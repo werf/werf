@@ -209,7 +209,7 @@ Stop Review:
 
 #### №1 Вручную
 
-> Данный вариант реализует подход описанный в разделе [Выкат на review из pull request по кнопке]({{ "usage/integration_with_ci_cd_systems/ci_cd_workflow_basics.html#выкат-на-review-из-pull-request-по-кнопке" | true_relative_url }})
+> Данный вариант реализует подход описанный в разделе [Выкат на review из pull request по кнопке]({{ "usage/integration_with_ci_cd_systems/ci_cd_workflows.html#выкат-на-review-из-pull-request-по-кнопке" | true_relative_url }})
 
 При таком подходе пользователь выкатывает и удаляет окружение по кнопке в pipeline.
 
@@ -248,7 +248,7 @@ Stop Review:
 
 #### №2 Автоматически по имени ветки
 
-> Данный вариант реализует подход описанный в разделе [Выкат на review из ветки по шаблону автоматически]({{ "usage/integration_with_ci_cd_systems/ci_cd_workflow_basics.html#выкат-на-review-из-ветки-по-шаблону-автоматически" | true_relative_url }})
+> Данный вариант реализует подход описанный в разделе [Выкат на review из ветки по шаблону автоматически]({{ "usage/integration_with_ci_cd_systems/ci_cd_workflows.html#выкат-на-review-из-ветки-по-шаблону-автоматически" | true_relative_url }})
 
 В предложенном ниже варианте автоматический релиз выполняется для каждого коммита в MR, в случае, если имя git-ветки имеет префикс `review-`.
 
@@ -284,7 +284,7 @@ Stop Review:
 
 #### №3 Полуавтоматический режим с лейблом (рекомендованный)
 
-> Данный вариант реализует подход описанный в разделе [Выкат на review из pull request автоматически после ручной активации]({{ "usage/integration_with_ci_cd_systems/ci_cd_workflow_basics.html#выкат-на-review-из-pull-request-автоматически-после-ручной-активации" | true_relative_url }})
+> Данный вариант реализует подход описанный в разделе [Выкат на review из pull request автоматически после ручной активации]({{ "usage/integration_with_ci_cd_systems/ci_cd_workflows.html#выкат-на-review-из-pull-request-автоматически-после-ручной-активации" | true_relative_url }})
 
 Полуавтоматический режим с лейблом — это комплексное решение, объединяющие первые два варианта.
 
@@ -343,7 +343,7 @@ Stop Review:
 
 #### №1 Fast and Furious (рекомендованный)
 
-> Данный вариант реализует подходы описанные в разделах [Выкат на production из master автоматически]({{ "usage/integration_with_ci_cd_systems/ci_cd_workflow_basics.html#выкат-на-production-из-master-автоматически" | true_relative_url }}) и [Выкат на production-like из pull request по кнопке]({{ "usage/integration_with_ci_cd_systems/ci_cd_workflow_basics.html#выкат-на-production-like-из-pull-request-по-кнопке" | true_relative_url }})
+> Данный вариант реализует подходы описанные в разделах [Выкат на production из master автоматически]({{ "usage/integration_with_ci_cd_systems/ci_cd_workflows.html#выкат-на-production-из-master-автоматически" | true_relative_url }}) и [Выкат на production-like из pull request по кнопке]({{ "usage/integration_with_ci_cd_systems/ci_cd_workflows.html#выкат-на-production-like-из-pull-request-по-кнопке" | true_relative_url }})
 
 Выкат в **production** происходит автоматически при любых изменениях в master. Выполнить выкат в **staging** можно по кнопке в MR.
 
@@ -372,7 +372,7 @@ Deploy to Production:
 
 #### №2 Push the Button
 
-> Данный вариант реализует подходы описанные в разделах [Выкат на production из master по кнопке]({{ "usage/integration_with_ci_cd_systems/ci_cd_workflow_basics.html#выкат-на-production-из-master-по-кнопке" | true_relative_url }}) и [Выкат на staging из master автоматически]({{ "usage/integration_with_ci_cd_systems/ci_cd_workflow_basics.html#выкат-на-staging-из-master-автоматически" | true_relative_url }})
+> Данный вариант реализует подходы описанные в разделах [Выкат на production из master по кнопке]({{ "usage/integration_with_ci_cd_systems/ci_cd_workflows.html#выкат-на-production-из-master-по-кнопке" | true_relative_url }}) и [Выкат на staging из master автоматически]({{ "usage/integration_with_ci_cd_systems/ci_cd_workflows.html#выкат-на-staging-из-master-автоматически" | true_relative_url }})
 
 Выкат **production** осуществляется по кнопке у коммита в master, а выкат в **staging** происходит автоматически при любых изменениях в master.
 
@@ -401,7 +401,7 @@ Deploy to Production:
 
 #### №3 Tag everything (рекомендованный)
 
-> Данный вариант реализует подходы описанные в разделах [Выкат на production из тега автоматически]({{ "usage/integration_with_ci_cd_systems/ci_cd_workflow_basics.html#выкат-на-production-из-тега-автоматически" | true_relative_url }}) и [Выкат на staging из master по кнопке]({{ "usage/integration_with_ci_cd_systems/ci_cd_workflow_basics.html#выкат-на-staging-из-master-по-кнопке" | true_relative_url }})
+> Данный вариант реализует подходы описанные в разделах [Выкат на production из тега автоматически]({{ "usage/integration_with_ci_cd_systems/ci_cd_workflows.html#выкат-на-production-из-тега-автоматически" | true_relative_url }}) и [Выкат на staging из master по кнопке]({{ "usage/integration_with_ci_cd_systems/ci_cd_workflows.html#выкат-на-staging-из-master-по-кнопке" | true_relative_url }})
 
 Выкат в **production** выполняется при проставлении тега, а в **staging** по кнопке у коммита в master.
 
@@ -431,7 +431,7 @@ Deploy to Production:
 
 #### №4 Branch, branch, branch!
 
-> Данный вариант реализует подходы описанные в разделах [Выкат на production из ветки автоматически]({{ "usage/integration_with_ci_cd_systems/ci_cd_workflow_basics.html#выкат-на-production-из-ветки-автоматически" | true_relative_url }}) и [Выкат на production-like из ветки автоматически]({{ "usage/integration_with_ci_cd_systems/ci_cd_workflow_basics.html#выкат-на-production-like-из-ветки-автоматически" | true_relative_url }})
+> Данный вариант реализует подходы описанные в разделах [Выкат на production из ветки автоматически]({{ "usage/integration_with_ci_cd_systems/ci_cd_workflows.html#выкат-на-production-из-ветки-автоматически" | true_relative_url }}) и [Выкат на production-like из ветки автоматически]({{ "usage/integration_with_ci_cd_systems/ci_cd_workflows.html#выкат-на-production-like-из-ветки-автоматически" | true_relative_url }})
 
 Выкат в **production** происходит автоматически при любых изменениях в ветке production, а в **staging** при любых изменениях в ветке master.
 
@@ -498,7 +498,7 @@ Cleanup:
 ### Детали workflow
 {:.no_toc}
 
-> Подробнее про workflow можно почитать в отдельной [статье]({{ "usage/integration_with_ci_cd_systems/ci_cd_workflow_basics.html#1-fast-and-furious" | true_relative_url }})
+> Подробнее про workflow можно почитать в отдельной [статье]({{ "usage/integration_with_ci_cd_systems/ci_cd_workflows.html#1-fast-and-furious" | true_relative_url }})
 
 * [Сборка и публикация](#сборка-и-публикация-образов-приложения).
 * Выкат на review контур по стратегии [№3 Полуавтоматический режим с лейблом (рекомендованный)](#3-полуавтоматический-режим-с-лейблом-рекомендованный).
@@ -601,7 +601,7 @@ Cleanup:
 ### Детали workflow
 {:.no_toc}
 
-> Подробнее про workflow можно почитать в отдельной [статье]({{ "usage/integration_with_ci_cd_systems/ci_cd_workflow_basics.html#2-push-the-button" | true_relative_url }})
+> Подробнее про workflow можно почитать в отдельной [статье]({{ "usage/integration_with_ci_cd_systems/ci_cd_workflows.html#2-push-the-button" | true_relative_url }})
 
 * [Сборка и публикация](#сборка-и-публикация-образов-приложения).
 * Выкат на review контур по стратегии [№1 Вручную](#1-вручную).
@@ -696,7 +696,7 @@ Cleanup:
 ### Детали workflow
 {:.no_toc}
 
-> Подробнее про workflow можно почитать в отдельной [статье]({{ "usage/integration_with_ci_cd_systems/ci_cd_workflow_basics.html#3-tag-everything" | true_relative_url }})
+> Подробнее про workflow можно почитать в отдельной [статье]({{ "usage/integration_with_ci_cd_systems/ci_cd_workflows.html#3-tag-everything" | true_relative_url }})
 
 * [Сборка и публикация](#сборка-и-публикация-образов-приложения).
 * Выкат на review контур по стратегии [№1 Вручную](#1-вручную).
@@ -789,7 +789,7 @@ Cleanup:
 ### Детали workflow
 {:.no_toc}
 
-> Подробнее про workflow можно почитать в отдельной [статье]({{ "usage/integration_with_ci_cd_systems/ci_cd_workflow_basics.html#4-branch-branch-branch" | true_relative_url }})
+> Подробнее про workflow можно почитать в отдельной [статье]({{ "usage/integration_with_ci_cd_systems/ci_cd_workflows.html#4-branch-branch-branch" | true_relative_url }})
 
 * [Сборка и публикация](#сборка-и-публикация-образов-приложения).
 * Выкат на review контур по стратегии [№2 Автоматически по имени ветки](#2-автоматически-по-имени-ветки).
