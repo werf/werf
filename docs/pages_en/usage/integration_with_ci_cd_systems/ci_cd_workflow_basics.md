@@ -1,6 +1,6 @@
 ---
-title: CI/CD workflow basics
-permalink: how_to/ci_cd_workflow_basics.html
+title: CI/CD basics
+permalink: usage/integration_with_ci_cd_systems/ci_cd_workflow_basics.html
 ---
 
 In this article, we will discuss what CI/CD means and overview CI/CD workflows that can be implemented with werf.
