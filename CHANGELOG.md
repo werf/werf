@@ -1,5 +1,14 @@
 # Changelog
 
+### [1.2.187](https://www.github.com/werf/werf/compare/v1.2.186...v1.2.187) (2022-12-17)
+
+
+### Bug Fixes
+
+* **build:** inconsistent report path when final-repo used ([8bcaf15](https://www.github.com/werf/werf/commit/8bcaf157b7a6929406ac8be316497d5c0b8f5549))
+* **report:** fix panic occured when using final-repo and report ([c9eb4b4](https://www.github.com/werf/werf/commit/c9eb4b402b87375a08eb6735566c79ff05564f03))
+* **shallow-clone:** enable auto unshallow unless force-shallow option used ([2dca11d](https://www.github.com/werf/werf/commit/2dca11d3d38da1a6cf05e23db0ed7d1ace1d3573))
+
 ### [1.2.186](https://www.github.com/werf/werf/compare/v1.2.185...v1.2.186) (2022-11-02)
 
 
