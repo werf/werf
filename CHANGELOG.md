@@ -1,5 +1,19 @@
 # Changelog
 
+### [1.2.193](https://www.github.com/werf/werf/compare/v1.2.192...v1.2.193) (2022-12-17)
+
+
+### Features
+
+* **docs:** build chapter: overview and configuration articles (lang:ru) ([79d6f81](https://www.github.com/werf/werf/commit/79d6f811e1a3bc37f3debd8ccc014bfb5f086028))
+* **docs:** new usage build chapter structure ([78370b0](https://www.github.com/werf/werf/commit/78370b04726096bb8604093898f90da5680aa203))
+
+
+### Bug Fixes
+
+* broken render output due to lock-related message ([420824b](https://www.github.com/werf/werf/commit/420824b9e6c1f652284dd343f478f6bb9ebfbb14))
+* **shallow-clone:** enable auto unshallow unless force-shallow option used ([88d5db9](https://www.github.com/werf/werf/commit/88d5db913dbecf69f84a555f02b12d9a976c6b03))
+
 ### [1.2.192](https://www.github.com/werf/werf/compare/v1.2.191...v1.2.192) (2022-12-12)
 
 
