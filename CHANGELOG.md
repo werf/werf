@@ -1,5 +1,15 @@
 # Changelog
 
+### [1.2.191](https://www.github.com/werf/werf/compare/v1.2.190...v1.2.191) (2022-12-17)
+
+
+### Bug Fixes
+
+* broken render output due to lock-related message ([345330c](https://www.github.com/werf/werf/commit/345330cf1184f4074571890edc5f52f2cca36fc9))
+* **report:** fix panic occured when using final-repo and report ([6d21c6f](https://www.github.com/werf/werf/commit/6d21c6fa23117781f01d9ad2e6555265f94fcaf2))
+* **shallow-clone:** enable auto unshallow unless force-shallow option used ([3a809d4](https://www.github.com/werf/werf/commit/3a809d4370d7aedb244ee058702634c5342354f7))
+* **staged-dockerfile:** do not store non-target Dockerfile stages in the final-repo ([5f5b8d0](https://www.github.com/werf/werf/commit/5f5b8d0aeaac0af7c3208d3318ffde464185aa7c))
+
 ### [1.2.190](https://www.github.com/werf/werf/compare/v1.2.189...v1.2.190) (2022-11-17)
 
 
