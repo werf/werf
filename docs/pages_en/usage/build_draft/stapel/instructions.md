@@ -29,24 +29,62 @@ What is the best strategy to execute them? You might think the best way is to ex
 
 ### beforeInstall
 
+```yaml
+shell:
+  beforeInstall:
+    - apt update -q
+    - apt install -y curl mysql-client libmysqlclient-dev g++ build-essential libcurl4
+  beforeInstallCacheVersion: "1"
+```
+
 This stage executes various instructions before installing an application. It is best suited for system applications that rarely change. At the same time, their installation process is very time-consuming. Also, at this stage, you can configure some system parameters that rarely change, such as setting a locale or a timezone, adding groups and users, etc. For example, you can install language distributions and build tools like PHP and Composer, Java and Gradle, and so on, at this stage.
 
 In practice, all these components rarely change, and the _beforeInstall_ stage caches
 them for an extended period.
 
+`beforeInstallCacheVersion: <string>` — optional directive which deterministically invalidates build cache using a change into `werf.yaml` introduced by the git commit.
+
 ### install
+
+```yaml
+shell:
+  install:
+    - bundle install
+    - npm ci
+  installCacheVersion: "1"
+```
 
 This stage is for installing an application. It is best suited for installing application dependencies and configuring some basic settings.
 
 Instructions on this stage have access to application source codes, so you can install application dependencies using build tools (like Composer, Gradle, npm, etc.) that require a manifest file (e.g., pom.xml, Gruntfile) to work. A best practice is to make this stage dependent on changes in that manifest file.
 
+`installCacheVersion: <string>` — optional directive which deterministically invalidates build cache using a change into `werf.yaml` introduced by the git commit.
+
 ### beforeSetup
+
+```yaml
+shell:
+  beforeSetup:
+    - rake assets:precompile
+  beforeSetupCacheVersion: "1"
+```
 
 At this stage, you can prepare an application for tuning some parameters. It supports all kinds of compiling tasks: creating jars, creating executable files and dynamic libraries, creating web assets, uglification, and encryption. This stage is often made dependent on changes in the source code.
 
+`beforeSetupCacheVersion: <string>` — optional directive which deterministically invalidates build cache using a change into `werf.yaml` introduced by the git commit.
+
 ### setup
 
+```yaml
+shell:
+  setup:
+    - npm run build
+  setupCacheVersion: "1"
+```
+
 This stage is intended for configuring application settings. The corresponding set of actions includes copying some profiles into `/etc`, copying configuration files to already-known locations, creating a file containing the application version. These actions should not be time-consuming since they will likely be executed on every commit.
+
+`setupCacheVersion: <string>` — optional directive which deterministically invalidates build cache using a change into `werf.yaml` introduced by the git commit.
 
 ### custom strategy
 
@@ -129,6 +167,8 @@ ansible:
   beforeSetupCacheVersion: <version>
   setupCacheVersion: <version>
 ```
+
+> **Notice:** ansible syntax is not available when using buildah building backend.
 
 ### Ansible config and stage playbook
 
