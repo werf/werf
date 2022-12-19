@@ -24,6 +24,9 @@ en:
   /usage/deploy: &documentation-usage-deploy
     title: Deploy
     url: usage/deploy/intro.html
+  /usage/distribute: &documentation-usage-distribute
+    title: Distribute
+    url: usage/distribute/charts.html
   /usage/cleanup: &documentation-usage-cleanup
     title: Cleanup
     url: usage/cleanup/cr_cleanup.html
@@ -86,6 +89,9 @@ ru:
   /usage/deploy:
     <<: *documentation-usage-deploy
     title: Развертывание
+  /usage/distribute:
+    <<: *documentation-usage-distribute
+    title: Дистрибуция
   /usage/cleanup:
     <<: *documentation-usage-cleanup
     title: Очистка
