@@ -80,23 +80,89 @@ chartname/
 # Chart.yaml:
 apiVersion: v2
 name: mychart
-version: 1.0.0
+version: 1.0.0-anything-here
+
+# Опционально:
+type: application
+kubeVersion: "~1.20.0"
 dependencies:
   - name: nginx
     version: 1.2.3
     repository: https://example.com/charts
+
+# Опциональные информационные директивы:
+appVersion: "1.0"
+deprecated: false
+icon: https://example.org/mychart-icon.svg
+description: This is My Chart
+home: https://example.org
+sources:
+  - https://github.com/my/chart
+keywords: 
+  - apps
+annotations:
+  anyAdditionalInfo: here
+maintainters:
+  - name: John Doe
+    email: john@example.org
+    url: https://john.example.org
 ```
 
-### Версия
+Обязательные директивы:
 
-У чарта должна быть версия согласно стандарту ["Семантическое версионирование 2.0"](https://semver.org/spec/v2.0.0.html). Версия указывается в директиве `version` файла `Chart.yaml`, например:
+* `apiVersion` — формат `Chart.yaml`, либо `v2` (рекомендуется), либо `v1`;
+
+* `name` — имя чарта;
+
+* `version` — версия чарта согласно ["Семантическое версионирование 2.0"](https://semver.org/spec/v2.0.0.html);
+
+Опциональные директивы:
+
+* `type` — тип чарта;
+
+* `kubeVersion` — совместимые версии Kubernetes;
+
+* `dependencies` — конфигурация зависимых чартов;
+
+Опциональные информационные директивы:
+
+* `appVersion` — версия приложения, устанавливаемого чартом, в произвольном формате;
+
+* `deprecated` — является ли чарт устаревшим, `false` (по умолчанию) или `true`;
+
+* `icon` — URL к иконке чарта;
+
+* `description` — описание чарта;
+
+* `home` — веб-сайт чарта;
+
+* `sources` — репозитории с содержимым чарта;
+
+* `keywords` — ключевые слова, связанные с чартом;
+
+* `annotations` — дополнительная произвольная информация о чарте;
+
+* `maintainers`  — список разработчиков чарта;
+
+### Тип чарта
+
+Тип чарта указывается в директиве `type` файла `Chart.yaml`. Допустимые типы:
+
+* `application` — обычный чарт, без ограничений;
+
+* `library` — чарт, содержащий только шаблоны, и не формирующий никаких манифестов сам по себе. Такой чарт нельзя установить, только использовать как зависимый.
+
+### Совместимые версии Kubernetes
+
+Указать с какими версиями Kubernetes совместим данный чарт можно директивой `kubeVersion`, например:
 
 ```yaml
 # Chart.yaml:
 name: mychart
-version: 1.2.3
-version: 1.2.3-alpha.1+d2fc5
-version: 1.2.3-anything
+kubeVersion: "1.20.0"   # Совместимо с 1.20.0
+kubeVersion: "~1.20.3"  # Совместимо со всеми 1.20.x, но минимум 1.20.3
+kubeVersion: "~1"       # Совместимо со всеми 1.x.x
+kubeVersion: ">= 1.20.3 < 2.0.0 && != 1.20.4"
 ```
 
 ## Зависимости от других чартов
