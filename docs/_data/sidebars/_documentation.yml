@@ -304,6 +304,11 @@ entries:
               - title: Бандлы
                 url: /usage/deploy/bundles.html
 
+          - title: Дистрибуция
+            f:
+              - title: Чарты
+                url: /usage/distribute/charts.html
+
           - title: Очистка
             f:
               - title: Очистка container registry
