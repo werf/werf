@@ -11,11 +11,11 @@ permalink: usage/deploy/charts.html
 
 ```
 chartname/
-  charts/                   
+  charts/
     dependent-chart/
       # ...
   templates/
-    deployment.yaml  
+    deployment.yaml
     _helpers.tpl
     NOTES.txt
   crds/
@@ -105,7 +105,7 @@ description: This is My Chart
 home: https://example.org
 sources:
   - https://github.com/my/chart
-keywords: 
+keywords:
   - apps
 annotations:
   anyAdditionalInfo: here
@@ -121,7 +121,7 @@ maintainters:
 
 * `name` — имя чарта;
 
-* `version` — версия чарта согласно ["Семантическое версионирование 2.0"](https://semver.org/spec/v2.0.0.html);
+* `version` — версия чарта согласно [«семантическому версионированию 2.0»](https://semver.org/spec/v2.0.0.html).
 
 Опциональные директивы:
 
@@ -129,7 +129,7 @@ maintainters:
 
 * `kubeVersion` — совместимые версии Kubernetes;
 
-* `dependencies` — конфигурация зависимых чартов;
+* `dependencies` — конфигурация зависимых чартов.
 
 Опциональные информационные директивы:
 
@@ -149,7 +149,7 @@ maintainters:
 
 * `annotations` — дополнительная произвольная информация о чарте;
 
-* `maintainers`  — список разработчиков чарта;
+* `maintainers`  — список разработчиков чарта.
 
 ### Тип чарта
 
@@ -161,7 +161,7 @@ maintainters:
 
 ### Совместимые версии Kubernetes
 
-Указать с какими версиями Kubernetes совместим данный чарт можно директивой `kubeVersion`, например:
+Указать, с какими версиями Kubernetes совместим данный чарт, можно директивой `kubeVersion`, например:
 
 ```yaml
 # Chart.yaml:
@@ -174,7 +174,7 @@ kubeVersion: ">= 1.20.3 < 2.0.0 && != 1.20.4"
 
 ## Зависимости от других чартов
 
-Чарт может зависеть от других чартов. В таком случае манифесты сформируются и для родительского и для зависимых чартов, после чего объединятся вместе для дальнейшего развертывания. Зависимые чарты настраиваются директивой `dependencies` файла `Chart.yaml`, например:
+Чарт может зависеть от других чартов. В таком случае манифесты сформируются и для родительского, и для зависимых чартов, после чего объединятся вместе для дальнейшего развертывания. Зависимые чарты настраиваются директивой `dependencies` файла `Chart.yaml`, например:
 
 ```yaml
 # Chart.yaml:
@@ -224,7 +224,7 @@ dependencies:
 
 ```yaml
 # Chart.yaml:
-dependencies:  
+dependencies:
 - name: mychart
   # OCI-репозиторий (рекомендуется):
   repository: oci://example.org/myrepo
@@ -248,9 +248,9 @@ dependencies:
 ```yaml
 # Chart.yaml:
 dependencies:
-- name: backend 
+- name: backend
   # Чарт будет включен, если .Values.backend.enabled == true:
-  condition: backend.enabled  
+  condition: backend.enabled
 ```
 
 Также можно использовать директиву `tags` для включения/выключения целых групп чартов сразу. Пример:
@@ -284,11 +284,11 @@ dependencies:
   # Автоматически подставлять .Values.exports.myMap.* в .Values.backend.*:
   - parent: exports.myMap
     child: .
-  # Более короткая форма предыдущего экспорта:  
+  # Более короткая форма предыдущего экспорта:
   - myMap
 ```
 
-`import-values` — автоматический проброс указанных Values из зависимого чарта в родительский, т. е. в обратном направлении. Пример:
+`import-values` — автоматический проброс указанных Values из зависимого чарта в родительский, т.е. в обратном направлении. Пример:
 
 ```yaml
 # Chart.yaml:
@@ -301,7 +301,7 @@ dependencies:
   # Автоматически подставлять .Values.backend.exports.myMap.* в .Values.*:
   - child: exports.myMap
     parent: .
-  # Более короткая форма предыдущего импорта:  
+  # Более короткая форма предыдущего импорта:
   - myMap
 ```
 
@@ -311,10 +311,10 @@ dependencies:
 
 1. Добавить/обновить конфигурацию зависимого чарта в `Chart.yaml`;
 
-2. При использовании приватного OCI или HTTP-репозитория c зависимым чартом добавьте OCI или HTTP-репозиторий вручную с `werf helm repo add`, указав нужные опции для доступа к ним;
+2. При использовании приватного OCI или HTTP-репозитория c зависимым чартом добавить OCI или HTTP-репозиторий вручную с `werf helm repo add`, указав нужные опции для доступа к ним;
 
-3. Вызовите `werf helm dependency update`, который обновит `Chart.lock`;
+3. Вызвать `werf helm dependency update`, который обновит `Chart.lock`;
 
-4. Закоммитите обновлённые `Chart.yaml` и `Chart.lock` в Git.
+4. Закоммитить обновлённые `Chart.yaml` и `Chart.lock` в Git.
 
 Также рекомендуется добавить `.helm/charts/**.tgz` в `.gitignore`.
