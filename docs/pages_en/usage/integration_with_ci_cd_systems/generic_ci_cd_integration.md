@@ -1,11 +1,7 @@
 ---
 title: Generic CI/CD integration
-permalink: how_to/integration_with_ci_cd_systems/generic_ci_cd_integration.html
+permalink: usage/integration_with_ci_cd_systems/generic_ci_cd_integration.html
 ---
-
-Currently, the following CI systems are officially supported and fully tested to be used with werf:
- * [GitLab CI]({{ "how_to/integration_with_ci_cd_systems/gitlab_ci_cd/workflows.html" | true_relative_url }});
- * [GitHub Actions]({{ "how_to/integration_with_ci_cd_systems/github_actions/workflows.html" | true_relative_url }}).
 
 Please refer to relevant guides if you're using one of them. This list will be extended with other CI systems. If you are particularly interested in any of them, please let us know via [this issue](https://github.com/werf/werf/issues/1617).
 
@@ -44,7 +40,7 @@ According to [CI/CD configuration integration]({{ "usage/integration_with_ci_cd_
 
 ### Configure modes of operation in CI/CD systems
 
-According to [configure modes of operation in CI/CD systems]({{ "how_to/integration_with_ci_cd_systems/generic_ci_cd_integration.html#configure-modes-of-operation-in-cicd-systems" | true_relative_url }}) procedure, variables to define:
+According to [configure modes of operation in CI/CD systems]({{ "usage/integration_with_ci_cd_systems/generic_ci_cd_integration.html#configure-modes-of-operation-in-cicd-systems" | true_relative_url }}) procedure, variables to define:
 
 Variables to define:
  * [`WERF_LOG_COLOR_MODE`]({{ "usage/integration_with_ci_cd_systems/how_ci_cd_integration_works/general_overview.html#werf_log_color_mode" | true_relative_url }});
