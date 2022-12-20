@@ -187,6 +187,7 @@ shell:
 
 Поддерживаются вспомогательные образы, из которых можно импортировать файлы в целевой образ (аналог `COPY --from=STAGE` в multi-stage Dockerfile), а также Golang-шаблонизация:
 
+{% raw %}
 ```yaml
 {{ $_ := set . "BaseImage" "ubuntu:22.04" }}
 
@@ -212,6 +213,7 @@ import:
   to: /usr/local/bin/app
   after: install
 ```
+{% endraw %}
 
 Подробная документация по написанию доступна [в разделе Stapel]({{ "usage/build/building_images_with_stapel/base_image.html" | true_relative_url }}).
 
