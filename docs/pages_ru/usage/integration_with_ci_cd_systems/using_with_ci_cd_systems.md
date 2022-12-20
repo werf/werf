@@ -8,12 +8,13 @@ description: Основы использования werf в рамках раз
 
 В этой статье мы рассмотрим основы использования werf в рамках различных систем CI/CD.
 
-Также доступна статья, в которой обсуждаются более продвинутые вопросы [общей интеграции в процесс CI/CD]({{ "how_to/integration_with_ci_cd_systems/generic_ci_cd_integration.html" | true_relative_url }}).
+Также доступна статья, в которой обсуждаются более продвинутые вопросы [общей интеграции в процесс CI/CD]({{ "usage/integration_with_ci_cd_systems/generic_ci_cd_integration.html" | true_relative_url }}).
 
 werf изначально поддерживает GitLab CI/CD и GitHub Actions, а также предлагает специальную команду `werf ci-env` (она необязательна и позволяет настраивать параметры werf, описываемые в этой статье, автоматически и единообразно). Дополнительные сведения можно найти в следующих документах:
 
- - [GitLab CI/CD]({{ "how_to/integration_with_ci_cd_systems/gitlab_ci_cd/workflows.html" | true_relative_url }});
- - [GitHub Actions]({{ "how_to/integration_with_ci_cd_systems/github_actions/workflows.html" | true_relative_url }}).
+[//]: # ( - [GitLab CI/CD]&#40;{{ "how_to/integration_with_ci_cd_systems/gitlab_ci_cd/workflows.html" | true_relative_url }}&#41;;)
+
+[//]: # ( - [GitHub Actions]&#40;{{ "how_to/integration_with_ci_cd_systems/github_actions/workflows.html" | true_relative_url }}&#41;.)
 
 ## Команды werf, которые понадобятся
 
@@ -68,7 +69,7 @@ docker login registry.mydomain.org/application -u USER -p PASSWORD
 
 ### Настройка целевого окружения для werf
 
-Обычно приложение развертывается в различные [окружения]({{ "usage/integration_with_ci_cd_systems/ci_cd_workflow_basics.html#окружение" | true_relative_url }}) (`production`, `staging`, `testing`, и т.д.).
+Обычно приложение развертывается в различные окружения (`production`, `staging`, `testing`, и т.д.).
 
 В werf имеется опциональный параметр `--env` (или переменная среды `WERF_ENV`), с помощью которого можно задать имя используемого окружения. Оно влияет на название соответствующего [пространства имен Kubernetes]() и [название Helm-релиза](). Мы рекомендуем проверять имя окружения в процессе выполнения CI/CD-задания (например, с помощью встроенных переменных окружения вашей CI/CD-системы) и соответствующим образом устанавливать параметр `--env`.
 
@@ -133,10 +134,14 @@ export WERF_ENABLE_PROCESS_EXTERMINATOR=1
 </div>
 </div>
 
-## Что дальше?
+[//]: # ()
+[//]: # (## Что дальше?)
 
-В [этом разделе]({{ "reference/deploy_annotations.html" | true_relative_url }}) рассказывается, как управлять отслеживанием ресурсов в процессе развертывания.
+[//]: # ()
+[//]: # (В [этом разделе]&#40;{{ "reference/deploy_annotations.html" | true_relative_url }}&#41; рассказывается, как управлять отслеживанием ресурсов в процессе развертывания.)
 
-Также рекомендуем ознакомиться со статьей ["Основы рабочего процесса CI/CD"]({{ "usage/integration_with_ci_cd_systems/ci_cd_workflow_basics.html" | true_relative_url }}). В ней описываются различные способы настройки рабочих процессов CI/CD.
+[//]: # ()
+[//]: # (Также рекомендуем ознакомиться со статьей ["Основы рабочего процесса CI/CD"]&#40;{{ "usage/integration_with_ci_cd_systems/ci_cd_workflow_basics.html" | true_relative_url }}&#41;. В ней описываются различные способы настройки рабочих процессов CI/CD.)
 
-В разделе ["Руководства"](/guides.html) можно найти инструкцию, подходящую для вашего проекта. Эти руководства также содержат подробную информацию о настройке конкретных систем CI/CD.
+[//]: # ()
+[//]: # (В разделе ["Руководства"]&#40;/guides.html&#41; можно найти инструкцию, подходящую для вашего проекта. Эти руководства также содержат подробную информацию о настройке конкретных систем CI/CD.)
