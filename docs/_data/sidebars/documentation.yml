@@ -647,6 +647,12 @@ entries:
 
           - title: Build
             f:
+              - title: Overview (NEW)
+                url: /usage/build_draft/overview.html
+
+              - title: Images configuration (NEW)
+                url: /usage/build_draft/images.html
+
               - title: Build process
                 url: /usage/build/build_process.html
 
@@ -673,34 +679,28 @@ entries:
                   - title: Use Kubernetes
                     url: /usage/build/run_in_containers/use_kubernetes.html
 
-              - title: Building images with stapel
+              - title: Building images with Stapel (UPDATED)
                 f:
-                  - title: Base image (required)
-                    url: /usage/build/building_images_with_stapel/base_image.html
+                  - title: Overview
+                    url: /usage/build_draft/stapel/overview.html
 
-                  - title: Adding docker instructions
-                    url: /usage/build/building_images_with_stapel/docker_directive.html
+                  - title: Base image
+                    url: /usage/build_draft/stapel/base.html
 
                   - title: Adding source code from git repositories
-                    url: /usage/build/building_images_with_stapel/git_directive.html
+                    url: /usage/build_draft/stapel/git.html
 
-                  - title: Running assembly instructions
-                    url: /usage/build/building_images_with_stapel/assembly_instructions.html
-
-                  - title: Reducing image size and speeding up a build by mounts
-                    url: /usage/build/building_images_with_stapel/mount_directive.html
+                  - title: User instructions
+                    url: /usage/build_draft/stapel/instructions.html
 
                   - title: Importing from images and artifacts
-                    url: /usage/build/building_images_with_stapel/import_directive.html
+                    url: /usage/build_draft/stapel/imports.html
 
-                  - title: Artifacts
-                    url: /usage/build/building_images_with_stapel/artifacts.html
+                  - title: Dockerfile instructions
+                    url: /usage/build_draft/stapel/dockerfile.html
 
-                  - title: Integration with SSH agent
-                    url: /usage/build/building_images_with_stapel/integration_with_ssh_agent.html
-
-                  - title: Stage Introspection
-                    url: /usage/build/building_images_with_stapel/stage_introspection.html
+                  - title: Reducing image size and speeding up a build by mounts
+                    url: /usage/build_draft/stapel/mounts.html
 
           - title: Deploy
             f:
@@ -838,6 +838,12 @@ entries:
 
           - title: Сборка
             f:
+              - title: Обзор (НОВИНКА)
+                url: /usage/build_draft/overview.html
+
+              - title: Конфигурация образов (НОВИНКА)
+                url: /usage/build_draft/images.html
+
               - title: Процесс сборки
                 url: /usage/build/build_process.html
 
@@ -864,34 +870,28 @@ entries:
                   - title: В Kubernetes
                     url: /usage/build/run_in_containers/use_kubernetes.html
 
-              - title: Сборка образов с помощью Stapel
+              - title: Сборка образов с помощью Stapel (ОБНОВЛЕНИЕ)
                 f:
-                  - title: Базовый образ
-                    url: /usage/build/building_images_with_stapel/base_image.html
+                  - title: Обзор
+                    url: /usage/build_draft/stapel/overview.html
 
-                  - title: Использование Docker-инструкций
-                    url: /usage/build/building_images_with_stapel/docker_directive.html
+                  - title: Базовый образ
+                    url: /usage/build_draft/stapel/base.html
 
                   - title: Добавление исходного кода из git-репозиториев
-                    url: /usage/build/building_images_with_stapel/git_directive.html
+                    url: /usage/build_draft/stapel/git.html
 
-                  - title: Запуск инструкций сборки
-                    url: /usage/build/building_images_with_stapel/assembly_instructions.html
-
-                  - title: Ускорение сборки и уменьшение размера за счёт монтирования
-                    url: /usage/build/building_images_with_stapel/mount_directive.html
+                  - title: Пользовательские инструкции
+                    url: /usage/build_draft/stapel/instructions.html
 
                   - title: Импорт из артефактов и образов
-                    url: /usage/build/building_images_with_stapel/import_directive.html
+                    url: /usage/build_draft/stapel/imports.html
 
-                  - title: Артефакты
-                    url: /usage/build/building_images_with_stapel/artifacts.html
+                  - title: Инструкции Dockerfile
+                    url: /usage/build_draft/stapel/dockerfile.html
 
-                  - title: Интеграция с SSH-агентом
-                    url: /usage/build/building_images_with_stapel/integration_with_ssh_agent.html
-
-                  - title: Интроспекция стадий
-                    url: /usage/build/building_images_with_stapel/stage_introspection.html
+                  - title: Ускорение сборки и уменьшение размера за счёт монтирования
+                    url: /usage/build_draft/stapel/mounts.html
 
           - title: Развертывание
             f:
@@ -921,6 +921,11 @@ entries:
 
               - title: Бандлы
                 url: /usage/deploy/bundles.html
+
+          - title: Дистрибуция
+            f:
+              - title: Чарты
+                url: /usage/distribute/charts.html
 
           - title: Очистка
             f:

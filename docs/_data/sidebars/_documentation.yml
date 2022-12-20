@@ -70,7 +70,7 @@ entries:
                     url: /usage/build_draft/stapel/dockerfile.html
 
                   - title: Reducing image size and speeding up a build by mounts
-                    url: /usage/build/building_images_with_stapel/mounts.html
+                    url: /usage/build_draft/stapel/mounts.html
 
           - title: Deploy
             f:
@@ -261,7 +261,7 @@ entries:
                     url: /usage/build_draft/stapel/dockerfile.html
 
                   - title: Ускорение сборки и уменьшение размера за счёт монтирования
-                    url: /usage/build/building_images_with_stapel/mounts.html
+                    url: /usage/build_draft/stapel/mounts.html
 
           - title: Развертывание
             f:
