@@ -741,12 +741,6 @@ entries:
 
           - title: Integration with CI/CD systems
             f:
-              - title: CI/CD workflow basics
-                url: /usage/integration_with_ci_cd_systems/ci_cd_workflow_basics.html
-
-              - title: CI/CD workflows
-                url: /usage/integration_with_ci_cd_systems/ci_cd_workflows.html
-
               - title: How CI/CD integration works
                 f:
                   - title: General overview
@@ -761,42 +755,8 @@ entries:
               - title: Using with CI/CD systems
                 url: /usage/integration_with_ci_cd_systems/using_with_ci_cd_systems.html
 
-      - title: How-to
-        f:
-          - title: Integration with CI/CD systems
-            f:
-              - title: GitLab CI/CD
-                f:
-                  - title: Workflows
-                    url: /how_to/integration_with_ci_cd_systems/gitlab_ci_cd/workflows.html
-
-                  - title: Docker executor
-                    url: /how_to/integration_with_ci_cd_systems/gitlab_ci_cd/docker_executor.html
-
-                  - title: Kubernetes executor
-                    url: /how_to/integration_with_ci_cd_systems/gitlab_ci_cd/kubernetes_executor.html
-
-              - title: GitHub Actions
-                f:
-                  - title: Workflows
-                    url: /how_to/integration_with_ci_cd_systems/github_actions/workflows.html
-
-              - title: ArgoCD
-                f:
-                  - title: CI/CD flow overview
-                    url: /how_to/integration_with_ci_cd_systems/argocd/ci_cd_flow_overview.html
-
-                  - title: Prepare Kubernetes cluster
-                    url: /how_to/integration_with_ci_cd_systems/argocd/prepare_kubernetes_cluster.html
-
-                  - title: Configure CI/CD
-                    url: /how_to/integration_with_ci_cd_systems/argocd/configure_ci_cd.html
-
               - title: Other CI/CD systems
-                url: /how_to/integration_with_ci_cd_systems/generic_ci_cd_integration.html
-
-          - title: How to migrate from v1.1 to v1.2
-            url: /how_to/how_to_migrate_from_v1_1_to_v1_2.html
+                url: /usage/integration_with_ci_cd_systems/generic_ci_cd_integration.html
 
       - title: Reference
         f:
@@ -818,8 +778,13 @@ entries:
           - title: Cheat sheet
             url: /reference/cheat_sheet.html
 
-      - title: Telemetry
-        url: /telemetry.html
+      - title: Resources
+        f:
+          - title: How to migrate from v1.1 to v1.2
+            url: /resources/how_to_migrate_from_v1_1_to_v1_2.html
+
+          - title: Telemetry
+            url: /resources/telemetry.html
 
   ru:
     f:
@@ -937,12 +902,6 @@ entries:
 
           - title: Интеграция с CI/CD системами
             f:
-              - title: Основы рабочего процесса CI/CD
-                url: /usage/integration_with_ci_cd_systems/ci_cd_workflow_basics.html
-
-              - title: Рабочие процессы CI/CD
-                url: /usage/integration_with_ci_cd_systems/ci_cd_workflows.html
-
               - title: Как работает интеграция с CI/CD
                 f:
                   - title: Общие сведения
@@ -957,42 +916,8 @@ entries:
               - title: Использование в CI/CD системах
                 url: /usage/integration_with_ci_cd_systems/using_with_ci_cd_systems.html
 
-      - title: How-to
-        f:
-          - title: Интеграция с CI/CD системами
-            f:
-              - title: GitLab CI/CD
-                f:
-                  - title: Workflows
-                    url: /how_to/integration_with_ci_cd_systems/gitlab_ci_cd/workflows.html
-
-                  - title: Docker executor
-                    url: /how_to/integration_with_ci_cd_systems/gitlab_ci_cd/docker_executor.html
-
-                  - title: Kubernetes executor
-                    url: /how_to/integration_with_ci_cd_systems/gitlab_ci_cd/kubernetes_executor.html
-
-              - title: GitHub Actions
-                f:
-                  - title: Workflows
-                    url: /how_to/integration_with_ci_cd_systems/github_actions/workflows.html
-
-              - title: ArgoCD
-                f:
-                  - title: Обзор процесса CI/CD
-                    url: /how_to/integration_with_ci_cd_systems/argocd/ci_cd_flow_overview.html
-
-                  - title: Подготовка кластера Kubernetes
-                    url: /how_to/integration_with_ci_cd_systems/argocd/prepare_kubernetes_cluster.html
-
-                  - title: Настройка CI/CD
-                    url: /how_to/integration_with_ci_cd_systems/argocd/configure_ci_cd.html
-
               - title: Другие CI/CD системы
-                url: /how_to/integration_with_ci_cd_systems/generic_ci_cd_integration.html
-
-          - title: Как мигрировать с v1.1 на v1.2
-            url: /how_to/how_to_migrate_from_v1_1_to_v1_2.html
+                url: /usage/integration_with_ci_cd_systems/generic_ci_cd_integration.html
 
       - title: Справочник
         f:
@@ -1014,5 +939,10 @@ entries:
           - title: Шпаргалка
             url: /reference/cheat_sheet.html
 
-      - title: Телеметрия
-        url: /telemetry.html
+      - title: Ресурсы
+        f:
+          - title: Как мигрировать с v1.1 на v1.2
+            url: /resources/how_to_migrate_from_v1_1_to_v1_2.html
+
+          - title: Телеметрия
+            url: /resources/telemetry.html
