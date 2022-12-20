@@ -1,11 +1,12 @@
 ---
 title: Интеграция с CI/CD-системами
-permalink: how_to/integration_with_ci_cd_systems/generic_ci_cd_integration.html
+permalink: usage/integration_with_ci_cd_systems/generic_ci_cd_integration.html
 ---
 
 В настоящий момент официально поддерживается и полностью протестирована работа werf со следующими CI-системами:
- * [GitLab CI/CD]({{ "how_to/integration_with_ci_cd_systems/gitlab_ci_cd/workflows.html" | true_relative_url }});
- * [GitHub Actions]({{ "how_to/integration_with_ci_cd_systems/github_actions/workflows.html" | true_relative_url }}).
+
+[//]: # ( * [GitLab CI/CD]&#40;{{ "how_to/integration_with_ci_cd_systems/gitlab_ci_cd/workflows.html" | true_relative_url }}&#41;;)
+[//]: # ( * [GitHub Actions]&#40;{{ "how_to/integration_with_ci_cd_systems/github_actions/workflows.html" | true_relative_url }}&#41;.)
 
 Если вы используете одну из них — обращайтесь к соответствующим руководствам. В дальнейшем этот список будет пополняться и другими CI-решениями. Если вы заинтересованы в поддержке конкретной системы — пожалуйста, дайте нам знать в [этом issue](https://github.com/werf/werf/issues/1617).
 
