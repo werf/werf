@@ -173,11 +173,14 @@ entries:
 
           - title: Сборка
             f:
-              - title: Обзор (НОВИНКА)
+              - title: Обзор (NEW)
                 url: /usage/build_draft/overview.html
 
-              - title: Конфигурация образов (НОВИНКА)
+              - title: Конфигурация образов (NEW)
                 url: /usage/build_draft/images.html
+
+              - title: Сборочный процесс (NEW)
+                url: /usage/build_draft/building.html
 
               - title: Процесс сборки
                 url: /usage/build/build_process.html
@@ -205,7 +208,7 @@ entries:
                   - title: В Kubernetes
                     url: /usage/build/run_in_containers/use_kubernetes.html
 
-              - title: Сборка образов с помощью Stapel (ОБНОВЛЕНИЕ)
+              - title: Сборка образов с помощью Stapel (NEW)
                 f:
                   - title: Обзор
                     url: /usage/build_draft/stapel/overview.html
