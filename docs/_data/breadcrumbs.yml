@@ -46,27 +46,9 @@ en:
   /reference/cli: &documentation-reference-cli
     title: Command line interface
     url: /reference/cli/overview.html
-  /how_to: &documentation-how_to
-    title: How-to
-    url: how_to/integration_with_ci_cd_systems/gitlab_ci_cd/workflows.html
-  /how_to/integration_with_ci_cd_systems: &documentation-guides-integration_with_ci_cd_systems
-    title: Integration with CI/CD systems
-    url: how_to/integration_with_ci_cd_systems/gitlab_ci_cd/workflows.html
-  /how_to/integration_with_ci_cd_systems/gitlab_ci_cd: &documentation-guides-integration_with_ci_cd_systems-gitlab_ci_cd
-    title: GitLab CI/CD
-    url: how_to/integration_with_ci_cd_systems/gitlab_ci_cd/workflows.html
-  /how_to/integration_with_ci_cd_systems/github_actions: &documentation-guides-integration_with_ci_cd_systems-github_actions
-    title: GitHub Actions
-    url: how_to/integration_with_ci_cd_systems/github_actions/workflows.html
-  /how_to/integration_with_ci_cd_systems/argocd: &documentation-guides-integration_with_ci_cd_systems-argocd
-    title: ArgoCD
-    url: how_to/integration_with_ci_cd_systems/argocd/ci_cd_flow_overview.html
-  /how_to/multiple_repositories_operation: &documentation-guides-multiple_repositories_operation
-    title: Multiple repositories operation
-    url: how_to/multiple_repositories_operation/overview.html
-  /how_to/secrets_management: &documentation-guides-secrets_management
-    title: Secrets management
-    url: how_to/secrets_management/overview.html
+  /resources: &documentation-resources
+    title: Resources
+    url: /resources/how_to_migrate_from_v1_1_to_v1_2.html
 ru:
   /documentation:
     <<: *documentation
@@ -115,21 +97,6 @@ ru:
   /reference/cli:
     <<: *documentation-reference-cli
     title: Интерфейс командной строки
-  /how_to:
-    <<: *documentation-how_to
-    title: How-to
-  /how_to/integration_with_ci_cd_systems:
-    <<: *documentation-guides-integration_with_ci_cd_systems
-    title: Интеграция с CI/CD системами
-  /how_to/integration_with_ci_cd_systems/gitlab_ci_cd:
-    <<: *documentation-guides-integration_with_ci_cd_systems-gitlab_ci_cd
-  /how_to/integration_with_ci_cd_systems/github_actions:
-    <<: *documentation-guides-integration_with_ci_cd_systems-github_actions
-  /how_to/integration_with_ci_cd_systems/argocd:
-    <<: *documentation-guides-integration_with_ci_cd_systems-argocd
-  /how_to/multiple_repositories_operation:
-    <<: *documentation-guides-multiple_repositories_operation
-    title: Практики оркестрации и выката многокомпонентных приложений
-  /how_to/secrets_management:
-    <<: *documentation-guides-secrets_management
-    title: Организация и управление секретами
+  /resources:
+    <<: *documentation-resources
+    title: Ресурсы
