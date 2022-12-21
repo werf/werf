@@ -1,6 +1,6 @@
 ---
 title: Telemetry
-permalink: telemetry.html
+permalink: resources/telemetry.html
 ---
 
 We collect anonymous usage data to improve werf's features and steer its development in the right direction.  This data is not associated with users in any way and does not contain any personal information.
