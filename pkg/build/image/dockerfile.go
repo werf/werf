@@ -285,21 +285,19 @@ func mapLegacyDockerfileToImage(ctx context.Context, dockerfileImageConfig *conf
 }
 
 func createDockerIgnorePathMatcher(ctx context.Context, giterminismMgr giterminism_manager.Interface, contextGitSubDir, dockerfileRelToContextPath string) (path_matcher.PathMatcher, error) {
-	dockerfileRelToGitPath := filepath.Join(contextGitSubDir, dockerfileRelToContextPath)
-
 	var dockerIgnorePatterns []string
 	for _, dockerIgnoreRelToContextPath := range []string{
 		dockerfileRelToContextPath + ".dockerignore",
 		".dockerignore",
 	} {
-		dockerIgnoreRelToGitPath := filepath.Join(contextGitSubDir, dockerIgnoreRelToContextPath)
-		if exist, err := giterminismMgr.FileReader().IsDockerignoreExistAnywhere(ctx, dockerIgnoreRelToGitPath); err != nil {
+		relDockerIgnorePath := filepath.Join(contextGitSubDir, dockerIgnoreRelToContextPath)
+		if exist, err := giterminismMgr.FileReader().IsDockerignoreExistAnywhere(ctx, relDockerIgnorePath); err != nil {
 			return nil, err
 		} else if !exist {
 			continue
 		}
 
-		dockerIgnore, err := giterminismMgr.FileReader().ReadDockerignore(ctx, dockerIgnoreRelToGitPath)
+		dockerIgnore, err := giterminismMgr.FileReader().ReadDockerignore(ctx, relDockerIgnorePath)
 		if err != nil {
 			return nil, err
 		}
@@ -318,6 +316,7 @@ func createDockerIgnorePathMatcher(ctx context.Context, giterminismMgr gitermini
 		DockerignorePatterns: dockerIgnorePatterns,
 	})
 
+	dockerfileRelToGitPath := filepath.Join(giterminismMgr.RelativeToGitProjectDir(), contextGitSubDir, dockerfileRelToContextPath)
 	if !dockerIgnorePathMatcher.IsPathMatched(dockerfileRelToGitPath) {
 		logboek.Context(ctx).Warn().LogLn("WARNING: There is no way to ignore the Dockerfile due to docker limitation when building an image for a compressed context that reads from STDIN.")
 		logboek.Context(ctx).Warn().LogF("WARNING: To hide this message, remove the Dockerfile ignore rule or add an exception rule.\n")
