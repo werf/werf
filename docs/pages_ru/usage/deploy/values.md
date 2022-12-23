@@ -230,7 +230,7 @@ global:
 - Развертывание будет осуществлено в namespace `.Values.werf.namespace`.
 - Название окружения CI/CD системы, используемое во время деплоя: `.Values.werf.env`.
 - Адрес container registry репозитория, используемый во время деплоя: `.Values.werf.repo`.
-- Полное имя и тег Docker-образа для каждого описанного в файле конфигурации `werf.yaml` образа: `.Values.werf.image.NAME`. Больше информации про использование этих значений доступно [в статье про шаблоны]({{ "/usage/deploy/templates.html#интеграция-с-собранными-образами" | true_relative_url }}).
+- Полное имя и тег Docker-образа для каждого описанного в файле конфигурации `werf.yaml` образа: `.Values.werf.image.NAME`.
 - Только теги собранных Docker-образов. Предназначены в первую очередь для использования совместно с `.Values.werf.repo`, для проброса полного имени и тега образов по-отдельности.
 - Информация о коммите, с которого werf был запущен: `.Values.werf.commit.hash`, `.Values.werf.commit.date.human`, `.Values.werf.commit.date.unix`.
 
