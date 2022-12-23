@@ -3,196 +3,318 @@ title: Charts
 permalink: usage/deploy/charts.html
 ---
 
-The chart is a set of configuration files which describe an application. Chart files reside in the `.helm` directory under the root directory of the project:
+## What is a chart?
+
+The chart in werf is a Helm chart with some additional features. In turn, a Helm chart is a distributable package with Helm templates, values files, and some metadata. The chart is used to generate ready-to-use Kubernetes manifests for deploying the application.
+
+A typical chart looks as follows:
 
 ```
-.helm/
+chartname/
+  charts/                   
+    dependent-chart/
+      # ...
   templates/
-    <name>.yaml
-    <name>.tpl
-    <some_dir>/
-      <name>.yaml
-      <name>.tpl
-  charts/
-  secret/
+    deployment.yaml  
+    _helpers.tpl
+    NOTES.txt
+  crds/
+    crd.yaml
+  secret/                   # only available in werf
+    some-secret-file
   values.yaml
-  secret-values.yaml
+  values.schema.json
+  secret-values.yaml        # only available in werf
+  Chart.yaml
+  Chart.lock
+  README.md
+  LICENSE
+  .helmignore
 ```
 
-werf chart has an optional `.helm/Chart.yaml` description file, which is fully compatible with [helm`s `Chart.yaml`](https://helm.sh/docs/topics/charts/) and could contain following content:
+Here:
+
+- `charts/*` — contains dependent charts whose Helm templates/values files are used to generate manifests together with the Helm templates/values files of the parent chart;
+
+- `templates/*.yaml` — contains to Helm templates that are used to generate Kubernetes manifests;
+
+- `templates/*.tpl` — contains Helm pattern files for use in other Helm templates. The result of templating these files is ignored;
+
+- `templates/NOTES.txt` — werf displays the contents of this file in the terminal at the end of each successful deployment;
+
+- `crds/*.yaml` — [Custom Resource Definitions](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/#customresourcedefinitions) to deploy before deploying manifests in `templates`;
+
+- `secret/*` — (werf only) encrypted files; their decrypted contents can be inserted into Helm templates;
+
+- `values.yaml` — contains files with declarative configurations to use in Helm templates. The configurations can be overridden by environment variables, command line arguments, or other values files;
+
+- `values.schema.json` — the JSON schema to validate `values.yaml`;
+
+- `secret-values.yaml` — (werf only) an encrypted declarative configuration file similar to `values.yaml`. Its decrypted contents are merged with `values.yaml` during manifest generation;
+
+- `Chart.yaml` — contains the main configuration and the chart metadata;
+
+- `Chart.lock` — the lock file protects from unwanted changes/updates to dependent charts;
+
+- `README.md` — the chart documentation;
+
+- `LICENSE` — the chart license;
+
+- `.helmignore` — a list of files in the chart directory not to be included in the chart when publishing.
+
+### The main chart
+
+When running commands like `werf converge` or `werf render`, werf by default uses a chart in the `<root Git repository>/.helm` directory. This chart is called the main chart. The main chart directory can be changed using the `deploy.helmChartDir` directive in `werf.yaml`.
+
+The main chart, unlike a typical chart, may not include a `Chart.yaml` file. In this case, the following `.helm/Chart.yaml` is used:
 
 ```yaml
+# .helm/Chart.yaml:
 apiVersion: v2
-name: mychart
+name: <werf project name>
 version: 1.0.0
-dependencies:
- - name: redis
-   version: "12.7.4"
-   repository: "https://charts.bitnami.com/bitnami" 
 ```
 
-By default, werf will use [project name]({{ "/reference/werf_yaml.html#project-name" | true_relative_url }}) from the `werf.yaml` as a chart name, and default version is always `1.0.0`. You can redefine this by placing own `.helm/Chart.yaml` with overrides for chart name or version:
+To modify the directives in `.helm/Chart.yaml' or to add new ones, create the file `.helm/Chart.yaml' manually by adding/redefining the directives of interest.
+
+To use a chart from the OCI/HTTP repository instead of a local one or to deploy multiple charts at once, specify the charts of interest as dependencies for the main chart. Use the `dependencies` directive of the `Chart.yaml` file to do this.
+
+### Chart configuration
+
+`Chart.yaml` is the main configuration file of the chart. It contains the name, version, and other chart parameters, as well as references to dependent charts, for example: 
 
 ```yaml
-name: mychart
-version: 2.4.6
-```
-
-`.helm/Chart.yaml` is also needed to define [chart dependencies]({{ "/usage/deploy/charts.html#dependent-charts" | true_relative_url }}).
-
-## Dependent charts
-
-**Subchart** is a helm chart that included into the current chart as a dependency. werf allows usage of subcharts the same way [as helm](https://helm.sh/docs/topics/charts/). The chart can include arbitrary number of subcharts. Usage of werf project itself as a subchart in another werf project is not supported for now.
-
-Subcharts are placed in the directory `.helm/charts/SUBCHART_DIR`. Each subchart in the `SUBCHART_DIR` is a chart by itself with the similar files structure (which can also have own recursive subcharts).
-
-During deploy process werf will render, create and track all resources of all subcharts.
-
-### Enable subchart for your project
-
- 1. Let's include a `redis` as a dependency for our werf chart using `.helm/Chart.yaml` file:
-
-     ```yaml
-     # .helm/Chart.yaml
-     apiVersion: v2
-     dependencies:
-       - name: redis
-         version: "12.7.4"
-         repository: "https://charts.bitnami.com/bitnami"
-      ```
-
-     **NOTE** It is not required to define full `Chart.yaml` with name and version fields as for the standard helm. werf will autogenerate chart name and version based on the `werf.yaml` `project` field settings. See more info in the [chart article]({{ "/usage/deploy/charts.html" | true_relative_url }}).
-
- 2. Next it is required to generate `.helm/Chart.lock` using `werf helm dependency update` command from the root of the project:
-
-     ```shell
-     werf helm dependency update .helm
-     ```
-
-     This command will generate `.helm/Chart.lock` file as well as download all dependencies into the `.helm/charts` directory.
-     
- 3. `.helm/Chart.lock` file should be committed into the git repository, while `.helm/charts` could be added to the `.gitignore`.
-
-Later during deploy process (with [`werf converge` command]({{ "/reference/cli/werf_converge.html" | true_relative_url }}) or [`werf bundle apply` command]({{ "/reference/cli/werf_bundle_apply.html" | true_relative_url }})), or during templates rendering (with [`werf render` command]({{ "/reference/cli/werf_render.html" | true_relative_url }})) werf will automatically download all dependencies specified in the lock file `.helm/Chart.lock`.
-
-**NOTE** `.helm/Chart.lock` file must be committed into the git repo due to giterminism.
-
-### Dependencies configuration
-
-<!-- Move to reference -->
-
-Let's describe format of the `.helm/Chart.yaml` dependencies.
-
-* The `name` should be the name of a chart, where that name must match the name in that chart's 'Chart.yaml' file.
-* The `version` field should contain a semantic version or version range.
-* The `repository` URL should point to a **Chart Repository**. Helm expects that by appending `/index.yaml` to the URL, it should be able to retrieve the chart repository's index. The `repository` can be an alias. The alias must start with `alias:` or `@`.
-
-The `.helm/Chart.lock` file lists the exact versions of immediate dependencies and their dependencies and so forth.
-
-The `werf helm dependency` commands operate on that file, making it easy to synchronize between the desired dependencies and the actual dependencies stored in the `charts` directory:
-* Use [`werf helm dependency list`]({{ "reference/cli/werf_helm_dependency_list.html" | true_relative_url }}) to check dependencies and their statuses.
-* Use [`werf helm dependency update`]({{ "reference/cli/werf_helm_dependency_update.html" | true_relative_url }}) to update `.helm/charts` based on the contents of `.helm/Chart.yaml`.
-* Use [`werf helm dependency build`]({{ "reference/cli/werf_helm_dependency_build.html" | true_relative_url }}) to update `.helm/charts` based on the `.helm/Chart.lock` file.
-
-All Chart Repositories that are used in `.helm/Chart.yaml` should be configured on the system. The `werf helm repo` commands can be used to interact with Chart Repositories:
-* Use [`werf helm repo add`]({{ "reference/cli/werf_helm_repo_add.html" | true_relative_url }}) to add Chart Repository.
-* Use [`werf helm repo index`]({{ "reference/cli/werf_helm_repo_index.html" | true_relative_url }}).
-* Use [`werf helm repo list`]({{ "reference/cli/werf_helm_repo_list.html" | true_relative_url }}) to list existing Chart Repositories.
-* Use [`werf helm repo remove`]({{ "reference/cli/werf_helm_repo_remove.html" | true_relative_url }}) to remove Chart Repository.
-* Use [`werf helm repo update`]({{ "reference/cli/werf_helm_repo_update.html" | true_relative_url }}) to update local Chart Repositories indexes.
-
-werf is compatible with Helm settings, so by default `werf helm dependency` and `werf helm repo` commands use settings from **helm home folder**, `~/.helm`. But you can change it with `--helm-home` option. If you do not have **helm home folder** or want to create another one use `werf helm repo init` command to initialize necessary settings and configure default Chart Repositories.
-
-### Passing values to subcharts
-
-To pass values from parent chart to subchart called `mysubchart` user must define following values in the parent chart:
-
-```yaml
-mysubchart:
-  key1:
-    key2:
-    - key3: value
-```
-
-In the `mysubchart` these values should be specified without `mysubchart` key:
-
-{% raw %}
-```yaml
-{{ .Values.key1.key2[0].key3 }}
-```
-{% endraw %}
-
-Global values defined by the special toplevel values key `global` will also be available in the subcharts:
-
-```yaml
-global:
-  database:
-    mysql:
-      user: user
-      password: password
-```
-
-In the subcharts these values should be specified as always:
-
-{% raw %}
-```yaml
-{{ .Values.global.database.mysql.user }}
-```
-{% endraw %}
-
-Only values by keys `mysubchart` and `global` will be available in the subchart `mysubchart`.
-
-**NOTE** `secret-values.yaml` files from subcharts will not be used during deploy process. Although secret values from main chart and additional secret values from cli params `--secret-values` will be available in the `.Values` as usually.
-
-### Mapping values from parent chart to subcharts
-
-If you want to pass the values available only in the parent chart to subcharts, then there is an `export-values` directive which mimics (with a few differences) functionality of [import-values](https://helm.sh/docs/topics/charts/#importing-child-values-via-dependencies), but instead of passing values from the subchart to the parent chart it does the opposite: it passes values down from the parent chart to the subchart. Usage is as follows:
-
-```yaml
-# .helm/Chart.yaml
+# Chart.yaml:
 apiVersion: v2
+name: mychart
+version: 1.0.0-anything-here
+
+# Optional:
+type: application
+kubeVersion: "~1.20.0"
 dependencies:
-  - name: backend
-    version: 1.0.0
-    export-values:
-    - parent: werf.image.backend
-      child: backend.image
+  - name: nginx
+    version: 1.2.3
+    repository: https://example.com/charts
+
+# Optional info directives:
+appVersion: "1.0"
+deprecated: false
+icon: https://example.org/mychart-icon.svg
+description: This is My Chart
+home: https://example.org
+sources:
+  - https://github.com/my/chart
+keywords: 
+  - apps
+annotations:
+  anyAdditionalInfo: here
+maintainters:
+  - name: John Doe
+    email: john@example.org
+    url: https://john.example.org
 ```
 
-This will pass to the subchart whatever will be in the parent chart at `.Values.werf.image.backend` path. In our particular case this will be the string with the repo, image and tag of the image `backend`, defined in `werf.yaml`, e.g. `example.org/backend:<image_tag>`. In the subchart you can access the result with `.Values.backend.image`:
+Mandatory directives:
 
-{% raw %}
+* `apiVersion` — the format of `Chart.yaml`; either `v2` (recommended) or `v1`;
+
+* `name` — the chart name;
+
+* `version` — the chart version as per ["Semantic Versioning 2.0"](https://semver.org/spec/v2.0.0.html);
+
+Optional directives:
+
+* `type` — the chart type;
+
+* `kubeVersion` — compatible Kubernetes versions;
+
+* `dependencies` — the description of the dependent charts;
+
+Optional info directives:
+
+* `appVersion` — the version of the application the chart installs (in an arbitrary format);
+
+* `deprecated` — tells whether the chart is deprecated, `false` (default) or `true`;
+
+* `icon` — the URL to the chart icon;
+
+* `description` — the chart description;
+
+* `home` — the chart website;
+
+* `sources` — a list of repositories with the chart contents;
+
+* `keywords` — a list of keywords associated with the chart;
+
+* `annotations` — extra optional information about the chart;
+
+* `maintainers`  — a list of chart maintainers;
+
+### The chart type
+
+The chart type is specified in the `type` directive of the `Chart.yaml` file. The valid types are:
+
+* `application` — the regular chart (no limitations);
+
+* `library` — this chart contains templates only and does not generate any manifests on its own. Such a chart cannot be set, it can only be used as a dependent one.
+
+### The compatible Kubernetes versions
+
+You can specify which Kubernetes versions this chart is compatible with using the `kubeVersion` directive, e.g.:
+
 ```yaml
-# .helm/charts/backend/app.yaml
-...
-spec:
-  template:
-    spec:
-      containers:
-      - name: backend
-        image: {{ .Values.backend.image }}  # Will result in: `image: example.org/backend:<image_tag>`
+# Chart.yaml:
+name: mychart
+kubeVersion: "1.20.0"   # Compatible with 1.20.0
+kubeVersion: "~1.20.3"  # Compatible with all 1.20.x starting with 1.20.3
+kubeVersion: "~1"       # Compatible with all 1.x.x
+kubeVersion: ">= 1.20.3 < 2.0.0 && != 1.20.4"
 ```
-{% endraw %}
 
-Unlike YAML-anchors, `export-values` will also work with dynamically set values (werf service values), passed via command-line values (`--set` and similar) and secret values.
+## Dependencies on other charts
 
-There is an alternative short form of `export-values`, which will only work for maps:
+A chart can depend on other charts. In this case, manifests are generated for both parent and dependent charts and then merged together for deployment. Dependent charts can be configured using the `dependencies` directive of the `Chart.yaml` file, e.g.:
 
 ```yaml
-    export-values:
-    - "someMap"
+# Chart.yaml:
+dependencies:
+- name: backend
+  version: "~1.2.3"
+  repository: https://example.com/charts
 ```
 
-Which is an equivalent to:
+We do not recommend specifying dependent charts in `requirements.yaml` instead of `Chart.yaml`. The `requirements.yaml` file has become obsolete.
+
+### Name, alias
+
+`name` — the original name of the dependent chart as set by the chart developer.
+
+You can connect multiple charts with the same `name` or the same chart several times using the `alias` directive to change the names of the connected charts, for example:
 
 ```yaml
-    export-values:
-    - parent: exports.somemap
-      child: .
+# Chart.yaml:
+dependencies:
+- name: backend
+  alias: main-backend
+- name: backend
+  alias: secondary-backend
 ```
 
-This will export all the keys found in `.Values.exports.somemap` to the root of subchart values.
+### Version
 
-### Obsolete requirements.yaml and requirements.lock
+`version` — limits suitable versions of the dependent chart, e.g.:
 
-An older way of storing dependencies in the `.helm/requirements.yaml` and `.helm/requirements.lock` files is also supported by the werf, but it is recommended to use `.helm/Chart.yaml` and `.helm/Chart.lock` instead. 
+```yaml
+# Chart.yaml:
+dependencies:
+- name: backend
+  version: "1.2.3"   # Use version 1.2.3
+  version: "~1.2.3"  # Use the latest 1.2.x version but no lower than 1.2.3
+  version: "~1"      # Use the latest 1.x.x version
+  version: "^1.2.3"  # Use the latest 1.x.x version but no lower than 1.2.3
+  version: ">= 1.2.3 < 2.0.0 && != 1.2.4"
+```
+
+For information on syntax, see [checking version constraints](https://github.com/Masterminds/semver#checking-version-constraints).
+
+### Repository
+
+`repository` — the path to the chart source where the specified dependent chart can be found, for example:
+
+```yaml
+# Chart.yaml:
+dependencies:  
+- name: mychart
+  # OCI repository (recommended):
+  repository: oci://example.org/myrepo
+  # HTTP repository:
+  repository: https://example.org/myrepo
+  # Short repository name (if the repository is added using
+  # `werf helm repo add shortreponame`):
+  repository: alias:myrepo
+  # Short repository name (alternative syntax)
+  repository: "@myrepo"
+  # Local chart from an arbitrary location:
+  repository: file://../mychart
+  # For a local chart in "charts/" the repository is omitted:
+  # repository:
+```
+
+### Condition, tags
+
+By default, all dependent charts are enabled. You can use the `condition` directive to enable/disable charts:
+
+```yaml
+# Chart.yaml:
+dependencies:
+- name: backend 
+  # The chart will be enabled if .Values.backend.enabled == true:
+  condition: backend.enabled  
+```
+
+You can also use the `tags` directive to enable/disable groups of charts all at once:
+
+```yaml
+# Chart.yaml:
+dependencies:
+# Enable backend if .Values.tags.app == true:
+- name: backend
+  tags: ["app"]
+# Enable frontend if .Values.tags.app == true:
+- name: frontend
+  tags: ["app"]
+# Enable database if .Values.tags.database == true:
+- name: database
+  tags: ["database"]
+```
+
+### Export-values, import-values
+
+`export-values` — (werf only) automatically passes specified Values from the parent chart to the dependent one; for example:
+
+```yaml
+# Chart.yaml:
+dependencies:
+- name: backend
+  export-values:
+  # Substitute .Values.werf into .Values.backend.werf automatically:
+  - parent: werf
+    child: werf
+  # Substitute .Values.exports.myMap.* into .Values.backend.* automatically:
+  - parent: exports.myMap
+    child: .
+  # A shorter version of the above export expression:  
+  - myMap
+```
+
+`import-values` — automatically passes the specified Values from the dependent chart to the parent one, i.e., in the opposite direction; for example:
+
+```yaml
+# Chart.yaml:
+dependencies:
+- name: backend
+  import-values:
+  # Substitute .Values.backend.from into .Values.to automatically:
+  - child: from
+    parent: to
+  # Substitute .Values.backend.exports.myMap.* into .Values.* automatically:
+  - child: exports.myMap
+    parent: .
+  # A shorter version of the above import expression:  
+  - myMap
+```
+
+### Adding/updating dependent charts
+
+The recommended way to add/update dependent charts is as follows:
+
+1. Add/update the dependent chart configuration to `Chart.yaml`;
+
+2. If a dependent chart is in the private OCI or HTTP repository, add the OCI or HTTP repository manually using `werf helm repo add` and provide all the options required to access it;
+
+3. Run `werf helm dependency update` — it will update `Chart.lock`;
+
+4. Commit the updated `Chart.yaml` and `Chart.lock` to Git.
+
+It is also recommended to add `.helm/charts/**.tgz` to `.gitignore`.
