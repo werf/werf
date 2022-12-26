@@ -3,7 +3,13 @@ title: Container registry cleanup
 permalink: usage/cleanup/cr_cleanup.html
 ---
 
+The number of images can grow rapidly, taking up more space in the container registry and thus leading to a significant increase in costs. To control the growth and keep it at an acceptable level, werf offers its cleanup approach. It takes into account the images used in Kubernetes as well as their relevance based on the Git history when deciding which images to delete.
+
 The [**werf cleanup**]({{ "reference/cli/werf_cleanup.html" | true_relative_url }}) command is designed to run on a schedule. werf performs the (safe) cleanup according to the specified cleanup policies.
+
+Note that the cleanup does not free up space occupied by images in the container registry. werf only removes tags for irrelevant images (manifests). You will have to run the container registry garbage collector periodically to clean up the associated data.
+
+> The issue of cleaning up images in the container registry and our approach to addressing it are covered in detail in the article [The problem of "smart" cleanup of container images and addressing it in werf](https://www.cncf.io/blog/2020/10/15/overcoming-the-challenges-of-cleaning-up-container-images/)
 
 ## Principle of operation
 
@@ -11,13 +17,13 @@ The algorithm automatically selects the images to delete. It consists of the fol
 
 - Pulling the necessary data from the container registry.
 - Preparing a list of images to keep. werf leaves intact:
-  - [Images that Kubernetes uses](#images-in-kubernetes);
-  - Images that meet the criteria of the user-defined policies when [scanning the Git history](#scanning-the-git-history);
-  - New images that were built within the predefined time frame;
+  - [Images that Kubernetes uses](#ignoring-images-that-kubernetes-uses);
+  - Images that meet the criteria of the [user-defined policies](#git-history-based-cleanup-policies) when [scanning the Git history](#scanning-the-git-history);
+  - [New images that were built within the predefined time frame](#ignoring-freshly-built-images);
   - Images related to the images selected in previous steps.
 - Deleting all the remaining images.
 
-### Images in Kubernetes
+### Ignoring images that Kubernetes uses
 
 werf connects to **all Kubernetes clusters** described in **all configuration contexts** of kubectl. It then collects image names for the following object types: `pod`, `deployment`, `replicaset`, `statefulset`, `daemonset`, `job`, `cronjob`, `replicationcontroller`.
 
@@ -25,7 +31,13 @@ The user can configure werf's behavior using the following parameters (and relat
 - `--kube-config`, `--kube-config-base64` set out the kubectl configuration (by default, the user-defined configuration at `~/.kube/config` is used);
 - `--kube-context` scans a specific context;
 - `--scan-context-namespace-only` scans the namespace linked to a specific context (by default, all namespaces are scanned).
-- `--without-kube` disables Kubernetes scanning.
+
+You can disable Kubernetes scanning using the following directive in werf.yaml:
+
+```yaml
+cleanup:
+  disableKubernetesBasedPolicy: true
+```
 
 As long as some object in the Kubernetes cluster uses an image, werf will never delete this image from the container registry. In other words, if you run some object in a Kubernetes cluster, werf will not delete its related images under any circumstances during the cleanup.
 
@@ -41,6 +53,16 @@ Information about commits is the only source of truth for the algorithm, so imag
 
 It is worth noting that the algorithm scans the local state of the git repository. Therefore, it is essential to keep all git branches and git tags up-to-date. By default, werf performs synchronization automatically (you can change its behavior using the [gitWorktree.allowFetchOriginBranchesAndTags]({{ "reference/werf_yaml.html#git-worktree" | true_relative_url }}) directive in `werf.yaml`).
 
+### Ignoring freshly built images
+
+When cleaning up, werf ignores images built during a specified time period (the default is 2 hours). If necessary, the period can be adjusted or the policy can be disabled altogether using the following directives in `werf.yaml`:
+
+```yaml
+cleanup:
+  disableBuiltWithinLastNHoursPolicy: false
+  keepImagesBuiltWithinLastNHours: 2
+```
+
 ### Aspects of cleaning up the images that are being built
 
 During the cleanup, werf applies user-defined policies to the set of images for each `image` defined in `werf.yaml`. The cleanup must respect all the `images` in use. On the other hand, the set of images based on the Git repository's main branch may not cover all the suitable images (for example, `images` may be added to/deleted from some feature branch).
@@ -49,22 +71,19 @@ werf adds the name of the image being built to the container registry to avoid d
 
 The `werf managed-images ls|add|rm` family of commands allows the user to edit the so-called _managed images_ set and explicitly delete images that are no longer needed and can be removed entirely.
 
-## Configuring cleanup policies
+## Git history-based cleanup policies
 
 The cleanup configuration consists of a set of policies called `keepPolicies`. They are used to select relevant images using the git history. Thus, during a cleanup, __images not meeting the criteria of any policy are deleted__.
 
 Each policy consists of two parts:
-
 - `references` defines a set of references, git tags, or git branches to perform scanning on.
 - `imagesPerReference` defines the limit on the number of images for each reference contained in the set.
 
-Each policy should be linked to some set of git tags (`tag: string || /REGEXP/`) or git branches (`branch: string || /REGEXP/`). You can specify the name/group of a reference using the [Golang's regular expression syntax](https://golang.org/pkg/regexp/syntax/#hdr-Syntax).
+Each policy must be associated with a set of git tags (`tag`) or git branches (`branch`). You can specify a specific reference name or a specific group using [golang regular expression syntax](https://golang.org/pkg/regexp/syntax/#hdr-Syntax).
 
 ```yaml
-tag: v1.1.1
-tag: /^v.*$/
-branch: main
-branch: /^(main|production)$/
+tag: v1.1.1  # or /^v.*$/
+branch: main # or /^(main|production)$/
 ```
 
 > When scanning, werf searches for the provided set of git branches in the origin remote references, but in the configuration, the  `origin/` prefix is omitted in branch names.
@@ -82,22 +101,22 @@ You can limit the set of references on the basis of the date when the git tag wa
 
 In the example above, werf selects no more than 10 latest branches that have the `features/` prefix in the name and have shown any activity during the last week.
 
-- The `last: int` parameter allows you to select n last references from those defined in the `branch` / `tag`.
-- The `in: duration string` parameter (you can learn more about the syntax in the [docs](https://golang.org/pkg/time/#ParseDuration)) allows you to select git tags that were created during the specified period or git branches that were active during the period. You can also do that for the specific set of `branches` / `tags`.
-- The `operator: And || Or` parameter defines if references should satisfy both conditions or either of them (`And` is set by default).
+- The `last` parameter allows you to select the last `n` references from the set defined in `branch`/`tag`.
+- The `in` parameter (see the [documentation](https://golang.org/pkg/time/#ParseDuration) to learn more) allows you to select git tags that were created during the specified period, or git branches with activity within the period. It can also be used for a specific set of `branch` / `tag`.
+- The `operator` parameter defines the references resulting from the policy. They may satisfy both conditions or either of them (`And` is set by default).
 
 When scanning references, the number of images is not limited by default. However, you can configure this behavior using the `imagesPerReference` set of parameters:
 
 ```yaml
 imagesPerReference:
   last: int
-  in: duration string
-  operator: And || Or
+  in: string
+  operator: string
 ```
 
-- The `last: int` parameter defines the number of images to search for each reference. Their amount is unlimited by default (`-1`).
-- The `in: duration string` parameter (you can learn more about the syntax in the [docs](https://golang.org/pkg/time/#ParseDuration)) defines the time frame in which werf searches for images.
-- The `operator: And || Or` parameter defines what images will stay after applying the policy: those that satisfy both conditions or either of them (`And` is set by default).
+- The `last` parameter specifies the number of images for each reference. By default, there is no limit (`-1`).
+- The `in` parameter (refer to the [documentation](https://golang.org/pkg/time/#ParseDuration) to learn more) defines the period for which to search for images.
+- The `operator` parameter determines which images will be saved after applying the policy. The images may satisfy both conditions or either of them (`And` is set by default).
 
 > In the case of git tags, werf checks the HEAD commit only; the value of `last`>1 does not make any sense and is invalid
 
@@ -115,6 +134,15 @@ When describing a group of policies, you have to move from the general to the pa
 ```
 
 In the above example, the _master_ reference matches both policies. Thus, when scanning the branch, the `last` parameter will equal to 5.
+
+### Disabling policies
+
+If Git history-based cleanup is not needed, you can disable it in `werf.yaml` as follows:
+
+```yaml
+cleanup:
+  disableGitHistoryBasedPolicy: true
+```
 
 ### Default policies
 
@@ -148,6 +176,18 @@ Let us examine each policy individually:
 1. Keep an image for the last 10 tags (by date of creation).
 2. Keep no more than two images published over the past week, for no more than 10 branches active over the past week.
 3. Keep the 10 latest images for main, staging, and production branches.
+
+## Container registry’s garbage collector
+
+Note that during the cleanup, werf only removes tags from the images (manifests) to be deleted. The container registry garbage collector (GC) is responsible for the actual deletion.
+
+While the garbage collector is running, the container registry must be set to read-only mode or turned off completely. Otherwise, there is a good chance that the garbage collector will not respect the images published during the procedure and may corrupt them.
+
+You can read more about the garbage collector and how to use it in the documentation for the garbage collector you are using. Here are links for some of the most popular ones:
+
+- [Docker Registry GC](https://docs.docker.com/registry/garbage-collection/#more-details-about-garbage-collection ).
+- [GitLab CR GC](https://docs.gitlab.com/ee/administration/packages/container_registry.html#container-registry-garbage-collection).
+- [Harbor GC](https://goharbor.io/docs/2.6.0/administration/garbage-collection/).
 
 ## Features of working with different container registries
 
