@@ -52,4 +52,4 @@ To use subcharts correctly one must add [`.helm/Chart.lock`](https://helm.sh/doc
 
 One may explicitly add chart files into the `.helm/charts/` directory and commit this directory into the repo. In such case werf will download subcharts specified in the `.helm/Chart.lock` and also load `.helm/charts` directory charts and merge resulting charts. Charts defined in the `.helm/charts` will have a higher priority in such case and should redefine duplicates from `.helm/Chart.lock`.
 
-More info about subcharts available in the [separate article]({{ "/usage/deploy/charts.html#dependent-charts" | true_relative_url }}).
+More info about subcharts available in the [separate article]({{ "/usage/deploy/charts.html#dependencies-on-other-charts" | true_relative_url }}).
