@@ -276,8 +276,3 @@ You can use the following options (or their respective environment variables) to
 * Sometimes, Selectel drop connection with VPC ID. Try to use the VPC name instead.
 * CR API has limitations, so you can not remove layers from the root of the container registry.
 * Low API rate limit. It can cause cleanup problems with rapid development.
-
-## What's next?
-
-- [Configuring cleanup in GitLab CI/CD]({{"/how_to/integration_with_ci_cd_systems/gitlab_ci_cd/workflows. html#cleaning-up-images" | true_relative_url }})
-- [Configuring cleanup in GitHub Actions]({{"/how_to/integration_with_ci_cd_systems/github_actions/workflows. html#cleaning-up-images"| true_relative_url }}).

@@ -7,4 +7,4 @@ werf uses the [kubedog library](https://github.com/werf/kubedog) to track resour
 
 ## Subcharts
 
-During deploy process werf will render, create and track all resources of all [subcharts]({{ "/usage/deploy/charts.html#dependent-charts" | true_relative_url }}).
+During deploy process werf will render, create and track all resources of all [subcharts]({{ "/usage/deploy/charts.html#dependencies-on-other-charts" | true_relative_url }}).

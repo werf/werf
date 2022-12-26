@@ -89,7 +89,7 @@ Next, follow these steps:
  1. Run `werf helm dependency update` command, which will create `.helm/Chart.lock` file and `.helm/charts` dir.
  1. Commit `.helm/Chart.lock` file into the project git repo.
 
- werf will automatically download subcharts into the cache and load subchart files in `werf converge` command (and other toplevel commands which require helm chart). More info [in the docs]({{ "usage/deploy/charts.html#dependent-charts" | true_relative_url }}).
+ werf will automatically download subcharts into the cache and load subchart files in `werf converge` command (and other toplevel commands which require helm chart). More info [in the docs]({{ "usage/deploy/charts.html#dependencies-on-other-charts" | true_relative_url }}).
 
 ### 6. Cleanup by Git history
 
