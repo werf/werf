@@ -9,7 +9,7 @@ The [**werf cleanup**]({{ "reference/cli/werf_cleanup.html" | true_relative_url 
 
 Note that the cleanup does not free up space occupied by images in the container registry. werf only removes tags for irrelevant images (manifests). You will have to run the container registry garbage collector periodically to clean up the associated data.
 
-> The issue of cleaning up images in the container registry and our approach to adressing it are covered in detail in the article [The problem of "smart" cleanup of container images and adressing it in werf](https://habr.com/ru/company/flant/blog/522024/)
+> The issue of cleaning up images in the container registry and our approach to addressing it are covered in detail in the article [The problem of "smart" cleanup of container images and addressing it in werf](https://www.cncf.io/blog/2020/10/15/overcoming-the-challenges-of-cleaning-up-container-images/)
 
 ## Principle of operation
 
