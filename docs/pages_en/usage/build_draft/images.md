@@ -5,7 +5,7 @@ permalink: usage/build_draft/images.html
 
 <!-- прим. для перевода: на основе https://werf.io/documentation/v1.2/reference/werf_yaml.html#image-section -->
 
-To enable building your own images, you have to add an image description to the werf.yaml file of the project. Each image is added using the `image` directive and the image name:
+To enable building your own images, you have to add an image description to the `werf.yaml` file of the project. Each image is added using the `image` directive and the image name:
 
 ```yaml
 image: frontend
