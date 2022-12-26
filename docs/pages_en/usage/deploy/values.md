@@ -29,9 +29,9 @@ global:
       password: mysql-dev
 ```
 
-Values placed under the `global` key will be available both in the current chart and in all [subcharts]({{ "/usage/deploy/charts.html#dependent-charts" | true_relative_url }}).
+Values placed under the `global` key will be available both in the current chart and in all [subcharts]({{ "/usage/deploy/charts.html#dependencies-on-other-charts" | true_relative_url }}).
 
-Values placed under the arbitrary `SOMEKEY` key will be available in the current chart and in the `SOMEKEY` [subchart]({{ "usage/deploy/charts.html#dependent-charts" | true_relative_url }}).
+Values placed under the arbitrary `SOMEKEY` key will be available in the current chart and in the `SOMEKEY` [subchart]({{ "usage/deploy/charts.html#dependencies-on-other-charts" | true_relative_url }}).
 
 The `.helm/values.yaml` file is the default place to store values. You can also pass additional user-defined regular values via:
 
@@ -136,7 +136,7 @@ There are following service values:
 
 ### Service values in the subcharts
 
-If you are using [subcharts]({{ "/usage/deploy/charts.html#dependent-charts" | true_relative_url }}) and you want to use regular werf service values (those that defined outside of `global` scope) in subchart, you need to explicitly export these parent-scoped service values from the parent to the subchart:
+If you are using [subcharts]({{ "/usage/deploy/charts.html#dependencies-on-other-charts" | true_relative_url }}) and you want to use regular werf service values (those that defined outside of `global` scope) in subchart, you need to explicitly export these parent-scoped service values from the parent to the subchart:
 
 ```yaml
 # .helm/Chart.yaml
@@ -188,7 +188,7 @@ dependencies:
       child: image.tag
 ```
 
-More info about `export-values` can be found [here]({{ "usage/deploy/charts.html#mapping-values-from-parent-chart-to-subcharts" | true_relative_url }}).
+More info about `export-values` can be found [here]({{ "usage/deploy/charts.html#export-values-import-values" | true_relative_url }}).
 
 ## Merging the resulting values
 
