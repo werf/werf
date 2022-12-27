@@ -1,5 +1,19 @@
 # Changelog
 
+### [1.2.194](https://www.github.com/werf/werf/compare/v1.2.193...v1.2.194) (2022-12-27)
+
+
+### Features
+
+* **docs:** new article for build chapter: storage layout (lang:ru) ([9afe73c](https://www.github.com/werf/werf/commit/9afe73c3ce46459481fdfdc90a292d1715dcbc75))
+* **docs:** new article for build chapter: build process (lang:ru) ([7c332ee](https://www.github.com/werf/werf/commit/7c332ee5031fbd5255ee659969747c359bb0540f))
+* **docs:** updated usage/build/stapel section (lang:en+ru) ([0c504a4](https://www.github.com/werf/werf/commit/0c504a41996b0d41d4e7230e706da34bacf32ab4))
+
+
+### Bug Fixes
+
+* **giterminism:** false warning about ignoring Dockerfile when using non-root project directory ([303a6e4](https://www.github.com/werf/werf/commit/303a6e4a728a5a19a40e342e90dd8eac1d7f1783))
+
 ### [1.2.193](https://www.github.com/werf/werf/compare/v1.2.192...v1.2.193) (2022-12-17)
 
 
