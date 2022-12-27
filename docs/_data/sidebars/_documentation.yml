@@ -17,39 +17,19 @@ entries:
 
           - title: Build
             f:
-              - title: Overview (NEW)
+              - title: Overview
                 url: /usage/build_draft/overview.html
 
-              - title: Images configuration (NEW)
+              - title: Image configuration
                 url: /usage/build_draft/images.html
 
               - title: Build process
-                url: /usage/build/build_process.html
+                url: /usage/build_draft/building.html
 
-              - title: Stages and storage
-                url: /usage/build/stages_and_storage.html
+              - title: Storage layout
+                url: /usage/build_draft/storage.html
 
-              - title: Storage layouts
-                url: /usage/build/storage_layouts.html
-
-              - title: Buildah mode
-                url: /usage/build/buildah_mode.html
-
-              - title: Synchronization in werf
-                url: /usage/build/synchronization.html
-
-              - title: Run in containers
-                f:
-                  - title: How it works
-                    url: /usage/build/run_in_containers/how_it_works.html
-
-                  - title: Use Docker container
-                    url: /usage/build/run_in_containers/use_docker_container.html
-
-                  - title: Use Kubernetes
-                    url: /usage/build/run_in_containers/use_kubernetes.html
-
-              - title: Building images with Stapel (UPDATED)
+              - title: Building images with Stapel
                 f:
                   - title: Overview
                     url: /usage/build_draft/stapel/overview.html
@@ -173,42 +153,19 @@ entries:
 
           - title: Сборка
             f:
-              - title: Обзор (NEW)
+              - title: Обзор
                 url: /usage/build_draft/overview.html
 
-              - title: Конфигурация образов (NEW)
+              - title: Конфигурация образов
                 url: /usage/build_draft/images.html
 
-              - title: Сборочный процесс (NEW)
+              - title: Сборочный процесс
                 url: /usage/build_draft/building.html
 
-              - title: Процесс сборки
-                url: /usage/build/build_process.html
-
-              - title: Стадии и хранилище
-                url: /usage/build/stages_and_storage.html
-
               - title: Организация хранилища стадий
-                url: /usage/build/storage_layouts.html
+                url: /usage/build_draft/storage.html
 
-              - title: Buildah
-                url: /usage/build/buildah_mode.html
-
-              - title: Синхронизация в werf
-                url: /usage/build/synchronization.html
-
-              - title: Запуск в контейнерах
-                f:
-                  - title: Принципы работы
-                    url: /usage/build/run_in_containers/how_it_works.html
-
-                  - title: В Docker-контейнере
-                    url: /usage/build/run_in_containers/use_docker_container.html
-
-                  - title: В Kubernetes
-                    url: /usage/build/run_in_containers/use_kubernetes.html
-
-              - title: Сборка образов с помощью Stapel (NEW)
+              - title: Сборка образов с помощью Stapel
                 f:
                   - title: Обзор
                     url: /usage/build_draft/stapel/overview.html
