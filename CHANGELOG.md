@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.195](https://www.github.com/werf/werf/compare/v1.2.194...v1.2.195) (2022-12-28)
+
+
+### Bug Fixes
+
+* **docs:** actualize sidebar in usage docs ([922d945](https://www.github.com/werf/werf/commit/922d945de0045c486e40c02ded14a0b3996cad98))
+
 ### [1.2.194](https://www.github.com/werf/werf/compare/v1.2.193...v1.2.194) (2022-12-27)
 
 
