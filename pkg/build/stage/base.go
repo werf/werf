@@ -144,6 +144,10 @@ func (s *BaseStage) Name() StageName {
 	panic("name must be defined!")
 }
 
+func (s *BaseStage) ExpandDependencies(ctx context.Context, c Conveyor, baseEnv map[string]string) error {
+	return nil
+}
+
 func (s *BaseStage) FetchDependencies(_ context.Context, _ Conveyor, _ container_backend.ContainerBackend, _ docker_registry.ApiInterface) error {
 	return nil
 }

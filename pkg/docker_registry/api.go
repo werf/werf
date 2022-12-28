@@ -161,6 +161,8 @@ func (api *api) GetRepoImage(_ context.Context, reference string) (*image.Info, 
 		RepoDigest: digest.String(),
 		ParentID:   parentID,
 		Labels:     configFile.Config.Labels,
+		OnBuild:    configFile.Config.OnBuild,
+		Env:        configFile.Config.Env,
 		Size:       totalSize,
 	}
 

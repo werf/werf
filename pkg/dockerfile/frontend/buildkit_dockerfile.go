@@ -62,15 +62,14 @@ func ParseDockerfileWithBuildkit(dockerfileBytes []byte, opts dockerfile.Dockerf
 func NewDockerfileStageFromBuildkitStage(index int, stage instructions.Stage, expanderFactory *ShlexExpanderFactory, metaArgs, buildArgs map[string]string, dependenciesArgsKeys []string) (*dockerfile.DockerfileStage, error) {
 	var stageInstructions []dockerfile.DockerfileStageInstructionInterface
 
-	env := map[string]string{}
-	opts := dockerfile.DockerfileStageInstructionOptions{ExpanderFactory: expanderFactory}
+	env := make(map[string]string)
 
 	for _, cmd := range stage.Commands {
 		var i dockerfile.DockerfileStageInstructionInterface
 
 		switch instrData := cmd.(type) {
 		case *instructions.AddCommand:
-			if instr, err := createAndExpandInstruction(instrData, env, opts); err != nil {
+			if instr, err := createAndExpandInstruction(instrData, expanderFactory, env); err != nil {
 				return nil, err
 			} else {
 				i = instr
@@ -78,7 +77,7 @@ func NewDockerfileStageFromBuildkitStage(index int, stage instructions.Stage, ex
 		case *instructions.ArgCommand:
 			instrData.Args = removeDependenciesArgs(instrData.Args, dependenciesArgsKeys)
 
-			if instr, err := createAndExpandInstruction(instrData, env, opts); err != nil {
+			if instr, err := createAndExpandInstruction(instrData, expanderFactory, env); err != nil {
 				return nil, err
 			} else {
 				i = instr
@@ -102,25 +101,25 @@ func NewDockerfileStageFromBuildkitStage(index int, stage instructions.Stage, ex
 				}
 			}
 		case *instructions.CmdCommand:
-			if instr, err := createAndExpandInstruction(instrData, env, opts); err != nil {
+			if instr, err := createAndExpandInstruction(instrData, expanderFactory, env); err != nil {
 				return nil, err
 			} else {
 				i = instr
 			}
 		case *instructions.CopyCommand:
-			if instr, err := createAndExpandInstruction(instrData, env, opts); err != nil {
+			if instr, err := createAndExpandInstruction(instrData, expanderFactory, env); err != nil {
 				return nil, err
 			} else {
 				i = instr
 			}
 		case *instructions.EntrypointCommand:
-			if instr, err := createAndExpandInstruction(instrData, env, opts); err != nil {
+			if instr, err := createAndExpandInstruction(instrData, expanderFactory, env); err != nil {
 				return nil, err
 			} else {
 				i = instr
 			}
 		case *instructions.EnvCommand:
-			if instr, err := createAndExpandInstruction(instrData, env, opts); err != nil {
+			if instr, err := createAndExpandInstruction(instrData, expanderFactory, env); err != nil {
 				return nil, err
 			} else {
 				i = instr
@@ -130,67 +129,67 @@ func NewDockerfileStageFromBuildkitStage(index int, stage instructions.Stage, ex
 				}
 			}
 		case *instructions.ExposeCommand:
-			if instr, err := createAndExpandInstruction(instrData, env, opts); err != nil {
+			if instr, err := createAndExpandInstruction(instrData, expanderFactory, env); err != nil {
 				return nil, err
 			} else {
 				i = instr
 			}
 		case *instructions.HealthCheckCommand:
-			if instr, err := createAndExpandInstruction(instrData, env, opts); err != nil {
+			if instr, err := createAndExpandInstruction(instrData, expanderFactory, env); err != nil {
 				return nil, err
 			} else {
 				i = instr
 			}
 		case *instructions.LabelCommand:
-			if instr, err := createAndExpandInstruction(instrData, env, opts); err != nil {
+			if instr, err := createAndExpandInstruction(instrData, expanderFactory, env); err != nil {
 				return nil, err
 			} else {
 				i = instr
 			}
 		case *instructions.MaintainerCommand:
-			if instr, err := createAndExpandInstruction(instrData, env, opts); err != nil {
+			if instr, err := createAndExpandInstruction(instrData, expanderFactory, env); err != nil {
 				return nil, err
 			} else {
 				i = instr
 			}
 		case *instructions.OnbuildCommand:
-			if instr, err := createAndExpandInstruction(instrData, env, opts); err != nil {
+			if instr, err := createAndExpandInstruction(instrData, expanderFactory, env); err != nil {
 				return nil, err
 			} else {
 				i = instr
 			}
 		case *instructions.RunCommand:
-			if instr, err := createAndExpandInstruction(instrData, env, opts); err != nil {
+			if instr, err := createAndExpandInstruction(instrData, expanderFactory, env); err != nil {
 				return nil, err
 			} else {
 				i = instr
 			}
 		case *instructions.ShellCommand:
-			if instr, err := createAndExpandInstruction(instrData, env, opts); err != nil {
+			if instr, err := createAndExpandInstruction(instrData, expanderFactory, env); err != nil {
 				return nil, err
 			} else {
 				i = instr
 			}
 		case *instructions.StopSignalCommand:
-			if instr, err := createAndExpandInstruction(instrData, env, opts); err != nil {
+			if instr, err := createAndExpandInstruction(instrData, expanderFactory, env); err != nil {
 				return nil, err
 			} else {
 				i = instr
 			}
 		case *instructions.UserCommand:
-			if instr, err := createAndExpandInstruction(instrData, env, opts); err != nil {
+			if instr, err := createAndExpandInstruction(instrData, expanderFactory, env); err != nil {
 				return nil, err
 			} else {
 				i = instr
 			}
 		case *instructions.VolumeCommand:
-			if instr, err := createAndExpandInstruction(instrData, env, opts); err != nil {
+			if instr, err := createAndExpandInstruction(instrData, expanderFactory, env); err != nil {
 				return nil, err
 			} else {
 				i = instr
 			}
 		case *instructions.WorkdirCommand:
-			if instr, err := createAndExpandInstruction(instrData, env, opts); err != nil {
+			if instr, err := createAndExpandInstruction(instrData, expanderFactory, env); err != nil {
 				return nil, err
 			} else {
 				i = instr
@@ -203,11 +202,19 @@ func NewDockerfileStageFromBuildkitStage(index int, stage instructions.Stage, ex
 	return dockerfile.NewDockerfileStage(index, stage.BaseName, stage.Name, stageInstructions, stage.Platform, expanderFactory), nil
 }
 
-func createAndExpandInstruction[T dockerfile.InstructionDataInterface](data T, env map[string]string, opts dockerfile.DockerfileStageInstructionOptions) (*dockerfile.DockerfileStageInstruction[T], error) {
+func createAndExpandInstruction[T dockerfile.InstructionDataInterface](data T, expanderFactory dockerfile.ExpanderFactory, env map[string]string) (*dockerfile.DockerfileStageInstruction[T], error) {
+	opts := dockerfile.DockerfileStageInstructionOptions{
+		ExpanderFactory: expanderFactory,
+		Env:             make(map[string]string),
+	}
+	for k, v := range env {
+		opts.Env[k] = v
+	}
+
 	i := dockerfile.NewDockerfileStageInstruction(data, opts)
 
-	// NOTE: skip unset envs during first stage expansion
-	if err := i.Expand(env, dockerfile.ExpandOptions{SkipUnsetEnv: true}); err != nil {
+	// NOTE: 1st stage expansion (skip unset envs)
+	if err := i.Expand(opts.Env, dockerfile.ExpandOptions{SkipUnsetEnv: true}); err != nil {
 		return nil, fmt.Errorf("unable to expand instruction %q: %w", i.GetInstructionData().Name(), err)
 	}
 

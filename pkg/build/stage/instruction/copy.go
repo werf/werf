@@ -22,8 +22,12 @@ func NewCopy(i *dockerfile.DockerfileStageInstruction[*instructions.CopyCommand]
 	return &Copy{Base: NewBase(i, backend_instruction.NewCopy(i.Data), dependencies, hasPrevStage, opts)}
 }
 
-func (stg *Copy) ExpandInstruction(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) error {
-	if err := stg.Base.ExpandInstruction(ctx, c, cb, prevBuiltImage, stageImage, buildContextArchive); err != nil {
+func (stg *Copy) ExpandDependencies(ctx context.Context, c stage.Conveyor, baseEnv map[string]string) error {
+	return stg.doExpandDependencies(ctx, c, baseEnv, stg)
+}
+
+func (stg *Copy) ExpandInstruction(c stage.Conveyor, env map[string]string) error {
+	if err := stg.Base.ExpandInstruction(c, env); err != nil {
 		return err
 	}
 
@@ -38,10 +42,7 @@ func (stg *Copy) ExpandInstruction(ctx context.Context, c stage.Conveyor, cb con
 }
 
 func (stg *Copy) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
-	args, err := stg.getDependencies(ctx, c, cb, prevImage, prevBuiltImage, buildContextArchive, stg)
-	if err != nil {
-		return "", err
-	}
+	var args []string
 
 	args = append(args, "From", stg.instruction.Data.From)
 	args = append(args, append([]string{"Sources"}, stg.instruction.Data.Sources()...)...)

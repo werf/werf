@@ -22,10 +22,7 @@ func NewEnv(i *dockerfile.DockerfileStageInstruction[*instructions.EnvCommand], 
 }
 
 func (stg *Env) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
-	args, err := stg.getDependencies(ctx, c, cb, prevImage, prevBuiltImage, buildContextArchive, stg)
-	if err != nil {
-		return "", err
-	}
+	var args []string
 
 	if len(stg.instruction.Data.Env) > 0 {
 		args = append(args, "Env")
@@ -33,5 +30,6 @@ func (stg *Env) GetDependencies(ctx context.Context, c stage.Conveyor, cb contai
 			args = append(args, item.Key, item.Value)
 		}
 	}
+
 	return util.Sha256Hash(args...), nil
 }

@@ -14,6 +14,7 @@ type Interface interface {
 
 	IsEmpty(ctx context.Context, c Conveyor, prevBuiltImage *StageImage) (bool, error)
 
+	ExpandDependencies(ctx context.Context, c Conveyor, baseEnv map[string]string) error
 	FetchDependencies(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, dockerRegistry docker_registry.ApiInterface) error
 	GetDependencies(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error)
 	GetNextStageDependencies(ctx context.Context, c Conveyor) (string, error)

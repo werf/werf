@@ -3,6 +3,7 @@ package image
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/gookit/color"
 
@@ -203,12 +204,22 @@ func (i *Image) GetRebuilt() bool {
 	return i.rebuilt
 }
 
+func (i *Image) ExpandDependencies(ctx context.Context, baseEnv map[string]string) error {
+	for _, stg := range i.stages {
+		if err := stg.ExpandDependencies(ctx, i.Conveyor, baseEnv); err != nil {
+			return fmt.Errorf("unable to expand dependencies for stage %q: %w", stg.Name(), err)
+		}
+	}
+	return nil
+}
+
 func (i *Image) SetupBaseImage(ctx context.Context, storageManager manager.StorageManagerInterface, storageOpts manager.StorageOptions) error {
 	switch i.baseImageType {
 	case StageAsBaseImage:
 		i.stageAsBaseImage = i.Conveyor.GetImage(i.baseImageName).GetLastNonEmptyStage()
 		i.baseImageReference = i.stageAsBaseImage.GetStageImage().Image.Name()
 		i.baseStageImage = i.stageAsBaseImage.GetStageImage()
+
 	case ImageFromRegistryAsBaseImage:
 		if i.IsDockerfileImage && i.dockerfileExpanderFactory != nil {
 			dependenciesArgs := stage.ResolveDependenciesArgs(i.DockerfileImageConfig.Dependencies, i.Conveyor)
@@ -218,27 +229,33 @@ func (i *Image) SetupBaseImage(ctx context.Context, storageManager manager.Stora
 			}
 			i.baseImageReference = ref
 		}
+
 		i.baseStageImage = i.Conveyor.GetOrCreateStageImage(i.baseImageReference, nil, nil, i)
+
+		info, err := storageManager.GetImageInfo(ctx, i.baseImageReference, storageOpts)
+		if err != nil {
+			return fmt.Errorf("unable to get base image %q manifest: %w", i.baseImageReference, err)
+		}
+
+		i.baseStageImage.Image.SetStageDescription(&image.StageDescription{
+			StageID: nil, // this is not a stage actually, TODO
+			Info:    info,
+		})
+
+		// for _, expression := range info.OnBuild {
+		// 	fmt.Printf(">> %q\n", expression)
+		// }
+
 	case NoBaseImage:
+
 	default:
 		panic(fmt.Sprintf("unknown base image type %q", i.baseImageType))
 	}
 
-	if i.IsDockerfileImage && i.DockerfileImageConfig.Staged {
-		switch i.baseImageType {
-		case StageAsBaseImage, ImageFromRegistryAsBaseImage:
-
-			fmt.Printf("-- %s SetupBaseImage %q\n", i.Name, i.baseImageReference)
-
-			info, err := storageManager.GetImageInfo(ctx, i.baseImageReference, storageOpts)
-			if err != nil {
-				return fmt.Errorf("unable to get base image %q manifest: %w", i.baseImageReference, err)
-			}
-
-			fmt.Printf("-- %s SetupBaseImage %q -> %#v\n", i.Name, i.baseImageReference, info)
-			for _, expression := range info.OnBuild {
-				fmt.Printf(">> %q\n", expression)
-			}
+	switch i.baseImageType {
+	case StageAsBaseImage, ImageFromRegistryAsBaseImage:
+		if err := i.ExpandDependencies(ctx, EnvToMap(i.baseStageImage.Image.GetStageDescription().Info.Env)); err != nil {
+			return err
 		}
 	}
 
@@ -257,6 +274,8 @@ func (i *Image) GetBaseImageReference() string {
 func (i *Image) FetchBaseImage(ctx context.Context) error {
 	switch i.baseImageType {
 	case ImageFromRegistryAsBaseImage:
+		// TODO: Refactor, move manifest fetching into SetupBaseImage, only pull image in FetchBaseImage method
+
 		if info, err := i.ContainerBackend.GetImageInfo(ctx, i.baseStageImage.Image.Name(), container_backend.GetImageInfoOpts{}); err != nil {
 			return fmt.Errorf("unable to inspect local image %s: %w", i.baseStageImage.Image.Name(), err)
 		} else if info != nil {
@@ -347,4 +366,23 @@ func (i *Image) getFromBaseImageIdFromRegistry(ctx context.Context, reference st
 	i.Conveyor.SetBaseImagesRepoIdsCache(reference, i.baseImageRepoId)
 
 	return i.baseImageRepoId, nil
+}
+
+func EnvToMap(env []string) map[string]string {
+	res := make(map[string]string)
+	for _, kv := range env {
+		k, v := parseKeyValue(kv)
+		res[k] = v
+	}
+	return res
+}
+
+func parseKeyValue(env string) (string, string) {
+	parts := strings.SplitN(env, "=", 2)
+	v := ""
+	if len(parts) > 1 {
+		v = parts[1]
+	}
+
+	return parts[0], v
 }
