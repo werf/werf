@@ -22,11 +22,9 @@ func NewOnBuild(i *dockerfile.DockerfileStageInstruction[*instructions.OnbuildCo
 }
 
 func (stg *OnBuild) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
-	args, err := stg.getDependencies(ctx, c, cb, prevImage, prevBuiltImage, buildContextArchive, stg)
-	if err != nil {
-		return "", err
-	}
+	var args []string
 
 	args = append(args, "Expression", stg.instruction.Data.Expression)
+
 	return util.Sha256Hash(args...), nil
 }

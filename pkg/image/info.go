@@ -18,6 +18,7 @@ type Info struct {
 	RepoDigest string `json:"repoDigest"`
 
 	OnBuild           []string          `json:"onBuild"`
+	Env               []string          `json:"env"`
 	ID                string            `json:"ID"`
 	ParentID          string            `json:"parentID"`
 	Labels            map[string]string `json:"labels"`
@@ -44,6 +45,7 @@ func (info *Info) GetCopy() *Info {
 		Tag:               info.Tag,
 		RepoDigest:        info.RepoDigest,
 		OnBuild:           util.CopyArr(info.OnBuild),
+		Env:               util.CopyArr(info.Env),
 		ID:                info.ID,
 		ParentID:          info.ParentID,
 		Labels:            util.CopyMap(info.Labels),
@@ -75,6 +77,7 @@ func NewInfoFromInspect(ref string, inspect *types.ImageInspect) *Info {
 		Tag:               tag,
 		Labels:            inspect.Config.Labels,
 		OnBuild:           inspect.Config.OnBuild,
+		Env:               inspect.Config.Env,
 		CreatedAtUnixNano: MustParseTimestampString(inspect.Created).UnixNano(),
 		RepoDigest:        repoDigest,
 		ID:                inspect.ID,
@@ -109,6 +112,7 @@ func NewImageInfoFromRegistryConfig(ref string, cfg *v1.ConfigFile) *Info {
 		Tag:               tag,
 		Labels:            cfg.Config.Labels,
 		OnBuild:           cfg.Config.OnBuild,
+		Env:               cfg.Config.Env,
 		CreatedAtUnixNano: cfg.Created.UnixNano(),
 		RepoDigest:        "", // TODO
 		ID:                "", // TODO

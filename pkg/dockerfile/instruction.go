@@ -19,6 +19,7 @@ type DockerfileStageInstructionInterface interface {
 	GetDependencyByStageRef(ref string) *DockerfileStage
 	GetDependenciesByStageRef() map[string]*DockerfileStage
 	GetInstructionData() InstructionDataInterface
+	ExpandEnv(baseEnv map[string]string, opts ExpandOptions) (map[string]string, error)
 	Expand(env map[string]string, opts ExpandOptions) error
 }
 
@@ -32,11 +33,13 @@ type Expander interface {
 }
 
 type DockerfileStageInstructionOptions struct {
+	Env             map[string]string
 	ExpanderFactory ExpanderFactory
 }
 
 type DockerfileStageInstruction[T InstructionDataInterface] struct {
 	Data                   T
+	Env                    map[string]string
 	DependenciesByStageRef map[string]*DockerfileStage
 	ExpanderFactory        ExpanderFactory
 }
@@ -46,6 +49,7 @@ func NewDockerfileStageInstruction[T InstructionDataInterface](data T, opts Dock
 		Data:                   data,
 		DependenciesByStageRef: make(map[string]*DockerfileStage),
 		ExpanderFactory:        opts.ExpanderFactory,
+		Env:                    opts.Env,
 	}
 }
 
@@ -71,6 +75,27 @@ func (i *DockerfileStageInstruction[T]) GetInstructionData() InstructionDataInte
 	return i.Data
 }
 
+func (i *DockerfileStageInstruction[T]) SetEnvVar(key, value string) {
+	i.Env[key] = value
+}
+
+func (i *DockerfileStageInstruction[T]) ExpandEnv(baseEnv map[string]string, opts ExpandOptions) (map[string]string, error) {
+	if i.ExpanderFactory == nil {
+		return i.Env, nil
+	}
+	expander := i.ExpanderFactory.GetExpander(opts)
+
+	res := make(map[string]string)
+	for k, v := range i.Env {
+		newValue, err := expander.ProcessWordWithMap(v, baseEnv)
+		if err != nil {
+			return nil, fmt.Errorf("error processing word %q: %w", v, err)
+		}
+		res[k] = newValue
+	}
+	return res, nil
+}
+
 func (i *DockerfileStageInstruction[T]) Expand(env map[string]string, opts ExpandOptions) error {
 	if i.ExpanderFactory == nil {
 		return nil
@@ -80,7 +105,8 @@ func (i *DockerfileStageInstruction[T]) Expand(env map[string]string, opts Expan
 	switch instr := any(i.Data).(type) {
 	case instructions.SupportsSingleWordExpansion:
 		return instr.Expand(func(word string) (string, error) {
-			return expander.ProcessWordWithMap(word, env)
+			v, err := expander.ProcessWordWithMap(word, env)
+			return v, err
 		})
 
 	case *instructions.ExposeCommand:
@@ -95,20 +121,6 @@ func (i *DockerfileStageInstruction[T]) Expand(env map[string]string, opts Expan
 			ports = append(ports, ps...)
 		}
 		instr.Ports = ports
-
-	case *instructions.RunCommand:
-		var newCmdLine []string
-		for _, line := range instr.CmdLine {
-			exline, err := expander.ProcessWordWithMap(line, env)
-			if err != nil {
-				return fmt.Errorf("unable to expand cmd line %q: %w", line, err)
-			}
-			newCmdLine = append(newCmdLine, exline)
-		}
-		instr.ShellDependantCmdLine = instructions.ShellDependantCmdLine{
-			CmdLine:      newCmdLine,
-			PrependShell: instr.PrependShell,
-		}
 	}
 
 	return nil

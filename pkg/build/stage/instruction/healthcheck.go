@@ -23,15 +23,13 @@ func NewHealthcheck(i *dockerfile.DockerfileStageInstruction[*instructions.Healt
 }
 
 func (stg *Healthcheck) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
-	args, err := stg.getDependencies(ctx, c, cb, prevImage, prevBuiltImage, buildContextArchive, stg)
-	if err != nil {
-		return "", err
-	}
+	var args []string
 
 	args = append(args, append([]string{"Test"}, stg.instruction.Data.Health.Test...)...)
 	args = append(args, "Interval", stg.instruction.Data.Health.Interval.String())
 	args = append(args, "Timeout", stg.instruction.Data.Health.Timeout.String())
 	args = append(args, "StartPeriod", stg.instruction.Data.Health.StartPeriod.String())
 	args = append(args, "Retries", fmt.Sprintf("%d", stg.instruction.Data.Health.Retries))
+
 	return util.Sha256Hash(args...), nil
 }

@@ -22,11 +22,9 @@ func NewWorkdir(i *dockerfile.DockerfileStageInstruction[*instructions.WorkdirCo
 }
 
 func (stg *Workdir) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
-	args, err := stg.getDependencies(ctx, c, cb, prevImage, prevBuiltImage, buildContextArchive, stg)
-	if err != nil {
-		return "", err
-	}
+	var args []string
 
 	args = append(args, "Path", stg.instruction.Data.Path)
+
 	return util.Sha256Hash(args...), nil
 }

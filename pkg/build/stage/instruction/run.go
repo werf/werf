@@ -3,6 +3,7 @@ package instruction
 import (
 	"context"
 	"fmt"
+	"sort"
 
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 
@@ -19,19 +20,30 @@ type Run struct {
 }
 
 func NewRun(i *dockerfile.DockerfileStageInstruction[*instructions.RunCommand], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *Run {
-	return &Run{Base: NewBase(i, backend_instruction.NewRun(i.Data), dependencies, hasPrevStage, opts)}
+	return &Run{Base: NewBase(i, backend_instruction.NewRun(i.Data, nil), dependencies, hasPrevStage, opts)}
+}
+
+func (stg *Run) ExpandDependencies(ctx context.Context, c stage.Conveyor, baseEnv map[string]string) error {
+	return stg.doExpandDependencies(ctx, c, baseEnv, stg)
+}
+
+func (stg *Run) ExpandInstruction(c stage.Conveyor, env map[string]string) error {
+	if err := stg.Base.ExpandInstruction(c, env); err != nil {
+		return err
+	}
+	// Setup RUN envs after 2nd stage expansion
+	stg.backendInstruction.Envs = EnvToSortedArr(stg.GetExpandedEnv(c))
+	return nil
 }
 
 func (stg *Run) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
-	args, err := stg.getDependencies(ctx, c, cb, prevImage, prevBuiltImage, buildContextArchive, stg)
-	if err != nil {
-		return "", err
-	}
+	var args []string
 
 	network := instructions.GetNetwork(stg.instruction.Data)
 	security := instructions.GetSecurity(stg.instruction.Data)
 	mounts := instructions.GetMounts(stg.instruction.Data)
 
+	args = append(args, append([]string{"Env"}, EnvToSortedArr(stg.GetExpandedEnv(c))...)...)
 	args = append(args, append([]string{"Command"}, stg.instruction.Data.CmdLine...)...)
 	args = append(args, "PrependShell", fmt.Sprintf("%v", stg.instruction.Data.PrependShell))
 	args = append(args, "Network", network)
@@ -79,4 +91,12 @@ func (stg *Run) GetDependencies(ctx context.Context, c stage.Conveyor, cb contai
 	}
 
 	return util.Sha256Hash(args...), nil
+}
+
+func EnvToSortedArr(env map[string]string) (r []string) {
+	for k, v := range env {
+		r = append(r, fmt.Sprintf("%s=%s", k, v))
+	}
+	sort.Strings(r)
+	return
 }

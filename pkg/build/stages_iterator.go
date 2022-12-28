@@ -26,7 +26,8 @@ func (iterator *StagesIterator) GetPrevImage(img *build_image.Image, stg stage.I
 	if stg.HasPrevStage() {
 		return iterator.PrevNonEmptyStage.GetStageImage()
 	} else if stg.IsStapelStage() && stg.Name() == "from" {
-		// TODO(staged-dockerfile): this is only for compatibility with stapel-builder logic, and this should be unified with new staged-dockerfile logic
+		return img.GetBaseStageImage()
+	} else if img.IsDockerfileImage && img.DockerfileImageConfig.Staged {
 		return img.GetBaseStageImage()
 	}
 	return nil
@@ -36,7 +37,8 @@ func (iterator *StagesIterator) GetPrevBuiltImage(img *build_image.Image, stg st
 	if stg.HasPrevStage() {
 		return iterator.PrevBuiltStage.GetStageImage()
 	} else if stg.IsStapelStage() && stg.Name() == "from" {
-		// TODO(staged-dockerfile): this is only for compatibility with stapel-builder logic, and this should be unified with new staged-dockerfile logic
+		return img.GetBaseStageImage()
+	} else if img.IsDockerfileImage && img.DockerfileImageConfig.Staged {
 		return img.GetBaseStageImage()
 	}
 	return nil

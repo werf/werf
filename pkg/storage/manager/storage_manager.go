@@ -923,6 +923,8 @@ func ConvertStageDescriptionForStagesStorage(stageDesc *image.StageDescription, 
 			Labels:            stageDesc.Info.Labels,
 			Size:              stageDesc.Info.Size,
 			CreatedAtUnixNano: stageDesc.Info.CreatedAtUnixNano,
+			OnBuild:           stageDesc.Info.OnBuild,
+			Env:               stageDesc.Info.Env,
 		},
 	}
 }

@@ -22,11 +22,9 @@ func NewExpose(i *dockerfile.DockerfileStageInstruction[*instructions.ExposeComm
 }
 
 func (stg *Expose) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
-	args, err := stg.getDependencies(ctx, c, cb, prevImage, prevBuiltImage, buildContextArchive, stg)
-	if err != nil {
-		return "", err
-	}
+	var args []string
 
 	args = append(args, append([]string{"Ports"}, stg.instruction.Data.Ports...)...)
+
 	return util.Sha256Hash(args...), nil
 }
