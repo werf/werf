@@ -314,7 +314,7 @@ werf предоставляет следующие команды compose:
   - Файл `.helm/Chart.yaml` берётся из git репозитория проекта, если он существует.
   - Поле `metadata.name` перезаписывается именем проекта из `werf.yaml`.
   - Поле `metadata.version` устанавливается в `1.0.0`, если оно явно не определено.
-- Добавлено [сервисное значение `.Values.werf.version`]({{ "/usage/deploy/values.html#сервисные-данные" | true_relative_url }}) с версией утилиты werf, которая используется.
+- Добавлено сервисное значение `.Values.werf.version` с версией утилиты werf, которая используется.
 - Поддерживается установка начального количества реплик, когда активен режим HPA для Deployment и других типов ресурсов. Необходимо установить аннотацию `"werf.io/replicas-on-creation": NUM` и убрать явное определение `spec.replicas` в шаблонах в таком случае.
   - `spec.replicas` переопределяет `werf.io/replicas-on-creation`.
   - Данная аннотация особенно полезна при использовании HPA, [в данной статье описано почему]({{ "/reference/deploy_annotations.html#replicas-on-creation" | true_relative_url }}).
@@ -340,7 +340,7 @@ werf предоставляет следующие команды compose:
 
 #### Изменён формат сервисных значений
 
-Удалено [сервисное значение]({{ "/usage/deploy/values.html#сервисные-данные" | true_relative_url }}) `.Values.global.werf.image`, вместо него используется `.Values.werf.image`.
+Удалено сервисное значение `.Values.global.werf.image`, вместо него используется `.Values.werf.image`.
 
 #### Процесс деплоя
 
