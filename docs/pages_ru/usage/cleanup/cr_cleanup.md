@@ -11,7 +11,14 @@ permalink: usage/cleanup/cr_cleanup.html
 
 > Проблематика очистки образов в container registry и наш подход к решению этой проблемы детально освещены в статье [Проблема «умной» очистки образов контейнеров и её решение в werf](https://habr.com/ru/company/flant/blog/522024/)
 
-## Игнорирование образов, используемых в Kubernetes
+## Автоматизация очистки container registry
+
+Для того чтобы автоматизировать очистку неактуальных образов в container registry необходимо выполнить следующие действия:     
+
+- Настроить периодический запуск [**werf cleanup**]({{ "reference/cli/werf_cleanup.html" | true_relative_url }}) для удаления неактуальных тегов из container registry. 
+- Настроить [периодический запуск сборщика мусора](#сборщик-мусора-container-registry) для непосредственного освобождения места в container registry.
+
+## Игнорирование образов, используемых в Kubernetes 
 
 werf подключается **ко всем кластерам** Kubernetes, описанным **во всех контекстах** конфигурации kubectl, и собирает имена образов для следующих типов объектов: `pod`, `deployment`, `replicaset`, `statefulset`, `daemonset`, `job`, `cronjob`, `replicationcontroller`.
 
