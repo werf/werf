@@ -3,65 +3,138 @@ title: Разные окружения
 permalink: usage/deploy/environments.html
 ---
 
-## Окружение
+## Параметризация шаблонов в зависимости от окружения (только в werf)
 
-По умолчанию, werf предполагает, что каждый релиз должен относиться к какому-либо окружению, например, `staging`, `test` или `production`.
+*Окружение* werf указывается опцией `--env` (`$WERF_ENV`), либо автоматически выставляется командой `werf ci-env`. Текущее окружение доступно в параметре `$.Values.werf.env` основного чарта.
 
-На основании окружения werf определяет:
+Окружение werf используется при формировании имени релиза и имени Namespace, а также может использоваться для параметризации шаблонов:
 
- 1. Имя релиза.
- 2. Namespace в Kubernetes.
-
-Передача имени окружения является обязательной для операции деплоя и должна быть выполнена либо с помощью параметра `--env` либо на основании данных используемой CI/CD системы (читай подробнее про [интеграцию c CI/CD системами]({{ "usage/integration_with_ci_cd_systems/how_ci_cd_integration_works/general_overview.html#интеграция-с-настройками-cicd" | true_relative_url }})) определиться автоматически.
-
-### Использование окружения в шаблонах
-
-Текущее окружение werf можно использовать в шаблонах.
-
-Например, вы можете использовать его для создания разных шаблонов для разных окружений:
+```yaml
+# .helm/values.yaml:
+memory:
+  staging: 1G
+  production: 2G
+```
 
 {% raw %}
 
 ```
-apiVersion: v1
-kind: Secret
-metadata:
-  name: regsecret
-type: kubernetes.io/dockerconfigjson
-data:
-{{ if eq .Values.werf.env "dev" }}
-  .dockerconfigjson: UmVhbGx5IHJlYWxseSByZWVlZWVlZWVlZWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWxsbGxsbGxsbGxsbGxsbGxsbGxsbGxsbGxsbGxsbGx5eXl5eXl5eXl5eXl5eXl5eXl5eSBsbGxsbGxsbGxsbGxsbG9vb29vb29vb29vb29vb29vb29vb29vb29vb25ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubmdnZ2dnZ2dnZ2dnZ2dnZ2dnZ2cgYXV0aCBrZXlzCg==
-{{ else }}
-  .dockerconfigjson: {{ .Values.dockerconfigjson }}
-{{ end }}
+# .helm/templates/example.yaml:
+memory: {{ index $.Values.memory $.Values.werf.env }}
 ```
 
 {% endraw %}
 
-Следует обратить внимание, что значение параметра `--env ENV` доступно не только в шаблонах helm, но и [в шаблонах конфигурации `werf.yaml`]({{ "/reference/werf_yaml_template_engine.html#env" | true_relative_url }}).
+```shell
+werf render --env production
+```
 
-Больше информации про сервисные значения доступно [в статье про values]({{ "/usage/deploy/values.html" | true_relative_url }}).
+Результат:
 
-## Namespace в Kubernetes
+```yaml
+memory: 2G
+```
 
-По умолчанию namespace, используемый в Kubernetes, формируется по шаблону `[[ project ]]-[[ env ]]`, где `[[ project ]]` — [имя проекта]({{ "reference/werf_yaml.html#имя-проекта" | true_relative_url }}), а `[[ env ]]` — имя [окружения](#окружение).
+Для использования `$.Values.werf.env` в зависимых чартах воспользуйтесь директивой `export-values` (только в werf):
 
-Например, для проекта с именем `symfony-demo` будет сформировано следующее имя namespace в Kubernetes, в зависимости от имени окружения:
-* `symfony-demo-stage` для окружения `stage`;
-* `symfony-demo-test` для окружения `test`;
-* `symfony-demo-prod` для окружения `prod`.
+```yaml
+# .helm/Chart.yaml:
+dependencies:
+- name: child
+  export-values:
+  - parent: werf
+    child: werf
+```
 
-Имя namespace в Kubernetes может быть переопределено с помощью параметра `--namespace NAMESPACE` при деплое. В этом случае werf будет использовать указанное имя как есть, без каких либо преобразований и использования шаблонов.
+{% raw %}
 
-Имя namespace также можно явно определить в файле конфигурации `werf.yaml`, установив параметр [`deploy.namespace`]({{ "/reference/werf_yaml.html#namespace-в-kubernetes" | true_relative_url }}).
+```
+# .helm/charts/child/templates/example.yaml:
+{{ $.Values.werf.env }}
+```
 
-### Слагификация namespace Kubernetes
+{% endraw %}
 
-Сформированное по шаблону имя namespace слагифицируется, чтобы удовлетворять требованиям к [DNS именам](https://www.ietf.org/rfc/rfc1035.txt), в результате чего получается уникальное имя namespace в Kubernetes.
+Результат:
 
-Слагификация имени namespace включена по умолчанию, но может быть отключена указанием параметра [`deploy.namespaceSlug=false`]({{ "/reference/werf_yaml.html#namespace-в-kubernetes" | true_relative_url }}) в файле конфигурации `werf.yaml`.
+```
+production
+```
 
-## Работа с несколькими кластерами Kubernetes
+## Развертывание в разные Kubernetes Namespace
 
-В некоторых случаях, необходима работа с несколькими кластерами Kubernetes для разных окружений. Все что вам нужно, это настроить необходимые [контексты](https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters) kubectl для доступа к необходимым кластерам и использовать для werf параметр `--kube-context=CONTEXT`, совместно с указанием окружения.
+Имя Kubernetes Namespace для развертываемых ресурсов формируется автоматически (только в werf) по специальному шаблону `[[ project ]]-[[ env ]]`, где `[[ project ]]` — имя проекта werf, а `[[ env ]]` — имя окружения.
 
+Достаточно изменить окружение werf и вместе с ним изменится и Namespace:
+
+```yaml
+# werf.yaml:
+project: myapp
+```
+
+```shell
+werf converge --env staging
+werf converge --env production
+```
+
+Результат: один экземпляр приложения развёрнут в Namespace `myapp-staging`, а второй — в `myapp-production`.
+
+Обратите внимание, что если в манифесте Kubernetes-ресурса явно указан Namespace, то для этого ресурса будет использован именно указанный в нём Namespace.
+
+### Изменение шаблона имени Namespace (только в werf)
+
+Если вас не устраивает специальный шаблон, из которого формируется имя Namespace, вы можете его изменить:
+
+```yaml
+# werf.yaml:
+project: myapp
+deploy:
+  namespace: "backend-[[ env ]]"
+```
+
+```shell
+werf converge --env production
+```
+
+Результат: приложение развёрнуто в Namespace `backend-production`.
+
+### Прямое указание имени Namespace
+
+Вместо формирования имени Namespace по специальному шаблону можно указывать Namespace явно для каждой команды (рекомендуется также изменять и имя релиза):
+
+```shell
+werf converge --namespace backend-production --release backend-production
+```
+
+Результат: приложение развёрнуто в Namespace `backend-production`.
+
+### Форматирование имени Namespace
+
+Namespace, сформированный по специальному шаблону или указанный опцией `--namespace`, приводится к формату [RFC 1123 Label Names](https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#dns-label-names) автоматически. Отключить автоматическое форматирование можно директивой `deploy.namespaceSlug` файла `werf.yaml`.
+
+Вручную отформатировать любую строку согласно формату RFC 1123 Label Names можно командой `werf slugify -f kubernetes-namespace`.
+
+## Развертывание в разные кластеры Kubernetes
+
+По умолчанию werf развертывает Kubernetes-ресурсы в кластер, на который настроена команда `werf kubectl`. Для развертывания в разные кластеры можно использовать разные kube-контексты единого kube-config файла (по умолчанию — `$HOME/.kube/config`):
+
+```shell
+werf converge --kube-context staging  # или $WERF_KUBE_CONTEXT=...
+werf converge --kube-context production
+```
+
+... или использовать разные kube-config файлы:
+
+```shell
+werf converge --kube-config "$HOME/.kube/staging.config"  # или $WERF_KUBE_CONFIG=...
+werf converge --kube-config-base64 "$KUBE_PRODUCTION_CONFIG_IN_BASE64"  # или $WERF_KUBE_CONFIG_BASE64=...
+```
+
+## Развертывание из под разных пользователей Kubernetes
+
+По умолчанию werf для развертывания использует пользователя Kubernetes, через которого работает команда `werf kubectl`. Для развертывания из под разных пользователей используйте разные kube-контексты:
+
+```shell
+werf converge --kube-context admin  # или $WERF_KUBE_CONTEXT=...
+werf converge --kube-context regular-user
+```
