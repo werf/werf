@@ -65,7 +65,7 @@ deploy:
 
 ### Namespace в Kubernetes 
 
-werf позволяет определять пользовательский шаблон namespace в Kubernetes, который будет использоваться во время [процесса деплоя]({{ "/usage/deploy/environments.html#namespace-в-kubernetes" | true_relative_url }}) для генерации имени namespace.
+werf позволяет определять пользовательский шаблон namespace в Kubernetes, который будет использоваться во время процесса деплоя для генерации имени namespace.
 
 Пользовательский шаблон namespace Kubernetes определяется в секции мета-информации в файле `werf.yaml`:
 
@@ -79,7 +79,7 @@ deploy:
 
 В качестве значения для `deploy.namespace` указывается Go-шаблон с разделителями `[[` и `]]`. Поддерживаются функции `project` и `env`. Значение шаблона имени namespace по умолчанию: `[[ project ]]-[[ env ]]`.
 
-`deploy.namespaceSlug` включает или отключает [слагификацию]({{ "/usage/deploy/environments.html#слагификация-namespace-kubernetes" | true_relative_url }}) имени namespace Kubernetes. Включен по умолчанию.
+`deploy.namespaceSlug` включает или отключает слагификацию имени namespace Kubernetes. Включен по умолчанию.
 
 ## Git worktree
 
