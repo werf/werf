@@ -50,7 +50,7 @@ metadata:
 
 ## Имя релиза
 
-По умолчанию название релиза формируется по шаблону `[[project]]-[[env]]`. Где `[[ project ]]` — имя [проекта]({{ "reference/werf_yaml.html#имя-проекта" | true_relative_url }}), а `[[ env ]]` — имя [окружения]({{ "/usage/deploy/environments.html#окружение" | true_relative_url }}).
+По умолчанию название релиза формируется по шаблону `[[project]]-[[env]]`. Где `[[ project ]]` — имя [проекта]({{ "reference/werf_yaml.html#имя-проекта" | true_relative_url }}), а `[[ env ]]` — имя окружения.
 
 Например, для проекта с именем `symfony-demo` будет сформировано следующее имя релиза в зависимости от имени окружения:
 * `symfony-demo-stage` для окружения `stage`;
