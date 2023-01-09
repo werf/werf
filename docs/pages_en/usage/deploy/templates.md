@@ -623,7 +623,7 @@ image: {{ .image }}
 
 ### Named templates
 
-To reuse templates, declare *named templates* in the `define` blocks in the `templates/_*.tpl` files:
+To reuse templating, declare *named templates* in the `define` blocks in the `templates/_*.tpl` files:
 
 {% raw %}
 
@@ -690,7 +690,7 @@ The name of the named template to use in the `include` function may be dynamic:
 
 ### Parameterizing named templates
 
-The `include` function that inserts named templates takes a single optional argument. It can be used to parameterize a named template, where that argument becomes the `.` relative context:
+The `include` function that inserts named templates takes a single optional argument. This argument can be used to parameterize a named template, where that argument becomes the `.` relative context:
 
 {% raw %}
 
@@ -716,7 +716,7 @@ Output:
 app: myapp
 ```
 
-To pass several arguments at once, use a list containing multiple values:
+To pass several arguments at once, use a list containing multiple arguments:
 
 {% raw %}
 
@@ -845,7 +845,7 @@ Output:
 myapp
 ```
 
-> Note that `fromYaml` does not support lists. Use `fromYamlArray`.
+> Note that `fromYaml` does not support lists. For lists, use the dedicated `fromYamlArray` function.
 
 You can use the `toYaml` and `toJson` functions for data serialization, and the `fromYaml/fromYamlArray` and `fromJson/fromJsonArray` functions for deserialization.
 
@@ -878,7 +878,7 @@ You can also use the `include` function in the `define` blocks to include named 
 
 {% endraw %}
 
-You can even use  the `include` function to include the named template recursively:
+You can even call the `include` function to include a named template from this very template, i.e., recursively:
 
 {% raw %}
 
