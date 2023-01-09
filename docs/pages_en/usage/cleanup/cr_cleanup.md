@@ -11,19 +11,7 @@ Note that the cleanup does not free up space occupied by images in the container
 
 > The issue of cleaning up images in the container registry and our approach to addressing it are covered in detail in the article [The problem of "smart" cleanup of container images and addressing it in werf](https://www.cncf.io/blog/2020/10/15/overcoming-the-challenges-of-cleaning-up-container-images/)
 
-## Principle of operation
-
-The algorithm automatically selects the images to delete. It consists of the following steps:
-
-- Pulling the necessary data from the container registry.
-- Preparing a list of images to keep. werf leaves intact:
-  - [Images that Kubernetes uses](#ignoring-images-that-kubernetes-uses);
-  - Images that meet the criteria of the [user-defined policies](#git-history-based-cleanup-policies) when [scanning the Git history](#scanning-the-git-history);
-  - [New images that were built within the predefined time frame](#ignoring-freshly-built-images);
-  - Images related to the images selected in previous steps.
-- Deleting all the remaining images.
-
-### Ignoring images that Kubernetes uses
+## Ignoring images that Kubernetes uses
 
 werf connects to **all Kubernetes clusters** described in **all configuration contexts** of kubectl. It then collects image names for the following object types: `pod`, `deployment`, `replicaset`, `statefulset`, `daemonset`, `job`, `cronjob`, `replicationcontroller`.
 
@@ -41,19 +29,7 @@ cleanup:
 
 As long as some object in the Kubernetes cluster uses an image, werf will never delete this image from the container registry. In other words, if you run some object in a Kubernetes cluster, werf will not delete its related images under any circumstances during the cleanup.
 
-### Scanning the git history
-
-werf's cleanup algorithm uses the fact that the container registry keeps the information about the commits on which the build is based (it does not matter if an image was added to the container registry or some changes were made to it). For each build, werf saves the information about the commit, [stage digest]({{ "usage/build/stages_and_storage.html#stage-digest" | true_relative_url }}), and the image name to the registry (for each `image` defined in `werf.yaml`).
-
-Once the new commit triggers the build process, werf adds the information that the [stage digest]({{ "usage/build/stages_and_storage.html#stage-digest" | true_relative_url }}) corresponds to a specific commit to the registry (even if the _resulting image_ does not change).
-
-This approach ensures the unbreakable bond between the [stage digest]({{ "usage/build/stages_and_storage.html#stage-digest" | true_relative_url}}) and the git history. Also, it makes it possible to effectively clean up outdated images based on the git state and selected policies. The algorithm scans the git history and selects relevant images.
-
-Information about commits is the only source of truth for the algorithm, so images lacking such information will be deleted.
-
-It is worth noting that the algorithm scans the local state of the git repository. Therefore, it is essential to keep all git branches and git tags up-to-date. By default, werf performs synchronization automatically (you can change its behavior using the [gitWorktree.allowFetchOriginBranchesAndTags]({{ "reference/werf_yaml.html#git-worktree" | true_relative_url }}) directive in `werf.yaml`).
-
-### Ignoring freshly built images
+## Ignoring freshly built images
 
 When cleaning up, werf ignores images built during a specified time period (the default is 2 hours). If necessary, the period can be adjusted or the policy can be disabled altogether using the following directives in `werf.yaml`:
 
@@ -63,15 +39,7 @@ cleanup:
   keepImagesBuiltWithinLastNHours: 2
 ```
 
-### Aspects of cleaning up the images that are being built
-
-During the cleanup, werf applies user-defined policies to the set of images for each `image` defined in `werf.yaml`. The cleanup must respect all the `images` in use. On the other hand, the set of images based on the Git repository's main branch may not cover all the suitable images (for example, `images` may be added to/deleted from some feature branch).
-
-werf adds the name of the image being built to the container registry to avoid deleting images and stages in use. Such an approach frees werf from the strict set of image names defined in `werf.yaml` and forces it to take into account all the images ever used.
-
-The `werf managed-images ls|add|rm` family of commands allows the user to edit the so-called _managed images_ set and explicitly delete images that are no longer needed and can be removed entirely.
-
-## Git history-based cleanup policies
+## Configuring Git history-based cleanup policies
 
 The cleanup configuration consists of a set of policies called `keepPolicies`. They are used to select relevant images using the git history. Thus, during a cleanup, __images not meeting the criteria of any policy are deleted__.
 
@@ -120,6 +88,8 @@ imagesPerReference:
 
 > In the case of git tags, werf checks the HEAD commit only; the value of `last`>1 does not make any sense and is invalid
 
+### Policy priority for a specific reference
+
 When describing a group of policies, you have to move from the general to the particular. In other words, `imagesPerReference` for a specific reference will match the latest policy it falls under:
 
 ```yaml
@@ -134,15 +104,6 @@ When describing a group of policies, you have to move from the general to the pa
 ```
 
 In the above example, the _master_ reference matches both policies. Thus, when scanning the branch, the `last` parameter will equal to 5.
-
-### Disabling policies
-
-If Git history-based cleanup is not needed, you can disable it in `werf.yaml` as follows:
-
-```yaml
-cleanup:
-  disableGitHistoryBasedPolicy: true
-```
 
 ### Default policies
 
@@ -177,17 +138,14 @@ Let us examine each policy individually:
 2. Keep no more than two images published over the past week, for no more than 10 branches active over the past week.
 3. Keep the 10 latest images for main, staging, and production branches.
 
-## Container registry’s garbage collector
+### Disabling policies
 
-Note that during the cleanup, werf only removes tags from the images (manifests) to be deleted. The container registry garbage collector (GC) is responsible for the actual deletion.
+If Git history-based cleanup is not needed, you can disable it in `werf.yaml` as follows:
 
-While the garbage collector is running, the container registry must be set to read-only mode or turned off completely. Otherwise, there is a good chance that the garbage collector will not respect the images published during the procedure and may corrupt them.
-
-You can read more about the garbage collector and how to use it in the documentation for the garbage collector you are using. Here are links for some of the most popular ones:
-
-- [Docker Registry GC](https://docs.docker.com/registry/garbage-collection/#more-details-about-garbage-collection ).
-- [GitLab CR GC](https://docs.gitlab.com/ee/administration/packages/container_registry.html#container-registry-garbage-collection).
-- [Harbor GC](https://goharbor.io/docs/2.6.0/administration/garbage-collection/).
+```yaml
+cleanup:
+  disableGitHistoryBasedPolicy: true
+```
 
 ## Features of working with different container registries
 
@@ -276,3 +234,15 @@ You can use the following options (or their respective environment variables) to
 * Sometimes, Selectel drop connection with VPC ID. Try to use the VPC name instead.
 * CR API has limitations, so you can not remove layers from the root of the container registry.
 * Low API rate limit. It can cause cleanup problems with rapid development.
+
+## Container registry’s garbage collector
+
+Note that during the cleanup, werf only removes tags from the images (manifests) to be deleted. The container registry garbage collector (GC) is responsible for the actual deletion.
+
+While the garbage collector is running, the container registry must be set to read-only mode or turned off completely. Otherwise, there is a good chance that the garbage collector will not respect the images published during the procedure and may corrupt them.
+
+You can read more about the garbage collector and how to use it in the documentation for the garbage collector you are using. Here are links for some of the most popular ones:
+
+- [Docker Registry GC](https://docs.docker.com/registry/garbage-collection/#more-details-about-garbage-collection ).
+- [GitLab CR GC](https://docs.gitlab.com/ee/administration/packages/container_registry.html#container-registry-garbage-collection).
+- [Harbor GC](https://goharbor.io/docs/2.6.0/administration/garbage-collection/).
