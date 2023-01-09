@@ -7,7 +7,7 @@ permalink: usage/deploy/templates.html
 
 For templating, werf uses Helm-based templating implemented using the [Go text/template](https://pkg.go.dev/text/template) package.
 
-Any Helm pattern can be used with werf. While werf offers a number of extra features on top of what Helm templating does, using these extra features is completely optional.
+Any Helm template can be used with werf. While werf offers a number of extra features on top of what Helm templating does, using these extra features is completely optional.
 
 ## Template files
 
@@ -367,9 +367,9 @@ app: {{ $appName }}
 
 ## Cycles
 
-### Циклы по спискам
+### Cycling through lists
 
-Циклы `range` позволяют перебирать элементы списка и выполнять нужную шаблонизацию на каждой итерации:
+The `range` cycles allow you to cycle through the list items and do the necessary templating at each iteration:
 
 {% raw %}
 
@@ -381,14 +381,14 @@ app: {{ $appName }}
 
 {% endraw %}
 
-Результат:
+Output:
 
 ```
 https://example.org
 https://sub.example.org
 ```
 
-Относительный контекст `.` всегда указывает на элемент списка, соответствующий текущей итерации, хотя указатель можно сохранить и в произвольную переменную:
+The `.` relative context always points to the list element that corresponds to the current iteration; the pointer can also be assigned to an arbitrary variable:
 
 {% raw %}
 
@@ -400,35 +400,35 @@ https://sub.example.org
 
 {% endraw %}
 
-Результат будет таким же:
+The output is the same:
 
 ```
 https://example.org
 https://sub.example.org
 ```
 
-Получить индекс элемента в списке можно следующим образом:
+Here's how you can get the index of an element in the list:
 
 {% raw %}
 
 ```
 {{ range $i, $elem := $urls }}
-{{ $elem }} имеет индекс {{ $i }}
+{{ $elem }} has an index of {{ $i }}
 {{ end }}
 ```
 
 {% endraw %}
 
-Результат:
+Output:
 
 ```
-https://example.org имеет индекс 0
-https://sub.example.org имеет индекс 1
+https://example.org has an index of 0
+https://sub.example.org has an index of 1
 ```
 
-### Циклы по словарям
+### Cycling through dictionaries
 
-Циклы `range` позволяют перебирать ключи и значения словарей и выполнять нужную шаблонизацию на каждой итерации:
+The `range` cycles allow you to cycle through the dictionary keys and values and do the necessary templating at each iteration:
 
 ```yaml
 # values.yaml:
@@ -450,14 +450,14 @@ apps:
 
 {% endraw %}
 
-Результат:
+Output:
 
 ```
 openjdk
 node
 ```
 
-Относительный контекст `.` всегда указывает на значение элемента словаря, соответствующего текущей итерации, при этом указатель можно сохранить и в произвольную переменную:
+The `.` relative context always points to the value of the dictionary element that corresponds to the current iteration; the pointer can also be assigned to an arbitrary variable:
 
 {% raw %}
 
@@ -469,14 +469,14 @@ node
 
 {% endraw %}
 
-Результат будет таким же:
+The output is the same:
 
 ```
 openjdk
 node
 ```
 
-Получить ключ элемента словаря можно так:
+Here's how you can get the key of the dictionary element:
 
 {% raw %}
 
@@ -488,16 +488,16 @@ node
 
 {% endraw %}
 
-Результат:
+Output:
 
 ```yaml
 backend: openjdk
 frontend: node
 ```
 
-### Контроль выполнения цикла
+### Cycle control
 
-Специальное действие `continue` позволяет пропустить текущую итерацию цикла. В качестве примера пропустим итерацию для элемента `https://example.org`:
+The `continue` statement allows you to skip the current cycle iteration. To give you an example, let's skip the iteration for the `https://example.org` element:
 
 {% raw %}
 
@@ -510,7 +510,7 @@ frontend: node
 
 {% endraw %}
 
-Специальное действие `break` позволяет не только пропустить текущую итерацию, но и прервать весь цикл:
+In contrast, the `break` statement lets you both skip the current iteration and terminate the whole cycle:
 
 {% raw %}
 
@@ -523,13 +523,13 @@ frontend: node
 
 {% endraw %}
 
-## Контекст
+## Context
 
-### Корневой контекст ($)
+### Root context ($)
 
-Корневой контекст — словарь, на который ссылается переменная `$`. Через него доступны values и некоторые специальные объекты. Корневой контекст имеет глобальную видимость в пределах файла-шаблона (исключение — блок `define` и некоторые функции).
+The root context is the dictionary to which the `$` variable refers. You can use it to access values and some special objects. The root context has global visibility within the template file (except for the `define` block and some functions).
 
-Пример использования:
+Example of use:
 
 {% raw %}
 
@@ -539,13 +539,13 @@ frontend: node
 
 {% endraw %}
 
-Результат:
+Output:
 
 ```
 myvalue
 ```
 
-К корневому контексту можно добавлять произвольные ключи/значения, которые также станут доступны из любого места файла-шаблона:
+You can add custom keys/values to the root context. They will also be available throughout the template file:
 
 {% raw %}
 
@@ -556,13 +556,13 @@ myvalue
 
 {% endraw %}
 
-Результат:
+Output:
 
 ```
 myvalue
 ```
 
-Корневой контекст остаётся неизменным даже в блоках, изменяющих относительный контекст (исключение — `define`):
+The root context remains intact even in blocks that change the relative context (except for `define`):
 
 {% raw %}
 
@@ -575,7 +575,7 @@ myvalue
 
 {% endraw %}
 
-Некоторые функции вроде `tpl` или `include` могут терять корневой контекст. Для сохранения доступа к корневому контексту многим из них можно передать корневой контекст аргументом:
+Functions like `tpl` or `include` can lose the root context. You can pass the root context as an argument to them to restore access to it:
 
 {% raw %}
 
@@ -585,17 +585,17 @@ myvalue
 
 {% endraw %}
 
-Результат:
+Output:
 
 ```
 myvalue
 ```
 
-### Относительный контекст (.)
+### Relative context (.)
 
-Относительный контекст — данные любого типа, на которые ссылается переменная `.`. По умолчанию относительный контекст указывает на корневой контекст. 
+The relative context is any type of data referenced by the `.` variable. By default, the relative context points to the root context.
 
-Некоторые блоки и функции могут менять относительный контекст. В примере ниже в первой строке относительный контекст указывает на корневой контекст `$`, а во второй строке — уже на `$.Values.containers`:
+Some blocks and functions can modify the relative context. In the example below, in the first line, the relative context points to the root context `$`, while in the second line, it points to `$.Values.containers`:
 
 {% raw %}
 
@@ -607,7 +607,7 @@ myvalue
 
 {% endraw %}
 
-Для смены относительного контекста можно использовать блок `with`:
+Use the `with` block to modify the relative context:
 
 {% raw %}
 
@@ -619,11 +619,11 @@ image: {{ .image }}
 
 {% endraw %}
 
-## Переиспользование шаблонов
+## Reusing templates
 
-### Именованные шаблоны
+### Named templates
 
-Для переиспользования шаблонов объявите *именованные шаблоны* в блоках `define` в файлах `templates/_*.tpl`:
+To reuse templates, declare *named templates* in the `define` blocks in the `templates/_*.tpl` files:
 
 {% raw %}
 
@@ -637,7 +637,7 @@ team: alpha
 
 {% endraw %}
 
-Далее подставляйте именованные шаблоны в файлы `templates/*.(yaml|tpl)` функцией `include`:
+Next, insert the named templates into the `templates/*.(yaml|tpl)` files using the `include` function:
 
 {% raw %}
 
@@ -657,7 +657,7 @@ spec:
 
 {% endraw %}
 
-Результат:
+Output:
 
 ```yaml
 apiVersion: apps/v1
@@ -676,7 +676,7 @@ spec:
         team: alpha
 ```
 
-Имя именованного шаблона для функции `include` может быть динамическим:
+The name of the named template to use in the `include` function may be dynamic:
 
 {% raw %}
 
@@ -686,11 +686,11 @@ spec:
 
 {% endraw %}
 
-**Именованные шаблоны обладают глобальной видимостью** — единожды объявленный в родительском или любом дочернем чарте именованный шаблон становится доступен сразу во всех чартах — и в родительском, и в дочерних. Убедитесь, что в подключенных родительском и дочерних чартах нет именованных шаблонов с одинаковыми именами.
+**Named templates are globally visible** - once declared in a parent or any child chart, a named template becomes available in all charts at once: in both parent and child charts. Make sure there are no named templates with the same name in the parent and child charts.
 
-### Параметризация именованных шаблонов
+### Parameterizing named templates
 
-Функция `include`, подставляющая именованные шаблоны, принимает один произвольный аргумент. Его можно использовать для параметризации именованного шаблона, где этот аргумент станет относительным контекстом `.`:
+The `include` function that inserts named templates takes a single optional argument. It can be used to parameterize a named template, where that argument becomes the `.` relative context:
 
 {% raw %}
 
@@ -710,13 +710,13 @@ app: {{ . }}
 
 {% endraw %}
 
-Результат:
+Output:
 
 ```yaml
 app: myapp
 ```
 
-Для передачи сразу нескольких аргументов используйте список с несколькими значениями:
+To pass several arguments at once, use a list containing multiple values:
 
 {% raw %}
 
@@ -737,7 +737,7 @@ team: {{ index . 1 }}
 
 {% endraw %}
 
-... или словарь:
+...or a dictionary:
 
 {% raw %}
 
@@ -758,7 +758,7 @@ team: {{ .team }}
 
 {% endraw %}
 
-Необязательные позиционные аргументы можно реализовать так:
+Optional positional arguments can be handled as follows:
 
 {% raw %}
 
@@ -782,7 +782,7 @@ team: {{ index . 1 }}
 
 {% endraw %}
 
-А необязательные непозиционные аргументы — так:
+Optional non-positional arguments can be handled as follows:
 
 {% raw %}
 
@@ -806,7 +806,7 @@ team: {{ .team }}
 
 {% endraw %}
 
-Именованному шаблону, не требующему параметризации, просто передайте `nil`:
+Pass `nil` to a named template that does not require parametrizing:
 
 {% raw %}
 
@@ -816,9 +816,9 @@ team: {{ .team }}
 
 {% endraw %}
 
-### Результат выполнения include
+### The result of running include
 
-Функция `include`, подставляющая именованный шаблон, **всегда возвращает только текст**. Для возврата структурированных данных нужно *десериализовать* результат выполнения `include` с помощью функции `fromYaml`:
+The `include` function that inserts a named template **returns text data**. To return structured data, you need to *deserialize* the result of `include` using the `fromYaml` function:
 
 {% raw %}
 
@@ -839,19 +839,19 @@ app: myapp
 
 {% endraw %}
 
-Результат:
+Output:
 
 ```
 myapp
 ```
 
-> Обратите внимание, что `fromYaml` не работает для списков. Используйте `fromYamlArray`.
+> Note that `fromYaml` does not support lists. Use `fromYamlArray`.
 
-Для явной сериализации данных можно воспользоваться функциями `toYaml` и `toJson`, для десериализации — функциями `fromYaml/fromYamlArray` и `fromJson/fromJsonArray`.
+You can use the `toYaml` and `toJson` functions for data serialization, and the `fromYaml/fromYamlArray` and `fromJson/fromJsonArray` functions for deserialization.
 
-### Контекст именованных шаблонов
+### Named template context
 
-Объявленные в `templates/_*.tpl` именованные шаблоны теряют доступ к корневому и относительному контекстам файла, в который они включаются функцией `include`. Исправить это можно, передав корневой и/или относительный контекст в виде аргументов `include`:
+The named templates declared in `templates/_*.tpl` cannot use the root and relative contexts of the file into which they are included by the `include` function. You can fix this by passing the root and/or relative context as `include` arguments:
 
 {% raw %}
 
@@ -864,9 +864,9 @@ myapp
 
 {% endraw %}
 
-### include в include
+### include in include
 
-В блоках `define` тоже можно использовать функцию `include` для включения именованных шаблонов:
+You can also use the `include` function in the `define` blocks to include named templates:
 
 {% raw %}
 
@@ -878,7 +878,7 @@ myapp
 
 {% endraw %}
 
-Через `include` можно вызвать даже тот именованный шаблон, из которого происходит вызов, т. е. вызвать его рекурсивно:
+You can even use  the `include` function to include the named template recursively:
 
 {% raw %}
 
@@ -892,11 +892,11 @@ myapp
 
 {% endraw %}
 
-## Шаблонизация с tpl
+## tpl templating
 
-Функция `tpl` позволяет выполнить шаблонизацию любой строки и тут же получить результат. Она принимает один аргумент, который должен быть корневым контекстом.
+The `tpl` function allows you to process any line in real time. It takes one argument (the root context).
 
-Пример шаблонизации values:
+In the example below, we use the `tpl` function to retrieve the deployment name from the values.yaml file:
 
 {% raw %}
 
@@ -917,13 +917,13 @@ deploymentName: "{{ .Values.appName }}-deployment"
 
 {% endraw %}
 
-Результат:
+Output:
 
 ```
 myapp-deployment
 ```
 
-Пример шаблонизации произвольных файлов, которые сами по себе не поддерживают Helm-шаблонизацию:
+And here's how you can process arbitrary files that don't support Helm templating:
 
 {% raw %}
 
@@ -933,7 +933,7 @@ myapp-deployment
 
 {% endraw %}
 
-Для передачи дополнительных аргументов в функцию `tpl` можно добавить аргументы как новые ключи корневого контекста:
+You can add arguments as new root context keys to the `tpl` function to pass additional arguments:
 
 {% raw %}
 
@@ -944,9 +944,9 @@ myapp-deployment
 
 {% endraw %}
 
-## Контроль отступов
+## Indentation control
 
-Используйте функцию `nindent` для выставления отступов:
+Use the `nindent` function to set the indentation:
 
 {% raw %}
 
@@ -956,7 +956,7 @@ myapp-deployment
 
 {% endraw %}
 
-Результат:
+Output:
 
 ```yaml
       containers:
@@ -964,7 +964,7 @@ myapp-deployment
         image: openjdk
 ```
 
-Пример комбинации с другими данными:
+And here's how you can mix it with other data:
 
 {% raw %}
 
@@ -977,7 +977,7 @@ myapp-deployment
 
 {% endraw %}
 
-Результат:
+Output:
 
 ```yaml
       containers:
@@ -987,7 +987,7 @@ myapp-deployment
         image: node
 ```
 
-Используйте `-` после {% raw %}`{{`{% endraw %} и/или до {% raw %}`}}`{% endraw %} для удаления лишних пробелов до и/или после результата выполнения действия, например:
+Use `-` after {% raw %}`{{`{% endraw %} and/or before {% raw %}`}}`{% endraw %} to remove extra spaces before and/or after the action result, for example:
 
 {% raw %}
 
@@ -997,30 +997,30 @@ myapp-deployment
 
 {% endraw %}
 
-Результат:
+Output:
 
 ```
 helloworld
 ```
 
-## Комментарии
+## Comments
 
-Поддерживаются два типа комментариев — комментарии шаблонизации {% raw %}`{{ /* */ }}`{% endraw %} и комментарии манифестов `#`.
+werf supports two types of comments — template comments {% raw %}`{{ /* */ }}`{% endraw %}} and manifest comments `#`.
 
-### Комментарии шаблонизации
+### Template comments
 
-Комментарии шаблонизации скрываются при формировании манифестов:
+The template comments are stripped off during manifest generation:
 
 {% raw %}
 
 ```
-{{ /* Этот комментарий пропадёт */ }}
+{{ /* This comment will be stripped off */ }}
 app: myApp
 ```
 
 {% endraw %}
 
-Комментарии могут быть многострочными:
+Comments can be multi-line:
 
 {% raw %}
 
@@ -1033,49 +1033,49 @@ World
 
 {% endraw %}
 
-Шаблоны в них игнорируются:
+Template actions are ignored in such comments
 
 {% raw %}
 
 ```
 {{ /*
-{{ print "Эта шаблонизация игнорируется" }}
+{{ print "This template action will be ignored" }}
 /* }}
 ```
 
 {% endraw %}
 
-### Комментарии манифестов
+### Manifest comments
 
-Комментарии манифестов сохраняются при формировании манифестов:
+The manifest comments are retained during manifest generation:
 
 ```yaml
-# Этот комментарий сохранится
+# This comment will stay in place
 app: myApp
 ```
 
-Комментарии могут быть только однострочнными:
+Only single-line comments of this type are supported:
 
 ```yaml
-# Для многострочных комментариев используйте
-# несколько однострочных комментариев подряд
+# For multi-line comments, use several
+# single-line comments in a row
 ```
 
-Шаблоны в них выполняются:
+The template actions encountered in them are carried out:
 
 {% raw %}
 
 ```
-# {{ print "Эта шаблонизация выполняется" }}
+# {{ print "This template action will be carried out" }}
 ```
 
 {% endraw %}
 
-## Отладка
+## Debugging
 
-Используйте `werf render`, чтобы полностью сформировать и отобразить конечные Kubernetes-манифесты. Укажите опцию `--debug`, чтобы увидеть манифесты, даже если они не являются корректным YAML.
+Use `werf render` to render and display ready-to-use Kubernetes manifests. The `--debug` option displays manifests even if they are not valid YAML.
 
-Отобразить содержимое переменной:
+Here's how you can display the variable contents:
 
 {% raw %}
 
@@ -1085,7 +1085,7 @@ output: {{ $appName | toYaml }}
 
 {% endraw %}
 
-Отобразить содержимое переменной-списка или словаря:
+Display the contents of a list or dictionary variable:
 
 {% raw %}
 
@@ -1095,7 +1095,7 @@ output: {{ $dictOrList | toYaml | nindent 2 }}
 
 {% endraw %}
 
-Отобразить тип данных у переменной:
+Display the variable's data type:
 
 {% raw %}
 
@@ -1105,12 +1105,12 @@ output: {{ kindOf $myvar }}
 
 {% endraw %}
 
-Отобразить произвольную строку, остановив дальнейшее формирование шаблонов:
+Display some string and stop template rendering:
 
 {% raw %}
 
 ```
-{{ fail (printf "Тип данных: %s" (kindOf $myvar)) }}
+{{ fail (printf "Data type: %s" (kindOf $myvar)) }}
 ```
 
 {% endraw %}
