@@ -516,6 +516,12 @@ tasks:
     cmds:
       - npm install -g prettier
 
+  deps:install:format:
+    desc: "Install format dependencies"
+    cmds:
+      - go install github.com/daixiang0/gci@latest
+      - go install mvdan.cc/gofumpt@latest
+
   sign:
     desc: 'Sign last version tag + origin/main and push signatures. Important vars: "refs".'
     cmds:
