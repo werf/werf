@@ -250,6 +250,11 @@ var (
 )
 
 func CheckBundlePathAllowed(path string) bool {
+	// TODO(bundles): provide more canonical way to whitelist/blacklist bundle files
+	if os.Getenv("WERF_BUNDLE_SCHEMA_NONSTRICT") == "1" {
+		return true
+	}
+
 	for _, p := range AllowedBundleChartFiles {
 		if p == path {
 			return true
