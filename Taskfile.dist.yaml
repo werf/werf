@@ -79,7 +79,8 @@ tasks:
   build:dev:all:
     desc: "Build all werf dev binaries in parallel."
     deps:
-      - build:dev:linux:amd64
+      - build:dev:linux:amd64:cgo
+      - build:dev:linux:amd64:go
       - build:dev:linux:arm64
       - build:dev:darwin:amd64
       - build:dev:darwin:arm64
@@ -97,7 +98,23 @@ tasks:
   build:dev:linux:amd64:
     desc: "Build werf dev binary for linux/amd64."
     cmds:
+      - task: build:dev:linux:amd64:cgo
+        vars:
+          outputDir: "{{.outputDir}}"
+
+  build:dev:linux:amd64:cgo:
+    desc: "Build werf dev binary for linux/amd64 with cgo."
+    cmds:
       - task: _build:cgo:dev
+        vars:
+          targetOS: "linux"
+          targetArch: "amd64"
+          outputDir: "{{.outputDir}}"
+
+  build:dev:linux:amd64:go:
+    desc: "Build werf dev binary for linux/amd64 without cgo."
+    cmds:
+      - task: _build:go:dev
         vars:
           targetOS: "linux"
           targetArch: "amd64"
