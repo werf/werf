@@ -48,15 +48,11 @@ toc: false
 
 Задает внешнюю зависимость для ресурса. Ресурс с аннотацией будет развернут только после создания и готовности внешней зависимости.
 
-Дополнительная информация доступна в разделе [Внешние зависимости]({{ "/usage/deploy/deployment_order.html#внешние-зависимости" | true_relative_url }}).
-
 ## External dependency namespace
 
 `<any-name>.external-dependency.werf.io/namespace: name`
 
 Указывает пространство имен для внешней зависимости, заданной [соответствующей аннотацией](#external-dependency-resource). Префикс `<any-name>` должен быть таким же, как у аннотации, определяющей внешнюю зависимость.
-
-Дополнительная информация доступна в разделе [Внешние зависимости]({{ "/usage/deploy/deployment_order.html#внешние-зависимости" | true_relative_url }}).
 
 ## Replicas on creation
 
