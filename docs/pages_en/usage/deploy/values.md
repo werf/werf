@@ -130,7 +130,7 @@ There are following service values:
  - Resources will be deployed in `.Values.werf.namespace` namespace.
  - Name of a CI/CD environment used during the current deploy process: `.Values.werf.env`.
  - Container registry repo used during the current deploy process: `.Values.werf.repo`.
- - Full images names used during the current deploy process: `.Values.werf.image.NAME`. More info about using this available in [the templates article]({{ "/usage/deploy/templates.html#integration-with-built-images" | true_relative_url }}).
+ - Full images names used during the current deploy process: `.Values.werf.image.NAME`.
  - Only tags of built images. Usually used in combination with `.Values.werf.repo` to pass image repos and image tags separately.
  - Info about commit from which werf was executed: `.Values.werf.commit.hash`, `.Values.werf.commit.date.human`, `.Values.werf.commit.date.unix`.
 
