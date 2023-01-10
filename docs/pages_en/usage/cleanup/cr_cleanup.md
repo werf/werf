@@ -5,11 +5,20 @@ permalink: usage/cleanup/cr_cleanup.html
 
 The number of images can grow rapidly, taking up more space in the container registry and thus leading to a significant increase in costs. To control the growth and keep it at an acceptable level, werf offers its cleanup approach. It takes into account the images used in Kubernetes as well as their relevance based on the Git history when deciding which images to delete.
 
-The [**werf cleanup**]({{ "reference/cli/werf_cleanup.html" | true_relative_url }}) command is designed to run on a schedule. werf performs the (safe) cleanup according to the specified cleanup policies.
+The [**werf cleanup**]({{ "reference/cli/werf_cleanup.html" | true_relative_url }}) command is designed to run on a schedule. werf performs the (safe) cleanup according to the cleanup policies.
+
+Most likely, the default cleanup policies will cover all your needs, and no additional configuration will be necessary.
 
 Note that the cleanup does not free up space occupied by images in the container registry. werf only removes tags for irrelevant images (manifests). You will have to run the container registry garbage collector periodically to clean up the associated data.
 
 > The issue of cleaning up images in the container registry and our approach to addressing it are covered in detail in the article [The problem of "smart" cleanup of container images and addressing it in werf](https://www.cncf.io/blog/2020/10/15/overcoming-the-challenges-of-cleaning-up-container-images/)
+
+## Automating the container registry cleanup
+
+Perform the following steps to automate the removal of irrelevant images from the container registry:
+
+- Set [**werf cleanup**]({{ "reference/cli/werf_cleanup.html" | true_relative_url }}) to run periodically to remove the no-longer-relevant tags from the container registry. 
+- Set [garbage collector](#container-registrys-garbage-collector) to run on intervals to free up space in the container registry.
 
 ## Ignoring images that Kubernetes uses
 
