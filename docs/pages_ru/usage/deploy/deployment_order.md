@@ -3,114 +3,266 @@ title: Порядок развертывания
 permalink: usage/deploy/deployment_order.html
 ---
 
-Во время запуска команды `werf converge` werf запускает процесс деплоя, включающий следующие этапы:
+## Стадии развертывания
 
- 1. Преобразование шаблонов чартов в единый список манифестов ресурсов Kubernetes и их проверка.
- 2. Последовательный запуск хуков `pre-install` или `pre-upgrade`, отсортированных по весу, и контроль каждого хука до завершения его работы с выводом логов.
- 3. Группировка ресурсов Kubernetes, не относящихся к хукам, по их весу и последовательное развертывание каждой группы в соответствии с ее весом: создание/обновление/удаление ресурсов и отслеживание их до готовности с выводом логов в процессе.
- 4. Запуск хуков `post-install` или `post-upgrade` по аналогии с хуками `pre-install` и `pre-upgrade`.
+Развертывание Kubernetes-ресурсов происходит в следующей последовательности:
 
-## Вес ресурсов
+1. Развертывание `CustomResourceDefinitions` из папок `crds` подключенных чартов.
 
-Все ресурсы по умолчанию применяются (apply) и отслеживаются одновременно, поскольку изначально у них одинаковый вес ([`werf.io/weight: 0`]({{ "/reference/deploy_annotations.html#resource-weight" | true_relative_url }})) (при условии, что вы его не меняли). Можно задать порядок применения (apply) и отслеживания ресурсов, установив для них различные веса.
+2. Развертывание хуков `pre-install`, `pre-upgrade` или `pre-rollback` по одному хуку за раз, от хуков с меньшим весом к большему. Если хук имеет зависимость от внешнего ресурса, то он развернётся только после его готовности.
 
-Перед фазой развертывания werf группирует ресурсы на основе их веса, затем выполняет apply для группы с наименьшим ассоциированным весом и ждет, пока ресурсы из этой группы будут готовы. После успешного развертывания всех ресурсов из этой группы, werf переходит к развертыванию ресурсов из группы со следующим наименьшим весом. Процесс продолжается до тех пор, пока не будут развернуты все ресурсы релиза.
+3. Развертывание основных ресурсов: объединение ресурсов с одинаковым весом в группы (ресурсы без указанного веса имеют вес 0) и развертывание по одной группе за раз, от групп с ресурсами меньшего веса к группам с ресурсами большего веса. Если ресурс в группе имеет зависимость от внешнего ресурса, то она начнёт развертывание только после его готовности.
 
-> Обратите внимание, что "werf.io/weight" работает только для ресурсов, не относящихся к хукам. Для хуков следует использовать "helm.sh/hook-weight".
+4. Развертывание хуков `post-install`, `post-upgrade` или `post-rollback` по одному хуку за раз, от хуков с меньшим весом к большему. Если хук имеет зависимость от внешнего ресурса, то он развернётся только после его готовности.
 
-Давайте рассмотрим следующий пример:
-```yaml
-kind: Job
-metadata:
-  name: db-migration
----
-kind: StatefulSet
-metadata:
-  name: postgres
----
-kind: Deployment
-metadata:
-  name: app
----
-kind: Service
-metadata:
-  name: app
-```
+## Развертывание CustomResourceDefinitions
 
-Все ресурсы из примера выше будут развертываться одновременно, поскольку у них одинаковый вес по умолчанию (0). Но что если базу данных необходимо развернуть до выполнения миграций, а приложение, в свою очередь, должно запуститься только после их завершения? Что ж, у этой проблемы есть решение! Попробуйте сделать так:
-```yaml
-kind: StatefulSet
-metadata:
-  name: postgres
-  annotations:
-    werf.io/weight: "-2"
----
-kind: Job
-metadata:
-  name: db-migration
-  annotations:
-    werf.io/weight: "-1"
----
-kind: Deployment
-metadata:
-  name: app
----
-kind: Service
-metadata:
-  name: app
-```
-
-В приведенном выше примере werf сначала развернет базу данных и дождется ее готовности, затем запустит миграции и дождется их завершения, после чего развернет приложение и связанный с ним сервис.
-
-Полезные ссылки:
-* [`werf.io/weight`]({{ "/reference/deploy_annotations.html#resource-weight" | true_relative_url }})
-
-## Helm-хуки
-
-Helm-хуки — произвольные ресурсы Kubernetes, помеченные специальной аннотацией `helm.sh/hook`. Например:
-
-```yaml
-kind: Job
-metadata:
-  name: somejob
-  annotations:
-    "helm.sh/hook": pre-upgrade,pre-install
-    "helm.sh/hook-weight": "1"
-```
-
-Существует много разных helm-хуков, влияющих на процесс деплоя. Хуки `pre|post-install|upgrade` наиболее часто используются для выполнения таких задач, как миграция (в хуках `pre-upgrade`) или выполнении некоторых действий после деплоя. Полный список доступных хуков можно найти в соответствующей документации [Helm](https://helm.sh/docs/topics/charts_hooks/).
-
-Хуки сортируются в порядке возрастания согласно значению аннотации `helm.sh/hook-weight` (хуки с одинаковым весом сортируются по имени в алфавитном порядке), после чего хуки последовательно создаются и выполняются. werf пересоздает ресурс Kubernetes для каждого хука, в случае когда ресурс уже существует в кластере. Созданные ресурсы-хуки не удаляются после выполнения, если не указано [специальной аннотации `"helm.sh/hook-delete-policy": hook-succeeded,hook-failed`](https://helm.sh/docs/topics/charts_hooks/).
-
-## Внешние зависимости
-
-Чтобы сделать один ресурс релиза зависимым от другого, можно изменить его порядок развертывания. После этого зависимый ресурс будет развертываться только после успешного развертывания основного. Но что делать, когда ресурс релиза должен зависеть от ресурса, который не является частью данного релиза или даже не управляется werf (например, создан неким оператором)?
-
-В этом случае можно воспользоваться аннотацией [`<name>.external-dependency.werf.io/resource`]({{ "/reference/deploy_annotations.html#external-dependency-resource" | true_relative_url }}). Ресурс с данной аннотацией не будет развернут, пока не будет создана и готова заданная внешняя зависимость.
+Для развертывания CustomResourceDefinitions поместите CRD-манифесты в нешаблонизируемые файлы `crds/*.yaml` в любом из подключенных чартов. При следующем развертывании эти CRD будут развернуты первыми, а хуки и основные ресурсы будут развернуты только после них.
 
 Пример:
+
 ```yaml
-kind: Deployment
-metadata:
-  name: app
-  annotations:
-    secret.external-dependency.werf.io/resource: secret/dynamic-vault-secret
+# .helm/crds/crontab.yaml:
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+# ...
+spec:
+  names:
+    kind: CronTab
 ```
 
-В приведенном выше примере werf дождется создания `dynamic-vault-secret`, прежде чем приступить к развертыванию `app`. Мы исходим из предположения, что `dynamic-vault-secret` создается оператором из инстанса Vault и не управляется werf.
-
-Давайте рассмотрим еще один пример:
-```yaml
-kind: Deployment
-metadata:
-  name: service1
-  annotations:
-    service2.external-dependency.werf.io/resource: deployment/service2
-    service2.external-dependency.werf.io/namespace: service2-production
+```
+# .helm/templates/crontab.yaml:
+apiVersion: example.org/v1
+kind: CronTab
+# ...
 ```
 
-В данном случае werf дождется успешного развертывания `service2` в другом пространстве имен, прежде чем приступить к развертыванию `service1`. Обратите внимание, что `service2` может развертываться либо как часть другого релиза werf, либо управляться иными инструментами в рамках CI/CD (т.е. находиться вне контроля werf).
+```shell
+werf converge
+```
 
-Полезные ссылки:
-* [`<name>.external-dependency.werf.io/resource`]({{ "/reference/deploy_annotations.html#external-dependency-resource" | true_relative_url }})
-* [`<name>.external-dependency.werf.io/namespace`]({{ "/reference/deploy_annotations.html#external-dependency-namespace" | true_relative_url }})
+Результат: сначала развернут CRD для CronTab-ресурса, а затем развернут сам CronTab-ресурс.
+
+## Изменение порядка развертывания ресурсов (только в werf)
+
+По умолчанию werf объединяет все основные ресурсы (основные — не являющиеся хуками или CRDs из `crds/*.yaml`) в одну группу, создаёт ресурсы этой группы, а затем отслеживает их готовность.
+
+Создание ресурсов группы происходит в следующем порядке:
+
+- Namespace
+- NetworkPolicy
+- ResourceQuota
+- LimitRange
+- PodSecurityPolicy
+- PodDisruptionBudget
+- ServiceAccount
+- Secret
+- SecretList
+- ConfigMap
+- StorageClass
+- PersistentVolume
+- PersistentVolumeClaim
+- CustomResourceDefinition
+- ClusterRole
+- ClusterRoleList
+- ClusterRoleBinding
+- ClusterRoleBindingList
+- Role
+- RoleList
+- RoleBinding
+- RoleBindingList
+- Service
+- DaemonSet
+- Pod
+- ReplicationController
+- ReplicaSet
+- Deployment
+- HorizontalPodAutoscaler
+- StatefulSet
+- Job
+- CronJob
+- Ingress
+- APIService
+
+Отслеживание готовности включается для всех ресурсов группы одновременно сразу после создания *всех* ресурсов группы.
+
+Для изменения порядка развертывания ресурсов можно создать *новые группы ресурсов* через задание ресурсам *веса*, отличного от веса по умолчанию `0`. Все ресурсы с одинаковым весом объединяются в группы, а затем группы ресурсов развертываются по очереди, от группы с меньшим весом к большему, например:
+
+```
+# .helm/templates/example.yaml:
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: database
+  annotations:
+    werf.io/weight: "-1"
+# ...
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: database-migrations
+# ...
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app1
+  annotations:
+    werf.io/weight: "1"
+# ...
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app2
+  annotations:
+    werf.io/weight: "1"
+# ...
+```
+
+```shell
+werf converge
+```
+
+Результат: сначала был развернут ресурс `database`, затем — `database-migrations`, а затем параллельно развернулись `app1` и `app2`.
+
+## Запуск задач перед/после установки, обновления, отката или удаления релиза
+
+Для развертывания определенных ресурсов только перед или после установки, обновления, отката или удаления релиза преобразуйте ресурс в *хук* аннотацией `helm.sh/hook`, например:
+
+```
+# .helm/templates/example.yaml:
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: database-initialization
+  annotations:
+    helm.sh/hook: pre-install
+# ...
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+```
+
+```shell
+werf converge
+```
+
+Результат: ресурс `database-initialization` будет развернут только при первой *установке* релиза, а ресурс `myapp` будет развертываться и при установке, и при обновлении, и при откате релиза.
+
+Аннотация `helm.sh/hook` объявляет ресурс хуком и указывает, при каких условиях этот ресурс должен развертываться (можно указать несколько условий через запятую). Возможные условия для развертывания хука:
+
+* `pre-install` — при установке релиза до установки основных ресурсов;
+
+* `pre-upgrade` — при обновлении релиза до обновления основных ресурсов;
+
+* `pre-rollback` — при откате релиза до отката основных ресурсов;
+
+* `pre-delete` — при удалении релиза до удаления основных ресурсов;
+
+* `post-install` — при установке релиза после установки основных ресурсов;
+
+* `post-upgrade` — при обновлении релиза после обновления основных ресурсов;
+
+* `post-rollback` — при откате релиза после отката основных ресурсов;
+
+* `post-delete` — при удалении релиза после удаления основных ресурсов.
+
+Для задания хукам порядка развертывания присвойте им разные *веса* (по умолчанию — `0`), чтобы хуки развертывались по очереди, от хука с меньшим весом к большему, например:
+
+```
+# .helm/templates/example.yaml:
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: first
+  annotations:
+    helm.sh/hook: pre-install
+    helm.sh/hook-weight: "-1"
+# ...
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: second
+  annotations:
+    helm.sh/hook: pre-install
+# ...
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: third
+  annotations:
+    helm.sh/hook: pre-install
+    helm.sh/hook-weight: "1"
+# ...
+```
+
+```shell
+werf converge
+```
+
+Результат: сначала будет развернут хук `first`, затем хук `second`, затем хук `third`.
+
+**По умолчанию при повторных развертываниях того же самого хука, старый хук в кластере удаляется прямо перед развертыванием нового хука.** Этап удаления старого хука можно изменить аннотацией `helm.sh/hook-delete-policy`, которая принимает следующие значения:
+
+- `hook-succeeded` — удалять новый хук сразу после его удачного развертывания, при неудачном развертывании не удалять совсем;
+
+- `hook-failed` — удалять новый хук сразу после его неудачного развертывания, при удачном развертывании не удалять совсем;
+
+- `before-hook-creation` — (по умолчанию) удалять старый хук сразу перед созданием нового.
+
+## Ожидание готовности ресурсов, не принадлежащих релизу (только в werf)
+
+Развертываемым в текущем релизе ресурсам могут требоваться ресурсы, которые не принадлежат текущему релизу. werf может дожидаться готовности этих внешних ресурсов благодаря аннотации `<name>.external-dependency.werf.io/resource`, например:
+
+```
+# .helm/templates/example.yaml:
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+  annotations:
+    secret.external-dependency.werf.io/resource: secret/my-dynamic-vault-secret
+# ...
+```
+
+```shell
+werf converge
+```
+
+Результат: Deployment `myapp` начнёт развертывание только после того, как Secret `my-dynamic-vault-secret`, создаваемый автоматически оператором в кластере, будет создан и готов.
+
+А так можно ожидать готовности сразу нескольких внешних ресурсов:
+
+```
+# .helm/templates/example.yaml:
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+  annotations:
+    secret.external-dependency.werf.io/resource: secret/my-dynamic-vault-secret
+    database.external-dependency.werf.io/resource: statefulset/my-database
+# ...
+```
+
+По умолчанию werf ищет внешний ресурс в Namespace релиза (если, конечно, ресурс не кластерный). Namespace внешнего ресурса можно изменить аннотацией `<name>.external-dependency.werf.io/namespace`:
+
+```
+# .helm/templates/example.yaml:
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+  annotations:
+    secret.external-dependency.werf.io/resource: secret/my-dynamic-vault-secret
+    secret.external-dependency.werf.io/namespace: my-namespace 
+```
+
+*Обратите внимание, что ожидать готовность внешнего ресурса будут и все другие ресурсы релиза с тем же весом, так как ресурсы объединяются по весу в группы и развертываются именно группами.*
