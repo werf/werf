@@ -282,7 +282,7 @@ werf предоставляет следующие команды compose:
 ### Опциональный параметр env
 
 - Для команд `werf converge`, `werf render` and `werf bundle publish` существует параметр `--env`.
-- `--env` [влияет на имя helm релиза и kubernetes namespace]({{ "/usage/deploy/releases.html#имя-релиза" | true_relative_url }}) также как в v1.1.
+- `--env` влияет на имя helm релиза и kubernetes namespace также как в v1.1.
   - При указании параметра `--env` имя [helm релиза]({{ "/usage/deploy/releases.html" | true_relative_url }}) будет сгенерировано по шаблону `[[ project ]]-[[ env ]]` и namespace в kubernetes будет сгенерирован по такому же шаблону `[[ project ]]-[[ env ]]` — так же как в версии v1.1.
   - Когда параметр `--env` не указан, werf будет использовать шаблон `[[ project ]]` для генерации имени [helm релиза]({{ "/usage/deploy/releases.html" | true_relative_url }}) и такой же шаблон `[[ project ]]` для генерации namespace в kubernetes.
 
