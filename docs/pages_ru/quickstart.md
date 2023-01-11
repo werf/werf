@@ -473,7 +473,3 @@ _Примечание: для подключения к кластеру Kuberne
    - Worker на основе .NET Core, Java или .NET Core 2.1 собирает голоса и сохраняет их в...
    - Базу данных Postgres или TiDB в томе Docker;
    - Веб-приложение на Node.js или ASP.NET Core SignalR в реальном времени показывает результаты голосования.
-
-## Что дальше?
-
-Рекомендуем ознакомиться со статьей ["Использование werf с системами CI/CD"]({{ "usage/integration_with_ci_cd_systems/using_with_ci_cd_systems.html" | true_relative_url }}) или обратиться к соответствующим [руководствам](/guides.html).
