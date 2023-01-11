@@ -12,7 +12,7 @@ Using this environment, werf determines:
 1. Release name.
 2. Kubernetes namespace.
 
-The environment is a required parameter for deploying and should be specified either with an `--env` option or determined automatically using the data for the CI/CD system used. See the [CI/CD configuration integration]({{ "usage/integration_with_ci_cd_systems/how_ci_cd_integration_works/general_overview.html#cicd-configuration-integration" | true_relative_url }}) for more info.
+The environment is a required parameter for deploying and should be specified either with an `--env` option or determined automatically using the data for the CI/CD system used.
 
 ### Using environment in templates
 
