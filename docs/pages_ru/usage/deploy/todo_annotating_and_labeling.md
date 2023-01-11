@@ -13,12 +13,6 @@ werf автоматически выставляет следующие встр
  * `"project.werf.io/env": ENV` — имя окружения, указанное с помощью параметра `--env` или переменной окружения `WERF_ENV` (не обязательно, аннотация не устанавливается, если окружение не было указано при запуске).
 
 При использовании команды `werf ci-env` перед выполнением команды `werf converge`, werf также автоматически устанавливает аннотации содержащие информацию из используемой системы CI/CD (например, GitLab CI).
-Например, [`project.werf.io/git`]({{ "usage/integration_with_ci_cd_systems/how_ci_cd_integration_works/gitlab_ci_cd.html#werf_add_annotation_project_git" | true_relative_url }}), [`ci.werf.io/commit`]({{ "usage/integration_with_ci_cd_systems/how_ci_cd_integration_works/gitlab_ci_cd.html#werf_add_annotation_ci_commit" | true_relative_url }}), [`gitlab.ci.werf.io/pipeline-url`]({{ "usage/integration_with_ci_cd_systems/how_ci_cd_integration_works/gitlab_ci_cd.html#werf_add_annotation_gitlab_ci_pipeline_url" | true_relative_url }}) и [`gitlab.ci.werf.io/job-url`]({{ "usage/integration_with_ci_cd_systems/how_ci_cd_integration_works/gitlab_ci_cd.html#werf_add_annotation_gitlab_ci_job_url" | true_relative_url }}).
-
-Для более подробной информации об интеграции werf с системами CI/CD читайте статьи по темам:
-
- * [Общие сведения по работе с CI/CD системами]({{ "usage/integration_with_ci_cd_systems/how_ci_cd_integration_works/general_overview.html" | true_relative_url }});
- * [Работа GitLab CI]({{ "usage/integration_with_ci_cd_systems/how_ci_cd_integration_works/gitlab_ci_cd.html" | true_relative_url }}).
 
 ## Пользовательские аннотации и лейблы
 

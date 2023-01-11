@@ -39,9 +39,9 @@ editme_button: false
             <div class="overview__step-num">3</div>
             <div class="overview__step-time">15 минут</div>
         </div>
-        <div class="overview__step-title">Изучи основы применения werf в любых системах CI/CD</div>
+        <div class="overview__step-title">Изучи основы применения werf в CI/CD</div>
         <div class="overview__step-actions">
-            <a class="overview__step-action" href="{{ "/usage/integration_with_ci_cd_systems/using_with_ci_cd_systems.html" | true_relative_url }}">Использование werf в системах CI/CD</a>
+            <a class="overview__step-action" href="{{ "/usage/integration_with_ci_cd_systems.html" | true_relative_url }}">Использование werf в системах CI/CD</a>
         </div>
     </div>
     <div class="overview__step">
@@ -96,7 +96,6 @@ editme_button: false
             <p>Для полноценного применения werf ознакомление с этим разделом не требуется, однако он будет полезен тем, что хочет больше узнать об устройстве и принципах работы инструмента.</p>
 <div markdown="1">
  - [Сборка образов]({{ "usage/build/process.html" | true_relative_url }}) — рассказывается о том, что такое сборщик образов и стадии, как работает хранилище стадий, что такое сервер синхронизации, а также приводится другая информация, связанная с процессом сборки.
- - [Как работает интеграция с CI/CD]({{ "usage/integration_with_ci_cd_systems/how_ci_cd_integration_works/general_overview.html" | true_relative_url }}).
 </div>
         </div>
     </div>
