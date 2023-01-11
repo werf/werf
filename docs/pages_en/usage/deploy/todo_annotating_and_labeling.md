@@ -12,12 +12,7 @@ werf automatically sets the following built-in annotations to all deployed chart
 * `"project.werf.io/name": PROJECT_NAME` — project name specified in the `werf.yaml`;
 * `"project.werf.io/env": ENV` — environment name specified via the `--env` param or `WERF_ENV` variable; optional, will not be set if env is not used.
 
-werf also sets auto annotations containing information from the CI/CD system used (for example, GitLab CI)  when running the `werf ci-env` command prior to the `werf converge` command. For example, [`project.werf.io/git`]({{ "usage/integration_with_ci_cd_systems/how_ci_cd_integration_works/gitlab_ci_cd.html#werf_add_annotation_project_git" | true_relative_url }}), [`ci.werf.io/commit`]({{ "usage/integration_with_ci_cd_systems/how_ci_cd_integration_works/gitlab_ci_cd.html#werf_add_annotation_ci_commit" | true_relative_url }}), [`gitlab.ci.werf.io/pipeline-url`]({{ "usage/integration_with_ci_cd_systems/how_ci_cd_integration_works/gitlab_ci_cd.html#werf_add_annotation_gitlab_ci_pipeline_url" | true_relative_url }}) and [`gitlab.ci.werf.io/job-url`]({{ "usage/integration_with_ci_cd_systems/how_ci_cd_integration_works/gitlab_ci_cd.html#werf_add_annotation_gitlab_ci_job_url" | true_relative_url }}).
-
-For more information about the CI/CD integration, please refer to the following pages:
-
-* [plugging into CI/CD overview]({{ "/usage/integration_with_ci_cd_systems/how_ci_cd_integration_works/general_overview.html" | true_relative_url }});
-* [plugging into GitLab CI]({{ "/usage/integration_with_ci_cd_systems/how_ci_cd_integration_works/gitlab_ci_cd.html" | true_relative_url }}).
+werf also sets auto annotations containing information from the CI/CD system used (for example, GitLab CI) when running the `werf ci-env` command prior to the `werf converge` command.
 
 ## Custom annotations and labels
 

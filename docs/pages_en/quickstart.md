@@ -465,7 +465,3 @@ To deploy an application using werf, we should define the desired state in the G
    - A .NET Core, Java or .NET Core 2.1 worker consumes votes and stores them in…
    - A Postgres or TiDB database backed by a Docker volume;
    - A Node.js or ASP.NET Core SignalR web-app shows the results of the voting in real-time.
-
-## What's next?
-
-Check the ["Using werf with CI/CD systems" article]({{ "usage/integration_with_ci_cd_systems/using_with_ci_cd_systems.html" | true_relative_url }}) or refer to the [guides](/guides.html).
