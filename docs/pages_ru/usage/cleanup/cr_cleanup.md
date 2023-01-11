@@ -7,7 +7,7 @@ permalink: usage/cleanup/cr_cleanup.html
 
 Команда [**werf cleanup**]({{ "reference/cli/werf_cleanup.html" | true_relative_url }}) рассчитана на периодический запуск. Удаление производится в соответствии с политиками очистки и является безопасной процедурой.
 
-Вероятнее всего политики очистки по умолчанию полностью покроют потребности проекта и дополнительная настройка не потребуется.  
+Вероятнее всего, политики очистки по умолчанию полностью покроют потребности проекта и дополнительная настройка не потребуется.
 
 Важно отметить, что фактически размер занимаемого образами места в container registry не сокращается после очистки. werf удаляет теги неактуальных образов (манифесты), а для очистки связанных с ними данных необходимо периодически запускать сборщик мусора container registry.
 
@@ -15,12 +15,12 @@ permalink: usage/cleanup/cr_cleanup.html
 
 ## Автоматизация очистки container registry
 
-Для того чтобы автоматизировать очистку неактуальных образов в container registry необходимо выполнить следующие действия:     
+Для того, чтобы автоматизировать очистку неактуальных образов в container registry, необходимо выполнить следующие действия:
 
-- Настроить периодический запуск [**werf cleanup**]({{ "reference/cli/werf_cleanup.html" | true_relative_url }}) для удаления неактуальных тегов из container registry. 
+- Настроить периодический запуск [**werf cleanup**]({{ "reference/cli/werf_cleanup.html" | true_relative_url }}) для удаления неактуальных тегов из container registry.
 - Настроить [периодический запуск сборщика мусора](#сборщик-мусора-container-registry) для непосредственного освобождения места в container registry.
 
-## Игнорирование образов, используемых в Kubernetes 
+## Игнорирование образов, используемых в Kubernetes
 
 werf подключается **ко всем кластерам** Kubernetes, описанным **во всех контекстах** конфигурации kubectl, и собирает имена образов для следующих типов объектов: `pod`, `deployment`, `replicaset`, `statefulset`, `daemonset`, `job`, `cronjob`, `replicationcontroller`.
 
@@ -135,11 +135,11 @@ cleanup:
       last: 2
       in: 168h
       operator: And
-  - references:  
+  - references:
       branch: /^(main|master|staging|production)$/
     imagesPerReference:
       last: 10
-``` 
+```
 
 Разберём каждую политику по отдельности:
 
