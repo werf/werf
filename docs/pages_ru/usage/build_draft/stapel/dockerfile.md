@@ -37,9 +37,9 @@ docker:
 
 Если вам требуются определённые переменные окружения во время сборки (например, `TERM`), то вам необходимо использовать [базовый образ]({{ "usage/build_draft/stapel/base.html" | true_relative_url }}), в котором эти переменные окружения установлен или экспортировать их в [_пользовательской стадии_]({{ "usage/build/building_images_with_stapel/assembly_instructions.html#пользовательские-стадии" | true_relative_url }}).
 
-##Как Stapel-сборщик работает с CMD и ENTRYPOINT
+## Как Stapel-сборщик работает с CMD и ENTRYPOINT
 
-Для сборки стадии werf запускает контейнер со служебными значениями `CMD` и `ENTRYPOINT`, а затем заменяет их значениями [базового образа]({{ "advanced/building_images_with_stapel/base_image.html" | true_relative_url }}). Если в базовом образе эти значения не установлены, werf сбрасывает их следующим образом:
+Для сборки стадии werf запускает контейнер со служебными значениями `CMD` и `ENTRYPOINT`, а затем заменяет их значениями [базового образа]({{ "usage/build_draft/stapel/base.html" | true_relative_url }}). Если в базовом образе эти значения не установлены, werf сбрасывает их следующим образом:
 - `[]` для `CMD`;
 - `[""]` для `ENTRYPOINT`.
 
