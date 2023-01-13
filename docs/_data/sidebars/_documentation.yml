@@ -208,6 +208,9 @@ entries:
               - title: Порядок развертывания
                 url: /usage/deploy/deployment_order.html
 
+              - title: Сценарии развертывания
+                url: /usage/deploy/deployment_scenarios.html
+
               - title: Отслеживание ресурсов
                 url: /usage/deploy/tracking.html
 
