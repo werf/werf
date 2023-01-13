@@ -823,6 +823,9 @@ entries:
               - title: Введение
                 url: /usage/deploy/intro.html
 
+              - title: Сценарии развертывания
+                url: /usage/deploy/deployment_scenarios.html
+
               - title: Чарты
                 url: /usage/deploy/charts.html
 
