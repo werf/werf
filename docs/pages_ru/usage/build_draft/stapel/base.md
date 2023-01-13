@@ -72,3 +72,13 @@ fromArtifact: <artifact name>
 ```yaml
 fromCacheVersion: <arbitrary string>
 ```
+
+## Как Stapel-сборщик работает с CMD и ENTRYPOINT из базового образа
+
+Для сборки стадии werf запускает контейнер со служебными значениями `CMD` и `ENTRYPOINT`, а затем заменяет их значениями [базового образа]({{ "usage/build_draft/stapel/base.html" | true_relative_url }}). Если в базовом образе эти значения не установлены, werf сбрасывает их следующим образом:
+- `[]` для `CMD`;
+- `[""]` для `ENTRYPOINT`.
+
+Также werf сбрасывает (использует специальные пустые значения) значение `ENTRYPOINT` базового образа, если указано значение `CMD` в конфигурации (`docker.CMD`).
+
+В противном случае поведение werf аналогично [поведению Docker](https://docs.docker.com/engine/reference/builder/#understand-how-cmd-and-entrypoint-interact).
