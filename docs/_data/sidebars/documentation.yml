@@ -820,7 +820,7 @@ entries:
 
           - title: Развертывание
             f:
-              - title: Введение
+              - title: Основы развертывания
                 url: /usage/deploy/intro.html
 
               - title: Чарты
