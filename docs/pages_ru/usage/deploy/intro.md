@@ -1,9 +1,9 @@
 ---
-title: Введение
+title: Основы развертывания
 permalink: usage/deploy/intro.html
 ---
 
-## Введение
+## werf и Helm
 
 За развертывание в werf отвечает Helm 3. werf стремится сделать работу с Helm более простой, удобной и гибкой, при этом не ломая обратную совместимость с Helm-чартами, Helm-шаблонами и Helm-релизами.
 
@@ -17,9 +17,9 @@ werf дает ряд дополнительных возможностей, не
 
 - интеграция сборки и развертывания и многое-многое другое.
 
-## Развертывание с werf
+## Пример развертывания
 
-Для развертывания простого приложения достаточно двух файлов и команды `werf converge`:
+Для развертывания простого приложения достаточно двух файлов и команды `werf converge`, запущенной в Git-репозитории приложения:
 
 ```
 # .helm/templates/hello.yaml:
@@ -51,6 +51,8 @@ werf converge --repo registry.example.org/repo --env production
 ```
 
 Результат: Deployment `hello` развёрнут в Namespace `hello-production`.
+
+## Расширенный пример развертывания
 
 Более сложный пример развертывания со сборкой образов и внешними Helm-чартами:
 
@@ -115,9 +117,3 @@ werf converge --repo registry.example.org/repo --env production
 ```
 
 Результат: собран образ `backend`, а затем Deployment `backend` и ресурсы чарта `postgresql` развёрнуты в Namespace `myapp-production`.
-
-Удалить развернутое приложение можно командой `werf dismiss`:
-
-```shell
-werf dismiss --repo registry.example.org/repo --env production
-```
