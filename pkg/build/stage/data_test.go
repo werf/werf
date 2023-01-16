@@ -18,19 +18,22 @@ type TestDependencies struct {
 type TestDependency struct {
 	ImageName string
 
-	TargetEnvImageName string
-	TargetEnvImageRepo string
-	TargetEnvImageTag  string
-	TargetEnvImageID   string
+	TargetEnvImageName   string
+	TargetEnvImageRepo   string
+	TargetEnvImageTag    string
+	TargetEnvImageID     string
+	TargetEnvImageDigest string
 
-	TargetBuildArgImageName string
-	TargetBuildArgImageRepo string
-	TargetBuildArgImageTag  string
-	TargetBuildArgImageID   string
+	TargetBuildArgImageName   string
+	TargetBuildArgImageRepo   string
+	TargetBuildArgImageTag    string
+	TargetBuildArgImageID     string
+	TargetBuildArgImageDigest string
 
-	DockerImageRepo string
-	DockerImageTag  string
-	DockerImageID   string
+	DockerImageRepo   string
+	DockerImageTag    string
+	DockerImageID     string
+	DockerImageDigest string
 }
 
 func (dep *TestDependency) GetDockerImageName() string {
@@ -64,6 +67,12 @@ func (dep *TestDependency) ToConfigDependency() *config.Dependency {
 			TargetEnv: dep.TargetEnvImageID,
 		})
 	}
+	if dep.TargetEnvImageDigest != "" {
+		depCfg.Imports = append(depCfg.Imports, &config.DependencyImport{
+			Type:      config.ImageDigestImport,
+			TargetEnv: dep.TargetEnvImageDigest,
+		})
+	}
 
 	if dep.TargetBuildArgImageName != "" {
 		depCfg.Imports = append(depCfg.Imports, &config.DependencyImport{
@@ -87,6 +96,12 @@ func (dep *TestDependency) ToConfigDependency() *config.Dependency {
 		depCfg.Imports = append(depCfg.Imports, &config.DependencyImport{
 			Type:           config.ImageIDImport,
 			TargetBuildArg: dep.TargetBuildArgImageID,
+		})
+	}
+	if dep.TargetBuildArgImageDigest != "" {
+		depCfg.Imports = append(depCfg.Imports, &config.DependencyImport{
+			Type:           config.ImageDigestImport,
+			TargetBuildArg: dep.TargetBuildArgImageDigest,
 		})
 	}
 
@@ -114,6 +129,9 @@ func CheckImageDependenciesAfterPrepare(img *LegacyImageStub, stageBuilder *stag
 		}
 		if dep.TargetEnvImageID != "" {
 			Expect(img._Container._ServiceCommitChangeOptions.Env[dep.TargetEnvImageID]).To(Equal(dep.DockerImageID))
+		}
+		if dep.TargetEnvImageDigest != "" {
+			Expect(img._Container._ServiceCommitChangeOptions.Env[dep.TargetEnvImageDigest]).To(Equal(dep.DockerImageDigest))
 		}
 
 		if dep.TargetBuildArgImageName != "" {
