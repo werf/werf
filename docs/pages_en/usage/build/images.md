@@ -1,6 +1,6 @@
 ---
 title: Image configuration
-permalink: usage/build_draft/images.html
+permalink: usage/build/images.html
 ---
 
 <!-- прим. для перевода: на основе https://werf.io/documentation/v1.2/reference/werf_yaml.html#image-section -->
@@ -136,7 +136,7 @@ The build context for the above configuration will include the following files:
 
 ## Stapel builder
 
-werf has a built-in alternative syntax for describing build instructions called Stapel. Refer to the [documentation]({{ "/usage/build_draft/stapel/overview.html" | true_relative_url }}) to learn more about the Stapel syntax.
+werf has a built-in alternative syntax for describing build instructions called Stapel. Refer to the [documentation]({{ "/usage/build/stapel/overview.html" | true_relative_url }}) to learn more about the Stapel syntax.
 
 
 Below is an example of a minimal stapel image configuration in `werf.yaml`:
@@ -156,7 +156,7 @@ git:
   to: /app
 ```
 
-There are 4 stages available to define arbitrary shell instructions, as well as a `git.stageDependencies` directive to set up triggers to rebuild these stages when the corresponding stages change (see [more]({{"/usage/build_draft/stapel/instructions.html#dependency-on-changes-in-the-git-repo"| true_relative_url }})):
+There are 4 stages available to define arbitrary shell instructions, as well as a `git.stageDependencies` directive to set up triggers to rebuild these stages when the corresponding stages change (see [more]({{"/usage/build/stapel/instructions.html#dependency-on-changes-in-the-git-repo"| true_relative_url }})):
 
 ```yaml
 image: app
@@ -214,7 +214,7 @@ import:
   after: install
 ```
 
-See [the stapel section]({{"usage/build_draft/stapel/base.html" | true_relative_url }}) for detailed instructions.
+See [the stapel section]({{"usage/build/stapel/base.html" | true_relative_url }}) for detailed instructions.
 
 ## Inheriting images and importing files
 

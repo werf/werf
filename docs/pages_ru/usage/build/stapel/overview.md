@@ -1,6 +1,6 @@
 ---
 title: Обзор
-permalink: usage/build_draft/stapel/overview.html
+permalink: usage/build/stapel/overview.html
 ---
 
 В werf встроен альтернативный синтаксис описания сборочных инструкций, называемый Stapel, который даёт следующие возможности:

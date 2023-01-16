@@ -1,6 +1,6 @@
 ---
 title: Storage layout
-permalink: usage/build_draft/storage.html
+permalink: usage/build/storage.html
 ---
 
 <!-- TODO: new content -->
