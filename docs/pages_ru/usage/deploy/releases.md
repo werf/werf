@@ -3,67 +3,81 @@ title: Управление релизами
 permalink: usage/deploy/releases.html
 ---
 
-В то время как чарт — набор конфигурационных файлов вашего приложения, релиз (**release**) — это объект времени выполнения, экземпляр вашего приложения, развернутого с помощью werf.
+## О релизах
 
-## Хранение релизов
+Результатом развертывания является *релиз* — совокупность развернутых в кластере ресурсов и служебной информации. Служебная информация по умолчанию хранится в специальном Secret-ресурсе.
 
-Информация о каждой версии релиза хранится в самом кластере Kubernetes. werf поддерживает сохранение в произвольном namespace в объектах Secret или ConfigMap.
+Релизы werf технически являются релизами Helm 3 и полностью с ними совместимы. Если вы использовали релизы Helm 2, то при новом развертывании с werf или при запуске команды `werf helm migrate2to3` релизы Helm 2 автоматически преобразуются в релизы Helm 3.
 
-По умолчанию, werf хранит информацию о релизах в объектах Secret в целевом namespace, куда происходит деплой приложения. Это полностью совместимо с конфигурацией по умолчанию по хранению релизов в [Helm 3](https://helm.sh), что полностью совместимо с конфигурацией [Helm 2](https://helm.sh) по умолчанию. Место хранения информации о релизах может быть указано при деплое с помощью параметров werf: `--helm-release-storage-namespace=NS` и `--helm-release-storage-type=configmap|secret`.
+## Автоматическое формирование имени релиза (только в werf)
 
-Для получения информации обо всех созданных релизах можно использовать команду [werf helm list]({{ "reference/cli/werf_helm_list.html" | true_relative_url }}), а для просмотра истории конкретного релиза [werf helm history]({{ "reference/cli/werf_helm_history.html" | true_relative_url }}).
-
-### Замечание о совместимости с Helm
-
-werf полностью совместим с уже установленным Helm 2, т.к. хранение информации о релизах осуществляется одним и тем же образом, как и в Helm. Если вы используете в Helm специфичное место хранения информации о релизах, а не значение по умолчанию, то вам нужно указывать место хранения с помощью опций werf `--helm-release-storage-namespace` и `--helm-release-storage-type`.
-
-Информация о релизах, созданных с помощью werf, может быть получена с помощью Helm, например, командами `helm list` и `helm get`. С помощью werf также можно обновлять релизы, развернутые ранее с помощью Helm.
-
-Команда [`werf helm list -A`]({{ "reference/cli/werf_helm_list.html" | true_relative_url }}) выводит список релизов созданных werf или Helm 3. Релизы, созданные через werf могут свободно просматриваться через утилиту helm командами `helm list` или `helm get` и другими.
-
-### Совместимость с Helm 2
-
-Существующие релизы helm 2 (созданные например через werf v1.1) могут быть конвертированы в helm 3 либо автоматически во время работы команды [`werf converge`]({{ "/reference/cli/werf_converge.html" | true_relative_url }}), либо с помощью команды [`werf helm migrate2to3`]({{ "/reference/cli/werf_helm_migrate2to3.html" | true_relative_url }}).
-
-## Принятие ресурсов в релиз
-
-По умолчанию Helm и werf позволяют управлять лишь теми ресурсами, которые были созданы самим Helm или werf в рамках релиза. При попытке выката чарта с манифестом ресурса, который уже существует в кластере и который был создан не с помощью Helm или werf, возникнет следующая ошибка:
-
-```
-Error: helm upgrade have failed: UPGRADE FAILED: rendered manifests contain a resource that already exists. Unable to continue with update: KIND NAME in namespace NAMESPACE exists and cannot be imported into the current release: invalid ownership metadata; label validation error: missing key "app.kubernetes.io/managed-by": must be set to "Helm"; annotation validation error: missing key "meta.helm.sh/release-name": must be set to RELEASE_NAME; annotation validation error: missing key "meta.helm.sh/release-namespace": must be set to RELEASE_NAMESPACE
-```
-
-Данная ошибка предотвращает деструктивное поведение, когда некоторый уже существующий релиз случайно становится частью выкаченного релиза.
-
-Однако если данное поведение является желаемым, то требуется отредактировать целевой ресурс в кластере и добавить в него следующие аннотации и лейблы:
+По умолчанию имя релиза формируется автоматически по специальному шаблону `[[ project ]]-[[ env ]]`, где `[[ project ]]` — имя проекта werf, а `[[ env ]]` — имя окружения, например:
 
 ```yaml
-metadata:
-  annotations:
-    meta.helm.sh/release-name: "RELEASE_NAME"
-    meta.helm.sh/release-namespace: "NAMESPACE"
-  labels:
-    app.kubernetes.io/managed-by: Helm
+# werf.yaml:
+project: myapp
 ```
 
-После следующего деплоя этот ресурс будет принят в новую ревизию релиза и соотвественно будет приведен к тому состоянию, которое описано в манифесте чарта.
+```shell
+werf converge --env staging
+werf converge --env production
+```
 
-## Имя релиза
+Результат: созданы релизы `myapp-staging` и `myapp-production`.
 
-По умолчанию название релиза формируется по шаблону `[[project]]-[[env]]`. Где `[[ project ]]` — имя [проекта]({{ "reference/werf_yaml.html#имя-проекта" | true_relative_url }}), а `[[ env ]]` — имя окружения.
+## Изменение шаблона имени релиза (только в werf)
 
-Например, для проекта с именем `symfony-demo` будет сформировано следующее имя релиза в зависимости от имени окружения:
+Если вас не устраивает специальный шаблон, из которого формируется имя релиза, вы можете его изменить:
 
-* `symfony-demo-stage` для окружения `stage`;
-* `symfony-demo-test` для окружения `test`;
-* `symfony-demo-prod` для окружения `prod`.
+```yaml
+# werf.yaml:
+project: myapp
+deploy:
+  helmRelease: "backend-[[ env ]]"
+```
 
-Имя релиза может быть переопределено с помощью параметра `--release NAME` при деплое. В этом случае werf будет использовать указанное имя как есть, без каких либо преобразований и использования шаблонов.
+```shell
+werf converge --env production
+```
 
-Имя релиза также можно явно определить в файле конфигурации `werf.yaml`, установив параметр [`deploy.helmRelease`]({{ "/reference/werf_yaml.html#имя-релиза" | true_relative_url }}).
+Результат: создан релиз `backend-production`.
 
-### Слагификация имени релиза
+## Прямое указание имени релиза
 
-Сформированное по шаблону имя Helm-релиза слагифицируется, в результате чего получается уникальное имя Helm-релиза.
+Вместо формирования имени релиза по специальному шаблону можно указывать имя релиза явно для каждой команды:
 
-Слагификация имени Helm-релиза включена по умолчанию, но может быть отключена указанием параметра [`deploy.helmReleaseSlug=false`]({{ "/reference/werf_yaml.html#имя-релиза" | true_relative_url }}) в файле конфигурации `werf.yaml`.
+```shell
+werf converge --release backend-production  # или $WERF_RELEASE=...
+```
+
+Результат: создан релиз `backend-production`.
+
+## Форматирование имени релиза
+
+Имя релиза, сформированное по специальному шаблону или указанное опцией `--release`, приводится к формату [RFC 1123 Label Names](https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#dns-label-names) автоматически. Отключить автоматическое форматирование можно директивой `deploy.helmReleaseSlug` файла `werf.yaml`.
+
+Вручную отформатировать любую строку согласно формату RFC 1123 Label Names можно командой `werf slugify -f helm-release`.
+
+## Добавление в релиз уже существующих в кластере ресурсов
+
+werf не позволяет развернуть новый ресурс релиза поверх уже существующего в кластере ресурса, если ресурс в кластере *не является частью текущего релиза*. Такое поведение предотвращает случайные обновления ресурсов, принадлежащих другому релизу или развернутых без werf. Если все же попытаться это сделать, то отобразится следующая ошибка:
+
+```
+Error: helm upgrade have failed: UPGRADE FAILED: rendered manifests contain a resource that already exists...
+```
+
+Чтобы добавить ресурс в кластере в текущий релиз и разрешить его обновление, выставьте ресурсу в кластере аннотации `meta.helm.sh/release-name: <имя текущего релиза>`, `meta.helm.sh/release-namespace: <Namespace текущего релиза>` и лейбл `app.kubernetes.io/managed-by: Helm`, например:
+
+```shell
+kubectl annotate deploy/myapp meta.helm.sh/release-name=myapp-production
+kubectl annotate deploy/myapp meta.helm.sh/release-namespace=myapp-production
+kubectl label deploy/myapp app.kubernetes.io/managed-by=Helm
+```
+
+... после чего перезапустите развертывание:
+
+```shell
+werf converge
+```
+
+Результат: ресурс релиза `myapp` успешно обновил ресурс `myapp` в кластере и теперь ресурс в кластере является частью текущего релиза.
