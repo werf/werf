@@ -130,6 +130,10 @@ var _ = Describe("rawImageFromDockerfile", func() {
 								"targetBuildArg": "IMAGE_ID_2",
 							},
 							{
+								"type":           string(ImageDigestImport),
+								"targetBuildArg": "IMAGE_DIGEST_2",
+							},
+							{
 								"type":           string(ImageRepoImport),
 								"targetBuildArg": "IMAGE_REPO_2",
 							},
@@ -168,6 +172,10 @@ var _ = Describe("rawImageFromDockerfile", func() {
 						{
 							Type:           ImageIDImport,
 							TargetBuildArg: "IMAGE_ID_2",
+						},
+						{
+							Type:           ImageDigestImport,
+							TargetBuildArg: "IMAGE_DIGEST_2",
 						},
 						{
 							Type:           ImageRepoImport,
