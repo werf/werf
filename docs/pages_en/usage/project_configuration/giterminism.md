@@ -58,12 +58,12 @@ To activate the `contextAddFiles` directive it is necessary to use [werf-gitermi
 
 ##### fromLatest
 
-If [fromLatest]({{ "usage/build/building_images_with_stapel/base_image.html#from-fromlatest" | true_relative_url }}) is true, then werf starts using the actual _base image_ digest in the stage digest. Thus, using this directive may break the reproducibility of previous builds. The changing of the base image in the registry makes all previously built images unusable.
+If [fromLatest]({{ "usage/build_draft/stapel/base.html#from-fromlatest" | true_relative_url }}) is true, then werf starts using the actual _base image_ digest in the stage digest. Thus, using this directive may break the reproducibility of previous builds. The changing of the base image in the registry makes all previously built images unusable.
 
  * Previous pipeline jobs (e.g., converge) cannot be retried without the image rebuilding after changing a registry base image.
  * If the base image is modified unexpectedly, it may lead to an inexplicably failed pipeline. For instance, the modification occurs after a successful build, and the following jobs will be failed due to changing stages digests alongside base image digest.
 
-As an alternative, we recommend using an unchangeable tag or periodically change [fromCacheVersion]({{ "usage/build/building_images_with_stapel/base_image.html#fromcacheversion" | true_relative_url }}) value to guarantee the application's controllable and predictable life cycle.
+As an alternative, we recommend using an unchangeable tag or periodically change [fromCacheVersion]({{ "usage/build_draft/stapel/base.html#fromcacheversion" | true_relative_url }}) value to guarantee the application's controllable and predictable life cycle.
 
 To activate the `fromLatest` directive it is necessary to use [werf-giterminism.yaml]({{ "reference/werf_giterminism_yaml.html" | true_relative_url }}), but we recommend thinking again about the possible consequences.
 
@@ -71,7 +71,7 @@ To activate the `fromLatest` directive it is necessary to use [werf-giterminism.
 
 ###### branch
 
-[Remote git mapping]({{ "usage/build/building_images_with_stapel/git_directive.html#working-with-remote-repositories" | true_relative_url }}) with a branch (master branch by default) may break the previous builds' reproducibility. werf uses the history of a git repository to calculate the stage digest. Thus, the new commit in the branch makes all previously built images unusable.
+[Remote git mapping]({{ "usage/build_draft/stapel/git.html#working-with-remote-repositories" | true_relative_url }}) with a branch (master branch by default) may break the previous builds' reproducibility. werf uses the history of a git repository to calculate the stage digest. Thus, the new commit in the branch makes all previously built images unusable.
 
  * The existing pipeline jobs (e.g., converge) would not run and would require rebuilding an image if a remote git branch has been changed.
  * Unplanned commits to a remote git branch might lead to the pipeline failing seemingly for no apparent reasons. For instance, changes may occur after the build process is completed successfully. In this case, the related pipeline jobs will fail due to changes in stage digests along with the branch HEAD.
@@ -84,13 +84,13 @@ To activate the `branch` directive it is necessary to use [werf-giterminism.yaml
 
 ###### build_dir
 
-The use of the [build_dir mount]({{ "usage/build/building_images_with_stapel/mount_directive.html" | true_relative_url }}) may lead to unpredictable behavior when used in parallel and potentially affect reproducibility and reliability.
+The use of the [build_dir mount]({{ "usage/build_draft/stapel/mounts.html" | true_relative_url }}) may lead to unpredictable behavior when used in parallel and potentially affect reproducibility and reliability.
 
 To activate the `build_dir` mount it is necessary to use [werf-giterminism.yaml]({{ "reference/werf_giterminism_yaml.html" | true_relative_url }}), but we recommend thinking again about the possible consequences.
 
 ###### fromPath
 
-The use of the [fromPath mount]({{ "usage/build/building_images_with_stapel/mount_directive.html" | true_relative_url }}) may lead to unpredictable behavior when used in parallel and potentially affect reproducibility and reliability. The data in the mounted directory has no effect on the final image digest, which can lead to invalid images and hard-to-trace issues.
+The use of the [fromPath mount]({{ "usage/build_draft/stapel/mounts.html" | true_relative_url }}) may lead to unpredictable behavior when used in parallel and potentially affect reproducibility and reliability. The data in the mounted directory has no effect on the final image digest, which can lead to invalid images and hard-to-trace issues.
 
 To activate the `fromPath` mount it is necessary to use [werf-giterminism.yaml]({{ "reference/werf_giterminism_yaml.html" | true_relative_url }}), but we recommend thinking again about the possible consequences.
 
@@ -98,4 +98,4 @@ To activate the `fromPath` mount it is necessary to use [werf-giterminism.yaml](
 
 Dockerfile image build context is context (read more about [context]({{ "reference/werf_yaml.html" | true_relative_url }}) directive) files from the current project git repository commit.
 
-Stapel image build context is all files that are added with [git]({{ "usage/build/building_images_with_stapel/git_directive.html" | true_relative_url }}) directive from the current project git repository commit.
+Stapel image build context is all files that are added with [git]({{ "usage/build_draft/stapel/git.html" | true_relative_url }}) directive from the current project git repository commit.

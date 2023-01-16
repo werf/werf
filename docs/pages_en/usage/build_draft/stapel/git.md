@@ -37,7 +37,7 @@ The _git mapping_ configuration for a local repository has the following paramet
 - `group` — the name or gid of the owner’s group;
 - `excludePaths` — a set of masks to exclude files or directories during recursive copying. Paths in masks must be specified relative to add;
 - `includePaths` — a set of masks to include files or directories during recursive copying. Paths in masks must be specified relative to add;
-- `stageDependencies` — a set of masks to monitor for changes that lead to rebuilds of the user stages. This is reviewed in detail in the [Running assembly instructions]({{ "usage/build/building_images_with_stapel/assembly_instructions.html" | true_relative_url }}) reference.
+- `stageDependencies` — a set of masks to monitor for changes that lead to rebuilds of the user stages. This is reviewed in detail in the [Running assembly instructions]({{ "usage/build_draft/stapel/instructions.html" | true_relative_url }}) reference.
 
 The configuration of a _git mapping_ for a remote repository has some additional parameters:
 - `url` — address of the remote repository;

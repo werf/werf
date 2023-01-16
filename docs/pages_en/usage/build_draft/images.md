@@ -214,7 +214,7 @@ import:
   after: install
 ```
 
-See [the stapel section]({{"usage/build/building_images_with_stapel/base_image.html" | true_relative_url }}) for detailed instructions.
+See [the stapel section]({{"usage/build_draft/stapel/base.html" | true_relative_url }}) for detailed instructions.
 
 ## Inheriting images and importing files
 
