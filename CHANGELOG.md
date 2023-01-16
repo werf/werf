@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.196](https://www.github.com/werf/werf/compare/v1.2.195...v1.2.196) (2023-01-16)
+
+
+### Features
+
+* **bundle:** allow non strict bundle publishing ([96fd4a1](https://www.github.com/werf/werf/commit/96fd4a17a17104ed56b42430f4110d9aa5f956d5))
+
 ### [1.2.195](https://www.github.com/werf/werf/compare/v1.2.194...v1.2.195) (2022-12-28)
 
 
