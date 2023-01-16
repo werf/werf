@@ -23,9 +23,6 @@ sections:
         description:
           en: Settings for deployment
           ru: Настройки выката
-        detailsAnchor:
-          en: "#deploy"
-          ru: "#выкат"
         collapsible: true
         isCollapsedByDefault: false
         directives:
@@ -35,18 +32,12 @@ sections:
               en: Path to the helm chart directory of the project
               ru: Путь до директории helm чарта проекта
             default: ".helm"
-            detailsAnchor:
-              en: "#helm-chart-dir"
-              ru: "#директория-helm-chart"
           - name: helmRelease
             value: "string"
             description:
               en: Release name template
               ru: Шаблон имени релиза
             default: "[[ project ]]-[[ env ]]"
-            detailsAnchor:
-              en: "#release-name"
-              ru: "#имя-релиза"
           - name: helmReleaseSlug
             value: "bool"
             description:
@@ -59,18 +50,12 @@ sections:
               en: Kubernetes namespace template
               ru: Шаблон Kubernetes namespace
             default: "[[ project ]]-[[ env ]]"
-            detailsAnchor:
-              en: "#kubernetes-namespace"
-              ru: "#namespace-в-kubernetes"
           - name: namespaceSlug
             value: "bool"
             description:
               en: Kubernetes namespace slugification
               ru: Слагификация Kubernetes namespace
             default: true
-            detailsAnchor:
-              en: "#kubernetes-namespace"
-              ru: "#namespace-в-kubernetes"
       - name: cleanup
         description:
           en: Settings for cleaning up irrelevant images
