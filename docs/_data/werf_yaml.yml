@@ -276,8 +276,8 @@ sections:
             - name: type
               value: "string"
               description:
-                en: "Type of image info: ImageName, ImageID, ImageRepo or ImageTag"
-                ru: "Тип импортируемой информации об образе: ImageName, ImageID, ImageRepo или ImageTag"
+                en: "Type of image info: ImageName, ImageDigest, ImageRepo or ImageTag"
+                ru: "Тип импортируемой информации об образе: ImageName, ImageDigest, ImageRepo или ImageTag"
             - name: targetBuildArg
               value: "string"
               description:
@@ -797,8 +797,8 @@ sections:
             - name: type
               value: "string"
               description:
-                en: "Type of image info: ImageName, ImageID, ImageRepo or ImageTag"
-                ru: "Тип импортируемой информации об образе: ImageName, ImageID, ImageRepo или ImageTag"
+                en: "Type of image info: ImageName, ImageDigest, ImageRepo or ImageTag"
+                ru: "Тип импортируемой информации об образе: ImageName, ImageDigest, ImageRepo или ImageTag"
             - name: targetEnv
               value: "string"
               description:
