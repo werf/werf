@@ -341,6 +341,8 @@ werf может использовать драйвер хранилища `over
 
 ## Работа в контейнерах
 
+### Основной режим
+
 <!-- прим. для перевода: на основе https://werf.io/documentation/v1.2/advanced/ci_cd/run_in_container/how_it_works.html и https://werf.io/documentation/v1.2/advanced/ci_cd/run_in_container/use_docker_container.html -->
 
 Рекомендуемым вариантом запуска werf в контейнерах является использование официальных образов werf из `registry.werf.io/werf/werf`. Запуск werf в контейнере выглядит следующим образом:

@@ -23,13 +23,7 @@ entries:
               - title: Image configuration
                 url: /usage/build/images.html
 
-              - title: Build process
-                url: /usage/build/process.html
-
-              - title: Storage layout
-                url: /usage/build/storage.html
-
-              - title: Building images with Stapel
+              - title: Stapel image configuration
                 f:
                   - title: Overview
                     url: /usage/build/stapel/overview.html
@@ -51,6 +45,12 @@ entries:
 
                   - title: Reducing image size and speeding up a build by mounts
                     url: /usage/build/stapel/mounts.html
+
+              - title: Build process
+                url: /usage/build/process.html
+
+              - title: Storage layout
+                url: /usage/build/storage.html
 
           - title: Deploy
             f:
@@ -159,13 +159,7 @@ entries:
               - title: Конфигурация образов
                 url: /usage/build/images.html
 
-              - title: Сборочный процесс
-                url: /usage/build/process.html
-
-              - title: Организация хранилища стадий
-                url: /usage/build/storage.html
-
-              - title: Сборка образов с помощью Stapel
+              - title: Конфигурация образов stapel
                 f:
                   - title: Обзор
                     url: /usage/build/stapel/overview.html
@@ -187,6 +181,12 @@ entries:
 
                   - title: Ускорение сборки и уменьшение размера за счёт монтирования
                     url: /usage/build/stapel/mounts.html
+
+              - title: Сборочный процесс
+                url: /usage/build/process.html
+
+              - title: Организация хранилища стадий
+                url: /usage/build/storage.html
 
           - title: Развертывание
             f:
