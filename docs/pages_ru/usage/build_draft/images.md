@@ -215,7 +215,7 @@ import:
 ```
 {% endraw %}
 
-Подробная документация по написанию доступна [в разделе Stapel]({{ "usage/build/building_images_with_stapel/base_image.html" | true_relative_url }}).
+Подробная документация по написанию доступна [в разделе Stapel]({{ "usage/build_draft/stapel/base.html" | true_relative_url }}).
 
 ## Наследование образов и импортирование файлов
 

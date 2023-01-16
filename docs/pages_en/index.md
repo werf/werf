@@ -84,20 +84,19 @@ editme_button: false
  - [Giterminism]({{ "usage/project_configuration/giterminism.html" | true_relative_url }}) describes how determinism is implemented with git, what limitations it imposes, and why.
  - [Helm]({{ "usage/deploy/intro.html" | true_relative_url }})** describes the deploy essentials: how to configure werf for deploying to Kubernetes, what helm chart and release is. Here you may find the basics of templating Kubernetes resources, algorithms for using built images defined in your `werf.yaml` file during the deploy process and working with secrets, plus other useful stuff. Read this chapter if you want to learn more about organizing the deploy process with werf.
  - [Cleanup]({{ "usage/cleanup/cr_cleanup.html" | true_relative_url }}) explains werf cleanup concepts and main commands to perform cleaning tasks.
- - [Building images with stapel]({{ "reference/werf_yaml.html#image-section" | true_relative_url }}) introduces werf's custom builder. It currently implements the distributed building algorithm to enable lightning-fast build pipelines with distributed caching and incremental rebuilds based on the Git history of your application.
- - [Development and debug]({{ "usage/build/building_images_with_stapel/stage_introspection.html" | true_relative_url }}) describes debugging build and deploy processes of your application when something goes wrong and provides instructions for setting up a local development environment.
+ - [Building images with stapel]({{ "usage/build_draft/stapel/overview.html" | true_relative_url }}) introduces werf's custom builder. It currently implements the distributed building algorithm to enable lightning-fast build pipelines with distributed caching and incremental rebuilds based on the Git history of your application.
 </div>
         </div>
     </div>
     <div class="overview__step">
         <div class="overview__step-title">Dive into overview of werf's inner workings</div>
         <div class="overview__step-actions">
-            <a class="overview__step-action" href="{{ "usage/build/build_process.html" | true_relative_url }}">Internals</a>
+            <a class="overview__step-action" href="{{ "usage/build_draft/building.html" | true_relative_url }}">Internals</a>
         </div>
         <div class="overview__step-info">
             <p>You do not have to read through this section to make full use of werf. However, those interested in werf's internal mechanics will find some valuable info here.</p>
 <div markdown="1">
- - [Building images]({{ "usage/build/build_process.html" | true_relative_url }}) — what image builder and stages are, how stages storage works, what is the synchronization server, other info related to the building process.
+ - [Building images]({{ "usage/build_draft/building.html" | true_relative_url }}) — how to use and configure werf images building.
  - [How does the CI/CD integration work?]({{ "usage/integration_with_ci_cd_systems/how_ci_cd_integration_works/general_overview.html" | true_relative_url }}).
 </div>
         </div>
