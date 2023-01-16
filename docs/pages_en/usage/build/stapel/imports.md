@@ -1,6 +1,6 @@
 ---
 title: Importing from images and artifacts
-permalink: usage/build_draft/stapel/imports.html
+permalink: usage/build/stapel/imports.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 directive_summary: import
 ---
@@ -72,11 +72,11 @@ import:
 
 As in the case of adding _git mappings_, masks are supported for including, `include_paths: []`, and excluding files, `exclude_paths: []`, from the specified path.
 You can also define the rights for the imported resources, `owner: <owner>` and `group: <group>`.
-Read more about these in the [git directive article]({{ "usage/build_draft/stapel/git.html" | true_relative_url }}).
+Read more about these in the [git directive article]({{ "usage/build/stapel/git.html" | true_relative_url }}).
 
 > Import paths and _git mappings_ must not overlap with each other
 
-Information about _using artifacts_ available in [separate article]({{ "usage/build_draft/stapel/imports.html#what-is-an-artifact" | true_relative_url }}).
+Information about _using artifacts_ available in [separate article]({{ "usage/build/stapel/imports.html#what-is-an-artifact" | true_relative_url }}).
 
 ## What is an artifact?
 
@@ -87,15 +87,15 @@ Using artifacts, you can independently assemble an unlimited number of component
 - The application can consist of a set of components, and each has its dependencies. With a standard assembly, you should rebuild all every time, but you want to assemble each one on-demand.
 - Components need to be assembled in other environments.
 
-Importing _resources_ from _artifacts_ are described in [import directive]({{ "usage/build_draft/stapel/imports.html" | true_relative_url }}).
+Importing _resources_ from _artifacts_ are described in [import directive]({{ "usage/build/stapel/imports.html" | true_relative_url }}).
 
 ### Configuration
 
 The configuration of the _artifact_ is not much different from the configuration of _image_. Each _artifact_ should be described in a separate artifact config section.
 
-The instructions associated with the _from stage_, namely the [_base image_]({{ "usage/build_draft/stapel/base.html" | true_relative_url }}) and [mounts]({{ "usage/build_draft/stapel/mounts.html" | true_relative_url }}), and also [imports]({{ "usage/build_draft/stapel/imports.html" | true_relative_url }}) remain unchanged.
+The instructions associated with the _from stage_, namely the [_base image_]({{ "usage/build/stapel/base.html" | true_relative_url }}) and [mounts]({{ "usage/build/stapel/mounts.html" | true_relative_url }}), and also [imports]({{ "usage/build/stapel/imports.html" | true_relative_url }}) remain unchanged.
 
-The _docker_instructions stage_ and the [corresponding instructions]({{ "usage/build_draft/stapel/dockerfile.html" | true_relative_url }}) are not supported for the _artifact_. An _artifact_ is an assembly tool and only the data stored in it is required.
+The _docker_instructions stage_ and the [corresponding instructions]({{ "usage/build/stapel/dockerfile.html" | true_relative_url }}) are not supported for the _artifact_. An _artifact_ is an assembly tool and only the data stored in it is required.
 
 The remaining _stages_ and instructions are considered further separately.
 
@@ -127,7 +127,7 @@ Unlike with _image_, _artifact stage conveyor_ has no _gitCache_ and _gitLatestP
 
 > werf implements optional dependence on changes in git repositories for _artifacts_. Thus, by default werf ignores them and _artifact image_ is cached after the first assembly, but you can specify any dependencies for assembly instructions
 
-Read about working with _git repositories_ in the corresponding [article]({{ "usage/build_draft/stapel/git.html" | true_relative_url }}).
+Read about working with _git repositories_ in the corresponding [article]({{ "usage/build/stapel/git.html" | true_relative_url }}).
 
 #### Running assembly instructions
 
@@ -151,11 +151,11 @@ git:
     install: "**/*"
 ```
 
-Read about working with _assembly instructions_ in the corresponding [article]({{ "usage/build_draft/stapel/instructions.html" | true_relative_url }}).
+Read about working with _assembly instructions_ in the corresponding [article]({{ "usage/build/stapel/instructions.html" | true_relative_url }}).
 
 ## Using artifacts
 
-Unlike [*stapel image*]({{ "usage/build_draft/stapel/instructions.html" | true_relative_url }}), *stapel artifact* does not have a git latest patch stage.
+Unlike [*stapel image*]({{ "usage/build/stapel/instructions.html" | true_relative_url }}), *stapel artifact* does not have a git latest patch stage.
 
 The git latest patch stage is supposed to be updated on every commit, which brings new changes to files. *Stapel artifact* though is recommended to be used as a deeply cached image, which will be updated in rare cases, when some special files changed.
 
@@ -174,4 +174,4 @@ git:
 
 In this case every change in git files will result in artifact rebuild, all *stapel images* that import this artifact will also be rebuilt.
 
-**NOTE** User should employ multiple separate `git.add` directive invocations in every [*stapel image*]({{ "usage/build_draft/stapel/instructions.html" | true_relative_url }}) and *stapel artifact* that needs git files — it is an optimal way to add git files into any image. Adding git files to artifact and then importing it into image using `import` directive is not recommended.
+**NOTE** User should employ multiple separate `git.add` directive invocations in every [*stapel image*]({{ "usage/build/stapel/instructions.html" | true_relative_url }}) and *stapel artifact* that needs git files — it is an optimal way to add git files into any image. Adding git files to artifact and then importing it into image using `import` directive is not recommended.

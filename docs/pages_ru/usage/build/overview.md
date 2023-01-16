@@ -1,6 +1,6 @@
 ---
 title: Обзор
-permalink: usage/build_draft/overview.html
+permalink: usage/build/overview.html
 ---
 
 Чтобы доставить приложение в kubernetes как правило нужно собрать один или несколько образов приложения.

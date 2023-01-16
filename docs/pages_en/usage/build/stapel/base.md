@@ -1,6 +1,6 @@
 ---
 title: Base image
-permalink: usage/build_draft/stapel/base.html
+permalink: usage/build/stapel/base.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 directive_summary: base_image
 ---
@@ -39,7 +39,7 @@ fromLatest: true
 
 ## fromImage and fromArtifact
 
-Besides using docker image from a repository, the _base image_ can refer to _image_ or [_artifact_]({{ "usage/build_draft/stapel/imports.html#what-is-an-artifact" | true_relative_url }}), that is described in the same `werf.yaml`.
+Besides using docker image from a repository, the _base image_ can refer to _image_ or [_artifact_]({{ "usage/build/stapel/imports.html#what-is-an-artifact" | true_relative_url }}), that is described in the same `werf.yaml`.
 
 ```yaml
 fromImage: <image name>

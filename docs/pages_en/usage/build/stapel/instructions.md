@@ -1,6 +1,6 @@
 ---
 title: Running assembly instructions
-permalink: usage/build_draft/stapel/instructions.html
+permalink: usage/build/stapel/instructions.html
 directive_summary: shell_and_ansible
 ---
 
@@ -131,7 +131,7 @@ shell:
 
 _Shell assembly instructions_ are made up of arrays. Each array consists of bash commands for the related _user stage_. Commands for each stage are executed as a single `RUN` instruction in Dockerfile. Thus, werf creates one layer for each _user stage_.
 
-werf provides distribution-agnostic bash binary, so you do not need a bash binary in the [base image]({{ "usage/build_draft/stapel/base.html" | true_relative_url }}).
+werf provides distribution-agnostic bash binary, so you do not need a bash binary in the [base image]({{ "usage/build/stapel/base.html" | true_relative_url }}).
 
 ```yaml
 beforeInstall:
@@ -215,7 +215,7 @@ An attempt to do a _werf config_ with the module not in this list will lead to a
 
 ### Copying files
 
-[Git mappings]({{ "usage/build_draft/stapel/git.html" | true_relative_url }}) are the preferred way of copying files into an image. werf cannot detect changes to the files referred to in the `copy` module. Currently, the only way to copy some external file into an image involves using the `.Files.Get` method of Go templates. This method returns the contents of the file as a string. Thus, the contents become a part of the _user stage digest_, and file changes lead to the rebuild of the _user stage_.
+[Git mappings]({{ "usage/build/stapel/git.html" | true_relative_url }}) are the preferred way of copying files into an image. werf cannot detect changes to the files referred to in the `copy` module. Currently, the only way to copy some external file into an image involves using the `.Files.Get` method of Go templates. This method returns the contents of the file as a string. Thus, the contents become a part of the _user stage digest_, and file changes lead to the rebuild of the _user stage_.
 
 Here is an example of copying `nginx.conf` into an image:
 
@@ -313,7 +313,7 @@ You can use these dependencies to shape the rebuilding process of _user stages_.
 - changes in assembly instructions
 - changes of _cacheVersion directives_
 - changes in the git repository
-- changes in files being imported from [artifacts]({{ "usage/build_draft/stapel/imports.html#what-is-an-artifact" | true_relative_url }})
+- changes in files being imported from [artifacts]({{ "usage/build/stapel/imports.html#what-is-an-artifact" | true_relative_url }})
 
 The first three dependencies are described below in more detail.
 

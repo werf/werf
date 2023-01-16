@@ -1,6 +1,6 @@
 ---
 title: Конфигурация образов
-permalink: usage/build_draft/images.html
+permalink: usage/build/images.html
 ---
 
 <!-- прим. для перевода: на основе https://werf.io/documentation/v1.2/reference/werf_yaml.html#image-section -->
@@ -136,7 +136,7 @@ config:
 
 ## Сборщик Stapel
 
-В werf встроен альтернативный синтаксис описания сборочных инструкций, называемый Stapel. Подробная документация по синтаксису Stapel доступна [в соответствующей секции документации]({{ "/usage/build_draft/stapel/overview.html" | true_relative_url }}).
+В werf встроен альтернативный синтаксис описания сборочных инструкций, называемый Stapel. Подробная документация по синтаксису Stapel доступна [в соответствующей секции документации]({{ "/usage/build/stapel/overview.html" | true_relative_url }}).
 
 Пример минимальной конфигурации Stapel-образа в `werf.yaml`:
 
@@ -155,7 +155,7 @@ git:
   to: /app
 ```
 
-Доступно 4 стадии для описания произвольных shell-инструкций, а также директива `git.stageDependencies` для настройки триггеров пересборки этих стадий при изменении соответствующих стадий ([см. подробнее]({{ "/usage/build_draft/stapel/instructions.html#зависимость-от-изменений-в-git-репозитории" | true_relative_url }})):
+Доступно 4 стадии для описания произвольных shell-инструкций, а также директива `git.stageDependencies` для настройки триггеров пересборки этих стадий при изменении соответствующих стадий ([см. подробнее]({{ "/usage/build/stapel/instructions.html#зависимость-от-изменений-в-git-репозитории" | true_relative_url }})):
 
 ```yaml
 image: app
@@ -215,7 +215,7 @@ import:
 ```
 {% endraw %}
 
-Подробная документация по написанию доступна [в разделе Stapel]({{ "usage/build_draft/stapel/base.html" | true_relative_url }}).
+Подробная документация по написанию доступна [в разделе Stapel]({{ "usage/build/stapel/base.html" | true_relative_url }}).
 
 ## Наследование образов и импортирование файлов
 
