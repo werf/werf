@@ -1,6 +1,6 @@
 ---
 title: Build process
-permalink: usage/build_draft/building.html
+permalink: usage/build/process.html
 ---
 
 <!-- TODO: new content -->

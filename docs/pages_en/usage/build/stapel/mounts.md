@@ -1,6 +1,6 @@
 ---
 title: Reducing image size and speeding up a build by mounts
-permalink: usage/build_draft/stapel/mounts.html
+permalink: usage/build/stapel/mounts.html
 author: Artem Kladov <artem.kladov@flant.com>, Alexey Igrychev <alexey.igrychev@flant.com>
 directive_summary: mount
 ---
@@ -31,9 +31,9 @@ If you need to keep assembly data from these directories in an image, you should
 
 On `from` stage werf adds mount points definitions to stage image labels.
 Then each stage uses these definitions for adding volumes to an assembly container.
-The implementation allows inheriting mount points from [base image]({{ "usage/build_draft/stapel/base.html" | true_relative_url }}).
+The implementation allows inheriting mount points from [base image]({{ "usage/build/stapel/base.html" | true_relative_url }}).
 
-Also, on `from` stage werf cleans assembly container mount points in a [base image]({{ "usage/build_draft/stapel/base.html" | true_relative_url }}).
+Also, on `from` stage werf cleans assembly container mount points in a [base image]({{ "usage/build/stapel/base.html" | true_relative_url }}).
 Therefore, these folders are empty in an image.
 
 > By default, the use of the `fromPath` directive and `from: build_dir` are not allowed by giterminism (read more about it [here]({{ "/usage/project_configuration/giterminism.html#mount" | true_relative_url }}))
