@@ -6,7 +6,7 @@ directive_summary: shell_and_ansible
 
 ## What are user stages?
 
-***User stage*** is a [_stage_]({{ "usage/build/stages_and_storage.html" | true_relative_url }}) containing _assembly instructions_ from the config.
+***User stage*** is a stage containing _assembly instructions_ from the config.
 Currently, there are two kinds of assembly instructions: _shell_ and _ansible_. werf provides four user stages and executes them in the following order: _beforeInstall_, _install_, _beforeSetup_, and _setup_. You can create the specific docker layer by executing assembly instructions contained within the respective stage.
 
 
@@ -306,7 +306,7 @@ In the example above the hash of the current commit will be added to the `echo .
 
 ## Dependencies of user stages
 
-werf features the ability to define dependencies for rebuilding the _stage_. As described in the [_stages_ reference]({{ "usage/build/stages_and_storage.html" | true_relative_url }}), _stages_ are built one by one, and the _digest_ is calculated for each _stage_. _Digests_ have various dependencies. When dependencies change, the _stage digest_ changes as well. As a result, werf rebuilds this _stage_ and all the subsequent _stages_.
+werf features the ability to define dependencies for rebuilding the _stage_. _Stages_ are built one by one, and the _digest_ is calculated for each _stage_. _Digests_ have various dependencies. When dependencies change, the _stage digest_ changes as well. As a result, werf rebuilds this _stage_ and all the subsequent _stages_.
 
 You can use these dependencies to shape the rebuilding process of _user stages_. _Digests_ of user stages  (and, therefore, the rebuilding process) depend on:
 

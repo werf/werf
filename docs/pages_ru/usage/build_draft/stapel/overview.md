@@ -21,8 +21,6 @@ permalink: usage/build_draft/stapel/overview.html
 <a href="javascript:void(0)" class="details__summary">Как устроен конвеер стадий stapel</a>
 <div class="details__content" markdown="1">
 
-<!-- прим. для перевода: на основе https://ru.werf.io/documentation/v1.2/internals/stages_and_storage.html#%D0%BA%D0%BE%D0%BD%D0%B2%D0%B5%D0%B5%D1%80-%D1%81%D1%82%D0%B0%D0%B4%D0%B8%D0%B9 -->
-
 _Конвейер стадий_ — набор условий и правил выполнения стадий, подразумевающий также четко определенный порядок выполнения стадий.
 
 <div class="tabs">
@@ -115,17 +113,14 @@ _Зависимости стадии_ — это данные, которые н
 <script>
 function application() {
   if ($("a[id=image-dependencies]").hasClass('active')) {
-    $(".image-from-dockerfile").addClass('hidden');
     $(".artifact").addClass('hidden');
     $(".image").removeClass('hidden')
   }
   else if ($("a[id=artifact-dependencies]").hasClass('active')) {
-    $(".image-from-dockerfile").addClass('hidden');
     $(".image").addClass('hidden');
     $(".artifact").removeClass('hidden')
   }
   else {
-    $(".image-from-dockerfile").addClass('hidden');
     $(".image").addClass('hidden');
     $(".artifact").addClass('hidden')
   }

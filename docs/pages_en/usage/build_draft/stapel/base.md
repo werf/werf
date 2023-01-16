@@ -62,3 +62,14 @@ The `fromCacheVersion` directive allows managing image reassembly.
 ```yaml
 fromCacheVersion: <arbitrary string>
 ```
+
+## How the Stapel builder processes CMD and ENTRYPOINT
+
+To build a stage, werf starts container with the `CMD` and `ENTRYPOINT` service parameters and then substitutes them with the values of the base image. If these values are not set in the base image, werf resets them as follows:
+
+- `[]` for `CMD`;
+- `[""]` for `ENTRYPOINT`.
+
+Also, werf resets (uses special empty values) `ENTRYPOINT` of the base image if the `CMD` parameter is specified in the configuration (`docker.CMD`).
+
+Otherwise, the behavior of werf is similar to that of [Docker](https://docs.docker.com/engine/reference/builder/#understand-how-cmd-and-entrypoint-interact).
