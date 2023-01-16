@@ -191,7 +191,7 @@ entries:
           - title: Развертывание
             f:
               - title: Основы развертывания
-                url: /usage/deploy/basics.html
+                url: /usage/deploy/intro.html
 
               - title: Чарты
                 url: /usage/deploy/charts.html
