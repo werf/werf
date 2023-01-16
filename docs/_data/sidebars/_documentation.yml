@@ -18,39 +18,39 @@ entries:
           - title: Build
             f:
               - title: Overview
-                url: /usage/build_draft/overview.html
+                url: /usage/build/overview.html
 
               - title: Image configuration
-                url: /usage/build_draft/images.html
+                url: /usage/build/images.html
 
               - title: Build process
-                url: /usage/build_draft/building.html
+                url: /usage/build/process.html
 
               - title: Storage layout
-                url: /usage/build_draft/storage.html
+                url: /usage/build/storage.html
 
               - title: Building images with Stapel
                 f:
                   - title: Overview
-                    url: /usage/build_draft/stapel/overview.html
+                    url: /usage/build/stapel/overview.html
 
                   - title: Base image
-                    url: /usage/build_draft/stapel/base.html
+                    url: /usage/build/stapel/base.html
 
                   - title: Adding source code from git repositories
-                    url: /usage/build_draft/stapel/git.html
+                    url: /usage/build/stapel/git.html
 
                   - title: User instructions
-                    url: /usage/build_draft/stapel/instructions.html
+                    url: /usage/build/stapel/instructions.html
 
                   - title: Importing from images and artifacts
-                    url: /usage/build_draft/stapel/imports.html
+                    url: /usage/build/stapel/imports.html
 
                   - title: Dockerfile instructions
-                    url: /usage/build_draft/stapel/dockerfile.html
+                    url: /usage/build/stapel/dockerfile.html
 
                   - title: Reducing image size and speeding up a build by mounts
-                    url: /usage/build_draft/stapel/mounts.html
+                    url: /usage/build/stapel/mounts.html
 
           - title: Deploy
             f:
@@ -154,39 +154,39 @@ entries:
           - title: Сборка
             f:
               - title: Обзор
-                url: /usage/build_draft/overview.html
+                url: /usage/build/overview.html
 
               - title: Конфигурация образов
-                url: /usage/build_draft/images.html
+                url: /usage/build/images.html
 
               - title: Сборочный процесс
-                url: /usage/build_draft/building.html
+                url: /usage/build/process.html
 
               - title: Организация хранилища стадий
-                url: /usage/build_draft/storage.html
+                url: /usage/build/storage.html
 
               - title: Сборка образов с помощью Stapel
                 f:
                   - title: Обзор
-                    url: /usage/build_draft/stapel/overview.html
+                    url: /usage/build/stapel/overview.html
 
                   - title: Базовый образ
-                    url: /usage/build_draft/stapel/base.html
+                    url: /usage/build/stapel/base.html
 
                   - title: Добавление исходного кода из git-репозиториев
-                    url: /usage/build_draft/stapel/git.html
+                    url: /usage/build/stapel/git.html
 
                   - title: Пользовательские инструкции
-                    url: /usage/build_draft/stapel/instructions.html
+                    url: /usage/build/stapel/instructions.html
 
                   - title: Импорт из артефактов и образов
-                    url: /usage/build_draft/stapel/imports.html
+                    url: /usage/build/stapel/imports.html
 
                   - title: Инструкции Dockerfile
-                    url: /usage/build_draft/stapel/dockerfile.html
+                    url: /usage/build/stapel/dockerfile.html
 
                   - title: Ускорение сборки и уменьшение размера за счёт монтирования
-                    url: /usage/build_draft/stapel/mounts.html
+                    url: /usage/build/stapel/mounts.html
 
           - title: Развертывание
             f:

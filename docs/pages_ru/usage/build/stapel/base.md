@@ -1,6 +1,6 @@
 ---
 title: Базовый образ
-permalink: usage/build_draft/stapel/base.html
+permalink: usage/build/stapel/base.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 directive_summary: base_image
 ---
@@ -42,7 +42,7 @@ fromLatest: true
 
 ## fromImage и fromArtifact
 
-В качестве _базового образа_ можно указывать не только образ из локального хранилища или container registry, но и имя другого _образа_ или [_артефакта_]({{ "usage/build_draft/stapel/imports.html#что-такое-артефакты" | true_relative_url }}), описанного в том же файле `werf.yaml`. В этом случае необходимо использовать директивы `fromImage` и `fromArtifact` соответственно.
+В качестве _базового образа_ можно указывать не только образ из локального хранилища или container registry, но и имя другого _образа_ или [_артефакта_]({{ "usage/build/stapel/imports.html#что-такое-артефакты" | true_relative_url }}), описанного в том же файле `werf.yaml`. В этом случае необходимо использовать директивы `fromImage` и `fromArtifact` соответственно.
 
 ```yaml
 fromImage: <image name>
@@ -75,7 +75,7 @@ fromCacheVersion: <arbitrary string>
 
 ## Как Stapel-сборщик работает с CMD и ENTRYPOINT из базового образа
 
-Для сборки стадии werf запускает контейнер со служебными значениями `CMD` и `ENTRYPOINT`, а затем заменяет их значениями [базового образа]({{ "usage/build_draft/stapel/base.html" | true_relative_url }}). Если в базовом образе эти значения не установлены, werf сбрасывает их следующим образом:
+Для сборки стадии werf запускает контейнер со служебными значениями `CMD` и `ENTRYPOINT`, а затем заменяет их значениями [базового образа]({{ "usage/build/stapel/base.html" | true_relative_url }}). Если в базовом образе эти значения не установлены, werf сбрасывает их следующим образом:
 - `[]` для `CMD`;
 - `[""]` для `ENTRYPOINT`.
 
