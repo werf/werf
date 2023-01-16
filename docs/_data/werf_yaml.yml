@@ -193,9 +193,6 @@ sections:
         description:
           en: One or more unique names for image
           ru: Одно или несколько уникальных имён для образа
-        detailsAnchor:
-          en: "#image-section"
-          ru: "#секция-image"
         required: true
       - name: dockerfile
         value: "string"
@@ -212,8 +209,6 @@ sections:
         description:
           en: Untracked files and directories for adding to build context. The paths must be relative to context PATH
           ru: Добавление нехранящихся в git файлов и директорий в сборочный контекст. Пути должны быть относительно директории контекста
-        detailsAnchor:
-          all: "#contextaddfiles"
       - name: target
         value: "string"
         description:
