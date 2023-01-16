@@ -338,13 +338,13 @@ dependencies:
   imports:
   - type: ImageName
     targetBuildArg: AUTH_IMAGE_NAME
-  - type: ImageID
+  - type: ImageDigest
     targetBuildArg: AUTH_IMAGE_DIGEST
 - image: controlplane
   imports:
   - type: ImageName
     targetBuildArg: CONTROLPLANE_IMAGE_NAME
-  - type: ImageID
+  - type: ImageDigest
     targetBuildArg: CONTROLPLANE_IMAGE_DIGEST
 ```
 
