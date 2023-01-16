@@ -32,9 +32,9 @@ en:
         - mounts
       references:
         - name: "Base image"
-          link: "/usage/build_draft/stapel/base.html"
+          link: "/usage/build/stapel/base.html"
         - name: "Reducing image size and speeding up a build by mounts"
-          link: "/usage/build_draft/stapel/mounts.html"
+          link: "/usage/build/stapel/mounts.html"
       werf_config: |
         from: <image[:<tag>]>
         fromLatest: <bool>
@@ -57,7 +57,7 @@ en:
         - beforeInstallCacheVersion
       references:
         - name: "Running assembly instructions"
-          link: "/usage/build_draft/stapel/instructions.html"
+          link: "/usage/build/stapel/instructions.html"
       werf_config: |
         shell:
           beforeInstall:
@@ -79,7 +79,7 @@ en:
         - dependencies before install
       references:
         - name: "Importing from images and artifacts"
-          link: "/usage/build_draft/stapel/imports.html"
+          link: "/usage/build/stapel/imports.html"
       werf_config: |
         import:
         - artifact: <artifact name>
@@ -99,7 +99,7 @@ en:
         - git mappings
       references:
         - name: "Adding source code from git repositories"
-          link: "/usage/build_draft/stapel/git.html"
+          link: "/usage/build/stapel/git.html"
       werf_config: |
         git:
         - add: <absolute path>
@@ -131,9 +131,9 @@ en:
         - git files hashsum by install stageDependency
       references:
         - name: "Running assembly instructions"
-          link: "/usage/build_draft/stapel/instructions.html"
+          link: "/usage/build/stapel/instructions.html"
         - name: "Dependency on git repo changes"
-          link: "/usage/build_draft/stapel/instructions.html#dependency-on-changes-in-the-git-repo"
+          link: "/usage/build/stapel/instructions.html#dependency-on-changes-in-the-git-repo"
       werf_config: |
         git:
         - stageDependencies:
@@ -170,7 +170,7 @@ en:
           - <relative path or glob>
       references:
         - name: "Importing from images and artifacts"
-          link: "/usage/build_draft/stapel/imports.html"
+          link: "/usage/build/stapel/imports.html"
     - &image_artifact_before_setup
       name: beforeSetup
       type: "image artifact"
@@ -180,9 +180,9 @@ en:
         - git files hashsum by beforeSetup stageDependency
       references:
         - name: "Running assembly instructions"
-          link: "/usage/build_draft/stapel/instructions.html"
+          link: "/usage/build/stapel/instructions.html"
         - name: "Dependency on git repo changes"
-          link: "/usage/build_draft/stapel/instructions.html#dependency-on-changes-in-the-git-repo"
+          link: "/usage/build/stapel/instructions.html#dependency-on-changes-in-the-git-repo"
       werf_config: |
         git:
         - stageDependencies:
@@ -219,7 +219,7 @@ en:
           - <relative path or glob>
       references:
         - name: "Importing from images and artifacts"
-          link: "/usage/build_draft/stapel/imports.html"
+          link: "/usage/build/stapel/imports.html"
     - &image_artifact_setup
       name: setup
       type: "image artifact"
@@ -229,9 +229,9 @@ en:
         - git files hashsum by setup stageDependency
       references:
         - name: "Running assembly instructions"
-          link: "/usage/build_draft/stapel/instructions.html"
+          link: "/usage/build/stapel/instructions.html"
         - name: "Dependency on git repo changes"
-          link: "/usage/build_draft/stapel/instructions.html#dependency-on-changes-in-the-git-repo"
+          link: "/usage/build/stapel/instructions.html#dependency-on-changes-in-the-git-repo"
       werf_config: |
         git:
         - stageDependencies:
@@ -256,7 +256,7 @@ en:
         - size of git diff between last used commit and actual
       references:
         - name: "More details: gitArchive, gitCache, gitLatestPatch"
-          link: "/usage/build_draft/stapel/git.html#more-details-gitarchive-gitcache-gitlatestpatch"
+          link: "/usage/build/stapel/git.html#more-details-gitarchive-gitcache-gitlatestpatch"
     - &image_dependencies_after_setup
       name: dependenciesAfterSetup
       type: "image artifact"
@@ -276,7 +276,7 @@ en:
           - <relative path or glob>
       references:
         - name: "Importing from images and artifacts"
-          link: "/usage/build_draft/stapel/imports.html"
+          link: "/usage/build/stapel/imports.html"
     - &image_git_latest_patch
       name: gitLatestPatch
       type: "image"
@@ -284,7 +284,7 @@ en:
         - presence of git diff changes between last used commit and actual
       references:
         - name: "More details: gitArchive, gitCache, gitLatestPatch"
-          link: "/usage/build_draft/stapel/git.html#more-details-gitarchive-gitcache-gitlatestpatch"
+          link: "/usage/build/stapel/git.html#more-details-gitarchive-gitcache-gitlatestpatch"
     - &image_docker_instructions
       name: dockerInstructions
       type: "image"
@@ -292,7 +292,7 @@ en:
         - docker instructions
       references:
         - name: Adding docker instructions
-          link: "/usage/build_draft/stapel/dockerfile.html"
+          link: "/usage/build/stapel/dockerfile.html"
       werf_config: |
         docker:
           VOLUME:
@@ -317,60 +317,60 @@ ru:
     - <<: *image_artifact_from
       references:
         - name: "Базовый образ"
-          link: "/usage/build_draft/stapel/base.html"
+          link: "/usage/build/stapel/base.html"
         - name: "Ускорение сборки и уменьшение размера за счёт маунтов"
-          link: "/usage/build_draft/stapel/mounts.html"
+          link: "/usage/build/stapel/mounts.html"
     - <<: *image_artifact_before_install
       references:
         - name: "Запуск инструкций сборки"
-          link: "/usage/build_draft/stapel/instructions.html"
+          link: "/usage/build/stapel/instructions.html"
     - <<: *image_artifact_dependencies_before_install
       references:
         - name: "Импорт из артефактов и образов"
-          link: "/usage/build_draft/stapel/imports.html"
+          link: "/usage/build/stapel/imports.html"
     - <<: *image_artifact_git_archive
       references:
         - name: "Добавление исходного кода из git-репозиториев"
-          link: "/usage/build_draft/stapel/git.html"
+          link: "/usage/build/stapel/git.html"
     - <<: *image_artifact_install
       references:
         - name: "Запуск инструкций сборки"
-          link: "/usage/build_draft/stapel/instructions.html"
+          link: "/usage/build/stapel/instructions.html"
         - name: "Зависимость от изменений в git-репозитории"
-          link: "/usage/build_draft/stapel/instructions.html#зависимость-от-изменений-в-git-репозитории"
+          link: "/usage/build/stapel/instructions.html#зависимость-от-изменений-в-git-репозитории"
     - <<: *image_artifact_dependencies_after_install
       references:
         - name: "Импорт из артефактов и образов"
-          link: "/usage/build_draft/stapel/imports.html"
+          link: "/usage/build/stapel/imports.html"
     - <<: *image_artifact_before_setup
       references:
         - name: "Запуск инструкций сборки"
-          link: "/usage/build_draft/stapel/instructions.html"
+          link: "/usage/build/stapel/instructions.html"
         - name: "Зависимость от изменений в git-репозитории"
-          link: "/usage/build_draft/stapel/instructions.html#зависимость-от-изменений-в-git-репозитории"
+          link: "/usage/build/stapel/instructions.html#зависимость-от-изменений-в-git-репозитории"
     - <<: *image_artifact_dependencies_before_setup
       references:
         - name: "Импорт из артефактов и образов"
-          link: "/usage/build_draft/stapel/imports.html"
+          link: "/usage/build/stapel/imports.html"
     - <<: *image_artifact_setup
       references:
         - name: "Запуск инструкций сборки"
-          link: "/usage/build_draft/stapel/instructions.html"
+          link: "/usage/build/stapel/instructions.html"
         - name: "Зависимость от изменений в git-репозитории"
-          link: "/usage/build_draft/stapel/instructions.html#зависимость-от-изменений-в-git-репозитории"
+          link: "/usage/build/stapel/instructions.html#зависимость-от-изменений-в-git-репозитории"
     - <<: *image_git_cache
       references:
         - name: "Подробнее про gitArchive, gitCache, gitLatestPatch"
-          link: "/usage/build_draft/stapel/git.html#подробнее-про-gitarchive-gitcache-gitlatestpatch"
+          link: "/usage/build/stapel/git.html#подробнее-про-gitarchive-gitcache-gitlatestpatch"
     - <<: *image_dependencies_after_setup
       references:
         - name: "Импорт из артефактов и образов"
-          link: "/usage/build_draft/stapel/imports.html"
+          link: "/usage/build/stapel/imports.html"
     - <<: *image_git_latest_patch
       references:
         - name: "Подробнее про gitArchive, gitCache, gitLatestPatch"
-          link: "/usage/build_draft/stapel/git.html#подробнее-про-gitarchive-gitcache-gitlatestpatch"
+          link: "/usage/build/stapel/git.html#подробнее-про-gitarchive-gitcache-gitlatestpatch"
     - <<: *image_docker_instructions
       references:
         - name: "Использование Docker-инструкций"
-          link: "/usage/build_draft/stapel/dockerfile.html"
+          link: "/usage/build/stapel/dockerfile.html"

@@ -1,6 +1,6 @@
 ---
 title: Overview
-permalink: usage/build_draft/stapel/overview.html
+permalink: usage/build/stapel/overview.html
 ---
 
 werf has a built-in alternative syntax for describing assembly instructions called Stapel. Here are its distinctive features:
@@ -57,7 +57,7 @@ _Stage dependency_ is a piece of data that affects the stage _digest_. Stage dep
 
 Most _stage dependencies_ are specified in the `werf.yaml`, others relate to a runtime.
 
-The tables below illustrate dependencies of a Dockerfile image, a Stapel image, and a [Stapel artifact]({{ "usage/build_draft/stapel/imports.html" | true_relative_url }}) _stages dependencies_.
+The tables below illustrate dependencies of a Dockerfile image, a Stapel image, and a [Stapel artifact]({{ "usage/build/stapel/imports.html" | true_relative_url }}) _stages dependencies_.
 Each row describes dependencies for a certain stage.
 The left column contains a short description of dependencies, the right column includes related `werf.yaml` directives and contains relevant references for more information.
 

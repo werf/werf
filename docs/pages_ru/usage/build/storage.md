@@ -1,6 +1,6 @@
 ---
 title: Организация хранения образов в Container Registry
-permalink: usage/build_draft/storage.html
+permalink: usage/build/storage.html
 ---
 
 <!-- прим. для перевода: на основе https://werf.io/documentation/v1.2/advanced/storage_layouts.html -->
