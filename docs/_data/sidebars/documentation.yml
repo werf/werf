@@ -679,8 +679,8 @@ entries:
               - title: Build process
                 url: /usage/build/process.html
 
-              - title: Storage layout
-                url: /usage/build/storage.html
+              - title: Run in containers
+                url: /usage/build/run_in_containers.html
 
           - title: Deploy
             f:
@@ -817,8 +817,8 @@ entries:
               - title: Сборочный процесс
                 url: /usage/build/process.html
 
-              - title: Организация хранилища стадий
-                url: /usage/build/storage.html
+              - title: Работа в контейнерах
+                url: /usage/build/run_in_containers.html
 
           - title: Развертывание
             f:
