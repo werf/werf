@@ -10,7 +10,7 @@ en:
     url: usage/project_configuration/giterminism.html
   /usage/build: &documentation-usage-build_draft
     title: Build
-    url: usage/build/overview.html
+    url: usage/build/intro.html
   /usage/build/stapel: &documentation-usage-build_draft-stapel
     title: Stapel
     url: usage/build/stapel/overview.html
