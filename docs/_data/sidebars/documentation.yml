@@ -708,8 +708,10 @@ entries:
               - title: Release management
                 url: /usage/deploy/releases.html
 
+          - title: Distribute
+            f:
               - title: Bundles
-                url: /usage/deploy/bundles.html
+                url: /usage/distribute/bundles.html
 
           - title: Cleanup
             f:
@@ -847,13 +849,13 @@ entries:
               - title: Управление релизами
                 url: /usage/deploy/releases.html
 
-              - title: Бандлы
-                url: /usage/deploy/bundles.html
-
           - title: Дистрибуция
             f:
               - title: Чарты
                 url: /usage/distribute/charts.html
+
+              - title: Бандлы
+                url: /usage/distribute/bundles.html
 
           - title: Очистка
             f:

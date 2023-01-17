@@ -1,6 +1,6 @@
 ---
 title: Bundles
-permalink: usage/deploy/bundles.html
+permalink: usage/distribute/bundles.html
 change_canonical: true
 ---
 
