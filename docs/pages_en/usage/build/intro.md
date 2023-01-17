@@ -1,6 +1,6 @@
 ---
-title: Overview
-permalink: usage/build/overview.html
+title: Introduction
+permalink: usage/build/intro.html
 ---
 
 <!-- TODO: translate pages_ru/usage/build/overview.md -->
