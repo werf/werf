@@ -647,8 +647,8 @@ entries:
 
           - title: Build
             f:
-              - title: Overview
-                url: /usage/build/overview.html
+              - title: Introduction
+                url: /usage/build/intro.html
 
               - title: Image configuration
                 url: /usage/build/images.html
@@ -785,8 +785,8 @@ entries:
 
           - title: Сборка
             f:
-              - title: Обзор
-                url: /usage/build/overview.html
+              - title: Введение
+                url: /usage/build/intro.html
 
               - title: Конфигурация образов
                 url: /usage/build/images.html
