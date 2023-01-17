@@ -1,5 +1,17 @@
 # Changelog
 
+### [1.2.196](https://www.github.com/werf/werf/compare/v1.2.195...v1.2.196) (2023-01-17)
+
+
+### Features
+
+* **bundle:** allow non strict bundle publishing ([96fd4a1](https://www.github.com/werf/werf/commit/96fd4a17a17104ed56b42430f4110d9aa5f956d5))
+
+
+### Bug Fixes
+
+* **dependencies:** introduce ImageDigest mode, hide ImageID mode ([cc352fd](https://www.github.com/werf/werf/commit/cc352fdf017f2ce52d44fbe6105a381bea7fcbc8))
+
 ### [1.2.196](https://www.github.com/werf/werf/compare/v1.2.195...v1.2.196) (2023-01-16)
 
 
