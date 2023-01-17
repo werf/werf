@@ -822,7 +822,7 @@ entries:
 
           - title: Развертывание
             f:
-              - title: Основы развертывания
+              - title: Введение
                 url: /usage/deploy/intro.html
 
               - title: Чарты
