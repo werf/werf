@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.197](https://www.github.com/werf/werf/compare/v1.2.196...v1.2.197) (2023-01-18)
+
+
+### Bug Fixes
+
+* **dependencies:** introduce ImageDigest mode, hide ImageID mode ([cc352fd](https://www.github.com/werf/werf/commit/cc352fdf017f2ce52d44fbe6105a381bea7fcbc8))
+
 ### [1.2.197](https://www.github.com/werf/werf/compare/v1.2.196...v1.2.197) (2023-01-16)
 
 
