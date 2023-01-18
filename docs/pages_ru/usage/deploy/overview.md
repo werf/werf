@@ -47,7 +47,7 @@ project: hello
 werf converge --repo registry.example.org/repo --env production
 ```
 
-Результат: Deployment `hello` развёрнут в Namespace `hello-production`.
+Результат: Deployment `hello` развёрнут в Namespace'е `hello-production`.
 
 ## Расширенный пример развертывания
 
@@ -113,4 +113,4 @@ spec:
 werf converge --repo registry.example.org/repo --env production
 ```
 
-Результат: собран образ `backend`, а затем Deployment `backend` и ресурсы чарта `postgresql` развёрнуты в Namespace `myapp-production`.
+Результат: собран образ `backend`, а затем Deployment `backend` и ресурсы чарта `postgresql` развёрнуты в Namespace'е `myapp-production`.
