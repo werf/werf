@@ -7,7 +7,7 @@ permalink: usage/deploy/deployment_order.html
 
 Развертывание Kubernetes-ресурсов происходит в следующей последовательности:
 
-1. Развертывание `CustomResourceDefinitions` из папок `crds` подключенных чартов.
+1. Развертывание `CustomResourceDefinitions` из директорий `crds` подключенных чартов.
 
 2. Развертывание хуков `pre-install`, `pre-upgrade` или `pre-rollback` по одному хуку за раз, от хуков с меньшим весом к большему. Если хук имеет зависимость от внешнего ресурса, то он развернётся только после его готовности.
 
@@ -50,40 +50,40 @@ werf converge
 
 Создание ресурсов группы происходит в следующем порядке:
 
-- Namespace
-- NetworkPolicy
-- ResourceQuota
-- LimitRange
-- PodSecurityPolicy
-- PodDisruptionBudget
-- ServiceAccount
-- Secret
-- SecretList
-- ConfigMap
-- StorageClass
-- PersistentVolume
-- PersistentVolumeClaim
-- CustomResourceDefinition
-- ClusterRole
-- ClusterRoleList
-- ClusterRoleBinding
-- ClusterRoleBindingList
-- Role
-- RoleList
-- RoleBinding
-- RoleBindingList
-- Service
-- DaemonSet
-- Pod
-- ReplicationController
-- ReplicaSet
-- Deployment
-- HorizontalPodAutoscaler
-- StatefulSet
-- Job
-- CronJob
-- Ingress
-- APIService
+- Namespace;
+- NetworkPolicy;
+- ResourceQuota;
+- LimitRange;
+- PodSecurityPolicy;
+- PodDisruptionBudget;
+- ServiceAccount;
+- Secret;
+- SecretList;
+- ConfigMap;
+- StorageClass;
+- PersistentVolume;
+- PersistentVolumeClaim;
+- CustomResourceDefinition;
+- ClusterRole;
+- ClusterRoleList;
+- ClusterRoleBinding;
+- ClusterRoleBindingList;
+- Role;
+- RoleList;
+- RoleBinding;
+- RoleBindingList;
+- Service;
+- DaemonSet;
+- Pod;
+- ReplicationController;
+- ReplicaSet;
+- Deployment;
+- HorizontalPodAutoscaler;
+- StatefulSet;
+- Job;
+- CronJob;
+- Ingress;
+- APIService.
 
 Отслеживание готовности включается для всех ресурсов группы одновременно сразу после создания *всех* ресурсов группы.
 
@@ -154,7 +154,7 @@ werf converge
 
 Результат: ресурс `database-initialization` будет развернут только при первой *установке* релиза, а ресурс `myapp` будет развертываться и при установке, и при обновлении, и при откате релиза.
 
-Аннотация `helm.sh/hook` объявляет ресурс хуком и указывает, при каких условиях этот ресурс должен развертываться (можно указать несколько условий через запятую). Возможные условия для развертывания хука:
+Аннотация `helm.sh/hook` объявляет ресурс-хуком и указывает, при каких условиях этот ресурс должен развертываться (можно указать несколько условий через запятую). Возможные условия для развертывания хука:
 
 * `pre-install` — при установке релиза до установки основных ресурсов;
 
@@ -209,7 +209,7 @@ werf converge
 
 Результат: сначала будет развернут хук `first`, затем хук `second`, затем хук `third`.
 
-**По умолчанию при повторных развертываниях того же самого хука, старый хук в кластере удаляется прямо перед развертыванием нового хука.** Этап удаления старого хука можно изменить аннотацией `helm.sh/hook-delete-policy`, которая принимает следующие значения:
+**По умолчанию при повторных развертываниях того же самого хука старый хук в кластере удаляется прямо перед развертыванием нового хука.** Этап удаления старого хука можно изменить аннотацией `helm.sh/hook-delete-policy`, которая принимает следующие значения:
 
 - `hook-succeeded` — удалять новый хук сразу после его удачного развертывания, при неудачном развертывании не удалять совсем;
 
