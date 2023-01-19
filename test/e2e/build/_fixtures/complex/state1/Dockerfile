@@ -32,6 +32,23 @@ RUN echo ${BASE_STAPEL_SHELL_IMAGE_ID} >> base_image_data.txt
 RUN echo ${BASE_STAPEL_SHELL_IMAGE_REPO} >> base_image_data.txt
 RUN echo ${BASE_STAPEL_SHELL_IMAGE_TAG} >> base_image_data.txt
 
+# Complex ARG and ENV usage
+ENV TEST_ENV=$PATH:test-env1
+ENV PATH=$TEST_ENV:custom-path
+ARG TEST_ARG=${TEST_ENV}:${PATH}
+ARG TEST_ARG2=${TEST_ARG}:test-arg-2
+ARG ANOTHER_ARG=$PATH
+ENV PATH=$PATH:/opt/bin
+RUN echo ${PATH} > /PATH
+RUN echo ${ANOTHER_ARG} > /ANOTHER_ARG
+RUN echo ${TEST_ARG} > /TEST_ARG
+RUN echo ${TEST_ARG2} > /TEST_ARG2
+
+COPY script.sh /app/
+ARG USERNAME
+ARG PASSWORD
+RUN /app/script.sh
+
 ENTRYPOINT ["sh", "-ec"]
 CMD ["tail -f /dev/null"]
 ONBUILD RUN echo onbuild

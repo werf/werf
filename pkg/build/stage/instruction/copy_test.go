@@ -87,7 +87,7 @@ var _ = DescribeTable("COPY digest",
 				ProjectName: "example-project",
 			},
 		),
-		"f49fa51e16c8cf0728f1cb9bd2be873555c5825d00cfac406057e6357d9900ed",
+		"c65e7b2d1c3a7614106b6eb061a6bf4712cf833817ce4e3b79d8af8de22c2ba0",
 		TestDataOptions{
 			LastStageImageNameByWerfImage: map[string]string{
 				"stage/base": "ghcr.io/werf/instruction-test:a71052baf9c6ace8171e59a2ae5ea1aede3fb89aa95d160ec354b205-1661868399091",
@@ -110,7 +110,7 @@ var _ = DescribeTable("COPY digest",
 				ProjectName: "example-project",
 			},
 		),
-		"a1374babfa54a99e2efa0dc16e0c267395e2adfa6ee66d177ba9813b1745f0fa",
+		"c65e7b2d1c3a7614106b6eb061a6bf4712cf833817ce4e3b79d8af8de22c2ba0",
 		TestDataOptions{
 			LastStageImageNameByWerfImage: map[string]string{
 				"stage/base": "ghcr.io/werf/instruction-test:4930d562bfbee9c931413c826137d49eff6a2e7d39519c1c9488a747-1655913653892",
@@ -133,7 +133,7 @@ var _ = DescribeTable("COPY digest",
 				ProjectName: "example-project",
 			},
 		),
-		"a1374babfa54a99e2efa0dc16e0c267395e2adfa6ee66d177ba9813b1745f0fa",
+		"c65e7b2d1c3a7614106b6eb061a6bf4712cf833817ce4e3b79d8af8de22c2ba0",
 		TestDataOptions{
 			LastStageImageNameByWerfImage: map[string]string{
 				"stage/base": "ghcr.io/werf/instruction-test:4930d562bfbee9c931413c826137d49eff6a2e7d39519c1c9488a747-1655913653892",
@@ -161,7 +161,7 @@ var _ = DescribeTable("COPY digest",
 				ProjectName: "example-project",
 			},
 		),
-		"834afb3164923c905c25b6238e1366e533d7b65c0e8c1011163131399e200d36",
+		"d1898898971186720898055e0682e356ff9e53178b6ac7c629f255113c6b17a0",
 		TestDataOptions{
 			LastStageImageNameByWerfImage: map[string]string{
 				"stage/base": "ghcr.io/werf/instruction-test:4930d562bfbee9c931413c826137d49eff6a2e7d39519c1c9488a747-1655913653892",
@@ -191,7 +191,7 @@ var _ = DescribeTable("COPY digest",
 				ProjectName: "example-project",
 			},
 		),
-		"919c20233b0060d5726cf23c99c199f6055d0db050bea6f95d29ca3796397912",
+		"18a8898734bef3802598b82bff90e2fd8fe37e5b4806f269553e70f017374e35",
 		TestDataOptions{
 			LastStageImageNameByWerfImage: map[string]string{
 				"stage/base": "ghcr.io/werf/instruction-test:4930d562bfbee9c931413c826137d49eff6a2e7d39519c1c9488a747-1655913653892",

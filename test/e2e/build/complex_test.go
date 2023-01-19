@@ -102,6 +102,24 @@ var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 					"test -f /created-by-run-state0",
 
 					"test -d /volume10/should-exist-in-volume",
+
+					"test -f /username",
+					"echo 'test-username' | diff /username -",
+
+					"test -f /password",
+					"echo 'test-password' | diff /password -",
+
+					"test -f /PATH",
+					"echo '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:test-env1:custom-path:/opt/bin' | diff /PATH -",
+
+					"test -f /ANOTHER_ARG",
+					"echo '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:test-env1:custom-path' | diff /ANOTHER_ARG -",
+
+					"test -f /TEST_ARG",
+					"echo '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:test-env1:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:test-env1:custom-path' | diff /TEST_ARG -",
+
+					"test -f /TEST_ARG2",
+					"echo '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:test-env1:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:test-env1:custom-path:test-arg-2' | diff /TEST_ARG2 -",
 				)
 
 				By(`state0: checking "stapel-shell" image content`)
@@ -192,6 +210,24 @@ var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 					"! test -e /helloworld.tgz",
 
 					"test -f /created-by-run-state1",
+
+					"test -f /username",
+					"echo 'new-username' | diff /username -",
+
+					"test -f /password",
+					"echo 'new-password' | diff /password -",
+
+					"test -f /PATH",
+					"echo '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:test-env1:custom-path:/opt/bin' | diff /PATH -",
+
+					"test -f /ANOTHER_ARG",
+					"echo 'changed-another-arg' | diff /ANOTHER_ARG -",
+
+					"test -f /TEST_ARG",
+					"echo 'changed-test-arg' | diff /TEST_ARG -",
+
+					"test -f /TEST_ARG2",
+					"echo 'changed-test-arg:test-arg-2' | diff /TEST_ARG2 -",
 				)
 
 				By(`state1: checking "stapel-shell" image content`)

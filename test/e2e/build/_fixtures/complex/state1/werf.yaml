@@ -9,6 +9,10 @@ target: result
 network: default
 args:
   CHANGED_ARG: "was_changed-state1"
+  USERNAME: "new-username"
+  PASSWORD: "new-password"
+  TEST_ARG: "changed-test-arg"
+  ANOTHER_ARG: "changed-another-arg"
 dependencies:
 - image: stapel-shell
   imports:
