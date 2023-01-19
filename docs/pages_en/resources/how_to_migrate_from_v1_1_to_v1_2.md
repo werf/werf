@@ -211,7 +211,7 @@ werf provides following compose commands:
 - Bundles allow splitting the process of creation of a new release of the source code for an application and the process of deploying of this release into the kubernetes.
 - Bundles are stored in the container registry.
 - Working with bundles implies two steps: 1) publishing a bundle for your application version from the application git directory into the container registry; 2) deploy published bundle from the container registry into the kubernetes.
-- More info [in the docs]({{ "/usage/deploy/bundles.html" | true_relative_url }})
+- More info [in the docs]({{ "/usage/distribute/bundles.html" | true_relative_url }})
 
 ### Change main commands interface and behaviour
 

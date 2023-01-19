@@ -71,7 +71,7 @@ fuse-overlayfs: cannot mount: No such file or directory
 time="2021-12-06T11:30:20Z" level=error msg="exit status 1"
 ```
 
-Решение: включите fuse device для контейнера, в котором запущен werf ([подробности](#работа-в-контейнерах)).
+Решение: включите fuse device для контейнера, в котором запущен werf ([подробности]({{ "usage/build/run_in_containers.html" | true_relative_url }}))..
 
 #### `flags: 0x1000: permission denied`
 
@@ -86,7 +86,7 @@ Error: unable to get buildah client: unable to create new Buildah instance with 
 time="2021-12-06T11:23:23Z" level=error msg="exit status 1"
 ```
 
-Решение: отключите профили AppArmor и seccomp с помощью параметров `--security-opt seccomp=unconfined` и `--security-opt apparmor=unconfined`, добавьте специальные аннотации в Pod ([подробности](#работа-в-контейнерах)).
+Решение: отключите профили AppArmor и seccomp с помощью параметров `--security-opt seccomp=unconfined` и `--security-opt apparmor=unconfined`, добавьте специальные аннотации в Pod ([подробности]({{ "usage/build/run_in_containers.html" | true_relative_url }})).
 
 #### `unshare(CLONE_NEWUSER): Operation not permitted`
 
@@ -98,7 +98,7 @@ ERRO[0000] error parsing PID "": strconv.Atoi: parsing "": invalid syntax
 ERRO[0000] (unable to determine exit status)
 ```
 
-Решение: отключите профили AppArmor и seccomp с помощью параметров `--security-opt seccomp=unconfined` и `--security-opt apparmor=unconfined`, добавьте специальные аннотации в Pod или используйте привилегированный контейнер ([подробности](#работа-в-контейнерах)).
+Решение: отключите профили AppArmor и seccomp с помощью параметров `--security-opt seccomp=unconfined` и `--security-opt apparmor=unconfined`, добавьте специальные аннотации в Pod или используйте привилегированный контейнер ([подробности]({{ "usage/build/run_in_containers.html" | true_relative_url }})).
 
 #### `User namespaces are not enabled in /proc/sys/kernel/unprivileged_userns_clone`
 
