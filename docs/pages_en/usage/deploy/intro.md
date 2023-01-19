@@ -18,7 +18,7 @@ With all of these features werf can be considered as an alternative or better he
 Briefly, the following commands are used to deal with an application in the Kubernetes cluster:
 - [converge]({{ "reference/cli/werf_converge.html" | true_relative_url }}) — to release an application;
 - [dismiss]({{ "reference/cli/werf_dismiss.html" | true_relative_url }}) — to delete an application from the cluster.
-- [bundle apply]({{ "reference/cli/werf_bundle_apply.html" | true_relative_url }}) — to release an application [bundle]({{ "usage/deploy/bundles.html" | true_relative_url }}).
+- [bundle apply]({{ "reference/cli/werf_bundle_apply.html" | true_relative_url }}) — to release an application [bundle]({{ "usage/distribute/bundles.html" | true_relative_url }}).
 
 ## Giterminism
 
