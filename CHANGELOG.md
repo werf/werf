@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.198](https://www.github.com/werf/werf/compare/v1.2.197...v1.2.198) (2023-01-20)
+
+
+### Bug Fixes
+
+* **staged-dockerfile:** correction for ENV and ARG instructions handling ([7a17fc7](https://www.github.com/werf/werf/commit/7a17fc7d57ba84d5597a480781cd51a576a9d6e2))
+
 ### [1.2.197](https://www.github.com/werf/werf/compare/v1.2.196...v1.2.197) (2023-01-18)
 
 
