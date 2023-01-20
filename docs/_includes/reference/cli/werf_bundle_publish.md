@@ -281,6 +281,8 @@ werf bundle publish [IMAGE_NAME...] [options]
   -Z, --skip-build=false
             Disable building of docker images, cached images in the repo should exist in the repo   
             if werf.yaml contains at least one image description (default $WERF_SKIP_BUILD)
+  -L, --skip-dependencies-repo-refresh=false
+            Do not refresh helm chart repositories locally cached index
       --skip-tls-verify-registry=false
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)
