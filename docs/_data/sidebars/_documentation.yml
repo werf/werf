@@ -92,23 +92,7 @@ entries:
                 url: /usage/cleanup/host_cleanup.html
 
           - title: Integration with CI/CD systems
-            f:
-              - title: How CI/CD integration works
-                f:
-                  - title: General overview
-                    url: /usage/integration_with_ci_cd_systems/how_ci_cd_integration_works/general_overview.html
-
-                  - title: GitLab CI/CD
-                    url: /usage/integration_with_ci_cd_systems/how_ci_cd_integration_works/gitlab_ci_cd.html
-
-                  - title: GitHub Actions
-                    url: /usage/integration_with_ci_cd_systems/how_ci_cd_integration_works/github_actions.html
-
-              - title: Using with CI/CD systems
-                url: /usage/integration_with_ci_cd_systems/using_with_ci_cd_systems.html
-
-              - title: Other CI/CD systems
-                url: /usage/integration_with_ci_cd_systems/generic_ci_cd_integration.html
+            url: /usage/integration_with_ci_cd_systems.html
 
       - title: Reference
         f:
@@ -236,23 +220,7 @@ entries:
                 url: /usage/cleanup/host_cleanup.html
 
           - title: Интеграция с CI/CD системами
-            f:
-              - title: Как работает интеграция с CI/CD
-                f:
-                  - title: Общие сведения
-                    url: /usage/integration_with_ci_cd_systems/how_ci_cd_integration_works/general_overview.html
-
-                  - title: GitLab CI/CD
-                    url: /usage/integration_with_ci_cd_systems/how_ci_cd_integration_works/gitlab_ci_cd.html
-
-                  - title: GitHub Actions
-                    url: /usage/integration_with_ci_cd_systems/how_ci_cd_integration_works/github_actions.html
-
-              - title: Использование в CI/CD системах
-                url: /usage/integration_with_ci_cd_systems/using_with_ci_cd_systems.html
-
-              - title: Другие CI/CD системы
-                url: /usage/integration_with_ci_cd_systems/generic_ci_cd_integration.html
+            url: /usage/integration_with_ci_cd_systems.html
 
       - title: Справочник
         f:
