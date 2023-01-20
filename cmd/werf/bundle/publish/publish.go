@@ -22,6 +22,7 @@ import (
 	"github.com/werf/werf/pkg/deploy/bundles"
 	"github.com/werf/werf/pkg/deploy/helm/chart_extender"
 	"github.com/werf/werf/pkg/deploy/helm/chart_extender/helpers"
+	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/git_repo/gitdata"
 	"github.com/werf/werf/pkg/image"
@@ -112,6 +113,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupValues(&commonCmdData, cmd)
 
 	commonCmdData.SetupDisableDefaultValues(cmd)
+	commonCmdData.SetupSkipDependenciesRepoRefresh(cmd)
 
 	common.SetupReportPath(&commonCmdData, cmd)
 	common.SetupReportFormat(&commonCmdData, cmd)
@@ -328,6 +330,7 @@ func runPublish(ctx context.Context, imagesToProcess build.ImagesToProcess) erro
 	}
 
 	wc := chart_extender.NewWerfChart(ctx, giterminismManager, nil, chartDir, helm_v3.Settings, helmRegistryClient, chart_extender.WerfChartOptions{
+		BuildChartDependenciesOpts:        command_helpers.BuildChartDependenciesOptions{SkipUpdate: *commonCmdData.SkipDependenciesRepoRefresh},
 		ExtraAnnotations:                  userExtraAnnotations,
 		ExtraLabels:                       userExtraLabels,
 		IgnoreInvalidAnnotationsAndLabels: true,

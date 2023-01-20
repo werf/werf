@@ -56,6 +56,7 @@ func NewWerfChart(ctx context.Context, giterminismManager giterminism_manager.In
 
 		DisableDefaultValues:       opts.DisableDefaultValues,
 		DisableDefaultSecretValues: opts.DisableDefaultSecretValues,
+		BuildChartDependenciesOpts: opts.BuildChartDependenciesOpts,
 	}
 
 	wc.extraAnnotationsAndLabelsPostRenderer.Add(opts.ExtraAnnotations, opts.ExtraLabels)

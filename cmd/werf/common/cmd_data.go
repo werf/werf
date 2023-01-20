@@ -16,6 +16,8 @@ type CmdData struct {
 	HomeDir            *string
 	SSHKeys            *[]string
 
+	SkipDependenciesRepoRefresh *bool
+
 	HelmChartDir                     *string
 	Environment                      *string
 	Release                          *string
@@ -115,4 +117,9 @@ func (cmdData *CmdData) SetupDisableDefaultValues(cmd *cobra.Command) {
 func (cmdData *CmdData) SetupDisableDefaultSecretValues(cmd *cobra.Command) {
 	cmdData.DisableDefaultSecretValues = new(bool)
 	cmd.Flags().BoolVarP(cmdData.DisableDefaultSecretValues, "disable-default-secret-values", "", util.GetBoolEnvironmentDefaultFalse("WERF_DISABLE_DEFAULT_SECRET_VALUES"), `Do not use secret values from the default .helm/secret-values.yaml file (default $WERF_DISABLE_DEFAULT_SECRET_VALUES or false)`)
+}
+
+func (cmdData *CmdData) SetupSkipDependenciesRepoRefresh(cmd *cobra.Command) {
+	cmdData.SkipDependenciesRepoRefresh = new(bool)
+	cmd.Flags().BoolVarP(cmdData.SkipDependenciesRepoRefresh, "skip-dependencies-repo-refresh", "L", util.GetBoolEnvironmentDefaultFalse("WERF_SKIP_DEPENDENCIES_REPO_REFRESH"), `Do not refresh helm chart repositories locally cached index`)
 }
