@@ -81,3 +81,30 @@ werf converge
 ```
 
 Результат: ресурс релиза `myapp` успешно обновил ресурс `myapp` в кластере и теперь ресурс в кластере является частью текущего релиза.
+
+## Автоматическое аннотирование выкатываемых ресурсов релиза
+
+werf автоматически выставляет следующие аннотации всем ресурсам чарта в процессе развёртывания:
+
+* `"werf.io/version": FULL_WERF_VERSION` — версия werf, использованная в процессе запуска команды `werf converge`;
+* `"project.werf.io/name": PROJECT_NAME` — имя проекта, указанное в файле конфигурации `werf.yaml`;
+* `"project.werf.io/env": ENV` — имя окружения, указанное с помощью параметра `--env` или переменной окружения `WERF_ENV` (аннотация не устанавливается, если окружение не было указано при запуске).
+
+При использовании команды `werf ci-env` с [поддерживаемыми CI/CD системами]({{ "usage/integration_with_ci_cd_systems.html" | true_relative_url }}) добавляются аннотации, которые позволяют пользователю перейти в связанный пайплайн, задание и коммит при необходимости.
+
+## Добавление произвольных аннотаций и лейблов для выкатываемых ресурсов релиза
+
+Пользователь может устанавливать произвольные аннотации и лейблы используя CLI-параметры при развёртывании `--add-annotation annoName=annoValue` (может быть указан несколько раз) и `--add-label labelName=labelValue` (может быть указан несколько раз). Аннотации и лейблы так же могут быть заданы с помощью соответствующих переменных `WERF_ADD_LABEL*` и `WERF_ADD_ANNOTATION*` (к примеру, `WERF_ADD_ANNOTATION_1=annoName1=annoValue1` и `WERF_ADD_LABEL_1=labelName1=labelValue1`).
+
+Например, для установки аннотаций и лейблов `commit-sha=9aeee03d607c1eed133166159fbea3bad5365c57`, `gitlab-user-email=vasya@myproject.com` всем ресурсам Kubernetes в чарте, можно использовать следующий вызов команды деплоя:
+
+```shell
+werf converge \
+  --add-annotation "commit-sha=9aeee03d607c1eed133166159fbea3bad5365c57" \
+  --add-label "commit-sha=9aeee03d607c1eed133166159fbea3bad5365c57" \
+  --add-annotation "gitlab-user-email=vasya@myproject.com" \
+  --add-label "gitlab-user-email=vasya@myproject.com" \
+  --env dev \
+  --repo REPO
+```
+
