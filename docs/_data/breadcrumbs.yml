@@ -23,12 +23,6 @@ en:
   /usage/cleanup: &documentation-usage-cleanup
     title: Cleanup
     url: usage/cleanup/cr_cleanup.html
-  /usage/integration_with_ci_cd_systems: &documentation-usage-integration_with_ci_cd_systems
-    title: Integration with CI/CD systems
-    url: usage/integration_with_ci_cd_systems/how_ci_cd_integration_works/general_overview.html
-  /usage/integration_with_ci_cd_systems/how_ci_cd_integration_works: &documentation-usage-integration_with_ci_cd_systems-how_ci_cd_integration_works
-    title: How CI/CD integration works
-    url: usage/integration_with_ci_cd_systems/how_ci_cd_integration_works/general_overview.html
   /reference: &documentation-reference
     title: Reference
     url: /reference/werf_yaml.html
@@ -63,12 +57,6 @@ ru:
   /usage/cleanup:
     <<: *documentation-usage-cleanup
     title: Очистка
-  /usage/integration_with_ci_cd_systems:
-    <<: *documentation-usage-integration_with_ci_cd_systems
-    title: Интеграция с CI/CD системами
-  /usage/integration_with_ci_cd_systems/how_ci_cd_integration_works:
-    <<: *documentation-usage-integration_with_ci_cd_systems-how_ci_cd_integration_works
-    title: Как работает интеграция с CI/CD
   /reference:
     <<: *documentation-reference
     title: Справочник
