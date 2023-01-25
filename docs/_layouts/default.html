@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="{% if page.lang == "ru" %}ru{% else %}en{% endif %}">
 <head>
-  {%- include head.html %}
+  {%- include head.html.liquid %}
   <script>
     $(document).ready(function() {
       // Initialize navgoco with default options
