@@ -25,7 +25,12 @@
   {%- assign title_parts = title_parts | push: breadcrumb.title -%}
 {%- endfor %}
 
-{%- assign title_parts = title_parts | push: page.title -%}
+{%- if page.head_title %}
+  {%- assign title_parts = title_parts | push: page.head_title -%}
+{%- else %}
+  {%- assign title_parts = title_parts | push: page.title -%}
+{%- endif %}
+
 {%- assign generated_title = title_parts | reverse | join: " | " | append: " | " | append: site.site_title %}
 {% comment %}title generation{% endcomment -%}
 
