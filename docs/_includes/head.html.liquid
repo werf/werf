@@ -1,0 +1,62 @@
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=1260">
+
+{% if page.multilang -%}
+  <link data-proofer-ignore rel="canonical" href="{{ site.url }}{{ site.canonical_url_prefix }}{{ page.url | relative_url }}" />
+  <link data-proofer-ignore rel="alternate" hreflang="ru" href="{{ site.site_urls.ru }}{{ site.canonical_url_prefix }}{{ page.url | relative_url }}" />
+  <link data-proofer-ignore rel="alternate" hreflang="en" href="{{ site.site_urls.en }}{{ site.canonical_url_prefix }}{{ page.url | relative_url }}" />
+{% endif -%}
+
+{% comment %}title generation{% endcomment -%}
+{%- assign page_url_parts = page.url | split: '/' -%}
+{%- assign max_ind = page_url_parts.size | minus: 2 -%}
+{%- assign title_parts = "" | split: "" -%}
+
+{%- for i in (1..max_ind) %}
+  {%- capture current_breadcrumb_url %}{{ next_prepender }}/{{ page_url_parts[i] }}{% endcapture -%}
+  {%- capture next_prepender %}{{ next_prepender }}/{{ page_url_parts[i] }}{% endcapture -%}
+
+  {%- assign breadcrumb = site.data.breadcrumbs[page.lang][current_breadcrumb_url] %}
+  {%- unless breadcrumb %}
+    {%- assign breadcrumb_err = "Check breadcrumbs.yml: " | append: current_breadcrumb_url | append: " not defined" %}
+    {{ breadcrumb_err | raise_error }}
+  {% endunless -%}
+  {%- assign title_parts = title_parts | push: breadcrumb.title -%}
+{%- endfor %}
+
+{%- if page.head_title %}
+  {%- assign title_parts = title_parts | push: page.head_title -%}
+{%- else %}
+  {%- assign title_parts = title_parts | push: page.title -%}
+{%- endif %}
+
+{%- assign generated_title = title_parts | reverse | join: " | " | append: " | " | append: site.site_title %}
+{% comment %}title generation{% endcomment -%}
+
+<title>{{ generated_title }}</title>
+
+{% if page.description -%}
+  {%- assign description = page.description | strip_html | strip_newlines | truncate: 160 %}
+{% else -%}
+  {%- assign description = site.site_description | strip_html | strip_newlines | truncate: 160 %}
+{% endif -%}
+
+<!-- Primary Meta Tags -->
+<meta name="title" content="{{ generated_title }}">
+<meta name="description" content="{{ description }}">
+<meta name="keywords" content="{{page.tags}}{% if page.tags %}, {% endif %} {{page.keywords}}">
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="{{ site.url }}{{ site.canonical_url_prefix }}{{ page.url | relative_url }}">
+<meta property="og:title" content="{{ generated_title }}">
+<meta property="og:description" content="{{ description }}">
+
+<!-- Twitter -->
+<meta property="twitter:card" content="summary_large_image">
+<meta property="twitter:url" content="{{ site.url }}{{ site.canonical_url_prefix }}{{ page.url | relative_url }}">
+<meta property="twitter:title" content="{{ generated_title }}">
+<meta property="twitter:description" content="{{ description }}">
+
+<!--#include virtual="/includes/head-common.html" -->
