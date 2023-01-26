@@ -256,14 +256,14 @@ ansible:
 
 На текущий момент, список поддерживаемых модулей Ansible следующий:
 
-- [Commands modules](https://docs.ansible.com/ansible/2.5/modules/list_of_commands_modules.html): command, shell, raw, script.
-- [Crypto modules](https://docs.ansible.com/ansible/2.5/modules/list_of_crypto_modules.html): openssl_certificate и другие.
-- [Files modules](https://docs.ansible.com/ansible/2.5/modules/list_of_files_modules.html): acl, archive, copy, stat, tempfile и другие.
-- [Net Tools Modules](https://docs.ansible.com/ansible/2.5/modules/list_of_net_tools_modules.html): get_url, slurp, uri.
-- [Packaging/Language modules](https://docs.ansible.com/ansible/2.5/modules/list_of_packaging_modules.html#language): composer, gem, npm, pip и другие.
-- [Packaging/OS modules](https://docs.ansible.com/ansible/2.5/modules/list_of_packaging_modules.html#os): apt, apk, yum и другие.
-- [System modules](https://docs.ansible.com/ansible/2.5/modules/list_of_system_modules.html): user, group, getent, locale_gen, timezone, cron и другие.
-- [Utilities modules](https://docs.ansible.com/ansible/2.5/modules/list_of_utilities_modules.html): assert, debug, set_fact, wait_for.
+- Command modules: command, shell, raw, script.
+- Crypto modules: openssl_certificate и другие.
+- Files modules: acl, archive, copy, stat, tempfile и другие.
+- Net Tools Modules: get_url, slurp, uri.
+- Packaging/Language modules: composer, gem, npm, pip и другие.
+- Packaging/OS modules: apt, apk, yum и другие.
+- System modules: user, group, getent, locale_gen, timezone, cron и другие.
+- Utilities modules: assert, debug, set_fact, wait_for.
 
 При указании в _конфигурации сборки_ модуля, отсутствующего в приведенном списке, сборка прервется с ошибкой. Не стесняйтесь [сообщать](https://github.com/werf/werf/issues/new) нам, если вы считаете что какой-либо модуль должен быть включен в список поддерживаемых.
 
