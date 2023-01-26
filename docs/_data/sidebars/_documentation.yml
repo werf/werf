@@ -142,7 +142,7 @@ entries:
               - title: Обзор
                 url: /usage/build/overview.html
 
-              - title: Конфигурация образов
+              - title: Образы и зависимости
                 url: /usage/build/images.html
 
               - title: Конфигурация образов stapel
