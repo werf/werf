@@ -57,7 +57,7 @@ entries:
               - title: Overview
                 url: /usage/deploy/overview.html
 
-              - title: Charts
+              - title: Charts and dependencies
                 url: /usage/deploy/charts.html
 
               - title: Templates
@@ -179,7 +179,7 @@ entries:
               - title: Обзор
                 url: /usage/deploy/overview.html
 
-              - title: Чарты
+              - title: Чарты и зависимости
                 url: /usage/deploy/charts.html
 
               - title: Шаблоны
@@ -205,7 +205,7 @@ entries:
 
           - title: Дистрибуция
             f:
-              - title: Чарты
+              - title: Чарты и зависимости
                 url: /usage/distribute/charts.html
 
               - title: Бандлы
