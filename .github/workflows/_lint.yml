@@ -33,6 +33,8 @@ jobs:
 
       - name: Install Task
         uses: arduino/setup-task@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install golangci-lint
         run: task -p deps:install:golangci-lint
