@@ -1,32 +1,41 @@
 ---
-title: Конфигурация образов
+title: Образы и зависимости
 permalink: usage/build/images.html
 ---
 
 <!-- прим. для перевода: на основе https://werf.io/documentation/v1.2/reference/werf_yaml.html#image-section -->
 
+## Добавление образов
+
 Для сборки c werf необходимо добавить описание образов в `werf.yaml` проекта. Каждый образ добавляется директивой `image` с указанием имени образа:
 
 ```yaml
 image: frontend
+# ...
 ---
 image: backend
+# ...
 ---
 image: database
+# ...
 ```
 
 > Имя образа — это уникальный внутренний идентификатор образа, который позволяет ссылаться на него при конфигурации и при вызове команд werf
 
-Далее для каждого образа в `werf.yaml` необходимо определить сборочные инструкции [с помощью Dockerfile](#сборщик-dockerfile) или [Stapel](#сборщик-stapel).
+Далее для каждого образа в `werf.yaml` необходимо определить сборочные инструкции [с помощью Dockerfile](#dockerfile) или [Stapel](#stapel).
 
-## Сборщик Dockerfile
+### Dockerfile
 
 <!-- прим. для перевода: на основе https://werf.io/documentation/v1.2/reference/werf_yaml.html#dockerfile-builder -->
+
+#### Написание Dockerfile-инструкций
 
 Для описания сборочных инструкций образа поддерживается стандартный Dockerfile. Следующие ресурсы помогут в его написании:
 
 * [Dockerfile Reference](https://docs.docker.com/engine/reference/builder/).
 * [Best practices for writing Dockerfiles](https://docs.docker.com/develop/develop-images/dockerfile_best-practices/).
+
+#### Использование Dockerfile
 
 Конфигурация сборки Dockerfile может выглядеть следующим образом:
 
@@ -45,6 +54,8 @@ CMD ["node", "server.js"]
 image: backend
 dockerfile: Dockerfile
 ```
+
+#### Использование определённой Dockerfile-стадии
 
 Также вы можете описывать несколько целевых образов из разных стадий одного и того же Dockerfile:
 
@@ -88,6 +99,8 @@ image: frontend
 dockerfile: dockerfiles/Dockerfile.frontend
 ```
 
+#### Выбор директории сборочного контекста
+
 Чтобы указать сборочный контекст используется директива `context`. **Важно:** в этом случае путь до Dockerfile указывается относительно директории контекста:
 
 ```yaml
@@ -102,7 +115,7 @@ dockerfile: Dockerfile
 
 Для образа `docs` будет использоваться Dockerfile по пути `docs/Dockerfile`, а для `service` — `service/Dockerfile`.
 
-### contextAddFiles
+#### Добавление произвольных файлов в сборочный контекст
 
 По умолчанию контекст сборки Dockerfile-образа включает только файлы из текущего коммита репозитория проекта. Файлы, не добавленные в Git, или некоммитнутые изменения не попадают в сборочный контекст. Такая логика действует в соответствии [с настройками гитерминизма]({{ "/usage/project_configuration/giterminism.html" | true_relative_url }}) по умолчанию.
 
@@ -134,7 +147,7 @@ config:
 - `app/**/*` из текущего коммита репозитория проекта;
 - файлы `app/file1`, `app/dir2/file2.out` и директория `dir1`, которые находятся в директории проекта.
 
-## Сборщик Stapel
+### Stapel
 
 В werf встроен альтернативный синтаксис описания сборочных инструкций, называемый Stapel. Подробная документация по синтаксису Stapel доступна [в соответствующей секции документации]({{ "/usage/build/stapel/overview.html" | true_relative_url }}).
 
