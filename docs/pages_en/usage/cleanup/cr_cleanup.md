@@ -3,6 +3,8 @@ title: Container registry cleanup
 permalink: usage/cleanup/cr_cleanup.html
 ---
 
+## Overview
+
 The number of images can grow rapidly, taking up more space in the container registry and thus leading to a significant increase in costs. To control the growth and keep it at an acceptable level, werf offers its cleanup approach. It takes into account the images used in Kubernetes as well as their relevance based on the Git history when deciding which images to delete.
 
 The [**werf cleanup**]({{ "reference/cli/werf_cleanup.html" | true_relative_url }}) command is designed to run on a schedule. werf performs the (safe) cleanup according to the cleanup policies.

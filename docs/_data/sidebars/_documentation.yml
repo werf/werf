@@ -17,8 +17,8 @@ entries:
 
           - title: Build
             f:
-              - title: Introduction
-                url: /usage/build/intro.html
+              - title: Overview
+                url: /usage/build/overview.html
 
               - title: Image configuration
                 url: /usage/build/images.html
@@ -54,8 +54,8 @@ entries:
 
           - title: Deploy
             f:
-              - title: Introduction
-                url: /usage/deploy/intro.html
+              - title: Overview
+                url: /usage/deploy/overview.html
 
               - title: Charts
                 url: /usage/deploy/charts.html
@@ -139,8 +139,8 @@ entries:
 
           - title: Сборка
             f:
-              - title: Введение
-                url: /usage/build/intro.html
+              - title: Обзор
+                url: /usage/build/overview.html
 
               - title: Конфигурация образов
                 url: /usage/build/images.html
@@ -176,8 +176,8 @@ entries:
 
           - title: Развертывание
             f:
-              - title: Введение
-                url: /usage/deploy/intro.html
+              - title: Обзор
+                url: /usage/deploy/overview.html
 
               - title: Чарты
                 url: /usage/deploy/charts.html
