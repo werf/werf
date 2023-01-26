@@ -1,5 +1,5 @@
 ---
-title: Чарты
+title: Чарты и зависимости
 permalink: usage/deploy/charts.html
 ---
 
