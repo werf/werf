@@ -82,7 +82,7 @@ editme_button: false
         <div class="overview__step-info">
 <div markdown="1">
  - [Giterminism]({{ "usage/project_configuration/giterminism.html" | true_relative_url }}) describes how determinism is implemented with git, what limitations it imposes, and why.
- - [Helm]({{ "usage/deploy/intro.html" | true_relative_url }})** describes the deploy essentials: how to configure werf for deploying to Kubernetes, what helm chart and release is. Here you may find the basics of templating Kubernetes resources, algorithms for using built images defined in your `werf.yaml` file during the deploy process and working with secrets, plus other useful stuff. Read this chapter if you want to learn more about organizing the deploy process with werf.
+ - [Helm]({{ "usage/deploy/overview.html" | true_relative_url }})** describes the deploy essentials: how to configure werf for deploying to Kubernetes, what helm chart and release is. Here you may find the basics of templating Kubernetes resources, algorithms for using built images defined in your `werf.yaml` file during the deploy process and working with secrets, plus other useful stuff. Read this chapter if you want to learn more about organizing the deploy process with werf.
  - [Cleanup]({{ "usage/cleanup/cr_cleanup.html" | true_relative_url }}) explains werf cleanup concepts and main commands to perform cleaning tasks.
  - [Building images with stapel]({{ "usage/build/stapel/overview.html" | true_relative_url }}) introduces werf's custom builder. It currently implements the distributed building algorithm to enable lightning-fast build pipelines with distributed caching and incremental rebuilds based on the Git history of your application.
 </div>

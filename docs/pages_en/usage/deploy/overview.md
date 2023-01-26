@@ -1,7 +1,9 @@
 ---
-title: Introduction
-permalink: usage/deploy/intro.html
+title: Overview
+permalink: usage/deploy/overview.html
 ---
+
+## Overview
 
 You can easily start using werf for deploying your projects via the existing [Helm](https://helm.sh) charts since they are fully compatible with werf. The configuration has a format similar to that of [Helm charts]({{ "usage/deploy/charts.html" | true_relative_url }}).
 
