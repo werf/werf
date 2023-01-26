@@ -202,14 +202,14 @@ ansible:
 
 One of the ideas at the core of werf is idempotent builds. werf must generate the very same image every time if there are no changes. We solve this task by calculating a _digest_ for _stages_. However, ansible’s modules are non-idempotent, meaning they produce different results even if the input parameters are the same. Thus, werf is unable to correctly calculate a _digest_ in order to determine the need to rebuild _stages_. Because of that, werf currently supports a limited list of modules:
 
-- [Command modules](https://docs.ansible.com/ansible/2.5/modules/list_of_commands_modules.html): command, shell, raw, script.
-- [Crypto modules](https://docs.ansible.com/ansible/2.5/modules/list_of_crypto_modules.html): openssl_certificate, and other.
-- [Files modules](https://docs.ansible.com/ansible/2.5/modules/list_of_files_modules.html): acl, archive, copy, stat, tempfile, and other.
-- [Net Tools Modules](https://docs.ansible.com/ansible/2.5/modules/list_of_net_tools_modules.html): get_url, slurp, uri.
-- [Packaging/Language modules](https://docs.ansible.com/ansible/2.5/modules/list_of_packaging_modules.html#language): composer, gem, npm, pip, and other.
-- [Packaging/OS modules](https://docs.ansible.com/ansible/2.5/modules/list_of_packaging_modules.html#os): apt, apk, yum, and other.
-- [System modules](https://docs.ansible.com/ansible/2.5/modules/list_of_system_modules.html): user, group, getent, locale_gen, timezone, cron, and other.
-- [Utilities modules](https://docs.ansible.com/ansible/2.5/modules/list_of_utilities_modules.html): assert, debug, set_fact, wait_for.
+- Command modules: command, shell, raw, script.
+- Crypto modules: openssl_certificate, and other.
+- Files modules: acl, archive, copy, stat, tempfile, and other.
+- Net Tools Modules: get_url, slurp, uri.
+- Packaging/Language modules: composer, gem, npm, pip, and other.
+- Packaging/OS modules: apt, apk, yum, and other.
+- System modules: user, group, getent, locale_gen, timezone, cron, and other.
+- Utilities modules: assert, debug, set_fact, wait_for.
 
 An attempt to do a _werf config_ with the module not in this list will lead to an error, and a failed build. Feel free to report an [issue](https://github.com/werf/werf/issues/new) if some module should be enabled.
 
