@@ -10,13 +10,13 @@ en:
     url: usage/project_configuration/giterminism.html
   /usage/build: &documentation-usage-build_draft
     title: Build
-    url: usage/build/intro.html
+    url: usage/build/overview.html
   /usage/build/stapel: &documentation-usage-build_draft-stapel
     title: Stapel
     url: usage/build/stapel/overview.html
   /usage/deploy: &documentation-usage-deploy
     title: Deploy
-    url: usage/deploy/intro.html
+    url: usage/deploy/overview.html
   /usage/distribute: &documentation-usage-distribute
     title: Distribute
     url: usage/distribute/charts.html
