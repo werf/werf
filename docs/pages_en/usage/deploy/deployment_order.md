@@ -3,116 +3,266 @@ title: Deployment order
 permalink: usage/deploy/deployment_order.html
 ---
 
-When running the `werf converge` command, werf starts the deployment process that includes the following steps:
+## Deployment stages
 
-1. Rendering chart templates into a single list of Kubernetes resource manifests and validating them.
-2. Sequentially running `pre-install` or `pre-upgrade` hooks sorted by their weight and tracking each hook to completion while printing its logs in the process.
-3. Grouping non-hook Kubernetes resources by their weight and deploying each group sequentially according to its weight: creating/updating/deleting resources and tracking them until they are ready while printing logs in the process.
-4. Running `post-install` or `post-upgrade` hooks the same way as `pre-install` and `pre-upgrade` hooks.
+Kubernetes resources are deployed in the following stages:
 
-## Resource weight
+1. Deploying `CustomResourceDefinitions` from the `crds` directories of the included charts.
 
-By default, resources are applied and tracked simultaneously because they all have the same initial ([werf.io/weight: 0]({{ "/reference/deploy_annotations.html#resource-weight" | true_relative_url }})) (which means that you haven't changed it or deliberately set it to "0"). However, you can change the order in which resources are applied and tracked by setting different weights for them.
+2. Deploying `pre-install`, `pre-upgrade` or `pre-rollback` hooks one hook at a time, starting with hooks with less weight to greater weight. If a hook is dependent on an external resource, it will only be deployed once that resource is ready.
 
-Before the deployment phase, werf groups the resources based on their weight, then applies the group with the lowest associated weight and waits until the resources from that group are ready. After all the resources from that group have been successfully deployed, werf proceeds to deploy the resources from the group with the next lowest weight. The process continues until all release resources have been deployed.
+3. Deploying basic resources: the resources with the same weight are combined into groups (resources without a specified weight are assigned a weight of 0) and deployed one group at a time, starting with groups with lower-weight resources to groups with higher-weight resources. If a resource in a group depends on an external resource, the group will be deployed only after that resource is ready.
 
-> Note that "werf.io/weight" works only for non-Hook resources. For Hooks, use "helm.sh/hook-weight".
+4. Deploying `post-install`, `post-upgrade` or `post-rollback` hooks one hook at a time, starting with hooks with less weight to ones with greater weight. If a hook is dependent on an external resource, it will be deployed only after that resource is ready.
 
-Let's look at the example:
-```yaml
-kind: Job
-metadata:
-  name: db-migration
----
-kind: StatefulSet
-metadata:
-  name: postgres
----
-kind: Deployment
-metadata:
-  name: app
----
-kind: Service
-metadata:
-  name: app
-```
+## Deploying CustomResourceDefinitions
 
-All of the above resources will be deployed simultaneously because they all have the same default weight (0). But what if the database must be deployed before migrations, and the application should only start after the migrations are completed? Well, there is a solution to this problem! Try this:
-```yaml
-kind: StatefulSet
-metadata:
-  name: postgres
-  annotations:
-    werf.io/weight: "-2"
----
-kind: Job
-metadata:
-  name: db-migration
-  annotations:
-    werf.io/weight: "-1"
----
-kind: Deployment
-metadata:
-  name: app
----
-kind: Service
-metadata:
-  name: app
-```
-
-In the above example, werf will first deploy the database and wait for it to become ready, then run migrations and wait for them to complete, and then deploy the application and the related service.
-
-Reference:
-* [`werf.io/weight`]({{ "/reference/deploy_annotations.html#resource-weight" | true_relative_url }})
-
-## Helm hooks
-
-The helm hook is an arbitrary Kubernetes resource marked with the `helm.sh/hook` annotation. For example:
-
-```yaml
-kind: Job
-metadata:
-  name: somejob
-  annotations:
-    "helm.sh/hook": pre-upgrade,pre-install
-    "helm.sh/hook-weight": "1"
-```
-
-A lot of various helm hooks come into play during the deploy process. We have already discussed `pre|post-install|upgrade` hooks during the [deploy process steps]({{ "/usage/deploy/deployment_order.html" | true_relative_url }}). These hooks are often used to perform tasks such as migrations (in the case of `pre-upgrade` hooks) or some post-deploy actions. The full list of available hooks can be found in the [helm docs](https://helm.sh/docs/topics/charts_hooks/).
-
-Hooks are sorted in the ascending order specified by the `helm.sh/hook-weight` annotation (hooks with the same weight are sorted by the name). After that, hooks are created and executed sequentially. werf by default recreates the Kubernetes resource for each hook if that resource already exists in the cluster. Hook resources are remained existing in the Kubernetes cluster after execution.
-
-Created hooks resources will not be deleted after completion, unless there is [special annotation `"helm.sh/hook-delete-policy": hook-succeeded,hook-failed`](https://helm.sh/docs/topics/charts_hooks/).
-
-## External dependencies
-
-To make one release resource dependent on another, you can change its [deployment order]({{ "/usage/deploy/deployment_order.html" | true_relative_url }}) so that the dependent one is deployed after the primary one has been successfully deployed. But what if you want a release resource to depend on a resource that is not part of that release or is not even managed by werf (e.g., created by some operator)?
-
-In this case, the [`<name>.external-dependency.werf.io/resource`]({{ "/reference/deploy_annotations.html#external-dependency-resource" | true_relative_url }}) annotation can help you set the dependency on an external resource. The annotated resource will not be deployed until the defined external dependency is created and ready.
+To deploy CustomResourceDefinitions, put the CRD manifests in the `crds/*.yaml` non-template files in any of the included charts. During the following deployment, these CRDs will be deployed first, with hooks and core resources following them.
 
 Example:
+
 ```yaml
-kind: Deployment
-metadata:
-  name: app
-  annotations:
-    secret.external-dependency.werf.io/resource: secret/dynamic-vault-secret
+# .helm/crds/crontab.yaml:
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+# ...
+spec:
+  names:
+    kind: CronTab
 ```
 
-In the example above, werf will wait for the `dynamic-vault-secret` to be created before proceeding to deploy the `app` deployment. We assume that `dynamic-vault-secret` is created by the operator from your Vault instance and is not managed by werf.
-
-Let's take a look at another example:
-```yaml
-kind: Deployment
-metadata:
-  name: service1
-  annotations:
-    service2.external-dependency.werf.io/resource: deployment/service2
-    service2.external-dependency.werf.io/namespace: service2-production
+```
+# .helm/templates/crontab.yaml:
+apiVersion: example.org/v1
+kind: CronTab
+# ...
 ```
 
-Here, werf will not start deploying `service1` until the deployment of `service2` in another namespace has been successfully completed. Note that `service2` can either be deployed as part of another werf release or be managed by some other CI/CD software (i.e., outside of werf's control).
+```shell
+werf converge
+```
 
-Reference:
-* [`<name>.external-dependency.werf.io/resource`]({{ "/reference/deploy_annotations.html#external-dependency-resource" | true_relative_url }})
-* [`<name>.external-dependency.werf.io/namespace`]({{ "/reference/deploy_annotations.html#external-dependency-namespace" | true_relative_url }})
+In this case, the CRD for the CronTab resource will be deployed first, followed by the CronTab resource.
+
+## Changing the order in which resources are deployed (werf only)
+
+By default, werf combines all the main resources ("main" means those are not hooks or CRDs from `crds/*.yaml`) into one group, creates resources for that group, and then tracks their readiness.
+
+The resources for the group are created in the following order:
+
+- Namespace;
+- NetworkPolicy;
+- ResourceQuota;
+- LimitRange;
+- PodSecurityPolicy;
+- PodDisruptionBudget;
+- ServiceAccount;
+- Secret;
+- SecretList;
+- ConfigMap;
+- StorageClass;
+- PersistentVolume;
+- PersistentVolumeClaim;
+- CustomResourceDefinition;
+- ClusterRole;
+- ClusterRoleList;
+- ClusterRoleBinding;
+- ClusterRoleBindingList;
+- Role;
+- RoleList;
+- RoleBinding;
+- RoleBindingList;
+- Service;
+- DaemonSet;
+- Pod;
+- ReplicationController;
+- ReplicaSet;
+- Deployment;
+- HorizontalPodAutoscaler;
+- StatefulSet;
+- Job;
+- CronJob;
+- Ingress;
+- APIService.
+
+Readiness tracking is enabled for all resources in the group simultaneously as soon as *all* resources in the group are created.
+
+To change the order in which resources are deployed, you can create *new resource groups* by assigning resources a *weight* other than the default `0`. All resources with the same weight are combined into their respective groups, and then the resource groups are deployed sequentially starting with the group with the lesser weight and progressing to the greater weight, for example:
+
+```
+# .helm/templates/example.yaml:
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: database
+  annotations:
+    werf.io/weight: "-1"
+# ...
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: database-migrations
+# ...
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app1
+  annotations:
+    werf.io/weight: "1"
+# ...
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app2
+  annotations:
+    werf.io/weight: "1"
+# ...
+```
+
+```shell
+werf converge
+```
+
+In this case, the `database` resource was deployed first, followed by `database-migrations`, and then `app1` and `app2` were deployed in parallel.
+
+## Running tasks before/after installing, upgrading, rolling back or deleting a release
+
+To deploy certain resources before or after installing, upgrading, rolling back or deleting a release, convert the resource to a *hook* by adding the `helm.sh/hook` annotation to it, for example:
+
+```
+# .helm/templates/example.yaml:
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: database-initialization
+  annotations:
+    helm.sh/hook: pre-install
+# ...
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+```
+
+```shell
+werf converge
+```
+
+In this case, the `database-initialization` resource will be deployed during the first-time *installation* of the release, while the `myapp` resource will be deployed whenever the release is installed, upgraded, or rolled back.
+
+The `helm.sh/hook` annotation sets the resource as a hook and defines the conditions on which the resource should be deployed (you can specify several comma-separated conditions). The available conditions for deploying a hook are listed below:
+
+* `pre-install` — during the release installation *before* installing the main resources;
+
+* `pre-upgrade` — when upgrading the release *before* upgrading the main resources;
+
+* `pre-rollback` — when rolling back the release *before* rolling back the main resources;
+
+* `pre-delete` — when deleting the release *before* deleting the main resources;
+
+* `post-install` — when installing the release *after* installing the main resources;
+
+* `post-upgrade` — when upgrading the release *after* upgrading the main resources;
+
+* `post-rollback` — when rolling back the release *after* rolling back the main resources;
+
+* `post-delete` — when deleting the release *after* deleting the main resources;
+
+To set the order in which hooks are deployed, assign them different *weights* (the default is `0`), so that hooks are deployed sequentially starting with a hook with a lower weight and proceeding to ones with a higher weight, for example:
+
+```
+# .helm/templates/example.yaml:
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: first
+  annotations:
+    helm.sh/hook: pre-install
+    helm.sh/hook-weight: "-1"
+# ...
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: second
+  annotations:
+    helm.sh/hook: pre-install
+# ...
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: third
+  annotations:
+    helm.sh/hook: pre-install
+    helm.sh/hook-weight: "1"
+# ...
+```
+
+```shell
+werf converge
+```
+
+In this case, the `first` hook will be deployed first, followed by the `second` hook, and then the `third` hook.
+
+**По умолчанию при повторных развертываниях того же самого хука старый хук в кластере удаляется прямо перед развертыванием нового хука.** Этап удаления старого хука можно изменить аннотацией `helm.sh/hook-delete-policy`, которая принимает следующие значения:
+
+- `hook-succeeded` — удалять новый хук сразу после его удачного развертывания, при неудачном развертывании не удалять совсем;
+
+- `hook-failed` — удалять новый хук сразу после его неудачного развертывания, при удачном развертывании не удалять совсем;
+
+- `before-hook-creation` — (по умолчанию) удалять старый хук сразу перед созданием нового.
+
+## Waiting for non-release resources to be ready (werf only)
+
+The resources deployed as part of the current release may depend on resources that do not belong to this release. werf can wait for these external resources to be ready — you just need to add the `<name>.external-dependency.werf.io/resource` annotation as follows:
+
+```
+# .helm/templates/example.yaml:
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+  annotations:
+    secret.external-dependency.werf.io/resource: secret/my-dynamic-vault-secret
+# ...
+```
+
+```shell
+werf converge
+```
+
+The `myapp` deployment will start deploying only after the `my-dynamic-vault-secret` (it is created automatically by the operator in the cluster) has been created and is ready.
+
+And here is how you can configure werf to wait for multiple external resources to be ready:
+
+```
+# .helm/templates/example.yaml:
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+  annotations:
+    secret.external-dependency.werf.io/resource: secret/my-dynamic-vault-secret
+    database.external-dependency.werf.io/resource: statefulset/my-database
+# ...
+```
+
+By default, werf looks for the external resource in the release Namespace (unless, of course, the resource is a cluster-wide). You can change the Namespace of the external resource by attaching the `<name>.external-dependency.werf.io/namespace` annotation to it:
+
+```
+# .helm/templates/example.yaml:
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+  annotations:
+    secret.external-dependency.werf.io/resource: secret/my-dynamic-vault-secret
+    secret.external-dependency.werf.io/namespace: my-namespace 
+```
+
+*Note that all other release resources with the same weight will also be waiting for the external resource to be ready, since resources are grouped by weight and deployed as groups.*
