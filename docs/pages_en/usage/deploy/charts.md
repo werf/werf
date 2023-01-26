@@ -1,5 +1,5 @@
 ---
-title: Charts
+title: Charts and dependencies
 permalink: usage/deploy/charts.html
 ---
 
