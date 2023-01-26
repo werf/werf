@@ -3,6 +3,8 @@ title: Automatic host cleanup
 permalink: usage/cleanup/host_cleanup.html
 ---
 
+## Overview
+
 Host cleanup removes irrelevant data and reduces cache size **automatically** as part of the basic werf command invocation and **for all projects** at once. If necessary, the cleanup can be performed manually using the [**werf host cleanup**]({{"reference/cli/werf_host_cleanup.html" | true_relative_url }}) command.
 
 ## Changing the Docker storage directory

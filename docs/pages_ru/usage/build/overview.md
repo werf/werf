@@ -1,6 +1,6 @@
 ---
-title: Введение
-permalink: usage/build/intro.html
+title: Обзор
+permalink: usage/build/overview.html
 ---
 
 Доставка приложения в Kubernetes предполагает его контейнеризацию, сборку одного или нескольких образов, для последующего развёртывания в кластере.
