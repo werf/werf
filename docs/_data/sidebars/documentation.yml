@@ -775,7 +775,7 @@ entries:
               - title: Образы и зависимости
                 url: /usage/build/images.html
 
-              - title: Конфигурация образов Stapel
+              - title: Конфигурация образов stapel
                 f:
                   - title: Обзор
                     url: /usage/build/stapel/overview.html
