@@ -3,65 +3,144 @@ title: Multiple environments
 permalink: usage/deploy/environments.html
 ---
 
-## Environment
+---
+title: Multiple environments
+permalink: usage/deploy/environments.html
 
-By default, werf assumes that each release should be tainted with some environment, such as `staging`, `test` or `production`.
+---
 
-Using this environment, werf determines:
+## Environment-dependent template parameters (werf only)
 
-1. Release name.
-2. Kubernetes namespace.
+You can set the *environment* to use in werf with the `--env` option (`$WERF_ENV`). It can also be set automatically via the `werf ci-env` command. The current environment is stored in the `$.Values.werf.env` parameter of the main chart.
 
-The environment is a required parameter for deploying and should be specified either with an `--env` option or determined automatically using the data for the CI/CD system used.
+The werf environment is used when generating the release name and Namespace name and can also be used to parameterize templates:
 
-### Using environment in templates
-
-Current werf environment can be used in templates.
-
-For example, you can use it to generate different templates for different environments:
+```yaml
+# .helm/values.yaml:
+memory:
+  staging: 1G
+  production: 2G
+```
 
 {% raw %}
+
 ```
-apiVersion: v1
-kind: Secret
-metadata:
-  name: regsecret
-type: kubernetes.io/dockerconfigjson
-data:
-{{ if eq .Values.werf.env "dev" }}
-  .dockerconfigjson: UmVhbGx5IHJlYWxseSByZWVlZWVlZWVlZWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWxsbGxsbGxsbGxsbGxsbGxsbGxsbGxsbGxsbGxsbGx5eXl5eXl5eXl5eXl5eXl5eXl5eSBsbGxsbGxsbGxsbGxsbG9vb29vb29vb29vb29vb29vb29vb29vb29vb25ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubmdnZ2dnZ2dnZ2dnZ2dnZ2dnZ2cgYXV0aCBrZXlzCg==
-{{ else }}
-  .dockerconfigjson: {{ .Values.dockerconfigjson }}
-{{ end }}
+# .helm/templates/example.yaml:
+memory: {{ index $.Values.memory $.Values.werf.env }}
 ```
+
 {% endraw %}
 
-It is important that `--env ENV` param value available not only in helm templates, but also [in `werf.yaml` templates]({{ "/reference/werf_yaml_template_engine.html#env" | true_relative_url }}).
+```shell
+werf render --env production
+```
 
-More info about service values available [in the article]({{ "/usage/deploy/values.html" | true_relative_url }}).
+Output:
 
-## Kubernetes namespace
+```yaml
+memory: 2G
+```
 
-The Kubernetes namespace is constructed using the template `[[ project ]]-[[ env ]]` by default. Here, `[[ project ]]` refers to the [project name]({{ "reference/werf_yaml.html#project-name" | true_relative_url }}) and `[[ env ]]` refers to the environment.
+The `export-values` (werf only) directive provides a way to use `$.Values.werf.env` in dependent charts:
 
-For example, for the project named `symfony-demo`, there can be the following Kubernetes namespaces depending on the environment specified:
+```yaml
+# .helm/Chart.yaml:
+dependencies:
+- name: child
+  export-values:
+  - parent: werf
+    child: werf
+```
 
-* `symfony-demo-stage` for the `stage` environment;
-* `symfony-demo-test` for the `test` environment;
-* `symfony-demo-prod` for the `prod` environment.
+{% raw %}
 
-You can redefine the Kubernetes Namespace using the `--namespace NAMESPACE` deploy option. In that case, werf would use the specified name as is.
+```
+# .helm/charts/child/templates/example.yaml:
+{{ $.Values.werf.env }}
+```
 
-You can also define the custom Kubernetes Namespace in the werf.yaml configuration [by setting `deploy.namespace`]({{ "/reference/werf_yaml.html#kubernetes-namespace" | true_relative_url }}) parameter.
+{% endraw %}
 
-### Slugging Kubernetes namespace
+Output:
 
-The Kubernetes namespace that is constructed using the template will be slugified to fit the [DNS Label](https://www.ietf.org/rfc/rfc1035.txt) requirements that generates a unique and valid Kubernetes Namespace.
+```
+production
+```
 
-This is default behavior. It can be disabled by [setting `deploy.namespaceSlug=false`]({{ "/reference/werf_yaml.html#kubernetes-namespace" | true_relative_url }}) in the werf.yaml configuration.
+## Deployment to various Kubernetes Namespaces
 
-## Multiple Kubernetes clusters
+The name of the Kubernetes Namespace for the resources being deployed is generated automatically (werf only) using a custom pattern `[[ project ]]-[[ env ]]`, where `[ project ]]` is the werf project name, and `[[ env ]]` is the environment name.
 
-There are cases when separate Kubernetes clusters are required for a different environments. You can [configure access to multiple clusters](https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters) using kube contexts in a single kube config.
+Thus, the Namespace changes when the werf environment changes:
 
-In that case, the `--kube-context=CONTEXT` deploy option should be set manually along with the environment.
+```yaml
+# werf.yaml:
+project: myapp
+```
+
+```shell
+werf converge --env staging
+werf converge --env production
+```
+
+In this case, the first instance of the application will be deployed to the `myapp-staging` namespace, and the second will be deployed to the `myapp-production` namespace.
+
+Note that if the Namespace is explicitly specified in the Kubernetes resource manifest, it will be used for that resource.
+
+### Changing the Namespace naming pattern (werf only)
+
+You can change the custom pattern used to generate the Namespace name.
+
+```yaml
+# werf.yaml:
+project: myapp
+deploy:
+  namespace: "backend-[[ env ]]"
+```
+
+```shell
+werf converge --env production
+```
+
+In this case, the application will be deployed to the `backend-production` Namespace.
+
+### Specifying the Namespace name explicitly
+
+You can specify the Namespace explicitly for each command instead of generating the Namespace using a custom pattern (it is recommended to change the release name as well):
+
+```shell
+werf converge --namespace backend-production --release backend-production
+```
+
+In this case, the application will be deployed to the `backend-production` Namespace.
+
+### Formatting the Namespace name
+
+Namespace generated using a custom pattern or specified by the `--namespace` option is converted to the [RFC 1123 Label Names](https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#dns-label-names) format automatically. You can disable automatic formatting using the `deploy.namespaceSlug` directive in `werf.yaml`.
+
+You can manually format any string according to RFC 1123 Label Names format using the `werf slugify -f kubernetes-namespace` command.
+
+## Deploying to different Kubernetes clusters
+
+By default, werf deploys Kubernetes resources to the cluster set for the `werf kubectl` command. You can use different kube-contexts of a single kube-config file (the default is `$HOME/.kube/config`) to deploy to different clusters:
+
+```shell
+werf converge --kube-context staging  # or $WERF_KUBE_CONTEXT=...
+werf converge --kube-context production
+```
+
+... or use different kube-config files:
+
+```shell
+werf converge --kube-config "$HOME/.kube/staging.config"  # or $WERF_KUBE_CONFIG=...
+werf converge --kube-config-base64 "$KUBE_PRODUCTION_CONFIG_IN_BASE64"  # or $WERF_KUBE_CONFIG_BASE64=...
+```
+
+## Deploying as a different Kubernetes user
+
+By default, werf uses the Kubernetes user set for the `werf kubectl` command for deployment. You can use several kube contexts to deploy as different users:
+
+```shell
+werf converge --kube-context admin  # or $WERF_KUBE_CONTEXT=...
+werf converge --kube-context regular-user
+```
