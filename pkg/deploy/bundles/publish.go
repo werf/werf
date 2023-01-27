@@ -20,7 +20,7 @@ func Publish(ctx context.Context, bundle *chart_extender.Bundle, bundleRef strin
 
 	loader.GlobalLoadOptions = &loader.LoadOptions{}
 
-	if err := logboek.Context(ctx).LogProcess("Saving bundle to the local chart helm cache").DoError(func() error {
+	if err := logboek.Context(ctx).Default().LogProcess("Saving bundle to the local chart helm cache").DoError(func() error {
 		path, err := filepath.Abs(bundle.Dir)
 		if err != nil {
 			return err

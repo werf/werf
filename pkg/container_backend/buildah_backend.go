@@ -586,29 +586,49 @@ func (runtime *BuildahBackend) GetImageInfo(ctx context.Context, ref string, opt
 }
 
 func (runtime *BuildahBackend) Rmi(ctx context.Context, ref string, opts RmiOpts) error {
+	var logWriter io.Writer
+	if logboek.Context(ctx).Info().IsAccepted() {
+		logWriter = logboek.Context(ctx).OutStream()
+	}
+
 	return runtime.buildah.Rmi(ctx, ref, buildah.RmiOpts{
 		Force: true,
 		CommonOpts: buildah.CommonOpts{
-			LogWriter: logboek.Context(ctx).OutStream(),
+			LogWriter: logWriter,
 		},
 	})
 }
 
 func (runtime *BuildahBackend) Pull(ctx context.Context, ref string, opts PullOpts) error {
+	var logWriter io.Writer
+	if logboek.Context(ctx).Info().IsAccepted() {
+		logWriter = logboek.Context(ctx).OutStream()
+	}
+
 	return runtime.buildah.Pull(ctx, ref, buildah.PullOpts{
-		LogWriter: logboek.Context(ctx).OutStream(),
+		LogWriter: logWriter,
 	})
 }
 
 func (runtime *BuildahBackend) Tag(ctx context.Context, ref, newRef string, opts TagOpts) error {
+	var logWriter io.Writer
+	if logboek.Context(ctx).Info().IsAccepted() {
+		logWriter = logboek.Context(ctx).OutStream()
+	}
+
 	return runtime.buildah.Tag(ctx, ref, newRef, buildah.TagOpts{
-		LogWriter: logboek.Context(ctx).OutStream(),
+		LogWriter: logWriter,
 	})
 }
 
 func (runtime *BuildahBackend) Push(ctx context.Context, ref string, opts PushOpts) error {
+	var logWriter io.Writer
+	if logboek.Context(ctx).Info().IsAccepted() {
+		logWriter = logboek.Context(ctx).OutStream()
+	}
+
 	return runtime.buildah.Push(ctx, ref, buildah.PushOpts{
-		LogWriter: logboek.Context(ctx).OutStream(),
+		LogWriter: logWriter,
 	})
 }
 
