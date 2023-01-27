@@ -132,13 +132,13 @@ func GetSynchronization(ctx context.Context, cmdData *CmdData, projectName strin
 
 	getHttpParamsFunc := func(synchronization string, stagesStorage storage.StagesStorage) (*SynchronizationParams, error) {
 		var address string
-		if err := logboek.Default().LogProcess(fmt.Sprintf("Getting client id for the http synchronization server")).
+		if err := logboek.Info().LogProcess(fmt.Sprintf("Getting client id for the http synchronization server")).
 			DoError(func() error {
 				if clientID, err := synchronization_server.GetOrCreateClientID(ctx, projectName, synchronization_server.NewSynchronizationClient(synchronization), stagesStorage); err != nil {
 					return fmt.Errorf("unable to get synchronization client id: %w", err)
 				} else {
 					address = fmt.Sprintf("%s/%s", synchronization, clientID)
-					logboek.Default().LogF("Using clientID %q for http synchronization server at address %s\n", clientID, address)
+					logboek.Info().LogF("Using clientID %q for http synchronization server at address %s\n", clientID, address)
 					return nil
 				}
 			}); err != nil {
