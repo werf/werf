@@ -1,5 +1,17 @@
 # Changelog
 
+### [1.2.199](https://www.github.com/werf/werf/compare/v1.2.198...v1.2.199) (2023-01-27)
+
+
+### Features
+
+* added flag to skip helm repo index fetching ([39d004a](https://www.github.com/werf/werf/commit/39d004a78814782ac859520135276148af8dc8c2))
+
+
+### Bug Fixes
+
+* **logging:** simplify logs, remove excess messages ([1d75db1](https://www.github.com/werf/werf/commit/1d75db11720bb542847a7f42d99a5bd7f68bc029))
+
 ### [1.2.198](https://www.github.com/werf/werf/compare/v1.2.197...v1.2.198) (2023-01-20)
 
 
