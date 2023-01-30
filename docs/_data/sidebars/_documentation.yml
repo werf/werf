@@ -12,6 +12,9 @@ entries:
         f:
           - title: Project configuration
             f:
+              - title: Overview
+                url: /usage/project_configuration/overview.html
+
               - title: Giterminism
                 url: /usage/project_configuration/giterminism.html
 
@@ -134,6 +137,9 @@ entries:
         f:
           - title: Конфигурация проекта
             f:
+              - title: Обзор
+                url: /usage/project_configuration/overview.html
+
               - title: Гитерминизм
                 url: /usage/project_configuration/giterminism.html
 
