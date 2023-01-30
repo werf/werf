@@ -1,6 +1,6 @@
 ---
 title: Quickstart
-permalink: quickstart.html
+permalink: index.html
 description: Deploy your first application with werf
 ---
 

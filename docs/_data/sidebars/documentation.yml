@@ -632,11 +632,8 @@ cli: &cli
 entries:
   en:
     f:
-      - title: Overview
-        url: /index.html
-
       - title: Quickstart
-        url: /quickstart.html
+        url: /index.html
 
       - title: Usage
         f:
@@ -757,11 +754,8 @@ entries:
 
   ru:
     f:
-      - title: Обзор
-        url: /index.html
-
       - title: Быстрый старт
-        url: /quickstart.html
+        url: /index.html
 
       - title: Использование
         f:
