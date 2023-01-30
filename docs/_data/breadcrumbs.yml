@@ -4,10 +4,10 @@ en:
     url: /index.html
   /usage: &documentation-usage
     title: Usage
-    url: usage/project_configuration/giterminism.html
+    url: usage/project_configuration/overview.html
   /usage/project_configuration: &documentation-usage-project_configuration
     title: Project configuration
-    url: usage/project_configuration/giterminism.html
+    url: usage/project_configuration/overview.html
   /usage/build: &documentation-usage-build_draft
     title: Build
     url: usage/build/overview.html
