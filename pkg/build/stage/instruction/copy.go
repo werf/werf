@@ -19,7 +19,7 @@ type Copy struct {
 }
 
 func NewCopy(i *dockerfile.DockerfileStageInstruction[*instructions.CopyCommand], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *Copy {
-	return &Copy{Base: NewBase(i, backend_instruction.NewCopy(i.Data), dependencies, hasPrevStage, opts)}
+	return &Copy{Base: NewBase(i, backend_instruction.NewCopy(*i.Data), dependencies, hasPrevStage, opts)}
 }
 
 func (stg *Copy) ExpandDependencies(ctx context.Context, c stage.Conveyor, baseEnv map[string]string) error {
@@ -33,7 +33,7 @@ func (stg *Copy) ExpandInstruction(c stage.Conveyor, env map[string]string) erro
 
 	if stg.instruction.Data.From != "" {
 		if ds := stg.instruction.GetDependencyByStageRef(stg.instruction.Data.From); ds != nil {
-			depStageImageName := c.GetImageNameForLastImageStage(ds.WerfImageName())
+			depStageImageName := c.GetImageNameForLastImageStage(ds.GetWerfImageName())
 			stg.backendInstruction.From = depStageImageName
 		}
 	}

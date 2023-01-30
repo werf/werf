@@ -13,11 +13,11 @@ import (
 )
 
 type Run struct {
-	*instructions.RunCommand
+	instructions.RunCommand
 	Envs []string
 }
 
-func NewRun(i *instructions.RunCommand, envs []string) *Run {
+func NewRun(i instructions.RunCommand, envs []string) *Run {
 	return &Run{RunCommand: i, Envs: envs}
 }
 
@@ -32,15 +32,15 @@ func (i *Run) UsesBuildContext() bool {
 }
 
 func (i *Run) GetMounts() []*instructions.Mount {
-	return instructions.GetMounts(i.RunCommand)
+	return instructions.GetMounts(&i.RunCommand)
 }
 
 func (i *Run) GetSecurity() string {
-	return instructions.GetSecurity(i.RunCommand)
+	return instructions.GetSecurity(&i.RunCommand)
 }
 
 func (i *Run) GetNetwork() string {
-	return instructions.GetNetwork(i.RunCommand)
+	return instructions.GetNetwork(&i.RunCommand)
 }
 
 func (i *Run) Apply(ctx context.Context, containerName string, drv buildah.Buildah, drvOpts buildah.CommonOpts, buildContextArchive container_backend.BuildContextArchiver) error {

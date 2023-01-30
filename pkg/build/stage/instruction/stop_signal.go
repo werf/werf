@@ -18,7 +18,7 @@ type StopSignal struct {
 }
 
 func NewStopSignal(i *dockerfile.DockerfileStageInstruction[*instructions.StopSignalCommand], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *StopSignal {
-	return &StopSignal{Base: NewBase(i, backend_instruction.NewStopSignal(i.Data), dependencies, hasPrevStage, opts)}
+	return &StopSignal{Base: NewBase(i, backend_instruction.NewStopSignal(*i.Data), dependencies, hasPrevStage, opts)}
 }
 
 func (stg *StopSignal) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {

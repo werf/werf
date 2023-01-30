@@ -11,10 +11,10 @@ import (
 )
 
 type Env struct {
-	*instructions.EnvCommand
+	instructions.EnvCommand
 }
 
-func NewEnv(i *instructions.EnvCommand) *Env {
+func NewEnv(i instructions.EnvCommand) *Env {
 	return &Env{EnvCommand: i}
 }
 

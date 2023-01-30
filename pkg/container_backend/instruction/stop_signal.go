@@ -11,10 +11,10 @@ import (
 )
 
 type StopSignal struct {
-	*instructions.StopSignalCommand
+	instructions.StopSignalCommand
 }
 
-func NewStopSignal(i *instructions.StopSignalCommand) *StopSignal {
+func NewStopSignal(i instructions.StopSignalCommand) *StopSignal {
 	return &StopSignal{StopSignalCommand: i}
 }
 

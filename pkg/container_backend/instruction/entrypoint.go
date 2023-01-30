@@ -11,10 +11,10 @@ import (
 )
 
 type Entrypoint struct {
-	*instructions.EntrypointCommand
+	instructions.EntrypointCommand
 }
 
-func NewEntrypoint(i *instructions.EntrypointCommand) *Entrypoint {
+func NewEntrypoint(i instructions.EntrypointCommand) *Entrypoint {
 	return &Entrypoint{EntrypointCommand: i}
 }
 

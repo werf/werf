@@ -20,7 +20,7 @@ type Add struct {
 }
 
 func NewAdd(i *dockerfile.DockerfileStageInstruction[*instructions.AddCommand], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *Add {
-	return &Add{Base: NewBase(i, backend_instruction.NewAdd(i.Data), dependencies, hasPrevStage, opts)}
+	return &Add{Base: NewBase(i, backend_instruction.NewAdd(*i.Data), dependencies, hasPrevStage, opts)}
 }
 
 func (stg *Add) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {

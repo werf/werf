@@ -11,10 +11,10 @@ import (
 )
 
 type Shell struct {
-	*instructions.ShellCommand
+	instructions.ShellCommand
 }
 
-func NewShell(i *instructions.ShellCommand) *Shell {
+func NewShell(i instructions.ShellCommand) *Shell {
 	return &Shell{ShellCommand: i}
 }
 

@@ -11,10 +11,10 @@ import (
 )
 
 type Volume struct {
-	*instructions.VolumeCommand
+	instructions.VolumeCommand
 }
 
-func NewVolume(i *instructions.VolumeCommand) *Volume {
+func NewVolume(i instructions.VolumeCommand) *Volume {
 	return &Volume{VolumeCommand: i}
 }
 

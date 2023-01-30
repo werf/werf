@@ -11,10 +11,10 @@ import (
 )
 
 type Workdir struct {
-	*instructions.WorkdirCommand
+	instructions.WorkdirCommand
 }
 
-func NewWorkdir(i *instructions.WorkdirCommand) *Workdir {
+func NewWorkdir(i instructions.WorkdirCommand) *Workdir {
 	return &Workdir{WorkdirCommand: i}
 }
 

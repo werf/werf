@@ -19,7 +19,7 @@ type Entrypoint struct {
 }
 
 func NewEntrypoint(i *dockerfile.DockerfileStageInstruction[*instructions.EntrypointCommand], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *Entrypoint {
-	return &Entrypoint{Base: NewBase(i, backend_instruction.NewEntrypoint(i.Data), dependencies, hasPrevStage, opts)}
+	return &Entrypoint{Base: NewBase(i, backend_instruction.NewEntrypoint(*i.Data), dependencies, hasPrevStage, opts)}
 }
 
 func (stg *Entrypoint) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {

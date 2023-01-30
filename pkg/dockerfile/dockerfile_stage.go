@@ -8,11 +8,12 @@ import (
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 )
 
-func NewDockerfileStage(index int, baseName, stageName string, instructions []DockerfileStageInstructionInterface, platform string, expanderFactory ExpanderFactory) *DockerfileStage {
+func NewDockerfileStage(index int, baseName, stageName, werfImageName string, instructions []DockerfileStageInstructionInterface, platform string, expanderFactory ExpanderFactory) *DockerfileStage {
 	return &DockerfileStage{
 		ExpanderFactory: expanderFactory,
 		BaseName:        baseName,
 		StageName:       stageName,
+		WerfImageName:   werfImageName,
 		Instructions:    instructions,
 		Platform:        platform,
 	}
@@ -24,11 +25,12 @@ type DockerfileStage struct {
 	BaseStage       *DockerfileStage
 	ExpanderFactory ExpanderFactory
 
-	BaseName     string
-	Index        int
-	StageName    string
-	Platform     string
-	Instructions []DockerfileStageInstructionInterface
+	BaseName      string
+	Index         int
+	StageName     string
+	WerfImageName string
+	Platform      string
+	Instructions  []DockerfileStageInstructionInterface
 }
 
 func (stage *DockerfileStage) AppendDependencyStage(dep *DockerfileStage) {
@@ -40,11 +42,11 @@ func (stage *DockerfileStage) AppendDependencyStage(dep *DockerfileStage) {
 	stage.Dependencies = append(stage.Dependencies, dep)
 }
 
-func (stage *DockerfileStage) WerfImageName() string {
+func (stage *DockerfileStage) GetWerfImageName() string {
 	if stage.HasStageName() {
-		return fmt.Sprintf("stage/%s", stage.StageName)
+		return fmt.Sprintf("%s/stage/%s", stage.WerfImageName, stage.StageName)
 	} else {
-		return fmt.Sprintf("stage%d", stage.Index)
+		return fmt.Sprintf("%s/stage%d", stage.WerfImageName, stage.Index)
 	}
 }
 
