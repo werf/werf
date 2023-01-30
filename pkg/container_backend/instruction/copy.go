@@ -11,10 +11,10 @@ import (
 )
 
 type Copy struct {
-	*instructions.CopyCommand
+	instructions.CopyCommand
 }
 
-func NewCopy(i *instructions.CopyCommand) *Copy {
+func NewCopy(i instructions.CopyCommand) *Copy {
 	return &Copy{CopyCommand: i}
 }
 

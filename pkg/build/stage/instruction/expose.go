@@ -18,7 +18,7 @@ type Expose struct {
 }
 
 func NewExpose(i *dockerfile.DockerfileStageInstruction[*instructions.ExposeCommand], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *Expose {
-	return &Expose{Base: NewBase(i, backend_instruction.NewExpose(i.Data), dependencies, hasPrevStage, opts)}
+	return &Expose{Base: NewBase(i, backend_instruction.NewExpose(*i.Data), dependencies, hasPrevStage, opts)}
 }
 
 func (stg *Expose) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {

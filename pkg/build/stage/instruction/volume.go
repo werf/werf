@@ -18,7 +18,7 @@ type Volume struct {
 }
 
 func NewVolume(i *dockerfile.DockerfileStageInstruction[*instructions.VolumeCommand], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *Volume {
-	return &Volume{Base: NewBase(i, backend_instruction.NewVolume(i.Data), dependencies, hasPrevStage, opts)}
+	return &Volume{Base: NewBase(i, backend_instruction.NewVolume(*i.Data), dependencies, hasPrevStage, opts)}
 }
 
 func (stg *Volume) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {

@@ -18,7 +18,7 @@ type OnBuild struct {
 }
 
 func NewOnBuild(i *dockerfile.DockerfileStageInstruction[*instructions.OnbuildCommand], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *OnBuild {
-	return &OnBuild{Base: NewBase(i, backend_instruction.NewOnBuild(i.Data), dependencies, hasPrevStage, opts)}
+	return &OnBuild{Base: NewBase(i, backend_instruction.NewOnBuild(*i.Data), dependencies, hasPrevStage, opts)}
 }
 
 func (stg *OnBuild) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {

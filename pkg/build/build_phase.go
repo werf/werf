@@ -718,7 +718,7 @@ func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *imag
 
 		for k, v := range serviceLabels {
 			stageImage.Builder.DockerfileStageBuilder().AppendPostInstruction(
-				backend_instruction.NewLabel(instructions.NewLabelCommand(k, v, true)),
+				backend_instruction.NewLabel(*instructions.NewLabelCommand(k, v, true)),
 			)
 		}
 	}

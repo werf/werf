@@ -11,10 +11,10 @@ import (
 )
 
 type Maintainer struct {
-	*instructions.MaintainerCommand
+	instructions.MaintainerCommand
 }
 
-func NewMaintainer(i *instructions.MaintainerCommand) *Maintainer {
+func NewMaintainer(i instructions.MaintainerCommand) *Maintainer {
 	return &Maintainer{MaintainerCommand: i}
 }
 

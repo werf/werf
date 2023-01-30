@@ -11,10 +11,10 @@ import (
 )
 
 type Cmd struct {
-	*instructions.CmdCommand
+	instructions.CmdCommand
 }
 
-func NewCmd(i *instructions.CmdCommand) *Cmd {
+func NewCmd(i instructions.CmdCommand) *Cmd {
 	return &Cmd{CmdCommand: i}
 }
 

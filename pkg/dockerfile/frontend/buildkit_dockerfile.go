@@ -12,7 +12,7 @@ import (
 	"github.com/werf/werf/pkg/dockerfile"
 )
 
-func ParseDockerfileWithBuildkit(dockerfileBytes []byte, opts dockerfile.DockerfileOptions) (*dockerfile.Dockerfile, error) {
+func ParseDockerfileWithBuildkit(dockerfileID string, dockerfileBytes []byte, werfImageName string, opts dockerfile.DockerfileOptions) (*dockerfile.Dockerfile, error) {
 	p, err := parser.Parse(bytes.NewReader(dockerfileBytes))
 	if err != nil {
 		return nil, fmt.Errorf("parsing dockerfile data: %w", err)
@@ -43,7 +43,12 @@ func ParseDockerfileWithBuildkit(dockerfileBytes []byte, opts dockerfile.Dockerf
 
 		// TODO(staged-dockerfile): support meta-args expansion for dockerStage.Platform
 
-		if stage, err := NewDockerfileStageFromBuildkitStage(i, dockerStage, expanderFactory, metaArgs, opts.BuildArgs, opts.DependenciesArgsKeys); err != nil {
+		// Check stage not already created for another dockerfile?
+		// Filepath = dockerfileID — should be generated at this stage, deduplicate stages building at a higher level.
+		//   Same underhood stage could be printed several times for each werf-image-target-name.
+		// <werf-image>/stage<N> || <werf-image>/stage/<name>
+
+		if stage, err := NewDockerfileStageFromBuildkitStage(i, werfImageName, dockerStage, expanderFactory, metaArgs, opts.BuildArgs, opts.DependenciesArgsKeys); err != nil {
 			return nil, fmt.Errorf("error converting buildkit stage to dockerfile stage: %w", err)
 		} else {
 			stages = append(stages, stage)
@@ -52,14 +57,14 @@ func ParseDockerfileWithBuildkit(dockerfileBytes []byte, opts dockerfile.Dockerf
 
 	dockerfile.SetupDockerfileStagesDependencies(stages)
 
-	d := dockerfile.NewDockerfile(stages, opts)
+	d := dockerfile.NewDockerfile(dockerfileID, stages, opts)
 	for _, stage := range d.Stages {
 		stage.Dockerfile = d
 	}
 	return d, nil
 }
 
-func NewDockerfileStageFromBuildkitStage(index int, stage instructions.Stage, expanderFactory *ShlexExpanderFactory, metaArgs, buildArgs map[string]string, dependenciesArgsKeys []string) (*dockerfile.DockerfileStage, error) {
+func NewDockerfileStageFromBuildkitStage(index int, werfImageName string, stage instructions.Stage, expanderFactory *ShlexExpanderFactory, metaArgs, buildArgs map[string]string, dependenciesArgsKeys []string) (*dockerfile.DockerfileStage, error) {
 	var stageInstructions []dockerfile.DockerfileStageInstructionInterface
 
 	env := make(map[string]string)
@@ -199,7 +204,7 @@ func NewDockerfileStageFromBuildkitStage(index int, stage instructions.Stage, ex
 		stageInstructions = append(stageInstructions, i)
 	}
 
-	return dockerfile.NewDockerfileStage(index, stage.BaseName, stage.Name, stageInstructions, stage.Platform, expanderFactory), nil
+	return dockerfile.NewDockerfileStage(index, stage.BaseName, stage.Name, werfImageName, stageInstructions, stage.Platform, expanderFactory), nil
 }
 
 func createAndExpandInstruction[T dockerfile.InstructionDataInterface](data T, expanderFactory dockerfile.ExpanderFactory, env map[string]string) (*dockerfile.DockerfileStageInstruction[T], error) {

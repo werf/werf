@@ -18,7 +18,7 @@ type Workdir struct {
 }
 
 func NewWorkdir(i *dockerfile.DockerfileStageInstruction[*instructions.WorkdirCommand], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *Workdir {
-	return &Workdir{Base: NewBase(i, backend_instruction.NewWorkdir(i.Data), dependencies, hasPrevStage, opts)}
+	return &Workdir{Base: NewBase(i, backend_instruction.NewWorkdir(*i.Data), dependencies, hasPrevStage, opts)}
 }
 
 func (stg *Workdir) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {

@@ -12,10 +12,10 @@ import (
 )
 
 type Healthcheck struct {
-	*instructions.HealthCheckCommand
+	instructions.HealthCheckCommand
 }
 
-func NewHealthcheck(i *instructions.HealthCheckCommand) *Healthcheck {
+func NewHealthcheck(i instructions.HealthCheckCommand) *Healthcheck {
 	return &Healthcheck{HealthCheckCommand: i}
 }
 

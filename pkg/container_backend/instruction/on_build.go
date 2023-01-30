@@ -11,10 +11,10 @@ import (
 )
 
 type OnBuild struct {
-	*instructions.OnbuildCommand
+	instructions.OnbuildCommand
 }
 
-func NewOnBuild(i *instructions.OnbuildCommand) *OnBuild {
+func NewOnBuild(i instructions.OnbuildCommand) *OnBuild {
 	return &OnBuild{OnbuildCommand: i}
 }
 

@@ -11,10 +11,10 @@ import (
 )
 
 type Label struct {
-	*instructions.LabelCommand
+	instructions.LabelCommand
 }
 
-func NewLabel(i *instructions.LabelCommand) *Label {
+func NewLabel(i instructions.LabelCommand) *Label {
 	return &Label{LabelCommand: i}
 }
 

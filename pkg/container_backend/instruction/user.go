@@ -11,10 +11,10 @@ import (
 )
 
 type User struct {
-	*instructions.UserCommand
+	instructions.UserCommand
 }
 
-func NewUser(i *instructions.UserCommand) *User {
+func NewUser(i instructions.UserCommand) *User {
 	return &User{UserCommand: i}
 }
 

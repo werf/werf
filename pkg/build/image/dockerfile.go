@@ -30,7 +30,9 @@ func MapDockerfileConfigToImagesSets(ctx context.Context, dockerfileImageConfig 
 			return nil, fmt.Errorf("unable to read dockerfile %s: %w", relDockerfilePath, err)
 		}
 
-		d, err := frontend.ParseDockerfileWithBuildkit(dockerfileData, dockerfile.DockerfileOptions{
+		dockerfileID := util.Sha256Hash(filepath.Clean(relDockerfilePath))
+
+		d, err := frontend.ParseDockerfileWithBuildkit(dockerfileID, dockerfileData, dockerfileImageConfig.Name, dockerfile.DockerfileOptions{
 			Target:               dockerfileImageConfig.Target,
 			BuildArgs:            util.MapStringInterfaceToMapStringString(dockerfileImageConfig.Args),
 			AddHost:              dockerfileImageConfig.AddHost,
@@ -109,14 +111,14 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 				IsDockerfileTargetStage:   item.IsTargetStage,
 				DockerfileImageConfig:     dockerfileImageConfig,
 				CommonImageOptions:        opts,
-				BaseImageName:             baseStg.WerfImageName(),
+				BaseImageName:             baseStg.GetWerfImageName(),
 				DockerfileExpanderFactory: stg.ExpanderFactory,
 			})
 			if err != nil {
 				return nil, fmt.Errorf("unable to map stage %s to werf image %q: %w", stg.LogName(), dockerfileImageConfig.Name, err)
 			}
 
-			appendQueue(baseStg.WerfImageName(), baseStg, item.Level+1)
+			appendQueue(baseStg.GetWerfImageName(), baseStg, item.Level+1)
 		} else {
 			img, err = NewImage(ctx, item.WerfImageName, ImageFromRegistryAsBaseImage, ImageOptions{
 				IsDockerfileImage:         true,
@@ -185,7 +187,7 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 			img.stages = append(img.stages, stg)
 
 			for _, dep := range instr.GetDependenciesByStageRef() {
-				appendQueue(dep.WerfImageName(), dep, item.Level+1)
+				appendQueue(dep.GetWerfImageName(), dep, item.Level+1)
 			}
 		}
 

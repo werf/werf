@@ -13,8 +13,9 @@ type DockerfileOptions struct {
 	SSH                  string
 }
 
-func NewDockerfile(stages []*DockerfileStage, opts DockerfileOptions) *Dockerfile {
+func NewDockerfile(dockerfileID string, stages []*DockerfileStage, opts DockerfileOptions) *Dockerfile {
 	return &Dockerfile{
+		DockerfileID:      dockerfileID,
 		DockerfileOptions: opts,
 		Stages:            stages,
 	}
@@ -23,7 +24,8 @@ func NewDockerfile(stages []*DockerfileStage, opts DockerfileOptions) *Dockerfil
 type Dockerfile struct {
 	DockerfileOptions
 
-	Stages []*DockerfileStage
+	DockerfileID string
+	Stages       []*DockerfileStage
 }
 
 func (df *Dockerfile) GetTargetStage() (*DockerfileStage, error) {

@@ -11,10 +11,10 @@ import (
 )
 
 type Expose struct {
-	*instructions.ExposeCommand
+	instructions.ExposeCommand
 }
 
-func NewExpose(i *instructions.ExposeCommand) *Expose {
+func NewExpose(i instructions.ExposeCommand) *Expose {
 	return &Expose{ExposeCommand: i}
 }
 

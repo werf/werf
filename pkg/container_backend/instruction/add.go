@@ -11,10 +11,10 @@ import (
 )
 
 type Add struct {
-	*instructions.AddCommand
+	instructions.AddCommand
 }
 
-func NewAdd(i *instructions.AddCommand) *Add {
+func NewAdd(i instructions.AddCommand) *Add {
 	return &Add{AddCommand: i}
 }
 
