@@ -9,13 +9,18 @@ import (
 	"github.com/werf/werf/pkg/docker_registry"
 )
 
+type copyToOptions struct {
+	HelmCompatibleChart bool
+	RenameChart         string
+}
+
 type BundleAccessor interface {
 	ReadChart(ctx context.Context) (*chart.Chart, error)
 	WriteChart(ctx context.Context, ch *chart.Chart) error
 
-	CopyTo(ctx context.Context, to BundleAccessor) error
-	CopyFromArchive(ctx context.Context, fromArchive *BundleArchive) error
-	CopyFromRemote(ctx context.Context, fromRemote *RemoteBundle) error
+	CopyTo(ctx context.Context, to BundleAccessor, opts copyToOptions) error
+	CopyFromArchive(ctx context.Context, fromArchive *BundleArchive, opts copyToOptions) error
+	CopyFromRemote(ctx context.Context, fromRemote *RemoteBundle, opts copyToOptions) error
 }
 
 type BundleAccessorOptions struct {

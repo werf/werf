@@ -1,6 +1,9 @@
 package common
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/spf13/cobra"
 
 	"github.com/werf/werf/pkg/util"
@@ -41,6 +44,8 @@ type CmdData struct {
 	IgnoreSecretKey            *bool
 	DisableDefaultValues       *bool
 	DisableDefaultSecretValues *bool
+	HelmCompatibleChart        *bool
+	RenameChart                *string
 
 	WithoutImages *bool
 	Repo          *RepoData
@@ -122,4 +127,22 @@ func (cmdData *CmdData) SetupDisableDefaultSecretValues(cmd *cobra.Command) {
 func (cmdData *CmdData) SetupSkipDependenciesRepoRefresh(cmd *cobra.Command) {
 	cmdData.SkipDependenciesRepoRefresh = new(bool)
 	cmd.Flags().BoolVarP(cmdData.SkipDependenciesRepoRefresh, "skip-dependencies-repo-refresh", "L", util.GetBoolEnvironmentDefaultFalse("WERF_SKIP_DEPENDENCIES_REPO_REFRESH"), `Do not refresh helm chart repositories locally cached index`)
+}
+
+func (cmdData *CmdData) SetupHelmCompatibleChart(cmd *cobra.Command, defaultEnabled bool) {
+	cmdData.HelmCompatibleChart = new(bool)
+
+	var defaultVal bool
+	if defaultEnabled {
+		defaultVal = util.GetBoolEnvironmentDefaultTrue("WERF_HELM_COMPATIBLE_CHART")
+	} else {
+		defaultVal = util.GetBoolEnvironmentDefaultFalse("WERF_HELM_COMPATIBLE_CHART")
+	}
+
+	cmd.Flags().BoolVarP(cmdData.HelmCompatibleChart, "helm-compatible-chart", "C", defaultVal, fmt.Sprintf(`Set chart name in the Chart.yaml of the published chart to the last path component of container registry repo (for REGISTRY/PATH/TO/REPO address chart name will be REPO, more info https://helm.sh/docs/topics/registries/#oci-feature-deprecation-and-behavior-changes-with-v370). In helm compatibility mode chart is fully conforming with the helm OCI registry requirements. Default %v or $WERF_HELM_COMPATIBLE_CHART.`, defaultEnabled))
+}
+
+func (cmdData *CmdData) SetupRenameChart(cmd *cobra.Command) {
+	cmdData.RenameChart = new(string)
+	cmd.Flags().StringVarP(cmdData.RenameChart, "rename-chart", "", os.Getenv("WERF_RENAME_CHART"), `Force setting of chart name in the Chart.yaml of the published chart to the specified value (can be set by the $WERF_RENAME_CHART, no rename by default, could not be used together with the '--helm-compatible-chart' option).`)
 }
