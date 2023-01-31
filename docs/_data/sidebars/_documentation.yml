@@ -205,6 +205,9 @@ entries:
 
           - title: Дистрибуция
             f:
+              - title: Обзор
+                url: /usage/distribute/overview.html
+
               - title: Образы
                 url: /usage/distribute/images.html
 
