@@ -5,9 +5,7 @@ permalink: usage/deploy/templates.html
 
 ## Templating
 
-For templating, werf uses Helm-based templating implemented using the [Go text/template](https://pkg.go.dev/text/template) package.
-
-Any Helm template can be used with werf. While werf offers a number of extra features on top of what Helm templating does, using these extra features is completely optional.
+The templating mechanism in werf is the same as in Helm. It uses the [Go text/template](https://pkg.go.dev/text/template) template engine, enhanced with the [Sprig](https://masterminds.github.io/sprig/) and Helm feature set.
 
 ## Template files
 
