@@ -47,7 +47,7 @@ In this case, the `backend-production` release will be created.
 Instead of generating the release name using a special pattern, you can specify the release name explicitly:
 
 ```shell
-werf converge --release backend-production  # или $WERF_RELEASE=...
+werf converge --release backend-production  # or $WERF_RELEASE=...
 ```
 
 In this case, the `backend-production` release will be created.
