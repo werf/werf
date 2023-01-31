@@ -19,7 +19,7 @@ en:
     url: usage/deploy/overview.html
   /usage/distribute: &documentation-usage-distribute
     title: Distribute
-    url: usage/distribute/charts.html
+    url: usage/distribute/bundles.html
   /usage/cleanup: &documentation-usage-cleanup
     title: Cleanup
     url: usage/cleanup/cr_cleanup.html
