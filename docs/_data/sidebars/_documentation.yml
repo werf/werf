@@ -211,6 +211,9 @@ entries:
 
           - title: Дистрибуция
             f:
+              - title: Образы
+                url: /usage/distribute/images.html
+
               - title: Чарты, бандлы
                 url: /usage/distribute/charts.html
 
