@@ -36,9 +36,40 @@ werf следует принципам подхода IaC (Infrastructure as Cod
 
 Любое отступление пользователя от гитерминизма должно фиксироваться в специальном файле `werf-giterminism.yaml`, чтобы процесс управления конфигурацией был осмысленным, а использование прозрачным для всех участников доставки.
 
-## Минимальная конфигурация
+## Пример типовой конфигурации проекта
 
 ```yaml
+# werf.yaml
 project: app
 configVersion: 1
+---
+image: backend
+context: backend
+dockerfile: Dockerfile
+---
+image: frontend
+context: frontend
+dockerfile: Dockerfile
+```
+
+```shell
+$ tree -a
+.
+├── .helm
+│   ├── templates
+│   │   ├── NOTES.txt
+│   │   ├── _helpers.tpl
+│   │   ├── deployment.yaml
+│   │   ├── hpa.yaml
+│   │   ├── ingress.yaml
+│   │   ├── service.yaml
+│   │   └── serviceaccount.yaml
+│   └── values.yaml
+├── backend
+│   ├── Dockerfile
+│   └── ...
+├── frontend
+│   ├── Dockerfile
+│   └── ...
+└── werf.yaml
 ```
