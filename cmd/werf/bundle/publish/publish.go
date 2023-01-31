@@ -134,6 +134,9 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupSkipBuild(&commonCmdData, cmd)
 	common.SetupPlatform(&commonCmdData, cmd)
 
+	commonCmdData.SetupHelmCompatibleChart(cmd, false)
+	commonCmdData.SetupRenameChart(cmd)
+
 	defaultTag := os.Getenv("WERF_TAG")
 	if defaultTag == "" {
 		defaultTag = "latest"
@@ -406,5 +409,8 @@ func runPublish(ctx context.Context, imagesToProcess build.ImagesToProcess) erro
 		bundleRepo = stagesStorage.Address()
 	}
 
-	return bundles.Publish(ctx, bundle, fmt.Sprintf("%s:%s", bundleRepo, cmdData.Tag), bundlesRegistryClient)
+	return bundles.Publish(ctx, bundle, fmt.Sprintf("%s:%s", bundleRepo, cmdData.Tag), bundlesRegistryClient, bundles.PublishOptions{
+		HelmCompatibleChart: *commonCmdData.HelmCompatibleChart,
+		RenameChart:         *commonCmdData.RenameChart,
+	})
 }

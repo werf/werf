@@ -56,11 +56,11 @@ func (bundle *BundleArchive) WriteChart(ctx context.Context, ch *chart.Chart) er
 	return nil
 }
 
-func (bundle *BundleArchive) CopyTo(ctx context.Context, to BundleAccessor) error {
-	return to.CopyFromArchive(ctx, bundle)
+func (bundle *BundleArchive) CopyTo(ctx context.Context, to BundleAccessor, opts copyToOptions) error {
+	return to.CopyFromArchive(ctx, bundle, opts)
 }
 
-func (bundle *BundleArchive) CopyFromArchive(ctx context.Context, fromArchive *BundleArchive) error {
+func (bundle *BundleArchive) CopyFromArchive(ctx context.Context, fromArchive *BundleArchive, opts copyToOptions) error {
 	ch, err := fromArchive.ReadChart(ctx)
 	if err != nil {
 		return fmt.Errorf("unable to read chart from the bundle archive %q: %w", fromArchive.Reader.String(), err)
@@ -122,7 +122,7 @@ func (bundle *BundleArchive) CopyFromArchive(ctx context.Context, fromArchive *B
 	return nil
 }
 
-func (bundle *BundleArchive) CopyFromRemote(ctx context.Context, fromRemote *RemoteBundle) error {
+func (bundle *BundleArchive) CopyFromRemote(ctx context.Context, fromRemote *RemoteBundle, opts copyToOptions) error {
 	ch, err := fromRemote.ReadChart(ctx)
 	if err != nil {
 		return fmt.Errorf("unable to read chart from remote bundle: %w", err)

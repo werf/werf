@@ -12,7 +12,12 @@ import (
 	"github.com/werf/werf/pkg/deploy/helm/chart_extender"
 )
 
-func Publish(ctx context.Context, bundle *chart_extender.Bundle, bundleRef string, bundlesRegistryClient *registry.Client) error {
+type PublishOptions struct {
+	HelmCompatibleChart bool
+	RenameChart         string
+}
+
+func Publish(ctx context.Context, bundle *chart_extender.Bundle, bundleRef string, bundlesRegistryClient *registry.Client, opts PublishOptions) error {
 	r, err := registry.ParseReference(bundleRef)
 	if err != nil {
 		return fmt.Errorf("error parsing bundle ref %q: %w", bundleRef, err)
@@ -29,6 +34,10 @@ func Publish(ctx context.Context, bundle *chart_extender.Bundle, bundleRef strin
 		ch, err := loader.Load(path)
 		if err != nil {
 			return fmt.Errorf("error loading chart %q: %w", path, err)
+		}
+
+		if nameOverwrite := GetChartNameOverwrite(r.Repo, opts.RenameChart, opts.HelmCompatibleChart); nameOverwrite != nil {
+			ch.Metadata.Name = *nameOverwrite
 		}
 
 		if err := bundlesRegistryClient.SaveChart(ch, r); err != nil {

@@ -67,6 +67,9 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 	common.SetupPlatform(&commonCmdData, cmd)
 
+	commonCmdData.SetupHelmCompatibleChart(cmd, true)
+	commonCmdData.SetupRenameChart(cmd)
+
 	cmd.Flags().StringVarP(&cmdData.Repo, "repo", "", os.Getenv("WERF_REPO"), "Deprecated param, use --from=ADDR instead. Source address of bundle which should be copied.")
 	cmd.Flags().StringVarP(&cmdData.Tag, "tag", "", os.Getenv("WERF_TAG"), "Deprecated param, use --from=REPO:TAG instead. Provide from tag version of the bundle to copy ($WERF_TAG or latest by default).")
 	cmd.Flags().StringVarP(&cmdData.ToTag, "to-tag", "", os.Getenv("WERF_TO_TAG"), "Deprecated param, use --to=REPO:TAG instead. Provide to tag version of the bundle to copy ($WERF_TO_TAG or same as --tag by default).")
@@ -147,6 +150,10 @@ func runCopy(ctx context.Context) error {
 		}
 	}
 
+	if *commonCmdData.HelmCompatibleChart && *commonCmdData.RenameChart != "" {
+		return fmt.Errorf("incompatible options specified, could not use --helm-compatible-chart and --rename-chart=%q at the same time", *commonCmdData.RenameChart)
+	}
+
 	return logboek.Context(ctx).LogProcess("Copy bundle").DoError(func() error {
 		logboek.Context(ctx).LogFDetails("From: %s\n", fromAddr.String())
 		logboek.Context(ctx).LogFDetails("To: %s\n", toAddr.String())
@@ -155,6 +162,8 @@ func runCopy(ctx context.Context) error {
 			BundlesRegistryClient: bundlesRegistryClient,
 			FromRegistryClient:    fromRegistry,
 			ToRegistryClient:      toRegistry,
+			HelmCompatibleChart:   *commonCmdData.HelmCompatibleChart,
+			RenameChart:           *commonCmdData.RenameChart,
 		})
 	})
 }
