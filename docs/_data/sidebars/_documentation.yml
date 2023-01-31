@@ -208,8 +208,8 @@ entries:
               - title: Образы
                 url: /usage/distribute/images.html
 
-              - title: Чарты, бандлы
-                url: /usage/distribute/charts.html
+              - title: Бандлы и чарты
+                url: /usage/distribute/bundles.html
 
           - title: Очистка
             f:
