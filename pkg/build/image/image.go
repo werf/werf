@@ -213,6 +213,10 @@ func (i *Image) ExpandDependencies(ctx context.Context, baseEnv map[string]strin
 	return nil
 }
 
+func isUnsupportedMediaTypeError(err error) bool {
+	return err != nil && strings.Contains(err.Error(), "unsupported MediaType")
+}
+
 func (i *Image) SetupBaseImage(ctx context.Context, storageManager manager.StorageManagerInterface, storageOpts manager.StorageOptions) error {
 	switch i.baseImageType {
 	case StageAsBaseImage:
@@ -232,8 +236,26 @@ func (i *Image) SetupBaseImage(ctx context.Context, storageManager manager.Stora
 
 		i.baseStageImage = i.Conveyor.GetOrCreateStageImage(i.baseImageReference, nil, nil, i)
 
-		info, err := storageManager.GetImageInfo(ctx, i.baseImageReference, storageOpts)
-		if err != nil {
+		var info *image.Info
+		var err error
+
+		info, err = storageManager.GetImageInfo(ctx, i.baseImageReference, storageOpts)
+		if isUnsupportedMediaTypeError(err) {
+			if err := logboek.Context(ctx).Default().LogProcess("Pulling base image %s", i.baseStageImage.Image.Name()).
+				Options(func(options types.LogProcessOptionsInterface) {
+					options.Style(style.Highlight())
+				}).
+				DoError(func() error {
+					return i.ContainerBackend.PullImageFromRegistry(ctx, i.baseStageImage.Image)
+				}); err != nil {
+				return err
+			}
+
+			info, err = storageManager.GetImageInfo(ctx, i.baseImageReference, storageOpts)
+			if err != nil {
+				return fmt.Errorf("unable to get base image %q manifest: %w", i.baseImageReference, err)
+			}
+		} else if err != nil {
 			return fmt.Errorf("unable to get base image %q manifest: %w", i.baseImageReference, err)
 		}
 
@@ -286,7 +308,7 @@ func (i *Image) FetchBaseImage(ctx context.Context) error {
 			})
 
 			baseImageRepoId, err := i.getFromBaseImageIdFromRegistry(ctx, i.baseStageImage.Image.Name())
-			if baseImageRepoId == info.ID || err != nil {
+			if baseImageRepoId == info.ID || (err != nil && !isUnsupportedMediaTypeError(err)) {
 				if err != nil {
 					logboek.Context(ctx).Warn().LogF("WARNING: cannot get base image id (%s): %s\n", i.baseStageImage.Image.Name(), err)
 					logboek.Context(ctx).Warn().LogF("WARNING: using existing image %s without pull\n", i.baseStageImage.Image.Name())
