@@ -133,7 +133,7 @@ myparam: overriden
 werf render --values .helm/values-production.yaml  # or WERF_VALUES_PROD=.helm/values-production.yaml werf render
 ```
 
-... or by a secret parameters file of the main chart (werf only):
+... or by a secret parameter file of the main chart (werf only):
 
 ```yaml
 # .helm/secret-values.yaml:
@@ -144,7 +144,7 @@ myparam: <encrypted>
 werf render
 ```
 
-... or by additional secret parameters files of the main chart (werf only):
+... or by additional secret parameter files of the main chart (werf only):
 
 ```yaml
 # .helm/secret-values-production.yaml:
@@ -174,9 +174,9 @@ overriden
 
 ## Parameterizing dependent charts
 
-Зависимый чарт можно параметризовать как через его собственный файл параметров, так и через файл параметров родительского чарта.
+A dependent chart can be parameterized both using its own parameter file and the parameter file of the parent chart.
 
-К примеру, здесь параметры из словаря `mychild` в файле `values.yaml` чарта `myparent` перезаписывают параметры в файле `values.yaml` чарта `mychild`:
+In the example below, the parameters from the `mychild` dictionary in the `values.yaml` file of the `myparent` chart override the parameters in the `values.yaml` file of the `mychild` chart:
 
 ```yaml
 # Chart.yaml:
@@ -205,25 +205,25 @@ myparam: original
 
 {% endraw %}
 
-Результат:
+Output:
 
 ```
 overriden
 ```
 
-Обратите внимание, что словарь, находящийся в `values.yaml` родительского чарта и содержащий параметры для зависимого чарта, должен иметь в качестве имени `alias` (если есть) или `name` зависимого чарта.
+Note that the dictionary in `values.yaml` of the parent chart that contains parameters for the dependent chart must have `alias` (if any) or `name` of the dependent chart as its name.
 
-Также добавить/переопределить параметры зависимого чарта можно и аргументами командной строки:
+You can also add/override parameters of a dependent chart using command line arguments:
 
 ```shell
-werf render --set mychild.myparam=overriden  # или WERF_SET_MYPARAM=mychild.myparam=overriden werf render
+werf render --set mychild.myparam=overriden  # or WERF_SET_MYPARAM=mychild.myparam=overriden werf render
 ```
 
 ```shell
-werf render --set-string mychild.myparam=overriden  # или WERF_SET_STRING_MYPARAM=mychild.myparam=overriden werf render
+werf render --set-string mychild.myparam=overriden  # or WERF_SET_STRING_MYPARAM=mychild.myparam=overriden werf render
 ```
 
-... или дополнительными файлами параметров:
+... as well as by additional parameter files:
 
 ```yaml
 # .helm/values-production.yaml:
@@ -232,10 +232,10 @@ mychild:
 ```
 
 ```shell
-werf render --values .helm/values-production.yaml  # или WERF_VALUES_PROD=.helm/values-production.yaml werf render
+werf render --values .helm/values-production.yaml  # or WERF_VALUES_PROD=.helm/values-production.yaml werf render
 ```
 
-... или файлом секретных параметров основного чарта (только в werf):
+... or by a secret parameter file of the main chart (werf only):
 
 ```yaml
 # .helm/secret-values.yaml:
@@ -247,7 +247,7 @@ mychild:
 werf render
 ```
 
-... или дополнительными файлами секретных параметров основного чарта (только в werf):
+or by additional secret parameter files of the main chart (werf only):
 
 ```yaml
 # .helm/secret-values-production.yaml:
@@ -256,10 +256,10 @@ mychild:
 ```
 
 ```shell
-werf render --secret-values .helm/secret-values-production.yaml  # или WERF_SECRET_VALUES_PROD=.helm/secret-values-production.yaml werf render
+werf render --secret-values .helm/secret-values-production.yaml  # or WERF_SECRET_VALUES_PROD=.helm/secret-values-production.yaml werf render
 ```
 
-... или set-файлами:
+... or using set files:
 
 ```
 # mychild-myparam.txt:
@@ -267,10 +267,10 @@ overriden
 ```
 
 ```shell
-werf render --set-file mychild.myparam=mychild-myparam.txt  # или WERF_SET_FILE_PROD=mychild.myparam=mychild-myparam.txt werf render
+werf render --set-file mychild.myparam=mychild-myparam.txt  # or WERF_SET_FILE_PROD=mychild.myparam=mychild-myparam.txt werf render
 ```
 
-... или директивой `export-values` (только в werf):
+... or vie the `export-values` directive (werf only):
 
 ```yaml
 # Chart.yaml:
@@ -291,15 +291,15 @@ myparam: overriden
 werf render
 ```
 
-Результат везде тот же:
+The output will be the same:
 
 ```
 overriden
 ```
 
-## Использование параметров зависимого чарта в родительском
+## Using the dependent chart parameters in the parent chart
 
-Для передачи параметров зависимого чарта в родительский можно использовать  директиву `import-values` в родительском чарте:
+You can use the `import-values` directive in the parent chart to pass the parameters of the dependent chart to the parent one:
 
 ```yaml
 # Chart.yaml:
@@ -330,17 +330,17 @@ myparam: overriden
 
 {% endraw %}
 
-Результат:
+Output:
 
 ```
 overriden
 ```
 
-## Глобальные параметры
+## Global parameters
 
-Параметры чарта доступны только в этом же чарте (и ограниченно доступны в зависимых от него). Один из простых способов получить доступ к параметрам одного чарта в других подключенных чартах — использование глобальных параметров.
+Chart parameters are only accessible in that chart (and have limited availability in the dependent charts). One easy way to access the parameters of one chart in other linked charts is to use global parameters.
 
-**Глобальный параметр имеет глобальную область видимости** — параметр, объявленный в родительском, дочернем или другом подключенном чарте становится доступен *во всех подключенных чартах* по одному и тому же пути:
+**A global parameter has global scope** — a parameter declared in a parent, child, or other linked chart becomes available *in all linked charts* at the same path:
 
 ```yaml
 # Chart.yaml:
@@ -383,7 +383,7 @@ mychild2: {{ $.Values.global.myparam }}
 
 {% endraw %}
 
-Результат:
+Output:
 
 ```yaml
 myparent: myvalue
@@ -393,11 +393,11 @@ mychild1: myvalue
 mychild2: myvalue
 ```
 
-## Секретные параметры (только в werf)
+## Secret parameters (werf only)
 
-Для хранения секретных параметров можно использовать файлы секретных параметров, хранящиеся в зашифрованном виде в Git-репозитории.
+You can use secret parameter files to store secret parameters. These files are encrypted and stored in the Git repository.
 
-По умолчанию werf пытается найти файл `.helm/secret-values.yaml`, содержащий зашифрованные параметры, и при нахождении файла расшифровывает его и объединяет расшифрованные параметры с остальными:
+By default, werf tries to locate the `.helm/secret-values.yaml` file containing the encrypted parameters. When werf finds the file, it decrypts it and merges the decrypted parameters with the others:
 
 ```yaml
 # .helm/values.yaml:
@@ -418,38 +418,38 @@ secretParam: 1000625c4f1d874f0ab853bf1db4e438ad6f054526e5dcf4fc8c10e551174904e6d
 
 {% endraw %}
 
-Результат:
+Output:
 
 ```
 plainValue
 secretValue
 ```
 
-### Работа с файлами секретных параметров
+### Working with secret parameter files
 
-Порядок работы с файлами секретных параметров:
+The order in which the secret parameters files are processed:
 
-1. Возьмите существующий секретный ключ или создайте новый командой `werf helm secret generate-secret-key`.
+1. Use an existing secret key or create a new one by running `werf helm secret generate-secret-key`.
 
-2. Сохраните секретный ключ в переменную окружения `WERF_SECRET_KEY`, либо в файлы `<корень Git-репозитория>/.werf_secret_key` или `<домашняя директория>/.werf/global_secret_key`.
+2. Save the secret key to the `WERF_SECRET_KEY` environment variable, or to `<Git repository root>/.werf_secret_key` or `<home directory>/.werf/global_secret_key`.
 
-3. Командой `werf helm secret values edit .helm/secret-values.yaml` откройте файл секретных параметров и добавьте/измените в нём расшифрованные параметры.
+3. Use the `werf helm secret values edit .helm/secret-values.yaml` command to open the secret parameters file and add the decrypted parameters to it or modify them.
 
-4. Сохраните файл — файл зашифруется и сохранится в зашифрованном виде.
+4. Save the file — it will be encrypted and saved in an encrypted form.
 
-5. Закоммитите в Git добавленный/изменённый файл `.helm/secret-values.yaml`;
+5. Commit the added/modified file `.helm/secret-values.yaml` to Git.
 
-6. При дальнейших вызовах werf секретный ключ должен быть установлен в вышеупомянутых переменной окружения или файлах, иначе файл секретных параметров не сможет быть расшифрован.
+6. On subsequent werf invocations, the secret key must be present in the aforementioned environment variable or files, or werf will not be able to decrypt the secret parameter file.
 
-> Имеющий доступ к секретному ключу может расшифровать содержимое файла секретных параметров, поэтому **держите секретный ключ в безопасном месте**!.
+> Note that someone with access to the secret key can decrypt the contents of the secret settings file, so **keep the secret key in a safe place!**
 
-При использовании файла `<корень Git-репозитория>/.werf_secret_key` обязательно добавьте его в `.gitignore`, чтобы случайно не сохранить его в Git-репозитории.
+When using the `<Git repository root>/.werf_secret_key` file, be sure to add it to `.gitignore` to avoid unintentionally saving it to the Git repository.
 
-Многие команды werf можно запускать и без указания секретного ключа благодаря опции `--ignore-secret-key`, но в таком случае параметры будут доступны для использования не в расшифрованной форме, а в зашифрованной.
+Many werf commands can also be run without a secret key (the `--ignore-secret-key` flag enables this), in which case the parameters will be available for use in an encrypted rather than decrypted form.
 
-### Дополнительные файлы секретных параметров
+### Additional secret parameter files
 
-В дополнение к файлу `.helm/secret-values.yaml` можно создавать и использовать дополнительные секретные файлы:
+You can create and use extra secret files in addition to the `.helm/secret-values.yaml` file:
 
 ```yaml
 # .helm/secret-values-production.yaml:
@@ -460,23 +460,23 @@ secret: 1000625c4f1d874f0ab853bf1db4e438ad6f054526e5dcf4fc8c10e551174904e6d0
 werf --secret-values .helm/secret-values-production.yaml
 ```
 
-## Информация о собранных образах (только в werf)
+## Information about the built images (werf only)
 
-werf хранит информацию о собранных образах в параметрах `$.Values.werf` основного чарта:
+werf stores information about the built images in the `$.Values.werf` parameters of the main chart:
 
 ```yaml
 werf:
   image:
-    # Полный путь к собранному Docker-образу для werf-образа "backend":
+    # The full path to the built Docker image for the "backend" werf image:
     backend: example.org/apps/myapp:a243949601ddc3d4133c4d5269ba23ed58cb8b18bf2b64047f35abd2-1598024377816
-  # Адрес container registry для собранных образов:
+  # The address of the container registry for the built images:
   repo: example.org/apps/myapp
   tag:
-    # Тег собранного Docker-образа для werf-образа "backend":
+    # The tag of the built Docker image for the "backend" werf image:
     backend: a243949601ddc3d4133c4d5269ba23ed58cb8b18bf2b64047f35abd2-1598024377816
 ```
 
-Пример использования:
+Example of use:
 
 {% raw %}
 
@@ -486,13 +486,13 @@ image: {{ $.Values.werf.image.backend }}
 
 {% endraw %}
 
-Результат:
+Output:
 
 ```yaml
 image: example.org/apps/myapp:a243949601ddc3d4133c4d5269ba23ed58cb8b18bf2b64047f35abd2-1598024377816
 ```
 
-Для использования `$.Values.werf` в зависимых чартах воспользуйтесь директивой `export-values` (только в werf):
+The `export-values` directive allows you to use `$.Values.werf` in the dependent charts (werf only):
 
 ```yaml
 # .helm/Chart.yaml:
@@ -512,40 +512,40 @@ image: {{ $.Values.werf.image.backend }}
 
 {% endraw %}
 
-Результат:
+Output:
 
 ```yaml
 image: example.org/apps/myapp:a243949601ddc3d4133c4d5269ba23ed58cb8b18bf2b64047f35abd2-1598024377816
 ```
 
-## Информация о релизе
+## Release information
 
-werf хранит информацию о релизе в свойствах объекта `$.Release`:
+werf stores release information in the properties of the `$.Release` object:
 
 ```yaml
-# Устанавливается ли релиз в первый раз:
+# Is the release being installed for the first time?
 IsInstall: true
-# Обновляется ли уже существующий релиз:
+# Is the existing release being updated?
 IsUpgrade: false
-# Имя релиза:
+# Release name:
 Name: myapp-production
-# Имя Kubernetes Namespace:
+# Kubernetes Namespace name:
 Namespace: myapp-production
-# Номер ревизии релиза:
+# Release revision:
 Revision: 1
 ```
 
-... и в параметрах `$.Values.werf` основного чарта (только в werf):
+... and in the `$.Values.werf` parameters of the main chart (werf only):
 
 ```yaml
 werf:
-  # Имя werf-проекта:
+  # Name of the werf project:
   name: myapp
-  # Окружение:
+  # Environment:
   env: production
 ```
 
-Пример использования:
+Example of use:
 
 {% raw %}
 
@@ -556,14 +556,14 @@ werf:
 
 {% endraw %}
 
-Результат:
+Output:
 
 ```
 myapp-production
 production
 ```
 
-Для использования `$.Values.werf` в зависимых чартах воспользуйтесь директивой `export-values` (только в werf):
+The `export-values` directive allows you to use `$.Values.werf` in the dependent charts (werf only):
 
 ```yaml
 # .helm/Chart.yaml:
@@ -583,27 +583,27 @@ dependencies:
 
 {% endraw %}
 
-Результат:
+Output:
 
 ```yaml
 production
 ```
 
-## Информация о чарте
+## Chart information
 
-werf хранит информацию о текущем чарте в свойствах объекта `$.Chart`:
+werf stores information about the current chart in the properties of the `$.Chart` object:
 
 ```yaml
-# Является ли чарт основным:
+# Is the chart the main one?
 IsRoot: true
 
-# Далее всё содержимое Chart.yaml:
+# All of the Chart.yaml contents:
 apiVersion: v2
 name: mychart
 version: 1.0.0
 ```
 
-Пример использования:
+Example of use:
 
 {% raw %}
 
@@ -613,24 +613,24 @@ version: 1.0.0
 
 {% endraw %}
 
-Результат:
+Output:
 
 ```
 mychart
 ```
 
-## Информация о шаблоне
+## Template information
 
-werf хранит информацию о текущем шаблоне в свойствах объекта `$.Template`:
+werf stores information about the current template in the properties of the `$.Template` object:
 
 ```yaml
-# Относительный путь к директории templates чарта:
+# The relative path to the chart's templates directory:
 BasePath: mychart/templates
-# Относительный путь к текущему файлу шаблона:
+# The relative path to the current template file:
 Name: mychart/templates/example.yaml
 ```
 
-Пример использования:
+Example of use:
 
 {% raw %}
 
@@ -640,29 +640,29 @@ Name: mychart/templates/example.yaml
 
 {% endraw %}
 
-Результат:
+Output:
 
 ```
 mychart/templates/example.yaml
 ```
 
-## Информация о Git-коммите (только в werf)
+## Git commit information (werf only)
 
-werf хранит информацию о Git-коммите, на котором он был запущен, в параметрах `$.Values.werf.commit` основного чарта:
+werf stores information about the Git commit that triggered its run in the `$.Values.werf.commit` parameters of the main chart:
 
 ```yaml
 werf:
   commit:
     date:
-      # Дата Git-коммита, на котором был запущен werf (человекочитаемая форма):
+      # The date of the Git commit that triggered werf (the human-readable form):
       human: 2022-01-21 18:51:39 +0300 +0300
-      # Дата Git-коммита, на котором был запущен werf (Unix time):
+      # The date of the Git commit that triggered werf (Unix time):
       unix: 1642780299
-    # Хэш Git-коммита, на котором был запущен werf:
+    # The hash of the Git commit that triggered werf:
     hash: 1b28e6843a963c5bdb3579f6fc93317cc028051c
 ```
 
-Пример использования:
+Example of use:
 
 {% raw %}
 
@@ -672,13 +672,13 @@ werf:
 
 {% endraw %}
 
-Результат:
+Output:
 
 ```
 1b28e6843a963c5bdb3579f6fc93317cc028051c
 ```
 
-Для использования `$.Values.werf.commit` в зависимых чартах воспользуйтесь директивой `export-values` (только в werf):
+The `export-values` directive allows you to use `$.Values.werf.commit` in the dependent charts (werf only):
 
 ```yaml
 # .helm/Chart.yaml:
@@ -698,36 +698,36 @@ dependencies:
 
 {% endraw %}
 
-Результат:
+Output:
 
 ```yaml
 1b28e6843a963c5bdb3579f6fc93317cc028051c
 ```
 
-## Информация о возможностях кластера Kubernetes
+## Information about the Kubernetes cluster
 
-werf предоставляет информацию о возможностях кластера Kubernetes, в который werf стал бы применять Kubernetes-манифесты, через свойства объекта `$.Capabilities`:
+werf provides information about the capabilities of the target Kubernetes cluster via the properties of the `$.Capabilities` object:
 
 ```yaml
 KubeVersion:
-  # Полная версия кластера Kubernetes:
+  # The full version of the Kubernetes cluster:
   Version: v1.20.0
-  # Мажорная версия кластера Kubernetes:
+  # The major version of the Kubernetes cluster:
   Major: "1"
-  # Минорная версия кластера Kubernetes:
+  # The minor version of the Kubernetes cluster:
   Minor: "20"
-# API, поддерживаемые кластером Kubernetes:
+# A list of APIs supported by the Kubernetes cluster:
 APIVersions:
 - apps/v1
 - batch/v1
 - # ...
 ```
 
-... и методы объекта `$.Capabilities`:
+... as well as methods of the `$.Capabilities` object:
 
-* `APIVersions.Has <arg>` — поддерживается ли кластером Kubernetes указанное аргументом API (например, `apps/v1`) или ресурс (например, `apps/v1/Deployment`).
+* `APIVersions.Has <arg>` — tells whether the Kubernetes cluster supports the API (e.g., `apps/v1`) or resource (e.g., `apps/v1/Deployment`) specified by the argument.
 
-Пример использования:
+Example of use:
 
 {% raw %}
 
@@ -738,7 +738,7 @@ APIVersions:
 
 {% endraw %}
 
-Результат:
+Output:
 
 ```
 v1.20.0
