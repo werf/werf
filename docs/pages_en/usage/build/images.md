@@ -188,6 +188,7 @@ shell:
 
 Stapel supports auxiliary images from which you can import files into the target image (similar to `COPY-from=STAGE` in the multi-stage Dockerfile) as well as golang templating:
 
+{% raw %}
 ```yaml
 {{ $_ := set . "BaseImage" "ubuntu:22.04" }}
 
@@ -213,6 +214,7 @@ import:
   to: /usr/local/bin/app
   after: install
 ```
+{% endraw %}
 
 See [the stapel section]({{"usage/build/stapel/base.html" | true_relative_url }}) for detailed instructions.
 

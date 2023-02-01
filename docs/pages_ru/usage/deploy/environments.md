@@ -8,7 +8,7 @@ permalink: usage/deploy/environments.html
 
 *Окружение* werf указывается опцией `--env` (`$WERF_ENV`), либо автоматически выставляется командой `werf ci-env`. Текущее окружение доступно в параметре `$.Values.werf.env` основного чарта.
 
-Окружение werf используется при формировании имени релиза и имени Namespace, а также может использоваться для параметризации шаблонов:
+Окружение werf используется при формировании имени релиза и имени Namespace'а, а также может использоваться для параметризации шаблонов:
 
 ```yaml
 # .helm/values.yaml:
@@ -131,9 +131,9 @@ werf converge --kube-config "$HOME/.kube/staging.config"  # или $WERF_KUBE_CO
 werf converge --kube-config-base64 "$KUBE_PRODUCTION_CONFIG_IN_BASE64"  # или $WERF_KUBE_CONFIG_BASE64=...
 ```
 
-## Развертывание из под разных пользователей Kubernetes
+## Развертывание из-под разных пользователей Kubernetes
 
-По умолчанию werf для развертывания использует пользователя Kubernetes, через которого работает команда `werf kubectl`. Для развертывания из под разных пользователей используйте разные kube-контексты:
+По умолчанию werf для развертывания использует пользователя Kubernetes, через которого работает команда `werf kubectl`. Для развертывания из-под разных пользователей используйте разные kube-контексты:
 
 ```shell
 werf converge --kube-context admin  # или $WERF_KUBE_CONTEXT=...

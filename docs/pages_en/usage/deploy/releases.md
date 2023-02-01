@@ -3,95 +3,107 @@ title: Release management
 permalink: usage/deploy/releases.html
 ---
 
-While the [chart]({{ "/usage/deploy/charts.html" | true_relative_url }}) is a collection of configuration files of your application, the **release** is a runtime object that represents a running instance of your application deployed via werf.
+## About releases
 
-Each release has a single name and multiple versions. A new release version is created with each invocation of werf converge. For each release only latest version is the actual version, previous versions of the release are stored for history.
+The deployment results in a *release* — a set of resources and service information deployed in the cluster. 
 
-## Storing releases
+From a technical point of view, werf releases are Helm 3 releases and therefore are fully compatible with them. Service information is stored in a special Secret resource by default.
 
-Each release version is stored in the Kubernetes cluster itself. werf supports storing release data in Secret and ConfigMap objects in the arbitrary namespace.
+## Automatic release name generation (werf only)
 
-By default, werf stores releases in the Secrets in the namespace of your deployed application. This is fully compatible with the default [Helm 3](https://helm.sh) configuration.
-
-The [`werf helm list -A`]({{ "reference/cli/werf_helm_list.html" | true_relative_url }}) command lists releases created by werf. Also, the user can fetch the history of a specific release with the [`werf helm history`]({{ "reference/cli/werf_helm_history.html" | true_relative_url }}) command.
-
-### Helm compatibility notice
-
-werf is fully compatible with the existing Helm 3 installations since the release data is stored similarly to Helm.
-
-Furthermore, you can use werf and Helm 3 simultaneously in the same cluster and at the same time.
-
-You can inspect and browse releases created by werf using commands such as `helm list` and `helm get`. werf can also upgrade existing releases created by the Helm.
-
-### Compatibility with Helm 2
-
-Existing helm 2 releases could be converted to helm 3 with the [`werf helm migrate2to3` command]({{ "/reference/cli/werf_helm_migrate2to3.html" | true_relative_url }}).
-
-Also [werf converge command]({{ "/reference/cli/werf_converge.html" | true_relative_url }}) detects existing helm 2 release for your project and converts it to the helm 3 automatically. Existing helm 2 release could exist in the case when your project has previously been deployed by the werf v1.1.
-
-## Resources adoption
-
-By default Helm and werf can only manage resources that was created by the Helm or werf itself. If you try to deploy chart with the new resource in the `.helm/templates` that already exists in the cluster and was created outside werf then the following error will occur:
-
-```
-Error: helm upgrade have failed: UPGRADE FAILED: rendered manifests contain a resource that already exists. Unable to continue with update: KIND NAME in namespace NAMESPACE exists and cannot be imported into the current release: invalid ownership metadata; label validation error: missing key "app.kubernetes.io/managed-by": must be set to "Helm"; annotation validation error: missing key "meta.helm.sh/release-name": must be set to RELEASE_NAME; annotation validation error: missing key "meta.helm.sh/release-namespace": must be set to RELEASE_NAMESPACE
-```
-
-This error prevents destructive behaviour when some existing resource would occasionally become part of helm release.
-
-However, if it is the desired outcome, then edit this resource in the cluster and set the following annotations and labels:
+By default, the release name is generated automatically using a special pattern `[[ project ]]-[[ env ]]`, where `[ project ]]` is the werf project name and `[ env ]]` is the environment name, for example:
 
 ```yaml
-metadata:
-  annotations:
-    meta.helm.sh/release-name: "RELEASE_NAME"
-    meta.helm.sh/release-namespace: "NAMESPACE"
-  labels:
-    app.kubernetes.io/managed-by: Helm
+# werf.yaml:
+project: myapp
 ```
 
-After the next deploy this resource will be adopted into the new release revision. Resource will be updated to the state defined in the chart manifest.
+```shell
+werf converge --env staging
+werf converge --env production
+```
 
-## Release name
+In this case, the `myapp-staging` and `myapp-production` releases will be created.
 
-The release name is constructed using the template `[[ project ]]-[[ env ]]` by default. Here, `[[ project ]]` refers to the [project name]({{ "reference/werf_yaml.html#project-name" | true_relative_url }}) and `[[ env ]]` refers to the specified or detected environment.
+## Changing the release name pattern (werf only)
 
-For example, for the project named `symfony-demo`, the following Helm Release names can be constructed depending on the environment:
-* `symfony-demo-stage` for the `stage` environment;
-* `symfony-demo-test` for the `test` environment;
-* `symfony-demo-prod` for the `prod` environment.
+If you are not happy with the pattern werf uses to generate the release name, you can modify it:
 
-You can redefine the release using the `--release NAME` deploy option. In that case werf would use the specified name as is.
+```yaml
+# werf.yaml:
+project: myapp
+deploy:
+  helmRelease: "backend-[[ env ]]"
+```
 
-You can also define the custom release name in the werf.yaml configuration [by setting `deploy.helmRelease`]({{ "/reference/werf_yaml.html#release-name" | true_relative_url }}).
+```shell
+werf converge --env production
+```
 
-### Slugging the release name
+In this case, the `backend-production` release will be created.
 
-The name of the Helm Release constructed using the template will be slugified to fit the requirements for the release name. This procedure generates a unique and valid Helm Release name.
+## Specifying the release name explicitly
 
-This is the default behavior. You can disable it by [setting `deploy.helmReleaseSlug=false`]({{ "/reference/werf_yaml.html#release-name" | true_relative_url }}) in the `werf.yaml` configuration.
+Instead of generating the release name using a special pattern, you can specify the release name explicitly:
 
-## Auto annotations
+```shell
+werf converge --release backend-production  # or $WERF_RELEASE=...
+```
 
-werf automatically sets the following built-in annotations to all deployed chart resources:
+In this case, the `backend-production` release will be created.
 
-* `"werf.io/version": FULL_WERF_VERSION` — version of werf used when running the `werf converge` command;
-* `"project.werf.io/name": PROJECT_NAME` — project name specified in the `werf.yaml`;
-* `"project.werf.io/env": ENV` — environment name specified via the `--env` param or `WERF_ENV` variable; optional, will not be set if env is not used.
+## Formatting the release name
 
-werf also sets auto annotations containing information from the CI/CD system used (for example, GitLab CI) when running the `werf ci-env` command prior to the `werf converge` command.
+A release name generated using a special pattern or specified by the `--release` flag is automatically converted to match the [RFC 1123 Label Names](https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#dns-label-names) format. You can disable automatic formatting by setting the `deploy.helmReleaseSlug` directive in the `werf.yaml` file.
 
-## Custom annotations and labels
+You can manually format any string to match the RFC 1123 Label Names format using the `werf slugify -f helm-release` command.
 
-The user can pass arbitrary additional annotations and labels using `--add-annotation annoName=annoValue` (can be used repeatedly) and `--add-label labelName=labelValue` (can be used repeatedly) CLI options when invoking werf converge.
+## Adding resources that already exist in the cluster to the release
 
-For example, you can use the following werf converge invocation to set `commit-sha=9aeee03d607c1eed133166159fbea3bad5365c57`, `gitlab-user-email=vasya@myproject.com`  annotations/labels to all Kubernetes resources in a chart:
+werf does not allow a new release resource to be deployed on top of an existing resource in the cluster if the resource in the cluster *isn't part of the current release*. This behavior prevents accidental updates to resources belonging to another release or deployed without werf. Trying to do so will result in the following error:
+
+```
+Error: helm upgrade have failed: UPGRADE FAILED: rendered manifests contain a resource that already exists...
+```
+
+To add a cluster resource to the current release and allow it to be updated, add the `meta.helm.sh/release-name: <name of the current release>`, `meta.helm.sh/release-namespace: <Namespace of the current release>` annotations and the `app.kubernetes.io/managed-by: Helm` label to that cluster resource, for example:
+
+```shell
+kubectl annotate deploy/myapp meta.helm.sh/release-name=myapp-production
+kubectl annotate deploy/myapp meta.helm.sh/release-namespace=myapp-production
+kubectl label deploy/myapp app.kubernetes.io/managed-by=Helm
+```
+
+... and then restart the deployment:
+
+```shell
+werf converge
+```
+
+Running the above commands will result in the `myapp` release resource successfully updating the `myapp` resource in the cluster. On top of that, the cluster resource will become part of the current release.
+
+## Auto-annotating the release resources being deployed
+
+During deployment, werf automatically adds the following annotations to all chart resources:
+
+* `"werf.io/version": FULL_WERF_VERSION` — the werf version used when running the `werf converge` command;
+* `"project.werf.io/name": PROJECT_NAME` — the project name specified in the `werf.yaml` configuration file;
+* `"project.werf.io/env": ENV` — the environment name specified with the `--env` parameter or the `WERF_ENV` environment variable (the annotation is not set if the environment was not set at startup).
+
+The `werf ci-env` command, if run with [supported CI/CD systems]({{"usage/integration_with_ci_cd_systems.html" | true_relative_url }}), adds annotations that allow the user to navigate to the related pipeline, job, and commit if necessary.
+
+## Adding arbitrary annotations and labels to the release resources being deployed
+
+During deployment, the user can attach arbitrary annotations and labels using the CLI parameters `--add-annotation annoName=annoValue` (supports multi-use) and `--add-label labelName=labelValue` (supports multi-use). Annotations and labels can also be specified with the `WERF_ADD_LABEL*` and `WERF_ADD_ANNOTATION*` variables (example: `WERF_ADD_ANNOTATION_1=annoName1=annoValue1` and `WERF_ADD_LABEL_1=labelName1=labelValue1`).
+
+For example, use the following command to add `commit-sha=9aeee03d607c1eed133166159fbea3bad5365c57` and `gitlab-user-email=vasya@myproject.com` annotations/labels to all Kubernetes resources in the chart:
 
 ```shell
 werf converge \
   --add-annotation "commit-sha=9aeee03d607c1eed133166159fbea3bad5365c57" \
   --add-label "commit-sha=9aeee03d607c1eed133166159fbea3bad5365c57" \
-  --add-annotation "gitlab-user-email=vasya@mydomain.com" \
-  --add-label "gitlab-user-email=vasya@mydomain.com" \
+  --add-annotation "gitlab-user-email=vasya@myproject.com" \
+  --add-label "gitlab-user-email=vasya@myproject.com" \
+  --env dev \
   --repo REPO
 ```
