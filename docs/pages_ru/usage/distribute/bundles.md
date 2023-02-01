@@ -123,6 +123,24 @@ werf bundle copy --from example.org/bundles/mybundle:v1.0.0 --to other.example.o
 werf bundle copy --from example.org/bundles/mybundle:v1.0.0 --to example.org/bundles/renamedbundle:v2.0.0
 ```
 
+## Экспорт бандла и его образов из репозитория в архив
+
+После публикации бандл и связанные с ним образы могут быть экспортированы из репозитория в локальный архив для дальнейшей дистрибуции иными способами с помощью команды `werf bundle copy`, например:
+
+```shell
+werf bundle copy --from example.org/bundles/mybundle:v1.0.0 --to archive:archive.tar.gz
+```
+
+## Импорт бандла и его образов из архива в репозиторий
+
+Экспортированный в архив бандл и связанные с ним образы можно снова импортировать в тот же или другой OCI-репозиторий командой `werf bundle copy`, например:
+
+```shell
+werf bundle copy --from archive:archive.tar.gz --to other.example.org/bundles/mybundle:v1.0.0
+```
+
+После этого вновь опубликованный бандл и его образы снова можно использовать привычными способами.
+
 ## Container Registries, поддерживающие публикацию бандлов
 
 Для публикации бандлов требуется Container Registry, поддерживающий спецификацию OCI ([Open Container Initiative](https://github.com/opencontainers/image-spec)). Список наиболее популярных Container Registries, совместимость с которыми была проверена:

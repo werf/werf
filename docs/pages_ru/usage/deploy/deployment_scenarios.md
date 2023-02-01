@@ -8,17 +8,41 @@ permalink: usage/deploy/deployment_scenarios.html
 Обычно развертывание осуществляется командой `werf converge`, которая собирает образы и развертывает приложение, но требует запуска из Git-репозитория приложения. Пример:
 
 ```shell
-werf converge --repo <репозиторий>
+werf converge --repo example.org/mycompany/myapp
 ```
 
 Если требуется разделить шаги сборки и развертывания, то это можно сделать так:
 
 ```shell
-werf build --repo <репозиторий>
+werf build --repo example.org/mycompany/myapp
 ```
 
 ```shell
-werf converge --skip-build --repo <репозиторий>
+werf converge --skip-build --repo example.org/mycompany/myapp
+```
+
+## Развертывание с использованием произвольных тегов образов
+
+По умолчанию собранные образы получают тег на основе их содержимого, который становится доступен в Values для их дальнейшего использования в шаблонах при развертывании. Но если возникает необходимость тегировать образы иным тегом, то можно использовать параметр `--use-custom-tag`, например:
+
+```shell
+werf converge --use-custom-tag '%image%-v1.0.0' --repo example.org/mycompany/myapp
+```
+
+Результат: образы были собраны и опубликованы с тегами `<имя image>-v1.0.0`, после чего теги этих образов стали доступны в Values, на основе которых были сформированы и применены конечные манифесты Kubernetes.
+
+В имени тега, указываемом в параметре `--use-custom-tag`, можно использовать шаблоны `%image%`, `%image_slug%` и `%image_safe_slug%` для подставления имени образа и `%image_content_based_tag%` для подставления оригинального тега на основе содержимого.
+
+> Обратите внимание, что при указании произвольного тега публикуется также и образ с тегом на основе содержимого. В дальнейшем при вызове `werf cleanup` образ с тегом на основе содержимого и образы с произвольными тегами удаляются вместе.
+
+Если требуется разделить шаги сборки и развертывания, то это можно сделать так:
+
+```shell
+werf build --add-custom-tag '%image%-v1.0.0' --repo example.org/mycompany/myapp
+```
+
+```shell
+werf converge --skip-build --use-custom-tag '%image%-v1.0.0' --repo example.org/mycompany/myapp
 ```
 
 ## Развертывание без доступа к Git-репозиторию приложения
@@ -34,13 +58,13 @@ werf converge --skip-build --repo <репозиторий>
 Первые два шага выполняются командой `werf bundle publish`, находясь в Git-репозитории приложения, например:
 
 ```shell
-werf bundle publish --tag latest --repo <репозиторий>
+werf bundle publish --tag latest --repo example.org/mycompany/myapp
 ```
 
 А третий шаг выполняется командой `werf bundle apply` уже без необходимости находиться в Git-репозитории приложения, например:
 
 ```shell
-werf bundle apply --tag latest --release myapp --namespace myapp-production --repo <репозиторий>
+werf bundle apply --tag latest --release myapp --namespace myapp-production --repo example.org/mycompany/myapp
 ```
 
 Конечный результат будет тот же самый, что и при использовании `werf converge`.
@@ -48,11 +72,11 @@ werf bundle apply --tag latest --release myapp --namespace myapp-production --re
 Если требуется разделить первый и второй шаг, то это можно сделать так:
 
 ```shell
-werf build --repo <репозиторий>
+werf build --repo example.org/mycompany/myapp
 ```
 
 ```
-werf bundle publish --skip-build --tag latest --repo <репозиторий>
+werf bundle publish --skip-build --tag latest --repo example.org/mycompany/myapp
 ```
 
 ## Развертывание сторонним инструментом
@@ -68,7 +92,7 @@ werf bundle publish --skip-build --tag latest --repo <репозиторий>
 Первые два шага выполняются командой `werf render`, находясь в Git-репозитории приложения:
 
 ```shell
-werf render --output manifests.yaml --repo <репозиторий>
+werf render --output manifests.yaml --repo example.org/mycompany/myapp
 ```
 
 Теперь полученные манифесты можно передать в сторонний инструмент для дальнейшего развертывания, например:
@@ -82,11 +106,11 @@ kubectl apply -f manifests.yaml
 Если требуется разделить первый и второй шаг, то это можно сделать так:
 
 ```shell
-werf build --repo <репозиторий>
+werf build --repo example.org/mycompany/myapp
 ```
 
 ```
-werf render --skip-build --output manifests.yaml --repo <репозиторий>
+werf render --skip-build --output manifests.yaml --repo example.org/mycompany/myapp
 ```
 
 ## Развертывание сторонним инструментом без доступа к Git-репозиторию приложения
@@ -104,13 +128,13 @@ werf render --skip-build --output manifests.yaml --repo <репозиторий>
 Первые два шага выполняются командой `werf bundle publish`, находясь в Git-репозитории приложения:
 
 ```shell
-werf bundle publish --tag latest --repo <репозиторий>
+werf bundle publish --tag latest --repo example.org/mycompany/myapp
 ```
 
 А третий шаг выполняется командой `werf bundle render` уже без необходимости находиться в Git-репозитории приложения, например:
 
 ```shell
-werf bundle render --output manifests.yaml --tag latest --release myapp --namespace myapp-production --repo <репозиторий>
+werf bundle render --output manifests.yaml --tag latest --release myapp --namespace myapp-production --repo example.org/mycompany/myapp
 ```
 
 Теперь полученные манифесты можно передать в сторонний инструмент для дальнейшего развертывания, например:
@@ -124,11 +148,11 @@ kubectl apply -f manifests.yaml
 Если требуется разделить первый и второй шаг, то это можно сделать так:
 
 ```shell
-werf build --repo <репозиторий>
+werf build --repo example.org/mycompany/myapp
 ```
 
 ```
-werf bundle publish --skip-build --tag latest --repo <репозиторий>
+werf bundle publish --skip-build --tag latest --repo example.org/mycompany/myapp
 ```
 
 ## Удаление развернутого приложения
