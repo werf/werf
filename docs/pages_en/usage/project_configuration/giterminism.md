@@ -4,98 +4,82 @@ permalink: usage/project_configuration/giterminism.html
 change_canonical: true
 ---
 
-werf introduces the so-called _giterminism_ mode. The word is constructed from `git` and `determinism`, which means "determined by the git".
+## Excluding unused files
 
-To provide a strong guarantee of reproducibility, werf reads the configuration and build's context files from the current git commit, and eliminates external dependencies. In this way, werf strives for easily reproducible configurations and allows developers in Windows, macOS, and Linux to reuse images just built in the CI system simply by switching to the desired commit.
+werf does not permit working with uncommitted and untracked files in Git. If files are not required, they should be explicitly excluded using the `.gitignore' and `.helmignore` files.
 
-werf does not allow working with uncommitted and untracked files. If the files are not required, they should be ignored with `.gitignore` (including global) or `.helmignore` file.
+## Using uncommitted and untracked files in debugging and development
 
-> We strongly recommend following this approach, but if necessary, you can loosen giterminism restrictions explicitly and enable the features that require careful use with [werf-giterminism.yaml]({{ "reference/werf_giterminism_yaml.html" | true_relative_url }})
+При отладке и разработке, изменение файлов проекта может доставлять неудобства за счёт необходимости создания промежуточных коммитов. Мы работаем над режимом разработки, чтобы упростить этот процесс и в то же время оставить всю логику работы неизменной.
 
-During development or debugging, changing the project files might be annoying due to the necessity of creating redundant commits. We are working on the development mode to simplify this process, while keeping the whole logic unchanged. 
-Currently, the development mode (activated by the `--dev` option) allows working with the worktree state of the git repository, with tracked and untracked changes. werf ignores changes in compliance with the rules described in `.gitignore` as well as rules that the user sets with the `--dev-ignore=<glob>` option (can be used multiple times).
+В текущих версиях, режим разработки (активируется опцией `--dev`) позволяет работать с состоянием worktree git-репозитория проекта, с отслеживаемыми (tracked) и неотслеживаемыми (untracked) файлами. werf игнорирует изменения с учётом правил, описанных в `.gitignore`, а также правил, заданных пользователем опцией `--dev-ignore=<glob>` (может использоваться несколько раз).
 
-## Configuration
+##  Allowing nondeterministic functionality selectively
 
-The configuration of an application may include the following project files:
+### Templating werf.yaml
 
-- The werf configuration (`werf.yaml` by default) that describes all images, deployment, and cleanup settings.
-- The werf configuration templates (`.werf/**/*.tmpl`).
-- The files that are used with Go-template functions [.Files.Get]({{ "reference/werf_yaml_template_engine.html#filesget" | true_relative_url }}) and [.Files.Glob]({{ "reference/werf_yaml_template_engine.html#filesglob" | true_relative_url }}).
-- The helm chart files (`.helm` by default).
+#### Functions of the Go templating engine
 
-> All configuration files must be in the project directory. A symbolic link is supported, but the link must point to a file in the project git repository
+##### env
 
-By default, werf prohibits using a particular set of directives and Go-template functions that might lead to external dependencies in the werf configuration.
+Использование функции [env]({{ "reference/werf_yaml_template_engine.html#env-1" | true_relative_url }}) усложняет совместное использование и воспроизводимость конфигурации в заданиях CI и среди разработчиков, поскольку значение переменной среды влияет на окончательный дайджест собираемых образов и значение должно быть идентичным на всех этапах CI-пайплайна и во время локальной разработки при воспроизведении.
 
-### werf configuration
+Для активации функции `env` необходимо использовать [werf-giterminism.yaml]({{ "reference/werf_giterminism_yaml.html" | true_relative_url }}), но мы рекомендуем еще раз подумать о возможных последствиях.
 
-#### CLI
+### Assembly
 
-##### \-\-use-custom-tag option
-
-The use of tag aliases with immutable values (e.g., `%image%-master`) makes previous deployments unreproducible and requires specifying the policy `imagePullPolicy: Always` for each image when configuring application containers in the helm chart.
-
-To activate `--use-custom-tag` option it is necessary to use [werf-giterminism.yaml]({{ "reference/werf_giterminism_yaml.html" | true_relative_url }}), but we recommend thinking again about the possible consequences.
-
-#### Go-template functions
-
-##### env 
-
-The use of the function [env]({{ "reference/werf_yaml_template_engine.html#env-1" | true_relative_url }}) complicates the sharing and reproducibility of the configuration in CI jobs and among developers because the value of the environment variable affects the final digest of built images and must be identical at all steps of the pipeline and during local development.
-
-To activate the `env` function it is necessary to use [werf-giterminism.yaml]({{ "reference/werf_giterminism_yaml.html" | true_relative_url }}), but we recommend thinking again about the possible consequences.
-
-#### dockerfile image
+#### Dockerfile image
 
 ##### contextAddFiles
 
-The use of the directive [contextAddFiles]({{ "reference/werf_yaml.html#contextaddfiles" | true_relative_url }}) complicates the sharing and reproducibility of the configuration in CI jobs and among developers because the file data affects the final digest of built images and must be identical at all steps of the pipeline and during local development.
+Использование директивы [contextAddFiles]({{ "reference/werf_yaml.html#contextaddfiles" | true_relative_url }}) усложняет совместное использование и воспроизводимость конфигурации в заданиях CI и среди разработчиков, поскольку данные файла влияют на окончательный дайджест собираемых образов и должны быть идентичными на всех этапах CI-пайплайна и во время локальной разработки при воспроизведении.
 
-To activate the `contextAddFiles` directive it is necessary to use [werf-giterminism.yaml]({{ "reference/werf_giterminism_yaml.html" | true_relative_url }}), but we recommend thinking again about the possible consequences.
+Для активации директивы `contextAddFiles` необходимо использовать [werf-giterminism.yaml]({{ "reference/werf_giterminism_yaml.html" | true_relative_url }}), но мы рекомендуем еще раз подумать о возможных последствиях.
 
-#### stapel image
+#### Stapel image
 
 ##### fromLatest
 
-If [fromLatest]({{ "usage/build/stapel/base.html#from-fromlatest" | true_relative_url }}) is true, then werf starts using the actual _base image_ digest in the stage digest. Thus, using this directive may break the reproducibility of previous builds. The changing of the base image in the registry makes all previously built images unusable.
+При использовании [fromLatest]({{ "usage/build/stapel/base.html#from-fromlatest" | true_relative_url }}), werf начинает учитывать реальный дайджест _базового образа_ в дайджесте собираемого образа. Таким образом, использование этой директивы может нарушить воспроизводимость предыдущих сборок. Изменение базового образа в container registry делает непригодными для использования все ранее собранные образы.
 
- * Previous pipeline jobs (e.g., converge) cannot be retried without the image rebuilding after changing a registry base image.
- * If the base image is modified unexpectedly, it may lead to an inexplicably failed pipeline. For instance, the modification occurs after a successful build, and the following jobs will be failed due to changing stages digests alongside base image digest.
+* Предыдущие задания CI-пайплайна (например, converge) не могут быть выполнены повторно без пересборки образа после изменения базового образа в container registry.
+* Изменение базового образа в container registry приводит к неожиданным падениям CI-пайплайна. Например, изменение происходит после успешной сборки, и следующие задания не могут выполниться из-за изменения дайджеста конечных образов вместе с дайджестом базового образа.
 
-As an alternative, we recommend using an unchangeable tag or periodically change [fromCacheVersion]({{ "usage/build/stapel/base.html#fromcacheversion" | true_relative_url }}) value to guarantee the application's controllable and predictable life cycle.
+В качестве альтернативы мы рекомендуем использовать неизменяемый тег или периодически изменять значение [fromCacheVersion]({{ "usage/build/stapel/base.html#fromcacheversion" | true_relative_url }}), чтобы гарантировать управляемый и предсказуемый жизненный цикл приложения.
 
-To activate the `fromLatest` directive it is necessary to use [werf-giterminism.yaml]({{ "reference/werf_giterminism_yaml.html" | true_relative_url }}), but we recommend thinking again about the possible consequences.
+Для активации директивы `fromLatest` необходимо использовать [werf-giterminism.yaml]({{ "reference/werf_giterminism_yaml.html" | true_relative_url }}), но мы рекомендуем еще раз подумать о возможных последствиях.
 
 ##### git
 
 ###### branch
 
-[Remote git mapping]({{ "usage/build/stapel/git.html#working-with-remote-repositories" | true_relative_url }}) with a branch (master branch by default) may break the previous builds' reproducibility. werf uses the history of a git repository to calculate the stage digest. Thus, the new commit in the branch makes all previously built images unusable.
+Использование ветки (по умолчанию ветка `master`) при работе с [произвольными git-репозиториями]({{ "usage/build/stapel/git.html#работа-с-удаленными-репозиториями" | true_relative_url }}) может нарушить воспроизводимость предыдущих сборок. werf использует историю git-репозитория для расчета дайджеста собираемого образа. Таким образом, новый коммит в ветке делает непригодным для использования все ранее собранные образы.
 
- * The existing pipeline jobs (e.g., converge) would not run and would require rebuilding an image if a remote git branch has been changed.
- * Unplanned commits to a remote git branch might lead to the pipeline failing seemingly for no apparent reasons. For instance, changes may occur after the build process is completed successfully. In this case, the related pipeline jobs will fail due to changes in stage digests along with the branch HEAD.
+* Существующие задания CI-пайплайна (например, converge) не будут выполняться и потребуют пересборки образа, если HEAD ветки был изменён.
+* Неконтролируемые коммиты в ветку могут приводить к сбоям CI-пайплайна без видимых причин. Например, изменения могут произойти после успешного завершения процесса сборки. В этом случае связанные задания CI-пайплайна завершатся с ошибкой из-за изменений в дайджестах собираемых образов вместе с HEAD связанной ветки.
 
-As an alternative, we recommend using an unchangeable reference, tag, or commit to guarantee the application's controllable and predictable life cycle.
+В качестве альтернативы мы рекомендуем использовать неизменяемую ссылку, тег или коммит, чтобы гарантировать управляемый и предсказуемый жизненный цикл приложения.
 
-To activate the `branch` directive it is necessary to use [werf-giterminism.yaml]({{ "reference/werf_giterminism_yaml.html" | true_relative_url }}), but we recommend thinking again about the possible consequences.
+Для активации директивы `branch` необходимо использовать [werf-giterminism.yaml]({{ "reference/werf_giterminism_yaml.html" | true_relative_url }}), но мы рекомендуем еще раз подумать о возможных последствиях.
 
 ##### mount
 
 ###### build_dir
 
-The use of the [build_dir mount]({{ "usage/build/stapel/mounts.html" | true_relative_url }}) may lead to unpredictable behavior when used in parallel and potentially affect reproducibility and reliability.
+Использование монтирования [build_dir]({{ "usage/build/stapel/mounts.html" | true_relative_url }}) может приводить к непредсказуемому поведению при параллельном использовании и потенциально повлиять на воспроизводимость и надежность.
 
-To activate the `build_dir` mount it is necessary to use [werf-giterminism.yaml]({{ "reference/werf_giterminism_yaml.html" | true_relative_url }}), but we recommend thinking again about the possible consequences.
+Для активации директивы `build_dir` необходимо использовать [werf-giterminism.yaml]({{ "reference/werf_giterminism_yaml.html" | true_relative_url }}), но мы рекомендуем еще раз подумать о возможных последствиях.
 
 ###### fromPath
 
-The use of the [fromPath mount]({{ "usage/build/stapel/mounts.html" | true_relative_url }}) may lead to unpredictable behavior when used in parallel and potentially affect reproducibility and reliability. The data in the mounted directory has no effect on the final image digest, which can lead to invalid images and hard-to-trace issues.
+Использование монтирования [fromPath]({{ "usage/build/stapel/mounts.html" | true_relative_url }}) может приводить к непредсказуемому поведению при параллельном использовании и потенциально повлиять на воспроизводимость и надежность. Данные в директории монтирования не влияют на окончательный дайджест собираемого образа, что может привести к невалидным образам, а также трудно отслеживаемым проблемам.
 
-To activate the `fromPath` mount it is necessary to use [werf-giterminism.yaml]({{ "reference/werf_giterminism_yaml.html" | true_relative_url }}), but we recommend thinking again about the possible consequences.
+Для активации директивы `fromPath` необходимо использовать [werf-giterminism.yaml]({{ "reference/werf_giterminism_yaml.html" | true_relative_url }}), но мы рекомендуем еще раз подумать о возможных последствиях.
 
-## Build's context files
+### Развёртывание
 
-Dockerfile image build context is context (read more about [context]({{ "reference/werf_yaml.html" | true_relative_url }}) directive) files from the current project git repository commit.
+#### Опция --use-custom-tag
 
-Stapel image build context is all files that are added with [git]({{ "usage/build/stapel/git.html" | true_relative_url }}) directive from the current project git repository commit.
+Использование алиасов тегов с неизменяемыми значениями (например, `%image%-master`) делает предыдущие выкаты невоспроизводимыми и требует указания политики `imagePullPolicy: Always` для каждого образа при конфигурации контейнеров приложения в helm-чарте.
+
+Для активации опции `--use-custom-tag` необходимо использовать [werf-giterminism.yaml]({{ "reference/werf_giterminism_yaml.html" | true_relative_url }}), но мы рекомендуем еще раз подумать о возможных последствиях.
