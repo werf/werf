@@ -3,12 +3,6 @@ title: Multiple environments
 permalink: usage/deploy/environments.html
 ---
 
----
-title: Multiple environments
-permalink: usage/deploy/environments.html
-
----
-
 ## Environment-dependent template parameters (werf only)
 
 You can set the *environment* to use in werf with the `--env` option (`$WERF_ENV`). It can also be set automatically via the `werf ci-env` command. The current environment is stored in the `$.Values.werf.env` parameter of the main chart.
