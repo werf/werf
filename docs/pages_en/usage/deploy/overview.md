@@ -5,14 +5,12 @@ permalink: usage/deploy/overview.html
 
 When setting up application delivery in Kubernetes, you must decide which format to use for managing the deployment configuration (parameterization, dependency management, configuration for different environments, etc.), as well as how to apply this configuration (the deployment mechanism).
 
-werf uses Helm for both the development and the configuration management (Helm chart) and the deployment process.
-
-werf integrates and extends Helm 3 to provide the user with additional features:
+Helm is built into werf and is used for these tasks. Configuration development and maintenance is carried out using Helm charts. As for the deployment process, Helm in werf provides some advanced features:
 
 - smart resource state tracking during deployment;
 - specifying the deployment order for any resources, not just hooks;
 - waiting for non-release resources to be created and ready;
-- integration of the assembly and deployment and much, much more.
+- integration of the assembly and deployment and other features.
 
 werf strives to make working with Helm easier, more convenient and flexible without breaking backward compatibility with Helm charts, Helm templates, and Helm releases.
 
