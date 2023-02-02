@@ -3,32 +3,41 @@ title: Image configuration
 permalink: usage/build/images.html
 ---
 
-<!-- прим. для перевода: на основе https://werf.io/documentation/v1.2/reference/werf_yaml.html#image-section -->
+<!-- reference: https://werf.io/documentation/v1.2/reference/werf_yaml.html#image-section -->
 
-To enable building your own images, you have to add an image description to the `werf.yaml` file of the project. Each image is added using the `image` directive and the image name:
+## Adding images
+
+To build images with werf, you have to add a description of each image to the `werf.yaml` file of the project. The image description starts with the `image` directive specifying the image name:
 
 ```yaml
 image: frontend
+# ...
 ---
 image: backend
+# ...
 ---
 image: database
+# ...
 ```
 
-The image name is a short symbolic name to refer to elsewhere in the configuration and when invoking werf commands. For example, you can use it to get the full name of the image published in the container registry or when running commands inside the built image using `werf kube-run`, etc. If multiple images are described in the configuration file, **each image** should have a name.
+> The image name is a unique internal image identifier that allows it to be referenced during configuration and when invoking werf commands.
 
-Next, for each image in `werf.yaml`, you must define the build instructions [using Dockerfile](#dockerfile-builder) or [stapel](#stapel-builder).
+Next, for each image in `werf.yaml`, you have to define the build instructions using [Dockerfile](#dockerfile) or [Stapel](#stapel).
 
-## Dockerfile builder
+### Dockerfile
 
-<!-- прим. для перевода: на основе https://werf.io/documentation/v1.2/reference/werf_yaml.html#dockerfile-builder -->
+<!-- reference: https://werf.io/documentation/v1.2/reference/werf_yaml.html#dockerfile-builder -->
 
-werf supports standard Dockerfiles for defining the image build instructions. Refer to the following resources for information about writing Dockerfiles:
+#### Writing Dockerfile instructions
+
+The format of the image build instructions matches the Dockerfile format. Refer to the following resources for more information:
 
 * [Dockerfile Reference](https://docs.docker.com/engine/reference/builder/).
 * [Best practices for writing Dockerfiles](https://docs.docker.com/develop/develop-images/dockerfile_best-practices/).
 
-The minimal configuration for a Dockerfile-based build is as follows:
+#### Using Dockerfiles
+
+The typical configuration of a Dockerfile-based build looks as follows:
 
 ```Dockerfile
 # Dockerfile
@@ -46,7 +55,9 @@ image: backend
 dockerfile: Dockerfile
 ```
 
-You can also define multiple target images using different stages of the same Dockerfile:
+#### Using a specific Dockerfile stage
+
+You can also define multiple target images using various stages of the same Dockerfile:
 
 ```Dockerfile
 # Dockerfile
@@ -77,7 +88,7 @@ dockerfile: Dockerfile
 target: frontend
 ```
 
-Of course, you can also define images based on different Dockerfiles:
+... as well as define images based on different Dockerfiles:
 
 ```yaml
 # werf.yaml
@@ -88,7 +99,9 @@ image: frontend
 dockerfile: dockerfiles/Dockerfile.frontend
 ```
 
-The `context` directive sets the build context. **Note** that in this case,the path to the dockerfile must be specified relative to the context directory:
+#### Selecting the build context directory
+
+The `context` directive sets the build context. **Note:** In this case, the path to the Dockerfile must be specified relative to the context directory:
 
 ```yaml
 image: docs
@@ -100,13 +113,13 @@ context: service
 dockerfile: Dockerfile
 ```
 
-Here, the `docs` image will use the `docs/Dockerfile` path, and the `service` image will use the `service/Dockerfile` path.
+In the example above, werf will use the Dockerfile at `docs/Dockerfile` to build the `docs` image and the Dockerfile at `service/Dockerfile` to build the `service` image.
 
-### contextAddFiles
+#### Adding arbitrary files to the build context
 
-By default, the build context of a Dockerfile image includes only the files from the current commit in the project repository. Files not added to git or non-committed changes are not included in the build context. This logic follows the default [giterminism] settings({{"/usage/project_configuration/giterminism.html" | true_relative_url }}).
+By default, the build context of a Dockerfile image only includes files from the current project repository commit. Files not added to Git or non-committed changes are not included in the build context. This logic follows the [giterminism configuration]({{"/usage/project_configuration/giterminism.html" | true_relative_url }}) default.
 
-Use the `contextAddFiles` directive in `werf.yaml` to add files that are not stored in git to the build context. You also have to enable the `contextAddFiles` directive in `werf-giterminism.yaml` (more [about giterminism]({{"/usage/project_configuration/giterminism.html#contextaddfiles" | true_relative_url }}): 
+You can add files that are not stored in Git to the build context through the `contextAddFiles` directive in the `werf.yaml` file. You also have to enable the `contextAddFiles` directive in `werf-giterminism.yaml` (more [about giterminism]({{"/usage/project_configuration/giterminism.html#contextaddfiles" | true_relative_url }})):
 
 ```yaml
 # werf.yaml
@@ -129,24 +142,23 @@ config:
     - dir2/file2.out
 ```
 
-The build context for the above configuration will include the following files:
+In the above configuration, the build context will include the following files:
 
-- `app/**/*` from the current commit in the project repository;
-- `app/file1`, `app/dir2/file2.out` and the `dir1` directory, which are in the project directory.
+- `app/**/*` of the current project repository commit;
+- `app/file1`, `app/dir2/file2.out` files and the `dir1` directory in the project directory.
 
-## Stapel builder
+### Stapel
 
-werf has a built-in alternative syntax for describing build instructions called Stapel. Refer to the [documentation]({{ "/usage/build/stapel/overview.html" | true_relative_url }}) to learn more about the Stapel syntax.
+Stapel is a built-in alternative syntax for describing build instructions. Detailed documentation on Stapel syntax is available [in the corresponding documentation section]({{"/usage/build/stapel/overview.html" | true_relative_url }}).
 
-
-Below is an example of a minimal stapel image configuration in `werf.yaml`:
+Below is an example of a minimal configuration of the Stapel image in `werf.yaml`:
 
 ```yaml
 image: app
 from: ubuntu:22.04
 ```
 
-Add the git sources to the image:
+And here's how you can add source files from Git to an image:
 
 ```yaml
 image: app
@@ -156,7 +168,7 @@ git:
   to: /app
 ```
 
-There are 4 stages available to define arbitrary shell instructions, as well as a `git.stageDependencies` directive to set up triggers to rebuild these stages when the corresponding stages change (see [more]({{"/usage/build/stapel/instructions.html#dependency-on-changes-in-the-git-repo"| true_relative_url }})):
+There are 4 stages for describing arbitrary shell instructions, as well as a `git.stageDependencies` directive to set up triggers to rebuild these stages whenever the corresponding stages change ([learn more]({{"/usage/build/stapel/instructions.html#dependencies-from-modifications-in-git-repository"| true_relative_url }})):
 
 ```yaml
 image: app
@@ -186,7 +198,7 @@ shell:
   - rake generate:configs
 ```
 
-Stapel supports auxiliary images from which you can import files into the target image (similar to `COPY-from=STAGE` in the multi-stage Dockerfile) as well as golang templating:
+Auxiliary images and Golang templating are also supported. You can use the former to import files into the target image (similar to `COPY-from=STAGE` in multi-stage Dockerfile):
 
 {% raw %}
 ```yaml
@@ -216,15 +228,15 @@ import:
 ```
 {% endraw %}
 
-See [the stapel section]({{"usage/build/stapel/base.html" | true_relative_url }}) for detailed instructions.
+For more info on how to write Stapel instructions refer to the [documentation]({{"usage/build/stapel/base.html" | true_relative_url }}).
 
 ## Inheriting images and importing files
 
-The multi-stage mechanism allows you to declare a single image as a stage in the Dockerfile and use it as a base for another image, or copy specific files from it.
+A multi-stage mechanism allows you to define a separate image stage in a Dockerfile and use it as a basis for another image or copy individual files from it.
 
-werf extends it beyond just one Dockerfile and allows you to use arbitrary images defined in `werf.yaml`, including those built from different Dockerfiles or built by the Stapel builder. All orchestration and dependency building will be done by werf, and the build will be accomplished in one step (as part of the `werf build` command).
+werf allows to do this not only within a single Dockerfile, but also for arbitrary images defined in `werf.yaml`, including those built from different Dockerfiles, or built by the Stapel builder. werf will take care of all orchestration and dependency management and then build everything in one step (as part of the `werf build` command).
 
-Below is an example of using the `base.Dockerfile` image as the base image for the `Dockerfile` image:
+Below is an example of using a `base.Dockerfile` image as the basis for a `Dockerfile` image:
 
 ```Dockerfile
 # base.Dockerfile
@@ -255,7 +267,7 @@ dependencies:
     targetBuildArg: BASE_IMAGE
 ```
 
-The following example shows how to import files from a Stapel image into a Dockerfile image:
+The next example deals with importing files from a Stapel image into a Dockerfile image:
 
 ```yaml
 # werf.yaml
@@ -288,7 +300,7 @@ CMD [ "/app/bin/server", "server" ]
 
 ## Passing information about the built image to another image
 
-werf supports passing information about the built image to another image during the build. For example, the following configuration passes the names and digests of the `auth` and `controlplane` images published in the container registry to the `app` image:
+werf allows you to get information about the built image when building another image. Suppose, the build instructions of the `app` image require the names and digests of the `auth` and `controlplane` images published in the container registry. The configuration in this case would look like this:
 
 ```Dockerfile
 # modules/auth/Dockerfile
@@ -350,4 +362,4 @@ dependencies:
     targetBuildArg: CONTROLPLANE_IMAGE_DIGEST
 ```
 
-During the build werf will automatically insert the appropriate names and identifiers into the specified build-arguments. All orchestration and dependency building will be handled by werf and the build will be done in one step (as part of the `werf build` command).
+During the build, werf will automatically insert the appropriate names and identifiers into the referenced build-arguments. werf will take care of all orchestration and dependency mapping and then build everything in one step (as part of the `werf build` command).
