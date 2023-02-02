@@ -79,19 +79,19 @@ werf build --repo example.org/mycompany/myapp
 werf bundle publish --skip-build --tag latest --repo example.org/mycompany/myapp
 ```
 
-## Развертывание без доступа к Git-репозиторию и Container Registry приложения
+## Развертывание без доступа к Git-репозиторию и container registry приложения
 
-Если нужно развернуть приложение без доступа к Git-репозиторию приложения и без доступа к Container Registry приложения, то необходимо выполнить пять шагов:
+Если нужно развернуть приложение без доступа к Git-репозиторию приложения и без доступа к container registry приложения, то необходимо выполнить пять шагов:
 
-1. Сборка образов и их публикация в Container Registry приложения.
+1. Сборка образов и их публикация в container registry приложения.
 
 2. Публикация основного чарта и переданных ему параметров как *бандла* в OCI-репозиторий. Бандл содержит указатели на опубликованные в первом шаге образы.
 
 3. Экспорт бандла и связанных с ним образов в локальный архив.
 
-4. Импорт заархивированного бандла и его образов в Container Registry, доступный из Kubernetes-кластера, используемого для развертывания.
+4. Импорт заархивированного бандла и его образов в container registry, доступный из Kubernetes-кластера, используемого для развертывания.
 
-5. Применение в кластер бандла, опубликованного в новом Container Registry.
+5. Применение в кластер бандла, опубликованного в новом container registry.
 
 Первые два шага выполняются командой `werf bundle publish`, находясь в Git-репозитории приложения, например:
 
@@ -105,19 +105,19 @@ werf bundle publish --tag latest --repo example.org/mycompany/myapp
 werf bundle copy --from example.org/mycompany/myapp:latest --to archive:myapp-latest.tar.gz
 ```
 
-Теперь полученный локальный архив `myapp-latest.tar.gz` переносится удобным способом туда, откуда имеется доступ в Container Registry, используемый для развертывания в Kubernetes-кластер, и снова выполняется команда `werf bundle copy`, например:
+Теперь полученный локальный архив `myapp-latest.tar.gz` переносится удобным способом туда, откуда имеется доступ в container registry, используемый для развертывания в Kubernetes-кластер, и снова выполняется команда `werf bundle copy`, например:
 
 ```shell
 werf bundle copy --from archive:myapp-latest.tar.gz --to registry.internal/mycompany/myapp:latest
 ```
 
-В результате бандл и связанные с ним образы опубликуются в новый Container Registry, к которому из Kubernetes-кластера уже есть доступ. Осталось только развернуть опубликованный бандл в кластер командой `werf bundle apply`, например:
+В результате бандл и связанные с ним образы опубликуются в новый container registry, к которому из Kubernetes-кластера уже есть доступ. Осталось только развернуть опубликованный бандл в кластер командой `werf bundle apply`, например:
 
 ```shell
 werf bundle apply --tag latest --release myapp --namespace myapp-production --repo registry.internal/mycompany/myapp
 ```
 
-На этом шаге уже не требуется доступ ни в Git-репозиторий приложения, ни в его первоначальный Container Registry. Конечный результат развертывания бандла будет тот же самый, что и при использовании `werf converge`.
+На этом шаге уже не требуется доступ ни в Git-репозиторий приложения, ни в его первоначальный container registry. Конечный результат развертывания бандла будет тот же самый, что и при использовании `werf converge`.
 
 Если требуется разделить первый и второй шаг, то это можно сделать так:
 
