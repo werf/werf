@@ -12,7 +12,7 @@
 </p>
 ___
 
-**werf** is a solution for implementing efficient and consistent software delivery to Kubernetes. It covers the entire life cycle of CI/CD and related artifacts, gluing commonly used tools (Git, Buildah, Helm, K8s) and facilitating best practices.
+**werf** is a cross-platform CLI tool for using in your CI system to easily implement best-practice full-cycle CI/CD to Kubernetes leveraging familiar and reliable technologies like Dockerfile, Helm, Git and Buildah.
 
 ## [How it works?](https://werf.io/how_it_works.html)
 
