@@ -77,11 +77,11 @@ func (bundle *RemoteBundle) WriteChart(ctx context.Context, ch *chart.Chart) err
 	return nil
 }
 
-func (bundle *RemoteBundle) CopyTo(ctx context.Context, to BundleAccessor) error {
-	return to.CopyFromRemote(ctx, bundle)
+func (bundle *RemoteBundle) CopyTo(ctx context.Context, to BundleAccessor, opts copyToOptions) error {
+	return to.CopyFromRemote(ctx, bundle, opts)
 }
 
-func (bundle *RemoteBundle) CopyFromArchive(ctx context.Context, fromArchive *BundleArchive) error {
+func (bundle *RemoteBundle) CopyFromArchive(ctx context.Context, fromArchive *BundleArchive, opts copyToOptions) error {
 	ch, err := fromArchive.ReadChart(ctx)
 	if err != nil {
 		return fmt.Errorf("unable to read chart from the bundle archive %q: %w", fromArchive.Reader.String(), err)
@@ -131,7 +131,9 @@ func (bundle *RemoteBundle) CopyFromArchive(ctx context.Context, fromArchive *Bu
 		return err
 	}
 
-	ch.Metadata.Name = util.Reverse(strings.SplitN(util.Reverse(bundle.RegistryAddress.Repo), "/", 2)[0])
+	if nameOverwrite := GetChartNameOverwrite(bundle.RegistryAddress.Repo, opts.RenameChart, opts.HelmCompatibleChart); nameOverwrite != nil {
+		ch.Metadata.Name = *nameOverwrite
+	}
 
 	sv, err := BundleTagToChartVersion(ctx, bundle.RegistryAddress.Tag, time.Now())
 	if err != nil {
@@ -146,7 +148,7 @@ func (bundle *RemoteBundle) CopyFromArchive(ctx context.Context, fromArchive *Bu
 	return nil
 }
 
-func (bundle *RemoteBundle) CopyFromRemote(ctx context.Context, fromRemote *RemoteBundle) error {
+func (bundle *RemoteBundle) CopyFromRemote(ctx context.Context, fromRemote *RemoteBundle, opts copyToOptions) error {
 	ch, err := fromRemote.ReadChart(ctx)
 	if err != nil {
 		return fmt.Errorf("unable to read chart from source remote bundle: %w", err)

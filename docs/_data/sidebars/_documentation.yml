@@ -2,11 +2,8 @@
 entries:
   en:
     f:
-      - title: Overview
-        url: /index.html
-
       - title: Quickstart
-        url: /quickstart.html
+        url: /index.html
 
       - title: Usage
         f:
@@ -127,11 +124,8 @@ entries:
 
   ru:
     f:
-      - title: Обзор
-        url: /index.html
-
       - title: Быстрый старт
-        url: /quickstart.html
+        url: /index.html
 
       - title: Использование
         f:
@@ -211,11 +205,14 @@ entries:
 
           - title: Дистрибуция
             f:
+              - title: Обзор
+                url: /usage/distribute/overview.html
+
               - title: Образы
                 url: /usage/distribute/images.html
 
-              - title: Чарты, бандлы
-                url: /usage/distribute/charts.html
+              - title: Бандлы и чарты
+                url: /usage/distribute/bundles.html
 
           - title: Очистка
             f:

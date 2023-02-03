@@ -132,6 +132,12 @@ werf bundle publish [IMAGE_NAME...] [options]
       --git-work-tree=''
             Use specified git work tree dir (default $WERF_WORK_TREE or lookup for directory that   
             contains .git in the current or parent directories)
+  -C, --helm-compatible-chart=false
+            Set chart name in the Chart.yaml of the published chart to the last path component of   
+            container registry repo (for REGISTRY/PATH/TO/REPO address chart name will be REPO,     
+            more info https://helm.sh/docs/topics/registries/#oci-feature-deprecation-and-behavior-c
+            hanges-with-v370). In helm compatibility mode chart is fully conforming with the helm   
+            OCI registry requirements. Default false or $WERF_HELM_COMPATIBLE_CHART.
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --insecure-helm-dependencies=false
@@ -201,6 +207,10 @@ werf bundle publish [IMAGE_NAME...] [options]
       --platform=''
             Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT]     
             ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)
+      --rename-chart=''
+            Force setting of chart name in the Chart.yaml of the published chart to the specified   
+            value (can be set by the $WERF_RENAME_CHART, no rename by default, could not be used    
+            together with the `--helm-compatible-chart` option).
       --repo=''
             Container registry storage address (default $WERF_REPO)
       --repo-container-registry=''
