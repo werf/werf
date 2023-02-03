@@ -10,9 +10,8 @@
   <a href="https://codeclimate.com/github/werf/werf/test_coverage"><img src="https://api.codeclimate.com/v1/badges/bac6f23d5c366c6324b5/test_coverage" /></a>
   <a href="CODE_OF_CONDUCT.md"><img src="https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg" alt="Contributor Covenant"></a>
 </p>
-___
 
-**werf** is a cross-platform CLI tool for using in your CI system to easily implement best-practice full-cycle CI/CD to Kubernetes leveraging familiar and reliable technologies like Dockerfile, Helm, Git and Buildah.
+werf is a cross-platform CLI tool for using in your CI system to easily implement best-practice full-cycle CI/CD to Kubernetes leveraging familiar and reliable technologies like Dockerfile, Helm, Git and Buildah.
 
 ## [How it works?](https://werf.io/how_it_works.html)
 
