@@ -3,17 +3,17 @@ title: Build process
 permalink: usage/build/process.html
 ---
 
-## Тегирование образов
+## Tagging images
 
 <!-- reference https://werf.io/documentation/v1.2/internals/stages_and_storage.html#stage-naming -->
 
 The tagging of werf images is performed automatically as part of the build process. werf uses an optimal tagging scheme based on the contents of the image, thus preventing unnecessary rebuilds and application wait times during deployment.
 
 <div class="details">
-<a href="javascript:void(0)" class="details__summary">Тегирование в деталях</a>
+<a href="javascript:void(0)" class="details__summary">Tagging in details</a>
 <div class="details__content" markdown="1">
 
-ПBy default, a **tag is some hash-based identifier** which includes the checksum of instructions and build context files. For example:
+By default, a **tag is some hash-based identifier** which includes the checksum of instructions and build context files. For example:
 
 ```
 registry.example.org/group/project  d4bf3e71015d1e757a8481536eeabda98f51f1891d68b539cc50753a-1589714365467  7c834f0ff026  20 hours ago  66.7MB
