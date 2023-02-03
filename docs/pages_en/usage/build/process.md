@@ -20,107 +20,107 @@ registry.example.org/group/project  d4bf3e71015d1e757a8481536eeabda98f51f1891d68
 registry.example.org/group/project  e6073b8f03231e122fa3b7d3294ff69a5060c332c4395e7d0b3231e3-1589714362300  2fc39536332d  20 hours ago  66.7MB
 ```
 
-Такой тег будет меняться только при изменении входных данных для сборки образа. Таким образом, один тег может быть переиспользован для разных Git-коммитов. werf берёт на себя:
-- расчёт таких тегов;
-- атомарную публикацию образов по этим тегам в репозиторий или локально;
-- передачу тегов в Helm-чарт.
+Such a tag will only change when the underlying data used to build an image changes. This way, one tag can be reused for different Git commits. werf:
+- calculates these tags;
+- atomically publishes the images based on these tags to the repository or locally;
+- passes the tags to the Helm chart.
 
-Образы в репозитории именуются согласно следующей схемы: `CONTAINER_REGISTRY_REPO:DIGEST-TIMESTAMP_MILLISEC`. Здесь:
+The images in the repository are named according to the following scheme: `CONTAINER_REGISTRY_REPO:DIGEST-TIMESTAMP_MILLISEC`. Here:
 
-- `CONTAINER_REGISTRY_REPO` — репозиторий, заданный опцией `--repo`;
-- `DIGEST` — контрольная сумма от:
-  - сборочных инструкций, описанных в Dockerfile или `werf.yaml`;
-  - файлов сборочного контекста, используемых в тех или иных сборочных инструкциях.
-- `TIMESTAMP_MILLISEC` — временная отметка, которая проставляется в процессе [процедуры сохранения слоя в container registry](#послойное-кэширование-образов) после того, как стадия была собрана.
+- `CONTAINER_REGISTRY_REPO` — repository defined by the `--repo` option;
+- `DIGEST` — the checksum calculated for:
+  - build instructions defined in the Dockerfile or `werf.yaml`;
+  - build context files used in build instructions.
+- `TIMESTAMP_MILLISEC` — timestamp that is added while [saving a layer to the container registry](#layer-by-layer-image-caching) after the stage has been built.
 
-Сборочный алгоритм также дополнительно гарантирует нам, что образ под таким тегом является уникальным, и этот тег никогда не будет перезаписан образом с другим содержимым.
+The assembly algorithm also ensures that the image with such a tag is unique and that tag will never be overwritten by an image with different content.
 
-**Тегирование промежуточных слоёв**
+**Tagging intermediate layers**
 
-На самом деле описанный выше автоматический тег используется и для финальных образов, которые запускает пользователь, и для промежуточных слоёв, хранимых в container registry. Любой слой, найденный в репозитории, может быть использован либо как промежуточный для сборки нового слоя на его основе, либо в качестве финального образа.
+The automatically generated tag described above is used for both the final images which the user runs and for intermediate layers stored in the container registry. Any layer found in the repository can either be used as an intermediate layer to build a new layer based on it, or as a final image.
 
 </div>
 </div>
 
-### Получение тегов
+### Retrieving tags
 
-Для получения тегов образов может использоваться опция `--report-path` для команд `werf build`, `werf converge` и пр.:
+You can retrieve image tags using the `--report-path` option for `werf build`, `werf converge`, and other commands:
 
 ```shell
-# По умолчанию формат JSON.
+# By default, the JSON format is used.
 werf build --report-path=images.json --repo REPO
 
-# Поддерживается формат envfile.
+# The envfile format is also supported.
 werf converge --report-path=images.env --report-format=envfile --repo REPO
 
-# В команде рендера финальные теги будут доступны только с параметром --repo.
+# For the render command, the final tags are only available with the --repo parameter.
 werf render --report-path=images.json --repo REPO
 ```
 
-> **ЗАМЕЧАНИЕ:** Получить теги заранее, не вызывая сборочный процесс, на данный момент невозможно, можно получить лишь теги уже собранных ранее образов.
+> **NOTE:** Retrieving tags beforehand without first invoking the build process is currently impossible. You can only retrieve tags from the images you've already built.
 
-### Добавление произвольных тегов
+### Adding custom tags
 
-Пользователь может добавить произвольное количество дополнительных тегов с опцией `--add-custom-tag`:
+The user can add any number of custom tags using the `--add-custom-tag` option:
 
 ```shell
 werf build --repo REPO --add-custom-tag main
 
-# Можно добавить несколько тегов-алиасов.
+# You can add some alias tags.
 werf build --repo REPO --add-custom-tag main --add-custom-tag latest --add-custom-tag prerelease
 ```
 
-Шаблон тега может включать следующие параметры:
+The tag template may include the following parameters:
 
-- `%image%`, `%image_slug%` или `%image_safe_slug%` для использования имени образа из `werf.yaml` (обязательно при сборке нескольких образов);
-- `%image_content_based_tag%` для использования content-based тега werf.
+- `%image%`, `%image_slug%` or `%image_safe_slug%` to use an image name defined in `werf.yaml` (mandatory when building multiple images);
+- `%image_content_based_tag%` to use the content-based werf tag.
 
 ```shell
 werf build --repo REPO --add-custom-tag "%image%-latest"
 ```
 
-> **ЗАМЕЧАНИЕ:** При использовании опций создаются **дополнительные теги-алиасы**, ссылающиеся на автоматические теги-хэши. Полное отключение создания автоматических тегов не предусматривается.
+> **NOTE:** When you use the options listed above, werf still creates the **additional alias tags** that reference the automatic hash tags. It is not possible to completely disable auto-tagging.
 
-### Развёртывание образов с произвольным тегом
+### Deploying images with an arbitrary tag
 
-Пользователь может выбрать произвольное тегирование при развёртывании образов в Kubernetes. Для этого может использоваться опция `--use-custom-tag` (опция неявно добавляет тег-алиас и включает его использование):
+The user may opt for arbitrary tagging when deploying images in Kubernetes. The `--use-custom-tag` option can be used for this (it implicitly adds an alias tag and enables its use):
 
 ```shell
 werf converge --repo REPO --use-custom-tag main
 ```
 
-## Послойное кэширование образов
+## Layer-by-layer image caching
 
-<!-- прим. для перевода: на основе https://werf.io/documentation/v1.2/internals/stages_and_storage.html#storage -->
+<!-- reference https://werf.io/documentation/v1.2/internals/stages_and_storage.html#storage -->
 
-Послойное кэширование образов является частью сборочного процесса werf и не требует какой-либо конфигурации. werf сохраняет и переиспользует сборочный кэш в container registry, а также синхронизирует работу параллельных сборщиков.
+Layer-by-layer image caching is part of the werf build process and does not require any configuration. werf saves and reuses the build cache in the container registry and synchronizes parallel builders.
 
 <div class="details">
-<a href="javascript:void(0)" class="details__summary">Как работает сборка</a>
+<a href="javascript:void(0)" class="details__summary">How assembly works</a>
 <div class="details__content" markdown="1">
 
-Сборка реализована с отступлением от стандартной для Docker парадигмы разделения стадий `build` и `push`, и переходом к одной стадии `build`, совмещающей и сборку, и публикацию слоёв.
+Building in werf deviates from the standard Docker paradigm of separating the `build` and `push` stages. It consists of a single `build` stage, which combines both building and publishing layers.
 
-Стандартный подход сборки и публикации образов и слоёв через Docker может выглядеть следующим образом:
-1. Скачивание сборочного кеша из container registry (опционально).
-2. Локальная сборка всех промежуточных слоёв образа с использованием локального кеша слоёв.
-3. Публикация собранного образа.
-4. Публикация локального сборочного кеша в container registry (опционально).
+A standard approach for building and publishing images and layers via Docker might look like this:
+1. Downloading the build cache from the container registry (optional).
+2. Local building of all the intermediate image layers using the local layer cache.
+3. Publishing the built image.
+4. Publishing the local build cache to the container registry (optional).
 
-Алгоритм сборки образов в werf работает по-другому:
-1. Если очередной собираемый слой уже есть в container registry, то его сборка и скачивание не происходит.
-2. Если очередной собираемый слой отсутствует в container registry, то скачивается предыдущий слой, базовый для сборки текущего.
-3. Новый слой собирается на локальной машине и публикуется в container registry.
-4. В момент публикации автоматически разрешаются конфликты между сборщиками с разных хостов, которые пытаются опубликовать один и тот же слой. В этом случае гарантированно будет опубликован только один слой, и все остальные сборщики будут обязаны переиспользовать именно его. (Такое возможно за счёт [использования встроенного сервиса синхронизации](#синхронизация-сборщиков)).
-5. И т.д. до тех пор, пока не будут собраны все слои образа.
+The image building algorithm in werf is different:
+1. If the next layer to be built is already present in the container registry, it will not be built or downloaded.
+2. If the next layer to be built is not in the container registry, the previous layer is downloaded (the base layer for building the current one).
+3. The new layer is built on the local machine and published to the container registry.
+4. At publishing time, werf automatically resolves conflicts between builders from different hosts that try to publish the same layer. This ensures that only one layer is published, and all other builders are required to reuse that layer. ([The built-in sync service](#syncing-builders) makes this possible).
+5. The process continues until all the layers of the image are built.
 
-Алгоритм выборки стадии в werf можно представить следующим образом:
-1. Рассчитывается [дайджест стадии](#тегирование-образов).
-2. Выбираются все стадии, подходящие под дайджест, т.к. с одним дайджестом может быть связанно несколько стадий в репозитории.
-3. Для Stapel-сборщика, если текущая стадия связана с Git (стадия Git-архив, пользовательская стадия с Git-патчами или стадия `git latest patch`), тогда выбираются только те стадии, которые связаны с коммитами, являющимися предками текущего коммита. Таким образом, коммиты соседних веток будут отброшены.
-4. Выбирается старейший по времени `TIMESTAMP_MILLISEC`.
+The algorithm of stage selection in werf works as follows:
+1. werf calculates the [stage digest](#tagging-images).
+2. Then it selects all the stages matching the digest, since several stages in the repository may be tied to a single digest.
+3. For the Stapel builder, if the current stage involves Git (a Git archive stage, a custom stage with Git patches, or a `git latest patch` stage), then only those stages associated with commits that are ancestral to the current commit are selected. Thus, commits from neighboring branches will be discarded.
+4. Then the oldest `TIMESTAMP_MILLISEC` is selected.
 
-Если запустить сборку с хранением образов в репозитории, то werf сначала проверит наличие требуемых стадий в локальном хранилище и скопирует оттуда подходящие стадии, чтобы не пересобирать эти стадии заново.
+If you run a build with storing images in the repository, werf will first check if the required stages exist in the local repository and copy the suitable stages from there, so that no rebuilding of those stages is necessary.
 
 </div>
 </div>
@@ -129,7 +129,7 @@ werf converge --repo REPO --use-custom-tag main
 
 ## Параллельность и порядок сборки образов
 
-<!-- прим. для перевода: на основе https://werf.io/documentation/v1.2/internals/build_process.html#parallel-build -->
+<!-- reference: https://werf.io/documentation/v1.2/internals/build_process.html#parallel-build -->
 
 Все образы, описанные в `werf.yaml`, собираются параллельно на одном сборочном хосте. При наличии зависимостей между образами сборка разбивается на этапы, где каждый этап содержит набор независимых образов и может собираться параллельно.
 
