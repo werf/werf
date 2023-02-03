@@ -38,9 +38,40 @@ To ensure consistency and guarantee reproducibility, werf introduces the so-call
 
 Any user drift from giterminism must be documented in a dedicated `werf-giterminism.yaml` file so that the configuration management process remains meaningful and the usage is transparent to all participants of the delivery cycle.
 
-## Minimal configuration
+## Example of a typical project configuration
 
 ```yaml
+# werf.yaml
 project: app
 configVersion: 1
+---
+image: backend
+context: backend
+dockerfile: Dockerfile
+---
+image: frontend
+context: frontend
+dockerfile: Dockerfile
+```
+
+```shell
+$ tree -a
+.
+├── .helm
+│   ├── templates
+│   │   ├── NOTES.txt
+│   │   ├── _helpers.tpl
+│   │   ├── deployment.yaml
+│   │   ├── hpa.yaml
+│   │   ├── ingress.yaml
+│   │   ├── service.yaml
+│   │   └── serviceaccount.yaml
+│   └── values.yaml
+├── backend
+│   ├── Dockerfile
+│   └── ...
+├── frontend
+│   ├── Dockerfile
+│   └── ...
+└── werf.yaml
 ```
