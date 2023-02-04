@@ -125,19 +125,19 @@ If you run a build with storing images in the repository, werf will first check 
 </div>
 </div>
 
-> **ЗАМЕЧАНИЕ:** Предполагается, что репозиторий образов для проекта не будет удален или очищен сторонними средствами без негативных последствий для пользователей CI/CD, построенного на основе werf ([см. очистка образов]({{ "usage/cleanup/cr_cleanup.html" | true_relative_url }})).
+> **NOTE:** It is assumed that the image repository for the project will not be deleted or cleaned by third-party tools, otherwise it will have negative consequences for users of a werf-based CI/CD ([see image cleanup]({{"usage/cleanup/cr_cleanup.html" | true_relative_url }})).
 
-## Параллельность и порядок сборки образов
+## Parallelism and image assembly order
 
 <!-- reference: https://werf.io/documentation/v1.2/internals/build_process.html#parallel-build -->
 
-Все образы, описанные в `werf.yaml`, собираются параллельно на одном сборочном хосте. При наличии зависимостей между образами сборка разбивается на этапы, где каждый этап содержит набор независимых образов и может собираться параллельно.
+All the images described in `werf.yaml` are built in parallel on the same build host. If there are dependencies between the images, the build is split into stages, with each stage containing a set of independent images that can be built in parallel.
 
-> При использовании Dockerfile-стадий параллельность их сборки также определяется на основе дерева зависимостей. Также, если Dockerfile-стадия используется разными образами, объявленными в `werf.yaml`, werf обеспечит однократную сборку этой общей стадии без лишних пересборок
+> When Dockerfile stages are used, the parallelism of their assembly is also determined based on the dependency tree. On top of that, if different images use a Dockerfile stage declared in `werf.yaml`, werf will make sure that this common stage is built only once, without any redundant rebuilds.
 
-Параллельная сборка в werf регулируется двумя параметрами `--parallel` и `--parallel-tasks-limit`. По умолчанию параллельная сборка включена и собирается не более 5 образов одновременно.
+The parallel assembly in werf is regulated by two parameters: `--parallel` and `--parallel-tasks-limit`. By default, the parallel build is enabled and no more than 5 images can be built at a time.
 
-Рассмотрим следующий пример:
+Let's look at the following example:
 
 ```Dockerfile
 # backend/Dockerfile
@@ -184,9 +184,9 @@ context: frontend
 target: assets
 ```
 
-Имеется 3 образа `backend`, `frontend` и `frontend-assets`. Образ `frontend-assets` зависит от `frontend`, потому что он импортирует скомпилированные ассеты из `frontend`.
+There are 3 images: `backend`, `frontend` and `frontend-assets`. The `frontend-assets` image depends on `frontend` because it imports compiled assets from `frontend`.
 
-Формируются следующие наборы для сборки:
+In this case, werf will compose the following sets to build:
 
 ```shell
 ┌ Concurrent builds plan (no more than 5 images at the same time)
@@ -199,161 +199,161 @@ target: assets
 └ Concurrent builds plan (no more than 5 images at the same time)
 ```
 
-## Использование container registry
+## Using container registry
 
-При использовании werf container registry используется не только для хранения конечных образов, но также для сборочного кэша и служебных данных, необходимых для работы werf (например, метаданные для очистки container registry на основе истории Git). Репозиторий container registry задаётся параметром `--repo`:
+In werf, the container registry is used not only to store the final images, but also to store the build cache and service data required for werf (e.g., metadata for cleaning the container registry based on Git history). The container registry is set by the `--repo` parameter:
 
 ```shell
 werf converge --repo registry.mycompany.org/project
 ```
 
-В дополнение к основному репозиторию существует ряд дополнительных:
+There are a number of additional repositories on top of the main repository:
 
-- `--final-repo` для сохранения конечных образов в отдельном репозитории;
-- `--secondary-repo` для использования репозитория в режиме `read-only` (например, для использования container registry CI, в который нельзя пушить, но можно переиспользовать сборочный кэш);
-- `--cache-repo` для поднятия репозитория со сборочным кэшом рядом со сборщиками.
+- `--final-repo` to store the final images in a dedicated repository;
+- `--secondary-repo` to use the repository in `read-only` mode (e.g. to use a container registry CI that you cannot push into, but you can reuse the build cache);
+- `--cache-repo` to set the repository containing the build cache alongside the builders.
 
-> **ВАЖНО.** Для корректной работы werf container registry должен быть надёжным (persistent), а очистка должна выполняться только с помощью специальной команды `werf cleanup`
+> **Caution!** For werf to operate properly, the container registry must be persistent, and cleaning should only be done with the `werf cleanup` special command.
 
-### Дополнительный репозиторий для конечных образов
+### Extra repository for final images
 
-При необходимости в дополнение к основному репозиторию могут использоваться т.н. **финальные** репозитории для непосредственного хранения конечных образов.
+If necessary, the so-called **final** repositories can be used to exclusively store the final images.
 
 ```shell
 werf build --repo registry.mycompany.org/project --final-repo final-registry.mycompany.org/project-final
 ```
 
-Финальные репозитории позволяют сократить время загрузки образов и снизить нагрузку на сеть за счёт поднятия container registry ближе к кластеру Kubernetes, на котором происходит развёртывание приложения. Также при необходимости финальные репозитории могут использоваться в том же container registry, что и основной репозиторий (`--repo`).
+Final repositories reduce image retrieval time and network load by bringing the container registry closer to the Kubernetes cluster on which the application is being deployed. Final repositories can also be used in the same container registry as the main repository (`--repo`), if necessary.
 
-### Дополнительный репозиторий для быстрого доступа к сборочному кэшу
+### Extra repository for quick access to the build cache
 
-С помощью параметра `--cache-repo` можно указать один или несколько т.н. **кеширующих** репозиториев.
+You can specify one or more so-called **caching** repositories using the `--cache-repo` parameter.
 
 ```shell
-# Дополнительный кэширующий репозиторий в локальной сети.
+# An extra caching repository on the local network.
 werf build --repo registry.mycompany.org/project --cache-repo localhost:5000/project
 ```
 
-Кеширующий репозиторий может помочь сократить время загрузки сборочного кэша, но для этого скорость загрузки из него должна быть значительно выше по сравнению с основным репозиторием — как правило, это достигается за счёт поднятия container registry в локальной сети, но это необязательно.
+A caching repository can help reduce build cache loading times. However, for this to work, download speeds from a caching repository must be significantly higher than those from the main repository. This is usually achieved by hosting a container registry on the local network, but it is not mandatory.
 
-При загрузке сборочного кэша кеширующие репозитории имеют больший приоритет, чем основной репозиторий. При использовании кеширующих репозиториев сборочный кэш продолжает сохраняться и в основном репозитории.
+Caching repositories have higher priority than the main repository when the build cache is retrieved. When caching repositories are used, the build cache remains stored in the main repository as well.
 
-Очистка кeширующего репозитория может осуществляться путём его полного удаления без каких-либо рисков.
+You can clean up a caching repository by deleting it entirely without any risks.
 
-## Синхронизация сборщиков
+## Synchronizing builders
 
-<!-- прим. для перевода: на основе https://werf.io/documentation/v1.2/advanced/synchronization.html -->
+<!-- reference https://werf.io/documentation/v1.2/advanced/synchronization.html -->
 
-Для обеспечения согласованности в работе параллельных сборщиков, а также гарантии воспроизводимости образов и промежуточных слоёв, werf берёт на себя ответственность за синхронизацию сборщиков. По умолчанию используется публичный сервис синхронизации по адресу [https://synchronization.werf.io/](https://synchronization.werf.io/) и от пользователя ничего дополнительно не требуется.
+To ensure consistency among parallel builders and to guarantee the reproducibility of images and intermediate layers, werf handles the synchronization of the builders. By default, the public synchronization service at [https://synchronization.werf.io/](https://synchronization.werf.io/) is used and no extra user interaction is required.
 
 <div class="details">
-<a href="javascript:void(0)" class="details__summary">Как работает сервис синхронизации</a>
+<a href="javascript:void(0)" class="details__summary">How the synchronization service works</a>
 <div class="details__content" markdown="1">
 
-Сервис синхронизации — это компонент werf, который предназначен для координации нескольких процессов werf и выполняет роль _менеджера блокировок_. Блокировки требуются для корректной публикации новых образов в container registry и реализации алгоритма сборки, описанного в разделе [«Послойное кэширование образов»](#послойное-кэширование-образов).
+The synchronization service is a werf component that is designed to coordinate multiple werf processes. It acts as a _lock manager_. The locks are required to correctly publish new images to the container registry and to implement the build algorithm described in ["Layer-by-layer image caching"](#layer-by-layer-image-caching).
 
-На сервис синхронизации отправляются только обезличенные данные в виде хэш-сумм тегов, публикуемых в container registry.
+The data sent to the sync service are anonymized and are hash sums of the tags published in the container registry.
 
-В качестве сервиса синхронизации может выступать:
-1. HTTP-сервер синхронизации, реализованный в команде `werf synchronization`.
-2. Ресурс ConfigMap в кластере Kubernetes. В качестве механизма используется библиотека [lockgate](https://github.com/werf/lockgate), реализующая распределённые блокировки через хранение аннотаций в выбранном ресурсе.
-3. Локальные файловые блокировки, предоставляемые операционной системой.
+A synchronization service can be:
+1. An HTTP synchronization server implemented in the `werf synchronization` command.
+2. The ConfigMap resource in a Kubernetes cluster. The mechanism used is the [lockgate](https://github.com/werf/lockgate) library, which implements distributed locks by storing annotations in the selected resource.
+3. Local file locks provided by the operating system.
 
 </div>
 </div>
 
-### Использование собственного сервиса синхронизации
+### Using your own synchronization service
 
-#### HTTP-сервер
+#### HTTP server
 
-Сервер синхронизации можно запустить командой `werf synchronization`, например для использования порта 55581 (по умолчанию):
+The synchronization server can be run with the `werf synchronization` command. In the example below, port 55581 (the default one) is used:
 
 ```shell
 werf synchronization --host 0.0.0.0 --port 55581
 ```
 
-— данный сервер поддерживает только работу в режиме HTTP, для использования HTTPS необходима настройка дополнительной SSL-терминации сторонними средствами (например через Ingress в Kubernetes).
+— This server only supports HTTP mode, to use HTTP, you have to configure additional SSL termination by third-party tools (e.g., via the Kubernetes Ingress).
 
-Далее во всех командах werf, которые используют параметр `--repo` дополнительно указывается параметр `--synchronization=http[s]://DOMAIN`, например:
+Then, for all werf commands that use the `--repo` parameter, the `--synchronization=http[s]://DOMAIN` parameter must be specified as well, for example:
 
 ```shell
 werf build --repo registry.mydomain.org/repo --synchronization https://synchronization.domain.org
 werf converge --repo registry.mydomain.org/repo --synchronization https://synchronization.domain.org
 ```
 
-#### Специальный ресурс в Kubernetes
+#### Dedicated Kubernetes resource
 
-Требуется лишь предоставить рабочий кластер Kubernetes, и выбрать namespace, в котором будет хранится сервисный ConfigMap/werf, через аннотации которого будет происходить распределённая блокировка.
+You only have to specify a running Kubernetes cluster and choose the namespace where the ConfigMap/werf service will reside. Its annotations will be used for distributed locking.
 
-Далее во всех командах werf, которые используют параметр `--repo` дополнительно указывается параметр `--synchronization=kubernetes://NAMESPACE[:CONTEXT][@(base64:CONFIG_DATA)|CONFIG_PATH]`, например:
+Then, for all werf commands that use the `--repo` parameter, the `--synchronization=kubernetes://NAMESPACE[:CONTEXT][@(base64:CONFIG_DATA)|CONFIG_PATH]` parameter must be specified as well, for example:
 
 ```shell
-# Используем стандартный ~/.kube/config или KUBECONFIG.
+# The regular ~/.kube/config or KUBECONFIG is used.
 werf build --repo registry.mydomain.org/repo --synchronization kubernetes://mynamespace
 werf converge --repo registry.mydomain.org/repo --synchronization kubernetes://mynamespace
 
-# Явно указываем содержимое kubeconfig через base64.
+# Here, the base64-encoded contents of kubeconfig are explicitly specified.
 werf build --repo registry.mydomain.org/repo --synchronization kubernetes://mynamespace@base64:YXBpVmVyc2lvbjogdjEKa2luZDogQ29uZmlnCnByZWZlcmVuY2VzOiB7fQoKY2x1c3RlcnM6Ci0gY2x1c3RlcjoKICBuYW1lOiBkZXZlbG9wbWVudAotIGNsdXN0ZXI6CiAgbmFtZTogc2NyYXRjaAoKdXNlcnM6Ci0gbmFtZTogZGV2ZWxvcGVyCi0gbmFtZTogZXhwZXJpbWVudGVyCgpjb250ZXh0czoKLSBjb250ZXh0OgogIG5hbWU6IGRldi1mcm9udGVuZAotIGNvbnRleHQ6CiAgbmFtZTogZGV2LXN0b3JhZ2UKLSBjb250ZXh0OgogIG5hbWU6IGV4cC1zY3JhdGNoCg==
 
-# Используем контекст mycontext в конфиге /etc/kubeconfig.
+# The mycontext context is used in the /etc/kubeconfig config.
 werf build --repo registry.mydomain.org/repo --synchronization kubernetes://mynamespace:mycontext@/etc/kubeconfig
 ```
 
-> **ЗАМЕЧАНИЕ:** Данный способ неудобен при доставке проекта в разные кластера Kubernetes из одного Git-репозитория из-за сложности корректной настройки. В этом случае для всех команд werf требуется указывать один и тот же адрес кластера и ресурс, даже если деплой происходит в разные контура, чтобы обеспечить консистивность данных в container registry. Поэтому для такого случая рекомендуется запустить отдельный общий сервис синхронизации, чтобы исключить вероятность некорректной конфигурации.
+> **NOTE:** This method is poorly suited when the project is delivered to different Kubernetes clusters from the same Git repository due to the difficulties of setting it up correctly. In this case, the same cluster address and resource must be specified for all werf commands even if the deployment occurs to different environments to ensure data consistency in the container registry. Therefore, it is recommended to run a dedicated shared synchronization service for this case to avoid the risk of incorrect configuration.
 
-#### Локальная синхронизация
+#### Local synchronization
 
-Включается опцией `--synchronization=:local`. Локальный _менеджер блокировок_ использует файловые блокировки, предоставляемые операционной системой.
+Local synchronization is enabled by the `--synchronization=:local` option. The local _lock manager_ uses file locks provided by the operating system.
 
 ```shell
 werf build --repo registry.mydomain.org/repo --synchronization :local
 werf converge --repo registry.mydomain.org/repo --synchronization :local
 ```
 
-> **ЗАМЕЧАНИЕ:** Данный способ подходит лишь в том случае, если в вашей CI/CD системе все запуски werf происходят с одного и того же раннера.
+> **NOTE:** This method is only suitable if all werf runs are triggered by the same runner in your CI/CD system.
 
-## Настройка сборочного бэкенда
+## Configuring the build backend
 
-<!-- прим. для перевода: на основе https://werf.io/documentation/v1.2/advanced/buildah_mode.html -->
+<!-- reference: https://werf.io/documentation/v1.2/advanced/buildah_mode.html -->
 
-werf поддерживает использование Docker Server или Buildah в качестве бекенда для сборки образов. Buildah обеспечивает полноценную работу в контейнерах и послойную сборку Dockerfile'ов с кешированием всех промежуточных слоёв в container registry. Docker Server на данный момент является бекэндом, используемым по умолчанию.
+werf supports Docker Server or Buildah as backend for building images. Buildah provides full containerization and layer-by-layer Dockerfile builds with caching of all intermediate layers into the container registry. Docker Server is currently the default backend.
 
-> **ЗАМЕЧАНИЕ:** Сборочный бекэнд Buildah на данный момент не поддерживает хранение образов локально, поддерживается только [хранение образов в container registry](#послойное-кэширование-образов).
+> **NOTE:** The Buildah backend does not currently support storing images locally, only [storing images in the container registry](#layer-by-layer-image-caching) is supported.
 
 ### Docker
 
-Docker Server на данный момент является бекэндом, используемым по умолчанию, и никакая дополнительная настройка не требуется.
+Docker Server is currently the default backend and no additional configuration is required.
 
 ### Buildah
 
-> **ЗАМЕЧАНИЕ:** На данный момент Buildah доступен только для пользователей Linux и Windows с включённой подсистемой WSL2. Для пользователей macOS предлагается использование виртуальной машины для запуска werf в режиме Buildah.
+> **NOTE:** Buildah is currently only available to Linux users and Windows users with the WSL2 subsystem enabled. For macOS, we suggest using a virtual machine to run werf in Buildah mode.
 
-Для сборки без Docker-сервера werf использует Buildah в rootless-режиме. Buildah встроен в бинарник werf. Требования к хост-системе для запуска werf с бэкендом Buildah можно найти [в инструкциях по установке](/installation.html).
+werf uses Buildah in rootless mode to build images without a Docker server. Buildah is built into the werf binary. You can find the host system requirements to run werf with the Buildah backend [in the installation instructions](/installation.html).
 
-Buildah включается установкой переменной окружения `WERF_BUILDAH_MODE` в один из вариантов: `auto`, `native-chroot`, `native-rootless`. Большинству пользователей для включения режима Buildah достаточно установить `WERF_BUILDAH_MODE=auto`.
+Buildah can be enabled by setting the `WERF_BUILDAH_MODE` environment variable to one of the options: `auto`, `native-chroot`, `native-rootless`. Most users only have to set `WERF_BUILDAH_MODE=auto` to enable Buildah mode.
 
-#### Уровень изоляции сборки
+#### Level of assembly isolation
 
-По умолчанию в режиме `auto` werf автоматически выбирает уровень изоляции в зависимости от платформы и окружения.
+By default, in `auto` mode, werf automatically sets the isolation level depending on the platform and environment.
 
-Поддерживается 2 варианта изоляции сборочных контейнеров:
-1. Chroot — вариант без использования container runtime, включается переменной окружения `WERF_BUILDAH_MODE=native-chroot`.
-2. Rootless — вариант с использованием container runtime (в системе должен быть установлен crun, или runc, или kata, или runsc), включается переменной окружения `WERF_BUILAH_MODE=native-rootless`.
+2 types of assembly container isolation are supported:
+1. Chroot is an option that does not use the container runtime; it can be enabled as follows: `WERF_BUILDAH_MODE=native-chroot`.
+2. Rootless is an option involving container runtime (crun or runc or kata or runsc must be installed on the system); it can be enabled as follows: `WERF_BUILAH_MODE=native-rootless`.
 
-#### Драйвер хранилища
+#### Storage driver
 
-werf может использовать драйвер хранилища `overlay` или `vfs`:
+werf supports the `overlay` or `vfs` storage driver:
 
-* `overlay` позволяет использовать файловую систему OverlayFS. Можно использовать либо встроенную в ядро Linux поддержку OverlayFS (если она доступна), либо реализацию fuse-overlayfs. Это рекомендуемый выбор по умолчанию.
-* `vfs` обеспечивает доступ к виртуальной файловой системе вместо OverlayFS. Эта файловая система уступает по производительности и требует привилегированного контейнера, поэтому ее не рекомендуется использовать. Однако в некоторых случаях она может пригодиться.
+* `overlay` allows you to use the OverlayFS filesystem. You can either use the Linux kernel's built-in support for OverlayFS (if available) or you can use the fuse-overlayfs implementation. This is the recommended default choice.
+* `vfs` provides access to a virtual filesystem instead of OverlayFS. This file system is inferior in performance and requires a privileged container, so it is not recommended. However, it may be useful in some cases.
 
-Как правило, достаточно использовать драйвер по умолчанию (`overlay`). Драйвер хранилища можно задать с помощью переменной окружения `WERF_BUILDAH_STORAGE_DRIVER`.
+Generally, the default driver (`overlay`) is enough. The storage driver can be set using the `WERF_BUILDAH_STORAGE_DRIVER` environment variable.
 
 #### Ulimits
 
-По умолчанию Buildah-режим в werf наследует системные ulimits при запуске сборочных контейнеров. Пользователь может переопределить эти параметры с помощью переменной окружения `WERF_BUILDAH_ULIMIT`.
+By default, the Buildah mode in werf inherits system ulimits when the build containers are started. The user can override these parameters using the `WERF_BUILDAH_ULIMIT` environment variable.
 
-Формат `WERF_BUILDAH_ULIMIT=type=softlimit[:hardlimit][,type=softlimit[:hardlimit],...]` — конфигурация лимитов, указанные через запятую:
+The format of `WERF_BUILDAH_ULIMIT=type=softlimit[:hardlimit][,type=softlimit[:hardlimit],...]` is comma-separated limit values:
 * "core": maximum core dump size (ulimit -c);
 * "cpu": maximum CPU time (ulimit -t);
 * "data": maximum size of a process's data segment (ulimit -d);
