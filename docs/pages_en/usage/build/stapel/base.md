@@ -5,7 +5,7 @@ author: Alexey Igrychev <alexey.igrychev@flant.com>
 directive_summary: base_image
 ---
 
-Here's a minimal `werf.yaml`. It describes a _image_ named `example` that is based on a _base image_ named `alpine`:
+Here's a minimal `werf.yaml`. It describes an _image_ named `example` that is based on a _base image_ named `alpine`:
 
 ```yaml
 project: my-project
@@ -15,41 +15,42 @@ image: example
 from: alpine
 ```
 
-_Base image_ can be declared with `from`, `fromImage` or `fromArtifact` directive.
+A _base image_ can be declared with `from`, `fromImage`, or `fromArtifact` directive.
 
 ## from, fromLatest
 
-The `from` directive defines the name and tag of a _base image_. If absent, tag defaults to `latest`.
+The `from` directive defines the name and tag of a _base image_. If no tag is specified, the tag defaults to `latest`.
 
 ```yaml
 from: <image>[:<tag>]
 ```
 
-By default, the assembly process does not depend on actual _base image_ digest in the repository, only on _from_ directive value.
-Thus, changing _base image_ locally or in the repository does not matter if _from_ stage is already exists in _storage_.
+By default, the assembly process does not depend on the actual _base image_ digest in the repository, it only depends on the value of the _from_ directive.
+Thus, changing the _base image_ locally or in the repository will not affect the build as long as the _from_ stage exists in the _storage_.
 
-If you want always build the image with actual _base image_ you should use _fromLatest_ directive.
-_fromLatest_ directive allows connecting the assembly process with the _base image_ digest getting from the repository.
+Use the _fromLatest_ directive to ensure that the current _base image_ is used. If this directive is set, werf will check for the current digest of the base image in the container registry at each run.
+
+Here is an example of how to use the fromLatest directive:
 
 ```yaml
 fromLatest: true
 ```
 
-> By default, the use of the `fromLatest` directive is not allowed by giterminism (read more about it [here]({{ "usage/project_configuration/giterminism.html" | true_relative_url }}))
+> By default, giterminism does not allow the use of the `fromLatest` directive (you can read more about it [here]({{"usage/project_configuration/giterminism.html" | true_relative_url }}))
 
 ## fromImage and fromArtifact
 
-Besides using docker image from a repository, the _base image_ can refer to _image_ or [_artifact_]({{ "usage/build/stapel/imports.html#what-is-an-artifact" | true_relative_url }}), that is described in the same `werf.yaml`.
+In addition to the image from the repository, the _base image_ can also refer to an _image_ or an [_artifact_]({{ "usage/build/stapel/imports.html#what-is-an-artifact" | true_relative_url }}) defined in the same `werf.yaml`.
 
 ```yaml
 fromImage: <image name>
 fromArtifact: <artifact name>
 ```
 
-If a _base image_ is specific to a particular application,
-it is reasonable to store its description with _images_ and _artifacts_ which are used it as opposed to storing the _base image_ in a container registry.
+If the _base image_ is specific to a particular application,
+it makes sense to store its description together with _images_ and _artifacts_ which use it as opposed to storing the _base image_ in a container registry.
 
-Also, this method can be useful if the stages of _stage conveyor_ are not enough for building the image. You can design your _stage conveyor_.
+This method comes in handy if the stages of the existing _stage conveyor_ are not enough for building the image. Using the image described in the same `werf.yaml` as the base image, you can essentially build your own _stage conveyor_.
 
 <a class="google-drawings" href="{{ "images/configuration/base_image2.png" | true_relative_url }}" data-featherlight="image">
     <img src="{{ "images/configuration/base_image2_preview.png" | true_relative_url }}" alt="Conveyor with fromImage and fromArtifact stages">
@@ -57,7 +58,9 @@ Also, this method can be useful if the stages of _stage conveyor_ are not enough
 
 ## fromCacheVersion
 
-The `fromCacheVersion` directive allows managing image reassembly.
+As described above, normally the build process actively uses caching. During the build, a werf checks to see if the base image has changed. Depending on the directives used, the digest or the image name and tag are checked for changes. If the image is unchanged, the digest of the from stage is unchanged as well. If there is an image with this digest in the stages storage, it will be used during the build.
+
+You can use the `fromCacheVersion` directive to manipulate the digest of the `from` stage (since the `fromCacheVersion` value is part of the stage digest) and thus force the rebuild of the image. If you modify the value specified in the `fromCacheVersion` directive, then regardless of whether the _base_ image (or its digest) is changed or stays the same, the digest of the `from` stage (as well as all subsequent stages) will change. This will result in rebuilding all the stages.
 
 ```yaml
 fromCacheVersion: <arbitrary string>
@@ -65,11 +68,11 @@ fromCacheVersion: <arbitrary string>
 
 ## How the Stapel builder processes CMD and ENTRYPOINT
 
-To build a stage, werf starts container with the `CMD` and `ENTRYPOINT` service parameters and then substitutes them with the values of the base image. If these values are not set in the base image, werf resets them as follows:
+To build a stage, werf runs a container with the `CMD` and `ENTRYPOINT` service parameters and then substitutes them with the values of the [base image]({{"usage/build/stapel/base.html" | true_relative_url }}). If these values are not set in the base image, werf resets them as follows:
 
 - `[]` for `CMD`;
 - `[""]` for `ENTRYPOINT`.
 
-Also, werf resets (uses special empty values) `ENTRYPOINT` of the base image if the `CMD` parameter is specified in the configuration (`docker.CMD`).
+On top of that, werf resets (using special empty values) `ENTRYPOINT` of the base image if the `CMD` parameter is specified in the configuration (`docker.CMD`).
 
 Otherwise, the behavior of werf is similar to that of [Docker](https://docs.docker.com/engine/reference/builder/#understand-how-cmd-and-entrypoint-interact).
