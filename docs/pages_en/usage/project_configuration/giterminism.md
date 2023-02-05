@@ -32,7 +32,7 @@ The `env` function can be activated using [werf-giterminism.yaml]({{"reference/w
 
 ##### contextAddFiles
 
-Using the [contextAddFiles]({{"reference/werf_yaml.html#contextaddfiles" | true_relative_url }}) directive complicates configuration sharing and reproducibility in CI jobs and among developers, since file data affects the final digest of the built images and must be identical at all stages of the CI pipeline and in local development during reproduction.
+Using the `contextAddFiles` directive complicates configuration sharing and reproducibility in CI jobs and among developers, since file data affects the final digest of the built images and must be identical at all stages of the CI pipeline and in local development during reproduction.
 
 The `contextAddFiles` directive can be activated using [werf-giterminism.yaml]({{"reference/werf_giterminism_yaml.html" | true_relative_url }}), but we strongly recommend that you carefully consider the possible implications of this.
 

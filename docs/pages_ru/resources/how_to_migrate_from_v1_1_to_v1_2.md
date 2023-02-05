@@ -360,7 +360,7 @@ werf предоставляет следующие команды compose:
      helmChartDir: .helm
    ```
 
-- Опции `--allow-git-shallow-clone`, `--git-unshallow` и `--git-history-synchronization` превращены в директивы `werf.yaml`, добавлена [новая мета-секция `gitWorktree`]({{ "/reference/werf_yaml.html#git-worktree" | true_relative_url }}). Выключено использование этих опций в команде `werf ci-env`: unshallow git clone происходит всегда.
+- Опции `--allow-git-shallow-clone`, `--git-unshallow` и `--git-history-synchronization` превращены в директивы `werf.yaml`, добавлена [новая мета-секция `gitWorktree`]({{ "/reference/werf_yaml.html#meta-section-gitWorktree" | true_relative_url }}). Выключено использование этих опций в команде `werf ci-env`: unshallow git clone происходит всегда.
 - Использование sprig v3 вместо v2: [http://masterminds.github.io/sprig/](http://masterminds.github.io/sprig/).
 - Новая страница документации, описывающая [движок шаблонов `werf.yaml`]({{ "/reference/werf_yaml_template_engine.html" | true_relative_url }}).
 - Пофикшено именование пользовательских шаблонов. Имя шаблона — это относительный путь в директории `.werf`. {% raw %}{{ include ".werf/templates/1.tmpl" . }} => {{ include "templates/1.tmpl" . }}{% endraw %}.
