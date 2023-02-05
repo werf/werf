@@ -9,9 +9,6 @@ sections:
         description:
           en: Unique project name
           ru: Уникальное имя проекта приложения
-        detailsAnchor:
-          en: "#project-name"
-          ru: "#имя-проекта"
         required: true
       - name: configVersion
         value: "int"
@@ -23,9 +20,6 @@ sections:
         description:
           en: Settings for deployment
           ru: Настройки выката
-        detailsAnchor:
-          en: "#deploy"
-          ru: "#выкат"
         collapsible: true
         isCollapsedByDefault: false
         directives:
@@ -35,18 +29,12 @@ sections:
               en: Path to the helm chart directory of the project
               ru: Путь до директории helm чарта проекта
             default: ".helm"
-            detailsAnchor:
-              en: "#helm-chart-dir"
-              ru: "#директория-helm-chart"
           - name: helmRelease
             value: "string"
             description:
               en: Release name template
               ru: Шаблон имени релиза
             default: "[[ project ]]-[[ env ]]"
-            detailsAnchor:
-              en: "#release-name"
-              ru: "#имя-релиза"
           - name: helmReleaseSlug
             value: "bool"
             description:
@@ -59,18 +47,12 @@ sections:
               en: Kubernetes namespace template
               ru: Шаблон Kubernetes namespace
             default: "[[ project ]]-[[ env ]]"
-            detailsAnchor:
-              en: "#kubernetes-namespace"
-              ru: "#namespace-в-kubernetes"
           - name: namespaceSlug
             value: "bool"
             description:
               en: Kubernetes namespace slugification
               ru: Слагификация Kubernetes namespace
             default: true
-            detailsAnchor:
-              en: "#kubernetes-namespace"
-              ru: "#namespace-в-kubernetes"
       - name: cleanup
         description:
           en: Settings for cleaning up irrelevant images
@@ -167,9 +149,6 @@ sections:
         description:
           en: Configure how werf handles git worktree of the project
           ru: Настройки связанные с работой werf с рабочей директорией git проекта
-        detailsAnchor:
-          en: "#git-worktree"
-          ru: "#git-worktree"
         collapsible: true
         isCollapsedByDefault: false
         directives:
@@ -179,9 +158,6 @@ sections:
               en: Force werf to use shallow clone despite restrictions
               ru: Принудительно позволить werf использовать shallow clone несмотря на ограничения данного подхода
             default: false
-            detailsAnchor:
-              en: "#git-worktree"
-              ru: "#git-worktree"
           - name: allowUnshallow
             value: "bool"
             description:
@@ -194,9 +170,6 @@ sections:
               en: Allow werf to synchronize git branches and tags with remote origin during cleanup process when needed
               ru: Разрешить процессу werf автоматически скачать новые ветки и теги из origin в процессе cleanup по необходимости
             default: true
-            detailsAnchor:
-              en: "#git-worktree"
-              ru: "#git-worktree"
   - id: dockerfile-image-section
     description:
       en: "Dockerfile image section: optional, define as many image sections as you need"
@@ -208,9 +181,6 @@ sections:
         description:
           en: One or more unique names for image
           ru: Одно или несколько уникальных имён для образа
-        detailsAnchor:
-          en: "#image-section"
-          ru: "#секция-image"
         required: true
       - name: dockerfile
         value: "string"
@@ -227,8 +197,6 @@ sections:
         description:
           en: Untracked files and directories for adding to build context. The paths must be relative to context PATH
           ru: Добавление нехранящихся в git файлов и директорий в сборочный контекст. Пути должны быть относительно директории контекста
-        detailsAnchor:
-          all: "#contextaddfiles"
       - name: target
         value: "string"
         description:
