@@ -497,7 +497,7 @@ You can use this image as a base for multiple applications if images from _hub.d
 
 ### Example of using external dependencies
 
-You can use _CacheVersion directives_ jointly with [go templates]({{ "reference/werf_yaml.html#image-section" | true_relative_url }}) to define dependency of the _user stage_ on files outside the git tree.
+You can use _CacheVersion directives_ jointly with go templates to define dependency of the _user stage_ on files outside the git tree.
 
 {% raw %}
 ```yaml

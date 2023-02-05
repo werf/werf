@@ -89,7 +89,7 @@ Next, follow these steps:
  1. Run `werf helm dependency update` command, which will create `.helm/Chart.lock` file and `.helm/charts` dir.
  1. Commit `.helm/Chart.lock` file into the project git repo.
 
- werf will automatically download subcharts into the cache and load subchart files in `werf converge` command (and other toplevel commands which require helm chart). More info [in the docs]({{ "usage/deploy/charts.html#dependencies-on-other-charts" | true_relative_url }}).
+werf will automatically download subcharts into the cache and load subchart files in `werf converge` command (and other toplevel commands which require helm chart).
 
 ### 6. Cleanup by Git history
 
@@ -306,7 +306,7 @@ Use project's container registry repository as `--repo` param for werf commands.
   - Take `.helm/Chart.yaml` from the repository if exists.
   - Override `metadata.name` field with werf project name from the `werf.yaml`.
   - Set `metadata.version = 1.0.0` if not set.
-- Added [`.Values.werf.version` service value]({{ "/usage/deploy/values.html#service-values" | true_relative_url }}) with werf cli util version.
+- Added `.Values.werf.version` service value with werf cli util version.
 - Support setting initial number of replicas when HPA is active for Deployment and other resources kinds. Set `"werf.io/replicas-on-creation": NUM` annotation, do not set `spec.replicas` field in templates in such case explicitly.
   - `spec.replicas` will override `werf.io/replicas-on-creation`.
   - This annotation is especially useful when HPA is active, [here is the reason]({{ "/reference/deploy_annotations.html#replicas-on-creation" | true_relative_url }}).
@@ -350,7 +350,7 @@ Removed `.Values.global.werf.image` section, use `.Values.werf.image` instead.
      helmChartDir: .helm
    ```
 
-- Move `--allow-git-shallow-clone`, `--git-unshallow` and `--git-history-synchronization` options into the `werf.yaml`, added [new `gitWorktree` meta section]({{ "/reference/werf_yaml.html#git-worktree" | true_relative_url }}). Disabled generation of old options in the `werf ci-env` command. Always unshallow git clone by default.
+- Move `--allow-git-shallow-clone`, `--git-unshallow` and `--git-history-synchronization` options into the `werf.yaml`, added new `gitWorktree` meta section]({{ "/reference/werf_yaml.html#meta-section-gitWorktree" | true_relative_url }}). Disabled generation of old options in the `werf ci-env` command. Always unshallow git clone by default.
 - Use sprig v3 instead of v2: [http://masterminds.github.io/sprig/](http://masterminds.github.io/sprig/).
 - New documentation page describing [`werf.yaml` template engine]({{ "/reference/werf_yaml_template_engine.html" | true_relative_url }}).
 - Fix naming for the user template. The template name is the path relative to the templates directory. {% raw %}{{ include ".werf/templates/1.tmpl" . }} => {{ include "templates/1.tmpl" . }}{% endraw %}.
