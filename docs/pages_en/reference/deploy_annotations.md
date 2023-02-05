@@ -51,7 +51,7 @@ Example: \
 
 Sets the external dependency for the resource. The annotated resource won't be deployed until the external dependency has been created and ready.
 
-More info: [external dependencies]({{ "/usage/deploy/deployment_order.html#external-dependencies" | true_relative_url }})
+More info: [deployment order]({{ "/usage/deploy/deployment_order.html" | true_relative_url }})
 
 ## External dependency namespace
 
@@ -59,7 +59,7 @@ More info: [external dependencies]({{ "/usage/deploy/deployment_order.html#exter
 
 Sets the namespace for the external dependency specified by the [external dependency resource](#external-dependency-resource) annotation. The `<any-name>` prefix must be the same as in the annotation of the external dependency resource.
 
-More info: [external dependencies]({{ "/usage/deploy/deployment_order.html#external-dependencies" | true_relative_url }})
+More info: [deployment order]({{ "/usage/deploy/deployment_order.html" | true_relative_url }})
 
 ## Replicas on creation
 

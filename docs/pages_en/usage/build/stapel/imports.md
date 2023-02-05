@@ -45,13 +45,13 @@ COPY --from=appserver /app/target/AtSea-0.0.1-SNAPSHOT.jar /app/AtSea.jar
 
 The meaning of such an approach is as follows, describe several auxiliary images and selectively copy artifacts from one image to another leaving behind everything you do not want in the result image.
 
-We suggest the same, but using [_images_]({{ "reference/werf_yaml.html#image-section" | true_relative_url }}) and [_artifacts_]({{ "reference/werf_yaml.html#image-section" | true_relative_url }}).
+We suggest the same, but using _images_ and _artifacts_.
 
 > Why is werf not using multi-stage?
 * Historically, _imports_ appeared much earlier than Docker multi-stage, and
 * werf gives more flexibility working with auxiliary images
 
-Importing _resources_ from _images_ and _artifacts_ should be described in `import` directive in _destination image_ config section ([_image_]({{ "reference/werf_yaml.html#image-section" | true_relative_url }}) or [_artifact_]({{ "reference/werf_yaml.html#image-section" | true_relative_url }}). `import` is an array of records. Each record should contain the following:
+Importing _resources_ from _images_ and _artifacts_ should be described in `import` directive in _destination image_ config section _image_ or _artifact_. `import` is an array of records. Each record should contain the following:
 
 - `image: <image name>` or `artifact: <artifact name>`: _source image_, image name from which you want to copy files.
 - `stage: <stage name>`: _source image stage_, particular stage of _source_image_ from which you want to copy files.
@@ -107,7 +107,7 @@ artifact: string
 ```
 </div>
 
-_Artifact images_ are declared with `artifact` directive: `artifact: string`. Unlike the [name of the _image_]({{ "reference/werf_yaml.html#image-section" | true_relative_url }}), the artifact has no limitations associated with docker naming convention, as used only internal.
+_Artifact images_ are declared with `artifact` directive: `artifact: string`. Unlike the name of the _image_, the artifact has no limitations associated with docker naming convention, as used only internal.
 
 ```yaml
 artifact: "application assets"
