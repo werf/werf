@@ -5,14 +5,14 @@ author: Alexey Igrychev <alexey.igrychev@flant.com>
 directive_summary: import
 ---
 
-The size of the image can be increased several times due to the assembly tools and source files, while the user does not need them.
-To solve such problems, Docker community suggests doing the installation of tools, the assembly, and removal in one step.
+The size of the final image can grow dramatically due to the assembly tools and source files eating up space. These files are generally not needed in the final image.
+To avoid this, the Docker community suggests installing tools, building, and removing irrelevant files in one step:
 
 ```
 RUN “download-source && cmd && cmd2 && remove-source”
 ```
 
-> To obtain a similar effect when using werf, it is sufficient describing the instructions in one _user stage_. For example, _shell assembly instructions_ for the _install stage_ (similarly for _ansible_):
+> You can do the same in werf — just specify the relevant instructions for some _user stage_. Below is an example of specifying the _shell assembly instructions_ for the _install stage_ (you can do so for the _ansible_ builder as well):
 ```yaml
 shell:
   install:
@@ -22,9 +22,9 @@ shell:
   - "remove-source"
 ```
 
-However, with this method, it is not possible using a cache, so toolkit installation runs each time.
+However, this method does not support caching. Thus, a build toolkit will be installed all over again.
 
-Another solution is using multi-stage builds, which are supported starting with Docker 17.05.
+Another way is to use a multi-stage build, a feature supported in Docker since version 17.05:
 
 ```
 FROM node:latest AS storefront
@@ -43,21 +43,23 @@ COPY --from=storefront /app/react-app/build/ /static
 COPY --from=appserver /app/target/AtSea-0.0.1-SNAPSHOT.jar /app/AtSea.jar
 ```
 
-The meaning of such an approach is as follows, describe several auxiliary images and selectively copy artifacts from one image to another leaving behind everything you do not want in the result image.
+The point of this approach is to describe several auxiliary images and selectively copy artifacts from one image to another, leaving all the unnecessary data outside the final image.
 
-We suggest the same, but using _images_ and _artifacts_.
+werf offers the same approach, but using _images_ and _artifacts_.
 
-> Why is werf not using multi-stage?
-* Historically, _imports_ appeared much earlier than Docker multi-stage, and
-* werf gives more flexibility working with auxiliary images
+> Why doesn't werf use multi-stage assembly?
+* Historically, _imports_ came much earlier than the Docker multi-stage mechanism, and
+* werf allows for greater flexibility when working with auxiliary images.
 
-Importing _resources_ from _images_ and _artifacts_ should be described in `import` directive in _destination image_ config section _image_ or _artifact_. `import` is an array of records. Each record should contain the following:
+Importing _resources_ from the _images_ and _artifacts_ must be described in the `import` directive in the _destination image_ in the _image_ or _artifact_ config section. `import` is an array of records, where each record must contain the following:
 
-- `image: <image name>` or `artifact: <artifact name>`: _source image_, image name from which you want to copy files.
-- `stage: <stage name>`: _source image stage_, particular stage of _source_image_ from which you want to copy files.
-- `add: <absolute path>`: _source path_, absolute file or folder path in _source image_ for copying.
-- `to: <absolute path>`: _destination path_, absolute path in _destination image_. In case of absence, _destination path_ equals _source path_ (from `add` directive).
-- `before: <install || setup>` or `after: <install || setup>`: _destination image stage_, stage for importing files. At present, only _install_ and _setup_ stages are supported.
+- `image: <image name>` or `artifact: <artifact name>`: _source image_; the name of the image copy files from.
+- `stage: <stage name>`: _source image stage_; the stage of the _source_image_ to copy files from.
+- `add: <absolute path>`: _source path_; the absolute path to the file or directory in the _source image_ to copy from.
+- `to: <absolute path>`: _destination path_; the absolute path in the _destination image_. If absent, the _destination path_ defaults to the  _source path_ (as specified by the `add` directive).
+- `before: <install || setup>` or `after: <install || setup>`: _destination image stage_; the stage to import files. Currently, only _install_ and _setup_ stages are supported.
+
+An example of the `import` directive:
 
 ```yaml
 import:
@@ -70,34 +72,34 @@ import:
   after: setup
 ```
 
-As in the case of adding _git mappings_, masks are supported for including, `include_paths: []`, and excluding files, `exclude_paths: []`, from the specified path.
-You can also define the rights for the imported resources, `owner: <owner>` and `group: <group>`.
-Read more about these in the [git directive article]({{ "usage/build/stapel/git.html" | true_relative_url }}).
+As with the _git mappings_ configuration, include and exclude file and directory masks are supported (`include_paths: []` and `exclude_paths: []`, respectively). Masks must be specified relative to the source path (as in the `add` parameter).
+You can also specify an owner and a group for the imported resources, `owner: <owner>` and `group: <group>`.
+This behavior is similar to the one used when adding code from Git repositories, and you can read more about it in the [git directive section]({{ "usage/build/stapel/git.html" | true_relative_url }}).
 
-> Import paths and _git mappings_ must not overlap with each other
+> Note that the path of imported resources and the path specified in _git mappings_ must not overlap
 
-Information about _using artifacts_ available in [separate article]({{ "usage/build/stapel/imports.html#what-is-an-artifact" | true_relative_url }}).
+Refer to [this section]({{ "usage/build/stapel/imports.html#what-is-an-artifact" | true_relative_url }}) to learn more about _using artifacts_.
 
 ## What is an artifact?
 
-***Artifact*** is a special image that is used by _images_ and _artifacts_ to isolate the build process and build tools resources (environments, software, data).
+An ***artifact*** is a special image used by other _images_ and _artifacts_ to isolate the build process and build tools resources (environments, software, data) from the application image build process. Examples of such resources include software or data used to build the image but not needed to run the application, etc.
 
-Using artifacts, you can independently assemble an unlimited number of components, and also solving the following problems:
+Using artifacts, you can build an unlimited number of components. They also help you to solve the following problems:
 
-- The application can consist of a set of components, and each has its dependencies. With a standard assembly, you should rebuild all every time, but you want to assemble each one on-demand.
-- Components need to be assembled in other environments.
+- If an application consists of a set of components, each with their own dependencies, you usually have to rebuild all the components every time. Artifacts allow you to assemble only the components that you really need.
+- Assembling components in different environments.
 
-Importing _resources_ from _artifacts_ are described in [import directive]({{ "usage/build/stapel/imports.html" | true_relative_url }}).
+Refer to [import directive]({{ "usage/build/stapel/imports.html" | true_relative_url }}) to learn more about importing _resources_ from the _artifacts_.
 
 ### Configuration
 
-The configuration of the _artifact_ is not much different from the configuration of _image_. Each _artifact_ should be described in a separate artifact config section.
+The configuration of an _artifact_ is similar to that of an _image_. Each _artifact_ must be described in irs own artifact config section.
 
-The instructions associated with the _from stage_, namely the [_base image_]({{ "usage/build/stapel/base.html" | true_relative_url }}) and [mounts]({{ "usage/build/stapel/mounts.html" | true_relative_url }}), and also [imports]({{ "usage/build/stapel/imports.html" | true_relative_url }}) remain unchanged.
+The instructions related to the _from stage_, namely, the instruction to set the [_base image_]({{ "usage/build/stapel/base.html" | true_relative_url }}), [mounts]({{ "usage/build/stapel/mounts.html" | true_relative_url }}), and [imports]({{ "usage/build/stapel/imports.html" | true_relative_url }}) are exactly the same as those for images.
 
-The _docker_instructions stage_ and the [corresponding instructions]({{ "usage/build/stapel/dockerfile.html" | true_relative_url }}) are not supported for the _artifact_. An _artifact_ is an assembly tool and only the data stored in it is required.
+The _docker_ _ _instructions stage_ and the [related instructions]({{ "usage/build/stapel/dockerfile.html" | true_relative_url }}) are not supported for _artifacts_. An _artifact_ is an assembly tool, and and the only thing it provides is data.
 
-The remaining _stages_ and instructions are considered further separately.
+The remaining _stages_ and instructions for defining artifacts are discussed in detail below.
 
 #### Naming
 
@@ -107,13 +109,13 @@ artifact: string
 ```
 </div>
 
-_Artifact images_ are declared with `artifact` directive: `artifact: string`. Unlike the name of the _image_, the artifact has no limitations associated with docker naming convention, as used only internal.
+The _artifact images_ is declared with the `artifact` directive: `artifact: string`. In contrast to naming _images_, when naming artifacts, you do not have to observe the Docker naming convention, since artifacts used purely internally.
 
 ```yaml
 artifact: "application assets"
 ```
 
-#### Adding source code from git repositories
+#### Adding source code from Git repositories
 
 <div class="summary">
 
@@ -123,11 +125,11 @@ artifact: "application assets"
 
 </div>
 
-Unlike with _image_, _artifact stage conveyor_ has no _gitCache_ and _gitLatestPatch_ stages.
+Unlike regular _images_, the _artifact stage conveyor_ has no _gitCache_ and _gitLatestPatch_ stages.
 
-> werf implements optional dependence on changes in git repositories for _artifacts_. Thus, by default werf ignores them and _artifact image_ is cached after the first assembly, but you can specify any dependencies for assembly instructions
+> In werf, there is an optional dependency on changes to Git repositories for _artifacts_. So, by default, werf ignores any changes to the Git repositories by caching the _artifact image_ after the first build. But you can define file and directory dependencies that will trigger an artifact image rebuild when changed.
 
-Read about working with _git repositories_ in the corresponding [article]({{ "usage/build/stapel/git.html" | true_relative_url }}).
+Refer to the [documentation]({{ "usage/build/stapel/git.html" | true_relative_url }}) to learn more about working with _git repositories_.
 
 #### Running assembly instructions
 
@@ -139,11 +141,12 @@ Read about working with _git repositories_ in the corresponding [article]({{ "us
 
 </div>
 
-Directives and _user stages_ remain unchanged: _beforeInstall_, _install_, _beforeSetup_ and _setup_.
+Artifacts share the same set of directives and _user stages_ as regular images: _beforeInstall_, _install_, _beforeSetup_, and _setup_.
 
-If there are no dependencies on files specified in git `stageDependencies` directive for _user stages_, the image is cached after the first build and will no longer be reassembled while the related _stages_ exist in _storage_.
+If you don't specify any file dependencies in the `stageDependencies` directive in the Git section for a _user stage_, the image will be cached after the first build and will not be reassembled as long as the corresponding _stage_ exists in the _stages storage_.
 
-> If the artifact should be rebuilt on any change in the related git repository, you should specify the _stageDependency_ `**/*` for any _user stage_, e.g., for _install stage_:
+> To rebuild the artifact whenever there are any changes in the related Git repository, specify _stageDependency_ `**/*` for any _user stage_. Below is an example of setting it for the _install stage_:
+
 ```yaml
 git:
 - to: /
@@ -151,17 +154,17 @@ git:
     install: "**/*"
 ```
 
-Read about working with _assembly instructions_ in the corresponding [article]({{ "usage/build/stapel/instructions.html" | true_relative_url }}).
+Refer to the [documentation]({{ "usage/build/stapel/instructions.html" | true_relative_url }}) to learn more about working with _assembly instructions_.
 
 ## Using artifacts
 
-Unlike [*stapel image*]({{ "usage/build/stapel/instructions.html" | true_relative_url }}), *stapel artifact* does not have a git latest patch stage.
+Unlike the [*stapel image*]({{ "usage/build/stapel/instructions.html" | true_relative_url }}), the *stapel artifact* has no _git latest patch_ stage.
 
-The git latest patch stage is supposed to be updated on every commit, which brings new changes to files. *Stapel artifact* though is recommended to be used as a deeply cached image, which will be updated in rare cases, when some special files changed.
+This is intentional, because the _git latest patch_ stage usually runs on every commit, applying the changes made to the files. However, it makes sense to use the *Stapel artifact* as a highly cacheable image that is updated infrequently (e.g., when some special files are changed).
 
-For example: import git into *stapel artifact* and rebuild assets in this artifact only when dependent assets files in git has changes. For every other change in git where non-dependent files has been changed assets will not be rebuilt.
+Suppose you want to import data from Git into a *Stapel artifact*, and only rebuild the assets when the files that affect the assembly of the assets change. This means assets should not be rebuilt if other files in Git are changed.
 
-However in the case when there is a need to bring changes of any git files into *stapel artifact* (to build Go application for example) user should define `git.stageDependencies` of some stage that needs these files explicitly as `*` pattern:
+Of course, sometimes you want to include changes made to any files in the Git repository in your *stapel artifact* (for example, if a Go app is being built in the artifact). In that case, you have to specify a dependency relative to the stage to build if there are changes in Git using `git.stageDependencies` and `*` as a pattern:
 
 ```
 git:
@@ -172,6 +175,6 @@ git:
     - "*"
 ```
 
-In this case every change in git files will result in artifact rebuild, all *stapel images* that import this artifact will also be rebuilt.
+In this case, any changes to the files in the Git repository will result in a rebuild of the artifact image and all *stapel images* into which that artifact is imported.
 
-**NOTE** User should employ multiple separate `git.add` directive invocations in every [*stapel image*]({{ "usage/build/stapel/instructions.html" | true_relative_url }}) and *stapel artifact* that needs git files — it is an optimal way to add git files into any image. Adding git files to artifact and then importing it into image using `import` directive is not recommended.
+**NOTE:** If you use any files in both the *stapel artifact* and the [*stapel image*]({{"usage/build/stapel/instructions.html" | true_relative_url }}) builds, the proper way is to use the `git.add` directive in each image, that is, multiple times, when adding Git files. We do not recommend adding files to the artifact and then importing them into the image using the `import` directive.
