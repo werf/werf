@@ -6,22 +6,22 @@ permalink: usage/build/stapel/overview.html
 werf has a built-in alternative syntax for describing assembly instructions called Stapel. Here are its distinctive features:
 
 1. Easily support and parameterize complex configurations, reuse common snippets and generate configurations of the images of the same type using YAML format and templating.
-2. Dedicated commands for integrating with git to enable incremental rebuilds based on the git repository history.
-3. Inheriting images and importing files from images (similar to Dockerfile's multi-stage).
+2. Dedicated commands for integrating with Git to enable incremental rebuilds based on the Git repository history.
+3. Image inheritance and importing files from images (similar to the Dockerfile multi-stage mechanism).
 4. Run arbitrary build instructions, specify directory mount options, and use other advanced tools to build images.
 5. More efficient caching mechanics for layers (a similar scheme is supported for Dockerfile layers when building with Buildah (currently pre-alpha)).
 
-<!-- TODO(staged-dockerfile): удалить 5 пункт как неактуальный -->
+<!-- TODO(staged-dockerfile): delete point 5 as no longer relevant -->
 
-To build images using the Stapel builder, you need to describe the build instructions in the `werf.yaml` configuration file. Stapel is supported for both the docker server builder backend (building via shell instructions or ansible) and for buildah (shell instructions only).
+To build images using the Stapel builder, you have to define build instructions in the `werf.yaml` configuration file. Stapel is supported for both the Docker server builder backend (assembly via shell instructions or Ansible) and for Buildah (shell instructions only).
 
 This section describes how to build images with the Stapel builder, its advanced features and how to use them.
 
 <div class="details">
-<a href="javascript:void(0)" class="details__summary">Как устроен конвеер стадий stapel</a>
+<a href="javascript:void(0)" class="details__summary">How the Stapel stage conveyor works</a>
 <div class="details__content" markdown="1">
 
-A _stage conveyor_ is an ordered sequence of conditions and rules for carrying out stages. werf uses different _stage conveyors_ to assemble various types of images depending on their configuration.
+A _stage conveyor_ is an ordered sequence of conditions and rules for running stages. werf uses different _stage conveyors_ to assemble various types of images, depending on their configuration.
 
 <div class="tabs">
   <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'stapel-image-tab')">Stapel Image</a>
@@ -40,26 +40,26 @@ A _stage conveyor_ is an ordered sequence of conditions and rules for carrying o
 </a>
 </div>
 
-For each _stage_ at every build, werf calculates the unique identifier of the stage called stage digest.
+For each _stage_ at every build, werf calculates a unique stage identifier called stage digest.
 
-If a _stage_ has no stage dependencies, it is skipped, and, accordingly, the _stage conveyor_ is reduced by one stage. It means that the _stage conveyor_ can be reduced to several _stages_ or even to a single _from_ stage.
+If a _stage_ has no stage dependencies, it is skipped, and the _stage conveyor_ gets reduced by one stage as a result. This means that the _stage conveyor_ can be reduced to several _stages_ or even to a single _from_ stage.
 
 <a class="google-drawings" href="{{ "images/reference/stages_and_images4.png" | true_relative_url }}" data-featherlight="image">
 <img src="{{ "images/reference/stages_and_images4_preview.png" | true_relative_url }}">
 </a>
 
-_Stage dependency_ is a piece of data that affects the stage _digest_. Stage dependency may be represented by:
+_Stage dependency_ is a piece of data that affects the stage _digest_. Stage dependencies include:
 
- - some file from a git repo with its contents;
+ - files from the Git repository with their contents;
  - instructions to build stage defined in the `werf.yaml`;
- - the arbitrary string specified by the user in the `werf.yaml`;
+ - an arbitrary string specified by the user in the `werf.yaml`;
  - and so on.
 
-Most _stage dependencies_ are specified in the `werf.yaml`, others relate to a runtime.
+Most _stage dependencies_ are specified in the `werf.yaml`, others originate from the runtime.
 
-The tables below illustrate dependencies of a Dockerfile image, a Stapel image, and a [Stapel artifact]({{ "usage/build/stapel/imports.html" | true_relative_url }}) _stages dependencies_.
-Each row describes dependencies for a certain stage.
-The left column contains a short description of dependencies, the right column includes related `werf.yaml` directives and contains relevant references for more information.
+The tables below illustrate dependencies of a Dockerfile image, a Stapel image, and a [Stapel artifact]({{ "usage/build/stapel/imports.html" | true_relative_url }}) _stage dependencies_.
+Each row covers the dependencies for a certain stage.
+The left column contains a brief description of the dependencies, the right column includes the related `werf.yaml` directives and contains links to sections with more details.
 
 <div class="tabs">
   <a href="javascript:void(0)" id="image-dependencies" class="tabs__btn dependencies-btn active">Stapel Image</a>
