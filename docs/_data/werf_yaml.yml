@@ -452,7 +452,7 @@ sections:
               en: "Common cache version"
               ru: "Общая версия кеша"
             detailsArticle:
-              en: "/usage/build/stapel/instructions.html#dependency-on-the-cacheversion-value"
+              en: "/usage/build/stapel/instructions.html#dependency-on-the-cacheversion"
               ru: "/usage/build/stapel/instructions.html#зависимость-от-значения-cacheversion"
           - name: beforeInstallCacheVersion
             value: "string"
@@ -460,7 +460,7 @@ sections:
               en: "Cache version for beforeInstall stage"
               ru: "Версия кеша для стадии beforeInstall"
             detailsArticle:
-              en: "/usage/build/stapel/instructions.html#dependency-on-the-cacheversion-value"
+              en: "/usage/build/stapel/instructions.html#dependency-on-the-cacheversion"
               ru: "/usage/build/stapel/instructions.html#зависимость-от-значения-cacheversion"
           - name: installCacheVersion
             value: "string"
@@ -468,7 +468,7 @@ sections:
               en: "Cache version for install stage"
               ru: "Версия кеша для стадии install"
             detailsArticle:
-              en: "/usage/build/stapel/instructions.html#dependency-on-the-cacheversion-value"
+              en: "/usage/build/stapel/instructions.html#dependency-on-the-cacheversion"
               ru: "/usage/build/stapel/instructions.html#зависимость-от-значения-cacheversion"
           - name: beforeSetupCacheVersion
             value: "string"
@@ -476,7 +476,7 @@ sections:
               en: "Cache version for beforeSetup stage"
               ru: "Версия кеша для стадии beforeSetup"
             detailsArticle:
-              en: "/usage/build/stapel/instructions.html#dependency-on-the-cacheversion-value"
+              en: "/usage/build/stapel/instructions.html#dependency-on-the-cacheversion"
               ru: "/usage/build/stapel/instructions.html#зависимость-от-значения-cacheversion"
           - name: setupCacheVersion
             value: "string"
@@ -484,7 +484,7 @@ sections:
               en: "Cache version for setup stage"
               ru: "Версия кеша для стадии setup"
             detailsArticle:
-              en: "/usage/build/stapel/instructions.html#dependency-on-the-cacheversion-value"
+              en: "/usage/build/stapel/instructions.html#dependency-on-the-cacheversion"
               ru: "/usage/build/stapel/instructions.html#зависимость-от-значения-cacheversion"
       - name: ansible
         description:
@@ -529,7 +529,7 @@ sections:
               en: "Common cache version"
               ru: "Общая версия кеша"
             detailsArticle:
-              en: "/usage/build/stapel/instructions.html#dependency-on-the-cacheversion-value"
+              en: "/usage/build/stapel/instructions.html#dependency-on-the-cacheversion"
               ru: "/usage/build/stapel/instructions.html#зависимость-от-значения-cacheversion"
           - name: beforeInstallCacheVersion
             value: "string"
@@ -537,7 +537,7 @@ sections:
               en: "Cache version for beforeInstall stage"
               ru: "Версия кеша для стадии beforeInstall"
             detailsArticle:
-              en: "/usage/build/stapel/instructions.html#dependency-on-the-cacheversion-value"
+              en: "/usage/build/stapel/instructions.html#dependency-on-the-cacheversion"
               ru: "/usage/build/stapel/instructions.html#зависимость-от-значения-cacheversion"
           - name: installCacheVersion
             value: "string"
@@ -545,7 +545,7 @@ sections:
               en: "Cache version for install stage"
               ru: "Версия кеша для стадии install"
             detailsArticle:
-              en: "/usage/build/stapel/instructions.html#dependency-on-the-cacheversion-value"
+              en: "/usage/build/stapel/instructions.html#dependency-on-the-cacheversion"
               ru: "/usage/build/stapel/instructions.html#зависимость-от-значения-cacheversion"
           - name: beforeSetupCacheVersion
             value: "string"
@@ -553,7 +553,7 @@ sections:
               en: "Cache version for beforeSetup stage"
               ru: "Версия кеша для стадии beforeSetup"
             detailsArticle:
-              en: "/usage/build/stapel/instructions.html#dependency-on-the-cacheversion-value"
+              en: "/usage/build/stapel/instructions.html#dependency-on-the-cacheversion"
               ru: "/usage/build/stapel/instructions.html#зависимость-от-значения-cacheversion"
           - name: setupCacheVersion
             value: "string"
@@ -561,7 +561,7 @@ sections:
               en: "Cache version for setup stage"
               ru: "Версия кеша для стадии setup"
             detailsArticle:
-              en: "/usage/build/stapel/instructions.html#dependency-on-the-cacheversion-value"
+              en: "/usage/build/stapel/instructions.html#dependency-on-the-cacheversion"
               ru: "/usage/build/stapel/instructions.html#зависимость-от-значения-cacheversion"
       - name: docker
         description:
