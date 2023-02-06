@@ -306,58 +306,11 @@ func GetHelmDependencyUpdateDocs() structs.DocsStruct {
 	return docs
 }
 
-func GetHelmDependencyListDocs() structs.DocsStruct {
-	var docs structs.DocsStruct
-
-	docs.LongMD = "List all of the dependencies declared in a chart.\n\n" +
-		"This can take chart archives and chart directories as input. It will not alter " +
-		"the contents of a chart.\n\n" +
-		"This will produce an error if the chart cannot be loaded.\n"
-
-	return docs
-}
-
 func GetHelmGetHooksDocs() structs.DocsStruct {
 	var docs structs.DocsStruct
 
 	docs.LongMD = "This command downloads hooks for a given release.\n\n" +
 		"Hooks are formatted in YAML and separated by the YAML `---\\n` separator."
-
-	return docs
-}
-
-func GetHelmGetAllDocs() structs.DocsStruct {
-	var docs structs.DocsStruct
-
-	docs.LongMD = "This command prints a human readable collection of information about the " +
-		"notes, hooks, supplied values, and generated manifest file of the given release."
-
-	return docs
-}
-
-func GetHelmGetValuesDocs() structs.DocsStruct {
-	var docs structs.DocsStruct
-
-	docs.LongMD = "This command downloads a values file for a given release."
-
-	return docs
-}
-
-func GetHelmGetManifestDocs() structs.DocsStruct {
-	var docs structs.DocsStruct
-
-	docs.LongMD = "This command fetches the generated manifest for a given release.\n\n" +
-		"A manifest is a YAML-encoded representation of the Kubernetes resources that " +
-		"were generated from this release's chart(s). If a chart is dependent on other " +
-		"charts, those resources will also be included in the manifest."
-
-	return docs
-}
-
-func GetHelmGetNotesDocs() structs.DocsStruct {
-	var docs structs.DocsStruct
-
-	docs.LongMD = "This command shows notes provided by the chart of a named release."
 
 	return docs
 }
@@ -382,14 +335,6 @@ func GetHelmPluginUpdateDocs() structs.DocsStruct {
 	var docs structs.DocsStruct
 
 	docs.LongMD = "Update one or more Helm plugins."
-
-	return docs
-}
-
-func GetHelmPluginInstallDocs() structs.DocsStruct {
-	var docs structs.DocsStruct
-
-	docs.LongMD = "This command allows you to install a plugin from a URL to a VCS repo or a local path."
 
 	return docs
 }

@@ -65,18 +65,16 @@ func (opts *LegacyContainerOptionsStub) AddEnv(envs map[string]string) {
 type ConveyorStub struct {
 	Conveyor
 
-	giterminismManager              *GiterminismManagerStub
-	lastStageImageNameByImageName   map[string]string
-	lastStageImageIDByImageName     map[string]string
-	lastStageImageDigestByImageName map[string]string
+	giterminismManager            *GiterminismManagerStub
+	lastStageImageNameByImageName map[string]string
+	lastStageImageIDByImageName   map[string]string
 }
 
-func NewConveyorStub(giterminismManager *GiterminismManagerStub, lastStageImageNameByImageName, lastStageImageIDByImageName, lastStageImageDigestByImageName map[string]string) *ConveyorStub {
+func NewConveyorStub(giterminismManager *GiterminismManagerStub, lastStageImageNameByImageName, lastStageImageIDByImageName map[string]string) *ConveyorStub {
 	return &ConveyorStub{
-		giterminismManager:              giterminismManager,
-		lastStageImageNameByImageName:   lastStageImageNameByImageName,
-		lastStageImageIDByImageName:     lastStageImageIDByImageName,
-		lastStageImageDigestByImageName: lastStageImageDigestByImageName,
+		giterminismManager:            giterminismManager,
+		lastStageImageNameByImageName: lastStageImageNameByImageName,
+		lastStageImageIDByImageName:   lastStageImageIDByImageName,
 	}
 }
 
@@ -102,10 +100,6 @@ func (c *ConveyorStub) GetImageNameForLastImageStage(imageName string) string {
 
 func (c *ConveyorStub) GetImageIDForLastImageStage(imageName string) string {
 	return c.lastStageImageIDByImageName[imageName]
-}
-
-func (c *ConveyorStub) GetImageDigestForLastImageStage(imageName string) string {
-	return c.lastStageImageDigestByImageName[imageName]
 }
 
 func (c *ConveyorStub) GiterminismManager() giterminism_manager.Interface {
