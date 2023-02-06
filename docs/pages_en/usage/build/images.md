@@ -168,7 +168,7 @@ git:
   to: /app
 ```
 
-There are 4 stages for describing arbitrary shell instructions, as well as a `git.stageDependencies` directive to set up triggers to rebuild these stages whenever the corresponding stages change ([learn more]({{"/usage/build/stapel/instructions.html#dependencies-from-modifications-in-git-repository"| true_relative_url }})):
+There are 4 stages for describing arbitrary shell instructions, as well as a `git.stageDependencies` directive to set up triggers to rebuild these stages whenever the corresponding stages change ([learn more]({{"/usage/build/stapel/instructions.html#dependency-on-changes-in-the-git-repo"| true_relative_url }})):
 
 ```yaml
 image: app
