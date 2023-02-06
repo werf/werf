@@ -2,6 +2,7 @@
 title: Bundles
 permalink: usage/distribute/bundles.html
 change_canonical: true
+published: false
 ---
 
 Standard werf usage flow implies usage of [werf-converge]({{ "/reference/cli/werf_converge.html" | true_relative_url }}) command to deploy a new version of your application into kubernetes. werf-converge command consists of:
