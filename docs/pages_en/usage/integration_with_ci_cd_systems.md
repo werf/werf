@@ -9,9 +9,9 @@ When working with a CI/CD system, the user must keep its particularities in mind
 
 werf provides a ready-made integrations for GitLab CI/CD and GitHub Actions. By leveraging CI jobs' service environment variables, the integration does the following:
 
--  Creating a temporary Docker configuration based on the current user configuration and authorizing in the container registry CI.
+- Creating a temporary Docker configuration based on the current user configuration and authorizing in the CI container registry.
 - Setting default values for werf commands:
-  - Using the container registry CI (`WERF_REPO`).
+  - Using the CI container registry (`WERF_REPO`).
   - Detecting the current environment (`WERF_ENV`).
   - Annotating the chart resources being deployed, binding to the CI system (`WERF_ADD_ANNOTATION_*`). Annotations are added to all resources being deployed, allowing the user to go to the bound pipeline, job, and commit if necessary.
   - Setting up werf logging (`WERF_LOG_*`).
@@ -25,7 +25,7 @@ The entire integration boils down to invoking the [ci-env]({{"reference/cli/werf
 . $(werf ci-env gitlab --as-file)
 ```
 
-Then, within a shell session, all werf commands will use the preset values by default and work with the container registry CI.
+Then, within a shell session, all werf commands will use the preset values by default and work with the CI container registry.
 
 For example, the pipeline stage to deploy to production might look as follows:
 
@@ -54,7 +54,7 @@ Just like with GitLab CI/CD, the integration boils down to invoking the [ci-env]
 . $(werf ci-env github --as-file)
 ```
 
-Then, within a particular step, all werf commands will use the preset values by default and work with the container registry CI.
+Then, within a particular step, all werf commands will use the preset values by default and work with the CI container registry.
 
 For example, the job to deploy to production might look as follows:
 
