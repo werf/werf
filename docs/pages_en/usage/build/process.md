@@ -111,7 +111,7 @@ The image building algorithm in werf is different:
 1. If the next layer to be built is already present in the container registry, it will not be built or downloaded.
 2. If the next layer to be built is not in the container registry, the previous layer is downloaded (the base layer for building the current one).
 3. The new layer is built on the local machine and published to the container registry.
-4. At publishing time, werf automatically resolves conflicts between builders from different hosts that try to publish the same layer. This ensures that only one layer is published, and all other builders are required to reuse that layer. ([The built-in sync service](#syncing-builders) makes this possible).
+4. At publishing time, werf automatically resolves conflicts between builders from different hosts that try to publish the same layer. This ensures that only one layer is published, and all other builders are required to reuse that layer. ([The built-in sync service](#synchronizing-builders) makes this possible).
 5. The process continues until all the layers of the image are built.
 
 The algorithm of stage selection in werf works as follows:

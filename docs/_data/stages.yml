@@ -17,9 +17,6 @@ en:
           <build arg name>: <value>
         addHost:
         - <host:ip>
-      references:
-        - name: "Dockerfile Image"
-          link: "/reference/werf_yaml.html#dockerfile-builder"
     - &image_artifact_from
       name: from
       type: "image artifact"
@@ -311,9 +308,6 @@ en:
 ru:
   entries:
     - <<: *dockerfile
-      references:
-        - name: "Dockerfile-образ"
-          link: "/reference/werf_yaml.html#сборщик-dockerfile"
     - <<: *image_artifact_from
       references:
         - name: "Базовый образ"
