@@ -222,7 +222,7 @@ entries:
               - title: Автоматическая очистка хоста
                 url: /usage/cleanup/host_cleanup.html
 
-          - title: Интеграция с CI/CD системами
+          - title: Интеграция с CI/CD-системами
             url: /usage/integration_with_ci_cd_systems.html
 
       - title: Справочник
