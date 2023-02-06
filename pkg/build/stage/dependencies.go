@@ -127,7 +127,6 @@ func (s *DependenciesStage) prepareImageWithLegacyStapelBuilder(ctx context.Cont
 
 		depImageName := c.GetImageNameForLastImageStage(dep.ImageName)
 		depImageID := c.GetImageIDForLastImageStage(dep.ImageName)
-		depImageDigest := c.GetImageDigestForLastImageStage(dep.ImageName)
 		depImageRepo, depImageTag := imagePkg.ParseRepositoryAndTag(depImageName)
 
 		for _, img := range dep.Imports {
@@ -147,10 +146,6 @@ func (s *DependenciesStage) prepareImageWithLegacyStapelBuilder(ctx context.Cont
 			case config.ImageIDImport:
 				depImageServiceOptions.AddEnv(map[string]string{
 					img.TargetEnv: depImageID,
-				})
-			case config.ImageDigestImport:
-				depImageServiceOptions.AddEnv(map[string]string{
-					img.TargetEnv: depImageDigest,
 				})
 			}
 		}
@@ -187,7 +182,6 @@ func (s *DependenciesStage) prepareImage(ctx context.Context, c Conveyor, cr con
 	for _, dep := range s.dependencies {
 		depImageName := c.GetImageNameForLastImageStage(dep.ImageName)
 		depImageID := c.GetImageIDForLastImageStage(dep.ImageName)
-		depImageDigest := c.GetImageDigestForLastImageStage(dep.ImageName)
 		depImageRepo, depImageTag := imagePkg.ParseRepositoryAndTag(depImageName)
 
 		for _, img := range dep.Imports {
@@ -207,10 +201,6 @@ func (s *DependenciesStage) prepareImage(ctx context.Context, c Conveyor, cr con
 			case config.ImageIDImport:
 				stageImage.Builder.StapelStageBuilder().AddEnvs(map[string]string{
 					img.TargetEnv: depImageID,
-				})
-			case config.ImageDigestImport:
-				stageImage.Builder.StapelStageBuilder().AddEnvs(map[string]string{
-					img.TargetEnv: depImageDigest,
 				})
 			}
 		}

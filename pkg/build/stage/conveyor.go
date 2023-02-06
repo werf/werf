@@ -21,7 +21,6 @@ type Conveyor interface {
 	FetchLastNonEmptyImageStage(ctx context.Context, imageName string) error
 	GetImageNameForLastImageStage(imageName string) string
 	GetImageIDForLastImageStage(imageName string) string
-	GetImageDigestForLastImageStage(imageName string) string
 
 	GetImageNameForImageStage(imageName, stageName string) string
 	GetImageIDForImageStage(imageName, stageName string) string
