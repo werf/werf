@@ -81,14 +81,6 @@ werf build --repo REPO --add-custom-tag "%image%-latest"
 
 > **NOTE:** When you use the options listed above, werf still creates the **additional alias tags** that reference the automatic hash tags. It is not possible to completely disable auto-tagging.
 
-### Deploying images with an arbitrary tag
-
-The user may opt for arbitrary tagging when deploying images in Kubernetes. The `--use-custom-tag` option can be used for this (it implicitly adds an alias tag and enables its use):
-
-```shell
-werf converge --repo REPO --use-custom-tag main
-```
-
 ## Layer-by-layer image caching
 
 <!-- reference https://werf.io/documentation/v1.2/internals/stages_and_storage.html#storage -->
