@@ -18,7 +18,7 @@ What makes werf special:
 - **Complete application lifecycle management**: build and publish container images, test, deploy an application to Kubernetes, distribute release artifacts and clean up the container registry.
 - **Easy to use**: use Dockerfiles and Helm chart for configuration and let werf handle all the rest.
 - **Gluing common technologies**: Git, Buildah, Helm, Kubernetes, and your CI system of choice.
-- **Feature-packed**: an advanced caching system, builds’ reproducibility via Giterminism (using Git as a single source of truth), content-based tagging, enhanced resource tracking in Helm, unique container registry cleanup approach, and more.
+- **Out-of-the-box efficiency**: an advanced caching system, builds’ reproducibility via Giterminism (using Git as a single source of truth), content-based tagging, enhanced resource tracking in Helm, unique container registry cleanup approach, and more.
 - **Production-ready**: werf has been used in production since 2017; thousands of projects rely on it to build & deploy various apps.
 
 ## Quickstart
