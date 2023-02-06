@@ -5,13 +5,13 @@ permalink: usage/distribute/overview.html
 
 ## What this section is about
 
-The typical werf-based application delivery cycle looks like this: building images, publishing them, followed by deploying charts. A single run of the `werf converge` command is often enough to do all these things. But sometimes you need to separate the *distribution* of artifacts (images, charts) and their *deployment*, or even to deploy the artifacts without werf at all (using some third-party software).
+The typical werf-based application delivery cycle looks like this: building images, publishing them, and deploying charts. A single run of the `werf converge` command is often enough to do all these things. But sometimes you need to separate the *distribution* of artifacts (images, charts) and their *deployment*, or even to deploy the artifacts without werf at all (using some third-party software).
 
-This section discusses how to distribute images and bundles (charts with an optional extra functionality) for subsequent deployment with or without werf. Refer to the Deployment section for instructions on deploying published artifacts.
+This section discusses how to distribute images and bundles (charts with optional extra functionality) for subsequent deployment with or without werf. Refer to the Deployment section for instructions on deploying published artifacts.
 
 ## Example of image distribution
 
-You only need two files and one `werf export` command running in the application's Git repository to distribute a single image built using the Dockerfile, which will be deployed by a third-party software:
+You only need two files and one `werf export` command running in the application's Git repository to distribute a single image built using the Dockerfile, which will be deployed by third-party software:
 
 ```yaml
 # werf.yaml:
@@ -37,11 +37,11 @@ CMD ["node", "server.js"]
 werf export myapp --repo example.org/myproject --tag other.example.org/myproject/myapp:latest
 ```
 
-As a result of running the above command, the `other.example.org/myproject/myapp:latest` application image will be published and ready to be deployed by a third-party software.
+As a result of running the above command, the `other.example.org/myproject/myapp:latest` application image will be published and ready to be deployed by third-party software.
 
 ## Example of bundle distribution
 
-In the most basic case, three files and one `werf bundle publish` command running in the application's Git repository are enough to distributing the bundle to be deployed with werf, hooking it up as a dependent bundle, or deploying it as a chart by a third-party software:
+In the most basic case, three files and one `werf bundle publish` command running in the application's Git repository are enough to distribute the bundle to be deployed with werf, hooking it up as a dependent bundle, or deploying it as a chart by third-party software:
 
 ```yaml
 # werf.yaml:
@@ -92,4 +92,4 @@ werf bundle publish --repo example.org/bundles/mybundle
 
 As a result of running the above command, the application image will be built, followed by publishing the `example.org/bundles/mybundle:latest` bundle and the corresponding built image.
 
-The published bundle can then be deployed with `werf bundle apply`, linked as a dependent bundle, or deployed as a regular bundle by a third-party software.
+The published bundle can then be deployed with `werf bundle apply`, linked as a dependent bundle, or deployed as a regular bundle by third-party software.
