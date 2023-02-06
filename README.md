@@ -11,12 +11,15 @@
   <a href="CODE_OF_CONDUCT.md"><img src="https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg" alt="Contributor Covenant"></a>
 </p>
 
-werf is a CNCF sandbox cross-platform CLI tool to easily implement best-practice full-cycle CI/CD to Kubernetes.  werf integrates in your CI system and leverages familiar and reliable technologies like Dockerfile, Helm, Git and Buildah.
+werf is a CNCF Sandbox cross-platform CLI tool to implement best-practice full-cycle CI/CD to Kubernetes easily. werf integrates into your CI system and leverages familiar and reliable technologies, such as Git, Dockerfile, Helm, and Buildah.
 
-- **Complete application lifecycle management**: build and publish images, test, deploy an application to Kubernetes, distribute release artifacts and cleanup container registry.
-- **Easy to use**: Dockerfiles and Helm chart for configuration and werf for handling all the rest.
+What makes werf special:
+
+- **Complete application lifecycle management**: build and publish container images, test, deploy an application to Kubernetes, distribute release artifacts and clean up the container registry.
+- **Easy to use**: use Dockerfiles and Helm chart for configuration and let werf handle all the rest.
 - **Gluing common technologies**: Git, Buildah, Helm, Kubernetes, and your CI system of choice.
-- **Features**: an advanced caching system, builds’ reproducibility via Giterminism (using Git as a single source of truth), content-based tagging, enhanced resource tracking in Helm, unique container registry cleanup approach and more.
+- **Facilitating best practices** via built-in features: an advanced caching system, builds’ reproducibility via Giterminism (using Git as a single source of truth), content-based tagging, enhanced resource tracking in Helm, unique container registry cleanup approach, and more.
+- **Production-ready**: werf has been used in production since 2017; thousands of projects rely on it to build & deploy various apps.
 
 ## Quickstart
 
@@ -24,11 +27,13 @@ The [quickstart guide](https://werf.io/documentation/quickstart.html) shows how 
 
 ## Installation
 
-The [installation guide](https://werf.io/documentation/installation.html) helps set up and use werf both locally and in a CI-system.
+The [installation guide](https://werf.io/installation.html) helps set up and use werf both locally and in your CI system.
 
 ## Documentation
 
-Detailed usage and reference are available in [documentation](https://werf.io/documentation/) in multiple languages. All the necessary knowledge about application delivery in Kubernetes developers can find in our [guides](https://werf.io/guides.html) for most popular frameworks.
+Detailed usage and reference for werf are available in [documentation](https://werf.io/documentation/) in multiple languages.
+
+Developers can get all the necessary knowledge about application delivery in Kubernetes (including basic understanding of K8s primitives) in the [werf guides](https://werf.io/guides.html). They provide ready-to-use examples for popular frameworks, including Node.js (JavaScript), Spring Boot (Java), Django (Python), Rails (Ruby), and Laravel (PHP).
 
 ## Community & support
 
