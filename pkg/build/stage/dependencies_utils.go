@@ -20,7 +20,6 @@ func ResolveDependenciesArgs(dependencies []*config.Dependency, c Conveyor) map[
 	for _, dep := range dependencies {
 		depImageName := c.GetImageNameForLastImageStage(dep.ImageName)
 		depImageID := c.GetImageIDForLastImageStage(dep.ImageName)
-		depImageDigest := c.GetImageDigestForLastImageStage(dep.ImageName)
 		depImageRepo, depImageTag := image.ParseRepositoryAndTag(depImageName)
 
 		for _, imp := range dep.Imports {
@@ -33,8 +32,6 @@ func ResolveDependenciesArgs(dependencies []*config.Dependency, c Conveyor) map[
 				resolved[imp.TargetBuildArg] = depImageName
 			case config.ImageIDImport:
 				resolved[imp.TargetBuildArg] = depImageID
-			case config.ImageDigestImport:
-				resolved[imp.TargetBuildArg] = depImageDigest
 			}
 		}
 	}
