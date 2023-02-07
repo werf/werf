@@ -708,10 +708,16 @@ entries:
               - title: Release management
                 url: /usage/deploy/releases.html
 
-#          - title: Distribute
-#            f:
-#              - title: Bundles
-#                url: /usage/distribute/bundles.html
+          - title: Distribute
+            f:
+              - title: Overview
+                url: /usage/distribute/overview.html
+
+              - title: Images
+                url: /usage/distribute/bundles.html
+
+              - title: Bundles
+                url: /usage/distribute/bundles.html
 
           - title: Cleanup
             f:
@@ -775,7 +781,7 @@ entries:
               - title: Образы и зависимости
                 url: /usage/build/images.html
 
-              - title: Конфигурация образов stapel
+              - title: Конфигурация образов Stapel
                 f:
                   - title: Обзор
                     url: /usage/build/stapel/overview.html
@@ -852,7 +858,7 @@ entries:
               - title: Автоматическая очистка хоста
                 url: /usage/cleanup/host_cleanup.html
 
-          - title: Интеграция с CI/CD системами
+          - title: Интеграция с CI/CD-системами
             url: /usage/integration_with_ci_cd_systems.html
 
       - title: Справочник
