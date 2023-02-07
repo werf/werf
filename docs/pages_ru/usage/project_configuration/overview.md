@@ -1,7 +1,6 @@
 ---
 title: Обзор
 permalink: usage/project_configuration/overview.html
-change_canonical: true
 ---
 
 werf следует принципам подхода IaC (Infrastructure as Code) и стимулирует пользователя хранить конфигурацию доставки проекта вместе с кодом приложения в Git и осознанно использовать внешние зависимости. 
