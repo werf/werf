@@ -1,7 +1,6 @@
 ---
 title: Bundles
 permalink: usage/distribute/bundles.html
-published: false
 ---
 
 ## Bundles and charts
