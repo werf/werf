@@ -78,10 +78,16 @@ entries:
               - title: Release management
                 url: /usage/deploy/releases.html
 
-#          - title: Distribute
-#            f:
-#              - title: Bundles
-#                url: /usage/distribute/bundles.html
+          - title: Distribute
+            f:
+              - title: Overview
+                url: /usage/distribute/overview.html
+
+              - title: Images
+                url: /usage/distribute/bundles.html
+
+              - title: Bundles
+                url: /usage/distribute/bundles.html
 
           - title: Cleanup
             f:
