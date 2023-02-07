@@ -1,7 +1,6 @@
 ---
 title: Overview
 permalink: usage/project_configuration/overview.html
-change_canonical: true
 ---
 
 werf follows the principles of the IaC (Infrastructure as Code) approach and encourages the user to store the project delivery configuration along with the application code in Git and to use external dependencies responsibly.
