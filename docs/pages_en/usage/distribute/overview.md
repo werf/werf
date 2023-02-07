@@ -3,8 +3,6 @@ title: Overview
 permalink: usage/distribute/overview.html
 ---
 
-## What this section is about
-
 The typical werf-based application delivery cycle looks like this: building images, publishing them, and deploying charts. A single run of the `werf converge` command is often enough to do all these things. But sometimes you need to separate the *distribution* of artifacts (images, charts) and their *deployment*, or even to deploy the artifacts without werf at all (using some third-party software).
 
 This section discusses how to distribute images and bundles (charts with optional extra functionality) for subsequent deployment with or without werf. Refer to the Deployment section for instructions on deploying published artifacts.
