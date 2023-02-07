@@ -129,7 +129,7 @@ Here:
 
 ### Including dependent local charts
 
-You can add dependent local charts (or bundles) by placing them in the `charts` directory of the parent chart. In this case, manifests will be generated for both parent and dependent charts, and then merged together for further deployment. No additional configuration is required.
+You can add dependent local charts by placing them in the `charts` directory of the parent chart. In this case, manifests will be generated for both parent and dependent charts, and then merged together for further deployment. No additional configuration is required.
 
 Here is an example of a main chart with local dependent charts:
 
@@ -171,7 +171,7 @@ dependencies:
 ```
 ### Including dependent charts that come from the repository
 
-You can include additional charts (or bundles) from the OCI/HTTP repository by listing them as dependencies in the `dependencies` parameter of the `Chart.yaml` file of the parent chart. In this case, manifests will be generated for both parent and dependent charts and then merged together for further deployment.
+You can include additional charts from the OCI/HTTP repository by listing them as dependencies in the `dependencies` parameter of the `Chart.yaml` file of the parent chart. In this case, manifests will be generated for both parent and dependent charts and then merged together for further deployment.
 
 Here is an example of using a chart that comes from a repository and depends on the main chart:
 
