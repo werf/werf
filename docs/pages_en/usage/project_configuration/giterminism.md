@@ -4,6 +4,12 @@ permalink: usage/project_configuration/giterminism.html
 change_canonical: true
 ---
 
+## About giterminism
+
+To ensure consistency and guarantee reproducibility, werf introduces the so-called mechanism of _giterminism_. Its name comes from a combination of the words `git` and `determinism` and refers to "deterministic Git" mode. In this mode, werf reads the configuration and build context from the current project repository commit and, by default, does not permit the use of external dependencies.
+
+Any user drift from giterminism must be documented in a dedicated `werf-giterminism.yaml` file so that the configuration management process remains meaningful and the usage is transparent to all participants of the delivery cycle.
+
 ## Excluding unused files
 
 werf does not permit working with uncommitted and untracked files in Git. If files are not required, they should be explicitly excluded using the `.gitignore` and `.helmignore` files.
