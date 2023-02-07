@@ -30,14 +30,6 @@ These instructions are defined for the entire application (and all deployment en
 
 > Refer to the corresponding section of the documentation for details on the deployment configuration.
 
-## Giterminism
-
-To ensure consistency and guarantee reproducibility, werf introduces the so-called mechanism of _giterminism_. Its name comes from a combination of the words `git` and `determinism` and refers to "deterministic Git" mode. In this mode, werf reads the configuration and build context from the current project repository commit and, by default, does not permit the use of external dependencies.
-
-
-
-Any user drift from giterminism must be documented in a dedicated `werf-giterminism.yaml` file so that the configuration management process remains meaningful and the usage is transparent to all participants of the delivery cycle.
-
 ## Example of a typical project configuration
 
 ```yaml
