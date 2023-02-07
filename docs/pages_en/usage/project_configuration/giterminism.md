@@ -1,7 +1,6 @@
 ---
 title: Giterminism
 permalink: usage/project_configuration/giterminism.html
-change_canonical: true
 ---
 
 ## About giterminism
