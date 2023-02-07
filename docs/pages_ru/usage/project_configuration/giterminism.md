@@ -1,7 +1,6 @@
 ---
 title: Гитерминизм
 permalink: usage/project_configuration/giterminism.html
-change_canonical: true
 ---
 
 ## О гитерминизме
