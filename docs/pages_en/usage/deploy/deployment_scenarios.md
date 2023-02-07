@@ -8,17 +8,41 @@ permalink: usage/deploy/deployment_scenarios.html
 A normal deployment is carried out by the `werf converge` command. It builds images and deploys the application but requires the application's Git repository to run. Example:
 
 ```shell
-werf converge --repo <repository>
+werf converge --repo example.org/mycompany/myapp
 ```
 
 You can separate the build and deployment steps as follows:
 
 ```shell
-werf build --repo <repository>
+werf build --repo example.org/mycompany/myapp
 ```
 
 ```shell
-werf converge --skip-build --repo <repository>
+werf converge --skip-build --repo example.org/mycompany/myapp
+```
+
+## Deploying using custom image tags
+
+By default, built images are tagged based on their contents. The tag becomes available in Values and allows those images to be used in templates during deployment. But if you want to use a different tag for the images, you can use the `--use-custom-tag` parameter, for example:
+
+```shell
+werf converge --use-custom-tag '%image%-v1.0.0' --repo example.org/mycompany/myapp
+```
+
+Running the command above will result in the images being assembled, tagged with `<name image>-v1.0.0`, and published. The tags of those images will then become available in Values. The final Kubernetes manifests will then be generated and applied based on those tags.
+
+The tag name set by the `--use-custom-tag` parameter supports the `%image%`, `%image_slug%`, and `%image_safe_slug%` patterns to substitute the image name and `%image_content_based_tag%` to substitute the original content-based tag.
+
+> Note that when you set a custom tag, an image with a content-based tag is published as well. Later on, when `werf cleanup` is invoked, the image with the content-based tag and the images with arbitrary tags are deleted together.
+
+You can separate the assembly and deployment steps like this:
+
+```shell
+werf build --add-custom-tag '%image%-v1.0.0' --repo example.org/mycompany/myapp
+```
+
+```shell
+werf converge --skip-build --use-custom-tag '%image%-v1.0.0' --repo example.org/mycompany/myapp
 ```
 
 ## Deploying without access to the application's Git repository
@@ -34,13 +58,13 @@ To deploy the application with no access to the application's Git repository, fo
 The first two steps are carried out by the `werf bundle publish` command from the application's Git repository, for example:
 
 ```shell
-werf bundle publish --tag latest --repo <repository>
+werf bundle publish --tag latest --repo example.org/mycompany/myapp
 ```
 
 The third step is carried out by the `werf bundle apply` command, but you don't have to be in the application's Git repository; for example:
 
 ```shell
-werf bundle apply --tag latest --release myapp --namespace myapp-production --repo <репозиторий>
+werf bundle apply --tag latest --release myapp --namespace myapp-production --repo example.org/mycompany/myapp
 ```
 
 You will end up with the same result as with `werf converge`.
@@ -48,11 +72,61 @@ You will end up with the same result as with `werf converge`.
 You can separate the first and second steps as follows:
 
 ```shell
-werf build --repo <repository>
+werf build --repo example.org/mycompany/myapp
 ```
 
 ```
-werf bundle publish --skip-build --tag latest --repo <repository>
+werf bundle publish --skip-build --tag latest --repo example.org/mycompany/myapp
+```
+
+## Deploying without access to an application's Git repository and Container Registry
+
+Follow these five steps to deploy an application with no access to the application's Git repository and the container registry:
+
+1. Build images and publish them to the Container Registry of the application.
+
+2. Publish the main chart and the parameters passed to it as a *bundle* in the OCI repository. The bundle contains pointers to the images published in the first step.
+
+3. Export the bundle and its related images to a local archive.
+
+4. Import the archived bundle and its images into the container registry accessible from the Kubernetes cluster used for deployment.
+
+5. Apply the bundle published in the new container registry to the cluster.
+
+The first two steps are handled by the `werf bundle publish` command running in the application's Git repository, for example:
+
+```shell
+werf bundle publish --tag latest --repo example.org/mycompany/myapp
+```
+
+The third step is handled by the `werf bundle copy` command (no need to be in the application's Git repository), for example:
+
+```shell
+werf bundle copy --from example.org/mycompany/myapp:latest --to archive:myapp-latest.tar.gz
+```
+
+The local `myapp-latest.tar.gz` archive can now easily be pushed to the container registry used for deployment to the Kubernetes cluster, and again the `werf bundle copy` command comes into play, for example:
+
+```shell
+werf bundle copy --from archive:myapp-latest.tar.gz --to registry.internal/mycompany/myapp:latest
+```
+
+As a result, the bundle and its associated images will be published to the new container registry accessible from the Kubernetes cluster. All that remains is to deploy the published bundle to the cluster using the `werf bundle apply` command like this:
+
+```shell
+werf bundle apply --tag latest --release myapp --namespace myapp-production --repo registry.internal/mycompany/myapp
+```
+
+This step no longer requires access to either the application's Git repository or its original container registry. The end result of deploying the bundle will be the same as when using `werf converge'.
+
+You can separate the first and second step, if necessary:
+
+```shell
+werf build --repo example.org/mycompany/myapp
+```
+
+```
+werf bundle publish --skip-build --tag latest --repo example.org/mycompany/myapp
 ```
 
 ## Deploying with a third-party tool
@@ -68,7 +142,7 @@ To apply the final application manifests with a tool other than werf (kubectl, H
 The first two steps are carried out by the `werf render` command from the application's Git repository:
 
 ```shell
-werf render --output manifests.yaml --repo <repository>
+werf render --output manifests.yaml --repo example.org/mycompany/myapp
 ```
 
 You can now pass the rendered manifests to a third-party tool for deployment:
@@ -82,11 +156,11 @@ kubectl apply -f manifests.yaml
 You can separate the first and second steps as follows:
 
 ```shell
-werf build --repo <repository>
+werf build --repo example.org/mycompany/myapp
 ```
 
 ```
-werf render --skip-build --output manifests.yaml --repo <repository>
+werf render --skip-build --output manifests.yaml --repo example.org/mycompany/myapp
 ```
 
 ## Deploying with a third-party tool without access to the application's Git repository
@@ -104,13 +178,13 @@ To deploy the application using some third-party tool (kubectl, Helm, etc.), and
 The first two steps are carried out by the `werf bundle publish` command from the application's Git repository:
 
 ```shell
-werf bundle publish --tag latest --repo <repository>
+werf bundle publish --tag latest --repo example.org/mycompany/myapp
 ```
 
 The third step is carried out by the `werf bundle render` command, but this time, you don't have to be in the application's Git repository; for example:
 
 ```shell
-werf bundle render --output manifests.yaml --tag latest --release myapp --namespace myapp-production --repo <repository>
+werf bundle render --output manifests.yaml --tag latest --release myapp --namespace myapp-production --repo example.org/mycompany/myapp
 ```
 
 You can now pass the rendered manifests to a third-party tool for deployment, e.g.:
@@ -124,11 +198,11 @@ kubectl apply -f manifests.yaml
 You can separate the first and second steps as follows:
 
 ```shell
-werf build --repo <repository>
+werf build --repo example.org/mycompany/myapp
 ```
 
 ```
-werf bundle publish --skip-build --tag latest --repo <repository>
+werf bundle publish --skip-build --tag latest --repo example.org/mycompany/myapp
 ```
 
 ## Deleting a deployed application
