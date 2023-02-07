@@ -7,8 +7,8 @@ directive_summary: shell_and_ansible
 ## What are user stages?
 
 ***User stage*** is a stage containing _assembly instructions_ from the config.
-Currently, there are two kinds of assembly instructions: _shell_ and _ansible_. werf provides four user stages and executes them in the following order: _beforeInstall_, _install_, _beforeSetup_, and _setup_. You can create a specific Docker layer by executing assembly instructions in the corresponding stage.
 
+Currently, there are two kinds of assembly instructions: _shell_ and _ansible_. werf provides four user stages and executes them in the following order: _beforeInstall_, _install_, _beforeSetup_, and _setup_. You can create a specific Docker layer by executing assembly instructions in the corresponding stage.
 
 ## Using user stages
 
@@ -26,6 +26,42 @@ What is the best strategy for carrying them out? You might think the best way is
 - use the _install_ user stage to install system and application dependencies;
 - use the _beforeSetup_ user stage to configure system parameters and install an application;
 - use the _setup_ user stage to configure an application.
+
+<div class="details">
+<a href="javascript:void(0)" class="details__summary">How the Stapel stage assembly works</a>
+<div class="details__content" markdown="1">
+
+When building a stage, the stage instructions are supposed to run in a container based on the previous built stage or [base image]({{"usage/build/stapel/base.html#from-from-flatest" | true_relative_url }}). We will further refer to such a container as a **build container**.
+
+Before running the _build container_, werf prepares a set of instructions. This set depends on the stage type and contains both werf service commands and user commands specified in the `werf.yaml` config file. The service commands may include, for example, adding files, applying patches, running Ansible jobs, etc.
+
+The Stapel builder uses its own set of tools and libraries and does not depend on the base image in any way. When the _build container_ is started, werf mounts everything it needs from the special service image named `registry.werf.io/werf/stapel`.
+
+The _build container_ [gets the socket to communicate with the SSH-agent on the host](#how-to-use-the-ssh-agent-in-build-instructions); [custom mounts]({{"usage/build/stapel/mounts.html" | true_relative_url }}) can also be used.
+
+
+
+It is also worth noting that werf ignores some of the base image manifest parameters when building, replacing them with the following values:
+- `--user=0:0`;
+- `--workdir=/`;
+- `--entrypoint=/.werf/stapel/embedded/bin/bash`.
+
+So the start of the _build container_ of some arbitrary stage typically looks as follows:
+
+```shell
+docker run \
+  --volume=/tmp/ssh-ln8yCMlFLZob/agent.17554:/.werf/tmp/ssh-auth-sock \
+  --volumes-from=stapel_0.6.1 \
+  --env=SSH_AUTH_SOCK=/.werf/tmp/ssh-auth-sock \
+  --user=0:0 \
+  --workdir=/ \
+  --entrypoint=/.werf/stapel/embedded/bin/bash \
+  sha256:d6e46aa2470df1d32034c6707c8041158b652f38d2a9ae3d7ad7e7532d22ebe0 \
+  -ec eval $(echo c2V0IC14 | /.werf/stapel/embedded/bin/base64 --decode)
+```
+
+</div>
+</div>
 
 ### beforeInstall
 
@@ -510,3 +546,21 @@ shell:
 {% endraw %}
 
 The build script can be used to download the `some-library-latest.tar.gz` archive and then run the `werf build` command. Any changes to the file will trigger the rebuild of the _install user stage_ and all the subsequent stages.
+
+## How to use the SSH agent in build instructions
+
+Working with remote Git repositories relies on the `SSH_AUTH_SOCK` UNIX socket, which is mounted in all build containers. This way, the build instructions can use the SSH agent over the specified UNIX socket.
+
+> **NOTE** There is a restriction that only the `root` user inside the build container can access the UNIX socket defined by the `SSH_AUTH_SOCK` environment variable.
+
+By default (if no parameters are specified), werf tries to use the SSH-agent running on the system by checking its availability via the `SSH_AUTH_SOCK` environment variable.
+
+If no SSH agent is running on the system, werf tries to act as an SSH client, using the user's default SSH key (`~/.ssh/id_rsa|id_dsa`). If werf finds one of these files, it runs a temporary SSH agent and adds to it the keys it has found. 
+
+You have to specify the `--ssh-key PRIVATE_KEY_FILE_PATH` startup option to use specific SSH keys only (you can use this option more than once to specify multiple SSH keys). In this case, werf runs a temporary SSH agent and adds to it only the specified SSH keys.
+
+### Temporary SSH agent
+
+werf can start a temporary SSH agent to run some commands. Such an SSH agent is terminated when the corresponding werf command finishes its work.
+
+If there is an SSH agent running on the system, the temporary SSH agent started by werf does not conflict with the one running on the system.
