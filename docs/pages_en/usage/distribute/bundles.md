@@ -1,7 +1,6 @@
 ---
 title: Bundles
 permalink: usage/distribute/bundles.html
-change_canonical: true
 published: false
 ---
 
