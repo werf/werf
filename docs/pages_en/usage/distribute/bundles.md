@@ -5,206 +5,158 @@ change_canonical: true
 published: false
 ---
 
-Standard werf usage flow implies usage of [werf-converge]({{ "/reference/cli/werf_converge.html" | true_relative_url }}) command to deploy a new version of your application into kubernetes. werf-converge command consists of:
- - building and publishing needed images into the container registry;
- - actualizing application running in the kubernetes cluster.
+## Bundles and charts
 
-werf allows splitting the process of releasing a new application version and deploy process of this new version into the kubernetes with so called **bundles**.
+The *charts* in werf are Helm charts with some extra capabilities. *Bundles* in werf are essentially charts in the OCI repository which are used for the same purposes as regular charts, but provide a range of additional features:
 
-**Bundle** is a collection of images and deployment configurations of the application version published into the container registry, which is ready to be deployed into the kubernetes cluster. Deployment of an application with bundles implies 2 steps:
- 1. Publishing of a bundle version.
- 2. Deploying of a bundle into the kubernetes.
+* saving the names of the images being built and their dynamic tags in the bundle Values;
 
-Bundles allow implementing hybrid push-pull model to deploy an application. Publishing of a bundle version is the push part, while deploying of a bundle into the kubernetes is the pull part.
+* copying both the bundle and its related assembled images to another repository and automatically updating the paths to those images in the bundle Values using a single `werf bundle copy` command;
 
-**Note**. At the moment there is no bundle operator for kubernetes, to allow fully automatic bundles deployment, but it will be added. Also, there will be an ability to auto update a bundle [by semver constraint](#deployment-by-semver-constraint).
+* saving global user and service annotations and labels for resources in the bundle;
 
-## Bundles publication
+* saving the Values passed via command line parameters or environment variables in the bundle.
 
-werf publishes bundles with the [werf-bundle-publish]({{ "/reference/cli/werf_bundle_apply.html" | true_relative_url }}) command. This command accepts arguments analogous to the [werf-converge]({{ "/reference/cli/werf_converge.html" | true_relative_url }}) command and **requires project git directory** to run.
+*Any* chart published to the OCI repository is a bundle. *Any* bundle is also a chart, although when used as a regular chart, some of its advanced features, such as saved global service annotations, will not be available.
 
-werf-bundle-publish command consists of:
- - building and publishing needed images into the container registry (the same way werf-converge does);
- - publishing of project's [helm chart]({{ "/usage/deploy/charts.html" | true_relative_url }}) files into the container registry;
- - saving of passed [helm chart values]({{ "/usage/deploy/values.html" | true_relative_url }}) params in the published bundle;
- - saving of passed annotations and labels in the published bundle.
+The `werf bundle publish` command is used to publish both charts and bundles. It publishes the bundle specifically, but the bundle can be used both as a bundle and as a chart since a bundle is an enhanced version of a chart.
 
-### Bundle structure
+## Publishing a bundle
 
-Before publication we have a regular chart in werf project, which looks like follows:
+You can publish the bundle to the OCI repository as follows:
 
-```
-.helm/
-  Chart.yaml
-  LICENSE
-  README.md
-  values.yaml
-  values.schema.json
-  templates/
-  crds/
-  charts/
-  files/
-```
+1. Create `werf.yaml` if it does not exist:
 
-Only specified above files and directories will be packaged into bundle during publication by default.
+   ```yaml
+   # werf.yaml:
+   project: mybundle
+   configVersion: 1
+   ```
 
-`.helm/files` is conventional directory which should contain configuration files which used in the `.Files.Get` and `.Files.Glob` directives.
+2. Put the bundle files in the main chart directory (by default, `.helm` in the Git repository root). Note that *only* the following files and directories will be included in the bundle when you publish it:
 
-`.helm/values.yaml` will be merged with werf's internal service values and another custom values and sets passed to the publish command and then saved into resulting bundle file `values.yaml`. Using of default `.helm/values.yaml` can be disabled with `--disable-default-values` option passed to `werf bundle publish` (in such case resulting bundle `values.yaml` would still exist in the published bundle and contain merged service values and another custom values and sets passwed to the publish command).
+   ```
+   .helm/
+     charts/
+     templates/
+     crds/
+     files/
+     Chart.yaml
+     values.yaml
+     values.schema.json
+     LICENSE
+     README.md
+   ```
 
-Published bundle file structure looks like follows:
+   To include additional files/directories in the bundle, set the environment variable `WERF_BUNDLE_SCHEMA_NONSTRICT=1`. In this case, *all* files and directories in the main chart directory will be published, not just the ones mentioned above.
 
-```
-Chart.yaml
-LICENSE
-README.md
-values.yaml
-values.schema.json
-templates/
-crds/
-charts/
-files/
-extra_annotations.json
-extra_labels.json
-```
+3. The next step is to build and publish the images defined in `werf.yaml` (if any), and then publish the contents of `.helm` as a `example.org/bundles/mybundle:latest` bundle in the form of an OCI image:
 
-Note `extra_annotations.json` and `extra_labels.json` service werf's files, which used to store default extra annotations and labels that should be appended to each deployed resource when applying bundle with the `werf bundle apply` command.
+   ```shell
+   werf bundle publish --repo example.org/bundles/mybundle
+   ```
 
-To download and inspect published bundle use `werf bundle copy --from REPO:TAG --to archive:PATH_TO_ARCHIVE.tar.gz` command.
+## Publishing multiple bundles from a single Git repository
 
-### Versioning during publication
-
-User may choose a version of published bundle with `--tag` parameter. By default, bundle published with the `latest` tag.
-
-When publishing a bundle by the tag which already exists in the container registry, werf will replace an existing bundle with the newer version. This ability could be used for automatic updates of the application when a newer application bundle version is available in the container registry. More info in the [auto updates of bundles](#auto-updates-of-bundles).
-
-## Bundles deployment
-
-Bundle published into the container registry could be deployed into the kubernetes by the werf with one of the following ways:
- 1. With `werf bundle apply` command directly from container registry.
- 2. From another werf project as helm chart dependency.
-
-### Deploy with werf bundle apply
-
-[werf-bundle-apply]({{ "/reference/cli/werf_bundle_apply.html" | true_relative_url }}) command used to deploy a published bundle version into the kubernetes. This command **does not need a project git directory** to run, because bundle contains all needed files and images to deploy an application. This command accepts params which is analogous to [werf-converge]({{ "/reference/cli/werf_converge.html" | true_relative_url }}) command. For `werf bundle apply` you should explicitly specify Helm release name (`--release`) and namespace to be used for deployment (`--namespace`).
-
-[Values for helm chart]({{ "/usage/deploy/values.html" | true_relative_url }}), annotations and labels which has been passed to the [werf-bundle-apply]({{ "/reference/cli/werf_bundle_apply.html" | true_relative_url }}) command will be united with the values, annotations and labels, which has been passed during publication of the bundle being applied.
-
-### Deploy as helm chart dependency
-
-Configure dependency in the target werf project `.helm/Chart.yaml`:
-
-```yaml
-apiVersion: v2
-dependencies:
-- name: project
-  repository: "oci://ghcr.io/group"
-  version: 1.4.x
-```
-
-Update project chart dependencies (this command will actualize `.helm/Chart.lock`):
+Place the `.helm` file with the bundle contents and its corresponding `werf.yaml` in a separate directory for each bundle:
 
 ```
-werf helm dependency update .helm
+bundle1/
+  .helm/
+    templates/
+    ...
+  werf.yaml
+bundle2/
+  .helm/
+    templates/
+    ...
+  werf.yaml
 ```
 
-Deploy project with dependencies:
+You can now publish each bundle individually:
 
-```
-werf converge --repo ghcr.io/group/otherproject
-```
+```shell
+cd bundle1
+werf bundle publish --repo example.org/bundles/bundle1
 
-### Versioning during deployment
-
-User may choose a version of deployed bundle with `--tag` parameter. By default, bundle with the `latest` tag will be deployed.
-
-werf will check that bundle has been updated in the container registry for the specified tag (or `latest`) and update an application to the latest published bundle version. This ability could be used for automatic updates of the application when a newer application bundle version is available in the container registry. More info in the [auto updating bundles](#auto-updates-of-bundles).
-
-## Other commands to work with bundles
-
-### Render bundle manifests
-
-[`werf bundle render`]({{ "/reference/cli/werf_bundle_render.html" | true_relative_url }}) command renders Kubernetes manifests that can be passed to other software which will handle the deployment part (e.g. ArgoCD) or can be used just for the debugging.
-
-Command **does not require project git directory**. One of the two options has to be specified:
-1. `--repo`, to render bundle from the remote OCI-repository.
-2. or `--bundle-dir`, to render bundle from the directory containing the extracted bundle.
-
-If you are going to deploy resulting manifests, then you should provide values for the options `--release` and `--namespace`, otherwise stub values will be used for them.
-
-Option `--output` might be used to save rendered manifests to an arbitrary file.
-
-### Export bundle into the directory
-
-[werf-bundle-export]({{ "/reference/cli/werf_bundle_export.html" | true_relative_url }}) command will create bundle directory in the same way as it will be published into the container registry.
-
-This command works the same way as [werf-bundle-publish]({{ "/reference/cli/werf_bundle_publish.html" | true_relative_url }}), has the same parameters and **requires project git directory** to run.
-
-This command is useful to inspect a bundle before publishing and for debug purposes.
-
-### Download published bundle
-
-[werf-bundle-download]({{ "/reference/cli/werf_bundle_download.html" | true_relative_url }}) command allows downloading published bundle into the directory.
-
-This command works the same way as [werf-bundle-apply]({{ "/reference/cli/werf_bundle_apply.html" | true_relative_url }}) does, has the same parameters and **does not need a project git directory** to run.
-
-This command is useful to inspect a published bundle and for debug purposes.
-
-## Examples
-
-Let's publish bundle of the application by some semver version, run in the project git directory:
-
-```
-git checkout v3.5.0
-werf bundle publish --repo registry.mydomain.io/project --tag v3.5.0 --add-label "project-version=v3.5.0"
+cd ../bundle2
+werf bundle publish --repo example.org/bundles/bundle2
 ```
 
-Let's publish bundle of the application by static tag `main`, run in the project git directory:
+## Excluding files or directories from the bundle
 
-```
-git checkout main
-werf bundle publish --repo registry.mydomain.io/project --tag main --set "myvalue.x=150"
-```
+The `.helmignore` file at the bundle root can include filename filters that prevent files or directories from being added to the bundle when it is published. The rules format is the same as [in .gitignore](https://git-scm.com/docs/gitignore) except for the following:
 
-Let's deploy published bundle by the `v3.4.9` tag, run on an arbitrary host with access to the kubernetes and container registry:
+- `**` is not supported;
 
-```
-werf bundle apply --repo registry.mydomain.io/project --tag v3.4.9 --env production --release myproject --namespace myproject --set "sentry.url=sentry.mydomain.io"
-```
+- `!` at the beginning of a line is not supported;
 
-## Auto updates of bundles
+- `.helmignore` does not exclude itself by default.
 
-werf supports automatical redeployment of the bundle, which has been published by some statical tag like `latest` or `main`. werf will update bundle by such tag in the container registry each time publish command has been called.
+Also, the `--disable-default-values` flag for the `werf bundle publish` command excludes the `values.yaml` file from the bundle being published.
 
-When deploying bundle by such tag werf will download the latest actual version of the bundle published into the container registry.
+## Bundle versioning
 
-### Deployment by semver constraint
+By default, the bundle is tagged as `latest` when published. You can specify a different tag, e.g., a semantic version for the published package, using the `--tag` option:
 
-Auto updates by semver constraint is not supported yet, but [planned](https://github.com/werf/werf/issues/3169):
-
-```
-werf bundle apply --repo registry.mydomain.io/project --tag-mask v3.5.* --release myproject --namespace myproject
+```shell
+werf bundle publish --repo example.org/bundles/mybundle --tag v1.0.0
 ```
 
-This bundle apply should check available versions by specified mask `v3.5.*`, select latest version then deploy this version into the kubernetes.
+Running the command above will result in the `example.org/bundles/mybundle:v1.0.0` bundle being published.
 
-## Supported container registries
+If the OCI repository finds that a bundle with this tag already exists, the bundle in the repository will be overwritten.
 
-The [Open Container Initiative (OCI) Image Spec](https://github.com/opencontainers/image-spec) support in the container registry is sufficient to work with bundles.
+## Copying the bundle and its images to a different repository
 
-|                             |                   |
-|-----------------------------|:-----------------:|
-| _AWS ECR_                   |      **ok**       |
-| _Azure CR_                  |      **ok**       |
-| _Default_                   |      **ok**       |
-| _Docker Hub_                |      **ok**       |
-| _GCR_                       |      **ok**       |
-| _GitHub Packages_           |      **ok**       |
-| _GitLab Registry_           |      **ok**       |
-| _Harbor_                    |      **ok**       |
-| _JFrog Artifactory_         |      **ok**       |
-| _Nexus_                     |  **not tested**   |
-| _Quay_                      | **not supported** |
-| _Yandex Container Registry_ |      **ok**       |
-| _Selectel CRaaS_            |  **not tested**   |
+The `werf bundle copy` command provides a convenient way to copy the bundle and its related built images to another repository. Besides copying the bundle and images, this command will also update the Values stored in the bundle, which contain the path to the images.
 
+Example:
+
+```shell
+werf bundle copy --from example.org/bundles/mybundle:v1.0.0 --to other.example.org/bundles/mybundle:v1.0.0
+```
+
+## Changing the name or tag of a published bundle
+
+To change the name or tag of a published bundle, copy it under the new name/tag using the `werf bundle copy` command, for example:
+
+```shell
+werf bundle copy --from example.org/bundles/mybundle:v1.0.0 --to example.org/bundles/renamedbundle:v2.0.0
+```
+
+## Exporting the bundle and its images from the repository to an archive
+
+After publication, the bundle and its related images can be exported from the repository to a local archive for distribution by other means using the `werf bundle copy` command, for example:
+
+```shell
+werf bundle copy --from example.org/bundles/mybundle:v1.0.0 --to archive:archive.tar.gz
+```
+
+## Importing the bundle and its images from the archive to the repository
+
+The bundle and its related images can be imported back into the same or another OCI repository using the `werf bundle copy` command, for example:
+
+```shell
+werf bundle copy --from archive:archive.tar.gz --to other.example.org/bundles/mybundle:v1.0.0
+```
+
+Then the newly published bundle and its images can be used as usual again.
+
+## Container registries that support the publication of bundles
+
+Publishing bundles requires a container registry to support the OCI ([Open Container Initiative](https://github.com/opencontainers/image-spec)) specification. Below is a list of the most popular container registries that have been tested and found to be compatible:
+
+| Container Registry        | Supports bundle publishing      |
+| ------------------------- |:-------------------------------:|
+| AWS ECR                   | +                               |
+| Azure CR                  | +                               |
+| Docker Hub                | +                               |
+| GCR                       | +                               |
+| GitHub Packages           | +                               |
+| GitLab Registry           | +                               |
+| Harbor                    | +                               |
+| JFrog Artifactory         | +                               |
+| Yandex Container Registry | +                               |
+| Nexus                     | +                               |
+| Quay                      | -                               |
