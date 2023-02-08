@@ -268,7 +268,7 @@ werf compose down [IMAGE_NAME...] [options] [--docker-compose-options="OPTIONS"]
       --virtual-merge=false
             Enable virtual/ephemeral merge commit mode when building current application state      
             ($WERF_VIRTUAL_MERGE by default)
-      --without-images=false
+      --without-images=true
             Disable building of images defined in the werf.yaml (if any) and usage of such images   
             in the .helm/templates ($WERF_WITHOUT_IMAGES or false by default — e.g. enable all      
             images defined in the werf.yaml by default)
