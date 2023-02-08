@@ -51,7 +51,7 @@ To deploy the application with no access to the application's Git repository, fo
 
 1. Build images and publish them to the container registry.
 
-2. Add the parameters passed to the main chart and publish it in the OCI repository. The chart contains references to the images published in the first step.
+2. Add the passed parameters and publish the main chart to the OCI repository. The chart contains references to the images published in the first step.
 
 3. Apply the published bundle to the cluster.
 
@@ -85,7 +85,7 @@ Follow these five steps to deploy an application with no access to the applicati
 
 1. Build images and publish them to the Container Registry of the application.
 
-2. Add the parameters passed to the main chart and publish it in the OCI repository. The chart contains pointers to the images published in the first step.
+2. Add the passed parameters and publish the main chart to the OCI repository. The chart contains pointers to the images published in the first step.
 
 3. Export the bundle and its related images to a local archive.
 
@@ -169,7 +169,7 @@ To deploy the application using some third-party tool (kubectl, Helm, etc.), and
 
 1. Build images and publish them to the container registry.
 
-2. Add the parameters passed to the main chart and publish it in the OCI repository. The chart contains references to the images published in the first step.
+2. Add the passed parameters and publish the main chart to the OCI repository. The chart contains references to the images published in the first step.
 
 3. Render the final manifests using the bundle.
 
