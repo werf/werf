@@ -89,5 +89,3 @@ werf bundle publish --repo example.org/bundles/mybundle
 ```
 
 The above command will result in the `example.org/bundles/mybundle:latest` chart and its related built image being published.
-
-The published bundle can then be deployed with `werf bundle apply`, linked as a dependent bundle, or deployed as a regular bundle by third-party software.
