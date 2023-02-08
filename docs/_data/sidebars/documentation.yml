@@ -702,6 +702,9 @@ entries:
               - title: Deployment order
                 url: /usage/deploy/deployment_order.html
 
+              - title: Deployment scenarios
+                url: /usage/deploy/deployment_scenarios.html
+
               - title: Resource tracking
                 url: /usage/deploy/tracking.html
 
