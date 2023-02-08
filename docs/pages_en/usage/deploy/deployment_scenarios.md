@@ -51,7 +51,7 @@ To deploy the application with no access to the application's Git repository, fo
 
 1. Build images and publish them to the container registry.
 
-2. Publish the main chart and the parameters passed to it as a *bundle* in the OCI repository. The bundle contains references to the images published in the first step.
+2. Add the parameters passed to the main chart and publish it in the OCI repository. The chart contains references to the images published in the first step.
 
 3. Apply the published bundle to the cluster.
 
@@ -85,7 +85,7 @@ Follow these five steps to deploy an application with no access to the applicati
 
 1. Build images and publish them to the Container Registry of the application.
 
-2. Publish the main chart and the parameters passed to it as a *bundle* in the OCI repository. The bundle contains pointers to the images published in the first step.
+2. Add the parameters passed to the main chart and publish it in the OCI repository. The chart contains pointers to the images published in the first step.
 
 3. Export the bundle and its related images to a local archive.
 
@@ -111,7 +111,7 @@ The local `myapp-latest.tar.gz` archive can now easily be pushed to the containe
 werf bundle copy --from archive:myapp-latest.tar.gz --to registry.internal/mycompany/myapp:latest
 ```
 
-As a result, the bundle and its associated images will be published to the new container registry accessible from the Kubernetes cluster. All that remains is to deploy the published bundle to the cluster using the `werf bundle apply` command like this:
+As a result, the chart and its associated images will be published to the new container registry accessible from the Kubernetes cluster. All that remains is to deploy the published bundle to the cluster using the `werf bundle apply` command like this:
 
 ```shell
 werf bundle apply --tag latest --release myapp --namespace myapp-production --repo registry.internal/mycompany/myapp
@@ -169,7 +169,7 @@ To deploy the application using some third-party tool (kubectl, Helm, etc.), and
 
 1. Build images and publish them to the container registry.
 
-2. Publish the main chart and the parameters passed to it as a *bundle* in the OCI repository. The bundle contains references to the images published in the first step.
+2. Add the parameters passed to the main chart and publish it in the OCI repository. The chart contains references to the images published in the first step.
 
 3. Render the final manifests using the bundle.
 
