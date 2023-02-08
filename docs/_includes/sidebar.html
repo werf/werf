@@ -1,9 +1,13 @@
 {%- assign sidebar = site.data.sidebars[page.sidebar].entries[page.lang] %}
-<ul class="sidebar" id="mysidebar">
-  {%- for entry in sidebar.f %}
-    {% include sidebar_entry.html entry=entry folder_entry_class="sidebar__item sidebar__item_parent" item_entry_class="sidebar__item" %}
-  {%- endfor %}
-</ul>
+<div class="sidebar__wrapper-inner">
+  <nav class="sidebar__container">
+    <ul class="sidebar" id="mysidebar">
+      {%- for entry in sidebar.f %}
+        {% include sidebar_entry.html entry=entry folder_entry_class="sidebar__item sidebar__item_parent" item_entry_class="sidebar__item" %}
+      {%- endfor %}
+    </ul>
+  </nav>
+</div>
 
 <!-- this highlights the active parent class in the navgoco sidebar. this is critical so that the parent expands when you're viewing a page. This must appear below the sidebar code above. Otherwise, if placed inside customscripts.js, the script runs before the sidebar code runs and the class never gets inserted.-->
 <script>$("li.active").parents('li').toggleClass("active");</script>
