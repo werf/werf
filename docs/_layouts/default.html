@@ -7,7 +7,7 @@
       // Initialize navgoco with default options
       $("#mysidebar").navgoco({
         caretHtml: '',
-        accordion: true,
+        accordion: false,
         openClass: 'active', // open
         save: false, // leave false or nav highlighting doesn't work right
         cookie: {
@@ -30,7 +30,7 @@
         e.preventDefault();
         $("#mysidebar").navgoco('toggle', true);
       });
-
+      $("#mysidebar").navgoco('toggle', true, 0, 7, 45);
     });
 
   </script>
