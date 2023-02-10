@@ -46,6 +46,8 @@ werf helm template [NAME] [CHART] [flags] [options]
             create the release namespace if not present
       --dependency-update=false
             update dependencies if they are missing before installing the chart
+      --deploy-report-path=''
+            save deploy report in JSON to the specified path
       --description=''
             add a custom description
       --devel=false
