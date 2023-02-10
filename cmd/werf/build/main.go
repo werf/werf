@@ -99,8 +99,10 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupKubeConfigBase64(&commonCmdData, cmd)
 	common.SetupKubeContext(&commonCmdData, cmd)
 
-	common.SetupReportPath(&commonCmdData, cmd)
-	common.SetupReportFormat(&commonCmdData, cmd)
+	common.SetupDeprecatedReportPath(&commonCmdData, cmd)
+	common.SetupDeprecatedReportFormat(&commonCmdData, cmd)
+	common.SetupBuildReportPath(&commonCmdData, cmd)
+	common.SetupBuildReportFormat(&commonCmdData, cmd)
 
 	common.SetupAddCustomTag(&commonCmdData, cmd)
 	common.SetupVirtualMerge(&commonCmdData, cmd)
@@ -236,7 +238,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 
 	storageManager := manager.NewStorageManager(projectName, stagesStorage, finalStagesStorage, secondaryStagesStorageList, cacheStagesStorageList, storageLockManager)
 
-	buildOptions, err := common.GetBuildOptions(&commonCmdData, giterminismManager, werfConfig)
+	buildOptions, err := common.GetBuildOptions(ctx, &commonCmdData, giterminismManager, werfConfig)
 	if err != nil {
 		return err
 	}

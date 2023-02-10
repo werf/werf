@@ -159,8 +159,11 @@ werf converge --repo registry.mydomain.com/web --env production`,
 	commonCmdData.SetupDisableDefaultSecretValues(cmd)
 	commonCmdData.SetupSkipDependenciesRepoRefresh(cmd)
 
-	common.SetupReportPath(&commonCmdData, cmd)
-	common.SetupReportFormat(&commonCmdData, cmd)
+	common.SetupDeprecatedReportPath(&commonCmdData, cmd)
+	common.SetupDeprecatedReportFormat(&commonCmdData, cmd)
+	common.SetupBuildReportPath(&commonCmdData, cmd)
+	common.SetupBuildReportFormat(&commonCmdData, cmd)
+	common.SetupDeployReportPath(&commonCmdData, cmd)
 
 	common.SetupUseCustomTag(&commonCmdData, cmd)
 	common.SetupAddCustomTag(&commonCmdData, cmd)
@@ -287,7 +290,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
-	buildOptions, err := common.GetBuildOptions(&commonCmdData, giterminismManager, werfConfig)
+	buildOptions, err := common.GetBuildOptions(ctx, &commonCmdData, giterminismManager, werfConfig)
 	if err != nil {
 		return err
 	}
@@ -483,6 +486,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		Timeout:                     common.NewDuration(time.Duration(cmdData.Timeout) * time.Second),
 		IgnorePending:               common.NewBool(true),
 		CleanupOnFail:               common.NewBool(true),
+		DeployReportPath:            commonCmdData.DeployReportPath,
 	})
 
 	return command_helpers.LockReleaseWrapper(ctx, releaseName, lockManager, func() error {

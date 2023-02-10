@@ -137,8 +137,10 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	commonCmdData.SetupDisableDefaultSecretValues(cmd)
 	commonCmdData.SetupSkipDependenciesRepoRefresh(cmd)
 
-	common.SetupReportPath(&commonCmdData, cmd)
-	common.SetupReportFormat(&commonCmdData, cmd)
+	common.SetupDeprecatedReportPath(&commonCmdData, cmd)
+	common.SetupDeprecatedReportFormat(&commonCmdData, cmd)
+	common.SetupBuildReportPath(&commonCmdData, cmd)
+	common.SetupBuildReportFormat(&commonCmdData, cmd)
 
 	common.SetupUseCustomTag(&commonCmdData, cmd)
 	common.SetupVirtualMerge(&commonCmdData, cmd)
@@ -253,7 +255,7 @@ func runRender(ctx context.Context, imagesToProcess build.ImagesToProcess) error
 		return err
 	}
 
-	buildOptions, err := common.GetBuildOptions(&commonCmdData, giterminismManager, werfConfig)
+	buildOptions, err := common.GetBuildOptions(ctx, &commonCmdData, giterminismManager, werfConfig)
 	if err != nil {
 		return err
 	}

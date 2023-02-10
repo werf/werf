@@ -91,8 +91,11 @@ type CmdData struct {
 	LogProjectDir    *bool
 	LogTerminalWidth *int64
 
-	ReportPath   *string
-	ReportFormat *string
+	DeprecatedReportPath   *string
+	DeprecatedReportFormat *string
+	BuildReportPath        *string
+	BuildReportFormat      *string
+	DeployReportPath       *string
 
 	VirtualMerge *bool
 

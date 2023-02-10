@@ -87,6 +87,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupSecretValues(&commonCmdData, cmd)
 	common.SetupIgnoreSecretKey(&commonCmdData, cmd)
 
+	common.SetupDeployReportPath(&commonCmdData, cmd)
+
 	common.SetupKubeConfig(&commonCmdData, cmd)
 	common.SetupKubeConfigBase64(&commonCmdData, cmd)
 	common.SetupKubeContext(&commonCmdData, cmd)
@@ -227,13 +229,14 @@ func runApply(ctx context.Context) error {
 			Values:       common.GetSet(&commonCmdData),
 			FileValues:   common.GetSetFile(&commonCmdData),
 		},
-		CreateNamespace: common.NewBool(true),
-		Install:         common.NewBool(true),
-		Wait:            common.NewBool(true),
-		Atomic:          common.NewBool(cmdData.AutoRollback),
-		Timeout:         common.NewDuration(time.Duration(cmdData.Timeout) * time.Second),
-		IgnorePending:   common.NewBool(true),
-		CleanupOnFail:   common.NewBool(true),
+		CreateNamespace:  common.NewBool(true),
+		Install:          common.NewBool(true),
+		Wait:             common.NewBool(true),
+		Atomic:           common.NewBool(cmdData.AutoRollback),
+		Timeout:          common.NewDuration(time.Duration(cmdData.Timeout) * time.Second),
+		IgnorePending:    common.NewBool(true),
+		CleanupOnFail:    common.NewBool(true),
+		DeployReportPath: commonCmdData.DeployReportPath,
 	})
 
 	return command_helpers.LockReleaseWrapper(ctx, releaseName, lockManager, func() error {
