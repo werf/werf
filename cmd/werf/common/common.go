@@ -41,8 +41,15 @@ const (
 	DefaultBuildReportPathJSON = ".werf-build-report.json"
 
 	DefaultSaveDeployReport     = false
+	DefaultUseDeployReport      = false
 	DefaultDeployReportPathJSON = ".werf-deploy-report.json"
 )
+
+type GitWorktreeNotFoundError struct{}
+
+func (e *GitWorktreeNotFoundError) Error() string {
+	return fmt.Sprintf("werf requires a git work tree for the project to exist: unable to find a valid .git in the current directory %q or parent directories, you may also specify git work tree explicitly with --git-work-tree option (or WERF_GIT_WORK_TREE env var)", util.GetAbsoluteFilepath("."))
+}
 
 func GetLongCommandDescription(text string) string {
 	return logboek.FitText(text, types.FitTextOptions{MaxWidth: 100})
@@ -268,6 +275,19 @@ func GetDeployReportPath(cmdData *CmdData) (string, error) {
 	default:
 		return "", fmt.Errorf("invalid --deploy-report-path %q: extension must be either .json or unspecified", *cmdData.DeployReportPath)
 	}
+}
+
+func SetupUseDeployReport(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.UseDeployReport = new(bool)
+	cmd.Flags().BoolVarP(cmdData.UseDeployReport, "use-deploy-report", "", util.GetBoolEnvironmentDefaultFalse("WERF_USE_DEPLOY_REPORT"), fmt.Sprintf("Use previously saved deploy report (by default $WERF_USE_DEPLOY_REPORT or %t)", DefaultUseDeployReport))
+}
+
+func GetUseDeployReport(cmdData *CmdData) bool {
+	if cmdData.UseDeployReport == nil {
+		return false
+	}
+
+	return *cmdData.UseDeployReport
 }
 
 func SetupWithoutKube(cmdData *CmdData, cmd *cobra.Command) {
@@ -1050,7 +1070,7 @@ func GetGitWorkTree(ctx context.Context, cmdData *CmdData, workingDir string) (s
 		return res, nil
 	}
 
-	return "", fmt.Errorf("werf requires a git work tree for the project to exist: unable to find a valid .git in the current directory %q or parent directories, you may also specify git work tree explicitly with --git-work-tree option (or WERF_GIT_WORK_TREE env var)", util.GetAbsoluteFilepath("."))
+	return "", &GitWorktreeNotFoundError{}
 }
 
 func LookupGitWorkTree(ctx context.Context, workingDir string) (string, error) {
