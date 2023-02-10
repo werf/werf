@@ -118,7 +118,7 @@ werf bundle apply [options]
       --repo-selectel-vpc-id=''
             repo Selectel VPC ID (default $WERF_REPO_SELECTEL_VPC_ID)
       --save-deploy-report=false
-            Save deploy report (by default $WERF_SAVE_DEPLOY_REPORT or %!q(bool=false))
+            Save deploy report (by default $WERF_SAVE_DEPLOY_REPORT or false)
       --secret-values=[]
             Specify helm secret values in a YAML file (can specify multiple).
             Also, can be defined with $WERF_SECRET_VALUES_* (e.g.                                   

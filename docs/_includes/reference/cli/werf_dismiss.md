@@ -63,6 +63,9 @@ werf dismiss [options]
       --config-templates-dir=''
             Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf   
             in working directory)
+      --deploy-report-path=''
+            Change deploy report save path (by default $WERF_DEPLOY_REPORT_PATH or                  
+            ".werf-deploy-report.json" if not set). Extension must be either .json or unspecified
       --dev=false
             Enable development mode (default $WERF_DEV).
             The mode allows working with project files without doing redundant commits during       
@@ -233,6 +236,8 @@ werf dismiss [options]
             repo. :local address allows execution of werf processes from a single host only
       --tmp-dir=''
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
+      --use-deploy-report=false
+            Use previously saved deploy report (by default $WERF_USE_DEPLOY_REPORT or false)
       --with-hooks=true
             Delete Helm Release hooks getting from existing revisions (default $WERF_WITH_HOOKS or  
             true)
