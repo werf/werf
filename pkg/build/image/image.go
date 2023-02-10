@@ -236,48 +236,50 @@ func (i *Image) SetupBaseImage(ctx context.Context, storageManager manager.Stora
 
 		i.baseStageImage = i.Conveyor.GetOrCreateStageImage(i.baseImageReference, nil, nil, i)
 
-		var info *image.Info
-		var err error
-
-		info, err = storageManager.GetImageInfo(ctx, i.baseImageReference, storageOpts)
-		if isUnsupportedMediaTypeError(err) {
-			if err := logboek.Context(ctx).Default().LogProcess("Pulling base image %s", i.baseStageImage.Image.Name()).
-				Options(func(options types.LogProcessOptionsInterface) {
-					options.Style(style.Highlight())
-				}).
-				DoError(func() error {
-					return i.ContainerBackend.PullImageFromRegistry(ctx, i.baseStageImage.Image)
-				}); err != nil {
-				return err
-			}
-
+		if i.IsDockerfileImage && i.DockerfileImageConfig.Staged {
+			var info *image.Info
+			var err error
 			info, err = storageManager.GetImageInfo(ctx, i.baseImageReference, storageOpts)
-			if err != nil {
+			if isUnsupportedMediaTypeError(err) {
+				if err := logboek.Context(ctx).Default().LogProcess("Pulling base image %s", i.baseStageImage.Image.Name()).
+					Options(func(options types.LogProcessOptionsInterface) {
+						options.Style(style.Highlight())
+					}).
+					DoError(func() error {
+						return i.ContainerBackend.PullImageFromRegistry(ctx, i.baseStageImage.Image)
+					}); err != nil {
+					return err
+				}
+
+				info, err = storageManager.GetImageInfo(ctx, i.baseImageReference, storageOpts)
+				if err != nil {
+					return fmt.Errorf("unable to get base image %q manifest: %w", i.baseImageReference, err)
+				}
+			} else if err != nil {
 				return fmt.Errorf("unable to get base image %q manifest: %w", i.baseImageReference, err)
 			}
-		} else if err != nil {
-			return fmt.Errorf("unable to get base image %q manifest: %w", i.baseImageReference, err)
+
+			i.baseStageImage.Image.SetStageDescription(&image.StageDescription{
+				StageID: nil, // this is not a stage actually, TODO
+				Info:    info,
+			})
+
+			// for _, expression := range info.OnBuild {
+			// 	fmt.Printf(">> %q\n", expression)
+			// }
 		}
-
-		i.baseStageImage.Image.SetStageDescription(&image.StageDescription{
-			StageID: nil, // this is not a stage actually, TODO
-			Info:    info,
-		})
-
-		// for _, expression := range info.OnBuild {
-		// 	fmt.Printf(">> %q\n", expression)
-		// }
-
 	case NoBaseImage:
 
 	default:
 		panic(fmt.Sprintf("unknown base image type %q", i.baseImageType))
 	}
 
-	switch i.baseImageType {
-	case StageAsBaseImage, ImageFromRegistryAsBaseImage:
-		if err := i.ExpandDependencies(ctx, EnvToMap(i.baseStageImage.Image.GetStageDescription().Info.Env)); err != nil {
-			return err
+	if i.IsDockerfileImage && i.DockerfileImageConfig.Staged {
+		switch i.baseImageType {
+		case StageAsBaseImage, ImageFromRegistryAsBaseImage:
+			if err := i.ExpandDependencies(ctx, EnvToMap(i.baseStageImage.Image.GetStageDescription().Info.Env)); err != nil {
+				return err
+			}
 		}
 	}
 
