@@ -20,6 +20,8 @@ werf helm rollback <RELEASE> [REVISION] [flags] [options]
 ```shell
       --cleanup-on-fail=false
             allow deletion of new resources created in this rollback when rollback fails
+      --deploy-report-path=''
+            save deploy report in JSON to the specified path
       --dry-run=false
             simulate a rollback
       --force=false

@@ -37,6 +37,31 @@ werf render [IMAGE_NAME...] [options]
             Format: labelName=labelValue.
             Also, can be specified with $WERF_ADD_LABEL_* (e.g.                                     
             $WERF_ADD_LABEL_1=labelName1=labelValue1, $WERF_ADD_LABEL_2=labelName2=labelValue2)
+      --build-report-format=''
+            Report format: json or envfile (json or $WERF_BUILD_REPORT_FORMAT by default)
+            json:
+            	{
+            	  "Images": {
+            		"<WERF_IMAGE_NAME>": {
+            			"WerfImageName": "<WERF_IMAGE_NAME>",
+            			"DockerRepo": "<REPO>",
+            			"DockerTag": "<TAG>"
+            			"DockerImageName": "<REPO>:<TAG>",
+            			"DockerImageID": "<SHA256>",
+            			"DockerImageDigest": "<SHA256>",
+            		},
+            		...
+            	  }
+            	}
+            envfile:
+            	WERF_<FORMATTED_WERF_IMAGE_NAME>_DOCKER_IMAGE_NAME=<REPO>:<TAG>
+            	...
+            <FORMATTED_WERF_IMAGE_NAME> is werf image name from werf.yaml modified according to the 
+            following rules:
+            - all characters are uppercase (app -> APP);
+            - charset /- is replaced with _ (DEV/APP-FRONTEND -> DEV_APP_FRONTEND)
+      --build-report-path=''
+            Report save path ($WERF_BUILD_REPORT_PATH by default)
       --cache-repo=[]
             Specify one or multiple cache repos with images that will be used as a cache. Cache     
             will be populated when pushing newly built images into the primary repo and when        
@@ -230,9 +255,9 @@ werf render [IMAGE_NAME...] [options]
             repo Selectel VPC (default $WERF_REPO_SELECTEL_VPC)
       --repo-selectel-vpc-id=''
             repo Selectel VPC ID (default $WERF_REPO_SELECTEL_VPC_ID)
-      --report-format='json'
-            Report format: json or envfile (json or $WERF_REPORT_FORMAT by default)
-            json:
+      --report-format=''
+            DEPRECATED: use --build-report-format.
+            Report format: json or envfile (json or $WERF_REPORT_FORMAT by default) json:
             	{
             	  "Images": {
             		"<WERF_IMAGE_NAME>": {
@@ -254,6 +279,7 @@ werf render [IMAGE_NAME...] [options]
             - all characters are uppercase (app -> APP);
             - charset /- is replaced with _ (DEV/APP-FRONTEND -> DEV_APP_FRONTEND)
       --report-path=''
+            DEPRECATED: use --build-report-path.
             Report save path ($WERF_REPORT_PATH by default)
       --secondary-repo=[]
             Specify one or multiple secondary read-only repos with images that will be used as a    
