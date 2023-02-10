@@ -93,9 +93,12 @@ type CmdData struct {
 
 	DeprecatedReportPath   *string
 	DeprecatedReportFormat *string
-	BuildReportPath        *string
-	BuildReportFormat      *string
-	DeployReportPath       *string
+
+	SaveBuildReport *bool
+	BuildReportPath *string
+
+	SaveDeployReport *bool
+	DeployReportPath *string
 
 	VirtualMerge *bool
 

@@ -159,10 +159,12 @@ werf converge --repo registry.mydomain.com/web --env production`,
 	commonCmdData.SetupDisableDefaultSecretValues(cmd)
 	commonCmdData.SetupSkipDependenciesRepoRefresh(cmd)
 
+	common.SetupSaveBuildReport(&commonCmdData, cmd)
+	common.SetupBuildReportPath(&commonCmdData, cmd)
 	common.SetupDeprecatedReportPath(&commonCmdData, cmd)
 	common.SetupDeprecatedReportFormat(&commonCmdData, cmd)
-	common.SetupBuildReportPath(&commonCmdData, cmd)
-	common.SetupBuildReportFormat(&commonCmdData, cmd)
+
+	common.SetupSaveDeployReport(&commonCmdData, cmd)
 	common.SetupDeployReportPath(&commonCmdData, cmd)
 
 	common.SetupUseCustomTag(&commonCmdData, cmd)
@@ -474,6 +476,15 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		return err
 	}
 
+	var deployReportPath *string
+	if common.GetSaveDeployReport(&commonCmdData) {
+		if path, err := common.GetDeployReportPath(&commonCmdData); err != nil {
+			return fmt.Errorf("unable to get deploy report path: %w", err)
+		} else {
+			deployReportPath = &path
+		}
+	}
+
 	helmUpgradeCmd, _ := helm_v3.NewUpgradeCmd(actionConfig, logboek.OutStream(), helm_v3.UpgradeCmdOptions{
 		StagesSplitter:              helm.NewStagesSplitter(),
 		StagesExternalDepsGenerator: helm.NewStagesExternalDepsGenerator(&actionConfig.RESTClientGetter, &namespace),
@@ -486,7 +497,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		Timeout:                     common.NewDuration(time.Duration(cmdData.Timeout) * time.Second),
 		IgnorePending:               common.NewBool(true),
 		CleanupOnFail:               common.NewBool(true),
-		DeployReportPath:            commonCmdData.DeployReportPath,
+		DeployReportPath:            deployReportPath,
 	})
 
 	return command_helpers.LockReleaseWrapper(ctx, releaseName, lockManager, func() error {
