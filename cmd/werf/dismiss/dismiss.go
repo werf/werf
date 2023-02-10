@@ -2,13 +2,17 @@ package dismiss
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/spf13/cobra"
 	helm_v3 "helm.sh/helm/v3/cmd/helm"
 	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/registry"
+	helmrelease "helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
 
 	"github.com/werf/kubedog/pkg/kube"
@@ -16,7 +20,6 @@ import (
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/config/deploy_params"
 	"github.com/werf/werf/pkg/deploy/helm"
-	"github.com/werf/werf/pkg/deploy/helm/chart_extender"
 	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
 	"github.com/werf/werf/pkg/deploy/lock_manager"
 	"github.com/werf/werf/pkg/git_repo"
@@ -91,6 +94,9 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupRelease(&commonCmdData, cmd)
 	common.SetupNamespace(&commonCmdData, cmd)
 
+	common.SetupUseDeployReport(&commonCmdData, cmd)
+	common.SetupDeployReportPath(&commonCmdData, cmd)
+
 	common.SetupKubeConfig(&commonCmdData, cmd)
 	common.SetupKubeConfigBase64(&commonCmdData, cmd)
 	common.SetupKubeContext(&commonCmdData, cmd)
@@ -159,32 +165,85 @@ func runDismiss(ctx context.Context) error {
 
 	common.LogKubeContext(kube.Context)
 
+	var gitNotFoundErr *common.GitWorktreeNotFoundError
 	giterminismManager, err := common.GetGiterminismManager(ctx, &commonCmdData)
 	if err != nil {
-		return err
+		if !errors.As(err, &gitNotFoundErr) {
+			return err
+		}
 	}
-
-	common.ProcessLogProjectDir(&commonCmdData, giterminismManager.ProjectDir())
-
-	werfConfigPath, werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
-	if err != nil {
-		return fmt.Errorf("unable to load werf config: %w", err)
-	}
-	logboek.LogOptionalLn()
 
 	common.SetupOndemandKubeInitializer(*commonCmdData.KubeContext, *commonCmdData.KubeConfig, *commonCmdData.KubeConfigBase64, *commonCmdData.KubeConfigPathMergeList)
 	if err := common.GetOndemandKubeInitializer().Init(ctx); err != nil {
 		return err
 	}
 
-	namespace, err := deploy_params.GetKubernetesNamespace(*commonCmdData.Namespace, *commonCmdData.Environment, werfConfig)
-	if err != nil {
-		return err
-	}
+	namespaceSpecified := *commonCmdData.Namespace != ""
+	releaseSpecified := *commonCmdData.Release != ""
 
-	releaseName, err := deploy_params.GetHelmRelease(*commonCmdData.Release, *commonCmdData.Environment, namespace, werfConfig)
-	if err != nil {
-		return err
+	var namespace string
+	var release string
+	var helmRegistryClient *registry.Client
+	if namespaceSpecified || releaseSpecified {
+		if namespaceSpecified && !releaseSpecified {
+			return fmt.Errorf("--namespace specified, but not --release, while should be specified both or none")
+		} else if !namespaceSpecified && releaseSpecified {
+			return fmt.Errorf("--release specified, but not --namespace, while should be specified both or none")
+		}
+
+		namespace = *commonCmdData.Namespace
+		release = *commonCmdData.Release
+	} else if common.GetUseDeployReport(&commonCmdData) {
+		deployReportPath, err := common.GetDeployReportPath(&commonCmdData)
+		if err != nil {
+			return fmt.Errorf("unable to get deploy report path: %w", err)
+		}
+
+		deployReportByte, err := os.ReadFile(deployReportPath)
+		if err != nil {
+			return fmt.Errorf("unable to read deploy report file %q: %w", deployReportPath, err)
+		}
+
+		var deployReport helmrelease.DeployReport
+		if err := json.Unmarshal(deployReportByte, &deployReport); err != nil {
+			return fmt.Errorf("unable to unmarshal deploy report file %q: %w", deployReportPath, err)
+		}
+
+		if deployReport.Namespace == "" {
+			return fmt.Errorf("unable to get namespace from deploy report file %q", deployReportPath)
+		}
+
+		if deployReport.Release == "" {
+			return fmt.Errorf("unable to get release from deploy report file %q", deployReportPath)
+		}
+
+		namespace = deployReport.Namespace
+		release = deployReport.Release
+	} else if gitNotFoundErr != nil {
+		return fmt.Errorf("dismiss should either be executed in a git repository or with --namespace and --release specified, or with --use-deploy-report")
+	} else {
+		common.ProcessLogProjectDir(&commonCmdData, giterminismManager.ProjectDir())
+
+		_, werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
+		if err != nil {
+			return fmt.Errorf("unable to load werf config: %w", err)
+		}
+		logboek.LogOptionalLn()
+
+		namespace, err = deploy_params.GetKubernetesNamespace(*commonCmdData.Namespace, *commonCmdData.Environment, werfConfig)
+		if err != nil {
+			return err
+		}
+
+		release, err = deploy_params.GetHelmRelease(*commonCmdData.Release, *commonCmdData.Environment, namespace, werfConfig)
+		if err != nil {
+			return err
+		}
+
+		helmRegistryClient, err = common.NewHelmRegistryClient(ctx, *commonCmdData.DockerConfig, *commonCmdData.InsecureHelmDependencies)
+		if err != nil {
+			return fmt.Errorf("unable to create helm registry client: %w", err)
+		}
 	}
 
 	var lockManager *lock_manager.LockManager
@@ -194,27 +253,6 @@ func runDismiss(ctx context.Context) error {
 		} else {
 			lockManager = m
 		}
-	}
-
-	chartDir, err := common.GetHelmChartDir(werfConfigPath, werfConfig, giterminismManager)
-	if err != nil {
-		return fmt.Errorf("getting helm chart dir failed: %w", err)
-	}
-
-	helmRegistryClient, err := common.NewHelmRegistryClient(ctx, *commonCmdData.DockerConfig, *commonCmdData.InsecureHelmDependencies)
-	if err != nil {
-		return fmt.Errorf("unable to create helm registry client: %w", err)
-	}
-
-	wc := chart_extender.NewWerfChart(ctx, giterminismManager, nil, chartDir, helm_v3.Settings, helmRegistryClient, chart_extender.WerfChartOptions{
-		IgnoreInvalidAnnotationsAndLabels: true,
-	})
-
-	if err := wc.SetEnv(*commonCmdData.Environment); err != nil {
-		return err
-	}
-	if err := wc.SetWerfConfig(werfConfig); err != nil {
-		return err
 	}
 
 	actionConfig := new(action.Configuration)
@@ -241,19 +279,19 @@ func runDismiss(ctx context.Context) error {
 	})
 
 	logboek.Context(ctx).Default().LogFDetails("Using namespace: %s\n", namespace)
-	logboek.Context(ctx).Default().LogFDetails("Using release: %s\n", releaseName)
+	logboek.Context(ctx).Default().LogFDetails("Using release: %s\n", release)
 
 	if cmdData.WithNamespace {
 		// TODO: solve lock release + delete-namespace case
-		return helmUninstallCmd.RunE(helmUninstallCmd, []string{releaseName})
+		return helmUninstallCmd.RunE(helmUninstallCmd, []string{release})
 	} else {
-		if _, err := actionConfig.Releases.History(releaseName); errors.Is(err, driver.ErrReleaseNotFound) {
-			logboek.Context(ctx).Default().LogFDetails("No such release %q\n", releaseName)
+		if _, err := actionConfig.Releases.History(release); errors.Is(err, driver.ErrReleaseNotFound) {
+			logboek.Context(ctx).Default().LogFDetails("No such release %q\n", release)
 			return nil
 		}
 
-		return command_helpers.LockReleaseWrapper(ctx, releaseName, lockManager, func() error {
-			return helmUninstallCmd.RunE(helmUninstallCmd, []string{releaseName})
+		return command_helpers.LockReleaseWrapper(ctx, release, lockManager, func() error {
+			return helmUninstallCmd.RunE(helmUninstallCmd, []string{release})
 		})
 	}
 }

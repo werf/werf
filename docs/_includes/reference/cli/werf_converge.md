@@ -318,9 +318,9 @@ werf converge --repo registry.mydomain.com/web --env production
             DEPRECATED: use --save-build-report with optional --build-report-path.
             Report save path ($WERF_REPORT_PATH by default)
       --save-build-report=false
-            Save build report (by default $WERF_SAVE_BUILD_REPORT or %!q(bool=false))
+            Save build report (by default $WERF_SAVE_BUILD_REPORT or false)
       --save-deploy-report=false
-            Save deploy report (by default $WERF_SAVE_DEPLOY_REPORT or %!q(bool=false))
+            Save deploy report (by default $WERF_SAVE_DEPLOY_REPORT or false)
       --secondary-repo=[]
             Specify one or multiple secondary read-only repos with images that will be used as a    
             cache.
