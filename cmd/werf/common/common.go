@@ -36,6 +36,12 @@ const (
 	StubTag                                = "TAG"
 	DefaultBuildParallelTasksLimit         = 5
 	DefaultCleanupParallelTasksLimit       = 10
+
+	DefaultSaveBuildReport     = false
+	DefaultBuildReportPathJSON = ".werf-build-report.json"
+
+	DefaultSaveDeployReport     = false
+	DefaultDeployReportPathJSON = ".werf-deploy-report.json"
 )
 
 func GetLongCommandDescription(text string) string {
@@ -135,13 +141,13 @@ Defaults to $WERF_SSH_KEY_*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see htt
 
 func SetupDeprecatedReportPath(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.DeprecatedReportPath = new(string)
-	cmd.Flags().StringVarP(cmdData.DeprecatedReportPath, "report-path", "", os.Getenv("WERF_REPORT_PATH"), "DEPRECATED: use --build-report-path.\nReport save path ($WERF_REPORT_PATH by default)")
+	cmd.Flags().StringVarP(cmdData.DeprecatedReportPath, "report-path", "", os.Getenv("WERF_REPORT_PATH"), "DEPRECATED: use --save-build-report with optional --build-report-path.\nReport save path ($WERF_REPORT_PATH by default)")
 }
 
 func SetupDeprecatedReportFormat(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.DeprecatedReportFormat = new(string)
 
-	cmd.Flags().StringVarP(cmdData.DeprecatedReportFormat, "report-format", "", os.Getenv("WERF_REPORT_FORMAT"), fmt.Sprintf(`DEPRECATED: use --build-report-format.
+	cmd.Flags().StringVarP(cmdData.DeprecatedReportFormat, "report-format", "", os.Getenv("WERF_REPORT_FORMAT"), fmt.Sprintf(`DEPRECATED: use --save-build-report with optional --build-report-path.
 Report format: %[1]s or %[2]s (%[1]s or $WERF_REPORT_FORMAT by default) %[1]s:
 	{
 	  "Images": {
@@ -164,62 +170,104 @@ Report format: %[1]s or %[2]s (%[1]s or $WERF_REPORT_FORMAT by default) %[1]s:
 - charset /- is replaced with _ (DEV/APP-FRONTEND -> DEV_APP_FRONTEND)`, string(build.ReportJSON), string(build.ReportEnvFile)))
 }
 
-func GetDeprecatedReportFormat(cmdData *CmdData) (build.ReportFormat, error) {
-	switch format := build.ReportFormat(*cmdData.DeprecatedReportFormat); format {
-	case build.ReportJSON, build.ReportEnvFile:
-		return format, nil
-	case "":
-		return build.ReportJSON, nil
-	default:
-		return "", fmt.Errorf("bad --report-format given %q, expected: \"%s\"", format, strings.Join([]string{string(build.ReportJSON), string(build.ReportEnvFile)}, "\", \""))
+func GetDeprecatedReportPath(ctx context.Context, cmdData *CmdData) string {
+	if cmdData.DeprecatedReportPath == nil {
+		return ""
 	}
+
+	logboek.Context(ctx).Warn().LogF("DEPRECATED: use --save-build-report ($WERF_SAVE_BUILD_REPORT) with optional --build-report-path ($WERF_BUILD_REPORT_PATH) instead of --report-path ($WERF_REPORT_PATH)\n")
+
+	return *cmdData.DeprecatedReportPath
+}
+
+func GetDeprecatedReportFormat(ctx context.Context, cmdData *CmdData) (build.ReportFormat, error) {
+	if cmdData.DeprecatedReportFormat == nil {
+		return build.ReportJSON, nil
+	}
+
+	var reportFormat build.ReportFormat
+	switch reportFormat = build.ReportFormat(*cmdData.DeprecatedReportFormat); reportFormat {
+	case build.ReportJSON, build.ReportEnvFile:
+	case "":
+		defaultFormat := build.ReportJSON
+		reportFormat = defaultFormat
+	default:
+		return "", fmt.Errorf("bad --report-format given %q, expected: \"%s\"", reportFormat, strings.Join([]string{string(build.ReportJSON), string(build.ReportEnvFile)}, "\", \""))
+	}
+
+	logboek.Context(ctx).Warn().LogF("DEPRECATED: use --save-build-report ($WERF_SAVE_BUILD_REPORT) and optionally --build-report-path ($WERF_BUILD_REPORT_PATH) instead of --report-format ($WERF_REPORT_FORMAT)\n")
+
+	return reportFormat, nil
+}
+
+func SetupSaveBuildReport(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.SaveBuildReport = new(bool)
+	cmd.Flags().BoolVarP(cmdData.SaveBuildReport, "save-build-report", "", util.GetBoolEnvironmentDefaultFalse("WERF_SAVE_BUILD_REPORT"), fmt.Sprintf("Save build report (by default $WERF_SAVE_BUILD_REPORT or %t)", DefaultSaveBuildReport))
 }
 
 func SetupBuildReportPath(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.BuildReportPath = new(string)
-	cmd.Flags().StringVarP(cmdData.BuildReportPath, "build-report-path", "", os.Getenv("WERF_BUILD_REPORT_PATH"), "Report save path ($WERF_BUILD_REPORT_PATH by default)")
+	cmd.Flags().StringVarP(cmdData.BuildReportPath, "build-report-path", "", os.Getenv("WERF_BUILD_REPORT_PATH"), fmt.Sprintf("Change build report save path (by default $WERF_BUILD_REPORT_PATH or %q if not set). Extension must be either .json or .env, .json will be used if not specified", DefaultBuildReportPathJSON))
 }
 
-func SetupBuildReportFormat(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.BuildReportFormat = new(string)
-
-	cmd.Flags().StringVarP(cmdData.BuildReportFormat, "build-report-format", "", os.Getenv("WERF_BUILD_REPORT_FORMAT"), fmt.Sprintf(`Report format: %[1]s or %[2]s (%[1]s or $WERF_BUILD_REPORT_FORMAT by default)
-%[1]s:
-	{
-	  "Images": {
-		"<WERF_IMAGE_NAME>": {
-			"WerfImageName": "<WERF_IMAGE_NAME>",
-			"DockerRepo": "<REPO>",
-			"DockerTag": "<TAG>"
-			"DockerImageName": "<REPO>:<TAG>",
-			"DockerImageID": "<SHA256>",
-			"DockerImageDigest": "<SHA256>",
-		},
-		...
-	  }
+func GetSaveBuildReport(cmdData *CmdData) bool {
+	if cmdData.SaveBuildReport == nil {
+		return false
 	}
-%[2]s:
-	WERF_<FORMATTED_WERF_IMAGE_NAME>_DOCKER_IMAGE_NAME=<REPO>:<TAG>
-	...
-<FORMATTED_WERF_IMAGE_NAME> is werf image name from werf.yaml modified according to the following rules:
-- all characters are uppercase (app -> APP);
-- charset /- is replaced with _ (DEV/APP-FRONTEND -> DEV_APP_FRONTEND)`, string(build.ReportJSON), string(build.ReportEnvFile)))
+
+	return *cmdData.SaveBuildReport
 }
 
-func GetBuildReportFormat(cmdData *CmdData) (build.ReportFormat, error) {
-	switch format := build.ReportFormat(*cmdData.BuildReportFormat); format {
-	case build.ReportJSON, build.ReportEnvFile:
-		return format, nil
+func GetBuildReportPathAndFormat(cmdData *CmdData) (string, build.ReportFormat, error) {
+	unspecifiedPath := cmdData.BuildReportPath == nil || *cmdData.BuildReportPath == ""
+	if unspecifiedPath {
+		return DefaultBuildReportPathJSON, build.ReportJSON, nil
+	}
+
+	switch ext := filepath.Ext(*cmdData.BuildReportPath); ext {
+	case ".json":
+		return *cmdData.BuildReportPath, build.ReportJSON, nil
+	case ".env":
+		return *cmdData.BuildReportPath, build.ReportEnvFile, nil
 	case "":
-		return build.ReportJSON, nil
+		return *cmdData.BuildReportPath + ".json", build.ReportJSON, nil
 	default:
-		return "", fmt.Errorf("bad --build-report-format given %q, expected: \"%s\"", format, strings.Join([]string{string(build.ReportJSON), string(build.ReportEnvFile)}, "\", \""))
+		return "", "", fmt.Errorf("invalid --build-report-path %q: extension must be either .json or .env or unspecified", *cmdData.BuildReportPath)
 	}
+}
+
+func SetupSaveDeployReport(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.SaveDeployReport = new(bool)
+	cmd.Flags().BoolVarP(cmdData.SaveDeployReport, "save-deploy-report", "", util.GetBoolEnvironmentDefaultFalse("WERF_SAVE_DEPLOY_REPORT"), fmt.Sprintf("Save deploy report (by default $WERF_SAVE_DEPLOY_REPORT or %t)", DefaultSaveDeployReport))
 }
 
 func SetupDeployReportPath(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.DeployReportPath = new(string)
-	cmd.Flags().StringVarP(cmdData.DeployReportPath, "deploy-report-path", "", os.Getenv("WERF_DEPLOY_REPORT_PATH"), "Deploy report save path ($WERF_DEPLOY_REPORT_PATH by default)")
+	cmd.Flags().StringVarP(cmdData.DeployReportPath, "deploy-report-path", "", os.Getenv("WERF_DEPLOY_REPORT_PATH"), fmt.Sprintf("Change deploy report save path (by default $WERF_DEPLOY_REPORT_PATH or %q if not set). Extension must be either .json or unspecified", DefaultDeployReportPathJSON))
+}
+
+func GetSaveDeployReport(cmdData *CmdData) bool {
+	if cmdData.SaveDeployReport == nil {
+		return false
+	}
+
+	return *cmdData.SaveDeployReport
+}
+
+func GetDeployReportPath(cmdData *CmdData) (string, error) {
+	unspecifiedPath := cmdData.DeployReportPath == nil || *cmdData.DeployReportPath == ""
+	if unspecifiedPath {
+		return DefaultDeployReportPathJSON, nil
+	}
+
+	switch ext := filepath.Ext(*cmdData.DeployReportPath); ext {
+	case ".json":
+		return *cmdData.DeployReportPath, nil
+	case "":
+		return *cmdData.DeployReportPath + ".json", nil
+	default:
+		return "", fmt.Errorf("invalid --deploy-report-path %q: extension must be either .json or unspecified", *cmdData.DeployReportPath)
+	}
 }
 
 func SetupWithoutKube(cmdData *CmdData, cmd *cobra.Command) {

@@ -87,6 +87,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupSecretValues(&commonCmdData, cmd)
 	common.SetupIgnoreSecretKey(&commonCmdData, cmd)
 
+	common.SetupSaveDeployReport(&commonCmdData, cmd)
 	common.SetupDeployReportPath(&commonCmdData, cmd)
 
 	common.SetupKubeConfig(&commonCmdData, cmd)
@@ -219,6 +220,15 @@ func runApply(ctx context.Context) error {
 		ChartExtender: bundle,
 	}
 
+	var deployReportPath *string
+	if common.GetSaveDeployReport(&commonCmdData) {
+		if path, err := common.GetDeployReportPath(&commonCmdData); err != nil {
+			return fmt.Errorf("unable to get deploy report path: %w", err)
+		} else {
+			deployReportPath = &path
+		}
+	}
+
 	helmUpgradeCmd, _ := helm_v3.NewUpgradeCmd(actionConfig, logboek.Context(ctx).OutStream(), helm_v3.UpgradeCmdOptions{
 		StagesSplitter:              helm.NewStagesSplitter(),
 		StagesExternalDepsGenerator: helm.NewStagesExternalDepsGenerator(&actionConfig.RESTClientGetter, &namespace),
@@ -236,7 +246,7 @@ func runApply(ctx context.Context) error {
 		Timeout:          common.NewDuration(time.Duration(cmdData.Timeout) * time.Second),
 		IgnorePending:    common.NewBool(true),
 		CleanupOnFail:    common.NewBool(true),
-		DeployReportPath: commonCmdData.DeployReportPath,
+		DeployReportPath: deployReportPath,
 	})
 
 	return command_helpers.LockReleaseWrapper(ctx, releaseName, lockManager, func() error {

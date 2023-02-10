@@ -99,10 +99,10 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupKubeConfigBase64(&commonCmdData, cmd)
 	common.SetupKubeContext(&commonCmdData, cmd)
 
+	common.SetupSaveBuildReport(&commonCmdData, cmd)
+	common.SetupBuildReportPath(&commonCmdData, cmd)
 	common.SetupDeprecatedReportPath(&commonCmdData, cmd)
 	common.SetupDeprecatedReportFormat(&commonCmdData, cmd)
-	common.SetupBuildReportPath(&commonCmdData, cmd)
-	common.SetupBuildReportFormat(&commonCmdData, cmd)
 
 	common.SetupAddCustomTag(&commonCmdData, cmd)
 	common.SetupVirtualMerge(&commonCmdData, cmd)

@@ -126,10 +126,10 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	commonCmdData.SetupDisableDefaultValues(cmd)
 	commonCmdData.SetupSkipDependenciesRepoRefresh(cmd)
 
+	common.SetupSaveBuildReport(&commonCmdData, cmd)
+	common.SetupBuildReportPath(&commonCmdData, cmd)
 	common.SetupDeprecatedReportPath(&commonCmdData, cmd)
 	common.SetupDeprecatedReportFormat(&commonCmdData, cmd)
-	common.SetupBuildReportPath(&commonCmdData, cmd)
-	common.SetupBuildReportFormat(&commonCmdData, cmd)
 
 	common.SetupUseCustomTag(&commonCmdData, cmd)
 	common.SetupVirtualMerge(&commonCmdData, cmd)
