@@ -2,10 +2,12 @@ package common
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"strings"
 	"text/template"
 
+	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/build"
 	"github.com/werf/werf/pkg/build/stage"
 	"github.com/werf/werf/pkg/config"
@@ -49,15 +51,38 @@ func GetShouldBeBuiltOptions(commonCmdData *CmdData, giterminismManager gitermin
 	return options, nil
 }
 
-func GetBuildOptions(commonCmdData *CmdData, giterminismManager giterminism_manager.Interface, werfConfig *config.WerfConfig) (buildOptions build.BuildOptions, err error) {
+func GetBuildOptions(ctx context.Context, commonCmdData *CmdData, giterminismManager giterminism_manager.Interface, werfConfig *config.WerfConfig) (buildOptions build.BuildOptions, err error) {
 	introspectOptions, err := GetIntrospectOptions(commonCmdData, werfConfig)
 	if err != nil {
 		return buildOptions, err
 	}
 
-	reportFormat, err := GetReportFormat(commonCmdData)
-	if err != nil {
-		return buildOptions, err
+	var buildReportPath string
+	if commonCmdData.BuildReportPath != nil && *commonCmdData.BuildReportPath != "" && commonCmdData.DeprecatedReportPath != nil && *commonCmdData.DeprecatedReportPath != "" {
+		return buildOptions, fmt.Errorf("you can't use both --report-path ($WERF_REPORT_PATH) and --build-report-path ($WERF_BUILD_REPORT_PATH), use only the latter instead")
+	} else if commonCmdData.BuildReportPath != nil && *commonCmdData.BuildReportPath != "" {
+		buildReportPath = *commonCmdData.BuildReportPath
+	} else if commonCmdData.DeprecatedReportPath != nil && *commonCmdData.DeprecatedReportPath != "" {
+		logboek.Context(ctx).Warn().LogF("DEPRECATED: use --build-report-path ($WERF_BUILD_REPORT_PATH) instead of --report-path ($WERF_REPORT_PATH)\n")
+		buildReportPath = *commonCmdData.DeprecatedReportPath
+	}
+
+	var buildReportFormat build.ReportFormat
+	if commonCmdData.BuildReportFormat != nil && *commonCmdData.BuildReportFormat != "" && commonCmdData.DeprecatedReportFormat != nil && *commonCmdData.DeprecatedReportFormat != "" {
+		return buildOptions, fmt.Errorf("you can't use both --report-format ($WERF_REPORT_FORMAT) and --build-report-format ($WERF_BUILD_REPORT_FORMAT), use only the latter instead")
+	} else if commonCmdData.BuildReportFormat != nil && *commonCmdData.BuildReportFormat != "" {
+		buildReportFormat, err = GetBuildReportFormat(commonCmdData)
+		if err != nil {
+			return buildOptions, fmt.Errorf("error getting build report format: %w", err)
+		}
+	} else if commonCmdData.DeprecatedReportFormat != nil && *commonCmdData.DeprecatedReportFormat != "" {
+		logboek.Context(ctx).Warn().LogF("DEPRECATED: use --build-report-format ($WERF_BUILD_REPORT_FORMAT) instead of --report-format ($WERF_REPORT_FORMAT)\n")
+		buildReportFormat, err = GetDeprecatedReportFormat(commonCmdData)
+		if err != nil {
+			return buildOptions, fmt.Errorf("error getting report format: %w", err)
+		}
+	} else {
+		buildReportFormat = build.ReportJSON
 	}
 
 	customTagFuncList, err := getCustomTagFuncList(getCustomTagOptionValues(commonCmdData), commonCmdData, giterminismManager, werfConfig)
@@ -73,8 +98,8 @@ func GetBuildOptions(commonCmdData *CmdData, giterminismManager giterminism_mana
 			IntrospectBeforeError: *commonCmdData.IntrospectBeforeError,
 		},
 		IntrospectOptions: introspectOptions,
-		ReportPath:        *commonCmdData.ReportPath,
-		ReportFormat:      reportFormat,
+		ReportPath:        buildReportPath,
+		ReportFormat:      buildReportFormat,
 	}
 
 	return buildOptions, nil

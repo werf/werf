@@ -26,6 +26,8 @@ werf bundle apply [options]
             Format: labelName=labelValue.
             Also, can be specified with $WERF_ADD_LABEL_* (e.g.                                     
             $WERF_ADD_LABEL_1=labelName1=labelValue1, $WERF_ADD_LABEL_2=labelName2=labelValue2)
+      --deploy-report-path=''
+            Deploy report save path ($WERF_DEPLOY_REPORT_PATH by default)
       --docker-config=''
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)

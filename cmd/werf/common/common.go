@@ -133,20 +133,57 @@ Can be specified with $WERF_SSH_KEY_* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa, 
 Defaults to $WERF_SSH_KEY_*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see https://werf.io/documentation/reference/toolbox/ssh.html`)
 }
 
-func SetupReportPath(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.ReportPath = new(string)
-	cmd.Flags().StringVarP(cmdData.ReportPath, "report-path", "", os.Getenv("WERF_REPORT_PATH"), "Report save path ($WERF_REPORT_PATH by default)")
+func SetupDeprecatedReportPath(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.DeprecatedReportPath = new(string)
+	cmd.Flags().StringVarP(cmdData.DeprecatedReportPath, "report-path", "", os.Getenv("WERF_REPORT_PATH"), "DEPRECATED: use --build-report-path.\nReport save path ($WERF_REPORT_PATH by default)")
 }
 
-func SetupReportFormat(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.ReportFormat = new(string)
+func SetupDeprecatedReportFormat(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.DeprecatedReportFormat = new(string)
 
-	defaultValue := os.Getenv("WERF_REPORT_FORMAT")
-	if defaultValue == "" {
-		defaultValue = string(build.ReportJSON)
+	cmd.Flags().StringVarP(cmdData.DeprecatedReportFormat, "report-format", "", os.Getenv("WERF_REPORT_FORMAT"), fmt.Sprintf(`DEPRECATED: use --build-report-format.
+Report format: %[1]s or %[2]s (%[1]s or $WERF_REPORT_FORMAT by default) %[1]s:
+	{
+	  "Images": {
+		"<WERF_IMAGE_NAME>": {
+			"WerfImageName": "<WERF_IMAGE_NAME>",
+			"DockerRepo": "<REPO>",
+			"DockerTag": "<TAG>"
+			"DockerImageName": "<REPO>:<TAG>",
+			"DockerImageID": "<SHA256>",
+			"DockerImageDigest": "<SHA256>",
+		},
+		...
+	  }
 	}
+%[2]s:
+	WERF_<FORMATTED_WERF_IMAGE_NAME>_DOCKER_IMAGE_NAME=<REPO>:<TAG>
+	...
+<FORMATTED_WERF_IMAGE_NAME> is werf image name from werf.yaml modified according to the following rules:
+- all characters are uppercase (app -> APP);
+- charset /- is replaced with _ (DEV/APP-FRONTEND -> DEV_APP_FRONTEND)`, string(build.ReportJSON), string(build.ReportEnvFile)))
+}
 
-	cmd.Flags().StringVarP(cmdData.ReportFormat, "report-format", "", defaultValue, fmt.Sprintf(`Report format: %[1]s or %[2]s (%[1]s or $WERF_REPORT_FORMAT by default)
+func GetDeprecatedReportFormat(cmdData *CmdData) (build.ReportFormat, error) {
+	switch format := build.ReportFormat(*cmdData.DeprecatedReportFormat); format {
+	case build.ReportJSON, build.ReportEnvFile:
+		return format, nil
+	case "":
+		return build.ReportJSON, nil
+	default:
+		return "", fmt.Errorf("bad --report-format given %q, expected: \"%s\"", format, strings.Join([]string{string(build.ReportJSON), string(build.ReportEnvFile)}, "\", \""))
+	}
+}
+
+func SetupBuildReportPath(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.BuildReportPath = new(string)
+	cmd.Flags().StringVarP(cmdData.BuildReportPath, "build-report-path", "", os.Getenv("WERF_BUILD_REPORT_PATH"), "Report save path ($WERF_BUILD_REPORT_PATH by default)")
+}
+
+func SetupBuildReportFormat(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.BuildReportFormat = new(string)
+
+	cmd.Flags().StringVarP(cmdData.BuildReportFormat, "build-report-format", "", os.Getenv("WERF_BUILD_REPORT_FORMAT"), fmt.Sprintf(`Report format: %[1]s or %[2]s (%[1]s or $WERF_BUILD_REPORT_FORMAT by default)
 %[1]s:
 	{
 	  "Images": {
@@ -169,13 +206,20 @@ func SetupReportFormat(cmdData *CmdData, cmd *cobra.Command) {
 - charset /- is replaced with _ (DEV/APP-FRONTEND -> DEV_APP_FRONTEND)`, string(build.ReportJSON), string(build.ReportEnvFile)))
 }
 
-func GetReportFormat(cmdData *CmdData) (build.ReportFormat, error) {
-	switch format := build.ReportFormat(*cmdData.ReportFormat); format {
+func GetBuildReportFormat(cmdData *CmdData) (build.ReportFormat, error) {
+	switch format := build.ReportFormat(*cmdData.BuildReportFormat); format {
 	case build.ReportJSON, build.ReportEnvFile:
 		return format, nil
+	case "":
+		return build.ReportJSON, nil
 	default:
-		return "", fmt.Errorf("bad --report-format given %q, expected: \"%s\"", format, strings.Join([]string{string(build.ReportJSON), string(build.ReportEnvFile)}, "\", \""))
+		return "", fmt.Errorf("bad --build-report-format given %q, expected: \"%s\"", format, strings.Join([]string{string(build.ReportJSON), string(build.ReportEnvFile)}, "\", \""))
 	}
+}
+
+func SetupDeployReportPath(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.DeployReportPath = new(string)
+	cmd.Flags().StringVarP(cmdData.DeployReportPath, "deploy-report-path", "", os.Getenv("WERF_DEPLOY_REPORT_PATH"), "Deploy report save path ($WERF_DEPLOY_REPORT_PATH by default)")
 }
 
 func SetupWithoutKube(cmdData *CmdData, cmd *cobra.Command) {
