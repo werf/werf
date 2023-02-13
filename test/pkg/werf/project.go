@@ -79,7 +79,7 @@ func (p *Project) BuildWithReport(buildReportPath string, opts *BuildWithReportO
 		opts = &BuildWithReportOptions{}
 	}
 
-	args := append([]string{"build", "--report-path", buildReportPath}, opts.ExtraArgs...)
+	args := append([]string{"build", "--save-build-report", "--build-report-path", buildReportPath}, opts.ExtraArgs...)
 	out := p.runCommand(runCommandOptions{Args: args, ShouldFail: opts.ShouldFail})
 
 	buildReportRaw, err := os.ReadFile(buildReportPath)
