@@ -205,6 +205,18 @@ werf build --repo example.org/mycompany/myapp
 werf bundle publish --skip-build --tag latest --repo example.org/mycompany/myapp
 ```
 
+## Сохранение отчета о развертывании
+
+Команды `werf converge` и `werf bundle apply` имеют параметр `--save-deploy-report`, который позволяет сохранить отчёт о последнем развертывании в файл. Отчёт содержит имя релиза, Namespace, статус развертывания и ряд других данных. Пример:
+
+```shell
+werf converge --save-deploy-report
+```
+
+Результат: после развертывания появится файл `.werf-deploy-report.json`, содержащий информацию о последнем релизе.
+
+Путь к отчёту о развертывании можно изменить параметром `--deploy-report-path`.
+
 ## Удаление развернутого приложения
 
 Удалить развернутое приложение можно командой `werf dismiss`, запущенной из Git-репозитория приложения, например:
@@ -212,3 +224,20 @@ werf bundle publish --skip-build --tag latest --repo example.org/mycompany/myapp
 ```shell
 werf dismiss --env staging
 ```
+
+При отсутствии доступа к Git-репозиторию приложения можно явно указать имя релиза и Namespace:
+
+```shell
+werf dismiss --release myapp-staging --namespace myapp-staging
+```
+
+... или использовать отчёт о предыдущем развертывании, включаемый опцией `--save-deploy-report` у `werf converge` и `werf bundle apply`, который содержит имя релиза и Namespace:
+
+```shell
+werf converge --save-deploy-report
+cp .werf-deploy-report.json /anywhere
+cd /anywhere
+werf dismiss --use-deploy-report
+```
+
+Путь к отчёту о развертывании можно изменить параметром `--deploy-report-path`.
