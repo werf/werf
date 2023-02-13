@@ -76,7 +76,7 @@ func GetBuildOptions(ctx context.Context, commonCmdData *CmdData, giterminismMan
 	usedOldBuildReportOption := (commonCmdData.DeprecatedReportPath != nil && *commonCmdData.DeprecatedReportPath != "") || (commonCmdData.DeprecatedReportFormat != nil && *commonCmdData.DeprecatedReportFormat != "")
 
 	if usedNewBuildReportOption && usedOldBuildReportOption {
-		return buildOptions, fmt.Errorf("you can't use deprecated options --report-path and --report-format along with new options --save-build-report, --build-report-path, use only the latter instead")
+		return buildOptions, fmt.Errorf("you can't use deprecated options --report-path and --report-format along with new options --save-build-report and --build-report-path, use only the latter instead")
 	}
 
 	if usedNewBuildReportOption && GetSaveBuildReport(commonCmdData) {

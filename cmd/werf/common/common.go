@@ -202,19 +202,19 @@ func GetDeprecatedReportFormat(ctx context.Context, cmdData *CmdData) (build.Rep
 		return "", fmt.Errorf("bad --report-format given %q, expected: \"%s\"", reportFormat, strings.Join([]string{string(build.ReportJSON), string(build.ReportEnvFile)}, "\", \""))
 	}
 
-	logboek.Context(ctx).Warn().LogF("DEPRECATED: use --save-build-report ($WERF_SAVE_BUILD_REPORT) and optionally --build-report-path ($WERF_BUILD_REPORT_PATH) instead of --report-format ($WERF_REPORT_FORMAT)\n")
+	logboek.Context(ctx).Warn().LogF("DEPRECATED: use --save-build-report ($WERF_SAVE_BUILD_REPORT) with optional --build-report-path ($WERF_BUILD_REPORT_PATH) instead of --report-format ($WERF_REPORT_FORMAT)\n")
 
 	return reportFormat, nil
 }
 
 func SetupSaveBuildReport(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.SaveBuildReport = new(bool)
-	cmd.Flags().BoolVarP(cmdData.SaveBuildReport, "save-build-report", "", util.GetBoolEnvironmentDefaultFalse("WERF_SAVE_BUILD_REPORT"), fmt.Sprintf("Save build report (by default $WERF_SAVE_BUILD_REPORT or %t)", DefaultSaveBuildReport))
+	cmd.Flags().BoolVarP(cmdData.SaveBuildReport, "save-build-report", "", util.GetBoolEnvironmentDefaultFalse("WERF_SAVE_BUILD_REPORT"), fmt.Sprintf("Save build report (by default $WERF_SAVE_BUILD_REPORT or %t). Its path and format configured with --build-report-path", DefaultSaveBuildReport))
 }
 
 func SetupBuildReportPath(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.BuildReportPath = new(string)
-	cmd.Flags().StringVarP(cmdData.BuildReportPath, "build-report-path", "", os.Getenv("WERF_BUILD_REPORT_PATH"), fmt.Sprintf("Change build report save path (by default $WERF_BUILD_REPORT_PATH or %q if not set). Extension must be either .json or .env, .json will be used if not specified", DefaultBuildReportPathJSON))
+	cmd.Flags().StringVarP(cmdData.BuildReportPath, "build-report-path", "", os.Getenv("WERF_BUILD_REPORT_PATH"), fmt.Sprintf("Change build report path and format (by default $WERF_BUILD_REPORT_PATH or %q if not set). Extension must be either .json for JSON format or .env for env-file format. If extension not specified, then .json is used", DefaultBuildReportPathJSON))
 }
 
 func GetSaveBuildReport(cmdData *CmdData) bool {
@@ -245,12 +245,12 @@ func GetBuildReportPathAndFormat(cmdData *CmdData) (string, build.ReportFormat, 
 
 func SetupSaveDeployReport(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.SaveDeployReport = new(bool)
-	cmd.Flags().BoolVarP(cmdData.SaveDeployReport, "save-deploy-report", "", util.GetBoolEnvironmentDefaultFalse("WERF_SAVE_DEPLOY_REPORT"), fmt.Sprintf("Save deploy report (by default $WERF_SAVE_DEPLOY_REPORT or %t)", DefaultSaveDeployReport))
+	cmd.Flags().BoolVarP(cmdData.SaveDeployReport, "save-deploy-report", "", util.GetBoolEnvironmentDefaultFalse("WERF_SAVE_DEPLOY_REPORT"), fmt.Sprintf("Save deploy report (by default $WERF_SAVE_DEPLOY_REPORT or %t). Its path and format configured with --deploy-report-path", DefaultSaveDeployReport))
 }
 
 func SetupDeployReportPath(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.DeployReportPath = new(string)
-	cmd.Flags().StringVarP(cmdData.DeployReportPath, "deploy-report-path", "", os.Getenv("WERF_DEPLOY_REPORT_PATH"), fmt.Sprintf("Change deploy report save path (by default $WERF_DEPLOY_REPORT_PATH or %q if not set). Extension must be either .json or unspecified", DefaultDeployReportPathJSON))
+	cmd.Flags().StringVarP(cmdData.DeployReportPath, "deploy-report-path", "", os.Getenv("WERF_DEPLOY_REPORT_PATH"), fmt.Sprintf("Change deploy report path and format (by default $WERF_DEPLOY_REPORT_PATH or %q if not set). Extension must be .json for JSON format. If extension not specified, then .json is used", DefaultDeployReportPathJSON))
 }
 
 func GetSaveDeployReport(cmdData *CmdData) bool {
@@ -279,7 +279,7 @@ func GetDeployReportPath(cmdData *CmdData) (string, error) {
 
 func SetupUseDeployReport(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.UseDeployReport = new(bool)
-	cmd.Flags().BoolVarP(cmdData.UseDeployReport, "use-deploy-report", "", util.GetBoolEnvironmentDefaultFalse("WERF_USE_DEPLOY_REPORT"), fmt.Sprintf("Use previously saved deploy report (by default $WERF_USE_DEPLOY_REPORT or %t)", DefaultUseDeployReport))
+	cmd.Flags().BoolVarP(cmdData.UseDeployReport, "use-deploy-report", "", util.GetBoolEnvironmentDefaultFalse("WERF_USE_DEPLOY_REPORT"), fmt.Sprintf("Use deploy report, previously saved with --save-deploy-report (by default $WERF_USE_DEPLOY_REPORT or %t). Its path and format configured with --deploy-report-path", DefaultUseDeployReport))
 }
 
 func GetUseDeployReport(cmdData *CmdData) bool {

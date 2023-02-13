@@ -85,9 +85,9 @@ werf converge --repo registry.mydomain.com/web --env production
             Enable auto rollback of the failed release to the previous deployed release version     
             when current deploy process have failed ($WERF_AUTO_ROLLBACK by default)
       --build-report-path=''
-            Change build report save path (by default $WERF_BUILD_REPORT_PATH or                    
-            ".werf-build-report.json" if not set). Extension must be either .json or .env, .json    
-            will be used if not specified
+            Change build report path and format (by default $WERF_BUILD_REPORT_PATH or              
+            ".werf-build-report.json" if not set). Extension must be either .json for JSON format   
+            or .env for env-file format. If extension not specified, then .json is used
       --cache-repo=[]
             Specify one or multiple cache repos with images that will be used as a cache. Cache     
             will be populated when pushing newly built images into the primary repo and when        
@@ -101,8 +101,9 @@ werf converge --repo registry.mydomain.com/web --env production
             Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf   
             in working directory)
       --deploy-report-path=''
-            Change deploy report save path (by default $WERF_DEPLOY_REPORT_PATH or                  
-            ".werf-deploy-report.json" if not set). Extension must be either .json or unspecified
+            Change deploy report path and format (by default $WERF_DEPLOY_REPORT_PATH or            
+            ".werf-deploy-report.json" if not set). Extension must be .json for JSON format. If     
+            extension not specified, then .json is used
       --dev=false
             Enable development mode (default $WERF_DEV).
             The mode allows working with project files without doing redundant commits during       
@@ -318,9 +319,11 @@ werf converge --repo registry.mydomain.com/web --env production
             DEPRECATED: use --save-build-report with optional --build-report-path.
             Report save path ($WERF_REPORT_PATH by default)
       --save-build-report=false
-            Save build report (by default $WERF_SAVE_BUILD_REPORT or false)
+            Save build report (by default $WERF_SAVE_BUILD_REPORT or false). Its path and format    
+            configured with --build-report-path
       --save-deploy-report=false
-            Save deploy report (by default $WERF_SAVE_DEPLOY_REPORT or false)
+            Save deploy report (by default $WERF_SAVE_DEPLOY_REPORT or false). Its path and format  
+            configured with --deploy-report-path
       --secondary-repo=[]
             Specify one or multiple secondary read-only repos with images that will be used as a    
             cache.
