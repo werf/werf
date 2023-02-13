@@ -1,5 +1,23 @@
 # Changelog
 
+### [1.2.200](https://www.github.com/werf/werf/compare/v1.2.199...v1.2.200) (2023-02-13)
+
+
+### Features
+
+* add --deploy-report-path, --build-report-path ([7fa1d81](https://www.github.com/werf/werf/commit/7fa1d81eef47bf95165a684ca1932489e9510c4c))
+* **dismiss:** add two ways to run without git ([f2e1d16](https://www.github.com/werf/werf/commit/f2e1d16d382ff7c18b6350437f0100d20ec15c3f))
+
+
+### Bug Fixes
+
+* **build:** 'unsupported MediaType' error when using quay base images ([27b572d](https://www.github.com/werf/werf/commit/27b572d3b731d8ea5eb0846854eb38cd9bde804f))
+* **build:** TOOMANYREQUESTS error occurs for the built images ([163961d](https://www.github.com/werf/werf/commit/163961d4022457d8ce8b3cc0e44e1807665d0089))
+* **bundles:** --helm-compatible-chart and --rename-chart options for 'bundle copy' and 'bundle publish' ([3333d03](https://www.github.com/werf/werf/commit/3333d031d87825b74e7dce451cb2ad15908ca6ea))
+* **compose:** redundant image building with compose down command ([e94e7c4](https://www.github.com/werf/werf/commit/e94e7c49bc2219b84b0ba4812e98f3224411abf7))
+* rework build/deploy report options ([40a8e81](https://www.github.com/werf/werf/commit/40a8e8155f36d94d54abe4386bf25b6b5a315faa))
+* **staged-dockerfile:** fix multiple stages with the same name from multiple Dockerfiles ([76f654d](https://www.github.com/werf/werf/commit/76f654d2ee871e16e1d787b741e9cdc133c8f82c))
+
 ### [1.2.199](https://www.github.com/werf/werf/compare/v1.2.198...v1.2.199) (2023-01-27)
 
 
