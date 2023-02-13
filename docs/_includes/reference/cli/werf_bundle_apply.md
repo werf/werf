@@ -27,8 +27,9 @@ werf bundle apply [options]
             Also, can be specified with $WERF_ADD_LABEL_* (e.g.                                     
             $WERF_ADD_LABEL_1=labelName1=labelValue1, $WERF_ADD_LABEL_2=labelName2=labelValue2)
       --deploy-report-path=''
-            Change deploy report save path (by default $WERF_DEPLOY_REPORT_PATH or                  
-            ".werf-deploy-report.json" if not set). Extension must be either .json or unspecified
+            Change deploy report path and format (by default $WERF_DEPLOY_REPORT_PATH or            
+            ".werf-deploy-report.json" if not set). Extension must be .json for JSON format. If     
+            extension not specified, then .json is used
       --docker-config=''
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)
@@ -118,7 +119,8 @@ werf bundle apply [options]
       --repo-selectel-vpc-id=''
             repo Selectel VPC ID (default $WERF_REPO_SELECTEL_VPC_ID)
       --save-deploy-report=false
-            Save deploy report (by default $WERF_SAVE_DEPLOY_REPORT or false)
+            Save deploy report (by default $WERF_SAVE_DEPLOY_REPORT or false). Its path and format  
+            configured with --deploy-report-path
       --secret-values=[]
             Specify helm secret values in a YAML file (can specify multiple).
             Also, can be defined with $WERF_SECRET_VALUES_* (e.g.                                   

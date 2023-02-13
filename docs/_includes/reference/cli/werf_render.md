@@ -38,9 +38,9 @@ werf render [IMAGE_NAME...] [options]
             Also, can be specified with $WERF_ADD_LABEL_* (e.g.                                     
             $WERF_ADD_LABEL_1=labelName1=labelValue1, $WERF_ADD_LABEL_2=labelName2=labelValue2)
       --build-report-path=''
-            Change build report save path (by default $WERF_BUILD_REPORT_PATH or                    
-            ".werf-build-report.json" if not set). Extension must be either .json or .env, .json    
-            will be used if not specified
+            Change build report path and format (by default $WERF_BUILD_REPORT_PATH or              
+            ".werf-build-report.json" if not set). Extension must be either .json for JSON format   
+            or .env for env-file format. If extension not specified, then .json is used
       --cache-repo=[]
             Specify one or multiple cache repos with images that will be used as a cache. Cache     
             will be populated when pushing newly built images into the primary repo and when        
@@ -261,7 +261,8 @@ werf render [IMAGE_NAME...] [options]
             DEPRECATED: use --save-build-report with optional --build-report-path.
             Report save path ($WERF_REPORT_PATH by default)
       --save-build-report=false
-            Save build report (by default $WERF_SAVE_BUILD_REPORT or false)
+            Save build report (by default $WERF_SAVE_BUILD_REPORT or false). Its path and format    
+            configured with --build-report-path
       --secondary-repo=[]
             Specify one or multiple secondary read-only repos with images that will be used as a    
             cache.

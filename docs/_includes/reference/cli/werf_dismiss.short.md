@@ -1,1 +1,1 @@
-delete application from Kubernetes
+delete werf release from Kubernetes
