@@ -44,17 +44,17 @@ The automatically generated tag described above is used for both the final image
 
 ### Retrieving tags
 
-You can retrieve image tags using the `--report-path` option for `werf build`, `werf converge`, and other commands:
+You can retrieve image tags using the `--save-build-report` option for `werf build`, `werf converge`, and other commands:
 
 ```shell
 # By default, the JSON format is used.
-werf build --report-path=images.json --repo REPO
+werf build --save-build-report --repo REPO
 
 # The envfile format is also supported.
-werf converge --report-path=images.env --report-format=envfile --repo REPO
+werf converge --save-build-report --build-report-path .werf-build-report.env --repo REPO
 
 # For the render command, the final tags are only available with the --repo parameter.
-werf render --report-path=images.json --repo REPO
+werf render --save-build-report --repo REPO
 ```
 
 > **NOTE:** Retrieving tags beforehand without first invoking the build process is currently impossible. You can only retrieve tags from the images you've already built.

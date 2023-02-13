@@ -23,10 +23,10 @@ sidebar: documentation
  - Удалите параметр `--tagging-strategy` команды `werf ci-env`.
  - Удалите опции `--tag-custom`, `--tag-git-tag`, `--tag-git-branch`, и `--tag-by-stages-signature`.
 
- В случае, если требуется, чтобы определённый Docker-тег для собранного образа существовал в container registry для использования вне werf, тогда допустимо использование параметров `--report-path` и `--report-format` следующим образом:
- - `werf build/converge --report-path=images-report.json --repo REPO`;
- - `docker pull $(cat images-report.json | jq -r .Images.IMAGE_NAME_FROM_WERF_YAML.DockerImageName)`;
- - `docker tag $(cat images-report.json | jq -r .Images.IMAGE_NAME_FROM_WERF_YAML.DockerImageName) REPO:mytag`;
+ В случае, если требуется, чтобы определённый Docker-тег для собранного образа существовал в container registry для использования вне werf, тогда допустимо использование параметра `--save-build-report` (и, опционально, `--build-report-path`) следующим образом:
+ - `werf build/converge --save-build-report --repo REPO`;
+ - `docker pull $(cat .werf-build-report.json | jq -r .Images.IMAGE_NAME_FROM_WERF_YAML.DockerImageName)`;
+ - `docker tag $(cat .werf-build-report.json | jq -r .Images.IMAGE_NAME_FROM_WERF_YAML.DockerImageName) REPO:mytag`;
  - `docker push REPO:mytag`.
 
 ### 2. Используйте команду `converge` вместо команды `build-and-publish`
@@ -408,10 +408,10 @@ werf предоставляет следующие команды compose:
 
 ### Built images report format changes
 
-Команды `werf converge`, `werf build`, `werf run`, `werf bundle publish` и `werf render` имеют опции `--report-path` и `--report-format`. `--report-path` включает генерацию в следующем формате:
+Команды `werf converge`, `werf build`, `werf run`, `werf bundle publish` и `werf render` имеют опции `--save-build-report` и `--build-report-path`. `--save-build-report` включает генерацию в следующем формате:
 
 ```shell
-$ werf build --report-path images.json --report-format json
+$ werf build --save-build-report
 
 {
   "Images": {
@@ -443,7 +443,7 @@ $ werf build --report-path images.json --report-format json
 или
 
 ```shell
-$ werf build --report-path images.sh --report-format envfile
+$ werf build --save-build-report --build-report-path=.werf-build-report.env
 
 WERF_RESULT_DOCKER_IMAGE_NAME=quickstart-application:32e88a6a19a425c9254374ee2899b365876de31ac7d6857b523696a1-1613371915843
 WERF_WORKER_DOCKER_IMAGE_NAME=quickstart-application:1b16118e7d5c67aa3c61fc0f8d49b3eccf8f72810f01c33a40290418-1613371916044

@@ -44,17 +44,17 @@ registry.example.org/group/project  e6073b8f03231e122fa3b7d3294ff69a5060c332c439
 
 ### Получение тегов
 
-Для получения тегов образов может использоваться опция `--report-path` для команд `werf build`, `werf converge` и пр.:
+Для получения тегов образов может использоваться опция `--save-build-report` для команд `werf build`, `werf converge` и пр.:
 
 ```shell
 # По умолчанию формат JSON.
-werf build --report-path=images.json --repo REPO
+werf build --save-build-report --repo REPO
 
 # Поддерживается формат envfile.
-werf converge --report-path=images.env --report-format=envfile --repo REPO
+werf converge --save-build-report --build-report-path .werf-build-report.env --repo REPO
 
 # В команде рендера финальные теги будут доступны только с параметром --repo.
-werf render --report-path=images.json --repo REPO
+werf render --save-build-report --repo REPO
 ```
 
 > **ЗАМЕЧАНИЕ:** Получить теги заранее, не вызывая сборочный процесс, на данный момент невозможно, можно получить лишь теги уже собранных ранее образов.
