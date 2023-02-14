@@ -3,7 +3,7 @@
   <nav class="sidebar__container">
     <ul class="sidebar" id="mysidebar">
       {%- for entry in sidebar.f %}
-        {% include sidebar_entry.html entry=entry folder_entry_class="sidebar__item sidebar__item_parent" item_entry_class="sidebar__item" %}
+        {% include sidebar_entry.html entry=entry folder_entry_class="sidebar__item sidebar__item_parent" item_entry_class="sidebar__item" data_attr="data-parent" %}
       {%- endfor %}
     </ul>
   </nav>

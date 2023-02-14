@@ -30,7 +30,12 @@
         e.preventDefault();
         $("#mysidebar").navgoco('toggle', true);
       });
-      $("#mysidebar").navgoco('toggle', true, 0, 7, 45);
+
+      const parents = $('[data-parent]');
+
+      parents.each((_, parent) => {
+        $("#mysidebar").navgoco('toggle', true, $($(parent).children('[data-index]')).attr('data-index'));
+      })
     });
 
   </script>
