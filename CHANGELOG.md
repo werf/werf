@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.201](https://www.github.com/werf/werf/compare/v1.2.200...v1.2.201) (2023-02-16)
+
+
+### Bug Fixes
+
+* **dismiss:** allow --namespace or --release if git repo present ([68f0f14](https://www.github.com/werf/werf/commit/68f0f14caaa6fd270a001e965c664acc07ab0458))
+
 ### [1.2.200](https://www.github.com/werf/werf/compare/v1.2.199...v1.2.200) (2023-02-13)
 
 
