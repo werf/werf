@@ -24,6 +24,7 @@ import (
 	"github.com/werf/werf/pkg/deploy/lock_manager"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/git_repo/gitdata"
+	"github.com/werf/werf/pkg/giterminism_manager"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/storage/lrumeta"
 	"github.com/werf/werf/pkg/true_git"
@@ -171,81 +172,27 @@ func runDismiss(ctx context.Context) error {
 
 	common.LogKubeContext(kube.Context)
 
-	var gitNotFoundErr *common.GitWorktreeNotFoundError
 	giterminismManager, err := common.GetGiterminismManager(ctx, &commonCmdData)
+	var gitNotFoundErr *common.GitWorktreeNotFoundError
 	if err != nil {
 		if !errors.As(err, &gitNotFoundErr) {
 			return err
 		}
 	}
+	gitFound := gitNotFoundErr == nil
 
 	common.SetupOndemandKubeInitializer(*commonCmdData.KubeContext, *commonCmdData.KubeConfig, *commonCmdData.KubeConfigBase64, *commonCmdData.KubeConfigPathMergeList)
 	if err := common.GetOndemandKubeInitializer().Init(ctx); err != nil {
 		return err
 	}
 
-	namespaceSpecified := *commonCmdData.Namespace != ""
-	releaseSpecified := *commonCmdData.Release != ""
+	namespace, release, err := getNamespaceAndRelease(ctx, gitFound, giterminismManager)
+	if err != nil {
+		return err
+	}
 
-	var namespace string
-	var release string
 	var helmRegistryClient *registry.Client
-	if namespaceSpecified || releaseSpecified {
-		if namespaceSpecified && !releaseSpecified {
-			return fmt.Errorf("--namespace specified, but not --release, while should be specified both or none")
-		} else if !namespaceSpecified && releaseSpecified {
-			return fmt.Errorf("--release specified, but not --namespace, while should be specified both or none")
-		}
-
-		namespace = *commonCmdData.Namespace
-		release = *commonCmdData.Release
-	} else if common.GetUseDeployReport(&commonCmdData) {
-		deployReportPath, err := common.GetDeployReportPath(&commonCmdData)
-		if err != nil {
-			return fmt.Errorf("unable to get deploy report path: %w", err)
-		}
-
-		deployReportByte, err := os.ReadFile(deployReportPath)
-		if err != nil {
-			return fmt.Errorf("unable to read deploy report file %q: %w", deployReportPath, err)
-		}
-
-		var deployReport helmrelease.DeployReport
-		if err := json.Unmarshal(deployReportByte, &deployReport); err != nil {
-			return fmt.Errorf("unable to unmarshal deploy report file %q: %w", deployReportPath, err)
-		}
-
-		if deployReport.Namespace == "" {
-			return fmt.Errorf("unable to get namespace from deploy report file %q", deployReportPath)
-		}
-
-		if deployReport.Release == "" {
-			return fmt.Errorf("unable to get release from deploy report file %q", deployReportPath)
-		}
-
-		namespace = deployReport.Namespace
-		release = deployReport.Release
-	} else if gitNotFoundErr != nil {
-		return fmt.Errorf("dismiss should either be executed in a git repository or with --namespace and --release specified, or with --use-deploy-report")
-	} else {
-		common.ProcessLogProjectDir(&commonCmdData, giterminismManager.ProjectDir())
-
-		_, werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
-		if err != nil {
-			return fmt.Errorf("unable to load werf config: %w", err)
-		}
-		logboek.LogOptionalLn()
-
-		namespace, err = deploy_params.GetKubernetesNamespace(*commonCmdData.Namespace, *commonCmdData.Environment, werfConfig)
-		if err != nil {
-			return err
-		}
-
-		release, err = deploy_params.GetHelmRelease(*commonCmdData.Release, *commonCmdData.Environment, namespace, werfConfig)
-		if err != nil {
-			return err
-		}
-
+	if gitFound {
 		helmRegistryClient, err = common.NewHelmRegistryClient(ctx, *commonCmdData.DockerConfig, *commonCmdData.InsecureHelmDependencies)
 		if err != nil {
 			return fmt.Errorf("unable to create helm registry client: %w", err)
@@ -300,4 +247,74 @@ func runDismiss(ctx context.Context) error {
 			return helmUninstallCmd.RunE(helmUninstallCmd, []string{release})
 		})
 	}
+}
+
+func getNamespaceAndRelease(ctx context.Context, gitFound bool, giterminismMgr giterminism_manager.Interface) (string, string, error) {
+	namespaceSpecified := *commonCmdData.Namespace != ""
+	releaseSpecified := *commonCmdData.Release != ""
+
+	var namespace string
+	var release string
+	if common.GetUseDeployReport(&commonCmdData) {
+		if namespaceSpecified || releaseSpecified {
+			return "", "", fmt.Errorf("--namespace or --release can't be used together with --use-deploy-report")
+		}
+
+		deployReportPath, err := common.GetDeployReportPath(&commonCmdData)
+		if err != nil {
+			return "", "", fmt.Errorf("unable to get deploy report path: %w", err)
+		}
+
+		deployReportByte, err := os.ReadFile(deployReportPath)
+		if err != nil {
+			return "", "", fmt.Errorf("unable to read deploy report file %q: %w", deployReportPath, err)
+		}
+
+		var deployReport helmrelease.DeployReport
+		if err := json.Unmarshal(deployReportByte, &deployReport); err != nil {
+			return "", "", fmt.Errorf("unable to unmarshal deploy report file %q: %w", deployReportPath, err)
+		}
+
+		if deployReport.Namespace == "" {
+			return "", "", fmt.Errorf("unable to get namespace from deploy report file %q", deployReportPath)
+		}
+
+		if deployReport.Release == "" {
+			return "", "", fmt.Errorf("unable to get release from deploy report file %q", deployReportPath)
+		}
+
+		namespace = deployReport.Namespace
+		release = deployReport.Release
+	} else if gitFound {
+		common.ProcessLogProjectDir(&commonCmdData, giterminismMgr.ProjectDir())
+
+		_, werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismMgr, common.GetWerfConfigOptions(&commonCmdData, true))
+		if err != nil {
+			return "", "", fmt.Errorf("unable to load werf config: %w", err)
+		}
+		logboek.LogOptionalLn()
+
+		namespace, err = deploy_params.GetKubernetesNamespace(*commonCmdData.Namespace, *commonCmdData.Environment, werfConfig)
+		if err != nil {
+			return "", "", err
+		}
+
+		release, err = deploy_params.GetHelmRelease(*commonCmdData.Release, *commonCmdData.Environment, namespace, werfConfig)
+		if err != nil {
+			return "", "", err
+		}
+	} else if !gitFound {
+		if !namespaceSpecified && !releaseSpecified {
+			return "", "", fmt.Errorf("no git with werf project found: dismiss should either be executed in a git repository, or with --namespace and --release specified, or with --use-deploy-report")
+		} else if namespaceSpecified && !releaseSpecified {
+			return "", "", fmt.Errorf("--namespace specified, but not --release, while should be specified both or none")
+		} else if !namespaceSpecified && releaseSpecified {
+			return "", "", fmt.Errorf("--release specified, but not --namespace, while should be specified both or none")
+		}
+
+		namespace = *commonCmdData.Namespace
+		release = *commonCmdData.Release
+	}
+
+	return namespace, release, nil
 }
