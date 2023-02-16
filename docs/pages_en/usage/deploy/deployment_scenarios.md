@@ -205,6 +205,18 @@ werf build --repo example.org/mycompany/myapp
 werf bundle publish --skip-build --tag latest --repo example.org/mycompany/myapp
 ```
 
+## Saving a deployment report
+
+The `werf converge` and `werf bundle apply` commands come with the `-save-deploy-report` parameter. You can use it to save a report about the deployment to a file. The report contains the release name, Namespace, deployment status, and some other data. Here is a usage example:
+
+```shell
+werf converge --save-deploy-report
+```
+
+Running the command above will create a `.werf-deploy-report.json' file containing information about the latest release once the deployment is complete.
+
+The custom path to the deployment report can be set with the `--deploy-report-path` parameter.
+
 ## Deleting a deployed application
 
 You can delete a deployed application using the `werf dismiss` command run from the application's Git repository, for example:
@@ -212,3 +224,20 @@ You can delete a deployed application using the `werf dismiss` command run from 
 ```shell
 werf dismiss --env staging
 ```
+
+You can explicitly specify the release name and Namespace if there is no access to the application's Git repository:
+
+```shell
+werf dismiss --release myapp-staging --namespace myapp-staging
+```
+
+... or you can use a previous deployment report which contains the release name and Namespace. You can enable saving this report by using the `-save-deploy-report` flag of the `werf converge` or `werf bundle apply` commands.
+
+```shell
+werf converge --save-deploy-report
+cp .werf-deploy-report.json /anywhere
+cd /anywhere
+werf dismiss --use-deploy-report
+```
+
+The custom path to the deployment report can be set with the `--deploy-report-path` parameter.
