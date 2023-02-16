@@ -213,7 +213,7 @@ The `werf converge` and `werf bundle apply` commands come with the `-save-deploy
 werf converge --save-deploy-report
 ```
 
-Running the command above will create a `.werf-deploy-report.json' file containing information about the latest release once the deployment is complete.
+Running the command above will create a `.werf-deploy-report.json` file containing information about the latest release once the deployment is complete.
 
 The custom path to the deployment report can be set with the `--deploy-report-path` parameter.
 
