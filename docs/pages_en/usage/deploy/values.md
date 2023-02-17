@@ -591,16 +591,31 @@ production
 
 ## Chart information
 
-werf stores information about the current chart in the properties of the `$.Chart` object:
+werf stores information about the current chart in the `$.Chart` object:
 
 ```yaml
 # Is the chart the main one?
 IsRoot: true
 
-# All of the Chart.yaml contents:
-apiVersion: v2
-name: mychart
-version: 1.0.0
+# Contents of the Chart.yaml:
+Name: mychart
+Version: 1.0.0
+Type: library
+KubeVersion: "~1.20.3"
+AppVersion: "1.0"
+Deprecated: false
+Icon: https://example.org/mychart-icon.svg
+Description: This is My Chart
+Home: https://example.org
+Sources:
+  - https://github.com/my/chart
+Keywords:
+  - apps
+Annotations:
+  anyAdditionalInfo: here
+Dependencies:
+- Name: redis
+  Condition: redis.enabled
 ```
 
 Example of use:
@@ -608,7 +623,7 @@ Example of use:
 {% raw %}
 
 ```
-{{ $.Chart.name }}
+{{ $.Chart.Name }}
 ```
 
 {% endraw %}

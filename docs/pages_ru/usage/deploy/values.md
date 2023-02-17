@@ -591,16 +591,31 @@ production
 
 ## Информация о чарте
 
-werf хранит информацию о текущем чарте в свойствах объекта `$.Chart`:
+werf хранит информацию о текущем чарте в объекте `$.Chart`:
 
 ```yaml
 # Является ли чарт основным:
 IsRoot: true
 
-# Далее всё содержимое Chart.yaml:
-apiVersion: v2
-name: mychart
-version: 1.0.0
+# Содержимое Chart.yaml:
+Name: mychart
+Version: 1.0.0
+Type: library
+KubeVersion: "~1.20.3"
+AppVersion: "1.0"
+Deprecated: false
+Icon: https://example.org/mychart-icon.svg
+Description: This is My Chart
+Home: https://example.org
+Sources:
+  - https://github.com/my/chart
+Keywords:
+  - apps
+Annotations:
+  anyAdditionalInfo: here
+Dependencies:
+- Name: redis
+  Condition: redis.enabled
 ```
 
 Пример использования:
@@ -608,7 +623,7 @@ version: 1.0.0
 {% raw %}
 
 ```
-{{ $.Chart.name }}
+{{ $.Chart.Name }}
 ```
 
 {% endraw %}
