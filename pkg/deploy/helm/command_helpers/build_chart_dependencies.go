@@ -3,11 +3,7 @@ package command_helpers
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
-	"os"
-	"path/filepath"
 
-	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/cli"
 	"helm.sh/helm/v3/pkg/downloader"
@@ -25,25 +21,8 @@ type BuildChartDependenciesOptions struct {
 	IgnoreInvalidAnnotationsAndLabels bool
 }
 
-func BuildChartDependenciesInDir(ctx context.Context, chartFile, chartLockFile *chart.ChartExtenderBufferedFile, targetDir string, helmEnvSettings *cli.EnvSettings, registryClient *registry.Client, opts BuildChartDependenciesOptions) error {
+func BuildChartDependenciesInDir(ctx context.Context, targetDir string, helmEnvSettings *cli.EnvSettings, registryClient *registry.Client, opts BuildChartDependenciesOptions) error {
 	logboek.Context(ctx).Debug().LogF("-- BuildChartDependenciesInDir\n")
-
-	if err := os.MkdirAll(targetDir, os.ModePerm); err != nil {
-		return fmt.Errorf("error creating dir %q: %w", targetDir, err)
-	}
-
-	files := []*chart.ChartExtenderBufferedFile{chartFile, chartLockFile}
-
-	for _, file := range files {
-		if file == nil {
-			continue
-		}
-
-		path := filepath.Join(targetDir, file.Name)
-		if err := ioutil.WriteFile(path, file.Data, 0o644); err != nil {
-			return fmt.Errorf("error writing %q: %w", path, err)
-		}
-	}
 
 	man := &downloader.Manager{
 		Out:               logboek.Context(ctx).OutStream(),

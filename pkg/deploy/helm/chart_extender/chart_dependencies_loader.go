@@ -5,10 +5,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/otiai10/copy"
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 	"helm.sh/helm/v3/pkg/chart"
@@ -20,13 +22,14 @@ import (
 
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/types"
 	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
 	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/werf"
 )
 
-func GetChartDependenciesCacheDir(lockChecksum string) string {
-	return filepath.Join(werf.GetLocalCacheDir(), "helm_chart_dependencies", "1", lockChecksum)
+func GetChartDependenciesCacheDir() string {
+	return filepath.Join(werf.GetLocalCacheDir(), "helm_chart_dependencies", "1")
 }
 
 func LoadMetadata(files []*chart.ChartExtenderBufferedFile) (*chart.Metadata, error) {
@@ -60,14 +63,54 @@ func LoadMetadata(files []*chart.ChartExtenderBufferedFile) (*chart.Metadata, er
 	return metadata, nil
 }
 
-func GetPreparedChartDependenciesDir(ctx context.Context, metadataFile, metadataLockFile *chart.ChartExtenderBufferedFile, helmEnvSettings *cli.EnvSettings, registryClient *registry.Client, buildChartDependenciesOpts command_helpers.BuildChartDependenciesOptions) (string, error) {
-	depsDir := GetChartDependenciesCacheDir(util.Sha256Hash(string(metadataLockFile.Data)))
+func CopyChartDependenciesIntoCache(ctx context.Context, chartDir string, ch *chart.Chart) error {
+	metadataBytes, err := yaml.Marshal(ch.Metadata)
+	if err != nil {
+		return fmt.Errorf("unable to marshal chart metadata into yaml: %w", err)
+	}
+
+	metadataLockBytes, err := yaml.Marshal(ch.Lock)
+	if err != nil {
+		return fmt.Errorf("unable to marshal chart metadata lock into yaml: %w", err)
+	}
+
+	_, err = prepareDependenciesDir(ctx, metadataBytes, metadataLockBytes, func(tmpDepsDir string) error {
+		var archivesDependencies []*chart.File
+
+	FindArchivesDependencies:
+		for _, f := range ch.Raw {
+			if strings.HasPrefix(f.Name, "charts/") {
+				for _, depLock := range ch.Lock.Dependencies {
+					if filepath.Base(f.Name) == MakeDependencyArchiveName(depLock.Name, depLock.Version) {
+						archivesDependencies = append(archivesDependencies, f)
+						continue FindArchivesDependencies
+					}
+				}
+			}
+		}
+
+		for _, depArch := range archivesDependencies {
+			srcPath := filepath.Join(chartDir, depArch.Name)
+			destPath := filepath.Join(tmpDepsDir, depArch.Name)
+			if err := copy.Copy(srcPath, destPath); err != nil {
+				return fmt.Errorf("unable to copy %q into cache %q: %w", srcPath, tmpDepsDir, err)
+			}
+		}
+
+		return nil
+	}, logboek.Context(ctx).Info())
+
+	return err
+}
+
+func prepareDependenciesDir(ctx context.Context, metadataBytes, metadataLockBytes []byte, prepareFunc func(tmpDepsDir string) error, logger types.ManagerInterface) (string, error) {
+	depsDir := filepath.Join(GetChartDependenciesCacheDir(), util.Sha256Hash(string(metadataLockBytes)))
 
 	_, err := os.Stat(depsDir)
 	switch {
 	case os.IsNotExist(err):
-		if err := logboek.Context(ctx).Default().LogProcess("Building chart dependencies").DoError(func() error {
-			logboek.Context(ctx).Default().LogF("Using chart dependencies directory: %s\n", depsDir)
+		if err := logger.LogProcess("Preparing chart dependencies").DoError(func() error {
+			logger.LogF("Using chart dependencies directory: %s\n", depsDir)
 			_, lock, err := werf.AcquireHostLock(ctx, depsDir, lockgate.AcquireOptions{})
 			if err != nil {
 				return fmt.Errorf("error acquiring lock for %q: %w", depsDir, err)
@@ -85,19 +128,17 @@ func GetPreparedChartDependenciesDir(ctx context.Context, metadataFile, metadata
 
 			tmpDepsDir := fmt.Sprintf("%s.tmp.%s", depsDir, uuid.NewV4().String())
 
-			buildChartDependenciesOpts.LoadOptions = &loader.LoadOptions{
-				ChartExtender:               NewWerfChartStub(ctx, buildChartDependenciesOpts.IgnoreInvalidAnnotationsAndLabels),
-				SubchartExtenderFactoryFunc: nil,
+			if err := createChartDependenciesDir(tmpDepsDir, metadataBytes, metadataLockBytes); err != nil {
+				return err
 			}
 
-			if err := command_helpers.BuildChartDependenciesInDir(ctx, metadataFile, metadataLockFile, tmpDepsDir, helmEnvSettings, registryClient, buildChartDependenciesOpts); err != nil {
-				return fmt.Errorf("error building chart dependencies: %w", err)
+			if err := prepareFunc(tmpDepsDir); err != nil {
+				return err
 			}
 
 			if err := os.Rename(tmpDepsDir, depsDir); err != nil {
 				return fmt.Errorf("error renaming %q to %q: %w", tmpDepsDir, depsDir, err)
 			}
-
 			return nil
 		}); err != nil {
 			return "", err
@@ -105,10 +146,47 @@ func GetPreparedChartDependenciesDir(ctx context.Context, metadataFile, metadata
 	case err != nil:
 		return "", fmt.Errorf("error accessing %q: %w", depsDir, err)
 	default:
-		logboek.Context(ctx).Default().LogF("Using cached chart dependencies directory: %s\n", depsDir)
+		logger.LogF("Using cached chart dependencies directory: %s\n", depsDir)
 	}
 
 	return depsDir, nil
+}
+
+func createChartDependenciesDir(destDir string, metadataBytes, metadataLockBytes []byte) error {
+	if err := os.MkdirAll(destDir, os.ModePerm); err != nil {
+		return fmt.Errorf("error creating dir %q: %w", destDir, err)
+	}
+
+	files := []*chart.ChartExtenderBufferedFile{
+		{Name: "Chart.yaml", Data: metadataBytes},
+		{Name: "Chart.lock", Data: metadataLockBytes},
+	}
+
+	for _, file := range files {
+		if file == nil {
+			continue
+		}
+
+		path := filepath.Join(destDir, file.Name)
+		if err := ioutil.WriteFile(path, file.Data, 0o644); err != nil {
+			return fmt.Errorf("error writing %q: %w", path, err)
+		}
+	}
+
+	return nil
+}
+
+func GetPreparedChartDependenciesDir(ctx context.Context, metadataFile, metadataLockFile *chart.ChartExtenderBufferedFile, helmEnvSettings *cli.EnvSettings, registryClient *registry.Client, buildChartDependenciesOpts command_helpers.BuildChartDependenciesOptions) (string, error) {
+	return prepareDependenciesDir(ctx, metadataFile.Data, metadataLockFile.Data, func(tmpDepsDir string) error {
+		buildChartDependenciesOpts.LoadOptions = &loader.LoadOptions{
+			ChartExtender:               NewWerfChartStub(ctx, buildChartDependenciesOpts.IgnoreInvalidAnnotationsAndLabels),
+			SubchartExtenderFactoryFunc: nil,
+		}
+		if err := command_helpers.BuildChartDependenciesInDir(ctx, tmpDepsDir, helmEnvSettings, registryClient, buildChartDependenciesOpts); err != nil {
+			return fmt.Errorf("error building chart dependencies: %w", err)
+		}
+		return nil
+	}, logboek.Context(ctx).Default())
 }
 
 type ChartDependenciesConfiguration struct {
@@ -142,7 +220,7 @@ func (conf *ChartDependenciesConfiguration) GetExternalDependenciesFiles(loadedC
 	metadata.APIVersion = "v2"
 
 	var externalDependenciesNames []string
-	var isExternalDependency = func(depName string) bool {
+	isExternalDependency := func(depName string) bool {
 		for _, externalDepName := range externalDependenciesNames {
 			if depName == externalDepName {
 				return true
@@ -159,7 +237,7 @@ FindExternalDependencies:
 
 		for _, loadedFile := range loadedChartFiles {
 			if strings.HasPrefix(loadedFile.Name, "charts/") {
-				if filepath.Base(loadedFile.Name) == fmt.Sprintf("%s-%s.tgz", depLock.Name, depLock.Version) {
+				if filepath.Base(loadedFile.Name) == MakeDependencyArchiveName(depLock.Name, depLock.Version) {
 					continue FindExternalDependencies
 				}
 			}
@@ -342,4 +420,8 @@ func HashReq(req, lock []*chart.Dependency) (string, error) {
 	}
 	s, err := provenance.Digest(bytes.NewBuffer(data))
 	return "sha256:" + s, err
+}
+
+func MakeDependencyArchiveName(depName, depVersion string) string {
+	return fmt.Sprintf("%s-%s.tgz", depName, depVersion)
 }
