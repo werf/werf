@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -76,11 +77,35 @@ func NewCmd(ctx context.Context) (*cobra.Command, error) {
 	common.SetupInsecureHelmDependencies(&_commonCmdData, cmd)
 	common.SetupDockerConfig(&_commonCmdData, cmd, "")
 
+	dependencyCmd := helm_v3.NewDependencyCmd(actionConfig, os.Stdout)
+	for _, depCmd := range dependencyCmd.Commands() {
+		if depCmd.Name() == "update" {
+			oldRunE := depCmd.RunE
+			depCmd.RunE = func(cmd *cobra.Command, args []string) error {
+				if err := oldRunE(cmd, args); err != nil {
+					return err
+				}
+
+				chartpath := "."
+				if len(args) > 0 {
+					chartpath = filepath.Clean(args[0])
+				}
+
+				ch, err := loader.LoadDir(chartpath)
+				if err != nil {
+					return fmt.Errorf("error loading chart %q: %w", chartpath, err)
+				}
+
+				return chart_extender.CopyChartDependenciesIntoCache(cmd.Context(), chartpath, ch)
+			}
+		}
+	}
+
 	cmd.AddCommand(
 		helm2.ReplaceHelmUninstallDocs(helm_v3.NewUninstallCmd(actionConfig, os.Stdout, helm_v3.UninstallCmdOptions{
 			StagesSplitter: helm.NewStagesSplitter(),
 		})),
-		helm2.ReplaceHelmDependencyDocs(helm_v3.NewDependencyCmd(actionConfig, os.Stdout)),
+		helm2.ReplaceHelmDependencyDocs(dependencyCmd),
 		helm2.ReplaceHelmGetDocs(helm_v3.NewGetCmd(actionConfig, os.Stdout)),
 		helm2.ReplaceHelmHistoryDocs(helm_v3.NewHistoryCmd(actionConfig, os.Stdout)),
 		NewLintCmd(actionConfig, wc),
