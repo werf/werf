@@ -120,7 +120,7 @@ func NewChartDependenciesConfiguration(chartMetadata *chart.Metadata, chartMetad
 	return &ChartDependenciesConfiguration{ChartMetadata: chartMetadata, ChartMetadataLock: chartMetadataLock}
 }
 
-func (conf *ChartDependenciesConfiguration) GetExternalDependenciesFiles() (bool, *chart.ChartExtenderBufferedFile, *chart.ChartExtenderBufferedFile, error) {
+func (conf *ChartDependenciesConfiguration) GetExternalDependenciesFiles(loadedChartFiles []*chart.ChartExtenderBufferedFile) (bool, *chart.ChartExtenderBufferedFile, *chart.ChartExtenderBufferedFile, error) {
 	metadataBytes, err := yaml.Marshal(conf.ChartMetadata)
 	if err != nil {
 		return false, nil, nil, fmt.Errorf("unable to marshal original chart metadata into yaml: %w", err)
@@ -141,28 +141,46 @@ func (conf *ChartDependenciesConfiguration) GetExternalDependenciesFiles() (bool
 
 	metadata.APIVersion = "v2"
 
-	var localDependenciesNames []string
+	var externalDependenciesNames []string
+	var isExternalDependency = func(depName string) bool {
+		for _, externalDepName := range externalDependenciesNames {
+			if depName == externalDepName {
+				return true
+			}
+		}
+		return false
+	}
+
+FindExternalDependencies:
+	for _, depLock := range metadataLock.Dependencies {
+		if depLock.Repository == "" || strings.HasPrefix(depLock.Repository, "file://") {
+			continue
+		}
+
+		for _, loadedFile := range loadedChartFiles {
+			if strings.HasPrefix(loadedFile.Name, "charts/") {
+				if filepath.Base(loadedFile.Name) == fmt.Sprintf("%s-%s.tgz", depLock.Name, depLock.Version) {
+					continue FindExternalDependencies
+				}
+			}
+		}
+
+		externalDependenciesNames = append(externalDependenciesNames, depLock.Name)
+	}
 
 	var filteredLockDependencies []*chart.Dependency
 	for _, depLock := range metadataLock.Dependencies {
-		if depLock.Repository == "" || strings.HasPrefix(depLock.Repository, "file://") {
-			localDependenciesNames = append(localDependenciesNames, depLock.Name)
-			continue
+		if isExternalDependency(depLock.Name) {
+			filteredLockDependencies = append(filteredLockDependencies, depLock)
 		}
-		filteredLockDependencies = append(filteredLockDependencies, depLock)
 	}
 	metadataLock.Dependencies = filteredLockDependencies
 
 	var filteredDependencies []*chart.Dependency
-FilterOutLocalDependencies:
 	for _, dep := range metadata.Dependencies {
-		for _, localDepName := range localDependenciesNames {
-			if localDepName == dep.Name {
-				continue FilterOutLocalDependencies
-			}
+		if isExternalDependency(dep.Name) {
+			filteredDependencies = append(filteredDependencies, dep)
 		}
-
-		filteredDependencies = append(filteredDependencies, dep)
 	}
 	metadata.Dependencies = filteredDependencies
 
@@ -288,11 +306,10 @@ func LoadChartDependencies(ctx context.Context, loadChartDirFunc func(ctx contex
 		res = append(res, chartFiles...)
 	}
 
-	haveExternalDependencies, metadataFile, metadataLockFile, err := conf.GetExternalDependenciesFiles()
+	haveExternalDependencies, metadataFile, metadataLockFile, err := conf.GetExternalDependenciesFiles(loadedChartFiles)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get external dependencies chart configuration files: %w", err)
 	}
-
 	if !haveExternalDependencies {
 		return res, nil
 	}
