@@ -209,13 +209,13 @@ werf converge
 
 In this case, the `first` hook will be deployed first, followed by the `second` hook, and then the `third` hook.
 
-**По умолчанию при повторных развертываниях того же самого хука старый хук в кластере удаляется прямо перед развертыванием нового хука.** Этап удаления старого хука можно изменить аннотацией `helm.sh/hook-delete-policy`, которая принимает следующие значения:
+**By default, redeploying the same hook will delete the old hook in the cluster just before deploying the new one.** You can change the deletion policy for the old hook using the `helm.shook/hook-delete-policy` annotation. It can have the following values:
 
-- `hook-succeeded` — удалять новый хук сразу после его удачного развертывания, при неудачном развертывании не удалять совсем;
+- `hook-succeeded` — delete the new hook once it has been successfully deployed; do not delete it if it has failed to deploy;
 
-- `hook-failed` — удалять новый хук сразу после его неудачного развертывания, при удачном развертывании не удалять совсем;
+- `hook-failed` — delete the new hook once it has failed to deploy; do not delete it if it has been deployed successfully;
 
-- `before-hook-creation` — (по умолчанию) удалять старый хук сразу перед созданием нового.
+- `before-hook-creation` — (default) delete the old hook right before creating a new one.
 
 ## Waiting for non-release resources to be ready (werf only)
 
