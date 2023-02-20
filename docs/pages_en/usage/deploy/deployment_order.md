@@ -209,7 +209,7 @@ werf converge
 
 In this case, the `first` hook will be deployed first, followed by the `second` hook, and then the `third` hook.
 
-**By default, redeploying the same hook will delete the old hook in the cluster just before deploying the new one.** You can change the deletion policy for the old hook using the `helm.shook/hook-delete-policy` annotation. It can have the following values:
+**By default, redeploying the same hook will delete the old hook in the cluster just before deploying the new one.** You can change the deletion policy for the old hook using the `helm.sh/hook-delete-policy` annotation. It can have the following values:
 
 - `hook-succeeded` — delete the new hook once it has been successfully deployed; do not delete it if it has failed to deploy;
 
