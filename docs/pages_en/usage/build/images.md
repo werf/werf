@@ -1,5 +1,5 @@
 ---
-title: Image configuration
+title: Images and dependencies
 permalink: usage/build/images.html
 ---
 
