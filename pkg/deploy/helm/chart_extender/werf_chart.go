@@ -351,9 +351,6 @@ func (wc *WerfChart) CreateNewBundle(ctx context.Context, destDir, chartVersion 
 	}
 
 	for _, f := range wc.HelmChart.Files {
-		if !CheckBundlePathAllowed(f.Name) {
-			continue
-		}
 		if err := writeChartFile(ctx, destDir, f.Name, f.Data); err != nil {
 			return nil, fmt.Errorf("error writing miscellaneous chart file: %w", err)
 		}

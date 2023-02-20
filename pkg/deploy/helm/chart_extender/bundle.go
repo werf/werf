@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
 	"text/template"
 
 	"helm.sh/helm/v3/pkg/chart"
@@ -120,7 +119,7 @@ func (bundle *Bundle) ChartLoaded(files []*chart.ChartExtenderBufferedFile) erro
 		if err := bundle.SecretsRuntimeData.DecodeAndLoadSecrets(bundle.ChartExtenderContext, files, bundle.Dir, wd, bundle.secretsManager, secrets.DecodeAndLoadSecretsOptions{
 			LoadFromLocalFilesystem:    true,
 			CustomSecretValueFiles:     bundle.SecretValueFiles,
-			WithoutDefaultSecretValues: true,
+			WithoutDefaultSecretValues: false,
 		}); err != nil {
 			return fmt.Errorf("error decoding secrets: %w", err)
 		}
@@ -231,41 +230,4 @@ func readBundleJsonMap(path string) (map[string]string, error) {
 	} else {
 		return res, nil
 	}
-}
-
-var (
-	AllowedBundleChartFiles = []string{
-		"Chart.yaml",
-		"LICENSE",
-		"README.md",
-		"values.yaml",
-		"values.schema.json",
-	}
-	AllowedBundleChartDirs = []string{
-		"charts/",
-		"crds/",
-		"templates/",
-		"files/",
-	}
-)
-
-func CheckBundlePathAllowed(path string) bool {
-	// TODO(bundles): provide more canonical way to whitelist/blacklist bundle files
-	if os.Getenv("WERF_BUNDLE_SCHEMA_NONSTRICT") == "1" {
-		return true
-	}
-
-	for _, p := range AllowedBundleChartFiles {
-		if p == path {
-			return true
-		}
-	}
-
-	for _, d := range AllowedBundleChartDirs {
-		if strings.HasPrefix(path, d) {
-			return true
-		}
-	}
-
-	return false
 }
