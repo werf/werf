@@ -1,5 +1,18 @@
 # Changelog
 
+### [1.2.202](https://www.github.com/werf/werf/compare/v1.2.201...v1.2.202) (2023-02-21)
+
+
+### Features
+
+* **bundles:** enable secrets for bundle publish and apply ([5d6dec7](https://www.github.com/werf/werf/commit/5d6dec768cc46d58349b9d46c69f2b5938793a53))
+
+
+### Bug Fixes
+
+* **helm-dependencies:** automatically fill ~/.werf/local_cache on 'werf helm dependency update' command ([b094521](https://www.github.com/werf/werf/commit/b094521630e61ce987269c13c3152e225ffebba9))
+* **helm-dependencies:** enable loading of .helm/charts/CHART-VERSION.tgz charts ([3addc23](https://www.github.com/werf/werf/commit/3addc23805c113759b7af9e0b29cafbdd2b9c6d2))
+
 ### [1.2.201](https://www.github.com/werf/werf/compare/v1.2.200...v1.2.201) (2023-02-16)
 
 
