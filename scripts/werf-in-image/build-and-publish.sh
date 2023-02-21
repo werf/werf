@@ -17,6 +17,10 @@ for dest_repo in "ghcr.io/werf" "registry-write.werf.io/werf"; do
     werf export --tag "$DEST_REPO/werf:$group" "$group-stable-alpine"
     werf export --tag "$DEST_REPO/werf-argocd-cmp-sidecar:$group" "argocd-cmp-sidecar-$group-stable-ubuntu"
 
+    for distro in "alpine" "ubuntu" "centos" "fedora"; do
+      werf export --tag "$DEST_REPO/werf:$group-$distro" "$group-stable-$distro"
+    done
+
     for channel in "alpha" "beta" "ea" "stable" "rock-solid"; do
       werf export --tag "$DEST_REPO/werf:$group-$channel" "$group-$channel-alpine"
       werf export --tag "$DEST_REPO/werf-argocd-cmp-sidecar:$group-$channel" "argocd-cmp-sidecar-$group-$channel-ubuntu"
