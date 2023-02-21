@@ -3,13 +3,17 @@ package image
 type ImagesSets [][]*Image
 
 func NewImagesSetsBuilder() *ImagesSetsBuilder {
-	return &ImagesSetsBuilder{}
+	return &ImagesSetsBuilder{
+		curSetInd:  0,
+		nextSetInd: 1,
+	}
 }
 
 type ImagesSetsBuilder struct {
 	allImages  []*Image
 	imagesSets ImagesSets
 	curSetInd  int
+	nextSetInd int
 }
 
 func (is *ImagesSetsBuilder) GetImagesSets() ImagesSets {
@@ -30,10 +34,15 @@ func (is *ImagesSetsBuilder) MergeImagesSets(newImagesSets [][]*Image) {
 			is.allImages = append(is.allImages, img)
 		}
 	}
+
+	nextSetInd := is.curSetInd + len(newImagesSets)
+	if nextSetInd > is.nextSetInd {
+		is.nextSetInd = nextSetInd
+	}
 }
 
 func (is *ImagesSetsBuilder) Next() {
-	is.curSetInd++
+	is.curSetInd = is.nextSetInd
 }
 
 func (is *ImagesSetsBuilder) getImagesByInd(ind int) []*Image {
