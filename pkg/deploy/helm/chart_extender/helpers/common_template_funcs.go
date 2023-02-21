@@ -37,11 +37,11 @@ func SetupWerfSecretFile(secretsRuntimeData *secrets.SecretsRuntimeData, funcMap
 			return "", fmt.Errorf("expected relative secret file path, given path %v", secretRelativePath)
 		}
 
-		decodedData, ok := secretsRuntimeData.DecodedSecretFilesData[secretRelativePath]
+		decodedData, ok := secretsRuntimeData.DecryptedSecretFilesData[secretRelativePath]
 
 		if !ok {
 			var secretFiles []string
-			for key := range secretsRuntimeData.DecodedSecretFilesData {
+			for key := range secretsRuntimeData.DecryptedSecretFilesData {
 				secretFiles = append(secretFiles, key)
 			}
 

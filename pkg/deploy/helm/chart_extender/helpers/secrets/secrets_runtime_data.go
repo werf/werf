@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 
 	"helm.sh/helm/v3/pkg/chart"
+	"sigs.k8s.io/yaml"
 
 	"github.com/werf/werf/pkg/deploy/secrets_manager"
 	"github.com/werf/werf/pkg/giterminism_manager"
@@ -14,14 +15,14 @@ import (
 )
 
 type SecretsRuntimeData struct {
-	DecodedSecretValues    map[string]interface{}
-	DecodedSecretFilesData map[string]string
-	SecretValuesToMask     []string
+	DecryptedSecretValues    map[string]interface{}
+	DecryptedSecretFilesData map[string]string
+	SecretValuesToMask       []string
 }
 
 func NewSecretsRuntimeData() *SecretsRuntimeData {
 	return &SecretsRuntimeData{
-		DecodedSecretFilesData: make(map[string]string),
+		DecryptedSecretFilesData: make(map[string]string),
 	}
 }
 
@@ -51,14 +52,12 @@ func (secretsRuntimeData *SecretsRuntimeData) DecodeAndLoadSecrets(ctx context.C
 			if err != nil {
 				return fmt.Errorf("unable to read custom secret values file %q from local filesystem: %w", customSecretValuesFileName, err)
 			}
-
 			file.Data = data
 		} else {
 			data, err := opts.GiterminismManager.FileReader().ReadChartFile(ctx, customSecretValuesFileName)
 			if err != nil {
 				return fmt.Errorf("unable to read custom secret values file %q: %w", customSecretValuesFileName, err)
 			}
-
 			file.Data = data
 		}
 
@@ -68,7 +67,7 @@ func (secretsRuntimeData *SecretsRuntimeData) DecodeAndLoadSecrets(ctx context.C
 	var encoder *secret.YamlEncoder
 	if len(secretDirFiles)+len(loadedSecretValuesFiles) > 0 {
 		if enc, err := secretsManager.GetYamlEncoder(ctx, secretsWorkingDir); err != nil {
-			return err
+			return fmt.Errorf("error getting secrets yaml encoder: %w", err)
 		} else {
 			encoder = enc
 		}
@@ -78,8 +77,8 @@ func (secretsRuntimeData *SecretsRuntimeData) DecodeAndLoadSecrets(ctx context.C
 		if data, err := LoadChartSecretDirFilesData(chartDir, secretDirFiles, encoder); err != nil {
 			return fmt.Errorf("error loading secret files data: %w", err)
 		} else {
-			secretsRuntimeData.DecodedSecretFilesData = data
-			for _, fileData := range secretsRuntimeData.DecodedSecretFilesData {
+			secretsRuntimeData.DecryptedSecretFilesData = data
+			for _, fileData := range secretsRuntimeData.DecryptedSecretFilesData {
 				secretsRuntimeData.SecretValuesToMask = append(secretsRuntimeData.SecretValuesToMask, fileData)
 			}
 		}
@@ -89,10 +88,42 @@ func (secretsRuntimeData *SecretsRuntimeData) DecodeAndLoadSecrets(ctx context.C
 		if values, err := LoadChartSecretValueFiles(chartDir, loadedSecretValuesFiles, encoder); err != nil {
 			return fmt.Errorf("error loading secret value files: %w", err)
 		} else {
-			secretsRuntimeData.DecodedSecretValues = values
+			secretsRuntimeData.DecryptedSecretValues = values
 			secretsRuntimeData.SecretValuesToMask = append(secretsRuntimeData.SecretValuesToMask, secretvalues.ExtractSecretValuesFromMap(values)...)
 		}
 	}
 
 	return nil
+}
+
+func (secretsRuntimeData *SecretsRuntimeData) GetEncodedSecretValues(ctx context.Context, secretsManager *secrets_manager.SecretsManager, secretsWorkingDir string) (map[string]interface{}, error) {
+	if len(secretsRuntimeData.DecryptedSecretValues) == 0 {
+		return nil, nil
+	}
+
+	// FIXME: secrets encoder should receive interface{} raw data instead of []byte yaml data
+
+	var encoder *secret.YamlEncoder
+	if enc, err := secretsManager.GetYamlEncoder(ctx, secretsWorkingDir); err != nil {
+		return nil, fmt.Errorf("error getting secrets yaml encoder: %w", err)
+	} else {
+		encoder = enc
+	}
+
+	decryptedSecretsData, err := yaml.Marshal(secretsRuntimeData.DecryptedSecretValues)
+	if err != nil {
+		return nil, fmt.Errorf("unable to marshal decrypted secrets yaml: %w", err)
+	}
+
+	encryptedSecretsData, err := encoder.EncryptYamlData(decryptedSecretsData)
+	if err != nil {
+		return nil, fmt.Errorf("unable to encrypt secrets data: %w", err)
+	}
+
+	var encryptedData map[string]interface{}
+	if err := yaml.Unmarshal(encryptedSecretsData, &encryptedData); err != nil {
+		return nil, fmt.Errorf("unable to unmarshal encrypted secrets data: %w", err)
+	}
+
+	return encryptedData, nil
 }

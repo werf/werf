@@ -10,6 +10,8 @@ import (
 
 type SecretsManager struct {
 	DisableSecretsDecryption bool
+
+	missedSecretKeyModeEnabled bool
 }
 
 type SecretsManagerOptions struct {
@@ -22,9 +24,29 @@ func NewSecretsManager(opts SecretsManagerOptions) *SecretsManager {
 	}
 }
 
+func (manager *SecretsManager) IsMissedSecretKeyModeEnabled() bool {
+	return manager.missedSecretKeyModeEnabled
+}
+
+func (manager *SecretsManager) AllowMissedSecretKeyMode(workingDir string) error {
+	_, err := GetRequiredSecretKey(workingDir)
+	if err != nil {
+		if _, missedKey := err.(*EncryptionKeyRequiredError); missedKey {
+			manager.missedSecretKeyModeEnabled = true
+			return nil
+		}
+		return fmt.Errorf("unable to load secret key: %w", err)
+	}
+	return nil
+}
+
 func (manager *SecretsManager) GetYamlEncoder(ctx context.Context, workingDir string) (*secret.YamlEncoder, error) {
 	if manager.DisableSecretsDecryption {
 		logboek.Context(ctx).Default().LogLnDetails("Secrets decryption disabled")
+		return secret.NewYamlEncoder(nil), nil
+	}
+	if manager.missedSecretKeyModeEnabled {
+		logboek.Context(ctx).Error().LogLn("Secrets decryption disabled due to missed key (no WERF_SECRET_KEY is set)")
 		return secret.NewYamlEncoder(nil), nil
 	}
 

@@ -146,9 +146,9 @@ func (bundle *Bundle) MakeValues(inputVals map[string]interface{}) (map[string]i
 	chartutil.CoalesceTables(vals, bundle.ServiceValues)
 
 	if debugSecretValues() {
-		debugPrintValues(bundle.ChartExtenderContext, "secret", bundle.SecretsRuntimeData.DecodedSecretValues)
+		debugPrintValues(bundle.ChartExtenderContext, "secret", bundle.SecretsRuntimeData.DecryptedSecretValues)
 	}
-	chartutil.CoalesceTables(vals, bundle.SecretsRuntimeData.DecodedSecretValues)
+	chartutil.CoalesceTables(vals, bundle.SecretsRuntimeData.DecryptedSecretValues)
 
 	debugPrintValues(bundle.ChartExtenderContext, "input", inputVals)
 	chartutil.CoalesceTables(vals, inputVals)
