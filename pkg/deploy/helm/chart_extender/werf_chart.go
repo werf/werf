@@ -11,10 +11,13 @@ import (
 	"text/template"
 
 	"github.com/mitchellh/copystructure"
+	helm_v3 "helm.sh/helm/v3/cmd/helm"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/chartutil"
 	"helm.sh/helm/v3/pkg/cli"
+	"helm.sh/helm/v3/pkg/cli/values"
+	"helm.sh/helm/v3/pkg/getter"
 	"helm.sh/helm/v3/pkg/postrender"
 	"helm.sh/helm/v3/pkg/registry"
 	"sigs.k8s.io/yaml"
@@ -27,6 +30,7 @@ import (
 	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
 	"github.com/werf/werf/pkg/deploy/secrets_manager"
 	"github.com/werf/werf/pkg/giterminism_manager"
+	"github.com/werf/werf/pkg/util"
 )
 
 type WerfChartOptions struct {
@@ -65,9 +69,9 @@ func NewWerfChart(ctx context.Context, giterminismManager giterminism_manager.In
 }
 
 type WerfChartRuntimeData struct {
-	DecodedSecretValues    map[string]interface{}
-	DecodedSecretFilesData map[string]string
-	SecretValuesToMask     []string
+	DecryptedSecretValues    map[string]interface{}
+	DecryptedSecretFilesData map[string]string
+	SecretValuesToMask       []string
 }
 
 type WerfChart struct {
@@ -161,9 +165,9 @@ func (wc *WerfChart) makeValues(inputVals map[string]interface{}, withSecrets bo
 
 	if withSecrets {
 		if debugSecretValues() {
-			debugPrintValues(wc.ChartExtenderContext, "secret", wc.SecretsRuntimeData.DecodedSecretValues)
+			debugPrintValues(wc.ChartExtenderContext, "secret", wc.SecretsRuntimeData.DecryptedSecretValues)
 		}
-		chartutil.CoalesceTables(vals, wc.SecretsRuntimeData.DecodedSecretValues)
+		chartutil.CoalesceTables(vals, wc.SecretsRuntimeData.DecryptedSecretValues)
 	}
 
 	debugPrintValues(wc.ChartExtenderContext, "input", inputVals)
@@ -206,6 +210,13 @@ func (wc *WerfChart) MakeBundleValues(chrt *chart.Chart, inputVals map[string]in
 	debugPrintValues(wc.ChartExtenderContext, "all", valsCopy)
 
 	return valsCopy, nil
+}
+
+func (wc *WerfChart) MakeBundleSecretValues(ctx context.Context, secretsRuntimeData *secrets.SecretsRuntimeData) (map[string]interface{}, error) {
+	if debugSecretValues() {
+		debugPrintValues(wc.ChartExtenderContext, "secret", wc.SecretsRuntimeData.DecryptedSecretValues)
+	}
+	return secretsRuntimeData.GetEncodedSecretValues(ctx, wc.SecretsManager, wc.GiterminismManager.ProjectDir())
 }
 
 // SetupTemplateFuncs method for the chart.Extender interface
@@ -276,7 +287,7 @@ func (wc *WerfChart) SetEnv(env string) error {
  * CreateNewBundle creates new Bundle object with werf chart extensions taken into account.
  * inputVals could contain any custom values, which should be stored in the bundle.
  */
-func (wc *WerfChart) CreateNewBundle(ctx context.Context, destDir, chartVersion string, inputVals map[string]interface{}) (*Bundle, error) {
+func (wc *WerfChart) CreateNewBundle(ctx context.Context, destDir, chartVersion string, vals *values.Options) (*Bundle, error) {
 	chartPath := filepath.Join(wc.GiterminismManager.ProjectDir(), wc.ChartDir)
 	chrt, err := loader.LoadDir(chartPath)
 	if err != nil {
@@ -285,14 +296,33 @@ func (wc *WerfChart) CreateNewBundle(ctx context.Context, destDir, chartVersion 
 
 	var valsData []byte
 	{
-		vals, err := wc.MakeBundleValues(chrt, inputVals)
+		p := getter.All(helm_v3.Settings)
+		vals, err := vals.MergeValues(p, wc)
 		if err != nil {
-			return nil, fmt.Errorf("unable to construct bundle input values: %w", err)
+			return nil, fmt.Errorf("unable to merge input values: %w", err)
 		}
 
-		valsData, err = yaml.Marshal(vals)
+		bundleVals, err := wc.MakeBundleValues(chrt, vals)
 		if err != nil {
-			return nil, fmt.Errorf("unable to prepare values: %w", err)
+			return nil, fmt.Errorf("unable to construct bundle values: %w", err)
+		}
+
+		valsData, err = yaml.Marshal(bundleVals)
+		if err != nil {
+			return nil, fmt.Errorf("unable to marshal bundle values: %w", err)
+		}
+	}
+
+	var secretValsData []byte
+	if wc.SecretsRuntimeData != nil && !wc.SecretsManager.IsMissedSecretKeyModeEnabled() {
+		vals, err := wc.MakeBundleSecretValues(ctx, wc.SecretsRuntimeData)
+		if err != nil {
+			return nil, fmt.Errorf("unable to construct bundle secret values: %w", err)
+		}
+
+		secretValsData, err = yaml.Marshal(vals)
+		if err != nil {
+			return nil, fmt.Errorf("unable to marshal bundle secret values: %w", err)
 		}
 	}
 
@@ -312,6 +342,13 @@ func (wc *WerfChart) CreateNewBundle(ctx context.Context, destDir, chartVersion 
 	valuesFile := filepath.Join(destDir, "values.yaml")
 	if err := ioutil.WriteFile(valuesFile, valsData, os.ModePerm); err != nil {
 		return nil, fmt.Errorf("unable to write %q: %w", valuesFile, err)
+	}
+
+	if secretValsData != nil {
+		secretValuesFile := filepath.Join(destDir, "secret-values.yaml")
+		if err := ioutil.WriteFile(secretValuesFile, secretValsData, os.ModePerm); err != nil {
+			return nil, fmt.Errorf("unable to write %q: %w", secretValuesFile, err)
+		}
 	}
 
 	if wc.HelmChart.Metadata == nil {
@@ -350,7 +387,28 @@ func (wc *WerfChart) CreateNewBundle(ctx context.Context, destDir, chartVersion 
 		}
 	}
 
+	chartDirAbs := filepath.Join(wc.GiterminismManager.ProjectDir(), wc.ChartDir)
+
+	ignoreChartValuesFiles := []string{secrets.DefaultSecretValuesFileName}
+
+	// Do not publish into the bundle no custom values nor custom secret values.
+	// Final bundle values and secret values will be preconstructed, merged and
+	//  embedded into the bundle using only 2 files: values.yaml and secret-values.yaml.
+	for _, customValuesPath := range append(wc.SecretValueFiles, vals.ValueFiles...) {
+		path := util.GetAbsoluteFilepath(customValuesPath)
+		if util.IsSubpathOfBasePath(chartDirAbs, path) {
+			ignoreChartValuesFiles = append(ignoreChartValuesFiles, util.GetRelativeToBaseFilepath(chartDirAbs, path))
+		}
+	}
+
+WritingFiles:
 	for _, f := range wc.HelmChart.Files {
+		for _, ignoreValuesFile := range ignoreChartValuesFiles {
+			if f.Name == ignoreValuesFile {
+				continue WritingFiles
+			}
+		}
+
 		if err := writeChartFile(ctx, destDir, f.Name, f.Data); err != nil {
 			return nil, fmt.Errorf("error writing miscellaneous chart file: %w", err)
 		}

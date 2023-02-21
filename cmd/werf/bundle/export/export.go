@@ -11,7 +11,6 @@ import (
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/cli/values"
-	"helm.sh/helm/v3/pkg/getter"
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/cmd/werf/common"
@@ -367,22 +366,14 @@ func runExport(ctx context.Context, imagesToProcess build.ImagesToProcess) error
 		SubchartExtenderFactoryFunc: func() chart.ChartExtender { return chart_extender.NewWerfSubchart() },
 	}
 
-	valueOpts := &values.Options{
+	chartVersion := fmt.Sprintf("0.0.0-%d", time.Now().Unix())
+
+	if _, err := wc.CreateNewBundle(ctx, cmdData.Destination, chartVersion, &values.Options{
 		ValueFiles:   common.GetValues(&commonCmdData),
 		StringValues: common.GetSetString(&commonCmdData),
 		Values:       common.GetSet(&commonCmdData),
 		FileValues:   common.GetSetFile(&commonCmdData),
-	}
-
-	chartVersion := fmt.Sprintf("0.0.0-%d", time.Now().Unix())
-
-	p := getter.All(helm_v3.Settings)
-	vals, err := valueOpts.MergeValues(p, wc)
-	if err != nil {
-		return err
-	}
-
-	if _, err := wc.CreateNewBundle(ctx, cmdData.Destination, chartVersion, vals); err != nil {
+	}); err != nil {
 		return fmt.Errorf("unable to create bundle: %w", err)
 	}
 

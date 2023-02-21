@@ -13,7 +13,6 @@ import (
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/cli/values"
-	"helm.sh/helm/v3/pkg/getter"
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/cmd/werf/common"
@@ -23,6 +22,7 @@ import (
 	"github.com/werf/werf/pkg/deploy/helm/chart_extender"
 	"github.com/werf/werf/pkg/deploy/helm/chart_extender/helpers"
 	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
+	"github.com/werf/werf/pkg/deploy/secrets_manager"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/git_repo/gitdata"
 	"github.com/werf/werf/pkg/image"
@@ -111,8 +111,11 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupSetString(&commonCmdData, cmd)
 	common.SetupSetFile(&commonCmdData, cmd)
 	common.SetupValues(&commonCmdData, cmd)
+	common.SetupSecretValues(&commonCmdData, cmd)
+	common.SetupIgnoreSecretKey(&commonCmdData, cmd)
 
 	commonCmdData.SetupDisableDefaultValues(cmd)
+	commonCmdData.SetupDisableDefaultSecretValues(cmd)
 	commonCmdData.SetupSkipDependenciesRepoRefresh(cmd)
 
 	common.SetupSaveBuildReport(&commonCmdData, cmd)
@@ -334,13 +337,23 @@ func runPublish(ctx context.Context, imagesToProcess build.ImagesToProcess) erro
 		return err
 	}
 
-	wc := chart_extender.NewWerfChart(ctx, giterminismManager, nil, chartDir, helm_v3.Settings, helmRegistryClient, chart_extender.WerfChartOptions{
+	secretsManager := secrets_manager.NewSecretsManager(secrets_manager.SecretsManagerOptions{
+		DisableSecretsDecryption: *commonCmdData.IgnoreSecretKey,
+	})
+
+	// FIXME(1.3): compatibility mode with older 1.2 versions, which do not require WERF_SECRET_KEY in the 'werf bundle publish' command
+	if err := secretsManager.AllowMissedSecretKeyMode(giterminismManager.ProjectDir()); err != nil {
+		return err
+	}
+
+	wc := chart_extender.NewWerfChart(ctx, giterminismManager, secretsManager, chartDir, helm_v3.Settings, helmRegistryClient, chart_extender.WerfChartOptions{
 		BuildChartDependenciesOpts:        command_helpers.BuildChartDependenciesOptions{SkipUpdate: *commonCmdData.SkipDependenciesRepoRefresh},
+		SecretValueFiles:                  common.GetSecretValues(&commonCmdData),
 		ExtraAnnotations:                  userExtraAnnotations,
 		ExtraLabels:                       userExtraLabels,
 		IgnoreInvalidAnnotationsAndLabels: true,
 		DisableDefaultValues:              *commonCmdData.DisableDefaultValues,
-		DisableDefaultSecretValues:        true,
+		DisableDefaultSecretValues:        *commonCmdData.DisableDefaultSecretValues,
 	})
 
 	if err := wc.SetEnv(*commonCmdData.Environment); err != nil {
@@ -377,13 +390,6 @@ func runPublish(ctx context.Context, imagesToProcess build.ImagesToProcess) erro
 		SubchartExtenderFactoryFunc: func() chart.ChartExtender { return chart_extender.NewWerfSubchart() },
 	}
 
-	valueOpts := &values.Options{
-		ValueFiles:   *commonCmdData.Values,
-		StringValues: *commonCmdData.SetString,
-		Values:       *commonCmdData.Set,
-		FileValues:   *commonCmdData.SetFile,
-	}
-
 	sv, err := bundles.BundleTagToChartVersion(ctx, cmdData.Tag, time.Now())
 	if err != nil {
 		return fmt.Errorf("unable to set chart version from bundle tag %q: %w", cmdData.Tag, err)
@@ -393,13 +399,12 @@ func runPublish(ctx context.Context, imagesToProcess build.ImagesToProcess) erro
 	bundleTmpDir := filepath.Join(werf.GetServiceDir(), "tmp", "bundles", uuid.NewV4().String())
 	defer os.RemoveAll(bundleTmpDir)
 
-	p := getter.All(helm_v3.Settings)
-	vals, err := valueOpts.MergeValues(p, wc)
-	if err != nil {
-		return err
-	}
-
-	bundle, err := wc.CreateNewBundle(ctx, bundleTmpDir, chartVersion, vals)
+	bundle, err := wc.CreateNewBundle(ctx, bundleTmpDir, chartVersion, &values.Options{
+		ValueFiles:   *commonCmdData.Values,
+		StringValues: *commonCmdData.SetString,
+		Values:       *commonCmdData.Set,
+		FileValues:   *commonCmdData.SetFile,
+	})
 	if err != nil {
 		return fmt.Errorf("unable to create bundle: %w", err)
 	}

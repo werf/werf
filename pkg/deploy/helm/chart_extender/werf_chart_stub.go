@@ -108,7 +108,7 @@ func (wc *WerfChartStub) MakeValues(inputVals map[string]interface{}) (map[strin
 	vals := make(map[string]interface{})
 	chartutil.CoalesceTables(vals, wc.stubServiceValuesOverrides)
 	chartutil.CoalesceTables(vals, wc.stubServiceValues)
-	chartutil.CoalesceTables(vals, wc.SecretsRuntimeData.DecodedSecretValues)
+	chartutil.CoalesceTables(vals, wc.SecretsRuntimeData.DecryptedSecretValues)
 	chartutil.CoalesceTables(vals, inputVals)
 
 	return vals, nil

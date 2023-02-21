@@ -76,10 +76,20 @@ func GetRequiredSecretKey(workingDir string) ([]byte, error) {
 	return secretKey, nil
 }
 
-func NewEncryptionKeyRequiredError(notFoundIn []string) error {
+type EncryptionKeyRequiredError struct {
+	Msg error
+}
+
+func (err *EncryptionKeyRequiredError) Error() string {
+	return err.Msg.Error()
+}
+
+func NewEncryptionKeyRequiredError(notFoundIn []string) *EncryptionKeyRequiredError {
 	notFoundInFormatted := []string{}
 	for _, el := range notFoundIn {
 		notFoundInFormatted = append(notFoundInFormatted, fmt.Sprintf("%q", el))
 	}
-	return fmt.Errorf("required encryption key not found in: %s", strings.Join(notFoundInFormatted, ", "))
+	return &EncryptionKeyRequiredError{
+		Msg: fmt.Errorf("required encryption key not found in: %s", strings.Join(notFoundInFormatted, ", ")),
+	}
 }
