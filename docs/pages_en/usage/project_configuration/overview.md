@@ -21,13 +21,13 @@ These instructions are defined for each application component. They can be in tw
 - Dockerfiles that describe the project images.
 - Stapel (an alternative assembly syntax).
 
-> Refer to the corresponding section of the documentation for more details on the assembly configuration.
+> Refer to the ["Build"]({{ "usage/build/overview.html" | true_relative_url }}) section of the documentation for more details on the assembly configuration.
 
 ### Deploy instructions
 
 These instructions are defined for the entire application (and all deployment environments) and should take the form of a Helm Chart.
 
-> Refer to the corresponding section of the documentation for details on the deployment configuration.
+> Refer to the ["Deploy"]({{ "usage/deploy/overview.html" | true_relative_url }}) section of the documentation for details on the deployment configuration.
 
 ## Example of a typical project configuration
 
