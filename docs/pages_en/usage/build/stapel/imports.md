@@ -8,7 +8,7 @@ directive_summary: import
 The size of the final image can grow dramatically due to the assembly tools and source files eating up space. These files are generally not needed in the final image.
 To avoid this, the Docker community suggests installing tools, building, and removing irrelevant files in one step:
 
-```
+```Dockerfile
 RUN “download-source && cmd && cmd2 && remove-source”
 ```
 
@@ -26,7 +26,7 @@ However, this method does not support caching. Thus, a build toolkit will be ins
 
 Another way is to use a multi-stage build, a feature supported in Docker since version 17.05:
 
-```
+```Dockerfile
 FROM node:latest AS storefront
 WORKDIR /app
 COPY react-app .
@@ -76,7 +76,7 @@ As with the _git mappings_ configuration, include and exclude file and directory
 You can also specify an owner and a group for the imported resources, `owner: <owner>` and `group: <group>`.
 This behavior is similar to the one used when adding code from Git repositories, and you can read more about it in the [git directive section]({{ "usage/build/stapel/git.html" | true_relative_url }}).
 
-> Note that the path of imported resources and the path specified in _git mappings_ must not overlap
+> Note that the path of imported resources and the path specified in _git mappings_ must not overlap.
 
 Refer to [this section]({{ "usage/build/stapel/imports.html#what-is-an-artifact" | true_relative_url }}) to learn more about _using artifacts_.
 

@@ -551,11 +551,11 @@ The build script can be used to download the `some-library-latest.tar.gz` archiv
 
 Working with remote Git repositories relies on the `SSH_AUTH_SOCK` UNIX socket, which is mounted in all build containers. This way, the build instructions can use the SSH agent over the specified UNIX socket.
 
-> **NOTE** There is a restriction that only the `root` user inside the build container can access the UNIX socket defined by the `SSH_AUTH_SOCK` environment variable.
+> **NOTE:** There is a restriction that only the `root` user inside the build container can access the UNIX socket defined by the `SSH_AUTH_SOCK` environment variable.
 
 By default (if no parameters are specified), werf tries to use the SSH-agent running on the system by checking its availability via the `SSH_AUTH_SOCK` environment variable.
 
-If no SSH agent is running on the system, werf tries to act as an SSH client, using the user's default SSH key (`~/.ssh/id_rsa|id_dsa`). If werf finds one of these files, it runs a temporary SSH agent and adds to it the keys it has found. 
+If no SSH agent is running on the system, werf tries to act as an SSH client, using the user's default SSH key (`~/.ssh/id_rsa|id_dsa`). If werf finds one of these files, it runs a temporary SSH agent and adds to it the keys it has found.
 
 You have to specify the `--ssh-key PRIVATE_KEY_FILE_PATH` startup option to use specific SSH keys only (you can use this option more than once to specify multiple SSH keys). In this case, werf runs a temporary SSH agent and adds to it only the specified SSH keys.
 
