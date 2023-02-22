@@ -18,7 +18,7 @@ werf стремится сделать работу с Helm более прос�
 
 Для развертывания простого приложения достаточно двух файлов и команды `werf converge`, запущенной в Git-репозитории приложения:
 
-```
+```yaml
 # .helm/templates/hello.yaml:
 apiVersion: apps/v1
 kind: Deployment
@@ -37,7 +37,7 @@ spec:
       - image: nginxdemos/hello:plain-text
 ```
 
-```
+```yaml
 # werf.yaml:
 configVersion: 1
 project: hello
@@ -53,7 +53,7 @@ werf converge --repo registry.example.org/repo --env production
 
 Более сложный пример развертывания со сборкой образов и внешними Helm-чартами:
 
-```
+```yaml
 # werf.yaml:
 configVersion: 1
 project: myapp
@@ -87,7 +87,7 @@ backend:
 
 {% raw %}
 
-```
+```yaml
 # .helm/templates/backend.yaml:
 apiVersion: apps/v1
 kind: Deployment

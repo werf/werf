@@ -18,7 +18,7 @@ werf strives to make working with Helm easier, more convenient and flexible with
 
 You only need two files and the `werf converge` command (run it in the application's Git repository) to deploy a basic application:
 
-```
+```yaml
 # .helm/templates/hello.yaml:
 apiVersion: apps/v1
 kind: Deployment
@@ -37,7 +37,7 @@ spec:
       - image: nginxdemos/hello:plain-text
 ```
 
-```
+```yaml
 # werf.yaml:
 configVersion: 1
 project: hello
@@ -53,7 +53,7 @@ The above command will deploy the `hello` Deployment to the `hello-production` N
 
 Here is a more complex deployment example involving image assembly and external Helm charts:
 
-```
+```yaml
 # werf.yaml:
 configVersion: 1
 project: myapp
@@ -87,7 +87,7 @@ backend:
 
 {% raw %}
 
-```
+```yaml
 # .helm/templates/backend.yaml:
 apiVersion: apps/v1
 kind: Deployment
