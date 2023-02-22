@@ -33,8 +33,8 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
    minikube start --driver=docker --insecure-registry registry.example.com:80
    ```
    {% endraw %}
-    
-   **IMPORTANT** Param `--insecure-registry` allows usage of Container Registry without TLS. TLS in our case dropped for simplicity.
+
+   **IMPORTANT** Param `--insecure-registry` allows usage of container registry without TLS. TLS in our case dropped for simplicity.
 
 4. Install NGINX Ingress Controller:
 
@@ -44,7 +44,7 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
    ```
    {% endraw %}
 
-5. Install Container Registry to store images:
+5. Install container registry to store images:
 
    {% raw %}
    ```shell
@@ -52,8 +52,8 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
    ```
    {% endraw %}
 
-   Create Ingress to access Container Registry. 
-   
+   Create Ingress to access container registry.
+
        {% raw %}
    ```shell
    @"
@@ -77,11 +77,11 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
                name: registry
                port:
                  number: 80
-   "@ | kubectl apply -f -  
+   "@ | kubectl apply -f -
    ```
    {% endraw %}
 
-6. Allow usage of Container Registry without TLS for Docker:
+6. Allow usage of container registry without TLS for Docker:
 
    Using menu Docker Desktop -> Settings -> Docker Engine add following configuration key:
 
@@ -99,7 +99,7 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
    minikube start --driver=docker --insecure-registry registry.example.com:80
    ```
 
-7. Allow usage of Container Registry without TLS for werf:
+7. Allow usage of container registry without TLS for werf:
 
    Set `WERF_INSECURE_REGISTRY=1` environment variable in the terminal where werf would run.
 
@@ -109,7 +109,7 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
    set WERF_INSECURE_REGISTRY=1
    ```
 
-   For bash:
+   For Bash:
 
    ```
    export WERF_INSECURE_REGISTRY=1
@@ -121,7 +121,7 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
    $Env:WERF_INSECURE_REGISTRY = "1"
    ```
 
-8. We are going to use `vote.quickstart-application.example.com` and `result.quickstart-application.example.com` domains to access application and `registry.example.com` domain to access Container Registry.
+8. We are going to use `vote.quickstart-application.example.com` and `result.quickstart-application.example.com` domains to access application and `registry.example.com` domain to access container registry.
 
    Let's update hosts file. Get minikube IP-address:
 
@@ -130,7 +130,7 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
    ```
 
    Using IP-address above append line to the end of the file `C:\Windows\System32\drivers\etc\hosts`:
-   
+
    ```
    <IP-address minikube>    vote.quickstart-application.example.com result.quickstart-application.example.com registry.example.com
    ```
@@ -160,8 +160,8 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
    minikube start --vm=true --insecure-registry registry.example.com:80
    ```
    {% endraw %}
-    
-   **IMPORTANT** Param `--insecure-registry` allows usage of Container Registry without TLS. TLS in our case dropped for simplicity.
+
+   > **IMPORTANT** Param `--insecure-registry` allows usage of container registry without TLS. TLS in our case dropped for simplicity.
 
 4. Install NGINX Ingress Controller:
 
@@ -171,16 +171,16 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
    ```
    {% endraw %}
 
-5. Install Container Registry to store images:
+5. Install container registry to store images:
 
    {% raw %}
    ```shell
    minikube addons enable registry
    ```
    {% endraw %}
-    
-   Create Ingress to access Container Registry:
- 
+
+   Create Ingress to access container registry:
+
    {% raw %}
    ```shell
    kubectl apply -f - << EOF
@@ -208,7 +208,7 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
    ```
    {% endraw %}
 
-6. Allow usage of Container Registry without TLS for docker:
+6. Allow usage of container registry without TLS for docker:
 
    Using menu Docker Desktop -> Settings -> Docker Engine add following configuration key:
 
@@ -228,24 +228,24 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
    ```
    {% endraw %}
 
-7. Allow usage of Container Registry without TLS for werf:
+7. Allow usage of container registry without TLS for werf:
 
-   Set `WERF_INSECURE_REGISTRY=1` environment variable in the terminal where werf would run. For bash:
+   Set `WERF_INSECURE_REGISTRY=1` environment variable in the terminal where werf would run. For Bash:
 
    ```
    export WERF_INSECURE_REGISTRY=1
    ```
 
-   To set this option automatically in new bash-sessions, add it to the `.bashrc`:
+   To set this option automatically in new Bash-sessions, add it to the `.bashrc`:
 
    ```shell
    echo export WERF_INSECURE_REGISTRY=1 | tee -a ~/.bashrc
    ```
 
-8. We are going to use `vote.quickstart-application.example.com` and `result.quickstart-application.example.com` domains to access application and `registry.example.com` domain to access Container Registry.
+8. We are going to use `vote.quickstart-application.example.com` and `result.quickstart-application.example.com` domains to access application and `registry.example.com` domain to access container registry.
 
    Let's update hosts file. Run the following command in the terminal:
-   
+
    ```shell
    echo "$(minikube ip) vote.quickstart-application.example.com result.quickstart-application.example.com registry.example.com" | sudo tee -a /etc/hosts
    ```
@@ -271,8 +271,8 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
    minikube start --driver=docker --insecure-registry registry.example.com:80
    ```
    {% endraw %}
-    
-   **IMPORTANT** Param `--insecure-registry` allows usage of Container Registry without TLS. TLS in our case dropped for simplicity.
+
+   > **IMPORTANT** Param `--insecure-registry` allows usage of container registry without TLS. TLS in our case dropped for simplicity.
 
 3. If you haven't installed `kubectl` yet, you can create an alias to use `kubectl` supplied with minikube:
 
@@ -289,16 +289,16 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
    ```
    {% endraw %}
 
-5. Install Container Registry to store images:
+5. Install container registry to store images:
 
    {% raw %}
    ```shell
    minikube addons enable registry
    ```
    {% endraw %}
-    
-   Create Ingress to access Container Registry:
- 
+
+   Create Ingress to access container registry:
+
    {% raw %}
    ```shell
    kubectl apply -f - << EOF
@@ -326,7 +326,7 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
    ```
    {% endraw %}
 
-6. Allow usage of Container Registry without TLS for Docker:
+6. Allow usage of container registry without TLS for Docker:
 
    Add new key to the file `/etc/docker/daemon.json` (default location):
 
@@ -339,7 +339,7 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
    If there is no such file in the directory, you need to create it and insert the above lines into it. Note that you need the superuser (root) privileges to access and modify files in the `/etc` directory.
 
    Restart Docker:
-   
+
    ```shell
    sudo systemctl restart docker
    ```
@@ -352,21 +352,21 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
    ```
    {% endraw %}
 
-7. Allow usage of Container Registry without TLS for werf:
+7. Allow usage of container registry without TLS for werf:
 
-   Set `WERF_INSECURE_REGISTRY=1` environment variable in the terminal where werf would run. For bash:
+   Set `WERF_INSECURE_REGISTRY=1` environment variable in the terminal where werf would run. For Bash:
 
    ```
    export WERF_INSECURE_REGISTRY=1
    ```
 
-   To set this option automatically in new bash-sessions, add it to the `.bashrc`:
+   To set this option automatically in new Bash-sessions, add it to the `.bashrc`:
 
    ```shell
    echo export WERF_INSECURE_REGISTRY=1 | tee -a ~/.bashrc
    ```
 
-8. We are going to use `vote.quickstart-application.example.com` and `result.quickstart-application.example.com` domains to access application and `registry.example.com` domain to access Container Registry.
+8. We are going to use `vote.quickstart-application.example.com` and `result.quickstart-application.example.com` domains to access application and `registry.example.com` domain to access container registry.
 
    Let's update hosts file. Make sure minikube is up and running:
 
@@ -375,9 +375,9 @@ Or use one of the following instructions to set up the local Kubernetes cluster 
    ```
 
    If the result shows the IP address of the cluster, your cluster is up.
-   
+
    Run the following command in the terminal:
-   
+
    ```shell
    echo "$(minikube ip) vote.quickstart-application.example.com result.quickstart-application.example.com registry.example.com" | sudo tee -a /etc/hosts
    ```
@@ -463,5 +463,5 @@ To deploy an application using werf, we should define the desired state in the G
    - A front-end web app in Python or ASP.NET Core lets you vote for one of the two options;
    - A Redis or NATS queue collects new votes;
    - A .NET Core, Java or .NET Core 2.1 worker consumes votes and stores them in…
-   - A Postgres or TiDB database backed by a Docker volume;
+   - A PostgreSQL or TiDB database backed by a Docker volume;
    - A Node.js or ASP.NET Core SignalR web-app shows the results of the voting in real-time.
