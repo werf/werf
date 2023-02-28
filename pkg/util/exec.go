@@ -10,8 +10,7 @@ func ExecWerfBinaryCmd(args ...string) *exec.Cmd {
 	cmd := exec.Command(strings.TrimSuffix(os.Args[0], "-in-a-user-namespace"), args...)
 
 	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stdin
-	cmd.Stdin = os.Stdin
+	cmd.Stderr = os.Stderr
 
 	return cmd
 }
