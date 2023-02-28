@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.204](https://www.github.com/werf/werf/compare/v1.2.203...v1.2.204) (2023-02-28)
+
+
+### Bug Fixes
+
+* **kube-run:** command stderr was redirected to stdin ([4d038d4](https://www.github.com/werf/werf/commit/4d038d4a2a7bb88329c43d1f0234ea73879330eb))
+
 ### [1.2.203](https://www.github.com/werf/werf/compare/v1.2.202...v1.2.203) (2023-02-28)
 
 
