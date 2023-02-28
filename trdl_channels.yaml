@@ -29,13 +29,13 @@ groups:
         version: 1.2.202
 
       - name: beta
-        version: 1.2.201+fix1
+        version: 1.2.202
 
       - name: ea
-        version: 1.2.197+fix5
+        version: 1.2.201+fix1
 
       # - name: pre-stable
-      #   version: 1.2.197+fix5
+      #   version: 1.2.201+fix1
 
       - name: stable
         version: 1.2.197+fix5
