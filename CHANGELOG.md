@@ -1,5 +1,17 @@
 # Changelog
 
+### [1.2.203](https://www.github.com/werf/werf/compare/v1.2.202...v1.2.203) (2023-02-28)
+
+
+### Features
+
+* **bundles:** support custom secret values files when publishing bundle ([5290e33](https://www.github.com/werf/werf/commit/5290e337da68935f4732056e5b33c0b63e2a26cd))
+
+
+### Bug Fixes
+
+* **staged-dockerfile:** fix panic which occurs when using dependencies between images with multistages ([4f6b10e](https://www.github.com/werf/werf/commit/4f6b10e13c60bce18f06df8e12df6c364d7575f2))
+
 ### [1.2.202](https://www.github.com/werf/werf/compare/v1.2.201...v1.2.202) (2023-02-21)
 
 
