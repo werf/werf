@@ -87,6 +87,9 @@ werf bundle publish [IMAGE_NAME...] [options]
       --disable-auto-host-cleanup=false
             Disable auto host cleanup procedure in main werf commands like werf-build,              
             werf-converge and other (default disabled or WERF_DISABLE_AUTO_HOST_CLEANUP)
+      --disable-default-secret-values=false
+            Do not use secret values from the default .helm/secret-values.yaml file (default        
+            $WERF_DISABLE_DEFAULT_SECRET_VALUES or false)
       --disable-default-values=false
             Do not use values from the default .helm/values.yaml file (default                      
             $WERF_DISABLE_DEFAULT_VALUES or false)
@@ -144,6 +147,8 @@ werf bundle publish [IMAGE_NAME...] [options]
             OCI registry requirements. Default false or $WERF_HELM_COMPATIBLE_CHART.
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
+      --ignore-secret-key=false
+            Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)
       --insecure-helm-dependencies=false
             Allow insecure oci registries to be used in the .helm/Chart.yaml dependencies           
             configuration (default $WERF_INSECURE_HELM_DEPENDENCIES)
@@ -281,6 +286,11 @@ werf bundle publish [IMAGE_NAME...] [options]
             cache.
             Also, can be specified with $WERF_SECONDARY_REPO_* (e.g. $WERF_SECONDARY_REPO_1=...,    
             $WERF_SECONDARY_REPO_2=...)
+      --secret-values=[]
+            Specify helm secret values in a YAML file (can specify multiple).
+            Also, can be defined with $WERF_SECRET_VALUES_* (e.g.                                   
+            $WERF_SECRET_VALUES_ENV=.helm/secret_values_test.yaml,                                  
+            $WERF_SECRET_VALUES_DB=.helm/secret_values_db.yaml)
       --set=[]
             Set helm values on the command line (can specify multiple or separate values with       
             commas: key1=val1,key2=val2).
