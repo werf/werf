@@ -94,6 +94,7 @@ type WerfChart struct {
 	*secrets.SecretsRuntimeData
 	*helpers.ChartExtenderServiceValuesData
 	*helpers.ChartExtenderContextData
+	*helpers.ChartExtenderValuesMerger
 }
 
 // ChartCreated method for the chart.Extender interface
@@ -144,52 +145,15 @@ func (wc *WerfChart) ChartDependenciesLoaded() error {
 	return nil
 }
 
-func debugSecretValues() bool {
-	return os.Getenv("WERF_DEBUG_SECRET_VALUES") == "1"
-}
-
-func debugPrintValues(ctx context.Context, name string, vals map[string]interface{}) {
-	data, err := yaml.Marshal(vals)
-	if err != nil {
-		logboek.Context(ctx).Debug().LogF("Unable to marshal %q values: %s\n", err)
-	} else {
-		logboek.Context(ctx).Debug().LogF("%q values:\n%s---\n", name, data)
-	}
-}
-
-func (wc *WerfChart) makeValues(inputVals map[string]interface{}, withSecrets bool) (map[string]interface{}, error) {
-	vals := make(map[string]interface{})
-
-	debugPrintValues(wc.ChartExtenderContext, "service", wc.ServiceValues)
-	chartutil.CoalesceTables(vals, wc.ServiceValues) // NOTE: service values will not be saved into the marshalled release
-
-	if withSecrets {
-		if debugSecretValues() {
-			debugPrintValues(wc.ChartExtenderContext, "secret", wc.SecretsRuntimeData.DecryptedSecretValues)
-		}
-		chartutil.CoalesceTables(vals, wc.SecretsRuntimeData.DecryptedSecretValues)
-	}
-
-	debugPrintValues(wc.ChartExtenderContext, "input", inputVals)
-	chartutil.CoalesceTables(vals, inputVals)
-
-	if debugSecretValues() {
-		// Only print all values with secrets when secret values debug enabled
-		debugPrintValues(wc.ChartExtenderContext, "all", vals)
-	}
-
-	return vals, nil
-}
-
 // MakeValues method for the chart.Extender interface
 func (wc *WerfChart) MakeValues(inputVals map[string]interface{}) (map[string]interface{}, error) {
-	return wc.makeValues(inputVals, true)
+	return wc.MergeValues(wc.ChartExtenderContext, inputVals, wc.ServiceValues, wc.SecretsRuntimeData)
 }
 
 func (wc *WerfChart) MakeBundleValues(chrt *chart.Chart, inputVals map[string]interface{}) (map[string]interface{}, error) {
-	debugPrintValues(wc.ChartExtenderContext, "input", inputVals)
+	helpers.DebugPrintValues(wc.ChartExtenderContext, "input", inputVals)
 
-	vals, err := wc.makeValues(inputVals, false)
+	vals, err := wc.MergeValues(wc.ChartExtenderContext, inputVals, wc.ServiceValues, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to coalesce werf chart values: %w", err)
 	}
@@ -207,14 +171,14 @@ func (wc *WerfChart) MakeBundleValues(chrt *chart.Chart, inputVals map[string]in
 
 	chartutil.CoalesceChartValues(chrt, valsCopy)
 
-	debugPrintValues(wc.ChartExtenderContext, "all", valsCopy)
+	helpers.DebugPrintValues(wc.ChartExtenderContext, "all", valsCopy)
 
 	return valsCopy, nil
 }
 
 func (wc *WerfChart) MakeBundleSecretValues(ctx context.Context, secretsRuntimeData *secrets.SecretsRuntimeData) (map[string]interface{}, error) {
-	if debugSecretValues() {
-		debugPrintValues(wc.ChartExtenderContext, "secret", wc.SecretsRuntimeData.DecryptedSecretValues)
+	if helpers.DebugSecretValues() {
+		helpers.DebugPrintValues(wc.ChartExtenderContext, "secret", wc.SecretsRuntimeData.DecryptedSecretValues)
 	}
 	return secretsRuntimeData.GetEncodedSecretValues(ctx, wc.SecretsManager, wc.GiterminismManager.ProjectDir())
 }

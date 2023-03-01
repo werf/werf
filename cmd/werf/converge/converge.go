@@ -450,8 +450,12 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 	}
 
 	loader.GlobalLoadOptions = &loader.LoadOptions{
-		ChartExtender:               wc,
-		SubchartExtenderFactoryFunc: func() chart.ChartExtender { return chart_extender.NewWerfSubchart() },
+		ChartExtender: wc,
+		SubchartExtenderFactoryFunc: func() chart.ChartExtender {
+			return chart_extender.NewWerfSubchart(ctx, secretsManager, chart_extender.WerfSubchartOptions{
+				DisableDefaultSecretValues: *commonCmdData.DisableDefaultSecretValues,
+			})
+		},
 	}
 
 	valueOpts := &values.Options{
