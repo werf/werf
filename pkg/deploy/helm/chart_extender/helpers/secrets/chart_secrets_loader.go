@@ -19,7 +19,7 @@ const (
 	SecretDirName               = "secret"
 )
 
-func GetDefaultSecretValuesFile(chartDir string, loadedChartFiles []*chart.ChartExtenderBufferedFile) *chart.ChartExtenderBufferedFile {
+func GetDefaultSecretValuesFile(loadedChartFiles []*chart.ChartExtenderBufferedFile) *chart.ChartExtenderBufferedFile {
 	for _, file := range loadedChartFiles {
 		if file.Name == DefaultSecretValuesFileName {
 			return file

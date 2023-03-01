@@ -11,11 +11,9 @@ import (
 
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
-	"helm.sh/helm/v3/pkg/chartutil"
 	"helm.sh/helm/v3/pkg/cli"
 	"helm.sh/helm/v3/pkg/postrender"
 	"helm.sh/helm/v3/pkg/registry"
-	"sigs.k8s.io/yaml"
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/deploy/helm"
@@ -87,6 +85,7 @@ type Bundle struct {
 	*secrets.SecretsRuntimeData
 	*helpers.ChartExtenderServiceValuesData
 	*helpers.ChartExtenderContextData
+	*helpers.ChartExtenderValuesMerger
 }
 
 func (bundle *Bundle) ChainPostRenderer(postRenderer postrender.PostRenderer) postrender.PostRenderer {
@@ -140,28 +139,7 @@ func (bundle *Bundle) ChartDependenciesLoaded() error {
 
 // MakeValues method for the chart.Extender interface
 func (bundle *Bundle) MakeValues(inputVals map[string]interface{}) (map[string]interface{}, error) {
-	vals := make(map[string]interface{})
-
-	debugPrintValues(bundle.ChartExtenderContext, "service", bundle.ServiceValues)
-	chartutil.CoalesceTables(vals, bundle.ServiceValues)
-
-	if debugSecretValues() {
-		debugPrintValues(bundle.ChartExtenderContext, "secret", bundle.SecretsRuntimeData.DecryptedSecretValues)
-	}
-	chartutil.CoalesceTables(vals, bundle.SecretsRuntimeData.DecryptedSecretValues)
-
-	debugPrintValues(bundle.ChartExtenderContext, "input", inputVals)
-	chartutil.CoalesceTables(vals, inputVals)
-
-	if debugSecretValues() {
-		// Only print all values with secrets when secret values debug enabled
-		debugPrintValues(bundle.ChartExtenderContext, "all", vals)
-	}
-
-	data, err := yaml.Marshal(vals)
-	logboek.Context(bundle.ChartExtenderContext).Debug().LogF("-- Bundle.MakeValues result (err=%v):\n%s\n---\n", err, data)
-
-	return vals, nil
+	return bundle.MergeValues(bundle.ChartExtenderContext, inputVals, bundle.ServiceValues, bundle.SecretsRuntimeData)
 }
 
 // SetupTemplateFuncs method for the chart.Extender interface

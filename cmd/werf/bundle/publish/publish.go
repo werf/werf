@@ -386,8 +386,12 @@ func runPublish(ctx context.Context, imagesToProcess build.ImagesToProcess) erro
 	helm_v3.Settings.Debug = *commonCmdData.LogDebug
 
 	loader.GlobalLoadOptions = &loader.LoadOptions{
-		ChartExtender:               wc,
-		SubchartExtenderFactoryFunc: func() chart.ChartExtender { return chart_extender.NewWerfSubchart() },
+		ChartExtender: wc,
+		SubchartExtenderFactoryFunc: func() chart.ChartExtender {
+			return chart_extender.NewWerfSubchart(ctx, secretsManager, chart_extender.WerfSubchartOptions{
+				DisableDefaultSecretValues: *commonCmdData.DisableDefaultSecretValues,
+			})
+		},
 	}
 
 	sv, err := bundles.BundleTagToChartVersion(ctx, cmdData.Tag, time.Now())

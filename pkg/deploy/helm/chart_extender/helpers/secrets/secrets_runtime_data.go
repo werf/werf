@@ -39,7 +39,7 @@ func (secretsRuntimeData *SecretsRuntimeData) DecodeAndLoadSecrets(ctx context.C
 	var loadedSecretValuesFiles []*chart.ChartExtenderBufferedFile
 
 	if !opts.WithoutDefaultSecretValues {
-		if defaultSecretValues := GetDefaultSecretValuesFile(chartDir, loadedChartFiles); defaultSecretValues != nil {
+		if defaultSecretValues := GetDefaultSecretValuesFile(loadedChartFiles); defaultSecretValues != nil {
 			loadedSecretValuesFiles = append(loadedSecretValuesFiles, defaultSecretValues)
 		}
 	}

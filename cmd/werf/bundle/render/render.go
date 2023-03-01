@@ -88,6 +88,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupValues(&commonCmdData, cmd)
 	common.SetupSecretValues(&commonCmdData, cmd)
 	common.SetupIgnoreSecretKey(&commonCmdData, cmd)
+	commonCmdData.SetupDisableDefaultSecretValues(cmd)
 
 	common.SetupRelease(&commonCmdData, cmd)
 	common.SetupNamespace(&commonCmdData, cmd)
@@ -212,8 +213,12 @@ func runRender(ctx context.Context) error {
 	}
 
 	loader.GlobalLoadOptions = &loader.LoadOptions{
-		ChartExtender:               bundle,
-		SubchartExtenderFactoryFunc: func() chart.ChartExtender { return chart_extender.NewWerfSubchart() },
+		ChartExtender: bundle,
+		SubchartExtenderFactoryFunc: func() chart.ChartExtender {
+			return chart_extender.NewWerfSubchart(ctx, secretsManager, chart_extender.WerfSubchartOptions{
+				DisableDefaultSecretValues: *commonCmdData.DisableDefaultSecretValues,
+			})
+		},
 	}
 
 	var output io.Writer

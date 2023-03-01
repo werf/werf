@@ -19,6 +19,7 @@ import (
 	"github.com/werf/werf/pkg/deploy/helm/chart_extender"
 	"github.com/werf/werf/pkg/deploy/helm/chart_extender/helpers"
 	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
+	"github.com/werf/werf/pkg/deploy/secrets_manager"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/git_repo/gitdata"
 	"github.com/werf/werf/pkg/image"
@@ -123,7 +124,9 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupValues(&commonCmdData, cmd)
 
 	commonCmdData.SetupDisableDefaultValues(cmd)
+	commonCmdData.SetupDisableDefaultSecretValues(cmd)
 	commonCmdData.SetupSkipDependenciesRepoRefresh(cmd)
+	common.SetupIgnoreSecretKey(&commonCmdData, cmd)
 
 	common.SetupSaveBuildReport(&commonCmdData, cmd)
 	common.SetupBuildReportPath(&commonCmdData, cmd)
@@ -361,9 +364,15 @@ func runExport(ctx context.Context, imagesToProcess build.ImagesToProcess) error
 
 	helm_v3.Settings.Debug = *commonCmdData.LogDebug
 
+	secretsManager := secrets_manager.NewSecretsManager(secrets_manager.SecretsManagerOptions{DisableSecretsDecryption: *commonCmdData.IgnoreSecretKey})
+
 	loader.GlobalLoadOptions = &loader.LoadOptions{
-		ChartExtender:               wc,
-		SubchartExtenderFactoryFunc: func() chart.ChartExtender { return chart_extender.NewWerfSubchart() },
+		ChartExtender: wc,
+		SubchartExtenderFactoryFunc: func() chart.ChartExtender {
+			return chart_extender.NewWerfSubchart(ctx, secretsManager, chart_extender.WerfSubchartOptions{
+				DisableDefaultSecretValues: *commonCmdData.DisableDefaultSecretValues,
+			})
+		},
 	}
 
 	chartVersion := fmt.Sprintf("0.0.0-%d", time.Now().Unix())
