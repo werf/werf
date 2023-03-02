@@ -78,6 +78,9 @@ werf bundle export [IMAGE_NAME...] [options]
       --disable-auto-host-cleanup=false
             Disable auto host cleanup procedure in main werf commands like werf-build,              
             werf-converge and other (default disabled or WERF_DISABLE_AUTO_HOST_CLEANUP)
+      --disable-default-secret-values=false
+            Do not use secret values from the default .helm/secret-values.yaml file (default        
+            $WERF_DISABLE_DEFAULT_SECRET_VALUES or false)
       --disable-default-values=false
             Do not use values from the default .helm/values.yaml file (default                      
             $WERF_DISABLE_DEFAULT_VALUES or false)
@@ -129,6 +132,8 @@ werf bundle export [IMAGE_NAME...] [options]
             contains .git in the current or parent directories)
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
+      --ignore-secret-key=false
+            Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)
       --insecure-helm-dependencies=false
             Allow insecure oci registries to be used in the .helm/Chart.yaml dependencies           
             configuration (default $WERF_INSECURE_HELM_DEPENDENCIES)
