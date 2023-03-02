@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.205](https://www.github.com/werf/werf/compare/v1.2.204...v1.2.205) (2023-03-02)
+
+
+### Features
+
+* **bundles:** allow usage of bundles with included secret-values as oci chart dependencies ([469678c](https://www.github.com/werf/werf/commit/469678cd71aa97ab5a147164f3949fc3a0c5863b))
+
 ### [1.2.204](https://www.github.com/werf/werf/compare/v1.2.203...v1.2.204) (2023-02-28)
 
 
