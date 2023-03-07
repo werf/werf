@@ -32,7 +32,7 @@ groups:
         version: 1.2.205
 
       - name: ea
-        version: 1.2.204
+        version: 1.2.205
 
       # - name: pre-stable
       #   version: 1.2.201+fix1
