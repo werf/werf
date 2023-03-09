@@ -25,8 +25,6 @@ werf kubectl version [flags] [options]
             If true, shows client version only (no server required).
   -o, --output=''
             One of `yaml` or `json`.
-      --short=false
-            If true, print just the version number.
 ```
 
 {{ header }} Options inherited from parent commands
@@ -52,6 +50,8 @@ werf kubectl version [flags] [options]
             The name of the kubeconfig cluster to use
       --context=''
             The name of the kubeconfig context to use (default $WERF_KUBE_CONTEXT)
+      --disable-compression=false
+            If true, opt-out of response compression for all requests to the server
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --insecure-skip-tls-verify=false

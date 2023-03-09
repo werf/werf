@@ -3,42 +3,43 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Experimental: Display events.
+Experimental: Check who you are and your attributes (groups, extra).
 
-Prints a table of the most important information about events. You can request events for a namespace, for all namespace, or filtered to only those pertaining to a specified resource.
+  This command is helpful to get yourself aware of the current user attributes,
+  especially when dynamic authentication, e.g., token webhook, auth proxy, or OIDC provider,
+  is enabled in the Kubernetes cluster.
 
 {{ header }} Syntax
 
 ```shell
-werf kubectl alpha events [--for TYPE/NAME] [--watch] [options]
+werf kubectl alpha auth whoami [options]
 ```
 
 {{ header }} Examples
 
 ```shell
-  # List recent events in the default namespace.
-  kubectl alpha events
+  # Get your subject attributes.
+  kubectl alpha auth whoami
   
-  # List recent events in all namespaces.
-  kubectl alpha events --all-namespaces
-  
-  # List recent events for the specified pod, then wait for more events and list them as they arrive.
-  kubectl alpha events --for pod/web-pod-13je7 --watch
+  # Get your subject attributes in JSON format.
+  kubectl alpha auth whoami -o json
 ```
 
 {{ header }} Options
 
 ```shell
-  -A, --all-namespaces=false
-            If present, list the requested object(s) across all namespaces. Namespace in current    
-            context is ignored even if specified with --namespace.
-      --chunk-size=500
-            Return large lists in chunks rather than all at once. Pass 0 to disable. This flag is   
-            beta and may change in the future.
-      --for=''
-            Filter events to only those pertaining to the specified resource.
-  -w, --watch=false
-            After listing the requested events, watch for more events.
+      --allow-missing-template-keys=true
+            If true, ignore any errors in templates when a field or map key is missing in the       
+            template. Only applies to golang and jsonpath output formats.
+  -o, --output=''
+            Output format. One of: (json, yaml, name, go-template, go-template-file, template,      
+            templatefile, jsonpath, jsonpath-as-json, jsonpath-file).
+      --show-managed-fields=false
+            If true, keep the managedFields when printing objects in JSON or YAML format.
+      --template=''
+            Template string or path to template file to use when -o=go-template,                    
+            -o=go-template-file. The template format is golang templates                            
+            [http://golang.org/pkg/text/template/#pkg-overview].
 ```
 
 {{ header }} Options inherited from parent commands
@@ -64,6 +65,8 @@ werf kubectl alpha events [--for TYPE/NAME] [--watch] [options]
             The name of the kubeconfig cluster to use
       --context=''
             The name of the kubeconfig context to use (default $WERF_KUBE_CONTEXT)
+      --disable-compression=false
+            If true, opt-out of response compression for all requests to the server
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --insecure-skip-tls-verify=false

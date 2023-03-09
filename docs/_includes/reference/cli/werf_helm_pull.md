@@ -25,8 +25,8 @@ werf helm pull [chart URL | repo/chartname] [...] [flags] [options]
       --cert-file=''
             identify HTTPS client using this SSL certificate file
   -d, --destination='.'
-            location to write the chart. If this and tardir are specified, tardir is appended to    
-            this
+            location to write the chart. If this and untardir are specified, untardir is appended   
+            to this
       --devel=false
             use development versions, too. Equivalent to version `>0.0.0-0`. If --version is set,   
             this is ignored.

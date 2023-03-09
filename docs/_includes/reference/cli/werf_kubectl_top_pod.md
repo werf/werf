@@ -47,10 +47,13 @@ werf kubectl top pod [NAME | -l label] [options]
             If present, print output without headers.
   -l, --selector=''
             Selector (label query) to filter on, supports `=`, `==`, and `!=`.(e.g. -l              
-            key1=value1,key2=value2)
+            key1=value1,key2=value2). Matching objects must satisfy all of the specified label      
+            constraints.
       --sort-by=''
             If non-empty, sort pods list using specified field. The field can be either `cpu` or    
             `memory`.
+      --sum=false
+            Print the sum of the resource usage
       --use-protocol-buffers=true
             Enables using protocol-buffers to access Metrics API.
 ```
@@ -78,6 +81,8 @@ werf kubectl top pod [NAME | -l label] [options]
             The name of the kubeconfig cluster to use
       --context=''
             The name of the kubeconfig context to use (default $WERF_KUBE_CONTEXT)
+      --disable-compression=false
+            If true, opt-out of response compression for all requests to the server
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --insecure-skip-tls-verify=false

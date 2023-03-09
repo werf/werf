@@ -31,6 +31,8 @@ werf helm lint PATH [flags] [options]
             Use specified environment (default $WERF_ENV)
       --ignore-secret-key=false
             Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)
+      --quiet=false
+            print only warnings and errors
       --secret-values=[]
             Specify helm secret values in a YAML file (can specify multiple).
             Also, can be defined with $WERF_SECRET_VALUES_* (e.g.                                   
@@ -42,6 +44,9 @@ werf helm lint PATH [flags] [options]
       --set-file=[]
             set values from respective files specified via the command line (can specify multiple   
             or separate values with commas: key1=path1,key2=path2)
+      --set-json=[]
+            set JSON values on the command line (can specify multiple or separate values with       
+            commas: key1=jsonval1,key2=jsonval2)
       --set-string=[]
             set STRING values on the command line (can specify multiple or separate values with     
             commas: key1=val1,key2=val2)

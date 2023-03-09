@@ -66,10 +66,6 @@ werf kubectl expose (-f FILENAME | TYPE NAME) [--port=port] [--protocol=TCP|UDP|
             Name of the manager used to track field ownership.
   -f, --filename=[]
             Filename, directory, or URL to files identifying the resource to expose a service
-      --generator='service/v2'
-            The name of the API generator to use. There are 2 generators: `service/v1` and          
-            `service/v2`. The only difference between them is that service port in v1 is named      
-            `default`, while it is left unnamed in v2. Default is `service/v2`.
   -k, --kustomize=''
             Process the kustomization directory. This flag can`t be used together with -f or -R.
   -l, --labels=''
@@ -80,8 +76,8 @@ werf kubectl expose (-f FILENAME | TYPE NAME) [--port=port] [--protocol=TCP|UDP|
       --name=''
             The name for the newly created object.
   -o, --output=''
-            Output format. One of: json|yaml|name|go-template|go-template-file|template|templatefile
-            |jsonpath|jsonpath-as-json|jsonpath-file.
+            Output format. One of: (json, yaml, name, go-template, go-template-file, template,      
+            templatefile, jsonpath, jsonpath-as-json, jsonpath-file).
       --override-type='merge'
             The method used to override the generated object: json, merge, or strategic.
       --overrides=''
@@ -143,6 +139,8 @@ werf kubectl expose (-f FILENAME | TYPE NAME) [--port=port] [--protocol=TCP|UDP|
             The name of the kubeconfig cluster to use
       --context=''
             The name of the kubeconfig context to use (default $WERF_KUBE_CONTEXT)
+      --disable-compression=false
+            If true, opt-out of response compression for all requests to the server
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --insecure-skip-tls-verify=false

@@ -44,6 +44,8 @@ werf helm list [flags] [options]
             included in the results
   -m, --max=256
             maximum number of releases to fetch
+      --no-headers=false
+            don`t print headers when using the default output format
       --offset=0
             next release index in the list, used to offset from start value
   -o, --output=table

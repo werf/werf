@@ -29,6 +29,8 @@ werf helm status RELEASE_NAME [flags] [options]
             if set, display the status of the named release with revision
       --show-desc=false
             if set, display the description message of the named release
+      --show-resources=false
+            if set, display the resources of the named release
 ```
 
 {{ header }} Options inherited from parent commands

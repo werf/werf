@@ -312,8 +312,10 @@ cli: &cli
         f:
           - title: werf kubectl alpha
             f:
-              - title: werf kubectl alpha events
-                url: /reference/cli/werf_kubectl_alpha_events.html
+              - title: werf kubectl alpha auth
+                f:
+                  - title: werf kubectl alpha auth whoami
+                    url: /reference/cli/werf_kubectl_alpha_auth_whoami.html
 
           - title: werf kubectl annotate
             url: /reference/cli/werf_kubectl_annotate.html
@@ -487,6 +489,9 @@ cli: &cli
               - title: werf kubectl create serviceaccount
                 url: /reference/cli/werf_kubectl_create_serviceaccount.html
 
+              - title: werf kubectl create token
+                url: /reference/cli/werf_kubectl_create_token.html
+
           - title: werf kubectl debug
             url: /reference/cli/werf_kubectl_debug.html
 
@@ -504,6 +509,9 @@ cli: &cli
 
           - title: werf kubectl edit
             url: /reference/cli/werf_kubectl_edit.html
+
+          - title: werf kubectl events
+            url: /reference/cli/werf_kubectl_events.html
 
           - title: werf kubectl exec
             url: /reference/cli/werf_kubectl_exec.html

@@ -33,10 +33,10 @@ werf kubectl create rolebinding NAME --clusterrole=NAME|--role=NAME [--user=user
       --field-manager='kubectl-create'
             Name of the manager used to track field ownership.
       --group=[]
-            Groups to bind to the role
+            Groups to bind to the role. The flag can be repeated to add multiple groups.
   -o, --output=''
-            Output format. One of: json|yaml|name|go-template|go-template-file|template|templatefile
-            |jsonpath|jsonpath-as-json|jsonpath-file.
+            Output format. One of: (json, yaml, name, go-template, go-template-file, template,      
+            templatefile, jsonpath, jsonpath-as-json, jsonpath-file).
       --role=''
             Role this RoleBinding should reference
       --save-config=false
@@ -44,15 +44,26 @@ werf kubectl create rolebinding NAME --clusterrole=NAME|--role=NAME [--user=user
             Otherwise, the annotation will be unchanged. This flag is useful when you want to       
             perform kubectl apply on this object in the future.
       --serviceaccount=[]
-            Service accounts to bind to the role, in the format <namespace>:<name>
+            Service accounts to bind to the role, in the format <namespace>:<name>. The flag can be 
+            repeated to add multiple service accounts.
       --show-managed-fields=false
             If true, keep the managedFields when printing objects in JSON or YAML format.
       --template=''
             Template string or path to template file to use when -o=go-template,                    
             -o=go-template-file. The template format is golang templates                            
             [http://golang.org/pkg/text/template/#pkg-overview].
-      --validate=true
-            If true, use a schema to validate the input before sending it
+      --user=[]
+            Usernames to bind to the role. The flag can be repeated to add multiple users.
+      --validate='strict'
+            Must be one of: strict (or true), warn, ignore (or false).
+            		"true" or "strict" will use a schema to validate the input and fail the request if    
+            invalid. It will perform server side validation if ServerSideFieldValidation is enabled 
+            on the api-server, but will fall back to less reliable client-side validation if not.
+            		"warn" will warn about unknown or duplicate fields without blocking the request if    
+            server-side field validation is enabled on the API server, and behave as "ignore"       
+            otherwise.
+            		"false" or "ignore" will not perform any schema validation, silently dropping any     
+            unknown or duplicate fields.
 ```
 
 {{ header }} Options inherited from parent commands
@@ -78,6 +89,8 @@ werf kubectl create rolebinding NAME --clusterrole=NAME|--role=NAME [--user=user
             The name of the kubeconfig cluster to use
       --context=''
             The name of the kubeconfig context to use (default $WERF_KUBE_CONTEXT)
+      --disable-compression=false
+            If true, opt-out of response compression for all requests to the server
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --insecure-skip-tls-verify=false
@@ -112,8 +125,6 @@ werf kubectl create rolebinding NAME --clusterrole=NAME|--role=NAME [--user=user
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --token=''
             Bearer token for authentication to the API server
-      --user=''
-            The name of the kubeconfig user to use
       --username=''
             Username for basic authentication to the API server
       --warnings-as-errors=false
