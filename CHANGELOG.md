@@ -1,5 +1,13 @@
 # Changelog
 
+### [1.2.207](https://www.github.com/werf/werf/compare/v1.2.206...v1.2.207) (2023-03-09)
+
+
+### Bug Fixes
+
+* update go + go modules ([3c7f2d3](https://www.github.com/werf/werf/commit/3c7f2d3a8d272f9078b8a14d2f012d066e92bb4e))
+* update werf builder image ([d803468](https://www.github.com/werf/werf/commit/d803468ee0948f3f552de2a792c5398275065ff6))
+
 ### [1.2.206](https://www.github.com/werf/werf/compare/v1.2.205...v1.2.206) (2023-03-09)
 
 
