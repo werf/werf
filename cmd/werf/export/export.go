@@ -38,7 +38,7 @@ func NewExportCmd(ctx context.Context) *cobra.Command {
 		Short:                 "Export images",
 		Long:                  common.GetLongCommandDescription(GetExportDocs().Long),
 		DisableFlagsInUseLine: true,
-		Example: `  # Export images to Docker Hub and GitHub Container Registry
+		Example: `  # Export images to Docker Hub and GitHub container registry
   $ werf export --tag=index.docker.io/company/project:%image%-latest --tag=ghcr.io/company/project/%image%:latest`,
 		Annotations: map[string]string{
 			common.DisableOptionsInUseLineAnno: "1",

@@ -145,7 +145,7 @@ Then the newly published bundle (a chart and its images) can be used as usual.
 
 Publishing bundles requires a container registry to support the OCI ([Open Container Initiative](https://github.com/opencontainers/image-spec)) specification. Below is a list of the most popular container registries that have been tested and found to be compatible:
 
-| Container Registry        | Supports bundle publishing      |
+| Container registry        | Supports bundle publishing      |
 |---------------------------|:-------------------------------:|
 | AWS ECR                   |                +                |
 | Azure CR                  |                +                |
@@ -155,6 +155,6 @@ Publishing bundles requires a container registry to support the OCI ([Open Conta
 | GitLab Registry           |                +                |
 | Harbor                    |                +                |
 | JFrog Artifactory         |                +                |
-| Yandex Container Registry |                +                |
+| Yandex container registry |                +                |
 | Nexus                     |                +                |
 | Quay                      |                -                |

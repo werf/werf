@@ -175,7 +175,7 @@ By default, werf uses the [_Docker Registry API_](https://docs.docker.com/regist
 | _JFrog Artifactory_         |           **ok**            |
 | _Nexus_                     |           **ok**            |
 | _Quay_                      |           **ok**            |
-| _Yandex Container Registry_ |           **ok**            |
+| _Yandex container registry_ |           **ok**            |
 | _Selectel CRaaS_            | [***ok**](#selectel-craas)  |
 
 werf tries to automatically detect the type of container registry using the repository address provided (via the `--repo` option). The user can explicitly specify the container registry using the `--repo-container-registry` option or via the `WERF_REPO_CONTAINER_REGISTRY` environment variable.
@@ -225,7 +225,7 @@ You can use the `--repo-github-token` option or the corresponding environment va
 
 ### GitLab Registry
 
-werf uses the _GitLab Container Registry API_ or _Docker Registry API_ (depending on the GitLab version) to delete tags.
+werf uses the _GitLab container registry API_ or _Docker Registry API_ (depending on the GitLab version) to delete tags.
 
 > Privileges of the temporary CI job token (`$CI_JOB_TOKEN`) are not enough to delete tags. That is why the user have to create a dedicated token in the Access Token section (select the `api` in the Scope section) and perform authorization using it
 
