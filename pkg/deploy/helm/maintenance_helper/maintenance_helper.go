@@ -9,6 +9,7 @@ import (
 	helm2to3_v3 "github.com/helm/helm-2to3/pkg/v3"
 	v3_action "helm.sh/helm/v3/pkg/action"
 	v3_rspb "helm.sh/helm/v3/pkg/release"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/resource"
 	v2_rspb "k8s.io/helm/pkg/proto/hapi/release"
 	v2_releaseutil "k8s.io/helm/pkg/releaseutil"
@@ -213,7 +214,8 @@ func (helper *MaintenanceHelper) BuildHelm2ResourcesInfos(releaseData *Helm2Rele
 		return nil, err
 	}
 
-	schema, err := factory.Validator(false)
+	verifier := resource.NewQueryParamVerifier(kube.DynamicClient, factory.OpenAPIGetter(), resource.QueryParamFieldValidation)
+	schema, err := factory.Validator(v1.FieldValidationIgnore, verifier)
 	if err != nil {
 		return nil, err
 	}

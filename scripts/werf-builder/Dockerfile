@@ -1,4 +1,4 @@
-FROM --platform=linux/amd64 golang:1.18-bullseye
+FROM --platform=linux/amd64 golang:1.20-bullseye@sha256:51ff22f03320894402290ba7dfd83ee05b61e58b5381d76b40f2e3a370d81da3
 
 ENV DEBIAN_FRONTEND=noninteractive
 
