@@ -62,10 +62,10 @@ require (
 	github.com/werf/lockgate v0.0.0-20200729113342-ec2c142f71ea
 	github.com/werf/logboek v0.5.4
 	go.opentelemetry.io/otel v1.7.1-0.20220624212736-ef6c0da0de3b
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.3.0
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.3.0
-	go.opentelemetry.io/otel/sdk v1.7.0
-	go.opentelemetry.io/otel/trace v1.7.0
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.7.1-0.20220624212736-ef6c0da0de3b
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.7.1-0.20220624212736-ef6c0da0de3b
+	go.opentelemetry.io/otel/sdk v1.7.1-0.20220624212736-ef6c0da0de3b
+	go.opentelemetry.io/otel/trace v1.7.1-0.20220624212736-ef6c0da0de3b
 	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4
 	golang.org/x/mod v0.6.0-dev.0.20220106191415-9b9b3d81d5e3
 	golang.org/x/net v0.0.0-20220728211354-c7608f3a8462
@@ -275,7 +275,7 @@ require (
 	go.mozilla.org/pkcs7 v0.0.0-20200128120323-432b2356ecb1 // indirect
 	go.opencensus.io v0.23.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/internal/retry v1.7.0 // indirect
-	go.opentelemetry.io/proto/otlp v0.16.0 // indirect
+	go.opentelemetry.io/proto/otlp v0.18.0 // indirect
 	go.starlark.net v0.0.0-20200306205701-8dd3e2ee1dd5 // indirect
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
@@ -285,7 +285,7 @@ require (
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20220304144024-325a89244dc8 // indirect
-	google.golang.org/grpc v1.46.0 // indirect
+	google.golang.org/grpc v1.46.2 // indirect
 	google.golang.org/protobuf v1.28.0 // indirect
 	gopkg.in/dancannon/gorethink.v3 v3.0.5 // indirect
 	gopkg.in/fatih/pool.v2 v2.0.0 // indirect
