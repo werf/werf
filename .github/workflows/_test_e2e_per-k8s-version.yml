@@ -18,6 +18,9 @@ on:
       forceSkip:
         default: false
         type: string
+      timeout:
+        default: 60
+        type: number
 
 defaults:
   run:
@@ -39,7 +42,7 @@ jobs:
           - major: 1
             minor: 25
     runs-on: ubuntu-22.04
-    timeout-minutes: 60
+    timeout-minutes: ${{ inputs.timeout }}
     steps:
       - name: Install system dependencies
         run: sudo apt-get install -y libbtrfs-dev buildah

@@ -27,6 +27,7 @@ jobs:
     uses: ./.github/workflows/_test_e2e_per-k8s-version.yml
     with:
       scope: complex
+      timeout: 120
     secrets: inherit
 
   e2e_extra_per-k8s-version:
