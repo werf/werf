@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.206](https://www.github.com/werf/werf/compare/v1.2.205...v1.2.206) (2023-03-09)
+
+
+### Features
+
+* **cleanup:** more logging for saved images ([0bda54d](https://www.github.com/werf/werf/commit/0bda54de45211ad33fbdbf254d821caf4cfcb310))
+
 ### [1.2.205](https://www.github.com/werf/werf/compare/v1.2.204...v1.2.205) (2023-03-02)
 
 
