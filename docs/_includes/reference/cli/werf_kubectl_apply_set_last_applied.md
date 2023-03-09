@@ -40,8 +40,8 @@ werf kubectl apply set-last-applied -f FILENAME [options]
             Filename, directory, or URL to files that contains the last-applied-configuration       
             annotations
   -o, --output=''
-            Output format. One of: json|yaml|name|go-template|go-template-file|template|templatefile
-            |jsonpath|jsonpath-as-json|jsonpath-file.
+            Output format. One of: (json, yaml, name, go-template, go-template-file, template,      
+            templatefile, jsonpath, jsonpath-as-json, jsonpath-file).
       --show-managed-fields=false
             If true, keep the managedFields when printing objects in JSON or YAML format.
       --template=''
@@ -73,6 +73,8 @@ werf kubectl apply set-last-applied -f FILENAME [options]
             The name of the kubeconfig cluster to use
       --context=''
             The name of the kubeconfig context to use (default $WERF_KUBE_CONTEXT)
+      --disable-compression=false
+            If true, opt-out of response compression for all requests to the server
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --insecure-skip-tls-verify=false

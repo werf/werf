@@ -40,8 +40,8 @@ werf kubectl cluster-info dump [flags] [options]
       --namespaces=[]
             A comma separated list of namespaces to dump.
   -o, --output='json'
-            Output format. One of: json|yaml|name|go-template|go-template-file|template|templatefile
-            |jsonpath|jsonpath-as-json|jsonpath-file.
+            Output format. One of: (json, yaml, name, go-template, go-template-file, template,      
+            templatefile, jsonpath, jsonpath-as-json, jsonpath-file).
       --output-directory=''
             Where to output the files.  If empty or `-` uses stdout, otherwise creates a directory  
             hierarchy in that directory
@@ -79,6 +79,8 @@ werf kubectl cluster-info dump [flags] [options]
             The name of the kubeconfig cluster to use
       --context=''
             The name of the kubeconfig context to use (default $WERF_KUBE_CONTEXT)
+      --disable-compression=false
+            If true, opt-out of response compression for all requests to the server
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --insecure-skip-tls-verify=false

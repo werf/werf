@@ -60,6 +60,10 @@ werf kubectl config set-credentials NAME [--client-certificate=path/to/certfile]
             Auth provider for the user entry in kubeconfig
       --auth-provider-arg=[]
             `key=value` arguments for the auth provider
+      --client-certificate=''
+            Path to client-certificate file for the user entry in kubeconfig
+      --client-key=''
+            Path to client-key file for the user entry in kubeconfig
       --embed-certs=false
             Embed client cert/key for the user entry in kubeconfig
       --exec-api-version=''
@@ -70,6 +74,12 @@ werf kubectl config set-credentials NAME [--client-certificate=path/to/certfile]
             Command for the exec credential plugin for the user entry in kubeconfig
       --exec-env=[]
             `key=value` environment values for the exec credential plugin
+      --password=''
+            password for the user entry in kubeconfig
+      --token=''
+            token for the user entry in kubeconfig
+      --username=''
+            username for the user entry in kubeconfig
 ```
 
 {{ header }} Options inherited from parent commands
@@ -87,14 +97,12 @@ werf kubectl config set-credentials NAME [--client-certificate=path/to/certfile]
             Default cache directory
       --certificate-authority=''
             Path to a cert file for the certificate authority
-      --client-certificate=''
-            Path to a client certificate file for TLS
-      --client-key=''
-            Path to a client key file for TLS
       --cluster=''
             The name of the kubeconfig cluster to use
       --context=''
             The name of the kubeconfig context to use (default $WERF_KUBE_CONTEXT)
+      --disable-compression=false
+            If true, opt-out of response compression for all requests to the server
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --insecure-skip-tls-verify=false
@@ -109,8 +117,6 @@ werf kubectl config set-credentials NAME [--client-certificate=path/to/certfile]
             Require server version to match client version
   -n, --namespace=''
             If present, the namespace scope for this CLI request
-      --password=''
-            Password for basic authentication to the API server
       --profile='none'
             Name of profile to capture. One of (none|cpu|heap|goroutine|threadcreate|block|mutex)
       --profile-output='profile.pprof'
@@ -126,12 +132,8 @@ werf kubectl config set-credentials NAME [--client-certificate=path/to/certfile]
             hostname used to contact the server is used
       --tmp-dir=''
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
-      --token=''
-            Bearer token for authentication to the API server
       --user=''
             The name of the kubeconfig user to use
-      --username=''
-            Username for basic authentication to the API server
       --warnings-as-errors=false
             Treat warnings received from the server as errors and exit with a non-zero exit code
 ```

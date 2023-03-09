@@ -42,8 +42,8 @@ werf kubectl set selector (-f FILENAME | TYPE NAME) EXPRESSIONS [--resource-vers
       --local=false
             If true, annotation will NOT contact api-server but run locally.
   -o, --output=''
-            Output format. One of: json|yaml|name|go-template|go-template-file|template|templatefile
-            |jsonpath|jsonpath-as-json|jsonpath-file.
+            Output format. One of: (json, yaml, name, go-template, go-template-file, template,      
+            templatefile, jsonpath, jsonpath-as-json, jsonpath-file).
   -R, --recursive=true
             Process the directory used in -f, --filename recursively. Useful when you want to       
             manage related manifests organized within the same directory.
@@ -81,6 +81,8 @@ werf kubectl set selector (-f FILENAME | TYPE NAME) EXPRESSIONS [--resource-vers
             The name of the kubeconfig cluster to use
       --context=''
             The name of the kubeconfig context to use (default $WERF_KUBE_CONTEXT)
+      --disable-compression=false
+            If true, opt-out of response compression for all requests to the server
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --insecure-skip-tls-verify=false

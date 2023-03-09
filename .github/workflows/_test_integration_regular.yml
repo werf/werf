@@ -5,7 +5,6 @@ on:
     inputs:
       packages:
         description: Comma-separated package paths to test
-        required: true
         type: string
       excludePackages:
         description: Comma-separated package paths to exclude from testing

@@ -30,7 +30,7 @@ werf kubectl api-resources [flags] [options]
   kubectl api-resources --namespaced=false
   
   # Print the supported API resources with a specific APIGroup
-  kubectl api-resources --api-group=extensions
+  kubectl api-resources --api-group=rbac.authorization.k8s.io
 ```
 
 {{ header }} Options
@@ -40,6 +40,8 @@ werf kubectl api-resources [flags] [options]
             Limit to resources in the specified API group.
       --cached=false
             Use the cached list of resources if available.
+      --categories=[]
+            Limit to resources that belong the the specified categories.
       --namespaced=true
             If false, non-namespaced resources will be returned, otherwise returning namespaced     
             resources by default.
@@ -47,7 +49,7 @@ werf kubectl api-resources [flags] [options]
             When using the default or custom-column output format, don`t print headers (default     
             print headers).
   -o, --output=''
-            Output format. One of: wide|name.
+            Output format. One of: (wide, name).
       --sort-by=''
             If non-empty, sort list of resources using specified field. The field can be either     
             `name` or `kind`.
@@ -78,6 +80,8 @@ werf kubectl api-resources [flags] [options]
             The name of the kubeconfig cluster to use
       --context=''
             The name of the kubeconfig context to use (default $WERF_KUBE_CONTEXT)
+      --disable-compression=false
+            If true, opt-out of response compression for all requests to the server
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --insecure-skip-tls-verify=false

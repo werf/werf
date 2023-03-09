@@ -22,18 +22,31 @@ werf kubectl config set-cluster NAME [--server=server] [--certificate-authority=
   # Embed certificate authority data for the e2e cluster entry
   kubectl config set-cluster e2e --embed-certs --certificate-authority=~/.kube/e2e/kubernetes.ca.crt
   
-  # Disable cert checking for the dev cluster entry
+  # Disable cert checking for the e2e cluster entry
   kubectl config set-cluster e2e --insecure-skip-tls-verify=true
   
   # Set custom TLS server name to use for validation for the e2e cluster entry
   kubectl config set-cluster e2e --tls-server-name=my-cluster-name
+  
+  # Set proxy url for the e2e cluster entry
+  kubectl config set-cluster e2e --proxy-url=https://1.2.3.4
 ```
 
 {{ header }} Options
 
 ```shell
+      --certificate-authority=''
+            Path to certificate-authority file for the cluster entry in kubeconfig
       --embed-certs=false
             embed-certs for the cluster entry in kubeconfig
+      --insecure-skip-tls-verify=false
+            insecure-skip-tls-verify for the cluster entry in kubeconfig
+      --proxy-url=''
+            proxy-url for the cluster entry in kubeconfig
+      --server=''
+            server for the cluster entry in kubeconfig
+      --tls-server-name=''
+            tls-server-name for the cluster entry in kubeconfig
 ```
 
 {{ header }} Options inherited from parent commands
@@ -49,8 +62,6 @@ werf kubectl config set-cluster NAME [--server=server] [--certificate-authority=
             UID to impersonate for the operation.
       --cache-dir='~/.kube/cache'
             Default cache directory
-      --certificate-authority=''
-            Path to a cert file for the certificate authority
       --client-certificate=''
             Path to a client certificate file for TLS
       --client-key=''
@@ -59,11 +70,10 @@ werf kubectl config set-cluster NAME [--server=server] [--certificate-authority=
             The name of the kubeconfig cluster to use
       --context=''
             The name of the kubeconfig context to use (default $WERF_KUBE_CONTEXT)
+      --disable-compression=false
+            If true, opt-out of response compression for all requests to the server
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
-      --insecure-skip-tls-verify=false
-            If true, the server`s certificate will not be checked for validity. This will make your 
-            HTTPS connections insecure (default $WERF_SKIP_TLS_VERIFY_REGISTRY)
       --kube-config-base64=''
             Kubernetes config data as base64 string (default $WERF_KUBE_CONFIG_BASE64 or            
             $WERF_KUBECONFIG_BASE64 or $KUBECONFIG_BASE64)
@@ -83,11 +93,6 @@ werf kubectl config set-cluster NAME [--server=server] [--certificate-authority=
             The length of time to wait before giving up on a single server request. Non-zero values 
             should contain a corresponding time unit (e.g. 1s, 2m, 3h). A value of zero means don`t 
             timeout requests.
-  -s, --server=''
-            The address and port of the Kubernetes API server
-      --tls-server-name=''
-            Server name to use for server certificate validation. If it is not provided, the        
-            hostname used to contact the server is used
       --tmp-dir=''
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --token=''

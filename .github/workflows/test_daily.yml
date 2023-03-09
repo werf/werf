@@ -14,6 +14,7 @@ jobs:
   unit:
     uses: ./.github/workflows/_test_unit.yml
     with:
+      excludePackages: cmd/werf/docs
       coverage: true
 
   e2e_simple_per-k8s-version:
@@ -38,7 +39,7 @@ jobs:
     uses: ./.github/workflows/_test_integration_regular.yml
     with:
       packages: integration/suites
-      excludePackages: integration/suites/deploy,integration/suites/cleanup_after_converge,integration/suites/helm/deploy_rollback,integration/suites/bundles,integration/suites/ansible,integration/suites/build/stapel_image/git
+      excludePackages: integration/suites/deploy,integration/suites/cleanup_after_converge,integration/suites/helm/deploy_rollback,integration/suites/bundles,integration/suites/ansible,integration/suites/build/stapel_image/git,integration/suites/docs
       fetchDepth: 0 # Git history as fixtures for tests.
       coverage: true
     secrets: inherit

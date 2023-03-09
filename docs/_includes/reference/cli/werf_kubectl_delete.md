@@ -26,6 +26,9 @@ werf kubectl delete ([-f FILENAME] | [-k DIRECTORY] | TYPE [(NAME | -l label | -
   # Delete resources from a directory containing kustomization.yaml - e.g. dir/kustomization.yaml
   kubectl delete -k dir
   
+  # Delete resources from all files that end with '.json' - i.e. expand wildcard characters in file names
+  kubectl delete -f '*.json'
+  
   # Delete a pod based on the type and name in the JSON passed into stdin
   cat pod.json | kubectl delete -f -
   
@@ -90,7 +93,9 @@ werf kubectl delete ([-f FILENAME] | [-k DIRECTORY] | TYPE [(NAME | -l label | -
             Process the directory used in -f, --filename recursively. Useful when you want to       
             manage related manifests organized within the same directory.
   -l, --selector=''
-            Selector (label query) to filter on.
+            Selector (label query) to filter on, supports `=`, `==`, and `!=`.(e.g. -l              
+            key1=value1,key2=value2). Matching objects must satisfy all of the specified label      
+            constraints.
       --timeout=0s
             The length of time to wait before giving up on a delete, zero means determine a timeout 
             from the size of the object
@@ -121,6 +126,8 @@ werf kubectl delete ([-f FILENAME] | [-k DIRECTORY] | TYPE [(NAME | -l label | -
             The name of the kubeconfig cluster to use
       --context=''
             The name of the kubeconfig context to use (default $WERF_KUBE_CONTEXT)
+      --disable-compression=false
+            If true, opt-out of response compression for all requests to the server
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --insecure-skip-tls-verify=false

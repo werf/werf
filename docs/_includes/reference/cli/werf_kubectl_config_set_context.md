@@ -23,8 +23,14 @@ werf kubectl config set-context [NAME | --current] [--cluster=cluster_nickname] 
 {{ header }} Options
 
 ```shell
+      --cluster=''
+            cluster for the context entry in kubeconfig
       --current=false
             Modify the current context
+      --namespace=''
+            namespace for the context entry in kubeconfig
+      --user=''
+            user for the context entry in kubeconfig
 ```
 
 {{ header }} Options inherited from parent commands
@@ -46,10 +52,10 @@ werf kubectl config set-context [NAME | --current] [--cluster=cluster_nickname] 
             Path to a client certificate file for TLS
       --client-key=''
             Path to a client key file for TLS
-      --cluster=''
-            The name of the kubeconfig cluster to use
       --context=''
             The name of the kubeconfig context to use (default $WERF_KUBE_CONTEXT)
+      --disable-compression=false
+            If true, opt-out of response compression for all requests to the server
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --insecure-skip-tls-verify=false
@@ -62,8 +68,6 @@ werf kubectl config set-context [NAME | --current] [--cluster=cluster_nickname] 
             use a particular kubeconfig file
       --match-server-version=false
             Require server version to match client version
-  -n, --namespace=''
-            If present, the namespace scope for this CLI request
       --password=''
             Password for basic authentication to the API server
       --profile='none'
@@ -83,8 +87,6 @@ werf kubectl config set-context [NAME | --current] [--cluster=cluster_nickname] 
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --token=''
             Bearer token for authentication to the API server
-      --user=''
-            The name of the kubeconfig user to use
       --username=''
             Username for basic authentication to the API server
       --warnings-as-errors=false

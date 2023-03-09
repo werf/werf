@@ -24,17 +24,20 @@ werf kubectl edit (RESOURCE/NAME | -f FILENAME) [options]
 {{ header }} Examples
 
 ```shell
-  # Edit the service named 'docker-registry'
-  kubectl edit svc/docker-registry
+  # Edit the service named 'registry'
+  kubectl edit svc/registry
   
   # Use an alternative editor
-  KUBE_EDITOR="nano" kubectl edit svc/docker-registry
+  KUBE_EDITOR="nano" kubectl edit svc/registry
   
   # Edit the job 'myjob' in JSON using the v1 API format
   kubectl edit job.v1.batch/myjob -o json
   
   # Edit the deployment 'mydeployment' in YAML and save the modified config in its annotation
   kubectl edit deployment/mydeployment -o yaml --save-config
+  
+  # Edit the deployment/mydeployment's status subresource
+  kubectl edit deployment mydeployment --subresource='status'
 ```
 
 {{ header }} Options
@@ -50,8 +53,8 @@ werf kubectl edit (RESOURCE/NAME | -f FILENAME) [options]
   -k, --kustomize=''
             Process the kustomization directory. This flag can`t be used together with -f or -R.
   -o, --output=''
-            Output format. One of: json|yaml|name|go-template|go-template-file|template|templatefile
-            |jsonpath|jsonpath-as-json|jsonpath-file.
+            Output format. One of: (json, yaml, name, go-template, go-template-file, template,      
+            templatefile, jsonpath, jsonpath-as-json, jsonpath-file).
       --output-patch=false
             Output the patch if the resource is edited.
   -R, --recursive=false
@@ -63,12 +66,23 @@ werf kubectl edit (RESOURCE/NAME | -f FILENAME) [options]
             perform kubectl apply on this object in the future.
       --show-managed-fields=false
             If true, keep the managedFields when printing objects in JSON or YAML format.
+      --subresource=''
+            If specified, edit will operate on the subresource of the requested object. Must be one 
+            of [status]. This flag is alpha and may change in the future.
       --template=''
             Template string or path to template file to use when -o=go-template,                    
             -o=go-template-file. The template format is golang templates                            
             [http://golang.org/pkg/text/template/#pkg-overview].
-      --validate=true
-            If true, use a schema to validate the input before sending it
+      --validate='strict'
+            Must be one of: strict (or true), warn, ignore (or false).
+            		"true" or "strict" will use a schema to validate the input and fail the request if    
+            invalid. It will perform server side validation if ServerSideFieldValidation is enabled 
+            on the api-server, but will fall back to less reliable client-side validation if not.
+            		"warn" will warn about unknown or duplicate fields without blocking the request if    
+            server-side field validation is enabled on the API server, and behave as "ignore"       
+            otherwise.
+            		"false" or "ignore" will not perform any schema validation, silently dropping any     
+            unknown or duplicate fields.
       --windows-line-endings=false
             Defaults to the line ending native to your platform.
 ```
@@ -96,6 +110,8 @@ werf kubectl edit (RESOURCE/NAME | -f FILENAME) [options]
             The name of the kubeconfig cluster to use
       --context=''
             The name of the kubeconfig context to use (default $WERF_KUBE_CONTEXT)
+      --disable-compression=false
+            If true, opt-out of response compression for all requests to the server
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --insecure-skip-tls-verify=false

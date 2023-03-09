@@ -94,8 +94,8 @@ werf kubectl set env RESOURCE/NAME KEY_1=VAL_1 ... KEY_N=VAL_N [options]
       --local=false
             If true, set env will NOT contact api-server but run locally.
   -o, --output=''
-            Output format. One of: json|yaml|name|go-template|go-template-file|template|templatefile
-            |jsonpath|jsonpath-as-json|jsonpath-file.
+            Output format. One of: (json, yaml, name, go-template, go-template-file, template,      
+            templatefile, jsonpath, jsonpath-as-json, jsonpath-file).
       --overwrite=true
             If true, allow environment to be overwritten, otherwise reject updates that overwrite   
             existing environment.
@@ -107,7 +107,9 @@ werf kubectl set env RESOURCE/NAME KEY_1=VAL_1 ... KEY_N=VAL_N [options]
       --resolve=false
             If true, show secret or configmap references when listing variables
   -l, --selector=''
-            Selector (label query) to filter on
+            Selector (label query) to filter on, supports `=`, `==`, and `!=`.(e.g. -l              
+            key1=value1,key2=value2). Matching objects must satisfy all of the specified label      
+            constraints.
       --show-managed-fields=false
             If true, keep the managedFields when printing objects in JSON or YAML format.
       --template=''
@@ -139,6 +141,8 @@ werf kubectl set env RESOURCE/NAME KEY_1=VAL_1 ... KEY_N=VAL_N [options]
             The name of the kubeconfig cluster to use
       --context=''
             The name of the kubeconfig context to use (default $WERF_KUBE_CONTEXT)
+      --disable-compression=false
+            If true, opt-out of response compression for all requests to the server
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --insecure-skip-tls-verify=false

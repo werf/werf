@@ -30,7 +30,8 @@ werf kubectl top node [NAME | -l label] [options]
             If present, print output without headers
   -l, --selector=''
             Selector (label query) to filter on, supports `=`, `==`, and `!=`.(e.g. -l              
-            key1=value1,key2=value2)
+            key1=value1,key2=value2). Matching objects must satisfy all of the specified label      
+            constraints.
       --show-capacity=false
             Print node resources based on Capacity instead of Allocatable(default) of the nodes.
       --sort-by=''
@@ -63,6 +64,8 @@ werf kubectl top node [NAME | -l label] [options]
             The name of the kubeconfig cluster to use
       --context=''
             The name of the kubeconfig context to use (default $WERF_KUBE_CONTEXT)
+      --disable-compression=false
+            If true, opt-out of response compression for all requests to the server
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --insecure-skip-tls-verify=false

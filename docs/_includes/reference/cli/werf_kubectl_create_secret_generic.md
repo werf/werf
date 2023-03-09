@@ -51,8 +51,7 @@ werf kubectl create secret generic NAME [--type=string] [--from-file=[key=]sourc
       --field-manager='kubectl-create'
             Name of the manager used to track field ownership.
       --from-env-file=[]
-            Specify the path to a file to read lines of key=val pairs to create a secret (i.e. a    
-            Docker .env file).
+            Specify the path to a file to read lines of key=val pairs to create a secret.
       --from-file=[]
             Key files can be specified using their file path, in which case a default name will be  
             given to them, or optionally with a name and file path, in which case the given name    
@@ -61,8 +60,8 @@ werf kubectl create secret generic NAME [--type=string] [--from-file=[key=]sourc
       --from-literal=[]
             Specify a key and literal value to insert in secret (i.e. mykey=somevalue)
   -o, --output=''
-            Output format. One of: json|yaml|name|go-template|go-template-file|template|templatefile
-            |jsonpath|jsonpath-as-json|jsonpath-file.
+            Output format. One of: (json, yaml, name, go-template, go-template-file, template,      
+            templatefile, jsonpath, jsonpath-as-json, jsonpath-file).
       --save-config=false
             If true, the configuration of current object will be saved in its annotation.           
             Otherwise, the annotation will be unchanged. This flag is useful when you want to       
@@ -75,8 +74,16 @@ werf kubectl create secret generic NAME [--type=string] [--from-file=[key=]sourc
             [http://golang.org/pkg/text/template/#pkg-overview].
       --type=''
             The type of secret to create
-      --validate=true
-            If true, use a schema to validate the input before sending it
+      --validate='strict'
+            Must be one of: strict (or true), warn, ignore (or false).
+            		"true" or "strict" will use a schema to validate the input and fail the request if    
+            invalid. It will perform server side validation if ServerSideFieldValidation is enabled 
+            on the api-server, but will fall back to less reliable client-side validation if not.
+            		"warn" will warn about unknown or duplicate fields without blocking the request if    
+            server-side field validation is enabled on the API server, and behave as "ignore"       
+            otherwise.
+            		"false" or "ignore" will not perform any schema validation, silently dropping any     
+            unknown or duplicate fields.
 ```
 
 {{ header }} Options inherited from parent commands
@@ -102,6 +109,8 @@ werf kubectl create secret generic NAME [--type=string] [--from-file=[key=]sourc
             The name of the kubeconfig cluster to use
       --context=''
             The name of the kubeconfig context to use (default $WERF_KUBE_CONTEXT)
+      --disable-compression=false
+            If true, opt-out of response compression for all requests to the server
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --insecure-skip-tls-verify=false

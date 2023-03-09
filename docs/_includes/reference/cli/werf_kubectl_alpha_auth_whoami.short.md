@@ -1,0 +1,1 @@
+experimental: Check self subject attributes

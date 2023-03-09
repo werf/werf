@@ -42,8 +42,8 @@ werf kubectl apply edit-last-applied (RESOURCE/NAME | -f FILENAME) [options]
   -k, --kustomize=''
             Process the kustomization directory. This flag can`t be used together with -f or -R.
   -o, --output=''
-            Output format. One of: json|yaml|name|go-template|go-template-file|template|templatefile
-            |jsonpath|jsonpath-as-json|jsonpath-file.
+            Output format. One of: (json, yaml, name, go-template, go-template-file, template,      
+            templatefile, jsonpath, jsonpath-as-json, jsonpath-file).
   -R, --recursive=false
             Process the directory used in -f, --filename recursively. Useful when you want to       
             manage related manifests organized within the same directory.
@@ -53,6 +53,16 @@ werf kubectl apply edit-last-applied (RESOURCE/NAME | -f FILENAME) [options]
             Template string or path to template file to use when -o=go-template,                    
             -o=go-template-file. The template format is golang templates                            
             [http://golang.org/pkg/text/template/#pkg-overview].
+      --validate='strict'
+            Must be one of: strict (or true), warn, ignore (or false).
+            		"true" or "strict" will use a schema to validate the input and fail the request if    
+            invalid. It will perform server side validation if ServerSideFieldValidation is enabled 
+            on the api-server, but will fall back to less reliable client-side validation if not.
+            		"warn" will warn about unknown or duplicate fields without blocking the request if    
+            server-side field validation is enabled on the API server, and behave as "ignore"       
+            otherwise.
+            		"false" or "ignore" will not perform any schema validation, silently dropping any     
+            unknown or duplicate fields.
       --windows-line-endings=false
             Defaults to the line ending native to your platform.
 ```
@@ -80,6 +90,8 @@ werf kubectl apply edit-last-applied (RESOURCE/NAME | -f FILENAME) [options]
             The name of the kubeconfig cluster to use
       --context=''
             The name of the kubeconfig context to use (default $WERF_KUBE_CONTEXT)
+      --disable-compression=false
+            If true, opt-out of response compression for all requests to the server
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --insecure-skip-tls-verify=false

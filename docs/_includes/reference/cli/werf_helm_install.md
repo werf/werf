@@ -94,6 +94,10 @@ werf helm install [NAME] [CHART] [flags] [options]
             Kubernetes OpenAPI Schema
       --dry-run=false
             simulate an install
+      --enable-dns=false
+            enable DNS lookups when rendering templates
+      --force=false
+            force resource updates through a replacement strategy
   -g, --generate-name=false
             generate the name (and omit the NAME parameter)
       --ignore-secret-key=false
@@ -114,9 +118,11 @@ werf helm install [NAME] [CHART] [flags] [options]
             pass credentials to all domains
       --password=''
             chart repository password where to locate the requested chart
-      --post-renderer=exec
+      --post-renderer=
             the path to an executable to be used for post rendering. If it exists in $PATH, the     
             binary will be used, otherwise it will try to look for the executable at the given path
+      --post-renderer-args=[]
+            an argument to the post-renderer (can specify multiple)
       --render-subchart-notes=false
             if set, render subchart notes along with the parent
       --replace=false
@@ -135,6 +141,9 @@ werf helm install [NAME] [CHART] [flags] [options]
       --set-file=[]
             set values from respective files specified via the command line (can specify multiple   
             or separate values with commas: key1=path1,key2=path2)
+      --set-json=[]
+            set JSON values on the command line (can specify multiple or separate values with       
+            commas: key1=jsonval1,key2=jsonval2)
       --set-string=[]
             set STRING values on the command line (can specify multiple or separate values with     
             commas: key1=val1,key2=val2)

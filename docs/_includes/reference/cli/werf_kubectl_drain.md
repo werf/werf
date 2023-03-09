@@ -46,8 +46,7 @@ werf kubectl drain NODE [options]
             would be sent, without sending it. If server strategy, submit server-side request       
             without persisting the resource.
       --force=false
-            Continue even if there are pods not managed by a ReplicationController, ReplicaSet,     
-            Job, DaemonSet or StatefulSet.
+            Continue even if there are pods that do not declare a controller.
       --grace-period=-1
             Period of time in seconds given to each pod to terminate gracefully. If negative, the   
             default value specified in the pod will be used.
@@ -56,7 +55,9 @@ werf kubectl drain NODE [options]
       --pod-selector=''
             Label selector to filter pods on the node
   -l, --selector=''
-            Selector (label query) to filter on
+            Selector (label query) to filter on, supports `=`, `==`, and `!=`.(e.g. -l              
+            key1=value1,key2=value2). Matching objects must satisfy all of the specified label      
+            constraints.
       --skip-wait-for-delete-timeout=0
             If pod DeletionTimestamp older than N seconds, skip waiting for the pod.  Seconds must  
             be greater than 0 to skip.
@@ -87,6 +88,8 @@ werf kubectl drain NODE [options]
             The name of the kubeconfig cluster to use
       --context=''
             The name of the kubeconfig context to use (default $WERF_KUBE_CONTEXT)
+      --disable-compression=false
+            If true, opt-out of response compression for all requests to the server
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --insecure-skip-tls-verify=false
