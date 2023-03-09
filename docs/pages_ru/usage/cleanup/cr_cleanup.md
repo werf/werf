@@ -175,7 +175,7 @@ cleanup:
 | _JFrog Artifactory_         |           **ок**            |
 | _Nexus_                     |           **ок**            |
 | _Quay_                      |           **ок**            |
-| _Yandex Container Registry_ |           **ок**            |
+| _Yandex container registry_ |           **ок**            |
 | _Selectel CRaaS_            | [***ок**](#selectel-craas)  |
 
 werf пытается автоматически определить используемый container registry, используя заданный адрес репозитория (опция `--repo`). Пользователь может явно задать container registry опцией `--repo-container-registry` или переменной окружения `WERF_REPO_CONTAINER_REGISTRY`.
@@ -224,7 +224,7 @@ HUB_TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username":
 
 ### GitLab Registry
 
-При удалении тегов werf использует _GitLab Container Registry API_ или _Docker Registry API_ в зависимости от версии GitLab.
+При удалении тегов werf использует _GitLab container registry API_ или _Docker Registry API_ в зависимости от версии GitLab.
 
 > Для удаления тега прав временного токена CI-задания (`$CI_JOB_TOKEN`) недостаточно, поэтому пользователю необходимо создать специальный токен в разделе Access Token (в секции Scope необходимо выбрать `api`) и выполнить авторизацию с ним
 

@@ -79,11 +79,11 @@ werf build --repo example.org/mycompany/myapp
 werf bundle publish --skip-build --tag latest --repo example.org/mycompany/myapp
 ```
 
-## Deploying without access to an application's Git repository and Container Registry
+## Deploying without access to an application's Git repository and container registry
 
 Follow these five steps to deploy an application with no access to the application's Git repository and the container registry:
 
-1. Build images and publish them to the Container Registry of the application.
+1. Build images and publish them to the container registry of the application.
 
 2. Add the passed parameters and publish the main chart to the OCI repository. The chart contains pointers to the images published in the first step.
 
