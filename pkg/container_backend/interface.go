@@ -61,6 +61,10 @@ type ContainerBackend interface {
 	CalculateDependencyImportChecksum(ctx context.Context, dependencyImport DependencyImportSpec) (string, error)
 
 	HasStapelBuildSupport() bool
+	IsTargetPlatformSupportedForStapel(targetPlatform string) bool
+	IsTargetPlatformSupportedForStagedDockerfile(targetPlatform string) bool
+	IsTargetPlatformSupportedForDockerfile(targetPlatform string) bool
+
 	String() string
 
 	// TODO: Util method for cleanup, which possibly should be avoided in the future

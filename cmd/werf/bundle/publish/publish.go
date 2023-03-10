@@ -137,7 +137,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupDockerServerStoragePath(&commonCmdData, cmd)
 
 	common.SetupSkipBuild(&commonCmdData, cmd)
-	common.SetupPlatform(&commonCmdData, cmd)
+	commonCmdData.SetupPlatform(cmd)
 
 	commonCmdData.SetupHelmCompatibleChart(cmd, false)
 	commonCmdData.SetupRenameChart(cmd)

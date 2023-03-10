@@ -99,7 +99,7 @@ func NewExportCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupVirtualMerge(&commonCmdData, cmd)
 
-	common.SetupPlatform(&commonCmdData, cmd)
+	commonCmdData.SetupPlatform(cmd)
 
 	cmd.Flags().StringArrayVarP(&tagTemplateList, "tag", "", []string{}, `Set a tag template (can specify multiple).
 It is necessary to use image name shortcut %image% or %image_slug% if multiple images are exported (e.g. REPO:TAG-%image% or REPO-%image%:TAG)`)
@@ -209,7 +209,12 @@ func run(ctx context.Context, imagesToProcess build.ImagesToProcess, tagTemplate
 
 	logboek.Context(ctx).Info().LogOptionalLn()
 
-	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, giterminismManager.ProjectDir(), projectTmpDir, ssh_agent.SSHAuthSock, containerBackend, storageManager, storageLockManager, common.GetConveyorOptions(&commonCmdData, imagesToProcess))
+	conveyorOptions, err := common.GetConveyorOptions(&commonCmdData, imagesToProcess)
+	if err != nil {
+		return err
+	}
+
+	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, giterminismManager.ProjectDir(), projectTmpDir, ssh_agent.SSHAuthSock, containerBackend, storageManager, storageLockManager, conveyorOptions)
 	defer conveyorWithRetry.Terminate()
 
 	return conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
