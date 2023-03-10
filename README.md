@@ -5,6 +5,7 @@
 <p align="center">
   <a href="https://github.com/werf/werf/discussions"><img src="https://img.shields.io/static/v1?label=GitHub&message=discussions&color=brightgreen&logo=github" alt="GH Discussions"/></a>
   <a href="https://twitter.com/werf_io"><img src="https://img.shields.io/static/v1?label=Twitter&message=page&color=blue&logo=twitter" alt="Twitter"/></a>
+<a href="https://app.fossa.com/projects/git%2Bgithub.com%2Fwerf%2Fwerf?ref=badge_shield" alt="FOSSA Status"><img src="https://app.fossa.com/api/projects/git%2Bgithub.com%2Fwerf%2Fwerf.svg?type=shield"/></a>
   <a href="https://t.me/werf_io"><img src="https://img.shields.io/static/v1?label=Telegram&message=chat&logo=telegram" alt="Telegram chat"></a><br>
   <a href="https://godoc.org/github.com/werf/werf"><img src="https://godoc.org/github.com/werf/werf?status.svg" alt="GoDoc"></a>
   <a href="https://codeclimate.com/github/werf/werf/test_coverage"><img src="https://api.codeclimate.com/v1/badges/bac6f23d5c366c6324b5/test_coverage" /></a>
@@ -54,6 +55,9 @@ This [contributing guide](https://github.com/werf/werf/blob/main/CONTRIBUTING.md
 ## License
 
 Apache License 2.0, see [LICENSE](LICENSE).
+
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fwerf%2Fwerf.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fwerf%2Fwerf?ref=badge_large)
 
 ## Featured in
 
