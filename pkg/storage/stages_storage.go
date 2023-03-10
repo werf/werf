@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strings"
 
+	v1 "github.com/google/go-containerregistry/pkg/v1"
+
 	"github.com/werf/werf/pkg/container_backend"
 	"github.com/werf/werf/pkg/image"
 )
@@ -27,7 +29,7 @@ type StagesStorage interface {
 	GetStagesIDs(ctx context.Context, projectName string, opts ...Option) ([]image.StageID, error)
 	GetStagesIDsByDigest(ctx context.Context, projectName, digest string, opts ...Option) ([]image.StageID, error)
 	GetStageDescription(ctx context.Context, projectName, digest string, uniqueID int64) (*image.StageDescription, error)
-	ExportStage(ctx context.Context, stageDescription *image.StageDescription, destinationReference string) error
+	ExportStage(ctx context.Context, stageDescription *image.StageDescription, destinationReference string, mutateConfigFunc func(config v1.Config) (v1.Config, error)) error
 	DeleteStage(ctx context.Context, stageDescription *image.StageDescription, options DeleteImageOptions) error
 
 	AddStageCustomTag(ctx context.Context, stageDescription *image.StageDescription, tag string) error

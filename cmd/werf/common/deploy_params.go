@@ -27,21 +27,27 @@ func GetUserExtraAnnotations(cmdData *CmdData) (map[string]string, error) {
 }
 
 func GetUserExtraLabels(cmdData *CmdData) (map[string]string, error) {
-	extraLabelMap := map[string]string{}
-	var addLabels []string
-
-	addLabels = append(addLabels, GetAddLabels(cmdData)...)
-
-	for _, addLabel := range addLabels {
-		parts := strings.Split(addLabel, "=")
-		if len(parts) != 2 {
-			return nil, fmt.Errorf("bad --add-label value %s", addLabel)
-		}
-
-		extraLabelMap[parts[0]] = parts[1]
+	addLabelArray := append([]string{}, GetAddLabels(cmdData)...)
+	addLabelMap, err := KeyValueArrayToMap(addLabelArray, "=")
+	if err != nil {
+		return nil, fmt.Errorf("unsupported --add-label value: %w", err)
 	}
 
-	return extraLabelMap, nil
+	return addLabelMap, nil
+}
+
+func KeyValueArrayToMap(pairs []string, sep string) (map[string]string, error) {
+	keyValueMap := map[string]string{}
+	for _, pair := range pairs {
+		parts := strings.SplitN(pair, sep, 2)
+		if len(parts) != 2 {
+			return nil, fmt.Errorf("invalid key=value pair %q", pair)
+		}
+
+		keyValueMap[parts[0]] = parts[1]
+	}
+
+	return keyValueMap, nil
 }
 
 func StubImageInfoGetters(werfConfig *config.WerfConfig) (list []*image.InfoGetter) {

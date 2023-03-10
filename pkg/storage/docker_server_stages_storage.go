@@ -8,6 +8,7 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
+	v1 "github.com/google/go-containerregistry/pkg/v1"
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/container_backend"
@@ -66,7 +67,7 @@ func (storage *DockerServerStagesStorage) GetStagesIDs(ctx context.Context, proj
 	return convertToStagesList(images)
 }
 
-func (storage *DockerServerStagesStorage) ExportStage(ctx context.Context, stageDescription *image.StageDescription, destinationReference string) error {
+func (storage *DockerServerStagesStorage) ExportStage(ctx context.Context, stageDescription *image.StageDescription, destinationReference string, mutateConfigFunc func(config v1.Config) (v1.Config, error)) error {
 	if err := docker.CliTag(ctx, stageDescription.Info.Name, destinationReference); err != nil {
 		return err
 	}
@@ -76,7 +77,7 @@ func (storage *DockerServerStagesStorage) ExportStage(ctx context.Context, stage
 		return err
 	}
 
-	return docker_registry.API().MutateAndPushImage(ctx, destinationReference, destinationReference, mutateExportStageConfig)
+	return docker_registry.API().MutateAndPushImage(ctx, destinationReference, destinationReference, mutateExportStageConfig(mutateConfigFunc))
 }
 
 func (storage *DockerServerStagesStorage) DeleteStage(ctx context.Context, stageDescription *image.StageDescription, options DeleteImageOptions) error {
