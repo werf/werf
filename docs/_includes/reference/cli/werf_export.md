@@ -20,12 +20,27 @@ werf export [IMAGE_NAME...] [options]
 
 ```shell
   # Export images to Docker Hub and GitHub container registry
-  $ werf export --tag=index.docker.io/company/project:%image%-latest --tag=ghcr.io/company/project/%image%:latest
+  $ werf export \
+      --tag index.docker.io/company/project:%image%-latest \
+      --tag ghcr.io/company/project/%image%:latest
+
+  # Export images with extra labels
+  $ werf export \
+      --tag registry.werf.io/company/project/%image%:latest \
+      --add-label io.artifacthub.package.readme-url=https://raw.githubusercontent.com/werf/werf/main/README.md \
+      --add-label org.opencontainers.image.created=2023-03-13T11:55:24Z \
+      --add-label org.opencontainers.image.description="Official image to run werf in containers"
 ```
 
 {{ header }} Options
 
 ```shell
+      --add-label=[]
+            Add label to exported images (can specify multiple).
+            Format: labelName=labelValue.
+            Also, can be specified with $WERF_EXPORT_ADD_LABEL_* (e.g.                              
+            $WERF_EXPORT_ADD_LABEL_1=labelName1=labelValue1,                                        
+            $WERF_EXPORT_ADD_LABEL_2=labelName2=labelValue2)
       --cache-repo=[]
             Specify one or multiple cache repos with images that will be used as a cache. Cache     
             will be populated when pushing newly built images into the primary repo and when        

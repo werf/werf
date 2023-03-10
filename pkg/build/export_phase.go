@@ -3,6 +3,8 @@ package build
 import (
 	"context"
 
+	v1 "github.com/google/go-containerregistry/pkg/v1"
+
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
@@ -17,6 +19,7 @@ type ExportPhase struct {
 
 type ExportPhaseOptions struct {
 	ExportTagFuncList []image.ExportTagFunc
+	MutateConfigFunc  func(config v1.Config) (v1.Config, error)
 }
 
 func NewExportPhase(c *Conveyor, opts ExportPhaseOptions) *ExportPhase {
@@ -57,7 +60,7 @@ func (phase *ExportPhase) exportLastStageImage(ctx context.Context, img *build_i
 				if err := logboek.Context(ctx).Default().LogProcess("tag %s", tag).
 					DoError(func() error {
 						stageDesc := img.GetLastNonEmptyStage().GetStageImage().Image.GetStageDescription()
-						if err := phase.Conveyor.StorageManager.GetStagesStorage().ExportStage(ctx, stageDesc, tag); err != nil {
+						if err := phase.Conveyor.StorageManager.GetStagesStorage().ExportStage(ctx, stageDesc, tag, phase.MutateConfigFunc); err != nil {
 							return err
 						}
 

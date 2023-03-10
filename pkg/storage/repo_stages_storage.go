@@ -111,22 +111,28 @@ func (storage *RepoStagesStorage) GetStagesIDs(ctx context.Context, _ string, op
 	}
 }
 
-func (storage *RepoStagesStorage) ExportStage(ctx context.Context, stageDescription *image.StageDescription, destinationReference string) error {
-	return storage.DockerRegistry.MutateAndPushImage(ctx, stageDescription.Info.Name, destinationReference, mutateExportStageConfig)
+func (storage *RepoStagesStorage) ExportStage(ctx context.Context, stageDescription *image.StageDescription, destinationReference string, mutateConfigFunc func(config v1.Config) (v1.Config, error)) error {
+	return storage.DockerRegistry.MutateAndPushImage(ctx, stageDescription.Info.Name, destinationReference, mutateExportStageConfig(mutateConfigFunc))
 }
 
-func mutateExportStageConfig(config v1.Config) (v1.Config, error) {
-	if config.Labels == nil {
-		panic("unexpected condition: stage image without labels")
-	}
-
-	for name := range config.Labels {
-		if strings.HasPrefix(name, image.WerfLabelPrefix) {
-			delete(config.Labels, name)
+func mutateExportStageConfig(mutateConfigFunc func(config v1.Config) (v1.Config, error)) func(config v1.Config) (v1.Config, error) {
+	return func(config v1.Config) (v1.Config, error) {
+		if config.Labels == nil {
+			panic("unexpected condition: stage image without labels")
 		}
-	}
 
-	return config, nil
+		for name := range config.Labels {
+			if strings.HasPrefix(name, image.WerfLabelPrefix) {
+				delete(config.Labels, name)
+			}
+		}
+
+		if mutateConfigFunc != nil {
+			return mutateConfigFunc(config)
+		}
+
+		return config, nil
+	}
 }
 
 func (storage *RepoStagesStorage) DeleteStage(ctx context.Context, stageDescription *image.StageDescription, _ DeleteImageOptions) error {

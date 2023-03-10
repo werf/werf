@@ -9,6 +9,7 @@ import (
 	"text/template"
 
 	"github.com/google/go-containerregistry/pkg/name"
+	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/spf13/cobra"
 
 	"github.com/werf/logboek"
@@ -23,6 +24,7 @@ import (
 	"github.com/werf/werf/pkg/storage/manager"
 	"github.com/werf/werf/pkg/tmp_manager"
 	"github.com/werf/werf/pkg/true_git"
+	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/werf"
 	"github.com/werf/werf/pkg/werf/global_warnings"
 )
@@ -31,6 +33,7 @@ var commonCmdData common.CmdData
 
 func NewExportCmd(ctx context.Context) *cobra.Command {
 	var tagTemplateList []string
+	var addLabelArray []string
 
 	ctx = common.NewContextWithCmdData(ctx, &commonCmdData)
 	cmd := common.SetCommandContext(ctx, &cobra.Command{
@@ -39,7 +42,16 @@ func NewExportCmd(ctx context.Context) *cobra.Command {
 		Long:                  common.GetLongCommandDescription(GetExportDocs().Long),
 		DisableFlagsInUseLine: true,
 		Example: `  # Export images to Docker Hub and GitHub container registry
-  $ werf export --tag=index.docker.io/company/project:%image%-latest --tag=ghcr.io/company/project/%image%:latest`,
+  $ werf export \
+      --tag index.docker.io/company/project:%image%-latest \
+      --tag ghcr.io/company/project/%image%:latest
+
+  # Export images with extra labels
+  $ werf export \
+      --tag registry.werf.io/company/project/%image%:latest \
+      --add-label io.artifacthub.package.readme-url=https://raw.githubusercontent.com/werf/werf/main/README.md \
+      --add-label org.opencontainers.image.created=2023-03-13T11:55:24Z \
+      --add-label org.opencontainers.image.description="Official image to run werf in containers"`,
 		Annotations: map[string]string{
 			common.DisableOptionsInUseLineAnno: "1",
 			common.DocsLongMD:                  GetExportDocs().LongMD,
@@ -59,7 +71,18 @@ func NewExportCmd(ctx context.Context) *cobra.Command {
 				return fmt.Errorf("required at least one tag template: use the --tag option to specify templates")
 			}
 
-			return run(ctx, common.GetImagesToProcess(args, false), tagTemplateList)
+			var addLabelMap map[string]string
+			var err error
+			{
+				addLabelArray := append(util.PredefinedValuesByEnvNamePrefix("WERF_EXPORT_ADD_LABEL_"), addLabelArray...)
+				addLabelMap, err = common.KeyValueArrayToMap(addLabelArray, "=")
+				if err != nil {
+					common.PrintHelp(cmd)
+					return fmt.Errorf("unsupported --add-label value: %w", err)
+				}
+			}
+
+			return run(ctx, common.GetImagesToProcess(args, false), tagTemplateList, addLabelMap)
 		},
 	})
 
@@ -104,10 +127,14 @@ func NewExportCmd(ctx context.Context) *cobra.Command {
 	cmd.Flags().StringArrayVarP(&tagTemplateList, "tag", "", []string{}, `Set a tag template (can specify multiple).
 It is necessary to use image name shortcut %image% or %image_slug% if multiple images are exported (e.g. REPO:TAG-%image% or REPO-%image%:TAG)`)
 
+	cmd.Flags().StringArrayVarP(&addLabelArray, "add-label", "", []string{}, `Add label to exported images (can specify multiple).
+Format: labelName=labelValue.
+Also, can be specified with $WERF_EXPORT_ADD_LABEL_* (e.g. $WERF_EXPORT_ADD_LABEL_1=labelName1=labelValue1, $WERF_EXPORT_ADD_LABEL_2=labelName2=labelValue2)`)
+
 	return cmd
 }
 
-func run(ctx context.Context, imagesToProcess build.ImagesToProcess, tagTemplateList []string) error {
+func run(ctx context.Context, imagesToProcess build.ImagesToProcess, tagTemplateList []string, extraLabels map[string]string) error {
 	if imagesToProcess.WithoutImages {
 		return nil
 	}
@@ -237,6 +264,13 @@ func run(ctx context.Context, imagesToProcess build.ImagesToProcess, tagTemplate
 			},
 			ExportPhaseOptions: build.ExportPhaseOptions{
 				ExportTagFuncList: tagFuncList,
+				MutateConfigFunc: func(config v1.Config) (v1.Config, error) {
+					for k, v := range extraLabels {
+						config.Labels[k] = v
+					}
+
+					return config, nil
+				},
 			},
 		})
 	})
