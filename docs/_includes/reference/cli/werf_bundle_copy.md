@@ -57,7 +57,7 @@ werf bundle copy [options]
             * interactive terminal width or 140
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
-      --platform=''
+      --platform=[]
             Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT]     
             ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)
       --rename-chart=''

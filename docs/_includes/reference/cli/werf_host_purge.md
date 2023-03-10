@@ -69,7 +69,7 @@ werf host purge [options]
             Loose werf giterminism mode restrictions (NOTE: not all restrictions can be removed,    
             more info https://werf.io/documentation/usage/project_configuration/giterminism.html,   
             default $WERF_LOOSE_GITERMINISM)
-      --platform=''
+      --platform=[]
             Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT]     
             ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)
   -N, --project-name=''
