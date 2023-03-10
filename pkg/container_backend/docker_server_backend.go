@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	go_runtime "runtime"
 	"strings"
 
 	"github.com/docker/docker/api/types"
@@ -24,6 +25,32 @@ func NewDockerServerBackend() *DockerServerBackend {
 
 func (runtime *DockerServerBackend) HasStapelBuildSupport() bool {
 	return false
+}
+
+func (runtime *DockerServerBackend) IsTargetPlatformSupportedForStapel(targetPlatform string) bool {
+	if targetPlatform == "" {
+		// werf uses current host platform in such case,
+		// non amd64 platform is not supported for stapel-builder+docker-server backend
+		//  because of usage of werf's service image (stapel image is built only for amd64).
+
+		if go_runtime.GOARCH != "amd64" {
+			return false
+		}
+	} else if targetPlatform != "linux/amd64" {
+		// user specified unsupported target platform
+		return false
+	}
+
+	return true
+}
+
+func (runtime *DockerServerBackend) IsTargetPlatformSupportedForStagedDockerfile(targetPlatform string) bool {
+	// no staged dockerfile support at all
+	return false
+}
+
+func (runtime *DockerServerBackend) IsTargetPlatformSupportedForDockerfile(targetPlatform string) bool {
+	return true
 }
 
 func (runtime *DockerServerBackend) BuildStapelStage(ctx context.Context, baseImage string, opts BuildStapelStageOptions) (string, error) {

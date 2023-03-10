@@ -11,30 +11,44 @@ import (
 	"github.com/werf/werf/pkg/build/stage"
 	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/container_backend"
+	"github.com/werf/werf/pkg/container_backend/thirdparty/platformutil"
 	"github.com/werf/werf/pkg/giterminism_manager"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/slug"
 	"github.com/werf/werf/pkg/storage"
 )
 
-func GetConveyorOptions(commonCmdData *CmdData, imagesToProcess build.ImagesToProcess) build.ConveyorOptions {
-	return build.ConveyorOptions{
+func GetConveyorOptions(commonCmdData *CmdData, imagesToProcess build.ImagesToProcess) (build.ConveyorOptions, error) {
+	conveyorOptions := build.ConveyorOptions{
 		LocalGitRepoVirtualMergeOptions: stage.VirtualMergeOptions{
 			VirtualMerge: *commonCmdData.VirtualMerge,
 		},
 		ImagesToProcess: imagesToProcess,
 	}
+
+	if len(commonCmdData.GetPlatform()) > 0 {
+		platforms, err := platformutil.NormalizeUserParams(commonCmdData.GetPlatform())
+		if err != nil {
+			return build.ConveyorOptions{}, fmt.Errorf("unable to normalize platform params %v: %w", commonCmdData.GetPlatform(), err)
+		}
+		conveyorOptions.TargetPlatforms = platforms
+	}
+
+	return conveyorOptions, nil
 }
 
 func GetConveyorOptionsWithParallel(commonCmdData *CmdData, imagesToProcess build.ImagesToProcess, buildStagesOptions build.BuildOptions) (build.ConveyorOptions, error) {
-	conveyorOptions := GetConveyorOptions(commonCmdData, imagesToProcess)
+	conveyorOptions, err := GetConveyorOptions(commonCmdData, imagesToProcess)
+	if err != nil {
+		return conveyorOptions, err
+	}
+
 	conveyorOptions.Parallel = !(buildStagesOptions.ImageBuildOptions.IntrospectAfterError || buildStagesOptions.ImageBuildOptions.IntrospectBeforeError || len(buildStagesOptions.Targets) != 0) && *commonCmdData.Parallel
 
 	parallelTasksLimit, err := GetParallelTasksLimit(commonCmdData)
 	if err != nil {
 		return conveyorOptions, fmt.Errorf("getting parallel tasks limit failed: %w", err)
 	}
-
 	conveyorOptions.ParallelTasksLimit = parallelTasksLimit
 
 	return conveyorOptions, nil
