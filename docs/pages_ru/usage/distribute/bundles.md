@@ -145,7 +145,7 @@ werf bundle copy --from archive:archive.tar.gz --to other.example.org/bundles/my
 
 Для публикации бандлов требуется container registry, поддерживающий спецификацию OCI ([Open Container Initiative](https://github.com/opencontainers/image-spec)). Список наиболее популярных container registries, совместимость с которыми была проверена:
 
-| Container Registry        | Поддерживает публикацию бандлов |
+| Container registry        | Поддерживает публикацию бандлов |
 |---------------------------|:-------------------------------:|
 | AWS ECR                   |                +                |
 | Azure CR                  |                +                |
@@ -155,6 +155,6 @@ werf bundle copy --from archive:archive.tar.gz --to other.example.org/bundles/my
 | GitLab Registry           |                +                |
 | Harbor                    |                +                |
 | JFrog Artifactory         |                +                |
-| Yandex Container Registry |                +                |
+| Yandex container registry |                +                |
 | Nexus                     |                +                |
 | Quay                      |                -                |

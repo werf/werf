@@ -19,7 +19,7 @@ werf export [IMAGE_NAME...] [options]
 {{ header }} Examples
 
 ```shell
-  # Export images to Docker Hub and GitHub Container Registry
+  # Export images to Docker Hub and GitHub container registry
   $ werf export --tag=index.docker.io/company/project:%image%-latest --tag=ghcr.io/company/project/%image%:latest
 ```
 

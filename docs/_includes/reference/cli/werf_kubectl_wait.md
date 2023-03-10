@@ -23,7 +23,7 @@ werf kubectl wait ([-f FILENAME] | resource.group/resource.name | resource.group
   # Wait for the pod "busybox1" to contain the status condition of type "Ready"
   kubectl wait --for=condition=Ready pod/busybox1
   
-  # The default value of status condition is true; you can set it to false
+  # The default value of status condition is true; you can wait for other targets after an equal delimiter (compared after Unicode simple case folding, which is a more general form of case-insensitivity):
   kubectl wait --for=condition=Ready=false pod/busybox1
   
   # Wait for the pod "busybox1" to contain the status phase to be "Running".
@@ -52,14 +52,16 @@ werf kubectl wait ([-f FILENAME] | resource.group/resource.name | resource.group
   -f, --filename=[]
             identifying the resource.
       --for=''
-            The condition to wait on: [delete|condition=condition-name|jsonpath=`{JSONPath          
-            expression}`=JSONPath Condition]. The default status value of condition-name is true,   
-            you can set false with condition=condition-name=false.
+            The condition to wait on:                                                               
+            [delete|condition=condition-name[=condition-value]|jsonpath=`{JSONPath                  
+            expression}`=JSONPath Condition]. The default condition-value is true.  Condition       
+            values are compared after Unicode simple case folding, which is a more general form of  
+            case-insensitivity.
       --local=false
             If true, annotation will NOT contact api-server but run locally.
   -o, --output=''
-            Output format. One of: json|yaml|name|go-template|go-template-file|template|templatefile
-            |jsonpath|jsonpath-as-json|jsonpath-file.
+            Output format. One of: (json, yaml, name, go-template, go-template-file, template,      
+            templatefile, jsonpath, jsonpath-as-json, jsonpath-file).
   -R, --recursive=true
             Process the directory used in -f, --filename recursively. Useful when you want to       
             manage related manifests organized within the same directory.
@@ -100,6 +102,8 @@ werf kubectl wait ([-f FILENAME] | resource.group/resource.name | resource.group
             The name of the kubeconfig cluster to use
       --context=''
             The name of the kubeconfig context to use (default $WERF_KUBE_CONTEXT)
+      --disable-compression=false
+            If true, opt-out of response compression for all requests to the server
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --insecure-skip-tls-verify=false

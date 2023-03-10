@@ -4,7 +4,7 @@ permalink: index.html
 description: Разверните ваше первое приложение с werf
 ---
 
-В этой статье мы покажем, как развернуть простое [приложение](https://github.com/werf/quickstart-application) (для голосования в нашем случае) с помощью werf. Прежде всего рекомендуем ознакомиться с [кратким введением](/how_it_works.html), если вы этого еще не сделали.
+В этой статье мы покажем, как развернуть простое [приложение](https://github.com/werf/quickstart-application), реализующее простое голосование, с помощью werf. Прежде всего рекомендуем ознакомиться [с кратким введением](/how_it_works.html), если вы этого еще не сделали.
 
 ## Подготовка
 
@@ -19,7 +19,7 @@ description: Разверните ваше первое приложение с 
 
 <br>
 
-В ином случае выполните одну из следующих инструкций, чтобы настроить локальный кластер Kubernetes и container registry в вашей системе:
+В ином случае выполните одну из следующих инструкций чтобы настроить локальный кластер Kubernetes и container registry в вашей системе:
 
 <div class="details">
 <a href="javascript:void(0)" class="details__summary">Windows — minikube</a>
@@ -34,7 +34,7 @@ description: Разверните ваше первое приложение с 
    ```
    {% endraw %}
 
-   **ВАЖНО.** С параметром `--insecure-registry` мы подготавливаем такое окружение, которое сможет работать с Container Registry без TLS. В нашем случае для упрощения настройка TLS отсутствует.
+   > **ВАЖНО.** С параметром `--insecure-registry` мы подготавливаем такое окружение, которое сможет работать с container registry без TLS. В нашем случае для упрощения настройка TLS отсутствует.
 
 4. Установка NGINX Ingress Controller:
 
@@ -44,7 +44,7 @@ description: Разверните ваше первое приложение с 
    ```
    {% endraw %}
 
-5. Установка Container Registry для хранения образов:
+5. Установка container registry для хранения образов:
 
    {% raw %}
    ```shell
@@ -52,7 +52,7 @@ description: Разверните ваше первое приложение с 
    ```
    {% endraw %}
 
-   Создадим Ingress для доступа к Container Registry. 
+   Создадим Ingress для доступа к container registry.
 
       {% raw %}
    ```shell
@@ -77,13 +77,13 @@ description: Разверните ваше первое приложение с 
                name: registry
                port:
                  number: 80
-   "@ | kubectl apply -f -  
+   "@ | kubectl apply -f -
    ```
    {% endraw %}
 
-6. Разрешаем доступ в Container Registry без TLS для Docker:
+6. Разрешаем доступ в сontainer registry без TLS для Docker:
 
-   Через меню Docker Desktop -> Settings -> Docker Engine добавим новый ключ в конфигурацию:
+   Через меню _Docker Desktop_ -> _Settings_ -> _Docker Engine_ добавим новый ключ в конфигурацию:
 
    ```json
    {
@@ -91,7 +91,7 @@ description: Разверните ваше первое приложение с 
    }
    ```
 
-   Перезапустим Docker Desktop через меню, открывающееся правым кликом по иконке Docker Desktop в трее.
+   Перезапустим Docker Desktop через меню, открывающееся правым кликом по иконке _Docker Desktop_ в трее.
 
    Затем снова запустим minikube:
 
@@ -99,7 +99,7 @@ description: Разверните ваше первое приложение с 
    minikube start --driver=docker --insecure-registry registry.example.com:80
    ```
 
-7. Разрешаем доступ в Container Registry без TLS для werf:
+7. Разрешаем доступ в container registry без TLS для werf:
 
    В терминале, где будет запускаться werf, установим переменную окружения `WERF_INSECURE_REGISTRY=1`.
 
@@ -109,7 +109,7 @@ description: Разверните ваше первое приложение с 
    set WERF_INSECURE_REGISTRY=1
    ```
 
-   Для bash:
+   Для Bash:
 
    ```
    export WERF_INSECURE_REGISTRY=1
@@ -121,7 +121,7 @@ description: Разверните ваше первое приложение с 
    $Env:WERF_INSECURE_REGISTRY = "1"
    ```
 
-8. Мы будем использовать домены `vote.quickstart-application.example.com` и `result.quickstart-application.example.com` для доступа к приложению и домен `registry.example.com` для доступа к Container Registry.
+8. Мы будем использовать домены `vote.quickstart-application.example.com` и `result.quickstart-application.example.com` для доступа к приложению и домен `registry.example.com` для доступа к container registry.
 
    Обновим файл hosts. Сначала получите IP-адрес minikube:
 
@@ -162,7 +162,7 @@ description: Разверните ваше первое приложение с 
    ```
    {% endraw %}
 
-   **ВАЖНО.** С параметром `--insecure-registry` мы подготавливаем такое окружение, которое сможет работать с Container Registry без TLS. В нашем случае для упрощения настройка TLS отсутствует.
+   > **ВАЖНО.** С параметром `--insecure-registry` мы подготавливаем такое окружение, которое сможет работать с container registry без TLS. В нашем случае для упрощения настройка TLS отсутствует.
 
 4. Установка NGINX Ingress Controller:
 
@@ -172,7 +172,7 @@ description: Разверните ваше первое приложение с 
    ```
    {% endraw %}
 
-5. Установка Container Registry для хранения образов:
+5. Установка container registry для хранения образов:
 
    {% raw %}
    ```shell
@@ -180,7 +180,7 @@ description: Разверните ваше первое приложение с 
    ```
    {% endraw %}
 
-   Создадим Ingress для доступа к Container Registry:
+   Создадим Ingress для доступа к container registry:
 
    {% raw %}
    ```shell
@@ -209,9 +209,9 @@ description: Разверните ваше первое приложение с 
    ```
    {% endraw %}
 
-6. Разрешаем доступ в Container Registry без TLS для docker:
+6. Разрешаем доступ в container registry без TLS для Docker:
 
-   Через меню Docker Desktop -> Settings -> Docker Engine добавим новый ключ в конфигурацию:
+   Через меню _Docker Desktop_ -> _Settings_ -> _Docker Engine_ добавим новый ключ в конфигурацию:
 
    ```json
    {
@@ -219,31 +219,31 @@ description: Разверните ваше первое приложение с 
    }
    ```
 
-   Перезапустим Docker Desktop через меню, открывающееся правым кликом по иконке Docker Desktop в трее.
+   Перезапустим Docker Desktop через меню, открывающееся правым кликом по иконке _Docker Desktop_ в трее.
 
    Затем снова запустим minikube:
-   
+
    {% raw %}
    ```shell
    minikube start --vm=true --insecure-registry registry.example.com:80
    ```
    {% endraw %}
 
-7. Разрешаем доступ в Container Registry без TLS для werf:
+7. Разрешаем доступ в container registry без TLS для werf:
 
-   В терминале, где будет запускаться werf, установим переменную окружения `WERF_INSECURE_REGISTRY=1`. Для bash:
+   В терминале, где будет запускаться werf, установим переменную окружения `WERF_INSECURE_REGISTRY=1`. Для Bash:
 
    ```shell
    export WERF_INSECURE_REGISTRY=1
    ```
 
-   Чтобы опция автоматически устанавливалась в новых bash-сессиях, добавим её в `.bashrc`:
+   Чтобы опция автоматически устанавливалась в новых Bash-сессиях, добавим её в `.bashrc`:
 
    ```shell
    echo export WERF_INSECURE_REGISTRY=1 | tee -a ~/.bashrc
    ```
 
-8. Мы будем использовать домены `vote.quickstart-application.example.com` и `result.quickstart-application.example.com` для доступа к приложению и домен `registry.example.com` для доступа к Container Registry.
+8. Мы будем использовать домены `vote.quickstart-application.example.com` и `result.quickstart-application.example.com` для доступа к приложению и домен `registry.example.com` для доступа к container registry.
 
    Обновим файл hosts. Выполните команду в терминале:
 
@@ -264,7 +264,7 @@ description: Разверните ваше первое приложение с 
 <a href="javascript:void(0)" class="details__summary">Linux — minikube</a>
 <div class="details__content" markdown="1">
 
-1. Установите [minikube](https://github.com/kubernetes/minikube#installation) по [инструкции](https://minikube.sigs.k8s.io/docs/start/) (достаточно выполнить только первый пункт этих инструкций под названием _Installation_).
+1. Установите [minikube](https://github.com/kubernetes/minikube#installation) [по инструкции](https://minikube.sigs.k8s.io/docs/start/) (достаточно выполнить только первый пункт этих инструкций под названием _Installation_).
 
 
 2. Запустите minikube:
@@ -275,7 +275,7 @@ description: Разверните ваше первое приложение с 
    ```
    {% endraw %}
 
-   **ВАЖНО.** С параметром `--insecure-registry` мы подготавливаем такое окружение, которое сможет работать с Container Registry без TLS. В нашем случае для упрощения настройка TLS отсутствует.
+   > **ВАЖНО.** С параметром `--insecure-registry` мы подготавливаем такое окружение, которое сможет работать с container registry без TLS. В нашем случае для упрощения настройка TLS отсутствует.
 
 3. Если вы не устанавливали отдельно утилиту `kubectl`, можно создать alias на `kubectl`, поставляемую с munikube:
 
@@ -292,7 +292,7 @@ description: Разверните ваше первое приложение с 
    ```
    {% endraw %}
 
-5. Установка Container Registry для хранения образов:
+5. Установка container registry для хранения образов:
 
    {% raw %}
    ```shell
@@ -300,7 +300,7 @@ description: Разверните ваше первое приложение с 
    ```
    {% endraw %}
 
-   Создадим Ingress для доступа к Container Registry:
+   Создадим Ingress для доступа к container registry:
 
    {% raw %}
    ```shell
@@ -328,8 +328,8 @@ description: Разверните ваше первое приложение с 
    EOF
    ```
    {% endraw %}
-   
-6. Разрешаем доступ в Container Registry без TLS для Docker:
+
+6. Разрешаем доступ в container registry без TLS для Docker:
 
 
    В файл, по умолчанию находящийся в `/etc/docker/daemon.json`, добавим новый ключ:
@@ -339,7 +339,7 @@ description: Разверните ваше первое приложение с 
    "insecure-registries": ["registry.example.com:80"]
    }
    ```
-  
+
    Если такого файла в каталоге нет, его нужно создать и вставить в него указанные выше строки. Обратите внимание, что для доступа к изменению файлов в каталоге `/etc` нужны права суперпользователя (root).
 
    Перезапустим Docker:
@@ -356,26 +356,26 @@ description: Разверните ваше первое приложение с 
    ```
    {% endraw %}
 
-7. Разрешаем доступ в Container Registry без TLS для werf:
+7. Разрешаем доступ в container registry без TLS для werf:
 
    В терминале, где будет запускаться werf, установим переменную окружения `WERF_INSECURE_REGISTRY=1`.
 
-   Для bash:
+   Для Bash:
 
    ```shell
    export WERF_INSECURE_REGISTRY=1
    ```
 
-   Чтобы опция автоматически устанавливалась в новых bash-сессиях, добавим её в `.bashrc`:
+   Чтобы опция автоматически устанавливалась в новых Bash-сессиях, добавим её в `.bashrc`:
 
    ```shell
    echo export WERF_INSECURE_REGISTRY=1 | tee -a ~/.bashrc
    ```
 
-8. Мы будем использовать домены `vote.quickstart-application.example.com` и `result.quickstart-application.example.com` для доступа к приложению и домен `registry.example.com` для доступа к Container Registry.
+8. Мы будем использовать домены `vote.quickstart-application.example.com` и `result.quickstart-application.example.com` для доступа к приложению и домен `registry.example.com` для доступа к container registry.
 
    Обновим файл hosts. Убедитесь, что minikube запущен и работает:
-   
+
    ```shell
    echo "$(minikube ip)"
    ```
@@ -408,7 +408,7 @@ description: Разверните ваше первое приложение с 
    ```
    {% endraw %}
 
-2. Запустите команду converge, которая использует Container Registry для хранения образов:
+2. Запустите команду `converge`, которая использует container registry для хранения образов:
 
    {% raw %}
    ```shell
@@ -422,7 +422,7 @@ _Примечание: для подключения к кластеру Kuberne
 
 После успешного завершения команды `converge` можно считать, что наше приложение развернуто и работает.
 
-Как вы помните, наше приложение представляет собой простую голосовалку. Давайте его проверим!
+Как вы помните, приложение представляет собой простую голосовалку. Давайте его проверим!
 
 1. Чтобы принять участие в голосовании, перейдите по ссылке: [vote.quickstart-application.example.com](http://vote.quickstart-application.example.com)
 
@@ -430,7 +430,7 @@ _Примечание: для подключения к кластеру Kuberne
 
 ## Принципы работы
 
-Чтобы развернуть приложение с помощью `werf`, необходимо описать желаемое состояние в Git (как описано в [Как это работает](/how_it_works.html)).
+Чтобы развернуть приложение с помощью `werf`, необходимо описать желаемое состояние в Git (как описано [в «Как это работает»](/how_it_works.html)).
 
 1. В нашем репозитории имеются следующие Dockerfile'ы:
 
@@ -471,5 +471,5 @@ _Примечание: для подключения к кластеру Kuberne
    - Фронтенд-приложение на Python или ASP.NET Core позволяет пользователю проголосовать за один из двух вариантов;
    - Очередь на базе Redis или NATS получает новые голоса;
    - Worker на основе .NET Core, Java или .NET Core 2.1 собирает голоса и сохраняет их в...
-   - Базу данных Postgres или TiDB в томе Docker;
+   - Базу данных PostgreSQL или TiDB в томе Docker;
    - Веб-приложение на Node.js или ASP.NET Core SignalR в реальном времени показывает результаты голосования.

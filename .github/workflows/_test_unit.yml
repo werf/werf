@@ -3,6 +3,12 @@ name: xxxxx(internal)
 on:
   workflow_call:
     inputs:
+      packages:
+        description: Comma-separated package paths to test
+        type: string
+      excludePackages:
+        description: Comma-separated package paths to exclude from testing
+        type: string
       coverage:
         default: false
         type: string
@@ -56,10 +62,10 @@ jobs:
       - name: Test
         run: |
           if ${{ inputs.coverage }}; then
-            task -p test:unit -- --coverprofile="$(openssl rand -hex 6)-coverage.out" --keep-going
+            task -p test:unit paths="$(echo ${{ inputs.packages }} | tr , ' ')" -- --coverprofile="$(openssl rand -hex 6)-coverage.out" --keep-going --skip-package '${{ inputs.excludePackages }}'
             mv *-coverage.out "$WERF_TEST_COVERAGE_DIR/"
           else
-            task -p test:unit -- --keep-going
+            task -p test:unit paths="$(echo ${{ inputs.packages }} | tr , ' ')" -- --keep-going --skip-package '${{ inputs.excludePackages }}'
           fi
           echo loadavg: $(cat /proc/loadavg)
 

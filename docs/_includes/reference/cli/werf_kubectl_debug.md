@@ -67,6 +67,8 @@ werf kubectl debug (POD | TYPE[[.VERSION].GROUP]/NAME) [ -- COMMAND [args...] ] 
       --image-pull-policy=''
             The image pull policy for the container. If left empty, this value will not be          
             specified by the client and defaulted by the server.
+      --profile='legacy'
+            Debugging profile.
   -q, --quiet=false
             If true, suppress informational messages.
       --replace=false
@@ -109,6 +111,8 @@ werf kubectl debug (POD | TYPE[[.VERSION].GROUP]/NAME) [ -- COMMAND [args...] ] 
             The name of the kubeconfig cluster to use
       --context=''
             The name of the kubeconfig context to use (default $WERF_KUBE_CONTEXT)
+      --disable-compression=false
+            If true, opt-out of response compression for all requests to the server
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --insecure-skip-tls-verify=false
@@ -126,8 +130,6 @@ werf kubectl debug (POD | TYPE[[.VERSION].GROUP]/NAME) [ -- COMMAND [args...] ] 
             If present, the namespace scope for this CLI request
       --password=''
             Password for basic authentication to the API server
-      --profile='none'
-            Name of profile to capture. One of (none|cpu|heap|goroutine|threadcreate|block|mutex)
       --profile-output='profile.pprof'
             Name of the file to write the profile to
       --request-timeout='0'

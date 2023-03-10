@@ -16,6 +16,13 @@ The loading order follows these rules:
 werf kubectl config SUBCOMMAND
 ```
 
+{{ header }} Options
+
+```shell
+      --kubeconfig=''
+            use a particular kubeconfig file
+```
+
 {{ header }} Options inherited from parent commands
 
 ```shell
@@ -39,6 +46,8 @@ werf kubectl config SUBCOMMAND
             The name of the kubeconfig cluster to use
       --context=''
             The name of the kubeconfig context to use (default $WERF_KUBE_CONTEXT)
+      --disable-compression=false
+            If true, opt-out of response compression for all requests to the server
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --insecure-skip-tls-verify=false
@@ -47,9 +56,6 @@ werf kubectl config SUBCOMMAND
       --kube-config-base64=''
             Kubernetes config data as base64 string (default $WERF_KUBE_CONFIG_BASE64 or            
             $WERF_KUBECONFIG_BASE64 or $KUBECONFIG_BASE64)
-      --kubeconfig=''
-            Path to the kubeconfig file to use for CLI requests (default $WERF_KUBE_CONFIG, or      
-            $WERF_KUBECONFIG, or $KUBECONFIG). Ignored if kubeconfig passed as base64.
       --match-server-version=false
             Require server version to match client version
   -n, --namespace=''

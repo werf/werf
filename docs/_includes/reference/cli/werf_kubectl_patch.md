@@ -30,6 +30,9 @@ werf kubectl patch (-f FILENAME | TYPE NAME) [-p PATCH|--patch-file FILE] [optio
   
   # Update a container's image using a JSON patch with positional arrays
   kubectl patch pod valid-pod --type='json' -p='[{"op": "replace", "path": "/spec/containers/0/image", "value":"new image"}]'
+  
+  # Update a deployment's replicas through the scale subresource using a merge patch.
+  kubectl patch deployment nginx-deployment --subresource='scale' --type='merge' -p '{"spec":{"replicas":2}}'
 ```
 
 {{ header }} Options
@@ -51,8 +54,8 @@ werf kubectl patch (-f FILENAME | TYPE NAME) [-p PATCH|--patch-file FILE] [optio
       --local=false
             If true, patch will operate on the content of the file, not the server-side resource.
   -o, --output=''
-            Output format. One of: json|yaml|name|go-template|go-template-file|template|templatefile
-            |jsonpath|jsonpath-as-json|jsonpath-file.
+            Output format. One of: (json, yaml, name, go-template, go-template-file, template,      
+            templatefile, jsonpath, jsonpath-as-json, jsonpath-file).
   -p, --patch=''
             The patch to be applied to the resource JSON file.
       --patch-file=''
@@ -62,6 +65,9 @@ werf kubectl patch (-f FILENAME | TYPE NAME) [-p PATCH|--patch-file FILE] [optio
             manage related manifests organized within the same directory.
       --show-managed-fields=false
             If true, keep the managedFields when printing objects in JSON or YAML format.
+      --subresource=''
+            If specified, patch will operate on the subresource of the requested object. Must be    
+            one of [status scale]. This flag is alpha and may change in the future.
       --template=''
             Template string or path to template file to use when -o=go-template,                    
             -o=go-template-file. The template format is golang templates                            
@@ -93,6 +99,8 @@ werf kubectl patch (-f FILENAME | TYPE NAME) [-p PATCH|--patch-file FILE] [optio
             The name of the kubeconfig cluster to use
       --context=''
             The name of the kubeconfig context to use (default $WERF_KUBE_CONTEXT)
+      --disable-compression=false
+            If true, opt-out of response compression for all requests to the server
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --insecure-skip-tls-verify=false

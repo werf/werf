@@ -70,8 +70,8 @@ werf kubectl annotate [--overwrite] (-f FILENAME | TYPE NAME) KEY_1=VAL_1 ... KE
       --local=false
             If true, annotation will NOT contact api-server but run locally.
   -o, --output=''
-            Output format. One of: json|yaml|name|go-template|go-template-file|template|templatefile
-            |jsonpath|jsonpath-as-json|jsonpath-file.
+            Output format. One of: (json, yaml, name, go-template, go-template-file, template,      
+            templatefile, jsonpath, jsonpath-as-json, jsonpath-file).
       --overwrite=false
             If true, allow annotations to be overwritten, otherwise reject annotation updates that  
             overwrite existing annotations.
@@ -83,7 +83,8 @@ werf kubectl annotate [--overwrite] (-f FILENAME | TYPE NAME) KEY_1=VAL_1 ... KE
             resource-version for the object. Only valid when specifying a single resource.
   -l, --selector=''
             Selector (label query) to filter on, supports `=`, `==`, and `!=`.(e.g. -l              
-            key1=value1,key2=value2).
+            key1=value1,key2=value2). Matching objects must satisfy all of the specified label      
+            constraints.
       --show-managed-fields=false
             If true, keep the managedFields when printing objects in JSON or YAML format.
       --template=''
@@ -115,6 +116,8 @@ werf kubectl annotate [--overwrite] (-f FILENAME | TYPE NAME) KEY_1=VAL_1 ... KE
             The name of the kubeconfig cluster to use
       --context=''
             The name of the kubeconfig context to use (default $WERF_KUBE_CONTEXT)
+      --disable-compression=false
+            If true, opt-out of response compression for all requests to the server
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --insecure-skip-tls-verify=false

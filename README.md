@@ -3,12 +3,14 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/werf/werf/discussions"><img src="https://img.shields.io/badge/GitHub-discussions-brightgreen" alt="GH Discussions"/></a>
-  <a href="https://twitter.com/werf_io"><img src="https://img.shields.io/twitter/follow/werf_io?label=%40werf_io&style=flat-square" alt="Twitter"></a>
-  <a href="https://t.me/werf_io"><img src="https://img.shields.io/badge/telegram-chat-179cde.svg?logo=telegram" alt="Telegram chat"></a><br>
+  <a href="https://github.com/werf/werf/discussions"><img src="https://img.shields.io/static/v1?label=GitHub&message=discussions&color=brightgreen&logo=github" alt="GH Discussions"/></a>
+  <a href="https://twitter.com/werf_io"><img src="https://img.shields.io/static/v1?label=Twitter&message=page&color=blue&logo=twitter" alt="Twitter"/></a>
+  <a href="https://t.me/werf_io"><img src="https://img.shields.io/static/v1?label=Telegram&message=chat&logo=telegram" alt="Telegram chat"></a><br>
   <a href="https://godoc.org/github.com/werf/werf"><img src="https://godoc.org/github.com/werf/werf?status.svg" alt="GoDoc"></a>
   <a href="https://codeclimate.com/github/werf/werf/test_coverage"><img src="https://api.codeclimate.com/v1/badges/bac6f23d5c366c6324b5/test_coverage" /></a>
   <a href="CODE_OF_CONDUCT.md"><img src="https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg" alt="Contributor Covenant"></a>
+  <a href="https://bestpractices.coreinfrastructure.org/projects/2503"><img src="https://bestpractices.coreinfrastructure.org/projects/2503/badge"></a>
+  <a href="https://artifacthub.io/packages/search?repo=werf"><img src="https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/werf" alt="Artifact Hub"></a>
 </p>
 
 werf is a CNCF Sandbox CLI tool to implement full-cycle CI/CD to Kubernetes easily. werf integrates into your CI system and leverages familiar and reliable technologies, such as Git, Dockerfile, Helm, and Buildah.

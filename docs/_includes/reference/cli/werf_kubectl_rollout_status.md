@@ -32,6 +32,10 @@ werf kubectl rollout status (TYPE NAME | TYPE/NAME) [flags] [options]
             manage related manifests organized within the same directory.
       --revision=0
             Pin to a specific revision for showing its status. Defaults to 0 (last revision).
+  -l, --selector=''
+            Selector (label query) to filter on, supports `=`, `==`, and `!=`.(e.g. -l              
+            key1=value1,key2=value2). Matching objects must satisfy all of the specified label      
+            constraints.
       --timeout=0s
             The length of time to wait before ending watch, zero means never. Any other values      
             should contain a corresponding time unit (e.g. 1s, 2m, 3h).
@@ -62,6 +66,8 @@ werf kubectl rollout status (TYPE NAME | TYPE/NAME) [flags] [options]
             The name of the kubeconfig cluster to use
       --context=''
             The name of the kubeconfig context to use (default $WERF_KUBE_CONTEXT)
+      --disable-compression=false
+            If true, opt-out of response compression for all requests to the server
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --insecure-skip-tls-verify=false

@@ -19,7 +19,7 @@ werf kubectl config view [flags] [options]
   # Show merged kubeconfig settings
   kubectl config view
   
-  # Show merged kubeconfig settings and raw certificate data
+  # Show merged kubeconfig settings and raw certificate data and exposed secrets
   kubectl config view --raw
   
   # Get the password for the e2e user
@@ -40,10 +40,10 @@ werf kubectl config view [flags] [options]
       --minify=false
             Remove all information not used by current-context from the output
   -o, --output='yaml'
-            Output format. One of: json|yaml|name|go-template|go-template-file|template|templatefile
-            |jsonpath|jsonpath-as-json|jsonpath-file.
+            Output format. One of: (json, yaml, name, go-template, go-template-file, template,      
+            templatefile, jsonpath, jsonpath-as-json, jsonpath-file).
       --raw=false
-            Display raw byte data
+            Display raw byte data and sensitive data
       --show-managed-fields=false
             If true, keep the managedFields when printing objects in JSON or YAML format.
       --template=''
@@ -75,6 +75,8 @@ werf kubectl config view [flags] [options]
             The name of the kubeconfig cluster to use
       --context=''
             The name of the kubeconfig context to use (default $WERF_KUBE_CONTEXT)
+      --disable-compression=false
+            If true, opt-out of response compression for all requests to the server
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --insecure-skip-tls-verify=false

@@ -26,26 +26,6 @@ werf helm migrate2to3 [options]
       --insecure-helm-dependencies=false
             Allow insecure oci registries to be used in the .helm/Chart.yaml dependencies           
             configuration (default $WERF_INSECURE_HELM_DEPENDENCIES)
-      --release=''
-            Existing helm 2 release name which should be migrated to helm 3 (default                
-            $WERF_RELEASE). Option also sets target name for a new helm 3 release, use              
-            --target-release option (or $WERF_TARGET_RELEASE) to specify a different helm 3 release 
-            name.
-      --target-namespace=''
-            Target kubernetes namespace for a new helm 3 release (default $WERF_NAMESPACE)
-      --target-release=''
-            Target helm 3 release name (optional, default $WERF_TARGET_RELEASE, or the value of     
-            --release option, or $WERF_RELEASE)
-      --tmp-dir=''
-            Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
-```
-
-{{ header }} Options inherited from parent commands
-
-```shell
-      --hooks-status-progress-period=5
-            Hooks status progress period in seconds. Set 0 to stop showing hooks status progress.   
-            Defaults to $WERF_HOOKS_STATUS_PROGRESS_PERIOD_SECONDS or status progress period value
       --kube-config=''
             Kubernetes config file path (default $WERF_KUBE_CONFIG, or $WERF_KUBECONFIG, or         
             $KUBECONFIG)
@@ -73,6 +53,26 @@ werf helm migrate2to3 [options]
             * interactive terminal width or 140
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
+      --release=''
+            Existing helm 2 release name which should be migrated to helm 3 (default                
+            $WERF_RELEASE). Option also sets target name for a new helm 3 release, use              
+            --target-release option (or $WERF_TARGET_RELEASE) to specify a different helm 3 release 
+            name.
+      --target-namespace=''
+            Target kubernetes namespace for a new helm 3 release (default $WERF_NAMESPACE)
+      --target-release=''
+            Target helm 3 release name (optional, default $WERF_TARGET_RELEASE, or the value of     
+            --release option, or $WERF_RELEASE)
+      --tmp-dir=''
+            Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
+```
+
+{{ header }} Options inherited from parent commands
+
+```shell
+      --hooks-status-progress-period=5
+            Hooks status progress period in seconds. Set 0 to stop showing hooks status progress.   
+            Defaults to $WERF_HOOKS_STATUS_PROGRESS_PERIOD_SECONDS or status progress period value
   -n, --namespace=''
             namespace scope for this request
       --status-progress-period=5

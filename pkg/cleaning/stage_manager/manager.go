@@ -26,9 +26,10 @@ func NewManager() Manager {
 }
 
 type stage struct {
-	stageID     string
-	description *image.StageDescription
-	isProtected bool
+	stageID          string
+	description      *image.StageDescription
+	isProtected      bool
+	protectionReason string
 }
 
 func newStage(stageID string, description *image.StageDescription) *stage {
@@ -184,12 +185,14 @@ func (m *Manager) GetFinalStageIDList() []string {
 	return result
 }
 
-func (m *Manager) MarkStageAsProtected(stageID string) {
+func (m *Manager) MarkStageAsProtected(stageID, reason string) {
 	m.stages[stageID].isProtected = true
+	m.stages[stageID].protectionReason = reason
 }
 
-func (m *Manager) MarkFinalStageAsProtected(stageID string) {
+func (m *Manager) MarkFinalStageAsProtected(stageID, reason string) {
 	m.finalStages[stageID].isProtected = true
+	m.finalStages[stageID].protectionReason = reason
 }
 
 // GetImageStageIDCommitListToCleanup method returns existing stage IDs and related existing commits (for each managed image)
@@ -328,15 +331,17 @@ func (m *Manager) GetFinalStageDescriptionList(opts StageDescriptionListOptions)
 	return getStageDescriptionList(m.finalStages, opts)
 }
 
-func (m *Manager) GetProtectedStageDescriptionList() []*image.StageDescription {
-	var result []*image.StageDescription
+func (m *Manager) GetProtectedStageDescriptionListByReason() map[string][]*image.StageDescription {
+	res := make(map[string][]*image.StageDescription)
+
 	for _, stage := range m.stages {
-		if stage.isProtected {
-			result = append(result, stage.description)
+		if !stage.isProtected {
+			continue
 		}
+		res[stage.protectionReason] = append(res[stage.protectionReason], stage.description)
 	}
 
-	return result
+	return res
 }
 
 func (m *Manager) IsStageExist(stageID string) bool {

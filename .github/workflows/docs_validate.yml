@@ -8,7 +8,9 @@ on:
       - "cmd/werf/**"
       - "docs/**"
       - "scripts/**"
+      - "integration/suites/docs/**"
       - "README.md"
+      - "go.mod"
   repository_dispatch:
     types: ["docs:validate"]
   workflow_dispatch:
@@ -17,37 +19,24 @@ defaults:
   run:
     shell: bash
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
 env:
   DEBIAN_FRONTEND: "noninteractive"
   GOPATH: ${{ github.workspace }}/go
 
 jobs:
-  check_cli_and_readme_partials:
-    runs-on: ubuntu-22.04
-    timeout-minutes: 60
-    steps:
-      - name: Install werf build dependencies
-        run: sudo apt-get install -y libbtrfs-dev
+  doc_unit:
+    uses: ./.github/workflows/_test_unit.yml
+    with:
+      packages: cmd/werf/docs
 
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          cache: true
-          go-version-file: go.mod
-
-      - name: Install Task
-        uses: arduino/setup-task@v1
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Set up git config
-        uses: ./.github/actions/set-up-git-config
-
-      - name: Test
-        run: task -p test:go-test paths="./integration/suites/docs"
+  doc_integration:
+    uses: ./.github/workflows/_test_integration_regular.yml
+    with:
+      packages: integration/suites/docs
 
   check_broken_links:
     runs-on: ubuntu-22.04
@@ -70,7 +59,7 @@ jobs:
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Login to GitHub Container Registry
+      - name: Login to GitHub container registry
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
@@ -87,7 +76,8 @@ jobs:
       (github.event_name == 'pull_request' && github.event.pull_request.draft == false && failure()) ||
       (github.event_name != 'pull_request' && failure())
     needs:
-      - check_cli_and_readme_partials
+      - doc_unit
+      - doc_integration
       - check_broken_links
     uses: ./.github/workflows/_notification.yml
     secrets:

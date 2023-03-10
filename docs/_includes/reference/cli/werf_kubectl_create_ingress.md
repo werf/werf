@@ -70,8 +70,8 @@ werf kubectl create ingress NAME --rule=host/path=service:port[,tls[=secret]]  [
       --field-manager='kubectl-create'
             Name of the manager used to track field ownership.
   -o, --output=''
-            Output format. One of: json|yaml|name|go-template|go-template-file|template|templatefile
-            |jsonpath|jsonpath-as-json|jsonpath-file.
+            Output format. One of: (json, yaml, name, go-template, go-template-file, template,      
+            templatefile, jsonpath, jsonpath-as-json, jsonpath-file).
       --rule=[]
             Rule in format host/path=service:port[,tls=secretname]. Paths containing the leading    
             character `*` are considered pathType=Prefix. tls argument is optional.
@@ -85,8 +85,16 @@ werf kubectl create ingress NAME --rule=host/path=service:port[,tls[=secret]]  [
             Template string or path to template file to use when -o=go-template,                    
             -o=go-template-file. The template format is golang templates                            
             [http://golang.org/pkg/text/template/#pkg-overview].
-      --validate=true
-            If true, use a schema to validate the input before sending it
+      --validate='strict'
+            Must be one of: strict (or true), warn, ignore (or false).
+            		"true" or "strict" will use a schema to validate the input and fail the request if    
+            invalid. It will perform server side validation if ServerSideFieldValidation is enabled 
+            on the api-server, but will fall back to less reliable client-side validation if not.
+            		"warn" will warn about unknown or duplicate fields without blocking the request if    
+            server-side field validation is enabled on the API server, and behave as "ignore"       
+            otherwise.
+            		"false" or "ignore" will not perform any schema validation, silently dropping any     
+            unknown or duplicate fields.
 ```
 
 {{ header }} Options inherited from parent commands
@@ -112,6 +120,8 @@ werf kubectl create ingress NAME --rule=host/path=service:port[,tls[=secret]]  [
             The name of the kubeconfig cluster to use
       --context=''
             The name of the kubeconfig context to use (default $WERF_KUBE_CONTEXT)
+      --disable-compression=false
+            If true, opt-out of response compression for all requests to the server
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --insecure-skip-tls-verify=false

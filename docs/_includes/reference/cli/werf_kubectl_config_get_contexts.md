@@ -28,7 +28,7 @@ werf kubectl config get-contexts [(-o|--output=)name)] [options]
             When using the default or custom-column output format, don`t print headers (default     
             print headers).
   -o, --output=''
-            Output format. One of: name
+            Output format. One of: (name).
 ```
 
 {{ header }} Options inherited from parent commands
@@ -54,6 +54,8 @@ werf kubectl config get-contexts [(-o|--output=)name)] [options]
             The name of the kubeconfig cluster to use
       --context=''
             The name of the kubeconfig context to use (default $WERF_KUBE_CONTEXT)
+      --disable-compression=false
+            If true, opt-out of response compression for all requests to the server
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --insecure-skip-tls-verify=false

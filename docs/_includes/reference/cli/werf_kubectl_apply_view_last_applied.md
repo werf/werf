@@ -34,13 +34,14 @@ werf kubectl apply view-last-applied (TYPE [NAME | -l label] | TYPE/NAME | -f FI
   -k, --kustomize=''
             Process the kustomization directory. This flag can`t be used together with -f or -R.
   -o, --output='yaml'
-            Output format. Must be one of yaml|json
+            Output format. Must be one of (yaml, json)
   -R, --recursive=false
             Process the directory used in -f, --filename recursively. Useful when you want to       
             manage related manifests organized within the same directory.
   -l, --selector=''
             Selector (label query) to filter on, supports `=`, `==`, and `!=`.(e.g. -l              
-            key1=value1,key2=value2)
+            key1=value1,key2=value2). Matching objects must satisfy all of the specified label      
+            constraints.
 ```
 
 {{ header }} Options inherited from parent commands
@@ -66,6 +67,8 @@ werf kubectl apply view-last-applied (TYPE [NAME | -l label] | TYPE/NAME | -f FI
             The name of the kubeconfig cluster to use
       --context=''
             The name of the kubeconfig context to use (default $WERF_KUBE_CONTEXT)
+      --disable-compression=false
+            If true, opt-out of response compression for all requests to the server
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --insecure-skip-tls-verify=false

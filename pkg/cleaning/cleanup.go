@@ -122,19 +122,19 @@ func (m *cleanupManager) run(ctx context.Context) error {
 			return fmt.Errorf("no kubernetes configs found to skip images being used in the Kubernetes, pass --without-kube option (or WERF_WITHOUT_KUBE env var) to suppress this error")
 		}
 
-		deployedDockerImagesNames, err := m.deployedDockerImagesNames(ctx)
+		deployedDockerImages, err := m.deployedDockerImages(ctx)
 		if err != nil {
 			return fmt.Errorf("error getting deployed docker images names from Kubernetes: %w", err)
 		}
 
 		if err := logboek.Context(ctx).LogProcess("Skipping repo tags that are being used in Kubernetes").DoError(func() error {
-			return m.skipStageIDsThatAreUsedInKubernetes(ctx, deployedDockerImagesNames)
+			return m.skipStageIDsThatAreUsedInKubernetes(ctx, deployedDockerImages)
 		}); err != nil {
 			return err
 		}
 
 		if err := logboek.Context(ctx).LogProcess("Skipping final repo tags that are being used in Kubernetes").DoError(func() error {
-			return m.skipFinalStageIDsThatAreUsedInKubernetes(ctx, deployedDockerImagesNames)
+			return m.skipFinalStageIDsThatAreUsedInKubernetes(ctx, deployedDockerImages)
 		}); err != nil {
 			return err
 		}
@@ -165,16 +165,24 @@ func (m *cleanupManager) run(ctx context.Context) error {
 	return nil
 }
 
-func (m *cleanupManager) skipStageIDsThatAreUsedInKubernetes(ctx context.Context, deployedDockerImagesNames []string) error {
+func (m *cleanupManager) skipStageIDsThatAreUsedInKubernetes(ctx context.Context, deployedDockerImages []*DeployedDockerImage) error {
 	handledDeployedStages := map[string]bool{}
 	handleTagFunc := func(tag, stageID string, f func()) {
 		dockerImageName := fmt.Sprintf("%s:%s", m.StorageManager.GetStagesStorage().Address(), tag)
-		for _, deployedDockerImageName := range deployedDockerImagesNames {
-			if deployedDockerImageName == dockerImageName {
+		for _, deployedDockerImage := range deployedDockerImages {
+			if deployedDockerImage.Name == dockerImageName {
 				if !handledDeployedStages[stageID] {
 					f()
 
-					logboek.Context(ctx).Default().LogFDetails("  tag: %s\n", tag)
+					logboek.Context(ctx).Default().LogFDetails("tag: %s\n", tag)
+					logboek.Context(ctx).Default().LogBlock("used by resources").Do(func() {
+						for _, cr := range deployedDockerImage.ContextResources {
+							for _, r := range cr.ResourcesNames {
+								logboek.Context(ctx).Default().LogF("ctx/%s %s\n", cr.ContextName, r)
+							}
+						}
+					})
+
 					logboek.Context(ctx).LogOptionalLn()
 					handledDeployedStages[stageID] = true
 				}
@@ -186,7 +194,7 @@ func (m *cleanupManager) skipStageIDsThatAreUsedInKubernetes(ctx context.Context
 
 	for _, stageID := range m.stageManager.GetStageIDList() {
 		handleTagFunc(stageID, stageID, func() {
-			m.stageManager.MarkStageAsProtected(stageID)
+			m.stageManager.MarkStageAsProtected(stageID, "used in the Kubernetes")
 		})
 	}
 
@@ -195,7 +203,7 @@ func (m *cleanupManager) skipStageIDsThatAreUsedInKubernetes(ctx context.Context
 			handleTagFunc(customTag, stageID, func() {
 				if m.stageManager.IsStageExist(stageID) {
 					// keep existent stage and associated custom tags
-					m.stageManager.MarkStageAsProtected(stageID)
+					m.stageManager.MarkStageAsProtected(stageID, "used in the Kubernetes")
 				} else {
 					// keep custom tags that do not have associated existent stage
 					m.stageManager.ForgetCustomTagsByStageID(stageID)
@@ -207,16 +215,16 @@ func (m *cleanupManager) skipStageIDsThatAreUsedInKubernetes(ctx context.Context
 	return nil
 }
 
-func (m *cleanupManager) skipFinalStageIDsThatAreUsedInKubernetes(ctx context.Context, deployedDockerImagesNames []string) error {
+func (m *cleanupManager) skipFinalStageIDsThatAreUsedInKubernetes(ctx context.Context, deployedDockerImages []*DeployedDockerImage) error {
 	handledDeployedFinalStages := map[string]bool{}
 Loop:
 	for _, stageID := range m.stageManager.GetFinalStageIDList() {
 		dockerImageName := fmt.Sprintf("%s:%s", m.StorageManager.GetFinalStagesStorage().Address(), stageID)
 
-		for _, deployedDockerImageName := range deployedDockerImagesNames {
-			if deployedDockerImageName == dockerImageName {
+		for _, deployedDockerImage := range deployedDockerImages {
+			if deployedDockerImage.Name == dockerImageName {
 				if !handledDeployedFinalStages[stageID] {
-					m.stageManager.MarkFinalStageAsProtected(stageID)
+					m.stageManager.MarkFinalStageAsProtected(stageID, "used in the Kubernetes")
 
 					logboek.Context(ctx).Default().LogFDetails("  tag: %s\n", stageID)
 					logboek.Context(ctx).LogOptionalLn()
@@ -231,17 +239,68 @@ Loop:
 	return nil
 }
 
-func (m *cleanupManager) deployedDockerImagesNames(ctx context.Context) ([]string, error) {
-	var deployedDockerImagesNames []string
+type DeployedDockerImage struct {
+	Name             string
+	ContextResources []*ContextResources
+}
+
+type ContextResources struct {
+	ContextName    string
+	ResourcesNames []string
+}
+
+func AppendContextDeployedDockerImages(list []*DeployedDockerImage, contextName string, images []*allow_list.DeployedImage) (res []*DeployedDockerImage) {
+	for _, desc := range list {
+		res = append(res, &DeployedDockerImage{
+			Name:             desc.Name,
+			ContextResources: desc.ContextResources,
+		})
+	}
+
+AppendNewImages:
+	for _, i := range images {
+		for _, desc := range res {
+			if desc.Name == i.Name {
+				for _, contextResources := range desc.ContextResources {
+					if contextResources.ContextName == contextName {
+						contextResources.ResourcesNames = append(contextResources.ResourcesNames, i.ResourcesNames...)
+						continue AppendNewImages
+					}
+				}
+
+				desc.ContextResources = append(desc.ContextResources, &ContextResources{
+					ContextName:    contextName,
+					ResourcesNames: i.ResourcesNames,
+				})
+				continue AppendNewImages
+			}
+		}
+
+		res = append(res, &DeployedDockerImage{
+			Name: i.Name,
+			ContextResources: []*ContextResources{
+				{
+					ContextName:    contextName,
+					ResourcesNames: i.ResourcesNames,
+				},
+			},
+		})
+	}
+
+	return
+}
+
+func (m *cleanupManager) deployedDockerImages(ctx context.Context) ([]*DeployedDockerImage, error) {
+	var deployedDockerImages []*DeployedDockerImage
 	for _, contextClient := range m.KubernetesContextClients {
 		if err := logboek.Context(ctx).LogProcessInline("Getting deployed docker images (context %s)", contextClient.ContextName).
 			DoError(func() error {
-				kubernetesClientDeployedDockerImagesNames, err := allow_list.DeployedDockerImages(ctx, contextClient.Client, m.KubernetesNamespaceRestrictionByContext[contextClient.ContextName])
+				contextDeployedImages, err := allow_list.DeployedDockerImages(ctx, contextClient.Client, m.KubernetesNamespaceRestrictionByContext[contextClient.ContextName])
 				if err != nil {
 					return fmt.Errorf("cannot get deployed imagesStageList: %w", err)
 				}
 
-				deployedDockerImagesNames = append(deployedDockerImagesNames, kubernetesClientDeployedDockerImagesNames...)
+				deployedDockerImages = AppendContextDeployedDockerImages(deployedDockerImages, contextClient.ContextName, contextDeployedImages)
 
 				return nil
 			}); err != nil {
@@ -249,7 +308,7 @@ func (m *cleanupManager) deployedDockerImagesNames(ctx context.Context) ([]strin
 		}
 	}
 
-	return deployedDockerImagesNames, nil
+	return deployedDockerImages, nil
 }
 
 func (m *cleanupManager) gitHistoryBasedCleanup(ctx context.Context) error {
@@ -395,7 +454,7 @@ func (m *cleanupManager) prepareStageIDTableRows(ctx context.Context, stageIDCus
 func (m *cleanupManager) handleSavedStageIDs(ctx context.Context, savedStageIDs []string) {
 	logboek.Context(ctx).Default().LogBlock("Saved tags").Do(func() {
 		for _, stageID := range savedStageIDs {
-			m.stageManager.MarkStageAsProtected(stageID)
+			m.stageManager.MarkStageAsProtected(stageID, "found in the git history")
 			logboek.Context(ctx).Default().LogFDetails("  tag: %s\n", stageID)
 			logboek.Context(ctx).LogOptionalLn()
 		}
@@ -610,17 +669,36 @@ func (m *cleanupManager) cleanupUnusedStages(ctx context.Context) error {
 	// skip stages and their relatives covered by Kubernetes- or git history-based cleanup policies
 	stageDescriptionListToDelete := stageDescriptionList
 	{
-		var excludedSDList []*image.StageDescription
-		for _, sd := range m.stageManager.GetProtectedStageDescriptionList() {
-			var excludedSDListBySD []*image.StageDescription
-			stageDescriptionListToDelete, excludedSDListBySD = m.excludeStageAndRelativesByImageID(stageDescriptionListToDelete, sd.Info.ID)
-			excludedSDList = append(excludedSDList, excludedSDListBySD...)
+		excludedSDListByReason := make(map[string][]*image.StageDescription)
+
+		for reason, sdList := range m.stageManager.GetProtectedStageDescriptionListByReason() {
+			for _, sd := range sdList {
+				var excludedSDListBySD []*image.StageDescription
+				stageDescriptionListToDelete, excludedSDListBySD = m.excludeStageAndRelativesByImageID(stageDescriptionListToDelete, sd.Info.ID)
+
+				for _, exclSD := range excludedSDListBySD {
+					if sd.Info.Name == exclSD.Info.Name {
+						excludedSDListByReason[reason] = append(excludedSDListByReason[reason], exclSD)
+					} else {
+						ancestorReason := fmt.Sprintf("ancestors of images %s", reason)
+						excludedSDListByReason[ancestorReason] = append(excludedSDListByReason[ancestorReason], exclSD)
+					}
+				}
+			}
 		}
 
-		logboek.Context(ctx).Default().LogBlock("Saved stages (%d/%d)", len(excludedSDList), len(stageDescriptionList)).Do(func() {
-			for _, excludedSD := range excludedSDList {
-				logboek.Context(ctx).Default().LogFDetails("  tag: %s\n", excludedSD.Info.Tag)
-				logboek.Context(ctx).Default().LogOptionalLn()
+		excludedCount := 0
+		for _, list := range excludedSDListByReason {
+			excludedCount += len(list)
+		}
+
+		logboek.Context(ctx).Default().LogBlock("Saved stages (%d/%d)", excludedCount, len(stageDescriptionList)).Do(func() {
+			for reason, list := range excludedSDListByReason {
+				logboek.Context(ctx).Default().LogProcess("%s (%d)", reason, len(list)).Do(func() {
+					for _, excludedSD := range list {
+						logboek.Context(ctx).Default().LogFDetails("%s\n", excludedSD.Info.Tag)
+					}
+				})
 			}
 		})
 	}

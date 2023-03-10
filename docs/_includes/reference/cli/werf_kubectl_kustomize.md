@@ -33,8 +33,6 @@ werf kubectl kustomize DIR [flags] [options]
             enable kustomize plugins
       --enable-helm=false
             Enable use of the Helm chart inflator generator.
-      --enable-managedby-label=false
-            enable adding app.kubernetes.io/managed-by
   -e, --env=[]
             a list of environment variables to be used by functions
       --helm-command='helm'
@@ -78,6 +76,8 @@ werf kubectl kustomize DIR [flags] [options]
             The name of the kubeconfig cluster to use
       --context=''
             The name of the kubeconfig context to use (default $WERF_KUBE_CONTEXT)
+      --disable-compression=false
+            If true, opt-out of response compression for all requests to the server
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --insecure-skip-tls-verify=false

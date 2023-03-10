@@ -41,7 +41,7 @@ jobs:
     uses: ./.github/workflows/_test_integration_regular.yml
     with:
       packages: integration/suites
-      excludePackages: integration/suites/deploy,integration/suites/cleanup_after_converge,integration/suites/helm/deploy_rollback,integration/suites/bundles,integration/suites/ansible,integration/suites/build/stapel_image/git
+      excludePackages: integration/suites/deploy,integration/suites/cleanup_after_converge,integration/suites/helm/deploy_rollback,integration/suites/bundles,integration/suites/ansible,integration/suites/build/stapel_image/git,integration/suites/docs
       fetchDepth: 0 # Git history as fixtures for tests.
     secrets: inherit
 
@@ -81,6 +81,7 @@ jobs:
     uses: ./.github/workflows/_test_e2e_per-k8s-version.yml
     with:
       scope: complex
+      timeout: 120
     secrets: inherit
 
   notify:
