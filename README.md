@@ -10,6 +10,7 @@
   <a href="https://codeclimate.com/github/werf/werf/test_coverage"><img src="https://api.codeclimate.com/v1/badges/bac6f23d5c366c6324b5/test_coverage" /></a>
   <a href="CODE_OF_CONDUCT.md"><img src="https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg" alt="Contributor Covenant"></a>
   <a href="https://bestpractices.coreinfrastructure.org/projects/2503"><img src="https://bestpractices.coreinfrastructure.org/projects/2503/badge"></a>
+  <a href="https://artifacthub.io/packages/search?repo=werf"><img src="https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/werf" alt="Artifact Hub"></a>
 </p>
 
 werf is a CNCF Sandbox CLI tool to implement full-cycle CI/CD to Kubernetes easily. werf integrates into your CI system and leverages familiar and reliable technologies, such as Git, Dockerfile, Helm, and Buildah.
