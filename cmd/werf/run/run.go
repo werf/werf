@@ -152,7 +152,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupVirtualMerge(&commonCmdData, cmd)
 
-	commonCmdData.SetupPlatform(cmd)
+	common.SetupPlatform(&commonCmdData, cmd)
 
 	cmd.Flags().BoolVarP(&cmdData.Shell, "shell", "", false, "Use predefined docker options and command for debug")
 	cmd.Flags().BoolVarP(&cmdData.Bash, "bash", "", false, "Use predefined docker options and command for debug")
@@ -382,12 +382,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 
 	imagesToProcess := build.NewImagesToProcess([]string{imageName}, false)
 
-	conveyorOptions, err := common.GetConveyorOptions(&commonCmdData, imagesToProcess)
-	if err != nil {
-		return err
-	}
-
-	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, giterminismManager.ProjectDir(), projectTmpDir, ssh_agent.SSHAuthSock, containerBackend, storageManager, storageLockManager, conveyorOptions)
+	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, giterminismManager.ProjectDir(), projectTmpDir, ssh_agent.SSHAuthSock, containerBackend, storageManager, storageLockManager, common.GetConveyorOptions(&commonCmdData, imagesToProcess))
 	defer conveyorWithRetry.Terminate()
 
 	var dockerImageName string

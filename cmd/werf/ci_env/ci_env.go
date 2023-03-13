@@ -18,7 +18,6 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/level"
 	"github.com/werf/werf/cmd/werf/common"
-	"github.com/werf/werf/pkg/container_backend/thirdparty/platformutil"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/docker_registry"
 	"github.com/werf/werf/pkg/git_repo"
@@ -73,7 +72,7 @@ Currently supported only GitLab (gitlab) and GitHub (github) CI systems`,
 	common.SetupHomeDir(&commonCmdData, cmd, common.SetupHomeDirOptions{})
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command will copy specified or default (~/.docker) config to the temporary directory and may perform additional login with new config.")
 
-	commonCmdData.SetupPlatform(cmd)
+	common.SetupPlatform(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 
@@ -118,17 +117,7 @@ func runCIEnv(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	var platform string
-	if len(commonCmdData.GetPlatform()) > 0 {
-		platforms, err := platformutil.NormalizeUserParams(commonCmdData.GetPlatform())
-		if err != nil {
-			return fmt.Errorf("unable to normalize platforms params %v: %w", commonCmdData.GetPlatform(), err)
-		}
-		platform = platforms[0]
-	}
-	// FIXME(multiarch): do not initialize platform in backend here
-	// FIXME(multiarch): why docker initialization here? what if buildah backend enabled?
-	if err := docker.Init(ctx, dockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug, platform); err != nil {
+	if err := docker.Init(ctx, dockerConfig, *commonCmdData.LogVerbose, *commonCmdData.LogDebug, *commonCmdData.Platform); err != nil {
 		return fmt.Errorf("docker init failed in dir %q: %w", dockerConfig, err)
 	}
 

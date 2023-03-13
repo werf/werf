@@ -85,7 +85,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupVirtualMerge(&commonCmdData, cmd)
 
-	commonCmdData.SetupPlatform(cmd)
+	common.SetupPlatform(&commonCmdData, cmd)
 
 	return cmd
 }
@@ -194,12 +194,7 @@ func run(ctx context.Context, imageName string) error {
 
 	imagesToProcess := build.NewImagesToProcess([]string{imageName}, false)
 
-	conveyorOptions, err := common.GetConveyorOptions(&commonCmdData, imagesToProcess)
-	if err != nil {
-		return err
-	}
-
-	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, giterminismManager.ProjectDir(), projectTmpDir, ssh_agent.SSHAuthSock, containerBackend, storageManager, storageLockManager, conveyorOptions)
+	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, giterminismManager.ProjectDir(), projectTmpDir, ssh_agent.SSHAuthSock, containerBackend, storageManager, storageLockManager, common.GetConveyorOptions(&commonCmdData, imagesToProcess))
 	defer conveyorWithRetry.Terminate()
 
 	if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {

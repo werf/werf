@@ -222,7 +222,7 @@ func newCmd(ctx context.Context, composeCmdName string, options *newCmdOptions) 
 	common.SetupAllowedLocalCacheVolumeUsageMargin(&commonCmdData, cmd)
 	common.SetupDockerServerStoragePath(&commonCmdData, cmd)
 
-	commonCmdData.SetupPlatform(cmd)
+	common.SetupPlatform(&commonCmdData, cmd)
 
 	cmd.Flags().StringVarP(&cmdData.RawComposeOptions, "docker-compose-options", "", os.Getenv("WERF_DOCKER_COMPOSE_OPTIONS"), "Define docker-compose options (default $WERF_DOCKER_COMPOSE_OPTIONS)")
 	cmd.Flags().StringVarP(&cmdData.RawComposeCommandOptions, "docker-compose-command-options", "", os.Getenv("WERF_DOCKER_COMPOSE_COMMAND_OPTIONS"), "Define docker-compose command options (default $WERF_DOCKER_COMPOSE_COMMAND_OPTIONS)")
@@ -399,12 +399,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 
 			logboek.Context(ctx).Info().LogOptionalLn()
 
-			conveyorOptions, err := common.GetConveyorOptions(&commonCmdData, imagesToProcess)
-			if err != nil {
-				return err
-			}
-
-			conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, giterminismManager.ProjectDir(), projectTmpDir, ssh_agent.SSHAuthSock, containerBackend, storageManager, storageLockManager, conveyorOptions)
+			conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, giterminismManager.ProjectDir(), projectTmpDir, ssh_agent.SSHAuthSock, containerBackend, storageManager, storageLockManager, common.GetConveyorOptions(&commonCmdData, imagesToProcess))
 			defer conveyorWithRetry.Terminate()
 
 			if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {

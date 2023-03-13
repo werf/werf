@@ -19,18 +19,6 @@ func (runtime *PerfCheckContainerBackend) HasStapelBuildSupport() bool {
 	return runtime.ContainerBackend.HasStapelBuildSupport()
 }
 
-func (runtime *PerfCheckContainerBackend) IsTargetPlatformSupportedForStapel(targetPlatform string) bool {
-	return runtime.ContainerBackend.IsTargetPlatformSupportedForStapel(targetPlatform)
-}
-
-func (runtime *PerfCheckContainerBackend) IsTargetPlatformSupportedForStagedDockerfile(targetPlatform string) bool {
-	return runtime.ContainerBackend.IsTargetPlatformSupportedForStagedDockerfile(targetPlatform)
-}
-
-func (runtime *PerfCheckContainerBackend) IsTargetPlatformSupportedForDockerfile(targetPlatform string) bool {
-	return runtime.ContainerBackend.IsTargetPlatformSupportedForDockerfile(targetPlatform)
-}
-
 func (runtime *PerfCheckContainerBackend) ShouldCleanupDockerfileImage() bool {
 	return runtime.ContainerBackend.ShouldCleanupDockerfileImage()
 }

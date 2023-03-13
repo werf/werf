@@ -38,7 +38,6 @@ type CommonImageOptions struct {
 	ProjectName        string
 	ContainerWerfDir   string
 	TmpDir             string
-	TargetPlatform     string
 }
 
 type ImageOptions struct {
@@ -66,7 +65,6 @@ func NewImage(ctx context.Context, name string, baseImageType BaseImageType, opt
 		IsDockerfileImage:       opts.IsDockerfileImage,
 		IsDockerfileTargetStage: opts.IsDockerfileTargetStage,
 		DockerfileImageConfig:   opts.DockerfileImageConfig,
-		TargetPlatform:          opts.TargetPlatform,
 
 		baseImageType:             baseImageType,
 		baseImageReference:        opts.BaseImageReference,
@@ -91,7 +89,6 @@ type Image struct {
 	IsDockerfileTargetStage bool
 	Name                    string
 	DockerfileImageConfig   *config.ImageFromDockerfile
-	TargetPlatform          string
 
 	stages            []stage.Interface
 	lastNonEmptyStage stage.Interface
@@ -113,7 +110,7 @@ func (i *Image) LogName() string {
 }
 
 func (i *Image) LogDetailedName() string {
-	return logging.ImageLogProcessName(i.Name, i.IsArtifact, i.TargetPlatform)
+	return logging.ImageLogProcessName(i.Name, i.IsArtifact)
 }
 
 func (i *Image) LogProcessStyle() color.Style {

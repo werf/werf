@@ -47,63 +47,51 @@ func (tree *ImagesTree) Calculate(ctx context.Context) error {
 		return fmt.Errorf("unable to group werf config images by independent sets: %w", err)
 	}
 
-	targetPlatforms, err := tree.Conveyor.GetTargetPlatforms()
-	if err != nil {
-		return fmt.Errorf("invalid target platforms: %w", err)
-	}
-	if len(targetPlatforms) == 0 {
-		targetPlatforms = []string{""}
-	}
-
 	builder := NewImagesSetsBuilder()
 
 	for _, iteration := range imageConfigSets {
 		for _, imageConfigI := range iteration {
-			for _, targetPlatform := range targetPlatforms {
-				var imageLogName string
-				var style color.Style
+			var imageLogName string
+			var style color.Style
 
-				switch imageConfig := imageConfigI.(type) {
-				case config.StapelImageInterface:
-					imageLogName = logging.ImageLogProcessName(imageConfig.ImageBaseConfig().Name, imageConfig.IsArtifact(), targetPlatform)
-					style = ImageLogProcessStyle(imageConfig.IsArtifact())
-				case *config.ImageFromDockerfile:
-					imageLogName = logging.ImageLogProcessName(imageConfig.Name, false, targetPlatform)
-					style = ImageLogProcessStyle(false)
-				}
+			switch imageConfig := imageConfigI.(type) {
+			case config.StapelImageInterface:
+				imageLogName = logging.ImageLogProcessName(imageConfig.ImageBaseConfig().Name, imageConfig.IsArtifact())
+				style = ImageLogProcessStyle(imageConfig.IsArtifact())
+			case *config.ImageFromDockerfile:
+				imageLogName = logging.ImageLogProcessName(imageConfig.Name, false)
+				style = ImageLogProcessStyle(false)
+			}
 
-				err := logboek.Context(ctx).Info().LogProcess(imageLogName).
-					Options(func(options types.LogProcessOptionsInterface) {
-						options.Style(style)
-					}).
-					DoError(func() error {
-						var err error
-						var newImagesSets ImagesSets
+			err := logboek.Context(ctx).Info().LogProcess(imageLogName).
+				Options(func(options types.LogProcessOptionsInterface) {
+					options.Style(style)
+				}).
+				DoError(func() error {
+					var err error
 
-						commonOpts := tree.CommonImageOptions
-						commonOpts.TargetPlatform = targetPlatform
+					var newImagesSets ImagesSets
 
-						switch imageConfig := imageConfigI.(type) {
-						case config.StapelImageInterface:
-							newImagesSets, err = MapStapelConfigToImagesSets(ctx, tree.werfConfig.Meta, imageConfig, commonOpts)
-							if err != nil {
-								return fmt.Errorf("unable to map stapel config to images sets: %w", err)
-							}
-
-						case *config.ImageFromDockerfile:
-							newImagesSets, err = MapDockerfileConfigToImagesSets(ctx, imageConfig, commonOpts)
-							if err != nil {
-								return fmt.Errorf("unable to map dockerfile to images sets: %w", err)
-							}
+					switch imageConfig := imageConfigI.(type) {
+					case config.StapelImageInterface:
+						newImagesSets, err = MapStapelConfigToImagesSets(ctx, tree.werfConfig.Meta, imageConfig, tree.CommonImageOptions)
+						if err != nil {
+							return fmt.Errorf("unable to map stapel config to images sets: %w", err)
 						}
 
-						builder.MergeImagesSets(newImagesSets)
+					case *config.ImageFromDockerfile:
+						newImagesSets, err = MapDockerfileConfigToImagesSets(ctx, imageConfig, tree.CommonImageOptions)
+						if err != nil {
+							return fmt.Errorf("unable to map dockerfile to images sets: %w", err)
+						}
+					}
 
-						return nil
-					})
-				if err != nil {
-					return err
-				}
+					builder.MergeImagesSets(newImagesSets)
+
+					return nil
+				})
+			if err != nil {
+				return err
 			}
 		}
 
