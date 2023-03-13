@@ -91,7 +91,7 @@ werf ci-env CI_SYSTEM [options]
             default $WERF_LOOSE_GITERMINISM)
   -o, --output-file-path=''
             Write to custom file (default $WERF_OUTPUT_FILE_PATH).
-      --platform=''
+      --platform=[]
             Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT]     
             ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)
       --shell=''
