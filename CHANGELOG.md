@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.209](https://www.github.com/werf/werf/compare/v1.2.208...v1.2.209) (2023-03-13)
+
+
+### Bug Fixes
+
+* **multiarch:** fix werf converge, kube-run, run and other commands when platform param specified ([3e2add1](https://www.github.com/werf/werf/commit/3e2add1b35f57194a8a51083fdc2a8d042f0462e))
+
 ### [1.2.208](https://www.github.com/werf/werf/compare/v1.2.207...v1.2.208) (2023-03-13)
 
 
