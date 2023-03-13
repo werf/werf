@@ -1,5 +1,19 @@
 # Changelog
 
+### [1.2.208](https://www.github.com/werf/werf/compare/v1.2.207...v1.2.208) (2023-03-13)
+
+
+### Features
+
+* **export:** add --add-label option ([46afee2](https://www.github.com/werf/werf/commit/46afee2256ab8d188b0a2dff4fe42511343f550d))
+* **multiarch:** introduced ability to specify multiple platforms ([f0efcb7](https://www.github.com/werf/werf/commit/f0efcb73517f42e7374682eec9028b76db3f8b34))
+
+
+### Bug Fixes
+
+* docs/Gemfile & docs/Gemfile.lock to reduce vulnerabilities ([aca4bd1](https://www.github.com/werf/werf/commit/aca4bd1ee1fdeb8b54a2c083205507346ab4a3ec))
+* playground/Dockerfile.ghost to reduce vulnerabilities ([8d4cca9](https://www.github.com/werf/werf/commit/8d4cca999d582fbb33ac6393f26d98527fdde1d5))
+
 ### [1.2.207](https://www.github.com/werf/werf/compare/v1.2.206...v1.2.207) (2023-03-09)
 
 
