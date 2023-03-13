@@ -5,6 +5,12 @@ script_dir="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 cd $script_dir
 
 export WERF_REPO=ghcr.io/werf/werf-storage
+
+# Extra labels for artifacthub
+export WERF_EXPORT_ADD_LABEL_1=io.artifacthub.package.readme-url=https://raw.githubusercontent.com/werf/werf/main/README.md \
+       WERF_EXPORT_ADD_LABEL_2=org.opencontainers.image.created=$(date -u +"%Y-%m-%dT%H:%M:%SZ") \
+       WERF_EXPORT_ADD_LABEL_3=org.opencontainers.image.description="Official image to run werf in containers"
+
 werf build
 
 for dest_repo in "ghcr.io/werf" "registry-write.werf.io/werf"; do
