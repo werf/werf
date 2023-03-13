@@ -51,4 +51,15 @@ werf export \
     --tag example.org/mycompany/myproject/myapp:%image_content_based_tag%
 ```
 
-> Опубликованные командой `werf export` образы *никогда* не будут удаляться командой `werf cleanup`, в отличие от образов, опубликованных обычным способом. Очистка экспортированных образов может быть реализована сторонними средствами.
+## Добавление произвольных лейблов
+
+Используя параметр `--add-label` можно добавить произвольное количество дополнительных тегов к экспортируемому образу(ам), например:
+
+```shell
+werf export \
+    --repo example.org/mycompany/myproject \
+    --tag registry.werf.io/werf/werf:latest \
+    --add-label io.artifacthub.package.readme-url=https://raw.githubusercontent.com/werf/werf/main/README.md \
+    --add-label org.opencontainers.image.created=2023-03-13T11:55:24Z \
+    --add-label org.opencontainers.image.description="Official image to run werf in containers"
+```
