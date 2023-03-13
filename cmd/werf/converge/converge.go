@@ -359,7 +359,10 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 				}
 			}
 
-			imagesInfoGetters = c.GetImageInfoGetters(image.InfoGetterOptions{CustomTagFunc: useCustomTagFunc})
+			imagesInfoGetters, err = c.GetImageInfoGetters(image.InfoGetterOptions{CustomTagFunc: useCustomTagFunc})
+			if err != nil {
+				return err
+			}
 
 			return nil
 		}); err != nil {

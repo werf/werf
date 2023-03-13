@@ -86,7 +86,7 @@ func (s *DependenciesStage) GetDependencies(ctx context.Context, c Conveyor, cb 
 	}
 
 	for _, dep := range s.dependencies {
-		args = append(args, "Dependency", c.GetImageNameForLastImageStage(dep.ImageName))
+		args = append(args, "Dependency", c.GetImageNameForLastImageStage(s.targetPlatform, dep.ImageName))
 		for _, imp := range dep.Imports {
 			args = append(args, "DependencyImport", getDependencyImportID(imp))
 		}
@@ -98,7 +98,7 @@ func (s *DependenciesStage) GetDependencies(ctx context.Context, c Conveyor, cb 
 func (s *DependenciesStage) prepareImageWithLegacyStapelBuilder(ctx context.Context, c Conveyor, cr container_backend.ContainerBackend, _, stageImage *StageImage) error {
 	for _, elm := range s.imports {
 		sourceImageName := getSourceImageName(elm)
-		srv, err := c.GetImportServer(ctx, sourceImageName, elm.Stage)
+		srv, err := c.GetImportServer(ctx, s.targetPlatform, sourceImageName, elm.Stage)
 		if err != nil {
 			return fmt.Errorf("unable to get import server for image %q: %w", sourceImageName, err)
 		}
@@ -110,7 +110,7 @@ func (s *DependenciesStage) prepareImageWithLegacyStapelBuilder(ctx context.Cont
 
 		labelKey := imagePkg.WerfImportChecksumLabelPrefix + getImportID(elm)
 
-		importSourceID := getImportSourceID(c, elm)
+		importSourceID := getImportSourceID(c, s.targetPlatform, elm)
 		importMetadata, err := c.GetImportMetadata(ctx, s.projectName, importSourceID)
 		if err != nil {
 			return fmt.Errorf("unable to get import source checksum: %w", err)
@@ -125,9 +125,9 @@ func (s *DependenciesStage) prepareImageWithLegacyStapelBuilder(ctx context.Cont
 	for _, dep := range s.dependencies {
 		depImageServiceOptions := stageImage.Builder.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions()
 
-		depImageName := c.GetImageNameForLastImageStage(dep.ImageName)
-		depImageID := c.GetImageIDForLastImageStage(dep.ImageName)
-		depImageDigest := c.GetImageDigestForLastImageStage(dep.ImageName)
+		depImageName := c.GetImageNameForLastImageStage(s.targetPlatform, dep.ImageName)
+		depImageID := c.GetImageIDForLastImageStage(s.targetPlatform, dep.ImageName)
+		depImageDigest := c.GetImageDigestForLastImageStage(s.targetPlatform, dep.ImageName)
 		depImageRepo, depImageTag := imagePkg.ParseRepositoryAndTag(depImageName)
 
 		for _, img := range dep.Imports {
@@ -164,14 +164,14 @@ func (s *DependenciesStage) prepareImage(ctx context.Context, c Conveyor, cr con
 		sourceImageConfigName := getSourceImageName(elm)
 		var sourceImageName string
 		if elm.Stage == "" {
-			sourceImageName = c.GetImageNameForLastImageStage(sourceImageConfigName)
+			sourceImageName = c.GetImageNameForLastImageStage(s.targetPlatform, sourceImageConfigName)
 		} else {
-			sourceImageName = c.GetImageNameForImageStage(sourceImageConfigName, elm.Stage)
+			sourceImageName = c.GetImageNameForImageStage(s.targetPlatform, sourceImageConfigName, elm.Stage)
 		}
 
 		labelKey := imagePkg.WerfImportChecksumLabelPrefix + getImportID(elm)
 
-		importSourceID := getImportSourceID(c, elm)
+		importSourceID := getImportSourceID(c, s.targetPlatform, elm)
 		importMetadata, err := c.GetImportMetadata(ctx, s.projectName, importSourceID)
 		if err != nil {
 			return fmt.Errorf("unable to get import source checksum: %w", err)
@@ -185,9 +185,9 @@ func (s *DependenciesStage) prepareImage(ctx context.Context, c Conveyor, cr con
 	}
 
 	for _, dep := range s.dependencies {
-		depImageName := c.GetImageNameForLastImageStage(dep.ImageName)
-		depImageID := c.GetImageIDForLastImageStage(dep.ImageName)
-		depImageDigest := c.GetImageDigestForLastImageStage(dep.ImageName)
+		depImageName := c.GetImageNameForLastImageStage(s.targetPlatform, dep.ImageName)
+		depImageID := c.GetImageIDForLastImageStage(s.targetPlatform, dep.ImageName)
+		depImageDigest := c.GetImageDigestForLastImageStage(s.targetPlatform, dep.ImageName)
 		depImageRepo, depImageTag := imagePkg.ParseRepositoryAndTag(depImageName)
 
 		for _, img := range dep.Imports {
@@ -228,7 +228,7 @@ func (s *DependenciesStage) PrepareImage(ctx context.Context, c Conveyor, cb con
 }
 
 func (s *DependenciesStage) getImportSourceChecksum(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, importElm *config.Import) (string, error) {
-	importSourceID := getImportSourceID(c, importElm)
+	importSourceID := getImportSourceID(c, s.targetPlatform, importElm)
 	importMetadata, err := c.GetImportMetadata(ctx, s.projectName, importSourceID)
 	if err != nil {
 		return "", fmt.Errorf("unable to get import metadata: %w", err)
@@ -240,7 +240,7 @@ func (s *DependenciesStage) getImportSourceChecksum(ctx context.Context, c Conve
 			return "", fmt.Errorf("unable to generate import source checksum: %w", err)
 		}
 
-		sourceImageID := getSourceImageID(c, importElm)
+		sourceImageID := getSourceImageID(c, s.targetPlatform, importElm)
 		importMetadata = &storage.ImportMetadata{
 			ImportSourceID: importSourceID,
 			SourceImageID:  sourceImageID,
@@ -256,14 +256,14 @@ func (s *DependenciesStage) getImportSourceChecksum(ctx context.Context, c Conve
 }
 
 func (s *DependenciesStage) generateImportChecksum(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, importElm *config.Import) (string, error) {
-	if err := fetchSourceImageDockerImage(ctx, c, importElm); err != nil {
+	if err := fetchSourceImageDockerImage(ctx, c, s.targetPlatform, importElm); err != nil {
 		return "", fmt.Errorf("unable to fetch source image: %w", err)
 	}
 
-	sourceImageDockerImageName := getSourceImageDockerImageName(c, importElm)
+	sourceImageDockerImageName := getSourceImageDockerImageName(c, s.targetPlatform, importElm)
 
 	if c.UseLegacyStapelBuilder(cb) {
-		importSourceID := getImportSourceID(c, importElm)
+		importSourceID := getImportSourceID(c, s.targetPlatform, importElm)
 
 		stapelContainerName, err := stapel.GetOrCreateContainer(ctx)
 		if err != nil {
@@ -415,58 +415,58 @@ func getImportID(importElm *config.Import) string {
 	)
 }
 
-func getImportSourceID(c Conveyor, importElm *config.Import) string {
+func getImportSourceID(c Conveyor, targetPlatform string, importElm *config.Import) string {
 	return util.Sha256Hash(
-		"SourceImageContentDigest", getSourceImageContentDigest(c, importElm),
+		"SourceImageContentDigest", getSourceImageContentDigest(c, targetPlatform, importElm),
 		"Add", importElm.Add,
 		"IncludePaths", strings.Join(importElm.IncludePaths, "///"),
 		"ExcludePaths", strings.Join(importElm.ExcludePaths, "///"),
 	)
 }
 
-func fetchSourceImageDockerImage(ctx context.Context, c Conveyor, importElm *config.Import) error {
+func fetchSourceImageDockerImage(ctx context.Context, c Conveyor, targetPlatform string, importElm *config.Import) error {
 	sourceImageName := getSourceImageName(importElm)
 	if importElm.Stage == "" {
-		return c.FetchLastNonEmptyImageStage(ctx, sourceImageName)
+		return c.FetchLastNonEmptyImageStage(ctx, targetPlatform, sourceImageName)
 	} else {
-		return c.FetchImageStage(ctx, sourceImageName, importElm.Stage)
+		return c.FetchImageStage(ctx, targetPlatform, sourceImageName, importElm.Stage)
 	}
 }
 
-func getSourceImageDockerImageName(c Conveyor, importElm *config.Import) string {
+func getSourceImageDockerImageName(c Conveyor, targetPlatform string, importElm *config.Import) string {
 	sourceImageName := getSourceImageName(importElm)
 
 	var sourceImageDockerImageName string
 	if importElm.Stage == "" {
-		sourceImageDockerImageName = c.GetImageNameForLastImageStage(sourceImageName)
+		sourceImageDockerImageName = c.GetImageNameForLastImageStage(targetPlatform, sourceImageName)
 	} else {
-		sourceImageDockerImageName = c.GetImageNameForImageStage(sourceImageName, importElm.Stage)
+		sourceImageDockerImageName = c.GetImageNameForImageStage(sourceImageName, targetPlatform, importElm.Stage)
 	}
 
 	return sourceImageDockerImageName
 }
 
-func getSourceImageID(c Conveyor, importElm *config.Import) string {
+func getSourceImageID(c Conveyor, targetPlatform string, importElm *config.Import) string {
 	sourceImageName := getSourceImageName(importElm)
 
 	var sourceImageID string
 	if importElm.Stage == "" {
-		sourceImageID = c.GetImageIDForLastImageStage(sourceImageName)
+		sourceImageID = c.GetImageIDForLastImageStage(targetPlatform, sourceImageName)
 	} else {
-		sourceImageID = c.GetImageIDForImageStage(sourceImageName, importElm.Stage)
+		sourceImageID = c.GetImageIDForImageStage(sourceImageName, targetPlatform, importElm.Stage)
 	}
 
 	return sourceImageID
 }
 
-func getSourceImageContentDigest(c Conveyor, importElm *config.Import) string {
+func getSourceImageContentDigest(c Conveyor, targetPlatform string, importElm *config.Import) string {
 	sourceImageName := getSourceImageName(importElm)
 
 	var sourceImageContentDigest string
 	if importElm.Stage == "" {
-		sourceImageContentDigest = c.GetImageContentDigest(sourceImageName)
+		sourceImageContentDigest = c.GetImageContentDigest(targetPlatform, sourceImageName)
 	} else {
-		sourceImageContentDigest = c.GetImageStageContentDigest(sourceImageName, importElm.Stage)
+		sourceImageContentDigest = c.GetImageStageContentDigest(sourceImageName, targetPlatform, importElm.Stage)
 	}
 
 	return sourceImageContentDigest

@@ -418,8 +418,8 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 					}
 				}
 
-				for _, imageName := range c.GetExportedImagesNames() {
-					if err := c.FetchLastImageStage(ctx, imageName); err != nil {
+				for _, img := range c.GetExportedImages() {
+					if err := c.FetchLastImageStage(ctx, img.TargetPlatform, img.Name); err != nil {
 						return err
 					}
 				}

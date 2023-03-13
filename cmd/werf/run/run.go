@@ -402,11 +402,11 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 			}
 		}
 
-		if err := c.FetchLastImageStage(ctx, imageName); err != nil {
+		if err := c.FetchLastImageStage(ctx, "", imageName); err != nil {
 			return err
 		}
 
-		dockerImageName = c.GetImageNameForLastImageStage(imageName)
+		dockerImageName = c.GetImageNameForLastImageStage("", imageName)
 		return nil
 	}); err != nil {
 		return err

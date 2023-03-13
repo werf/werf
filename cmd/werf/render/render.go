@@ -348,7 +348,10 @@ func runRender(ctx context.Context, imagesToProcess build.ImagesToProcess) error
 					}
 				}
 
-				imagesInfoGetters = c.GetImageInfoGetters(image.InfoGetterOptions{CustomTagFunc: useCustomTagFunc})
+				imagesInfoGetters, err = c.GetImageInfoGetters(image.InfoGetterOptions{CustomTagFunc: useCustomTagFunc})
+				if err != nil {
+					return err
+				}
 
 				return nil
 			}); err != nil {

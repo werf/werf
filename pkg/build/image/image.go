@@ -223,13 +223,13 @@ func isUnsupportedMediaTypeError(err error) bool {
 func (i *Image) SetupBaseImage(ctx context.Context, storageManager manager.StorageManagerInterface, storageOpts manager.StorageOptions) error {
 	switch i.baseImageType {
 	case StageAsBaseImage:
-		i.stageAsBaseImage = i.Conveyor.GetImage(i.baseImageName).GetLastNonEmptyStage()
+		i.stageAsBaseImage = i.Conveyor.GetImage(i.TargetPlatform, i.baseImageName).GetLastNonEmptyStage()
 		i.baseImageReference = i.stageAsBaseImage.GetStageImage().Image.Name()
 		i.baseStageImage = i.stageAsBaseImage.GetStageImage()
 
 	case ImageFromRegistryAsBaseImage:
 		if i.IsDockerfileImage && i.dockerfileExpanderFactory != nil {
-			dependenciesArgs := stage.ResolveDependenciesArgs(i.DockerfileImageConfig.Dependencies, i.Conveyor)
+			dependenciesArgs := stage.ResolveDependenciesArgs(i.TargetPlatform, i.DockerfileImageConfig.Dependencies, i.Conveyor)
 			ref, err := i.dockerfileExpanderFactory.GetExpander(dockerfile.ExpandOptions{SkipUnsetEnv: false}).ProcessWordWithMap(i.baseImageReference, dependenciesArgs)
 			if err != nil {
 				return fmt.Errorf("unable to expand dockerfile base image reference %q: %w", i.baseImageReference, err)

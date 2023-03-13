@@ -10,7 +10,7 @@ import (
 type Conveyor interface {
 	stage.Conveyor
 
-	GetImage(name string) *Image
+	GetImage(targetPlatform, name string) *Image
 	GetOrCreateStageImage(name string, prevStageImage *stage.StageImage, stg stage.Interface, img *Image) *stage.StageImage
 	GetTargetPlatforms() ([]string, error)
 

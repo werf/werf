@@ -66,6 +66,7 @@ func initStages(ctx context.Context, image *Image, metaConfig *config.Meta, stap
 	imageArtifact := stapelImageConfig.IsArtifact()
 
 	baseStageOptions := &stage.BaseStageOptions{
+		TargetPlatform:   image.TargetPlatform,
 		ImageName:        imageName,
 		ConfigMounts:     imageBaseConfig.Mount,
 		ImageTmpDir:      filepath.Join(opts.TmpDir, "image", imageBaseConfig.Name),
