@@ -72,7 +72,7 @@ jobs:
 
       - name: Build and publish werf images
         run: |
-          . $(trdl use werf 1.2 stable)
+          . $(trdl use werf 1.2 alpha)
           ./scripts/werf-in-image/build-and-publish.sh
 
   notify:
