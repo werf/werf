@@ -6,5 +6,4 @@ type Meta struct {
 	Deploy        MetaDeploy
 	Cleanup       MetaCleanup
 	GitWorktree   MetaGitWorktree
-	Build         MetaBuild
 }

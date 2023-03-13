@@ -57,7 +57,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupSynchronization(&commonCmdData, cmd)
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupGiterminismOptions(&commonCmdData, cmd)
-	commonCmdData.SetupPlatform(cmd)
+	common.SetupPlatform(&commonCmdData, cmd)
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 

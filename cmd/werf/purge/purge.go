@@ -85,7 +85,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupDryRun(&commonCmdData, cmd)
 
-	commonCmdData.SetupPlatform(cmd)
+	common.SetupPlatform(&commonCmdData, cmd)
 
 	return cmd
 }

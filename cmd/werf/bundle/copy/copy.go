@@ -65,7 +65,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
-	commonCmdData.SetupPlatform(cmd)
+	common.SetupPlatform(&commonCmdData, cmd)
 
 	commonCmdData.SetupHelmCompatibleChart(cmd, true)
 	commonCmdData.SetupRenameChart(cmd)
