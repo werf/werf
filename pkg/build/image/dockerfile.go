@@ -137,6 +137,7 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 			stageLogName := fmt.Sprintf("%s%d", strings.ToUpper(instr.GetInstructionData().Name()), ind+1)
 			isFirstStage := (len(img.stages) == 0)
 			baseStageOptions := &stage.BaseStageOptions{
+				TargetPlatform:   img.TargetPlatform,
 				ImageName:        img.Name,
 				LogName:          stageLogName,
 				ImageTmpDir:      img.TmpDir,
@@ -257,8 +258,9 @@ func mapLegacyDockerfileToImage(ctx context.Context, dockerfileImageConfig *conf
 	)
 
 	baseStageOptions := &stage.BaseStageOptions{
-		ImageName:   dockerfileImageConfig.Name,
-		ProjectName: opts.ProjectName,
+		TargetPlatform: opts.TargetPlatform,
+		ImageName:      dockerfileImageConfig.Name,
+		ProjectName:    opts.ProjectName,
 	}
 
 	dockerfileStage := stage.GenerateFullDockerfileStage(

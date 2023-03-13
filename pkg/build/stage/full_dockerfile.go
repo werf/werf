@@ -295,7 +295,7 @@ type dockerfileInstructionInterface interface {
 }
 
 func (s *FullDockerfileStage) FetchDependencies(ctx context.Context, c Conveyor, containerBackend container_backend.ContainerBackend, dockerRegistry docker_registry.ApiInterface) error {
-	resolvedDependenciesArgsHash := ResolveDependenciesArgs(s.dependencies, c)
+	resolvedDependenciesArgsHash := ResolveDependenciesArgs(s.targetPlatform, s.dependencies, c)
 
 	resolvedDockerMetaArgsHash, err := s.resolveDockerMetaArgs(resolvedDependenciesArgsHash)
 	if err != nil {
@@ -387,7 +387,7 @@ func isUnsupportedMediaTypeError(err error) bool {
 var errImageNotExistLocally = errors.New("IMAGE_NOT_EXIST_LOCALLY")
 
 func (s *FullDockerfileStage) GetDependencies(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
-	resolvedDependenciesArgsHash := ResolveDependenciesArgs(s.dependencies, c)
+	resolvedDependenciesArgsHash := ResolveDependenciesArgs(s.targetPlatform, s.dependencies, c)
 
 	resolvedDockerMetaArgsHash, err := s.resolveDockerMetaArgs(resolvedDependenciesArgsHash)
 	if err != nil {
@@ -707,7 +707,7 @@ func (s *FullDockerfileStage) SetupDockerImageBuilder(b stage_builder.Dockerfile
 		}
 	}
 
-	resolvedDependenciesArgsHash := ResolveDependenciesArgs(s.dependencies, c)
+	resolvedDependenciesArgsHash := ResolveDependenciesArgs(s.targetPlatform, s.dependencies, c)
 	if len(resolvedDependenciesArgsHash) > 0 {
 		for key, value := range resolvedDependenciesArgsHash {
 			b.AppendBuildArgs(fmt.Sprintf("%s=%v", key, value))

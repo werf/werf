@@ -92,7 +92,7 @@ func (stg *Base[T, BT]) GetExpandedEnv(c stage.Conveyor) map[string]string {
 	for k, v := range stg.expandedEnv {
 		env[k] = v
 	}
-	for k, v := range stage.ResolveDependenciesArgs(stg.dependencies, c) {
+	for k, v := range stage.ResolveDependenciesArgs(stg.TargetPlatform(), stg.dependencies, c) {
 		env[k] = v
 	}
 	return env

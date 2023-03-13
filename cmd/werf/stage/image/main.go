@@ -207,7 +207,8 @@ func run(ctx context.Context, imageName string) error {
 			return err
 		}
 
-		fmt.Println(c.GetImageNameForLastImageStage(imageName))
+		// FIXME(multiarch): specify multiarch manifest here
+		fmt.Println(c.GetImageNameForLastImageStage("", imageName))
 
 		return nil
 	}); err != nil {

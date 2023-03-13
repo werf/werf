@@ -75,6 +75,7 @@ var AllStages = []StageName{
 
 type BaseStageOptions struct {
 	LogName          string
+	TargetPlatform   string
 	ImageName        string
 	ConfigMounts     []*config.Mount
 	ImageTmpDir      string
@@ -86,6 +87,7 @@ func NewBaseStage(name StageName, options *BaseStageOptions) *BaseStage {
 	s := &BaseStage{}
 	s.name = name
 	s.logName = options.LogName
+	s.targetPlatform = options.TargetPlatform
 	s.imageName = options.ImageName
 	s.configMounts = options.ConfigMounts
 	s.imageTmpDir = options.ImageTmpDir
@@ -97,6 +99,7 @@ func NewBaseStage(name StageName, options *BaseStageOptions) *BaseStage {
 type BaseStage struct {
 	name             StageName
 	logName          string
+	targetPlatform   string
 	imageName        string
 	digest           string
 	contentDigest    string
@@ -123,6 +126,10 @@ func (s *BaseStage) LogDetailedName() string {
 	}
 
 	return fmt.Sprintf("%s/%s", imageName, s.LogName())
+}
+
+func (s *BaseStage) TargetPlatform() string {
+	return s.targetPlatform
 }
 
 func (s *BaseStage) ImageName() string {

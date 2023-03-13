@@ -14,19 +14,19 @@ type Conveyor interface {
 	PutImportMetadata(ctx context.Context, projectName string, metadata *storage.ImportMetadata) error
 	RmImportMetadata(ctx context.Context, projectName, id string) error
 
-	GetImageStageContentDigest(imageName, stageName string) string
-	GetImageContentDigest(imageName string) string
+	GetImageStageContentDigest(targetPlatform, imageName, stageName string) string
+	GetImageContentDigest(targetPlatform, imageName string) string
 
-	FetchImageStage(ctx context.Context, imageName, stageName string) error
-	FetchLastNonEmptyImageStage(ctx context.Context, imageName string) error
-	GetImageNameForLastImageStage(imageName string) string
-	GetImageIDForLastImageStage(imageName string) string
-	GetImageDigestForLastImageStage(imageName string) string
+	FetchImageStage(ctx context.Context, targetPlatform, imageName, stageName string) error
+	FetchLastNonEmptyImageStage(ctx context.Context, targetPlatform, imageName string) error
+	GetImageNameForLastImageStage(targetPlatform, imageName string) string
+	GetImageIDForLastImageStage(targetPlatform, imageName string) string
+	GetImageDigestForLastImageStage(targetPlatform, imageName string) string
 
-	GetImageNameForImageStage(imageName, stageName string) string
-	GetImageIDForImageStage(imageName, stageName string) string
+	GetImageNameForImageStage(targetPlatform, imageName, stageName string) string
+	GetImageIDForImageStage(targetPlatform, imageName, stageName string) string
 
-	GetImportServer(ctx context.Context, imageName, stageName string) (import_server.ImportServer, error)
+	GetImportServer(ctx context.Context, targetPlatform, imageName, stageName string) (import_server.ImportServer, error)
 	GetLocalGitRepoVirtualMergeOptions() VirtualMergeOptions
 
 	GiterminismManager() giterminism_manager.Interface

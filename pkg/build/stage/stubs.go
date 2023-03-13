@@ -84,15 +84,15 @@ func (c *ConveyorStub) UseLegacyStapelBuilder(cr container_backend.ContainerBack
 	return true
 }
 
-func (c *ConveyorStub) GetImageNameForLastImageStage(imageName string) string {
+func (c *ConveyorStub) GetImageNameForLastImageStage(targetPlatform, imageName string) string {
 	return c.lastStageImageNameByImageName[imageName]
 }
 
-func (c *ConveyorStub) GetImageIDForLastImageStage(imageName string) string {
+func (c *ConveyorStub) GetImageIDForLastImageStage(targetPlatform, imageName string) string {
 	return c.lastStageImageIDByImageName[imageName]
 }
 
-func (c *ConveyorStub) GetImageDigestForLastImageStage(imageName string) string {
+func (c *ConveyorStub) GetImageDigestForLastImageStage(targetPlatform, imageName string) string {
 	return c.lastStageImageDigestByImageName[imageName]
 }
 

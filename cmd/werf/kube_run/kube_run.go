@@ -416,11 +416,13 @@ func run(ctx context.Context, pod, secret, namespace string, werfConfig *config.
 			}
 		}
 
-		if err := c.FetchLastImageStage(ctx, imageName); err != nil {
+		// FIXME(multiarch): specify multiarch manifest here
+		if err := c.FetchLastImageStage(ctx, "", imageName); err != nil {
 			return err
 		}
 
-		image = c.GetImageNameForLastImageStage(imageName)
+		// FIXME(multiarch): specify multiarch manifest here
+		image = c.GetImageNameForLastImageStage("", imageName)
 		return nil
 	}); err != nil {
 		return err

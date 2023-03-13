@@ -14,13 +14,13 @@ func GetDependenciesArgsKeys(dependencies []*config.Dependency) (res []string) {
 	return
 }
 
-func ResolveDependenciesArgs(dependencies []*config.Dependency, c Conveyor) map[string]string {
+func ResolveDependenciesArgs(targetPlatform string, dependencies []*config.Dependency, c Conveyor) map[string]string {
 	resolved := make(map[string]string)
 
 	for _, dep := range dependencies {
-		depImageName := c.GetImageNameForLastImageStage(dep.ImageName)
-		depImageID := c.GetImageIDForLastImageStage(dep.ImageName)
-		depImageDigest := c.GetImageDigestForLastImageStage(dep.ImageName)
+		depImageName := c.GetImageNameForLastImageStage(targetPlatform, dep.ImageName)
+		depImageID := c.GetImageIDForLastImageStage(targetPlatform, dep.ImageName)
+		depImageDigest := c.GetImageDigestForLastImageStage(targetPlatform, dep.ImageName)
 		depImageRepo, depImageTag := image.ParseRepositoryAndTag(depImageName)
 
 		for _, imp := range dep.Imports {
