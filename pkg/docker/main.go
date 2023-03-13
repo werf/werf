@@ -36,6 +36,7 @@ func IsEnabled() bool {
 	return defaultCLi != nil
 }
 
+// TODO(multiarch): do not configure platform globally, instead specify platform on each build call
 func Init(ctx context.Context, dockerConfigDir string, verbose, debug bool, platform string) error {
 	if (platform == "" && runtime.GOARCH != "amd64") || (platform != "" && platform != "linux/amd64") {
 		logboek.Context(ctx).Error().LogF("werf currently does not support building of images for any other platform besides linux/amd64.\n")

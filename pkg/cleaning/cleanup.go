@@ -328,7 +328,8 @@ func (m *cleanupManager) gitHistoryBasedCleanup(ctx context.Context) error {
 	for imageName, stageIDCommitList := range m.stageManager.GetImageStageIDCommitListToCleanup() {
 		var reachedStageIDs []string
 		var hitStageIDCommitList map[string][]string
-		if err := logboek.Context(ctx).LogProcess(logging.ImageLogProcessName(imageName, false)).DoError(func() error {
+		// TODO(multiarch): iterate target platforms
+		if err := logboek.Context(ctx).LogProcess(logging.ImageLogProcessName(imageName, false, "")).DoError(func() error {
 			if logboek.Context(ctx).Streams().Width() > 120 {
 				m.printStageIDCommitListTable(ctx, imageName)
 				m.printStageIDCustomTagListTable(ctx)

@@ -113,7 +113,7 @@ type CmdData struct {
 	AllowedLocalCacheVolumeUsage          *uint
 	AllowedLocalCacheVolumeUsageMargin    *uint
 
-	Platform *string
+	Platform *[]string
 }
 
 func (cmdData *CmdData) SetupWithoutImages(cmd *cobra.Command) {
@@ -124,6 +124,27 @@ func (cmdData *CmdData) SetupWithoutImages(cmd *cobra.Command) {
 func (cmdData *CmdData) SetupDisableDefaultValues(cmd *cobra.Command) {
 	cmdData.DisableDefaultValues = new(bool)
 	cmd.Flags().BoolVarP(cmdData.DisableDefaultValues, "disable-default-values", "", util.GetBoolEnvironmentDefaultFalse("WERF_DISABLE_DEFAULT_VALUES"), `Do not use values from the default .helm/values.yaml file (default $WERF_DISABLE_DEFAULT_VALUES or false)`)
+}
+
+func (cmdData *CmdData) SetupPlatform(cmd *cobra.Command) {
+	cmdData.Platform = new([]string)
+
+	var defaultValue []string
+	for _, envName := range []string{
+		"WERF_PLATFORM",
+		"DOCKER_DEFAULT_PLATFORM",
+	} {
+		if v := os.Getenv(envName); v != "" {
+			defaultValue = []string{v}
+			break
+		}
+	}
+
+	cmd.Flags().StringArrayVarP(cmdData.Platform, "platform", "", defaultValue, "Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT] ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)")
+}
+
+func (cmdData *CmdData) GetPlatform() []string {
+	return *cmdData.Platform
 }
 
 func (cmdData *CmdData) SetupDisableDefaultSecretValues(cmd *cobra.Command) {
