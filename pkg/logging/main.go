@@ -19,12 +19,20 @@ func ImageLogName(name string, isArtifact bool) string {
 	return name
 }
 
-func ImageLogProcessName(name string, isArtifact bool) string {
+func ImageLogProcessName(name string, isArtifact bool, targetPlatform string) string {
+	appendPlatformFunc := func(name string) string {
+		if targetPlatform == "" {
+			return name
+		}
+		return fmt.Sprintf("%s [%s]", name, targetPlatform)
+	}
+
 	logName := ImageLogName(name, isArtifact)
+
 	if !isArtifact {
-		return fmt.Sprintf(imageNameFormat, logName)
+		return appendPlatformFunc(fmt.Sprintf(imageNameFormat, logName))
 	} else {
-		return fmt.Sprintf(artifactNameFormat, logName)
+		return appendPlatformFunc(fmt.Sprintf(artifactNameFormat, logName))
 	}
 }
 

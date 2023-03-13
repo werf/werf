@@ -10,6 +10,7 @@ import (
 type rawMeta struct {
 	ConfigVersion *int                `yaml:"configVersion,omitempty"`
 	Project       *string             `yaml:"project,omitempty"`
+	Build         *rawMetaBuild       `yaml:"build,omitempty"`
 	Deploy        *rawMetaDeploy      `yaml:"deploy,omitempty"`
 	Cleanup       *rawMetaCleanup     `yaml:"cleanup,omitempty"`
 	GitWorktree   *rawMetaGitWorktree `yaml:"gitWorktree,omitempty"`
@@ -65,6 +66,10 @@ func (c *rawMeta) toMeta() *Meta {
 
 	if c.Cleanup != nil {
 		meta.Cleanup = c.Cleanup.toMetaCleanup()
+	}
+
+	if c.Build != nil {
+		meta.Build = c.Build.toMetaBuild()
 	}
 
 	if c.Deploy != nil {

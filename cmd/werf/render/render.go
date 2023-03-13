@@ -148,7 +148,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultBuildParallelTasksLimit)
 
 	common.SetupSkipBuild(&commonCmdData, cmd)
-	common.SetupPlatform(&commonCmdData, cmd)
+	commonCmdData.SetupPlatform(cmd)
 
 	cmd.Flags().BoolVarP(&cmdData.Validate, "validate", "", util.GetBoolEnvironmentDefaultFalse("WERF_VALIDATE"), "Validate your manifests against the Kubernetes cluster you are currently pointing at (default $WERF_VALIDATE)")
 	cmd.Flags().BoolVarP(&cmdData.IncludeCRDs, "include-crds", "", util.GetBoolEnvironmentDefaultTrue("WERF_INCLUDE_CRDS"), "Include CRDs in the templated output (default $WERF_INCLUDE_CRDS)")

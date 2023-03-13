@@ -46,6 +46,18 @@ func (runtime *BuildahBackend) HasStapelBuildSupport() bool {
 	return true
 }
 
+func (runtime *BuildahBackend) IsTargetPlatformSupportedForStapel(targetPlatform string) bool {
+	return true
+}
+
+func (runtime *BuildahBackend) IsTargetPlatformSupportedForStagedDockerfile(targetPlatform string) bool {
+	return true
+}
+
+func (runtime *BuildahBackend) IsTargetPlatformSupportedForDockerfile(targetPlatform string) bool {
+	return true
+}
+
 func (runtime *BuildahBackend) getBuildahCommonOpts(ctx context.Context, suppressLog bool) (opts buildah.CommonOpts) {
 	if !suppressLog {
 		opts.LogWriter = logboek.Context(ctx).OutStream()

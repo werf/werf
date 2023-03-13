@@ -1359,24 +1359,6 @@ func SetupVirtualMerge(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(cmdData.VirtualMerge, "virtual-merge", "", util.GetBoolEnvironmentDefaultFalse("WERF_VIRTUAL_MERGE"), "Enable virtual/ephemeral merge commit mode when building current application state ($WERF_VIRTUAL_MERGE by default)")
 }
 
-func SetupPlatform(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.Platform = new(string)
-
-	var defaultValue string
-
-	for _, envName := range []string{
-		"WERF_PLATFORM",
-		"DOCKER_DEFAULT_PLATFORM",
-	} {
-		if v := os.Getenv(envName); v != "" {
-			defaultValue = v
-			break
-		}
-	}
-
-	cmd.Flags().StringVarP(cmdData.Platform, "platform", "", defaultValue, "Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT] ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)")
-}
-
 func GetContextWithLogger() context.Context {
 	return logboek.NewContext(context.Background(), logboek.DefaultLogger())
 }
