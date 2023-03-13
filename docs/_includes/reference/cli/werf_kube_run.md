@@ -174,7 +174,7 @@ werf kube-run [options] [IMAGE_NAME] [-- COMMAND ARG...]
             Inline JSON to override/extend any fields in created Pod, e.g. to add imagePullSecrets  
             field (default $WERF_OVERRIDES). %pod_name% and %container_name% will be replaced with  
             names of a created pod and a container.
-      --platform=''
+      --platform=[]
             Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT]     
             ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)
       --pod=''
