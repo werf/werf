@@ -142,6 +142,14 @@ func GetAuthDocs() structs.DocsStruct {
 	return docs
 }
 
+func GetWhoamiDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Experimental: Check self subject attributes."
+
+	return docs
+}
+
 func GetAuthCanIDocs() structs.DocsStruct {
 	var docs structs.DocsStruct
 

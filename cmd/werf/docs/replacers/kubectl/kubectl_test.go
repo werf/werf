@@ -74,6 +74,7 @@ func checkText(ann string) bool {
 		ann != GetApplyViewLastAppliedDocs().LongMD &&
 		ann != GetAttachDocs().LongMD &&
 		ann != GetAuthDocs().LongMD &&
+		ann != GetWhoamiDocs().LongMD &&
 		ann != GetAuthCanIDocs().LongMD &&
 		ann != GetAuthReconcileDocs().LongMD &&
 		ann != GetAutoscaleDocs().LongMD &&
