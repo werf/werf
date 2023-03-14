@@ -268,7 +268,8 @@ func run(ctx context.Context, imagesToProcess build.ImagesToProcess, tagTemplate
 				ShouldBeBuiltMode: *commonCmdData.SkipBuild,
 			},
 			ExportPhaseOptions: build.ExportPhaseOptions{
-				ExportTagFuncList: tagFuncList,
+				ExportImageNameList: imageNameList,
+				ExportTagFuncList:   tagFuncList,
 				MutateConfigFunc: func(config v1.Config) (v1.Config, error) {
 					for k, v := range extraLabels {
 						config.Labels[k] = v
