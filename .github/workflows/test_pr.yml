@@ -51,6 +51,7 @@ jobs:
       forceSkip: ${{ github.event_name == 'pull_request' && needs.detect-changes.outputs.workflow_proceed == 'false' }}
 
   build:
+    if: ${{ !(github.event_name == 'pull_request' && needs.detect-changes.outputs.workflow_proceed == 'false') }}
     needs: detect-changes
     strategy:
       fail-fast: false
