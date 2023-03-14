@@ -50,9 +50,9 @@ jobs:
     name: Publish images with werf by trdl group and channel
     strategy:
       matrix:
-        dest-repo:
-          - ghcr.io/werf/werf
-          - ${{ secrets.WERF_REGISTRY_SERVER }}/werf/werf
+        dest-registry:
+          - ghcr.io
+          - registry-write.werf.io
     needs: publish
     runs-on: tfprod-werf
     steps:
@@ -61,15 +61,15 @@ jobs:
         with:
           fetch-depth: 0
 
-      - if: matrix.dest-repo == 'ghcr.io/werf/werf'
+      - if: matrix.dest-registry == 'registry-write.werf.io'
         name: Login to werf registry
         uses: docker/login-action@v2
         with:
-          registry: ${{ secrets.WERF_REGISTRY_SERVER }}
+          registry: registry-write.werf.io
           username: ${{ secrets.WERF_REGISTRY_USERNAME }}
           password: ${{ secrets.WERF_REGISTRY_PASSWORD }}
 
-      - if: matrix.dest-repo == '${{ secrets.WERF_REGISTRY_SERVER }}/werf/werf'
+      - if: matrix.dest-registry == 'ghcr.io'
         name: Login to ghcr.io
         uses: docker/login-action@v2
         with:
@@ -80,7 +80,7 @@ jobs:
       - name: Build and publish werf images
         run: |
           . $(trdl use werf 1.2 alpha)
-          ./scripts/werf-in-image/build-and-publish.sh ${{ matrix.dest-repo }}
+          ./scripts/werf-in-image/build-and-publish.sh ${{ matrix.dest-registry }}
 
   notify:
     if: always()
