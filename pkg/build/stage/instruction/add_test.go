@@ -27,7 +27,14 @@ var _ = DescribeTable("ADD digest",
 	Entry("ADD basic", NewTestData(
 		NewAdd(
 			dockerfile.NewDockerfileStageInstruction(
-				&instructions.AddCommand{SourcesAndDest: []string{"src", "/app"}, Chown: "1000:1000", Chmod: ""},
+				&instructions.AddCommand{
+					SourcesAndDest: instructions.SourcesAndDest{
+						DestPath:    "/app",
+						SourcePaths: []string{"src"},
+					},
+					Chown: "1000:1000",
+					Chmod: "",
+				},
 				dockerfile.DockerfileStageInstructionOptions{},
 			),
 			nil, false,
@@ -48,7 +55,14 @@ var _ = DescribeTable("ADD digest",
 	Entry("ADD with changed chown", NewTestData(
 		NewAdd(
 			dockerfile.NewDockerfileStageInstruction(
-				&instructions.AddCommand{SourcesAndDest: []string{"src", "/app"}, Chown: "1000:1001", Chmod: ""},
+				&instructions.AddCommand{
+					SourcesAndDest: instructions.SourcesAndDest{
+						DestPath:    "/app",
+						SourcePaths: []string{"src"},
+					},
+					Chown: "1000:1001",
+					Chmod: "",
+				},
 				dockerfile.DockerfileStageInstructionOptions{},
 			),
 			nil, false,
@@ -70,7 +84,14 @@ var _ = DescribeTable("ADD digest",
 	Entry("ADD with changed chmod", NewTestData(
 		NewAdd(
 			dockerfile.NewDockerfileStageInstruction(
-				&instructions.AddCommand{SourcesAndDest: []string{"src", "/app"}, Chown: "1000:1001", Chmod: "0777"},
+				&instructions.AddCommand{
+					SourcesAndDest: instructions.SourcesAndDest{
+						DestPath:    "/app",
+						SourcePaths: []string{"src"},
+					},
+					Chown: "1000:1001",
+					Chmod: "0777",
+				},
 				dockerfile.DockerfileStageInstructionOptions{},
 			),
 			nil, false,
@@ -92,7 +113,14 @@ var _ = DescribeTable("ADD digest",
 	Entry("ADD with changed sources paths", NewTestData(
 		NewAdd(
 			dockerfile.NewDockerfileStageInstruction(
-				&instructions.AddCommand{SourcesAndDest: []string{"src", "pom.xml", "/app"}, Chown: "1000:1001", Chmod: "0777"},
+				&instructions.AddCommand{
+					SourcesAndDest: instructions.SourcesAndDest{
+						DestPath:    "/app",
+						SourcePaths: []string{"src", "pom.xml"},
+					},
+					Chown: "1000:1001",
+					Chmod: "0777",
+				},
 				dockerfile.DockerfileStageInstructionOptions{},
 			),
 			nil, false,
@@ -114,7 +142,14 @@ var _ = DescribeTable("ADD digest",
 	Entry("ADD with changed source files", NewTestData(
 		NewAdd(
 			dockerfile.NewDockerfileStageInstruction(
-				&instructions.AddCommand{SourcesAndDest: []string{"src", "pom.xml", "/app"}, Chown: "1000:1001", Chmod: "0777"},
+				&instructions.AddCommand{
+					SourcesAndDest: instructions.SourcesAndDest{
+						DestPath:    "/app",
+						SourcePaths: []string{"src", "pom.xml"},
+					},
+					Chown: "1000:1001",
+					Chmod: "0777",
+				},
 				dockerfile.DockerfileStageInstructionOptions{},
 			),
 			nil, false,
@@ -136,7 +171,14 @@ var _ = DescribeTable("ADD digest",
 	Entry("ADD with changed destination path", NewTestData(
 		NewAdd(
 			dockerfile.NewDockerfileStageInstruction(
-				&instructions.AddCommand{SourcesAndDest: []string{"src", "pom.xml", "/app2"}, Chown: "1000:1001", Chmod: "0777"},
+				&instructions.AddCommand{
+					SourcesAndDest: instructions.SourcesAndDest{
+						DestPath:    "/app2",
+						SourcePaths: []string{"src", "pom.xml"},
+					},
+					Chown: "1000:1001",
+					Chmod: "0777",
+				},
 				dockerfile.DockerfileStageInstructionOptions{},
 			),
 			nil, false,

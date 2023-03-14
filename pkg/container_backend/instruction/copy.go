@@ -42,12 +42,12 @@ func (i *Copy) Apply(ctx context.Context, containerName string, drv buildah.Buil
 		}
 	}
 
-	if err := drv.Copy(ctx, containerName, contextDir, i.Sources(), i.Dest(), buildah.CopyOpts{
+	if err := drv.Copy(ctx, containerName, contextDir, i.SourcePaths, i.DestPath, buildah.CopyOpts{
 		CommonOpts: drvOpts,
 		Chown:      i.Chown,
 		Chmod:      i.Chmod,
 	}); err != nil {
-		return fmt.Errorf("error copying %v to %s for container %s: %w", i.Sources(), i.Dest(), containerName, err)
+		return fmt.Errorf("error copying %v to %s for container %s: %w", i.SourcePaths, i.DestPath, containerName, err)
 	}
 
 	return nil

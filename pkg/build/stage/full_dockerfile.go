@@ -607,7 +607,7 @@ func (s *FullDockerfileStage) dockerfileInstructionDependencies(ctx context.Cont
 	case *instructions.AddCommand:
 		dependencies = append(dependencies, c.String())
 
-		resolvedSources, err := resolveSourcesFunc(c.SourcesAndDest.Sources())
+		resolvedSources, err := resolveSourcesFunc(c.SourcePaths)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -620,7 +620,7 @@ func (s *FullDockerfileStage) dockerfileInstructionDependencies(ctx context.Cont
 	case *instructions.CopyCommand:
 		dependencies = append(dependencies, c.String())
 		if c.From == "" {
-			resolvedSources, err := resolveSourcesFunc(c.SourcesAndDest.Sources())
+			resolvedSources, err := resolveSourcesFunc(c.SourcePaths)
 			if err != nil {
 				return nil, nil, err
 			}
