@@ -4,6 +4,7 @@ import (
 	"context"
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
+	"k8s.io/utils/strings/slices"
 
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/style"
@@ -18,8 +19,9 @@ type ExportPhase struct {
 }
 
 type ExportPhaseOptions struct {
-	ExportTagFuncList []image.ExportTagFunc
-	MutateConfigFunc  func(config v1.Config) (v1.Config, error)
+	ExportImageNameList []string
+	ExportTagFuncList   []image.ExportTagFunc
+	MutateConfigFunc    func(config v1.Config) (v1.Config, error)
 }
 
 func NewExportPhase(c *Conveyor, opts ExportPhaseOptions) *ExportPhase {
@@ -46,6 +48,10 @@ func (phase *ExportPhase) AfterImageStages(ctx context.Context, img *build_image
 }
 
 func (phase *ExportPhase) exportLastStageImage(ctx context.Context, img *build_image.Image) error {
+	if !slices.Contains(phase.ExportImageNameList, img.Name) {
+		return nil
+	}
+
 	if len(phase.ExportTagFuncList) == 0 {
 		return nil
 	}
