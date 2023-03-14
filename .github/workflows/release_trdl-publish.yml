@@ -69,8 +69,7 @@ jobs:
           username: ${{ secrets.WERF_REGISTRY_USERNAME }}
           password: ${{ secrets.WERF_REGISTRY_PASSWORD }}
 
-      - if: matrix.dest-registry == 'ghcr.io'
-        name: Login to ghcr.io
+      - name: Login to ghcr.io
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
