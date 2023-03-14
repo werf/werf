@@ -78,7 +78,7 @@ type StorageManagerInterface interface {
 
 	FetchStage(ctx context.Context, containerBackend container_backend.ContainerBackend, stg stage.Interface) error
 	SelectSuitableStage(ctx context.Context, c stage.Conveyor, stg stage.Interface, stages []*image.StageDescription) (*image.StageDescription, error)
-	CopySuitableByDigestStage(ctx context.Context, stageDesc *image.StageDescription, sourceStagesStorage, destinationStagesStorage storage.StagesStorage, containerBackend container_backend.ContainerBackend) (*image.StageDescription, error)
+	CopySuitableByDigestStage(ctx context.Context, stageDesc *image.StageDescription, sourceStagesStorage, destinationStagesStorage storage.StagesStorage, containerBackend container_backend.ContainerBackend, targetPlatform string) (*image.StageDescription, error)
 	CopyStageIntoCacheStorages(ctx context.Context, stg stage.Interface, containerBackend container_backend.ContainerBackend) error
 	CopyStageIntoFinalStorage(ctx context.Context, stg stage.Interface, containerBackend container_backend.ContainerBackend, opts CopyStageIntoFinalStorageOptions) error
 
@@ -468,7 +468,7 @@ func (m *StorageManager) FetchStage(ctx context.Context, containerBackend contai
 	fetchStageFromCache := func(stagesStorage storage.StagesStorage) (container_backend.LegacyImageInterface, error) {
 		stageID := stg.GetStageImage().Image.GetStageDescription().StageID
 		imageName := stagesStorage.ConstructStageImageName(m.ProjectName, stageID.Digest, stageID.UniqueID)
-		stageImage := container_backend.NewLegacyStageImage(nil, imageName, containerBackend)
+		stageImage := container_backend.NewLegacyStageImage(nil, imageName, containerBackend, stg.GetStageImage().Image.GetTargetPlatform())
 
 		shouldFetch, err := stagesStorage.ShouldFetchImage(ctx, stageImage)
 		if err != nil {
@@ -800,8 +800,8 @@ func (m *StorageManager) getStagesByDigestFromStagesStorage(ctx context.Context,
 	return stages, nil
 }
 
-func (m *StorageManager) CopySuitableByDigestStage(ctx context.Context, stageDesc *image.StageDescription, sourceStagesStorage, destinationStagesStorage storage.StagesStorage, containerBackend container_backend.ContainerBackend) (*image.StageDescription, error) {
-	img := container_backend.NewLegacyStageImage(nil, stageDesc.Info.Name, containerBackend)
+func (m *StorageManager) CopySuitableByDigestStage(ctx context.Context, stageDesc *image.StageDescription, sourceStagesStorage, destinationStagesStorage storage.StagesStorage, containerBackend container_backend.ContainerBackend, targetPlatform string) (*image.StageDescription, error) {
+	img := container_backend.NewLegacyStageImage(nil, stageDesc.Info.Name, containerBackend, targetPlatform)
 
 	logboek.Context(ctx).Info().LogF("Fetching %s\n", img.Name())
 	if err := sourceStagesStorage.FetchImage(ctx, img); err != nil {

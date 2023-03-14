@@ -36,11 +36,8 @@ const (
 )
 
 type CommonOpts struct {
-	LogWriter io.Writer
-}
-
-type BuildFromCommandsOpts struct {
-	CommonOpts
+	TargetPlatform string
+	LogWriter      io.Writer
 }
 
 type BuildFromDockerfileOpts struct {
@@ -126,16 +123,19 @@ type AddOpts struct {
 }
 
 type (
-	FromCommandOpts CommonOpts
-	PushOpts        CommonOpts
-	PullOpts        CommonOpts
-	TagOpts         CommonOpts
-	MountOpts       CommonOpts
-	UmountOpts      CommonOpts
-	RmOpts          CommonOpts
+	FromCommandOpts       CommonOpts
+	BuildFromCommandsOpts CommonOpts
+	PushOpts              CommonOpts
+	PullOpts              CommonOpts
+	TagOpts               CommonOpts
+	MountOpts             CommonOpts
+	UmountOpts            CommonOpts
+	RmOpts                CommonOpts
 )
 
 type Buildah interface {
+	GetDefaultPlatform() string
+	GetRuntimePlatform() string
 	Tag(ctx context.Context, ref, newRef string, opts TagOpts) error
 	Push(ctx context.Context, ref string, opts PushOpts) error
 	BuildFromDockerfile(ctx context.Context, dockerfile string, opts BuildFromDockerfileOpts) (string, error)
@@ -169,7 +169,7 @@ type CommonBuildahOpts struct {
 }
 
 type NativeModeOpts struct {
-	Platform string
+	DefaultPlatform string
 }
 
 type BuildahOpts struct {

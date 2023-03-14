@@ -483,12 +483,12 @@ func (storage *RepoStagesStorage) FetchImage(ctx context.Context, img container_
 // FIXME(stapel-to-buildah): possible optimization would be to push buildah container directly into registry wihtout committing a local image
 func (storage *RepoStagesStorage) StoreImage(ctx context.Context, img container_backend.LegacyImageInterface) error {
 	if img.GetBuiltID() != "" {
-		if err := storage.ContainerBackend.Tag(ctx, img.GetBuiltID(), img.Name(), container_backend.TagOpts{}); err != nil {
+		if err := storage.ContainerBackend.Tag(ctx, img.GetBuiltID(), img.Name(), container_backend.TagOpts{TargetPlatform: img.GetTargetPlatform()}); err != nil {
 			return fmt.Errorf("unable to tag built image %q by %q: %w", img.GetBuiltID(), img.Name(), err)
 		}
 	}
 
-	if err := storage.ContainerBackend.Push(ctx, img.Name(), container_backend.PushOpts{}); err != nil {
+	if err := storage.ContainerBackend.Push(ctx, img.Name(), container_backend.PushOpts{TargetPlatform: img.GetTargetPlatform()}); err != nil {
 		return fmt.Errorf("unable to push image %q: %w", img.Name(), err)
 	}
 
@@ -496,7 +496,7 @@ func (storage *RepoStagesStorage) StoreImage(ctx context.Context, img container_
 }
 
 func (storage *RepoStagesStorage) ShouldFetchImage(ctx context.Context, img container_backend.LegacyImageInterface) (bool, error) {
-	if info, err := storage.ContainerBackend.GetImageInfo(ctx, img.Name(), container_backend.GetImageInfoOpts{}); err != nil {
+	if info, err := storage.ContainerBackend.GetImageInfo(ctx, img.Name(), container_backend.GetImageInfoOpts{TargetPlatform: img.GetTargetPlatform()}); err != nil {
 		return false, fmt.Errorf("unable to get inspect for image %s: %w", img.Name(), err)
 	} else if info != nil {
 		img.SetInfo(info)

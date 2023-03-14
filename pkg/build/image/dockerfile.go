@@ -22,7 +22,7 @@ import (
 	"github.com/werf/werf/pkg/util"
 )
 
-func MapDockerfileConfigToImagesSets(ctx context.Context, dockerfileImageConfig *config.ImageFromDockerfile, opts CommonImageOptions) (ImagesSets, error) {
+func MapDockerfileConfigToImagesSets(ctx context.Context, dockerfileImageConfig *config.ImageFromDockerfile, targetPlatform string, opts CommonImageOptions) (ImagesSets, error) {
 	if dockerfileImageConfig.Staged {
 		relDockerfilePath := filepath.Join(dockerfileImageConfig.Context, dockerfileImageConfig.Dockerfile)
 		dockerfileData, err := opts.GiterminismManager.FileReader().ReadDockerfile(ctx, relDockerfilePath)
@@ -44,10 +44,10 @@ func MapDockerfileConfigToImagesSets(ctx context.Context, dockerfileImageConfig 
 			return nil, fmt.Errorf("unable to parse dockerfile %s: %w", relDockerfilePath, err)
 		}
 
-		return mapDockerfileToImagesSets(ctx, d, dockerfileImageConfig, opts)
+		return mapDockerfileToImagesSets(ctx, d, dockerfileImageConfig, targetPlatform, opts)
 	}
 
-	img, err := mapLegacyDockerfileToImage(ctx, dockerfileImageConfig, opts)
+	img, err := mapLegacyDockerfileToImage(ctx, dockerfileImageConfig, targetPlatform, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +59,7 @@ func MapDockerfileConfigToImagesSets(ctx context.Context, dockerfileImageConfig 
 	return ret, nil
 }
 
-func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, dockerfileImageConfig *config.ImageFromDockerfile, opts CommonImageOptions) (ImagesSets, error) {
+func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, dockerfileImageConfig *config.ImageFromDockerfile, targetPlatform string, opts CommonImageOptions) (ImagesSets, error) {
 	var ret ImagesSets
 
 	targetStage, err := cfg.GetTargetStage()
@@ -106,7 +106,7 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 		var img *Image
 		var err error
 		if baseStg := cfg.FindStage(stg.BaseName); baseStg != nil {
-			img, err = NewImage(ctx, item.WerfImageName, StageAsBaseImage, ImageOptions{
+			img, err = NewImage(ctx, targetPlatform, item.WerfImageName, StageAsBaseImage, ImageOptions{
 				IsDockerfileImage:         true,
 				IsDockerfileTargetStage:   item.IsTargetStage,
 				DockerfileImageConfig:     dockerfileImageConfig,
@@ -120,7 +120,7 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 
 			appendQueue(baseStg.GetWerfImageName(), baseStg, item.Level+1)
 		} else {
-			img, err = NewImage(ctx, item.WerfImageName, ImageFromRegistryAsBaseImage, ImageOptions{
+			img, err = NewImage(ctx, targetPlatform, item.WerfImageName, ImageFromRegistryAsBaseImage, ImageOptions{
 				IsDockerfileImage:         true,
 				IsDockerfileTargetStage:   item.IsTargetStage,
 				DockerfileImageConfig:     dockerfileImageConfig,
@@ -198,8 +198,8 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 	return ret, nil
 }
 
-func mapLegacyDockerfileToImage(ctx context.Context, dockerfileImageConfig *config.ImageFromDockerfile, opts CommonImageOptions) (*Image, error) {
-	img, err := NewImage(ctx, dockerfileImageConfig.Name, NoBaseImage, ImageOptions{
+func mapLegacyDockerfileToImage(ctx context.Context, dockerfileImageConfig *config.ImageFromDockerfile, targetPlatform string, opts CommonImageOptions) (*Image, error) {
+	img, err := NewImage(ctx, targetPlatform, dockerfileImageConfig.Name, NoBaseImage, ImageOptions{
 		CommonImageOptions:      opts,
 		IsDockerfileImage:       true,
 		IsDockerfileTargetStage: true,
@@ -258,7 +258,7 @@ func mapLegacyDockerfileToImage(ctx context.Context, dockerfileImageConfig *conf
 	)
 
 	baseStageOptions := &stage.BaseStageOptions{
-		TargetPlatform: opts.TargetPlatform,
+		TargetPlatform: targetPlatform,
 		ImageName:      dockerfileImageConfig.Name,
 		ProjectName:    opts.ProjectName,
 	}

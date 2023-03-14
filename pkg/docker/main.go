@@ -6,8 +6,8 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"runtime"
 
+	"github.com/containerd/containerd/platforms"
 	"github.com/docker/cli/cli/command"
 	cliconfig "github.com/docker/cli/cli/config"
 	"github.com/docker/cli/cli/flags"
@@ -24,6 +24,8 @@ var (
 	liveCliOutputEnabled bool
 	isDebug              bool
 	defaultCLi           command.Cli
+	defaultPlatform      string
+	runtimePlatform      string
 
 	DockerConfigDir string
 )
@@ -36,41 +38,64 @@ func IsEnabled() bool {
 	return defaultCLi != nil
 }
 
-// TODO(multiarch): do not configure platform globally, instead specify platform on each build call
-func Init(ctx context.Context, dockerConfigDir string, verbose, debug bool, platform string) error {
-	if (platform == "" && runtime.GOARCH != "amd64") || (platform != "" && platform != "linux/amd64") {
-		logboek.Context(ctx).Error().LogF("werf currently does not support building of images for any other platform besides linux/amd64.\n")
-		logboek.Context(ctx).Error().LogF("Please set --platform option (or WERF_PLATFORM, or DOCKER_DEFAULT_PLATFORM environment variable) to linux/amd64 to enable platform emulation when building images with werf.\n")
-		logboek.Context(ctx).Error().LogLn()
-		return fmt.Errorf("unsupported platform")
-	}
-	if platform != "" {
-		os.Setenv("DOCKER_DEFAULT_PLATFORM", platform)
-		os.Setenv("DOCKER_BUILDKIT", "1")
-	}
+type InitOptions struct {
+	DockerConfigDir string
+	DefaultPlatform string
+	ClaimPlatforms  []string
+	Verbose         bool
+	Debug           bool
+}
 
-	DockerConfigDir = dockerConfigDir
-
-	if dockerConfigDir == "" {
-		DockerConfigDir = filepath.Join(os.Getenv("HOME"), ".docker")
+func Init(ctx context.Context, opts InitOptions) error {
+	if opts.DockerConfigDir != "" {
+		DockerConfigDir = opts.DockerConfigDir
+		cliconfig.SetDir(opts.DockerConfigDir)
 	} else {
-		cliconfig.SetDir(dockerConfigDir)
+		DockerConfigDir = filepath.Join(os.Getenv("HOME"), ".docker")
 	}
 
-	err := os.Setenv("DOCKER_CONFIG", dockerConfigDir)
+	err := os.Setenv("DOCKER_CONFIG", DockerConfigDir)
 	if err != nil {
-		return fmt.Errorf("cannot set DOCKER_CONFIG to %s: %w", dockerConfigDir, err)
+		return fmt.Errorf("cannot set DOCKER_CONFIG to %s: %w", DockerConfigDir, err)
 	}
 
 	isDebug = os.Getenv("WERF_DEBUG_DOCKER") == "1"
-	liveCliOutputEnabled = verbose || debug
+	liveCliOutputEnabled = opts.Verbose || opts.Debug
 
 	defaultCLi, err = newDockerCli(defaultCliOptions(ctx))
 	if err != nil {
 		return err
 	}
 
+	spec := platforms.DefaultSpec()
+	spec.OS = defaultCLi.ServerInfo().OSType
+	runtimePlatform = platforms.Format(spec)
+	claimPlatforms := opts.ClaimPlatforms
+
+	if opts.DefaultPlatform != "" {
+		defaultPlatform = opts.DefaultPlatform
+		os.Setenv("DOCKER_DEFAULT_PLATFORM", opts.DefaultPlatform)
+		claimPlatforms = append(claimPlatforms, opts.DefaultPlatform)
+	} else {
+		defaultPlatform = runtimePlatform
+	}
+
+	for _, claimPlatform := range claimPlatforms {
+		if claimPlatform != runtimePlatform {
+			os.Setenv("DOCKER_BUILDKIT", "1")
+			break
+		}
+	}
+
 	return nil
+}
+
+func GetDefaultPlatform() string {
+	return defaultPlatform
+}
+
+func GetRuntimePlatform() string {
+	return runtimePlatform
 }
 
 func ServerVersion(ctx context.Context) (*types.Version, error) {

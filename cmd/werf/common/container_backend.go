@@ -10,7 +10,6 @@ import (
 	"github.com/werf/werf/pkg/buildah"
 	"github.com/werf/werf/pkg/buildah/thirdparty"
 	"github.com/werf/werf/pkg/container_backend"
-	"github.com/werf/werf/pkg/container_backend/thirdparty/platformutil"
 	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/werf"
@@ -100,16 +99,6 @@ func InitProcessContainerBackend(ctx context.Context, cmdData *CmdData) (contain
 
 		insecure := *cmdData.InsecureRegistry || *cmdData.SkipTlsVerifyRegistry
 
-		// FIXME(multiarch): rework container backend platform initialization, specify platform only when running build operation
-		var platform string
-		if len(cmdData.GetPlatform()) > 0 {
-			platforms, err := platformutil.NormalizeUserParams(cmdData.GetPlatform())
-			if err != nil {
-				return nil, ctx, fmt.Errorf("unable to normalize platforms params %v: %w", cmdData.GetPlatform(), err)
-			}
-			platform = platforms[0]
-		}
-
 		b, err := buildah.NewBuildah(*buildahMode, buildah.BuildahOpts{
 			CommonBuildahOpts: buildah.CommonBuildahOpts{
 				TmpDir:        filepath.Join(werf.GetServiceDir(), "tmp", "buildah"),
@@ -117,7 +106,7 @@ func InitProcessContainerBackend(ctx context.Context, cmdData *CmdData) (contain
 				Isolation:     buildahIsolation,
 				StorageDriver: storageDriver,
 			},
-			NativeModeOpts: buildah.NativeModeOpts{Platform: platform},
+			NativeModeOpts: buildah.NativeModeOpts{},
 		})
 		if err != nil {
 			return nil, ctx, fmt.Errorf("unable to get buildah client: %w", err)
@@ -136,13 +125,14 @@ func InitProcessContainerBackend(ctx context.Context, cmdData *CmdData) (contain
 }
 
 func InitProcessDocker(ctx context.Context, cmdData *CmdData) (context.Context, error) {
-	// FIXME(multiarch): rework container backend platform initialization, specify platform only when running build operation
-	var platform string
-	if len(cmdData.GetPlatform()) > 0 {
-		platform = cmdData.GetPlatform()[0]
+	opts := docker.InitOptions{
+		DockerConfigDir: *cmdData.DockerConfig,
+		ClaimPlatforms:  cmdData.GetPlatform(),
+		Verbose:         *cmdData.LogVerbose,
+		Debug:           *cmdData.LogDebug,
 	}
 
-	if err := docker.Init(ctx, *cmdData.DockerConfig, *cmdData.LogVerbose, *cmdData.LogDebug, platform); err != nil {
+	if err := docker.Init(ctx, opts); err != nil {
 		return ctx, fmt.Errorf("unable to init docker for buildah container backend: %w", err)
 	}
 

@@ -324,7 +324,7 @@ func (s *DependenciesStage) generateImportChecksum(ctx context.Context, c Convey
 				ExcludePaths: importElm.ExcludePaths,
 				Owner:        importElm.Owner,
 				Group:        importElm.Group,
-			})
+			}, container_backend.CalculateDependencyImportChecksum{TargetPlatform: s.targetPlatform})
 		})
 
 		if err != nil {

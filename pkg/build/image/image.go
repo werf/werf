@@ -38,7 +38,8 @@ type CommonImageOptions struct {
 	ProjectName        string
 	ContainerWerfDir   string
 	TmpDir             string
-	TargetPlatform     string
+
+	ForceTargetPlatformLogging bool
 }
 
 type ImageOptions struct {
@@ -52,11 +53,15 @@ type ImageOptions struct {
 	DockerfileExpanderFactory dockerfile.ExpanderFactory
 }
 
-func NewImage(ctx context.Context, name string, baseImageType BaseImageType, opts ImageOptions) (*Image, error) {
+func NewImage(ctx context.Context, targetPlatform, name string, baseImageType BaseImageType, opts ImageOptions) (*Image, error) {
 	switch baseImageType {
 	case NoBaseImage, ImageFromRegistryAsBaseImage, StageAsBaseImage:
 	default:
 		panic(fmt.Sprintf("unknown opts.BaseImageType %q", baseImageType))
+	}
+
+	if targetPlatform == "" {
+		panic("assertion: targetPlatform cannot be empty")
 	}
 
 	i := &Image{
@@ -66,7 +71,7 @@ func NewImage(ctx context.Context, name string, baseImageType BaseImageType, opt
 		IsDockerfileImage:       opts.IsDockerfileImage,
 		IsDockerfileTargetStage: opts.IsDockerfileTargetStage,
 		DockerfileImageConfig:   opts.DockerfileImageConfig,
-		TargetPlatform:          opts.TargetPlatform,
+		TargetPlatform:          targetPlatform,
 
 		baseImageType:             baseImageType,
 		baseImageReference:        opts.BaseImageReference,
@@ -113,7 +118,11 @@ func (i *Image) LogName() string {
 }
 
 func (i *Image) LogDetailedName() string {
-	return logging.ImageLogProcessName(i.Name, i.IsArtifact, i.TargetPlatform)
+	var targetPlatformForLog string
+	if i.ForceTargetPlatformLogging || i.TargetPlatform != i.ContainerBackend.GetRuntimePlatform() {
+		targetPlatformForLog = i.TargetPlatform
+	}
+	return logging.ImageLogProcessName(i.Name, i.IsArtifact, targetPlatformForLog)
 }
 
 func (i *Image) LogProcessStyle() color.Style {

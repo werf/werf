@@ -60,7 +60,10 @@ func (b *DockerfileStageBuilder) SetBuildContextArchive(buildContextArchive cont
 
 func (b *DockerfileStageBuilder) Build(ctx context.Context, opts container_backend.BuildOptions) error {
 	instructions := append(append(b.preInstructions, b.instructions...), b.postInstructions...)
-	backendOpts := container_backend.BuildDockerfileStageOptions{BuildContextArchive: b.buildContextArchive}
+	backendOpts := container_backend.BuildDockerfileStageOptions{
+		CommonOpts:          container_backend.CommonOpts{TargetPlatform: opts.TargetPlatform},
+		BuildContextArchive: b.buildContextArchive,
+	}
 
 	if builtID, err := b.containerBackend.BuildDockerfileStage(ctx, b.baseImage, backendOpts, instructions...); err != nil {
 		return fmt.Errorf("error building dockerfile stage: %w", err)

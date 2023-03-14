@@ -223,10 +223,12 @@ func (c *Conveyor) GetImportServer(ctx context.Context, targetPlatform, imageNam
 	if stageName != "" {
 		importServerName += "/" + stageName
 	}
-	// FIXME(multiarch): in this place we should get our current platform from the container backend in the case when targetPlatform is empty
-	if targetPlatform != "" && targetPlatform != "linux/amd64" {
-		importServerName += "[" + targetPlatform + "]"
+
+	if targetPlatform == "" {
+		panic("assertion: targetPlatform cannot be empty")
 	}
+	importServerName += fmt.Sprintf("[%s]", targetPlatform)
+
 	if srv, hasKey := c.importServers[importServerName]; hasKey {
 		return srv, nil
 	}
@@ -249,9 +251,9 @@ func (c *Conveyor) GetImportServer(ctx context.Context, targetPlatform, imageNam
 		DoError(func() error {
 			var tmpDir string
 			if stageName == "" {
-				tmpDir = filepath.Join(c.tmpDir, "import-server", imageName)
+				tmpDir = filepath.Join(c.tmpDir, "import-server", imageName, targetPlatform)
 			} else {
-				tmpDir = filepath.Join(c.tmpDir, "import-server", fmt.Sprintf("%s-%s", imageName, stageName))
+				tmpDir = filepath.Join(c.tmpDir, "import-server", fmt.Sprintf("%s-%s", imageName, stageName), targetPlatform)
 			}
 
 			if err := os.MkdirAll(tmpDir, os.ModePerm); err != nil {
@@ -682,7 +684,7 @@ func (c *Conveyor) GetOrCreateStageImage(name string, prevStageImage *stage.Stag
 		return stageImage
 	}
 
-	i := container_backend.NewLegacyStageImage(extractLegacyStageImage(prevStageImage), name, c.ContainerBackend)
+	i := container_backend.NewLegacyStageImage(extractLegacyStageImage(prevStageImage), name, c.ContainerBackend, img.TargetPlatform)
 
 	var baseImage string
 	if stg != nil {
@@ -701,6 +703,10 @@ func (c *Conveyor) GetOrCreateStageImage(name string, prevStageImage *stage.Stag
 }
 
 func (c *Conveyor) GetImage(targetPlatform, name string) *image.Image {
+	if targetPlatform == "" {
+		panic("assertion: targetPlatform should not be empty")
+	}
+
 	for _, img := range c.imagesTree.GetImages() {
 		if img.GetName() == name && img.TargetPlatform == targetPlatform {
 			return img

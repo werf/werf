@@ -17,6 +17,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/containerd/containerd/platforms"
 	"github.com/containers/buildah"
 	"github.com/containers/buildah/define"
 	"github.com/containers/buildah/docker"
@@ -39,7 +40,6 @@ import (
 	"gopkg.in/errgo.v2/fmt/errors"
 
 	"github.com/werf/werf/pkg/buildah/thirdparty"
-	"github.com/werf/werf/pkg/util"
 )
 
 const (
@@ -72,12 +72,13 @@ type NativeBuildah struct {
 	RegistriesConfigDirPath string
 	Insecure                bool
 
-	Store                     storage.Store
-	Runtime                   libimage.Runtime
-	DefaultSystemContext      imgtypes.SystemContext
-	DefaultCommonBuildOptions define.CommonBuildOptions
+	Store storage.Store
 
-	platforms []struct{ OS, Arch, Variant string }
+	defaultCommonBuildOptions    define.CommonBuildOptions
+	defaultSystemContext         imgtypes.SystemContext
+	defaultPlatform              string
+	defaultPlatformOverrideSpecs []struct{ OS, Arch, Variant string }
+	runtimePlatform              string
 }
 
 func NewNativeBuildah(commonOpts CommonBuildahOpts, opts NativeModeOpts) (*NativeBuildah, error) {
@@ -127,7 +128,7 @@ func NewNativeBuildah(commonOpts CommonBuildahOpts, opts NativeModeOpts) (*Nativ
 		return nil, fmt.Errorf("unable to get storage: %w", err)
 	}
 
-	b.DefaultSystemContext = imgtypes.SystemContext{
+	b.defaultSystemContext = imgtypes.SystemContext{
 		SignaturePolicyPath:               b.SignaturePolicyPath,
 		SystemRegistriesConfPath:          b.RegistriesConfigPath,
 		SystemRegistriesConfDirPath:       b.RegistriesConfigDirPath,
@@ -136,19 +137,25 @@ func NewNativeBuildah(commonOpts CommonBuildahOpts, opts NativeModeOpts) (*Nativ
 		DockerDaemonInsecureSkipTLSVerify: b.Insecure,
 	}
 
-	if opts.Platform != "" {
-		os, arch, variant, err := parse.Platform(opts.Platform)
+	b.runtimePlatform = platforms.Format(platforms.DefaultSpec())
+
+	if opts.DefaultPlatform != "" {
+		b.defaultPlatform = opts.DefaultPlatform
+
+		os, arch, variant, err := parse.Platform(opts.DefaultPlatform)
 		if err != nil {
-			return nil, fmt.Errorf("unable to parse platform %q: %w", opts.Platform, err)
+			return nil, fmt.Errorf("unable to parse platform %q: %w", opts.DefaultPlatform, err)
 		}
 
-		b.DefaultSystemContext.OSChoice = os
-		b.DefaultSystemContext.ArchitectureChoice = arch
-		b.DefaultSystemContext.VariantChoice = variant
+		b.defaultSystemContext.OSChoice = os
+		b.defaultSystemContext.ArchitectureChoice = arch
+		b.defaultSystemContext.VariantChoice = variant
 
-		b.platforms = []struct{ OS, Arch, Variant string }{
+		b.defaultPlatformOverrideSpecs = []struct{ OS, Arch, Variant string }{
 			{os, arch, variant},
 		}
+	} else {
+		b.defaultPlatform = b.runtimePlatform
 	}
 
 	var ulimit []string
@@ -162,26 +169,51 @@ func NewNativeBuildah(commonOpts CommonBuildahOpts, opts NativeModeOpts) (*Nativ
 		ulimit = rlimitsToBuildahUlimits(rlimits)
 	}
 
-	b.DefaultCommonBuildOptions = define.CommonBuildOptions{
+	b.defaultCommonBuildOptions = define.CommonBuildOptions{
 		ShmSize: DefaultShmSize,
 		Ulimit:  ulimit,
 	}
 
 	imgstor.Transport.SetStore(b.Store)
-	runtime, err := libimage.RuntimeFromStore(b.Store, &libimage.RuntimeOptions{
-		SystemContext: &b.DefaultSystemContext,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("error getting runtime from store: %w", err)
-	}
-	b.Runtime = *runtime
 
 	return b, nil
 }
 
+func (b *NativeBuildah) getSystemContext(targetPlatform string) (*imgtypes.SystemContext, error) {
+	systemContext := new(imgtypes.SystemContext)
+	*systemContext = b.defaultSystemContext
+
+	if targetPlatform != "" {
+		os, arch, variant, err := parse.Platform(targetPlatform)
+		if err != nil {
+			return nil, fmt.Errorf("unable to parse platform %q: %w", targetPlatform, err)
+		}
+
+		systemContext.OSChoice = os
+		systemContext.ArchitectureChoice = arch
+		systemContext.VariantChoice = variant
+	}
+
+	return systemContext, nil
+}
+
+func (b *NativeBuildah) getRuntime(systemContext *imgtypes.SystemContext) (*libimage.Runtime, error) {
+	return libimage.RuntimeFromStore(b.Store, &libimage.RuntimeOptions{
+		SystemContext: systemContext,
+	})
+}
+
+func (b *NativeBuildah) GetRuntimePlatform() string {
+	return b.runtimePlatform
+}
+
+func (b *NativeBuildah) GetDefaultPlatform() string {
+	return b.defaultPlatform
+}
+
 // Inspect returns nil, nil if image not found.
 func (b *NativeBuildah) Inspect(ctx context.Context, ref string) (*thirdparty.BuilderInfo, error) {
-	builder, err := b.getBuilderFromImage(ctx, ref)
+	builder, err := b.getBuilderFromImage(ctx, ref, CommonOpts{})
 	if err != nil {
 		return nil, fmt.Errorf("error doing inspect: %w", err)
 	}
@@ -195,7 +227,7 @@ func (b *NativeBuildah) Inspect(ctx context.Context, ref string) (*thirdparty.Bu
 }
 
 func (b *NativeBuildah) Tag(_ context.Context, ref, newRef string, opts TagOpts) error {
-	image, err := b.getImage(ref)
+	image, err := b.getImage(ref, CommonOpts(opts))
 	if err != nil {
 		return err
 	}
@@ -208,12 +240,18 @@ func (b *NativeBuildah) Tag(_ context.Context, ref, newRef string, opts TagOpts)
 }
 
 func (b *NativeBuildah) Push(ctx context.Context, ref string, opts PushOpts) error {
+	// NOTICE: targetPlatform specified for push causes buildah to fail for some unknown reason
+	sysCtx, err := b.getSystemContext("")
+	if err != nil {
+		return err
+	}
+
 	pushOpts := buildah.PushOptions{
 		Compression:         define.Gzip,
 		SignaturePolicyPath: b.SignaturePolicyPath,
 		ReportWriter:        opts.LogWriter,
 		Store:               b.Store,
-		SystemContext:       &b.DefaultSystemContext,
+		SystemContext:       sysCtx,
 		ManifestType:        manifest.DockerV2Schema2MediaType,
 		MaxRetries:          MaxPullPushRetries,
 		RetryDelay:          PullPushRetryDelay,
@@ -232,23 +270,54 @@ func (b *NativeBuildah) Push(ctx context.Context, ref string, opts PushOpts) err
 }
 
 func (b *NativeBuildah) BuildFromDockerfile(ctx context.Context, dockerfile string, opts BuildFromDockerfileOpts) (string, error) {
+	var targetPlatform string
+	var targetPlatforms []struct{ OS, Arch, Variant string }
+	if opts.TargetPlatform != "" {
+		os, arch, variant, err := parse.Platform(opts.TargetPlatform)
+		if err != nil {
+			return "", fmt.Errorf("unable to parse target platform %q: %w", opts.TargetPlatform, err)
+		}
+
+		targetPlatform = opts.TargetPlatform
+		targetPlatforms = []struct{ OS, Arch, Variant string }{
+			{os, arch, variant},
+		}
+	} else {
+		targetPlatform = b.defaultPlatform
+		targetPlatforms = b.defaultPlatformOverrideSpecs
+	}
+
+	// FIXME(multiarch): Fix warning in the build log:
+	// FIXME(multiarch):  [Warning] one or more build args were not consumed: [TARGETARCH TARGETOS TARGETPLATFORM]
+
+	sysCtx, err := b.getSystemContext(targetPlatform)
+	if err != nil {
+		return "", err
+	}
+
 	buildOpts := define.BuildOptions{
 		Isolation:               define.Isolation(b.Isolation),
 		Args:                    opts.BuildArgs,
 		SignaturePolicyPath:     b.SignaturePolicyPath,
 		ReportWriter:            opts.LogWriter,
 		OutputFormat:            buildah.Dockerv2ImageManifest,
-		SystemContext:           &b.DefaultSystemContext,
+		SystemContext:           sysCtx,
 		ConfigureNetwork:        define.NetworkEnabled,
-		CommonBuildOpts:         &b.DefaultCommonBuildOptions,
+		CommonBuildOpts:         &b.defaultCommonBuildOptions,
 		Target:                  opts.Target,
+		Platforms:               targetPlatforms,
 		MaxPullPushRetries:      MaxPullPushRetries,
 		PullPushRetryDelay:      PullPushRetryDelay,
-		Platforms:               b.platforms,
 		Layers:                  true,
 		RemoveIntermediateCtrs:  true,
 		ForceRmIntermediateCtrs: false,
 		NoCache:                 false,
+	}
+
+	if targetPlatform != b.GetRuntimePlatform() {
+		// Prevent local cache collisions in multiplatform build mode:
+		//   allow local cache only for the current runtime platform.
+		buildOpts.NoCache = true
 	}
 
 	errLog := &bytes.Buffer{}
@@ -300,6 +369,11 @@ func (b *NativeBuildah) RunCommand(ctx context.Context, container string, comman
 	stdout, stderr, stderrBuf := generateStdoutStderr(opts.LogWriter)
 	command = prependShellToCommand(opts.PrependShell, opts.Shell, command, builder)
 
+	sysCtx, err := b.getSystemContext(opts.TargetPlatform)
+	if err != nil {
+		return err
+	}
+
 	runOpts := buildah.RunOptions{
 		Env:              opts.Envs,
 		ContextDir:       contextDir,
@@ -310,7 +384,7 @@ func (b *NativeBuildah) RunCommand(ctx context.Context, container string, comman
 		NamespaceOptions: nsOpts,
 		ConfigureNetwork: netPolicy,
 		Isolation:        define.Isolation(b.Isolation),
-		SystemContext:    &b.DefaultSystemContext,
+		SystemContext:    sysCtx,
 		WorkingDir:       opts.WorkingDir,
 		User:             opts.User,
 		Entrypoint:       []string{},
@@ -331,15 +405,20 @@ func (b *NativeBuildah) RunCommand(ctx context.Context, container string, comman
 }
 
 func (b *NativeBuildah) FromCommand(ctx context.Context, container, image string, opts FromCommandOpts) (string, error) {
+	sysCtx, err := b.getSystemContext(opts.TargetPlatform)
+	if err != nil {
+		return "", err
+	}
+
 	builder, err := buildah.NewBuilder(ctx, b.Store, buildah.BuilderOptions{
 		FromImage:           image,
 		Container:           container,
 		SignaturePolicyPath: b.SignaturePolicyPath,
 		ReportWriter:        opts.LogWriter,
-		SystemContext:       &b.DefaultSystemContext,
+		SystemContext:       sysCtx,
 		Isolation:           define.Isolation(b.Isolation),
 		ConfigureNetwork:    define.NetworkEnabled,
-		CommonBuildOpts:     &b.DefaultCommonBuildOptions,
+		CommonBuildOpts:     &b.defaultCommonBuildOptions,
 		Format:              buildah.Dockerv2ImageManifest,
 		MaxPullRetries:      MaxPullPushRetries,
 		PullRetryDelay:      PullPushRetryDelay,
@@ -353,11 +432,16 @@ func (b *NativeBuildah) FromCommand(ctx context.Context, container, image string
 }
 
 func (b *NativeBuildah) Pull(ctx context.Context, ref string, opts PullOpts) error {
+	sysCtx, err := b.getSystemContext(opts.TargetPlatform)
+	if err != nil {
+		return err
+	}
+
 	pullOpts := buildah.PullOptions{
 		SignaturePolicyPath: b.SignaturePolicyPath,
 		ReportWriter:        opts.LogWriter,
 		Store:               b.Store,
-		SystemContext:       &b.DefaultSystemContext,
+		SystemContext:       sysCtx,
 		MaxRetries:          MaxPullPushRetries,
 		RetryDelay:          PullPushRetryDelay,
 		PullPolicy:          define.PullIfNewer,
@@ -374,21 +458,21 @@ func (b *NativeBuildah) Pull(ctx context.Context, ref string, opts PullOpts) err
 	}
 
 	platformMismatch := false
-	if b.DefaultSystemContext.OSChoice != "" && b.DefaultSystemContext.OSChoice != imageInspect.OCIv1.OS {
+	if sysCtx.OSChoice != "" && sysCtx.OSChoice != imageInspect.OCIv1.OS {
 		platformMismatch = true
 	}
-	if b.DefaultSystemContext.ArchitectureChoice != "" && b.DefaultSystemContext.ArchitectureChoice != imageInspect.OCIv1.Architecture {
-		platformMismatch = true
-	}
-	if b.DefaultSystemContext.VariantChoice != "" && b.DefaultSystemContext.VariantChoice != imageInspect.OCIv1.Variant {
+	if sysCtx.ArchitectureChoice != "" && sysCtx.ArchitectureChoice != imageInspect.OCIv1.Architecture {
 		platformMismatch = true
 	}
 
 	if platformMismatch {
-		imagePlatform := fmt.Sprintf("%s/%s/%s", imageInspect.OCIv1.OS, imageInspect.OCIv1.Architecture, imageInspect.OCIv1.Variant)
-		expectedPlatform := fmt.Sprintf("%s/%s", b.DefaultSystemContext.OSChoice, b.DefaultSystemContext.ArchitectureChoice)
-		if b.DefaultSystemContext.VariantChoice != "" {
-			expectedPlatform = fmt.Sprintf("%s/%s", expectedPlatform, b.DefaultSystemContext.VariantChoice)
+		imagePlatform := fmt.Sprintf("%s/%s", imageInspect.OCIv1.OS, imageInspect.OCIv1.Architecture)
+		if imageInspect.OCIv1.Variant != "" {
+			imagePlatform = fmt.Sprintf("%s/%s", imagePlatform, imageInspect.OCIv1.Variant)
+		}
+		expectedPlatform := fmt.Sprintf("%s/%s", sysCtx.OSChoice, sysCtx.ArchitectureChoice)
+		if sysCtx.VariantChoice != "" {
+			expectedPlatform = fmt.Sprintf("%s/%s", expectedPlatform, sysCtx.VariantChoice)
 		}
 		return fmt.Errorf("image platform mismatch: image uses %s, expecting %s platform", imagePlatform, expectedPlatform)
 	}
@@ -406,7 +490,17 @@ func (b *NativeBuildah) Rm(ctx context.Context, ref string, opts RmOpts) error {
 }
 
 func (b *NativeBuildah) Rmi(ctx context.Context, ref string, opts RmiOpts) error {
-	_, rmiErrors := b.Runtime.RemoveImages(ctx, []string{ref}, &libimage.RemoveImagesOptions{
+	sysCtx, err := b.getSystemContext(opts.TargetPlatform)
+	if err != nil {
+		return err
+	}
+
+	runtime, err := b.getRuntime(sysCtx)
+	if err != nil {
+		return err
+	}
+
+	_, rmiErrors := runtime.RemoveImages(ctx, []string{ref}, &libimage.RemoveImagesOptions{
 		Force: opts.Force,
 		// Filters: []string{"readonly=false", "intermediate=false", "dangling=true"},
 	})
@@ -431,11 +525,16 @@ func (b *NativeBuildah) Commit(ctx context.Context, container string, opts Commi
 
 	builder.SetLabel("werf.io/base-image-id", fmt.Sprintf("sha256:%s", builder.FromImageID))
 
+	sysCtx, err := b.getSystemContext(opts.TargetPlatform)
+	if err != nil {
+		return "", err
+	}
+
 	imgID, _, _, err := builder.Commit(ctx, imageRef, buildah.CommitOptions{
 		PreferredManifestType: buildah.Dockerv2ImageManifest,
 		SignaturePolicyPath:   b.SignaturePolicyPath,
 		ReportWriter:          opts.LogWriter,
-		SystemContext:         &b.DefaultSystemContext,
+		SystemContext:         sysCtx,
 		MaxRetries:            MaxPullPushRetries,
 		RetryDelay:            PullPushRetryDelay,
 	})
@@ -600,8 +699,18 @@ func (b *NativeBuildah) Add(ctx context.Context, container string, src []string,
 	return nil
 }
 
-func (b *NativeBuildah) getImage(ref string) (*libimage.Image, error) {
-	image, _, err := b.Runtime.LookupImage(ref, &libimage.LookupImageOptions{
+func (b *NativeBuildah) getImage(ref string, opts CommonOpts) (*libimage.Image, error) {
+	sysCtx, err := b.getSystemContext(opts.TargetPlatform)
+	if err != nil {
+		return nil, err
+	}
+
+	runtime, err := b.getRuntime(sysCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	image, _, err := runtime.LookupImage(ref, &libimage.LookupImageOptions{
 		ManifestList: true,
 	})
 	if err != nil {
@@ -612,11 +721,16 @@ func (b *NativeBuildah) getImage(ref string) (*libimage.Image, error) {
 }
 
 // getBuilderFromImage returns nil, nil if image not found.
-func (b *NativeBuildah) getBuilderFromImage(ctx context.Context, imgName string) (builder *buildah.Builder, err error) {
+func (b *NativeBuildah) getBuilderFromImage(ctx context.Context, imgName string, opts CommonOpts) (builder *buildah.Builder, err error) {
+	sysCtx, err := b.getSystemContext(opts.TargetPlatform)
+	if err != nil {
+		return nil, err
+	}
+
 	builder, err = buildah.ImportBuilderFromImage(ctx, b.Store, buildah.ImportFromImageOptions{
 		Image:               imgName,
 		SignaturePolicyPath: b.SignaturePolicyPath,
-		SystemContext:       &b.DefaultSystemContext,
+		SystemContext:       sysCtx,
 	})
 	switch {
 	case err != nil && strings.HasSuffix(err.Error(), storage.ErrImageUnknown.Error()):
@@ -676,31 +790,6 @@ func (b *NativeBuildah) NewSessionTmpDir() (string, error) {
 	}
 
 	return sessionTmpDir, nil
-}
-
-func (b *NativeBuildah) prepareBuildFromDockerfile(dockerfile []byte, contextTar io.Reader) (string, string, string, error) {
-	sessionTmpDir, err := b.NewSessionTmpDir()
-	if err != nil {
-		return "", "", "", err
-	}
-
-	dockerfileTmpPath := filepath.Join(sessionTmpDir, "Dockerfile")
-	if err := ioutil.WriteFile(dockerfileTmpPath, dockerfile, os.ModePerm); err != nil {
-		return "", "", "", fmt.Errorf("error writing %q: %w", dockerfileTmpPath, err)
-	}
-
-	contextTmpDir := filepath.Join(sessionTmpDir, "context")
-	if err := os.MkdirAll(contextTmpDir, os.ModePerm); err != nil {
-		return "", "", "", fmt.Errorf("unable to create dir %q: %w", contextTmpDir, err)
-	}
-
-	if contextTar != nil {
-		if err := util.ExtractTar(contextTar, contextTmpDir, util.ExtractTarOptions{}); err != nil {
-			return "", "", "", fmt.Errorf("unable to extract context tar to tmp context dir: %w", err)
-		}
-	}
-
-	return sessionTmpDir, contextTmpDir, dockerfileTmpPath, nil
 }
 
 func NewNativeStoreOptions(rootlessUID int, driver StorageDriver) (*thirdparty.StoreOptions, error) {

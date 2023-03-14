@@ -9,7 +9,7 @@ import (
 )
 
 type DockerfileBuilderInterface interface {
-	Build(ctx context.Context) error
+	Build(ctx context.Context, opts container_backend.BuildOptions) error
 	Cleanup(ctx context.Context) error
 	SetDockerfile(dockerfile []byte)
 	SetDockerfileCtxRelPath(dockerfileCtxRelPath string)
@@ -35,22 +35,23 @@ func NewDockerfileBuilder(containerBackend container_backend.ContainerBackend, i
 	return &DockerfileBuilder{ContainerBackend: containerBackend, Image: image}
 }
 
-func (b *DockerfileBuilder) Build(ctx context.Context) error {
+func (b *DockerfileBuilder) Build(ctx context.Context, opts container_backend.BuildOptions) error {
 	// filePathToStdin != "" ??
 
 	if container_backend.Debug() {
 		fmt.Printf("[DOCKER BUILD] context archive path: %s\n", b.BuildContextArchive.Path())
 	}
 
-	opts := b.BuildDockerfileOptions
-	opts.BuildContextArchive = b.BuildContextArchive
+	finalOpts := b.BuildDockerfileOptions
+	finalOpts.BuildContextArchive = b.BuildContextArchive
+	finalOpts.TargetPlatform = opts.TargetPlatform
 
 	if container_backend.Debug() {
 		fmt.Printf("BuildContextArchive=%q\n", b.BuildContextArchive)
 		fmt.Printf("BiuldDockerfileOptions: %#v\n", opts)
 	}
 
-	builtID, err := b.ContainerBackend.BuildDockerfile(ctx, b.Dockerfile, opts)
+	builtID, err := b.ContainerBackend.BuildDockerfile(ctx, b.Dockerfile, finalOpts)
 	if err != nil {
 		return fmt.Errorf("error building dockerfile with %s: %w", b.ContainerBackend.String(), err)
 	}

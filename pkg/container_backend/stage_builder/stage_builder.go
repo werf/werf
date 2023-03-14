@@ -81,7 +81,7 @@ func (stageBuilder *StageBuilder) DockerfileStageBuilder() DockerfileStageBuilde
 func (stageBuilder *StageBuilder) Build(ctx context.Context, opts container_backend.BuildOptions) error {
 	switch {
 	case stageBuilder.dockerfileBuilder != nil:
-		return stageBuilder.dockerfileBuilder.Build(ctx)
+		return stageBuilder.dockerfileBuilder.Build(ctx, opts)
 	case stageBuilder.dockerfileStageBuilder != nil:
 		return stageBuilder.dockerfileStageBuilder.Build(ctx, opts)
 	case stageBuilder.stapelStageBuilder != nil:

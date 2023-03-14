@@ -20,18 +20,24 @@ type LegacyStageImage struct {
 	buildImage          *legacyBaseImage
 	builtID             string
 	commitChangeOptions LegacyCommitChangeOptions
+	targetPlatform      string
 }
 
-func NewLegacyStageImage(fromImage *LegacyStageImage, name string, containerBackend ContainerBackend) *LegacyStageImage {
+func NewLegacyStageImage(fromImage *LegacyStageImage, name string, containerBackend ContainerBackend, targetPlatform string) *LegacyStageImage {
 	stage := &LegacyStageImage{}
 	stage.legacyBaseImage = newLegacyBaseImage(name, containerBackend)
 	stage.fromImage = fromImage
 	stage.container = newLegacyStageImageContainer(stage)
+	stage.targetPlatform = targetPlatform
 	return stage
 }
 
+func (i *LegacyStageImage) GetTargetPlatform() string {
+	return i.targetPlatform
+}
+
 func (i *LegacyStageImage) GetCopy() LegacyImageInterface {
-	ni := NewLegacyStageImage(i.fromImage, i.name, i.ContainerBackend)
+	ni := NewLegacyStageImage(i.fromImage, i.name, i.ContainerBackend, i.targetPlatform)
 	if desc := i.GetStageDescription(); desc != nil {
 		ni.SetStageDescription(desc.GetCopy())
 	} else if info := i.GetInfo(); info != nil {
@@ -61,6 +67,22 @@ func (i *LegacyStageImage) GetID() string {
 }
 
 func (i *LegacyStageImage) Build(ctx context.Context, options BuildOptions) error {
+	// FIXME(multiarch): docker server default platform should be defined using server-info, not current machine platform
+	if i.GetTargetPlatform() == i.ContainerBackend.GetDefaultPlatform() && i.ContainerBackend.GetDefaultPlatform() != "linux/amd64" {
+		logboek.Context(ctx).Error().LogF("Detected your default build platform as %s.\n", i.ContainerBackend.GetDefaultPlatform())
+		logboek.Context(ctx).Error().LogF("Building of stapel-type images using Docker-Server backend for platforms other than linux/amd64 is not supported.\n")
+		logboek.Context(ctx).Error().LogF("Please either:\n * confirm emulation of linux/amd64 by exlicitly setting --platform=linux/amd64 param;\n * or use Dockerfile-type image instead.\n")
+		logboek.Context(ctx).Error().LogLn()
+		return fmt.Errorf("building of stapel image using Docker-Server backend is unsupported on your current platform %q", i.ContainerBackend.GetDefaultPlatform())
+	}
+
+	if i.GetTargetPlatform() != "" && i.GetTargetPlatform() != "linux/amd64" {
+		logboek.Context(ctx).Error().LogF("Building of stapel-type images using Docker-Server backend for platforms other than linux/amd64 is not supported.\n")
+		logboek.Context(ctx).Error().LogF("Please either:\n * use Buildah backend to build stapel-type images for arbitrary platforms;\n * or use Dockerfile-type images with any backend.\n")
+		logboek.Context(ctx).Error().LogLn()
+		return fmt.Errorf("building of stapel image using Docker-Server backend is unsupported for specified platform %q", i.GetTargetPlatform())
+	}
+
 	containerLockName := ContainerLockName(i.container.Name())
 	if _, lock, err := werf.AcquireHostLock(ctx, containerLockName, lockgate.AcquireOptions{}); err != nil {
 		return fmt.Errorf("failed to lock %s: %w", containerLockName, err)
@@ -213,7 +235,13 @@ func (i *LegacyStageImage) Tag(ctx context.Context, name string) error {
 func (i *LegacyStageImage) Pull(ctx context.Context) error {
 	_ = i.ContainerBackend.(*DockerServerBackend)
 
-	if err := docker.CliPullWithRetries(ctx, i.name); err != nil {
+	var args []string
+	if i.targetPlatform != "" {
+		args = append(args, "--platform", i.targetPlatform)
+	}
+	args = append(args, i.name)
+
+	if err := docker.CliPullWithRetries(ctx, args...); err != nil {
 		return err
 	}
 

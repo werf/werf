@@ -24,7 +24,7 @@ func Parse(platformsStr []string) ([]specs.Platform, error) {
 			out = append(out, p...)
 			continue
 		}
-		p, err := parse(s)
+		p, err := ParsePlatform(s)
 		if err != nil {
 			return nil, err
 		}
@@ -33,7 +33,7 @@ func Parse(platformsStr []string) ([]specs.Platform, error) {
 	return out, nil
 }
 
-func parse(in string) (specs.Platform, error) {
+func ParsePlatform(in string) (specs.Platform, error) {
 	if strings.EqualFold(in, "local") {
 		return platforms.DefaultSpec(), nil
 	}

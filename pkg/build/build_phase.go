@@ -531,7 +531,7 @@ func (phase *BuildPhase) findAndFetchStageFromSecondaryStagesStorage(ctx context
 		err := logboek.Context(ctx).Default().LogProcess("Copy suitable stage from secondary %s", secondaryStagesStorage.String()).DoError(func() error {
 			// Copy suitable stage from a secondary stages storage to the primary stages storage
 			// while primary stages storage lock for this digest is held
-			if copiedStageDesc, err := storageManager.CopySuitableByDigestStage(ctx, secondaryStageDesc, secondaryStagesStorage, storageManager.GetStagesStorage(), phase.Conveyor.ContainerBackend); err != nil {
+			if copiedStageDesc, err := storageManager.CopySuitableByDigestStage(ctx, secondaryStageDesc, secondaryStagesStorage, storageManager.GetStagesStorage(), phase.Conveyor.ContainerBackend, img.TargetPlatform); err != nil {
 				return fmt.Errorf("unable to copy suitable stage %s from %s to %s: %w", secondaryStageDesc.StageID.String(), secondaryStagesStorage.String(), storageManager.GetStagesStorage().String(), err)
 			} else {
 				i := phase.Conveyor.GetOrCreateStageImage(copiedStageDesc.Info.Name, phase.StagesIterator.GetPrevImage(img, stg), stg, img)
@@ -783,7 +783,9 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 	}
 
 	if err := logboek.Context(ctx).Streams().DoErrorWithTag(fmt.Sprintf("%s/%s", img.LogName(), stg.Name()), img.LogTagStyle(), func() error {
-		return stageImage.Builder.Build(ctx, phase.ImageBuildOptions)
+		opts := phase.ImageBuildOptions
+		opts.TargetPlatform = img.TargetPlatform
+		return stageImage.Builder.Build(ctx, opts)
 	}); err != nil {
 		return fmt.Errorf("failed to build image for stage %s with digest %s: %w", stg.Name(), stg.GetDigest(), err)
 	}
