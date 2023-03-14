@@ -7,7 +7,7 @@ on:
         default: false
         type: string
       linuxAmd64Runner:
-        default: ubuntu-22.04
+        default: ubuntu-latest-4-cores
         type: string
 
 defaults:

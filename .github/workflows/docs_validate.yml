@@ -39,7 +39,7 @@ jobs:
       packages: integration/suites/docs
 
   check_broken_links:
-    runs-on: ubuntu-latest-16-cores
+    runs-on: ubuntu-latest-4-cores
     timeout-minutes: 60
     steps:
       - name: Install werf build dependencies
