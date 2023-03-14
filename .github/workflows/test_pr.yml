@@ -50,6 +50,33 @@ jobs:
       excludePackages: cmd/werf/docs
       forceSkip: ${{ github.event_name == 'pull_request' && needs.detect-changes.outputs.workflow_proceed == 'false' }}
 
+  build:
+    needs: detect-changes
+    strategy:
+      fail-fast: false
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    steps:
+      - name: Install werf build dependencies
+        run: sudo apt-get install -y gcc-aarch64-linux-gnu libbtrfs-dev file
+
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          cache: true
+          go-version-file: go.mod
+
+      - name: Install Task
+        uses: arduino/setup-task@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build
+        run: task -p build:dev:all
+
   e2e_simple:
     needs: detect-changes
     uses: ./.github/workflows/_test_e2e_regular.yml
