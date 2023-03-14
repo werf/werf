@@ -219,7 +219,7 @@ func (c *Conveyor) GetImportServer(ctx context.Context, targetPlatform, imageNam
 	c.GetServiceRWMutex("ImportServer").Lock()
 	defer c.GetServiceRWMutex("ImportServer").Unlock()
 
-	importServerName := fmt.Sprintf("%s")
+	importServerName := imageName
 	if stageName != "" {
 		importServerName += "/" + stageName
 	}
