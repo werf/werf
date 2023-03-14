@@ -23,7 +23,12 @@ func init() {
 		}
 	}
 
-	if err := docker.Init(context.Background(), "", true, true, platform); err != nil {
+	opts := docker.InitOptions{
+		Verbose:         true,
+		Debug:           true,
+		DefaultPlatform: platform,
+	}
+	if err := docker.Init(context.Background(), opts); err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "init werf docker failed: %s\n", err)
 		os.Exit(1)
 	}

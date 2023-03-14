@@ -71,6 +71,10 @@ func (c *LegacyStageImageContainer) prepareRunArgs(ctx context.Context) ([]strin
 	var args []string
 	args = append(args, fmt.Sprintf("--name=%s", c.name))
 
+	if c.image.GetTargetPlatform() != "" {
+		args = append(args, fmt.Sprintf("--platform=%s", c.image.GetTargetPlatform()))
+	}
+
 	runOptions, err := c.prepareRunOptions(ctx)
 	if err != nil {
 		return nil, err

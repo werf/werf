@@ -6,14 +6,11 @@ import (
 	"github.com/werf/werf/pkg/image"
 )
 
-type BuildOptions struct {
-	IntrospectBeforeError bool
-	IntrospectAfterError  bool
-}
-
 type LegacyImageInterface interface {
 	Name() string
 	SetName(name string)
+
+	GetTargetPlatform() string
 
 	Pull(ctx context.Context) error
 	Push(ctx context.Context) error

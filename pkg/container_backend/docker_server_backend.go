@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	go_runtime "runtime"
 	"strings"
 
 	"github.com/docker/docker/api/types"
@@ -23,41 +22,23 @@ func NewDockerServerBackend() *DockerServerBackend {
 	return &DockerServerBackend{}
 }
 
+func (runtime *DockerServerBackend) GetDefaultPlatform() string {
+	return docker.GetDefaultPlatform()
+}
+
+func (runtime *DockerServerBackend) GetRuntimePlatform() string {
+	return docker.GetRuntimePlatform()
+}
+
 func (runtime *DockerServerBackend) HasStapelBuildSupport() bool {
 	return false
-}
-
-func (runtime *DockerServerBackend) IsTargetPlatformSupportedForStapel(targetPlatform string) bool {
-	if targetPlatform == "" {
-		// werf uses current host platform in such case,
-		// non amd64 platform is not supported for stapel-builder+docker-server backend
-		//  because of usage of werf's service image (stapel image is built only for amd64).
-
-		if go_runtime.GOARCH != "amd64" {
-			return false
-		}
-	} else if targetPlatform != "linux/amd64" {
-		// user specified unsupported target platform
-		return false
-	}
-
-	return true
-}
-
-func (runtime *DockerServerBackend) IsTargetPlatformSupportedForStagedDockerfile(targetPlatform string) bool {
-	// no staged dockerfile support at all
-	return false
-}
-
-func (runtime *DockerServerBackend) IsTargetPlatformSupportedForDockerfile(targetPlatform string) bool {
-	return true
 }
 
 func (runtime *DockerServerBackend) BuildStapelStage(ctx context.Context, baseImage string, opts BuildStapelStageOptions) (string, error) {
 	panic("BuildStapelStage does not implemented for DockerServerBackend. Please report the bug if you've received this message.")
 }
 
-func (runtime *DockerServerBackend) CalculateDependencyImportChecksum(ctx context.Context, dependencyImport DependencyImportSpec) (string, error) {
+func (runtime *DockerServerBackend) CalculateDependencyImportChecksum(ctx context.Context, dependencyImport DependencyImportSpec, opts CalculateDependencyImportChecksum) (string, error) {
 	panic("CalculateDependencyImportChecksum does not implemented for DockerServerBackend. Please report the bug if you've received this message.")
 }
 
@@ -70,8 +51,11 @@ func (runtime *DockerServerBackend) BuildDockerfile(ctx context.Context, _ []byt
 	}
 
 	var cliArgs []string
-
 	cliArgs = append(cliArgs, "--file", opts.DockerfileCtxRelPath)
+
+	if opts.TargetPlatform != "" {
+		cliArgs = append(cliArgs, "--platform", opts.TargetPlatform)
+	}
 	if opts.Target != "" {
 		cliArgs = append(cliArgs, "--target", opts.Target)
 	}
@@ -144,7 +128,7 @@ func (runtime *DockerServerBackend) GetImageInspect(ctx context.Context, ref str
 }
 
 func (runtime *DockerServerBackend) RefreshImageObject(ctx context.Context, img LegacyImageInterface) error {
-	if info, err := runtime.GetImageInfo(ctx, img.Name(), GetImageInfoOpts{}); err != nil {
+	if info, err := runtime.GetImageInfo(ctx, img.Name(), GetImageInfoOpts{TargetPlatform: img.GetTargetPlatform()}); err != nil {
 		return err
 	} else {
 		img.SetInfo(info)
@@ -152,6 +136,7 @@ func (runtime *DockerServerBackend) RefreshImageObject(ctx context.Context, img 
 	return nil
 }
 
+// FIXME(multiarch): targetPlatform support needed?
 func (runtime *DockerServerBackend) RenameImage(ctx context.Context, img LegacyImageInterface, newImageName string, removeOldName bool) error {
 	if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Tagging image %s by name %s", img.Name(), newImageName)).DoError(func() error {
 		if err := docker.CliTag(ctx, img.Name(), newImageName); err != nil {
@@ -175,7 +160,7 @@ func (runtime *DockerServerBackend) RenameImage(ctx context.Context, img LegacyI
 
 	img.SetName(newImageName)
 
-	if info, err := runtime.GetImageInfo(ctx, img.Name(), GetImageInfoOpts{}); err != nil {
+	if info, err := runtime.GetImageInfo(ctx, img.Name(), GetImageInfoOpts{TargetPlatform: img.GetTargetPlatform()}); err != nil {
 		return err
 	} else {
 		img.SetInfo(info)
@@ -193,7 +178,7 @@ func (runtime *DockerServerBackend) RenameImage(ctx context.Context, img LegacyI
 
 func (runtime *DockerServerBackend) RemoveImage(ctx context.Context, img LegacyImageInterface) error {
 	return logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Removing image tag %s", img.Name())).DoError(func() error {
-		return runtime.Rmi(ctx, img.Name(), RmiOpts{})
+		return runtime.Rmi(ctx, img.Name(), RmiOpts{TargetPlatform: img.GetTargetPlatform()})
 	})
 }
 
@@ -202,7 +187,7 @@ func (runtime *DockerServerBackend) PullImageFromRegistry(ctx context.Context, i
 		return fmt.Errorf("unable to pull image %s: %w", img.Name(), err)
 	}
 
-	if info, err := runtime.GetImageInfo(ctx, img.Name(), GetImageInfoOpts{}); err != nil {
+	if info, err := runtime.GetImageInfo(ctx, img.Name(), GetImageInfoOpts{TargetPlatform: img.GetTargetPlatform()}); err != nil {
 		return fmt.Errorf("unable to get inspect of image %s: %w", img.Name(), err)
 	} else {
 		img.SetInfo(info)
@@ -220,7 +205,13 @@ func (runtime *DockerServerBackend) Push(ctx context.Context, ref string, opts P
 }
 
 func (runtime *DockerServerBackend) Pull(ctx context.Context, ref string, opts PullOpts) error {
-	if err := docker.CliPull(ctx, ref); err != nil {
+	var args []string
+	if opts.TargetPlatform != "" {
+		args = append(args, "--platform", opts.TargetPlatform)
+	}
+	args = append(args, ref)
+
+	if err := docker.CliPull(ctx, args...); err != nil {
 		return fmt.Errorf("unable to pull image %s: %w", ref, err)
 	}
 	return nil

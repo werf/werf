@@ -6,31 +6,23 @@ import (
 	"github.com/werf/werf/pkg/image"
 )
 
-type CommonOpts struct{}
-
-type TagOpts struct {
-	CommonOpts
+type CommonOpts struct {
+	TargetPlatform string
 }
 
-type PushOpts struct {
-	CommonOpts
-}
-
-type PullOpts struct {
-	CommonOpts
-}
-
-type RmiOpts struct {
-	CommonOpts
-}
-
-type GetImageInfoOpts struct {
-	CommonOpts
-}
+type (
+	TagOpts                           CommonOpts
+	PushOpts                          CommonOpts
+	PullOpts                          CommonOpts
+	RmiOpts                           CommonOpts
+	GetImageInfoOpts                  CommonOpts
+	CalculateDependencyImportChecksum CommonOpts
+)
 
 type BuildDockerfileOpts struct {
 	CommonOpts
 
+	TargetPlatform       string
 	BuildContextArchive  BuildContextArchiver
 	DockerfileCtxRelPath string // TODO: remove this and instead write the []byte dockerfile to /Dockerfile in the ContextTar inDockerServerBackend.BuildDockerfile().
 	Target               string
@@ -48,6 +40,12 @@ type BuildDockerfileStageOptions struct {
 	BuildContextArchive BuildContextArchiver
 }
 
+type BuildOptions struct {
+	TargetPlatform        string
+	IntrospectBeforeError bool
+	IntrospectAfterError  bool
+}
+
 type ContainerBackend interface {
 	Tag(ctx context.Context, ref, newRef string, opts TagOpts) error
 	Push(ctx context.Context, ref string, opts PushOpts) error
@@ -58,12 +56,11 @@ type ContainerBackend interface {
 	BuildDockerfile(ctx context.Context, dockerfile []byte, opts BuildDockerfileOpts) (string, error)
 	BuildDockerfileStage(ctx context.Context, baseImage string, opts BuildDockerfileStageOptions, instructions ...InstructionInterface) (string, error)
 	BuildStapelStage(ctx context.Context, baseImage string, opts BuildStapelStageOptions) (string, error)
-	CalculateDependencyImportChecksum(ctx context.Context, dependencyImport DependencyImportSpec) (string, error)
+	CalculateDependencyImportChecksum(ctx context.Context, dependencyImport DependencyImportSpec, opts CalculateDependencyImportChecksum) (string, error)
 
 	HasStapelBuildSupport() bool
-	IsTargetPlatformSupportedForStapel(targetPlatform string) bool
-	IsTargetPlatformSupportedForStagedDockerfile(targetPlatform string) bool
-	IsTargetPlatformSupportedForDockerfile(targetPlatform string) bool
+	GetDefaultPlatform() string
+	GetRuntimePlatform() string
 
 	String() string
 

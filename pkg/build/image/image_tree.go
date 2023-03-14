@@ -52,8 +52,11 @@ func (tree *ImagesTree) Calculate(ctx context.Context) error {
 		return fmt.Errorf("invalid target platforms: %w", err)
 	}
 	if len(targetPlatforms) == 0 {
-		targetPlatforms = []string{""}
+		targetPlatforms = []string{tree.ContainerBackend.GetDefaultPlatform()}
 	}
+
+	commonImageOpts := tree.CommonImageOptions
+	commonImageOpts.ForceTargetPlatformLogging = (len(targetPlatforms) > 1)
 
 	builder := NewImagesSetsBuilder()
 
@@ -80,18 +83,15 @@ func (tree *ImagesTree) Calculate(ctx context.Context) error {
 						var err error
 						var newImagesSets ImagesSets
 
-						commonOpts := tree.CommonImageOptions
-						commonOpts.TargetPlatform = targetPlatform
-
 						switch imageConfig := imageConfigI.(type) {
 						case config.StapelImageInterface:
-							newImagesSets, err = MapStapelConfigToImagesSets(ctx, tree.werfConfig.Meta, imageConfig, commonOpts)
+							newImagesSets, err = MapStapelConfigToImagesSets(ctx, tree.werfConfig.Meta, imageConfig, targetPlatform, commonImageOpts)
 							if err != nil {
 								return fmt.Errorf("unable to map stapel config to images sets: %w", err)
 							}
 
 						case *config.ImageFromDockerfile:
-							newImagesSets, err = MapDockerfileConfigToImagesSets(ctx, imageConfig, commonOpts)
+							newImagesSets, err = MapDockerfileConfigToImagesSets(ctx, imageConfig, targetPlatform, commonImageOpts)
 							if err != nil {
 								return fmt.Errorf("unable to map dockerfile to images sets: %w", err)
 							}

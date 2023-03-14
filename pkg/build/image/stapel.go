@@ -12,8 +12,8 @@ import (
 	"github.com/werf/werf/pkg/git_repo"
 )
 
-func MapStapelConfigToImagesSets(ctx context.Context, metaConfig *config.Meta, stapelImageConfig config.StapelImageInterface, opts CommonImageOptions) (ImagesSets, error) {
-	img, err := mapStapelConfigToImage(ctx, metaConfig, stapelImageConfig, opts)
+func MapStapelConfigToImagesSets(ctx context.Context, metaConfig *config.Meta, stapelImageConfig config.StapelImageInterface, targetPlatform string, opts CommonImageOptions) (ImagesSets, error) {
+	img, err := mapStapelConfigToImage(ctx, metaConfig, stapelImageConfig, targetPlatform, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -25,7 +25,7 @@ func MapStapelConfigToImagesSets(ctx context.Context, metaConfig *config.Meta, s
 	return ret, nil
 }
 
-func mapStapelConfigToImage(ctx context.Context, metaConfig *config.Meta, stapelImageConfig config.StapelImageInterface, opts CommonImageOptions) (*Image, error) {
+func mapStapelConfigToImage(ctx context.Context, metaConfig *config.Meta, stapelImageConfig config.StapelImageInterface, targetPlatform string, opts CommonImageOptions) (*Image, error) {
 	imageBaseConfig := stapelImageConfig.ImageBaseConfig()
 	imageName := imageBaseConfig.Name
 	imageArtifact := stapelImageConfig.IsArtifact()
@@ -46,7 +46,7 @@ func mapStapelConfigToImage(ctx context.Context, metaConfig *config.Meta, stapel
 		imageOpts.BaseImageName = fromImageName
 	}
 
-	image, err := NewImage(ctx, imageName, baseImageType, imageOpts)
+	image, err := NewImage(ctx, targetPlatform, imageName, baseImageType, imageOpts)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create image %q: %w", imageName, err)
 	}

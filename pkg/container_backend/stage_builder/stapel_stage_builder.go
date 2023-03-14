@@ -29,9 +29,11 @@ func NewStapelStageBuilder(containerBackend container_backend.ContainerBackend, 
 }
 
 func (builder *StapelStageBuilder) Build(ctx context.Context, opts container_backend.BuildOptions) error {
+	finalOpts := builder.BuildStapelStageOptions
+	finalOpts.TargetPlatform = opts.TargetPlatform
 	// TODO: support introspect options
 
-	builtID, err := builder.ContainerBackend.BuildStapelStage(ctx, builder.BaseImage, builder.BuildStapelStageOptions)
+	builtID, err := builder.ContainerBackend.BuildStapelStage(ctx, builder.BaseImage, finalOpts)
 	if err != nil {
 		return fmt.Errorf("error building stapel stage with %s: %w", builder.ContainerBackend.String(), err)
 	}

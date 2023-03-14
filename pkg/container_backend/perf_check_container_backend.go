@@ -19,16 +19,12 @@ func (runtime *PerfCheckContainerBackend) HasStapelBuildSupport() bool {
 	return runtime.ContainerBackend.HasStapelBuildSupport()
 }
 
-func (runtime *PerfCheckContainerBackend) IsTargetPlatformSupportedForStapel(targetPlatform string) bool {
-	return runtime.ContainerBackend.IsTargetPlatformSupportedForStapel(targetPlatform)
+func (runtime *PerfCheckContainerBackend) GetDefaultPlatform() string {
+	return runtime.ContainerBackend.GetDefaultPlatform()
 }
 
-func (runtime *PerfCheckContainerBackend) IsTargetPlatformSupportedForStagedDockerfile(targetPlatform string) bool {
-	return runtime.ContainerBackend.IsTargetPlatformSupportedForStagedDockerfile(targetPlatform)
-}
-
-func (runtime *PerfCheckContainerBackend) IsTargetPlatformSupportedForDockerfile(targetPlatform string) bool {
-	return runtime.ContainerBackend.IsTargetPlatformSupportedForDockerfile(targetPlatform)
+func (runtime *PerfCheckContainerBackend) GetRuntimePlatform() string {
+	return runtime.ContainerBackend.GetRuntimePlatform()
 }
 
 func (runtime *PerfCheckContainerBackend) ShouldCleanupDockerfileImage() bool {
@@ -99,10 +95,10 @@ func (runtime *PerfCheckContainerBackend) BuildStapelStage(ctx context.Context, 
 	return
 }
 
-func (runtime *PerfCheckContainerBackend) CalculateDependencyImportChecksum(ctx context.Context, dependencyImport DependencyImportSpec) (resID string, resErr error) {
+func (runtime *PerfCheckContainerBackend) CalculateDependencyImportChecksum(ctx context.Context, dependencyImport DependencyImportSpec, opts CalculateDependencyImportChecksum) (resID string, resErr error) {
 	logboek.Context(ctx).Default().LogProcess("ContainerBackend.BuildDockerfile").
 		Do(func() {
-			resID, resErr = runtime.ContainerBackend.CalculateDependencyImportChecksum(ctx, dependencyImport)
+			resID, resErr = runtime.ContainerBackend.CalculateDependencyImportChecksum(ctx, dependencyImport, opts)
 		})
 	return
 }

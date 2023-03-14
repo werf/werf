@@ -42,26 +42,27 @@ func NewBuildahBackend(buildah buildah.Buildah, opts BuildahBackendOptions) *Bui
 	return &BuildahBackend{buildah: buildah, BuildahBackendOptions: opts}
 }
 
-func (runtime *BuildahBackend) HasStapelBuildSupport() bool {
+func (backend *BuildahBackend) HasStapelBuildSupport() bool {
 	return true
 }
 
-func (runtime *BuildahBackend) IsTargetPlatformSupportedForStapel(targetPlatform string) bool {
-	return true
+func (backend *BuildahBackend) GetDefaultPlatform() string {
+	return backend.buildah.GetDefaultPlatform()
 }
 
-func (runtime *BuildahBackend) IsTargetPlatformSupportedForStagedDockerfile(targetPlatform string) bool {
-	return true
+func (backend *BuildahBackend) GetRuntimePlatform() string {
+	return backend.buildah.GetRuntimePlatform()
 }
 
-func (runtime *BuildahBackend) IsTargetPlatformSupportedForDockerfile(targetPlatform string) bool {
-	return true
-}
-
-func (runtime *BuildahBackend) getBuildahCommonOpts(ctx context.Context, suppressLog bool) (opts buildah.CommonOpts) {
+func (backend *BuildahBackend) getBuildahCommonOpts(ctx context.Context, suppressLog bool, logWriterOverride io.Writer, targetPlatform string) (opts buildah.CommonOpts) {
 	if !suppressLog {
-		opts.LogWriter = logboek.Context(ctx).OutStream()
+		if logWriterOverride != nil {
+			opts.LogWriter = logWriterOverride
+		} else {
+			opts.LogWriter = logboek.Context(ctx).OutStream()
+		}
 	}
+	opts.TargetPlatform = targetPlatform
 
 	return
 }
@@ -72,7 +73,7 @@ type containerDesc struct {
 	RootMount string
 }
 
-func (runtime *BuildahBackend) createContainers(ctx context.Context, images []string) ([]*containerDesc, error) {
+func (backend *BuildahBackend) createContainers(ctx context.Context, images []string, opts CommonOpts) ([]*containerDesc, error) {
 	var res []*containerDesc
 
 	for _, img := range images {
@@ -82,7 +83,7 @@ func (runtime *BuildahBackend) createContainers(ctx context.Context, images []st
 			panic("cannot start container for an empty image param")
 		}
 
-		_, err := runtime.buildah.FromCommand(ctx, containerID, img, buildah.FromCommandOpts(runtime.getBuildahCommonOpts(ctx, true)))
+		_, err := backend.buildah.FromCommand(ctx, containerID, img, buildah.FromCommandOpts(backend.getBuildahCommonOpts(ctx, true, nil, opts.TargetPlatform)))
 		if err != nil {
 			return nil, fmt.Errorf("unable to create container using base image %q: %w", img, err)
 		}
@@ -94,9 +95,9 @@ func (runtime *BuildahBackend) createContainers(ctx context.Context, images []st
 	return res, nil
 }
 
-func (runtime *BuildahBackend) removeContainers(ctx context.Context, containers []*containerDesc) error {
+func (backend *BuildahBackend) removeContainers(ctx context.Context, containers []*containerDesc, opts CommonOpts) error {
 	for _, cont := range containers {
-		if err := runtime.buildah.Rm(ctx, cont.Name, buildah.RmOpts(runtime.getBuildahCommonOpts(ctx, true))); err != nil {
+		if err := backend.buildah.Rm(ctx, cont.Name, buildah.RmOpts(backend.getBuildahCommonOpts(ctx, true, nil, opts.TargetPlatform))); err != nil {
 			return fmt.Errorf("unable to remove container %q: %w", cont.Name, err)
 		}
 	}
@@ -104,9 +105,9 @@ func (runtime *BuildahBackend) removeContainers(ctx context.Context, containers 
 	return nil
 }
 
-func (runtime *BuildahBackend) mountContainers(ctx context.Context, containers []*containerDesc) error {
+func (backend *BuildahBackend) mountContainers(ctx context.Context, containers []*containerDesc, opts CommonOpts) error {
 	for _, cont := range containers {
-		containerRoot, err := runtime.buildah.Mount(ctx, cont.Name, buildah.MountOpts(runtime.getBuildahCommonOpts(ctx, true)))
+		containerRoot, err := backend.buildah.Mount(ctx, cont.Name, buildah.MountOpts(backend.getBuildahCommonOpts(ctx, true, nil, opts.TargetPlatform)))
 		if err != nil {
 			return fmt.Errorf("unable to mount container %q root dir: %w", cont.Name, err)
 		}
@@ -116,9 +117,9 @@ func (runtime *BuildahBackend) mountContainers(ctx context.Context, containers [
 	return nil
 }
 
-func (runtime *BuildahBackend) unmountContainers(ctx context.Context, containers []*containerDesc) error {
+func (backend *BuildahBackend) unmountContainers(ctx context.Context, containers []*containerDesc, opts CommonOpts) error {
 	for _, cont := range containers {
-		if err := runtime.buildah.Umount(ctx, cont.Name, buildah.UmountOpts(runtime.getBuildahCommonOpts(ctx, true))); err != nil {
+		if err := backend.buildah.Umount(ctx, cont.Name, buildah.UmountOpts(backend.getBuildahCommonOpts(ctx, true, nil, opts.TargetPlatform))); err != nil {
 			return fmt.Errorf("container %q: %w", cont.Name, err)
 		}
 	}
@@ -153,8 +154,8 @@ fi
 `, strings.Join(scriptCommands, "\n")))
 }
 
-func (runtime *BuildahBackend) applyCommands(ctx context.Context, container *containerDesc, buildVolumes, commands []string) error {
-	hostScriptPath := filepath.Join(runtime.TmpDir, fmt.Sprintf("script-%s.sh", uuid.New().String()))
+func (backend *BuildahBackend) applyCommands(ctx context.Context, container *containerDesc, buildVolumes, commands []string, opts CommonOpts) error {
+	hostScriptPath := filepath.Join(backend.TmpDir, fmt.Sprintf("script-%s.sh", uuid.New().String()))
 	if err := os.WriteFile(hostScriptPath, makeScript(commands), os.FileMode(0o555)); err != nil {
 		return fmt.Errorf("unable to write script file %q: %w", hostScriptPath, err)
 	}
@@ -177,8 +178,8 @@ func (runtime *BuildahBackend) applyCommands(ctx context.Context, container *con
 		mounts = append(mounts, m...)
 	}
 
-	if err := runtime.buildah.RunCommand(ctx, container.Name, []string{"sh", destScriptPath}, buildah.RunCommandOpts{
-		CommonOpts:   runtime.getBuildahCommonOpts(ctx, false),
+	if err := backend.buildah.RunCommand(ctx, container.Name, []string{"sh", destScriptPath}, buildah.RunCommandOpts{
+		CommonOpts:   backend.getBuildahCommonOpts(ctx, false, nil, opts.TargetPlatform),
 		User:         "0:0",
 		WorkingDir:   "/",
 		GlobalMounts: mounts,
@@ -189,28 +190,28 @@ func (runtime *BuildahBackend) applyCommands(ctx context.Context, container *con
 	return nil
 }
 
-func (runtime *BuildahBackend) CalculateDependencyImportChecksum(ctx context.Context, dependencyImport DependencyImportSpec) (string, error) {
+func (backend *BuildahBackend) CalculateDependencyImportChecksum(ctx context.Context, dependencyImport DependencyImportSpec, opts CalculateDependencyImportChecksum) (string, error) {
 	// TODO(2.0): Take into account empty dirs
 
 	var container *containerDesc
-	if c, err := runtime.createContainers(ctx, []string{dependencyImport.ImageName}); err != nil {
+	if c, err := backend.createContainers(ctx, []string{dependencyImport.ImageName}, CommonOpts(opts)); err != nil {
 		return "", err
 	} else {
 		container = c[0]
 	}
 	defer func() {
-		if err := runtime.removeContainers(ctx, []*containerDesc{container}); err != nil {
+		if err := backend.removeContainers(ctx, []*containerDesc{container}, CommonOpts(opts)); err != nil {
 			logboek.Context(ctx).Error().LogF("ERROR: unable to remove temporal dependency container %q: %s\n", container.Name, err)
 		}
 	}()
 
 	logboek.Context(ctx).Debug().LogF("Mounting dependency container %s\n", container.Name)
-	if err := runtime.mountContainers(ctx, []*containerDesc{container}); err != nil {
+	if err := backend.mountContainers(ctx, []*containerDesc{container}, CommonOpts(opts)); err != nil {
 		return "", fmt.Errorf("unable to mount build container %s: %w", container.Name, err)
 	}
 	defer func() {
 		logboek.Context(ctx).Debug().LogF("Unmounting build container %s\n", container.Name)
-		if err := runtime.unmountContainers(ctx, []*containerDesc{container}); err != nil {
+		if err := backend.unmountContainers(ctx, []*containerDesc{container}, CommonOpts(opts)); err != nil {
 			logboek.Context(ctx).Error().LogF("ERROR: unable to unmount containers: %s\n", err)
 		}
 	}()
@@ -274,7 +275,7 @@ func (runtime *BuildahBackend) CalculateDependencyImportChecksum(ctx context.Con
 	return fmt.Sprintf("%x", hash.Sum(nil)), nil
 }
 
-func (runtime *BuildahBackend) applyDataArchives(ctx context.Context, container *containerDesc, dataArchives []DataArchiveSpec) error {
+func (backend *BuildahBackend) applyDataArchives(ctx context.Context, container *containerDesc, dataArchives []DataArchiveSpec) error {
 	for _, archive := range dataArchives {
 		destPath := filepath.Join(container.RootMount, archive.To)
 
@@ -321,7 +322,7 @@ func (runtime *BuildahBackend) applyDataArchives(ctx context.Context, container 
 	return nil
 }
 
-func (runtime *BuildahBackend) applyRemoveData(ctx context.Context, container *containerDesc, removeData []RemoveDataSpec) error {
+func (backend *BuildahBackend) applyRemoveData(ctx context.Context, container *containerDesc, removeData []RemoveDataSpec) error {
 	for _, spec := range removeData {
 		switch spec.Type {
 		case RemoveExactPath:
@@ -353,7 +354,7 @@ func (runtime *BuildahBackend) applyRemoveData(ctx context.Context, container *c
 	return nil
 }
 
-func (runtime *BuildahBackend) applyDependenciesImports(ctx context.Context, container *containerDesc, depImports []DependencyImportSpec) error {
+func (backend *BuildahBackend) applyDependenciesImports(ctx context.Context, container *containerDesc, depImports []DependencyImportSpec, opts CommonOpts) error {
 	var depImages []string
 	for _, imp := range depImports {
 		if util.IsStringsContainValue(depImages, imp.ImageName) {
@@ -364,24 +365,24 @@ func (runtime *BuildahBackend) applyDependenciesImports(ctx context.Context, con
 	}
 
 	logboek.Context(ctx).Debug().LogF("Creating containers for depContainers images %v\n", depImages)
-	createdDepContainers, err := runtime.createContainers(ctx, depImages)
+	createdDepContainers, err := backend.createContainers(ctx, depImages, opts)
 	if err != nil {
 		return fmt.Errorf("unable to create depContainers containers: %w", err)
 	}
 	defer func() {
-		if err := runtime.removeContainers(ctx, createdDepContainers); err != nil {
+		if err := backend.removeContainers(ctx, createdDepContainers, opts); err != nil {
 			logboek.Context(ctx).Error().LogF("ERROR: unable to remove temporal depContainers containers: %s\n", err)
 		}
 	}()
 
 	// NOTE: maybe it is more optimal not to mount all dependencies at once, but mount one-by-one
 	logboek.Context(ctx).Debug().LogF("Mounting depContainers containers %v\n", createdDepContainers)
-	if err := runtime.mountContainers(ctx, createdDepContainers); err != nil {
+	if err := backend.mountContainers(ctx, createdDepContainers, opts); err != nil {
 		return fmt.Errorf("unable to mount containers: %w", err)
 	}
 	defer func() {
 		logboek.Context(ctx).Debug().LogF("Unmounting depContainers containers %v\n", createdDepContainers)
-		if err := runtime.unmountContainers(ctx, createdDepContainers); err != nil {
+		if err := backend.unmountContainers(ctx, createdDepContainers, opts); err != nil {
 			logboek.Context(ctx).Error().LogF("ERROR: unable to unmount containers: %s\n", err)
 		}
 	}()
@@ -438,28 +439,28 @@ func (runtime *BuildahBackend) applyDependenciesImports(ctx context.Context, con
 	return nil
 }
 
-func (runtime *BuildahBackend) BuildDockerfileStage(ctx context.Context, baseImage string, opts BuildDockerfileStageOptions, instructions ...InstructionInterface) (string, error) {
+func (backend *BuildahBackend) BuildDockerfileStage(ctx context.Context, baseImage string, opts BuildDockerfileStageOptions, instructions ...InstructionInterface) (string, error) {
 	var container *containerDesc
-	if c, err := runtime.createContainers(ctx, []string{baseImage}); err != nil {
+	if c, err := backend.createContainers(ctx, []string{baseImage}, opts.CommonOpts); err != nil {
 		return "", err
 	} else {
 		container = c[0]
 	}
 
 	defer func() {
-		if err := runtime.removeContainers(ctx, []*containerDesc{container}); err != nil {
+		if err := backend.removeContainers(ctx, []*containerDesc{container}, opts.CommonOpts); err != nil {
 			logboek.Context(ctx).Error().LogF("ERROR: unable to remove temporary build container: %s\n", err)
 		}
 	}()
 	// TODO: cleanup orphan build containers in werf-host-cleanup procedure
 
 	logboek.Context(ctx).Debug().LogF("Mounting build container %s\n", container.Name)
-	if err := runtime.mountContainers(ctx, []*containerDesc{container}); err != nil {
+	if err := backend.mountContainers(ctx, []*containerDesc{container}, opts.CommonOpts); err != nil {
 		return "", fmt.Errorf("unable to mount build container %s: %w", container.Name, err)
 	}
 	defer func() {
 		logboek.Context(ctx).Debug().LogF("Unmounting build container %s\n", container.Name)
-		if err := runtime.unmountContainers(ctx, []*containerDesc{container}); err != nil {
+		if err := backend.unmountContainers(ctx, []*containerDesc{container}, opts.CommonOpts); err != nil {
 			logboek.Context(ctx).Error().LogF("ERROR: unable to unmount containers: %s\n", err)
 		}
 	}()
@@ -467,14 +468,14 @@ func (runtime *BuildahBackend) BuildDockerfileStage(ctx context.Context, baseIma
 	logboek.Context(ctx).Debug().LogF("Executing commands for build container %s: %#v\n", container.Name, instructions)
 
 	for _, instruction := range instructions {
-		if err := instruction.Apply(ctx, container.Name, runtime.buildah, runtime.getBuildahCommonOpts(ctx, false), opts.BuildContextArchive); err != nil {
+		if err := instruction.Apply(ctx, container.Name, backend.buildah, backend.getBuildahCommonOpts(ctx, false, nil, opts.TargetPlatform), opts.BuildContextArchive); err != nil {
 			return "", fmt.Errorf("unable to apply instruction %s: %w", instruction.Name(), err)
 		}
 	}
 
 	logboek.Context(ctx).Debug().LogF("Committing build container %s\n", container.Name)
-	imageID, err := runtime.buildah.Commit(ctx, container.Name, buildah.CommitOpts{
-		CommonOpts: runtime.getBuildahCommonOpts(ctx, true),
+	imageID, err := backend.buildah.Commit(ctx, container.Name, buildah.CommitOpts{
+		CommonOpts: backend.getBuildahCommonOpts(ctx, true, nil, opts.TargetPlatform),
 	})
 	if err != nil {
 		return "", fmt.Errorf("error committing container %s: %w", container.Name, err)
@@ -483,15 +484,17 @@ func (runtime *BuildahBackend) BuildDockerfileStage(ctx context.Context, baseIma
 	return imageID, nil
 }
 
-func (runtime *BuildahBackend) BuildStapelStage(ctx context.Context, baseImage string, opts BuildStapelStageOptions) (string, error) {
+func (backend *BuildahBackend) BuildStapelStage(ctx context.Context, baseImage string, opts BuildStapelStageOptions) (string, error) {
+	commonOpts := CommonOpts{TargetPlatform: opts.TargetPlatform}
+
 	var container *containerDesc
-	if c, err := runtime.createContainers(ctx, []string{baseImage}); err != nil {
+	if c, err := backend.createContainers(ctx, []string{baseImage}, commonOpts); err != nil {
 		return "", err
 	} else {
 		container = c[0]
 	}
 	defer func() {
-		if err := runtime.removeContainers(ctx, []*containerDesc{container}); err != nil {
+		if err := backend.removeContainers(ctx, []*containerDesc{container}, commonOpts); err != nil {
 			logboek.Context(ctx).Error().LogF("ERROR: unable to remove temporal build container: %s\n", err)
 		}
 	}()
@@ -499,34 +502,34 @@ func (runtime *BuildahBackend) BuildStapelStage(ctx context.Context, baseImage s
 
 	if len(opts.DependencyImportSpecs)+len(opts.DataArchiveSpecs)+len(opts.RemoveDataSpecs) > 0 {
 		logboek.Context(ctx).Debug().LogF("Mounting build container %s\n", container.Name)
-		if err := runtime.mountContainers(ctx, []*containerDesc{container}); err != nil {
+		if err := backend.mountContainers(ctx, []*containerDesc{container}, commonOpts); err != nil {
 			return "", fmt.Errorf("unable to mount build container %s: %w", container.Name, err)
 		}
 		defer func() {
 			logboek.Context(ctx).Debug().LogF("Unmounting build container %s\n", container.Name)
-			if err := runtime.unmountContainers(ctx, []*containerDesc{container}); err != nil {
+			if err := backend.unmountContainers(ctx, []*containerDesc{container}, commonOpts); err != nil {
 				logboek.Context(ctx).Error().LogF("ERROR: unable to unmount containers: %s\n", err)
 			}
 		}()
 	}
 
 	if len(opts.DependencyImportSpecs) > 0 {
-		if err := runtime.applyDependenciesImports(ctx, container, opts.DependencyImportSpecs); err != nil {
+		if err := backend.applyDependenciesImports(ctx, container, opts.DependencyImportSpecs, commonOpts); err != nil {
 			return "", err
 		}
 	}
 	if len(opts.DataArchiveSpecs) > 0 {
-		if err := runtime.applyDataArchives(ctx, container, opts.DataArchiveSpecs); err != nil {
+		if err := backend.applyDataArchives(ctx, container, opts.DataArchiveSpecs); err != nil {
 			return "", err
 		}
 	}
 	if len(opts.RemoveDataSpecs) > 0 {
-		if err := runtime.applyRemoveData(ctx, container, opts.RemoveDataSpecs); err != nil {
+		if err := backend.applyRemoveData(ctx, container, opts.RemoveDataSpecs); err != nil {
 			return "", err
 		}
 	}
 	if len(opts.Commands) > 0 {
-		if err := runtime.applyCommands(ctx, container, opts.BuildVolumes, opts.Commands); err != nil {
+		if err := backend.applyCommands(ctx, container, opts.BuildVolumes, opts.Commands, commonOpts); err != nil {
 			return "", err
 		}
 	}
@@ -537,8 +540,8 @@ func (runtime *BuildahBackend) BuildStapelStage(ctx context.Context, baseImage s
 	}
 
 	logboek.Context(ctx).Debug().LogF("Setting config for build container %q\n", container.Name)
-	if err := runtime.buildah.Config(ctx, container.Name, buildah.ConfigOpts{
-		CommonOpts:  runtime.getBuildahCommonOpts(ctx, true),
+	if err := backend.buildah.Config(ctx, container.Name, buildah.ConfigOpts{
+		CommonOpts:  backend.getBuildahCommonOpts(ctx, true, nil, opts.TargetPlatform),
 		Labels:      opts.Labels,
 		Volumes:     opts.Volumes,
 		Expose:      opts.Expose,
@@ -555,7 +558,7 @@ func (runtime *BuildahBackend) BuildStapelStage(ctx context.Context, baseImage s
 	// TODO(stapel-to-buildah): Save container name as builtID. There is no need to commit an image here,
 	//                            because buildah allows to commit and push directly container, which would happen later.
 	logboek.Context(ctx).Debug().LogF("committing container %q\n", container.Name)
-	imgID, err := runtime.buildah.Commit(ctx, container.Name, buildah.CommitOpts{CommonOpts: runtime.getBuildahCommonOpts(ctx, true)})
+	imgID, err := backend.buildah.Commit(ctx, container.Name, buildah.CommitOpts{CommonOpts: backend.getBuildahCommonOpts(ctx, true, nil, opts.TargetPlatform)})
 	if err != nil {
 		return "", fmt.Errorf("unable to commit container %q: %w", container.Name, err)
 	}
@@ -564,8 +567,8 @@ func (runtime *BuildahBackend) BuildStapelStage(ctx context.Context, baseImage s
 }
 
 // GetImageInfo returns nil, nil if image not found.
-func (runtime *BuildahBackend) GetImageInfo(ctx context.Context, ref string, opts GetImageInfoOpts) (*image.Info, error) {
-	inspect, err := runtime.buildah.Inspect(ctx, ref)
+func (backend *BuildahBackend) GetImageInfo(ctx context.Context, ref string, opts GetImageInfoOpts) (*image.Info, error) {
+	inspect, err := backend.buildah.Inspect(ctx, ref)
 	if err != nil {
 		return nil, fmt.Errorf("error getting buildah inspect of %q: %w", ref, err)
 	}
@@ -597,54 +600,55 @@ func (runtime *BuildahBackend) GetImageInfo(ctx context.Context, ref string, opt
 	}, nil
 }
 
-func (runtime *BuildahBackend) Rmi(ctx context.Context, ref string, opts RmiOpts) error {
+func (backend *BuildahBackend) Rmi(ctx context.Context, ref string, opts RmiOpts) error {
 	var logWriter io.Writer
 	if logboek.Context(ctx).Info().IsAccepted() {
 		logWriter = logboek.Context(ctx).OutStream()
 	}
 
-	return runtime.buildah.Rmi(ctx, ref, buildah.RmiOpts{
-		Force: true,
-		CommonOpts: buildah.CommonOpts{
-			LogWriter: logWriter,
-		},
+	return backend.buildah.Rmi(ctx, ref, buildah.RmiOpts{
+		Force:      true,
+		CommonOpts: backend.getBuildahCommonOpts(ctx, false, logWriter, opts.TargetPlatform),
 	})
 }
 
-func (runtime *BuildahBackend) Pull(ctx context.Context, ref string, opts PullOpts) error {
+func (backend *BuildahBackend) Pull(ctx context.Context, ref string, opts PullOpts) error {
 	var logWriter io.Writer
 	if logboek.Context(ctx).Info().IsAccepted() {
 		logWriter = logboek.Context(ctx).OutStream()
 	}
 
-	return runtime.buildah.Pull(ctx, ref, buildah.PullOpts{
-		LogWriter: logWriter,
-	})
+	return backend.buildah.Pull(
+		ctx, ref,
+		buildah.PullOpts(backend.getBuildahCommonOpts(ctx, false, logWriter, opts.TargetPlatform)),
+	)
 }
 
-func (runtime *BuildahBackend) Tag(ctx context.Context, ref, newRef string, opts TagOpts) error {
+func (backend *BuildahBackend) Tag(ctx context.Context, ref, newRef string, opts TagOpts) error {
 	var logWriter io.Writer
 	if logboek.Context(ctx).Info().IsAccepted() {
 		logWriter = logboek.Context(ctx).OutStream()
 	}
 
-	return runtime.buildah.Tag(ctx, ref, newRef, buildah.TagOpts{
-		LogWriter: logWriter,
-	})
+	return backend.buildah.Tag(
+		ctx, ref, newRef,
+		buildah.TagOpts(backend.getBuildahCommonOpts(ctx, false, logWriter, opts.TargetPlatform)),
+	)
 }
 
-func (runtime *BuildahBackend) Push(ctx context.Context, ref string, opts PushOpts) error {
+func (backend *BuildahBackend) Push(ctx context.Context, ref string, opts PushOpts) error {
 	var logWriter io.Writer
 	if logboek.Context(ctx).Info().IsAccepted() {
 		logWriter = logboek.Context(ctx).OutStream()
 	}
 
-	return runtime.buildah.Push(ctx, ref, buildah.PushOpts{
-		LogWriter: logWriter,
-	})
+	return backend.buildah.Push(
+		ctx, ref,
+		buildah.PushOpts(backend.getBuildahCommonOpts(ctx, false, logWriter, opts.TargetPlatform)),
+	)
 }
 
-func (runtime *BuildahBackend) BuildDockerfile(ctx context.Context, dockerfileContent []byte, opts BuildDockerfileOpts) (string, error) {
+func (backend *BuildahBackend) BuildDockerfile(ctx context.Context, dockerfileContent []byte, opts BuildDockerfileOpts) (string, error) {
 	buildArgs := make(map[string]string)
 	for _, argStr := range opts.BuildArgs {
 		argParts := strings.SplitN(argStr, "=", 2)
@@ -659,7 +663,7 @@ func (runtime *BuildahBackend) BuildDockerfile(ctx context.Context, dockerfileCo
 		return "", fmt.Errorf("unable to extract build context: %w", err)
 	}
 
-	dockerfile, err := ioutil.TempFile(runtime.TmpDir, "*.Dockerfile")
+	dockerfile, err := ioutil.TempFile(backend.TmpDir, "*.Dockerfile")
 	if err != nil {
 		return "", fmt.Errorf("error creating temporary dockerfile: %w", err)
 	}
@@ -673,22 +677,20 @@ func (runtime *BuildahBackend) BuildDockerfile(ctx context.Context, dockerfileCo
 		}
 	}()
 
-	return runtime.buildah.BuildFromDockerfile(ctx, dockerfile.Name(), buildah.BuildFromDockerfileOpts{
-		CommonOpts: buildah.CommonOpts{
-			LogWriter: logboek.Context(ctx).OutStream(),
-		},
+	return backend.buildah.BuildFromDockerfile(ctx, dockerfile.Name(), buildah.BuildFromDockerfileOpts{
+		CommonOpts: backend.getBuildahCommonOpts(ctx, false, nil, opts.TargetPlatform),
 		ContextDir: buildContextTmpDir,
 		BuildArgs:  buildArgs,
 		Target:     opts.Target,
 	})
 }
 
-func (runtime *BuildahBackend) ShouldCleanupDockerfileImage() bool {
+func (backend *BuildahBackend) ShouldCleanupDockerfileImage() bool {
 	return false
 }
 
-func (runtime *BuildahBackend) RefreshImageObject(ctx context.Context, img LegacyImageInterface) error {
-	if info, err := runtime.GetImageInfo(ctx, img.Name(), GetImageInfoOpts{}); err != nil {
+func (backend *BuildahBackend) RefreshImageObject(ctx context.Context, img LegacyImageInterface) error {
+	if info, err := backend.GetImageInfo(ctx, img.Name(), GetImageInfoOpts{TargetPlatform: img.GetTargetPlatform()}); err != nil {
 		return err
 	} else {
 		img.SetInfo(info)
@@ -696,12 +698,12 @@ func (runtime *BuildahBackend) RefreshImageObject(ctx context.Context, img Legac
 	return nil
 }
 
-func (runtime *BuildahBackend) PullImageFromRegistry(ctx context.Context, img LegacyImageInterface) error {
-	if err := runtime.Pull(ctx, img.Name(), PullOpts{}); err != nil {
+func (backend *BuildahBackend) PullImageFromRegistry(ctx context.Context, img LegacyImageInterface) error {
+	if err := backend.Pull(ctx, img.Name(), PullOpts{TargetPlatform: img.GetTargetPlatform()}); err != nil {
 		return fmt.Errorf("unable to pull image %s: %w", img.Name(), err)
 	}
 
-	if info, err := runtime.GetImageInfo(ctx, img.Name(), GetImageInfoOpts{}); err != nil {
+	if info, err := backend.GetImageInfo(ctx, img.Name(), GetImageInfoOpts{TargetPlatform: img.GetTargetPlatform()}); err != nil {
 		return fmt.Errorf("unable to get inspect of image %s: %w", img.Name(), err)
 	} else {
 		img.SetInfo(info)
@@ -710,9 +712,9 @@ func (runtime *BuildahBackend) PullImageFromRegistry(ctx context.Context, img Le
 	return nil
 }
 
-func (runtime *BuildahBackend) RenameImage(ctx context.Context, img LegacyImageInterface, newImageName string, removeOldName bool) error {
+func (backend *BuildahBackend) RenameImage(ctx context.Context, img LegacyImageInterface, newImageName string, removeOldName bool) error {
 	if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Tagging image %s by name %s", img.Name(), newImageName)).DoError(func() error {
-		if err := runtime.Tag(ctx, img.Name(), newImageName, TagOpts{}); err != nil {
+		if err := backend.Tag(ctx, img.Name(), newImageName, TagOpts{TargetPlatform: img.GetTargetPlatform()}); err != nil {
 			return fmt.Errorf("unable to tag image %s by name %s: %w", img.Name(), newImageName, err)
 		}
 		return nil
@@ -722,7 +724,7 @@ func (runtime *BuildahBackend) RenameImage(ctx context.Context, img LegacyImageI
 
 	if removeOldName {
 		if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Removing old image tag %s", img.Name())).DoError(func() error {
-			if err := runtime.Rmi(ctx, img.Name(), RmiOpts{}); err != nil {
+			if err := backend.Rmi(ctx, img.Name(), RmiOpts{TargetPlatform: img.GetTargetPlatform()}); err != nil {
 				return fmt.Errorf("unable to remove image %q: %w", img.Name(), err)
 			}
 			return nil
@@ -733,7 +735,7 @@ func (runtime *BuildahBackend) RenameImage(ctx context.Context, img LegacyImageI
 
 	img.SetName(newImageName)
 
-	if info, err := runtime.GetImageInfo(ctx, img.Name(), GetImageInfoOpts{}); err != nil {
+	if info, err := backend.GetImageInfo(ctx, img.Name(), GetImageInfoOpts{TargetPlatform: img.GetTargetPlatform()}); err != nil {
 		return err
 	} else {
 		img.SetInfo(info)
@@ -749,9 +751,9 @@ func (runtime *BuildahBackend) RenameImage(ctx context.Context, img LegacyImageI
 	return nil
 }
 
-func (runtime *BuildahBackend) RemoveImage(ctx context.Context, img LegacyImageInterface) error {
+func (backend *BuildahBackend) RemoveImage(ctx context.Context, img LegacyImageInterface) error {
 	if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Removing image tag %s", img.Name())).DoError(func() error {
-		if err := runtime.Rmi(ctx, img.Name(), RmiOpts{}); err != nil {
+		if err := backend.Rmi(ctx, img.Name(), RmiOpts{TargetPlatform: img.GetTargetPlatform()}); err != nil {
 			return fmt.Errorf("unable to remove image %q: %w", img.Name(), err)
 		}
 		return nil
@@ -762,19 +764,19 @@ func (runtime *BuildahBackend) RemoveImage(ctx context.Context, img LegacyImageI
 	return nil
 }
 
-func (runtime *BuildahBackend) String() string {
+func (backend *BuildahBackend) String() string {
 	return "buildah-runtime"
 }
 
-func (runtime *BuildahBackend) RemoveHostDirs(ctx context.Context, mountDir string, dirs []string) error {
+func (backend *BuildahBackend) RemoveHostDirs(ctx context.Context, mountDir string, dirs []string) error {
 	var container *containerDesc
-	if c, err := runtime.createContainers(ctx, []string{"alpine"}); err != nil {
+	if c, err := backend.createContainers(ctx, []string{"alpine"}, CommonOpts{}); err != nil {
 		return fmt.Errorf("unable to create container based on alpine: %w", err)
 	} else {
 		container = c[0]
 	}
 	defer func() {
-		if err := runtime.removeContainers(ctx, []*containerDesc{container}); err != nil {
+		if err := backend.removeContainers(ctx, []*containerDesc{container}, CommonOpts{}); err != nil {
 			logboek.Context(ctx).Error().LogF("ERROR: unable to remove temporal container %q: %s\n", container.Name, err)
 		}
 	}()
@@ -783,7 +785,7 @@ func (runtime *BuildahBackend) RemoveHostDirs(ctx context.Context, mountDir stri
 		containerDirs = append(containerDirs, util.ToLinuxContainerPath(dir))
 	}
 
-	return runtime.buildah.RunCommand(ctx, container.Name, append([]string{"rm", "-rf"}, containerDirs...), buildah.RunCommandOpts{
+	return backend.buildah.RunCommand(ctx, container.Name, append([]string{"rm", "-rf"}, containerDirs...), buildah.RunCommandOpts{
 		User:       "0:0",
 		WorkingDir: "/",
 		GlobalMounts: []*specs.Mount{

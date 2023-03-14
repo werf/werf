@@ -29,6 +29,8 @@ type BuildStapelStageOptionsInterface interface {
 }
 
 type BuildStapelStageOptions struct {
+	TargetPlatform string
+
 	Labels      []string
 	Volumes     []string
 	Expose      []string

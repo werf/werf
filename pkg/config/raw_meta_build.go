@@ -1,7 +1,7 @@
 package config
 
 type rawMetaBuild struct {
-	Platforms []string `yaml:"platforms,omitempty"`
+	Platform []string `yaml:"platform,omitempty"`
 
 	rawMeta *rawMeta
 
@@ -30,6 +30,6 @@ func (c *rawMetaBuild) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 func (c *rawMetaBuild) toMetaBuild() MetaBuild {
 	metaBuild := MetaBuild{}
-	metaBuild.Platform = c.Platforms
+	metaBuild.Platform = c.Platform
 	return metaBuild
 }
