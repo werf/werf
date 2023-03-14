@@ -15,8 +15,12 @@ export WERF_REPO=ghcr.io/werf/werf-storage
 
 # Extra labels for artifacthub
 export WERF_EXPORT_ADD_LABEL_1=io.artifacthub.package.readme-url=https://raw.githubusercontent.com/werf/werf/main/README.md \
-       WERF_EXPORT_ADD_LABEL_2=org.opencontainers.image.created=$(date -u +"%Y-%m-%dT%H:%M:%SZ") \
-       WERF_EXPORT_ADD_LABEL_3=org.opencontainers.image.description="Official image to run werf in containers"
+       WERF_EXPORT_ADD_LABEL_2=io.artifacthub.package.logo-url=https://werf.io/assets/images/werf-logo.svg \
+       WERF_EXPORT_ADD_LABEL_3=io.artifacthub.package.category=integration-delivery \
+       WERF_EXPORT_ADD_LABEL_4=org.opencontainers.image.url=https://github.com/werf/werf/tree/main/scripts/werf-in-image \
+       WERF_EXPORT_ADD_LABEL_5=org.opencontainers.image.source=https://github.com/werf/werf/tree/main/scripts/werf-in-image \
+       WERF_EXPORT_ADD_LABEL_6=org.opencontainers.image.created=$(date -u +"%Y-%m-%dT%H:%M:%SZ") \
+       WERF_EXPORT_ADD_LABEL_7=org.opencontainers.image.description="Official image to run werf in containers"
 
 werf export --tag "$DEST_REPO/werf:latest" "1.2-stable-alpine"
 werf export --tag "$DEST_REPO/werf-argocd-cmp-sidecar:latest" "argocd-cmp-sidecar-1.2-stable-ubuntu"
