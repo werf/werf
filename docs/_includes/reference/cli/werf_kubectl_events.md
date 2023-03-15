@@ -3,9 +3,11 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Display events
+Display events.
 
- Prints a table of the most important information about events. You can request events for a namespace, for all namespace, or filtered to only those pertaining to a specified resource.
+Prints a table of the most important information about events.
+
+You can request events for a namespace, for all namespace, or filtered to only those pertaining to a specified resource.
 
 {{ header }} Syntax
 
