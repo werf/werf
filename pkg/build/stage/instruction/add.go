@@ -26,13 +26,13 @@ func NewAdd(i *dockerfile.DockerfileStageInstruction[*instructions.AddCommand], 
 func (stg *Add) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
 	var args []string
 
-	args = append(args, append([]string{"Sources"}, stg.instruction.Data.Sources()...)...)
-	args = append(args, "Dest", stg.instruction.Data.Dest())
+	args = append(args, append([]string{"Sources"}, stg.instruction.Data.SourcePaths...)...)
+	args = append(args, "Dest", stg.instruction.Data.DestPath)
 	args = append(args, "Chown", stg.instruction.Data.Chown)
 	args = append(args, "Chmod", stg.instruction.Data.Chmod)
 
 	var fileGlobSrc []string
-	for _, src := range stg.instruction.Data.Sources() {
+	for _, src := range stg.instruction.Data.SourcePaths {
 		if !strings.HasPrefix(src, "http://") && !strings.HasPrefix(src, "https://") {
 			fileGlobSrc = append(fileGlobSrc, src)
 		}

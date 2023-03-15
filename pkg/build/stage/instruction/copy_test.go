@@ -28,7 +28,10 @@ var _ = DescribeTable("COPY digest",
 		NewCopy(
 			dockerfile.NewDockerfileStageInstruction(
 				&instructions.CopyCommand{
-					SourcesAndDest: []string{"src/", "doc/", "/app"},
+					SourcesAndDest: instructions.SourcesAndDest{
+						DestPath:    "/app",
+						SourcePaths: []string{"src/", "doc/"},
+					},
 				},
 				dockerfile.DockerfileStageInstructionOptions{},
 			),
@@ -52,7 +55,10 @@ var _ = DescribeTable("COPY digest",
 		NewCopy(
 			dockerfile.NewDockerfileStageInstruction(
 				&instructions.CopyCommand{
-					SourcesAndDest: []string{"src/", "doc/", "/app"},
+					SourcesAndDest: instructions.SourcesAndDest{
+						DestPath:    "/app",
+						SourcePaths: []string{"src/", "doc/"},
+					},
 				},
 				dockerfile.DockerfileStageInstructionOptions{},
 			),
@@ -76,8 +82,11 @@ var _ = DescribeTable("COPY digest",
 		NewCopy(
 			NewDockerfileStageInstructionWithDependencyStages(
 				&instructions.CopyCommand{
-					From:           "base",
-					SourcesAndDest: []string{"src/", "doc/", "/app"},
+					From: "base",
+					SourcesAndDest: instructions.SourcesAndDest{
+						DestPath:    "/app",
+						SourcePaths: []string{"src/", "doc/"},
+					},
 				},
 				[]string{"base"},
 			),
@@ -99,8 +108,11 @@ var _ = DescribeTable("COPY digest",
 		NewCopy(
 			NewDockerfileStageInstructionWithDependencyStages(
 				&instructions.CopyCommand{
-					From:           "base",
-					SourcesAndDest: []string{"src/", "doc/", "/app"},
+					From: "base",
+					SourcesAndDest: instructions.SourcesAndDest{
+						DestPath:    "/app",
+						SourcePaths: []string{"src/", "doc/"},
+					},
 				},
 				[]string{"base"},
 			),
@@ -122,8 +134,11 @@ var _ = DescribeTable("COPY digest",
 		NewCopy(
 			NewDockerfileStageInstructionWithDependencyStages(
 				&instructions.CopyCommand{
-					From:           "base",
-					SourcesAndDest: []string{"src/", "doc/", "/app"},
+					From: "base",
+					SourcesAndDest: instructions.SourcesAndDest{
+						DestPath:    "/app",
+						SourcePaths: []string{"src/", "doc/"},
+					},
 				},
 				[]string{"base"},
 			),
@@ -150,8 +165,11 @@ var _ = DescribeTable("COPY digest",
 		NewCopy(
 			NewDockerfileStageInstructionWithDependencyStages(
 				&instructions.CopyCommand{
-					From:           "base",
-					SourcesAndDest: []string{"src/", "doc/", "/app2"},
+					From: "base",
+					SourcesAndDest: instructions.SourcesAndDest{
+						DestPath:    "/app2",
+						SourcePaths: []string{"src/", "doc/"},
+					},
 				},
 				[]string{"base"},
 			),
@@ -178,10 +196,13 @@ var _ = DescribeTable("COPY digest",
 		NewCopy(
 			NewDockerfileStageInstructionWithDependencyStages(
 				&instructions.CopyCommand{
-					From:           "base",
-					SourcesAndDest: []string{"src/", "doc/", "/app2"},
-					Chown:          "1000:1000",
-					Chmod:          "0777",
+					From: "base",
+					SourcesAndDest: instructions.SourcesAndDest{
+						DestPath:    "/app2",
+						SourcePaths: []string{"src/", "doc/"},
+					},
+					Chown: "1000:1000",
+					Chmod: "0777",
 				},
 				[]string{"base"},
 			),

@@ -45,14 +45,14 @@ func (stg *Copy) GetDependencies(ctx context.Context, c stage.Conveyor, cb conta
 	var args []string
 
 	args = append(args, "From", stg.instruction.Data.From)
-	args = append(args, append([]string{"Sources"}, stg.instruction.Data.Sources()...)...)
-	args = append(args, "Dest", stg.instruction.Data.Dest())
+	args = append(args, append([]string{"Sources"}, stg.instruction.Data.SourcePaths...)...)
+	args = append(args, "Dest", stg.instruction.Data.DestPath)
 	args = append(args, "Chown", stg.instruction.Data.Chown)
 	args = append(args, "Chmod", stg.instruction.Data.Chmod)
 	args = append(args, "ExpandedFrom", stg.backendInstruction.From)
 
 	if stg.UsesBuildContext() {
-		if srcChecksum, err := buildContextArchive.CalculateGlobsChecksum(ctx, stg.instruction.Data.Sources(), false); err != nil {
+		if srcChecksum, err := buildContextArchive.CalculateGlobsChecksum(ctx, stg.instruction.Data.SourcePaths, false); err != nil {
 			return "", fmt.Errorf("unable to calculate build context globs checksum: %w", err)
 		} else {
 			args = append(args, "SourcesChecksum", srcChecksum)
