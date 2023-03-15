@@ -126,6 +126,7 @@ func checkText(ann string) bool {
 		ann != GetCreateServiceLoadBalancerDocs().LongMD &&
 		ann != GetCreateServiceNodePortDocs().LongMD &&
 		ann != GetCreateServiceAccountDocs().LongMD &&
+		ann != GetCreateTokenDocs().LongMD &&
 		ann != GetDebugDocs().LongMD &&
 		ann != GetDeleteDocs().LongMD &&
 		ann != GetDescribeDocs().LongMD &&
