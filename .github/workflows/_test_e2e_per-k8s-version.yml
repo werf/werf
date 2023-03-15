@@ -41,7 +41,7 @@ jobs:
             minor: 23
           - major: 1
             minor: 25
-    runs-on: ubuntu-latest-4-cores
+    runs-on: ubuntu-latest-16-cores
     timeout-minutes: ${{ inputs.timeout }}
     steps:
       - name: Install system dependencies

@@ -16,7 +16,7 @@ defaults:
 jobs:
   publish:
     name: Publish release channels using trdl server
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest-16-cores
     steps:
       - name: Publish
         uses: werf/trdl-vault-actions/publish@main
@@ -54,7 +54,7 @@ jobs:
           - ghcr.io
           - registry-write.werf.io
     needs: publish
-    runs-on: ubuntu-latest-16-cores
+    runs-on: tfprod-werf
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
