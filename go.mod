@@ -39,7 +39,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/go-version v1.6.0
 	github.com/helm/helm-2to3 v0.10.3
-	github.com/minio/minio v0.0.0-20210601192313-bf87c4b1e427
+	github.com/minio/minio v0.0.0-20210311070216-f92b7a562103
 	github.com/mitchellh/copystructure v1.2.0
 	github.com/moby/buildkit v0.9.3
 	github.com/moby/term v0.0.0-20221205130635-1aeaba878587
@@ -149,7 +149,6 @@ require (
 	github.com/go-gorp/gorp/v3 v3.0.5 // indirect
 	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
-	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/go-openapi/analysis v0.21.4 // indirect
 	github.com/go-openapi/errors v0.20.3 // indirect
 	github.com/go-openapi/jsonpointer v0.19.6 // indirect
@@ -196,14 +195,12 @@ require (
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
 	github.com/kevinburke/ssh_config v1.1.0 // indirect
 	github.com/klauspost/compress v1.16.0 // indirect
-	github.com/klauspost/cpuid/v2 v2.2.4 // indirect
 	github.com/klauspost/pgzip v1.2.6-0.20220930104621-17e8dac29df8 // indirect
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
 	github.com/lib/pq v1.10.7 // indirect
 	github.com/liggitt/tabwriter v0.0.0-20181228230101-89fcab3d43de // indirect
 	github.com/lithammer/dedent v1.1.0 // indirect
-	github.com/lufia/plan9stats v0.0.0-20230110061619-bbe2e5e100de // indirect
 	github.com/magiconair/properties v1.8.6 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/manifoldco/promptui v0.9.0 // indirect
@@ -214,9 +211,6 @@ require (
 	github.com/mattn/go-sqlite3 v2.0.1+incompatible // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/miekg/pkcs11 v1.1.1 // indirect
-	github.com/minio/madmin-go v1.6.6 // indirect
-	github.com/minio/md5-simd v1.1.2 // indirect
-	github.com/minio/minio-go/v7 v7.0.49 // indirect
 	github.com/mistifyio/go-zfs v2.1.2-0.20190413222219-f784269be439+incompatible // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.0 // indirect
@@ -245,9 +239,7 @@ require (
 	github.com/openshift/imagebuilder v1.2.4-0.20220711175835-4151e43600df // indirect
 	github.com/ostreedev/ostree-go v0.0.0-20210805093236-719684c64e4f // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
-	github.com/philhofer/fwd v1.1.2 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
-	github.com/power-devops/perfstat v0.0.0-20221212215047-62379fc7944b // indirect
 	github.com/proglottis/gpgme v0.1.3 // indirect
 	github.com/prometheus/client_golang v1.14.0 // indirect
 	github.com/prometheus/client_model v0.3.0 // indirect
@@ -255,13 +247,10 @@ require (
 	github.com/prometheus/procfs v0.9.0 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/rogpeppe/go-internal v1.8.1 // indirect
-	github.com/rs/xid v1.4.0 // indirect
 	github.com/rubenv/sql-migrate v1.2.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/seccomp/libseccomp-golang v0.10.0 // indirect
-	github.com/secure-io/sio-go v0.3.1 // indirect
 	github.com/sergi/go-diff v1.2.0 // indirect
-	github.com/shirou/gopsutil/v3 v3.23.2 // indirect
 	github.com/shopspring/decimal v1.2.0 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/viper v1.10.1 // indirect
@@ -271,9 +260,6 @@ require (
 	github.com/tchap/go-patricia v2.3.0+incompatible // indirect
 	github.com/theupdateframework/notary v0.6.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
-	github.com/tinylib/msgp v1.1.8 // indirect
-	github.com/tklauser/go-sysconf v0.3.11 // indirect
-	github.com/tklauser/numcpus v0.6.0 // indirect
 	github.com/tonistiigi/fsutil v0.0.0-20210609172227-d72af97c0eaf // indirect
 	github.com/tonistiigi/go-rosetta v0.0.0-20220804170347-3f4430f2d346 // indirect
 	github.com/tonistiigi/units v0.0.0-20180711220420-6950e57a87ea // indirect
@@ -290,7 +276,6 @@ require (
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
 	github.com/xlab/treeprint v1.1.0 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
-	github.com/yusufpapurcu/wmi v1.2.2 // indirect
 	github.com/zmap/zcrypto v0.0.0-20220402174210-599ec18ecbac // indirect
 	go.etcd.io/bbolt v1.3.7 // indirect
 	go.etcd.io/etcd/api/v3 v3.5.7 // indirect
