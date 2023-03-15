@@ -169,6 +169,7 @@ func checkText(ann string) bool {
 		ann != GetTopPodDocs().LongMD &&
 		ann != GetUncordonDocs().LongMD &&
 		ann != GetVersionDocs().LongMD &&
+		ann != GetEventsDocs().LongMD &&
 		ann != GetWaitDocs().LongMD {
 		return false
 	}
