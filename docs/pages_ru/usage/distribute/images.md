@@ -41,7 +41,7 @@ werf export backend frontend \
     --tag example.org/mycompany/myproject/%image%:latest
 ```
 
-## Использование content-based тега при формировании тега
+## Использование content-based-тега при формировании тега
 
 В параметре `--tag` можно использовать шаблон `%image_content_based_tag%` для использования тега образа, основанном на его содержимом, например:
 
