@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.211](https://www.github.com/werf/werf/compare/v1.2.210...v1.2.211) (2023-03-15)
+
+
+### Bug Fixes
+
+* update all dependencies ([cc19916](https://www.github.com/werf/werf/commit/cc19916f9a7cdb1ad5ce1d5275b01ccd893eba0e))
+
 ### [1.2.210](https://www.github.com/werf/werf/compare/v1.2.209...v1.2.210) (2023-03-14)
 
 
