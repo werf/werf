@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.212](https://www.github.com/werf/werf/compare/v1.2.211...v1.2.212) (2023-03-15)
+
+
+### Bug Fixes
+
+* downgrade minio ([d016fbf](https://www.github.com/werf/werf/commit/d016fbf957fb1b52b2aa0b6a2551ea39ec747bbe))
+
 ### [1.2.211](https://www.github.com/werf/werf/compare/v1.2.210...v1.2.211) (2023-03-15)
 
 
