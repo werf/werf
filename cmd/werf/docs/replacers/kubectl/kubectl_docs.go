@@ -449,6 +449,14 @@ func GetCreateDocs() structs.DocsStruct {
 	return docs
 }
 
+func GetCreateTokenDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Request a service account token."
+
+	return docs
+}
+
 func GetCreateClusterRoleDocs() structs.DocsStruct {
 	var docs structs.DocsStruct
 

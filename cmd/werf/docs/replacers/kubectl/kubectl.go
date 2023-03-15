@@ -224,6 +224,10 @@ func setNewDocs(cmd *cobra.Command) {
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetCreateDocs().LongMD,
 		}
+	case "token SERVICE_ACCOUNT_NAME":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetCreateTokenDocs().LongMD,
+		}
 	case "clusterrole NAME --verb=verb --resource=resource.group [--resource-name=resourcename] " +
 		"[--dry-run=server|client|none]":
 		cmd.Annotations = map[string]string{
