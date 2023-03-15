@@ -504,5 +504,10 @@ func setNewDocs(cmd *cobra.Command) {
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetWaitDocs().LongMD,
 		}
+	case "events [(-o|--output=)json|yaml|name|go-template|go-template-file|template|templatefile|jsonpath|" +
+		"jsonpath-as-json|jsonpath-file] [--for TYPE/NAME] [--watch] [--event=Normal,Warning]":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetEventsDocs().LongMD,
+		}
 	}
 }

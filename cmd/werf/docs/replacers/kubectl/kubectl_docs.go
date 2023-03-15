@@ -1246,3 +1246,14 @@ func GetWaitDocs() structs.DocsStruct {
 
 	return docs
 }
+
+func GetEventsDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Display events.\n\n" +
+		"Prints a table of the most important information about events.\n\n" +
+		"You can request events for a namespace, for all namespace, or filtered to only those " +
+		"pertaining to a specified resource."
+
+	return docs
+}
