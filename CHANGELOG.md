@@ -1,5 +1,13 @@
 # Changelog
 
+### [1.2.210](https://www.github.com/werf/werf/compare/v1.2.209...v1.2.210) (2023-03-15)
+
+
+### Bug Fixes
+
+* **export:** erroneous export of intermediate images ([24d5f9f](https://www.github.com/werf/werf/commit/24d5f9f09e3e0a9db17da90bb27abb2a0aca1362))
+* **multiarch:** fix bug with import servers names collision introduced during refactor ([8f251dc](https://www.github.com/werf/werf/commit/8f251dc85e509e549290ba5928d7ba506ef3d181))
+
 ### [1.2.210](https://www.github.com/werf/werf/compare/v1.2.209...v1.2.210) (2023-03-14)
 
 
