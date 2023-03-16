@@ -116,7 +116,7 @@ en:
       preview_link: "images/configuration/assembly_instructions2.svg"
   mount: &mount
     link: "images/configuration/mount_directive1.svg"
-    preview_link: "images/configuration/mount_directive1s.svg"
+    preview_link: "images/configuration/mount_directive1.svg"
     link_alt: "from stage"
     yaml: |
       mount:
