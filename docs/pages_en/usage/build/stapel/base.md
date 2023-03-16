@@ -52,8 +52,8 @@ it makes sense to store its description together with _images_ and _artifacts_ w
 
 This method comes in handy if the stages of the existing _stage conveyor_ are not enough for building the image. Using the image described in the same `werf.yaml` as the base image, you can essentially build your own _stage conveyor_.
 
-<a class="google-drawings" href="{{ "images/configuration/base_image2.png" | true_relative_url }}" data-featherlight="image">
-    <img src="{{ "images/configuration/base_image2_preview.png" | true_relative_url }}" alt="Conveyor with fromImage and fromArtifact stages">
+<a class="google-drawings" href="{{ "images/configuration/base_image2.svg" | true_relative_url }}" data-featherlight="image">
+    <img src="{{ "images/configuration/base_image2.svg" | true_relative_url }}" alt="Conveyor with fromImage and fromArtifact stages">
 </a>
 
 ## fromCacheVersion
