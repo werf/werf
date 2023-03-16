@@ -54,8 +54,8 @@ fromArtifact: <artifact name>
 Также эта рекомендация будет полезной, если вам по каким-либо причинам не хватает существующего _конвейера стадий_.
 Используя в качестве _базового образа_ образ, описанный в том же `werf.yaml`, вы по сути можете построить свой _конвейер стадий_.
 
-<a class="google-drawings" href="{{ "images/configuration/base_image2.png" | true_relative_url }}" data-featherlight="image">
-<img src="{{ "images/configuration/base_image2_preview.png" | true_relative_url }}">
+<a class="google-drawings" href="{{ "images/configuration/base_image2.svg" | true_relative_url }}" data-featherlight="image">
+<img src="{{ "images/configuration/base_image2.svg" | true_relative_url }}">
 </a>
 
 ## fromCacheVersion

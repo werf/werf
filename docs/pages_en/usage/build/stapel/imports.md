@@ -119,8 +119,8 @@ artifact: "application assets"
 
 <div class="summary">
 
-<a class="google-drawings" href="{{ "images/configuration/stapel_artifact2.png" | true_relative_url }}" data-featherlight="image">
-  <img src="{{ "images/configuration/stapel_artifact2_preview.png" | true_relative_url }}">
+<a class="google-drawings" href="{{ "images/configuration/stapel_artifact2.svg" | true_relative_url }}" data-featherlight="image">
+  <img src="{{ "images/configuration/stapel_artifact2.svg" | true_relative_url }}">
 </a>
 
 </div>
@@ -135,8 +135,8 @@ Refer to the [documentation]({{ "usage/build/stapel/git.html" | true_relative_ur
 
 <div class="summary">
 
-<a class="google-drawings" href="{{ "images/configuration/stapel_artifact3.png" | true_relative_url }}" data-featherlight="image">
-  <img src="{{ "images/configuration/stapel_artifact3_preview.png" | true_relative_url }}">
+<a class="google-drawings" href="{{ "images/configuration/stapel_artifact3.svg" | true_relative_url }}" data-featherlight="image">
+  <img src="{{ "images/configuration/stapel_artifact3.svg" | true_relative_url }}">
 </a>
 
 </div>

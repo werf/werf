@@ -1,7 +1,7 @@
 en:
   base_image: &base_image
-    link: "images/configuration/base_image1.png"
-    preview_link: "images/configuration/base_image1_preview.png"
+    link: "images/configuration/base_image1.svg"
+    preview_link: "images/configuration/base_image1.svg"
     link_alt: "from stage"
     yaml: |
       from: <image[:<tag>]>
@@ -10,8 +10,8 @@ en:
       fromImage: <image name>
       fromArtifact: <artifact name>
   docker: &docker
-    link: "images/configuration/docker_directive1.png"
-    preview_link: "images/configuration/docker_directive1_preview.png"
+    link: "images/configuration/docker_directive1.svg"
+    preview_link: "images/configuration/docker_directive1.svg"
     link_alt: "dockerInstructions stage"
     yaml: |
       docker:
@@ -29,8 +29,8 @@ en:
         USER: <user>
         HEALTHCHECK: <healthcheck>
   git: &git
-    link: "images/configuration/git_directive1.png"
-    preview_link: "images/configuration/git_directive1_preview.png"
+    link: "images/configuration/git_directive1.svg"
+    preview_link: "images/configuration/git_directive1.svg"
     link_alt: "Git stages"
     yamls:
       - name: local
@@ -74,8 +74,8 @@ en:
               setup:
               - <path or glob relative to path in add>
   shell_and_ansible: &shell_and_ansible
-    link: "images/configuration/assembly_instructions1.png"
-    preview_link: "images/configuration/assembly_instructions1_preview.png"
+    link: "images/configuration/assembly_instructions1.svg"
+    preview_link: "images/configuration/assembly_instructions1.svg"
     link_alt: "User stages"
     yamls:
       - name: shell
@@ -112,11 +112,11 @@ en:
             setupCacheVersion: <arbitrary string>
     extra: &shell_and_ansible_extra
       text: "Running assembly instructions with git"
-      link: "images/configuration/assembly_instructions2.png"
-      preview_link: "images/configuration/assembly_instructions2_preview.png"
+      link: "images/configuration/assembly_instructions2.svg"
+      preview_link: "images/configuration/assembly_instructions2.svg"
   mount: &mount
-    link: "images/configuration/mount_directive1.png"
-    preview_link: "images/configuration/mount_directive1_preview.png"
+    link: "images/configuration/mount_directive1.svg"
+    preview_link: "images/configuration/mount_directive1s.svg"
     link_alt: "from stage"
     yaml: |
       mount:
@@ -127,8 +127,8 @@ en:
       - fromPath: <absolute_or_relative_path>
         to: <absolute_path>
   import: &import
-    link: "images/configuration/import_directive1.png"
-    preview_link: "images/configuration/import_directive1_preview.png"
+    link: "images/configuration/import_directive1.svg"
+    preview_link: "images/configuration/import_directive1.svg"
     link_alt: "Import stages"
     yaml: |
       import:
@@ -146,8 +146,8 @@ en:
         excludePaths:
         - <relative path or glob>
   artifact: &artifact
-    link: "images/configuration/stapel_artifact1.png"
-    preview_link: "images/configuration/stapel_artifact1_preview.png"
+    link: "images/configuration/stapel_artifact1.svg"
+    preview_link: "images/configuration/stapel_artifact1.svg"
     link_alt: "Artifact stages"
 ru:
   base_image:
