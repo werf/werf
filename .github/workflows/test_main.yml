@@ -23,7 +23,7 @@ jobs:
   unlabel:
     if: |
       github.event_name == 'pull_request' && github.event.label.name == 'trigger: test:main'
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest-16-cores
     steps:
       - uses: actions/github-script@v6
         with:
