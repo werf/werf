@@ -243,35 +243,35 @@ func generateGitlabEnvs(ctx context.Context, w io.Writer, dockerConfig string) e
 	if trdlUseWerfGroupChannel != "" {
 		releaseChannel = fmt.Sprintf("werf.io/release-channel=%s", trdlUseWerfGroupChannel)
 	}
-	writeEnv(w, "WERF_ADD_ANNOTATION_WERF_RELEASE_CHANNEL", releaseChannel, false)
+	writeEnv(w, "WERF_ADD_ANNOTATION_WERF_RELEASE_CHANNEL", releaseChannel, true)
 
 	var projectGit string
 	ciProjectUrlEnv := os.Getenv("CI_PROJECT_URL")
 	if ciProjectUrlEnv != "" {
 		projectGit = fmt.Sprintf("project.werf.io/git=%s", ciProjectUrlEnv)
 	}
-	writeEnv(w, "WERF_ADD_ANNOTATION_PROJECT_GIT", projectGit, false)
+	writeEnv(w, "WERF_ADD_ANNOTATION_PROJECT_GIT", projectGit, true)
 
 	var ciCommit string
 	ciCommitShaEnv := os.Getenv("CI_COMMIT_SHA")
 	if ciCommitShaEnv != "" {
 		ciCommit = fmt.Sprintf("ci.werf.io/commit=%s", ciCommitShaEnv)
 	}
-	writeEnv(w, "WERF_ADD_ANNOTATION_CI_COMMIT", ciCommit, false)
+	writeEnv(w, "WERF_ADD_ANNOTATION_CI_COMMIT", ciCommit, true)
 
 	var gitlabCIPipelineUrl string
 	ciPipelineIdEnv := os.Getenv("CI_PIPELINE_ID")
 	if ciProjectUrlEnv != "" && ciPipelineIdEnv != "" {
 		gitlabCIPipelineUrl = fmt.Sprintf("gitlab.ci.werf.io/pipeline-url=%s/pipelines/%s", ciProjectUrlEnv, ciPipelineIdEnv)
 	}
-	writeEnv(w, "WERF_ADD_ANNOTATION_GITLAB_CI_PIPELINE_URL", gitlabCIPipelineUrl, false)
+	writeEnv(w, "WERF_ADD_ANNOTATION_GITLAB_CI_PIPELINE_URL", gitlabCIPipelineUrl, true)
 
 	var gitlabCiJobUrl string
 	ciJobIdEnv := os.Getenv("CI_JOB_ID")
 	if ciProjectUrlEnv != "" && os.Getenv("CI_JOB_ID") != "" {
 		gitlabCiJobUrl = fmt.Sprintf("gitlab.ci.werf.io/job-url=%s/-/jobs/%s", ciProjectUrlEnv, ciJobIdEnv)
 	}
-	writeEnv(w, "WERF_ADD_ANNOTATION_GITLAB_CI_JOB_URL", gitlabCiJobUrl, false)
+	writeEnv(w, "WERF_ADD_ANNOTATION_GITLAB_CI_JOB_URL", gitlabCiJobUrl, true)
 
 	writeHeader(w, "OTHER", true)
 
@@ -336,27 +336,27 @@ func generateGithubEnvs(ctx context.Context, w io.Writer, dockerConfig string) e
 	if trdlUseWerfGroupChannel != "" {
 		releaseChannel = fmt.Sprintf("werf.io/release-channel=%s", trdlUseWerfGroupChannel)
 	}
-	writeEnv(w, "WERF_ADD_ANNOTATION_WERF_RELEASE_CHANNEL", releaseChannel, false)
+	writeEnv(w, "WERF_ADD_ANNOTATION_WERF_RELEASE_CHANNEL", releaseChannel, true)
 
 	var projectGit string
 	if ciGithubOwnerWithProject != "" {
 		projectGit = fmt.Sprintf("project.werf.io/git=%s", fmt.Sprintf("https://github.com/%s", ciGithubOwnerWithProject))
 	}
-	writeEnv(w, "WERF_ADD_ANNOTATION_PROJECT_GIT", projectGit, false)
+	writeEnv(w, "WERF_ADD_ANNOTATION_PROJECT_GIT", projectGit, true)
 
 	var ciCommit string
 	ciCommitShaEnv := os.Getenv("GITHUB_SHA")
 	if ciCommitShaEnv != "" {
 		ciCommit = fmt.Sprintf("ci.werf.io/commit=%s", ciCommitShaEnv)
 	}
-	writeEnv(w, "WERF_ADD_ANNOTATION_CI_COMMIT", ciCommit, false)
+	writeEnv(w, "WERF_ADD_ANNOTATION_CI_COMMIT", ciCommit, true)
 
 	var workflowRunUrl string
 	ciWorkflowRunIdEnv := os.Getenv("GITHUB_RUN_ID")
 	if ciGithubOwnerWithProject != "" && ciWorkflowRunIdEnv != "" {
 		workflowRunUrl = fmt.Sprintf("github.ci.werf.io/workflow-run-url=%s", fmt.Sprintf("https://github.com/%s/actions/runs/%s", ciGithubOwnerWithProject, ciWorkflowRunIdEnv))
 	}
-	writeEnv(w, "WERF_ADD_ANNOTATION_GITHUB_ACTIONS_RUN_URL", workflowRunUrl, false)
+	writeEnv(w, "WERF_ADD_ANNOTATION_GITHUB_ACTIONS_RUN_URL", workflowRunUrl, true)
 
 	writeHeader(w, "CLEANUP", true)
 	writeEnv(w, "WERF_REPO_GITHUB_TOKEN", ciGithubToken, false)
