@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.214](https://www.github.com/werf/werf/compare/v1.2.213...v1.2.214) (2023-03-17)
+
+
+### Bug Fixes
+
+* fix(deps): update ([1578b7c](https://github.com/werf/werf/commit/1578b7cf1c8ddc385d59479842d7497c7188281f))
+
 ### [1.2.213](https://www.github.com/werf/werf/compare/v1.2.212...v1.2.213) (2023-03-17)
 
 
