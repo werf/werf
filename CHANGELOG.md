@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.213](https://www.github.com/werf/werf/compare/v1.2.212...v1.2.213) (2023-03-17)
+
+
+### Bug Fixes
+
+* **ci-env:** existing envs for adding extra annotations not overwritten ([dbaf2a3](https://www.github.com/werf/werf/commit/dbaf2a3eac46898e7fc53d6620f25561f62763a3))
+
 ### [1.2.212](https://www.github.com/werf/werf/compare/v1.2.211...v1.2.212) (2023-03-15)
 
 
