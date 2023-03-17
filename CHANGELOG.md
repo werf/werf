@@ -5,7 +5,7 @@
 
 ### Bug Fixes
 
-* trigger release ([38c1817](https://www.github.com/werf/werf/commit/38c18170eb756eb46e1d1c83cf94ad075a35caa5))
+* fix(deps): update ([1578b7c](https://github.com/werf/werf/commit/1578b7cf1c8ddc385d59479842d7497c7188281f))
 
 ### [1.2.213](https://www.github.com/werf/werf/compare/v1.2.212...v1.2.213) (2023-03-17)
 
