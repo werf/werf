@@ -57,10 +57,10 @@ require (
 	github.com/spaolacci/murmur3 v1.1.0
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/pflag v1.0.5
-	github.com/werf/copy-recurse v0.2.6
-	github.com/werf/kubedog v0.9.10-0.20230313143039-3cc639c52e4b
-	github.com/werf/lockgate v0.0.0-20211004100849-f85d5325b201
-	github.com/werf/logboek v0.5.4
+	github.com/werf/copy-recurse v0.2.7
+	github.com/werf/kubedog v0.9.11
+	github.com/werf/lockgate v0.1.1
+	github.com/werf/logboek v0.5.5
 	go.opentelemetry.io/otel v1.14.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.14.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.14.0
