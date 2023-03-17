@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.214](https://www.github.com/werf/werf/compare/v1.2.213...v1.2.214) (2023-03-17)
+
+
+### Bug Fixes
+
+* trigger release ([38c1817](https://www.github.com/werf/werf/commit/38c18170eb756eb46e1d1c83cf94ad075a35caa5))
+
 ### [1.2.213](https://www.github.com/werf/werf/compare/v1.2.212...v1.2.213) (2023-03-17)
 
 
