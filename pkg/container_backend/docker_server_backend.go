@@ -98,7 +98,12 @@ func (runtime *DockerServerBackend) BuildDockerfile(ctx context.Context, _ []byt
 }
 
 func (runtime *DockerServerBackend) BuildDockerfileStage(ctx context.Context, baseImage string, opts BuildDockerfileStageOptions, instructions ...InstructionInterface) (string, error) {
-	panic("not implemented")
+	logboek.Context(ctx).Error().LogF("Staged build of Dockerfile is not available for Docker Server backend.")
+	logboek.Context(ctx).Error().LogF("Please either:\n")
+	logboek.Context(ctx).Error().LogF(" * switch to Buildah backend;\n")
+	logboek.Context(ctx).Error().LogF(" * or disable staged build by setting `staged: false` for the image in the werf.yaml.\n")
+	logboek.Context(ctx).Error().LogLn()
+	return "", fmt.Errorf("staged Dockerfile is not available for Docker Server backend")
 }
 
 // ShouldCleanupDockerfileImage for docker-server backend we should cleanup image built from dockerfrom tagged with tempID
