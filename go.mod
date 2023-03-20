@@ -29,7 +29,7 @@ require (
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/go-git/go-git/v5 v5.6.0
 	github.com/go-openapi/spec v0.20.8
-	github.com/go-openapi/strfmt v0.21.3
+	github.com/go-openapi/strfmt v0.21.5
 	github.com/go-openapi/validate v0.22.1
 	github.com/google/go-containerregistry v0.13.0
 	github.com/google/uuid v1.3.0
