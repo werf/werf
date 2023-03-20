@@ -14,7 +14,7 @@ require (
 	github.com/containerd/containerd v1.6.19
 	github.com/containers/buildah v1.26.6
 	github.com/containers/common v0.49.1
-	github.com/containers/image/v5 v5.22.0
+	github.com/containers/image/v5 v5.22.1
 	github.com/containers/storage v1.42.0
 	github.com/deislabs/oras v0.12.0
 	github.com/djherbis/buffer v1.2.0
