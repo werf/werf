@@ -61,6 +61,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Install werf
+        uses: werf/actions/install@v1.2
+        with:
+          channel: alpha
+
       - if: matrix.dest-registry == 'registry-write.werf.io'
         name: Login to werf registry
         uses: docker/login-action@v2
@@ -78,7 +83,6 @@ jobs:
 
       - name: Build and publish werf images
         run: |
-          . $(trdl use werf 1.2 alpha)
           ./scripts/werf-in-image/build-and-publish.sh ${{ matrix.dest-registry }}
 
   notify:
