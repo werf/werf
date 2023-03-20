@@ -2,7 +2,7 @@ source "https://rubygems.org"
 
 gem "jekyll-assets", git: "https://github.com/envygeeks/jekyll-assets", group: :jekyll_plugins
 gem "jekyll"
-gem 'html-proofer', '~> 3.3'
+gem 'html-proofer', '~> 5.0'
 gem "kramdown-parser-gfm"
 
 gem "sprockets", "~> 4.2", ">= 4.2.0"
