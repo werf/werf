@@ -18,3 +18,7 @@ updates:
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
       - dependency-name: github.com/docker/cli
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
+  - package-ecosystem: bundler
+    directory: "/docs"
+    schedule:
+      interval: "weekly"
