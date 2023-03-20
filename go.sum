@@ -642,8 +642,9 @@ github.com/containers/ocicrypt v1.1.5/go.mod h1:WgjxPWdTJMqYMjf3M6cuIFFA1/MpyyhI
 github.com/containers/ocicrypt v1.1.7 h1:thhNr4fu2ltyGz8aMx8u48Ae0Pnbip3ePP9/mzkZ/3U=
 github.com/containers/ocicrypt v1.1.7/go.mod h1:7CAhjcj2H8AYp5YvEie7oVSK2AhBY8NscCYRawuDNtw=
 github.com/containers/storage v1.37.0/go.mod h1:kqeJeS0b7DO2ZT1nVWs0XufrmPFbgV3c+Q/45RlH6r4=
-github.com/containers/storage v1.42.0 h1:zm2AQD4NDeTB3JQ8X+Wo5+VRqNB+b4ocEd7Qj6ylPJA=
 github.com/containers/storage v1.42.0/go.mod h1:JiUJwOgOo1dr2DdOUc1MRe2GCAXABYoYmOdPF8yvH78=
+github.com/containers/storage v1.45.4 h1:49u6l37f/QC2ylG4d9FNS3ERfFKH462jrd7HARf3tfw=
+github.com/containers/storage v1.45.4/go.mod h1:mnFUauIJ9UiIYn2KIVavFz73PH8MUhI/8FCkjB7OX8o=
 github.com/coredns/coredns v1.4.0/go.mod h1:zASH/MVDgR6XZTbxvOnsZfffS+31vg6Ackf/wo1+AM0=
 github.com/coreos/bbolt v1.3.2/go.mod h1:iRUV2dpdMOn7Bo10OQBFzIJO9kkE559Wcmn+qkEiiKk=
 github.com/coreos/etcd v3.3.10+incompatible/go.mod h1:uF7uidLiAD3TWHmW31ZFd/JWoc32PjwdhPthX9715RE=
@@ -1871,8 +1872,9 @@ github.com/minio/sha256-simd v0.1.1/go.mod h1:B5e1o+1/KgNmWrSQK08Y6Z1Vb5pwIktudl
 github.com/minio/sha256-simd v1.0.0/go.mod h1:OuYzVNI5vcoYIAmbIvHPl3N3jUzVedXbKy5RFepssQM=
 github.com/minio/simdjson-go v0.2.1/go.mod h1:JPUSkRykfSPS+AhO0YPA1h0l5vY7NqrF4zel2b12wxc=
 github.com/minio/sio v0.2.1/go.mod h1:8b0yPp2avGThviy/+OCJBI6OMpvxoUuiLvE6F1lebhw=
-github.com/mistifyio/go-zfs v2.1.2-0.20190413222219-f784269be439+incompatible h1:aKW/4cBs+yK6gpqU3K/oIwk9Q/XICqd3zOX/UFuvqmk=
 github.com/mistifyio/go-zfs v2.1.2-0.20190413222219-f784269be439+incompatible/go.mod h1:8AuVvqP/mXw1px98n46wfvcGfQ4ci2FwoAjKYxuo3Z4=
+github.com/mistifyio/go-zfs/v3 v3.0.0 h1:J5QK618xRcXnQYZ2GE5FdmpS1ufIrWue+lR/mpe6/14=
+github.com/mistifyio/go-zfs/v3 v3.0.0/go.mod h1:CzVgeB0RvF2EGzQnytKVvVSDwmKJXxkOTUGbNrTja/k=
 github.com/mitchellh/cli v1.0.0/go.mod h1:hNIlj7HEI86fIcpObd7a0FcrxTWetlwJDGcceTlRvqc=
 github.com/mitchellh/cli v1.1.0/go.mod h1:xcISNoH86gajksDmfB23e/pu+B+GeFRMYmoHXxx3xhI=
 github.com/mitchellh/cli v1.1.4/go.mod h1:vTLESy5mRhKOs9KDp0/RATawxP1UqBmdrpVRMnpcvKQ=
@@ -2473,8 +2475,9 @@ github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7/go.mod h1:q4W45
 github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d/go.mod h1:RRCYJbIwD5jmqPI9XoAFR0OcDxqUctll6zUj/+B4S48=
 github.com/tarm/serial v0.0.0-20180830185346-98f6abe2eb07/go.mod h1:kDXzergiv9cbyO7IOYJZWg1U88JhDg3PB6klq9Hg2pA=
 github.com/tchap/go-patricia v2.2.6+incompatible/go.mod h1:bmLyhP68RS6kStMGxByiQ23RP/odRBOTVjwp2cDyi6I=
-github.com/tchap/go-patricia v2.3.0+incompatible h1:GkY4dP3cEfEASBPPkWd+AmjYxhmDkqO9/zg7R0lSQRs=
 github.com/tchap/go-patricia v2.3.0+incompatible/go.mod h1:bmLyhP68RS6kStMGxByiQ23RP/odRBOTVjwp2cDyi6I=
+github.com/tchap/go-patricia/v2 v2.3.1 h1:6rQp39lgIYZ+MHmdEq4xzuk1t7OdC35z/xm0BGhTkes=
+github.com/tchap/go-patricia/v2 v2.3.1/go.mod h1:VZRHKAb53DLaG+nA9EaYYiaEx6YztwDlLElMsnSHD4k=
 github.com/tdakkota/asciicheck v0.0.0-20200416190851-d7f85be797a2/go.mod h1:yHp0ai0Z9gUljN3o0xMhYJnH/IcvkdTBOX2fmJ93JEM=
 github.com/tdakkota/asciicheck v0.0.0-20200416200610-e657995f937b/go.mod h1:yHp0ai0Z9gUljN3o0xMhYJnH/IcvkdTBOX2fmJ93JEM=
 github.com/technosophos/moniker v0.0.0-20180509230615-a5dbd03a2245/go.mod h1:O1c8HleITsZqzNZDjSNzirUGsMT0oGu9LhHKoJrqO+A=

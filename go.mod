@@ -15,7 +15,7 @@ require (
 	github.com/containers/buildah v1.26.6
 	github.com/containers/common v0.49.1
 	github.com/containers/image/v5 v5.22.0
-	github.com/containers/storage v1.42.0
+	github.com/containers/storage v1.45.4
 	github.com/deislabs/oras v0.12.0
 	github.com/djherbis/buffer v1.2.0
 	github.com/djherbis/nio/v3 v3.0.1
@@ -210,7 +210,7 @@ require (
 	github.com/mattn/go-shellwords v1.0.12 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/miekg/pkcs11 v1.1.1 // indirect
-	github.com/mistifyio/go-zfs v2.1.2-0.20190413222219-f784269be439+incompatible // indirect
+	github.com/mistifyio/go-zfs/v3 v3.0.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
@@ -257,7 +257,7 @@ require (
 	github.com/stefanberger/go-pkcs11uri v0.0.0-20201008174630-78d3cae3a980 // indirect
 	github.com/sylabs/sif/v2 v2.9.0 // indirect
 	github.com/syndtr/gocapability v0.0.0-20200815063812-42c35b437635 // indirect
-	github.com/tchap/go-patricia v2.3.0+incompatible // indirect
+	github.com/tchap/go-patricia/v2 v2.3.1 // indirect
 	github.com/theupdateframework/go-tuf v0.5.2-0.20220930112810-3890c1e7ace4 // indirect
 	github.com/theupdateframework/notary v0.6.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
