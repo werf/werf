@@ -30,3 +30,6 @@ updates:
     directory: "/docs"
     schedule:
       interval: "weekly"
+    ignore:
+      - dependency-name: html-proofer
+        update-types: ["version-update:semver-major"]
