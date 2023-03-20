@@ -14,10 +14,18 @@ updates:
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
       - dependency-name: github.com/containers/buildah
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: github.com/containers/common
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: github.com/containers/image/v5
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: github.com/containers/storage
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
       - dependency-name: github.com/moby/buildkit
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
       - dependency-name: github.com/docker/cli
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: github.com/docker/docker
+        update-types: [ "version-update:semver-major", "version-update:semver-minor"]
   - package-ecosystem: bundler
     directory: "/docs"
     schedule:
