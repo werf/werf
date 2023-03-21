@@ -75,14 +75,14 @@ jobs:
       scope: simple
     secrets: inherit
 
-#   e2e_complex_per-k8s:
-#     if: |
-#       github.event_name != 'pull_request' || github.event.label.name == 'trigger: test:main'
-#     uses: ./.github/workflows/_test_e2e_per-k8s-version.yml
-#     with:
-#       scope: complex
-#       timeout: 120
-#     secrets: inherit
+  #   e2e_complex_per-k8s:
+  #     if: |
+  #       github.event_name != 'pull_request' || github.event.label.name == 'trigger: test:main'
+  #     uses: ./.github/workflows/_test_e2e_per-k8s-version.yml
+  #     with:
+  #       scope: complex
+  #       timeout: 120
+  #     secrets: inherit
 
   notify:
     if: |
@@ -95,7 +95,7 @@ jobs:
       - integration_ansible
       - integration_per-k8s
       - e2e_simple_per-k8s
-#       - e2e_complex_per-k8s
+    #       - e2e_complex_per-k8s
     uses: ./.github/workflows/_notification.yml
     secrets:
       mentionGroupID: ${{ secrets.SLACK_MENTION_GROUP_ID }}
