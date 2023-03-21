@@ -62,10 +62,9 @@ func TestRunMain(t *testing.T) {
 }
 
 func discardStdOut() {
-	w, err := os.Open(os.DevNull)
+	devnull, err := os.OpenFile(os.DevNull, os.O_WRONLY, 0o755)
 	if err != nil {
 		panic(err)
 	}
-
-	os.Stdout = w
+	os.Stdout = devnull
 }
