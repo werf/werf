@@ -410,6 +410,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 			targetPlatforms = []string{containerBackend.GetDefaultPlatform()}
 		}
 
+		// FIXME(multiarch): specify multiarch manifest here
 		if err := c.FetchLastImageStage(ctx, targetPlatforms[0], imageName); err != nil {
 			return err
 		}
