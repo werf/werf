@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.215](https://www.github.com/werf/werf/compare/v1.2.214...v1.2.215) (2023-03-22)
+
+
+### Bug Fixes
+
+* **multiarch:** fix panic which occurs when using stapel import from certain stage [1.2.214] ([759d760](https://www.github.com/werf/werf/commit/759d7602a6e15b57b29e9f63f0bc6f4611f3dc5a))
+
 ### [1.2.214](https://www.github.com/werf/werf/compare/v1.2.213...v1.2.214) (2023-03-17)
 
 
