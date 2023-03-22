@@ -1,5 +1,18 @@
 # Changelog
 
+### [1.2.215](https://www.github.com/werf/werf/compare/v1.2.214...v1.2.215) (2023-03-22)
+
+
+### Features
+
+* **multiarch:** add support for target platform in container backends ([22ae3cf](https://www.github.com/werf/werf/commit/22ae3cfd6bdff851822515f216808c73def9f0c9))
+
+
+### Bug Fixes
+
+* **multiarch:** fix 'werf stage image' command panic related to multiarch refactor ([9eeb9d4](https://www.github.com/werf/werf/commit/9eeb9d4478cff547117fe61f52e4c1d2d25fef94))
+* **staged-dockerfile:** meaningful message about staged: true available only for buildah backend and not avaiable for docker server backend ([44485e2](https://www.github.com/werf/werf/commit/44485e2fc18ac393c86740d5109c86fdbf35e966))
+
 ### [1.2.214](https://www.github.com/werf/werf/compare/v1.2.213...v1.2.214) (2023-03-17)
 
 
