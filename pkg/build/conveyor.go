@@ -372,11 +372,12 @@ func (c *Conveyor) GetImageInfoGetters(opts imagePkg.InfoGetterOptions) ([]*imag
 	if err != nil {
 		return nil, fmt.Errorf("unable to get target platforms: %w", err)
 	}
-	var targetPlatform string
-	if len(targetPlatforms) > 0 {
-		// FIXME(multiarch): instead of using first specified platform use multiarch-manifest
-		targetPlatform = targetPlatforms[0]
+	if len(targetPlatforms) == 0 {
+		targetPlatforms = []string{c.ContainerBackend.GetDefaultPlatform()}
 	}
+
+	// FIXME(multiarch): instead of using first specified platform use multiarch-manifest
+	targetPlatform := targetPlatforms[0]
 
 	var images []*imagePkg.InfoGetter
 	for _, img := range c.imagesTree.GetImages() {
