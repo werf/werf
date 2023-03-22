@@ -440,7 +440,7 @@ func getSourceImageDockerImageName(c Conveyor, targetPlatform string, importElm 
 	if importElm.Stage == "" {
 		sourceImageDockerImageName = c.GetImageNameForLastImageStage(targetPlatform, sourceImageName)
 	} else {
-		sourceImageDockerImageName = c.GetImageNameForImageStage(sourceImageName, targetPlatform, importElm.Stage)
+		sourceImageDockerImageName = c.GetImageNameForImageStage(targetPlatform, sourceImageName, importElm.Stage)
 	}
 
 	return sourceImageDockerImageName
@@ -453,7 +453,7 @@ func getSourceImageID(c Conveyor, targetPlatform string, importElm *config.Impor
 	if importElm.Stage == "" {
 		sourceImageID = c.GetImageIDForLastImageStage(targetPlatform, sourceImageName)
 	} else {
-		sourceImageID = c.GetImageIDForImageStage(sourceImageName, targetPlatform, importElm.Stage)
+		sourceImageID = c.GetImageIDForImageStage(targetPlatform, sourceImageName, importElm.Stage)
 	}
 
 	return sourceImageID
@@ -466,7 +466,7 @@ func getSourceImageContentDigest(c Conveyor, targetPlatform string, importElm *c
 	if importElm.Stage == "" {
 		sourceImageContentDigest = c.GetImageContentDigest(targetPlatform, sourceImageName)
 	} else {
-		sourceImageContentDigest = c.GetImageStageContentDigest(sourceImageName, targetPlatform, importElm.Stage)
+		sourceImageContentDigest = c.GetImageStageContentDigest(targetPlatform, sourceImageName, importElm.Stage)
 	}
 
 	return sourceImageContentDigest
