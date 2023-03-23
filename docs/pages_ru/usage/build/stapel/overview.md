@@ -3,7 +3,7 @@ title: Обзор
 permalink: usage/build/stapel/overview.html
 ---
 
-В werf встроен альтернативный синтаксис описания сборочных инструкций, называемый Stapel, который даёт следующие возможности:
+В werf встроен альтернативный синтаксис описания сборочных инструкций, называемый stapel, который даёт следующие возможности:
 
 1. Удобство поддержки и параметризации комплексной конфигурации, возможность переиспользовать общие части и генерировать конфигурацию однотипных образов за счет использования YAML-формата и шаблонизации.
 2. Специальные инструкции для интеграции с Git, позволяющие задействовать инкрементальную пересборку с учетом истории Git-репозитория.
@@ -13,9 +13,9 @@ permalink: usage/build/stapel/overview.html
 
 <!-- TODO(staged-dockerfile): удалить 5 пункт как неактуальный -->
 
-Сборка образов через сборщик Stapel предполагает описание сборочных инструкций в конфигурационном файле `werf.yaml`. Stapel поддерживается как для сборочного бекенда Docker Server'а (сборка через shell-инструкции или ansible), так и для Buildah (только shell-инструкции).
+Сборка образов через сборщик stapel предполагает описание сборочных инструкций в конфигурационном файле `werf.yaml`. stapel поддерживается как для сборочного бекенда Docker-сервера (сборка через shell-инструкции или ansible), так и для Buildah (только shell-инструкции).
 
-В данном разделе рассмотрено, как описывать сборку образов с помощью сборщика Stapel, а также описание дополнительных возможностей и как ими пользоваться.
+В данном разделе рассмотрено, как описывать сборку образов с помощью сборщика stapel, а также описание дополнительных возможностей и как ими пользоваться.
 
 <div class="details">
 <a href="javascript:void(0)" class="details__summary">Как устроен конвеер стадий stapel</a>
@@ -24,8 +24,8 @@ permalink: usage/build/stapel/overview.html
 _Конвейер стадий_ — набор условий и правил выполнения стадий, подразумевающий также четко определенный порядок выполнения стадий.
 
 <div class="tabs">
-  <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'stapel-image-tab')">Stapel-образ</a>
-  <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'stapel-artifact-tab')">Stapel-артефакт</a>
+  <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'stapel-image-tab')">stapel-образ</a>
+  <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'stapel-artifact-tab')">stapel-артефакт</a>
 </div>
 
 <div id="stapel-image-tab" class="tabs__content">
@@ -56,11 +56,11 @@ _Зависимости стадии_ — это данные, которые н
 
 Большинство _зависимостей стадии_ определяется в файле конфигурации `werf.yaml`, остальные — во время запуска.
 
-Следующая таблица иллюстрирует зависимости в Stapel-образе и Stapel-артефакте. Каждая строка таблицы описывает зависимости для определенной стадии. Левая колонка содержит краткое описание зависимостей, правая содержит соответствующую часть `werf.yaml` и ссылки на разделы с более подробной информацией.
+Следующая таблица иллюстрирует зависимости в stapel-образе и stapel-артефакте. Каждая строка таблицы описывает зависимости для определенной стадии. Левая колонка содержит краткое описание зависимостей, правая содержит соответствующую часть `werf.yaml` и ссылки на разделы с более подробной информацией.
 
 <div class="tabs">
-  <a href="javascript:void(0)" id="image-dependencies" class="tabs__btn dependencies-btn active">Stapel-образ</a>
-  <a href="javascript:void(0)" id="artifact-dependencies" class="tabs__btn dependencies-btn">Stapel-артефакт</a>
+  <a href="javascript:void(0)" id="image-dependencies" class="tabs__btn dependencies-btn active">stapel-образ</a>
+  <a href="javascript:void(0)" id="artifact-dependencies" class="tabs__btn dependencies-btn">stapel-артефакт</a>
 </div>
 
 <div id="dependencies">
