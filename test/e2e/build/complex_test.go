@@ -1,6 +1,8 @@
 package e2e_build_test
 
 import (
+	"fmt"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
@@ -81,7 +83,7 @@ var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 				Expect(stapelShellImgCfg.ExposedPorts).To(HaveKey(manifest.Schema2Port("8010/tcp")))
 				Expect(stapelShellImgCfg.Healthcheck.Test).To(ContainElements("CMD-SHELL", "echo healthcheck20"))
 
-				By(`state0: checking "dockerfile" image content`)
+				By(fmt.Sprintf(`state0: checking "dockerfile" image %s content`, buildReport.Images["dockerfile"].DockerImageName))
 				contRuntime.ExpectCmdsToSucceed(
 					buildReport.Images["dockerfile"].DockerImageName,
 					"test -f /app/added/file1",
@@ -97,7 +99,9 @@ var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 					"echo 'file2content' | diff /app/copied/file2 -",
 
 					"test -f /helloworld.tgz",
-					"tar xOf /helloworld.tgz | grep -qF 'Hello World!'",
+					"mkdir /out",
+					"tar xf /helloworld.tgz -C /out --strip-components=1",
+					"grep -qF 'module github.com/werf/werf' /out/go.mod",
 
 					"test -f /created-by-run-state0",
 

@@ -4,7 +4,7 @@ ARG STAPEL_SHELL_IMAGE_NAME="no_such_image"
 FROM ${STAPEL_SHELL_IMAGE_NAME} AS builder
 
 ADD src/file* /app/added/
-ADD "https://github.com/octocat/Hello-World/tarball/7fd1a60b01f91b314f59955a4e4d4e80d8edf11d" /helloworld.tgz
+ADD "https://codeload.github.com/werf/werf/tar.gz/refs/tags/v1.2.210" /helloworld.tgz
 COPY src/file* /app/copied/
 
 
