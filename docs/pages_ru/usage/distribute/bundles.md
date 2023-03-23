@@ -62,12 +62,12 @@ permalink: usage/distribute/bundles.html
 bundle1/
   .helm/
     templates/
-    ...
+    # ...
   werf.yaml
 bundle2/
   .helm/
     templates/
-    ...
+    # ...
   werf.yaml
 ```
 

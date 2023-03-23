@@ -74,11 +74,11 @@ Add templates, parameters, dependent charts, and more to the chart as needed. A 
 
 ```
 .helm/
-  charts/                   
+  charts/
     dependent-chart/
       # ...
   templates/
-    deployment.yaml  
+    deployment.yaml
     _helpers.tpl
     NOTES.txt
   crds/

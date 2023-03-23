@@ -301,7 +301,7 @@ The `if/else` conditionals allows to perform templating only if specific conditi
 
 ```
 {{ if $.Values.app.enabled }}
-...
+# ...
 {{ end }}
 ```
 
