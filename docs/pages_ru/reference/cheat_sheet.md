@@ -26,15 +26,15 @@ werf converge --repo ghcr.io/group/project --use-custom-tag "%image%-$CI_JOB_ID"
 
 ### Интеграция с CI-системой (в настоящее время поддерживаются GitLab и GitHub Workflows)
 
-Задать значения по умолчанию для команд werf и выполнить авторизацию в реестр контейнеров, используя переменные окружения GitLab:
+Задать значения по умолчанию для команд werf и выполнить авторизацию в container registry, используя переменные окружения GitLab:
 
 ```shell
-. $(werf ci-env gitlab --as-file) 
+. $(werf ci-env gitlab --as-file)
 ```
 
 ### Сборка, тегирование и публикация образов
 
-Собрать образы с использованием реестра контейнеров:
+Собрать образы с использованием container registry:
 
 ```shell
 werf build --repo ghcr.io/group/project
@@ -46,7 +46,7 @@ werf build --repo ghcr.io/group/project
 werf build --repo ghcr.io/group/project --add-custom-tag latest --add-custom-tag 1.2.1
 ```
 
-Собрать и сохранить конечные образы в отдельный реестр, развернутый в кластере Kubernetes:
+Собрать и сохранить конечные образы в отдельный registry, развернутый в кластере Kubernetes:
 
 ```shell
 werf build --repo ghcr.io/group/project --final-repo fast-in-cluster-registry.cluster/group/project
@@ -86,7 +86,7 @@ werf kube-run frontend_image --repo ghcr.io/group/project --overrides='{"spec":{
 
 ### Запуск интеграционных тестов
 
-Как правило, для запуска интеграционных тестов (e2e, acceptance, security и т.д.) необходимо production-окружение (его можно подготовить с помощью `converge` или `bundle`) и контейнер с соответствующей командой. 
+Как правило, для запуска интеграционных тестов (e2e, acceptance, security и т.д.) необходимо production-окружение (его можно подготовить с помощью `converge` или `bundle`) и контейнер с соответствующей командой.
 
 Запустить интеграционные тесты с помощью `converge`:
 
@@ -103,7 +103,7 @@ werf kube-run --repo ghcr.io/group/project --env integration -- npm run acceptan
 
 ### Подготовка артефактов релиза (по желанию)
 
-Бандлы werf позволяют подготовить артефакты релиза, которые могут быть протестированы или развернуты позже (с помощью werf, Argo CD или Helm), и сохранить их в реестре контейнеров с указанным тегом. 
+Бандлы werf позволяют подготовить артефакты релиза, которые могут быть протестированы или развернуты позже (с помощью werf, Argo CD или Helm), и сохранить их в реестре контейнеров с указанным тегом.
 
 Использовать тег semver, совместимый с OCI-чартом Helm:
 
@@ -157,7 +157,7 @@ werf cleanup --repo ghcr.io/group/project
 werf render --dev
 ```
 
-Собрать образ и запустить интерактивную оболочку в контейнере с неудавшейся стадией в случае ошибки: 
+Собрать образ и запустить интерактивную оболочку в контейнере с неудавшейся стадией в случае ошибки:
 
 ```shell
 werf build --dev [--follow] --introspect-error
@@ -169,7 +169,7 @@ werf build --dev [--follow] --introspect-error
 werf kube-run --dev [--follow] --repo ghcr.io/group/project frontend -- npm lint
 ```
 
-Запустить командную оболочку в контейнере в Pod'e Kubernetes для указанного образа: 
+Запустить командную оболочку в контейнере в Pod'e Kubernetes для указанного образа:
 
 ```shell
 werf kube-run --dev --repo ghcr.io/group/project -it frontend -- bash

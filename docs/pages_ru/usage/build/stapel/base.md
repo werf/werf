@@ -73,7 +73,7 @@ fromArtifact: <artifact name>
 fromCacheVersion: <arbitrary string>
 ```
 
-## Как Stapel-сборщик работает с CMD и ENTRYPOINT из базового образа
+## Как stapel-сборщик работает с CMD и ENTRYPOINT из базового образа
 
 Для сборки стадии werf запускает контейнер со служебными значениями `CMD` и `ENTRYPOINT`, а затем заменяет их значениями [базового образа]({{ "usage/build/stapel/base.html" | true_relative_url }}). Если в базовом образе эти значения не установлены, werf сбрасывает их следующим образом:
 - `[]` для `CMD`;

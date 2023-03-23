@@ -17,7 +17,7 @@ werf export \
     --tag other.example.org/myproject/myapp:latest
 ```
 
-Результат: образ собран и сначала опубликован с content-based тегом в container registry `example.org/myproject`, а затем опубликован в другой container registry `other.example.org/myproject` как конечный экспортированный образ `other.example.org/myproject/myapp:latest`.
+Результат: образ собран и сначала опубликован с content-based тегом в container registry `example.org/myproject`, а затем опубликован в другой container registry `other.example.org/myproject` как целевой экспортированный образ `other.example.org/myproject/myapp:latest`.
 
 В параметре `--tag` можно указать тот же репозиторий, что и в `--repo`, таким образом используя один и тот же container registry и для сборки, и для экспортированного образа.
 
