@@ -1,16 +1,16 @@
 ---
-title: Сравнение с другими инструментами
+title: Comparing to other tools
 permalink: resources/comparison.html
 ---
 
 ## werf vs Helm
 
-Helm используется только для развертывания и дистрибуции чартов, а werf ещё и для разработки, сборки, тестирования, дистрибуции образов и бандлов, а также очистки container registry. В werf встроен Helm с дополнительными возможностями: продвинутым отслеживанием, порядком развертывания не только для хуков, но и для обычных ресурсов, и другими.
+Helm is used only for chart deployment and distribution, while werf can also be used for developing, building, testing, distributing images and bundles, and cleaning up the container registry. Helm is built into werf and is enhanced with additional features such as advanced tracking, customizing the deployment order not only for hooks but also for regular resources, and more.
 
 ## werf vs ArgoCD
 
-ArgoCD используется только для развертывания (production-like окружений), а werf ещё и для разработки, сборки, тестирования, дистрибуции, очистки container registry. Развертывание в werf происходит по push-модели с Helm, но доступна и интеграция с ArgoCD для реализации GitOps.
+ArgoCD is only used for deploying (production-like environments), while werf also supports developing, building, testing, distributing, and cleaning up the container registry. Deployment in werf follows a Helm push model, though integration with ArgoCD to implement GitOps is also available.
 
 ## werf vs Scaffold/DevSpace
 
-Skaffold и DevSpace по сути являются враперами популярных сборщиков и инструментов развёртывания с дополнительной функциональностью, ориентированной на разработку. werf в свою очередь концентрируется на CI/CD и более тесной интеграции единственного способа сборки и развёртывания – пользователям предлагаются решения их прикладных задач, а не инструменты (они в контексте werf вторичны).
+Skaffold and DevSpace are essentially wrappers for the popular builders and deployment tools with additional development-oriented functionality. werf, on the other hand, focuses on CI/CD and tighter integration of the unified way of building and deploying. Users are provided with the solutions to their application problems, not just tools (those are secondary in the werf's context).
