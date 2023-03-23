@@ -35,7 +35,7 @@ type StapelDockerInstructionsStage struct {
 func (s *StapelDockerInstructionsStage) GetDependencies(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
 	var args []string
 
-	if c.UseLegacyStapelBuilder(cb) && s.instructions.ExactValues {
+	if s.instructions.ExactValues {
 		args = append(args, "exact-values:::")
 	}
 
