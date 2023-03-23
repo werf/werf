@@ -250,25 +250,33 @@ func (i *Image) SetupBaseImage(ctx context.Context, storageManager manager.Stora
 
 		if i.IsDockerfileImage && i.DockerfileImageConfig.Staged {
 			var info *image.Info
-			var err error
-			info, err = storageManager.GetImageInfo(ctx, i.baseImageReference, storageOpts)
-			if isUnsupportedMediaTypeError(err) {
-				if err := logboek.Context(ctx).Default().LogProcess("Pulling base image %s", i.baseStageImage.Image.Name()).
-					Options(func(options types.LogProcessOptionsInterface) {
-						options.Style(style.Highlight())
-					}).
-					DoError(func() error {
-						return i.ContainerBackend.PullImageFromRegistry(ctx, i.baseStageImage.Image)
-					}); err != nil {
-					return err
-				}
 
+			if i.baseImageReference != "scratch" {
+				var err error
 				info, err = storageManager.GetImageInfo(ctx, i.baseImageReference, storageOpts)
-				if err != nil {
+				if isUnsupportedMediaTypeError(err) {
+					if err := logboek.Context(ctx).Default().LogProcess("Pulling base image %s", i.baseStageImage.Image.Name()).
+						Options(func(options types.LogProcessOptionsInterface) {
+							options.Style(style.Highlight())
+						}).
+						DoError(func() error {
+							return i.ContainerBackend.PullImageFromRegistry(ctx, i.baseStageImage.Image)
+						}); err != nil {
+						return err
+					}
+
+					info, err = storageManager.GetImageInfo(ctx, i.baseImageReference, storageOpts)
+					if err != nil {
+						return fmt.Errorf("unable to get base image %q manifest: %w", i.baseImageReference, err)
+					}
+				} else if err != nil {
 					return fmt.Errorf("unable to get base image %q manifest: %w", i.baseImageReference, err)
 				}
-			} else if err != nil {
-				return fmt.Errorf("unable to get base image %q manifest: %w", i.baseImageReference, err)
+			} else {
+				info = &image.Info{
+					Name: i.baseImageReference,
+					Env:  nil,
+				}
 			}
 
 			i.baseStageImage.Image.SetStageDescription(&image.StageDescription{
@@ -310,6 +318,10 @@ func (i *Image) GetBaseImageReference() string {
 func (i *Image) FetchBaseImage(ctx context.Context) error {
 	switch i.baseImageType {
 	case ImageFromRegistryAsBaseImage:
+		if i.baseStageImage.Image.Name() == "scratch" {
+			return nil
+		}
+
 		// TODO: Refactor, move manifest fetching into SetupBaseImage, only pull image in FetchBaseImage method
 
 		if info, err := i.ContainerBackend.GetImageInfo(ctx, i.baseStageImage.Image.Name(), container_backend.GetImageInfoOpts{}); err != nil {

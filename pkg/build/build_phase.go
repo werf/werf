@@ -583,7 +583,7 @@ func (phase *BuildPhase) fetchBaseImageForStage(ctx context.Context, img *image.
 		return phase.Conveyor.StorageManager.FetchStage(ctx, phase.Conveyor.ContainerBackend, phase.StagesIterator.PrevBuiltStage)
 	} else {
 		if err := img.FetchBaseImage(ctx); err != nil {
-			return fmt.Errorf("unable to fetch base image %s for stage %s: %w", img.GetBaseStageImage().Image.Name(), stg.LogDetailedName(), err)
+			return fmt.Errorf("unable to fetch base image %q for stage %s: %w", img.GetBaseStageImage().Image.Name(), stg.LogDetailedName(), err)
 		}
 	}
 	return nil
