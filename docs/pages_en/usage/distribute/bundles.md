@@ -62,12 +62,12 @@ Place the `.helm` file with the chart contents and its corresponding `werf.yaml`
 bundle1/
   .helm/
     templates/
-    ...
+    # ...
   werf.yaml
 bundle2/
   .helm/
     templates/
-    ...
+    # ...
   werf.yaml
 ```
 
