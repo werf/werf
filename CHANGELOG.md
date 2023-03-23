@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.217](https://www.github.com/werf/werf/compare/v1.2.216...v1.2.217) (2023-03-23)
+
+
+### Bug Fixes
+
+* **buildah:** usage of docker.exactValues affects digest the same way for buildah and docker-server backends ([726ef94](https://www.github.com/werf/werf/commit/726ef9454b8070bf37a09273a034fd9856c5c123))
+
 ### [1.2.216](https://www.github.com/werf/werf/compare/v1.2.215...v1.2.216) (2023-03-22)
 
 
