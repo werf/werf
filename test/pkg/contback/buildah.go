@@ -61,7 +61,7 @@ func (r *NativeBuildahBackend) Pull(image string) {
 	utils.RunSucceedCommand("/", "buildah", args...)
 }
 
-func (r *NativeBuildahBackend) GetImageInspectConfig(image string) (config manifest.Schema2Config) {
+func (r *NativeBuildahBackend) GetImageInspect(image string) DockerImageInspect {
 	r.Pull(image)
 
 	args := r.CommonCliArgs
@@ -75,11 +75,14 @@ func (r *NativeBuildahBackend) GetImageInspectConfig(image string) (config manif
 	var inspect BuildahInspect
 	Expect(json.Unmarshal(inspectRaw, &inspect)).To(Succeed())
 
-	return inspect.Docker.Config
+	return DockerImageInspect(inspect.Docker)
 }
 
 type BuildahInspect struct {
 	Docker struct {
-		Config manifest.Schema2Config `json:"config"`
+		Config       manifest.Schema2Config `json:"config"`
+		Architecture string                 `json:"architecture"`
+		Os           string                 `json:"os"`
+		Variant      string                 `json:"variant"`
 	} `json:"Docker"`
 }

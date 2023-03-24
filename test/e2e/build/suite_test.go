@@ -27,6 +27,8 @@ var SuiteData = struct {
 	RegistryLocalAddress    string
 	RegistryInternalAddress string
 	RegistryContainerName   string
+
+	WerfRepo string
 }{}
 
 var (

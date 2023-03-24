@@ -1,0 +1,4 @@
+giterminismConfigVersion: 1
+config:
+  goTemplateRendering:
+    allowEnvVariables: [ "ENABLE_STAPEL_IMAGE", "ENABLE_STAGED_DOCKERFILE_IMAGE", "ENABLE_DOCKERFILE_IMAGE" ]

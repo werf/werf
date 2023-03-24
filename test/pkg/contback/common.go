@@ -12,8 +12,8 @@ import (
 
 var ErrRuntimeUnavailable = errors.New("requested runtime unavailable")
 
-func NewContainerBackend(buildahMode string) (ContainerBackend, error) {
-	switch buildahMode {
+func NewContainerBackend(mode string) (ContainerBackend, error) {
+	switch mode {
 	case "docker", "vanilla-docker", "buildkit-docker":
 		return NewDockerBackend(), nil
 	case "native-rootless":
@@ -27,7 +27,7 @@ func NewContainerBackend(buildahMode string) (ContainerBackend, error) {
 		}
 		return NewNativeBuildahBackend(bdTypes.IsolationChroot, buildah.DefaultStorageDriver), nil
 	default:
-		panic(fmt.Sprintf("unexpected buildah mode: %s", buildahMode))
+		panic(fmt.Sprintf("unexpected buildah mode: %s", mode))
 	}
 }
 
@@ -37,6 +37,13 @@ type ContainerBackend interface {
 	Rm(containerName string)
 
 	RunSleepingContainer(containerName, image string)
-	GetImageInspectConfig(image string) (config manifest.Schema2Config)
+	GetImageInspect(image string) DockerImageInspect
 	ExpectCmdsToSucceed(image string, cmds ...string)
+}
+
+type DockerImageInspect struct {
+	Config       manifest.Schema2Config
+	Architecture string
+	Os           string
+	Variant      string
 }

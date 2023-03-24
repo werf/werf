@@ -96,8 +96,9 @@ const (
 type ReportFormat string
 
 type ImagesReport struct {
-	mux    sync.Mutex
-	Images map[string]ReportImageRecord
+	mux              sync.Mutex
+	Images           map[string]ReportImageRecord
+	ImagesByPlatform map[string]map[string]ReportImageRecord
 }
 
 func (report *ImagesReport) SetImageRecord(name string, imageRecord ReportImageRecord) {

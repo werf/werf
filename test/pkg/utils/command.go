@@ -43,9 +43,7 @@ func RunCommandWithOptions(dir, command string, args []string, options RunComman
 		cmd.Dir = dir
 	}
 
-	if len(options.ExtraEnv) != 0 {
-		cmd.Env = append(os.Environ(), options.ExtraEnv...)
-	}
+	cmd.Env = append(os.Environ(), options.ExtraEnv...)
 
 	if options.ToStdin != "" {
 		var b bytes.Buffer
