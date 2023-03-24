@@ -86,7 +86,12 @@ func RunAutoHostCleanup(ctx context.Context, options AutoHostCleanupOptions) err
 		args = append(args, "--docker-server-storage-path", *options.DockerServerStoragePath)
 	}
 
-	cmd := exec.Command(os.Args[0], args...)
+	executableName := os.Getenv("WERF_ORIGINAL_EXECUTABLE")
+	if executableName == "" {
+		executableName = os.Args[0]
+	}
+
+	cmd := exec.Command(executableName, args...)
 
 	var env []string
 	for _, spec := range os.Environ() {

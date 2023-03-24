@@ -164,5 +164,11 @@ func Init(tmpDirOption, homeDirOption string) error {
 		return fmt.Errorf("error setting werf last run at timestamp: %w", err)
 	}
 
+	if os.Getenv("WERF_ORIGINAL_EXECUTABLE") == "" {
+		if err := os.Setenv("WERF_ORIGINAL_EXECUTABLE", os.Args[0]); err != nil {
+			return fmt.Errorf("error setting werf original args env var: %w", err)
+		}
+	}
+
 	return nil
 }
