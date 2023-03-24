@@ -13,4 +13,6 @@ ArgoCD is only used for deploying (production-like environments), while werf als
 
 ## werf vs Scaffold/DevSpace
 
-Skaffold and DevSpace are essentially wrappers for the popular builders and deployment tools with additional development-oriented functionality. werf, on the other hand, focuses on CI/CD and tighter integration of the unified way of building and deploying. Users are provided with the solutions to their application problems, not just tools (those are secondary in the werf's context).
+Skaffold and DevSpace are essentially wrappers for the popular builders and deployment tools with additional development-oriented functionality. 
+
+werf, on the other hand, focuses on CI/CD and tighter integration of the unified way of building and deploying. Users are provided with the solutions to their application problems, not just tools (those are secondary in the werf's context).
