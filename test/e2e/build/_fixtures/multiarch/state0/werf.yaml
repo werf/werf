@@ -1,0 +1,28 @@
+project: multiarch
+configVersion: 1
+build:
+  platform:
+    - linux/arm64
+    - linux/amd64
+
+{{ if ( eq ( env "ENABLE_STAPEL_IMAGE" ) "1" ) }}
+---
+image: orange
+from: alpine
+shell:
+  install:
+    - echo install
+{{ end }}
+
+{{ if ( eq ( env "ENABLE_STAGED_DOCKERFILE_IMAGE" ) "1" ) }}
+---
+image: apple
+dockerfile: Dockerfile.apple
+staged: true
+{{ end }}
+
+{{ if ( eq ( env "ENABLE_DOCKERFILE_IMAGE" ) "1" ) }}
+---
+image: potato
+dockerfile: Dockerfile.potato
+{{ end }}

@@ -5,7 +5,6 @@ import (
 
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/test/pkg/thirdparty/contruntime/manifest"
 	"github.com/werf/werf/test/pkg/utils"
 )
 
@@ -47,12 +46,18 @@ func (r *DockerBackend) Pull(image string) {
 	utils.RunSucceedCommand("/", "docker", args...)
 }
 
-func (r *DockerBackend) GetImageInspectConfig(image string) (config manifest.Schema2Config) {
+func (r *DockerBackend) GetImageInspect(image string) DockerImageInspect {
 	args := r.CommonCliArgs
-	args = append(args, "image", "inspect", "-f", "{{ json .Config }}", image)
-	configRaw, err := utils.RunCommand("/", "docker", args...)
-	Expect(err).NotTo(HaveOccurred())
-	Expect(json.Unmarshal(configRaw, &config)).To(Succeed())
+	args = append(args, "image", "inspect", image)
+	inspectRaw, err := utils.RunCommand("/", "docker", args...)
 
-	return config
+	var dockerInspect DockerInspect
+
+	Expect(err).NotTo(HaveOccurred())
+	Expect(json.Unmarshal(inspectRaw, &dockerInspect)).To(Succeed())
+	Expect(len(dockerInspect)).To(Equal(1))
+
+	return dockerInspect[0]
 }
+
+type DockerInspect []DockerImageInspect
