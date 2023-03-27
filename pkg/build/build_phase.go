@@ -72,7 +72,7 @@ func NewBuildPhase(c *Conveyor, opts BuildPhaseOptions) *BuildPhase {
 	return &BuildPhase{
 		BasePhase:         BasePhase{c},
 		BuildPhaseOptions: opts,
-		ImagesReport:      &ImagesReport{Images: make(map[string]ReportImageRecord)},
+		ImagesReport:      NewImagesReport(),
 	}
 }
 
@@ -101,10 +101,27 @@ type ImagesReport struct {
 	ImagesByPlatform map[string]map[string]ReportImageRecord
 }
 
+func NewImagesReport() *ImagesReport {
+	return &ImagesReport{
+		Images:           make(map[string]ReportImageRecord),
+		ImagesByPlatform: make(map[string]map[string]ReportImageRecord),
+	}
+}
+
 func (report *ImagesReport) SetImageRecord(name string, imageRecord ReportImageRecord) {
 	report.mux.Lock()
 	defer report.mux.Unlock()
 	report.Images[name] = imageRecord
+}
+
+func (report *ImagesReport) SetImageByPlatformRecord(targetPlatform, name string, imageRecord ReportImageRecord) {
+	report.mux.Lock()
+	defer report.mux.Unlock()
+
+	if _, hasKey := report.ImagesByPlatform[name]; !hasKey {
+		report.ImagesByPlatform[name] = make(map[string]ReportImageRecord)
+	}
+	report.ImagesByPlatform[name][targetPlatform] = imageRecord
 }
 
 func (report *ImagesReport) ToJsonData() ([]byte, error) {
@@ -175,6 +192,17 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 }
 
 func (phase *BuildPhase) createReport(ctx context.Context) error {
+	targetPlatforms, err := phase.Conveyor.GetTargetPlatforms()
+	if err != nil {
+		return fmt.Errorf("unable to get target platforms: %w", err)
+	}
+	if len(targetPlatforms) == 0 {
+		targetPlatforms = []string{phase.Conveyor.ContainerBackend.GetDefaultPlatform()}
+	}
+
+	// FIXME(multiarch): instead of using first specified platform use multiarch-manifest
+	targetPlatform := targetPlatforms[0]
+
 	for _, img := range phase.Conveyor.imagesTree.GetImages() {
 		if img.IsArtifact {
 			continue
@@ -186,7 +214,7 @@ func (phase *BuildPhase) createReport(ctx context.Context) error {
 			desc = stageImage.GetStageDescription()
 		}
 
-		phase.ImagesReport.SetImageRecord(img.GetName(), ReportImageRecord{
+		record := ReportImageRecord{
 			WerfImageName:     img.GetName(),
 			DockerRepo:        desc.Info.Repository,
 			DockerTag:         desc.Info.Tag,
@@ -194,7 +222,14 @@ func (phase *BuildPhase) createReport(ctx context.Context) error {
 			DockerImageDigest: desc.Info.RepoDigest,
 			DockerImageName:   desc.Info.Name,
 			Rebuilt:           img.GetRebuilt(),
-		})
+		}
+
+		if os.Getenv("WERF_ENABLE_REPORT_BY_PLATFORM") == "1" {
+			phase.ImagesReport.SetImageByPlatformRecord(img.TargetPlatform, img.GetName(), record)
+		}
+		if img.TargetPlatform == targetPlatform {
+			phase.ImagesReport.SetImageRecord(img.GetName(), record)
+		}
 	}
 
 	debugJsonData, err := phase.ImagesReport.ToJsonData()
