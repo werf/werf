@@ -3,7 +3,7 @@ title: Overview
 permalink: usage/project_configuration/overview.html
 ---
 
-werf follows the principles of the IaC (Infrastructure as Code) approach and encourages the user to store the project delivery configuration along with the application code in Git and to use external dependencies responsibly.
+werf follows the principles of the IaC (Infrastructure as Code) approach and encourages the user to store the project delivery configuration along with the application code in Git and to use external dependencies responsibly. This is accomplished by a mechanism called [giterminism]({{ "usage/project_configuration/giterminism.html" | true_relative_url }}).
 
 A typical project configuration includes several files:
 
