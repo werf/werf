@@ -11,7 +11,7 @@ Helm is used only for chart deployment and distribution, while werf can also be 
 
 ArgoCD is only used for deploying (production-like environments), while werf also supports developing, building, testing, distributing, and cleaning up the container registry. Deployment in werf follows a Helm push model, though integration with ArgoCD to implement GitOps is also available.
 
-## werf vs Scaffold/DevSpace
+## werf vs Skaffold/DevSpace
 
 Skaffold and DevSpace are essentially wrappers for the popular builders and deployment tools with additional development-oriented functionality. 
 
