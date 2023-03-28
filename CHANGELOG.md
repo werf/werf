@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.218](https://www.github.com/werf/werf/compare/v1.2.217...v1.2.218) (2023-03-28)
+
+
+### Bug Fixes
+
+* **multiplatform:** images report contains correct digests [1.2.217] ([299dbf1](https://www.github.com/werf/werf/commit/299dbf1247be854e393f24f3b85dad95c8eb6c39))
+
 ### [1.2.217](https://www.github.com/werf/werf/compare/v1.2.216...v1.2.217) (2023-03-23)
 
 
