@@ -262,7 +262,7 @@ entries:
           - title: Как мигрировать с v1.1 на v1.2
             url: /resources/how_to_migrate_from_v1_1_to_v1_2.html
 
-          - title: Сравнение с другими инструментами
+          - title: Сравнение с другими решениями
             url: /resources/comparison.html
 
           - title: Телеметрия
