@@ -1,5 +1,14 @@
 # Changelog
 
+### [1.2.218](https://www.github.com/werf/werf/compare/v1.2.217...v1.2.218) (2023-03-28)
+
+
+### Bug Fixes
+
+* 'exec: werf-in-a-user-namespace: executable file not found in $PATH' when using buildah ([6323d8e](https://www.github.com/werf/werf/commit/6323d8efd55d9f5e15ff2d5ed6e99eeb4a449f6f))
+* **multiplatform:** images report contains correct digests ([836fe04](https://www.github.com/werf/werf/commit/836fe044abb1f2a71bd4033112bbd09ee3890b8a))
+* **staged-dockerfile:** allow scratch base image ([5bf6a27](https://www.github.com/werf/werf/commit/5bf6a27afcb100d107dc00b5258315515004ded4))
+
 ### [1.2.217](https://www.github.com/werf/werf/compare/v1.2.216...v1.2.217) (2023-03-23)
 
 
