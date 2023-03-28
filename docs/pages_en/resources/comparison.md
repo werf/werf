@@ -1,23 +1,27 @@
 ---
-title: Comparing to other tools
+title: Comparison with other solutions
 permalink: resources/comparison.html
 ---
 
 ## Giterminism vs GitOps
 
-GitOps only defines the deployment of pre-built application artifacts, while Giterminism can define (shape) the entire CI/CD process, including building, testing, distributing, and deploying.
+GitOps only defines the deployment of pre-built application artifacts, while giterminism can define (shape) the entire CI/CD process, including building, testing, distributing, and deploying.
 
-GitOps requires a CD solution that continuously synchronizes the desired state with the actual one, while Giterminism imposes no restrictions: the user can decide how to perform such synchronization themselves.
+GitOps requires a CD solution that continuously synchronizes the desired state with the actual one, while giterminism imposes no restrictions: the user can decide how to perform such synchronization themselves.
 
-GitOps mandates separation of development and operation, while Giterminism allows for them to be separated or integrated into a single process so that the DevOps methodology can be followed.
+GitOps mandates separation of development and operation, while giterminism allows for them to be separated or integrated into a single process so that the DevOps methodology can be followed.
 
 ## werf vs Helm
 
-Helm is used only for chart deployment and distribution, while werf can also be used for developing, building, testing, distributing images and bundles, and cleaning up the container registry. Helm is built into werf and is enhanced with additional features such as advanced tracking, customizing the deployment order not only for hooks but also for regular resources, and more.
+Helm is used only for chart deployment and distribution, while werf can also be used for developing, building, testing, distributing images and bundles, and cleaning up the container registry. 
+
+Helm is built into werf and is enhanced with additional features such as advanced tracking, customizing the deployment order not only for hooks but also for regular resources, and more.
 
 ## werf vs ArgoCD
 
-ArgoCD is only used for deploying (production-like environments), while werf also supports developing, building, testing, distributing, and cleaning up the container registry. Deployment in werf follows a Helm push model, though integration with ArgoCD to implement GitOps is also available.
+ArgoCD is only used for deploying, while werf also supports developing, building, testing, distributing, and cleaning up the container registry. 
+
+Deployment in werf follows a Helm push model, though integration with ArgoCD to implement GitOps is also available.
 
 ## werf vs Skaffold/DevSpace
 
