@@ -188,6 +188,27 @@ func (phase *BuildPhase) BeforeImages(ctx context.Context) error {
 }
 
 func (phase *BuildPhase) AfterImages(ctx context.Context) error {
+	targetPlatforms, err := phase.Conveyor.GetTargetPlatforms()
+	if err != nil {
+		return fmt.Errorf("unable to get target platforms: %w", err)
+	}
+	if len(targetPlatforms) == 0 {
+		targetPlatforms = []string{phase.Conveyor.ContainerBackend.GetDefaultPlatform()}
+	}
+
+	for imageName, imagePlatforms := range phase.Conveyor.imagesTree.GetImagePlatformsByName(true) {
+	AssertAllTargetPlatformsPresent:
+		for _, targetPlatform := range targetPlatforms {
+			for _, imagePlatform := range imagePlatforms {
+				if targetPlatform == imagePlatform {
+					fmt.Printf("Found image %q built for target platform %q\n", imageName, targetPlatform)
+					continue AssertAllTargetPlatformsPresent
+				}
+			}
+			panic(fmt.Sprintf("there is no image %q built for target platform %q, please report a bug", imageName, targetPlatform))
+		}
+	}
+
 	return phase.createReport(ctx)
 }
 
@@ -362,6 +383,20 @@ func (phase *BuildPhase) addManagedImage(ctx context.Context, img *image.Image) 
 }
 
 func (phase *BuildPhase) publishImageMetadata(ctx context.Context, img *image.Image) error {
+	targetPlatforms, err := phase.Conveyor.GetTargetPlatforms()
+	if err != nil {
+		return fmt.Errorf("unable to get target platforms: %w", err)
+	}
+	if len(targetPlatforms) == 0 {
+		targetPlatforms = []string{phase.Conveyor.ContainerBackend.GetDefaultPlatform()}
+	}
+	targetPlatform := targetPlatforms[0]
+
+	// FIXME(multiarch): publish image metadata for multiarch manifest instead of per-platform-images
+	if targetPlatform != img.TargetPlatform {
+		return nil
+	}
+
 	return logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Processing image %s git metadata", img.GetName())).
 		DoError(func() error {
 			var commits []string
