@@ -201,7 +201,7 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 		for _, targetPlatform := range targetPlatforms {
 			for _, imagePlatform := range imagePlatforms {
 				if targetPlatform == imagePlatform {
-					fmt.Printf("Found image %q built for target platform %q\n", imageName, targetPlatform)
+					logboek.Context(ctx).Debug().LogF("Found image %q built for target platform %q\n", imageName, targetPlatform)
 					continue AssertAllTargetPlatformsPresent
 				}
 			}
