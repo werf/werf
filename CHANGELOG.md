@@ -1,5 +1,14 @@
 # Changelog
 
+### [1.2.215](https://www.github.com/werf/werf/compare/v1.2.214...v1.2.215) (2023-03-29)
+
+
+### Bug Fixes
+
+* **multiarch:** do not override image metadata for secondary platforms ([715c1ea](https://www.github.com/werf/werf/commit/715c1eaa57998c96a48a5997cb50ec4c3539f23c))
+* **multiarch:** fix panic which occurs when using stapel import from certain stage [1.2.214] ([759d760](https://www.github.com/werf/werf/commit/759d7602a6e15b57b29e9f63f0bc6f4611f3dc5a))
+* **multiplatform:** images report contains correct digests [1.2.214] ([714e226](https://www.github.com/werf/werf/commit/714e226d53e050274463513e8bc10abb67de44de))
+
 ### [1.2.214](https://www.github.com/werf/werf/compare/v1.2.213...v1.2.214) (2023-03-17)
 
 
