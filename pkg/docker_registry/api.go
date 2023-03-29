@@ -270,14 +270,11 @@ func (api *api) image(reference string) (v1.Image, name.Reference, error) {
 		return nil, nil, fmt.Errorf("parsing reference %q: %w", reference, err)
 	}
 
-	// FIXME: Hack for the go-containerregistry library,
-	// FIXME: that uses default transport without options to change transport to custom.
-	// FIXME: Needed for the insecure https registry to work.
-	oldDefaultTransport := http.DefaultTransport
-	http.DefaultTransport = api.getHttpTransport()
-	img, err := remote.Image(ref, remote.WithAuthFromKeychain(authn.DefaultKeychain))
-	http.DefaultTransport = oldDefaultTransport
-
+	img, err := remote.Image(
+		ref,
+		remote.WithAuthFromKeychain(authn.DefaultKeychain),
+		remote.WithTransport(api.getHttpTransport()),
+	)
 	if err != nil {
 		return nil, nil, fmt.Errorf("reading image %q: %w", ref, err)
 	}
