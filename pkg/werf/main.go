@@ -16,7 +16,8 @@ import (
 var Version = "dev"
 
 var (
-	tmpDir, homeDir  string
+	tmpDir, homeDir string
+
 	sharedContextDir string
 	localCacheDir    string
 	serviceDir       string
