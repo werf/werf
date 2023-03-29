@@ -120,6 +120,22 @@ func (tree *ImagesTree) GetImage(name string) *Image {
 	return nil
 }
 
+func (tree *ImagesTree) GetImagePlatformsByName(finalOnly bool) map[string][]string {
+	res := make(map[string][]string)
+	for _, img := range tree.GetImages() {
+		if finalOnly {
+			for _, finalImageName := range tree.werfConfig.GetAllImages() {
+				if finalImageName.GetName() == img.Name {
+					res[img.Name] = append(res[img.Name], img.TargetPlatform)
+				}
+			}
+		} else {
+			res[img.Name] = append(res[img.Name], img.TargetPlatform)
+		}
+	}
+	return res
+}
+
 func (tree *ImagesTree) GetImages() []*Image {
 	return tree.allImages
 }
