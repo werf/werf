@@ -1,5 +1,15 @@
 # Changelog
 
+### [1.2.219](https://www.github.com/werf/werf/compare/v1.2.218...v1.2.219) (2023-03-29)
+
+
+### Bug Fixes
+
+* 'certificate signed by unknown authority' and not working skip-tls-verify-registry param ([b646359](https://www.github.com/werf/werf/commit/b646359b80f729159bff6fe1616e3e1e2799be4e))
+* **multiarch:** do not override image metadata for secondary platforms ([b49060e](https://www.github.com/werf/werf/commit/b49060ef993d9e9c0c9ee31d49a2562807679e1a))
+* **multiarch:** do not override image metadata for secondary platforms (part 2) ([838baef](https://www.github.com/werf/werf/commit/838baef7fa48fd67b8907d68a668e72265066c03))
+* restart release-please process ([63f4072](https://www.github.com/werf/werf/commit/63f4072298c43e593e29225b06ba6609247fe762))
+
 ### [1.2.218](https://www.github.com/werf/werf/compare/v1.2.217...v1.2.218) (2023-03-28)
 
 
