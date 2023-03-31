@@ -16,6 +16,14 @@ import (
 )
 
 func ContainerBackendProcessStartupHook() (bool, error) {
+	switch {
+	case strings.HasPrefix(os.Args[0], "buildah-") || strings.HasPrefix(os.Args[0], "chrootuser-") || strings.HasPrefix(os.Args[0], "storage-"):
+	case os.Getenv("WERF_ORIGINAL_EXECUTABLE") == "":
+		if err := os.Setenv("WERF_ORIGINAL_EXECUTABLE", os.Args[0]); err != nil {
+			return false, fmt.Errorf("error setting werf original args env var: %w", err)
+		}
+	}
+
 	buildahMode, _, err := GetBuildahMode()
 	if err != nil {
 		return false, fmt.Errorf("unable to determine buildah mode: %w", err)
