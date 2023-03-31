@@ -17,10 +17,13 @@ import (
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
+	"github.com/google/go-containerregistry/pkg/v1/empty"
 	"github.com/google/go-containerregistry/pkg/v1/mutate"
+	"github.com/google/go-containerregistry/pkg/v1/partial"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
 	"github.com/google/go-containerregistry/pkg/v1/tarball"
+	"github.com/google/go-containerregistry/pkg/v1/types"
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/docker_registry/container_registry_extensions"
@@ -48,8 +51,8 @@ func (api *api) Tags(ctx context.Context, reference string, _ ...Option) ([]stri
 	return api.tags(ctx, reference)
 }
 
-func (api *api) tags(_ context.Context, reference string, extraListOptions ...remote.Option) ([]string, error) {
-	tags, err := api.list(reference, extraListOptions...)
+func (api *api) tags(ctx context.Context, reference string, extraListOptions ...remote.Option) ([]string, error) {
+	tags, err := api.list(ctx, reference, extraListOptions...)
 	if err != nil {
 		if IsStatusNotFoundErr(err) {
 			return []string{}, nil
@@ -61,20 +64,20 @@ func (api *api) tags(_ context.Context, reference string, extraListOptions ...re
 	return tags, nil
 }
 
-func (api *api) tagImage(reference, tag string) error {
+func (api *api) tagImage(ctx context.Context, reference, tag string) error {
 	ref, err := name.ParseReference(reference, api.parseReferenceOptions()...)
 	if err != nil {
 		return fmt.Errorf("parsing reference %q: %w", reference, err)
 	}
 
-	desc, err := remote.Get(ref, api.defaultRemoteOptions()...)
+	desc, err := remote.Get(ref, api.defaultRemoteOptions(ctx)...)
 	if err != nil {
 		return fmt.Errorf("getting reference %q: %w", reference, err)
 	}
 
 	dst := ref.Context().Tag(tag)
 
-	return remote.Tag(dst, desc, api.defaultRemoteOptions()...)
+	return remote.Tag(dst, desc, api.defaultRemoteOptions(ctx)...)
 }
 
 func (api *api) IsRepoImageExists(ctx context.Context, reference string) (bool, error) {
@@ -171,14 +174,14 @@ func (api *api) GetRepoImage(_ context.Context, reference string) (*image.Info, 
 	return repoImage, nil
 }
 
-func (api *api) list(reference string, extraListOptions ...remote.Option) ([]string, error) {
+func (api *api) list(ctx context.Context, reference string, extraListOptions ...remote.Option) ([]string, error) {
 	repo, err := name.NewRepository(reference, api.newRepositoryOptions()...)
 	if err != nil {
 		return nil, fmt.Errorf("parsing repo %q: %w", reference, err)
 	}
 
 	listOptions := append(
-		api.defaultRemoteOptions(),
+		api.defaultRemoteOptions(ctx),
 		extraListOptions...,
 	)
 	tags, err := remote.List(repo, listOptions...)
@@ -189,13 +192,13 @@ func (api *api) list(reference string, extraListOptions ...remote.Option) ([]str
 	return tags, nil
 }
 
-func (api *api) deleteImageByReference(reference string) error {
+func (api *api) deleteImageByReference(ctx context.Context, reference string) error {
 	r, err := name.ParseReference(reference, api.parseReferenceOptions()...)
 	if err != nil {
 		return fmt.Errorf("parsing reference %q: %w", reference, err)
 	}
 
-	if err := remote.Delete(r, api.defaultRemoteOptions()...); err != nil {
+	if err := remote.Delete(r, api.defaultRemoteOptions(ctx)...); err != nil {
 		return fmt.Errorf("deleting image %q: %w", r, err)
 	}
 
@@ -297,8 +300,12 @@ func (api *api) parseReferenceOptions() []name.Option {
 	return options
 }
 
-func (api *api) defaultRemoteOptions() []remote.Option {
-	return []remote.Option{remote.WithAuthFromKeychain(authn.DefaultKeychain), remote.WithTransport(api.getHttpTransport())}
+func (api *api) defaultRemoteOptions(ctx context.Context) []remote.Option {
+	return []remote.Option{
+		remote.WithContext(ctx),
+		remote.WithAuthFromKeychain(authn.DefaultKeychain),
+		remote.WithTransport(api.getHttpTransport()),
+	}
 }
 
 func (api *api) getHttpTransport() (transport http.RoundTripper) {
@@ -420,7 +427,13 @@ func (api *api) writeToRemote(ctx context.Context, ref name.Reference, img v1.Im
 
 	c := make(chan v1.Update, 200)
 
-	go remote.Write(ref, img, remote.WithAuthFromKeychain(authn.DefaultKeychain), remote.WithProgress(c))
+	go remote.Write(
+		ref, img,
+		remote.WithAuthFromKeychain(authn.DefaultKeychain),
+		remote.WithProgress(c),
+		remote.WithTransport(api.getHttpTransport()),
+		remote.WithContext(ctx),
+	)
 
 	for upd := range c {
 		switch {
@@ -443,7 +456,7 @@ func (api *api) PullImageArchive(ctx context.Context, archiveWriter io.Writer, r
 		return fmt.Errorf("unable to parse reference %q: %w", reference, err)
 	}
 
-	desc, err := remote.Get(ref, api.defaultRemoteOptions()...)
+	desc, err := remote.Get(ref, api.defaultRemoteOptions(ctx)...)
 	if err != nil {
 		return fmt.Errorf("getting reference %q: %w", reference, err)
 	}
@@ -467,6 +480,75 @@ func (api *api) PullImageArchive(ctx context.Context, archiveWriter io.Writer, r
 		default:
 			logboek.Context(ctx).Debug().LogF("(%d/%d) pulling image %s is in progress\n", upd.Complete, upd.Total, reference)
 		}
+	}
+
+	return nil
+}
+
+func (api *api) PushManifestList(ctx context.Context, reference string, opts ManifestListOptions) error {
+	if len(opts.Manifests) == 0 {
+		panic("unexpected empty manifests list")
+	}
+
+	manifestListRef, err := name.ParseReference(reference, api.parseReferenceOptions()...)
+	if err != nil {
+		return fmt.Errorf("unable to parse reference %q: %w", reference, err)
+	}
+
+	// FIXME(multiarch): Check manifest list already exists and do not republish in this case.
+	// FIXME(multiarch): If custom tag, then we should check by digest => we need to get each manifest from registry.
+	// FIXME(multiarch): If checksum tag, then we could simply check existing.
+	// FIXME(multiarch): ^^ This behaviour should be controlled by an option.
+
+	var ii v1.ImageIndex
+	ii = empty.Index
+	ii = mutate.IndexMediaType(ii, types.DockerManifestList)
+
+	adds := make([]mutate.IndexAddendum, 0, len(opts.Manifests))
+
+	for _, info := range opts.Manifests {
+		ref, err := name.ParseReference(info.Name, api.parseReferenceOptions()...)
+		if err != nil {
+			return fmt.Errorf("unable to parse reference %q: %w", info.Name, err)
+		}
+		// FIXME(multiarch): Optimize: do not get manifest, save v1.Image into the image.Info (optional)
+		desc, err := remote.Get(ref, api.defaultRemoteOptions(ctx)...)
+		if err != nil {
+			return fmt.Errorf("unable to get manifest of %q: %w", info.Name, err)
+		}
+		img, err := desc.Image()
+		if err != nil {
+			return fmt.Errorf("unable to get image descriptor of %q: %w", info.Name, err)
+		}
+		cf, err := img.ConfigFile()
+		if err != nil {
+			return fmt.Errorf("unable to get config file of %q: %w", info.Name, err)
+		}
+		newDesc, err := partial.Descriptor(img)
+		if err != nil {
+			return fmt.Errorf("unable to create image descriptor of %q: %w", info.Name, err)
+		}
+		newDesc.Platform = cf.Platform()
+
+		adds = append(adds, mutate.IndexAddendum{
+			Add:        img,
+			Descriptor: *newDesc,
+		})
+	}
+
+	ii = mutate.AppendManifests(ii, adds...)
+
+	// TODO(multiarch): research whether we could use digest-only manifest writing mode
+	// digest, err := ii.Digest()
+	// if err != nil {
+	// 	return fmt.Errorf("unable to calculate manifest list digest: %w", err)
+	// }
+	//  if _, ok := ref.(name.Digest); ok {
+	// 		ref = ref.Context().Digest(digest.String())
+	// }
+
+	if err := remote.WriteIndex(manifestListRef, ii, api.defaultRemoteOptions(ctx)...); err != nil {
+		return fmt.Errorf("unable to write manifest %q: %w", manifestListRef, err)
 	}
 
 	return nil

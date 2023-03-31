@@ -117,9 +117,13 @@ func (i *Image) LogName() string {
 	return logging.ImageLogName(i.Name, i.IsArtifact)
 }
 
+func (i *Image) ShouldLogPlatform() bool {
+	return i.ForceTargetPlatformLogging || i.TargetPlatform != i.ContainerBackend.GetRuntimePlatform()
+}
+
 func (i *Image) LogDetailedName() string {
 	var targetPlatformForLog string
-	if i.ForceTargetPlatformLogging || i.TargetPlatform != i.ContainerBackend.GetRuntimePlatform() {
+	if i.ShouldLogPlatform() {
 		targetPlatformForLog = i.TargetPlatform
 	}
 	return logging.ImageLogProcessName(i.Name, i.IsArtifact, targetPlatformForLog)
@@ -134,22 +138,11 @@ func (i *Image) LogTagStyle() color.Style {
 }
 
 func ImageLogProcessStyle(isArtifact bool) color.Style {
-	return imageDefaultStyle(isArtifact)
+	return logging.ImageDefaultStyle(isArtifact)
 }
 
 func ImageLogTagStyle(isArtifact bool) color.Style {
-	return imageDefaultStyle(isArtifact)
-}
-
-func imageDefaultStyle(isArtifact bool) color.Style {
-	var colors []color.Color
-	if isArtifact {
-		colors = []color.Color{color.FgCyan, color.Bold}
-	} else {
-		colors = []color.Color{color.FgYellow, color.Bold}
-	}
-
-	return color.New(colors...)
+	return logging.ImageDefaultStyle(isArtifact)
 }
 
 func (i *Image) SetStages(stages []stage.Interface) {

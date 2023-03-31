@@ -371,6 +371,31 @@ func (storage *DockerServerStagesStorage) PostClientIDRecord(ctx context.Context
 	return nil
 }
 
+func (storage *DockerServerStagesStorage) PostMultiplatformImage(ctx context.Context, projectName, tag string, allPlatformsImages []*image.Info) error {
+	logboek.Context(ctx).Debug().LogF("-- DockerServerStagesStorage.PostMultiplatformImage by tag %s for project %s\n", tag, projectName)
+
+	fullImageName := fmt.Sprintf("%s:%s", projectName, tag)
+
+	logboek.Context(ctx).Debug().LogF("-- DockerServerStagesStorage.PostMultiplatformImage full image name: %s\n", fullImageName)
+
+	// opts := docker_registry.ManifestListOptions{
+	// 	PushImageOptions: docker_registry.PushImageOptions{
+	// 		Labels: map[string]string{image.WerfLabel: projectName},
+	// 	},
+	// 	Manifests: allPlatformsImages,
+	// }
+
+	// if err := storage.DockerRegistry.PushManifestList(ctx, fullImageName, opts); err != nil {
+	// 	return fmt.Errorf("unable to push image %s: %w", fullImageName, err)
+	// }
+
+	// FIXME(multiarch): use container backend to create manifest list
+
+	// logboek.Context(ctx).Info().LogF("Created manifest list %s for project %s\n", fullImageName, projectName)
+
+	return nil
+}
+
 type processRelatedContainersOptions struct {
 	skipUsedImages           bool
 	rmContainersThatUseImage bool
@@ -418,7 +443,6 @@ func processRelatedContainers(ctx context.Context, stageDescriptionList []*image
 func containerListByFilterSet(ctx context.Context, filterSet filters.Args) ([]types.Container, error) {
 	containersOptions := types.ContainerListOptions{}
 	containersOptions.All = true
-	containersOptions.Quiet = true
 	containersOptions.Filters = filterSet
 
 	return docker.Containers(ctx, containersOptions)

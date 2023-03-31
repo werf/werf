@@ -32,7 +32,6 @@ func werfContainersByFilterSet(ctx context.Context, filterSet filters.Args) ([]t
 func containersByFilterSet(ctx context.Context, filterSet filters.Args) ([]types.Container, error) {
 	containersOptions := types.ContainerListOptions{}
 	containersOptions.All = true
-	containersOptions.Quiet = true
 	containersOptions.Filters = filterSet
 
 	return docker.Containers(ctx, containersOptions)

@@ -120,11 +120,11 @@ func newDockerCli(opts []command.DockerCliOption) (command.Cli, error) {
 		dockerCertPath = cliconfig.Dir()
 	}
 
-	clientOpts.Common.TLS = os.Getenv("DOCKER_TLS") != ""
-	clientOpts.Common.TLSVerify = os.Getenv("DOCKER_TLS_VERIFY") != ""
+	clientOpts.TLS = os.Getenv("DOCKER_TLS") != ""
+	clientOpts.TLSVerify = os.Getenv("DOCKER_TLS_VERIFY") != ""
 
-	if clientOpts.Common.TLSVerify {
-		clientOpts.Common.TLSOptions = &tlsconfig.Options{
+	if clientOpts.TLSVerify {
+		clientOpts.TLSOptions = &tlsconfig.Options{
 			CAFile:   filepath.Join(dockerCertPath, flags.DefaultCaFile),
 			CertFile: filepath.Join(dockerCertPath, flags.DefaultCertFile),
 			KeyFile:  filepath.Join(dockerCertPath, flags.DefaultKeyFile),
@@ -132,9 +132,9 @@ func newDockerCli(opts []command.DockerCliOption) (command.Cli, error) {
 	}
 
 	if isDebug {
-		clientOpts.Common.LogLevel = "debug"
+		clientOpts.LogLevel = "debug"
 	} else {
-		clientOpts.Common.LogLevel = "fatal"
+		clientOpts.LogLevel = "fatal"
 	}
 
 	if err := newCli.Initialize(clientOpts); err != nil {

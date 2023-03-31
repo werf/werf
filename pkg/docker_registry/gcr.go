@@ -30,9 +30,9 @@ func newGcr(options GcrOptions) (*gcr, error) {
 	return gcr, nil
 }
 
-func (r *gcr) DeleteRepoImage(_ context.Context, repoImage *image.Info) error {
+func (r *gcr) DeleteRepoImage(ctx context.Context, repoImage *image.Info) error {
 	reference := strings.Join([]string{repoImage.Repository, repoImage.Tag}, ":")
-	return r.api.deleteImageByReference(reference)
+	return r.api.deleteImageByReference(ctx, reference)
 }
 
 func (r *gcr) String() string {

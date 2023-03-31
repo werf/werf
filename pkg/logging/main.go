@@ -2,11 +2,14 @@ package logging
 
 import (
 	"fmt"
+
+	"github.com/gookit/color"
 )
 
 var (
-	imageNameFormat    = "⛵ image %s"
-	artifactNameFormat = "🛸 artifact %s"
+	imageNameFormat     = "⛵ image %s"
+	artifactNameFormat  = "🛸 artifact %s"
+	imageMetadataFormat = "⚙ image %s metadata"
 )
 
 func ImageLogName(name string, isArtifact bool) string {
@@ -17,6 +20,10 @@ func ImageLogName(name string, isArtifact bool) string {
 	}
 
 	return name
+}
+
+func ImageMetadataLogProcess(name string) string {
+	return fmt.Sprintf(imageMetadataFormat, name)
 }
 
 func ImageLogProcessName(name string, isArtifact bool, targetPlatform string) string {
@@ -38,5 +45,21 @@ func ImageLogProcessName(name string, isArtifact bool, targetPlatform string) st
 
 func DisablePrettyLog() {
 	imageNameFormat = "image %s"
+	imageMetadataFormat = "image %s metadata"
 	artifactNameFormat = "artifact %s"
+}
+
+func ImageDefaultStyle(isArtifact bool) color.Style {
+	var colors []color.Color
+	if isArtifact {
+		colors = []color.Color{color.FgCyan, color.Bold}
+	} else {
+		colors = []color.Color{color.FgYellow, color.Bold}
+	}
+
+	return color.New(colors...)
+}
+
+func ImageMetadataStyle() color.Style {
+	return ImageDefaultStyle(false)
 }

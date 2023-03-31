@@ -19,7 +19,14 @@ func MergeMaps[K comparable, V any](src, dest map[K]V) map[K]V {
 	return result
 }
 
-func SortedStringKeys(m map[string]string) []string {
+func MapKeys[M ~map[K]V, K comparable, V any](m M) (res []K) {
+	for k := range m {
+		res = append(res, k)
+	}
+	return
+}
+
+func SortedStringKeys[T map[string]any](m T) []string {
 	var keys []string
 	for k := range m {
 		keys = append(keys, k)
