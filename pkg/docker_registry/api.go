@@ -419,12 +419,6 @@ attemptLoop:
 }
 
 func (api *api) writeToRemote(ctx context.Context, ref name.Reference, img v1.Image) error {
-	oldDefaultTransport := http.DefaultTransport
-	http.DefaultTransport = api.getHttpTransport()
-	defer func() {
-		http.DefaultTransport = oldDefaultTransport
-	}()
-
 	c := make(chan v1.Update, 200)
 
 	go remote.Write(
