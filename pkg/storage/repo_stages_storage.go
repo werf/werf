@@ -866,3 +866,26 @@ func (storage *RepoStagesStorage) PostClientIDRecord(ctx context.Context, projec
 
 	return nil
 }
+
+func (storage *RepoStagesStorage) PostMultiplatformImage(ctx context.Context, projectName, tag string, allPlatformsImages []*image.Info) error {
+	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PostMultiplatformImage by tag %s for project %s\n", tag, projectName)
+
+	fullImageName := fmt.Sprintf("%s:%s", storage.RepoAddress, tag)
+
+	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PostMultiplatformImage full image name: %s\n", fullImageName)
+
+	opts := docker_registry.ManifestListOptions{
+		PushImageOptions: docker_registry.PushImageOptions{
+			Labels: map[string]string{image.WerfLabel: projectName},
+		},
+		Manifests: allPlatformsImages,
+	}
+
+	if err := storage.DockerRegistry.PushManifestList(ctx, fullImageName, opts); err != nil {
+		return fmt.Errorf("unable to push image %s: %w", fullImageName, err)
+	}
+
+	logboek.Context(ctx).Info().LogF("Posted manifest list %s for project %s\n", fullImageName, projectName)
+
+	return nil
+}

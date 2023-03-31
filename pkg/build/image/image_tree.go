@@ -6,6 +6,7 @@ import (
 	"path"
 	"path/filepath"
 	"reflect"
+	"sort"
 
 	"github.com/gookit/color"
 
@@ -16,6 +17,7 @@ import (
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/giterminism_manager"
 	"github.com/werf/werf/pkg/logging"
+	"github.com/werf/werf/pkg/util"
 )
 
 type ImagesTree struct {
@@ -118,6 +120,47 @@ func (tree *ImagesTree) Calculate(ctx context.Context) error {
 
 func (tree *ImagesTree) GetImage(name string) *Image {
 	return nil
+}
+
+func (tree *ImagesTree) GetImagesByName(finalOnly bool) []*util.Pair[string, []*Image] {
+	images := make(map[string]map[string]*Image)
+	var names []string
+
+	appendImage := func(img *Image) {
+		names = util.UniqAppendString(names, img.Name)
+		if images[img.Name] == nil {
+			images[img.Name] = make(map[string]*Image)
+		}
+		images[img.Name][img.TargetPlatform] = img
+	}
+
+	for _, img := range tree.GetImages() {
+		if finalOnly {
+			for _, finalImageName := range tree.werfConfig.GetAllImages() {
+				if finalImageName.GetName() == img.Name {
+					appendImage(img)
+				}
+			}
+		} else {
+			appendImage(img)
+		}
+	}
+
+	var res []*util.Pair[string, []*Image]
+
+	sort.Strings(names)
+	for _, name := range names {
+		platforms := util.MapKeys(images[name])
+		sort.Strings(platforms)
+
+		allPlatformsImages := util.NewPair(name, make([]*Image, 0, len(platforms)))
+		for _, platform := range platforms {
+			allPlatformsImages.Second = append(allPlatformsImages.Second, images[name][platform])
+		}
+		res = append(res, allPlatformsImages)
+	}
+
+	return res
 }
 
 func (tree *ImagesTree) GetImagePlatformsByName(finalOnly bool) map[string][]string {

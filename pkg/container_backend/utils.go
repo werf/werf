@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/docker/docker/pkg/stringid"
 
@@ -23,7 +24,7 @@ func LogImageName(ctx context.Context, name string) {
 	logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "name", name)
 }
 
-func LogImageInfo(ctx context.Context, img LegacyImageInterface, prevStageImageSize int64) {
+func LogImageInfo(ctx context.Context, img LegacyImageInterface, prevStageImageSize int64, withPlatform bool) {
 	LogImageName(ctx, img.Name())
 
 	logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "id", stringid.TruncateID(img.GetStageDescription().Info.ID))
@@ -34,6 +35,14 @@ func LogImageInfo(ctx context.Context, img LegacyImageInterface, prevStageImageS
 	} else {
 		logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "size", fmt.Sprintf("%s (+%s)", byteCountBinary(img.GetStageDescription().Info.Size), byteCountBinary(img.GetStageDescription().Info.Size-prevStageImageSize)))
 	}
+
+	if withPlatform {
+		logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "platform", img.GetTargetPlatform())
+	}
+}
+
+func LogMultiplatformImageInfo(ctx context.Context, platforms []string) {
+	logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "platform", strings.Join(platforms, ","))
 }
 
 func byteCountBinary(b int64) string {

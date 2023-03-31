@@ -23,6 +23,7 @@ type Interface interface {
 
 	PushImageArchive(ctx context.Context, archiveOpener ArchiveOpener, reference string) error
 	PullImageArchive(ctx context.Context, archiveWriter io.Writer, reference string) error
+	PushManifestList(ctx context.Context, reference string, opts ManifestListOptions) error
 
 	String() string
 
@@ -35,4 +36,9 @@ type ApiInterface interface {
 
 type ArchiveOpener interface {
 	Open() (io.ReadCloser, error)
+}
+
+type ManifestListOptions struct {
+	PushImageOptions
+	Manifests []*image.Info
 }
