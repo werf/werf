@@ -1,5 +1,6 @@
 module github.com/werf/werf
 
+
 go 1.20
 
 require (
