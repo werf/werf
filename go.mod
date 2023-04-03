@@ -11,7 +11,7 @@ require (
 	github.com/alessio/shellescape v1.4.1
 	github.com/aws/aws-sdk-go v1.44.234
 	github.com/bmatcuk/doublestar v1.3.4
-	github.com/containerd/containerd v1.6.19
+	github.com/containerd/containerd v1.7.0
 	github.com/containers/buildah v1.29.1
 	github.com/containers/common v0.51.2
 	github.com/containers/image/v5 v5.24.1
@@ -83,13 +83,14 @@ require (
 	k8s.io/klog v1.0.0
 	k8s.io/klog/v2 v2.90.1
 	k8s.io/kubectl v0.26.3
-	k8s.io/utils v0.0.0-20230209194617-a36077c30491
+	k8s.io/utils v0.0.0-20230220204549-a5ecb0141aa5
 	mvdan.cc/xurls v1.1.0
 	oras.land/oras-go v1.2.2
 	sigs.k8s.io/yaml v1.3.0
 )
 
 require (
+	github.com/AdaLogics/go-fuzz-headers v0.0.0-20230106234847-43070de90fa1 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
 	github.com/BurntSushi/toml v1.2.1 // indirect
 	github.com/MakeNowJust/heredoc v1.0.0 // indirect
@@ -114,12 +115,13 @@ require (
 	github.com/chzyer/readline v1.5.1 // indirect
 	github.com/cloudflare/cfssl v1.4.1 // indirect
 	github.com/cloudflare/circl v1.1.0 // indirect
-	github.com/container-orchestrated-devices/container-device-interface v0.5.3 // indirect
+	github.com/container-orchestrated-devices/container-device-interface v0.5.4 // indirect
 	github.com/containerd/cgroups v1.1.0 // indirect
 	github.com/containerd/console v1.0.3 // indirect
 	github.com/containerd/continuity v0.3.0 // indirect
 	github.com/containerd/stargz-snapshotter/estargz v0.14.3 // indirect
 	github.com/containerd/typeurl v1.0.2 // indirect
+	github.com/containerd/typeurl/v2 v2.1.0 // indirect
 	github.com/containernetworking/cni v1.1.2 // indirect
 	github.com/containernetworking/plugins v1.2.0 // indirect
 	github.com/containers/libtrust v0.0.0-20230121012942-c1716e8a8d01 // indirect
@@ -218,7 +220,7 @@ require (
 	github.com/moby/spdystream v0.2.0 // indirect
 	github.com/moby/sys/mount v0.3.3 // indirect
 	github.com/moby/sys/mountinfo v0.6.2 // indirect
-	github.com/moby/sys/signal v0.7.0 // indirect
+	github.com/moby/sys/sequential v0.5.0 // indirect
 	github.com/moby/sys/symlink v0.2.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
