@@ -16,6 +16,8 @@ var _ = Describe("Simple build", Label("e2e", "build", "simple"), func() {
 	DescribeTable("should succeed and produce expected image",
 		func(testOpts simpleTestOptions) {
 			By("initializing")
+			a := 1
+			_ = a
 			setupEnv(testOpts.setupEnvOptions)
 			contRuntime, err := contback.NewContainerBackend(testOpts.ContainerBackendMode)
 			if err == contback.ErrRuntimeUnavailable {
