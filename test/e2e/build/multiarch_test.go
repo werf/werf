@@ -95,7 +95,11 @@ var _ = Describe("Multiarch build", Label("e2e", "build", "multiarch", "simple")
 					platformSpec, err := platformutil.ParsePlatform(platform)
 					Expect(err).To(Succeed())
 
-					inspect := contBack.GetImageInspect(fmt.Sprintf("%s:%s", SuiteData.WerfRepo, byPlatform[platform].DockerTag))
+					ref := fmt.Sprintf("%s:%s", SuiteData.WerfRepo, byPlatform[platform].DockerTag)
+					inspect := contBack.GetImageInspect(ref)
+
+					fmt.Printf("Check image %q inspect:\n%#v\n---\n", ref, inspect)
+
 					Expect(inspect.Os).To(Equal(platformSpec.OS))
 					Expect(inspect.Architecture).To(Equal(platformSpec.Architecture))
 					Expect(inspect.Variant).To(Equal(platformSpec.Variant))

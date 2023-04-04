@@ -11,7 +11,7 @@ import (
 
 func LocalDockerRegistryRun() (string, string, string) {
 	containerName := fmt.Sprintf("werf_test_docker_registry-%s", utils.GetRandomString(10))
-	imageName := "flant/werf-test:registry"
+	imageName := "docker.io/library/registry:2"
 
 	if exist := IsImageExist(imageName); !exist {
 		err := Pull(imageName)

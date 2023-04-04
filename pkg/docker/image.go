@@ -13,6 +13,7 @@ import (
 	"github.com/docker/cli/cli/streams"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
+	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 
 	"github.com/werf/logboek"
@@ -187,26 +188,41 @@ func CliRmi_LiveOutput(ctx context.Context, args ...string) error {
 	return doCliRmi(cli(ctx), args...)
 }
 
-func doCliBuild(c command.Cli, args ...string) error {
-	return prepareCliCmd(image.NewBuildCommand(c), args...).Execute()
+type BuildOptions struct {
+	EnableBuildx bool
+}
+
+func doCliBuild(c command.Cli, opts BuildOptions, args ...string) error {
+	var finalArgs []string
+	var cmd *cobra.Command
+
+	if opts.EnableBuildx {
+		cmd = NewBuildxCommand(c)
+		finalArgs = append([]string{"build"}, args...)
+	} else {
+		cmd = image.NewBuildCommand(c)
+		finalArgs = args
+	}
+
+	return prepareCliCmd(cmd, finalArgs...).Execute()
 }
 
 func CliBuild_LiveOutputWithCustomIn(ctx context.Context, rc io.ReadCloser, args ...string) error {
-	dockerBuildkitEnvName := "DOCKER_BUILDKIT"
-	dockerBuildkitEnvValue := os.Getenv(dockerBuildkitEnvName)
+	buildOpts := BuildOptions{}
 
-	switch dockerBuildkitEnvValue {
-	case "":
-		// disable buildkit by default
-		if err := os.Setenv(dockerBuildkitEnvName, "0"); err != nil {
-			return err
-		}
-	case "1":
+	if useBuildx {
+		buildOpts.EnableBuildx = true
+
 		// disable buildkit output in background tasks due to https://github.com/docker/cli/issues/2889
 		// there is no true way to get output, because buildkit uses the standard output and error streams instead of defined ones in the cli instance
 		if ctx.Value(parallelConstant.CtxBackgroundTaskIDKey) != nil {
 			logboek.Context(ctx).Warn().LogLn("WARNING: BuildKit output in background tasks is not supported (--quiet) due to https://github.com/docker/cli/issues/2889")
 			args = append(args, "--quiet")
+		}
+	} else {
+		// ensure buildkit not enabled
+		if err := os.Setenv("DOCKER_BUILDKIT", "0"); err != nil {
+			return err
 		}
 	}
 
@@ -216,10 +232,11 @@ func CliBuild_LiveOutputWithCustomIn(ctx context.Context, rc io.ReadCloser, args
 			return nil
 		},
 	}, func(cli command.Cli) error {
-		return doCliBuild(cli, args...)
+		return doCliBuild(cli, buildOpts, args...)
 	})
 }
 
 func CliBuild_LiveOutput(ctx context.Context, args ...string) error {
-	return doCliBuild(cli(ctx), args...)
+	buildOpts := BuildOptions{EnableBuildx: useBuildx}
+	return doCliBuild(cli(ctx), buildOpts, args...)
 }
