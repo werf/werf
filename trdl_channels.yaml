@@ -29,19 +29,19 @@ groups:
         version: 1.2.219
 
       - name: beta
-        version: 1.2.217+fix2
+        version: 1.2.219
 
       - name: ea
-        version: 1.2.214+fix3
+        version: 1.2.217+fix2
 
       # - name: pre-stable
-      #   version: 1.2.207
+      #   version: 1.2.214+fix3
 
       - name: stable
-        version: 1.2.205
+        version: 1.2.207
 
       # - name: pre-rock-solid
       #   version: 1.2.205
 
       - name: rock-solid
-        version: 1.2.201+fix1
+        version: 1.2.205
