@@ -26,6 +26,7 @@ var (
 	defaultCLi           command.Cli
 	defaultPlatform      string
 	runtimePlatform      string
+	useBuildx            bool
 
 	DockerConfigDir string
 )
@@ -82,9 +83,16 @@ func Init(ctx context.Context, opts InitOptions) error {
 
 	for _, claimPlatform := range claimPlatforms {
 		if claimPlatform != runtimePlatform {
-			os.Setenv("DOCKER_BUILDKIT", "1")
+			useBuildx = true
 			break
 		}
+	}
+
+	if v := os.Getenv("DOCKER_BUILDKIT"); v == "1" || v == "true" {
+		if err := os.Setenv("DOCKER_BUILDKIT", "0"); err != nil {
+			return fmt.Errorf("unable to set env var: %w", err)
+		}
+		useBuildx = true
 	}
 
 	return nil
