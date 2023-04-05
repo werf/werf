@@ -45,6 +45,8 @@ type Conveyor struct {
 	giterminismManager giterminism_manager.Interface
 	remoteGitRepos     map[string]*git_repo.Remote
 
+	shouldAddManagedImagesRecords bool
+
 	tmpDir string
 
 	ContainerBackend container_backend.ContainerBackend
@@ -335,6 +337,18 @@ func (c *Conveyor) GetRemoteGitRepo(key string) *git_repo.Remote {
 	defer c.GetServiceRWMutex("RemoteGitRepo").RUnlock()
 
 	return c.remoteGitRepos[key]
+}
+
+func (c *Conveyor) SetShouldAddManagedImagesRecords() {
+	c.GetServiceRWMutex("ShouldAddManagedImagesRecords").RLock()
+	defer c.GetServiceRWMutex("ShouldAddManagedImagesRecords").RUnlock()
+	c.shouldAddManagedImagesRecords = true
+}
+
+func (c *Conveyor) ShouldAddManagedImagesRecords() bool {
+	c.GetServiceRWMutex("ShouldAddManagedImagesRecords").RLock()
+	defer c.GetServiceRWMutex("ShouldAddManagedImagesRecords").RUnlock()
+	return c.shouldAddManagedImagesRecords
 }
 
 type ShouldBeBuiltOptions struct {

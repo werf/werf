@@ -81,10 +81,8 @@ type BuildPhase struct {
 	BasePhase
 	BuildPhaseOptions
 
-	StagesIterator              *StagesIterator
-	ShouldAddManagedImageRecord bool
-
-	ImagesReport *ImagesReport
+	StagesIterator *StagesIterator
+	ImagesReport   *ImagesReport
 
 	buildContextArchive container_backend.BuildContextArchiver
 }
@@ -473,7 +471,7 @@ func (phase *BuildPhase) AfterImageStages(ctx context.Context, img *image.Image)
 }
 
 func (phase *BuildPhase) addManagedImage(ctx context.Context, name string) error {
-	if phase.ShouldAddManagedImageRecord {
+	if phase.Conveyor.ShouldAddManagedImagesRecords() {
 		stagesStorage := phase.Conveyor.StorageManager.GetStagesStorage()
 		exist, err := stagesStorage.IsManagedImageExist(ctx, phase.Conveyor.ProjectName(), name, storage.WithCache())
 		if err != nil {
@@ -674,7 +672,7 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *image.Image, stg
 	}
 
 	// Add managed image record only if there was at least one newly built stage
-	phase.ShouldAddManagedImageRecord = true
+	phase.Conveyor.SetShouldAddManagedImagesRecords()
 
 	return nil
 }
