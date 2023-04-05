@@ -117,7 +117,7 @@ func (d *RepoData) GetContainerRegistry(ctx context.Context) string {
 		return *d.ContainerRegistry
 	case *d.Implementation != "":
 		repoNameUpper := strings.ToUpper(strings.ReplaceAll(d.Name, "-", "_"))
-		logboek.Context(ctx).Warn().LogLn("DEPRECATION WARNING: The option --%s-implementation ($WERF_%s_IMPLEMENTATION) is renamed to --%s-container-registry ($WERF_%s_CONTAINER_REGISTRY) and will be removed in v1.3!", d.Name, repoNameUpper, d.Name, repoNameUpper)
+		logboek.Context(ctx).Warn().LogF("DEPRECATION WARNING: The option --%s-implementation ($WERF_%s_IMPLEMENTATION) is renamed to --%s-container-registry ($WERF_%s_CONTAINER_REGISTRY) and will be removed in v1.3!", d.Name, repoNameUpper, d.Name, repoNameUpper)
 		return *d.Implementation
 	default:
 		return ""
