@@ -77,6 +77,12 @@ jobs:
       - name: Install werf build dependencies
         run: sudo apt-get install -y libbtrfs-dev
 
+      - name: "FIXME: needed for ginkgo to run registry:2 image correctly"
+        run: |
+          uname -a
+          docker version
+          docker pull registry:2
+
       - name: Checkout code
         uses: actions/checkout@v3
 
