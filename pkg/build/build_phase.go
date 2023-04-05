@@ -195,7 +195,7 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 		targetPlatforms = []string{phase.Conveyor.ContainerBackend.GetDefaultPlatform()}
 	}
 
-	for _, desc := range phase.Conveyor.imagesTree.GetImagesByName(true) {
+	for _, desc := range phase.Conveyor.imagesTree.GetImagesByName(false) {
 		name, images := desc.Unpair()
 		platforms := util.MapFuncToSlice(images, func(img *image.Image) string { return img.TargetPlatform })
 
