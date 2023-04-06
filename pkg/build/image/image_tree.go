@@ -27,6 +27,8 @@ type ImagesTree struct {
 
 	allImages  []*Image
 	imagesSets ImagesSets
+
+	multiplatformImages []*MultiplatformImage
 }
 
 type ImagesTreeOptions struct {
@@ -185,6 +187,24 @@ func (tree *ImagesTree) GetImages() []*Image {
 
 func (tree *ImagesTree) GetImagesSets() ImagesSets {
 	return tree.imagesSets
+}
+
+func (tree *ImagesTree) GetMultiplatformImage(name string) *MultiplatformImage {
+	for _, img := range tree.multiplatformImages {
+		if img.Name == name {
+			return img
+		}
+	}
+	return nil
+}
+
+func (tree *ImagesTree) SetMultiplatformImage(newImg *MultiplatformImage) {
+	for _, img := range tree.multiplatformImages {
+		if img.Name == newImg.Name {
+			return
+		}
+	}
+	tree.multiplatformImages = append(tree.multiplatformImages, newImg)
 }
 
 func getFromFields(imageBaseConfig *config.StapelImageBase) (string, string, bool) {
