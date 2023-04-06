@@ -390,21 +390,35 @@ func (c *Conveyor) GetImageInfoGetters(opts imagePkg.InfoGetterOptions) ([]*imag
 		targetPlatforms = []string{c.ContainerBackend.GetDefaultPlatform()}
 	}
 
-	// FIXME(multiarch): instead of using first specified platform use multiarch-manifest
-	targetPlatform := targetPlatforms[0]
-
 	var images []*imagePkg.InfoGetter
-	for _, img := range c.imagesTree.GetImages() {
-		if img.IsArtifact {
-			continue
-		}
-		if img.TargetPlatform != targetPlatform {
-			continue
-		}
 
-		getter := c.StorageManager.GetImageInfoGetter(img.Name, img.GetLastNonEmptyStage(), opts)
-		images = append(images, getter)
+	if len(targetPlatforms) == 1 {
+		for _, img := range c.imagesTree.GetImages() {
+			if img.IsArtifact {
+				continue
+			}
+			getter := c.StorageManager.GetImageInfoGetter(img.Name, img.GetLastNonEmptyStage().GetStageImage().Image.GetStageDescription(), opts)
+			images = append(images, getter)
+		}
+	} else {
+		for _, img := range c.imagesTree.GetMultiplatformImages() {
+			if img.IsArtifact {
+				continue
+			}
+			if img.IsDockerfileImage && !img.IsDockerfileTargetStage {
+				continue
+			}
+
+			desc := img.GetFinalStageDescription()
+			if desc == nil {
+				desc = img.GetStageDescription()
+			}
+
+			getter := c.StorageManager.GetImageInfoGetter(img.Name, desc, opts)
+			images = append(images, getter)
+		}
 	}
+
 	return images, nil
 }
 

@@ -304,6 +304,8 @@ func (phase *BuildPhase) publishMultiplatformImageMetadata(ctx context.Context, 
 	}
 
 	img := image.NewMultiplatformImage(name, images, phase.Conveyor.StorageManager, opts)
+	phase.Conveyor.imagesTree.SetMultiplatformImage(img)
+
 	stagesStorage := phase.Conveyor.StorageManager.GetStagesStorage()
 
 	if len(phase.CustomTagFuncList) == 0 {
@@ -315,6 +317,16 @@ func (phase *BuildPhase) publishMultiplatformImageMetadata(ctx context.Context, 
 		if err := stagesStorage.PostMultiplatformImage(ctx, phase.Conveyor.ProjectName(), img.GetStageID().String(), img.GetImagesInfoList()); err != nil {
 			return fmt.Errorf("unable to post multiplatform image %s %s: %w", name, img.GetStageID(), err)
 		}
+
+		desc, err := stagesStorage.GetStageDescription(ctx, phase.Conveyor.ProjectName(), img.GetStageID().Digest, img.GetStageID().UniqueID)
+		if err != nil {
+			return fmt.Errorf("unable to get image %s %s descriptor: %w", name, img.GetStageID(), err)
+		}
+		if desc == nil {
+			return fmt.Errorf("unable to get image %s %s descriptor: no manifest found", name, img.GetStageID())
+		}
+		img.SetStageDescription(desc)
+
 	} else {
 		for _, tagFunc := range phase.CustomTagFuncList {
 			tag := tagFunc(name, img.GetStageID().String())
@@ -355,6 +367,12 @@ func (phase *BuildPhase) publishMultiplatformImageMetadata(ctx context.Context, 
 		// ); err != nil {
 		// 	return err
 		// }
+
+		// desc, err := phase.Conveyor.StorageManager.GetFinalStagesStorage().GetStageDescription(ctx, phase.Conveyor.ProjectName(), img.GetStageID().Digest, img.GetStageID().UniqueID)
+		// if err != nil {
+		// 	return fmt.Errorf("unable to get image %s %s descriptor: %w", name, img.GetStageID(), err)
+		// }
+		// img.SetFinalStageDescription(desc)
 	}
 
 	return nil
@@ -363,17 +381,17 @@ func (phase *BuildPhase) publishMultiplatformImageMetadata(ctx context.Context, 
 func (phase *BuildPhase) createReport(ctx context.Context) error {
 	targetPlatforms, err := phase.Conveyor.GetTargetPlatforms()
 	if err != nil {
-		return fmt.Errorf("unable to get target platforms: %w", err)
+		return fmt.Errorf("invalid target platforms: %w", err)
 	}
 	if len(targetPlatforms) == 0 {
 		targetPlatforms = []string{phase.Conveyor.ContainerBackend.GetDefaultPlatform()}
 	}
 
-	// FIXME(multiarch): instead of using first specified platform use multiarch-manifest
-	targetPlatform := targetPlatforms[0]
-
 	for _, img := range phase.Conveyor.imagesTree.GetImages() {
 		if img.IsArtifact {
+			continue
+		}
+		if img.IsDockerfileImage && !img.IsDockerfileTargetStage {
 			continue
 		}
 
@@ -396,8 +414,41 @@ func (phase *BuildPhase) createReport(ctx context.Context) error {
 		if os.Getenv("WERF_ENABLE_REPORT_BY_PLATFORM") == "1" {
 			phase.ImagesReport.SetImageByPlatformRecord(img.TargetPlatform, img.GetName(), record)
 		}
-		if img.TargetPlatform == targetPlatform {
-			phase.ImagesReport.SetImageRecord(img.GetName(), record)
+		if len(targetPlatforms) == 1 {
+			phase.ImagesReport.SetImageRecord(img.Name, record)
+		}
+	}
+
+	if len(targetPlatforms) > 1 {
+		for _, img := range phase.Conveyor.imagesTree.GetMultiplatformImages() {
+			if img.IsArtifact {
+				continue
+			}
+			if img.IsDockerfileImage && !img.IsDockerfileTargetStage {
+				continue
+			}
+
+			isRebuilt := false
+			for _, pImg := range img.Images {
+				isRebuilt = (isRebuilt || pImg.GetRebuilt())
+			}
+
+			desc := img.GetFinalStageDescription()
+			if desc == nil {
+				desc = img.GetStageDescription()
+			}
+
+			record := ReportImageRecord{
+				WerfImageName:     img.Name,
+				DockerRepo:        desc.Info.Repository,
+				DockerTag:         desc.Info.Tag,
+				DockerImageID:     desc.Info.ID,
+				DockerImageDigest: desc.Info.RepoDigest,
+				DockerImageName:   desc.Info.Name,
+				Rebuilt:           isRebuilt,
+			}
+
+			phase.ImagesReport.SetImageRecord(img.Name, record)
 		}
 	}
 

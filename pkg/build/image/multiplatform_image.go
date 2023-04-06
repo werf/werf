@@ -1,6 +1,7 @@
 package image
 
 import (
+	"github.com/werf/werf/pkg/image"
 	common_image "github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/storage/manager"
 	"github.com/werf/werf/pkg/util"
@@ -12,8 +13,10 @@ type MultiplatformImage struct {
 
 	MultiplatformImageOptions
 
-	calculatedDigest string
-	stageID          common_image.StageID
+	calculatedDigest      string
+	stageID               common_image.StageID
+	stageDescription      *common_image.StageDescription
+	finalStageDescription *common_image.StageDescription
 }
 
 type MultiplatformImageOptions struct {
@@ -32,9 +35,7 @@ func NewMultiplatformImage(name string, images []*Image, storageManager manager.
 		return stageDesc.StageID.String()
 	})
 	img.calculatedDigest = util.Sha3_224Hash(metaStageDeps...)
-
-	_, uniqueID := storageManager.GenerateStageUniqueID(img.GetDigest(), nil)
-	img.stageID = common_image.StageID{Digest: img.GetDigest(), UniqueID: uniqueID}
+	img.stageID = common_image.StageID{Digest: img.GetDigest()}
 
 	return img
 }
@@ -56,4 +57,20 @@ func (img *MultiplatformImage) GetImagesInfoList() []*common_image.Info {
 		stageDesc := img.GetLastNonEmptyStage().GetStageImage().Image.GetStageDescription()
 		return stageDesc.Info
 	})
+}
+
+func (img *MultiplatformImage) GetFinalStageDescription() *image.StageDescription {
+	return img.finalStageDescription
+}
+
+func (img *MultiplatformImage) SetFinalStageDescription(desc *common_image.StageDescription) {
+	img.finalStageDescription = desc
+}
+
+func (img *MultiplatformImage) GetStageDescription() *image.StageDescription {
+	return img.stageDescription
+}
+
+func (img *MultiplatformImage) SetStageDescription(desc *common_image.StageDescription) {
+	img.stageDescription = desc
 }
