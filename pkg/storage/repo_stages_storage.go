@@ -17,7 +17,8 @@ import (
 )
 
 const (
-	RepoStage_ImageFormat = "%s:%s-%d"
+	RepoStage_ImageFormatWithUniqueID = "%s:%s-%d"
+	RepoStage_ImageFormat             = "%s:%s"
 
 	RepoManagedImageRecord_ImageTagPrefix  = "managed-image-"
 	RepoManagedImageRecord_ImageNameFormat = "%s:managed-image-%s"
@@ -73,7 +74,10 @@ func NewRepoStagesStorage(repoAddress string, containerBackend container_backend
 }
 
 func (storage *RepoStagesStorage) ConstructStageImageName(_, digest string, uniqueID int64) string {
-	return fmt.Sprintf(RepoStage_ImageFormat, storage.RepoAddress, digest, uniqueID)
+	if uniqueID == 0 {
+		return fmt.Sprintf(RepoStage_ImageFormat, storage.RepoAddress, digest)
+	}
+	return fmt.Sprintf(RepoStage_ImageFormatWithUniqueID, storage.RepoAddress, digest, uniqueID)
 }
 
 func (storage *RepoStagesStorage) GetStagesIDs(ctx context.Context, _ string, opts ...Option) ([]image.StageID, error) {

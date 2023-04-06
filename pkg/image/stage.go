@@ -12,6 +12,9 @@ type StageID struct {
 }
 
 func (id StageID) String() string {
+	if id.UniqueID == 0 {
+		return id.Digest
+	}
 	return fmt.Sprintf("%s-%d", id.Digest, id.UniqueID)
 }
 

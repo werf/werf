@@ -59,7 +59,7 @@ type StorageManagerInterface interface {
 	GetStagesStorage() storage.PrimaryStagesStorage
 	GetFinalStagesStorage() storage.StagesStorage
 	GetSecondaryStagesStorageList() []storage.StagesStorage
-	GetImageInfoGetter(imageName string, stg stage.Interface, opts image.InfoGetterOptions) *image.InfoGetter
+	GetImageInfoGetter(imageName string, desc *image.StageDescription, opts image.InfoGetterOptions) *image.InfoGetter
 
 	EnableParallel(parallelTasksLimit int)
 	MaxNumberOfWorkers() int
@@ -191,16 +191,13 @@ func (m *StorageManager) GetServiceValuesRepo() string {
 	return m.StagesStorage.String()
 }
 
-func (m *StorageManager) GetImageInfoGetter(imageName string, stg stage.Interface, opts image.InfoGetterOptions) *image.InfoGetter {
-	stageID := stg.GetStageImage().Image.GetStageDescription().StageID
-	info := stg.GetStageImage().Image.GetStageDescription().Info
-
+func (m *StorageManager) GetImageInfoGetter(imageName string, desc *image.StageDescription, opts image.InfoGetterOptions) *image.InfoGetter {
 	if m.FinalStagesStorage != nil {
-		finalImageName := m.FinalStagesStorage.ConstructStageImageName(m.ProjectName, stageID.Digest, stageID.UniqueID)
+		finalImageName := m.FinalStagesStorage.ConstructStageImageName(m.ProjectName, desc.StageID.Digest, desc.StageID.UniqueID)
 		return image.NewInfoGetter(imageName, finalImageName, opts)
 	}
 
-	return image.NewInfoGetter(imageName, info.Name, opts)
+	return image.NewInfoGetter(imageName, desc.Info.Name, opts)
 }
 
 func (m *StorageManager) InitCache(ctx context.Context) error {

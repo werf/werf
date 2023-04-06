@@ -19,6 +19,13 @@ func MergeMaps[K comparable, V any](src, dest map[K]V) map[K]V {
 	return result
 }
 
+func MapValues[M ~map[K]V, K comparable, V any](m M) (res []V) {
+	for _, v := range m {
+		res = append(res, v)
+	}
+	return
+}
+
 func MapKeys[M ~map[K]V, K comparable, V any](m M) (res []K) {
 	for k := range m {
 		res = append(res, k)

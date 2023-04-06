@@ -2,12 +2,14 @@ package e2e_build_test
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	"github.com/werf/werf/pkg/container_backend/thirdparty/platformutil"
+	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/test/pkg/contback"
 	"github.com/werf/werf/test/pkg/werf"
 )
@@ -27,7 +29,6 @@ type multiarchTestOptions struct {
 
 type expectedImageInfo struct {
 	ImageName        string
-	MetaDigest       string
 	DigestByPlatform map[string]string
 }
 
@@ -89,6 +90,7 @@ var _ = Describe("Multiarch build", Label("e2e", "build", "multiarch", "simple")
 			for _, expect := range expects {
 				byPlatform := buildReport.ImagesByPlatform[expect.ImageName]
 				Expect(len(byPlatform)).To(Equal(len(testOpts.Platforms)))
+
 				for _, platform := range testOpts.Platforms {
 					Expect(strings.HasPrefix(byPlatform[platform].DockerTag, expect.DigestByPlatform[platform]+"-")).To(BeTrue())
 
@@ -104,7 +106,23 @@ var _ = Describe("Multiarch build", Label("e2e", "build", "multiarch", "simple")
 					Expect(inspect.Architecture).To(Equal(platformSpec.Architecture))
 					Expect(inspect.Variant).To(Equal(platformSpec.Variant))
 				}
-				Expect(strings.HasPrefix(buildReport.Images[expect.ImageName].DockerTag, expect.MetaDigest+"-")).To(BeTrue())
+
+				// Meta digest only used for multiplatform builds
+				if len(expect.DigestByPlatform) > 1 {
+					platforms := util.MapKeys(expect.DigestByPlatform)
+					sort.Strings(platforms)
+
+					metaDeps := util.MapFuncToSlice(platforms, func(platform string) string {
+						return buildReport.ImagesByPlatform[expect.ImageName][platform].DockerTag
+					})
+					expectedMetaDigest := util.Sha3_224Hash(metaDeps...)
+
+					fmt.Printf("metaDeps %v -> %q\n", metaDeps, expectedMetaDigest)
+					Expect(buildReport.Images[expect.ImageName].DockerTag).To(Equal(expectedMetaDigest))
+				} else {
+					expectedDigest := util.MapValues(expect.DigestByPlatform)[0]
+					Expect(strings.HasPrefix(buildReport.Images[expect.ImageName].DockerTag, expectedDigest+"-")).To(BeTrue())
+				}
 			}
 		},
 
@@ -119,24 +137,21 @@ var _ = Describe("Multiarch build", Label("e2e", "build", "multiarch", "simple")
 			EnableDockerfileImage:       true,
 
 			ExpectedStapelImageInfo: expectedImageInfo{
-				ImageName:  "orange",
-				MetaDigest: "0bfe25871a0014046617e5c47e399183886b23ab394ee8422cc8b10c",
+				ImageName: "orange",
 				DigestByPlatform: map[string]string{
 					"linux/arm64": "0bfe25871a0014046617e5c47e399183886b23ab394ee8422cc8b10c",
 					"linux/amd64": "f401fc847eba504268377fe9a6e192bd90cd9cd4e9333c3564846264",
 				},
 			},
 			ExpectedStagedDockerfileImageInfo: expectedImageInfo{
-				ImageName:  "apple",
-				MetaDigest: "e09a53cbff65cd32668dd9749845923d46be8a70c1e1f12b1ae3318b",
+				ImageName: "apple",
 				DigestByPlatform: map[string]string{
 					"linux/arm64": "e09a53cbff65cd32668dd9749845923d46be8a70c1e1f12b1ae3318b",
 					"linux/amd64": "8f89f4cdc76a994e38f4146ef4e3edd83e070266cc15c135696bddd2",
 				},
 			},
 			ExpectedDockerfileImageInfo: expectedImageInfo{
-				ImageName:  "potato",
-				MetaDigest: "cd8956d94612821a843cfbbb3b44d9ed837f8001f2a2361a4815acce",
+				ImageName: "potato",
 				DigestByPlatform: map[string]string{
 					"linux/arm64": "cd8956d94612821a843cfbbb3b44d9ed837f8001f2a2361a4815acce",
 					"linux/amd64": "30bd7a840fcb35eb283d9940f58d1dd02a576a6967e416d9c13deaf2",
@@ -153,8 +168,7 @@ var _ = Describe("Multiarch build", Label("e2e", "build", "multiarch", "simple")
 			EnableStapelImage: true,
 
 			ExpectedStapelImageInfo: expectedImageInfo{
-				ImageName:  "orange",
-				MetaDigest: "f401fc847eba504268377fe9a6e192bd90cd9cd4e9333c3564846264",
+				ImageName: "orange",
 				DigestByPlatform: map[string]string{
 					"linux/amd64": "f401fc847eba504268377fe9a6e192bd90cd9cd4e9333c3564846264",
 				},
@@ -170,8 +184,7 @@ var _ = Describe("Multiarch build", Label("e2e", "build", "multiarch", "simple")
 			EnableDockerfileImage: true,
 
 			ExpectedDockerfileImageInfo: expectedImageInfo{
-				ImageName:  "potato",
-				MetaDigest: "cd8956d94612821a843cfbbb3b44d9ed837f8001f2a2361a4815acce",
+				ImageName: "potato",
 				DigestByPlatform: map[string]string{
 					"linux/arm64": "cd8956d94612821a843cfbbb3b44d9ed837f8001f2a2361a4815acce",
 					"linux/amd64": "30bd7a840fcb35eb283d9940f58d1dd02a576a6967e416d9c13deaf2",

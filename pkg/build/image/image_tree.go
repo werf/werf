@@ -207,6 +207,10 @@ func (tree *ImagesTree) SetMultiplatformImage(newImg *MultiplatformImage) {
 	tree.multiplatformImages = append(tree.multiplatformImages, newImg)
 }
 
+func (tree *ImagesTree) GetMultiplatformImages() []*MultiplatformImage {
+	return tree.multiplatformImages
+}
+
 func getFromFields(imageBaseConfig *config.StapelImageBase) (string, string, bool) {
 	var from string
 	var fromImageName string
