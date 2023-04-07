@@ -14,6 +14,7 @@ import (
 	"github.com/opencontainers/runtime-spec/specs-go"
 
 	"github.com/werf/werf/pkg/buildah/thirdparty"
+	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/werf"
 )
@@ -122,6 +123,16 @@ type AddOpts struct {
 	Ignores    []string
 }
 
+type ImagesOptions struct {
+	CommitOpts
+	Filters []util.Pair[string, string]
+}
+
+type ContainersOptions struct {
+	CommitOpts
+	Filters []image.ContainerFilter
+}
+
 type (
 	FromCommandOpts       CommonOpts
 	BuildFromCommandsOpts CommonOpts
@@ -151,6 +162,8 @@ type Buildah interface {
 	Config(ctx context.Context, container string, opts ConfigOpts) error
 	Copy(ctx context.Context, container, contextDir string, src []string, dst string, opts CopyOpts) error
 	Add(ctx context.Context, container string, src []string, dst string, opts AddOpts) error
+	Images(ctx context.Context, opts ImagesOptions) (image.ImagesList, error)
+	Containers(ctx context.Context, opts ContainersOptions) (image.ContainerList, error)
 }
 
 type Mode string

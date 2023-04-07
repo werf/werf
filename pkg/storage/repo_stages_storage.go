@@ -486,9 +486,9 @@ func (storage *RepoStagesStorage) FetchImage(ctx context.Context, img container_
 // FIXME(stapel-to-buildah): use ImageInterface instead of LegacyImageInterface
 // FIXME(stapel-to-buildah): possible optimization would be to push buildah container directly into registry wihtout committing a local image
 func (storage *RepoStagesStorage) StoreImage(ctx context.Context, img container_backend.LegacyImageInterface) error {
-	if img.GetBuiltID() != "" {
-		if err := storage.ContainerBackend.Tag(ctx, img.GetBuiltID(), img.Name(), container_backend.TagOpts{TargetPlatform: img.GetTargetPlatform()}); err != nil {
-			return fmt.Errorf("unable to tag built image %q by %q: %w", img.GetBuiltID(), img.Name(), err)
+	if img.BuiltID() != "" {
+		if err := storage.ContainerBackend.Tag(ctx, img.BuiltID(), img.Name(), container_backend.TagOpts{TargetPlatform: img.GetTargetPlatform()}); err != nil {
+			return fmt.Errorf("unable to tag built image %q by %q: %w", img.BuiltID(), img.Name(), err)
 		}
 	}
 
@@ -628,9 +628,7 @@ func (storage *RepoStagesStorage) PutImportMetadata(ctx context.Context, project
 	fullImageName := makeRepoImportMetadataName(storage.RepoAddress, metadata.ImportSourceID)
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PutImportMetadata full image name: %s\n", fullImageName)
 
-	opts := &docker_registry.PushImageOptions{
-		Labels: metadata.ToLabels(),
-	}
+	opts := &docker_registry.PushImageOptions{Labels: metadata.ToLabelsMap()}
 	opts.Labels[image.WerfLabel] = projectName
 
 	if err := storage.DockerRegistry.PushImage(ctx, fullImageName, opts); err != nil {
@@ -892,4 +890,8 @@ func (storage *RepoStagesStorage) PostMultiplatformImage(ctx context.Context, pr
 	logboek.Context(ctx).Info().LogF("Posted manifest list %s for project %s\n", fullImageName, projectName)
 
 	return nil
+}
+
+func (storage *RepoStagesStorage) FilterStagesAndProcessRelatedData(ctx context.Context, stageDescriptions []*image.StageDescription, options FilterStagesAndProcessRelatedDataOptions) ([]*image.StageDescription, error) {
+	return stageDescriptions, nil
 }

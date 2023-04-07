@@ -55,7 +55,7 @@ func (repoData *RepoData) CreateStagesStorage(ctx context.Context, containerBack
 	}
 
 	if addr == storage.LocalStorageAddress {
-		return storage.NewDockerServerStagesStorage(containerBackend.(*container_backend.DockerServerBackend)), nil
+		return storage.NewLocalStagesStorage(containerBackend), nil
 	} else {
 		dockerRegistry, err := repoData.CreateDockerRegistry(ctx, insecureRegistry, skipTlsVerifyRegistry)
 		if err != nil {
