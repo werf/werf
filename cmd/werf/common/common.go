@@ -857,8 +857,8 @@ func GetParallelTasksLimit(cmdData *CmdData) (int64, error) {
 	}
 }
 
-func GetLocalStagesStorage(containerBackend container_backend.ContainerBackend) *storage.DockerServerStagesStorage {
-	return storage.NewDockerServerStagesStorage(containerBackend.(*container_backend.DockerServerBackend))
+func GetLocalStagesStorage(containerBackend container_backend.ContainerBackend) *storage.LocalStagesStorage {
+	return storage.NewLocalStagesStorage(containerBackend)
 }
 
 func GetStagesStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) (storage.PrimaryStagesStorage, error) {
@@ -902,9 +902,9 @@ func GetCacheStagesStorageList(ctx context.Context, containerBackend container_b
 func GetSecondaryStagesStorageList(ctx context.Context, stagesStorage storage.StagesStorage, containerBackend container_backend.ContainerBackend, cmdData *CmdData) ([]storage.StagesStorage, error) {
 	var res []storage.StagesStorage
 
-	if dockerBackend, matched := containerBackend.(*container_backend.DockerServerBackend); matched {
+	if _, matched := containerBackend.(*container_backend.DockerServerBackend); matched {
 		if stagesStorage.Address() != storage.LocalStorageAddress {
-			res = append(res, storage.NewDockerServerStagesStorage(dockerBackend))
+			res = append(res, storage.NewLocalStagesStorage(containerBackend))
 		}
 	}
 

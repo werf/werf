@@ -201,7 +201,7 @@ func (i *LegacyStageImage) GetInfo() *image.Info {
 }
 
 func (i *LegacyStageImage) MustGetBuiltID() string {
-	builtId := i.GetBuiltID()
+	builtId := i.BuiltID()
 	if builtId == "" {
 		panic(fmt.Sprintf("image %s built id is not available", i.Name()))
 	}
@@ -216,19 +216,8 @@ func (i *LegacyStageImage) BuiltID() string {
 	return i.builtID
 }
 
-func (i *LegacyStageImage) GetBuiltID() string {
-	return i.BuiltID()
-}
-
-func (i *LegacyStageImage) TagBuiltImage(ctx context.Context) error {
-	_ = i.ContainerBackend.(*DockerServerBackend)
-
-	return docker.CliTag(ctx, i.MustGetBuiltID(), i.name)
-}
-
 func (i *LegacyStageImage) Tag(ctx context.Context, name string) error {
 	_ = i.ContainerBackend.(*DockerServerBackend)
-
 	return docker.CliTag(ctx, i.GetID(), name)
 }
 

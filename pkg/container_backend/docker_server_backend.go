@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
 	"github.com/google/uuid"
 
@@ -183,7 +184,9 @@ func (runtime *DockerServerBackend) RenameImage(ctx context.Context, img LegacyI
 
 func (runtime *DockerServerBackend) RemoveImage(ctx context.Context, img LegacyImageInterface) error {
 	return logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Removing image tag %s", img.Name())).DoError(func() error {
-		return runtime.Rmi(ctx, img.Name(), RmiOpts{TargetPlatform: img.GetTargetPlatform()})
+		return runtime.Rmi(ctx, img.Name(), RmiOpts{
+			CommonOpts: CommonOpts{TargetPlatform: img.GetTargetPlatform()},
+		})
 	})
 }
 
@@ -223,7 +226,15 @@ func (runtime *DockerServerBackend) Pull(ctx context.Context, ref string, opts P
 }
 
 func (runtime *DockerServerBackend) Rmi(ctx context.Context, ref string, opts RmiOpts) error {
-	return docker.CliRmi(ctx, ref, "--force")
+	args := []string{ref}
+	if opts.Force {
+		args = append(args, "--force")
+	}
+	return docker.CliRmi(ctx, args...)
+}
+
+func (runtime *DockerServerBackend) Rm(ctx context.Context, ref string, opts RmOpts) error {
+	return docker.ContainerRemove(ctx, ref, types.ContainerRemoveOptions{Force: opts.Force})
 }
 
 func (runtime *DockerServerBackend) PushImage(ctx context.Context, img LegacyImageInterface) error {
@@ -232,34 +243,12 @@ func (runtime *DockerServerBackend) PushImage(ctx context.Context, img LegacyIma
 	}); err != nil {
 		return err
 	}
-
 	return nil
 }
 
-// PushBuiltImage is only available for DockerServerBackend
-func (runtime *DockerServerBackend) PushBuiltImage(ctx context.Context, img LegacyImageInterface) error {
-	if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Tagging built image by name %s", img.Name())).DoError(func() error {
-		if err := img.TagBuiltImage(ctx); err != nil {
-			return fmt.Errorf("unable to tag built image by name %s: %w", img.Name(), err)
-		}
-		return nil
-	}); err != nil {
-		return err
-	}
-
-	if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Pushing %s", img.Name())).DoError(func() error {
-		return img.Push(ctx)
-	}); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// TagBuiltImageByName is only available for DockerServerBackend
 func (runtime *DockerServerBackend) TagImageByName(ctx context.Context, img LegacyImageInterface) error {
-	if img.GetBuiltID() != "" {
-		if err := img.TagBuiltImage(ctx); err != nil {
+	if img.BuiltID() != "" {
+		if err := docker.CliTag(ctx, img.BuiltID(), img.Name()); err != nil {
 			return fmt.Errorf("unable to tag image %s: %w", img.Name(), err)
 		}
 	} else {
@@ -267,7 +256,6 @@ func (runtime *DockerServerBackend) TagImageByName(ctx context.Context, img Lega
 			return err
 		}
 	}
-
 	return nil
 }
 
@@ -291,4 +279,62 @@ func (runtime *DockerServerBackend) RemoveHostDirs(ctx context.Context, mountDir
 	args = append(args, containerDirs...)
 
 	return docker.CliRun(ctx, args...)
+}
+
+func (runtime *DockerServerBackend) Images(ctx context.Context, opts ImagesOptions) (image.ImagesList, error) {
+	filterSet := filters.NewArgs()
+	for _, item := range opts.Filters {
+		filterSet.Add(item.First, item.Second)
+	}
+	images, err := docker.Images(ctx, types.ImageListOptions{Filters: filterSet})
+	if err != nil {
+		return nil, fmt.Errorf("unable to get docker images: %w", err)
+	}
+
+	var res image.ImagesList
+	for _, img := range images {
+		res = append(res, image.Summary{
+			RepoTags: img.RepoTags,
+		})
+	}
+	return res, nil
+}
+
+func (runtime *DockerServerBackend) Containers(ctx context.Context, opts ContainersOptions) (image.ContainerList, error) {
+	filterSet := filters.NewArgs()
+	for _, filter := range opts.Filters {
+		if filter.ID != "" {
+			filterSet.Add("id", filter.ID)
+		}
+		if filter.Name != "" {
+			filterSet.Add("name", filter.Name)
+		}
+		if filter.Ancestor != "" {
+			filterSet.Add("ancestor", filter.Ancestor)
+		}
+	}
+
+	containersOptions := types.ContainerListOptions{}
+	containersOptions.All = true
+	containersOptions.Filters = filterSet
+
+	containers, err := docker.Containers(ctx, containersOptions)
+	if err != nil {
+		return nil, err
+	}
+
+	var res image.ContainerList
+	for _, container := range containers {
+		res = append(res, image.Container{
+			ID:      container.ID,
+			ImageID: container.ImageID,
+			Names:   container.Names,
+		})
+	}
+
+	return res, nil
+}
+
+func (runtime *DockerServerBackend) PostManifest(ctx context.Context, ref string, opts PostManifestOpts) error {
+	return docker.CreateImage(ctx, ref, opts.Labels)
 }

@@ -1,6 +1,8 @@
 package storage
 
 import (
+	"fmt"
+
 	"github.com/werf/werf/pkg/image"
 )
 
@@ -10,7 +12,15 @@ type ImportMetadata struct {
 	Checksum       string
 }
 
-func (m *ImportMetadata) ToLabels() map[string]string {
+func (m *ImportMetadata) ToLabels() []string {
+	return []string{
+		fmt.Sprintf("%s=%s", image.WerfImportMetadataImportSourceIDLabel, m.ImportSourceID),
+		fmt.Sprintf("%s=%s", image.WerfImportMetadataSourceImageIDLabel, m.SourceImageID),
+		fmt.Sprintf("%s=%s", image.WerfImportMetadataChecksumLabel, m.Checksum),
+	}
+}
+
+func (m *ImportMetadata) ToLabelsMap() map[string]string {
 	return map[string]string{
 		image.WerfImportMetadataImportSourceIDLabel: m.ImportSourceID,
 		image.WerfImportMetadataSourceImageIDLabel:  m.SourceImageID,

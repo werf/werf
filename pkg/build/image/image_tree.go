@@ -124,7 +124,7 @@ func (tree *ImagesTree) GetImage(name string) *Image {
 	return nil
 }
 
-func (tree *ImagesTree) GetImagesByName(finalOnly bool) []*util.Pair[string, []*Image] {
+func (tree *ImagesTree) GetImagesByName(finalOnly bool) []util.Pair[string, []*Image] {
 	images := make(map[string]map[string]*Image)
 	var names []string
 
@@ -148,7 +148,7 @@ func (tree *ImagesTree) GetImagesByName(finalOnly bool) []*util.Pair[string, []*
 		}
 	}
 
-	var res []*util.Pair[string, []*Image]
+	var res []util.Pair[string, []*Image]
 
 	sort.Strings(names)
 	for _, name := range names {

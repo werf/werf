@@ -23,9 +23,7 @@ type LegacyImageInterface interface {
 
 	Build(context.Context, BuildOptions) error
 	SetBuiltID(builtID string)
-	GetBuiltID() string
 	BuiltID() string
-	TagBuiltImage(ctx context.Context) error
 
 	Introspect(ctx context.Context) error
 

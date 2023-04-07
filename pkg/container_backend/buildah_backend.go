@@ -648,6 +648,19 @@ func (backend *BuildahBackend) Push(ctx context.Context, ref string, opts PushOp
 	)
 }
 
+func (backend *BuildahBackend) TagImageByName(ctx context.Context, img LegacyImageInterface) error {
+	if img.BuiltID() != "" {
+		if err := backend.Tag(ctx, img.BuiltID(), img.Name(), TagOpts{}); err != nil {
+			return fmt.Errorf("unable to tag %q as %s: %w", img.BuiltID(), img.Name(), err)
+		}
+	} else {
+		if err := backend.RefreshImageObject(ctx, img); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (backend *BuildahBackend) BuildDockerfile(ctx context.Context, dockerfileContent []byte, opts BuildDockerfileOpts) (string, error) {
 	buildArgs := make(map[string]string)
 	for _, argStr := range opts.BuildArgs {
@@ -724,7 +737,9 @@ func (backend *BuildahBackend) RenameImage(ctx context.Context, img LegacyImageI
 
 	if removeOldName {
 		if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Removing old image tag %s", img.Name())).DoError(func() error {
-			if err := backend.Rmi(ctx, img.Name(), RmiOpts{TargetPlatform: img.GetTargetPlatform()}); err != nil {
+			if err := backend.Rmi(ctx, img.Name(), RmiOpts{
+				CommonOpts: CommonOpts{TargetPlatform: img.GetTargetPlatform()},
+			}); err != nil {
 				return fmt.Errorf("unable to remove image %q: %w", img.Name(), err)
 			}
 			return nil
@@ -753,7 +768,9 @@ func (backend *BuildahBackend) RenameImage(ctx context.Context, img LegacyImageI
 
 func (backend *BuildahBackend) RemoveImage(ctx context.Context, img LegacyImageInterface) error {
 	if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Removing image tag %s", img.Name())).DoError(func() error {
-		if err := backend.Rmi(ctx, img.Name(), RmiOpts{TargetPlatform: img.GetTargetPlatform()}); err != nil {
+		if err := backend.Rmi(ctx, img.Name(), RmiOpts{
+			CommonOpts: CommonOpts{TargetPlatform: img.GetTargetPlatform()},
+		}); err != nil {
 			return fmt.Errorf("unable to remove image %q: %w", img.Name(), err)
 		}
 		return nil
@@ -969,4 +986,22 @@ func newHealthConfigFromString(healthcheck string) (*thirdparty.BuildahHealthCon
 	healthconfig := (*thirdparty.BuildahHealthConfig)(healthcheckcmd.Health)
 
 	return healthconfig, nil
+}
+
+func (runtime *BuildahBackend) Images(ctx context.Context, opts ImagesOptions) (image.ImagesList, error) {
+	imagesOpts := buildah.ImagesOptions{Filters: opts.Filters}
+	return runtime.buildah.Images(ctx, imagesOpts)
+}
+
+func (runtime *BuildahBackend) Containers(ctx context.Context, opts ContainersOptions) (image.ContainerList, error) {
+	containersOpts := buildah.ContainersOptions{Filters: opts.Filters}
+	return runtime.buildah.Containers(ctx, containersOpts)
+}
+
+func (runtime *BuildahBackend) Rm(ctx context.Context, name string, opts RmOpts) error {
+	return runtime.buildah.Rm(ctx, name, buildah.RmOpts{})
+}
+
+func (runtime *BuildahBackend) PostManifest(ctx context.Context, ref string, opts PostManifestOpts) error {
+	return fmt.Errorf("not implemented")
 }

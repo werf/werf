@@ -25,6 +25,12 @@ func IsErrBrokenImage(err error) bool {
 	return err != nil && strings.HasSuffix(err.Error(), ErrBrokenImage.Error())
 }
 
+type FilterStagesAndProcessRelatedDataOptions struct {
+	SkipUsedImage            bool
+	RmForce                  bool
+	RmContainersThatUseImage bool
+}
+
 type StagesStorage interface {
 	GetStagesIDs(ctx context.Context, projectName string, opts ...Option) ([]image.StageID, error)
 	GetStagesIDsByDigest(ctx context.Context, projectName, digest string, opts ...Option) ([]image.StageID, error)
@@ -73,6 +79,7 @@ type StagesStorage interface {
 	GetClientIDRecords(ctx context.Context, projectName string, opts ...Option) ([]*ClientIDRecord, error)
 	PostClientIDRecord(ctx context.Context, projectName string, rec *ClientIDRecord) error
 	PostMultiplatformImage(ctx context.Context, projectName, tag string, allPlatformsImages []*image.Info) error
+	FilterStagesAndProcessRelatedData(ctx context.Context, stageDescriptions []*image.StageDescription, options FilterStagesAndProcessRelatedDataOptions) ([]*image.StageDescription, error)
 
 	String() string
 	Address() string

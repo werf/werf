@@ -12,7 +12,7 @@ import (
 
 func NewStagesStorage(stagesStorageAddress, implementationName string, dockerRegistryOptions docker_registry.DockerRegistryOptions) storage.PrimaryStagesStorage {
 	if stagesStorageAddress == storage.LocalStorageAddress {
-		return storage.NewDockerServerStagesStorage(&container_backend.DockerServerBackend{})
+		return storage.NewLocalStagesStorage(container_backend.NewDockerServerBackend())
 	} else {
 		dockerRegistry, err := docker_registry.NewDockerRegistry(stagesStorageAddress, implementationName, dockerRegistryOptions)
 		Expect(err).ShouldNot(HaveOccurred())

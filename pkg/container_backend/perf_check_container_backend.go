@@ -146,3 +146,43 @@ func (runtime *PerfCheckContainerBackend) RemoveHostDirs(ctx context.Context, mo
 		})
 	return
 }
+
+func (runtime *PerfCheckContainerBackend) Images(ctx context.Context, opts ImagesOptions) (res image.ImagesList, resErr error) {
+	logboek.Context(ctx).Default().LogProcess("ContainerBackend.Images %v", opts).
+		Do(func() {
+			res, resErr = runtime.ContainerBackend.Images(ctx, opts)
+		})
+	return
+}
+
+func (runtime *PerfCheckContainerBackend) Containers(ctx context.Context, opts ContainersOptions) (res image.ContainerList, resErr error) {
+	logboek.Context(ctx).Default().LogProcess("ContainerBackend.Containers %v", opts).
+		Do(func() {
+			res, resErr = runtime.ContainerBackend.Containers(ctx, opts)
+		})
+	return
+}
+
+func (runtime *PerfCheckContainerBackend) Rm(ctx context.Context, name string, opts RmOpts) (resErr error) {
+	logboek.Context(ctx).Default().LogProcess("ContainerBackend.Rm %q %v", name, opts).
+		Do(func() {
+			resErr = runtime.ContainerBackend.Rm(ctx, name, opts)
+		})
+	return
+}
+
+func (runtime *PerfCheckContainerBackend) PostManifest(ctx context.Context, ref string, opts PostManifestOpts) (resErr error) {
+	logboek.Context(ctx).Default().LogProcess("ContainerBackend.PostManifest %q %v", ref, opts).
+		Do(func() {
+			resErr = runtime.ContainerBackend.PostManifest(ctx, ref, opts)
+		})
+	return
+}
+
+func (runtime *PerfCheckContainerBackend) TagImageByName(ctx context.Context, img LegacyImageInterface) (resErr error) {
+	logboek.Context(ctx).Default().LogProcess("ContainerBackend.TagImageByName %q", img.Name()).
+		Do(func() {
+			resErr = runtime.ContainerBackend.TagImageByName(ctx, img)
+		})
+	return
+}

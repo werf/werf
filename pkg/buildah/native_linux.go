@@ -40,6 +40,7 @@ import (
 	"gopkg.in/errgo.v2/fmt/errors"
 
 	"github.com/werf/werf/pkg/buildah/thirdparty"
+	"github.com/werf/werf/pkg/image"
 )
 
 const (
@@ -790,6 +791,88 @@ func (b *NativeBuildah) NewSessionTmpDir() (string, error) {
 	}
 
 	return sessionTmpDir, nil
+}
+
+func (b *NativeBuildah) Images(ctx context.Context, opts ImagesOptions) (image.ImagesList, error) {
+	sysCtx, err := b.getSystemContext(opts.TargetPlatform)
+	if err != nil {
+		return nil, err
+	}
+
+	runtime, err := b.getRuntime(sysCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	listOpts := &libimage.ListImagesOptions{}
+	for _, filter := range opts.Filters {
+		listOpts.Filters = append(listOpts.Filters, fmt.Sprintf("%s=%s", filter.First, filter.Second))
+	}
+	images, err := runtime.ListImages(ctx, nil, listOpts)
+	if err != nil {
+		return nil, err
+	}
+
+	var res image.ImagesList
+	for _, img := range images {
+		repoTags, err := img.RepoTags()
+		if err != nil {
+			return nil, fmt.Errorf("unable to get image %s repo tags: %w", img.ID(), err)
+		}
+		res = append(res, image.Summary{RepoTags: repoTags})
+	}
+
+	return res, nil
+}
+
+func (b *NativeBuildah) Containers(ctx context.Context, opts ContainersOptions) (image.ContainerList, error) {
+	builders, err := buildah.OpenAllBuilders(b.Store)
+	if err != nil {
+		return nil, err
+	}
+
+	seenImages := make(map[string]string)
+	imageNameForID := func(id string) string {
+		if id == "" {
+			return buildah.BaseImageFakeName
+		}
+		imageName, ok := seenImages[id]
+		if ok {
+			return imageName
+		}
+		img, err2 := b.Store.Image(id)
+		if err2 == nil && len(img.Names) > 0 {
+			seenImages[id] = img.Names[0]
+		}
+		return seenImages[id]
+	}
+
+	var res image.ContainerList
+SelectContainers:
+	for _, builder := range builders {
+		imgID := builder.FromImageID
+		imgName := imageNameForID(builder.FromImageID)
+
+		for _, filter := range opts.Filters {
+			if filter.ID != "" && !thirdparty.MatchesID(builder.ContainerID, filter.ID) {
+				continue SelectContainers
+			}
+			if filter.Name != "" && !thirdparty.MatchesCtrName(builder.Container, filter.Name) {
+				continue SelectContainers
+			}
+			if filter.Ancestor != "" && !thirdparty.MatchesAncestor(imgName, imgID, filter.Ancestor) {
+				continue SelectContainers
+			}
+		}
+
+		res = append(res, image.Container{
+			ID:      builder.ContainerID,
+			ImageID: builder.FromImageID,
+			Names:   []string{builder.Container},
+		})
+	}
+
+	return res, nil
 }
 
 func NewNativeStoreOptions(rootlessUID int, driver StorageDriver) (*thirdparty.StoreOptions, error) {

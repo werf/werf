@@ -54,6 +54,14 @@ func (info *Info) GetCopy() *Info {
 	}
 }
 
+func (info *Info) LogName() string {
+	if info.Name == "<none>:<none>" {
+		return info.ID
+	} else {
+		return info.Name
+	}
+}
+
 func NewInfoFromInspect(ref string, inspect *types.ImageInspect) *Info {
 	repository, tag := ParseRepositoryAndTag(ref)
 
