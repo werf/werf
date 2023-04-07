@@ -1,5 +1,24 @@
 # Changelog
 
+### [1.2.220](https://www.github.com/werf/werf/compare/v1.2.219...v1.2.220) (2023-04-07)
+
+
+### Features
+
+* **multiarch:** implement creation of manifest list for each werf image in multiplatform mode builds ([5406416](https://www.github.com/werf/werf/commit/5406416dbc74a05fa70994b0cd5cb9f1ba3a2268))
+* **multiarch:** use multiplatform images for converge/render and in the build report ([370d14c](https://www.github.com/werf/werf/commit/370d14c4050c3e0758da2cf090288bfa5078eb7e))
+
+
+### Bug Fixes
+
+* fix self-signed-registry write operations when skip-tls-verify flag used ([94f2b42](https://www.github.com/werf/werf/commit/94f2b42419a4b21437edc74787a7fe18cf1471f9))
+* **logs:** fix typo in deprecation warning ([3b2a9b0](https://www.github.com/werf/werf/commit/3b2a9b0c99555d03db05abb4d28f93a70199e04c))
+* **multiarch:** managed images adding bug fix ([285e5a6](https://www.github.com/werf/werf/commit/285e5a6d69f5707ae313c1ad2bbe37d2602ae01b))
+* **multiarch:** managed images adding bug fix (part 2) ([e685e5e](https://www.github.com/werf/werf/commit/e685e5e68798d1e6c1d84666b79492fa4f00e983))
+* **multiarch:** publish git metadata for multiplatform mode images ([1913c95](https://www.github.com/werf/werf/commit/1913c95f95d1676bf4e6b51ce1694d31674d713f))
+* **multiarch:** use buildx instead of deprecated DOCKER_BUILDKIT to enable buildkit building ([5334baa](https://www.github.com/werf/werf/commit/5334baa42e352b2a12645dcd1fcd2ef5ea4f7f74))
+* werf-in-a-user-namespace not found, cannot start auto host cleanup procedure ([f7ecd7d](https://www.github.com/werf/werf/commit/f7ecd7dccd20c619cce9c4c257b9dbe175302ae3))
+
 ### [1.2.219](https://www.github.com/werf/werf/compare/v1.2.218...v1.2.219) (2023-03-29)
 
 
