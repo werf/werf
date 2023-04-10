@@ -1,4 +1,4 @@
-FROM --platform=linux/amd64 golang:1.20-bullseye@sha256:51ff22f03320894402290ba7dfd83ee05b61e58b5381d76b40f2e3a370d81da3
+FROM --platform=linux/amd64 golang:1.20-bullseye@sha256:0c4028f241827951ee41df718abdb75769b63610f3b0e2350cf6fede68e24d6f
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -17,3 +17,5 @@ RUN cd /.werf-deps && \
     task build:dist:all version=base && \
     task verify:binaries:dist:all version=base && \
     rm -rf /.werf-deps
+
+RUN git config --global --add safe.directory /git
