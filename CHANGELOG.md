@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.222](https://www.github.com/werf/werf/compare/v1.2.221...v1.2.222) (2023-04-10)
+
+
+### Bug Fixes
+
+* **werf-builder:** update werf-builder image ([1171fc5](https://www.github.com/werf/werf/commit/1171fc5766ca45bcb9eb6755e887f8300d5ef0a7))
+
 ### [1.2.221](https://www.github.com/werf/werf/compare/v1.2.220...v1.2.221) (2023-04-07)
 
 
