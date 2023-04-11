@@ -74,3 +74,13 @@ func (img *MultiplatformImage) GetStageDescription() *image.StageDescription {
 func (img *MultiplatformImage) SetStageDescription(desc *common_image.StageDescription) {
 	img.stageDescription = desc
 }
+
+func (img *MultiplatformImage) IsFinal() bool {
+	if img.IsArtifact {
+		return false
+	}
+	if img.IsDockerfileImage && !img.IsDockerfileTargetStage {
+		return false
+	}
+	return true
+}

@@ -91,6 +91,8 @@ type ContainerBackend interface {
 	Images(ctx context.Context, opts ImagesOptions) (image.ImagesList, error)
 	Containers(ctx context.Context, opts ContainersOptions) (image.ContainerList, error)
 
+	ClaimTargetPlatforms(ctx context.Context, targetPlatforms []string)
+
 	String() string
 
 	// TODO: Util method for cleanup, which possibly should be avoided in the future

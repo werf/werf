@@ -20,18 +20,20 @@ import (
 	parallelConstant "github.com/werf/werf/pkg/util/parallel/constant"
 )
 
-func CreateImage(ctx context.Context, ref string, labels []string) error {
-	var opts types.ImageImportOptions
+type CreateImageOptions struct {
+	Labels []string
+}
 
-	if len(labels) > 0 {
+func CreateImage(ctx context.Context, ref string, opts CreateImageOptions) error {
+	var importOpts types.ImageImportOptions
+	if len(opts.Labels) > 0 {
 		changeOption := "LABEL"
-		for _, label := range labels {
+		for _, label := range opts.Labels {
 			changeOption += fmt.Sprintf(" %s", label)
 		}
-		opts.Changes = append(opts.Changes, changeOption)
+		importOpts.Changes = append(importOpts.Changes, changeOption)
 	}
-
-	_, err := apiCli(ctx).ImageImport(ctx, types.ImageImportSource{SourceName: "-"}, ref, opts)
+	_, err := apiCli(ctx).ImageImport(ctx, types.ImageImportSource{SourceName: "-"}, ref, importOpts)
 	return err
 }
 

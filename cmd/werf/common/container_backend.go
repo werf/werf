@@ -135,7 +135,6 @@ func InitProcessContainerBackend(ctx context.Context, cmdData *CmdData) (contain
 func InitProcessDocker(ctx context.Context, cmdData *CmdData) (context.Context, error) {
 	opts := docker.InitOptions{
 		DockerConfigDir: *cmdData.DockerConfig,
-		ClaimPlatforms:  cmdData.GetPlatform(),
 		Verbose:         *cmdData.LogVerbose,
 		Debug:           *cmdData.LogDebug,
 	}

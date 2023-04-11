@@ -23,6 +23,10 @@ func NewDockerServerBackend() *DockerServerBackend {
 	return &DockerServerBackend{}
 }
 
+func (runtime *DockerServerBackend) ClaimTargetPlatforms(ctx context.Context, targetPlatforms []string) {
+	docker.ClaimTargetPlatforms(targetPlatforms)
+}
+
 func (runtime *DockerServerBackend) GetDefaultPlatform() string {
 	return docker.GetDefaultPlatform()
 }
@@ -336,5 +340,5 @@ func (runtime *DockerServerBackend) Containers(ctx context.Context, opts Contain
 }
 
 func (runtime *DockerServerBackend) PostManifest(ctx context.Context, ref string, opts PostManifestOpts) error {
-	return docker.CreateImage(ctx, ref, opts.Labels)
+	return docker.CreateImage(ctx, ref, docker.CreateImageOptions{Labels: opts.Labels})
 }
