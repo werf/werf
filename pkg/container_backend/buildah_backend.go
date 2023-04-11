@@ -1005,3 +1005,5 @@ func (runtime *BuildahBackend) Rm(ctx context.Context, name string, opts RmOpts)
 func (runtime *BuildahBackend) PostManifest(ctx context.Context, ref string, opts PostManifestOpts) error {
 	return fmt.Errorf("not implemented")
 }
+
+func (runtime *BuildahBackend) ClaimTargetPlatforms(ctx context.Context, targetPlatforms []string) {}

@@ -215,26 +215,82 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 		}
 
 		if len(targetPlatforms) == 1 {
-			if err := phase.publishImageMetadata(ctx, name, images[0]); err != nil {
-				return fmt.Errorf("unable to publish image %q metadata: %w", name, err)
+			img := images[0]
+
+			if img.IsFinal() {
+				if err := phase.publishFinalImage(ctx, name, img); err != nil {
+					return err
+				}
+			}
+
+			// TODO: Separate LocalStagesStorage and RepoStagesStorage interfaces, local should not include metadata publishing methods at all
+			if _, isLocal := phase.Conveyor.StorageManager.GetStagesStorage().(*storage.LocalStagesStorage); !isLocal {
+				if err := phase.publishImageMetadata(ctx, name, img); err != nil {
+					return fmt.Errorf("unable to publish image %q metadata: %w", name, err)
+				}
 			}
 		} else {
-			if err := logboek.Context(ctx).LogProcess(logging.ImageLogProcessName(name, false, "")).
-				Options(func(options types.LogProcessOptionsInterface) {
-					options.Style(logging.ImageMetadataStyle())
-				}).
-				DoError(func() error {
-					if err := phase.publishMultiplatformImageMetadata(ctx, name, images); err != nil {
-						return fmt.Errorf("unable to publish image %q multiplatform metadata: %w", name, err)
-					}
-					return nil
-				}); err != nil {
-				return err
+			opts := image.MultiplatformImageOptions{
+				IsArtifact:              images[0].IsArtifact,
+				IsDockerfileImage:       images[0].IsDockerfileImage,
+				IsDockerfileTargetStage: images[0].IsDockerfileTargetStage,
+			}
+			img := image.NewMultiplatformImage(name, images, phase.Conveyor.StorageManager, opts)
+			phase.Conveyor.imagesTree.SetMultiplatformImage(img)
+
+			if img.IsFinal() {
+				if err := phase.publishMultiplatformFinalImage(ctx, name, images); err != nil {
+					return err
+				}
+			}
+
+			// TODO: Separate LocalStagesStorage and RepoStagesStorage interfaces, local should not include metadata publishing methods at all
+			if _, isLocal := phase.Conveyor.StorageManager.GetStagesStorage().(*storage.LocalStagesStorage); !isLocal {
+				if err := logboek.Context(ctx).LogProcess(logging.ImageLogProcessName(name, false, "")).
+					Options(func(options types.LogProcessOptionsInterface) {
+						options.Style(logging.ImageMetadataStyle())
+					}).
+					DoError(func() error {
+						if err := phase.publishMultiplatformImageMetadata(ctx, name, img); err != nil {
+							return fmt.Errorf("unable to publish image %q multiplatform metadata: %w", name, err)
+						}
+						return nil
+					}); err != nil {
+					return err
+				}
 			}
 		}
 	}
 
 	return phase.createReport(ctx)
+}
+
+func (phase *BuildPhase) publishFinalImage(ctx context.Context, name string, img *image.Image) error {
+	if phase.Conveyor.StorageManager.GetFinalStagesStorage() != nil {
+		if err := phase.Conveyor.StorageManager.CopyStageIntoFinalStorage(ctx, img.GetLastNonEmptyStage(), phase.Conveyor.ContainerBackend, manager.CopyStageIntoFinalStorageOptions{ShouldBeBuiltMode: phase.ShouldBeBuiltMode}); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (phase *BuildPhase) publishMultiplatformFinalImage(ctx context.Context, name string, images []*image.Image) error {
+	// FIXME(multiarch): copy manifest list into final stages storage with all dependant images
+	if phase.Conveyor.StorageManager.GetFinalStagesStorage() != nil {
+		// if err := phase.Conveyor.StorageManager.CopyStageIntoFinalStorage(
+		// 	ctx, img.GetLastNonEmptyStage(), phase.Conveyor.ContainerBackend,
+		// 	manager.CopyStageIntoFinalStorageOptions{ShouldBeBuiltMode: phase.ShouldBeBuiltMode},
+		// ); err != nil {
+		// 	return err
+		// }
+
+		// desc, err := phase.Conveyor.StorageManager.GetFinalStagesStorage().GetStageDescription(ctx, phase.Conveyor.ProjectName(), img.GetStageID().Digest, img.GetStageID().UniqueID)
+		// if err != nil {
+		// 	return fmt.Errorf("unable to get image %s %s descriptor: %w", name, img.GetStageID(), err)
+		// }
+		// img.SetFinalStageDescription(desc)
+	}
+	return nil
 }
 
 func (phase *BuildPhase) publishImageMetadata(ctx context.Context, name string, img *image.Image) error {
@@ -248,7 +304,6 @@ func (phase *BuildPhase) publishImageMetadata(ctx context.Context, name string, 
 			DoError(func() error {
 				return phase.publishImageGitMetadata(
 					ctx, img.GetName(),
-					img.GetLastNonEmptyStage().GetStageImage().Image.GetStageDescription().Info.Repository,
 					*img.GetLastNonEmptyStage().GetStageImage().Image.GetStageDescription().StageID,
 				)
 			}); err != nil {
@@ -256,17 +311,8 @@ func (phase *BuildPhase) publishImageMetadata(ctx context.Context, name string, 
 		}
 	}
 
-	if img.IsArtifact {
+	if !img.IsFinal() {
 		return nil
-	}
-	if img.IsDockerfileImage && !img.IsDockerfileTargetStage {
-		return nil
-	}
-
-	if phase.Conveyor.StorageManager.GetFinalStagesStorage() != nil {
-		if err := phase.Conveyor.StorageManager.CopyStageIntoFinalStorage(ctx, img.GetLastNonEmptyStage(), phase.Conveyor.ContainerBackend, manager.CopyStageIntoFinalStorageOptions{ShouldBeBuiltMode: phase.ShouldBeBuiltMode}); err != nil {
-			return err
-		}
 	}
 
 	var customTagStorage storage.StagesStorage
@@ -292,26 +338,18 @@ func (phase *BuildPhase) publishImageMetadata(ctx context.Context, name string, 
 	return nil
 }
 
-func (phase *BuildPhase) publishMultiplatformImageMetadata(ctx context.Context, name string, images []*image.Image) error {
+func (phase *BuildPhase) publishMultiplatformImageMetadata(ctx context.Context, name string, img *image.MultiplatformImage) error {
 	if err := phase.addManagedImage(ctx, name); err != nil {
 		return err
 	}
 
-	opts := image.MultiplatformImageOptions{
-		IsArtifact:              images[0].IsArtifact,
-		IsDockerfileImage:       images[0].IsDockerfileImage,
-		IsDockerfileTargetStage: images[0].IsDockerfileTargetStage,
-	}
-
-	img := image.NewMultiplatformImage(name, images, phase.Conveyor.StorageManager, opts)
-	phase.Conveyor.imagesTree.SetMultiplatformImage(img)
-
 	stagesStorage := phase.Conveyor.StorageManager.GetStagesStorage()
 
 	if len(phase.CustomTagFuncList) == 0 {
-		platforms := util.MapFuncToSlice(images, func(img *image.Image) string { return img.TargetPlatform })
+		fullImageName := stagesStorage.ConstructStageImageName(phase.Conveyor.ProjectName(), img.GetStageID().Digest, img.GetStageID().UniqueID)
+		platforms := img.GetPlatforms()
 
-		container_backend.LogImageName(ctx, fmt.Sprintf("%s:%s", stagesStorage.Address(), img.GetStageID()))
+		container_backend.LogImageName(ctx, fullImageName)
 		container_backend.LogMultiplatformImageInfo(ctx, platforms)
 
 		if err := stagesStorage.PostMultiplatformImage(ctx, phase.Conveyor.ProjectName(), img.GetStageID().String(), img.GetImagesInfoList()); err != nil {
@@ -346,35 +384,11 @@ func (phase *BuildPhase) publishMultiplatformImageMetadata(ctx context.Context, 
 		if err := logboek.Context(ctx).Info().
 			LogProcess(fmt.Sprintf("Publish multiarch image %s git metadata", name)).
 			DoError(func() error {
-				return phase.publishImageGitMetadata(ctx, name, stagesStorage.Address(), img.GetStageID())
+				return phase.publishImageGitMetadata(ctx, name, img.GetStageID())
 			}); err != nil {
 			return err
 		}
 	}
-
-	if img.IsArtifact {
-		return nil
-	}
-	if img.IsDockerfileImage && !img.IsDockerfileTargetStage {
-		return nil
-	}
-
-	if phase.Conveyor.StorageManager.GetFinalStagesStorage() != nil {
-		// FIXME(multiarch): copy manifest list into final stages storage with all dependant images
-		// if err := phase.Conveyor.StorageManager.CopyStageIntoFinalStorage(
-		// 	ctx, img.GetLastNonEmptyStage(), phase.Conveyor.ContainerBackend,
-		// 	manager.CopyStageIntoFinalStorageOptions{ShouldBeBuiltMode: phase.ShouldBeBuiltMode},
-		// ); err != nil {
-		// 	return err
-		// }
-
-		// desc, err := phase.Conveyor.StorageManager.GetFinalStagesStorage().GetStageDescription(ctx, phase.Conveyor.ProjectName(), img.GetStageID().Digest, img.GetStageID().UniqueID)
-		// if err != nil {
-		// 	return fmt.Errorf("unable to get image %s %s descriptor: %w", name, img.GetStageID(), err)
-		// }
-		// img.SetFinalStageDescription(desc)
-	}
-
 	return nil
 }
 
@@ -388,10 +402,7 @@ func (phase *BuildPhase) createReport(ctx context.Context) error {
 	}
 
 	for _, img := range phase.Conveyor.imagesTree.GetImages() {
-		if img.IsArtifact {
-			continue
-		}
-		if img.IsDockerfileImage && !img.IsDockerfileTargetStage {
+		if !img.IsFinal() {
 			continue
 		}
 
@@ -419,36 +430,34 @@ func (phase *BuildPhase) createReport(ctx context.Context) error {
 		}
 	}
 
-	if len(targetPlatforms) > 1 {
-		for _, img := range phase.Conveyor.imagesTree.GetMultiplatformImages() {
-			if img.IsArtifact {
-				continue
-			}
-			if img.IsDockerfileImage && !img.IsDockerfileTargetStage {
-				continue
-			}
+	if _, isLocal := phase.Conveyor.StorageManager.GetStagesStorage().(*storage.LocalStagesStorage); !isLocal {
+		if len(targetPlatforms) > 1 {
+			for _, img := range phase.Conveyor.imagesTree.GetMultiplatformImages() {
+				if !img.IsFinal() {
+					continue
+				}
 
-			isRebuilt := false
-			for _, pImg := range img.Images {
-				isRebuilt = (isRebuilt || pImg.GetRebuilt())
-			}
+				isRebuilt := false
+				for _, pImg := range img.Images {
+					isRebuilt = (isRebuilt || pImg.GetRebuilt())
+				}
 
-			desc := img.GetFinalStageDescription()
-			if desc == nil {
-				desc = img.GetStageDescription()
-			}
+				desc := img.GetFinalStageDescription()
+				if desc == nil {
+					desc = img.GetStageDescription()
+				}
 
-			record := ReportImageRecord{
-				WerfImageName:     img.Name,
-				DockerRepo:        desc.Info.Repository,
-				DockerTag:         desc.Info.Tag,
-				DockerImageID:     desc.Info.ID,
-				DockerImageDigest: desc.Info.RepoDigest,
-				DockerImageName:   desc.Info.Name,
-				Rebuilt:           isRebuilt,
+				record := ReportImageRecord{
+					WerfImageName:     img.Name,
+					DockerRepo:        desc.Info.Repository,
+					DockerTag:         desc.Info.Tag,
+					DockerImageID:     desc.Info.ID,
+					DockerImageDigest: desc.Info.RepoDigest,
+					DockerImageName:   desc.Info.Name,
+					Rebuilt:           isRebuilt,
+				}
+				phase.ImagesReport.SetImageRecord(img.Name, record)
 			}
-
-			phase.ImagesReport.SetImageRecord(img.Name, record)
 		}
 	}
 
@@ -537,7 +546,7 @@ func (phase *BuildPhase) addManagedImage(ctx context.Context, name string) error
 	return nil
 }
 
-func (phase *BuildPhase) publishImageGitMetadata(ctx context.Context, imageName, repository string, stageID imagePkg.StageID) error {
+func (phase *BuildPhase) publishImageGitMetadata(ctx context.Context, imageName string, stageID imagePkg.StageID) error {
 	var commits []string
 
 	headCommit := phase.Conveyor.giterminismManager.HeadCommit()
@@ -554,7 +563,8 @@ func (phase *BuildPhase) publishImageGitMetadata(ctx context.Context, imageName,
 
 	stagesStorage := phase.Conveyor.StorageManager.GetStagesStorage()
 
-	logboek.Context(ctx).Info().LogF("name: %s:%s\n", repository, stageID)
+	fullImageName := stagesStorage.ConstructStageImageName(phase.Conveyor.ProjectName(), stageID.Digest, stageID.UniqueID)
+	logboek.Context(ctx).Info().LogF("name: %s\n", fullImageName)
 	logboek.Context(ctx).Info().LogF("commits:\n")
 
 	for _, commit := range commits {

@@ -402,10 +402,7 @@ func (c *Conveyor) GetImageInfoGetters(opts imagePkg.InfoGetterOptions) ([]*imag
 		}
 	} else {
 		for _, img := range c.imagesTree.GetMultiplatformImages() {
-			if img.IsArtifact {
-				continue
-			}
-			if img.IsDockerfileImage && !img.IsDockerfileTargetStage {
+			if !img.IsFinal() {
 				continue
 			}
 
@@ -445,7 +442,13 @@ func (c *Conveyor) GetImagesEnvArray() []string {
 	return envArray
 }
 
-func (c *Conveyor) checkContainerBackendSupported(_ context.Context) error {
+func (c *Conveyor) checkContainerBackendSupported(ctx context.Context) error {
+	targetPlatforms, err := c.GetTargetPlatforms()
+	if err != nil {
+		return fmt.Errorf("error getting target platforms: %w", err)
+	}
+	c.ContainerBackend.ClaimTargetPlatforms(ctx, targetPlatforms)
+
 	if _, isBuildah := c.ContainerBackend.(*container_backend.BuildahBackend); !isBuildah {
 		return nil
 	}

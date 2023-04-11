@@ -385,22 +385,6 @@ func (storage *LocalStagesStorage) PostClientIDRecord(ctx context.Context, proje
 }
 
 func (storage *LocalStagesStorage) PostMultiplatformImage(ctx context.Context, projectName, tag string, allPlatformsImages []*image.Info) error {
-	logboek.Context(ctx).Debug().LogF("-- LocalStagesStorage.PostMultiplatformImage by tag %s for project %s\n", tag, projectName)
-
-	fullImageName := fmt.Sprintf("%s:%s", projectName, tag)
-	postManifestOpts := container_backend.PostManifestOpts{
-		Labels:    []string{fmt.Sprintf("%s=%s", image.WerfLabel, projectName)},
-		Manifests: allPlatformsImages,
-	}
-
-	logboek.Context(ctx).Debug().LogF("-- LocalStagesStorage.PostMultiplatformImage full image name: %s\n", fullImageName)
-
-	if err := storage.ContainerBackend.PostManifest(ctx, fullImageName, postManifestOpts); err != nil {
-		return fmt.Errorf("unable to post manifest %q: %w", fullImageName, err)
-	}
-
-	logboek.Context(ctx).Info().LogF("Created manifest list %s for project %s\n", fullImageName, projectName)
-
 	return nil
 }
 

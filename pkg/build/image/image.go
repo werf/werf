@@ -145,6 +145,16 @@ func ImageLogTagStyle(isArtifact bool) color.Style {
 	return logging.ImageDefaultStyle(isArtifact)
 }
 
+func (i *Image) IsFinal() bool {
+	if i.IsArtifact {
+		return false
+	}
+	if i.IsDockerfileImage && !i.IsDockerfileTargetStage {
+		return false
+	}
+	return true
+}
+
 func (i *Image) SetStages(stages []stage.Interface) {
 	i.stages = stages
 }

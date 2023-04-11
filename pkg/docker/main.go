@@ -98,6 +98,18 @@ func Init(ctx context.Context, opts InitOptions) error {
 	return nil
 }
 
+func ClaimTargetPlatforms(claimPlatforms []string) {
+	if defaultPlatform != "" {
+		claimPlatforms = append(claimPlatforms, defaultPlatform)
+	}
+	for _, claimPlatform := range claimPlatforms {
+		if claimPlatform != runtimePlatform {
+			useBuildx = true
+			break
+		}
+	}
+}
+
 func GetDefaultPlatform() string {
 	return defaultPlatform
 }

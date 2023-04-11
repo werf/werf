@@ -186,3 +186,8 @@ func (runtime *PerfCheckContainerBackend) TagImageByName(ctx context.Context, im
 		})
 	return
 }
+
+func (runtime *PerfCheckContainerBackend) ClaimTargetPlatforms(ctx context.Context, targetPlatforms []string) {
+	logboek.Context(ctx).Default().LogProcess("ContainerBackend.ClaimTargetPlatforms %v", targetPlatforms).
+		Do(func() { runtime.ContainerBackend.ClaimTargetPlatforms(ctx, targetPlatforms) })
+}
