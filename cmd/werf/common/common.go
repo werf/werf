@@ -862,16 +862,6 @@ func GetLocalStagesStorage(containerBackend container_backend.ContainerBackend) 
 }
 
 func GetStagesStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) (storage.PrimaryStagesStorage, error) {
-	if _, match := containerBackend.(*container_backend.BuildahBackend); match {
-		addr, err := cmdData.Repo.GetAddress()
-		if err != nil {
-			return nil, err
-		}
-
-		if addr == storage.LocalStorageAddress {
-			return nil, fmt.Errorf(`"--repo" should be specified and not equal ":local" for Buildah container backend`)
-		}
-	}
 	return cmdData.Repo.CreateStagesStorage(ctx, containerBackend, *cmdData.InsecureRegistry, *cmdData.SkipTlsVerifyRegistry)
 }
 
@@ -902,10 +892,8 @@ func GetCacheStagesStorageList(ctx context.Context, containerBackend container_b
 func GetSecondaryStagesStorageList(ctx context.Context, stagesStorage storage.StagesStorage, containerBackend container_backend.ContainerBackend, cmdData *CmdData) ([]storage.StagesStorage, error) {
 	var res []storage.StagesStorage
 
-	if _, matched := containerBackend.(*container_backend.DockerServerBackend); matched {
-		if stagesStorage.Address() != storage.LocalStorageAddress {
-			res = append(res, storage.NewLocalStagesStorage(containerBackend))
-		}
+	if stagesStorage.Address() != storage.LocalStorageAddress {
+		res = append(res, storage.NewLocalStagesStorage(containerBackend))
 	}
 
 	for _, address := range GetSecondaryStagesStorage(cmdData) {
