@@ -1,5 +1,14 @@
 # Changelog
 
+### [1.2.223](https://www.github.com/werf/werf/compare/v1.2.222...v1.2.223) (2023-04-12)
+
+
+### Features
+
+* **buildah:** enable :local mode for buildah backend ([d1e400d](https://www.github.com/werf/werf/commit/d1e400dd15e0bf964c7a0e2347062494f7f9a73f))
+* **local-stages-storage:** introduce local storage independent of container backend implementation ([e6aa7f1](https://www.github.com/werf/werf/commit/e6aa7f14453be1eb2c5f0032a22255d5edf408bb))
+* **multiarch:** support :local mode multiarch building for docker server backend ([e519902](https://www.github.com/werf/werf/commit/e519902272eb3262f146213a6906996be4677c11))
+
 ### [1.2.222](https://www.github.com/werf/werf/compare/v1.2.221...v1.2.222) (2023-04-10)
 
 
