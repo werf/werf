@@ -47,6 +47,7 @@ type BuildFromDockerfileOpts struct {
 	ContextDir string
 	BuildArgs  map[string]string
 	Target     string
+	Labels     []string
 }
 
 type RunMount struct {

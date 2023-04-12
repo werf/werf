@@ -26,7 +26,9 @@ import (
 	"github.com/containers/common/libimage"
 	"github.com/containers/image/v5/manifest"
 	imgstor "github.com/containers/image/v5/storage"
+	storageTransport "github.com/containers/image/v5/storage"
 	"github.com/containers/image/v5/transports/alltransports"
+	"github.com/containers/image/v5/types"
 	imgtypes "github.com/containers/image/v5/types"
 	"github.com/containers/storage"
 	"github.com/containers/storage/drivers/overlay"
@@ -313,6 +315,7 @@ func (b *NativeBuildah) BuildFromDockerfile(ctx context.Context, dockerfile stri
 		RemoveIntermediateCtrs:  true,
 		ForceRmIntermediateCtrs: false,
 		NoCache:                 false,
+		Labels:                  opts.Labels,
 	}
 
 	if targetPlatform != b.GetRuntimePlatform() {
@@ -516,11 +519,15 @@ func (b *NativeBuildah) Commit(ctx context.Context, container string, opts Commi
 		return "", fmt.Errorf("error getting builder: %w", err)
 	}
 
-	var imageRef imgtypes.ImageReference
+	var imageRef types.ImageReference
 	if opts.Image != "" {
-		imageRef, err = alltransports.ParseImageName(opts.Image)
+		normalizedImage, err := libimage.NormalizeName(opts.Image)
 		if err != nil {
-			return "", fmt.Errorf("error parsing image name: %w", err)
+			return "", fmt.Errorf("normalizing target image name %q: %w", opts.Image, err)
+		}
+		imageRef, err = storageTransport.Transport.ParseStoreReference(b.Store, normalizedImage.String())
+		if err != nil {
+			return "", fmt.Errorf("parsing target image name %q: %w", opts.Image, err)
 		}
 	}
 

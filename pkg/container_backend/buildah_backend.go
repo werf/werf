@@ -695,6 +695,7 @@ func (backend *BuildahBackend) BuildDockerfile(ctx context.Context, dockerfileCo
 		ContextDir: buildContextTmpDir,
 		BuildArgs:  buildArgs,
 		Target:     opts.Target,
+		Labels:     opts.Labels,
 	})
 }
 
@@ -782,7 +783,7 @@ func (backend *BuildahBackend) RemoveImage(ctx context.Context, img LegacyImageI
 }
 
 func (backend *BuildahBackend) String() string {
-	return "buildah-runtime"
+	return "buildah-backend"
 }
 
 func (backend *BuildahBackend) RemoveHostDirs(ctx context.Context, mountDir string, dirs []string) error {
@@ -988,22 +989,35 @@ func newHealthConfigFromString(healthcheck string) (*thirdparty.BuildahHealthCon
 	return healthconfig, nil
 }
 
-func (runtime *BuildahBackend) Images(ctx context.Context, opts ImagesOptions) (image.ImagesList, error) {
+func (backend *BuildahBackend) Images(ctx context.Context, opts ImagesOptions) (image.ImagesList, error) {
 	imagesOpts := buildah.ImagesOptions{Filters: opts.Filters}
-	return runtime.buildah.Images(ctx, imagesOpts)
+	return backend.buildah.Images(ctx, imagesOpts)
 }
 
-func (runtime *BuildahBackend) Containers(ctx context.Context, opts ContainersOptions) (image.ContainerList, error) {
+func (backend *BuildahBackend) Containers(ctx context.Context, opts ContainersOptions) (image.ContainerList, error) {
 	containersOpts := buildah.ContainersOptions{Filters: opts.Filters}
-	return runtime.buildah.Containers(ctx, containersOpts)
+	return backend.buildah.Containers(ctx, containersOpts)
 }
 
-func (runtime *BuildahBackend) Rm(ctx context.Context, name string, opts RmOpts) error {
-	return runtime.buildah.Rm(ctx, name, buildah.RmOpts{})
+func (backend *BuildahBackend) Rm(ctx context.Context, name string, opts RmOpts) error {
+	return backend.buildah.Rm(ctx, name, buildah.RmOpts{})
 }
 
-func (runtime *BuildahBackend) PostManifest(ctx context.Context, ref string, opts PostManifestOpts) error {
-	return fmt.Errorf("not implemented")
+func (backend *BuildahBackend) PostManifest(ctx context.Context, ref string, opts PostManifestOpts) error {
+	containerID := uuid.New().String()
+	_, err := backend.buildah.FromCommand(ctx, containerID, "", buildah.FromCommandOpts(backend.getBuildahCommonOpts(ctx, true, nil, opts.TargetPlatform)))
+	if err != nil {
+		return fmt.Errorf("unable to create container using scratch base image: %w", err)
+	}
+
+	if err := backend.buildah.Config(ctx, containerID, buildah.ConfigOpts{Labels: opts.Labels}); err != nil {
+		return fmt.Errorf("unable to configure container %q labels: %w", containerID, err)
+	}
+
+	if _, err := backend.buildah.Commit(ctx, containerID, buildah.CommitOpts{Image: ref}); err != nil {
+		return fmt.Errorf("unable to commit container %q: %w", containerID, err)
+	}
+	return nil
 }
 
-func (runtime *BuildahBackend) ClaimTargetPlatforms(ctx context.Context, targetPlatforms []string) {}
+func (backend *BuildahBackend) ClaimTargetPlatforms(ctx context.Context, targetPlatforms []string) {}
