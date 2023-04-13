@@ -361,3 +361,19 @@ The format of `WERF_BUILDAH_ULIMIT=type=softlimit[:hardlimit][,type=softlimit[:h
 * "rttime": maximum amount of real-time execution between blocking syscalls;
 * "sigpending": maximum number of pending signals (ulimit -i);
 * "stack": maximum stack size (ulimit -s).
+
+### Multiplatform builds
+
+Multiplatform building uses crossplatform instructions execution mechanics provided by the [linux kernel](https://en.wikipedia.org/wiki/Binfmt_misc) and qemu emulator. The easiest way to register the most architectures emulation in your host system is to use qemu-user-static like that:
+
+```shell
+docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+```
+
+This table summarizes support of multiplatform building for different configuration syntax, modes of building and build backends:
+
+|                         | buildah        | docker-server      |
+|---                      |---             |---                 |
+| **Dockerfile**          | full support   | full support       |
+| **staged Dockerfile**   | full support   | no support         |
+| **stapel**              | full support   | linux/amd64 only   |

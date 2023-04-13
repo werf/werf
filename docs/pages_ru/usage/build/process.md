@@ -361,3 +361,19 @@ werf может использовать драйвер хранилища `over
 * "rttime": maximum amount of real-time execution between blocking syscalls;
 * "sigpending": maximum number of pending signals (ulimit -i);
 * "stack": maximum stack size (ulimit -s).
+
+### Мультиплатформенная сборка
+
+Мультиплатформенная сборка использует механизмы кроссплатформенного исполнения инструкций, предоставляемые [ядром linux](https://en.wikipedia.org/wiki/Binfmt_misc) и эмулятором qemu. Самый простой способ зарегистрировать в хост-системе эмуляторы для большинства архитектур — воспользоваться образом qemu-user-static:
+
+```shell
+docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+```
+
+Поддержка мультиплатформенной сборки для разных вариантов синтаксиса сборки, режимов сборки и используемого бекенда:
+
+|                         | buildah            | docker-server        |
+|---                      |---                 |---                   |
+| **Dockerfile**          | полная поддержка   | полная поддержка     |
+| **staged Dockerfile**   | полная поддержка   | не поддерживается    |
+| **stapel**              | полная поддержка   | только linux/amd64   |
