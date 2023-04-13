@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.224](https://www.github.com/werf/werf/compare/v1.2.223...v1.2.224) (2023-04-13)
+
+
+### Features
+
+* **multiarch:** minimal docs about multiplatform mode ([f0579be](https://www.github.com/werf/werf/commit/f0579be5b2f0b44285377f93d114d4b91ce9a7fa))
+
 ### [1.2.223](https://www.github.com/werf/werf/compare/v1.2.222...v1.2.223) (2023-04-12)
 
 
