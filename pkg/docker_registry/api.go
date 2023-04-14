@@ -208,31 +208,54 @@ func (api *api) deleteImageByReference(ctx context.Context, reference string) er
 func (api *api) MutateAndPushImage(_ context.Context, sourceReference, destinationReference string, mutateConfigFunc func(cfg v1.Config) (v1.Config, error)) error {
 	img, _, err := api.image(sourceReference)
 	if err != nil {
-		return err
+		return fmt.Errorf("error reading image %q: %w", sourceReference, err)
 	}
-
 	cfgFile, err := img.ConfigFile()
 	if err != nil {
-		return err
+		return fmt.Errorf("error reading config file %q: %w", sourceReference, err)
 	}
 
 	newConf, err := mutateConfigFunc(cfgFile.Config)
 	if err != nil {
 		return err
 	}
-
 	newImg, err := mutate.Config(img, newConf)
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to mutate image config: %w", err)
 	}
 
 	ref, err := name.ParseReference(destinationReference, api.parseReferenceOptions()...)
 	if err != nil {
 		return fmt.Errorf("parsing reference %q: %w", destinationReference, err)
 	}
-
 	if err = remote.Write(ref, newImg, remote.WithAuthFromKeychain(authn.DefaultKeychain)); err != nil {
-		return err
+		return fmt.Errorf("unable to write %q: %w", ref, err)
+	}
+	return nil
+}
+
+func (api *api) CopyImage(ctx context.Context, sourceReference, destinationReference string, opts CopyImageOptions) error {
+	ref, err := name.ParseReference(destinationReference, api.parseReferenceOptions()...)
+	if err != nil {
+		return fmt.Errorf("parsing reference %q: %w", destinationReference, err)
+	}
+
+	if opts.IsImageIndex {
+		ii, _, err := api.imageIndex(sourceReference)
+		if err != nil {
+			return fmt.Errorf("error reading image index %q: %w", sourceReference, err)
+		}
+		if err = remote.WriteIndex(ref, ii, remote.WithAuthFromKeychain(authn.DefaultKeychain)); err != nil {
+			return fmt.Errorf("unable to write %q: %w", ref, err)
+		}
+	} else {
+		img, _, err := api.image(sourceReference)
+		if err != nil {
+			return fmt.Errorf("error reading image %q: %w", sourceReference, err)
+		}
+		if err = remote.Write(ref, img, remote.WithAuthFromKeychain(authn.DefaultKeychain)); err != nil {
+			return fmt.Errorf("unable to write %q: %w", ref, err)
+		}
 	}
 
 	return nil
@@ -283,6 +306,24 @@ func (api *api) image(reference string) (v1.Image, name.Reference, error) {
 	}
 
 	return img, ref, nil
+}
+
+func (api *api) imageIndex(reference string) (v1.ImageIndex, name.Reference, error) {
+	ref, err := name.ParseReference(reference, api.parseReferenceOptions()...)
+	if err != nil {
+		return nil, nil, fmt.Errorf("parsing reference %q: %w", reference, err)
+	}
+
+	ii, err := remote.Index(
+		ref,
+		remote.WithAuthFromKeychain(authn.DefaultKeychain),
+		remote.WithTransport(api.getHttpTransport()),
+	)
+	if err != nil {
+		return nil, nil, fmt.Errorf("reading image %q: %w", ref, err)
+	}
+
+	return ii, ref, nil
 }
 
 func (api *api) newRepositoryOptions() []name.Option {

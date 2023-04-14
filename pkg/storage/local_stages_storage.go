@@ -412,6 +412,10 @@ func (storage *LocalStagesStorage) UnregisterStageCustomTag(ctx context.Context,
 	return nil
 }
 
+func (storage *LocalStagesStorage) CopyFromStorage(ctx context.Context, src StagesStorage, projectName string, stageID image.StageID, opts CopyFromStorageOptions) (*image.StageDescription, error) {
+	panic("not implemented")
+}
+
 func makeLocalImportMetadataName(projectName, importSourceID string) string {
 	return strings.Join(
 		[]string{

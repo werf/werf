@@ -44,7 +44,12 @@ const (
 func getDigestAndUniqueIDFromRepoStageImageTag(repoStageImageTag string) (string, int64, error) {
 	parts := strings.SplitN(repoStageImageTag, "-", 2)
 
-	if len(parts) != 2 {
+	if len(parts) == 1 {
+		if len(parts[0]) != 56 {
+			return "", 0, fmt.Errorf("%s: sha3-224 hash expected, got %q", UnexpectedTagFormatErrorPrefix, parts[0])
+		}
+		return parts[0], 0, nil
+	} else if len(parts) != 2 {
 		return "", 0, fmt.Errorf("%s %s", UnexpectedTagFormatErrorPrefix, repoStageImageTag)
 	}
 
@@ -90,7 +95,9 @@ func (storage *RepoStagesStorage) GetStagesIDs(ctx context.Context, _ string, op
 		logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetStagesIDs fetched tags for %q: %#v\n", storage.RepoAddress, tags)
 
 		for _, tag := range tags {
-			if len(tag) != 70 || len(strings.Split(tag, "-")) != 2 { // 2604b86b2c7a1c6d19c62601aadb19e7d5c6bb8f17bc2bf26a390ea7-1611836746968
+			isRegularStage := (len(tag) == 70 && len(strings.Split(tag, "-")) == 2) // 2604b86b2c7a1c6d19c62601aadb19e7d5c6bb8f17bc2bf26a390ea7-1611836746968
+			isMultiplatformStage := (len(tag) == 56)                                // 2604b86b2c7a1c6d19c62601aadb19e7d5c6bb8f17bc2bf26a390ea7
+			if !isRegularStage && !isMultiplatformStage {
 				continue
 			}
 
@@ -251,6 +258,10 @@ func (storage *RepoStagesStorage) GetStagesIDsByDigest(ctx context.Context, _, d
 	return res, nil
 }
 
+// NOTE: Do we need a special option for multiplatform image description getter?
+// NOTE: go-containerregistry has a special method to get an v1.ImageIndex manifest, instead of v1.Image,
+// NOTE:   should we utilize this method in GetStageDescription also?
+// NOTE: Current version always tries to get v1.Image manifest and it works without errors though.
 func (storage *RepoStagesStorage) GetStageDescription(ctx context.Context, projectName, digest string, uniqueID int64) (*image.StageDescription, error) {
 	stageImageName := storage.ConstructStageImageName(projectName, digest, uniqueID)
 
@@ -890,6 +901,30 @@ func (storage *RepoStagesStorage) PostMultiplatformImage(ctx context.Context, pr
 	logboek.Context(ctx).Info().LogF("Posted manifest list %s for project %s\n", fullImageName, projectName)
 
 	return nil
+}
+
+func (storage *RepoStagesStorage) CopyFromStorage(ctx context.Context, src StagesStorage, projectName string, stageID image.StageID, opts CopyFromStorageOptions) (*image.StageDescription, error) {
+	desc, err := storage.GetStageDescription(ctx, projectName, stageID.Digest, stageID.UniqueID)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get stage %s description: %w", stageID, err)
+	}
+	if desc != nil {
+		return desc, nil
+	}
+
+	srcRef := src.ConstructStageImageName(projectName, stageID.Digest, stageID.UniqueID)
+	dstRef := storage.ConstructStageImageName(projectName, stageID.Digest, stageID.UniqueID)
+	if err := storage.DockerRegistry.CopyImage(ctx, srcRef, dstRef, docker_registry.CopyImageOptions{
+		IsImageIndex: opts.IsMultiplatformImage,
+	}); err != nil {
+		return nil, fmt.Errorf("unable to copy image into registry: %w", err)
+	}
+
+	desc, err = storage.GetStageDescription(ctx, projectName, stageID.Digest, stageID.UniqueID)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get stage %s description: %w", stageID, err)
+	}
+	return desc, nil
 }
 
 func (storage *RepoStagesStorage) FilterStagesAndProcessRelatedData(ctx context.Context, stageDescriptions []*image.StageDescription, options FilterStagesAndProcessRelatedDataOptions) ([]*image.StageDescription, error) {

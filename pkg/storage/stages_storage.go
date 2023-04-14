@@ -51,6 +51,7 @@ type StagesStorage interface {
 	// StoreImage will store a local image into the container-runtime, local built image should exist prior running store
 	StoreImage(ctx context.Context, img container_backend.LegacyImageInterface) error
 	ShouldFetchImage(ctx context.Context, img container_backend.LegacyImageInterface) (bool, error)
+	CopyFromStorage(ctx context.Context, src StagesStorage, projectName string, stageID image.StageID, opts CopyFromStorageOptions) (*image.StageDescription, error)
 
 	CreateRepo(ctx context.Context) error
 	DeleteRepo(ctx context.Context) error
@@ -96,4 +97,8 @@ func (rec *ClientIDRecord) String() string {
 
 type ImageMetadata struct {
 	ContentDigest string
+}
+
+type CopyFromStorageOptions struct {
+	IsMultiplatformImage bool
 }

@@ -20,6 +20,7 @@ type Interface interface {
 	DeleteRepoImage(ctx context.Context, repoImage *image.Info) error
 	PushImage(ctx context.Context, reference string, opts *PushImageOptions) error
 	MutateAndPushImage(ctx context.Context, sourceReference, destinationReference string, mutateConfigFunc func(v1.Config) (v1.Config, error)) error
+	CopyImage(ctx context.Context, sourceReference, destinationReference string, opts CopyImageOptions) error
 
 	PushImageArchive(ctx context.Context, archiveOpener ArchiveOpener, reference string) error
 	PullImageArchive(ctx context.Context, archiveWriter io.Writer, reference string) error
@@ -41,4 +42,8 @@ type ArchiveOpener interface {
 type ManifestListOptions struct {
 	PushImageOptions
 	Manifests []*image.Info
+}
+
+type CopyImageOptions struct {
+	IsImageIndex bool
 }
