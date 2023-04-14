@@ -217,8 +217,11 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 		if len(targetPlatforms) == 1 {
 			img := images[0]
 
-			if img.IsFinal() {
-				if err := phase.publishFinalImage(ctx, name, img); err != nil {
+			if img.IsFinal() && phase.Conveyor.StorageManager.GetFinalStagesStorage() != nil {
+				if err := phase.publishFinalImage(
+					ctx, name, img,
+					phase.Conveyor.StorageManager.GetFinalStagesStorage(),
+				); err != nil {
 					return err
 				}
 			}
@@ -238,12 +241,6 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 			img := image.NewMultiplatformImage(name, images, phase.Conveyor.StorageManager, opts)
 			phase.Conveyor.imagesTree.SetMultiplatformImage(img)
 
-			if img.IsFinal() {
-				if err := phase.publishMultiplatformFinalImage(ctx, name, images); err != nil {
-					return err
-				}
-			}
-
 			// TODO: Separate LocalStagesStorage and RepoStagesStorage interfaces, local should not include metadata publishing methods at all
 			if _, isLocal := phase.Conveyor.StorageManager.GetStagesStorage().(*storage.LocalStagesStorage); !isLocal {
 				if err := logboek.Context(ctx).LogProcess(logging.ImageLogProcessName(name, false, "")).
@@ -259,37 +256,56 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 					return err
 				}
 			}
+
+			if img.IsFinal() && phase.Conveyor.StorageManager.GetFinalStagesStorage() != nil {
+				if _, isLocal := phase.Conveyor.StorageManager.GetStagesStorage().(*storage.LocalStagesStorage); !isLocal {
+					if err := phase.publishMultiplatformFinalImage(ctx, name, img, phase.Conveyor.StorageManager.GetFinalStagesStorage()); err != nil {
+						return err
+					}
+				}
+			}
 		}
 	}
 
 	return phase.createReport(ctx)
 }
 
-func (phase *BuildPhase) publishFinalImage(ctx context.Context, name string, img *image.Image) error {
-	if phase.Conveyor.StorageManager.GetFinalStagesStorage() != nil {
-		if err := phase.Conveyor.StorageManager.CopyStageIntoFinalStorage(ctx, img.GetLastNonEmptyStage(), phase.Conveyor.ContainerBackend, manager.CopyStageIntoFinalStorageOptions{ShouldBeBuiltMode: phase.ShouldBeBuiltMode}); err != nil {
-			return err
-		}
+func (phase *BuildPhase) publishFinalImage(ctx context.Context, name string, img *image.Image, finalStagesStorage storage.StagesStorage) error {
+	stg := img.GetLastNonEmptyStage()
+
+	desc, err := phase.Conveyor.StorageManager.CopyStageIntoFinalStorage(
+		ctx, *stg.GetStageImage().Image.GetStageDescription().StageID,
+		phase.Conveyor.StorageManager.GetFinalStagesStorage(),
+		manager.CopyStageIntoFinalStorageOptions{
+			ContainerBackend:  phase.Conveyor.ContainerBackend,
+			FetchStage:        stg,
+			ShouldBeBuiltMode: phase.ShouldBeBuiltMode,
+			LogDetailedName:   stg.LogDetailedName(),
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("unable to copy image into final repo: %w", err)
 	}
+	img.GetLastNonEmptyStage().GetStageImage().Image.SetFinalStageDescription(desc)
+
 	return nil
 }
 
-func (phase *BuildPhase) publishMultiplatformFinalImage(ctx context.Context, name string, images []*image.Image) error {
-	// FIXME(multiarch): copy manifest list into final stages storage with all dependant images
-	if phase.Conveyor.StorageManager.GetFinalStagesStorage() != nil {
-		// if err := phase.Conveyor.StorageManager.CopyStageIntoFinalStorage(
-		// 	ctx, img.GetLastNonEmptyStage(), phase.Conveyor.ContainerBackend,
-		// 	manager.CopyStageIntoFinalStorageOptions{ShouldBeBuiltMode: phase.ShouldBeBuiltMode},
-		// ); err != nil {
-		// 	return err
-		// }
-
-		// desc, err := phase.Conveyor.StorageManager.GetFinalStagesStorage().GetStageDescription(ctx, phase.Conveyor.ProjectName(), img.GetStageID().Digest, img.GetStageID().UniqueID)
-		// if err != nil {
-		// 	return fmt.Errorf("unable to get image %s %s descriptor: %w", name, img.GetStageID(), err)
-		// }
-		// img.SetFinalStageDescription(desc)
+func (phase *BuildPhase) publishMultiplatformFinalImage(ctx context.Context, name string, img *image.MultiplatformImage, finalStagesStorage storage.StagesStorage) error {
+	desc, err := phase.Conveyor.StorageManager.CopyStageIntoFinalStorage(
+		ctx, img.GetStageID(), finalStagesStorage,
+		manager.CopyStageIntoFinalStorageOptions{
+			ShouldBeBuiltMode:    phase.ShouldBeBuiltMode,
+			ContainerBackend:     phase.Conveyor.ContainerBackend,
+			LogDetailedName:      img.Name,
+			IsMultiplatformImage: true,
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("unable to copy image into final repo: %w", err)
 	}
+	img.SetFinalStageDescription(desc)
+
 	return nil
 }
 

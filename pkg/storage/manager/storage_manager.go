@@ -80,7 +80,7 @@ type StorageManagerInterface interface {
 	SelectSuitableStage(ctx context.Context, c stage.Conveyor, stg stage.Interface, stages []*image.StageDescription) (*image.StageDescription, error)
 	CopySuitableByDigestStage(ctx context.Context, stageDesc *image.StageDescription, sourceStagesStorage, destinationStagesStorage storage.StagesStorage, containerBackend container_backend.ContainerBackend, targetPlatform string) (*image.StageDescription, error)
 	CopyStageIntoCacheStorages(ctx context.Context, stg stage.Interface, containerBackend container_backend.ContainerBackend) error
-	CopyStageIntoFinalStorage(ctx context.Context, stg stage.Interface, containerBackend container_backend.ContainerBackend, opts CopyStageIntoFinalStorageOptions) error
+	CopyStageIntoFinalStorage(ctx context.Context, stageID image.StageID, finalStagesStorage storage.StagesStorage, opts CopyStageIntoFinalStorageOptions) (*image.StageDescription, error)
 
 	ForEachDeleteStage(ctx context.Context, options ForEachDeleteStageOptions, stagesDescriptions []*image.StageDescription, f func(ctx context.Context, stageDesc *image.StageDescription, err error) error) error
 	ForEachDeleteFinalStage(ctx context.Context, options ForEachDeleteStageOptions, stagesDescriptions []*image.StageDescription, f func(ctx context.Context, stageDesc *image.StageDescription, err error) error) error
@@ -412,30 +412,6 @@ func doFetchStage(ctx context.Context, projectName string, stagesStorage storage
 	})
 }
 
-func copyStageIntoStagesStorage(ctx context.Context, projectName string, stageID image.StageID, img container_backend.LegacyImageInterface, stagesStorage storage.StagesStorage, containerBackend container_backend.ContainerBackend) (*image.StageDescription, error) {
-	newImg := img.GetCopy()
-
-	targetStagesStorageImageName := stagesStorage.ConstructStageImageName(projectName, stageID.Digest, stageID.UniqueID)
-
-	if err := containerBackend.RenameImage(ctx, newImg, targetStagesStorageImageName, false); err != nil {
-		return nil, fmt.Errorf("unable to rename image %s to %s: %w", img.Name(), targetStagesStorageImageName, err)
-	}
-
-	if err := stagesStorage.StoreImage(ctx, newImg); err != nil {
-		return nil, fmt.Errorf("unable to store stage %s into the cache stages storage %s: %w", stageID.String(), stagesStorage.String(), err)
-	}
-
-	if err := storeStageDescriptionIntoLocalManifestCache(ctx, projectName, stageID, stagesStorage, ConvertStageDescriptionForStagesStorage(newImg.GetStageDescription(), stagesStorage)); err != nil {
-		return nil, fmt.Errorf("error storing stage %s description into local manifest cache: %w", targetStagesStorageImageName, err)
-	}
-
-	if err := lrumeta.CommonLRUImagesCache.AccessImage(ctx, targetStagesStorageImageName); err != nil {
-		return nil, fmt.Errorf("error accessing last recently used images cache for %s: %w", targetStagesStorageImageName, err)
-	}
-
-	return newImg.GetStageDescription(), nil
-}
-
 func (m *StorageManager) FetchStage(ctx context.Context, containerBackend container_backend.ContainerBackend, stg stage.Interface) error {
 	logboek.Context(ctx).Debug().LogF("-- StagesManager.FetchStage %s\n", stg.LogDetailedName())
 
@@ -603,7 +579,10 @@ func (m *StorageManager) FetchStage(ctx context.Context, containerBackend contai
 
 		err := logboek.Context(ctx).Default().LogProcess("Copy stage %s into cache %s", stg.LogDetailedName(), cacheStagesStorage.String()).
 			DoError(func() error {
-				if _, err := copyStageIntoStagesStorage(ctx, m.ProjectName, *stageID, fetchedImg, cacheStagesStorage, containerBackend); err != nil {
+				if _, err := m.CopyStage(ctx, m.StagesStorage, cacheStagesStorage, *stageID, CopyStageOptions{
+					ContainerBackend: containerBackend,
+					LegacyImage:      fetchedImg,
+				}); err != nil {
 					return fmt.Errorf("unable to copy stage %s into cache stages storage %s: %w", stageID.String(), cacheStagesStorage.String(), err)
 				}
 				return nil
@@ -623,7 +602,10 @@ func (m *StorageManager) CopyStageIntoCacheStorages(ctx context.Context, stg sta
 
 		err := logboek.Context(ctx).Default().LogProcess("Copy stage %s into cache %s", stg.LogDetailedName(), cacheStagesStorage.String()).
 			DoError(func() error {
-				if _, err := copyStageIntoStagesStorage(ctx, m.ProjectName, *stageID, img.Image, cacheStagesStorage, containerBackend); err != nil {
+				if _, err := m.CopyStage(ctx, m.StagesStorage, cacheStagesStorage, *stageID, CopyStageOptions{
+					ContainerBackend: containerBackend,
+					LegacyImage:      img.Image,
+				}); err != nil {
 					return fmt.Errorf("unable to copy stage %s into cache stages storage %s: %w", stageID.String(), cacheStagesStorage.String(), err)
 				}
 				return nil
@@ -653,75 +635,80 @@ func (m *StorageManager) getOrCreateFinalStagesListCache(ctx context.Context) (*
 	return m.FinalStagesListCache, nil
 }
 
+// NOTE: FetchStage is a legacy option, which could in theory be removed.
+// NOTE: FetchStage and ContainerBackend options used for a case of copying between local and remote storage.
+// NOTE: Remote->Local copy does not need FetchStage and ContainerBackend options.
 type CopyStageIntoFinalStorageOptions struct {
-	ShouldBeBuiltMode bool
+	FetchStage           stage.Interface
+	ContainerBackend     container_backend.ContainerBackend
+	ShouldBeBuiltMode    bool
+	IsMultiplatformImage bool
+	LogDetailedName      string
 }
 
-func (m *StorageManager) CopyStageIntoFinalStorage(ctx context.Context, stg stage.Interface, containerBackend container_backend.ContainerBackend, opts CopyStageIntoFinalStorageOptions) error {
+func (m *StorageManager) CopyStageIntoFinalStorage(ctx context.Context, stageID image.StageID, finalStagesStorage storage.StagesStorage, opts CopyStageIntoFinalStorageOptions) (*image.StageDescription, error) {
 	existingStagesListCache, err := m.getOrCreateFinalStagesListCache(ctx)
 	if err != nil {
-		return fmt.Errorf("error getting existing stages list of final repo %s: %w", m.FinalStagesStorage.String(), err)
+		return nil, fmt.Errorf("error getting existing stages list of final repo %s: %w", finalStagesStorage.String(), err)
 	}
 
 	logboek.Context(ctx).Debug().LogF("[%p] Got existing final stages list cache: %#v\n", m, existingStagesListCache.StageIDs)
 
-	stageID := stg.GetStageImage().Image.GetStageDescription().StageID
-
-	finalImageName := m.GetFinalStagesStorage().ConstructStageImageName(m.ProjectName, stageID.Digest, stageID.UniqueID)
+	finalImageName := finalStagesStorage.ConstructStageImageName(m.ProjectName, stageID.Digest, stageID.UniqueID)
 
 	for _, existingStg := range existingStagesListCache.GetStageIDs() {
-		if existingStg.IsEqual(*stageID) {
+		if existingStg.IsEqual(stageID) {
 			desc, err := m.GetFinalStagesStorage().GetStageDescription(ctx, m.ProjectName, stageID.Digest, stageID.UniqueID)
 			if err != nil {
-				return fmt.Errorf("unable to get stage %s descriptor from final repo %s: %w", stageID.String(), m.GetFinalStagesStorage().String(), err)
+				return nil, fmt.Errorf("unable to get stage %s descriptor from final repo %s: %w", stageID.String(), m.GetFinalStagesStorage().String(), err)
 			}
 			if desc != nil {
-				stg.GetStageImage().Image.SetFinalStageDescription(desc)
-
 				logboek.Context(ctx).Info().LogF("Stage %s already exists in the final repo, skipping\n", stageID.String())
 
-				logboek.Context(ctx).Default().LogFHighlight("Use cache final image for %s\n", stg.LogDetailedName())
+				logboek.Context(ctx).Default().LogFHighlight("Use cache final image for %s\n", opts.LogDetailedName)
 				container_backend.LogImageName(ctx, finalImageName)
 
-				return nil
+				return desc, nil
 			}
 		}
 	}
 
 	if opts.ShouldBeBuiltMode {
-		return fmt.Errorf("%s with digest %s is not exist in the final repo", stg.LogDetailedName(), stg.GetDigest())
+		return nil, fmt.Errorf("%s with digest %s is not exist in the final repo", opts.LogDetailedName, stageID.Digest)
 	}
 
-	if err := m.FetchStage(ctx, containerBackend, stg); err != nil {
-		return fmt.Errorf("unable to fetch stage %s: %w", stg.LogDetailedName(), err)
-	}
+	var desc *image.StageDescription
 
-	img := stg.GetStageImage()
-
-	err = logboek.Context(ctx).Default().LogProcess("Copy stage %s into the final repo", stg.LogDetailedName()).
+	err = logboek.Context(ctx).Default().LogProcess("Copy stage %s into the final repo", opts.LogDetailedName).
 		Options(func(options types.LogProcessOptionsInterface) {
 			options.Style(style.Highlight())
 		}).
 		DoError(func() error {
-			if desc, err := copyStageIntoStagesStorage(ctx, m.ProjectName, *stageID, img.Image, m.FinalStagesStorage, containerBackend); err != nil {
-				return fmt.Errorf("unable to copy stage %s into the final repo %s: %w", stageID.String(), m.FinalStagesStorage.String(), err)
-			} else {
-				stg.GetStageImage().Image.SetFinalStageDescription(desc)
+			copyOpts := CopyStageOptions{
+				ContainerBackend:     opts.ContainerBackend,
+				IsMultiplatformImage: opts.IsMultiplatformImage,
+			}
+			if opts.FetchStage != nil {
+				copyOpts.FetchStage = opts.FetchStage
+				copyOpts.LegacyImage = opts.FetchStage.GetStageImage().Image
+			}
+			desc, err = m.CopyStage(ctx, m.StagesStorage, finalStagesStorage, stageID, copyOpts)
+			if err != nil {
+				return fmt.Errorf("unable to copy stage %s into the final repo %s: %w", stageID.String(), finalStagesStorage.String(), err)
 			}
 
 			logboek.Context(ctx).Default().LogFDetails("  name: %s\n", finalImageName)
+
 			return nil
 		})
-
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	existingStagesListCache.AddStageID(*stageID)
-
+	existingStagesListCache.AddStageID(stageID)
 	logboek.Context(ctx).Debug().LogF("Updated existing final stages list: %#v\n", m.FinalStagesListCache.StageIDs)
 
-	return nil
+	return desc, nil
 }
 
 func (m *StorageManager) SelectSuitableStage(ctx context.Context, c stage.Conveyor, stg stage.Interface, stages []*image.StageDescription) (*image.StageDescription, error) {
@@ -891,17 +878,6 @@ func getStageDescriptionFromLocalManifestCache(ctx context.Context, projectName 
 	}
 
 	return nil, nil
-}
-
-func storeStageDescriptionIntoLocalManifestCache(ctx context.Context, projectName string, stageID image.StageID, stagesStorage storage.StagesStorage, stageDesc *image.StageDescription) error {
-	stageImageName := stagesStorage.ConstructStageImageName(projectName, stageID.Digest, stageID.UniqueID)
-
-	logboek.Context(ctx).Debug().LogF("Storing image %s info into manifest cache\n", stageImageName)
-	if err := image.CommonManifestCache.StoreImageInfo(ctx, stagesStorage.String(), stageDesc.Info); err != nil {
-		return fmt.Errorf("error storing image %s info: %w", stageImageName, err)
-	}
-
-	return nil
 }
 
 func ConvertStageDescriptionForStagesStorage(stageDesc *image.StageDescription, stagesStorage storage.StagesStorage) *image.StageDescription {
