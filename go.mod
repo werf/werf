@@ -9,7 +9,7 @@ require (
 	github.com/Masterminds/sprig/v3 v3.2.3
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d
 	github.com/alessio/shellescape v1.4.1
-	github.com/aws/aws-sdk-go v1.44.234
+	github.com/aws/aws-sdk-go v1.44.244
 	github.com/bmatcuk/doublestar v1.3.4
 	github.com/containerd/containerd v1.7.0
 	github.com/containers/buildah v1.29.1
