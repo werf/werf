@@ -76,10 +76,10 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
 	helm.sh/helm/v3 v3.11.2
-	k8s.io/api v0.26.3
+	k8s.io/api v0.27.1
 	k8s.io/apimachinery v0.27.1
-	k8s.io/cli-runtime v0.26.3
-	k8s.io/client-go v0.26.3
+	k8s.io/cli-runtime v0.27.1
+	k8s.io/client-go v0.27.1
 	k8s.io/helm v2.17.0+incompatible
 	k8s.io/klog v1.0.0
 	k8s.io/klog/v2 v2.90.1
@@ -164,7 +164,7 @@ require (
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/fsouza/go-dockerclient v1.9.6 // indirect
 	github.com/fvbommel/sortorder v1.0.1 // indirect
-	github.com/go-errors/errors v1.0.1 // indirect
+	github.com/go-errors/errors v1.4.2 // indirect
 	github.com/go-git/gcfg v1.5.0 // indirect
 	github.com/go-git/go-billy/v5 v5.3.1 // indirect
 	github.com/go-gorp/gorp/v3 v3.0.5 // indirect
@@ -334,9 +334,9 @@ require (
 	k8s.io/metrics v0.26.3 // indirect
 	rsc.io/letsencrypt v0.0.3 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
-	sigs.k8s.io/kustomize/api v0.12.1 // indirect
+	sigs.k8s.io/kustomize/api v0.13.2 // indirect
 	sigs.k8s.io/kustomize/kustomize/v4 v4.5.7 // indirect
-	sigs.k8s.io/kustomize/kyaml v0.13.9 // indirect
+	sigs.k8s.io/kustomize/kyaml v0.14.1 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
 )
 
