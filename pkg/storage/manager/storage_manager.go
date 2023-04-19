@@ -59,6 +59,8 @@ type StorageManagerInterface interface {
 	GetStagesStorage() storage.PrimaryStagesStorage
 	GetFinalStagesStorage() storage.StagesStorage
 	GetSecondaryStagesStorageList() []storage.StagesStorage
+	GetCacheStagesStorageList() []storage.StagesStorage
+
 	GetImageInfoGetter(imageName string, desc *image.StageDescription, opts image.InfoGetterOptions) *image.InfoGetter
 
 	EnableParallel(parallelTasksLimit int)
@@ -79,8 +81,8 @@ type StorageManagerInterface interface {
 	FetchStage(ctx context.Context, containerBackend container_backend.ContainerBackend, stg stage.Interface) error
 	SelectSuitableStage(ctx context.Context, c stage.Conveyor, stg stage.Interface, stages []*image.StageDescription) (*image.StageDescription, error)
 	CopySuitableByDigestStage(ctx context.Context, stageDesc *image.StageDescription, sourceStagesStorage, destinationStagesStorage storage.StagesStorage, containerBackend container_backend.ContainerBackend, targetPlatform string) (*image.StageDescription, error)
-	CopyStageIntoCacheStorages(ctx context.Context, stg stage.Interface, containerBackend container_backend.ContainerBackend) error
-	CopyStageIntoFinalStorage(ctx context.Context, stageID image.StageID, finalStagesStorage storage.StagesStorage, opts CopyStageIntoFinalStorageOptions) (*image.StageDescription, error)
+	CopyStageIntoCacheStorages(ctx context.Context, stageID image.StageID, cacheStagesStorages []storage.StagesStorage, opts CopyStageIntoStorageOptions) error
+	CopyStageIntoFinalStorage(ctx context.Context, stageID image.StageID, finalStagesStorage storage.StagesStorage, opts CopyStageIntoStorageOptions) (*image.StageDescription, error)
 
 	ForEachDeleteStage(ctx context.Context, options ForEachDeleteStageOptions, stagesDescriptions []*image.StageDescription, f func(ctx context.Context, stageDesc *image.StageDescription, err error) error) error
 	ForEachDeleteFinalStage(ctx context.Context, options ForEachDeleteStageOptions, stagesDescriptions []*image.StageDescription, f func(ctx context.Context, stageDesc *image.StageDescription, err error) error) error
@@ -90,6 +92,17 @@ type StorageManagerInterface interface {
 	ForEachRmImportMetadata(ctx context.Context, projectName string, ids []string, f func(ctx context.Context, id string, err error) error) error
 	ForEachGetStageCustomTagMetadata(ctx context.Context, ids []string, f func(ctx context.Context, metadataID string, metadata *storage.CustomTagMetadata, err error) error) error
 	ForEachDeleteStageCustomTag(ctx context.Context, ids []string, f func(ctx context.Context, tag string, err error) error) error
+}
+
+// NOTE: FetchStage is a legacy option, which could in theory be removed.
+// NOTE: FetchStage and ContainerBackend options used for a case of copying between local and remote storage.
+// NOTE: Remote->Local copy does not need FetchStage and ContainerBackend options.
+type CopyStageIntoStorageOptions struct {
+	FetchStage           stage.Interface
+	ContainerBackend     container_backend.ContainerBackend
+	ShouldBeBuiltMode    bool
+	IsMultiplatformImage bool
+	LogDetailedName      string
 }
 
 func RetryOnUnexpectedStagesStorageState(_ context.Context, _ StorageManagerInterface, f func() error) error {
@@ -182,6 +195,10 @@ func (m *StorageManager) GetFinalStagesStorage() storage.StagesStorage {
 
 func (m *StorageManager) GetSecondaryStagesStorageList() []storage.StagesStorage {
 	return m.SecondaryStagesStorageList
+}
+
+func (m *StorageManager) GetCacheStagesStorageList() []storage.StagesStorage {
+	return m.CacheStagesStorageList
 }
 
 func (m *StorageManager) GetServiceValuesRepo() string {
@@ -595,18 +612,17 @@ func (m *StorageManager) FetchStage(ctx context.Context, containerBackend contai
 	return nil
 }
 
-func (m *StorageManager) CopyStageIntoCacheStorages(ctx context.Context, stg stage.Interface, containerBackend container_backend.ContainerBackend) error {
-	for _, cacheStagesStorage := range m.CacheStagesStorageList {
-		stageID := stg.GetStageImage().Image.GetStageDescription().StageID
-		img := stg.GetStageImage()
-
-		err := logboek.Context(ctx).Default().LogProcess("Copy stage %s into cache %s", stg.LogDetailedName(), cacheStagesStorage.String()).
+func (m *StorageManager) CopyStageIntoCacheStorages(ctx context.Context, stageID image.StageID, cacheStagesStorageList []storage.StagesStorage, opts CopyStageIntoStorageOptions) error {
+	for _, cache := range cacheStagesStorageList {
+		err := logboek.Context(ctx).Default().LogProcess("Copy stage %s into cache %s", opts.LogDetailedName, cache.String()).
 			DoError(func() error {
-				if _, err := m.CopyStage(ctx, m.StagesStorage, cacheStagesStorage, *stageID, CopyStageOptions{
-					ContainerBackend: containerBackend,
-					LegacyImage:      img.Image,
-				}); err != nil {
-					return fmt.Errorf("unable to copy stage %s into cache stages storage %s: %w", stageID.String(), cacheStagesStorage.String(), err)
+				copyOpts := CopyStageOptions{ContainerBackend: opts.ContainerBackend}
+				if opts.FetchStage != nil {
+					copyOpts.FetchStage = opts.FetchStage
+					copyOpts.LegacyImage = opts.FetchStage.GetStageImage().Image
+				}
+				if _, err := m.CopyStage(ctx, m.StagesStorage, cache, stageID, copyOpts); err != nil {
+					return fmt.Errorf("unable to copy stage %s into cache stages storage %s: %w", stageID.String(), cache.String(), err)
 				}
 				return nil
 			})
@@ -614,7 +630,6 @@ func (m *StorageManager) CopyStageIntoCacheStorages(ctx context.Context, stg sta
 			logboek.Context(ctx).Warn().LogF("Warning: %s\n", err)
 		}
 	}
-
 	return nil
 }
 
@@ -635,18 +650,7 @@ func (m *StorageManager) getOrCreateFinalStagesListCache(ctx context.Context) (*
 	return m.FinalStagesListCache, nil
 }
 
-// NOTE: FetchStage is a legacy option, which could in theory be removed.
-// NOTE: FetchStage and ContainerBackend options used for a case of copying between local and remote storage.
-// NOTE: Remote->Local copy does not need FetchStage and ContainerBackend options.
-type CopyStageIntoFinalStorageOptions struct {
-	FetchStage           stage.Interface
-	ContainerBackend     container_backend.ContainerBackend
-	ShouldBeBuiltMode    bool
-	IsMultiplatformImage bool
-	LogDetailedName      string
-}
-
-func (m *StorageManager) CopyStageIntoFinalStorage(ctx context.Context, stageID image.StageID, finalStagesStorage storage.StagesStorage, opts CopyStageIntoFinalStorageOptions) (*image.StageDescription, error) {
+func (m *StorageManager) CopyStageIntoFinalStorage(ctx context.Context, stageID image.StageID, finalStagesStorage storage.StagesStorage, opts CopyStageIntoStorageOptions) (*image.StageDescription, error) {
 	existingStagesListCache, err := m.getOrCreateFinalStagesListCache(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error getting existing stages list of final repo %s: %w", finalStagesStorage.String(), err)

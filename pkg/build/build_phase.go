@@ -276,7 +276,7 @@ func (phase *BuildPhase) publishFinalImage(ctx context.Context, name string, img
 	desc, err := phase.Conveyor.StorageManager.CopyStageIntoFinalStorage(
 		ctx, *stg.GetStageImage().Image.GetStageDescription().StageID,
 		phase.Conveyor.StorageManager.GetFinalStagesStorage(),
-		manager.CopyStageIntoFinalStorageOptions{
+		manager.CopyStageIntoStorageOptions{
 			ContainerBackend:  phase.Conveyor.ContainerBackend,
 			FetchStage:        stg,
 			ShouldBeBuiltMode: phase.ShouldBeBuiltMode,
@@ -294,7 +294,7 @@ func (phase *BuildPhase) publishFinalImage(ctx context.Context, name string, img
 func (phase *BuildPhase) publishMultiplatformFinalImage(ctx context.Context, name string, img *image.MultiplatformImage, finalStagesStorage storage.StagesStorage) error {
 	desc, err := phase.Conveyor.StorageManager.CopyStageIntoFinalStorage(
 		ctx, img.GetStageID(), finalStagesStorage,
-		manager.CopyStageIntoFinalStorageOptions{
+		manager.CopyStageIntoStorageOptions{
 			ShouldBeBuiltMode:    phase.ShouldBeBuiltMode,
 			ContainerBackend:     phase.Conveyor.ContainerBackend,
 			LogDetailedName:      img.Name,
@@ -791,7 +791,15 @@ func (phase *BuildPhase) findAndFetchStageFromSecondaryStagesStorage(ctx context
 
 		unlockStage()
 
-		if err := storageManager.CopyStageIntoCacheStorages(ctx, stg, phase.Conveyor.ContainerBackend); err != nil {
+		if err := storageManager.CopyStageIntoCacheStorages(
+			ctx, *stg.GetStageImage().Image.GetStageDescription().StageID,
+			storageManager.GetCacheStagesStorageList(),
+			manager.CopyStageIntoStorageOptions{
+				FetchStage:       stg,
+				LogDetailedName:  stg.LogDetailedName(),
+				ContainerBackend: phase.Conveyor.ContainerBackend,
+			},
+		); err != nil {
 			return fmt.Errorf("unable to copy stage %s into cache storages: %w", stg.GetStageImage().Image.GetStageDescription().StageID.String(), err)
 		}
 
@@ -1100,7 +1108,15 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 
 		unlockStage()
 
-		if err := phase.Conveyor.StorageManager.CopyStageIntoCacheStorages(ctx, stg, phase.Conveyor.ContainerBackend); err != nil {
+		if err := phase.Conveyor.StorageManager.CopyStageIntoCacheStorages(
+			ctx, *stg.GetStageImage().Image.GetStageDescription().StageID,
+			phase.Conveyor.StorageManager.GetCacheStagesStorageList(),
+			manager.CopyStageIntoStorageOptions{
+				FetchStage:       stg,
+				ContainerBackend: phase.Conveyor.ContainerBackend,
+				LogDetailedName:  stg.LogDetailedName(),
+			},
+		); err != nil {
 			return fmt.Errorf("unable to copy stage %s into cache storages: %w", stageImage.Image.GetStageDescription().StageID.String(), err)
 		}
 		return nil
