@@ -1,5 +1,13 @@
 # Changelog
 
+### [1.2.225](https://www.github.com/werf/werf/compare/v1.2.224...v1.2.225) (2023-04-20)
+
+
+### Features
+
+* **multiarch:** support for final-repo ([0c632fb](https://www.github.com/werf/werf/commit/0c632fb8e05da276d3576cf8fd475efc27d8af46))
+* **multiarch:** support secondary-repo and cache-repo ([d7df554](https://www.github.com/werf/werf/commit/d7df554330b3cc07b3393625681d7ff801ef6b26))
+
 ### [1.2.224](https://www.github.com/werf/werf/compare/v1.2.223...v1.2.224) (2023-04-13)
 
 
