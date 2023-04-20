@@ -7,8 +7,17 @@ import (
 )
 
 type StageID struct {
-	Digest   string `json:"digest"`
-	UniqueID int64  `json:"uniqueID"`
+	Digest          string `json:"digest"`
+	UniqueID        int64  `json:"uniqueID"`
+	IsMultiplatform bool   `json:"isMultiplatform"`
+}
+
+func NewStageID(digest string, uniqueID int64) *StageID {
+	return &StageID{
+		Digest:          digest,
+		UniqueID:        uniqueID,
+		IsMultiplatform: (uniqueID == 0),
+	}
 }
 
 func (id StageID) String() string {
@@ -41,7 +50,7 @@ func ParseUniqueIDAsTimestamp(uniqueID string) (int64, error) {
 
 func (desc *StageDescription) GetCopy() *StageDescription {
 	return &StageDescription{
-		StageID: &StageID{desc.StageID.Digest, desc.StageID.UniqueID},
+		StageID: NewStageID(desc.StageID.Digest, desc.StageID.UniqueID),
 		Info:    desc.Info.GetCopy(),
 	}
 }

@@ -52,12 +52,17 @@ func (api *genericApi) GetRepoImageConfigFile(ctx context.Context, reference str
 }
 
 func (api *genericApi) getRepoImageConfigFile(_ context.Context, reference string) (*v1.ConfigFile, error) {
-	imageInfo, _, err := api.commonApi.image(reference)
+	desc, _, err := api.commonApi.getImageDesc(reference)
 	if err != nil {
 		return nil, err
 	}
 
-	return imageInfo.ConfigFile()
+	img, err := desc.Image()
+	if err != nil {
+		return nil, err
+	}
+
+	return img.ConfigFile()
 }
 
 func (api *genericApi) GetRepoImage(ctx context.Context, reference string) (*image.Info, error) {

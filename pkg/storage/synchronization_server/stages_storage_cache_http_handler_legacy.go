@@ -127,7 +127,7 @@ func (handler *StagesStorageCacheHttpHandlerLegacy) handleStoreStagesBySignature
 			logboek.Debug().LogF("StagesStorageCacheHttpHandlerLegacy -- StoreStagesBySignature request %#v\n", request)
 			var stages []image.StageID
 			for _, s := range request.Stages {
-				stages = append(stages, image.StageID{Digest: s.Signature, UniqueID: s.UniqueID})
+				stages = append(stages, *image.NewStageID(s.Signature, s.UniqueID))
 			}
 			response.Err.Error = handler.StagesStorageCache.StoreStagesByDigest(context.Background(), request.ProjectName, request.Signature, stages)
 			logboek.Debug().LogF("StagesStorageCacheHttpHandlerLegacy -- StoreStagesBySignature response %#v\n", response)

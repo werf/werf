@@ -44,6 +44,8 @@ type ManifestListOptions struct {
 	Manifests []*image.Info
 }
 
-type CopyImageOptions struct {
+type GetRepoImageOptions struct {
 	IsImageIndex bool
 }
+
+type CopyImageOptions struct{}

@@ -402,7 +402,7 @@ func (m *StorageManager) LockStageImage(ctx context.Context, imageName string) e
 
 func doFetchStage(ctx context.Context, projectName string, stagesStorage storage.StagesStorage, stageID image.StageID, img container_backend.LegacyImageInterface) error {
 	err := logboek.Context(ctx).Info().LogProcess("Check manifest availability").DoError(func() error {
-		freshStageDescription, err := stagesStorage.GetStageDescription(ctx, projectName, stageID.Digest, stageID.UniqueID)
+		freshStageDescription, err := stagesStorage.GetStageDescription(ctx, projectName, stageID)
 		if err != nil {
 			return fmt.Errorf("unable to get stage description: %w", err)
 		}
@@ -662,7 +662,7 @@ func (m *StorageManager) CopyStageIntoFinalStorage(ctx context.Context, stageID 
 
 	for _, existingStg := range existingStagesListCache.GetStageIDs() {
 		if existingStg.IsEqual(stageID) {
-			desc, err := m.GetFinalStagesStorage().GetStageDescription(ctx, m.ProjectName, stageID.Digest, stageID.UniqueID)
+			desc, err := m.GetFinalStagesStorage().GetStageDescription(ctx, m.ProjectName, stageID)
 			if err != nil {
 				return nil, fmt.Errorf("unable to get stage %s descriptor from final repo %s: %w", stageID.String(), m.GetFinalStagesStorage().String(), err)
 			}
@@ -874,7 +874,7 @@ func getStageDescriptionFromLocalManifestCache(ctx context.Context, projectName 
 		logboek.Context(ctx).Info().LogF("Got image %s info from the manifest cache (CACHE HIT)\n", stageImageName)
 
 		return &image.StageDescription{
-			StageID: &image.StageID{Digest: stageID.Digest, UniqueID: stageID.UniqueID},
+			StageID: image.NewStageID(stageID.Digest, stageID.UniqueID),
 			Info:    imgInfo,
 		}, nil
 	} else {
@@ -886,10 +886,7 @@ func getStageDescriptionFromLocalManifestCache(ctx context.Context, projectName 
 
 func ConvertStageDescriptionForStagesStorage(stageDesc *image.StageDescription, stagesStorage storage.StagesStorage) *image.StageDescription {
 	return &image.StageDescription{
-		StageID: &image.StageID{
-			Digest:   stageDesc.StageID.Digest,
-			UniqueID: stageDesc.StageID.UniqueID,
-		},
+		StageID: image.NewStageID(stageDesc.StageID.Digest, stageDesc.StageID.UniqueID),
 		Info: &image.Info{
 			Name:              fmt.Sprintf("%s:%s-%d", stagesStorage.Address(), stageDesc.StageID.Digest, stageDesc.StageID.UniqueID),
 			Repository:        stagesStorage.Address(),
@@ -932,7 +929,7 @@ func getStageDescription(ctx context.Context, projectName string, stageID image.
 		err := logboek.Context(ctx).Info().LogProcess("Get stage %s description from cache stages storage %s", stageID.String(), cacheStagesStorage.String()).
 			DoError(func() error {
 				var err error
-				stageDesc, err = cacheStagesStorage.GetStageDescription(ctx, projectName, stageID.Digest, stageID.UniqueID)
+				stageDesc, err = cacheStagesStorage.GetStageDescription(ctx, projectName, stageID)
 
 				logboek.Context(ctx).Debug().LogF("Got stage description: %#v\n", stageDesc)
 				return err
@@ -954,7 +951,7 @@ func getStageDescription(ctx context.Context, projectName string, stageID image.
 	}
 
 	logboek.Context(ctx).Debug().LogF("Getting digest %q uniqueID %d stage info from %s...\n", stageID.Digest, stageID.UniqueID, stagesStorage.String())
-	stageDesc, err := stagesStorage.GetStageDescription(ctx, projectName, stageID.Digest, stageID.UniqueID)
+	stageDesc, err := stagesStorage.GetStageDescription(ctx, projectName, stageID)
 	switch {
 	case storage.IsErrBrokenImage(err):
 		return nil, nil

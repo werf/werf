@@ -31,7 +31,7 @@ func (list ImagesList) ConvertToStages() ([]StageID, error) {
 			if digest, uniqueID, err := getDigestAndUniqueIDFromLocalStageImageTag(tag); err != nil {
 				return nil, err
 			} else {
-				stagesList = append(stagesList, StageID{Digest: digest, UniqueID: uniqueID})
+				stagesList = append(stagesList, *NewStageID(digest, uniqueID))
 			}
 		}
 	}
