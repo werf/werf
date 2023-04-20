@@ -130,8 +130,8 @@ func (storage *LocalStagesStorage) GetStagesIDsByDigest(ctx context.Context, pro
 	return images.ConvertToStages()
 }
 
-func (storage *LocalStagesStorage) GetStageDescription(ctx context.Context, projectName, digest string, uniqueID int64) (*image.StageDescription, error) {
-	stageImageName := storage.ConstructStageImageName(projectName, digest, uniqueID)
+func (storage *LocalStagesStorage) GetStageDescription(ctx context.Context, projectName string, stageID image.StageID) (*image.StageDescription, error) {
+	stageImageName := storage.ConstructStageImageName(projectName, stageID.Digest, stageID.UniqueID)
 	info, err := storage.ContainerBackend.GetImageInfo(ctx, stageImageName, container_backend.GetImageInfoOpts{})
 	if err != nil {
 		return nil, fmt.Errorf("unable to get image %s info: %w", stageImageName, err)
@@ -139,7 +139,7 @@ func (storage *LocalStagesStorage) GetStageDescription(ctx context.Context, proj
 
 	if info != nil {
 		return &image.StageDescription{
-			StageID: &image.StageID{Digest: digest, UniqueID: uniqueID},
+			StageID: image.NewStageID(stageID.Digest, stageID.UniqueID),
 			Info:    info,
 		}, nil
 	}

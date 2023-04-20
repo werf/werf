@@ -24,6 +24,9 @@ type Info struct {
 	Labels            map[string]string `json:"labels"`
 	Size              int64             `json:"size"`
 	CreatedAtUnixNano int64             `json:"createdAtUnixNano"`
+
+	IsIndex bool
+	Index   []*Info
 }
 
 func (info *Info) SetCreatedAtUnix(seconds int64) {
@@ -39,7 +42,7 @@ func (info *Info) GetCreatedAt() time.Time {
 }
 
 func (info *Info) GetCopy() *Info {
-	return &Info{
+	res := &Info{
 		Name:              info.Name,
 		Repository:        info.Repository,
 		Tag:               info.Tag,
@@ -51,7 +54,15 @@ func (info *Info) GetCopy() *Info {
 		Labels:            util.CopyMap(info.Labels),
 		Size:              info.Size,
 		CreatedAtUnixNano: info.CreatedAtUnixNano,
+
+		IsIndex: info.IsIndex,
 	}
+
+	for _, i := range info.Index {
+		res.Index = append(res.Index, i.GetCopy())
+	}
+
+	return res
 }
 
 func (info *Info) LogName() string {

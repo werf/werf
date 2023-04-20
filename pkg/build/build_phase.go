@@ -372,7 +372,7 @@ func (phase *BuildPhase) publishMultiplatformImageMetadata(ctx context.Context, 
 			return fmt.Errorf("unable to post multiplatform image %s %s: %w", name, img.GetStageID(), err)
 		}
 
-		desc, err := stagesStorage.GetStageDescription(ctx, phase.Conveyor.ProjectName(), img.GetStageID().Digest, img.GetStageID().UniqueID)
+		desc, err := stagesStorage.GetStageDescription(ctx, phase.Conveyor.ProjectName(), img.GetStageID())
 		if err != nil {
 			return fmt.Errorf("unable to get image %s %s descriptor: %w", name, img.GetStageID(), err)
 		}
@@ -1093,7 +1093,7 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 				return fmt.Errorf("unable to store stage %s digest %s image %s into repo %s: %w", stg.LogDetailedName(), stg.GetDigest(), stageImage.Image.Name(), phase.Conveyor.StorageManager.GetStagesStorage().String(), err)
 			}
 
-			if desc, err := phase.Conveyor.StorageManager.GetStagesStorage().GetStageDescription(ctx, phase.Conveyor.ProjectName(), stg.GetDigest(), uniqueID); err != nil {
+			if desc, err := phase.Conveyor.StorageManager.GetStagesStorage().GetStageDescription(ctx, phase.Conveyor.ProjectName(), *imagePkg.NewStageID(stg.GetDigest(), uniqueID)); err != nil {
 				return fmt.Errorf("unable to get stage %s digest %s image %s description from repo %s after stages has been stored into repo: %w", stg.LogDetailedName(), stg.GetDigest(), stageImage.Image.Name(), phase.Conveyor.StorageManager.GetStagesStorage().String(), err)
 			} else {
 				stageImage.Image.SetStageDescription(desc)

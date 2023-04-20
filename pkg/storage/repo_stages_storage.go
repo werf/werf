@@ -112,7 +112,7 @@ func (storage *RepoStagesStorage) GetStagesIDs(ctx context.Context, _ string, op
 				}
 				return nil, err
 			} else {
-				res = append(res, image.StageID{Digest: digest, UniqueID: uniqueID})
+				res = append(res, *image.NewStageID(digest, uniqueID))
 
 				logboek.Context(ctx).Debug().LogF("Selected stage by digest %q uniqueID %d\n", digest, uniqueID)
 			}
@@ -216,7 +216,7 @@ func (storage *RepoStagesStorage) GetStagesIDsByDigest(ctx context.Context, _, d
 				return nil, fmt.Errorf("unable to get digest and uniqueID from rejected stage tag %q: %w", tag, err)
 			} else {
 				logboek.Context(ctx).Info().LogF("Found rejected stage %q\n", tag)
-				rejectedStages = append(rejectedStages, image.StageID{Digest: digest, UniqueID: uniqueID})
+				rejectedStages = append(rejectedStages, *image.NewStageID(digest, uniqueID))
 			}
 		}
 
@@ -238,7 +238,7 @@ func (storage *RepoStagesStorage) GetStagesIDsByDigest(ctx context.Context, _, d
 				}
 				return nil, fmt.Errorf("unable to get digest and uniqueID from tag %q: %w", tag, err)
 			} else {
-				stageID := image.StageID{Digest: digest, UniqueID: uniqueID}
+				stageID := image.NewStageID(digest, uniqueID)
 
 				for _, rejectedStage := range rejectedStages {
 					if rejectedStage.Digest == stageID.Digest && rejectedStage.UniqueID == stageID.UniqueID {
@@ -248,7 +248,7 @@ func (storage *RepoStagesStorage) GetStagesIDsByDigest(ctx context.Context, _, d
 				}
 
 				logboek.Context(ctx).Debug().LogF("Stage %q is suitable for digest %q\n", tag, digest)
-				res = append(res, stageID)
+				res = append(res, *stageID)
 			}
 		}
 	}
@@ -262,10 +262,10 @@ func (storage *RepoStagesStorage) GetStagesIDsByDigest(ctx context.Context, _, d
 // NOTE: go-containerregistry has a special method to get an v1.ImageIndex manifest, instead of v1.Image,
 // NOTE:   should we utilize this method in GetStageDescription also?
 // NOTE: Current version always tries to get v1.Image manifest and it works without errors though.
-func (storage *RepoStagesStorage) GetStageDescription(ctx context.Context, projectName, digest string, uniqueID int64) (*image.StageDescription, error) {
-	stageImageName := storage.ConstructStageImageName(projectName, digest, uniqueID)
+func (storage *RepoStagesStorage) GetStageDescription(ctx context.Context, projectName string, stageID image.StageID) (*image.StageDescription, error) {
+	stageImageName := storage.ConstructStageImageName(projectName, stageID.Digest, stageID.UniqueID)
 
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage GetStageDescription %s %s %d\n", projectName, digest, uniqueID)
+	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage GetStageDescription %s %s %d\n", projectName, stageID.Digest, stageID.UniqueID)
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage stageImageName = %q\n", stageImageName)
 
 	imgInfo, err := storage.DockerRegistry.GetRepoImage(ctx, stageImageName)
@@ -282,18 +282,18 @@ func (storage *RepoStagesStorage) GetStageDescription(ctx context.Context, proje
 		return nil, fmt.Errorf("unable to inspect repo image %s: %w", stageImageName, err)
 	}
 
-	rejectedImageName := makeRepoRejectedStageImageRecord(storage.RepoAddress, digest, uniqueID)
+	rejectedImageName := makeRepoRejectedStageImageRecord(storage.RepoAddress, stageID.Digest, stageID.UniqueID)
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetStageDescription check rejected image name: %s\n", rejectedImageName)
 
 	if rejectedImgInfo, err := storage.DockerRegistry.TryGetRepoImage(ctx, rejectedImageName); err != nil {
 		return nil, fmt.Errorf("unable to get repo image %q: %w", rejectedImageName, err)
 	} else if rejectedImgInfo != nil {
-		logboek.Context(ctx).Info().LogF("Stage digest %s uniqueID %d image is rejected: ignore stage image\n", digest, uniqueID)
+		logboek.Context(ctx).Info().LogF("Stage digest %s uniqueID %d image is rejected: ignore stage image\n", stageID.Digest, stageID.UniqueID)
 		return nil, nil
 	}
 
 	return &image.StageDescription{
-		StageID: &image.StageID{Digest: digest, UniqueID: uniqueID},
+		StageID: image.NewStageID(stageID.Digest, stageID.UniqueID),
 		Info:    imgInfo,
 	}, nil
 }
@@ -904,7 +904,7 @@ func (storage *RepoStagesStorage) PostMultiplatformImage(ctx context.Context, pr
 }
 
 func (storage *RepoStagesStorage) CopyFromStorage(ctx context.Context, src StagesStorage, projectName string, stageID image.StageID, opts CopyFromStorageOptions) (*image.StageDescription, error) {
-	desc, err := storage.GetStageDescription(ctx, projectName, stageID.Digest, stageID.UniqueID)
+	desc, err := storage.GetStageDescription(ctx, projectName, stageID)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get stage %s description: %w", stageID, err)
 	}
@@ -914,13 +914,11 @@ func (storage *RepoStagesStorage) CopyFromStorage(ctx context.Context, src Stage
 
 	srcRef := src.ConstructStageImageName(projectName, stageID.Digest, stageID.UniqueID)
 	dstRef := storage.ConstructStageImageName(projectName, stageID.Digest, stageID.UniqueID)
-	if err := storage.DockerRegistry.CopyImage(ctx, srcRef, dstRef, docker_registry.CopyImageOptions{
-		IsImageIndex: opts.IsMultiplatformImage,
-	}); err != nil {
+	if err := storage.DockerRegistry.CopyImage(ctx, srcRef, dstRef, docker_registry.CopyImageOptions{}); err != nil {
 		return nil, fmt.Errorf("unable to copy image into registry: %w", err)
 	}
 
-	desc, err = storage.GetStageDescription(ctx, projectName, stageID.Digest, stageID.UniqueID)
+	desc, err = storage.GetStageDescription(ctx, projectName, stageID)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get stage %s description: %w", stageID, err)
 	}

@@ -35,7 +35,7 @@ func NewMultiplatformImage(name string, images []*Image, storageManager manager.
 		return stageDesc.StageID.String()
 	})
 	img.calculatedDigest = util.Sha3_224Hash(metaStageDeps...)
-	img.stageID = common_image.StageID{Digest: img.GetDigest()}
+	img.stageID = *common_image.NewStageID(img.GetDigest(), 0)
 
 	return img
 }

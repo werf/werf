@@ -27,6 +27,7 @@ func NewManager() Manager {
 
 type stage struct {
 	stageID          string
+	isMultiplatform  bool
 	description      *image.StageDescription
 	isProtected      bool
 	protectionReason string

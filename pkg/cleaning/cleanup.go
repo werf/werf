@@ -669,13 +669,15 @@ func (m *cleanupManager) cleanupUnusedStages(ctx context.Context) error {
 
 	// skip stages and their relatives covered by Kubernetes- or git history-based cleanup policies
 	stageDescriptionListToDelete := stageDescriptionList
+
 	{
 		excludedSDListByReason := make(map[string][]*image.StageDescription)
 
 		for reason, sdList := range m.stageManager.GetProtectedStageDescriptionListByReason() {
 			for _, sd := range sdList {
 				var excludedSDListBySD []*image.StageDescription
-				stageDescriptionListToDelete, excludedSDListBySD = m.excludeStageAndRelativesByImageID(stageDescriptionListToDelete, sd.Info.ID)
+
+				stageDescriptionListToDelete, excludedSDListBySD = m.excludeStageAndRelativesByImage(stageDescriptionListToDelete, sd.Info)
 
 				for _, exclSD := range excludedSDListBySD {
 					if sd.Info.Name == exclSD.Info.Name {
@@ -714,7 +716,7 @@ func (m *cleanupManager) cleanupUnusedStages(ctx context.Context) error {
 		for _, sd := range stageDescriptionListToDelete {
 			if (time.Since(sd.Info.GetCreatedAt()).Hours()) <= float64(keepImagesBuiltWithinLastNHours) {
 				var excludedRelativesSDList []*image.StageDescription
-				stageDescriptionListToDelete, excludedRelativesSDList = m.excludeStageAndRelativesByImageID(stageDescriptionListToDelete, sd.Info.ID)
+				stageDescriptionListToDelete, excludedRelativesSDList = m.excludeStageAndRelativesByImage(stageDescriptionListToDelete, sd.Info)
 				excludedSDList = append(excludedSDList, excludedRelativesSDList...)
 			}
 		}
@@ -854,36 +856,95 @@ func deleteImportsMetadata(ctx context.Context, projectName string, storageManag
 	})
 }
 
-func (m *cleanupManager) excludeStageAndRelativesByImageID(stages []*image.StageDescription, imageID string) ([]*image.StageDescription, []*image.StageDescription) {
-	stage := findStageByImageID(stages, imageID)
-	if stage == nil {
+func (m *cleanupManager) excludeStageAndRelativesByImage(stages []*image.StageDescription, excludeImage *image.Info) ([]*image.StageDescription, []*image.StageDescription) {
+	excludeStages := findStagesByImageID(stages, excludeImage)
+	if len(excludeStages) == 0 {
 		return stages, []*image.StageDescription{}
 	}
+	return m.excludeStageAndRelativesByStages(stages, excludeStages)
+}
 
-	return m.excludeStageAndRelativesByStage(stages, stage)
+// findStagesByImage could return multiple stages when target image.Info is an image index
+func findStagesByImage(stages []*image.StageDescription, target *image.Info, imageMatcher, indexMatcher func(stg *image.StageDescription, target *image.Info) bool) (res []*image.StageDescription) {
+	if target.IsIndex {
+		if indexMatcher != nil {
+			for _, stg := range stages {
+				if indexMatcher(stg, target) {
+					res = append(res, stg)
+				}
+			}
+		}
+		for _, subimg := range target.Index {
+			res = append(res, findStagesByImage(stages, subimg, imageMatcher, indexMatcher)...)
+		}
+	} else if imageMatcher != nil {
+		for _, stg := range stages {
+			if imageMatcher(stg, target) {
+				res = append(res, stg)
+			}
+		}
+	}
+	return
+}
+
+func findStagesByImageID(stages []*image.StageDescription, target *image.Info) []*image.StageDescription {
+	return findStagesByImage(
+		stages, target,
+		func(stg *image.StageDescription, target *image.Info) bool {
+			return stg.Info.ID == target.ID
+		},
+		func(stg *image.StageDescription, target *image.Info) bool {
+			return stg.Info.Name == target.Name
+		},
+	)
+}
+
+func findStagesByImageParentID(stages []*image.StageDescription, target *image.Info) []*image.StageDescription {
+	return findStagesByImage(
+		stages, target,
+		func(stg *image.StageDescription, target *image.Info) bool {
+			return stg.Info.ID == target.ParentID
+		}, nil,
+	)
 }
 
 func findStageByImageID(stages []*image.StageDescription, imageID string) *image.StageDescription {
-	for _, stage := range stages {
-		if stage.Info.ID == imageID {
-			return stage
+	for _, stg := range stages {
+		if stg.Info.ID == imageID {
+			return stg
 		}
 	}
-
 	return nil
 }
 
-func (m *cleanupManager) excludeStageAndRelativesByStage(stages []*image.StageDescription, stage *image.StageDescription) ([]*image.StageDescription, []*image.StageDescription) {
-	var excludedStages []*image.StageDescription
-	currentStage := stage
-	for {
-		stages = excludeStages(stages, currentStage)
-		excludedStages = append(excludedStages, currentStage)
-
-		currentStage = findStageByImageID(stages, currentStage.Info.ParentID)
-		if currentStage == nil {
-			break
+func appendUniqueStageDescriptions(stages []*image.StageDescription, newStages ...*image.StageDescription) []*image.StageDescription {
+appendUnique:
+	for _, newStg := range newStages {
+		for _, stg := range stages {
+			if stg.StageID.IsEqual(*newStg.StageID) {
+				continue appendUnique
+			}
 		}
+		stages = append(stages, newStg)
+	}
+	return stages
+}
+
+func (m *cleanupManager) excludeStageAndRelativesByStages(stages, stagesToExclude []*image.StageDescription) ([]*image.StageDescription, []*image.StageDescription) {
+	var excludedStages []*image.StageDescription
+	currentStagesToExclude := stagesToExclude
+
+	for len(currentStagesToExclude) > 0 {
+		stages = excludeStages(stages, currentStagesToExclude...)
+		excludedStages = appendUniqueStageDescriptions(excludedStages, currentStagesToExclude...)
+
+		var nextStagesToExclude []*image.StageDescription
+		for _, excludeStg := range currentStagesToExclude {
+			excludeByParents := findStagesByImageParentID(stages, excludeStg.Info)
+			nextStagesToExclude = appendUniqueStageDescriptions(nextStagesToExclude, excludeByParents...)
+		}
+
+		currentStagesToExclude = nextStagesToExclude
 	}
 
 	return stages, excludedStages

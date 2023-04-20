@@ -109,67 +109,114 @@ func (api *api) TryGetRepoImage(ctx context.Context, reference string) (*image.I
 	}
 }
 
-func (api *api) GetRepoImage(_ context.Context, reference string) (*image.Info, error) {
-	imageInfo, _, err := api.image(reference)
+func (api *api) GetRepoImage(ctx context.Context, reference string) (*image.Info, error) {
+	desc, _, err := api.getImageDesc(reference)
 	if err != nil {
 		return nil, err
 	}
 
-	digest, err := imageInfo.Digest()
+	referenceParts, err := api.parseReferenceParts(desc.Ref.Name())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to parse reference %q: %w", desc.Ref.Name(), err)
 	}
 
-	manifest, err := imageInfo.Manifest()
+	return api.getRepoImageByDesc(ctx, referenceParts.tag, desc)
+}
+
+func (api *api) getRepoImageByDesc(ctx context.Context, originalTag string, desc *remote.Descriptor) (*image.Info, error) {
+	referenceParts, err := api.parseReferenceParts(desc.Ref.Name())
 	if err != nil {
-		return nil, err
-	}
-
-	configFile, err := imageInfo.ConfigFile()
-	if err != nil {
-		return nil, err
-	}
-
-	var totalSize int64
-	if layers, err := imageInfo.Layers(); err != nil {
-		return nil, err
-	} else {
-		for _, l := range layers {
-			if lSize, err := l.Size(); err != nil {
-				return nil, err
-			} else {
-				totalSize += lSize
-			}
-		}
-	}
-
-	referenceParts, err := api.parseReferenceParts(reference)
-	if err != nil {
-		return nil, fmt.Errorf("unable to parse reference %q: %w", reference, err)
-	}
-
-	var parentID string
-	if baseImageID, ok := configFile.Config.Labels["werf.io/base-image-id"]; ok {
-		parentID = baseImageID
-	} else {
-		// TODO(1.3): Legacy compatibility mode
-		parentID = configFile.Config.Image
+		return nil, fmt.Errorf("unable to parse reference %q: %w", desc.Ref.Name(), err)
 	}
 
 	repoImage := &image.Info{
-		Name:       reference,
+		Name:       desc.Ref.Name(),
 		Repository: strings.Join([]string{referenceParts.registry, referenceParts.repository}, "/"),
-		ID:         manifest.Config.Digest.String(),
-		Tag:        referenceParts.tag,
-		RepoDigest: digest.String(),
-		ParentID:   parentID,
-		Labels:     configFile.Config.Labels,
-		OnBuild:    configFile.Config.OnBuild,
-		Env:        configFile.Config.Env,
-		Size:       totalSize,
+		Tag:        originalTag,
 	}
 
-	repoImage.SetCreatedAtUnix(configFile.Created.Unix())
+	if desc.MediaType.IsIndex() {
+		repoImage.IsIndex = true
+
+		ii, err := desc.ImageIndex()
+		if err != nil {
+			return nil, fmt.Errorf("error getting image index: %w", err)
+		}
+
+		digest, err := ii.Digest()
+		if err != nil {
+			return nil, fmt.Errorf("error getting image index digest: %w", err)
+		}
+		repoImage.RepoDigest = digest.String()
+
+		im, err := ii.IndexManifest()
+		if err != nil {
+			return nil, fmt.Errorf("error getting image manifest: %w", err)
+		}
+
+		for _, desc := range im.Manifests {
+			subref := fmt.Sprintf("%s@%s", repoImage.Repository, desc.Digest)
+			subDesc, _, err := api.getImageDesc(subref)
+			if err != nil {
+				return nil, fmt.Errorf("error getting image %s manifest: %w", subref, err)
+			}
+
+			subInfo, err := api.getRepoImageByDesc(ctx, originalTag, subDesc)
+			if err != nil {
+				return nil, fmt.Errorf("error getting image %s descriptor: %w", subref, err)
+			}
+			repoImage.Index = append(repoImage.Index, subInfo)
+		}
+	} else {
+		imageInfo, err := desc.Image()
+		if err != nil {
+			return nil, fmt.Errorf("error getting image manifest: %w", err)
+		}
+
+		digest, err := imageInfo.Digest()
+		if err != nil {
+			return nil, err
+		}
+		repoImage.RepoDigest = digest.String()
+
+		manifest, err := imageInfo.Manifest()
+		if err != nil {
+			return nil, err
+		}
+		repoImage.ID = manifest.Config.Digest.String()
+
+		configFile, err := imageInfo.ConfigFile()
+		if err != nil {
+			return nil, err
+		}
+		repoImage.Labels = configFile.Config.Labels
+		repoImage.OnBuild = configFile.Config.OnBuild
+		repoImage.Env = configFile.Config.Env
+		repoImage.SetCreatedAtUnix(configFile.Created.Unix())
+
+		var totalSize int64
+		if layers, err := imageInfo.Layers(); err != nil {
+			return nil, err
+		} else {
+			for _, l := range layers {
+				if lSize, err := l.Size(); err != nil {
+					return nil, err
+				} else {
+					totalSize += lSize
+				}
+			}
+		}
+		repoImage.Size = totalSize
+
+		var parentID string
+		if baseImageID, ok := configFile.Config.Labels["werf.io/base-image-id"]; ok {
+			parentID = baseImageID
+		} else {
+			// TODO(1.3): Legacy compatibility mode
+			parentID = configFile.Config.Image
+		}
+		repoImage.ParentID = parentID
+	}
 
 	return repoImage, nil
 }
@@ -206,10 +253,20 @@ func (api *api) deleteImageByReference(ctx context.Context, reference string) er
 }
 
 func (api *api) MutateAndPushImage(_ context.Context, sourceReference, destinationReference string, mutateConfigFunc func(cfg v1.Config) (v1.Config, error)) error {
-	img, _, err := api.image(sourceReference)
+	desc, _, err := api.getImageDesc(sourceReference)
 	if err != nil {
 		return fmt.Errorf("error reading image %q: %w", sourceReference, err)
 	}
+
+	if desc.MediaType.IsIndex() {
+		panic("unexpected condition, please report a bug")
+	}
+
+	img, err := desc.Image()
+	if err != nil {
+		return fmt.Errorf("error getting image manifest: %w", err)
+	}
+
 	cfgFile, err := img.ConfigFile()
 	if err != nil {
 		return fmt.Errorf("error reading config file %q: %w", sourceReference, err)
@@ -235,26 +292,31 @@ func (api *api) MutateAndPushImage(_ context.Context, sourceReference, destinati
 }
 
 func (api *api) CopyImage(ctx context.Context, sourceReference, destinationReference string, opts CopyImageOptions) error {
-	ref, err := name.ParseReference(destinationReference, api.parseReferenceOptions()...)
+	dstRef, err := name.ParseReference(destinationReference, api.parseReferenceOptions()...)
 	if err != nil {
 		return fmt.Errorf("parsing reference %q: %w", destinationReference, err)
 	}
 
-	if opts.IsImageIndex {
-		ii, _, err := api.imageIndex(sourceReference)
+	desc, _, err := api.getImageDesc(sourceReference)
+	if err != nil {
+		return fmt.Errorf("unable to get image %s: %w", sourceReference, err)
+	}
+
+	if desc.MediaType.IsIndex() {
+		ii, err := desc.ImageIndex()
 		if err != nil {
-			return fmt.Errorf("error reading image index %q: %w", sourceReference, err)
+			return fmt.Errorf("getting image index %s: %w", sourceReference, err)
 		}
-		if err = remote.WriteIndex(ref, ii, remote.WithAuthFromKeychain(authn.DefaultKeychain)); err != nil {
-			return fmt.Errorf("unable to write %q: %w", ref, err)
+		if err = remote.WriteIndex(dstRef, ii, remote.WithAuthFromKeychain(authn.DefaultKeychain)); err != nil {
+			return fmt.Errorf("unable to write %s: %w", dstRef, err)
 		}
 	} else {
-		img, _, err := api.image(sourceReference)
+		img, err := desc.Image()
 		if err != nil {
-			return fmt.Errorf("error reading image %q: %w", sourceReference, err)
+			return fmt.Errorf("getting image manifest %s: %w", sourceReference, err)
 		}
-		if err = remote.Write(ref, img, remote.WithAuthFromKeychain(authn.DefaultKeychain)); err != nil {
-			return fmt.Errorf("unable to write %q: %w", ref, err)
+		if err = remote.Write(dstRef, img, remote.WithAuthFromKeychain(authn.DefaultKeychain)); err != nil {
+			return fmt.Errorf("unable to write %s: %w", dstRef, err)
 		}
 	}
 
@@ -290,40 +352,21 @@ func (api *api) pushImage(ctx context.Context, reference string, opts *PushImage
 	return nil
 }
 
-func (api *api) image(reference string) (v1.Image, name.Reference, error) {
+func (api *api) getImageDesc(reference string) (*remote.Descriptor, name.Reference, error) {
 	ref, err := name.ParseReference(reference, api.parseReferenceOptions()...)
 	if err != nil {
 		return nil, nil, fmt.Errorf("parsing reference %q: %w", reference, err)
 	}
 
-	img, err := remote.Image(
+	desc, err := remote.Get(
 		ref,
 		remote.WithAuthFromKeychain(authn.DefaultKeychain),
 		remote.WithTransport(api.getHttpTransport()),
 	)
 	if err != nil {
-		return nil, nil, fmt.Errorf("reading image %q: %w", ref, err)
+		return nil, nil, fmt.Errorf("getting %s: %w", ref, err)
 	}
-
-	return img, ref, nil
-}
-
-func (api *api) imageIndex(reference string) (v1.ImageIndex, name.Reference, error) {
-	ref, err := name.ParseReference(reference, api.parseReferenceOptions()...)
-	if err != nil {
-		return nil, nil, fmt.Errorf("parsing reference %q: %w", reference, err)
-	}
-
-	ii, err := remote.Index(
-		ref,
-		remote.WithAuthFromKeychain(authn.DefaultKeychain),
-		remote.WithTransport(api.getHttpTransport()),
-	)
-	if err != nil {
-		return nil, nil, fmt.Errorf("reading image %q: %w", ref, err)
-	}
-
-	return ii, ref, nil
+	return desc, ref, nil
 }
 
 func (api *api) newRepositoryOptions() []name.Option {
