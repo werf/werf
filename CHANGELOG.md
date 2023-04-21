@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.226](https://www.github.com/werf/werf/compare/v1.2.225...v1.2.226) (2023-04-21)
+
+
+### Features
+
+* **multiarch:** support cleanup of images built in multiarch mode ([64b50e8](https://www.github.com/werf/werf/commit/64b50e8182def90063bf196885381a3f73cdfe30))
+
 ### [1.2.225](https://www.github.com/werf/werf/compare/v1.2.224...v1.2.225) (2023-04-20)
 
 
