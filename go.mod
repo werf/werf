@@ -48,7 +48,7 @@ require (
 	github.com/onsi/gomega v1.27.6
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.1.0-rc2.0.20221005185240-3a7f492d3f1b
-	github.com/opencontainers/runtime-spec v1.1.0-rc.1
+	github.com/opencontainers/runtime-spec v1.1.0-rc.2
 	github.com/otiai10/copy v1.10.0
 	github.com/pkg/errors v0.9.1
 	github.com/prashantv/gostub v1.1.0
