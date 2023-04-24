@@ -12,8 +12,8 @@ require (
 	github.com/aws/aws-sdk-go v1.44.244
 	github.com/bmatcuk/doublestar v1.3.4
 	github.com/containerd/containerd v1.7.0
-	github.com/containers/buildah v1.29.1
-	github.com/containers/common v0.51.2
+	github.com/containers/buildah v1.30.0
+	github.com/containers/common v0.52.0
 	github.com/containers/image/v5 v5.25.0
 	github.com/containers/storage v1.46.1
 	github.com/deislabs/oras v0.12.0
@@ -56,7 +56,7 @@ require (
 	github.com/satori/go.uuid v1.2.0
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spaolacci/murmur3 v1.1.0
-	github.com/spf13/cobra v1.6.1
+	github.com/spf13/cobra v1.7.0
 	github.com/spf13/pflag v1.0.5
 	github.com/werf/copy-recurse v0.2.7
 	github.com/werf/kubedog v0.9.11
@@ -162,7 +162,7 @@ require (
 	github.com/fatih/color v1.14.1 // indirect
 	github.com/felixge/httpsnoop v1.0.3 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
-	github.com/fsouza/go-dockerclient v1.9.6 // indirect
+	github.com/fsouza/go-dockerclient v1.9.7 // indirect
 	github.com/fvbommel/sortorder v1.0.1 // indirect
 	github.com/go-errors/errors v1.0.1 // indirect
 	github.com/go-git/gcfg v1.5.0 // indirect
@@ -252,7 +252,7 @@ require (
 	github.com/oklog/ulid v1.3.1 // indirect
 	github.com/oleiade/reflections v1.0.1 // indirect
 	github.com/opencontainers/runc v1.1.5 // indirect
-	github.com/opencontainers/runtime-tools v0.9.1-0.20221107090550-2e043c6bd626 // indirect
+	github.com/opencontainers/runtime-tools v0.9.1-0.20230317050512-e931285f4b69 // indirect
 	github.com/opencontainers/selinux v1.11.0 // indirect
 	github.com/openshift/imagebuilder v1.2.5-0.20230315213933-1693aaac1009 // indirect
 	github.com/ostreedev/ostree-go v0.0.0-20210805093236-719684c64e4f // indirect
