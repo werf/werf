@@ -48,8 +48,8 @@ func (api *api) Tags(ctx context.Context, reference string, _ ...Option) ([]stri
 	return api.tags(ctx, reference)
 }
 
-func (api *api) tags(_ context.Context, reference string, extraListOptions ...remote.Option) ([]string, error) {
-	tags, err := api.list(reference, extraListOptions...)
+func (api *api) tags(ctx context.Context, reference string, extraListOptions ...remote.Option) ([]string, error) {
+	tags, err := api.list(ctx, reference, extraListOptions...)
 	if err != nil {
 		if IsStatusNotFoundErr(err) {
 			return []string{}, nil
@@ -61,20 +61,20 @@ func (api *api) tags(_ context.Context, reference string, extraListOptions ...re
 	return tags, nil
 }
 
-func (api *api) tagImage(reference, tag string) error {
+func (api *api) tagImage(ctx context.Context, reference, tag string) error {
 	ref, err := name.ParseReference(reference, api.parseReferenceOptions()...)
 	if err != nil {
 		return fmt.Errorf("parsing reference %q: %w", reference, err)
 	}
 
-	desc, err := remote.Get(ref, api.defaultRemoteOptions()...)
+	desc, err := remote.Get(ref, api.defaultRemoteOptions(ctx)...)
 	if err != nil {
 		return fmt.Errorf("getting reference %q: %w", reference, err)
 	}
 
 	dst := ref.Context().Tag(tag)
 
-	return remote.Tag(dst, desc, api.defaultRemoteOptions()...)
+	return remote.Tag(dst, desc, api.defaultRemoteOptions(ctx)...)
 }
 
 func (api *api) IsRepoImageExists(ctx context.Context, reference string) (bool, error) {
@@ -171,14 +171,14 @@ func (api *api) GetRepoImage(_ context.Context, reference string) (*image.Info, 
 	return repoImage, nil
 }
 
-func (api *api) list(reference string, extraListOptions ...remote.Option) ([]string, error) {
+func (api *api) list(ctx context.Context, reference string, extraListOptions ...remote.Option) ([]string, error) {
 	repo, err := name.NewRepository(reference, api.newRepositoryOptions()...)
 	if err != nil {
 		return nil, fmt.Errorf("parsing repo %q: %w", reference, err)
 	}
 
 	listOptions := append(
-		api.defaultRemoteOptions(),
+		api.defaultRemoteOptions(ctx),
 		extraListOptions...,
 	)
 	tags, err := remote.List(repo, listOptions...)
@@ -189,13 +189,13 @@ func (api *api) list(reference string, extraListOptions ...remote.Option) ([]str
 	return tags, nil
 }
 
-func (api *api) deleteImageByReference(reference string) error {
+func (api *api) deleteImageByReference(ctx context.Context, reference string) error {
 	r, err := name.ParseReference(reference, api.parseReferenceOptions()...)
 	if err != nil {
 		return fmt.Errorf("parsing reference %q: %w", reference, err)
 	}
 
-	if err := remote.Delete(r, api.defaultRemoteOptions()...); err != nil {
+	if err := remote.Delete(r, api.defaultRemoteOptions(ctx)...); err != nil {
 		return fmt.Errorf("deleting image %q: %w", r, err)
 	}
 
@@ -297,8 +297,12 @@ func (api *api) parseReferenceOptions() []name.Option {
 	return options
 }
 
-func (api *api) defaultRemoteOptions() []remote.Option {
-	return []remote.Option{remote.WithAuthFromKeychain(authn.DefaultKeychain), remote.WithTransport(api.getHttpTransport())}
+func (api *api) defaultRemoteOptions(ctx context.Context) []remote.Option {
+	return []remote.Option{
+		remote.WithContext(ctx),
+		remote.WithAuthFromKeychain(authn.DefaultKeychain),
+		remote.WithTransport(api.getHttpTransport()),
+	}
 }
 
 func (api *api) getHttpTransport() (transport http.RoundTripper) {
@@ -412,15 +416,15 @@ attemptLoop:
 }
 
 func (api *api) writeToRemote(ctx context.Context, ref name.Reference, img v1.Image) error {
-	oldDefaultTransport := http.DefaultTransport
-	http.DefaultTransport = api.getHttpTransport()
-	defer func() {
-		http.DefaultTransport = oldDefaultTransport
-	}()
-
 	c := make(chan v1.Update, 200)
 
-	go remote.Write(ref, img, remote.WithAuthFromKeychain(authn.DefaultKeychain), remote.WithProgress(c))
+	go remote.Write(
+		ref, img,
+		remote.WithAuthFromKeychain(authn.DefaultKeychain),
+		remote.WithProgress(c),
+		remote.WithTransport(api.getHttpTransport()),
+		remote.WithContext(ctx),
+	)
 
 	for upd := range c {
 		switch {
@@ -443,7 +447,7 @@ func (api *api) PullImageArchive(ctx context.Context, archiveWriter io.Writer, r
 		return fmt.Errorf("unable to parse reference %q: %w", reference, err)
 	}
 
-	desc, err := remote.Get(ref, api.defaultRemoteOptions()...)
+	desc, err := remote.Get(ref, api.defaultRemoteOptions(ctx)...)
 	if err != nil {
 		return fmt.Errorf("getting reference %q: %w", reference, err)
 	}
