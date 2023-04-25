@@ -2,25 +2,25 @@ version: "3.9"
 
 services:
   en:
-    image: $WERF_ASSETS_DOCKER_IMAGE_NAME
-    working_dir: "/srv/jekyll-data"
+    image: $WERF_JEKYLL_BASE_DOCKER_IMAGE_NAME
+    working_dir: "/app"
     environment:
       JEKYLL_ENV: "dev"
     command: bash -c "
-      chmod -R o+w /srv/jekyll-data/ &&
-      jekyll serve --disable-disk-cache --config _config.yml --destination /tmp/_site -P 80"
+      chmod -R o+w /app/ &&
+      jekyll serve --disable-disk-cache --config _config.yml --destination /tmp/_site -P 80 --profile --trace --watch"
     volumes:
-      - "./:/srv/jekyll-data/"
+      - "./:/app/:cached"
   ru:
-    image: $WERF_ASSETS_DOCKER_IMAGE_NAME
-    working_dir: "/srv/jekyll-data"
+    image: $WERF_JEKYLL_BASE_DOCKER_IMAGE_NAME
+    working_dir: "/app"
     environment:
       JEKYLL_ENV: "dev"
     command: bash -c "
-      chmod -R o+w /srv/jekyll-data/ &&
-      jekyll serve --config _config.yml,_config_ru.yml --destination /tmp/_site -P 80"
+      chmod -R o+w /app/ &&
+      jekyll serve --disable-disk-cache --config _config.yml,_config_ru.yml --destination /tmp/_site -P 80 --profile --trace --watch"
     volumes:
-      - "./:/srv/jekyll-data/"
+      - "./:/app/:cached"
     depends_on:
       - en
 

@@ -2,33 +2,56 @@ project: werfio-ng
 configVersion: 1
 
 ---
-image: assets
+image: jekyll_base
 from: jekyll/builder:4.2.0
-fromCacheVersion: 20220110
-ansible:
-  install:
-  - shell: |
-      export PATH=/usr/jekyll/bin/:$PATH
-      gem update bundler
-  - name: "Install Dependencies"
-    shell: bundle install
-    args:
-      executable: /bin/bash
-      chdir: /app/docs
+fromCacheVersion: 20230421
+git:
+  - add: /docs
+    to: /app/docs
+    owner: jekyll
+    group: jekyll
+    includePaths:
+      - Gemfile
+      - Gemfile.lock
+    stageDependencies:
+      setup: ["**/*"]
+shell:
+  setup:
+    - export PATH=/usr/jekyll/bin/:$PATH
+    - gem update bundler
+    - echo "Install Dependencies ..."
+    - cd /app/docs && bundle install
+
+---
+image: assets
+fromImage: jekyll_base
+shell:
   beforeSetup:
-  - file:
-      path: "{{`{{ item }}`}}"
-      state: directory
-      mode: 0777
-    with_items:
-    - /app/_site/main/
-    - /app/_site/ru/
-  - shell: |
-      JEKYLL_ENV=production jekyll build -s /app/docs  -d /app/_site/main/ --config /app/docs/_config.yml
-      JEKYLL_ENV=production jekyll build -s /app/docs  -d /app/_site/ru/ --config /app/docs/_config.yml,/app/docs/_config_ru.yml
-    args:
-      executable: /bin/bash
-      chdir: /app/docs
+    - mkdir -p /app/_site/main/
+    - chmod 777 /app/_site/main/
+    - mkdir -p /app/_site/ru/
+    - chmod 777 /app/_site/ru/
+    - cd /app/docs
+    - bundle exec jekyll --version
+    - export JEKYLL_ENV="production"
+
+    - bundle info bundler
+    - bundle info sprockets
+    - bundle info jekyll
+
+    - cat _config.yml
+
+    - echo "Build 'en' ..."
+    - bundle exec jekyll build -s /app/docs  -d /app/_site/main/ --config /app/docs/_config.yml --profile --trace
+
+    - echo "Build 'ru' ..."
+    - bundle exec jekyll build -s /app/docs  -d /app/_site/ru/ --config /app/docs/_config.yml,/app/docs/_config_ru.yml --profile --trace
+
+    - echo "Assets in 'en':"
+    - ls -la /app/_site/main/assets || true
+
+    - echo "Assets in 'ru':"
+    - ls -la /app/_site/ru/assets || true
 git:
 - add: /docs
   to: /app/docs
@@ -50,8 +73,8 @@ git:
     - Gemfile.lock
     - "*.xml"
   stageDependencies:
-    install: ['Gemfile','Gemfile.lock']
-    beforeSetup: '**/*'
+    beforeSetup:
+    - '**/*'
 ---
 image: web
 from: nginx:stable-alpine

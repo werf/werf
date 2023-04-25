@@ -6,7 +6,15 @@ layout: default
   {%- include nav-breadcrumbs.html %}
   <div class="layout-sidebar">
     <div class="layout-sidebar__sidebar">
-      {%- include sidebar.html %}
+      {% comment %} Use page relative path for caching: ../.. or ../../.. {% endcomment %}
+      {%- assign page_rel_path = "/" %}
+      {%- assign is_404 = false %}
+      {%- if page.name == '404.md' %}
+        {%- assign is_404 = true %}
+      {%- else %}
+        {%- assign page_rel_path = page.url | true_relative_url | remove: page.url %}
+      {%- endif %}
+      {%- include_cached sidebar.html sidebar=page.sidebar lang=page.lang is_404=is_404 page_rel_path=page_rel_path %}
     </div>
     <div class="layout-sidebar__content">
       {{ content }}
