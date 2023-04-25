@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/user"
+	"path"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -150,4 +151,24 @@ func FilepathsWithParents(path string) []string {
 	}
 
 	return res
+}
+
+// SafeTrimGlobsAndSlashesFromFilepath trims any trailing globs and/or slashes from the path,
+// while ignoring globs that are part of a directory or file name.
+func SafeTrimGlobsAndSlashesFromFilepath(p string) string {
+	return filepath.FromSlash(SafeTrimGlobsAndSlashesFromPath(p))
+}
+
+func SafeTrimGlobsAndSlashesFromPath(p string) string {
+	parts := SplitFilepath(p)
+	for i := len(parts) - 1; i >= 0; i-- {
+		if partWOGlobs := strings.TrimRight(parts[i], "*"); partWOGlobs != "" {
+			parts = parts[:i+1]
+			break
+		} else {
+			parts = parts[:i]
+		}
+	}
+
+	return path.Join(parts...)
 }

@@ -46,7 +46,7 @@ func hasUniversalGlob(globs []string) bool {
 			return true
 		}
 
-		if trimRightAsterisks(glob) == "" {
+		if util.SafeTrimGlobsAndSlashesFromFilepath(glob) == "" {
 			return true
 		}
 	}
@@ -70,8 +70,8 @@ func isPathMatched(filePath, glob string) bool {
 	// The previous glob with the universal part `**/*` (path/*/dir/**/*).
 	for _, g := range []string{
 		glob,
-		trimRightAsterisks(glob),
-		filepath.Join(trimRightAsterisks(glob), "**", "*"),
+		util.SafeTrimGlobsAndSlashesFromFilepath(glob),
+		filepath.Join(util.SafeTrimGlobsAndSlashesFromFilepath(glob), "**", "*"),
 	} {
 		matched, err := doublestar.PathMatch(g, filePath)
 		if err != nil {
@@ -84,10 +84,6 @@ func isPathMatched(filePath, glob string) bool {
 	}
 
 	return false
-}
-
-func trimRightAsterisks(pattern string) string {
-	return strings.TrimRight(pattern, "*\\/")
 }
 
 func formatPaths(paths []string) []string {
