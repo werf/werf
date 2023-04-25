@@ -339,7 +339,7 @@ func generateChecksumCommand(from string, includePaths, excludePaths []string, r
 
 	var nameIncludeArgs []string
 	for _, includePath := range includePaths {
-		formattedPath := formatIncludeAndExcludePath(includePath)
+		formattedPath := util.SafeTrimGlobsAndSlashesFromPath(includePath)
 		nameIncludeArgs = append(
 			nameIncludeArgs,
 			fmt.Sprintf("-wholename \"%s\"", path.Join(from, formattedPath)),
@@ -353,7 +353,7 @@ func generateChecksumCommand(from string, includePaths, excludePaths []string, r
 
 	var nameExcludeArgs []string
 	for _, excludePath := range excludePaths {
-		formattedPath := formatIncludeAndExcludePath(excludePath)
+		formattedPath := util.SafeTrimGlobsAndSlashesFromPath(excludePath)
 		nameExcludeArgs = append(
 			nameExcludeArgs,
 			fmt.Sprintf("! -wholename \"%s\"", path.Join(from, formattedPath)),
@@ -386,10 +386,6 @@ func generateChecksumCommand(from string, includePaths, excludePaths []string, r
 	command := fmt.Sprintf("%s > %s", strings.Join(commands, " | "), resultChecksumPath)
 
 	return command
-}
-
-func formatIncludeAndExcludePath(path string) string {
-	return strings.TrimRight(path, "*/")
 }
 
 func getDependencyImportID(dependencyImport *config.DependencyImport) string {
