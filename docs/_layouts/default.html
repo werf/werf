@@ -31,11 +31,15 @@
         $("#mysidebar").navgoco('toggle', true);
       });
 
-      const parents = $('[data-parent]');
-
-      parents.each((_, parent) => {
-        $("#mysidebar").navgoco('toggle', true, $($(parent).children('[data-index]')).attr('data-index'));
-      })
+      // Activate page item in sidebar and expands its ancestors.
+      let page_url='{{ page.url }}';
+      let active_item = $(`#mysidebar li[data-page-url="${page_url}"]`);
+      active_item.addClass('active');
+      active_item.parents('li')
+        .addClass('active')
+        .each((_, parent) => {
+          $("#mysidebar").navgoco('toggle', true, $($(parent).children('[data-index]')).attr('data-index'));
+        });
     });
 
   </script>
@@ -44,6 +48,7 @@
       $('[data-toggle="tooltip"]').tooltip()
     })
   </script>
+
   {%- if page.datatable == true %}
   <link rel="stylesheet" type="text/css" href="//cdn.datatables.net/1.10.5/css/jquery.dataTables.css">
   <script type="text/javascript" charset="utf8" src="//cdn.datatables.net/1.10.5/js/jquery.dataTables.js"></script>

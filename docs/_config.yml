@@ -45,6 +45,7 @@ highlighter: rouge
 
 plugins:
   - jekyll-assets
+  - jekyll-include-cache
 
 markdown: kramdown
 kramdown:
