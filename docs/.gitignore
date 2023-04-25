@@ -7,3 +7,4 @@ _pdf/
 site/backend/multiwerf/
 site/backend/vendor/
 site/backend/root/
+.bundle
