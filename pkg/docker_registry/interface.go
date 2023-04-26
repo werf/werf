@@ -40,7 +40,6 @@ type ArchiveOpener interface {
 }
 
 type ManifestListOptions struct {
-	PushImageOptions
 	Manifests []*image.Info
 }
 

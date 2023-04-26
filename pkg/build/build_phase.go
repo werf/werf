@@ -248,7 +248,7 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 						options.Style(logging.ImageMetadataStyle())
 					}).
 					DoError(func() error {
-						if err := phase.publishMultiplatformImageMetadata(ctx, name, img); err != nil {
+						if err := phase.publishMultiplatformImageMetadata(ctx, name, img, phase.Conveyor.StorageManager.GetFinalStagesStorage()); err != nil {
 							return fmt.Errorf("unable to publish image %q multiplatform metadata: %w", name, err)
 						}
 						return nil
@@ -354,46 +354,63 @@ func (phase *BuildPhase) publishImageMetadata(ctx context.Context, name string, 
 	return nil
 }
 
-func (phase *BuildPhase) publishMultiplatformImageMetadata(ctx context.Context, name string, img *image.MultiplatformImage) error {
+func (phase *BuildPhase) publishMultiplatformImageMetadata(ctx context.Context, name string, img *image.MultiplatformImage, finalStagesStorage storage.StagesStorage) error {
 	if err := phase.addManagedImage(ctx, name); err != nil {
 		return err
 	}
 
-	stagesStorage := phase.Conveyor.StorageManager.GetStagesStorage()
+	primaryStagesStorage := phase.Conveyor.StorageManager.GetStagesStorage()
 
-	if len(phase.CustomTagFuncList) == 0 {
-		fullImageName := stagesStorage.ConstructStageImageName(phase.Conveyor.ProjectName(), img.GetStageID().Digest, img.GetStageID().UniqueID)
-		platforms := img.GetPlatforms()
+	fullImageName := primaryStagesStorage.ConstructStageImageName(phase.Conveyor.ProjectName(), img.GetStageID().Digest, img.GetStageID().UniqueID)
+	platforms := img.GetPlatforms()
 
-		container_backend.LogImageName(ctx, fullImageName)
-		container_backend.LogMultiplatformImageInfo(ctx, platforms)
+	container_backend.LogImageName(ctx, fullImageName)
+	container_backend.LogMultiplatformImageInfo(ctx, platforms)
 
-		if err := stagesStorage.PostMultiplatformImage(ctx, phase.Conveyor.ProjectName(), img.GetStageID().String(), img.GetImagesInfoList()); err != nil {
-			return fmt.Errorf("unable to post multiplatform image %s %s: %w", name, img.GetStageID(), err)
-		}
+	if err := primaryStagesStorage.PostMultiplatformImage(ctx, phase.Conveyor.ProjectName(), img.GetStageID().String(), img.GetImagesInfoList()); err != nil {
+		return fmt.Errorf("unable to post multiplatform image %s %s: %w", name, img.GetStageID(), err)
+	}
 
-		desc, err := stagesStorage.GetStageDescription(ctx, phase.Conveyor.ProjectName(), img.GetStageID())
-		if err != nil {
-			return fmt.Errorf("unable to get image %s %s descriptor: %w", name, img.GetStageID(), err)
-		}
-		if desc == nil {
-			return fmt.Errorf("unable to get image %s %s descriptor: no manifest found", name, img.GetStageID())
-		}
-		img.SetStageDescription(desc)
+	desc, err := primaryStagesStorage.GetStageDescription(ctx, phase.Conveyor.ProjectName(), img.GetStageID())
+	if err != nil {
+		return fmt.Errorf("unable to get image %s %s descriptor: %w", name, img.GetStageID(), err)
+	}
+	if desc == nil {
+		return fmt.Errorf("unable to get image %s %s descriptor: no manifest found", name, img.GetStageID())
+	}
+	img.SetStageDescription(desc)
 
-	} else {
-		for _, tagFunc := range phase.CustomTagFuncList {
-			tag := tagFunc(name, img.GetStageID().String())
+	if len(phase.CustomTagFuncList) > 0 {
+		logboek.Context(ctx).Default().LogLn()
+		logboek.Context(ctx).Default().LogProcess("Adding custom tags").
+			Options(func(options types.LogProcessOptionsInterface) {
+				options.Style(style.Highlight())
+			}).
+			DoError(func() error {
+				for _, tagFunc := range phase.CustomTagFuncList {
+					tag := tagFunc(name, img.GetStageID().String())
 
-			if err := stagesStorage.PostMultiplatformImage(ctx, phase.Conveyor.ProjectName(), tag, img.GetImagesInfoList()); err != nil {
-				return fmt.Errorf("unable to post multiplatform image %s %s: %w", name, img.GetStageID(), err)
-			}
+					var storage storage.StagesStorage = primaryStagesStorage
+					if finalStagesStorage != nil {
+						storage = finalStagesStorage
+					}
 
-			// FIXME(multiarch): custom tag registration for cleanup, shall we do it?
-			// if err := stagesStorage.RegisterStageCustomTag(ctx, stageDesc, tag); err != nil {
-			// 	return fmt.Errorf("unable to register stage %s custom tag %s in the primary storage %s: %w", stageDesc.StageID.String(), tag, primaryStagesStorage.String(), err)
-			// }
-		}
+					logboek.Context(ctx).Default().LogProcess("tag %s", tag).
+						DoError(func() error {
+							// final or primary
+							if err := storage.AddStageCustomTag(ctx, desc, tag); err != nil {
+								return fmt.Errorf("unable to add stage %s custom tag %s in the storage %s: %w", desc.StageID.String(), tag, storage.String(), err)
+							}
+							if err := primaryStagesStorage.RegisterStageCustomTag(ctx, phase.Conveyor.ProjectName(), desc, tag); err != nil {
+								return fmt.Errorf("unable to register stage %s custom tag %s in the primary storage %s: %w", desc.StageID.String(), tag, primaryStagesStorage.String(), err)
+							}
+							logboek.Context(ctx).LogFDetails("  name: %s:%s\n", desc.Info.Repository, tag)
+							return nil
+						})
+				}
+
+				return nil
+			})
 	}
 
 	if !phase.BuildPhaseOptions.SkipImageMetadataPublication {
@@ -613,7 +630,7 @@ func (phase *BuildPhase) addCustomImageTags(ctx context.Context, imageName strin
 		DoError(func() error {
 			for _, tagFunc := range customTagFuncList {
 				tag := tagFunc(imageName, stageDesc.Info.Tag)
-				if err := addCustomImageTag(ctx, stagesStorage, primaryStagesStorage, stageDesc, tag); err != nil {
+				if err := addCustomImageTag(ctx, phase.Conveyor.ProjectName(), stagesStorage, primaryStagesStorage, stageDesc, tag); err != nil {
 					return err
 				}
 			}
@@ -622,13 +639,13 @@ func (phase *BuildPhase) addCustomImageTags(ctx context.Context, imageName strin
 		})
 }
 
-func addCustomImageTag(ctx context.Context, stagesStorage storage.StagesStorage, primaryStagesStorage storage.PrimaryStagesStorage, stageDesc *imagePkg.StageDescription, tag string) error {
+func addCustomImageTag(ctx context.Context, projectName string, stagesStorage storage.StagesStorage, primaryStagesStorage storage.PrimaryStagesStorage, stageDesc *imagePkg.StageDescription, tag string) error {
 	return logboek.Context(ctx).Default().LogProcess("tag %s", tag).
 		DoError(func() error {
 			if err := stagesStorage.AddStageCustomTag(ctx, stageDesc, tag); err != nil {
 				return fmt.Errorf("unable to add stage %s custom tag %s in the storage %s: %w", stageDesc.StageID.String(), tag, stagesStorage.String(), err)
 			}
-			if err := primaryStagesStorage.RegisterStageCustomTag(ctx, stageDesc, tag); err != nil {
+			if err := primaryStagesStorage.RegisterStageCustomTag(ctx, projectName, stageDesc, tag); err != nil {
 				return fmt.Errorf("unable to register stage %s custom tag %s in the primary storage %s: %w", stageDesc.StageID.String(), tag, primaryStagesStorage.String(), err)
 			}
 

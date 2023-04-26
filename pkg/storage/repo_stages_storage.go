@@ -338,13 +338,13 @@ func (storage *RepoStagesStorage) DeleteStageCustomTag(ctx context.Context, tag 
 	return nil
 }
 
-func (storage *RepoStagesStorage) addStageCustomTagMetadata(ctx context.Context, stageDescription *image.StageDescription, tag string) error {
+func (storage *RepoStagesStorage) addStageCustomTagMetadata(ctx context.Context, projectName string, stageDescription *image.StageDescription, tag string) error {
 	fullImageName := makeRepoCustomTagMetadataRecord(storage.RepoAddress, tag)
 	metadata := newCustomTagMetadata(stageDescription.StageID.String(), tag)
 	opts := &docker_registry.PushImageOptions{
 		Labels: metadata.ToLabels(),
 	}
-	opts.Labels[image.WerfLabel] = stageDescription.Info.Labels[image.WerfLabel]
+	opts.Labels[image.WerfLabel] = projectName
 
 	if err := storage.DockerRegistry.PushImage(ctx, fullImageName, opts); err != nil {
 		return fmt.Errorf("unable to push image %s: %w", fullImageName, err)
@@ -405,8 +405,8 @@ func (storage *RepoStagesStorage) GetStageCustomTagMetadataIDs(ctx context.Conte
 	return res, nil
 }
 
-func (storage *RepoStagesStorage) RegisterStageCustomTag(ctx context.Context, stageDescription *image.StageDescription, tag string) error {
-	if err := storage.addStageCustomTagMetadata(ctx, stageDescription, tag); err != nil {
+func (storage *RepoStagesStorage) RegisterStageCustomTag(ctx context.Context, projectName string, stageDescription *image.StageDescription, tag string) error {
+	if err := storage.addStageCustomTagMetadata(ctx, projectName, stageDescription, tag); err != nil {
 		return fmt.Errorf("unable to add stage custom tag metadata: %w", err)
 	}
 	return nil
@@ -887,13 +887,7 @@ func (storage *RepoStagesStorage) PostMultiplatformImage(ctx context.Context, pr
 
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PostMultiplatformImage full image name: %s\n", fullImageName)
 
-	opts := docker_registry.ManifestListOptions{
-		PushImageOptions: docker_registry.PushImageOptions{
-			Labels: map[string]string{image.WerfLabel: projectName},
-		},
-		Manifests: allPlatformsImages,
-	}
-
+	opts := docker_registry.ManifestListOptions{Manifests: allPlatformsImages}
 	if err := storage.DockerRegistry.PushManifestList(ctx, fullImageName, opts); err != nil {
 		return fmt.Errorf("unable to push image %s: %w", fullImageName, err)
 	}
