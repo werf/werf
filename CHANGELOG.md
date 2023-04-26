@@ -1,5 +1,13 @@
 # Changelog
 
+### [1.2.227](https://www.github.com/werf/werf/compare/v1.2.226...v1.2.227) (2023-04-26)
+
+
+### Bug Fixes
+
+* **stapel/imports:** processing of includePaths/excludePaths with globs in file/directory name ([7046ca7](https://www.github.com/werf/werf/commit/7046ca70d7b8b8fab10160cb05df8098c3de186a))
+* update ruby gems ([e51e7b6](https://www.github.com/werf/werf/commit/e51e7b676e580fb78157e1a00a806228108bea8f))
+
 ### [1.2.226](https://www.github.com/werf/werf/compare/v1.2.225...v1.2.226) (2023-04-21)
 
 
