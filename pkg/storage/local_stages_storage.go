@@ -404,7 +404,7 @@ func (storage *LocalStagesStorage) GetStageCustomTagMetadata(ctx context.Context
 	return nil, fmt.Errorf("not implemented")
 }
 
-func (storage *LocalStagesStorage) RegisterStageCustomTag(ctx context.Context, stageDescription *image.StageDescription, tag string) error {
+func (storage *LocalStagesStorage) RegisterStageCustomTag(ctx context.Context, projectName string, stageDescription *image.StageDescription, tag string) error {
 	return nil
 }
 
