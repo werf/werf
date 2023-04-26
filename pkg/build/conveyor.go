@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/werf/logboek"
 	stylePkg "github.com/werf/logboek/pkg/style"
@@ -596,10 +597,12 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 			}
 		})
 
+	var setImageExecutionTimesArray [][]string
 	for setId := range c.imagesTree.GetImagesSets() {
 		numberOfTasks := len(c.imagesTree.GetImagesSets()[setId])
 		numberOfWorkers := int(c.ParallelTasksLimit)
 
+		var setImageExecutionTimes []string
 		if err := parallel.DoTasks(ctx, numberOfTasks, parallel.DoTasksOptions{
 			InitDockerCLIForEachWorker: true,
 			MaxNumberOfWorkers:         numberOfWorkers,
@@ -612,10 +615,46 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 				taskPhases = append(taskPhases, phase.Clone())
 			}
 
-			return c.doImage(ctx, taskImage, taskPhases, logImages)
+			// execution time calculation
+			taskStartTime := time.Now()
+			{
+				if err := c.doImage(ctx, taskImage, taskPhases, logImages); err != nil {
+					return err
+				}
+
+				taskEndTime := time.Now()
+				taskDuration := taskEndTime.Sub(taskStartTime)
+				setImageExecutionTimes = append(
+					setImageExecutionTimes,
+					fmt.Sprintf("%s (%.2f seconds)", taskImage.LogDetailedName(), taskDuration.Seconds()),
+				)
+			}
+
+			return nil
 		}); err != nil {
 			return err
 		}
+
+		setImageExecutionTimesArray = append(setImageExecutionTimesArray, setImageExecutionTimes)
+	}
+
+	if logImages {
+		blockMsg := "Build summary"
+		logboek.Context(ctx).LogBlock(blockMsg).
+			Options(func(options types.LogBlockOptionsInterface) {
+				options.Style(stylePkg.Highlight())
+			}).
+			Do(func() {
+				for setId := range c.imagesTree.GetImagesSets() {
+					logboek.Context(ctx).LogFHighlight("Set #%d:\n", setId)
+					for _, setTaskTitles := range setImageExecutionTimesArray {
+						for _, taskTitle := range setTaskTitles {
+							logboek.Context(ctx).LogLnHighlight("-", taskTitle)
+						}
+					}
+					logboek.Context(ctx).LogOptionalLn()
+				}
+			})
 	}
 
 	return nil
