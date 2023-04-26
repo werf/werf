@@ -578,24 +578,26 @@ func (c *Conveyor) doImages(ctx context.Context, phases []Phase, logImages bool)
 }
 
 func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logImages bool) error {
-	blockMsg := "Concurrent builds plan"
-	if c.ParallelTasksLimit > 0 {
-		blockMsg = fmt.Sprintf("%s (no more than %d images at the same time)", blockMsg, c.ParallelTasksLimit)
-	}
+	if logImages {
+		blockMsg := "Concurrent build plan"
+		if c.ParallelTasksLimit > 0 {
+			blockMsg = fmt.Sprintf("%s (no more than %d images at the same time)", blockMsg, c.ParallelTasksLimit)
+		}
 
-	logboek.Context(ctx).LogBlock(blockMsg).
-		Options(func(options types.LogBlockOptionsInterface) {
-			options.Style(stylePkg.Highlight())
-		}).
-		Do(func() {
-			for setId := range c.imagesTree.GetImagesSets() {
-				logboek.Context(ctx).LogFHighlight("Set #%d:\n", setId)
-				for _, img := range c.imagesTree.GetImagesSets()[setId] {
-					logboek.Context(ctx).LogLnHighlight("-", img.LogDetailedName())
+		logboek.Context(ctx).LogBlock(blockMsg).
+			Options(func(options types.LogBlockOptionsInterface) {
+				options.Style(stylePkg.Highlight())
+			}).
+			Do(func() {
+				for setId := range c.imagesTree.GetImagesSets() {
+					logboek.Context(ctx).LogFHighlight("Set #%d:\n", setId)
+					for _, img := range c.imagesTree.GetImagesSets()[setId] {
+						logboek.Context(ctx).LogLnHighlight("-", img.LogDetailedName())
+					}
+					logboek.Context(ctx).LogOptionalLn()
 				}
-				logboek.Context(ctx).LogOptionalLn()
-			}
-		})
+			})
+	}
 
 	var setImageExecutionTimesArray [][]string
 	for setId := range c.imagesTree.GetImagesSets() {
