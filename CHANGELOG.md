@@ -1,5 +1,15 @@
 # Changelog
 
+### [1.2.228](https://www.github.com/werf/werf/compare/v1.2.227...v1.2.228) (2023-04-27)
+
+
+### Bug Fixes
+
+* **docs:** change configurator urls ([12d35e0](https://www.github.com/werf/werf/commit/12d35e0face6de9da77cbd02d746aa4455adae91))
+* **multiarch:** custom tags not working ([ce34af1](https://www.github.com/werf/werf/commit/ce34af19b9bef43e21f6335282db14d3126af170))
+* revert precompile stanza ([#5572](https://www.github.com/werf/werf/issues/5572)) ([6d26b79](https://www.github.com/werf/werf/commit/6d26b7968060c9e20445e609455c46638a4b114f))
+* update docs ([5ced8f2](https://www.github.com/werf/werf/commit/5ced8f2e4a78ff2ff54b900b0cfc85b4fda6a9ec))
+
 ### [1.2.227](https://www.github.com/werf/werf/compare/v1.2.226...v1.2.227) (2023-04-26)
 
 
