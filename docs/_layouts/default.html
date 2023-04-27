@@ -31,6 +31,15 @@
         $("#mysidebar").navgoco('toggle', true);
       });
 
+      // Turn off sliding. (https://api.jquery.com/slideup/)
+      let fxOrig = jQuery.fx.off;
+      jQuery.fx.off = true;
+
+      // Expand first level.
+      $(`#mysidebar > li`).each((_, parent) => {
+        $("#mysidebar").navgoco('toggle', true, $($(parent).children('[data-index]')).attr('data-index'));
+      });
+
       // Activate page item in sidebar and expands its ancestors.
       let page_url='{{ page.url }}';
       let active_item = $(`#mysidebar li[data-page-url="${page_url}"]`);
@@ -40,6 +49,9 @@
         .each((_, parent) => {
           $("#mysidebar").navgoco('toggle', true, $($(parent).children('[data-index]')).attr('data-index'));
         });
+
+      // Restore sliding.
+      jQuery.fx.off = fxOrig;
     });
 
   </script>
