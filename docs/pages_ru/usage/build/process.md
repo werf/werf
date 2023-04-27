@@ -370,6 +370,8 @@ werf может использовать драйвер хранилища `over
 docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
 ```
 
+[Перечень поддерживаемых архитектур](https://www.qemu.org/docs/master/about/emulation.html).
+
 Поддержка мультиплатформенной сборки для разных вариантов синтаксиса сборки, режимов сборки и используемого бекенда:
 
 |                         | buildah            | docker-server        |
