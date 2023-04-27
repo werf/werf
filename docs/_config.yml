@@ -14,6 +14,9 @@ site_description: Consistent delivery tool. Git as a single source of truth. Bui
 
 github_repo_path: /werf/werf
 
+assets:
+  precompile: ["**/*.*"]
+
 social_links:
   ru:
     twitter: https://twitter.com/werf_io
