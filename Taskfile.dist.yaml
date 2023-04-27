@@ -39,7 +39,7 @@ tasks:
 
   _build:cgo:dev: &build_cgo_dev
     cmds:
-      - go build -o "{{.outputDir | default (printf "./build/%s-%s" .targetOS .targetArch)}}/werf{{if (eq .targetOS "windows")}}.exe{{end}}"
+      - time go build -o "{{.outputDir | default (printf "./build/%s-%s" .targetOS .targetArch)}}/werf{{if (eq .targetOS "windows")}}.exe{{end}}"
         -compiler gc -ldflags="{{.cgoDevLDFlags}}" -tags="{{.cgoTags}}" {{.CLI_ARGS}} {{.pkg | default .package}}
     env:
       CGO_ENABLED: "1"
@@ -55,7 +55,7 @@ tasks:
 
   _build:go:dev: &build_go_dev
     cmds:
-      - go build -o "{{.outputDir | default (printf "./build/%s-%s" .targetOS .targetArch)}}/werf{{if (eq .targetOS "windows")}}.exe{{end}}"
+      - time go build -o "{{.outputDir | default (printf "./build/%s-%s" .targetOS .targetArch)}}/werf{{if (eq .targetOS "windows")}}.exe{{end}}"
         -ldflags="{{.goDevLDFlags}}" -tags="{{.goTags}}" {{.CLI_ARGS}} {{.pkg | default .package}}
     env:
       CGO_ENABLED: "0"
@@ -416,17 +416,21 @@ tasks:
 
   doc:check-broken-links:ru:
     desc: "Check ru docs for broken links."
-    deps:
-      - build
     cmds:
-      - ./scripts/docs/check_broken_links.sh ru "{{.devBinary}}"
+      - echo Start check-broken-links ru at $( date +%H:%M:%S)
+      - task: build
+      - echo End build at $( date +%H:%M:%S)
+      - time ./scripts/docs/check_broken_links.sh ru "{{.devBinary}}"
+      - echo End check-broken-links ru at $( date +%H:%M:%S)
 
   doc:check-broken-links:en:
     desc: "Check en docs for broken links."
     deps:
       - build
     cmds:
-      - ./scripts/docs/check_broken_links.sh main "{{.devBinary}}"
+      - echo Start check-broken-links en at $( date +%H:%M:%S)
+      - time ./scripts/docs/check_broken_links.sh main "{{.devBinary}}"
+      - echo End check-broken-links en at $( date +%H:%M:%S)
 
   github:dispatch:werf:
     desc: 'Manually dispatch specified GitHub workflow. Important vars: "eventType", "githubToken".'
@@ -528,3 +532,24 @@ tasks:
           git signatures show {{.CLI_ARGS}} $ref
         done
       - git signatures push {{.CLI_ARGS}}
+
+  task1:
+    desc: task 1
+    cmds:
+      - echo "Task 1"
+      - sleep 3
+      - echo "Task 1 end"
+
+  task2:
+    desc: task 2
+    cmds:
+      - echo "Task 2"
+      - time sleep 3
+      - echo "Task 2 end"
+
+
+  task3:
+    desc: task 3 is task2 and task 1
+    cmds:
+      - task: task1
+      - task: task2
