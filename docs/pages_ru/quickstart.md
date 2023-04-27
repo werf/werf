@@ -3,4 +3,4 @@ title: Установка и запуск
 permalink: index.html
 ---
 
-<!--#include virtual="/configurator.html" -->
+<!--#include virtual="/includes/configurator.html" -->
