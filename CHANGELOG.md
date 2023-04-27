@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.229](https://www.github.com/werf/werf/compare/v1.2.228...v1.2.229) (2023-04-27)
+
+
+### Bug Fixes
+
+* **docs:** fix configurator link ([924dcb6](https://www.github.com/werf/werf/commit/924dcb6488d7366fe1e9964281b0fd2bc9530b65))
+
 ### [1.2.228](https://www.github.com/werf/werf/compare/v1.2.227...v1.2.228) (2023-04-27)
 
 
