@@ -1,6 +1,7 @@
 ---
 title: Установка и запуск
 permalink: index.html
+toc: false
 ---
 
-<!--#include virtual="/configurator.html" -->
+<!--#include virtual="/includes/configurator.html" -->
