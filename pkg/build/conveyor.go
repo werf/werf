@@ -647,12 +647,10 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 				options.Style(stylePkg.Highlight())
 			}).
 			Do(func() {
-				for setId := range c.imagesTree.GetImagesSets() {
+				for setId, setImageExecutionTImes := range setImageExecutionTimesArray {
 					logboek.Context(ctx).LogFHighlight("Set #%d:\n", setId)
-					for _, setTaskTitles := range setImageExecutionTimesArray {
-						for _, taskTitle := range setTaskTitles {
-							logboek.Context(ctx).LogLnHighlight("-", taskTitle)
-						}
+					for _, msg := range setImageExecutionTImes {
+						logboek.Context(ctx).LogLnHighlight("-", msg)
 					}
 					logboek.Context(ctx).LogOptionalLn()
 				}
