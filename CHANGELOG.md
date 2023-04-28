@@ -1,5 +1,18 @@
 # Changelog
 
+### [1.2.215](https://www.github.com/werf/werf/compare/v1.2.214...v1.2.215) (2023-04-28)
+
+
+### Bug Fixes
+
+* 'certificate signed by unknown authority' and not working skip-tls-verify-registry param ([029230f](https://www.github.com/werf/werf/commit/029230f42999f98beca0f2e96c0e23f271a9a530))
+* **docs:** new install-and-run ([756510a](https://www.github.com/werf/werf/commit/756510afdecb7be0511145bfb5bf7a256be8833a))
+* **multiarch:** do not override image metadata for secondary platforms ([715c1ea](https://www.github.com/werf/werf/commit/715c1eaa57998c96a48a5997cb50ec4c3539f23c))
+* **multiarch:** fix panic which occurs when using stapel import from certain stage [1.2.214] ([759d760](https://www.github.com/werf/werf/commit/759d7602a6e15b57b29e9f63f0bc6f4611f3dc5a))
+* **multiarch:** fix panics in werf kube-run, run and stage image commands ([bd7a9f8](https://www.github.com/werf/werf/commit/bd7a9f81c7e4303e6bba9c09466c1cd410979a10))
+* **multiplatform:** images report contains correct digests [1.2.214] ([714e226](https://www.github.com/werf/werf/commit/714e226d53e050274463513e8bc10abb67de44de))
+* skip-tls-verify-registry not working when publishing new client-id ([24224c3](https://www.github.com/werf/werf/commit/24224c38e932d60ffa2adf82c728ee2411dbfdfd))
+
 ### [1.2.214](https://www.github.com/werf/werf/compare/v1.2.213...v1.2.214) (2023-03-17)
 
 
