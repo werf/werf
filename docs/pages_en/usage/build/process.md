@@ -304,65 +304,7 @@ werf converge --repo registry.mydomain.org/repo --synchronization :local
 
 > **NOTE:** This method is only suitable if all werf runs are triggered by the same runner in your CI/CD system.
 
-## Configuring the build backend
-
-<!-- reference: https://werf.io/documentation/v1.2/advanced/buildah_mode.html -->
-
-werf supports Docker Server or Buildah as backend for building images. Buildah provides full containerization and layer-by-layer Dockerfile builds with caching of all intermediate layers into the container registry. Docker Server is currently the default backend.
-
-> **NOTE:** The Buildah backend does not currently support storing images locally, only [storing images in the container registry](#layer-by-layer-image-caching) is supported.
-
-### Docker
-
-Docker Server is currently the default backend and no additional configuration is required.
-
-### Buildah
-
-> **NOTE:** Buildah is currently only available to Linux users and Windows users with the WSL2 subsystem enabled. For macOS, we suggest using a virtual machine to run werf in Buildah mode.
-
-werf uses Buildah in rootless mode to build images without a Docker server. Buildah is built into the werf binary. You can find the host system requirements to run werf with the Buildah backend [in the installation instructions](/installation.html).
-
-Buildah can be enabled by setting the `WERF_BUILDAH_MODE` environment variable to one of the options: `auto`, `native-chroot`, `native-rootless`. Most users only have to set `WERF_BUILDAH_MODE=auto` to enable Buildah mode.
-
-#### Level of assembly isolation
-
-By default, in `auto` mode, werf automatically sets the isolation level depending on the platform and environment.
-
-2 types of assembly container isolation are supported:
-1. Chroot is an option that does not use the container runtime; it can be enabled as follows: `WERF_BUILDAH_MODE=native-chroot`.
-2. Rootless is an option involving container runtime (crun or runc or kata or runsc must be installed on the system); it can be enabled as follows: `WERF_BUILAH_MODE=native-rootless`.
-
-#### Storage driver
-
-werf supports the `overlay` or `vfs` storage driver:
-
-* `overlay` allows you to use the OverlayFS filesystem. You can either use the Linux kernel's built-in support for OverlayFS (if available) or you can use the fuse-overlayfs implementation. This is the recommended default choice.
-* `vfs` provides access to a virtual filesystem instead of OverlayFS. This file system is inferior in performance and requires a privileged container, so it is not recommended. However, it may be useful in some cases.
-
-Generally, the default driver (`overlay`) is enough. The storage driver can be set using the `WERF_BUILDAH_STORAGE_DRIVER` environment variable.
-
-#### Ulimits
-
-By default, the Buildah mode in werf inherits system ulimits when the build containers are started. The user can override these parameters using the `WERF_BUILDAH_ULIMIT` environment variable.
-
-The format of `WERF_BUILDAH_ULIMIT=type=softlimit[:hardlimit][,type=softlimit[:hardlimit],...]` is comma-separated limit values:
-* "core": maximum core dump size (ulimit -c);
-* "cpu": maximum CPU time (ulimit -t);
-* "data": maximum size of a process's data segment (ulimit -d);
-* "fsize": maximum size of new files (ulimit -f);
-* "locks": maximum number of file locks (ulimit -x);
-* "memlock": maximum amount of locked memory (ulimit -l);
-* "msgqueue": maximum amount of data in message queues (ulimit -q);
-* "nice": niceness adjustment (nice -n, ulimit -e);
-* "nofile": maximum number of open files (ulimit -n);
-* "nproc": maximum number of processes (ulimit -u);
-* "rss": maximum size of a process's (ulimit -m);
-* "rtprio": maximum real-time scheduling priority (ulimit -r);
-* "rttime": maximum amount of real-time execution between blocking syscalls;
-* "sigpending": maximum number of pending signals (ulimit -i);
-* "stack": maximum stack size (ulimit -s).
-
-### Multiplatform builds
+## Multiplatform builds
 
 Multiplatform builds use the cross-platform instruction execution mechanics provided by the [Linux kernel](https://en.wikipedia.org/wiki/Binfmt_misc) and the QEMU emulator. The easiest way to register emulators for most architectures on your host system is to use the `qemu-user-static` image:
 

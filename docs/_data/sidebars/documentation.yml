@@ -687,9 +687,6 @@ entries:
               - title: Build process
                 url: /usage/build/process.html
 
-              - title: Run in containers
-                url: /usage/build/run_in_containers.html
-
           - title: Deploy
             f:
               - title: Overview
@@ -820,9 +817,6 @@ entries:
 
               - title: Сборочный процесс
                 url: /usage/build/process.html
-
-              - title: Работа в контейнерах
-                url: /usage/build/run_in_containers.html
 
           - title: Развертывание
             f:
