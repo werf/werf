@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.225](https://www.github.com/werf/werf/compare/v1.2.224...v1.2.225) (2023-04-28)
+
+
+### Bug Fixes
+
+* **docs:** new install-and-run ([23044ea](https://www.github.com/werf/werf/commit/23044ea1c85987b3f7b0b1015262890d1df2c3a7))
+
 ### [1.2.224](https://www.github.com/werf/werf/compare/v1.2.223...v1.2.224) (2023-04-13)
 
 
