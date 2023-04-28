@@ -1,5 +1,13 @@
 # Changelog
 
+### [1.2.206](https://www.github.com/werf/werf/compare/v1.2.205...v1.2.206) (2023-04-28)
+
+
+### Bug Fixes
+
+* **docs:** install-and-run hide toc ([ed13dc6](https://www.github.com/werf/werf/commit/ed13dc6a9e16f41d651fe13e533fddeb21811a5b))
+* **docs:** new install-and-run ([14e3ca0](https://www.github.com/werf/werf/commit/14e3ca0accacee8acf8c0e3d807dec5f7692b108))
+
 ### [1.2.205](https://www.github.com/werf/werf/compare/v1.2.204...v1.2.205) (2023-03-02)
 
 
