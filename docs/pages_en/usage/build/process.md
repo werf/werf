@@ -364,13 +364,15 @@ The format of `WERF_BUILDAH_ULIMIT=type=softlimit[:hardlimit][,type=softlimit[:h
 
 ### Multiplatform builds
 
-Multiplatform building uses crossplatform instructions execution mechanics provided by the [linux kernel](https://en.wikipedia.org/wiki/Binfmt_misc) and qemu emulator. The easiest way to register the most architectures emulation in your host system is to use qemu-user-static like that:
+Multiplatform builds use the cross-platform instruction execution mechanics provided by the [Linux kernel](https://en.wikipedia.org/wiki/Binfmt_misc) and the QEMU emulator. The easiest way to register emulators for most architectures on your host system is to use the `qemu-user-static` image:
 
 ```shell
 docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
 ```
 
-This table summarizes support of multiplatform building for different configuration syntax, modes of building and build backends:
+[List of supported architectures](https://www.qemu.org/docs/master/about/emulation.html).
+
+The table below summarizes support of multiplatform building for different configuration syntaxes, building modes, and build backends:
 
 |                         | buildah        | docker-server      |
 |---                      |---             |---                 |
