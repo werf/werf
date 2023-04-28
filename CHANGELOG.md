@@ -1,5 +1,13 @@
 # Changelog
 
+### [1.2.220](https://www.github.com/werf/werf/compare/v1.2.219...v1.2.220) (2023-04-28)
+
+
+### Bug Fixes
+
+* **docs:** new install-and-run ([b859fcd](https://www.github.com/werf/werf/commit/b859fcdadbd6e2273c9ed9cacdf3333422a28c4d))
+* skip-tls-verify-registry not working when publishing new client-id ([83e3838](https://www.github.com/werf/werf/commit/83e3838c6fd86423b0e9d640412c00b7ef68db00))
+
 ### [1.2.219](https://www.github.com/werf/werf/compare/v1.2.218...v1.2.219) (2023-03-29)
 
 
