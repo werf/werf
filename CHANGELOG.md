@@ -1,5 +1,17 @@
 # Changelog
 
+### [1.2.218](https://www.github.com/werf/werf/compare/v1.2.217...v1.2.218) (2023-04-28)
+
+
+### Bug Fixes
+
+* 'certificate signed by unknown authority' and not working skip-tls-verify-registry param ([5bef36e](https://www.github.com/werf/werf/commit/5bef36e18ab8f32fbd5859d549c5ac4f45e32268))
+* **docs:** install-and-run hide toc ([19061be](https://www.github.com/werf/werf/commit/19061be2f151ac295a491c6cc049fa9afa736ad6))
+* **docs:** new install-and-run ([319c356](https://www.github.com/werf/werf/commit/319c356e827a5d3aa10175cd0b8e9c66453cecca))
+* **multiarch:** do not override image metadata for secondary platforms ([881696f](https://www.github.com/werf/werf/commit/881696f548c527442e5d9dbe098c85b9d134be79))
+* **multiplatform:** images report contains correct digests [1.2.217] ([299dbf1](https://www.github.com/werf/werf/commit/299dbf1247be854e393f24f3b85dad95c8eb6c39))
+* skip-tls-verify-registry not working when publishing new client-id ([5af984d](https://www.github.com/werf/werf/commit/5af984d3711b2241c805d6089cc87307a123f31e))
+
 ### [1.2.217](https://www.github.com/werf/werf/compare/v1.2.216...v1.2.217) (2023-03-23)
 
 
