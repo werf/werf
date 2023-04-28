@@ -640,7 +640,7 @@ cli: &cli
 entries:
   en:
     f:
-      - title: Quickstart
+      - title: Install and run
         url: /index.html
 
       - title: Usage
@@ -774,7 +774,7 @@ entries:
 
   ru:
     f:
-      - title: Быстрый старт
+      - title: Установка и запуск
         url: /index.html
 
       - title: Использование
