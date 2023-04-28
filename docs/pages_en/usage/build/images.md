@@ -364,17 +364,17 @@ dependencies:
 
 During the build, werf will automatically insert the appropriate names and identifiers into the referenced build-arguments. werf will take care of all orchestration and dependency mapping and then build everything in one step (as part of the `werf build` command).
 
-## Building for target platform
+## Building for the target platform
 
-Using `--platform` parameter user can choose target platform for built images:
+The user can choose the target platform for the images to be built using the `--platform` parameter:
 
 ```shell
 werf build --platform linux/arm64
 ```
 
-— werf builds all final images from werf.yaml for the target platform using emulation.
+— werf builds all the final images from werf.yaml for the target platform using emulation.
 
-You can also set target platform with `build.platform` configuration directive:
+You can also set the target platform using the `build.platform` configuration directive:
 
 ```yaml
 # werf.yaml
@@ -391,15 +391,15 @@ image: backend
 dockerfile: backend/Dockerfile
 ```
 
-In this case running `werf build` command without parameters will start building images for the specified platform (explicitly passed `--platform` parameter redefines werf.yaml setting).
+In this case, running the `werf build` command without parameters will start the image build process for the specified platform (the explicitly passed `--platform` parameter will override the werf.yaml settings).
 
-> **NOTE:** Preparation of host-system for multiplatform building, and also additional information about multiplatform support for different syntaxes and backends are available [in the building process article]({{ "/usage/build/process.html" | true_relative_url }}).
+> **NOTE:** Refer to the [Build process]({{ "/usage/build/process.html" | true_relative_url }}) article for more information on multi-platform support for different syntaxes and backends, as well as on how to prepaare a host system for multi-platform builds.
 
-### Build multiplatform images
+### Building multiplatform images
 
-werf supports buildling of images for multiple platforms at the same time. In such case werf publishes special manifest into the container registry, this manifest includes built images for each specified target platform (when pulling such an image a client will receive image built for the client platform).
+werf supports simultaneous image building for multiple platforms. In this case, werf publishes a special manifest in the container registry, which includes the built images for each specified target platform (pulling such an image will provide the client with the image built for the client platform).
 
-Tou can define list of target platforms with such configuration:
+Here is how you can define a list of target platforms:
 
 ```yaml
 # werf.yaml
@@ -412,7 +412,7 @@ build:
   - linux/arm/v7
 ```
 
-This list also can be redefined by the `--platform` parameter like that:
+You can also override this list using the `--platform` parameter as follows:
 
 ```shell
 werf build --platform=linux/amd64,linux/i386
