@@ -1,5 +1,14 @@
 # Changelog
 
+### [1.2.230](https://www.github.com/werf/werf/compare/v1.2.229...v1.2.230) (2023-04-28)
+
+
+### Bug Fixes
+
+* **docs:** cleanup docs moved to install ([4afcf03](https://www.github.com/werf/werf/commit/4afcf032cdd56fc5dc266e65033c07717cb8b62c))
+* **logging:** doubling in build summary block with several sets ([59b7bf5](https://www.github.com/werf/werf/commit/59b7bf5b6502cf02e0212188ed3dbacdb4240d5e))
+* speedup docs development ([2dc150a](https://www.github.com/werf/werf/commit/2dc150abfc3219529ae9f3879762b8f18cbb0bb6))
+
 ### [1.2.229](https://www.github.com/werf/werf/compare/v1.2.228...v1.2.229) (2023-04-27)
 
 
