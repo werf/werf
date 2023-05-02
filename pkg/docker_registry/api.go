@@ -156,12 +156,12 @@ func (api *api) getRepoImageByDesc(ctx context.Context, originalTag string, desc
 
 		for _, desc := range im.Manifests {
 			subref := fmt.Sprintf("%s@%s", repoImage.Repository, desc.Digest)
-			subDesc, _, err := api.getImageDesc(subref)
+			subdesc, _, err := api.getImageDesc(subref)
 			if err != nil {
 				return nil, fmt.Errorf("error getting image %s manifest: %w", subref, err)
 			}
 
-			subInfo, err := api.getRepoImageByDesc(ctx, originalTag, subDesc)
+			subInfo, err := api.getRepoImageByDesc(ctx, originalTag, subdesc)
 			if err != nil {
 				return nil, fmt.Errorf("error getting image %s descriptor: %w", subref, err)
 			}
@@ -252,43 +252,148 @@ func (api *api) deleteImageByReference(ctx context.Context, reference string) er
 	return nil
 }
 
-func (api *api) MutateAndPushImage(_ context.Context, sourceReference, destinationReference string, mutateConfigFunc func(cfg v1.Config) (v1.Config, error)) error {
+func (api *api) mutateImageOrIndex(ctx context.Context, imageOrIndex interface{}, mutateManifestConfigFunc func(cfg v1.Config) (v1.Config, error), ref name.Reference, isRefByDigest bool) (interface{}, error) {
+	switch i := imageOrIndex.(type) {
+	case v1.Image:
+		cf, err := i.ConfigFile()
+		if err != nil {
+			return nil, fmt.Errorf("error reading config file: %w", err)
+		}
+		newconf, err := mutateManifestConfigFunc(cf.Config)
+		if err != nil {
+			return nil, err
+		}
+		newimg, err := mutate.Config(i, newconf)
+		if err != nil {
+			return nil, fmt.Errorf("unable to mutate image config: %w", err)
+		}
+		newdigest, err := newimg.Digest()
+		if err != nil {
+			return nil, fmt.Errorf("unable to get new image digest: %w", err)
+		}
+		var destref name.Reference
+		if isRefByDigest {
+			destref = ref.Context().Digest(newdigest.String())
+		} else {
+			destref = ref
+		}
+		if err := api.writeToRemote(ctx, destref, newimg); err != nil {
+			return nil, fmt.Errorf("unable to write image: %w", err)
+		}
+		return newimg, nil
+	case v1.ImageIndex:
+		indexManifest, err := i.IndexManifest()
+		if err != nil {
+			return nil, fmt.Errorf("getting image index manifest: %w", err)
+		}
+
+		var newii v1.ImageIndex
+		newii = empty.Index
+		newii = mutate.IndexMediaType(newii, types.DockerManifestList)
+		newiiadds := make([]mutate.IndexAddendum, 0, len(indexManifest.Manifests))
+
+		for _, desc := range indexManifest.Manifests {
+			subref := ref.Context().Digest(desc.Digest.String())
+			switch {
+			case desc.MediaType.IsIndex():
+				subii, err := i.ImageIndex(desc.Digest)
+				if err != nil {
+					return nil, fmt.Errorf("getting manifest list index by digest %s: %w", desc.Digest, err)
+				}
+				var newsubii v1.ImageIndex
+				if ret, err := api.mutateImageOrIndex(ctx, subii, mutateManifestConfigFunc, subref, true); err != nil {
+					return nil, fmt.Errorf("unable to mutate index %s from manifest list: %w", subref, err)
+				} else {
+					newsubii = ret.(v1.ImageIndex)
+				}
+				newdesc, err := partial.Descriptor(newsubii)
+				if err != nil {
+					return nil, fmt.Errorf("unable to create image index descriptor of %s: %w", subref, err)
+				}
+
+				newiiadds = append(newiiadds, mutate.IndexAddendum{
+					Add:        newsubii,
+					Descriptor: *newdesc,
+				})
+			case desc.MediaType.IsImage():
+				subimg, err := i.Image(desc.Digest)
+				if err != nil {
+					return nil, fmt.Errorf("getting image by digest %s: %w", desc.Digest, err)
+				}
+				var newsubimg v1.Image
+				if ret, err := api.mutateImageOrIndex(ctx, subimg, mutateManifestConfigFunc, subref, true); err != nil {
+					return nil, fmt.Errorf("unable to mutate image %s from manifest list: %w", subref, err)
+				} else {
+					newsubimg = ret.(v1.Image)
+				}
+				newsubcf, err := newsubimg.ConfigFile()
+				if err != nil {
+					return nil, fmt.Errorf("unable to get config file of %s: %w", subref, err)
+				}
+				newdesc, err := partial.Descriptor(newsubimg)
+				if err != nil {
+					return nil, fmt.Errorf("unable to create image descriptor of %q: %w", subref, err)
+				}
+				newdesc.Platform = newsubcf.Platform()
+
+				newiiadds = append(newiiadds, mutate.IndexAddendum{
+					Add:        newsubimg,
+					Descriptor: *newdesc,
+				})
+			default:
+				return nil, fmt.Errorf("unsupported media type %q: %w", desc.MediaType, err)
+			}
+		}
+
+		newii = mutate.AppendManifests(newii, newiiadds...)
+		newdigest, err := newii.Digest()
+		if err != nil {
+			return nil, fmt.Errorf("error getting new image index digest: %w", err)
+		}
+		var destref name.Reference
+		if isRefByDigest {
+			destref = ref.Context().Digest(newdigest.String())
+		} else {
+			destref = ref
+		}
+		if err := api.writeToRemote(ctx, destref, newii); err != nil {
+			return nil, fmt.Errorf("unable to write index: %w", err)
+		}
+		return newii, nil
+	default:
+		panic("unexpected condition")
+	}
+}
+
+func (api *api) MutateAndPushImage(ctx context.Context, sourceReference, destinationReference string, mutateManifestConfigFunc func(cfg v1.Config) (v1.Config, error)) error {
+	dstRef, err := name.ParseReference(destinationReference, api.parseReferenceOptions()...)
+	if err != nil {
+		return fmt.Errorf("parsing reference %q: %w", destinationReference, err)
+	}
+	_, isDstDigest := dstRef.(name.Digest)
+
 	desc, _, err := api.getImageDesc(sourceReference)
 	if err != nil {
 		return fmt.Errorf("error reading image %q: %w", sourceReference, err)
 	}
-
-	if desc.MediaType.IsIndex() {
-		panic("unexpected condition, please report a bug")
-	}
-
-	img, err := desc.Image()
-	if err != nil {
-		return fmt.Errorf("error getting image manifest: %w", err)
-	}
-
-	cfgFile, err := img.ConfigFile()
-	if err != nil {
-		return fmt.Errorf("error reading config file %q: %w", sourceReference, err)
-	}
-
-	newConf, err := mutateConfigFunc(cfgFile.Config)
-	if err != nil {
+	switch {
+	case desc.MediaType.IsIndex():
+		ii, err := desc.ImageIndex()
+		if err != nil {
+			return fmt.Errorf("getting image index: %w", err)
+		}
+		_, err = api.mutateImageOrIndex(ctx, ii, mutateManifestConfigFunc, dstRef, isDstDigest)
 		return err
+	case desc.MediaType.IsImage():
+		img, err := desc.Image()
+		if err != nil {
+			return fmt.Errorf("error getting image manifest: %w", err)
+		}
+		_, err = api.mutateImageOrIndex(ctx, img, mutateManifestConfigFunc, dstRef, isDstDigest)
+		return err
+	default:
+		return fmt.Errorf("unsupported media type %q: %w", desc.MediaType, err)
 	}
-	newImg, err := mutate.Config(img, newConf)
-	if err != nil {
-		return fmt.Errorf("unable to mutate image config: %w", err)
-	}
-
-	ref, err := name.ParseReference(destinationReference, api.parseReferenceOptions()...)
-	if err != nil {
-		return fmt.Errorf("parsing reference %q: %w", destinationReference, err)
-	}
-	if err = remote.Write(ref, newImg, remote.WithAuthFromKeychain(authn.DefaultKeychain)); err != nil {
-		return fmt.Errorf("unable to write %q: %w", ref, err)
-	}
-	return nil
 }
 
 func (api *api) CopyImage(ctx context.Context, sourceReference, destinationReference string, opts CopyImageOptions) error {
@@ -296,28 +401,29 @@ func (api *api) CopyImage(ctx context.Context, sourceReference, destinationRefer
 	if err != nil {
 		return fmt.Errorf("parsing reference %q: %w", destinationReference, err)
 	}
-
 	desc, _, err := api.getImageDesc(sourceReference)
 	if err != nil {
 		return fmt.Errorf("unable to get image %s: %w", sourceReference, err)
 	}
-
-	if desc.MediaType.IsIndex() {
+	switch {
+	case desc.MediaType.IsIndex():
 		ii, err := desc.ImageIndex()
 		if err != nil {
 			return fmt.Errorf("getting image index %s: %w", sourceReference, err)
 		}
-		if err = remote.WriteIndex(dstRef, ii, remote.WithAuthFromKeychain(authn.DefaultKeychain)); err != nil {
+		if err := api.writeToRemote(ctx, dstRef, ii); err != nil {
 			return fmt.Errorf("unable to write %s: %w", dstRef, err)
 		}
-	} else {
+	case desc.MediaType.IsImage():
 		img, err := desc.Image()
 		if err != nil {
 			return fmt.Errorf("getting image manifest %s: %w", sourceReference, err)
 		}
-		if err = remote.Write(dstRef, img, remote.WithAuthFromKeychain(authn.DefaultKeychain)); err != nil {
+		if err := api.writeToRemote(ctx, dstRef, img); err != nil {
 			return fmt.Errorf("unable to write %s: %w", dstRef, err)
 		}
+	default:
+		return fmt.Errorf("unsupported media type %q: %w", desc.MediaType, err)
 	}
 
 	return nil
@@ -502,16 +608,29 @@ attemptLoop:
 	return fmt.Errorf("retries limit reached: %w", err)
 }
 
-func (api *api) writeToRemote(ctx context.Context, ref name.Reference, img v1.Image) error {
+func (api *api) writeToRemote(ctx context.Context, ref name.Reference, imageOrIndex interface{}) error {
 	c := make(chan v1.Update, 200)
 
-	go remote.Write(
-		ref, img,
-		remote.WithAuthFromKeychain(authn.DefaultKeychain),
-		remote.WithProgress(c),
-		remote.WithTransport(api.getHttpTransport()),
-		remote.WithContext(ctx),
-	)
+	switch i := imageOrIndex.(type) {
+	case v1.Image:
+		go remote.Write(
+			ref, i,
+			remote.WithAuthFromKeychain(authn.DefaultKeychain),
+			remote.WithProgress(c),
+			remote.WithTransport(api.getHttpTransport()),
+			remote.WithContext(ctx),
+		)
+	case v1.ImageIndex:
+		go remote.WriteIndex(
+			ref, i,
+			remote.WithAuthFromKeychain(authn.DefaultKeychain),
+			remote.WithProgress(c),
+			remote.WithTransport(api.getHttpTransport()),
+			remote.WithContext(ctx),
+		)
+	default:
+		panic(fmt.Sprintf("unexpected object type %#v", i))
+	}
 
 	for upd := range c {
 		switch {
@@ -602,19 +721,17 @@ func (api *api) PushManifestList(ctx context.Context, reference string, opts Man
 		if err != nil {
 			return fmt.Errorf("unable to get config file of %q: %w", info.Name, err)
 		}
-		newDesc, err := partial.Descriptor(img)
+		newdesc, err := partial.Descriptor(img)
 		if err != nil {
 			return fmt.Errorf("unable to create image descriptor of %q: %w", info.Name, err)
 		}
-		newDesc.Platform = cf.Platform()
+		newdesc.Platform = cf.Platform()
 
 		adds = append(adds, mutate.IndexAddendum{
 			Add:        img,
-			Descriptor: *newDesc,
+			Descriptor: *newdesc,
 		})
 	}
-
-	ii = mutate.AppendManifests(ii, adds...)
 
 	// TODO(multiarch): research whether we could use digest-only manifest writing mode
 	// digest, err := ii.Digest()
@@ -625,10 +742,10 @@ func (api *api) PushManifestList(ctx context.Context, reference string, opts Man
 	// 		ref = ref.Context().Digest(digest.String())
 	// }
 
-	if err := remote.WriteIndex(manifestListRef, ii, api.defaultRemoteOptions(ctx)...); err != nil {
+	ii = mutate.AppendManifests(ii, adds...)
+	if err := api.writeToRemote(ctx, manifestListRef, ii); err != nil {
 		return fmt.Errorf("unable to write manifest %q: %w", manifestListRef, err)
 	}
-
 	return nil
 }
 
