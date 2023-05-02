@@ -411,6 +411,11 @@ func (api *api) CopyImage(ctx context.Context, sourceReference, destinationRefer
 		if err != nil {
 			return fmt.Errorf("getting image index %s: %w", sourceReference, err)
 		}
+		digest, err := ii.Digest()
+		if err != nil {
+			return fmt.Errorf("getting image index %s digest: %w", sourceReference, err)
+		}
+		logboek.Context(ctx).Debug().LogF("-- CopyImage writing index ref:%q digest:%q\n", dstRef, digest)
 		if err := api.writeToRemote(ctx, dstRef, ii); err != nil {
 			return fmt.Errorf("unable to write %s: %w", dstRef, err)
 		}
@@ -419,13 +424,17 @@ func (api *api) CopyImage(ctx context.Context, sourceReference, destinationRefer
 		if err != nil {
 			return fmt.Errorf("getting image manifest %s: %w", sourceReference, err)
 		}
+		digest, err := img.Digest()
+		if err != nil {
+			return fmt.Errorf("getting image %s digest: %w", sourceReference, err)
+		}
+		logboek.Context(ctx).Debug().LogF("-- CopyImage writing image ref:%q digest:%q\n", dstRef, digest)
 		if err := api.writeToRemote(ctx, dstRef, img); err != nil {
 			return fmt.Errorf("unable to write %s: %w", dstRef, err)
 		}
 	default:
 		return fmt.Errorf("unsupported media type %q: %w", desc.MediaType, err)
 	}
-
 	return nil
 }
 
@@ -743,6 +752,13 @@ func (api *api) PushManifestList(ctx context.Context, reference string, opts Man
 	// }
 
 	ii = mutate.AppendManifests(ii, adds...)
+
+	digest, err := ii.Digest()
+	if err != nil {
+		return fmt.Errorf("error getting image index digest: %w", err)
+	}
+	logboek.Context(ctx).Debug().LogF("-- PushManifestList ref:%q digest:%q\n", manifestListRef, digest)
+
 	if err := api.writeToRemote(ctx, manifestListRef, ii); err != nil {
 		return fmt.Errorf("unable to write manifest %q: %w", manifestListRef, err)
 	}
