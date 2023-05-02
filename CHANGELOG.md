@@ -1,5 +1,17 @@
 # Changelog
 
+### [1.2.231](https://www.github.com/werf/werf/compare/v1.2.230...v1.2.231) (2023-05-02)
+
+
+### Features
+
+* **multiarch:** working werf-export command in multiarch mode ([a699230](https://www.github.com/werf/werf/commit/a6992306d500511c4b29145e7387d37b5adf9fc6))
+
+
+### Bug Fixes
+
+* restore data-parent attribute ([#5600](https://www.github.com/werf/werf/issues/5600)) ([ecb72d2](https://www.github.com/werf/werf/commit/ecb72d234d08395a4d796a3d3c5117f927fd0c26))
+
 ### [1.2.230](https://www.github.com/werf/werf/compare/v1.2.229...v1.2.230) (2023-04-28)
 
 
