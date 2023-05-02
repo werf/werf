@@ -4,7 +4,7 @@
   <nav class="sidebar__container">
     <ul class="sidebar" id="mysidebar">
       {%- for entry in sidebar.f %}
-        {% include sidebar_entry.html entry=entry folder_entry_class="sidebar__item sidebar__item_parent" item_entry_class="sidebar__item" data_attr="data-parent" is_404=include.is_404 %}
+        {% include sidebar_entry.html entry=entry folder_entry_class="sidebar__item sidebar__item_parent" item_entry_class="sidebar__item" data_attr="data-parent" is_404=include.is_404 is_root=include.is_root %}
       {%- endfor %}
     </ul>
   </nav>
