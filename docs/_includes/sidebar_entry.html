@@ -1,13 +1,14 @@
 {%- assign entry = include.entry %}
 {%- assign folder_entry_class = include.folder_entry_class %}
 {%- assign item_entry_class = include.item_entry_class %}
+{%- assign data_attr = include.data_attr %}
 
 {%- if entry.hot == true %}
     {%- assign item_entry_class = item_entry_class | append: ' sidebar__item_hot' %}
 {%- endif %}
 
 {%- if entry.f %}
-<li class="{{ folder_entry_class }}">
+<li class="{{ folder_entry_class }}" {{ data_attr }}>
     <a href="#">{{ entry.title }}{{ entry.url }}</a>
     <ul class="sidebar__submenu">
         {%- for entry in entry.f %}
