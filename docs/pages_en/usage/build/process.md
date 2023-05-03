@@ -306,13 +306,7 @@ werf converge --repo registry.mydomain.org/repo --synchronization :local
 
 ## Multiplatform builds
 
-Multiplatform builds use the cross-platform instruction execution mechanics provided by the [Linux kernel](https://en.wikipedia.org/wiki/Binfmt_misc) and the QEMU emulator. The easiest way to register emulators for most architectures on your host system is to use the `qemu-user-static` image:
-
-```shell
-docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
-```
-
-[List of supported architectures](https://www.qemu.org/docs/master/about/emulation.html).
+Multiplatform builds use the cross-platform instruction execution mechanics provided by the [Linux kernel](https://en.wikipedia.org/wiki/Binfmt_misc) and the QEMU emulator. [List of supported architectures](https://www.qemu.org/docs/master/about/emulation.html). Refer to the [Installation]({{ "index.html" | true_relative_url }}) for more information about preparing host system for cross-platform builds.
 
 The table below summarizes support of multiplatform building for different configuration syntaxes, building modes, and build backends:
 
