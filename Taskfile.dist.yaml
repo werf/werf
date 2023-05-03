@@ -528,3 +528,52 @@ tasks:
           git signatures show {{.CLI_ARGS}} $ref
         done
       - git signatures push {{.CLI_ARGS}}
+
+  docker:network:create:
+    desc: 'Create shared docker network werfio-dev to use with werf/website'
+    vars:
+      NETWORK_NAME: werfio-dev
+    cmds:
+      - docker network create -d=bridge {{.NETWORK_NAME}}
+    status:
+      - docker network inspect {{.NETWORK_NAME}}
+
+  _compose:up:
+    deps:
+      - docker:network:create
+    cmds:
+      - |
+        services="{{ .lang }}"
+        services=${services:-"en ru"}
+        if [[ "yes" == "{{.standalone}}" ]] ; then
+          services="${services} front"
+        fi
+
+        # Run compose up in docs directory.
+        cd docs
+        which werf >/dev/null || source $(trdl use werf 1.2 beta)
+        werf compose up jekyll_base --dev --docker-compose-command-options="$services" --platform=linux/amd64 || true
+
+  compose:up:standalone:
+    desc: 'Run jekyll in werf compose for content editing without werf/website (scripts/styles/images are proxied from werf.io). Use lang=en or lang=ru to run only specified lang.'
+    cmds:
+      - task: _compose:up
+        vars:
+          standalone: 'yes'
+
+  compose:up:
+    desc: 'Run jekyll in werf compose for local development. Use lang=en or lang=ru to run only specified lang. Run task compose:up in werf/website repository to access documentation.'
+    cmds:
+      - task: _compose:up
+        vars:
+          standalone: 'no'
+
+  compose:down:
+    desc: 'Stop and clean after werf compose'
+    cmds:
+      - |
+        cd docs
+        which werf >/dev/null || source $(trdl use werf 1.2 beta)
+        # Workaround: set image variable to stub image.
+        WERF_JEKYLL_BASE_DOCKER_IMAGE_NAME=nginx:latest \
+        werf compose down
