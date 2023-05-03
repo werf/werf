@@ -230,7 +230,9 @@ import:
 
 For more info on how to write Stapel instructions refer to the [documentation]({{"usage/build/stapel/base.html" | true_relative_url }}).
 
-## Inheriting images and importing files
+## Linking images
+
+### Inheritance and importing files
 
 A multi-stage mechanism allows you to define a separate image stage in a Dockerfile and use it as a basis for another image or copy individual files from it.
 
@@ -298,7 +300,7 @@ COPY --from=${BUILDER_IMAGE} /app/bin /app/bin
 CMD [ "/app/bin/server", "server" ]
 ```
 
-## Passing information about the built image to another image
+### Passing information about the built image to another image
 
 werf allows you to get information about the built image when building another image. Suppose, the build instructions of the `app` image require the names and digests of the `auth` and `controlplane` images published in the container registry. The configuration in this case would look like this:
 
@@ -364,7 +366,13 @@ dependencies:
 
 During the build, werf will automatically insert the appropriate names and identifiers into the referenced build-arguments. werf will take care of all orchestration and dependency mapping and then build everything in one step (as part of the `werf build` command).
 
-## Building for the target platform
+## Multi-platform and cross-platform building
+
+werf can build images for either the native host platform where werf have started, or for arbitrary platform in cross-platform mode using emulation. Also it is possible to build images for multiple platforms at the same time (i.e. manifest-list images).
+
+> **NOTE:** Refer to the [Installation]({{ "index.html" | true_relative_url }}) for more information about preparing host system for cross-platform builds, and [Build process]({{ "/usage/build/process.html" | true_relative_url }}) for more information on multi-platform support for different syntaxes and backends.
+
+### Building for single target platform
 
 The user can choose the target platform for the images to be built using the `--platform` parameter:
 
@@ -393,9 +401,7 @@ dockerfile: backend/Dockerfile
 
 In this case, running the `werf build` command without parameters will start the image build process for the specified platform (the explicitly passed `--platform` parameter will override the werf.yaml settings).
 
-> **NOTE:** Refer to the [Build process]({{ "/usage/build/process.html" | true_relative_url }}) article for more information on multi-platform support for different syntaxes and backends, as well as on how to prepaare a host system for multi-platform builds.
-
-### Building multiplatform images
+### Building for multiple target platforms
 
 werf supports simultaneous image building for multiple platforms. In this case, werf publishes a special manifest in the container registry, which includes the built images for each specified target platform (pulling such an image will provide the client with the image built for the client platform).
 

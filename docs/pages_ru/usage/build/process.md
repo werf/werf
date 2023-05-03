@@ -306,13 +306,7 @@ werf converge --repo registry.mydomain.org/repo --synchronization :local
 
 ## Мультиплатформенная сборка
 
-Мультиплатформенная сборка использует механизмы кроссплатформенного исполнения инструкций, предоставляемые [ядром Linux](https://en.wikipedia.org/wiki/Binfmt_misc) и эмулятором QEMU. Самый простой способ зарегистрировать в хост-системе эмуляторы для большинства архитектур — воспользоваться образом `qemu-user-static`:
-
-```shell
-docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
-```
-
-[Перечень поддерживаемых архитектур](https://www.qemu.org/docs/master/about/emulation.html).
+Мультиплатформенная сборка использует механизмы кроссплатформенного исполнения инструкций, предоставляемые [ядром Linux](https://en.wikipedia.org/wiki/Binfmt_misc) и эмулятором QEMU. [Перечень поддерживаемых архитектур](https://www.qemu.org/docs/master/about/emulation.html). Подготовка хост-системы для мультиплатформенной сборки рассмотрена [в разделе установки werf]({{ "index.html" | true_relative_url }})
 
 Поддержка мультиплатформенной сборки для разных вариантов синтаксиса сборки, режимов сборки и используемого бекенда:
 
