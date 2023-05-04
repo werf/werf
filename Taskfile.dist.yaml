@@ -530,7 +530,7 @@ tasks:
       - git signatures push {{.CLI_ARGS}}
 
   docker:network:create:
-    desc: 'Create shared docker network werfio-dev to use with werf/website'
+    desc: "Create shared docker network werfio-dev to use with werf/website"
     vars:
       NETWORK_NAME: werfio-dev
     cmds:
@@ -555,21 +555,21 @@ tasks:
         werf compose up jekyll_base --dev --docker-compose-command-options="$services" --platform=linux/amd64 || true
 
   compose:up:standalone:
-    desc: 'Run jekyll in werf compose for content editing without werf/website (scripts/styles/images are proxied from werf.io). Use lang=en or lang=ru to run only specified lang.'
+    desc: "Run jekyll in werf compose for content editing without werf/website (scripts/styles/images are proxied from werf.io). Use lang=en or lang=ru to run only specified lang."
     cmds:
       - task: _compose:up
         vars:
-          standalone: 'yes'
+          standalone: "yes"
 
   compose:up:
-    desc: 'Run jekyll in werf compose for local development. Use lang=en or lang=ru to run only specified lang. Run task compose:up in werf/website repository to access documentation.'
+    desc: "Run jekyll in werf compose for local development. Use lang=en or lang=ru to run only specified lang. Run task compose:up in werf/website repository to access documentation."
     cmds:
       - task: _compose:up
         vars:
-          standalone: 'no'
+          standalone: "no"
 
   compose:down:
-    desc: 'Stop and clean after werf compose'
+    desc: "Stop and clean after werf compose"
     cmds:
       - |
         cd docs
