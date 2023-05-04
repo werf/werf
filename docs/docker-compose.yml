@@ -11,6 +11,11 @@ services:
       jekyll serve --disable-disk-cache --config _config.yml --destination /tmp/_site -P 80 --profile --trace --watch"
     volumes:
       - "./:/app/:cached"
+    networks:
+      default:
+        aliases:
+          - docs-en
+
   ru:
     image: $WERF_JEKYLL_BASE_DOCKER_IMAGE_NAME
     working_dir: "/app"
@@ -23,6 +28,10 @@ services:
       - "./:/app/:cached"
     depends_on:
       - en
+    networks:
+      default:
+        aliases:
+          - docs-ru
 
   front:
     image: nginx:latest
@@ -33,3 +42,10 @@ services:
     depends_on:
       - ru
       - en
+    profiles:
+      - quick
+
+networks:
+  default:
+    name: werfio-dev
+    external: true

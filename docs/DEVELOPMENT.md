@@ -7,29 +7,32 @@ ___
 
 ### Run the documentation part of the site locally
 
-#### Variant 1
+#### Variant 1 (full)
 
-Run `jekyll serve` with --watch option to test changes in "real time".
+Run `jekyll serve` with --watch option to test changes in "real time". Requires to run werf compose in werf/website to access documentation in browser.
 
 - Install [werf](http://werf.io/installation.html).
+- Install [task](https://taskfile.dev/installation/).
 - Run:
   ```shell
-  werf compose up jekyll_base --dev
+  task compose:up
   ```
-- Or run with specific architecture (e.g. ARM-based Macbooks):
+- Wait (approximately 60 seconds) for the message "done in X.XXX seconds" from the `docs-en-1` and `docs-ru-1` containers.
+- Run werf/website:
   ```shell
-  werf compose up jekyll_base --dev --platform='linux/amd64'
+  cd ../website
+  task compose:up
   ```
-- Wait (approximately 60 seconds) for the message "done in X.XXX seconds" from the `docs-en-1` and `docs-ru-1` containers.   
 - Check the English version is available on [https://localhost](http://localhost), and the Russian version on [http://ru.localhost](https://ru.localhost) (add `ru.localhost` record in your `/etc/hosts` to access the Russian version of the site). 
 
-#### Variant 2 (slower)
+#### Variant 2 (standalone)
 
-Run fully built 'web' image.
+Run `jekyll serve` with --watch option to test changes in "real time". Use scripts/styles/images from werf.io site.
 
 - Install [werf](http://werf.io/installation.html). 
+- Install [task](https://taskfile.dev/installation/)
 - Run (add `--follow --docker-compose-command-options="-d"` if necessary):
   ```shell
-  werf compose up --docker-compose-options="-f docker-compose-slow.yml" --dev
+  task compose:up:standalone
   ```
 - Check the English version is available on [https://localhost](http://localhost), and the Russian version on [http://ru.localhost](https://ru.localhost) (add `ru.localhost` record in your `/etc/hosts` to access the Russian version of the site). 
