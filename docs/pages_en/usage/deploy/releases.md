@@ -11,7 +11,7 @@ From a technical point of view, werf releases are Helm 3 releases and therefore 
 
 ## Automatic release name generation (werf only)
 
-By default, the release name is generated automatically using a special pattern `[[ project ]]-[[ env ]]`, where `[ project ]]` is the werf project name and `[ env ]]` is the environment name, for example:
+By default, the release name is generated automatically using a special pattern `[[ project ]]-[[ env ]]`, where `project` is the werf project name and `env` is the environment name, for example:
 
 ```yaml
 # werf.yaml:
