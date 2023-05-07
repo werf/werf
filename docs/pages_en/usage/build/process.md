@@ -304,11 +304,11 @@ werf converge --repo registry.mydomain.org/repo --synchronization :local
 
 > **NOTE:** This method is only suitable if all werf runs are triggered by the same runner in your CI/CD system.
 
-## Multiplatform builds
+## Multi-platform builds
 
-Multiplatform builds use the cross-platform instruction execution mechanics provided by the [Linux kernel](https://en.wikipedia.org/wiki/Binfmt_misc) and the QEMU emulator. [List of supported architectures](https://www.qemu.org/docs/master/about/emulation.html). Refer to the [Installation]({{ "index.html" | true_relative_url }}) for more information about preparing host system for cross-platform builds.
+Multi-platform builds use the cross-platform instruction execution mechanics provided by the [Linux kernel](https://en.wikipedia.org/wiki/Binfmt_misc) and the QEMU emulator. [List of supported architectures](https://www.qemu.org/docs/master/about/emulation.html). Refer to the [Installation]({{ "index.html" | true_relative_url }}) for more information about preparing host system for cross-platform builds.
 
-The table below summarizes support of multiplatform building for different configuration syntaxes, building modes, and build backends:
+The table below summarizes support of multi-platform building for different configuration syntaxes, building modes, and build backends:
 
 |                         | buildah        | docker-server      |
 |---                      |---             |---                 |
