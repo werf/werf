@@ -21,6 +21,7 @@ type rawStapelImage struct {
 	RawDocker        *rawDocker       `yaml:"docker,omitempty"`
 	RawImport        []*rawImport     `yaml:"import,omitempty"`
 	RawDependencies  []*rawDependency `yaml:"dependencies,omitempty"`
+	Platform         []string         `yaml:"platform,omitempty"`
 
 	doc *doc `yaml:"-"` // parent
 
@@ -213,6 +214,7 @@ func (c *rawStapelImage) toStapelImageBaseDirective(giterminismManager gitermini
 	imageBase.FromArtifactName = c.FromArtifact
 	imageBase.FromLatest = c.FromLatest
 	imageBase.FromCacheVersion = c.FromCacheVersion
+	imageBase.Platform = append([]string{}, c.Platform...)
 
 	for _, git := range c.RawGit {
 		if git.gitType() == "local" {

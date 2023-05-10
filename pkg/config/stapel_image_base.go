@@ -21,6 +21,7 @@ type StapelImageBase struct {
 	Mount            []*Mount
 	Import           []*Import
 	Dependencies     []*Dependency
+	Platform         []string
 
 	raw *rawStapelImage
 }

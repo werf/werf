@@ -187,17 +187,40 @@ func (phase *BuildPhase) BeforeImages(ctx context.Context) error {
 }
 
 func (phase *BuildPhase) AfterImages(ctx context.Context) error {
-	targetPlatforms, err := phase.Conveyor.GetTargetPlatforms()
+	forcedTargetPlatforms := phase.Conveyor.GetForcedTargetPlatforms()
+	commonTargetPlatforms, err := phase.Conveyor.GetTargetPlatforms()
 	if err != nil {
-		return fmt.Errorf("unable to get target platforms: %w", err)
+		return fmt.Errorf("invalid common target platforms: %w", err)
 	}
-	if len(targetPlatforms) == 0 {
-		targetPlatforms = []string{phase.Conveyor.ContainerBackend.GetDefaultPlatform()}
+	if len(commonTargetPlatforms) == 0 {
+		commonTargetPlatforms = []string{phase.Conveyor.ContainerBackend.GetDefaultPlatform()}
 	}
 
 	for _, desc := range phase.Conveyor.imagesTree.GetImagesByName(false) {
 		name, images := desc.Unpair()
 		platforms := util.MapFuncToSlice(images, func(img *image.Image) string { return img.TargetPlatform })
+
+		// TODO: this target platforms assertion could be removed in future versions and now exists only as a additional self-testing code
+		var targetPlatforms []string
+		if len(forcedTargetPlatforms) > 0 {
+			targetPlatforms = forcedTargetPlatforms
+		} else {
+			targetName := name
+			nameParts := strings.SplitN(name, "/", 3)
+			if len(nameParts) == 3 && nameParts[1] == "stage" {
+				targetName = nameParts[0]
+			}
+
+			imageTargetPlatforms, err := phase.Conveyor.GetImageTargetPlatforms(targetName)
+			if err != nil {
+				return fmt.Errorf("invalid image %q target platforms: %w", name, err)
+			}
+			if len(imageTargetPlatforms) > 0 {
+				targetPlatforms = imageTargetPlatforms
+			} else {
+				targetPlatforms = commonTargetPlatforms
+			}
+		}
 
 	AssertAllTargetPlatformsPresent:
 		for _, targetPlatform := range targetPlatforms {
@@ -426,49 +449,38 @@ func (phase *BuildPhase) publishMultiplatformImageMetadata(ctx context.Context, 
 }
 
 func (phase *BuildPhase) createReport(ctx context.Context) error {
-	targetPlatforms, err := phase.Conveyor.GetTargetPlatforms()
-	if err != nil {
-		return fmt.Errorf("invalid target platforms: %w", err)
-	}
-	if len(targetPlatforms) == 0 {
-		targetPlatforms = []string{phase.Conveyor.ContainerBackend.GetDefaultPlatform()}
-	}
+	for _, desc := range phase.Conveyor.imagesTree.GetImagesByName(true) {
+		name, images := desc.Unpair()
+		targetPlatforms := util.MapFuncToSlice(images, func(img *image.Image) string { return img.TargetPlatform })
 
-	for _, img := range phase.Conveyor.imagesTree.GetImages() {
-		if !img.IsFinal() {
-			continue
+		for _, img := range images {
+			stageImage := img.GetLastNonEmptyStage().GetStageImage().Image
+			desc := stageImage.GetFinalStageDescription()
+			if desc == nil {
+				desc = stageImage.GetStageDescription()
+			}
+
+			record := ReportImageRecord{
+				WerfImageName:     img.GetName(),
+				DockerRepo:        desc.Info.Repository,
+				DockerTag:         desc.Info.Tag,
+				DockerImageID:     desc.Info.ID,
+				DockerImageDigest: desc.Info.RepoDigest,
+				DockerImageName:   desc.Info.Name,
+				Rebuilt:           img.GetRebuilt(),
+			}
+
+			if os.Getenv("WERF_ENABLE_REPORT_BY_PLATFORM") == "1" {
+				phase.ImagesReport.SetImageByPlatformRecord(img.TargetPlatform, img.GetName(), record)
+			}
+			if len(targetPlatforms) == 1 {
+				phase.ImagesReport.SetImageRecord(img.Name, record)
+			}
 		}
 
-		stageImage := img.GetLastNonEmptyStage().GetStageImage().Image
-		desc := stageImage.GetFinalStageDescription()
-		if desc == nil {
-			desc = stageImage.GetStageDescription()
-		}
-
-		record := ReportImageRecord{
-			WerfImageName:     img.GetName(),
-			DockerRepo:        desc.Info.Repository,
-			DockerTag:         desc.Info.Tag,
-			DockerImageID:     desc.Info.ID,
-			DockerImageDigest: desc.Info.RepoDigest,
-			DockerImageName:   desc.Info.Name,
-			Rebuilt:           img.GetRebuilt(),
-		}
-
-		if os.Getenv("WERF_ENABLE_REPORT_BY_PLATFORM") == "1" {
-			phase.ImagesReport.SetImageByPlatformRecord(img.TargetPlatform, img.GetName(), record)
-		}
-		if len(targetPlatforms) == 1 {
-			phase.ImagesReport.SetImageRecord(img.Name, record)
-		}
-	}
-
-	if _, isLocal := phase.Conveyor.StorageManager.GetStagesStorage().(*storage.LocalStagesStorage); !isLocal {
-		if len(targetPlatforms) > 1 {
-			for _, img := range phase.Conveyor.imagesTree.GetMultiplatformImages() {
-				if !img.IsFinal() {
-					continue
-				}
+		if _, isLocal := phase.Conveyor.StorageManager.GetStagesStorage().(*storage.LocalStagesStorage); !isLocal {
+			if len(targetPlatforms) > 1 {
+				img := phase.Conveyor.imagesTree.GetMultiplatformImage(name)
 
 				isRebuilt := false
 				for _, pImg := range img.Images {

@@ -19,6 +19,7 @@ type ImageFromDockerfile struct {
 	SSH             string
 	Dependencies    []*Dependency
 	Staged          bool
+	Platform        []string
 
 	raw *rawImageFromDockerfile
 }

@@ -121,23 +121,44 @@ func NewConveyor(werfConfig *config.WerfConfig, giterminismManager giterminism_m
 	return c
 }
 
-func (c *Conveyor) GetTargetPlatforms() ([]string, error) {
-	if len(c.ConveyorOptions.TargetPlatforms) > 0 {
-		return c.ConveyorOptions.TargetPlatforms, nil
-	}
-
-	for _, p := range c.werfConfig.Meta.Build.Platform {
+func validatePlatforms(platforms []string) error {
+	for _, p := range platforms {
 		parts := strings.Split(p, ",")
 		if len(parts) > 1 {
-			return nil, fmt.Errorf("invalid platform specified %q: specify multiple platforms using yaml array", p)
+			return fmt.Errorf("invalid platform specified %q: specify multiple platforms using yaml array", p)
 		}
 	}
+	return nil
+}
 
-	platforms, err := platformutil.NormalizeUserParams(c.werfConfig.Meta.Build.Platform)
-	if err != nil {
-		return nil, fmt.Errorf("unable to normalize platforms specified in the werf.yaml %v: %w", c.werfConfig.Meta.Build.Platform, err)
+func prepareConfigurationPlatforms(platforms []string) ([]string, error) {
+	if err := validatePlatforms(platforms); err != nil {
+		return nil, fmt.Errorf("unable to validate platforms: %w", err)
 	}
-	return platforms, nil
+	res, err := platformutil.NormalizeUserParams(platforms)
+	if err != nil {
+		return nil, fmt.Errorf("unable to normalize platforms specified in the werf.yaml %v: %w", platforms, err)
+	}
+	return res, nil
+}
+
+func (c *Conveyor) GetImageTargetPlatforms(targetImageName string) ([]string, error) {
+	if img := c.werfConfig.GetStapelImage(targetImageName); img != nil {
+		return prepareConfigurationPlatforms(img.Platform)
+	} else if img := c.werfConfig.GetArtifact(targetImageName); img != nil {
+		return prepareConfigurationPlatforms(img.Platform)
+	} else if img := c.werfConfig.GetDockerfileImage(targetImageName); img != nil {
+		return prepareConfigurationPlatforms(img.Platform)
+	}
+	return nil, nil
+}
+
+func (c *Conveyor) GetForcedTargetPlatforms() []string {
+	return c.ConveyorOptions.TargetPlatforms
+}
+
+func (c *Conveyor) GetTargetPlatforms() ([]string, error) {
+	return prepareConfigurationPlatforms(c.werfConfig.Meta.Build.Platform)
 }
 
 func (c *Conveyor) GetServiceRWMutex(service string) *sync.RWMutex {
@@ -383,41 +404,26 @@ func (c *Conveyor) FetchLastImageStage(ctx context.Context, targetPlatform, imag
 }
 
 func (c *Conveyor) GetImageInfoGetters(opts imagePkg.InfoGetterOptions) ([]*imagePkg.InfoGetter, error) {
-	targetPlatforms, err := c.GetTargetPlatforms()
-	if err != nil {
-		return nil, fmt.Errorf("unable to get target platforms: %w", err)
-	}
-	if len(targetPlatforms) == 0 {
-		targetPlatforms = []string{c.ContainerBackend.GetDefaultPlatform()}
-	}
+	var imagesGetters []*imagePkg.InfoGetter
+	for _, desc := range c.imagesTree.GetImagesByName(true) {
+		name, images := desc.Unpair()
+		platforms := util.MapFuncToSlice(images, func(img *image.Image) string { return img.TargetPlatform })
 
-	var images []*imagePkg.InfoGetter
-
-	if len(targetPlatforms) == 1 {
-		for _, img := range c.imagesTree.GetImages() {
-			if img.IsArtifact {
-				continue
-			}
+		if len(platforms) == 1 {
+			img := images[0]
 			getter := c.StorageManager.GetImageInfoGetter(img.Name, img.GetLastNonEmptyStage().GetStageImage().Image.GetStageDescription(), opts)
-			images = append(images, getter)
-		}
-	} else {
-		for _, img := range c.imagesTree.GetMultiplatformImages() {
-			if !img.IsFinal() {
-				continue
-			}
-
+			imagesGetters = append(imagesGetters, getter)
+		} else {
+			img := c.imagesTree.GetMultiplatformImage(name)
 			desc := img.GetFinalStageDescription()
 			if desc == nil {
 				desc = img.GetStageDescription()
 			}
-
 			getter := c.StorageManager.GetImageInfoGetter(img.Name, desc, opts)
-			images = append(images, getter)
+			imagesGetters = append(imagesGetters, getter)
 		}
 	}
-
-	return images, nil
+	return imagesGetters, nil
 }
 
 func (c *Conveyor) GetExportedImages() (res []*image.Image) {
