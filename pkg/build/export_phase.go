@@ -13,6 +13,7 @@ import (
 	build_image "github.com/werf/werf/pkg/build/image"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/storage"
+	"github.com/werf/werf/pkg/util"
 )
 
 type ExportPhase struct {
@@ -42,38 +43,27 @@ func (phase *ExportPhase) AfterImages(ctx context.Context) error {
 		return nil
 	}
 
-	targetPlatforms, err := phase.Conveyor.GetTargetPlatforms()
-	if err != nil {
-		return fmt.Errorf("unable to get target platforms: %w", err)
-	}
-	if len(targetPlatforms) == 0 {
-		targetPlatforms = []string{phase.Conveyor.ContainerBackend.GetDefaultPlatform()}
-	}
+	for _, desc := range phase.Conveyor.imagesTree.GetImagesByName(true) {
+		name, images := desc.Unpair()
+		if !slices.Contains(phase.ExportImageNameList, name) {
+			continue
+		}
 
-	if len(targetPlatforms) == 1 {
-		// single platform mode
-		for _, desc := range phase.Conveyor.imagesTree.GetImagesByName(true) {
-			_, images := desc.Unpair()
+		targetPlatforms := util.MapFuncToSlice(images, func(img *build_image.Image) string { return img.TargetPlatform })
+		if len(targetPlatforms) == 1 {
 			img := images[0]
-			if !slices.Contains(phase.ExportImageNameList, img.Name) {
-				continue
-			}
 			if err := phase.exportImage(ctx, img); err != nil {
 				return fmt.Errorf("unable to export image %q: %w", img.Name, err)
 			}
-		}
-	} else {
-		// FIXME(multiarch): Support multiplatform manifest by pushing local images to repo first, then create manifest list.
-		// FIXME(multiarch): Also support multiplatform manifest in werf build command in local mode with enabled final-repo.
-		if _, isLocal := phase.Conveyor.StorageManager.GetStagesStorage().(*storage.LocalStagesStorage); isLocal {
-			return fmt.Errorf("export command is not supported in multiplatform mode")
-		}
-
-		// multiplatform mode
-		for _, img := range phase.Conveyor.imagesTree.GetMultiplatformImages() {
-			if !slices.Contains(phase.ExportImageNameList, img.Name) {
-				continue
+		} else {
+			// FIXME(multiarch): Support multiplatform manifest by pushing local images to repo first, then create manifest list.
+			// FIXME(multiarch): Also support multiplatform manifest in werf build command in local mode with enabled final-repo.
+			if _, isLocal := phase.Conveyor.StorageManager.GetStagesStorage().(*storage.LocalStagesStorage); isLocal {
+				return fmt.Errorf("export command is not supported in multiplatform mode")
 			}
+
+			// multiplatform mode
+			img := phase.Conveyor.imagesTree.GetMultiplatformImage(name)
 			if err := phase.exportMultiplatformImage(ctx, img); err != nil {
 				return fmt.Errorf("unable to export multiplatform image %q: %w", img.Name, err)
 			}

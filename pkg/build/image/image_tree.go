@@ -51,21 +51,37 @@ func (tree *ImagesTree) Calculate(ctx context.Context) error {
 		return fmt.Errorf("unable to group werf config images by independent sets: %w", err)
 	}
 
-	targetPlatforms, err := tree.Conveyor.GetTargetPlatforms()
+	forcedTargetPlatforms := tree.Conveyor.GetForcedTargetPlatforms()
+	commonTargetPlatforms, err := tree.Conveyor.GetTargetPlatforms()
 	if err != nil {
-		return fmt.Errorf("invalid target platforms: %w", err)
+		return fmt.Errorf("invalid common target platforms: %w", err)
 	}
-	if len(targetPlatforms) == 0 {
-		targetPlatforms = []string{tree.ContainerBackend.GetDefaultPlatform()}
+	if len(commonTargetPlatforms) == 0 {
+		commonTargetPlatforms = []string{tree.ContainerBackend.GetDefaultPlatform()}
 	}
 
 	commonImageOpts := tree.CommonImageOptions
-	commonImageOpts.ForceTargetPlatformLogging = (len(targetPlatforms) > 1)
-
 	builder := NewImagesSetsBuilder()
 
 	for _, iteration := range imageConfigSets {
 		for _, imageConfigI := range iteration {
+			var targetPlatforms []string
+			if len(forcedTargetPlatforms) > 0 {
+				targetPlatforms = forcedTargetPlatforms
+			} else {
+				imageTargetPlatforms, err := tree.Conveyor.GetImageTargetPlatforms(imageConfigI.GetName())
+				if err != nil {
+					return fmt.Errorf("invalid image %q target platforms: %w", imageConfigI.GetName(), err)
+				}
+				if len(imageTargetPlatforms) > 0 {
+					targetPlatforms = imageTargetPlatforms
+				} else {
+					targetPlatforms = commonTargetPlatforms
+				}
+			}
+
+			commonImageOpts.ForceTargetPlatformLogging = (len(targetPlatforms) > 1)
+
 			for _, targetPlatform := range targetPlatforms {
 				var imageLogName string
 				var style color.Style
@@ -179,6 +195,13 @@ func (tree *ImagesTree) GetImagePlatformsByName(finalOnly bool) map[string][]str
 		}
 	}
 	return res
+}
+
+func (tree *ImagesTree) GetImagesNames() (res []string) {
+	for _, img := range tree.allImages {
+		res = util.UniqAppendString(res, img.Name)
+	}
+	return
 }
 
 func (tree *ImagesTree) GetImages() []*Image {

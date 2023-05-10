@@ -20,6 +20,7 @@ type rawImageFromDockerfile struct {
 	SSH             string                 `yaml:"ssh,omitempty"`
 	RawDependencies []*rawDependency       `yaml:"dependencies,omitempty"`
 	Staged          bool                   `yaml:"staged,omitempty"`
+	Platform        []string               `yaml:"platform,omitempty"`
 
 	doc *doc `yaml:"-"` // parent
 
@@ -128,6 +129,7 @@ func (c *rawImageFromDockerfile) toImageFromDockerfileDirective(giterminismManag
 	}
 
 	image.Staged = c.Staged || util.GetBoolEnvironmentDefaultFalse("WERF_FORCE_STAGED_DOCKERFILE")
+	image.Platform = append([]string{}, c.Platform...)
 	image.raw = c
 
 	if err := image.validate(giterminismManager); err != nil {

@@ -12,7 +12,10 @@ type Conveyor interface {
 
 	GetImage(targetPlatform, name string) *Image
 	GetOrCreateStageImage(name string, prevStageImage *stage.StageImage, stg stage.Interface, img *Image) *stage.StageImage
+
+	GetForcedTargetPlatforms() []string
 	GetTargetPlatforms() ([]string, error)
+	GetImageTargetPlatforms(imageName string) ([]string, error)
 
 	IsBaseImagesRepoIdsCacheExist(key string) bool
 	GetBaseImagesRepoIdsCache(key string) string
