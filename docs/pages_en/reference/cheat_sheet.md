@@ -22,7 +22,7 @@ werf converge --repo ghcr.io/group/project --use-custom-tag "%image%-$CI_JOB_ID"
 
 You can create a pipeline tailored to your needs using the commands below.
 
-Running most of the commands will first cause the missing images to be rebuilt. You can skip the rebuild by using the `--skip-build` flag. Make sure that the necessary images are built beforehand using the `werf build` command.
+Running most commands will first check for images in the specified repo. Build instructions will run for missing images. For some scenarios, e.g. running tests in CI system, it is more convenient to use `werf build` to build images first and then strictly use the same images on other steps with flag `--require-built-images`. The step command will exit with an error in case of missing images.
 
 ### Integrating with a CI system (GitLab and GitHub-based workflows are currently supported)
 
@@ -128,7 +128,7 @@ werf converge --repo ghcr.io/group/project --env production
 Deploying the application you built in the previous step and using a custom tag:
 
 ```shell
-werf converge --skip-build --repo ghcr.io/group/project --use-custom-tag "%image%-$CI_JOB_ID"
+werf converge --require-built-images --repo ghcr.io/group/project --use-custom-tag "%image%-$CI_JOB_ID"
 ```
 
 Deploying the previously published bundle with the 1.0.0 tag to production:

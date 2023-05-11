@@ -139,6 +139,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultBuildParallelTasksLimit)
 
 	common.SetupSkipBuild(&commonCmdData, cmd)
+	common.SetupRequireBuiltImages(&commonCmdData, cmd)
 	commonCmdData.SetupPlatform(cmd)
 
 	common.SetupDisableAutoHostCleanup(&commonCmdData, cmd)
@@ -296,7 +297,7 @@ func runExport(ctx context.Context, imagesToProcess build.ImagesToProcess) error
 		defer conveyorWithRetry.Terminate()
 
 		if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
-			if *commonCmdData.SkipBuild {
+			if common.GetRequireBuiltImages(ctx, &commonCmdData) {
 				shouldBeBuiltOptions, err := common.GetShouldBeBuiltOptions(&commonCmdData, giterminismManager, werfConfig)
 				if err != nil {
 					return err

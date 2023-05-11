@@ -224,10 +224,8 @@ werf предоставляет следующие команды compose:
 
 #### Переработка интерфейса
 
-- Единая команда `werf converge` для сборки и публикации требуемых образов в container registry и деплоя приложения в kubernetes.
-- Single `werf converge` command to build and publish needed images and deploy application into the kubernetes.
-  - Вызов команды с опцией `werf converge --skip-build` эмулирует поведение ранее существующей команды `werf deploy`.
-    - werf упадёт с ошибкой если требуемые образы не будут найдены в container registry, так же как падал с ошибкой `werf deploy`.
+- Удалена команда `werf deploy`. Рекомендуется использовать команду `werf converge` — единую команду для сборки и публикации требуемых образов в container registry и деплоя приложения в kubernetes.
+  - Вызов `werf converge --require-built-images` эмулирует поведение `werf deploy`: werf выходит с ошибкой если требуемые образы не будут найдены в container registry.
 - Удалены команды `werf stages *`, `werf images *` и `werf host project *`.
 - Более нет команды `werf publish`, потому что команда `werf build` с параметром `--repo` загрузит образы и все стадии, из которых они состоят, в container registry автоматически.
 - Более нет флагов тегирования: `--tag-by-stages-signature`, `--tag-git-branch`, `--tag-git-commit`, `--tag-git-tag` и `--tag-custom`, werf всегда использует поведение ранее включаемое флагом `--tag-by-stages-signature`.

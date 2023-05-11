@@ -216,10 +216,9 @@ werf provides following compose commands:
 
 #### Interface rework
 
-- Single `werf converge` command to build and publish needed images into the container registry and deploy application into the kubernetes.
-  - `werf converge --skip-build` emulates behaviour of an old `werf deploy` command.
-    - werf will complain if needed images was not found in the container registry as `werf deploy` did.
-- Removed `werf stages *`, `werf images *` and `werf host project *` commands.
+- `werf deploy` is removed. Use `werf converge` — a single command to build and publish needed images into the container registry and deploy application into the kubernetes.
+  - Use `werf converge --require-built-images` to emulate `werf deploy` behaviour: werf will exit with error in case needed images was not found in the container registry.
+- Commands `werf stages *`, `werf images *` and `werf host project *` are removed.
 - There is no more `werf publish` command, because `werf build` command with `--repo` param will publish images with all it's stages into the container registry automatically.
 - There is no more `--tag-by-stages-signature`, `--tag-git-branch`, `--tag-git-commit`, `--tag-git-tag`, `--tag-custom` options, `--tag-by-stages-signature` behaviour is default.
   - Forcing of custom tags is [not yet available](https://github.com/werf/werf/issues/2869) in the v1.2

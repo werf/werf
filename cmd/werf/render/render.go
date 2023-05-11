@@ -148,6 +148,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultBuildParallelTasksLimit)
 
 	common.SetupSkipBuild(&commonCmdData, cmd)
+	common.SetupRequireBuiltImages(&commonCmdData, cmd)
 	commonCmdData.SetupPlatform(cmd)
 
 	cmd.Flags().BoolVarP(&cmdData.Validate, "validate", "", util.GetBoolEnvironmentDefaultFalse("WERF_VALIDATE"), "Validate your manifests against the Kubernetes cluster you are currently pointing at (default $WERF_VALIDATE)")
@@ -321,7 +322,7 @@ func runRender(ctx context.Context, imagesToProcess build.ImagesToProcess) error
 
 			if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
 				buildFunc := func(ctx context.Context) error {
-					if *commonCmdData.SkipBuild {
+					if common.GetRequireBuiltImages(ctx, &commonCmdData) {
 						shouldBeBuiltOptions, err := common.GetShouldBeBuiltOptions(&commonCmdData, giterminismManager, werfConfig)
 						if err != nil {
 							return err

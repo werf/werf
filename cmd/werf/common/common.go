@@ -800,9 +800,19 @@ IMAGE_NAME is the name of an image or artifact described in werf.yaml, the namel
 STAGE_NAME should be one of the following: `+strings.Join(allStagesNames(), ", "))
 }
 
+// SetupSkipBuild
+// Deprecated. See [SetupRequireBuiltImages].
 func SetupSkipBuild(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.SkipBuild = new(bool)
-	cmd.Flags().BoolVarP(cmdData.SkipBuild, "skip-build", "Z", util.GetBoolEnvironmentDefaultFalse("WERF_SKIP_BUILD"), "Disable building of docker images, cached images in the repo should exist in the repo if werf.yaml contains at least one image description (default $WERF_SKIP_BUILD)")
+	cmd.Flags().BoolVarP(cmdData.SkipBuild, "skip-build", "", util.GetBoolEnvironmentDefaultFalse("WERF_SKIP_BUILD"), "DEPRECATED: use --require-built-images.")
+	_ = cmd.Flags().MarkHidden("skip-build")
+}
+
+// SetupRequireBuiltImages adds --require-built-images flag.
+// See also [quireBuiltImages].
+func SetupRequireBuiltImages(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.RequireBuiltImages = new(bool)
+	cmd.Flags().BoolVarP(cmdData.RequireBuiltImages, "require-built-images", "Z", util.GetBoolEnvironmentDefaultFalse("WERF_REQUIRE_BUILT_IMAGES"), "Requires all used images to be previously built and exist in repo. Exits with error if needed images are not cached and so require to run build instructions (default $WERF_REQUIRE_BUILT_IMAGES)")
 }
 
 func SetupStubTags(cmdData *CmdData, cmd *cobra.Command) {
@@ -1164,6 +1174,20 @@ func GetOptionalRelease(cmdData *CmdData) string {
 		return "werf-stub"
 	}
 	return *cmdData.Release
+}
+
+// GetRequireBuiltImages returns true if --require-built-images is set or --skip-build is set.
+// There is no way to determine if both options are used, so no warning.
+func GetRequireBuiltImages(ctx context.Context, cmdData *CmdData) bool {
+	if cmdData.RequireBuiltImages != nil && *cmdData.RequireBuiltImages {
+		return true
+	}
+	// Support for deprecated option.
+	if cmdData.SkipBuild != nil && *cmdData.SkipBuild {
+		logboek.Context(ctx).Warn().LogF("DEPRECATED: use --require-built-images ($WERF_REQUIRE_BUILT_IMAGES) instead of --skip-build\n")
+		return true
+	}
+	return false
 }
 
 func GetIntrospectOptions(cmdData *CmdData, werfConfig *config.WerfConfig) (build.IntrospectOptions, error) {
