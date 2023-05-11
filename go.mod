@@ -129,7 +129,7 @@ require (
 	github.com/chai2010/gettext-go v1.0.2 // indirect
 	github.com/chzyer/readline v1.5.1 // indirect
 	github.com/cloudflare/cfssl v1.4.1 // indirect
-	github.com/cloudflare/circl v1.1.0 // indirect
+	github.com/cloudflare/circl v1.3.3 // indirect
 	github.com/compose-spec/compose-go v1.6.0 // indirect
 	github.com/container-orchestrated-devices/container-device-interface v0.5.4 // indirect
 	github.com/containerd/cgroups v1.1.0 // indirect
