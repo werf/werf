@@ -57,7 +57,7 @@ var _ = Describe("git stages", func() {
 				checkResultedFilesChecksum: true,
 				expectedOutputMatchers: []types.GomegaMatcher{
 					Not(ContainSubstring("stage image/gitLatestPatch")),
-					ContainSubstring("Use cache image for image/gitArchive"),
+					ContainSubstring("Use previously built image for image/gitArchive"),
 					ContainSubstring("Building stage image/gitCache"),
 				},
 			}
@@ -70,7 +70,7 @@ var _ = Describe("git stages", func() {
 				checkResultedFilesChecksum: true,
 				expectedOutputMatchers: []types.GomegaMatcher{
 					Not(ContainSubstring("stage image/gitCache")),
-					ContainSubstring("Use cache image for image/gitArchive"),
+					ContainSubstring("Use previously built image for image/gitArchive"),
 					ContainSubstring("Building stage image/gitLatestPatch"),
 				},
 			}
@@ -98,7 +98,7 @@ var _ = Describe("git stages", func() {
 					checkResultedFilesChecksum: true,
 					expectedOutputMatchers: []types.GomegaMatcher{
 						Not(ContainSubstring("stage image/gitLatestPatch")),
-						ContainSubstring("Use cache image for image/gitArchive"),
+						ContainSubstring("Use previously built image for image/gitArchive"),
 						ContainSubstring("Building stage image/gitCache"),
 					},
 				}
@@ -110,8 +110,8 @@ var _ = Describe("git stages", func() {
 					},
 					checkResultedFilesChecksum: true,
 					expectedOutputMatchers: []types.GomegaMatcher{
-						ContainSubstring("Use cache image for image/gitCache"),
-						ContainSubstring("Use cache image for image/gitArchive"),
+						ContainSubstring("Use previously built image for image/gitCache"),
+						ContainSubstring("Use previously built image for image/gitArchive"),
 						ContainSubstring("Building stage image/gitLatestPatch"),
 					},
 				}
@@ -167,7 +167,7 @@ var _ = Describe("git stages", func() {
 			checkResultedFilesChecksum: false,
 			expectedOutputMatchers: []types.GomegaMatcher{
 				Not(ContainSubstring("Building stage")),
-				ContainSubstring("Use cache image for artifact/gitArchive"),
+				ContainSubstring("Use previously built image for artifact/gitArchive"),
 			},
 		}
 
@@ -227,7 +227,7 @@ var _ = Describe("user stages", func() {
 			checkResultedFilesChecksum: true,
 			expectedOutputMatchers: []types.GomegaMatcher{
 				Not(ContainSubstring("stage image/gitLatestPatch")),
-				ContainSubstring("Use cache image for image/gitArchive"),
+				ContainSubstring("Use previously built image for image/gitArchive"),
 				ContainSubstring("Building stage image/gitCache"),
 			},
 		}
@@ -240,7 +240,7 @@ var _ = Describe("user stages", func() {
 			checkResultedFilesChecksum: true,
 			expectedOutputMatchers: []types.GomegaMatcher{
 				Not(ContainSubstring("stage image/gitCache")),
-				ContainSubstring("Use cache image for image/gitArchive"),
+				ContainSubstring("Use previously built image for image/gitArchive"),
 				ContainSubstring("Building stage image/gitLatestPatch"),
 			},
 		}
@@ -392,7 +392,7 @@ var _ = Describe("user stages", func() {
 			checkResultedFilesChecksum: false,
 			expectedOutputMatchers: []types.GomegaMatcher{
 				Not(ContainSubstring("Building stage")),
-				ContainSubstring("Use cache image for artifact/gitArchive"),
+				ContainSubstring("Use previously built image for artifact/gitArchive"),
 			},
 		}
 

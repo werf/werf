@@ -170,7 +170,7 @@ var _ = Describe("Build phase", func() {
 					"WERF_CONFIG": "werf_2.yaml",
 				},
 				OutputLineHandler: func(line string) {
-					if strings.Contains(line, "Use cache image for ~/install") {
+					if strings.Contains(line, "Use previously built image for ~/install") {
 						useCachedInstall = true
 						stageParserState = "usingCachedInstall"
 					}
