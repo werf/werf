@@ -727,7 +727,7 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *image.Image, stg
 	}
 
 	if foundSuitableStage {
-		logboek.Context(ctx).Default().LogFHighlight("Use cache image for %s\n", stg.LogDetailedName())
+		logboek.Context(ctx).Default().LogFHighlight("Use previously built image for %s\n", stg.LogDetailedName())
 		container_backend.LogImageInfo(ctx, stg.GetStageImage().Image, phase.getPrevNonEmptyStageImageSize(), img.ShouldLogPlatform())
 
 		logboek.Context(ctx).LogOptionalLn()
@@ -808,7 +808,7 @@ func (phase *BuildPhase) findAndFetchStageFromSecondaryStagesStorage(ctx context
 				i.Image.SetStageDescription(copiedStageDesc)
 				stg.SetStageImage(i)
 
-				logboek.Context(ctx).Default().LogFHighlight("Use cache image for %s\n", stg.LogDetailedName())
+				logboek.Context(ctx).Default().LogFHighlight("Use previously built image for %s\n", stg.LogDetailedName())
 				container_backend.LogImageInfo(ctx, stg.GetStageImage().Image, phase.getPrevNonEmptyStageImageSize(), img.ShouldLogPlatform())
 
 				return nil

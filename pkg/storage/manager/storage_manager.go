@@ -669,7 +669,7 @@ func (m *StorageManager) CopyStageIntoFinalStorage(ctx context.Context, stageID 
 			if desc != nil {
 				logboek.Context(ctx).Info().LogF("Stage %s already exists in the final repo, skipping\n", stageID.String())
 
-				logboek.Context(ctx).Default().LogFHighlight("Use cache final image for %s\n", opts.LogDetailedName)
+				logboek.Context(ctx).Default().LogFHighlight("Use previously built final image for %s\n", opts.LogDetailedName)
 				container_backend.LogImageName(ctx, finalImageName)
 
 				return desc, nil

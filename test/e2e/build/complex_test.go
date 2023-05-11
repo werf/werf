@@ -40,11 +40,11 @@ var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
 				buildOut, buildReport := werfProject.BuildWithReport(SuiteData.GetBuildReportPath(buildReportName), nil)
 				Expect(buildOut).To(ContainSubstring("Building stage"))
-				Expect(buildOut).NotTo(ContainSubstring("Use cache image"))
+				Expect(buildOut).NotTo(ContainSubstring("Use previously built image"))
 
 				By("state0: rebuilding same images")
 				Expect(werfProject.Build(nil)).To(And(
-					ContainSubstring("Use cache image"),
+					ContainSubstring("Use previously built image"),
 					Not(ContainSubstring("Building stage")),
 				))
 
@@ -174,7 +174,7 @@ var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 
 				By("state1: rebuilding same images")
 				Expect(werfProject.Build(nil)).To(And(
-					ContainSubstring("Use cache image"),
+					ContainSubstring("Use previously built image"),
 					Not(ContainSubstring("Building stage")),
 				))
 
