@@ -7,10 +7,13 @@ When setting up application delivery in Kubernetes, you must decide which format
 
 Helm is built into werf and is used for these tasks. Configuration development and maintenance is carried out using Helm charts. As for the deployment process, Helm in werf provides some advanced features:
 
-- smart resource state tracking during deployment;
-- specifying the deployment order for any resources, not just hooks;
-- waiting for non-release resources to be created and ready;
-- integration of the assembly and deployment and other features.
+- tracking the status of deployed resources (with the option to change the behaviour [for each resource])({{ "/reference/deploy_annotations.html" | true_relative_url }})):
+  - smart waiting for resources to become ready;
+  - instant termination of a failed deployment without the need to wait for a timeout;
+  - deployment progress, logs, system events and application errors.
+- arbitrary deployment order for any resources, not just hooks;
+- waiting for resources that are not part of the release to be created and ready;
+- integrating building and deployment, and much more.
 
 werf strives to make working with Helm easier, more convenient and flexible without breaking backward compatibility with Helm charts, Helm templates, and Helm releases.
 
