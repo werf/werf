@@ -38,7 +38,7 @@ func (api *genericApi) GetRepoImageConfigFile(ctx context.Context, reference str
 	for _, mirrorReference := range mirrorReferenceList {
 		config, err := api.getRepoImageConfigFile(ctx, mirrorReference)
 		if err != nil {
-			if IsStatusNotFoundErr(err) || IsQuayTagExpiredErr(err) {
+			if IsStatusNotFoundErr(err) || IsImageNotFoundError(err) || IsBrokenImageError(err) {
 				continue
 			}
 
@@ -76,7 +76,6 @@ func (api *genericApi) GetRepoImage(ctx context.Context, reference string) (*ima
 		if err != nil {
 			return nil, fmt.Errorf("unable to try getting mirror repo image %q: %w", mirrorReference, err)
 		}
-
 		if info != nil {
 			return info, nil
 		}

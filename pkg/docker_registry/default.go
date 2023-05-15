@@ -51,18 +51,7 @@ func (r *defaultImplementation) IsTagExist(_ context.Context, _ string, _ ...Opt
 }
 
 func (r *defaultImplementation) TryGetRepoImage(ctx context.Context, reference string) (*image.Info, error) {
-	info, err := r.api.TryGetRepoImage(ctx, reference)
-	if err != nil {
-		if IsQuayTagExpiredErr(err) && r.Implementation != QuayImplementationName {
-			logboek.Context(ctx).Error().LogF("WARNING: Detected error specific for quay container registry implementation!\n")
-			logboek.Context(ctx).Error().LogF("WARNING: Use --repo-container-registry=quay option (or WERF_CONTAINER_REGISTRY env var)\n")
-			logboek.Context(ctx).Error().LogF("WARNING:  to instruct werf to use quay driver.\n")
-		}
-
-		return nil, err
-	}
-
-	return info, nil
+	return r.tryGetRepoImage(ctx, reference, r.Implementation)
 }
 
 func (r *defaultImplementation) CreateRepo(_ context.Context, _ string) error {
@@ -83,12 +72,4 @@ func (r *defaultImplementation) DeleteRepoImage(ctx context.Context, repoImage *
 
 func (r *defaultImplementation) String() string {
 	return DefaultImplementationName
-}
-
-func IsManifestUnknownError(err error) bool {
-	return (err != nil) && strings.Contains(err.Error(), "MANIFEST_UNKNOWN")
-}
-
-func IsNameUnknownError(err error) bool {
-	return (err != nil) && strings.Contains(err.Error(), "NAME_UNKNOWN")
 }
