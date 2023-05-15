@@ -251,6 +251,10 @@ werf bundle export [IMAGE_NAME...] [options]
       --report-path=''
             DEPRECATED: use --save-build-report with optional --build-report-path.
             Report save path ($WERF_REPORT_PATH by default)
+  -Z, --require-built-images=false
+            Requires all used images to be previously built and exist in repo. Exits with error if  
+            needed images are not cached and so require to run build instructions (default          
+            $WERF_REQUIRE_BUILT_IMAGES)
       --save-build-report=false
             Save build report (by default $WERF_SAVE_BUILD_REPORT or false). Its path and format    
             configured with --build-report-path
@@ -274,9 +278,6 @@ werf bundle export [IMAGE_NAME...] [options]
             with commas: key1=val1,key2=val2).
             Also, can be defined with $WERF_SET_STRING_* (e.g. $WERF_SET_STRING_1=key1=val1,        
             $WERF_SET_STRING_2=key2=val2)
-  -Z, --skip-build=false
-            Disable building of docker images, cached images in the repo should exist in the repo   
-            if werf.yaml contains at least one image description (default $WERF_SKIP_BUILD)
   -L, --skip-dependencies-repo-refresh=false
             Do not refresh helm chart repositories locally cached index
       --skip-tls-verify-registry=false

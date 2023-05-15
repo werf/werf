@@ -184,6 +184,10 @@ werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
             repo Selectel VPC (default $WERF_REPO_SELECTEL_VPC)
       --repo-selectel-vpc-id=''
             repo Selectel VPC ID (default $WERF_REPO_SELECTEL_VPC_ID)
+  -Z, --require-built-images=false
+            Requires all used images to be previously built and exist in repo. Exits with error if  
+            needed images are not cached and so require to run build instructions (default          
+            $WERF_REQUIRE_BUILT_IMAGES)
       --secondary-repo=[]
             Specify one or multiple secondary read-only repos with images that will be used as a    
             cache.
@@ -191,9 +195,6 @@ werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
             $WERF_SECONDARY_REPO_2=...)
       --shell=false
             Use predefined docker options and command for debug
-  -Z, --skip-build=false
-            Disable building of docker images, cached images in the repo should exist in the repo   
-            if werf.yaml contains at least one image description (default $WERF_SKIP_BUILD)
       --skip-tls-verify-registry=false
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)

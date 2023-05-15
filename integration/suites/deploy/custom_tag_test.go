@@ -103,7 +103,7 @@ var _ = Describe("custom tag", func() {
 			"--set", fmt.Sprintf("imageCredentials.password=%s", os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD")),
 		)
 		werfArgs = append(werfArgs, "--use-custom-tag", customTagValue)
-		werfArgs = append(werfArgs, "--skip-build")
+		werfArgs = append(werfArgs, "--require-built-images")
 
 		bytes, err := utils.RunCommand(
 			SuiteData.GetProjectWorktree(SuiteData.ProjectName),

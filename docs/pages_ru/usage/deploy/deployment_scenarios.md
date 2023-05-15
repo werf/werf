@@ -18,7 +18,7 @@ werf build --repo example.org/mycompany/myapp
 ```
 
 ```shell
-werf converge --skip-build --repo example.org/mycompany/myapp
+werf converge --require-built-images --repo example.org/mycompany/myapp
 ```
 
 ## Развертывание с использованием произвольных тегов образов
@@ -42,7 +42,7 @@ werf build --add-custom-tag '%image%-v1.0.0' --repo example.org/mycompany/myapp
 ```
 
 ```shell
-werf converge --skip-build --use-custom-tag '%image%-v1.0.0' --repo example.org/mycompany/myapp
+werf converge --require-built-images --use-custom-tag '%image%-v1.0.0' --repo example.org/mycompany/myapp
 ```
 
 ## Развертывание без доступа к Git-репозиторию приложения
@@ -76,7 +76,7 @@ werf build --repo example.org/mycompany/myapp
 ```
 
 ```
-werf bundle publish --skip-build --tag latest --repo example.org/mycompany/myapp
+werf bundle publish --require-built-images --tag latest --repo example.org/mycompany/myapp
 ```
 
 ## Развертывание без доступа к Git-репозиторию и container registry приложения
@@ -126,7 +126,7 @@ werf build --repo example.org/mycompany/myapp
 ```
 
 ```
-werf bundle publish --skip-build --tag latest --repo example.org/mycompany/myapp
+werf bundle publish --require-built-images --tag latest --repo example.org/mycompany/myapp
 ```
 
 ## Развертывание сторонним инструментом
@@ -160,7 +160,7 @@ werf build --repo example.org/mycompany/myapp
 ```
 
 ```
-werf render --skip-build --output manifests.yaml --repo example.org/mycompany/myapp
+werf render --require-built-images --output manifests.yaml --repo example.org/mycompany/myapp
 ```
 
 ## Развертывание сторонним инструментом без доступа к Git-репозиторию приложения
@@ -202,7 +202,7 @@ werf build --repo example.org/mycompany/myapp
 ```
 
 ```
-werf bundle publish --skip-build --tag latest --repo example.org/mycompany/myapp
+werf bundle publish --require-built-images --tag latest --repo example.org/mycompany/myapp
 ```
 
 ## Сохранение отчета о развертывании

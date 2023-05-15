@@ -104,6 +104,7 @@ func NewExportCmd(ctx context.Context) *cobra.Command {
 	common.SetupFinalRepo(&commonCmdData, cmd)
 
 	common.SetupSkipBuild(&commonCmdData, cmd)
+	common.SetupRequireBuiltImages(&commonCmdData, cmd)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified repo")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
@@ -265,7 +266,7 @@ func run(ctx context.Context, imagesToProcess build.ImagesToProcess, tagTemplate
 		return c.Export(ctx, build.ExportOptions{
 			BuildPhaseOptions: build.BuildPhaseOptions{
 				BuildOptions:      build.BuildOptions{SkipImageMetadataPublication: *commonCmdData.Dev},
-				ShouldBeBuiltMode: *commonCmdData.SkipBuild,
+				ShouldBeBuiltMode: common.GetRequireBuiltImages(ctx, &commonCmdData),
 			},
 			ExportPhaseOptions: build.ExportPhaseOptions{
 				ExportImageNameList: imageNameList,

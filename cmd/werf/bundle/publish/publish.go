@@ -137,6 +137,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupDockerServerStoragePath(&commonCmdData, cmd)
 
 	common.SetupSkipBuild(&commonCmdData, cmd)
+	common.SetupRequireBuiltImages(&commonCmdData, cmd)
 	commonCmdData.SetupPlatform(cmd)
 
 	commonCmdData.SetupHelmCompatibleChart(cmd, false)
@@ -302,7 +303,7 @@ func runPublish(ctx context.Context, imagesToProcess build.ImagesToProcess) erro
 		defer conveyorWithRetry.Terminate()
 
 		if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
-			if *commonCmdData.SkipBuild {
+			if common.GetRequireBuiltImages(ctx, &commonCmdData) {
 				shouldBeBuiltOptions, err := common.GetShouldBeBuiltOptions(&commonCmdData, giterminismManager, werfConfig)
 				if err != nil {
 					return err

@@ -65,7 +65,7 @@ var _ = Describe("cleaning images and stages", func() {
 					"--set", fmt.Sprintf("imageCredentials.username=%s", os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME")),
 					"--set", fmt.Sprintf("imageCredentials.password=%s", os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD")),
 				)
-				werfArgs = append(werfArgs, "--skip-build")
+				werfArgs = append(werfArgs, "--require-built-images")
 
 				if useCustomTag {
 					werfArgs = append(werfArgs, "--use-custom-tag", useCustomTagValue)

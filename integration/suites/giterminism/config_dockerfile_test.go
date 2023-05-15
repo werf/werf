@@ -130,7 +130,7 @@ config:
 					output, err := utils.RunCommand(
 						SuiteData.TestDirPath,
 						SuiteData.WerfBinPath,
-						"run", "--skip-build",
+						"run", "--require-built-images",
 					)
 
 					Ω(err).Should(HaveOccurred())
@@ -255,7 +255,7 @@ config:
 					output, err := utils.RunCommand(
 						SuiteData.TestDirPath,
 						SuiteData.WerfBinPath,
-						"run", "--skip-build",
+						"run", "--require-built-images",
 					)
 
 					Ω(err).Should(HaveOccurred())
@@ -377,7 +377,7 @@ config:
 				output, err := utils.RunCommand(
 					SuiteData.TestDirPath,
 					SuiteData.WerfBinPath,
-					"run", "--skip-build",
+					"run", "--require-built-images",
 				)
 
 				Ω(err).Should(HaveOccurred())
