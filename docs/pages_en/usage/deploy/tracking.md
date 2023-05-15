@@ -5,7 +5,7 @@ permalink: usage/deploy/tracking.html
 
 ## Tracking resource status
 
-The resource deployment process consists of two steps: applying resources to the cluster and *tracking the state* of those resources. werf implements advanced resource state tracking (werf only) via the [kubedog] library (https://github.com/werf/kubedog).
+The resource deployment process consists of two steps: applying resources to the cluster and *tracking the state* of those resources. werf implements advanced resource state tracking (werf only) via the [kubedog](https://github.com/werf/kubedog) library.
 
 Resource tracking is enabled by default for all supported resource types, namely:
 

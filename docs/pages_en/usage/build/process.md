@@ -264,7 +264,7 @@ The synchronization server can be run with the `werf synchronization` command. I
 werf synchronization --host 0.0.0.0 --port 55581
 ```
 
-— This server only supports HTTP mode, to use HTTP, you have to configure additional SSL termination by third-party tools (e.g., via the Kubernetes Ingress).
+— This server only supports HTTP mode. To use HTTPS, you have to configure additional SSL termination by third-party tools (e.g., via the Kubernetes Ingress).
 
 Then, for all werf commands that use the `--repo` parameter, the `--synchronization=http[s]://DOMAIN` parameter must be specified as well, for example:
 
@@ -304,11 +304,11 @@ werf converge --repo registry.mydomain.org/repo --synchronization :local
 
 > **NOTE:** This method is only suitable if all werf runs are triggered by the same runner in your CI/CD system.
 
-## Multiplatform builds
+## Multi-platform builds
 
-Multiplatform builds use the cross-platform instruction execution mechanics provided by the [Linux kernel](https://en.wikipedia.org/wiki/Binfmt_misc) and the QEMU emulator. [List of supported architectures](https://www.qemu.org/docs/master/about/emulation.html). Refer to the [Installation]({{ "index.html" | true_relative_url }}) for more information about preparing host system for cross-platform builds.
+Multi-platform builds use the cross-platform instruction execution mechanics provided by the [Linux kernel](https://en.wikipedia.org/wiki/Binfmt_misc) and the QEMU emulator. [List of supported architectures](https://www.qemu.org/docs/master/about/emulation.html). Refer to the [Installation]({{ "index.html" | true_relative_url }}) section for more information on how to configure the host system to do cross-platform builds.
 
-The table below summarizes support of multiplatform building for different configuration syntaxes, building modes, and build backends:
+The table below summarizes support of multi-platform building for different configuration syntaxes, building modes, and build backends:
 
 |                         | buildah        | docker-server      |
 |---                      |---             |---                 |
