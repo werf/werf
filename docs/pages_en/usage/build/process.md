@@ -306,7 +306,7 @@ werf converge --repo registry.mydomain.org/repo --synchronization :local
 
 ## Multi-platform builds
 
-Multi-platform builds use the cross-platform instruction execution mechanics provided by the [Linux kernel](https://en.wikipedia.org/wiki/Binfmt_misc) and the QEMU emulator. [List of supported architectures](https://www.qemu.org/docs/master/about/emulation.html). Refer to the [Installation]({{ "index.html" | true_relative_url }}) for more information about preparing host system for cross-platform builds.
+Multi-platform builds use the cross-platform instruction execution mechanics provided by the [Linux kernel](https://en.wikipedia.org/wiki/Binfmt_misc) and the QEMU emulator. [List of supported architectures](https://www.qemu.org/docs/master/about/emulation.html). Refer to the [Installation]({{ "index.html" | true_relative_url }}) section for more information on how to configure the host system to do cross-platform builds.
 
 The table below summarizes support of multi-platform building for different configuration syntaxes, building modes, and build backends:
 
