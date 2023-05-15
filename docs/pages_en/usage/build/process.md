@@ -264,7 +264,7 @@ The synchronization server can be run with the `werf synchronization` command. I
 werf synchronization --host 0.0.0.0 --port 55581
 ```
 
-— This server only supports HTTP mode, to use HTTPS, you have to configure additional SSL termination by third-party tools (e.g., via the Kubernetes Ingress).
+— This server only supports HTTP mode. To use HTTPS, you have to configure additional SSL termination by third-party tools (e.g., via the Kubernetes Ingress).
 
 Then, for all werf commands that use the `--repo` parameter, the `--synchronization=http[s]://DOMAIN` parameter must be specified as well, for example:
 
