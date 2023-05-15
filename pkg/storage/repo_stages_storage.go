@@ -269,15 +269,12 @@ func (storage *RepoStagesStorage) GetStageDescription(ctx context.Context, proje
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage stageImageName = %q\n", stageImageName)
 
 	imgInfo, err := storage.DockerRegistry.GetRepoImage(ctx, stageImageName)
-
-	if docker_registry.IsNameUnknownError(err) || docker_registry.IsManifestUnknownError(err) {
+	if docker_registry.IsImageNotFoundError(err) {
 		return nil, nil
 	}
-
-	if docker_registry.IsStatusNotFoundErr(err) || docker_registry.IsQuayTagExpiredErr(err) {
+	if docker_registry.IsBrokenImageError(err) {
 		return nil, ErrBrokenImage
 	}
-
 	if err != nil {
 		return nil, fmt.Errorf("unable to inspect repo image %s: %w", stageImageName, err)
 	}
