@@ -16,6 +16,18 @@ sections:
           en: Config syntax version. It should always be 1 for now
           ru: Версия конфигурации. На данный момент поддерживается единственная версия 1
         required: true
+      - name: build
+        description:
+          en: Common build settings
+          ru: Общие настройки сборки
+        collapsible: true
+        isCollapsedByDefault: false
+        direcvies:
+          - name: platform
+            description:
+              en: Common list of target platforms for all images (for example ['linux/amd64', 'linux/arm64', 'linux/arm/v8'])
+              ru: Общий список целевых платформ для всех образов (например ['linux/amd64', 'linux/arm64', 'linux/arm/v8'])
+            value: "[ string, ... ]"
       - name: deploy
         description:
           en: Settings for deployment
@@ -192,6 +204,11 @@ sections:
         description:
           en: Build context PATH inside project directory
           ru: Путь к контексту внутри папки проекта
+      - name: platform
+        description:
+          en: List of target platforms for this image (for example ['linux/amd64', 'linux/arm64', 'linux/arm/v8'])
+          ru: Список целевых платформ для данного образа (например ['linux/amd64', 'linux/arm64', 'linux/arm/v8'])
+        value: "[ string, ... ]"
       - name: contextAddFiles
         value: "[ string, ... ]"
         description:
@@ -266,6 +283,11 @@ sections:
           ru: Уникальное имя артефакта
         detailsArticle:
           all: "/usage/build/stapel/imports.html"
+      - name: platform
+        description:
+          en: List of target platforms for this image (for example ['linux/amd64', 'linux/arm64', 'linux/arm/v8'])
+          ru: Список целевых платформ для данного образа (например ['linux/amd64', 'linux/arm64', 'linux/arm/v8'])
+        value: "[ string, ... ]"
       - name: from
         value: "string"
         description:
