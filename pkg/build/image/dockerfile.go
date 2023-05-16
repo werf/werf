@@ -91,14 +91,33 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 
 		appendImageToCurrentSet := func(newImg *Image) {
 			if item.Level == len(ret) {
+				// prepend new images set
+				// ret minimal len is 1 at this moment
 				ret = append([][]*Image{nil}, ret...)
 			}
-			for _, img := range ret[len(ret)-item.Level-1] {
+
+			// find existing same stage in the current images set
+			for _, img := range ret[0] {
 				if img.Name == newImg.Name {
 					return
 				}
 			}
-			ret[len(ret)-item.Level-1] = append(ret[len(ret)-item.Level-1], newImg)
+
+			// exclude same stage from all previous images sets (optimization)
+			for i := 1; i < len(ret); i++ {
+				var newSet []*Image
+				for _, img := range ret[i] {
+					if img.Name != newImg.Name {
+						newSet = append(newSet, img)
+					}
+				}
+				if len(ret[i]) != len(newSet) {
+					// replace previous set only when image was excluded
+					ret[i] = newSet
+				}
+			}
+
+			ret[0] = append(ret[0], newImg)
 		}
 
 		stg := item.Stage
