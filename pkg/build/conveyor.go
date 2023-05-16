@@ -403,6 +403,19 @@ func (c *Conveyor) FetchLastImageStage(ctx context.Context, targetPlatform, imag
 	return c.StorageManager.FetchStage(ctx, c.ContainerBackend, lastImageStage)
 }
 
+func (c *Conveyor) GetFullImageName(ctx context.Context, imageName string) (string, error) {
+	infoGetters, err := c.GetImageInfoGetters(imagePkg.InfoGetterOptions{})
+	if err != nil {
+		return "", nil
+	}
+	for _, getter := range infoGetters {
+		if getter.WerfImageName == imageName {
+			return getter.GetName(), nil
+		}
+	}
+	return "", fmt.Errorf("image not found")
+}
+
 func (c *Conveyor) GetImageInfoGetters(opts imagePkg.InfoGetterOptions) ([]*imagePkg.InfoGetter, error) {
 	var imagesGetters []*imagePkg.InfoGetter
 	for _, desc := range c.imagesTree.GetImagesByName(true) {
