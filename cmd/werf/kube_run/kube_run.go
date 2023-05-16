@@ -417,21 +417,10 @@ func run(ctx context.Context, pod, secret, namespace string, werfConfig *config.
 			}
 		}
 
-		targetPlatforms, err := c.GetTargetPlatforms()
+		image, err = c.GetFullImageName(ctx, imageName)
 		if err != nil {
-			return fmt.Errorf("invalid target platforms: %w", err)
+			return fmt.Errorf("unable to get full name for image %q: %w", imageName, err)
 		}
-		if len(targetPlatforms) == 0 {
-			targetPlatforms = []string{containerBackend.GetDefaultPlatform()}
-		}
-
-		// FIXME(multiarch): specify multiarch manifest here
-		if err := c.FetchLastImageStage(ctx, targetPlatforms[0], imageName); err != nil {
-			return err
-		}
-
-		// FIXME(multiarch): specify multiarch manifest here
-		image = c.GetImageNameForLastImageStage(targetPlatforms[0], imageName)
 		return nil
 	}); err != nil {
 		return err

@@ -23,7 +23,7 @@ import (
 var (
 	liveCliOutputEnabled bool
 	isDebug              bool
-	defaultCLi           command.Cli
+	defaultCLI           command.Cli
 	defaultPlatform      string
 	runtimePlatform      string
 	useBuildx            bool
@@ -36,7 +36,7 @@ const (
 )
 
 func IsEnabled() bool {
-	return defaultCLi != nil
+	return defaultCLI != nil
 }
 
 type InitOptions struct {
@@ -63,13 +63,13 @@ func Init(ctx context.Context, opts InitOptions) error {
 	isDebug = os.Getenv("WERF_DEBUG_DOCKER") == "1"
 	liveCliOutputEnabled = opts.Verbose || opts.Debug
 
-	defaultCLi, err = newDockerCli(defaultCliOptions(ctx))
+	defaultCLI, err = newDockerCli(defaultCliOptions(ctx))
 	if err != nil {
 		return err
 	}
 
 	spec := platforms.DefaultSpec()
-	spec.OS = defaultCLi.ServerInfo().OSType
+	spec.OS = defaultCLI.ServerInfo().OSType
 	runtimePlatform = platforms.Format(spec)
 	claimPlatforms := opts.ClaimPlatforms
 
@@ -169,7 +169,7 @@ func cli(ctx context.Context) command.Cli {
 	case cliInterf != nil:
 		return cliInterf.(command.Cli)
 	case ctx == context.Background():
-		return defaultCLi
+		return defaultCLI
 	default:
 		panic("context is not bound with docker cli")
 	}
