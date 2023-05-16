@@ -1,5 +1,21 @@
 # Changelog
 
+### [1.2.232](https://www.github.com/werf/werf/compare/v1.2.231...v1.2.232) (2023-05-16)
+
+
+### Features
+
+* **dev:** tasks for local development ([#5607](https://www.github.com/werf/werf/issues/5607)) ([5b96afc](https://www.github.com/werf/werf/commit/5b96afc8c1f0e1f3275d5ff1a0a36f8ddb39eef2))
+* **multiarch:** support platform setting per image in werf.yaml configuration ([39fd752](https://www.github.com/werf/werf/commit/39fd7524482b2f40b3c8e3df50775a7d82681c6a))
+
+
+### Bug Fixes
+
+* harbor regular NOT_FOUND error treated as 'broken image' internal registry error ([bc4ef3d](https://www.github.com/werf/werf/commit/bc4ef3db6b9b5395612f5418c1f435ed0b1e7732))
+* **multiarch:** use correct multiarch manifests for werf-run and werf-kube-run commands ([fca96f2](https://www.github.com/werf/werf/commit/fca96f23f1acaf9dffe927d6cf84647b76855187))
+* rename ambiguous --skip-build to --require-built-images ([#5619](https://www.github.com/werf/werf/issues/5619)) ([2a57b4b](https://www.github.com/werf/werf/commit/2a57b4b780e4bd63660d83044fbe3ab73557359c))
+* use 'built image' instead 'cache image' ([fee0d67](https://www.github.com/werf/werf/commit/fee0d67f887e0b7ef95ebe3872e78b3b905adec0))
+
 ### [1.2.231](https://www.github.com/werf/werf/compare/v1.2.230...v1.2.231) (2023-05-02)
 
 
