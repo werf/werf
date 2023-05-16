@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.233](https://www.github.com/werf/werf/compare/v1.2.232...v1.2.233) (2023-05-16)
+
+
+### Bug Fixes
+
+* **staged-dockerfile:** optimize stages dependencies tree builder ([bc3ac92](https://www.github.com/werf/werf/commit/bc3ac92a1a93eef0f74616fbd54849b623a76f52))
+
 ### [1.2.232](https://www.github.com/werf/werf/compare/v1.2.231...v1.2.232) (2023-05-16)
 
 
