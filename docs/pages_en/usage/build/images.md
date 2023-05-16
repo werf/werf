@@ -405,7 +405,7 @@ In this case, running the `werf build` command without parameters will start the
 
 werf supports simultaneous image building for multiple platforms. In this case, werf publishes a special manifest in the container registry, which includes the built images for each specified target platform (pulling such an image will provide the client with the image built for the client platform).
 
-Here is how you can define a list of target platforms:
+Here is how you can define a common list of target platforms for all images in the werf.yaml:
 
 ```yaml
 # werf.yaml
@@ -418,8 +418,26 @@ build:
   - linux/arm/v7
 ```
 
+It is possible to define list of target platforms separately per image in the werf.yaml (this setting will have a priority over common list of target platforms):
+
+```yaml
+# werf.yaml
+image: mysql
+dockerfile: ./Dockerfile.mysql
+platform:
+- linux/amd64
+---
+image: backend
+dockerfile: ./Dockerfile.backend
+platform:
+- linux/amd64
+- linux/arm64
+```
+
 You can also override this list using the `--platform` parameter as follows:
 
 ```shell
 werf build --platform=linux/amd64,linux/i386
 ```
+
+— this parameter will override all platform settings specified in the werf.yaml (both common list and per-image list).
