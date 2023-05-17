@@ -1,7 +1,6 @@
 package render
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -28,6 +27,7 @@ import (
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/git_repo/gitdata"
 	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/pkg/logging"
 	"github.com/werf/werf/pkg/ssh_agent"
 	"github.com/werf/werf/pkg/storage"
 	"github.com/werf/werf/pkg/storage/lrumeta"
@@ -334,20 +334,29 @@ func runRender(ctx context.Context, imagesToProcess build.ImagesToProcess) error
 					return c.Build(ctx, buildOptions)
 				}
 
+				// Print build logs on error by default.
+				// Always print logs if --log-verbose is specified (level.Info).
+				deferLog := true
 				if logboek.Context(ctx).IsAcceptedLevel(level.Default) {
-					if err := buildFunc(ctx); err != nil {
-						return err
-					}
-				} else {
-					buf := new(bytes.Buffer)
-					bufLogger := logboek.NewLogger(buf, buf)
-					ctxWithBufLogger := logboek.NewContext(ctx, bufLogger)
-
-					if err := buildFunc(ctxWithBufLogger); err != nil {
-						fmt.Println(buf.String())
-						return err
-					}
+					deferLog = false
 				}
+				if err := logging.RunWithDeferredLog(ctx, deferLog, buildFunc); err != nil {
+					return err
+				}
+				//if logboek.Context(ctx).IsAcceptedLevel(level.Default) {
+				//	if err := buildFunc(ctx); err != nil {
+				//		return err
+				//	}
+				//} else {
+				//	buf := new(bytes.Buffer)
+				//	bufLogger := logboek.NewLogger(buf, buf)
+				//	ctxWithBufLogger := logboek.NewContext(ctx, bufLogger)
+				//
+				//	if err := buildFunc(ctxWithBufLogger); err != nil {
+				//		fmt.Println(buf.String())
+				//		return err
+				//	}
+				//}
 
 				imagesInfoGetters, err = c.GetImageInfoGetters(image.InfoGetterOptions{CustomTagFunc: useCustomTagFunc})
 				if err != nil {
