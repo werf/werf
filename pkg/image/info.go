@@ -5,10 +5,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/docker/docker/api/types"
-	v1 "github.com/google/go-containerregistry/pkg/v1"
-
 	"github.com/werf/werf/pkg/util"
+)
+
+const (
+	DockerHubRepositoryPrefix      = "docker.io/library/"
+	IndexDockerHubRepositoryPrefix = "index.docker.io/library/"
 )
 
 type Info struct {
@@ -27,6 +29,10 @@ type Info struct {
 
 	IsIndex bool
 	Index   []*Info
+}
+
+func (info *Info) GetDigest() string {
+	return strings.TrimPrefix(info.RepoDigest, fmt.Sprintf("%s@", info.Repository))
 }
 
 func (info *Info) SetCreatedAtUnix(seconds int64) {
@@ -73,38 +79,6 @@ func (info *Info) LogName() string {
 	}
 }
 
-func NewInfoFromInspect(ref string, inspect *types.ImageInspect) *Info {
-	repository, tag := ParseRepositoryAndTag(ref)
-
-	var repoDigest string
-	if len(inspect.RepoDigests) > 0 {
-		// NOTE: suppose we have a single repo for each stage
-		repoDigest = inspect.RepoDigests[0]
-	}
-
-	var parentID string
-	if id, ok := inspect.Config.Labels["werf.io/base-image-id"]; ok {
-		parentID = id
-	} else {
-		// TODO(1.3): Legacy compatibility mode
-		parentID = inspect.Config.Image
-	}
-
-	return &Info{
-		Name:              ref,
-		Repository:        repository,
-		Tag:               tag,
-		Labels:            inspect.Config.Labels,
-		OnBuild:           inspect.Config.OnBuild,
-		Env:               inspect.Config.Env,
-		CreatedAtUnixNano: MustParseTimestampString(inspect.Created).UnixNano(),
-		RepoDigest:        repoDigest,
-		ID:                inspect.ID,
-		ParentID:          parentID,
-		Size:              inspect.Size,
-	}
-}
-
 func MustParseTimestampString(timestampString string) time.Time {
 	t, err := time.Parse(time.RFC3339, timestampString)
 	if err != nil {
@@ -123,19 +97,20 @@ func ParseRepositoryAndTag(ref string) (string, string) {
 	return repository, tag
 }
 
-func NewImageInfoFromRegistryConfig(ref string, cfg *v1.ConfigFile) *Info {
-	repository, tag := ParseRepositoryAndTag(ref)
-	return &Info{
-		Name:              ref,
-		Repository:        repository,
-		Tag:               tag,
-		Labels:            cfg.Config.Labels,
-		OnBuild:           cfg.Config.OnBuild,
-		Env:               cfg.Config.Env,
-		CreatedAtUnixNano: cfg.Created.UnixNano(),
-		RepoDigest:        "", // TODO
-		ID:                "", // TODO
-		ParentID:          "", // TODO
-		Size:              0,  // TODO
+func NormalizeRepository(repository string) (res string) {
+	res = repository
+	res = strings.TrimPrefix(res, IndexDockerHubRepositoryPrefix)
+	res = strings.TrimPrefix(res, DockerHubRepositoryPrefix)
+	return
+}
+
+func ExtractRepoDigest(inspectRepoDigests []string, repository string) string {
+	for _, inspectRepoDigest := range inspectRepoDigests {
+		repoAndDigest := strings.SplitN(inspectRepoDigest, "@sha256:", 2)
+		repo := NormalizeRepository(repoAndDigest[0])
+		if len(repoAndDigest) == 2 && NormalizeRepository(repository) == repo {
+			return fmt.Sprintf("%s@sha256:%s", repo, repoAndDigest[1])
+		}
 	}
+	return ""
 }

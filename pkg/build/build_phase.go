@@ -465,7 +465,7 @@ func (phase *BuildPhase) createReport(ctx context.Context) error {
 				DockerRepo:        desc.Info.Repository,
 				DockerTag:         desc.Info.Tag,
 				DockerImageID:     desc.Info.ID,
-				DockerImageDigest: desc.Info.RepoDigest,
+				DockerImageDigest: desc.Info.GetDigest(),
 				DockerImageName:   desc.Info.Name,
 				Rebuilt:           img.GetRebuilt(),
 			}
@@ -497,7 +497,7 @@ func (phase *BuildPhase) createReport(ctx context.Context) error {
 					DockerRepo:        desc.Info.Repository,
 					DockerTag:         desc.Info.Tag,
 					DockerImageID:     desc.Info.ID,
-					DockerImageDigest: desc.Info.RepoDigest,
+					DockerImageDigest: desc.Info.GetDigest(),
 					DockerImageName:   desc.Info.Name,
 					Rebuilt:           isRebuilt,
 				}
@@ -874,13 +874,18 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, s
 		return false, nil, err
 	}
 
-	var opts calculateDigestOption
-	if img.IsDockerfileImage && img.DockerfileImageConfig.Staged {
-		if !stg.HasPrevStage() {
-			opts.BaseImage = img.GetBaseImageReference()
+	var opts calculateDigestOptions
+	// TODO: common cache version / per image cache version / fromCacheVersion goes into this
+	opts.CacheVersionParts = nil
+	opts.TargetPlatform = img.TargetPlatform
+
+	if werf.GetStagedDockerfileVersion() == werf.StagedDockerfileV1 {
+		if img.IsDockerfileImage && img.DockerfileImageConfig.Staged {
+			if !stg.HasPrevStage() {
+				opts.BaseImage = img.GetBaseImageReference()
+			}
 		}
 	}
-	opts.TargetPlatform = img.TargetPlatform
 
 	stageDigest, err := calculateDigest(ctx, stage.GetLegacyCompatibleStageName(stg.Name()), stageDependencies, phase.StagesIterator.PrevNonEmptyStage, phase.Conveyor, opts)
 	if err != nil {
@@ -911,7 +916,7 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, s
 		}
 	}
 
-	stageContentSig, err := calculateDigest(ctx, fmt.Sprintf("%s-content", stg.Name()), "", stg, phase.Conveyor, calculateDigestOption{TargetPlatform: img.TargetPlatform})
+	stageContentSig, err := calculateDigest(ctx, fmt.Sprintf("%s-content", stg.Name()), "", stg, phase.Conveyor, calculateDigestOptions{TargetPlatform: img.TargetPlatform})
 	if err != nil {
 		return false, phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Unlock, fmt.Errorf("unable to calculate stage %s content digest: %w", stg.Name(), err)
 	}
@@ -1032,8 +1037,8 @@ func (phase *BuildPhase) buildStage(ctx context.Context, img *image.Image, stg s
 			options.Style(style.Highlight())
 		}).
 		DoError(func() (err error) {
-			if err := stg.PreRunHook(ctx, phase.Conveyor); err != nil {
-				return fmt.Errorf("%s preRunHook failed: %w", stg.LogDetailedName(), err)
+			if err := stg.PreRun(ctx, phase.Conveyor); err != nil {
+				return fmt.Errorf("%s preRun failed: %w", stg.LogDetailedName(), err)
 			}
 
 			return phase.atomicBuildStageImage(ctx, img, stg)
@@ -1168,12 +1173,13 @@ func introspectStage(ctx context.Context, s stage.Interface) error {
 		})
 }
 
-type calculateDigestOption struct {
-	BaseImage      string
-	TargetPlatform string
+type calculateDigestOptions struct {
+	TargetPlatform    string
+	CacheVersionParts []string
+	BaseImage         string // TODO(staged-dockerfile): legacy compatibility field
 }
 
-func calculateDigest(ctx context.Context, stageName, stageDependencies string, prevNonEmptyStage stage.Interface, conveyor *Conveyor, opts calculateDigestOption) (string, error) {
+func calculateDigest(ctx context.Context, stageName, stageDependencies string, prevNonEmptyStage stage.Interface, conveyor *Conveyor, opts calculateDigestOptions) (string, error) {
 	var checksumArgs []string
 	var checksumArgsNames []string
 
@@ -1203,6 +1209,15 @@ func calculateDigest(ctx context.Context, stageName, stageDependencies string, p
 		)
 	}
 
+	if len(opts.CacheVersionParts) > 0 {
+		for i, cacheVersion := range opts.CacheVersionParts {
+			name := fmt.Sprintf("CacheVersion%d", i)
+			checksumArgsNames = append(checksumArgsNames, name)
+			checksumArgs = append(checksumArgs, name, cacheVersion)
+		}
+	}
+
+	// TODO(staged-dockerfile): this is legacy digest part used for StagedDockerfileV1
 	if opts.BaseImage != "" {
 		checksumArgs = append(checksumArgs, opts.BaseImage)
 		checksumArgsNames = append(checksumArgsNames, "BaseImage")

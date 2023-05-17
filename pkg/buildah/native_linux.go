@@ -815,7 +815,7 @@ func (b *NativeBuildah) Images(ctx context.Context, opts ImagesOptions) (image.I
 	for _, filter := range opts.Filters {
 		listOpts.Filters = append(listOpts.Filters, fmt.Sprintf("%s=%s", filter.First, filter.Second))
 	}
-	images, err := runtime.ListImages(ctx, nil, listOpts)
+	images, err := runtime.ListImages(ctx, opts.Names, listOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -826,7 +826,11 @@ func (b *NativeBuildah) Images(ctx context.Context, opts ImagesOptions) (image.I
 		if err != nil {
 			return nil, fmt.Errorf("unable to get image %s repo tags: %w", img.ID(), err)
 		}
-		res = append(res, image.Summary{RepoTags: repoTags})
+		repoDigests, err := img.RepoDigests()
+		if err != nil {
+			return nil, fmt.Errorf("unable to get image %s repo digests: %w", img.ID(), err)
+		}
+		res = append(res, image.Summary{RepoTags: repoTags, RepoDigests: repoDigests})
 	}
 
 	return res, nil

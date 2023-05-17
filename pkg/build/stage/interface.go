@@ -21,7 +21,7 @@ type Interface interface {
 
 	PrepareImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) error
 
-	PreRunHook(context.Context, Conveyor) error
+	PreRun(context.Context, Conveyor) error
 
 	SetDigest(digest string)
 	GetDigest() string

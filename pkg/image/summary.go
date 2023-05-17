@@ -6,7 +6,8 @@ import (
 )
 
 type Summary struct {
-	RepoTags []string
+	RepoTags    []string
+	RepoDigests []string
 }
 
 type ImagesList []Summary

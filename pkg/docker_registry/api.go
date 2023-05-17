@@ -153,7 +153,7 @@ func (api *api) getRepoImageByDesc(ctx context.Context, originalTag string, desc
 		if err != nil {
 			return nil, fmt.Errorf("error getting image index digest: %w", err)
 		}
-		repoImage.RepoDigest = digest.String()
+		repoImage.RepoDigest = fmt.Sprintf("%s@%s", image.NormalizeRepository(repoImage.Repository), digest.String())
 
 		im, err := ii.IndexManifest()
 		if err != nil {
@@ -183,7 +183,7 @@ func (api *api) getRepoImageByDesc(ctx context.Context, originalTag string, desc
 		if err != nil {
 			return nil, err
 		}
-		repoImage.RepoDigest = digest.String()
+		repoImage.RepoDigest = fmt.Sprintf("%s@%s", image.NormalizeRepository(repoImage.Repository), digest.String())
 
 		manifest, err := imageInfo.Manifest()
 		if err != nil {

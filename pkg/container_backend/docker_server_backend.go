@@ -124,8 +124,7 @@ func (backend *DockerServerBackend) GetImageInfo(ctx context.Context, ref string
 	} else if err != nil {
 		return nil, fmt.Errorf("unable to inspect docker image: %w", err)
 	}
-
-	return image.NewInfoFromInspect(ref, inspect), nil
+	return docker.NewInfoFromInspect(ref, inspect), nil
 }
 
 // GetImageInspect only available for DockerServerBackend

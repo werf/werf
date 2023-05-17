@@ -299,7 +299,7 @@ func (s *BaseStage) PrepareImage(ctx context.Context, c Conveyor, cb container_b
 	return nil
 }
 
-func (s *BaseStage) PreRunHook(_ context.Context, _ Conveyor) error {
+func (s *BaseStage) PreRun(_ context.Context, _ Conveyor) error {
 	return nil
 }
 
