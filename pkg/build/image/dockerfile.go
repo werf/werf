@@ -20,6 +20,7 @@ import (
 	"github.com/werf/werf/pkg/giterminism_manager"
 	"github.com/werf/werf/pkg/path_matcher"
 	"github.com/werf/werf/pkg/util"
+	"github.com/werf/werf/pkg/werf"
 )
 
 func MapDockerfileConfigToImagesSets(ctx context.Context, dockerfileImageConfig *config.ImageFromDockerfile, targetPlatform string, opts CommonImageOptions) (ImagesSets, error) {
@@ -152,54 +153,70 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 			}
 		}
 
-		for ind, instr := range stg.Instructions {
-			stageLogName := fmt.Sprintf("%s%d", strings.ToUpper(instr.GetInstructionData().Name()), ind+1)
+		commonBaseStageOptions := &stage.BaseStageOptions{
+			TargetPlatform:   img.TargetPlatform,
+			ImageName:        img.Name,
+			ImageTmpDir:      img.TmpDir,
+			ContainerWerfDir: img.ContainerWerfDir,
+			ProjectName:      opts.ProjectName,
+		}
+
+		var instrNum int
+
+		if werf.GetStagedDockerfileVersion() == werf.StagedDockerfileV2 {
+			baseStageOptions := *commonBaseStageOptions
+			baseStageOptions.LogName = "FROM1"
+			img.stages = append(img.stages, stage_instruction.NewFrom(
+				img.GetBaseImageReference(), img.GetBaseImageRepoDigest(),
+				&baseStageOptions,
+			))
+			instrNum = 1
+		} else {
+			instrNum = 0
+		}
+
+		for _, instr := range stg.Instructions {
+			stageLogName := fmt.Sprintf("%s%d", strings.ToUpper(instr.GetInstructionData().Name()), instrNum+1)
 			isFirstStage := (len(img.stages) == 0)
-			baseStageOptions := &stage.BaseStageOptions{
-				TargetPlatform:   img.TargetPlatform,
-				ImageName:        img.Name,
-				LogName:          stageLogName,
-				ImageTmpDir:      img.TmpDir,
-				ContainerWerfDir: img.ContainerWerfDir,
-				ProjectName:      opts.ProjectName,
-			}
+			baseStageOptions := *commonBaseStageOptions
+			baseStageOptions.LogName = stageLogName
 
 			var stg stage.Interface
 			switch typedInstr := any(instr).(type) {
 			case *dockerfile.DockerfileStageInstruction[*instructions.ArgCommand]:
 				continue
 			case *dockerfile.DockerfileStageInstruction[*instructions.AddCommand]:
-				stg = stage_instruction.NewAdd(typedInstr, dockerfileImageConfig.Dependencies, !isFirstStage, baseStageOptions)
+				stg = stage_instruction.NewAdd(typedInstr, dockerfileImageConfig.Dependencies, !isFirstStage, &baseStageOptions)
 			case *dockerfile.DockerfileStageInstruction[*instructions.CmdCommand]:
-				stg = stage_instruction.NewCmd(typedInstr, dockerfileImageConfig.Dependencies, !isFirstStage, baseStageOptions)
+				stg = stage_instruction.NewCmd(typedInstr, dockerfileImageConfig.Dependencies, !isFirstStage, &baseStageOptions)
 			case *dockerfile.DockerfileStageInstruction[*instructions.CopyCommand]:
-				stg = stage_instruction.NewCopy(typedInstr, dockerfileImageConfig.Dependencies, !isFirstStage, baseStageOptions)
+				stg = stage_instruction.NewCopy(typedInstr, dockerfileImageConfig.Dependencies, !isFirstStage, &baseStageOptions)
 			case *dockerfile.DockerfileStageInstruction[*instructions.EntrypointCommand]:
-				stg = stage_instruction.NewEntrypoint(typedInstr, dockerfileImageConfig.Dependencies, !isFirstStage, baseStageOptions)
+				stg = stage_instruction.NewEntrypoint(typedInstr, dockerfileImageConfig.Dependencies, !isFirstStage, &baseStageOptions)
 			case *dockerfile.DockerfileStageInstruction[*instructions.EnvCommand]:
-				stg = stage_instruction.NewEnv(typedInstr, dockerfileImageConfig.Dependencies, !isFirstStage, baseStageOptions)
+				stg = stage_instruction.NewEnv(typedInstr, dockerfileImageConfig.Dependencies, !isFirstStage, &baseStageOptions)
 			case *dockerfile.DockerfileStageInstruction[*instructions.ExposeCommand]:
-				stg = stage_instruction.NewExpose(typedInstr, dockerfileImageConfig.Dependencies, !isFirstStage, baseStageOptions)
+				stg = stage_instruction.NewExpose(typedInstr, dockerfileImageConfig.Dependencies, !isFirstStage, &baseStageOptions)
 			case *dockerfile.DockerfileStageInstruction[*instructions.HealthCheckCommand]:
-				stg = stage_instruction.NewHealthcheck(typedInstr, dockerfileImageConfig.Dependencies, !isFirstStage, baseStageOptions)
+				stg = stage_instruction.NewHealthcheck(typedInstr, dockerfileImageConfig.Dependencies, !isFirstStage, &baseStageOptions)
 			case *dockerfile.DockerfileStageInstruction[*instructions.LabelCommand]:
-				stg = stage_instruction.NewLabel(typedInstr, dockerfileImageConfig.Dependencies, !isFirstStage, baseStageOptions)
+				stg = stage_instruction.NewLabel(typedInstr, dockerfileImageConfig.Dependencies, !isFirstStage, &baseStageOptions)
 			case *dockerfile.DockerfileStageInstruction[*instructions.MaintainerCommand]:
-				stg = stage_instruction.NewMaintainer(typedInstr, dockerfileImageConfig.Dependencies, !isFirstStage, baseStageOptions)
+				stg = stage_instruction.NewMaintainer(typedInstr, dockerfileImageConfig.Dependencies, !isFirstStage, &baseStageOptions)
 			case *dockerfile.DockerfileStageInstruction[*instructions.OnbuildCommand]:
-				stg = stage_instruction.NewOnBuild(typedInstr, dockerfileImageConfig.Dependencies, !isFirstStage, baseStageOptions)
+				stg = stage_instruction.NewOnBuild(typedInstr, dockerfileImageConfig.Dependencies, !isFirstStage, &baseStageOptions)
 			case *dockerfile.DockerfileStageInstruction[*instructions.RunCommand]:
-				stg = stage_instruction.NewRun(typedInstr, dockerfileImageConfig.Dependencies, !isFirstStage, baseStageOptions)
+				stg = stage_instruction.NewRun(typedInstr, dockerfileImageConfig.Dependencies, !isFirstStage, &baseStageOptions)
 			case *dockerfile.DockerfileStageInstruction[*instructions.ShellCommand]:
-				stg = stage_instruction.NewShell(typedInstr, dockerfileImageConfig.Dependencies, !isFirstStage, baseStageOptions)
+				stg = stage_instruction.NewShell(typedInstr, dockerfileImageConfig.Dependencies, !isFirstStage, &baseStageOptions)
 			case *dockerfile.DockerfileStageInstruction[*instructions.StopSignalCommand]:
-				stg = stage_instruction.NewStopSignal(typedInstr, dockerfileImageConfig.Dependencies, !isFirstStage, baseStageOptions)
+				stg = stage_instruction.NewStopSignal(typedInstr, dockerfileImageConfig.Dependencies, !isFirstStage, &baseStageOptions)
 			case *dockerfile.DockerfileStageInstruction[*instructions.UserCommand]:
-				stg = stage_instruction.NewUser(typedInstr, dockerfileImageConfig.Dependencies, !isFirstStage, baseStageOptions)
+				stg = stage_instruction.NewUser(typedInstr, dockerfileImageConfig.Dependencies, !isFirstStage, &baseStageOptions)
 			case *dockerfile.DockerfileStageInstruction[*instructions.VolumeCommand]:
-				stg = stage_instruction.NewVolume(typedInstr, dockerfileImageConfig.Dependencies, !isFirstStage, baseStageOptions)
+				stg = stage_instruction.NewVolume(typedInstr, dockerfileImageConfig.Dependencies, !isFirstStage, &baseStageOptions)
 			case *dockerfile.DockerfileStageInstruction[*instructions.WorkdirCommand]:
-				stg = stage_instruction.NewWorkdir(typedInstr, dockerfileImageConfig.Dependencies, !isFirstStage, baseStageOptions)
+				stg = stage_instruction.NewWorkdir(typedInstr, dockerfileImageConfig.Dependencies, !isFirstStage, &baseStageOptions)
 			default:
 				panic(fmt.Sprintf("unsupported instruction type %#v", instr))
 			}
@@ -209,6 +226,8 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 			for _, dep := range instr.GetDependenciesByStageRef() {
 				appendQueue(dep.GetWerfImageName(), dep, item.Level+1)
 			}
+
+			instrNum++
 		}
 
 		appendImageToCurrentSet(img)

@@ -576,8 +576,6 @@ func (backend *BuildahBackend) GetImageInfo(ctx context.Context, ref string, opt
 		return nil, nil
 	}
 
-	repository, tag := image.ParseRepositoryAndTag(ref)
-
 	var parentID string
 	if id, ok := inspect.Docker.Config.Labels["werf.io/base-image-id"]; ok {
 		parentID = id
@@ -585,13 +583,25 @@ func (backend *BuildahBackend) GetImageInfo(ctx context.Context, ref string, opt
 		parentID = string(inspect.Docker.Parent)
 	}
 
+	var repository, tag, repoDigest string
+	if !strings.HasPrefix(ref, "sha256:") {
+		repository, tag = image.ParseRepositoryAndTag(ref)
+		list, err := backend.buildah.Images(ctx, buildah.ImagesOptions{Names: []string{ref}})
+		if err != nil {
+			return nil, fmt.Errorf("error getting buildah info for image %q: %w", ref, err)
+		}
+		if len(list) > 0 {
+			repoDigest = image.ExtractRepoDigest(list[0].RepoDigests, repository)
+		}
+	}
+
 	return &image.Info{
 		Name:              ref,
 		Repository:        repository,
+		RepoDigest:        repoDigest,
 		Tag:               tag,
 		Labels:            inspect.Docker.Config.Labels,
 		CreatedAtUnixNano: inspect.Docker.Created.UnixNano(),
-		RepoDigest:        inspect.FromImageDigest,
 		OnBuild:           inspect.Docker.Config.OnBuild,
 		Env:               inspect.Docker.Config.Env,
 		ID:                inspect.FromImageID,

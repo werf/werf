@@ -166,5 +166,14 @@ func Init(tmpDirOption, homeDirOption string) error {
 		return fmt.Errorf("error setting werf last run at timestamp: %w", err)
 	}
 
+	switch v := os.Getenv("WERF_STAGED_DOCKERFILE_VERSION"); v {
+	case "", "v1":
+		stagedDockerfileVersion = StagedDockerfileV1
+	case "v2":
+		stagedDockerfileVersion = StagedDockerfileV2
+	default:
+		return fmt.Errorf("unsupported WERF_STAGED_DOCKERFILE_VERSION=%q, expected v1 or v2 (recommended)", v)
+	}
+
 	return nil
 }

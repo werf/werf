@@ -80,7 +80,7 @@ func NewImage(ctx context.Context, targetPlatform, name string, baseImageType Ba
 	}
 
 	if opts.FetchLatestBaseImage {
-		if _, err := i.getFromBaseImageIdFromRegistry(ctx, i.baseImageReference); err != nil {
+		if err := i.setupBaseImageRepoDigest(ctx, i.baseImageReference); err != nil {
 			return nil, fmt.Errorf("error fetching base image id from registry: %w", err)
 		}
 	}
@@ -108,7 +108,10 @@ type Image struct {
 	baseImageName             string
 	dockerfileExpanderFactory dockerfile.ExpanderFactory
 
-	baseImageRepoId  string
+	// NOTICE: baseImageRepoId is a legacy field, better use Digest instead everywhere
+	baseImageRepoId     string
+	baseImageRepoDigest string
+
 	baseStageImage   *stage.StageImage
 	stageAsBaseImage stage.Interface
 }
@@ -233,6 +236,8 @@ func isUnsupportedMediaTypeError(err error) bool {
 }
 
 func (i *Image) SetupBaseImage(ctx context.Context, storageManager manager.StorageManagerInterface, storageOpts manager.StorageOptions) error {
+	logboek.Context(ctx).Debug().LogF(" -- SetupBaseImage for %q\n", i.Name)
+
 	switch i.baseImageType {
 	case StageAsBaseImage:
 		i.stageAsBaseImage = i.Conveyor.GetImage(i.TargetPlatform, i.baseImageName).GetLastNonEmptyStage()
@@ -318,7 +323,13 @@ func (i *Image) GetBaseImageReference() string {
 	return i.baseImageReference
 }
 
+func (i *Image) GetBaseImageRepoDigest() string {
+	return i.baseImageRepoDigest
+}
+
 func (i *Image) FetchBaseImage(ctx context.Context) error {
+	logboek.Context(ctx).Debug().LogF(" -- FetchBaseImage for %q\n", i.Name)
+
 	switch i.baseImageType {
 	case ImageFromRegistryAsBaseImage:
 		if i.baseStageImage.Image.Name() == "scratch" {
@@ -330,20 +341,24 @@ func (i *Image) FetchBaseImage(ctx context.Context) error {
 		if info, err := i.ContainerBackend.GetImageInfo(ctx, i.baseStageImage.Image.Name(), container_backend.GetImageInfoOpts{}); err != nil {
 			return fmt.Errorf("unable to inspect local image %s: %w", i.baseStageImage.Image.Name(), err)
 		} else if info != nil {
+			logboek.Context(ctx).Debug().LogF("GetImageInfo of %q -> %#v\n", i.baseStageImage.Image.Name(), info)
+
 			// TODO: do not use container_backend.LegacyStageImage for base image
 			i.baseStageImage.Image.SetStageDescription(&image.StageDescription{
 				StageID: nil, // this is not a stage actually, TODO
 				Info:    info,
 			})
 
-			baseImageRepoId, err := i.getFromBaseImageIdFromRegistry(ctx, i.baseStageImage.Image.Name())
-			if baseImageRepoId == info.ID || (err != nil && !isUnsupportedMediaTypeError(err)) {
+			err = i.setupBaseImageRepoDigest(ctx, i.baseStageImage.Image.Name())
+			if (i.baseImageRepoDigest != "" && i.baseImageRepoDigest == info.RepoDigest) || (err != nil && !isUnsupportedMediaTypeError(err)) {
 				if err != nil {
 					logboek.Context(ctx).Warn().LogF("WARNING: cannot get base image id (%s): %s\n", i.baseStageImage.Image.Name(), err)
 					logboek.Context(ctx).Warn().LogF("WARNING: using existing image %s without pull\n", i.baseStageImage.Image.Name())
 					logboek.Context(ctx).Warn().LogOptionalLn()
+				} else {
+					logboek.Context(ctx).Info().LogF("No pull needed for base image %s of image %q: image by digest %s is up to date\n", i.baseImageReference, i.Name, i.baseImageRepoDigest)
 				}
-
+				// No image pull
 				return nil
 			}
 		}
@@ -384,18 +399,27 @@ func (i *Image) FetchBaseImage(ctx context.Context) error {
 	}
 }
 
-func (i *Image) getFromBaseImageIdFromRegistry(ctx context.Context, reference string) (string, error) {
+func packRepoIDAndDigest(repoID, digest string) string {
+	return fmt.Sprintf("%s/%s", repoID, digest)
+}
+
+func unpackRepoIDAndDigest(packed string) (string, string) {
+	parts := strings.SplitN(packed, "/", 2)
+	return parts[0], parts[1]
+}
+
+func (i *Image) setupBaseImageRepoDigest(ctx context.Context, reference string) error {
 	i.Conveyor.GetServiceRWMutex("baseImagesRepoIdsCache" + reference).Lock()
 	defer i.Conveyor.GetServiceRWMutex("baseImagesRepoIdsCache" + reference).Unlock()
 
 	switch {
 	case i.baseImageRepoId != "":
-		return i.baseImageRepoId, nil
+		return nil
 	case i.Conveyor.IsBaseImagesRepoIdsCacheExist(reference):
-		i.baseImageRepoId = i.Conveyor.GetBaseImagesRepoIdsCache(reference)
-		return i.baseImageRepoId, nil
+		i.baseImageRepoId, i.baseImageRepoDigest = unpackRepoIDAndDigest(i.Conveyor.GetBaseImagesRepoIdsCache(reference))
+		return nil
 	case i.Conveyor.IsBaseImagesRepoErrCacheExist(reference):
-		return "", i.Conveyor.GetBaseImagesRepoErrCache(reference)
+		return i.Conveyor.GetBaseImagesRepoErrCache(reference)
 	}
 
 	var fetchedBaseRepoImage *image.Info
@@ -410,13 +434,14 @@ func (i *Image) getFromBaseImageIdFromRegistry(ctx context.Context, reference st
 
 		return nil
 	}); err != nil {
-		return "", err
+		return err
 	}
 
 	i.baseImageRepoId = fetchedBaseRepoImage.ID
-	i.Conveyor.SetBaseImagesRepoIdsCache(reference, i.baseImageRepoId)
+	i.baseImageRepoDigest = fetchedBaseRepoImage.RepoDigest
+	i.Conveyor.SetBaseImagesRepoIdsCache(reference, packRepoIDAndDigest(i.baseImageRepoId, i.baseImageRepoDigest))
 
-	return i.baseImageRepoId, nil
+	return nil
 }
 
 func EnvToMap(env []string) map[string]string {

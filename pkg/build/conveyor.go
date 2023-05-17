@@ -852,7 +852,7 @@ func (c *Conveyor) GetImageIDForLastImageStage(targetPlatform, imageName string)
 }
 
 func (c *Conveyor) GetImageDigestForLastImageStage(targetPlatform, imageName string) string {
-	return c.GetImage(targetPlatform, imageName).GetLastNonEmptyStage().GetStageImage().Image.GetStageDescription().Info.RepoDigest
+	return c.GetImage(targetPlatform, imageName).GetLastNonEmptyStage().GetStageImage().Image.GetStageDescription().Info.GetDigest()
 }
 
 func (c *Conveyor) GetImageIDForImageStage(targetPlatform, imageName, stageName string) string {

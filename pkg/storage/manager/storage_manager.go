@@ -384,7 +384,7 @@ func (m *StorageManager) getImageInfoFromRegistry(ctx context.Context, ref strin
 	if err != nil {
 		return nil, err
 	}
-	return image.NewImageInfoFromRegistryConfig(ref, cfg), nil
+	return docker_registry.NewImageInfoFromRegistryConfig(ref, cfg), nil
 }
 
 func (m *StorageManager) LockStageImage(ctx context.Context, imageName string) error {

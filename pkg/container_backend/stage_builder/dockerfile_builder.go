@@ -65,9 +65,11 @@ func (b *DockerfileBuilder) Cleanup(ctx context.Context) error {
 		return nil
 	}
 
-	logboek.Context(ctx).Info().LogF("Cleanup built dockerfile image %q\n", b.Image.BuiltID())
-	if err := b.ContainerBackend.Rmi(ctx, b.Image.BuiltID(), container_backend.RmiOpts{}); err != nil {
-		return fmt.Errorf("unable to remove built dockerfile image %q: %w", b.Image.BuiltID(), err)
+	if b.Image.BuiltID() != "" {
+		logboek.Context(ctx).Info().LogF("Cleanup built dockerfile image %q\n", b.Image.BuiltID())
+		if err := b.ContainerBackend.Rmi(ctx, b.Image.BuiltID(), container_backend.RmiOpts{}); err != nil {
+			return fmt.Errorf("unable to remove built dockerfile image %q: %w", b.Image.BuiltID(), err)
+		}
 	}
 	return nil
 }
