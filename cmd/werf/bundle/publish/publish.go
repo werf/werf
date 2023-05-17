@@ -15,6 +15,7 @@ import (
 	"helm.sh/helm/v3/pkg/cli/values"
 
 	"github.com/werf/logboek"
+
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/build"
 	"github.com/werf/werf/pkg/config"
@@ -408,10 +409,10 @@ func runPublish(ctx context.Context, imagesToProcess build.ImagesToProcess) erro
 	defer os.RemoveAll(bundleTmpDir)
 
 	bundle, err := wc.CreateNewBundle(ctx, bundleTmpDir, chartVersion, &values.Options{
-		ValueFiles:   *commonCmdData.Values,
-		StringValues: *commonCmdData.SetString,
-		Values:       *commonCmdData.Set,
-		FileValues:   *commonCmdData.SetFile,
+		ValueFiles:   common.GetValues(&commonCmdData),
+		StringValues: common.GetSetString(&commonCmdData),
+		Values:       common.GetSet(&commonCmdData),
+		FileValues:   common.GetSetFile(&commonCmdData),
 	})
 	if err != nil {
 		return fmt.Errorf("unable to create bundle: %w", err)
