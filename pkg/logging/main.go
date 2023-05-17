@@ -1,9 +1,12 @@
 package logging
 
 import (
+	"bytes"
+	"context"
 	"fmt"
 
 	"github.com/gookit/color"
+	"github.com/werf/logboek"
 )
 
 var (
@@ -62,4 +65,22 @@ func ImageDefaultStyle(isArtifact bool) color.Style {
 
 func ImageMetadataStyle() color.Style {
 	return ImageDefaultStyle(false)
+}
+
+// RunWithDeferredLog will run a function and print log if condition is true and
+// print logs only on error if condition is false.
+func RunWithDeferredLog(ctx context.Context, deferLog bool, run func(ctx context.Context) error) error {
+	if !deferLog {
+		return run(ctx)
+	}
+
+	buf := new(bytes.Buffer)
+	bufLogger := logboek.NewLogger(buf, buf)
+	ctxWithBufLogger := logboek.NewContext(ctx, bufLogger)
+
+	err := run(ctxWithBufLogger)
+	if err != nil {
+		fmt.Println(buf.String())
+	}
+	return err
 }

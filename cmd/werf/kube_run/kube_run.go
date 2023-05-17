@@ -25,6 +25,7 @@ import (
 
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/level"
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/build"
 	"github.com/werf/werf/pkg/config"
@@ -407,14 +408,20 @@ func run(ctx context.Context, pod, secret, namespace string, werfConfig *config.
 
 	var image string
 	if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
-		if common.GetRequireBuiltImages(ctx, &commonCmdData) {
-			if err := c.ShouldBeBuilt(ctx, build.ShouldBeBuiltOptions{}); err != nil {
-				return err
+		buildFunc := func(ctx context.Context) error {
+			if common.GetRequireBuiltImages(ctx, &commonCmdData) {
+				return c.ShouldBeBuilt(ctx, build.ShouldBeBuiltOptions{})
 			}
-		} else {
-			if err := c.Build(ctx, build.BuildOptions{}); err != nil {
-				return err
-			}
+			return c.Build(ctx, build.BuildOptions{})
+		}
+
+		// Print build logs on error if --require-built-images is specified.
+		// Always print logs by default or if --log-verbose is specified.
+		requireBuiltImage := common.GetRequireBuiltImages(ctx, &commonCmdData)
+		isVerbose := logboek.Context(ctx).IsAcceptedLevel(level.Default)
+		deferLog := requireBuiltImage || !isVerbose
+		if err := logging.RunWithDeferredLog(ctx, deferLog, buildFunc); err != nil {
+			return err
 		}
 
 		image, err = c.GetFullImageName(ctx, imageName)
