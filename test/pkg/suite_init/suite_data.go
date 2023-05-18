@@ -66,6 +66,12 @@ func (data *SuiteData) GetBuildReportPath(filename string) string {
 	return filepath.Join(buildReportsDir, filename)
 }
 
+func (data *SuiteData) GetDeployReportPath(filename string) string {
+	deployReportsDir := filepath.Join(data.TestDirPath, "deploy-reports")
+	Expect(os.MkdirAll(deployReportsDir, os.ModePerm)).To(Succeed())
+	return filepath.Join(deployReportsDir, filename)
+}
+
 func (data *SuiteData) InitTestRepo(dirname, fixtureRelPath string) {
 	testRepoPath := data.GetTestRepoPath(dirname)
 	utils.CopyIn(utils.FixturePath(fixtureRelPath), testRepoPath)

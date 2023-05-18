@@ -1,0 +1,15 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: hook
+  annotations:
+    helm.sh/hook: pre-upgrade,pre-install
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      containers:
+        - name: hook
+          image: ubuntu:22.04
+          command: ["echo", "hook started"]
+      restartPolicy: Never

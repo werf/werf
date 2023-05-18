@@ -200,7 +200,7 @@ func NewCmd(ctx context.Context) (*cobra.Command, error) {
 
 				common.SetupOndemandKubeInitializer(*_commonCmdData.KubeContext, *_commonCmdData.KubeConfig, *_commonCmdData.KubeConfigBase64, *_commonCmdData.KubeConfigPathMergeList)
 
-				helm.InitActionConfig(ctx, common.GetOndemandKubeInitializer(), namespace, helm_v3.Settings, actionConfig, helm.InitActionConfigOptions{
+				helm.InitActionConfig(ctx, common.GetOndemandKubeInitializer(), "", namespace, helm_v3.Settings, actionConfig, helm.InitActionConfigOptions{
 					StatusProgressPeriod:      time.Duration(*_commonCmdData.StatusProgressPeriodSeconds) * time.Second,
 					HooksStatusProgressPeriod: time.Duration(*_commonCmdData.HooksStatusProgressPeriodSeconds) * time.Second,
 					KubeConfigOptions: kube.KubeConfigOptions{
@@ -210,7 +210,7 @@ func NewCmd(ctx context.Context) (*cobra.Command, error) {
 						ConfigDataBase64:    *_commonCmdData.KubeConfigBase64,
 					},
 					ReleasesHistoryMax: *_commonCmdData.ReleasesHistoryMax,
-				})
+				}, nil)
 
 				if oldRunE != nil {
 					return oldRunE(cmd, args)

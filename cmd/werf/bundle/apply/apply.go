@@ -152,8 +152,14 @@ func runApply(ctx context.Context) error {
 		return err
 	}
 
+	namespace := common.GetNamespace(&commonCmdData)
+	releaseName, err := common.GetRequiredRelease(&commonCmdData)
+	if err != nil {
+		return err
+	}
+
 	actionConfig := new(action.Configuration)
-	if err := helm.InitActionConfig(ctx, common.GetOndemandKubeInitializer(), *commonCmdData.Namespace, helm_v3.Settings, actionConfig, helm.InitActionConfigOptions{
+	if err := helm.InitActionConfig(ctx, common.GetOndemandKubeInitializer(), releaseName, namespace, helm_v3.Settings, actionConfig, helm.InitActionConfigOptions{
 		StatusProgressPeriod:      time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
 		HooksStatusProgressPeriod: time.Duration(*commonCmdData.HooksStatusProgressPeriodSeconds) * time.Second,
 		KubeConfigOptions: kube.KubeConfigOptions{
@@ -164,7 +170,7 @@ func runApply(ctx context.Context) error {
 		},
 		ReleasesHistoryMax: *commonCmdData.ReleasesHistoryMax,
 		RegistryClient:     helmRegistryClient,
-	}); err != nil {
+	}, nil); err != nil {
 		return err
 	}
 
@@ -173,12 +179,6 @@ func runApply(ctx context.Context) error {
 
 	if err := bundles.Pull(ctx, fmt.Sprintf("%s:%s", repoAddress, cmdData.Tag), bundleTmpDir, bundlesRegistryClient); err != nil {
 		return fmt.Errorf("unable to pull bundle: %w", err)
-	}
-
-	namespace := common.GetNamespace(&commonCmdData)
-	releaseName, err := common.GetRequiredRelease(&commonCmdData)
-	if err != nil {
-		return err
 	}
 
 	var lockManager *lock_manager.LockManager
