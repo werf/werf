@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.235](https://www.github.com/werf/werf/compare/v1.2.234...v1.2.235) (2023-05-18)
+
+
+### Bug Fixes
+
+* **deploy:** add debug for new deploy engine ([7481265](https://www.github.com/werf/werf/commit/74812653ef762564ea5ed8e852bb3a29c55366f5))
+
 ### [1.2.234](https://www.github.com/werf/werf/compare/v1.2.233...v1.2.234) (2023-05-18)
 
 
