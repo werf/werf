@@ -1,0 +1,10 @@
+dependencies:
+  - name: hello
+    repository: oci://ghcr.io/werf
+    version: 0.1.0
+  - name: local-chart
+    repository: ""
+    version: 0.1.0
+digest: sha256:fe76d5af7ce7fc3948deb95766ad10eee77d4866c385638934981d118afb316b
+generated: "2022-09-19T16:13:01.337342528+03:00"
+

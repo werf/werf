@@ -10,6 +10,7 @@ import (
 	"sync"
 
 	. "github.com/onsi/gomega"
+	"helm.sh/helm/v3/pkg/release"
 
 	"github.com/werf/werf/pkg/build"
 	iutils "github.com/werf/werf/test/pkg/utils"
@@ -45,6 +46,10 @@ type BuildWithReportOptions struct {
 }
 
 type ConvergeOptions struct {
+	CommonOptions
+}
+
+type ConvergeWithReportOptions struct {
 	CommonOptions
 }
 
@@ -100,6 +105,23 @@ func (p *Project) Converge(opts *ConvergeOptions) (combinedOut string) {
 	outb := p.runCommand(runCommandOptions{Args: args, ShouldFail: opts.ShouldFail})
 
 	return string(outb)
+}
+
+func (p *Project) ConvergeWithReport(deployReportPath string, opts *ConvergeWithReportOptions) (combinedOut string, report release.DeployReport) {
+	if opts == nil {
+		opts = &ConvergeWithReportOptions{}
+	}
+
+	args := append([]string{"converge", "--save-deploy-report", "--deploy-report-path", deployReportPath}, opts.ExtraArgs...)
+	out := p.runCommand(runCommandOptions{Args: args, ShouldFail: opts.ShouldFail})
+
+	deployReportRaw, err := os.ReadFile(deployReportPath)
+	Expect(err).NotTo(HaveOccurred())
+
+	var deployReport release.DeployReport
+	Expect(json.Unmarshal(deployReportRaw, &deployReport)).To(Succeed())
+
+	return out, deployReport
 }
 
 func (p *Project) KubeRun(opts *KubeRunOptions) string {

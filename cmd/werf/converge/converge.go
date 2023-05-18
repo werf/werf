@@ -16,6 +16,7 @@ import (
 	"helm.sh/helm/v3/pkg/cli/values"
 	"helm.sh/helm/v3/pkg/postrender"
 	"helm.sh/helm/v3/pkg/registry"
+	"helm.sh/helm/v3/pkg/werf/mutator"
 
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
@@ -469,51 +470,95 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		FileValues:   common.GetSetFile(&commonCmdData),
 	}
 
-	actionConfig, err := common.NewActionConfig(ctx, common.GetOndemandKubeInitializer(), namespace, &commonCmdData, helmRegistryClient)
+	var extraRuntimeResourceMutators []mutator.RuntimeResourceMutator
+	if util.GetBoolEnvironmentDefaultFalse("WERF_EXPERIMENTAL_DEPLOY_ENGINE") {
+		extraRuntimeResourceMutators = []mutator.RuntimeResourceMutator{
+			helm.NewExtraAnnotationsMutator(userExtraAnnotations),
+			helm.NewExtraLabelsMutator(userExtraLabels),
+			helm.NewServiceAnnotationsMutator(*commonCmdData.Environment, werfConfig.Meta.Project),
+		}
+	}
+
+	actionConfig, err := common.NewActionConfig(ctx, common.GetOndemandKubeInitializer(), releaseName, namespace, &commonCmdData, helmRegistryClient, extraRuntimeResourceMutators)
 	if err != nil {
 		return err
 	}
 	maintenanceHelper := createMaintenanceHelper(ctx, actionConfig, kubeConfigOptions)
 
-	if err := migrateHelm2ToHelm3(ctx, releaseName, namespace, maintenanceHelper, wc.ChainPostRenderer, valueOpts, filepath.Join(giterminismManager.ProjectDir(), chartDir), helmRegistryClient); err != nil {
+	if err := migrateHelm2ToHelm3(ctx, releaseName, namespace, maintenanceHelper, wc.ChainPostRenderer, valueOpts, filepath.Join(giterminismManager.ProjectDir(), chartDir), helmRegistryClient, extraRuntimeResourceMutators); err != nil {
 		return err
 	}
 
-	actionConfig, err = common.NewActionConfig(ctx, common.GetOndemandKubeInitializer(), namespace, &commonCmdData, helmRegistryClient)
+	actionConfig, err = common.NewActionConfig(ctx, common.GetOndemandKubeInitializer(), releaseName, namespace, &commonCmdData, helmRegistryClient, extraRuntimeResourceMutators)
 	if err != nil {
 		return err
 	}
 
-	var deployReportPath *string
-	if common.GetSaveDeployReport(&commonCmdData) {
-		if path, err := common.GetDeployReportPath(&commonCmdData); err != nil {
-			return fmt.Errorf("unable to get deploy report path: %w", err)
-		} else {
-			deployReportPath = &path
+	if util.GetBoolEnvironmentDefaultFalse("WERF_EXPERIMENTAL_DEPLOY_ENGINE") {
+		// FIXME(ilya-lesikov): implement rollback
+		autoRollback := common.NewBool(cmdData.AutoRollback)
+		if *autoRollback {
+			return fmt.Errorf("--auto-rollback and --atomic not yet supported with new deploy engine")
 		}
+
+		var deployReportPath string
+		if common.GetSaveDeployReport(&commonCmdData) {
+			deployReportPath, err = common.GetDeployReportPath(&commonCmdData)
+			if err != nil {
+				return fmt.Errorf("unable to get deploy report path: %w", err)
+			}
+		}
+
+		helmDeployCmd := action.NewDeploy(releaseName, chartDir, actionConfig, helm_v3.Settings, action.DeployOptions{
+			OutStream:         logboek.OutStream(),
+			ErrStream:         logboek.ErrStream(),
+			ValueOptions:      valueOpts,
+			ReleaseNamespace:  namespace,
+			RollbackOnFailure: *autoRollback,
+			TrackTimeout:      *common.NewDuration(time.Duration(cmdData.Timeout) * time.Second),
+			KeepHistoryLimit:  *commonCmdData.ReleasesHistoryMax,
+			DeployReportPath:  deployReportPath,
+		})
+
+		return command_helpers.LockReleaseWrapper(ctx, releaseName, lockManager, func() error {
+			if err := helmDeployCmd.Run(ctx); err != nil {
+				return fmt.Errorf("helm deploy failed: %w", err)
+			}
+
+			return nil
+		})
+	} else {
+		var deployReportPath *string
+		if common.GetSaveDeployReport(&commonCmdData) {
+			if path, err := common.GetDeployReportPath(&commonCmdData); err != nil {
+				return fmt.Errorf("unable to get deploy report path: %w", err)
+			} else {
+				deployReportPath = &path
+			}
+		}
+
+		helmUpgradeCmd, _ := helm_v3.NewUpgradeCmd(actionConfig, logboek.OutStream(), helm_v3.UpgradeCmdOptions{
+			StagesSplitter:              helm.NewStagesSplitter(),
+			StagesExternalDepsGenerator: helm.NewStagesExternalDepsGenerator(&actionConfig.RESTClientGetter, &namespace),
+			ChainPostRenderer:           wc.ChainPostRenderer,
+			ValueOpts:                   valueOpts,
+			CreateNamespace:             common.NewBool(true),
+			Install:                     common.NewBool(true),
+			Wait:                        common.NewBool(true),
+			Atomic:                      common.NewBool(cmdData.AutoRollback),
+			Timeout:                     common.NewDuration(time.Duration(cmdData.Timeout) * time.Second),
+			IgnorePending:               common.NewBool(true),
+			CleanupOnFail:               common.NewBool(true),
+			DeployReportPath:            deployReportPath,
+		})
+
+		return command_helpers.LockReleaseWrapper(ctx, releaseName, lockManager, func() error {
+			if err := helmUpgradeCmd.RunE(helmUpgradeCmd, []string{releaseName, filepath.Join(giterminismManager.ProjectDir(), chartDir)}); err != nil {
+				return fmt.Errorf("helm upgrade have failed: %w", err)
+			}
+			return nil
+		})
 	}
-
-	helmUpgradeCmd, _ := helm_v3.NewUpgradeCmd(actionConfig, logboek.OutStream(), helm_v3.UpgradeCmdOptions{
-		StagesSplitter:              helm.NewStagesSplitter(),
-		StagesExternalDepsGenerator: helm.NewStagesExternalDepsGenerator(&actionConfig.RESTClientGetter, &namespace),
-		ChainPostRenderer:           wc.ChainPostRenderer,
-		ValueOpts:                   valueOpts,
-		CreateNamespace:             common.NewBool(true),
-		Install:                     common.NewBool(true),
-		Wait:                        common.NewBool(true),
-		Atomic:                      common.NewBool(cmdData.AutoRollback),
-		Timeout:                     common.NewDuration(time.Duration(cmdData.Timeout) * time.Second),
-		IgnorePending:               common.NewBool(true),
-		CleanupOnFail:               common.NewBool(true),
-		DeployReportPath:            deployReportPath,
-	})
-
-	return command_helpers.LockReleaseWrapper(ctx, releaseName, lockManager, func() error {
-		if err := helmUpgradeCmd.RunE(helmUpgradeCmd, []string{releaseName, filepath.Join(giterminismManager.ProjectDir(), chartDir)}); err != nil {
-			return fmt.Errorf("helm upgrade have failed: %w", err)
-		}
-		return nil
-	})
 }
 
 func createMaintenanceHelper(ctx context.Context, actionConfig *action.Configuration, kubeConfigOptions kube.KubeConfigOptions) *maintenance_helper.MaintenanceHelper {
@@ -545,7 +590,7 @@ func createMaintenanceHelper(ctx context.Context, actionConfig *action.Configura
 	return maintenance_helper.NewMaintenanceHelper(actionConfig, maintenanceOpts)
 }
 
-func migrateHelm2ToHelm3(ctx context.Context, releaseName, namespace string, maintenanceHelper *maintenance_helper.MaintenanceHelper, chainPostRenderer func(postrender.PostRenderer) postrender.PostRenderer, valueOpts *values.Options, fullChartDir string, helmRegistryClient *registry.Client) error {
+func migrateHelm2ToHelm3(ctx context.Context, releaseName, namespace string, maintenanceHelper *maintenance_helper.MaintenanceHelper, chainPostRenderer func(postrender.PostRenderer) postrender.PostRenderer, valueOpts *values.Options, fullChartDir string, helmRegistryClient *registry.Client, extraMutators []mutator.RuntimeResourceMutator) error {
 	if helm2Exists, err := checkHelm2AvailableAndReleaseExists(ctx, releaseName, namespace, maintenanceHelper); err != nil {
 		return fmt.Errorf("error checking availability of helm 2 and existence of helm 2 release %q: %w", releaseName, err)
 	} else if !helm2Exists {
@@ -572,7 +617,7 @@ func migrateHelm2ToHelm3(ctx context.Context, releaseName, namespace string, mai
 
 	logboek.Context(ctx).Default().LogOptionalLn()
 	if err := logboek.Context(ctx).LogProcess("Rendering helm 3 templates for the current project state").DoError(func() error {
-		actionConfig, err := common.NewActionConfig(ctx, common.GetOndemandKubeInitializer(), namespace, &commonCmdData, helmRegistryClient)
+		actionConfig, err := common.NewActionConfig(ctx, common.GetOndemandKubeInitializer(), releaseName, namespace, &commonCmdData, helmRegistryClient, extraMutators)
 		if err != nil {
 			return err
 		}

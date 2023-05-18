@@ -150,8 +150,11 @@ func runRender(ctx context.Context) error {
 		return fmt.Errorf("unable to create helm registry client: %w", err)
 	}
 
+	namespace := common.GetNamespace(&commonCmdData)
+	releaseName := common.GetOptionalRelease(&commonCmdData)
+
 	actionConfig := new(action.Configuration)
-	if err := helm.InitActionConfig(ctx, nil, *commonCmdData.Namespace, helm_v3.Settings, actionConfig, helm.InitActionConfigOptions{RegistryClient: helmRegistryClient}); err != nil {
+	if err := helm.InitActionConfig(ctx, nil, releaseName, namespace, helm_v3.Settings, actionConfig, helm.InitActionConfigOptions{RegistryClient: helmRegistryClient}, nil); err != nil {
 		return err
 	}
 
@@ -180,9 +183,6 @@ func runRender(ctx context.Context) error {
 			return fmt.Errorf("unable to pull bundle: %w", err)
 		}
 	}
-
-	namespace := common.GetNamespace(&commonCmdData)
-	releaseName := common.GetOptionalRelease(&commonCmdData)
 
 	if *commonCmdData.Environment != "" {
 		userExtraAnnotations["project.werf.io/env"] = *commonCmdData.Environment

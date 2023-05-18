@@ -1,0 +1,5 @@
+app1:
+  option: wouldBeOverridden
+
+local-chart:
+  option: optionValue

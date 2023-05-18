@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app1-config
+  annotations:
+    werf.io/weight: "-10"
+data:
+  werfNamespace: {{ .Values.werf.namespace }}
+  werfEnv: {{ .Values.werf.env }}
+  option: {{ .Values.app1.option }}
+  secretOption: {{ .Values.app1.secretOption }}
+  secretConfig: {{ werf_secret_file "app1-secret-config.txt" }}

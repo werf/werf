@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app2
+  annotations:
+    werf.io/track-termination-mode: NonBlocking
+    werf.io/fail-mode: IgnoreAndContinueDeployProcess
+spec:
+  selector:
+    matchLabels:
+      app: app2
+  template:
+    metadata:
+      labels:
+        app: app2
+    spec:
+      containers:
+        - name: app
+          image: ubuntu:22.04
+          command:
+            - sh
+            - -ec
+            - |
+              echo app2 started
+              false
