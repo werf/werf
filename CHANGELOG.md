@@ -1,5 +1,18 @@
 # Changelog
 
+### [1.2.234](https://www.github.com/werf/werf/compare/v1.2.233...v1.2.234) (2023-05-18)
+
+
+### Features
+
+* new experimental deploy engine ([8d431c2](https://www.github.com/werf/werf/commit/8d431c2a2c194c806496ccd28df85500cd43428d))
+
+
+### Bug Fixes
+
+* **bundles/publish:** fix usage of CreateNewBundle without env variables. ([974e01a](https://www.github.com/werf/werf/commit/974e01a59d9f7b34ddd93d87da32b9d7f88fe251))
+* **bundles/publish:** fix usage of CreateNewBundle without env variables. ([3e0e079](https://www.github.com/werf/werf/commit/3e0e0798251061f7777e6f55829ca8db19b526fb))
+
 ### [1.2.233](https://www.github.com/werf/werf/compare/v1.2.232...v1.2.233) (2023-05-16)
 
 
