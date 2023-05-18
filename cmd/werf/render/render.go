@@ -336,27 +336,10 @@ func runRender(ctx context.Context, imagesToProcess build.ImagesToProcess) error
 
 				// Print build logs on error by default.
 				// Always print logs if --log-verbose is specified (level.Info).
-				deferLog := true
-				if logboek.Context(ctx).IsAcceptedLevel(level.Default) {
-					deferLog = false
-				}
-				if err := logging.RunWithDeferredLog(ctx, deferLog, buildFunc); err != nil {
+				isVerbose := logboek.Context(ctx).IsAcceptedLevel(level.Default)
+				if err := logging.RunWithDeferredLog(ctx, !isVerbose, buildFunc); err != nil {
 					return err
 				}
-				//if logboek.Context(ctx).IsAcceptedLevel(level.Default) {
-				//	if err := buildFunc(ctx); err != nil {
-				//		return err
-				//	}
-				//} else {
-				//	buf := new(bytes.Buffer)
-				//	bufLogger := logboek.NewLogger(buf, buf)
-				//	ctxWithBufLogger := logboek.NewContext(ctx, bufLogger)
-				//
-				//	if err := buildFunc(ctxWithBufLogger); err != nil {
-				//		fmt.Println(buf.String())
-				//		return err
-				//	}
-				//}
 
 				imagesInfoGetters, err = c.GetImageInfoGetters(image.InfoGetterOptions{CustomTagFunc: useCustomTagFunc})
 				if err != nil {

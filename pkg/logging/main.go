@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/gookit/color"
+
 	"github.com/werf/logboek"
 )
 
