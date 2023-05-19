@@ -640,6 +640,8 @@ func (backend *BuildahBackend) Push(ctx context.Context, ref string, opts PushOp
 	var logWriter io.Writer
 	if logboek.Context(ctx).Info().IsAccepted() {
 		logWriter = logboek.Context(ctx).OutStream()
+	} else {
+		logWriter = io.Discard
 	}
 
 	return backend.buildah.Push(
