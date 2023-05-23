@@ -253,10 +253,7 @@ func GetFuseOverlayfsOptions() ([]string, error) {
 }
 
 func GetDefaultIsolation() (thirdparty.Isolation, error) {
-	if util.IsInContainer() {
-		return thirdparty.IsolationChroot, nil
-	}
-	return thirdparty.IsolationOCIRootless, nil
+	return thirdparty.IsolationChroot, nil
 }
 
 func debug() bool {
