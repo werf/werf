@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.237](https://www.github.com/werf/werf/compare/v1.2.236...v1.2.237) (2023-05-23)
+
+
+### Bug Fixes
+
+* **buildah:** use native-chroot isolation by default with buildah backend ([fdfc558](https://www.github.com/werf/werf/commit/fdfc558bd9863340bffbdf3f5cbd613ca9277871))
+
 ### [1.2.236](https://www.github.com/werf/werf/compare/v1.2.235...v1.2.236) (2023-05-23)
 
 
