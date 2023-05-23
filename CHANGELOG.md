@@ -1,5 +1,18 @@
 # Changelog
 
+### [1.2.236](https://www.github.com/werf/werf/compare/v1.2.235...v1.2.236) (2023-05-23)
+
+
+### Features
+
+* hide build logs if --require-built-images is in use, show logs on error ([3a7506c](https://www.github.com/werf/werf/commit/3a7506c6787335b8b903e96cffaaf0aa5399fab8))
+
+
+### Bug Fixes
+
+* **buildah:** push-layers logs in buildah only in verbose mode ([f46abbc](https://www.github.com/werf/werf/commit/f46abbc01bb1f919d18eb9239a2ee353b017e789))
+* **staged-dockerfile:** separate FROM stage with caching in the container-registry and possibility to reset by global cache version ([dd3d653](https://www.github.com/werf/werf/commit/dd3d653361c8b6f9d539bc276888d7415683d0a1))
+
 ### [1.2.235](https://www.github.com/werf/werf/compare/v1.2.234...v1.2.235) (2023-05-18)
 
 
