@@ -347,6 +347,6 @@ replace (
 	github.com/helm/helm-2to3 => github.com/werf/3p-helm-2to3 v0.0.0-20230313155428-cf9dd655c0e3 // switch back to upstream when merged: https://github.com/helm/helm-2to3/pull/224
 	github.com/jaguilar/vt100 => github.com/tonistiigi/vt100 v0.0.0-20190402012908-ad4c4a574305 // upstream not maintained
 	github.com/maorfr/helm-plugin-utils => github.com/werf/3p-helm-plugin-utils v0.6.1-0.20230313152239-057595ce9d57 // switch back to upstream when merged: https://github.com/maorfr/helm-plugin-utils/pull/17
-	helm.sh/helm/v3 => github.com/werf/3p-helm/v3 v3.0.0-20230518143747-0439c75b40fc
+	helm.sh/helm/v3 => github.com/werf/3p-helm/v3 v3.0.0-20230524184535-76f4c3806013
 	k8s.io/helm => github.com/werf/helm v0.0.0-20210202111118-81e74d46da0f
 )
