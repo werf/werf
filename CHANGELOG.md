@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.238](https://www.github.com/werf/werf/compare/v1.2.237...v1.2.238) (2023-05-24)
+
+
+### Bug Fixes
+
+* **deploy:** new engine no activity timeout for hooks ([9dab75d](https://www.github.com/werf/werf/commit/9dab75dfe728778238c9cd29ada86dfe93f0e66d))
+
 ### [1.2.237](https://www.github.com/werf/werf/compare/v1.2.236...v1.2.237) (2023-05-23)
 
 
