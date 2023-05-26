@@ -22,7 +22,7 @@ sections:
           ru: Общие настройки сборки
         collapsible: true
         isCollapsedByDefault: false
-        direcvies:
+        directives:
           - name: platform
             description:
               en: Common list of target platforms for all images (for example ['linux/amd64', 'linux/arm64', 'linux/arm/v8'])
