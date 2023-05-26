@@ -102,6 +102,8 @@ func (r *gitHubPackages) DeleteRepoImage(ctx context.Context, repoImage *image.I
 	}
 
 	if isUser {
+		//nolint:bodyclose
+		// TODO: close response body
 		if resp, err := r.gitHubApi.deleteUserContainerPackageVersion(ctx, packageName, packageVersionId, r.token); err != nil {
 			return r.handleFailedApiResponse(resp, err)
 		}
@@ -109,6 +111,8 @@ func (r *gitHubPackages) DeleteRepoImage(ctx context.Context, repoImage *image.I
 		return nil
 	}
 
+	//nolint:bodyclose
+	// TODO: close response body
 	if resp, err := r.gitHubApi.deleteOrgContainerPackageVersion(ctx, orgOrUserName, packageName, packageVersionId, r.token); err != nil {
 		return r.handleFailedApiResponse(resp, err)
 	}
@@ -128,6 +132,8 @@ func (r *gitHubPackages) DeleteRepo(ctx context.Context, reference string) error
 	}
 
 	if isUser {
+		//nolint:bodyclose
+		// TODO: close response body
 		if resp, err := r.gitHubApi.deleteUserContainerPackage(ctx, packageName, r.token); err != nil {
 			return r.handleFailedApiResponse(resp, err)
 		}
@@ -135,6 +141,8 @@ func (r *gitHubPackages) DeleteRepo(ctx context.Context, reference string) error
 		return nil
 	}
 
+	//nolint:bodyclose
+	// TODO: close response body
 	if resp, err := r.gitHubApi.deleteOrgContainerPackage(ctx, orgOrUserName, packageName, r.token); err != nil {
 		return r.handleFailedApiResponse(resp, err)
 	}
@@ -178,6 +186,8 @@ func (r *gitHubPackages) populateTagIDPackageVersionIDCache(ctx context.Context,
 	}
 
 	if isUser {
+		//nolint:bodyclose
+		// TODO: close response body
 		if resp, err := r.gitHubApi.getUserContainerPackageVersionsInBatches(ctx, packageName, r.token, handleFunc); err != nil {
 			return r.handleFailedApiResponse(resp, err)
 		}
@@ -185,6 +195,8 @@ func (r *gitHubPackages) populateTagIDPackageVersionIDCache(ctx context.Context,
 		return nil
 	}
 
+	//nolint:bodyclose
+	// TODO: close response body
 	if resp, err := r.gitHubApi.getOrgContainerPackageVersionsInBatches(ctx, orgOrUserName, packageName, r.token, handleFunc); err != nil {
 		return r.handleFailedApiResponse(resp, err)
 	}
@@ -202,6 +214,8 @@ func (r *gitHubPackages) isUser(ctx context.Context, orgOrUserName string) (bool
 		return isUser.(bool), nil
 	}
 
+	//nolint:bodyclose
+	// TODO: close response body
 	user, resp, err := r.gitHubApi.getUser(ctx, orgOrUserName, r.token)
 	if err != nil {
 		return false, r.handleFailedApiResponse(resp, err)

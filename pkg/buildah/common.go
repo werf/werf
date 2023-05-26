@@ -256,7 +256,9 @@ func GetDefaultIsolation() (thirdparty.Isolation, error) {
 	return thirdparty.IsolationChroot, nil
 }
 
-//nolint:deadcode,unused
+// TODO used for linux only, hide under the build flag
+//
+//nolint:nolintlint,unused
 func debug() bool {
 	return os.Getenv("WERF_BUILDAH_DEBUG") == "1"
 }

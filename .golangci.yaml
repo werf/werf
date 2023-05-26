@@ -25,11 +25,9 @@ linters:
   disable-all: true
   enable:
     # Default linters.
-    - deadcode
     - ineffassign
-    - structcheck
     - typecheck
-    - varcheck
+    - unused
 
     # Extra linters.
     - asciicheck
@@ -42,3 +40,13 @@ linters:
     - gocritic
     - gofumpt
     - misspell
+    - nolintlint
+
+issues:
+  # Show all errors.
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+  exclude:
+    # TODO use %w in the future.
+    - "non-wrapping format verb for fmt.Errorf" # errorlint

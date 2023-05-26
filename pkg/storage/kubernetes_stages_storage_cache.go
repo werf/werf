@@ -73,6 +73,7 @@ func (cache *KubernetesStagesStorageCache) setCacheData(obj *v1.ConfigMap, cache
 	}
 }
 
+//nolint:unused
 func (cache *KubernetesStagesStorageCache) getConfigMapName(projectName string) string {
 	if cache.GetConfigMapNameFunc != nil {
 		return cache.GetConfigMapNameFunc(projectName)

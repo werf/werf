@@ -93,6 +93,8 @@ func (r *dockerHub) DeleteRepoImage(ctx context.Context, repoImage *image.Info) 
 		return err
 	}
 
+	//nolint:bodyclose
+	// TODO: close response body
 	resp, err := r.dockerHubApi.deleteTag(ctx, account, project, repoImage.Tag, token)
 	if err != nil {
 		return r.handleFailedApiResponse(resp, err)
@@ -112,6 +114,8 @@ func (r *dockerHub) deleteRepo(ctx context.Context, reference string) error {
 		return err
 	}
 
+	//nolint:bodyclose
+	// TODO: close response body
 	resp, err := r.dockerHubApi.deleteRepository(ctx, account, project, token)
 	if err != nil {
 		return r.handleFailedApiResponse(resp, err)
@@ -125,6 +129,8 @@ func (r *dockerHub) getToken(ctx context.Context) (string, error) {
 		return r.dockerHubCredentials.token, nil
 	}
 
+	//nolint:bodyclose
+	// TODO: close response body
 	token, resp, err := r.dockerHubApi.getToken(ctx, r.dockerHubCredentials.username, r.dockerHubCredentials.password)
 	if err != nil {
 		return "", r.handleFailedApiResponse(resp, err)
