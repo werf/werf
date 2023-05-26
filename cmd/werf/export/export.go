@@ -11,7 +11,6 @@ import (
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/spf13/cobra"
-
 	"github.com/werf/logboek"
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/build"
@@ -237,7 +236,7 @@ func run(ctx context.Context, imagesToProcess build.ImagesToProcess, tagTemplate
 
 	logboek.Context(ctx).Info().LogOptionalLn()
 
-	conveyorOptions, err := common.GetConveyorOptions(&commonCmdData, imagesToProcess)
+	conveyorOptions, err := common.GetConveyorOptions(ctx, &commonCmdData, imagesToProcess)
 	if err != nil {
 		return err
 	}
@@ -263,21 +262,24 @@ func run(ctx context.Context, imagesToProcess build.ImagesToProcess, tagTemplate
 			return err
 		}
 
-		return c.Export(ctx, build.ExportOptions{
-			BuildPhaseOptions: build.BuildPhaseOptions{
-				BuildOptions:      build.BuildOptions{SkipImageMetadataPublication: *commonCmdData.Dev},
-				ShouldBeBuiltMode: common.GetRequireBuiltImages(ctx, &commonCmdData),
-			},
-			ExportPhaseOptions: build.ExportPhaseOptions{
-				ExportImageNameList: imageNameList,
-				ExportTagFuncList:   tagFuncList,
-				MutateConfigFunc: func(config v1.Config) (v1.Config, error) {
-					for k, v := range extraLabels {
-						config.Labels[k] = v
-					}
+		if common.GetRequireBuiltImages(ctx, &commonCmdData) {
+			if err := c.ShouldBeBuilt(ctx, build.ShouldBeBuiltOptions{}); err != nil {
+				return err
+			}
+		} else {
+			if err := c.Build(ctx, build.BuildOptions{SkipImageMetadataPublication: *commonCmdData.Dev}); err != nil {
+				return err
+			}
+		}
 
-					return config, nil
-				},
+		return c.Export(ctx, build.ExportOptions{
+			ExportImageNameList: imageNameList,
+			ExportTagFuncList:   tagFuncList,
+			MutateConfigFunc: func(config v1.Config) (v1.Config, error) {
+				for k, v := range extraLabels {
+					config.Labels[k] = v
+				}
+				return config, nil
 			},
 		})
 	})

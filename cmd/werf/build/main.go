@@ -243,10 +243,13 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		return err
 	}
 
-	conveyorOptions, err := common.GetConveyorOptionsWithParallel(&commonCmdData, imagesToProcess, buildOptions)
+	conveyorOptions, err := common.GetConveyorOptionsWithParallel(ctx, &commonCmdData, imagesToProcess, buildOptions)
 	if err != nil {
 		return err
 	}
+
+	// Always print logs.
+	conveyorOptions.DeferBuildLog = false
 
 	logboek.LogOptionalLn()
 

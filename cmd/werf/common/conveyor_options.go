@@ -7,6 +7,8 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/level"
 	"github.com/werf/werf/pkg/build"
 	"github.com/werf/werf/pkg/build/stage"
 	"github.com/werf/werf/pkg/config"
@@ -18,7 +20,7 @@ import (
 	"github.com/werf/werf/pkg/storage"
 )
 
-func GetConveyorOptions(commonCmdData *CmdData, imagesToProcess build.ImagesToProcess) (build.ConveyorOptions, error) {
+func GetConveyorOptions(ctx context.Context, commonCmdData *CmdData, imagesToProcess build.ImagesToProcess) (build.ConveyorOptions, error) {
 	conveyorOptions := build.ConveyorOptions{
 		LocalGitRepoVirtualMergeOptions: stage.VirtualMergeOptions{
 			VirtualMerge: *commonCmdData.VirtualMerge,
@@ -34,11 +36,24 @@ func GetConveyorOptions(commonCmdData *CmdData, imagesToProcess build.ImagesToPr
 		conveyorOptions.TargetPlatforms = platforms
 	}
 
+	conveyorOptions.DeferBuildLog = GetDeferredBuildLog(ctx, commonCmdData)
+
 	return conveyorOptions, nil
 }
 
-func GetConveyorOptionsWithParallel(commonCmdData *CmdData, imagesToProcess build.ImagesToProcess, buildStagesOptions build.BuildOptions) (build.ConveyorOptions, error) {
-	conveyorOptions, err := GetConveyorOptions(commonCmdData, imagesToProcess)
+// GetDeferredBuildLog returns true if build log should be catched and printed on error.
+// Default rules are follows:
+// - If --require-built-images is specified catch log and print on error.
+// - Hide log messages if --log-quiet is specified.
+// - Print "live" logs by default or if --log-verbose is specified.
+func GetDeferredBuildLog(ctx context.Context, commonCmdData *CmdData) bool {
+	requireBuiltImage := GetRequireBuiltImages(ctx, commonCmdData)
+	isVerbose := logboek.Context(ctx).IsAcceptedLevel(level.Default)
+	return requireBuiltImage || !isVerbose
+}
+
+func GetConveyorOptionsWithParallel(ctx context.Context, commonCmdData *CmdData, imagesToProcess build.ImagesToProcess, buildStagesOptions build.BuildOptions) (build.ConveyorOptions, error) {
+	conveyorOptions, err := GetConveyorOptions(ctx, commonCmdData, imagesToProcess)
 	if err != nil {
 		return conveyorOptions, err
 	}
