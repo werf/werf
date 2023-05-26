@@ -85,7 +85,33 @@ werf build --repo REPO --add-custom-tag "%image%-latest"
 
 <!-- reference https://werf.io/documentation/v1.2/internals/stages_and_storage.html#storage -->
 
-Layer-by-layer image caching is part of the werf build process and does not require any configuration. werf saves and reuses the build cache in the container registry and synchronizes parallel builders.
+Layer-by-layer image caching is essential part of the werf build process. werf saves and reuses the build cache in the container registry and synchronizes parallel builders.
+
+By default Dockerfiles are cached as a single layer in the container registry. To enable Dockerfile caching per-instruction use the `staged: true` directive:
+
+```yaml
+# werf.yaml
+image: example
+dockerfile: ./Dockerfile
+staged: true
+```
+
+Stapel images are cached layer-by-layer in the container registry by default and do not require any configuration.
+
+<div class="details">
+<a href="javascript:void(0)" class="details__summary">**NOTICE**: Staged Dockerfile caching feature is currently in alpha state</a>
+<div class="details__content" markdown="1">
+
+There are several generations of staged dockerfile builder, which can be explicitly switched by the `WERF_STAGED_DOCKERFILE_VERSION={v1|v2}`. Switching staged dockerfile version can cause rebuild of images.
+
+* `v1` used by default.
+* `v2` version enables:
+    * dedicated `FROM` layer to cache base image specified in the `FROM` instruction.
+
+`v2` version compatibility will be broken in future releases.
+
+</div>
+</div>
 
 <div class="details">
 <a href="javascript:void(0)" class="details__summary">How assembly works</a>
