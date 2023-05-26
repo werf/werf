@@ -756,7 +756,7 @@ entries:
             f: *cli
 
           - title: Cheat sheet
-            url: /reference/cheat_sheet.html
+            url: /resources/cheat_sheet.html
 
       - title: Resources
         f:
@@ -887,7 +887,7 @@ entries:
             f: *cli
 
           - title: Шпаргалка
-            url: /reference/cheat_sheet.html
+            url: /resources/cheat_sheet.html
 
       - title: Ресурсы
         f:
