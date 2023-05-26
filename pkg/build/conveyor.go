@@ -513,12 +513,11 @@ func (c *Conveyor) prepareBuildCtx(ctx context.Context) (context.Context, *bytes
 }
 
 func (c *Conveyor) printDeferredBuildLog(ctx context.Context, buf *bytes.Buffer) {
-	if !c.DeferBuildLog || buf == nil  {
+	if !c.DeferBuildLog || buf == nil {
 		return
 	}
 
 	_, _ = logboek.Context(ctx).OutStream().Write(buf.Bytes())
-	//fmt.Println(buf.String())
 }
 
 func (c *Conveyor) Build(ctx context.Context, opts BuildOptions) error {
@@ -544,7 +543,6 @@ func (c *Conveyor) Build(ctx context.Context, opts BuildOptions) error {
 	}
 	return err
 }
-
 
 func (c *Conveyor) Export(ctx context.Context, opts ExportOptions) error {
 	return NewExporter(c, opts).Run(ctx)

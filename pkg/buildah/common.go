@@ -256,6 +256,7 @@ func GetDefaultIsolation() (thirdparty.Isolation, error) {
 	return thirdparty.IsolationChroot, nil
 }
 
+//nolint:deadcode,unused
 func debug() bool {
 	return os.Getenv("WERF_BUILDAH_DEBUG") == "1"
 }

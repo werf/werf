@@ -29,8 +29,8 @@ type ExportOptions struct {
 
 func NewExporter(c *Conveyor, opts ExportOptions) *Exporter {
 	return &Exporter{
+		Conveyor:      c,
 		ExportOptions: opts,
-		Conveyor: c,
 	}
 }
 
