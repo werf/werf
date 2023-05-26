@@ -85,7 +85,33 @@ werf build --repo REPO --add-custom-tag "%image%-latest"
 
 <!-- прим. для перевода: на основе https://werf.io/documentation/v1.2/internals/stages_and_storage.html#storage -->
 
-Послойное кэширование образов является частью сборочного процесса werf и не требует какой-либо конфигурации. werf сохраняет и переиспользует сборочный кэш в container registry, а также синхронизирует работу параллельных сборщиков.
+Послойное кэширование образов является неотъемлемой частью сборочного процесса werf. werf сохраняет и переиспользует сборочный кэш в container registry, а также синхронизирует работу параллельных сборщиков.
+
+По умолчанию Dockerfile-ы кешируются одной финальной стадией в container registry. Чтобы включить послойное кеширование всех инструкций Dockerfile в container registry необходимо включить директиву `staged: true`:
+
+```yaml
+# werf.yaml
+image: example
+dockerfile: ./Dockerfile
+staged: true
+```
+
+Образы stapel кешируются в режиме послойного кеширования в container registry по умолчанию без дополнительной конфигурации.
+
+<div class="details">
+<a href="javascript:void(0)" class="details__summary">**ЗАМЕЧАНИЕ**: Послойное кеширование Dockerfile на данный момент находится стадии альфа-тестирования</a>
+<div class="details__content" markdown="1">
+
+Существует несколько ревизий послойного сборщика Dockerfile-ов, которые могут быть включены с помощью переменной `WERF_STAGED_DOCKERFILE_VERSION={v1|v2}`. Изменение версии сборщика может вызвать пересборку сборочного кеша.
+
+* `v1` используется по умолчанию.
+* `v2` включает:
+    * отдельный слой для стадии `FROM`, чтобы закешировать базовый образ, указанный в инструкции `FROM`.
+
+Совместимость версии `v2` может быть сломана в будущих релизах.
+
+</div>
+</div>
 
 <div class="details">
 <a href="javascript:void(0)" class="details__summary">Как работает сборка</a>
