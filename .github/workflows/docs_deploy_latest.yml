@@ -1,0 +1,34 @@
+name: docs:deploy:latest
+
+on:
+  push:
+    branches:
+      - main
+  repository_dispatch:
+    types: ["docs:deploy:latest"]
+  workflow_dispatch:
+
+jobs:
+  deploy-prod:
+    uses: ./.github/workflows/_docs_deploy.yml
+    with:
+      persistent: true
+      env: production
+      kubeContext: prod
+
+  deploy-test:
+    uses: ./.github/workflows/_docs_deploy.yml
+    with:
+      persistent: true
+      env: test
+      kubeContext: dev
+
+  notify:
+    if: always()
+    needs:
+      - deploy-prod
+      - deploy-test
+    uses: ./.github/workflows/_notification.yml
+    secrets:
+      mentionGroupID: ${{ secrets.SLACK_MENTION_GROUP_ID }}
+      webhook: ${{ secrets.SLACK_WEBHOOK }}
