@@ -1,6 +1,7 @@
 package build
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -70,6 +71,7 @@ type ConveyorOptions struct {
 	ParallelTasksLimit              int64
 	LocalGitRepoVirtualMergeOptions stage.VirtualMergeOptions
 	TargetPlatforms                 []string
+	DeferBuildLog                   bool
 
 	ImagesToProcess
 }
@@ -382,6 +384,8 @@ func (c *Conveyor) ShouldBeBuilt(ctx context.Context, opts ShouldBeBuiltOptions)
 		return err
 	}
 
+	buildCtx, buf := c.prepareBuildCtx(ctx)
+
 	phases := []Phase{
 		NewBuildPhase(c, BuildPhaseOptions{
 			ShouldBeBuiltMode: true,
@@ -391,11 +395,11 @@ func (c *Conveyor) ShouldBeBuilt(ctx context.Context, opts ShouldBeBuiltOptions)
 		}),
 	}
 
-	if err := c.runPhases(ctx, phases, false); err != nil {
-		return err
+	err := c.runPhases(buildCtx, phases, false)
+	if err != nil {
+		c.printDeferredBuildLog(ctx, buf)
 	}
-
-	return nil
+	return err
 }
 
 func (c *Conveyor) FetchLastImageStage(ctx context.Context, targetPlatform, imageName string) error {
@@ -497,6 +501,25 @@ It is recommended to use shell builder, because ansible builder will be deprecat
 	return nil
 }
 
+// prepareBuildCtx creates buffer and a new logger context if printing build log should be deferred.
+func (c *Conveyor) prepareBuildCtx(ctx context.Context) (context.Context, *bytes.Buffer) {
+	if !c.DeferBuildLog {
+		return ctx, nil
+	}
+
+	buf := new(bytes.Buffer)
+	bufLogger := logboek.NewLogger(buf, buf)
+	return logboek.NewContext(ctx, bufLogger), buf
+}
+
+func (c *Conveyor) printDeferredBuildLog(ctx context.Context, buf *bytes.Buffer) {
+	if !c.DeferBuildLog || buf == nil {
+		return
+	}
+
+	_, _ = logboek.Context(ctx).OutStream().Write(buf.Bytes())
+}
+
 func (c *Conveyor) Build(ctx context.Context, opts BuildOptions) error {
 	if err := c.checkContainerBackendSupported(ctx); err != nil {
 		return err
@@ -506,31 +529,23 @@ func (c *Conveyor) Build(ctx context.Context, opts BuildOptions) error {
 		return err
 	}
 
+	buildCtx, buf := c.prepareBuildCtx(ctx)
+
 	phases := []Phase{
 		NewBuildPhase(c, BuildPhaseOptions{
 			BuildOptions: opts,
 		}),
 	}
 
-	return c.runPhases(ctx, phases, true)
-}
-
-type ExportOptions struct {
-	BuildPhaseOptions  BuildPhaseOptions
-	ExportPhaseOptions ExportPhaseOptions
+	err := c.runPhases(buildCtx, phases, true)
+	if err != nil {
+		c.printDeferredBuildLog(ctx, buf)
+	}
+	return err
 }
 
 func (c *Conveyor) Export(ctx context.Context, opts ExportOptions) error {
-	if err := c.determineStages(ctx); err != nil {
-		return err
-	}
-
-	phases := []Phase{
-		NewBuildPhase(c, opts.BuildPhaseOptions),
-		NewExportPhase(c, opts.ExportPhaseOptions),
-	}
-
-	return c.runPhases(ctx, phases, true)
+	return NewExporter(c, opts).Run(ctx)
 }
 
 func (c *Conveyor) determineStages(ctx context.Context) error {
@@ -587,7 +602,7 @@ func (c *Conveyor) doImages(ctx context.Context, phases []Phase, logImages bool)
 		return c.doImagesInParallel(ctx, phases, logImages)
 	} else {
 		for _, img := range c.imagesTree.GetImages() {
-			if err := c.doImage(ctx, img, phases, logImages); err != nil {
+			if err := c.doImage(ctx, img, phases); err != nil {
 				return err
 			}
 		}
@@ -639,7 +654,7 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 			// execution time calculation
 			taskStartTime := time.Now()
 			{
-				if err := c.doImage(ctx, taskImage, taskPhases, logImages); err != nil {
+				if err := c.doImage(ctx, taskImage, taskPhases); err != nil {
 					return err
 				}
 
@@ -679,15 +694,8 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 	return nil
 }
 
-func (c *Conveyor) doImage(ctx context.Context, img *image.Image, phases []Phase, logImages bool) error {
-	var imagesLogger types.ManagerInterface
-	if logImages {
-		imagesLogger = logboek.Context(ctx).Default()
-	} else {
-		imagesLogger = logboek.Context(ctx).Info()
-	}
-
-	return imagesLogger.LogProcess(img.LogDetailedName()).
+func (c *Conveyor) doImage(ctx context.Context, img *image.Image, phases []Phase) error {
+	return logboek.Context(ctx).LogProcess(img.LogDetailedName()).
 		Options(func(options types.LogProcessOptionsInterface) {
 			options.Style(img.LogProcessStyle())
 		}).

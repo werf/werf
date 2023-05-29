@@ -16,55 +16,51 @@ import (
 	"github.com/werf/werf/pkg/util"
 )
 
-type ExportPhase struct {
-	BasePhase
-	ExportPhaseOptions
+type Exporter struct {
+	ExportOptions
+	Conveyor *Conveyor
 }
 
-type ExportPhaseOptions struct {
+type ExportOptions struct {
 	ExportImageNameList []string
 	ExportTagFuncList   []image.ExportTagFunc
 	MutateConfigFunc    func(config v1.Config) (v1.Config, error)
 }
 
-func NewExportPhase(c *Conveyor, opts ExportPhaseOptions) *ExportPhase {
-	return &ExportPhase{
-		BasePhase:          BasePhase{c},
-		ExportPhaseOptions: opts,
+func NewExporter(c *Conveyor, opts ExportOptions) *Exporter {
+	return &Exporter{
+		Conveyor:      c,
+		ExportOptions: opts,
 	}
 }
 
-func (phase *ExportPhase) Name() string {
-	return "export"
-}
-
-func (phase *ExportPhase) AfterImages(ctx context.Context) error {
-	if len(phase.ExportTagFuncList) == 0 {
+func (e *Exporter) Run(ctx context.Context) error {
+	if len(e.ExportTagFuncList) == 0 {
 		return nil
 	}
 
-	for _, desc := range phase.Conveyor.imagesTree.GetImagesByName(true) {
+	for _, desc := range e.Conveyor.imagesTree.GetImagesByName(true) {
 		name, images := desc.Unpair()
-		if !slices.Contains(phase.ExportImageNameList, name) {
+		if !slices.Contains(e.ExportImageNameList, name) {
 			continue
 		}
 
 		targetPlatforms := util.MapFuncToSlice(images, func(img *build_image.Image) string { return img.TargetPlatform })
 		if len(targetPlatforms) == 1 {
 			img := images[0]
-			if err := phase.exportImage(ctx, img); err != nil {
+			if err := e.exportImage(ctx, img); err != nil {
 				return fmt.Errorf("unable to export image %q: %w", img.Name, err)
 			}
 		} else {
 			// FIXME(multiarch): Support multiplatform manifest by pushing local images to repo first, then create manifest list.
 			// FIXME(multiarch): Also support multiplatform manifest in werf build command in local mode with enabled final-repo.
-			if _, isLocal := phase.Conveyor.StorageManager.GetStagesStorage().(*storage.LocalStagesStorage); isLocal {
+			if _, isLocal := e.Conveyor.StorageManager.GetStagesStorage().(*storage.LocalStagesStorage); isLocal {
 				return fmt.Errorf("export command is not supported in multiplatform mode")
 			}
 
 			// multiplatform mode
-			img := phase.Conveyor.imagesTree.GetMultiplatformImage(name)
-			if err := phase.exportMultiplatformImage(ctx, img); err != nil {
+			img := e.Conveyor.imagesTree.GetMultiplatformImage(name)
+			if err := e.exportMultiplatformImage(ctx, img); err != nil {
 				return fmt.Errorf("unable to export multiplatform image %q: %w", img.Name, err)
 			}
 		}
@@ -73,18 +69,18 @@ func (phase *ExportPhase) AfterImages(ctx context.Context) error {
 	return nil
 }
 
-func (phase *ExportPhase) exportMultiplatformImage(ctx context.Context, img *build_image.MultiplatformImage) error {
+func (e *Exporter) exportMultiplatformImage(ctx context.Context, img *build_image.MultiplatformImage) error {
 	return logboek.Context(ctx).Default().LogProcess("Exporting image...").
 		Options(func(options types.LogProcessOptionsInterface) {
 			options.Style(style.Highlight())
 		}).
 		DoError(func() error {
-			for _, tagFunc := range phase.ExportTagFuncList {
+			for _, tagFunc := range e.ExportTagFuncList {
 				tag := tagFunc(img.Name, img.GetStageID().String())
 				if err := logboek.Context(ctx).Default().LogProcess("tag %s", tag).
 					DoError(func() error {
 						desc := img.GetStageDescription()
-						if err := phase.Conveyor.StorageManager.GetStagesStorage().ExportStage(ctx, desc, tag, phase.MutateConfigFunc); err != nil {
+						if err := e.Conveyor.StorageManager.GetStagesStorage().ExportStage(ctx, desc, tag, e.MutateConfigFunc); err != nil {
 							return err
 						}
 
@@ -98,11 +94,11 @@ func (phase *ExportPhase) exportMultiplatformImage(ctx context.Context, img *bui
 		})
 }
 
-func (phase *ExportPhase) exportImage(ctx context.Context, img *build_image.Image) error {
-	if !slices.Contains(phase.ExportImageNameList, img.Name) {
+func (e *Exporter) exportImage(ctx context.Context, img *build_image.Image) error {
+	if !slices.Contains(e.ExportImageNameList, img.Name) {
 		return nil
 	}
-	if len(phase.ExportTagFuncList) == 0 {
+	if len(e.ExportTagFuncList) == 0 {
 		return nil
 	}
 
@@ -111,12 +107,12 @@ func (phase *ExportPhase) exportImage(ctx context.Context, img *build_image.Imag
 			options.Style(style.Highlight())
 		}).
 		DoError(func() error {
-			for _, tagFunc := range phase.ExportTagFuncList {
+			for _, tagFunc := range e.ExportTagFuncList {
 				tag := tagFunc(img.GetName(), img.GetStageID())
 				if err := logboek.Context(ctx).Default().LogProcess("tag %s", tag).
 					DoError(func() error {
 						stageDesc := img.GetLastNonEmptyStage().GetStageImage().Image.GetStageDescription()
-						if err := phase.Conveyor.StorageManager.GetStagesStorage().ExportStage(ctx, stageDesc, tag, phase.MutateConfigFunc); err != nil {
+						if err := e.Conveyor.StorageManager.GetStagesStorage().ExportStage(ctx, stageDesc, tag, e.MutateConfigFunc); err != nil {
 							return err
 						}
 
@@ -128,9 +124,4 @@ func (phase *ExportPhase) exportImage(ctx context.Context, img *build_image.Imag
 
 			return nil
 		})
-}
-
-func (phase *ExportPhase) Clone() Phase {
-	u := *phase
-	return &u
 }

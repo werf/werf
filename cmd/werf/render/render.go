@@ -27,7 +27,6 @@ import (
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/git_repo/gitdata"
 	"github.com/werf/werf/pkg/image"
-	"github.com/werf/werf/pkg/logging"
 	"github.com/werf/werf/pkg/ssh_agent"
 	"github.com/werf/werf/pkg/storage"
 	"github.com/werf/werf/pkg/storage/lrumeta"
@@ -312,33 +311,34 @@ func runRender(ctx context.Context, imagesToProcess build.ImagesToProcess) error
 
 			imagesRepo = storageManager.GetServiceValuesRepo()
 
-			conveyorOptions, err := common.GetConveyorOptionsWithParallel(&commonCmdData, imagesToProcess, buildOptions)
+			conveyorOptions, err := common.GetConveyorOptionsWithParallel(ctx, &commonCmdData, imagesToProcess, buildOptions)
 			if err != nil {
 				return err
 			}
+
+			// Override default behaviour:
+			// Print build logs on error by default.
+			// Always print logs if --log-verbose is specified (level.Info).
+			isVerbose := logboek.Context(ctx).IsAcceptedLevel(level.Default)
+			conveyorOptions.DeferBuildLog = !isVerbose
 
 			conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, giterminismManager.ProjectDir(), projectTmpDir, ssh_agent.SSHAuthSock, containerBackend, storageManager, storageLockManager, conveyorOptions)
 			defer conveyorWithRetry.Terminate()
 
 			if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
-				buildFunc := func(ctx context.Context) error {
-					if common.GetRequireBuiltImages(ctx, &commonCmdData) {
-						shouldBeBuiltOptions, err := common.GetShouldBeBuiltOptions(&commonCmdData, giterminismManager, werfConfig)
-						if err != nil {
-							return err
-						}
-
-						return c.ShouldBeBuilt(ctx, shouldBeBuiltOptions)
+				if common.GetRequireBuiltImages(ctx, &commonCmdData) {
+					shouldBeBuiltOptions, err := common.GetShouldBeBuiltOptions(&commonCmdData, giterminismManager, werfConfig)
+					if err != nil {
+						return err
 					}
 
-					return c.Build(ctx, buildOptions)
-				}
-
-				// Print build logs on error by default.
-				// Always print logs if --log-verbose is specified (level.Info).
-				isVerbose := logboek.Context(ctx).IsAcceptedLevel(level.Default)
-				if err := logging.RunWithDeferredLog(ctx, !isVerbose, buildFunc); err != nil {
-					return err
+					if err := c.ShouldBeBuilt(ctx, shouldBeBuiltOptions); err != nil {
+						return err
+					}
+				} else {
+					if err := c.Build(ctx, buildOptions); err != nil {
+						return err
+					}
 				}
 
 				imagesInfoGetters, err = c.GetImageInfoGetters(image.InfoGetterOptions{CustomTagFunc: useCustomTagFunc})

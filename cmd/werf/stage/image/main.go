@@ -194,7 +194,7 @@ func run(ctx context.Context, imageName string) error {
 
 	imagesToProcess := build.NewImagesToProcess([]string{imageName}, false)
 
-	conveyorOptions, err := common.GetConveyorOptions(&commonCmdData, imagesToProcess)
+	conveyorOptions, err := common.GetConveyorOptions(ctx, &commonCmdData, imagesToProcess)
 	if err != nil {
 		return err
 	}
