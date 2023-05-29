@@ -28,12 +28,24 @@ jobs:
       - uses: actions/github-script@v6
         with:
           script: >
-            github.issues.removeLabel({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              name: '${{ github.event.label.name }}'
-            })
+            core.startGroup(`Remove label '${context.payload.label.name}' from issue ${context.issue.number} ...`);
+            try {
+              const response = await github.rest.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                name: context.payload.label.name
+              });
+              if (response.status !== 204 || response.status !== 200) {
+                core.info(`Bad response on remove label: ${JSON.stringify(response)}`)
+              } else {
+                core.info(`Removed.`);
+              }
+            } catch (error) {
+              core.info(`Ignore error when removing label: may be it was removed by another workflow. Error: ${dumpError(error)}.`);
+            } finally {
+              core.endGroup()
+            }
 
   integration_main:
     if: |
