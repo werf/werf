@@ -1,5 +1,14 @@
 # Changelog
 
+### [1.2.239](https://www.github.com/werf/werf/compare/v1.2.238...v1.2.239) (2023-05-29)
+
+
+### Bug Fixes
+
+* hide build log in export command ([#5658](https://www.github.com/werf/werf/issues/5658)) ([88bc502](https://www.github.com/werf/werf/commit/88bc5024117b9dc5dfb30f59e2b6f72e786ed5db))
+* **kubedog:** resource hangs on context canceled ([0ff8176](https://www.github.com/werf/werf/commit/0ff81768864e1fe380dba00086b39d3525d81c06))
+* remove abandoned linters, use unused linter ([#5661](https://www.github.com/werf/werf/issues/5661)) ([adbf2c7](https://www.github.com/werf/werf/commit/adbf2c707e5104f18605e8d723f03d3c7bdadc59))
+
 ### [1.2.238](https://www.github.com/werf/werf/compare/v1.2.237...v1.2.238) (2023-05-24)
 
 
