@@ -158,6 +158,7 @@ func (c *rawStapelImage) validateStapelImageDirective(image *StapelImage) (err e
 	return nil
 }
 
+//nolint:unused
 func (c *rawStapelImage) toShellDirectiveByCommandAndStage(command, stage string) (shell *Shell) {
 	shell = &Shell{}
 	switch stage {
@@ -176,6 +177,7 @@ func (c *rawStapelImage) toShellDirectiveByCommandAndStage(command, stage string
 	return
 }
 
+//nolint:unused
 func (c *rawStapelImage) toAnsibleWithTaskByStage(task *AnsibleTask, stage string) (ansible *Ansible) {
 	ansible = &Ansible{}
 	switch stage {

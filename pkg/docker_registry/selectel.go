@@ -110,6 +110,8 @@ func (r *selectel) deleteRepoImage(ctx context.Context, repoImage *image.Info) e
 		return err
 	}
 
+	//nolint:bodyclose
+	// TODO: close response body
 	resp, err := r.selectelApi.deleteReference(ctx, hostname, registryID, repository, repoImage.RepoDigest, token)
 	if err != nil {
 		return r.handleFailedApiResponse(resp, err)
@@ -129,6 +131,8 @@ func (r *selectel) deleteRepo(ctx context.Context, reference string) error {
 		return err
 	}
 
+	//nolint:bodyclose
+	// TODO: close response body
 	resp, err := r.selectelApi.deleteRepository(ctx, hostname, registryID, repository, token)
 	if err != nil {
 		return r.handleFailedApiResponse(resp, err)
@@ -148,6 +152,8 @@ func (r *selectel) tags(ctx context.Context, reference string) ([]string, error)
 		return nil, err
 	}
 
+	//nolint:bodyclose
+	// TODO: close response body
 	tags, resp, err := r.selectelApi.getTags(ctx, hostname, registryID, repository, token)
 	if err != nil {
 		return nil, r.handleFailedApiResponse(resp, err)
@@ -195,6 +201,8 @@ func (r *selectel) getRegistryId(ctx context.Context, token, reference string) (
 		return "", err
 	}
 
+	//nolint:bodyclose
+	// TODO: close response body
 	registryId, resp, err := r.selectelApi.getRegistryId(ctx, hostname, registry, token)
 	if err != nil {
 		return "", r.handleFailedApiResponse(resp, err)
