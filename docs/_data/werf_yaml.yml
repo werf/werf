@@ -199,6 +199,11 @@ sections:
         description:
           en: Dockerfile path relative to the context PATH
           ru: Путь к Dockerfile относительно директории контекста
+      - name: staged
+        value: "bool"
+        description:
+          en: "Enable layered caching of every Dockerfile instruction in the container registry"
+          ru: "Включить кеширование каждой инструкции Dockerfile в container registry"
       - name: context
         value: "string"
         description:
