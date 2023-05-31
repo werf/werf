@@ -67,14 +67,7 @@ func (r *defaultImplementation) TagRepoImage(ctx context.Context, repoImage *ima
 }
 
 func (r *defaultImplementation) DeleteRepoImage(ctx context.Context, repoImage *image.Info) error {
-	repoDigest := ""
-	if strings.HasPrefix(repoImage.RepoDigest, repoImage.Repository) {
-		repoDigest = repoImage.RepoDigest
-	}
-	if repoDigest == "" {
-		strings.Join([]string{repoImage.Repository, repoImage.RepoDigest}, "@")
-	}
-	return r.api.deleteImageByReference(ctx, repoDigest)
+	return r.api.deleteImageByReference(ctx, repoImage.RepoDigest)
 }
 
 func (r *defaultImplementation) String() string {

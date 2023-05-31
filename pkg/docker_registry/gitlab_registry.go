@@ -128,8 +128,7 @@ func (r *gitLabRegistry) deleteRepoImageTagWithCustomScope(repoImage *image.Info
 }
 
 func (r *gitLabRegistry) deleteRepoImageWithCustomScope(repoImage *image.Info, scopeFunc func(ref name.Reference) []string) error {
-	reference := strings.Join([]string{repoImage.Repository, repoImage.RepoDigest}, "@")
-	return r.customDeleteRepoImage("/v2/%s/manifests/%s", reference, scopeFunc)
+	return r.customDeleteRepoImage("/v2/%s/manifests/%s", repoImage.RepoDigest, scopeFunc)
 }
 
 func (r *gitLabRegistry) customDeleteRepoImage(endpointFormat, reference string, scopeFunc func(ref name.Reference) []string) error {
