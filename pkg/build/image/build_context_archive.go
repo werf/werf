@@ -99,7 +99,6 @@ func (a *BuildContextArchive) ExtractOrGetExtractedDir(ctx context.Context) (str
 	if err := util.ExtractTar(archiveReader, a.extractionDir, util.ExtractTarOptions{}); err != nil {
 		return "", fmt.Errorf("unable to extract context tar to tmp context dir %q: %w", a.extractionDir, err)
 	}
-
 	return a.extractionDir, nil
 }
 
@@ -119,7 +118,13 @@ func (a *BuildContextArchive) CalculateGlobsChecksum(ctx context.Context, globs 
 		return "", fmt.Errorf("unable to get build context dir: %w", err)
 	}
 
-	globStats, err := copier.Stat(contextDir, contextDir, copier.StatOptions{CheckForArchives: checkForArchives}, globs)
+	var contextGlobs []string
+	for _, glob := range globs {
+		contextGlobs = append(contextGlobs, filepath.Join(contextDir, glob))
+	}
+	logboek.Context(ctx).Debug().LogF("Calculating checksum for globs %v in context dir %q: will scan following dirs globs: %v\n", globs, contextDir, contextGlobs)
+
+	globStats, err := copier.Stat(contextDir, contextDir, copier.StatOptions{CheckForArchives: checkForArchives}, contextGlobs)
 	if err != nil {
 		return "", fmt.Errorf("unable to stat globs: %w", err)
 	}
@@ -132,9 +137,10 @@ func (a *BuildContextArchive) CalculateGlobsChecksum(ctx context.Context, globs 
 		if globStat.Error != "" {
 			return "", fmt.Errorf("unable to stat glob %q: %s", globStat.Glob, globStat.Error)
 		}
-
 		for _, match := range globStat.Globbed {
-			matches = append(matches, match)
+			relMatch := util.GetRelativeToBaseFilepath(contextDir, match)
+			logboek.Context(ctx).Debug().LogF("Calculating checksum for globs %v in context dir %q: matched path %q\n", globs, contextDir, relMatch)
+			matches = append(matches, relMatch)
 		}
 	}
 
