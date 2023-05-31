@@ -32,16 +32,16 @@ groups:
         version: 1.2.235
 
       - name: ea
-        version: 1.2.233
+        version: 1.2.235
 
       # - name: pre-stable
-      #   version: 1.2.232
+      #   version: 1.2.233
 
       - name: stable
-        version: 1.2.219+fix3
+        version: 1.2.232
 
       # - name: pre-rock-solid
       #   version: 1.2.219+fix3
 
       - name: rock-solid
-        version: 1.2.214+fix6
+        version: 1.2.219+fix3
