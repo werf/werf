@@ -137,8 +137,7 @@ staged: true
 There are several generations of staged dockerfile builder, which can be explicitly switched by the `WERF_STAGED_DOCKERFILE_VERSION={v1|v2}`. Switching staged dockerfile version can cause rebuild of images.
 
 * `v1` used by default.
-* `v2` version enables:
-    * dedicated `FROM` layer to cache base image specified in the `FROM` instruction.
+* `v2` version enables dedicated `FROM` layer to cache base image specified in the `FROM` instruction.
 
 `v2` version compatibility will be broken in future releases.
 
