@@ -112,7 +112,7 @@ func (r *selectel) deleteRepoImage(ctx context.Context, repoImage *image.Info) e
 
 	//nolint:bodyclose
 	// TODO: close response body
-	resp, err := r.selectelApi.deleteReference(ctx, hostname, registryID, repository, repoImage.RepoDigest, token)
+	resp, err := r.selectelApi.deleteReference(ctx, hostname, registryID, repository, repoImage.GetDigest(), token)
 	if err != nil {
 		return r.handleFailedApiResponse(resp, err)
 	}

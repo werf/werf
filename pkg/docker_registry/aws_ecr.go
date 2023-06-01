@@ -44,13 +44,14 @@ func (r *awsEcr) DeleteRepoImage(_ context.Context, repoImage *image.Info) error
 	if err != nil {
 		return err
 	}
+	digest := repoImage.GetDigest()
 
 	mySession := session.Must(session.NewSession())
 	service := ecr.New(mySession, aws.NewConfig().WithRegion(region))
 	_, err = service.BatchDeleteImage(&ecr.BatchDeleteImageInput{
 		ImageIds: []*ecr.ImageIdentifier{
 			{
-				ImageDigest: &repoImage.RepoDigest,
+				ImageDigest: &digest,
 			},
 		},
 		RepositoryName: &repository,

@@ -17,6 +17,7 @@ type Info struct {
 	Name       string `json:"name"`
 	Repository string `json:"repository"`
 	Tag        string `json:"tag"`
+	// repo@sha256:digest
 	RepoDigest string `json:"repoDigest"`
 
 	OnBuild           []string          `json:"onBuild"`
@@ -104,6 +105,7 @@ func NormalizeRepository(repository string) (res string) {
 	return
 }
 
+// ExtractRepoDigest return repo@digest from the list.
 func ExtractRepoDigest(inspectRepoDigests []string, repository string) string {
 	for _, inspectRepoDigest := range inspectRepoDigests {
 		repoAndDigest := strings.SplitN(inspectRepoDigest, "@sha256:", 2)
