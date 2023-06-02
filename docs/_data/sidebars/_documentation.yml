@@ -117,11 +117,11 @@ entries:
           - title: Command line interface
             f: "#!*cli"
 
+      - title: Resources
+        f:
           - title: Cheat sheet
             url: /resources/cheat_sheet.html
 
-      - title: Resources
-        f:
           - title: How to migrate from v1.1 to v1.2
             url: /resources/how_to_migrate_from_v1_1_to_v1_2.html
 
@@ -248,11 +248,11 @@ entries:
           - title: Интерфейс командной строки
             f: "#!*cli"
 
+      - title: Ресурсы
+        f:
           - title: Шпаргалка
             url: /resources/cheat_sheet.html
 
-      - title: Ресурсы
-        f:
           - title: Как мигрировать с v1.1 на v1.2
             url: /resources/how_to_migrate_from_v1_1_to_v1_2.html
 
