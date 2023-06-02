@@ -1,6 +1,6 @@
 <div class="breadcrumbs-container">
    <ol class="breadcrumbs">
-      <!--#include virtual="/includes/group-menu.html" -->
+      <!--#include virtual="/includes/group-menu-v2.html" -->
       {%- assign page_url_parts = page.url | split: '/' -%}
       {%- assign max_ind = page_url_parts.size | minus: 1 -%}
 
@@ -23,13 +23,6 @@
       {%- endfor %}
    </ol>
    <div id="doc-versions-menu" class="channel-menu submenu-parent">
-      <a data-proofer-ignore href="#">
-          {%- if page.lang == "ru" %}
-              Перейти к определённой версии
-          {%- else %}
-              Go to specific version
-          {%- endif %}
-      </a>
-      <!--#include virtual="/includes/channel-menu.html" -->
+      <!--#include virtual="/includes/channel-menu-v2.html" -->
    </div>
 </div>
