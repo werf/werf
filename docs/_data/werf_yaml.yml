@@ -202,8 +202,8 @@ sections:
       - name: staged
         value: "bool"
         description:
-          en: "Enable layered caching of every Dockerfile instruction in the container registry"
-          ru: "Включить кеширование каждой инструкции Dockerfile в container registry"
+          en: "Enable layer-by-layer caching of Dockerfile instructions in container registry"
+          ru: "Включить послойное кеширование Dockerfile-инструкций в container registry"
       - name: context
         value: "string"
         description:

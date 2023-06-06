@@ -119,7 +119,9 @@ werf build --repo REPO --add-custom-tag "%image%-latest"
 
 ### Dockerfile
 
-По умолчанию Dockerfile'ы кешируются одной финальной стадией в container registry. Чтобы включить послойное кеширование всех инструкций Dockerfile в container registry необходимо активировать параметр `staged: true` в werf.yaml:
+По умолчанию Dockerfile-образы кешируются одним образом в container registry. 
+
+Для включения послойного кеширования Dockerfile-инструкций в container registry необходимо использовать директиву `staged` в werf.yaml:
 
 ```yaml
 # werf.yaml
@@ -132,7 +134,7 @@ staged: true
 <a href="javascript:void(0)" class="details__summary">**ЗАМЕЧАНИЕ**: Послойное кеширование Dockerfile на данный момент находится стадии альфа-тестирования.</a>
 <div class="details__content" markdown="1">
 
-Существует несколько ревизий послойного сборщика Dockerfile'ов, которые могут быть включены с помощью переменной `WERF_STAGED_DOCKERFILE_VERSION={v1|v2}`. Изменение версии сборщика может вызвать пересборку сборочного кеша.
+Существует несколько ревизий послойного сборщика Dockerfile, которые могут быть включены с помощью переменной `WERF_STAGED_DOCKERFILE_VERSION={v1|v2}`. Изменение версии сборщика может вызвать пересборку сборочного кеша.
 
 * `v1` используется по умолчанию.
 * `v2` включает отдельный слой для стадии `FROM`, чтобы закешировать базовый образ, указанный в инструкции `FROM`.
