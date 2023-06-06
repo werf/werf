@@ -1,5 +1,14 @@
 # Changelog
 
+### [1.2.240](https://www.github.com/werf/werf/compare/v1.2.239...v1.2.240) (2023-06-06)
+
+
+### Bug Fixes
+
+* **ci:** unlabel job should not fail ([#5670](https://www.github.com/werf/werf/issues/5670)) ([3f4267a](https://www.github.com/werf/werf/commit/3f4267ad2b3cedefb557097f6e07d926473d23fd))
+* **custom-tags:** no way to tag only certain images ([54ad8a5](https://www.github.com/werf/werf/commit/54ad8a5e285ab46b3c5315a9e87b8800ac47fbee))
+* integration tests should not fail ([#5669](https://www.github.com/werf/werf/issues/5669)) ([c4e411a](https://www.github.com/werf/werf/commit/c4e411a0855014e12697808b76e6b5da70931c7f))
+
 ### [1.2.239](https://www.github.com/werf/werf/compare/v1.2.238...v1.2.239) (2023-05-29)
 
 
