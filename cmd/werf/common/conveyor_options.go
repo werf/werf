@@ -69,8 +69,8 @@ func GetConveyorOptionsWithParallel(ctx context.Context, commonCmdData *CmdData,
 	return conveyorOptions, nil
 }
 
-func GetShouldBeBuiltOptions(commonCmdData *CmdData, giterminismManager giterminism_manager.Interface, werfConfig *config.WerfConfig) (options build.ShouldBeBuiltOptions, err error) {
-	customTagFuncList, err := getCustomTagFuncList(getCustomTagOptionValues(commonCmdData), commonCmdData, giterminismManager, werfConfig)
+func GetShouldBeBuiltOptions(commonCmdData *CmdData, imageNameList []string) (options build.ShouldBeBuiltOptions, err error) {
+	customTagFuncList, err := getCustomTagFuncList(getCustomTagOptionValues(commonCmdData), commonCmdData, imageNameList)
 	if err != nil {
 		return options, err
 	}
@@ -79,13 +79,13 @@ func GetShouldBeBuiltOptions(commonCmdData *CmdData, giterminismManager gitermin
 	return options, nil
 }
 
-func GetBuildOptions(ctx context.Context, commonCmdData *CmdData, giterminismManager giterminism_manager.Interface, werfConfig *config.WerfConfig) (buildOptions build.BuildOptions, err error) {
+func GetBuildOptions(ctx context.Context, commonCmdData *CmdData, werfConfig *config.WerfConfig, imageNameList []string) (buildOptions build.BuildOptions, err error) {
 	introspectOptions, err := GetIntrospectOptions(commonCmdData, werfConfig)
 	if err != nil {
 		return buildOptions, err
 	}
 
-	customTagFuncList, err := getCustomTagFuncList(getCustomTagOptionValues(commonCmdData), commonCmdData, giterminismManager, werfConfig)
+	customTagFuncList, err := getCustomTagFuncList(getCustomTagOptionValues(commonCmdData), commonCmdData, imageNameList)
 	if err != nil {
 		return buildOptions, err
 	}
@@ -125,7 +125,7 @@ func GetBuildOptions(ctx context.Context, commonCmdData *CmdData, giterminismMan
 	return buildOptions, nil
 }
 
-func getCustomTagFuncList(tagOptionValues []string, commonCmdData *CmdData, giterminismManager giterminism_manager.Interface, werfConfig *config.WerfConfig) ([]image.CustomTagFunc, error) {
+func getCustomTagFuncList(tagOptionValues []string, commonCmdData *CmdData, imageNameList []string) ([]image.CustomTagFunc, error) {
 	if len(tagOptionValues) == 0 {
 		return nil, nil
 	}
@@ -166,8 +166,8 @@ func getCustomTagFuncList(tagOptionValues []string, commonCmdData *CmdData, gite
 
 		contentBasedTagStub := strings.Repeat("x", 70) // 1b77754d35b0a3e603731828ee6f2400c4f937382874db2566c616bb-1624991915332
 		var prevImageTag string
-		for _, img := range werfConfig.GetAllImages() {
-			imageTag := tagFunc(img.GetName(), contentBasedTagStub)
+		for _, imageName := range imageNameList {
+			imageTag := tagFunc(imageName, contentBasedTagStub)
 
 			if err := slug.ValidateDockerTag(imageTag); err != nil {
 				return nil, fmt.Errorf("invalid custom tag %q: %w", optionValue, err)
@@ -187,13 +187,13 @@ func getCustomTagFuncList(tagOptionValues []string, commonCmdData *CmdData, gite
 	return tagFuncList, nil
 }
 
-func GetUseCustomTagFunc(commonCmdData *CmdData, giterminismManager giterminism_manager.Interface, werfConfig *config.WerfConfig) (image.CustomTagFunc, error) {
+func GetUseCustomTagFunc(commonCmdData *CmdData, giterminismManager giterminism_manager.Interface, imageNameList []string) (image.CustomTagFunc, error) {
 	var tagOptionValues []string
 	if *commonCmdData.UseCustomTag != "" {
 		tagOptionValues = []string{*commonCmdData.UseCustomTag}
 	}
 
-	customTagFuncList, err := getCustomTagFuncList(tagOptionValues, commonCmdData, giterminismManager, werfConfig)
+	customTagFuncList, err := getCustomTagFuncList(tagOptionValues, commonCmdData, imageNameList)
 	if err != nil {
 		return nil, err
 	}

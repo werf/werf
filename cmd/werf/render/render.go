@@ -255,7 +255,8 @@ func runRender(ctx context.Context, imagesToProcess build.ImagesToProcess) error
 		return err
 	}
 
-	buildOptions, err := common.GetBuildOptions(ctx, &commonCmdData, giterminismManager, werfConfig)
+	imageNameList := common.GetImageNameList(imagesToProcess, werfConfig)
+	buildOptions, err := common.GetBuildOptions(ctx, &commonCmdData, werfConfig, imageNameList)
 	if err != nil {
 		return err
 	}
@@ -302,7 +303,7 @@ func runRender(ctx context.Context, imagesToProcess build.ImagesToProcess) error
 			if err != nil {
 				return err
 			}
-			useCustomTagFunc, err := common.GetUseCustomTagFunc(&commonCmdData, giterminismManager, werfConfig)
+			useCustomTagFunc, err := common.GetUseCustomTagFunc(&commonCmdData, giterminismManager, imageNameList)
 			if err != nil {
 				return err
 			}
@@ -327,7 +328,7 @@ func runRender(ctx context.Context, imagesToProcess build.ImagesToProcess) error
 
 			if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
 				if common.GetRequireBuiltImages(ctx, &commonCmdData) {
-					shouldBeBuiltOptions, err := common.GetShouldBeBuiltOptions(&commonCmdData, giterminismManager, werfConfig)
+					shouldBeBuiltOptions, err := common.GetShouldBeBuiltOptions(&commonCmdData, imageNameList)
 					if err != nil {
 						return err
 					}
