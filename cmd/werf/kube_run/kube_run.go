@@ -513,7 +513,7 @@ func createCommonKubectlArgs(namespace string) ([]string, error) {
 }
 
 func createPod(ctx context.Context, namespace, pod, image, secret string, extraArgs []string, extraAnnos, extraLabels map[string]string) error {
-	logboek.Context(ctx).LogF("Running pod %q in namespace %q ...\n", pod, namespace)
+	logboek.Context(ctx).LogF("Running pod %q ...\n", pod)
 
 	args, err := createKubectlRunArgs(pod, image, secret, extraArgs, extraAnnos, extraLabels)
 	if err != nil {
@@ -639,7 +639,7 @@ func waitPodReadiness(ctx context.Context, namespace, pod string, extraArgs []st
 		return nil
 	}
 
-	logboek.Context(ctx).LogF("Waiting for pod %q in namespace %q to be ready ...\n", pod, namespace)
+	logboek.Context(ctx).LogF("Waiting for pod to be ready ...\n")
 
 	for {
 		phase, err := getPodPhase(namespace, pod, extraArgs)
@@ -710,7 +710,7 @@ func isPodReady(namespace, pod string, extraArgs []string) (bool, error) {
 }
 
 func copyFromPod(ctx context.Context, namespace, pod, container string, copyFrom copyFromTo, extraArgs []string) {
-	logboek.Context(ctx).LogF("Copying %q from pod %q in namespace %q to %q ...\n", copyFrom.Src, pod, namespace, copyFrom.Dst)
+	logboek.Context(ctx).LogF("Copying %q from pod to %q ...\n", copyFrom.Src, copyFrom.Dst)
 
 	args := []string{
 		"cp", fmt.Sprint(namespace, "/", pod, ":", copyFrom.Src), copyFrom.Dst, "-c", container,
@@ -731,7 +731,7 @@ func copyFromPod(ctx context.Context, namespace, pod, container string, copyFrom
 }
 
 func copyToPod(ctx context.Context, namespace, pod, container string, copyFrom copyFromTo, extraArgs []string) error {
-	logboek.Context(ctx).LogF("Copying %q to %q in pod %q in namespace %q ...\n", copyFrom.Src, copyFrom.Dst, pod, namespace)
+	logboek.Context(ctx).LogF("Copying %q to %q in pod ...\n", copyFrom.Src, copyFrom.Dst)
 
 	args := []string{
 		"cp", copyFrom.Src, fmt.Sprint(namespace, "/", pod, ":", copyFrom.Dst), "-c", container,
@@ -754,7 +754,7 @@ func copyToPod(ctx context.Context, namespace, pod, container string, copyFrom c
 }
 
 func stopContainer(ctx context.Context, namespace, pod, container string, extraArgs []string) {
-	logboek.Context(ctx).LogF("Stopping container %q in pod %q in namespace %q ...\n", container, pod, namespace)
+	logboek.Context(ctx).LogF("Stopping container %q in pod ...\n", container)
 
 	args := []string{
 		"exec", pod, "-q", "--pod-running-timeout", "5h", "-c", container,
@@ -776,7 +776,7 @@ func stopContainer(ctx context.Context, namespace, pod, container string, extraA
 }
 
 func execCommandInPod(ctx context.Context, namespace, pod, container string, command, extraArgs []string) error {
-	logboek.Context(ctx).LogF("Execing into pod %q in namespace %q ...\n", pod, namespace)
+	logboek.Context(ctx).LogF("Execing into pod ...\n")
 
 	args := []string{
 		"exec", pod, "-q", "--pod-running-timeout", "5h", "-c", container,
@@ -914,7 +914,7 @@ func createDockerRegistrySecret(ctx context.Context, name, namespace string, ref
 
 	secret.Data[corev1.DockerConfigJsonKey] = dockerConf
 
-	logboek.Context(ctx).LogF("Creating secret %q in namespace %q ...\n", name, namespace)
+	logboek.Context(ctx).LogF("Creating secret %q ...\n", name)
 	if _, err := kube.Client.CoreV1().Secrets(namespace).Create(ctx, secret, v1.CreateOptions{}); err != nil {
 		return fmt.Errorf("error creating secret %s/%s: %w", namespace, secret, err)
 	}
