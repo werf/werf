@@ -16,9 +16,13 @@ updates:
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
       - dependency-name: github.com/docker/docker
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
-      
+
       # TODO: require manual changes
-      - dependency-name: go.opentelemetry.io/otel/exporters/otlp/otlptrace 
+      - dependency-name: go.opentelemetry.io/otel/exporters/otlp/otlptrace
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: go.opentelemetry.io/otel/sdk
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: go.opentelemetry.io/otel/trace
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
       - dependency-name: k8s.io/cli-runtime
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
