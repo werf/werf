@@ -238,7 +238,8 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 
 	storageManager := manager.NewStorageManager(projectName, stagesStorage, finalStagesStorage, secondaryStagesStorageList, cacheStagesStorageList, storageLockManager)
 
-	buildOptions, err := common.GetBuildOptions(ctx, &commonCmdData, giterminismManager, werfConfig)
+	imageNameList := common.GetImageNameList(imagesToProcess, werfConfig)
+	buildOptions, err := common.GetBuildOptions(ctx, &commonCmdData, werfConfig, imageNameList)
 	if err != nil {
 		return err
 	}

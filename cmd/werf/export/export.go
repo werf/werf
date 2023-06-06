@@ -246,17 +246,7 @@ func run(ctx context.Context, imagesToProcess build.ImagesToProcess, tagTemplate
 	defer conveyorWithRetry.Terminate()
 
 	return conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
-		var imageNameList []string
-
-		if !imagesToProcess.WithoutImages {
-			if imagesToProcess.OnlyImages == nil {
-				for _, img := range werfConfig.GetAllImages() {
-					imageNameList = append(imageNameList, img.GetName())
-				}
-			} else {
-				imageNameList = append(imageNameList, imagesToProcess.OnlyImages...)
-			}
-		}
+		imageNameList := common.GetImageNameList(imagesToProcess, werfConfig)
 
 		tagFuncList, err := getTagFuncList(imageNameList, tagTemplateList)
 		if err != nil {
