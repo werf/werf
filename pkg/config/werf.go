@@ -78,6 +78,15 @@ func (c *WerfConfig) GetAllImages() []ImageInterface {
 	return images
 }
 
+func (c *WerfConfig) GetImageNameList() []string {
+	var list []string
+	for _, image := range c.GetAllImages() {
+		list = append(list, image.GetName())
+	}
+
+	return list
+}
+
 func (c *WerfConfig) GetImage(imageName string) ImageInterface {
 	if i := c.GetStapelImage(imageName); i != nil {
 		return i
