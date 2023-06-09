@@ -8,7 +8,6 @@ import (
 	"io"
 	"math/rand"
 	"net/http"
-	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -100,7 +99,7 @@ func (api *api) tryGetRepoImage(ctx context.Context, reference, implementation s
 		if IsImageNotFoundError(err) || IsBrokenImageError(err) {
 			// TODO: 1. make sure werf never ever creates rejected image records for name-unknown errors.
 			// TODO: 2. werf-cleanup should remove broken images
-			if os.Getenv("WERF_DOCKER_REGISTRY_DEBUG") == "1" {
+			if debugDockerRegistry() {
 				logboek.Context(ctx).Error().LogF("WARNING: Got an error when inspecting repo image %q: %s\n", reference, err)
 			}
 			return nil, nil

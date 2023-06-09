@@ -21,6 +21,7 @@ import (
 	"github.com/werf/logboek/pkg/types"
 	"github.com/werf/werf/pkg/build/image"
 	"github.com/werf/werf/pkg/build/stage"
+	"github.com/werf/werf/pkg/build/stage/instruction"
 	"github.com/werf/werf/pkg/container_backend"
 	backend_instruction "github.com/werf/werf/pkg/container_backend/instruction"
 	"github.com/werf/werf/pkg/docker_registry"
@@ -693,15 +694,20 @@ func (phase *BuildPhase) getPrevNonEmptyStageImageSize() int64 {
 
 func (phase *BuildPhase) OnImageStage(ctx context.Context, img *image.Image, stg stage.Interface) error {
 	return phase.StagesIterator.OnImageStage(ctx, img, stg, func(img *image.Image, stg stage.Interface, isEmpty bool) error {
-		return phase.onImageStage(ctx, img, stg, isEmpty)
+		if isEmpty {
+			return nil
+		}
+		if err := phase.onImageStage(ctx, img, stg); err != nil {
+			return err
+		}
+		if err := phase.afterImageStage(ctx, img, stg); err != nil {
+			return err
+		}
+		return nil
 	})
 }
 
-func (phase *BuildPhase) onImageStage(ctx context.Context, img *image.Image, stg stage.Interface, isEmpty bool) error {
-	if isEmpty {
-		return nil
-	}
-
+func (phase *BuildPhase) onImageStage(ctx context.Context, img *image.Image, stg stage.Interface) error {
 	if err := stg.FetchDependencies(ctx, phase.Conveyor, phase.Conveyor.ContainerBackend, docker_registry.API()); err != nil {
 		return fmt.Errorf("unable to fetch dependencies for stage %s: %w", stg.LogDetailedName(), err)
 	}
@@ -767,12 +773,32 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *image.Image, stg
 		}
 	}
 
+	// debug assertion
 	if stg.GetStageImage().Image.GetStageDescription() == nil {
 		panic(fmt.Sprintf("expected stage %s image %q built image info (image name = %s) to be set!", stg.Name(), img.GetName(), stg.GetStageImage().Image.Name()))
 	}
 
 	// Add managed image record only if there was at least one newly built stage
 	phase.Conveyor.SetShouldAddManagedImagesRecords()
+
+	return nil
+}
+
+func (phase *BuildPhase) afterImageStage(ctx context.Context, img *image.Image, stg stage.Interface) error {
+	// TODO(staged-dockerfile): Expand possible ONBUILD instruction into specified intructions,
+	// TODO(staged-dockerfile):  proxying ONBUILD instruction to chain of arbitrary instructions.
+
+	if img.IsDockerfileImage && img.DockerfileImageConfig.Staged {
+		if werf.GetStagedDockerfileVersion() == werf.StagedDockerfileV2 {
+			if _, isFromStage := stg.(*instruction.From); isFromStage {
+				fmt.Printf("image %q running Second Stage expansion using base env in FROM stage: %#v\n", img.Name, image.EnvToMap(stg.GetStageImage().Image.GetStageDescription().Info.Env))
+
+				if err := img.ExpandDependencies(ctx, image.EnvToMap(stg.GetStageImage().Image.GetStageDescription().Info.Env)); err != nil {
+					return err
+				}
+			}
+		}
+	}
 
 	return nil
 }

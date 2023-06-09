@@ -41,8 +41,15 @@ func Init(ctx context.Context, insecureRegistry, skipTlsVerifyRegistry bool) err
 	return nil
 }
 
-func API() *genericApi {
+func API() GenericApiInterface {
+	if debugDockerRegistry() {
+		return NewDockerRegistryTracer(nil, generic)
+	}
 	return generic
+}
+
+func debugDockerRegistry() bool {
+	return os.Getenv("WERF_DOCKER_REGISTRY_DEBUG") == "1"
 }
 
 func debugDockerRegistryAPI() bool {

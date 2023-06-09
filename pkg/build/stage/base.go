@@ -155,7 +155,7 @@ func (s *BaseStage) ExpandDependencies(ctx context.Context, c Conveyor, baseEnv 
 	return nil
 }
 
-func (s *BaseStage) FetchDependencies(_ context.Context, _ Conveyor, _ container_backend.ContainerBackend, _ docker_registry.ApiInterface) error {
+func (s *BaseStage) FetchDependencies(_ context.Context, _ Conveyor, _ container_backend.ContainerBackend, _ docker_registry.GenericApiInterface) error {
 	return nil
 }
 

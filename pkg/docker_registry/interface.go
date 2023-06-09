@@ -9,17 +9,22 @@ import (
 	"github.com/werf/werf/pkg/image"
 )
 
+type commonInterface interface {
+	GetRepoImage(ctx context.Context, reference string) (*image.Info, error)
+	MutateAndPushImage(ctx context.Context, sourceReference, destinationReference string, mutateConfigFunc func(v1.Config) (v1.Config, error)) error
+}
+
 type Interface interface {
+	commonInterface
+
 	CreateRepo(ctx context.Context, reference string) error
 	DeleteRepo(ctx context.Context, reference string) error
 	Tags(ctx context.Context, reference string, opts ...Option) ([]string, error)
 	IsTagExist(ctx context.Context, reference string, opts ...Option) (bool, error)
 	TagRepoImage(ctx context.Context, repoImage *image.Info, tag string) error
-	GetRepoImage(ctx context.Context, reference string) (*image.Info, error)
 	TryGetRepoImage(ctx context.Context, reference string) (*image.Info, error)
 	DeleteRepoImage(ctx context.Context, repoImage *image.Info) error
 	PushImage(ctx context.Context, reference string, opts *PushImageOptions) error
-	MutateAndPushImage(ctx context.Context, sourceReference, destinationReference string, mutateConfigFunc func(v1.Config) (v1.Config, error)) error
 	CopyImage(ctx context.Context, sourceReference, destinationReference string, opts CopyImageOptions) error
 
 	PushImageArchive(ctx context.Context, archiveOpener ArchiveOpener, reference string) error
@@ -31,7 +36,9 @@ type Interface interface {
 	parseReferenceParts(reference string) (referenceParts, error)
 }
 
-type ApiInterface interface {
+type GenericApiInterface interface {
+	commonInterface
+
 	GetRepoImageConfigFile(ctx context.Context, reference string) (*v1.ConfigFile, error)
 }
 

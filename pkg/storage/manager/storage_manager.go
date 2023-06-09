@@ -50,7 +50,7 @@ type ForEachDeleteStageOptions struct {
 
 type StorageOptions struct {
 	ContainerBackend container_backend.ContainerBackend
-	DockerRegistry   docker_registry.ApiInterface
+	DockerRegistry   docker_registry.GenericApiInterface
 }
 
 type StorageManagerInterface interface {
@@ -379,7 +379,7 @@ func (m *StorageManager) getImageInfoFromContainerBackend(ctx context.Context, r
 	return containerBackend.GetImageInfo(ctx, ref, container_backend.GetImageInfoOpts{})
 }
 
-func (m *StorageManager) getImageInfoFromRegistry(ctx context.Context, ref string, dockerRegistry docker_registry.ApiInterface) (*image.Info, error) {
+func (m *StorageManager) getImageInfoFromRegistry(ctx context.Context, ref string, dockerRegistry docker_registry.GenericApiInterface) (*image.Info, error) {
 	cfg, err := dockerRegistry.GetRepoImageConfigFile(ctx, ref)
 	if err != nil {
 		return nil, err

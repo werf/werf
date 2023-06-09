@@ -110,13 +110,19 @@ func (o *DockerRegistryOptions) defaultOptions() defaultImplementationOptions {
 }
 
 func NewDockerRegistry(repositoryAddress, implementation string, options DockerRegistryOptions) (Interface, error) {
-	dockerRegistry, err := newDockerRegistry(repositoryAddress, implementation, options)
+	var res Interface
+	var err error
+
+	res, err = newDockerRegistry(repositoryAddress, implementation, options)
 	if err != nil {
 		return nil, err
 	}
+	if debugDockerRegistry() {
+		res = NewDockerRegistryTracer(res, nil)
+	}
 
-	dockerRegistryWithCache := newDockerRegistryWithCache(dockerRegistry)
-	return dockerRegistryWithCache, nil
+	res = newDockerRegistryWithCache(res)
+	return res, nil
 }
 
 func newDockerRegistry(repositoryAddress, implementation string, options DockerRegistryOptions) (Interface, error) {
