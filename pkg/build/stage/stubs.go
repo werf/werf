@@ -210,7 +210,7 @@ func (containerBackend *ContainerBackendStub) Pull(ctx context.Context, ref stri
 }
 
 type DockerRegistryApiStub struct {
-	docker_registry.ApiInterface
+	docker_registry.GenericApiInterface
 }
 
 func NewDockerRegistryApiStub() *DockerRegistryApiStub {

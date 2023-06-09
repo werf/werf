@@ -19,6 +19,7 @@ import (
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/logging"
 	"github.com/werf/werf/pkg/storage/manager"
+	"github.com/werf/werf/pkg/werf"
 )
 
 type BaseImageType string
@@ -257,44 +258,42 @@ func (i *Image) SetupBaseImage(ctx context.Context, storageManager manager.Stora
 		i.baseStageImage = i.Conveyor.GetOrCreateStageImage(i.baseImageReference, nil, nil, i)
 
 		if i.IsDockerfileImage && i.DockerfileImageConfig.Staged {
-			var info *image.Info
+			if werf.GetStagedDockerfileVersion() == werf.StagedDockerfileV1 {
+				var info *image.Info
 
-			if i.baseImageReference != "scratch" {
-				var err error
-				info, err = storageManager.GetImageInfo(ctx, i.baseImageReference, storageOpts)
-				if isUnsupportedMediaTypeError(err) {
-					if err := logboek.Context(ctx).Default().LogProcess("Pulling base image %s", i.baseStageImage.Image.Name()).
-						Options(func(options types.LogProcessOptionsInterface) {
-							options.Style(style.Highlight())
-						}).
-						DoError(func() error {
-							return i.ContainerBackend.PullImageFromRegistry(ctx, i.baseStageImage.Image)
-						}); err != nil {
-						return err
-					}
-
+				if i.baseImageReference != "scratch" {
+					var err error
 					info, err = storageManager.GetImageInfo(ctx, i.baseImageReference, storageOpts)
-					if err != nil {
+					if isUnsupportedMediaTypeError(err) {
+						if err := logboek.Context(ctx).Default().LogProcess("Pulling base image %s", i.baseStageImage.Image.Name()).
+							Options(func(options types.LogProcessOptionsInterface) {
+								options.Style(style.Highlight())
+							}).
+							DoError(func() error {
+								return i.ContainerBackend.PullImageFromRegistry(ctx, i.baseStageImage.Image)
+							}); err != nil {
+							return err
+						}
+
+						info, err = storageManager.GetImageInfo(ctx, i.baseImageReference, storageOpts)
+						if err != nil {
+							return fmt.Errorf("unable to get base image %q manifest: %w", i.baseImageReference, err)
+						}
+					} else if err != nil {
 						return fmt.Errorf("unable to get base image %q manifest: %w", i.baseImageReference, err)
 					}
-				} else if err != nil {
-					return fmt.Errorf("unable to get base image %q manifest: %w", i.baseImageReference, err)
+				} else {
+					info = &image.Info{
+						Name: i.baseImageReference,
+						Env:  nil,
+					}
 				}
-			} else {
-				info = &image.Info{
-					Name: i.baseImageReference,
-					Env:  nil,
-				}
+
+				i.baseStageImage.Image.SetStageDescription(&image.StageDescription{
+					StageID: nil, // this is not a stage actually, TODO
+					Info:    info,
+				})
 			}
-
-			i.baseStageImage.Image.SetStageDescription(&image.StageDescription{
-				StageID: nil, // this is not a stage actually, TODO
-				Info:    info,
-			})
-
-			// for _, expression := range info.OnBuild {
-			// 	fmt.Printf(">> %q\n", expression)
-			// }
 		}
 	case NoBaseImage:
 
@@ -303,10 +302,12 @@ func (i *Image) SetupBaseImage(ctx context.Context, storageManager manager.Stora
 	}
 
 	if i.IsDockerfileImage && i.DockerfileImageConfig.Staged {
-		switch i.baseImageType {
-		case StageAsBaseImage, ImageFromRegistryAsBaseImage:
-			if err := i.ExpandDependencies(ctx, EnvToMap(i.baseStageImage.Image.GetStageDescription().Info.Env)); err != nil {
-				return err
+		if werf.GetStagedDockerfileVersion() == werf.StagedDockerfileV1 {
+			switch i.baseImageType {
+			case StageAsBaseImage, ImageFromRegistryAsBaseImage:
+				if err := i.ExpandDependencies(ctx, EnvToMap(i.baseStageImage.Image.GetStageDescription().Info.Env)); err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -382,6 +383,7 @@ func (i *Image) FetchBaseImage(ctx context.Context) error {
 			return fmt.Errorf("unable to inspect local image %s after successful pull: image is not exists", i.baseStageImage.Image.Name())
 		}
 
+		fmt.Printf("SETTING BASE STAGE IMAGE FOR %q to %q\n", i.Name, i.baseStageImage.Image.Name())
 		i.baseStageImage.Image.SetStageDescription(&image.StageDescription{
 			StageID: nil, // this is not a stage actually, TODO
 			Info:    info,

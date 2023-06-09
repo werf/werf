@@ -48,7 +48,7 @@ func (stg *From) PrepareImage(ctx context.Context, c stage.Conveyor, cb containe
 	return nil
 }
 
-func (s *From) FetchDependencies(_ context.Context, _ stage.Conveyor, _ container_backend.ContainerBackend, _ docker_registry.ApiInterface) error {
+func (s *From) FetchDependencies(_ context.Context, _ stage.Conveyor, _ container_backend.ContainerBackend, _ docker_registry.GenericApiInterface) error {
 	return nil
 }
 
