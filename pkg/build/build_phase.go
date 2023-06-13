@@ -791,8 +791,6 @@ func (phase *BuildPhase) afterImageStage(ctx context.Context, img *image.Image, 
 	if img.IsDockerfileImage && img.DockerfileImageConfig.Staged {
 		if werf.GetStagedDockerfileVersion() == werf.StagedDockerfileV2 {
 			if _, isFromStage := stg.(*instruction.From); isFromStage {
-				fmt.Printf("image %q running Second Stage expansion using base env in FROM stage: %#v\n", img.Name, image.EnvToMap(stg.GetStageImage().Image.GetStageDescription().Info.Env))
-
 				if err := img.ExpandDependencies(ctx, image.EnvToMap(stg.GetStageImage().Image.GetStageDescription().Info.Env)); err != nil {
 					return err
 				}
