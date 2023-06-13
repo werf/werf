@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.241](https://www.github.com/werf/werf/compare/v1.2.240...v1.2.241) (2023-06-13)
+
+
+### Bug Fixes
+
+* **staged-dockerfile:** eliminate excess manifest get request from base image registry ([3103aff](https://www.github.com/werf/werf/commit/3103affb8e3e6cea272f99970586a1221103b70c))
+
 ### [1.2.240](https://www.github.com/werf/werf/compare/v1.2.239...v1.2.240) (2023-06-06)
 
 
