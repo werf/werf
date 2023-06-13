@@ -383,7 +383,6 @@ func (i *Image) FetchBaseImage(ctx context.Context) error {
 			return fmt.Errorf("unable to inspect local image %s after successful pull: image is not exists", i.baseStageImage.Image.Name())
 		}
 
-		fmt.Printf("SETTING BASE STAGE IMAGE FOR %q to %q\n", i.Name, i.baseStageImage.Image.Name())
 		i.baseStageImage.Image.SetStageDescription(&image.StageDescription{
 			StageID: nil, // this is not a stage actually, TODO
 			Info:    info,
