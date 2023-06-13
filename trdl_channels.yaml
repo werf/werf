@@ -26,7 +26,7 @@ groups:
   - name: "1.2"
     channels:
       - name: alpha
-        version: 1.2.240
+        version: 1.2.241
 
       - name: beta
         version: 1.2.235
