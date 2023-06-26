@@ -69,7 +69,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.14.0
 	golang.org/x/crypto v0.10.0
 	golang.org/x/mod v0.11.0
-	golang.org/x/net v0.10.0
+	golang.org/x/net v0.11.0
 	gopkg.in/errgo.v2 v2.1.0
 	gopkg.in/ini.v1 v1.67.0
 	gopkg.in/oleiade/reflections.v1 v1.0.0
