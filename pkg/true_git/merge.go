@@ -37,7 +37,7 @@ func CreateDetachedMergeCommit(ctx context.Context, gitDir, workTreeCacheDir, co
 				return fmt.Errorf("unable to remove %s: %w", currentCommitPath, err)
 			}
 
-			mergeCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: workTreeDir}, "-c", "user.email=werf@werf.io", "-c", "user.name=werf", "merge", "--no-edit", "--no-ff", commitToMerge)
+			mergeCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: workTreeDir}, "-c", "user.email=werf@werf.io", "-c", "user.name=werf", "merge", "--no-verify", "--no-edit", "--no-ff", commitToMerge)
 			if err := mergeCmd.Run(ctx); err != nil {
 				return fmt.Errorf("git merge failed: %w", err)
 			}
