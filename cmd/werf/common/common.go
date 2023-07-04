@@ -815,6 +815,11 @@ func SetupRequireBuiltImages(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(cmdData.RequireBuiltImages, "require-built-images", "Z", util.GetBoolEnvironmentDefaultFalse("WERF_REQUIRE_BUILT_IMAGES"), "Requires all used images to be previously built and exist in repo. Exits with error if needed images are not cached and so require to run build instructions (default $WERF_REQUIRE_BUILT_IMAGES)")
 }
 
+func SetupRequireDeployed(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.RequireDeployed = new(bool)
+	cmd.Flags().BoolVarP(cmdData.RequireDeployed, "require-deployed", "", util.GetBoolEnvironmentDefaultFalse("WERF_REQUIRE_DEPLOYED"), "Requires an application revision to exist in the target Kubernetes cluster, no fresh installation allowed (default $WERF_REQUIRE_DEPLOYED)")
+}
+
 func SetupStubTags(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.StubTags = new(bool)
 	cmd.Flags().BoolVarP(cmdData.StubTags, "stub-tags", "", util.GetBoolEnvironmentDefaultFalse("WERF_STUB_TAGS"), "Use stubs instead of real tags (default $WERF_STUB_TAGS)")

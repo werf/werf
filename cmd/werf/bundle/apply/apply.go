@@ -89,6 +89,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupSaveDeployReport(&commonCmdData, cmd)
 	common.SetupDeployReportPath(&commonCmdData, cmd)
+	common.SetupRequireDeployed(&commonCmdData, cmd)
 
 	common.SetupKubeConfig(&commonCmdData, cmd)
 	common.SetupKubeConfigBase64(&commonCmdData, cmd)
@@ -240,7 +241,7 @@ func runApply(ctx context.Context) error {
 			FileValues:   common.GetSetFile(&commonCmdData),
 		},
 		CreateNamespace:  common.NewBool(true),
-		Install:          common.NewBool(true),
+		Install:          common.NewBool(!*commonCmdData.RequireDeployed),
 		Wait:             common.NewBool(true),
 		Atomic:           common.NewBool(cmdData.AutoRollback),
 		Timeout:          common.NewDuration(time.Duration(cmdData.Timeout) * time.Second),

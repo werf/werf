@@ -175,6 +175,7 @@ werf converge --repo registry.mydomain.com/web --env production`,
 	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultBuildParallelTasksLimit)
 	common.SetupSkipBuild(&commonCmdData, cmd)
 	common.SetupRequireBuiltImages(&commonCmdData, cmd)
+	common.SetupRequireDeployed(&commonCmdData, cmd)
 	commonCmdData.SetupPlatform(cmd)
 	common.SetupFollow(&commonCmdData, cmd)
 
@@ -544,7 +545,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 			ChainPostRenderer:           wc.ChainPostRenderer,
 			ValueOpts:                   valueOpts,
 			CreateNamespace:             common.NewBool(true),
-			Install:                     common.NewBool(true),
+			Install:                     common.NewBool(!*commonCmdData.RequireDeployed),
 			Wait:                        common.NewBool(true),
 			Atomic:                      common.NewBool(cmdData.AutoRollback),
 			Timeout:                     common.NewDuration(time.Duration(cmdData.Timeout) * time.Second),
