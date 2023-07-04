@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.242](https://www.github.com/werf/werf/compare/v1.2.241...v1.2.242) (2023-07-04)
+
+
+### Bug Fixes
+
+* **dev:** precommit git hooks are not ignored ([76fb7ab](https://www.github.com/werf/werf/commit/76fb7ab28d5811b68c25235f4bfe8ae66e5b8fda))
+
 ### [1.2.241](https://www.github.com/werf/werf/compare/v1.2.240...v1.2.241) (2023-06-13)
 
 
