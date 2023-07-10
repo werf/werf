@@ -26,7 +26,7 @@ require (
 	github.com/docker/go-connections v0.4.1-0.20210727194412-58542c764a11
 	github.com/docker/go-units v0.5.0
 	github.com/dustin/go-humanize v1.0.1
-	github.com/fluxcd/flagger v1.29.0
+	github.com/fluxcd/flagger v1.31.0
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/go-git/go-git/v5 v5.6.0
 	github.com/go-openapi/spec v0.20.9
@@ -84,7 +84,7 @@ require (
 	k8s.io/klog v1.0.0
 	k8s.io/klog/v2 v2.100.1
 	k8s.io/kubectl v0.26.3
-	k8s.io/utils v0.0.0-20230220204549-a5ecb0141aa5
+	k8s.io/utils v0.0.0-20230406110748-d93618cff8a2
 	mvdan.cc/xurls v1.1.0
 	oras.land/oras-go v1.2.3
 	sigs.k8s.io/yaml v1.3.0
@@ -95,7 +95,7 @@ require (
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
 	github.com/BurntSushi/toml v1.2.1 // indirect
 	github.com/MakeNowJust/heredoc v1.0.0 // indirect
-	github.com/Masterminds/semver/v3 v3.2.0 // indirect
+	github.com/Masterminds/semver/v3 v3.2.1 // indirect
 	github.com/Masterminds/squirrel v1.5.3 // indirect
 	github.com/Masterminds/vcs v1.13.3 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
@@ -154,7 +154,7 @@ require (
 	github.com/docker/docker-credential-helpers v0.7.0 // indirect
 	github.com/docker/go v1.5.1-1.0.20160303222718-d30aec9fd63c // indirect
 	github.com/docker/go-metrics v0.0.1 // indirect
-	github.com/emicklei/go-restful/v3 v3.10.1 // indirect
+	github.com/emicklei/go-restful/v3 v3.10.2 // indirect
 	github.com/emirpasic/gods v1.12.0 // indirect
 	github.com/evanphx/json-patch v5.6.0+incompatible // indirect
 	github.com/exponent-io/jsonpath v0.0.0-20151013193312-d6023ce2651d // indirect
