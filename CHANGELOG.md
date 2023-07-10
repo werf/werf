@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.243](https://www.github.com/werf/werf/compare/v1.2.242...v1.2.243) (2023-07-10)
+
+
+### Bug Fixes
+
+* **telemetry:** experimental deploy engine attribute ([753e129](https://www.github.com/werf/werf/commit/753e1299d685fd042bb9dec35b4b59179d915218))
+
 ### [1.2.242](https://www.github.com/werf/werf/compare/v1.2.241...v1.2.242) (2023-07-04)
 
 
