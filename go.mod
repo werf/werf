@@ -83,7 +83,7 @@ require (
 	k8s.io/helm v2.17.0+incompatible
 	k8s.io/klog v1.0.0
 	k8s.io/klog/v2 v2.100.1
-	k8s.io/kubectl v0.26.3
+	k8s.io/kubectl v0.26.6
 	k8s.io/utils v0.0.0-20230406110748-d93618cff8a2
 	mvdan.cc/xurls v1.1.0
 	oras.land/oras-go v1.2.3
@@ -328,10 +328,10 @@ require (
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	k8s.io/apiextensions-apiserver v0.26.2 // indirect
 	k8s.io/apiserver v0.26.2 // indirect
-	k8s.io/component-base v0.26.3 // indirect
-	k8s.io/component-helpers v0.26.3 // indirect
+	k8s.io/component-base v0.26.6 // indirect
+	k8s.io/component-helpers v0.26.6 // indirect
 	k8s.io/kube-openapi v0.0.0-20230501164219-8b0f38b5fd1f // indirect
-	k8s.io/metrics v0.26.3 // indirect
+	k8s.io/metrics v0.26.6 // indirect
 	rsc.io/letsencrypt v0.0.3 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/kustomize/api v0.12.1 // indirect
