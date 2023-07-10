@@ -28,6 +28,8 @@ import (
 	"github.com/werf/werf/pkg/util"
 )
 
+const FEATURE_TOGGLE_ENV_EXPERIMENTAL_DEPLOY_ENGINE = "WERF_EXPERIMENTAL_DEPLOY_ENGINE"
+
 type InitActionConfigOptions struct {
 	StatusProgressPeriod      time.Duration
 	HooksStatusProgressPeriod time.Duration
@@ -78,7 +80,7 @@ func InitActionConfig(ctx context.Context, kubeInitializer KubeInitializer, rele
 		actionConfig.RegistryClient = opts.RegistryClient
 	}
 
-	if util.GetBoolEnvironmentDefaultFalse("WERF_EXPERIMENTAL_DEPLOY_ENGINE") {
+	if util.GetBoolEnvironmentDefaultFalse(FEATURE_TOGGLE_ENV_EXPERIMENTAL_DEPLOY_ENGINE) {
 		deferredKubeClient := kubeclient.NewDeferredKubeClient(configGetter)
 
 		waiter := resourcewaiter.NewResourceWaiter(deferredKubeClient.Dynamic(), deferredKubeClient.Mapper())
