@@ -16,6 +16,7 @@ import (
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/werf/werf/pkg/deploy/helm"
 	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/werf"
 )
@@ -145,6 +146,11 @@ func (t *TelemetryWerfIO) getAttributes() map[string]interface{} {
 	}
 	if val := os.Getenv("TRDL_USE_WERF_GROUP_CHANNEL"); val != "" {
 		attributes["groupChannel"] = val
+	}
+	if val := os.Getenv(helm.FEATURE_TOGGLE_ENV_EXPERIMENTAL_DEPLOY_ENGINE); val == "1" {
+		attributes["expDeployEngine"] = true
+	} else {
+		attributes["expDeployEngine"] = false
 	}
 
 	{

@@ -471,7 +471,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 	}
 
 	var extraRuntimeResourceMutators []mutator.RuntimeResourceMutator
-	if util.GetBoolEnvironmentDefaultFalse("WERF_EXPERIMENTAL_DEPLOY_ENGINE") {
+	if util.GetBoolEnvironmentDefaultFalse(helm.FEATURE_TOGGLE_ENV_EXPERIMENTAL_DEPLOY_ENGINE) {
 		extraRuntimeResourceMutators = []mutator.RuntimeResourceMutator{
 			helm.NewExtraAnnotationsMutator(userExtraAnnotations),
 			helm.NewExtraLabelsMutator(userExtraLabels),
@@ -494,7 +494,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		return err
 	}
 
-	if util.GetBoolEnvironmentDefaultFalse("WERF_EXPERIMENTAL_DEPLOY_ENGINE") {
+	if util.GetBoolEnvironmentDefaultFalse(helm.FEATURE_TOGGLE_ENV_EXPERIMENTAL_DEPLOY_ENGINE) {
 		// FIXME(ilya-lesikov): implement rollback
 		autoRollback := common.NewBool(cmdData.AutoRollback)
 		if *autoRollback {
