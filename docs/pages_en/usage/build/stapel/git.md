@@ -138,7 +138,7 @@ git:
 
 werf uses the `includePaths` and `excludePaths` parameters to process the file list. These parameters contain a set of paths or masks to include and exclude files and directories to/from the list of files to transfer to the image. The `excludePaths` filter works as follows: masks are applied to each file found in the `add` path. If there is at least one match, the file is ignored; if no matches are found, the file gets added to the image. `includePaths` works the opposite way: if there is at least one match, the file gets added to the image.
 
-The _git mapping_ configuration can include both filters. In this case, the file will be added to the image if the path matches any of `includePaths` masks and does not match all `excludePaths` masks.
+The _git mapping_ configuration can include both filters. In this case, the file will be added to the image if the path matches any of `includePaths` masks and does not match any `excludePaths` masks.
 
 For example:
 
