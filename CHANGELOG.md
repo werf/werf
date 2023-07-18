@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.247](https://www.github.com/werf/werf/compare/v1.2.246...v1.2.247) (2023-07-18)
+
+
+### Bug Fixes
+
+* **exp-engine:** use new ChartTree api ([5ed24fd](https://www.github.com/werf/werf/commit/5ed24fd46938ecee092de2fb8b7d1b0528741037))
+
 ### [1.2.246](https://www.github.com/werf/werf/compare/v1.2.245...v1.2.246) (2023-07-18)
 
 
