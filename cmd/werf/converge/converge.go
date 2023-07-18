@@ -17,15 +17,16 @@ import (
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/chartutil"
 	"helm.sh/helm/v3/pkg/cli/values"
-	"helm.sh/helm/v3/pkg/getter"
 	"helm.sh/helm/v3/pkg/postrender"
 	"helm.sh/helm/v3/pkg/registry"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
+	helmchart "helm.sh/helm/v3/pkg/werf/chart"
+	"helm.sh/helm/v3/pkg/werf/log"
 	"helm.sh/helm/v3/pkg/werf/mutator"
 	"helm.sh/helm/v3/pkg/werf/plan"
-	release2 "helm.sh/helm/v3/pkg/werf/release"
-	resource22 "helm.sh/helm/v3/pkg/werf/resource"
+	helmrelease "helm.sh/helm/v3/pkg/werf/release"
+	helmresource "helm.sh/helm/v3/pkg/werf/resource"
 	"helm.sh/helm/v3/pkg/werf/resourcebuilder"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -475,6 +476,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		},
 	}
 
+	// TODO(ilya-lesikov): not needed after new engine migration
 	valueOpts := &values.Options{
 		ValueFiles:   common.GetValues(&commonCmdData),
 		StringValues: common.GetSetString(&commonCmdData),
@@ -507,18 +509,23 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 	}
 
 	if util.GetBoolEnvironmentDefaultFalse(helm.FEATURE_TOGGLE_ENV_EXPERIMENTAL_DEPLOY_ENGINE) {
-		// FIXME(ilya-lesikov): if last succeeded release was cleaned up because of release limit, werf
-		// will see current release as first install. We might want to not delete last succeeded or last
+		// FIXME(ilya-lesikov):
+		// 1. if last succeeded release was cleaned up because of release limit, werf will see
+		// current release as first install. We might want to not delete last succeeded or last
 		// uninstalled release ever.
-		// FIXME(ilya-lesikov): rollback should rollback to the last succesfull release, not last release
-		// FIXME(ilya-lesikov): discovery should be without version
-		// FIXME(ilya-lesikov): add adoption validation, whether we can adopt or not
+		// 2. rollback should rollback to the last succesfull release, not last release
+		// 3. discovery should be without version
+		// 4. add adoption validation, whether we can adopt or not
 
-		// FIXME(ilya-lesikov): implement rollback
 		autoRollback := common.NewBool(cmdData.AutoRollback)
 		if *autoRollback {
 			return fmt.Errorf("--auto-rollback and --atomic not yet supported with new deploy engine")
 		}
+
+		logger := log.NewLogboekLogger(ctx)
+		// FIXME(ilya-lesikov): get rid?
+		outStream := logboek.OutStream()
+		errStream := logboek.ErrStream()
 
 		var deployReportPath string
 		if common.GetSaveDeployReport(&commonCmdData) {
@@ -542,9 +549,6 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 			releaseNamespace = helm_v3.Settings.Namespace()
 		}
 
-		outStream := logboek.OutStream()
-		errStream := logboek.ErrStream()
-
 		// FIXME(ilya-lesikov): move some of it out of lock release wrapper
 		return command_helpers.LockReleaseWrapper(ctx, releaseName, lockManager, func() error {
 			actionConfig.Releases.MaxHistory = *commonCmdData.ReleasesHistoryMax
@@ -553,112 +557,31 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 				return fmt.Errorf("release name is invalid: %s", releaseNamespace)
 			}
 
-			getters := getter.All(helm_v3.Settings)
-			valuesMap, err := valueOpts.MergeValues(getters, loader.GlobalLoadOptions.ChartExtender)
-			if err != nil {
-				return fmt.Errorf("error merging values: %w", err)
-			}
-
-			chart, err := loader.Load(chartDir)
-			if err != nil {
-				return fmt.Errorf("error loading chart: %w", err)
-			}
-			if chart == nil {
-				return action.ErrMissingChart()
-			}
-			if chart.Metadata.Type != "" && chart.Metadata.Type != "application" {
-				return fmt.Errorf("chart type %q can't be deployed", chart.Metadata.Type)
-			}
-
-			if chart.Metadata.Deprecated {
-				fmt.Fprintf(errStream, "This chart is deprecated.\n")
-			}
-
-			if chart.Metadata.Dependencies != nil {
-				if err := action.CheckDependencies(chart, chart.Metadata.Dependencies); err != nil {
-					return fmt.Errorf("An error occurred while checking for chart dependencies. You may need to run `werf helm dependency build` to fetch missing dependencies: %w", err)
-				}
-			}
-
-			// FIXME(ilya-lesikov):
-			// Create context and prepare the handle of SIGTERM
-			// ctx, cancel := context.WithCancel(context.Background())
-
-			// FIXME(ilya-lesikov):
-			// Set up channel on which to send signal notifications.
-			// We must use a buffered channel or risk missing the signal
-			// if we're not ready to receive when the signal is sent.
-			// signalCh := make(chan os.Signal, 2)
-			// signal.Notify(signalCh, os.Interrupt, syscall.SIGTERM)
-			// go func() {
-			// 	<-signalCh
-			// 	fmt.Fprintf(d.errStream, "Release %q has been cancelled.\n", d.releaseName)
-			// 	cancel()
-			// }()
-
-			if err := chartutil.ProcessDependencies(chart, &valuesMap); err != nil {
-				return fmt.Errorf("error processing dependencies: %w", err)
-			}
-
 			if err := actionConfig.DeferredKubeClient.Init(); err != nil {
 				return fmt.Errorf("error initializing deferred kube client: %w", err)
 			}
-
-			// TODO(ilya-lesikov): for local mode here should be stub. Later might allow overriding this stub by user.
-			// {
-			// 	d.cfg.Capabilities = chartutil.DefaultCapabilities.Copy()
-			// 	if d.KubeVersion != nil {
-			// 		d.cfg.Capabilities.KubeVersion = *i.KubeVersion
-			// 	}
-			// }
 
 			history, err := actionConfig.Releases.History(releaseName)
 			if err != nil && err != driver.ErrReleaseNotFound {
 				return fmt.Errorf("error getting history for release %q: %w", releaseName, err)
 			}
-			historyAnalyzer := release2.NewHistoryAnalyzer(history)
+			historyAnalyzer := helmrelease.NewHistoryAnalyzer(history)
 			deployType := historyAnalyzer.DeployTypeForNewRelease()
 			revision := historyAnalyzer.RevisionForNewRelease()
 			prevRelease := historyAnalyzer.LastRelease()
 
-			var (
-				isInstall bool
-				isUpgrade bool
-			)
-			switch deployType {
-			case plan.DeployTypeInitial, plan.DeployTypeInstall:
-				isInstall = true
-			case plan.DeployTypeUpgrade, plan.DeployTypeRollback:
-				isUpgrade = true
-			}
-
-			releaseOptions := chartutil.ReleaseOptions{
-				Name:      releaseName,
-				Namespace: releaseNamespace,
-				Revision:  revision,
-				IsInstall: isInstall,
-				IsUpgrade: isUpgrade,
-			}
-
-			// TODO(ilya-lesikov): capabilities should be manually updated with CRDs
-			capabilities, err := actionConfig.GetCapabilities()
+			chartTree, err := helmchart.NewChartTree(chartDir, releaseName, releaseNamespace, revision, deployType, actionConfig, helmchart.NewChartTreeOptions{
+				Logger:       logger,
+				StringValues: valueOpts.StringValues,
+				Values:       valueOpts.Values,
+				FileValues:   valueOpts.FileValues,
+				ValuesFiles:  valueOpts.ValueFiles,
+			})
 			if err != nil {
-				return fmt.Errorf("error getting capabilities: %w", err)
+				return fmt.Errorf("error creating chart tree: %w", err)
 			}
 
-			values, err := chartutil.ToRenderValues(chart, valuesMap, releaseOptions, capabilities)
-			if err != nil {
-				return fmt.Errorf("error building values: %w", err)
-			}
-
-			// TODO(ilya-lesikov): pass dryrun for local version
-			legacyHooks, manifestsBuf, notes, err := actionConfig.RenderResources(chart, values, "", "", true, false, false, nil, false, false)
-			if err != nil {
-				return fmt.Errorf("error rendering resources: %w", err)
-			}
-			manifests := manifestsBuf.String()
-
-			releaseNamespace := resource22.NewUnmanagedResource(
+			releaseNamespace := helmresource.NewUnmanagedResource(
 				&unstructured.Unstructured{
 					Object: map[string]interface{}{
 						"apiVersion": "v1",
@@ -676,9 +599,9 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 			}
 
 			deployResourceBuilder := resourcebuilder.NewDeployResourceBuilder(releaseNamespace, deployType, actionConfig.Client).
-				WithLegacyPreloadedCRDs(chart.CRDObjects()...).
-				WithLegacyHelmHooks(legacyHooks...).
-				WithReleaseManifests(manifests)
+				WithLegacyPreloadedCRDs(chartTree.LegacyPreloadedCRDs()...).
+				WithLegacyHelmHooks(chartTree.LegacyHooks()...).
+				WithReleaseManifests(chartTree.LegacyResources())
 
 			if prevRelease != nil {
 				deployResourceBuilder = deployResourceBuilder.
@@ -795,7 +718,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 
 			// FIXME(ilya-lesikov): additional validation here
 			// FIXME(ilya-lesikov): move it somewhere?
-			var helmHooks []*resource22.HelmHook
+			var helmHooks []*helmresource.HelmHook
 			for _, hook := range resources.HelmHooks.Matched.UpToDate {
 				helmHooks = append(helmHooks, hook.Local)
 			}
@@ -813,7 +736,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 			}
 
 			// FIXME(ilya-lesikov): move it somewhere?
-			var helmResources []*resource22.HelmResource
+			var helmResources []*helmresource.HelmResource
 			for _, res := range resources.HelmResources.UpToDate {
 				helmResources = append(helmResources, res.Local)
 			}
@@ -830,10 +753,10 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 				helmResources = append(helmResources, res.Local)
 			}
 
-			deployReleaseBuilder := release2.NewDeployReleaseBuilder(deployType, releaseName, releaseNamespace.Name(), chart, valuesMap, revision).
+			deployReleaseBuilder := helmrelease.NewDeployReleaseBuilder(deployType, releaseName, releaseNamespace.Name(), chartTree.LegacyChart(), chartTree.ReleaseValues(), revision).
 				WithHelmHooks(helmHooks).
 				WithHelmResources(helmResources).
-				WithNotes(notes).
+				WithNotes(chartTree.Notes()).
 				WithPrevRelease(prevRelease)
 
 			rel, err := deployReleaseBuilder.BuildPendingRelease()
