@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.245](https://www.github.com/werf/werf/compare/v1.2.244...v1.2.245) (2023-07-18)
+
+
+### Bug Fixes
+
+* **converge:** remove redundant chart downloading on Helm level ([c97e5d4](https://www.github.com/werf/werf/commit/c97e5d4c2f7ec5206acbe487e2abb26d170452f0))
+
 ### [1.2.244](https://www.github.com/werf/werf/compare/v1.2.243...v1.2.244) (2023-07-18)
 
 
