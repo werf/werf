@@ -2,21 +2,32 @@ package converge
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"time"
 
+	"github.com/hashicorp/go-multierror"
 	"github.com/spf13/cobra"
 	helm_v3 "helm.sh/helm/v3/cmd/helm"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
+	"helm.sh/helm/v3/pkg/chartutil"
 	"helm.sh/helm/v3/pkg/cli/values"
+	"helm.sh/helm/v3/pkg/getter"
 	"helm.sh/helm/v3/pkg/postrender"
 	"helm.sh/helm/v3/pkg/registry"
+	"helm.sh/helm/v3/pkg/release"
+	"helm.sh/helm/v3/pkg/storage/driver"
 	"helm.sh/helm/v3/pkg/werf/mutator"
+	"helm.sh/helm/v3/pkg/werf/plan"
+	release2 "helm.sh/helm/v3/pkg/werf/release"
+	resource22 "helm.sh/helm/v3/pkg/werf/resource"
+	"helm.sh/helm/v3/pkg/werf/resourcebuilder"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
@@ -496,6 +507,13 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 	}
 
 	if util.GetBoolEnvironmentDefaultFalse(helm.FEATURE_TOGGLE_ENV_EXPERIMENTAL_DEPLOY_ENGINE) {
+		// FIXME(ilya-lesikov): if last succeeded release was cleaned up because of release limit, werf
+		// will see current release as first install. We might want to not delete last succeeded or last
+		// uninstalled release ever.
+		// FIXME(ilya-lesikov): rollback should rollback to the last succesfull release, not last release
+		// FIXME(ilya-lesikov): discovery should be without version
+		// FIXME(ilya-lesikov): add adoption validation, whether we can adopt or not
+
 		// FIXME(ilya-lesikov): implement rollback
 		autoRollback := common.NewBool(cmdData.AutoRollback)
 		if *autoRollback {
@@ -510,21 +528,445 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 			}
 		}
 
-		helmDeployCmd := action.NewDeploy(releaseName, chartDir, actionConfig, helm_v3.Settings, action.DeployOptions{
-			OutStream:         logboek.OutStream(),
-			ErrStream:         logboek.ErrStream(),
-			ValueOptions:      valueOpts,
-			ReleaseNamespace:  namespace,
-			RollbackOnFailure: *autoRollback,
-			TrackTimeout:      *common.NewDuration(time.Duration(cmdData.Timeout) * time.Second),
-			KeepHistoryLimit:  *commonCmdData.ReleasesHistoryMax,
-			DeployReportPath:  deployReportPath,
-		})
+		trackTimeout := *common.NewDuration(time.Duration(cmdData.Timeout) * time.Second)
+		actionConfig.Client.SetDeletionTimeout(int(trackTimeout))
 
+		// FIXME(ilya-lesikov): there is more chartpath options, are they needed?
+		chartPathOptions := action.ChartPathOptions{}
+		chartPathOptions.SetRegistryClient(actionConfig.RegistryClient)
+
+		var releaseNamespace string
+		if namespace != "" {
+			releaseNamespace = namespace
+		} else {
+			releaseNamespace = helm_v3.Settings.Namespace()
+		}
+
+		outStream := logboek.OutStream()
+		errStream := logboek.ErrStream()
+
+		// FIXME(ilya-lesikov): move some of it out of lock release wrapper
 		return command_helpers.LockReleaseWrapper(ctx, releaseName, lockManager, func() error {
-			if err := helmDeployCmd.Run(ctx); err != nil {
-				return fmt.Errorf("helm deploy failed: %w", err)
+			actionConfig.Releases.MaxHistory = *commonCmdData.ReleasesHistoryMax
+
+			if err := chartutil.ValidateReleaseName(releaseName); err != nil {
+				return fmt.Errorf("release name is invalid: %s", releaseNamespace)
 			}
+
+			// TODO(ilya-lesikov): we skip if chart is not found, is this bug?
+			if isLocated, path, err := loader.GlobalLoadOptions.ChartExtender.LocateChart(chartDir, helm_v3.Settings); err != nil {
+				return fmt.Errorf("error locating chart: %w", err)
+			} else if isLocated {
+				chartDir = path
+			} else {
+				if path, err := chartPathOptions.LocateChart(chartDir, helm_v3.Settings); err != nil {
+					return fmt.Errorf("error locating chart: %w", err)
+				} else {
+					chartDir = path
+				}
+			}
+
+			getters := getter.All(helm_v3.Settings)
+			valuesMap, err := valueOpts.MergeValues(getters, loader.GlobalLoadOptions.ChartExtender)
+			if err != nil {
+				return fmt.Errorf("error merging values: %w", err)
+			}
+
+			chart, err := loader.Load(chartDir)
+			if err != nil {
+				return fmt.Errorf("error loading chart: %w", err)
+			}
+			if chart == nil {
+				return action.ErrMissingChart()
+			}
+			if chart.Metadata.Type != "" && chart.Metadata.Type != "application" {
+				return fmt.Errorf("chart type %q can't be deployed", chart.Metadata.Type)
+			}
+
+			if chart.Metadata.Deprecated {
+				fmt.Fprintf(errStream, "This chart is deprecated.\n")
+			}
+
+			if chart.Metadata.Dependencies != nil {
+				if err := action.CheckDependencies(chart, chart.Metadata.Dependencies); err != nil {
+					return fmt.Errorf("An error occurred while checking for chart dependencies. You may need to run `werf helm dependency build` to fetch missing dependencies: %w", err)
+				}
+			}
+
+			// FIXME(ilya-lesikov):
+			// Create context and prepare the handle of SIGTERM
+			// ctx, cancel := context.WithCancel(context.Background())
+
+			// FIXME(ilya-lesikov):
+			// Set up channel on which to send signal notifications.
+			// We must use a buffered channel or risk missing the signal
+			// if we're not ready to receive when the signal is sent.
+			// signalCh := make(chan os.Signal, 2)
+			// signal.Notify(signalCh, os.Interrupt, syscall.SIGTERM)
+			// go func() {
+			// 	<-signalCh
+			// 	fmt.Fprintf(d.errStream, "Release %q has been cancelled.\n", d.releaseName)
+			// 	cancel()
+			// }()
+
+			if err := chartutil.ProcessDependencies(chart, &valuesMap); err != nil {
+				return fmt.Errorf("error processing dependencies: %w", err)
+			}
+
+			if err := actionConfig.DeferredKubeClient.Init(); err != nil {
+				return fmt.Errorf("error initializing deferred kube client: %w", err)
+			}
+
+			// TODO(ilya-lesikov): for local mode here should be stub. Later might allow overriding this stub by user.
+			// {
+			// 	d.cfg.Capabilities = chartutil.DefaultCapabilities.Copy()
+			// 	if d.KubeVersion != nil {
+			// 		d.cfg.Capabilities.KubeVersion = *i.KubeVersion
+			// 	}
+			// }
+
+			history, err := actionConfig.Releases.History(releaseName)
+			if err != nil && err != driver.ErrReleaseNotFound {
+				return fmt.Errorf("error getting history for release %q: %w", releaseName, err)
+			}
+			historyAnalyzer := release2.NewHistoryAnalyzer(history)
+			deployType := historyAnalyzer.DeployTypeForNewRelease()
+			revision := historyAnalyzer.RevisionForNewRelease()
+			prevRelease := historyAnalyzer.LastRelease()
+
+			var (
+				isInstall bool
+				isUpgrade bool
+			)
+			switch deployType {
+			case plan.DeployTypeInitial, plan.DeployTypeInstall:
+				isInstall = true
+			case plan.DeployTypeUpgrade, plan.DeployTypeRollback:
+				isUpgrade = true
+			}
+
+			releaseOptions := chartutil.ReleaseOptions{
+				Name:      releaseName,
+				Namespace: releaseNamespace,
+				Revision:  revision,
+				IsInstall: isInstall,
+				IsUpgrade: isUpgrade,
+			}
+
+			// TODO(ilya-lesikov): capabilities should be manually updated with CRDs
+			capabilities, err := actionConfig.GetCapabilities()
+			if err != nil {
+				return fmt.Errorf("error getting capabilities: %w", err)
+			}
+
+			values, err := chartutil.ToRenderValues(chart, valuesMap, releaseOptions, capabilities)
+			if err != nil {
+				return fmt.Errorf("error building values: %w", err)
+			}
+
+			// TODO(ilya-lesikov): pass dryrun for local version
+			legacyHooks, manifestsBuf, notes, err := actionConfig.RenderResources(chart, values, "", "", true, false, false, nil, false, false)
+			if err != nil {
+				return fmt.Errorf("error rendering resources: %w", err)
+			}
+			manifests := manifestsBuf.String()
+
+			releaseNamespace := resource22.NewUnmanagedResource(
+				&unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"apiVersion": "v1",
+						"kind":       "Namespace",
+						"metadata": map[string]interface{}{
+							"name": releaseNamespace,
+						},
+					},
+				},
+				actionConfig.Client.DiscoveryRESTMapper(),
+				actionConfig.Client.DiscoveryClient(),
+			)
+			if err := releaseNamespace.Validate(); err != nil {
+				return fmt.Errorf("error validating release namespace: %w", err)
+			}
+
+			deployResourceBuilder := resourcebuilder.NewDeployResourceBuilder(releaseNamespace, deployType, actionConfig.Client).
+				WithLegacyPreloadedCRDs(chart.CRDObjects()...).
+				WithLegacyHelmHooks(legacyHooks...).
+				WithReleaseManifests(manifests)
+
+			if prevRelease != nil {
+				deployResourceBuilder = deployResourceBuilder.
+					WithPrevReleaseManifests(prevRelease.Manifest)
+			}
+
+			resources, err := deployResourceBuilder.Build(ctx)
+			if err != nil {
+				return fmt.Errorf("error building resources: %w", err)
+			}
+
+			if os.Getenv("WERF_EXPERIMENTAL_DEPLOY_ENGINE_DEBUG") == "1" {
+				for _, res := range resources.HelmResources.UpToDate {
+					b, _ := json.MarshalIndent(res.Local.Unstructured().UnstructuredContent(), "", "\t")
+					fmt.Printf("DEBUG(helmResourceUpToDateLocal):\n%s\n", b)
+					b, _ = json.MarshalIndent(res.Live.Unstructured().UnstructuredContent(), "", "\t")
+					fmt.Printf("DEBUG(helmResourceUpToDateLive):\n%s\n", b)
+				}
+				for _, res := range resources.HelmResources.Outdated {
+					b, _ := json.MarshalIndent(res.Local.Unstructured().UnstructuredContent(), "", "\t")
+					fmt.Printf("DEBUG(helmResourceOutdatedLocal):\n%s\n", b)
+					b, _ = json.MarshalIndent(res.Live.Unstructured().UnstructuredContent(), "", "\t")
+					fmt.Printf("DEBUG(helmResourceOutdatedLive):\n%s\n", b)
+					b, _ = json.MarshalIndent(res.Desired.Unstructured().UnstructuredContent(), "", "\t")
+					fmt.Printf("DEBUG(helmResourceOutdatedDesired):\n%s\n", b)
+				}
+				for _, res := range resources.HelmResources.Unsupported {
+					b, _ := json.MarshalIndent(res.Local.Unstructured().UnstructuredContent(), "", "\t")
+					fmt.Printf("DEBUG(helmResourceUnsupportedLocal):\n%s\n", b)
+				}
+				for _, res := range resources.HelmResources.OutdatedImmutable {
+					b, _ := json.MarshalIndent(res.Local.Unstructured().UnstructuredContent(), "", "\t")
+					fmt.Printf("DEBUG(helmResourceOutdatedImmutableLocal):\n%s\n", b)
+					b, _ = json.MarshalIndent(res.Live.Unstructured().UnstructuredContent(), "", "\t")
+					fmt.Printf("DEBUG(helmResourceOutdatedImmutableLive):\n%s\n", b)
+				}
+				for _, res := range resources.HelmResources.NonExisting {
+					b, _ := json.MarshalIndent(res.Local.Unstructured().UnstructuredContent(), "", "\t")
+					fmt.Printf("DEBUG(helmResourceNonExistingLocal):\n%s\n", b)
+					b, _ = json.MarshalIndent(res.Desired.Unstructured().UnstructuredContent(), "", "\t")
+					fmt.Printf("DEBUG(helmResourceNonExistingDesired):\n%s\n", b)
+				}
+				for _, res := range resources.HelmHooks.Matched.UpToDate {
+					b, _ := json.MarshalIndent(res.Local.Unstructured().UnstructuredContent(), "", "\t")
+					fmt.Printf("DEBUG(helmHooksMatchedUpToDateLocal):\n%s\n", b)
+					b, _ = json.MarshalIndent(res.Live.Unstructured().UnstructuredContent(), "", "\t")
+					fmt.Printf("DEBUG(helmHooksMatchedUpToDateLive):\n%s\n", b)
+				}
+				for _, res := range resources.HelmHooks.Matched.Outdated {
+					b, _ := json.MarshalIndent(res.Local.Unstructured().UnstructuredContent(), "", "\t")
+					fmt.Printf("DEBUG(helmHooksMatchedOutdatedLocal):\n%s\n", b)
+					b, _ = json.MarshalIndent(res.Live.Unstructured().UnstructuredContent(), "", "\t")
+					fmt.Printf("DEBUG(helmHooksMatchedOutdatedLive):\n%s\n", b)
+					b, _ = json.MarshalIndent(res.Desired.Unstructured().UnstructuredContent(), "", "\t")
+					fmt.Printf("DEBUG(helmHooksMatchedOutdatedDesired):\n%s\n", b)
+				}
+				for _, res := range resources.HelmHooks.Matched.OutdatedImmutable {
+					b, _ := json.MarshalIndent(res.Local.Unstructured().UnstructuredContent(), "", "\t")
+					fmt.Printf("DEBUG(helmHooksMatchedOutdatedImmutableLocal):\n%s\n", b)
+					b, _ = json.MarshalIndent(res.Live.Unstructured().UnstructuredContent(), "", "\t")
+					fmt.Printf("DEBUG(helmHooksMatchedOutdatedImmutableLive):\n%s\n", b)
+				}
+				for _, res := range resources.HelmHooks.Matched.NonExisting {
+					b, _ := json.MarshalIndent(res.Local.Unstructured().UnstructuredContent(), "", "\t")
+					fmt.Printf("DEBUG(helmHooksMatchedNonExistingLocal):\n%s\n", b)
+					b, _ = json.MarshalIndent(res.Desired.Unstructured().UnstructuredContent(), "", "\t")
+					fmt.Printf("DEBUG(helmHooksMatchedNonExistingDesired):\n%s\n", b)
+				}
+				for _, res := range resources.HelmHooks.Matched.Unsupported {
+					b, _ := json.MarshalIndent(res.Local.Unstructured().UnstructuredContent(), "", "\t")
+					fmt.Printf("DEBUG(helmHooksMatchedUnsupportedLocal):\n%s\n", b)
+				}
+				for _, res := range resources.HelmHooks.Unmatched {
+					b, _ := json.MarshalIndent(res.Unstructured().UnstructuredContent(), "", "\t")
+					fmt.Printf("DEBUG(helmHooksUnmatched):\n%s\n", b)
+				}
+				for _, res := range resources.PreloadedCRDs.Outdated {
+					b, _ := json.MarshalIndent(res.Local.Unstructured().UnstructuredContent(), "", "\t")
+					fmt.Printf("DEBUG(preloadedCrdsOutdatedLocal):\n%s\n", b)
+					b, _ = json.MarshalIndent(res.Live.Unstructured().UnstructuredContent(), "", "\t")
+					fmt.Printf("DEBUG(preloadedCrdsOutdatedLive):\n%s\n", b)
+					b, _ = json.MarshalIndent(res.Desired.Unstructured().UnstructuredContent(), "", "\t")
+					fmt.Printf("DEBUG(preloadedCrdsOutdatedDesired):\n%s\n", b)
+				}
+				for _, res := range resources.PreloadedCRDs.OutdatedImmutable {
+					b, _ := json.MarshalIndent(res.Local.Unstructured().UnstructuredContent(), "", "\t")
+					fmt.Printf("DEBUG(preloadedCrdsOutdatedImmutableLocal):\n%s\n", b)
+					b, _ = json.MarshalIndent(res.Live.Unstructured().UnstructuredContent(), "", "\t")
+					fmt.Printf("DEBUG(preloadedCrdsOutdatedImmutableLive):\n%s\n", b)
+				}
+				for _, res := range resources.PreloadedCRDs.UpToDate {
+					b, _ := json.MarshalIndent(res.Local.Unstructured().UnstructuredContent(), "", "\t")
+					fmt.Printf("DEBUG(preloadedCrdsUpToDateLocal):\n%s\n", b)
+					b, _ = json.MarshalIndent(res.Live.Unstructured().UnstructuredContent(), "", "\t")
+					fmt.Printf("DEBUG(preloadedCrdsUpToDateLive):\n%s\n", b)
+				}
+				for _, res := range resources.PreloadedCRDs.NonExisting {
+					b, _ := json.MarshalIndent(res.Local.Unstructured().UnstructuredContent(), "", "\t")
+					fmt.Printf("DEBUG(preloadedCrdsNonExistingLocal):\n%s\n", b)
+					b, _ = json.MarshalIndent(res.Desired.Unstructured().UnstructuredContent(), "", "\t")
+					fmt.Printf("DEBUG(preloadedCrdsNonExistingDesired):\n%s\n", b)
+				}
+				for _, res := range resources.PrevReleaseHelmResources.Existing {
+					b, _ := json.MarshalIndent(res.Local.Unstructured().UnstructuredContent(), "", "\t")
+					fmt.Printf("DEBUG(prevReleaseHelmResourcesExistingLocal):\n%s\n", b)
+					b, _ = json.MarshalIndent(res.Live.Unstructured().UnstructuredContent(), "", "\t")
+					fmt.Printf("DEBUG(prevReleaseHelmResourcesExistingLive):\n%s\n", b)
+				}
+				for _, res := range resources.PrevReleaseHelmResources.NonExisting {
+					b, _ := json.MarshalIndent(res.Unstructured().UnstructuredContent(), "", "\t")
+					fmt.Printf("DEBUG(prevReleaseHelmResourcesNonExistingLocal):\n%s\n", b)
+				}
+			}
+
+			// FIXME(ilya-lesikov): additional validation here
+			// FIXME(ilya-lesikov): move it somewhere?
+			var helmHooks []*resource22.HelmHook
+			for _, hook := range resources.HelmHooks.Matched.UpToDate {
+				helmHooks = append(helmHooks, hook.Local)
+			}
+			for _, hook := range resources.HelmHooks.Matched.Outdated {
+				helmHooks = append(helmHooks, hook.Local)
+			}
+			for _, hook := range resources.HelmHooks.Matched.OutdatedImmutable {
+				helmHooks = append(helmHooks, hook.Local)
+			}
+			for _, hook := range resources.HelmHooks.Matched.NonExisting {
+				helmHooks = append(helmHooks, hook.Local)
+			}
+			for _, hook := range resources.HelmHooks.Matched.Unsupported {
+				helmHooks = append(helmHooks, hook.Local)
+			}
+
+			// FIXME(ilya-lesikov): move it somewhere?
+			var helmResources []*resource22.HelmResource
+			for _, res := range resources.HelmResources.UpToDate {
+				helmResources = append(helmResources, res.Local)
+			}
+			for _, res := range resources.HelmResources.Outdated {
+				helmResources = append(helmResources, res.Local)
+			}
+			for _, res := range resources.HelmResources.OutdatedImmutable {
+				helmResources = append(helmResources, res.Local)
+			}
+			for _, res := range resources.HelmResources.NonExisting {
+				helmResources = append(helmResources, res.Local)
+			}
+			for _, res := range resources.HelmResources.Unsupported {
+				helmResources = append(helmResources, res.Local)
+			}
+
+			deployReleaseBuilder := release2.NewDeployReleaseBuilder(deployType, releaseName, releaseNamespace.Name(), chart, valuesMap, revision).
+				WithHelmHooks(helmHooks).
+				WithHelmResources(helmResources).
+				WithNotes(notes).
+				WithPrevRelease(prevRelease)
+
+			rel, err := deployReleaseBuilder.BuildPendingRelease()
+			if err != nil {
+				return fmt.Errorf("error building release: %w", err)
+			}
+
+			succeededRel := deployReleaseBuilder.PromotePendingReleaseToSucceeded(rel)
+
+			var supersededRel *release.Release
+			if prevRelease != nil {
+				supersededRel = deployReleaseBuilder.PromotePreviousReleaseToSuperseded(prevRelease)
+			}
+
+			deployPlan, referencesToCleanupOnFailure, err := plan.
+				NewDeployPlanBuilder(deployType, resources.ReleaseNamespace, rel, succeededRel).
+				WithPreloadedCRDs(resources.PreloadedCRDs).
+				WithMatchedHelmHooks(resources.HelmHooks.Matched).
+				WithHelmResources(resources.HelmResources).
+				WithPreviousReleaseHelmResources(resources.PrevReleaseHelmResources).
+				WithSupersededPreviousRelease(supersededRel).
+				WithPreviousReleaseDeployed(historyAnalyzer.LastReleaseDeployed()).
+				Build(ctx)
+			if err != nil {
+				return fmt.Errorf("error building deploy plan: %w", err)
+			}
+
+			if os.Getenv("WERF_EXPERIMENTAL_DEPLOY_ENGINE_DEBUG") == "1" {
+				for _, phase := range deployPlan.Phases {
+					fmt.Printf("DEBUG(phaseType): %s\n", phase.Type)
+					for _, operation := range phase.Operations {
+						fmt.Printf("DEBUG(opType): %s\n", operation.Type())
+						switch op := operation.(type) {
+						case *plan.OperationCreate:
+							for _, target := range op.Targets {
+								b, _ := json.MarshalIndent(target.Unstructured().UnstructuredContent(), "", "\t")
+								fmt.Printf("DEBUG(opTarget):\n%s\n", b)
+							}
+						case *plan.OperationUpdate:
+							for _, target := range op.Targets {
+								b, _ := json.MarshalIndent(target.Unstructured().UnstructuredContent(), "", "\t")
+								fmt.Printf("DEBUG(opTarget):\n%s\n", b)
+							}
+						case *plan.OperationRecreate:
+							for _, target := range op.Targets {
+								b, _ := json.MarshalIndent(target.Unstructured().UnstructuredContent(), "", "\t")
+								fmt.Printf("DEBUG(opTarget):\n%s\n", b)
+							}
+						case *plan.OperationDelete:
+							fmt.Printf("DEBUG(opTargets): %s\n", op.Targets)
+						case *plan.OperationCreateReleases:
+							for _, r := range op.Releases {
+								b, _ := json.MarshalIndent(r, "", "\t")
+								fmt.Printf("DEBUG(opTarget):\n%s\n", b)
+							}
+						case *plan.OperationUpdateReleases:
+							for _, r := range op.Releases {
+								b, _ := json.MarshalIndent(r, "", "\t")
+								fmt.Printf("DEBUG(opTarget):\n%s\n", b)
+							}
+						}
+					}
+				}
+			}
+
+			if deployPlan.Empty() {
+				fmt.Fprintf(outStream, "\nRelease %q in namespace %q canceled: no changes to be made.\n", releaseName, releaseNamespace)
+				return nil
+			}
+
+			// TODO(ilya-lesikov): add more info from executor report
+			if deployReportPath != "" {
+				defer func() {
+					deployReportData, err := release.NewDeployReport().FromRelease(rel).ToJSONData()
+					if err != nil {
+						actionConfig.Log("warning: error creating deploy report data: %s", err)
+						return
+					}
+
+					if err := os.WriteFile(deployReportPath, deployReportData, 0o644); err != nil {
+						actionConfig.Log("warning: error writing deploy report file: %s", err)
+						return
+					}
+				}()
+			}
+
+			deployReport, executeErr := plan.NewDeployPlanExecutor(deployPlan, releaseNamespace, actionConfig.Client, actionConfig.Tracker, actionConfig.Releases).WithTrackTimeout(trackTimeout).Execute(ctx)
+			if executeErr != nil {
+				defer func() {
+					fmt.Fprintf(errStream, "\nRelease %q in namespace %q failed.\n", releaseName, releaseNamespace)
+				}()
+
+				rel = deployReleaseBuilder.PromotePendingReleaseToFailed(rel)
+
+				finalizeFailedDeployPlan := plan.
+					NewFinalizeFailedDeployPlanBuilder(rel).
+					WithReferencesToCleanup(referencesToCleanupOnFailure).
+					Build()
+
+				// FIXME(ilya-lesikov): deploy report from this execute is not used
+				_, err = plan.NewDeployPlanExecutor(finalizeFailedDeployPlan, releaseNamespace, actionConfig.Client, actionConfig.Tracker, actionConfig.Releases).WithTrackTimeout(trackTimeout).WithReport(deployReport).Execute(ctx)
+				if err != nil {
+					return multierror.Append(executeErr, fmt.Errorf("error finalizing failed deploy plan: %w", err))
+				}
+
+				return executeErr
+			}
+
+			rel = succeededRel
+
+			defer func() {
+				fmt.Fprintf(outStream, "\nRelease %q in namespace %q succeeded.\n", releaseName, releaseNamespace)
+			}()
+
+			deployReportPrinter := plan.NewDeployReportPrinter(outStream, deployReport)
+			deployReportPrinter.PrintSummary()
+
+			// FIXME(ilya-lesikov): better error handling (interrupts, etc)
+
+			// FIXME(ilya-lesikov): don't forget errs.FormatTemplatingError if any errors occurs
 
 			return nil
 		})
