@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.244](https://www.github.com/werf/werf/compare/v1.2.243...v1.2.244) (2023-07-18)
+
+
+### Bug Fixes
+
+* move helm deploy action to converge ([33cd546](https://www.github.com/werf/werf/commit/33cd54644a82e593de0842c624d738b59b168738))
+
 ### [1.2.243](https://www.github.com/werf/werf/compare/v1.2.242...v1.2.243) (2023-07-10)
 
 
