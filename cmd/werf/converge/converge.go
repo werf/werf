@@ -553,19 +553,6 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 				return fmt.Errorf("release name is invalid: %s", releaseNamespace)
 			}
 
-			// TODO(ilya-lesikov): we skip if chart is not found, is this bug?
-			if isLocated, path, err := loader.GlobalLoadOptions.ChartExtender.LocateChart(chartDir, helm_v3.Settings); err != nil {
-				return fmt.Errorf("error locating chart: %w", err)
-			} else if isLocated {
-				chartDir = path
-			} else {
-				if path, err := chartPathOptions.LocateChart(chartDir, helm_v3.Settings); err != nil {
-					return fmt.Errorf("error locating chart: %w", err)
-				} else {
-					chartDir = path
-				}
-			}
-
 			getters := getter.All(helm_v3.Settings)
 			valuesMap, err := valueOpts.MergeValues(getters, loader.GlobalLoadOptions.ChartExtender)
 			if err != nil {
