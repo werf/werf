@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.246](https://www.github.com/werf/werf/compare/v1.2.245...v1.2.246) (2023-07-18)
+
+
+### Bug Fixes
+
+* **exp-engine:** panic on external-dependency namespace annotation ([be555f7](https://www.github.com/werf/werf/commit/be555f7e5f4616588c0f7cc7b4aafadffc550f1c))
+
 ### [1.2.245](https://www.github.com/werf/werf/compare/v1.2.244...v1.2.245) (2023-07-18)
 
 
