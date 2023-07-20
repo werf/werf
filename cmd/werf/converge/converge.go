@@ -20,12 +20,11 @@ import (
 	"helm.sh/helm/v3/pkg/postrender"
 	"helm.sh/helm/v3/pkg/registry"
 	"helm.sh/helm/v3/pkg/release"
-	"helm.sh/helm/v3/pkg/storage/driver"
 	helmchart "helm.sh/helm/v3/pkg/werf/chart"
+	"helm.sh/helm/v3/pkg/werf/history"
 	"helm.sh/helm/v3/pkg/werf/log"
 	"helm.sh/helm/v3/pkg/werf/mutator"
 	"helm.sh/helm/v3/pkg/werf/plan"
-	helmrelease "helm.sh/helm/v3/pkg/werf/release"
 	helmresource "helm.sh/helm/v3/pkg/werf/resource"
 	"helm.sh/helm/v3/pkg/werf/resourcebuilder"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -561,14 +560,13 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 				return fmt.Errorf("error initializing deferred kube client: %w", err)
 			}
 
-			history, err := actionConfig.Releases.History(releaseName)
-			if err != nil && err != driver.ErrReleaseNotFound {
-				return fmt.Errorf("error getting history for release %q: %w", releaseName, err)
+			hist, err := history.NewHistory(releaseName, releaseNamespace, actionConfig.Releases.Driver)
+			if err != nil {
+				return fmt.Errorf("error building history for release %q: %w", releaseName, err)
 			}
-			historyAnalyzer := helmrelease.NewHistoryAnalyzer(history)
-			deployType := historyAnalyzer.DeployTypeForNewRelease()
-			revision := historyAnalyzer.RevisionForNewRelease()
-			prevRelease := historyAnalyzer.LastRelease()
+			prevRelease := hist.LastRelease()
+			deployType := hist.DeployTypeForNextRelease()
+			revision := hist.RevisionForNextRelease()
 
 			chartTree, err := helmchart.NewChartTree(chartDir, releaseName, releaseNamespace, revision, deployType, actionConfig, helmchart.NewChartTreeOptions{
 				Logger:       logger,
@@ -753,22 +751,16 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 				helmResources = append(helmResources, res.Local)
 			}
 
-			deployReleaseBuilder := helmrelease.NewDeployReleaseBuilder(deployType, releaseName, releaseNamespace.Name(), chartTree.LegacyChart(), chartTree.ReleaseValues(), revision).
-				WithHelmHooks(helmHooks).
-				WithHelmResources(helmResources).
-				WithNotes(chartTree.Notes()).
-				WithPrevRelease(prevRelease)
-
-			rel, err := deployReleaseBuilder.BuildPendingRelease()
+			rel, err := hist.BuildNextRelease(helmHooks, helmResources, chartTree.Notes(), chartTree.LegacyChart(), chartTree.ReleaseValues())
 			if err != nil {
-				return fmt.Errorf("error building release: %w", err)
+				return fmt.Errorf("error building next release: %w", err)
 			}
 
-			succeededRel := deployReleaseBuilder.PromotePendingReleaseToSucceeded(rel)
+			succeededRel := hist.PromoteReleaseToSucceeded(rel)
 
 			var supersededRel *release.Release
 			if prevRelease != nil {
-				supersededRel = deployReleaseBuilder.PromotePreviousReleaseToSuperseded(prevRelease)
+				supersededRel = hist.PromoteReleaseToSuperseded(prevRelease)
 			}
 
 			deployPlan, referencesToCleanupOnFailure, err := plan.
@@ -778,7 +770,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 				WithHelmResources(resources.HelmResources).
 				WithPreviousReleaseHelmResources(resources.PrevReleaseHelmResources).
 				WithSupersededPreviousRelease(supersededRel).
-				WithPreviousReleaseDeployed(historyAnalyzer.LastReleaseDeployed()).
+				WithPreviousReleaseDeployed(hist.LastReleaseIsDeployed()).
 				Build(ctx)
 			if err != nil {
 				return fmt.Errorf("error building deploy plan: %w", err)
@@ -849,7 +841,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 					fmt.Fprintf(errStream, "\nRelease %q in namespace %q failed.\n", releaseName, releaseNamespace)
 				}()
 
-				rel = deployReleaseBuilder.PromotePendingReleaseToFailed(rel)
+				rel = hist.PromoteReleaseToFailed(rel)
 
 				finalizeFailedDeployPlan := plan.
 					NewFinalizeFailedDeployPlanBuilder(rel).
