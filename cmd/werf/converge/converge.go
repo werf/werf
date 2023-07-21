@@ -556,7 +556,11 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 			return fmt.Errorf("error initializing deferred kube client: %w", err)
 		}
 
-		waiter := resourcewaiter.NewResourceWaiter(deferredKubeClient.Dynamic(), deferredKubeClient.Mapper())
+		trackTimeout := *common.NewDuration(time.Duration(cmdData.Timeout) * time.Second)
+		waiter := resourcewaiter.NewResourceWaiter(deferredKubeClient.Dynamic(), deferredKubeClient.Mapper(), resourcewaiter.NewResourceWaiterOptions{
+			Logger:              logger,
+			DefaultTrackTimeout: trackTimeout,
+		})
 
 		statusProgressPeriod := time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second
 		hooksStatusProgressPeriod := time.Duration(*commonCmdData.HooksStatusProgressPeriodSeconds) * time.Second
@@ -571,7 +575,6 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 			mutator.NewReplicasOnCreationMutator(),
 			mutator.NewReleaseMetadataMutator(releaseName, namespace),
 		)
-		trackTimeout := *common.NewDuration(time.Duration(cmdData.Timeout) * time.Second)
 		cli.SetDeletionTimeout(int(trackTimeout))
 
 		// FIXME(ilya-lesikov): move some of it out of lock release wrapper
