@@ -416,7 +416,7 @@ func runRender(ctx context.Context, imagesToProcess build.ImagesToProcess) error
 		wc.SetServiceValues(vals)
 	}
 
-	actionConfig, err := common.NewActionConfig(ctx, common.GetOndemandKubeInitializer(), releaseName, namespace, &commonCmdData, helmRegistryClient, nil)
+	actionConfig, err := common.NewActionConfig(ctx, common.GetOndemandKubeInitializer(), namespace, &commonCmdData, helmRegistryClient)
 	if err != nil {
 		return err
 	}

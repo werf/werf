@@ -140,10 +140,10 @@ func runMigrate2To3(ctx context.Context) error {
 	}
 
 	actionConfig := new(action.Configuration)
-	if err := helm.InitActionConfig(ctx, common.GetOndemandKubeInitializer(), targetReleaseName, targetNamespace, helm_v3.Settings, actionConfig, helm.InitActionConfigOptions{
+	if err := helm.InitActionConfig(ctx, common.GetOndemandKubeInitializer(), targetNamespace, helm_v3.Settings, actionConfig, helm.InitActionConfigOptions{
 		KubeConfigOptions: kubeConfigOptions,
 		RegistryClient:    helmRegistryClient,
-	}, nil); err != nil {
+	}); err != nil {
 		return err
 	}
 

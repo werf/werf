@@ -7,7 +7,6 @@ import (
 	helm_v3 "helm.sh/helm/v3/cmd/helm"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/registry"
-	"helm.sh/helm/v3/pkg/werf/mutator"
 
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
@@ -55,10 +54,10 @@ func NewBundlesRegistryClient(ctx context.Context, commonCmdData *CmdData) (*bun
 	)
 }
 
-func NewActionConfig(ctx context.Context, kubeInitializer helm.KubeInitializer, releaseName, namespace string, commonCmdData *CmdData, registryClient *registry.Client, extraMutators []mutator.RuntimeResourceMutator) (*action.Configuration, error) {
+func NewActionConfig(ctx context.Context, kubeInitializer helm.KubeInitializer, namespace string, commonCmdData *CmdData, registryClient *registry.Client) (*action.Configuration, error) {
 	actionConfig := new(action.Configuration)
 
-	if err := helm.InitActionConfig(ctx, kubeInitializer, releaseName, namespace, helm_v3.Settings, actionConfig, helm.InitActionConfigOptions{
+	if err := helm.InitActionConfig(ctx, kubeInitializer, namespace, helm_v3.Settings, actionConfig, helm.InitActionConfigOptions{
 		StatusProgressPeriod:      time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
 		HooksStatusProgressPeriod: time.Duration(*commonCmdData.HooksStatusProgressPeriodSeconds) * time.Second,
 		KubeConfigOptions: kube.KubeConfigOptions{
@@ -69,7 +68,7 @@ func NewActionConfig(ctx context.Context, kubeInitializer helm.KubeInitializer, 
 		},
 		ReleasesHistoryMax: *commonCmdData.ReleasesHistoryMax,
 		RegistryClient:     registryClient,
-	}, extraMutators); err != nil {
+	}); err != nil {
 		return nil, err
 	}
 
