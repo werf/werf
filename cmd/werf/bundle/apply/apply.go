@@ -159,7 +159,7 @@ func runApply(ctx context.Context) error {
 	}
 
 	actionConfig := new(action.Configuration)
-	if err := helm.InitActionConfig(ctx, common.GetOndemandKubeInitializer(), releaseName, namespace, helm_v3.Settings, actionConfig, helm.InitActionConfigOptions{
+	if err := helm.InitActionConfig(ctx, common.GetOndemandKubeInitializer(), namespace, helm_v3.Settings, actionConfig, helm.InitActionConfigOptions{
 		StatusProgressPeriod:      time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
 		HooksStatusProgressPeriod: time.Duration(*commonCmdData.HooksStatusProgressPeriodSeconds) * time.Second,
 		KubeConfigOptions: kube.KubeConfigOptions{
@@ -170,7 +170,7 @@ func runApply(ctx context.Context) error {
 		},
 		ReleasesHistoryMax: *commonCmdData.ReleasesHistoryMax,
 		RegistryClient:     helmRegistryClient,
-	}, nil); err != nil {
+	}); err != nil {
 		return err
 	}
 

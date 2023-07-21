@@ -21,12 +21,16 @@ import (
 	"helm.sh/helm/v3/pkg/registry"
 	"helm.sh/helm/v3/pkg/release"
 	helmchart "helm.sh/helm/v3/pkg/werf/chart"
+	"helm.sh/helm/v3/pkg/werf/client"
 	"helm.sh/helm/v3/pkg/werf/history"
+	"helm.sh/helm/v3/pkg/werf/kubeclient"
 	"helm.sh/helm/v3/pkg/werf/log"
 	"helm.sh/helm/v3/pkg/werf/mutator"
 	"helm.sh/helm/v3/pkg/werf/plan"
 	helmresource "helm.sh/helm/v3/pkg/werf/resource"
 	"helm.sh/helm/v3/pkg/werf/resourcebuilder"
+	"helm.sh/helm/v3/pkg/werf/resourcetracker"
+	"helm.sh/helm/v3/pkg/werf/resourcewaiter"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/werf/kubedog/pkg/kube"
@@ -492,7 +496,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		}
 	}
 
-	actionConfig, err := common.NewActionConfig(ctx, common.GetOndemandKubeInitializer(), releaseName, namespace, &commonCmdData, helmRegistryClient, extraRuntimeResourceMutators)
+	actionConfig, err := common.NewActionConfig(ctx, common.GetOndemandKubeInitializer(), namespace, &commonCmdData, helmRegistryClient)
 	if err != nil {
 		return err
 	}
@@ -502,7 +506,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		return err
 	}
 
-	actionConfig, err = common.NewActionConfig(ctx, common.GetOndemandKubeInitializer(), releaseName, namespace, &commonCmdData, helmRegistryClient, extraRuntimeResourceMutators)
+	actionConfig, err = common.NewActionConfig(ctx, common.GetOndemandKubeInitializer(), namespace, &commonCmdData, helmRegistryClient)
 	if err != nil {
 		return err
 	}
@@ -534,9 +538,6 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 			}
 		}
 
-		trackTimeout := *common.NewDuration(time.Duration(cmdData.Timeout) * time.Second)
-		actionConfig.Client.SetDeletionTimeout(int(trackTimeout))
-
 		// FIXME(ilya-lesikov): there is more chartpath options, are they needed?
 		chartPathOptions := action.ChartPathOptions{}
 		chartPathOptions.SetRegistryClient(actionConfig.RegistryClient)
@@ -548,16 +549,37 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 			releaseNamespace = helm_v3.Settings.Namespace()
 		}
 
+		configGetter := helm_v3.Settings.GetConfigP()
+
+		deferredKubeClient := kubeclient.NewDeferredKubeClient(*configGetter)
+		if err := deferredKubeClient.Init(); err != nil {
+			return fmt.Errorf("error initializing deferred kube client: %w", err)
+		}
+
+		waiter := resourcewaiter.NewResourceWaiter(deferredKubeClient.Dynamic(), deferredKubeClient.Mapper())
+
+		statusProgressPeriod := time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second
+		hooksStatusProgressPeriod := time.Duration(*commonCmdData.HooksStatusProgressPeriodSeconds) * time.Second
+		tracker := resourcetracker.NewResourceTracker(statusProgressPeriod, hooksStatusProgressPeriod)
+
+		cli, err := client.NewClient(deferredKubeClient.Static(), deferredKubeClient.Dynamic(), deferredKubeClient.Discovery(), deferredKubeClient.Mapper(), waiter)
+		if err != nil {
+			return fmt.Errorf("error creating client: %w", err)
+		}
+		cli.AddTargetResourceMutators(extraRuntimeResourceMutators...)
+		cli.AddTargetResourceMutators(
+			mutator.NewReplicasOnCreationMutator(),
+			mutator.NewReleaseMetadataMutator(releaseName, namespace),
+		)
+		trackTimeout := *common.NewDuration(time.Duration(cmdData.Timeout) * time.Second)
+		cli.SetDeletionTimeout(int(trackTimeout))
+
 		// FIXME(ilya-lesikov): move some of it out of lock release wrapper
 		return command_helpers.LockReleaseWrapper(ctx, releaseName, lockManager, func() error {
 			actionConfig.Releases.MaxHistory = *commonCmdData.ReleasesHistoryMax
 
 			if err := chartutil.ValidateReleaseName(releaseName); err != nil {
 				return fmt.Errorf("release name is invalid: %s", releaseNamespace)
-			}
-
-			if err := actionConfig.DeferredKubeClient.Init(); err != nil {
-				return fmt.Errorf("error initializing deferred kube client: %w", err)
 			}
 
 			hist, err := history.NewHistory(releaseName, releaseNamespace, actionConfig.Releases.Driver)
@@ -589,14 +611,14 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 						},
 					},
 				},
-				actionConfig.Client.DiscoveryRESTMapper(),
-				actionConfig.Client.DiscoveryClient(),
+				cli.DiscoveryRESTMapper(),
+				cli.DiscoveryClient(),
 			)
 			if err := releaseNamespace.Validate(); err != nil {
 				return fmt.Errorf("error validating release namespace: %w", err)
 			}
 
-			deployResourceBuilder := resourcebuilder.NewDeployResourceBuilder(releaseNamespace, deployType, actionConfig.Client).
+			deployResourceBuilder := resourcebuilder.NewDeployResourceBuilder(releaseNamespace, deployType, cli).
 				WithLegacyPreloadedCRDs(chartTree.LegacyPreloadedCRDs()...).
 				WithLegacyHelmHooks(chartTree.LegacyHooks()...).
 				WithReleaseManifests(chartTree.LegacyResources())
@@ -835,7 +857,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 				}()
 			}
 
-			deployReport, executeErr := plan.NewDeployPlanExecutor(deployPlan, releaseNamespace, actionConfig.Client, actionConfig.Tracker, actionConfig.Releases).WithTrackTimeout(trackTimeout).Execute(ctx)
+			deployReport, executeErr := plan.NewDeployPlanExecutor(deployPlan, releaseNamespace, cli, tracker, actionConfig.Releases).WithTrackTimeout(trackTimeout).Execute(ctx)
 			if executeErr != nil {
 				defer func() {
 					fmt.Fprintf(errStream, "\nRelease %q in namespace %q failed.\n", releaseName, releaseNamespace)
@@ -849,7 +871,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 					Build()
 
 				// FIXME(ilya-lesikov): deploy report from this execute is not used
-				_, err = plan.NewDeployPlanExecutor(finalizeFailedDeployPlan, releaseNamespace, actionConfig.Client, actionConfig.Tracker, actionConfig.Releases).WithTrackTimeout(trackTimeout).WithReport(deployReport).Execute(ctx)
+				_, err = plan.NewDeployPlanExecutor(finalizeFailedDeployPlan, releaseNamespace, cli, tracker, actionConfig.Releases).WithTrackTimeout(trackTimeout).WithReport(deployReport).Execute(ctx)
 				if err != nil {
 					return multierror.Append(executeErr, fmt.Errorf("error finalizing failed deploy plan: %w", err))
 				}
@@ -962,7 +984,7 @@ func migrateHelm2ToHelm3(ctx context.Context, releaseName, namespace string, mai
 
 	logboek.Context(ctx).Default().LogOptionalLn()
 	if err := logboek.Context(ctx).LogProcess("Rendering helm 3 templates for the current project state").DoError(func() error {
-		actionConfig, err := common.NewActionConfig(ctx, common.GetOndemandKubeInitializer(), releaseName, namespace, &commonCmdData, helmRegistryClient, extraMutators)
+		actionConfig, err := common.NewActionConfig(ctx, common.GetOndemandKubeInitializer(), namespace, &commonCmdData, helmRegistryClient)
 		if err != nil {
 			return err
 		}

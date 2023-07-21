@@ -16,16 +16,10 @@ import (
 	"helm.sh/helm/v3/pkg/registry"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
-	"helm.sh/helm/v3/pkg/werf/client"
-	"helm.sh/helm/v3/pkg/werf/kubeclient"
-	"helm.sh/helm/v3/pkg/werf/mutator"
-	"helm.sh/helm/v3/pkg/werf/resourcetracker"
-	"helm.sh/helm/v3/pkg/werf/resourcewaiter"
 	"sigs.k8s.io/yaml"
 
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/util"
 )
 
 const FEATURE_TOGGLE_ENV_EXPERIMENTAL_DEPLOY_ENGINE = "WERF_EXPERIMENTAL_DEPLOY_ENGINE"
@@ -38,7 +32,7 @@ type InitActionConfigOptions struct {
 	RegistryClient            *registry.Client
 }
 
-func InitActionConfig(ctx context.Context, kubeInitializer KubeInitializer, releaseName, namespace string, envSettings *cli.EnvSettings, actionConfig *action.Configuration, opts InitActionConfigOptions, extraMutators []mutator.RuntimeResourceMutator) error {
+func InitActionConfig(ctx context.Context, kubeInitializer KubeInitializer, namespace string, envSettings *cli.EnvSettings, actionConfig *action.Configuration, opts InitActionConfigOptions) error {
 	configGetter, err := kube.NewKubeConfigGetter(kube.KubeConfigGetterOptions{
 		KubeConfigOptions: opts.KubeConfigOptions,
 		Namespace:         namespace,
@@ -78,29 +72,6 @@ func InitActionConfig(ctx context.Context, kubeInitializer KubeInitializer, rele
 
 	if opts.RegistryClient != nil {
 		actionConfig.RegistryClient = opts.RegistryClient
-	}
-
-	if util.GetBoolEnvironmentDefaultFalse(FEATURE_TOGGLE_ENV_EXPERIMENTAL_DEPLOY_ENGINE) {
-		deferredKubeClient := kubeclient.NewDeferredKubeClient(configGetter)
-
-		waiter := resourcewaiter.NewResourceWaiter(deferredKubeClient.Dynamic(), deferredKubeClient.Mapper())
-
-		tracker := resourcetracker.NewResourceTracker(opts.StatusProgressPeriod, opts.HooksStatusProgressPeriod)
-
-		cli, err := client.NewClient(deferredKubeClient.Static(), deferredKubeClient.Dynamic(), deferredKubeClient.Discovery(), deferredKubeClient.Mapper(), waiter)
-		if err != nil {
-			return fmt.Errorf("error creating client: %w", err)
-		}
-		cli.AddTargetResourceMutators(extraMutators...)
-		cli.AddTargetResourceMutators(
-			mutator.NewReplicasOnCreationMutator(),
-			mutator.NewReleaseMetadataMutator(releaseName, namespace),
-		)
-
-		actionConfig.DeferredKubeClient = deferredKubeClient
-		actionConfig.Waiter = waiter
-		actionConfig.Tracker = tracker
-		actionConfig.Client = cli
 	}
 
 	return nil

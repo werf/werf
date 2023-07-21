@@ -154,7 +154,7 @@ func runRender(ctx context.Context) error {
 	releaseName := common.GetOptionalRelease(&commonCmdData)
 
 	actionConfig := new(action.Configuration)
-	if err := helm.InitActionConfig(ctx, nil, releaseName, namespace, helm_v3.Settings, actionConfig, helm.InitActionConfigOptions{RegistryClient: helmRegistryClient}, nil); err != nil {
+	if err := helm.InitActionConfig(ctx, nil, namespace, helm_v3.Settings, actionConfig, helm.InitActionConfigOptions{RegistryClient: helmRegistryClient}); err != nil {
 		return err
 	}
 
