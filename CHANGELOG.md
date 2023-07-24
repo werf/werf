@@ -1,5 +1,15 @@
 # Changelog
 
+### [1.2.248](https://www.github.com/werf/werf/compare/v1.2.247...v1.2.248) (2023-07-24)
+
+
+### Bug Fixes
+
+* **exp-engine:** decouple deploy from ActionConfig ([a4b0850](https://www.github.com/werf/werf/commit/a4b0850b83e3203f8357c05db6a528ff2f239c7e))
+* **exp-engine:** use new History api ([1ca6109](https://www.github.com/werf/werf/commit/1ca610904115c08f798b88597f458ea1b9c357be))
+* **exp-engine:** use new Waiter API ([3361a3d](https://www.github.com/werf/werf/commit/3361a3d04ee139384318afa7143b4b444e4a3368))
+* **exp-engine:** use updated Helm API ([e6c8c1a](https://www.github.com/werf/werf/commit/e6c8c1ab5d1dfb688ffe295b746aeda818458ba2))
+
 ### [1.2.247](https://www.github.com/werf/werf/compare/v1.2.246...v1.2.247) (2023-07-18)
 
 
