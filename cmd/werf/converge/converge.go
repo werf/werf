@@ -564,7 +564,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 
 		statusProgressPeriod := time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second
 		hooksStatusProgressPeriod := time.Duration(*commonCmdData.HooksStatusProgressPeriodSeconds) * time.Second
-		tracker := resourcetracker.NewResourceTracker(statusProgressPeriod, hooksStatusProgressPeriod)
+		tracker := resourcetracker.NewResourceTracker(deferredKubeClient.Static(), deferredKubeClient.Dynamic(), deferredKubeClient.Discovery(), deferredKubeClient.Mapper(), resourcetracker.NewResourceTrackerOptions{Logger: logger})
 
 		cli, err := client.NewClient(deferredKubeClient.Static(), deferredKubeClient.Dynamic(), deferredKubeClient.Discovery(), deferredKubeClient.Mapper(), waiter)
 		if err != nil {
@@ -860,7 +860,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 				}()
 			}
 
-			deployReport, executeErr := plan.NewDeployPlanExecutor(deployPlan, releaseNamespace, cli, tracker, actionConfig.Releases).WithTrackTimeout(trackTimeout).Execute(ctx)
+			deployReport, executeErr := plan.NewDeployPlanExecutor(deployPlan, releaseNamespace, cli, tracker, actionConfig.Releases).WithTrackTimeout(trackTimeout).WithResourceShowProgressPeriod(statusProgressPeriod).WithHookShowProgressPeriod(hooksStatusProgressPeriod).Execute(ctx)
 			if executeErr != nil {
 				defer func() {
 					fmt.Fprintf(errStream, "\nRelease %q in namespace %q failed.\n", releaseName, releaseNamespace)
@@ -874,7 +874,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 					Build()
 
 				// FIXME(ilya-lesikov): deploy report from this execute is not used
-				_, err = plan.NewDeployPlanExecutor(finalizeFailedDeployPlan, releaseNamespace, cli, tracker, actionConfig.Releases).WithTrackTimeout(trackTimeout).WithReport(deployReport).Execute(ctx)
+				_, err = plan.NewDeployPlanExecutor(finalizeFailedDeployPlan, releaseNamespace, cli, tracker, actionConfig.Releases).WithTrackTimeout(trackTimeout).WithResourceShowProgressPeriod(statusProgressPeriod).WithHookShowProgressPeriod(hooksStatusProgressPeriod).WithReport(deployReport).Execute(ctx)
 				if err != nil {
 					return multierror.Append(executeErr, fmt.Errorf("error finalizing failed deploy plan: %w", err))
 				}
