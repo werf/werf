@@ -29,16 +29,16 @@ groups:
         version: 1.2.248
 
       - name: beta
-        version: 1.2.246
+        version: 1.2.248
 
       - name: ea
-        version: 1.2.241+fix1
+        version: 1.2.246
 
       # - name: pre-stable
       #   version: 1.2.241+fix1
 
       - name: stable
-        version: 1.2.235+fix1
+        version: 1.2.241+fix1
 
       # - name: pre-rock-solid
       #   version: 1.2.235+fix1
