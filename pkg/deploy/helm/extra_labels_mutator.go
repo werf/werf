@@ -1,12 +1,9 @@
 package helm
 
 import (
-	"fmt"
-
 	"helm.sh/helm/v3/pkg/werf/common"
 	"helm.sh/helm/v3/pkg/werf/mutator"
 	"helm.sh/helm/v3/pkg/werf/resource"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 var _ mutator.RuntimeResourceMutator = (*ExtraLabelsMutator)(nil)
@@ -32,11 +29,14 @@ func (m *ExtraLabelsMutator) Mutate(res resource.Resourcer, operationType common
 		return res, nil
 	}
 
-	for k, v := range m.extraLabels {
-		if err := unstructured.SetNestedField(res.Unstructured().UnstructuredContent(), v, "metadata", "labels", k); err != nil {
-			return nil, fmt.Errorf("error adding extra labels: %w", err)
-		}
+	labels := res.Unstructured().GetLabels()
+	if labels == nil {
+		labels = make(map[string]string)
 	}
+	for k, v := range m.extraLabels {
+		labels[k] = v
+	}
+	res.Unstructured().SetLabels(labels)
 
 	return res, nil
 }

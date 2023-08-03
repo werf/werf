@@ -1555,6 +1555,8 @@ github.com/ryanuber/columnize v0.0.0-20160712163229-9b3edd62028f/go.mod h1:sm1tb
 github.com/ryanuber/columnize v2.1.0+incompatible/go.mod h1:sm1tb6uqfes/u+d4ooFouqFdy9/2g9QGwK3SQygK0Ts=
 github.com/ryanuber/go-glob v1.0.0/go.mod h1:807d1WSdnB0XRJzKNil9Om6lcp/3a0v4qIHxIXzX/Yc=
 github.com/safchain/ethtool v0.0.0-20190326074333-42ed695e3de8/go.mod h1:Z0q5wiBQGYcxhMZ6gUqHn6pYNLypFAvaL3UvgZLR0U4=
+github.com/samber/lo v1.38.1 h1:j2XEAqXKb09Am4ebOg31SpvzUTTs6EN3VfgeLUhPdXM=
+github.com/samber/lo v1.38.1/go.mod h1:+m/ZKRl6ClXCE2Lgf3MsQlWfh4bn1bz6CXEOxnEXnEA=
 github.com/samuel/go-zookeeper v0.0.0-20190923202752-2cc03de413da/go.mod h1:gi+0XIa01GRL2eRQVjQkKGqKF3SF9vZR/HnPullcV2E=
 github.com/satori/go.uuid v1.2.0 h1:0uYX9dsZ2yD7q2RtLRtPSdGDWzjeM3TbMJP9utgA0ww=
 github.com/satori/go.uuid v1.2.0/go.mod h1:dA0hQrYB0VpLJoorglMZABFdXlWrHn1NEOzdhQKdks0=
@@ -1740,8 +1742,8 @@ github.com/weppos/publicsuffix-go v0.5.0/go.mod h1:z3LCPQ38eedDQSwmsSRW4Y7t2L8Ln
 github.com/weppos/publicsuffix-go v0.20.1-0.20221209102050-40d9c30084b3 h1:ypyhoprZWFzU0ydOBv3I5SS7/jLFJ+ujPAU+BD/EVFM=
 github.com/werf/3p-helm-2to3 v0.0.0-20230313155428-cf9dd655c0e3 h1:pdKLiuiUoOFswc0HV6GX1+JHgP14HqE035xl2DQJi8A=
 github.com/werf/3p-helm-2to3 v0.0.0-20230313155428-cf9dd655c0e3/go.mod h1:lTSQBLomjl67m4HQMbg3BHKWes3pOmjNBg8yygXYugk=
-github.com/werf/3p-helm/v3 v3.0.0-20230724143857-81fee9872ef8 h1:EapJbxzmXXZduzj0D2YIepcUGwAbOzDJGHsH5ReUYIk=
-github.com/werf/3p-helm/v3 v3.0.0-20230724143857-81fee9872ef8/go.mod h1:vH6ckglZT6mhJefVLbUM9759Zt/wQnqqRe0BY4jmmHM=
+github.com/werf/3p-helm/v3 v3.0.0-20230803130450-84c058aa1f4b h1:5v8Ow+3W+Uqlu63wSPidDxovgpUZeGCdF8uwGH51dYc=
+github.com/werf/3p-helm/v3 v3.0.0-20230803130450-84c058aa1f4b/go.mod h1:VOUBLZpCrLMJKLGAQQJ/EoXx1DVN3605V5dkMm8EC9A=
 github.com/werf/copy-recurse v0.2.7 h1:3FTOarbJ9uhFLi75oeUCioK9zxZwuV7o28kuUBPDZPM=
 github.com/werf/copy-recurse v0.2.7/go.mod h1:6Ypb+qN+hRBJgoCgEkX1vpbqcQ+8q69BQ3hi8s8Y6Qc=
 github.com/werf/helm v0.0.0-20210202111118-81e74d46da0f h1:81YscYTF9mmTf0ULOsCmm42YWQp+qWDzWi1HjWniZrg=
