@@ -32,6 +32,7 @@ require (
 	github.com/go-openapi/spec v0.20.9
 	github.com/go-openapi/strfmt v0.21.7
 	github.com/go-openapi/validate v0.22.1
+	github.com/google/go-cmp v0.5.9
 	github.com/google/go-containerregistry v0.14.0
 	github.com/google/uuid v1.3.0
 	github.com/gookit/color v1.5.3
@@ -53,6 +54,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/prashantv/gostub v1.1.0
 	github.com/rodaine/table v1.1.0
+	github.com/samber/lo v1.38.1
 	github.com/satori/go.uuid v1.2.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spaolacci/murmur3 v1.1.0
@@ -187,7 +189,6 @@ require (
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/btree v1.0.1 // indirect
 	github.com/google/gnostic v0.6.9 // indirect
-	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/google/go-intervals v0.0.2 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/pprof v0.0.0-20230309165930-d61513b1440d // indirect
@@ -347,6 +348,6 @@ replace (
 	github.com/helm/helm-2to3 => github.com/werf/3p-helm-2to3 v0.0.0-20230313155428-cf9dd655c0e3 // switch back to upstream when merged: https://github.com/helm/helm-2to3/pull/224
 	github.com/jaguilar/vt100 => github.com/tonistiigi/vt100 v0.0.0-20190402012908-ad4c4a574305 // upstream not maintained
 	github.com/maorfr/helm-plugin-utils => github.com/werf/3p-helm-plugin-utils v0.6.1-0.20230313152239-057595ce9d57 // switch back to upstream when merged: https://github.com/maorfr/helm-plugin-utils/pull/17
-	helm.sh/helm/v3 => github.com/werf/3p-helm/v3 v3.0.0-20230724143857-81fee9872ef8
+	helm.sh/helm/v3 => github.com/werf/3p-helm/v3 v3.0.0-20230803130450-84c058aa1f4b
 	k8s.io/helm => github.com/werf/helm v0.0.0-20210202111118-81e74d46da0f
 )

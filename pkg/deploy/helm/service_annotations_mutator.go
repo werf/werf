@@ -1,12 +1,9 @@
 package helm
 
 import (
-	"fmt"
-
 	"helm.sh/helm/v3/pkg/werf/common"
 	"helm.sh/helm/v3/pkg/werf/mutator"
 	"helm.sh/helm/v3/pkg/werf/resource"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/werf/werf/pkg/werf"
 )
@@ -36,17 +33,14 @@ func (m *ServiceAnnotationsMutator) Mutate(res resource.Resourcer, operationType
 		return res, nil
 	}
 
-	if err := unstructured.SetNestedField(res.Unstructured().UnstructuredContent(), werf.Version, "metadata", "annotations", "werf.io/version"); err != nil {
-		return nil, fmt.Errorf("error adding werf version annotation: %w", err)
+	annos := res.Unstructured().GetAnnotations()
+	if annos == nil {
+		annos = make(map[string]string)
 	}
-
-	if err := unstructured.SetNestedField(res.Unstructured().UnstructuredContent(), m.werfProject, "metadata", "annotations", "project.werf.io/name"); err != nil {
-		return nil, fmt.Errorf("error adding werf project name annotation: %w", err)
-	}
-
-	if err := unstructured.SetNestedField(res.Unstructured().UnstructuredContent(), m.werfEnv, "metadata", "annotations", "project.werf.io/env"); err != nil {
-		return nil, fmt.Errorf("error adding werf project env annotation: %w", err)
-	}
+	annos["werf.io/version"] = werf.Version
+	annos["project.werf.io/name"] = m.werfProject
+	annos["project.werf.io/env"] = m.werfEnv
+	res.Unstructured().SetAnnotations(annos)
 
 	return res, nil
 }
