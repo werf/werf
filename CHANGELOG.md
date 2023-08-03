@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.249](https://www.github.com/werf/werf/compare/v1.2.248...v1.2.249) (2023-08-03)
+
+
+### Bug Fixes
+
+* **exp-engine:** major refactor: new Resource(s), Release, History, ResourcePreparer, KubeClient classes ([6b9dcb2](https://www.github.com/werf/werf/commit/6b9dcb2ee8b6d90d728be9f26411d889876930bd))
+
 ### [1.2.248](https://www.github.com/werf/werf/compare/v1.2.247...v1.2.248) (2023-07-24)
 
 
