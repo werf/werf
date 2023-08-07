@@ -20,9 +20,9 @@ require (
 	github.com/djherbis/buffer v1.2.0
 	github.com/djherbis/nio/v3 v3.0.1
 	github.com/docker/buildx v0.10.4
-	github.com/docker/cli v23.0.6+incompatible
+	github.com/docker/cli v24.0.0+incompatible
 	github.com/docker/distribution v2.8.2+incompatible
-	github.com/docker/docker v23.0.6+incompatible
+	github.com/docker/docker v24.0.0+incompatible
 	github.com/docker/go-connections v0.4.1-0.20210727194412-58542c764a11
 	github.com/docker/go-units v0.5.0
 	github.com/dustin/go-humanize v1.0.1
@@ -33,7 +33,7 @@ require (
 	github.com/go-openapi/strfmt v0.21.7
 	github.com/go-openapi/validate v0.22.1
 	github.com/google/go-cmp v0.5.9
-	github.com/google/go-containerregistry v0.14.0
+	github.com/google/go-containerregistry v0.16.1
 	github.com/google/uuid v1.3.0
 	github.com/gookit/color v1.5.3
 	github.com/gophercloud/gophercloud v1.4.0
@@ -48,7 +48,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.11.0
 	github.com/onsi/gomega v1.27.8
 	github.com/opencontainers/go-digest v1.0.0
-	github.com/opencontainers/image-spec v1.1.0-rc2.0.20221005185240-3a7f492d3f1b
+	github.com/opencontainers/image-spec v1.1.0-rc3
 	github.com/opencontainers/runtime-spec v1.1.0-rc.3
 	github.com/otiai10/copy v1.12.0
 	github.com/pkg/errors v0.9.1
@@ -212,7 +212,7 @@ require (
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/kevinburke/ssh_config v1.1.0 // indirect
-	github.com/klauspost/compress v1.16.4 // indirect
+	github.com/klauspost/compress v1.16.5 // indirect
 	github.com/klauspost/pgzip v1.2.6-0.20220930104621-17e8dac29df8 // indirect
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
@@ -312,7 +312,7 @@ require (
 	go.opentelemetry.io/proto/otlp v0.19.0 // indirect
 	go.starlark.net v0.0.0-20200306205701-8dd3e2ee1dd5 // indirect
 	golang.org/x/exp v0.0.0-20230321023759-10a507213a29 // indirect
-	golang.org/x/oauth2 v0.7.0 // indirect
+	golang.org/x/oauth2 v0.8.0 // indirect
 	golang.org/x/sync v0.2.0 // indirect
 	golang.org/x/sys v0.9.0 // indirect
 	golang.org/x/term v0.9.0 // indirect
