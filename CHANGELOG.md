@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.251](https://www.github.com/werf/werf/compare/v1.2.250...v1.2.251) (2023-08-16)
+
+
+### Bug Fixes
+
+* **render:** missing WERF_KUBE_VERSION env ([810f5d3](https://www.github.com/werf/werf/commit/810f5d3abef33a19ec058281edfb57e18c54a993))
+
 ### [1.2.250](https://www.github.com/werf/werf/compare/v1.2.249...v1.2.250) (2023-08-16)
 
 
