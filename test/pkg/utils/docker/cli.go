@@ -92,7 +92,7 @@ func IsImageExist(imageName string) bool {
 	if err == nil {
 		return true
 	} else {
-		if !strings.HasPrefix(err.Error(), "Error: No such image") {
+		if !strings.HasPrefix(err.Error(), "Error: No such image") && !strings.HasPrefix(err.Error(), "No such image:") {
 			Ω(err).ShouldNot(HaveOccurred())
 		}
 
