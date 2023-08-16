@@ -150,6 +150,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupRequireBuiltImages(&commonCmdData, cmd)
 	commonCmdData.SetupPlatform(cmd)
 
+	common.SetupKubeVersion(&commonCmdData, cmd)
+
 	cmd.Flags().BoolVarP(&cmdData.Validate, "validate", "", util.GetBoolEnvironmentDefaultFalse("WERF_VALIDATE"), "Validate your manifests against the Kubernetes cluster you are currently pointing at (default $WERF_VALIDATE)")
 	cmd.Flags().BoolVarP(&cmdData.IncludeCRDs, "include-crds", "", util.GetBoolEnvironmentDefaultTrue("WERF_INCLUDE_CRDS"), "Include CRDs in the templated output (default $WERF_INCLUDE_CRDS)")
 
@@ -455,6 +457,7 @@ func runRender(ctx context.Context, imagesToProcess build.ImagesToProcess) error
 		},
 		Validate:    &cmdData.Validate,
 		IncludeCrds: &cmdData.IncludeCRDs,
+		KubeVersion: commonCmdData.KubeVersion,
 	}
 
 	fullChartDir := filepath.Join(giterminismManager.ProjectDir(), chartDir)

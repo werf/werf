@@ -72,6 +72,7 @@ type CmdData struct {
 	DryRun                          *bool
 	KeepStagesBuiltWithinLastNHours *uint64
 	WithoutKube                     *bool
+	KubeVersion                     *string
 
 	LooseGiterminism *bool
 	Dev              *bool

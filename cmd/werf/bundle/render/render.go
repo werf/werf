@@ -93,6 +93,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupRelease(&commonCmdData, cmd)
 	common.SetupNamespace(&commonCmdData, cmd)
 
+	common.SetupKubeVersion(&commonCmdData, cmd)
+
 	defaultTag := os.Getenv("WERF_TAG")
 	if defaultTag == "" {
 		defaultTag = "latest"
@@ -244,6 +246,7 @@ func runRender(ctx context.Context) error {
 		},
 		Validate:    &cmdData.Validate,
 		IncludeCrds: &cmdData.IncludeCRDs,
+		KubeVersion: commonCmdData.KubeVersion,
 	})
 
 	if err := helmTemplateCmd.RunE(helmTemplateCmd, []string{releaseName, bundleDir}); err != nil {

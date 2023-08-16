@@ -60,6 +60,8 @@ werf bundle render [options]
             configuration (default $WERF_INSECURE_HELM_DEPENDENCIES)
       --insecure-registry=false
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
+      --kube-version=''
+            Set specific Capabilities.KubeVersion (default $WERF_KUBE_VERSION)
       --log-color-mode='auto'
             Set log color mode.
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        

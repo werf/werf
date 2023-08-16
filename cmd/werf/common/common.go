@@ -827,6 +827,11 @@ The mode allows restarting the command on a new commit.
 In development mode (--dev), werf restarts the command on any changes (including untracked files) in the git repository worktree`)
 }
 
+func SetupKubeVersion(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.KubeVersion = new(string)
+	cmd.Flags().StringVarP(cmdData.KubeVersion, "kube-version", "", "", "Set specific Capabilities.KubeVersion (default $WERF_KUBE_VERSION)")
+}
+
 func allStagesNames() []string {
 	var stageNames []string
 	for _, stageName := range stage.AllStages {
