@@ -504,7 +504,7 @@ tasks:
   deps:install:ginkgo:
     desc: "Install ginkgo binary."
     cmds:
-      - go install {{.CLI_ARGS}} github.com/onsi/ginkgo/v2/ginkgo@{{.ginkgoVersion | default "v2.9.1"}}
+      - go install {{.CLI_ARGS}} github.com/onsi/ginkgo/v2/ginkgo@{{.ginkgoVersion | default "v2.11.0"}}
 
   deps:install:golangci-lint:
     desc: "Install golangci-lint binary."
