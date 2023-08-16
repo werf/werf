@@ -262,6 +262,35 @@ cli: &cli
                   - title: werf helm secret values encrypt
                     url: /reference/cli/werf_helm_secret_values_encrypt.html
 
+          - title: werf helm secrets
+            f:
+              - title: werf helm secrets decrypt
+                url: /reference/cli/werf_helm_secrets_decrypt.html
+
+              - title: werf helm secrets diff
+                url: /reference/cli/werf_helm_secrets_diff.html
+
+              - title: werf helm secrets edit
+                url: /reference/cli/werf_helm_secrets_edit.html
+
+              - title: werf helm secrets encrypt
+                url: /reference/cli/werf_helm_secrets_encrypt.html
+
+              - title: werf helm secrets install
+                url: /reference/cli/werf_helm_secrets_install.html
+
+              - title: werf helm secrets kubeval
+                url: /reference/cli/werf_helm_secrets_kubeval.html
+
+              - title: werf helm secrets lint
+                url: /reference/cli/werf_helm_secrets_lint.html
+
+              - title: werf helm secrets template
+                url: /reference/cli/werf_helm_secrets_template.html
+
+              - title: werf helm secrets upgrade
+                url: /reference/cli/werf_helm_secrets_upgrade.html
+
           - title: werf helm show
             f:
               - title: werf helm show all

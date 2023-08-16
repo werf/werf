@@ -158,6 +158,8 @@ werf render [IMAGE_NAME...] [options]
             $WERF_KUBECONFIG_BASE64 or $KUBECONFIG_BASE64)
       --kube-context=''
             Kubernetes config context (default $WERF_KUBE_CONTEXT)
+      --kube-version=''
+            Set specific Capabilities.KubeVersion (default $WERF_KUBE_VERSION)
       --log-color-mode='auto'
             Set log color mode.
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
