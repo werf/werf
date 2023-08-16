@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.250](https://www.github.com/werf/werf/compare/v1.2.249...v1.2.250) (2023-08-16)
+
+
+### Bug Fixes
+
+* **render:** add --kube-version flag ([bc48dd0](https://www.github.com/werf/werf/commit/bc48dd07e8f74c183ea0efa836c144e720de6330))
+
 ### [1.2.249](https://www.github.com/werf/werf/compare/v1.2.248...v1.2.249) (2023-08-03)
 
 
