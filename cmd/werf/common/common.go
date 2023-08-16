@@ -829,7 +829,7 @@ In development mode (--dev), werf restarts the command on any changes (including
 
 func SetupKubeVersion(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.KubeVersion = new(string)
-	cmd.Flags().StringVarP(cmdData.KubeVersion, "kube-version", "", "", "Set specific Capabilities.KubeVersion (default $WERF_KUBE_VERSION)")
+	cmd.Flags().StringVarP(cmdData.KubeVersion, "kube-version", "", os.Getenv("WERF_KUBE_VERSION"), "Set specific Capabilities.KubeVersion (default $WERF_KUBE_VERSION)")
 }
 
 func allStagesNames() []string {
