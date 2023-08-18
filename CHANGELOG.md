@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.252](https://www.github.com/werf/werf/compare/v1.2.251...v1.2.252) (2023-08-18)
+
+
+### Bug Fixes
+
+* cannot deep copy *annotation.AnnotationReplicasOnCreation ([475824a](https://www.github.com/werf/werf/commit/475824ad1a21a3f699dfa6c2a99aad9dec9c43eb))
+
 ### [1.2.251](https://www.github.com/werf/werf/compare/v1.2.250...v1.2.251) (2023-08-16)
 
 
