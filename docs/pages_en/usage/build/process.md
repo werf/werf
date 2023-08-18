@@ -3,6 +3,8 @@ title: Build process
 permalink: usage/build/process.html
 ---
 
+{% include pages/en/cr_login.md.liquid %}
+
 ## Tagging images
 
 <!-- reference https://werf.io/documentation/v1.2/internals/stages_and_storage.html#stage-naming -->
