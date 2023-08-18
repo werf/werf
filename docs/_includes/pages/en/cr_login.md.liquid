@@ -18,3 +18,5 @@ werf cr login -p token registry.example.com
 # Login into insecure registry (over http)
 werf cr login --insecure-registry registry.example.com
 ```
+
+> Для автоматической аутентификации в CI/CD необходимо воспользоваться командой [ci-env](https://ru.werf.io/documentation/v1.2/reference/cli/werf_ci_env.html) во время настройки [инеграции](https://ru.werf.io/documentation/v1.2/usage/integration_with_ci_cd_systems.html) с CD/CD-системой.
