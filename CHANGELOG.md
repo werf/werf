@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.253](https://www.github.com/werf/werf/compare/v1.2.252...v1.2.253) (2023-08-22)
+
+
+### Bug Fixes
+
+* **exp-engine:** parallel GET/dry-APPLY finishing before results received ([0237621](https://www.github.com/werf/werf/commit/0237621493a0204bc84631d1f84ab621f6f983d5))
+
 ### [1.2.252](https://www.github.com/werf/werf/compare/v1.2.251...v1.2.252) (2023-08-18)
 
 
