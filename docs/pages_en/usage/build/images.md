@@ -10,6 +10,9 @@ permalink: usage/build/images.html
 To build images with werf, you have to add a description of each image to the `werf.yaml` file of the project. The image description starts with the `image` directive specifying the image name:
 
 ```yaml
+project: example
+configVersion: 1
+---
 image: frontend
 # ...
 ---
@@ -51,6 +54,9 @@ CMD ["node", "server.js"]
 
 ```yaml
 # werf.yaml
+project: example
+configVersion: 1
+---
 image: backend
 dockerfile: Dockerfile
 ```
@@ -79,6 +85,9 @@ CMD ["gunicorn", "app:app", "-b", "0.0.0.0:80", "--log-file", "-"]
 
 ```yaml
 # werf.yaml
+project: example
+configVersion: 1
+---
 image: backend
 dockerfile: Dockerfile
 target: backend
@@ -92,6 +101,9 @@ target: frontend
 
 ```yaml
 # werf.yaml
+project: example
+configVersion: 1
+---
 image: backend
 dockerfile: dockerfiles/Dockerfile.backend
 ---
@@ -104,6 +116,9 @@ dockerfile: dockerfiles/Dockerfile.frontend
 The `context` directive sets the build context. **Note:** In this case, the path to the Dockerfile must be specified relative to the context directory:
 
 ```yaml
+project: example
+configVersion: 1
+---
 image: docs
 context: docs
 dockerfile: Dockerfile
@@ -123,6 +138,9 @@ You can add files that are not stored in Git to the build context through the `c
 
 ```yaml
 # werf.yaml
+project: example
+configVersion: 1
+---
 image: app
 context: app
 contextAddFiles:
@@ -154,6 +172,9 @@ Stapel is a built-in alternative syntax for describing build instructions. Detai
 Below is an example of a minimal configuration of the Stapel image in `werf.yaml`:
 
 ```yaml
+project: example
+configVersion: 1
+---
 image: app
 from: ubuntu:22.04
 ```
@@ -161,6 +182,9 @@ from: ubuntu:22.04
 And here's how you can add source files from Git to an image:
 
 ```yaml
+project: example
+configVersion: 1
+---
 image: app
 from: ubuntu:22.04
 git:
@@ -171,6 +195,9 @@ git:
 There are 4 stages for describing arbitrary shell instructions, as well as a `git.stageDependencies` directive to set up triggers to rebuild these stages whenever the corresponding stages change ([learn more]({{"/usage/build/stapel/instructions.html#dependency-on-changes-in-the-git-repo"| true_relative_url }})):
 
 ```yaml
+project: example
+configVersion: 1
+---
 image: app
 from: ubuntu:22.04
 git:
@@ -209,6 +236,9 @@ Auxiliary images and Golang templating are also supported. You can use the forme
   - apt install -y gcc g++ build-essential make
 {{ end }}
 
+project: example
+configVersion: 1
+---
 image: builder
 from: {{ .BaseImage }}
 shell:
@@ -257,6 +287,9 @@ CMD [ "/app/server", "start" ]
 
 ```yaml
 # werf.yaml
+project: example
+configVersion: 1
+---
 image: base
 dockerfile: base.Dockerfile
 ---
@@ -273,6 +306,9 @@ The next example deals with importing files from a Stapel image into a Dockerfil
 
 ```yaml
 # werf.yaml
+project: example
+configVersion: 1
+---
 image: builder
 from: golang
 git:
@@ -339,6 +375,9 @@ RUN echo CONTROLPLANE_IMAGE_DIGEST=${CONTROLPLANE_IMAGE_DIGEST} >> modules_image
 
 ```yaml
 # werf.yaml
+project: example
+configVersion: 1
+---
 image: auth
 dockerfile: Dockerfile
 context: modules/auth/
@@ -422,6 +461,9 @@ It is possible to define list of target platforms separately per image in the we
 
 ```yaml
 # werf.yaml
+project: example
+configVersion: 1
+---
 image: mysql
 dockerfile: ./Dockerfile.mysql
 platform:
