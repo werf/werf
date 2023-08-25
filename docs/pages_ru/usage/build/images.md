@@ -10,6 +10,9 @@ permalink: usage/build/images.html
 Для сборки c werf необходимо добавить описание образов в `werf.yaml` проекта. Каждый образ добавляется директивой `image` с указанием имени образа:
 
 ```yaml
+project: example
+configVersion: 1
+---
 image: frontend
 # ...
 ---
@@ -51,6 +54,9 @@ CMD ["node", "server.js"]
 
 ```yaml
 # werf.yaml
+project: example
+configVersion: 1
+---
 image: backend
 dockerfile: Dockerfile
 ```
@@ -79,6 +85,9 @@ CMD ["gunicorn", "app:app", "-b", "0.0.0.0:80", "--log-file", "-"]
 
 ```yaml
 # werf.yaml
+project: example
+configVersion: 1
+---
 image: backend
 dockerfile: Dockerfile
 target: backend
@@ -92,6 +101,9 @@ target: frontend
 
 ```yaml
 # werf.yaml
+project: example
+configVersion: 1
+---
 image: backend
 dockerfile: dockerfiles/Dockerfile.backend
 ---
@@ -104,6 +116,9 @@ dockerfile: dockerfiles/Dockerfile.frontend
 Чтобы указать сборочный контекст используется директива `context`. **Важно:** в этом случае путь до Dockerfile указывается относительно директории контекста:
 
 ```yaml
+project: example
+configVersion: 1
+---
 image: docs
 context: docs
 dockerfile: Dockerfile
@@ -123,6 +138,9 @@ dockerfile: Dockerfile
 
 ```yaml
 # werf.yaml
+project: example
+configVersion: 1
+---
 image: app
 context: app
 contextAddFiles:
@@ -154,6 +172,9 @@ config:
 Пример минимальной конфигурации stapel-образа в `werf.yaml`:
 
 ```yaml
+project: example
+configVersion: 1
+---
 image: app
 from: ubuntu:22.04
 ```
@@ -161,6 +182,9 @@ from: ubuntu:22.04
 Добавим исходники из Git в образ:
 
 ```yaml
+project: example
+configVersion: 1
+---
 image: app
 from: ubuntu:22.04
 git:
@@ -171,6 +195,9 @@ git:
 Доступно 4 стадии для описания произвольных shell-инструкций, а также директива `git.stageDependencies` для настройки триггеров пересборки этих стадий при изменении соответствующих стадий ([см. подробнее]({{ "/usage/build/stapel/instructions.html#зависимость-от-изменений-в-git-репозитории" | true_relative_url }})):
 
 ```yaml
+project: example
+configVersion: 1
+---
 image: app
 from: ubuntu:22.04
 git:
@@ -209,6 +236,9 @@ shell:
   - apt install -y gcc g++ build-essential make
 {{ end }}
 
+project: example
+configVersion: 1
+---
 image: builder
 from: {{ .BaseImage }}
 shell:
@@ -257,6 +287,9 @@ CMD [ "/app/server", "start" ]
 
 ```yaml
 # werf.yaml
+project: example
+configVersion: 1
+---
 image: base
 dockerfile: base.Dockerfile
 ---
@@ -273,6 +306,9 @@ dependencies:
 
 ```yaml
 # werf.yaml
+project: example
+configVersion: 1
+---
 image: builder
 from: golang
 git:
@@ -339,6 +375,9 @@ RUN echo CONTROLPLANE_IMAGE_DIGEST=${CONTROLPLANE_IMAGE_DIGEST} >> modules_image
 
 ```yaml
 # werf.yaml
+project: example
+configVersion: 1
+---
 image: auth
 dockerfile: Dockerfile
 context: modules/auth/
@@ -422,6 +461,9 @@ build:
 
 ```yaml
 # werf.yaml
+project: example
+configVersion: 1
+---
 image: mysql
 dockerfile: ./Dockerfile.mysql
 platform:
