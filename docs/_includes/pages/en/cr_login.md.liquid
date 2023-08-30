@@ -19,4 +19,4 @@ werf cr login -p token registry.example.com
 werf cr login --insecure-registry registry.example.com
 ```
 
-> В случае использования команды [ci-env](https://ru.werf.io/documentation/v1.2/reference/cli/werf_ci_env.html) с поддерживаемыми CI/CD-системами аутентификация во встроенные container registry выполняется в рамках команды, поэтому использование команды [werf cr login](https://werf.io/documentation/v1.2/reference/cli/werf_cr_login.html) в этом случае не требуется.
+> Note: In supported CI/CD systems, the user gets authenticated to the integrated container registries as part of the [ci-env](https://werf.io/documentation/v1.2/reference/cli/werf_ci_env.html) command — you do not have to use the [werf cr login](https://werf.io/documentation/v1.2/reference/cli/werf_cr_login.html) command in this case.
