@@ -1,0 +1,22 @@
+## Container registry authentication
+
+You must log in to the container registry to work with the images. Use the [werf cr login](https://werf.io/documentation/v1.2/reference/cli/werf_cr_login.html) command as follows:
+
+```shell
+werf cr login <registry url>
+```
+
+For example:
+
+```shell
+# Log in with a username and password from the command line
+werf cr login -u username -p password registry.example.com
+
+# Log in with a token from the command line
+werf cr login -p token registry.example.com
+
+# Log in to an insecure registry (over HTTP)
+werf cr login --insecure-registry registry.example.com
+```
+
+> Note: In supported CI/CD systems, the user gets authenticated to the integrated container registries as part of the [ci-env](https://werf.io/documentation/v1.2/reference/cli/werf_ci_env.html) command — you do not have to use the [werf cr login](https://werf.io/documentation/v1.2/reference/cli/werf_cr_login.html) command in this case.

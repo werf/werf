@@ -3,6 +3,8 @@ title: Сборочный процесс
 permalink: usage/build/process.html
 ---
 
+{% include pages/ru/cr_login.md.liquid %}
+
 ## Тегирование образов
 
 <!-- прим. для перевода: на основе https://werf.io/documentation/v1.2/internals/stages_and_storage.html#stage-naming -->

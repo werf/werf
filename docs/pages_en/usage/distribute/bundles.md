@@ -3,6 +3,8 @@ title: Bundles and charts
 permalink: usage/distribute/bundles.html
 ---
 
+{% include /pages/en/cr_login.md.liquid %}
+
 ## About bundles and charts
 
 A *bundle* is a way to distribute a chart and its related images as a single entity.
