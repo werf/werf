@@ -99,7 +99,7 @@ GEM
       forwardable-extended (~> 2.6)
     public_suffix (5.0.1)
     racc (1.7.1)
-    rack (3.0.7)
+    rack (3.0.8)
     rainbow (3.1.1)
     rake (13.0.6)
     rb-fsevent (0.11.2)
@@ -113,7 +113,7 @@ GEM
       rake (>= 10.0.0)
     sassc (2.4.0)
       ffi (~> 1.9)
-    sprockets (4.2.0)
+    sprockets (4.2.1)
       concurrent-ruby (~> 1.0)
       rack (>= 2.2.4, < 4)
     terminal-table (3.0.2)
@@ -139,7 +139,7 @@ DEPENDENCIES
   kramdown (>= 2.3.0)
   kramdown-parser-gfm
   nokogiri (>= 1.12.5)
-  sprockets (~> 4.0)
+  sprockets (~> 4.2)
 
 BUNDLED WITH
    2.4.12
