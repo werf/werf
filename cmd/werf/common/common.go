@@ -290,6 +290,55 @@ func GetUseDeployReport(cmdData *CmdData) bool {
 	return *cmdData.UseDeployReport
 }
 
+func SetupNetworkParallelism(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.NetworkParallelism = new(int)
+
+	fallbackVal := 30
+
+	var defVal int
+	if val, err := util.GetIntEnvVar("WERF_NETWORK_PARALLELISM"); err != nil {
+		TerminateWithError(fmt.Sprintf("bad WERF_NETWORK_PARALLELISM value: %s", err), 1)
+	} else if val != nil {
+		defVal = int(*val)
+	} else {
+		defVal = fallbackVal
+	}
+
+	cmd.Flags().IntVarP(
+		cmdData.NetworkParallelism,
+		"network-parallelism",
+		"",
+		defVal,
+		fmt.Sprintf("Parallelize some network operations (default $WERF_NETWORK_PARALLELISM or %d)", fallbackVal),
+	)
+}
+
+func GetNetworkParallelism(cmdData *CmdData) int {
+	if *cmdData.NetworkParallelism < 1 {
+		TerminateWithError(fmt.Sprintf("bad network parallelism value: %d (should be >= 1)", *cmdData.NetworkParallelism), 1)
+	}
+
+	return *cmdData.NetworkParallelism
+}
+
+func SetupDeployGraphPath(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.DeployGraphPath = new(string)
+
+	cmd.Flags().StringVarP(cmdData.DeployGraphPath, "deploy-graph-path", "", os.Getenv("WERF_DEPLOY_GRAPH_PATH"), "Save deploy graph path to the specified file (by default $WERF_DEPLOY_GRAPH_PATH). Extension must be .dot or not specified. If extension not specified, then .dot is used")
+}
+
+func GetDeployGraphPath(cmdData *CmdData) string {
+	switch ext := filepath.Ext(*cmdData.DeployGraphPath); ext {
+	case ".dot":
+		return *cmdData.DeployGraphPath
+	case "":
+		return *cmdData.DeployGraphPath + ".dot"
+	default:
+		TerminateWithError(fmt.Sprintf("invalid --deploy-graph-path %q: extension must be either .dot or unspecified", *cmdData.DeployGraphPath), 1)
+		return ""
+	}
+}
+
 func SetupWithoutKube(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.WithoutKube = new(bool)
 	cmd.Flags().BoolVarP(cmdData.WithoutKube, "without-kube", "", util.GetBoolEnvironmentDefaultFalse("WERF_WITHOUT_KUBE"), "Do not skip deployed Kubernetes images (default $WERF_WITHOUT_KUBE)")

@@ -2,17 +2,13 @@ package converge
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"regexp"
-	"strings"
 	"time"
 
-	"github.com/google/go-cmp/cmp"
-	"github.com/hashicorp/go-multierror"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 	helm_v3 "helm.sh/helm/v3/cmd/helm"
@@ -24,26 +20,24 @@ import (
 	kubefake "helm.sh/helm/v3/pkg/kube/fake"
 	"helm.sh/helm/v3/pkg/postrender"
 	"helm.sh/helm/v3/pkg/registry"
-	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage"
 	"helm.sh/helm/v3/pkg/storage/driver"
-	helmchart "helm.sh/helm/v3/pkg/werf/chart"
-	"helm.sh/helm/v3/pkg/werf/client"
-	errors2 "helm.sh/helm/v3/pkg/werf/errors"
-	"helm.sh/helm/v3/pkg/werf/history"
-	"helm.sh/helm/v3/pkg/werf/kubeclient"
-	"helm.sh/helm/v3/pkg/werf/kubeclientv2"
+	"helm.sh/helm/v3/pkg/werf/chrttree"
+	helmcommon "helm.sh/helm/v3/pkg/werf/common"
+	"helm.sh/helm/v3/pkg/werf/kubeclnt"
 	"helm.sh/helm/v3/pkg/werf/log"
-	"helm.sh/helm/v3/pkg/werf/mutator"
-	"helm.sh/helm/v3/pkg/werf/mutatorsv2"
-	"helm.sh/helm/v3/pkg/werf/plan"
-	release2 "helm.sh/helm/v3/pkg/werf/release"
-	"helm.sh/helm/v3/pkg/werf/resource"
-	"helm.sh/helm/v3/pkg/werf/resourcepreparer"
-	"helm.sh/helm/v3/pkg/werf/resourcetracker"
-	"helm.sh/helm/v3/pkg/werf/resourcev2"
-	"helm.sh/helm/v3/pkg/werf/resourcewaiter"
-	"k8s.io/apimachinery/pkg/api/errors"
+	"helm.sh/helm/v3/pkg/werf/opertn"
+	"helm.sh/helm/v3/pkg/werf/plnbuilder"
+	"helm.sh/helm/v3/pkg/werf/plnexectr"
+	"helm.sh/helm/v3/pkg/werf/reprt"
+	"helm.sh/helm/v3/pkg/werf/resrc"
+	"helm.sh/helm/v3/pkg/werf/resrcpatcher"
+	"helm.sh/helm/v3/pkg/werf/resrcprocssr"
+	"helm.sh/helm/v3/pkg/werf/resrctracker"
+	"helm.sh/helm/v3/pkg/werf/resrctransfrmr"
+	"helm.sh/helm/v3/pkg/werf/rls"
+	"helm.sh/helm/v3/pkg/werf/rlshistor"
+	"helm.sh/helm/v3/pkg/werf/utls"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/werf/kubedog/pkg/kube"
@@ -212,6 +206,11 @@ werf converge --repo registry.mydomain.com/web --env production`,
 	common.SetupAllowedLocalCacheVolumeUsage(&commonCmdData, cmd)
 	common.SetupAllowedLocalCacheVolumeUsageMargin(&commonCmdData, cmd)
 	common.SetupDockerServerStoragePath(&commonCmdData, cmd)
+
+	if helm.IsExperimentalEngine() {
+		common.SetupNetworkParallelism(&commonCmdData, cmd)
+		common.SetupDeployGraphPath(&commonCmdData, cmd)
+	}
 
 	defaultTimeout, err := util.GetIntEnvVar("WERF_TIMEOUT")
 	if err != nil || defaultTimeout == nil {
@@ -500,22 +499,13 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		FileValues:   common.GetSetFile(&commonCmdData),
 	}
 
-	var extraRuntimeResourceMutators []mutator.RuntimeResourceMutator
-	if util.GetBoolEnvironmentDefaultFalse(helm.FEATURE_TOGGLE_ENV_EXPERIMENTAL_DEPLOY_ENGINE) {
-		extraRuntimeResourceMutators = []mutator.RuntimeResourceMutator{
-			helm.NewExtraAnnotationsMutator(userExtraAnnotations),
-			helm.NewExtraLabelsMutator(userExtraLabels),
-			helm.NewServiceAnnotationsMutator(*commonCmdData.Environment, werfConfig.Meta.Project),
-		}
-	}
-
 	actionConfig, err := common.NewActionConfig(ctx, common.GetOndemandKubeInitializer(), namespace, &commonCmdData, helmRegistryClient)
 	if err != nil {
 		return err
 	}
 	maintenanceHelper := createMaintenanceHelper(ctx, actionConfig, kubeConfigOptions)
 
-	if err := migrateHelm2ToHelm3(ctx, releaseName, namespace, maintenanceHelper, wc.ChainPostRenderer, valueOpts, filepath.Join(giterminismManager.ProjectDir(), chartDir), helmRegistryClient, extraRuntimeResourceMutators); err != nil {
+	if err := migrateHelm2ToHelm3(ctx, releaseName, namespace, maintenanceHelper, wc.ChainPostRenderer, valueOpts, filepath.Join(giterminismManager.ProjectDir(), chartDir), helmRegistryClient); err != nil {
 		return err
 	}
 
@@ -524,722 +514,359 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		return err
 	}
 
-	if util.GetBoolEnvironmentDefaultFalse(helm.FEATURE_TOGGLE_ENV_EXPERIMENTAL_DEPLOY_ENGINE) {
+	if helm.IsExperimentalEngine() {
 		// FIXME(ilya-lesikov):
 		// 1. if last succeeded release was cleaned up because of release limit, werf will see
 		// current release as first install. We might want to not delete last succeeded or last
 		// uninstalled release ever.
 		// 2. rollback should rollback to the last succesfull release, not last release
-		// 3. discovery should be without version
-		// 4. add adoption validation, whether we can adopt or not
+		// 3. don't forget errs.FormatTemplatingError if any errors occurs
 
 		autoRollback := common.NewBool(cmdData.AutoRollback)
 		if *autoRollback {
 			return fmt.Errorf("--auto-rollback and --atomic not yet supported with new deploy engine")
 		}
 
-		logger := log.NewLogboekLogger(ctx)
-		// FIXME(ilya-lesikov): get rid?
-		outStream := logboek.OutStream()
-		errStream := logboek.ErrStream()
-
-		var deployReportPath string
-		if common.GetSaveDeployReport(&commonCmdData) {
-			deployReportPath, err = common.GetDeployReportPath(&commonCmdData)
-			if err != nil {
-				return fmt.Errorf("unable to get deploy report path: %w", err)
-			}
+		trackReadinessTimeout := *common.NewDuration(time.Duration(cmdData.Timeout) * time.Second)
+		trackDeletionTimeout := trackReadinessTimeout
+		showResourceProgressPeriod := time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second
+		showHookResourceProgressPeriod := time.Duration(*commonCmdData.HooksStatusProgressPeriodSeconds) * time.Second
+		saveDeployReport := common.GetSaveDeployReport(&commonCmdData)
+		deployReportPath, err := common.GetDeployReportPath(&commonCmdData)
+		if err != nil {
+			return fmt.Errorf("error getting deploy report path: %w", err)
 		}
+
+		deployGraphPath := common.GetDeployGraphPath(&commonCmdData)
+		saveDeployGraph := deployGraphPath != ""
+		networkParallelism := common.GetNetworkParallelism(&commonCmdData)
+		serviceAnnotations := map[string]string{
+			"werf.io/version":      werf.Version,
+			"project.werf.io/name": werfConfig.Meta.Project,
+			"project.werf.io/env":  *commonCmdData.Environment,
+		}
+
+		clientFactory, err := kubeclnt.NewClientFactory()
+		if err != nil {
+			return fmt.Errorf("error creating kube client factory: %w", err)
+		}
+
+		releaseNamespace := resrc.NewReleaseNamespace(&unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": "v1",
+				"kind":       "Namespace",
+				"metadata": map[string]interface{}{
+					"name": lo.WithoutEmpty([]string{namespace, helm_v3.Settings.Namespace()})[0],
+				},
+			},
+		}, resrc.ReleaseNamespaceOptions{
+			Mapper: clientFactory.Mapper(),
+		})
 
 		// FIXME(ilya-lesikov): there is more chartpath options, are they needed?
 		chartPathOptions := action.ChartPathOptions{}
 		chartPathOptions.SetRegistryClient(actionConfig.RegistryClient)
 
-		var releaseNamespace string
-		if namespace != "" {
-			releaseNamespace = namespace
-		} else {
-			releaseNamespace = helm_v3.Settings.Namespace()
+		// FIXME(ilya-lesikov): allow local mode
+		// TODO(ilya-lesikov): allow specifying kube version and additional capabilities manually
+		actionConfig.Releases.MaxHistory = *commonCmdData.ReleasesHistoryMax
+		if false {
+			actionConfig.Capabilities = chartutil.DefaultCapabilities.Copy()
+			actionConfig.KubeClient = &kubefake.PrintingKubeClient{Out: ioutil.Discard}
+			mem := driver.NewMemory()
+			mem.SetNamespace(releaseNamespace.Name())
+			actionConfig.Releases = storage.Init(mem)
 		}
 
-		configGetter := helm_v3.Settings.GetConfigP()
+		tracker := resrctracker.NewResourceTracker(clientFactory.Static(), clientFactory.Dynamic(), clientFactory.Discovery(), clientFactory.Mapper())
 
-		deferredKubeClient := kubeclient.NewDeferredKubeClient(*configGetter)
-		if err := deferredKubeClient.Init(); err != nil {
-			return fmt.Errorf("error initializing deferred kube client: %w", err)
-		}
-
-		trackTimeout := *common.NewDuration(time.Duration(cmdData.Timeout) * time.Second)
-		waiter := resourcewaiter.NewResourceWaiter(deferredKubeClient.Dynamic(), deferredKubeClient.Mapper(), resourcewaiter.NewResourceWaiterOptions{
-			Logger:              logger,
-			DefaultTrackTimeout: trackTimeout,
-		})
-
-		statusProgressPeriod := time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second
-		hooksStatusProgressPeriod := time.Duration(*commonCmdData.HooksStatusProgressPeriodSeconds) * time.Second
-		tracker := resourcetracker.NewResourceTracker(deferredKubeClient.Static(), deferredKubeClient.Dynamic(), deferredKubeClient.Discovery(), deferredKubeClient.Mapper(), resourcetracker.NewResourceTrackerOptions{Logger: logger})
-
-		cli, err := client.NewClient(deferredKubeClient.Static(), deferredKubeClient.Dynamic(), deferredKubeClient.Discovery(), deferredKubeClient.Mapper(), waiter)
-		if err != nil {
-			return fmt.Errorf("error creating client: %w", err)
-		}
-		cli.AddTargetResourceMutators(extraRuntimeResourceMutators...)
-		cli.AddTargetResourceMutators(
-			mutator.NewReplicasOnCreationMutator(),
-			mutator.NewReleaseMetadataMutator(releaseName, namespace),
-		)
-		cli.SetDeletionTimeout(int(trackTimeout))
-
-		// FIXME(ilya-lesikov): move some of it out of lock release wrapper
 		return command_helpers.LockReleaseWrapper(ctx, releaseName, lockManager, func() error {
-			// FIXME(ilya-lesikov): allow local mode
-			// TODO(ilya-lesikov): allow specifying kube version and additional capabilities manually
-			if false {
-				actionConfig.Capabilities = chartutil.DefaultCapabilities.Copy()
-				actionConfig.KubeClient = &kubefake.PrintingKubeClient{Out: ioutil.Discard}
-				mem := driver.NewMemory()
-				mem.SetNamespace(releaseNamespace)
-				actionConfig.Releases = storage.Init(mem)
-			}
-
-			actionConfig.Releases.MaxHistory = *commonCmdData.ReleasesHistoryMax
-
-			if err := chartutil.ValidateReleaseName(releaseName); err != nil {
-				return fmt.Errorf("release name is invalid: %s", releaseNamespace)
-			}
-
-			hist, err := history.NewHistory(
-				releaseName,
-				releaseNamespace,
-				actionConfig.Releases.Driver,
-				history.NewHistoryOptions{
-					Mapper:          deferredKubeClient.Mapper(),
-					DiscoveryClient: deferredKubeClient.Discovery(),
-				},
-			)
+			log.Default.Info(ctx, "Constructing release history ...")
+			history, err := rlshistor.NewHistory(releaseName, releaseNamespace.Name(), actionConfig.Releases, rlshistor.HistoryOptions{
+				Mapper:          clientFactory.Mapper(),
+				DiscoveryClient: clientFactory.Discovery(),
+			})
 			if err != nil {
-				return fmt.Errorf("error building history for release %q: %w", releaseName, err)
+				return fmt.Errorf("error constructing release history: %w", err)
 			}
 
-			deployType, err := hist.DeployTypeForNextRelease()
+			prevRelease, prevReleaseFound, err := history.LastRelease()
 			if err != nil {
-				return fmt.Errorf("error getting deploy type for next release: %w", err)
+				return fmt.Errorf("error getting last deployed release: %w", err)
 			}
 
-			revision, err := hist.NextReleaseRevision()
+			prevDeployedRelease, prevDeployedReleaseFound, err := history.LastDeployedRelease()
 			if err != nil {
-				return fmt.Errorf("error getting next release revision: %w", err)
+				return fmt.Errorf("error getting last deployed release: %w", err)
 			}
 
-			lastReleaseIsDeployed, err := hist.LastReleaseIsDeployed()
-			if err != nil {
-				return fmt.Errorf("error checking whether the last release is deployed: %w", err)
+			var newRevision int
+			var firstDeployed time.Time
+			if prevReleaseFound {
+				newRevision = prevRelease.Revision() + 1
+				firstDeployed = prevRelease.FirstDeployed()
+			} else {
+				newRevision = 1
 			}
 
-			chartTree, err := helmchart.NewChartTree(
+			var deployType helmcommon.DeployType
+			if prevReleaseFound && prevDeployedReleaseFound {
+				deployType = helmcommon.DeployTypeUpgrade
+			} else if prevReleaseFound {
+				deployType = helmcommon.DeployTypeInstall
+			} else {
+				deployType = helmcommon.DeployTypeInitial
+			}
+
+			log.Default.Info(ctx, "Constructing chart tree ...")
+			chartTree, err := chrttree.NewChartTree(
+				ctx,
 				chartDir,
 				releaseName,
-				releaseNamespace,
-				revision,
+				releaseNamespace.Name(),
+				newRevision,
 				deployType,
 				actionConfig,
-				helmchart.NewChartTreeOptions{
-					Mapper:          deferredKubeClient.Mapper(),
-					DiscoveryClient: deferredKubeClient.Discovery(),
-					Logger:          logger,
+				chrttree.ChartTreeOptions{
 					StringSetValues: valueOpts.StringValues,
 					SetValues:       valueOpts.Values,
 					FileValues:      valueOpts.FileValues,
 					ValuesFiles:     valueOpts.ValueFiles,
+					Mapper:          clientFactory.Mapper(),
+					DiscoveryClient: clientFactory.Discovery(),
 				},
-			).Load()
-			if err != nil {
-				return fmt.Errorf("error loading chart tree at %q: %w", chartDir, err)
-			}
-
-			rel, err := hist.BuildNextRelease(
-				chartTree.ReleaseValues(),
-				chartTree.LegacyChart(),
-				chartTree.StandaloneCRDsManifests(),
-				chartTree.HookManifests(),
-				chartTree.GeneralManifests(),
-				chartTree.Notes(),
 			)
 			if err != nil {
-				return fmt.Errorf("error building next release: %w", err)
-			}
-			if _, err := rel.Load(); err != nil {
-				return fmt.Errorf("error loading next release: %w", err)
+				return fmt.Errorf("error constructing chart tree: %w", err)
 			}
 
-			// FIXME(ilya-lesikov):
-			legacyRel, err := release2.BuildLegacyReleaseFromRelease(rel)
-			if err != nil {
-				return fmt.Errorf("error building legacy release: %w", err)
-			}
-			succeededLegacyRelInfoStruct := *legacyRel.Info
-			succeededLegacyRelStruct := *legacyRel
-			succeededLegacyRel := &succeededLegacyRelStruct
-			succeededLegacyRel.Info = &succeededLegacyRelInfoStruct
-			succeededLegacyRel.SetStatus(release.StatusDeployed, "")
-
-			prevRel, err := hist.LastRelease()
-			if err != nil {
-				return fmt.Errorf("error getting last release: %w", err)
+			var prevRelGeneralResources []*resrc.GeneralResource
+			if prevReleaseFound {
+				prevRelGeneralResources = prevRelease.GeneralResources()
 			}
 
-			// FIXME(ilya-lesikov):
-			var legacyPrevRel *release.Release
-			var supersededLegacyPrevRel *release.Release
-			var prevReleaseLocalGeneralCRDs []*resourcev2.LocalGeneralCRD
-			var prevReleaseLocalGeneralResources []*resourcev2.LocalGeneralResource
-			if prevRel != nil {
-				legacyPrevRel, err = release2.BuildLegacyReleaseFromRelease(prevRel)
-				if err != nil {
-					return fmt.Errorf("error building legacy previous release: %w", err)
-				}
-
-				supersededLegacyPrevRel = legacyPrevRel
-				supersededLegacyPrevRel.SetStatus(release.StatusSuperseded, "")
-
-				prevReleaseLocalGeneralCRDs = prevRel.GeneralCRDs()
-				prevReleaseLocalGeneralResources = prevRel.GeneralResources()
-			}
-
-			releaseNs := resourcev2.NewLocalReleaseNamespace(&unstructured.Unstructured{
-				Object: map[string]interface{}{
-					"apiVersion": "v1",
-					"kind":       "Namespace",
-					"metadata": map[string]interface{}{
-						"name": releaseNamespace,
+			log.Default.Info(ctx, "Processing resources ...")
+			resProcessor := resrcprocssr.NewDeployableResourcesProcessor(
+				deployType,
+				releaseName,
+				releaseNamespace,
+				chartTree.StandaloneCRDs(),
+				chartTree.HookResources(),
+				chartTree.GeneralResources(),
+				prevRelGeneralResources,
+				clientFactory.KubeClient(),
+				clientFactory.Mapper(),
+				clientFactory.Discovery(),
+				resrcprocssr.DeployableResourcesProcessorOptions{
+					NetworkParallelism: networkParallelism,
+					HookResourceTransformers: []resrctransfrmr.ResourceTransformer{
+						resrctransfrmr.NewResourceListsTransformer(),
+					},
+					GeneralResourceTransformers: []resrctransfrmr.ResourceTransformer{
+						resrctransfrmr.NewResourceListsTransformer(),
+					},
+					ReleasableHookResourcePatchers: []resrcpatcher.ResourcePatcher{
+						resrcpatcher.NewExtraMetadataPatcher(lo.Assign(userExtraAnnotations, serviceAnnotations), userExtraLabels),
+					},
+					ReleasableGeneralResourcePatchers: []resrcpatcher.ResourcePatcher{
+						resrcpatcher.NewExtraMetadataPatcher(lo.Assign(userExtraAnnotations, serviceAnnotations), userExtraLabels),
+					},
+					DeployableStandaloneCRDsPatchers: []resrcpatcher.ResourcePatcher{
+						resrcpatcher.NewExtraMetadataPatcher(lo.Assign(userExtraAnnotations, serviceAnnotations), userExtraLabels),
+					},
+					DeployableHookResourcePatchers: []resrcpatcher.ResourcePatcher{
+						resrcpatcher.NewExtraMetadataPatcher(lo.Assign(userExtraAnnotations, serviceAnnotations), userExtraLabels),
+						resrcpatcher.NewReleaseMetadataPatcher(releaseName, releaseNamespace.Name()),
+					},
+					DeployableGeneralResourcePatchers: []resrcpatcher.ResourcePatcher{
+						resrcpatcher.NewExtraMetadataPatcher(lo.Assign(userExtraAnnotations, serviceAnnotations), userExtraLabels),
+						resrcpatcher.NewReleaseMetadataPatcher(releaseName, releaseNamespace.Name()),
 					},
 				},
-			}, resourcev2.NewLocalReleaseNamespaceOptions{
-				Mapper:          deferredKubeClient.Mapper(),
-				DiscoveryClient: deferredKubeClient.Discovery(),
-			})
-
-			// FIXME(ilya-lesikov):
-			releaseNsUnmanaged := resource.NewUnmanagedResource(releaseNs.Unstructured(), deferredKubeClient.Mapper(), deferredKubeClient.Discovery())
-
-			serviceAnnos := map[string]string{
-				"werf.io/version":      werf.Version,
-				"project.werf.io/name": werfConfig.Meta.Project,
-				"project.werf.io/env":  *commonCmdData.Environment,
-			}
-
-			createResourceMutators := []kubeclientv2.CreateResourceMutator{
-				mutatorsv2.NewReleaseMetadataOnCreateSetter(releaseName, namespace),
-				mutatorsv2.NewAnnotationsAndLabelsOnCreateSetter(userExtraAnnotations, userExtraLabels),
-				mutatorsv2.NewServiceAnnotationsAndLabelsOnCreateSetter(serviceAnnos, nil),
-				mutatorsv2.NewDefaultReplicasOnCreateSetter(),
-			}
-			applyResourceMutators := []kubeclientv2.ApplyResourceMutator{
-				mutatorsv2.NewReleaseMetadataOnApplySetter(releaseName, namespace),
-				mutatorsv2.NewAnnotationsAndLabelsOnApplySetter(userExtraAnnotations, userExtraLabels),
-				mutatorsv2.NewServiceAnnotationsAndLabelsOnApplySetter(serviceAnnos, nil),
-			}
-
-			kubeClient := kubeclientv2.NewClient(
-				deferredKubeClient.Static(),
-				deferredKubeClient.Dynamic(),
-				deferredKubeClient.Discovery(),
-				deferredKubeClient.Mapper(),
-				kubeclientv2.NewKubeClientOptions{
-					CreateResourceMutators: createResourceMutators,
-					ApplyResourceMutators:  applyResourceMutators,
-					// TODO(ilya-lesikov):
-					FieldManager: "",
-					Logger:       logger,
-				},
 			)
 
-			localStandaloneCRDs := rel.StandaloneCRDs()
-			localHookCRDs := lo.Filter(rel.HookCRDs(), func(res *resourcev2.LocalHookCRD, _ int) bool {
-				switch deployType {
-				case plan.DeployTypeInitial, plan.DeployTypeInstall:
-					return res.HookPreInstall() || res.HookPostInstall()
-				case plan.DeployTypeUpgrade:
-					return res.HookPreUpgrade() || res.HookPostUpgrade()
-				}
-				return false
-			})
-			localHookResources := lo.Filter(rel.HookResources(), func(res *resourcev2.LocalHookResource, _ int) bool {
-				switch deployType {
-				case plan.DeployTypeInitial, plan.DeployTypeInstall:
-					return res.HookPreInstall() || res.HookPostInstall()
-				case plan.DeployTypeUpgrade:
-					return res.HookPreUpgrade() || res.HookPostUpgrade()
-				}
-				return false
-			})
-			localGeneralCRDs := rel.GeneralCRDs()
-			localGeneralResources := rel.GeneralResources()
+			if err := resProcessor.Process(ctx); err != nil {
+				return fmt.Errorf("error processing deployable resources: %w", err)
+			}
 
-			prepareResult, err := resourcepreparer.PrepareDeployResources(
-				ctx,
-				releaseName,
-				releaseNs,
-				resourcepreparer.CastToValidatableGettables(prevReleaseLocalGeneralCRDs),
-				resourcepreparer.CastToValidatableGettables(prevReleaseLocalGeneralResources),
-				resourcepreparer.CastToValidatableGettableDryAppliables(localStandaloneCRDs),
-				resourcepreparer.CastToValidatableGettableDryAppliables(localHookCRDs),
-				resourcepreparer.CastToValidatableGettableDryAppliables(localHookResources),
-				resourcepreparer.CastToValidatableGettableDryAppliables(localGeneralCRDs),
-				resourcepreparer.CastToValidatableGettableDryAppliables(localGeneralResources),
-				kubeClient,
-				resourcepreparer.PrepareDeployResourcesOptions{
-					FallbackNamespace: releaseNamespace,
-				},
-			)
+			log.Default.Info(ctx, "Constructing new release ...")
+			newRel, err := rls.NewRelease(releaseName, releaseNamespace.Name(), newRevision, chartTree.ReleaseValues(), chartTree.LegacyChart(), resProcessor.ReleasableHookResources(), resProcessor.ReleasableGeneralResources(), chartTree.Notes(), rls.ReleaseOptions{
+				FirstDeployed: firstDeployed,
+				Mapper:        clientFactory.Mapper(),
+			})
 			if err != nil {
-				return fmt.Errorf("error preparing deploy resources: %w", err)
+				return fmt.Errorf("error constructing new release: %w", err)
 			}
 
-			validateErrs := prepareResult.ValidateErrs()
-			if len(validateErrs) > 0 {
-				return errors2.Multierrorf("validation failed", validateErrs)
-			}
+			log.Default.Info(ctx, "Constructing new deploy plan ...")
+			deployPlanBuilder := plnbuilder.NewDeployPlanBuilder(
+				deployType,
+				resProcessor.DeployableReleaseNamespaceInfo(),
+				resProcessor.DeployableStandaloneCRDsInfos(),
+				resProcessor.DeployableHookResourcesInfos(),
+				resProcessor.DeployableGeneralResourcesInfos(),
+				resProcessor.DeployablePrevReleaseGeneralResourcesInfos(),
+				newRel,
+				history,
+				clientFactory.KubeClient(),
+				clientFactory.Mapper(),
+				tracker,
+				plnbuilder.DeployPlanBuilderOptions{
+					PrevRelease:            prevRelease,
+					PrevDeployedRelease:    prevDeployedRelease,
+					CreationTimeout:        trackReadinessTimeout,
+					ReadinessTimeout:       trackReadinessTimeout,
+					DeletionTimeout:        trackDeletionTimeout,
+					ShowProgressPeriod:     showResourceProgressPeriod,
+					ShowHookProgressPeriod: showHookResourceProgressPeriod,
+				},
+			)
 
-			// FIXME(ilya-lesikov):
-			legacyReleaseNs := struct {
-				Local    *resource.UnmanagedResource
-				Live     *resource.GenericResource
-				Desired  *resource.GenericResource
-				UpToDate bool
-				Existing bool
-			}{
-				Local: releaseNsUnmanaged,
-			}
-			rnresult := prepareResult.ReleaseNamespace
-			if rnresult.GetErr != nil {
-				if !isNotFoundErr(rnresult.GetErr) {
-					return err
-				}
-			} else {
-				legacyReleaseNs.Live = resource.NewGenericResource(rnresult.GetResource.Unstructured())
-				legacyReleaseNs.Existing = true
-
-				if rnresult.DryApplyErr != nil {
-					return err
-				} else {
-					legacyReleaseNs.Desired = resource.NewGenericResource(rnresult.DryApplyResource.Unstructured())
-					differs := compareLiveWithResult(legacyReleaseNs.Live.Unstructured(), legacyReleaseNs.Desired.Unstructured())
-					legacyReleaseNs.UpToDate = !differs
-					legacyReleaseNs.Existing = true
-				}
-			}
-
-			legacyPreloadedCRDs := struct {
-				UpToDate []struct {
-					Local *resource.UnmanagedResource
-					Live  *resource.GenericResource
-				}
-				Outdated []struct {
-					Local   *resource.UnmanagedResource
-					Live    *resource.GenericResource
-					Desired *resource.GenericResource
-				}
-				OutdatedImmutable []struct {
-					Local *resource.UnmanagedResource
-					Live  *resource.GenericResource
-				}
-				NonExisting []struct {
-					Local   *resource.UnmanagedResource
-					Desired *resource.GenericResource
-				}
-			}{}
-			scresults := prepareResult.StandaloneCRDs
-			for _, scresult := range scresults {
-				localRes, _ := lo.Find(localStandaloneCRDs, func(res *resourcev2.LocalStandaloneCRD) bool {
-					return res.Name() == scresult.Name && res.Namespace() == scresult.Namespace && res.GroupVersionKind() == scresult.GroupVersionKind
-				})
-
-				if scresult.GetErr != nil {
-					if isNotFoundErr(scresult.GetErr) {
-						legacyPreloadedCRDs.NonExisting = append(legacyPreloadedCRDs.NonExisting, struct {
-							Local   *resource.UnmanagedResource
-							Desired *resource.GenericResource
-						}{
-							Local: resource.NewUnmanagedResource(localRes.Unstructured(), deferredKubeClient.Mapper(), deferredKubeClient.Discovery()),
-						})
-					} else {
-						return err
-					}
-				} else {
-					if scresult.DryApplyErr != nil {
-						if isImmutableErr(scresult.DryApplyErr) {
-							legacyPreloadedCRDs.OutdatedImmutable = append(legacyPreloadedCRDs.OutdatedImmutable, struct {
-								Local *resource.UnmanagedResource
-								Live  *resource.GenericResource
-							}{
-								Local: resource.NewUnmanagedResource(localRes.Unstructured(), deferredKubeClient.Mapper(), deferredKubeClient.Discovery()),
-								Live:  resource.NewGenericResource(scresult.GetResource.Unstructured()),
-							})
-						} else {
-							return err
-						}
-					} else {
-						differs := compareLiveWithResult(scresult.GetResource.Unstructured(), scresult.DryApplyResource.Unstructured())
-						if differs {
-							legacyPreloadedCRDs.Outdated = append(legacyPreloadedCRDs.Outdated, struct {
-								Local   *resource.UnmanagedResource
-								Live    *resource.GenericResource
-								Desired *resource.GenericResource
-							}{
-								Local:   resource.NewUnmanagedResource(localRes.Unstructured(), deferredKubeClient.Mapper(), deferredKubeClient.Discovery()),
-								Live:    resource.NewGenericResource(scresult.GetResource.Unstructured()),
-								Desired: resource.NewGenericResource(scresult.DryApplyResource.Unstructured()),
-							})
-						} else {
-							legacyPreloadedCRDs.UpToDate = append(legacyPreloadedCRDs.UpToDate, struct {
-								Local *resource.UnmanagedResource
-								Live  *resource.GenericResource
-							}{
-								Local: resource.NewUnmanagedResource(localRes.Unstructured(), deferredKubeClient.Mapper(), deferredKubeClient.Discovery()),
-								Live:  resource.NewGenericResource(scresult.GetResource.Unstructured()),
-							})
-						}
-					}
-				}
-			}
-
-			legacyHooks := struct {
-				UpToDate []struct {
-					Local *resource.HelmHook
-					Live  *resource.GenericResource
-				}
-				Outdated []struct {
-					Local   *resource.HelmHook
-					Live    *resource.GenericResource
-					Desired *resource.GenericResource
-				}
-				OutdatedImmutable []struct {
-					Local *resource.HelmHook
-					Live  *resource.GenericResource
-				}
-				Unsupported []struct {
-					Local *resource.HelmHook
-				}
-				NonExisting []struct {
-					Local   *resource.HelmHook
-					Desired *resource.GenericResource
-				}
-			}{}
-			var hresults []*resourcepreparer.ValidatableGettableDryAppliableResult
-			hresults = append(append(hresults, prepareResult.HookCRDs...), prepareResult.HookResources...)
-			for _, hresult := range hresults {
-				var localRes *resource.HelmHook
-				if res, found := lo.Find(localHookCRDs, func(res *resourcev2.LocalHookCRD) bool {
-					return res.Name() == hresult.Name && res.Namespace() == hresult.Namespace && res.GroupVersionKind() == hresult.GroupVersionKind
-				}); found {
-					localRes = resource.NewHelmHook(res.Unstructured(), "", deferredKubeClient.Mapper(), deferredKubeClient.Discovery())
-				} else {
-					res, _ := lo.Find(localHookResources, func(res *resourcev2.LocalHookResource) bool {
-						return res.Name() == hresult.Name && res.Namespace() == hresult.Namespace && res.GroupVersionKind() == hresult.GroupVersionKind
-					})
-					localRes = resource.NewHelmHook(res.Unstructured(), "", deferredKubeClient.Mapper(), deferredKubeClient.Discovery())
-				}
-
-				if hresult.GetErr != nil {
-					if isNotFoundErr(hresult.GetErr) {
-						legacyHooks.NonExisting = append(legacyHooks.NonExisting, struct {
-							Local   *resource.HelmHook
-							Desired *resource.GenericResource
-						}{
-							Local: localRes,
-						})
-					} else if isNoSuchKindErr(hresult.GetErr) {
-						legacyHooks.Unsupported = append(legacyHooks.Unsupported, struct {
-							Local *resource.HelmHook
-						}{
-							Local: localRes,
-						})
-					} else {
-						return err
-					}
-				} else {
-					if hresult.DryApplyErr != nil {
-						if isImmutableErr(hresult.DryApplyErr) {
-							legacyHooks.OutdatedImmutable = append(legacyHooks.OutdatedImmutable, struct {
-								Local *resource.HelmHook
-								Live  *resource.GenericResource
-							}{
-								Local: localRes,
-								Live:  resource.NewGenericResource(hresult.GetResource.Unstructured()),
-							})
-						} else {
-							return err
-						}
-					} else {
-						differs := compareLiveWithResult(hresult.GetResource.Unstructured(), hresult.DryApplyResource.Unstructured())
-						if differs {
-							legacyHooks.Outdated = append(legacyHooks.Outdated, struct {
-								Local   *resource.HelmHook
-								Live    *resource.GenericResource
-								Desired *resource.GenericResource
-							}{
-								Local:   localRes,
-								Live:    resource.NewGenericResource(hresult.GetResource.Unstructured()),
-								Desired: resource.NewGenericResource(hresult.DryApplyResource.Unstructured()),
-							})
-						} else {
-							legacyHooks.UpToDate = append(legacyHooks.UpToDate, struct {
-								Local *resource.HelmHook
-								Live  *resource.GenericResource
-							}{
-								Local: localRes,
-								Live:  resource.NewGenericResource(hresult.GetResource.Unstructured()),
-							})
-						}
-					}
-				}
-			}
-
-			legacyHelmResources := struct {
-				UpToDate []struct {
-					Local *resource.HelmResource
-					Live  *resource.GenericResource
-				}
-				Outdated []struct {
-					Local   *resource.HelmResource
-					Live    *resource.GenericResource
-					Desired *resource.GenericResource
-				}
-				OutdatedImmutable []struct {
-					Local *resource.HelmResource
-					Live  *resource.GenericResource
-				}
-				Unsupported []struct {
-					Local *resource.HelmResource
-				}
-				NonExisting []struct {
-					Local   *resource.HelmResource
-					Desired *resource.GenericResource
-				}
-			}{}
-			var hrresults []*resourcepreparer.ValidatableGettableDryAppliableResult
-			hrresults = append(append(hrresults, prepareResult.GeneralCRDs...), prepareResult.GeneralResources...)
-			for _, hrresult := range hrresults {
-				var localRes *resource.HelmResource
-				if res, found := lo.Find(localGeneralCRDs, func(res *resourcev2.LocalGeneralCRD) bool {
-					return res.Name() == hrresult.Name && res.Namespace() == hrresult.Namespace && res.GroupVersionKind() == hrresult.GroupVersionKind
-				}); found {
-					localRes = resource.NewHelmResource(res.Unstructured(), deferredKubeClient.Mapper(), deferredKubeClient.Discovery())
-				} else {
-					res, _ := lo.Find(localGeneralResources, func(res *resourcev2.LocalGeneralResource) bool {
-						return res.Name() == hrresult.Name && res.Namespace() == hrresult.Namespace && res.GroupVersionKind() == hrresult.GroupVersionKind
-					})
-					localRes = resource.NewHelmResource(res.Unstructured(), deferredKubeClient.Mapper(), deferredKubeClient.Discovery())
-				}
-
-				if hrresult.GetErr != nil {
-					if isNotFoundErr(hrresult.GetErr) {
-						legacyHelmResources.NonExisting = append(legacyHelmResources.NonExisting, struct {
-							Local   *resource.HelmResource
-							Desired *resource.GenericResource
-						}{
-							Local: localRes,
-						})
-					} else if isNoSuchKindErr(hrresult.GetErr) {
-						legacyHelmResources.Unsupported = append(legacyHelmResources.Unsupported, struct {
-							Local *resource.HelmResource
-						}{
-							Local: localRes,
-						})
-					} else {
-						return err
-					}
-				} else {
-					if hrresult.DryApplyErr != nil {
-						if isImmutableErr(hrresult.DryApplyErr) {
-							legacyHelmResources.OutdatedImmutable = append(legacyHelmResources.OutdatedImmutable, struct {
-								Local *resource.HelmResource
-								Live  *resource.GenericResource
-							}{
-								Local: localRes,
-								Live:  resource.NewGenericResource(hrresult.GetResource.Unstructured()),
-							})
-						} else {
-							return err
-						}
-					} else {
-						differs := compareLiveWithResult(hrresult.GetResource.Unstructured(), hrresult.DryApplyResource.Unstructured())
-						if differs {
-							legacyHelmResources.Outdated = append(legacyHelmResources.Outdated, struct {
-								Local   *resource.HelmResource
-								Live    *resource.GenericResource
-								Desired *resource.GenericResource
-							}{
-								Local:   localRes,
-								Live:    resource.NewGenericResource(hrresult.GetResource.Unstructured()),
-								Desired: resource.NewGenericResource(hrresult.DryApplyResource.Unstructured()),
-							})
-						} else {
-							legacyHelmResources.UpToDate = append(legacyHelmResources.UpToDate, struct {
-								Local *resource.HelmResource
-								Live  *resource.GenericResource
-							}{
-								Local: localRes,
-								Live:  resource.NewGenericResource(hrresult.GetResource.Unstructured()),
-							})
-						}
-					}
-				}
-			}
-
-			legacyPrevRelHelmResources := struct {
-				Existing []struct {
-					Local *resource.HelmResource
-					Live  *resource.GenericResource
-				}
-				NonExisting []*resource.HelmResource
-			}{}
-			var prresults []*resourcepreparer.ValidatableGettableResult
-			prresults = append(append(prresults, prepareResult.PrevReleaseGeneralCRDs...), prepareResult.PrevReleaseGeneralResources...)
-			for _, prresult := range prresults {
-				var localRes *resource.HelmResource
-				if res, found := lo.Find(prevReleaseLocalGeneralCRDs, func(res *resourcev2.LocalGeneralCRD) bool {
-					return res.Name() == prresult.Name && res.Namespace() == prresult.Namespace && res.GroupVersionKind() == prresult.GroupVersionKind
-				}); found {
-					localRes = resource.NewHelmResource(res.Unstructured(), deferredKubeClient.Mapper(), deferredKubeClient.Discovery())
-				} else {
-					res, _ := lo.Find(prevReleaseLocalGeneralResources, func(res *resourcev2.LocalGeneralResource) bool {
-						return res.Name() == prresult.Name && res.Namespace() == prresult.Namespace && res.GroupVersionKind() == prresult.GroupVersionKind
-					})
-					localRes = resource.NewHelmResource(res.Unstructured(), deferredKubeClient.Mapper(), deferredKubeClient.Discovery())
-				}
-
-				if prresult.GetErr != nil {
-					if isNotFoundErr(prresult.GetErr) || isNoSuchKindErr(prresult.GetErr) {
-						legacyPrevRelHelmResources.NonExisting = append(legacyPrevRelHelmResources.NonExisting, localRes)
-					} else {
-						return err
-					}
-				} else {
-					legacyPrevRelHelmResources.Existing = append(legacyPrevRelHelmResources.Existing, struct {
-						Local *resource.HelmResource
-						Live  *resource.GenericResource
-					}{
-						Local: localRes,
-						Live:  resource.NewGenericResource(prresult.GetResource.Unstructured()),
-					})
-				}
-			}
-
-			deployPlanBuilder := plan.
-				NewDeployPlanBuilder(deployType, legacyReleaseNs, legacyRel, succeededLegacyRel).
-				WithPreloadedCRDs(legacyPreloadedCRDs).
-				WithMatchedHelmHooks(legacyHooks).
-				WithHelmResources(legacyHelmResources)
-
-			if legacyPrevRel != nil {
-				deployPlanBuilder = deployPlanBuilder.
-					WithPreviousReleaseHelmResources(legacyPrevRelHelmResources).
-					WithSupersededPreviousRelease(supersededLegacyPrevRel).
-					WithPreviousReleaseDeployed(lastReleaseIsDeployed)
-			}
-
-			deployPlan, referencesToCleanupOnFailure, err := deployPlanBuilder.Build(ctx)
+			plan, err := deployPlanBuilder.Build(ctx)
 			if err != nil {
 				return fmt.Errorf("error building deploy plan: %w", err)
 			}
 
-			if os.Getenv("WERF_EXPERIMENTAL_DEPLOY_ENGINE_DEBUG") == "1" {
-				for _, phase := range deployPlan.Phases {
-					fmt.Printf("DEBUG(phaseType): %s\n", phase.Type)
-					for _, operation := range phase.Operations {
-						fmt.Printf("DEBUG(opType): %s\n", operation.Type())
-						switch op := operation.(type) {
-						case *plan.OperationCreate:
-							for _, target := range op.Targets {
-								b, _ := json.MarshalIndent(target.Unstructured().UnstructuredContent(), "", "\t")
-								fmt.Printf("DEBUG(opTarget):\n%s\n", b)
-							}
-						case *plan.OperationUpdate:
-							for _, target := range op.Targets {
-								b, _ := json.MarshalIndent(target.Unstructured().UnstructuredContent(), "", "\t")
-								fmt.Printf("DEBUG(opTarget):\n%s\n", b)
-							}
-						case *plan.OperationRecreate:
-							for _, target := range op.Targets {
-								b, _ := json.MarshalIndent(target.Unstructured().UnstructuredContent(), "", "\t")
-								fmt.Printf("DEBUG(opTarget):\n%s\n", b)
-							}
-						case *plan.OperationDelete:
-							fmt.Printf("DEBUG(opTargets): %s\n", op.Targets)
-						case *plan.OperationCreateReleases:
-							for _, r := range op.Releases {
-								b, _ := json.MarshalIndent(r, "", "\t")
-								fmt.Printf("DEBUG(opTarget):\n%s\n", b)
-							}
-						case *plan.OperationUpdateReleases:
-							for _, r := range op.Releases {
-								b, _ := json.MarshalIndent(r, "", "\t")
-								fmt.Printf("DEBUG(opTarget):\n%s\n", b)
-							}
-						}
-					}
+			if saveDeployGraph {
+				if err := plan.SaveDOT(deployGraphPath); err != nil {
+					return fmt.Errorf("error saving deploy graph: %w", err)
 				}
 			}
 
-			if deployPlan.Empty() {
-				fmt.Fprintf(outStream, "\nRelease %q in namespace %q canceled: no changes to be made.\n", releaseName, releaseNamespace)
+			if useless, err := plan.Useless(); err != nil {
+				return fmt.Errorf("error checking if deploy plan will do nothing useful: %w", err)
+			} else if useless {
+				log.Default.Info(ctx, "Skipped release %q in namespace %q: cluster resources already as desired.", releaseName, releaseNamespace.Name())
 				return nil
 			}
 
-			// TODO(ilya-lesikov): add more info from executor report
-			if deployReportPath != "" {
-				defer func() {
-					deployReportData, err := release.NewDeployReport().FromRelease(legacyRel).ToJSONData()
-					if err != nil {
-						actionConfig.Log("warning: error creating deploy report data: %s", err)
-						return
-					}
+			log.Default.Info(ctx, "Executing deploy plan ...")
+			planExecutor := plnexectr.NewPlanExecutor(plan, plnexectr.PlanExecutorOptions{
+				NetworkParallelism: networkParallelism,
+			})
 
-					if err := os.WriteFile(deployReportPath, deployReportData, 0o644); err != nil {
-						actionConfig.Log("warning: error writing deploy report file: %s", err)
-						return
-					}
-				}()
+			var finalErrs []error
+
+			planExecutionErr := planExecutor.Execute(ctx)
+			if planExecutionErr != nil {
+				finalErrs = append(finalErrs, fmt.Errorf("error executing deploy plan: %w", planExecutionErr))
 			}
 
-			deployReport, executeErr := plan.NewDeployPlanExecutor(deployPlan, releaseNsUnmanaged, cli, tracker, actionConfig.Releases).WithTrackTimeout(trackTimeout).WithResourceShowProgressPeriod(statusProgressPeriod).WithHookShowProgressPeriod(hooksStatusProgressPeriod).Execute(ctx)
-			if executeErr != nil {
-				defer func() {
-					fmt.Fprintf(errStream, "\nRelease %q in namespace %q failed.\n", releaseName, releaseNamespace)
-				}()
+			var worthyCompletedOps []opertn.Operation
+			if ops, found, err := plan.WorthyCompletedOperations(); err != nil {
+				finalErrs = append(finalErrs, fmt.Errorf("error getting worthy completed operations: %w", err))
+			} else if found {
+				worthyCompletedOps = ops
+			}
 
-				legacyRel.SetStatus(release.StatusFailed, "")
+			var worthyCanceledOps []opertn.Operation
+			if ops, found, err := plan.WorthyCanceledOperations(); err != nil {
+				finalErrs = append(finalErrs, fmt.Errorf("error getting worthy canceled operations: %w", err))
+			} else if found {
+				worthyCanceledOps = ops
+			}
 
-				finalizeFailedDeployPlan := plan.
-					NewFinalizeFailedDeployPlanBuilder(legacyRel).
-					WithReferencesToCleanup(referencesToCleanupOnFailure).
-					Build()
+			var worthyFailedOps []opertn.Operation
+			if ops, found, err := plan.WorthyFailedOperations(); err != nil {
+				finalErrs = append(finalErrs, fmt.Errorf("error getting worthy failed operations: %w", err))
+			} else if found {
+				worthyFailedOps = ops
+			}
 
-				// FIXME(ilya-lesikov): deploy report from this execute is not used
-				_, err = plan.NewDeployPlanExecutor(finalizeFailedDeployPlan, releaseNsUnmanaged, cli, tracker, actionConfig.Releases).WithTrackTimeout(trackTimeout).WithResourceShowProgressPeriod(statusProgressPeriod).WithHookShowProgressPeriod(hooksStatusProgressPeriod).WithReport(deployReport).Execute(ctx)
-				if err != nil {
-					return multierror.Append(executeErr, fmt.Errorf("error finalizing failed deploy plan: %w", err))
+			if errs := func() []error {
+				if planExecutionErr == nil {
+					return nil
 				}
 
-				return executeErr
+				if ops, found, err := plan.OperationsMatch(regexp.MustCompile(fmt.Sprintf(`^%s/%s$`, opertn.TypeCreatePendingReleaseOperation, newRel.ID()))); err != nil {
+					return []error{fmt.Errorf("error getting pending release operation: %w", err)}
+				} else if !found {
+					panic("no pending release operation found")
+				} else if ops[0].Status() != opertn.StatusCompleted {
+					return nil
+				}
+
+				log.Default.Info(ctx, "Building failure deploy plan ...")
+				failurePlanBuilder := plnbuilder.NewDeployFailurePlanBuilder(
+					plan,
+					resProcessor.DeployableHookResourcesInfos(),
+					resProcessor.DeployableGeneralResourcesInfos(),
+					newRel,
+					history,
+					clientFactory.KubeClient(),
+					plnbuilder.DeployFailurePlanBuilderOptions{
+						PrevRelease: prevRelease,
+					},
+				)
+
+				failurePlan, err := failurePlanBuilder.Build(ctx)
+				if err != nil {
+					return []error{fmt.Errorf("error building failure plan: %w", err)}
+				}
+
+				if useless, err := failurePlan.Useless(); err != nil {
+					return []error{fmt.Errorf("error checking if failure plan will do nothing useful: %w", err)}
+				} else if useless {
+					return nil
+				}
+
+				log.Default.Info(ctx, "Executing failure deploy plan ...")
+				failurePlanExecutor := plnexectr.NewPlanExecutor(failurePlan, plnexectr.PlanExecutorOptions{
+					NetworkParallelism: networkParallelism,
+				})
+
+				var finalErrs []error
+
+				if err := failurePlanExecutor.Execute(ctx); err != nil {
+					finalErrs = append(finalErrs, fmt.Errorf("error executing failure plan: %w", err))
+				}
+
+				if ops, found, err := failurePlan.WorthyCompletedOperations(); err != nil {
+					finalErrs = append(finalErrs, fmt.Errorf("error getting worthy completed operations: %w", err))
+				} else if found {
+					worthyCompletedOps = append(worthyCompletedOps, ops...)
+				}
+
+				if ops, found, err := failurePlan.WorthyFailedOperations(); err != nil {
+					finalErrs = append(finalErrs, fmt.Errorf("error getting worthy failed operations: %w", err))
+				} else if found {
+					worthyFailedOps = append(worthyFailedOps, ops...)
+				}
+
+				if ops, found, err := failurePlan.WorthyCanceledOperations(); err != nil {
+					finalErrs = append(finalErrs, fmt.Errorf("error getting worthy canceled operations: %w", err))
+				} else if found {
+					worthyCanceledOps = append(worthyCanceledOps, ops...)
+				}
+
+				return finalErrs
+			}(); len(errs) > 0 {
+				finalErrs = append(finalErrs, errs...)
 			}
 
-			legacyRel.SetStatus(release.StatusDeployed, "")
+			report := reprt.NewReport(
+				worthyCompletedOps,
+				worthyCanceledOps,
+				worthyFailedOps,
+				newRel,
+			)
 
-			defer func() {
-				fmt.Fprintf(outStream, "\nRelease %q in namespace %q succeeded.\n", releaseName, releaseNamespace)
-			}()
+			report.Print(ctx)
 
-			deployReportPrinter := plan.NewDeployReportPrinter(outStream, deployReport)
-			deployReportPrinter.PrintSummary()
+			if saveDeployReport {
+				if err := report.Save(deployReportPath); err != nil {
+					finalErrs = append(finalErrs, fmt.Errorf("error saving deploy report: %w", err))
+				}
+			}
 
-			// FIXME(ilya-lesikov): better error handling (interrupts, etc)
-
-			// FIXME(ilya-lesikov): don't forget errs.FormatTemplatingError if any errors occurs
-
-			return nil
+			if planExecutionErr != nil {
+				return utls.Multierrorf("failed release %q (namespace: %q)", finalErrs, releaseName, releaseNamespace.Name())
+			} else if len(finalErrs) > 0 {
+				return utls.Multierrorf("succeeded release %q (namespace: %q), but errors encountered", finalErrs, releaseName, releaseNamespace.Name())
+			} else {
+				log.Default.Info(ctx, "Succeeded release %q (namespace: %q)", releaseName, releaseNamespace.Name())
+				return nil
+			}
 		})
 	} else {
 		var deployReportPath *string
@@ -1304,7 +931,7 @@ func createMaintenanceHelper(ctx context.Context, actionConfig *action.Configura
 	return maintenance_helper.NewMaintenanceHelper(actionConfig, maintenanceOpts)
 }
 
-func migrateHelm2ToHelm3(ctx context.Context, releaseName, namespace string, maintenanceHelper *maintenance_helper.MaintenanceHelper, chainPostRenderer func(postrender.PostRenderer) postrender.PostRenderer, valueOpts *values.Options, fullChartDir string, helmRegistryClient *registry.Client, extraMutators []mutator.RuntimeResourceMutator) error {
+func migrateHelm2ToHelm3(ctx context.Context, releaseName, namespace string, maintenanceHelper *maintenance_helper.MaintenanceHelper, chainPostRenderer func(postrender.PostRenderer) postrender.PostRenderer, valueOpts *values.Options, fullChartDir string, helmRegistryClient *registry.Client) error {
 	if helm2Exists, err := checkHelm2AvailableAndReleaseExists(ctx, releaseName, namespace, maintenanceHelper); err != nil {
 		return fmt.Errorf("error checking availability of helm 2 and existence of helm 2 release %q: %w", releaseName, err)
 	} else if !helm2Exists {
@@ -1383,32 +1010,4 @@ func checkHelm3ReleaseExists(ctx context.Context, releaseName, namespace string,
 	}
 
 	return foundHelm3Release, nil
-}
-
-// FIXME(ilya-lesikov):
-func compareLiveWithResult(liveObj, resultObj *unstructured.Unstructured) bool {
-	filterIgnore := func(p cmp.Path) bool {
-		managedFieldsTimeRegex := regexp.MustCompile(`^\{\*unstructured.Unstructured\}\.Object\["metadata"\]\.\(map\[string\]any\)\["managedFields"\]\.\(\[\]any\)\[0\]\.\(map\[string\]any\)\["time"\]$`)
-		if managedFieldsTimeRegex.MatchString(p.GoString()) {
-			return true
-		}
-
-		return false
-	}
-
-	different := !cmp.Equal(liveObj, resultObj, cmp.FilterPath(filterIgnore, cmp.Ignore()))
-
-	return different
-}
-
-func isImmutableErr(err error) bool {
-	return err != nil && errors.IsInvalid(err) && strings.Contains(err.Error(), "field is immutable")
-}
-
-func isNoSuchKindErr(err error) bool {
-	return err != nil && strings.Contains(err.Error(), "no matches for kind")
-}
-
-func isNotFoundErr(err error) bool {
-	return err != nil && errors.IsNotFound(err)
 }
