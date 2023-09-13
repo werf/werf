@@ -20,9 +20,14 @@ import (
 
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
+	"github.com/werf/werf/pkg/util"
 )
 
 const FEATURE_TOGGLE_ENV_EXPERIMENTAL_DEPLOY_ENGINE = "WERF_EXPERIMENTAL_DEPLOY_ENGINE"
+
+func IsExperimentalEngine() bool {
+	return util.GetBoolEnvironmentDefaultFalse(FEATURE_TOGGLE_ENV_EXPERIMENTAL_DEPLOY_ENGINE)
+}
 
 type InitActionConfigOptions struct {
 	StatusProgressPeriod      time.Duration

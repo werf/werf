@@ -64,6 +64,7 @@ type CmdData struct {
 	Synchronization    *string
 	Parallel           *bool
 	ParallelTasksLimit *int64
+	NetworkParallelism *int
 
 	DockerConfig                    *string
 	InsecureRegistry                *bool
@@ -102,6 +103,8 @@ type CmdData struct {
 	SaveDeployReport *bool
 	UseDeployReport  *bool
 	DeployReportPath *string
+
+	DeployGraphPath *string
 
 	VirtualMerge *bool
 
