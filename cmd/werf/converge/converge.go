@@ -34,7 +34,6 @@ import (
 	"helm.sh/helm/v3/pkg/werf/resrcpatcher"
 	"helm.sh/helm/v3/pkg/werf/resrcprocssr"
 	"helm.sh/helm/v3/pkg/werf/resrctracker"
-	"helm.sh/helm/v3/pkg/werf/resrctransfrmr"
 	"helm.sh/helm/v3/pkg/werf/rls"
 	"helm.sh/helm/v3/pkg/werf/rlshistor"
 	"helm.sh/helm/v3/pkg/werf/utls"
@@ -659,12 +658,6 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 				clientFactory.Discovery(),
 				resrcprocssr.DeployableResourcesProcessorOptions{
 					NetworkParallelism: networkParallelism,
-					HookResourceTransformers: []resrctransfrmr.ResourceTransformer{
-						resrctransfrmr.NewResourceListsTransformer(),
-					},
-					GeneralResourceTransformers: []resrctransfrmr.ResourceTransformer{
-						resrctransfrmr.NewResourceListsTransformer(),
-					},
 					ReleasableHookResourcePatchers: []resrcpatcher.ResourcePatcher{
 						resrcpatcher.NewExtraMetadataPatcher(lo.Assign(userExtraAnnotations, serviceAnnotations), userExtraLabels),
 					},
@@ -676,11 +669,9 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 					},
 					DeployableHookResourcePatchers: []resrcpatcher.ResourcePatcher{
 						resrcpatcher.NewExtraMetadataPatcher(lo.Assign(userExtraAnnotations, serviceAnnotations), userExtraLabels),
-						resrcpatcher.NewReleaseMetadataPatcher(releaseName, releaseNamespace.Name()),
 					},
 					DeployableGeneralResourcePatchers: []resrcpatcher.ResourcePatcher{
 						resrcpatcher.NewExtraMetadataPatcher(lo.Assign(userExtraAnnotations, serviceAnnotations), userExtraLabels),
-						resrcpatcher.NewReleaseMetadataPatcher(releaseName, releaseNamespace.Name()),
 					},
 				},
 			)
