@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.254](https://www.github.com/werf/werf/compare/v1.2.253...v1.2.254) (2023-09-13)
+
+
+### Features
+
+* **exp-engine:** experimental deploy engine v2 with graph ([192e179](https://www.github.com/werf/werf/commit/192e1790cdcfd0df8e5839720bbe5c3aedd0b0bb))
+
 ### [1.2.253](https://www.github.com/werf/werf/compare/v1.2.252...v1.2.253) (2023-08-22)
 
 
