@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.255](https://www.github.com/werf/werf/compare/v1.2.254...v1.2.255) (2023-09-13)
+
+
+### Bug Fixes
+
+* **exp-engine:** minor deploy engine improvements ([afa07ab](https://www.github.com/werf/werf/commit/afa07ab6c841cb71ff5b0842e0e1513b27902671))
+
 ### [1.2.254](https://www.github.com/werf/werf/compare/v1.2.253...v1.2.254) (2023-09-13)
 
 
