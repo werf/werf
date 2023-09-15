@@ -147,11 +147,7 @@ func (t *TelemetryWerfIO) getAttributes() map[string]interface{} {
 	if val := os.Getenv("TRDL_USE_WERF_GROUP_CHANNEL"); val != "" {
 		attributes["groupChannel"] = val
 	}
-	if val := os.Getenv(helm.FEATURE_TOGGLE_ENV_EXPERIMENTAL_DEPLOY_ENGINE); val == "1" {
-		attributes["expDeployEngine"] = true
-	} else {
-		attributes["expDeployEngine"] = false
-	}
+	attributes["expDeployEngine"] = helm.IsExperimentalEngine()
 
 	{
 		if isCI := util.GetBoolEnvironmentDefaultFalse("CI"); isCI {

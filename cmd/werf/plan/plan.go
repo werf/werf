@@ -1,4 +1,4 @@
-package converge
+package plan
 
 import (
 	"context"
@@ -6,10 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"regexp"
-	"time"
 
-	"github.com/gookit/color"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 	helm_v3 "helm.sh/helm/v3/cmd/helm"
@@ -23,17 +20,12 @@ import (
 	helmcommon "helm.sh/helm/v3/pkg/werf/common"
 	"helm.sh/helm/v3/pkg/werf/kubeclnt"
 	"helm.sh/helm/v3/pkg/werf/log"
-	"helm.sh/helm/v3/pkg/werf/opertn"
-	"helm.sh/helm/v3/pkg/werf/plnbuilder"
-	"helm.sh/helm/v3/pkg/werf/plnexectr"
-	"helm.sh/helm/v3/pkg/werf/reprt"
 	"helm.sh/helm/v3/pkg/werf/resrc"
+	"helm.sh/helm/v3/pkg/werf/resrcchangcalc"
+	"helm.sh/helm/v3/pkg/werf/resrcchanglog"
 	"helm.sh/helm/v3/pkg/werf/resrcpatcher"
 	"helm.sh/helm/v3/pkg/werf/resrcprocssr"
-	"helm.sh/helm/v3/pkg/werf/resrctracker"
-	"helm.sh/helm/v3/pkg/werf/rls"
 	"helm.sh/helm/v3/pkg/werf/rlshistor"
-	"helm.sh/helm/v3/pkg/werf/utls"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/werf/kubedog/pkg/kube"
@@ -64,8 +56,7 @@ import (
 )
 
 var cmdData struct {
-	Timeout      int
-	AutoRollback bool
+	Timeout int
 }
 
 var commonCmdData common.CmdData
@@ -79,21 +70,21 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	var useMsg string
 	if isSpecificImagesEnabled() {
-		useMsg = "converge [IMAGE_NAME ...]"
+		useMsg = "plan [IMAGE_NAME ...]"
 	} else {
-		useMsg = "converge"
+		useMsg = "plan"
 	}
 
 	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:   useMsg,
-		Short: "Build and push images, then deploy application into Kubernetes",
-		Long:  common.GetLongCommandDescription(GetConvergeDocs().Long),
-		Example: `# Build and deploy current application state into production environment
-werf converge --repo registry.mydomain.com/web --env production`,
+		Short: "Prepare deploy plan and show how resources in a Kubernetes cluster would change on next deploy",
+		Long:  common.GetLongCommandDescription(GetPlanDocs().Long),
+		Example: `# Prepare and show deploy plan
+werf plan --repo registry.mydomain.com/web --env production`,
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfDebugAnsibleArgs, common.WerfSecretKey),
-			common.DocsLongMD: GetConvergeDocs().LongMD,
+			common.DocsLongMD: GetPlanDocs().LongMD,
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
@@ -183,9 +174,6 @@ werf converge --repo registry.mydomain.com/web --env production`,
 	common.SetupDeprecatedReportPath(&commonCmdData, cmd)
 	common.SetupDeprecatedReportFormat(&commonCmdData, cmd)
 
-	common.SetupSaveDeployReport(&commonCmdData, cmd)
-	common.SetupDeployReportPath(&commonCmdData, cmd)
-
 	common.SetupUseCustomTag(&commonCmdData, cmd)
 	common.SetupAddCustomTag(&commonCmdData, cmd)
 	common.SetupVirtualMerge(&commonCmdData, cmd)
@@ -205,7 +193,6 @@ werf converge --repo registry.mydomain.com/web --env production`,
 
 	if helm.IsExperimentalEngine() {
 		common.SetupNetworkParallelism(&commonCmdData, cmd)
-		common.SetupDeployGraphPath(&commonCmdData, cmd)
 	}
 
 	defaultTimeout, err := util.GetIntEnvVar("WERF_TIMEOUT")
@@ -213,8 +200,6 @@ werf converge --repo registry.mydomain.com/web --env production`,
 		defaultTimeout = new(int64)
 	}
 	cmd.Flags().IntVarP(&cmdData.Timeout, "timeout", "t", int(*defaultTimeout), "Resources tracking timeout in seconds ($WERF_TIMEOUT by default)")
-	cmd.Flags().BoolVarP(&cmdData.AutoRollback, "auto-rollback", "R", util.GetBoolEnvironmentDefaultFalse("WERF_AUTO_ROLLBACK"), "Enable auto rollback of the failed release to the previous deployed release version when current deploy process have failed ($WERF_AUTO_ROLLBACK by default)")
-	cmd.Flags().BoolVarP(&cmdData.AutoRollback, "atomic", "", util.GetBoolEnvironmentDefaultFalse("WERF_ATOMIC"), "Enable auto rollback of the failed release to the previous deployed release version when current deploy process have failed ($WERF_ATOMIC by default)")
 
 	return cmd
 }
@@ -518,23 +503,6 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		// 2. rollback should rollback to the last succesfull release, not last release
 		// 3. don't forget errs.FormatTemplatingError if any errors occurs
 
-		autoRollback := common.NewBool(cmdData.AutoRollback)
-		if *autoRollback {
-			return fmt.Errorf("--auto-rollback and --atomic not yet supported with new deploy engine")
-		}
-
-		trackReadinessTimeout := *common.NewDuration(time.Duration(cmdData.Timeout) * time.Second)
-		trackDeletionTimeout := trackReadinessTimeout
-		showResourceProgressPeriod := time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second
-		showHookResourceProgressPeriod := time.Duration(*commonCmdData.HooksStatusProgressPeriodSeconds) * time.Second
-		saveDeployReport := common.GetSaveDeployReport(&commonCmdData)
-		deployReportPath, err := common.GetDeployReportPath(&commonCmdData)
-		if err != nil {
-			return fmt.Errorf("error getting deploy report path: %w", err)
-		}
-
-		deployGraphPath := common.GetDeployGraphPath(&commonCmdData)
-		saveDeployGraph := deployGraphPath != ""
 		networkParallelism := common.GetNetworkParallelism(&commonCmdData)
 		serviceAnnotations := map[string]string{
 			"werf.io/version":      werf.Version,
@@ -563,20 +531,6 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		chartPathOptions := action.ChartPathOptions{}
 		chartPathOptions.SetRegistryClient(actionConfig.RegistryClient)
 
-		actionConfig.Releases.MaxHistory = *commonCmdData.ReleasesHistoryMax
-
-		// FIXME(ilya-lesikov): for local commands (lint, ...)
-		// if false {
-		// 	// allow specifying kube version and additional capabilities manually
-		// 	actionConfig.Capabilities = chartutil.DefaultCapabilities.Copy()
-		// 	actionConfig.KubeClient = &kubefake.PrintingKubeClient{Out: ioutil.Discard}
-		// 	mem := driver.NewMemory()
-		// 	mem.SetNamespace(releaseNamespace.Name())
-		// 	actionConfig.Releases = storage.Init(mem)
-		// }
-
-		tracker := resrctracker.NewResourceTracker(clientFactory.Static(), clientFactory.Dynamic(), clientFactory.Discovery(), clientFactory.Mapper())
-
 		return command_helpers.LockReleaseWrapper(ctx, releaseName, lockManager, func() error {
 			log.Default.Info(ctx, "Constructing release history ...")
 			history, err := rlshistor.NewHistory(releaseName, releaseNamespace.Name(), actionConfig.Releases, rlshistor.HistoryOptions{
@@ -592,16 +546,14 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 				return fmt.Errorf("error getting last deployed release: %w", err)
 			}
 
-			prevDeployedRelease, prevDeployedReleaseFound, err := history.LastDeployedRelease()
+			_, prevDeployedReleaseFound, err := history.LastDeployedRelease()
 			if err != nil {
 				return fmt.Errorf("error getting last deployed release: %w", err)
 			}
 
 			var newRevision int
-			var firstDeployed time.Time
 			if prevReleaseFound {
 				newRevision = prevRelease.Revision() + 1
-				firstDeployed = prevRelease.FirstDeployed()
 			} else {
 				newRevision = 1
 			}
@@ -638,10 +590,13 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 			}
 
 			var prevRelGeneralResources []*resrc.GeneralResource
+			var prevRelFailed bool
 			if prevReleaseFound {
 				prevRelGeneralResources = prevRelease.GeneralResources()
+				prevRelFailed = prevRelease.Failed()
 			}
 
+			// FIXME(ilya-lesikov): no releasable resources needed
 			log.Default.Info(ctx, "Processing resources ...")
 			resProcessor := resrcprocssr.NewDeployableResourcesProcessor(
 				deployType,
@@ -678,217 +633,32 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 				return fmt.Errorf("error processing deployable resources: %w", err)
 			}
 
-			log.Default.Info(ctx, "Constructing new release ...")
-			newRel, err := rls.NewRelease(releaseName, releaseNamespace.Name(), newRevision, chartTree.ReleaseValues(), chartTree.LegacyChart(), resProcessor.ReleasableHookResources(), resProcessor.ReleasableGeneralResources(), chartTree.Notes(), rls.ReleaseOptions{
-				FirstDeployed: firstDeployed,
-				Mapper:        clientFactory.Mapper(),
-			})
-			if err != nil {
-				return fmt.Errorf("error constructing new release: %w", err)
-			}
-
-			log.Default.Info(ctx, "Constructing new deploy plan ...")
-			deployPlanBuilder := plnbuilder.NewDeployPlanBuilder(
-				deployType,
+			log.Default.Info(ctx, "Calculating planned changes ...")
+			createdChanges, recreatedChanges, updatedChanges, appliedChanges, deletedChanges := resrcchangcalc.CalculatePlannedChanges(
 				resProcessor.DeployableReleaseNamespaceInfo(),
 				resProcessor.DeployableStandaloneCRDsInfos(),
 				resProcessor.DeployableHookResourcesInfos(),
 				resProcessor.DeployableGeneralResourcesInfos(),
 				resProcessor.DeployablePrevReleaseGeneralResourcesInfos(),
-				newRel,
-				history,
-				clientFactory.KubeClient(),
-				clientFactory.Mapper(),
-				tracker,
-				plnbuilder.DeployPlanBuilderOptions{
-					PrevRelease:            prevRelease,
-					PrevDeployedRelease:    prevDeployedRelease,
-					CreationTimeout:        trackReadinessTimeout,
-					ReadinessTimeout:       trackReadinessTimeout,
-					DeletionTimeout:        trackDeletionTimeout,
-					ShowProgressPeriod:     showResourceProgressPeriod,
-					ShowHookProgressPeriod: showHookResourceProgressPeriod,
-				},
+				prevRelFailed,
 			)
 
-			plan, err := deployPlanBuilder.Build(ctx)
-			if err != nil {
-				return fmt.Errorf("error building deploy plan: %w", err)
-			}
-
-			if saveDeployGraph {
-				if err := plan.SaveDOT(deployGraphPath); err != nil {
-					return fmt.Errorf("error saving deploy graph: %w", err)
-				}
-			}
-
-			if useless, err := plan.Useless(); err != nil {
-				return fmt.Errorf("error checking if deploy plan will do nothing useful: %w", err)
-			} else if useless {
-				log.Default.Info(ctx, color.Style{color.Bold, color.Green}.Render("Skipped release")+" %q (namespace: %q): cluster resources already as desired", releaseName, releaseNamespace.Name())
-				return nil
-			}
-
-			log.Default.Info(ctx, "Executing deploy plan ...")
-			planExecutor := plnexectr.NewPlanExecutor(plan, plnexectr.PlanExecutorOptions{
-				NetworkParallelism: networkParallelism,
-			})
-
-			var finalErrs []error
-
-			planExecutionErr := planExecutor.Execute(ctx)
-			if planExecutionErr != nil {
-				finalErrs = append(finalErrs, fmt.Errorf("error executing deploy plan: %w", planExecutionErr))
-			}
-
-			var worthyCompletedOps []opertn.Operation
-			if ops, found, err := plan.WorthyCompletedOperations(); err != nil {
-				finalErrs = append(finalErrs, fmt.Errorf("error getting worthy completed operations: %w", err))
-			} else if found {
-				worthyCompletedOps = ops
-			}
-
-			var worthyCanceledOps []opertn.Operation
-			if ops, found, err := plan.WorthyCanceledOperations(); err != nil {
-				finalErrs = append(finalErrs, fmt.Errorf("error getting worthy canceled operations: %w", err))
-			} else if found {
-				worthyCanceledOps = ops
-			}
-
-			var worthyFailedOps []opertn.Operation
-			if ops, found, err := plan.WorthyFailedOperations(); err != nil {
-				finalErrs = append(finalErrs, fmt.Errorf("error getting worthy failed operations: %w", err))
-			} else if found {
-				worthyFailedOps = ops
-			}
-
-			if errs := func() []error {
-				if planExecutionErr == nil {
-					return nil
-				}
-
-				if ops, found, err := plan.OperationsMatch(regexp.MustCompile(fmt.Sprintf(`^%s/%s$`, opertn.TypeCreatePendingReleaseOperation, newRel.ID()))); err != nil {
-					return []error{fmt.Errorf("error getting pending release operation: %w", err)}
-				} else if !found {
-					panic("no pending release operation found")
-				} else if ops[0].Status() != opertn.StatusCompleted {
-					return nil
-				}
-
-				log.Default.Info(ctx, "Building failure deploy plan ...")
-				failurePlanBuilder := plnbuilder.NewDeployFailurePlanBuilder(
-					plan,
-					resProcessor.DeployableHookResourcesInfos(),
-					resProcessor.DeployableGeneralResourcesInfos(),
-					newRel,
-					history,
-					clientFactory.KubeClient(),
-					plnbuilder.DeployFailurePlanBuilderOptions{
-						PrevRelease: prevRelease,
-					},
-				)
-
-				failurePlan, err := failurePlanBuilder.Build(ctx)
-				if err != nil {
-					return []error{fmt.Errorf("error building failure plan: %w", err)}
-				}
-
-				if useless, err := failurePlan.Useless(); err != nil {
-					return []error{fmt.Errorf("error checking if failure plan will do nothing useful: %w", err)}
-				} else if useless {
-					return nil
-				}
-
-				log.Default.Info(ctx, "Executing failure deploy plan ...")
-				failurePlanExecutor := plnexectr.NewPlanExecutor(failurePlan, plnexectr.PlanExecutorOptions{
-					NetworkParallelism: networkParallelism,
-				})
-
-				var finalErrs []error
-
-				if err := failurePlanExecutor.Execute(ctx); err != nil {
-					finalErrs = append(finalErrs, fmt.Errorf("error executing failure plan: %w", err))
-				}
-
-				if ops, found, err := failurePlan.WorthyCompletedOperations(); err != nil {
-					finalErrs = append(finalErrs, fmt.Errorf("error getting worthy completed operations: %w", err))
-				} else if found {
-					worthyCompletedOps = append(worthyCompletedOps, ops...)
-				}
-
-				if ops, found, err := failurePlan.WorthyFailedOperations(); err != nil {
-					finalErrs = append(finalErrs, fmt.Errorf("error getting worthy failed operations: %w", err))
-				} else if found {
-					worthyFailedOps = append(worthyFailedOps, ops...)
-				}
-
-				if ops, found, err := failurePlan.WorthyCanceledOperations(); err != nil {
-					finalErrs = append(finalErrs, fmt.Errorf("error getting worthy canceled operations: %w", err))
-				} else if found {
-					worthyCanceledOps = append(worthyCanceledOps, ops...)
-				}
-
-				return finalErrs
-			}(); len(errs) > 0 {
-				finalErrs = append(finalErrs, errs...)
-			}
-
-			report := reprt.NewReport(
-				worthyCompletedOps,
-				worthyCanceledOps,
-				worthyFailedOps,
-				newRel,
+			resrcchanglog.LogPlannedChanges(
+				ctx,
+				releaseName,
+				releaseNamespace.Name(),
+				createdChanges,
+				recreatedChanges,
+				updatedChanges,
+				appliedChanges,
+				deletedChanges,
 			)
 
-			report.Print(ctx)
-
-			if saveDeployReport {
-				if err := report.Save(deployReportPath); err != nil {
-					finalErrs = append(finalErrs, fmt.Errorf("error saving deploy report: %w", err))
-				}
-			}
-
-			if planExecutionErr != nil {
-				return utls.Multierrorf("failed release %q (namespace: %q)", finalErrs, releaseName, releaseNamespace.Name())
-			} else if len(finalErrs) > 0 {
-				return utls.Multierrorf("succeeded release %q (namespace: %q), but errors encountered", finalErrs, releaseName, releaseNamespace.Name())
-			} else {
-				log.Default.Info(ctx, color.Style{color.Bold, color.Green}.Render("Succeeded release")+" %q (namespace: %q)", releaseName, releaseNamespace.Name())
-				return nil
-			}
-		})
-	} else {
-		var deployReportPath *string
-		if common.GetSaveDeployReport(&commonCmdData) {
-			if path, err := common.GetDeployReportPath(&commonCmdData); err != nil {
-				return fmt.Errorf("unable to get deploy report path: %w", err)
-			} else {
-				deployReportPath = &path
-			}
-		}
-
-		helmUpgradeCmd, _ := helm_v3.NewUpgradeCmd(actionConfig, logboek.OutStream(), helm_v3.UpgradeCmdOptions{
-			StagesSplitter:              helm.NewStagesSplitter(),
-			StagesExternalDepsGenerator: helm.NewStagesExternalDepsGenerator(&actionConfig.RESTClientGetter, &namespace),
-			ChainPostRenderer:           wc.ChainPostRenderer,
-			ValueOpts:                   valueOpts,
-			CreateNamespace:             common.NewBool(true),
-			Install:                     common.NewBool(true),
-			Wait:                        common.NewBool(true),
-			Atomic:                      common.NewBool(cmdData.AutoRollback),
-			Timeout:                     common.NewDuration(time.Duration(cmdData.Timeout) * time.Second),
-			IgnorePending:               common.NewBool(true),
-			CleanupOnFail:               common.NewBool(true),
-			DeployReportPath:            deployReportPath,
-		})
-
-		return command_helpers.LockReleaseWrapper(ctx, releaseName, lockManager, func() error {
-			if err := helmUpgradeCmd.RunE(helmUpgradeCmd, []string{releaseName, filepath.Join(giterminismManager.ProjectDir(), chartDir)}); err != nil {
-				return fmt.Errorf("helm upgrade have failed: %w", err)
-			}
 			return nil
 		})
 	}
+
+	return nil
 }
 
 func createMaintenanceHelper(ctx context.Context, actionConfig *action.Configuration, kubeConfigOptions kube.KubeConfigOptions) *maintenance_helper.MaintenanceHelper {

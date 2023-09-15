@@ -23,10 +23,8 @@ import (
 	"github.com/werf/werf/pkg/util"
 )
 
-const FEATURE_TOGGLE_ENV_EXPERIMENTAL_DEPLOY_ENGINE = "WERF_EXPERIMENTAL_DEPLOY_ENGINE"
-
 func IsExperimentalEngine() bool {
-	return util.GetBoolEnvironmentDefaultFalse(FEATURE_TOGGLE_ENV_EXPERIMENTAL_DEPLOY_ENGINE)
+	return util.GetBoolEnvironmentDefaultFalse("WERF_EXPERIMENTAL_DEPLOY_ENGINE")
 }
 
 type InitActionConfigOptions struct {
