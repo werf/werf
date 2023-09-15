@@ -496,13 +496,6 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 	}
 
 	if helm.IsExperimentalEngine() {
-		// FIXME(ilya-lesikov):
-		// 1. if last succeeded release was cleaned up because of release limit, werf will see
-		// current release as first install. We might want to not delete last succeeded or last
-		// uninstalled release ever.
-		// 2. rollback should rollback to the last succesfull release, not last release
-		// 3. don't forget errs.FormatTemplatingError if any errors occurs
-
 		networkParallelism := common.GetNetworkParallelism(&commonCmdData)
 		serviceAnnotations := map[string]string{
 			"werf.io/version":      werf.Version,
@@ -527,7 +520,6 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 			Mapper: clientFactory.Mapper(),
 		})
 
-		// FIXME(ilya-lesikov): there is more chartpath options, are they needed?
 		chartPathOptions := action.ChartPathOptions{}
 		chartPathOptions.SetRegistryClient(actionConfig.RegistryClient)
 
