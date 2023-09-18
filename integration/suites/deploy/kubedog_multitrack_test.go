@@ -240,7 +240,7 @@ var _ = Describe("Kubedog multitrack — werf's kubernetes resources tracker", f
 					if strings.Contains(line, `Allowed failures count for deploy/mydeploy5 exceeded 2 errors: stop tracking immediately!`) {
 						gotAllowedErrorsExceeded = true
 					}
-					if isTooManyProbesTriggered(line, "readiness", 7) {
+					if isTooManyProbesTriggered(line, "readiness", 8) {
 						gotTooManyProbesTriggered = true
 					}
 
