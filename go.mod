@@ -286,7 +286,10 @@ require (
 	github.com/tchap/go-patricia/v2 v2.3.1 // indirect
 	github.com/theupdateframework/go-tuf v0.5.2 // indirect
 	github.com/theupdateframework/notary v0.6.1 // indirect
+	github.com/tidwall/gjson v1.14.2 // indirect
+	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
+	github.com/tidwall/sjson v1.2.5 // indirect
 	github.com/titanous/rocacheck v0.0.0-20171023193734-afe73141d399 // indirect
 	github.com/tonistiigi/fsutil v0.0.0-20230105215944-fb433841cbfa // indirect
 	github.com/tonistiigi/units v0.0.0-20180711220420-6950e57a87ea // indirect
@@ -296,6 +299,7 @@ require (
 	github.com/vbauerster/mpb/v8 v8.3.0 // indirect
 	github.com/vishvananda/netlink v1.2.1-beta.2 // indirect
 	github.com/vishvananda/netns v0.0.0-20210104183010-2eb08e3e575f // indirect
+	github.com/wI2L/jsondiff v0.4.0 // indirect
 	github.com/xanzy/ssh-agent v0.3.1 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
@@ -353,6 +357,6 @@ replace (
 	github.com/helm/helm-2to3 => github.com/werf/3p-helm-2to3 v0.0.0-20230313155428-cf9dd655c0e3 // switch back to upstream when merged: https://github.com/helm/helm-2to3/pull/224
 	github.com/jaguilar/vt100 => github.com/tonistiigi/vt100 v0.0.0-20190402012908-ad4c4a574305 // upstream not maintained
 	github.com/maorfr/helm-plugin-utils => github.com/werf/3p-helm-plugin-utils v0.6.1-0.20230313152239-057595ce9d57 // switch back to upstream when merged: https://github.com/maorfr/helm-plugin-utils/pull/17
-	helm.sh/helm/v3 => github.com/werf/3p-helm/v3 v3.0.0-20230915193754-e8321eac1aed
+	helm.sh/helm/v3 => github.com/werf/3p-helm/v3 v3.0.0-20230920161320-808d9f218816
 	k8s.io/helm => github.com/werf/helm v0.0.0-20210202111118-81e74d46da0f
 )
