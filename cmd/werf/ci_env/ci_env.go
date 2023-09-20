@@ -256,6 +256,13 @@ func generateGitlabEnvs(ctx context.Context, w io.Writer, dockerConfig string) e
 	}
 	writeEnv(w, "WERF_ADD_ANNOTATION_CI_COMMIT", ciCommit, true)
 
+	var ciGitTag string
+	ciCommitTag := os.Getenv("CI_COMMIT_TAG")
+	if ciCommitTag != "" {
+		ciGitTag = fmt.Sprintf("ci.werf.io/tag=%s", ciCommitTag)
+	}
+	writeEnv(w, "WERF_ADD_ANNOTATION_CI_GIT_TAG", ciGitTag, true)
+
 	var gitlabCIPipelineUrl string
 	ciPipelineIdEnv := os.Getenv("CI_PIPELINE_ID")
 	if ciProjectUrlEnv != "" && ciPipelineIdEnv != "" {
@@ -347,6 +354,14 @@ func generateGithubEnvs(ctx context.Context, w io.Writer, dockerConfig string) e
 		ciCommit = fmt.Sprintf("ci.werf.io/commit=%s", ciCommitShaEnv)
 	}
 	writeEnv(w, "WERF_ADD_ANNOTATION_CI_COMMIT", ciCommit, true)
+
+	var ciGitTag string
+	ciRefType := os.Getenv("GITHUB_REF_TYPE")
+	ciRefName := os.Getenv("GITHUB_REF_NAME")
+	if ciRefType == "tag" && ciRefName != "" {
+		ciGitTag = fmt.Sprintf("ci.werf.io/tag=%s", ciRefName)
+	}
+	writeEnv(w, "WERF_ADD_ANNOTATION_CI_GIT_TAG", ciGitTag, true)
 
 	var workflowRunUrl string
 	ciWorkflowRunIdEnv := os.Getenv("GITHUB_RUN_ID")
