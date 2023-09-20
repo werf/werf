@@ -1,5 +1,23 @@
 # Changelog
 
+### [1.2.256](https://www.github.com/werf/werf/compare/v1.2.255...v1.2.256) (2023-09-20)
+
+
+### Features
+
+* **ci-env:** add ci.werf.io/tag automatic annotation ([#5789](https://www.github.com/werf/werf/issues/5789)) ([b36586f](https://www.github.com/werf/werf/commit/b36586f616d19cccf16bfedd7bd0ec4c4b077704))
+* complete rework of managed fields handling + minor fixes ([2d41d32](https://www.github.com/werf/werf/commit/2d41d3258881ef0b467d017f9dabd7d1653c20e6))
+* **exp-engine:** "werf plan" command, "werf converge" improvements ([f3a2b0b](https://www.github.com/werf/werf/commit/f3a2b0bec4e9de792a55f1c4e8ab1b3c9ca06766))
+* **exp-engine:** complete rework of managed fields handling + ([2d41d32](https://www.github.com/werf/werf/commit/2d41d3258881ef0b467d017f9dabd7d1653c20e6))
+
+
+### Bug Fixes
+
+* hide CRDs create diffs from plan ([2d41d32](https://www.github.com/werf/werf/commit/2d41d3258881ef0b467d017f9dabd7d1653c20e6))
+* remove "..." from log messages ([2d41d32](https://www.github.com/werf/werf/commit/2d41d3258881ef0b467d017f9dabd7d1653c20e6))
+* show "insignificant changes" in plan if filtered resource diff is ([2d41d32](https://www.github.com/werf/werf/commit/2d41d3258881ef0b467d017f9dabd7d1653c20e6))
+* unreliable deletion of resources removed from release due to race ([327f1fd](https://www.github.com/werf/werf/commit/327f1fde2aceb2a9be43191c9fdcf9779ab1bc84))
+
 ### [1.2.255](https://www.github.com/werf/werf/compare/v1.2.254...v1.2.255) (2023-09-13)
 
 
