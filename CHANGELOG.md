@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.258](https://www.github.com/werf/werf/compare/v1.2.257...v1.2.258) (2023-09-21)
+
+
+### Bug Fixes
+
+* **exp-engine:** divide by zero error if no deployable resources; field adoption didn't work if live resource up to date ([b2e7742](https://www.github.com/werf/werf/commit/b2e774289c8170e557f3e6ea70577a38c4eb4ec3))
+
 ### [1.2.257](https://www.github.com/werf/werf/compare/v1.2.256...v1.2.257) (2023-09-21)
 
 
