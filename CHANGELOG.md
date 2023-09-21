@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.257](https://www.github.com/werf/werf/compare/v1.2.256...v1.2.257) (2023-09-21)
+
+
+### Bug Fixes
+
+* **exp-engine:** replace strategic patch with merge patch ([ba7a9df](https://www.github.com/werf/werf/commit/ba7a9dfe62f565d9ff19be696352e28418c92227))
+
 ### [1.2.256](https://www.github.com/werf/werf/compare/v1.2.255...v1.2.256) (2023-09-20)
 
 
