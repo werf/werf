@@ -1,5 +1,14 @@
 # Changelog
 
+### [1.2.259](https://www.github.com/werf/werf/compare/v1.2.258...v1.2.259) (2023-09-21)
+
+
+### Bug Fixes
+
+* don't add useless "name" label when creating release namespace ([9621115](https://www.github.com/werf/werf/commit/9621115593ef436e95086a13c6ad68daa9a0e6df))
+* **exp-engine:** cosmetics ([37888c6](https://www.github.com/werf/werf/commit/37888c6951607bbf7e83e1d826c2c7a075ef3f45))
+* **exp-engine:** steal managed fields from any manager with prefix "werf" ([73cfb21](https://www.github.com/werf/werf/commit/73cfb219e1b1f18b5861069b21048c41cfaa47b4))
+
 ### [1.2.258](https://www.github.com/werf/werf/compare/v1.2.257...v1.2.258) (2023-09-21)
 
 
