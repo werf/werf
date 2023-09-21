@@ -19,9 +19,6 @@ func CreateNamespaceIfNotExists(client kubernetes.Interface, namespace string) e
 			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name: namespace,
-				Labels: map[string]string{
-					"name": namespace,
-				},
 			},
 		}
 
