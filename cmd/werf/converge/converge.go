@@ -578,7 +578,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		tracker := resrctracker.NewResourceTracker(clientFactory.Static(), clientFactory.Dynamic(), clientFactory.Discovery(), clientFactory.Mapper())
 
 		return command_helpers.LockReleaseWrapper(ctx, releaseName, lockManager, func() error {
-			log.Default.Info(ctx, "Constructing release history ...")
+			log.Default.Info(ctx, "Constructing release history")
 			history, err := rlshistor.NewHistory(releaseName, releaseNamespace.Name(), actionConfig.Releases, rlshistor.HistoryOptions{
 				Mapper:          clientFactory.Mapper(),
 				DiscoveryClient: clientFactory.Discovery(),
@@ -615,7 +615,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 				deployType = helmcommon.DeployTypeInitial
 			}
 
-			log.Default.Info(ctx, "Constructing chart tree ...")
+			log.Default.Info(ctx, "Constructing chart tree")
 			chartTree, err := chrttree.NewChartTree(
 				ctx,
 				chartDir,
@@ -642,7 +642,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 				prevRelGeneralResources = prevRelease.GeneralResources()
 			}
 
-			log.Default.Info(ctx, "Processing resources ...")
+			log.Default.Info(ctx, "Processing resources")
 			resProcessor := resrcprocssr.NewDeployableResourcesProcessor(
 				deployType,
 				releaseName,
@@ -678,7 +678,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 				return fmt.Errorf("error processing deployable resources: %w", err)
 			}
 
-			log.Default.Info(ctx, "Constructing new release ...")
+			log.Default.Info(ctx, "Constructing new release")
 			newRel, err := rls.NewRelease(releaseName, releaseNamespace.Name(), newRevision, chartTree.ReleaseValues(), chartTree.LegacyChart(), resProcessor.ReleasableHookResources(), resProcessor.ReleasableGeneralResources(), chartTree.Notes(), rls.ReleaseOptions{
 				FirstDeployed: firstDeployed,
 				Mapper:        clientFactory.Mapper(),
@@ -687,7 +687,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 				return fmt.Errorf("error constructing new release: %w", err)
 			}
 
-			log.Default.Info(ctx, "Constructing new deploy plan ...")
+			log.Default.Info(ctx, "Constructing new deploy plan")
 			deployPlanBuilder := plnbuilder.NewDeployPlanBuilder(
 				deployType,
 				resProcessor.DeployableReleaseNamespaceInfo(),
@@ -729,7 +729,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 				return nil
 			}
 
-			log.Default.Info(ctx, "Executing deploy plan ...")
+			log.Default.Info(ctx, "Executing deploy plan")
 			planExecutor := plnexectr.NewPlanExecutor(plan, plnexectr.PlanExecutorOptions{
 				NetworkParallelism: networkParallelism,
 			})
@@ -775,7 +775,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 					return nil
 				}
 
-				log.Default.Info(ctx, "Building failure deploy plan ...")
+				log.Default.Info(ctx, "Building failure deploy plan")
 				failurePlanBuilder := plnbuilder.NewDeployFailurePlanBuilder(
 					plan,
 					resProcessor.DeployableHookResourcesInfos(),
@@ -799,7 +799,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 					return nil
 				}
 
-				log.Default.Info(ctx, "Executing failure deploy plan ...")
+				log.Default.Info(ctx, "Executing failure deploy plan")
 				failurePlanExecutor := plnexectr.NewPlanExecutor(failurePlan, plnexectr.PlanExecutorOptions{
 					NetworkParallelism: networkParallelism,
 				})

@@ -524,7 +524,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		chartPathOptions.SetRegistryClient(actionConfig.RegistryClient)
 
 		return command_helpers.LockReleaseWrapper(ctx, releaseName, lockManager, func() error {
-			log.Default.Info(ctx, "Constructing release history ...")
+			log.Default.Info(ctx, "Constructing release history")
 			history, err := rlshistor.NewHistory(releaseName, releaseNamespace.Name(), actionConfig.Releases, rlshistor.HistoryOptions{
 				Mapper:          clientFactory.Mapper(),
 				DiscoveryClient: clientFactory.Discovery(),
@@ -559,7 +559,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 				deployType = helmcommon.DeployTypeInitial
 			}
 
-			log.Default.Info(ctx, "Constructing chart tree ...")
+			log.Default.Info(ctx, "Constructing chart tree")
 			chartTree, err := chrttree.NewChartTree(
 				ctx,
 				chartDir,
@@ -589,7 +589,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 			}
 
 			// FIXME(ilya-lesikov): no releasable resources needed
-			log.Default.Info(ctx, "Processing resources ...")
+			log.Default.Info(ctx, "Processing resources")
 			resProcessor := resrcprocssr.NewDeployableResourcesProcessor(
 				deployType,
 				releaseName,
@@ -625,7 +625,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 				return fmt.Errorf("error processing deployable resources: %w", err)
 			}
 
-			log.Default.Info(ctx, "Calculating planned changes ...")
+			log.Default.Info(ctx, "Calculating planned changes")
 			createdChanges, recreatedChanges, updatedChanges, appliedChanges, deletedChanges := resrcchangcalc.CalculatePlannedChanges(
 				resProcessor.DeployableReleaseNamespaceInfo(),
 				resProcessor.DeployableStandaloneCRDsInfos(),
