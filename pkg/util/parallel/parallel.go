@@ -25,6 +25,9 @@ func DoTasks(ctx context.Context, numberOfTasks int, options DoTasksOptions, tas
 		return nil
 	}
 
+	ctx, cancelCtx := context.WithCancel(ctx)
+	defer cancelCtx()
+
 	// determine number of tasks
 	numberOfWorkers := options.MaxNumberOfWorkers
 	if numberOfWorkers <= 0 || numberOfWorkers > numberOfTasks {
