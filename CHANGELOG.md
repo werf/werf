@@ -1,5 +1,17 @@
 # Changelog
 
+### [1.2.260](https://www.github.com/werf/werf/compare/v1.2.259...v1.2.260) (2023-09-25)
+
+
+### Features
+
+* **exp-engine:** hide sensitive Secret's diff in werf plan ([27192fd](https://www.github.com/werf/werf/commit/27192fd0b2fd66fc25c2553c15f984bd0a53dacb))
+
+
+### Bug Fixes
+
+* **parallel:** cancel context for active tasks when task fails ([#5800](https://www.github.com/werf/werf/issues/5800)) ([1d062fd](https://www.github.com/werf/werf/commit/1d062fd54e125ff145ef7d113f4beab9f2fe3a9f))
+
 ### [1.2.259](https://www.github.com/werf/werf/compare/v1.2.258...v1.2.259) (2023-09-21)
 
 
