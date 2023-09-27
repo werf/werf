@@ -7,6 +7,13 @@
 
 * **exp-engine:** helm hooks with multiple pre/post conditions always skipped ([5d0db6d](https://www.github.com/werf/werf/commit/5d0db6d130ebbd101043c8adb900656b08dad85c))
 
+### [1.2.261](https://www.github.com/werf/werf/compare/v1.2.260...v1.2.261) (2023-09-27)
+
+
+### Bug Fixes
+
+* **exp-engine:** helm hooks with multiple pre/post conditions always skipped ([5d0db6d](https://www.github.com/werf/werf/commit/5d0db6d130ebbd101043c8adb900656b08dad85c))
+
 ### [1.2.260](https://www.github.com/werf/werf/compare/v1.2.259...v1.2.260) (2023-09-25)
 
 
