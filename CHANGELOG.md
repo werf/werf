@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.263](https://www.github.com/werf/werf/compare/v1.2.262...v1.2.263) (2023-09-28)
+
+
+### Bug Fixes
+
+* **exp-engine:** panic connecting internal dependencies ([b881bed](https://www.github.com/werf/werf/commit/b881bedf875b3d7b35aa171144a905a5ae89778f))
+
 ### [1.2.262](https://www.github.com/werf/werf/compare/v1.2.261...v1.2.262) (2023-09-28)
 
 
