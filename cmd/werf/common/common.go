@@ -328,6 +328,10 @@ func SetupDeployGraphPath(cmdData *CmdData, cmd *cobra.Command) {
 }
 
 func GetDeployGraphPath(cmdData *CmdData) string {
+	if strings.TrimSpace(*cmdData.DeployGraphPath) == "" {
+		return ""
+	}
+
 	switch ext := filepath.Ext(*cmdData.DeployGraphPath); ext {
 	case ".dot":
 		return *cmdData.DeployGraphPath
