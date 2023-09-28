@@ -1,5 +1,13 @@
 # Changelog
 
+### [1.2.262](https://www.github.com/werf/werf/compare/v1.2.261...v1.2.262) (2023-09-28)
+
+
+### Bug Fixes
+
+* **exp-engine:** .dot graph saved even if not requested ([60b31ee](https://www.github.com/werf/werf/commit/60b31eecd0698ae964f8e74f93e2d505decfaf99))
+* **exp-engine:** dependencies not connecting to Apply operations ([06efd9a](https://www.github.com/werf/werf/commit/06efd9a72ddf357506a3935e6629c85e88d52067))
+
 ### [1.2.261](https://www.github.com/werf/werf/compare/v1.2.260...v1.2.261) (2023-09-27)
 
 
