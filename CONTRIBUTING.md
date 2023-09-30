@@ -21,6 +21,7 @@ The first thing we recommend is to check the existing [issues](https://github.co
    - [Go](https://golang.org/doc/install) 1.11.4+
    - [Docker](https://docs.docker.com/get-docker/)
    - [go-task](https://taskfile.dev/installation/) (build tool to run common workflows)
+   - [ginkgo](https://onsi.github.io/ginkgo/#installing-ginkgo) (testing framework required to run tests)
 
 4. Make changes.
 5. Build werf:
