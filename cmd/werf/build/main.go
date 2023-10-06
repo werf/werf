@@ -183,6 +183,11 @@ func runMain(ctx context.Context, imagesToProcess build.ImagesToProcess) error {
 		}
 	}()
 
+	common.SetupOndemandKubeInitializer(*commonCmdData.KubeContext, *commonCmdData.KubeConfig, *commonCmdData.KubeConfigBase64, *commonCmdData.KubeConfigPathMergeList)
+	if err := common.GetOndemandKubeInitializer().Init(ctx); err != nil {
+		return err
+	}
+
 	if *commonCmdData.Follow {
 		logboek.LogOptionalLn()
 		return common.FollowGitHead(ctx, &commonCmdData, func(ctx context.Context, headCommitGiterminismManager giterminism_manager.Interface) error {
