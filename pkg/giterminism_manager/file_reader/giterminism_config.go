@@ -8,9 +8,7 @@ import (
 	"github.com/werf/logboek/pkg/types"
 )
 
-const GiterminismConfigName = "werf-giterminism.yaml"
-
-func (r FileReader) IsGiterminismConfigExistAnywhere(ctx context.Context) (exist bool, err error) {
+func (r FileReader) IsGiterminismConfigExistAnywhere(ctx context.Context, relPath string) (exist bool, err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("IsGiterminismConfigExistAnywhere").
 		Options(func(options types.LogBlockOptionsInterface) {
@@ -19,7 +17,7 @@ func (r FileReader) IsGiterminismConfigExistAnywhere(ctx context.Context) (exist
 			}
 		}).
 		Do(func() {
-			exist, err = r.IsConfigurationFileExistAnywhere(ctx, GiterminismConfigName)
+			exist, err = r.IsConfigurationFileExistAnywhere(ctx, relPath)
 
 			if debug() {
 				logboek.Context(ctx).Debug().LogF("exist: %v\nerr: %q\n", exist, err)
@@ -29,7 +27,7 @@ func (r FileReader) IsGiterminismConfigExistAnywhere(ctx context.Context) (exist
 	return
 }
 
-func (r FileReader) ReadGiterminismConfig(ctx context.Context) (data []byte, err error) {
+func (r FileReader) ReadGiterminismConfig(ctx context.Context, relPath string) (data []byte, err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("ReadGiterminismConfig").
 		Options(func(options types.LogBlockOptionsInterface) {
@@ -38,7 +36,7 @@ func (r FileReader) ReadGiterminismConfig(ctx context.Context) (data []byte, err
 			}
 		}).
 		Do(func() {
-			data, err = r.readGiterminismConfig(ctx)
+			data, err = r.readGiterminismConfig(ctx, relPath)
 
 			if debug() {
 				logboek.Context(ctx).Debug().LogF("dataLength: %v\nerr: %q\n", len(data), err)
@@ -52,8 +50,8 @@ func (r FileReader) ReadGiterminismConfig(ctx context.Context) (data []byte, err
 	return
 }
 
-func (r FileReader) readGiterminismConfig(ctx context.Context) ([]byte, error) {
-	return r.ReadAndCheckConfigurationFile(ctx, GiterminismConfigName, func(relPath string) bool {
+func (r FileReader) readGiterminismConfig(ctx context.Context, relPath string) ([]byte, error) {
+	return r.ReadAndCheckConfigurationFile(ctx, relPath, func(path string) bool {
 		return false
 	})
 }

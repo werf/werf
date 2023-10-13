@@ -80,6 +80,11 @@ func SetupConfigPath(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringVarP(cmdData.ConfigPath, "config", "", os.Getenv("WERF_CONFIG"), `Use custom configuration file (default $WERF_CONFIG or werf.yaml in working directory)`)
 }
 
+func SetupGiterminismConfigPath(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.GiterminismConfigRelPath = new(string)
+	cmd.Flags().StringVarP(cmdData.GiterminismConfigRelPath, "giterminism-config", "", os.Getenv("WERF_GITERMINISM_CONFIG"), "Custom path to the giterminism configuration file relative to working directory (default $WERF_GITERMINISM_CONFIG or werf-giterminism.yaml in working directory)")
+}
+
 func SetupConfigTemplatesDir(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.ConfigTemplatesDir = new(string)
 	cmd.Flags().StringVarP(cmdData.ConfigTemplatesDir, "config-templates-dir", "", os.Getenv("WERF_CONFIG_TEMPLATES_DIR"), `Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf in working directory)`)
@@ -1039,6 +1044,15 @@ func GetCustomWerfConfigRelPath(giterminismManager giterminism_manager.Interface
 	return util.GetRelativeToBaseFilepath(giterminismManager.ProjectDir(), customConfigPath), nil
 }
 
+func GetWerfGiterminismConfigRelPath(cmdData *CmdData) string {
+	path := cmdData.GiterminismConfigRelPath
+	if path == nil || *path == "" {
+		return "werf-giterminism.yaml"
+	}
+
+	return filepath.ToSlash(*path)
+}
+
 func GetCustomWerfConfigTemplatesDirRelPath(giterminismManager giterminism_manager.Interface, cmdData *CmdData) (string, error) {
 	customConfigTemplatesDirPath := *cmdData.ConfigTemplatesDir
 	if customConfigTemplatesDirPath == "" {
@@ -1095,7 +1109,9 @@ func GetGiterminismManager(ctx context.Context, cmdData *CmdData) (giterminism_m
 		return nil, err
 	}
 
-	return giterminism_manager.NewManager(ctx, workingDir, localGitRepo, headCommit, giterminism_manager.NewManagerOptions{
+	configRelPath := GetWerfGiterminismConfigRelPath(cmdData)
+
+	return giterminism_manager.NewManager(ctx, configRelPath, workingDir, localGitRepo, headCommit, giterminism_manager.NewManagerOptions{
 		LooseGiterminism: *cmdData.LooseGiterminism,
 		Dev:              *cmdData.Dev,
 	})

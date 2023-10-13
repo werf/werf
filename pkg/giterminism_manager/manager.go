@@ -17,7 +17,7 @@ type NewManagerOptions struct {
 	Dev              bool
 }
 
-func NewManager(ctx context.Context, projectDir string, localGitRepo *git_repo.Local, headCommit string, options NewManagerOptions) (Interface, error) {
+func NewManager(ctx context.Context, configRelPath, projectDir string, localGitRepo *git_repo.Local, headCommit string, options NewManagerOptions) (Interface, error) {
 	sharedOptions := &sharedOptions{
 		projectDir:       projectDir,
 		localGitRepo:     localGitRepo,
@@ -33,7 +33,7 @@ func NewManager(ctx context.Context, projectDir string, localGitRepo *git_repo.L
 
 	fr := file_reader.NewFileReader(sharedOptions)
 
-	c, err := config.NewConfig(ctx, fr)
+	c, err := config.NewConfig(ctx, fr, configRelPath)
 	if err != nil {
 		return nil, err
 	}
