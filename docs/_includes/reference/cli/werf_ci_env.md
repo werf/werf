@@ -88,6 +88,9 @@ werf ci-env CI_SYSTEM [options]
             * interactive terminal width or 140
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
+      --login-to-registry=true
+            Log in to CI-specific registry automatically if possible (default                       
+            $WERF_LOGIN_TO_REGISTRY).
       --loose-giterminism=false
             Loose werf giterminism mode restrictions (NOTE: not all restrictions can be removed,    
             more info https://werf.io/documentation/usage/project_configuration/giterminism.html,   
