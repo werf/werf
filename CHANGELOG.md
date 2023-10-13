@@ -1,5 +1,17 @@
 # Changelog
 
+### [1.2.265](https://www.github.com/werf/werf/compare/v1.2.264...v1.2.265) (2023-10-13)
+
+
+### Features
+
+* option to disable registry login in "werf ci-env" ([170d068](https://www.github.com/werf/werf/commit/170d06833ee17c6a26654bcba07b99b5c61643fe))
+
+
+### Bug Fixes
+
+* forbid "werf run" in Buildah mode ([09fb5bd](https://www.github.com/werf/werf/commit/09fb5bd58a0570d595a66b7b99b5601d44e86ee0))
+
 ### [1.2.264](https://www.github.com/werf/werf/compare/v1.2.263...v1.2.264) (2023-10-13)
 
 
