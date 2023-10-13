@@ -1,5 +1,20 @@
 # Changelog
 
+### [1.2.264](https://www.github.com/werf/werf/compare/v1.2.263...v1.2.264) (2023-10-13)
+
+
+### Features
+
+* add more tools to werf images; update werf images ([9ca24e7](https://www.github.com/werf/werf/commit/9ca24e77ff245a9452b2dbd44eb79d668ebec7dc))
+* configurable giterminism config path ([b852a34](https://www.github.com/werf/werf/commit/b852a347713b98da87b49383765f39341988f005))
+
+
+### Bug Fixes
+
+* "bundle copy --from" fails after "ci-env" ([6c8ed39](https://www.github.com/werf/werf/commit/6c8ed397f965c0a249bd88269e51ce19b7e61cb8))
+* **build:** initialize ondemandKubeInitializer for custom sync server in Kubernetes ([e08a901](https://www.github.com/werf/werf/commit/e08a9014c4c9d75444fac01004e774580d82bd32))
+* tone down --loose-giterminism warning ([938a9ab](https://www.github.com/werf/werf/commit/938a9ab8c3199b30ebd8c397b33fa426fe060803))
+
 ### [1.2.263](https://www.github.com/werf/werf/compare/v1.2.262...v1.2.263) (2023-09-28)
 
 
