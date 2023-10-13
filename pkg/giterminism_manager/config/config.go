@@ -10,8 +10,8 @@ import (
 	"github.com/werf/werf/pkg/path_matcher"
 )
 
-func NewConfig(ctx context.Context, fileReader fileReader) (c Config, err error) {
-	exist, err := fileReader.IsGiterminismConfigExistAnywhere(ctx)
+func NewConfig(ctx context.Context, fileReader fileReader, configRelPath string) (c Config, err error) {
+	exist, err := fileReader.IsGiterminismConfigExistAnywhere(ctx, configRelPath)
 	if err != nil {
 		return c, err
 	}
@@ -20,7 +20,7 @@ func NewConfig(ctx context.Context, fileReader fileReader) (c Config, err error)
 		return Config{}, nil
 	}
 
-	data, err := fileReader.ReadGiterminismConfig(ctx)
+	data, err := fileReader.ReadGiterminismConfig(ctx, configRelPath)
 	if err != nil {
 		return c, err
 	}
@@ -38,8 +38,8 @@ func NewConfig(ctx context.Context, fileReader fileReader) (c Config, err error)
 }
 
 type fileReader interface {
-	IsGiterminismConfigExistAnywhere(ctx context.Context) (bool, error)
-	ReadGiterminismConfig(ctx context.Context) ([]byte, error)
+	IsGiterminismConfigExistAnywhere(ctx context.Context, relPath string) (bool, error)
+	ReadGiterminismConfig(ctx context.Context, relPath string) ([]byte, error)
 }
 
 type Config struct {

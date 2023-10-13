@@ -64,6 +64,9 @@ werf ci-env CI_SYSTEM [options]
       --git-work-tree=''
             Use specified git work tree dir (default $WERF_WORK_TREE or lookup for directory that   
             contains .git in the current or parent directories)
+      --giterminism-config=''
+            Custom path to the giterminism configuration file relative to working directory         
+            (default $WERF_GITERMINISM_CONFIG or werf-giterminism.yaml in working directory)
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --log-color-mode='auto'
@@ -85,6 +88,9 @@ werf ci-env CI_SYSTEM [options]
             * interactive terminal width or 140
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
+      --login-to-registry=true
+            Log in to CI-specific registry automatically if possible (default                       
+            $WERF_LOGIN_TO_REGISTRY).
       --loose-giterminism=false
             Loose werf giterminism mode restrictions (NOTE: not all restrictions can be removed,    
             more info https://werf.io/documentation/usage/project_configuration/giterminism.html,   

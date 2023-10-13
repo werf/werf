@@ -17,7 +17,7 @@ type NewManagerOptions struct {
 	Dev              bool
 }
 
-func NewManager(ctx context.Context, projectDir string, localGitRepo *git_repo.Local, headCommit string, options NewManagerOptions) (Interface, error) {
+func NewManager(ctx context.Context, configRelPath, projectDir string, localGitRepo *git_repo.Local, headCommit string, options NewManagerOptions) (Interface, error) {
 	sharedOptions := &sharedOptions{
 		projectDir:       projectDir,
 		localGitRepo:     localGitRepo,
@@ -27,14 +27,13 @@ func NewManager(ctx context.Context, projectDir string, localGitRepo *git_repo.L
 	}
 
 	if options.LooseGiterminism {
-		err := errors.NewError(`DEPRECATION WARNING: The --loose-giterminism option (and WERF_LOOSE_GITERMINISM env variable) is forbidden and will be removed in v1.2!
-Please use werf-giterminism.yaml config instead to loosen giterminism restrictions if needed.`)
+		err := errors.NewError(`We recommend using werf-giterminism.yaml to loosen giterminism instead of using --loose-giterminism/WERF_LOOSE_GITERMINISM`)
 		logboek.Context(ctx).Warn().LogLn(err)
 	}
 
 	fr := file_reader.NewFileReader(sharedOptions)
 
-	c, err := config.NewConfig(ctx, fr)
+	c, err := config.NewConfig(ctx, fr, configRelPath)
 	if err != nil {
 		return nil, err
 	}

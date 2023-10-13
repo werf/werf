@@ -38,6 +38,7 @@ func NewGetNamespaceCmd(ctx context.Context) *cobra.Command {
 	common.SetupGitWorkTree(&getNamespaceCmdData, cmd)
 	common.SetupConfigTemplatesDir(&getNamespaceCmdData, cmd)
 	common.SetupConfigPath(&getNamespaceCmdData, cmd)
+	common.SetupGiterminismConfigPath(&getNamespaceCmdData, cmd)
 	common.SetupEnvironment(&getNamespaceCmdData, cmd)
 
 	common.SetupGiterminismOptions(&getNamespaceCmdData, cmd)

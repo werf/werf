@@ -96,15 +96,14 @@ func runCopy(ctx context.Context) error {
 		return err
 	}
 
-	fromAddrRaw := cmdData.From
-	if fromAddrRaw != "" && cmdData.Repo != "" {
-		return fmt.Errorf("unable to use --repo=ADDRESS and --from=ADDRESS params at the same time: please specify only --from=ADDRESS param, --repo param has been deprecated")
-	} else if cmdData.Repo != "" {
+	var fromAddrRaw string
+	if cmdData.From == "" && cmdData.Repo == "" {
+		return fmt.Errorf("--from=ADDRESS param required")
+	} else if cmdData.From != "" {
+		fromAddrRaw = cmdData.From
+	} else {
 		logboek.Context(ctx).Warn().LogF("Please use --from=ADDRESS param instead of deprecated --repo=ADDRESS param\n")
 		fromAddrRaw = cmdData.Repo
-	}
-	if fromAddrRaw == "" {
-		return fmt.Errorf("--from=ADDRESS param required")
 	}
 
 	toAddrRaw := cmdData.To

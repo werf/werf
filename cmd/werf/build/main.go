@@ -69,6 +69,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupGitWorkTree(&commonCmdData, cmd)
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
 	common.SetupConfigPath(&commonCmdData, cmd)
+	common.SetupGiterminismConfigPath(&commonCmdData, cmd)
 	common.SetupEnvironment(&commonCmdData, cmd)
 
 	common.SetupGiterminismOptions(&commonCmdData, cmd)
@@ -182,6 +183,11 @@ func runMain(ctx context.Context, imagesToProcess build.ImagesToProcess) error {
 			logboek.Warn().LogF("WARNING: ssh agent termination failed: %s\n", err)
 		}
 	}()
+
+	common.SetupOndemandKubeInitializer(*commonCmdData.KubeContext, *commonCmdData.KubeConfig, *commonCmdData.KubeConfigBase64, *commonCmdData.KubeConfigPathMergeList)
+	if err := common.GetOndemandKubeInitializer().Init(ctx); err != nil {
+		return err
+	}
 
 	if *commonCmdData.Follow {
 		logboek.LogOptionalLn()
