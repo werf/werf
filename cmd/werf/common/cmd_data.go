@@ -10,14 +10,15 @@ import (
 )
 
 type CmdData struct {
-	GitWorkTree        *string
-	ProjectName        *string
-	Dir                *string
-	ConfigPath         *string
-	ConfigTemplatesDir *string
-	TmpDir             *string
-	HomeDir            *string
-	SSHKeys            *[]string
+	GitWorkTree              *string
+	ProjectName              *string
+	Dir                      *string
+	ConfigPath               *string
+	GiterminismConfigRelPath *string
+	ConfigTemplatesDir       *string
+	TmpDir                   *string
+	HomeDir                  *string
+	SSHKeys                  *[]string
 
 	SkipDependenciesRepoRefresh *bool
 

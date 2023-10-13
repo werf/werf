@@ -139,6 +139,9 @@ werf bundle publish [IMAGE_NAME...] [options]
       --git-work-tree=''
             Use specified git work tree dir (default $WERF_WORK_TREE or lookup for directory that   
             contains .git in the current or parent directories)
+      --giterminism-config=''
+            Custom path to the giterminism configuration file relative to working directory         
+            (default $WERF_GITERMINISM_CONFIG or werf-giterminism.yaml in working directory)
   -C, --helm-compatible-chart=false
             Set chart name in the Chart.yaml of the published chart to the last path component of   
             container registry repo (for REGISTRY/PATH/TO/REPO address chart name will be REPO,     
