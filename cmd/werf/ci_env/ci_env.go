@@ -34,6 +34,7 @@ var cmdData struct {
 	AsEnvFile           bool
 	OutputFilePath      string
 	Shell               string
+	AllowRegistryLogin  bool
 }
 
 var commonCmdData common.CmdData
@@ -77,6 +78,7 @@ Currently supported only GitLab (gitlab) and GitHub (github) CI systems`,
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 
+	cmd.Flags().BoolVarP(&cmdData.AllowRegistryLogin, "login-to-registry", "", util.GetBoolEnvironmentDefaultTrue("WERF_LOGIN_TO_REGISTRY"), "Log in to CI-specific registry automatically if possible (default $WERF_LOGIN_TO_REGISTRY).")
 	cmd.Flags().BoolVarP(&cmdData.AsFile, "as-file", "", util.GetBoolEnvironmentDefaultFalse("WERF_AS_FILE"), "Create the script and print the path for sourcing (default $WERF_AS_FILE).")
 	cmd.Flags().BoolVarP(&cmdData.AsEnvFile, "as-env-file", "", util.GetBoolEnvironmentDefaultFalse("WERF_AS_ENV_FILE"), "Create the .env file and print the path for sourcing (default $WERF_AS_ENV_FILE).")
 	cmd.Flags().StringVarP(&cmdData.OutputFilePath, "output-file-path", "o", os.Getenv("WERF_OUTPUT_FILE_PATH"), "Write to custom file (default $WERF_OUTPUT_FILE_PATH).")
@@ -217,7 +219,7 @@ func generateGitlabEnvs(ctx context.Context, w io.Writer, dockerConfig string) e
 		}
 	}
 
-	if doLogin {
+	if doLogin && cmdData.AllowRegistryLogin {
 		err := docker.Login(ctx, imagesUsername, imagesPassword, ciRegistryImageEnv)
 		if err != nil {
 			return fmt.Errorf("unable to login into docker repo %s: %w", ciRegistryImageEnv, err)
@@ -321,7 +323,7 @@ func generateGithubEnvs(ctx context.Context, w io.Writer, dockerConfig string) e
 
 	ciGithubActor := os.Getenv("GITHUB_ACTOR")
 	ciGithubToken := os.Getenv("GITHUB_TOKEN")
-	if ciGithubActor != "" && ciGithubToken != "" {
+	if ciGithubActor != "" && ciGithubToken != "" && cmdData.AllowRegistryLogin {
 		err := docker.Login(ctx, ciGithubActor, ciGithubToken, registryToLogin)
 		if err != nil {
 			return fmt.Errorf("unable to login into docker registry %s: %w", defaultRegistry, err)
