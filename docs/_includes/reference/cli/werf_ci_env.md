@@ -64,6 +64,9 @@ werf ci-env CI_SYSTEM [options]
       --git-work-tree=''
             Use specified git work tree dir (default $WERF_WORK_TREE or lookup for directory that   
             contains .git in the current or parent directories)
+      --giterminism-config=''
+            Custom path to the giterminism configuration file relative to working directory         
+            (default $WERF_GITERMINISM_CONFIG or werf-giterminism.yaml in working directory)
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --log-color-mode='auto'
