@@ -3,7 +3,6 @@ package chart_extender
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -126,12 +125,7 @@ func (wc *WerfChart) ChartLoaded(files []*chart.ChartExtenderBufferedFile) error
 		opts.DefaultName = wc.werfConfig.Meta.Project
 	}
 	opts.DefaultVersion = "1.0.0"
-
-	modifiedMetadata, err := helpers.AutosetChartMetadata(wc.HelmChart.Metadata, opts)
-	if errors.Is(err, helpers.ErrMetadataIsMissing) {
-		return fmt.Errorf("Chart.yaml file is missing")
-	}
-	wc.HelmChart.Metadata = modifiedMetadata
+	wc.HelmChart.Metadata = helpers.AutosetChartMetadata(wc.HelmChart.Metadata, opts)
 
 	wc.HelmChart.Templates = append(wc.HelmChart.Templates, &chart.File{
 		Name: "templates/_werf_helpers.tpl",

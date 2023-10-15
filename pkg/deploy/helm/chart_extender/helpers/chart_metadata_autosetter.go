@@ -1,12 +1,6 @@
 package helpers
 
-import (
-	"fmt"
-
-	"helm.sh/helm/v3/pkg/chart"
-)
-
-var ErrMetadataIsMissing = fmt.Errorf("chart metadata is missing")
+import "helm.sh/helm/v3/pkg/chart"
 
 type GetHelmChartMetadataOptions struct {
 	OverrideName   string
@@ -14,11 +8,7 @@ type GetHelmChartMetadataOptions struct {
 	DefaultVersion string
 }
 
-func AutosetChartMetadata(metadataIn *chart.Metadata, opts GetHelmChartMetadataOptions) (*chart.Metadata, error) {
-	if metadataIn == nil {
-		return nil, ErrMetadataIsMissing
-	}
-
+func AutosetChartMetadata(metadataIn *chart.Metadata, opts GetHelmChartMetadataOptions) *chart.Metadata {
 	var metadata *chart.Metadata
 	if metadataIn == nil {
 		metadata = &chart.Metadata{
@@ -38,5 +28,5 @@ func AutosetChartMetadata(metadataIn *chart.Metadata, opts GetHelmChartMetadataO
 		metadata.Version = opts.DefaultVersion
 	}
 
-	return metadata, nil
+	return metadata
 }
