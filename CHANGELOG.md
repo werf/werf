@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.266](https://www.github.com/werf/werf/compare/v1.2.265...v1.2.266) (2023-10-16)
+
+
+### Bug Fixes
+
+* **werf-in-image:** detected dubious ownership in git repository ([#5827](https://www.github.com/werf/werf/issues/5827)) ([2ae94b4](https://www.github.com/werf/werf/commit/2ae94b452ad83930aed44db4646b78a0d88ada31))
+
 ### [1.2.265](https://www.github.com/werf/werf/compare/v1.2.264...v1.2.265) (2023-10-13)
 
 
