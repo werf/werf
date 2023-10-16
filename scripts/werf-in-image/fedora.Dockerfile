@@ -13,6 +13,9 @@ USER build:build
 RUN mkdir -p /home/build/.local/share/containers
 VOLUME /home/build/.local/share/containers
 
+# Fix fatal: detected dubious ownership in repository.
+RUN git config --global --add safe.directory '*'
+
 WORKDIR /home/build
 
 ENV WERF_CONTAINERIZED=yes
