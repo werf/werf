@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.267](https://www.github.com/werf/werf/compare/v1.2.266...v1.2.267) (2023-10-19)
+
+
+### Bug Fixes
+
+* add yq to werf images ([7d23125](https://www.github.com/werf/werf/commit/7d23125432ba84b78d09db7e6252365a1526bf2d))
+
 ### [1.2.266](https://www.github.com/werf/werf/compare/v1.2.265...v1.2.266) (2023-10-16)
 
 
