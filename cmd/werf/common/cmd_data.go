@@ -89,6 +89,8 @@ type CmdData struct {
 
 	LogDebug         *bool
 	LogPretty        *bool
+	LogTime          *bool
+	LogTimeFormat    *string
 	LogVerbose       *bool
 	LogQuiet         *bool
 	LogColorMode     *string

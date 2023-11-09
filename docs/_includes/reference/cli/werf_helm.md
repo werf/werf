@@ -44,6 +44,11 @@ Manage application deployment with helm
             Defaults to:
             * $WERF_LOG_TERMINAL_WIDTH
             * interactive terminal width or 140
+      --log-time=false
+            Add time to log entries for precise event time tracking (default $WERF_LOG_TIME or      
+            false).
+      --log-time-format='2006-01-02T15:04:05Z07:00'
+            Specify custom log time format (default $WERF_LOG_TIME_FORMAT or RFC3339 format).
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
   -n, --namespace=''
