@@ -9,7 +9,7 @@ from: alpine
 shell:
   beforeInstall:
     - apk add curl gnupg
-    - curl -sSLO "https://tuf.trdl.dev/targets/releases/0.3.1/linux-amd64/bin/trdl" -O "https://tuf.trdl.dev/targets/signatures/0.3.1/linux-amd64/bin/trdl.sig"
+    - curl -sSLO "https://tuf.trdl.dev/targets/releases/0.7.0/linux-amd64/bin/trdl" -O "https://tuf.trdl.dev/targets/signatures/0.7.0/linux-amd64/bin/trdl.sig"
     - curl -sSL https://trdl.dev/trdl.asc | gpg --import
     - gpg --verify trdl.sig trdl
     - rm trdl.sig
