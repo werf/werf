@@ -626,20 +626,21 @@ func SetupDockerConfig(cmdData *CmdData, cmd *cobra.Command, extraDesc string) {
 }
 
 func SetupLogOptions(cmdData *CmdData, cmd *cobra.Command) {
-	setupLogDebug(cmdData, cmd)
-	setupLogVerbose(cmdData, cmd)
-	setupLogQuiet(cmdData, cmd, false)
-	setupLogColor(cmdData, cmd)
-	setupLogPretty(cmdData, cmd)
-	setupTerminalWidth(cmdData, cmd)
+	setupLogOptions(cmdData, cmd, false)
 }
 
 func SetupLogOptionsDefaultQuiet(cmdData *CmdData, cmd *cobra.Command) {
+	setupLogOptions(cmdData, cmd, true)
+}
+
+func setupLogOptions(cmdData *CmdData, cmd *cobra.Command, defaultQuiet bool) {
 	setupLogDebug(cmdData, cmd)
 	setupLogVerbose(cmdData, cmd)
-	setupLogQuiet(cmdData, cmd, true)
+	setupLogQuiet(cmdData, cmd, defaultQuiet)
 	setupLogColor(cmdData, cmd)
 	setupLogPretty(cmdData, cmd)
+	setupLogTime(cmdData, cmd)
+	setupLogTimeFormat(cmdData, cmd)
 	setupTerminalWidth(cmdData, cmd)
 }
 
@@ -771,6 +772,21 @@ func setupLogPretty(cmdData *CmdData, cmd *cobra.Command) {
 	}
 
 	cmd.PersistentFlags().BoolVarP(cmdData.LogPretty, "log-pretty", "", defaultValue, `Enable emojis, auto line wrapping and log process border (default $WERF_LOG_PRETTY or true).`)
+}
+
+func setupLogTime(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.LogTime = new(bool)
+	cmd.PersistentFlags().BoolVarP(cmdData.LogTime, "log-time", "", util.GetBoolEnvironmentDefaultFalse("WERF_LOG_TIME"), `Add time to log entries for precise event time tracking (default $WERF_LOG_TIME or false).`)
+}
+
+func setupLogTimeFormat(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.LogTimeFormat = new(string)
+
+	defaultValue := os.Getenv("WERF_LOG_TIME_FORMAT")
+	if defaultValue == "" {
+		defaultValue = time.RFC3339
+	}
+	cmd.PersistentFlags().StringVarP(cmdData.LogTimeFormat, "log-time-format", "", defaultValue, `Specify custom log time format (default $WERF_LOG_TIME_FORMAT or RFC3339 format).`)
 }
 
 func setupTerminalWidth(cmdData *CmdData, cmd *cobra.Command) {
@@ -1326,12 +1342,18 @@ func ProcessLogOptions(cmdData *CmdData) error {
 	switch {
 	case *cmdData.LogDebug:
 		logboek.SetAcceptedLevel(level.Debug)
-		logboek.Streams().EnablePrefixWithTime()
+		logboek.Streams().EnablePrefixDuration()
 		logboek.Streams().SetPrefixStyle(style.Details())
 	case *cmdData.LogVerbose:
 		logboek.SetAcceptedLevel(level.Info)
 	case *cmdData.LogQuiet:
 		logboek.SetAcceptedLevel(level.Error)
+	}
+
+	if *cmdData.LogTime {
+		logboek.Streams().EnablePrefixTime()
+		logboek.Streams().SetPrefixTimeFormat(*cmdData.LogTimeFormat)
+		logboek.Streams().SetPrefixStyle(style.Details())
 	}
 
 	if !*cmdData.LogPretty {
@@ -1435,6 +1457,7 @@ func TerminateWithError(errMsg string, exitCode int) {
 	msg := fmt.Sprintf("Error: %s", errMsg)
 	msg = strings.TrimSuffix(msg, "\n")
 
+	logboek.Streams().DisablePrefix()
 	logboek.Streams().DisableLineWrapping()
 	logboek.Error().LogLn(msg)
 	os.Exit(exitCode)
