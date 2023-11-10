@@ -1,5 +1,13 @@
 # Changelog
 
+### [1.2.268](https://www.github.com/werf/werf/compare/v1.2.267...v1.2.268) (2023-11-10)
+
+
+### Features
+
+* **logboek:** pre-collapse GitLab log section ([#5842](https://www.github.com/werf/werf/issues/5842)) ([2b68426](https://www.github.com/werf/werf/commit/2b68426a8f081c3e90eb39503a9dc25a2b96d899))
+* **logs:** add --log-time and --log-time-format options ([#5844](https://www.github.com/werf/werf/issues/5844)) ([d83bd20](https://www.github.com/werf/werf/commit/d83bd20bd132c4ba1caa4d833dbe003535f5bf49))
+
 ### [1.2.267](https://www.github.com/werf/werf/compare/v1.2.266...v1.2.267) (2023-10-19)
 
 
