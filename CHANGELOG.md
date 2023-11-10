@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.269](https://www.github.com/werf/werf/compare/v1.2.268...v1.2.269) (2023-11-10)
+
+
+### Bug Fixes
+
+* **werf-in-image:** unable to update tuf meta ([#5846](https://www.github.com/werf/werf/issues/5846)) ([fd41be1](https://www.github.com/werf/werf/commit/fd41be173d885ced78dedda7bebca6f32cc0bda5))
+
 ### [1.2.268](https://www.github.com/werf/werf/compare/v1.2.267...v1.2.268) (2023-11-10)
 
 
