@@ -3,8 +3,6 @@ title: Bundles and charts
 permalink: usage/distribute/bundles.html
 ---
 
-{% include /pages/en/cr_login.md.liquid %}
-
 ## About bundles and charts
 
 A *bundle* is a way to distribute a chart and its related images as a single entity.
@@ -20,6 +18,8 @@ werf automatically adds the following data to the chart when compiling it:
 * global user and service annotations and labels to be added to the chart resources when deploying using the `werf bundle apply` command.
 
 The published bundle (a chart and its related images) can be copied to another container registry or extracted from/added to the archive using the `werf bundle copy` command.
+
+{% include /pages/en/cr_login.md.liquid %}
 
 ## Publishing a bundle
 
