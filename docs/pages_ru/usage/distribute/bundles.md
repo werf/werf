@@ -3,8 +3,6 @@ title: Бандлы и чарты
 permalink: usage/distribute/bundles.html
 ---
 
-{% include pages/ru/cr_login.md.liquid %}
-
 ## О бандлах и чартах
 
 Бандл — это способ дистрибуции чарта и связанных с ним образов как единого целого.
@@ -20,6 +18,8 @@ permalink: usage/distribute/bundles.html
 * глобальные пользовательские и служебные аннотации и лейблы для добавления в ресурсы чарта при развёртывании командой `werf bundle apply`.
 
 Опубликованный бандл (чарт и связанные с ним образы) можно копировать в другой репозиторий container registry или выгружать в/из архива с помощью одной команды `werf bundle copy`.
+
+{% include pages/ru/cr_login.md.liquid %}
 
 ## Публикация бандла
 
