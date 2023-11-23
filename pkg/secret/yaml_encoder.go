@@ -80,7 +80,7 @@ func doYamlDataV2(doFunc func([]byte) ([]byte, error), data []byte, mode yamlPro
 		return nil, fmt.Errorf("unable to unmarshal config data: %w", err)
 	}
 
-	resultConfig, err := doYamlValueSecretV2(doFunc, &config, mode)
+	resultConfig, err := doYamlValueSecretV2(doFunc, deepCopyNode(&config), mode)
 	if err != nil {
 		return nil, fmt.Errorf("unable to process config secrets: %w", err)
 	}
@@ -103,11 +103,38 @@ const (
 	encryptYamlMode
 )
 
+func deepCopyNode(node *yaml_v3.Node) *yaml_v3.Node {
+	if node == nil {
+		return nil
+	}
+
+	copyNode := &yaml_v3.Node{
+		Kind:        node.Kind,
+		Style:       node.Style,
+		Tag:         node.Tag,
+		Value:       node.Value,
+		Anchor:      node.Anchor,
+		Alias:       deepCopyNode(node.Alias),
+		HeadComment: node.HeadComment,
+		LineComment: node.LineComment,
+		FootComment: node.FootComment,
+		Line:        node.Line,
+		Column:      node.Column,
+	}
+
+	copyNode.Content = make([]*yaml_v3.Node, len(node.Content))
+	for i, child := range node.Content {
+		copyNode.Content[i] = deepCopyNode(child)
+	}
+
+	return copyNode
+}
+
 func doYamlValueSecretV2(doFunc func([]byte) ([]byte, error), node *yaml_v3.Node, mode yamlProcessorMode) (*yaml_v3.Node, error) {
 	switch node.Kind {
 	case yaml_v3.DocumentNode:
 		for pos := 0; pos < len(node.Content); pos += 1 {
-			newValueNode, err := doYamlValueSecretV2(doFunc, node.Content[pos], mode)
+			newValueNode, err := doYamlValueSecretV2(doFunc, deepCopyNode(node.Content[pos]), mode)
 			if err != nil {
 				return nil, fmt.Errorf("unable to process document key %d: %w", pos, err)
 			}
@@ -118,16 +145,16 @@ func doYamlValueSecretV2(doFunc func([]byte) ([]byte, error), node *yaml_v3.Node
 		for pos := 0; pos < len(node.Content); pos += 2 {
 			keyNode := node.Content[pos]
 			valueNode := node.Content[pos+1]
-			newValueNode, err := doYamlValueSecretV2(doFunc, valueNode, mode)
+			newValueNode, err := doYamlValueSecretV2(doFunc, deepCopyNode(valueNode), mode)
 			if err != nil {
-				return nil, fmt.Errorf("unable to process map key %q: %w", keyNode.Value, err)
+				return nil, fmt.Errorf("unable to process map key %q value=%v: %w", keyNode.Value, valueNode.Value, err)
 			}
 			node.Content[pos+1] = newValueNode
 		}
 
 	case yaml_v3.SequenceNode:
 		for pos := 0; pos < len(node.Content); pos += 1 {
-			newValueNode, err := doYamlValueSecretV2(doFunc, node.Content[pos], mode)
+			newValueNode, err := doYamlValueSecretV2(doFunc, deepCopyNode(node.Content[pos]), mode)
 			if err != nil {
 				return nil, fmt.Errorf("unable to process array key %d: %w", pos, err)
 			}
@@ -135,7 +162,7 @@ func doYamlValueSecretV2(doFunc func([]byte) ([]byte, error), node *yaml_v3.Node
 		}
 
 	case yaml_v3.AliasNode:
-		newAliasNode, err := doYamlValueSecretV2(doFunc, node.Alias, mode)
+		newAliasNode, err := doYamlValueSecretV2(doFunc, deepCopyNode(node.Alias), mode)
 		if err != nil {
 			return nil, fmt.Errorf("unable to process an alias node %q: %w", node.Value, err)
 		}
