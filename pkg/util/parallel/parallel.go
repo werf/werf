@@ -3,13 +3,13 @@ package parallel
 import (
 	"bytes"
 	"context"
-	"github.com/werf/logboek/pkg/style"
-	"github.com/werf/werf/pkg/docker"
 	"io"
 	"os"
 	"time"
 
 	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/style"
+	"github.com/werf/werf/pkg/docker"
 	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/util/parallel/constant"
 )
