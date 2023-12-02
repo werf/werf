@@ -4,14 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
-	"math/rand"
 	"net/http"
-	"strconv"
 	"time"
-
-	"github.com/werf/logboek"
-	parallelConstant "github.com/werf/werf/pkg/util/parallel/constant"
 )
 
 type gitHubApi struct{}
@@ -63,7 +57,7 @@ type githubApiUser struct {
 
 func (api *gitHubApi) getUser(ctx context.Context, username, token string) (githubApiUser, *http.Response, error) {
 	url := fmt.Sprintf("https://api.github.com/users/%s", username)
-	resp, respBody, err := api.doRequest(ctx, http.MethodGet, url, nil, doRequestOptions{
+	resp, respBody, err := doRequest(ctx, http.MethodGet, url, nil, doRequestOptions{
 		Headers: map[string]string{
 			"Accept":        "application/vnd.github.v3+json",
 			"Authorization": fmt.Sprintf("Bearer %s", token),
@@ -141,7 +135,7 @@ type githubApiVersion struct {
 func (api *gitHubApi) getContainerPackageVersionListInBatches(ctx context.Context, url, token string, f func([]githubApiVersion) error) (*http.Response, error) {
 	for page := 1; true; page++ {
 		pageUrl := url + fmt.Sprintf("?page=%d&per_page=100", page)
-		resp, respBody, err := api.doRequest(ctx, http.MethodGet, pageUrl, nil, doRequestOptions{
+		resp, respBody, err := doRequest(ctx, http.MethodGet, pageUrl, nil, doRequestOptions{
 			Headers: map[string]string{
 				"Accept":        "application/vnd.github.v3+json",
 				"Authorization": fmt.Sprintf("Bearer %s", token),
@@ -170,7 +164,7 @@ func (api *gitHubApi) getContainerPackageVersionListInBatches(ctx context.Contex
 }
 
 func (api *gitHubApi) deleteContainerPackage(ctx context.Context, url, token string) (*http.Response, error) {
-	resp, _, err := api.doRequest(ctx, http.MethodDelete, url, nil, doRequestOptions{
+	resp, _, err := doRequest(ctx, http.MethodDelete, url, nil, doRequestOptions{
 		Headers: map[string]string{
 			"Accept":        "application/vnd.github.v3+json",
 			"Authorization": fmt.Sprintf("Bearer %s", token),
@@ -182,38 +176,4 @@ func (api *gitHubApi) deleteContainerPackage(ctx context.Context, url, token str
 	}
 
 	return nil, nil
-}
-
-func (api *gitHubApi) doRequest(ctx context.Context, method, url string, body io.Reader, options doRequestOptions) (*http.Response, []byte, error) {
-	resp, respBody, err := doRequest(ctx, method, url, body, options)
-	if err != nil {
-		if resp != nil && resp.Header.Get("Retry-After") != "" {
-			secondsString := resp.Header.Get("Retry-After")
-			seconds, err := strconv.Atoi(secondsString)
-			if err == nil {
-				sleepSeconds := seconds + rand.Intn(15) + 5
-				workerId := ctx.Value(parallelConstant.CtxBackgroundTaskIDKey)
-				if workerId != nil {
-					logboek.Context(ctx).Warn().LogF(
-						"WARNING: Rate limit error occurred. Waiting for %d before retrying request... (worker %d).\nThe --parallel ($WERF_PARALLEL) and --parallel-tasks-limit ($WERF_PARALLEL_TASKS_LIMIT) options can be used to regulate parallel tasks.\n",
-						sleepSeconds,
-						workerId.(int),
-					)
-					logboek.Context(ctx).Warn().LogLn()
-				} else {
-					logboek.Context(ctx).Warn().LogF(
-						"WARNING: Rate limit error occurred. Waiting for %d before retrying request...\n",
-						sleepSeconds,
-					)
-				}
-
-				time.Sleep(time.Second * time.Duration(sleepSeconds))
-				return api.doRequest(ctx, method, url, body, options)
-			}
-		}
-
-		return resp, respBody, err
-	}
-
-	return resp, respBody, nil
 }
