@@ -51,8 +51,8 @@ func (api *genericApi) GetRepoImageConfigFile(ctx context.Context, reference str
 	return api.getRepoImageConfigFile(ctx, reference)
 }
 
-func (api *genericApi) getRepoImageConfigFile(_ context.Context, reference string) (*v1.ConfigFile, error) {
-	desc, _, err := api.commonApi.getImageDesc(reference)
+func (api *genericApi) getRepoImageConfigFile(ctx context.Context, reference string) (*v1.ConfigFile, error) {
+	desc, _, err := api.commonApi.getImageDesc(ctx, reference)
 	if err != nil {
 		return nil, err
 	}

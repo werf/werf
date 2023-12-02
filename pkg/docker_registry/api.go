@@ -2,12 +2,10 @@ package docker_registry
 
 import (
 	"context"
-	"crypto/tls"
 	"errors"
 	"fmt"
 	"io"
 	"math/rand"
-	"net/http"
 	"regexp"
 	"strings"
 	"time"
@@ -115,7 +113,7 @@ func (api *api) TryGetRepoImage(ctx context.Context, reference string) (*image.I
 }
 
 func (api *api) GetRepoImage(ctx context.Context, reference string) (*image.Info, error) {
-	desc, _, err := api.getImageDesc(reference)
+	desc, _, err := api.getImageDesc(ctx, reference)
 	if err != nil {
 		return nil, err
 	}
@@ -161,7 +159,7 @@ func (api *api) getRepoImageByDesc(ctx context.Context, originalTag string, desc
 
 		for _, desc := range im.Manifests {
 			subref := fmt.Sprintf("%s@%s", repoImage.Repository, desc.Digest)
-			subdesc, _, err := api.getImageDesc(subref)
+			subdesc, _, err := api.getImageDesc(ctx, subref)
 			if err != nil {
 				return nil, fmt.Errorf("error getting image %s manifest: %w", subref, err)
 			}
@@ -377,7 +375,7 @@ func (api *api) MutateAndPushImage(ctx context.Context, sourceReference, destina
 	}
 	_, isDstDigest := dstRef.(name.Digest)
 
-	desc, _, err := api.getImageDesc(sourceReference)
+	desc, _, err := api.getImageDesc(ctx, sourceReference)
 	if err != nil {
 		return fmt.Errorf("error reading image %q: %w", sourceReference, err)
 	}
@@ -406,7 +404,7 @@ func (api *api) CopyImage(ctx context.Context, sourceReference, destinationRefer
 	if err != nil {
 		return fmt.Errorf("parsing reference %q: %w", destinationReference, err)
 	}
-	desc, _, err := api.getImageDesc(sourceReference)
+	desc, _, err := api.getImageDesc(ctx, sourceReference)
 	if err != nil {
 		return fmt.Errorf("unable to get image %s: %w", sourceReference, err)
 	}
@@ -472,17 +470,13 @@ func (api *api) pushImage(ctx context.Context, reference string, opts *PushImage
 	return nil
 }
 
-func (api *api) getImageDesc(reference string) (*remote.Descriptor, name.Reference, error) {
+func (api *api) getImageDesc(ctx context.Context, reference string) (*remote.Descriptor, name.Reference, error) {
 	ref, err := name.ParseReference(reference, api.parseReferenceOptions()...)
 	if err != nil {
 		return nil, nil, fmt.Errorf("parsing reference %q: %w", reference, err)
 	}
 
-	desc, err := remote.Get(
-		ref,
-		remote.WithAuthFromKeychain(authn.DefaultKeychain),
-		remote.WithTransport(api.getHttpTransport()),
-	)
+	desc, err := remote.Get(ref, api.defaultRemoteOptions(ctx)...)
 	if err != nil {
 		return nil, nil, fmt.Errorf("getting %s: %w", ref, err)
 	}
@@ -508,31 +502,8 @@ func (api *api) defaultRemoteOptions(ctx context.Context) []remote.Option {
 	return []remote.Option{
 		remote.WithContext(ctx),
 		remote.WithAuthFromKeychain(authn.DefaultKeychain),
-		remote.WithTransport(api.getHttpTransport()),
+		remote.WithTransport(getHttpTransport(api.SkipTlsVerifyRegistry)),
 	}
-}
-
-func (api *api) getHttpTransport() (transport http.RoundTripper) {
-	transport = http.DefaultTransport
-
-	if api.SkipTlsVerifyRegistry {
-		defaultTransport := http.DefaultTransport.(*http.Transport)
-
-		newTransport := &http.Transport{
-			Proxy:                 defaultTransport.Proxy,
-			DialContext:           defaultTransport.DialContext,
-			MaxIdleConns:          defaultTransport.MaxIdleConns,
-			IdleConnTimeout:       defaultTransport.IdleConnTimeout,
-			TLSHandshakeTimeout:   defaultTransport.TLSHandshakeTimeout,
-			ExpectContinueTimeout: defaultTransport.ExpectContinueTimeout,
-			TLSClientConfig:       &tls.Config{InsecureSkipVerify: true},
-			TLSNextProto:          make(map[string]func(authority string, c *tls.Conn) http.RoundTripper),
-		}
-
-		transport = newTransport
-	}
-
-	return
 }
 
 type referenceParts struct {
@@ -631,7 +602,7 @@ func (api *api) writeToRemote(ctx context.Context, ref name.Reference, imageOrIn
 			ref, i,
 			remote.WithAuthFromKeychain(authn.DefaultKeychain),
 			remote.WithProgress(c),
-			remote.WithTransport(api.getHttpTransport()),
+			remote.WithTransport(getHttpTransport(api.SkipTlsVerifyRegistry)),
 			remote.WithContext(ctx),
 		)
 	case v1.ImageIndex:
@@ -639,7 +610,7 @@ func (api *api) writeToRemote(ctx context.Context, ref name.Reference, imageOrIn
 			ref, i,
 			remote.WithAuthFromKeychain(authn.DefaultKeychain),
 			remote.WithProgress(c),
-			remote.WithTransport(api.getHttpTransport()),
+			remote.WithTransport(getHttpTransport(api.SkipTlsVerifyRegistry)),
 			remote.WithContext(ctx),
 		)
 	default:
