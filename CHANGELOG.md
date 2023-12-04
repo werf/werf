@@ -1,5 +1,17 @@
 # Changelog
 
+### [1.2.270](https://www.github.com/werf/werf/compare/v1.2.269...v1.2.270) (2023-12-04)
+
+
+### Features
+
+* **container:** implement generic Retry-After header handling ([#5867](https://www.github.com/werf/werf/issues/5867)) ([b2a6022](https://www.github.com/werf/werf/commit/b2a60225a4f8d06429eb57cc3fb8b3a34e2addd3))
+
+
+### Bug Fixes
+
+* **secrets:** fix double decryption error when decrypting a yaml with multiple references to the same anchor ([a7df8cc](https://www.github.com/werf/werf/commit/a7df8cc98eecb1732e540e07ae9ec28b617b6e1d))
+
 ### [1.2.269](https://www.github.com/werf/werf/compare/v1.2.268...v1.2.269) (2023-11-10)
 
 
