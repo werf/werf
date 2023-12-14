@@ -122,9 +122,11 @@ func deepCopyNode(node *yaml_v3.Node) *yaml_v3.Node {
 		Column:      node.Column,
 	}
 
-	copyNode.Content = make([]*yaml_v3.Node, len(node.Content))
-	for i, child := range node.Content {
-		copyNode.Content[i] = deepCopyNode(child)
+	if len(node.Content) > 0 {
+		copyNode.Content = make([]*yaml_v3.Node, len(node.Content))
+		for i, child := range node.Content {
+			copyNode.Content[i] = deepCopyNode(child)
+		}
 	}
 
 	return copyNode
