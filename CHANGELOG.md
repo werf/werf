@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.271](https://www.github.com/werf/werf/compare/v1.2.270...v1.2.271) (2023-12-14)
+
+
+### Bug Fixes
+
+* **secrets:** empty secrets values yaml file results in werf error ([7fe6b2b](https://www.github.com/werf/werf/commit/7fe6b2b77eb7702e2e764e7592d3fad5d4696daf))
+
 ### [1.2.270](https://www.github.com/werf/werf/compare/v1.2.269...v1.2.270) (2023-12-04)
 
 
