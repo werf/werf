@@ -230,6 +230,12 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 			instrNum++
 		}
 
+		if werf.GetStagedDockerfileVersion() == werf.StagedDockerfileV1 {
+			if len(img.stages) == 0 {
+				return nil, fmt.Errorf("unsupported configuration, please enable staged dockerfile builder v2 by setting environment variable WERF_STAGED_DOCKERFILE_VERSION=v2")
+			}
+		}
+
 		appendImageToCurrentSet(img)
 	}
 
