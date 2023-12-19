@@ -60,7 +60,7 @@ require (
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/pflag v1.0.5
 	github.com/werf/copy-recurse v0.2.7
-	github.com/werf/kubedog v0.9.12
+	github.com/werf/kubedog v0.11.0
 	github.com/werf/lockgate v0.1.1
 	github.com/werf/logboek v0.6.0
 	go.opentelemetry.io/otel v1.14.0
@@ -129,6 +129,7 @@ require (
 	github.com/cenkalti/backoff/v4 v4.2.0 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/chai2010/gettext-go v1.0.2 // indirect
+	github.com/chanced/caps v1.0.1 // indirect
 	github.com/chzyer/readline v1.5.1 // indirect
 	github.com/cloudflare/cfssl v1.4.1 // indirect
 	github.com/cloudflare/circl v1.3.3 // indirect
