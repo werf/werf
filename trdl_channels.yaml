@@ -35,13 +35,13 @@ groups:
         version: 1.2.271
 
       # - name: pre-stable
-      #   version: 1.2.269
+      #   version: 1.2.271
 
       - name: stable
-        version: 1.2.267
+        version: 1.2.269
 
       # - name: pre-rock-solid
-      #   version: 1.2.253
+      #   version: 1.2.267
 
       - name: rock-solid
         version: 1.2.253
