@@ -286,6 +286,8 @@ github.com/cespare/xxhash/v2 v2.2.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XL
 github.com/chai2010/gettext-go v0.0.0-20160711120539-c6fed771bfd5/go.mod h1:/iP1qXHoty45bqomnu2LM+VVyAEdWN+vtSHGlQgyxbw=
 github.com/chai2010/gettext-go v1.0.2 h1:1Lwwip6Q2QGsAdl/ZKPCwTe9fe0CjlUbqj5bFNSjIRk=
 github.com/chai2010/gettext-go v1.0.2/go.mod h1:y+wnP2cHYaVj19NZhYKAwEMH2CI1gNHeQQ+5AjwawxA=
+github.com/chanced/caps v1.0.1 h1:B9LhH2mmAcNjn1argkddu9fRdU+VMrfomRoeXL1DYhg=
+github.com/chanced/caps v1.0.1/go.mod h1:SJhRzeYLKJ3OmzyQXhdZ7Etj7lqqWoPtQ1zcSJRtQjs=
 github.com/checkpoint-restore/go-criu/v4 v4.1.0/go.mod h1:xUQBLp4RLc5zJtWY++yjOoMoB5lihDt7fai+75m+rGw=
 github.com/checkpoint-restore/go-criu/v5 v5.0.0/go.mod h1:cfwC0EG7HMUenopBsUf9d89JlCLQIfgVcNsNN0t6T2M=
 github.com/checkpoint-restore/go-criu/v5 v5.3.0/go.mod h1:E/eQpaFtUKGOOSEBZgmKAcn+zUUwWxqcaKZlF54wK8E=
@@ -1765,13 +1767,10 @@ github.com/werf/copy-recurse v0.2.7 h1:3FTOarbJ9uhFLi75oeUCioK9zxZwuV7o28kuUBPDZ
 github.com/werf/copy-recurse v0.2.7/go.mod h1:6Ypb+qN+hRBJgoCgEkX1vpbqcQ+8q69BQ3hi8s8Y6Qc=
 github.com/werf/helm v0.0.0-20210202111118-81e74d46da0f h1:81YscYTF9mmTf0ULOsCmm42YWQp+qWDzWi1HjWniZrg=
 github.com/werf/helm v0.0.0-20210202111118-81e74d46da0f/go.mod h1:OMONwLWU9zEENgaVjWEX+M+xik2QakejzKHG1+6mnUo=
-github.com/werf/kubedog v0.9.12 h1:x21o0VwcX1tnBotIuwobIs0xqeHfpgXy/NxzyRIdUm0=
-github.com/werf/kubedog v0.9.12/go.mod h1:FhBgKOVEicFQh+0eO9aXx9/qJ1XkosVkh7ad3TNQMHQ=
+github.com/werf/kubedog v0.11.0 h1:8mmlWARcO65PPja4Y85qSsg8Xiloh8QYcgbK6yPm5fs=
+github.com/werf/kubedog v0.11.0/go.mod h1:cHmbX7BQmobC/jpndbqRL6mjHyosEzkiAilIv7t4emw=
 github.com/werf/lockgate v0.1.1 h1:S400JFYjtWfE4i4LY9FA8zx0fMdfui9DPrBiTciCrx4=
 github.com/werf/lockgate v0.1.1/go.mod h1:0yIFSLq9ausy6ejNxF5uUBf/Ib6daMAfXuCaTMZJzIE=
-github.com/werf/logboek v0.5.5 h1:RmtTejHJOyw0fub4pIfKsb7OTzD90ZOUyuBAXqYqJpU=
-github.com/werf/logboek v0.5.5/go.mod h1:Gez5J4bxekyr6MxTmIJyId1F61rpO+0/V4vjCIEIZmk=
-github.com/werf/logboek v0.5.6/go.mod h1:Gez5J4bxekyr6MxTmIJyId1F61rpO+0/V4vjCIEIZmk=
 github.com/werf/logboek v0.6.0 h1:i/iRxUFcxj6g21t67cFnv0pBU7X90yGpHm1TlqkMkKU=
 github.com/werf/logboek v0.6.0/go.mod h1:Gez5J4bxekyr6MxTmIJyId1F61rpO+0/V4vjCIEIZmk=
 github.com/werf/third-party-oras v0.9.1-0.20210927171747-6d045506f4c8 h1:MG0ez6kjfPXPHpDt4Ga76hfnEtT3Fal2fRnBLfJmhp4=
