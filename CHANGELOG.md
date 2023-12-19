@@ -1,5 +1,17 @@
 # Changelog
 
+### [1.2.272](https://www.github.com/werf/werf/compare/v1.2.271...v1.2.272) (2023-12-19)
+
+
+### Features
+
+* improve generic resource tracking ([c366a72](https://www.github.com/werf/werf/commit/c366a722681fd7cf348ec58bb42384464e47592a))
+
+
+### Bug Fixes
+
+* **staged-dockerfile:** explanatory error message when building unsupported Dockerfile conf ([a884912](https://www.github.com/werf/werf/commit/a884912608bbc0b0f0521e31a61dc3bd2407e7d3))
+
 ### [1.2.271](https://www.github.com/werf/werf/compare/v1.2.270...v1.2.271) (2023-12-14)
 
 
