@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.274](https://www.github.com/werf/werf/compare/v1.2.273...v1.2.274) (2023-12-21)
+
+
+### Bug Fixes
+
+* **buildah:** fix digest change on rebuild of install/beforeSetup/setup stage when using multiple git-mappings in the same image ([52db306](https://www.github.com/werf/werf/commit/52db30637f090b6a721a66d1bdab8c7c48ebe8ad))
+
 ### [1.2.273](https://www.github.com/werf/werf/compare/v1.2.272...v1.2.273) (2023-12-21)
 
 
