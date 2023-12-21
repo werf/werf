@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.273](https://www.github.com/werf/werf/compare/v1.2.272...v1.2.273) (2023-12-21)
+
+
+### Bug Fixes
+
+* **exp-engine:** "no matches for kind" when deploying CR for CRD from crds/ ([5c68186](https://www.github.com/werf/werf/commit/5c68186be8b10cdc33e7fef045be10df9a57dce5))
+
 ### [1.2.272](https://www.github.com/werf/werf/compare/v1.2.271...v1.2.272) (2023-12-19)
 
 
