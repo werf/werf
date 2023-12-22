@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.275](https://www.github.com/werf/werf/compare/v1.2.274...v1.2.275) (2023-12-22)
+
+
+### Bug Fixes
+
+* **build:** files from git with spaces in path not removed on install/beforeSetup/setup patch-stages ([6c052db](https://www.github.com/werf/werf/commit/6c052db1c250cfb5cf5e0259849e15856700034a))
+
 ### [1.2.274](https://www.github.com/werf/werf/compare/v1.2.273...v1.2.274) (2023-12-21)
 
 
