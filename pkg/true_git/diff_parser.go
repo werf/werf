@@ -402,7 +402,10 @@ func (p *diffParser) handleNewFilePath(line string) error {
 }
 
 func (p *diffParser) trimFileBaseFilepath(path string) string {
-	return filepath.ToSlash(util.GetRelativeToBaseFilepath(filepath.FromSlash(p.PathScope), filepath.FromSlash(path)))
+	newPath := filepath.ToSlash(util.GetRelativeToBaseFilepath(filepath.FromSlash(p.PathScope), filepath.FromSlash(path)))
+	// NOTE: for some files git diff may emit tabs on the end of path-line, for example: "--- a/path with spaces/to/file.txt\t"
+	newPath = strings.TrimRight(newPath, "\t")
+	return newPath
 }
 
 func (p *diffParser) handleDeleteFilePath(line string) error {
