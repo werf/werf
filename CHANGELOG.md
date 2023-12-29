@@ -1,5 +1,13 @@
 # Changelog
 
+### [1.2.277](https://www.github.com/werf/werf/compare/v1.2.276...v1.2.277) (2023-12-29)
+
+
+### Bug Fixes
+
+* add WERF_NELM var (same as WERF_EXPERIMENTAL_DEPLOY_ENGINE) ([455d293](https://www.github.com/werf/werf/commit/455d29377b47be07efb100ed3528ce9a1689e8d9))
+* Nelm moved to separate repo ([be662c3](https://www.github.com/werf/werf/commit/be662c3577318b3ee145eafa7161e276d6ff00f7))
+
 ### [1.2.276](https://www.github.com/werf/werf/compare/v1.2.275...v1.2.276) (2023-12-29)
 
 
