@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.276](https://www.github.com/werf/werf/compare/v1.2.275...v1.2.276) (2023-12-29)
+
+
+### Bug Fixes
+
+* pre-collapsed gitlab section not usable ([#5897](https://www.github.com/werf/werf/issues/5897)) ([68040b1](https://www.github.com/werf/werf/commit/68040b17a35cd9888d07eabde414c050877715df))
+
 ### [1.2.275](https://www.github.com/werf/werf/compare/v1.2.274...v1.2.275) (2023-12-22)
 
 
