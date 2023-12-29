@@ -24,7 +24,15 @@ import (
 )
 
 func IsExperimentalEngine() bool {
-	return util.GetBoolEnvironmentDefaultFalse("WERF_EXPERIMENTAL_DEPLOY_ENGINE")
+	if isNelm, set := util.LookupBoolEnvironment("WERF_NELM"); set {
+		return *isNelm
+	}
+
+	if isNelm, set := util.LookupBoolEnvironment("WERF_EXPERIMENTAL_DEPLOY_ENGINE"); set {
+		return *isNelm
+	}
+
+	return false
 }
 
 type InitActionConfigOptions struct {
