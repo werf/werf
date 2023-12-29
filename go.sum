@@ -1774,6 +1774,8 @@ github.com/werf/logboek v0.5.5/go.mod h1:Gez5J4bxekyr6MxTmIJyId1F61rpO+0/V4vjCIE
 github.com/werf/logboek v0.5.6/go.mod h1:Gez5J4bxekyr6MxTmIJyId1F61rpO+0/V4vjCIEIZmk=
 github.com/werf/logboek v0.6.0 h1:i/iRxUFcxj6g21t67cFnv0pBU7X90yGpHm1TlqkMkKU=
 github.com/werf/logboek v0.6.0/go.mod h1:Gez5J4bxekyr6MxTmIJyId1F61rpO+0/V4vjCIEIZmk=
+github.com/werf/logboek v0.6.1 h1:oEe6FkmlKg0z0n80oZjLplj6sXcBeLleCkjfOOZEL2g=
+github.com/werf/logboek v0.6.1/go.mod h1:Gez5J4bxekyr6MxTmIJyId1F61rpO+0/V4vjCIEIZmk=
 github.com/werf/third-party-oras v0.9.1-0.20210927171747-6d045506f4c8 h1:MG0ez6kjfPXPHpDt4Ga76hfnEtT3Fal2fRnBLfJmhp4=
 github.com/werf/third-party-oras v0.9.1-0.20210927171747-6d045506f4c8/go.mod h1:/AidOcr36nqm78ft5XE0l5Dgid3veF99BGQtwLr58pc=
 github.com/willf/bitset v1.1.11-0.20200630133818-d5bec3311243/go.mod h1:RjeCKbqT1RxIR/KWY6phxZiaY1IyutSBfGjNPySAYV4=
