@@ -63,6 +63,7 @@ require (
 	github.com/werf/kubedog v0.11.0
 	github.com/werf/lockgate v0.1.1
 	github.com/werf/logboek v0.6.1
+	github.com/werf/nelm v0.0.0-00010101000000-000000000000
 	go.opentelemetry.io/otel v1.14.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.14.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.14.0
@@ -358,6 +359,8 @@ replace (
 	github.com/helm/helm-2to3 => github.com/werf/3p-helm-2to3 v0.0.0-20230313155428-cf9dd655c0e3 // switch back to upstream when merged: https://github.com/helm/helm-2to3/pull/224
 	github.com/jaguilar/vt100 => github.com/tonistiigi/vt100 v0.0.0-20190402012908-ad4c4a574305 // upstream not maintained
 	github.com/maorfr/helm-plugin-utils => github.com/werf/3p-helm-plugin-utils v0.6.1-0.20230313152239-057595ce9d57 // switch back to upstream when merged: https://github.com/maorfr/helm-plugin-utils/pull/17
-	helm.sh/helm/v3 => github.com/werf/3p-helm/v3 v3.0.0-20231221124451-07953f0b3b74
+	github.com/werf/kubedog => github.com/werf/kubedog v0.12.1-0.20231229174621-812121cfb937
+	github.com/werf/nelm => github.com/werf/nelm v0.0.0-20231229194917-1b1406e21187
+	helm.sh/helm/v3 => github.com/werf/3p-helm/v3 v3.0.0-20231229193803-ecfe0905ab7c
 	k8s.io/helm => github.com/werf/helm v0.0.0-20210202111118-81e74d46da0f
 )
