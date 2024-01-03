@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"time"
 
-	uuid "github.com/satori/go.uuid"
+	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 	helm_v3 "helm.sh/helm/v3/cmd/helm"
 	"helm.sh/helm/v3/pkg/chart"
@@ -406,7 +406,7 @@ func runPublish(ctx context.Context, imagesToProcess build.ImagesToProcess) erro
 	}
 	chartVersion := sv.String()
 
-	bundleTmpDir := filepath.Join(werf.GetServiceDir(), "tmp", "bundles", uuid.NewV4().String())
+	bundleTmpDir := filepath.Join(werf.GetServiceDir(), "tmp", "bundles", uuid.NewString())
 	defer os.RemoveAll(bundleTmpDir)
 
 	bundle, err := wc.CreateNewBundle(ctx, bundleTmpDir, chartVersion, &values.Options{

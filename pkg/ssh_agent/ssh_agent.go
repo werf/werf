@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	uuid "github.com/satori/go.uuid"
+	"github.com/google/uuid"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"
 	"golang.org/x/crypto/ssh/terminal"
@@ -185,7 +185,7 @@ func runSSHAgentWithKeys(ctx context.Context, keys []sshKey) (string, error) {
 }
 
 func runSSHAgent(ctx context.Context) (string, error) {
-	sockPath := filepath.Join(werf.GetTmpDir(), "werf-ssh-agent", uuid.NewV4().String())
+	sockPath := filepath.Join(werf.GetTmpDir(), "werf-ssh-agent", uuid.NewString())
 	tmpSockPath = sockPath
 
 	err := os.MkdirAll(filepath.Dir(sockPath), os.ModePerm)

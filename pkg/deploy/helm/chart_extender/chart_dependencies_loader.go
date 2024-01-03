@@ -10,9 +10,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/otiai10/copy"
 	"github.com/pkg/errors"
-	uuid "github.com/satori/go.uuid"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/cli"
@@ -126,7 +126,7 @@ func prepareDependenciesDir(ctx context.Context, metadataBytes, metadataLockByte
 				return nil
 			}
 
-			tmpDepsDir := fmt.Sprintf("%s.tmp.%s", depsDir, uuid.NewV4().String())
+			tmpDepsDir := fmt.Sprintf("%s.tmp.%s", depsDir, uuid.NewString())
 
 			if err := createChartDependenciesDir(tmpDepsDir, metadataBytes, metadataLockBytes); err != nil {
 				return err

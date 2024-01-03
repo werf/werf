@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"time"
 
-	uuid "github.com/satori/go.uuid"
+	"github.com/google/uuid"
 
 	"github.com/werf/lockgate"
 	"github.com/werf/werf/pkg/git_repo"
@@ -66,7 +66,7 @@ func (manager *GitDataManager) GetPatchesCacheDir() string {
 }
 
 func (manager *GitDataManager) NewTmpFile() (string, error) {
-	path := filepath.Join(manager.TmpDir, uuid.NewV4().String())
+	path := filepath.Join(manager.TmpDir, uuid.NewString())
 	if err := os.MkdirAll(filepath.Dir(path), 0o777); err != nil {
 		return "", fmt.Errorf("unable to create dir %q: %w", filepath.Dir(path), err)
 	}
