@@ -18,6 +18,8 @@ import (
 	"helm.sh/helm/v3/pkg/registry"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	"github.com/werf/kubedog/pkg/kube"
+	"github.com/werf/logboek"
 	"github.com/werf/nelm/pkg/chrttree"
 	helmcommon "github.com/werf/nelm/pkg/common"
 	"github.com/werf/nelm/pkg/kubeclnt"
@@ -28,9 +30,6 @@ import (
 	"github.com/werf/nelm/pkg/resrcpatcher"
 	"github.com/werf/nelm/pkg/resrcprocssr"
 	"github.com/werf/nelm/pkg/rlshistor"
-
-	"github.com/werf/kubedog/pkg/kube"
-	"github.com/werf/logboek"
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/build"
 	"github.com/werf/werf/pkg/config/deploy_params"
