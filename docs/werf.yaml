@@ -16,9 +16,11 @@ git:
     stageDependencies:
       setup: ["**/*"]
 shell:
+  install:
+    - gem update --system 3.2.3
+    - gem install bundler -v 2.4.22
   setup:
     - export PATH=/usr/jekyll/bin/:$PATH
-    - gem update bundler
     - echo "Install Dependencies ..."
     - cd /app/docs && bundle install
 
