@@ -6,14 +6,14 @@ on:
       env:
         required: true
         type: string
-      kubeContext:
+      kubeConfig:
         required: true
         type: string
       persistent:
         default: false
         type: string
       runner:
-        default: tfprod-werf
+        default: ubuntu-latest-4-cores
         type: string
 
 defaults:
@@ -26,7 +26,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -48,9 +48,9 @@ jobs:
         uses: werf/actions/converge@v1.2
         with:
           env: ${{ inputs.env }}
+          kube-config-base64-data: ${{ inputs.kubeConfig }}
         env:
           WERF_NAMESPACE: werfio-${{ inputs.env }}
           WERF_DIR: docs
           WERF_LOG_VERBOSE: on
-          WERF_KUBE_CONTEXT: ${{ inputs.kubeContext }}
           WERF_REPO: ghcr.io/${{ github.repository_owner }}/werfio

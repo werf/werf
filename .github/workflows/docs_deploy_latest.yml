@@ -14,14 +14,14 @@ jobs:
     with:
       persistent: true
       env: production
-      kubeContext: prod
+      kubeConfig: ${{ secrets.KUBECONFIG_BASE64_DPROD }}
 
   deploy-test:
     uses: ./.github/workflows/_docs_deploy.yml
     with:
       persistent: true
       env: test
-      kubeContext: dev
+      kubeConfig: ${{ secrets.KUBECONFIG_BASE64_DEV }}
 
   notify:
     if: always()

@@ -30,10 +30,10 @@ jobs:
   deploy_channels_cm_prod:
     name: Deploy trdl_channels.yaml to production
     needs: publish
-    runs-on: tfprod-werf
+    runs-on: ubuntu-latest-4-cores
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -41,6 +41,7 @@ jobs:
         uses: werf/actions/converge@v1.2
         with:
           env: production
+          kube-config-base64-data: ${{ secrets.KUBECONFIG_BASE64_PROD }}
         env:
           WERF_NAMESPACE: "werfio-production"
           WERF_KUBE_CONTEXT: prod
