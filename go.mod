@@ -227,6 +227,7 @@ require (
 	github.com/lithammer/dedent v1.1.0 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/manifoldco/promptui v0.9.0 // indirect
+	github.com/maorfr/helm-plugin-utils v0.6.1-0.20230319074221-e61910f7f295 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.17 // indirect
 	github.com/mattn/go-runewidth v0.0.14 // indirect
@@ -359,7 +360,6 @@ replace (
 	github.com/docker/buildx => github.com/distorhead/buildx v0.0.0-20230404154752-53c65bd80f74
 	github.com/helm/helm-2to3 => github.com/werf/3p-helm-2to3 v0.0.0-20230313155428-cf9dd655c0e3 // switch back to upstream when merged: https://github.com/helm/helm-2to3/pull/224
 	github.com/jaguilar/vt100 => github.com/tonistiigi/vt100 v0.0.0-20190402012908-ad4c4a574305 // upstream not maintained
-	github.com/maorfr/helm-plugin-utils => github.com/werf/3p-helm-plugin-utils v0.6.1-0.20230313152239-057595ce9d57 // switch back to upstream when merged: https://github.com/maorfr/helm-plugin-utils/pull/17
 	github.com/werf/kubedog => github.com/werf/kubedog v0.12.1-0.20231229174621-812121cfb937
 	github.com/werf/nelm => github.com/werf/nelm v0.0.0-20231229194917-1b1406e21187
 	helm.sh/helm/v3 => github.com/werf/3p-helm/v3 v3.0.0-20231229193803-ecfe0905ab7c
