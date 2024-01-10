@@ -1,5 +1,13 @@
 # Changelog
 
+### [1.2.278](https://www.github.com/werf/werf/compare/v1.2.277...v1.2.278) (2024-01-10)
+
+
+### Bug Fixes
+
+* **deps:** update go-git ([ff00de8](https://www.github.com/werf/werf/commit/ff00de8ea7ddd887bcfbec224fbc548b3f5e2f2a))
+* **deps:** update helm-plugin-utils ([608941e](https://www.github.com/werf/werf/commit/608941eef3c8aae0bc1c8e8f6fd4010b1acde6c0))
+
 ### [1.2.277](https://www.github.com/werf/werf/compare/v1.2.276...v1.2.277) (2023-12-29)
 
 
