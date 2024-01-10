@@ -5,13 +5,13 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/docker/docker/pkg/fileutils"
+	"github.com/moby/patternmatcher"
 
 	"github.com/werf/werf/pkg/util"
 )
 
 func newDockerfileIgnorePathMatcher(dockerignorePatterns []string) dockerfileIgnorePathMatcher {
-	m, err := fileutils.NewPatternMatcher(dockerignorePatterns)
+	m, err := patternmatcher.New(dockerignorePatterns)
 	if err != nil {
 		panic(err)
 	}
@@ -22,7 +22,7 @@ func newDockerfileIgnorePathMatcher(dockerignorePatterns []string) dockerfileIgn
 }
 
 type dockerfileIgnorePathMatcher struct {
-	patternMatcher *fileutils.PatternMatcher
+	patternMatcher *patternmatcher.PatternMatcher
 }
 
 func (m dockerfileIgnorePathMatcher) IsPathMatched(path string) bool {

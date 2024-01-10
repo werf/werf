@@ -895,7 +895,7 @@ func NewNativeStoreOptions(rootlessUID int, driver StorageDriver) (*thirdparty.S
 	if rootlessUID == 0 {
 		runRoot = "/run/containers/storage"
 	} else {
-		runRoot, err = storage.GetRootlessRuntimeDir(rootlessUID)
+		runRoot, err = homedir.GetRuntimeDir()
 		if err != nil {
 			return nil, fmt.Errorf("unable to get runtime dir: %w", err)
 		}

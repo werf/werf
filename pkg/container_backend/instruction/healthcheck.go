@@ -24,9 +24,17 @@ func (i *Healthcheck) UsesBuildContext() bool {
 }
 
 func (i *Healthcheck) Apply(ctx context.Context, containerName string, drv buildah.Buildah, drvOpts buildah.CommonOpts, buildContextArchive container_backend.BuildContextArchiver) error {
+	healthCheck := &thirdparty.BuildahHealthConfig{
+		Test:        i.Health.Test,
+		Interval:    i.Health.Interval,
+		Timeout:     i.Health.Timeout,
+		StartPeriod: i.Health.StartPeriod,
+		Retries:     i.Health.Retries,
+	}
+
 	if err := drv.Config(ctx, containerName, buildah.ConfigOpts{
 		CommonOpts:  drvOpts,
-		Healthcheck: (*thirdparty.BuildahHealthConfig)(i.Health),
+		Healthcheck: healthCheck,
 	}); err != nil {
 		return fmt.Errorf("error setting healthcheck for container %s: %w", containerName, err)
 	}

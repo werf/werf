@@ -169,7 +169,7 @@ func (wc *WerfChart) MakeBundleValues(chrt *chart.Chart, inputVals map[string]in
 		valsCopy = make(map[string]interface{})
 	}
 
-	chartutil.CoalesceChartValues(chrt, valsCopy)
+	chartutil.CoalesceChartValues(chrt, valsCopy, true)
 
 	helpers.DebugPrintValues(wc.ChartExtenderContext, "all", valsCopy)
 
