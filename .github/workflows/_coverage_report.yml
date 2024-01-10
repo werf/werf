@@ -25,7 +25,7 @@ jobs:
           go-version-file: go.mod
 
       - name: Download coverage artifact
-        uses: actions/download-artifact@master
+        uses: actions/download-artifact@v3
         with:
           name: coverage
           path: coverage
