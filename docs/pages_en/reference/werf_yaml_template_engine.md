@@ -209,12 +209,13 @@ shell:
 
 #### env
 
-The `env` function reads an environment variable. The environment variable must be set, but the value can be empty.
+The `env` function reads an environment variable.
 
 __Syntax__:
 {% raw %}
 ```yaml
-{{ env "<ENV_NAME>" "optional value if ENV_NAME is missing" }}
+{{ env "<ENV_NAME>" }}
+{{ env "<ENV_NAME>" "default_value" }}
 ```
 {% endraw %}
 
