@@ -12,7 +12,7 @@ import (
 	"runtime"
 	"strings"
 
-	uuid "github.com/satori/go.uuid"
+	"github.com/google/uuid"
 	"golang.org/x/crypto/ssh/terminal"
 
 	"github.com/werf/logboek"
@@ -36,7 +36,7 @@ func SecretEdit(ctx context.Context, m *secrets_manager.SecretsManager, workingD
 		return err
 	}
 
-	tmpFilePath := filepath.Join(werf.GetTmpDir(), fmt.Sprintf("werf-edit-secret-%s.yaml", uuid.NewV4().String()))
+	tmpFilePath := filepath.Join(werf.GetTmpDir(), fmt.Sprintf("werf-edit-secret-%s.yaml", uuid.NewString()))
 	defer os.RemoveAll(tmpFilePath)
 
 	if err := createTmpEditedFile(tmpFilePath, data); err != nil {

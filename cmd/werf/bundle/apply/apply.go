@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"time"
 
-	uuid "github.com/satori/go.uuid"
+	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 	helm_v3 "helm.sh/helm/v3/cmd/helm"
 	"helm.sh/helm/v3/pkg/action"
@@ -174,7 +174,7 @@ func runApply(ctx context.Context) error {
 		return err
 	}
 
-	bundleTmpDir := filepath.Join(werf.GetServiceDir(), "tmp", "bundles", uuid.NewV4().String())
+	bundleTmpDir := filepath.Join(werf.GetServiceDir(), "tmp", "bundles", uuid.NewString())
 	defer os.RemoveAll(bundleTmpDir)
 
 	if err := bundles.Pull(ctx, fmt.Sprintf("%s:%s", repoAddress, cmdData.Tag), bundleTmpDir, bundlesRegistryClient); err != nil {

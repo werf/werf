@@ -9,7 +9,7 @@ import (
 	"os"
 	"path/filepath"
 
-	uuid "github.com/satori/go.uuid"
+	"github.com/google/uuid"
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/path_matcher"
@@ -22,7 +22,7 @@ func GetTmpDir() string {
 }
 
 func GetTmpArchivePath() string {
-	return filepath.Join(GetTmpDir(), uuid.NewV4().String())
+	return filepath.Join(GetTmpDir(), uuid.NewString())
 }
 
 func GetContextAddFilesPaths(projectDir, contextDir string, contextAddFiles []string) ([]string, error) {
