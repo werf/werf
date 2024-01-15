@@ -72,7 +72,7 @@ func (i manifestOnlyImage) RawConfigFile() ([]byte, error) {
 // ConfigFile implements v1.Image.
 func (i manifestOnlyImage) ConfigFile() (*v1.ConfigFile, error) {
 	return &v1.ConfigFile{
-		Created: v1.Time{i.CreatedAt},
+		Created: v1.Time{Time: i.CreatedAt},
 		Config: v1.Config{
 			Labels: i.Labels,
 		},

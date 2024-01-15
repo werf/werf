@@ -3,12 +3,39 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Inspect authorization.
+Experimental: Check self subject attributes.
 
 {{ header }} Syntax
 
 ```shell
-werf kubectl alpha auth
+werf kubectl auth whoami [options]
+```
+
+{{ header }} Examples
+
+```shell
+  # Get your subject attributes.
+  kubectl auth whoami
+  
+  # Get your subject attributes in JSON format.
+  kubectl auth whoami -o json
+```
+
+{{ header }} Options
+
+```shell
+      --allow-missing-template-keys=true
+            If true, ignore any errors in templates when a field or map key is missing in the       
+            template. Only applies to golang and jsonpath output formats.
+  -o, --output=''
+            Output format. One of: (json, yaml, name, go-template, go-template-file, template,      
+            templatefile, jsonpath, jsonpath-as-json, jsonpath-file).
+      --show-managed-fields=false
+            If true, keep the managedFields when printing objects in JSON or YAML format.
+      --template=''
+            Template string or path to template file to use when -o=go-template,                    
+            -o=go-template-file. The template format is golang templates                            
+            [http://golang.org/pkg/text/template/#pkg-overview].
 ```
 
 {{ header }} Options inherited from parent commands

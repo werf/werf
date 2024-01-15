@@ -3,20 +3,20 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-List the fields for supported resources.
+Describe fields and structure of various resources.
 
-This command describes the fields associated with each supported API resource. Fields are identified via a simple JSON Path identifier:
-```
-<type>.<fieldName>[.<fieldName>]
-```
-Add the `--recursive` flag to display all of the fields at once without descriptions. Information about each field is retrieved from the server in OpenAPI format.
+ This command describes the fields associated with each supported API resource. Fields are identified via a simple JSONPath identifier:
 
-Use `kubectl api-resources` for a complete list of supported resources.
+        <type>.<fieldName>[.<fieldName>]
+        
+ Information about each field is retrieved from the server in OpenAPI format.
+
+Use "kubectl api-resources" for a complete list of supported resources.
 
 {{ header }} Syntax
 
 ```shell
-werf kubectl explain RESOURCE [options]
+werf kubectl explain TYPE [--recursive=FALSE|TRUE] [--api-version=api-version-group] [--output=plaintext|plaintext-openapiv2] [options]
 ```
 
 {{ header }} Examples
@@ -25,17 +25,30 @@ werf kubectl explain RESOURCE [options]
   # Get the documentation of the resource and its fields
   kubectl explain pods
   
+  # Get all the fields in the resource
+  kubectl explain pods --recursive
+  
+  # Get the explanation for deployment in supported api versions
+  kubectl explain deployments --api-version=apps/v1
+  
   # Get the documentation of a specific field of a resource
   kubectl explain pods.spec.containers
+  
+  # Get the documentation of resources in different format
+  kubectl explain deployment --output=plaintext-openapiv2
 ```
 
 {{ header }} Options
 
 ```shell
       --api-version=''
-            Get different explanations for particular API version (API group/version)
+            Use given api-version (group/version) of the resource.
+      --output='plaintext'
+            Format in which to render the schema. Valid values are: (plaintext,                     
+            plaintext-openapiv2).
       --recursive=false
-            Print the fields of fields (Currently only 1 level deep)
+            When true, print the name of all the fields recursively. Otherwise, print the available 
+            fields with their description.
 ```
 
 {{ header }} Options inherited from parent commands

@@ -16,6 +16,9 @@ werf kubectl rollout restart RESOURCE [options]
 {{ header }} Examples
 
 ```shell
+  # Restart all deployments in test-namespace namespace
+  kubectl rollout restart deployment -n test-namespace
+  
   # Restart a deployment
   kubectl rollout restart deployment/nginx
   

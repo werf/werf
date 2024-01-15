@@ -52,13 +52,13 @@ func (stg *Run) GetDependencies(ctx context.Context, c stage.Conveyor, cb contai
 	if len(mounts) > 0 {
 		args = append(args, "Mounts")
 		for _, mnt := range mounts {
-			args = append(args, "Type", mnt.Type)
+			args = append(args, "Type", string(mnt.Type))
 			args = append(args, "From", mnt.From)
 			args = append(args, "Source", mnt.Source)
 			args = append(args, "Target", mnt.Target)
 			args = append(args, "ReadOnly", fmt.Sprintf("%v", mnt.ReadOnly))
 			args = append(args, "CacheID", mnt.CacheID)
-			args = append(args, "CacheSharing", mnt.CacheSharing)
+			args = append(args, "CacheSharing", string(mnt.CacheSharing))
 			args = append(args, "Required", fmt.Sprintf("%v", mnt.Required))
 			if mnt.Mode != nil {
 				args = append(args, "Mode", fmt.Sprintf("%d", *mnt.Mode))

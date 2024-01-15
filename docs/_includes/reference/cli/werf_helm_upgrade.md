@@ -62,8 +62,10 @@ werf helm upgrade [RELEASE] [CHART] [flags] [options]
       --disable-openapi-validation=false
             if set, the upgrade process will not validate rendered templates against the Kubernetes 
             OpenAPI Schema
-      --dry-run=false
-            simulate an upgrade
+      --dry-run=''
+            simulate an install. If --dry-run is set with no option being specified or as           
+            `--dry-run=client`, it will not attempt cluster connections. Setting `--dry-run=server` 
+            allows attempting cluster connections.
       --enable-dns=false
             enable DNS lookups when rendering templates
       --force=false
@@ -80,6 +82,9 @@ werf helm upgrade [RELEASE] [CHART] [flags] [options]
             identify HTTPS client using this SSL key file
       --keyring='~/.gnupg/pubring.gpg'
             location of public keys used for verification
+  -l, --labels=[]
+            Labels that would be added to release metadata. Should be separated by comma. Original  
+            release labels will be merged with upgrade labels. You can unset label using null.
       --no-hooks=false
             disable pre/post upgrade hooks
   -o, --output=table
@@ -88,6 +93,8 @@ werf helm upgrade [RELEASE] [CHART] [flags] [options]
             pass credentials to all domains
       --password=''
             chart repository password where to locate the requested chart
+      --plain-http=false
+            use insecure HTTP connections for the chart download
       --post-renderer=
             the path to an executable to be used for post rendering. If it exists in $PATH, the     
             binary will be used, otherwise it will try to look for the executable at the given path
@@ -97,6 +104,10 @@ werf helm upgrade [RELEASE] [CHART] [flags] [options]
             if set, render subchart notes along with the parent
       --repo=''
             chart repository url where to locate the requested chart
+      --reset-then-reuse-values=false
+            when upgrading, reset the values to the ones built into the chart, apply the last       
+            release`s values and merge in any overrides from the command line via --set and -f. If  
+            `--reset-values` or `--reuse-values` is specified, this is ignored
       --reset-values=false
             when upgrading, reset the values to the ones built into the chart
       --reuse-values=false
@@ -116,6 +127,8 @@ werf helm upgrade [RELEASE] [CHART] [flags] [options]
       --set-json=[]
             set JSON values on the command line (can specify multiple or separate values with       
             commas: key1=jsonval1,key2=jsonval2)
+      --set-literal=[]
+            set a literal STRING value on the command line
       --set-string=[]
             set STRING values on the command line (can specify multiple or separate values with     
             commas: key1=val1,key2=val2)

@@ -18,10 +18,15 @@ werf helm uninstall RELEASE_NAME [...] [flags] [options]
 {{ header }} Options
 
 ```shell
+      --cascade='background'
+            Must be "background", "orphan", or "foreground". Selects the deletion cascading         
+            strategy for the dependents. Defaults to background.
       --description=''
             add a custom description
       --dry-run=false
             simulate a uninstall
+      --ignore-not-found=false
+            Treat "release not found" as a successful uninstall
       --keep-history=false
             remove all associated resources and mark the release as deleted, but retain the release 
             history

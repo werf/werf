@@ -56,8 +56,10 @@ werf helm template [NAME] [CHART] [flags] [options]
       --disable-openapi-validation=false
             if set, the installation process will not validate rendered templates against the       
             Kubernetes OpenAPI Schema
-      --dry-run=false
-            simulate an install
+      --dry-run=''
+            simulate an install. If --dry-run is set with no option being specified or as           
+            `--dry-run=client`, it will not attempt cluster connections. Setting `--dry-run=server` 
+            allows attempting cluster connections.
       --enable-dns=false
             enable DNS lookups when rendering templates
       --force=false
@@ -78,6 +80,8 @@ werf helm template [NAME] [CHART] [flags] [options]
             location of public keys used for verification
       --kube-version=''
             Kubernetes version used for Capabilities.KubeVersion
+  -l, --labels=[]
+            Labels that would be added to release metadata. Should be divided by comma.
       --name-template=''
             specify template used to name the release
       --no-hooks=false
@@ -88,6 +92,8 @@ werf helm template [NAME] [CHART] [flags] [options]
             pass credentials to all domains
       --password=''
             chart repository password where to locate the requested chart
+      --plain-http=false
+            use insecure HTTP connections for the chart download
       --post-renderer=
             the path to an executable to be used for post rendering. If it exists in $PATH, the     
             binary will be used, otherwise it will try to look for the executable at the given path
@@ -116,6 +122,8 @@ werf helm template [NAME] [CHART] [flags] [options]
       --set-json=[]
             set JSON values on the command line (can specify multiple or separate values with       
             commas: key1=jsonval1,key2=jsonval2)
+      --set-literal=[]
+            set a literal STRING value on the command line
       --set-string=[]
             set STRING values on the command line (can specify multiple or separate values with     
             commas: key1=val1,key2=val2)

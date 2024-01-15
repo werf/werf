@@ -996,7 +996,13 @@ func newHealthConfigFromString(healthcheck string) (*thirdparty.BuildahHealthCon
 	}
 
 	healthcheckcmd := cmd.(*instructions.HealthCheckCommand)
-	healthconfig := (*thirdparty.BuildahHealthConfig)(healthcheckcmd.Health)
+	healthconfig := &thirdparty.BuildahHealthConfig{
+		Test:        healthcheckcmd.Health.Test,
+		Interval:    healthcheckcmd.Health.Interval,
+		Timeout:     healthcheckcmd.Health.Timeout,
+		StartPeriod: healthcheckcmd.Health.StartPeriod,
+		Retries:     healthcheckcmd.Health.Retries,
+	}
 
 	return healthconfig, nil
 }

@@ -113,27 +113,27 @@ func (api *api) TryGetRepoImage(ctx context.Context, reference string) (*image.I
 }
 
 func (api *api) GetRepoImage(ctx context.Context, reference string) (*image.Info, error) {
-	desc, _, err := api.getImageDesc(ctx, reference)
+	desc, ref, err := api.getImageDesc(ctx, reference)
 	if err != nil {
 		return nil, err
 	}
 
-	referenceParts, err := api.parseReferenceParts(desc.Ref.Name())
+	referenceParts, err := api.parseReferenceParts(ref.Name())
 	if err != nil {
-		return nil, fmt.Errorf("unable to parse reference %q: %w", desc.Ref.Name(), err)
+		return nil, fmt.Errorf("unable to parse reference %q: %w", ref.Name(), err)
 	}
 
-	return api.getRepoImageByDesc(ctx, referenceParts.tag, desc)
+	return api.getRepoImageByDesc(ctx, referenceParts.tag, desc, ref)
 }
 
-func (api *api) getRepoImageByDesc(ctx context.Context, originalTag string, desc *remote.Descriptor) (*image.Info, error) {
-	referenceParts, err := api.parseReferenceParts(desc.Ref.Name())
+func (api *api) getRepoImageByDesc(ctx context.Context, originalTag string, desc *remote.Descriptor, ref name.Reference) (*image.Info, error) {
+	referenceParts, err := api.parseReferenceParts(ref.Name())
 	if err != nil {
-		return nil, fmt.Errorf("unable to parse reference %q: %w", desc.Ref.Name(), err)
+		return nil, fmt.Errorf("unable to parse reference %q: %w", ref.Name(), err)
 	}
 
 	repoImage := &image.Info{
-		Name:       desc.Ref.Name(),
+		Name:       ref.Name(),
 		Repository: strings.Join([]string{referenceParts.registry, referenceParts.repository}, "/"),
 		Tag:        originalTag,
 	}
@@ -159,12 +159,12 @@ func (api *api) getRepoImageByDesc(ctx context.Context, originalTag string, desc
 
 		for _, desc := range im.Manifests {
 			subref := fmt.Sprintf("%s@%s", repoImage.Repository, desc.Digest)
-			subdesc, _, err := api.getImageDesc(ctx, subref)
+			subdesc, r, err := api.getImageDesc(ctx, subref)
 			if err != nil {
 				return nil, fmt.Errorf("error getting image %s manifest: %w", subref, err)
 			}
 
-			subInfo, err := api.getRepoImageByDesc(ctx, originalTag, subdesc)
+			subInfo, err := api.getRepoImageByDesc(ctx, originalTag, subdesc, r)
 			if err != nil {
 				return nil, fmt.Errorf("error getting image %s descriptor: %w", subref, err)
 			}

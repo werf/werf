@@ -73,7 +73,7 @@ werf kubectl replace -f FILENAME [options]
             If true, keep the managedFields when printing objects in JSON or YAML format.
       --subresource=''
             If specified, replace will operate on the subresource of the requested object. Must be  
-            one of [status scale]. This flag is alpha and may change in the future.
+            one of [status scale]. This flag is beta and may change in the future.
       --template=''
             Template string or path to template file to use when -o=go-template,                    
             -o=go-template-file. The template format is golang templates                            

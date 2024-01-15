@@ -36,7 +36,9 @@ func NewHelmRegistryClientWithoutInit(ctx context.Context) (*registry.Client, er
 
 func InitHelmRegistryClient(registryClient *registry.Client, dockerConfig string, insecureHelmDependencies bool) {
 	registry.ClientOptCredentialsFile(docker.GetDockerConfigCredentialsFile(dockerConfig))(registryClient)
-	registry.ClientOptInsecure(insecureHelmDependencies)(registryClient)
+	if insecureHelmDependencies {
+		registry.ClientOptPlainHTTP()
+	}
 }
 
 func NewBundlesRegistryClient(ctx context.Context, commonCmdData *CmdData) (*bundles_registry.Client, error) {

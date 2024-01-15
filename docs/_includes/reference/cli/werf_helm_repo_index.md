@@ -19,6 +19,8 @@ werf helm repo index [DIR] [flags] [options]
 {{ header }} Options
 
 ```shell
+      --json=false
+            output in JSON format
       --merge=''
             merge the generated index into the given index
       --url=''

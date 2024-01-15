@@ -31,6 +31,8 @@ werf helm lint PATH [flags] [options]
             Use specified environment (default $WERF_ENV)
       --ignore-secret-key=false
             Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)
+      --kube-version=''
+            Kubernetes version used for capabilities and deprecation checks
       --quiet=false
             print only warnings and errors
       --secret-values=[]
@@ -47,6 +49,8 @@ werf helm lint PATH [flags] [options]
       --set-json=[]
             set JSON values on the command line (can specify multiple or separate values with       
             commas: key1=jsonval1,key2=jsonval2)
+      --set-literal=[]
+            set a literal STRING value on the command line
       --set-string=[]
             set STRING values on the command line (can specify multiple or separate values with     
             commas: key1=val1,key2=val2)

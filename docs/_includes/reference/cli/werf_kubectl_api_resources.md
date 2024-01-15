@@ -41,7 +41,7 @@ werf kubectl api-resources [flags] [options]
       --cached=false
             Use the cached list of resources if available.
       --categories=[]
-            Limit to resources that belong the the specified categories.
+            Limit to resources that belong to the specified categories.
       --namespaced=true
             If false, non-namespaced resources will be returned, otherwise returning namespaced     
             resources by default.

@@ -53,7 +53,7 @@ werf kubectl get [(-o|--output=)json|yaml|name|go-template|go-template-file|temp
   # List one or more resources by their type and names
   kubectl get rc/web service/frontend pods/web-pod-13je7
   
-  # List status subresource for a single pod.
+  # List the 'status' subresource for a single pod
   kubectl get pod web-pod-13je7 --subresource status
 ```
 
@@ -121,7 +121,7 @@ werf kubectl get [(-o|--output=)json|yaml|name|go-template|go-template-file|temp
             resource specified by this JSONPath expression must be an integer or a string.
       --subresource=''
             If specified, gets the subresource of the requested object. Must be one of [status      
-            scale]. This flag is alpha and may change in the future.
+            scale]. This flag is beta and may change in the future.
       --template=''
             Template string or path to template file to use when -o=go-template,                    
             -o=go-template-file. The template format is golang templates                            

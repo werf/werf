@@ -3,18 +3,18 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-**Experimental**: Wait for a specific condition on one or many resources.
+Experimental: Wait for a specific condition on one or many resources.
 
-The command takes multiple resources and waits until the specified condition is seen in the `Status` field of every given resource.
+ The command takes multiple resources and waits until the specified condition is seen in the Status field of every given resource.
 
-Alternatively, the command can wait for the given set of resources to be deleted by providing the `delete` keyword as the value to the `--for` flag.
+ Alternatively, the command can wait for the given set of resources to be deleted by providing the "delete" keyword as the value to the --for flag.
 
-A successful message will be printed to stdout indicating when the specified condition has been met. You can use `-o` option to change to output destination.
+ A successful message will be printed to stdout indicating when the specified condition has been met. You can use -o option to change to output destination.
 
 {{ header }} Syntax
 
 ```shell
-werf kubectl wait ([-f FILENAME] | resource.group/resource.name | resource.group [(-l label | --all)]) [--for=delete|--for condition=available|--for=jsonpath='{}'=value] [options]
+werf kubectl wait ([-f FILENAME] | resource.group/resource.name | resource.group [(-l label | --all)]) [--for=delete|--for condition=available|--for=jsonpath='{}'[=value]] [options]
 ```
 
 {{ header }} Examples
@@ -23,11 +23,17 @@ werf kubectl wait ([-f FILENAME] | resource.group/resource.name | resource.group
   # Wait for the pod "busybox1" to contain the status condition of type "Ready"
   kubectl wait --for=condition=Ready pod/busybox1
   
-  # The default value of status condition is true; you can wait for other targets after an equal delimiter (compared after Unicode simple case folding, which is a more general form of case-insensitivity):
+  # The default value of status condition is true; you can wait for other targets after an equal delimiter (compared after Unicode simple case folding, which is a more general form of case-insensitivity)
   kubectl wait --for=condition=Ready=false pod/busybox1
   
-  # Wait for the pod "busybox1" to contain the status phase to be "Running".
+  # Wait for the pod "busybox1" to contain the status phase to be "Running"
   kubectl wait --for=jsonpath='{.status.phase}'=Running pod/busybox1
+  
+  # Wait for pod "busybox1" to be Ready
+  kubectl wait --for='jsonpath={.status.conditions[?(@.type=="Ready")].status}=True' pod/busybox1
+  
+  # Wait for the service "loadbalancer" to have ingress.
+  kubectl wait --for=jsonpath='{.status.loadBalancer.ingress}' service/loadbalancer
   
   # Wait for the pod "busybox1" to be deleted, with a timeout of 60s, after having issued the "delete" command
   kubectl delete pod/busybox1
@@ -54,8 +60,8 @@ werf kubectl wait ([-f FILENAME] | resource.group/resource.name | resource.group
       --for=''
             The condition to wait on:                                                               
             [delete|condition=condition-name[=condition-value]|jsonpath=`{JSONPath                  
-            expression}`=JSONPath Condition]. The default condition-value is true.  Condition       
-            values are compared after Unicode simple case folding, which is a more general form of  
+            expression}`=[JSONPath value]]. The default condition-value is true.  Condition values  
+            are compared after Unicode simple case folding, which is a more general form of         
             case-insensitivity.
       --local=false
             If true, annotation will NOT contact api-server but run locally.

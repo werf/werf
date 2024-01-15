@@ -36,7 +36,7 @@ werf kubectl edit (RESOURCE/NAME | -f FILENAME) [options]
   # Edit the deployment 'mydeployment' in YAML and save the modified config in its annotation
   kubectl edit deployment/mydeployment -o yaml --save-config
   
-  # Edit the deployment/mydeployment's status subresource
+  # Edit the 'status' subresource for the 'mydeployment' deployment
   kubectl edit deployment mydeployment --subresource='status'
 ```
 
@@ -68,7 +68,7 @@ werf kubectl edit (RESOURCE/NAME | -f FILENAME) [options]
             If true, keep the managedFields when printing objects in JSON or YAML format.
       --subresource=''
             If specified, edit will operate on the subresource of the requested object. Must be one 
-            of [status]. This flag is alpha and may change in the future.
+            of [status]. This flag is beta and may change in the future.
       --template=''
             Template string or path to template file to use when -o=go-template,                    
             -o=go-template-file. The template format is golang templates                            

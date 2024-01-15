@@ -214,8 +214,7 @@ func (helper *MaintenanceHelper) BuildHelm2ResourcesInfos(releaseData *Helm2Rele
 		return nil, err
 	}
 
-	verifier := resource.NewQueryParamVerifier(kube.DynamicClient, factory.OpenAPIGetter(), resource.QueryParamFieldValidation)
-	schema, err := factory.Validator(v1.FieldValidationIgnore, verifier)
+	schema, err := factory.Validator(v1.FieldValidationIgnore)
 	if err != nil {
 		return nil, err
 	}

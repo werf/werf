@@ -140,6 +140,9 @@ cli: &cli
               - title: werf helm get manifest
                 url: /reference/cli/werf_helm_get_manifest.html
 
+              - title: werf helm get metadata
+                url: /reference/cli/werf_helm_get_metadata.html
+
               - title: werf helm get notes
                 url: /reference/cli/werf_helm_get_notes.html
 
@@ -311,11 +314,7 @@ cli: &cli
       - title: werf kubectl
         f:
           - title: werf kubectl alpha
-            f:
-              - title: werf kubectl alpha auth
-                f:
-                  - title: werf kubectl alpha auth whoami
-                    url: /reference/cli/werf_kubectl_alpha_auth_whoami.html
+            url: /reference/cli/werf_kubectl_alpha.html
 
           - title: werf kubectl annotate
             url: /reference/cli/werf_kubectl_annotate.html
@@ -347,6 +346,9 @@ cli: &cli
 
               - title: werf kubectl auth reconcile
                 url: /reference/cli/werf_kubectl_auth_reconcile.html
+
+              - title: werf kubectl auth whoami
+                url: /reference/cli/werf_kubectl_auth_whoami.html
 
           - title: werf kubectl autoscale
             url: /reference/cli/werf_kubectl_autoscale.html
