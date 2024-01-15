@@ -24,6 +24,8 @@ werf helm search hub [KEYWORD] [flags] [options]
 ```shell
       --endpoint='https://hub.helm.sh'
             Hub instance to query for charts
+      --fail-on-no-result=false
+            search fails if no results are found
       --list-repo-url=false
             print charts repository URL
       --max-col-width=50

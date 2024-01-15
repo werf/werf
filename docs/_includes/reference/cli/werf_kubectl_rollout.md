@@ -28,7 +28,7 @@ werf kubectl rollout SUBCOMMAND
   # Restart a deployment
   kubectl rollout restart deployment/abc
   
-  # Restart deployments with the app=nginx label
+  # Restart deployments with the 'app=nginx' label
   kubectl rollout restart deployment --selector=app=nginx
 ```
 

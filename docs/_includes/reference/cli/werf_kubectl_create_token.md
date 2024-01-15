@@ -29,7 +29,7 @@ werf kubectl create token SERVICE_ACCOUNT_NAME [options]
   # Request a token bound to an instance of a Secret object
   kubectl create token myapp --bound-object-kind Secret --bound-object-name mysecret
   
-  # Request a token bound to an instance of a Secret object with a specific uid
+  # Request a token bound to an instance of a Secret object with a specific UID
   kubectl create token myapp --bound-object-kind Secret --bound-object-name mysecret --bound-object-uid 0d4691ed-659b-4935-a832-355f77ee47cc
 ```
 
@@ -53,8 +53,9 @@ werf kubectl create token SERVICE_ACCOUNT_NAME [options]
             UID of an object to bind the token to. Requires --bound-object-kind and                 
             --bound-object-name. If unset, the UID of the existing object is used.
       --duration=0s
-            Requested lifetime of the issued token. The server may return a token with a longer or  
-            shorter lifetime.
+            Requested lifetime of the issued token. If not set, the lifetime will be determined by  
+            the server automatically. The server may return a token with a longer or shorter        
+            lifetime.
   -o, --output=''
             Output format. One of: (json, yaml, name, go-template, go-template-file, template,      
             templatefile, jsonpath, jsonpath-as-json, jsonpath-file).

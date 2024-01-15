@@ -1,1 +1,1 @@
-create a secret using specified subcommand
+create a secret using a specified subcommand

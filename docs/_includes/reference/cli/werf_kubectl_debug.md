@@ -22,11 +22,13 @@ werf kubectl debug (POD | TYPE[[.VERSION].GROUP]/NAME) [ -- COMMAND [args...] ] 
 
 ```shell
   # Create an interactive debugging session in pod mypod and immediately attach to it.
-  # (requires the EphemeralContainers feature to be enabled in the cluster)
   kubectl debug mypod -it --image=busybox
   
-  # Create a debug container named debugger using a custom automated debugging image.
+  # Create an interactive debugging session for the pod in the file pod.yaml and immediately attach to it.
   # (requires the EphemeralContainers feature to be enabled in the cluster)
+  kubectl debug -f pod.yaml -it --image=busybox
+  
+  # Create a debug container named debugger using a custom automated debugging image.
   kubectl debug --image=myproj/debug-tools -c debugger mypod
   
   # Create a copy of mypod adding a debug container and attach to it
@@ -62,13 +64,16 @@ werf kubectl debug (POD | TYPE[[.VERSION].GROUP]/NAME) [ -- COMMAND [args...] ] 
             Create a copy of the target Pod with this name.
       --env=[]
             Environment variables to set in the container.
+  -f, --filename=[]
+            identifying the resource to debug
       --image=''
             Container image to use for debug container.
       --image-pull-policy=''
             The image pull policy for the container. If left empty, this value will not be          
             specified by the client and defaulted by the server.
       --profile='legacy'
-            Debugging profile.
+            Debugging profile. Options are "legacy", "general", "baseline", "netadmin", or          
+            "restricted".
   -q, --quiet=false
             If true, suppress informational messages.
       --replace=false

@@ -33,6 +33,8 @@ werf helm search repo [keyword] [flags] [options]
       --devel=false
             use development versions (alpha, beta, and release candidate releases), too. Equivalent 
             to version `>0.0.0-0`. If --version is set, this is ignored
+      --fail-on-no-result=false
+            search fails if no results are found
       --max-col-width=50
             maximum column width for output table
   -o, --output=table

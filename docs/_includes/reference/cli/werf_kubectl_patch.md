@@ -31,7 +31,7 @@ werf kubectl patch (-f FILENAME | TYPE NAME) [-p PATCH|--patch-file FILE] [optio
   # Update a container's image using a JSON patch with positional arrays
   kubectl patch pod valid-pod --type='json' -p='[{"op": "replace", "path": "/spec/containers/0/image", "value":"new image"}]'
   
-  # Update a deployment's replicas through the scale subresource using a merge patch.
+  # Update a deployment's replicas through the 'scale' subresource using a merge patch
   kubectl patch deployment nginx-deployment --subresource='scale' --type='merge' -p '{"spec":{"replicas":2}}'
 ```
 
@@ -67,7 +67,7 @@ werf kubectl patch (-f FILENAME | TYPE NAME) [-p PATCH|--patch-file FILE] [optio
             If true, keep the managedFields when printing objects in JSON or YAML format.
       --subresource=''
             If specified, patch will operate on the subresource of the requested object. Must be    
-            one of [status scale]. This flag is alpha and may change in the future.
+            one of [status scale]. This flag is beta and may change in the future.
       --template=''
             Template string or path to template file to use when -o=go-template,                    
             -o=go-template-file. The template format is golang templates                            

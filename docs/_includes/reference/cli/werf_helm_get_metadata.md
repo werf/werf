@@ -3,16 +3,22 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
+This command fetches metadata for a given release
 
-This command consists of multiple subcommands which can be used to
-get extended information about the release, including:
+{{ header }} Syntax
 
-- The values used to generate the release
-- The generated manifest file
-- The notes provided by the chart of the release
-- The hooks associated with the release
-- The metadata of the release
+```shell
+werf helm get metadata RELEASE_NAME [flags] [options]
+```
 
+{{ header }} Options
+
+```shell
+  -o, --output=table
+            prints the output in the specified format. Allowed values: table, json, yaml
+      --revision=0
+            specify release revision
+```
 
 {{ header }} Options inherited from parent commands
 

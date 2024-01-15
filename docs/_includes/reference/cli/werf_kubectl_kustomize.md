@@ -35,8 +35,12 @@ werf kubectl kustomize DIR [flags] [options]
             Enable use of the Helm chart inflator generator.
   -e, --env=[]
             a list of environment variables to be used by functions
+      --helm-api-versions=[]
+            Kubernetes api versions used by Helm for Capabilities.APIVersions
       --helm-command='helm'
             helm command (path to executable)
+      --helm-kube-version=''
+            Kubernetes version used by Helm for Capabilities.KubeVersion
       --load-restrictor='LoadRestrictionsRootOnly'
             if set to `LoadRestrictionsNone`, local kustomizations may load files from outside      
             their root. This does, however, break the relocatability of the kustomization.
@@ -48,9 +52,6 @@ werf kubectl kustomize DIR [flags] [options]
             the docker network to run the container in
   -o, --output=''
             If specified, write output to this path.
-      --reorder='legacy'
-            Reorder the resources just before output. Use `legacy` to apply a legacy reordering     
-            (Namespaces first, Webhooks last, etc). Use `none` to suppress a final reordering.
 ```
 
 {{ header }} Options inherited from parent commands

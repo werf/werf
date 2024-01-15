@@ -26,7 +26,7 @@ werf kubectl delete ([-f FILENAME] | [-k DIRECTORY] | TYPE [(NAME | -l label | -
   # Delete resources from a directory containing kustomization.yaml - e.g. dir/kustomization.yaml
   kubectl delete -k dir
   
-  # Delete resources from all files that end with '.json' - i.e. expand wildcard characters in file names
+  # Delete resources from all files that end with '.json'
   kubectl delete -f '*.json'
   
   # Delete a pod based on the type and name in the JSON passed into stdin
@@ -81,6 +81,8 @@ werf kubectl delete ([-f FILENAME] | [-k DIRECTORY] | TYPE [(NAME | -l label | -
       --ignore-not-found=false
             Treat "resource not found" as a successful delete. Defaults to "true" when --all is     
             specified.
+  -i, --interactive=false
+            If true, delete resource only when user confirms. This flag is in Alpha.
   -k, --kustomize=''
             Process a kustomization directory. This flag can`t be used together with -f or -R.
       --now=false

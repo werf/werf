@@ -31,6 +31,8 @@ werf helm show crds [CHART] [flags] [options]
             pass credentials to all domains
       --password=''
             chart repository password where to locate the requested chart
+      --plain-http=false
+            use insecure HTTP connections for the chart download
       --repo=''
             chart repository url where to locate the requested chart
       --username=''

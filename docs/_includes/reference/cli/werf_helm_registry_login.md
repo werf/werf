@@ -16,8 +16,14 @@ werf helm registry login [host] [flags] [options]
 {{ header }} Options
 
 ```shell
+      --ca-file=''
+            verify certificates of HTTPS-enabled servers using this CA bundle
+      --cert-file=''
+            identify registry client using this SSL certificate file
       --insecure=false
             allow connections to TLS registry without certs
+      --key-file=''
+            identify registry client using this SSL key file
   -p, --password=''
             registry password or identity token
       --password-stdin=false

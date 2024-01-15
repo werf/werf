@@ -22,10 +22,10 @@ werf kubectl drain NODE [options]
 {{ header }} Examples
 
 ```shell
-  # Drain node "foo", even if there are pods not managed by a replication controller, replica set, job, daemon set or stateful set on it
+  # Drain node "foo", even if there are pods not managed by a replication controller, replica set, job, daemon set, or stateful set on it
   kubectl drain foo --force
   
-  # As above, but abort if there are pods not managed by a replication controller, replica set, job, daemon set or stateful set, and use a grace period of 15 minutes
+  # As above, but abort if there are pods not managed by a replication controller, replica set, job, daemon set, or stateful set, and use a grace period of 15 minutes
   kubectl drain foo --grace-period=900
 ```
 

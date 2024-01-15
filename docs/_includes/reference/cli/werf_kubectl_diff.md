@@ -36,6 +36,9 @@ werf kubectl diff -f FILENAME [options]
 {{ header }} Options
 
 ```shell
+      --concurrency=1
+            Number of objects to process in parallel when diffing against the live version. Larger  
+            number = faster, but more memory, I/O and CPU over that shorter period of time.
       --field-manager='kubectl-client-side-apply'
             Name of the manager used to track field ownership.
   -f, --filename=[]
