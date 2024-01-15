@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/minio/minio/pkg/disk"
+	"github.com/werf/werf/pkg/third_party/minio/disk"
 )
 
 type VolumeUsage struct {
@@ -16,7 +16,7 @@ type VolumeUsage struct {
 }
 
 func GetVolumeUsageByPath(ctx context.Context, path string) (VolumeUsage, error) {
-	di, err := disk.GetInfo(path)
+	di, err := disk.GetInfo(path, true)
 	if err != nil {
 		return VolumeUsage{}, fmt.Errorf("unable to get disk info: %w", err)
 	}
