@@ -1,5 +1,13 @@
 # Changelog
 
+### [1.2.279](https://www.github.com/werf/werf/compare/v1.2.278...v1.2.279) (2024-01-15)
+
+
+### Bug Fixes
+
+* update all go modules ([6cd8ff5](https://www.github.com/werf/werf/commit/6cd8ff5195ed9b23f3cab436ce463f58ab42b207))
+* update more modules, get rid of minio ([09a77d2](https://www.github.com/werf/werf/commit/09a77d2100d078b53c0f5fa0078001e8cb50b1a8))
+
 ### [1.2.278](https://www.github.com/werf/werf/compare/v1.2.277...v1.2.278) (2024-01-10)
 
 
