@@ -3,13 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Create a secret with specified type.
-
- A docker-registry type secret is for accessing a container registry.
-
- A generic type secret indicate an Opaque secret type.
-
- A tls type secret holds TLS certificate and its associated key.
+Create a secret using specified subcommand.
 
 {{ header }} Syntax
 

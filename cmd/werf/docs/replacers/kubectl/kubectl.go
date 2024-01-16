@@ -284,7 +284,7 @@ func setNewDocs(cmd *cobra.Command) {
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetCreateRoleBindingDocs().LongMD,
 		}
-	case "secret":
+	case "secret (docker-registry | generic | tls)":
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetCreateSecretDocs().LongMD,
 		}
@@ -354,7 +354,7 @@ func setNewDocs(cmd *cobra.Command) {
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetExecDocs().LongMD,
 		}
-	case "explain RESOURCE":
+	case "explain TYPE [--recursive=FALSE|TRUE] [--api-version=api-version-group] [--output=plaintext|plaintext-openapiv2]":
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetExplainDocs().LongMD,
 		}
@@ -499,13 +499,12 @@ func setNewDocs(cmd *cobra.Command) {
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetVersionDocs().LongMD,
 		}
-	case "wait ([-f FILENAME] | resource.group/resource.name | resource.group " +
-		"[(-l label | --all)]) [--for=delete|--for condition=available|--for=jsonpath='{}'=value]":
+	case "wait ([-f FILENAME] | resource.group/resource.name | resource.group [(-l label | --all)]) [--for=delete|--for condition=available|--for=jsonpath='{}'[=value]]":
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetWaitDocs().LongMD,
 		}
 	case "events [(-o|--output=)json|yaml|name|go-template|go-template-file|template|templatefile|jsonpath|" +
-		"jsonpath-as-json|jsonpath-file] [--for TYPE/NAME] [--watch] [--event=Normal,Warning]":
+		"jsonpath-as-json|jsonpath-file] [--for TYPE/NAME] [--watch] [--types=Normal,Warning]":
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetEventsDocs().LongMD,
 		}
