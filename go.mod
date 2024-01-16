@@ -1,6 +1,8 @@
 module github.com/werf/werf
 
-go 1.20
+go 1.21.1
+
+toolchain go1.21.6
 
 require (
 	bou.ke/monkey v1.0.2
@@ -60,10 +62,10 @@ require (
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.5
 	github.com/werf/copy-recurse v0.2.7
-	github.com/werf/kubedog v0.12.1-0.20240115134541-7f2b2536e267
+	github.com/werf/kubedog v0.12.1-0.20240116144346-6cc5b832e653
 	github.com/werf/lockgate v0.1.1
 	github.com/werf/logboek v0.6.1
-	github.com/werf/nelm v0.0.0-20240115140857-493ca808f594
+	github.com/werf/nelm v0.0.0-20240116145227-7009d6b92c55
 	go.opentelemetry.io/otel v1.21.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.21.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.21.0
@@ -326,7 +328,7 @@ require (
 	github.com/vbauerster/mpb/v8 v8.7.2 // indirect
 	github.com/vishvananda/netlink v1.2.1-beta.2 // indirect
 	github.com/vishvananda/netns v0.0.4 // indirect
-	github.com/wI2L/jsondiff v0.4.0 // indirect
+	github.com/wI2L/jsondiff v0.5.0 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
@@ -389,7 +391,7 @@ replace (
 	github.com/deislabs/oras => github.com/werf/3p-oras v0.9.1-0.20240115121544-03962ecbd40a // upstream not maintained
 	github.com/helm/helm-2to3 => github.com/werf/3p-helm-2to3 v0.0.0-20230313155428-cf9dd655c0e3 // upstream not maintained, switch back to upstream when merged: https://github.com/helm/helm-2to3/pull/224
 	github.com/jaguilar/vt100 => github.com/tonistiigi/vt100 v0.0.0-20190402012908-ad4c4a574305 // upstream not maintained
-	helm.sh/helm/v3 => github.com/werf/3p-helm/v3 v3.0.0-20240115134707-3872be025314 // helm 3
+	helm.sh/helm/v3 => github.com/werf/3p-helm/v3 v3.0.0-20240116144224-07a251e069dc // helm 3
 	k8s.io/helm => github.com/werf/3p-helm v0.0.0-20210202111118-81e74d46da0f // helm 2
 	oras.land/oras-go => github.com/werf/3p-oras-go v0.0.0-20240112153018-fd519ad81736 // switch back to upstream when merged: https://github.com/oras-project/oras-go/pull/678
 )
