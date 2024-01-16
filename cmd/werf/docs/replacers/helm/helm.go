@@ -148,6 +148,10 @@ func ReplaceHelmGetDocs(cmd *cobra.Command) *cobra.Command {
 			cmd.Commands()[i].Annotations = map[string]string{
 				common.DocsLongMD: GetHelmGetNotesDocs().LongMD,
 			}
+		case "metadata RELEASE_NAME":
+			cmd.Commands()[i].Annotations = map[string]string{
+				common.DocsLongMD: GetHelmGetMetadataDocs().LongMD,
+			}
 		}
 	}
 	return cmd

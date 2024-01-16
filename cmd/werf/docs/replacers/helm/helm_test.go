@@ -171,7 +171,8 @@ func TestReplaceHelmGetDocs(t *testing.T) {
 				ann != GetHelmGetAllDocs().LongMD &&
 				ann != GetHelmGetValuesDocs().LongMD &&
 				ann != GetHelmGetManifestDocs().LongMD &&
-				ann != GetHelmGetNotesDocs().LongMD {
+				ann != GetHelmGetNotesDocs().LongMD &&
+				ann != GetHelmGetMetadataDocs().LongMD {
 				t.Errorf("The annotation in `%s -> %s` command does not match!", cmd.Use, cmd.Commands()[i].Use)
 			}
 		}

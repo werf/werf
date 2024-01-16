@@ -362,6 +362,14 @@ func GetHelmGetNotesDocs() structs.DocsStruct {
 	return docs
 }
 
+func GetHelmGetMetadataDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = ""
+
+	return docs
+}
+
 func GetHelmPluginListDocs() structs.DocsStruct {
 	var docs structs.DocsStruct
 

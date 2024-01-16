@@ -3,7 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-This command fetches metadata for a given release
+
 
 {{ header }} Syntax
 
