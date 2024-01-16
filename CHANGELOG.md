@@ -1,5 +1,13 @@
 # Changelog
 
+### [1.2.280](https://www.github.com/werf/werf/compare/v1.2.279...v1.2.280) (2024-01-16)
+
+
+### Bug Fixes
+
+* disable dependabot ([76998e9](https://www.github.com/werf/werf/commit/76998e9b479e5ab7f523608713b2758545a01abd))
+* switch to go 1.21 ([2624b32](https://www.github.com/werf/werf/commit/2624b32cbf49a8437aa5d1886960b76ade2e8295))
+
 ### [1.2.279](https://www.github.com/werf/werf/compare/v1.2.278...v1.2.279) (2024-01-15)
 
 
