@@ -1,6 +1,6 @@
 module github.com/werf/werf
 
-go 1.20
+go 1.21.1
 
 require (
 	bou.ke/monkey v1.0.2
