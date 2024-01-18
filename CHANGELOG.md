@@ -1,5 +1,17 @@
 # Changelog
 
+### [1.2.281](https://www.github.com/werf/werf/compare/v1.2.280...v1.2.281) (2024-01-18)
+
+
+### Features
+
+* **nelm:** --exit-code flag for werf plan ([a9dcf1b](https://www.github.com/werf/werf/commit/a9dcf1b27f4fd71ef68b47f3b635aa1237c4ca0c))
+
+
+### Bug Fixes
+
+* update helm, nelm modules ([90d07de](https://www.github.com/werf/werf/commit/90d07debe795bf05b8b2f2d3eb32a69eb42bb686))
+
 ### [1.2.280](https://www.github.com/werf/werf/compare/v1.2.279...v1.2.280) (2024-01-16)
 
 
