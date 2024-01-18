@@ -56,7 +56,8 @@ import (
 )
 
 var cmdData struct {
-	Timeout int
+	Timeout          int
+	DetailedExitCode bool
 }
 
 var commonCmdData common.CmdData
@@ -201,6 +202,7 @@ werf plan --repo registry.mydomain.com/web --env production`,
 		defaultTimeout = new(int64)
 	}
 	cmd.Flags().IntVarP(&cmdData.Timeout, "timeout", "t", int(*defaultTimeout), "Resources tracking timeout in seconds ($WERF_TIMEOUT by default)")
+	cmd.Flags().BoolVarP(&cmdData.DetailedExitCode, "exit-code", "", util.GetBoolEnvironmentDefaultFalse("WERF_EXIT_CODE"), "If true, returns exit code 0 if no changes, exit code 2 if any changes planned or exit code 1 in case of an error (default $WERF_EXIT_CODE or false)")
 
 	return cmd
 }
@@ -627,7 +629,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 			}
 
 			log.Default.Info(ctx, "Calculating planned changes")
-			createdChanges, recreatedChanges, updatedChanges, appliedChanges, deletedChanges := resrcchangcalc.CalculatePlannedChanges(
+			createdChanges, recreatedChanges, updatedChanges, appliedChanges, deletedChanges, anyChangesPlanned := resrcchangcalc.CalculatePlannedChanges(
 				resProcessor.DeployableReleaseNamespaceInfo(),
 				resProcessor.DeployableStandaloneCRDsInfos(),
 				resProcessor.DeployableHookResourcesInfos(),
@@ -646,6 +648,10 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 				appliedChanges,
 				deletedChanges,
 			)
+
+			if cmdData.DetailedExitCode && anyChangesPlanned {
+				return resrcchangcalc.ErrChangesPlanned
+			}
 
 			return nil
 		})

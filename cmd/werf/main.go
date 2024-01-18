@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -12,6 +13,7 @@ import (
 	helm_v3 "helm.sh/helm/v3/cmd/helm"
 
 	"github.com/werf/logboek"
+	"github.com/werf/nelm/pkg/resrcchangcalc"
 	"github.com/werf/werf/cmd/werf/build"
 	bundle_apply "github.com/werf/werf/cmd/werf/bundle/apply"
 	bundle_copy "github.com/werf/werf/cmd/werf/bundle/copy"
@@ -87,6 +89,9 @@ func main() {
 		if helm_v3.IsPluginError(err) {
 			common.ShutdownTelemetry(ctx, helm_v3.PluginErrorCode(err))
 			common.TerminateWithError(err.Error(), helm_v3.PluginErrorCode(err))
+		} else if errors.Is(err, resrcchangcalc.ErrChangesPlanned) {
+			common.ShutdownTelemetry(ctx, 2)
+			os.Exit(2)
 		} else {
 			common.ShutdownTelemetry(ctx, 1)
 			common.TerminateWithError(err.Error(), 1)
