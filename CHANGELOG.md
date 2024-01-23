@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.282](https://www.github.com/werf/werf/compare/v1.2.281...v1.2.282) (2024-01-23)
+
+
+### Bug Fixes
+
+* **cleanup:** panic: runtime error: invalid memory address or nil pointer dereference ([#5937](https://www.github.com/werf/werf/issues/5937)) ([33465ab](https://www.github.com/werf/werf/commit/33465abb68e64a9b869cb16db8df56a6a3d0ea3d))
+
 ### [1.2.281](https://www.github.com/werf/werf/compare/v1.2.280...v1.2.281) (2024-01-18)
 
 
