@@ -4,4 +4,4 @@ permalink: configurator.html
 toc: false
 ---
 
-<!--#include virtual="/configurator/content/$configurator_selected_page" -->
+<!--#include virtual="/configurator/tab/$configurator_selected_page" -->
