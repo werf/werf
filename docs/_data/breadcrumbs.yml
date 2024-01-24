@@ -1,4 +1,7 @@
 en:
+  /configurator: &configurator
+    title: Configurator
+    url: /configurator.html
   /documentation: &documentation
     title: Documentation
     url: /index.html
@@ -33,6 +36,9 @@ en:
     title: Resources
     url: /resources/how_to_migrate_from_v1_1_to_v1_2.html
 ru:
+  /configurator:
+      <<: *configurator
+      title: Конфигуратор
   /documentation:
     <<: *documentation
     title: Документация
