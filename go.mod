@@ -62,10 +62,10 @@ require (
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.5
 	github.com/werf/copy-recurse v0.2.7
-	github.com/werf/kubedog v0.12.1-0.20240116144346-6cc5b832e653
+	github.com/werf/kubedog v0.12.3
 	github.com/werf/lockgate v0.1.1
 	github.com/werf/logboek v0.6.1
-	github.com/werf/nelm v0.0.0-20240118180300-6375703101bf
+	github.com/werf/nelm v0.0.0-20240125141556-e86addcab63f
 	go.opentelemetry.io/otel v1.21.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.21.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.21.0
@@ -229,6 +229,7 @@ require (
 	github.com/in-toto/in-toto-golang v0.9.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
+	github.com/jedib0t/go-pretty/v6 v6.5.2 // indirect
 	github.com/jellydator/ttlcache/v3 v3.1.1 // indirect
 	github.com/jinzhu/copier v0.4.0 // indirect
 	github.com/jinzhu/gorm v1.9.16 // indirect
@@ -391,6 +392,7 @@ replace (
 	github.com/deislabs/oras => github.com/werf/3p-oras v0.9.1-0.20240115121544-03962ecbd40a // upstream not maintained
 	github.com/helm/helm-2to3 => github.com/werf/3p-helm-2to3 v0.0.0-20230313155428-cf9dd655c0e3 // upstream not maintained, switch back to upstream when merged: https://github.com/helm/helm-2to3/pull/224
 	github.com/jaguilar/vt100 => github.com/tonistiigi/vt100 v0.0.0-20190402012908-ad4c4a574305 // upstream not maintained
+	github.com/jedib0t/go-pretty/v6 => github.com/werf/3p-go-pretty/v6 v6.0.0-20240125135207-7170e1857aa0 // switch back to upstream when merged: https://github.com/jedib0t/go-pretty/pull/295
 	helm.sh/helm/v3 => github.com/werf/3p-helm/v3 v3.0.0-20240116144224-07a251e069dc // helm 3
 	k8s.io/helm => github.com/werf/3p-helm v0.0.0-20210202111118-81e74d46da0f // helm 2
 	oras.land/oras-go => github.com/werf/3p-oras-go v0.0.0-20240112153018-fd519ad81736 // switch back to upstream when merged: https://github.com/oras-project/oras-go/pull/678

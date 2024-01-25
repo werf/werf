@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"time"
 
 	"github.com/gookit/color"
@@ -22,6 +23,9 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/werf/kubedog/pkg/kube"
+	"github.com/werf/kubedog/pkg/trackers/dyntracker/logstore"
+	"github.com/werf/kubedog/pkg/trackers/dyntracker/statestore"
+	kubeutil "github.com/werf/kubedog/pkg/trackers/dyntracker/util"
 	"github.com/werf/logboek"
 	"github.com/werf/nelm/pkg/chrttree"
 	helmcommon "github.com/werf/nelm/pkg/common"
@@ -34,9 +38,9 @@ import (
 	"github.com/werf/nelm/pkg/resrc"
 	"github.com/werf/nelm/pkg/resrcpatcher"
 	"github.com/werf/nelm/pkg/resrcprocssr"
-	"github.com/werf/nelm/pkg/resrctracker"
 	"github.com/werf/nelm/pkg/rls"
 	"github.com/werf/nelm/pkg/rlshistor"
+	"github.com/werf/nelm/pkg/track"
 	"github.com/werf/nelm/pkg/utls"
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/build"
@@ -527,7 +531,6 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		trackReadinessTimeout := *common.NewDuration(time.Duration(cmdData.Timeout) * time.Second)
 		trackDeletionTimeout := trackReadinessTimeout
 		showResourceProgressPeriod := time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second
-		showHookResourceProgressPeriod := time.Duration(*commonCmdData.HooksStatusProgressPeriodSeconds) * time.Second
 		saveDeployReport := common.GetSaveDeployReport(&commonCmdData)
 		deployReportPath, err := common.GetDeployReportPath(&commonCmdData)
 		if err != nil {
@@ -575,8 +578,6 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		// 	mem.SetNamespace(releaseNamespace.Name())
 		// 	actionConfig.Releases = storage.Init(mem)
 		// }
-
-		tracker := resrctracker.NewResourceTracker(clientFactory.Static(), clientFactory.Dynamic(), clientFactory.Discovery(), clientFactory.Mapper())
 
 		return command_helpers.LockReleaseWrapper(ctx, releaseName, lockManager, func() error {
 			log.Default.Info(ctx, "Constructing release history")
@@ -688,9 +689,16 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 				return fmt.Errorf("error constructing new release: %w", err)
 			}
 
+			taskStore := statestore.NewTaskStore()
+			logStore := kubeutil.NewConcurrent(
+				logstore.NewLogStore(),
+			)
+
 			log.Default.Info(ctx, "Constructing new deploy plan")
 			deployPlanBuilder := plnbuilder.NewDeployPlanBuilder(
 				deployType,
+				taskStore,
+				logStore,
 				resProcessor.DeployableReleaseNamespaceInfo(),
 				resProcessor.DeployableStandaloneCRDsInfos(),
 				resProcessor.DeployableHookResourcesInfos(),
@@ -699,16 +707,16 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 				newRel,
 				history,
 				clientFactory.KubeClient(),
+				clientFactory.Static(),
+				clientFactory.Dynamic(),
+				clientFactory.Discovery(),
 				clientFactory.Mapper(),
-				tracker,
 				plnbuilder.DeployPlanBuilderOptions{
-					PrevRelease:            prevRelease,
-					PrevDeployedRelease:    prevDeployedRelease,
-					CreationTimeout:        trackReadinessTimeout,
-					ReadinessTimeout:       trackReadinessTimeout,
-					DeletionTimeout:        trackDeletionTimeout,
-					ShowProgressPeriod:     showResourceProgressPeriod,
-					ShowHookProgressPeriod: showHookResourceProgressPeriod,
+					PrevRelease:         prevRelease,
+					PrevDeployedRelease: prevDeployedRelease,
+					CreationTimeout:     trackReadinessTimeout,
+					ReadinessTimeout:    trackReadinessTimeout,
+					DeletionTimeout:     trackDeletionTimeout,
 				},
 			)
 
@@ -729,6 +737,37 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 				log.Default.Info(ctx, color.Style{color.Bold, color.Green}.Render("Skipped release")+" %q (namespace: %q): cluster resources already as desired", releaseName, releaseNamespace.Name())
 				return nil
 			}
+
+			colorize := *commonCmdData.LogColorMode != "off"
+			tablesBuilder := track.NewTablesBuilder(
+				taskStore,
+				logStore,
+				track.TablesBuilderOptions{
+					DefaultNamespace: releaseNamespace.Name(),
+					Colorize:         colorize,
+				},
+			)
+
+			log.Default.Info(ctx, "Starting tracking")
+			stdoutTrackerStopCh := make(chan bool)
+			stdoutTrackerFinishedCh := make(chan bool)
+			go func() {
+				ticker := time.NewTicker(showResourceProgressPeriod)
+				defer func() {
+					ticker.Stop()
+					stdoutTrackerFinishedCh <- true
+				}()
+
+				for {
+					select {
+					case <-ticker.C:
+						printTables(ctx, tablesBuilder)
+					case <-stdoutTrackerStopCh:
+						printTables(ctx, tablesBuilder)
+						return
+					}
+				}
+			}()
 
 			log.Default.Info(ctx, "Executing deploy plan")
 			planExecutor := plnexectr.NewPlanExecutor(plan, plnexectr.PlanExecutorOptions{
@@ -779,11 +818,14 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 				log.Default.Info(ctx, "Building failure deploy plan")
 				failurePlanBuilder := plnbuilder.NewDeployFailurePlanBuilder(
 					plan,
+					taskStore,
 					resProcessor.DeployableHookResourcesInfos(),
 					resProcessor.DeployableGeneralResourcesInfos(),
 					newRel,
 					history,
 					clientFactory.KubeClient(),
+					clientFactory.Dynamic(),
+					clientFactory.Mapper(),
 					plnbuilder.DeployFailurePlanBuilderOptions{
 						PrevRelease: prevRelease,
 					},
@@ -833,6 +875,9 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 			}(); len(errs) > 0 {
 				finalErrs = append(finalErrs, errs...)
 			}
+
+			stdoutTrackerStopCh <- true
+			<-stdoutTrackerFinishedCh
 
 			report := reprt.NewReport(
 				worthyCompletedOps,
@@ -888,6 +933,42 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 				return fmt.Errorf("helm upgrade have failed: %w", err)
 			}
 			return nil
+		})
+	}
+}
+
+func printTables(ctx context.Context, tablesBuilder *track.TablesBuilder) {
+	maxTableWidth := logboek.Context(ctx).Streams().ContentWidth() - 2
+	tablesBuilder.SetMaxTableWidth(maxTableWidth)
+
+	if tables, nonEmpty := tablesBuilder.BuildEventTables(); nonEmpty {
+		headers := lo.Keys(tables)
+		sort.Strings(headers)
+
+		for _, header := range headers {
+			logboek.Context(ctx).LogBlock(header).Do(func() {
+				tables[header].SuppressTrailingSpaces()
+				logboek.Context(ctx).LogLn(tables[header].Render())
+			})
+		}
+	}
+
+	if tables, nonEmpty := tablesBuilder.BuildLogTables(); nonEmpty {
+		headers := lo.Keys(tables)
+		sort.Strings(headers)
+
+		for _, header := range headers {
+			logboek.Context(ctx).LogBlock(header).Do(func() {
+				tables[header].SuppressTrailingSpaces()
+				logboek.Context(ctx).LogLn(tables[header].Render())
+			})
+		}
+	}
+
+	if table, nonEmpty := tablesBuilder.BuildProgressTable(); nonEmpty {
+		logboek.Context(ctx).LogBlock("Progress status").Do(func() {
+			table.SuppressTrailingSpaces()
+			logboek.Context(ctx).LogLn(table.Render())
 		})
 	}
 }

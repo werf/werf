@@ -1536,6 +1536,8 @@ github.com/weppos/publicsuffix-go v0.13.1-0.20210123135404-5fd73613514e/go.mod h
 github.com/weppos/publicsuffix-go v0.15.1-0.20210511084619-b1f36a2d6c0b/go.mod h1:HYux0V0Zi04bHNwOHy4cXJVz/TQjYonnF6aoYhj+3QE=
 github.com/weppos/publicsuffix-go v0.30.2-0.20230730094716-a20f9abcc222 h1:h2JizvZl9aIj6za9S5AyrkU+OzIS4CetQthH/ejO+lg=
 github.com/weppos/publicsuffix-go v0.30.2-0.20230730094716-a20f9abcc222/go.mod h1:s41lQh6dIsDWIC1OWh7ChWJXLH0zkJ9KHZVqA7vHyuQ=
+github.com/werf/3p-go-pretty/v6 v6.0.0-20240125135207-7170e1857aa0 h1:G2jf0aBQhhJqfyusEtoSBf+JoB+FARkZmrx1A9Quink=
+github.com/werf/3p-go-pretty/v6 v6.0.0-20240125135207-7170e1857aa0/go.mod h1:5LQIxa52oJ/DlDSLv0HEkWOFMDGoWkJb9ss5KqPpJBg=
 github.com/werf/3p-helm v0.0.0-20210202111118-81e74d46da0f h1:3anHigsmgMJ7IlG8WCKNgiZpO3CaZFwq8l7W+6UT+pM=
 github.com/werf/3p-helm v0.0.0-20210202111118-81e74d46da0f/go.mod h1:OMONwLWU9zEENgaVjWEX+M+xik2QakejzKHG1+6mnUo=
 github.com/werf/3p-helm-2to3 v0.0.0-20230313155428-cf9dd655c0e3 h1:pdKLiuiUoOFswc0HV6GX1+JHgP14HqE035xl2DQJi8A=
@@ -1550,14 +1552,14 @@ github.com/werf/3p-storage v0.0.0-20240115153922-84bfff8f31d9 h1:1WRUXBeh1TR2UAr
 github.com/werf/3p-storage v0.0.0-20240115153922-84bfff8f31d9/go.mod h1:pMhG1O3eMGlQKpuEuv7ves+K3BsK8/UJs8ctV5fEaoI=
 github.com/werf/copy-recurse v0.2.7 h1:3FTOarbJ9uhFLi75oeUCioK9zxZwuV7o28kuUBPDZPM=
 github.com/werf/copy-recurse v0.2.7/go.mod h1:6Ypb+qN+hRBJgoCgEkX1vpbqcQ+8q69BQ3hi8s8Y6Qc=
-github.com/werf/kubedog v0.12.1-0.20240116144346-6cc5b832e653 h1:ghm4lKZSldfzg0W6P7VO5+HU90nO1GQ5rs27+pd76SM=
-github.com/werf/kubedog v0.12.1-0.20240116144346-6cc5b832e653/go.mod h1:AtmPbj6IokFIyBsXkPaLfPmof8Vuye66+JdUXffXUMA=
+github.com/werf/kubedog v0.12.3 h1:FSuFhB0OcJz9PZd94IW9V3GS6M4TkHCo+sBxB8pDLyQ=
+github.com/werf/kubedog v0.12.3/go.mod h1:AtmPbj6IokFIyBsXkPaLfPmof8Vuye66+JdUXffXUMA=
 github.com/werf/lockgate v0.1.1 h1:S400JFYjtWfE4i4LY9FA8zx0fMdfui9DPrBiTciCrx4=
 github.com/werf/lockgate v0.1.1/go.mod h1:0yIFSLq9ausy6ejNxF5uUBf/Ib6daMAfXuCaTMZJzIE=
 github.com/werf/logboek v0.6.1 h1:oEe6FkmlKg0z0n80oZjLplj6sXcBeLleCkjfOOZEL2g=
 github.com/werf/logboek v0.6.1/go.mod h1:Gez5J4bxekyr6MxTmIJyId1F61rpO+0/V4vjCIEIZmk=
-github.com/werf/nelm v0.0.0-20240118180300-6375703101bf h1:5jTvI6i68Us4k44un3x0VMm9h8kuV3oKmvwiUlmcqdU=
-github.com/werf/nelm v0.0.0-20240118180300-6375703101bf/go.mod h1:gD9Ej2C3HZcQxEfpHMF4fANtVk2EylEcy5LfTEBN/KQ=
+github.com/werf/nelm v0.0.0-20240125141556-e86addcab63f h1:Qnk7gq25Q0xgaWj9oMxiPqjKbE/gD22O/nLWUPtzlIw=
+github.com/werf/nelm v0.0.0-20240125141556-e86addcab63f/go.mod h1:JJkG5txk0x4uV8oFh0J/Ow260K8bhe3QeOlaBCHWHJw=
 github.com/xanzy/go-gitlab v0.31.0/go.mod h1:sPLojNBn68fMUWSxIJtdVVIP8uSBYqesTfDUseX11Ug=
 github.com/xanzy/ssh-agent v0.2.1/go.mod h1:mLlQY/MoOhWBj+gOGMQkOeiEvkx+8pJSI+0Bx9h2kr4=
 github.com/xanzy/ssh-agent v0.3.3 h1:+/15pJfg/RsTxqYcX6fHqOXZwwMP+2VyYWJeWM2qQFM=
