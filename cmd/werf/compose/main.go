@@ -445,15 +445,17 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		dockerComposeArgs = append(dockerComposeArgs, cmdData.ComposeCommandArgs...)
 	}
 
-	// TODO: use docker CLI compose command instead of host docker-compose binary
+	// TODO: use docker SDK instead of host docker binary
 	if *commonCmdData.DryRun {
 		for _, env := range envArray {
 			fmt.Println("export", env)
 		}
-		fmt.Printf("docker-compose %s\n", strings.Join(dockerComposeArgs, " "))
+		fmt.Printf("docker compose %s\n", strings.Join(dockerComposeArgs, " "))
 		return nil
 	} else {
-		cmd := exec.Command("docker-compose", dockerComposeArgs...)
+		dockerComposeArgs = append([]string{"compose"}, dockerComposeArgs...)
+
+		cmd := exec.Command("docker", dockerComposeArgs...)
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
