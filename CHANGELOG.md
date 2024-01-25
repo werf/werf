@@ -1,5 +1,13 @@
 # Changelog
 
+### [1.2.283](https://www.github.com/werf/werf/compare/v1.2.282...v1.2.283) (2024-01-25)
+
+
+### Features
+
+* **compose:** use host docker binary instead of docker-compose ([#5944](https://www.github.com/werf/werf/issues/5944)) ([a82a665](https://www.github.com/werf/werf/commit/a82a665091cba4e0f64f8a11c4d3006496867c90))
+* **nelm:** heavily improved resource tracking ([0a23121](https://www.github.com/werf/werf/commit/0a23121447ad25641e00726cb6caa13fda4df383))
+
 ### [1.2.282](https://www.github.com/werf/werf/compare/v1.2.281...v1.2.282) (2024-01-23)
 
 
