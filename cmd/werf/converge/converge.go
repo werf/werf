@@ -32,6 +32,7 @@ import (
 	"github.com/werf/nelm/pkg/kubeclnt"
 	"github.com/werf/nelm/pkg/log"
 	"github.com/werf/nelm/pkg/opertn"
+	"github.com/werf/nelm/pkg/pln"
 	"github.com/werf/nelm/pkg/plnbuilder"
 	"github.com/werf/nelm/pkg/plnexectr"
 	"github.com/werf/nelm/pkg/reprt"
@@ -802,76 +803,22 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 				worthyFailedOps = ops
 			}
 
-			if errs := func() []error {
-				if planExecutionErr == nil {
-					return nil
-				}
-
-				if ops, found, err := plan.OperationsMatch(regexp.MustCompile(fmt.Sprintf(`^%s/%s$`, opertn.TypeCreatePendingReleaseOperation, newRel.ID()))); err != nil {
-					return []error{fmt.Errorf("error getting pending release operation: %w", err)}
-				} else if !found {
-					panic("no pending release operation found")
-				} else if ops[0].Status() != opertn.StatusCompleted {
-					return nil
-				}
-
-				log.Default.Info(ctx, "Building failure deploy plan")
-				failurePlanBuilder := plnbuilder.NewDeployFailurePlanBuilder(
+			if planExecutionErr != nil {
+				wcops, wcfops, wccops, ncerrs := runFailureDeployPlan(
+					ctx,
 					plan,
 					taskStore,
-					resProcessor.DeployableHookResourcesInfos(),
-					resProcessor.DeployableGeneralResourcesInfos(),
+					resProcessor,
 					newRel,
+					prevRelease,
 					history,
-					clientFactory.KubeClient(),
-					clientFactory.Dynamic(),
-					clientFactory.Mapper(),
-					plnbuilder.DeployFailurePlanBuilderOptions{
-						PrevRelease: prevRelease,
-					},
+					clientFactory,
+					networkParallelism,
 				)
-
-				failurePlan, err := failurePlanBuilder.Build(ctx)
-				if err != nil {
-					return []error{fmt.Errorf("error building failure plan: %w", err)}
-				}
-
-				if useless, err := failurePlan.Useless(); err != nil {
-					return []error{fmt.Errorf("error checking if failure plan will do nothing useful: %w", err)}
-				} else if useless {
-					return nil
-				}
-
-				log.Default.Info(ctx, "Executing failure deploy plan")
-				failurePlanExecutor := plnexectr.NewPlanExecutor(failurePlan, plnexectr.PlanExecutorOptions{
-					NetworkParallelism: networkParallelism,
-				})
-
-				if err := failurePlanExecutor.Execute(ctx); err != nil {
-					nonCriticalErrs = append(nonCriticalErrs, fmt.Errorf("error executing failure plan: %w", err))
-				}
-
-				if ops, found, err := failurePlan.WorthyCompletedOperations(); err != nil {
-					nonCriticalErrs = append(nonCriticalErrs, fmt.Errorf("error getting worthy completed operations: %w", err))
-				} else if found {
-					worthyCompletedOps = append(worthyCompletedOps, ops...)
-				}
-
-				if ops, found, err := failurePlan.WorthyFailedOperations(); err != nil {
-					nonCriticalErrs = append(nonCriticalErrs, fmt.Errorf("error getting worthy failed operations: %w", err))
-				} else if found {
-					worthyFailedOps = append(worthyFailedOps, ops...)
-				}
-
-				if ops, found, err := failurePlan.WorthyCanceledOperations(); err != nil {
-					nonCriticalErrs = append(nonCriticalErrs, fmt.Errorf("error getting worthy canceled operations: %w", err))
-				} else if found {
-					worthyCanceledOps = append(worthyCanceledOps, ops...)
-				}
-
-				return nonCriticalErrs
-			}(); len(errs) > 0 {
-				nonCriticalErrs = append(nonCriticalErrs, errs...)
+				worthyCompletedOps = append(worthyCompletedOps, wcops...)
+				worthyCanceledOps = append(worthyCanceledOps, wcfops...)
+				worthyCanceledOps = append(worthyCanceledOps, wccops...)
+				nonCriticalErrs = append(nonCriticalErrs, ncerrs...)
 			}
 
 			stdoutTrackerStopCh <- true
@@ -933,6 +880,72 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 			return nil
 		})
 	}
+}
+
+func runFailureDeployPlan(ctx context.Context, failedPlan *pln.Plan, taskStore *statestore.TaskStore, resProcessor *resrcprocssr.DeployableResourcesProcessor, newRel, prevRelease *rls.Release, history *rlshistor.History, clientFactory *kubeclnt.ClientFactory, networkParallelism int) (worthyCompletedOps, worthyFailedOps, worthyCanceledOps []opertn.Operation, nonCriticalErrs []error) {
+	if ops, found, err := failedPlan.OperationsMatch(regexp.MustCompile(fmt.Sprintf(`^%s/%s$`, opertn.TypeCreatePendingReleaseOperation, newRel.ID()))); err != nil {
+		return nil, nil, nil, []error{fmt.Errorf("error getting pending release operation: %w", err)}
+	} else if !found {
+		panic("no pending release operation found")
+	} else if ops[0].Status() != opertn.StatusCompleted {
+		return nil, nil, nil, nil
+	}
+
+	log.Default.Info(ctx, "Building failure deploy plan")
+	failurePlanBuilder := plnbuilder.NewDeployFailurePlanBuilder(
+		failedPlan,
+		taskStore,
+		resProcessor.DeployableHookResourcesInfos(),
+		resProcessor.DeployableGeneralResourcesInfos(),
+		newRel,
+		history,
+		clientFactory.KubeClient(),
+		clientFactory.Dynamic(),
+		clientFactory.Mapper(),
+		plnbuilder.DeployFailurePlanBuilderOptions{
+			PrevRelease: prevRelease,
+		},
+	)
+
+	failurePlan, err := failurePlanBuilder.Build(ctx)
+	if err != nil {
+		return nil, nil, nil, []error{fmt.Errorf("error building failure plan: %w", err)}
+	}
+
+	if useless, err := failurePlan.Useless(); err != nil {
+		return nil, nil, nil, []error{fmt.Errorf("error checking if failure plan will do nothing useful: %w", err)}
+	} else if useless {
+		return nil, nil, nil, nil
+	}
+
+	log.Default.Info(ctx, "Executing failure deploy plan")
+	failurePlanExecutor := plnexectr.NewPlanExecutor(failurePlan, plnexectr.PlanExecutorOptions{
+		NetworkParallelism: networkParallelism,
+	})
+
+	if err := failurePlanExecutor.Execute(ctx); err != nil {
+		nonCriticalErrs = append(nonCriticalErrs, fmt.Errorf("error executing failure plan: %w", err))
+	}
+
+	if ops, found, err := failurePlan.WorthyCompletedOperations(); err != nil {
+		nonCriticalErrs = append(nonCriticalErrs, fmt.Errorf("error getting worthy completed operations: %w", err))
+	} else if found {
+		worthyCompletedOps = append(worthyCompletedOps, ops...)
+	}
+
+	if ops, found, err := failurePlan.WorthyFailedOperations(); err != nil {
+		nonCriticalErrs = append(nonCriticalErrs, fmt.Errorf("error getting worthy failed operations: %w", err))
+	} else if found {
+		worthyFailedOps = append(worthyFailedOps, ops...)
+	}
+
+	if ops, found, err := failurePlan.WorthyCanceledOperations(); err != nil {
+		nonCriticalErrs = append(nonCriticalErrs, fmt.Errorf("error getting worthy canceled operations: %w", err))
+	} else if found {
+		worthyCanceledOps = append(worthyCanceledOps, ops...)
+	}
+
+	return worthyCompletedOps, worthyFailedOps, worthyCanceledOps, nonCriticalErrs
 }
 
 func printTables(ctx context.Context, tablesBuilder *track.TablesBuilder) {
