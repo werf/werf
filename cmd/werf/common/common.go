@@ -332,6 +332,12 @@ func SetupDeployGraphPath(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringVarP(cmdData.DeployGraphPath, "deploy-graph-path", "", os.Getenv("WERF_DEPLOY_GRAPH_PATH"), "Save deploy graph path to the specified file (by default $WERF_DEPLOY_GRAPH_PATH). Extension must be .dot or not specified. If extension not specified, then .dot is used")
 }
 
+func SetupRollbackGraphPath(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.RollbackGraphPath = new(string)
+
+	cmd.Flags().StringVarP(cmdData.RollbackGraphPath, "rollback-graph-path", "", os.Getenv("WERF_ROLLBACK_GRAPH_PATH"), "Save rollback graph path to the specified file (by default $WERF_ROLLBACK_GRAPH_PATH). Extension must be .dot or not specified. If extension not specified, then .dot is used")
+}
+
 func GetDeployGraphPath(cmdData *CmdData) string {
 	if strings.TrimSpace(*cmdData.DeployGraphPath) == "" {
 		return ""
@@ -344,6 +350,22 @@ func GetDeployGraphPath(cmdData *CmdData) string {
 		return *cmdData.DeployGraphPath + ".dot"
 	default:
 		TerminateWithError(fmt.Sprintf("invalid --deploy-graph-path %q: extension must be either .dot or unspecified", *cmdData.DeployGraphPath), 1)
+		return ""
+	}
+}
+
+func GetRollbackGraphPath(cmdData *CmdData) string {
+	if strings.TrimSpace(*cmdData.RollbackGraphPath) == "" {
+		return ""
+	}
+
+	switch ext := filepath.Ext(*cmdData.RollbackGraphPath); ext {
+	case ".dot":
+		return *cmdData.RollbackGraphPath
+	case "":
+		return *cmdData.RollbackGraphPath + ".dot"
+	default:
+		TerminateWithError(fmt.Sprintf("invalid --rollback-graph-path %q: extension must be either .dot or unspecified", *cmdData.RollbackGraphPath), 1)
 		return ""
 	}
 }

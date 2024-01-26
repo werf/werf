@@ -107,7 +107,8 @@ type CmdData struct {
 	UseDeployReport  *bool
 	DeployReportPath *string
 
-	DeployGraphPath *string
+	DeployGraphPath   *string
+	RollbackGraphPath *string
 
 	VirtualMerge *bool
 
