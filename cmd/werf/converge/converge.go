@@ -774,30 +774,30 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 				NetworkParallelism: networkParallelism,
 			})
 
-			var finalErrs []error
+			var criticalErrs, nonCriticalErrs []error
 
 			planExecutionErr := planExecutor.Execute(ctx)
 			if planExecutionErr != nil {
-				finalErrs = append(finalErrs, fmt.Errorf("error executing deploy plan: %w", planExecutionErr))
+				criticalErrs = append(criticalErrs, fmt.Errorf("error executing deploy plan: %w", planExecutionErr))
 			}
 
 			var worthyCompletedOps []opertn.Operation
 			if ops, found, err := plan.WorthyCompletedOperations(); err != nil {
-				finalErrs = append(finalErrs, fmt.Errorf("error getting worthy completed operations: %w", err))
+				nonCriticalErrs = append(nonCriticalErrs, fmt.Errorf("error getting worthy completed operations: %w", err))
 			} else if found {
 				worthyCompletedOps = ops
 			}
 
 			var worthyCanceledOps []opertn.Operation
 			if ops, found, err := plan.WorthyCanceledOperations(); err != nil {
-				finalErrs = append(finalErrs, fmt.Errorf("error getting worthy canceled operations: %w", err))
+				nonCriticalErrs = append(nonCriticalErrs, fmt.Errorf("error getting worthy canceled operations: %w", err))
 			} else if found {
 				worthyCanceledOps = ops
 			}
 
 			var worthyFailedOps []opertn.Operation
 			if ops, found, err := plan.WorthyFailedOperations(); err != nil {
-				finalErrs = append(finalErrs, fmt.Errorf("error getting worthy failed operations: %w", err))
+				nonCriticalErrs = append(nonCriticalErrs, fmt.Errorf("error getting worthy failed operations: %w", err))
 			} else if found {
 				worthyFailedOps = ops
 			}
@@ -847,33 +847,31 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 					NetworkParallelism: networkParallelism,
 				})
 
-				var finalErrs []error
-
 				if err := failurePlanExecutor.Execute(ctx); err != nil {
-					finalErrs = append(finalErrs, fmt.Errorf("error executing failure plan: %w", err))
+					nonCriticalErrs = append(nonCriticalErrs, fmt.Errorf("error executing failure plan: %w", err))
 				}
 
 				if ops, found, err := failurePlan.WorthyCompletedOperations(); err != nil {
-					finalErrs = append(finalErrs, fmt.Errorf("error getting worthy completed operations: %w", err))
+					nonCriticalErrs = append(nonCriticalErrs, fmt.Errorf("error getting worthy completed operations: %w", err))
 				} else if found {
 					worthyCompletedOps = append(worthyCompletedOps, ops...)
 				}
 
 				if ops, found, err := failurePlan.WorthyFailedOperations(); err != nil {
-					finalErrs = append(finalErrs, fmt.Errorf("error getting worthy failed operations: %w", err))
+					nonCriticalErrs = append(nonCriticalErrs, fmt.Errorf("error getting worthy failed operations: %w", err))
 				} else if found {
 					worthyFailedOps = append(worthyFailedOps, ops...)
 				}
 
 				if ops, found, err := failurePlan.WorthyCanceledOperations(); err != nil {
-					finalErrs = append(finalErrs, fmt.Errorf("error getting worthy canceled operations: %w", err))
+					nonCriticalErrs = append(nonCriticalErrs, fmt.Errorf("error getting worthy canceled operations: %w", err))
 				} else if found {
 					worthyCanceledOps = append(worthyCanceledOps, ops...)
 				}
 
-				return finalErrs
+				return nonCriticalErrs
 			}(); len(errs) > 0 {
-				finalErrs = append(finalErrs, errs...)
+				nonCriticalErrs = append(nonCriticalErrs, errs...)
 			}
 
 			stdoutTrackerStopCh <- true
@@ -890,14 +888,14 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 
 			if saveDeployReport {
 				if err := report.Save(deployReportPath); err != nil {
-					finalErrs = append(finalErrs, fmt.Errorf("error saving deploy report: %w", err))
+					nonCriticalErrs = append(nonCriticalErrs, fmt.Errorf("error saving deploy report: %w", err))
 				}
 			}
 
-			if planExecutionErr != nil {
-				return utls.Multierrorf("failed release %q (namespace: %q)", finalErrs, releaseName, releaseNamespace.Name())
-			} else if len(finalErrs) > 0 {
-				return utls.Multierrorf("succeeded release %q (namespace: %q), but errors encountered", finalErrs, releaseName, releaseNamespace.Name())
+			if len(criticalErrs) > 0 {
+				return utls.Multierrorf("failed release %q (namespace: %q)", append(criticalErrs, nonCriticalErrs...), releaseName, releaseNamespace.Name())
+			} else if len(nonCriticalErrs) > 0 {
+				return utls.Multierrorf("succeeded release %q (namespace: %q), but errors encountered", nonCriticalErrs, releaseName, releaseNamespace.Name())
 			} else {
 				log.Default.Info(ctx, color.Style{color.Bold, color.Green}.Render("Succeeded release")+" %q (namespace: %q)", releaseName, releaseNamespace.Name())
 				return nil
