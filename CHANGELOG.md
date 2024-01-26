@@ -1,5 +1,19 @@
 # Changelog
 
+### [1.2.284](https://www.github.com/werf/werf/compare/v1.2.283...v1.2.284) (2024-01-26)
+
+
+### Features
+
+* **nelm:** --auto-rollback support for converge ([5826586](https://www.github.com/werf/werf/commit/58265865a1eafad6e408a8baedea9f3269888134))
+
+
+### Bug Fixes
+
+* **nelm:** refactor error handling in converge ([fd50797](https://www.github.com/werf/werf/commit/fd5079742ee00335998e09ea2542435a1f3909db))
+* **nelm:** refactor failure deploy plan in converge ([51aa423](https://www.github.com/werf/werf/commit/51aa4237eeeedb7df6f7719151f0edb4273af490))
+* **nelm:** refactor pending release check in converge ([00e0c0f](https://www.github.com/werf/werf/commit/00e0c0fbc23dc766c2df9d83d4439f4aa57eb8cf))
+
 ### [1.2.283](https://www.github.com/werf/werf/compare/v1.2.282...v1.2.283) (2024-01-25)
 
 
