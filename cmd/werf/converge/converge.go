@@ -212,6 +212,7 @@ werf converge --repo registry.mydomain.com/web --env production`,
 	if helm.IsExperimentalEngine() {
 		common.SetupNetworkParallelism(&commonCmdData, cmd)
 		common.SetupDeployGraphPath(&commonCmdData, cmd)
+		common.SetupRollbackGraphPath(&commonCmdData, cmd)
 	}
 
 	defaultTimeout, err := util.GetIntEnvVar("WERF_TIMEOUT")
@@ -521,13 +522,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		// 1. if last succeeded release was cleaned up because of release limit, werf will see
 		// current release as first install. We might want to not delete last succeeded or last
 		// uninstalled release ever.
-		// 2. rollback should rollback to the last succesfull release, not last release
 		// 3. don't forget errs.FormatTemplatingError if any errors occurs
-
-		autoRollback := common.NewBool(cmdData.AutoRollback)
-		if *autoRollback {
-			return fmt.Errorf("--auto-rollback and --atomic not yet supported with new deploy engine")
-		}
 
 		trackReadinessTimeout := *common.NewDuration(time.Duration(cmdData.Timeout) * time.Second)
 		trackDeletionTimeout := trackReadinessTimeout
@@ -539,7 +534,9 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		}
 
 		deployGraphPath := common.GetDeployGraphPath(&commonCmdData)
+		rollbackGraphPath := common.GetRollbackGraphPath(&commonCmdData)
 		saveDeployGraph := deployGraphPath != ""
+		saveRollbackGraphPath := rollbackGraphPath != ""
 		networkParallelism := common.GetNetworkParallelism(&commonCmdData)
 		serviceAnnotations := map[string]string{
 			"werf.io/version":      werf.Version,
@@ -813,7 +810,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 			}
 
 			if planExecutionErr != nil && pendingReleaseCreated {
-				wcops, wcfops, wccops, ncerrs := runFailureDeployPlan(
+				wcompops, wfailops, wcancops, criterrs, noncriterrs := runFailureDeployPlan(
 					ctx,
 					plan,
 					taskStore,
@@ -824,10 +821,40 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 					clientFactory,
 					networkParallelism,
 				)
-				worthyCompletedOps = append(worthyCompletedOps, wcops...)
-				worthyCanceledOps = append(worthyCanceledOps, wcfops...)
-				worthyCanceledOps = append(worthyCanceledOps, wccops...)
-				nonCriticalErrs = append(nonCriticalErrs, ncerrs...)
+				worthyCompletedOps = append(worthyCompletedOps, wcompops...)
+				worthyFailedOps = append(worthyFailedOps, wfailops...)
+				worthyCanceledOps = append(worthyCanceledOps, wcancops...)
+				criticalErrs = append(criticalErrs, criterrs...)
+				nonCriticalErrs = append(nonCriticalErrs, noncriterrs...)
+
+				if cmdData.AutoRollback && prevDeployedReleaseFound {
+					wcompops, wfailops, wcancops, criterrs, noncriterrs = runRollbackPlan(
+						ctx,
+						taskStore,
+						logStore,
+						releaseName,
+						releaseNamespace,
+						newRel,
+						prevDeployedRelease,
+						newRevision,
+						history,
+						clientFactory,
+						userExtraAnnotations,
+						serviceAnnotations,
+						userExtraLabels,
+						trackReadinessTimeout,
+						trackReadinessTimeout,
+						trackDeletionTimeout,
+						saveRollbackGraphPath,
+						rollbackGraphPath,
+						networkParallelism,
+					)
+					worthyCompletedOps = append(worthyCompletedOps, wcompops...)
+					worthyFailedOps = append(worthyFailedOps, wfailops...)
+					worthyCanceledOps = append(worthyCanceledOps, wcancops...)
+					criticalErrs = append(criticalErrs, criterrs...)
+					nonCriticalErrs = append(nonCriticalErrs, noncriterrs...)
+				}
 			}
 
 			stdoutTrackerStopCh <- true
@@ -851,7 +878,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 			if len(criticalErrs) > 0 {
 				return utls.Multierrorf("failed release %q (namespace: %q)", append(criticalErrs, nonCriticalErrs...), releaseName, releaseNamespace.Name())
 			} else if len(nonCriticalErrs) > 0 {
-				return utls.Multierrorf("succeeded release %q (namespace: %q), but errors encountered", nonCriticalErrs, releaseName, releaseNamespace.Name())
+				return utls.Multierrorf("succeeded release %q (namespace: %q), but non-critical errors encountered", nonCriticalErrs, releaseName, releaseNamespace.Name())
 			} else {
 				log.Default.Info(ctx, color.Style{color.Bold, color.Green}.Render("Succeeded release")+" %q (namespace: %q)", releaseName, releaseNamespace.Name())
 				return nil
@@ -891,7 +918,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 	}
 }
 
-func runFailureDeployPlan(ctx context.Context, failedPlan *pln.Plan, taskStore *statestore.TaskStore, resProcessor *resrcprocssr.DeployableResourcesProcessor, newRel, prevRelease *rls.Release, history *rlshistor.History, clientFactory *kubeclnt.ClientFactory, networkParallelism int) (worthyCompletedOps, worthyFailedOps, worthyCanceledOps []opertn.Operation, nonCriticalErrs []error) {
+func runFailureDeployPlan(ctx context.Context, failedPlan *pln.Plan, taskStore *statestore.TaskStore, resProcessor *resrcprocssr.DeployableResourcesProcessor, newRel, prevRelease *rls.Release, history *rlshistor.History, clientFactory *kubeclnt.ClientFactory, networkParallelism int) (worthyCompletedOps, worthyFailedOps, worthyCanceledOps []opertn.Operation, criticalErrs, nonCriticalErrs []error) {
 	log.Default.Info(ctx, "Building failure deploy plan")
 	failurePlanBuilder := plnbuilder.NewDeployFailurePlanBuilder(
 		failedPlan,
@@ -910,13 +937,13 @@ func runFailureDeployPlan(ctx context.Context, failedPlan *pln.Plan, taskStore *
 
 	failurePlan, err := failurePlanBuilder.Build(ctx)
 	if err != nil {
-		return nil, nil, nil, []error{fmt.Errorf("error building failure plan: %w", err)}
+		return nil, nil, nil, []error{fmt.Errorf("error building failure plan: %w", err)}, nil
 	}
 
 	if useless, err := failurePlan.Useless(); err != nil {
-		return nil, nil, nil, []error{fmt.Errorf("error checking if failure plan will do nothing useful: %w", err)}
+		return nil, nil, nil, []error{fmt.Errorf("error checking if failure plan will do nothing useful: %w", err)}, nil
 	} else if useless {
-		return nil, nil, nil, nil
+		return nil, nil, nil, nil, nil
 	}
 
 	log.Default.Info(ctx, "Executing failure deploy plan")
@@ -925,7 +952,7 @@ func runFailureDeployPlan(ctx context.Context, failedPlan *pln.Plan, taskStore *
 	})
 
 	if err := failurePlanExecutor.Execute(ctx); err != nil {
-		nonCriticalErrs = append(nonCriticalErrs, fmt.Errorf("error executing failure plan: %w", err))
+		criticalErrs = append(criticalErrs, fmt.Errorf("error executing failure plan: %w", err))
 	}
 
 	if ops, found, err := failurePlan.WorthyCompletedOperations(); err != nil {
@@ -946,7 +973,186 @@ func runFailureDeployPlan(ctx context.Context, failedPlan *pln.Plan, taskStore *
 		worthyCanceledOps = append(worthyCanceledOps, ops...)
 	}
 
-	return worthyCompletedOps, worthyFailedOps, worthyCanceledOps, nonCriticalErrs
+	return worthyCompletedOps, worthyFailedOps, worthyCanceledOps, criticalErrs, nonCriticalErrs
+}
+
+func runRollbackPlan(
+	ctx context.Context,
+	taskStore *statestore.TaskStore,
+	logStore *kubeutil.Concurrent[*logstore.LogStore],
+	releaseName string,
+	releaseNamespace *resrc.ReleaseNamespace,
+	failedRelease, prevDeployedRelease *rls.Release,
+	failedRevision int,
+	history *rlshistor.History,
+	clientFactory *kubeclnt.ClientFactory,
+	userExtraAnnotations, serviceAnnotations, userExtraLabels map[string]string,
+	trackReadinessTimeout, trackCreationTimeout, trackDeletionTimeout time.Duration,
+	saveRollbackGraph bool,
+	rollbackGraphPath string,
+	networkParallelism int,
+) (
+	worthyCompletedOps, worthyFailedOps, worthyCanceledOps []opertn.Operation,
+	criticalErrs, nonCriticalErrs []error,
+) {
+	log.Default.Info(ctx, "Processing rollback resources")
+	resProcessor := resrcprocssr.NewDeployableResourcesProcessor(
+		helmcommon.DeployTypeRollback,
+		releaseName,
+		releaseNamespace,
+		nil,
+		prevDeployedRelease.HookResources(),
+		prevDeployedRelease.GeneralResources(),
+		failedRelease.GeneralResources(),
+		clientFactory.KubeClient(),
+		clientFactory.Mapper(),
+		clientFactory.Discovery(),
+		resrcprocssr.DeployableResourcesProcessorOptions{
+			NetworkParallelism: networkParallelism,
+			ReleasableHookResourcePatchers: []resrcpatcher.ResourcePatcher{
+				resrcpatcher.NewExtraMetadataPatcher(lo.Assign(userExtraAnnotations, serviceAnnotations), userExtraLabels),
+			},
+			ReleasableGeneralResourcePatchers: []resrcpatcher.ResourcePatcher{
+				resrcpatcher.NewExtraMetadataPatcher(lo.Assign(userExtraAnnotations, serviceAnnotations), userExtraLabels),
+			},
+			DeployableStandaloneCRDsPatchers: []resrcpatcher.ResourcePatcher{
+				resrcpatcher.NewExtraMetadataPatcher(lo.Assign(userExtraAnnotations, serviceAnnotations), userExtraLabels),
+			},
+			DeployableHookResourcePatchers: []resrcpatcher.ResourcePatcher{
+				resrcpatcher.NewExtraMetadataPatcher(lo.Assign(userExtraAnnotations, serviceAnnotations), userExtraLabels),
+			},
+			DeployableGeneralResourcePatchers: []resrcpatcher.ResourcePatcher{
+				resrcpatcher.NewExtraMetadataPatcher(lo.Assign(userExtraAnnotations, serviceAnnotations), userExtraLabels),
+			},
+		},
+	)
+
+	if err := resProcessor.Process(ctx); err != nil {
+		return nil, nil, nil, []error{fmt.Errorf("error processing rollback resources: %w", err)}, nonCriticalErrs
+	}
+
+	rollbackRevision := failedRevision + 1
+
+	log.Default.Info(ctx, "Constructing rollback release")
+	rollbackRel, err := rls.NewRelease(
+		releaseName,
+		releaseNamespace.Name(),
+		rollbackRevision,
+		prevDeployedRelease.Values(),
+		prevDeployedRelease.LegacyChart(),
+		resProcessor.ReleasableHookResources(),
+		resProcessor.ReleasableGeneralResources(),
+		prevDeployedRelease.Notes(),
+		rls.ReleaseOptions{
+			FirstDeployed: prevDeployedRelease.FirstDeployed(),
+			Mapper:        clientFactory.Mapper(),
+		},
+	)
+	if err != nil {
+		return nil, nil, nil, []error{fmt.Errorf("error constructing rollback release: %w", err)}, nonCriticalErrs
+	}
+
+	log.Default.Info(ctx, "Constructing rollback plan")
+	rollbackPlanBuilder := plnbuilder.NewDeployPlanBuilder(
+		helmcommon.DeployTypeRollback,
+		taskStore,
+		logStore,
+		resProcessor.DeployableReleaseNamespaceInfo(),
+		nil,
+		resProcessor.DeployableHookResourcesInfos(),
+		resProcessor.DeployableGeneralResourcesInfos(),
+		resProcessor.DeployablePrevReleaseGeneralResourcesInfos(),
+		rollbackRel,
+		history,
+		clientFactory.KubeClient(),
+		clientFactory.Static(),
+		clientFactory.Dynamic(),
+		clientFactory.Discovery(),
+		clientFactory.Mapper(),
+		plnbuilder.DeployPlanBuilderOptions{
+			PrevRelease:         failedRelease,
+			PrevDeployedRelease: prevDeployedRelease,
+			CreationTimeout:     trackCreationTimeout,
+			ReadinessTimeout:    trackReadinessTimeout,
+			DeletionTimeout:     trackDeletionTimeout,
+		},
+	)
+
+	rollbackPlan, err := rollbackPlanBuilder.Build(ctx)
+	if err != nil {
+		return nil, nil, nil, []error{fmt.Errorf("error building rollback plan: %w", err)}, nonCriticalErrs
+	}
+
+	if saveRollbackGraph {
+		if err := rollbackPlan.SaveDOT(rollbackGraphPath); err != nil {
+			nonCriticalErrs = append(nonCriticalErrs, fmt.Errorf("error saving rollback graph: %w", err))
+		}
+	}
+
+	if useless, err := rollbackPlan.Useless(); err != nil {
+		return nil, nil, nil, []error{fmt.Errorf("error checking if rollback plan will do nothing useful: %w", err)}, nonCriticalErrs
+	} else if useless {
+		log.Default.Info(ctx, color.Style{color.Bold, color.Green}.Render("Skipped rollback release")+" %q (namespace: %q): cluster resources already as desired", releaseName, releaseNamespace.Name())
+		return nil, nil, nil, criticalErrs, nonCriticalErrs
+	}
+
+	log.Default.Info(ctx, "Executing rollback plan")
+	rollbackPlanExecutor := plnexectr.NewPlanExecutor(rollbackPlan, plnexectr.PlanExecutorOptions{
+		NetworkParallelism: networkParallelism,
+	})
+
+	rollbackPlanExecutionErr := rollbackPlanExecutor.Execute(ctx)
+	if rollbackPlanExecutionErr != nil {
+		criticalErrs = append(criticalErrs, fmt.Errorf("error executing rollback plan: %w", err))
+	}
+
+	if ops, found, err := rollbackPlan.WorthyCompletedOperations(); err != nil {
+		nonCriticalErrs = append(nonCriticalErrs, fmt.Errorf("error getting worthy completed operations: %w", err))
+	} else if found {
+		worthyCompletedOps = ops
+	}
+
+	if ops, found, err := rollbackPlan.WorthyFailedOperations(); err != nil {
+		nonCriticalErrs = append(nonCriticalErrs, fmt.Errorf("error getting worthy failed operations: %w", err))
+	} else if found {
+		worthyFailedOps = ops
+	}
+
+	if ops, found, err := rollbackPlan.WorthyCanceledOperations(); err != nil {
+		nonCriticalErrs = append(nonCriticalErrs, fmt.Errorf("error getting worthy canceled operations: %w", err))
+	} else if found {
+		worthyCanceledOps = ops
+	}
+
+	var pendingRollbackReleaseCreated bool
+	if ops, found, err := rollbackPlan.OperationsMatch(regexp.MustCompile(fmt.Sprintf(`^%s/%s$`, opertn.TypeCreatePendingReleaseOperation, rollbackRel.ID()))); err != nil {
+		nonCriticalErrs = append(nonCriticalErrs, fmt.Errorf("error getting pending rollback release operation: %w", err))
+	} else if !found {
+		panic("no pending rollback release operation found")
+	} else {
+		pendingRollbackReleaseCreated = ops[0].Status() == opertn.StatusCompleted
+	}
+
+	if rollbackPlanExecutionErr != nil && pendingRollbackReleaseCreated {
+		wcompops, wfailops, wcancops, criterrs, noncriterrs := runFailureDeployPlan(
+			ctx,
+			rollbackPlan,
+			taskStore,
+			resProcessor,
+			rollbackRel,
+			failedRelease,
+			history,
+			clientFactory,
+			networkParallelism,
+		)
+		worthyCompletedOps = append(worthyCompletedOps, wcompops...)
+		worthyFailedOps = append(worthyFailedOps, wfailops...)
+		worthyCanceledOps = append(worthyCanceledOps, wcancops...)
+		criticalErrs = append(criticalErrs, criterrs...)
+		nonCriticalErrs = append(nonCriticalErrs, noncriterrs...)
+	}
+
+	return worthyCompletedOps, worthyFailedOps, worthyCanceledOps, criticalErrs, nonCriticalErrs
 }
 
 func printTables(ctx context.Context, tablesBuilder *track.TablesBuilder) {
