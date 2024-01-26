@@ -803,7 +803,16 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 				worthyFailedOps = ops
 			}
 
-			if planExecutionErr != nil {
+			var pendingReleaseCreated bool
+			if ops, found, err := plan.OperationsMatch(regexp.MustCompile(fmt.Sprintf(`^%s/%s$`, opertn.TypeCreatePendingReleaseOperation, newRel.ID()))); err != nil {
+				nonCriticalErrs = append(nonCriticalErrs, fmt.Errorf("error getting pending release operation: %w", err))
+			} else if !found {
+				panic("no pending release operation found")
+			} else {
+				pendingReleaseCreated = ops[0].Status() == opertn.StatusCompleted
+			}
+
+			if planExecutionErr != nil && pendingReleaseCreated {
 				wcops, wcfops, wccops, ncerrs := runFailureDeployPlan(
 					ctx,
 					plan,
@@ -883,14 +892,6 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 }
 
 func runFailureDeployPlan(ctx context.Context, failedPlan *pln.Plan, taskStore *statestore.TaskStore, resProcessor *resrcprocssr.DeployableResourcesProcessor, newRel, prevRelease *rls.Release, history *rlshistor.History, clientFactory *kubeclnt.ClientFactory, networkParallelism int) (worthyCompletedOps, worthyFailedOps, worthyCanceledOps []opertn.Operation, nonCriticalErrs []error) {
-	if ops, found, err := failedPlan.OperationsMatch(regexp.MustCompile(fmt.Sprintf(`^%s/%s$`, opertn.TypeCreatePendingReleaseOperation, newRel.ID()))); err != nil {
-		return nil, nil, nil, []error{fmt.Errorf("error getting pending release operation: %w", err)}
-	} else if !found {
-		panic("no pending release operation found")
-	} else if ops[0].Status() != opertn.StatusCompleted {
-		return nil, nil, nil, nil
-	}
-
 	log.Default.Info(ctx, "Building failure deploy plan")
 	failurePlanBuilder := plnbuilder.NewDeployFailurePlanBuilder(
 		failedPlan,
