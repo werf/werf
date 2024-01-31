@@ -19,10 +19,23 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 10
     steps:
-      - name: Deploy
+      - name: Deploy v1 documentation
         run: |
           curl -X POST -F "token=${{ secrets.GITLAB_TRIGGER_TOKEN }}" -F "ref=master" \
                ${{ secrets.GITLAB_URL }}/api/v4/projects/${{ secrets.GITLAB_PROJECT_ID }}/trigger/pipeline
+
+      - name: Update the website
+        uses: actions/github-script@v7.0.1
+        with:
+          github-token: ${{ secrets.WERF_TEST_GITHUB_TOKEN }}
+          script: |
+            return await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: '${{vars.WEBSITE_REPO_NAME}}',
+              workflow_id: '${{vars.WEBSITE_DEPLOY_WORKFLOW_ID}}',
+              ref: 'refs/heads/main',
+              inputs: {},
+            });
 
   notify:
     if: always()
