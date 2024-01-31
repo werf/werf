@@ -20,10 +20,10 @@ jobs:
       workflow_proceed: ${{ steps.changes.outputs.workflow_proceed }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Detect changes
-        uses: dorny/paths-filter@v2
+        uses: dorny/paths-filter@v3
         id: changes
         with:
           filters: |
@@ -64,10 +64,10 @@ jobs:
           sudo apt install -y gcc-aarch64-linux-gnu libbtrfs-dev file
 
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5
         with:
           cache: true
           go-version-file: go.mod

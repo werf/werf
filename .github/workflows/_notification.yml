@@ -29,11 +29,11 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Run workflow status conclusion manager
-        uses: technote-space/workflow-conclusion-action@v2
+        uses: technote-space/workflow-conclusion-action@v3
 
       - if: inputs.useCommitMessage == 'true'
         name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - if: inputs.useCommitMessage == 'true'
         name: Get commit message
