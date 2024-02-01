@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.285](https://www.github.com/werf/werf/compare/v1.2.284...v1.2.285) (2024-02-01)
+
+
+### Bug Fixes
+
+* **nelm:** pods not ready in progress report when they are ([89efd58](https://www.github.com/werf/werf/commit/89efd58329b0869b106ff27ce02b874f08d00a69))
+
 ### [1.2.284](https://www.github.com/werf/werf/compare/v1.2.283...v1.2.284) (2024-01-26)
 
 
