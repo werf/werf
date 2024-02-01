@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.286](https://www.github.com/werf/werf/compare/v1.2.285...v1.2.286) (2024-02-01)
+
+
+### Bug Fixes
+
+* dont try to create namespace if exists ([88c0610](https://www.github.com/werf/werf/commit/88c06104196da552fafc2a64c05dcf803d60b961))
+
 ### [1.2.285](https://www.github.com/werf/werf/compare/v1.2.284...v1.2.285) (2024-02-01)
 
 
