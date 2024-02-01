@@ -393,7 +393,7 @@ replace (
 	github.com/helm/helm-2to3 => github.com/werf/3p-helm-2to3 v0.0.0-20230313155428-cf9dd655c0e3 // upstream not maintained, switch back to upstream when merged: https://github.com/helm/helm-2to3/pull/224
 	github.com/jaguilar/vt100 => github.com/tonistiigi/vt100 v0.0.0-20190402012908-ad4c4a574305 // upstream not maintained
 	github.com/jedib0t/go-pretty/v6 => github.com/werf/3p-go-pretty/v6 v6.0.0-20240125135207-7170e1857aa0 // switch back to upstream when merged: https://github.com/jedib0t/go-pretty/pull/295
-	helm.sh/helm/v3 => github.com/werf/3p-helm/v3 v3.0.0-20240116144224-07a251e069dc // helm 3
+	helm.sh/helm/v3 => github.com/werf/3p-helm/v3 v3.0.0-20240118162323-49c32fc2d8dd // helm 3
 	k8s.io/helm => github.com/werf/3p-helm v0.0.0-20210202111118-81e74d46da0f // helm 2
 	oras.land/oras-go => github.com/werf/3p-oras-go v0.0.0-20240112153018-fd519ad81736 // switch back to upstream when merged: https://github.com/oras-project/oras-go/pull/678
 )
