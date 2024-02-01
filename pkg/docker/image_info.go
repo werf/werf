@@ -15,12 +15,11 @@ func NewInfoFromInspect(ref string, inspect *types.ImageInspect) *image.Info {
 		repoDigest = image.ExtractRepoDigest(inspect.RepoDigests, repository)
 	}
 
-	var parentID string
-	if id, ok := inspect.Config.Labels["werf.io/base-image-id"]; ok {
-		parentID = id
-	} else {
-		// TODO(1.3): Legacy compatibility mode
-		parentID = inspect.Config.Image
+	parentID := inspect.Config.Image
+	if parentID == "" {
+		if id, ok := inspect.Config.Labels[image.WerfBaseImageIDLabel]; ok { // built with werf and buildah backend
+			parentID = id
+		}
 	}
 
 	return &image.Info{

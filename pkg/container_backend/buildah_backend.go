@@ -576,11 +576,11 @@ func (backend *BuildahBackend) GetImageInfo(ctx context.Context, ref string, opt
 		return nil, nil
 	}
 
-	var parentID string
-	if id, ok := inspect.Docker.Config.Labels["werf.io/base-image-id"]; ok {
-		parentID = id
-	} else {
-		parentID = string(inspect.Docker.Parent)
+	parentID := string(inspect.Docker.Parent)
+	if parentID == "" {
+		if id, ok := inspect.Docker.Config.Labels[image.WerfBaseImageIDLabel]; ok { // built with werf and buildah backend
+			parentID = id
+		}
 	}
 
 	var repository, tag, repoDigest string
