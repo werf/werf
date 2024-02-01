@@ -211,12 +211,11 @@ func (api *api) getRepoImageByDesc(ctx context.Context, originalTag string, desc
 		}
 		repoImage.Size = totalSize
 
-		var parentID string
-		if baseImageID, ok := configFile.Config.Labels["werf.io/base-image-id"]; ok {
-			parentID = baseImageID
-		} else {
-			// TODO(1.3): Legacy compatibility mode
-			parentID = configFile.Config.Image
+		parentID := configFile.Config.Image
+		if parentID == "" {
+			if id, ok := configFile.Config.Labels[image.WerfBaseImageIDLabel]; ok { // built with werf and buildah backend
+				parentID = id
+			}
 		}
 		repoImage.ParentID = parentID
 	}
