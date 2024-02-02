@@ -1,5 +1,13 @@
 # Changelog
 
+### [1.2.287](https://www.github.com/werf/werf/compare/v1.2.286...v1.2.287) (2024-02-02)
+
+
+### Bug Fixes
+
+* **cleanup:** issue with incorrect exclusion of ancestors for retained images ([#5956](https://www.github.com/werf/werf/issues/5956)) ([00ee0e1](https://www.github.com/werf/werf/commit/00ee0e1d19c3d5511c641c8ab8794d84a6f01655))
+* **nelm:** resources always rendered in no-cluster mode ([289cf14](https://www.github.com/werf/werf/commit/289cf1456ef81f5dcb517ad70ea94283b3afc195))
+
 ### [1.2.286](https://www.github.com/werf/werf/compare/v1.2.285...v1.2.286) (2024-02-01)
 
 
