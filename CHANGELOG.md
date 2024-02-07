@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.288](https://www.github.com/werf/werf/compare/v1.2.287...v1.2.288) (2024-02-07)
+
+
+### Bug Fixes
+
+* **nelm:** controllers not Readying; no logs for STS/DS ([84b5054](https://www.github.com/werf/werf/commit/84b505446b85ac46d951bddc73271c86112d4d5c))
+
 ### [1.2.287](https://www.github.com/werf/werf/compare/v1.2.286...v1.2.287) (2024-02-02)
 
 
