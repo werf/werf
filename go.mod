@@ -62,7 +62,7 @@ require (
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.5
 	github.com/werf/copy-recurse v0.2.7
-	github.com/werf/kubedog v0.12.4-0.20240201135121-80233006b4d4
+	github.com/werf/kubedog v0.12.4-0.20240207151806-c1febe10359f
 	github.com/werf/lockgate v0.1.1
 	github.com/werf/logboek v0.6.1
 	github.com/werf/nelm v0.0.0-20240202145254-4b75a5126b11
