@@ -1542,8 +1542,8 @@ github.com/werf/3p-helm v0.0.0-20210202111118-81e74d46da0f h1:3anHigsmgMJ7IlG8WC
 github.com/werf/3p-helm v0.0.0-20210202111118-81e74d46da0f/go.mod h1:OMONwLWU9zEENgaVjWEX+M+xik2QakejzKHG1+6mnUo=
 github.com/werf/3p-helm-2to3 v0.0.0-20230313155428-cf9dd655c0e3 h1:pdKLiuiUoOFswc0HV6GX1+JHgP14HqE035xl2DQJi8A=
 github.com/werf/3p-helm-2to3 v0.0.0-20230313155428-cf9dd655c0e3/go.mod h1:lTSQBLomjl67m4HQMbg3BHKWes3pOmjNBg8yygXYugk=
-github.com/werf/3p-helm/v3 v3.0.0-20240118162323-49c32fc2d8dd h1:EX1wiW+WE4rMV8nEsYKiWux8hupZOU75qDklxhnA/Fc=
-github.com/werf/3p-helm/v3 v3.0.0-20240118162323-49c32fc2d8dd/go.mod h1:MtZUnm4LODbbDMPrd8l2MczznuzdL9R88el+8g2DhDM=
+github.com/werf/3p-helm/v3 v3.0.0-20240208151039-7d970da4ce8f h1:UUkNgBsjRU+SDk5X8EuOBHqVgoxVONFPRcXoKNyZK/E=
+github.com/werf/3p-helm/v3 v3.0.0-20240208151039-7d970da4ce8f/go.mod h1:MtZUnm4LODbbDMPrd8l2MczznuzdL9R88el+8g2DhDM=
 github.com/werf/3p-oras v0.9.1-0.20240115121544-03962ecbd40a h1:PsU9szHZlIH+CjcuIuPXRLc5dsdoaFldvYjS6YHI7YQ=
 github.com/werf/3p-oras v0.9.1-0.20240115121544-03962ecbd40a/go.mod h1:XTePf8biMMCkqbuuWBZ24xOwo3hZej+BBM0uvd8aGqk=
 github.com/werf/3p-oras-go v0.0.0-20240112153018-fd519ad81736 h1:ABb4n+XvInTuLME9ETs9yA5KSjhTZLAQ39yc28U9hRU=
