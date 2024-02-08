@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.289](https://www.github.com/werf/werf/compare/v1.2.288...v1.2.289) (2024-02-08)
+
+
+### Bug Fixes
+
+* --wait-for-jobs did not use Kubedog ([69fac2c](https://www.github.com/werf/werf/commit/69fac2c722a86855fe53cd473d8cdf08e9e34518))
+
 ### [1.2.288](https://www.github.com/werf/werf/compare/v1.2.287...v1.2.288) (2024-02-07)
 
 
