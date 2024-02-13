@@ -720,6 +720,20 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 
 			plan, err := deployPlanBuilder.Build(ctx)
 			if err != nil {
+				if deployGraphPath == "" {
+					if file, err := os.CreateTemp("", "werf-deploy-plan-*.dot"); err != nil {
+						log.Default.Error(ctx, "Error creating temporary file for deploy graph: %s", err)
+						return fmt.Errorf("error building deploy plan: %w", err)
+					} else {
+						deployGraphPath = file.Name()
+					}
+				}
+
+				if err := plan.SaveDOT(deployGraphPath); err != nil {
+					log.Default.Error(ctx, "Error saving deploy graph: %s", err)
+				}
+				log.Default.Warn(ctx, "Deploy graph saved to %q for debugging", deployGraphPath)
+
 				return fmt.Errorf("error building deploy plan: %w", err)
 			}
 
