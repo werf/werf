@@ -1,5 +1,17 @@
 # Changelog
 
+### [1.2.290](https://www.github.com/werf/werf/compare/v1.2.289...v1.2.290) (2024-02-14)
+
+
+### Features
+
+* **nelm:** save plan graph on plan build error ([c931364](https://www.github.com/werf/werf/commit/c9313645e85eb196fa608b445c0f4e4a3be01e64))
+
+
+### Bug Fixes
+
+* **nelm:** panic on replicas null ([513700e](https://www.github.com/werf/werf/commit/513700e094cc99078aea35141f3b3fbbd27236a2))
+
 ### [1.2.289](https://www.github.com/werf/werf/compare/v1.2.288...v1.2.289) (2024-02-08)
 
 
