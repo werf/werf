@@ -74,20 +74,7 @@ func (m *purgeManager) run(ctx context.Context) error {
 		return err
 	}
 
-	if err := logboek.Context(ctx).Default().LogProcess("Deleting images metadata").DoError(func() error {
-		_, imageMetadataByImageName, err := m.StorageManager.GetStagesStorage().GetAllAndGroupImageMetadataByImageName(ctx, m.ProjectName, []string{}, storage.WithCache())
-		if err != nil {
-			return err
-		}
-
-		for imageNameID, stageIDCommitList := range imageMetadataByImageName {
-			if err := m.deleteImageMetadata(ctx, imageNameID, stageIDCommitList); err != nil {
-				return err
-			}
-		}
-
-		return nil
-	}); err != nil {
+	if err := m.purgeImageMetadata(ctx); err != nil {
 		return err
 	}
 
@@ -156,8 +143,8 @@ func (m *purgeManager) deleteManagedImages(ctx context.Context, managedImages []
 	})
 }
 
-func (m *purgeManager) deleteImageMetadata(ctx context.Context, imageNameOrID string, stageIDCommitList map[string][]string) error {
-	return deleteImageMetadata(ctx, m.ProjectName, m.StorageManager, imageNameOrID, stageIDCommitList, m.DryRun)
+func (m *purgeManager) purgeImageMetadata(ctx context.Context) error {
+	return purgeImageMetadata(ctx, m.ProjectName, m.StorageManager, m.DryRun)
 }
 
 func (m *purgeManager) deleteCustomTags(ctx context.Context) error {

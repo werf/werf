@@ -146,6 +146,10 @@ func (m *cleanupManager) run(ctx context.Context) error {
 		}); err != nil {
 			return err
 		}
+	} else {
+		if err := m.purgeImageMetadata(ctx); err != nil {
+			return err
+		}
 	}
 
 	if err := logboek.Context(ctx).LogProcess("Cleanup unused stages").DoError(func() error {
@@ -163,6 +167,10 @@ func (m *cleanupManager) run(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (m *cleanupManager) purgeImageMetadata(ctx context.Context) error {
+	return purgeImageMetadata(ctx, m.ProjectName, m.StorageManager, m.DryRun)
 }
 
 func (m *cleanupManager) skipStageIDsThatAreUsedInKubernetes(ctx context.Context, deployedDockerImages []*DeployedDockerImage) error {
@@ -621,6 +629,23 @@ func (m *cleanupManager) deleteImageMetadata(ctx context.Context, imageName stri
 	}
 
 	return nil
+}
+
+func purgeImageMetadata(ctx context.Context, projectName string, storageManager manager.StorageManagerInterface, dryRun bool) error {
+	return logboek.Context(ctx).Default().LogProcess("Deleting images metadata").DoError(func() error {
+		_, imageMetadataByImageName, err := storageManager.GetStagesStorage().GetAllAndGroupImageMetadataByImageName(ctx, projectName, []string{}, storage.WithCache())
+		if err != nil {
+			return err
+		}
+
+		for imageNameID, stageIDCommitList := range imageMetadataByImageName {
+			if err := deleteImageMetadata(ctx, projectName, storageManager, imageNameID, stageIDCommitList, dryRun); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
 }
 
 func deleteImageMetadata(ctx context.Context, projectName string, storageManager manager.StorageManagerInterface, imageNameOrID string, stageIDCommitList map[string][]string, dryRun bool) error {
