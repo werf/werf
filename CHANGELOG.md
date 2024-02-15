@@ -1,5 +1,16 @@
 # Changelog
 
+### [1.2.291](https://www.github.com/werf/werf/compare/v1.2.290...v1.2.291) (2024-02-15)
+
+
+### Bug Fixes
+
+* **build:** image metadata publication when git history based policy disabled ([11850a8](https://www.github.com/werf/werf/commit/11850a88d9367b0a40b4f752a88a8b7b5fbd6c69))
+* **bundle:** support for --insecure-registry/--skip-tls-verify-registry options ([96123cb](https://www.github.com/werf/werf/commit/96123cbd3fd3741699e9a7514ffc5fda875de2dd))
+* **cleanup:** git unshallow and sync with remote when git history based policy disabled ([d1078a0](https://www.github.com/werf/werf/commit/d1078a099e4657e7433d0c7bf1d0e2557cd5e8fe))
+* **cleanup:** image metadata cleanup when git history based policy disabled ([3a709ea](https://www.github.com/werf/werf/commit/3a709ea53dd033d6fbe8e82147624b6fff8ac0eb))
+* **nelm:** cycle error if pre+post hook in release ([8c40fdb](https://www.github.com/werf/werf/commit/8c40fdb80c6c3e309b6c166f4a50db1a27e354df))
+
 ### [1.2.290](https://www.github.com/werf/werf/compare/v1.2.289...v1.2.290) (2024-02-14)
 
 
