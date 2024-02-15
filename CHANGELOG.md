@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.292](https://www.github.com/werf/werf/compare/v1.2.291...v1.2.292) (2024-02-15)
+
+
+### Features
+
+* add --atomic, --timeout, --skip-dependencies-repo-refresh for "bundle apply" ([b29c290](https://www.github.com/werf/werf/commit/b29c29018c527813e6d82b70c1cd9da52d496412))
+
 ### [1.2.291](https://www.github.com/werf/werf/compare/v1.2.290...v1.2.291) (2024-02-15)
 
 
