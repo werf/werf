@@ -171,24 +171,26 @@ func runCleanup(ctx context.Context) error {
 		return fmt.Errorf("unable to load werf config: %w", err)
 	}
 
-	if !werfConfig.Meta.GitWorktree.GetForceShallowClone() && !werfConfig.Meta.GitWorktree.GetAllowFetchingOriginBranchesAndTags() {
-		isShallow, err := giterminismManager.LocalGitRepo().IsShallowClone(ctx)
-		if err != nil {
-			return fmt.Errorf("check shallow clone failed: %w", err)
+	if !werfConfig.Meta.Cleanup.DisableGitHistoryBasedPolicy {
+		if !werfConfig.Meta.GitWorktree.GetForceShallowClone() && !werfConfig.Meta.GitWorktree.GetAllowFetchingOriginBranchesAndTags() {
+			isShallow, err := giterminismManager.LocalGitRepo().IsShallowClone(ctx)
+			if err != nil {
+				return fmt.Errorf("check shallow clone failed: %w", err)
+			}
+
+			if isShallow {
+				logboek.Warn().LogLn("Git shallow clone should not be used with images cleanup commands due to incompleteness of the repository history that is extremely essential for proper work.")
+				logboek.Warn().LogLn("It is recommended to enable automatic fetch of origin git branches and tags during cleanup process with the gitWorktree.allowFetchOriginBranchesAndTags=true werf.yaml directive (which is enabled by default, http://werf.io/documentation/reference/werf_yaml.html#git-worktree).")
+				logboek.Warn().LogLn("If you still want to use shallow clone, add gitWorktree.forceShallowClone=true directive into werf.yaml (http://werf.io/documentation/reference/werf_yaml.html#git-worktree).")
+
+				return fmt.Errorf("git shallow clone is not allowed")
+			}
 		}
 
-		if isShallow {
-			logboek.Warn().LogLn("Git shallow clone should not be used with images cleanup commands due to incompleteness of the repository history that is extremely essential for proper work.")
-			logboek.Warn().LogLn("It is recommended to enable automatic fetch of origin git branches and tags during cleanup process with the gitWorktree.allowFetchOriginBranchesAndTags=true werf.yaml directive (which is enabled by default, http://werf.io/documentation/reference/werf_yaml.html#git-worktree).")
-			logboek.Warn().LogLn("If you still want to use shallow clone, add gitWorktree.forceShallowClone=true directive into werf.yaml (http://werf.io/documentation/reference/werf_yaml.html#git-worktree).")
-
-			return fmt.Errorf("git shallow clone is not allowed")
-		}
-	}
-
-	if werfConfig.Meta.GitWorktree.GetAllowFetchingOriginBranchesAndTags() {
-		if err := giterminismManager.LocalGitRepo().SyncWithOrigin(ctx); err != nil {
-			return fmt.Errorf("synchronization failed: %w", err)
+		if werfConfig.Meta.GitWorktree.GetAllowFetchingOriginBranchesAndTags() {
+			if err := giterminismManager.LocalGitRepo().SyncWithOrigin(ctx); err != nil {
+				return fmt.Errorf("synchronization failed: %w", err)
+			}
 		}
 	}
 
