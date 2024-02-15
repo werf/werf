@@ -13,7 +13,6 @@ import (
 	bundles_registry "github.com/werf/werf/pkg/deploy/bundles/registry"
 	"github.com/werf/werf/pkg/deploy/helm"
 	"github.com/werf/werf/pkg/docker"
-	"github.com/werf/werf/pkg/util"
 )
 
 func NewHelmRegistryClient(ctx context.Context, dockerConfig string, insecureHelmDependencies bool) (*registry.Client, error) {
@@ -42,16 +41,13 @@ func InitHelmRegistryClient(registryClient *registry.Client, dockerConfig string
 }
 
 func NewBundlesRegistryClient(ctx context.Context, commonCmdData *CmdData) (*bundles_registry.Client, error) {
-	debug := logboek.Context(ctx).Debug().IsAccepted()
-	insecure := util.GetBoolEnvironmentDefaultFalse("WERF_BUNDLE_INSECURE_REGISTRY")
-	skipTlsVerify := util.GetBoolEnvironmentDefaultFalse("WERF_BUNDLE_SKIP_TLS_VERIFY_REGISTRY")
 	out := logboek.Context(ctx).OutStream()
 
 	return bundles_registry.NewClient(
 		bundles_registry.ClientOptCredentialsFile(docker.GetDockerConfigCredentialsFile(*commonCmdData.DockerConfig)),
-		bundles_registry.ClientOptDebug(debug),
-		bundles_registry.ClientOptInsecure(insecure),
-		bundles_registry.ClientOptSkipTlsVerify(skipTlsVerify),
+		bundles_registry.ClientOptDebug(*commonCmdData.LogDebug),
+		bundles_registry.ClientOptInsecure(*commonCmdData.InsecureRegistry),
+		bundles_registry.ClientOptSkipTlsVerify(*commonCmdData.SkipTlsVerifyRegistry),
 		bundles_registry.ClientOptWriter(out),
 	)
 }
