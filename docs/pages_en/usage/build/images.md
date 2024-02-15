@@ -155,9 +155,9 @@ giterminismConfigVersion: 1
 config:
   dockerfile:
     allowContextAddFiles:
-    - file1
-    - dir1/
-    - dir2/file2.out
+    - app/file1
+    - app/dir1/
+    - app/dir2/file2.out
 ```
 
 In the above configuration, the build context will include the following files:
