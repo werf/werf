@@ -26,6 +26,12 @@ werf bundle apply [options]
             Format: labelName=labelValue.
             Also, can be specified with $WERF_ADD_LABEL_* (e.g.                                     
             $WERF_ADD_LABEL_1=labelName1=labelValue1, $WERF_ADD_LABEL_2=labelName2=labelValue2)
+      --atomic=false
+            Enable auto rollback of the failed release to the previous deployed release version     
+            when current deploy process have failed ($WERF_ATOMIC by default)
+  -R, --auto-rollback=false
+            Enable auto rollback of the failed release to the previous deployed release version     
+            when current deploy process have failed ($WERF_AUTO_ROLLBACK by default)
       --deploy-report-path=''
             Change deploy report path and format (by default $WERF_DEPLOY_REPORT_PATH or            
             ".werf-deploy-report.json" if not set). Extension must be .json for JSON format. If     
@@ -148,6 +154,8 @@ werf bundle apply [options]
             with commas: key1=val1,key2=val2).
             Also, can be defined with $WERF_SET_STRING_* (e.g. $WERF_SET_STRING_1=key1=val1,        
             $WERF_SET_STRING_2=key2=val2)
+  -L, --skip-dependencies-repo-refresh=false
+            Do not refresh helm chart repositories locally cached index
       --skip-tls-verify-registry=false
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)
@@ -157,6 +165,8 @@ werf bundle apply [options]
       --tag='latest'
             Provide exact tag version or semver-based pattern, werf will install or upgrade to the  
             latest version of the specified bundle ($WERF_TAG or latest by default)
+  -t, --timeout=0
+            Resources tracking timeout in seconds ($WERF_TIMEOUT by default)
       --tmp-dir=''
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --values=[]
