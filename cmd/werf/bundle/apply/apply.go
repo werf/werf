@@ -24,6 +24,7 @@ import (
 	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
 	"github.com/werf/werf/pkg/deploy/lock_manager"
 	"github.com/werf/werf/pkg/deploy/secrets_manager"
+	"github.com/werf/werf/pkg/util"
 	"github.com/werf/werf/pkg/werf"
 	"github.com/werf/werf/pkg/werf/global_warnings"
 )
@@ -87,6 +88,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupSecretValues(&commonCmdData, cmd)
 	common.SetupIgnoreSecretKey(&commonCmdData, cmd)
 
+	commonCmdData.SetupSkipDependenciesRepoRefresh(cmd)
+
 	common.SetupSaveDeployReport(&commonCmdData, cmd)
 	common.SetupDeployReportPath(&commonCmdData, cmd)
 
@@ -105,6 +108,15 @@ func NewCmd(ctx context.Context) *cobra.Command {
 		defaultTag = "latest"
 	}
 	cmd.Flags().StringVarP(&cmdData.Tag, "tag", "", defaultTag, "Provide exact tag version or semver-based pattern, werf will install or upgrade to the latest version of the specified bundle ($WERF_TAG or latest by default)")
+
+	defaultTimeout, err := util.GetIntEnvVar("WERF_TIMEOUT")
+	if err != nil || defaultTimeout == nil {
+		defaultTimeout = new(int64)
+	}
+	cmd.Flags().IntVarP(&cmdData.Timeout, "timeout", "t", int(*defaultTimeout), "Resources tracking timeout in seconds ($WERF_TIMEOUT by default)")
+
+	cmd.Flags().BoolVarP(&cmdData.AutoRollback, "auto-rollback", "R", util.GetBoolEnvironmentDefaultFalse("WERF_AUTO_ROLLBACK"), "Enable auto rollback of the failed release to the previous deployed release version when current deploy process have failed ($WERF_AUTO_ROLLBACK by default)")
+	cmd.Flags().BoolVarP(&cmdData.AutoRollback, "atomic", "", util.GetBoolEnvironmentDefaultFalse("WERF_ATOMIC"), "Enable auto rollback of the failed release to the previous deployed release version when current deploy process have failed ($WERF_ATOMIC by default)")
 
 	return cmd
 }
@@ -195,8 +207,11 @@ func runApply(ctx context.Context) error {
 	secretsManager := secrets_manager.NewSecretsManager(secrets_manager.SecretsManagerOptions{DisableSecretsDecryption: *commonCmdData.IgnoreSecretKey})
 
 	bundle, err := chart_extender.NewBundle(ctx, bundleTmpDir, helm_v3.Settings, helmRegistryClient, secretsManager, chart_extender.BundleOptions{
-		SecretValueFiles:                  common.GetSecretValues(&commonCmdData),
-		BuildChartDependenciesOpts:        command_helpers.BuildChartDependenciesOptions{IgnoreInvalidAnnotationsAndLabels: true},
+		SecretValueFiles: common.GetSecretValues(&commonCmdData),
+		BuildChartDependenciesOpts: command_helpers.BuildChartDependenciesOptions{
+			IgnoreInvalidAnnotationsAndLabels: true,
+			SkipUpdate:                        *commonCmdData.SkipDependenciesRepoRefresh,
+		},
 		IgnoreInvalidAnnotationsAndLabels: true,
 		ExtraAnnotations:                  userExtraAnnotations,
 		ExtraLabels:                       userExtraLabels,
