@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.294](https://www.github.com/werf/werf/compare/v1.2.293...v1.2.294) (2024-02-19)
+
+
+### Bug Fixes
+
+* **deploy:** dont strip non-whitespace after --- in manifests ([1b4c7f2](https://www.github.com/werf/werf/commit/1b4c7f2ac8598ec0d464a022e577fcb1d7138653))
+
 ### [1.2.293](https://www.github.com/werf/werf/compare/v1.2.292...v1.2.293) (2024-02-19)
 
 
