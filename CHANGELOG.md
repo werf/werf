@@ -1,5 +1,13 @@
 # Changelog
 
+### [1.2.293](https://www.github.com/werf/werf/compare/v1.2.292...v1.2.293) (2024-02-19)
+
+
+### Bug Fixes
+
+* more robust manifest splitting ([340c92b](https://www.github.com/werf/werf/commit/340c92b82a919c6ce5c1a320467071147f76ed1d))
+* **nelm:** corrupted revision number in errors messages ([e95fb4f](https://www.github.com/werf/werf/commit/e95fb4fe65c421cd7282d796f294641297a7ee96))
+
 ### [1.2.292](https://www.github.com/werf/werf/compare/v1.2.291...v1.2.292) (2024-02-15)
 
 
