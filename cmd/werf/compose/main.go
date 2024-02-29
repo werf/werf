@@ -309,13 +309,6 @@ func runMain(ctx context.Context, dockerComposeCmdName string, cmdData composeCm
 		}
 	}()
 
-	giterminismManager, err := common.GetGiterminismManager(ctx, &commonCmdData)
-	if err != nil {
-		return err
-	}
-
-	common.ProcessLogProjectDir(&commonCmdData, giterminismManager.ProjectDir())
-
 	if err := ssh_agent.Init(ctx, common.GetSSHKey(&commonCmdData)); err != nil {
 		return fmt.Errorf("cannot initialize ssh agent: %w", err)
 	}
@@ -325,6 +318,13 @@ func runMain(ctx context.Context, dockerComposeCmdName string, cmdData composeCm
 			logboek.Warn().LogF("WARNING: ssh agent termination failed: %s\n", err)
 		}
 	}()
+
+	giterminismManager, err := common.GetGiterminismManager(ctx, &commonCmdData)
+	if err != nil {
+		return err
+	}
+
+	common.ProcessLogProjectDir(&commonCmdData, giterminismManager.ProjectDir())
 
 	if followSupport && *commonCmdData.Follow {
 		if err := checkDetachDockerComposeOption(cmdData); err != nil {
