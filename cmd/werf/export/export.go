@@ -176,13 +176,6 @@ func run(ctx context.Context, imagesToProcess build.ImagesToProcess, tagTemplate
 		return err
 	}
 
-	giterminismManager, err := common.GetGiterminismManager(ctx, &commonCmdData)
-	if err != nil {
-		return err
-	}
-
-	common.ProcessLogProjectDir(&commonCmdData, giterminismManager.ProjectDir())
-
 	if err := ssh_agent.Init(ctx, common.GetSSHKey(&commonCmdData)); err != nil {
 		return fmt.Errorf("cannot initialize ssh agent: %w", err)
 	}
@@ -192,6 +185,13 @@ func run(ctx context.Context, imagesToProcess build.ImagesToProcess, tagTemplate
 			logboek.Warn().LogF("WARNING: ssh agent termination failed: %s\n", err)
 		}
 	}()
+
+	giterminismManager, err := common.GetGiterminismManager(ctx, &commonCmdData)
+	if err != nil {
+		return err
+	}
+
+	common.ProcessLogProjectDir(&commonCmdData, giterminismManager.ProjectDir())
 
 	_, werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, false))
 	if err != nil {

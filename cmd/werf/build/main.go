@@ -167,13 +167,6 @@ func runMain(ctx context.Context, imagesToProcess build.ImagesToProcess) error {
 		}
 	}()
 
-	giterminismManager, err := common.GetGiterminismManager(ctx, &commonCmdData)
-	if err != nil {
-		return err
-	}
-
-	common.ProcessLogProjectDir(&commonCmdData, giterminismManager.ProjectDir())
-
 	if err := ssh_agent.Init(ctx, common.GetSSHKey(&commonCmdData)); err != nil {
 		return fmt.Errorf("cannot initialize ssh agent: %w", err)
 	}
@@ -183,6 +176,13 @@ func runMain(ctx context.Context, imagesToProcess build.ImagesToProcess) error {
 			logboek.Warn().LogF("WARNING: ssh agent termination failed: %s\n", err)
 		}
 	}()
+
+	giterminismManager, err := common.GetGiterminismManager(ctx, &commonCmdData)
+	if err != nil {
+		return err
+	}
+
+	common.ProcessLogProjectDir(&commonCmdData, giterminismManager.ProjectDir())
 
 	common.SetupOndemandKubeInitializer(*commonCmdData.KubeContext, *commonCmdData.KubeConfig, *commonCmdData.KubeConfigBase64, *commonCmdData.KubeConfigPathMergeList)
 	if err := common.GetOndemandKubeInitializer().Init(ctx); err != nil {

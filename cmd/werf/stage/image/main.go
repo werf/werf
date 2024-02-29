@@ -127,6 +127,16 @@ func run(ctx context.Context, imageName string) error {
 		return err
 	}
 
+	if err := ssh_agent.Init(ctx, common.GetSSHKey(&commonCmdData)); err != nil {
+		return fmt.Errorf("cannot initialize ssh agent: %w", err)
+	}
+	defer func() {
+		err := ssh_agent.Terminate()
+		if err != nil {
+			logboek.Warn().LogF("WARNING: ssh agent termination failed: %s\n", err)
+		}
+	}()
+
 	giterminismManager, err := common.GetGiterminismManager(ctx, &commonCmdData)
 	if err != nil {
 		return err
@@ -146,16 +156,6 @@ func run(ctx context.Context, imageName string) error {
 		return fmt.Errorf("getting project tmp dir failed: %w", err)
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
-
-	if err := ssh_agent.Init(ctx, common.GetSSHKey(&commonCmdData)); err != nil {
-		return fmt.Errorf("cannot initialize ssh agent: %w", err)
-	}
-	defer func() {
-		err := ssh_agent.Terminate()
-		if err != nil {
-			logboek.Warn().LogF("WARNING: ssh agent termination failed: %s\n", err)
-		}
-	}()
 
 	if imageName == "" && len(werfConfig.StapelImages) == 1 {
 		imageName = werfConfig.StapelImages[0].Name
