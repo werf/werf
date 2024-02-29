@@ -1,5 +1,13 @@
 # Changelog
 
+### [1.2.295](https://www.github.com/werf/werf/compare/v1.2.294...v1.2.295) (2024-02-29)
+
+
+### Bug Fixes
+
+* **nelm:** deployment tracking hangs; old pods tracked ([583017e](https://www.github.com/werf/werf/commit/583017e0cc67cf8572f902cedc7444b62437d7f4))
+* **ssh:** initialize ssh agent before working with git repo ([caf1422](https://www.github.com/werf/werf/commit/caf142255c5d65cfa405f94acc94889ac7332453))
+
 ### [1.2.294](https://www.github.com/werf/werf/compare/v1.2.293...v1.2.294) (2024-02-19)
 
 
