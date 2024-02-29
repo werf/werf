@@ -62,10 +62,10 @@ require (
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.5
 	github.com/werf/copy-recurse v0.2.7
-	github.com/werf/kubedog v0.12.4-0.20240207151806-c1febe10359f
+	github.com/werf/kubedog v0.12.4-0.20240229114338-b4b4fe4011fe
 	github.com/werf/lockgate v0.1.1
 	github.com/werf/logboek v0.6.1
-	github.com/werf/nelm v0.0.0-20240219130413-3b22ee727f40
+	github.com/werf/nelm v0.0.0-20240229112246-160d524e6b6b
 	go.opentelemetry.io/otel v1.21.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.21.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.21.0
