@@ -32,14 +32,13 @@ func (api *selectelApi) makeApiUrl(hostname, registryId string, pathParts ...str
 		return "", err
 	}
 
-	parts := append([]string{u.Path}, pathParts...)
-	u.Path = path.Join(parts...)
-
+	parts := []string{u.Path}
 	if registryId != "" {
-		q := u.Query()
-		q.Set("registryId", registryId)
-		u.RawQuery = q.Encode()
+		parts = append(parts, "registries", registryId)
 	}
+
+	parts = append(parts, pathParts...)
+	u.Path = path.Join(parts...)
 
 	return u.String(), nil
 }

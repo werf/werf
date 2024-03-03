@@ -242,10 +242,13 @@ You can use the following options (or their respective environment variables) to
 
 #### Known limitations
 
-* Sometimes, Selectel drop connection with VPC ID. Try to use the VPC name instead.
-* CR API has limitations, so you can not remove layers from the root of the container registry.
-* Low API rate limit. It can cause cleanup problems with rapid development.
-
+- Sometimes, Selectel drop connection with VPC ID. Try to use the VPC name instead.
+- CR API has limitations, so you can not remove layers from the root of the container registry.
+- Low API rate limit. It can cause cleanup problems with rapid development.
+    ```
+    WERF_PARALLEL_TASKS_LIMIT: 0
+    WERF_PARALLEL: 0
+    ```
 ## Container registry’s garbage collector
 
 Note that during the cleanup, werf only removes tags from the images (manifests) to be deleted. The container registry garbage collector (GC) is responsible for the actual deletion.
