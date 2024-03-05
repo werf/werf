@@ -32,7 +32,7 @@ func IsExperimentalEngine() bool {
 		return *isNelm
 	}
 
-	return false
+	return true
 }
 
 type InitActionConfigOptions struct {
