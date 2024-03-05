@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.296](https://www.github.com/werf/werf/compare/v1.2.295...v1.2.296) (2024-03-05)
+
+
+### Features
+
+* **nelm:** activate new deployment engine Nelm by default ([be67fc1](https://www.github.com/werf/werf/commit/be67fc134c864e39fecc3e15896db9d2a8084cf6))
+
 ### [1.2.295](https://www.github.com/werf/werf/compare/v1.2.294...v1.2.295) (2024-02-29)
 
 
