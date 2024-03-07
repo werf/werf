@@ -578,6 +578,8 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		// }
 
 		return command_helpers.LockReleaseWrapper(ctx, releaseName, lockManager, func() error {
+			log.Default.Info(ctx, color.Style{color.Bold, color.Green}.Render("Starting release")+" %q (namespace: %q)", releaseName, releaseNamespace.Name())
+
 			log.Default.Info(ctx, "Constructing release history")
 			history, err := rlshistor.NewHistory(releaseName, releaseNamespace.Name(), actionConfig.Releases, rlshistor.HistoryOptions{
 				Mapper:          clientFactory.Mapper(),
