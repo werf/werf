@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/gookit/color"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 	helm_v3 "helm.sh/helm/v3/cmd/helm"
@@ -527,6 +528,8 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		chartPathOptions.SetRegistryClient(actionConfig.RegistryClient)
 
 		return command_helpers.LockReleaseWrapper(ctx, releaseName, lockManager, func() error {
+			log.Default.Info(ctx, color.Style{color.Bold, color.Green}.Render("Planning release")+" %q (namespace: %q)", releaseName, releaseNamespace.Name())
+
 			log.Default.Info(ctx, "Constructing release history")
 			history, err := rlshistor.NewHistory(releaseName, releaseNamespace.Name(), actionConfig.Releases, rlshistor.HistoryOptions{
 				Mapper:          clientFactory.Mapper(),
