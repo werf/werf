@@ -637,6 +637,8 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 				return fmt.Errorf("error constructing chart tree: %w", err)
 			}
 
+			notes := chartTree.Notes()
+
 			var prevRelGeneralResources []*resrc.GeneralResource
 			if prevReleaseFound {
 				prevRelGeneralResources = prevRelease.GeneralResources()
@@ -679,7 +681,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 			}
 
 			log.Default.Info(ctx, "Constructing new release")
-			newRel, err := rls.NewRelease(releaseName, releaseNamespace.Name(), newRevision, chartTree.ReleaseValues(), chartTree.LegacyChart(), resProcessor.ReleasableHookResources(), resProcessor.ReleasableGeneralResources(), chartTree.Notes(), rls.ReleaseOptions{
+			newRel, err := rls.NewRelease(releaseName, releaseNamespace.Name(), newRevision, chartTree.ReleaseValues(), chartTree.LegacyChart(), resProcessor.ReleasableHookResources(), resProcessor.ReleasableGeneralResources(), notes, rls.ReleaseOptions{
 				FirstDeployed: firstDeployed,
 				Mapper:        clientFactory.Mapper(),
 			})
@@ -746,6 +748,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 			if useless, err := plan.Useless(); err != nil {
 				return fmt.Errorf("error checking if deploy plan will do nothing useful: %w", err)
 			} else if useless {
+				printNotes(ctx, notes)
 				log.Default.Info(ctx, color.Style{color.Bold, color.Green}.Render("Skipped release")+" %q (namespace: %q): cluster resources already as desired", releaseName, releaseNamespace.Name())
 				return nil
 			}
@@ -842,7 +845,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 				nonCriticalErrs = append(nonCriticalErrs, noncriterrs...)
 
 				if cmdData.AutoRollback && prevDeployedReleaseFound {
-					wcompops, wfailops, wcancops, criterrs, noncriterrs = runRollbackPlan(
+					wcompops, wfailops, wcancops, notes, criterrs, noncriterrs = runRollbackPlan(
 						ctx,
 						taskStore,
 						logStore,
@@ -887,6 +890,10 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 				if err := report.Save(deployReportPath); err != nil {
 					nonCriticalErrs = append(nonCriticalErrs, fmt.Errorf("error saving deploy report: %w", err))
 				}
+			}
+
+			if len(criticalErrs) == 0 {
+				printNotes(ctx, notes)
 			}
 
 			if len(criticalErrs) > 0 {
@@ -1006,7 +1013,7 @@ func runRollbackPlan(
 	rollbackGraphPath string,
 	networkParallelism int,
 ) (
-	worthyCompletedOps, worthyFailedOps, worthyCanceledOps []opertn.Operation,
+	worthyCompletedOps, worthyFailedOps, worthyCanceledOps []opertn.Operation, notes string,
 	criticalErrs, nonCriticalErrs []error,
 ) {
 	log.Default.Info(ctx, "Processing rollback resources")
@@ -1042,7 +1049,7 @@ func runRollbackPlan(
 	)
 
 	if err := resProcessor.Process(ctx); err != nil {
-		return nil, nil, nil, []error{fmt.Errorf("error processing rollback resources: %w", err)}, nonCriticalErrs
+		return nil, nil, nil, "", []error{fmt.Errorf("error processing rollback resources: %w", err)}, nonCriticalErrs
 	}
 
 	rollbackRevision := failedRevision + 1
@@ -1063,7 +1070,7 @@ func runRollbackPlan(
 		},
 	)
 	if err != nil {
-		return nil, nil, nil, []error{fmt.Errorf("error constructing rollback release: %w", err)}, nonCriticalErrs
+		return nil, nil, nil, "", []error{fmt.Errorf("error constructing rollback release: %w", err)}, nonCriticalErrs
 	}
 
 	log.Default.Info(ctx, "Constructing rollback plan")
@@ -1094,7 +1101,7 @@ func runRollbackPlan(
 
 	rollbackPlan, err := rollbackPlanBuilder.Build(ctx)
 	if err != nil {
-		return nil, nil, nil, []error{fmt.Errorf("error building rollback plan: %w", err)}, nonCriticalErrs
+		return nil, nil, nil, "", []error{fmt.Errorf("error building rollback plan: %w", err)}, nonCriticalErrs
 	}
 
 	if saveRollbackGraph {
@@ -1104,10 +1111,10 @@ func runRollbackPlan(
 	}
 
 	if useless, err := rollbackPlan.Useless(); err != nil {
-		return nil, nil, nil, []error{fmt.Errorf("error checking if rollback plan will do nothing useful: %w", err)}, nonCriticalErrs
+		return nil, nil, nil, "", []error{fmt.Errorf("error checking if rollback plan will do nothing useful: %w", err)}, nonCriticalErrs
 	} else if useless {
 		log.Default.Info(ctx, color.Style{color.Bold, color.Green}.Render("Skipped rollback release")+" %q (namespace: %q): cluster resources already as desired", releaseName, releaseNamespace.Name())
-		return nil, nil, nil, criticalErrs, nonCriticalErrs
+		return nil, nil, nil, "", criticalErrs, nonCriticalErrs
 	}
 
 	log.Default.Info(ctx, "Executing rollback plan")
@@ -1166,7 +1173,7 @@ func runRollbackPlan(
 		nonCriticalErrs = append(nonCriticalErrs, noncriterrs...)
 	}
 
-	return worthyCompletedOps, worthyFailedOps, worthyCanceledOps, criticalErrs, nonCriticalErrs
+	return worthyCompletedOps, worthyFailedOps, worthyCanceledOps, rollbackRel.Notes(), criticalErrs, nonCriticalErrs
 }
 
 func printTables(ctx context.Context, tablesBuilder *track.TablesBuilder) {
@@ -1313,4 +1320,14 @@ func checkHelm3ReleaseExists(ctx context.Context, releaseName, namespace string,
 	}
 
 	return foundHelm3Release, nil
+}
+
+func printNotes(ctx context.Context, notes string) {
+	if notes == "" {
+		return
+	}
+
+	log.Default.InfoBlock(ctx, color.Style{color.Bold, color.Blue}.Render("Release notes")).Do(func() {
+		log.Default.Info(ctx, notes)
+	})
 }
