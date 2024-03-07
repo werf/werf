@@ -1205,7 +1205,7 @@ func printTables(ctx context.Context, tablesBuilder *track.TablesBuilder) {
 	}
 
 	if table, nonEmpty := tablesBuilder.BuildProgressTable(); nonEmpty {
-		logboek.Context(ctx).LogBlock("Progress status").Do(func() {
+		logboek.Context(ctx).LogBlock(color.Style{color.Bold, color.Blue}.Render("Progress status")).Do(func() {
 			table.SuppressTrailingSpaces()
 			logboek.Context(ctx).LogLn(table.Render())
 		})
