@@ -311,10 +311,12 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		return err
 	}
 
-	chartDir, err := common.GetHelmChartDir(werfConfigPath, werfConfig, giterminismManager)
+	relChartDir, err := common.GetHelmChartDir(werfConfigPath, werfConfig, giterminismManager)
 	if err != nil {
 		return fmt.Errorf("getting helm chart dir failed: %w", err)
 	}
+
+	chartDir := filepath.Join(giterminismManager.ProjectDir(), relChartDir)
 
 	projectName := werfConfig.Meta.Project
 
@@ -445,7 +447,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		return fmt.Errorf("unable to create helm registry client: %w", err)
 	}
 
-	wc := chart_extender.NewWerfChart(ctx, giterminismManager, secretsManager, chartDir, helm_v3.Settings, helmRegistryClient, chart_extender.WerfChartOptions{
+	wc := chart_extender.NewWerfChart(ctx, giterminismManager, secretsManager, relChartDir, helm_v3.Settings, helmRegistryClient, chart_extender.WerfChartOptions{
 		BuildChartDependenciesOpts:        command_helpers.BuildChartDependenciesOptions{SkipUpdate: *commonCmdData.SkipDependenciesRepoRefresh},
 		SecretValueFiles:                  common.GetSecretValues(&commonCmdData),
 		ExtraAnnotations:                  userExtraAnnotations,
@@ -508,7 +510,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 	}
 	maintenanceHelper := createMaintenanceHelper(ctx, actionConfig, kubeConfigOptions)
 
-	if err := migrateHelm2ToHelm3(ctx, releaseName, namespace, maintenanceHelper, wc.ChainPostRenderer, valueOpts, filepath.Join(giterminismManager.ProjectDir(), chartDir), helmRegistryClient); err != nil {
+	if err := migrateHelm2ToHelm3(ctx, releaseName, namespace, maintenanceHelper, wc.ChainPostRenderer, valueOpts, chartDir, helmRegistryClient); err != nil {
 		return err
 	}
 
@@ -933,7 +935,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		})
 
 		return command_helpers.LockReleaseWrapper(ctx, releaseName, lockManager, func() error {
-			if err := helmUpgradeCmd.RunE(helmUpgradeCmd, []string{releaseName, filepath.Join(giterminismManager.ProjectDir(), chartDir)}); err != nil {
+			if err := helmUpgradeCmd.RunE(helmUpgradeCmd, []string{releaseName, chartDir}); err != nil {
 				return fmt.Errorf("helm upgrade have failed: %w", err)
 			}
 			return nil
