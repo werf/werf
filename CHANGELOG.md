@@ -1,5 +1,21 @@
 # Changelog
 
+### [1.2.297](https://www.github.com/werf/werf/compare/v1.2.296...v1.2.297) (2024-03-19)
+
+
+### Features
+
+* **nelm:** improve log coloring ([cc5c397](https://www.github.com/werf/werf/commit/cc5c397a71ad324070dc2e6610ab508dd3947e00))
+* **nelm:** remove excessive operations summary ([8a295df](https://www.github.com/werf/werf/commit/8a295dfa6522b9c7aaedbfd2ee6212ef297398b4))
+* **nelm:** show NOTES.txt on release ([3c64bd9](https://www.github.com/werf/werf/commit/3c64bd9c78e2a2894aebb702a09df1bd79fa55ba))
+* **nelm:** show release name/namespace on converge/plan start ([eb85b19](https://www.github.com/werf/werf/commit/eb85b19fd85affbaec584472b3dd097231d769f8))
+
+
+### Bug Fixes
+
+* **nelm:** panic with werf.io/replicas-on-creation ([49043e3](https://www.github.com/werf/werf/commit/49043e3849e01d56be80e645a5ddecbe7c65a785))
+* **nelm:** removing child chart values with null ([9fcc639](https://www.github.com/werf/werf/commit/9fcc639cc02d9fa22035cbc9f518682b280a85e8))
+
 ### [1.2.296](https://www.github.com/werf/werf/compare/v1.2.295...v1.2.296) (2024-03-05)
 
 
