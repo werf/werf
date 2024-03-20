@@ -17,11 +17,11 @@ Helm is used only for chart deployment and distribution, while werf can also be 
 
 Helm is built into werf and is enhanced with additional features such as advanced tracking, customizing the deployment order not only for hooks but also for regular resources, and more.
 
-## werf vs ArgoCD
+## werf vs Argo CD
 
-ArgoCD is only used for deploying, while werf also supports developing, building, testing, distributing, and cleaning up the container registry. 
+Argo CD is only used for deploying, while werf also supports developing, building, testing, distributing, and cleaning up the container registry. 
 
-Deployment in werf follows a Helm push model, though integration with ArgoCD to implement GitOps is also available.
+Deployment in werf follows a Helm push model, though integration with Argo CD to implement GitOps is also available. Read [this article](https://blog.werf.io/new-werf-mode-combining-werf-argo-cd-into-a-unified-ci-cd-process-d49bce7f3be1) to learn more about the integration and how & why Argo CD might complement werf.
 
 ## werf vs Skaffold/DevSpace
 
