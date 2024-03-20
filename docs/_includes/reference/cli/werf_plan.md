@@ -3,11 +3,9 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Build and push images, then deploy application into Kubernetes.
+Prepare deploy plan and show how resources in a Kubernetes cluster would change on next deploy.
 
-The result of converge command is an application deployed into Kubernetes for current git state. Command will create release and wait until all resources of the release will become ready.
-
-Environment is a required param for the deploy by default, because it is needed to construct Helm Release name and Kubernetes Namespace. Either `--env` or `$WERF_ENV` should be specified for command.
+Environment is a required param by default, because it is needed to construct Helm Release name and Kubernetes Namespace. Either `--env` or `$WERF_ENV` should be specified for command.
 
 Read more info about Helm chart structure, Helm Release name, Kubernetes Namespace and how to change it: [https://werf.io/documentation/usage/deploy/environments.html]({{ "/usage/deploy/environments.html" | true_relative_url }})
 
@@ -15,14 +13,14 @@ Read more info about Helm chart structure, Helm Release name, Kubernetes Namespa
 {{ header }} Syntax
 
 ```shell
-werf converge [options]
+werf plan [options]
 ```
 
 {{ header }} Examples
 
 ```shell
-# Build and deploy current application state into production environment
-werf converge --repo registry.mydomain.com/web --env production
+# Prepare and show deploy plan
+werf plan --repo registry.mydomain.com/web --env production
 ```
 
 {{ header }} Environments
@@ -78,12 +76,6 @@ werf converge --repo registry.mydomain.com/web --env production
             until volume usage becomes below "allowed-docker-storage-volume-usage -                 
             allowed-docker-storage-volume-usage-margin" level (default 5% or                        
             $WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE_MARGIN)
-      --atomic=false
-            Enable auto rollback of the failed release to the previous deployed release version     
-            when current deploy process have failed ($WERF_ATOMIC by default)
-  -R, --auto-rollback=false
-            Enable auto rollback of the failed release to the previous deployed release version     
-            when current deploy process have failed ($WERF_AUTO_ROLLBACK by default)
       --build-report-path=''
             Change build report path and format (by default $WERF_BUILD_REPORT_PATH or              
             ".werf-build-report.json" if not set). Extension must be either .json for JSON format   
@@ -100,13 +92,6 @@ werf converge --repo registry.mydomain.com/web --env production
       --config-templates-dir=''
             Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf   
             in working directory)
-      --deploy-graph-path=''
-            Save deploy graph path to the specified file (by default $WERF_DEPLOY_GRAPH_PATH).      
-            Extension must be .dot or not specified. If extension not specified, then .dot is used
-      --deploy-report-path=''
-            Change deploy report path and format (by default $WERF_DEPLOY_REPORT_PATH or            
-            ".werf-deploy-report.json" if not set). Extension must be .json for JSON format. If     
-            extension not specified, then .json is used
       --dev=false
             Enable development mode (default $WERF_DEV).
             The mode allows working with project files without doing redundant commits during       
@@ -141,6 +126,9 @@ werf converge --repo registry.mydomain.com/web --env production
             server storage path by default or use $WERF_DOCKER_SERVER_STORAGE_PATH)
       --env=''
             Use specified environment (default $WERF_ENV)
+      --exit-code=false
+            If true, returns exit code 0 if no changes, exit code 2 if any changes planned or exit  
+            code 1 in case of an error (default $WERF_EXIT_CODE or false)
       --final-repo=''
             Container registry storage address (default $WERF_FINAL_REPO)
       --final-repo-container-registry=''
@@ -335,15 +323,9 @@ werf converge --repo registry.mydomain.com/web --env production
             Requires all used images to be previously built and exist in repo. Exits with error if  
             needed images are not cached and so require to run build instructions (default          
             $WERF_REQUIRE_BUILT_IMAGES)
-      --rollback-graph-path=''
-            Save rollback graph path to the specified file (by default $WERF_ROLLBACK_GRAPH_PATH).  
-            Extension must be .dot or not specified. If extension not specified, then .dot is used
       --save-build-report=false
             Save build report (by default $WERF_SAVE_BUILD_REPORT or false). Its path and format    
             configured with --build-report-path
-      --save-deploy-report=false
-            Save deploy report (by default $WERF_SAVE_DEPLOY_REPORT or false). Its path and format  
-            configured with --deploy-report-path
       --secondary-repo=[]
             Specify one or multiple secondary read-only repos with images that will be used as a    
             cache.

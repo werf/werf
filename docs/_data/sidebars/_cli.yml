@@ -10,6 +10,9 @@ cli: &cli
       - title: werf converge
         url: /reference/cli/werf_converge.html
 
+      - title: werf plan
+        url: /reference/cli/werf_plan.html
+
       - title: werf dismiss
         url: /reference/cli/werf_dismiss.html
 
