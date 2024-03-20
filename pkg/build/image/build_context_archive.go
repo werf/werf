@@ -99,7 +99,6 @@ func (a *BuildContextArchive) ExtractOrGetExtractedDir(ctx context.Context) (str
 	if err := util.ExtractTar(archiveReader, a.extractionDir, util.ExtractTarOptions{}); err != nil {
 		return "", fmt.Errorf("unable to extract context tar to tmp context dir %q: %w", a.extractionDir, err)
 	}
-
 	return a.extractionDir, nil
 }
 
@@ -119,7 +118,12 @@ func (a *BuildContextArchive) CalculateGlobsChecksum(ctx context.Context, globs 
 		return "", fmt.Errorf("unable to get build context dir: %w", err)
 	}
 
-	globStats, err := copier.Stat(contextDir, contextDir, copier.StatOptions{CheckForArchives: checkForArchives}, globs)
+	var contextGlobs []string
+	for _, glob := range globs {
+		contextGlobs = append(contextGlobs, filepath.Join(contextDir, glob))
+	}
+	fmt.Printf("contextGlobs=%v\n", contextGlobs)
+	globStats, err := copier.Stat(contextDir, contextDir, copier.StatOptions{CheckForArchives: checkForArchives}, contextGlobs)
 	if err != nil {
 		return "", fmt.Errorf("unable to stat globs: %w", err)
 	}
@@ -132,9 +136,9 @@ func (a *BuildContextArchive) CalculateGlobsChecksum(ctx context.Context, globs 
 		if globStat.Error != "" {
 			return "", fmt.Errorf("unable to stat glob %q: %s", globStat.Glob, globStat.Error)
 		}
-
 		for _, match := range globStat.Globbed {
-			matches = append(matches, match)
+			fmt.Printf("contextDir=%q %v MATCHED! -> %q\n", contextDir, globs, match)
+			matches = append(matches, util.GetRelativeToBaseFilepath(contextDir, match))
 		}
 	}
 
@@ -142,7 +146,6 @@ func (a *BuildContextArchive) CalculateGlobsChecksum(ctx context.Context, globs 
 	if err != nil {
 		return "", fmt.Errorf("unable to calculate build context paths checksum: %w", err)
 	}
-
 	return pathsChecksum, nil
 }
 
@@ -158,6 +161,7 @@ func (a *BuildContextArchive) CalculatePathsChecksum(ctx context.Context, paths 
 	var pathsHashes []string
 	for _, path := range paths {
 		p := filepath.Join(dir, path)
+		fmt.Printf("JOINING %q with %q -> %q\n", dir, path, p)
 
 		hash, err := util.HashContentsAndPathsRecurse(p)
 		if err != nil {
@@ -167,5 +171,7 @@ func (a *BuildContextArchive) CalculatePathsChecksum(ctx context.Context, paths 
 		pathsHashes = append(pathsHashes, hash)
 	}
 
-	return util.Sha256Hash(pathsHashes...), nil
+	c := util.Sha256Hash(pathsHashes...)
+	fmt.Printf("-- CalculatePathsChecksum -> %q\n", c)
+	return c, nil
 }
