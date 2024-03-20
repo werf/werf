@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.298](https://www.github.com/werf/werf/compare/v1.2.297...v1.2.298) (2024-03-20)
+
+
+### Bug Fixes
+
+* **nelm:** WERF_DIR ignored for chart path ([5acfaa3](https://www.github.com/werf/werf/commit/5acfaa3b1075a9dfa264ff2883e8d43d1f66e36f))
+
 ### [1.2.297](https://www.github.com/werf/werf/compare/v1.2.296...v1.2.297) (2024-03-19)
 
 
