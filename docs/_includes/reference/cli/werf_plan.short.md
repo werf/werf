@@ -1,0 +1,1 @@
+prepare deploy plan and show how resources in a Kubernetes cluster would change on next deploy
