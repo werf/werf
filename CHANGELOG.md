@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.299](https://www.github.com/werf/werf/compare/v1.2.298...v1.2.299) (2024-03-21)
+
+
+### Bug Fixes
+
+* **nelm:** Jobs not failing on errors ([ca069a2](https://www.github.com/werf/werf/commit/ca069a2500796ccb06ca3c01767200cfc7ba3550))
+
 ### [1.2.298](https://www.github.com/werf/werf/compare/v1.2.297...v1.2.298) (2024-03-20)
 
 
