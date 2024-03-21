@@ -1,5 +1,17 @@
 # Changelog
 
+### [1.2.300](https://www.github.com/werf/werf/compare/v1.2.299...v1.2.300) (2024-03-21)
+
+
+### Features
+
+* make werf root command embeddable ([2e1c9d3](https://www.github.com/werf/werf/commit/2e1c9d3c88351a7ff7c816c5d0cdcf55b9a8c5f2))
+
+
+### Bug Fixes
+
+* **nelm:** Jobs not failing on errors /2 ([96793f0](https://www.github.com/werf/werf/commit/96793f0671c441f54f5ba98c7953b6d4c9909051))
+
 ### [1.2.299](https://www.github.com/werf/werf/compare/v1.2.298...v1.2.299) (2024-03-21)
 
 
