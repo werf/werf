@@ -5,6 +5,7 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"helm.sh/helm/v3/pkg/release"
 	appsv1 "k8s.io/api/apps/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,6 +32,7 @@ var _ = Describe("Complex converge", Label("e2e", "converge", "complex"), func()
 			By("state0: starting")
 			{
 				fixtureRelPath := "complex/state0"
+				deployReportName := ".werf-deploy-report.json"
 
 				By("state0: preparing test repo")
 				SuiteData.InitTestRepo(repoDirname, fixtureRelPath)
@@ -41,7 +43,7 @@ var _ = Describe("Complex converge", Label("e2e", "converge", "complex"), func()
 				werfProject.CreateRegistryPullSecretFromDockerConfig()
 
 				By("state0: execute converge")
-				combinedOut := werfProject.Converge(&werf.ConvergeOptions{
+				_, deployReport := werfProject.ConvergeWithReport(SuiteData.GetDeployReportPath(deployReportName), &werf.ConvergeWithReportOptions{
 					CommonOptions: werf.CommonOptions{
 						ExtraArgs: []string{
 							"--set=app1.option=optionValue",
@@ -49,14 +51,11 @@ var _ = Describe("Complex converge", Label("e2e", "converge", "complex"), func()
 					},
 				})
 
-				By("state0: check converge output")
-				Expect(combinedOut).To(ContainSubstring("Status progress"))
-				Expect(combinedOut).To(ContainSubstring("hook started"))
-				// TODO: fix https://github.com/werf/kubedog/issues/282, then uncomment
-				// Expect(combinedOut).To(ContainSubstring("app1 started"))
-				// Expect(combinedOut).To(ContainSubstring("app2 started"))
-				Expect(combinedOut).To(ContainSubstring("STATUS: deployed"))
-				Expect(combinedOut).To(ContainSubstring("REVISION: 1"))
+				By("state0: check deploy report")
+				Expect(deployReport.Release).To(Equal(werfProject.Release()))
+				Expect(deployReport.Namespace).To(Equal(werfProject.Namespace()))
+				Expect(deployReport.Revision).To(Equal(1))
+				Expect(deployReport.Status).To(Equal(release.StatusDeployed))
 
 				By("state0: check deployed resources in cluster")
 				cm, err := kube.Client.CoreV1().ConfigMaps(werfProject.Namespace()).Get(context.Background(), "app1-config", metav1.GetOptions{})
@@ -97,6 +96,7 @@ var _ = Describe("Complex converge", Label("e2e", "converge", "complex"), func()
 			By("state1: starting")
 			{
 				fixtureRelPath := "complex/state1"
+				deployReportName := ".werf-deploy-report.json"
 
 				By("state1: preparing test repo")
 				SuiteData.UpdateTestRepo(repoDirname, fixtureRelPath)
@@ -113,12 +113,17 @@ var _ = Describe("Complex converge", Label("e2e", "converge", "complex"), func()
 				Expect(err).NotTo(HaveOccurred())
 
 				By("state1: execute converge")
-				combinedOut := werfProject.Converge(&werf.ConvergeOptions{})
+				_, deployReport := werfProject.ConvergeWithReport(SuiteData.GetDeployReportPath(deployReportName), &werf.ConvergeWithReportOptions{
+					CommonOptions: werf.CommonOptions{
+						ExtraArgs: []string{
+							"--set=app1.option=optionValue",
+						},
+					},
+				})
 
-				By("state1: check converge output")
-				Expect(combinedOut).To(ContainSubstring("hook started"))
-				Expect(combinedOut).To(ContainSubstring("STATUS: deployed"))
-				Expect(combinedOut).To(ContainSubstring("REVISION: 2"))
+				By("state1: check deploy report")
+				Expect(deployReport.Revision).To(Equal(2))
+				Expect(deployReport.Status).To(Equal(release.StatusDeployed))
 
 				By("state1: check deployed configmap in cluster")
 				cm, err := kube.Client.CoreV1().ConfigMaps(werfProject.Namespace()).Get(context.Background(), "app1-config", metav1.GetOptions{})
@@ -147,23 +152,22 @@ var _ = Describe("Complex converge", Label("e2e", "converge", "complex"), func()
 			By("state2: starting")
 			{
 				fixtureRelPath := "complex/state2"
+				deployReportName := ".werf-deploy-report.json"
 
 				By("state2: preparing test repo")
 				SuiteData.UpdateTestRepo(repoDirname, fixtureRelPath)
 				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
 
 				By("state2: execute converge")
-				combinedOut := werfProject.Converge(&werf.ConvergeOptions{
+				_, deployReport := werfProject.ConvergeWithReport(SuiteData.GetDeployReportPath(deployReportName), &werf.ConvergeWithReportOptions{
 					CommonOptions: werf.CommonOptions{
 						ShouldFail: true,
 					},
 				})
 
-				By("state2: check converge output")
-				Expect(combinedOut).ToNot(ContainSubstring("hook started"))
-				// TODO: fix https://github.com/werf/kubedog/issues/282, then uncomment
-				// Expect(combinedOut).To(ContainSubstring("app2 started"))
-				Expect(combinedOut).To(ContainSubstring("UPGRADE FAILED"))
+				By("state2: check deploy report")
+				Expect(deployReport.Revision).To(Equal(3))
+				Expect(deployReport.Status).To(Equal(release.StatusFailed))
 
 				By("state2: check deployed deployment in cluster")
 				deployment, err := kube.Client.AppsV1().Deployments(werfProject.Namespace()).Get(context.Background(), "app2", metav1.GetOptions{})

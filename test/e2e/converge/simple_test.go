@@ -5,6 +5,7 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"helm.sh/helm/v3/pkg/release"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/werf/kubedog/pkg/kube"
@@ -28,17 +29,20 @@ var _ = Describe("Simple converge", Label("e2e", "converge", "simple"), func() {
 			By("state0: starting")
 			{
 				fixtureRelPath := "simple/state0"
+				deployReportName := ".werf-deploy-report.json"
 
 				By("state0: preparing test repo")
 				SuiteData.InitTestRepo(repoDirname, fixtureRelPath)
 				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
 
 				By("state0: execute converge")
-				combinedOut := werfProject.Converge(&werf.ConvergeOptions{})
+				_, deployReport := werfProject.ConvergeWithReport(SuiteData.GetDeployReportPath(deployReportName), &werf.ConvergeWithReportOptions{})
 
-				By("state0: check converge output")
-				Expect(combinedOut).To(ContainSubstring("STATUS: deployed"))
-				Expect(combinedOut).To(ContainSubstring("REVISION: 1"))
+				By("state0: check deploy report")
+				Expect(deployReport.Release).To(Equal(werfProject.Release()))
+				Expect(deployReport.Namespace).To(Equal(werfProject.Namespace()))
+				Expect(deployReport.Revision).To(Equal(1))
+				Expect(deployReport.Status).To(Equal(release.StatusDeployed))
 
 				By("state0: check deployed resources in cluster")
 				cm, err := kube.Client.CoreV1().ConfigMaps(werfProject.Namespace()).Get(context.Background(), "test1", metav1.GetOptions{})

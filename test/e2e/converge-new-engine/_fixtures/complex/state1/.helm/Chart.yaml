@@ -1,3 +1,0 @@
-apiVersion: v2
-name: werf-test-e2e-converge-complex
-version: 0.1.0
