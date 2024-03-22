@@ -33,7 +33,6 @@ func Init(ctx context.Context, insecureRegistry, skipTlsVerifyRegistry bool) err
 		InsecureRegistry:      insecureRegistry,
 		SkipTlsVerifyRegistry: skipTlsVerifyRegistry,
 	})
-
 	if err != nil {
 		return err
 	}

@@ -78,7 +78,6 @@ func (r *azureCr) DeleteRepo(ctx context.Context, reference string) error {
 		"--repository="+repository,
 		"--yes",
 	)
-
 	if err != nil {
 		if strings.Contains(err.Error(), "repository name not known to registry") {
 			return NewAzureCrRepositoryNotFoundErr(err)
