@@ -101,7 +101,6 @@ require (
 	github.com/AdamKorcz/go-118-fuzz-build v0.0.0-20231105174938-2b5cbb29f3e2 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
 	github.com/BurntSushi/toml v1.3.2 // indirect
-	github.com/DATA-DOG/go-sqlmock v1.5.2 // indirect
 	github.com/MakeNowJust/heredoc v1.0.0 // indirect
 	github.com/Masterminds/semver/v3 v3.2.1 // indirect
 	github.com/Masterminds/squirrel v1.5.4 // indirect
@@ -393,7 +392,7 @@ replace (
 	github.com/helm/helm-2to3 => github.com/werf/3p-helm-2to3 v0.0.0-20230313155428-cf9dd655c0e3 // upstream not maintained, switch back to upstream when merged: https://github.com/helm/helm-2to3/pull/224
 	github.com/jaguilar/vt100 => github.com/tonistiigi/vt100 v0.0.0-20190402012908-ad4c4a574305 // upstream not maintained
 	github.com/jedib0t/go-pretty/v6 => github.com/werf/3p-go-pretty/v6 v6.0.0-20240125135207-7170e1857aa0 // switch back to upstream when merged: https://github.com/jedib0t/go-pretty/pull/295
-	helm.sh/helm/v3 => github.com/werf/3p-helm/v3 v3.0.0-20240219201213-9f81f7688cdc // helm 3
+	helm.sh/helm/v3 => github.com/werf/3p-helm/v3 v3.0.0-20240322181436-8274718b3f64 // helm 3
 	k8s.io/helm => github.com/werf/3p-helm v0.0.0-20210202111118-81e74d46da0f // helm 2
 	oras.land/oras-go => github.com/werf/3p-oras-go v0.0.0-20240112153018-fd519ad81736 // switch back to upstream when merged: https://github.com/oras-project/oras-go/pull/678
 )
