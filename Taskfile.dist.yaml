@@ -525,7 +525,7 @@ tasks:
   deps:install:golangci-lint:
     desc: "Install golangci-lint binary."
     cmds:
-      - curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin {{.golangcilintVersion | default "v1.55.2"}}
+      - curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin {{.golangcilintVersion | default "v1.57.1"}}
 
   deps:install:prettier:
     desc: "Install prettier."
