@@ -565,7 +565,6 @@ func (api *api) pushWithRetry(ctx context.Context, pusher func() error) error {
 attemptLoop:
 	for attempt := 1; attempt <= retriesLimit; attempt++ {
 		err = pusher()
-
 		if err != nil {
 			for _, substr := range []string{
 				"REDACTED: UNKNOWN",
