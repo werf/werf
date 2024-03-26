@@ -1,5 +1,16 @@
 # Changelog
 
+### [1.2.301](https://www.github.com/werf/werf/compare/v1.2.300...v1.2.301) (2024-03-26)
+
+
+### Bug Fixes
+
+* **deps:** update all direct dependencies ([48641a0](https://www.github.com/werf/werf/commit/48641a09010a39065a80df754e39dd73dda53e24))
+* **deps:** update Helm to v3.14.3 ([049f682](https://www.github.com/werf/werf/commit/049f682d9710224ebb6f0c3ec46c2f402f2ae6c4))
+* e2e converge tests after Nelm migration ([216d363](https://www.github.com/werf/werf/commit/216d3636eabe6d4b19701efc93cb3a2ba2191c2b))
+* **nelm:** Jobs not failing on errors /2 ([688b760](https://www.github.com/werf/werf/commit/688b760ac21f4ac6851a87e3194a6da8a915fa47))
+* **nelm:** tracking might hang with werf.io/track-termination-mode: "NonBlocking" ([c0fda6b](https://www.github.com/werf/werf/commit/c0fda6b4cd76207be5b145ddb5d00838be73d42d))
+
 ### [1.2.300](https://www.github.com/werf/werf/compare/v1.2.299...v1.2.300) (2024-03-21)
 
 
