@@ -1137,6 +1137,9 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 			i.Image.SetStageDescription(stageDesc)
 			stg.SetStageImage(i)
 
+			// The stage digest is equal but stage content digest might be different.
+			stg.SetContentDigest(stageDesc.Info.Labels[imagePkg.WerfStageContentDigestLabel])
+
 			return nil
 		}
 
