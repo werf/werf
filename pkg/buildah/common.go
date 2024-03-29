@@ -24,6 +24,10 @@ const (
 	DefaultContainersConfig = `
 [network]
 default_rootless_network_cmd="slirp4netns"
+[engine]
+# Prefer runc over crun since old versions of crun (including one shipped in Ubuntu 22.04) cause
+# "unknown version specified" error
+runtime="runc"
 `
 	DefaultSignaturePolicy      = `{"default": [{"type": "insecureAcceptAnything"}], "transports": {"docker-daemon": {"": [{"type": "insecureAcceptAnything"}]}}}`
 	DefaultRegistriesConfig     = `unqualified-search-registries = ["docker.io"]`
