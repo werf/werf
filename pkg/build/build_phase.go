@@ -832,6 +832,9 @@ func (phase *BuildPhase) findAndFetchStageFromSecondaryStagesStorage(ctx context
 				i.Image.SetStageDescription(copiedStageDesc)
 				stg.SetStageImage(i)
 
+				// The stage digest remains the same, but the content digest may differ (e.g., the content digest of git and some user stages depends on the git commit).
+				stg.SetContentDigest(copiedStageDesc.Info.Labels[imagePkg.WerfStageContentDigestLabel])
+
 				logboek.Context(ctx).Default().LogFHighlight("Use previously built image for %s\n", stg.LogDetailedName())
 				container_backend.LogImageInfo(ctx, stg.GetStageImage().Image, phase.getPrevNonEmptyStageImageSize(), img.ShouldLogPlatform())
 
