@@ -2,8 +2,8 @@
 entries:
   en:
     f:
-      - title: Install and run
-        url: /index.html
+      - title: Getting started
+        external_url: https://werf.io/getting_started/
 
       - title: Usage
         f:
@@ -133,8 +133,8 @@ entries:
 
   ru:
     f:
-      - title: Установка и запуск
-        url: /index.html
+      - title: Быстрый старт
+        external_url: https://ru.werf.io/getting_started/
 
       - title: Использование
         f:
