@@ -528,7 +528,13 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 
 		trackReadinessTimeout := *common.NewDuration(time.Duration(cmdData.Timeout) * time.Second)
 		trackDeletionTimeout := trackReadinessTimeout
-		showResourceProgressPeriod := time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second
+		showResourceProgress := *commonCmdData.StatusProgressPeriodSeconds != -1
+		showResourceProgressPeriod := time.Duration(
+			lo.Max([]int64{
+				*commonCmdData.StatusProgressPeriodSeconds,
+				int64(1),
+			}),
+		) * time.Second
 		saveDeployReport := common.GetSaveDeployReport(&commonCmdData)
 		deployReportPath, err := common.GetDeployReportPath(&commonCmdData)
 		if err != nil {
@@ -770,23 +776,26 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 			log.Default.Info(ctx, "Starting tracking")
 			stdoutTrackerStopCh := make(chan bool)
 			stdoutTrackerFinishedCh := make(chan bool)
-			go func() {
-				ticker := time.NewTicker(showResourceProgressPeriod)
-				defer func() {
-					ticker.Stop()
-					stdoutTrackerFinishedCh <- true
-				}()
 
-				for {
-					select {
-					case <-ticker.C:
-						printTables(ctx, tablesBuilder)
-					case <-stdoutTrackerStopCh:
-						printTables(ctx, tablesBuilder)
-						return
+			if showResourceProgress {
+				go func() {
+					ticker := time.NewTicker(showResourceProgressPeriod)
+					defer func() {
+						ticker.Stop()
+						stdoutTrackerFinishedCh <- true
+					}()
+
+					for {
+						select {
+						case <-ticker.C:
+							printTables(ctx, tablesBuilder)
+						case <-stdoutTrackerStopCh:
+							printTables(ctx, tablesBuilder)
+							return
+						}
 					}
-				}
-			}()
+				}()
+			}
 
 			log.Default.Info(ctx, "Executing deploy plan")
 			planExecutor := plnexectr.NewPlanExecutor(plan, plnexectr.PlanExecutorOptions{
@@ -878,8 +887,10 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 				}
 			}
 
-			stdoutTrackerStopCh <- true
-			<-stdoutTrackerFinishedCh
+			if showResourceProgress {
+				stdoutTrackerStopCh <- true
+				<-stdoutTrackerFinishedCh
+			}
 
 			report := reprt.NewReport(
 				worthyCompletedOps,
