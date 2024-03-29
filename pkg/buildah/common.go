@@ -20,7 +20,11 @@ import (
 )
 
 const (
-	DefaultShmSize              = "65536k"
+	DefaultShmSize          = "65536k"
+	DefaultContainersConfig = `
+[network]
+default_rootless_network_cmd="slirp4netns"
+`
 	DefaultSignaturePolicy      = `{"default": [{"type": "insecureAcceptAnything"}], "transports": {"docker-daemon": {"": [{"type": "insecureAcceptAnything"}]}}}`
 	DefaultRegistriesConfig     = `unqualified-search-registries = ["docker.io"]`
 	BuildahImage                = "registry.werf.io/werf/buildah:v1.22.3-1"

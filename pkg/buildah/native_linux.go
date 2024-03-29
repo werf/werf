@@ -71,6 +71,7 @@ type NativeBuildah struct {
 	InstanceTmpDir          string
 	ConfigTmpDir            string
 	SignaturePolicyPath     string
+	ContainersConfigPath    string
 	RegistriesConfigPath    string
 	RegistriesConfigDirPath string
 	Insecure                bool
@@ -109,6 +110,15 @@ func NewNativeBuildah(commonOpts CommonBuildahOpts, opts NativeModeOpts) (*Nativ
 	b.SignaturePolicyPath = filepath.Join(b.ConfigTmpDir, "policy.json")
 	if err := ioutil.WriteFile(b.SignaturePolicyPath, []byte(DefaultSignaturePolicy), os.ModePerm); err != nil {
 		return nil, fmt.Errorf("unable to write file %q: %w", b.SignaturePolicyPath, err)
+	}
+
+	b.ContainersConfigPath = filepath.Join(b.ConfigTmpDir, "containers.conf")
+	if err := ioutil.WriteFile(b.ContainersConfigPath, []byte(DefaultContainersConfig), os.ModePerm); err != nil {
+		return nil, fmt.Errorf("unable to write file %q: %w", b.ContainersConfigPath, err)
+	}
+
+	if err := os.Setenv("CONTAINERS_CONF", b.ContainersConfigPath); err != nil {
+		return nil, fmt.Errorf("unable to set env var CONTAINERS_CONF: %w", err)
 	}
 
 	b.RegistriesConfigPath = filepath.Join(b.ConfigTmpDir, "registries.conf")
