@@ -939,17 +939,21 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, s
 		return false, phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Unlock, err
 	}
 
+	var stageContentSig string
 	foundSuitableStage := false
 	if stageDesc != nil {
 		i := phase.Conveyor.GetOrCreateStageImage(stageDesc.Info.Name, phase.StagesIterator.GetPrevImage(img, stg), stg, img)
 		i.Image.SetStageDescription(stageDesc)
 		stg.SetStageImage(i)
 		foundSuitableStage = true
-	}
 
-	stageContentSig, err := calculateDigest(ctx, fmt.Sprintf("%s-content", stg.Name()), "", stg, phase.Conveyor, calculateDigestOptions{TargetPlatform: img.TargetPlatform})
-	if err != nil {
-		return false, phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Unlock, fmt.Errorf("unable to calculate stage %s content digest: %w", stg.Name(), err)
+		// The stage digest remains the same, but the content digest may differ (e.g., the content digest of git and some user stages depends on the git commit).
+		stageContentSig = stageDesc.Info.Labels[imagePkg.WerfStageContentDigestLabel]
+	} else {
+		stageContentSig, err = calculateDigest(ctx, fmt.Sprintf("%s-content", stg.Name()), "", stg, phase.Conveyor, calculateDigestOptions{TargetPlatform: img.TargetPlatform})
+		if err != nil {
+			return false, phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Unlock, fmt.Errorf("unable to calculate stage %s content digest: %w", stg.Name(), err)
+		}
 	}
 
 	stg.SetContentDigest(stageContentSig)
