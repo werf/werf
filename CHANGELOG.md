@@ -1,5 +1,29 @@
 # Changelog
 
+### [1.2.301](https://www.github.com/werf/werf/compare/v1.2.300...v1.2.301) (2024-03-29)
+
+
+### Features
+
+* **deps:** mini bump all modules ([8802bd7](https://www.github.com/werf/werf/commit/8802bd7c9557a817249b56c5f3310cf8b9121db4))
+
+
+### Bug Fixes
+
+* **buildah:** "could not find netavark" error ([0503170](https://www.github.com/werf/werf/commit/0503170d918988bd0b32a74a89660668e9b9db5f))
+* **buildah:** "unknown version specified" error ([d475c14](https://www.github.com/werf/werf/commit/d475c1422d62f1ed4fbff4d23ad003b3daecd74a))
+* **buildah:** unable to find "pasta" binary ([858933f](https://www.github.com/werf/werf/commit/858933f6c5f66541af0dcb4fee452dd73cccf277))
+* **deps:** update all direct dependencies ([48641a0](https://www.github.com/werf/werf/commit/48641a09010a39065a80df754e39dd73dda53e24))
+* **deps:** update Helm to v3.14.3 ([049f682](https://www.github.com/werf/werf/commit/049f682d9710224ebb6f0c3ec46c2f402f2ae6c4))
+* e2e converge tests after Nelm migration ([216d363](https://www.github.com/werf/werf/commit/216d3636eabe6d4b19701efc93cb3a2ba2191c2b))
+* **nelm:** --status-progress-period=-1 panics ([aa152f6](https://www.github.com/werf/werf/commit/aa152f6b84803a16ad9f6df4b400b289d09a7876))
+* **nelm:** don't show logs produced before current release ([7067534](https://www.github.com/werf/werf/commit/70675344d7a6db8f2421b18f3839254a48c25767))
+* **nelm:** Jobs not failing on errors /2 ([688b760](https://www.github.com/werf/werf/commit/688b760ac21f4ac6851a87e3194a6da8a915fa47))
+* **nelm:** tracking might hang with werf.io/track-termination-mode: "NonBlocking" ([c0fda6b](https://www.github.com/werf/werf/commit/c0fda6b4cd76207be5b145ddb5d00838be73d42d))
+* **stapel:** copying suitable stage from secondary might break reproducibility of subsequent stages ([96dddad](https://www.github.com/werf/werf/commit/96dddad4713f15fe6f179a1b4d05490e1ad2a49e))
+* **stapel:** discarding newly built image might break reproducibility of subsequent stages ([78d2905](https://www.github.com/werf/werf/commit/78d2905ca1efc52bf5608372d4bed38a9b40b65f))
+* **stapel:** using suitable stage might break reproducibility of subsequent stages ([f0a618c](https://www.github.com/werf/werf/commit/f0a618c38d55a26f40c480aed4502d257dd8b101))
+
 ### [1.2.300](https://www.github.com/werf/werf/compare/v1.2.299...v1.2.300) (2024-03-21)
 
 
