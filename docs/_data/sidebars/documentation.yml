@@ -645,8 +645,8 @@ cli: &cli
 entries:
   en:
     f:
-      - title: Getting started
-        external_url: https://werf.io/getting_started/
+      - title: Install and run
+        url: /index.html
 
       - title: Usage
         f:
@@ -776,8 +776,8 @@ entries:
 
   ru:
     f:
-      - title: Быстрый старт
-        external_url: https://ru.werf.io/getting_started/
+      - title: Установка и запуск
+        url: /index.html
 
       - title: Использование
         f:
