@@ -928,27 +928,31 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, s
 		}).
 		Do(phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Lock)
 
-	foundSuitableStage := false
 	storageManager := phase.Conveyor.StorageManager
-	if stages, err := storageManager.GetStagesByDigestWithCache(ctx, stg.LogDetailedName(), stageDigest); err != nil {
+	stages, err := storageManager.GetStagesByDigestWithCache(ctx, stg.LogDetailedName(), stageDigest)
+	if err != nil {
 		return false, phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Unlock, err
-	} else {
-		if stageDesc, err := storageManager.SelectSuitableStage(ctx, phase.Conveyor, stg, stages); err != nil {
-			return false, phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Unlock, err
-		} else if stageDesc != nil {
-			i := phase.Conveyor.GetOrCreateStageImage(stageDesc.Info.Name, phase.StagesIterator.GetPrevImage(img, stg), stg, img)
-			i.Image.SetStageDescription(stageDesc)
-			stg.SetStageImage(i)
-			foundSuitableStage = true
-		}
+	}
+
+	stageDesc, err := storageManager.SelectSuitableStage(ctx, phase.Conveyor, stg, stages)
+	if err != nil {
+		return false, phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Unlock, err
+	}
+
+	foundSuitableStage := false
+	if stageDesc != nil {
+		i := phase.Conveyor.GetOrCreateStageImage(stageDesc.Info.Name, phase.StagesIterator.GetPrevImage(img, stg), stg, img)
+		i.Image.SetStageDescription(stageDesc)
+		stg.SetStageImage(i)
+		foundSuitableStage = true
 	}
 
 	stageContentSig, err := calculateDigest(ctx, fmt.Sprintf("%s-content", stg.Name()), "", stg, phase.Conveyor, calculateDigestOptions{TargetPlatform: img.TargetPlatform})
 	if err != nil {
 		return false, phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Unlock, fmt.Errorf("unable to calculate stage %s content digest: %w", stg.Name(), err)
 	}
-	stg.SetContentDigest(stageContentSig)
 
+	stg.SetContentDigest(stageContentSig)
 	logboek.Context(ctx).Info().LogF("Stage %s content digest: %s\n", stg.LogDetailedName(), stageContentSig)
 
 	return foundSuitableStage, phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Unlock, nil
