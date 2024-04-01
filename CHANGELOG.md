@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.302](https://www.github.com/werf/werf/compare/v1.2.301...v1.2.302) (2024-04-01)
+
+
+### Features
+
+* **nelm:** change propagation policy on DELETE from Auto to Foreground ([d7906f0](https://www.github.com/werf/werf/commit/d7906f02807d3a611c067ed4cf2c939a98d2ecf7))
+
 ### [1.2.301](https://www.github.com/werf/werf/compare/v1.2.300...v1.2.301) (2024-03-29)
 
 
