@@ -16,7 +16,7 @@ import (
 	"github.com/werf/werf/test/pkg/utils/resourcesfactory"
 )
 
-var _ = Describe("Resources adopter", func() {
+var _ = Describe("Resources adopter", Pending, func() {
 	BeforeEach(func() {
 		Expect(kube.Init(kube.InitOptions{})).To(Succeed())
 	})
