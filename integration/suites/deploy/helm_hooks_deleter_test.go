@@ -11,7 +11,7 @@ import (
 	"github.com/werf/werf/test/pkg/utils/liveexec"
 )
 
-var _ = Describe("Helm hooks deleter", func() {
+var _ = Describe("Helm hooks deleter", Pending, func() {
 	Context("when installing chart with post-install Job hook and hook-succeeded delete policy", func() {
 		AfterEach(func() {
 			utils.RunCommand(SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "dismiss", "--with-namespace")

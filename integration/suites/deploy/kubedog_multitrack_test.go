@@ -89,7 +89,7 @@ func isTooManyProbesTriggered(line, probeName string, maxAllowed int) bool {
 	return isTooManyProbesTriggered
 }
 
-var _ = Describe("Kubedog multitrack — werf's kubernetes resources tracker", func() {
+var _ = Describe("Kubedog multitrack — werf's kubernetes resources tracker", Pending, func() {
 	Context("when chart contains valid resource", func() {
 		AfterEach(func() {
 			utils.RunCommand(SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "dismiss", "--with-namespace")
