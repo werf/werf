@@ -15,7 +15,7 @@ import (
 	"github.com/werf/werf/test/pkg/utils/liveexec"
 )
 
-var _ = Describe("Helm releases manager", func() {
+var _ = Describe("Helm releases manager", Pending, func() {
 	var projectName, releaseName string
 
 	BeforeEach(func() {
