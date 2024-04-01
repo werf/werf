@@ -26,10 +26,10 @@ groups:
   - name: "1.2"
     channels:
       - name: alpha
-        version: 1.2.301
+        version: 1.2.302
 
       - name: beta
-        version: 1.2.300
+        version: 1.2.301
 
       - name: ea
         version: 1.2.295
