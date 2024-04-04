@@ -61,7 +61,7 @@ func NewBundle(ctx context.Context, dir string, helmEnvSettings *cli.EnvSettings
 
 	extraAnnotationsAndLabelsPostRenderer.Add(opts.ExtraAnnotations, opts.ExtraLabels)
 
-	bundle.extraAnnotationsAndLabelsPostRenderer = extraAnnotationsAndLabelsPostRenderer
+	bundle.ExtraAnnotationsAndLabelsPostRenderer = extraAnnotationsAndLabelsPostRenderer
 
 	return bundle, nil
 }
@@ -71,16 +71,16 @@ func NewBundle(ctx context.Context, dir string, helmEnvSettings *cli.EnvSettings
  * which could be used during helm install/upgrade process
  */
 type Bundle struct {
-	Dir                        string
-	SecretValueFiles           []string
-	HelmChart                  *chart.Chart
-	HelmEnvSettings            *cli.EnvSettings
-	RegistryClient             *registry.Client
-	BuildChartDependenciesOpts command_helpers.BuildChartDependenciesOptions
-	DisableDefaultValues       bool
+	Dir                                   string
+	SecretValueFiles                      []string
+	HelmChart                             *chart.Chart
+	HelmEnvSettings                       *cli.EnvSettings
+	RegistryClient                        *registry.Client
+	BuildChartDependenciesOpts            command_helpers.BuildChartDependenciesOptions
+	DisableDefaultValues                  bool
+	ExtraAnnotationsAndLabelsPostRenderer *helm.ExtraAnnotationsAndLabelsPostRenderer
 
-	extraAnnotationsAndLabelsPostRenderer *helm.ExtraAnnotationsAndLabelsPostRenderer
-	secretsManager                        *secrets_manager.SecretsManager
+	secretsManager *secrets_manager.SecretsManager
 
 	*secrets.SecretsRuntimeData
 	*helpers.ChartExtenderServiceValuesData
@@ -95,7 +95,7 @@ func (bundle *Bundle) ChainPostRenderer(postRenderer postrender.PostRenderer) po
 		chain = append(chain, postRenderer)
 	}
 
-	chain = append(chain, bundle.extraAnnotationsAndLabelsPostRenderer)
+	chain = append(chain, bundle.ExtraAnnotationsAndLabelsPostRenderer)
 
 	return helm.NewPostRendererChain(chain...)
 }
