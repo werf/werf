@@ -651,6 +651,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 
 			log.Default.Info(ctx, "Calculating planned changes")
 			createdChanges, recreatedChanges, updatedChanges, appliedChanges, deletedChanges, planChangesPlanned := resrcchangcalc.CalculatePlannedChanges(
+				releaseName,
 				resProcessor.DeployableReleaseNamespaceInfo(),
 				resProcessor.DeployableStandaloneCRDsInfos(),
 				resProcessor.DeployableHookResourcesInfos(),
