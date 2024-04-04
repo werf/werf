@@ -491,9 +491,12 @@ func runApply(ctx context.Context) error {
 				}
 			}
 
-			releaseUpToDate, err := rlsdiff.ReleaseUpToDate(prevRelease, newRel)
-			if err != nil {
-				return fmt.Errorf("error checking if release is up to date: %w", err)
+			var releaseUpToDate bool
+			if prevReleaseFound {
+				releaseUpToDate, err = rlsdiff.ReleaseUpToDate(prevRelease, newRel)
+				if err != nil {
+					return fmt.Errorf("error checking if release is up to date: %w", err)
+				}
 			}
 
 			planUseless, err := plan.Useless()
