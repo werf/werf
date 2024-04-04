@@ -41,7 +41,7 @@ GEM
     ffi (1.16.3)
     forwardable-extended (2.6.0)
     google-protobuf (3.25.2)
-    html-proofer (3.19.4)
+    html-proofer (4.4.3)
       addressable (~> 2.3)
       mercenary (~> 0.3)
       nokogiri (~> 1.13)
@@ -49,6 +49,7 @@ GEM
       rainbow (~> 3.0)
       typhoeus (~> 1.3)
       yell (~> 2.0)
+      zeitwerk (~> 2.5)
     http_parser.rb (0.8.0)
     i18n (1.14.1)
       concurrent-ruby (~> 1.0)
@@ -91,13 +92,13 @@ GEM
     mercenary (0.4.0)
     mini_portile2 (2.8.5)
     minitest (5.20.0)
-    nokogiri (1.15.5)
+    nokogiri (1.15.6)
       mini_portile2 (~> 2.8.2)
       racc (~> 1.4)
     parallel (1.24.0)
     pathutil (0.16.2)
       forwardable-extended (~> 2.6)
-    public_suffix (5.0.4)
+    public_suffix (5.0.5)
     racc (1.7.3)
     rack (3.0.8)
     rainbow (3.1.1)
@@ -131,14 +132,14 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  html-proofer (~> 3.3)
+  html-proofer (~> 4.0, >= 4.0.0)
   jekyll (>= 3.5, < 5.0)
   jekyll-assets!
   jekyll-include-cache (~> 0.2)
   jekyll-sass-converter (~> 3.0)
   kramdown (>= 2.3.0)
   kramdown-parser-gfm
-  nokogiri (>= 1.12.5)
+  nokogiri (>= 1.15.6)
   sprockets (~> 4.2)
 
 BUNDLED WITH
