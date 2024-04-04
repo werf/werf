@@ -40,6 +40,7 @@ import (
 	"github.com/werf/nelm/pkg/resrcpatcher"
 	"github.com/werf/nelm/pkg/resrcprocssr"
 	"github.com/werf/nelm/pkg/rls"
+	"github.com/werf/nelm/pkg/rlsdiff"
 	"github.com/werf/nelm/pkg/rlshistor"
 	"github.com/werf/nelm/pkg/track"
 	"github.com/werf/nelm/pkg/utls"
@@ -755,11 +756,19 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 				}
 			}
 
-			if useless, err := plan.Useless(); err != nil {
+			releaseUpToDate, err := rlsdiff.ReleaseUpToDate(prevRelease, newRel)
+			if err != nil {
+				return fmt.Errorf("error checking if release is up to date: %w", err)
+			}
+
+			planUseless, err := plan.Useless()
+			if err != nil {
 				return fmt.Errorf("error checking if deploy plan will do nothing useful: %w", err)
-			} else if useless {
+			}
+
+			if releaseUpToDate && planUseless {
 				printNotes(ctx, notes)
-				log.Default.Info(ctx, color.Style{color.Bold, color.Green}.Render("Skipped release")+" %q (namespace: %q): cluster resources already as desired", releaseName, releaseNamespace.Name())
+				log.Default.Info(ctx, color.Style{color.Bold, color.Green}.Render(fmt.Sprintf("Skipped release %q (namespace: %q): cluster resources already as desired", releaseName, releaseNamespace.Name())))
 				return nil
 			}
 
@@ -916,7 +925,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 			} else if len(nonCriticalErrs) > 0 {
 				return utls.Multierrorf("succeeded release %q (namespace: %q), but non-critical errors encountered", nonCriticalErrs, releaseName, releaseNamespace.Name())
 			} else {
-				log.Default.Info(ctx, color.Style{color.Bold, color.Green}.Render("Succeeded release")+" %q (namespace: %q)", releaseName, releaseNamespace.Name())
+				log.Default.Info(ctx, color.Style{color.Bold, color.Green}.Render(fmt.Sprintf("Succeeded release %q (namespace: %q)", releaseName, releaseNamespace.Name())))
 				return nil
 			}
 		})

@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/gookit/color"
 	"github.com/samber/lo"
@@ -30,6 +31,8 @@ import (
 	"github.com/werf/nelm/pkg/resrcchanglog"
 	"github.com/werf/nelm/pkg/resrcpatcher"
 	"github.com/werf/nelm/pkg/resrcprocssr"
+	"github.com/werf/nelm/pkg/rls"
+	"github.com/werf/nelm/pkg/rlsdiff"
 	"github.com/werf/nelm/pkg/rlshistor"
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/build"
@@ -552,8 +555,10 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 			}
 
 			var newRevision int
+			var firstDeployed time.Time
 			if prevReleaseFound {
 				newRevision = prevRelease.Revision() + 1
+				firstDeployed = prevRelease.FirstDeployed()
 			} else {
 				newRevision = 1
 			}
@@ -588,6 +593,8 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 			if err != nil {
 				return fmt.Errorf("error constructing chart tree: %w", err)
 			}
+
+			notes := chartTree.Notes()
 
 			var prevRelGeneralResources []*resrc.GeneralResource
 			var prevRelFailed bool
@@ -633,8 +640,17 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 				return fmt.Errorf("error processing deployable resources: %w", err)
 			}
 
+			log.Default.Info(ctx, "Constructing new release")
+			newRel, err := rls.NewRelease(releaseName, releaseNamespace.Name(), newRevision, chartTree.ReleaseValues(), chartTree.LegacyChart(), resProcessor.ReleasableHookResources(), resProcessor.ReleasableGeneralResources(), notes, rls.ReleaseOptions{
+				FirstDeployed: firstDeployed,
+				Mapper:        clientFactory.Mapper(),
+			})
+			if err != nil {
+				return fmt.Errorf("error constructing new release: %w", err)
+			}
+
 			log.Default.Info(ctx, "Calculating planned changes")
-			createdChanges, recreatedChanges, updatedChanges, appliedChanges, deletedChanges, anyChangesPlanned := resrcchangcalc.CalculatePlannedChanges(
+			createdChanges, recreatedChanges, updatedChanges, appliedChanges, deletedChanges, planChangesPlanned := resrcchangcalc.CalculatePlannedChanges(
 				resProcessor.DeployableReleaseNamespaceInfo(),
 				resProcessor.DeployableStandaloneCRDsInfos(),
 				resProcessor.DeployableHookResourcesInfos(),
@@ -643,10 +659,16 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 				prevRelFailed,
 			)
 
+			releaseUpToDate, err := rlsdiff.ReleaseUpToDate(prevRelease, newRel)
+			if err != nil {
+				return fmt.Errorf("error checking if release is up to date: %w", err)
+			}
+
 			resrcchanglog.LogPlannedChanges(
 				ctx,
 				releaseName,
 				releaseNamespace.Name(),
+				!releaseUpToDate,
 				createdChanges,
 				recreatedChanges,
 				updatedChanges,
@@ -654,7 +676,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 				deletedChanges,
 			)
 
-			if cmdData.DetailedExitCode && anyChangesPlanned {
+			if cmdData.DetailedExitCode && (planChangesPlanned || !releaseUpToDate) {
 				return resrcchangcalc.ErrChangesPlanned
 			}
 
