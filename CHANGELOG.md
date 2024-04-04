@@ -1,5 +1,22 @@
 # Changelog
 
+### [1.2.303](https://www.github.com/werf/werf/compare/v1.2.302...v1.2.303) (2024-04-04)
+
+
+### Features
+
+* **deps:** update Nelm ([0c8f786](https://www.github.com/werf/werf/commit/0c8f78658397979f06b34cd8e136fc22ac23599a))
+* **nelm:** deploy bundles using new deployment engine ([a87ad6e](https://www.github.com/werf/werf/commit/a87ad6ee5bcd4408edefc11e3a8853f2854193a4))
+* **nelm:** skip removal of resources with missing/incorrect release annotations and labels ([dc81fc3](https://www.github.com/werf/werf/commit/dc81fc36603165937a8013c839082f28595943b8))
+
+
+### Bug Fixes
+
+* **nelm:** "werf converge" panics on first release ([4272ea6](https://www.github.com/werf/werf/commit/4272ea671439d71995d455f7a72b3fef9c6cb08c))
+* **nelm:** allow empty helm.sh/hook-delete-policy and werf.io/delete-policy ([187fc7e](https://www.github.com/werf/werf/commit/187fc7ec6716f516b7e00b5aafd53328bfb25384))
+* **nelm:** don't skip release if all resources up-to-date but the release itself changed ([e208e9c](https://www.github.com/werf/werf/commit/e208e9c748c792696355029047e7e14bfe0c76fd))
+* **nelm:** missing expected annotations values in adoption errors ([5fc5817](https://www.github.com/werf/werf/commit/5fc581786982cc375fb465d3251d6a5e41ef1c75))
+
 ### [1.2.302](https://www.github.com/werf/werf/compare/v1.2.301...v1.2.302) (2024-04-01)
 
 
