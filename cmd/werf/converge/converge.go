@@ -971,6 +971,7 @@ func runFailureDeployPlan(ctx context.Context, failedPlan *pln.Plan, taskStore *
 	failurePlanBuilder := plnbuilder.NewDeployFailurePlanBuilder(
 		failedPlan,
 		taskStore,
+		resProcessor.DeployableReleaseNamespaceInfo(),
 		resProcessor.DeployableHookResourcesInfos(),
 		resProcessor.DeployableGeneralResourcesInfos(),
 		newRel,
