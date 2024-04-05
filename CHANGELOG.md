@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.305](https://www.github.com/werf/werf/compare/v1.2.304...v1.2.305) (2024-04-05)
+
+
+### Bug Fixes
+
+* **nelm:** --save-deploy-report not saving report on skipped release /2 ([83190c2](https://www.github.com/werf/werf/commit/83190c2055d701b5724edf96f6bb0e9960cd719a))
+
 ### [1.2.304](https://www.github.com/werf/werf/compare/v1.2.303...v1.2.304) (2024-04-05)
 
 
