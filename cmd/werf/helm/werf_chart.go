@@ -14,7 +14,7 @@ func SetupRenderRelatedWerfChartParams(cmd *cobra.Command, commonCmdData *common
 	common.SetupAddAnnotations(commonCmdData, cmd)
 	common.SetupAddLabels(commonCmdData, cmd)
 
-	common.SetupSecretValues(commonCmdData, cmd)
+	common.SetupSecretValues(commonCmdData, cmd, true)
 	common.SetupIgnoreSecretKey(commonCmdData, cmd)
 }
 

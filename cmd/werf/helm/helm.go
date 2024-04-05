@@ -74,7 +74,7 @@ func NewCmd(ctx context.Context) (*cobra.Command, error) {
 	common.SetupHooksStatusProgressPeriod(&_commonCmdData, cmd)
 	common.SetupReleasesHistoryMax(&_commonCmdData, cmd)
 	common.SetupLogOptions(&_commonCmdData, cmd)
-	common.SetupInsecureHelmDependencies(&_commonCmdData, cmd)
+	common.SetupInsecureHelmDependencies(&_commonCmdData, cmd, false)
 	common.SetupDockerConfig(&_commonCmdData, cmd, "")
 
 	dependencyCmd := helm_v3.NewDependencyCmd(actionConfig, os.Stdout)

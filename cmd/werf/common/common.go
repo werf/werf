@@ -398,14 +398,30 @@ func SetupEnvironment(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringVarP(cmdData.Environment, "env", "", os.Getenv("WERF_ENV"), "Use specified environment (default $WERF_ENV)")
 }
 
-func SetupRelease(cmdData *CmdData, cmd *cobra.Command) {
+func SetupRelease(cmdData *CmdData, cmd *cobra.Command, projectConfigParsed bool) {
 	cmdData.Release = new(string)
-	cmd.Flags().StringVarP(cmdData.Release, "release", "", os.Getenv("WERF_RELEASE"), "Use specified Helm release name (default [[ project ]]-[[ env ]] template or deploy.helmRelease custom template from werf.yaml or $WERF_RELEASE)")
+
+	var usage string
+	if projectConfigParsed {
+		usage = "Use specified Helm release name (default [[ project ]]-[[ env ]] template or deploy.helmRelease custom template from werf.yaml or $WERF_RELEASE)"
+	} else {
+		usage = "Use specified Helm release name (default $WERF_RELEASE)"
+	}
+
+	cmd.Flags().StringVarP(cmdData.Release, "release", "", os.Getenv("WERF_RELEASE"), usage)
 }
 
-func SetupNamespace(cmdData *CmdData, cmd *cobra.Command) {
+func SetupNamespace(cmdData *CmdData, cmd *cobra.Command, projectConfigParsed bool) {
 	cmdData.Namespace = new(string)
-	cmd.Flags().StringVarP(cmdData.Namespace, "namespace", "", os.Getenv("WERF_NAMESPACE"), "Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or deploy.namespace custom template from werf.yaml or $WERF_NAMESPACE)")
+
+	var usage string
+	if projectConfigParsed {
+		usage = "Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or deploy.namespace custom template from werf.yaml or $WERF_NAMESPACE)"
+	} else {
+		usage = "Use specified Kubernetes namespace (default $WERF_NAMESPACE)"
+	}
+
+	cmd.Flags().StringVarP(cmdData.Namespace, "namespace", "", os.Getenv("WERF_NAMESPACE"), usage)
 }
 
 func SetupAddAnnotations(cmdData *CmdData, cmd *cobra.Command) {
@@ -601,9 +617,17 @@ func hooksStatusProgressPeriodDefaultValue() *int64 {
 	}
 }
 
-func SetupInsecureHelmDependencies(cmdData *CmdData, cmd *cobra.Command) {
+func SetupInsecureHelmDependencies(cmdData *CmdData, cmd *cobra.Command, projectConfigParsed bool) {
 	cmdData.InsecureHelmDependencies = new(bool)
-	cmd.Flags().BoolVarP(cmdData.InsecureHelmDependencies, "insecure-helm-dependencies", "", util.GetBoolEnvironmentDefaultFalse("WERF_INSECURE_HELM_DEPENDENCIES"), "Allow insecure oci registries to be used in the .helm/Chart.yaml dependencies configuration (default $WERF_INSECURE_HELM_DEPENDENCIES)")
+
+	var usage string
+	if projectConfigParsed {
+		usage = "Allow insecure oci registries to be used in the .helm/Chart.yaml dependencies configuration (default $WERF_INSECURE_HELM_DEPENDENCIES)"
+	} else {
+		usage = "Allow insecure oci registries to be used in the Chart.yaml dependencies configuration (default $WERF_INSECURE_HELM_DEPENDENCIES)"
+	}
+
+	cmd.Flags().BoolVarP(cmdData.InsecureHelmDependencies, "insecure-helm-dependencies", "", util.GetBoolEnvironmentDefaultFalse("WERF_INSECURE_HELM_DEPENDENCIES"), usage)
 }
 
 func SetupInsecureRegistry(cmdData *CmdData, cmd *cobra.Command) {
@@ -831,10 +855,17 @@ func SetupSetString(cmdData *CmdData, cmd *cobra.Command) {
 Also, can be defined with $WERF_SET_STRING_* (e.g. $WERF_SET_STRING_1=key1=val1, $WERF_SET_STRING_2=key2=val2)`)
 }
 
-func SetupValues(cmdData *CmdData, cmd *cobra.Command) {
+func SetupValues(cmdData *CmdData, cmd *cobra.Command, projectConfigParsed bool) {
 	cmdData.Values = new([]string)
-	cmd.Flags().StringArrayVarP(cmdData.Values, "values", "", []string{}, `Specify helm values in a YAML file or a URL (can specify multiple).
-Also, can be defined with $WERF_VALUES_* (e.g. $WERF_VALUES_1=.helm/values_1.yaml, $WERF_VALUES_2=.helm/values_2.yaml)`)
+
+	var usage string
+	if projectConfigParsed {
+		usage = `Specify helm values in a YAML file or a URL (can specify multiple). Also, can be defined with $WERF_VALUES_* (e.g. $WERF_VALUES_1=.helm/values_1.yaml, $WERF_VALUES_2=.helm/values_2.yaml)`
+	} else {
+		usage = `Specify helm values in a YAML file or a URL (can specify multiple). Also, can be defined with $WERF_VALUES_* (e.g. $WERF_VALUES_1=values_1.yaml, $WERF_VALUES_2=values_2.yaml)`
+	}
+
+	cmd.Flags().StringArrayVarP(cmdData.Values, "values", "", []string{}, usage)
 }
 
 func SetupSetFile(cmdData *CmdData, cmd *cobra.Command) {
@@ -843,10 +874,17 @@ func SetupSetFile(cmdData *CmdData, cmd *cobra.Command) {
 Also, can be defined with $WERF_SET_FILE_* (e.g. $WERF_SET_FILE_1=key1=path1, $WERF_SET_FILE_2=key2=val2)`)
 }
 
-func SetupSecretValues(cmdData *CmdData, cmd *cobra.Command) {
+func SetupSecretValues(cmdData *CmdData, cmd *cobra.Command, projectConfigParsed bool) {
 	cmdData.SecretValues = new([]string)
-	cmd.Flags().StringArrayVarP(cmdData.SecretValues, "secret-values", "", []string{}, `Specify helm secret values in a YAML file (can specify multiple).
-Also, can be defined with $WERF_SECRET_VALUES_* (e.g. $WERF_SECRET_VALUES_ENV=.helm/secret_values_test.yaml, $WERF_SECRET_VALUES_DB=.helm/secret_values_db.yaml)`)
+
+	var usage string
+	if projectConfigParsed {
+		usage = `Specify helm secret values in a YAML file (can specify multiple). Also, can be defined with $WERF_SECRET_VALUES_* (e.g. $WERF_SECRET_VALUES_ENV=.helm/secret_values_test.yaml, $WERF_SECRET_VALUES_DB=.helm/secret_values_db.yaml)`
+	} else {
+		usage = `Specify helm secret values in a YAML file (can specify multiple). Also, can be defined with $WERF_SECRET_VALUES_* (e.g. $WERF_SECRET_VALUES_ENV=secret_values_test.yaml, $WERF_SECRET_VALUES_DB=secret_values_db.yaml)`
+	}
+
+	cmd.Flags().StringArrayVarP(cmdData.SecretValues, "secret-values", "", []string{}, usage)
 }
 
 func SetupIgnoreSecretKey(cmdData *CmdData, cmd *cobra.Command) {

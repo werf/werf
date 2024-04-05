@@ -109,9 +109,8 @@ werf helm template [NAME] [CHART] [flags] [options]
       --repo=''
             chart repository url where to locate the requested chart
       --secret-values=[]
-            Specify helm secret values in a YAML file (can specify multiple).
-            Also, can be defined with $WERF_SECRET_VALUES_* (e.g.                                   
-            $WERF_SECRET_VALUES_ENV=.helm/secret_values_test.yaml,                                  
+            Specify helm secret values in a YAML file (can specify multiple). Also, can be defined  
+            with $WERF_SECRET_VALUES_* (e.g. $WERF_SECRET_VALUES_ENV=.helm/secret_values_test.yaml, 
             $WERF_SECRET_VALUES_DB=.helm/secret_values_db.yaml)
       --set=[]
             set values on the command line (can specify multiple or separate values with commas:    

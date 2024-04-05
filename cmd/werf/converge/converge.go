@@ -152,7 +152,7 @@ werf converge --repo registry.mydomain.com/web --env production`,
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified repo, to pull base images")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
-	common.SetupInsecureHelmDependencies(&commonCmdData, cmd)
+	common.SetupInsecureHelmDependencies(&commonCmdData, cmd, true)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
@@ -168,8 +168,8 @@ werf converge --repo registry.mydomain.com/web --env production`,
 	common.SetupHooksStatusProgressPeriod(&commonCmdData, cmd)
 	common.SetupReleasesHistoryMax(&commonCmdData, cmd)
 
-	common.SetupRelease(&commonCmdData, cmd)
-	common.SetupNamespace(&commonCmdData, cmd)
+	common.SetupRelease(&commonCmdData, cmd, true)
+	common.SetupNamespace(&commonCmdData, cmd, true)
 	common.SetupAddAnnotations(&commonCmdData, cmd)
 	common.SetupAddLabels(&commonCmdData, cmd)
 
@@ -177,8 +177,8 @@ werf converge --repo registry.mydomain.com/web --env production`,
 	common.SetupSet(&commonCmdData, cmd)
 	common.SetupSetString(&commonCmdData, cmd)
 	common.SetupSetFile(&commonCmdData, cmd)
-	common.SetupValues(&commonCmdData, cmd)
-	common.SetupSecretValues(&commonCmdData, cmd)
+	common.SetupValues(&commonCmdData, cmd, true)
+	common.SetupSecretValues(&commonCmdData, cmd, true)
 	common.SetupIgnoreSecretKey(&commonCmdData, cmd)
 
 	commonCmdData.SetupDisableDefaultValues(cmd)

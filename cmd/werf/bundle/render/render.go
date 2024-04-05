@@ -72,7 +72,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified repo, to pull base images")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
-	common.SetupInsecureHelmDependencies(&commonCmdData, cmd)
+	common.SetupInsecureHelmDependencies(&commonCmdData, cmd, false)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 
 	common.SetupLogOptionsDefaultQuiet(&commonCmdData, cmd)
@@ -85,13 +85,13 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupSet(&commonCmdData, cmd)
 	common.SetupSetString(&commonCmdData, cmd)
 	common.SetupSetFile(&commonCmdData, cmd)
-	common.SetupValues(&commonCmdData, cmd)
-	common.SetupSecretValues(&commonCmdData, cmd)
+	common.SetupValues(&commonCmdData, cmd, false)
+	common.SetupSecretValues(&commonCmdData, cmd, false)
 	common.SetupIgnoreSecretKey(&commonCmdData, cmd)
 	commonCmdData.SetupDisableDefaultSecretValues(cmd)
 
-	common.SetupRelease(&commonCmdData, cmd)
-	common.SetupNamespace(&commonCmdData, cmd)
+	common.SetupRelease(&commonCmdData, cmd, false)
+	common.SetupNamespace(&commonCmdData, cmd, false)
 
 	common.SetupKubeVersion(&commonCmdData, cmd)
 

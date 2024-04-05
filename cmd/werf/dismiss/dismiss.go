@@ -99,8 +99,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupFinalRepo(&commonCmdData, cmd)
 	common.SetupSynchronization(&commonCmdData, cmd)
 
-	common.SetupRelease(&commonCmdData, cmd)
-	common.SetupNamespace(&commonCmdData, cmd)
+	common.SetupRelease(&commonCmdData, cmd, true)
+	common.SetupNamespace(&commonCmdData, cmd, true)
 
 	common.SetupUseDeployReport(&commonCmdData, cmd)
 	common.SetupDeployReportPath(&commonCmdData, cmd)
@@ -126,7 +126,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupDockerServerStoragePath(&commonCmdData, cmd)
 
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
-	common.SetupInsecureHelmDependencies(&commonCmdData, cmd)
+	common.SetupInsecureHelmDependencies(&commonCmdData, cmd, true)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 
 	commonCmdData.SetupPlatform(cmd)
