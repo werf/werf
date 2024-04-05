@@ -505,8 +505,25 @@ func runApply(ctx context.Context) error {
 			}
 
 			if releaseUpToDate && planUseless {
+				if saveDeployReport {
+					newRel.Skip()
+
+					report := reprt.NewReport(
+						nil,
+						nil,
+						nil,
+						newRel,
+					)
+
+					if err := report.Save(deployReportPath); err != nil {
+						log.Default.Error(ctx, "Error saving deploy report: %s", err)
+					}
+				}
+
 				printNotes(ctx, notes)
+
 				log.Default.Info(ctx, color.Style{color.Bold, color.Green}.Render(fmt.Sprintf("Skipped release %q (namespace: %q): cluster resources already as desired", releaseName, releaseNamespace.Name())))
+
 				return nil
 			}
 
