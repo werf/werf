@@ -88,7 +88,7 @@ func NewMigrate2To3Cmd(ctx context.Context) *cobra.Command {
 	common.SetupKubeConfigBase64(&migrate2To3CommonCmdData, cmd)
 	common.SetupKubeContext(&migrate2To3CommonCmdData, cmd)
 
-	common.SetupInsecureHelmDependencies(&migrate2To3CommonCmdData, cmd)
+	common.SetupInsecureHelmDependencies(&migrate2To3CommonCmdData, cmd, false)
 
 	common.SetupLogOptions(&migrate2To3CommonCmdData, cmd)
 

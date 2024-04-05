@@ -68,7 +68,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupHomeDir(&commonCmdData, cmd, common.SetupHomeDirOptions{})
 
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
-	common.SetupInsecureHelmDependencies(&commonCmdData, cmd)
+	common.SetupInsecureHelmDependencies(&commonCmdData, cmd, false)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 
 	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{})

@@ -350,9 +350,8 @@ werf converge --repo registry.mydomain.com/web --env production
             Also, can be specified with $WERF_SECONDARY_REPO_* (e.g. $WERF_SECONDARY_REPO_1=...,    
             $WERF_SECONDARY_REPO_2=...)
       --secret-values=[]
-            Specify helm secret values in a YAML file (can specify multiple).
-            Also, can be defined with $WERF_SECRET_VALUES_* (e.g.                                   
-            $WERF_SECRET_VALUES_ENV=.helm/secret_values_test.yaml,                                  
+            Specify helm secret values in a YAML file (can specify multiple). Also, can be defined  
+            with $WERF_SECRET_VALUES_* (e.g. $WERF_SECRET_VALUES_ENV=.helm/secret_values_test.yaml, 
             $WERF_SECRET_VALUES_DB=.helm/secret_values_db.yaml)
       --set=[]
             Set helm values on the command line (can specify multiple or separate values with       
@@ -409,8 +408,8 @@ werf converge --repo registry.mydomain.com/web --env production
             For cleaning custom tags and associated content-based tag are treated as one.
             Also, can be defined with $WERF_USE_CUSTOM_TAG (e.g. $WERF_USE_CUSTOM_TAG="%image%-tag")
       --values=[]
-            Specify helm values in a YAML file or a URL (can specify multiple).
-            Also, can be defined with $WERF_VALUES_* (e.g. $WERF_VALUES_1=.helm/values_1.yaml,      
+            Specify helm values in a YAML file or a URL (can specify multiple). Also, can be        
+            defined with $WERF_VALUES_* (e.g. $WERF_VALUES_1=.helm/values_1.yaml,                   
             $WERF_VALUES_2=.helm/values_2.yaml)
       --virtual-merge=false
             Enable virtual/ephemeral merge commit mode when building current application state      

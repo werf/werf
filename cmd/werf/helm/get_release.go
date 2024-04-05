@@ -39,7 +39,7 @@ func NewGetReleaseCmd(ctx context.Context) *cobra.Command {
 	common.SetupConfigTemplatesDir(&getReleaseCmdData, cmd)
 	common.SetupConfigPath(&getReleaseCmdData, cmd)
 	common.SetupGiterminismConfigPath(&getReleaseCmdData, cmd)
-	common.SetupNamespace(&getReleaseCmdData, cmd)
+	common.SetupNamespace(&getReleaseCmdData, cmd, true)
 	common.SetupEnvironment(&getReleaseCmdData, cmd)
 
 	common.SetupGiterminismOptions(&getReleaseCmdData, cmd)

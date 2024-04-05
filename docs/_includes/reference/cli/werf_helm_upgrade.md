@@ -114,9 +114,8 @@ werf helm upgrade [RELEASE] [CHART] [flags] [options]
             when upgrading, reuse the last release`s values and merge in any overrides from the     
             command line via --set and -f. If `--reset-values` is specified, this is ignored
       --secret-values=[]
-            Specify helm secret values in a YAML file (can specify multiple).
-            Also, can be defined with $WERF_SECRET_VALUES_* (e.g.                                   
-            $WERF_SECRET_VALUES_ENV=.helm/secret_values_test.yaml,                                  
+            Specify helm secret values in a YAML file (can specify multiple). Also, can be defined  
+            with $WERF_SECRET_VALUES_* (e.g. $WERF_SECRET_VALUES_ENV=.helm/secret_values_test.yaml, 
             $WERF_SECRET_VALUES_DB=.helm/secret_values_db.yaml)
       --set=[]
             set values on the command line (can specify multiple or separate values with commas:    
