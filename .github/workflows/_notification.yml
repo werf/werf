@@ -75,4 +75,4 @@ jobs:
           SLACK_MESSAGE: |
             ${{ steps.get_commit_message.outputs.message }}
             ${{ inputs.message }}
-            ${{ steps.msg_mention.outputs.content }}
+            ${{ steps.msg_mention.outputs.content }} .
