@@ -1,5 +1,13 @@
 # Changelog
 
+### [1.2.304](https://www.github.com/werf/werf/compare/v1.2.303...v1.2.304) (2024-04-05)
+
+
+### Bug Fixes
+
+* **doc:** remove references to werf.yaml and .helm from commands that ignore project configs ([9ce7b84](https://www.github.com/werf/werf/commit/9ce7b849782bcab5314699b4004f5beeff40e0b6))
+* **nelm:** --save-deploy-report not saving report on skipped release ([a03ed79](https://www.github.com/werf/werf/commit/a03ed793428daeb6175359c6df5e1484a81c312e))
+
 ### [1.2.303](https://www.github.com/werf/werf/compare/v1.2.302...v1.2.303) (2024-04-04)
 
 
