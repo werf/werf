@@ -16,7 +16,7 @@ on:
         default: 1
         type: string
       k8sMinor:
-        default: 25
+        default: 29
         type: string
       coverage:
         default: false

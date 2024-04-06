@@ -27,9 +27,9 @@ jobs:
           - ${{ inputs.linuxAmd64Runner }}
         k8s-version:
           - major: 1
-            minor: 23
+            minor: 27
           - major: 1
-            minor: 25
+            minor: 29
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     steps:
