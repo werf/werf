@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.307](https://www.github.com/werf/werf/compare/v1.2.306...v1.2.307) (2024-04-09)
+
+
+### Features
+
+* **nelm:** switch back to the old deployment engine by default ([439b0d4](https://www.github.com/werf/werf/commit/439b0d489c0a31fa138ce54ddae6c6f822573282))
+
 ### [1.2.306](https://www.github.com/werf/werf/compare/v1.2.305...v1.2.306) (2024-04-09)
 
 
