@@ -36,7 +36,7 @@ func NewConfigMapLocker(configMapName, namespace string, locker lockgate.Locker)
 
 func (locker *ConfigMapLocker) Acquire(lockName string, opts lockgate.AcquireOptions) (bool, lockgate.LockHandle, error) {
 	if _, err := kubeutils.GetOrCreateConfigMapWithNamespaceIfNotExists(kube.Client, locker.Namespace, locker.ConfigMapName); err != nil {
-		return false, lockgate.LockHandle{}, fmt.Errorf("unable to prepare kubernetes cm/%s in ns/%s: %w", locker.Namespace, locker.ConfigMapName, err)
+		return false, lockgate.LockHandle{}, fmt.Errorf("unable to prepare kubernetes cm/%s in ns/%s: %w", locker.ConfigMapName, locker.Namespace, err)
 	}
 	return locker.Locker.Acquire(lockName, opts)
 }
