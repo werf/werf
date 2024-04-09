@@ -47,7 +47,6 @@ import (
 	stage_image "github.com/werf/werf/cmd/werf/stage/image"
 	"github.com/werf/werf/cmd/werf/synchronization"
 	"github.com/werf/werf/cmd/werf/version"
-	dhelm "github.com/werf/werf/pkg/deploy/helm"
 	"github.com/werf/werf/pkg/telemetry"
 )
 
@@ -71,27 +70,16 @@ Find more information at https://werf.io`),
 		SilenceErrors: true,
 	})
 
-	var deliveryCmds []*cobra.Command
-	if dhelm.IsExperimentalEngine() {
-		deliveryCmds = []*cobra.Command{
-			converge.NewCmd(ctx),
-			plan.NewCmd(ctx),
-			dismiss.NewCmd(ctx),
-			bundleCmd(ctx),
-		}
-	} else {
-		deliveryCmds = []*cobra.Command{
-			converge.NewCmd(ctx),
-			dismiss.NewCmd(ctx),
-			bundleCmd(ctx),
-		}
-	}
-
 	groups := &templates.CommandGroups{}
 	*groups = append(*groups, templates.CommandGroups{
 		{
-			Message:  "Delivery commands",
-			Commands: deliveryCmds,
+			Message: "Delivery commands",
+			Commands: []*cobra.Command{
+				converge.NewCmd(ctx),
+				plan.NewCmd(ctx),
+				dismiss.NewCmd(ctx),
+				bundleCmd(ctx),
+			},
 		},
 		{
 			Message: "Cleaning commands",

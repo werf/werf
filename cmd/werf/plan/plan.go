@@ -197,9 +197,7 @@ werf plan --repo registry.mydomain.com/web --env production`,
 	common.SetupAllowedLocalCacheVolumeUsageMargin(&commonCmdData, cmd)
 	common.SetupDockerServerStoragePath(&commonCmdData, cmd)
 
-	if helm.IsExperimentalEngine() {
-		common.SetupNetworkParallelism(&commonCmdData, cmd)
-	}
+	common.SetupNetworkParallelism(&commonCmdData, cmd)
 
 	defaultTimeout, err := util.GetIntEnvVar("WERF_TIMEOUT")
 	if err != nil || defaultTimeout == nil {
@@ -213,6 +211,12 @@ werf plan --repo registry.mydomain.com/web --env production`,
 
 func runMain(ctx context.Context, imagesToProcess build.ImagesToProcess) error {
 	global_warnings.PostponeMultiwerfNotUpToDateWarning()
+	if !helm.IsExperimentalEngine() {
+		global_warnings.GlobalWarningLines = append(
+			global_warnings.GlobalWarningLines,
+			`"werf plan" shows planned changes for the new deployment engine. Currently you are using the old engine, which might produce different results during deployment. If you want to use "werf plan" we strongly advice migrating to the new engine by setting environment variable "WERF_NELM=1".`,
+		)
+	}
 
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %w", err)
@@ -504,7 +508,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		return err
 	}
 
-	if helm.IsExperimentalEngine() {
+	if true {
 		networkParallelism := common.GetNetworkParallelism(&commonCmdData)
 		serviceAnnotations := map[string]string{
 			"werf.io/version":      werf.Version,
