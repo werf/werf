@@ -1,5 +1,13 @@
 # Changelog
 
+### [1.2.306](https://www.github.com/werf/werf/compare/v1.2.305...v1.2.306) (2024-04-09)
+
+
+### Bug Fixes
+
+* **nelm:** multiple delete policies ignored ([8778984](https://www.github.com/werf/werf/commit/87789846101c604d748614b4233aefe6dda75740))
+* **nelm:** release namespace and hook never deleted (except recreation) ([10ae8b5](https://www.github.com/werf/werf/commit/10ae8b57b5550974a7fd142533db43cf63528a5b))
+
 ### [1.2.305](https://www.github.com/werf/werf/compare/v1.2.304...v1.2.305) (2024-04-05)
 
 
