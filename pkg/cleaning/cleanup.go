@@ -23,6 +23,7 @@ import (
 	"github.com/werf/werf/pkg/storage"
 	"github.com/werf/werf/pkg/storage/manager"
 	"github.com/werf/werf/pkg/util"
+	"github.com/werf/werf/pkg/werf"
 )
 
 type CleanupOptions struct {
@@ -1044,20 +1045,20 @@ func handleDeletionError(err error) error {
 You should specify Docker Hub token or username and password to remove tags with Docker Hub API.
 Check --repo-docker-hub-token, --repo-docker-hub-username and --repo-docker-hub-password options.
 Be aware that access to the resource is forbidden with personal access token.
-Read more details here https://werf.io/documentation/usage/cleanup/cr_cleanup.html#docker-hub`, err)
+Read more details here https://%s/documentation/usage/cleanup/cr_cleanup.html#docker-hub`, err, werf.Domain)
 	case docker_registry.IsGitHubPackagesUnauthorizedErr(err), docker_registry.IsGitHubPackagesForbiddenErr(err):
 		return fmt.Errorf(`%w
 
 You should specify a token with delete:packages and read:packages scopes to remove package versions.
 Check --repo-github-token option.
 Be aware that the token provided to GitHub Actions workflow is not enough to remove package versions.
-Read more details here https://werf.io/documentation/usage/cleanup/cr_cleanup.html#github-packages`, err)
+Read more details here https://%s/documentation/usage/cleanup/cr_cleanup.html#github-packages`, err, werf.Domain)
 	case docker_registry.IsSelectelUnauthorizedErr(err):
 		return fmt.Errorf(`%w
 
 You should specify Serectel cloud container registry (cr) credentials: username, password, account and VPC to remove tags with Selectel CR API.
 Check --repo-selectel-username, --repo-selectel-password, --repo-selectel-account and --repo-selectel-vpc or --repo-selectel-vpc-id options.
-Read more details here https://werf.io/documentation/usage/cleanup/cr_cleanup.html#selectel-craas`, err)
+Read more details here https://%s/documentation/usage/cleanup/cr_cleanup.html#selectel-craas`, err, werf.Domain)
 	default:
 		if storage.IsImageDeletionFailedDueToUsingByContainerErr(err) {
 			return err

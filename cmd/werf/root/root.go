@@ -48,6 +48,7 @@ import (
 	"github.com/werf/werf/cmd/werf/synchronization"
 	"github.com/werf/werf/cmd/werf/version"
 	"github.com/werf/werf/pkg/telemetry"
+	"github.com/werf/werf/pkg/werf"
 )
 
 func ConstructRootCmd(ctx context.Context) (*cobra.Command, error) {
@@ -63,9 +64,9 @@ func ConstructRootCmd(ctx context.Context) (*cobra.Command, error) {
 	rootCmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:   "werf",
 		Short: "werf helps to implement and support Continuous Integration and Continuous Delivery",
-		Long: common.GetLongCommandDescription(`werf helps to implement and support Continuous Integration and Continuous Delivery.
+		Long: common.GetLongCommandDescription(fmt.Sprintf(`werf helps to implement and support Continuous Integration and Continuous Delivery.
 
-Find more information at https://werf.io`),
+Find more information at https://%s`, werf.Domain)),
 		SilenceUsage:  true,
 		SilenceErrors: true,
 	})

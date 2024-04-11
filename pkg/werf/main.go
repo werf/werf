@@ -13,7 +13,10 @@ import (
 	"github.com/werf/logboek"
 )
 
-var Version = "dev"
+var (
+	Version = "dev"
+	Domain  = "werf.io"
+)
 
 var (
 	tmpDir  string

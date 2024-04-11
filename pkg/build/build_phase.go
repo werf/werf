@@ -1305,13 +1305,13 @@ func (phase *BuildPhase) printShouldBeBuiltError(ctx context.Context, img *image
 - auto-generated file content (e.g. {{ .Files.Get "hash_sum_of_something" }})`)
 			logboek.Context(ctx).Warn().LogLn()
 
-			logboek.Context(ctx).Warn().LogLn(`Stage digest dependencies can be found here, https://werf.io/documentation/reference/stages_and_images.html#stage-dependencies.
+			logboek.Context(ctx).Warn().LogLn(fmt.Sprintf(`Stage digest dependencies can be found here, https://%s/documentation/reference/stages_and_images.html#stage-dependencies.
 
 To quickly find the problem compare current and previous rendered werf configurations.
 Get the path at the beginning of command output by the following prefix 'Using werf config render file: '.
 E.g.:
 
-  diff /tmp/werf-config-render-502883762 /tmp/werf-config-render-837625028`)
+  diff /tmp/werf-config-render-502883762 /tmp/werf-config-render-837625028`, werf.Domain))
 			logboek.Context(ctx).Warn().LogLn()
 
 			logboek.Context(ctx).Warn().LogLn(reasonNumberFunc() + `Stages have not been built yet or stages have been removed:
