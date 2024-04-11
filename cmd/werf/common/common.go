@@ -108,7 +108,7 @@ func SetupGiterminismOptions(cmdData *CmdData, cmd *cobra.Command) {
 
 func setupLooseGiterminism(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.LooseGiterminism = new(bool)
-	cmd.Flags().BoolVarP(cmdData.LooseGiterminism, "loose-giterminism", "", util.GetBoolEnvironmentDefaultFalse("WERF_LOOSE_GITERMINISM"), "Loose werf giterminism mode restrictions (NOTE: not all restrictions can be removed, more info https://werf.io/documentation/usage/project_configuration/giterminism.html, default $WERF_LOOSE_GITERMINISM)")
+	cmd.Flags().BoolVarP(cmdData.LooseGiterminism, "loose-giterminism", "", util.GetBoolEnvironmentDefaultFalse("WERF_LOOSE_GITERMINISM"), fmt.Sprintf("Loose werf giterminism mode restrictions (NOTE: not all restrictions can be removed, more info https://%s/documentation/usage/project_configuration/giterminism.html, default $WERF_LOOSE_GITERMINISM)", werf.Domain))
 }
 
 func setupDev(cmdData *CmdData, cmd *cobra.Command) {
@@ -146,9 +146,9 @@ func SetupHomeDir(cmdData *CmdData, cmd *cobra.Command, opts SetupHomeDirOptions
 
 func SetupSSHKey(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.SSHKeys = new([]string)
-	cmd.Flags().StringArrayVarP(cmdData.SSHKeys, "ssh-key", "", []string{}, `Use only specific ssh key(s).
+	cmd.Flags().StringArrayVarP(cmdData.SSHKeys, "ssh-key", "", []string{}, fmt.Sprintf(`Use only specific ssh key(s).
 Can be specified with $WERF_SSH_KEY_* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa, $WERF_SSH_KEY_NODEJS=~/.ssh/nodejs_rsa).
-Defaults to $WERF_SSH_KEY_*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see https://werf.io/documentation/reference/toolbox/ssh.html`)
+Defaults to $WERF_SSH_KEY_*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see https://%s/documentation/reference/toolbox/ssh.html`, werf.Domain))
 }
 
 func SetupDeprecatedReportPath(cmdData *CmdData, cmd *cobra.Command) {
