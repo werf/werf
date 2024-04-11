@@ -11,6 +11,7 @@ import (
 
 	"github.com/werf/lockgate/pkg/distributed_locker"
 	"github.com/werf/logboek"
+	"github.com/werf/werf/pkg/storage"
 	"github.com/werf/werf/pkg/util"
 )
 
@@ -83,7 +84,7 @@ func (server *SynchronizationServerHandler) handleNewClientID(w http.ResponseWri
 }
 
 func (server *SynchronizationServerHandler) handleLanding(w http.ResponseWriter, r *http.Request) {
-	rawPage := ` <!doctype html>
+	rawPage := fmt.Sprintf(` <!doctype html>
 <html>
 <head>
   <meta charset="utf-8">
@@ -92,14 +93,14 @@ func (server *SynchronizationServerHandler) handleLanding(w http.ResponseWriter,
 <body>
 <h1>Werf synchronization http server</h1>
 
-<p>Werf uses --synchronization=https://synchronization.werf.io as a default synchronization service.</p>
+<p>Werf uses --synchronization=%s as a default synchronization service.</p>
 
 <p>Use "werf synchronization" command to run own synchronization http server. You can also configure werf to use local or kubernetes based synchronization backend.</p>
 
 <p>More info about synchronization in werf: <a href="https://werf.io/documentation/internals/stages_and_storage.html#synchronization-locks-and-stages-storage-cache">https://werf.io/documentation/internals/stages_and_storage.html#synchronization-locks-and-stages-storage-cache</a></p>
 </body>
 </html>
-`
+`, storage.DefaultHttpSynchronizationServer)
 	fmt.Fprintf(w, rawPage)
 }
 
