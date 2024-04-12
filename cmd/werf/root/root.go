@@ -125,8 +125,6 @@ func ConstructRootCmd(ctx context.Context) (*cobra.Command, error) {
 
 	templates.ActsAsRootCommand(rootCmd, *groups...)
 
-	setupTelemetryInit(rootCmd)
-
 	return rootCmd, nil
 }
 
@@ -229,7 +227,7 @@ func hostCmd(ctx context.Context) *cobra.Command {
 	return hostCmd
 }
 
-func setupTelemetryInit(rootCmd *cobra.Command) {
+func SetupTelemetryInit(rootCmd *cobra.Command) {
 	commandsQueue := []*cobra.Command{rootCmd}
 
 	for len(commandsQueue) > 0 {
