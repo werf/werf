@@ -10,7 +10,6 @@ import (
 	"github.com/Masterminds/semver"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/werf"
 )
 
 const LastMultiwerfVersion = "1.5.0"
@@ -67,7 +66,7 @@ func PostponeMultiwerfNotUpToDateWarning() {
 		GlobalWarningLines = append(
 			GlobalWarningLines,
 			fmt.Sprintf("Failure detecting whether multiwerf (if present) is outdated: %s", err),
-			fmt.Sprintf("multiwerf is deprecated, so if you are still using it we strongly recommend removing multiwerf and switching to trdl by following these instructions: https://%s/installation.html", werf.Domain),
+			"multiwerf is deprecated, so if you are still using it we strongly recommend removing multiwerf and switching to trdl",
 		)
 		return
 	} else if multiwerfIsUpToDate {
@@ -77,7 +76,7 @@ func PostponeMultiwerfNotUpToDateWarning() {
 	GlobalWarningLines = append(
 		GlobalWarningLines,
 		"multiwerf detected, but it is out of date. multiwerf is deprecated in favor of trdl: https://github.com/werf/trdl",
-		fmt.Sprintf("If you are still using multiwerf we strongly recommend removing multiwerf and switching to trdl by following these instructions: https://%s/installation.html", werf.Domain),
+		"If you are still using multiwerf we strongly recommend removing multiwerf and switching to trdl",
 	)
 }
 

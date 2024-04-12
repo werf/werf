@@ -180,8 +180,8 @@ func runCleanup(ctx context.Context) error {
 
 			if isShallow {
 				logboek.Warn().LogLn("Git shallow clone should not be used with images cleanup commands due to incompleteness of the repository history that is extremely essential for proper work.")
-				logboek.Warn().LogLn(fmt.Sprintf("It is recommended to enable automatic fetch of origin git branches and tags during cleanup process with the gitWorktree.allowFetchOriginBranchesAndTags=true werf.yaml directive (which is enabled by default, http://%s/documentation/reference/werf_yaml.html#git-worktree).", werf.Domain))
-				logboek.Warn().LogLn(fmt.Sprintf("If you still want to use shallow clone, add gitWorktree.forceShallowClone=true directive into werf.yaml (http://%s/documentation/reference/werf_yaml.html#git-worktree).", werf.Domain))
+				logboek.Warn().LogLn("It is recommended to enable automatic fetch of origin git branches and tags during cleanup process with the gitWorktree.allowFetchOriginBranchesAndTags=true werf.yaml directive (which is enabled by default.")
+				logboek.Warn().LogLn("If you still want to use shallow clone, add gitWorktree.forceShallowClone=true directive into werf.yaml.")
 
 				return fmt.Errorf("git shallow clone is not allowed")
 			}
