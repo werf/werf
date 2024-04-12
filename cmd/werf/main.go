@@ -37,9 +37,10 @@ func main() {
 
 	rootCmd, err := root.ConstructRootCmd(ctx)
 	if err != nil {
-		common.ShutdownTelemetry(ctx, 1)
 		common.TerminateWithError(err.Error(), 1)
 	}
+
+	root.SetupTelemetryInit(rootCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		if helm_v3.IsPluginError(err) {
