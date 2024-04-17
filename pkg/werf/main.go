@@ -77,6 +77,10 @@ func GetHostLocker() lockgate.Locker {
 	return hostLocker
 }
 
+func getHostLockerDir() string {
+	return filepath.Join(GetServiceDir(), "locks")
+}
+
 func SetupLockerDefaultOptions(ctx context.Context, opts lockgate.AcquireOptions) lockgate.AcquireOptions {
 	if opts.OnWaitFunc == nil {
 		opts.OnWaitFunc = DefaultLockerOnWait(ctx)
@@ -155,7 +159,7 @@ func Init(tmpDirOption, homeDirOption string) error {
 
 	file_lock.LegacyHashFunction = true
 
-	if locker, err := file_locker.NewFileLocker(filepath.Join(serviceDir, "locks")); err != nil {
+	if locker, err := file_locker.NewFileLocker(getHostLockerDir()); err != nil {
 		return fmt.Errorf("error creating werf host file locker: %w", err)
 	} else {
 		hostLocker = locker

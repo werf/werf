@@ -136,6 +136,12 @@ func RunGC(ctx context.Context, dryRun bool, containerBackend container_backend.
 		}
 	}
 
+	if !dryRun {
+		if err := werf.GCHostLockerDir(); err != nil {
+			removeErrors = append(removeErrors, fmt.Errorf("unable to run host locker GC: %w", err))
+		}
+	}
+
 	if len(removeErrors) > 0 {
 		msg := ""
 		for _, err := range removeErrors {
