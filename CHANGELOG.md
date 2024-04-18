@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.308](https://www.github.com/werf/werf/compare/v1.2.307...v1.2.308) (2024-04-18)
+
+
+### Bug Fixes
+
+* **deploy:** incorrect error message when release lock fails ([7f60ccc](https://www.github.com/werf/werf/commit/7f60cccc92a0db5597b275c83579eda1350e7958))
+
 ### [1.2.307](https://www.github.com/werf/werf/compare/v1.2.306...v1.2.307) (2024-04-09)
 
 
