@@ -3,7 +3,7 @@ entries:
   en:
     f:
       - title: Getting started
-        url: /getting_started/
+        external_url: https://werf.io/getting_started/
 
       - title: Usage
         f:

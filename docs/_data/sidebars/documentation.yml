@@ -777,7 +777,7 @@ entries:
   ru:
     f:
       - title: Быстрый старт
-        url: /getting_started/
+        external_url: https://ru.werf.io/getting_started/
 
       - title: Использование
         f:
