@@ -97,9 +97,7 @@ werf ci-env CI_SYSTEM [options]
             Log in to CI-specific registry automatically if possible (default                       
             $WERF_LOGIN_TO_REGISTRY).
       --loose-giterminism=false
-            Loose werf giterminism mode restrictions (NOTE: not all restrictions can be removed,    
-            more info https://werf.io/documentation/usage/project_configuration/giterminism.html,   
-            default $WERF_LOOSE_GITERMINISM)
+            Loose werf giterminism mode restrictions
   -o, --output-file-path=''
             Write to custom file (default $WERF_OUTPUT_FILE_PATH).
       --platform=[]
