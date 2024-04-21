@@ -3,8 +3,6 @@ package plan
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
-	"os"
 	"path/filepath"
 	"time"
 
@@ -16,11 +14,8 @@ import (
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/cli/values"
-	"helm.sh/helm/v3/pkg/postrender"
-	"helm.sh/helm/v3/pkg/registry"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
 	"github.com/werf/nelm/pkg/chrttree"
 	helmcommon "github.com/werf/nelm/pkg/common"
@@ -42,7 +37,6 @@ import (
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
 	"github.com/werf/werf/v2/pkg/deploy/helm/command_helpers"
-	"github.com/werf/werf/v2/pkg/deploy/helm/maintenance_helper"
 	"github.com/werf/werf/v2/pkg/deploy/lock_manager"
 	"github.com/werf/werf/v2/pkg/deploy/secrets_manager"
 	"github.com/werf/werf/v2/pkg/git_repo"
@@ -408,12 +402,6 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		return err
 	}
 
-	kubeConfigOptions := kube.KubeConfigOptions{
-		Context:          *commonCmdData.KubeContext,
-		ConfigPath:       *commonCmdData.KubeConfig,
-		ConfigDataBase64: *commonCmdData.KubeConfigBase64,
-	}
-
 	userExtraAnnotations, err := common.GetUserExtraAnnotations(&commonCmdData)
 	if err != nil {
 		return err
@@ -494,16 +482,6 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 	}
 
 	actionConfig, err := common.NewActionConfig(ctx, common.GetOndemandKubeInitializer(), namespace, &commonCmdData, helmRegistryClient)
-	if err != nil {
-		return err
-	}
-	maintenanceHelper := createMaintenanceHelper(ctx, actionConfig, kubeConfigOptions)
-
-	if err := migrateHelm2ToHelm3(ctx, releaseName, namespace, maintenanceHelper, wc.ChainPostRenderer, valueOpts, chartDir, helmRegistryClient); err != nil {
-		return err
-	}
-
-	actionConfig, err = common.NewActionConfig(ctx, common.GetOndemandKubeInitializer(), namespace, &commonCmdData, helmRegistryClient)
 	if err != nil {
 		return err
 	}
@@ -693,114 +671,4 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 	}
 
 	return nil
-}
-
-func createMaintenanceHelper(ctx context.Context, actionConfig *action.Configuration, kubeConfigOptions kube.KubeConfigOptions) *maintenance_helper.MaintenanceHelper {
-	maintenanceOpts := maintenance_helper.MaintenanceHelperOptions{
-		KubeConfigOptions: kubeConfigOptions,
-	}
-
-	for _, val := range []string{
-		os.Getenv("WERF_HELM2_RELEASE_STORAGE_NAMESPACE"),
-		os.Getenv("WERF_HELM_RELEASE_STORAGE_NAMESPACE"),
-		os.Getenv("TILLER_NAMESPACE"),
-	} {
-		if val != "" {
-			maintenanceOpts.Helm2ReleaseStorageNamespace = val
-			break
-		}
-	}
-
-	for _, val := range []string{
-		os.Getenv("WERF_HELM2_RELEASE_STORAGE_TYPE"),
-		os.Getenv("WERF_HELM_RELEASE_STORAGE_TYPE"),
-	} {
-		if val != "" {
-			maintenanceOpts.Helm2ReleaseStorageType = val
-			break
-		}
-	}
-
-	return maintenance_helper.NewMaintenanceHelper(actionConfig, maintenanceOpts)
-}
-
-func migrateHelm2ToHelm3(ctx context.Context, releaseName, namespace string, maintenanceHelper *maintenance_helper.MaintenanceHelper, chainPostRenderer func(postrender.PostRenderer) postrender.PostRenderer, valueOpts *values.Options, fullChartDir string, helmRegistryClient *registry.Client) error {
-	if helm2Exists, err := checkHelm2AvailableAndReleaseExists(ctx, releaseName, namespace, maintenanceHelper); err != nil {
-		return fmt.Errorf("error checking availability of helm 2 and existence of helm 2 release %q: %w", releaseName, err)
-	} else if !helm2Exists {
-		return nil
-	}
-
-	if helm3Exists, err := checkHelm3ReleaseExists(ctx, releaseName, namespace, maintenanceHelper); err != nil {
-		return fmt.Errorf("error checking existence of helm 3 release %q: %w", releaseName, err)
-	} else if helm3Exists {
-		// helm 2 exists and helm 3 exists
-		// migration not needed, but we should warn user that some helm 2 release with the same name exists
-
-		logboek.Context(ctx).Warn().LogF("### Helm 2 and helm 3 release %q exists at the same time ###\n", releaseName)
-		logboek.Context(ctx).Warn().LogLn()
-		logboek.Context(ctx).Warn().LogF("Found existing helm 2 release %q while there is existing helm 3 release %q in the %q namespace!\n", releaseName, releaseName, namespace)
-		logboek.Context(ctx).Warn().LogF("werf will continue deploy process into helm 3 release %q in the %q namespace\n", releaseName, namespace)
-		logboek.Context(ctx).Warn().LogF("To disable this warning please remove old helm 2 release %q metadata (fox example using: kubectl -n kube-system delete cm RELEASE_NAME.VERSION)\n", releaseName)
-		logboek.Context(ctx).Warn().LogLn()
-
-		return nil
-	}
-
-	logboek.Context(ctx).Warn().LogFDetails("Found existing helm 2 release %q, will try to render helm 3 templates and migrate existing release resources to helm 3\n", releaseName)
-
-	logboek.Context(ctx).Default().LogOptionalLn()
-	if err := logboek.Context(ctx).LogProcess("Rendering helm 3 templates for the current project state").DoError(func() error {
-		actionConfig, err := common.NewActionConfig(ctx, common.GetOndemandKubeInitializer(), namespace, &commonCmdData, helmRegistryClient)
-		if err != nil {
-			return err
-		}
-
-		helmTemplateCmd, _ := helm_v3.NewTemplateCmd(actionConfig, ioutil.Discard, helm_v3.TemplateCmdOptions{
-			StagesSplitter:    helm.NewStagesSplitter(),
-			ChainPostRenderer: chainPostRenderer,
-			ValueOpts:         valueOpts,
-			Validate:          common.NewBool(true),
-			IncludeCrds:       common.NewBool(true),
-			IsUpgrade:         common.NewBool(true),
-		})
-		return helmTemplateCmd.RunE(helmTemplateCmd, []string{releaseName, fullChartDir})
-	}); err != nil {
-		return err
-	}
-
-	if err := logboek.Context(ctx).Default().LogProcess("Migrating helm 2 release %q to helm 3 in the %q namespace", releaseName, namespace).DoError(func() error {
-		if err := maintenance_helper.Migrate2To3(ctx, releaseName, releaseName, namespace, maintenanceHelper); err != nil {
-			return fmt.Errorf("error migrating existing helm 2 release %q to helm 3 release %q in the namespace %q: %w", releaseName, releaseName, namespace, err)
-		}
-		return nil
-	}); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func checkHelm2AvailableAndReleaseExists(ctx context.Context, releaseName, namespace string, maintenanceHelper *maintenance_helper.MaintenanceHelper) (bool, error) {
-	if available, err := maintenanceHelper.CheckHelm2StorageAvailable(ctx); err != nil {
-		return false, err
-	} else if available {
-		foundHelm2Release, err := maintenanceHelper.IsHelm2ReleaseExist(ctx, releaseName)
-		if err != nil {
-			return false, fmt.Errorf("error checking existence of helm 2 release %q: %w", releaseName, err)
-		}
-
-		return foundHelm2Release, nil
-	}
-
-	return false, nil
-}
-
-func checkHelm3ReleaseExists(ctx context.Context, releaseName, namespace string, maintenanceHelper *maintenance_helper.MaintenanceHelper) (bool, error) {
-	foundHelm3Release, err := maintenanceHelper.IsHelm3ReleaseExist(ctx, releaseName)
-	if err != nil {
-		return false, fmt.Errorf("error checking existence of helm 3 release %q: %w", releaseName, err)
-	}
-
-	return foundHelm3Release, nil
 }
