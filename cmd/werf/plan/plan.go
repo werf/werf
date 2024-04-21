@@ -33,7 +33,6 @@ import (
 	"github.com/werf/werf/v2/pkg/build"
 	"github.com/werf/werf/v2/pkg/config/deploy_params"
 	"github.com/werf/werf/v2/pkg/container_backend"
-	"github.com/werf/werf/v2/pkg/deploy/helm"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
 	"github.com/werf/werf/v2/pkg/deploy/helm/command_helpers"
@@ -205,13 +204,6 @@ werf plan --repo registry.mydomain.com/web --env production`,
 
 func runMain(ctx context.Context, imagesToProcess build.ImagesToProcess) error {
 	global_warnings.PostponeMultiwerfNotUpToDateWarning()
-	if !helm.IsExperimentalEngine() {
-		global_warnings.GlobalWarningLines = append(
-			global_warnings.GlobalWarningLines,
-			`"werf plan" shows planned changes for the new deployment engine. Currently you are using the old engine, which might produce different results during deployment. If you want to use "werf plan" we strongly advice migrating to the new engine by setting environment variable "WERF_NELM=1".`,
-		)
-	}
-
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %w", err)
 	}
