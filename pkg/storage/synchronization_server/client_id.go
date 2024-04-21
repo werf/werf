@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/storage"
+	"github.com/werf/werf/v2/pkg/storage"
 )
 
 func GetOrCreateClientID(ctx context.Context, projectName string, synchronizationClient *SynchronizationClient, stagesStorage storage.StagesStorage) (string, error) {

@@ -6,7 +6,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/test/pkg/suite_init"
+	"github.com/werf/werf/v2/test/pkg/suite_init"
 )
 
 func TestSuite(t *testing.T) {

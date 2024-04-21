@@ -11,10 +11,10 @@ import (
 	"helm.sh/helm/v3/pkg/cli"
 	"helm.sh/helm/v3/pkg/postrender"
 
-	"github.com/werf/werf/pkg/deploy/helm"
-	"github.com/werf/werf/pkg/deploy/helm/chart_extender/helpers"
-	"github.com/werf/werf/pkg/deploy/helm/chart_extender/helpers/secrets"
-	"github.com/werf/werf/pkg/deploy/secrets_manager"
+	"github.com/werf/werf/v2/pkg/deploy/helm"
+	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
+	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers/secrets"
+	"github.com/werf/werf/v2/pkg/deploy/secrets_manager"
 )
 
 func NewWerfChartStub(ctx context.Context, ignoreInvalidAnnotationsAndLabels bool) *WerfChartStub {

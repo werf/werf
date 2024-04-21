@@ -8,7 +8,7 @@ import (
 	"text/template"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/deploy/helm/chart_extender/helpers/secrets"
+	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers/secrets"
 )
 
 func SetupIncludeWrapperFuncs(funcMap template.FuncMap) {

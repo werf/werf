@@ -10,8 +10,8 @@ import (
 	"helm.sh/helm/v3/pkg/chartutil"
 	"sigs.k8s.io/yaml"
 
-	"github.com/werf/werf/pkg/secret"
-	"github.com/werf/werf/pkg/util"
+	"github.com/werf/werf/v2/pkg/secret"
+	"github.com/werf/werf/v2/pkg/util"
 )
 
 const (

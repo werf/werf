@@ -1,7 +1,7 @@
 package git_repo
 
 import (
-	"github.com/werf/werf/pkg/true_git"
+	"github.com/werf/werf/v2/pkg/true_git"
 )
 
 type PatchFile struct {

@@ -3,10 +3,10 @@ package stage
 import (
 	"context"
 
-	"github.com/werf/werf/pkg/build/builder"
-	"github.com/werf/werf/pkg/config"
-	"github.com/werf/werf/pkg/container_backend"
-	"github.com/werf/werf/pkg/util"
+	"github.com/werf/werf/v2/pkg/build/builder"
+	"github.com/werf/werf/v2/pkg/config"
+	"github.com/werf/werf/v2/pkg/container_backend"
+	"github.com/werf/werf/v2/pkg/util"
 )
 
 func GenerateInstallStage(ctx context.Context, imageBaseConfig *config.StapelImageBase, gitPatchStageOptions *NewGitPatchStageOptions, baseStageOptions *BaseStageOptions) *InstallStage {

@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"runtime"
 
-	"github.com/werf/werf/pkg/buildah"
-	bdTypes "github.com/werf/werf/pkg/buildah/thirdparty"
-	"github.com/werf/werf/test/pkg/thirdparty/contruntime/manifest"
+	"github.com/werf/werf/v2/pkg/buildah"
+	bdTypes "github.com/werf/werf/v2/pkg/buildah/thirdparty"
+	"github.com/werf/werf/v2/test/pkg/thirdparty/contruntime/manifest"
 )
 
 var ErrRuntimeUnavailable = errors.New("requested runtime unavailable")

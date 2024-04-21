@@ -12,9 +12,9 @@ import (
 	"github.com/werf/lockgate"
 	"github.com/werf/lockgate/pkg/distributed_locker"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/kubeutils"
-	"github.com/werf/werf/pkg/werf"
-	"github.com/werf/werf/pkg/werf/locker_with_retry"
+	"github.com/werf/werf/v2/pkg/kubeutils"
+	"github.com/werf/werf/v2/pkg/werf"
+	"github.com/werf/werf/v2/pkg/werf/locker_with_retry"
 )
 
 func NewKubernetesLockManager(namespace string, kubeClient kubernetes.Interface, kubeDynamicClient dynamic.Interface, getConfigMapNameFunc func(projectName string) string) *KubernetesLockManager {

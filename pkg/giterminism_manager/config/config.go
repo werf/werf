@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/werf/werf/pkg/path_matcher"
+	"github.com/werf/werf/v2/pkg/path_matcher"
 )
 
 func NewConfig(ctx context.Context, fileReader fileReader, configRelPath string) (c Config, err error) {

@@ -6,7 +6,7 @@ import (
 
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/werf"
+	"github.com/werf/werf/v2/pkg/werf"
 )
 
 func NewGenericLockManager(locker lockgate.Locker) *GenericLockManager {

@@ -13,11 +13,11 @@ import (
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/lockgate/pkg/distributed_locker"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/storage"
-	"github.com/werf/werf/pkg/storage/synchronization_server"
-	"github.com/werf/werf/pkg/werf"
-	"github.com/werf/werf/pkg/werf/global_warnings"
-	"github.com/werf/werf/pkg/werf/locker_with_retry"
+	"github.com/werf/werf/v2/pkg/storage"
+	"github.com/werf/werf/v2/pkg/storage/synchronization_server"
+	"github.com/werf/werf/v2/pkg/werf"
+	"github.com/werf/werf/v2/pkg/werf/global_warnings"
+	"github.com/werf/werf/v2/pkg/werf/locker_with_retry"
 )
 
 func SetupSynchronization(cmdData *CmdData, cmd *cobra.Command) {

@@ -7,9 +7,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/werf/werf/pkg/container_backend"
-	"github.com/werf/werf/pkg/host_cleaning"
-	"github.com/werf/werf/pkg/util"
+	"github.com/werf/werf/v2/pkg/container_backend"
+	"github.com/werf/werf/v2/pkg/host_cleaning"
+	"github.com/werf/werf/v2/pkg/util"
 )
 
 func RunAutoHostCleanup(ctx context.Context, cmdData *CmdData, containerBackend container_backend.ContainerBackend) error {

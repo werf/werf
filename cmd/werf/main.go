@@ -11,9 +11,9 @@ import (
 
 	"github.com/werf/logboek"
 	"github.com/werf/nelm/pkg/resrcchangcalc"
-	"github.com/werf/werf/cmd/werf/common"
-	"github.com/werf/werf/cmd/werf/root"
-	"github.com/werf/werf/pkg/process_exterminator"
+	"github.com/werf/werf/v2/cmd/werf/common"
+	"github.com/werf/werf/v2/cmd/werf/root"
+	"github.com/werf/werf/v2/pkg/process_exterminator"
 )
 
 func main() {

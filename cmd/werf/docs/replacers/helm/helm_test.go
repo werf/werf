@@ -7,8 +7,8 @@ import (
 	helm_v3 "helm.sh/helm/v3/cmd/helm"
 	"helm.sh/helm/v3/pkg/action"
 
-	"github.com/werf/werf/cmd/werf/common"
-	"github.com/werf/werf/pkg/deploy/helm"
+	"github.com/werf/werf/v2/cmd/werf/common"
+	"github.com/werf/werf/v2/pkg/deploy/helm"
 )
 
 func TestReplaceHelmCreateDocs(t *testing.T) {

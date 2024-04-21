@@ -12,8 +12,8 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/otiai10/copy"
 
-	"github.com/werf/werf/test/pkg/utils"
-	"github.com/werf/werf/test/pkg/utils/liveexec"
+	"github.com/werf/werf/v2/test/pkg/utils"
+	"github.com/werf/werf/v2/test/pkg/utils/liveexec"
 )
 
 type StageInfo struct {

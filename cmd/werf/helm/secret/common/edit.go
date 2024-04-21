@@ -17,10 +17,10 @@ import (
 
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/style"
-	"github.com/werf/werf/pkg/deploy/secrets_manager"
-	"github.com/werf/werf/pkg/secret"
-	"github.com/werf/werf/pkg/util"
-	"github.com/werf/werf/pkg/werf"
+	"github.com/werf/werf/v2/pkg/deploy/secrets_manager"
+	"github.com/werf/werf/v2/pkg/secret"
+	"github.com/werf/werf/v2/pkg/util"
+	"github.com/werf/werf/v2/pkg/werf"
 )
 
 func SecretEdit(ctx context.Context, m *secrets_manager.SecretsManager, workingDir, filePath string, values bool) error {

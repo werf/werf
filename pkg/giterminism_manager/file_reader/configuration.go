@@ -6,8 +6,8 @@ import (
 
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/types"
-	"github.com/werf/werf/pkg/path_matcher"
-	"github.com/werf/werf/pkg/util"
+	"github.com/werf/werf/v2/pkg/path_matcher"
+	"github.com/werf/werf/v2/pkg/util"
 )
 
 // WalkConfigurationFilesWithGlob reads the configuration files taking into account the giterminism config.

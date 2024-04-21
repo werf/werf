@@ -3,7 +3,7 @@ package git_repo
 import (
 	"path/filepath"
 
-	"github.com/werf/werf/pkg/werf"
+	"github.com/werf/werf/v2/pkg/werf"
 )
 
 const GitWorktreesCacheVersion = "9"

@@ -22,11 +22,11 @@ import (
 
 	copyrec "github.com/werf/copy-recurse"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/buildah"
-	"github.com/werf/werf/pkg/buildah/thirdparty"
-	"github.com/werf/werf/pkg/image"
-	"github.com/werf/werf/pkg/path_matcher"
-	"github.com/werf/werf/pkg/util"
+	"github.com/werf/werf/v2/pkg/buildah"
+	"github.com/werf/werf/v2/pkg/buildah/thirdparty"
+	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/path_matcher"
+	"github.com/werf/werf/v2/pkg/util"
 )
 
 type BuildahBackend struct {

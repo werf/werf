@@ -11,7 +11,7 @@ import (
 
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/style"
-	"github.com/werf/werf/pkg/util"
+	"github.com/werf/werf/v2/pkg/util"
 )
 
 type GenerateOptions struct {

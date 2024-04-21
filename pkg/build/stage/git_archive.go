@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/werf/werf/pkg/container_backend"
-	"github.com/werf/werf/pkg/git_repo"
-	"github.com/werf/werf/pkg/image"
-	"github.com/werf/werf/pkg/util"
+	"github.com/werf/werf/v2/pkg/container_backend"
+	"github.com/werf/werf/v2/pkg/git_repo"
+	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/util"
 )
 
 type NewGitArchiveStageOptions struct {

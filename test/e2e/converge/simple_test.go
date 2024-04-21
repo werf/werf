@@ -9,8 +9,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/werf/kubedog/pkg/kube"
-	"github.com/werf/werf/test/pkg/utils"
-	"github.com/werf/werf/test/pkg/werf"
+	"github.com/werf/werf/v2/test/pkg/utils"
+	"github.com/werf/werf/v2/test/pkg/werf"
 )
 
 var _ = Describe("Simple converge", Label("e2e", "converge", "simple"), func() {

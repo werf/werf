@@ -5,10 +5,10 @@ import (
 
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/pkg/buildah"
-	"github.com/werf/werf/pkg/buildah/thirdparty"
-	"github.com/werf/werf/test/pkg/thirdparty/contruntime/manifest"
-	"github.com/werf/werf/test/pkg/utils"
+	"github.com/werf/werf/v2/pkg/buildah"
+	"github.com/werf/werf/v2/pkg/buildah/thirdparty"
+	"github.com/werf/werf/v2/test/pkg/thirdparty/contruntime/manifest"
+	"github.com/werf/werf/v2/test/pkg/utils"
 )
 
 func NewNativeBuildahBackend(isolation thirdparty.Isolation, storageDriver buildah.StorageDriver) ContainerBackend {

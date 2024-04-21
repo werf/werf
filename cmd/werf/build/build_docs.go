@@ -1,6 +1,6 @@
 package build
 
-import "github.com/werf/werf/cmd/werf/docs/structs"
+import "github.com/werf/werf/v2/cmd/werf/docs/structs"
 
 func GetBuildDocs() structs.DocsStruct {
 	var docs structs.DocsStruct

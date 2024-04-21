@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/v2/pkg/image"
 )
 
 const GcrImplementationName = "gcr"

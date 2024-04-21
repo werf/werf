@@ -8,8 +8,8 @@ import (
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/buildah"
-	"github.com/werf/werf/pkg/container_backend"
+	"github.com/werf/werf/v2/pkg/buildah"
+	"github.com/werf/werf/v2/pkg/container_backend"
 )
 
 type Run struct {

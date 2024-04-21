@@ -3,7 +3,7 @@ package config
 import (
 	"fmt"
 
-	"github.com/werf/werf/pkg/giterminism_manager"
+	"github.com/werf/werf/v2/pkg/giterminism_manager"
 )
 
 type rawStapelImage struct {

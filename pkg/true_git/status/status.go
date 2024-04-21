@@ -9,7 +9,7 @@ import (
 
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/types"
-	"github.com/werf/werf/pkg/true_git"
+	"github.com/werf/werf/v2/pkg/true_git"
 )
 
 // Status returns Result with path lists of untracked files and modified files for index and worktree.

@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/build/stage"
-	"github.com/werf/werf/pkg/container_backend"
-	"github.com/werf/werf/pkg/docker_registry"
-	"github.com/werf/werf/pkg/util"
+	"github.com/werf/werf/v2/pkg/build/stage"
+	"github.com/werf/werf/v2/pkg/container_backend"
+	"github.com/werf/werf/v2/pkg/docker_registry"
+	"github.com/werf/werf/v2/pkg/util"
 )
 
 type From struct {

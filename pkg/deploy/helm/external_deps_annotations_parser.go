@@ -6,7 +6,7 @@ import (
 
 	"helm.sh/helm/v3/pkg/phases/stages/externaldeps"
 
-	"github.com/werf/werf/pkg/slug"
+	"github.com/werf/werf/v2/pkg/slug"
 )
 
 func NewExternalDepsAnnotationsParser(defaultNamespace string) *ExternalDepsAnnotationsParser {

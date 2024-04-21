@@ -13,8 +13,8 @@ import (
 	"helm.sh/helm/v3/pkg/chart"
 	"sigs.k8s.io/yaml"
 
-	bundles_registry "github.com/werf/werf/pkg/deploy/bundles/registry"
-	"github.com/werf/werf/pkg/docker_registry"
+	bundles_registry "github.com/werf/werf/v2/pkg/deploy/bundles/registry"
+	"github.com/werf/werf/v2/pkg/docker_registry"
 )
 
 var _ = Describe("Bundle copy", func() {

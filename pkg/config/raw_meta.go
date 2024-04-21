@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/werf/werf/pkg/slug"
+	"github.com/werf/werf/v2/pkg/slug"
 )
 
 type rawMeta struct {

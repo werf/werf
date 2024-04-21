@@ -3,10 +3,10 @@ package stage
 import (
 	"context"
 
-	"github.com/werf/werf/pkg/build/import_server"
-	"github.com/werf/werf/pkg/container_backend"
-	"github.com/werf/werf/pkg/giterminism_manager"
-	"github.com/werf/werf/pkg/storage"
+	"github.com/werf/werf/v2/pkg/build/import_server"
+	"github.com/werf/werf/v2/pkg/container_backend"
+	"github.com/werf/werf/v2/pkg/giterminism_manager"
+	"github.com/werf/werf/v2/pkg/storage"
 )
 
 type Conveyor interface {

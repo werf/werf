@@ -3,7 +3,7 @@ package contback
 import (
 	"github.com/google/uuid"
 
-	"github.com/werf/werf/pkg/buildah/thirdparty"
+	"github.com/werf/werf/v2/pkg/buildah/thirdparty"
 )
 
 type BaseContainerBackend struct {

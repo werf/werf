@@ -3,7 +3,7 @@ package bundles
 import (
 	"context"
 
-	"github.com/werf/werf/pkg/docker_registry"
+	"github.com/werf/werf/v2/pkg/docker_registry"
 )
 
 type CopyOptions struct {

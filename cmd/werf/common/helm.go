@@ -10,9 +10,9 @@ import (
 
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
-	bundles_registry "github.com/werf/werf/pkg/deploy/bundles/registry"
-	"github.com/werf/werf/pkg/deploy/helm"
-	"github.com/werf/werf/pkg/docker"
+	bundles_registry "github.com/werf/werf/v2/pkg/deploy/bundles/registry"
+	"github.com/werf/werf/v2/pkg/deploy/helm"
+	"github.com/werf/werf/v2/pkg/docker"
 )
 
 func NewHelmRegistryClient(ctx context.Context, dockerConfig string, insecureHelmDependencies bool) (*registry.Client, error) {

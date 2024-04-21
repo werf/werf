@@ -3,7 +3,7 @@ package build_phase_test
 import (
 	"testing"
 
-	"github.com/werf/werf/test/pkg/suite_init"
+	"github.com/werf/werf/v2/test/pkg/suite_init"
 )
 
 var testSuiteEntrypointFunc = suite_init.MakeTestSuiteEntrypointFunc("Build phase suite", suite_init.TestSuiteEntrypointFuncOptions{})

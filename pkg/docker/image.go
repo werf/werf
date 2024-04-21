@@ -17,7 +17,7 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/werf/logboek"
-	parallelConstant "github.com/werf/werf/pkg/util/parallel/constant"
+	parallelConstant "github.com/werf/werf/v2/pkg/util/parallel/constant"
 )
 
 type CreateImageOptions struct {

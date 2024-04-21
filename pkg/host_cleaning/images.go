@@ -11,7 +11,7 @@ import (
 	"github.com/docker/docker/api/types/filters"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/docker"
+	"github.com/werf/werf/v2/pkg/docker"
 )
 
 func werfImagesFlushByFilterSet(ctx context.Context, filterSet filters.Args, options CommonOptions) error {

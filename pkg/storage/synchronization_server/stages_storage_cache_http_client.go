@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/v2/pkg/image"
 )
 
 func NewStagesStorageCacheHttpClient(url string) *StagesStorageCacheHttpClient {

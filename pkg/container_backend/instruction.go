@@ -3,7 +3,7 @@ package container_backend
 import (
 	"context"
 
-	"github.com/werf/werf/pkg/buildah"
+	"github.com/werf/werf/v2/pkg/buildah"
 )
 
 type InstructionInterface interface {

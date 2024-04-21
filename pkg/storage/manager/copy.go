@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/werf/werf/pkg/build/stage"
-	"github.com/werf/werf/pkg/container_backend"
-	"github.com/werf/werf/pkg/image"
-	"github.com/werf/werf/pkg/storage"
-	"github.com/werf/werf/pkg/storage/lrumeta"
+	"github.com/werf/werf/v2/pkg/build/stage"
+	"github.com/werf/werf/v2/pkg/container_backend"
+	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/storage"
+	"github.com/werf/werf/v2/pkg/storage/lrumeta"
 )
 
 type CopyStageOptions struct {

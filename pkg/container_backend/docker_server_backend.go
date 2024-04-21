@@ -12,9 +12,9 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/docker"
-	"github.com/werf/werf/pkg/image"
-	"github.com/werf/werf/pkg/util"
+	"github.com/werf/werf/v2/pkg/docker"
+	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/util"
 )
 
 type DockerServerBackend struct{}

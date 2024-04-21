@@ -3,8 +3,8 @@ package image
 import (
 	"sync"
 
-	"github.com/werf/werf/pkg/build/stage"
-	"github.com/werf/werf/pkg/git_repo"
+	"github.com/werf/werf/v2/pkg/build/stage"
+	"github.com/werf/werf/v2/pkg/git_repo"
 )
 
 type Conveyor interface {

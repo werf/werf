@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/werf/lockgate"
-	"github.com/werf/werf/pkg/util/timestamps"
+	"github.com/werf/werf/v2/pkg/util/timestamps"
 )
 
 func getWerfLastRunAtPath() string {

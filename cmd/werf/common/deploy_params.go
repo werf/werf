@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/werf/werf/pkg/config"
-	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/v2/pkg/config"
+	"github.com/werf/werf/v2/pkg/image"
 )
 
 func GetUserExtraAnnotations(cmdData *CmdData) (map[string]string, error) {

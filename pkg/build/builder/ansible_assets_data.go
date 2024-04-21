@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"path"
 
-	"github.com/werf/werf/pkg/build/builder/ansible"
-	"github.com/werf/werf/pkg/stapel"
+	"github.com/werf/werf/v2/pkg/build/builder/ansible"
+	"github.com/werf/werf/v2/pkg/stapel"
 )
 
 func (b *Ansible) assetsAnsibleCfg() string {

@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/giterminism_manager"
+	"github.com/werf/werf/v2/pkg/giterminism_manager"
 )
 
 type StapelImageBase struct {

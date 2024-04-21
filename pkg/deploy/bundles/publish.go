@@ -8,8 +8,8 @@ import (
 	"helm.sh/helm/v3/pkg/chart/loader"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/deploy/bundles/registry"
-	"github.com/werf/werf/pkg/deploy/helm/chart_extender"
+	"github.com/werf/werf/v2/pkg/deploy/bundles/registry"
+	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender"
 )
 
 type PublishOptions struct {

@@ -17,7 +17,7 @@ vars:
   mode: '{{ternary "cgo" "go" (eq .os "linux")}}'
   devBinary: './bin/werf{{if (eq .targetOS "windows")}}.exe{{end}}'
   withCoverageBinary: './bin/werf-with-coverage{{if (eq .targetOS "windows")}}.exe{{end}}'
-  package: "github.com/werf/werf/cmd/werf"
+  package: "github.com/werf/werf/v2/cmd/werf"
 
   cgoTags: "dfrunsecurity dfrunnetwork dfrunmount dfssh containers_image_openpgp osusergo exclude_graphdriver_devicemapper netgo no_devmapper static_build cni"
   cgoDevLDFlags: "-linkmode external -extldflags=-static"

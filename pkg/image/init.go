@@ -3,7 +3,7 @@ package image
 import (
 	"path/filepath"
 
-	"github.com/werf/werf/pkg/werf"
+	"github.com/werf/werf/v2/pkg/werf"
 )
 
 var CommonManifestCache *ManifestCache

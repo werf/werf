@@ -6,9 +6,9 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/pkg/docker_registry"
-	"github.com/werf/werf/test/pkg/suite_init"
-	"github.com/werf/werf/test/pkg/utils"
+	"github.com/werf/werf/v2/pkg/docker_registry"
+	"github.com/werf/werf/v2/test/pkg/suite_init"
+	"github.com/werf/werf/v2/test/pkg/utils"
 )
 
 var _ = Describe("purge command", func() {

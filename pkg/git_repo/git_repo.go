@@ -5,12 +5,12 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/werf/werf/pkg/git_repo/repo_handle"
-	"github.com/werf/werf/pkg/path_matcher"
-	"github.com/werf/werf/pkg/true_git"
-	"github.com/werf/werf/pkg/true_git/ls_tree"
-	"github.com/werf/werf/pkg/util"
-	"github.com/werf/werf/pkg/werf"
+	"github.com/werf/werf/v2/pkg/git_repo/repo_handle"
+	"github.com/werf/werf/v2/pkg/path_matcher"
+	"github.com/werf/werf/v2/pkg/true_git"
+	"github.com/werf/werf/v2/pkg/true_git/ls_tree"
+	"github.com/werf/werf/v2/pkg/util"
+	"github.com/werf/werf/v2/pkg/werf"
 )
 
 const GitReposCacheVersion = "5"

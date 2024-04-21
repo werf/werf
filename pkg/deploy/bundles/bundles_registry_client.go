@@ -3,7 +3,7 @@ package bundles
 import (
 	"helm.sh/helm/v3/pkg/chart"
 
-	bundles_registry "github.com/werf/werf/pkg/deploy/bundles/registry"
+	bundles_registry "github.com/werf/werf/v2/pkg/deploy/bundles/registry"
 )
 
 type BundlesRegistryClient interface {

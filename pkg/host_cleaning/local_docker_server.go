@@ -18,12 +18,12 @@ import (
 	"github.com/werf/kubedog/pkg/utils"
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/container_backend"
-	"github.com/werf/werf/pkg/docker"
-	"github.com/werf/werf/pkg/image"
-	"github.com/werf/werf/pkg/storage/lrumeta"
-	"github.com/werf/werf/pkg/volumeutils"
-	"github.com/werf/werf/pkg/werf"
+	"github.com/werf/werf/v2/pkg/container_backend"
+	"github.com/werf/werf/v2/pkg/docker"
+	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/storage/lrumeta"
+	"github.com/werf/werf/v2/pkg/volumeutils"
+	"github.com/werf/werf/v2/pkg/werf"
 )
 
 const (

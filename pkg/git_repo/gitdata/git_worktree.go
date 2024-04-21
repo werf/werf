@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/werf/werf/pkg/util/timestamps"
-	"github.com/werf/werf/pkg/volumeutils"
+	"github.com/werf/werf/v2/pkg/util/timestamps"
+	"github.com/werf/werf/v2/pkg/volumeutils"
 )
 
 type GitWorktreeDesc struct {

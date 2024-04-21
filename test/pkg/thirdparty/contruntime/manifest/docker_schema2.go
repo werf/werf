@@ -5,7 +5,7 @@ package manifest
 import (
 	"time"
 
-	"github.com/werf/werf/test/pkg/thirdparty/contruntime/strslice"
+	"github.com/werf/werf/v2/test/pkg/thirdparty/contruntime/strslice"
 )
 
 // Schema2Port is a Port, a string containing port number and protocol in the

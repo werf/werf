@@ -1,8 +1,8 @@
 package stage
 
 import (
-	"github.com/werf/werf/pkg/config"
-	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/v2/pkg/config"
+	"github.com/werf/werf/v2/pkg/image"
 )
 
 func GetDependenciesArgsKeys(dependencies []*config.Dependency) (res []string) {

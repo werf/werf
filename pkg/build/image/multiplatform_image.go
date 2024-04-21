@@ -1,10 +1,10 @@
 package image
 
 import (
-	"github.com/werf/werf/pkg/image"
-	common_image "github.com/werf/werf/pkg/image"
-	"github.com/werf/werf/pkg/storage/manager"
-	"github.com/werf/werf/pkg/util"
+	"github.com/werf/werf/v2/pkg/image"
+	common_image "github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/storage/manager"
+	"github.com/werf/werf/v2/pkg/util"
 )
 
 type MultiplatformImage struct {

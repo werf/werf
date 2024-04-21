@@ -1,8 +1,8 @@
 package build_phase_test
 
 import (
-	"github.com/werf/werf/test/pkg/utils"
-	"github.com/werf/werf/test/pkg/utils/liveexec"
+	"github.com/werf/werf/v2/test/pkg/utils"
+	"github.com/werf/werf/v2/test/pkg/utils/liveexec"
 )
 
 func werfBuild(dir string, opts liveexec.ExecCommandOptions, extraArgs ...string) error {

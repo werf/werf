@@ -12,9 +12,9 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/path_matcher"
-	"github.com/werf/werf/pkg/util"
-	"github.com/werf/werf/pkg/werf"
+	"github.com/werf/werf/v2/pkg/path_matcher"
+	"github.com/werf/werf/v2/pkg/util"
+	"github.com/werf/werf/v2/pkg/werf"
 )
 
 func GetTmpDir() string {

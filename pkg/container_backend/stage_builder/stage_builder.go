@@ -3,7 +3,7 @@ package stage_builder
 import (
 	"context"
 
-	"github.com/werf/werf/pkg/container_backend"
+	"github.com/werf/werf/v2/pkg/container_backend"
 )
 
 type StageBuilderInterface interface {

@@ -1,6 +1,6 @@
 package list
 
-import "github.com/werf/werf/cmd/werf/docs/structs"
+import "github.com/werf/werf/v2/cmd/werf/docs/structs"
 
 func GetListDocs() structs.DocsShortStruct {
 	var docs structs.DocsShortStruct

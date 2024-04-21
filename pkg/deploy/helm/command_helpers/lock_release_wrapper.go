@@ -3,7 +3,7 @@ package command_helpers
 import (
 	"context"
 
-	"github.com/werf/werf/pkg/deploy/lock_manager"
+	"github.com/werf/werf/v2/pkg/deploy/lock_manager"
 )
 
 func LockReleaseWrapper(ctx context.Context, releaseName string, lockManager *lock_manager.LockManager, cmdFunc func() error) error {

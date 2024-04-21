@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/werf/werf/pkg/logging"
-	"github.com/werf/werf/pkg/util"
+	"github.com/werf/werf/v2/pkg/logging"
+	"github.com/werf/werf/v2/pkg/util"
 )
 
 type WerfConfig struct {

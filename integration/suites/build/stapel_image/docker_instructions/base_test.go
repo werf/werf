@@ -9,8 +9,8 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/test/pkg/utils"
-	utilsDocker "github.com/werf/werf/test/pkg/utils/docker"
+	"github.com/werf/werf/v2/test/pkg/utils"
+	utilsDocker "github.com/werf/werf/v2/test/pkg/utils/docker"
 )
 
 var _ = AfterEach(func() {

@@ -7,8 +7,8 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/pkg/util"
-	"github.com/werf/werf/test/pkg/werf"
+	"github.com/werf/werf/v2/pkg/util"
+	"github.com/werf/werf/v2/test/pkg/werf"
 )
 
 var _ = Describe("Simple kube-run", Label("e2e", "kube-run", "simple"), func() {

@@ -3,8 +3,8 @@ package stage
 import (
 	"context"
 
-	"github.com/werf/werf/pkg/container_backend"
-	imagePkg "github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/v2/pkg/container_backend"
+	imagePkg "github.com/werf/werf/v2/pkg/image"
 )
 
 func newGitStage(name StageName, baseStageOptions *BaseStageOptions) *GitStage {

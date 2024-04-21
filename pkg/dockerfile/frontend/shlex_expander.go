@@ -3,7 +3,7 @@ package frontend
 import (
 	"github.com/moby/buildkit/frontend/dockerfile/shell"
 
-	"github.com/werf/werf/pkg/dockerfile"
+	"github.com/werf/werf/v2/pkg/dockerfile"
 )
 
 type ShlexExpanderFactory struct {

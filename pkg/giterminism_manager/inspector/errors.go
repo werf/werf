@@ -3,7 +3,7 @@ package inspector
 import (
 	"fmt"
 
-	"github.com/werf/werf/pkg/giterminism_manager/errors"
+	"github.com/werf/werf/v2/pkg/giterminism_manager/errors"
 )
 
 func NewExternalDependencyFoundError(msg string) error {
