@@ -20,20 +20,7 @@ import (
 
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/util"
 )
-
-func IsExperimentalEngine() bool {
-	if isNelm, set := util.LookupBoolEnvironment("WERF_NELM"); set {
-		return *isNelm
-	}
-
-	if isNelm, set := util.LookupBoolEnvironment("WERF_EXPERIMENTAL_DEPLOY_ENGINE"); set {
-		return *isNelm
-	}
-
-	return false
-}
 
 type InitActionConfigOptions struct {
 	StatusProgressPeriod      time.Duration
