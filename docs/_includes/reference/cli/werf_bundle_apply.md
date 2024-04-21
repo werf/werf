@@ -32,6 +32,9 @@ werf bundle apply [options]
   -R, --auto-rollback=false
             Enable auto rollback of the failed release to the previous deployed release version     
             when current deploy process have failed ($WERF_AUTO_ROLLBACK by default)
+      --deploy-graph-path=''
+            Save deploy graph path to the specified file (by default $WERF_DEPLOY_GRAPH_PATH).      
+            Extension must be .dot or not specified. If extension not specified, then .dot is used
       --deploy-report-path=''
             Change deploy report path and format (by default $WERF_DEPLOY_REPORT_PATH or            
             ".werf-deploy-report.json" if not set). Extension must be .json for JSON format. If     
@@ -91,6 +94,8 @@ werf bundle apply [options]
             Enable verbose output (default $WERF_LOG_VERBOSE).
       --namespace=''
             Use specified Kubernetes namespace (default $WERF_NAMESPACE)
+      --network-parallelism=30
+            Parallelize some network operations (default $WERF_NETWORK_PARALLELISM or 30)
       --release=''
             Use specified Helm release name (default $WERF_RELEASE)
       --releases-history-max=5
@@ -127,6 +132,9 @@ werf bundle apply [options]
             repo Selectel VPC (default $WERF_REPO_SELECTEL_VPC)
       --repo-selectel-vpc-id=''
             repo Selectel VPC ID (default $WERF_REPO_SELECTEL_VPC_ID)
+      --rollback-graph-path=''
+            Save rollback graph path to the specified file (by default $WERF_ROLLBACK_GRAPH_PATH).  
+            Extension must be .dot or not specified. If extension not specified, then .dot is used
       --save-deploy-report=false
             Save deploy report (by default $WERF_SAVE_DEPLOY_REPORT or false). Its path and format  
             configured with --deploy-report-path

@@ -5,7 +5,7 @@
 {% endif %}
 Safely cleanup unused project images in the container registry.
 
-The command works according to special rules called cleanup policies, which the user defines in `werf.yaml` ([https://werf.io/documentation/reference/werf_yaml.html#configuring-cleanup-policies]({{ "/reference/werf_yaml.html#configuring-cleanup-policies" | true_relative_url }})).
+The command works according to special rules called cleanup policies, which the user defines in `werf.yaml`.
 
 It is safe to run this command periodically (daily is enough) by automated cleanup job in parallel with other werf commands such as `build`, `converge` and `host cleanup`.
 
@@ -168,9 +168,7 @@ werf cleanup [options]
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
       --loose-giterminism=false
-            Loose werf giterminism mode restrictions (NOTE: not all restrictions can be removed,    
-            more info https://werf.io/documentation/usage/project_configuration/giterminism.html,   
-            default $WERF_LOOSE_GITERMINISM)
+            Loose werf giterminism mode restrictions
   -p, --parallel=true
             Run in parallel (default $WERF_PARALLEL or true)
       --parallel-tasks-limit=10

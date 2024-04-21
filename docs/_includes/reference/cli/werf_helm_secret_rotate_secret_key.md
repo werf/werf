@@ -89,9 +89,7 @@ werf helm secret rotate-secret-key [EXTRA_SECRET_VALUES_FILE_PATH...] [options]
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
       --loose-giterminism=false
-            Loose werf giterminism mode restrictions (NOTE: not all restrictions can be removed,    
-            more info https://werf.io/documentation/usage/project_configuration/giterminism.html,   
-            default $WERF_LOOSE_GITERMINISM)
+            Loose werf giterminism mode restrictions
       --tmp-dir=''
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
 ```

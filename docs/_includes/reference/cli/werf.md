@@ -5,5 +5,3 @@
 {% endif %}
 werf helps to implement and support Continuous Integration and Continuous Delivery.
 
-Find more information at [https://werf.io](https://werf.io)
-

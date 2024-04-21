@@ -24,12 +24,6 @@ cli: &cli
           - title: werf bundle copy
             url: /reference/cli/werf_bundle_copy.html
 
-          - title: werf bundle download
-            url: /reference/cli/werf_bundle_download.html
-
-          - title: werf bundle export
-            url: /reference/cli/werf_bundle_export.html
-
           - title: werf bundle publish
             url: /reference/cli/werf_bundle_publish.html
 
@@ -172,9 +166,6 @@ cli: &cli
 
           - title: werf helm list
             url: /reference/cli/werf_helm_list.html
-
-          - title: werf helm migrate2to3
-            url: /reference/cli/werf_helm_migrate2to3.html
 
           - title: werf helm package
             url: /reference/cli/werf_helm_package.html
