@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -228,10 +229,6 @@ func runApply(ctx context.Context) error {
 		lockManager = m
 	}
 
-	if *commonCmdData.Environment != "" {
-		userExtraAnnotations["project.werf.io/env"] = *commonCmdData.Environment
-	}
-
 	secretsManager := secrets_manager.NewSecretsManager(secrets_manager.SecretsManagerOptions{DisableSecretsDecryption: *commonCmdData.IgnoreSecretKey})
 
 	bundle, err := chart_extender.NewBundle(ctx, bundleTmpDir, helm_v3.Settings, helmRegistryClient, secretsManager, chart_extender.BundleOptions{
@@ -283,8 +280,26 @@ func runApply(ctx context.Context) error {
 	saveDeployGraph := deployGraphPath != ""
 	saveRollbackGraphPath := rollbackGraphPath != ""
 	networkParallelism := common.GetNetworkParallelism(&commonCmdData)
-	extraAnnotations := bundle.ExtraAnnotationsAndLabelsPostRenderer.ExtraAnnotations
-	extraAnnotations["werf.io/version"] = werf.Version
+
+	serviceAnnotations := map[string]string{
+		"werf.io/version": werf.Version,
+	}
+
+	if *commonCmdData.Environment != "" {
+		serviceAnnotations["project.werf.io/env"] = *commonCmdData.Environment
+	}
+
+	var extraAnnotations map[string]string
+	for key, value := range bundle.ExtraAnnotationsAndLabelsPostRenderer.ExtraAnnotations {
+		if strings.HasPrefix(key, "project.werf.io/") ||
+			strings.Contains(key, "ci.werf.io/") ||
+			key == "werf.io/release-channel" {
+			serviceAnnotations[key] = value
+		} else {
+			extraAnnotations[key] = value
+		}
+	}
+
 	extraLabels := bundle.ExtraAnnotationsAndLabelsPostRenderer.ExtraLabels
 
 	clientFactory, err := kubeclnt.NewClientFactory()
@@ -400,13 +415,13 @@ func runApply(ctx context.Context) error {
 					resrcpatcher.NewExtraMetadataPatcher(extraAnnotations, extraLabels),
 				},
 				DeployableStandaloneCRDsPatchers: []resrcpatcher.ResourcePatcher{
-					resrcpatcher.NewExtraMetadataPatcher(extraAnnotations, extraLabels),
+					resrcpatcher.NewExtraMetadataPatcher(lo.Assign(extraAnnotations, serviceAnnotations), extraLabels),
 				},
 				DeployableHookResourcePatchers: []resrcpatcher.ResourcePatcher{
-					resrcpatcher.NewExtraMetadataPatcher(extraAnnotations, extraLabels),
+					resrcpatcher.NewExtraMetadataPatcher(lo.Assign(extraAnnotations, serviceAnnotations), extraLabels),
 				},
 				DeployableGeneralResourcePatchers: []resrcpatcher.ResourcePatcher{
-					resrcpatcher.NewExtraMetadataPatcher(extraAnnotations, extraLabels),
+					resrcpatcher.NewExtraMetadataPatcher(lo.Assign(extraAnnotations, serviceAnnotations), extraLabels),
 				},
 			},
 		)
@@ -623,6 +638,7 @@ func runApply(ctx context.Context) error {
 					history,
 					clientFactory,
 					extraAnnotations,
+					serviceAnnotations,
 					extraLabels,
 					trackReadinessTimeout,
 					trackReadinessTimeout,
@@ -743,7 +759,7 @@ func runRollbackPlan(
 	failedRevision int,
 	history *rlshistor.History,
 	clientFactory *kubeclnt.ClientFactory,
-	extraAnnotations, extraLabels map[string]string,
+	extraAnnotations, serviceAnnotations, extraLabels map[string]string,
 	trackReadinessTimeout, trackCreationTimeout, trackDeletionTimeout time.Duration,
 	saveRollbackGraph bool,
 	rollbackGraphPath string,
@@ -773,13 +789,13 @@ func runRollbackPlan(
 				resrcpatcher.NewExtraMetadataPatcher(extraAnnotations, extraLabels),
 			},
 			DeployableStandaloneCRDsPatchers: []resrcpatcher.ResourcePatcher{
-				resrcpatcher.NewExtraMetadataPatcher(extraAnnotations, extraLabels),
+				resrcpatcher.NewExtraMetadataPatcher(lo.Assign(extraAnnotations, serviceAnnotations), extraLabels),
 			},
 			DeployableHookResourcePatchers: []resrcpatcher.ResourcePatcher{
-				resrcpatcher.NewExtraMetadataPatcher(extraAnnotations, extraLabels),
+				resrcpatcher.NewExtraMetadataPatcher(lo.Assign(extraAnnotations, serviceAnnotations), extraLabels),
 			},
 			DeployableGeneralResourcePatchers: []resrcpatcher.ResourcePatcher{
-				resrcpatcher.NewExtraMetadataPatcher(extraAnnotations, extraLabels),
+				resrcpatcher.NewExtraMetadataPatcher(lo.Assign(extraAnnotations, serviceAnnotations), extraLabels),
 			},
 		},
 	)
