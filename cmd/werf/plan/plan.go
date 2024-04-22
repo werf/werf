@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/gookit/color"
@@ -394,9 +395,25 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		return err
 	}
 
-	userExtraAnnotations, err := common.GetUserExtraAnnotations(&commonCmdData)
-	if err != nil {
+	serviceAnnotations := map[string]string{
+		"werf.io/version":      werf.Version,
+		"project.werf.io/name": werfConfig.Meta.Project,
+		"project.werf.io/env":  *commonCmdData.Environment,
+	}
+
+	var userExtraAnnotations map[string]string
+	if annos, err := common.GetUserExtraAnnotations(&commonCmdData); err != nil {
 		return err
+	} else {
+		for key, value := range annos {
+			if strings.HasPrefix(key, "project.werf.io/") ||
+				strings.Contains(key, "ci.werf.io/") ||
+				key == "werf.io/release-channel" {
+				serviceAnnotations[key] = value
+			} else {
+				userExtraAnnotations[key] = value
+			}
+		}
 	}
 
 	userExtraLabels, err := common.GetUserExtraLabels(&commonCmdData)
@@ -480,11 +497,6 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 
 	if true {
 		networkParallelism := common.GetNetworkParallelism(&commonCmdData)
-		serviceAnnotations := map[string]string{
-			"werf.io/version":      werf.Version,
-			"project.werf.io/name": werfConfig.Meta.Project,
-			"project.werf.io/env":  *commonCmdData.Environment,
-		}
 
 		clientFactory, err := kubeclnt.NewClientFactory()
 		if err != nil {
@@ -593,10 +605,10 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 				resrcprocssr.DeployableResourcesProcessorOptions{
 					NetworkParallelism: networkParallelism,
 					ReleasableHookResourcePatchers: []resrcpatcher.ResourcePatcher{
-						resrcpatcher.NewExtraMetadataPatcher(lo.Assign(userExtraAnnotations, serviceAnnotations), userExtraLabels),
+						resrcpatcher.NewExtraMetadataPatcher(userExtraAnnotations, userExtraLabels),
 					},
 					ReleasableGeneralResourcePatchers: []resrcpatcher.ResourcePatcher{
-						resrcpatcher.NewExtraMetadataPatcher(lo.Assign(userExtraAnnotations, serviceAnnotations), userExtraLabels),
+						resrcpatcher.NewExtraMetadataPatcher(userExtraAnnotations, userExtraLabels),
 					},
 					DeployableStandaloneCRDsPatchers: []resrcpatcher.ResourcePatcher{
 						resrcpatcher.NewExtraMetadataPatcher(lo.Assign(userExtraAnnotations, serviceAnnotations), userExtraLabels),
