@@ -1050,11 +1050,6 @@ Be aware that access to the resource is forbidden with personal access token.`, 
 You should specify a token with delete:packages and read:packages scopes to remove package versions.
 Check --repo-github-token option.
 Be aware that the token provided to GitHub Actions workflow is not enough to remove package versions.`, err)
-	case docker_registry.IsSelectelUnauthorizedErr(err):
-		return fmt.Errorf(`%w
-
-You should specify Serectel cloud container registry (cr) credentials: username, password, account and VPC to remove tags with Selectel CR API.
-Check --repo-selectel-username, --repo-selectel-password, --repo-selectel-account and --repo-selectel-vpc or --repo-selectel-vpc-id options.`, err)
 	default:
 		if storage.IsImageDeletionFailedDueToUsingByContainerErr(err) {
 			return err

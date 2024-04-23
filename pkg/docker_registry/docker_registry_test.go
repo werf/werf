@@ -48,8 +48,4 @@ var _ = DescribeTable("ResolveImplementation", func(entry ResolveImplementationE
 		imagesRepoAddress: "quay.io/account/repo",
 		expectation:       "quay",
 	}),
-	Entry("selectel", ResolveImplementationEntry{
-		imagesRepoAddress: "cr.selcloud.ru/test",
-		expectation:       "selectel",
-	}),
 )
