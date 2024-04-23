@@ -176,7 +176,7 @@ By default, werf uses the [_Docker Registry API_](https://docs.docker.com/regist
 | _Nexus_                     |           **ok**            |
 | _Quay_                      |           **ok**            |
 | _Yandex container registry_ |           **ok**            |
-| _Selectel CRaaS_            | [***ok**](#selectel-craas)  |
+| _Selectel CRaaS_            |           **ok**            |
 
 werf tries to automatically detect the type of container registry using the repository address provided (via the `--repo` option). The user can explicitly specify the container registry using the `--repo-container-registry` option or via the `WERF_REPO_CONTAINER_REGISTRY` environment variable.
 
@@ -228,23 +228,6 @@ You can use the `--repo-github-token` option or the corresponding environment va
 werf uses the _GitLab container registry API_ or _Docker Registry API_ (depending on the GitLab version) to delete tags.
 
 > Privileges of the temporary CI job token (`$CI_JOB_TOKEN`) are not enough to delete tags. That is why the user have to create a dedicated token in the Access Token section (select the `api` in the Scope section) and perform authorization using it
-
-### Selectel CRaaS
-
-werf uses the [_Selectel CR API_](https://developers.selectel.ru/docs/selectel-cloud-platform/craas_api/) to delete tags, so you need to set either the _username/password_, _account_ and _vpc_ or _vpcID_ to clean up the container registry.
-
-You can use the following options (or their respective environment variables) to set the said parameters:
-- `--repo-selectel-username`
-- `--repo-selectel-password`
-- `--repo-selectel-account`
-- `--repo-selectel-vpc` or
-- `--repo-selectel-vpc-id`
-
-#### Known limitations
-
-* Sometimes, Selectel drop connection with VPC ID. Try to use the VPC name instead.
-* CR API has limitations, so you can not remove layers from the root of the container registry.
-* Low API rate limit. It can cause cleanup problems with rapid development.
 
 ## Container registry’s garbage collector
 
