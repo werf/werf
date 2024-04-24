@@ -92,7 +92,6 @@ func (wc *WerfChartStub) ChartLoaded(files []*chart.ChartExtenderBufferedFile) e
 
 	wc.HelmChart.Templates = append(wc.HelmChart.Templates, &chart.File{
 		Name: "templates/_werf_helpers.tpl",
-		Data: []byte(helpers.ChartTemplateHelpers),
 	})
 
 	return nil
@@ -118,7 +117,6 @@ func (wc *WerfChartStub) MakeValues(inputVals map[string]interface{}) (map[strin
 func (wc *WerfChartStub) SetupTemplateFuncs(t *template.Template, funcMap template.FuncMap) {
 	helpers.SetupWerfSecretFile(wc.SecretsRuntimeData, funcMap)
 	helpers.SetupIncludeWrapperFuncs(funcMap)
-	helpers.SetupWerfImageDeprecationFunc(wc.ChartExtenderContext, funcMap)
 }
 
 // LoadDir method for the chart.Extender interface
