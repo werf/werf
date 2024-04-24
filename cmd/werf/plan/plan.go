@@ -599,9 +599,6 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 				chartTree.HookResources(),
 				chartTree.GeneralResources(),
 				prevRelGeneralResources,
-				clientFactory.KubeClient(),
-				clientFactory.Mapper(),
-				clientFactory.Discovery(),
 				resrcprocssr.DeployableResourcesProcessorOptions{
 					NetworkParallelism: networkParallelism,
 					ReleasableHookResourcePatchers: []resrcpatcher.ResourcePatcher{
@@ -619,6 +616,10 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 					DeployableGeneralResourcePatchers: []resrcpatcher.ResourcePatcher{
 						resrcpatcher.NewExtraMetadataPatcher(lo.Assign(userExtraAnnotations, serviceAnnotations), userExtraLabels),
 					},
+					KubeClient:         clientFactory.KubeClient(),
+					Mapper:             clientFactory.Mapper(),
+					DiscoveryClient:    clientFactory.Discovery(),
+					AllowClusterAccess: true,
 				},
 			)
 

@@ -403,9 +403,6 @@ func runApply(ctx context.Context) error {
 			chartTree.HookResources(),
 			chartTree.GeneralResources(),
 			prevRelGeneralResources,
-			clientFactory.KubeClient(),
-			clientFactory.Mapper(),
-			clientFactory.Discovery(),
 			resrcprocssr.DeployableResourcesProcessorOptions{
 				NetworkParallelism: networkParallelism,
 				ReleasableHookResourcePatchers: []resrcpatcher.ResourcePatcher{
@@ -423,6 +420,10 @@ func runApply(ctx context.Context) error {
 				DeployableGeneralResourcePatchers: []resrcpatcher.ResourcePatcher{
 					resrcpatcher.NewExtraMetadataPatcher(lo.Assign(extraAnnotations, serviceAnnotations), extraLabels),
 				},
+				KubeClient:         clientFactory.KubeClient(),
+				Mapper:             clientFactory.Mapper(),
+				DiscoveryClient:    clientFactory.Discovery(),
+				AllowClusterAccess: true,
 			},
 		)
 
@@ -777,9 +778,6 @@ func runRollbackPlan(
 		prevDeployedRelease.HookResources(),
 		prevDeployedRelease.GeneralResources(),
 		failedRelease.GeneralResources(),
-		clientFactory.KubeClient(),
-		clientFactory.Mapper(),
-		clientFactory.Discovery(),
 		resrcprocssr.DeployableResourcesProcessorOptions{
 			NetworkParallelism: networkParallelism,
 			ReleasableHookResourcePatchers: []resrcpatcher.ResourcePatcher{
@@ -797,6 +795,10 @@ func runRollbackPlan(
 			DeployableGeneralResourcePatchers: []resrcpatcher.ResourcePatcher{
 				resrcpatcher.NewExtraMetadataPatcher(lo.Assign(extraAnnotations, serviceAnnotations), extraLabels),
 			},
+			KubeClient:         clientFactory.KubeClient(),
+			Mapper:             clientFactory.Mapper(),
+			DiscoveryClient:    clientFactory.Discovery(),
+			AllowClusterAccess: true,
 		},
 	)
 
