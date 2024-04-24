@@ -71,7 +71,7 @@ converge:
         fetch-depth: 0
 
     - name: Install werf
-      uses: werf/actions/install@v1.2
+      uses: werf/actions/install@v2
 
     - name: Run script
       run: |

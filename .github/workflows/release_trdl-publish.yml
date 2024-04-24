@@ -38,7 +38,7 @@ jobs:
           fetch-depth: 0
 
       - name: Converge
-        uses: werf/actions/converge@v1.2
+        uses: werf/actions/converge@v2
         with:
           env: production
           kube-config-base64-data: ${{ secrets.KUBECONFIG_BASE64_PROD }}
@@ -62,7 +62,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install werf
-        uses: werf/actions/install@v1.2
+        uses: werf/actions/install@v2
         with:
           channel: alpha
 

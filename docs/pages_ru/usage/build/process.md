@@ -7,7 +7,7 @@ permalink: usage/build/process.html
 
 ## Тегирование образов
 
-<!-- прим. для перевода: на основе https://werf.io/documentation/v1.2/internals/stages_and_storage.html#stage-naming -->
+<!-- прим. для перевода: на основе https://werf.io/documentation/v2/internals/stages_and_storage.html#stage-naming -->
 
 Тегирование образов werf выполняется автоматически в рамках сборочного процесса. Используется оптимальная схема тегирования, основанная на содержимом образа, которая предотвращает лишние пересборки и время простоя приложения при выкате.
 
@@ -152,7 +152,7 @@ staged: true
 
 ## Параллельность и порядок сборки образов
 
-<!-- прим. для перевода: на основе https://werf.io/documentation/v1.2/internals/build_process.html#parallel-build -->
+<!-- прим. для перевода: на основе https://werf.io/documentation/v2/internals/build_process.html#parallel-build -->
 
 Все образы, описанные в `werf.yaml`, собираются параллельно на одном сборочном хосте. При наличии зависимостей между образами сборка разбивается на этапы, где каждый этап содержит набор независимых образов и может собираться параллельно.
 
@@ -265,7 +265,7 @@ werf build --repo registry.mycompany.org/project --cache-repo localhost:5000/pro
 
 ## Синхронизация сборщиков
 
-<!-- прим. для перевода: на основе https://werf.io/documentation/v1.2/advanced/synchronization.html -->
+<!-- прим. для перевода: на основе https://werf.io/documentation/v2/advanced/synchronization.html -->
 
 Для обеспечения согласованности в работе параллельных сборщиков, а также гарантии воспроизводимости образов и промежуточных слоёв, werf берёт на себя ответственность за синхронизацию сборщиков. По умолчанию используется публичный сервис синхронизации по адресу [https://synchronization.werf.io/](https://synchronization.werf.io/) и от пользователя ничего дополнительно не требуется.
 
