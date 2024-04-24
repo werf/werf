@@ -104,7 +104,6 @@ func NewExportCmd(ctx context.Context) *cobra.Command {
 	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{OptionalRepo: true})
 	common.SetupFinalRepo(&commonCmdData, cmd)
 
-	common.SetupSkipBuild(&commonCmdData, cmd)
 	common.SetupRequireBuiltImages(&commonCmdData, cmd)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified repo")

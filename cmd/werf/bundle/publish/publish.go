@@ -135,7 +135,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupAllowedLocalCacheVolumeUsageMargin(&commonCmdData, cmd)
 	common.SetupDockerServerStoragePath(&commonCmdData, cmd)
 
-	common.SetupSkipBuild(&commonCmdData, cmd)
 	common.SetupRequireBuiltImages(&commonCmdData, cmd)
 	commonCmdData.SetupPlatform(cmd)
 
