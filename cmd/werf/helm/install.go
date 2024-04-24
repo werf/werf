@@ -8,12 +8,12 @@ import (
 	helm_v3 "helm.sh/helm/v3/cmd/helm"
 	"helm.sh/helm/v3/pkg/action"
 
-	"github.com/werf/werf/cmd/werf/common"
-	helm2 "github.com/werf/werf/cmd/werf/docs/replacers/helm"
-	"github.com/werf/werf/pkg/deploy/helm"
-	"github.com/werf/werf/pkg/deploy/helm/chart_extender"
-	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
-	"github.com/werf/werf/pkg/deploy/lock_manager"
+	"github.com/werf/werf/v2/cmd/werf/common"
+	helm2 "github.com/werf/werf/v2/cmd/werf/docs/replacers/helm"
+	"github.com/werf/werf/v2/pkg/deploy/helm"
+	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender"
+	"github.com/werf/werf/v2/pkg/deploy/helm/command_helpers"
+	"github.com/werf/werf/v2/pkg/deploy/lock_manager"
 )
 
 var installCmdData common.CmdData

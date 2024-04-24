@@ -10,13 +10,13 @@ import (
 	"strings"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/config"
-	"github.com/werf/werf/pkg/container_backend"
-	"github.com/werf/werf/pkg/docker_registry"
-	imagePkg "github.com/werf/werf/pkg/image"
-	"github.com/werf/werf/pkg/slug"
-	"github.com/werf/werf/pkg/util"
-	"github.com/werf/werf/pkg/werf"
+	"github.com/werf/werf/v2/pkg/config"
+	"github.com/werf/werf/v2/pkg/container_backend"
+	"github.com/werf/werf/v2/pkg/docker_registry"
+	imagePkg "github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/slug"
+	"github.com/werf/werf/v2/pkg/util"
+	"github.com/werf/werf/v2/pkg/werf"
 )
 
 type StageName string

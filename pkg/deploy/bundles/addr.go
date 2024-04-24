@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/werf/werf/pkg/deploy/bundles/registry"
+	"github.com/werf/werf/v2/pkg/deploy/bundles/registry"
 )
 
 const (

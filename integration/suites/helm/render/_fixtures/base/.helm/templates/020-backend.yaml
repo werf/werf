@@ -18,7 +18,7 @@ spec:
       - name: backend
         workingDir: /app
         command: [ "python3", "-m", "http.server", "8080" ]
-        image: {{ werf_image . }}
+        image: {{ $.Values.werf.image }}
         livenessProbe:
           httpGet:
             path: /

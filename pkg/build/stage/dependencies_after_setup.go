@@ -1,6 +1,6 @@
 package stage
 
-import "github.com/werf/werf/pkg/config"
+import "github.com/werf/werf/v2/pkg/config"
 
 func GenerateDependenciesAfterSetupStage(imageBaseConfig *config.StapelImageBase, baseStageOptions *BaseStageOptions) *DependenciesAfterSetupStage {
 	imports := getImports(imageBaseConfig, &getImportsOptions{After: Setup})

@@ -4,11 +4,11 @@ import (
 	"context"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/cleaning/stage_manager"
-	"github.com/werf/werf/pkg/image"
-	"github.com/werf/werf/pkg/logging"
-	"github.com/werf/werf/pkg/storage"
-	"github.com/werf/werf/pkg/storage/manager"
+	"github.com/werf/werf/v2/pkg/cleaning/stage_manager"
+	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/logging"
+	"github.com/werf/werf/v2/pkg/storage"
+	"github.com/werf/werf/v2/pkg/storage/manager"
 )
 
 type PurgeOptions struct {

@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/werf/logboek"
-	build_image "github.com/werf/werf/pkg/build/image"
-	"github.com/werf/werf/pkg/build/stage"
+	build_image "github.com/werf/werf/v2/pkg/build/image"
+	"github.com/werf/werf/v2/pkg/build/stage"
 )
 
 type StagesIterator struct {

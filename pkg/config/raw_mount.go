@@ -1,6 +1,6 @@
 package config
 
-import "github.com/werf/werf/pkg/giterminism_manager"
+import "github.com/werf/werf/v2/pkg/giterminism_manager"
 
 type rawMount struct {
 	To       string `yaml:"to,omitempty"`

@@ -11,9 +11,9 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/werf/logboek"
-	bundles_registry "github.com/werf/werf/pkg/deploy/bundles/registry"
-	"github.com/werf/werf/pkg/docker_registry"
-	"github.com/werf/werf/pkg/util"
+	bundles_registry "github.com/werf/werf/v2/pkg/deploy/bundles/registry"
+	"github.com/werf/werf/v2/pkg/docker_registry"
+	"github.com/werf/werf/v2/pkg/util"
 )
 
 type RemoteBundle struct {

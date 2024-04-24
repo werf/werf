@@ -1,7 +1,7 @@
 package converge
 
 import (
-	"github.com/werf/werf/cmd/werf/docs/structs"
+	"github.com/werf/werf/v2/cmd/werf/docs/structs"
 )
 
 func GetConvergeDocs() structs.DocsStruct {

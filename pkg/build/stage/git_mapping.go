@@ -19,11 +19,11 @@ import (
 	"github.com/djherbis/nio/v3"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/container_backend"
-	"github.com/werf/werf/pkg/git_repo"
-	"github.com/werf/werf/pkg/path_matcher"
-	"github.com/werf/werf/pkg/stapel"
-	"github.com/werf/werf/pkg/util"
+	"github.com/werf/werf/v2/pkg/container_backend"
+	"github.com/werf/werf/v2/pkg/git_repo"
+	"github.com/werf/werf/v2/pkg/path_matcher"
+	"github.com/werf/werf/v2/pkg/stapel"
+	"github.com/werf/werf/v2/pkg/util"
 )
 
 type GitMapping struct {

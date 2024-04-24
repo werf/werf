@@ -7,8 +7,8 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/werf/kubedog/pkg/kube"
-	"github.com/werf/werf/test/pkg/suite_init"
-	"github.com/werf/werf/test/pkg/utils"
+	"github.com/werf/werf/v2/test/pkg/suite_init"
+	"github.com/werf/werf/v2/test/pkg/utils"
 )
 
 func TestSuite(t *testing.T) {

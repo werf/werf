@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/werf/werf/pkg/container_backend"
+	"github.com/werf/werf/v2/pkg/container_backend"
 )
 
 type DockerfileStageBuilderInterface interface {

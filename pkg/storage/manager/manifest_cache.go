@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/image"
-	"github.com/werf/werf/pkg/storage"
+	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/storage"
 )
 
 func storeStageDescriptionIntoLocalManifestCache(ctx context.Context, projectName string, stageID image.StageID, stagesStorage storage.StagesStorage, stageDesc *image.StageDescription) error {

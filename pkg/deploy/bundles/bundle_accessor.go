@@ -6,7 +6,7 @@ import (
 
 	"helm.sh/helm/v3/pkg/chart"
 
-	"github.com/werf/werf/pkg/docker_registry"
+	"github.com/werf/werf/v2/pkg/docker_registry"
 )
 
 type copyToOptions struct {

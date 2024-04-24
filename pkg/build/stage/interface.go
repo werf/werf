@@ -3,9 +3,9 @@ package stage
 import (
 	"context"
 
-	"github.com/werf/werf/pkg/container_backend"
-	"github.com/werf/werf/pkg/docker_registry"
-	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/v2/pkg/container_backend"
+	"github.com/werf/werf/v2/pkg/docker_registry"
+	"github.com/werf/werf/v2/pkg/image"
 )
 
 type Interface interface {

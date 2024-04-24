@@ -7,7 +7,7 @@ import (
 	"helm.sh/helm/v3/pkg/chartutil"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/deploy/bundles/registry"
+	"github.com/werf/werf/v2/pkg/deploy/bundles/registry"
 )
 
 func Pull(ctx context.Context, bundleRef, destDir string, bundlesRegistryClient *registry.Client) error {

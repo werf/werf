@@ -11,8 +11,8 @@ import (
 	"github.com/containers/storage/pkg/unshare"
 	"github.com/sirupsen/logrus"
 
-	"github.com/werf/werf/pkg/buildah"
-	"github.com/werf/werf/pkg/werf"
+	"github.com/werf/werf/v2/pkg/buildah"
+	"github.com/werf/werf/v2/pkg/werf"
 )
 
 const newImage = "ilyalesikov/test:test"

@@ -1,7 +1,7 @@
 package cleanup
 
 import (
-	"github.com/werf/werf/cmd/werf/docs/structs"
+	"github.com/werf/werf/v2/cmd/werf/docs/structs"
 )
 
 func GetCleanupDocs() structs.DocsStruct {

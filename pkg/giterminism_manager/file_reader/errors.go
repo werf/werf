@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/werf/werf/pkg/giterminism_manager/errors"
+	"github.com/werf/werf/v2/pkg/giterminism_manager/errors"
 )
 
 type (

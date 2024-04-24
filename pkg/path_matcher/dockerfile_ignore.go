@@ -7,7 +7,7 @@ import (
 
 	"github.com/moby/patternmatcher"
 
-	"github.com/werf/werf/pkg/util"
+	"github.com/werf/werf/v2/pkg/util"
 )
 
 func newDockerfileIgnorePathMatcher(dockerignorePatterns []string) dockerfileIgnorePathMatcher {

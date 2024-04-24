@@ -6,8 +6,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/werf/werf/cmd/werf/common"
-	"github.com/werf/werf/pkg/werf"
+	"github.com/werf/werf/v2/cmd/werf/common"
+	"github.com/werf/werf/v2/pkg/werf"
 )
 
 func NewCmd(ctx context.Context) *cobra.Command {

@@ -12,8 +12,8 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/image"
-	"github.com/werf/werf/pkg/werf"
+	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/werf"
 )
 
 func NewChartExtenderServiceValuesData() *ChartExtenderServiceValuesData {

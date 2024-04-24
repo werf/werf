@@ -3,7 +3,7 @@ package docker_registry
 import (
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 
-	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/v2/pkg/image"
 )
 
 func NewImageInfoFromRegistryConfig(ref string, cfg *v1.ConfigFile) *image.Info {

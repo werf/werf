@@ -7,8 +7,8 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/pkg/config"
-	"github.com/werf/werf/pkg/config/deploy_params"
+	"github.com/werf/werf/v2/pkg/config"
+	"github.com/werf/werf/v2/pkg/config/deploy_params"
 )
 
 var _ = Describe("Deploy params", func() {

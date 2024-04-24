@@ -9,11 +9,11 @@ import (
 	"github.com/docker/docker/api/types/filters"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/container_backend"
-	"github.com/werf/werf/pkg/image"
-	"github.com/werf/werf/pkg/stapel"
-	"github.com/werf/werf/pkg/tmp_manager"
-	"github.com/werf/werf/pkg/werf"
+	"github.com/werf/werf/v2/pkg/container_backend"
+	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/stapel"
+	"github.com/werf/werf/v2/pkg/tmp_manager"
+	"github.com/werf/werf/v2/pkg/werf"
 )
 
 type HostPurgeOptions struct {

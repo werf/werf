@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/werf/werf/pkg/giterminism_manager"
+	"github.com/werf/werf/v2/pkg/giterminism_manager"
 )
 
 type GitRemoteExport struct {

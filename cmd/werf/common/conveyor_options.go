@@ -9,15 +9,15 @@ import (
 
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/level"
-	"github.com/werf/werf/pkg/build"
-	"github.com/werf/werf/pkg/build/stage"
-	"github.com/werf/werf/pkg/config"
-	"github.com/werf/werf/pkg/container_backend"
-	"github.com/werf/werf/pkg/container_backend/thirdparty/platformutil"
-	"github.com/werf/werf/pkg/giterminism_manager"
-	"github.com/werf/werf/pkg/image"
-	"github.com/werf/werf/pkg/slug"
-	"github.com/werf/werf/pkg/storage"
+	"github.com/werf/werf/v2/pkg/build"
+	"github.com/werf/werf/v2/pkg/build/stage"
+	"github.com/werf/werf/v2/pkg/config"
+	"github.com/werf/werf/v2/pkg/container_backend"
+	"github.com/werf/werf/v2/pkg/container_backend/thirdparty/platformutil"
+	"github.com/werf/werf/v2/pkg/giterminism_manager"
+	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/slug"
+	"github.com/werf/werf/v2/pkg/storage"
 )
 
 func GetConveyorOptions(ctx context.Context, commonCmdData *CmdData, imagesToProcess build.ImagesToProcess) (build.ConveyorOptions, error) {
@@ -100,26 +100,11 @@ func GetBuildOptions(ctx context.Context, commonCmdData *CmdData, werfConfig *co
 		IntrospectOptions: introspectOptions,
 	}
 
-	usedNewBuildReportOption := (commonCmdData.SaveBuildReport != nil && *commonCmdData.SaveBuildReport == true) || (commonCmdData.BuildReportPath != nil && *commonCmdData.BuildReportPath != "")
-
-	usedOldBuildReportOption := (commonCmdData.DeprecatedReportPath != nil && *commonCmdData.DeprecatedReportPath != "") || (commonCmdData.DeprecatedReportFormat != nil && *commonCmdData.DeprecatedReportFormat != "")
-
-	if usedNewBuildReportOption && usedOldBuildReportOption {
-		return buildOptions, fmt.Errorf("you can't use deprecated options --report-path and --report-format along with new options --save-build-report and --build-report-path, use only the latter instead")
-	}
-
-	if usedNewBuildReportOption && GetSaveBuildReport(commonCmdData) {
+	if GetSaveBuildReport(commonCmdData) {
 		buildOptions.ReportPath, buildOptions.ReportFormat, err = GetBuildReportPathAndFormat(commonCmdData)
 		if err != nil {
 			return buildOptions, fmt.Errorf("getting build report path failed: %w", err)
 		}
-	} else if usedOldBuildReportOption {
-		buildOptions.ReportFormat, err = GetDeprecatedReportFormat(ctx, commonCmdData)
-		if err != nil {
-			return buildOptions, fmt.Errorf("getting deprecated build report format failed: %w", err)
-		}
-
-		buildOptions.ReportPath = GetDeprecatedReportPath(ctx, commonCmdData)
 	}
 
 	return buildOptions, nil

@@ -11,9 +11,9 @@ import (
 	"github.com/spf13/cobra"
 	flag "github.com/spf13/pflag"
 
-	"github.com/werf/werf/pkg/git_repo"
-	"github.com/werf/werf/pkg/telemetry"
-	"github.com/werf/werf/pkg/util"
+	"github.com/werf/werf/v2/pkg/git_repo"
+	"github.com/werf/werf/v2/pkg/telemetry"
+	"github.com/werf/werf/v2/pkg/util"
 )
 
 var telemetryIgnoreCommands = []string{

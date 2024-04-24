@@ -17,15 +17,15 @@ import (
 
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/level"
-	"github.com/werf/werf/cmd/werf/common"
-	"github.com/werf/werf/pkg/docker"
-	"github.com/werf/werf/pkg/docker_registry"
-	"github.com/werf/werf/pkg/git_repo"
-	"github.com/werf/werf/pkg/git_repo/gitdata"
-	"github.com/werf/werf/pkg/tmp_manager"
-	"github.com/werf/werf/pkg/true_git"
-	"github.com/werf/werf/pkg/util"
-	"github.com/werf/werf/pkg/werf"
+	"github.com/werf/werf/v2/cmd/werf/common"
+	"github.com/werf/werf/v2/pkg/docker"
+	"github.com/werf/werf/v2/pkg/docker_registry"
+	"github.com/werf/werf/v2/pkg/git_repo"
+	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
+	"github.com/werf/werf/v2/pkg/tmp_manager"
+	"github.com/werf/werf/v2/pkg/true_git"
+	"github.com/werf/werf/v2/pkg/util"
+	"github.com/werf/werf/v2/pkg/werf"
 )
 
 var cmdData struct {

@@ -5,7 +5,7 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 
-	"github.com/werf/werf/test/pkg/suite_init"
+	"github.com/werf/werf/v2/test/pkg/suite_init"
 )
 
 var testSuiteEntrypointFunc = suite_init.MakeTestSuiteEntrypointFunc("Giterminism suite", suite_init.TestSuiteEntrypointFuncOptions{})

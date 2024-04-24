@@ -8,8 +8,8 @@ import (
 
 	"golang.org/x/crypto/ssh/terminal"
 
-	"github.com/werf/werf/pkg/deploy/secrets_manager"
-	"github.com/werf/werf/pkg/secret"
+	"github.com/werf/werf/v2/pkg/deploy/secrets_manager"
+	"github.com/werf/werf/v2/pkg/secret"
 )
 
 func SecretFileEncrypt(ctx context.Context, m *secrets_manager.SecretsManager, workingDir, filePath, outputFilePath string) error {

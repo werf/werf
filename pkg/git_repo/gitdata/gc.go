@@ -15,10 +15,10 @@ import (
 	"github.com/werf/kubedog/pkg/utils"
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/git_repo"
-	"github.com/werf/werf/pkg/util"
-	"github.com/werf/werf/pkg/volumeutils"
-	"github.com/werf/werf/pkg/werf"
+	"github.com/werf/werf/v2/pkg/git_repo"
+	"github.com/werf/werf/v2/pkg/util"
+	"github.com/werf/werf/v2/pkg/volumeutils"
+	"github.com/werf/werf/v2/pkg/werf"
 )
 
 const (

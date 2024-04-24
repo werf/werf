@@ -5,7 +5,7 @@ import (
 
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/test/pkg/utils"
+	"github.com/werf/werf/v2/test/pkg/utils"
 )
 
 func NewDockerBackend() ContainerBackend {

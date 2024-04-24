@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/werf/werf/pkg/build/builder"
-	"github.com/werf/werf/pkg/container_backend"
-	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/v2/pkg/build/builder"
+	"github.com/werf/werf/v2/pkg/container_backend"
+	"github.com/werf/werf/v2/pkg/image"
 )
 
 func newUserWithGitPatchStage(builder builder.Builder, name StageName, gitPatchStageOptions *NewGitPatchStageOptions, baseStageOptions *BaseStageOptions) *UserWithGitPatchStage {

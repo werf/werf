@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/tools/clientcmd"
 
-	"github.com/werf/werf/cmd/werf/common"
+	"github.com/werf/werf/v2/cmd/werf/common"
 )
 
 const (

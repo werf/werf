@@ -6,8 +6,8 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/test/pkg/utils"
-	"github.com/werf/werf/test/pkg/utils/liveexec"
+	"github.com/werf/werf/v2/test/pkg/utils"
+	"github.com/werf/werf/v2/test/pkg/utils/liveexec"
 )
 
 func werfRender(dir string, opts liveexec.ExecCommandOptions, extraArgs ...string) error {

@@ -9,7 +9,6 @@ The result of converge command is an application deployed into Kubernetes for cu
 
 Environment is a required param for the deploy by default, because it is needed to construct Helm Release name and Kubernetes Namespace. Either `--env` or `$WERF_ENV` should be specified for command.
 
-Read more info about Helm chart structure, Helm Release name, Kubernetes Namespace and how to change it: [https://werf.io/documentation/usage/deploy/environments.html]({{ "/usage/deploy/environments.html" | true_relative_url }})
 
 
 {{ header }} Syntax
@@ -100,6 +99,9 @@ werf converge --repo registry.mydomain.com/web --env production
       --config-templates-dir=''
             Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf   
             in working directory)
+      --deploy-graph-path=''
+            Save deploy graph path to the specified file (by default $WERF_DEPLOY_GRAPH_PATH).      
+            Extension must be .dot or not specified. If extension not specified, then .dot is used
       --deploy-report-path=''
             Change deploy report path and format (by default $WERF_DEPLOY_REPORT_PATH or            
             ".werf-deploy-report.json" if not set). Extension must be .json for JSON format. If     
@@ -249,12 +251,12 @@ werf converge --repo registry.mydomain.com/web --env production
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
       --loose-giterminism=false
-            Loose werf giterminism mode restrictions (NOTE: not all restrictions can be removed,    
-            more info https://werf.io/documentation/usage/project_configuration/giterminism.html,   
-            default $WERF_LOOSE_GITERMINISM)
+            Loose werf giterminism mode restrictions
       --namespace=''
             Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or         
             deploy.namespace custom template from werf.yaml or $WERF_NAMESPACE)
+      --network-parallelism=30
+            Parallelize some network operations (default $WERF_NETWORK_PARALLELISM or 30)
   -p, --parallel=true
             Run in parallel (default $WERF_PARALLEL or true)
       --parallel-tasks-limit=5
@@ -300,36 +302,13 @@ werf converge --repo registry.mydomain.com/web --env production
             repo Selectel VPC (default $WERF_REPO_SELECTEL_VPC)
       --repo-selectel-vpc-id=''
             repo Selectel VPC ID (default $WERF_REPO_SELECTEL_VPC_ID)
-      --report-format=''
-            DEPRECATED: use --save-build-report with optional --build-report-path.
-            Report format: json or envfile (json or $WERF_REPORT_FORMAT by default) json:
-            	{
-            	  "Images": {
-            		"<WERF_IMAGE_NAME>": {
-            			"WerfImageName": "<WERF_IMAGE_NAME>",
-            			"DockerRepo": "<REPO>",
-            			"DockerTag": "<TAG>"
-            			"DockerImageName": "<REPO>:<TAG>",
-            			"DockerImageID": "<SHA256>",
-            			"DockerImageDigest": "<SHA256>",
-            		},
-            		...
-            	  }
-            	}
-            envfile:
-            	WERF_<FORMATTED_WERF_IMAGE_NAME>_DOCKER_IMAGE_NAME=<REPO>:<TAG>
-            	...
-            <FORMATTED_WERF_IMAGE_NAME> is werf image name from werf.yaml modified according to the 
-            following rules:
-            - all characters are uppercase (app -> APP);
-            - charset /- is replaced with _ (DEV/APP-FRONTEND -> DEV_APP_FRONTEND)
-      --report-path=''
-            DEPRECATED: use --save-build-report with optional --build-report-path.
-            Report save path ($WERF_REPORT_PATH by default)
   -Z, --require-built-images=false
             Requires all used images to be previously built and exist in repo. Exits with error if  
             needed images are not cached and so require to run build instructions (default          
             $WERF_REQUIRE_BUILT_IMAGES)
+      --rollback-graph-path=''
+            Save rollback graph path to the specified file (by default $WERF_ROLLBACK_GRAPH_PATH).  
+            Extension must be .dot or not specified. If extension not specified, then .dot is used
       --save-build-report=false
             Save build report (by default $WERF_SAVE_BUILD_REPORT or false). Its path and format    
             configured with --build-report-path
@@ -371,8 +350,7 @@ werf converge --repo registry.mydomain.com/web --env production
             Use only specific ssh key(s).
             Can be specified with $WERF_SSH_KEY_* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa,         
             $WERF_SSH_KEY_NODEJS=~/.ssh/nodejs_rsa).
-            Defaults to $WERF_SSH_KEY_*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see            
-            https://werf.io/documentation/reference/toolbox/ssh.html
+            Defaults to $WERF_SSH_KEY_*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}
       --status-progress-period=5
             Status progress period in seconds. Set -1 to stop showing status progress. Defaults to  
             $WERF_STATUS_PROGRESS_PERIOD_SECONDS or 5 seconds

@@ -69,23 +69,14 @@ werf bundle copy [options]
             Force setting of chart name in the Chart.yaml of the published chart to the specified   
             value (can be set by the $WERF_RENAME_CHART, no rename by default, could not be used    
             together with the `--helm-compatible-chart` option).
-      --repo=''
-            Deprecated param, use --from=ADDR instead. Source address of bundle which should be     
-            copied.
       --skip-tls-verify-registry=false
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)
-      --tag=''
-            Deprecated param, use --from=REPO:TAG instead. Provide from tag version of the bundle   
-            to copy ($WERF_TAG or latest by default).
       --tmp-dir=''
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --to=''
             Destination address of the bundle to copy, specify bundle archive using schema          
             `archive:PATH_TO_ARCHIVE.tar.gz`, specify remote bundle with schema                     
             `[docker://]REPO:TAG` or without schema.
-      --to-tag=''
-            Deprecated param, use --to=REPO:TAG instead. Provide to tag version of the bundle to    
-            copy ($WERF_TO_TAG or same as --tag by default).
 ```
 

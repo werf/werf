@@ -12,8 +12,8 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/config"
-	"github.com/werf/werf/pkg/util"
+	"github.com/werf/werf/v2/pkg/config"
+	"github.com/werf/werf/v2/pkg/util"
 )
 
 func ScanReferencesHistory(ctx context.Context, gitRepository *git.Repository, refs []*ReferenceToScan, expectedStageIDCommitList map[string][]string) ([]string, map[string][]string, error) {

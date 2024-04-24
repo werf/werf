@@ -13,9 +13,9 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/config"
-	"github.com/werf/werf/pkg/docker"
-	"github.com/werf/werf/pkg/stapel"
+	"github.com/werf/werf/v2/pkg/config"
+	"github.com/werf/werf/v2/pkg/docker"
+	"github.com/werf/werf/v2/pkg/stapel"
 )
 
 const rsyncServerPort = "873"

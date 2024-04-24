@@ -25,7 +25,7 @@ To create an integration test suite you need:
     import (
       "testing"
     
-      "github.com/werf/werf/test/pkg/suite_init"
+      "github.com/werf/werf/v2/test/pkg/suite_init"
     )
     
     var testSuiteEntrypointFunc = suite_init.MakeTestSuiteEntrypointFunc("MYTEST suite", suite_init.TestSuiteEntrypointFuncOptions{})
@@ -95,7 +95,7 @@ There is `integration/pkg/suite_init` package which provides objects and helpers
 To setup needed data you should create following `SuiteData` variable in the `suite_test.go` setup file:
 
 ```
-import "github.com/werf/werf/test/pkg/suite_init"
+import "github.com/werf/werf/v2/test/pkg/suite_init"
 
 var SuiteData suite_init.SuiteData
 ```
@@ -103,7 +103,7 @@ var SuiteData suite_init.SuiteData
 Then you should call corresponding setup function to setup needed data, providing required arguments. Note that suite data can depend on each other and should be initialized in the corresponding order. For example, let's initialize stubs, project name, synchronized suite callbacks and werf binary:
 
 ```
-import "github.com/werf/werf/test/pkg/suite_init"
+import "github.com/werf/werf/v2/test/pkg/suite_init"
 
 var SuiteData suite_init.SuiteData
 
@@ -124,7 +124,7 @@ Furthermore, different `It` blocks (within the same `Describe` or different `Des
 Use `integration/pkg/suite_init/project_name_data.go` suite data initialization to generate project name:
 
 ```
-import "github.com/werf/werf/test/pkg/suite_init"
+import "github.com/werf/werf/v2/test/pkg/suite_init"
 
 var SuiteData suite_init.SuiteData
 

@@ -12,10 +12,10 @@ import (
 	"k8s.io/kubectl/pkg/cmd/plugin"
 	"k8s.io/kubectl/pkg/cmd/util"
 
-	"github.com/werf/werf/cmd/werf/common"
-	"github.com/werf/werf/pkg/tmp_manager"
-	util2 "github.com/werf/werf/pkg/util"
-	"github.com/werf/werf/pkg/werf"
+	"github.com/werf/werf/v2/cmd/werf/common"
+	"github.com/werf/werf/v2/pkg/tmp_manager"
+	util2 "github.com/werf/werf/v2/pkg/util"
+	"github.com/werf/werf/v2/pkg/werf"
 )
 
 var (

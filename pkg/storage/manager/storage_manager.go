@@ -14,14 +14,14 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
-	"github.com/werf/werf/pkg/build/stage"
-	"github.com/werf/werf/pkg/container_backend"
-	"github.com/werf/werf/pkg/docker_registry"
-	"github.com/werf/werf/pkg/image"
-	"github.com/werf/werf/pkg/storage"
-	"github.com/werf/werf/pkg/storage/lrumeta"
-	"github.com/werf/werf/pkg/util/parallel"
-	"github.com/werf/werf/pkg/werf"
+	"github.com/werf/werf/v2/pkg/build/stage"
+	"github.com/werf/werf/v2/pkg/container_backend"
+	"github.com/werf/werf/v2/pkg/docker_registry"
+	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/storage"
+	"github.com/werf/werf/v2/pkg/storage/lrumeta"
+	"github.com/werf/werf/v2/pkg/util/parallel"
+	"github.com/werf/werf/v2/pkg/werf"
 )
 
 var (

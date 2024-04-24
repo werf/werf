@@ -7,7 +7,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/yaml"
 
-	"github.com/werf/werf/test/pkg/utils"
+	"github.com/werf/werf/v2/test/pkg/utils"
 )
 
 var _ = Describe("helm render with extra annotations and labels", func() {

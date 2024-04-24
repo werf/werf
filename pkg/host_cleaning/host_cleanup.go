@@ -8,9 +8,9 @@ import (
 	"strings"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/container_backend"
-	"github.com/werf/werf/pkg/git_repo/gitdata"
-	"github.com/werf/werf/pkg/tmp_manager"
+	"github.com/werf/werf/v2/pkg/container_backend"
+	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
+	"github.com/werf/werf/v2/pkg/tmp_manager"
 )
 
 const (

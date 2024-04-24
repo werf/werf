@@ -3,8 +3,8 @@ package inspector
 import (
 	"context"
 
-	"github.com/werf/werf/pkg/git_repo"
-	"github.com/werf/werf/pkg/path_matcher"
+	"github.com/werf/werf/v2/pkg/git_repo"
+	"github.com/werf/werf/v2/pkg/path_matcher"
 )
 
 type Inspector struct {

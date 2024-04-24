@@ -9,9 +9,9 @@ import (
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/lockgate"
 	"github.com/werf/lockgate/pkg/distributed_locker"
-	"github.com/werf/werf/pkg/kubeutils"
-	"github.com/werf/werf/pkg/werf"
-	"github.com/werf/werf/pkg/werf/locker_with_retry"
+	"github.com/werf/werf/v2/pkg/kubeutils"
+	"github.com/werf/werf/v2/pkg/werf"
+	"github.com/werf/werf/v2/pkg/werf/locker_with_retry"
 )
 
 // NOTE: LockManager for not is not multithreaded due to the lack of support of contexts in the lockgate library

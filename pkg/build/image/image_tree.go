@@ -12,12 +12,12 @@ import (
 
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/types"
-	"github.com/werf/werf/pkg/build/stage"
-	"github.com/werf/werf/pkg/config"
-	"github.com/werf/werf/pkg/git_repo"
-	"github.com/werf/werf/pkg/giterminism_manager"
-	"github.com/werf/werf/pkg/logging"
-	"github.com/werf/werf/pkg/util"
+	"github.com/werf/werf/v2/pkg/build/stage"
+	"github.com/werf/werf/v2/pkg/config"
+	"github.com/werf/werf/v2/pkg/git_repo"
+	"github.com/werf/werf/v2/pkg/giterminism_manager"
+	"github.com/werf/werf/v2/pkg/logging"
+	"github.com/werf/werf/v2/pkg/util"
 )
 
 type ImagesTree struct {

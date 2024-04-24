@@ -41,8 +41,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"gopkg.in/errgo.v2/fmt/errors"
 
-	"github.com/werf/werf/pkg/buildah/thirdparty"
-	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/v2/pkg/buildah/thirdparty"
+	"github.com/werf/werf/v2/pkg/image"
 )
 
 const (

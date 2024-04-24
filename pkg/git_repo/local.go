@@ -13,13 +13,13 @@ import (
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/types"
-	"github.com/werf/werf/pkg/git_repo/repo_handle"
-	"github.com/werf/werf/pkg/path_matcher"
-	"github.com/werf/werf/pkg/telemetry"
-	"github.com/werf/werf/pkg/true_git"
-	"github.com/werf/werf/pkg/true_git/status"
-	"github.com/werf/werf/pkg/util"
-	"github.com/werf/werf/pkg/werf"
+	"github.com/werf/werf/v2/pkg/git_repo/repo_handle"
+	"github.com/werf/werf/v2/pkg/path_matcher"
+	"github.com/werf/werf/v2/pkg/telemetry"
+	"github.com/werf/werf/v2/pkg/true_git"
+	"github.com/werf/werf/v2/pkg/true_git/status"
+	"github.com/werf/werf/v2/pkg/util"
+	"github.com/werf/werf/v2/pkg/werf"
 )
 
 var ErrLocalRepositoryNotExists = git.ErrRepositoryNotExists

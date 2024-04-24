@@ -13,7 +13,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/v2/pkg/image"
 )
 
 const GitLabRegistryImplementationName = "gitlab"

@@ -8,10 +8,10 @@ import (
 	helm_v3 "helm.sh/helm/v3/cmd/helm"
 	"helm.sh/helm/v3/pkg/action"
 
-	"github.com/werf/werf/cmd/werf/common"
-	"github.com/werf/werf/cmd/werf/docs/replacers/helm"
-	"github.com/werf/werf/pkg/deploy/helm/chart_extender"
-	"github.com/werf/werf/pkg/deploy/helm/chart_extender/helpers"
+	"github.com/werf/werf/v2/cmd/werf/common"
+	"github.com/werf/werf/v2/cmd/werf/docs/replacers/helm"
+	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender"
+	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
 )
 
 var lintCmdData common.CmdData

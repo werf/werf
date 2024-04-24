@@ -7,12 +7,12 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/werf/werf/pkg/buildah"
-	"github.com/werf/werf/pkg/buildah/thirdparty"
-	"github.com/werf/werf/pkg/container_backend"
-	"github.com/werf/werf/pkg/docker"
-	"github.com/werf/werf/pkg/util"
-	"github.com/werf/werf/pkg/werf"
+	"github.com/werf/werf/v2/pkg/buildah"
+	"github.com/werf/werf/v2/pkg/buildah/thirdparty"
+	"github.com/werf/werf/v2/pkg/container_backend"
+	"github.com/werf/werf/v2/pkg/docker"
+	"github.com/werf/werf/v2/pkg/util"
+	"github.com/werf/werf/v2/pkg/werf"
 )
 
 func ContainerBackendProcessStartupHook() (bool, error) {

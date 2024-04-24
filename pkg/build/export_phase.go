@@ -10,10 +10,10 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
-	build_image "github.com/werf/werf/pkg/build/image"
-	"github.com/werf/werf/pkg/image"
-	"github.com/werf/werf/pkg/storage"
-	"github.com/werf/werf/pkg/util"
+	build_image "github.com/werf/werf/v2/pkg/build/image"
+	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/storage"
+	"github.com/werf/werf/v2/pkg/util"
 )
 
 type Exporter struct {

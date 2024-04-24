@@ -1,6 +1,6 @@
 package storage
 
-import "github.com/werf/werf/pkg/docker_registry"
+import "github.com/werf/werf/v2/pkg/docker_registry"
 
 type Options struct {
 	dockerRegistryOptions []docker_registry.Option

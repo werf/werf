@@ -15,8 +15,8 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/werf"
-	"github.com/werf/werf/pkg/werf/global_warnings"
+	"github.com/werf/werf/v2/pkg/werf"
+	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
 
 var WerfRuntimeAnnotations = map[string]string{

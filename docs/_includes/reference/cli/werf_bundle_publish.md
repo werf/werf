@@ -3,7 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Publish bundle into the container registry. `werf bundle` contains built images defined in the `werf.yaml`, Helm chart, Service values which contain built images tags, any custom values and set values params provided during publish invocation, werf addon templates (like `werf_image`).
+Publish bundle into the container registry. `werf bundle` contains built images defined in the `werf.yaml`, Helm chart, Service values which contain built images tags, any custom values and set values params provided during publish invocation, werf addon templates.
 
 Published into container registry bundle can be rolled out by the `werf bundle` command.
 
@@ -213,9 +213,7 @@ werf bundle publish [IMAGE_NAME...] [options]
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
       --loose-giterminism=false
-            Loose werf giterminism mode restrictions (NOTE: not all restrictions can be removed,    
-            more info https://werf.io/documentation/usage/project_configuration/giterminism.html,   
-            default $WERF_LOOSE_GITERMINISM)
+            Loose werf giterminism mode restrictions
   -p, --parallel=true
             Run in parallel (default $WERF_PARALLEL or true)
       --parallel-tasks-limit=5
@@ -260,32 +258,6 @@ werf bundle publish [IMAGE_NAME...] [options]
             repo Selectel VPC (default $WERF_REPO_SELECTEL_VPC)
       --repo-selectel-vpc-id=''
             repo Selectel VPC ID (default $WERF_REPO_SELECTEL_VPC_ID)
-      --report-format=''
-            DEPRECATED: use --save-build-report with optional --build-report-path.
-            Report format: json or envfile (json or $WERF_REPORT_FORMAT by default) json:
-            	{
-            	  "Images": {
-            		"<WERF_IMAGE_NAME>": {
-            			"WerfImageName": "<WERF_IMAGE_NAME>",
-            			"DockerRepo": "<REPO>",
-            			"DockerTag": "<TAG>"
-            			"DockerImageName": "<REPO>:<TAG>",
-            			"DockerImageID": "<SHA256>",
-            			"DockerImageDigest": "<SHA256>",
-            		},
-            		...
-            	  }
-            	}
-            envfile:
-            	WERF_<FORMATTED_WERF_IMAGE_NAME>_DOCKER_IMAGE_NAME=<REPO>:<TAG>
-            	...
-            <FORMATTED_WERF_IMAGE_NAME> is werf image name from werf.yaml modified according to the 
-            following rules:
-            - all characters are uppercase (app -> APP);
-            - charset /- is replaced with _ (DEV/APP-FRONTEND -> DEV_APP_FRONTEND)
-      --report-path=''
-            DEPRECATED: use --save-build-report with optional --build-report-path.
-            Report save path ($WERF_REPORT_PATH by default)
   -Z, --require-built-images=false
             Requires all used images to be previously built and exist in repo. Exits with error if  
             needed images are not cached and so require to run build instructions (default          
@@ -326,8 +298,7 @@ werf bundle publish [IMAGE_NAME...] [options]
             Use only specific ssh key(s).
             Can be specified with $WERF_SSH_KEY_* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa,         
             $WERF_SSH_KEY_NODEJS=~/.ssh/nodejs_rsa).
-            Defaults to $WERF_SSH_KEY_*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see            
-            https://werf.io/documentation/reference/toolbox/ssh.html
+            Defaults to $WERF_SSH_KEY_*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}
   -S, --synchronization=''
             Address of synchronizer for multiple werf processes to work with a single repo.
             

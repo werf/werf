@@ -9,7 +9,7 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/go-git/go-git/v5"
 
-	"github.com/werf/werf/pkg/util"
+	"github.com/werf/werf/v2/pkg/util"
 )
 
 func GitOpenWithCustomWorktreeDir(gitDir, worktreeDir string) (*git.Repository, error) {

@@ -15,24 +15,24 @@ import (
 	"helm.sh/helm/v3/pkg/cli/values"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/cmd/werf/common"
-	"github.com/werf/werf/pkg/build"
-	"github.com/werf/werf/pkg/config"
-	"github.com/werf/werf/pkg/deploy/bundles"
-	"github.com/werf/werf/pkg/deploy/helm/chart_extender"
-	"github.com/werf/werf/pkg/deploy/helm/chart_extender/helpers"
-	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
-	"github.com/werf/werf/pkg/deploy/secrets_manager"
-	"github.com/werf/werf/pkg/git_repo"
-	"github.com/werf/werf/pkg/git_repo/gitdata"
-	"github.com/werf/werf/pkg/image"
-	"github.com/werf/werf/pkg/ssh_agent"
-	"github.com/werf/werf/pkg/storage/lrumeta"
-	"github.com/werf/werf/pkg/storage/manager"
-	"github.com/werf/werf/pkg/tmp_manager"
-	"github.com/werf/werf/pkg/true_git"
-	"github.com/werf/werf/pkg/werf"
-	"github.com/werf/werf/pkg/werf/global_warnings"
+	"github.com/werf/werf/v2/cmd/werf/common"
+	"github.com/werf/werf/v2/pkg/build"
+	"github.com/werf/werf/v2/pkg/config"
+	"github.com/werf/werf/v2/pkg/deploy/bundles"
+	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender"
+	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
+	"github.com/werf/werf/v2/pkg/deploy/helm/command_helpers"
+	"github.com/werf/werf/v2/pkg/deploy/secrets_manager"
+	"github.com/werf/werf/v2/pkg/git_repo"
+	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
+	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/ssh_agent"
+	"github.com/werf/werf/v2/pkg/storage/lrumeta"
+	"github.com/werf/werf/v2/pkg/storage/manager"
+	"github.com/werf/werf/v2/pkg/tmp_manager"
+	"github.com/werf/werf/v2/pkg/true_git"
+	"github.com/werf/werf/v2/pkg/werf"
+	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
 
 var cmdData struct {
@@ -121,8 +121,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupSaveBuildReport(&commonCmdData, cmd)
 	common.SetupBuildReportPath(&commonCmdData, cmd)
-	common.SetupDeprecatedReportPath(&commonCmdData, cmd)
-	common.SetupDeprecatedReportFormat(&commonCmdData, cmd)
 
 	common.SetupUseCustomTag(&commonCmdData, cmd)
 	common.SetupAddCustomTag(&commonCmdData, cmd)
@@ -137,7 +135,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupAllowedLocalCacheVolumeUsageMargin(&commonCmdData, cmd)
 	common.SetupDockerServerStoragePath(&commonCmdData, cmd)
 
-	common.SetupSkipBuild(&commonCmdData, cmd)
 	common.SetupRequireBuiltImages(&commonCmdData, cmd)
 	commonCmdData.SetupPlatform(cmd)
 

@@ -1,8 +1,8 @@
 package common
 
 import (
-	"github.com/werf/werf/pkg/build"
-	"github.com/werf/werf/pkg/config"
+	"github.com/werf/werf/v2/pkg/build"
+	"github.com/werf/werf/v2/pkg/config"
 )
 
 func GetImagesToProcess(onlyImages []string, withoutImages bool) build.ImagesToProcess {

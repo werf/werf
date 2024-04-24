@@ -8,10 +8,10 @@ import (
 	"helm.sh/helm/v3/pkg/chart"
 	"sigs.k8s.io/yaml"
 
-	"github.com/werf/werf/pkg/deploy/secrets_manager"
-	"github.com/werf/werf/pkg/giterminism_manager"
-	"github.com/werf/werf/pkg/secret"
-	"github.com/werf/werf/pkg/util/secretvalues"
+	"github.com/werf/werf/v2/pkg/deploy/secrets_manager"
+	"github.com/werf/werf/v2/pkg/giterminism_manager"
+	"github.com/werf/werf/v2/pkg/secret"
+	"github.com/werf/werf/v2/pkg/util/secretvalues"
 )
 
 type SecretsRuntimeData struct {

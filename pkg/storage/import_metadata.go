@@ -3,7 +3,7 @@ package storage
 import (
 	"fmt"
 
-	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/v2/pkg/image"
 )
 
 type ImportMetadata struct {

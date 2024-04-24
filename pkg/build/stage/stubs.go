@@ -6,12 +6,12 @@ import (
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/pkg/container_backend"
-	"github.com/werf/werf/pkg/docker_registry"
-	"github.com/werf/werf/pkg/git_repo"
-	"github.com/werf/werf/pkg/giterminism_manager"
-	"github.com/werf/werf/pkg/image"
-	"github.com/werf/werf/pkg/path_matcher"
+	"github.com/werf/werf/v2/pkg/container_backend"
+	"github.com/werf/werf/v2/pkg/docker_registry"
+	"github.com/werf/werf/v2/pkg/git_repo"
+	"github.com/werf/werf/v2/pkg/giterminism_manager"
+	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/path_matcher"
 )
 
 type LegacyImageStub struct {

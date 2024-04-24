@@ -15,19 +15,19 @@ import (
 	"github.com/werf/logboek/pkg/level"
 	"github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
-	"github.com/werf/werf/pkg/build"
-	"github.com/werf/werf/pkg/build/stage"
-	"github.com/werf/werf/pkg/config"
-	"github.com/werf/werf/pkg/container_backend"
-	"github.com/werf/werf/pkg/docker_registry"
-	"github.com/werf/werf/pkg/git_repo"
-	"github.com/werf/werf/pkg/giterminism_manager"
-	"github.com/werf/werf/pkg/logging"
-	"github.com/werf/werf/pkg/storage"
-	"github.com/werf/werf/pkg/true_git"
-	"github.com/werf/werf/pkg/util"
-	"github.com/werf/werf/pkg/werf"
-	"github.com/werf/werf/pkg/werf/global_warnings"
+	"github.com/werf/werf/v2/pkg/build"
+	"github.com/werf/werf/v2/pkg/build/stage"
+	"github.com/werf/werf/v2/pkg/config"
+	"github.com/werf/werf/v2/pkg/container_backend"
+	"github.com/werf/werf/v2/pkg/docker_registry"
+	"github.com/werf/werf/v2/pkg/git_repo"
+	"github.com/werf/werf/v2/pkg/giterminism_manager"
+	"github.com/werf/werf/v2/pkg/logging"
+	"github.com/werf/werf/v2/pkg/storage"
+	"github.com/werf/werf/v2/pkg/true_git"
+	"github.com/werf/werf/v2/pkg/util"
+	"github.com/werf/werf/v2/pkg/werf"
+	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
 
 const (
@@ -149,67 +149,6 @@ func SetupSSHKey(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringArrayVarP(cmdData.SSHKeys, "ssh-key", "", []string{}, `Use only specific ssh key(s).
 Can be specified with $WERF_SSH_KEY_* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa, $WERF_SSH_KEY_NODEJS=~/.ssh/nodejs_rsa).
 Defaults to $WERF_SSH_KEY_*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}`)
-}
-
-func SetupDeprecatedReportPath(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.DeprecatedReportPath = new(string)
-	cmd.Flags().StringVarP(cmdData.DeprecatedReportPath, "report-path", "", os.Getenv("WERF_REPORT_PATH"), "DEPRECATED: use --save-build-report with optional --build-report-path.\nReport save path ($WERF_REPORT_PATH by default)")
-}
-
-func SetupDeprecatedReportFormat(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.DeprecatedReportFormat = new(string)
-
-	cmd.Flags().StringVarP(cmdData.DeprecatedReportFormat, "report-format", "", os.Getenv("WERF_REPORT_FORMAT"), fmt.Sprintf(`DEPRECATED: use --save-build-report with optional --build-report-path.
-Report format: %[1]s or %[2]s (%[1]s or $WERF_REPORT_FORMAT by default) %[1]s:
-	{
-	  "Images": {
-		"<WERF_IMAGE_NAME>": {
-			"WerfImageName": "<WERF_IMAGE_NAME>",
-			"DockerRepo": "<REPO>",
-			"DockerTag": "<TAG>"
-			"DockerImageName": "<REPO>:<TAG>",
-			"DockerImageID": "<SHA256>",
-			"DockerImageDigest": "<SHA256>",
-		},
-		...
-	  }
-	}
-%[2]s:
-	WERF_<FORMATTED_WERF_IMAGE_NAME>_DOCKER_IMAGE_NAME=<REPO>:<TAG>
-	...
-<FORMATTED_WERF_IMAGE_NAME> is werf image name from werf.yaml modified according to the following rules:
-- all characters are uppercase (app -> APP);
-- charset /- is replaced with _ (DEV/APP-FRONTEND -> DEV_APP_FRONTEND)`, string(build.ReportJSON), string(build.ReportEnvFile)))
-}
-
-func GetDeprecatedReportPath(ctx context.Context, cmdData *CmdData) string {
-	if cmdData.DeprecatedReportPath == nil {
-		return ""
-	}
-
-	logboek.Context(ctx).Warn().LogF("DEPRECATED: use --save-build-report ($WERF_SAVE_BUILD_REPORT) with optional --build-report-path ($WERF_BUILD_REPORT_PATH) instead of --report-path ($WERF_REPORT_PATH)\n")
-
-	return *cmdData.DeprecatedReportPath
-}
-
-func GetDeprecatedReportFormat(ctx context.Context, cmdData *CmdData) (build.ReportFormat, error) {
-	if cmdData.DeprecatedReportFormat == nil {
-		return build.ReportJSON, nil
-	}
-
-	var reportFormat build.ReportFormat
-	switch reportFormat = build.ReportFormat(*cmdData.DeprecatedReportFormat); reportFormat {
-	case build.ReportJSON, build.ReportEnvFile:
-	case "":
-		defaultFormat := build.ReportJSON
-		reportFormat = defaultFormat
-	default:
-		return "", fmt.Errorf("bad --report-format given %q, expected: \"%s\"", reportFormat, strings.Join([]string{string(build.ReportJSON), string(build.ReportEnvFile)}, "\", \""))
-	}
-
-	logboek.Context(ctx).Warn().LogF("DEPRECATED: use --save-build-report ($WERF_SAVE_BUILD_REPORT) with optional --build-report-path ($WERF_BUILD_REPORT_PATH) instead of --report-format ($WERF_REPORT_FORMAT)\n")
-
-	return reportFormat, nil
 }
 
 func SetupSaveBuildReport(cmdData *CmdData, cmd *cobra.Command) {
@@ -934,14 +873,6 @@ IMAGE_NAME is the name of an image or artifact described in werf.yaml, the namel
 STAGE_NAME should be one of the following: `+strings.Join(allStagesNames(), ", "))
 }
 
-// SetupSkipBuild
-// Deprecated. See [SetupRequireBuiltImages].
-func SetupSkipBuild(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.SkipBuild = new(bool)
-	cmd.Flags().BoolVarP(cmdData.SkipBuild, "skip-build", "", util.GetBoolEnvironmentDefaultFalse("WERF_SKIP_BUILD"), "DEPRECATED: use --require-built-images.")
-	_ = cmd.Flags().MarkHidden("skip-build")
-}
-
 // SetupRequireBuiltImages adds --require-built-images flag.
 // See also [quireBuiltImages].
 func SetupRequireBuiltImages(cmdData *CmdData, cmd *cobra.Command) {
@@ -1332,11 +1263,7 @@ func GetRequireBuiltImages(ctx context.Context, cmdData *CmdData) bool {
 	if cmdData.RequireBuiltImages != nil && *cmdData.RequireBuiltImages {
 		return true
 	}
-	// Support for deprecated option.
-	if cmdData.SkipBuild != nil && *cmdData.SkipBuild {
-		logboek.Context(ctx).Warn().LogF("DEPRECATED: use --require-built-images ($WERF_REQUIRE_BUILT_IMAGES) instead of --skip-build\n")
-		return true
-	}
+
 	return false
 }
 

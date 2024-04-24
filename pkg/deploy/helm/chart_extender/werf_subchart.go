@@ -9,9 +9,9 @@ import (
 	"helm.sh/helm/v3/pkg/cli"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/deploy/helm/chart_extender/helpers"
-	"github.com/werf/werf/pkg/deploy/helm/chart_extender/helpers/secrets"
-	"github.com/werf/werf/pkg/deploy/secrets_manager"
+	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
+	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers/secrets"
+	"github.com/werf/werf/v2/pkg/deploy/secrets_manager"
 )
 
 // NOTE: maybe in the future we will need a support for the werf project to be used as a chart.

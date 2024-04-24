@@ -13,8 +13,8 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	"gopkg.in/yaml.v3"
 
-	"github.com/werf/werf/test/pkg/utils"
-	"github.com/werf/werf/test/pkg/utils/docker"
+	"github.com/werf/werf/v2/test/pkg/utils"
+	"github.com/werf/werf/v2/test/pkg/utils/docker"
 )
 
 var _ = Describe("Git add file renames", func() {

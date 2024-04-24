@@ -15,11 +15,11 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/config"
-	"github.com/werf/werf/pkg/container_backend"
-	"github.com/werf/werf/pkg/container_backend/stage_builder"
-	"github.com/werf/werf/pkg/stapel"
-	"github.com/werf/werf/pkg/util"
+	"github.com/werf/werf/v2/pkg/config"
+	"github.com/werf/werf/v2/pkg/container_backend"
+	"github.com/werf/werf/v2/pkg/container_backend/stage_builder"
+	"github.com/werf/werf/v2/pkg/stapel"
+	"github.com/werf/werf/v2/pkg/util"
 )
 
 type Ansible struct {

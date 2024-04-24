@@ -8,14 +8,14 @@ import (
 
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/level"
-	"github.com/werf/werf/cmd/werf/common"
-	"github.com/werf/werf/pkg/git_repo"
-	"github.com/werf/werf/pkg/git_repo/gitdata"
-	"github.com/werf/werf/pkg/image"
-	"github.com/werf/werf/pkg/storage/lrumeta"
-	"github.com/werf/werf/pkg/tmp_manager"
-	"github.com/werf/werf/pkg/true_git"
-	"github.com/werf/werf/pkg/werf"
+	"github.com/werf/werf/v2/cmd/werf/common"
+	"github.com/werf/werf/v2/pkg/git_repo"
+	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
+	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/storage/lrumeta"
+	"github.com/werf/werf/v2/pkg/tmp_manager"
+	"github.com/werf/werf/v2/pkg/true_git"
+	"github.com/werf/werf/v2/pkg/werf"
 )
 
 var commonCmdData common.CmdData

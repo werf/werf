@@ -7,7 +7,7 @@ import (
 
 	"github.com/hashicorp/go-version"
 
-	"github.com/werf/werf/pkg/docker"
+	"github.com/werf/werf/v2/pkg/docker"
 )
 
 type LegacyCommitChangeOptions struct {

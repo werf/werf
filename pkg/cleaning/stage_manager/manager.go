@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/werf/werf/pkg/image"
-	"github.com/werf/werf/pkg/storage"
-	"github.com/werf/werf/pkg/storage/manager"
+	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/storage"
+	"github.com/werf/werf/v2/pkg/storage/manager"
 )
 
 type Manager struct {

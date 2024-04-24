@@ -8,9 +8,9 @@ import (
 
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/pkg/docker_registry"
-	"github.com/werf/werf/test/pkg/utils"
-	utilsDocker "github.com/werf/werf/test/pkg/utils/docker"
+	"github.com/werf/werf/v2/pkg/docker_registry"
+	"github.com/werf/werf/v2/test/pkg/utils"
+	utilsDocker "github.com/werf/werf/v2/test/pkg/utils/docker"
 )
 
 const LocalRegistryImplementationName = ":local_container_registry"

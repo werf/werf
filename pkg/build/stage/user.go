@@ -5,9 +5,9 @@ import (
 	"os"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/build/builder"
-	"github.com/werf/werf/pkg/config"
-	"github.com/werf/werf/pkg/util"
+	"github.com/werf/werf/v2/pkg/build/builder"
+	"github.com/werf/werf/v2/pkg/config"
+	"github.com/werf/werf/v2/pkg/util"
 )
 
 func getBuilder(imageBaseConfig *config.StapelImageBase, baseStageOptions *BaseStageOptions) builder.Builder {

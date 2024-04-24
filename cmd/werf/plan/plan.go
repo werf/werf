@@ -3,9 +3,8 @@ package plan
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
-	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/gookit/color"
@@ -16,11 +15,8 @@ import (
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/cli/values"
-	"helm.sh/helm/v3/pkg/postrender"
-	"helm.sh/helm/v3/pkg/registry"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
 	"github.com/werf/nelm/pkg/chrttree"
 	helmcommon "github.com/werf/nelm/pkg/common"
@@ -34,29 +30,27 @@ import (
 	"github.com/werf/nelm/pkg/rls"
 	"github.com/werf/nelm/pkg/rlsdiff"
 	"github.com/werf/nelm/pkg/rlshistor"
-	"github.com/werf/werf/cmd/werf/common"
-	"github.com/werf/werf/pkg/build"
-	"github.com/werf/werf/pkg/config/deploy_params"
-	"github.com/werf/werf/pkg/container_backend"
-	"github.com/werf/werf/pkg/deploy/helm"
-	"github.com/werf/werf/pkg/deploy/helm/chart_extender"
-	"github.com/werf/werf/pkg/deploy/helm/chart_extender/helpers"
-	"github.com/werf/werf/pkg/deploy/helm/command_helpers"
-	"github.com/werf/werf/pkg/deploy/helm/maintenance_helper"
-	"github.com/werf/werf/pkg/deploy/lock_manager"
-	"github.com/werf/werf/pkg/deploy/secrets_manager"
-	"github.com/werf/werf/pkg/git_repo"
-	"github.com/werf/werf/pkg/git_repo/gitdata"
-	"github.com/werf/werf/pkg/giterminism_manager"
-	"github.com/werf/werf/pkg/image"
-	"github.com/werf/werf/pkg/ssh_agent"
-	"github.com/werf/werf/pkg/storage/lrumeta"
-	"github.com/werf/werf/pkg/storage/manager"
-	"github.com/werf/werf/pkg/tmp_manager"
-	"github.com/werf/werf/pkg/true_git"
-	"github.com/werf/werf/pkg/util"
-	"github.com/werf/werf/pkg/werf"
-	"github.com/werf/werf/pkg/werf/global_warnings"
+	"github.com/werf/werf/v2/cmd/werf/common"
+	"github.com/werf/werf/v2/pkg/build"
+	"github.com/werf/werf/v2/pkg/config/deploy_params"
+	"github.com/werf/werf/v2/pkg/container_backend"
+	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender"
+	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
+	"github.com/werf/werf/v2/pkg/deploy/helm/command_helpers"
+	"github.com/werf/werf/v2/pkg/deploy/lock_manager"
+	"github.com/werf/werf/v2/pkg/deploy/secrets_manager"
+	"github.com/werf/werf/v2/pkg/git_repo"
+	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
+	"github.com/werf/werf/v2/pkg/giterminism_manager"
+	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/ssh_agent"
+	"github.com/werf/werf/v2/pkg/storage/lrumeta"
+	"github.com/werf/werf/v2/pkg/storage/manager"
+	"github.com/werf/werf/v2/pkg/tmp_manager"
+	"github.com/werf/werf/v2/pkg/true_git"
+	"github.com/werf/werf/v2/pkg/util"
+	"github.com/werf/werf/v2/pkg/werf"
+	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
 
 var cmdData struct {
@@ -177,15 +171,12 @@ werf plan --repo registry.mydomain.com/web --env production`,
 
 	common.SetupSaveBuildReport(&commonCmdData, cmd)
 	common.SetupBuildReportPath(&commonCmdData, cmd)
-	common.SetupDeprecatedReportPath(&commonCmdData, cmd)
-	common.SetupDeprecatedReportFormat(&commonCmdData, cmd)
 
 	common.SetupUseCustomTag(&commonCmdData, cmd)
 	common.SetupAddCustomTag(&commonCmdData, cmd)
 	common.SetupVirtualMerge(&commonCmdData, cmd)
 
 	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultBuildParallelTasksLimit)
-	common.SetupSkipBuild(&commonCmdData, cmd)
 	common.SetupRequireBuiltImages(&commonCmdData, cmd)
 	commonCmdData.SetupPlatform(cmd)
 	common.SetupFollow(&commonCmdData, cmd)
@@ -211,13 +202,6 @@ werf plan --repo registry.mydomain.com/web --env production`,
 
 func runMain(ctx context.Context, imagesToProcess build.ImagesToProcess) error {
 	global_warnings.PostponeMultiwerfNotUpToDateWarning()
-	if !helm.IsExperimentalEngine() {
-		global_warnings.GlobalWarningLines = append(
-			global_warnings.GlobalWarningLines,
-			`"werf plan" shows planned changes for the new deployment engine. Currently you are using the old engine, which might produce different results during deployment. If you want to use "werf plan" we strongly advice migrating to the new engine by setting environment variable "WERF_NELM=1".`,
-		)
-	}
-
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %w", err)
 	}
@@ -408,15 +392,25 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		return err
 	}
 
-	kubeConfigOptions := kube.KubeConfigOptions{
-		Context:          *commonCmdData.KubeContext,
-		ConfigPath:       *commonCmdData.KubeConfig,
-		ConfigDataBase64: *commonCmdData.KubeConfigBase64,
+	serviceAnnotations := map[string]string{
+		"werf.io/version":      werf.Version,
+		"project.werf.io/name": werfConfig.Meta.Project,
+		"project.werf.io/env":  *commonCmdData.Environment,
 	}
 
-	userExtraAnnotations, err := common.GetUserExtraAnnotations(&commonCmdData)
-	if err != nil {
+	var userExtraAnnotations map[string]string
+	if annos, err := common.GetUserExtraAnnotations(&commonCmdData); err != nil {
 		return err
+	} else {
+		for key, value := range annos {
+			if strings.HasPrefix(key, "project.werf.io/") ||
+				strings.Contains(key, "ci.werf.io/") ||
+				key == "werf.io/release-channel" {
+				serviceAnnotations[key] = value
+			} else {
+				userExtraAnnotations[key] = value
+			}
+		}
 	}
 
 	userExtraLabels, err := common.GetUserExtraLabels(&commonCmdData)
@@ -497,24 +491,9 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 	if err != nil {
 		return err
 	}
-	maintenanceHelper := createMaintenanceHelper(ctx, actionConfig, kubeConfigOptions)
-
-	if err := migrateHelm2ToHelm3(ctx, releaseName, namespace, maintenanceHelper, wc.ChainPostRenderer, valueOpts, chartDir, helmRegistryClient); err != nil {
-		return err
-	}
-
-	actionConfig, err = common.NewActionConfig(ctx, common.GetOndemandKubeInitializer(), namespace, &commonCmdData, helmRegistryClient)
-	if err != nil {
-		return err
-	}
 
 	if true {
 		networkParallelism := common.GetNetworkParallelism(&commonCmdData)
-		serviceAnnotations := map[string]string{
-			"werf.io/version":      werf.Version,
-			"project.werf.io/name": werfConfig.Meta.Project,
-			"project.werf.io/env":  *commonCmdData.Environment,
-		}
 
 		clientFactory, err := kubeclnt.NewClientFactory()
 		if err != nil {
@@ -617,16 +596,13 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 				chartTree.HookResources(),
 				chartTree.GeneralResources(),
 				prevRelGeneralResources,
-				clientFactory.KubeClient(),
-				clientFactory.Mapper(),
-				clientFactory.Discovery(),
 				resrcprocssr.DeployableResourcesProcessorOptions{
 					NetworkParallelism: networkParallelism,
 					ReleasableHookResourcePatchers: []resrcpatcher.ResourcePatcher{
-						resrcpatcher.NewExtraMetadataPatcher(lo.Assign(userExtraAnnotations, serviceAnnotations), userExtraLabels),
+						resrcpatcher.NewExtraMetadataPatcher(userExtraAnnotations, userExtraLabels),
 					},
 					ReleasableGeneralResourcePatchers: []resrcpatcher.ResourcePatcher{
-						resrcpatcher.NewExtraMetadataPatcher(lo.Assign(userExtraAnnotations, serviceAnnotations), userExtraLabels),
+						resrcpatcher.NewExtraMetadataPatcher(userExtraAnnotations, userExtraLabels),
 					},
 					DeployableStandaloneCRDsPatchers: []resrcpatcher.ResourcePatcher{
 						resrcpatcher.NewExtraMetadataPatcher(lo.Assign(userExtraAnnotations, serviceAnnotations), userExtraLabels),
@@ -637,6 +613,10 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 					DeployableGeneralResourcePatchers: []resrcpatcher.ResourcePatcher{
 						resrcpatcher.NewExtraMetadataPatcher(lo.Assign(userExtraAnnotations, serviceAnnotations), userExtraLabels),
 					},
+					KubeClient:         clientFactory.KubeClient(),
+					Mapper:             clientFactory.Mapper(),
+					DiscoveryClient:    clientFactory.Discovery(),
+					AllowClusterAccess: true,
 				},
 			)
 
@@ -693,114 +673,4 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 	}
 
 	return nil
-}
-
-func createMaintenanceHelper(ctx context.Context, actionConfig *action.Configuration, kubeConfigOptions kube.KubeConfigOptions) *maintenance_helper.MaintenanceHelper {
-	maintenanceOpts := maintenance_helper.MaintenanceHelperOptions{
-		KubeConfigOptions: kubeConfigOptions,
-	}
-
-	for _, val := range []string{
-		os.Getenv("WERF_HELM2_RELEASE_STORAGE_NAMESPACE"),
-		os.Getenv("WERF_HELM_RELEASE_STORAGE_NAMESPACE"),
-		os.Getenv("TILLER_NAMESPACE"),
-	} {
-		if val != "" {
-			maintenanceOpts.Helm2ReleaseStorageNamespace = val
-			break
-		}
-	}
-
-	for _, val := range []string{
-		os.Getenv("WERF_HELM2_RELEASE_STORAGE_TYPE"),
-		os.Getenv("WERF_HELM_RELEASE_STORAGE_TYPE"),
-	} {
-		if val != "" {
-			maintenanceOpts.Helm2ReleaseStorageType = val
-			break
-		}
-	}
-
-	return maintenance_helper.NewMaintenanceHelper(actionConfig, maintenanceOpts)
-}
-
-func migrateHelm2ToHelm3(ctx context.Context, releaseName, namespace string, maintenanceHelper *maintenance_helper.MaintenanceHelper, chainPostRenderer func(postrender.PostRenderer) postrender.PostRenderer, valueOpts *values.Options, fullChartDir string, helmRegistryClient *registry.Client) error {
-	if helm2Exists, err := checkHelm2AvailableAndReleaseExists(ctx, releaseName, namespace, maintenanceHelper); err != nil {
-		return fmt.Errorf("error checking availability of helm 2 and existence of helm 2 release %q: %w", releaseName, err)
-	} else if !helm2Exists {
-		return nil
-	}
-
-	if helm3Exists, err := checkHelm3ReleaseExists(ctx, releaseName, namespace, maintenanceHelper); err != nil {
-		return fmt.Errorf("error checking existence of helm 3 release %q: %w", releaseName, err)
-	} else if helm3Exists {
-		// helm 2 exists and helm 3 exists
-		// migration not needed, but we should warn user that some helm 2 release with the same name exists
-
-		logboek.Context(ctx).Warn().LogF("### Helm 2 and helm 3 release %q exists at the same time ###\n", releaseName)
-		logboek.Context(ctx).Warn().LogLn()
-		logboek.Context(ctx).Warn().LogF("Found existing helm 2 release %q while there is existing helm 3 release %q in the %q namespace!\n", releaseName, releaseName, namespace)
-		logboek.Context(ctx).Warn().LogF("werf will continue deploy process into helm 3 release %q in the %q namespace\n", releaseName, namespace)
-		logboek.Context(ctx).Warn().LogF("To disable this warning please remove old helm 2 release %q metadata (fox example using: kubectl -n kube-system delete cm RELEASE_NAME.VERSION)\n", releaseName)
-		logboek.Context(ctx).Warn().LogLn()
-
-		return nil
-	}
-
-	logboek.Context(ctx).Warn().LogFDetails("Found existing helm 2 release %q, will try to render helm 3 templates and migrate existing release resources to helm 3\n", releaseName)
-
-	logboek.Context(ctx).Default().LogOptionalLn()
-	if err := logboek.Context(ctx).LogProcess("Rendering helm 3 templates for the current project state").DoError(func() error {
-		actionConfig, err := common.NewActionConfig(ctx, common.GetOndemandKubeInitializer(), namespace, &commonCmdData, helmRegistryClient)
-		if err != nil {
-			return err
-		}
-
-		helmTemplateCmd, _ := helm_v3.NewTemplateCmd(actionConfig, ioutil.Discard, helm_v3.TemplateCmdOptions{
-			StagesSplitter:    helm.NewStagesSplitter(),
-			ChainPostRenderer: chainPostRenderer,
-			ValueOpts:         valueOpts,
-			Validate:          common.NewBool(true),
-			IncludeCrds:       common.NewBool(true),
-			IsUpgrade:         common.NewBool(true),
-		})
-		return helmTemplateCmd.RunE(helmTemplateCmd, []string{releaseName, fullChartDir})
-	}); err != nil {
-		return err
-	}
-
-	if err := logboek.Context(ctx).Default().LogProcess("Migrating helm 2 release %q to helm 3 in the %q namespace", releaseName, namespace).DoError(func() error {
-		if err := maintenance_helper.Migrate2To3(ctx, releaseName, releaseName, namespace, maintenanceHelper); err != nil {
-			return fmt.Errorf("error migrating existing helm 2 release %q to helm 3 release %q in the namespace %q: %w", releaseName, releaseName, namespace, err)
-		}
-		return nil
-	}); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func checkHelm2AvailableAndReleaseExists(ctx context.Context, releaseName, namespace string, maintenanceHelper *maintenance_helper.MaintenanceHelper) (bool, error) {
-	if available, err := maintenanceHelper.CheckHelm2StorageAvailable(ctx); err != nil {
-		return false, err
-	} else if available {
-		foundHelm2Release, err := maintenanceHelper.IsHelm2ReleaseExist(ctx, releaseName)
-		if err != nil {
-			return false, fmt.Errorf("error checking existence of helm 2 release %q: %w", releaseName, err)
-		}
-
-		return foundHelm2Release, nil
-	}
-
-	return false, nil
-}
-
-func checkHelm3ReleaseExists(ctx context.Context, releaseName, namespace string, maintenanceHelper *maintenance_helper.MaintenanceHelper) (bool, error) {
-	foundHelm3Release, err := maintenanceHelper.IsHelm3ReleaseExist(ctx, releaseName)
-	if err != nil {
-		return false, fmt.Errorf("error checking existence of helm 3 release %q: %w", releaseName, err)
-	}
-
-	return foundHelm3Release, nil
 }

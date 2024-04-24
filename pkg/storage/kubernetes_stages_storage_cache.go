@@ -11,8 +11,8 @@ import (
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/pkg/image"
-	"github.com/werf/werf/pkg/kubeutils"
+	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/kubeutils"
 )
 
 const (

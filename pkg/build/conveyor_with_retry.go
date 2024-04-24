@@ -3,11 +3,11 @@ package build
 import (
 	"context"
 
-	"github.com/werf/werf/pkg/config"
-	"github.com/werf/werf/pkg/container_backend"
-	"github.com/werf/werf/pkg/giterminism_manager"
-	"github.com/werf/werf/pkg/storage"
-	"github.com/werf/werf/pkg/storage/manager"
+	"github.com/werf/werf/v2/pkg/config"
+	"github.com/werf/werf/v2/pkg/container_backend"
+	"github.com/werf/werf/v2/pkg/giterminism_manager"
+	"github.com/werf/werf/v2/pkg/storage"
+	"github.com/werf/werf/v2/pkg/storage/manager"
 )
 
 type ConveyorWithRetryWrapper struct {

@@ -12,8 +12,8 @@ import (
 	. "github.com/onsi/gomega"
 	"helm.sh/helm/v3/pkg/release"
 
-	"github.com/werf/werf/pkg/build"
-	iutils "github.com/werf/werf/test/pkg/utils"
+	"github.com/werf/werf/v2/pkg/build"
+	iutils "github.com/werf/werf/v2/test/pkg/utils"
 )
 
 func NewProject(werfBinPath, gitRepoPath string) *Project {
