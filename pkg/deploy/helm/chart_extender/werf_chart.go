@@ -129,7 +129,6 @@ func (wc *WerfChart) ChartLoaded(files []*chart.ChartExtenderBufferedFile) error
 
 	wc.HelmChart.Templates = append(wc.HelmChart.Templates, &chart.File{
 		Name: "templates/_werf_helpers.tpl",
-		Data: []byte(helpers.ChartTemplateHelpers),
 	})
 
 	if wc.DisableDefaultValues {
@@ -187,7 +186,6 @@ func (wc *WerfChart) MakeBundleSecretValues(ctx context.Context, secretsRuntimeD
 func (wc *WerfChart) SetupTemplateFuncs(t *template.Template, funcMap template.FuncMap) {
 	helpers.SetupWerfSecretFile(wc.SecretsRuntimeData, funcMap)
 	helpers.SetupIncludeWrapperFuncs(funcMap)
-	helpers.SetupWerfImageDeprecationFunc(wc.ChartExtenderContext, funcMap)
 }
 
 // LoadDir method for the chart.Extender interface

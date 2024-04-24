@@ -145,7 +145,6 @@ func (bundle *Bundle) MakeValues(inputVals map[string]interface{}) (map[string]i
 // SetupTemplateFuncs method for the chart.Extender interface
 func (bundle *Bundle) SetupTemplateFuncs(t *template.Template, funcMap template.FuncMap) {
 	helpers.SetupIncludeWrapperFuncs(funcMap)
-	helpers.SetupWerfImageDeprecationFunc(bundle.ChartExtenderContext, funcMap)
 }
 
 func convertBufferedFilesForChartExtender(files []*loader.BufferedFile) []*chart.ChartExtenderBufferedFile {
