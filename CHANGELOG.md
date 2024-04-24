@@ -1,5 +1,28 @@
 # Changelog
 
+### [1.2.308](https://www.github.com/werf/werf/compare/v1.2.307...v1.2.308) (2024-04-24)
+
+
+### Features
+
+* new major v2 release ([e15cf3c](https://www.github.com/werf/werf/commit/e15cf3ce7ce16de984856e651e87067367e55b3e))
+* **v2:** "werf render" now uses Nelm ([03e05a5](https://www.github.com/werf/werf/commit/03e05a598cad5350a0f55baa5927c6b785228d1c))
+* **v2:** remove --...-implementation flags ([82b548f](https://www.github.com/werf/werf/commit/82b548fc33af024b97421a68e120da475e49be71))
+* **v2:** remove deprecated --report-path and --report-format ([4f26904](https://www.github.com/werf/werf/commit/4f26904c1847d68d0384ad609aec65192585f431))
+* **v2:** remove deprecated --skip-build option ([14d1c72](https://www.github.com/werf/werf/commit/14d1c72c49b7485a9e5133eca76973c9152ab5f2))
+* **v2:** remove deprecated --tag/--to-tag/--repo from "werf bundle copy" ([1a4bea1](https://www.github.com/werf/werf/commit/1a4bea1509128795eea235d9a4131e6647611535))
+* **v2:** remove deprecated "werf_image" Helm templates function ([8721568](https://www.github.com/werf/werf/commit/87215684e745138f74f151af7dd19a39ef399198))
+* **v2:** switch "werf bundle render" to Nelm ([24f3042](https://www.github.com/werf/werf/commit/24f30427a5ef799fbf570ba74284897cc8d89b98))
+
+
+### Bug Fixes
+
+* **deploy:** incorrect error message when release lock fails ([7f60ccc](https://www.github.com/werf/werf/commit/7f60cccc92a0db5597b275c83579eda1350e7958))
+* remove deprecated werf bundle export/download commands ([dd9bc09](https://www.github.com/werf/werf/commit/dd9bc0954f6e73c3c567a4cbd23d57b09f5d194c))
+* **v2:** dont save service annotations in release secret ([27d6c4d](https://www.github.com/werf/werf/commit/27d6c4d09330877a935263b236e19b7023c7bfb3))
+* **v2:** enable Nelm by default, remove option to switch back to the old engine ([9df5245](https://www.github.com/werf/werf/commit/9df5245c5063c94a838e68b912686d56e6644462))
+* **v2:** remove automigration from helm 2 to helm 3 releases ([316caee](https://www.github.com/werf/werf/commit/316caee9779cedbfb8ef4b18351b350c35e2523f))
+
 ### [1.2.307](https://www.github.com/werf/werf/compare/v1.2.306...v1.2.307) (2024-04-09)
 
 
