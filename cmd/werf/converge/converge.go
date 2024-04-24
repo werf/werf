@@ -181,8 +181,6 @@ werf converge --repo registry.mydomain.com/web --env production`,
 
 	common.SetupSaveBuildReport(&commonCmdData, cmd)
 	common.SetupBuildReportPath(&commonCmdData, cmd)
-	common.SetupDeprecatedReportPath(&commonCmdData, cmd)
-	common.SetupDeprecatedReportFormat(&commonCmdData, cmd)
 
 	common.SetupSaveDeployReport(&commonCmdData, cmd)
 	common.SetupDeployReportPath(&commonCmdData, cmd)
