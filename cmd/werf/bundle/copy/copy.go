@@ -17,12 +17,6 @@ import (
 )
 
 var cmdData struct {
-	// TODO(2.0): Legacy {
-	Repo  string
-	Tag   string
-	ToTag string
-	// TODO(2.0): } Legacy
-
 	From string
 	To   string
 }
@@ -70,10 +64,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	commonCmdData.SetupHelmCompatibleChart(cmd, true)
 	commonCmdData.SetupRenameChart(cmd)
 
-	cmd.Flags().StringVarP(&cmdData.Repo, "repo", "", os.Getenv("WERF_REPO"), "Deprecated param, use --from=ADDR instead. Source address of bundle which should be copied.")
-	cmd.Flags().StringVarP(&cmdData.Tag, "tag", "", os.Getenv("WERF_TAG"), "Deprecated param, use --from=REPO:TAG instead. Provide from tag version of the bundle to copy ($WERF_TAG or latest by default).")
-	cmd.Flags().StringVarP(&cmdData.ToTag, "to-tag", "", os.Getenv("WERF_TO_TAG"), "Deprecated param, use --to=REPO:TAG instead. Provide to tag version of the bundle to copy ($WERF_TO_TAG or same as --tag by default).")
-
 	cmd.Flags().StringVarP(&cmdData.From, "from", "", os.Getenv("WERF_FROM"), "Source address of the bundle to copy, specify bundle archive using schema `archive:PATH_TO_ARCHIVE.tar.gz`, specify remote bundle with schema `[docker://]REPO:TAG` or without schema.")
 	cmd.Flags().StringVarP(&cmdData.To, "to", "", os.Getenv("WERF_TO"), "Destination address of the bundle to copy, specify bundle archive using schema `archive:PATH_TO_ARCHIVE.tar.gz`, specify remote bundle with schema `[docker://]REPO:TAG` or without schema.")
 
@@ -96,15 +86,11 @@ func runCopy(ctx context.Context) error {
 		return err
 	}
 
-	var fromAddrRaw string
-	if cmdData.From == "" && cmdData.Repo == "" {
+	if cmdData.From == "" {
 		return fmt.Errorf("--from=ADDRESS param required")
-	} else if cmdData.From != "" {
-		fromAddrRaw = cmdData.From
-	} else {
-		logboek.Context(ctx).Warn().LogF("Please use --from=ADDRESS param instead of deprecated --repo=ADDRESS param\n")
-		fromAddrRaw = cmdData.Repo
 	}
+
+	fromAddrRaw := cmdData.From
 
 	toAddrRaw := cmdData.To
 	if toAddrRaw == "" {
@@ -124,12 +110,6 @@ func runCopy(ctx context.Context) error {
 	var fromRegistry, toRegistry docker_registry.Interface
 
 	if fromAddr.RegistryAddress != nil {
-		// TODO(2.0): remove legacy compatibility param
-		if cmdData.Tag != "" {
-			logboek.Context(ctx).Warn().LogF("Please use --from=REPO:TAG tag specification instead of deprecated --tag=TAG param\n")
-			fromAddr.RegistryAddress.Tag = cmdData.Tag
-		}
-
 		fromRegistry, err = common.CreateDockerRegistry(fromAddr.RegistryAddress.Repo, *commonCmdData.InsecureRegistry, *commonCmdData.SkipTlsVerifyRegistry)
 		if err != nil {
 			return err
@@ -137,12 +117,6 @@ func runCopy(ctx context.Context) error {
 	}
 
 	if toAddr.RegistryAddress != nil {
-		// TODO(2.0): remove legacy compatibility param
-		if cmdData.ToTag != "" {
-			logboek.Context(ctx).Warn().LogF("Please use --to=REPO:TAG tag specification instead of deprecated --to-tag=TAG param\n")
-			toAddr.RegistryAddress.Tag = cmdData.ToTag
-		}
-
 		toRegistry, err = common.CreateDockerRegistry(toAddr.RegistryAddress.Repo, *commonCmdData.InsecureRegistry, *commonCmdData.SkipTlsVerifyRegistry)
 		if err != nil {
 			return err
