@@ -45,7 +45,7 @@ jobs:
           fi
 
       - name: Deploy
-        uses: werf/actions/converge@v1.2
+        uses: werf/actions/converge@v2
         with:
           env: ${{ inputs.env }}
           kube-config-base64-data: ${{ secrets.kubeConfig }}

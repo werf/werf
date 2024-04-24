@@ -30,5 +30,5 @@ permalink: usage/cleanup/host_cleanup.html
 ```shell
 # /etc/cron.d/werf-host-cleanup
 SHELL=/bin/bash
-*/30 * * * * gitlab-runner source ~/.profile ; source $(trdl use werf 1.2 stable) ; werf host cleanup
+*/30 * * * * gitlab-runner source ~/.profile ; source $(trdl use werf 2 stable) ; werf host cleanup
 ```
