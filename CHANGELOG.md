@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.0.2](https://www.github.com/werf/werf/compare/v2.0.1...v2.0.2) (2024-04-24)
+
+
+### Bug Fixes
+
+* **v2:** panic with --add-annotations ([b8b9e83](https://www.github.com/werf/werf/commit/b8b9e839811de0d8f362dac761abcc0c6fa350d6))
+
 ### [2.0.1](https://www.github.com/werf/werf/compare/v2.0.0...v2.0.1) (2024-04-24)
 
 
