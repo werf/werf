@@ -151,67 +151,6 @@ Can be specified with $WERF_SSH_KEY_* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa, 
 Defaults to $WERF_SSH_KEY_*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}`)
 }
 
-func SetupDeprecatedReportPath(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.DeprecatedReportPath = new(string)
-	cmd.Flags().StringVarP(cmdData.DeprecatedReportPath, "report-path", "", os.Getenv("WERF_REPORT_PATH"), "DEPRECATED: use --save-build-report with optional --build-report-path.\nReport save path ($WERF_REPORT_PATH by default)")
-}
-
-func SetupDeprecatedReportFormat(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.DeprecatedReportFormat = new(string)
-
-	cmd.Flags().StringVarP(cmdData.DeprecatedReportFormat, "report-format", "", os.Getenv("WERF_REPORT_FORMAT"), fmt.Sprintf(`DEPRECATED: use --save-build-report with optional --build-report-path.
-Report format: %[1]s or %[2]s (%[1]s or $WERF_REPORT_FORMAT by default) %[1]s:
-	{
-	  "Images": {
-		"<WERF_IMAGE_NAME>": {
-			"WerfImageName": "<WERF_IMAGE_NAME>",
-			"DockerRepo": "<REPO>",
-			"DockerTag": "<TAG>"
-			"DockerImageName": "<REPO>:<TAG>",
-			"DockerImageID": "<SHA256>",
-			"DockerImageDigest": "<SHA256>",
-		},
-		...
-	  }
-	}
-%[2]s:
-	WERF_<FORMATTED_WERF_IMAGE_NAME>_DOCKER_IMAGE_NAME=<REPO>:<TAG>
-	...
-<FORMATTED_WERF_IMAGE_NAME> is werf image name from werf.yaml modified according to the following rules:
-- all characters are uppercase (app -> APP);
-- charset /- is replaced with _ (DEV/APP-FRONTEND -> DEV_APP_FRONTEND)`, string(build.ReportJSON), string(build.ReportEnvFile)))
-}
-
-func GetDeprecatedReportPath(ctx context.Context, cmdData *CmdData) string {
-	if cmdData.DeprecatedReportPath == nil {
-		return ""
-	}
-
-	logboek.Context(ctx).Warn().LogF("DEPRECATED: use --save-build-report ($WERF_SAVE_BUILD_REPORT) with optional --build-report-path ($WERF_BUILD_REPORT_PATH) instead of --report-path ($WERF_REPORT_PATH)\n")
-
-	return *cmdData.DeprecatedReportPath
-}
-
-func GetDeprecatedReportFormat(ctx context.Context, cmdData *CmdData) (build.ReportFormat, error) {
-	if cmdData.DeprecatedReportFormat == nil {
-		return build.ReportJSON, nil
-	}
-
-	var reportFormat build.ReportFormat
-	switch reportFormat = build.ReportFormat(*cmdData.DeprecatedReportFormat); reportFormat {
-	case build.ReportJSON, build.ReportEnvFile:
-	case "":
-		defaultFormat := build.ReportJSON
-		reportFormat = defaultFormat
-	default:
-		return "", fmt.Errorf("bad --report-format given %q, expected: \"%s\"", reportFormat, strings.Join([]string{string(build.ReportJSON), string(build.ReportEnvFile)}, "\", \""))
-	}
-
-	logboek.Context(ctx).Warn().LogF("DEPRECATED: use --save-build-report ($WERF_SAVE_BUILD_REPORT) with optional --build-report-path ($WERF_BUILD_REPORT_PATH) instead of --report-format ($WERF_REPORT_FORMAT)\n")
-
-	return reportFormat, nil
-}
-
 func SetupSaveBuildReport(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.SaveBuildReport = new(bool)
 	cmd.Flags().BoolVarP(cmdData.SaveBuildReport, "save-build-report", "", util.GetBoolEnvironmentDefaultFalse("WERF_SAVE_BUILD_REPORT"), fmt.Sprintf("Save build report (by default $WERF_SAVE_BUILD_REPORT or %t). Its path and format configured with --build-report-path", DefaultSaveBuildReport))
