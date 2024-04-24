@@ -724,8 +724,7 @@ func renderResource(unstruct *unstructured.Unstructured, path string, output io.
 
 	prefixBytes := []byte(fmt.Sprintf("---\n# Source: %s\n", path))
 
-	result := append(prefixBytes, resourceYamlBytes...)
-	if _, err := output.Write(result); err != nil {
+	if _, err := output.Write(append(prefixBytes, resourceYamlBytes...)); err != nil {
 		return fmt.Errorf("writing to output failed: %w", err)
 	}
 
