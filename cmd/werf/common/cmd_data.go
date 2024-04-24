@@ -55,7 +55,6 @@ type CmdData struct {
 	SecondaryStagesStorage *[]string
 	CacheStagesStorage     *[]string
 
-	SkipBuild          *bool
 	RequireBuiltImages *bool
 	StubTags           *bool
 

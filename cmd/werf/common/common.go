@@ -873,14 +873,6 @@ IMAGE_NAME is the name of an image or artifact described in werf.yaml, the namel
 STAGE_NAME should be one of the following: `+strings.Join(allStagesNames(), ", "))
 }
 
-// SetupSkipBuild
-// Deprecated. See [SetupRequireBuiltImages].
-func SetupSkipBuild(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.SkipBuild = new(bool)
-	cmd.Flags().BoolVarP(cmdData.SkipBuild, "skip-build", "", util.GetBoolEnvironmentDefaultFalse("WERF_SKIP_BUILD"), "DEPRECATED: use --require-built-images.")
-	_ = cmd.Flags().MarkHidden("skip-build")
-}
-
 // SetupRequireBuiltImages adds --require-built-images flag.
 // See also [quireBuiltImages].
 func SetupRequireBuiltImages(cmdData *CmdData, cmd *cobra.Command) {
@@ -1271,11 +1263,7 @@ func GetRequireBuiltImages(ctx context.Context, cmdData *CmdData) bool {
 	if cmdData.RequireBuiltImages != nil && *cmdData.RequireBuiltImages {
 		return true
 	}
-	// Support for deprecated option.
-	if cmdData.SkipBuild != nil && *cmdData.SkipBuild {
-		logboek.Context(ctx).Warn().LogF("DEPRECATED: use --require-built-images ($WERF_REQUIRE_BUILT_IMAGES) instead of --skip-build\n")
-		return true
-	}
+
 	return false
 }
 
