@@ -194,6 +194,8 @@ werf render [IMAGE_NAME...] [options]
       --namespace=''
             Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or         
             deploy.namespace custom template from werf.yaml or $WERF_NAMESPACE)
+      --network-parallelism=30
+            Parallelize some network operations (default $WERF_NETWORK_PARALLELISM or 30)
       --output=''
             Write render output to the specified file instead of stdout ($WERF_RENDER_OUTPUT by     
             default)
