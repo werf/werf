@@ -1,5 +1,13 @@
 # Changelog
 
+### [2.0.1](https://www.github.com/werf/werf/compare/v2.0.0...v2.0.1) (2024-04-24)
+
+
+### Bug Fixes
+
+* **cleanup:** remove unnecessary specific implementation for selectel ([88d0d65](https://www.github.com/werf/werf/commit/88d0d650f25d1cb6773ea784aa8b559c32867a90))
+* **v2:** werf version is always dev ([9876a4e](https://www.github.com/werf/werf/commit/9876a4e2194f1210cb82da80f0fda908ccb0df4f))
+
 ## [2.0.0](https://www.github.com/werf/werf/compare/v1.2.307...v2.0.0) (2024-04-24)
 
 
