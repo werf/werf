@@ -8,7 +8,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/docker_registry"
 	"github.com/werf/werf/v2/pkg/storage"
@@ -112,16 +111,11 @@ func (d *RepoData) GetContainerRegistry(ctx context.Context) string {
 		return ""
 	}
 
-	switch {
-	case *d.ContainerRegistry != "":
+	if *d.ContainerRegistry != "" {
 		return *d.ContainerRegistry
-	case *d.Implementation != "":
-		repoNameUpper := strings.ToUpper(strings.ReplaceAll(d.Name, "-", "_"))
-		logboek.Context(ctx).Warn().LogF("DEPRECATION WARNING: The option --%s-implementation ($WERF_%s_IMPLEMENTATION) is renamed to --%s-container-registry ($WERF_%s_CONTAINER_REGISTRY) and will be removed in v1.3!", d.Name, repoNameUpper, d.Name, repoNameUpper)
-		return *d.Implementation
-	default:
-		return ""
 	}
+
+	return ""
 }
 
 func (d *RepoData) GetDockerRegistryOptions(insecureRegistry, skipTlsVerifyRegistry bool) docker_registry.DockerRegistryOptions {
@@ -162,7 +156,6 @@ func (repoData *RepoData) SetupCmd(cmd *cobra.Command) {
 		return
 	}
 
-	repoData.SetupImplementationForRepoData(cmd, makeOpt("implementation"), []string{makeEnvVar("IMPLEMENTATION")}) // legacy
 	repoData.SetupContainerRegistryForRepoData(cmd, makeOpt("container-registry"), []string{makeEnvVar("CONTAINER_REGISTRY")})
 	repoData.SetupDockerHubUsernameForRepoData(cmd, makeOpt("docker-hub-username"), []string{makeEnvVar("DOCKER_HUB_USERNAME")})
 	repoData.SetupDockerHubPasswordForRepoData(cmd, makeOpt("docker-hub-password"), []string{makeEnvVar("DOCKER_HUB_PASSWORD")})
@@ -238,19 +231,6 @@ func (repoData *RepoData) SetupAddressForRepoData(cmd *cobra.Command, paramName 
 		getDefaultValueByParamEnvNames(paramEnvNames),
 		usage,
 	)
-}
-
-// legacy
-func (repoData *RepoData) SetupImplementationForRepoData(cmd *cobra.Command, paramName string, paramEnvNames []string) {
-	repoData.Implementation = new(string)
-	cmd.Flags().StringVarP(
-		repoData.Implementation,
-		paramName,
-		"",
-		getDefaultValueByParamEnvNames(paramEnvNames),
-		"",
-	)
-	cmd.Flag(paramName).Hidden = true
 }
 
 func (repoData *RepoData) SetupContainerRegistryForRepoData(cmd *cobra.Command, paramName string, paramEnvNames []string) {
