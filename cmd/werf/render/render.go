@@ -270,7 +270,7 @@ func runRender(ctx context.Context, imagesToProcess build.ImagesToProcess) error
 		"project.werf.io/env":  *commonCmdData.Environment,
 	}
 
-	var userExtraAnnotations map[string]string
+	userExtraAnnotations := map[string]string{}
 	if annos, err := common.GetUserExtraAnnotations(&commonCmdData); err != nil {
 		return err
 	} else {

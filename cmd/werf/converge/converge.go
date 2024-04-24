@@ -415,7 +415,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		"project.werf.io/env":  *commonCmdData.Environment,
 	}
 
-	var userExtraAnnotations map[string]string
+	userExtraAnnotations := map[string]string{}
 	if annos, err := common.GetUserExtraAnnotations(&commonCmdData); err != nil {
 		return err
 	} else {

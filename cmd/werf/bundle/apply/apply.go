@@ -289,7 +289,7 @@ func runApply(ctx context.Context) error {
 		serviceAnnotations["project.werf.io/env"] = *commonCmdData.Environment
 	}
 
-	var extraAnnotations map[string]string
+	extraAnnotations := map[string]string{}
 	for key, value := range bundle.ExtraAnnotationsAndLabelsPostRenderer.ExtraAnnotations {
 		if strings.HasPrefix(key, "project.werf.io/") ||
 			strings.Contains(key, "ci.werf.io/") ||
