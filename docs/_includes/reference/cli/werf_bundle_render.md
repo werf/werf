@@ -90,6 +90,8 @@ werf bundle render [options]
             Enable verbose output (default $WERF_LOG_VERBOSE).
       --namespace=''
             Use specified Kubernetes namespace (default $WERF_NAMESPACE)
+      --network-parallelism=30
+            Parallelize some network operations (default $WERF_NETWORK_PARALLELISM or 30)
       --output=''
             Write render output to the specified file instead of stdout ($WERF_RENDER_OUTPUT by     
             default)
