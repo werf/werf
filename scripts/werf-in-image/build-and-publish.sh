@@ -26,7 +26,7 @@ export WERF_EXPORT_ADD_LABEL_AH1=io.artifacthub.package.readme-url=https://raw.g
 werf export --tag "$DEST_SUBREPO/werf:latest" "2-stable-alpine"
 werf export --tag "$DEST_SUBREPO/werf-argocd-cmp-sidecar:latest" "argocd-cmp-sidecar-2-stable-ubuntu"
 
-for group in "2"; do
+for group in "1.2" "2"; do
   werf export --tag "$DEST_SUBREPO/werf:$group" "$group-stable-alpine"
   werf export --tag "$DEST_SUBREPO/werf-argocd-cmp-sidecar:$group" "argocd-cmp-sidecar-$group-stable-ubuntu"
 
