@@ -1,6 +1,6 @@
 project: werf-in-image
 configVersion: 1
-{{- $_ := set $ "Groups" (list "2") }}
+{{- $_ := set $ "Groups" (list "1.2" "2") }}
 {{- $_ := set $ "Channels" (list "alpha" "beta" "ea" "stable" "rock-solid") }}
 
 ---
@@ -26,7 +26,7 @@ shell:
         echo "Perform trdl update for werf {{ $group }} {{ $channel }} ..."
         trdl update werf {{ $group }} {{ $channel }}
         . $(trdl use werf {{ $group }} {{ $channel }})
-        REQUIRED_VERSION=$(cat /trdl_channels.yaml | yq e '.groups[] | select(.name | contains("{{ $group }}")) | .channels[] | select(.name | contains("{{ $channel }}")) | .version' -)
+        REQUIRED_VERSION=$(cat /trdl_channels.yaml | yq e '.groups[] | select(.name == "{{ $group }}") | .channels[] | select(.name == "{{ $channel }}") | .version' -)
         DOWNLOADED_VERSION=$(werf version | sed -e 's|^v||')
         echo "werf {{ $group }} {{ $channel }}: required version $REQUIRED_VERSION, downloaded version $DOWNLOADED_VERSION"
         [[ "$REQUIRED_VERSION" != "$DOWNLOADED_VERSION" ]] || break

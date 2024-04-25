@@ -180,7 +180,7 @@ var _ = Describe("COMPONENT", func() {
 
 ### Catch and test werf output in realtime
 
-`github.com/werf/werf/test/pkg/utils/liveexec` package provides execution of external commands with realtime output handling and ability to fail fast when expectation of output was not met. Example of liveexec usage:
+`github.com/werf/werf/v2/test/pkg/utils/liveexec` package provides execution of external commands with realtime output handling and ability to fail fast when expectation of output was not met. Example of liveexec usage:
 
 ```
 func werfDeploy(dir string, opts liveexec.ExecCommandOptions, extraArgs ...string) error {

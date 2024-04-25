@@ -53,7 +53,7 @@ jobs:
             sed -i -e "s|/Users/runner/runners/[0-9.]*/work/werf/werf|github.com/werf/werf|g" {} +
 
           find coverage -type f -exec \
-            sed -i -e 's|D:\\a\\werf\\werf\\cmd\\werf\\main.go|github.com/werf/werf/cmd/werf/main.go|g' {} +
+            sed -i -e 's|D:\\a\\werf\\werf\\cmd\\werf\\main.go|github.com/werf/werf/v2/cmd/werf/main.go|g' {} +
 
           coverage_files=$(find coverage -name '*.out')
           gocovmerge ${coverage_files[@]} > coverage.out
@@ -63,7 +63,7 @@ jobs:
           export GIT_BRANCH="${GITHUB_REF:11}"
           export GIT_COMMIT_SHA="$GITHUB_SHA"
 
-          ./reporter format-coverage -t=gocov -p=github.com/werf/werf/ coverage.out
+          ./reporter format-coverage -t=gocov -p=github.com/werf/werf/v2/ coverage.out
           ./reporter upload-coverage
         env:
           CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
