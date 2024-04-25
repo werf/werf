@@ -34,20 +34,20 @@ groups:
       # - name: pre-stable
       #   version: 1.2.307
       - name: stable
-        version: 1.2.295
+        version: 1.2.307
       # - name: pre-rock-solid
       #   version: 1.2.295
       - name: rock-solid
-        version: 1.2.294
+        version: 1.2.295
   - name: "2"
     channels:
       - name: alpha
-        version: 2.0.2
+        version: 2.0.3
       - name: beta
-        version: 2.0.2
+        version: 2.0.3
       - name: ea
-        version: 2.0.2
+        version: 2.0.3
       - name: stable
-        version: 2.0.2
+        version: 2.0.3
       - name: rock-solid
-        version: 2.0.2
+        version: 2.0.3
