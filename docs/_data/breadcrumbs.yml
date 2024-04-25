@@ -31,7 +31,7 @@ en:
     url: /reference/cli/overview.html
   /resources: &documentation-resources
     title: Resources
-    url: /resources/how_to_migrate_from_v1_1_to_v1_2.html
+    url: /resources/migration_from_v1_2_to_v2_0.md
 ru:
   /documentation:
     <<: *documentation
