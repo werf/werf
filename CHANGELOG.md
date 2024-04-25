@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.0.3](https://www.github.com/werf/werf/compare/v2.0.2...v2.0.3) (2024-04-25)
+
+
+### Bug Fixes
+
+* **v2:** replace leftovers of v1.2 to v2 /2 ([d6cacfb](https://www.github.com/werf/werf/commit/d6cacfbc24ddef174ed2cb73206cbd9d8ecf85ab))
+
 ### [2.0.2](https://www.github.com/werf/werf/compare/v2.0.1...v2.0.2) (2024-04-24)
 
 
