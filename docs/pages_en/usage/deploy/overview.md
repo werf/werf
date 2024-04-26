@@ -5,7 +5,7 @@ permalink: usage/deploy/overview.html
 
 When setting up application delivery in Kubernetes, you must decide which format to use for managing the deployment configuration (parameterization, dependency management, configuration for different environments, etc.), as well as how to apply this configuration (the deployment mechanism).
 
-Helm is built into werf and is used for these tasks. Configuration development and maintenance is carried out using Helm charts. As for the deployment process, Helm in werf provides some advanced features:
+Nelm, the backward-compatible Helm alternative, is built into werf and is used for these tasks. Configuration development and maintenance is carried out using Helm charts. As for the deployment process, Nelm in werf provides some advanced features:
 
 - tracking the status of deployed resources (with the option to change the behaviour [for each resource]({{ "/reference/deploy_annotations.html" | true_relative_url }})):
   - smart waiting for resources to become ready;
@@ -13,9 +13,11 @@ Helm is built into werf and is used for these tasks. Configuration development a
   - deployment progress, logs, system events and application errors.
 - arbitrary deployment order for any resources, not just hooks;
 - waiting for resources that are not part of the release to be created and ready;
+- using much more robust Server-Side Apply for resource updates instead of 3-Way Merge;
+- `terraform plan`-like capabilities out of the box;
 - integrating building and deployment, and much more.
 
-werf strives to make working with Helm easier, more convenient and flexible without breaking backward compatibility with Helm charts, Helm templates, and Helm releases.
+werf strives to make working with Helm deployments easier, more convenient and flexible without breaking backward compatibility with Helm charts, Helm templates, and Helm releases.
 
 ## Basic deployment example
 

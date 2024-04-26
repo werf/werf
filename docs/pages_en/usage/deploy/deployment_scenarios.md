@@ -159,7 +159,7 @@ You can separate the first and second steps as follows:
 werf build --repo example.org/mycompany/myapp
 ```
 
-```
+```shell
 werf render --require-built-images --output manifests.yaml --repo example.org/mycompany/myapp
 ```
 
@@ -231,7 +231,7 @@ You can explicitly specify the release name and Namespace if there is no access 
 werf dismiss --release myapp-staging --namespace myapp-staging
 ```
 
-... or you can use a previous deployment report which contains the release name and Namespace. You can enable saving this report by using the `-save-deploy-report` flag of the `werf converge` or `werf bundle apply` commands.
+... or you can use a previous deployment report which contains the release name and Namespace. You can enable saving this report by using the `--save-deploy-report` flag of the `werf converge` or `werf bundle apply` commands.
 
 ```shell
 werf converge --save-deploy-report
