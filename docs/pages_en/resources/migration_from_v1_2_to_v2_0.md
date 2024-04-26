@@ -1,6 +1,7 @@
 ---
 title: Migration from v1.2 to v2.0
 permalink: resources/migration_from_v1_2_to_v2_0.html
+toc: false
 ---
 
 ## Breaking changes in v2.0
@@ -12,7 +13,7 @@ Key changes:
 1. Commands `werf render` and `werf bundle render` sort manifests in the resulting YAML differently.
 1. Removed commands `werf bundle download` and `werf bundle export`. Use `werf bundle copy --from REPO:TAG --to archive:mybundle.tar.gz`.
 1. Renamed flag `--skip-build` to `--require-built-images`.
-1. Replaced Helm templating function `werf_image` with `{{ $.Values.werf.image.<MY_IMAGE_NAME> }}`.
+1. Replaced Helm templating function `werf_image` with {% raw %}`{{ $.Values.werf.image.<MY_IMAGE_NAME> }}`{% endraw %}.
 1. Replaced flags `--report-path`, `--report-format` with `--save-build-report`, `--build-report-path`.
 1. In command `werf bundle copy` replaced flags `--repo`, `--tag`, `--to-tag` with `--from=REPO`, `--from=REPO:TAG`, `--to=REPO:TAG`.
 1. Removed automatic migrations from Helm 2 releases to Helm 3 releases.
