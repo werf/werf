@@ -225,5 +225,3 @@ metadata:
     secret.external-dependency.werf.io/resource: secret/my-dynamic-vault-secret
     secret.external-dependency.werf.io/namespace: my-namespace 
 ```
-
-*Обратите внимание, что ожидать готовность внешнего ресурса будут и все другие ресурсы релиза с тем же весом, так как ресурсы объединяются по весу в группы и развертываются именно группами.*
