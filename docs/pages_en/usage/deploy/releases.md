@@ -58,30 +58,6 @@ A release name generated using a special pattern or specified by the `--release`
 
 You can manually format any string to match the RFC 1123 Label Names format using the `werf slugify -f helm-release` command.
 
-## Adding resources that already exist in the cluster to the release
-
-werf does not allow a new release resource to be deployed on top of an existing resource in the cluster if the resource in the cluster *isn't part of the current release*. This behavior prevents accidental updates to resources belonging to another release or deployed without werf. Trying to do so will result in the following error:
-
-```
-Error: helm upgrade have failed: UPGRADE FAILED: rendered manifests contain a resource that already exists...
-```
-
-To add a cluster resource to the current release and allow it to be updated, add the `meta.helm.sh/release-name: <name of the current release>`, `meta.helm.sh/release-namespace: <Namespace of the current release>` annotations and the `app.kubernetes.io/managed-by: Helm` label to that cluster resource, for example:
-
-```shell
-kubectl annotate deploy/myapp meta.helm.sh/release-name=myapp-production
-kubectl annotate deploy/myapp meta.helm.sh/release-namespace=myapp-production
-kubectl label deploy/myapp app.kubernetes.io/managed-by=Helm
-```
-
-... and then restart the deployment:
-
-```shell
-werf converge
-```
-
-Running the above commands will result in the `myapp` release resource successfully updating the `myapp` resource in the cluster. On top of that, the cluster resource will become part of the current release.
-
 ## Auto-annotating the release resources being deployed
 
 During deployment, werf automatically adds the following annotations to all chart resources:

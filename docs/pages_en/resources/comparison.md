@@ -15,7 +15,7 @@ GitOps mandates separation of development and operation, while giterminism allow
 
 Helm is used only for chart deployment and distribution, while werf can also be used for developing, building, testing, distributing images and bundles, and cleaning up the container registry. 
 
-Helm is built into werf and is enhanced with additional features such as advanced tracking, customizing the deployment order not only for hooks but also for regular resources, and more.
+For chart deployment and distribution we use Nelm: backward-compatible Helm alternative, which provides many new features and improvements, such as as advanced resource tracking, flexible ordering of resources during deployment, Server-Side Apply instead of 3-Way Merge, `terraform plan`-like capabilities and much more.
 
 ## werf vs Argo CD
 

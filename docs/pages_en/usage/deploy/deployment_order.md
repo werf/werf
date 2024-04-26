@@ -46,46 +46,7 @@ In this case, the CRD for the CronTab resource will be deployed first, followed 
 
 ## Changing the order in which resources are deployed (werf only)
 
-By default, werf combines all the main resources ("main" means those are not hooks or CRDs from `crds/*.yaml`) into one group, creates resources for that group, and then tracks their readiness.
-
-The resources for the group are created in the following order:
-
-- Namespace;
-- NetworkPolicy;
-- ResourceQuota;
-- LimitRange;
-- PodSecurityPolicy;
-- PodDisruptionBudget;
-- ServiceAccount;
-- Secret;
-- SecretList;
-- ConfigMap;
-- StorageClass;
-- PersistentVolume;
-- PersistentVolumeClaim;
-- CustomResourceDefinition;
-- ClusterRole;
-- ClusterRoleList;
-- ClusterRoleBinding;
-- ClusterRoleBindingList;
-- Role;
-- RoleList;
-- RoleBinding;
-- RoleBindingList;
-- Service;
-- DaemonSet;
-- Pod;
-- ReplicationController;
-- ReplicaSet;
-- Deployment;
-- HorizontalPodAutoscaler;
-- StatefulSet;
-- Job;
-- CronJob;
-- Ingress;
-- APIService.
-
-Readiness tracking is enabled for all resources in the group simultaneously as soon as *all* resources in the group are created.
+By default, werf combines all the main resources ("main" means those are not hooks or CRDs from `crds/*.yaml`) into one group, creates resources for that group and tracks their readiness.
 
 To change the order in which resources are deployed, you can create *new resource groups* by assigning resources a *weight* other than the default `0`. All resources with the same weight are combined into their respective groups, and then the resource groups are deployed sequentially starting with the group with the lesser weight and progressing to the greater weight, for example:
 
@@ -264,5 +225,3 @@ metadata:
     secret.external-dependency.werf.io/resource: secret/my-dynamic-vault-secret
     secret.external-dependency.werf.io/namespace: my-namespace 
 ```
-
-*Note that all other release resources with the same weight will also be waiting for the external resource to be ready, since resources are grouped by weight and deployed as groups.*
