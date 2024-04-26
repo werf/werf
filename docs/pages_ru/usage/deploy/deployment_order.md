@@ -48,45 +48,6 @@ werf converge
 
 По умолчанию werf объединяет все основные ресурсы (основные — не являющиеся хуками или CRDs из `crds/*.yaml`) в одну группу, создаёт ресурсы этой группы, а затем отслеживает их готовность.
 
-Создание ресурсов группы происходит в следующем порядке:
-
-- Namespace;
-- NetworkPolicy;
-- ResourceQuota;
-- LimitRange;
-- PodSecurityPolicy;
-- PodDisruptionBudget;
-- ServiceAccount;
-- Secret;
-- SecretList;
-- ConfigMap;
-- StorageClass;
-- PersistentVolume;
-- PersistentVolumeClaim;
-- CustomResourceDefinition;
-- ClusterRole;
-- ClusterRoleList;
-- ClusterRoleBinding;
-- ClusterRoleBindingList;
-- Role;
-- RoleList;
-- RoleBinding;
-- RoleBindingList;
-- Service;
-- DaemonSet;
-- Pod;
-- ReplicationController;
-- ReplicaSet;
-- Deployment;
-- HorizontalPodAutoscaler;
-- StatefulSet;
-- Job;
-- CronJob;
-- Ingress;
-- APIService.
-
-Отслеживание готовности включается для всех ресурсов группы одновременно сразу после создания *всех* ресурсов группы.
-
 Для изменения порядка развертывания ресурсов можно создать *новые группы ресурсов* через задание ресурсам *веса*, отличного от веса по умолчанию `0`. Все ресурсы с одинаковым весом объединяются в группы, а затем группы ресурсов развертываются по очереди, от группы с меньшим весом к большему, например:
 
 ```
@@ -264,5 +225,3 @@ metadata:
     secret.external-dependency.werf.io/resource: secret/my-dynamic-vault-secret
     secret.external-dependency.werf.io/namespace: my-namespace 
 ```
-
-*Обратите внимание, что ожидать готовность внешнего ресурса будут и все другие ресурсы релиза с тем же весом, так как ресурсы объединяются по весу в группы и развертываются именно группами.*

@@ -159,7 +159,7 @@ kubectl apply -f manifests.yaml
 werf build --repo example.org/mycompany/myapp
 ```
 
-```
+```shell
 werf render --require-built-images --output manifests.yaml --repo example.org/mycompany/myapp
 ```
 
