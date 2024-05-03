@@ -39,10 +39,12 @@ jobs:
         name: Get commit message
         id: get_commit_message
         uses: ./.github/actions/get-commit-message
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          ignoreTitle: "true" # Don't use PR title
-          ignoreDescription: "false" # Use the Pull Request description
-          ignoreLatestCommitMessage: "false" # Use the latest commit message content
+          ignoreTitle: "true" # Don't use PR title.
+          ignoreDescription: "false" # Use the Pull Request description.
+          ignoreLatestCommitMessage: "false" # Use the latest commit message content.
 
       - if: env.WORKFLOW_CONCLUSION == 'failure'
         name: Add mentions
@@ -73,4 +75,4 @@ jobs:
           SLACK_MESSAGE: |
             ${{ steps.get_commit_message.outputs.message }}
             ${{ inputs.message }}
-            ${{ steps.msg_mention.outputs.content }} .
+            ${{ steps.msg_mention.outputs.content }}

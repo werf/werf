@@ -1,5 +1,6 @@
 const core = require('@actions/core');
 const github = require('@actions/github');
+const { graphql } = require("@octokit/graphql");
 
 async function getCommitMessagesFromPullRequest() {
   const { context } = github;
@@ -8,10 +9,16 @@ async function getCommitMessagesFromPullRequest() {
   const repositoryName = context.payload.repository.name;
   const pullRequestNumber = context.payload.pull_request.number;
 
-  core.debug('Get messages from pull request...');
+  core.debug('Geting messages from the pull request...');
   core.debug(` - repositoryOwner: ${repositoryOwner}`);
   core.debug(` - repositoryName: ${repositoryName}`);
   core.debug(` - pullRequestNumber: ${pullRequestNumber}`);
+
+  const graphqlWithAuth = graphql.defaults({
+    headers: {
+      authorization: `token ${process.env.GITHUB_TOKEN}`,
+    },
+  });
 
   const query = `
   query commitMessages(
@@ -44,7 +51,7 @@ async function getCommitMessagesFromPullRequest() {
   core.debug(` - query: ${query}`);
   core.debug(` - variables: ${JSON.stringify(variables, null, 2)}`);
 
-  const { repository } = await github.graphql(query, variables);
+  const { repository } = await graphqlWithAuth(query, variables);
 
   core.debug(` - response: ${JSON.stringify(repository, null, 2)}`);
 
@@ -66,9 +73,9 @@ async function getCommitMessagesFromPullRequest() {
 async function getCommitMessages() {
   const { context } = github;
 
-  const ignoreTitle = core.getInput('ignoreTitle').trim();
-  const ignoreDescription = core.getInput('ignoreDescription').trim();
-  const ignoreLatestCommitMessage = core.getInput('ignoreLatestCommitMessage').trim();
+  const ignoreTitle = core.getInput('ignoreTitle').trim() === 'true';
+  const ignoreDescription = core.getInput('ignoreDescription').trim() === 'true';
+  const ignoreLatestCommitMessage = core.getInput('ignoreLatestCommitMessage').trim() === 'true';
 
   const messages = [];
   switch (context.eventName) {
@@ -90,7 +97,7 @@ async function getCommitMessages() {
 
         message += context.payload.pull_request.title;
       } else {
-        core.debug(' - skipping title');
+        core.debug(`Skip getting title, as ignoreTitle is ${ignoreTitle}.`);
       }
 
       if (!ignoreDescription) {
@@ -101,7 +108,7 @@ async function getCommitMessages() {
           );
         }
       } else {
-        core.debug(' - skipping description');
+        core.debug(`Skip getting description, as ignoreDescription is ${ignoreDescription}.`);
       }
 
       if (message) {
@@ -129,11 +136,13 @@ async function getCommitMessages() {
           throw new Error('No owner found in the repository.');
         }
 
+        core.debug('Trying to get message from the pull request...');
+
         const commitMessages = await getCommitMessagesFromPullRequest({ github, context, core });
         message = commitMessages[commitMessages.length - 1];
         messages.push(messages.length > 0 ? ''.concat('\n\n', message) : message);
       } else {
-        core.debug(' - skipping commit message');
+        core.debug(`Skip getting commit message, as ignoreLatestCommitMessage is ${ignoreLatestCommitMessage}.`);
       }
 
       break;
@@ -147,7 +156,7 @@ async function getCommitMessages() {
         !context.payload.commits
         || !context.payload.commits.length
       ) {
-        core.debug(' - skipping commits');
+        core.debug(`Skip getting commit messages, as context.payload.commits is empty.`);
         break;
       }
 
