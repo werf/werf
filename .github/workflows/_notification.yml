@@ -63,7 +63,7 @@ jobs:
           fi
           if [ -n "${{ secrets.mentionGroupID }}" ] && [ -z "${MSG_MENTION_STRING}" ]; then MSG_MENTION_STRING="<!subteam^${{ secrets.mentionGroupID }}>"; fi
           if [ -n "${{ secrets.mentionUserID }}" ]; then MSG_MENTION_STRING="$MSG_MENTION_STRING${MSG_MENTION_STRING:+, }<@${{ secrets.mentionUserID }}>"; fi
-          echo "::debug:: Mention string - '$MSG_MENTION_STRING'."
+          echo "::debug:: zMention string - '$MSG_MENTION_STRING'."
           echo "::set-output name=content::$MSG_MENTION_STRING"
 
       - name: Notify
