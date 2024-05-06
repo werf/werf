@@ -26,9 +26,12 @@ func CreateDockerConfigDir(ctx context.Context, fromDockerConfig string) (string
 			return "", fmt.Errorf("unable to read %q", fromDockerConfig)
 		}
 
+		pathsToSkip := []string{"run", "mutagen"}
 		for _, file := range files {
-			if file.Name() == "run" {
-				continue
+			for _, pathToSkip := range pathsToSkip {
+				if file.Name() == pathToSkip {
+					continue
+				}
 			}
 
 			source := filepath.Join(fromDockerConfig, file.Name())
