@@ -1,6 +1,6 @@
 {{- $_ := set . "Version" ( splitList "/" .Values.global.github_ref | last ) }}
 {{- if  eq .Version "main" }}
-{{- $_ := set . "VersionURLNormalized" "latest" }}
+{{- $_ := set . "VersionURLNormalized" "v2" }}
 {{- else }}
 {{- $_ := set . "VersionURLNormalized" ( printf "%s" .Version | lower | replace "+" "-plus-" | replace "_" "-u-" ) }}
 {{- end }}
@@ -16,8 +16,6 @@ metadata:
   name: {{ .Chart.Name }}-{{ .VersionDNSNormalized }}-configurator
   annotations:
     kubernetes.io/ingress.class: "nginx"
-    nginx.ingress.kubernetes.io/use-regex: "true"
-    nginx.ingress.kubernetes.io/rewrite-target: /documentation/{{ .VersionURLNormalized }}/configurator.html
     nginx.ingress.kubernetes.io/configuration-snippet: |
       proxy_set_header X-Original-URI $request_uri;
 
