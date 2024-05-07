@@ -1,34 +1,41 @@
-{{- $_ := set . "Version" ( splitList "/" .Values.global.github_ref | last ) }}
-{{- $_ := set . "VersionURLNormalized" ( printf "%s" .Version | lower | replace "+" "-plus-" | replace "_" "-u-" ) }}
-{{- $_ := set . "VersionDNSNormalized" ( printf "%s" .Version | lower | replace "+" "-plus-" | replace "_" "-u-" | replace "." "-dot-" ) }}
+{{- $refs := list $.Values.global.github_ref }}
+{{- if eq $.Values.werf.env "test" }}
+{{- $refs = concat $refs (list "v2.0.3" "v1.2.294+fix1") }}
+{{- end }}
 
+{{- range $_, $ref := $refs }}
+
+{{- $version := splitList "/" $ref | last }}
+{{- $versionDNSNormalized := printf "%s" $version | lower | replace "+" "-plus-" | replace "_" "-u-" | replace "." "-dot-" }}
+
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Chart.Name }}-{{ .VersionDNSNormalized }}
+  name: {{ $.Chart.Name }}-{{ $versionDNSNormalized }}
   annotations:
     "werf.io/replicas-on-creation": "1"
   labels:
-    service: {{ .Chart.Name }}-{{ .VersionDNSNormalized }}
+    service: {{ $.Chart.Name }}-{{ $versionDNSNormalized }}
 spec:
   minReadySeconds: 5
   revisionHistoryLimit: 5
   selector:
     matchLabels:
-      service: {{ .Chart.Name }}-{{ .VersionDNSNormalized }}
+      service: {{ $.Chart.Name }}-{{ $versionDNSNormalized }}
   template:
     metadata:
       labels:
-        service: {{ .Chart.Name }}-{{ .VersionDNSNormalized }}
+        service: {{ $.Chart.Name }}-{{ $versionDNSNormalized }}
     spec:
       imagePullSecrets:
         - name: github-werfio
-      priorityClassName: {{ pluck .Values.werf.env .Values.priorityClassName | first | default .Values.priorityClassName._default }}
+      priorityClassName: {{ pluck $.Values.werf.env $.Values.priorityClassName | first | default $.Values.priorityClassName._default }}
       containers:
         - name: web
           command: ["nginx", "-g", "daemon off;"]
-          image: {{ index .Values.werf.image "web" }}
-{{- include "resources" . | indent 10 }}
+          image: {{ index $.Values.werf.image "web" }}
+{{- include "resources" $ | indent 10 }}
           ports:
           - containerPort: 80
             name: http
@@ -48,11 +55,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Chart.Name }}-{{ .VersionDNSNormalized }}
+  name: {{ $.Chart.Name }}-{{ $versionDNSNormalized }}
 spec:
   clusterIP: None
   selector:
-    service: {{ .Chart.Name }}-{{ .VersionDNSNormalized }}
+    service: {{ $.Chart.Name }}-{{ $versionDNSNormalized }}
   ports:
   - name: http
     port: 80
@@ -61,21 +68,22 @@ spec:
 apiVersion: autoscaling.k8s.io/v1beta2
 kind: VerticalPodAutoscaler
 metadata:
-  name: {{ .Chart.Name }}-{{ .VersionDNSNormalized }}
+  name: {{ $.Chart.Name }}-{{ $versionDNSNormalized }}
 spec:
   targetRef:
     apiVersion: "apps/v1"
     kind: Deployment
-    name: {{ .Chart.Name }}-{{ .VersionDNSNormalized }}
+    name: {{ $.Chart.Name }}-{{ $versionDNSNormalized }}
   updatePolicy:
     updateMode: "Initial"
 ---
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
-  name: {{ .Chart.Name }}-{{ .VersionDNSNormalized }}
+  name: {{ $.Chart.Name }}-{{ $versionDNSNormalized }}
 spec:
   maxUnavailable: 1
   selector:
     matchLabels:
-      service: {{ .Chart.Name }}-{{ .VersionDNSNormalized }}
+      service: {{ $.Chart.Name }}-{{ $versionDNSNormalized }}
+{{- end }}

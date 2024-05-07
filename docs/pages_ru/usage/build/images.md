@@ -3,7 +3,7 @@ title: Образы и зависимости
 permalink: usage/build/images.html
 ---
 
-<!-- прим. для перевода: на основе https://werf.io/documentation/v2/reference/werf_yaml.html#image-section -->
+<!-- прим. для перевода: на основе https://werf.io/docs/v2/reference/werf_yaml.html#image-section -->
 
 ## Добавление образов
 
@@ -29,7 +29,7 @@ image: database
 
 ### Dockerfile
 
-<!-- прим. для перевода: на основе https://werf.io/documentation/v2/reference/werf_yaml.html#dockerfile-builder -->
+<!-- прим. для перевода: на основе https://werf.io/docs/v2/reference/werf_yaml.html#dockerfile-builder -->
 
 #### Написание Dockerfile-инструкций
 

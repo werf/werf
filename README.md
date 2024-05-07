@@ -25,7 +25,7 @@ What makes werf special:
 
 ## Quickstart
 
-The [quickstart guide](https://werf.io/documentation/quickstart.html) shows how to set up the deployment of an example application (a cool voting app in our case) using werf.
+The [quickstart guide](https://werf.io/docs/quickstart.html) shows how to set up the deployment of an example application (a cool voting app in our case) using werf.
 
 ## Installation
 
@@ -33,7 +33,7 @@ The [installation guide](https://werf.io/installation.html) helps set up and use
 
 ## Documentation
 
-Detailed usage and reference for werf are available in [documentation](https://werf.io/documentation/) in multiple languages.
+Detailed usage and reference for werf are available in [documentation](https://werf.io/docs/) in multiple languages.
 
 Developers can get all the necessary knowledge about application delivery in Kubernetes (including basic understanding of K8s primitives) in the [werf guides](https://werf.io/guides.html). They provide ready-to-use examples for popular frameworks, including Node.js (JavaScript), Spring Boot (Java), Django (Python), Rails (Ruby), and Laravel (PHP).
 

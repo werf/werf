@@ -4,18 +4,22 @@ layout: default
 <!--#include virtual="/includes/banner.html" -->
 <div class="page__container">
   {%- include nav-breadcrumbs.html %}
+
+  {% comment %} Use page relative path for caching: ../.. or ../../.. {% endcomment %}
+  {%- if page.name == '404.md' %}
+    {%- assign is_404 = true %}
+    {%- assign page_rel_path = "/" %}
+  {%- else %}
+    {%- assign is_404 = false %}
+    {%- assign page_rel_path = page.url | true_relative_url | remove: page.url %}
+  {%- endif %}
+
   <div class="layout-sidebar">
+    {%- unless is_404 %}
     <div class="layout-sidebar__sidebar">
-      {% comment %} Use page relative path for caching: ../.. or ../../.. {% endcomment %}
-      {%- assign page_rel_path = "/" %}
-      {%- assign is_404 = false %}
-      {%- if page.name == '404.md' %}
-        {%- assign is_404 = true %}
-      {%- else %}
-        {%- assign page_rel_path = page.url | true_relative_url | remove: page.url %}
-      {%- endif %}
-      {%- include_cached sidebar.html sidebar=page.sidebar lang=page.lang is_404=is_404 page_rel_path=page_rel_path %}
+        {%- include_cached sidebar.html sidebar=page.sidebar lang=page.lang is_404=false page_rel_path=page_rel_path %}
     </div>
+    {%- endunless %}
     <div class="layout-sidebar__content">
       {{ content }}
     </div>

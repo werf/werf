@@ -2490,7 +2490,7 @@
 
 ### Docs
 
-* New docs for running werf in container (experimental): [https://werf.io/documentation/v1.2.46/advanced/ci_cd/run_in_container/run_in_docker_container.html](https://werf.io/documentation/v1.2.46/advanced/ci_cd/run_in_container/run_in_docker_container.html).
+* New docs for running werf in container (experimental): [https://werf.io/docs/v1.2.46/advanced/ci_cd/run_in_container/run_in_docker_container.html](https://werf.io/docs/v1.2.46/advanced/ci_cd/run_in_container/run_in_docker_container.html).
 
 ### Bug Fixes
 
@@ -2655,7 +2655,7 @@
 * For cleaning custom tags and associated content-based tag are treated as one:
   * The cleanup command deletes/keeps all tags following the cleaning policies for content-based tags.
   * The cleanup command keeps all when any tag is used in k8s.
-* By default, alias tags are not allowed by giterminism, and it is necessary to use [werf-giterminism.yaml](https://werf.io/documentation/v1.2/reference/werf_giterminism_yaml.html) to activate options:
+* By default, alias tags are not allowed by giterminism, and it is necessary to use [werf-giterminism.yaml](https://werf.io/docs/v1.2/reference/werf_giterminism_yaml.html) to activate options:
     ```yaml
     giterminismConfigVersion: 1 
     cli:

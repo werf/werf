@@ -7,7 +7,7 @@ permalink: usage/build/process.html
 
 ## Tagging images
 
-<!-- reference https://werf.io/documentation/v2/internals/stages_and_storage.html#stage-naming -->
+<!-- reference https://werf.io/docs/v2/internals/stages_and_storage.html#stage-naming -->
 
 The tagging of werf images is performed automatically as part of the build process. werf uses an optimal tagging scheme based on the contents of the image, thus preventing unnecessary rebuilds and application wait times during deployment.
 
@@ -85,7 +85,7 @@ werf build --repo REPO --add-custom-tag "%image%-latest"
 
 ## Layer-by-layer image caching
 
-<!-- reference https://werf.io/documentation/v2/internals/stages_and_storage.html#storage -->
+<!-- reference https://werf.io/docs/v2/internals/stages_and_storage.html#storage -->
 
 Layer-by-layer image caching is essential part of the werf build process. werf saves and reuses the build cache in the container registry and synchronizes parallel builders.
 
@@ -154,7 +154,7 @@ Stapel images are cached layer-by-layer in the container registry by default and
 
 ## Parallelism and image assembly order
 
-<!-- reference: https://werf.io/documentation/v2/internals/build_process.html#parallel-build -->
+<!-- reference: https://werf.io/docs/v2/internals/build_process.html#parallel-build -->
 
 All the images described in `werf.yaml` are built in parallel on the same build host. If there are dependencies between the images, the build is split into stages, with each stage containing a set of independent images that can be built in parallel.
 
@@ -267,7 +267,7 @@ You can clean up a caching repository by deleting it entirely without any risks.
 
 ## Synchronizing builders
 
-<!-- reference https://werf.io/documentation/v2/advanced/synchronization.html -->
+<!-- reference https://werf.io/docs/v2/advanced/synchronization.html -->
 
 To ensure consistency among parallel builders and to guarantee the reproducibility of images and intermediate layers, werf handles the synchronization of the builders. By default, the public synchronization service at [https://synchronization.werf.io/](https://synchronization.werf.io/) is used and no extra user interaction is required.
 
