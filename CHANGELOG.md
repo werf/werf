@@ -9,6 +9,15 @@
 * docs routing ([2734bd9](https://www.github.com/werf/werf/commit/2734bd9dca08c5037b06efd3d3172dd5dc810aeb))
 * **docs:** fix routing /3 ([306422f](https://www.github.com/werf/werf/commit/306422f1aaa446938f44d6936e82cce0260e30e2))
 
+### [2.0.4](https://www.github.com/werf/werf/compare/v2.0.3...v2.0.4) (2024-05-13)
+
+
+### Bug Fixes
+
+* **ci-env:** fix unable to copy "/Users/username/.docker/mutagen" ([6cac137](https://www.github.com/werf/werf/commit/6cac13729e72f47a9636b9bab47473c7043ea07e))
+* docs routing ([2734bd9](https://www.github.com/werf/werf/commit/2734bd9dca08c5037b06efd3d3172dd5dc810aeb))
+* **docs:** fix routing /3 ([306422f](https://www.github.com/werf/werf/commit/306422f1aaa446938f44d6936e82cce0260e30e2))
+
 ### [2.0.3](https://www.github.com/werf/werf/compare/v2.0.2...v2.0.3) (2024-04-25)
 
 
