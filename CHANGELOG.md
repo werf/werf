@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.1.35](https://www.github.com/werf/werf/compare/v1.1.34...v1.1.35) (2024-05-13)
+
+
+### Bug Fixes
+
+* update docs ([f893e60](https://www.github.com/werf/werf/commit/f893e60aa92de09cd040e68b63504cc8025d911c))
+
 ### [1.1.34](https://www.github.com/werf/werf/compare/v1.1.33...v1.1.34) (2022-05-24)
 
 
