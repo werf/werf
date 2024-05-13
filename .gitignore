@@ -23,3 +23,5 @@ docs/\.jekyll-cache/
 /tests/integration/three-way-merge/**/main
 /bin
 /tests-coverage
+/build/
+/dist/
