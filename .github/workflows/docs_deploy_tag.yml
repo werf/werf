@@ -22,7 +22,6 @@ jobs:
   deploy-test:
     uses: ./.github/workflows/_docs_deploy.yml
     with:
-      persistent: true
       env: test
     secrets:
       kubeConfig: ${{ secrets.KUBECONFIG_BASE64_DEV }}
