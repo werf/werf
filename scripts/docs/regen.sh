@@ -14,7 +14,7 @@ function regen() {
 }
 
 function create_documentation_sidebar() {
-  sidebar_documentation_path="$docs_dir/_data/sidebars/docs.yml"
+  sidebar_documentation_path="$docs_dir/_data/sidebars/documentation.yml"
   sidebar_cli_partial_path="$docs_dir/_data/sidebars/_cli.yml"
   sidebar_documentation_partial_path="$docs_dir/_data/sidebars/_documentation.yml"
 
