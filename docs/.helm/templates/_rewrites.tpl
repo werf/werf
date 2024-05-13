@@ -17,8 +17,10 @@ rewrite ^/(?<ver>v\d+(?:\.\d+(?:\.\d+(?:[^/]+)?)?)?|latest)/docs/?$             
 rewrite ^/(?<ver>v\d+(?:\.\d+(?:\.\d+(?:[^/]+)?)?)?|latest)/docs/(?<tail>.+)           /docs/$ver/$tail        redirect;
 
 rewrite ^/documentation\.html$                                                         /docs/                  redirect;
-rewrite ^/documentation/(?<ver>v\d+(?:\.\d+(?:\.\d+(?:[^/]+)?)?)?|latest)$             /docs/$ver/             redirect;
+rewrite ^/documentation/?$                                                             /docs/                  redirect;
+rewrite ^/documentation/(?<ver>v\d+(?:\.\d+(?:\.\d+(?:[^/]+)?)?)?|latest)/?$           /docs/$ver/             redirect;
 rewrite ^/documentation/(?<ver>v\d+(?:\.\d+(?:\.\d+(?:[^/]+)?)?)?|latest)/index\.html$ /docs/$ver/             redirect;
+rewrite ^/documentation/(?<ver>v\d+(?:\.\d+(?:\.\d+(?:[^/]+)?)?)?|latest)/(?<tail>.+)  /docs/$ver/$tail        redirect;
 rewrite ^/(?<ver>v\d+(?:\.\d+(?:\.\d+(?:[^/]+)?)?)?|latest)/documentation\.html$       /docs/$ver/             redirect;
 rewrite ^/(?<ver>v\d+(?:\.\d+(?:\.\d+(?:[^/]+)?)?)?|latest)/documentation/?$           /docs/$ver/             redirect;
 rewrite ^/(?<ver>v\d+(?:\.\d+(?:\.\d+(?:[^/]+)?)?)?|latest)/documentation/(?<tail>.+)  /docs/$ver/$tail        redirect;
