@@ -1,5 +1,13 @@
 # Changelog
 
+### [1.2.308](https://www.github.com/werf/werf/compare/v1.2.307...v1.2.308) (2024-05-13)
+
+
+### Bug Fixes
+
+* **deploy:** incorrect error message when release lock fails ([7f60ccc](https://www.github.com/werf/werf/commit/7f60cccc92a0db5597b275c83579eda1350e7958))
+* **docs:** cherry-pick updates to docs structure and routing from v2 ([ec59b2e](https://www.github.com/werf/werf/commit/ec59b2ef0b1c687450da217fe784b48f34e952f5))
+
 ### [1.2.307](https://www.github.com/werf/werf/compare/v1.2.306...v1.2.307) (2024-04-09)
 
 
