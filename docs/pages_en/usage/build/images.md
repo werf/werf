@@ -3,7 +3,7 @@ title: Images and dependencies
 permalink: usage/build/images.html
 ---
 
-<!-- reference: https://werf.io/documentation/v2/reference/werf_yaml.html#image-section -->
+<!-- reference: https://werf.io/docs/v2/reference/werf_yaml.html#image-section -->
 
 ## Adding images
 
@@ -29,7 +29,7 @@ Next, for each image in `werf.yaml`, you have to define the build instructions u
 
 ### Dockerfile
 
-<!-- reference: https://werf.io/documentation/v2/reference/werf_yaml.html#dockerfile-builder -->
+<!-- reference: https://werf.io/docs/v2/reference/werf_yaml.html#dockerfile-builder -->
 
 #### Writing Dockerfile instructions
 

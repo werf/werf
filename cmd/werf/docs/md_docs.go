@@ -89,7 +89,7 @@ func replaceLinks(s string) string {
 	links := xurls.Relaxed.FindAllString(s, -1)
 	for _, link := range links {
 		linkText := link
-		for _, prefix := range []string{"werf.io/documentation", "https://werf.io/documentation"} {
+		for _, prefix := range []string{"werf.io/docs", "https://werf.io/docs"} {
 			if strings.HasPrefix(link, prefix) {
 				link = strings.TrimPrefix(link, prefix)
 				link = fmt.Sprintf("{{ \"%s\" | true_relative_url }}", link)
