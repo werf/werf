@@ -51,7 +51,14 @@ spec:
     http:
       paths:
       - path: /docs/{{ $versionURLNormalized }}/
-        pathType: Prefix
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: {{ $.Chart.Name }}-{{ $versionDNSNormalized }}
+            port:
+              name: http
+      - path: /documentation/{{ $versionURLNormalized }}/
+        pathType: ImplementationSpecific
         backend:
           service:
             name: {{ $.Chart.Name }}-{{ $versionDNSNormalized }}
@@ -61,7 +68,14 @@ spec:
     http:
       paths:
       - path: /docs/{{ $versionURLNormalized }}/
-        pathType: Prefix
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: {{ $.Chart.Name }}-{{ $versionDNSNormalized }}
+            port:
+              name: http
+      - path: /documentation/{{ $versionURLNormalized }}/
+        pathType: ImplementationSpecific
         backend:
           service:
             name: {{ $.Chart.Name }}-{{ $versionDNSNormalized }}
