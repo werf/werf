@@ -567,7 +567,7 @@ tasks:
 
         # Run compose up in docs directory.
         cd docs
-        which werf >/dev/null || source $(trdl use werf 1.2 beta)
+        which werf >/dev/null || source $(trdl use werf 2 beta)
         werf compose up jekyll_base --dev --docker-compose-command-options="$services" --platform=linux/amd64 || true
 
   compose:up:standalone:
@@ -589,7 +589,7 @@ tasks:
     cmds:
       - |
         cd docs
-        which werf >/dev/null || source $(trdl use werf 1.2 beta)
+        which werf >/dev/null || source $(trdl use werf 2 beta)
         # Workaround: set image variable to stub image.
         WERF_JEKYLL_BASE_DOCKER_IMAGE_NAME=nginx:latest \
         werf compose down

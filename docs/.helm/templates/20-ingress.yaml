@@ -1,82 +1,38 @@
-{{- $_ := set . "Version" ( splitList "/" .Values.global.github_ref | last ) }}
-{{- if  eq .Version "main" }}
-{{- $_ := set . "VersionURLNormalized" "latest" }}
+{{- $refs := list $.Values.global.github_ref }}
+{{- if eq $.Values.werf.env "test" }}
+{{- $refs = concat $refs (list "v2.0.3" "v1.2.294+fix1") }}
+{{- end }}
+
+{{- range $_, $ref := $refs }}
+
+{{- $version := splitList "/" $ref | last }}
+{{- $versionDNSNormalized := printf "%s" $version | lower | replace "+" "-plus-" | replace "_" "-u-" | replace "." "-dot-" }}
+
+{{- $versionURLNormalized := "" }}
+{{- if eq $version "main" }}
+{{- $versionURLNormalized = "latest" }}
 {{- else }}
-{{- $_ := set . "VersionURLNormalized" ( printf "%s" .Version | lower | replace "+" "-plus-" | replace "_" "-u-" ) }}
-{{- end }}
-{{- $_ := set . "VersionDNSNormalized" ( printf "%s" .Version | lower | replace "+" "-plus-" | replace "_" "-u-" | replace "." "-dot-" ) }}
-{{- $host := pluck .Values.werf.env .Values.host | first | default .Values.host._default  }}
-{{- if  hasPrefix "review" .Values.werf.env }}
-{{- $host = ( printf "%s.%s" .Values.werf.env (pluck "dev" .Values.host | first | default .Values.host._default ) | lower ) }}
+{{- $versionURLNormalized = printf "%s" $version | lower | replace "+" "-plus-" | replace "_" "-u-" }}
 {{- end }}
 
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: {{ .Chart.Name }}-{{ .VersionDNSNormalized }}-configurator
-  annotations:
-    kubernetes.io/ingress.class: "nginx"
-    nginx.ingress.kubernetes.io/use-regex: "true"
-    nginx.ingress.kubernetes.io/rewrite-target: /documentation/{{ .VersionURLNormalized }}/configurator.html
-    nginx.ingress.kubernetes.io/configuration-snippet: |
-      proxy_set_header X-Original-URI $request_uri;
-
-      set $configurator_selected_page $1;
-
-      ssi on;
-      ssi_silent_errors on;
-
-{{ include "rewrites" . | indent 6 }}
-{{- if eq .Values.werf.env "production" }}
-    nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
-{{- else }}
-    nginx.ingress.kubernetes.io/auth-url: http://basic-auth.kube-basic-auth.svc.cluster.local/werfio
+{{- $host := pluck $.Values.werf.env $.Values.host | first | default $.Values.host._default  }}
+{{- if hasPrefix "review" $.Values.werf.env }}
+{{- $host = printf "%s.%s" $.Values.werf.env (pluck "dev" $.Values.host | first | default $.Values.host._default ) | lower }}
 {{- end }}
-spec:
-  tls:
-    - hosts:
-        - {{ $host }}
-        - ru.{{ $host }}
-{{- if eq .Values.werf.env "production" }}
-        - www.{{ $host }}
-{{- end }}
-      secretName: tls-{{ $host }}
-  rules:
-    - host: {{ $host }}
-      http:
-        paths:
-          - path: /documentation/{{ .VersionURLNormalized }}/configurator(?:/(.*))?$
-            pathType: Prefix
-            backend:
-              service:
-                name: {{ .Chart.Name }}-{{ .VersionDNSNormalized }}
-                port:
-                  name: http
-    - host: ru.{{ $host }}
-      http:
-        paths:
-          - path: /documentation/{{ .VersionURLNormalized }}/configurator(?:/(.*))?$
-            pathType: Prefix
-            backend:
-              service:
-                name: {{ .Chart.Name }}-{{ .VersionDNSNormalized }}
-                port:
-                  name: http
+
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ .Chart.Name }}-{{ .VersionDNSNormalized }}
+  name: {{ $.Chart.Name }}-{{ $versionDNSNormalized }}
   annotations:
     kubernetes.io/ingress.class: "nginx"
     nginx.ingress.kubernetes.io/configuration-snippet: |
       proxy_set_header X-Original-URI $request_uri;
-
       ssi on;
       ssi_silent_errors on;
-
-{{ include "rewrites" . | indent 6 }}
-{{- if eq .Values.werf.env "production" }}
+{{ include "rewrites" $ | indent 6 }}
+{{- if eq $.Values.werf.env "production" }}
     nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
 {{- else }}
     nginx.ingress.kubernetes.io/auth-url: http://basic-auth.kube-basic-auth.svc.cluster.local/werfio
@@ -86,7 +42,7 @@ spec:
   - hosts:
       - {{ $host }}
       - ru.{{ $host }}
-{{- if eq .Values.werf.env "production" }}
+{{- if eq $.Values.werf.env "production" }}
       - www.{{ $host }}
 {{- end }}
     secretName: tls-{{ $host }}
@@ -94,21 +50,35 @@ spec:
   - host: {{ $host }}
     http:
       paths:
-      - path: /documentation/{{ .VersionURLNormalized }}
-        pathType: Prefix
+      - path: /docs/{{ $versionURLNormalized }}/
+        pathType: ImplementationSpecific
         backend:
           service:
-            name: {{ .Chart.Name }}-{{ .VersionDNSNormalized }}
+            name: {{ $.Chart.Name }}-{{ $versionDNSNormalized }}
+            port:
+              name: http
+      - path: /documentation/{{ $versionURLNormalized }}/
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: {{ $.Chart.Name }}-{{ $versionDNSNormalized }}
             port:
               name: http
   - host: ru.{{ $host }}
     http:
       paths:
-      - path: /documentation/{{ .VersionURLNormalized }}
-        pathType: Prefix
+      - path: /docs/{{ $versionURLNormalized }}/
+        pathType: ImplementationSpecific
         backend:
           service:
-            name: {{ .Chart.Name }}-{{ .VersionDNSNormalized }}
+            name: {{ $.Chart.Name }}-{{ $versionDNSNormalized }}
             port:
               name: http
----
+      - path: /documentation/{{ $versionURLNormalized }}/
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: {{ $.Chart.Name }}-{{ $versionDNSNormalized }}
+            port:
+              name: http
+{{- end }}

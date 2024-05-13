@@ -40,12 +40,12 @@ jobs:
           else
             cat >> "$GITHUB_ENV" <<EOF
           WERF_RELEASE=werfio-documentation-${{ inputs.env }}
-          WERF_SET_GITHUB_REF=global.github_ref=v1.2.3-dev
+          WERF_SET_GITHUB_REF=global.github_ref=main
           EOF
           fi
 
       - name: Deploy
-        uses: werf/actions/converge@v1.2
+        uses: werf/actions/converge@v2
         with:
           env: ${{ inputs.env }}
           kube-config-base64-data: ${{ secrets.kubeConfig }}

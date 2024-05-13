@@ -19,7 +19,7 @@
 {%- elsif entry.external_url %}
 <li class="{{ item_entry_class }}"><a href="{{ entry.external_url }}" target="_blank">{{entry.title}}</a></li>
 {%- elsif include.is_404 %}
-<li class="{{ item_entry_class }}"><a data-proofer-ignore href="{{ site.canonical_url_prefix }}{{ entry.url | relative_url }}">{{entry.title}}</a></li>
+<li class="{{ item_entry_class }}"><a data-proofer-ignore href="{{ site.canonical_url_prefix }}{{ entry.url }}">{{entry.title }}</a></li>
 {%- else %}
-<li class="{{ item_entry_class }}" data-page-url="{{ entry.url }}"><a href="{{ entry.url | true_relative_url }}">{{entry.title}}</a></li>
+<li class="{{ item_entry_class }}" data-page-url="{{ entry.url }}"><a href="{{ entry.url | true_relative_url }}">{{entry.title }}</a></li>
 {%- endif %}

@@ -1,5 +1,5 @@
 en:
-  /documentation: &documentation
+  /docs: &documentation
     title: Documentation
     url: /index.html
   /usage: &documentation-usage
@@ -33,7 +33,7 @@ en:
     title: Resources
     url: /resources/how_to_migrate_from_v1_1_to_v1_2.html
 ru:
-  /documentation:
+  /docs:
     <<: *documentation
     title: Документация
   /usage:
