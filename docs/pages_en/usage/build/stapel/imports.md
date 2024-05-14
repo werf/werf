@@ -72,7 +72,7 @@ import:
   after: setup
 ```
 
-As with the _git mappings_ configuration, include and exclude file and directory masks are supported (`include_paths: []` and `exclude_paths: []`, respectively). Masks must be specified relative to the source path (as in the `add` parameter).
+As with the _git mappings_ configuration, include and exclude file and directory masks are supported (`includePaths: []` and `excludePaths: []`, respectively). Masks must be specified relative to the source path (as in the `add` parameter).
 You can also specify an owner and a group for the imported resources, `owner: <owner>` and `group: <group>`.
 This behavior is similar to the one used when adding code from Git repositories, and you can read more about it in the [git directive section]({{ "usage/build/stapel/git.html" | true_relative_url }}).
 
