@@ -53,7 +53,14 @@ helm:
 
 			{ // helm files
 				for _, relPath := range e.addFiles {
-					fileCreateOrAppend(relPath, fmt.Sprintf(`test: %s`, relPath))
+					fileCreateOrAppend(relPath, fmt.Sprintf(`
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: %s
+  annotations:
+    test: %s
+`, relPath, relPath))
 				}
 
 				for _, relPath := range e.commitFiles {
@@ -125,7 +132,14 @@ helm:
 						}
 
 						for _, relPath := range e.addFiles {
-							fileCreateOrAppend(relPath, fmt.Sprintf(`test: %s`, relPath))
+							fileCreateOrAppend(relPath, fmt.Sprintf(`
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: %s
+  annotations:
+    test: %s
+`, relPath, relPath))
 						}
 
 						for _, relPath := range e.commitFiles {
@@ -154,11 +168,11 @@ helm:
 						}
 					},
 					Entry("the chart directory not found", entry{
-						expectedErrSubstring: `unable to locate chart directory: the directory ".helm" not found in the project git repository`,
+						expectedErrSubstring: `stat .helm: no such file or directory`,
 					}),
 					Entry(`the template file ".helm/templates/template1.yaml" not tracked`, entry{
 						addFiles:             []string{relativeToProjectDir(".helm/templates/template1.yaml")},
-						expectedErrSubstring: `unable to locate chart directory: the untracked file ".helm/templates/template1.yaml" must be committed`,
+						expectedErrSubstring: `unable to load chart directory: the untracked file ".helm/templates/template1.yaml" must be committed`,
 					}),
 					Entry("the template files not tracked", entry{
 						addFiles: []string{
@@ -167,7 +181,7 @@ helm:
 							relativeToProjectDir(".helm/templates/template3.yaml"),
 						},
 						commitFiles: []string{relativeToProjectDir(".helm/templates/template1.yaml")},
-						expectedErrSubstring: `unable to locate chart directory: the following untracked files must be committed:
+						expectedErrSubstring: `unable to load chart directory: the following untracked files must be committed:
 
  - .helm/templates/template2.yaml
  - .helm/templates/template3.yaml
@@ -182,7 +196,7 @@ helm:
 						addFiles:               []string{relativeToProjectDir(".helm/templates/template1.yaml")},
 						commitFiles:            []string{relativeToProjectDir(".helm/templates/template1.yaml")},
 						changeFilesAfterCommit: []string{relativeToProjectDir(".helm/templates/template1.yaml")},
-						expectedErrSubstring:   `unable to locate chart directory: the file ".helm/templates/template1.yaml" must be committed`,
+						expectedErrSubstring:   `unable to load chart directory: the file ".helm/templates/template1.yaml" must be committed`,
 					}),
 					Entry("the template files changed after commit", entry{
 						addFiles: []string{
@@ -200,7 +214,7 @@ helm:
 							relativeToProjectDir(".helm/templates/template2.yaml"),
 							relativeToProjectDir(".helm/templates/template3.yaml"),
 						},
-						expectedErrSubstring: `unable to locate chart directory: the following files must be committed:
+						expectedErrSubstring: `unable to load chart directory: the following files must be committed:
 
  - .helm/templates/template1.yaml
  - .helm/templates/template2.yaml
@@ -240,7 +254,7 @@ helm:
 						addSymlinks: map[string]string{
 							relativeToProjectDir(".helm/templates"): getLinkTo(relativeToProjectDir(".helm/templates"), relativeToProjectDir("dir/.helm/templates")),
 						},
-						expectedErrSubstring: `unable to locate chart directory: accepted file ".helm/templates/template1.yaml" check failed: the link target "dir/.helm/templates" should be also accepted by giterminism config`,
+						expectedErrSubstring: `unable to load chart directory: accepted file ".helm/templates/template1.yaml" check failed: the link target "dir/.helm/templates" should be also accepted by giterminism config`,
 					}),
 					Entry("helm.allowUncommittedFiles (.helm, dir) covers uncommitted files", symlinkEntry{
 						skipOnWindows:              true,
@@ -294,7 +308,7 @@ helm:
 						addAndCommitSymlinks: map[string]string{
 							relativeToProjectDir(".helm"): getLinkTo(relativeToProjectDir(".helm"), "helm"),
 						},
-						expectedErrSubstring: `unable to locate chart directory: the file ".helm/templates/template1.yaml" not found in the project git repository`,
+						expectedErrSubstring: `unable to load chart directory: the file ".helm/templates/template1.yaml" not found in the project git repository`,
 					})
 				})
 
@@ -306,7 +320,7 @@ helm:
 						addSymlinks: map[string]string{
 							relativeToProjectDir(".helm"): getLinkTo(relativeToProjectDir(".helm"), "helm"),
 						},
-						expectedErrSubstring: `unable to locate chart directory: accepted file ".helm/templates/template1.yaml" check failed: the link target "../../helm" should be also accepted by giterminism config`,
+						expectedErrSubstring: `unable to load chart directory: accepted file ".helm/templates/template1.yaml" check failed: the link target "../../helm" should be also accepted by giterminism config`,
 					})
 				})
 
