@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 
 	"github.com/samber/lo"
@@ -30,7 +29,6 @@ import (
 	helmcommon "github.com/werf/nelm/pkg/common"
 	"github.com/werf/nelm/pkg/kubeclnt"
 	"github.com/werf/nelm/pkg/resrc"
-	"github.com/werf/nelm/pkg/resrcid"
 	"github.com/werf/nelm/pkg/resrcpatcher"
 	"github.com/werf/nelm/pkg/resrcprocssr"
 	"github.com/werf/nelm/pkg/rlshistor"
@@ -660,9 +658,6 @@ func runRender(ctx context.Context, imagesToProcess build.ImagesToProcess) error
 
 	if cmdData.IncludeCRDs {
 		crds := resProcessor.DeployableStandaloneCRDs()
-		sort.SliceStable(crds, func(i, j int) bool {
-			return sortResources(crds[i].ResourceID, crds[j].ResourceID)
-		})
 
 		for _, res := range crds {
 			if len(showFiles) > 0 && !lo.Contains(showFiles, res.FilePath()) {
@@ -676,9 +671,6 @@ func runRender(ctx context.Context, imagesToProcess build.ImagesToProcess) error
 	}
 
 	hooks := resProcessor.DeployableHookResources()
-	sort.SliceStable(hooks, func(i, j int) bool {
-		return sortResources(hooks[i].ResourceID, hooks[j].ResourceID)
-	})
 
 	for _, res := range hooks {
 		if len(showFiles) > 0 && !lo.Contains(showFiles, res.FilePath()) {
@@ -691,9 +683,6 @@ func runRender(ctx context.Context, imagesToProcess build.ImagesToProcess) error
 	}
 
 	resources := resProcessor.DeployableGeneralResources()
-	sort.SliceStable(resources, func(i, j int) bool {
-		return sortResources(resources[i].ResourceID, resources[j].ResourceID)
-	})
 
 	for _, res := range resources {
 		if len(showFiles) > 0 && !lo.Contains(showFiles, res.FilePath()) {
@@ -726,32 +715,4 @@ func renderResource(unstruct *unstructured.Unstructured, path string, output io.
 	}
 
 	return nil
-}
-
-func sortResources(id1, id2 *resrcid.ResourceID) bool {
-	kind1 := id1.GroupVersionKind().Kind
-	kind2 := id2.GroupVersionKind().Kind
-	if kind1 != kind2 {
-		return kind1 < kind2
-	}
-
-	group1 := id1.GroupVersionKind().Group
-	group2 := id2.GroupVersionKind().Group
-	if group1 != group2 {
-		return group1 < group2
-	}
-
-	version1 := id1.GroupVersionKind().Version
-	version2 := id2.GroupVersionKind().Version
-	if version1 != version2 {
-		return version1 < version2
-	}
-
-	namespace1 := id1.Namespace()
-	namespace2 := id2.Namespace()
-	if namespace1 != namespace2 {
-		return namespace1 < namespace2
-	}
-
-	return id1.Name() < id2.Name()
 }
