@@ -13,6 +13,7 @@ import (
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/util"
 	"github.com/werf/werf/v2/pkg/werf"
 )
 
@@ -47,10 +48,15 @@ type ServiceValuesOptions struct {
 }
 
 func GetEnvServiceValues(env string) map[string]interface{} {
-	return map[string]interface{}{
-		"werf":   map[string]interface{}{"env": env},
-		"global": map[string]interface{}{"env": env},
+	result := map[string]interface{}{
+		"werf": map[string]interface{}{"env": env},
 	}
+
+	if exposeGlobalServiceValues() {
+		result["global"] = map[string]interface{}{"env": env}
+	}
+
+	return result
 }
 
 func GetServiceValues(ctx context.Context, projectName, repo string, imageInfoGetters []*image.InfoGetter, opts ServiceValuesOptions) (map[string]interface{}, error) {
@@ -114,8 +120,11 @@ func GetServiceValues(ctx context.Context, projectName, repo string, imageInfoGe
 	}
 
 	res := map[string]interface{}{
-		"werf":   werfInfo,
-		"global": globalInfo,
+		"werf": werfInfo,
+	}
+
+	if exposeGlobalServiceValues() {
+		res["global"] = globalInfo
 	}
 
 	if opts.SetDockerConfigJsonValue {
@@ -151,8 +160,11 @@ func GetBundleServiceValues(ctx context.Context, opts ServiceValuesOptions) (map
 	}
 
 	res := map[string]interface{}{
-		"werf":   werfInfo,
-		"global": globalInfo,
+		"werf": werfInfo,
+	}
+
+	if exposeGlobalServiceValues() {
+		res["global"] = globalInfo
 	}
 
 	if opts.SetDockerConfigJsonValue {
@@ -192,4 +204,9 @@ func writeDockerConfigJsonValue(ctx context.Context, values map[string]interface
 	logboek.Context(ctx).Default().LogF("NOTE: and in such case should not be used as imagePullSecrets.\n")
 
 	return nil
+}
+
+// TODO(3.0): remove global service values completely
+func exposeGlobalServiceValues() bool {
+	return !util.GetBoolEnvironmentDefaultFalse("WERF_EXPERIMENT_NO_GLOBAL_SERVICE_VALUES")
 }
