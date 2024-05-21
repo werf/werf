@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.1.0](https://www.github.com/werf/werf/compare/v2.0.4...v2.1.0) (2024-05-20)
+
+
+### Features
+
+* **values:** env WERF_EXPERIMENT_NO_GLOBAL_SERVICE_VALUES=1 will disable global service values ([3949b70](https://www.github.com/werf/werf/commit/3949b70af9330ff4262c402073ed9e9c26755474))
+
+
+### Bug Fixes
+
+* **deploy:** stable resource sorting in Helm release manifests ([333ac86](https://www.github.com/werf/werf/commit/333ac8636ea12ee6a2c72cd825f3f4410501d09d))
+
 ### [2.0.4](https://www.github.com/werf/werf/compare/v2.0.3...v2.0.4) (2024-05-13)
 
 
