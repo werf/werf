@@ -41,21 +41,21 @@ toc: false
 
 ## Resource dependencies
 
-`werf.io/deploy-dependency-ANY_NAME: [state=STATE] [name=NAME] [namespace=NAMESPACE] [kind=KIND] [group=GROUP] [version=VERSION]`
+`werf.io/deploy-dependency-ANY_NAME: state=STATE[,name=NAME][,namespace=NAMESPACE][,kind=KIND][,group=GROUP][,version=VERSION]`
 
 Пример: \
-`werf.io/deploy-dependency-db: state=ready kind=StatefulSet name=postgres` \
-`werf.io/deploy-dependency-app: state=present kind=Deployment group=apps version=v1 name=app namespace=app`
+`werf.io/deploy-dependency-db: state=ready,kind=StatefulSet,name=postgres` \
+`werf.io/deploy-dependency-app: state=present,kind=Deployment,group=apps,version=v1,name=app,namespace=app`
 
 Обязательные параметры:
-- "state": `ready` или `present`. Если `present`, то дождаться, пока ресурс не будет создан/обновлен, если `ready`, то дождаться, пока ресурс не будет создан/обновлен и приведен в готовность.
+- `state`: `ready` или `present`. Если `present`, то дождаться, пока ресурс не будет создан/обновлен, если `ready`, то дождаться, пока ресурс не будет создан/обновлен и приведен в готовность.
 
 Как минимум один из этих параметров требуется указать:
-- "name": имя ресурса, от которого будет зависеть текущий ресурс.
-- "namespace": namespace ресурса, от которого будет зависеть текущий ресурс.
-- "kind": kind ресурса, от которого будет зависеть текущий ресурс.
-- "group": api group ресурса, от которого будет зависеть текущий ресурс.
-- "version": api version ресурса, от которого будет зависеть текущий ресурс.
+- `name`: имя ресурса, от которого будет зависеть текущий ресурс.
+- `namespace`: namespace ресурса, от которого будет зависеть текущий ресурс.
+- `kind`: kind ресурса, от которого будет зависеть текущий ресурс.
+- `group`: api group ресурса, от которого будет зависеть текущий ресурс.
+- `version`: api version ресурса, от которого будет зависеть текущий ресурс.
 
 Больше информации: [порядок развертывания]({{ "/usage/deploy/deployment_order.html" | true_relative_url }})
 
