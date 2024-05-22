@@ -8,6 +8,7 @@ toc: false
 This article contains description of annotations which control werf resource operations and tracking of resources during deploy process. Annotations should be configured in the chart templates.
 
  - [`werf.io/weight`](#resource-weight) — defines the weight of the resource, which will affect the order in which the resources are deployed.
+ - [`werf.io/deploy-dependency-ANY_NAME`](#resource-dependencies) — define a dependency for the resource, which will affect the order in which the resources are deployed.
  - [`<any-name>.external-dependency.werf.io/resource`](#external-dependency-resource) — wait for specified external dependency to be up and running, and only then proceed to deploy the annotated resource.
  - [`<any-name>.external-dependency.werf.io/namespace`](#external-dependency-namespace) — specify the namespace for the external dependency.
  - [`werf.io/replicas-on-creation`](#replicas-on-creation) — defines number of replicas that should be set only when creating resource initially (useful for HPA).
@@ -38,6 +39,26 @@ Example: \
 - Works for non-Hook resources only. For Hooks, use `helm.sh/hook-weight`, which works almost the same.
 
 This parameter sets the weight of the resources, defining the order in which they are deployed. First, werf groups resources according to their weight and then sequentially deploys them, starting with the group with the lowest weight. In this case, werf will not proceed to deploy the next batch of resources until the previous group has been successfully deployed.
+
+More info: [deployment order]({{ "/usage/deploy/deployment_order.html" | true_relative_url }})
+
+## Resource dependencies
+
+`werf.io/deploy-dependency-ANY_NAME: [state=STATE] [name=NAME] [namespace=NAMESPACE] [kind=KIND] [group=GROUP] [version=VERSION]`
+
+Example: \
+`werf.io/deploy-dependency-db: state=ready kind=StatefulSet name=postgres` \
+`werf.io/deploy-dependency-app: state=present kind=Deployment group=apps version=v1 name=app namespace=app`
+
+Required parameters:
+- "state": `ready` or `present`. If `present`, then wait until resource is created/updated, if `ready`, then wait until resource is created/updated and ready.
+
+At least one of these parameters must be specified:
+- "name": name of a resource to depend on.
+- "namespace": namespace of a resource to depend on.
+- "kind": kind of a resource to depend on.
+- "group": api group of a resource to depend on.
+- "version": api version of a resource to depend on.
 
 More info: [deployment order]({{ "/usage/deploy/deployment_order.html" | true_relative_url }})
 

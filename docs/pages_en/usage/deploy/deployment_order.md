@@ -9,11 +9,13 @@ Kubernetes resources are deployed in the following stages:
 
 1. Deploying `CustomResourceDefinitions` from the `crds` directories of the included charts.
 
-2. Deploying `pre-install`, `pre-upgrade` or `pre-rollback` hooks one hook at a time, starting with hooks with less weight to greater weight. If a hook is dependent on an external resource, it will only be deployed once that resource is ready.
+2. Deploying `pre-install`, `pre-upgrade` or `pre-rollback` hooks, starting with hooks with less weight to greater weight.
 
-3. Deploying basic resources: the resources with the same weight are combined into groups (resources without a specified weight are assigned a weight of 0) and deployed one group at a time, starting with groups with lower-weight resources to groups with higher-weight resources. If a resource in a group depends on an external resource, the group will be deployed only after that resource is ready.
+3. Deploying basic resources: the resources with the same weight are combined into groups (resources without a specified weight are assigned a weight of 0) and deployed one group at a time, starting with groups with lower-weight resources to groups with higher-weight resources.
 
-4. Deploying `post-install`, `post-upgrade` or `post-rollback` hooks one hook at a time, starting with hooks with less weight to ones with greater weight. If a hook is dependent on an external resource, it will be deployed only after that resource is ready.
+4. Deploying `post-install`, `post-upgrade` or `post-rollback` hooks, starting with hooks with less weight to ones with greater weight.
+
+Resources with `werf.io/deploy-dependency-<name>` annotation do not belong to any stage and are deployed as soon as their dependencies satisfied.
 
 ## Deploying CustomResourceDefinitions
 
@@ -44,7 +46,7 @@ werf converge
 
 In this case, the CRD for the CronTab resource will be deployed first, followed by the CronTab resource.
 
-## Changing the order in which resources are deployed (werf only)
+## Resource deployments ordering via weight groups (werf only)
 
 By default, werf combines all the main resources ("main" means those are not hooks or CRDs from `crds/*.yaml`) into one group, creates resources for that group and tracks their readiness.
 
@@ -88,6 +90,47 @@ werf converge
 ```
 
 In this case, the `database` resource was deployed first, followed by `database-migrations`, and then `app1` and `app2` were deployed in parallel.
+
+## Resource deployments ordering via direct dependencies (werf only)
+
+Annotation `werf.io/deploy-dependency-<name>` can be used to set resources ordering during deployment. These resources will not belong to any particular resource group or stage and are deployed as soon as their dependencies are satisfied, for example:
+
+```
+# .helm/templates/example.yaml:
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: database
+# ...
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: database-migrations
+  annotations:
+    werf.io/deploy-dependency-db: kind=StatefulSet name=database state=ready
+# ...
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app1
+  annotations:
+    werf.io/deploy-dependency-migrations: kind=Job name=database-migrations state=ready
+# ...
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app2
+  annotations:
+    werf.io/deploy-dependency-migrations: kind=Job name=database-migrations state=ready
+# ...
+```
+
+In this case, the `database` resource was deployed first, followed by `database-migrations`, and then `app1` and `app2` were deployed in parallel.
+
+This is a more flexible and effective way to set the order of resource deployments in comparison to `werf.io/weight` and other methods, as it allows you to deploy resources in a graph-like order.
 
 ## Running tasks before/after installing, upgrading, rolling back or deleting a release
 
