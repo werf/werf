@@ -44,21 +44,21 @@ More info: [deployment order]({{ "/usage/deploy/deployment_order.html" | true_re
 
 ## Resource dependencies
 
-`werf.io/deploy-dependency-ANY_NAME: [state=STATE] [name=NAME] [namespace=NAMESPACE] [kind=KIND] [group=GROUP] [version=VERSION]`
+`werf.io/deploy-dependency-ANY_NAME: state=STATE[,name=NAME][,namespace=NAMESPACE][,kind=KIND][,group=GROUP][,version=VERSION]`
 
 Example: \
-`werf.io/deploy-dependency-db: state=ready kind=StatefulSet name=postgres` \
-`werf.io/deploy-dependency-app: state=present kind=Deployment group=apps version=v1 name=app namespace=app`
+`werf.io/deploy-dependency-db: state=ready,kind=StatefulSet,name=postgres` \
+`werf.io/deploy-dependency-app: state=present,kind=Deployment,group=apps,version=v1,name=app,namespace=app`
 
 Required parameters:
-- "state": `ready` or `present`. If `present`, then wait until resource is created/updated, if `ready`, then wait until resource is created/updated and ready.
+- `state`: `ready` or `present`. If `present`, then wait until resource is created/updated, if `ready`, then wait until resource is created/updated and ready.
 
 At least one of these parameters must be specified:
-- "name": name of a resource to depend on.
-- "namespace": namespace of a resource to depend on.
-- "kind": kind of a resource to depend on.
-- "group": api group of a resource to depend on.
-- "version": api version of a resource to depend on.
+- `name`: name of a resource to depend on.
+- `namespace`: namespace of a resource to depend on.
+- `kind`: kind of a resource to depend on.
+- `group`: api group of a resource to depend on.
+- `version`: api version of a resource to depend on.
 
 More info: [deployment order]({{ "/usage/deploy/deployment_order.html" | true_relative_url }})
 

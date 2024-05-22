@@ -108,7 +108,7 @@ kind: Job
 metadata:
   name: database-migrations
   annotations:
-    werf.io/deploy-dependency-db: kind=StatefulSet name=database state=ready
+    werf.io/deploy-dependency-db: state=ready,kind=StatefulSet,name=database
 # ...
 ---
 apiVersion: apps/v1
@@ -116,7 +116,7 @@ kind: Deployment
 metadata:
   name: app1
   annotations:
-    werf.io/deploy-dependency-migrations: kind=Job name=database-migrations state=ready
+    werf.io/deploy-dependency-migrations: state=ready,kind=Job,name=database-migrations
 # ...
 ---
 apiVersion: apps/v1
@@ -124,11 +124,13 @@ kind: Deployment
 metadata:
   name: app2
   annotations:
-    werf.io/deploy-dependency-migrations: kind=Job name=database-migrations state=ready
+    werf.io/deploy-dependency-migrations: state=ready,kind=Job,name=database-migrations
 # ...
 ```
 
 Результат: сначала был развернут ресурс `database`, затем — `database-migrations`, а затем параллельно развернулись `app1` и `app2`.
+
+Все возможности этой аннотации можно узнать [здесь]({{ "/reference/deploy_annotations.html#resource-dependencies" | true_relative_url }}).
 
 Это более гибкий и эффективный способ задания порядка развертывания ресурсов по сравнению с использованием `werf.io/weight` и других методов, т. к. позволяет развертывать ресурсы в порядке графа.
 

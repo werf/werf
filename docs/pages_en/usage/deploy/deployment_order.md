@@ -108,7 +108,7 @@ kind: Job
 metadata:
   name: database-migrations
   annotations:
-    werf.io/deploy-dependency-db: kind=StatefulSet name=database state=ready
+    werf.io/deploy-dependency-db: state=ready,kind=StatefulSet,name=database
 # ...
 ---
 apiVersion: apps/v1
@@ -116,7 +116,7 @@ kind: Deployment
 metadata:
   name: app1
   annotations:
-    werf.io/deploy-dependency-migrations: kind=Job name=database-migrations state=ready
+    werf.io/deploy-dependency-migrations: state=ready,kind=Job,name=database-migrations
 # ...
 ---
 apiVersion: apps/v1
@@ -124,11 +124,13 @@ kind: Deployment
 metadata:
   name: app2
   annotations:
-    werf.io/deploy-dependency-migrations: kind=Job name=database-migrations state=ready
+    werf.io/deploy-dependency-migrations: state=ready,kind=Job,name=database-migrations
 # ...
 ```
 
 In this case, the `database` resource was deployed first, followed by `database-migrations`, and then `app1` and `app2` were deployed in parallel.
+
+Check out all capabilities of this annotation [here]({{ "/reference/deploy_annotations.html#resource-dependencies" | true_relative_url }}).
 
 This is a more flexible and effective way to set the order of resource deployments in comparison to `werf.io/weight` and other methods, as it allows you to deploy resources in a graph-like order.
 
