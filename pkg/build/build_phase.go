@@ -32,6 +32,7 @@ import (
 	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/storage/manager"
 	"github.com/werf/werf/v2/pkg/util"
+	"github.com/werf/werf/v2/pkg/util/parallel"
 	"github.com/werf/werf/v2/pkg/werf"
 )
 
@@ -197,8 +198,13 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 		commonTargetPlatforms = []string{phase.Conveyor.ContainerBackend.GetDefaultPlatform()}
 	}
 
-	for _, desc := range phase.Conveyor.imagesTree.GetImagesByName(false) {
-		name, images := desc.Unpair()
+	imagesPairs := phase.Conveyor.imagesTree.GetImagesByName(false)
+	if err := parallel.DoTasks(ctx, len(imagesPairs), parallel.DoTasksOptions{
+		MaxNumberOfWorkers: phase.Conveyor.StorageManager.MaxNumberOfWorkers(),
+	}, func(ctx context.Context, taskId int) error {
+		pair := imagesPairs[taskId]
+
+		name, images := pair.Unpair()
 		platforms := util.MapFuncToSlice(images, func(img *image.Image) string { return img.TargetPlatform })
 
 		// TODO: this target platforms assertion could be removed in future versions and now exists only as a additional self-testing code
@@ -289,6 +295,10 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 				}
 			}
 		}
+
+		return nil
+	}); err != nil {
+		return err
 	}
 
 	return phase.createReport(ctx)
