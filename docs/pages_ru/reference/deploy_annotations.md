@@ -7,6 +7,7 @@ toc: false
 Данная статья содержит описание аннотаций, которые меняют поведение механизма отслеживания ресурсов в процессе выката с помощью werf. Все аннотации должны быть объявлены в шаблонах чарта.
 
  - [`werf.io/weight`](#resource-weight) — задает вес ресурса, который определяет порядок развертывания ресурсов.
+ - [`werf.io/deploy-dependency-ANY_NAME`](#resource-dependencies) — задать зависимость от другого ресурса, что повлияет на порядок развертывания ресурсов.
  - [`<any-name>.external-dependency.werf.io/resource`](#external-dependency-resource) — дождаться, пока указанная внешняя зависимость будет запущена, и только после этого приступить к развертыванию аннотированного ресурса.
  - [`<any-name>.external-dependency.werf.io/namespace`](#external-dependency-namespace) — задать пространство имен для внешней зависимости.
  - [`werf.io/replicas-on-creation`](#replicas-on-creation) — задаёт количество реплик, которое должно быть установлено при первичном создании ресурса (полезно при использовании HPA).
@@ -37,6 +38,26 @@ toc: false
 Этот параметр задает вес ресурсов, определяя порядок их развертывания. Сначала werf группирует ресурсы в соответствии с их весом, а затем последовательно развертывает их, начиная с группы с наименьшим весом. В этом случае werf не будет приступать к развертыванию следующей группы ресурсов, пока развертывание предыдущей не завершено успешно.
 
 Дополнительная информация доступна в разделе [Порядок развертывания]({{ "/usage/deploy/deployment_order.html" | true_relative_url }}).
+
+## Resource dependencies
+
+`werf.io/deploy-dependency-ANY_NAME: [state=STATE] [name=NAME] [namespace=NAMESPACE] [kind=KIND] [group=GROUP] [version=VERSION]`
+
+Пример: \
+`werf.io/deploy-dependency-db: state=ready kind=StatefulSet name=postgres` \
+`werf.io/deploy-dependency-app: state=present kind=Deployment group=apps version=v1 name=app namespace=app`
+
+Обязательные параметры:
+- "state": `ready` или `present`. Если `present`, то дождаться, пока ресурс не будет создан/обновлен, если `ready`, то дождаться, пока ресурс не будет создан/обновлен и приведен в готовность.
+
+Как минимум один из этих параметров требуется указать:
+- "name": имя ресурса, от которого будет зависеть текущий ресурс.
+- "namespace": namespace ресурса, от которого будет зависеть текущий ресурс.
+- "kind": kind ресурса, от которого будет зависеть текущий ресурс.
+- "group": api group ресурса, от которого будет зависеть текущий ресурс.
+- "version": api version ресурса, от которого будет зависеть текущий ресурс.
+
+Больше информации: [порядок развертывания]({{ "/usage/deploy/deployment_order.html" | true_relative_url }})
 
 ## External dependency resource
 
