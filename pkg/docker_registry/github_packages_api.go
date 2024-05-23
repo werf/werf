@@ -8,10 +8,16 @@ import (
 	"time"
 )
 
-type gitHubApi struct{}
+type gitHubApi struct {
+	httpClient *http.Client
+}
 
 func newGitHubApi() gitHubApi {
-	return gitHubApi{}
+	return gitHubApi{
+		httpClient: &http.Client{
+			Transport: newHttpTransport(false),
+		},
+	}
 }
 
 type githubApiUser struct {
@@ -57,7 +63,7 @@ type githubApiUser struct {
 
 func (api *gitHubApi) getUser(ctx context.Context, username, token string) (githubApiUser, *http.Response, error) {
 	url := fmt.Sprintf("https://api.github.com/users/%s", username)
-	resp, respBody, err := doRequest(ctx, http.MethodGet, url, nil, doRequestOptions{
+	resp, respBody, err := doRequest(ctx, api.httpClient, http.MethodGet, url, nil, doRequestOptions{
 		Headers: map[string]string{
 			"Accept":        "application/vnd.github.v3+json",
 			"Authorization": fmt.Sprintf("Bearer %s", token),
@@ -135,7 +141,7 @@ type githubApiVersion struct {
 func (api *gitHubApi) getContainerPackageVersionListInBatches(ctx context.Context, url, token string, f func([]githubApiVersion) error) (*http.Response, error) {
 	for page := 1; true; page++ {
 		pageUrl := url + fmt.Sprintf("?page=%d&per_page=100", page)
-		resp, respBody, err := doRequest(ctx, http.MethodGet, pageUrl, nil, doRequestOptions{
+		resp, respBody, err := doRequest(ctx, api.httpClient, http.MethodGet, pageUrl, nil, doRequestOptions{
 			Headers: map[string]string{
 				"Accept":        "application/vnd.github.v3+json",
 				"Authorization": fmt.Sprintf("Bearer %s", token),
@@ -164,7 +170,7 @@ func (api *gitHubApi) getContainerPackageVersionListInBatches(ctx context.Contex
 }
 
 func (api *gitHubApi) deleteContainerPackage(ctx context.Context, url, token string) (*http.Response, error) {
-	resp, _, err := doRequest(ctx, http.MethodDelete, url, nil, doRequestOptions{
+	resp, _, err := doRequest(ctx, api.httpClient, http.MethodDelete, url, nil, doRequestOptions{
 		Headers: map[string]string{
 			"Accept":        "application/vnd.github.v3+json",
 			"Authorization": fmt.Sprintf("Bearer %s", token),
