@@ -93,46 +93,57 @@ Scope indicates the area of the project affected by the changes. The scope can c
 
 Supported scopes are the following:
 
-  ```
-  # The end-user functionalities, aiming to streamline and optimize user experiences.
-  # NOTE! The api scope should be omitted if a more specific sub-scope is used.
-  - api
-    - vm
-      - vmop
-      - vmbda
-      - vmcpu
-      - vmcpureq
-      - vmmodel
-      - vmip
-      - vmipl
-    - disks
-      - vd
-    - images
-      - vi
-      - cvi
+```
+# The end-user functionalities, aiming to streamline and optimize user experiences.
+- image
+  - build
+    - <builder>
+      - buildah
+      - docker
+    - config
+      - dockerfile
+      - stapel
+  - distribution
+    - tagging
+    - custom-tags
 
-  # Core mechanisms and low-level system functionalities.
-  - core
-    - api-service
-    - vmi-router
-    - kubevirt
-    - kube-api-rewriter
-    - cdi
-    - dvcr
+- build
+  
+  - common
+    
+    - distributed
 
-  # Integration with the Deckhouse.
-  - module
+- chart
+  - configuration
+  - distribution
+- deploy
 
-  # User metrics, alerts, dashboards, and logs that provide insights into system performance and health.
-  - observability
+- cleanup
+  - registry
+  - host
 
-  # Maintaining, improving code quality and development workflow. 
-  - ci
-  - lint
-  - format
-  - gen
-  - dev
-  ```
+# Core mechanisms and low-level system functionalities.
+- core
+  - api-service
+  - vmi-router
+  - kubevirt
+  - kube-api-rewriter
+  - cdi
+  - dvcr
+
+# Integration with the Deckhouse.
+- module
+
+# User metrics, alerts, dashboards, and logs that provide insights into system performance and health.
+- observability
+
+# Maintaining, improving code quality and development workflow. 
+- ci
+- lint
+- format
+- gen
+- dev
+```
 
 #### Subject
 
