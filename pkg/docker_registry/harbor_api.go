@@ -7,10 +7,16 @@ import (
 	"path"
 )
 
-type harborApi struct{}
+type harborApi struct {
+	httpClient *http.Client
+}
 
 func newHarborApi() harborApi {
-	return harborApi{}
+	return harborApi{
+		httpClient: &http.Client{
+			Transport: newHttpTransport(false),
+		},
+	}
 }
 
 func (api *harborApi) DeleteRepository(ctx context.Context, hostname, repository, username, password string) (*http.Response, error) {
@@ -22,7 +28,7 @@ func (api *harborApi) DeleteRepository(ctx context.Context, hostname, repository
 	u.Path = path.Join(u.Path, "repositories", repository)
 	url := u.String()
 
-	resp, _, err := doRequest(ctx, http.MethodDelete, url, nil, doRequestOptions{
+	resp, _, err := doRequest(ctx, api.httpClient, http.MethodDelete, url, nil, doRequestOptions{
 		Headers: map[string]string{
 			"Accept": "application/json",
 		},

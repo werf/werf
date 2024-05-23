@@ -8,10 +8,16 @@ import (
 	"path"
 )
 
-type quayApi struct{}
+type quayApi struct {
+	httpClient *http.Client
+}
 
 func newQuayApi() quayApi {
-	return quayApi{}
+	return quayApi{
+		httpClient: &http.Client{
+			Transport: newHttpTransport(false),
+		},
+	}
 }
 
 func (api *quayApi) DeleteRepository(ctx context.Context, hostname, namespace, repository, token string) (*http.Response, error) {
@@ -26,7 +32,7 @@ func (api *quayApi) DeleteRepository(ctx context.Context, hostname, namespace, r
 	reqAccept := "application/json"
 	reqAuthorization := fmt.Sprintf("Bearer %s", token)
 
-	resp, _, err := doRequest(ctx, http.MethodDelete, reqUrl, nil, doRequestOptions{
+	resp, _, err := doRequest(ctx, api.httpClient, http.MethodDelete, reqUrl, nil, doRequestOptions{
 		Headers: map[string]string{
 			"Accept":        reqAccept,
 			"Authorization": reqAuthorization,
