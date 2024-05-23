@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"math/rand"
+	"net/http"
 	"regexp"
 	"strings"
 	"time"
@@ -30,6 +31,8 @@ import (
 type api struct {
 	InsecureRegistry      bool
 	SkipTlsVerifyRegistry bool
+
+	httpTransport http.RoundTripper
 }
 
 type apiOptions struct {
@@ -41,6 +44,7 @@ func newAPI(options apiOptions) *api {
 	return &api{
 		InsecureRegistry:      options.InsecureRegistry,
 		SkipTlsVerifyRegistry: options.SkipTlsVerifyRegistry,
+		httpTransport:         newHttpTransport(options.SkipTlsVerifyRegistry),
 	}
 }
 
@@ -501,7 +505,7 @@ func (api *api) defaultRemoteOptions(ctx context.Context) []remote.Option {
 	return []remote.Option{
 		remote.WithContext(ctx),
 		remote.WithAuthFromKeychain(authn.DefaultKeychain),
-		remote.WithTransport(getHttpTransport(api.SkipTlsVerifyRegistry)),
+		remote.WithTransport(api.httpTransport),
 	}
 }
 
@@ -600,7 +604,7 @@ func (api *api) writeToRemote(ctx context.Context, ref name.Reference, imageOrIn
 			ref, i,
 			remote.WithAuthFromKeychain(authn.DefaultKeychain),
 			remote.WithProgress(c),
-			remote.WithTransport(getHttpTransport(api.SkipTlsVerifyRegistry)),
+			remote.WithTransport(api.httpTransport),
 			remote.WithContext(ctx),
 		)
 	case v1.ImageIndex:
@@ -608,7 +612,7 @@ func (api *api) writeToRemote(ctx context.Context, ref name.Reference, imageOrIn
 			ref, i,
 			remote.WithAuthFromKeychain(authn.DefaultKeychain),
 			remote.WithProgress(c),
-			remote.WithTransport(getHttpTransport(api.SkipTlsVerifyRegistry)),
+			remote.WithTransport(api.httpTransport),
 			remote.WithContext(ctx),
 		)
 	default:

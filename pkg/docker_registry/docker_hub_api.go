@@ -8,10 +8,16 @@ import (
 	"net/http"
 )
 
-type dockerHubApi struct{}
+type dockerHubApi struct {
+	httpClient *http.Client
+}
 
 func newDockerHubApi() dockerHubApi {
-	return dockerHubApi{}
+	return dockerHubApi{
+		httpClient: &http.Client{
+			Transport: newHttpTransport(false),
+		},
+	}
 }
 
 func (api *dockerHubApi) deleteRepository(ctx context.Context, account, project, token string) (*http.Response, error) {
@@ -21,7 +27,7 @@ func (api *dockerHubApi) deleteRepository(ctx context.Context, account, project,
 		project,
 	)
 
-	resp, _, err := doRequest(ctx, http.MethodDelete, url, nil, doRequestOptions{
+	resp, _, err := doRequest(ctx, api.httpClient, http.MethodDelete, url, nil, doRequestOptions{
 		Headers: map[string]string{
 			"Accept":        "application/json",
 			"Authorization": fmt.Sprintf("JWT %s", token),
@@ -40,7 +46,7 @@ func (api *dockerHubApi) deleteTag(ctx context.Context, account, project, tag, t
 		tag,
 	)
 
-	resp, _, err := doRequest(ctx, http.MethodDelete, url, nil, doRequestOptions{
+	resp, _, err := doRequest(ctx, api.httpClient, http.MethodDelete, url, nil, doRequestOptions{
 		Headers: map[string]string{
 			"Accept":        "application/json",
 			"Authorization": fmt.Sprintf("JWT %s", token),
@@ -61,7 +67,7 @@ func (api *dockerHubApi) getToken(ctx context.Context, username, password string
 		return "", nil, err
 	}
 
-	resp, respBody, err := doRequest(ctx, http.MethodPost, url, bytes.NewBuffer(body), doRequestOptions{
+	resp, respBody, err := doRequest(ctx, api.httpClient, http.MethodPost, url, bytes.NewBuffer(body), doRequestOptions{
 		Headers: map[string]string{
 			"Content-Type": "application/json",
 		},

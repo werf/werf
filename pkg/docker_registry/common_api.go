@@ -33,7 +33,7 @@ type doRequestBasicAuth struct {
 	password string
 }
 
-func doRequest(ctx context.Context, method, url string, body io.Reader, options doRequestOptions) (*http.Response, []byte, error) {
+func doRequest(ctx context.Context, client *http.Client, method, url string, body io.Reader, options doRequestOptions) (*http.Response, []byte, error) {
 	req, err := http.NewRequestWithContext(ctx, method, url, body)
 	if err != nil {
 		return nil, nil, err
@@ -48,7 +48,7 @@ func doRequest(ctx context.Context, method, url string, body io.Reader, options 
 	}
 
 	logboek.Context(ctx).Debug().LogF("--> %s %s\n", method, url)
-	resp, err := getHTTPClient(options.SkipTlsVerify).Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -72,13 +72,7 @@ func doRequest(ctx context.Context, method, url string, body io.Reader, options 
 	return resp, respBody, nil
 }
 
-func getHTTPClient(skipTlsVerify bool) *http.Client {
-	return &http.Client{
-		Transport: getHttpTransport(skipTlsVerify),
-	}
-}
-
-func getHttpTransport(skipTlsVerify bool) http.RoundTripper {
+func newHttpTransport(skipTlsVerify bool) http.RoundTripper {
 	t := remote.DefaultTransport.(*http.Transport).Clone()
 
 	if skipTlsVerify {

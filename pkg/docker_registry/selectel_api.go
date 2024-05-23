@@ -20,10 +20,16 @@ import (
 	parallelConstant "github.com/werf/werf/pkg/util/parallel/constant"
 )
 
-type selectelApi struct{}
+type selectelApi struct {
+	httpClient *http.Client
+}
 
 func newSelectelApi() selectelApi {
-	return selectelApi{}
+	return selectelApi{
+		httpClient: &http.Client{
+			Transport: newHttpTransport(false),
+		},
+	}
 }
 
 func (api *selectelApi) makeApiUrl(hostname, registryId string, pathParts ...string) (string, error) {
@@ -164,7 +170,7 @@ func (api *selectelApi) getTags(ctx context.Context, hostname, registryId, repos
 		return nil, nil, err
 	}
 
-	resp, respBody, err := doRequest(ctx, http.MethodGet, url, nil, doRequestOptions{
+	resp, respBody, err := doRequest(ctx, api.httpClient, http.MethodGet, url, nil, doRequestOptions{
 		Headers: map[string]string{
 			"Accept":       "application/json",
 			"X-Auth-Token": token,
@@ -189,7 +195,7 @@ func (api *selectelApi) getTags(ctx context.Context, hostname, registryId, repos
 
 func (api *selectelApi) doRequest(ctx context.Context, method, url string, body io.Reader, options doRequestOptions) (*http.Response, []byte, error) {
 	var seconds int
-	resp, respBody, err := doRequest(ctx, method, url, body, options)
+	resp, respBody, err := doRequest(ctx, api.httpClient, method, url, body, options)
 	if err != nil {
 		if resp != nil && resp.StatusCode == http.StatusTooManyRequests {
 			if resp.Header.Get("Retry-After") != "" {
