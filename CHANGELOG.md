@@ -1,5 +1,20 @@
 # Changelog
 
+## [2.2.0](https://www.github.com/werf/werf/compare/v2.1.0...v2.2.0) (2024-05-24)
+
+
+### Features
+
+* **build:** publish custom tags and final images in parallel ([ff2843a](https://www.github.com/werf/werf/commit/ff2843a50c8ba22111a1b3b7716ad94fe6cf76a1))
+* **deploy:** new `werf.io/deploy-dependency-<name>` annotation ([3e76f87](https://www.github.com/werf/werf/commit/3e76f87e6f5d332c14ac28037e0b1b3a0e31cee7))
+* **harbor:** try to get the image again due to PROJECTPOLICYVIOLATION error ([b7044c1](https://www.github.com/werf/werf/commit/b7044c1ea9976c95df6e4c3a87f39425ebd0e128))
+
+
+### Bug Fixes
+
+* **deploy:** `werf.io/deploy-dependency-..` anno params should be comma-separated ([17639e5](https://www.github.com/werf/werf/commit/17639e5a388333595836ff1d1914eeb974475b53))
+* prevent growing TCP connections by using a shared HTTP transport ([59f4ec8](https://www.github.com/werf/werf/commit/59f4ec87ea6cb28e818ccc595a4e8da58ba30674))
+
 ## [2.1.0](https://www.github.com/werf/werf/compare/v2.0.4...v2.1.0) (2024-05-20)
 
 
