@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.309](https://www.github.com/werf/werf/compare/v1.2.308...v1.2.309) (2024-05-27)
+
+
+### Bug Fixes
+
+* prevent growing TCP connections by using a shared HTTP transport ([8fed3e7](https://www.github.com/werf/werf/commit/8fed3e7298e2a78f6392129d49a70917a61b7568))
+
 ### [1.2.308](https://www.github.com/werf/werf/compare/v1.2.307...v1.2.308) (2024-05-13)
 
 
