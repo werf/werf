@@ -65,17 +65,6 @@ Each commit message consists of a **header** and a [**body**](#body). The header
 <body>
 ```
 
-**Examples:**
-
-  - _feat(api): bump resource version to v1beta1_
-  - _feat(images): implement ImageLost phase_
-  - _feat(images, vi): add PVC as a storage_
-  - _fix(vm, vmmodel): fix unsupported type of model_
-  - _refactor(core): rename 3rd party resources_
-  - _docs(module): describe how to install module_
-  - _chore(core): use alt linux as base image_
-  - _chore: update go dependencies_
-
 #### Type
 
 Must be one of the following:
@@ -95,53 +84,28 @@ Supported scopes are the following:
 
 ```
 # The end-user functionalities, aiming to streamline and optimize user experiences.
-- image
-  - build
-    - <builder>
-      - buildah
-      - docker
-    - config
-      - dockerfile
-      - stapel
-  - distribution
-    - tagging
-    - custom-tags
-
+- giterminism
 - build
-  
-  - common
-    
-    - distributed
-
-- chart
-  - configuration
-  - distribution
+  - stapel
+  - dockerfile
+  - multiplatform
+  - secrets
+  - stages
+  - other
 - deploy
-
+  - chart
+  - lint
+  - tracking
+  - plan
+  - other
+- bundle
 - cleanup
   - registry
   - host
 
-# Core mechanisms and low-level system functionalities.
-- core
-  - api-service
-  - vmi-router
-  - kubevirt
-  - kube-api-rewriter
-  - cdi
-  - dvcr
-
-# Integration with the Deckhouse.
-- module
-
-# User metrics, alerts, dashboards, and logs that provide insights into system performance and health.
-- observability
-
 # Maintaining, improving code quality and development workflow. 
 - ci
-- lint
-- format
-- gen
+- release
 - dev
 ```
 
@@ -168,11 +132,6 @@ Each branch name consists of a [**type**](#type), [**scope**](#scope), and a [**
 
 When naming branches, only the top-level scope should be used. Multiple or nested scopes are not allowed in branch names, ensuring that each branch is clearly associated with a broad area of the project.
 
-**Examples:**
-
-  - _feat/disks/support-new-image-source_
-  - _chore/ci/speed-up-builds_
-
 #### Short description
 
 A concise, hyphen-separated phrase in kebab-case that clearly describes the main focus of the branch.
@@ -180,11 +139,6 @@ A concise, hyphen-separated phrase in kebab-case that clearly describes the main
 ### Pull request name
 
 Each pull request title should clearly reflect the changes introduced, adhering to [**the header format** of a commit message](#commit-message), typically mirroring the main commit's text in the PR.
-
-**Examples**
-
-  - _feat(vm): add live migration capability_
-  - _docs(api): update REST API documentation for clarity_
     
 ### Coding Conventions
 
