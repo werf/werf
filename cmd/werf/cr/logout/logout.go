@@ -33,12 +33,18 @@ func NewCmd(ctx context.Context) *cobra.Command {
 				return err
 			}
 
-			if len(args) != 1 {
+			var registry string
+			switch {
+			case len(args) == 0:
+				registry = "https://index.docker.io/v1/"
+			case len(args) == 1:
+				registry = args[0]
+			default: // len(args) > 1
 				common.PrintHelp(cmd)
-				return fmt.Errorf("registry address argument required")
+				return fmt.Errorf("invalid number of arguments, expected optional registry address: got %d arguments", len(args))
 			}
 
-			return Logout(ctx, args[0], LogoutOptions{
+			return Logout(ctx, registry, LogoutOptions{
 				DockerConfigDir: *commonCmdData.DockerConfig,
 			})
 		},

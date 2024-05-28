@@ -52,12 +52,18 @@ werf cr login --insecure-registry registry.example.com`,
 				return err
 			}
 
-			if len(args) != 1 {
+			var registry string
+			switch {
+			case len(args) == 0:
+				registry = "https://index.docker.io/v1/"
+			case len(args) == 1:
+				registry = args[0]
+			default: // len(args) > 1
 				common.PrintHelp(cmd)
-				return fmt.Errorf("registry address argument required")
+				return fmt.Errorf("invalid number of arguments, expected optional registry address: got %d arguments", len(args))
 			}
 
-			return Login(ctx, args[0], LoginOptions{
+			return Login(ctx, registry, LoginOptions{
 				Username:         cmdData.Username,
 				Password:         cmdData.Password,
 				PasswordStdin:    cmdData.PasswordStdin,
