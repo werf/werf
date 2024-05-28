@@ -88,17 +88,18 @@ Supported scopes are the following:
 - build
   - stapel
   - dockerfile
+  - docker
+  - buildah
   - stages
-  - other
 - deploy
   - chart
   - tracking
   - plan
-  - other
 - bundle
 - cleanup
   - registry
   - host
+- other
 
 # Maintaining, improving code quality and development workflow. 
 - ci
