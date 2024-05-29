@@ -96,9 +96,7 @@ Supported scopes are the following:
   - tracking
   - plan
 - bundle
-- cleanup
-  - registry
-  - host
+- cleanup-registry
 - other
 
 # Maintaining, improving code quality and development workflow. 
