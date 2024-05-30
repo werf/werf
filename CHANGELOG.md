@@ -1,5 +1,13 @@
 # Changelog
 
+### [1.1.36](https://www.github.com/werf/werf/compare/v1.1.35...v1.1.36) (2024-05-30)
+
+
+### Features
+
+* **build, stapel:** use stapel image from registry.werf.io ([034bf6d](https://www.github.com/werf/werf/commit/034bf6dfab0b73db3c60b81ad5714b99aabc1d17))
+* **build:** support mirror registries ([bb741a3](https://www.github.com/werf/werf/commit/bb741a3426d3443b642e88627491e86906025907))
+
 ### [1.1.35](https://www.github.com/werf/werf/compare/v1.1.34...v1.1.35) (2024-05-13)
 
 
