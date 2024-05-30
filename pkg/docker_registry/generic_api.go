@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"strings"
 	"sync"
 
 	"github.com/google/go-containerregistry/pkg/name"
@@ -143,7 +144,14 @@ func (api *genericApi) getOrCreateRegistryMirrors(ctx context.Context) ([]string
 		}
 
 		mirrorsFromEnv := util.PredefinedValuesByEnvNamePrefix("WERF_CONTAINER_REGISTRY_MIRROR_")
-		mirrors = append(mirrors, mirrorsFromEnv...)
+
+		for _, mirror := range mirrorsFromEnv {
+			if !strings.HasPrefix("http://", mirror) && !strings.HasPrefix("https://", mirror) {
+				mirror = "https://" + mirror
+			}
+
+			mirrors = append(mirrors, mirror)
+		}
 
 		api.mirrors = &mirrors
 	}
