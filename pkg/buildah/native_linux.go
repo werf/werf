@@ -15,6 +15,7 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+	"text/template"
 	"time"
 
 	"github.com/containerd/containerd/platforms"
@@ -43,6 +44,7 @@ import (
 
 	"github.com/werf/werf/pkg/buildah/thirdparty"
 	"github.com/werf/werf/pkg/image"
+	"github.com/werf/werf/pkg/util"
 )
 
 const (
@@ -121,8 +123,14 @@ func NewNativeBuildah(commonOpts CommonBuildahOpts, opts NativeModeOpts) (*Nativ
 		return nil, fmt.Errorf("unable to set env var CONTAINERS_CONF: %w", err)
 	}
 
+	mirrorsFromEnv := util.PredefinedValuesByEnvNamePrefix("WERF_CONTAINER_REGISTRY_MIRROR_")
+	registriesConfig, err := generateRegistriesConfig(mirrorsFromEnv)
+	if err != nil {
+		return nil, fmt.Errorf("unable to generate registries config: %w", err)
+	}
+
 	b.RegistriesConfigPath = filepath.Join(b.ConfigTmpDir, "registries.conf")
-	if err := ioutil.WriteFile(b.RegistriesConfigPath, []byte(DefaultRegistriesConfig), os.ModePerm); err != nil {
+	if err := ioutil.WriteFile(b.RegistriesConfigPath, []byte(registriesConfig), os.ModePerm); err != nil {
 		return nil, fmt.Errorf("unable to write file %q: %w", b.RegistriesConfigPath, err)
 	}
 
@@ -208,6 +216,30 @@ func (b *NativeBuildah) getSystemContext(targetPlatform string) (*imgtypes.Syste
 	}
 
 	return systemContext, nil
+}
+
+func generateRegistriesConfig(mirrors []string) (string, error) {
+	tpl := `
+unqualified-search-registries = ["docker.io"]
+
+{{ range . -}}
+[[registry.mirror]]
+location = "{{ . }}"
+
+{{ end -}}
+`
+	tmpl, err := template.New("tmp").Parse(tpl)
+	if err != nil {
+		return "", err
+	}
+
+	var result bytes.Buffer
+	err = tmpl.Execute(&result, mirrors)
+	if err != nil {
+		return "", err
+	}
+
+	return result.String(), nil
 }
 
 func (b *NativeBuildah) getRuntime(systemContext *imgtypes.SystemContext) (*libimage.Runtime, error) {
