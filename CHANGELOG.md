@@ -1,5 +1,13 @@
 # Changelog
 
+### [2.3.1](https://www.github.com/werf/werf/compare/v2.3.0...v2.3.1) (2024-05-30)
+
+
+### Bug Fixes
+
+* **build, buildah:** add default registry for mirrors docker.io ([a974a1d](https://www.github.com/werf/werf/commit/a974a1d55fa388d10d7da45f11672f613e143ca5))
+* **build, buildah:** prefix registries mirrors with https ([6113528](https://www.github.com/werf/werf/commit/611352856b9a42cfac935707602b58611742a5a6))
+
 ## [2.3.0](https://www.github.com/werf/werf/compare/v2.2.0...v2.3.0) (2024-05-30)
 
 
