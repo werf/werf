@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.3.3](https://www.github.com/werf/werf/compare/v2.3.2...v2.3.3) (2024-05-30)
+
+
+### Bug Fixes
+
+* **build, buildah:** multiple registry mirrors broken ([0acd5f0](https://www.github.com/werf/werf/commit/0acd5f0b8e03bb328d55e6727c383b9cde90a28c))
+
 ### [2.3.2](https://www.github.com/werf/werf/compare/v2.3.1...v2.3.2) (2024-05-30)
 
 
