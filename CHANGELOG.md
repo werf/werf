@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.310](https://www.github.com/werf/werf/compare/v1.2.309...v1.2.310) (2024-05-30)
+
+
+### Features
+
+* **build, buildah:** support mirror registries (v1) ([66f4942](https://www.github.com/werf/werf/commit/66f4942133fb23bc80a27c485bcd1d3e914d601d))
+
 ### [1.2.309](https://www.github.com/werf/werf/compare/v1.2.308...v1.2.309) (2024-05-27)
 
 
