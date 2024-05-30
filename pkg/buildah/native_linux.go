@@ -223,6 +223,9 @@ func generateRegistriesConfig(mirrors []string) (string, error) {
 unqualified-search-registries = ["docker.io"]
 
 {{ range . -}}
+[[registry]]
+location = "docker.io"
+
 [[registry.mirror]]
 location = "{{ . }}"
 
