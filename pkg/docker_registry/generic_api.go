@@ -146,7 +146,7 @@ func (api *genericApi) getOrCreateRegistryMirrors(ctx context.Context) ([]string
 		mirrorsFromEnv := util.PredefinedValuesByEnvNamePrefix("WERF_CONTAINER_REGISTRY_MIRROR_")
 
 		for _, mirror := range mirrorsFromEnv {
-			if !strings.HasPrefix("http://", mirror) && !strings.HasPrefix("https://", mirror) {
+			if !strings.HasPrefix(mirror, "http://") && !strings.HasPrefix(mirror, "https://") {
 				mirror = "https://" + mirror
 			}
 
