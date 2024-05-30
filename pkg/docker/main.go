@@ -28,6 +28,10 @@ const (
 	ctxDockerCliKey = "docker_cli"
 )
 
+func IsEnabled() bool {
+	return defaultCLi != nil
+}
+
 func Init(ctx context.Context, dockerConfigDir string, verbose, debug bool) error {
 	if dockerConfigDir != "" {
 		cliconfig.SetDir(dockerConfigDir)

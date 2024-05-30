@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	dockerReference "github.com/docker/distribution/reference"
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
@@ -232,6 +233,40 @@ func (api *api) image(reference string) (v1.Image, name.Reference, error) {
 
 func (api *api) newRepositoryOptions() []name.Option {
 	return api.parseReferenceOptions()
+}
+
+type referenceParts struct {
+	registry   string
+	repository string
+	tag        string
+	digest     string
+}
+
+func (api *api) parseReferenceParts(reference string) (referenceParts, error) {
+	parsedReference, err := name.ParseReference(reference, api.parseReferenceOptions()...)
+	if err != nil {
+		return referenceParts{}, err
+	}
+
+	// res[0] full match
+	// res[1] repository
+	// res[2] tag
+	// res[3] digest
+	res := dockerReference.ReferenceRegexp.FindStringSubmatch(reference)
+	if len(res) != 4 {
+		panic(fmt.Sprintf("unexpected regexp find submatch result %v for reference %q (%d)", res, reference, len(res)))
+	}
+
+	referenceParts := referenceParts{}
+	referenceParts.registry = parsedReference.Context().RegistryStr()
+	referenceParts.repository = parsedReference.Context().RepositoryStr()
+	referenceParts.tag = res[2]
+	if referenceParts.tag == "" {
+		referenceParts.tag = "latest"
+	}
+	referenceParts.digest = res[3]
+
+	return referenceParts, nil
 }
 
 func (api *api) parseReferenceOptions() []name.Option {
