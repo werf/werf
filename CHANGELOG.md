@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.3.2](https://www.github.com/werf/werf/compare/v2.3.1...v2.3.2) (2024-05-30)
+
+
+### Bug Fixes
+
+* **build, buildah:** prefix registries mirrors with https /2 ([0966521](https://www.github.com/werf/werf/commit/096652184198f6ef917e2e59d30af5b6104206e2))
+
 ### [2.3.1](https://www.github.com/werf/werf/compare/v2.3.0...v2.3.1) (2024-05-30)
 
 
