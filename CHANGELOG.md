@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.3.0](https://www.github.com/werf/werf/compare/v2.2.0...v2.3.0) (2024-05-30)
+
+
+### Features
+
+* **build, buildah:** support mirror registries (v1) ([4720b46](https://www.github.com/werf/werf/commit/4720b46f818b148df2d9996565525ae10922a187))
+* **other:** use docker hub if registry address not specified in `werf cr` ([661f357](https://www.github.com/werf/werf/commit/661f35727a9ddf21495e592c33768cd1a235d41b))
+
 ## [2.2.0](https://www.github.com/werf/werf/compare/v2.1.0...v2.2.0) (2024-05-24)
 
 
