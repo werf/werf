@@ -13,7 +13,7 @@ import (
 )
 
 const VERSION = "0.6.1"
-const IMAGE = "flant/werf-stapel"
+const IMAGE = "registry.werf.io/werf/werf-stapel"
 
 func getVersion() string {
 	version := VERSION
@@ -24,12 +24,12 @@ func getVersion() string {
 }
 
 func getImage() string {
- 	image := IMAGE
- 	if i := os.Getenv("WERF_STAPEL_IMAGE_NAME"); i != "" {
- 		image = i
- 	}
- 	return image
- }
+	image := IMAGE
+	if i := os.Getenv("WERF_STAPEL_IMAGE_NAME"); i != "" {
+		image = i
+	}
+	return image
+}
 
 func ImageName() string {
 	return fmt.Sprintf("%s:%s", getImage(), getVersion())
