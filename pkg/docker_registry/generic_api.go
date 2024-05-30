@@ -11,6 +11,7 @@ import (
 
 	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/util"
 )
 
 type genericApi struct {
@@ -140,6 +141,9 @@ func (api *genericApi) getOrCreateRegistryMirrors(ctx context.Context) ([]string
 				mirrors = info.RegistryConfig.Mirrors
 			}
 		}
+
+		mirrorsFromEnv := util.PredefinedValuesByEnvNamePrefix("WERF_CONTAINER_REGISTRY_MIRROR_")
+		mirrors = append(mirrors, mirrorsFromEnv...)
 
 		api.mirrors = &mirrors
 	}
