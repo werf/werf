@@ -70,6 +70,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
 	common.SetupInsecureHelmDependencies(&commonCmdData, cmd, false)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
+	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
 
 	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{})
 
@@ -92,7 +93,12 @@ func runDownload(ctx context.Context) error {
 		return fmt.Errorf("initialization error: %w", err)
 	}
 
-	if err := common.DockerRegistryInit(ctx, &commonCmdData); err != nil {
+	registryMirrors, err := common.GetContainerRegistryMirror(ctx, &commonCmdData)
+	if err != nil {
+		return fmt.Errorf("get container registry mirrors: %w", err)
+	}
+
+	if err := common.DockerRegistryInit(ctx, &commonCmdData, registryMirrors); err != nil {
 		return err
 	}
 
