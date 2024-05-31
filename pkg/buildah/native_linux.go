@@ -44,7 +44,6 @@ import (
 
 	"github.com/werf/werf/v2/pkg/buildah/thirdparty"
 	"github.com/werf/werf/v2/pkg/image"
-	"github.com/werf/werf/v2/pkg/util"
 )
 
 const (
@@ -123,8 +122,7 @@ func NewNativeBuildah(commonOpts CommonBuildahOpts, opts NativeModeOpts) (*Nativ
 		return nil, fmt.Errorf("unable to set env var CONTAINERS_CONF: %w", err)
 	}
 
-	mirrorsFromEnv := util.PredefinedValuesByEnvNamePrefix("WERF_CONTAINER_REGISTRY_MIRROR_")
-	registriesConfig, err := generateRegistriesConfig(mirrorsFromEnv)
+	registriesConfig, err := generateRegistriesConfig(commonOpts.RegistryMirrors)
 	if err != nil {
 		return nil, fmt.Errorf("unable to generate registries config: %w", err)
 	}
@@ -219,6 +217,13 @@ func (b *NativeBuildah) getSystemContext(targetPlatform string) (*imgtypes.Syste
 }
 
 func generateRegistriesConfig(mirrors []string) (string, error) {
+	var mrs []string
+	for _, mirror := range mirrors {
+		mirror, _ = strings.CutPrefix(mirror, "https://")
+		mirror, _ = strings.CutPrefix(mirror, "http://")
+		mrs = append(mrs, mirror)
+	}
+
 	tpl := `
 unqualified-search-registries = ["docker.io"]
 
@@ -237,7 +242,7 @@ location = "{{ . }}"
 	}
 
 	var result bytes.Buffer
-	err = tmpl.Execute(&result, mirrors)
+	err = tmpl.Execute(&result, mrs)
 	if err != nil {
 		return "", err
 	}

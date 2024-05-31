@@ -17,8 +17,10 @@ import (
 	"github.com/werf/logboek/pkg/types"
 	"github.com/werf/werf/v2/pkg/build"
 	"github.com/werf/werf/v2/pkg/build/stage"
+	"github.com/werf/werf/v2/pkg/buildah"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
+	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/docker_registry"
 	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
@@ -576,6 +578,11 @@ func SetupInsecureRegistry(cmdData *CmdData, cmd *cobra.Command) {
 
 	cmdData.InsecureRegistry = new(bool)
 	cmd.Flags().BoolVarP(cmdData.InsecureRegistry, "insecure-registry", "", util.GetBoolEnvironmentDefaultFalse("WERF_INSECURE_REGISTRY"), "Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)")
+}
+
+func SetupContainerRegistryMirror(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.ContainerRegistryMirror = new([]string)
+	cmd.Flags().StringArrayVarP(cmdData.ContainerRegistryMirror, "container-registry-mirror", "", []string{}, "(Buildah-only) Use specified mirrors for docker.io")
 }
 
 func SetupSkipTlsVerifyRegistry(cmdData *CmdData, cmd *cobra.Command) {
@@ -1219,6 +1226,51 @@ func GetSecondaryStagesStorage(cmdData *CmdData) []string {
 	return append(util.PredefinedValuesByEnvNamePrefix("WERF_SECONDARY_REPO_"), *cmdData.SecondaryStagesStorage...)
 }
 
+func GetContainerRegistryMirror(ctx context.Context, cmdData *CmdData) ([]string, error) {
+	mirrors := append(util.PredefinedValuesByEnvNamePrefix("WERF_CONTAINER_REGISTRY_MIRROR_"), *cmdData.ContainerRegistryMirror...)
+
+	if len(mirrors) > 0 {
+		buildahMode, _, err := GetBuildahMode()
+		if err != nil {
+			return nil, fmt.Errorf("get buildah mode: %w", err)
+		}
+
+		if *buildahMode == buildah.ModeDisabled {
+			global_warnings.GlobalWarningLn(ctx, "in Docker mode container registry mirrors should be configured in daemon.json file, not via --container-registry-mirrors: https://werf.io/docs/usage/build/process.html#container-registry-mirrors")
+			return nil, nil
+		}
+	}
+
+	// init registry mirrors if docker cli initialized in context
+	if docker.IsEnabled() && docker.IsContext(ctx) {
+		info, err := docker.Info(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("unable to get docker system info: %w", err)
+		}
+
+		if info.RegistryConfig == nil {
+			return nil, nil
+		}
+
+		return info.RegistryConfig.Mirrors, nil
+	}
+
+	var result []string
+	for _, mirror := range mirrors {
+		if strings.HasPrefix(mirror, "http://") {
+			return nil, fmt.Errorf("invalid container registry mirror %q: only https schema allowed", mirror)
+		}
+
+		if !strings.HasPrefix(mirror, "http://") && !strings.HasPrefix(mirror, "https://") {
+			mirror = "https://" + mirror
+		}
+
+		result = append(result, mirror)
+	}
+
+	return result, nil
+}
+
 func getAddCustomTag(cmdData *CmdData) []string {
 	return append(util.PredefinedValuesByEnvNamePrefix("WERF_ADD_CUSTOM_TAG_"), *cmdData.AddCustomTag...)
 }
@@ -1400,8 +1452,8 @@ func ProcessLogTerminalWidth(cmdData *CmdData) error {
 	return nil
 }
 
-func DockerRegistryInit(ctx context.Context, cmdData *CmdData) error {
-	return docker_registry.Init(ctx, *cmdData.InsecureRegistry, *cmdData.SkipTlsVerifyRegistry)
+func DockerRegistryInit(ctx context.Context, cmdData *CmdData, registryMirrors []string) error {
+	return docker_registry.Init(ctx, *cmdData.InsecureRegistry, *cmdData.SkipTlsVerifyRegistry, registryMirrors)
 }
 
 func ValidateMinimumNArgs(minArgs int, args []string, cmd *cobra.Command) error {

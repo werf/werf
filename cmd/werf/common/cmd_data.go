@@ -74,6 +74,7 @@ type CmdData struct {
 	KeepStagesBuiltWithinLastNHours *uint64
 	WithoutKube                     *bool
 	KubeVersion                     *string
+	ContainerRegistryMirror         *[]string
 
 	LooseGiterminism *bool
 	Dev              *bool

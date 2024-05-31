@@ -185,10 +185,11 @@ const (
 )
 
 type CommonBuildahOpts struct {
-	Isolation     *thirdparty.Isolation
-	StorageDriver *StorageDriver
-	TmpDir        string
-	Insecure      bool
+	Isolation       *thirdparty.Isolation
+	StorageDriver   *StorageDriver
+	TmpDir          string
+	Insecure        bool
+	RegistryMirrors []string
 }
 
 type NativeModeOpts struct {
