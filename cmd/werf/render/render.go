@@ -129,6 +129,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
 	common.SetupInsecureHelmDependencies(&commonCmdData, cmd, true)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
+	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
 
 	common.SetupLogOptionsDefaultQuiet(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
@@ -185,7 +186,12 @@ func runRender(ctx context.Context, imagesToProcess build.ImagesToProcess) error
 		return fmt.Errorf("initialization error: %w", err)
 	}
 
-	containerBackend, processCtx, err := common.InitProcessContainerBackend(ctx, &commonCmdData)
+	registryMirrors, err := common.GetContainerRegistryMirror(ctx, &commonCmdData)
+	if err != nil {
+		return fmt.Errorf("get container registry mirrors: %w", err)
+	}
+
+	containerBackend, processCtx, err := common.InitProcessContainerBackend(ctx, &commonCmdData, registryMirrors)
 	if err != nil {
 		return err
 	}
@@ -308,7 +314,7 @@ func runRender(ctx context.Context, imagesToProcess build.ImagesToProcess) error
 		}
 
 		if addr != storage.LocalStorageAddress {
-			if err := common.DockerRegistryInit(ctx, &commonCmdData); err != nil {
+			if err := common.DockerRegistryInit(ctx, &commonCmdData, registryMirrors); err != nil {
 				return err
 			}
 

@@ -93,7 +93,7 @@ func wrapContainerBackend(containerBackend container_backend.ContainerBackend) c
 	return containerBackend
 }
 
-func InitProcessContainerBackend(ctx context.Context, cmdData *CmdData) (container_backend.ContainerBackend, context.Context, error) {
+func InitProcessContainerBackend(ctx context.Context, cmdData *CmdData, registryMirrors []string) (container_backend.ContainerBackend, context.Context, error) {
 	buildahMode, buildahIsolation, err := GetBuildahMode()
 	if err != nil {
 		return nil, ctx, fmt.Errorf("unable to determine buildah mode: %w", err)
@@ -109,10 +109,11 @@ func InitProcessContainerBackend(ctx context.Context, cmdData *CmdData) (contain
 
 		b, err := buildah.NewBuildah(*buildahMode, buildah.BuildahOpts{
 			CommonBuildahOpts: buildah.CommonBuildahOpts{
-				TmpDir:        filepath.Join(werf.GetServiceDir(), "tmp", "buildah"),
-				Insecure:      insecure,
-				Isolation:     buildahIsolation,
-				StorageDriver: storageDriver,
+				TmpDir:          filepath.Join(werf.GetServiceDir(), "tmp", "buildah"),
+				Insecure:        insecure,
+				Isolation:       buildahIsolation,
+				StorageDriver:   storageDriver,
+				RegistryMirrors: registryMirrors,
 			},
 			NativeModeOpts: buildah.NativeModeOpts{},
 		})

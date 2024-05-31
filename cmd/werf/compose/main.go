@@ -203,6 +203,7 @@ func newCmd(ctx context.Context, composeCmdName string, options *newCmdOptions) 
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
 	common.SetupInsecureHelmDependencies(&commonCmdData, cmd, true)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
+	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
@@ -271,7 +272,12 @@ func runMain(ctx context.Context, dockerComposeCmdName string, cmdData composeCm
 		return fmt.Errorf("initialization error: %w", err)
 	}
 
-	containerBackend, processCtx, err := common.InitProcessContainerBackend(ctx, &commonCmdData)
+	registryMirrors, err := common.GetContainerRegistryMirror(ctx, &commonCmdData)
+	if err != nil {
+		return fmt.Errorf("get container registry mirrors: %w", err)
+	}
+
+	containerBackend, processCtx, err := common.InitProcessContainerBackend(ctx, &commonCmdData, registryMirrors)
 	if err != nil {
 		return err
 	}
@@ -298,7 +304,7 @@ func runMain(ctx context.Context, dockerComposeCmdName string, cmdData composeCm
 		return err
 	}
 
-	if err := common.DockerRegistryInit(ctx, &commonCmdData); err != nil {
+	if err := common.DockerRegistryInit(ctx, &commonCmdData, registryMirrors); err != nil {
 		return err
 	}
 
