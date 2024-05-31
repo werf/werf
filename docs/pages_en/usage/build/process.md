@@ -265,6 +265,24 @@ Caching repositories have higher priority than the main repository when the buil
 
 You can clean up a caching repository by deleting it entirely without any risks.
 
+### Container registry mirrors
+
+You can set up mirrors for the default `docker.io` container registry.
+
+If you are using Docker backend for building images, add `registry-mirrors` to `/etc/docker/daemon.json` file:
+```json
+{
+  "registry-mirrors": ["https://<my-docker-io-mirror-host>"]
+}
+```
+
+Then restart Docker daemon and logout from `docker.io` with `werf cr logout`.
+
+If you are using Buildah backend, then instead of editing `daemon.json` you should add `--container-registry-mirror` to werf commands, e.g.:
+```shell
+werf build --container-registry-mirror=mirror.gcr.io
+```
+
 ## Synchronizing builders
 
 <!-- reference https://werf.io/docs/v2/advanced/synchronization.html -->
