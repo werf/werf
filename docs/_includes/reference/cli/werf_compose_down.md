@@ -91,6 +91,8 @@ werf compose down [IMAGE_NAME...] [options] [--docker-compose-options="OPTIONS"]
       --config-templates-dir=''
             Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf   
             in working directory)
+      --container-registry-mirror=[]
+            (Buildah-only) Use specified mirrors for docker.io
       --dev=false
             Enable development mode (default $WERF_DEV).
             The mode allows working with project files without doing redundant commits during       

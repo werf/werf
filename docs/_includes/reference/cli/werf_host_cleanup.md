@@ -41,6 +41,8 @@ werf host cleanup [options]
             until volume usage becomes below "allowed-docker-storage-volume-usage -                 
             allowed-docker-storage-volume-usage-margin" level (default 5% or                        
             $WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE_MARGIN)
+      --container-registry-mirror=[]
+            (Buildah-only) Use specified mirrors for docker.io
       --dev=false
             Enable development mode (default $WERF_DEV).
             The mode allows working with project files without doing redundant commits during       

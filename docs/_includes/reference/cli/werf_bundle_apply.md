@@ -32,6 +32,8 @@ werf bundle apply [options]
   -R, --auto-rollback=false
             Enable auto rollback of the failed release to the previous deployed release version     
             when current deploy process have failed ($WERF_AUTO_ROLLBACK by default)
+      --container-registry-mirror=[]
+            (Buildah-only) Use specified mirrors for docker.io
       --deploy-report-path=''
             Change deploy report path and format (by default $WERF_DEPLOY_REPORT_PATH or            
             ".werf-deploy-report.json" if not set). Extension must be .json for JSON format. If     

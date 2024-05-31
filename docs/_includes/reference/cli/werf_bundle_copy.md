@@ -15,6 +15,8 @@ werf bundle copy [options]
 {{ header }} Options
 
 ```shell
+      --container-registry-mirror=[]
+            (Buildah-only) Use specified mirrors for docker.io
       --docker-config=''
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)

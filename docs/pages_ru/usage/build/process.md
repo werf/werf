@@ -263,6 +263,24 @@ werf build --repo registry.mycompany.org/project --cache-repo localhost:5000/pro
 
 Очистка кeширующего репозитория может осуществляться путём его полного удаления без каких-либо рисков.
 
+### Использование зеркал для Container Registry
+
+Вы можете использовать зеркала для используемого по умолчанию `docker.io` Container Registry.
+
+Если вы используете Docker для сборки, то добавьте `registry-mirrors` в `/etc/docker/daemon.json` файл:
+```json
+{
+  "registry-mirrors": ["https://<my-docker-io-mirror-host>"]
+}
+```
+
+После чего перезагрузите Docker и разлогиньтесь из `docker.io` с помощью `werf cr logout`.
+
+Если же вы используете Buildah для сборки, то вместо правки `daemon.json` используйте опцию `--container-registry-mirror` для werf-команд, например:
+```shell
+werf build --container-registry-mirror=mirror.gcr.io
+```
+
 ## Синхронизация сборщиков
 
 <!-- прим. для перевода: на основе https://werf.io/documentation/v1.2/advanced/synchronization.html -->

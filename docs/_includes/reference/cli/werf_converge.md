@@ -100,6 +100,8 @@ werf converge --repo registry.mydomain.com/web --env production
       --config-templates-dir=''
             Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf   
             in working directory)
+      --container-registry-mirror=[]
+            (Buildah-only) Use specified mirrors for docker.io
       --deploy-report-path=''
             Change deploy report path and format (by default $WERF_DEPLOY_REPORT_PATH or            
             ".werf-deploy-report.json" if not set). Extension must be .json for JSON format. If     

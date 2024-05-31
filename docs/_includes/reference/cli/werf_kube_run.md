@@ -55,6 +55,8 @@ werf kube-run [options] [IMAGE_NAME] [-- COMMAND ARG...]
       --config-templates-dir=''
             Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf   
             in working directory)
+      --container-registry-mirror=[]
+            (Buildah-only) Use specified mirrors for docker.io
       --copy-from=[]
             Copy file/dir from container to local machine after user command execution. Example:    
             "/from/file:to". Can be specified multiple times. Can also be defined with              
