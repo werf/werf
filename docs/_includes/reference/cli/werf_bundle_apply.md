@@ -32,6 +32,8 @@ werf bundle apply [options]
   -R, --auto-rollback=false
             Enable auto rollback of the failed release to the previous deployed release version     
             when current deploy process have failed ($WERF_AUTO_ROLLBACK by default)
+      --container-registry-mirror=[]
+            (Buildah-only) Use specified mirrors for docker.io
       --deploy-graph-path=''
             Save deploy graph path to the specified file (by default $WERF_DEPLOY_GRAPH_PATH).      
             Extension must be .dot or not specified. If extension not specified, then .dot is used

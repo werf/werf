@@ -99,6 +99,8 @@ werf converge --repo registry.mydomain.com/web --env production
       --config-templates-dir=''
             Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf   
             in working directory)
+      --container-registry-mirror=[]
+            (Buildah-only) Use specified mirrors for docker.io
       --deploy-graph-path=''
             Save deploy graph path to the specified file (by default $WERF_DEPLOY_GRAPH_PATH).      
             Extension must be .dot or not specified. If extension not specified, then .dot is used

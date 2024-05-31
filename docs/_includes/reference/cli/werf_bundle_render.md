@@ -39,6 +39,8 @@ werf bundle render [options]
             $WERF_ADD_LABEL_1=labelName1=labelValue1, $WERF_ADD_LABEL_2=labelName2=labelValue2)
   -b, --bundle-dir=''
             Get extracted bundle from directory instead of registry (default $WERF_BUNDLE_DIR)
+      --container-registry-mirror=[]
+            (Buildah-only) Use specified mirrors for docker.io
       --disable-default-secret-values=false
             Do not use secret values from the default .helm/secret-values.yaml file (default        
             $WERF_DISABLE_DEFAULT_SECRET_VALUES or false)
