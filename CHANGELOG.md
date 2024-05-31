@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.314](https://www.github.com/werf/werf/compare/v1.2.313...v1.2.314) (2024-05-31)
+
+
+### Features
+
+* **build:** new option --container-registry-mirror ([8c9daf2](https://www.github.com/werf/werf/commit/8c9daf2471721ef36ea300b26fe9298f9c2f4a05))
+
 ### [1.2.313](https://www.github.com/werf/werf/compare/v1.2.312...v1.2.313) (2024-05-30)
 
 
