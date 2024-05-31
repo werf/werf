@@ -192,9 +192,7 @@ werf render [IMAGE_NAME...] [options]
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
       --loose-giterminism=false
-            Loose werf giterminism mode restrictions (NOTE: not all restrictions can be removed,    
-            more info https://werf.io/documentation/usage/project_configuration/giterminism.html,   
-            default $WERF_LOOSE_GITERMINISM)
+            Loose werf giterminism mode restrictions
       --namespace=''
             Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or         
             deploy.namespace custom template from werf.yaml or $WERF_NAMESPACE)
@@ -316,8 +314,7 @@ werf render [IMAGE_NAME...] [options]
             Use only specific ssh key(s).
             Can be specified with $WERF_SSH_KEY_* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa,         
             $WERF_SSH_KEY_NODEJS=~/.ssh/nodejs_rsa).
-            Defaults to $WERF_SSH_KEY_*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see            
-            https://werf.io/documentation/reference/toolbox/ssh.html
+            Defaults to $WERF_SSH_KEY_*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}
       --status-progress-period=5
             Status progress period in seconds. Set -1 to stop showing status progress. Defaults to  
             $WERF_STATUS_PROGRESS_PERIOD_SECONDS or 5 seconds

@@ -9,7 +9,6 @@ The result of converge command is an application deployed into Kubernetes for cu
 
 Environment is a required param for the deploy by default, because it is needed to construct Helm Release name and Kubernetes Namespace. Either `--env` or `$WERF_ENV` should be specified for command.
 
-Read more info about Helm chart structure, Helm Release name, Kubernetes Namespace and how to change it: [https://werf.io/documentation/usage/deploy/environments.html]({{ "/usage/deploy/environments.html" | true_relative_url }})
 
 
 {{ header }} Syntax
@@ -251,9 +250,7 @@ werf converge --repo registry.mydomain.com/web --env production
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
       --loose-giterminism=false
-            Loose werf giterminism mode restrictions (NOTE: not all restrictions can be removed,    
-            more info https://werf.io/documentation/usage/project_configuration/giterminism.html,   
-            default $WERF_LOOSE_GITERMINISM)
+            Loose werf giterminism mode restrictions
       --namespace=''
             Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or         
             deploy.namespace custom template from werf.yaml or $WERF_NAMESPACE)
@@ -373,8 +370,7 @@ werf converge --repo registry.mydomain.com/web --env production
             Use only specific ssh key(s).
             Can be specified with $WERF_SSH_KEY_* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa,         
             $WERF_SSH_KEY_NODEJS=~/.ssh/nodejs_rsa).
-            Defaults to $WERF_SSH_KEY_*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see            
-            https://werf.io/documentation/reference/toolbox/ssh.html
+            Defaults to $WERF_SSH_KEY_*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}
       --status-progress-period=5
             Status progress period in seconds. Set -1 to stop showing status progress. Defaults to  
             $WERF_STATUS_PROGRESS_PERIOD_SECONDS or 5 seconds

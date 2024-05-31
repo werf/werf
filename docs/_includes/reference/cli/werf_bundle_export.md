@@ -59,6 +59,8 @@ werf bundle export [IMAGE_NAME...] [options]
       --config-templates-dir=''
             Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf   
             in working directory)
+      --container-registry-mirror=[]
+            (Buildah-only) Use specified mirrors for docker.io
   -d, --destination=''
             Export bundle into the provided directory ($WERF_DESTINATION or chart-name by default)
       --dev=false
@@ -190,9 +192,7 @@ werf bundle export [IMAGE_NAME...] [options]
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
       --loose-giterminism=false
-            Loose werf giterminism mode restrictions (NOTE: not all restrictions can be removed,    
-            more info https://werf.io/documentation/usage/project_configuration/giterminism.html,   
-            default $WERF_LOOSE_GITERMINISM)
+            Loose werf giterminism mode restrictions
   -p, --parallel=true
             Run in parallel (default $WERF_PARALLEL or true)
       --parallel-tasks-limit=5
@@ -295,8 +295,7 @@ werf bundle export [IMAGE_NAME...] [options]
             Use only specific ssh key(s).
             Can be specified with $WERF_SSH_KEY_* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa,         
             $WERF_SSH_KEY_NODEJS=~/.ssh/nodejs_rsa).
-            Defaults to $WERF_SSH_KEY_*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see            
-            https://werf.io/documentation/reference/toolbox/ssh.html
+            Defaults to $WERF_SSH_KEY_*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}
   -S, --synchronization=''
             Address of synchronizer for multiple werf processes to work with a single repo.
             

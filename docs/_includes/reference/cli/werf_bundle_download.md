@@ -16,6 +16,8 @@ werf bundle download [options]
 {{ header }} Options
 
 ```shell
+      --container-registry-mirror=[]
+            (Buildah-only) Use specified mirrors for docker.io
   -d, --destination=''
             Download bundle into the provided directory ($WERF_DESTINATION or chart-name by default)
       --docker-config=''
