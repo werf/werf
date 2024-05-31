@@ -75,6 +75,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	commonCmdData.SetupPlatform(cmd)
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
+	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
 
 	cmd.Flags().BoolVarP(&cmdData.Force, "force", "", util.GetBoolEnvironmentDefaultFalse("WERF_FORCE"), "Force deletion of images which are being used by some containers (default $WERF_FORCE)")
 
@@ -82,7 +83,12 @@ func NewCmd(ctx context.Context) *cobra.Command {
 }
 
 func runCleanup(ctx context.Context) error {
-	containerBackend, processCtx, err := common.InitProcessContainerBackend(ctx, &commonCmdData)
+	registryMirrors, err := common.GetContainerRegistryMirror(ctx, &commonCmdData)
+	if err != nil {
+		return fmt.Errorf("get container registry mirrors: %w", err)
+	}
+
+	containerBackend, processCtx, err := common.InitProcessContainerBackend(ctx, &commonCmdData, registryMirrors)
 	if err != nil {
 		return err
 	}

@@ -38,6 +38,7 @@ type api struct {
 type apiOptions struct {
 	InsecureRegistry      bool
 	SkipTlsVerifyRegistry bool
+	RegistryMirrors       []string
 }
 
 func newAPI(options apiOptions) *api {
