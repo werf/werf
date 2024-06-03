@@ -90,14 +90,23 @@ Supported scopes are the following:
   - dockerfile
   - docker
   - buildah
+  - tagging
   - stages
 - deploy
-  - chart
+  - values
+  - dependencies
+  - secrets
+  - templates
   - tracking
+  - resource-order
+  - resource-lifecycle
   - plan
 - bundle
-- cleanup-registry
-- other
+- cleanup
+- run
+- kube-run
+- compose
+- ci-env
 
 # Maintaining, improving code quality and development workflow. 
 - ci
