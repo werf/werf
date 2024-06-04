@@ -103,6 +103,7 @@ Supported scopes are the following:
   - plan
 - bundle
 - cleanup
+- host-cleanup
 - run
 - kube-run
 - compose
