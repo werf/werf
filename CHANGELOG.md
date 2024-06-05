@@ -1,5 +1,13 @@
 # Changelog
 
+### [2.4.1](https://www.github.com/werf/werf/compare/v2.4.0...v2.4.1) (2024-06-05)
+
+
+### Bug Fixes
+
+* **deploy:** bundle apply not overriding project.werf.io/env annotation ([937b452](https://www.github.com/werf/werf/commit/937b45299073ec33fdf3523fff319286ab1308cb))
+* **deploy:** panics when some manifest fields are of wrong type ([9e9926b](https://www.github.com/werf/werf/commit/9e9926b716c167f428136d77f6e453b1117938f9))
+
 ## [2.4.0](https://www.github.com/werf/werf/compare/v2.3.3...v2.4.0) (2024-05-31)
 
 
