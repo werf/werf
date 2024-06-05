@@ -1236,7 +1236,7 @@ func GetContainerRegistryMirror(ctx context.Context, cmdData *CmdData) ([]string
 		}
 
 		if *buildahMode == buildah.ModeDisabled {
-			global_warnings.GlobalWarningLn(ctx, "in Docker mode container registry mirrors should be configured in daemon.json file, not via --container-registry-mirrors: https://werf.io/docs/usage/build/process.html#container-registry-mirrors")
+			global_warnings.GlobalWarningLn(ctx, "in Docker mode container registry mirrors should be configured in daemon.json file, not via --container-registry-mirrors: https://werf.io/docs/usage/build/process.html#using-mirrors-for-dockerio")
 			return nil, nil
 		}
 	}

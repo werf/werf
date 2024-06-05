@@ -224,6 +224,24 @@ In this case, werf will compose the following sets to build:
 └ Concurrent builds plan (no more than 5 images at the same time)
 ```
 
+## Using mirrors for docker.io
+
+You can set up mirrors for the default `docker.io` container registry.
+
+If you are using Docker backend for building images, add `registry-mirrors` to `/etc/docker/daemon.json` file:
+```json
+{
+  "registry-mirrors": ["https://<my-docker-io-mirror-host>"]
+}
+```
+
+Then restart Docker daemon and logout from `docker.io` with `werf cr logout`.
+
+If you are using Buildah backend, then instead of editing `daemon.json` you should add `--container-registry-mirror` to werf commands, e.g.:
+```shell
+werf build --container-registry-mirror=mirror.gcr.io
+```
+
 ## Using container registry
 
 In werf, the container registry is used not only to store the final images, but also to store the build cache and service data required for werf (e.g., metadata for cleaning the container registry based on Git history). The container registry is set by the `--repo` parameter:
@@ -264,24 +282,6 @@ A caching repository can help reduce build cache loading times. However, for thi
 Caching repositories have higher priority than the main repository when the build cache is retrieved. When caching repositories are used, the build cache remains stored in the main repository as well.
 
 You can clean up a caching repository by deleting it entirely without any risks.
-
-### Container registry mirrors
-
-You can set up mirrors for the default `docker.io` container registry.
-
-If you are using Docker backend for building images, add `registry-mirrors` to `/etc/docker/daemon.json` file:
-```json
-{
-  "registry-mirrors": ["https://<my-docker-io-mirror-host>"]
-}
-```
-
-Then restart Docker daemon and logout from `docker.io` with `werf cr logout`.
-
-If you are using Buildah backend, then instead of editing `daemon.json` you should add `--container-registry-mirror` to werf commands, e.g.:
-```shell
-werf build --container-registry-mirror=mirror.gcr.io
-```
 
 ## Synchronizing builders
 

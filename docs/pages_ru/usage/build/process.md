@@ -222,6 +222,24 @@ target: assets
 └ Concurrent builds plan (no more than 5 images at the same time)
 ```
 
+## Использование зеркал для docker.io
+
+Вы можете использовать зеркала для используемого по умолчанию `docker.io` Container Registry.
+
+Если вы используете Docker для сборки, то добавьте `registry-mirrors` в `/etc/docker/daemon.json` файл:
+```json
+{
+  "registry-mirrors": ["https://<my-docker-io-mirror-host>"]
+}
+```
+
+После чего перезагрузите Docker и разлогиньтесь из `docker.io` с помощью `werf cr logout`.
+
+Если же вы используете Buildah для сборки, то вместо правки `daemon.json` используйте опцию `--container-registry-mirror` для werf-команд, например:
+```shell
+werf build --container-registry-mirror=mirror.gcr.io
+```
+
 ## Использование container registry
 
 При использовании werf container registry используется не только для хранения конечных образов, но также для сборочного кэша и служебных данных, необходимых для работы werf (например, метаданные для очистки container registry на основе истории Git). Репозиторий container registry задаётся параметром `--repo`:
@@ -262,24 +280,6 @@ werf build --repo registry.mycompany.org/project --cache-repo localhost:5000/pro
 При загрузке сборочного кэша кеширующие репозитории имеют больший приоритет, чем основной репозиторий. При использовании кеширующих репозиториев сборочный кэш продолжает сохраняться и в основном репозитории.
 
 Очистка кeширующего репозитория может осуществляться путём его полного удаления без каких-либо рисков.
-
-### Использование зеркал для Container Registry
-
-Вы можете использовать зеркала для используемого по умолчанию `docker.io` Container Registry.
-
-Если вы используете Docker для сборки, то добавьте `registry-mirrors` в `/etc/docker/daemon.json` файл:
-```json
-{
-  "registry-mirrors": ["https://<my-docker-io-mirror-host>"]
-}
-```
-
-После чего перезагрузите Docker и разлогиньтесь из `docker.io` с помощью `werf cr logout`.
-
-Если же вы используете Buildah для сборки, то вместо правки `daemon.json` используйте опцию `--container-registry-mirror` для werf-команд, например:
-```shell
-werf build --container-registry-mirror=mirror.gcr.io
-```
 
 ## Синхронизация сборщиков
 
