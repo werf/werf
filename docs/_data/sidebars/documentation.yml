@@ -706,6 +706,9 @@ entries:
               - title: Deployment scenarios
                 url: /usage/deploy/deployment_scenarios.html
 
+              - title: Planning
+                url: /usage/deploy/planning.html
+
               - title: Resource tracking
                 url: /usage/deploy/tracking.html
 
@@ -833,6 +836,9 @@ entries:
 
               - title: Порядок развертывания
                 url: /usage/deploy/deployment_order.html
+
+              - title: Планирование
+                url: /usage/deploy/planning.html
 
               - title: Сценарии развертывания
                 url: /usage/deploy/deployment_scenarios.html
