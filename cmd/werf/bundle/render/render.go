@@ -245,14 +245,7 @@ func runRender(ctx context.Context) error {
 
 	networkParallelism := common.GetNetworkParallelism(&commonCmdData)
 
-	serviceAnnotations := map[string]string{
-		"werf.io/version": werf.Version,
-	}
-
-	if *commonCmdData.Environment != "" {
-		serviceAnnotations["project.werf.io/env"] = *commonCmdData.Environment
-	}
-
+	serviceAnnotations := map[string]string{}
 	extraAnnotations := map[string]string{}
 	for key, value := range bundle.ExtraAnnotationsAndLabelsPostRenderer.ExtraAnnotations {
 		if strings.HasPrefix(key, "project.werf.io/") ||
@@ -262,6 +255,11 @@ func runRender(ctx context.Context) error {
 		} else {
 			extraAnnotations[key] = value
 		}
+	}
+
+	serviceAnnotations["werf.io/version"] = werf.Version
+	if *commonCmdData.Environment != "" {
+		serviceAnnotations["project.werf.io/env"] = *commonCmdData.Environment
 	}
 
 	extraLabels := bundle.ExtraAnnotationsAndLabelsPostRenderer.ExtraLabels
