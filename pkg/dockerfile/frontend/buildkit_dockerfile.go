@@ -9,7 +9,9 @@ import (
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
 
+	"github.com/werf/werf/v2/pkg/container_backend/thirdparty/platformutil"
 	"github.com/werf/werf/v2/pkg/dockerfile"
+	"github.com/werf/werf/v2/pkg/util"
 )
 
 func ParseDockerfileWithBuildkit(dockerfileID string, dockerfileBytes []byte, werfImageName string, opts dockerfile.DockerfileOptions) (*dockerfile.Dockerfile, error) {
@@ -25,7 +27,7 @@ func ParseDockerfileWithBuildkit(dockerfileID string, dockerfileBytes []byte, we
 
 	expanderFactory := NewShlexExpanderFactory(p.EscapeToken)
 
-	metaArgs, err := resolveMetaArgs(dockerMetaArgsCommands, opts.BuildArgs, opts.DependenciesArgsKeys, expanderFactory)
+	metaArgs, err := resolveMetaArgs(dockerMetaArgsCommands, opts.BuildArgs, opts.DependenciesArgsKeys, opts.TargetPlatform, expanderFactory)
 	if err != nil {
 		return nil, fmt.Errorf("unable to process meta args: %w", err)
 	}
@@ -245,17 +247,10 @@ func removeDependenciesArgs(args []instructions.KeyValuePairOptional, dependenci
 	return
 }
 
-func resolveMetaArgs(metaArgsCommands []instructions.ArgCommand, buildArgs map[string]string, dependenciesArgsKeys []string, expanderFactory *ShlexExpanderFactory) (map[string]string, error) {
+func resolveMetaArgs(metaArgsCommands []instructions.ArgCommand, buildArgs map[string]string, dependenciesArgsKeys []string, targetPlatform string, expanderFactory *ShlexExpanderFactory) (map[string]string, error) {
 	var optMetaArgs []instructions.KeyValuePairOptional
 
-	// TODO(staged-dockerfile): need to support builtin BUILD* and TARGET* args
-
-	// platformOpt := buildPlatformOpt(&opt)
-	// optMetaArgs := getPlatformArgs(platformOpt)
-	// for i, arg := range optMetaArgs {
-	// 	optMetaArgs[i] = setKVValue(arg, opt.BuildArgs)
-	// }
-
+	// Resolve meta arg commands and build args.
 	for _, cmd := range metaArgsCommands {
 		for _, metaArg := range cmd.Args {
 			if isDependencyArg(metaArg.Key, dependenciesArgsKeys) {
@@ -269,7 +264,19 @@ func resolveMetaArgs(metaArgsCommands []instructions.ArgCommand, buildArgs map[s
 		}
 	}
 
-	return metaArgsToMap(optMetaArgs), nil
+	// Merge with automatic meta args.
+	var metaArgsMap map[string]string
+	{
+		optMetaArgsMap := metaArgsToMap(optMetaArgs)
+		platformMetaArgsMap, err := platformutil.GetPlatformMetaArgsMap(targetPlatform)
+		if err != nil {
+			return nil, fmt.Errorf("unable to get platform args: %w", err)
+		}
+
+		metaArgsMap = util.MergeMaps(platformMetaArgsMap, optMetaArgsMap)
+	}
+
+	return metaArgsMap, nil
 }
 
 func metaArgsToMap(metaArgs []instructions.KeyValuePairOptional) map[string]string {
@@ -286,29 +293,6 @@ func setKVValue(kvpo instructions.KeyValuePairOptional, values map[string]string
 	}
 	return kvpo
 }
-
-// TODO(staged-dockerfile)
-//
-// func getPlatformArgs(po *platformOpt) []instructions.KeyValuePairOptional {
-// 	bp := po.buildPlatforms[0]
-// 	tp := po.targetPlatform
-// 	m := map[string]string{
-// 		"BUILDPLATFORM":  platforms.Format(bp),
-// 		"BUILDOS":        bp.OS,
-// 		"BUILDARCH":      bp.Architecture,
-// 		"BUILDVARIANT":   bp.Variant,
-// 		"TARGETPLATFORM": platforms.Format(tp),
-// 		"TARGETOS":       tp.OS,
-// 		"TARGETARCH":     tp.Architecture,
-// 		"TARGETVARIANT":  tp.Variant,
-// 	}
-// 	opts := make([]instructions.KeyValuePairOptional, 0, len(m))
-// 	for k, v := range m {
-// 		s := v
-// 		opts = append(opts, instructions.KeyValuePairOptional{Key: k, Value: &s})
-// 	}
-// 	return opts
-// }
 
 func GetDockerStagesNameToIndexMap(stages []instructions.Stage) map[string]int {
 	nameToIndex := make(map[string]int)

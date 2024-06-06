@@ -35,6 +35,7 @@ func MapDockerfileConfigToImagesSets(ctx context.Context, dockerfileImageConfig 
 
 		d, err := frontend.ParseDockerfileWithBuildkit(dockerfileID, dockerfileData, dockerfileImageConfig.Name, dockerfile.DockerfileOptions{
 			Target:               dockerfileImageConfig.Target,
+			TargetPlatform:       targetPlatform,
 			BuildArgs:            util.MapStringInterfaceToMapStringString(dockerfileImageConfig.Args),
 			AddHost:              dockerfileImageConfig.AddHost,
 			Network:              dockerfileImageConfig.Network,
