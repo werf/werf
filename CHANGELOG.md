@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.4.2](https://www.github.com/werf/werf/compare/v2.4.1...v2.4.2) (2024-06-06)
+
+
+### Bug Fixes
+
+* **dev:** disable signing for service commits ([cfcee71](https://www.github.com/werf/werf/commit/cfcee71ff1ea18a513e769e89e1bd20b77ec51e5))
+
 ### [2.4.1](https://www.github.com/werf/werf/compare/v2.4.0...v2.4.1) (2024-06-05)
 
 
