@@ -18,6 +18,7 @@ import (
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/container_backend/stage_builder"
+	"github.com/werf/werf/v2/pkg/container_backend/thirdparty/platformutil"
 	"github.com/werf/werf/v2/pkg/context_manager"
 	"github.com/werf/werf/v2/pkg/docker_registry"
 	"github.com/werf/werf/v2/pkg/dockerfile"
@@ -297,9 +298,19 @@ type dockerfileInstructionInterface interface {
 func (s *FullDockerfileStage) FetchDependencies(ctx context.Context, c Conveyor, containerBackend container_backend.ContainerBackend, dockerRegistry docker_registry.GenericApiInterface) error {
 	resolvedDependenciesArgsHash := ResolveDependenciesArgs(s.targetPlatform, s.dependencies, c)
 
-	resolvedDockerMetaArgsHash, err := s.resolveDockerMetaArgs(resolvedDependenciesArgsHash)
-	if err != nil {
-		return fmt.Errorf("unable to resolve docker meta args: %w", err)
+	var resolvedDockerMetaArgsHash map[string]string
+	{
+		metaArgs, err := s.resolveDockerMetaArgs(resolvedDependenciesArgsHash)
+		if err != nil {
+			return fmt.Errorf("unable to resolve docker meta args: %w", err)
+		}
+
+		platformMetaArgs, err := platformutil.GetPlatformMetaArgsMap(s.targetPlatform)
+		if err != nil {
+			return fmt.Errorf("unable to get platform args: %w", err)
+		}
+
+		resolvedDockerMetaArgsHash = util.MergeMaps(platformMetaArgs, metaArgs)
 	}
 
 outerLoop:
@@ -389,9 +400,19 @@ var errImageNotExistLocally = errors.New("IMAGE_NOT_EXIST_LOCALLY")
 func (s *FullDockerfileStage) GetDependencies(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
 	resolvedDependenciesArgsHash := ResolveDependenciesArgs(s.targetPlatform, s.dependencies, c)
 
-	resolvedDockerMetaArgsHash, err := s.resolveDockerMetaArgs(resolvedDependenciesArgsHash)
-	if err != nil {
-		return "", fmt.Errorf("unable to resolve docker meta args: %w", err)
+	var resolvedDockerMetaArgsHash map[string]string
+	{
+		metaArgs, err := s.resolveDockerMetaArgs(resolvedDependenciesArgsHash)
+		if err != nil {
+			return "", fmt.Errorf("unable to resolve docker meta args: %w", err)
+		}
+
+		platformMetaArgs, err := platformutil.GetPlatformMetaArgsMap(s.targetPlatform)
+		if err != nil {
+			return "", fmt.Errorf("unable to get platform args: %w", err)
+		}
+
+		resolvedDockerMetaArgsHash = util.MergeMaps(platformMetaArgs, metaArgs)
 	}
 
 	var stagesDependencies [][]string

@@ -11,6 +11,7 @@ type DockerfileOptions struct {
 	AddHost              []string
 	Network              string
 	SSH                  string
+	TargetPlatform       string
 }
 
 func NewDockerfile(dockerfileID string, stages []*DockerfileStage, opts DockerfileOptions) *Dockerfile {
