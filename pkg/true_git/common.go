@@ -5,7 +5,7 @@ import (
 )
 
 func getCommonGitOptions() []string {
-	return []string{"-c", "core.autocrlf=false", "-c", "gc.auto=0"}
+	return []string{"-c", "core.autocrlf=false", "-c", "gc.auto=0", "-c", "commit.gpgsign=false"}
 }
 
 func debug() bool {
