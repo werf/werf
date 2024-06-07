@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.5.1](https://www.github.com/werf/werf/compare/v2.5.0...v2.5.1) (2024-06-07)
+
+
+### Bug Fixes
+
+* **common:** fix panic "unexpected regexp find submatch for reference" ([45ecd0e](https://www.github.com/werf/werf/commit/45ecd0eac81adce237b7e49b189519eb45770d3e))
+
 ## [2.5.0](https://www.github.com/werf/werf/compare/v2.4.1...v2.5.0) (2024-06-07)
 
 
