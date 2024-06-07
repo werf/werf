@@ -149,6 +149,10 @@ func ImageLogTagStyle(isArtifact bool) color.Style {
 	return logging.ImageDefaultStyle(isArtifact)
 }
 
+func (i *Image) IsBasedOnStage() bool {
+	return i.baseImageType == StageAsBaseImage
+}
+
 func (i *Image) IsFinal() bool {
 	if i.IsArtifact {
 		return false
