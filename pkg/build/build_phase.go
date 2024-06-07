@@ -916,9 +916,12 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, s
 	opts.CacheVersionParts = nil
 	opts.TargetPlatform = img.TargetPlatform
 
-	if werf.GetStagedDockerfileVersion() == werf.StagedDockerfileV1 {
-		if img.IsDockerfileImage && img.DockerfileImageConfig.Staged {
-			if !stg.HasPrevStage() {
+	if img.IsDockerfileImage && img.DockerfileImageConfig.Staged {
+		if !stg.HasPrevStage() {
+			// FIXME: For werf.StagedDockerfileV2, this logic should also be the default.
+			// Currently, to avoid breaking tag reproducibility, this logic is only enabled for multi-stage cases.
+			// Eventually, this behavior should be default for all versions without the extra if condition.
+			if img.IsBasedOnStage() || werf.GetStagedDockerfileVersion() == werf.StagedDockerfileV1 {
 				opts.BaseImage = img.GetBaseImageReference()
 			}
 		}
@@ -1231,7 +1234,7 @@ func calculateDigest(ctx context.Context, stageName, stageDependencies string, p
 	var checksumArgs []string
 	var checksumArgsNames []string
 
-	// linux/amd64 not affects digest for compatibility with currently built stages
+	// TODO: linux/amd64 not affects digest for compatibility with currently built stages.
 	if opts.TargetPlatform != "" && opts.TargetPlatform != "linux/amd64" {
 		checksumArgs = append(checksumArgs, opts.TargetPlatform)
 		checksumArgsNames = append(checksumArgsNames, "TargetPlatform")
@@ -1265,7 +1268,6 @@ func calculateDigest(ctx context.Context, stageName, stageDependencies string, p
 		}
 	}
 
-	// TODO(staged-dockerfile): this is legacy digest part used for StagedDockerfileV1
 	if opts.BaseImage != "" {
 		checksumArgs = append(checksumArgs, opts.BaseImage)
 		checksumArgsNames = append(checksumArgsNames, "BaseImage")
