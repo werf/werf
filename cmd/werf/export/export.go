@@ -103,6 +103,11 @@ func NewExportCmd(ctx context.Context) *cobra.Command {
 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{OptionalRepo: true})
 	common.SetupFinalRepo(&commonCmdData, cmd)
+	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultBuildParallelTasksLimit)
+
+	common.SetupIntrospectAfterError(&commonCmdData, cmd)
+	common.SetupIntrospectBeforeError(&commonCmdData, cmd)
+	common.SetupIntrospectStage(&commonCmdData, cmd)
 
 	common.SetupRequireBuiltImages(&commonCmdData, cmd)
 
@@ -241,9 +246,14 @@ func run(ctx context.Context, imagesToProcess build.ImagesToProcess, tagTemplate
 
 	storageManager := manager.NewStorageManager(projectName, stagesStorage, finalStagesStorage, secondaryStagesStorageList, cacheStagesStorageList, storageLockManager)
 
+	buildOptions, err := common.GetBuildOptions(ctx, &commonCmdData, werfConfig, imagesToProcess.OnlyImages)
+	if err != nil {
+		return err
+	}
+
 	logboek.Context(ctx).Info().LogOptionalLn()
 
-	conveyorOptions, err := common.GetConveyorOptions(ctx, &commonCmdData, imagesToProcess)
+	conveyorOptions, err := common.GetConveyorOptionsWithParallel(ctx, &commonCmdData, imagesToProcess, buildOptions)
 	if err != nil {
 		return err
 	}

@@ -112,6 +112,27 @@ werf export [IMAGE_NAME...] [options]
             configuration (default $WERF_INSECURE_HELM_DEPENDENCIES)
       --insecure-registry=false
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
+      --introspect-before-error=false
+            Introspect failed stage in the clean state, before running all assembly instructions of 
+            the stage
+      --introspect-error=false
+            Introspect failed stage in the state, right after running failed assembly instruction
+      --introspect-stage=[]
+            Introspect a specific stage. The option can be used multiple times to introspect        
+            several stages.
+            
+            There are the following formats to use:
+            * specify IMAGE_NAME/STAGE_NAME to introspect stage STAGE_NAME of either image or       
+            artifact IMAGE_NAME
+            * specify STAGE_NAME or */STAGE_NAME for the introspection of all existing stages with  
+            name STAGE_NAME
+            
+            IMAGE_NAME is the name of an image or artifact described in werf.yaml, the nameless     
+            image specified with ~.
+            STAGE_NAME should be one of the following: from, beforeInstall,                         
+            dependenciesBeforeInstall, gitArchive, install, dependenciesAfterInstall, beforeSetup,  
+            dependenciesBeforeSetup, setup, dependenciesAfterSetup, gitCache, gitLatestPatch,       
+            dockerInstructions, dockerfile
       --kube-config=''
             Kubernetes config file path (default $WERF_KUBE_CONFIG, or $WERF_KUBECONFIG, or         
             $KUBECONFIG)
@@ -148,6 +169,11 @@ werf export [IMAGE_NAME...] [options]
             Enable verbose output (default $WERF_LOG_VERBOSE).
       --loose-giterminism=false
             Loose werf giterminism mode restrictions
+  -p, --parallel=true
+            Run in parallel (default $WERF_PARALLEL or true)
+      --parallel-tasks-limit=5
+            Parallel tasks limit, set -1 to remove the limitation (default                          
+            $WERF_PARALLEL_TASKS_LIMIT or 5)
       --platform=[]
             Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT]     
             ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)
