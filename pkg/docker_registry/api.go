@@ -529,7 +529,7 @@ func (api *api) parseReferenceParts(reference string) (referenceParts, error) {
 	// res[3] digest
 	res := dockerReference.ReferenceRegexp.FindStringSubmatch(reference)
 	if len(res) != 4 {
-		panic(fmt.Sprintf("unexpected regexp find submatch result %v for reference %q (%d)", res, reference, len(res)))
+		return referenceParts{}, fmt.Errorf("unexpected reference %q", reference)
 	}
 
 	referenceParts := referenceParts{}
