@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.5.0](https://www.github.com/werf/werf/compare/v2.4.1...v2.5.0) (2024-06-07)
+
+
+### Features
+
+* **build, dockerfile, multiplatform:** support automatic platform ARGs ([fbca962](https://www.github.com/werf/werf/commit/fbca962fb5351a0b0892af98ada05911cdf90f73))
+
+
+### Bug Fixes
+
+* **build, buildah, dockerfile:** fix multi-stage does not work properly ([02da623](https://www.github.com/werf/werf/commit/02da623ae8316ed2ddc81b68685fdf4325ccc7e9))
+* **dev:** disable signing for service commits ([cfcee71](https://www.github.com/werf/werf/commit/cfcee71ff1ea18a513e769e89e1bd20b77ec51e5))
+
 ### [2.4.1](https://www.github.com/werf/werf/compare/v2.4.0...v2.4.1) (2024-06-05)
 
 
