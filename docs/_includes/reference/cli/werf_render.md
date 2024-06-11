@@ -85,6 +85,12 @@ werf render [IMAGE_NAME...] [options]
             ~/.docker (in the order of priority)
             Command needs granted permissions to read, pull and push images into the specified repo 
             and to pull base images
+      --elf-pgp-private-key-base64=""
+            Base64-encoded PGP private key (default $WERF_ELF_PGP_PRIVATE_KEY_BASE64)
+      --elf-pgp-private-key-fingerprint=""
+            PGP private key fingerprint (default $WERF_ELF_PGP_PRIVATE_KEY_FINGERPRINT)
+      --elf-pgp-private-key-passphrase=""
+            Passphrase for the PGP private key (default $WERF_ELF_PGP_PRIVATE_KEY_PASSPHRASE)
       --env=""
             Use specified environment (default $WERF_ENV)
       --final-images-only=true
@@ -285,6 +291,10 @@ werf render [IMAGE_NAME...] [options]
             $WERF_SET_STRING_2=key2=val2)
   -s, --show-only=[]
             only show manifests rendered from the given templates
+      --sign-elf-files=false
+            Sign ELF files with the private key (default $WERF_SIGN_ELF_FILES). The private key     
+            should be specified with --elf-pgp-private-key-base64 or                                
+            --elf-pgp-private-key-fingerprint options
   -L, --skip-dependencies-repo-refresh=false
             Do not refresh helm chart repositories locally cached index
       --skip-image-spec-stage=false

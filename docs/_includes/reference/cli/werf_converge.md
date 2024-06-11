@@ -145,6 +145,12 @@ werf converge --repo registry.mydomain.com/web --env production
             ~/.docker (in the order of priority)
             Command needs granted permissions to read, pull and push images into the specified      
             repo, to pull base images
+      --elf-pgp-private-key-base64=""
+            Base64-encoded PGP private key (default $WERF_ELF_PGP_PRIVATE_KEY_BASE64)
+      --elf-pgp-private-key-fingerprint=""
+            PGP private key fingerprint (default $WERF_ELF_PGP_PRIVATE_KEY_FINGERPRINT)
+      --elf-pgp-private-key-passphrase=""
+            Passphrase for the PGP private key (default $WERF_ELF_PGP_PRIVATE_KEY_PASSPHRASE)
       --env=""
             Use specified environment (default $WERF_ENV)
       --final-images-only=true
@@ -362,6 +368,10 @@ werf converge --repo registry.mydomain.com/web --env production
             with commas: key1=val1,key2=val2).
             Also, can be defined with $WERF_SET_STRING_* (e.g. $WERF_SET_STRING_1=key1=val1,        
             $WERF_SET_STRING_2=key2=val2)
+      --sign-elf-files=false
+            Sign ELF files with the private key (default $WERF_SIGN_ELF_FILES). The private key     
+            should be specified with --elf-pgp-private-key-base64 or                                
+            --elf-pgp-private-key-fingerprint options
   -L, --skip-dependencies-repo-refresh=false
             Do not refresh helm chart repositories locally cached index
       --skip-image-spec-stage=false

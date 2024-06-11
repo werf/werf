@@ -42,3 +42,8 @@ func (builder *StapelStageBuilder) Build(ctx context.Context, opts container_bac
 
 	return nil
 }
+
+func (builder *StapelStageBuilder) Cleanup(ctx context.Context) error {
+	// TODO implement it
+	return nil
+}

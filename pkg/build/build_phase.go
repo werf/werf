@@ -39,6 +39,7 @@ type BuildPhaseOptions struct {
 type BuildOptions struct {
 	ImageBuildOptions container_backend.BuildOptions
 	IntrospectOptions
+	ELFSigningOptions
 
 	ReportPath   string
 	ReportFormat ReportFormat
@@ -50,6 +51,12 @@ type BuildOptions struct {
 
 type IntrospectOptions struct {
 	Targets []IntrospectTarget
+}
+
+type ELFSigningOptions struct {
+	Enabled                  bool
+	PGPPrivateKeyFingerprint string
+	PGPPrivateKeyPassphrase  string
 }
 
 type IntrospectTarget struct {
@@ -835,6 +842,7 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, s
 
 	var opts calculateDigestOptions
 	opts.TargetPlatform = img.TargetPlatform
+	opts.ELFSigningOptions = phase.ELFSigningOptions
 
 	if img.IsDockerfileImage && img.DockerfileImageConfig.Staged {
 		if !stg.HasPrevStage() {
@@ -911,8 +919,8 @@ func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *imag
 		imagePkg.WerfStageContentDigestLabel: stg.GetContentDigest(),
 	}
 
+	prevBuiltImage := phase.StagesIterator.GetPrevBuiltImage(img, stg)
 	if stg.HasPrevStage() {
-		prevBuiltImage := phase.StagesIterator.GetPrevBuiltImage(img, stg)
 		serviceLabels[imagePkg.WerfParentStageID] = prevBuiltImage.Image.GetStageDesc().StageID.String()
 
 		// TODO: remove this legacy logic in v3.
@@ -957,10 +965,6 @@ func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *imag
 			labels = append(labels, fmt.Sprintf("%s=%v", key, value))
 		}
 		stageImage.Builder.DockerfileBuilder().AppendLabels(labels...)
-
-		phase.Conveyor.AppendOnTerminateFunc(func() error {
-			return stageImage.Builder.DockerfileBuilder().Cleanup(ctx)
-		})
 	} else {
 		stageImage.Builder.DockerfileStageBuilder().SetBuildContextArchive(phase.buildContextArchive)
 
@@ -971,7 +975,11 @@ func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *imag
 		}
 	}
 
-	err := stg.PrepareImage(ctx, phase.Conveyor, phase.Conveyor.ContainerBackend, phase.StagesIterator.GetPrevBuiltImage(img, stg), stageImage, phase.buildContextArchive)
+	phase.Conveyor.AppendOnTerminateFunc(func() error {
+		return stageImage.Builder.Cleanup(ctx)
+	})
+
+	err := stg.PrepareImage(ctx, phase.Conveyor, phase.Conveyor.ContainerBackend, prevBuiltImage, stageImage, phase.buildContextArchive)
 	if err != nil {
 		return fmt.Errorf("error preparing stage %s: %w", stg.Name(), err)
 	}
@@ -1106,17 +1114,34 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 	stageImage.Image.SetName(newStageImageName)
 	phase.Conveyor.SetStageImage(stageImage)
 
-	if err := logboek.Context(ctx).Default().LogProcess("Store stage into %s", phase.Conveyor.StorageManager.GetStagesStorage().String()).DoError(func() error {
-		if stg.IsMutable() {
-			switch phase.Conveyor.StorageManager.GetStagesStorage().(type) {
-			case *storage.RepoStagesStorage:
-			default:
-				err := ErrMutableStageLocalStorage
-				if stg.Name() == stage.ImageSpec {
-					err = ErrMutableStageLocalStorageImageSpec
+
+	if phase.ELFSigningOptions.Enabled {
+		if err := logboek.Context(ctx).Default().LogProcess("Signing ELF files").DoError(func() error {
+			return stageImage.Image.Mutate(ctx, func(builtID string) (string, error) {
+				newID := "werf.signing." + uuid.NewString()
+				finalID, err := signing(ctx, builtID, newID, phase.ELFSigningOptions)
+				if err != nil {
+					return "", err
 				}
-				return fmt.Errorf("unable to build stage %q: %w", stg.Name(), err)
-			}
+
+				return finalID, nil
+			})
+		}); err != nil {
+			return err
+		}
+	}
+
+		if err := logboek.Context(ctx).Default().LogProcess("Store stage into %s", phase.Conveyor.StorageManager.GetStagesStorage().String()).DoError(func() error {
+			if stg.IsMutable() {
+				switch phase.Conveyor.StorageManager.GetStagesStorage().(type) {
+				case *storage.RepoStagesStorage:
+				default:
+					err := ErrMutableStageLocalStorage
+					if stg.Name() == stage.ImageSpec {
+						err = ErrMutableStageLocalStorageImageSpec
+					}
+					return fmt.Errorf("unable to build stage %q: %w", stg.Name(), err)
+				}
 
 			if err := stg.MutateImage(ctx, phase.Conveyor.StorageManager.GetStagesStorage().(*storage.RepoStagesStorage).DockerRegistry, phase.StagesIterator.PrevBuiltStage.GetStageImage(), stageImage); err != nil {
 				return fmt.Errorf("unable to mutate %s: %w", stg.Name(), err)
@@ -1173,8 +1198,9 @@ func introspectStage(ctx context.Context, s stage.Interface) error {
 }
 
 type calculateDigestOptions struct {
-	TargetPlatform string
-	BaseImage      string // TODO(staged-dockerfile): legacy compatibility field
+	TargetPlatform    string
+	ELFSigningOptions ELFSigningOptions
+	BaseImage         string // TODO(staged-dockerfile): legacy compatibility field
 }
 
 func calculateDigest(ctx context.Context, stageName, stageDependencies string, prevNonEmptyStage stage.Interface, conveyor *Conveyor, opts calculateDigestOptions) (string, error) {
@@ -1193,6 +1219,11 @@ func calculateDigest(ctx context.Context, stageName, stageDependencies string, p
 		"StageName",
 		"StageDependencies",
 	)
+
+	if opts.ELFSigningOptions.Enabled {
+		checksumArgs = append(checksumArgs, opts.ELFSigningOptions.PGPPrivateKeyFingerprint)
+		checksumArgsNames = append(checksumArgsNames, "ELF_SIGNING_PGP_KEY_FINGERPRINT")
+	}
 
 	if prevNonEmptyStage != nil {
 		prevStageDependencies, err := prevNonEmptyStage.GetNextStageDependencies(ctx, conveyor)
