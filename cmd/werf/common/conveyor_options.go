@@ -3,9 +3,12 @@ package common
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"fmt"
 	"strings"
 	"text/template"
+
+	"golang.org/x/crypto/openpgp"
 
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/level"
@@ -18,6 +21,7 @@ import (
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/slug"
 	"github.com/werf/werf/v2/pkg/storage"
+	cmd2 "github.com/werf/werf/v2/pkg/util/cmd"
 )
 
 func GetConveyorOptions(ctx context.Context, commonCmdData *CmdData, imagesToProcess config.ImagesToProcess) (build.ConveyorOptions, error) {
@@ -100,6 +104,11 @@ func GetBuildOptions(ctx context.Context, commonCmdData *CmdData, werfConfig *co
 		return buildOptions, err
 	}
 
+	elfSigningOptions, err := getELFSigningOptions(commonCmdData)
+	if err != nil {
+		return buildOptions, err
+	}
+
 	buildOptions = build.BuildOptions{
 		SkipAddManagedImagesRecords:  werfConfig.Meta.Cleanup.DisableCleanup,
 		SkipImageMetadataPublication: *commonCmdData.Dev || werfConfig.Meta.Cleanup.DisableGitHistoryBasedPolicy || werfConfig.Meta.Cleanup.DisableCleanup,
@@ -109,6 +118,7 @@ func GetBuildOptions(ctx context.Context, commonCmdData *CmdData, werfConfig *co
 			IntrospectBeforeError: *commonCmdData.IntrospectBeforeError,
 		},
 		IntrospectOptions: introspectOptions,
+		ELFSigningOptions: elfSigningOptions,
 	}
 
 	if GetSaveBuildReport(commonCmdData) {
@@ -119,6 +129,68 @@ func GetBuildOptions(ctx context.Context, commonCmdData *CmdData, werfConfig *co
 	}
 
 	return buildOptions, nil
+}
+
+func getELFSigningOptions(commonCmdData *CmdData) (build.ELFSigningOptions, error) {
+	var options build.ELFSigningOptions
+
+	if !*commonCmdData.SignELFFiles {
+		return options, nil
+	}
+	options.Enabled = true
+
+	if *commonCmdData.ELFPGPPrivateKeyPassphrase != "" {
+		options.PGPPrivateKeyPassphrase = *commonCmdData.ELFPGPPrivateKeyPassphrase
+	}
+
+	if *commonCmdData.ELFPGPPrivateKeyBase64 != "" && *commonCmdData.ELFPGPPrivateKeyFingerprint != "" {
+		return options, fmt.Errorf("both --elf-pgp-private-key-base64 and --elf-pgp-private-key-fingerprint params are specified, only one of them should be specified")
+	} else if *commonCmdData.ELFPGPPrivateKeyBase64 == "" && *commonCmdData.ELFPGPPrivateKeyFingerprint == "" {
+		return options, fmt.Errorf("either --elf-pgp-private-key-base64 or --elf-pgp-private-key-fingerprint param is required")
+	}
+
+	if *commonCmdData.ELFPGPPrivateKeyFingerprint != "" {
+		options.PGPPrivateKeyFingerprint = *commonCmdData.ELFPGPPrivateKeyFingerprint
+		return options, nil
+	}
+
+	// Get fingerprint and import key.
+	{
+		keyBytes, err := base64.StdEncoding.DecodeString(strings.TrimSpace(*commonCmdData.ELFPGPPrivateKeyBase64))
+		if err != nil {
+			return options, fmt.Errorf("unable to decode PGP key from base64: %w", err)
+		}
+
+		pgpKeyString := string(keyBytes)
+		entityList, err := openpgp.ReadArmoredKeyRing(bytes.NewReader(keyBytes))
+		if err != nil {
+			return options, fmt.Errorf("unable to read PGP key: %w", err)
+		}
+
+		firstKey := entityList[0].PrimaryKey
+		fingerprint := firstKey.Fingerprint
+		options.PGPPrivateKeyFingerprint = fmt.Sprintf("%X", fingerprint)
+
+		// Import PGP key.
+		{
+			ctx := context.Background()
+			cmd := cmd2.NewCmd(ctx, "gpg", "--import")
+			cmd.Stdin = bytes.NewBufferString(pgpKeyString)
+
+			if options.PGPPrivateKeyPassphrase != "" {
+				cmd.Args = append(cmd.Args, "--batch")
+				cmd.Args = append(cmd.Args, "--passphrase=$WERF_SERVICE_ELF_PGP_PRIVATE_KEY_PASSPHRASE")
+				cmd.Env = append(cmd.Env, fmt.Sprintf("WERF_SERVICE_ELF_PGP_PRIVATE_KEY_PASSPHRASE=%s", options.PGPPrivateKeyPassphrase))
+			}
+
+			err := cmd.Run(ctx)
+			if err != nil {
+				return options, fmt.Errorf("unable to import PGP key: %w", err)
+			}
+		}
+	}
+
+	return options, nil
 }
 
 func getCustomTagFuncList(tagOptionValues []string, commonCmdData *CmdData, imagesToProcess config.ImagesToProcess) ([]image.CustomTagFunc, error) {

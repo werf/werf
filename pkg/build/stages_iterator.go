@@ -41,6 +41,7 @@ func (iterator *StagesIterator) GetPrevBuiltImage(img *build_image.Image, stg st
 	} else if img.IsDockerfileImage && img.DockerfileImageConfig.Staged {
 		return img.GetBaseStageImage()
 	}
+
 	return nil
 }
 

@@ -145,6 +145,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupBackendStoragePath(&commonCmdData, cmd)
 	common.SetupProjectName(&commonCmdData, cmd, false)
 
+	common.SetupELFSigningOptions(&commonCmdData, cmd)
+
 	common.SetupRequireBuiltImages(&commonCmdData, cmd)
 	commonCmdData.SetupPlatform(cmd)
 

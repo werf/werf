@@ -1065,6 +1065,20 @@ IMAGE_NAME is the name of an image or artifact described in werf.yaml, the namel
 STAGE_NAME should be one of the following: `+strings.Join(allStagesNames(), ", "))
 }
 
+func SetupELFSigningOptions(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.SignELFFiles = new(bool)
+	cmd.Flags().BoolVarP(cmdData.SignELFFiles, "sign-elf-files", "", util.GetBoolEnvironmentDefaultFalse("WERF_SIGN_ELF_FILES"), "Sign ELF files with the private key (default $WERF_SIGN_ELF_FILES). The private key should be specified with --elf-pgp-private-key-base64 or --elf-pgp-private-key-fingerprint options")
+
+	cmdData.ELFPGPPrivateKeyBase64 = new(string)
+	cmd.Flags().StringVarP(cmdData.ELFPGPPrivateKeyBase64, "elf-pgp-private-key-base64", "", os.Getenv("WERF_ELF_PGP_PRIVATE_KEY_BASE64"), "Base64-encoded PGP private key (default $WERF_ELF_PGP_PRIVATE_KEY_BASE64)")
+
+	cmdData.ELFPGPPrivateKeyFingerprint = new(string)
+	cmd.Flags().StringVarP(cmdData.ELFPGPPrivateKeyFingerprint, "elf-pgp-private-key-fingerprint", "", os.Getenv("WERF_ELF_PGP_PRIVATE_KEY_FINGERPRINT"), "PGP private key fingerprint (default $WERF_ELF_PGP_PRIVATE_KEY_FINGERPRINT)")
+
+	cmdData.ELFPGPPrivateKeyPassphrase = new(string)
+	cmd.Flags().StringVarP(cmdData.ELFPGPPrivateKeyPassphrase, "elf-pgp-private-key-passphrase", "", os.Getenv("WERF_ELF_PGP_PRIVATE_KEY_PASSPHRASE"), "Passphrase for the PGP private key (default $WERF_ELF_PGP_PRIVATE_KEY_PASSPHRASE)")
+}
+
 // SetupRequireBuiltImages adds --require-built-images flag.
 // See also [quireBuiltImages].
 func SetupRequireBuiltImages(cmdData *CmdData, cmd *cobra.Command) {

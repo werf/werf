@@ -143,6 +143,11 @@ type CmdData struct {
 
 	Platform *[]string
 
+	SignELFFiles                *bool
+	ELFPGPPrivateKeyBase64      *string
+	ELFPGPPrivateKeyFingerprint *string
+	ELFPGPPrivateKeyPassphrase  *string
+
 	SkipImageSpecStage *bool
 	IncludesLsFilter   *string
 

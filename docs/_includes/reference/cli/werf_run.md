@@ -74,6 +74,12 @@ werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
             Define docker run options (default $WERF_DOCKER_OPTIONS)
       --dry-run=false
             Indicate what the command would do without actually doing that (default $WERF_DRY_RUN)
+      --elf-pgp-private-key-base64=""
+            Base64-encoded PGP private key (default $WERF_ELF_PGP_PRIVATE_KEY_BASE64)
+      --elf-pgp-private-key-fingerprint=""
+            PGP private key fingerprint (default $WERF_ELF_PGP_PRIVATE_KEY_FINGERPRINT)
+      --elf-pgp-private-key-passphrase=""
+            Passphrase for the PGP private key (default $WERF_ELF_PGP_PRIVATE_KEY_PASSPHRASE)
       --env=""
             Use specified environment (default $WERF_ENV)
       --final-repo=""
@@ -188,6 +194,10 @@ werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
             $WERF_SECONDARY_REPO_2=...)
       --shell=false
             Use predefined docker options and command for debug
+      --sign-elf-files=false
+            Sign ELF files with the private key (default $WERF_SIGN_ELF_FILES). The private key     
+            should be specified with --elf-pgp-private-key-base64 or                                
+            --elf-pgp-private-key-fingerprint options
       --skip-image-spec-stage=false
             Force skipping "imageSpec" build stage (default $WERF_SKIP_IMAGE_SPEC_STAGE or false)
       --skip-tls-verify-registry=false

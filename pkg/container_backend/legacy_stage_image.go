@@ -46,7 +46,7 @@ func (i *LegacyStageImage) GetCopy() LegacyImageInterface {
 	} else if info := i.GetInfo(); info != nil {
 		ni.SetInfo(info.GetCopy())
 	}
-	return ni
+	return nil
 }
 
 func (i *LegacyStageImage) SetCommitChangeOptions(opts LegacyCommitChangeOptions) {
@@ -63,7 +63,7 @@ func (i *LegacyStageImage) Container() LegacyContainer {
 
 func (i *LegacyStageImage) GetID() string {
 	if i.buildImage != nil {
-		return i.buildImage.Name()
+		return i.MustGetBuiltID()
 	} else {
 		return i.legacyBaseImage.GetStageDesc().Info.Name
 	}
@@ -245,6 +245,24 @@ func (i *LegacyStageImage) Push(ctx context.Context) error {
 	_ = i.ContainerBackend.(*DockerServerBackend)
 
 	return docker.CliPushWithRetries(ctx, i.name)
+}
+
+func (i *LegacyStageImage) Mutate(ctx context.Context, f func(builtID string) (string, error)) error {
+	buildID := i.MustGetBuiltID()
+	newID, err := f(buildID)
+	if err != nil {
+		return err
+	}
+
+	if newID != buildID {
+		i.SetBuiltID(newID)
+		i.buildImage = nil
+		if err := i.ContainerBackend.Rmi(ctx, buildID, RmiOpts{Force: true}); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func debugDockerRunCommand() bool {
