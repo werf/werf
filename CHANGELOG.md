@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.6.0](https://www.github.com/werf/werf/compare/v2.5.0...v2.6.0) (2024-06-14)
+
+
+### Features
+
+* **deploy:** release namespace management v2 ([88757cf](https://www.github.com/werf/werf/commit/88757cfe1358576bfdf68654c2dcbbc7a43d3f03))
+* **export:** add introspect and parallel cli options ([db20884](https://www.github.com/werf/werf/commit/db208842a801a7bc08b47a02b74d87caae7b7438))
+
+
+### Bug Fixes
+
+* **common:** fix panic "unexpected regexp find submatch for reference" ([45ecd0e](https://www.github.com/werf/werf/commit/45ecd0eac81adce237b7e49b189519eb45770d3e))
+
 ## [2.5.0](https://www.github.com/werf/werf/compare/v2.4.1...v2.5.0) (2024-06-07)
 
 
