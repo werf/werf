@@ -83,7 +83,7 @@ func (cache *KubernetesStagesStorageCache) getConfigMapName(projectName string) 
 }
 
 func (cache *KubernetesStagesStorageCache) GetAllStages(ctx context.Context, projectName string) (bool, []image.StageID, error) {
-	if obj, err := kubeutils.GetOrCreateConfigMapWithNamespaceIfNotExists(cache.KubeClient, cache.Namespace, cache.GetConfigMapNameFunc(projectName)); err != nil {
+	if obj, err := kubeutils.GetOrCreateConfigMapWithNamespaceIfNotExists(cache.KubeClient, cache.Namespace, cache.GetConfigMapNameFunc(projectName), true); err != nil {
 		return false, nil, err
 	} else if cacheData, err := cache.extractCacheData(ctx, obj); err != nil {
 		return false, nil, err
@@ -105,7 +105,7 @@ func (cache *KubernetesStagesStorageCache) DeleteAllStages(ctx context.Context, 
 }
 
 func (cache *KubernetesStagesStorageCache) GetStagesByDigest(ctx context.Context, projectName, digest string) (bool, []image.StageID, error) {
-	if obj, err := kubeutils.GetOrCreateConfigMapWithNamespaceIfNotExists(cache.KubeClient, cache.Namespace, cache.GetConfigMapNameFunc(projectName)); err != nil {
+	if obj, err := kubeutils.GetOrCreateConfigMapWithNamespaceIfNotExists(cache.KubeClient, cache.Namespace, cache.GetConfigMapNameFunc(projectName), true); err != nil {
 		return false, nil, err
 	} else if cacheData, err := cache.extractCacheData(ctx, obj); err != nil {
 		return false, nil, err
@@ -144,7 +144,7 @@ func (cache *KubernetesStagesStorageCache) DeleteStagesByDigest(ctx context.Cont
 func (cache *KubernetesStagesStorageCache) changeCacheData(ctx context.Context, projectName string, changeFunc func(obj *v1.ConfigMap, cacheData *KubernetesStagesStorageCacheData) error) error {
 RETRY_CHANGE:
 
-	obj, err := kubeutils.GetOrCreateConfigMapWithNamespaceIfNotExists(cache.KubeClient, cache.Namespace, cache.GetConfigMapNameFunc(projectName))
+	obj, err := kubeutils.GetOrCreateConfigMapWithNamespaceIfNotExists(cache.KubeClient, cache.Namespace, cache.GetConfigMapNameFunc(projectName), true)
 	if err != nil {
 		return err
 	}

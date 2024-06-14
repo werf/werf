@@ -624,7 +624,7 @@ func runRender(ctx context.Context, imagesToProcess build.ImagesToProcess) error
 	resProcessor := resrcprocssr.NewDeployableResourcesProcessor(
 		deployType,
 		releaseName,
-		releaseNamespace,
+		releaseNamespace.Name(),
 		chartTree.StandaloneCRDs(),
 		chartTree.HookResources(),
 		chartTree.GeneralResources(),

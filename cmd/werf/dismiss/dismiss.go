@@ -208,7 +208,7 @@ func runDismiss(ctx context.Context) error {
 
 	var lockManager *lock_manager.LockManager
 	if !cmdData.WithNamespace {
-		if m, err := lock_manager.NewLockManager(namespace); err != nil {
+		if m, err := lock_manager.NewLockManager(namespace, false); err != nil {
 			return fmt.Errorf("unable to create lock manager: %w", err)
 		} else {
 			lockManager = m
