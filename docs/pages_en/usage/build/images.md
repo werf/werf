@@ -409,7 +409,7 @@ During the build, werf will automatically insert the appropriate names and ident
 
 werf can build images for either the native host platform in which it is running, or for arbitrary platform in cross-platform mode using emulation. It is also possible to build images for multiple target platforms at once (i.e. manifest-list images).
 
-> **NOTE:** Refer to the [Installation]("https://werf.io/getting_started/") for more information about preparing host system for cross-platform builds, and [Build process]({{ "/usage/build/process.html" | true_relative_url }}) for more information on multi-platform support for different syntaxes and backends.
+> **NOTE:** Refer to the [Installation](https://werf.io/getting_started/) for more information about preparing host system for cross-platform builds, and [Build process]({{ "/usage/build/process.html" | true_relative_url }}) for more information on multi-platform support for different syntaxes and backends.
 
 ### Building for single target platform
 
