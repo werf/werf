@@ -50,12 +50,14 @@ func CreateNamespaceIfNotExists(client kubernetes.Interface, namespace string) e
 //	  return nil
 //  }
 
-func GetOrCreateConfigMapWithNamespaceIfNotExists(client kubernetes.Interface, namespace, configMapName string) (*v1.ConfigMap, error) {
+func GetOrCreateConfigMapWithNamespaceIfNotExists(client kubernetes.Interface, namespace, configMapName string, createNamespace bool) (*v1.ConfigMap, error) {
 	obj, err := client.CoreV1().ConfigMaps(namespace).Get(context.Background(), configMapName, metav1.GetOptions{})
 	switch {
 	case errors.IsNotFound(err):
-		if err := CreateNamespaceIfNotExists(client, namespace); err != nil {
-			return nil, err
+		if createNamespace {
+			if err := CreateNamespaceIfNotExists(client, namespace); err != nil {
+				return nil, err
+			}
 		}
 
 		cm := &v1.ConfigMap{

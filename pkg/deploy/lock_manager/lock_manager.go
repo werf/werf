@@ -24,20 +24,28 @@ type ConfigMapLocker struct {
 	ConfigMapName, Namespace string
 
 	Locker lockgate.Locker
+
+	createNamespace bool
 }
 
-func NewConfigMapLocker(configMapName, namespace string, locker lockgate.Locker) *ConfigMapLocker {
+type ConfigMapLockerOptions struct {
+	CreateNamespace bool
+}
+
+func NewConfigMapLocker(configMapName, namespace string, locker lockgate.Locker, options ConfigMapLockerOptions) *ConfigMapLocker {
 	return &ConfigMapLocker{
-		ConfigMapName: configMapName,
-		Namespace:     namespace,
-		Locker:        locker,
+		ConfigMapName:   configMapName,
+		Namespace:       namespace,
+		Locker:          locker,
+		createNamespace: options.CreateNamespace,
 	}
 }
 
 func (locker *ConfigMapLocker) Acquire(lockName string, opts lockgate.AcquireOptions) (bool, lockgate.LockHandle, error) {
-	if _, err := kubeutils.GetOrCreateConfigMapWithNamespaceIfNotExists(kube.Client, locker.Namespace, locker.ConfigMapName); err != nil {
+	if _, err := kubeutils.GetOrCreateConfigMapWithNamespaceIfNotExists(kube.Client, locker.Namespace, locker.ConfigMapName, locker.createNamespace); err != nil {
 		return false, lockgate.LockHandle{}, fmt.Errorf("unable to prepare kubernetes cm/%s in ns/%s: %w", locker.ConfigMapName, locker.Namespace, err)
 	}
+
 	return locker.Locker.Acquire(lockName, opts)
 }
 
@@ -45,7 +53,7 @@ func (locker *ConfigMapLocker) Release(lock lockgate.LockHandle) error {
 	return locker.Locker.Release(lock)
 }
 
-func NewLockManager(namespace string) (*LockManager, error) {
+func NewLockManager(namespace string, createNamespace bool) (*LockManager, error) {
 	configMapName := "werf-synchronization"
 
 	locker := distributed_locker.NewKubernetesLocker(
@@ -55,7 +63,7 @@ func NewLockManager(namespace string) (*LockManager, error) {
 			Resource: "configmaps",
 		}, configMapName, namespace,
 	)
-	cmLocker := NewConfigMapLocker(configMapName, namespace, locker)
+	cmLocker := NewConfigMapLocker(configMapName, namespace, locker, ConfigMapLockerOptions{CreateNamespace: createNamespace})
 	lockerWithRetry := locker_with_retry.NewLockerWithRetry(context.Background(), cmLocker, locker_with_retry.LockerWithRetryOptions{MaxAcquireAttempts: 10, MaxReleaseAttempts: 10})
 
 	return &LockManager{

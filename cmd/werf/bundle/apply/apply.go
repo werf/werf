@@ -17,6 +17,7 @@ import (
 	helm_v3 "helm.sh/helm/v3/cmd/helm"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart/loader"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/werf/kubedog/pkg/kube"
@@ -229,7 +230,7 @@ func runApply(ctx context.Context) error {
 	}
 
 	var lockManager *lock_manager.LockManager
-	if m, err := lock_manager.NewLockManager(namespace); err != nil {
+	if m, err := lock_manager.NewLockManager(namespace, false); err != nil {
 		return fmt.Errorf("unable to create lock manager: %w", err)
 	} else {
 		lockManager = m
@@ -329,6 +330,10 @@ func runApply(ctx context.Context) error {
 
 	actionConfig.Releases.MaxHistory = *commonCmdData.ReleasesHistoryMax
 
+	if err := createReleaseNamespace(ctx, clientFactory.KubeClient(), releaseNamespace); err != nil {
+		return fmt.Errorf("create release namespace: %w", err)
+	}
+
 	return command_helpers.LockReleaseWrapper(ctx, releaseName, lockManager, func() error {
 		log.Default.Info(ctx, color.Style{color.Bold, color.Green}.Render("Starting release")+" %q (namespace: %q)", releaseName, releaseNamespace.Name())
 
@@ -402,7 +407,7 @@ func runApply(ctx context.Context) error {
 		resProcessor := resrcprocssr.NewDeployableResourcesProcessor(
 			deployType,
 			releaseName,
-			releaseNamespace,
+			releaseNamespace.Name(),
 			chartTree.StandaloneCRDs(),
 			chartTree.HookResources(),
 			chartTree.GeneralResources(),
@@ -451,10 +456,10 @@ func runApply(ctx context.Context) error {
 
 		log.Default.Info(ctx, "Constructing new deploy plan")
 		deployPlanBuilder := plnbuilder.NewDeployPlanBuilder(
+			releaseNamespace.Name(),
 			deployType,
 			taskStore,
 			logStore,
-			resProcessor.DeployableReleaseNamespaceInfo(),
 			resProcessor.DeployableStandaloneCRDsInfos(),
 			resProcessor.DeployableHookResourcesInfos(),
 			resProcessor.DeployableGeneralResourcesInfos(),
@@ -615,6 +620,7 @@ func runApply(ctx context.Context) error {
 		if planExecutionErr != nil && pendingReleaseCreated {
 			wcompops, wfailops, wcancops, criterrs, noncriterrs := runFailureDeployPlan(
 				ctx,
+				releaseNamespace.Name(),
 				plan,
 				taskStore,
 				resProcessor,
@@ -695,12 +701,35 @@ func runApply(ctx context.Context) error {
 	})
 }
 
-func runFailureDeployPlan(ctx context.Context, failedPlan *pln.Plan, taskStore *statestore.TaskStore, resProcessor *resrcprocssr.DeployableResourcesProcessor, newRel, prevRelease *rls.Release, history *rlshistor.History, clientFactory *kubeclnt.ClientFactory, networkParallelism int) (worthyCompletedOps, worthyFailedOps, worthyCanceledOps []opertn.Operation, criticalErrs, nonCriticalErrs []error) {
+func createReleaseNamespace(ctx context.Context, kubeClient kubeclnt.KubeClienter, releaseNamespace *resrc.ReleaseNamespace) error {
+	if _, err := kubeClient.Get(ctx, releaseNamespace.ResourceID, kubeclnt.KubeClientGetOptions{
+		TryCache: true,
+	}); err != nil {
+		if errors.IsNotFound(err) {
+			log.Default.Info(ctx, "Creating release namespace %q", releaseNamespace.Name())
+
+			createOp := opertn.NewCreateResourceOperation(releaseNamespace.ResourceID, releaseNamespace.Unstructured(), kubeClient, opertn.CreateResourceOperationOptions{
+				ManageableBy: resrc.ManageableByAnyone,
+			})
+
+			if err := createOp.Execute(ctx); err != nil {
+				return fmt.Errorf("create release namespace: %w", err)
+			}
+		} else if errors.IsForbidden(err) {
+		} else {
+			return fmt.Errorf("get release namespace: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func runFailureDeployPlan(ctx context.Context, releaseNamespace string, failedPlan *pln.Plan, taskStore *statestore.TaskStore, resProcessor *resrcprocssr.DeployableResourcesProcessor, newRel, prevRelease *rls.Release, history *rlshistor.History, clientFactory *kubeclnt.ClientFactory, networkParallelism int) (worthyCompletedOps, worthyFailedOps, worthyCanceledOps []opertn.Operation, criticalErrs, nonCriticalErrs []error) {
 	log.Default.Info(ctx, "Building failure deploy plan")
 	failurePlanBuilder := plnbuilder.NewDeployFailurePlanBuilder(
+		releaseNamespace,
 		failedPlan,
 		taskStore,
-		resProcessor.DeployableReleaseNamespaceInfo(),
 		resProcessor.DeployableHookResourcesInfos(),
 		resProcessor.DeployableGeneralResourcesInfos(),
 		newRel,
@@ -777,7 +806,7 @@ func runRollbackPlan(
 	resProcessor := resrcprocssr.NewDeployableResourcesProcessor(
 		helmcommon.DeployTypeRollback,
 		releaseName,
-		releaseNamespace,
+		releaseNamespace.Name(),
 		nil,
 		prevDeployedRelease.HookResources(),
 		prevDeployedRelease.GeneralResources(),
@@ -833,10 +862,10 @@ func runRollbackPlan(
 
 	log.Default.Info(ctx, "Constructing rollback plan")
 	rollbackPlanBuilder := plnbuilder.NewDeployPlanBuilder(
+		releaseNamespace.Name(),
 		helmcommon.DeployTypeRollback,
 		taskStore,
 		logStore,
-		resProcessor.DeployableReleaseNamespaceInfo(),
 		nil,
 		resProcessor.DeployableHookResourcesInfos(),
 		resProcessor.DeployableGeneralResourcesInfos(),
@@ -915,6 +944,7 @@ func runRollbackPlan(
 	if rollbackPlanExecutionErr != nil && pendingRollbackReleaseCreated {
 		wcompops, wfailops, wcancops, criterrs, noncriterrs := runFailureDeployPlan(
 			ctx,
+			releaseNamespace.Name(),
 			rollbackPlan,
 			taskStore,
 			resProcessor,

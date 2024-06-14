@@ -41,7 +41,7 @@ func NewInstallCmd(actionConfig *action.Configuration, wc *chart_extender.WerfCh
 				return fmt.Errorf("unable to init werf chart: %w", err)
 			}
 
-			if m, err := lock_manager.NewLockManager(helm_v3.Settings.Namespace()); err != nil {
+			if m, err := lock_manager.NewLockManager(helm_v3.Settings.Namespace(), true); err != nil {
 				return fmt.Errorf("unable to create lock manager: %w", err)
 			} else {
 				return command_helpers.LockReleaseWrapper(ctx, releaseName, m, func() error {

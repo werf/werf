@@ -46,7 +46,7 @@ func (manager *KubernetesLockManager) getLockerForProject(ctx context.Context, p
 	}
 
 	name := manager.GetConfigMapNameFunc(projectName)
-	if _, err := kubeutils.GetOrCreateConfigMapWithNamespaceIfNotExists(manager.KubeClient, manager.Namespace, name); err != nil {
+	if _, err := kubeutils.GetOrCreateConfigMapWithNamespaceIfNotExists(manager.KubeClient, manager.Namespace, name, true); err != nil {
 		return nil, err
 	}
 

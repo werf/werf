@@ -37,7 +37,6 @@ import (
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
 	"github.com/werf/werf/v2/pkg/deploy/helm/command_helpers"
-	"github.com/werf/werf/v2/pkg/deploy/lock_manager"
 	"github.com/werf/werf/v2/pkg/deploy/secrets_manager"
 	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
@@ -424,13 +423,6 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		return err
 	}
 
-	var lockManager *lock_manager.LockManager
-	if m, err := lock_manager.NewLockManager(namespace); err != nil {
-		return fmt.Errorf("unable to create lock manager: %w", err)
-	} else {
-		lockManager = m
-	}
-
 	helmRegistryClient, err := common.NewHelmRegistryClient(ctx, *commonCmdData.DockerConfig, *commonCmdData.InsecureHelmDependencies)
 	if err != nil {
 		return fmt.Errorf("unable to create helm registry client: %w", err)
@@ -498,184 +490,178 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		return err
 	}
 
-	if true {
-		networkParallelism := common.GetNetworkParallelism(&commonCmdData)
+	networkParallelism := common.GetNetworkParallelism(&commonCmdData)
 
-		clientFactory, err := kubeclnt.NewClientFactory()
-		if err != nil {
-			return fmt.Errorf("error creating kube client factory: %w", err)
-		}
+	clientFactory, err := kubeclnt.NewClientFactory()
+	if err != nil {
+		return fmt.Errorf("error creating kube client factory: %w", err)
+	}
 
-		releaseNamespace := resrc.NewReleaseNamespace(&unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"apiVersion": "v1",
-				"kind":       "Namespace",
-				"metadata": map[string]interface{}{
-					"name": lo.WithoutEmpty([]string{namespace, helm_v3.Settings.Namespace()})[0],
-				},
+	releaseNamespace := resrc.NewReleaseNamespace(&unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "v1",
+			"kind":       "Namespace",
+			"metadata": map[string]interface{}{
+				"name": lo.WithoutEmpty([]string{namespace, helm_v3.Settings.Namespace()})[0],
 			},
-		}, resrc.ReleaseNamespaceOptions{
-			Mapper: clientFactory.Mapper(),
-		})
+		},
+	}, resrc.ReleaseNamespaceOptions{
+		Mapper: clientFactory.Mapper(),
+	})
 
-		chartPathOptions := action.ChartPathOptions{}
-		chartPathOptions.SetRegistryClient(actionConfig.RegistryClient)
+	chartPathOptions := action.ChartPathOptions{}
+	chartPathOptions.SetRegistryClient(actionConfig.RegistryClient)
 
-		return command_helpers.LockReleaseWrapper(ctx, releaseName, lockManager, func() error {
-			log.Default.Info(ctx, color.Style{color.Bold, color.Green}.Render("Planning release")+" %q (namespace: %q)", releaseName, releaseNamespace.Name())
+	log.Default.Info(ctx, color.Style{color.Bold, color.Green}.Render("Planning release")+" %q (namespace: %q)", releaseName, releaseNamespace.Name())
 
-			log.Default.Info(ctx, "Constructing release history")
-			history, err := rlshistor.NewHistory(releaseName, releaseNamespace.Name(), actionConfig.Releases, rlshistor.HistoryOptions{
-				Mapper:          clientFactory.Mapper(),
-				DiscoveryClient: clientFactory.Discovery(),
-			})
-			if err != nil {
-				return fmt.Errorf("error constructing release history: %w", err)
-			}
+	log.Default.Info(ctx, "Constructing release history")
+	history, err := rlshistor.NewHistory(releaseName, releaseNamespace.Name(), actionConfig.Releases, rlshistor.HistoryOptions{
+		Mapper:          clientFactory.Mapper(),
+		DiscoveryClient: clientFactory.Discovery(),
+	})
+	if err != nil {
+		return fmt.Errorf("error constructing release history: %w", err)
+	}
 
-			prevRelease, prevReleaseFound, err := history.LastRelease()
-			if err != nil {
-				return fmt.Errorf("error getting last deployed release: %w", err)
-			}
+	prevRelease, prevReleaseFound, err := history.LastRelease()
+	if err != nil {
+		return fmt.Errorf("error getting last deployed release: %w", err)
+	}
 
-			_, prevDeployedReleaseFound, err := history.LastDeployedRelease()
-			if err != nil {
-				return fmt.Errorf("error getting last deployed release: %w", err)
-			}
+	_, prevDeployedReleaseFound, err := history.LastDeployedRelease()
+	if err != nil {
+		return fmt.Errorf("error getting last deployed release: %w", err)
+	}
 
-			var newRevision int
-			var firstDeployed time.Time
-			if prevReleaseFound {
-				newRevision = prevRelease.Revision() + 1
-				firstDeployed = prevRelease.FirstDeployed()
-			} else {
-				newRevision = 1
-			}
+	var newRevision int
+	var firstDeployed time.Time
+	if prevReleaseFound {
+		newRevision = prevRelease.Revision() + 1
+		firstDeployed = prevRelease.FirstDeployed()
+	} else {
+		newRevision = 1
+	}
 
-			var deployType helmcommon.DeployType
-			if prevReleaseFound && prevDeployedReleaseFound {
-				deployType = helmcommon.DeployTypeUpgrade
-			} else if prevReleaseFound {
-				deployType = helmcommon.DeployTypeInstall
-			} else {
-				deployType = helmcommon.DeployTypeInitial
-			}
+	var deployType helmcommon.DeployType
+	if prevReleaseFound && prevDeployedReleaseFound {
+		deployType = helmcommon.DeployTypeUpgrade
+	} else if prevReleaseFound {
+		deployType = helmcommon.DeployTypeInstall
+	} else {
+		deployType = helmcommon.DeployTypeInitial
+	}
 
-			log.Default.Info(ctx, "Constructing chart tree")
-			chartTree, err := chrttree.NewChartTree(
-				ctx,
-				chartDir,
-				releaseName,
-				releaseNamespace.Name(),
-				newRevision,
-				deployType,
-				actionConfig,
-				chrttree.ChartTreeOptions{
-					StringSetValues: valueOpts.StringValues,
-					SetValues:       valueOpts.Values,
-					FileValues:      valueOpts.FileValues,
-					ValuesFiles:     valueOpts.ValueFiles,
-					Mapper:          clientFactory.Mapper(),
-					DiscoveryClient: clientFactory.Discovery(),
-				},
-			)
-			if err != nil {
-				return fmt.Errorf("error constructing chart tree: %w", err)
-			}
+	log.Default.Info(ctx, "Constructing chart tree")
+	chartTree, err := chrttree.NewChartTree(
+		ctx,
+		chartDir,
+		releaseName,
+		releaseNamespace.Name(),
+		newRevision,
+		deployType,
+		actionConfig,
+		chrttree.ChartTreeOptions{
+			StringSetValues: valueOpts.StringValues,
+			SetValues:       valueOpts.Values,
+			FileValues:      valueOpts.FileValues,
+			ValuesFiles:     valueOpts.ValueFiles,
+			Mapper:          clientFactory.Mapper(),
+			DiscoveryClient: clientFactory.Discovery(),
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("error constructing chart tree: %w", err)
+	}
 
-			notes := chartTree.Notes()
+	notes := chartTree.Notes()
 
-			var prevRelGeneralResources []*resrc.GeneralResource
-			var prevRelFailed bool
-			if prevReleaseFound {
-				prevRelGeneralResources = prevRelease.GeneralResources()
-				prevRelFailed = prevRelease.Failed()
-			}
+	var prevRelGeneralResources []*resrc.GeneralResource
+	var prevRelFailed bool
+	if prevReleaseFound {
+		prevRelGeneralResources = prevRelease.GeneralResources()
+		prevRelFailed = prevRelease.Failed()
+	}
 
-			// FIXME(ilya-lesikov): no releasable resources needed
-			log.Default.Info(ctx, "Processing resources")
-			resProcessor := resrcprocssr.NewDeployableResourcesProcessor(
-				deployType,
-				releaseName,
-				releaseNamespace,
-				chartTree.StandaloneCRDs(),
-				chartTree.HookResources(),
-				chartTree.GeneralResources(),
-				prevRelGeneralResources,
-				resrcprocssr.DeployableResourcesProcessorOptions{
-					NetworkParallelism: networkParallelism,
-					ReleasableHookResourcePatchers: []resrcpatcher.ResourcePatcher{
-						resrcpatcher.NewExtraMetadataPatcher(userExtraAnnotations, userExtraLabels),
-					},
-					ReleasableGeneralResourcePatchers: []resrcpatcher.ResourcePatcher{
-						resrcpatcher.NewExtraMetadataPatcher(userExtraAnnotations, userExtraLabels),
-					},
-					DeployableStandaloneCRDsPatchers: []resrcpatcher.ResourcePatcher{
-						resrcpatcher.NewExtraMetadataPatcher(lo.Assign(userExtraAnnotations, serviceAnnotations), userExtraLabels),
-					},
-					DeployableHookResourcePatchers: []resrcpatcher.ResourcePatcher{
-						resrcpatcher.NewExtraMetadataPatcher(lo.Assign(userExtraAnnotations, serviceAnnotations), userExtraLabels),
-					},
-					DeployableGeneralResourcePatchers: []resrcpatcher.ResourcePatcher{
-						resrcpatcher.NewExtraMetadataPatcher(lo.Assign(userExtraAnnotations, serviceAnnotations), userExtraLabels),
-					},
-					KubeClient:         clientFactory.KubeClient(),
-					Mapper:             clientFactory.Mapper(),
-					DiscoveryClient:    clientFactory.Discovery(),
-					AllowClusterAccess: true,
-				},
-			)
+	// FIXME(ilya-lesikov): no releasable resources needed
+	log.Default.Info(ctx, "Processing resources")
+	resProcessor := resrcprocssr.NewDeployableResourcesProcessor(
+		deployType,
+		releaseName,
+		releaseNamespace.Name(),
+		chartTree.StandaloneCRDs(),
+		chartTree.HookResources(),
+		chartTree.GeneralResources(),
+		prevRelGeneralResources,
+		resrcprocssr.DeployableResourcesProcessorOptions{
+			NetworkParallelism: networkParallelism,
+			ReleasableHookResourcePatchers: []resrcpatcher.ResourcePatcher{
+				resrcpatcher.NewExtraMetadataPatcher(userExtraAnnotations, userExtraLabels),
+			},
+			ReleasableGeneralResourcePatchers: []resrcpatcher.ResourcePatcher{
+				resrcpatcher.NewExtraMetadataPatcher(userExtraAnnotations, userExtraLabels),
+			},
+			DeployableStandaloneCRDsPatchers: []resrcpatcher.ResourcePatcher{
+				resrcpatcher.NewExtraMetadataPatcher(lo.Assign(userExtraAnnotations, serviceAnnotations), userExtraLabels),
+			},
+			DeployableHookResourcePatchers: []resrcpatcher.ResourcePatcher{
+				resrcpatcher.NewExtraMetadataPatcher(lo.Assign(userExtraAnnotations, serviceAnnotations), userExtraLabels),
+			},
+			DeployableGeneralResourcePatchers: []resrcpatcher.ResourcePatcher{
+				resrcpatcher.NewExtraMetadataPatcher(lo.Assign(userExtraAnnotations, serviceAnnotations), userExtraLabels),
+			},
+			KubeClient:         clientFactory.KubeClient(),
+			Mapper:             clientFactory.Mapper(),
+			DiscoveryClient:    clientFactory.Discovery(),
+			AllowClusterAccess: true,
+		},
+	)
 
-			if err := resProcessor.Process(ctx); err != nil {
-				return fmt.Errorf("error processing deployable resources: %w", err)
-			}
+	if err := resProcessor.Process(ctx); err != nil {
+		return fmt.Errorf("error processing deployable resources: %w", err)
+	}
 
-			log.Default.Info(ctx, "Constructing new release")
-			newRel, err := rls.NewRelease(releaseName, releaseNamespace.Name(), newRevision, chartTree.ReleaseValues(), chartTree.LegacyChart(), resProcessor.ReleasableHookResources(), resProcessor.ReleasableGeneralResources(), notes, rls.ReleaseOptions{
-				FirstDeployed: firstDeployed,
-				Mapper:        clientFactory.Mapper(),
-			})
-			if err != nil {
-				return fmt.Errorf("error constructing new release: %w", err)
-			}
+	log.Default.Info(ctx, "Constructing new release")
+	newRel, err := rls.NewRelease(releaseName, releaseNamespace.Name(), newRevision, chartTree.ReleaseValues(), chartTree.LegacyChart(), resProcessor.ReleasableHookResources(), resProcessor.ReleasableGeneralResources(), notes, rls.ReleaseOptions{
+		FirstDeployed: firstDeployed,
+		Mapper:        clientFactory.Mapper(),
+	})
+	if err != nil {
+		return fmt.Errorf("error constructing new release: %w", err)
+	}
 
-			log.Default.Info(ctx, "Calculating planned changes")
-			createdChanges, recreatedChanges, updatedChanges, appliedChanges, deletedChanges, planChangesPlanned := resrcchangcalc.CalculatePlannedChanges(
-				releaseName,
-				resProcessor.DeployableReleaseNamespaceInfo(),
-				resProcessor.DeployableStandaloneCRDsInfos(),
-				resProcessor.DeployableHookResourcesInfos(),
-				resProcessor.DeployableGeneralResourcesInfos(),
-				resProcessor.DeployablePrevReleaseGeneralResourcesInfos(),
-				prevRelFailed,
-			)
+	log.Default.Info(ctx, "Calculating planned changes")
+	createdChanges, recreatedChanges, updatedChanges, appliedChanges, deletedChanges, planChangesPlanned := resrcchangcalc.CalculatePlannedChanges(
+		releaseName,
+		releaseNamespace.Name(),
+		resProcessor.DeployableStandaloneCRDsInfos(),
+		resProcessor.DeployableHookResourcesInfos(),
+		resProcessor.DeployableGeneralResourcesInfos(),
+		resProcessor.DeployablePrevReleaseGeneralResourcesInfos(),
+		prevRelFailed,
+	)
 
-			var releaseUpToDate bool
-			if prevReleaseFound {
-				releaseUpToDate, err = rlsdiff.ReleaseUpToDate(prevRelease, newRel)
-				if err != nil {
-					return fmt.Errorf("error checking if release is up to date: %w", err)
-				}
-			}
+	var releaseUpToDate bool
+	if prevReleaseFound {
+		releaseUpToDate, err = rlsdiff.ReleaseUpToDate(prevRelease, newRel)
+		if err != nil {
+			return fmt.Errorf("error checking if release is up to date: %w", err)
+		}
+	}
 
-			resrcchanglog.LogPlannedChanges(
-				ctx,
-				releaseName,
-				releaseNamespace.Name(),
-				!releaseUpToDate,
-				createdChanges,
-				recreatedChanges,
-				updatedChanges,
-				appliedChanges,
-				deletedChanges,
-			)
+	resrcchanglog.LogPlannedChanges(
+		ctx,
+		releaseName,
+		releaseNamespace.Name(),
+		!releaseUpToDate,
+		createdChanges,
+		recreatedChanges,
+		updatedChanges,
+		appliedChanges,
+		deletedChanges,
+	)
 
-			if cmdData.DetailedExitCode && (planChangesPlanned || !releaseUpToDate) {
-				return resrcchangcalc.ErrChangesPlanned
-			}
-
-			return nil
-		})
+	if cmdData.DetailedExitCode && (planChangesPlanned || !releaseUpToDate) {
+		return resrcchangcalc.ErrChangesPlanned
 	}
 
 	return nil
