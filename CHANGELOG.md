@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.6.1](https://www.github.com/werf/werf/compare/v2.6.0...v2.6.1) (2024-06-17)
+
+
+### Bug Fixes
+
+* "docker-compose": executable file not found error ([835290a](https://www.github.com/werf/werf/commit/835290a5299803870cff160e6030ada7a25893b7))
+
 ## [2.6.0](https://www.github.com/werf/werf/compare/v2.5.0...v2.6.0) (2024-06-14)
 
 
