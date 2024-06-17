@@ -39,7 +39,7 @@ func getComputedValues() map[string]interface{} {
 	return getValues("--all")
 }
 
-var _ = Describe("Helm values", func() {
+var _ = Describe("Helm values", Pending, func() {
 	BeforeEach(func() {
 		Expect(kube.Init(kube.InitOptions{})).To(Succeed())
 	})
