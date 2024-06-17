@@ -39,13 +39,16 @@ Developers can get all the necessary knowledge about application delivery in Kub
 
 ## Community & support
 
-Please feel free to reach developers/maintainers and users via [GitHub Discussions](https://github.com/werf/werf/discussions) for any questions regarding werf.
+Please feel free to reach developers/maintainers and users via [GitHub Discussions](https://github.com/werf/werf/discussions) for any questions regarding werf. You're also welcome on [Stack Overflow](https://stackoverflow.com/questions/tagged/werf): when you tag a question with `werf`, our team is notified and comes to help you.
 
 Your issues are processed carefully if posted to [issues at GitHub](https://github.com/werf/werf/issues).
 
-You're also welcome to:
-* follow [@werf_io](https://twitter.com/werf_io) to stay informed about all important news, new articles, etc;
-* join our Telegram chat for announcements and ongoing talks: [werf_io](https://t.me/werf_io). _(There is a Russian-speaking Telegram chat [werf_ru](https://t.me/werf_ru) as well.)_
+For questions that may require a more detailed and prompt discussion, you can use:
+
+* [#werf](https://cloud-native.slack.com/archives/CHY2THYUU) channel in the CNCF’s Slack workspace;
+* [werf_io](https://t.me/werf_io) Telegram chat. _(There is a Russian-speaking Telegram chat [werf_ru](https://t.me/werf_ru) as well.)_
+
+Follow [@werf_io](https://x.com/werf_io) to stay informed about all important project's news, new articles, etc.
 
 ## Contributing
 
