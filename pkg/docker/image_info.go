@@ -17,7 +17,7 @@ func NewInfoFromInspect(ref string, inspect *types.ImageInspect) *image.Info {
 
 	parentID := inspect.Config.Image
 	if parentID == "" {
-		if id, ok := inspect.Config.Labels[image.WerfBaseImageIDLabel]; ok { // built with werf and buildah backend
+		if id, ok := inspect.Config.Labels[image.WerfBaseImageIDLabel]; ok { // built with werf
 			parentID = id
 		}
 	}

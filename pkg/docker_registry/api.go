@@ -220,7 +220,7 @@ func (api *api) getRepoImageByDesc(ctx context.Context, originalTag string, desc
 
 		parentID := configFile.Config.Image
 		if parentID == "" {
-			if id, ok := configFile.Config.Labels[image.WerfBaseImageIDLabel]; ok { // built with werf and buildah backend
+			if id, ok := configFile.Config.Labels[image.WerfBaseImageIDLabel]; ok { // built with werf
 				parentID = id
 			}
 		}

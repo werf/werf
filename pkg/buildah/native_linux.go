@@ -581,8 +581,6 @@ func (b *NativeBuildah) Commit(ctx context.Context, container string, opts Commi
 		}
 	}
 
-	builder.SetLabel(image.WerfBaseImageIDLabel, fmt.Sprintf("sha256:%s", builder.FromImageID))
-
 	sysCtx, err := b.getSystemContext(opts.TargetPlatform)
 	if err != nil {
 		return "", err
