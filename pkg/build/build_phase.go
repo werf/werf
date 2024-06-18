@@ -995,6 +995,11 @@ func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *imag
 		imagePkg.WerfStageContentDigestLabel: stg.GetContentDigest(),
 	}
 
+	if stg.HasPrevStage() {
+		prevBuiltImage := phase.StagesIterator.GetPrevBuiltImage(img, stg)
+		serviceLabels[imagePkg.WerfBaseImageIDLabel] = prevBuiltImage.Image.GetStageDescription().Info.ID
+	}
+
 	if stg.IsStapelStage() {
 		if phase.Conveyor.UseLegacyStapelBuilder(phase.Conveyor.ContainerBackend) {
 			stageImage.Builder.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions().AddLabel(serviceLabels)
