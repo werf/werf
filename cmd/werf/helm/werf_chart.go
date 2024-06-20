@@ -5,9 +5,9 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/werf/nelm/pkg/secrets_manager"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender"
-	"github.com/werf/werf/v2/pkg/deploy/secrets_manager"
 )
 
 func SetupRenderRelatedWerfChartParams(cmd *cobra.Command, commonCmdData *common.CmdData) {
@@ -18,7 +18,11 @@ func SetupRenderRelatedWerfChartParams(cmd *cobra.Command, commonCmdData *common
 	common.SetupIgnoreSecretKey(commonCmdData, cmd)
 }
 
-func InitRenderRelatedWerfChartParams(ctx context.Context, commonCmdData *common.CmdData, wc *chart_extender.WerfChartStub) error {
+func InitRenderRelatedWerfChartParams(
+	ctx context.Context,
+	commonCmdData *common.CmdData,
+	wc *chart_extender.WerfChartStub,
+) error {
 	if extraAnnotations, err := common.GetUserExtraAnnotations(commonCmdData); err != nil {
 		return err
 	} else {

@@ -30,6 +30,7 @@ import (
 	"github.com/werf/nelm/pkg/rls"
 	"github.com/werf/nelm/pkg/rlsdiff"
 	"github.com/werf/nelm/pkg/rlshistor"
+	"github.com/werf/nelm/pkg/secrets_manager"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/build"
 	"github.com/werf/werf/v2/pkg/config/deploy_params"
@@ -37,7 +38,6 @@ import (
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
 	"github.com/werf/werf/v2/pkg/deploy/helm/command_helpers"
-	"github.com/werf/werf/v2/pkg/deploy/secrets_manager"
 	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
@@ -272,7 +272,10 @@ func runMain(ctx context.Context, imagesToProcess build.ImagesToProcess) error {
 
 	if *commonCmdData.Follow {
 		logboek.LogOptionalLn()
-		return common.FollowGitHead(ctx, &commonCmdData, func(ctx context.Context, headCommitGiterminismManager giterminism_manager.Interface) error {
+		return common.FollowGitHead(ctx, &commonCmdData, func(
+			ctx context.Context,
+			headCommitGiterminismManager giterminism_manager.Interface,
+		) error {
 			return run(ctx, containerBackend, headCommitGiterminismManager, imagesToProcess)
 		})
 	} else {
@@ -280,7 +283,12 @@ func runMain(ctx context.Context, imagesToProcess build.ImagesToProcess) error {
 	}
 }
 
-func run(ctx context.Context, containerBackend container_backend.ContainerBackend, giterminismManager giterminism_manager.Interface, imagesToProcess build.ImagesToProcess) error {
+func run(
+	ctx context.Context,
+	containerBackend container_backend.ContainerBackend,
+	giterminismManager giterminism_manager.Interface,
+	imagesToProcess build.ImagesToProcess,
+) error {
 	werfConfigPath, werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %w", err)

@@ -28,6 +28,7 @@ import (
 	"github.com/werf/nelm/pkg/chrttree"
 	helmcommon "github.com/werf/nelm/pkg/common"
 	"github.com/werf/nelm/pkg/kubeclnt"
+	"github.com/werf/nelm/pkg/lock_manager"
 	"github.com/werf/nelm/pkg/log"
 	"github.com/werf/nelm/pkg/opertn"
 	"github.com/werf/nelm/pkg/pln"
@@ -40,6 +41,7 @@ import (
 	"github.com/werf/nelm/pkg/rls"
 	"github.com/werf/nelm/pkg/rlsdiff"
 	"github.com/werf/nelm/pkg/rlshistor"
+	"github.com/werf/nelm/pkg/secrets_manager"
 	"github.com/werf/nelm/pkg/track"
 	"github.com/werf/nelm/pkg/utls"
 	"github.com/werf/werf/v2/cmd/werf/common"
@@ -48,8 +50,6 @@ import (
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
 	"github.com/werf/werf/v2/pkg/deploy/helm/command_helpers"
-	"github.com/werf/werf/v2/pkg/deploy/lock_manager"
-	"github.com/werf/werf/v2/pkg/deploy/secrets_manager"
 	"github.com/werf/werf/v2/pkg/util"
 	"github.com/werf/werf/v2/pkg/werf"
 	"github.com/werf/werf/v2/pkg/werf/global_warnings"
@@ -230,7 +230,7 @@ func runApply(ctx context.Context) error {
 	}
 
 	var lockManager *lock_manager.LockManager
-	if m, err := lock_manager.NewLockManager(namespace, false); err != nil {
+	if m, err := lock_manager.NewLockManager(namespace, false, nil, nil); err != nil {
 		return fmt.Errorf("unable to create lock manager: %w", err)
 	} else {
 		lockManager = m
@@ -701,7 +701,11 @@ func runApply(ctx context.Context) error {
 	})
 }
 
-func createReleaseNamespace(ctx context.Context, kubeClient kubeclnt.KubeClienter, releaseNamespace *resrc.ReleaseNamespace) error {
+func createReleaseNamespace(
+	ctx context.Context,
+	kubeClient kubeclnt.KubeClienter,
+	releaseNamespace *resrc.ReleaseNamespace,
+) error {
 	if _, err := kubeClient.Get(ctx, releaseNamespace.ResourceID, kubeclnt.KubeClientGetOptions{
 		TryCache: true,
 	}); err != nil {
@@ -724,7 +728,20 @@ func createReleaseNamespace(ctx context.Context, kubeClient kubeclnt.KubeCliente
 	return nil
 }
 
-func runFailureDeployPlan(ctx context.Context, releaseNamespace string, failedPlan *pln.Plan, taskStore *statestore.TaskStore, resProcessor *resrcprocssr.DeployableResourcesProcessor, newRel, prevRelease *rls.Release, history *rlshistor.History, clientFactory *kubeclnt.ClientFactory, networkParallelism int) (worthyCompletedOps, worthyFailedOps, worthyCanceledOps []opertn.Operation, criticalErrs, nonCriticalErrs []error) {
+func runFailureDeployPlan(
+	ctx context.Context,
+	releaseNamespace string,
+	failedPlan *pln.Plan,
+	taskStore *statestore.TaskStore,
+	resProcessor *resrcprocssr.DeployableResourcesProcessor,
+	newRel, prevRelease *rls.Release,
+	history *rlshistor.History,
+	clientFactory *kubeclnt.ClientFactory,
+	networkParallelism int,
+) (
+	worthyCompletedOps, worthyFailedOps, worthyCanceledOps []opertn.Operation,
+	criticalErrs, nonCriticalErrs []error,
+) {
 	log.Default.Info(ctx, "Building failure deploy plan")
 	failurePlanBuilder := plnbuilder.NewDeployFailurePlanBuilder(
 		releaseNamespace,

@@ -8,17 +8,21 @@ import (
 	helm_v3 "helm.sh/helm/v3/cmd/helm"
 	"helm.sh/helm/v3/pkg/action"
 
+	"github.com/werf/nelm/pkg/lock_manager"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	helm2 "github.com/werf/werf/v2/cmd/werf/docs/replacers/helm"
 	"github.com/werf/werf/v2/pkg/deploy/helm"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender"
 	"github.com/werf/werf/v2/pkg/deploy/helm/command_helpers"
-	"github.com/werf/werf/v2/pkg/deploy/lock_manager"
 )
 
 var installCmdData common.CmdData
 
-func NewInstallCmd(actionConfig *action.Configuration, wc *chart_extender.WerfChartStub, namespace *string) *cobra.Command {
+func NewInstallCmd(
+	actionConfig *action.Configuration,
+	wc *chart_extender.WerfChartStub,
+	namespace *string,
+) *cobra.Command {
 	cmd, helmAction := helm2.ReplaceHelmInstallDocs(helm_v3.NewInstallCmd(actionConfig, os.Stdout, helm_v3.InstallCmdOptions{
 		StagesSplitter:              helm.NewStagesSplitter(),
 		StagesExternalDepsGenerator: helm.NewStagesExternalDepsGenerator(&actionConfig.RESTClientGetter, namespace),
@@ -41,7 +45,7 @@ func NewInstallCmd(actionConfig *action.Configuration, wc *chart_extender.WerfCh
 				return fmt.Errorf("unable to init werf chart: %w", err)
 			}
 
-			if m, err := lock_manager.NewLockManager(helm_v3.Settings.Namespace(), true); err != nil {
+			if m, err := lock_manager.NewLockManager(helm_v3.Settings.Namespace(), true, nil, nil); err != nil {
 				return fmt.Errorf("unable to create lock manager: %w", err)
 			} else {
 				return command_helpers.LockReleaseWrapper(ctx, releaseName, m, func() error {

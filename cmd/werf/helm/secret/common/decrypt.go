@@ -9,11 +9,15 @@ import (
 
 	"golang.org/x/crypto/ssh/terminal"
 
-	"github.com/werf/werf/v2/pkg/deploy/secrets_manager"
-	"github.com/werf/werf/v2/pkg/secret"
+	"github.com/werf/nelm/pkg/secret"
+	"github.com/werf/nelm/pkg/secrets_manager"
 )
 
-func SecretFileDecrypt(ctx context.Context, m *secrets_manager.SecretsManager, workingDir, filePath, outputFilePath string) error {
+func SecretFileDecrypt(
+	ctx context.Context,
+	m *secrets_manager.SecretsManager,
+	workingDir, filePath, outputFilePath string,
+) error {
 	options := &GenerateOptions{
 		FilePath:       filePath,
 		OutputFilePath: outputFilePath,
@@ -23,7 +27,11 @@ func SecretFileDecrypt(ctx context.Context, m *secrets_manager.SecretsManager, w
 	return secretDecrypt(ctx, m, workingDir, options)
 }
 
-func SecretValuesDecrypt(ctx context.Context, m *secrets_manager.SecretsManager, workingDir, filePath, outputFilePath string) error {
+func SecretValuesDecrypt(
+	ctx context.Context,
+	m *secrets_manager.SecretsManager,
+	workingDir, filePath, outputFilePath string,
+) error {
 	options := &GenerateOptions{
 		FilePath:       filePath,
 		OutputFilePath: outputFilePath,
@@ -33,7 +41,12 @@ func SecretValuesDecrypt(ctx context.Context, m *secrets_manager.SecretsManager,
 	return secretDecrypt(ctx, m, workingDir, options)
 }
 
-func secretDecrypt(ctx context.Context, m *secrets_manager.SecretsManager, workingDir string, options *GenerateOptions) error {
+func secretDecrypt(
+	ctx context.Context,
+	m *secrets_manager.SecretsManager,
+	workingDir string,
+	options *GenerateOptions,
+) error {
 	var encodedData []byte
 	var data []byte
 	var err error

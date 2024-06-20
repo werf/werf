@@ -11,10 +11,10 @@ import (
 	"helm.sh/helm/v3/pkg/cli"
 	"helm.sh/helm/v3/pkg/postrender"
 
+	"github.com/werf/nelm/pkg/secrets_manager"
 	"github.com/werf/werf/v2/pkg/deploy/helm"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers/secrets"
-	"github.com/werf/werf/v2/pkg/deploy/secrets_manager"
 )
 
 func NewWerfChartStub(ctx context.Context, ignoreInvalidAnnotationsAndLabels bool) *WerfChartStub {
@@ -103,7 +103,10 @@ func (wc *WerfChartStub) ChartDependenciesLoaded() error {
 }
 
 // MakeValues method for the chart.Extender interface
-func (wc *WerfChartStub) MakeValues(inputVals map[string]interface{}) (map[string]interface{}, error) {
+func (wc *WerfChartStub) MakeValues(inputVals map[string]interface{}) (
+	map[string]interface{},
+	error,
+) {
 	vals := make(map[string]interface{})
 	chartutil.CoalesceTables(vals, wc.stubServiceValuesOverrides)
 	chartutil.CoalesceTables(vals, wc.stubServiceValues)

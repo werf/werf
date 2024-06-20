@@ -17,11 +17,11 @@ import (
 
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
+	"github.com/werf/nelm/pkg/lock_manager"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/config/deploy_params"
 	"github.com/werf/werf/v2/pkg/deploy/helm"
 	"github.com/werf/werf/v2/pkg/deploy/helm/command_helpers"
-	"github.com/werf/werf/v2/pkg/deploy/lock_manager"
 	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
@@ -208,7 +208,7 @@ func runDismiss(ctx context.Context) error {
 
 	var lockManager *lock_manager.LockManager
 	if !cmdData.WithNamespace {
-		if m, err := lock_manager.NewLockManager(namespace, false); err != nil {
+		if m, err := lock_manager.NewLockManager(namespace, false, nil, nil); err != nil {
 			return fmt.Errorf("unable to create lock manager: %w", err)
 		} else {
 			lockManager = m
@@ -256,7 +256,11 @@ func runDismiss(ctx context.Context) error {
 	}
 }
 
-func getNamespaceAndRelease(ctx context.Context, gitFound bool, giterminismMgr giterminism_manager.Interface) (string, string, error) {
+func getNamespaceAndRelease(
+	ctx context.Context,
+	gitFound bool,
+	giterminismMgr giterminism_manager.Interface,
+) (string, string, error) {
 	namespaceSpecified := *commonCmdData.Namespace != ""
 	releaseSpecified := *commonCmdData.Release != ""
 

@@ -12,12 +12,17 @@ import (
 	"github.com/werf/lockgate"
 	"github.com/werf/lockgate/pkg/distributed_locker"
 	"github.com/werf/logboek"
+	"github.com/werf/nelm/pkg/locker_with_retry"
 	"github.com/werf/werf/v2/pkg/kubeutils"
 	"github.com/werf/werf/v2/pkg/werf"
-	"github.com/werf/werf/v2/pkg/werf/locker_with_retry"
 )
 
-func NewKubernetesLockManager(namespace string, kubeClient kubernetes.Interface, kubeDynamicClient dynamic.Interface, getConfigMapNameFunc func(projectName string) string) *KubernetesLockManager {
+func NewKubernetesLockManager(
+	namespace string,
+	kubeClient kubernetes.Interface,
+	kubeDynamicClient dynamic.Interface,
+	getConfigMapNameFunc func(projectName string) string,
+) *KubernetesLockManager {
 	return &KubernetesLockManager{
 		KubeClient:           kubeClient,
 		KubeDynamicClient:    kubeDynamicClient,
@@ -37,7 +42,10 @@ type KubernetesLockManager struct {
 	mux sync.Mutex
 }
 
-func (manager *KubernetesLockManager) getLockerForProject(ctx context.Context, projectName string) (lockgate.Locker, error) {
+func (manager *KubernetesLockManager) getLockerForProject(
+	ctx context.Context,
+	projectName string,
+) (lockgate.Locker, error) {
 	manager.mux.Lock()
 	defer manager.mux.Unlock()
 
@@ -64,7 +72,10 @@ func (manager *KubernetesLockManager) getLockerForProject(ctx context.Context, p
 	return locker, nil
 }
 
-func (manager *KubernetesLockManager) LockStage(ctx context.Context, projectName, digest string) (LockHandle, error) {
+func (manager *KubernetesLockManager) LockStage(
+	ctx context.Context,
+	projectName, digest string,
+) (LockHandle, error) {
 	if locker, err := manager.getLockerForProject(ctx, projectName); err != nil {
 		return LockHandle{}, err
 	} else {
@@ -73,7 +84,10 @@ func (manager *KubernetesLockManager) LockStage(ctx context.Context, projectName
 	}
 }
 
-func (manager *KubernetesLockManager) LockStageCache(ctx context.Context, projectName, digest string) (LockHandle, error) {
+func (manager *KubernetesLockManager) LockStageCache(
+	ctx context.Context,
+	projectName, digest string,
+) (LockHandle, error) {
 	if locker, err := manager.getLockerForProject(ctx, projectName); err != nil {
 		return LockHandle{}, err
 	} else {

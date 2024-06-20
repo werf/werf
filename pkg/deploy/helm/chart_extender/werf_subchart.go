@@ -9,9 +9,9 @@ import (
 	"helm.sh/helm/v3/pkg/cli"
 
 	"github.com/werf/logboek"
+	"github.com/werf/nelm/pkg/secrets_manager"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers/secrets"
-	"github.com/werf/werf/v2/pkg/deploy/secrets_manager"
 )
 
 // NOTE: maybe in the future we will need a support for the werf project to be used as a chart.
@@ -21,7 +21,11 @@ type WerfSubchartOptions struct {
 	DisableDefaultSecretValues bool
 }
 
-func NewWerfSubchart(ctx context.Context, secretsManager *secrets_manager.SecretsManager, opts WerfSubchartOptions) *WerfSubchart {
+func NewWerfSubchart(
+	ctx context.Context,
+	secretsManager *secrets_manager.SecretsManager,
+	opts WerfSubchartOptions,
+) *WerfSubchart {
 	return &WerfSubchart{
 		SecretsManager:             secretsManager,
 		ChartExtenderContextData:   helpers.NewChartExtenderContextData(ctx),
@@ -70,7 +74,10 @@ func (wc *WerfSubchart) ChartDependenciesLoaded() error {
 }
 
 // MakeValues method for the chart.Extender interface
-func (wc *WerfSubchart) MakeValues(inputVals map[string]interface{}) (map[string]interface{}, error) {
+func (wc *WerfSubchart) MakeValues(inputVals map[string]interface{}) (
+	map[string]interface{},
+	error,
+) {
 	return wc.MergeValues(wc.ChartExtenderContext, inputVals, nil, wc.SecretsRuntimeData)
 }
 
