@@ -13,11 +13,11 @@ import (
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/lockgate/pkg/distributed_locker"
 	"github.com/werf/logboek"
+	"github.com/werf/nelm/pkg/locker_with_retry"
 	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/storage/synchronization_server"
 	"github.com/werf/werf/v2/pkg/werf"
 	"github.com/werf/werf/v2/pkg/werf/global_warnings"
-	"github.com/werf/werf/v2/pkg/werf/locker_with_retry"
 )
 
 func SetupSynchronization(cmdData *CmdData, cmd *cobra.Command) {
@@ -100,8 +100,16 @@ func checkSynchronizationKubernetesParamsForWarnings(cmdData *CmdData) {
 	}
 }
 
-func GetSynchronization(ctx context.Context, cmdData *CmdData, projectName string, stagesStorage storage.StagesStorage) (*SynchronizationParams, error) {
-	getKubeParamsFunc := func(address string, commonKubeInitializer *OndemandKubeInitializer) (*SynchronizationParams, error) {
+func GetSynchronization(
+	ctx context.Context,
+	cmdData *CmdData,
+	projectName string,
+	stagesStorage storage.StagesStorage,
+) (*SynchronizationParams, error) {
+	getKubeParamsFunc := func(
+		address string,
+		commonKubeInitializer *OndemandKubeInitializer,
+	) (*SynchronizationParams, error) {
 		res := &SynchronizationParams{}
 		res.SynchronizationType = KubernetesSynchronization
 		res.Address = address
@@ -128,7 +136,10 @@ func GetSynchronization(ctx context.Context, cmdData *CmdData, projectName strin
 		return res, nil
 	}
 
-	getHttpParamsFunc := func(synchronization string, stagesStorage storage.StagesStorage) (*SynchronizationParams, error) {
+	getHttpParamsFunc := func(
+		synchronization string,
+		stagesStorage storage.StagesStorage,
+	) (*SynchronizationParams, error) {
 		var address string
 		if err := logboek.Info().LogProcess(fmt.Sprintf("Getting client id for the http synchronization server")).
 			DoError(func() error {
@@ -165,7 +176,10 @@ func GetSynchronization(ctx context.Context, cmdData *CmdData, projectName strin
 	}
 }
 
-func GetStorageLockManager(ctx context.Context, synchronization *SynchronizationParams) (storage.LockManager, error) {
+func GetStorageLockManager(
+	ctx context.Context,
+	synchronization *SynchronizationParams,
+) (storage.LockManager, error) {
 	switch synchronization.SynchronizationType {
 	case LocalSynchronization:
 		return storage.NewGenericLockManager(werf.GetHostLocker()), nil

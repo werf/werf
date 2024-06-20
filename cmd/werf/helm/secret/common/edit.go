@@ -17,13 +17,18 @@ import (
 
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/style"
-	"github.com/werf/werf/v2/pkg/deploy/secrets_manager"
-	"github.com/werf/werf/v2/pkg/secret"
+	"github.com/werf/nelm/pkg/secret"
+	"github.com/werf/nelm/pkg/secrets_manager"
 	"github.com/werf/werf/v2/pkg/util"
 	"github.com/werf/werf/v2/pkg/werf"
 )
 
-func SecretEdit(ctx context.Context, m *secrets_manager.SecretsManager, workingDir, filePath string, values bool) error {
+func SecretEdit(
+	ctx context.Context,
+	m *secrets_manager.SecretsManager,
+	workingDir, filePath string,
+	values bool,
+) error {
 	var encoder *secret.YamlEncoder
 	if enc, err := m.GetYamlEncoder(ctx, workingDir); err != nil {
 		return err
@@ -120,7 +125,11 @@ func SecretEdit(ctx context.Context, m *secrets_manager.SecretsManager, workingD
 	return nil
 }
 
-func readEditedFile(filePath string, values bool, encoder *secret.YamlEncoder) ([]byte, []byte, error) {
+func readEditedFile(filePath string, values bool, encoder *secret.YamlEncoder) (
+	[]byte,
+	[]byte,
+	error,
+) {
 	var data, encodedData []byte
 
 	exist, err := util.FileExists(filePath)

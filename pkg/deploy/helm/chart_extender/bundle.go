@@ -16,11 +16,11 @@ import (
 	"helm.sh/helm/v3/pkg/registry"
 
 	"github.com/werf/logboek"
+	"github.com/werf/nelm/pkg/secrets_manager"
 	"github.com/werf/werf/v2/pkg/deploy/helm"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers/secrets"
 	"github.com/werf/werf/v2/pkg/deploy/helm/command_helpers"
-	"github.com/werf/werf/v2/pkg/deploy/secrets_manager"
 )
 
 type BundleOptions struct {
@@ -32,7 +32,14 @@ type BundleOptions struct {
 	DisableDefaultValues              bool
 }
 
-func NewBundle(ctx context.Context, dir string, helmEnvSettings *cli.EnvSettings, registryClient *registry.Client, secretsManager *secrets_manager.SecretsManager, opts BundleOptions) (*Bundle, error) {
+func NewBundle(
+	ctx context.Context,
+	dir string,
+	helmEnvSettings *cli.EnvSettings,
+	registryClient *registry.Client,
+	secretsManager *secrets_manager.SecretsManager,
+	opts BundleOptions,
+) (*Bundle, error) {
 	bundle := &Bundle{
 		Dir:                            dir,
 		SecretValueFiles:               opts.SecretValueFiles,
@@ -164,7 +171,10 @@ func (bundle *Bundle) LoadDir(dir string) (bool, []*chart.ChartExtenderBufferedF
 		return true, nil, err
 	}
 
-	res, err := LoadChartDependencies(bundle.ChartExtenderContext, func(ctx context.Context, dir string) ([]*chart.ChartExtenderBufferedFile, error) {
+	res, err := LoadChartDependencies(bundle.ChartExtenderContext, func(
+		ctx context.Context,
+		dir string,
+	) ([]*chart.ChartExtenderBufferedFile, error) {
 		files, err := loader.GetFilesFromLocalFilesystem(dir)
 		if err != nil {
 			return nil, err

@@ -10,7 +10,7 @@ import (
 	"helm.sh/helm/v3/pkg/chartutil"
 	"sigs.k8s.io/yaml"
 
-	"github.com/werf/werf/v2/pkg/secret"
+	"github.com/werf/nelm/pkg/secret"
 	"github.com/werf/werf/v2/pkg/util"
 )
 
@@ -42,7 +42,11 @@ func GetSecretDirFiles(loadedChartFiles []*chart.ChartExtenderBufferedFile) []*c
 	return res
 }
 
-func LoadChartSecretValueFiles(chartDir string, secretDirFiles []*chart.ChartExtenderBufferedFile, encoder *secret.YamlEncoder) (map[string]interface{}, error) {
+func LoadChartSecretValueFiles(
+	chartDir string,
+	secretDirFiles []*chart.ChartExtenderBufferedFile,
+	encoder *secret.YamlEncoder,
+) (map[string]interface{}, error) {
 	var res map[string]interface{}
 
 	for _, file := range secretDirFiles {
@@ -62,7 +66,11 @@ func LoadChartSecretValueFiles(chartDir string, secretDirFiles []*chart.ChartExt
 	return res, nil
 }
 
-func LoadChartSecretDirFilesData(chartDir string, secretFiles []*chart.ChartExtenderBufferedFile, encoder *secret.YamlEncoder) (map[string]string, error) {
+func LoadChartSecretDirFilesData(
+	chartDir string,
+	secretFiles []*chart.ChartExtenderBufferedFile,
+	encoder *secret.YamlEncoder,
+) (map[string]string, error) {
 	res := make(map[string]string)
 
 	for _, file := range secretFiles {

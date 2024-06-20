@@ -8,9 +8,9 @@ import (
 	"helm.sh/helm/v3/pkg/chart"
 	"sigs.k8s.io/yaml"
 
-	"github.com/werf/werf/v2/pkg/deploy/secrets_manager"
+	"github.com/werf/nelm/pkg/secret"
+	"github.com/werf/nelm/pkg/secrets_manager"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
-	"github.com/werf/werf/v2/pkg/secret"
 	"github.com/werf/werf/v2/pkg/util/secretvalues"
 )
 
@@ -33,7 +33,13 @@ type DecodeAndLoadSecretsOptions struct {
 	WithoutDefaultSecretValues bool
 }
 
-func (secretsRuntimeData *SecretsRuntimeData) DecodeAndLoadSecrets(ctx context.Context, loadedChartFiles []*chart.ChartExtenderBufferedFile, chartDir, secretsWorkingDir string, secretsManager *secrets_manager.SecretsManager, opts DecodeAndLoadSecretsOptions) error {
+func (secretsRuntimeData *SecretsRuntimeData) DecodeAndLoadSecrets(
+	ctx context.Context,
+	loadedChartFiles []*chart.ChartExtenderBufferedFile,
+	chartDir, secretsWorkingDir string,
+	secretsManager *secrets_manager.SecretsManager,
+	opts DecodeAndLoadSecretsOptions,
+) error {
 	secretDirFiles := GetSecretDirFiles(loadedChartFiles)
 
 	var loadedSecretValuesFiles []*chart.ChartExtenderBufferedFile
@@ -96,7 +102,11 @@ func (secretsRuntimeData *SecretsRuntimeData) DecodeAndLoadSecrets(ctx context.C
 	return nil
 }
 
-func (secretsRuntimeData *SecretsRuntimeData) GetEncodedSecretValues(ctx context.Context, secretsManager *secrets_manager.SecretsManager, secretsWorkingDir string) (map[string]interface{}, error) {
+func (secretsRuntimeData *SecretsRuntimeData) GetEncodedSecretValues(
+	ctx context.Context,
+	secretsManager *secrets_manager.SecretsManager,
+	secretsWorkingDir string,
+) (map[string]interface{}, error) {
 	if len(secretsRuntimeData.DecryptedSecretValues) == 0 {
 		return nil, nil
 	}

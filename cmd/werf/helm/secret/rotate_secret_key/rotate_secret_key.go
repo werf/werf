@@ -11,12 +11,12 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/werf/logboek"
+	"github.com/werf/nelm/pkg/secret"
+	"github.com/werf/nelm/pkg/secrets_manager"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/cmd/werf/docs/replacers/helm"
-	"github.com/werf/werf/v2/pkg/deploy/secrets_manager"
 	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
-	"github.com/werf/werf/v2/pkg/secret"
 	"github.com/werf/werf/v2/pkg/true_git"
 	"github.com/werf/werf/v2/pkg/util"
 	"github.com/werf/werf/v2/pkg/werf"
@@ -64,7 +64,11 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	return cmd
 }
 
-func runRotateSecretKey(ctx context.Context, cmd *cobra.Command, secretValuesPaths ...string) error {
+func runRotateSecretKey(
+	ctx context.Context,
+	cmd *cobra.Command,
+	secretValuesPaths ...string,
+) error {
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %w", err)
 	}
@@ -114,7 +118,11 @@ func runRotateSecretKey(ctx context.Context, cmd *cobra.Command, secretValuesPat
 	return secretsRegenerate(newEncoder, oldEncoder, helmChartDir, secretValuesPaths...)
 }
 
-func secretsRegenerate(newEncoder, oldEncoder *secret.YamlEncoder, helmChartDir string, secretValuesPaths ...string) error {
+func secretsRegenerate(
+	newEncoder, oldEncoder *secret.YamlEncoder,
+	helmChartDir string,
+	secretValuesPaths ...string,
+) error {
 	var secretFilesPaths []string
 	var secretFilesData map[string][]byte
 	var secretValuesFilesData map[string][]byte
@@ -202,7 +210,10 @@ func secretsRegenerate(newEncoder, oldEncoder *secret.YamlEncoder, helmChartDir 
 	return nil
 }
 
-func regenerateSecrets(filesData, regeneratedFilesData map[string][]byte, decodeFunc, encodeFunc func([]byte) ([]byte, error)) error {
+func regenerateSecrets(
+	filesData, regeneratedFilesData map[string][]byte,
+	decodeFunc, encodeFunc func([]byte) ([]byte, error),
+) error {
 	for filePath, fileData := range filesData {
 		err := logboek.LogProcess(fmt.Sprintf("Regenerating file %q", filePath)).
 			DoError(func() error {

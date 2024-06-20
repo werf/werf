@@ -23,12 +23,12 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/werf/logboek"
+	"github.com/werf/nelm/pkg/secrets_manager"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/deploy/helm"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers/secrets"
 	"github.com/werf/werf/v2/pkg/deploy/helm/command_helpers"
-	"github.com/werf/werf/v2/pkg/deploy/secrets_manager"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
 	"github.com/werf/werf/v2/pkg/util"
 )
@@ -43,7 +43,15 @@ type WerfChartOptions struct {
 	DisableDefaultSecretValues        bool
 }
 
-func NewWerfChart(ctx context.Context, giterminismManager giterminism_manager.Interface, secretsManager *secrets_manager.SecretsManager, chartDir string, helmEnvSettings *cli.EnvSettings, registryClient *registry.Client, opts WerfChartOptions) *WerfChart {
+func NewWerfChart(
+	ctx context.Context,
+	giterminismManager giterminism_manager.Interface,
+	secretsManager *secrets_manager.SecretsManager,
+	chartDir string,
+	helmEnvSettings *cli.EnvSettings,
+	registryClient *registry.Client,
+	opts WerfChartOptions,
+) *WerfChart {
 	wc := &WerfChart{
 		ChartDir:         chartDir,
 		SecretValueFiles: opts.SecretValueFiles,
@@ -149,7 +157,10 @@ func (wc *WerfChart) MakeValues(inputVals map[string]interface{}) (map[string]in
 	return wc.MergeValues(wc.ChartExtenderContext, inputVals, wc.ServiceValues, wc.SecretsRuntimeData)
 }
 
-func (wc *WerfChart) MakeBundleValues(chrt *chart.Chart, inputVals map[string]interface{}) (map[string]interface{}, error) {
+func (wc *WerfChart) MakeBundleValues(
+	chrt *chart.Chart,
+	inputVals map[string]interface{},
+) (map[string]interface{}, error) {
 	helpers.DebugPrintValues(wc.ChartExtenderContext, "input", inputVals)
 
 	vals, err := wc.MergeValues(wc.ChartExtenderContext, inputVals, wc.ServiceValues, nil)
@@ -175,7 +186,10 @@ func (wc *WerfChart) MakeBundleValues(chrt *chart.Chart, inputVals map[string]in
 	return valsCopy, nil
 }
 
-func (wc *WerfChart) MakeBundleSecretValues(ctx context.Context, secretsRuntimeData *secrets.SecretsRuntimeData) (map[string]interface{}, error) {
+func (wc *WerfChart) MakeBundleSecretValues(
+	ctx context.Context,
+	secretsRuntimeData *secrets.SecretsRuntimeData,
+) (map[string]interface{}, error) {
 	if helpers.DebugSecretValues() {
 		helpers.DebugPrintValues(wc.ChartExtenderContext, "secret", wc.SecretsRuntimeData.DecryptedSecretValues)
 	}
@@ -249,7 +263,11 @@ func (wc *WerfChart) SetEnv(env string) error {
  * CreateNewBundle creates new Bundle object with werf chart extensions taken into account.
  * inputVals could contain any custom values, which should be stored in the bundle.
  */
-func (wc *WerfChart) CreateNewBundle(ctx context.Context, destDir, chartVersion string, vals *values.Options) (*Bundle, error) {
+func (wc *WerfChart) CreateNewBundle(
+	ctx context.Context,
+	destDir, chartVersion string,
+	vals *values.Options,
+) (*Bundle, error) {
 	chartPath := filepath.Join(wc.GiterminismManager.ProjectDir(), wc.ChartDir)
 	chrt, err := loader.LoadDir(chartPath)
 	if err != nil {

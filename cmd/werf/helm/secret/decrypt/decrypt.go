@@ -9,13 +9,13 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh/terminal"
 
+	"github.com/werf/nelm/pkg/secret"
+	"github.com/werf/nelm/pkg/secrets_manager"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/cmd/werf/docs/replacers/helm"
 	secret_common "github.com/werf/werf/v2/cmd/werf/helm/secret/common"
-	"github.com/werf/werf/v2/pkg/deploy/secrets_manager"
 	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
-	"github.com/werf/werf/v2/pkg/secret"
 	"github.com/werf/werf/v2/pkg/werf"
 )
 
@@ -88,7 +88,11 @@ func runSecretDecrypt(ctx context.Context) error {
 	return secretDecrypt(ctx, secrets_manager.NewSecretsManager(secrets_manager.SecretsManagerOptions{}), workingDir)
 }
 
-func secretDecrypt(ctx context.Context, m *secrets_manager.SecretsManager, workingDir string) error {
+func secretDecrypt(
+	ctx context.Context,
+	m *secrets_manager.SecretsManager,
+	workingDir string,
+) error {
 	var encodedData []byte
 	var data []byte
 	var err error
