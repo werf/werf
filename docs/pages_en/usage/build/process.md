@@ -228,18 +228,37 @@ In this case, werf will compose the following sets to build:
 
 You can set up mirrors for the default `docker.io` container registry.
 
-If you are using Docker backend for building images, add `registry-mirrors` to `/etc/docker/daemon.json` file:
+### Docker
+
+If you are using Docker backend for building images, add `registry-mirrors` to the `/etc/docker/daemon.json` file:
+
 ```json
 {
   "registry-mirrors": ["https://<my-docker-io-mirror-host>"]
 }
 ```
 
-Then restart Docker daemon and logout from `docker.io` with `werf cr logout`.
+Then restart the Docker daemon and logout from `docker.io` with:
 
-If you are using Buildah backend, then instead of editing `daemon.json` you should add `--container-registry-mirror` to werf commands, e.g.:
+```bash
+werf cr logout
+```
+
+### Buildah
+
+If you are using Buildah backend, instead of editing `daemon.json`, add the `--container-registry-mirror` option to werf commands. For example:
+
 ```shell
 werf build --container-registry-mirror=mirror.gcr.io
+```
+
+To add multiple mirrors, use the `--container-registry-mirror` option multiple times.
+
+In addition to the command-line option, you can use the environment variables `WERF_CONTAINER_REGISTRY_MIRROR_*`, for example:
+
+```bash
+export WERF_CONTAINER_REGISTRY_MIRROR_GCR=mirror.gcr.io
+export WERF_CONTAINER_REGISTRY_MIRROR_LOCAL=docker.mirror.local
 ```
 
 ## Using container registry

@@ -224,20 +224,39 @@ target: assets
 
 ## Использование зеркал для docker.io
 
-Вы можете использовать зеркала для используемого по умолчанию `docker.io` Container Registry.
+Вы можете использовать зеркала для используемого по умолчанию `docker.io` container registry.
 
-Если вы используете Docker для сборки, то добавьте `registry-mirrors` в `/etc/docker/daemon.json` файл:
+### Docker
+
+Если вы используете Docker для сборки, добавьте `registry-mirrors` в файл `/etc/docker/daemon.json`:
+
 ```json
 {
   "registry-mirrors": ["https://<my-docker-io-mirror-host>"]
 }
 ```
 
-После чего перезагрузите Docker и разлогиньтесь из `docker.io` с помощью `werf cr logout`.
+После этого перезапустите Docker и разлогиньтесь из `docker.io` с помощью команды:
 
-Если же вы используете Buildah для сборки, то вместо правки `daemon.json` используйте опцию `--container-registry-mirror` для werf-команд, например:
+```bash
+werf cr logout
+```
+
+### Buildah
+
+Если вы используете Buildah для сборки, вместо редактирования `daemon.json` используйте опцию `--container-registry-mirror` для werf-команд. Например:
+
 ```shell
 werf build --container-registry-mirror=mirror.gcr.io
+```
+
+Для добавления нескольких зеркал используйте опцию `--container-registry-mirror` несколько раз.
+
+Помимо опции, поддерживается использование переменных окружения `WERF_CONTAINER_REGISTRY_MIRROR_*`, например:
+
+```bash
+export WERF_CONTAINER_REGISTRY_MIRROR_GCR=mirror.gcr.io
+export WERF_CONTAINER_REGISTRY_MIRROR_LOCAL=docker.mirror.local
 ```
 
 ## Использование container registry
