@@ -3,33 +3,18 @@ package plan
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
-	"github.com/gookit/color"
-	"github.com/samber/lo"
 	"github.com/spf13/cobra"
-	helm_v3 "helm.sh/helm/v3/cmd/helm"
-	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
-	"helm.sh/helm/v3/pkg/cli/values"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"helm.sh/helm/v3/pkg/cli"
+	"helm.sh/helm/v3/pkg/registry"
 
 	"github.com/werf/logboek"
-	"github.com/werf/nelm/pkg/chrttree"
-	helmcommon "github.com/werf/nelm/pkg/common"
-	"github.com/werf/nelm/pkg/kubeclnt"
-	"github.com/werf/nelm/pkg/log"
-	"github.com/werf/nelm/pkg/resrc"
-	"github.com/werf/nelm/pkg/resrcchangcalc"
-	"github.com/werf/nelm/pkg/resrcchanglog"
-	"github.com/werf/nelm/pkg/resrcpatcher"
-	"github.com/werf/nelm/pkg/resrcprocssr"
-	"github.com/werf/nelm/pkg/rls"
-	"github.com/werf/nelm/pkg/rlsdiff"
-	"github.com/werf/nelm/pkg/rlshistor"
+	"github.com/werf/nelm/pkg/action"
 	"github.com/werf/nelm/pkg/secrets_manager"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/build"
@@ -38,6 +23,7 @@ import (
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
 	"github.com/werf/werf/v2/pkg/deploy/helm/command_helpers"
+	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
@@ -150,6 +136,7 @@ werf plan --repo registry.mydomain.com/web --env production`,
 
 	common.SetupStatusProgressPeriod(&commonCmdData, cmd)
 	common.SetupHooksStatusProgressPeriod(&commonCmdData, cmd)
+	// TODO(3.0): remove this, useless
 	common.SetupReleasesHistoryMax(&commonCmdData, cmd)
 
 	common.SetupRelease(&commonCmdData, cmd, true)
@@ -194,6 +181,7 @@ werf plan --repo registry.mydomain.com/web --env production`,
 	if err != nil || defaultTimeout == nil {
 		defaultTimeout = new(int64)
 	}
+	// TODO(3.0): remove this, useless
 	cmd.Flags().IntVarP(&cmdData.Timeout, "timeout", "t", int(*defaultTimeout), "Resources tracking timeout in seconds ($WERF_TIMEOUT by default)")
 	cmd.Flags().BoolVarP(&cmdData.DetailedExitCode, "exit-code", "", util.GetBoolEnvironmentDefaultFalse("WERF_EXIT_CODE"), "If true, returns exit code 0 if no changes, exit code 2 if any changes planned or exit code 1 in case of an error (default $WERF_EXIT_CODE or false)")
 
@@ -265,11 +253,6 @@ func runMain(ctx context.Context, imagesToProcess build.ImagesToProcess) error {
 
 	common.ProcessLogProjectDir(&commonCmdData, giterminismManager.ProjectDir())
 
-	common.SetupOndemandKubeInitializer(*commonCmdData.KubeContext, *commonCmdData.KubeConfig, *commonCmdData.KubeConfigBase64, *commonCmdData.KubeConfigPathMergeList)
-	if err := common.GetOndemandKubeInitializer().Init(ctx); err != nil {
-		return err
-	}
-
 	if *commonCmdData.Follow {
 		logboek.LogOptionalLn()
 		return common.FollowGitHead(ctx, &commonCmdData, func(
@@ -296,13 +279,6 @@ func run(
 	if err := werfConfig.CheckThatImagesExist(imagesToProcess.OnlyImages); err != nil {
 		return err
 	}
-
-	relChartDir, err := common.GetHelmChartDir(werfConfigPath, werfConfig, giterminismManager)
-	if err != nil {
-		return fmt.Errorf("getting helm chart dir failed: %w", err)
-	}
-
-	chartDir := filepath.Join(giterminismManager.ProjectDir(), relChartDir)
 
 	projectName := werfConfig.Meta.Project
 
@@ -393,27 +369,45 @@ func run(
 		logboek.LogOptionalLn()
 	}
 
-	secretsManager := secrets_manager.NewSecretsManager(secrets_manager.SecretsManagerOptions{DisableSecretsDecryption: *commonCmdData.IgnoreSecretKey})
-
-	namespace, err := deploy_params.GetKubernetesNamespace(*commonCmdData.Namespace, *commonCmdData.Environment, werfConfig)
+	relChartPath, err := common.GetHelmChartDir(
+		werfConfigPath,
+		werfConfig,
+		giterminismManager,
+	)
 	if err != nil {
-		return err
+		return fmt.Errorf("get relative helm chart directory: %w", err)
 	}
 
-	releaseName, err := deploy_params.GetHelmRelease(*commonCmdData.Release, *commonCmdData.Environment, namespace, werfConfig)
+	chartPath := filepath.Join(giterminismManager.ProjectDir(), relChartPath)
+
+	releaseNamespace, err := deploy_params.GetKubernetesNamespace(
+		*commonCmdData.Namespace,
+		*commonCmdData.Environment,
+		werfConfig,
+	)
 	if err != nil {
-		return err
+		return fmt.Errorf("get kubernetes namespace: %w", err)
+	}
+
+	releaseName, err := deploy_params.GetHelmRelease(
+		*commonCmdData.Release,
+		*commonCmdData.Environment,
+		releaseNamespace,
+		werfConfig,
+	)
+	if err != nil {
+		return fmt.Errorf("get helm release: %w", err)
 	}
 
 	serviceAnnotations := map[string]string{
 		"werf.io/version":      werf.Version,
-		"project.werf.io/name": werfConfig.Meta.Project,
+		"project.werf.io/name": projectName,
 		"project.werf.io/env":  *commonCmdData.Environment,
 	}
 
-	userExtraAnnotations := map[string]string{}
+	extraAnnotations := map[string]string{}
 	if annos, err := common.GetUserExtraAnnotations(&commonCmdData); err != nil {
-		return err
+		return fmt.Errorf("get user extra annotations: %w", err)
 	} else {
 		for key, value := range annos {
 			if strings.HasPrefix(key, "project.werf.io/") ||
@@ -421,255 +415,126 @@ func run(
 				key == "werf.io/release-channel" {
 				serviceAnnotations[key] = value
 			} else {
-				userExtraAnnotations[key] = value
+				extraAnnotations[key] = value
 			}
 		}
 	}
 
-	userExtraLabels, err := common.GetUserExtraLabels(&commonCmdData)
+	extraLabels, err := common.GetUserExtraLabels(&commonCmdData)
 	if err != nil {
-		return err
+		return fmt.Errorf("get user extra labels: %w", err)
 	}
 
-	helmRegistryClient, err := common.NewHelmRegistryClient(ctx, *commonCmdData.DockerConfig, *commonCmdData.InsecureHelmDependencies)
-	if err != nil {
-		return fmt.Errorf("unable to create helm registry client: %w", err)
-	}
+	secrets_manager.WerfHomeDir = werf.GetHomeDir()
 
-	wc := chart_extender.NewWerfChart(ctx, giterminismManager, secretsManager, relChartDir, helm_v3.Settings, helmRegistryClient, chart_extender.WerfChartOptions{
-		BuildChartDependenciesOpts:        command_helpers.BuildChartDependenciesOptions{SkipUpdate: *commonCmdData.SkipDependenciesRepoRefresh},
-		SecretValueFiles:                  common.GetSecretValues(&commonCmdData),
-		ExtraAnnotations:                  userExtraAnnotations,
-		ExtraLabels:                       userExtraLabels,
-		IgnoreInvalidAnnotationsAndLabels: true,
-		DisableDefaultValues:              *commonCmdData.DisableDefaultValues,
-		DisableDefaultSecretValues:        *commonCmdData.DisableDefaultSecretValues,
-	})
+	if err := action.Plan(ctx, action.PlanOptions{
+		ChartDirPath:               chartPath,
+		ChartRepositoryInsecure:    *commonCmdData.InsecureHelmDependencies,
+		ChartRepositorySkipUpdate:  *commonCmdData.SkipDependenciesRepoRefresh,
+		DefaultSecretValuesDisable: *commonCmdData.DisableDefaultSecretValues,
+		DefaultValuesDisable:       *commonCmdData.DisableDefaultValues,
+		ErrorIfChangesPlanned:      cmdData.DetailedExitCode,
+		ExtraAnnotations:           extraAnnotations,
+		ExtraLabels:                extraLabels,
+		ExtraRuntimeAnnotations:    serviceAnnotations,
+		KubeConfigBase64:           *commonCmdData.KubeConfigBase64,
+		KubeConfigPaths:            append(*commonCmdData.KubeConfigPathMergeList, *commonCmdData.KubeConfig),
+		KubeContext:                *commonCmdData.KubeContext,
+		LogRegistryDebug:           *commonCmdData.LogDebug,
+		LogRegistryStreamOut:       os.Stdout,
+		NetworkParallelism:         common.GetNetworkParallelism(&commonCmdData),
+		RegistryCredentialsPath:    docker.GetDockerConfigCredentialsFile(*commonCmdData.DockerConfig),
+		ReleaseName:                releaseName,
+		ReleaseNamespace:           releaseNamespace,
+		ReleaseStorageDriver:       action.ReleaseStorageDriver(os.Getenv("HELM_DRIVER")),
+		SecretKeyIgnore:            *commonCmdData.IgnoreSecretKey,
+		SecretValuesPaths:          common.GetSecretValues(&commonCmdData),
+		ValuesFileSets:             common.GetSetFile(&commonCmdData),
+		ValuesFilesPaths:           common.GetValues(&commonCmdData),
+		ValuesSets:                 common.GetSet(&commonCmdData),
+		ValuesStringSets:           common.GetSetString(&commonCmdData),
+		LegacyPrePlanHook: func(
+			ctx context.Context,
+			releaseNamespace string,
+			helmRegistryClient *registry.Client,
+			secretsManager *secrets_manager.SecretsManager,
+			registryCredentialsPath string,
+			chartRepositorySkipUpdate bool,
+			secretValuesPaths []string,
+			extraAnnotations map[string]string,
+			extraLabels map[string]string,
+			defaultValuesDisable bool,
+			defaultSecretValuesDisable bool,
+			helmSettings *cli.EnvSettings,
+		) error {
+			wc := chart_extender.NewWerfChart(
+				ctx,
+				giterminismManager,
+				secretsManager,
+				relChartPath,
+				helmSettings,
+				helmRegistryClient,
+				chart_extender.WerfChartOptions{
+					BuildChartDependenciesOpts: command_helpers.BuildChartDependenciesOptions{
+						SkipUpdate: chartRepositorySkipUpdate,
+					},
+					SecretValueFiles:                  secretValuesPaths,
+					ExtraAnnotations:                  extraAnnotations,
+					ExtraLabels:                       extraLabels,
+					IgnoreInvalidAnnotationsAndLabels: true,
+					DisableDefaultValues:              defaultValuesDisable,
+					DisableDefaultSecretValues:        defaultSecretValuesDisable,
+				},
+			)
 
-	if err := wc.SetEnv(*commonCmdData.Environment); err != nil {
-		return err
-	}
-	if err := wc.SetWerfConfig(werfConfig); err != nil {
-		return err
-	}
+			if err := wc.SetEnv(*commonCmdData.Environment); err != nil {
+				return fmt.Errorf("set werf chart environment: %w", err)
+			}
 
-	headHash, err := giterminismManager.LocalGitRepo().HeadCommitHash(ctx)
-	if err != nil {
-		return fmt.Errorf("getting HEAD commit hash failed: %w", err)
-	}
+			if err := wc.SetWerfConfig(werfConfig); err != nil {
+				return fmt.Errorf("set werf chart werf config: %w", err)
+			}
 
-	headTime, err := giterminismManager.LocalGitRepo().HeadCommitTime(ctx)
-	if err != nil {
-		return fmt.Errorf("getting HEAD commit time failed: %w", err)
-	}
+			headHash, err := giterminismManager.LocalGitRepo().HeadCommitHash(ctx)
+			if err != nil {
+				return fmt.Errorf("get HEAD commit hash: %w", err)
+			}
 
-	if vals, err := helpers.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepo, imagesInfoGetters, helpers.ServiceValuesOptions{
-		Namespace:                namespace,
-		Env:                      *commonCmdData.Environment,
-		SetDockerConfigJsonValue: *commonCmdData.SetDockerConfigJsonValue,
-		DockerConfigPath:         *commonCmdData.DockerConfig,
-		CommitHash:               headHash,
-		CommitDate:               headTime,
+			headTime, err := giterminismManager.LocalGitRepo().HeadCommitTime(ctx)
+			if err != nil {
+				return fmt.Errorf("get HEAD commit time: %w", err)
+			}
+
+			if vals, err := helpers.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepo, imagesInfoGetters, helpers.ServiceValuesOptions{
+				Namespace:                releaseNamespace,
+				Env:                      *commonCmdData.Environment,
+				SetDockerConfigJsonValue: *commonCmdData.SetDockerConfigJsonValue,
+				DockerConfigPath:         registryCredentialsPath,
+				CommitHash:               headHash,
+				CommitDate:               headTime,
+			}); err != nil {
+				return fmt.Errorf("get service values: %w", err)
+			} else {
+				wc.SetServiceValues(vals)
+			}
+
+			loader.GlobalLoadOptions = &loader.LoadOptions{
+				ChartExtender: wc,
+				SubchartExtenderFactoryFunc: func() chart.ChartExtender {
+					return chart_extender.NewWerfSubchart(
+						ctx,
+						secretsManager,
+						chart_extender.WerfSubchartOptions{
+							DisableDefaultSecretValues: defaultSecretValuesDisable,
+						},
+					)
+				},
+			}
+
+			return nil
+		},
 	}); err != nil {
-		return fmt.Errorf("error creating service values: %w", err)
-	} else {
-		wc.SetServiceValues(vals)
-	}
-
-	loader.GlobalLoadOptions = &loader.LoadOptions{
-		ChartExtender: wc,
-		SubchartExtenderFactoryFunc: func() chart.ChartExtender {
-			return chart_extender.NewWerfSubchart(ctx, secretsManager, chart_extender.WerfSubchartOptions{
-				DisableDefaultSecretValues: *commonCmdData.DisableDefaultSecretValues,
-			})
-		},
-	}
-
-	// TODO(ilya-lesikov): not needed after new engine migration
-	valueOpts := &values.Options{
-		ValueFiles:   common.GetValues(&commonCmdData),
-		StringValues: common.GetSetString(&commonCmdData),
-		Values:       common.GetSet(&commonCmdData),
-		FileValues:   common.GetSetFile(&commonCmdData),
-	}
-
-	actionConfig, err := common.NewActionConfig(ctx, common.GetOndemandKubeInitializer(), namespace, &commonCmdData, helmRegistryClient)
-	if err != nil {
-		return err
-	}
-
-	networkParallelism := common.GetNetworkParallelism(&commonCmdData)
-
-	clientFactory, err := kubeclnt.NewClientFactory()
-	if err != nil {
-		return fmt.Errorf("error creating kube client factory: %w", err)
-	}
-
-	releaseNamespace := resrc.NewReleaseNamespace(&unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"apiVersion": "v1",
-			"kind":       "Namespace",
-			"metadata": map[string]interface{}{
-				"name": lo.WithoutEmpty([]string{namespace, helm_v3.Settings.Namespace()})[0],
-			},
-		},
-	}, resrc.ReleaseNamespaceOptions{
-		Mapper: clientFactory.Mapper(),
-	})
-
-	chartPathOptions := action.ChartPathOptions{}
-	chartPathOptions.SetRegistryClient(actionConfig.RegistryClient)
-
-	log.Default.Info(ctx, color.Style{color.Bold, color.Green}.Render("Planning release")+" %q (namespace: %q)", releaseName, releaseNamespace.Name())
-
-	log.Default.Info(ctx, "Constructing release history")
-	history, err := rlshistor.NewHistory(releaseName, releaseNamespace.Name(), actionConfig.Releases, rlshistor.HistoryOptions{
-		Mapper:          clientFactory.Mapper(),
-		DiscoveryClient: clientFactory.Discovery(),
-	})
-	if err != nil {
-		return fmt.Errorf("error constructing release history: %w", err)
-	}
-
-	prevRelease, prevReleaseFound, err := history.LastRelease()
-	if err != nil {
-		return fmt.Errorf("error getting last deployed release: %w", err)
-	}
-
-	_, prevDeployedReleaseFound, err := history.LastDeployedRelease()
-	if err != nil {
-		return fmt.Errorf("error getting last deployed release: %w", err)
-	}
-
-	var newRevision int
-	var firstDeployed time.Time
-	if prevReleaseFound {
-		newRevision = prevRelease.Revision() + 1
-		firstDeployed = prevRelease.FirstDeployed()
-	} else {
-		newRevision = 1
-	}
-
-	var deployType helmcommon.DeployType
-	if prevReleaseFound && prevDeployedReleaseFound {
-		deployType = helmcommon.DeployTypeUpgrade
-	} else if prevReleaseFound {
-		deployType = helmcommon.DeployTypeInstall
-	} else {
-		deployType = helmcommon.DeployTypeInitial
-	}
-
-	log.Default.Info(ctx, "Constructing chart tree")
-	chartTree, err := chrttree.NewChartTree(
-		ctx,
-		chartDir,
-		releaseName,
-		releaseNamespace.Name(),
-		newRevision,
-		deployType,
-		actionConfig,
-		chrttree.ChartTreeOptions{
-			StringSetValues: valueOpts.StringValues,
-			SetValues:       valueOpts.Values,
-			FileValues:      valueOpts.FileValues,
-			ValuesFiles:     valueOpts.ValueFiles,
-			Mapper:          clientFactory.Mapper(),
-			DiscoveryClient: clientFactory.Discovery(),
-		},
-	)
-	if err != nil {
-		return fmt.Errorf("error constructing chart tree: %w", err)
-	}
-
-	notes := chartTree.Notes()
-
-	var prevRelGeneralResources []*resrc.GeneralResource
-	var prevRelFailed bool
-	if prevReleaseFound {
-		prevRelGeneralResources = prevRelease.GeneralResources()
-		prevRelFailed = prevRelease.Failed()
-	}
-
-	// FIXME(ilya-lesikov): no releasable resources needed
-	log.Default.Info(ctx, "Processing resources")
-	resProcessor := resrcprocssr.NewDeployableResourcesProcessor(
-		deployType,
-		releaseName,
-		releaseNamespace.Name(),
-		chartTree.StandaloneCRDs(),
-		chartTree.HookResources(),
-		chartTree.GeneralResources(),
-		prevRelGeneralResources,
-		resrcprocssr.DeployableResourcesProcessorOptions{
-			NetworkParallelism: networkParallelism,
-			ReleasableHookResourcePatchers: []resrcpatcher.ResourcePatcher{
-				resrcpatcher.NewExtraMetadataPatcher(userExtraAnnotations, userExtraLabels),
-			},
-			ReleasableGeneralResourcePatchers: []resrcpatcher.ResourcePatcher{
-				resrcpatcher.NewExtraMetadataPatcher(userExtraAnnotations, userExtraLabels),
-			},
-			DeployableStandaloneCRDsPatchers: []resrcpatcher.ResourcePatcher{
-				resrcpatcher.NewExtraMetadataPatcher(lo.Assign(userExtraAnnotations, serviceAnnotations), userExtraLabels),
-			},
-			DeployableHookResourcePatchers: []resrcpatcher.ResourcePatcher{
-				resrcpatcher.NewExtraMetadataPatcher(lo.Assign(userExtraAnnotations, serviceAnnotations), userExtraLabels),
-			},
-			DeployableGeneralResourcePatchers: []resrcpatcher.ResourcePatcher{
-				resrcpatcher.NewExtraMetadataPatcher(lo.Assign(userExtraAnnotations, serviceAnnotations), userExtraLabels),
-			},
-			KubeClient:         clientFactory.KubeClient(),
-			Mapper:             clientFactory.Mapper(),
-			DiscoveryClient:    clientFactory.Discovery(),
-			AllowClusterAccess: true,
-		},
-	)
-
-	if err := resProcessor.Process(ctx); err != nil {
-		return fmt.Errorf("error processing deployable resources: %w", err)
-	}
-
-	log.Default.Info(ctx, "Constructing new release")
-	newRel, err := rls.NewRelease(releaseName, releaseNamespace.Name(), newRevision, chartTree.ReleaseValues(), chartTree.LegacyChart(), resProcessor.ReleasableHookResources(), resProcessor.ReleasableGeneralResources(), notes, rls.ReleaseOptions{
-		FirstDeployed: firstDeployed,
-		Mapper:        clientFactory.Mapper(),
-	})
-	if err != nil {
-		return fmt.Errorf("error constructing new release: %w", err)
-	}
-
-	log.Default.Info(ctx, "Calculating planned changes")
-	createdChanges, recreatedChanges, updatedChanges, appliedChanges, deletedChanges, planChangesPlanned := resrcchangcalc.CalculatePlannedChanges(
-		releaseName,
-		releaseNamespace.Name(),
-		resProcessor.DeployableStandaloneCRDsInfos(),
-		resProcessor.DeployableHookResourcesInfos(),
-		resProcessor.DeployableGeneralResourcesInfos(),
-		resProcessor.DeployablePrevReleaseGeneralResourcesInfos(),
-		prevRelFailed,
-	)
-
-	var releaseUpToDate bool
-	if prevReleaseFound {
-		releaseUpToDate, err = rlsdiff.ReleaseUpToDate(prevRelease, newRel)
-		if err != nil {
-			return fmt.Errorf("error checking if release is up to date: %w", err)
-		}
-	}
-
-	resrcchanglog.LogPlannedChanges(
-		ctx,
-		releaseName,
-		releaseNamespace.Name(),
-		!releaseUpToDate,
-		createdChanges,
-		recreatedChanges,
-		updatedChanges,
-		appliedChanges,
-		deletedChanges,
-	)
-
-	if cmdData.DetailedExitCode && (planChangesPlanned || !releaseUpToDate) {
-		return resrcchangcalc.ErrChangesPlanned
+		return fmt.Errorf("plan release: %w", err)
 	}
 
 	return nil

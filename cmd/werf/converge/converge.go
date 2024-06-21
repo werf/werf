@@ -375,7 +375,11 @@ func run(
 		logboek.LogOptionalLn()
 	}
 
-	relChartPath, err := common.GetHelmChartDir(werfConfigPath, werfConfig, giterminismManager)
+	relChartPath, err := common.GetHelmChartDir(
+		werfConfigPath,
+		werfConfig,
+		giterminismManager,
+	)
 	if err != nil {
 		return fmt.Errorf("get relative helm chart directory: %w", err)
 	}
@@ -388,7 +392,7 @@ func run(
 		werfConfig,
 	)
 	if err != nil {
-		return err
+		return fmt.Errorf("get kubernetes namespace: %w", err)
 	}
 
 	releaseName, err := deploy_params.GetHelmRelease(
@@ -398,7 +402,7 @@ func run(
 		werfConfig,
 	)
 	if err != nil {
-		return err
+		return fmt.Errorf("get helm release name: %w", err)
 	}
 
 	serviceAnnotations := map[string]string{
@@ -409,7 +413,7 @@ func run(
 
 	extraAnnotations := map[string]string{}
 	if annos, err := common.GetUserExtraAnnotations(&commonCmdData); err != nil {
-		return err
+		return fmt.Errorf("get user extra annotations: %w", err)
 	} else {
 		for key, value := range annos {
 			if strings.HasPrefix(key, "project.werf.io/") ||
@@ -433,15 +437,10 @@ func run(
 	}
 
 	var logColorMode action.LogColorMode
-	switch *commonCmdData.LogColorMode {
-	case "on":
-		logColorMode = action.LogColorModeOn
-	case "off":
-		logColorMode = action.LogColorModeOff
-	case "auto", "":
+	if *commonCmdData.LogColorMode == "auto" {
 		logColorMode = action.LogColorModeDefault
-	default:
-		panic("unexpected color mode")
+	} else {
+		logColorMode = action.LogColorMode(*commonCmdData.LogColorMode)
 	}
 
 	secrets_manager.WerfHomeDir = werf.GetHomeDir()
