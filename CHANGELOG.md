@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.6.2](https://www.github.com/werf/werf/compare/v2.6.1...v2.6.2) (2024-06-25)
+
+
+### Bug Fixes
+
+* **build:** publish custom tags and final images in parallel ([6180f23](https://www.github.com/werf/werf/commit/6180f238e79610ccca4bb278bbba1ff1bbf39b8b))
+
 ### [2.6.1](https://www.github.com/werf/werf/compare/v2.6.0...v2.6.1) (2024-06-17)
 
 
