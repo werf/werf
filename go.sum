@@ -1396,8 +1396,8 @@ github.com/werf/3p-oras v0.9.1-0.20240115121544-03962ecbd40a h1:PsU9szHZlIH+Cjcu
 github.com/werf/3p-oras v0.9.1-0.20240115121544-03962ecbd40a/go.mod h1:XTePf8biMMCkqbuuWBZ24xOwo3hZej+BBM0uvd8aGqk=
 github.com/werf/copy-recurse v0.2.7 h1:3FTOarbJ9uhFLi75oeUCioK9zxZwuV7o28kuUBPDZPM=
 github.com/werf/copy-recurse v0.2.7/go.mod h1:6Ypb+qN+hRBJgoCgEkX1vpbqcQ+8q69BQ3hi8s8Y6Qc=
-github.com/werf/kubedog v0.12.4-0.20240329141850-9e5c458d11bb h1:BXsj07rgjjTwWd4xeSB5jVRStGr+KMkVzuXXlxkFz08=
-github.com/werf/kubedog v0.12.4-0.20240329141850-9e5c458d11bb/go.mod h1:Y6pesrIN5uhFKqmHnHSoeW4jmVyZlWPFWv5SjB0rUPg=
+github.com/werf/kubedog v0.12.4-0.20240625171314-7c603d8e166d h1:OwnC4y/dUTELMYBimedHEAaPrSyK/e0Aia/gfvVMelE=
+github.com/werf/kubedog v0.12.4-0.20240625171314-7c603d8e166d/go.mod h1:Y6pesrIN5uhFKqmHnHSoeW4jmVyZlWPFWv5SjB0rUPg=
 github.com/werf/lockgate v0.1.1 h1:S400JFYjtWfE4i4LY9FA8zx0fMdfui9DPrBiTciCrx4=
 github.com/werf/lockgate v0.1.1/go.mod h1:0yIFSLq9ausy6ejNxF5uUBf/Ib6daMAfXuCaTMZJzIE=
 github.com/werf/logboek v0.6.1 h1:oEe6FkmlKg0z0n80oZjLplj6sXcBeLleCkjfOOZEL2g=
