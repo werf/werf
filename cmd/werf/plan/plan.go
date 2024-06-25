@@ -440,7 +440,7 @@ func run(
 		KubeConfigBase64:           *commonCmdData.KubeConfigBase64,
 		KubeConfigPaths:            append(*commonCmdData.KubeConfigPathMergeList, *commonCmdData.KubeConfig),
 		KubeContext:                *commonCmdData.KubeContext,
-		LogRegistryDebug:           *commonCmdData.LogDebug,
+		LogDebug:                   *commonCmdData.LogDebug,
 		LogRegistryStreamOut:       os.Stdout,
 		NetworkParallelism:         common.GetNetworkParallelism(&commonCmdData),
 		RegistryCredentialsPath:    docker.GetDockerConfigCredentialsFile(*commonCmdData.DockerConfig),
@@ -509,7 +509,7 @@ func run(
 				Namespace:                releaseNamespace,
 				Env:                      *commonCmdData.Environment,
 				SetDockerConfigJsonValue: *commonCmdData.SetDockerConfigJsonValue,
-				DockerConfigPath:         registryCredentialsPath,
+				DockerConfigPath:         filepath.Dir(registryCredentialsPath),
 				CommitHash:               headHash,
 				CommitDate:               headTime,
 			}); err != nil {

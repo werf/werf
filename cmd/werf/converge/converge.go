@@ -462,7 +462,7 @@ func run(
 		KubeConfigPaths:            append(*commonCmdData.KubeConfigPathMergeList, *commonCmdData.KubeConfig),
 		KubeContext:                *commonCmdData.KubeContext,
 		LogColorMode:               logColorMode,
-		LogRegistryDebug:           *commonCmdData.LogDebug,
+		LogDebug:                   *commonCmdData.LogDebug,
 		LogRegistryStreamOut:       os.Stdout,
 		NetworkParallelism:         common.GetNetworkParallelism(&commonCmdData),
 		ProgressTablePrint:         *commonCmdData.StatusProgressPeriodSeconds != -1,
@@ -539,7 +539,7 @@ func run(
 				Namespace:                releaseNamespace,
 				Env:                      *commonCmdData.Environment,
 				SetDockerConfigJsonValue: *commonCmdData.SetDockerConfigJsonValue,
-				DockerConfigPath:         registryCredentialsPath,
+				DockerConfigPath:         filepath.Dir(registryCredentialsPath),
 				CommitHash:               headHash,
 				CommitDate:               headTime,
 			}); err != nil {
