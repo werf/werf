@@ -928,7 +928,7 @@ func runRollbackPlan(
 
 	rollbackPlanExecutionErr := rollbackPlanExecutor.Execute(ctx)
 	if rollbackPlanExecutionErr != nil {
-		criticalErrs = append(criticalErrs, fmt.Errorf("error executing rollback plan: %w", err))
+		criticalErrs = append(criticalErrs, fmt.Errorf("error executing rollback plan: %w", rollbackPlanExecutionErr))
 	}
 
 	if ops, found, err := rollbackPlan.WorthyCompletedOperations(); err != nil {
