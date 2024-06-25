@@ -1,5 +1,16 @@
 # Changelog
 
+### [2.6.3](https://www.github.com/werf/werf/compare/v2.6.2...v2.6.3) (2024-06-25)
+
+
+### Bug Fixes
+
+* **deploy:** errors count in progress report not updating ([46ada1c](https://www.github.com/werf/werf/commit/46ada1c2652f538998d548e27e8ccfdada7baa92))
+* **deploy:** helm rollback not adding release metadata to created resources ([bfd3924](https://www.github.com/werf/werf/commit/bfd3924d9c285737a40f950547973d26802a559d))
+* **deploy:** ignore false recreation errors during StatefulSet tracking ([a7fb885](https://www.github.com/werf/werf/commit/a7fb885c18ba59d924d54612fa45db0bb5e45888))
+* **deploy:** rollback error not showed ([be32b2a](https://www.github.com/werf/werf/commit/be32b2a8c86c0215378b9539ee4a675965692d19))
+* **deploy:** some STS and DS pods not tracked and their errors ignored ([d1a5758](https://www.github.com/werf/werf/commit/d1a575877110be666ff727bbab6e719674e2c88b))
+
 ### [2.6.2](https://www.github.com/werf/werf/compare/v2.6.1...v2.6.2) (2024-06-25)
 
 
