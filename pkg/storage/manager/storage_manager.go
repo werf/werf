@@ -511,21 +511,19 @@ func (m *StorageManager) FetchStage(ctx context.Context, containerBackend contai
 	}
 
 	prepareCacheStageAsPrimary := func(cacheImg container_backend.LegacyImageInterface, primaryStage stage.Interface) error {
-		stageID := primaryStage.GetStageImage().Image.GetStageDescription().StageID
+		primaryImg := primaryStage.GetStageImage().Image
+		stageID := primaryImg.GetStageDescription().StageID
 		primaryImageName := m.StagesStorage.ConstructStageImageName(m.ProjectName, stageID.Digest, stageID.UniqueID)
 
-		// TODO(buildah): check no bugs introduced by removing of following calls
-		// if err := containerBackend.RenameImage(ctx, cacheDockerImage, primaryImageName, false); err != nil {
-		//	 return fmt.Errorf("unable to rename image %s to %s: %w", fetchedDockerImage.Image.Name(), primaryImageName, err)
-		// }
+		if err := containerBackend.RenameImage(ctx, cacheImg, primaryImageName, true); err != nil {
+			return fmt.Errorf("unable to rename image %s to %s: %w", cacheImg.Name(), primaryImageName, err)
+		}
 
-		// if err := containerBackend.RefreshImageObject(ctx, &container_backend.Image{Image: primaryStage.GetImage()}); err != nil {
-		//	 return fmt.Errorf("unable to refresh stage image %s: %w", primaryStage.GetImage().Name(), err)
-		// }
+		if err := containerBackend.RefreshImageObject(ctx, primaryImg); err != nil {
+			return fmt.Errorf("unable to refresh stage image %s: %w", primaryImageName, err)
+		}
 
-		// TODO(buildah): check no bugs introduced by removing of following calls
-		// if err := storeStageDescriptionIntoLocalManifestCache(ctx, m.ProjectName, *stageID, m.StagesStorage, ConvertStageDescriptionForStagesStorage(cacheDockerImage.Image.GetStageDescription(), m.StagesStorage)); err != nil {
-		if err := storeStageDescriptionIntoLocalManifestCache(ctx, m.ProjectName, *stageID, m.StagesStorage, cacheImg.GetStageDescription()); err != nil {
+		if err := storeStageDescriptionIntoLocalManifestCache(ctx, m.ProjectName, *stageID, m.StagesStorage, primaryImg.GetStageDescription()); err != nil {
 			return fmt.Errorf("error storing stage %s description into local manifest cache: %w", primaryImageName, err)
 		}
 
