@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.316](https://www.github.com/werf/werf/compare/v1.2.315...v1.2.316) (2024-06-26)
+
+
+### Bug Fixes
+
+* **build, cache-repo:** fix "panic: runtime error: info must be set for image" ([e260f26](https://www.github.com/werf/werf/commit/e260f260d919bad898e6232a48a7fdb2db299510))
+
 ### [1.2.315](https://www.github.com/werf/werf/compare/v1.2.314...v1.2.315) (2024-05-31)
 
 
