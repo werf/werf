@@ -9,19 +9,13 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	helm_v3 "helm.sh/helm/v3/cmd/helm"
-	"helm.sh/helm/v3/pkg/action"
-	"helm.sh/helm/v3/pkg/registry"
 	helmrelease "helm.sh/helm/v3/pkg/release"
-	"helm.sh/helm/v3/pkg/storage/driver"
 
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
-	"github.com/werf/nelm/pkg/lock_manager"
+	"github.com/werf/nelm/pkg/action"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/config/deploy_params"
-	"github.com/werf/werf/v2/pkg/deploy/helm"
-	"github.com/werf/werf/v2/pkg/deploy/helm/command_helpers"
 	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
@@ -148,13 +142,11 @@ func runDismiss(ctx context.Context) error {
 		return fmt.Errorf("get container registry mirrors: %w", err)
 	}
 
-	containerBackend, processCtx, err := common.InitProcessContainerBackend(ctx, &commonCmdData, registryMirrors)
+	_, processCtx, err := common.InitProcessContainerBackend(ctx, &commonCmdData, registryMirrors)
 	if err != nil {
 		return err
 	}
 	ctx = processCtx
-
-	_ = containerBackend
 
 	gitDataManager, err := gitdata.GetHostGitDataManager(ctx)
 	if err != nil {
@@ -183,77 +175,36 @@ func runDismiss(ctx context.Context) error {
 	var gitNotFoundErr *common.GitWorktreeNotFoundError
 	if err != nil {
 		if !errors.As(err, &gitNotFoundErr) {
-			return err
+			return fmt.Errorf("get giterminism manager: %w", err)
 		}
 	}
-	gitFound := gitNotFoundErr == nil
 
-	common.SetupOndemandKubeInitializer(*commonCmdData.KubeContext, *commonCmdData.KubeConfig, *commonCmdData.KubeConfigBase64, *commonCmdData.KubeConfigPathMergeList)
-	if err := common.GetOndemandKubeInitializer().Init(ctx); err != nil {
-		return err
-	}
-
-	namespace, release, err := getNamespaceAndRelease(ctx, gitFound, giterminismManager)
+	releaseNamespace, releaseName, err := getNamespaceAndRelease(
+		ctx,
+		gitNotFoundErr == nil,
+		giterminismManager,
+	)
 	if err != nil {
-		return err
+		return fmt.Errorf("get release name and namespace: %w", err)
 	}
 
-	var helmRegistryClient *registry.Client
-	if gitFound {
-		helmRegistryClient, err = common.NewHelmRegistryClient(ctx, *commonCmdData.DockerConfig, *commonCmdData.InsecureHelmDependencies)
-		if err != nil {
-			return fmt.Errorf("unable to create helm registry client: %w", err)
-		}
-	}
-
-	var lockManager *lock_manager.LockManager
-	if !cmdData.WithNamespace {
-		if m, err := lock_manager.NewLockManager(namespace, false, nil, nil); err != nil {
-			return fmt.Errorf("unable to create lock manager: %w", err)
-		} else {
-			lockManager = m
-		}
-	}
-
-	actionConfig := new(action.Configuration)
-	if err := helm.InitActionConfig(ctx, common.GetOndemandKubeInitializer(), namespace, helm_v3.Settings, actionConfig, helm.InitActionConfigOptions{
-		StatusProgressPeriod:      time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
-		HooksStatusProgressPeriod: time.Duration(*commonCmdData.HooksStatusProgressPeriodSeconds) * time.Second,
-		KubeConfigOptions: kube.KubeConfigOptions{
-			Context:          *commonCmdData.KubeContext,
-			ConfigPath:       *commonCmdData.KubeConfig,
-			ConfigDataBase64: *commonCmdData.KubeConfigBase64,
-		},
-		ReleasesHistoryMax: *commonCmdData.ReleasesHistoryMax,
-		RegistryClient:     helmRegistryClient,
+	if err := action.Uninstall(ctx, action.UninstallOptions{
+		DeleteHooks:                cmdData.WithHooks,
+		DeleteReleaseNamespace:     cmdData.WithNamespace,
+		KubeConfigBase64:           *commonCmdData.KubeConfigBase64,
+		KubeConfigPaths:            append(*commonCmdData.KubeConfigPathMergeList, *commonCmdData.KubeConfig),
+		KubeContext:                *commonCmdData.KubeContext,
+		LogDebug:                   *commonCmdData.LogDebug,
+		ProgressTablePrintInterval: time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
+		ReleaseHistoryLimit:        *commonCmdData.ReleasesHistoryMax,
+		ReleaseName:                releaseName,
+		ReleaseNamespace:           releaseNamespace,
+		ReleaseStorageDriver:       action.ReleaseStorageDriver(os.Getenv("HELM_DRIVER")),
 	}); err != nil {
-		return err
+		return fmt.Errorf("release uninstall: %w", err)
 	}
 
-	dontFailIfNoRelease := true
-	helmUninstallCmd := helm_v3.NewUninstallCmd(actionConfig, logboek.Context(ctx).OutStream(), helm_v3.UninstallCmdOptions{
-		StagesSplitter:      helm.NewStagesSplitter(),
-		DeleteNamespace:     &cmdData.WithNamespace,
-		DeleteHooks:         &cmdData.WithHooks,
-		DontFailIfNoRelease: &dontFailIfNoRelease,
-	})
-
-	logboek.Context(ctx).Default().LogFDetails("Using namespace: %s\n", namespace)
-	logboek.Context(ctx).Default().LogFDetails("Using release: %s\n", release)
-
-	if cmdData.WithNamespace {
-		// TODO: solve lock release + delete-namespace case
-		return helmUninstallCmd.RunE(helmUninstallCmd, []string{release})
-	} else {
-		if _, err := actionConfig.Releases.History(release); errors.Is(err, driver.ErrReleaseNotFound) {
-			logboek.Context(ctx).Default().LogFDetails("No such release %q\n", release)
-			return nil
-		}
-
-		return command_helpers.LockReleaseWrapper(ctx, release, lockManager, func() error {
-			return helmUninstallCmd.RunE(helmUninstallCmd, []string{release})
-		})
-	}
+	return nil
 }
 
 func getNamespaceAndRelease(
