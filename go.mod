@@ -382,5 +382,5 @@ require (
 replace (
 	github.com/deislabs/oras => github.com/werf/3p-oras v0.9.1-0.20240115121544-03962ecbd40a // upstream not maintained
 	github.com/jaguilar/vt100 => github.com/tonistiigi/vt100 v0.0.0-20190402012908-ad4c4a574305 // upstream not maintained
-	helm.sh/helm/v3 => github.com/werf/3p-helm/v3 v3.0.0-20240625152754-fd19c59e2682 // helm 3
+	helm.sh/helm/v3 => github.com/werf/3p-helm/v3 v3.0.0-20240628131457-bbcfb26e2839 // helm 3
 )
