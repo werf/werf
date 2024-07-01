@@ -381,11 +381,7 @@ func (m *StorageManager) getImageInfoFromContainerBackend(ctx context.Context, r
 }
 
 func (m *StorageManager) getImageInfoFromRegistry(ctx context.Context, ref string, dockerRegistry docker_registry.GenericApiInterface) (*image.Info, error) {
-	cfg, err := dockerRegistry.GetRepoImageConfigFile(ctx, ref)
-	if err != nil {
-		return nil, err
-	}
-	return docker_registry.NewImageInfoFromRegistryConfig(ref, cfg), nil
+	return dockerRegistry.GetRepoImage(ctx, ref)
 }
 
 func (m *StorageManager) LockStageImage(ctx context.Context, imageName string) error {
