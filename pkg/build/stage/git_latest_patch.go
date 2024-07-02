@@ -70,7 +70,7 @@ func (s *GitLatestPatchStage) SelectSuitableStage(ctx context.Context, c Conveyo
 	if err != nil {
 		return nil, fmt.Errorf("unable to select cache images ancestors by git mappings: %w", err)
 	}
-	return s.selectStageByOldestCreationTimestamp(ancestorsImages)
+	return s.selectStageByOldestCreationTs(ancestorsImages)
 }
 
 func (s *GitLatestPatchStage) GetNextStageDependencies(ctx context.Context, c Conveyor) (string, error) {

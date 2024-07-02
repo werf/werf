@@ -195,12 +195,12 @@ func (s *BaseStage) IsEmpty(_ context.Context, _ Conveyor, _ *StageImage) (bool,
 	return false, nil
 }
 
-func (s *BaseStage) selectStageByOldestCreationTimestamp(stages []*imagePkg.StageDescription) (*imagePkg.StageDescription, error) {
+func (s *BaseStage) selectStageByOldestCreationTs(stages []*imagePkg.StageDescription) (*imagePkg.StageDescription, error) {
 	var oldestStage *imagePkg.StageDescription
 	for _, stageDesc := range stages {
 		if oldestStage == nil {
 			oldestStage = stageDesc
-		} else if stageDesc.StageID.UniqueIDAsTime().Before(oldestStage.StageID.UniqueIDAsTime()) {
+		} else if stageDesc.StageID.CreationTsToTime().Before(oldestStage.StageID.CreationTsToTime()) {
 			oldestStage = stageDesc
 		}
 	}
@@ -268,7 +268,7 @@ ScanImages:
 }
 
 func (s *BaseStage) SelectSuitableStage(_ context.Context, c Conveyor, stages []*imagePkg.StageDescription) (*imagePkg.StageDescription, error) {
-	return s.selectStageByOldestCreationTimestamp(stages)
+	return s.selectStageByOldestCreationTs(stages)
 }
 
 func (s *BaseStage) PrepareImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) error {

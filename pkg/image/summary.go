@@ -12,7 +12,7 @@ type Summary struct {
 
 type ImagesList []Summary
 
-// FIXME(multiarch): take into account multiarch stages, which does not use uniqueID
+// FIXME(multiarch): take into account multiarch stages, which does not use creationTs
 func (list ImagesList) ConvertToStages() ([]StageID, error) {
 	var stagesList []StageID
 
@@ -29,10 +29,10 @@ func (list ImagesList) ConvertToStages() ([]StageID, error) {
 				continue
 			}
 
-			if digest, uniqueID, err := getDigestAndUniqueIDFromLocalStageImageTag(tag); err != nil {
+			if digest, creationTs, err := getDigestAndCreationTsFromLocalStageImageTag(tag); err != nil {
 				return nil, err
 			} else {
-				stagesList = append(stagesList, *NewStageID(digest, uniqueID))
+				stagesList = append(stagesList, *NewStageID(digest, creationTs))
 			}
 		}
 	}
@@ -40,11 +40,11 @@ func (list ImagesList) ConvertToStages() ([]StageID, error) {
 	return stagesList, nil
 }
 
-func getDigestAndUniqueIDFromLocalStageImageTag(repoStageImageTag string) (string, int64, error) {
+func getDigestAndCreationTsFromLocalStageImageTag(repoStageImageTag string) (string, int64, error) {
 	parts := strings.SplitN(repoStageImageTag, "-", 2)
-	if uniqueID, err := ParseUniqueIDAsTimestamp(parts[1]); err != nil {
-		return "", 0, fmt.Errorf("unable to parse unique id %s as timestamp: %w", parts[1], err)
+	if creationTs, err := ParseCreationTs(parts[1]); err != nil {
+		return "", 0, fmt.Errorf("unable to parse value %q as creation timestamp: %w", parts[1], err)
 	} else {
-		return parts[0], uniqueID, nil
+		return parts[0], creationTs, nil
 	}
 }

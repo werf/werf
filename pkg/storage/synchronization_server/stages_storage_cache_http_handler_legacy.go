@@ -11,7 +11,9 @@ import (
 
 type StageIDLegacy struct {
 	Signature string `json:"signature"`
-	UniqueID  int64  `json:"uniqueID"`
+
+	// FIXME: rename to CreationTs
+	CreationTs int64 `json:"uniqueID"`
 }
 
 func NewStagesStorageCacheHttpHandlerLegacy(stagesStorageCache StagesStorageCacheInterface) *StagesStorageCacheHttpHandlerLegacy {
@@ -51,7 +53,7 @@ func (handler *StagesStorageCacheHttpHandlerLegacy) handleGetAllStages() func(w 
 			found, stages, err := handler.StagesStorageCache.GetAllStages(context.Background(), request.ProjectName)
 
 			for _, s := range stages {
-				response.Stages = append(response.Stages, StageIDLegacy{Signature: s.Digest, UniqueID: s.UniqueID})
+				response.Stages = append(response.Stages, StageIDLegacy{Signature: s.Digest, CreationTs: s.CreationTs})
 			}
 			response.Found = found
 			response.Err.Error = err
@@ -100,7 +102,7 @@ func (handler *StagesStorageCacheHttpHandlerLegacy) handleGetStagesBySignature()
 			logboek.Debug().LogF("StagesStorageCacheHttpHandlerLegacy -- GetStagesBySignature request %#v\n", request)
 			found, stages, err := handler.StagesStorageCache.GetStagesByDigest(context.Background(), request.ProjectName, request.Signature)
 			for _, s := range stages {
-				response.Stages = append(response.Stages, StageIDLegacy{Signature: s.Digest, UniqueID: s.UniqueID})
+				response.Stages = append(response.Stages, StageIDLegacy{Signature: s.Digest, CreationTs: s.CreationTs})
 			}
 			response.Found = found
 			response.Err.Error = err
@@ -127,7 +129,7 @@ func (handler *StagesStorageCacheHttpHandlerLegacy) handleStoreStagesBySignature
 			logboek.Debug().LogF("StagesStorageCacheHttpHandlerLegacy -- StoreStagesBySignature request %#v\n", request)
 			var stages []image.StageID
 			for _, s := range request.Stages {
-				stages = append(stages, *image.NewStageID(s.Signature, s.UniqueID))
+				stages = append(stages, *image.NewStageID(s.Signature, s.CreationTs))
 			}
 			response.Err.Error = handler.StagesStorageCache.StoreStagesByDigest(context.Background(), request.ProjectName, request.Signature, stages)
 			logboek.Debug().LogF("StagesStorageCacheHttpHandlerLegacy -- StoreStagesBySignature response %#v\n", response)

@@ -43,7 +43,7 @@ func (s *GitArchiveStage) SelectSuitableStage(ctx context.Context, c Conveyor, s
 	if err != nil {
 		return nil, fmt.Errorf("unable to select cache images ancestors by git mappings: %w", err)
 	}
-	return s.selectStageByOldestCreationTimestamp(ancestorsStages)
+	return s.selectStageByOldestCreationTs(ancestorsStages)
 }
 
 // TODO: 1.3 add git mapping type (dir, file, ...) to gitArchive stage digest
