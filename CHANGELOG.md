@@ -1,5 +1,14 @@
 # Changelog
 
+### [2.6.5](https://www.github.com/werf/werf/compare/v2.6.4...v2.6.5) (2024-07-02)
+
+
+### Bug Fixes
+
+* **build, stapel:** fix fromLatest does not work properly with index manifest ([2561268](https://www.github.com/werf/werf/commit/25612689d026e7b72d53de117f8f585750c781d7))
+* **build:** fix `panic: got bad timestamp ""` when Created not present in base image ([0e06711](https://www.github.com/werf/werf/commit/0e0671135c09a85b84e58c9209f74a9e43839cd4))
+* **deploy:** werf helm ugprade aborts if last release Pending ([a85cfc0](https://www.github.com/werf/werf/commit/a85cfc0f39d5a88701baff26ce78981f13c82812))
+
 ### [2.6.4](https://www.github.com/werf/werf/compare/v2.6.3...v2.6.4) (2024-06-26)
 
 
