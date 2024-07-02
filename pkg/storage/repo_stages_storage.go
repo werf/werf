@@ -192,7 +192,7 @@ func (storage *RepoStagesStorage) DeleteRepo(ctx context.Context) error {
 	return storage.DockerRegistry.DeleteRepo(ctx, storage.RepoAddress)
 }
 
-func (storage *RepoStagesStorage) GetStagesIDsByDigest(ctx context.Context, _, digest string, opts ...Option) ([]image.StageID, error) {
+func (storage *RepoStagesStorage) GetStagesIDsByDigest(ctx context.Context, _, digest string, parentStageCreationTs int64, opts ...Option) ([]image.StageID, error) {
 	var res []image.StageID
 
 	o := makeOptions(opts...)
@@ -237,6 +237,9 @@ func (storage *RepoStagesStorage) GetStagesIDsByDigest(ctx context.Context, _, d
 					continue
 				}
 				return nil, fmt.Errorf("unable to get digest and creation timestamp from tag %q: %w", tag, err)
+			} else if parentStageCreationTs > creationTs {
+				logboek.Context(ctx).Debug().LogF("Skip stage %s (parent stage creation timestamp %d is greater than the stage creation timestamp %d)\n", tag, parentStageCreationTs, creationTs)
+				continue
 			} else {
 				stageID := image.NewStageID(digest, creationTs)
 
