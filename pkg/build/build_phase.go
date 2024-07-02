@@ -395,7 +395,7 @@ func (phase *BuildPhase) publishMultiplatformImageMetadata(ctx context.Context, 
 
 	primaryStagesStorage := phase.Conveyor.StorageManager.GetStagesStorage()
 
-	fullImageName := primaryStagesStorage.ConstructStageImageName(phase.Conveyor.ProjectName(), img.GetStageID().Digest, img.GetStageID().UniqueID)
+	fullImageName := primaryStagesStorage.ConstructStageImageName(phase.Conveyor.ProjectName(), img.GetStageID().Digest, img.GetStageID().CreationTs)
 	platforms := img.GetPlatforms()
 
 	container_backend.LogImageName(ctx, fullImageName)
@@ -619,7 +619,7 @@ func (phase *BuildPhase) publishImageGitMetadata(ctx context.Context, imageName 
 
 	stagesStorage := phase.Conveyor.StorageManager.GetStagesStorage()
 
-	fullImageName := stagesStorage.ConstructStageImageName(phase.Conveyor.ProjectName(), stageID.Digest, stageID.UniqueID)
+	fullImageName := stagesStorage.ConstructStageImageName(phase.Conveyor.ProjectName(), stageID.Digest, stageID.CreationTs)
 	logboek.Context(ctx).Info().LogF("name: %s\n", fullImageName)
 	logboek.Context(ctx).Info().LogF("commits:\n")
 
@@ -1168,7 +1168,7 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 		}
 
 		// use newly built image
-		newStageImageName, uniqueID := phase.Conveyor.StorageManager.GenerateStageUniqueID(stg.GetDigest(), stages)
+		newStageImageName, stageCreationTs := phase.Conveyor.StorageManager.GenerateStageCreationTs(stg.GetDigest(), stages)
 		phase.Conveyor.UnsetStageImage(stageImage.Image.Name())
 		stageImage.Image.SetName(newStageImageName)
 		phase.Conveyor.SetStageImage(stageImage)
@@ -1178,7 +1178,7 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 				return fmt.Errorf("unable to store stage %s digest %s image %s into repo %s: %w", stg.LogDetailedName(), stg.GetDigest(), stageImage.Image.Name(), phase.Conveyor.StorageManager.GetStagesStorage().String(), err)
 			}
 
-			if desc, err := phase.Conveyor.StorageManager.GetStagesStorage().GetStageDescription(ctx, phase.Conveyor.ProjectName(), *imagePkg.NewStageID(stg.GetDigest(), uniqueID)); err != nil {
+			if desc, err := phase.Conveyor.StorageManager.GetStagesStorage().GetStageDescription(ctx, phase.Conveyor.ProjectName(), *imagePkg.NewStageID(stg.GetDigest(), stageCreationTs)); err != nil {
 				return fmt.Errorf("unable to get stage %s digest %s image %s description from repo %s after stages has been stored into repo: %w", stg.LogDetailedName(), stg.GetDigest(), stageImage.Image.Name(), phase.Conveyor.StorageManager.GetStagesStorage().String(), err)
 			} else {
 				stageImage.Image.SetStageDescription(desc)

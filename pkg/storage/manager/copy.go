@@ -44,7 +44,7 @@ func (m *StorageManager) copyStageFromLocalStorage(ctx context.Context, src *sto
 	}
 
 	newImg := opts.LegacyImage.GetCopy()
-	destImageName := dest.ConstructStageImageName(m.ProjectName, stageID.Digest, stageID.UniqueID)
+	destImageName := dest.ConstructStageImageName(m.ProjectName, stageID.Digest, stageID.CreationTs)
 
 	if err := opts.ContainerBackend.RenameImage(ctx, newImg, destImageName, false); err != nil {
 		return nil, fmt.Errorf("unable to rename image %s to %s: %w", opts.LegacyImage.Name(), destImageName, err)

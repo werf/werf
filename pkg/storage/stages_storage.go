@@ -43,9 +43,9 @@ type StagesStorage interface {
 	CheckStageCustomTag(ctx context.Context, stageDescription *image.StageDescription, tag string) error
 	DeleteStageCustomTag(ctx context.Context, tag string) error
 
-	RejectStage(ctx context.Context, projectName, digest string, uniqueID int64) error
+	RejectStage(ctx context.Context, projectName, digest string, creationTs int64) error
 
-	ConstructStageImageName(projectName, digest string, uniqueID int64) string
+	ConstructStageImageName(projectName, digest string, creationTs int64) string
 
 	// FetchImage will create a local image in the container-runtime
 	FetchImage(ctx context.Context, img container_backend.LegacyImageInterface) error

@@ -7,32 +7,34 @@ import (
 )
 
 type StageID struct {
-	Digest          string `json:"digest"`
-	UniqueID        int64  `json:"uniqueID"`
-	IsMultiplatform bool   `json:"isMultiplatform"`
+	Digest string `json:"digest"`
+
+	// FIXME: rename to CreationTs / update cacheVersion
+	CreationTs      int64 `json:"uniqueID"`
+	IsMultiplatform bool  `json:"isMultiplatform"`
 }
 
-func NewStageID(digest string, uniqueID int64) *StageID {
+func NewStageID(digest string, creationTs int64) *StageID {
 	return &StageID{
 		Digest:          digest,
-		UniqueID:        uniqueID,
-		IsMultiplatform: (uniqueID == 0),
+		CreationTs:      creationTs,
+		IsMultiplatform: creationTs == 0,
 	}
 }
 
 func (id StageID) String() string {
-	if id.UniqueID == 0 {
+	if id.CreationTs == 0 {
 		return id.Digest
 	}
-	return fmt.Sprintf("%s-%d", id.Digest, id.UniqueID)
+	return fmt.Sprintf("%s-%d", id.Digest, id.CreationTs)
 }
 
-func (id StageID) UniqueIDAsTime() time.Time {
-	return time.Unix(id.UniqueID/1000, id.UniqueID%1000)
+func (id StageID) CreationTsToTime() time.Time {
+	return time.Unix(id.CreationTs/1000, id.CreationTs%1000)
 }
 
 func (id StageID) IsEqual(another StageID) bool {
-	return (id.Digest == another.Digest) && (id.UniqueID == another.UniqueID)
+	return (id.Digest == another.Digest) && (id.CreationTs == another.CreationTs)
 }
 
 type StageDescription struct {
@@ -40,8 +42,8 @@ type StageDescription struct {
 	Info    *Info    `json:"info"`
 }
 
-func ParseUniqueIDAsTimestamp(uniqueID string) (int64, error) {
-	if timestamp, err := strconv.ParseInt(uniqueID, 10, 64); err != nil {
+func ParseCreationTs(creationTs string) (int64, error) {
+	if timestamp, err := strconv.ParseInt(creationTs, 10, 64); err != nil {
 		return 0, err
 	} else {
 		return timestamp, nil
@@ -50,7 +52,7 @@ func ParseUniqueIDAsTimestamp(uniqueID string) (int64, error) {
 
 func (desc *StageDescription) GetCopy() *StageDescription {
 	return &StageDescription{
-		StageID: NewStageID(desc.StageID.Digest, desc.StageID.UniqueID),
+		StageID: NewStageID(desc.StageID.Digest, desc.StageID.CreationTs),
 		Info:    desc.Info.GetCopy(),
 	}
 }
