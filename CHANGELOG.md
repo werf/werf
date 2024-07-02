@@ -1,5 +1,13 @@
 # Changelog
 
+### [1.2.317](https://www.github.com/werf/werf/compare/v1.2.316...v1.2.317) (2024-07-02)
+
+
+### Bug Fixes
+
+* **build, stapel:** fix fromLatest does not work properly with index manifest ([9573cb5](https://www.github.com/werf/werf/commit/9573cb59b2d19ae9b863d8e1b0dee2712a0b9f01))
+* **build:** fix `panic: got bad timestamp ""` when Created not present in base image ([3353690](https://www.github.com/werf/werf/commit/3353690e12d3f5ba80cbf6aa348e88ba42628a90))
+
 ### [1.2.316](https://www.github.com/werf/werf/compare/v1.2.315...v1.2.316) (2024-06-26)
 
 
