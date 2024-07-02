@@ -32,7 +32,7 @@ groups:
       - name: ea
         version: 1.2.316
       - name: stable
-        version: 1.2.315
+        version: 1.2.316
       - name: rock-solid
         version: 1.2.315
   - name: "2"
@@ -40,10 +40,10 @@ groups:
       - name: alpha
         version: 2.6.4
       - name: beta
-        version: 2.6.1
+        version: 2.6.4
       - name: ea
-        version: 2.6.0
+        version: 2.6.1
       - name: stable
-        version: 2.5.0
+        version: 2.6.0
       - name: rock-solid
-        version: 2.4.1
+        version: 2.5.0
