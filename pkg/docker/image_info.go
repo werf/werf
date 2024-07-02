@@ -22,6 +22,13 @@ func NewInfoFromInspect(ref string, inspect *types.ImageInspect) *image.Info {
 		}
 	}
 
+	var created string
+	if inspect.Created != "" {
+		created = inspect.Created
+	} else {
+		created = "1970-01-01T00:00:00Z"
+	}
+
 	return &image.Info{
 		Name:              ref,
 		Repository:        repository,
@@ -29,7 +36,7 @@ func NewInfoFromInspect(ref string, inspect *types.ImageInspect) *image.Info {
 		Labels:            inspect.Config.Labels,
 		OnBuild:           inspect.Config.OnBuild,
 		Env:               inspect.Config.Env,
-		CreatedAtUnixNano: image.MustParseTimestampString(inspect.Created).UnixNano(),
+		CreatedAtUnixNano: image.MustParseTimestampString(created).UnixNano(),
 		RepoDigest:        repoDigest,
 		ID:                inspect.ID,
 		ParentID:          parentID,
