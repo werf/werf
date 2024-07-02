@@ -702,6 +702,15 @@ func (phase *BuildPhase) getPrevNonEmptyStageImageSize() int64 {
 	return 0
 }
 
+func (phase *BuildPhase) getPrevNonEmptyStageCreationTs() int64 {
+	if phase.StagesIterator.PrevNonEmptyStage != nil {
+		if phase.StagesIterator.PrevNonEmptyStage.GetStageImage().Image.GetStageDescription() != nil {
+			return phase.StagesIterator.PrevNonEmptyStage.GetStageImage().Image.GetStageDescription().StageID.CreationTs
+		}
+	}
+	return 0
+}
+
 func (phase *BuildPhase) OnImageStage(ctx context.Context, img *image.Image, stg stage.Interface) error {
 	return phase.StagesIterator.OnImageStage(ctx, img, stg, func(img *image.Image, stg stage.Interface, isEmpty bool) error {
 		if isEmpty {
@@ -874,7 +883,7 @@ func (phase *BuildPhase) findAndFetchStageFromSecondaryStagesStorage(ctx context
 
 ScanSecondaryStagesStorageList:
 	for _, secondaryStagesStorage := range storageManager.GetSecondaryStagesStorageList() {
-		secondaryStages, err := storageManager.GetStagesByDigestFromStagesStorageWithCache(ctx, stg.LogDetailedName(), stg.GetDigest(), secondaryStagesStorage)
+		secondaryStages, err := storageManager.GetStagesByDigestFromStagesStorageWithCache(ctx, stg.LogDetailedName(), stg.GetDigest(), phase.getPrevNonEmptyStageCreationTs(), secondaryStagesStorage)
 		if err != nil {
 			return false, err
 		} else {
@@ -942,7 +951,7 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, s
 		Do(phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Lock)
 
 	storageManager := phase.Conveyor.StorageManager
-	stages, err := storageManager.GetStagesByDigestWithCache(ctx, stg.LogDetailedName(), stageDigest)
+	stages, err := storageManager.GetStagesByDigestWithCache(ctx, stg.LogDetailedName(), stageDigest, phase.getPrevNonEmptyStageCreationTs())
 	if err != nil {
 		return false, phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Unlock, err
 	}
@@ -1143,7 +1152,7 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 		defer unlockStage()
 	}
 
-	if stages, err := phase.Conveyor.StorageManager.GetStagesByDigest(ctx, stg.LogDetailedName(), stg.GetDigest()); err != nil {
+	if stages, err := phase.Conveyor.StorageManager.GetStagesByDigest(ctx, stg.LogDetailedName(), stg.GetDigest(), phase.getPrevNonEmptyStageCreationTs()); err != nil {
 		return err
 	} else {
 		stageDesc, err := phase.Conveyor.StorageManager.SelectSuitableStage(ctx, phase.Conveyor, stg, stages)
