@@ -117,7 +117,7 @@ func (storage *LocalStagesStorage) GetStagesIDs(ctx context.Context, projectName
 	return images.ConvertToStages()
 }
 
-func (storage *LocalStagesStorage) GetStagesIDsByDigest(ctx context.Context, projectName, digest string, opts ...Option) ([]image.StageID, error) {
+func (storage *LocalStagesStorage) GetStagesIDsByDigest(ctx context.Context, projectName, digest string, parentStageCreationTs int64, _ ...Option) ([]image.StageID, error) {
 	imagesOpts := container_backend.ImagesOptions{}
 	imagesOpts.Filters = append(imagesOpts.Filters, util.NewPair("reference", fmt.Sprintf(LocalStage_ImageRepoFormat, projectName)))
 	// NOTE digest already depends on build-cache-version
@@ -127,7 +127,23 @@ func (storage *LocalStagesStorage) GetStagesIDsByDigest(ctx context.Context, pro
 	if err != nil {
 		return nil, fmt.Errorf("unable to get docker images: %w", err)
 	}
-	return images.ConvertToStages()
+
+	stagesIDs, err := images.ConvertToStages()
+	if err != nil {
+		return nil, fmt.Errorf("unable to convert images to stages: %w", err)
+	}
+
+	var resultStageIDs []image.StageID
+	for _, stageID := range stagesIDs {
+		if parentStageCreationTs > stageID.CreationTs {
+			logboek.Context(ctx).Debug().LogF("Skip stage %s (parent stage creation timestamp %d is greater than the stage creation timestamp %d)\n", stageID.String(), parentStageCreationTs, stageID.CreationTs)
+			continue
+		}
+
+		resultStageIDs = append(resultStageIDs, stageID)
+	}
+
+	return resultStageIDs, nil
 }
 
 func (storage *LocalStagesStorage) GetStageDescription(ctx context.Context, projectName string, stageID image.StageID) (*image.StageDescription, error) {

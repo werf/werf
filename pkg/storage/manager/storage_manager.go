@@ -70,10 +70,10 @@ type StorageManagerInterface interface {
 	GetImageInfo(ctx context.Context, ref string, opts StorageOptions) (*image.Info, error)
 
 	LockStageImage(ctx context.Context, imageName string) error
-	GetStagesByDigest(ctx context.Context, stageName, stageDigest string) ([]*image.StageDescription, error)
-	GetStagesByDigestWithCache(ctx context.Context, stageName, stageDigest string) ([]*image.StageDescription, error)
-	GetStagesByDigestFromStagesStorage(ctx context.Context, stageName, stageDigest string, stagesStorage storage.StagesStorage) ([]*image.StageDescription, error)
-	GetStagesByDigestFromStagesStorageWithCache(ctx context.Context, stageName, stageDigest string, stagesStorage storage.StagesStorage) ([]*image.StageDescription, error)
+	GetStagesByDigest(ctx context.Context, stageName, stageDigest string, parentStageCreationTs int64) ([]*image.StageDescription, error)
+	GetStagesByDigestWithCache(ctx context.Context, stageName, stageDigest string, parentStageCreationTs int64) ([]*image.StageDescription, error)
+	GetStagesByDigestFromStagesStorage(ctx context.Context, stageName, stageDigest string, parentStageCreationTs int64, stagesStorage storage.StagesStorage) ([]*image.StageDescription, error)
+	GetStagesByDigestFromStagesStorageWithCache(ctx context.Context, stageName, stageDigest string, parentStageCreationTs int64, stagesStorage storage.StagesStorage) ([]*image.StageDescription, error)
 	GetStageDescriptionList(ctx context.Context) ([]*image.StageDescription, error)
 	GetStageDescriptionListWithCache(ctx context.Context) ([]*image.StageDescription, error)
 	GetFinalStageDescriptionList(ctx context.Context) ([]*image.StageDescription, error)
@@ -744,16 +744,16 @@ func (m *StorageManager) SelectSuitableStage(ctx context.Context, c stage.Convey
 	return stageDesc, nil
 }
 
-func (m *StorageManager) GetStagesByDigestWithCache(ctx context.Context, stageName, stageDigest string) ([]*image.StageDescription, error) {
-	return m.GetStagesByDigestFromStagesStorageWithCache(ctx, stageName, stageDigest, m.StagesStorage)
+func (m *StorageManager) GetStagesByDigestWithCache(ctx context.Context, stageName, stageDigest string, parentStageCreationTs int64) ([]*image.StageDescription, error) {
+	return m.GetStagesByDigestFromStagesStorageWithCache(ctx, stageName, stageDigest, parentStageCreationTs, m.StagesStorage)
 }
 
-func (m *StorageManager) GetStagesByDigest(ctx context.Context, stageName, stageDigest string) ([]*image.StageDescription, error) {
-	return m.GetStagesByDigestFromStagesStorage(ctx, stageName, stageDigest, m.StagesStorage)
+func (m *StorageManager) GetStagesByDigest(ctx context.Context, stageName, stageDigest string, parentStageCreationTs int64) ([]*image.StageDescription, error) {
+	return m.GetStagesByDigestFromStagesStorage(ctx, stageName, stageDigest, parentStageCreationTs, m.StagesStorage)
 }
 
-func (m *StorageManager) GetStagesByDigestFromStagesStorageWithCache(ctx context.Context, stageName, stageDigest string, stagesStorage storage.StagesStorage) ([]*image.StageDescription, error) {
-	cachedStageDescriptionList, err := m.getStagesByDigestFromStagesStorage(ctx, stageName, stageDigest, stagesStorage, storage.WithCache())
+func (m *StorageManager) GetStagesByDigestFromStagesStorageWithCache(ctx context.Context, stageName, stageDigest string, parentStageCreationTs int64, stagesStorage storage.StagesStorage) ([]*image.StageDescription, error) {
+	cachedStageDescriptionList, err := m.getStagesByDigestFromStagesStorage(ctx, stageName, stageDigest, parentStageCreationTs, stagesStorage, storage.WithCache())
 	if err != nil {
 		return nil, err
 	}
@@ -762,15 +762,15 @@ func (m *StorageManager) GetStagesByDigestFromStagesStorageWithCache(ctx context
 		return cachedStageDescriptionList, nil
 	}
 
-	return m.getStagesByDigestFromStagesStorage(ctx, stageName, stageDigest, stagesStorage)
+	return m.getStagesByDigestFromStagesStorage(ctx, stageName, stageDigest, parentStageCreationTs, stagesStorage)
 }
 
-func (m *StorageManager) GetStagesByDigestFromStagesStorage(ctx context.Context, stageName, stageDigest string, stagesStorage storage.StagesStorage) ([]*image.StageDescription, error) {
-	return m.getStagesByDigestFromStagesStorage(ctx, stageName, stageDigest, stagesStorage)
+func (m *StorageManager) GetStagesByDigestFromStagesStorage(ctx context.Context, stageName, stageDigest string, parentStageCreationTs int64, stagesStorage storage.StagesStorage) ([]*image.StageDescription, error) {
+	return m.getStagesByDigestFromStagesStorage(ctx, stageName, stageDigest, parentStageCreationTs, stagesStorage)
 }
 
-func (m *StorageManager) getStagesByDigestFromStagesStorage(ctx context.Context, stageName, stageDigest string, stagesStorage storage.StagesStorage, opts ...storage.Option) ([]*image.StageDescription, error) {
-	stageIDs, err := m.getStagesIDsByDigestFromStagesStorage(ctx, stageName, stageDigest, stagesStorage, opts...)
+func (m *StorageManager) getStagesByDigestFromStagesStorage(ctx context.Context, stageName, stageDigest string, parentStageCreationTs int64, stagesStorage storage.StagesStorage, opts ...storage.Option) ([]*image.StageDescription, error) {
+	stageIDs, err := m.getStagesIDsByDigestFromStagesStorage(ctx, stageName, stageDigest, parentStageCreationTs, stagesStorage, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get stages ids from %s by digest %s for stage %s: %w", stagesStorage.String(), stageDigest, stageName, err)
 	}
@@ -813,12 +813,12 @@ func (m *StorageManager) getWithLocalManifestCacheOption() bool {
 	return m.StagesStorage.Address() != storage.LocalStorageAddress
 }
 
-func (m *StorageManager) getStagesIDsByDigestFromStagesStorage(ctx context.Context, stageName, stageDigest string, stagesStorage storage.StagesStorage, opts ...storage.Option) ([]image.StageID, error) {
+func (m *StorageManager) getStagesIDsByDigestFromStagesStorage(ctx context.Context, stageName, stageDigest string, parentStageCreationTs int64, stagesStorage storage.StagesStorage, opts ...storage.Option) ([]image.StageID, error) {
 	var stageIDs []image.StageID
 	if err := logboek.Context(ctx).Info().LogProcess("Get %s stages by digest %s from storage", stageName, stageDigest).
 		DoError(func() error {
 			var err error
-			stageIDs, err = stagesStorage.GetStagesIDsByDigest(ctx, m.ProjectName, stageDigest, opts...)
+			stageIDs, err = stagesStorage.GetStagesIDsByDigest(ctx, m.ProjectName, stageDigest, parentStageCreationTs, opts...)
 			if err != nil {
 				return fmt.Errorf("error getting project %s stage %s images from storage: %w", m.StagesStorage.String(), stageDigest, err)
 			}
