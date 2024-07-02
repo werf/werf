@@ -3,7 +3,6 @@ package build_phase_test
 import (
 	"fmt"
 	"os"
-	"strconv"
 	"strings"
 	"sync"
 
@@ -17,12 +16,10 @@ import (
 )
 
 type StageInfo struct {
-	ImageID               string
-	Repository            string
-	Tag                   string
-	Digest                string
-	UniqueID              string
-	CreatedAtUnixMillisec int64
+	ImageID    string
+	Repository string
+	Tag        string
+	Digest     string
 }
 
 func ExtractStageInfoFromOutputLine(stageInfo *StageInfo, line string) *StageInfo {
@@ -41,12 +38,6 @@ func ExtractStageInfoFromOutputLine(stageInfo *StageInfo, line string) *StageInf
 
 		sigAndID := strings.SplitN(stageInfo.Tag, "-", 2)
 		stageInfo.Digest = sigAndID[0]
-		stageInfo.UniqueID = sigAndID[1]
-
-		ts, err := strconv.ParseInt(stageInfo.UniqueID, 10, 64)
-		Expect(err).To(BeNil())
-
-		stageInfo.CreatedAtUnixMillisec = ts
 	}
 
 	return stageInfo
@@ -158,7 +149,7 @@ var _ = Describe("Build phase", func() {
 			Expect(firstCommitInstallStage.ImageID).NotTo(Equal(secondCommitInstallStage.ImageID))
 			Expect(firstCommitInstallStage.Repository).To(Equal(secondCommitInstallStage.Repository))
 			Expect(firstCommitInstallStage.Digest).To(Equal(secondCommitInstallStage.Digest))
-			Expect(firstCommitInstallStage.UniqueID).NotTo(Equal(secondCommitInstallStage.UniqueID))
+			Expect(firstCommitInstallStage.CreationTs).NotTo(Equal(secondCommitInstallStage.CreationTs))
 			Expect(firstCommitInstallStage.CreatedAtUnixMillisec > secondCommitInstallStage.CreatedAtUnixMillisec).To(BeTrue(), "second stage should be saved into stages-storage earlier than first")
 
 			By("first ~/install stage saved into the stages storage should be")
@@ -191,7 +182,7 @@ var _ = Describe("Build phase", func() {
 			Expect(secondCommitInstallStageOnRetry.ImageID).To(Equal(secondCommitInstallStage.ImageID))
 			Expect(secondCommitInstallStageOnRetry.Repository).To(Equal(secondCommitInstallStage.Repository))
 			Expect(secondCommitInstallStageOnRetry.Digest).To(Equal(secondCommitInstallStage.Digest))
-			Expect(secondCommitInstallStageOnRetry.UniqueID).To(Equal(secondCommitInstallStage.UniqueID))
+			Expect(secondCommitInstallStageOnRetry.CreationTs).To(Equal(secondCommitInstallStage.CreationTs))
 		})
 	})
 })

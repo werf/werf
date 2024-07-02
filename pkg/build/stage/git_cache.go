@@ -26,7 +26,7 @@ func (s *GitCacheStage) SelectSuitableStage(ctx context.Context, c Conveyor, sta
 	if err != nil {
 		return nil, fmt.Errorf("unable to select cache images ancestors by git mappings: %w", err)
 	}
-	return s.selectStageByOldestCreationTimestamp(ancestorsImages)
+	return s.selectStageByOldestCreationTs(ancestorsImages)
 }
 
 func (s *GitCacheStage) IsEmpty(ctx context.Context, c Conveyor, prevBuiltImage *StageImage) (bool, error) {

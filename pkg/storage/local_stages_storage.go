@@ -16,9 +16,9 @@ import (
 )
 
 const (
-	LocalStage_ImageRepoFormat         = "%s"
-	LocalStage_ImageFormatWithUniqueID = "%s:%s-%d"
-	LocalStage_ImageFormat             = "%s:%s"
+	LocalStage_ImageRepoFormat           = "%s"
+	LocalStage_ImageFormatWithCreationTs = "%s:%s-%d"
+	LocalStage_ImageFormat               = "%s:%s"
 
 	LocalImportMetadata_ImageNameFormat = "werf-import-metadata/%s"
 	LocalImportMetadata_TagFormat       = "%s"
@@ -131,7 +131,7 @@ func (storage *LocalStagesStorage) GetStagesIDsByDigest(ctx context.Context, pro
 }
 
 func (storage *LocalStagesStorage) GetStageDescription(ctx context.Context, projectName string, stageID image.StageID) (*image.StageDescription, error) {
-	stageImageName := storage.ConstructStageImageName(projectName, stageID.Digest, stageID.UniqueID)
+	stageImageName := storage.ConstructStageImageName(projectName, stageID.Digest, stageID.CreationTs)
 	info, err := storage.ContainerBackend.GetImageInfo(ctx, stageImageName, container_backend.GetImageInfoOpts{})
 	if err != nil {
 		return nil, fmt.Errorf("unable to get image %s info: %w", stageImageName, err)
@@ -139,7 +139,7 @@ func (storage *LocalStagesStorage) GetStageDescription(ctx context.Context, proj
 
 	if info != nil {
 		return &image.StageDescription{
-			StageID: image.NewStageID(stageID.Digest, stageID.UniqueID),
+			StageID: image.NewStageID(stageID.Digest, stageID.CreationTs),
 			Info:    info,
 		}, nil
 	}
@@ -197,15 +197,15 @@ func (storage *LocalStagesStorage) DeleteStageCustomTag(ctx context.Context, tag
 	return fmt.Errorf("not implemented")
 }
 
-func (storage *LocalStagesStorage) RejectStage(ctx context.Context, projectName, digest string, uniqueID int64) error {
+func (storage *LocalStagesStorage) RejectStage(_ context.Context, _, _ string, _ int64) error {
 	return nil
 }
 
-func (storage *LocalStagesStorage) ConstructStageImageName(projectName, digest string, uniqueID int64) string {
-	if uniqueID == 0 {
+func (storage *LocalStagesStorage) ConstructStageImageName(projectName, digest string, creationTs int64) string {
+	if creationTs == 0 {
 		return fmt.Sprintf(LocalStage_ImageFormat, projectName, digest)
 	}
-	return fmt.Sprintf(LocalStage_ImageFormatWithUniqueID, projectName, digest, uniqueID)
+	return fmt.Sprintf(LocalStage_ImageFormatWithCreationTs, projectName, digest, creationTs)
 }
 
 func (storage *LocalStagesStorage) FetchImage(ctx context.Context, img container_backend.LegacyImageInterface) error {
