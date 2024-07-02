@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.6.6](https://www.github.com/werf/werf/compare/v2.6.5...v2.6.6) (2024-07-02)
+
+
+### Bug Fixes
+
+* **build:** fix stage selection does not take into account parent creation timestamp ([741ecea](https://www.github.com/werf/werf/commit/741ecea116e526973deddb223ec0755bb0f9b4f4))
+
 ### [2.6.5](https://www.github.com/werf/werf/compare/v2.6.4...v2.6.5) (2024-07-02)
 
 
