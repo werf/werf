@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.6.7](https://www.github.com/werf/werf/compare/v2.6.6...v2.6.7) (2024-07-03)
+
+
+### Bug Fixes
+
+* **deploy:** dependency between ClusterRoleBinding in non-release namespace and ClusterRole not detected ([236f4d3](https://www.github.com/werf/werf/commit/236f4d3b649525c79ed3c3a9e8ef87827a38ca3a))
+
 ### [2.6.6](https://www.github.com/werf/werf/compare/v2.6.5...v2.6.6) (2024-07-02)
 
 
