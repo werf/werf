@@ -17,6 +17,8 @@ type Info struct {
 	Name       string `json:"name"`
 	Repository string `json:"repository"`
 	Tag        string `json:"tag"`
+
+	// FIXME remove RepoDigest from Info and use Digest everywhere instead cause it's more clear and repo part is not needed.
 	// repo@sha256:digest
 	RepoDigest string `json:"repoDigest"`
 
@@ -33,7 +35,16 @@ type Info struct {
 }
 
 func (info *Info) GetDigest() string {
-	return strings.TrimPrefix(info.RepoDigest, fmt.Sprintf("%s@", info.Repository))
+	if info.RepoDigest == "" {
+		return ""
+	}
+
+	parts := strings.Split(info.RepoDigest, "@")
+	if len(parts) != 2 {
+		panic(fmt.Sprintf("bad repo digest %q", info.RepoDigest))
+	}
+
+	return parts[1]
 }
 
 func (info *Info) SetCreatedAtUnix(seconds int64) {
