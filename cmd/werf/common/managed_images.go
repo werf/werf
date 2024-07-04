@@ -19,20 +19,17 @@ func GetManagedImageName(userSpecifiedImageName string) string {
 }
 
 func GetManagedImagesNames(ctx context.Context, projectName string, stagesStorage storage.StagesStorage, werfConfig *config.WerfConfig) ([]string, error) {
-	var imagesNames []string
-	if managedImages, err := stagesStorage.GetManagedImages(ctx, projectName); err != nil {
+	var names []string
+	if publishedNames, err := stagesStorage.GetManagedImages(ctx, projectName); err != nil {
 		return nil, fmt.Errorf("unable to get managed images for project %q: %w", projectName, err)
 	} else {
-		imagesNames = append(imagesNames, managedImages...)
+		names = append(names, publishedNames...)
 	}
-	for _, image := range werfConfig.StapelImages {
-		imagesNames = append(imagesNames, image.Name)
-	}
-	for _, image := range werfConfig.ImagesFromDockerfile {
-		imagesNames = append(imagesNames, image.Name)
-	}
-	uniqImagesNames := util.UniqStrings(imagesNames)
-	sort.Strings(uniqImagesNames)
 
-	return uniqImagesNames, nil
+	names = append(names, werfConfig.GetImageNameList(false)...)
+
+	uniqNames := util.UniqStrings(names)
+	sort.Strings(uniqNames)
+
+	return uniqNames, nil
 }

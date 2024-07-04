@@ -5,11 +5,11 @@ import (
 	"github.com/werf/werf/v2/pkg/config"
 )
 
-func GetImagesToProcess(onlyImages []string, withoutImages bool) build.ImagesToProcess {
+func GetImagesToProcess(imageNameList []string, withoutImages bool) build.ImagesToProcess {
 	if withoutImages {
 		return build.NewImagesToProcess(nil, true)
-	} else if len(onlyImages) > 0 {
-		return build.NewImagesToProcess(onlyImages, false)
+	} else if len(imageNameList) > 0 {
+		return build.NewImagesToProcess(imageNameList, false)
 	}
 	return build.NewImagesToProcess(nil, false)
 }
@@ -19,9 +19,9 @@ func GetImageNameList(imagesToProcess build.ImagesToProcess, werfConfig *config.
 		return []string{}
 	}
 
-	if len(imagesToProcess.OnlyImages) != 0 {
-		return imagesToProcess.OnlyImages
+	if len(imagesToProcess.ImageNameList) > 0 {
+		return imagesToProcess.ImageNameList
 	}
 
-	return werfConfig.GetImageNameList()
+	return werfConfig.GetImageNameList(true)
 }

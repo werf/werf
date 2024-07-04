@@ -7,26 +7,18 @@ import (
 )
 
 var (
-	imageNameFormat     = "⛵ image %s"
-	artifactNameFormat  = "🛸 artifact %s"
-	imageMetadataFormat = "⚙ image %s metadata"
+	finalImageNameFormat        = "🛳️  image %s"
+	intermediateImageNameFormat = "🏗️️  image %s"
 )
 
-func ImageLogName(name string, isArtifact bool) string {
-	if !isArtifact {
-		if name == "" {
-			name = "~"
-		}
+func ImageLogName(name string) string {
+	if name == "" {
+		name = "~"
 	}
-
 	return name
 }
 
-func ImageMetadataLogProcess(name string) string {
-	return fmt.Sprintf(imageMetadataFormat, name)
-}
-
-func ImageLogProcessName(name string, isArtifact bool, targetPlatform string) string {
+func ImageLogProcessName(name string, isFinal bool, targetPlatform string) string {
 	appendPlatformFunc := func(name string) string {
 		if targetPlatform == "" {
 			return name
@@ -34,27 +26,26 @@ func ImageLogProcessName(name string, isArtifact bool, targetPlatform string) st
 		return fmt.Sprintf("%s [%s]", name, targetPlatform)
 	}
 
-	logName := ImageLogName(name, isArtifact)
+	logName := ImageLogName(name)
 
-	if !isArtifact {
-		return appendPlatformFunc(fmt.Sprintf(imageNameFormat, logName))
+	if isFinal {
+		return appendPlatformFunc(fmt.Sprintf(finalImageNameFormat, logName))
 	} else {
-		return appendPlatformFunc(fmt.Sprintf(artifactNameFormat, logName))
+		return appendPlatformFunc(fmt.Sprintf(intermediateImageNameFormat, logName))
 	}
 }
 
 func DisablePrettyLog() {
-	imageNameFormat = "image %s"
-	imageMetadataFormat = "image %s metadata"
-	artifactNameFormat = "artifact %s"
+	finalImageNameFormat = "image %s"
+	intermediateImageNameFormat = "image %s"
 }
 
-func ImageDefaultStyle(isArtifact bool) color.Style {
+func ImageDefaultStyle(isFinal bool) color.Style {
 	var colors []color.Color
-	if isArtifact {
-		colors = []color.Color{color.FgCyan, color.Bold}
-	} else {
+	if isFinal {
 		colors = []color.Color{color.FgYellow, color.Bold}
+	} else {
+		colors = []color.Color{color.FgCyan, color.Bold}
 	}
 
 	return color.New(colors...)

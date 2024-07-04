@@ -35,7 +35,6 @@ import (
 	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
 	"github.com/werf/werf/v2/pkg/image"
-	"github.com/werf/werf/v2/pkg/logging"
 	"github.com/werf/werf/v2/pkg/ssh_agent"
 	"github.com/werf/werf/v2/pkg/storage/lrumeta"
 	"github.com/werf/werf/v2/pkg/storage/manager"
@@ -364,12 +363,13 @@ func run(ctx context.Context, pod, secret, namespace string, werfConfig *config.
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
 	imageName := cmdData.ImageName
-	if imageName == "" && len(werfConfig.GetAllImages()) == 1 {
-		imageName = werfConfig.GetAllImages()[0].GetName()
+	if imageName == "" && len(werfConfig.Images(true)) == 1 {
+		imageName = werfConfig.Images(true)[0].GetName()
 	}
 
-	if !werfConfig.HasImage(imageName) {
-		return fmt.Errorf("image %q is not defined in werf.yaml", logging.ImageLogName(imageName, false))
+	imagesToProcess := common.GetImagesToProcess([]string{imageName}, false)
+	if err := imagesToProcess.CheckImagesExistence(werfConfig); err != nil {
+		return err
 	}
 
 	stagesStorage, err := common.GetStagesStorage(ctx, containerBackend, &commonCmdData)
@@ -400,8 +400,6 @@ func run(ctx context.Context, pod, secret, namespace string, werfConfig *config.
 	storageManager := manager.NewStorageManager(projectName, stagesStorage, finalStagesStorage, secondaryStagesStorageList, cacheStagesStorageList, storageLockManager)
 
 	logboek.Context(ctx).Info().LogOptionalLn()
-
-	imagesToProcess := build.NewImagesToProcess([]string{imageName}, false)
 
 	conveyorOptions, err := common.GetConveyorOptions(ctx, &commonCmdData, imagesToProcess)
 	if err != nil {

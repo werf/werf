@@ -247,7 +247,7 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 		if len(targetPlatforms) == 1 {
 			img := images[0]
 
-			if img.IsFinal() && phase.Conveyor.StorageManager.GetFinalStagesStorage() != nil {
+			if img.IsFinal && phase.Conveyor.StorageManager.GetFinalStagesStorage() != nil {
 				if err := phase.publishFinalImage(
 					ctx, name, img,
 					phase.Conveyor.StorageManager.GetFinalStagesStorage(),
@@ -263,12 +263,7 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 				}
 			}
 		} else {
-			opts := image.MultiplatformImageOptions{
-				IsArtifact:              images[0].IsArtifact,
-				IsDockerfileImage:       images[0].IsDockerfileImage,
-				IsDockerfileTargetStage: images[0].IsDockerfileTargetStage,
-			}
-			img := image.NewMultiplatformImage(name, images, phase.Conveyor.StorageManager, opts)
+			img := image.NewMultiplatformImage(name, images)
 			phase.Conveyor.imagesTree.SetMultiplatformImage(img)
 
 			// TODO: Separate LocalStagesStorage and RepoStagesStorage interfaces, local should not include metadata publishing methods at all
@@ -287,7 +282,7 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 				}
 			}
 
-			if img.IsFinal() && phase.Conveyor.StorageManager.GetFinalStagesStorage() != nil {
+			if img.IsFinal && phase.Conveyor.StorageManager.GetFinalStagesStorage() != nil {
 				if _, isLocal := phase.Conveyor.StorageManager.GetStagesStorage().(*storage.LocalStagesStorage); !isLocal {
 					if err := phase.publishMultiplatformFinalImage(ctx, name, img, phase.Conveyor.StorageManager.GetFinalStagesStorage()); err != nil {
 						return err
@@ -361,7 +356,7 @@ func (phase *BuildPhase) publishImageMetadata(ctx context.Context, name string, 
 		}
 	}
 
-	if !img.IsFinal() {
+	if !img.IsFinal {
 		return nil
 	}
 

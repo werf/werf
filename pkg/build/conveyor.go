@@ -116,7 +116,7 @@ func NewConveyor(werfConfig *config.WerfConfig, giterminismManager giterminism_m
 			ContainerWerfDir:   c.containerWerfDir,
 			TmpDir:             c.tmpDir,
 		},
-		OnlyImages:    opts.OnlyImages,
+		ImageNameList: opts.ImageNameList,
 		WithoutImages: opts.WithoutImages,
 	})
 
@@ -145,12 +145,8 @@ func prepareConfigurationPlatforms(platforms []string) ([]string, error) {
 }
 
 func (c *Conveyor) GetImageTargetPlatforms(targetImageName string) ([]string, error) {
-	if img := c.werfConfig.GetStapelImage(targetImageName); img != nil {
-		return prepareConfigurationPlatforms(img.Platform)
-	} else if img := c.werfConfig.GetArtifact(targetImageName); img != nil {
-		return prepareConfigurationPlatforms(img.Platform)
-	} else if img := c.werfConfig.GetDockerfileImage(targetImageName); img != nil {
-		return prepareConfigurationPlatforms(img.Platform)
+	if image := c.werfConfig.GetImage(targetImageName); image != nil {
+		return prepareConfigurationPlatforms(image.Platform())
 	}
 	return nil, nil
 }
@@ -445,7 +441,7 @@ func (c *Conveyor) GetImageInfoGetters(opts imagePkg.InfoGetterOptions) ([]*imag
 
 func (c *Conveyor) GetExportedImages() (res []*image.Image) {
 	for _, img := range c.imagesTree.GetImages() {
-		if img.IsArtifact {
+		if !img.IsFinal {
 			continue
 		}
 		res = append(res, img)
@@ -456,7 +452,7 @@ func (c *Conveyor) GetExportedImages() (res []*image.Image) {
 func (c *Conveyor) GetImagesEnvArray() []string {
 	var envArray []string
 	for _, img := range c.imagesTree.GetImages() {
-		if img.IsArtifact {
+		if !img.IsFinal {
 			continue
 		}
 
@@ -477,25 +473,28 @@ func (c *Conveyor) checkContainerBackendSupported(ctx context.Context) error {
 		return nil
 	}
 
-	var stapelImagesWithAnsible []*config.StapelImage
-
-	for _, img := range c.werfConfig.StapelImages {
-		if img.Ansible != nil {
-			stapelImagesWithAnsible = append(stapelImagesWithAnsible, img)
+	// Check if ansible builder is used with buildah container backend.
+	{
+		var nameList []string
+		for _, i := range c.werfConfig.Images(false) {
+			switch imageOrArtifact := i.(type) {
+			case config.StapelImageInterface:
+				if imageOrArtifact.ImageBaseConfig().Ansible != nil {
+					nameList = append(nameList, fmt.Sprintf("%q", imageOrArtifact.GetName()))
+				}
+			case *config.ImageFromDockerfile:
+			default:
+				panic(fmt.Errorf("unexpected image type %T", imageOrArtifact))
+			}
 		}
-	}
 
-	if len(stapelImagesWithAnsible) > 0 {
-		var names []string
-		for _, img := range stapelImagesWithAnsible {
-			names = append(names, fmt.Sprintf("%q", img.GetName()))
-		}
-
-		return fmt.Errorf(`Unable to build stapel images [%s], which use ansible builder when buildah container backend is enabled.
+		if len(nameList) > 0 {
+			return fmt.Errorf(`Unable to build stapel images or/and artifacts (%s), which use ansible builder when buildah container backend is enabled.
 
 Please use shell builder instead, or select docker server backend to continue usage of ansible builder (disable buildah runtime by unsetting WERF_BUILDAH_MODE environment variable).
 
-It is recommended to use shell builder, because ansible builder will be deprecated soon.`, strings.Join(names, ", "))
+It is recommended to use shell builder, because ansible builder will be deprecated soon.`, strings.Join(nameList, ", "))
+		}
 	}
 
 	return nil

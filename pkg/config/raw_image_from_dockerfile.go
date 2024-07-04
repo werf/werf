@@ -129,7 +129,7 @@ func (c *rawImageFromDockerfile) toImageFromDockerfileDirective(giterminismManag
 	}
 
 	image.Staged = c.Staged || util.GetBoolEnvironmentDefaultFalse("WERF_FORCE_STAGED_DOCKERFILE")
-	image.Platform = append([]string{}, c.Platform...)
+	image.platform = append([]string{}, c.Platform...)
 	image.raw = c
 
 	if err := image.validate(giterminismManager); err != nil {

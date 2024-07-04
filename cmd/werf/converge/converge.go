@@ -282,7 +282,7 @@ func run(
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %w", err)
 	}
-	if err := werfConfig.CheckThatImagesExist(imagesToProcess.OnlyImages); err != nil {
+	if err := imagesToProcess.CheckImagesExistence(werfConfig); err != nil {
 		return err
 	}
 
@@ -303,7 +303,7 @@ func run(
 	var imagesInfoGetters []*image.InfoGetter
 	var imagesRepo string
 
-	if !imagesToProcess.WithoutImages && (len(werfConfig.StapelImages)+len(werfConfig.ImagesFromDockerfile) > 0) {
+	if imagesToProcess.HasImagesToProcess(werfConfig) {
 		stagesStorage, err := common.GetStagesStorage(ctx, containerBackend, &commonCmdData)
 		if err != nil {
 			return err

@@ -16,7 +16,7 @@ import (
 var (
 	commonCmdData common.CmdData
 	cmdData       struct {
-		imagesOnly bool
+		finalImagesOnly bool
 	}
 )
 
@@ -41,7 +41,23 @@ func NewCmd(ctx context.Context) *cobra.Command {
 		},
 	})
 
-	cmd.Flags().BoolVarP(&cmdData.imagesOnly, "images-only", "", false, "Show image names without artifacts")
+	// Setup final-images-only flag.
+	{
+		name := "final-images-only"
+		deprecatedName := "images-only"
+		for _, n := range []string{name, deprecatedName} {
+			// FIXME: it should be default behavior.
+			cmd.Flags().BoolVarP(&cmdData.finalImagesOnly, n, "", false, "Show only final images")
+		}
+
+		if err := cmd.Flags().MarkHidden(deprecatedName); err != nil {
+			panic(fmt.Errorf("error marking flag hidden: %w", err))
+		}
+
+		if err := cmd.Flags().MarkDeprecated(deprecatedName, fmt.Sprintf("use --%s instead", name)); err != nil {
+			panic(fmt.Errorf("error marking flag deprecated: %w", err))
+		}
+	}
 
 	common.SetupDir(&commonCmdData, cmd)
 	common.SetupGitWorkTree(&commonCmdData, cmd)
@@ -88,25 +104,11 @@ func run(ctx context.Context) error {
 		return err
 	}
 
-	for _, image := range werfConfig.StapelImages {
-		if image.Name == "" {
+	for _, imageName := range werfConfig.GetImageNameList(cmdData.finalImagesOnly) {
+		if imageName == "" {
 			fmt.Println("~")
 		} else {
-			fmt.Println(image.Name)
-		}
-	}
-
-	for _, image := range werfConfig.ImagesFromDockerfile {
-		if image.Name == "" {
-			fmt.Println("~")
-		} else {
-			fmt.Println(image.Name)
-		}
-	}
-
-	if !cmdData.imagesOnly {
-		for _, image := range werfConfig.Artifacts {
-			fmt.Println(image.Name)
+			fmt.Println(imageName)
 		}
 	}
 

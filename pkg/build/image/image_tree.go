@@ -8,8 +8,6 @@ import (
 	"reflect"
 	"sort"
 
-	"github.com/gookit/color"
-
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/types"
 	"github.com/werf/werf/v2/pkg/build/stage"
@@ -25,7 +23,7 @@ type ImagesTree struct {
 
 	werfConfig *config.WerfConfig
 
-	allImages  []*Image
+	images     []*Image
 	imagesSets ImagesSets
 
 	multiplatformImages []*MultiplatformImage
@@ -34,7 +32,7 @@ type ImagesTree struct {
 type ImagesTreeOptions struct {
 	CommonImageOptions
 
-	OnlyImages    []string
+	ImageNameList []string
 	WithoutImages bool
 }
 
@@ -46,7 +44,11 @@ func NewImagesTree(werfConfig *config.WerfConfig, opts ImagesTreeOptions) *Image
 }
 
 func (tree *ImagesTree) Calculate(ctx context.Context) error {
-	imageConfigSets, err := tree.werfConfig.GroupImagesByIndependentSets(tree.OnlyImages, tree.WithoutImages)
+	if tree.WithoutImages {
+		return nil
+	}
+
+	imageConfigSets, err := tree.werfConfig.GroupImagesByIndependentSets(tree.ImageNameList)
 	if err != nil {
 		return fmt.Errorf("unable to group werf config images by independent sets: %w", err)
 	}
@@ -83,18 +85,8 @@ func (tree *ImagesTree) Calculate(ctx context.Context) error {
 			commonImageOpts.ForceTargetPlatformLogging = (len(targetPlatforms) > 1)
 
 			for _, targetPlatform := range targetPlatforms {
-				var imageLogName string
-				var style color.Style
-
-				switch imageConfig := imageConfigI.(type) {
-				case config.StapelImageInterface:
-					imageLogName = logging.ImageLogProcessName(imageConfig.ImageBaseConfig().Name, imageConfig.IsArtifact(), targetPlatform)
-					style = ImageLogProcessStyle(imageConfig.IsArtifact())
-				case *config.ImageFromDockerfile:
-					imageLogName = logging.ImageLogProcessName(imageConfig.Name, false, targetPlatform)
-					style = ImageLogProcessStyle(false)
-				}
-
+ 				imageLogName := logging.ImageLogProcessName(imageConfigI.GetName(), imageConfigI.IsFinal(), targetPlatform)
+				style := ImageLogProcessStyle(imageConfigI.IsFinal())
 				err := logboek.Context(ctx).Info().LogProcess(imageLogName).
 					Options(func(options types.LogProcessOptionsInterface) {
 						options.Style(style)
@@ -109,7 +101,6 @@ func (tree *ImagesTree) Calculate(ctx context.Context) error {
 							if err != nil {
 								return fmt.Errorf("unable to map stapel config to images sets: %w", err)
 							}
-
 						case *config.ImageFromDockerfile:
 							newImagesSets, err = MapDockerfileConfigToImagesSets(ctx, imageConfig, targetPlatform, commonImageOpts)
 							if err != nil {
@@ -131,7 +122,7 @@ func (tree *ImagesTree) Calculate(ctx context.Context) error {
 	}
 
 	tree.imagesSets = builder.GetImagesSets()
-	tree.allImages = builder.GetAllImages()
+	tree.images = builder.GetImages()
 
 	return nil
 }
@@ -140,7 +131,7 @@ func (tree *ImagesTree) GetImage(name string) *Image {
 	return nil
 }
 
-func (tree *ImagesTree) GetImagesByName(finalOnly bool) []util.Pair[string, []*Image] {
+func (tree *ImagesTree) GetImagesByName(onlyFinal bool) []util.Pair[string, []*Image] {
 	images := make(map[string]map[string]*Image)
 	var names []string
 
@@ -153,15 +144,10 @@ func (tree *ImagesTree) GetImagesByName(finalOnly bool) []util.Pair[string, []*I
 	}
 
 	for _, img := range tree.GetImages() {
-		if finalOnly {
-			for _, finalImageName := range tree.werfConfig.GetAllImages() {
-				if finalImageName.GetName() == img.Name {
-					appendImage(img)
-				}
-			}
-		} else {
-			appendImage(img)
+		if onlyFinal && !img.IsFinal {
+			continue
 		}
+		appendImage(img)
 	}
 
 	var res []util.Pair[string, []*Image]
@@ -181,31 +167,26 @@ func (tree *ImagesTree) GetImagesByName(finalOnly bool) []util.Pair[string, []*I
 	return res
 }
 
-func (tree *ImagesTree) GetImagePlatformsByName(finalOnly bool) map[string][]string {
+func (tree *ImagesTree) GetImagePlatformsByName(onlyFinal bool) map[string][]string {
 	res := make(map[string][]string)
 	for _, img := range tree.GetImages() {
-		if finalOnly {
-			for _, finalImageName := range tree.werfConfig.GetAllImages() {
-				if finalImageName.GetName() == img.Name {
-					res[img.Name] = append(res[img.Name], img.TargetPlatform)
-				}
-			}
-		} else {
-			res[img.Name] = append(res[img.Name], img.TargetPlatform)
+		if onlyFinal && !img.IsFinal {
+			continue
 		}
+		res[img.Name] = append(res[img.Name], img.TargetPlatform)
 	}
 	return res
 }
 
 func (tree *ImagesTree) GetImagesNames() (res []string) {
-	for _, img := range tree.allImages {
+	for _, img := range tree.images {
 		res = util.UniqAppendString(res, img.Name)
 	}
 	return
 }
 
 func (tree *ImagesTree) GetImages() []*Image {
-	return tree.allImages
+	return tree.images
 }
 
 func (tree *ImagesTree) GetImagesSets() ImagesSets {

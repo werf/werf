@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
+	"github.com/werf/werf/v2/pkg/util"
 )
 
 type ImageFromDockerfile struct {
@@ -19,9 +20,9 @@ type ImageFromDockerfile struct {
 	SSH             string
 	Dependencies    []*Dependency
 	Staged          bool
-	Platform        []string
 
-	raw *rawImageFromDockerfile
+	platform []string
+	raw      *rawImageFromDockerfile
 }
 
 func (c *ImageFromDockerfile) validate(giterminismManager giterminism_manager.Interface) error {
@@ -59,4 +60,27 @@ func (c *ImageFromDockerfile) GetName() string {
 
 func (c *ImageFromDockerfile) IsStapel() bool {
 	return false
+}
+
+func (c *ImageFromDockerfile) IsFinal() bool {
+	return true
+}
+
+func (c *ImageFromDockerfile) Platform() []string {
+	return c.platform
+}
+
+func (c *ImageFromDockerfile) dependsOn() DependsOn {
+	var dependsOn DependsOn
+
+	for _, dep := range c.Dependencies {
+		dependsOn.Dependencies = append(dependsOn.Dependencies, dep.ImageName)
+	}
+	dependsOn.Dependencies = util.UniqStrings(dependsOn.Dependencies)
+
+	return dependsOn
+}
+
+func (c *ImageFromDockerfile) rawDoc() *doc {
+	return c.raw.doc
 }
