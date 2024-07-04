@@ -20,6 +20,7 @@ type StageInfo struct {
 	Repository string
 	Tag        string
 	Digest     string
+	CreationTs string
 }
 
 func ExtractStageInfoFromOutputLine(stageInfo *StageInfo, line string) *StageInfo {
@@ -38,6 +39,7 @@ func ExtractStageInfoFromOutputLine(stageInfo *StageInfo, line string) *StageInf
 
 		sigAndID := strings.SplitN(stageInfo.Tag, "-", 2)
 		stageInfo.Digest = sigAndID[0]
+		stageInfo.CreationTs = sigAndID[1]
 	}
 
 	return stageInfo
@@ -149,8 +151,7 @@ var _ = Describe("Build phase", func() {
 			Expect(firstCommitInstallStage.ImageID).NotTo(Equal(secondCommitInstallStage.ImageID))
 			Expect(firstCommitInstallStage.Repository).To(Equal(secondCommitInstallStage.Repository))
 			Expect(firstCommitInstallStage.Digest).To(Equal(secondCommitInstallStage.Digest))
-			Expect(firstCommitInstallStage.CreationTs).NotTo(Equal(secondCommitInstallStage.CreationTs))
-			Expect(firstCommitInstallStage.CreatedAtUnixMillisec > secondCommitInstallStage.CreatedAtUnixMillisec).To(BeTrue(), "second stage should be saved into stages-storage earlier than first")
+			Expect(firstCommitInstallStage.CreationTs > secondCommitInstallStage.CreationTs).To(BeTrue(), "second stage should be saved into stages-storage earlier than first")
 
 			By("first ~/install stage saved into the stages storage should be")
 
