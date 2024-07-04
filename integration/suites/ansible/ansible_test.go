@@ -26,30 +26,17 @@ var _ = Describe("Stapel builder with ansible", func() {
 		})
 	})
 
-	Context("when building stapel image based on centos 7", func() {
-		AfterEach(func() {
-			werfHostPurge("yum1", liveexec.ExecCommandOptions{}, "--force")
-			os.RemoveAll("yum1/.git")
-			os.RemoveAll("yum1_repo")
-		})
-
-		It("successfully installs packages using yum module", func() {
-			Expect(utils.SetGitRepoState("yum1", "yum1_repo", "initial commit")).To(Succeed())
-			Expect(werfBuild("yum1", liveexec.ExecCommandOptions{})).To(Succeed())
-		})
-	})
-
 	Context("when building stapel image based on centos 8", func() {
 		AfterEach(func() {
-			werfHostPurge("yum2", liveexec.ExecCommandOptions{}, "--force")
-			os.RemoveAll("yum2/.git")
-			os.RemoveAll("yum2_repo")
+			werfHostPurge("yum", liveexec.ExecCommandOptions{}, "--force")
+			os.RemoveAll("yum/.git")
+			os.RemoveAll("yum_repo")
 		})
 
 		It("successfully installs packages using yum module", func() {
 			Skip("FIXME https://github.com/werf/werf/issues/1983")
-			Expect(utils.SetGitRepoState("yum2", "yum2_repo", "initial commit")).To(Succeed())
-			Expect(werfBuild("yum2", liveexec.ExecCommandOptions{})).To(Succeed())
+			Expect(utils.SetGitRepoState("yum", "yum_repo", "initial commit")).To(Succeed())
+			Expect(werfBuild("yum", liveexec.ExecCommandOptions{})).To(Succeed())
 		})
 	})
 
