@@ -35,6 +35,8 @@ werf config list [options]
             should reside (default $WERF_DIR or current working directory)
       --env=''
             Use specified environment (default $WERF_ENV)
+      --final-images-only=false
+            Show only final images
       --git-work-tree=''
             Use specified git work tree dir (default $WERF_WORK_TREE or lookup for directory that   
             contains .git in the current or parent directories)
@@ -43,8 +45,6 @@ werf config list [options]
             (default $WERF_GITERMINISM_CONFIG or werf-giterminism.yaml in working directory)
       --home-dir=''
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
-      --images-only=false
-            Show image names without artifacts
       --log-color-mode='auto'
             Set log color mode.
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        

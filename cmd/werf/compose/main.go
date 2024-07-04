@@ -365,13 +365,14 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		if err != nil {
 			return fmt.Errorf("unable to load werf config: %w", err)
 		}
-		if err := werfConfig.CheckThatImagesExist(imagesToProcess.OnlyImages); err != nil {
+
+		if err := imagesToProcess.CheckImagesExistence(werfConfig); err != nil {
 			return err
 		}
 
 		projectName := werfConfig.Meta.Project
 
-		if !imagesToProcess.WithoutImages && (len(werfConfig.StapelImages)+len(werfConfig.ImagesFromDockerfile) > 0) {
+		if imagesToProcess.HasImagesToProcess(werfConfig) {
 			projectTmpDir, err := tmp_manager.CreateProjectDir(ctx)
 			if err != nil {
 				return fmt.Errorf("getting project tmp dir failed: %w", err)

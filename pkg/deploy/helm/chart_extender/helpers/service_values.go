@@ -33,10 +33,10 @@ func (d *ChartExtenderServiceValuesData) SetServiceValues(vals map[string]interf
 }
 
 type ServiceValuesOptions struct {
-	Namespace       string
-	Env             string
-	IsStub          bool
-	StubImagesNames []string
+	Namespace         string
+	Env               string
+	IsStub            bool
+	StubImageNameList []string
 	// disable env stub used in the werf-render command
 	DisableEnvStub bool
 	CommitHash     string
@@ -94,7 +94,7 @@ func GetServiceValues(ctx context.Context, projectName, repo string, imageInfoGe
 
 		werfInfo["is_stub"] = true
 		werfInfo["stub_image"] = stubImage
-		for _, name := range opts.StubImagesNames {
+		for _, name := range opts.StubImageNameList {
 			werfInfo["image"].(map[string]interface{})[name] = stubImage
 			werfInfo["tag"].(map[string]interface{})[name] = stubTag
 		}

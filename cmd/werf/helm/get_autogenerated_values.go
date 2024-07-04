@@ -155,7 +155,7 @@ func runGetServiceValues(ctx context.Context, imagesToProcess build.ImagesToProc
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %w", err)
 	}
-	if err := werfConfig.CheckThatImagesExist(imagesToProcess.OnlyImages); err != nil {
+	if err := imagesToProcess.CheckImagesExistence(werfConfig); err != nil {
 		return err
 	}
 

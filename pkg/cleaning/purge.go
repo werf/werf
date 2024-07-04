@@ -120,7 +120,7 @@ func (m *purgeManager) deleteImportsMetadata(ctx context.Context, importsMetadat
 func (m *purgeManager) deleteManagedImages(ctx context.Context, managedImages []string) error {
 	if m.DryRun {
 		for _, managedImage := range managedImages {
-			logboek.Context(ctx).Default().LogFDetails("  name: %s\n", logging.ImageLogName(managedImage, false))
+			logboek.Context(ctx).Default().LogFDetails("  name: %s\n", logging.ImageLogName(managedImage))
 			logboek.Context(ctx).LogOptionalLn()
 		}
 		return nil
@@ -137,7 +137,7 @@ func (m *purgeManager) deleteManagedImages(ctx context.Context, managedImages []
 			return nil
 		}
 
-		logboek.Context(ctx).Default().LogFDetails("  name: %s\n", logging.ImageLogName(managedImage, false))
+		logboek.Context(ctx).Default().LogFDetails("  name: %s\n", logging.ImageLogName(managedImage))
 
 		return nil
 	})

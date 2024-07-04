@@ -1404,27 +1404,28 @@ func GetIntrospectOptions(cmdData *CmdData, werfConfig *config.WerfConfig) (buil
 	}
 
 	introspectOptions := build.IntrospectOptions{}
-	for _, imageAndStage := range *cmdData.StagesToIntrospect {
+	for _, optionValue := range *cmdData.StagesToIntrospect {
 		var imageName, stageName string
+		{
+			parts := strings.SplitN(optionValue, "/", 2)
+			if len(parts) == 1 {
+				imageName = "*"
+				stageName = parts[0]
+			} else {
+				if parts[0] != "~" {
+					imageName = parts[0]
+				}
 
-		parts := strings.SplitN(imageAndStage, "/", 2)
-		if len(parts) == 1 {
-			imageName = "*"
-			stageName = parts[0]
-		} else {
-			if parts[0] != "~" {
-				imageName = parts[0]
+				stageName = parts[1]
 			}
-
-			stageName = parts[1]
 		}
 
-		if imageName != "*" && !werfConfig.HasImageOrArtifact(imageName) {
-			return introspectOptions, fmt.Errorf("specified image %s (%s) is not defined in werf.yaml", imageName, imageAndStage)
+		if imageName != "*" && werfConfig.GetImage(imageName) == nil {
+			return introspectOptions, fmt.Errorf("specified image %q (%q) is not defined in werf.yaml", imageName, optionValue)
 		}
 
 		if !isStageExist(stageName) {
-			return introspectOptions, fmt.Errorf("specified stage name %s (%s) is not exist", stageName, imageAndStage)
+			return introspectOptions, fmt.Errorf("specified stage name %q (%q) is not exist", stageName, optionValue)
 		}
 
 		introspectTarget := build.IntrospectTarget{ImageName: imageName, StageName: stageName}
