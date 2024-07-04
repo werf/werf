@@ -13,7 +13,6 @@ import (
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/git_repo/gitdata"
 	"github.com/werf/werf/pkg/image"
-	"github.com/werf/werf/pkg/logging"
 	"github.com/werf/werf/pkg/ssh_agent"
 	"github.com/werf/werf/pkg/storage/lrumeta"
 	"github.com/werf/werf/pkg/storage/manager"
@@ -163,12 +162,13 @@ func run(ctx context.Context, imageName string) error {
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
-	if imageName == "" && len(werfConfig.StapelImages) == 1 {
-		imageName = werfConfig.StapelImages[0].Name
+	if imageName == "" && len(werfConfig.Images(true)) == 1 {
+		imageName = werfConfig.Images(true)[0].GetName()
 	}
 
-	if !werfConfig.HasImage(imageName) {
-		return fmt.Errorf("image %q is not defined in werf.yaml", logging.ImageLogName(imageName, false))
+	imagesToProcess := common.GetImagesToProcess([]string{imageName}, false)
+	if err := imagesToProcess.CheckImagesExistence(werfConfig); err != nil {
+		return err
 	}
 
 	stagesStorage, err := common.GetStagesStorage(ctx, containerBackend, &commonCmdData)
@@ -198,8 +198,6 @@ func run(ctx context.Context, imageName string) error {
 	}
 
 	storageManager := manager.NewStorageManager(projectName, stagesStorage, finalStagesStorage, secondaryStagesStorageList, cacheStagesStorageList, storageLockManager)
-
-	imagesToProcess := build.NewImagesToProcess([]string{imageName}, false)
 
 	conveyorOptions, err := common.GetConveyorOptions(ctx, &commonCmdData, imagesToProcess)
 	if err != nil {

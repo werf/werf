@@ -45,8 +45,9 @@ type CommonImageOptions struct {
 
 type ImageOptions struct {
 	CommonImageOptions
-	IsArtifact, IsDockerfileImage, IsDockerfileTargetStage bool
-	DockerfileImageConfig                                  *config.ImageFromDockerfile
+	IsFinal               bool
+	DockerfileImageConfig *config.ImageFromDockerfile
+	IsDockerfileImage     bool
 
 	BaseImageReference        string
 	BaseImageName             string
@@ -66,13 +67,12 @@ func NewImage(ctx context.Context, targetPlatform, name string, baseImageType Ba
 	}
 
 	i := &Image{
-		Name:                    name,
-		CommonImageOptions:      opts.CommonImageOptions,
-		IsArtifact:              opts.IsArtifact,
-		IsDockerfileImage:       opts.IsDockerfileImage,
-		IsDockerfileTargetStage: opts.IsDockerfileTargetStage,
-		DockerfileImageConfig:   opts.DockerfileImageConfig,
-		TargetPlatform:          targetPlatform,
+		Name:                  name,
+		CommonImageOptions:    opts.CommonImageOptions,
+		IsFinal:               opts.IsFinal,
+		IsDockerfileImage:     opts.IsDockerfileImage,
+		DockerfileImageConfig: opts.DockerfileImageConfig,
+		TargetPlatform:        targetPlatform,
 
 		baseImageType:             baseImageType,
 		baseImageReference:        opts.BaseImageReference,
@@ -92,7 +92,7 @@ func NewImage(ctx context.Context, targetPlatform, name string, baseImageType Ba
 type Image struct {
 	CommonImageOptions
 
-	IsArtifact              bool
+	IsFinal                 bool
 	IsDockerfileImage       bool
 	IsDockerfileTargetStage bool
 	Name                    string
@@ -118,7 +118,7 @@ type Image struct {
 }
 
 func (i *Image) LogName() string {
-	return logging.ImageLogName(i.Name, i.IsArtifact)
+	return logging.ImageLogName(i.Name)
 }
 
 func (i *Image) ShouldLogPlatform() bool {
@@ -130,33 +130,27 @@ func (i *Image) LogDetailedName() string {
 	if i.ShouldLogPlatform() {
 		targetPlatformForLog = i.TargetPlatform
 	}
-	return logging.ImageLogProcessName(i.Name, i.IsArtifact, targetPlatformForLog)
+	return logging.ImageLogProcessName(i.Name, i.IsFinal, targetPlatformForLog)
 }
 
 func (i *Image) LogProcessStyle() color.Style {
-	return ImageLogProcessStyle(i.IsArtifact)
+	return ImageLogProcessStyle(i.IsFinal)
 }
 
 func (i *Image) LogTagStyle() color.Style {
-	return ImageLogTagStyle(i.IsArtifact)
+	return ImageLogTagStyle(i.IsFinal)
 }
 
-func ImageLogProcessStyle(isArtifact bool) color.Style {
-	return logging.ImageDefaultStyle(isArtifact)
+func ImageLogProcessStyle(isFinal bool) color.Style {
+	return logging.ImageDefaultStyle(isFinal)
 }
 
-func ImageLogTagStyle(isArtifact bool) color.Style {
-	return logging.ImageDefaultStyle(isArtifact)
+func ImageLogTagStyle(isFinal bool) color.Style {
+	return logging.ImageDefaultStyle(isFinal)
 }
 
-func (i *Image) IsFinal() bool {
-	if i.IsArtifact {
-		return false
-	}
-	if i.IsDockerfileImage && !i.IsDockerfileTargetStage {
-		return false
-	}
-	return true
+func (i *Image) IsBasedOnStage() bool {
+	return i.baseImageType == StageAsBaseImage
 }
 
 func (i *Image) SetStages(stages []stage.Interface) {

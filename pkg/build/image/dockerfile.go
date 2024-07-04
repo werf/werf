@@ -127,8 +127,8 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 		var err error
 		if baseStg := cfg.FindStage(stg.BaseName); baseStg != nil {
 			img, err = NewImage(ctx, targetPlatform, item.WerfImageName, StageAsBaseImage, ImageOptions{
+				IsFinal:                   dockerfileImageConfig.IsFinal() && item.IsTargetStage,
 				IsDockerfileImage:         true,
-				IsDockerfileTargetStage:   item.IsTargetStage,
 				DockerfileImageConfig:     dockerfileImageConfig,
 				CommonImageOptions:        opts,
 				BaseImageName:             baseStg.GetWerfImageName(),
@@ -142,7 +142,7 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 		} else {
 			img, err = NewImage(ctx, targetPlatform, item.WerfImageName, ImageFromRegistryAsBaseImage, ImageOptions{
 				IsDockerfileImage:         true,
-				IsDockerfileTargetStage:   item.IsTargetStage,
+				IsFinal:                   dockerfileImageConfig.IsFinal() && item.IsTargetStage,
 				DockerfileImageConfig:     dockerfileImageConfig,
 				CommonImageOptions:        opts,
 				BaseImageReference:        stg.BaseName,
@@ -244,10 +244,10 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 
 func mapLegacyDockerfileToImage(ctx context.Context, dockerfileImageConfig *config.ImageFromDockerfile, targetPlatform string, opts CommonImageOptions) (*Image, error) {
 	img, err := NewImage(ctx, targetPlatform, dockerfileImageConfig.Name, NoBaseImage, ImageOptions{
-		CommonImageOptions:      opts,
-		IsDockerfileImage:       true,
-		IsDockerfileTargetStage: true,
-		DockerfileImageConfig:   dockerfileImageConfig,
+		CommonImageOptions:    opts,
+		IsFinal:               dockerfileImageConfig.IsFinal(),
+		IsDockerfileImage:     true,
+		DockerfileImageConfig: dockerfileImageConfig,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("unable to create image %q: %w", dockerfileImageConfig.Name, err)

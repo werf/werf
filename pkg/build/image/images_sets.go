@@ -10,7 +10,7 @@ func NewImagesSetsBuilder() *ImagesSetsBuilder {
 }
 
 type ImagesSetsBuilder struct {
-	allImages  []*Image
+	images     []*Image
 	imagesSets ImagesSets
 	curSetInd  int
 	nextSetInd int
@@ -20,8 +20,8 @@ func (is *ImagesSetsBuilder) GetImagesSets() ImagesSets {
 	return is.imagesSets
 }
 
-func (is *ImagesSetsBuilder) GetAllImages() []*Image {
-	return is.allImages
+func (is *ImagesSetsBuilder) GetImages() []*Image {
+	return is.images
 }
 
 func (is *ImagesSetsBuilder) MergeImagesSets(newImagesSets [][]*Image) {
@@ -31,7 +31,7 @@ func (is *ImagesSetsBuilder) MergeImagesSets(newImagesSets [][]*Image) {
 		is.setImagesByInd(targetSetInd, append(targetSet, newSet...))
 
 		for _, img := range newSet {
-			is.allImages = append(is.allImages, img)
+			is.images = append(is.images, img)
 		}
 	}
 

@@ -3,15 +3,13 @@ package image
 import (
 	"github.com/werf/werf/pkg/image"
 	common_image "github.com/werf/werf/pkg/image"
-	"github.com/werf/werf/pkg/storage/manager"
 	"github.com/werf/werf/pkg/util"
 )
 
 type MultiplatformImage struct {
-	Name   string
-	Images []*Image
-
-	MultiplatformImageOptions
+	Name    string
+	IsFinal bool
+	Images  []*Image
 
 	calculatedDigest      string
 	stageID               common_image.StageID
@@ -19,15 +17,15 @@ type MultiplatformImage struct {
 	finalStageDescription *common_image.StageDescription
 }
 
-type MultiplatformImageOptions struct {
-	IsArtifact, IsDockerfileImage, IsDockerfileTargetStage bool
-}
+func NewMultiplatformImage(name string, images []*Image) *MultiplatformImage {
+	if len(images) == 0 {
+		panic("expected at least one image")
+	}
 
-func NewMultiplatformImage(name string, images []*Image, storageManager manager.StorageManagerInterface, opts MultiplatformImageOptions) *MultiplatformImage {
 	img := &MultiplatformImage{
-		Name:                      name,
-		Images:                    images,
-		MultiplatformImageOptions: opts,
+		Name:    name,
+		IsFinal: images[0].IsFinal,
+		Images:  images,
 	}
 
 	metaStageDeps := util.MapFuncToSlice(images, func(img *Image) string {
@@ -73,14 +71,4 @@ func (img *MultiplatformImage) GetStageDescription() *image.StageDescription {
 
 func (img *MultiplatformImage) SetStageDescription(desc *common_image.StageDescription) {
 	img.stageDescription = desc
-}
-
-func (img *MultiplatformImage) IsFinal() bool {
-	if img.IsArtifact {
-		return false
-	}
-	if img.IsDockerfileImage && !img.IsDockerfileTargetStage {
-		return false
-	}
-	return true
 }

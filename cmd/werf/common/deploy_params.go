@@ -50,18 +50,11 @@ func KeyValueArrayToMap(pairs []string, sep string) (map[string]string, error) {
 	return keyValueMap, nil
 }
 
-func StubImageInfoGetters(werfConfig *config.WerfConfig) (list []*image.InfoGetter) {
-	var imagesNames []string
-	for _, imageConfig := range werfConfig.StapelImages {
-		imagesNames = append(imagesNames, imageConfig.Name)
-	}
-	for _, imageConfig := range werfConfig.ImagesFromDockerfile {
-		imagesNames = append(imagesNames, imageConfig.Name)
+func StubImageInfoGetters(werfConfig *config.WerfConfig) []*image.InfoGetter {
+	var getters []*image.InfoGetter
+	for _, imageName := range werfConfig.GetImageNameList(true) {
+		getters = append(getters, image.NewInfoGetter(imageName, fmt.Sprintf("%s:%s", StubRepoAddress, StubTag), image.InfoGetterOptions{}))
 	}
 
-	for _, imageName := range imagesNames {
-		list = append(list, image.NewInfoGetter(imageName, fmt.Sprintf("%s:%s", StubRepoAddress, StubTag), image.InfoGetterOptions{}))
-	}
-
-	return list
+	return getters
 }

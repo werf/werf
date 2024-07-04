@@ -6,6 +6,7 @@ import (
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/pkg/giterminism_manager"
+	"github.com/werf/werf/pkg/util"
 )
 
 type StapelImageBase struct {
@@ -21,9 +22,10 @@ type StapelImageBase struct {
 	Mount            []*Mount
 	Import           []*Import
 	Dependencies     []*Dependency
-	Platform         []string
 
-	raw *rawStapelImage
+	final    bool
+	platform []string
+	raw      *rawStapelImage
 }
 
 func (c *StapelImageBase) GetName() string {
@@ -34,20 +36,51 @@ func (c *StapelImageBase) IsStapel() bool {
 	return true
 }
 
-func (c *StapelImageBase) imports() []*Import {
-	return c.Import
-}
-
-func (c *StapelImageBase) dependencies() []*Dependency {
-	return c.Dependencies
-}
-
 func (c *StapelImageBase) ImageBaseConfig() *StapelImageBase {
 	return c
 }
 
 func (c *StapelImageBase) IsArtifact() bool {
 	return false
+}
+
+func (c *StapelImageBase) IsFinal() bool {
+	return c.final
+}
+
+func (c *StapelImageBase) Platform() []string {
+	return c.platform
+}
+
+func (c *StapelImageBase) dependsOn() DependsOn {
+	var dependsOn DependsOn
+
+	if c.FromImageName != "" {
+		dependsOn.From = c.FromImageName
+	} else if c.FromArtifactName != "" {
+		dependsOn.From = c.FromArtifactName
+	}
+
+	for _, imp := range c.Import {
+		if imp.ImageName != "" {
+			dependsOn.Imports = append(dependsOn.Imports, imp.ImageName)
+		}
+
+		if imp.ArtifactName != "" {
+			dependsOn.Imports = append(dependsOn.Imports, imp.ArtifactName)
+		}
+	}
+
+	for _, dep := range c.Dependencies {
+		dependsOn.Dependencies = append(dependsOn.Dependencies, dep.ImageName)
+	}
+	dependsOn.Dependencies = util.UniqStrings(dependsOn.Dependencies)
+
+	return dependsOn
+}
+
+func (c *StapelImageBase) rawDoc() *doc {
+	return c.raw.doc
 }
 
 func (c *StapelImageBase) exportsAutoExcluding() error {

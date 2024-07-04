@@ -225,7 +225,7 @@ func runRender(ctx context.Context, imagesToProcess build.ImagesToProcess) error
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %w", err)
 	}
-	if err := werfConfig.CheckThatImagesExist(imagesToProcess.OnlyImages); err != nil {
+	if err := imagesToProcess.CheckImagesExistence(werfConfig); err != nil {
 		return err
 	}
 
@@ -275,9 +275,9 @@ func runRender(ctx context.Context, imagesToProcess build.ImagesToProcess) error
 	var imagesInfoGetters []*image.InfoGetter
 	var imagesRepo string
 	var isStub bool
-	var stubImagesNames []string
+	var stubImageNameList []string
 
-	if !imagesToProcess.WithoutImages && (len(werfConfig.StapelImages)+len(werfConfig.ImagesFromDockerfile) > 0) {
+	if imagesToProcess.HasImagesToProcess(werfConfig) {
 		addr, err := commonCmdData.Repo.GetAddress()
 		if err != nil {
 			return err
@@ -365,13 +365,7 @@ func runRender(ctx context.Context, imagesToProcess build.ImagesToProcess) error
 		} else {
 			imagesRepo = "REPO"
 			isStub = true
-
-			for _, img := range werfConfig.StapelImages {
-				stubImagesNames = append(stubImagesNames, img.Name)
-			}
-			for _, img := range werfConfig.ImagesFromDockerfile {
-				stubImagesNames = append(stubImagesNames, img.Name)
-			}
+			stubImageNameList = append(stubImageNameList, werfConfig.GetImageNameList(true)...)
 		}
 	}
 
@@ -414,7 +408,7 @@ func runRender(ctx context.Context, imagesToProcess build.ImagesToProcess) error
 		Env:                      *commonCmdData.Environment,
 		IsStub:                   isStub,
 		DisableEnvStub:           true,
-		StubImagesNames:          stubImagesNames,
+		StubImageNameList:        stubImageNameList,
 		SetDockerConfigJsonValue: *commonCmdData.SetDockerConfigJsonValue,
 		DockerConfigPath:         *commonCmdData.DockerConfig,
 		CommitHash:               headHash,
