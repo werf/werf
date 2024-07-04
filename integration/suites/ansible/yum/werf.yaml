@@ -1,5 +1,5 @@
 configVersion: 1
-project: ansible-yum2
+project: ansible-yum
 ---
 image: centos-8
 from: centos:8
