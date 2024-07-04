@@ -28,13 +28,13 @@ type WerfConfigOptions struct {
 	Env                 string
 }
 
-func RenderWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath string, imagesToProcess []string, giterminismManager giterminism_manager.Interface, opts WerfConfigOptions) error {
+func RenderWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath string, imageNameList []string, giterminismManager giterminism_manager.Interface, opts WerfConfigOptions) error {
 	_, werfConfig, err := GetWerfConfig(ctx, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, giterminismManager, opts)
 	if err != nil {
 		return err
 	}
 
-	if len(imagesToProcess) == 0 {
+	if len(imageNameList) == 0 {
 		_, werfConfigRenderContent, err := renderWerfConfigYaml(ctx, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, giterminismManager, opts.Env)
 		if err != nil {
 			return err
@@ -42,25 +42,20 @@ func RenderWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfCo
 
 		fmt.Print(werfConfigRenderContent)
 		return nil
-	}
-
-	if err := werfConfig.CheckThatImagesExist(imagesToProcess); err != nil {
-		return err
-	}
-
-	var imageDocs []string
-	for _, imageToProcess := range imagesToProcess {
-		if i := werfConfig.GetArtifact(imageToProcess); i != nil {
-			imageDocs = append(imageDocs, string(i.raw.doc.Content))
-		} else if i := werfConfig.GetStapelImage(imageToProcess); i != nil {
-			imageDocs = append(imageDocs, string(i.raw.doc.Content))
-		} else if i := werfConfig.GetDockerfileImage(imageToProcess); i != nil {
-			imageDocs = append(imageDocs, string(i.raw.doc.Content))
+	} else {
+		images, err := werfConfig.GetSpecificImages(imageNameList, false)
+		if err != nil {
+			return fmt.Errorf("unable to get specific images: %w", err)
 		}
-	}
 
-	fmt.Print(strings.Join(imageDocs, "---\n"))
-	return nil
+		var docs []string
+		for _, image := range images {
+			docs = append(docs, string(image.rawDoc().Content))
+		}
+
+		fmt.Print(strings.Join(docs, "---\n"))
+		return nil
+	}
 }
 
 func GetWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath string, giterminismManager giterminism_manager.Interface, opts WerfConfigOptions) (string, *WerfConfig, error) {
@@ -491,62 +486,52 @@ func emptyDocContent(content []byte) bool {
 }
 
 func prepareWerfConfig(giterminismManager giterminism_manager.Interface, rawImages []*rawStapelImage, rawImagesFromDockerfile []*rawImageFromDockerfile, meta *Meta) (*WerfConfig, error) {
-	var stapelImages []*StapelImage
-	var imagesFromDockerfile []*ImageFromDockerfile
-	var artifacts []*StapelImageArtifact
+	var images []ImageInterface
 
-	for _, rawImageFromDockerfile := range rawImagesFromDockerfile {
-		if sameImages, err := rawImageFromDockerfile.toImageFromDockerfileDirectives(giterminismManager); err != nil {
+	for _, rawImage := range rawImagesFromDockerfile {
+		imageList, err := rawImage.toImageFromDockerfileDirectives(giterminismManager)
+		if err != nil {
 			return nil, err
-		} else {
-			imagesFromDockerfile = append(imagesFromDockerfile, sameImages...)
+		}
+
+		for _, image := range imageList {
+			images = append(images, image)
 		}
 	}
 
 	for _, rawImage := range rawImages {
 		if rawImage.stapelImageType() == "images" {
-			if sameImages, err := rawImage.toStapelImageDirectives(giterminismManager); err != nil {
+			imageList, err := rawImage.toStapelImageDirectives(giterminismManager)
+			if err != nil {
 				return nil, err
-			} else {
-				stapelImages = append(stapelImages, sameImages...)
+			}
+
+			for _, image := range imageList {
+				images = append(images, image)
 			}
 		} else {
-			if imageArtifact, err := rawImage.toStapelImageArtifactDirectives(giterminismManager); err != nil {
+			if image, err := rawImage.toStapelImageArtifactDirectives(giterminismManager); err != nil {
 				return nil, err
 			} else {
-				artifacts = append(artifacts, imageArtifact)
+				images = append(images, image)
 			}
 		}
 	}
 
 	werfConfig := &WerfConfig{
-		Meta:                 meta,
-		StapelImages:         stapelImages,
-		ImagesFromDockerfile: imagesFromDockerfile,
-		Artifacts:            artifacts,
+		Meta:   meta,
+		images: images,
 	}
 
-	if err := werfConfig.validateImagesNames(); err != nil {
+	if err := werfConfig.validateConflictBetweenImagesNames(); err != nil {
 		return nil, err
 	}
 
-	if err := werfConfig.validateImagesFrom(); err != nil {
-		return nil, err
-	}
-
-	if err := werfConfig.associateImportsArtifacts(); err != nil {
-		return nil, err
-	}
-
-	if err := werfConfig.exportsAutoExcluding(); err != nil {
+	if err := werfConfig.validateRelatedImages(); err != nil {
 		return nil, err
 	}
 
 	if err := werfConfig.validateInfiniteLoopBetweenRelatedImages(); err != nil {
-		return nil, err
-	}
-
-	if err := werfConfig.validateDependencies(); err != nil {
 		return nil, err
 	}
 

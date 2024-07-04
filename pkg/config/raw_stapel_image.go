@@ -118,6 +118,7 @@ func (c *rawStapelImage) toStapelImageArtifactDirectives(giterminismManager gite
 	if imageArtifact.StapelImageBase, err = c.toStapelImageBaseDirective(giterminismManager, c.Artifact, true); err != nil {
 		return nil, err
 	}
+	imageArtifact.StapelImageBase.final = false
 
 	if err := c.validateStapelImageArtifactDirective(imageArtifact); err != nil {
 		return nil, err
@@ -134,6 +135,7 @@ func (c *rawStapelImage) toStapelImageDirective(giterminismManager giterminism_m
 	} else {
 		image.StapelImageBase = imageBase
 	}
+	image.StapelImageBase.final = true
 
 	if c.RawDocker != nil {
 		if docker, err := c.RawDocker.toDirective(); err != nil {
@@ -216,7 +218,7 @@ func (c *rawStapelImage) toStapelImageBaseDirective(giterminismManager gitermini
 	imageBase.FromArtifactName = c.FromArtifact
 	imageBase.FromLatest = c.FromLatest
 	imageBase.FromCacheVersion = c.FromCacheVersion
-	imageBase.Platform = append([]string{}, c.Platform...)
+	imageBase.platform = append([]string{}, c.Platform...)
 
 	for _, git := range c.RawGit {
 		if git.gitType() == "local" {
@@ -256,6 +258,10 @@ func (c *rawStapelImage) toStapelImageBaseDirective(giterminismManager gitermini
 		} else {
 			imageBase.Import = append(imageBase.Import, importArtifactDirective)
 		}
+	}
+
+	if err := imageBase.exportsAutoExcluding(); err != nil {
+		return nil, err
 	}
 
 	if isArtifact && len(c.RawDependencies) > 0 {

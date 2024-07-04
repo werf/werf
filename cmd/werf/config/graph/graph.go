@@ -95,11 +95,12 @@ func NewCmd(ctx context.Context) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if err := werfConfig.CheckThatImagesExist(imagesToProcess.OnlyImages); err != nil {
+
+			if err := imagesToProcess.CheckImagesExistence(werfConfig); err != nil {
 				return err
 			}
 
-			graphList, err := werfConfig.GetImageGraphList(imagesToProcess.OnlyImages, imagesToProcess.WithoutImages)
+			graphList, err := werfConfig.GetImageGraphList(imagesToProcess.ImageNameList)
 			if err != nil {
 				return err
 			}

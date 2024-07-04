@@ -28,12 +28,11 @@ func MapStapelConfigToImagesSets(ctx context.Context, metaConfig *config.Meta, s
 func mapStapelConfigToImage(ctx context.Context, metaConfig *config.Meta, stapelImageConfig config.StapelImageInterface, targetPlatform string, opts CommonImageOptions) (*Image, error) {
 	imageBaseConfig := stapelImageConfig.ImageBaseConfig()
 	imageName := imageBaseConfig.Name
-	imageArtifact := stapelImageConfig.IsArtifact()
 	from, fromImageName, fromLatest := getFromFields(imageBaseConfig)
 
 	imageOpts := ImageOptions{
 		CommonImageOptions: opts,
-		IsArtifact:         imageArtifact,
+		IsFinal:            stapelImageConfig.IsFinal(),
 	}
 
 	var baseImageType BaseImageType
@@ -63,7 +62,6 @@ func initStages(ctx context.Context, image *Image, metaConfig *config.Meta, stap
 
 	imageBaseConfig := stapelImageConfig.ImageBaseConfig()
 	imageName := imageBaseConfig.Name
-	imageArtifact := stapelImageConfig.IsArtifact()
 
 	baseStageOptions := &stage.BaseStageOptions{
 		TargetPlatform:   image.TargetPlatform,
@@ -109,7 +107,7 @@ func initStages(ctx context.Context, image *Image, metaConfig *config.Meta, stap
 	stages = appendIfExist(ctx, stages, stage.GenerateSetupStage(ctx, imageBaseConfig, gitPatchStageOptions, baseStageOptions))
 	stages = appendIfExist(ctx, stages, stage.GenerateDependenciesAfterSetupStage(imageBaseConfig, baseStageOptions))
 
-	if !imageArtifact {
+	if !stapelImageConfig.IsArtifact() {
 		if gitMappingsExist {
 			stages = append(stages, stage.NewGitCacheStage(gitPatchStageOptions, baseStageOptions))
 			stages = append(stages, stage.NewGitLatestPatchStage(gitPatchStageOptions, baseStageOptions))

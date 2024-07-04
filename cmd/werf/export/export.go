@@ -207,7 +207,7 @@ func run(ctx context.Context, imagesToProcess build.ImagesToProcess, tagTemplate
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %w", err)
 	}
-	if err := werfConfig.CheckThatImagesExist(imagesToProcess.OnlyImages); err != nil {
+	if err := imagesToProcess.CheckImagesExistence(werfConfig); err != nil {
 		return err
 	}
 
@@ -246,7 +246,7 @@ func run(ctx context.Context, imagesToProcess build.ImagesToProcess, tagTemplate
 
 	storageManager := manager.NewStorageManager(projectName, stagesStorage, finalStagesStorage, secondaryStagesStorageList, cacheStagesStorageList, storageLockManager)
 
-	buildOptions, err := common.GetBuildOptions(ctx, &commonCmdData, werfConfig, imagesToProcess.OnlyImages)
+	buildOptions, err := common.GetBuildOptions(ctx, &commonCmdData, werfConfig, imagesToProcess.ImageNameList)
 	if err != nil {
 		return err
 	}
