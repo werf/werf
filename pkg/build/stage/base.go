@@ -39,7 +39,7 @@ const (
 	Dockerfile StageName = "dockerfile"
 )
 
-// TODO(compatibility): remove in v1.3
+// TODO(compatibility): remove in v3
 func GetLegacyCompatibleStageName(name StageName) string {
 	switch name {
 	case DependenciesBeforeInstall:
