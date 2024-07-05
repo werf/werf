@@ -17,7 +17,7 @@ func (c *StapelImage) validate() error {
 	}
 
 	if c.Name == "" {
-		logboek.Context(context.Background()).Warn().LogLn("DEPRECATION WARNING: Support for the nameless image, `image: ~`, will be removed in v1.3!")
+		logboek.Context(context.Background()).Warn().LogLn("DEPRECATION WARNING: Support for the nameless image, `image: ~`, will be removed in v3!")
 	}
 
 	return nil
