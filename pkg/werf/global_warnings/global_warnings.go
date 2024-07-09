@@ -14,11 +14,11 @@ import (
 	"github.com/werf/werf/v2/pkg/util"
 )
 
-const LastMultiwerfVersion = "1.5.0"
+const lastMultiwerfVersion = "1.5.0"
 
 var (
-	GlobalWarningMessages            []string
-	GlobalDeprecationWarningMessages []string
+	globalWarningMessages            []string
+	globalDeprecationWarningMessages []string
 	SuppressGlobalWarnings           bool
 )
 
@@ -46,20 +46,20 @@ func PrintGlobalWarnings(ctx context.Context) {
 		}
 	}
 
-	printFunc("DEPRECATION WARNINGS:", GlobalDeprecationWarningMessages)
-	if len(GlobalWarningMessages) > 0 {
+	printFunc("DEPRECATION WARNINGS:", globalDeprecationWarningMessages)
+	if len(globalWarningMessages) > 0 {
 		printGlobalWarningLn(ctx, "")
-		printFunc("WARNINGS:", GlobalWarningMessages)
+		printFunc("WARNINGS:", globalWarningMessages)
 	}
 }
 
 func GlobalDeprecationWarningLn(ctx context.Context, line string) {
-	GlobalDeprecationWarningMessages = append(GlobalDeprecationWarningMessages, line)
+	globalDeprecationWarningMessages = append(globalDeprecationWarningMessages, line)
 	printGlobalWarningLn(ctx, "DEPRECATION WARNING! "+line)
 }
 
 func GlobalWarningLn(ctx context.Context, line string) {
-	GlobalWarningMessages = append(GlobalWarningMessages, line)
+	globalWarningMessages = append(globalWarningMessages, line)
 	printGlobalWarningLn(ctx, "WARNING! "+line)
 }
 
@@ -86,7 +86,7 @@ func IsMultiwerfUpToDate() (bool, error) {
 		return false, fmt.Errorf("unable to parse version of installed multiwerf version: %w", err)
 	}
 
-	lastMultiwerfVersion, err := semver.NewVersion(LastMultiwerfVersion)
+	lastMultiwerfVersion, err := semver.NewVersion(lastMultiwerfVersion)
 	if err != nil {
 		return false, fmt.Errorf("unable to parse version of last available multiwerf version: %w", err)
 	}
@@ -100,8 +100,8 @@ func PostponeMultiwerfNotUpToDateWarning() {
 multiwerf is deprecated, so if you are still using it we strongly recommend removing multiwerf and switching to trdl
 `, err)
 
-		GlobalWarningMessages = append(
-			GlobalWarningMessages,
+		globalWarningMessages = append(
+			globalWarningMessages,
 			msg,
 		)
 		return
@@ -109,8 +109,8 @@ multiwerf is deprecated, so if you are still using it we strongly recommend remo
 		return
 	}
 
-	GlobalWarningMessages = append(
-		GlobalWarningMessages,
+	globalWarningMessages = append(
+		globalWarningMessages,
 		`multiwerf detected, but it is out of date. multiwerf is deprecated in favor of trdl: https://github.com/werf/trdl
 If you are still using multiwerf we strongly recommend removing multiwerf and switching to trdl`,
 	)
