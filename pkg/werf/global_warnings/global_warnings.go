@@ -6,28 +6,61 @@ import (
 	"fmt"
 	"os/exec"
 	"regexp"
+	"strings"
 
 	"github.com/Masterminds/semver"
 
 	"github.com/werf/logboek"
+	"github.com/werf/werf/v2/pkg/util"
 )
 
 const LastMultiwerfVersion = "1.5.0"
 
 var (
-	GlobalWarningLines     []string
-	SuppressGlobalWarnings bool
+	GlobalWarningMessages            []string
+	GlobalDeprecationWarningMessages []string
+	SuppressGlobalWarnings           bool
 )
 
 func PrintGlobalWarnings(ctx context.Context) {
-	for _, line := range GlobalWarningLines {
-		printGlobalWarningLn(ctx, line)
+	printFunc := func(header string, messages []string) {
+		if len(messages) == 0 {
+			return
+		}
+
+		printGlobalWarningLn(ctx, header)
+		printGlobalWarningLn(ctx, "")
+		for i, line := range util.UniqStrings(messages) {
+			if i != 0 {
+				printGlobalWarningLn(ctx, "")
+			}
+
+			multilineLines := strings.Split(line, "\n")
+			for j, mlLine := range multilineLines {
+				if j == 0 {
+					printGlobalWarningLn(ctx, fmt.Sprintf("%d: %s", i+1, mlLine))
+				} else {
+					printGlobalWarningLn(ctx, fmt.Sprintf("   %s", mlLine))
+				}
+			}
+		}
+	}
+
+	printFunc("DEPRECATION WARNINGS:", GlobalDeprecationWarningMessages)
+	if len(GlobalWarningMessages) > 0 {
+		printGlobalWarningLn(ctx, "")
+		printFunc("WARNINGS:", GlobalWarningMessages)
 	}
 }
 
+func GlobalDeprecationWarningLn(ctx context.Context, line string) {
+	GlobalDeprecationWarningMessages = append(GlobalDeprecationWarningMessages, line)
+	printGlobalWarningLn(ctx, "DEPRECATION WARNING! "+line)
+}
+
 func GlobalWarningLn(ctx context.Context, line string) {
-	GlobalWarningLines = append(GlobalWarningLines, line)
-	printGlobalWarningLn(ctx, line)
+	GlobalWarningMessages = append(GlobalWarningMessages, line)
+	printGlobalWarningLn(ctx, "WARNING! "+line)
 }
 
 func IsMultiwerfUpToDate() (bool, error) {
@@ -63,20 +96,23 @@ func IsMultiwerfUpToDate() (bool, error) {
 
 func PostponeMultiwerfNotUpToDateWarning() {
 	if multiwerfIsUpToDate, err := IsMultiwerfUpToDate(); err != nil {
-		GlobalWarningLines = append(
-			GlobalWarningLines,
-			fmt.Sprintf("Failure detecting whether multiwerf (if present) is outdated: %s", err),
-			"multiwerf is deprecated, so if you are still using it we strongly recommend removing multiwerf and switching to trdl",
+		msg := fmt.Sprintf(`Failure detecting whether multiwerf (if present) is outdated: %s
+multiwerf is deprecated, so if you are still using it we strongly recommend removing multiwerf and switching to trdl
+`, err)
+
+		GlobalWarningMessages = append(
+			GlobalWarningMessages,
+			msg,
 		)
 		return
 	} else if multiwerfIsUpToDate {
 		return
 	}
 
-	GlobalWarningLines = append(
-		GlobalWarningLines,
-		"multiwerf detected, but it is out of date. multiwerf is deprecated in favor of trdl: https://github.com/werf/trdl",
-		"If you are still using multiwerf we strongly recommend removing multiwerf and switching to trdl",
+	GlobalWarningMessages = append(
+		GlobalWarningMessages,
+		`multiwerf detected, but it is out of date. multiwerf is deprecated in favor of trdl: https://github.com/werf/trdl
+If you are still using multiwerf we strongly recommend removing multiwerf and switching to trdl`,
 	)
 }
 
@@ -84,5 +120,5 @@ func printGlobalWarningLn(ctx context.Context, line string) {
 	if SuppressGlobalWarnings {
 		return
 	}
-	logboek.Context(ctx).Error().LogF("WARNING: %s\n", line)
+	logboek.Context(ctx).Warn().LogLn(line)
 }
