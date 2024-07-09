@@ -245,7 +245,7 @@ func runRender(ctx context.Context, imagesToProcess build.ImagesToProcess) error
 	var isStub bool
 	var stubImageNameList []string
 
-	if imagesToProcess.HasImagesToProcess(werfConfig) {
+	if imagesToProcess.HaveImagesToProcess(werfConfig) {
 		addr, err := commonCmdData.Repo.GetAddress()
 		if err != nil {
 			return err

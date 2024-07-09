@@ -356,7 +356,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 
 		projectName := werfConfig.Meta.Project
 
-		if imagesToProcess.HasImagesToProcess(werfConfig) {
+		if imagesToProcess.HaveImagesToProcess(werfConfig) {
 			projectTmpDir, err := tmp_manager.CreateProjectDir(ctx)
 			if err != nil {
 				return fmt.Errorf("getting project tmp dir failed: %w", err)
