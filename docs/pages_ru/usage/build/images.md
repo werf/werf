@@ -310,7 +310,7 @@ project: example
 configVersion: 1
 ---
 image: builder
-from: golang
+from: golang:1.23rc1-alpine3.20
 git:
 - add: /
   to: /app
@@ -368,7 +368,7 @@ ARG CONTROLPLANE_IMAGE_NAME
 ARG CONTROLPLANE_IMAGE_DIGEST
 
 RUN echo AUTH_IMAGE_NAME=${AUTH_IMAGE_NAME}                     >> modules_images.env
-RUN echo AUTH_IMAGE_DIGEST=${AUTH_IMAGE_DIGEST}                 >> modules_images.env
+RUN echo AUTH_IMAGE_DIGEST=${AUTH_IMAGE_DIGEST}                 >> modules_images.env   
 RUN echo CONTROLPLANE_IMAGE_NAME=${CONTROLPLANE_IMAGE_NAME}     >> modules_images.env
 RUN echo CONTROLPLANE_IMAGE_DIGEST=${CONTROLPLANE_IMAGE_DIGEST} >> modules_images.env
 ```
@@ -404,6 +404,35 @@ dependencies:
 ```
 
 В процессе сборки werf автоматически подставит в указанные build-arguments соответствующие имена и идентификаторы. Всю оркестрацию и выстраивание зависимостей werf возьмёт на себя и произведёт сборку за один шаг (вызов `werf build`).
+
+## Использование промежуточных и конечных образов
+
+По умолчанию все образы являются конечными, что позволяет пользователю оперировать ими, используя их имена в качестве аргументов для большинства команд werf, а также в шаблонах Helm-чарта. С помощью директивы `final` можно регулировать это свойство образа.
+
+Промежуточные образы (`final: false`) в отличие от конечных:
+- не попадают [в служебные values для Helm-чарта]({{ "usage/deploy/values.html#информация-о-собранных-образах-только-в-werf" | true_relative_url }}).
+- не тегируются произвольными тегами ([подробнее про --add-custom-tag]({{ "usage/build/process.html#добавление-произвольных-тегов" | true_relative_url }}));
+- не публикуются в финальный репозиторий ([подробнее про --final-repo]({{ "usage/build/process.html#дополнительный-репозиторий-для-конечных-образов" | true_relative_url }}));
+- не экспортируются ([подробнее про werf export]({{ "reference/cli/werf_export.html" | true_relative_url }})).
+
+Пример использования директивы `final`:
+
+```yaml
+project: example
+configVersion: 1
+---
+image: builder
+final: false
+dockerfile: Dockerfile.builder
+---
+image: app
+dockerfile: Dockerfile.app
+dependencies:
+- image: builder
+  imports:
+  - type: ImageName
+    targetBuildArg: BUILDER_IMAGE_NAME
+```
 
 ## Мультиплатформенная и кроссплатформенная сборка
 

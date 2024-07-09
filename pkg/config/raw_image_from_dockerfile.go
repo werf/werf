@@ -9,6 +9,7 @@ import (
 
 type rawImageFromDockerfile struct {
 	Images          []string               `yaml:"-"`
+	Final           *bool                  `yaml:"final,omitempty"`
 	Dockerfile      string                 `yaml:"dockerfile,omitempty"`
 	Context         string                 `yaml:"context,omitempty"`
 	ContextAddFile  interface{}            `yaml:"contextAddFile,omitempty"`
@@ -88,6 +89,15 @@ func (c *rawImageFromDockerfile) toImageFromDockerfileDirective(giterminismManag
 	image.Name = imageName
 	image.Dockerfile = c.Dockerfile
 	image.Context = c.Context
+
+	// Set final.
+	{
+		final := true
+		if c.Final != nil {
+			final = *c.Final
+		}
+		image.final = final
+	}
 
 	contextAddFile, err := InterfaceToStringArray(c.ContextAddFile, nil, c.doc)
 	if err != nil {
