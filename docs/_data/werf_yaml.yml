@@ -194,6 +194,16 @@ sections:
           en: One or more unique names for image
           ru: Одно или несколько уникальных имён для образа
         required: true
+      - &dockerfile-image-section-final
+        name: final
+        value: bool
+        default: true
+        description:
+          en: "Mark image as final"
+          ru: "Пометить образ как финальный"
+        detailsArticle:
+          en: "/usage/build/images.html#using-intermediate-and-final-images"
+          ru: "/usage/build/images.html#использование-промежуточных-и-конечных-образов"
       - name: dockerfile
         value: "string"
         description:
@@ -289,6 +299,7 @@ sections:
           ru: Уникальное имя артефакта
         detailsArticle:
           all: "/usage/build/stapel/imports.html"
+      - << : *dockerfile-image-section-final
       - name: platform
         description:
           en: List of target platforms for this image (for example ['linux/amd64', 'linux/arm64', 'linux/arm/v8'])
