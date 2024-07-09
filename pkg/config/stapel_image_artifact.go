@@ -13,6 +13,8 @@ func (c *StapelImageArtifact) IsFinal() bool {
 }
 
 func (c *StapelImageArtifact) validate() error {
+	printArtifactDepricationWarning()
+
 	if !oneOrNone([]bool{c.Shell != nil, c.Ansible != nil}) {
 		return newDetailedConfigError("can not use shell and ansible builders at the same time!", nil, c.StapelImageBase.raw.doc)
 	}
