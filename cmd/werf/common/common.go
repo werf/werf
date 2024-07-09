@@ -1305,7 +1305,7 @@ func GetContainerRegistryMirror(ctx context.Context, cmdData *CmdData) ([]string
 		}
 
 		if *buildahMode == buildah.ModeDisabled {
-			global_warnings.GlobalWarningLn(ctx, "in Docker mode container registry mirrors should be configured in daemon.json file, not via --container-registry-mirrors: https://werf.io/docs/usage/build/process.html#container-registry-mirrors")
+			global_warnings.GlobalWarningLn(ctx, "In Docker mode container registry mirrors should be configured in daemon.json file, not via --container-registry-mirrors: https://werf.io/docs/usage/build/process.html#using-mirrors-for-dockerio.")
 			return nil, nil
 		}
 	}
@@ -1612,7 +1612,7 @@ func WithContext(allowBackgroundMode bool, f func(ctx context.Context) error) er
 			if backgroundErr, err := GetAndRemoveLastBackgroundError(); err != nil {
 				return fmt.Errorf("unable to get last background error: %w", err)
 			} else if backgroundErr != nil {
-				global_warnings.GlobalWarningLn(ctx, fmt.Sprintf("last background error: %s", backgroundErr))
+				global_warnings.GlobalWarningLn(ctx, fmt.Sprintf("Last background error: %s", backgroundErr))
 			}
 		}
 
