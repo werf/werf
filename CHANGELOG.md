@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.6.8](https://www.github.com/werf/werf/compare/v2.6.7...v2.6.8) (2024-07-09)
+
+
+### Bug Fixes
+
+* **build:** fix invalid image digest when cache repo used ([21ada38](https://www.github.com/werf/werf/commit/21ada38bd03a3978518a740f88e16527bbb6a103))
+
 ### [2.6.7](https://www.github.com/werf/werf/compare/v2.6.6...v2.6.7) (2024-07-03)
 
 
