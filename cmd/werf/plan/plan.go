@@ -327,7 +327,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 	var imagesInfoGetters []*image.InfoGetter
 	var imagesRepo string
 
-	if imagesToProcess.HasImagesToProcess(werfConfig) {
+	if imagesToProcess.HaveImagesToProcess(werfConfig) {
 		stagesStorage, err := common.GetStagesStorage(ctx, containerBackend, &commonCmdData)
 		if err != nil {
 			return err
