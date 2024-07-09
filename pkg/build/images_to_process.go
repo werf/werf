@@ -18,7 +18,7 @@ func (i *ImagesToProcess) CheckImagesExistence(werfConfig *config.WerfConfig) er
 	return nil
 }
 
-func (i *ImagesToProcess) HasImagesToProcess(werfConfig *config.WerfConfig) bool {
+func (i *ImagesToProcess) HaveImagesToProcess(werfConfig *config.WerfConfig) bool {
 	return !i.WithoutImages && len(werfConfig.Images(true)) > 0
 }
 

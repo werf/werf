@@ -273,7 +273,7 @@ func runPublish(ctx context.Context, imagesToProcess build.ImagesToProcess) erro
 	var imagesInfoGetters []*image.InfoGetter
 	var imagesRepo string
 
-	if imagesToProcess.HasImagesToProcess(werfConfig) {
+	if imagesToProcess.HaveImagesToProcess(werfConfig) {
 		synchronization, err := common.GetSynchronization(ctx, &commonCmdData, projectName, stagesStorage)
 		if err != nil {
 			return err

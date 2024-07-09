@@ -303,7 +303,7 @@ func run(
 	var imagesInfoGetters []*image.InfoGetter
 	var imagesRepo string
 
-	if imagesToProcess.HasImagesToProcess(werfConfig) {
+	if imagesToProcess.HaveImagesToProcess(werfConfig) {
 		stagesStorage, err := common.GetStagesStorage(ctx, containerBackend, &commonCmdData)
 		if err != nil {
 			return err
