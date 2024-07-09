@@ -189,7 +189,7 @@ sections:
     directives:
       - &dockerfile-image-section-image
         name: image
-        value: "string || [ string, ... ] || ~"
+        value: "string || [ string, ... ]"
         description:
           en: One or more unique names for image
           ru: Одно или несколько уникальных имён для образа
@@ -199,6 +199,7 @@ sections:
         description:
           en: Dockerfile path relative to the context PATH
           ru: Путь к Dockerfile относительно директории контекста
+        required: true
       - name: staged
         value: "bool"
         description:
