@@ -11,7 +11,7 @@ import (
 	"github.com/Masterminds/semver"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/util"
+	"github.com/werf/werf/pkg/util"
 )
 
 const LastMultiwerfVersion = "1.5.0"

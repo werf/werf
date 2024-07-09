@@ -3,7 +3,7 @@ package build
 import (
 	"fmt"
 
-	"github.com/werf/werf/v2/pkg/config"
+	"github.com/werf/werf/pkg/config"
 )
 
 type ImagesToProcess struct {
