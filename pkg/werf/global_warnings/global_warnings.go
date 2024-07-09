@@ -14,7 +14,7 @@ import (
 	"github.com/werf/werf/pkg/util"
 )
 
-const LastMultiwerfVersion = "1.5.0"
+const lastMultiwerfVersion = "1.5.0"
 
 var (
 	globalWarningMessages            []string
@@ -86,7 +86,7 @@ func IsMultiwerfUpToDate() (bool, error) {
 		return false, fmt.Errorf("unable to parse version of installed multiwerf version: %w", err)
 	}
 
-	lastMultiwerfVersion, err := semver.NewVersion(LastMultiwerfVersion)
+	lastMultiwerfVersion, err := semver.NewVersion(lastMultiwerfVersion)
 	if err != nil {
 		return false, fmt.Errorf("unable to parse version of last available multiwerf version: %w", err)
 	}
