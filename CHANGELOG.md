@@ -1,5 +1,18 @@
 # Changelog
 
+### [1.2.319](https://www.github.com/werf/werf/compare/v1.2.318...v1.2.319) (2024-07-09)
+
+
+### Features
+
+* **build, stapel:** add disableGitAfterPatch directive ([5cc4647](https://www.github.com/werf/werf/commit/5cc4647f78f6c63e7f9f2da16e651fd397fc49f3))
+* **build:** add ability to regulate the final property of an image ([62ecb42](https://www.github.com/werf/werf/commit/62ecb429a15f8e3db6537333ede279e2ca4c28fd))
+
+
+### Bug Fixes
+
+* **build:** fix invalid image digest when cache repo used ([aac0cfe](https://www.github.com/werf/werf/commit/aac0cfe3a9becea94c43c754cdd75ce56de1be23))
+
 ### [1.2.318](https://www.github.com/werf/werf/compare/v1.2.317...v1.2.318) (2024-07-02)
 
 
