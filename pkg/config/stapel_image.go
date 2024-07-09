@@ -3,7 +3,7 @@ package config
 import (
 	"context"
 
-	"github.com/werf/logboek"
+	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
 
 type StapelImage struct {
@@ -17,7 +17,7 @@ func (c *StapelImage) validate() error {
 	}
 
 	if c.Name == "" {
-		logboek.Context(context.Background()).Warn().LogLn("DEPRECATION WARNING: Support for the nameless image, `image: ~`, will be removed in v3!")
+		global_warnings.GlobalDeprecationWarningLn(context.Background(), "Support for the nameless image (`image: ~`) is deprecated and will be removed in v3!")
 	}
 
 	return nil
