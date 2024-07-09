@@ -37,7 +37,6 @@ en:
         fromLatest: <bool>
         fromCacheVersion: <arbitrary string>
         fromImage: <image name>
-        fromArtifact: <artifact name>
         mount:
         - from: build_dir
           to: <absolute or relative path>
@@ -75,11 +74,11 @@ en:
       dependencies:
         - dependencies before install
       references:
-        - name: "Importing from images and artifacts"
+        - name: "Importing from images"
           link: "/usage/build/stapel/imports.html"
       werf_config: |
         import:
-        - artifact: <artifact name>
+        - image: <image name>
           before: install
           add: <absolute path>
           to: <absolute path>
@@ -155,7 +154,7 @@ en:
         - dependencies after install
       werf_config: |
         import:
-        - artifact: <artifact name>
+        - image: <image name>
           after: install
           add: <absolute path>
           to: <absolute path>
@@ -166,7 +165,7 @@ en:
           excludePaths:
           - <relative path or glob>
       references:
-        - name: "Importing from images and artifacts"
+        - name: "Importing from images"
           link: "/usage/build/stapel/imports.html"
     - &image_artifact_before_setup
       name: beforeSetup
@@ -204,7 +203,7 @@ en:
         - dependencies before setup
       werf_config: |
         import:
-        - artifact: <artifact name>
+        - image: <image name>
           before: setup
           add: <absolute path>
           to: <absolute path>
@@ -215,7 +214,7 @@ en:
           excludePaths:
           - <relative path or glob>
       references:
-        - name: "Importing from images and artifacts"
+        - name: "Importing from images"
           link: "/usage/build/stapel/imports.html"
     - &image_artifact_setup
       name: setup
@@ -261,7 +260,7 @@ en:
         - dependencies after setup
       werf_config: |
         import:
-        - artifact: <artifact name>
+        - image: <image name>
           after: setup
           add: <absolute path>
           to: <absolute path>
@@ -272,7 +271,7 @@ en:
           excludePaths:
           - <relative path or glob>
       references:
-        - name: "Importing from images and artifacts"
+        - name: "Importing from images"
           link: "/usage/build/stapel/imports.html"
     - &image_git_latest_patch
       name: gitLatestPatch
@@ -320,7 +319,7 @@ ru:
           link: "/usage/build/stapel/instructions.html"
     - <<: *image_artifact_dependencies_before_install
       references:
-        - name: "Импорт из артефактов и образов"
+        - name: "Импортирование из образов"
           link: "/usage/build/stapel/imports.html"
     - <<: *image_artifact_git_archive
       references:
@@ -334,7 +333,7 @@ ru:
           link: "/usage/build/stapel/instructions.html#зависимость-от-изменений-в-git-репозитории"
     - <<: *image_artifact_dependencies_after_install
       references:
-        - name: "Импорт из артефактов и образов"
+        - name: "Импортирование из образов"
           link: "/usage/build/stapel/imports.html"
     - <<: *image_artifact_before_setup
       references:
@@ -344,7 +343,7 @@ ru:
           link: "/usage/build/stapel/instructions.html#зависимость-от-изменений-в-git-репозитории"
     - <<: *image_artifact_dependencies_before_setup
       references:
-        - name: "Импорт из артефактов и образов"
+        - name: "Импортирование из образов"
           link: "/usage/build/stapel/imports.html"
     - <<: *image_artifact_setup
       references:
@@ -358,7 +357,7 @@ ru:
           link: "/usage/build/stapel/git.html#подробнее-про-gitarchive-gitcache-gitlatestpatch"
     - <<: *image_dependencies_after_setup
       references:
-        - name: "Импорт из артефактов и образов"
+        - name: "Импортирование из образов"
           link: "/usage/build/stapel/imports.html"
     - <<: *image_git_latest_patch
       references:
