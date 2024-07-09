@@ -15,7 +15,7 @@ image: example
 from: alpine
 ```
 
-A _base image_ can be declared with `from`, `fromImage`, or `fromArtifact` directive.
+A _base image_ can be declared with `from` or `fromImage` directive.
 
 ## from, fromLatest
 
@@ -38,22 +38,21 @@ fromLatest: true
 
 > By default, giterminism does not allow the use of the `fromLatest` directive (you can read more about it [here]({{"usage/project_configuration/giterminism.html" | true_relative_url }}))
 
-## fromImage and fromArtifact
+## fromImage
 
-In addition to the image from the repository, the _base image_ can also refer to an _image_ or an [_artifact_]({{ "usage/build/stapel/imports.html#what-is-an-artifact" | true_relative_url }}) defined in the same `werf.yaml`.
+In addition to the image from the repository, the _base image_ can also refer to an _image_ defined in the same `werf.yaml`.
 
 ```yaml
 fromImage: <image name>
-fromArtifact: <artifact name>
 ```
 
 If the _base image_ is specific to a particular application,
-it makes sense to store its description together with _images_ and _artifacts_ which use it as opposed to storing the _base image_ in a container registry.
+it makes sense to store its description together with _images_ which use it as opposed to storing the _base image_ in a container registry.
 
 This method comes in handy if the stages of the existing _stage conveyor_ are not enough for building the image. Using the image described in the same `werf.yaml` as the base image, you can essentially build your own _stage conveyor_.
 
 <a class="google-drawings" href="{{ "images/configuration/base_image2.svg" | true_relative_url }}" data-featherlight="image">
-    <img src="{{ "images/configuration/base_image2.svg" | true_relative_url }}" alt="Conveyor with fromImage and fromArtifact stages">
+    <img src="{{ "images/configuration/base_image2.svg" | true_relative_url }}" alt="Conveyor with fromImage stages">
 </a>
 
 ## fromCacheVersion

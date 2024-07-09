@@ -349,7 +349,7 @@ You can use these dependencies to shape the rebuilding process of the _user stag
 - changes in the assembly instructions;
 - changes of the _cacheVersion directives_;
 - changes in the Git repository;
-- changes in the files imported from the [artifacts]({{ "usage/build/stapel/imports.html#what-is-an-artifact" | true_relative_url }}).
+- changes in the files imported from the [images]({{ "usage/build/stapel/imports.html" | true_relative_url }}).
 
 The first three dependency types are described in more detail below.
 
