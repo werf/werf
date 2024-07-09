@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
 	"github.com/werf/werf/v2/pkg/util"
+	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
 
 type StapelImageBase struct {
@@ -149,10 +149,43 @@ func (c *StapelImageBase) validate(giterminismManager giterminism_manager.Interf
 	}
 
 	if c.raw.FromArtifact != "" {
-		logboek.Context(context.Background()).Warn().LogLn("WARNING: Do not use artifacts as a base for other images and artifacts. The feature is deprecated, and the directive 'fromArtifact' will be completely removed in version v3.\n\nCareless use of artifacts may lead to difficult to trace issues that may arise long after the configuration has been written. The artifact image is cached after the first build and ignores any changes in the project git repository unless the user has explicitly specified stage dependencies. As found, this behavior is completely unexpected for users despite the fact that it is absolutely correct in the werf logic.")
+		printArtifactDepricationWarning()
 	}
 
 	// TODO: валидацию формата `From`
 
 	return nil
+}
+
+var isArtifactDepricationWarningPrinted bool
+
+func printArtifactDepricationWarning() {
+	if isArtifactDepricationWarningPrinted {
+		return
+	}
+
+	global_warnings.GlobalDeprecationWarningLn(context.Background(), `The 'artifact', 'fromArtifact' and 'import.artifact' directives are deprecated and will be completely removed in version v3.
+
+Instead of 'artifact', use the 'image' directive:
+
+- If you need to preserve artifact behavior when working with 'git' (disabling source updates by skipping the 'gitCache' and 'gitLatestPatch' stages), use the 'disableGitAfterPatch' directive:
+
+    '''
+    image: builder
+    from: alpine:3.10
+    disableGitAfterPatch: true
+    git:
+    - add: /
+      to: /app
+    '''
+
+- If you simply need to limit the scope of image use, use the 'final' directive:
+
+    '''
+    image: builder
+    from: alpine:3.10
+    final: false
+    '''`)
+
+	isArtifactDepricationWarningPrinted = true
 }

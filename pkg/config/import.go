@@ -24,6 +24,10 @@ func (c *Import) validate() error {
 		return err
 	}
 
+	if c.ArtifactName != "" {
+		printArtifactDepricationWarning()
+	}
+
 	switch {
 	case c.ArtifactName == "" && c.ImageName == "":
 		return newDetailedConfigError("artifact name `artifact: NAME` or image name `image: NAME` required for import!", c.raw, c.raw.rawStapelImage.doc)
