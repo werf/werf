@@ -165,6 +165,39 @@ In the above configuration, the build context will include the following files:
 - `app/**/*` of the current project repository commit;
 - `app/file1`, `app/dir2/file2.out` files and the `dir1` directory in the project directory.
 
+#### Multiplatform Build
+
+werf supports multiplatform and cross-platform builds, allowing you to create images for various architectures and operating systems (for more details, see [the relevant section of the documentation]({{ "/usage/build/process.html#multi-platform-and-cross-platform-building" | true_relative_url }})).
+
+##### Cross-compilation
+
+> This functionality is available when using BuildKit (DOCKER_BUILDKIT=1) or Buildah.
+
+If your project requires cross-compilation, you can use multi-stage builds to create artifacts for target platforms using the build platform. The following build arguments are available for this purpose:
+
+- `TARGETPLATFORM`: the platform for the build result (e.g., linux/amd64, linux/arm/v7, windows/amd64).
+- `TARGETOS`: the OS of the target platform.
+- `TARGETARCH`: the architecture of the target platform.
+- `TARGETVARIANT`: the variant of the target platform.
+- `BUILDPLATFORM`: the platform of the node performing the build.
+- `BUILDOS`: the OS of the build platform.
+- `BUILDARCH`: the architecture of the build platform.
+- `BUILDVARIANT`: the variant of the build platform.
+
+Example:
+
+```Dockerfile
+FROM --platform=$BUILDPLATFORM golang:alpine AS build
+ARG TARGETPLATFORM
+ARG BUILDPLATFORM
+RUN echo "I am running on $BUILDPLATFORM, building for $TARGETPLATFORM" > /log
+
+FROM alpine
+COPY --from=build /log /log
+```
+
+In this example, the `FROM` instruction is pinned to the build platform of the builder using the `--platform=$BUILDPLATFORM` option to prevent emulation. The `$BUILDPLATFORM` and `$TARGETPLATFORM` arguments are then used in the `RUN` instruction.
+
 ### Stapel
 
 Stapel is a built-in alternative syntax for describing build instructions. Detailed documentation on Stapel syntax is available [in the corresponding documentation section]({{"/usage/build/stapel/overview.html" | true_relative_url }}).
