@@ -342,6 +342,14 @@ sections:
           ru: "Версия кеша"
         detailsArticle:
           all: "/usage/build/stapel/base.html#fromcacheversion"
+      - name: disableGitAfterPatch
+        value: "bool"
+        description:
+          en: "Disable updating git sources (gitCache, gitLatestPatch stages)"
+          ru: "Отключение актуализации исходников Git (стадии gitCache, gitLatestPatch)"
+        detailsArticle:
+          en: "/usage/build/stapel/instructions.html#disabling-source-updates-skipping-gitcache-and-gitlatestpatch-stages"
+          ru: "/usage/build/stapel/instructions.html#отключение-обновления-исходников-стадии-gitcache-и-gitlatestpatch"
       - name: git
         description:
           en: "Set of directives to add source files from git repositories (both the project repository and any other)"
