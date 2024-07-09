@@ -107,7 +107,7 @@ func initStages(ctx context.Context, image *Image, metaConfig *config.Meta, stap
 	stages = appendIfExist(ctx, stages, stage.GenerateSetupStage(ctx, imageBaseConfig, gitPatchStageOptions, baseStageOptions))
 	stages = appendIfExist(ctx, stages, stage.GenerateDependenciesAfterSetupStage(imageBaseConfig, baseStageOptions))
 
-	if !stapelImageConfig.IsArtifact() {
+	if !stapelImageConfig.IsGitAfterPatchDisabled() {
 		if gitMappingsExist {
 			stages = append(stages, stage.NewGitCacheStage(gitPatchStageOptions, baseStageOptions))
 			stages = append(stages, stage.NewGitLatestPatchStage(gitPatchStageOptions, baseStageOptions))

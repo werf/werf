@@ -7,22 +7,23 @@ import (
 )
 
 type rawStapelImage struct {
-	Images           []string         `yaml:"-"`
-	Final            *bool            `yaml:"final,omitempty"`
-	Artifact         string           `yaml:"artifact,omitempty"`
-	From             string           `yaml:"from,omitempty"`
-	FromLatest       bool             `yaml:"fromLatest,omitempty"`
-	FromCacheVersion string           `yaml:"fromCacheVersion,omitempty"`
-	FromImage        string           `yaml:"fromImage,omitempty"`
-	FromArtifact     string           `yaml:"fromArtifact,omitempty"`
-	RawGit           []*rawGit        `yaml:"git,omitempty"`
-	RawShell         *rawShell        `yaml:"shell,omitempty"`
-	RawAnsible       *rawAnsible      `yaml:"ansible,omitempty"`
-	RawMount         []*rawMount      `yaml:"mount,omitempty"`
-	RawDocker        *rawDocker       `yaml:"docker,omitempty"`
-	RawImport        []*rawImport     `yaml:"import,omitempty"`
-	RawDependencies  []*rawDependency `yaml:"dependencies,omitempty"`
-	Platform         []string         `yaml:"platform,omitempty"`
+	Images               []string         `yaml:"-"`
+	Final                *bool            `yaml:"final,omitempty"`
+	Artifact             string           `yaml:"artifact,omitempty"`
+	From                 string           `yaml:"from,omitempty"`
+	FromLatest           bool             `yaml:"fromLatest,omitempty"`
+	FromCacheVersion     string           `yaml:"fromCacheVersion,omitempty"`
+	FromImage            string           `yaml:"fromImage,omitempty"`
+	FromArtifact         string           `yaml:"fromArtifact,omitempty"`
+	DisableGitAfterPatch bool             `yaml:"disableGitAfterPatch,omitempty"`
+	RawGit               []*rawGit        `yaml:"git,omitempty"`
+	RawShell             *rawShell        `yaml:"shell,omitempty"`
+	RawAnsible           *rawAnsible      `yaml:"ansible,omitempty"`
+	RawMount             []*rawMount      `yaml:"mount,omitempty"`
+	RawDocker            *rawDocker       `yaml:"docker,omitempty"`
+	RawImport            []*rawImport     `yaml:"import,omitempty"`
+	RawDependencies      []*rawDependency `yaml:"dependencies,omitempty"`
+	Platform             []string         `yaml:"platform,omitempty"`
 
 	doc *doc `yaml:"-"` // parent
 
@@ -121,6 +122,10 @@ func (c *rawStapelImage) toStapelImageArtifactDirectives(giterminismManager gite
 	}
 	imageArtifact.StapelImageBase.final = false
 
+	if imageArtifact.Git != nil {
+		imageArtifact.Git.isGitAfterPatchDisabled = true
+	}
+
 	if err := c.validateStapelImageArtifactDirective(imageArtifact); err != nil {
 		return nil, err
 	}
@@ -210,6 +215,8 @@ func (c *rawStapelImage) validateStapelImageArtifactDirective(imageArtifact *Sta
 		return newDetailedConfigError("`docker` section is not supported for artifact!", nil, c.doc)
 	} else if c.Final != nil {
 		return newDetailedConfigError("`final` directive is not supported for artifact!", nil, c.doc)
+	} else if c.DisableGitAfterPatch {
+		return newDetailedConfigError("`disableGitAfterPatch` directive is not supported for artifact!", nil, c.doc)
 	}
 
 	if err := imageArtifact.validate(); err != nil {
@@ -316,6 +323,7 @@ func (c *rawStapelImage) toBaseStapelImageBaseDirective(giterminismManager giter
 	}
 
 	imageBase.Git = &GitManager{}
+	imageBase.Git.isGitAfterPatchDisabled = c.DisableGitAfterPatch
 
 	imageBase.raw = c
 
