@@ -8,6 +8,7 @@ import (
 
 type rawStapelImage struct {
 	Images           []string         `yaml:"-"`
+	Final            *bool            `yaml:"final,omitempty"`
 	Artifact         string           `yaml:"artifact,omitempty"`
 	From             string           `yaml:"from,omitempty"`
 	FromLatest       bool             `yaml:"fromLatest,omitempty"`
@@ -135,7 +136,15 @@ func (c *rawStapelImage) toStapelImageDirective(giterminismManager giterminism_m
 	} else {
 		image.StapelImageBase = imageBase
 	}
-	image.StapelImageBase.final = true
+
+	// Set final.
+	{
+		final := true
+		if c.Final != nil {
+			final = *c.Final
+		}
+		image.StapelImageBase.final = final
+	}
 
 	if c.RawDocker != nil {
 		if docker, err := c.RawDocker.toDirective(); err != nil {
@@ -199,6 +208,8 @@ func (c *rawStapelImage) toAnsibleWithTaskByStage(task *AnsibleTask, stage strin
 func (c *rawStapelImage) validateStapelImageArtifactDirective(imageArtifact *StapelImageArtifact) (err error) {
 	if c.RawDocker != nil {
 		return newDetailedConfigError("`docker` section is not supported for artifact!", nil, c.doc)
+	} else if c.Final != nil {
+		return newDetailedConfigError("`final` directive is not supported for artifact!", nil, c.doc)
 	}
 
 	if err := imageArtifact.validate(); err != nil {

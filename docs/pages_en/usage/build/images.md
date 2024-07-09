@@ -405,6 +405,35 @@ dependencies:
 
 During the build, werf will automatically insert the appropriate names and identifiers into the referenced build-arguments. werf will take care of all orchestration and dependency mapping and then build everything in one step (as part of the `werf build` command).
 
+### Using intermediate and final images
+
+By default, all images are final, allowing the user to operate with them using their names as arguments for most werf commands and in Helm chart templates. The `final` directive can be used to regulate this property of an image.
+
+Intermediate images (`final: false`), unlike final images:
+- Do not appear [in the service values for the Helm chart]({{ "usage/deploy/values.html#information-about-the-built-images-werf-only" | true_relative_url }}).
+- Are not tagged with arbitrary tags ([more about --add-custom-tag]({{ "usage/build/process.html#adding-custom-tags" | true_relative_url }})).
+- Are not published to the final repository ([more about --final-repo]({{ "usage/build/process.html#extra-repository-for-final-images" | true_relative_url }})).
+- Are not exported ([more about werf export]({{ "reference/cli/werf_export.html" | true_relative_url }})).
+
+Example of using the `final` directive:
+
+```yaml
+project: example
+configVersion: 1
+---
+image: builder
+final: false
+dockerfile: Dockerfile.builder
+---
+image: app
+dockerfile: Dockerfile.app
+dependencies:
+- image: builder
+  imports:
+  - type: ImageName
+    targetBuildArg: BUILDER_IMAGE_NAME
+```
+
 ## Multi-platform and cross-platform building
 
 werf can build images for either the native host platform in which it is running, or for arbitrary platform in cross-platform mode using emulation. It is also possible to build images for multiple target platforms at once (i.e. manifest-list images).

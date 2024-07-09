@@ -85,7 +85,7 @@ func (tree *ImagesTree) Calculate(ctx context.Context) error {
 			commonImageOpts.ForceTargetPlatformLogging = (len(targetPlatforms) > 1)
 
 			for _, targetPlatform := range targetPlatforms {
- 				imageLogName := logging.ImageLogProcessName(imageConfigI.GetName(), imageConfigI.IsFinal(), targetPlatform)
+				imageLogName := logging.ImageLogProcessName(imageConfigI.GetName(), imageConfigI.IsFinal(), targetPlatform)
 				style := ImageLogProcessStyle(imageConfigI.IsFinal())
 				err := logboek.Context(ctx).Info().LogProcess(imageLogName).
 					Options(func(options types.LogProcessOptionsInterface) {

@@ -22,6 +22,7 @@ type ImageFromDockerfile struct {
 	Staged          bool
 
 	platform []string
+	final    bool
 	raw      *rawImageFromDockerfile
 }
 
@@ -63,7 +64,7 @@ func (c *ImageFromDockerfile) IsStapel() bool {
 }
 
 func (c *ImageFromDockerfile) IsFinal() bool {
-	return true
+	return c.final
 }
 
 func (c *ImageFromDockerfile) Platform() []string {
