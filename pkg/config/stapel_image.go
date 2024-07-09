@@ -3,7 +3,7 @@ package config
 import (
 	"context"
 
-	"github.com/werf/werf/v2/pkg/werf/global_warnings"
+	"github.com/werf/werf/pkg/werf/global_warnings"
 )
 
 type StapelImage struct {
