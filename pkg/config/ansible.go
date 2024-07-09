@@ -1,5 +1,11 @@
 package config
 
+import (
+	"context"
+
+	"github.com/werf/werf/v2/pkg/werf/global_warnings"
+)
+
 type Ansible struct {
 	BeforeInstall             []*AnsibleTask
 	Install                   []*AnsibleTask
@@ -19,5 +25,7 @@ func (c *Ansible) GetDumpConfigSection() string {
 }
 
 func (c *Ansible) validate() error {
+	global_warnings.GlobalDeprecationWarningLn(context.Background(), "The `ansible` directive is deprecated and will be removed in v3!")
+
 	return nil
 }
