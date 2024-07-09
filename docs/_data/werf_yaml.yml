@@ -287,16 +287,16 @@ sections:
 
   - id: stapel-section
     description:
-      en: "Stapel image/artifact section: optional, define as many image sections as you need"
-      ru: "Секция Stapel image/artifact: может использоваться произвольное количество секций"
+      en: "Stapel image section: optional, define as many image sections as you need"
+      ru: "Секция Stapel image: может использоваться произвольное количество секций"
     isCollapsedByDefault: false
     directives:
       - << : *dockerfile-image-section-image
       - name: artifact
         value: "string"
         description:
-          en: The unique name for artifact
-          ru: Уникальное имя артефакта
+          en: The unique name for artifact (DEPRECATED)
+          ru: Уникальное имя артефакта (DEPRECATED)
         detailsArticle:
           all: "/usage/build/stapel/imports.html"
       - << : *dockerfile-image-section-final
@@ -325,16 +325,13 @@ sections:
           en: "To use image as base image by image name"
           ru: "Использование образа из werf.yaml в качестве базового"
         detailsArticle:
-          en: "/usage/build/stapel/base.html#fromimage-and-fromartifact"
-          ru: "/usage/build/stapel/base.html#fromimage-и-fromartifact"
+          en: "/usage/build/stapel/base.html#fromimage"
+          ru: "/usage/build/stapel/base.html#fromimage"
       - name: fromArtifact
         value: "string"
         description:
-          en: "To use artifact as base image by artifact name"
-          ru: "Использование образа артефакта из werf.yaml в качестве базового"
-        detailsArticle:
-          en: "/usage/build/stapel/base.html#fromimage-and-fromartifact"
-          ru: "/usage/build/stapel/base.html#fromimage-и-fromartifact"
+          en: "To use artifact as base image by artifact name (DEPRECATED)"
+          ru: "Использование образа артефакта из werf.yaml в качестве базового (DEPRECATED)"
       - name: fromCacheVersion
         value: "string"
         description:
@@ -711,7 +708,7 @@ sections:
       - name: import
         description:
           en: "Imports"
-          ru: "Импортирование из образов и артефактов"
+          ru: "Импортирование из образов"
         detailsArticle:
           all: "/usage/build/stapel/imports.html"
         collapsible: true
@@ -720,8 +717,8 @@ sections:
           - name: artifact
             value: "string"
             description:
-              en: "The artifact name from which you want to copy files"
-              ru: "Имя артефакта, из которого выполнять копирование файлов"
+              en: "The artifact name from which you want to copy files (DEPRECATED)"
+              ru: "Имя артефакта, из которого выполнять копирование файлов (DEPRECATED)"
           - name: image
             value: "string"
             description:
@@ -746,7 +743,7 @@ sections:
             value: "string"
             description:
               en: "The absolute file or folder path in source image for copying"
-              ru: "Абсолютный путь до файла или директории в выбранном образе/артефакте"
+              ru: "Абсолютный путь до файла или директории в выбранном образе"
           - name: to
             value: "string"
             description:

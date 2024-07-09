@@ -37,7 +37,7 @@ entries:
                   - title: User instructions
                     url: /usage/build/stapel/instructions.html
 
-                  - title: Importing from images and artifacts
+                  - title: Importing from images
                     url: /usage/build/stapel/imports.html
 
                   - title: Dockerfile instructions
@@ -171,7 +171,7 @@ entries:
                   - title: Пользовательские инструкции
                     url: /usage/build/stapel/instructions.html
 
-                  - title: Импорт из артефактов и образов
+                  - title: Импортирование из образов
                     url: /usage/build/stapel/imports.html
 
                   - title: Инструкции Dockerfile
