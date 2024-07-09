@@ -224,6 +224,93 @@ In this case, werf will compose the following sets to build:
 └ Concurrent builds plan (no more than 5 images at the same time)
 ```
 
+## Multi-platform and cross-platform building
+
+werf can build images for either the native host platform in which it is running, or for arbitrary platform in cross-platform mode using emulation. It is also possible to build images for multiple target platforms at once (i.e. manifest-list images).
+
+Multi-platform builds use the cross-platform instruction execution mechanics provided by the [Linux kernel](https://en.wikipedia.org/wiki/Binfmt_misc) and the QEMU emulator. [List of supported architectures](https://www.qemu.org/docs/master/about/emulation.html). Refer to the [Installation](https://werf.io/getting_started/) section for more information on how to configure the host system to do cross-platform builds.
+
+The table below summarizes support of multi-platform building for different configuration syntaxes, building modes, and build backends:
+
+|                         | buildah        | docker-server      |
+|---                      |---             |---                 |
+| **Dockerfile**          | full support   | full support       |
+| **staged Dockerfile**   | full support   | no support         |
+| **stapel**              | full support   | linux/amd64 only   |
+
+### Building for single target platform
+
+The user can choose the target platform for the images to be built using the `--platform` parameter:
+
+```shell
+werf build --platform linux/arm64
+```
+
+— werf builds all the final images from werf.yaml for the target platform using emulation.
+
+You can also set the target platform using the `build.platform` configuration directive:
+
+```yaml
+# werf.yaml
+project: example
+configVersion: 1
+build:
+  platform:
+  - linux/arm64
+---
+image: frontend
+dockerfile: frontend/Dockerfile
+---
+image: backend
+dockerfile: backend/Dockerfile
+```
+
+In this case, running the `werf build` command without parameters will start the image build process for the specified platform (the explicitly passed `--platform` parameter will override the werf.yaml settings).
+
+### Building for multiple target platforms
+
+werf supports simultaneous image building for multiple platforms. In this case, werf publishes a special manifest in the container registry, which includes the built images for each specified target platform (pulling such an image will provide the client with the image built for the client platform).
+
+Here is how you can define a common list of target platforms for all images in the werf.yaml:
+
+```yaml
+# werf.yaml
+project: example
+configVersion: 1
+build:
+  platform:
+  - linux/arm64
+  - linux/amd64
+  - linux/arm/v7
+```
+
+It is possible to define list of target platforms separately per image in the werf.yaml (this setting will have a priority over common list of target platforms):
+
+```yaml
+# werf.yaml
+project: example
+configVersion: 1
+---
+image: mysql
+dockerfile: ./Dockerfile.mysql
+platform:
+- linux/amd64
+---
+image: backend
+dockerfile: ./Dockerfile.backend
+platform:
+- linux/amd64
+- linux/arm64
+```
+
+You can also override this list using the `--platform` parameter as follows:
+
+```shell
+werf build --platform=linux/amd64,linux/i386
+```
+
+— this parameter will override all platform settings specified in the werf.yaml (both common list and per-image list).
+
 ## Using mirrors for docker.io
 
 You can set up mirrors for the default `docker.io` container registry.
@@ -373,15 +460,3 @@ werf converge --repo registry.mydomain.org/repo --synchronization :local
 ```
 
 > **NOTE:** This method is only suitable if all werf runs are triggered by the same runner in your CI/CD system.
-
-## Multi-platform builds
-
-Multi-platform builds use the cross-platform instruction execution mechanics provided by the [Linux kernel](https://en.wikipedia.org/wiki/Binfmt_misc) and the QEMU emulator. [List of supported architectures](https://www.qemu.org/docs/master/about/emulation.html). Refer to the [Installation](https://werf.io/getting_started/) section for more information on how to configure the host system to do cross-platform builds.
-
-The table below summarizes support of multi-platform building for different configuration syntaxes, building modes, and build backends:
-
-|                         | buildah        | docker-server      |
-|---                      |---             |---                 |
-| **Dockerfile**          | full support   | full support       |
-| **staged Dockerfile**   | full support   | no support         |
-| **stapel**              | full support   | linux/amd64 only   |
