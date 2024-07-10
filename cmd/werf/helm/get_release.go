@@ -12,6 +12,7 @@ import (
 	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
 	"github.com/werf/werf/v2/pkg/true_git"
 	"github.com/werf/werf/v2/pkg/werf"
+	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
 
 var getReleaseCmdData common.CmdData
@@ -24,6 +25,8 @@ func NewGetReleaseCmd(ctx context.Context) *cobra.Command {
 		Short:                 "Print Helm Release name that will be used in current configuration with specified params.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
+
+			global_warnings.SuppressGlobalWarnings = true
 
 			if err := common.ProcessLogOptions(&getReleaseCmdData); err != nil {
 				common.PrintHelp(cmd)
