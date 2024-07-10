@@ -12,6 +12,7 @@ import (
 	"github.com/werf/werf/pkg/git_repo/gitdata"
 	"github.com/werf/werf/pkg/true_git"
 	"github.com/werf/werf/pkg/werf"
+	"github.com/werf/werf/pkg/werf/global_warnings"
 )
 
 var commonCmdData common.CmdData
@@ -27,6 +28,12 @@ func NewCmd(ctx context.Context) *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
+
+			global_warnings.SuppressGlobalWarnings = true
+			if *commonCmdData.LogVerbose || *commonCmdData.LogDebug {
+				global_warnings.SuppressGlobalWarnings = false
+			}
+			defer global_warnings.PrintGlobalWarnings(ctx)
 
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)

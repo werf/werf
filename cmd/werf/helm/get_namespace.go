@@ -12,6 +12,7 @@ import (
 	"github.com/werf/werf/pkg/git_repo/gitdata"
 	"github.com/werf/werf/pkg/true_git"
 	"github.com/werf/werf/pkg/werf"
+	"github.com/werf/werf/pkg/werf/global_warnings"
 )
 
 var getNamespaceCmdData common.CmdData
@@ -24,6 +25,8 @@ func NewGetNamespaceCmd(ctx context.Context) *cobra.Command {
 		Short:                 "Print Kubernetes Namespace that will be used in current configuration with specified params.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
+
+			global_warnings.SuppressGlobalWarnings = true
 
 			if err := common.ProcessLogOptions(&getNamespaceCmdData); err != nil {
 				common.PrintHelp(cmd)
