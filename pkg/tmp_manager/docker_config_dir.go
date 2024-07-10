@@ -10,7 +10,7 @@ import (
 	"github.com/otiai10/copy"
 )
 
-func CreateDockerConfigDir(ctx context.Context, fromDockerConfig string) (string, error) {
+func CreateDockerConfigDir(_ context.Context, fromDockerConfig string) (string, error) {
 	newDir, err := newTmpDir(DockerConfigDirPrefix)
 	if err != nil {
 		return "", err
@@ -26,9 +26,13 @@ func CreateDockerConfigDir(ctx context.Context, fromDockerConfig string) (string
 			return "", fmt.Errorf("unable to read %q", fromDockerConfig)
 		}
 
+		pathsToSkip := []string{"run", "mutagen"}
+	mainLoop:
 		for _, file := range files {
-			if file.Name() == "run" {
-				continue
+			for _, pathToSkip := range pathsToSkip {
+				if file.Name() == pathToSkip {
+					continue mainLoop
+				}
 			}
 
 			source := filepath.Join(fromDockerConfig, file.Name())
