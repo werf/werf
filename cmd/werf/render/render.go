@@ -62,7 +62,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 			ctx := cmd.Context()
 
 			global_warnings.SuppressGlobalWarnings = true
-			if *commonCmdData.LogVerbose || *commonCmdData.LogDebug {
+			if *commonCmdData.LogDebug {
 				global_warnings.SuppressGlobalWarnings = false
 			}
 			defer global_warnings.PrintGlobalWarnings(ctx)
