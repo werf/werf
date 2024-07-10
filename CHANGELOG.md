@@ -1,5 +1,13 @@
 # Changelog
 
+### [2.7.1](https://www.github.com/werf/werf/compare/v2.7.0...v2.7.1) (2024-07-10)
+
+
+### Bug Fixes
+
+* **ci-env:** unable to copy /home/<user>/.docker/mutagen ([5256657](https://www.github.com/werf/werf/commit/5256657b67a9c10a28f741665250f8e79e9f61e3))
+* suppress warnings for some commands ([2d449b0](https://www.github.com/werf/werf/commit/2d449b0db369d9270a42f1efa5975bba0419c906))
+
 ## [2.7.0](https://www.github.com/werf/werf/compare/v2.6.7...v2.7.0) (2024-07-09)
 
 
