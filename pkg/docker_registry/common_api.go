@@ -15,6 +15,7 @@ import (
 
 	"github.com/werf/logboek"
 	transport2 "github.com/werf/werf/pkg/docker_registry/transport"
+	"github.com/werf/werf/pkg/werf"
 )
 
 type apiError struct {
@@ -86,6 +87,9 @@ func newHttpTransport(skipTlsVerify bool) http.RoundTripper {
 
 		t = dt
 	}
+
+	// Add werf User-Agent header.
+	t = werf.NewUserAgentTransport(t)
 
 	// Wrap the transport with retry logic.
 	t = transport.NewRetry(t)
