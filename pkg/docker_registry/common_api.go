@@ -73,12 +73,25 @@ func doRequest(ctx context.Context, client *http.Client, method, url string, bod
 }
 
 func newHttpTransport(skipTlsVerify bool) http.RoundTripper {
-	t := remote.DefaultTransport.(*http.Transport).Clone()
+	var t http.RoundTripper
 
-	if skipTlsVerify {
-		t.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-		t.TLSNextProto = make(map[string]func(authority string, c *tls.Conn) http.RoundTripper)
+	// Use the default transport and set insecure skip verify if needed.
+	{
+		dt := remote.DefaultTransport.(*http.Transport).Clone()
+
+		if skipTlsVerify {
+			dt.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+			dt.TLSNextProto = make(map[string]func(authority string, c *tls.Conn) http.RoundTripper)
+		}
+
+		t = dt
 	}
 
-	return transport.NewRetry(transport2.NewRetryAfter(t))
+	// Wrap the transport with retry logic.
+	t = transport.NewRetry(t)
+
+	// Wrap the transport with retry-after logic.
+	t = transport2.NewRetryAfter(t)
+
+	return t
 }
