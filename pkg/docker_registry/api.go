@@ -600,23 +600,12 @@ attemptLoop:
 func (api *api) writeToRemote(ctx context.Context, ref name.Reference, imageOrIndex interface{}) error {
 	c := make(chan v1.Update, 200)
 
+	remoteOpts := append(api.defaultRemoteOptions(ctx), remote.WithProgress(c))
 	switch i := imageOrIndex.(type) {
 	case v1.Image:
-		go remote.Write(
-			ref, i,
-			remote.WithAuthFromKeychain(authn.DefaultKeychain),
-			remote.WithProgress(c),
-			remote.WithTransport(api.httpTransport),
-			remote.WithContext(ctx),
-		)
+		go remote.Write(ref, i, remoteOpts...)
 	case v1.ImageIndex:
-		go remote.WriteIndex(
-			ref, i,
-			remote.WithAuthFromKeychain(authn.DefaultKeychain),
-			remote.WithProgress(c),
-			remote.WithTransport(api.httpTransport),
-			remote.WithContext(ctx),
-		)
+		go remote.WriteIndex(ref, i, remoteOpts...)
 	default:
 		panic(fmt.Sprintf("unexpected object type %#v", i))
 	}
