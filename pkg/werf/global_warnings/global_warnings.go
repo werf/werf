@@ -29,7 +29,6 @@ func PrintGlobalWarnings(ctx context.Context) {
 		}
 
 		printGlobalWarningLn(ctx, header)
-		printGlobalWarningLn(ctx, "")
 		for i, line := range util.UniqStrings(messages) {
 			if i != 0 {
 				printGlobalWarningLn(ctx, "")
