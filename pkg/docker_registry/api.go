@@ -26,6 +26,7 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/docker_registry/container_registry_extensions"
 	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/werf"
 )
 
 type api struct {
@@ -508,6 +509,7 @@ func (api *api) defaultRemoteOptions(ctx context.Context) []remote.Option {
 		remote.WithContext(ctx),
 		remote.WithAuthFromKeychain(authn.DefaultKeychain),
 		remote.WithTransport(api.httpTransport),
+		remote.WithUserAgent(werf.UserAgent),
 	}
 }
 
