@@ -53,8 +53,8 @@ func (api *api) Tags(ctx context.Context, reference string, _ ...Option) ([]stri
 	return api.tags(ctx, reference)
 }
 
-func (api *api) tags(ctx context.Context, reference string, extraListOptions ...remote.Option) ([]string, error) {
-	tags, err := api.list(ctx, reference, extraListOptions...)
+func (api *api) tags(ctx context.Context, reference string) ([]string, error) {
+	tags, err := api.list(ctx, reference, api.defaultRemoteOptions(ctx)...)
 	if err != nil {
 		if IsStatusNotFoundErr(err) {
 			return []string{}, nil
