@@ -254,6 +254,7 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 				); err != nil {
 					return err
 				}
+				logboek.Context(ctx).LogOptionalLn()
 			}
 
 			// TODO: Separate LocalStagesStorage and RepoStagesStorage interfaces, local should not include metadata publishing methods at all
