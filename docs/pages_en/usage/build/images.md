@@ -142,6 +142,7 @@ project: example
 configVersion: 1
 ---
 image: app
+dockerfile: Dockerfile
 context: app
 contextAddFiles:
 - file1
