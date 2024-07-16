@@ -328,6 +328,10 @@ func (i *Image) FetchBaseImage(ctx context.Context) error {
 	switch i.baseImageType {
 	case ImageFromRegistryAsBaseImage:
 		if i.baseStageImage.Image.Name() == "scratch" {
+			if !i.IsDockerfileImage {
+				return fmt.Errorf(`invalid base image: "scratch" is not allowed for stapel images. Please use a Dockerfile image or an alternative scratch image, such as "registry.werf.io/werf/scratch"`)
+			}
+
 			return nil
 		}
 
