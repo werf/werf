@@ -528,7 +528,7 @@ subsequent stages), you have to change the value of the `installCacheVersion` pa
 An image containing shared system packages can be defined in a separate `werf.yaml` file. You can use the `cacheVersion` parameter for rebuilding this image to update the package versions.
 
 ```yaml
-image: ~
+image: app
 from: ubuntu:latest
 shell:
   beforeInstallCacheVersion: 2
@@ -545,7 +545,7 @@ You can use _CacheVersion directives_ jointly with the Go templates to define de
 
 {% raw %}
 ```yaml
-image: ~
+image: app
 from: ubuntu:latest
 shell:
   installCacheVersion: {{.Files.Get "some-library-latest.tar.gz" | sha256sum}}

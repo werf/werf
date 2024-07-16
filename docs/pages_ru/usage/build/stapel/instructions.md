@@ -556,7 +556,7 @@ shell:
 Вы можете определить образ, содержащий общие системные пакеты в отдельном файле `werf.yaml`. Изменение параметра `cacheVersion` может быть использовано для пересборки этого образа, чтобы обновить версии системных пакетов.
 
 ```yaml
-image: ~
+image: app
 from: ubuntu:latest
 shell:
   beforeInstallCacheVersion: 2
@@ -573,7 +573,7 @@ shell:
 
 {% raw %}
 ```yaml
-image: ~
+image: app
 from: ubuntu:latest
 shell:
   installCacheVersion: {{.Files.Get "some-library-latest.tar.gz" | sha256sum}}
