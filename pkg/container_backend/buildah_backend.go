@@ -604,7 +604,7 @@ func (backend *BuildahBackend) GetImageInfo(ctx context.Context, ref string, opt
 		CreatedAtUnixNano: inspect.Docker.Created.UnixNano(),
 		OnBuild:           inspect.Docker.Config.OnBuild,
 		Env:               inspect.Docker.Config.Env,
-		ID:                inspect.FromImageID,
+		ID:                fmt.Sprintf("sha256:%x", inspect.Docker.ID),
 		ParentID:          parentID,
 		Size:              inspect.Docker.Size,
 	}, nil
