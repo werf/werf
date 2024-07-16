@@ -1,5 +1,17 @@
 # Changelog
 
+### [1.2.321](https://www.github.com/werf/werf/compare/v1.2.320...v1.2.321) (2024-07-16)
+
+
+### Features
+
+* **docker-registry:** use werf user agent for requests to container registry API ([b3f446f](https://www.github.com/werf/werf/commit/b3f446f38790e4b351dd05a6e56703082cf42f04))
+
+
+### Bug Fixes
+
+* **build, stapel:** fix panic when unsupported scratch base image used ([452ca95](https://www.github.com/werf/werf/commit/452ca95180e4fe71af492bd69965723eceb35b44))
+
 ### [1.2.320](https://www.github.com/werf/werf/compare/v1.2.319...v1.2.320) (2024-07-10)
 
 
