@@ -28,51 +28,52 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 10
     steps:
-      - name: Run workflow status conclusion manager
-        uses: technote-space/workflow-conclusion-action@v3
-
-      - if: inputs.useCommitMessage == 'true'
-        name: Checkout code
-        uses: actions/checkout@v4
-
-      - if: inputs.useCommitMessage == 'true'
-        name: Get commit message
-        id: get_commit_message
-        uses: ./.github/actions/get-commit-message
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          ignoreTitle: "true" # Don't use PR title.
-          ignoreDescription: "false" # Use the Pull Request description.
-          ignoreLatestCommitMessage: "false" # Use the latest commit message content.
-
-      - if: env.WORKFLOW_CONCLUSION == 'failure'
-        name: Add mentions
-        id: msg_mention
-        env:
-          ACTOR_NAME: ${{ github.triggering_actor }}
-        run: |
-          if [ -n "${{ secrets.mapSlackUsers }}" ]; then
-            ACTOR_SLACK_ID=$( echo '${{ secrets.mapSlackUsers }}' | ( grep "^${ACTOR_NAME:-:}": || true) | cut -d: -f2 | head -n 1 )
-            echo "::debug:: ACTOR_SLACK_ID is '${ACTOR_SLACK_ID}'."
-            if [ -n "$ACTOR_SLACK_ID" ]; then
-              MSG_MENTION_STRING="<@${ACTOR_SLACK_ID}>";
-            else
-              echo "Slack ID for ${ACTOR_NAME} was not found."
-            fi
-          fi
-          if [ -n "${{ secrets.mentionGroupID }}" ] && [ -z "${MSG_MENTION_STRING}" ]; then MSG_MENTION_STRING="<!subteam^${{ secrets.mentionGroupID }}>"; fi
-          if [ -n "${{ secrets.mentionUserID }}" ]; then MSG_MENTION_STRING="$MSG_MENTION_STRING${MSG_MENTION_STRING:+, }<@${{ secrets.mentionUserID }}>"; fi
-          echo "::debug:: zMention string - '$MSG_MENTION_STRING'."
-          echo "::set-output name=content::$MSG_MENTION_STRING"
-
-      - name: Notify
-        uses: rtCamp/action-slack-notify@v2
-        env:
-          SLACK_WEBHOOK: ${{ secrets.webhook }}
-          SLACK_COLOR: ${{ env.WORKFLOW_CONCLUSION }}
-          SLACK_LINK_NAMES: "true"
-          SLACK_MESSAGE: |
-            ${{ steps.get_commit_message.outputs.message }}
-            ${{ inputs.message }}
-            ${{ steps.msg_mention.outputs.content }} .
+      # FIXME: we no longer use Slack, need to migrate notifications
+      # - name: Run workflow status conclusion manager
+      #   uses: technote-space/workflow-conclusion-action@v3
+      #
+      # - if: inputs.useCommitMessage == 'true'
+      #   name: Checkout code
+      #   uses: actions/checkout@v4
+      #
+      # - if: inputs.useCommitMessage == 'true'
+      #   name: Get commit message
+      #   id: get_commit_message
+      #   uses: ./.github/actions/get-commit-message
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     ignoreTitle: "true" # Don't use PR title.
+      #     ignoreDescription: "false" # Use the Pull Request description.
+      #     ignoreLatestCommitMessage: "false" # Use the latest commit message content.
+      #
+      # - if: env.WORKFLOW_CONCLUSION == 'failure'
+      #   name: Add mentions
+      #   id: msg_mention
+      #   env:
+      #     ACTOR_NAME: ${{ github.triggering_actor }}
+      #   run: |
+      #     if [ -n "${{ secrets.mapSlackUsers }}" ]; then
+      #       ACTOR_SLACK_ID=$( echo '${{ secrets.mapSlackUsers }}' | ( grep "^${ACTOR_NAME:-:}": || true) | cut -d: -f2 | head -n 1 )
+      #       echo "::debug:: ACTOR_SLACK_ID is '${ACTOR_SLACK_ID}'."
+      #       if [ -n "$ACTOR_SLACK_ID" ]; then
+      #         MSG_MENTION_STRING="<@${ACTOR_SLACK_ID}>";
+      #       else
+      #         echo "Slack ID for ${ACTOR_NAME} was not found."
+      #       fi
+      #     fi
+      #     if [ -n "${{ secrets.mentionGroupID }}" ] && [ -z "${MSG_MENTION_STRING}" ]; then MSG_MENTION_STRING="<!subteam^${{ secrets.mentionGroupID }}>"; fi
+      #     if [ -n "${{ secrets.mentionUserID }}" ]; then MSG_MENTION_STRING="$MSG_MENTION_STRING${MSG_MENTION_STRING:+, }<@${{ secrets.mentionUserID }}>"; fi
+      #     echo "::debug:: zMention string - '$MSG_MENTION_STRING'."
+      #     echo "::set-output name=content::$MSG_MENTION_STRING"
+      #
+      # - name: Notify
+      #   uses: rtCamp/action-slack-notify@v2
+      #   env:
+      #     SLACK_WEBHOOK: ${{ secrets.webhook }}
+      #     SLACK_COLOR: ${{ env.WORKFLOW_CONCLUSION }}
+      #     SLACK_LINK_NAMES: "true"
+      #     SLACK_MESSAGE: |
+      #       ${{ steps.get_commit_message.outputs.message }}
+      #       ${{ inputs.message }}
+      #       ${{ steps.msg_mention.outputs.content }} .
