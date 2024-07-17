@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.8.0](https://www.github.com/werf/werf/compare/v2.7.1...v2.8.0) (2024-07-17)
+
+
+### Features
+
+* **docker-registry:** use werf user agent for requests to container registry API ([be83e6b](https://www.github.com/werf/werf/commit/be83e6bff9a67b9d9a94c7c004e3ee244ebde883))
+
+
+### Bug Fixes
+
+* **build, stapel:** fix panic when unsupported scratch base image used ([00c2151](https://www.github.com/werf/werf/commit/00c215189f58d9c0573617c938de597e41cafa85))
+* **deploy:** --kube-config option must have highest priority ([6c72eac](https://www.github.com/werf/werf/commit/6c72eac2af30fc31f15edd951b450310615ad0f8))
+
 ### [2.7.1](https://www.github.com/werf/werf/compare/v2.7.0...v2.7.1) (2024-07-10)
 
 
