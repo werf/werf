@@ -28,10 +28,10 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 10
     steps:
+      - name: Run workflow status conclusion manager
+        uses: technote-space/workflow-conclusion-action@v3
+
       # FIXME: we no longer use Slack, need to migrate notifications
-      # - name: Run workflow status conclusion manager
-      #   uses: technote-space/workflow-conclusion-action@v3
-      #
       # - if: inputs.useCommitMessage == 'true'
       #   name: Checkout code
       #   uses: actions/checkout@v4
