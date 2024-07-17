@@ -438,7 +438,7 @@ func run(
 		ExtraLabels:                extraLabels,
 		ExtraRuntimeAnnotations:    serviceAnnotations,
 		KubeConfigBase64:           *commonCmdData.KubeConfigBase64,
-		KubeConfigPaths:            append(*commonCmdData.KubeConfigPathMergeList, *commonCmdData.KubeConfig),
+		KubeConfigPaths:            append([]string{*commonCmdData.KubeConfig}, *commonCmdData.KubeConfigPathMergeList...),
 		KubeContext:                *commonCmdData.KubeContext,
 		LogDebug:                   *commonCmdData.LogDebug,
 		LogRegistryStreamOut:       os.Stdout,
