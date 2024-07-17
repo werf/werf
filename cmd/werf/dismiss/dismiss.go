@@ -192,7 +192,7 @@ func runDismiss(ctx context.Context) error {
 		DeleteHooks:                cmdData.WithHooks,
 		DeleteReleaseNamespace:     cmdData.WithNamespace,
 		KubeConfigBase64:           *commonCmdData.KubeConfigBase64,
-		KubeConfigPaths:            append(*commonCmdData.KubeConfigPathMergeList, *commonCmdData.KubeConfig),
+		KubeConfigPaths:            append([]string{*commonCmdData.KubeConfig}, *commonCmdData.KubeConfigPathMergeList...),
 		KubeContext:                *commonCmdData.KubeContext,
 		LogDebug:                   *commonCmdData.LogDebug,
 		ProgressTablePrintInterval: time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
