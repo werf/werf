@@ -1,6 +1,7 @@
 package gitdata
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -8,6 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/werf/logboek"
 )
 
 type GitArchiveDesc struct {
@@ -34,85 +37,124 @@ func (entry *GitArchiveDesc) GetCacheBasePath() string {
 	return entry.CacheBasePath
 }
 
-func GetExistingGitArchives(cacheVersionRoot string) ([]*GitArchiveDesc, error) {
+// GetGitArchivesAndRemoveInvalid scans the given cacheVersionRoot directory and returns
+// a list of GitArchiveDesc for each valid git archive found. It removes invalid
+// entries and handles errors appropriately.
+//
+// The directory structure expected is as follows:
+// ├── 39e4985a993e1688a3a7e548e9bbf007ea53f4654d746e966b7b6a5011b72ffa/
+// │   ├── 29/
+// │   │   ├── 296f52bea4934b503f8141226900ab3798ce9eeeefcbde068bd316c687e40320.meta.json
+// │   │   ├── 296f52bea4934b503f8141226900ab3798ce9eeeefcbde068bd316c687e40320.tar
+// │   │   └── ... (other archive files)
+// │   └── ... (other hash prefixes)
+// └── ... (other repository hashes)
+func GetGitArchivesAndRemoveInvalid(ctx context.Context, cacheVersionRoot string) ([]*GitArchiveDesc, error) {
 	var res []*GitArchiveDesc
 
-	if _, err := os.Stat(cacheVersionRoot); os.IsNotExist(err) {
-		return nil, nil
-	} else if err != nil {
+	fileStat, err := os.Stat(cacheVersionRoot)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil
+		}
 		return nil, fmt.Errorf("error accessing dir %q: %w", cacheVersionRoot, err)
 	}
+	if !fileStat.IsDir() {
+		logboek.Context(ctx).Warn().LogF("Removing invalid entry %q: not a directory\n", cacheVersionRoot)
+		if err := os.RemoveAll(cacheVersionRoot); err != nil {
+			return nil, fmt.Errorf("unable to remove %q: %w", cacheVersionRoot, err)
+		}
+		return nil, nil
+	}
 
-	files, err := ioutil.ReadDir(cacheVersionRoot)
+	repoHashes, err := ioutil.ReadDir(cacheVersionRoot)
 	if err != nil {
 		return nil, fmt.Errorf("error reading dir %q: %w", cacheVersionRoot, err)
 	}
 
-	for _, finfo := range files {
-		repoArchivesRootDir := filepath.Join(cacheVersionRoot, finfo.Name())
+	for _, repoHashInfo := range repoHashes {
+		repoHashDir := filepath.Join(cacheVersionRoot, repoHashInfo.Name())
 
-		if !finfo.IsDir() {
-			if err := os.RemoveAll(repoArchivesRootDir); err != nil {
-				return nil, fmt.Errorf("unable to remove %q: %w", repoArchivesRootDir, err)
+		if !repoHashInfo.IsDir() {
+			logboek.Context(ctx).Warn().LogF("Removing invalid entry %q: not a directory\n", repoHashDir)
+			if err := os.RemoveAll(repoHashDir); err != nil {
+				return nil, fmt.Errorf("unable to remove %q: %w", repoHashDir, err)
 			}
+			continue
 		}
 
-		hashDirs, err := ioutil.ReadDir(repoArchivesRootDir)
+		hashPrefixes, err := ioutil.ReadDir(repoHashDir)
 		if err != nil {
-			return nil, fmt.Errorf("error reading repo archives dir %q: %w", repoArchivesRootDir, err)
+			return nil, fmt.Errorf("error reading repo archives dir %q: %w", repoHashDir, err)
 		}
 
-		for _, finfo := range hashDirs {
-			hashDir := filepath.Join(repoArchivesRootDir, finfo.Name())
+		for _, hashPrefixInfo := range hashPrefixes {
+			hashPrefixDir := filepath.Join(repoHashDir, hashPrefixInfo.Name())
 
-			if !finfo.IsDir() {
-				if err := os.RemoveAll(hashDir); err != nil {
-					return nil, fmt.Errorf("unable to remove %q: %w", hashDir, err)
+			if !hashPrefixInfo.IsDir() {
+				logboek.Context(ctx).Warn().LogF("Removing invalid entry %q: not a directory\n", hashPrefixDir)
+				if err := os.RemoveAll(hashPrefixDir); err != nil {
+					return nil, fmt.Errorf("unable to remove %q: %w", hashPrefixDir, err)
 				}
+				continue
 			}
 
-			archivesFiles, err := ioutil.ReadDir(hashDir)
+			archiveFiles, err := ioutil.ReadDir(hashPrefixDir)
 			if err != nil {
-				return nil, fmt.Errorf("error reading repo archives from dir %q: %w", hashDir, err)
+				return nil, fmt.Errorf("error reading repo archives from dir %q: %w", hashPrefixDir, err)
 			}
 
-			for _, finfo := range archivesFiles {
-				path := filepath.Join(hashDir, finfo.Name())
+			for _, archiveMetaOrTarFileInfo := range archiveFiles {
+				archiveMetaOrTarFilePath := filepath.Join(hashPrefixDir, archiveMetaOrTarFileInfo.Name())
 
-				if finfo.IsDir() {
-					if err := os.RemoveAll(path); err != nil {
-						return nil, fmt.Errorf("unable to remove %q: %w", path, err)
+				if archiveMetaOrTarFileInfo.IsDir() {
+					logboek.Context(ctx).Warn().LogF("Removing invalid entry %q: not a file\n", archiveMetaOrTarFilePath)
+					if err := os.RemoveAll(archiveMetaOrTarFilePath); err != nil {
+						return nil, fmt.Errorf("unable to remove %q: %w", archiveMetaOrTarFilePath, err)
 					}
-				}
-
-				if !strings.HasSuffix(finfo.Name(), ".meta.json") {
 					continue
 				}
 
-				desc := &GitArchiveDesc{MetadataPath: path, CacheBasePath: cacheVersionRoot}
-				res = append(res, desc)
+				if strings.HasSuffix(archiveMetaOrTarFileInfo.Name(), ".meta.json") {
+					desc := &GitArchiveDesc{MetadataPath: archiveMetaOrTarFilePath, CacheBasePath: cacheVersionRoot}
 
-				if data, err := ioutil.ReadFile(path); err != nil {
-					return nil, fmt.Errorf("error reading metadata file %q: %w", path, err)
-				} else {
-					if err := json.Unmarshal(data, &desc.Metadata); err != nil {
-						return nil, fmt.Errorf("error unmarshalling json from %q: %w", path, err)
+					data, err := ioutil.ReadFile(archiveMetaOrTarFilePath)
+					if err != nil {
+						return nil, fmt.Errorf("error reading metadata file %q: %w", archiveMetaOrTarFilePath, err)
 					}
-				}
-
-				archivePath := filepath.Join(hashDir, fmt.Sprintf("%s.tar", strings.TrimSuffix(finfo.Name(), ".meta.json")))
-
-				archiveInfo, err := os.Stat(archivePath)
-				if err != nil {
-					if os.IsNotExist(err) {
+					if err := json.Unmarshal(data, &desc.Metadata); err != nil {
+						logboek.Context(ctx).Warn().LogF("Removing invalid entry %q: unable to unmarshal json: %w\n", archiveMetaOrTarFilePath, err)
+						if err := os.RemoveAll(archiveMetaOrTarFilePath); err != nil {
+							return nil, fmt.Errorf("unable to remove %q: %w", archiveMetaOrTarFilePath, err)
+						}
 						continue
 					}
 
-					return nil, fmt.Errorf("error accessing %q: %w", archivePath, err)
-				}
+					archivePath := filepath.Join(hashPrefixDir, fmt.Sprintf("%s.tar", strings.TrimSuffix(archiveMetaOrTarFileInfo.Name(), ".meta.json")))
 
-				desc.ArchivePath = archivePath
-				desc.Size = uint64(archiveInfo.Size())
+					archiveInfo, err := os.Stat(archivePath)
+					if err != nil {
+						if os.IsNotExist(err) {
+							logboek.Context(ctx).Warn().LogF("Removing invalid entry %q: archive file does not exist\n", archivePath)
+							if err := os.RemoveAll(archiveMetaOrTarFilePath); err != nil {
+								return nil, fmt.Errorf("unable to remove %q: %w", archiveMetaOrTarFilePath, err)
+							}
+							continue
+						}
+						return nil, fmt.Errorf("error accessing %q: %w", archivePath, err)
+					}
+
+					desc.ArchivePath = archivePath
+					desc.Size = uint64(archiveInfo.Size())
+					res = append(res, desc)
+				} else if strings.HasSuffix(archiveMetaOrTarFileInfo.Name(), ".tar") {
+					// This is a valid tar file, do nothing.
+				} else {
+					logboek.Context(ctx).Warn().LogF("Removing invalid entry %q: unknown file type\n", archiveMetaOrTarFilePath)
+					if err := os.RemoveAll(archiveMetaOrTarFilePath); err != nil {
+						return nil, fmt.Errorf("unable to remove %q: %w", archiveMetaOrTarFilePath, err)
+					}
+				}
 			}
 		}
 	}

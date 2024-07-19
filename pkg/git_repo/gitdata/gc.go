@@ -151,9 +151,9 @@ func RunGC(ctx context.Context, allowedVolumeUsagePercentage, allowedVolumeUsage
 	{
 		cacheVersionRoot := filepath.Join(werf.GetLocalCacheDir(), "git_repos", git_repo.GitReposCacheVersion)
 
-		entries, err := GetExistingGitRepos(cacheVersionRoot)
+		entries, err := GetGitReposAndRemoveInvalid(ctx, cacheVersionRoot)
 		if err != nil {
-			return fmt.Errorf("error getting existing git repos from %q: %w", cacheVersionRoot, err)
+			return fmt.Errorf("unable to process git repos from %q: %w", cacheVersionRoot, err)
 		}
 
 		for _, entry := range entries {
@@ -164,9 +164,9 @@ func RunGC(ctx context.Context, allowedVolumeUsagePercentage, allowedVolumeUsage
 	{
 		cacheVersionRoot := filepath.Join(werf.GetLocalCacheDir(), "git_worktrees", git_repo.GitWorktreesCacheVersion)
 
-		entries, err := GetExistingGitWorktrees(cacheVersionRoot)
+		entries, err := GetGitWorktreesAndRemoveInvalid(ctx, cacheVersionRoot)
 		if err != nil {
-			return fmt.Errorf("error getting existing git repos from %q: %w", cacheVersionRoot, err)
+			return fmt.Errorf("unable to process git worktrees from %q: %w", cacheVersionRoot, err)
 		}
 
 		for _, entry := range entries {
@@ -177,9 +177,9 @@ func RunGC(ctx context.Context, allowedVolumeUsagePercentage, allowedVolumeUsage
 	{
 		cacheVersionRoot := filepath.Join(werf.GetLocalCacheDir(), "git_archives", GitArchivesCacheVersion)
 
-		entries, err := GetExistingGitArchives(cacheVersionRoot)
+		entries, err := GetGitArchivesAndRemoveInvalid(ctx, cacheVersionRoot)
 		if err != nil {
-			return fmt.Errorf("error getting existing git repos from %q: %w", cacheVersionRoot, err)
+			return fmt.Errorf("unable to process git archives from %q: %w", cacheVersionRoot, err)
 		}
 
 		for _, entry := range entries {
@@ -190,9 +190,9 @@ func RunGC(ctx context.Context, allowedVolumeUsagePercentage, allowedVolumeUsage
 	{
 		cacheVersionRoot := filepath.Join(werf.GetLocalCacheDir(), "git_patches", GitPatchesCacheVersion)
 
-		entries, err := GetExistingGitPatches(cacheVersionRoot)
+		entries, err := GetGitPatchesAndRemoveInvalid(ctx, cacheVersionRoot)
 		if err != nil {
-			return fmt.Errorf("error getting existing git repos from %q: %w", cacheVersionRoot, err)
+			return fmt.Errorf("unable to process git patches from %q: %w", cacheVersionRoot, err)
 		}
 
 		for _, entry := range entries {
