@@ -1,6 +1,7 @@
 package gitdata
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -8,6 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/werf/logboek"
 )
 
 type GitPatchDesc struct {
@@ -34,7 +37,20 @@ func (entry *GitPatchDesc) GetCacheBasePath() string {
 	return entry.CacheBasePath
 }
 
-func GetExistingGitPatches(cacheVersionRoot string) ([]*GitPatchDesc, error) {
+// GetGitPatchesAndRemoveInvalid scans the given cacheVersionRoot directory and returns
+// a list of GitPatchDesc for each valid .meta.json file found. It removes invalid
+// entries and handles errors appropriately.
+//
+// The directory structure expected is as follows:
+// ├── 0f1ddce0c13406a1178a3e8df39e356fb0ab629e7b3f3db26f04cb668a2c3b2a/
+// │   ├── a3/
+// │   │   ├── a3be8a34b216b93516c0f50964a15cace97662cf20a278bb3f50f511649249bb.patch.92f0dd52eb4e3cc2deb6761be83a42fa9d1d07e1c6476a5ac2c2ba9e62b43c10.paths_list
+// │   │   ├── a3d24f9f2203e37ce6400f8198246e1a8d28a69728e8873e785d0e9adbf1e85e.meta.json
+// │   │   ├── a3d24f9f2203e37ce6400f8198246e1a8d28a69728e8873e785d0e9adbf1e85e.patch
+// │   │   └── ... (other patch files)
+// │   └── ... (other hash groups)
+// └── ... (other repositories)
+func GetGitPatchesAndRemoveInvalid(ctx context.Context, cacheVersionRoot string) ([]*GitPatchDesc, error) {
 	var res []*GitPatchDesc
 
 	if _, err := os.Stat(cacheVersionRoot); os.IsNotExist(err) {
@@ -43,76 +59,98 @@ func GetExistingGitPatches(cacheVersionRoot string) ([]*GitPatchDesc, error) {
 		return nil, fmt.Errorf("error accessing dir %q: %w", cacheVersionRoot, err)
 	}
 
-	files, err := ioutil.ReadDir(cacheVersionRoot)
+	repoDirs, err := ioutil.ReadDir(cacheVersionRoot)
 	if err != nil {
 		return nil, fmt.Errorf("error reading dir %q: %w", cacheVersionRoot, err)
 	}
 
-	for _, finfo := range files {
-		repoPatchesRootDir := filepath.Join(cacheVersionRoot, finfo.Name())
+	for _, repoDirInfo := range repoDirs {
+		repoDir := filepath.Join(cacheVersionRoot, repoDirInfo.Name())
 
-		if !finfo.IsDir() {
-			if err := os.RemoveAll(repoPatchesRootDir); err != nil {
-				return nil, fmt.Errorf("unable to remove %q: %w", repoPatchesRootDir, err)
+		if !repoDirInfo.IsDir() {
+			logboek.Context(ctx).Warn().LogF("Removing invalid entry %q: not a directory\n", repoDir)
+			if err := os.RemoveAll(repoDir); err != nil {
+				return nil, fmt.Errorf("unable to remove %q: %w", repoDir, err)
 			}
+			continue
 		}
 
-		hashDirs, err := ioutil.ReadDir(repoPatchesRootDir)
+		hashGroupDirs, err := ioutil.ReadDir(repoDir)
 		if err != nil {
-			return nil, fmt.Errorf("error reading repo archives dir %q: %w", repoPatchesRootDir, err)
+			return nil, fmt.Errorf("error reading repo archives dir %q: %w", repoDir, err)
 		}
 
-		for _, finfo := range hashDirs {
-			hashDir := filepath.Join(repoPatchesRootDir, finfo.Name())
+		for _, hashGroupDirInfo := range hashGroupDirs {
+			hashGroupDir := filepath.Join(repoDir, hashGroupDirInfo.Name())
 
-			if !finfo.IsDir() {
-				if err := os.RemoveAll(hashDir); err != nil {
-					return nil, fmt.Errorf("unable to remove %q: %w", hashDir, err)
+			if !hashGroupDirInfo.IsDir() {
+				logboek.Context(ctx).Warn().LogF("Removing invalid entry %q: not a directory\n", hashGroupDir)
+				if err := os.RemoveAll(hashGroupDir); err != nil {
+					return nil, fmt.Errorf("unable to remove %q: %w", hashGroupDir, err)
 				}
+				continue
 			}
 
-			patchesFiles, err := ioutil.ReadDir(hashDir)
+			patchFiles, err := ioutil.ReadDir(hashGroupDir)
 			if err != nil {
-				return nil, fmt.Errorf("error reading repo patches from dir %q: %w", hashDir, err)
+				return nil, fmt.Errorf("error reading repo patches from dir %q: %w", hashGroupDir, err)
 			}
 
-			for _, finfo := range patchesFiles {
-				path := filepath.Join(hashDir, finfo.Name())
+			for _, metaOrPatchFileInfo := range patchFiles {
+				metaOrPathFilePath := filepath.Join(hashGroupDir, metaOrPatchFileInfo.Name())
 
-				if finfo.IsDir() {
-					if err := os.RemoveAll(path); err != nil {
-						return nil, fmt.Errorf("unable to remove %q: %w", path, err)
+				// Remove invalid entry: file must be a regular file.
+				if metaOrPatchFileInfo.IsDir() {
+					logboek.Context(ctx).Warn().LogF("Removing invalid entry %q: not a regular file\n", metaOrPathFilePath)
+					if err := os.RemoveAll(metaOrPathFilePath); err != nil {
+						return nil, fmt.Errorf("unable to remove %q: %w", metaOrPathFilePath, err)
 					}
-				}
 
-				if !strings.HasSuffix(finfo.Name(), ".meta.json") {
 					continue
 				}
 
-				desc := &GitPatchDesc{MetadataPath: path}
-				res = append(res, desc)
+				if strings.HasSuffix(metaOrPatchFileInfo.Name(), ".meta.json") {
+					desc := &GitPatchDesc{MetadataPath: metaOrPathFilePath}
 
-				if data, err := ioutil.ReadFile(path); err != nil {
-					return nil, fmt.Errorf("error reading metadata file %q: %w", path, err)
-				} else {
-					if err := json.Unmarshal(data, &desc.Metadata); err != nil {
-						return nil, fmt.Errorf("error unmarshalling json from %q: %w", path, err)
+					data, err := ioutil.ReadFile(metaOrPathFilePath)
+					if err != nil {
+						return nil, fmt.Errorf("error reading metadata file %q: %w", metaOrPathFilePath, err)
 					}
-				}
 
-				patchPath := filepath.Join(hashDir, fmt.Sprintf("%s.patch", strings.TrimSuffix(finfo.Name(), ".meta.json")))
-
-				patchInfo, err := os.Stat(patchPath)
-				if err != nil {
-					if os.IsNotExist(err) {
+					err = json.Unmarshal(data, &desc.Metadata)
+					if err != nil {
+						logboek.Context(ctx).Warn().LogF("Removing invalid entry %q: unable to unmarshal json: %w\n", metaOrPathFilePath, err)
+						if err := os.RemoveAll(metaOrPathFilePath); err != nil {
+							return nil, fmt.Errorf("unable to remove %q: %w", metaOrPathFilePath, err)
+						}
 						continue
 					}
 
-					return nil, fmt.Errorf("error accessing %q: %w", patchPath, err)
-				}
+					patchPath := filepath.Join(hashGroupDir, fmt.Sprintf("%s.patch", strings.TrimSuffix(metaOrPatchFileInfo.Name(), ".meta.json")))
+					patchInfo, err := os.Stat(patchPath)
+					if err != nil {
+						if os.IsNotExist(err) {
+							logboek.Context(ctx).Warn().LogF("Removing invalid entry %q: patch file does not exist\n", patchPath)
+							if err := os.RemoveAll(metaOrPathFilePath); err != nil {
+								return nil, fmt.Errorf("unable to remove %q: %w", metaOrPathFilePath, err)
+							}
 
-				desc.PatchPath = patchPath
-				desc.Size = uint64(patchInfo.Size())
+							continue
+						}
+						return nil, fmt.Errorf("error accessing %q: %w", patchPath, err)
+					}
+
+					desc.PatchPath = patchPath
+					desc.Size = uint64(patchInfo.Size())
+					res = append(res, desc)
+				} else if strings.HasSuffix(metaOrPatchFileInfo.Name(), ".paths_list") {
+				} else if strings.HasSuffix(metaOrPatchFileInfo.Name(), ".patch") {
+				} else {
+					logboek.Context(ctx).Warn().LogF("Removing invalid entry %q: unknown file type\n", metaOrPathFilePath)
+					if err := os.RemoveAll(metaOrPathFilePath); err != nil {
+						return nil, fmt.Errorf("unable to remove %q: %w", metaOrPathFilePath, err)
+					}
+				}
 			}
 		}
 	}
