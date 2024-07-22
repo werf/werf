@@ -1,10 +1,12 @@
 package compose
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"os"
 	"os/exec"
+	"regexp"
 	"strings"
 	"syscall"
 
@@ -13,6 +15,7 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/build"
+	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
@@ -45,6 +48,95 @@ type composeCmdData struct {
 	ComposeCommandArgs    []string
 
 	imagesToProcess build.ImagesToProcess
+}
+
+func (d *composeCmdData) GetOrExtractImagesToProcess(werfConfig *config.WerfConfig) (build.ImagesToProcess, error) {
+	if len(d.imagesToProcess.ImageNameList) != 0 {
+		return d.imagesToProcess, nil
+	}
+
+	// Replace all special characters in image name with empty string to find the same image name in werf config.
+	replaceAllFunc := func(s string) string {
+		for _, l := range []string{"_", "-", "/"} {
+			s = strings.ReplaceAll(s, l, "")
+		}
+		return s
+	}
+
+	extractedImageNameList, err := extractImageNamesFromDockerComposeFile(d.getComposeFilePath())
+	if err != nil {
+		return build.ImagesToProcess{}, fmt.Errorf("unable to extract image names from docker-compose file: %w", err)
+	}
+
+	configImageNameList := werfConfig.GetImageNameList(false)
+
+	var imageNameList []string
+	for _, configImageName := range configImageNameList {
+		for _, imageName := range extractedImageNameList {
+			if configImageName == imageName {
+				imageNameList = append(imageNameList, imageName)
+				continue
+			}
+
+			if replaceAllFunc(configImageName) == replaceAllFunc(imageName) {
+				imageNameList = append(imageNameList, configImageName)
+				continue
+			}
+		}
+	}
+
+	return build.NewImagesToProcess(imageNameList, len(imageNameList) == 0), nil
+}
+
+func (d *composeCmdData) getComposeFilePath() string {
+	for ind, value := range d.ComposeOptions {
+		if strings.HasPrefix(value, "-f") || strings.HasPrefix(value, "--file") {
+			parts := strings.Split(value, "=")
+			if len(parts) == 2 {
+				return parts[1]
+			} else if len(d.ComposeOptions) > ind+1 {
+				return d.ComposeOptions[ind+1]
+			}
+		}
+	}
+
+	return "docker-compose.yml"
+}
+
+func extractImageNamesFromDockerComposeFile(filename string) ([]string, error) {
+	file, err := os.Open(filename)
+	if err != nil {
+		return nil, fmt.Errorf("error opening file: %v", err)
+	}
+	defer file.Close()
+
+	// Matches $WERF_<IMAGE_NAME>_DOCKER_IMAGE_NAME and ${WERF_<IMAGE_NAME>_DOCKER_IMAGE_NAME}.
+	re := regexp.MustCompile(`\${?WERF_(.*)_DOCKER_IMAGE_NAME}?`)
+
+	var imageNames []string
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+
+		// Ignore commented lines.
+		if strings.HasPrefix(line, "#") {
+			continue
+		}
+
+		matches := re.FindAllStringSubmatch(line, -1)
+		for _, match := range matches {
+			if len(match) > 1 {
+				imageName := strings.ToLower(match[1])
+				imageNames = append(imageNames, imageName)
+			}
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("error reading file: %v", err)
+	}
+
+	return imageNames, nil
 }
 
 func NewConfigCmd(ctx context.Context) *cobra.Command {
@@ -342,11 +434,14 @@ func runMain(ctx context.Context, dockerComposeCmdName string, cmdData composeCm
 }
 
 func run(ctx context.Context, containerBackend container_backend.ContainerBackend, giterminismManager giterminism_manager.Interface, commonCmdData common.CmdData, cmdData composeCmdData, dockerComposeCmdName string) error {
-	imagesToProcess := cmdData.imagesToProcess
-
 	_, werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %w", err)
+	}
+
+	imagesToProcess, err := cmdData.GetOrExtractImagesToProcess(werfConfig)
+	if err != nil {
+		return err
 	}
 
 	if err := imagesToProcess.CheckImagesExistence(werfConfig); err != nil {
