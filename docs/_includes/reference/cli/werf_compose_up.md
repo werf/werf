@@ -269,6 +269,8 @@ werf compose up [IMAGE_NAME...] [options] [--docker-compose-options="OPTIONS"] [
             Can be specified with $WERF_SSH_KEY_* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa,         
             $WERF_SSH_KEY_NODEJS=~/.ssh/nodejs_rsa).
             Defaults to $WERF_SSH_KEY_*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}
+      --stub-tags=false
+            Use stubs instead of real tags (default $WERF_STUB_TAGS)
   -S, --synchronization=''
             Address of synchronizer for multiple werf processes to work with a single repo.
             

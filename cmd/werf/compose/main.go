@@ -206,7 +206,14 @@ func NewDownCmd(ctx context.Context) *cobra.Command {
 		ArgsSupport:   false,
 	})
 
-	cmd.Flag("without-images").DefValue = "true"
+	f := cmd.Flag("stub-tags")
+	f.DefValue = "true"
+	if !f.Changed {
+		err := f.Value.Set("true")
+		if err != nil {
+			panic(fmt.Sprintf("unable to set stub-tags flag value: %s", err))
+		}
+	}
 
 	return cmd
 }
@@ -266,6 +273,7 @@ func newCmd(ctx context.Context, composeCmdName string, options *newCmdOptions) 
 	})
 
 	commonCmdData.SetupWithoutImages(cmd)
+	common.SetupStubTags(&commonCmdData, cmd)
 
 	common.SetupDir(&commonCmdData, cmd)
 	common.SetupGitWorkTree(&commonCmdData, cmd)
@@ -465,8 +473,10 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		return err
 	}
 
+	shouldBeBuilt := !*commonCmdData.StubTags
+
 	var envArray []string
-	if imagesToProcess.HaveImagesToProcess(werfConfig) {
+	if imagesToProcess.HaveImagesToProcess(werfConfig) && shouldBeBuilt {
 		projectName := werfConfig.Meta.Project
 
 		projectTmpDir, err := tmp_manager.CreateProjectDir(ctx)
@@ -502,7 +512,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 
 		storageManager := manager.NewStorageManager(projectName, stagesStorage, finalStagesStorage, secondaryStagesStorageList, cacheStagesStorageList, storageLockManager)
 
-		logboek.Context(ctx).Info().LogOptionalLn()
+		logboek.Context(ctx).Default().LogOptionalLn()
 
 		conveyorOptions, err := common.GetConveyorOptions(ctx, &commonCmdData, imagesToProcess)
 		if err != nil {
@@ -534,6 +544,10 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 			return nil
 		}); err != nil {
 			return err
+		}
+	} else {
+		for _, imageName := range imagesToProcess.ImageNameList {
+			envArray = append(envArray, build.GenerateImageEnv(imageName, "STUB:TAG"))
 		}
 	}
 

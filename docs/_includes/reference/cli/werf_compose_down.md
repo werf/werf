@@ -261,6 +261,8 @@ werf compose down [IMAGE_NAME...] [options] [--docker-compose-options="OPTIONS"]
             Can be specified with $WERF_SSH_KEY_* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa,         
             $WERF_SSH_KEY_NODEJS=~/.ssh/nodejs_rsa).
             Defaults to $WERF_SSH_KEY_*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}
+      --stub-tags=true
+            Use stubs instead of real tags (default $WERF_STUB_TAGS)
   -S, --synchronization=''
             Address of synchronizer for multiple werf processes to work with a single repo.
             
@@ -276,7 +278,7 @@ werf compose down [IMAGE_NAME...] [options] [--docker-compose-options="OPTIONS"]
       --virtual-merge=false
             Enable virtual/ephemeral merge commit mode when building current application state      
             ($WERF_VIRTUAL_MERGE by default)
-      --without-images=true
+      --without-images=false
             Disable building of images defined in the werf.yaml (if any) and usage of such images   
             in the .helm/templates ($WERF_WITHOUT_IMAGES or false by default — e.g. enable all      
             images defined in the werf.yaml by default)
