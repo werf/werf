@@ -144,14 +144,14 @@ func (report *ImagesReport) ToEnvFileData() []byte {
 
 	buf := bytes.NewBuffer([]byte{})
 	for img, record := range report.Images {
-		buf.WriteString(generateImageEnv(img, record.DockerImageName))
+		buf.WriteString(GenerateImageEnv(img, record.DockerImageName))
 		buf.WriteString("\n")
 	}
 
 	return buf.Bytes()
 }
 
-func generateImageEnv(werfImageName, imageName string) string {
+func GenerateImageEnv(werfImageName, imageName string) string {
 	var imageEnvName string
 	if werfImageName == "" {
 		imageEnvName = "WERF_DOCKER_IMAGE_NAME"
