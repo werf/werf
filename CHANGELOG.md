@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.8.1](https://www.github.com/werf/werf/compare/v2.8.0...v2.8.1) (2024-07-22)
+
+
+### Bug Fixes
+
+* **host-cleanup:** remove invalid entries from git cache ([b53811b](https://www.github.com/werf/werf/commit/b53811b7d9911e3b16dc0c3c3573bc0a8b2797f0))
+
 ## [2.8.0](https://www.github.com/werf/werf/compare/v2.7.1...v2.8.0) (2024-07-17)
 
 
