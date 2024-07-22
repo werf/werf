@@ -467,6 +467,11 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		cmd.Env = append(os.Environ(), envArray...)
-		return cmd.Run()
+
+		if err := cmd.Run(); err != nil {
+			return fmt.Errorf("error running command %q: %s", cmd, err)
+		}
 	}
+
+	return nil
 }
