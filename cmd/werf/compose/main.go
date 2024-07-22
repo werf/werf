@@ -39,12 +39,12 @@ type composeCmdData struct {
 	RawComposeOptions        string
 	RawComposeCommandOptions string
 
-	WerfImagesToProcess []string
-
 	ComposeBinPath        string
 	ComposeOptions        []string
 	ComposeCommandOptions []string
 	ComposeCommandArgs    []string
+
+	imagesToProcess build.ImagesToProcess
 }
 
 func NewConfigCmd(ctx context.Context) *cobra.Command {
@@ -224,7 +224,8 @@ func newCmd(ctx context.Context, composeCmdName string, options *newCmdOptions) 
 
 	cmd.Flags().StringVarP(&cmdData.RawComposeOptions, "docker-compose-options", "", os.Getenv("WERF_DOCKER_COMPOSE_OPTIONS"), "Define docker-compose options (default $WERF_DOCKER_COMPOSE_OPTIONS)")
 	cmd.Flags().StringVarP(&cmdData.RawComposeCommandOptions, "docker-compose-command-options", "", os.Getenv("WERF_DOCKER_COMPOSE_COMMAND_OPTIONS"), "Define docker-compose command options (default $WERF_DOCKER_COMPOSE_COMMAND_OPTIONS)")
-	// TODO(3.0): delete this flag
+
+	// TODO: delete this flag in v3
 	cmd.Flags().StringVarP(&cmdData.ComposeBinPath, "docker-compose-bin-path", "", os.Getenv("WERF_DOCKER_COMPOSE_BIN_PATH"), "DEPRECATED: \"docker compose\" command always used now, this option is ignored. Define docker-compose bin path (default $WERF_DOCKER_COMPOSE_BIN_PATH)")
 
 	return cmd
@@ -235,10 +236,10 @@ func processArgs(cmdData *composeCmdData, cmd *cobra.Command, args []string) {
 	doubleDashExist := cmd.ArgsLenAtDash() != -1
 
 	if doubleDashExist {
-		cmdData.WerfImagesToProcess = args[:doubleDashInd]
+		cmdData.imagesToProcess = build.NewImagesToProcess(args[:doubleDashInd], false)
 		cmdData.ComposeCommandArgs = args[doubleDashInd:]
 	} else if len(args) != 0 {
-		cmdData.WerfImagesToProcess = args
+		cmdData.imagesToProcess = build.NewImagesToProcess(args, false)
 	}
 }
 
@@ -341,88 +342,86 @@ func runMain(ctx context.Context, dockerComposeCmdName string, cmdData composeCm
 }
 
 func run(ctx context.Context, containerBackend container_backend.ContainerBackend, giterminismManager giterminism_manager.Interface, commonCmdData common.CmdData, cmdData composeCmdData, dockerComposeCmdName string) error {
+	imagesToProcess := cmdData.imagesToProcess
+
+	_, werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
+	if err != nil {
+		return fmt.Errorf("unable to load werf config: %w", err)
+	}
+
+	if err := imagesToProcess.CheckImagesExistence(werfConfig); err != nil {
+		return err
+	}
+
 	var envArray []string
-	if dockerComposeCmdName != "down" {
-		imagesToProcess := common.GetImagesToProcess(cmdData.WerfImagesToProcess, *commonCmdData.WithoutImages)
+	if imagesToProcess.HaveImagesToProcess(werfConfig) {
+		projectName := werfConfig.Meta.Project
 
-		_, werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
+		projectTmpDir, err := tmp_manager.CreateProjectDir(ctx)
 		if err != nil {
-			return fmt.Errorf("unable to load werf config: %w", err)
+			return fmt.Errorf("getting project tmp dir failed: %w", err)
 		}
+		defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
-		if err := imagesToProcess.CheckImagesExistence(werfConfig); err != nil {
+		stagesStorage, err := common.GetStagesStorage(ctx, containerBackend, &commonCmdData)
+		if err != nil {
+			return err
+		}
+		finalStagesStorage, err := common.GetOptionalFinalStagesStorage(ctx, containerBackend, &commonCmdData)
+		if err != nil {
+			return err
+		}
+		synchronization, err := common.GetSynchronization(ctx, &commonCmdData, projectName, stagesStorage)
+		if err != nil {
+			return err
+		}
+		storageLockManager, err := common.GetStorageLockManager(ctx, synchronization)
+		if err != nil {
+			return err
+		}
+		secondaryStagesStorageList, err := common.GetSecondaryStagesStorageList(ctx, stagesStorage, containerBackend, &commonCmdData)
+		if err != nil {
+			return err
+		}
+		cacheStagesStorageList, err := common.GetCacheStagesStorageList(ctx, containerBackend, &commonCmdData)
+		if err != nil {
 			return err
 		}
 
-		projectName := werfConfig.Meta.Project
+		storageManager := manager.NewStorageManager(projectName, stagesStorage, finalStagesStorage, secondaryStagesStorageList, cacheStagesStorageList, storageLockManager)
 
-		if imagesToProcess.HaveImagesToProcess(werfConfig) {
-			projectTmpDir, err := tmp_manager.CreateProjectDir(ctx)
-			if err != nil {
-				return fmt.Errorf("getting project tmp dir failed: %w", err)
-			}
-			defer tmp_manager.ReleaseProjectDir(projectTmpDir)
+		logboek.Context(ctx).Info().LogOptionalLn()
 
-			stagesStorage, err := common.GetStagesStorage(ctx, containerBackend, &commonCmdData)
-			if err != nil {
-				return err
-			}
-			finalStagesStorage, err := common.GetOptionalFinalStagesStorage(ctx, containerBackend, &commonCmdData)
-			if err != nil {
-				return err
-			}
-			synchronization, err := common.GetSynchronization(ctx, &commonCmdData, projectName, stagesStorage)
-			if err != nil {
-				return err
-			}
-			storageLockManager, err := common.GetStorageLockManager(ctx, synchronization)
-			if err != nil {
-				return err
-			}
-			secondaryStagesStorageList, err := common.GetSecondaryStagesStorageList(ctx, stagesStorage, containerBackend, &commonCmdData)
-			if err != nil {
-				return err
-			}
-			cacheStagesStorageList, err := common.GetCacheStagesStorageList(ctx, containerBackend, &commonCmdData)
-			if err != nil {
-				return err
-			}
+		conveyorOptions, err := common.GetConveyorOptions(ctx, &commonCmdData, imagesToProcess)
+		if err != nil {
+			return err
+		}
 
-			storageManager := manager.NewStorageManager(projectName, stagesStorage, finalStagesStorage, secondaryStagesStorageList, cacheStagesStorageList, storageLockManager)
+		conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, giterminismManager.ProjectDir(), projectTmpDir, ssh_agent.SSHAuthSock, containerBackend, storageManager, storageLockManager, conveyorOptions)
+		defer conveyorWithRetry.Terminate()
 
-			logboek.Context(ctx).Info().LogOptionalLn()
-
-			conveyorOptions, err := common.GetConveyorOptions(ctx, &commonCmdData, imagesToProcess)
-			if err != nil {
-				return err
-			}
-
-			conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, giterminismManager.ProjectDir(), projectTmpDir, ssh_agent.SSHAuthSock, containerBackend, storageManager, storageLockManager, conveyorOptions)
-			defer conveyorWithRetry.Terminate()
-
-			if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
-				if common.GetRequireBuiltImages(ctx, &commonCmdData) {
-					if err := c.ShouldBeBuilt(ctx, build.ShouldBeBuiltOptions{}); err != nil {
-						return err
-					}
-				} else {
-					if err := c.Build(ctx, build.BuildOptions{SkipImageMetadataPublication: *commonCmdData.Dev}); err != nil {
-						return err
-					}
+		if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
+			if common.GetRequireBuiltImages(ctx, &commonCmdData) {
+				if err := c.ShouldBeBuilt(ctx, build.ShouldBeBuiltOptions{}); err != nil {
+					return err
 				}
-
-				for _, img := range c.GetExportedImages() {
-					if err := c.FetchLastImageStage(ctx, img.TargetPlatform, img.Name); err != nil {
-						return err
-					}
+			} else {
+				if err := c.Build(ctx, build.BuildOptions{SkipImageMetadataPublication: *commonCmdData.Dev}); err != nil {
+					return err
 				}
-
-				envArray = c.GetImagesEnvArray()
-
-				return nil
-			}); err != nil {
-				return err
 			}
+
+			for _, img := range c.GetExportedImages() {
+				if err := c.FetchLastImageStage(ctx, img.TargetPlatform, img.Name); err != nil {
+					return err
+				}
+			}
+
+			envArray = c.GetImagesEnvArray()
+
+			return nil
+		}); err != nil {
+			return err
 		}
 	}
 
