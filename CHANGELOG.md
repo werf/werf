@@ -1,5 +1,18 @@
 # Changelog
 
+### [1.2.322](https://www.github.com/werf/werf/compare/v1.2.321...v1.2.322) (2024-07-22)
+
+
+### Features
+
+* **compose:** auto-extract used images from Docker Compose file if not specified ([da7840c](https://www.github.com/werf/werf/commit/da7840c76efc698afca5081e50312eaa00e8e8fd))
+
+
+### Bug Fixes
+
+* **compose:** require arbitrary values for service values to run the down command ([71bdc1c](https://www.github.com/werf/werf/commit/71bdc1cd3f0944cd332dc65e581115e3f8663074))
+* **host-cleanup:** remove invalid entries from git cache ([b9fbf91](https://www.github.com/werf/werf/commit/b9fbf9112e0e68f462da4704817880d83807ea50))
+
 ### [1.2.321](https://www.github.com/werf/werf/compare/v1.2.320...v1.2.321) (2024-07-16)
 
 
