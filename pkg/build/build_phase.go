@@ -855,7 +855,7 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, s
 		}
 	}
 
-	stageDigest, err := calculateDigest(ctx, stage.GetLegacyCompatibleStageName(stg.Name()), stageDependencies, phase.StagesIterator.PrevNonEmptyStage, phase.Conveyor, opts)
+	stageDigest, err := calculateDigest(ctx, img, stage.GetLegacyCompatibleStageName(stg.Name()), stageDependencies, phase.StagesIterator.PrevNonEmptyStage, phase.Conveyor, opts)
 	if err != nil {
 		return false, nil, err
 	}
@@ -896,7 +896,7 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, s
 			panic(fmt.Sprintf("expected stage %q content digest label to be set!", stg.Name()))
 		}
 	} else {
-		stageContentSig, err = calculateDigest(ctx, fmt.Sprintf("%s-content", stg.Name()), "", stg, phase.Conveyor, calculateDigestOptions{TargetPlatform: img.TargetPlatform})
+		stageContentSig, err = calculateDigest(ctx, img, fmt.Sprintf("%s-content", stg.Name()), "", stg, phase.Conveyor, calculateDigestOptions{TargetPlatform: img.TargetPlatform})
 		if err != nil {
 			return false, phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Unlock, fmt.Errorf("unable to calculate stage %s content digest: %w", stg.Name(), err)
 		}
@@ -1114,8 +1114,7 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 	stageImage.Image.SetName(newStageImageName)
 	phase.Conveyor.SetStageImage(stageImage)
 
-
-	if phase.ELFSigningOptions.Enabled {
+	if phase.ELFSigningOptions.Enabled && img.IsFinal {
 		if err := logboek.Context(ctx).Default().LogProcess("Signing ELF files").DoError(func() error {
 			return stageImage.Image.Mutate(ctx, func(builtID string) (string, error) {
 				newID := "werf.signing." + uuid.NewString()
@@ -1203,7 +1202,7 @@ type calculateDigestOptions struct {
 	BaseImage         string // TODO(staged-dockerfile): legacy compatibility field
 }
 
-func calculateDigest(ctx context.Context, stageName, stageDependencies string, prevNonEmptyStage stage.Interface, conveyor *Conveyor, opts calculateDigestOptions) (string, error) {
+func calculateDigest(ctx context.Context, img *image.Image, stageName, stageDependencies string, prevNonEmptyStage stage.Interface, conveyor *Conveyor, opts calculateDigestOptions) (string, error) {
 	var checksumArgs []string
 	var checksumArgsNames []string
 
@@ -1220,7 +1219,7 @@ func calculateDigest(ctx context.Context, stageName, stageDependencies string, p
 		"StageDependencies",
 	)
 
-	if opts.ELFSigningOptions.Enabled {
+	if opts.ELFSigningOptions.Enabled && img.IsFinal {
 		checksumArgs = append(checksumArgs, opts.ELFSigningOptions.PGPPrivateKeyFingerprint)
 		checksumArgsNames = append(checksumArgsNames, "ELF_SIGNING_PGP_KEY_FINGERPRINT")
 	}
