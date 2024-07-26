@@ -42,8 +42,8 @@ groups:
       - name: beta
         version: 2.9.0
       - name: ea
-        version: 2.8.0
+        version: 2.6.1
       - name: stable
-        version: 2.8.0
+        version: 2.6.1
       - name: rock-solid
         version: 2.6.1
