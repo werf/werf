@@ -264,6 +264,10 @@ func runRender(ctx context.Context, imagesToProcess build.ImagesToProcess) error
 			if err != nil {
 				return err
 			}
+			common.SetupOndemandKubeInitializer(*commonCmdData.KubeContext, *commonCmdData.KubeConfig, *commonCmdData.KubeConfigBase64, *commonCmdData.KubeConfigPathMergeList)
+			if err := common.GetOndemandKubeInitializer().Init(ctx); err != nil {
+				return err
+			}
 			synchronization, err := common.GetSynchronization(ctx, &commonCmdData, projectName, stagesStorage)
 			if err != nil {
 				return err
