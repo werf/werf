@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.9.1](https://www.github.com/werf/werf/compare/v2.9.0...v2.9.1) (2024-07-26)
+
+
+### Bug Fixes
+
+* **deploy:** panic on --synchronization=kubernetes://... ([f4a0e39](https://www.github.com/werf/werf/commit/f4a0e39428187000a2f754f74fb5910aa46394a0))
+
 ## [2.9.0](https://www.github.com/werf/werf/compare/v2.8.0...v2.9.0) (2024-07-22)
 
 
