@@ -313,6 +313,10 @@ func run(
 			return err
 		}
 		logboek.LogOptionalLn()
+		common.SetupOndemandKubeInitializer(*commonCmdData.KubeContext, *commonCmdData.KubeConfig, *commonCmdData.KubeConfigBase64, *commonCmdData.KubeConfigPathMergeList)
+		if err := common.GetOndemandKubeInitializer().Init(ctx); err != nil {
+			return err
+		}
 		synchronization, err := common.GetSynchronization(ctx, &commonCmdData, projectName, stagesStorage)
 		if err != nil {
 			return err
