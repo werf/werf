@@ -1,0 +1,38 @@
+project: werf-test-e2e-build-cmd-entrypoint
+configVersion: 1
+---
+image: dockerfile_shell_entrypoint
+dockerfile: Dockerfile
+target: shell_entrypoint
+---
+image: dockerfile_exec_entrypoint
+dockerfile: Dockerfile
+target: exec_entrypoint
+---
+image: dockerfile_shell_cmd
+dockerfile: Dockerfile
+target: shell_cmd
+---
+image: dockerfile_exec_cmd
+dockerfile: Dockerfile
+target: exec_cmd
+---
+image: dockerfile_no_cmd_no_entrypoint
+dockerfile: Dockerfile
+target: no_cmd_no_entrypoint
+---
+image: dockerfile_entrypoint_reset_cmd
+dockerfile: Dockerfile
+target: entrypoint_reset_cmd
+---
+image: dockerfile_entrypoint_cmd
+dockerfile: Dockerfile
+target: entrypoint_cmd
+---
+image: dockerfile_base_image_cmd
+dockerfile: Dockerfile
+target: base_image_cmd
+---
+image: dockerfile_custom_shell_exec_cmd_and_entrypoint
+dockerfile: Dockerfile
+target: custom_shell_exec_cmd_and_entrypoint
