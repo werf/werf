@@ -641,6 +641,10 @@ func (b *NativeBuildah) Config(ctx context.Context, container string, opts Confi
 		builder.SetShell(opts.Shell)
 	}
 
+	if opts.EntrypointResetCMD {
+		builder.SetCmd(nil)
+	}
+
 	if len(opts.Cmd) > 0 {
 		var cmd []string
 		if opts.CmdPrependShell {

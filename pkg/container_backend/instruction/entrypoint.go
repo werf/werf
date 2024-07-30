@@ -12,10 +12,11 @@ import (
 
 type Entrypoint struct {
 	instructions.EntrypointCommand
+	EntrypointResetCMD bool
 }
 
-func NewEntrypoint(i instructions.EntrypointCommand) *Entrypoint {
-	return &Entrypoint{EntrypointCommand: i}
+func NewEntrypoint(i instructions.EntrypointCommand, entrypointResetCMD bool) *Entrypoint {
+	return &Entrypoint{EntrypointCommand: i, EntrypointResetCMD: entrypointResetCMD}
 }
 
 func (i *Entrypoint) UsesBuildContext() bool {
@@ -27,6 +28,7 @@ func (i *Entrypoint) Apply(ctx context.Context, containerName string, drv builda
 		CommonOpts:             drvOpts,
 		Entrypoint:             i.CmdLine,
 		EntrypointPrependShell: i.PrependShell,
+		EntrypointResetCMD:     i.EntrypointResetCMD,
 	}); err != nil {
 		return fmt.Errorf("error setting entrypoint %v for container %s: %w", i.CmdLine, containerName, err)
 	}
