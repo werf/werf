@@ -648,7 +648,7 @@ func (b *NativeBuildah) Config(ctx context.Context, container string, opts Confi
 	if len(opts.Cmd) > 0 {
 		var cmd []string
 		if opts.CmdPrependShell {
-			if builder.Shell() != nil {
+			if len(builder.Shell()) > 0 {
 				cmd = builder.Shell()
 			} else {
 				cmd = DefaultShell
@@ -665,7 +665,7 @@ func (b *NativeBuildah) Config(ctx context.Context, container string, opts Confi
 	if len(opts.Entrypoint) > 0 {
 		var entrypoint []string
 		if opts.EntrypointPrependShell {
-			if builder.Shell() != nil {
+			if len(builder.Shell()) > 0 {
 				entrypoint = builder.Shell()
 			} else {
 				entrypoint = DefaultShell
