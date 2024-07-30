@@ -30,11 +30,11 @@ groups:
       - name: beta
         version: 1.2.322
       - name: ea
-        version: 1.2.320
+        version: 1.2.322
       - name: stable
-        version: 1.2.318
+        version: 1.2.320
       - name: rock-solid
-        version: 1.2.317
+        version: 1.2.318
   - name: "2"
     channels:
       - name: alpha
@@ -42,7 +42,7 @@ groups:
       - name: beta
         version: 2.9.1
       - name: ea
-        version: 2.6.1
+        version: 2.9.1
       - name: stable
         version: 2.6.1
       - name: rock-solid
