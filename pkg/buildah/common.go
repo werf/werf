@@ -106,13 +106,17 @@ type ConfigOpts struct {
 	CmdPrependShell        bool
 	Entrypoint             []string
 	EntrypointPrependShell bool
-	User                   string
-	Workdir                string
-	Healthcheck            *thirdparty.BuildahHealthConfig
-	OnBuild                string
-	StopSignal             string
-	Shell                  []string
-	Maintainer             string
+
+	// If CMD is defined from the base image, setting ENTRYPOINT will reset CMD to an empty value.
+	// https://docs.docker.com/reference/dockerfile/#understand-how-cmd-and-entrypoint-interact
+	EntrypointResetCMD bool
+	User               string
+	Workdir            string
+	Healthcheck        *thirdparty.BuildahHealthConfig
+	OnBuild            string
+	StopSignal         string
+	Shell              []string
+	Maintainer         string
 }
 
 type CopyOpts struct {

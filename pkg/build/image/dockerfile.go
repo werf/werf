@@ -176,6 +176,18 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 			instrNum = 0
 		}
 
+		var entrypointResetCMD bool
+	loop:
+		for _, instr := range stg.Instructions {
+			switch any(instr).(type) {
+			case *dockerfile.DockerfileStageInstruction[*instructions.CmdCommand]:
+				entrypointResetCMD = false
+				break loop
+			case *dockerfile.DockerfileStageInstruction[*instructions.EntrypointCommand]:
+				entrypointResetCMD = true
+			}
+		}
+
 		for _, instr := range stg.Instructions {
 			stageLogName := fmt.Sprintf("%s%d", strings.ToUpper(instr.GetInstructionData().Name()), instrNum+1)
 			isFirstStage := (len(img.stages) == 0)
@@ -193,7 +205,7 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 			case *dockerfile.DockerfileStageInstruction[*instructions.CopyCommand]:
 				stg = stage_instruction.NewCopy(typedInstr, dockerfileImageConfig.Dependencies, !isFirstStage, &baseStageOptions)
 			case *dockerfile.DockerfileStageInstruction[*instructions.EntrypointCommand]:
-				stg = stage_instruction.NewEntrypoint(typedInstr, dockerfileImageConfig.Dependencies, !isFirstStage, &baseStageOptions)
+				stg = stage_instruction.NewEntrypoint(typedInstr, dockerfileImageConfig.Dependencies, !isFirstStage, entrypointResetCMD, &baseStageOptions)
 			case *dockerfile.DockerfileStageInstruction[*instructions.EnvCommand]:
 				stg = stage_instruction.NewEnv(typedInstr, dockerfileImageConfig.Dependencies, !isFirstStage, &baseStageOptions)
 			case *dockerfile.DockerfileStageInstruction[*instructions.ExposeCommand]:
