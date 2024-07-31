@@ -1,5 +1,13 @@
 # Changelog
 
+### [1.2.324](https://www.github.com/werf/werf/compare/v1.2.323...v1.2.324) (2024-07-31)
+
+
+### Bug Fixes
+
+* **build, buildah, dockerfile, staged:** 'ADD / /app' not working ([8bf5d52](https://www.github.com/werf/werf/commit/8bf5d524dd360514f48cd9ed7b6e587aa9487980))
+* **dev:** disable signing for service commits ([4d9ba02](https://www.github.com/werf/werf/commit/4d9ba0206c67156f06957e637044269e84766bb0))
+
 ### [1.2.323](https://www.github.com/werf/werf/compare/v1.2.322...v1.2.323) (2024-07-31)
 
 
