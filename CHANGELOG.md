@@ -1,5 +1,13 @@
 # Changelog
 
+### [2.9.2](https://www.github.com/werf/werf/compare/v2.9.1...v2.9.2) (2024-07-31)
+
+
+### Bug Fixes
+
+* **build, buildah, dockerfile, staged:** ensure setting ENTRYPOINT correctly resets base image CMD ([8135121](https://www.github.com/werf/werf/commit/8135121cfb7c0f76b3cfeacb9837699bbf553cbe))
+* **build, buildah, dockerfile, staged:** fix handling of CMD and ENTRYPOINT in exec format ([6d499ba](https://www.github.com/werf/werf/commit/6d499badebc821f0cdf38b82656c6871f30b2c8c))
+
 ### [2.9.1](https://www.github.com/werf/werf/compare/v2.9.0...v2.9.1) (2024-07-26)
 
 
