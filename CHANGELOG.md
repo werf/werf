@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.9.3](https://www.github.com/werf/werf/compare/v2.9.2...v2.9.3) (2024-07-31)
+
+
+### Bug Fixes
+
+* **build, buildah, dockerfile, staged:** 'ADD / /app' not working ([322de1c](https://www.github.com/werf/werf/commit/322de1cadd56ee6f0c4d40a7d419b2daa7daeda4))
+
 ### [2.9.2](https://www.github.com/werf/werf/compare/v2.9.1...v2.9.2) (2024-07-31)
 
 
