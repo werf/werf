@@ -90,12 +90,10 @@ When scanning references, the number of images is not limited by default. Howeve
 imagesPerReference:
   last: int
   in: string
-  operator: string
 ```
 
 - The `last` parameter specifies the number of images for each reference. By default, there is one image (`1`).
 - The `in` parameter (refer to the [documentation](https://golang.org/pkg/time/#ParseDuration) to learn more) defines the period for which to search for images.
-- The `operator` parameter determines which images will be saved after applying the policy. The images may satisfy both conditions or either of them (`And` is set by default).
 
 > In the case of git tags, werf checks the HEAD commit only; the value of `last`>1 does not make any sense and is invalid
 
