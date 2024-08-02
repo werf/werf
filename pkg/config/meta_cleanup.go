@@ -7,6 +7,16 @@ import (
 	"time"
 )
 
+var (
+	// Unlimited references by default.
+	defaultReferencesLimitLast     = -1
+	defaultReferencesLimitOperator = AndOperator
+
+	// Unlimited images per reference by default.
+	defaultImagesPerReferenceLast     = -1
+	defaultImagesPerReferenceOperator = AndOperator
+)
+
 type MetaCleanup struct {
 	DisableKubernetesBasedPolicy       bool
 	DisableGitHistoryBasedPolicy       bool
@@ -35,7 +45,7 @@ func (p *MetaCleanupKeepPolicy) String() string {
 type MetaCleanupKeepPolicyReferences struct {
 	TagRegexp    *regexp.Regexp
 	BranchRegexp *regexp.Regexp
-	Limit        *MetaCleanupKeepPolicyLimit
+	Limit        *MetaCleanupKeepPolicyReferencesLimit
 }
 
 func (c *MetaCleanupKeepPolicyReferences) String() string {
@@ -54,30 +64,93 @@ func (c *MetaCleanupKeepPolicyReferences) String() string {
 	return strings.Join(parts, " ")
 }
 
+func NewMetaCleanupKeepPolicyReferencesLimit(last *int, in *time.Duration, operator *Operator) *MetaCleanupKeepPolicyReferencesLimit {
+	return &MetaCleanupKeepPolicyReferencesLimit{
+		metaCleanupKeepPolicyLimit{
+			last:     last,
+			in:       in,
+			operator: operator,
+		},
+	}
+}
+
+type MetaCleanupKeepPolicyReferencesLimit struct {
+	metaCleanupKeepPolicyLimit
+}
+
+func (c *MetaCleanupKeepPolicyReferencesLimit) Last() int {
+	if c.last == nil {
+		return defaultReferencesLimitLast
+	}
+	return *c.last
+}
+
+func (c *MetaCleanupKeepPolicyReferencesLimit) Operator() Operator {
+	if c.operator == nil || *c.operator == "" {
+		return defaultReferencesLimitOperator
+	}
+	return *c.operator
+}
+
+func (c *MetaCleanupKeepPolicyReferencesLimit) String() string {
+	return metaCleanupKeepPolicyLimitToString(c.Last(), c.In(), c.Operator())
+}
+
 type MetaCleanupKeepPolicyImagesPerReference struct {
-	MetaCleanupKeepPolicyLimit
+	metaCleanupKeepPolicyLimit
 }
 
-type MetaCleanupKeepPolicyLimit struct {
-	Last     *int
-	In       *time.Duration
-	Operator *Operator
+func NewMetaCleanupKeepPolicyImagesPerReference(last *int, in *time.Duration, operator *Operator) MetaCleanupKeepPolicyImagesPerReference {
+	return MetaCleanupKeepPolicyImagesPerReference{
+		metaCleanupKeepPolicyLimit{
+			last:     last,
+			in:       in,
+			operator: operator,
+		},
+	}
 }
 
-func (c *MetaCleanupKeepPolicyLimit) String() string {
+func (c *MetaCleanupKeepPolicyImagesPerReference) Last() int {
+	if c.last == nil {
+		return defaultImagesPerReferenceLast
+	}
+	return *c.last
+}
+
+func (c *MetaCleanupKeepPolicyImagesPerReference) Operator() Operator {
+	if c.operator == nil || *c.operator == "" {
+		return defaultImagesPerReferenceOperator
+	}
+	return *c.operator
+}
+
+func (c *MetaCleanupKeepPolicyImagesPerReference) String() string {
+	return metaCleanupKeepPolicyLimitToString(c.Last(), c.In(), c.Operator())
+}
+
+type metaCleanupKeepPolicyLimit struct {
+	last     *int
+	in       *time.Duration
+	operator *Operator
+}
+
+func (c *metaCleanupKeepPolicyLimit) In() *time.Duration {
+	return c.in
+}
+
+func (c *metaCleanupKeepPolicyLimit) String() string {
+	panic("not implemented")
+}
+
+func metaCleanupKeepPolicyLimitToString(last int, in *time.Duration, operator Operator) string {
 	var parts []string
 
-	if c.In != nil {
-		parts = append(parts, fmt.Sprintf("in=%s", c.In.String()))
+	if in != nil {
+		parts = append(parts, fmt.Sprintf("in=%s", in.String()))
 	}
 
-	if c.Last != nil {
-		parts = append(parts, fmt.Sprintf("last=%d", *c.Last))
-	}
-
-	if c.Operator != nil {
-		parts = append(parts, fmt.Sprintf("operator=%s", *c.Operator))
-	}
+	parts = append(parts, fmt.Sprintf("last=%d", last))
+	parts = append(parts, fmt.Sprintf("operator=%s", operator))
 
 	return strings.Join(parts, " ")
 }
