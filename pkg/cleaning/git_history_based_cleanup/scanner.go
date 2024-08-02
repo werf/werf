@@ -116,14 +116,15 @@ func (s *commitHistoryScanner) reachedStageIDList() []string {
 }
 
 func scanReferenceHistory(ctx context.Context, gitRepository *git.Repository, ref *ReferenceToScan, expectedStageIDCommitList map[string][]string, stopCommitList []string) ([]string, []string, map[string][]string, error) {
-	filteredExpectedStageIDCommitList := applyImagesCleanupInPolicy(gitRepository, expectedStageIDCommitList, ref.imagesCleanupKeepPolicy.In)
-
-	var refExpectedStageIDCommitList map[string][]string
-	isImagesCleanupKeepPolicyOnlyInOrAndBoth := ref.imagesCleanupKeepPolicy.Last == nil || (ref.imagesCleanupKeepPolicy.Operator != nil && *ref.imagesCleanupKeepPolicy.Operator == config.AndOperator)
-	if isImagesCleanupKeepPolicyOnlyInOrAndBoth {
-		refExpectedStageIDCommitList = filteredExpectedStageIDCommitList
-	} else {
-		refExpectedStageIDCommitList = expectedStageIDCommitList
+	refExpectedStageIDCommitList := expectedStageIDCommitList
+	{
+		// Last == 0 means that we should not keep any images.
+		// We can reduce the number of expected images if the In policy is set and Operator is AND.
+		if ref.imagesCleanupKeepPolicy.Last() == 0 {
+			refExpectedStageIDCommitList = nil
+		} else if ref.imagesCleanupKeepPolicy.In() != nil && ref.imagesCleanupKeepPolicy.Operator() == config.AndOperator {
+			refExpectedStageIDCommitList = applyImagesCleanupInPolicy(gitRepository, expectedStageIDCommitList, ref.imagesCleanupKeepPolicy.In())
+		}
 	}
 
 	if len(refExpectedStageIDCommitList) == 0 {
@@ -145,12 +146,12 @@ func scanReferenceHistory(ctx context.Context, gitRepository *git.Repository, re
 		return nil, nil, nil, fmt.Errorf("scan commit %s history failed: %w", ref.HeadCommit.Hash.String(), err)
 	}
 
-	isImagesCleanupKeepPolicyLastWithoutLimit := s.referenceScanOptions.imagesCleanupKeepPolicy.Last != nil && *s.referenceScanOptions.imagesCleanupKeepPolicy.Last != -1
-	if isImagesCleanupKeepPolicyLastWithoutLimit {
-		if len(s.reachedStageIDList()) == *s.referenceScanOptions.imagesCleanupKeepPolicy.Last {
+	// We should not handle result if the Last is unlimited (<0).
+	if s.referenceScanOptions.imagesCleanupKeepPolicy.Last() > 0 {
+		if len(s.reachedStageIDList()) == s.referenceScanOptions.imagesCleanupKeepPolicy.Last() {
 			return s.reachedStageIDList(), s.stopCommitList, s.stageIDHitCommitList(), nil
-		} else if len(s.reachedStageIDList()) > *s.referenceScanOptions.imagesCleanupKeepPolicy.Last {
-			logboek.Context(ctx).Info().LogF("Reached more tags than expected by last (%d/%d)\n", len(s.reachedStageIDList()), *s.referenceScanOptions.imagesCleanupKeepPolicy.Last)
+		} else if len(s.reachedStageIDList()) > s.referenceScanOptions.imagesCleanupKeepPolicy.Last() {
+			logboek.Context(ctx).Info().LogF("Reached more tags than expected by last (%d/%d)\n", len(s.reachedStageIDList()), s.referenceScanOptions.imagesCleanupKeepPolicy.Last())
 
 			latestCommitStageIDs := s.latestCommitStageIDs()
 			var latestCommitList []*object.Commit
@@ -162,7 +163,7 @@ func scanReferenceHistory(ctx context.Context, gitRepository *git.Repository, re
 				return latestCommitList[i].Committer.When.After(latestCommitList[j].Committer.When)
 			})
 
-			if s.referenceScanOptions.imagesCleanupKeepPolicy.In == nil {
+			if s.referenceScanOptions.imagesCleanupKeepPolicy.In() == nil {
 				return s.handleExtraStageIDsByLast(ctx, latestCommitStageIDs, latestCommitList)
 			} else {
 				return s.handleExtraStageIDsByLastWithIn(ctx, latestCommitStageIDs, latestCommitList)
@@ -201,18 +202,17 @@ func (s *commitHistoryScanner) handleExtraStageIDsByLastWithIn(ctx context.Conte
 	stageIDHitCommitList := map[string][]string{}
 
 	for ind, latestCommit := range latestCommitList {
-		if ind < *s.referenceScanOptions.imagesCleanupKeepPolicy.Last {
+		if ind < s.referenceScanOptions.imagesCleanupKeepPolicy.Last() {
 			latestCommitListByLast = append(latestCommitListByLast, latestCommit)
 		}
 
-		if latestCommit.Committer.When.After(time.Now().Add(-*s.referenceScanOptions.imagesCleanupKeepPolicy.In)) {
+		if latestCommit.Committer.When.After(time.Now().Add(-*s.referenceScanOptions.imagesCleanupKeepPolicy.In())) {
 			latestCommitListByIn = append(latestCommitListByIn, latestCommit)
 		}
 	}
 
 	var resultLatestCommitList []*object.Commit
-	isImagesCleanupKeepPolicyOperatorAnd := s.referenceScanOptions.imagesCleanupKeepPolicy.Operator == nil || *s.referenceScanOptions.imagesCleanupKeepPolicy.Operator == config.AndOperator
-	if isImagesCleanupKeepPolicyOperatorAnd {
+	if s.referenceScanOptions.imagesCleanupKeepPolicy.Operator() == config.AndOperator {
 		for _, commitByLast := range latestCommitListByLast {
 			for _, commitByIn := range latestCommitListByIn {
 				if commitByLast == commitByIn {
@@ -283,7 +283,7 @@ func (s *commitHistoryScanner) handleExtraStageIDsByLast(ctx context.Context, la
 
 	for ind, latestCommit := range latestCommitList {
 		stageIDs := latestCommitStageIDs[latestCommit]
-		if ind < *s.referenceScanOptions.imagesCleanupKeepPolicy.Last {
+		if ind < s.referenceScanOptions.imagesCleanupKeepPolicy.Last() {
 			if len(stageIDs) > 1 {
 				logboek.Context(ctx).Info().LogBlock("Counted tags as one due to identical related commit %s", latestCommit.Hash.String()).Do(func() {
 					for _, stageID := range stageIDs {
@@ -361,25 +361,9 @@ func (s *commitHistoryScanner) scanCommitHistory(ctx context.Context, commit str
 
 func (s *commitHistoryScanner) handleCommit(ctx context.Context, commit string) ([]string, error) {
 	var isReachedCommit bool
-
-outerLoop:
 	for stageID, commitList := range s.expectedStageIDCommitList {
 		for _, c := range commitList {
 			if c == commit {
-				if s.imagesCleanupKeepPolicy.In != nil {
-					commit, err := s.gitRepository.CommitObject(plumbing.NewHash(commit))
-					if err != nil {
-						panic("unexpected condition")
-					}
-
-					isImagesCleanupKeepPolicyOnlyInOrAndBoth := s.imagesCleanupKeepPolicy.Last == nil || s.imagesCleanupKeepPolicy.Operator == nil || *s.imagesCleanupKeepPolicy.Operator == config.AndOperator
-					if isImagesCleanupKeepPolicyOnlyInOrAndBoth {
-						if commit.Committer.When.Before(time.Now().Add(-*s.imagesCleanupKeepPolicy.In)) {
-							break outerLoop
-						}
-					}
-				}
-
 				isReachedCommit = true
 				s.reachedStageIDCommitList[stageID] = append(s.reachedStageIDCommitList[stageID], c)
 

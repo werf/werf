@@ -43,7 +43,7 @@ type rawMetaCleanupKeepPolicyImagesPerReference rawMetaCleanupKeepPolicyReferenc
 type rawMetaCleanupKeepPolicyReferencesLimit struct {
 	Last     *int           `yaml:"last,omitempty"`
 	In       *time.Duration `yaml:"in,omitempty"`
-	Operator *string        `yaml:"operator,omitempty"`
+	Operator *Operator      `yaml:"operator,omitempty"`
 
 	rawMetaCleanup        *rawMetaCleanup
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
@@ -161,9 +161,6 @@ func (c *rawMetaCleanupKeepPolicyReferencesLimit) UnmarshalYAML(unmarshal func(i
 		if *c.Operator != "Or" && *c.Operator != "And" {
 			return newDetailedConfigError(fmt.Sprintf("unsupported value %q for `operator: Or|And`!", *c.Operator), c, c.rawMetaCleanup.rawMeta.doc)
 		}
-	} else if c.In != nil && c.Last != nil {
-		defaultOperator := "And"
-		c.Operator = &defaultOperator
 	}
 
 	return nil
@@ -211,7 +208,11 @@ func (c *rawMetaCleanupKeepPolicy) toMetaCleanupKeepPolicy() *MetaCleanupKeepPol
 	}
 
 	if c.ImagesPerReference != nil {
-		policy.ImagesPerReference = c.ImagesPerReference.toMetaCleanupKeepPolicyImagesPerReference()
+		policy.ImagesPerReference = NewMetaCleanupKeepPolicyImagesPerReference(
+			c.ImagesPerReference.Last,
+			c.ImagesPerReference.In,
+			c.ImagesPerReference.Operator,
+		)
 	}
 
 	return policy
@@ -223,40 +224,12 @@ func (c *rawMetaCleanupKeepPolicyReferences) toMetaCleanupKeepPolicyReferences()
 	references.TagRegexp = c.TagRegexp
 
 	if c.Limit != nil {
-		references.Limit = c.Limit.toMetaCleanupKeepPolicyLimit()
+		references.Limit = NewMetaCleanupKeepPolicyReferencesLimit(
+			c.Limit.Last,
+			c.Limit.In,
+			c.Limit.Operator,
+		)
 	}
 
 	return references
-}
-
-func (c *rawMetaCleanupKeepPolicyReferencesLimit) toMetaCleanupKeepPolicyLimit() *MetaCleanupKeepPolicyLimit {
-	limit := &MetaCleanupKeepPolicyLimit{}
-	limit.Last = c.Last
-	limit.In = c.In
-
-	if c.Operator != nil {
-		if *c.Operator == "And" {
-			limit.Operator = &AndOperator
-		} else if *c.Operator == "Or" {
-			limit.Operator = &OrOperator
-		}
-	}
-
-	return limit
-}
-
-func (c *rawMetaCleanupKeepPolicyImagesPerReference) toMetaCleanupKeepPolicyImagesPerReference() MetaCleanupKeepPolicyImagesPerReference {
-	limit := MetaCleanupKeepPolicyImagesPerReference{}
-	limit.Last = c.Last
-	limit.In = c.In
-
-	if c.Operator != nil {
-		if *c.Operator == "And" {
-			limit.Operator = &AndOperator
-		} else if *c.Operator == "Or" {
-			limit.Operator = &OrOperator
-		}
-	}
-
-	return limit
 }

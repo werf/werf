@@ -128,9 +128,7 @@ func ReferencesToScan(ctx context.Context, gitRepository *git.Repository, keepPo
 		keepPolicies = append(keepPolicies, &config.MetaCleanupKeepPolicy{
 			References: config.MetaCleanupKeepPolicyReferences{
 				TagRegexp: regexp.MustCompile(".*"),
-				Limit: &config.MetaCleanupKeepPolicyLimit{
-					Last: &tagLast,
-				},
+				Limit:     config.NewMetaCleanupKeepPolicyReferencesLimit(&tagLast, nil, nil),
 			},
 		})
 
@@ -141,19 +139,13 @@ func ReferencesToScan(ctx context.Context, gitRepository *git.Repository, keepPo
 		keepPolicies = append(keepPolicies, &config.MetaCleanupKeepPolicy{
 			References: config.MetaCleanupKeepPolicyReferences{
 				BranchRegexp: regexp.MustCompile(".*"),
-				Limit: &config.MetaCleanupKeepPolicyLimit{
-					Last:     &branchLast,
-					In:       &branchIn,
-					Operator: &config.AndOperator,
-				},
+				Limit:        config.NewMetaCleanupKeepPolicyReferencesLimit(&branchLast, &branchIn, &config.AndOperator),
 			},
-			ImagesPerReference: config.MetaCleanupKeepPolicyImagesPerReference{
-				MetaCleanupKeepPolicyLimit: config.MetaCleanupKeepPolicyLimit{
-					Last:     &branchImagesPerReferenceLast,
-					In:       &branchImagesPerReferenceIn,
-					Operator: &config.AndOperator,
-				},
-			},
+			ImagesPerReference: config.NewMetaCleanupKeepPolicyImagesPerReference(
+				&branchImagesPerReferenceLast,
+				&branchImagesPerReferenceIn,
+				&config.AndOperator,
+			),
 		})
 
 		mainBranchImagesPerReferenceLast := 10
@@ -161,11 +153,7 @@ func ReferencesToScan(ctx context.Context, gitRepository *git.Repository, keepPo
 			References: config.MetaCleanupKeepPolicyReferences{
 				BranchRegexp: regexp.MustCompile("^(main|master|staging|production)$"),
 			},
-			ImagesPerReference: config.MetaCleanupKeepPolicyImagesPerReference{
-				MetaCleanupKeepPolicyLimit: config.MetaCleanupKeepPolicyLimit{
-					Last: &mainBranchImagesPerReferenceLast,
-				},
-			},
+			ImagesPerReference: config.NewMetaCleanupKeepPolicyImagesPerReference(&mainBranchImagesPerReferenceLast, nil, nil),
 		})
 	}
 
@@ -269,35 +257,18 @@ func applyCleanupKeepPolicy(refs []*ReferenceToScan, policy *config.MetaCleanupK
 	return refs
 }
 
-func applyReferencesLimit(refs []*ReferenceToScan, limit *config.MetaCleanupKeepPolicyLimit) []*ReferenceToScan {
+func applyReferencesLimit(refs []*ReferenceToScan, limit *config.MetaCleanupKeepPolicyReferencesLimit) []*ReferenceToScan {
 	if limit == nil {
 		return refs
 	}
 
-	var policyInRefs []*ReferenceToScan
-	if limit.In != nil {
-		policyInRefs = filterReferencesByIn(refs, *limit.In)
-	}
-
-	var policyLastRefs []*ReferenceToScan
-	if limit.Last != nil {
-		policyLastRefs = filterReferencesByLast(refs, *limit.Last)
-	}
-
-	if limit.In == nil {
-		return policyLastRefs
-	} else if limit.Last == nil {
-		return policyInRefs
-	}
-
-	var policyRefs []*ReferenceToScan
-	if limit.Operator != nil && *limit.Operator == config.OrOperator {
-		policyRefs = referencesOr(policyInRefs, policyLastRefs)
+	policyInRefs := filterReferencesByIn(refs, limit.In())
+	policyLastRefs := filterReferencesByLast(refs, limit.Last())
+	if limit.Operator() == config.OrOperator {
+		return referencesOr(policyInRefs, policyLastRefs)
 	} else {
-		policyRefs = referencesAnd(policyInRefs, policyLastRefs)
+		return referencesAnd(policyInRefs, policyLastRefs)
 	}
-
-	return policyRefs
 }
 
 func applyImagesPerReference(policyBranchesRefs []*ReferenceToScan, imagesPerReference config.MetaCleanupKeepPolicyImagesPerReference) {
@@ -326,9 +297,13 @@ outerLoop:
 	return result
 }
 
-func filterReferencesByIn(refs []*ReferenceToScan, in time.Duration) (result []*ReferenceToScan) {
+func filterReferencesByIn(refs []*ReferenceToScan, in *time.Duration) (result []*ReferenceToScan) {
+	if in == nil {
+		return refs
+	}
+
 	for _, ref := range refs {
-		if ref.CreatedAt.After(time.Now().Add(-in)) {
+		if ref.CreatedAt.After(time.Now().Add(-*in)) {
 			result = append(result, ref)
 		}
 	}
@@ -337,7 +312,7 @@ func filterReferencesByIn(refs []*ReferenceToScan, in time.Duration) (result []*
 }
 
 func filterReferencesByLast(refs []*ReferenceToScan, last int) []*ReferenceToScan {
-	if last == -1 {
+	if last < 0 {
 		return refs
 	}
 
