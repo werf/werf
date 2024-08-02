@@ -12,8 +12,8 @@ var (
 	defaultReferencesLimitLast     = -1
 	defaultReferencesLimitOperator = AndOperator
 
-	// Unlimited images per reference by default.
-	defaultImagesPerReferenceLast     = -1
+	// Keep only the last image by default.
+	defaultImagesPerReferenceLast     = 1
 	defaultImagesPerReferenceOperator = AndOperator
 )
 
