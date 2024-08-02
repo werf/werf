@@ -151,12 +151,6 @@ sections:
                     description:
                       en: The time frame in which werf searches for images
                       ru: Период, в рамках которого необходимо выполнять поиск образов
-                  - name: operator
-                    value: "And || Or"
-                    default: And
-                    description:
-                      en: Check both conditions or any of them
-                      ru: Определяет какие образы сохранятся после применения политики, те которые удовлетворяют оба условия или любое из них
       - name: gitWorktree
         description:
           en: Configure how werf handles git worktree of the project
