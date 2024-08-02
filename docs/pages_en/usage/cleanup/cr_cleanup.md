@@ -80,7 +80,7 @@ You can limit the set of references on the basis of the date when the git tag wa
 
 In the example above, werf selects no more than 10 latest branches that have the `features/` prefix in the name and have shown any activity during the last week.
 
-- The `last` parameter allows you to select the last `n` references from the set defined in `branch`/`tag`.
+- The `last` parameter allows you to select the last `n` references from the set defined in `branch`/`tag`. By default, there is no limit (`-1`).
 - The `in` parameter (see the [documentation](https://golang.org/pkg/time/#ParseDuration) to learn more) allows you to select git tags that were created during the specified period, or git branches with activity within the period. It can also be used for a specific set of `branch` / `tag`.
 - The `operator` parameter defines the references resulting from the policy. They may satisfy both conditions or either of them (`And` is set by default).
 
@@ -93,7 +93,7 @@ imagesPerReference:
   operator: string
 ```
 
-- The `last` parameter specifies the number of images for each reference. By default, there is no limit (`-1`).
+- The `last` parameter specifies the number of images for each reference. By default, there is one image (`1`).
 - The `in` parameter (refer to the [documentation](https://golang.org/pkg/time/#ParseDuration) to learn more) defines the period for which to search for images.
 - The `operator` parameter determines which images will be saved after applying the policy. The images may satisfy both conditions or either of them (`And` is set by default).
 
