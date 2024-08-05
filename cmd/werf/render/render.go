@@ -101,6 +101,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{OptionalRepo: true})
 	common.SetupFinalRepo(&commonCmdData, cmd)
+	common.SetupStubTags(&commonCmdData, cmd)
 
 	common.SetupKubeConfig(&commonCmdData, cmd)
 	common.SetupKubeConfigBase64(&commonCmdData, cmd)
@@ -251,7 +252,7 @@ func runRender(ctx context.Context, imagesToProcess build.ImagesToProcess) error
 			return err
 		}
 
-		if addr != storage.LocalStorageAddress {
+		if !*commonCmdData.StubTags && addr != storage.LocalStorageAddress {
 			if err := common.DockerRegistryInit(ctx, &commonCmdData, registryMirrors); err != nil {
 				return err
 			}

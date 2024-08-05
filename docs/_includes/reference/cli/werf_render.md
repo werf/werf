@@ -274,6 +274,8 @@ werf render [IMAGE_NAME...] [options]
       --status-progress-period=5
             Status progress period in seconds. Set -1 to stop showing status progress. Defaults to  
             $WERF_STATUS_PROGRESS_PERIOD_SECONDS or 5 seconds
+      --stub-tags=false
+            Use stubs instead of real tags (default $WERF_STUB_TAGS)
   -S, --synchronization=''
             Address of synchronizer for multiple werf processes to work with a single repo.
             
