@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.10.0](https://www.github.com/werf/werf/compare/v2.9.3...v2.10.0) (2024-08-05)
+
+
+### Features
+
+* **cleanup:** change default from unlimited to one image per reference ([a637185](https://www.github.com/werf/werf/commit/a63718507fe32f51410e02e98919a044b3f6cfae))
+* **render:** add --stub-tags option to explicitly ignore real tags ([6b387ef](https://www.github.com/werf/werf/commit/6b387efe9cd64405834bce86d155618ceb35a202))
+
 ### [2.9.3](https://www.github.com/werf/werf/compare/v2.9.2...v2.9.3) (2024-07-31)
 
 
