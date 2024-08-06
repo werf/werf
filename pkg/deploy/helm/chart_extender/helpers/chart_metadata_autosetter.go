@@ -1,6 +1,6 @@
 package helpers
 
-import "helm.sh/helm/v3/pkg/chart"
+import "github.com/werf/3p-helm/pkg/chart"
 
 type GetHelmChartMetadataOptions struct {
 	OverrideName   string

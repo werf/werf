@@ -2,7 +2,7 @@ package helm
 
 import (
 	"github.com/spf13/cobra"
-	"helm.sh/helm/v3/pkg/action"
+	"github.com/werf/3p-helm/pkg/action"
 
 	"github.com/werf/werf/v2/cmd/werf/common"
 )

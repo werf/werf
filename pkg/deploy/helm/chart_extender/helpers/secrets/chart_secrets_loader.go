@@ -6,8 +6,8 @@ import (
 	"strings"
 	"unicode"
 
-	"helm.sh/helm/v3/pkg/chart"
-	"helm.sh/helm/v3/pkg/chartutil"
+	"github.com/werf/3p-helm/pkg/chart"
+	"github.com/werf/3p-helm/pkg/chartutil"
 	"sigs.k8s.io/yaml"
 
 	"github.com/werf/nelm/pkg/secret"

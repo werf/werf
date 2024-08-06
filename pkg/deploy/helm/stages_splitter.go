@@ -5,8 +5,8 @@ import (
 	"sort"
 	"strconv"
 
-	"helm.sh/helm/v3/pkg/kube"
-	"helm.sh/helm/v3/pkg/phases/stages"
+	"github.com/werf/3p-helm/pkg/kube"
+	"github.com/werf/3p-helm/pkg/phases/stages"
 	"k8s.io/cli-runtime/pkg/resource"
 )
 

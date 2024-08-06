@@ -9,11 +9,11 @@ import (
 	"path/filepath"
 	"text/template"
 
-	"helm.sh/helm/v3/pkg/chart"
-	"helm.sh/helm/v3/pkg/chart/loader"
-	"helm.sh/helm/v3/pkg/cli"
-	"helm.sh/helm/v3/pkg/postrender"
-	"helm.sh/helm/v3/pkg/registry"
+	"github.com/werf/3p-helm/pkg/chart"
+	"github.com/werf/3p-helm/pkg/chart/loader"
+	"github.com/werf/3p-helm/pkg/cli"
+	"github.com/werf/3p-helm/pkg/postrender"
+	"github.com/werf/3p-helm/pkg/registry"
 
 	"github.com/werf/logboek"
 	"github.com/werf/nelm/pkg/secrets_manager"

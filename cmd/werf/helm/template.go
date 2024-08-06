@@ -5,8 +5,8 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"helm.sh/helm/v3/cmd/helm"
-	"helm.sh/helm/v3/pkg/action"
+	"github.com/werf/3p-helm/cmd/helm"
+	"github.com/werf/3p-helm/pkg/action"
 
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/deploy/helm"

@@ -6,10 +6,10 @@ import (
 	"os"
 	"text/template"
 
-	"helm.sh/helm/v3/pkg/chart"
-	"helm.sh/helm/v3/pkg/chartutil"
-	"helm.sh/helm/v3/pkg/cli"
-	"helm.sh/helm/v3/pkg/postrender"
+	"github.com/werf/3p-helm/pkg/chart"
+	"github.com/werf/3p-helm/pkg/chartutil"
+	"github.com/werf/3p-helm/pkg/cli"
+	"github.com/werf/3p-helm/pkg/postrender"
 
 	"github.com/werf/nelm/pkg/secrets_manager"
 	"github.com/werf/werf/v2/pkg/deploy/helm"

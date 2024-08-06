@@ -7,7 +7,7 @@ import (
 	"time"
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
-	"helm.sh/helm/v3/pkg/chart"
+	"github.com/werf/3p-helm/pkg/chart"
 	"sigs.k8s.io/yaml"
 
 	"github.com/werf/logboek"

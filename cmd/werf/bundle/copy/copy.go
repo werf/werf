@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	helm_v3 "helm.sh/helm/v3/cmd/helm"
+	helm_v3 "github.com/werf/3p-helm/cmd/helm"
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/cmd/werf/common"

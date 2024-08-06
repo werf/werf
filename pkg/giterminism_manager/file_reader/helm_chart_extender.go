@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"helm.sh/helm/v3/pkg/chart"
-	"helm.sh/helm/v3/pkg/cli"
+	"github.com/werf/3p-helm/pkg/chart"
+	"github.com/werf/3p-helm/pkg/cli"
 )
 
 func (r FileReader) LocateChart(ctx context.Context, chartDir string, settings *cli.EnvSettings) (string, error) {

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"text/template"
 
-	"helm.sh/helm/v3/pkg/chart"
-	"helm.sh/helm/v3/pkg/cli"
+	"github.com/werf/3p-helm/pkg/chart"
+	"github.com/werf/3p-helm/pkg/cli"
 
 	"github.com/werf/logboek"
 	"github.com/werf/nelm/pkg/secrets_manager"
