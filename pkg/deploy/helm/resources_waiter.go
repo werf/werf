@@ -12,7 +12,6 @@ import (
 
 	flaggerv1beta1 "github.com/fluxcd/flagger/pkg/apis/flagger/v1beta1"
 	flaggerscheme "github.com/fluxcd/flagger/pkg/client/clientset/versioned/scheme"
-	helm_kube "github.com/werf/3p-helm/pkg/kube"
 	appsv1 "k8s.io/api/apps/v1"
 	appsv1beta1 "k8s.io/api/apps/v1beta1"
 	appsv1beta2 "k8s.io/api/apps/v1beta2"
@@ -25,6 +24,7 @@ import (
 	"k8s.io/cli-runtime/pkg/resource"
 	"k8s.io/client-go/kubernetes/scheme"
 
+	helm_kube "github.com/werf/3p-helm/pkg/kube"
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/kubedog/pkg/tracker"
 	"github.com/werf/kubedog/pkg/tracker/resid"

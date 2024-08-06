@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"sigs.k8s.io/yaml"
+
 	"github.com/werf/3p-helm/pkg/action"
 	"github.com/werf/3p-helm/pkg/cli"
 	helm_kube "github.com/werf/3p-helm/pkg/kube"
@@ -16,8 +18,6 @@ import (
 	"github.com/werf/3p-helm/pkg/registry"
 	"github.com/werf/3p-helm/pkg/release"
 	"github.com/werf/3p-helm/pkg/storage/driver"
-	"sigs.k8s.io/yaml"
-
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
 )

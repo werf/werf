@@ -6,10 +6,10 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/werf/3p-helm/pkg/chart"
-	"github.com/werf/3p-helm/pkg/chartutil"
 	"sigs.k8s.io/yaml"
 
+	"github.com/werf/3p-helm/pkg/chart"
+	"github.com/werf/3p-helm/pkg/chartutil"
 	"github.com/werf/nelm/pkg/secret"
 	"github.com/werf/werf/v2/pkg/util"
 )

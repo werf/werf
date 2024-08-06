@@ -11,6 +11,8 @@ import (
 	"text/template"
 
 	"github.com/mitchellh/copystructure"
+	"sigs.k8s.io/yaml"
+
 	helm_v3 "github.com/werf/3p-helm/cmd/helm"
 	"github.com/werf/3p-helm/pkg/chart"
 	"github.com/werf/3p-helm/pkg/chart/loader"
@@ -20,8 +22,6 @@ import (
 	"github.com/werf/3p-helm/pkg/getter"
 	"github.com/werf/3p-helm/pkg/postrender"
 	"github.com/werf/3p-helm/pkg/registry"
-	"sigs.k8s.io/yaml"
-
 	"github.com/werf/logboek"
 	"github.com/werf/nelm/pkg/secrets_manager"
 	"github.com/werf/werf/v2/pkg/config"

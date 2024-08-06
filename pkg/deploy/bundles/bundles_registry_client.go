@@ -2,7 +2,6 @@ package bundles
 
 import (
 	"github.com/werf/3p-helm/pkg/chart"
-
 	bundles_registry "github.com/werf/werf/v2/pkg/deploy/bundles/registry"
 )
 

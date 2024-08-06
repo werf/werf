@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/werf/3p-helm/pkg/chart"
 	"sigs.k8s.io/yaml"
 
+	"github.com/werf/3p-helm/pkg/chart"
 	"github.com/werf/nelm/pkg/secret"
 	"github.com/werf/nelm/pkg/secrets_manager"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"

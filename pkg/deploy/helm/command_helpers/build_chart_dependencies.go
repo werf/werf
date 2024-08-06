@@ -9,7 +9,6 @@ import (
 	"github.com/werf/3p-helm/pkg/downloader"
 	"github.com/werf/3p-helm/pkg/getter"
 	"github.com/werf/3p-helm/pkg/registry"
-
 	"github.com/werf/logboek"
 )
 

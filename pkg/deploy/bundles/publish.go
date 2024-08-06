@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 
 	"github.com/werf/3p-helm/pkg/chart/loader"
-
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/deploy/bundles/registry"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender"

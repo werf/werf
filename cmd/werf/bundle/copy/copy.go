@@ -6,8 +6,8 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	helm_v3 "github.com/werf/3p-helm/cmd/helm"
 
+	helm_v3 "github.com/werf/3p-helm/cmd/helm"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/deploy/bundles"

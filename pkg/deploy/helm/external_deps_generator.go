@@ -3,11 +3,12 @@ package helm
 import (
 	"fmt"
 
+	"k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/cli-runtime/pkg/resource"
+
 	"github.com/werf/3p-helm/pkg/action"
 	"github.com/werf/3p-helm/pkg/phases/stages"
 	"github.com/werf/3p-helm/pkg/phases/stages/externaldeps"
-	"k8s.io/apimachinery/pkg/api/meta"
-	"k8s.io/cli-runtime/pkg/resource"
 )
 
 func NewStagesExternalDepsGenerator(restClient *action.RESTClientGetter, defaultNamespace *string) *StagesExternalDepsGenerator {

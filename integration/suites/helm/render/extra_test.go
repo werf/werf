@@ -3,10 +3,10 @@ package render_test
 import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/werf/3p-helm/pkg/releaseutil"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/yaml"
 
+	"github.com/werf/3p-helm/pkg/releaseutil"
 	"github.com/werf/werf/v2/test/pkg/utils"
 )
 

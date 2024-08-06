@@ -7,9 +7,9 @@ import (
 	"time"
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
-	"github.com/werf/3p-helm/pkg/chart"
 	"sigs.k8s.io/yaml"
 
+	"github.com/werf/3p-helm/pkg/chart"
 	"github.com/werf/logboek"
 	bundles_registry "github.com/werf/werf/v2/pkg/deploy/bundles/registry"
 	"github.com/werf/werf/v2/pkg/docker_registry"

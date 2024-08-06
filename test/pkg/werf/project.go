@@ -10,8 +10,8 @@ import (
 	"sync"
 
 	. "github.com/onsi/gomega"
-	"github.com/werf/3p-helm/pkg/release"
 
+	"github.com/werf/3p-helm/pkg/release"
 	"github.com/werf/werf/v2/pkg/build"
 	iutils "github.com/werf/werf/v2/test/pkg/utils"
 )
