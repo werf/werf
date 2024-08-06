@@ -10,9 +10,9 @@ import (
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/werf/3p-helm/pkg/chart"
 	"sigs.k8s.io/yaml"
 
+	"github.com/werf/3p-helm/pkg/chart"
 	bundles_registry "github.com/werf/werf/v2/pkg/deploy/bundles/registry"
 	"github.com/werf/werf/v2/pkg/docker_registry"
 )

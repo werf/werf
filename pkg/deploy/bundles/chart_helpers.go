@@ -7,11 +7,11 @@ import (
 	"context"
 	"fmt"
 
+	"sigs.k8s.io/yaml"
+
 	"github.com/werf/3p-helm/pkg/chart"
 	"github.com/werf/3p-helm/pkg/chart/loader"
 	"github.com/werf/3p-helm/pkg/chartutil"
-	"sigs.k8s.io/yaml"
-
 	"github.com/werf/logboek"
 )
 

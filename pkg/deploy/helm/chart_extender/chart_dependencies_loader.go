@@ -13,13 +13,13 @@ import (
 	"github.com/google/uuid"
 	"github.com/otiai10/copy"
 	"github.com/pkg/errors"
+	"sigs.k8s.io/yaml"
+
 	"github.com/werf/3p-helm/pkg/chart"
 	"github.com/werf/3p-helm/pkg/chart/loader"
 	"github.com/werf/3p-helm/pkg/cli"
 	"github.com/werf/3p-helm/pkg/provenance"
 	"github.com/werf/3p-helm/pkg/registry"
-	"sigs.k8s.io/yaml"
-
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/types"
