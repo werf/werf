@@ -1,5 +1,13 @@
 # Changelog
 
+### [2.10.1](https://www.github.com/werf/werf/compare/v2.10.0...v2.10.1) (2024-08-06)
+
+
+### Bug Fixes
+
+* **deploy:** occasional panics on logging ([907011f](https://www.github.com/werf/werf/commit/907011f90e379a0d4a645528d191076fbb42d20c))
+* **deploy:** plan build error not showed and graph not saved ([939f4c1](https://www.github.com/werf/werf/commit/939f4c1c73f100be3246fbd9c61a7c9972babd58))
+
 ## [2.10.0](https://www.github.com/werf/werf/compare/v2.9.3...v2.10.0) (2024-08-05)
 
 
