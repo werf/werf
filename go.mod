@@ -65,7 +65,7 @@ require (
 	github.com/werf/kubedog v0.12.4-0.20240625172905-6d4f29eae23b
 	github.com/werf/lockgate v0.1.1
 	github.com/werf/logboek v0.6.1
-	github.com/werf/nelm v0.0.0-20240806142430-cf05142d7f54
+	github.com/werf/nelm v0.0.0-20240806151008-21c317bee888
 	go.opentelemetry.io/otel v1.24.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.24.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.24.0
