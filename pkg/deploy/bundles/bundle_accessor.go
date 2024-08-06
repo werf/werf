@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"helm.sh/helm/v3/pkg/chart"
+	"github.com/werf/3p-helm/pkg/chart"
 
 	"github.com/werf/werf/v2/pkg/docker_registry"
 )

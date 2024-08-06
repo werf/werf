@@ -9,10 +9,10 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/spf13/cobra"
-	helm_v3 "helm.sh/helm/v3/cmd/helm"
-	"helm.sh/helm/v3/pkg/chart"
-	"helm.sh/helm/v3/pkg/chart/loader"
-	"helm.sh/helm/v3/pkg/cli/values"
+	helm_v3 "github.com/werf/3p-helm/cmd/helm"
+	"github.com/werf/3p-helm/pkg/chart"
+	"github.com/werf/3p-helm/pkg/chart/loader"
+	"github.com/werf/3p-helm/pkg/cli/values"
 
 	"github.com/werf/logboek"
 	"github.com/werf/nelm/pkg/secrets_manager"

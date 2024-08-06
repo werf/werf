@@ -3,7 +3,7 @@ package helm
 import (
 	"fmt"
 
-	"helm.sh/helm/v3/pkg/phases/stages/externaldeps"
+	"github.com/werf/3p-helm/pkg/phases/stages/externaldeps"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )

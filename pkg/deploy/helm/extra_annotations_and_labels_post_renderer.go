@@ -9,8 +9,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/werf/3p-helm/pkg/releaseutil"
 	yaml_v3 "gopkg.in/yaml.v3"
-	"helm.sh/helm/v3/pkg/releaseutil"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/yaml"
 

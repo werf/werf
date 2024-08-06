@@ -3,7 +3,7 @@ package helm
 import (
 	"bytes"
 
-	"helm.sh/helm/v3/pkg/postrender"
+	"github.com/werf/3p-helm/pkg/postrender"
 )
 
 type PostRendererChain struct {

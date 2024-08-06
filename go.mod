@@ -60,11 +60,12 @@ require (
 	github.com/spaolacci/murmur3 v1.1.0
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.5
+	github.com/werf/3p-helm v0.0.0-20240806141915-3137f4cc1557
 	github.com/werf/copy-recurse v0.2.7
 	github.com/werf/kubedog v0.12.4-0.20240625172905-6d4f29eae23b
 	github.com/werf/lockgate v0.1.1
 	github.com/werf/logboek v0.6.1
-	github.com/werf/nelm v0.0.0-20240703135808-2b873c2734f5
+	github.com/werf/nelm v0.0.0-20240806142430-cf05142d7f54
 	go.opentelemetry.io/otel v1.24.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.24.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.24.0
@@ -79,7 +80,6 @@ require (
 	gopkg.in/oleiade/reflections.v1 v1.0.0
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
-	helm.sh/helm/v3 v3.14.3
 	k8s.io/api v0.29.3
 	k8s.io/apimachinery v0.29.3
 	k8s.io/cli-runtime v0.29.3
@@ -382,5 +382,4 @@ require (
 replace (
 	github.com/deislabs/oras => github.com/werf/3p-oras v0.9.1-0.20240115121544-03962ecbd40a // upstream not maintained
 	github.com/jaguilar/vt100 => github.com/tonistiigi/vt100 v0.0.0-20190402012908-ad4c4a574305 // upstream not maintained
-	helm.sh/helm/v3 => github.com/werf/3p-helm/v3 v3.0.0-20240628131457-bbcfb26e2839 // helm 3
 )

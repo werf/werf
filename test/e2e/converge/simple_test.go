@@ -5,7 +5,7 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"helm.sh/helm/v3/pkg/release"
+	"github.com/werf/3p-helm/pkg/release"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/werf/kubedog/pkg/kube"

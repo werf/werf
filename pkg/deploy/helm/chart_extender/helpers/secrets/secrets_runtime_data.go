@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"helm.sh/helm/v3/pkg/chart"
+	"github.com/werf/3p-helm/pkg/chart"
 	"sigs.k8s.io/yaml"
 
 	"github.com/werf/nelm/pkg/secret"

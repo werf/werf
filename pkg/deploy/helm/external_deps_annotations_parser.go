@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"helm.sh/helm/v3/pkg/phases/stages/externaldeps"
+	"github.com/werf/3p-helm/pkg/phases/stages/externaldeps"
 
 	"github.com/werf/werf/v2/pkg/slug"
 )

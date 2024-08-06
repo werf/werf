@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"helm.sh/helm/v3/pkg/chart/loader"
-	"helm.sh/helm/v3/pkg/cli"
-	"helm.sh/helm/v3/pkg/downloader"
-	"helm.sh/helm/v3/pkg/getter"
-	"helm.sh/helm/v3/pkg/registry"
+	"github.com/werf/3p-helm/pkg/chart/loader"
+	"github.com/werf/3p-helm/pkg/cli"
+	"github.com/werf/3p-helm/pkg/downloader"
+	"github.com/werf/3p-helm/pkg/getter"
+	"github.com/werf/3p-helm/pkg/registry"
 
 	"github.com/werf/logboek"
 )
