@@ -249,7 +249,14 @@ func (i *Image) SetupBaseImage(ctx context.Context, storageManager manager.Stora
 			i.baseImageReference = ref
 		}
 
+		// TODO: do not use container_backend.LegacyStageImage for base image.
 		i.baseStageImage = i.Conveyor.GetOrCreateStageImage(i.baseImageReference, nil, nil, i)
+
+		// Do not override the base image description if it is already set.
+		// TODO: It might be a stage as base image (passed as dependency), and the absence of StageID in the description will lead to breaking the logic.
+		if i.baseStageImage.Image.GetStageDescription() != nil && i.baseStageImage.Image.GetStageDescription().Info != nil {
+			break
+		}
 
 		if i.IsDockerfileImage && i.DockerfileImageConfig.Staged {
 			if werf.GetStagedDockerfileVersion() == werf.StagedDockerfileV1 {
@@ -337,16 +344,22 @@ func (i *Image) FetchBaseImage(ctx context.Context) error {
 
 		// TODO: Refactor, move manifest fetching into SetupBaseImage, only pull image in FetchBaseImage method
 
+		// Check if image exists locally and is up-to-date.
 		if info, err := i.ContainerBackend.GetImageInfo(ctx, i.baseStageImage.Image.Name(), container_backend.GetImageInfoOpts{}); err != nil {
 			return fmt.Errorf("unable to inspect local image %s: %w", i.baseStageImage.Image.Name(), err)
 		} else if info != nil {
 			logboek.Context(ctx).Debug().LogF("GetImageInfo of %q -> %#v\n", i.baseStageImage.Image.Name(), info)
 
 			// TODO: do not use container_backend.LegacyStageImage for base image
-			i.baseStageImage.Image.SetStageDescription(&image.StageDescription{
-				StageID: nil, // this is not a stage actually, TODO
-				Info:    info,
-			})
+			// TODO: It might be a stage as base image (passed as dependency), and the absence of StageID in the description will lead to breaking the logic.
+			if i.baseStageImage.Image.GetStageDescription() != nil {
+				i.baseStageImage.Image.GetStageDescription().Info = info
+			} else {
+				i.baseStageImage.Image.SetStageDescription(&image.StageDescription{
+					StageID: nil, // this is not a stage actually, TODO
+					Info:    info,
+				})
+			}
 
 			err = i.setupBaseImageRepoDigest(ctx, i.baseStageImage.Image.Name())
 			if (i.baseImageRepoDigest != "" && i.baseImageRepoDigest == info.RepoDigest) || (err != nil && !isUnsupportedMediaTypeError(err)) {
@@ -381,10 +394,15 @@ func (i *Image) FetchBaseImage(ctx context.Context) error {
 			return fmt.Errorf("unable to inspect local image %s after successful pull: image is not exists", i.baseStageImage.Image.Name())
 		}
 
-		i.baseStageImage.Image.SetStageDescription(&image.StageDescription{
-			StageID: nil, // this is not a stage actually, TODO
-			Info:    info,
-		})
+		// TODO: It might be a stage as base image (passed as dependency), and the absence of StageID in the description will lead to breaking the logic.
+		if i.baseStageImage.Image.GetStageDescription() != nil {
+			i.baseStageImage.Image.GetStageDescription().Info = info
+		} else {
+			i.baseStageImage.Image.SetStageDescription(&image.StageDescription{
+				StageID: nil, // this is not a stage actually, TODO
+				Info:    info,
+			})
+		}
 
 		return nil
 	case StageAsBaseImage:
