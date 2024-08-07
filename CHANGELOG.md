@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.326](https://www.github.com/werf/werf/compare/v1.2.325...v1.2.326) (2024-08-07)
+
+
+### Bug Fixes
+
+* **build, buildah, dockerfile, staged:** fix panic when another image is used as a base image (through dependencies) ([261ee53](https://www.github.com/werf/werf/commit/261ee53abe8020820e5ebeff611a6ee27c50b3e0))
+
 ### [1.2.325](https://www.github.com/werf/werf/compare/v1.2.324...v1.2.325) (2024-08-05)
 
 
