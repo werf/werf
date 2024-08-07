@@ -17,6 +17,8 @@ type cmdEntrypointTestOptions struct {
 
 var _ = Describe("CMD and ENTRYPOINT combinations", Label("e2e", "build", "extra"), func() {
 	checkFunc := func(testOpts cmdEntrypointTestOptions, imageName string, expectedEntrypoint, expectedCmd strslice.StrSlice) {
+		SuiteData.Stubs.SetEnv("WERF_STAGED_DOCKERFILE_VERSION", "v2")
+
 		repoDirname := "repo"
 		fixtureRelPath := "cmd_entrypoint"
 		buildReportName := fmt.Sprintf("report-%s.json", imageName)
