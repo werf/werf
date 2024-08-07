@@ -1,6 +1,5 @@
-# Base Stage without CMD and ENTRYPOINT
+# Base Stage without SHELL, CMD and ENTRYPOINT
 FROM registry.werf.io/werf/scratch as base
-SHELL ["/bin/bash", "-c"]
 
 # Base Stage with CMD and without ENTRYPOINT
 FROM base as base_with_cmd
@@ -39,5 +38,6 @@ FROM base_with_cmd as base_image_cmd
 
 # Stage 9: Custom shell
 FROM base_with_cmd as custom_shell_exec_cmd_and_entrypoint
+SHELL ["/bin/bash", "-c"]
 ENTRYPOINT echo "ENTRYPOINT (shell)"
 CMD echo "CMD (shell)"
