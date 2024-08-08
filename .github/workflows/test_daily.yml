@@ -14,7 +14,6 @@ jobs:
   unit:
     uses: ./.github/workflows/_test_unit.yml
     with:
-      excludePackages: cmd/werf/docs
       coverage: true
 
   e2e_simple_per-k8s-version:
