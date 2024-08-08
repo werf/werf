@@ -1,0 +1,26 @@
+name: Upload coverage artifact
+inputs:
+  coverage:
+    default: false
+    type: string
+runs:
+  using: composite
+  steps:
+    - if: inputs.coverage == 'true'
+      name: Convert coverage artifact
+      shell: bash
+      run: |
+        if [ "$(ls -A $WERF_TEST_COVER_DIR)" ]; then
+          export COVER_PROFILE_FILE=$(openssl rand -hex 6)-coverage.out
+          go tool covdata textfmt -i=$WERF_TEST_COVER_DIR -o=$WERF_TEST_COVERAGE_DIR/$COVER_PROFILE_FILE
+          go tool cover -func=$WERF_TEST_COVERAGE_DIR/$COVER_PROFILE_FILE | awk '/^total:/{print $3}'
+        else
+          echo "No coverage data found in $WERF_TEST_COVER_DIR"
+        fi
+
+    - if: inputs.coverage == 'true'
+      name: Upload coverage artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: coverage
+        path: coverage

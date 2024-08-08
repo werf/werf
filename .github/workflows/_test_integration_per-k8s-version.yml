@@ -60,7 +60,6 @@ jobs:
         uses: ./.github/actions/set-up-prebuilt-werf-test-binary
         with:
           coverage: ${{ inputs.coverage }}
-          coverageDirSuffix: ${{ matrix.os }}
 
       - name: Set up git config
         uses: ./.github/actions/set-up-git-config
@@ -83,10 +82,9 @@ jobs:
           WERF_TEST_K8S_DOCKER_REGISTRY: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY }}
           WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME }}
           WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD }}
+          GOCOVERDIR: ${{ env.WERF_TEST_COVER_DIR }}
 
-      - if: inputs.coverage == 'true'
-        name: Upload coverage artifact
-        uses: actions/upload-artifact@v3
+      - name: Upload coverage artifact
+        uses: ./.github/actions/upload-coverage-artifact
         with:
-          name: coverage
-          path: coverage
+          coverage: ${{ inputs.coverage }}

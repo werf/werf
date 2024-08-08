@@ -3,8 +3,6 @@ inputs:
   coverage:
     default: false
     type: string
-  coverageDirSuffix:
-    type: string
 runs:
   using: composite
   steps:
@@ -12,8 +10,9 @@ runs:
       run: |
         if ${{ inputs.coverage }}; then
           cat >> "$GITHUB_ENV" <<EOF
-        WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/bin/werf-with-coverage
-        WERF_TEST_COVERAGE_DIR=$GITHUB_WORKSPACE/coverage/$RANDOM$RANDOM/${{ inputs.coverageDirSuffix }}
+        WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/bin/werf
+        WERF_TEST_COVER_DIR=$GITHUB_WORKSPACE/covdata
+        WERF_TEST_COVERAGE_DIR=$GITHUB_WORKSPACE/coverage
         EOF
         else
           cat >> "$GITHUB_ENV" <<EOF
@@ -23,8 +22,10 @@ runs:
       shell: bash
 
     - if: inputs.coverage == 'true'
-      name: Create WERF_TEST_COVERAGE_DIR
-      run: mkdir -p "$WERF_TEST_COVERAGE_DIR"
+      name: Create WERF_TEST_COVERAGE_DIR and WERF_TEST_COVER_DIR
+      run: |
+        mkdir -p "$WERF_TEST_COVERAGE_DIR"
+        mkdir -p "$WERF_TEST_COVER_DIR"
       shell: bash
 
     - name: Build werf test binary

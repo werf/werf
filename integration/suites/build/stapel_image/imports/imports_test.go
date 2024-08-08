@@ -14,7 +14,7 @@ import (
 )
 
 func werfBuild(dir string, opts liveexec.ExecCommandOptions, extraArgs ...string) error {
-	return liveexec.ExecCommand(dir, SuiteData.WerfBinPath, opts, utils.WerfBinArgs(append([]string{"build"}, extraArgs...)...)...)
+	return liveexec.ExecCommand(dir, SuiteData.WerfBinPath, opts, append([]string{"build"}, extraArgs...)...)
 }
 
 func werfRunOutput(dir string, extraArgs ...string) string {
@@ -27,7 +27,7 @@ func werfRunOutput(dir string, extraArgs ...string) string {
 }
 
 func werfHostPurge(dir string, opts liveexec.ExecCommandOptions, extraArgs ...string) error {
-	return liveexec.ExecCommand(dir, SuiteData.WerfBinPath, opts, utils.WerfBinArgs(append([]string{"host", "purge"}, extraArgs...)...)...)
+	return liveexec.ExecCommand(dir, SuiteData.WerfBinPath, opts, append([]string{"host", "purge"}, extraArgs...)...)
 }
 
 var _ = Describe("Stapel imports", func() {

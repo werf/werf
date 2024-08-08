@@ -6,12 +6,11 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/v2/test/pkg/utils"
 	"github.com/werf/werf/v2/test/pkg/utils/liveexec"
 )
 
 func werfRender(dir string, opts liveexec.ExecCommandOptions, extraArgs ...string) error {
-	return liveexec.ExecCommand(dir, SuiteData.WerfBinPath, opts, utils.WerfBinArgs(append([]string{"render"}, extraArgs...)...)...)
+	return liveexec.ExecCommand(dir, SuiteData.WerfBinPath, opts, append([]string{"render"}, extraArgs...)...)
 }
 
 var _ = Describe("Helm values yaml parser", func() {

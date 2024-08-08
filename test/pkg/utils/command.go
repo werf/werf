@@ -33,10 +33,6 @@ type RunCommandOptions struct {
 }
 
 func RunCommandWithOptions(dir, command string, args []string, options RunCommandOptions) ([]byte, error) {
-	if isWerfTestBinaryPath(command) {
-		args = WerfBinArgs(args...)
-	}
-
 	cmd := exec.Command(command, args...)
 
 	if dir != "" {

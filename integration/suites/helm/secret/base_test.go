@@ -40,7 +40,7 @@ var _ = It("should rotate secret key", func() {
 
 	newSecretKey := strings.TrimSpace(output)
 
-	cmd := exec.Command(SuiteData.WerfBinPath, utils.WerfBinArgs("helm", "secret", "rotate-secret-key")...)
+	cmd := exec.Command(SuiteData.WerfBinPath, "helm", "secret", "rotate-secret-key")
 	cmd.Dir = SuiteData.GetProjectWorktree(SuiteData.ProjectName)
 	cmd.Env = append([]string{
 		fmt.Sprintf("WERF_SECRET_KEY=%s", newSecretKey),

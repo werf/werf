@@ -33,7 +33,7 @@ var _ = Describe("base", func() {
 				output := utils.SucceedCommandOutputString(
 					SuiteData.GetProjectWorktree(SuiteData.ProjectName),
 					SuiteData.WerfBinPath,
-					utils.WerfBinArgs("ci-env", ciSystem, "--as-file")...,
+					"ci-env", ciSystem, "--as-file",
 				)
 
 				expectedPathGlob := filepath.Join(
@@ -55,13 +55,13 @@ var _ = Describe("base", func() {
 				output := utils.SucceedCommandOutputString(
 					SuiteData.GetProjectWorktree(SuiteData.ProjectName),
 					SuiteData.WerfBinPath,
-					utils.WerfBinArgs("ci-env", ciSystem)...,
+					"ci-env", ciSystem,
 				)
 
 				useAsFileOutput := utils.SucceedCommandOutputString(
 					SuiteData.GetProjectWorktree(SuiteData.ProjectName),
 					SuiteData.WerfBinPath,
-					utils.WerfBinArgs("ci-env", ciSystem, "--as-file")...,
+					"ci-env", ciSystem, "--as-file",
 				)
 
 				scriptPath := strings.TrimSpace(useAsFileOutput)
