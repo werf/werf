@@ -75,12 +75,7 @@ jobs:
 
       - name: Test
         run: |
-          if ${{ inputs.coverage }}; then
-            task -p test:integration paths="$(echo ${{ inputs.packages }} | tr , ' ')" -- --flake-attempts=3 --coverprofile="$(openssl rand -hex 6)-coverage.out" --keep-going --skip-package '${{ inputs.excludePackages }}'
-            mv *-coverage.out "$WERF_TEST_COVERAGE_DIR/"
-          else
-            task -p test:integration paths="$(echo ${{ inputs.packages }} | tr , ' ')" -- --flake-attempts=3 --keep-going --skip-package '${{ inputs.excludePackages }}'
-          fi
+          task -p test:integration paths="$(echo ${{ inputs.packages }} | tr , ' ')" -- --flake-attempts=3 --keep-going --skip-package '${{ inputs.excludePackages }}'
           echo loadavg: $(cat /proc/loadavg)
         env:
           GOCOVERDIR: ${{ env.WERF_TEST_COVER_DIR }}
