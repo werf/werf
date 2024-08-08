@@ -50,7 +50,6 @@ jobs:
         uses: ./.github/actions/set-up-prebuilt-werf-test-binary
         with:
           coverage: ${{ inputs.coverage }}
-          coverageDirSuffix: ubuntu-latest-4-cores
 
       - name: Set up git config
         uses: ./.github/actions/set-up-git-config
@@ -69,9 +68,7 @@ jobs:
           fi
           echo loadavg: $(cat /proc/loadavg)
 
-      - if: inputs.coverage == 'true'
-        name: Upload coverage artifact
-        uses: actions/upload-artifact@v3
+      - name: Upload coverage artifact
+        uses: ./.github/actions/upload-coverage-artifact
         with:
-          name: coverage
-          path: coverage
+          coverage: ${{ inputs.coverage }}

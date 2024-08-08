@@ -18,7 +18,7 @@ import (
 )
 
 func liveExecWerf(dir string, opts liveexec.ExecCommandOptions, extraArgs ...string) error {
-	return liveexec.ExecCommand(dir, SuiteData.WerfBinPath, opts, utils.WerfBinArgs(extraArgs...)...)
+	return liveexec.ExecCommand(dir, SuiteData.WerfBinPath, opts, extraArgs...)
 }
 
 var _ = Describe("Bundles", func() {

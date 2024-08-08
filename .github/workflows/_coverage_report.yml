@@ -23,41 +23,22 @@ jobs:
         with:
           go-version-file: go.mod
 
+      - name: Download Code Climate test-reporter
+        run: |
+          curl -sSL https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 --output reporter
+          chmod +x ./reporter
+
       - name: Download coverage artifact
         uses: actions/download-artifact@v3
         with:
           name: coverage
           path: coverage
 
-      - name: Download Code Climate test-reporter
-        run: |
-          curl -sSL https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 --output reporter
-          chmod +x ./reporter
-
       - name: Install gocovmerge
         run: go install github.com/wadey/gocovmerge@latest
 
-        # FIXME: determine problems with coverage records and remove seds
       - name: Merge coverage files into one
         run: |
-          find coverage -type f -exec \
-            sed -i -e "s|/home/ubuntu/actions-runner/_work/werf/werf|github.com/werf/werf/v2|g" {} +
-
-          find coverage -type f -exec \
-            sed -i -e "s|/home/runner/actions-runner/_work/werf/werf|github.com/werf/werf/v2|g" {} +
-
-          find coverage -type f -exec \
-            sed -i -e "s|/home/runner/work/werf/werf|github.com/werf/werf/v2|g" {} +
-
-          find coverage -type f -exec \
-            sed -i -e "s|/Users/runner/runners/[0-9.]*/work/werf/werf|github.com/werf/werf/v2|g" {} +
-
-          find coverage -type f -exec \
-            sed -i -e 's|D:\\a\\werf\\werf\\cmd\\werf\\main.go|github.\com/werf/werf/v2/cmd/werf/main.go|g' {} +
-
-          find coverage -type f -exec \
-            sed -i -e 's|D:\\a\\werf\\werf\\v2\\cmd\\werf\\main.go|github.\com/werf/werf/v2/cmd/werf/main.go|g' {} +
-
           coverage_files=$(find coverage -name '*.out')
           gocovmerge ${coverage_files[@]} > coverage.out
 

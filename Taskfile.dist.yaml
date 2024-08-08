@@ -41,7 +41,7 @@ tasks:
   _build:cgo:dev: &build_cgo_dev
     cmds:
       - go build -o "{{.outputDir | default (printf "./build/%s-%s" .targetOS .targetArch)}}/werf{{if (eq .targetOS "windows")}}.exe{{end}}"
-        -compiler gc -ldflags="{{.cgoDevLDFlags}}" -tags="{{.cgoTags}}" {{.CLI_ARGS}} {{.pkg | default .package}}
+        -compiler gc -ldflags="{{.cgoDevLDFlags}}" -tags="{{.cgoTags}}" {{.extraGoBuildArgs}} {{.CLI_ARGS}} {{.pkg | default .package}}
     env:
       CGO_ENABLED: "1"
       GOOS: "{{.targetOS}}"
@@ -52,12 +52,12 @@ tasks:
     <<: *build_cgo_dev
     cmds:
       - go build -o "{{.outputDir | default (printf "./dist/%s/%s-%s/bin" .version .targetOS .targetArch)}}/werf{{if (eq .targetOS "windows")}}.exe{{end}}"
-        -compiler gc -ldflags="{{.cgoReleaseLDFlags}}" -tags="{{.cgoTags}}" {{.CLI_ARGS}} {{.pkg | default .package}}
+        -compiler gc -ldflags="{{.cgoReleaseLDFlags}}" -tags="{{.cgoTags}}" {{.extraGoBuildArgs}} {{.CLI_ARGS}} {{.pkg | default .package}}
 
   _build:go:dev: &build_go_dev
     cmds:
       - go build -o "{{.outputDir | default (printf "./build/%s-%s" .targetOS .targetArch)}}/werf{{if (eq .targetOS "windows")}}.exe{{end}}"
-        -ldflags="{{.goDevLDFlags}}" -tags="{{.goTags}}" {{.CLI_ARGS}} {{.pkg | default .package}}
+        -ldflags="{{.goDevLDFlags}}" -tags="{{.goTags}}" {{.extraGoBuildArgs}} {{.CLI_ARGS}} {{.pkg | default .package}}
     env:
       CGO_ENABLED: "0"
       GOOS: "{{.targetOS}}"
@@ -67,7 +67,7 @@ tasks:
     <<: *build_go_dev
     cmds:
       - go build -o "{{.outputDir | default (printf "./dist/%s/%s-%s/bin" .version .targetOS .targetArch)}}/werf{{if (eq .targetOS "windows")}}.exe{{end}}"
-        -ldflags="{{.goReleaseLDFlags}}" -tags="{{.goTags}}" {{.CLI_ARGS}} {{.pkg | default .package}}
+        -ldflags="{{.goReleaseLDFlags}}" -tags="{{.goTags}}" {{.extraGoBuildArgs}} {{.CLI_ARGS}} {{.pkg | default .package}}
 
   build:
     desc: "Build werf dev binary."
@@ -76,6 +76,7 @@ tasks:
       - task: build:dev:{{.os}}:{{.arch}}
         vars:
           outputDir: '{{.outputDir | default "./bin"}}'
+          extraGoBuildArgs: "{{.extraGoBuildArgs}}"
 
   build:dev:all:
     desc: "Build all werf dev binaries in parallel."
@@ -102,6 +103,7 @@ tasks:
       - task: build:dev:linux:amd64:cgo
         vars:
           outputDir: "{{.outputDir}}"
+          extraGoBuildArgs: "{{.extraGoBuildArgs}}"
 
   build:dev:linux:amd64:cgo:
     desc: "Build werf dev binary for linux/amd64 with cgo."
@@ -111,6 +113,7 @@ tasks:
           targetOS: "linux"
           targetArch: "amd64"
           outputDir: "{{.outputDir}}"
+          extraGoBuildArgs: "{{.extraGoBuildArgs}}"
 
   build:dev:linux:amd64:go:
     desc: "Build werf dev binary for linux/amd64 without cgo."
@@ -120,6 +123,7 @@ tasks:
           targetOS: "linux"
           targetArch: "amd64"
           outputDir: "{{.outputDir}}"
+          extraGoBuildArgs: "{{.extraGoBuildArgs}}"
 
   build:dist:linux:amd64:
     desc: 'Build werf release binary for linux/amd64. Important vars: "version".'
@@ -128,6 +132,7 @@ tasks:
         vars:
           targetOS: "linux"
           targetArch: "amd64"
+          extraGoBuildArgs: "{{.extraGoBuildArgs}}"
 
   build:dev:linux:arm64:
     desc: "Build werf dev binary for linux/arm64."
@@ -138,6 +143,7 @@ tasks:
           targetArch: "arm64"
           cc: "aarch64-linux-gnu-gcc"
           outputDir: "{{.outputDir}}"
+          extraGoBuildArgs: "{{.extraGoBuildArgs}}"
 
   build:dist:linux:arm64:
     desc: 'Build werf release binary for linux/arm64. Important vars: "version".'
@@ -147,6 +153,7 @@ tasks:
           targetOS: "linux"
           targetArch: "arm64"
           cc: "aarch64-linux-gnu-gcc"
+          extraGoBuildArgs: "{{.extraGoBuildArgs}}"
 
   build:dev:darwin:amd64:
     desc: "Build werf dev binary for darwin/amd64."
@@ -156,6 +163,7 @@ tasks:
           targetOS: "darwin"
           targetArch: "amd64"
           outputDir: "{{.outputDir}}"
+          extraGoBuildArgs: "{{.extraGoBuildArgs}}"
 
   build:dist:darwin:amd64:
     desc: 'Build werf release binary for darwin/amd64. Important vars: "version".'
@@ -164,6 +172,7 @@ tasks:
         vars:
           targetOS: "darwin"
           targetArch: "amd64"
+          extraGoBuildArgs: "{{.extraGoBuildArgs}}"
 
   build:dev:darwin:arm64:
     desc: "Build werf dev binary for darwin/arm64."
@@ -173,6 +182,7 @@ tasks:
           targetOS: "darwin"
           targetArch: "arm64"
           outputDir: "{{.outputDir}}"
+          extraGoBuildArgs: "{{.extraGoBuildArgs}}"
 
   build:dist:darwin:arm64:
     desc: 'Build werf release binary for darwin/arm64. Important vars: "version".'
@@ -181,6 +191,7 @@ tasks:
         vars:
           targetOS: "darwin"
           targetArch: "arm64"
+          extraGoBuildArgs: "{{.extraGoBuildArgs}}"
 
   build:dev:windows:amd64:
     desc: "Build werf dev binary for windows/amd64."
@@ -190,6 +201,7 @@ tasks:
           targetOS: "windows"
           targetArch: "amd64"
           outputDir: "{{.outputDir}}"
+          extraGoBuildArgs: "{{.extraGoBuildArgs}}"
 
   build:dist:windows:amd64:
     desc: 'Build werf release binary for windows/amd64. Important vars: "version".'
@@ -198,14 +210,15 @@ tasks:
         vars:
           targetOS: "windows"
           targetArch: "amd64"
+          extraGoBuildArgs: "{{.extraGoBuildArgs}}"
 
   build-with-coverage:
     desc: "Build werf binary to run E2E tests with coverage."
     cmds:
-      - task: test:go-test
+      - task: build:dev:{{.os}}:{{.arch}}
         vars:
-          paths: "cmd/werf/main.go cmd/werf/main_test.go"
-          extraTestGoTestArgs: '-coverpkg=./... -c -o "{{.withCoverageBinary}}"'
+          outputDir: '{{.outputDir | default "./bin"}}'
+          extraGoBuildArgs: "-cover -coverpkg=./..."
 
   _test:go-test:cgo:
     cmds:

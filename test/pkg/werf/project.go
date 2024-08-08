@@ -210,7 +210,7 @@ func (p *Project) CreateRegistryPullSecretFromDockerConfig() {
 }
 
 func (p *Project) runCommand(opts runCommandOptions) string {
-	outb, err := iutils.RunCommand(p.GitRepoPath, p.WerfBinPath, iutils.WerfBinArgs(opts.Args...)...)
+	outb, err := iutils.RunCommand(p.GitRepoPath, p.WerfBinPath, opts.Args...)
 	if opts.ShouldFail {
 		Expect(err).To(HaveOccurred())
 	} else {

@@ -7,8 +7,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
-	"strconv"
-	"time"
 
 	. "github.com/onsi/gomega"
 )
@@ -23,26 +21,6 @@ func GetTempDir() string {
 	}
 
 	return dir
-}
-
-func WerfBinArgs(userArgs ...string) []string {
-	var args []string
-	if os.Getenv("WERF_TEST_BINARY_PATH") != "" && os.Getenv("WERF_TEST_COVERAGE_DIR") != "" {
-		coverageFilePath := filepath.Join(
-			os.Getenv("WERF_TEST_COVERAGE_DIR"),
-			fmt.Sprintf("%s-%s.out", strconv.FormatInt(time.Now().UTC().UnixNano(), 10), GetRandomString(10)),
-		)
-		args = append(args, fmt.Sprintf("-test.coverprofile=%s", coverageFilePath))
-	}
-
-	args = append(args, userArgs...)
-
-	return args
-}
-
-func isWerfTestBinaryPath(path string) bool {
-	werfTestBinaryPath := os.Getenv("WERF_TEST_BINARY_PATH")
-	return werfTestBinaryPath != "" && werfTestBinaryPath == path
 }
 
 func ProjectName() string {

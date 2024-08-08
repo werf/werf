@@ -310,7 +310,7 @@ spec:
 
 			By("deleting release from cluster with all adopted resources")
 
-			Expect(liveexec.ExecCommand(SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, liveexec.ExecCommandOptions{}, utils.WerfBinArgs("dismiss")...)).To(Succeed())
+			Expect(liveexec.ExecCommand(SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, liveexec.ExecCommandOptions{}, "dismiss")).To(Succeed())
 
 			_, err = kube.Client.AppsV1().Deployments(namespace).Get(context.Background(), "mydeploy1", metav1.GetOptions{})
 			Expect(errors.IsNotFound(err)).To(BeTrue(), fmt.Sprintf("get deploy/mydeploy1 should return not found error, got %v", err))

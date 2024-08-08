@@ -105,7 +105,6 @@ jobs:
         uses: ./.github/actions/set-up-prebuilt-werf-test-binary
         with:
           coverage: ${{ inputs.coverage }}
-          coverageDirSuffix: ${{ matrix.os }}
 
       - if: matrix.cr == 'acr'
         name: Login to ACR
@@ -139,10 +138,10 @@ jobs:
             task -p test:integration paths="integration/suites/cleanup integration/suites/managed_images" -- --focus="\[${{ matrix.cr }}\]" --flake-attempts=3 --keep-going
           fi
           echo loadavg: $(cat /proc/loadavg)
+        env:
+          GOCOVERDIR: ${{ env.WERF_TEST_COVER_DIR }}
 
-      - if: inputs.coverage == 'true'
-        name: Upload coverage artifact
-        uses: actions/upload-artifact@v3
+      - name: Upload coverage artifact
+        uses: ./.github/actions/upload-coverage-artifact
         with:
-          name: coverage
-          path: coverage
+          coverage: ${{ inputs.coverage }}
