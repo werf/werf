@@ -2,7 +2,9 @@ package compose
 
 import (
 	"bufio"
+	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -63,7 +65,7 @@ func (d *composeCmdData) GetOrExtractImagesToProcess(werfConfig *config.WerfConf
 		return s
 	}
 
-	extractedImageNameList, err := extractImageNamesFromDockerComposeFile(d.getComposeFilePath())
+	extractedImageNameList, err := extractImageNamesFromComposeConfig(d.getComposeFilePath())
 	if err != nil {
 		return build.ImagesToProcess{}, fmt.Errorf("unable to extract image names from docker-compose file: %w", err)
 	}
@@ -103,18 +105,30 @@ func (d *composeCmdData) getComposeFilePath() string {
 	return "docker-compose.yml"
 }
 
-func extractImageNamesFromDockerComposeFile(filename string) ([]string, error) {
-	file, err := os.Open(filename)
+func extractImageNamesFromComposeConfig(filename string) ([]string, error) {
+	composeArgs := []string{"compose", "--file", filename, "config", "--no-interpolate"}
+
+	cmd := exec.Command("docker", composeArgs...)
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	err := cmd.Run()
 	if err != nil {
-		return nil, fmt.Errorf("error opening file: %v", err)
+		var ee *exec.ExitError
+		if errors.As(err, &ee) {
+			return nil, fmt.Errorf("error running command %q: %w\n\nStdout:\n%s\nStderr:\n%s", cmd, err, stdout.String(), stderr.String())
+		}
+		return nil, fmt.Errorf("error running command %q: %w", cmd, err)
 	}
-	defer file.Close()
+
+	output := stdout.Bytes()
 
 	// Matches $WERF_<IMAGE_NAME>_DOCKER_IMAGE_NAME and ${WERF_<IMAGE_NAME>_DOCKER_IMAGE_NAME}.
 	re := regexp.MustCompile(`\${?WERF_(.*)_DOCKER_IMAGE_NAME}?`)
 
 	var imageNames []string
-	scanner := bufio.NewScanner(file)
+	scanner := bufio.NewScanner(strings.NewReader(string(output)))
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
 
@@ -133,7 +147,7 @@ func extractImageNamesFromDockerComposeFile(filename string) ([]string, error) {
 	}
 
 	if err := scanner.Err(); err != nil {
-		return nil, fmt.Errorf("error reading file: %v", err)
+		return nil, fmt.Errorf("error reading compose config: %v", err)
 	}
 
 	return imageNames, nil
