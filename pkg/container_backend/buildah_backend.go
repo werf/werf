@@ -22,6 +22,7 @@ import (
 
 	copyrec "github.com/werf/copy-recurse"
 	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/level"
 	"github.com/werf/werf/pkg/buildah"
 	"github.com/werf/werf/pkg/buildah/thirdparty"
 	"github.com/werf/werf/pkg/image"
@@ -127,14 +128,18 @@ func (backend *BuildahBackend) unmountContainers(ctx context.Context, containers
 	return nil
 }
 
-func makeScript(commands []string) []byte {
+func makeScript(commands []string, verbose bool) []byte {
 	var scriptCommands []string
 	for _, c := range commands {
-		scriptCommands = append(scriptCommands, fmt.Sprintf(`printf "$ %%s\n" %q`, c))
+		// TODO: print commands by default when build secrets are supported.
+		if verbose {
+			scriptCommands = append(scriptCommands, fmt.Sprintf(`printf "$ %%s\n" %q`, c))
+		}
 		scriptCommands = append(scriptCommands, c)
 	}
 
-	return []byte(fmt.Sprintf(`#!/bin/sh
+	if verbose {
+		return []byte(fmt.Sprintf(`#!/bin/sh
 
 set -e
 
@@ -152,16 +157,31 @@ fi
 
 %s
 `, strings.Join(scriptCommands, "\n")))
+	} else {
+		return []byte(fmt.Sprintf(`#!/bin/sh
+
+set -e
+
+if [ "x$_IS_REEXEC" = "x" ]; then
+	if type bash >/dev/null 2>&1 ; then
+		export _IS_REEXEC="1"
+		exec bash $0
+	fi
+fi
+
+%s
+`, strings.Join(scriptCommands, "\n")))
+	}
 }
 
 func (backend *BuildahBackend) applyCommands(ctx context.Context, container *containerDesc, buildVolumes, commands []string, opts CommonOpts) error {
 	hostScriptPath := filepath.Join(backend.TmpDir, fmt.Sprintf("script-%s.sh", uuid.New().String()))
-	if err := os.WriteFile(hostScriptPath, makeScript(commands), os.FileMode(0o555)); err != nil {
+	if err := os.WriteFile(hostScriptPath, makeScript(commands, logboek.Context(ctx).IsAcceptedLevel(level.Info)), os.FileMode(0o555)); err != nil {
 		return fmt.Errorf("unable to write script file %q: %w", hostScriptPath, err)
 	}
 	defer os.RemoveAll(hostScriptPath)
 
-	logboek.Context(ctx).Default().LogF("Executing script %s\n", hostScriptPath)
+	logboek.Context(ctx).Info().LogF("Executing script %s\n", hostScriptPath)
 
 	destScriptPath := "/.werf/script.sh"
 
