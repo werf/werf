@@ -1,5 +1,13 @@
 # Changelog
 
+### [2.10.2](https://www.github.com/werf/werf/compare/v2.10.1...v2.10.2) (2024-08-13)
+
+
+### Bug Fixes
+
+* **build, buildah, dockerfile, staged:** fix panic when another image is used as a base image (through dependencies) ([66d6fa8](https://www.github.com/werf/werf/commit/66d6fa8951dc438d690fb2153c1a3f80a46fb487))
+* **compose:** detect werf environment variables when extends functionality used ([5703d56](https://www.github.com/werf/werf/commit/5703d567ff82fa7c7a24cb8bccad2682fd63d981))
+
 ### [2.10.1](https://www.github.com/werf/werf/compare/v2.10.0...v2.10.1) (2024-08-06)
 
 
