@@ -1406,6 +1406,8 @@ github.com/werf/nelm v0.0.0-20240806151008-21c317bee888 h1:TDYUPstcaY7qz4ktcjjSr
 github.com/werf/nelm v0.0.0-20240806151008-21c317bee888/go.mod h1:rJQpFmToqj6twEeTcV7NtXACXqzuobvzjVocuCtIAms=
 github.com/werf/nelm v0.0.0-20240806160049-119410ac7901 h1:U2SD4nItf8s9LDGBqo4c/vDon571JcQnAK8YRmKBE1Y=
 github.com/werf/nelm v0.0.0-20240806160049-119410ac7901/go.mod h1:rJQpFmToqj6twEeTcV7NtXACXqzuobvzjVocuCtIAms=
+github.com/werf/nelm v0.0.0-20240815172253-215b579edc81 h1:604Cj5zZ/pdXpAtRgEJCvnaNO7BZNcJ90UYAnINB1cM=
+github.com/werf/nelm v0.0.0-20240815172253-215b579edc81/go.mod h1:rJQpFmToqj6twEeTcV7NtXACXqzuobvzjVocuCtIAms=
 github.com/xanzy/go-gitlab v0.31.0/go.mod h1:sPLojNBn68fMUWSxIJtdVVIP8uSBYqesTfDUseX11Ug=
 github.com/xanzy/ssh-agent v0.2.1/go.mod h1:mLlQY/MoOhWBj+gOGMQkOeiEvkx+8pJSI+0Bx9h2kr4=
 github.com/xanzy/ssh-agent v0.3.3 h1:+/15pJfg/RsTxqYcX6fHqOXZwwMP+2VyYWJeWM2qQFM=
