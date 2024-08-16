@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.327](https://www.github.com/werf/werf/compare/v1.2.326...v1.2.327) (2024-08-13)
+
+
+### Bug Fixes
+
+* **build, buildah, stapel:** prevent sensitive data exposure by not printing user commands ([69d26bb](https://www.github.com/werf/werf/commit/69d26bbcc7dbbb35750258246b32184f40866de2))
+
 ### [1.2.326](https://www.github.com/werf/werf/compare/v1.2.325...v1.2.326) (2024-08-13)
 
 
