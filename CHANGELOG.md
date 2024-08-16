@@ -1,5 +1,13 @@
 # Changelog
 
+### [2.10.3](https://www.github.com/werf/werf/compare/v2.10.2...v2.10.3) (2024-08-15)
+
+
+### Bug Fixes
+
+* **build, buildah, stapel:** prevent sensitive data exposure by not printing user commands ([b95670c](https://www.github.com/werf/werf/commit/b95670cd173fe2303c9ba675ec2ba3bf3a9df408))
+* **deploy:** invalid labels/annotations silently remove all user labels/annotations for the resource ([35a2fe7](https://www.github.com/werf/werf/commit/35a2fe79d8490164ef5bd0563307fd7a54c7f988))
+
 ### [2.10.2](https://www.github.com/werf/werf/compare/v2.10.1...v2.10.2) (2024-08-13)
 
 
