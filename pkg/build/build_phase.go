@@ -486,9 +486,8 @@ func (phase *BuildPhase) createReport(ctx context.Context) error {
 		}
 
 		if _, isLocal := phase.Conveyor.StorageManager.GetStagesStorage().(*storage.LocalStagesStorage); !isLocal {
-			if len(targetPlatforms) > 1 {
-				img := phase.Conveyor.imagesTree.GetMultiplatformImage(name)
-
+			img := phase.Conveyor.imagesTree.GetMultiplatformImage(name)
+			if len(targetPlatforms) > 1 && img != nil {
 				isRebuilt := false
 				for _, pImg := range img.Images {
 					isRebuilt = (isRebuilt || pImg.GetRebuilt())
