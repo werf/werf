@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"sort"
+	"sync"
 
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/types"
@@ -27,6 +28,7 @@ type ImagesTree struct {
 	imagesSets ImagesSets
 
 	multiplatformImages []*MultiplatformImage
+	mutex               sync.RWMutex
 }
 
 type ImagesTreeOptions struct {
@@ -40,6 +42,7 @@ func NewImagesTree(werfConfig *config.WerfConfig, opts ImagesTreeOptions) *Image
 	return &ImagesTree{
 		ImagesTreeOptions: opts,
 		werfConfig:        werfConfig,
+		mutex:             sync.RWMutex{},
 	}
 }
 
@@ -194,6 +197,8 @@ func (tree *ImagesTree) GetImagesSets() ImagesSets {
 }
 
 func (tree *ImagesTree) GetMultiplatformImage(name string) *MultiplatformImage {
+	tree.mutex.RLock()
+	defer tree.mutex.RUnlock()
 	for _, img := range tree.multiplatformImages {
 		if img.Name == name {
 			return img
@@ -203,6 +208,8 @@ func (tree *ImagesTree) GetMultiplatformImage(name string) *MultiplatformImage {
 }
 
 func (tree *ImagesTree) SetMultiplatformImage(newImg *MultiplatformImage) {
+	tree.mutex.Lock()
+	defer tree.mutex.Unlock()
 	for _, img := range tree.multiplatformImages {
 		if img.Name == newImg.Name {
 			return
@@ -212,6 +219,8 @@ func (tree *ImagesTree) SetMultiplatformImage(newImg *MultiplatformImage) {
 }
 
 func (tree *ImagesTree) GetMultiplatformImages() []*MultiplatformImage {
+	tree.mutex.RLock()
+	defer tree.mutex.RUnlock()
 	return tree.multiplatformImages
 }
 
