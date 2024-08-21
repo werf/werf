@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.10.4](https://www.github.com/werf/werf/compare/v2.10.3...v2.10.4) (2024-08-21)
+
+
+### Bug Fixes
+
+* **build/stages:** Add RWMutex to ImagesTree ([29855a9](https://www.github.com/werf/werf/commit/29855a92eef6aa1881fca2225f0c2cece9e41e30))
+
 ### [2.10.3](https://www.github.com/werf/werf/compare/v2.10.2...v2.10.3) (2024-08-15)
 
 
