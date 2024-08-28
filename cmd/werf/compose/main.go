@@ -65,7 +65,7 @@ func (d *composeCmdData) GetOrExtractImagesToProcess(werfConfig *config.WerfConf
 		return s
 	}
 
-	extractedImageNameList, err := extractImageNamesFromComposeConfig(d.getComposeFilePath())
+	extractedImageNameList, err := extractImageNamesFromComposeConfig(d.getComposeFileCustomPathList())
 	if err != nil {
 		return build.ImagesToProcess{}, fmt.Errorf("unable to extract image names from docker-compose file: %w", err)
 	}
@@ -90,23 +90,28 @@ func (d *composeCmdData) GetOrExtractImagesToProcess(werfConfig *config.WerfConf
 	return build.NewImagesToProcess(imageNameList, len(imageNameList) == 0), nil
 }
 
-func (d *composeCmdData) getComposeFilePath() string {
+func (d *composeCmdData) getComposeFileCustomPathList() []string {
+	var result []string
 	for ind, value := range d.ComposeOptions {
 		if strings.HasPrefix(value, "-f") || strings.HasPrefix(value, "--file") {
 			parts := strings.Split(value, "=")
 			if len(parts) == 2 {
-				return parts[1]
+				result = append(result, parts[1])
 			} else if len(d.ComposeOptions) > ind+1 {
-				return d.ComposeOptions[ind+1]
+				result = append(result, d.ComposeOptions[ind+1])
 			}
 		}
 	}
 
-	return "docker-compose.yml"
+	return result
 }
 
-func extractImageNamesFromComposeConfig(filename string) ([]string, error) {
-	composeArgs := []string{"compose", "--file", filename, "config", "--no-interpolate"}
+func extractImageNamesFromComposeConfig(customConfigPathList []string) ([]string, error) {
+	composeArgs := []string{"compose"}
+	for _, p := range customConfigPathList {
+		composeArgs = append(composeArgs, "--file", p)
+	}
+	composeArgs = append(composeArgs, "config", "--no-interpolate")
 
 	cmd := exec.Command("docker", composeArgs...)
 	var stdout, stderr bytes.Buffer
