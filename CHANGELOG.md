@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.328](https://www.github.com/werf/werf/compare/v1.2.327...v1.2.328) (2024-08-28)
+
+
+### Bug Fixes
+
+* **compose:** correctly handle multiple compose files with -f/--file option ([01c47eb](https://www.github.com/werf/werf/commit/01c47ebc19bfc61b7071b0e5406f55d6f60a8294))
+
 ### [1.2.327](https://www.github.com/werf/werf/compare/v1.2.326...v1.2.327) (2024-08-13)
 
 
