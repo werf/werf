@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -16,8 +15,7 @@ import (
 	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
 	"github.com/werf/werf/v2/pkg/kubeutils"
-	"github.com/werf/werf/v2/pkg/storage"
-	"github.com/werf/werf/v2/pkg/storage/synchronization_server"
+	"github.com/werf/werf/v2/pkg/storage/synchronization/server"
 	"github.com/werf/werf/v2/pkg/util"
 	"github.com/werf/werf/v2/pkg/werf"
 )
@@ -107,7 +105,6 @@ func runSynchronization(ctx context.Context) error {
 	}
 
 	var distributedLockerBackendFactoryFunc func(clientID string) (distributed_locker.DistributedLockerBackend, error)
-	var stagesStorageCacheFactoryFunc func(clientID string) (synchronization_server.StagesStorageCacheInterface, error)
 
 	if cmdData.Kubernetes {
 		if err := kube.Init(kube.InitOptions{kube.KubeConfigOptions{
@@ -139,27 +136,12 @@ func runSynchronization(ctx context.Context) error {
 			)
 			return distributed_locker.NewOptimisticLockingStorageBasedBackend(store), nil
 		}
-
-		stagesStorageCacheFactoryFunc = func(clientID string) (synchronization_server.StagesStorageCacheInterface, error) {
-			return storage.NewKubernetesStagesStorageCache("werf-synchronization", kube.Client, func(projectName string) string {
-				return fmt.Sprintf("werf-%s", clientID)
-			}), nil
-		}
 	} else {
-		stagesStorageCacheBaseDir := cmdData.LocalStagesStorageCacheBaseDir
-		if stagesStorageCacheBaseDir == "" {
-			stagesStorageCacheBaseDir = filepath.Join(werf.GetHomeDir(), "synchronization_server", "stages_storage_cache")
-		}
-
 		distributedLockerBackendFactoryFunc = func(clientID string) (distributed_locker.DistributedLockerBackend, error) {
 			store := optimistic_locking_store.NewInMemoryStore()
 			return distributed_locker.NewOptimisticLockingStorageBasedBackend(store), nil
 		}
-
-		stagesStorageCacheFactoryFunc = func(clientID string) (synchronization_server.StagesStorageCacheInterface, error) {
-			return storage.NewFileStagesStorageCache(filepath.Join(stagesStorageCacheBaseDir, clientID)), nil
-		}
 	}
 
-	return synchronization_server.RunSynchronizationServer(ctx, host, port, distributedLockerBackendFactoryFunc, stagesStorageCacheFactoryFunc)
+	return server.Run(ctx, host, port, distributedLockerBackendFactoryFunc)
 }

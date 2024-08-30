@@ -18,8 +18,6 @@ const (
 	NamelessImageRecordTag          = "__nameless__"
 )
 
-var DefaultHttpSynchronizationServer = "https://synchronization.werf.io"
-
 var ErrBrokenImage = errors.New("broken image")
 
 func IsErrBrokenImage(err error) bool {
