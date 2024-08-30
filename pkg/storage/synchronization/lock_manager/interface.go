@@ -1,4 +1,4 @@
-package storage
+package lock_manager
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"github.com/werf/lockgate"
 )
 
-type LockManager interface {
+type Interface interface {
 	LockStage(ctx context.Context, projectName, digest string) (LockHandle, error)
 	Unlock(ctx context.Context, lockHandle LockHandle) error
 }
@@ -14,8 +14,4 @@ type LockManager interface {
 type LockHandle struct {
 	ProjectName    string              `json:"projectName"`
 	LockgateHandle lockgate.LockHandle `json:"lockgateHandle"`
-}
-
-type LockStagesAndImagesOptions struct {
-	GetOrCreateImagesOnly bool `json:"getOrCreateImagesOnly"`
 }

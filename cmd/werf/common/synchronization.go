@@ -11,11 +11,10 @@ import (
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/werf/kubedog/pkg/kube"
-	"github.com/werf/lockgate/pkg/distributed_locker"
 	"github.com/werf/logboek"
-	"github.com/werf/nelm/pkg/locker_with_retry"
 	"github.com/werf/werf/v2/pkg/storage"
-	"github.com/werf/werf/v2/pkg/storage/synchronization_server"
+	"github.com/werf/werf/v2/pkg/storage/synchronization/lock_manager"
+	"github.com/werf/werf/v2/pkg/storage/synchronization/server"
 	"github.com/werf/werf/v2/pkg/werf"
 	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
@@ -32,7 +31,7 @@ Default:
  - :local if --repo is not specified, or
  - %s if --repo has been specified.
 
-The same address should be specified for all werf processes that work with a single repo. :local address allows execution of werf processes from a single host only`, storage.DefaultHttpSynchronizationServer))
+The same address should be specified for all werf processes that work with a single repo. :local address allows execution of werf processes from a single host only`, server.DefaultAddress))
 }
 
 type SynchronizationType string
@@ -44,9 +43,10 @@ const (
 )
 
 type SynchronizationParams struct {
+	ClientID            string
 	Address             string
 	SynchronizationType SynchronizationType
-	KubeParams          *storage.KubernetesSynchronizationParams
+	KubeParams          *lock_manager.KubernetesParams
 }
 
 func checkSynchronizationKubernetesParamsForWarnings(cmdData *CmdData) {
@@ -114,7 +114,7 @@ func GetSynchronization(
 		res.SynchronizationType = KubernetesSynchronization
 		res.Address = address
 
-		if params, err := storage.ParseKubernetesSynchronization(res.Address); err != nil {
+		if params, err := lock_manager.ParseKubernetesParams(res.Address); err != nil {
 			return nil, fmt.Errorf("unable to parse synchronization address %s: %w", res.Address, err)
 		} else {
 			res.KubeParams = params
@@ -137,24 +137,26 @@ func GetSynchronization(
 	}
 
 	getHttpParamsFunc := func(
-		synchronization string,
+		serverAddress string,
 		stagesStorage storage.StagesStorage,
 	) (*SynchronizationParams, error) {
-		var address string
+		var clientID string
+		var err error
 		if err := logboek.Info().LogProcess(fmt.Sprintf("Getting client id for the http synchronization server")).
 			DoError(func() error {
-				if clientID, err := synchronization_server.GetOrCreateClientID(ctx, projectName, synchronization_server.NewSynchronizationClient(synchronization), stagesStorage); err != nil {
-					return fmt.Errorf("unable to get synchronization client id: %w", err)
-				} else {
-					address = fmt.Sprintf("%s/%s", synchronization, clientID)
-					logboek.Info().LogF("Using clientID %q for http synchronization server at address %s\n", clientID, address)
-					return nil
+				clientID, err = lock_manager.GetHttpClientID(ctx, projectName, serverAddress, stagesStorage)
+				if err != nil {
+					return fmt.Errorf("unable to get client id for the http synchronization server: %w", err)
 				}
+
+				logboek.Info().LogF("Using clientID %q for http synchronization server at address %s\n", clientID, serverAddress)
+
+				return err
 			}); err != nil {
 			return nil, err
 		}
 
-		return &SynchronizationParams{Address: address, SynchronizationType: HttpSynchronization}, nil
+		return &SynchronizationParams{Address: serverAddress, ClientID: clientID, SynchronizationType: HttpSynchronization}, nil
 	}
 
 	switch {
@@ -163,7 +165,7 @@ func GetSynchronization(
 			return &SynchronizationParams{SynchronizationType: LocalSynchronization, Address: storage.LocalStorageAddress}, nil
 		}
 
-		return getHttpParamsFunc(storage.DefaultHttpSynchronizationServer, stagesStorage)
+		return getHttpParamsFunc(server.DefaultAddress, stagesStorage)
 	case *cmdData.Synchronization == storage.LocalStorageAddress:
 		return &SynchronizationParams{Address: *cmdData.Synchronization, SynchronizationType: LocalSynchronization}, nil
 	case strings.HasPrefix(*cmdData.Synchronization, "kubernetes://"):
@@ -179,10 +181,10 @@ func GetSynchronization(
 func GetStorageLockManager(
 	ctx context.Context,
 	synchronization *SynchronizationParams,
-) (storage.LockManager, error) {
+) (lock_manager.Interface, error) {
 	switch synchronization.SynchronizationType {
 	case LocalSynchronization:
-		return storage.NewGenericLockManager(werf.GetHostLocker()), nil
+		return lock_manager.NewGeneric(werf.GetHostLocker()), nil
 	case KubernetesSynchronization:
 		if config, err := kube.GetKubeConfig(kube.KubeConfigOptions{
 			ConfigPath:          synchronization.KubeParams.ConfigPath,
@@ -196,15 +198,13 @@ func GetStorageLockManager(
 		} else if client, err := kubernetes.NewForConfig(config.Config); err != nil {
 			return nil, fmt.Errorf("unable to create synchronization kubernetes client: %w", err)
 		} else {
-			return storage.NewKubernetesLockManager(synchronization.KubeParams.Namespace, client, dynamicClient, func(projectName string) string {
+			return lock_manager.NewKubernetes(synchronization.KubeParams.Namespace, client, dynamicClient, func(projectName string) string {
 				return fmt.Sprintf("werf-%s", projectName)
 			}), nil
 		}
 	case HttpSynchronization:
-		locker := distributed_locker.NewHttpLocker(fmt.Sprintf("%s/locker", synchronization.Address))
-		lockerWithRetry := locker_with_retry.NewLockerWithRetry(ctx, locker, locker_with_retry.LockerWithRetryOptions{MaxAcquireAttempts: 10, MaxReleaseAttempts: 10})
-		return storage.NewGenericLockManager(lockerWithRetry), nil
+		return lock_manager.NewHttp(ctx, synchronization.Address, synchronization.ClientID)
 	default:
-		panic(fmt.Sprintf("unsupported synchronization address %q", synchronization.Address))
+		panic(fmt.Sprintf("unsupported synchronization type %q", synchronization.SynchronizationType))
 	}
 }

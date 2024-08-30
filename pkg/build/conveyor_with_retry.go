@@ -6,8 +6,8 @@ import (
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
-	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/storage/manager"
+	"github.com/werf/werf/v2/pkg/storage/synchronization/lock_manager"
 )
 
 type ConveyorWithRetryWrapper struct {
@@ -18,12 +18,12 @@ type ConveyorWithRetryWrapper struct {
 	SshAuthSock        string
 	ContainerBackend   container_backend.ContainerBackend
 	StorageManager     *manager.StorageManager
-	StorageLockManager storage.LockManager
+	StorageLockManager lock_manager.Interface
 
 	ConveyorOptions ConveyorOptions
 }
 
-func NewConveyorWithRetryWrapper(werfConfig *config.WerfConfig, giterminismManager giterminism_manager.Interface, projectDir, baseTmpDir, sshAuthSock string, containerBackend container_backend.ContainerBackend, storageManager *manager.StorageManager, storageLockManager storage.LockManager, opts ConveyorOptions) *ConveyorWithRetryWrapper {
+func NewConveyorWithRetryWrapper(werfConfig *config.WerfConfig, giterminismManager giterminism_manager.Interface, projectDir, baseTmpDir, sshAuthSock string, containerBackend container_backend.ContainerBackend, storageManager *manager.StorageManager, storageLockManager lock_manager.Interface, opts ConveyorOptions) *ConveyorWithRetryWrapper {
 	return &ConveyorWithRetryWrapper{
 		WerfConfig:         werfConfig,
 		GiterminismManager: giterminismManager,
