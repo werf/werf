@@ -3,7 +3,6 @@ package storage
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"strings"
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
@@ -347,57 +346,12 @@ func (storage *LocalStagesStorage) GetImportMetadataIDs(ctx context.Context, pro
 	return tags, nil
 }
 
-func (storage *LocalStagesStorage) GetClientIDRecords(ctx context.Context, projectName string, opts ...Option) ([]*ClientIDRecord, error) {
-	logboek.Context(ctx).Debug().LogF("-- LocalStagesStorage.GetClientID for project %s\n", projectName)
-
-	imagesOpts := container_backend.ImagesOptions{}
-	imagesOpts.Filters = append(imagesOpts.Filters, util.NewPair("reference", fmt.Sprintf(LocalClientIDRecord_ImageNameFormat, projectName)))
-	images, err := storage.ContainerBackend.Images(ctx, imagesOpts)
-	if err != nil {
-		return nil, fmt.Errorf("unable to list images: %w", err)
-	}
-
-	var res []*ClientIDRecord
-	for _, img := range images {
-		for _, repoTag := range img.RepoTags {
-			_, tag := image.ParseRepositoryAndTag(repoTag)
-
-			tagParts := strings.SplitN(util.Reverse(tag), "-", 2)
-			if len(tagParts) != 2 {
-				continue
-			}
-
-			clientID, timestampMillisecStr := util.Reverse(tagParts[1]), util.Reverse(tagParts[0])
-
-			timestampMillisec, err := strconv.ParseInt(timestampMillisecStr, 10, 64)
-			if err != nil {
-				continue
-			}
-
-			rec := &ClientIDRecord{ClientID: clientID, TimestampMillisec: timestampMillisec}
-			res = append(res, rec)
-
-			logboek.Context(ctx).Debug().LogF("-- LocalStagesStorage.GetClientID got clientID record: %s\n", rec)
-		}
-	}
-	return res, nil
+func (storage *LocalStagesStorage) GetClientIDRecords(_ context.Context, _ string, _ ...Option) ([]*ClientIDRecord, error) {
+	panic("not implemented")
 }
 
-func (storage *LocalStagesStorage) PostClientIDRecord(ctx context.Context, projectName string, rec *ClientIDRecord) error {
-	logboek.Context(ctx).Debug().LogF("-- LocalStagesStorage.PostClientID %s for project %s\n", rec.ClientID, projectName)
-
-	fullImageName := fmt.Sprintf(LocalClientIDRecord_ImageFormat, projectName, rec.ClientID, rec.TimestampMillisec)
-	labels := []string{fmt.Sprintf("%s=%s", image.WerfLabel, projectName)}
-
-	logboek.Context(ctx).Debug().LogF("-- LocalStagesStorage.PostClientID full image name: %s\n", fullImageName)
-
-	if err := storage.ContainerBackend.PostManifest(ctx, fullImageName, container_backend.PostManifestOpts{Labels: labels}); err != nil {
-		return fmt.Errorf("unable to post %q: %w", fullImageName, err)
-	}
-
-	logboek.Context(ctx).Info().LogF("Posted new clientID %q for project %s\n", rec.ClientID, projectName)
-
-	return nil
+func (storage *LocalStagesStorage) PostClientIDRecord(_ context.Context, _ string, _ *ClientIDRecord) error {
+	panic("not implemented")
 }
 
 func (storage *LocalStagesStorage) PostMultiplatformImage(ctx context.Context, projectName, tag string, allPlatformsImages []*image.Info) error {
