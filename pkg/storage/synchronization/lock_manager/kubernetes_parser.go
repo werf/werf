@@ -1,13 +1,11 @@
-package storage
+package lock_manager
 
 import (
-	"errors"
+	"fmt"
 	"strings"
 )
 
-var ErrBadKubernetesSynchronizationAddress = errors.New("bad kubernetes synchronization address")
-
-type KubernetesSynchronizationParams struct {
+type KubernetesParams struct {
 	ConfigContext       string
 	ConfigPath          string
 	ConfigDataBase64    string
@@ -15,13 +13,13 @@ type KubernetesSynchronizationParams struct {
 	Namespace           string
 }
 
-func ParseKubernetesSynchronization(address string) (*KubernetesSynchronizationParams, error) {
+func ParseKubernetesParams(address string) (*KubernetesParams, error) {
 	if !strings.HasPrefix(address, "kubernetes://") {
-		return nil, ErrBadKubernetesSynchronizationAddress
+		return nil, fmt.Errorf("bad address %q: expected kubernetes:// scheme", address)
 	}
 	addressWithoutScheme := strings.TrimPrefix(address, "kubernetes://")
 
-	res := &KubernetesSynchronizationParams{}
+	res := &KubernetesParams{}
 
 	namespaceWithContextAndConfigParts := strings.SplitN(addressWithoutScheme, "@", 2)
 	var namespaceWithContext, config string

@@ -20,6 +20,7 @@ import (
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/storage/lrumeta"
+	"github.com/werf/werf/v2/pkg/storage/synchronization/lock_manager"
 	"github.com/werf/werf/v2/pkg/util/parallel"
 	"github.com/werf/werf/v2/pkg/werf"
 )
@@ -116,7 +117,7 @@ Retry:
 	return err
 }
 
-func NewStorageManager(projectName string, stagesStorage storage.PrimaryStagesStorage, finalStagesStorage storage.StagesStorage, secondaryStagesStorageList, cacheStagesStorageList []storage.StagesStorage, storageLockManager storage.LockManager) *StorageManager {
+func NewStorageManager(projectName string, stagesStorage storage.PrimaryStagesStorage, finalStagesStorage storage.StagesStorage, secondaryStagesStorageList, cacheStagesStorageList []storage.StagesStorage, storageLockManager lock_manager.Interface) *StorageManager {
 	return &StorageManager{
 		ProjectName:        projectName,
 		StorageLockManager: storageLockManager,
@@ -171,7 +172,7 @@ type StorageManager struct {
 
 	ProjectName string
 
-	StorageLockManager storage.LockManager
+	StorageLockManager lock_manager.Interface
 
 	StagesStorage              storage.PrimaryStagesStorage
 	FinalStagesStorage         storage.StagesStorage

@@ -1,34 +1,42 @@
-package storage
+package lock_manager
 
 import (
 	"testing"
+
+	"github.com/werf/werf/v2/pkg/storage"
 )
 
-func TestParseKubernetesSynchronization(t *testing.T) {
-	if params, err := ParseKubernetesSynchronization("kubertenes://allo"); err != ErrBadKubernetesSynchronizationAddress {
-		t.Errorf("unexpected parse response: params=%v err=%v", params, err)
+func TestParseKubernetesParams(t *testing.T) {
+	// Check bad scheme.
+	{
+		params, err := ParseKubernetesParams("kubertenes://allo")
+		if err == nil {
+			t.Errorf("expected error, got %#v", params)
+		} else if err.Error() != `bad address "kubertenes://allo": expected kubernetes:// scheme` {
+			t.Errorf("unexpected error: %v", err)
+		}
 	}
 
-	checkKubernetesSynchronization(t, DefaultKubernetesStorageAddress, &KubernetesSynchronizationParams{
+	checkParseKubernetesParams(t, storage.DefaultKubernetesStorageAddress, &KubernetesParams{
 		ConfigContext: "",
 		ConfigPath:    "",
 		Namespace:     "werf-synchronization",
 	})
 
-	checkKubernetesSynchronization(t, "kubernetes://mynamespace:mycontext@/tmp/kubeconfig", &KubernetesSynchronizationParams{
+	checkParseKubernetesParams(t, "kubernetes://mynamespace:mycontext@/tmp/kubeconfig", &KubernetesParams{
 		Namespace:     "mynamespace",
 		ConfigContext: "mycontext",
 		ConfigPath:    "/tmp/kubeconfig",
 	})
 
-	checkKubernetesSynchronization(t, "kubernetes://werf-synchronization-2@base64:YXBpVmVyc2lvbjogdjEKY2x1c3RlcnM6Ci0gY2x1c3RlcjoKICAgIGNlcnRpZmljYXRlLWF1dGhvcml0eTogL2hvbWUvbXlob21lLy5taW5pa3ViZS9jYS5jcnQKICAgIHNlcnZlcjogaHR0cHM6Ly8xNzIuMTcuMC40Ojg0NDMKICBuYW1lOiBtaW5pa3ViZQpjb250ZXh0czoKLSBjb250ZXh0OgogICAgY2x1c3RlcjogbWluaWt1YmUKICAgIHVzZXI6IG1pbmlrdWJlCiAgbmFtZTogbWluaWt1YmUKY3VycmVudC1jb250ZXh0OiAiIgpraW5kOiBDb25maWcKcHJlZmVyZW5jZXM6IHt9CnVzZXJzOgotIG5hbWU6IG1pbmlrdWJlCiAgdXNlcjoKICAgIGNsaWVudC1jZXJ0aWZpY2F0ZTogL2hvbWUvbXlob21lLy5taW5pa3ViZS9wcm9maWxlcy9taW5pa3ViZS9jbGllbnQuY3J0CiAgICBjbGllbnQta2V5OiAvaG9tZS9teWhvbWUvLm1pbmlrdWJlL3Byb2ZpbGVzL21pbmlrdWJlL2NsaWVudC5rZXkK", &KubernetesSynchronizationParams{
+	checkParseKubernetesParams(t, "kubernetes://werf-synchronization-2@base64:YXBpVmVyc2lvbjogdjEKY2x1c3RlcnM6Ci0gY2x1c3RlcjoKICAgIGNlcnRpZmljYXRlLWF1dGhvcml0eTogL2hvbWUvbXlob21lLy5taW5pa3ViZS9jYS5jcnQKICAgIHNlcnZlcjogaHR0cHM6Ly8xNzIuMTcuMC40Ojg0NDMKICBuYW1lOiBtaW5pa3ViZQpjb250ZXh0czoKLSBjb250ZXh0OgogICAgY2x1c3RlcjogbWluaWt1YmUKICAgIHVzZXI6IG1pbmlrdWJlCiAgbmFtZTogbWluaWt1YmUKY3VycmVudC1jb250ZXh0OiAiIgpraW5kOiBDb25maWcKcHJlZmVyZW5jZXM6IHt9CnVzZXJzOgotIG5hbWU6IG1pbmlrdWJlCiAgdXNlcjoKICAgIGNsaWVudC1jZXJ0aWZpY2F0ZTogL2hvbWUvbXlob21lLy5taW5pa3ViZS9wcm9maWxlcy9taW5pa3ViZS9jbGllbnQuY3J0CiAgICBjbGllbnQta2V5OiAvaG9tZS9teWhvbWUvLm1pbmlrdWJlL3Byb2ZpbGVzL21pbmlrdWJlL2NsaWVudC5rZXkK", &KubernetesParams{
 		Namespace:        "werf-synchronization-2",
 		ConfigDataBase64: "YXBpVmVyc2lvbjogdjEKY2x1c3RlcnM6Ci0gY2x1c3RlcjoKICAgIGNlcnRpZmljYXRlLWF1dGhvcml0eTogL2hvbWUvbXlob21lLy5taW5pa3ViZS9jYS5jcnQKICAgIHNlcnZlcjogaHR0cHM6Ly8xNzIuMTcuMC40Ojg0NDMKICBuYW1lOiBtaW5pa3ViZQpjb250ZXh0czoKLSBjb250ZXh0OgogICAgY2x1c3RlcjogbWluaWt1YmUKICAgIHVzZXI6IG1pbmlrdWJlCiAgbmFtZTogbWluaWt1YmUKY3VycmVudC1jb250ZXh0OiAiIgpraW5kOiBDb25maWcKcHJlZmVyZW5jZXM6IHt9CnVzZXJzOgotIG5hbWU6IG1pbmlrdWJlCiAgdXNlcjoKICAgIGNsaWVudC1jZXJ0aWZpY2F0ZTogL2hvbWUvbXlob21lLy5taW5pa3ViZS9wcm9maWxlcy9taW5pa3ViZS9jbGllbnQuY3J0CiAgICBjbGllbnQta2V5OiAvaG9tZS9teWhvbWUvLm1pbmlrdWJlL3Byb2ZpbGVzL21pbmlrdWJlL2NsaWVudC5rZXkK",
 	})
 }
 
-func checkKubernetesSynchronization(t *testing.T, address string, expected *KubernetesSynchronizationParams) {
-	params, err := ParseKubernetesSynchronization(address)
+func checkParseKubernetesParams(t *testing.T, address string, expected *KubernetesParams) {
+	params, err := ParseKubernetesParams(address)
 	if err != nil {
 		t.Error(err)
 	}

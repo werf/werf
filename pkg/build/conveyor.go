@@ -25,6 +25,7 @@ import (
 	imagePkg "github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/storage/manager"
+	"github.com/werf/werf/v2/pkg/storage/synchronization/lock_manager"
 	"github.com/werf/werf/v2/pkg/util"
 	"github.com/werf/werf/v2/pkg/util/parallel"
 )
@@ -53,7 +54,7 @@ type Conveyor struct {
 
 	ContainerBackend container_backend.ContainerBackend
 
-	StorageLockManager storage.LockManager
+	StorageLockManager lock_manager.Interface
 	StorageManager     manager.StorageManagerInterface
 
 	onTerminateFuncs []func() error
@@ -76,7 +77,7 @@ type ConveyorOptions struct {
 	ImagesToProcess
 }
 
-func NewConveyor(werfConfig *config.WerfConfig, giterminismManager giterminism_manager.Interface, projectDir, baseTmpDir, sshAuthSock string, containerBackend container_backend.ContainerBackend, storageManager manager.StorageManagerInterface, storageLockManager storage.LockManager, opts ConveyorOptions) *Conveyor {
+func NewConveyor(werfConfig *config.WerfConfig, giterminismManager giterminism_manager.Interface, projectDir, baseTmpDir, sshAuthSock string, containerBackend container_backend.ContainerBackend, storageManager manager.StorageManagerInterface, storageLockManager lock_manager.Interface, opts ConveyorOptions) *Conveyor {
 	c := &Conveyor{
 		werfConfig: werfConfig,
 
