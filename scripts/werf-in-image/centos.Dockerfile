@@ -1,4 +1,4 @@
-FROM quay.io/centos/centos:stream9
+FROM quay.io/centos/centos:stream9@sha256:1c9c3e22244b2913bf8c44ad9b316ac4f3430b429796925b92d1c412ba6b28b5
 
 RUN dnf -y install fuse-overlayfs git git-lfs gnupg nano jq bash make ca-certificates openssh-clients telnet iputils iproute dnsutils && \
     dnf clean all && rm -rf /var/cache /var/log/dnf* /var/log/yum.*

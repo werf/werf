@@ -1,4 +1,4 @@
-FROM fedora:38
+FROM fedora:38@sha256:b9ff6f23cceb5bde20bb1f79b492b98d71ef7a7ae518ca1b15b26661a11e6a94
 
 RUN dnf -y install fuse-overlayfs git git-lfs gnupg nano jq bash make ca-certificates openssh-clients telnet iputils iproute dnsutils && \
     dnf clean all && rm -rf /var/cache /var/log/dnf* /var/log/yum.*
