@@ -95,7 +95,8 @@ werf converge --repo registry.mydomain.com/web --env production
             Also, can be specified with $WERF_CACHE_REPO_* (e.g. $WERF_CACHE_REPO_1=...,            
             $WERF_CACHE_REPO_2=...)
       --config=''
-            Use custom configuration file (default $WERF_CONFIG or werf.yaml in working directory)
+            Use custom configuration file (default $WERF_CONFIG or werf.yaml in the project         
+            directory)
       --config-templates-dir=''
             Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf   
             in working directory)

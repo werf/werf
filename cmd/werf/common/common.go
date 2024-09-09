@@ -79,7 +79,7 @@ func SetupDir(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupConfigPath(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.ConfigPath = new(string)
-	cmd.Flags().StringVarP(cmdData.ConfigPath, "config", "", os.Getenv("WERF_CONFIG"), `Use custom configuration file (default $WERF_CONFIG or werf.yaml in working directory)`)
+	cmd.Flags().StringVarP(cmdData.ConfigPath, "config", "", os.Getenv("WERF_CONFIG"), `Use custom configuration file (default $WERF_CONFIG or werf.yaml in the project directory)`)
 }
 
 func SetupGiterminismConfigPath(cmdData *CmdData, cmd *cobra.Command) {
