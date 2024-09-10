@@ -32,7 +32,7 @@ groups:
       - name: ea
         version: 1.2.328
       - name: stable
-        version: 1.2.326
+        version: 1.2.328
       - name: rock-solid
         version: 1.2.326
   - name: "2"
@@ -46,4 +46,4 @@ groups:
       - name: stable
         version: 2.10.5
       - name: rock-solid
-        version: 2.9.3
+        version: 2.10.5
