@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.10.6](https://www.github.com/werf/werf/compare/v2.10.5...v2.10.6) (2024-09-17)
+
+
+### Bug Fixes
+
+* **ci-env, gitlab:** fix annotation with pipeline url ([bb86d5e](https://www.github.com/werf/werf/commit/bb86d5efdb808729d5473d00a97ce392576a3a06))
+
 ### [2.10.5](https://www.github.com/werf/werf/compare/v2.10.4...v2.10.5) (2024-08-28)
 
 
