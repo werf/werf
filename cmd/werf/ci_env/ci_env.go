@@ -273,12 +273,12 @@ func generateGitlabEnvs(ctx context.Context, w io.Writer, dockerConfig string) e
 	}
 	writeEnv(w, "WERF_ADD_ANNOTATION_GITLAB_CI_PIPELINE_URL", gitlabCIPipelineUrl, true)
 
-	var gitlabCiJobUrl string
-	ciJobIdEnv := os.Getenv("CI_JOB_ID")
-	if ciProjectUrlEnv != "" && os.Getenv("CI_JOB_ID") != "" {
-		gitlabCiJobUrl = fmt.Sprintf("gitlab.ci.werf.io/job-url=%s/-/jobs/%s", ciProjectUrlEnv, ciJobIdEnv)
+	var gitlabCIJobUrl string
+	ciJobUrlEnv := os.Getenv("CI_JOB_URL")
+	if ciJobUrlEnv != "" {
+		gitlabCIJobUrl = fmt.Sprintf("gitlab.ci.werf.io/job-url=%s", ciJobUrlEnv)
 	}
-	writeEnv(w, "WERF_ADD_ANNOTATION_GITLAB_CI_JOB_URL", gitlabCiJobUrl, true)
+	writeEnv(w, "WERF_ADD_ANNOTATION_GITLAB_CI_JOB_URL", gitlabCIJobUrl, true)
 
 	writeHeader(w, "OTHER", true)
 
