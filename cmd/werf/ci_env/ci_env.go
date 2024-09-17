@@ -267,9 +267,9 @@ func generateGitlabEnvs(ctx context.Context, w io.Writer, dockerConfig string) e
 	writeEnv(w, "WERF_ADD_ANNOTATION_CI_GIT_TAG", ciGitTag, true)
 
 	var gitlabCIPipelineUrl string
-	ciPipelineIdEnv := os.Getenv("CI_PIPELINE_ID")
-	if ciProjectUrlEnv != "" && ciPipelineIdEnv != "" {
-		gitlabCIPipelineUrl = fmt.Sprintf("gitlab.ci.werf.io/pipeline-url=%s/pipelines/%s", ciProjectUrlEnv, ciPipelineIdEnv)
+	ciPipelineUrlEnv := os.Getenv("CI_PIPELINE_URL")
+	if ciPipelineUrlEnv != "" {
+		gitlabCIPipelineUrl = fmt.Sprintf("gitlab.ci.werf.io/pipeline-url=%s", ciPipelineUrlEnv)
 	}
 	writeEnv(w, "WERF_ADD_ANNOTATION_GITLAB_CI_PIPELINE_URL", gitlabCIPipelineUrl, true)
 
