@@ -157,7 +157,7 @@ func GenerateImageEnv(werfImageName, imageName string) string {
 		imageEnvName = "WERF_DOCKER_IMAGE_NAME"
 	} else {
 		werfImageName := strings.ToUpper(werfImageName)
-		for _, l := range []string{"/", "-"} {
+		for _, l := range []string{"/", "-", "."} {
 			werfImageName = strings.ReplaceAll(werfImageName, l, "_")
 		}
 

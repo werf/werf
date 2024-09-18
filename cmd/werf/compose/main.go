@@ -59,7 +59,7 @@ func (d *composeCmdData) GetOrExtractImagesToProcess(werfConfig *config.WerfConf
 
 	// Replace all special characters in image name with empty string to find the same image name in werf config.
 	replaceAllFunc := func(s string) string {
-		for _, l := range []string{"_", "-", "/"} {
+		for _, l := range []string{"_", "-", "/", "."} {
 			s = strings.ReplaceAll(s, l, "")
 		}
 		return s
