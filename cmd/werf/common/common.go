@@ -279,6 +279,12 @@ func SetupRollbackGraphPath(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringVarP(cmdData.RollbackGraphPath, "rollback-graph-path", "", os.Getenv("WERF_ROLLBACK_GRAPH_PATH"), "Save rollback graph path to the specified file (by default $WERF_ROLLBACK_GRAPH_PATH). Extension must be .dot or not specified. If extension not specified, then .dot is used")
 }
 
+func SetupRenderSubchartNotes(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.RenderSubchartNotes = new(bool)
+
+	cmd.Flags().BoolVarP(cmdData.RenderSubchartNotes, "render-subchart-notes", "", util.GetBoolEnvironmentDefaultFalse("WERF_RENDER_SUBCHART_NOTES"), "If set, render subchart notes along with the parent (by default $WERF_RENDER_SUBCHART_NOTES or false)")
+}
+
 func GetDeployGraphPath(cmdData *CmdData) string {
 	if strings.TrimSpace(*cmdData.DeployGraphPath) == "" {
 		return ""

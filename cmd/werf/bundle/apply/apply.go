@@ -134,6 +134,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupDeployGraphPath(&commonCmdData, cmd)
 	common.SetupRollbackGraphPath(&commonCmdData, cmd)
 
+	common.SetupRenderSubchartNotes(&commonCmdData, cmd)
+
 	defaultTag := os.Getenv("WERF_TAG")
 	if defaultTag == "" {
 		defaultTag = "latest"
@@ -388,6 +390,7 @@ func runApply(ctx context.Context) error {
 				SetValues:       common.GetSet(&commonCmdData),
 				FileValues:      common.GetSetFile(&commonCmdData),
 				ValuesFiles:     common.GetValues(&commonCmdData),
+				SubNotes:        *commonCmdData.RenderSubchartNotes,
 				Mapper:          clientFactory.Mapper(),
 				DiscoveryClient: clientFactory.Discovery(),
 			},

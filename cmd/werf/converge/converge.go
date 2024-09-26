@@ -182,6 +182,8 @@ werf converge --repo registry.mydomain.com/web --env production`,
 	common.SetupDeployGraphPath(&commonCmdData, cmd)
 	common.SetupRollbackGraphPath(&commonCmdData, cmd)
 
+	common.SetupRenderSubchartNotes(&commonCmdData, cmd)
+
 	defaultTimeout, err := util.GetIntEnvVar("WERF_TIMEOUT")
 	if err != nil || defaultTimeout == nil {
 		defaultTimeout = new(int64)
@@ -487,6 +489,7 @@ func run(
 		ValuesFilesPaths:           common.GetValues(&commonCmdData),
 		ValuesSets:                 common.GetSet(&commonCmdData),
 		ValuesStringSets:           common.GetSetString(&commonCmdData),
+		SubNotes:                   *commonCmdData.RenderSubchartNotes,
 		LegacyPreDeployHook: func(
 			ctx context.Context,
 			releaseNamespace string,

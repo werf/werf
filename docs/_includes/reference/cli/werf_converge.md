@@ -263,6 +263,9 @@ werf converge --repo registry.mydomain.com/web --env production
             deploy.helmRelease custom template from werf.yaml or $WERF_RELEASE)
       --releases-history-max=5
             Max releases to keep in release storage ($WERF_RELEASES_HISTORY_MAX or 5 by default)
+      --render-subchart-notes=false
+            If set, render subchart notes along with the parent (by default                         
+            $WERF_RENDER_SUBCHART_NOTES or false)
       --repo=''
             Container registry storage address (default $WERF_REPO)
       --repo-container-registry=''
