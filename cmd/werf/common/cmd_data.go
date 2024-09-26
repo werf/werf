@@ -107,6 +107,8 @@ type CmdData struct {
 	DeployGraphPath   *string
 	RollbackGraphPath *string
 
+	RenderSubchartNotes *bool
+
 	VirtualMerge *bool
 
 	ScanContextNamespaceOnly *bool
