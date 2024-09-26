@@ -1,5 +1,13 @@
 # Changelog
 
+### [2.10.7](https://www.github.com/werf/werf/compare/v2.10.6...v2.10.7) (2024-09-26)
+
+
+### Bug Fixes
+
+* **compose:** support image names with dot ([fbd5b5a](https://www.github.com/werf/werf/commit/fbd5b5a464bd8ca79d1bc67db3541ddb20e52608))
+* disable rendering of subchart notes by default ([38f39c6](https://www.github.com/werf/werf/commit/38f39c6aae5f87768385bbd1537ce17b2cf82804))
+
 ### [2.10.6](https://www.github.com/werf/werf/compare/v2.10.5...v2.10.6) (2024-09-17)
 
 
