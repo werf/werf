@@ -210,7 +210,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		return fmt.Errorf("unable to load werf config: %w", err)
 	}
 
-	imagesToProcess, err := config.NewImagesToProcess(werfConfig, imageNameListFromArgs, true, false)
+	imagesToProcess, err := config.NewImagesToProcess(werfConfig, imageNameListFromArgs, false, false)
 	if err != nil {
 		return err
 	}

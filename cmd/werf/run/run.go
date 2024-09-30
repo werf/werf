@@ -358,10 +358,11 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 
 	imageName := cmdData.ImageName
 	if imageName == "" && len(werfConfig.Images(true)) == 1 {
+		// The only final image by default.
 		imageName = werfConfig.Images(true)[0].GetName()
 	}
 
-	imagesToProcess, err := config.NewImagesToProcess(werfConfig, []string{imageName}, true, false)
+	imagesToProcess, err := config.NewImagesToProcess(werfConfig, []string{imageName}, false, false)
 	if err != nil {
 		return err
 	}
