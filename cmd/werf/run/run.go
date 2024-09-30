@@ -16,6 +16,7 @@ import (
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/build"
 	"github.com/werf/werf/v2/pkg/buildah"
+	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/git_repo"
@@ -360,8 +361,8 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		imageName = werfConfig.Images(true)[0].GetName()
 	}
 
-	imagesToProcess := common.GetImagesToProcess([]string{imageName}, false)
-	if err := imagesToProcess.CheckImagesExistence(werfConfig); err != nil {
+	imagesToProcess, err := config.NewImagesToProcess(werfConfig, []string{imageName}, true, false)
+	if err != nil {
 		return err
 	}
 

@@ -35,27 +35,34 @@ func RenderWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfCo
 	}
 
 	if len(imageNameList) == 0 {
-		_, werfConfigRenderContent, err := renderWerfConfigYaml(ctx, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, giterminismManager, opts.Env)
-		if err != nil {
-			return err
-		}
-
-		fmt.Print(werfConfigRenderContent)
-		return nil
-	} else {
-		images, err := werfConfig.GetSpecificImages(imageNameList, false)
-		if err != nil {
-			return fmt.Errorf("unable to get specific images: %w", err)
-		}
-
-		var docs []string
-		for _, image := range images {
-			docs = append(docs, string(image.rawDoc().Content))
-		}
-
-		fmt.Print(strings.Join(docs, "---\n"))
-		return nil
+		return renderWerfConfig(ctx, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, giterminismManager, opts)
 	}
+	return renderSpecificImages(werfConfig, imageNameList)
+}
+
+func renderWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath string, giterminismManager giterminism_manager.Interface, opts WerfConfigOptions) error {
+	_, werfConfigRenderContent, err := renderWerfConfigYaml(ctx, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, giterminismManager, opts.Env)
+	if err != nil {
+		return err
+	}
+
+	fmt.Print(werfConfigRenderContent)
+	return nil
+}
+
+func renderSpecificImages(werfConfig *WerfConfig, imageNameList []string) error {
+	imagesToProcess, err := NewImagesToProcess(werfConfig, imageNameList, false, false)
+	if err != nil {
+		return err
+	}
+
+	var docs []string
+	for _, imageConfig := range werfConfig.getSpecificImages(imagesToProcess) {
+		docs = append(docs, string(imageConfig.rawDoc().Content))
+	}
+
+	fmt.Print(strings.Join(docs, "---\n"))
+	return nil
 }
 
 func GetWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath string, giterminismManager giterminism_manager.Interface, opts WerfConfigOptions) (string, *WerfConfig, error) {

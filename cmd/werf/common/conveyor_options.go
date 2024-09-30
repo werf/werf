@@ -20,7 +20,7 @@ import (
 	"github.com/werf/werf/v2/pkg/storage"
 )
 
-func GetConveyorOptions(ctx context.Context, commonCmdData *CmdData, imagesToProcess build.ImagesToProcess) (build.ConveyorOptions, error) {
+func GetConveyorOptions(ctx context.Context, commonCmdData *CmdData, imagesToProcess config.ImagesToProcess) (build.ConveyorOptions, error) {
 	conveyorOptions := build.ConveyorOptions{
 		LocalGitRepoVirtualMergeOptions: stage.VirtualMergeOptions{
 			VirtualMerge: *commonCmdData.VirtualMerge,
@@ -52,7 +52,7 @@ func GetDeferredBuildLog(ctx context.Context, commonCmdData *CmdData) bool {
 	return requireBuiltImage || !isVerbose
 }
 
-func GetConveyorOptionsWithParallel(ctx context.Context, commonCmdData *CmdData, imagesToProcess build.ImagesToProcess, buildStagesOptions build.BuildOptions) (build.ConveyorOptions, error) {
+func GetConveyorOptionsWithParallel(ctx context.Context, commonCmdData *CmdData, imagesToProcess config.ImagesToProcess, buildStagesOptions build.BuildOptions) (build.ConveyorOptions, error) {
 	conveyorOptions, err := GetConveyorOptions(ctx, commonCmdData, imagesToProcess)
 	if err != nil {
 		return conveyorOptions, err

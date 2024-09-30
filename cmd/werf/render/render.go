@@ -19,6 +19,7 @@ import (
 	"github.com/werf/nelm/pkg/secrets_manager"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/build"
+	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/config/deploy_params"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
@@ -74,7 +75,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 			common.LogVersion()
 
-			return common.LogRunningTime(func() error { return runRender(ctx, common.GetImagesToProcess(args, *commonCmdData.WithoutImages)) })
+			return common.LogRunningTime(func() error { return runRender(ctx, args) })
 		},
 	})
 
@@ -163,7 +164,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	return cmd
 }
 
-func runRender(ctx context.Context, imagesToProcess build.ImagesToProcess) error {
+func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %w", err)
 	}
@@ -221,7 +222,9 @@ func runRender(ctx context.Context, imagesToProcess build.ImagesToProcess) error
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %w", err)
 	}
-	if err := imagesToProcess.CheckImagesExistence(werfConfig); err != nil {
+
+	imagesToProcess, err := config.NewImagesToProcess(werfConfig, imageNameListFromArgs, true, *commonCmdData.WithoutImages)
+	if err != nil {
 		return err
 	}
 
@@ -233,7 +236,7 @@ func runRender(ctx context.Context, imagesToProcess build.ImagesToProcess) error
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
-	imageNameList := common.GetImageNameList(imagesToProcess, werfConfig)
+	imageNameList := imagesToProcess.ImageNameList
 	buildOptions, err := common.GetBuildOptions(ctx, &commonCmdData, werfConfig, imageNameList)
 	if err != nil {
 		return err
@@ -246,7 +249,7 @@ func runRender(ctx context.Context, imagesToProcess build.ImagesToProcess) error
 	var isStub bool
 	var stubImageNameList []string
 
-	if imagesToProcess.HaveImagesToProcess(werfConfig) {
+	if !imagesToProcess.WithoutImages {
 		addr, err := commonCmdData.Repo.GetAddress()
 		if err != nil {
 			return err
