@@ -73,8 +73,7 @@ type ConveyorOptions struct {
 	LocalGitRepoVirtualMergeOptions stage.VirtualMergeOptions
 	TargetPlatforms                 []string
 	DeferBuildLog                   bool
-
-	ImagesToProcess
+	ImagesToProcess                 config.ImagesToProcess
 }
 
 func NewConveyor(werfConfig *config.WerfConfig, giterminismManager giterminism_manager.Interface, projectDir, baseTmpDir, sshAuthSock string, containerBackend container_backend.ContainerBackend, storageManager manager.StorageManagerInterface, storageLockManager lock_manager.Interface, opts ConveyorOptions) *Conveyor {
@@ -117,8 +116,7 @@ func NewConveyor(werfConfig *config.WerfConfig, giterminismManager giterminism_m
 			ContainerWerfDir:   c.containerWerfDir,
 			TmpDir:             c.tmpDir,
 		},
-		ImageNameList: opts.ImageNameList,
-		WithoutImages: opts.WithoutImages,
+		ImagesToProcess: opts.ImagesToProcess,
 	})
 
 	return c

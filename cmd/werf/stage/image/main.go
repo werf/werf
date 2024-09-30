@@ -10,6 +10,7 @@ import (
 	"github.com/werf/logboek/pkg/level"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/build"
+	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
 	"github.com/werf/werf/v2/pkg/image"
@@ -173,8 +174,8 @@ func run(ctx context.Context, imageName string) error {
 		imageName = werfConfig.Images(true)[0].GetName()
 	}
 
-	imagesToProcess := common.GetImagesToProcess([]string{imageName}, false)
-	if err := imagesToProcess.CheckImagesExistence(werfConfig); err != nil {
+	imagesToProcess, err := config.NewImagesToProcess(werfConfig, []string{imageName}, true, false)
+	if err != nil {
 		return err
 	}
 
