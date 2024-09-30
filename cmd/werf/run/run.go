@@ -357,11 +357,11 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
 	imageName := cmdData.ImageName
-	if imageName == "" && len(werfConfig.Images(true)) == 1 {
-		imageName = werfConfig.Images(true)[0].GetName()
+	if imageName == "" && len(werfConfig.Images(false)) == 1 {
+		imageName = werfConfig.Images(false)[0].GetName()
 	}
 
-	imagesToProcess, err := config.NewImagesToProcess(werfConfig, []string{imageName}, true, false)
+	imagesToProcess, err := config.NewImagesToProcess(werfConfig, []string{imageName}, false, false)
 	if err != nil {
 		return err
 	}
