@@ -34,8 +34,7 @@ type ImagesTree struct {
 type ImagesTreeOptions struct {
 	CommonImageOptions
 
-	ImageNameList []string
-	WithoutImages bool
+	ImagesToProcess config.ImagesToProcess
 }
 
 func NewImagesTree(werfConfig *config.WerfConfig, opts ImagesTreeOptions) *ImagesTree {
@@ -47,13 +46,13 @@ func NewImagesTree(werfConfig *config.WerfConfig, opts ImagesTreeOptions) *Image
 }
 
 func (tree *ImagesTree) Calculate(ctx context.Context) error {
-	if tree.WithoutImages {
-		return nil
-	}
-
-	imageConfigSets, err := tree.werfConfig.GroupImagesByIndependentSets(tree.ImageNameList)
+	imageConfigSets, err := tree.werfConfig.GroupImagesByIndependentSets(tree.ImagesToProcess)
 	if err != nil {
 		return fmt.Errorf("unable to group werf config images by independent sets: %w", err)
+	}
+
+	if len(imageConfigSets) == 0 {
+		return nil
 	}
 
 	forcedTargetPlatforms := tree.Conveyor.GetForcedTargetPlatforms()
@@ -127,10 +126,6 @@ func (tree *ImagesTree) Calculate(ctx context.Context) error {
 	tree.imagesSets = builder.GetImagesSets()
 	tree.images = builder.GetImages()
 
-	return nil
-}
-
-func (tree *ImagesTree) GetImage(name string) *Image {
 	return nil
 }
 

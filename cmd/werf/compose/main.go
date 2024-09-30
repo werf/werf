@@ -49,14 +49,10 @@ type composeCmdData struct {
 	ComposeCommandOptions []string
 	ComposeCommandArgs    []string
 
-	imagesToProcess build.ImagesToProcess
+	ImageNameListFromArgs []string
 }
 
-func (d *composeCmdData) GetOrExtractImagesToProcess(werfConfig *config.WerfConfig) (build.ImagesToProcess, error) {
-	if len(d.imagesToProcess.ImageNameList) != 0 {
-		return d.imagesToProcess, nil
-	}
-
+func (d *composeCmdData) extractImageNameListFromComposeConfig(werfConfig *config.WerfConfig) ([]string, error) {
 	// Replace all special characters in image name with empty string to find the same image name in werf config.
 	replaceAllFunc := func(s string) string {
 		for _, l := range []string{"_", "-", "/", "."} {
@@ -67,7 +63,7 @@ func (d *composeCmdData) GetOrExtractImagesToProcess(werfConfig *config.WerfConf
 
 	extractedImageNameList, err := extractImageNamesFromComposeConfig(d.getComposeFileCustomPathList())
 	if err != nil {
-		return build.ImagesToProcess{}, fmt.Errorf("unable to extract image names from docker-compose file: %w", err)
+		return nil, fmt.Errorf("unable to extract image names from docker-compose file: %w", err)
 	}
 
 	configImageNameList := werfConfig.GetImageNameList(false)
@@ -87,7 +83,7 @@ func (d *composeCmdData) GetOrExtractImagesToProcess(werfConfig *config.WerfConf
 		}
 	}
 
-	return build.NewImagesToProcess(imageNameList, len(imageNameList) == 0), nil
+	return imageNameList, nil
 }
 
 func (d *composeCmdData) getComposeFileCustomPathList() []string {
@@ -355,10 +351,10 @@ func processArgs(cmdData *composeCmdData, cmd *cobra.Command, args []string) {
 	doubleDashExist := cmd.ArgsLenAtDash() != -1
 
 	if doubleDashExist {
-		cmdData.imagesToProcess = build.NewImagesToProcess(args[:doubleDashInd], false)
+		cmdData.ImageNameListFromArgs = args[:doubleDashInd]
 		cmdData.ComposeCommandArgs = args[doubleDashInd:]
 	} else if len(args) != 0 {
-		cmdData.imagesToProcess = build.NewImagesToProcess(args, false)
+		cmdData.ImageNameListFromArgs = args
 	}
 }
 
@@ -466,19 +462,26 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		return fmt.Errorf("unable to load werf config: %w", err)
 	}
 
-	imagesToProcess, err := cmdData.GetOrExtractImagesToProcess(werfConfig)
-	if err != nil {
-		return err
+	var imageNameList []string
+	if len(cmdData.ImageNameListFromArgs) != 0 {
+		imageNameList = cmdData.ImageNameListFromArgs
+	} else {
+		imageNameListFromComposeConfig, err := cmdData.extractImageNameListFromComposeConfig(werfConfig)
+		if err != nil {
+			return err
+		}
+		imageNameList = imageNameListFromComposeConfig
 	}
 
-	if err := imagesToProcess.CheckImagesExistence(werfConfig); err != nil {
+	imagesToProcess, err := config.NewImagesToProcess(werfConfig, imageNameList, true, *commonCmdData.WithoutImages)
+	if err != nil {
 		return err
 	}
 
 	shouldBeBuilt := !*commonCmdData.StubTags
 
 	var envArray []string
-	if imagesToProcess.HaveImagesToProcess(werfConfig) && shouldBeBuilt {
+	if !imagesToProcess.WithoutImages && shouldBeBuilt {
 		projectName := werfConfig.Meta.Project
 
 		projectTmpDir, err := tmp_manager.CreateProjectDir(ctx)

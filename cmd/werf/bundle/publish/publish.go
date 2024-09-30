@@ -64,7 +64,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 			common.LogVersion()
 
-			return common.LogRunningTime(func() error { return runPublish(ctx, common.GetImagesToProcess(args, *commonCmdData.WithoutImages)) })
+			return common.LogRunningTime(func() error { return runPublish(ctx, args) })
 		},
 	})
 
@@ -151,7 +151,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	return cmd
 }
 
-func runPublish(ctx context.Context, imagesToProcess build.ImagesToProcess) error {
+func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 	global_warnings.PostponeMultiwerfNotUpToDateWarning()
 
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
@@ -221,7 +221,9 @@ func runPublish(ctx context.Context, imagesToProcess build.ImagesToProcess) erro
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %w", err)
 	}
-	if err := imagesToProcess.CheckImagesExistence(werfConfig); err != nil {
+
+	imagesToProcess, err := config.NewImagesToProcess(werfConfig, imageNameListFromArgs, true, *commonCmdData.WithoutImages)
+	if err != nil {
 		return err
 	}
 
@@ -248,8 +250,7 @@ func runPublish(ctx context.Context, imagesToProcess build.ImagesToProcess) erro
 		return err
 	}
 
-	imageNameList := common.GetImageNameList(imagesToProcess, werfConfig)
-	buildOptions, err := common.GetBuildOptions(ctx, &commonCmdData, werfConfig, imageNameList)
+	buildOptions, err := common.GetBuildOptions(ctx, &commonCmdData, werfConfig, imagesToProcess)
 	if err != nil {
 		return err
 	}
@@ -273,7 +274,7 @@ func runPublish(ctx context.Context, imagesToProcess build.ImagesToProcess) erro
 	var imagesInfoGetters []*image.InfoGetter
 	var imagesRepo string
 
-	if imagesToProcess.HaveImagesToProcess(werfConfig) {
+	if !imagesToProcess.WithoutImages {
 		synchronization, err := common.GetSynchronization(ctx, &commonCmdData, projectName, stagesStorage)
 		if err != nil {
 			return err
@@ -290,7 +291,7 @@ func runPublish(ctx context.Context, imagesToProcess build.ImagesToProcess) erro
 		if err != nil {
 			return err
 		}
-		useCustomTagFunc, err := common.GetUseCustomTagFunc(&commonCmdData, giterminismManager, imageNameList)
+		useCustomTagFunc, err := common.GetUseCustomTagFunc(&commonCmdData, giterminismManager, imagesToProcess)
 		if err != nil {
 			return err
 		}
@@ -309,7 +310,7 @@ func runPublish(ctx context.Context, imagesToProcess build.ImagesToProcess) erro
 
 		if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
 			if common.GetRequireBuiltImages(ctx, &commonCmdData) {
-				shouldBeBuiltOptions, err := common.GetShouldBeBuiltOptions(&commonCmdData, imageNameList)
+				shouldBeBuiltOptions, err := common.GetShouldBeBuiltOptions(&commonCmdData, imagesToProcess)
 				if err != nil {
 					return err
 				}

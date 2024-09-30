@@ -9,6 +9,7 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/build"
+	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
@@ -60,7 +61,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 			common.LogVersion()
 
 			return common.LogRunningTime(func() error {
-				return runMain(ctx, common.GetImagesToProcess(args, false))
+				return runMain(ctx, args)
 			})
 		},
 	}))
@@ -122,7 +123,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	return cmd
 }
 
-func runMain(ctx context.Context, imagesToProcess build.ImagesToProcess) error {
+func runMain(ctx context.Context, imageNameListFromArgs []string) error {
 	global_warnings.PostponeMultiwerfNotUpToDateWarning()
 
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
@@ -196,20 +197,21 @@ func runMain(ctx context.Context, imagesToProcess build.ImagesToProcess) error {
 	if *commonCmdData.Follow {
 		logboek.LogOptionalLn()
 		return common.FollowGitHead(ctx, &commonCmdData, func(ctx context.Context, headCommitGiterminismManager giterminism_manager.Interface) error {
-			return run(ctx, containerBackend, headCommitGiterminismManager, imagesToProcess)
+			return run(ctx, containerBackend, headCommitGiterminismManager, imageNameListFromArgs)
 		})
 	} else {
-		return run(ctx, containerBackend, giterminismManager, imagesToProcess)
+		return run(ctx, containerBackend, giterminismManager, imageNameListFromArgs)
 	}
 }
 
-func run(ctx context.Context, containerBackend container_backend.ContainerBackend, giterminismManager giterminism_manager.Interface, imagesToProcess build.ImagesToProcess) error {
+func run(ctx context.Context, containerBackend container_backend.ContainerBackend, giterminismManager giterminism_manager.Interface, imageNameListFromArgs []string) error {
 	_, werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %w", err)
 	}
 
-	if err := imagesToProcess.CheckImagesExistence(werfConfig); err != nil {
+	imagesToProcess, err := config.NewImagesToProcess(werfConfig, imageNameListFromArgs, true, false)
+	if err != nil {
 		return err
 	}
 
@@ -249,8 +251,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 
 	storageManager := manager.NewStorageManager(projectName, stagesStorage, finalStagesStorage, secondaryStagesStorageList, cacheStagesStorageList, storageLockManager)
 
-	imageNameList := common.GetImageNameList(imagesToProcess, werfConfig)
-	buildOptions, err := common.GetBuildOptions(ctx, &commonCmdData, werfConfig, imageNameList)
+	buildOptions, err := common.GetBuildOptions(ctx, &commonCmdData, werfConfig, imagesToProcess)
 	if err != nil {
 		return err
 	}

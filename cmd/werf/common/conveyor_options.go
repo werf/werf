@@ -20,7 +20,7 @@ import (
 	"github.com/werf/werf/v2/pkg/storage"
 )
 
-func GetConveyorOptions(ctx context.Context, commonCmdData *CmdData, imagesToProcess build.ImagesToProcess) (build.ConveyorOptions, error) {
+func GetConveyorOptions(ctx context.Context, commonCmdData *CmdData, imagesToProcess config.ImagesToProcess) (build.ConveyorOptions, error) {
 	conveyorOptions := build.ConveyorOptions{
 		LocalGitRepoVirtualMergeOptions: stage.VirtualMergeOptions{
 			VirtualMerge: *commonCmdData.VirtualMerge,
@@ -52,7 +52,7 @@ func GetDeferredBuildLog(ctx context.Context, commonCmdData *CmdData) bool {
 	return requireBuiltImage || !isVerbose
 }
 
-func GetConveyorOptionsWithParallel(ctx context.Context, commonCmdData *CmdData, imagesToProcess build.ImagesToProcess, buildStagesOptions build.BuildOptions) (build.ConveyorOptions, error) {
+func GetConveyorOptionsWithParallel(ctx context.Context, commonCmdData *CmdData, imagesToProcess config.ImagesToProcess, buildStagesOptions build.BuildOptions) (build.ConveyorOptions, error) {
 	conveyorOptions, err := GetConveyorOptions(ctx, commonCmdData, imagesToProcess)
 	if err != nil {
 		return conveyorOptions, err
@@ -69,8 +69,8 @@ func GetConveyorOptionsWithParallel(ctx context.Context, commonCmdData *CmdData,
 	return conveyorOptions, nil
 }
 
-func GetShouldBeBuiltOptions(commonCmdData *CmdData, imageNameList []string) (options build.ShouldBeBuiltOptions, err error) {
-	customTagFuncList, err := getCustomTagFuncList(getCustomTagOptionValues(commonCmdData), commonCmdData, imageNameList)
+func GetShouldBeBuiltOptions(commonCmdData *CmdData, imagesToProcess config.ImagesToProcess) (options build.ShouldBeBuiltOptions, err error) {
+	customTagFuncList, err := getCustomTagFuncList(getCustomTagOptionValues(commonCmdData), commonCmdData, imagesToProcess)
 	if err != nil {
 		return options, err
 	}
@@ -79,13 +79,13 @@ func GetShouldBeBuiltOptions(commonCmdData *CmdData, imageNameList []string) (op
 	return options, nil
 }
 
-func GetBuildOptions(ctx context.Context, commonCmdData *CmdData, werfConfig *config.WerfConfig, imageNameList []string) (buildOptions build.BuildOptions, err error) {
+func GetBuildOptions(ctx context.Context, commonCmdData *CmdData, werfConfig *config.WerfConfig, imagesToProcess config.ImagesToProcess) (buildOptions build.BuildOptions, err error) {
 	introspectOptions, err := GetIntrospectOptions(commonCmdData, werfConfig)
 	if err != nil {
 		return buildOptions, err
 	}
 
-	customTagFuncList, err := getCustomTagFuncList(getCustomTagOptionValues(commonCmdData), commonCmdData, imageNameList)
+	customTagFuncList, err := getCustomTagFuncList(getCustomTagOptionValues(commonCmdData), commonCmdData, imagesToProcess)
 	if err != nil {
 		return buildOptions, err
 	}
@@ -110,7 +110,7 @@ func GetBuildOptions(ctx context.Context, commonCmdData *CmdData, werfConfig *co
 	return buildOptions, nil
 }
 
-func getCustomTagFuncList(tagOptionValues []string, commonCmdData *CmdData, imageNameList []string) ([]image.CustomTagFunc, error) {
+func getCustomTagFuncList(tagOptionValues []string, commonCmdData *CmdData, imagesToProcess config.ImagesToProcess) ([]image.CustomTagFunc, error) {
 	if len(tagOptionValues) == 0 {
 		return nil, nil
 	}
@@ -151,7 +151,7 @@ func getCustomTagFuncList(tagOptionValues []string, commonCmdData *CmdData, imag
 
 		contentBasedTagStub := strings.Repeat("x", 70) // 1b77754d35b0a3e603731828ee6f2400c4f937382874db2566c616bb-1624991915332
 		var prevImageTag string
-		for _, imageName := range imageNameList {
+		for _, imageName := range imagesToProcess.FinalImageNameList {
 			imageTag := tagFunc(imageName, contentBasedTagStub)
 
 			if err := slug.ValidateDockerTag(imageTag); err != nil {
@@ -172,13 +172,13 @@ func getCustomTagFuncList(tagOptionValues []string, commonCmdData *CmdData, imag
 	return tagFuncList, nil
 }
 
-func GetUseCustomTagFunc(commonCmdData *CmdData, giterminismManager giterminism_manager.Interface, imageNameList []string) (image.CustomTagFunc, error) {
+func GetUseCustomTagFunc(commonCmdData *CmdData, giterminismManager giterminism_manager.Interface, imagesToProcess config.ImagesToProcess) (image.CustomTagFunc, error) {
 	var tagOptionValues []string
 	if *commonCmdData.UseCustomTag != "" {
 		tagOptionValues = []string{*commonCmdData.UseCustomTag}
 	}
 
-	customTagFuncList, err := getCustomTagFuncList(tagOptionValues, commonCmdData, imageNameList)
+	customTagFuncList, err := getCustomTagFuncList(tagOptionValues, commonCmdData, imagesToProcess)
 	if err != nil {
 		return nil, err
 	}

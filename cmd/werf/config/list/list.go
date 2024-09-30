@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/werf/werf/v2/cmd/werf/common"
+	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
 	"github.com/werf/werf/v2/pkg/true_git"
@@ -107,7 +108,12 @@ func run(ctx context.Context) error {
 		return err
 	}
 
-	for _, imageName := range werfConfig.GetImageNameList(cmdData.finalImagesOnly) {
+	imagesToProcess, err := config.NewImagesToProcess(werfConfig, nil, cmdData.finalImagesOnly, false)
+	if err != nil {
+		return err
+	}
+
+	for _, imageName := range imagesToProcess.ImageNameList {
 		if imageName == "" {
 			fmt.Println("~")
 		} else {

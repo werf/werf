@@ -367,8 +367,8 @@ func run(ctx context.Context, pod, secret, namespace string, werfConfig *config.
 		imageName = werfConfig.Images(true)[0].GetName()
 	}
 
-	imagesToProcess := common.GetImagesToProcess([]string{imageName}, false)
-	if err := imagesToProcess.CheckImagesExistence(werfConfig); err != nil {
+	imagesToProcess, err := config.NewImagesToProcess(werfConfig, []string{imageName}, true, false)
+	if err != nil {
 		return err
 	}
 
