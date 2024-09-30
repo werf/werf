@@ -439,7 +439,7 @@ dependencies:
 
 During the build, werf will automatically insert the appropriate names and identifiers into the referenced build-arguments. werf will take care of all orchestration and dependency mapping and then build everything in one step (as part of the `werf build` command).
 
-### Using intermediate and final images
+## Using intermediate and final images
 
 By default, all images are final, allowing the user to operate with them using their names as arguments for most werf commands and in Helm chart templates. The `final` directive can be used to regulate this property of an image.
 
