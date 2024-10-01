@@ -97,7 +97,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 				return err
 			}
 
-			imagesToProcess, err := config.NewImagesToProcess(werfConfig, args, true, false)
+			imagesToProcess, err := config.NewImagesToProcess(werfConfig, args, false, false)
 			if err != nil {
 				return err
 			}

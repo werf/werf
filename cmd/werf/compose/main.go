@@ -490,7 +490,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		imageNameList = imageNameListFromComposeConfig
 	}
 
-	imagesToProcess, err := config.NewImagesToProcess(werfConfig, imageNameList, true, *commonCmdData.WithoutImages)
+	imagesToProcess, err := config.NewImagesToProcess(werfConfig, imageNameList, false, *commonCmdData.WithoutImages)
 	if err != nil {
 		return err
 	}
