@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.10.9](https://www.github.com/werf/werf/compare/v2.10.8...v2.10.9) (2024-10-01)
+
+
+### Miscellaneous Chores
+
+* **build:** up builder image ([1bd2ae6](https://www.github.com/werf/werf/commit/1bd2ae63182b07a69c0281766ed28b0bba26c169))
+
 ### [2.10.8](https://www.github.com/werf/werf/compare/v2.10.7...v2.10.8) (2024-10-01)
 
 
