@@ -46,6 +46,7 @@ import (
 	"github.com/werf/nelm/pkg/utls"
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/build"
+	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/config/deploy_params"
 	"github.com/werf/werf/pkg/container_backend"
 	"github.com/werf/werf/pkg/deploy/helm"
@@ -114,12 +115,12 @@ werf converge --repo registry.mydomain.com/web --env production`,
 			common.LogVersion()
 
 			return common.LogRunningTime(func() error {
-				var imagesToProcess build.ImagesToProcess
+				var imageNameListFromArgs []string
 				if isSpecificImagesEnabled() {
-					imagesToProcess = common.GetImagesToProcess(args, *commonCmdData.WithoutImages)
+					imageNameListFromArgs = args
 				}
 
-				return runMain(ctx, imagesToProcess)
+				return runMain(ctx, imageNameListFromArgs)
 			})
 		},
 	})
@@ -228,7 +229,7 @@ werf converge --repo registry.mydomain.com/web --env production`,
 	return cmd
 }
 
-func runMain(ctx context.Context, imagesToProcess build.ImagesToProcess) error {
+func runMain(ctx context.Context, imageNameListFromArgs []string) error {
 	global_warnings.PostponeMultiwerfNotUpToDateWarning()
 
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
@@ -302,19 +303,26 @@ func runMain(ctx context.Context, imagesToProcess build.ImagesToProcess) error {
 	if *commonCmdData.Follow {
 		logboek.LogOptionalLn()
 		return common.FollowGitHead(ctx, &commonCmdData, func(ctx context.Context, headCommitGiterminismManager giterminism_manager.Interface) error {
-			return run(ctx, containerBackend, headCommitGiterminismManager, imagesToProcess)
+			return run(ctx, containerBackend, headCommitGiterminismManager, imageNameListFromArgs)
 		})
 	} else {
-		return run(ctx, containerBackend, giterminismManager, imagesToProcess)
+		return run(ctx, containerBackend, giterminismManager, imageNameListFromArgs)
 	}
 }
 
-func run(ctx context.Context, containerBackend container_backend.ContainerBackend, giterminismManager giterminism_manager.Interface, imagesToProcess build.ImagesToProcess) error {
+func run(ctx context.Context, containerBackend container_backend.ContainerBackend, giterminismManager giterminism_manager.Interface, imageNameListFromArgs []string) error {
 	werfConfigPath, werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %w", err)
 	}
-	if err := imagesToProcess.CheckImagesExistence(werfConfig); err != nil {
+
+	var withoutImages bool
+	if isSpecificImagesEnabled() {
+		withoutImages = *commonCmdData.WithoutImages
+	}
+
+	imagesToProcess, err := config.NewImagesToProcess(werfConfig, imageNameListFromArgs, true, withoutImages)
+	if err != nil {
 		return err
 	}
 
@@ -333,8 +341,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
-	imageNameList := common.GetImageNameList(imagesToProcess, werfConfig)
-	buildOptions, err := common.GetBuildOptions(ctx, &commonCmdData, werfConfig, imageNameList)
+	buildOptions, err := common.GetBuildOptions(ctx, &commonCmdData, werfConfig, imagesToProcess)
 	if err != nil {
 		return err
 	}
@@ -342,7 +349,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 	var imagesInfoGetters []*image.InfoGetter
 	var imagesRepo string
 
-	if imagesToProcess.HaveImagesToProcess(werfConfig) {
+	if !imagesToProcess.WithoutImages {
 		stagesStorage, err := common.GetStagesStorage(ctx, containerBackend, &commonCmdData)
 		if err != nil {
 			return err
@@ -368,7 +375,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		if err != nil {
 			return err
 		}
-		useCustomTagFunc, err := common.GetUseCustomTagFunc(&commonCmdData, giterminismManager, imageNameList)
+		useCustomTagFunc, err := common.GetUseCustomTagFunc(&commonCmdData, giterminismManager, imagesToProcess)
 		if err != nil {
 			return err
 		}
@@ -387,7 +394,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 
 		if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
 			if common.GetRequireBuiltImages(ctx, &commonCmdData) {
-				shouldBeBuiltOptions, err := common.GetShouldBeBuiltOptions(&commonCmdData, imageNameList)
+				shouldBeBuiltOptions, err := common.GetShouldBeBuiltOptions(&commonCmdData, imagesToProcess)
 				if err != nil {
 					return err
 				}

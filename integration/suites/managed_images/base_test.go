@@ -71,7 +71,7 @@ var _ = Describe("managed images", func() {
 					Ω(isManagedImage("a")).Should(BeTrue())
 					Ω(isManagedImage("b")).Should(BeTrue())
 					Ω(isManagedImage("c")).Should(BeTrue())
-					Ω(isManagedImage("d")).Should(BeFalse())
+					Ω(isManagedImage("d")).Should(BeTrue())
 				})
 			})
 		})

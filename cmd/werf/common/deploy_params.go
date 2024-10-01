@@ -50,9 +50,9 @@ func KeyValueArrayToMap(pairs []string, sep string) (map[string]string, error) {
 	return keyValueMap, nil
 }
 
-func StubImageInfoGetters(werfConfig *config.WerfConfig) []*image.InfoGetter {
+func StubImageInfoGetters(imagesToProcess config.ImagesToProcess) []*image.InfoGetter {
 	var getters []*image.InfoGetter
-	for _, imageName := range werfConfig.GetImageNameList(true) {
+	for _, imageName := range imagesToProcess.FinalImageNameList {
 		getters = append(getters, image.NewInfoGetter(imageName, fmt.Sprintf("%s:%s", StubRepoAddress, StubTag), image.InfoGetterOptions{}))
 	}
 

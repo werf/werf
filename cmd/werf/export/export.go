@@ -15,6 +15,7 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/werf/cmd/werf/common"
 	"github.com/werf/werf/pkg/build"
+	"github.com/werf/werf/pkg/config"
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/git_repo/gitdata"
 	"github.com/werf/werf/pkg/image"
@@ -82,7 +83,7 @@ func NewExportCmd(ctx context.Context) *cobra.Command {
 				}
 			}
 
-			return run(ctx, common.GetImagesToProcess(args, false), tagTemplateList, addLabelMap)
+			return run(ctx, args, tagTemplateList, addLabelMap)
 		},
 	})
 
@@ -137,11 +138,7 @@ Also, can be specified with $WERF_EXPORT_ADD_LABEL_* (e.g. $WERF_EXPORT_ADD_LABE
 	return cmd
 }
 
-func run(ctx context.Context, imagesToProcess build.ImagesToProcess, tagTemplateList []string, extraLabels map[string]string) error {
-	if imagesToProcess.WithoutImages {
-		return nil
-	}
-
+func run(ctx context.Context, imageNameListFromArgs, tagTemplateList []string, extraLabels map[string]string) error {
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %w", err)
 	}
@@ -203,7 +200,9 @@ func run(ctx context.Context, imagesToProcess build.ImagesToProcess, tagTemplate
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %w", err)
 	}
-	if err := imagesToProcess.CheckImagesExistence(werfConfig); err != nil {
+
+	imagesToProcess, err := config.NewImagesToProcess(werfConfig, imageNameListFromArgs, true, false)
+	if err != nil {
 		return err
 	}
 
@@ -253,9 +252,7 @@ func run(ctx context.Context, imagesToProcess build.ImagesToProcess, tagTemplate
 	defer conveyorWithRetry.Terminate()
 
 	return conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
-		imageNameList := common.GetImageNameList(imagesToProcess, werfConfig)
-
-		tagFuncList, err := getTagFuncList(imageNameList, tagTemplateList)
+		tagFuncList, err := getTagFuncList(imagesToProcess.FinalImageNameList, tagTemplateList)
 		if err != nil {
 			return err
 		}
@@ -271,7 +268,7 @@ func run(ctx context.Context, imagesToProcess build.ImagesToProcess, tagTemplate
 		}
 
 		return c.Export(ctx, build.ExportOptions{
-			ExportImageNameList: imageNameList,
+			ExportImageNameList: imagesToProcess.FinalImageNameList,
 			ExportTagFuncList:   tagFuncList,
 			MutateConfigFunc: func(config v1.Config) (v1.Config, error) {
 				for k, v := range extraLabels {
