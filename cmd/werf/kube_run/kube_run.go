@@ -369,7 +369,7 @@ func run(ctx context.Context, pod, secret, namespace string, werfConfig *config.
 		imageName = werfConfig.Images(true)[0].GetName()
 	}
 
-	imagesToProcess, err := config.NewImagesToProcess(werfConfig, []string{imageName}, false, false)
+	imagesToProcess, err := config.NewImagesToProcess(werfConfig, []string{imageName}, true, false)
 	if err != nil {
 		return err
 	}
