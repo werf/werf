@@ -11,45 +11,18 @@ type WerfConfig struct {
 	images []ImageInterface
 }
 
-func (c *WerfConfig) CheckImagesExistence(imageNameList []string, onlyFinal bool) error {
-	for _, name := range imageNameList {
-		image := c.GetImage(name)
-		if image == nil {
-			return fmt.Errorf("image %q not defined in werf.yaml", name)
-		}
-
-		if onlyFinal && !image.IsFinal() {
-			return fmt.Errorf("image %q is not final", name)
-		}
-	}
-
-	return nil
-}
-
-func (c *WerfConfig) GetSpecificImages(imageNameList []string, onlyFinal bool) ([]ImageInterface, error) {
-	if len(imageNameList) == 0 {
-		return c.Images(onlyFinal), nil
-	}
-
-	if err := c.CheckImagesExistence(imageNameList, onlyFinal); err != nil {
-		return nil, err
-	}
-
+func (c *WerfConfig) getSpecificImages(imagesToProcess ImagesToProcess) []ImageInterface {
 	var resultImages []ImageInterface
-	for _, name := range imageNameList {
+	for _, name := range imagesToProcess.ImageNameList {
 		image := c.GetImage(name)
 		if image == nil {
 			panic(fmt.Sprintf("image %q not found but must be found", name))
 		}
 
-		if onlyFinal && !image.IsFinal() {
-			continue
-		}
-
 		resultImages = append(resultImages, image)
 	}
 
-	return resultImages, nil
+	return resultImages
 }
 
 func (c *WerfConfig) Images(onlyFinal bool) []ImageInterface {
@@ -145,12 +118,12 @@ func (c *WerfConfig) validateImageInfiniteLoop(imageName string, imageNameStack 
 	return nil, nil
 }
 
-func (c *WerfConfig) GroupImagesByIndependentSets(imageNameList []string) (sets [][]ImageInterface, err error) {
-	images, err := c.GetSpecificImages(imageNameList, true)
-	if err != nil {
-		return nil, err
+func (c *WerfConfig) GroupImagesByIndependentSets(imagesToProcess ImagesToProcess) (sets [][]ImageInterface, err error) {
+	if imagesToProcess.WithoutImages {
+		return nil, nil
 	}
 
+	images := c.getSpecificImages(imagesToProcess)
 	sets = [][]ImageInterface{}
 	isRelativeChecked := map[ImageInterface]bool{}
 	imageRelativesListToHandle := c.getImageRelativesInOrder(images)
@@ -233,12 +206,8 @@ func (d DependsOn) relatedImageNameList() []string {
 	return append(list, d.Dependencies...)
 }
 
-func (c *WerfConfig) GetImageGraphList(imageNameList []string) ([]imageGraph, error) {
-	images, err := c.GetSpecificImages(imageNameList, true)
-	if err != nil {
-		return nil, err
-	}
-
+func (c *WerfConfig) GetImageGraphList(imagesToProcess ImagesToProcess) ([]imageGraph, error) {
+	images := c.getSpecificImages(imagesToProcess)
 	var graphList []imageGraph
 	for _, image := range images {
 		graph := imageGraph{}
