@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.10.8](https://www.github.com/werf/werf/compare/v2.10.7...v2.10.8) (2024-10-01)
+
+
+### Bug Fixes
+
+* **build:** allow usage of non-final images for specific commands ([20641a8](https://www.github.com/werf/werf/commit/20641a87dcad7086f90c2b8eeccf2bf704364ad4))
+
 ### [2.10.7](https://www.github.com/werf/werf/compare/v2.10.6...v2.10.7) (2024-09-26)
 
 
