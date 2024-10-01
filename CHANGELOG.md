@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.329](https://www.github.com/werf/werf/compare/v1.2.328...v1.2.329) (2024-10-01)
+
+
+### Bug Fixes
+
+* **build:** allow usage of non-final images for specific commands ([9a7cb0a](https://www.github.com/werf/werf/commit/9a7cb0a660b1266bf47d390ad3237247765031d3))
+
 ### [1.2.328](https://www.github.com/werf/werf/compare/v1.2.327...v1.2.328) (2024-08-28)
 
 
