@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.10.10](https://www.github.com/werf/werf/compare/v2.10.9...v2.10.10) (2024-10-03)
+
+
+### Bug Fixes
+
+* **locker:** replace panic with error and add details for lost lease case ([2e5744a](https://www.github.com/werf/werf/commit/2e5744a7bbe2177a06379a53417e6379e6be210c))
+
 ### [2.10.9](https://www.github.com/werf/werf/compare/v2.10.8...v2.10.9) (2024-10-01)
 
 
