@@ -1,5 +1,14 @@
 # Changelog
 
+### [1.2.330](https://www.github.com/werf/werf/compare/v1.2.329...v1.2.330) (2024-10-17)
+
+
+### Bug Fixes
+
+* **build, docker, dockerfile:** remove ONBUILD support in base images to reduce overhead ([2c67b24](https://www.github.com/werf/werf/commit/2c67b249f2e2f1943101c09082ef92773d3c28d1))
+* **build, stapel, docker:** /.werf/stapel/embedded/bin/bash: warning: setlocale: LC_ALL: cannot change locale ([0e84905](https://www.github.com/werf/werf/commit/0e84905e95627770abde3d875ca7723ef759dfa9))
+* revert go-git to v5.10.1 due to broken backward compatibility ([75d972b](https://www.github.com/werf/werf/commit/75d972b6169e0d7d8b77799165d91531b13d7839))
+
 ### [1.2.329](https://www.github.com/werf/werf/compare/v1.2.328...v1.2.329) (2024-10-01)
 
 
