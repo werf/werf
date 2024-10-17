@@ -297,9 +297,7 @@ RUN echo hello
 
 			containerBackend := NewContainerBackendStub()
 
-			dockerRegistry := NewDockerRegistryApiStub()
-
-			err := stage.FetchDependencies(ctx, conveyor, containerBackend, dockerRegistry)
+			_, err := stage.GetDependencies(ctx, conveyor, containerBackend, nil, nil, nil)
 			Expect(IsErrInvalidBaseImage(err)).To(BeTrue())
 		})
 	})
