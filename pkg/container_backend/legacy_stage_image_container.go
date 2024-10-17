@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/runconfig/opts"
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/docker"
@@ -191,6 +192,10 @@ func (c *LegacyStageImageContainer) prepareServiceRunOptions(ctx context.Context
 	serviceRunOptions.Entrypoint = stapel.BashBinPath()
 	serviceRunOptions.User = "0:0"
 
+	// ENV
+	serviceRunOptions.Env["LANG"] = "C.UTF-8"
+	serviceRunOptions.Env["LC_ALL"] = "C.UTF-8"
+
 	stapelContainerName, err := stapel.GetOrCreateContainer(ctx)
 	if err != nil {
 		return nil, err
@@ -260,6 +265,14 @@ func (c *LegacyStageImageContainer) prepareInheritedCommitOptions(ctx context.Co
 	} else {
 		inheritedOptions.Workdir = "/"
 	}
+
+	fromImageEnv := opts.ConvertKVStringsToMap(fromImageInspect.Config.Env)
+	for _, k := range []string{"LANG", "LC_ALL"} {
+		if val, hasKey := fromImageEnv[k]; hasKey {
+			inheritedOptions.Env[k] = val
+		}
+	}
+
 	return inheritedOptions, nil
 }
 
