@@ -8,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
 
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
@@ -104,19 +103,16 @@ type DockerStages struct {
 	dockerMetaArgs         []instructions.ArgCommand
 	dockerStageArgsHash    map[int]map[string]string
 	dockerStageEnvs        map[int]map[string]string
-
-	imageOnBuildInstructions map[string][]string
 }
 
 func NewDockerStages(dockerStages []instructions.Stage, dockerBuildArgsHash map[string]string, dockerMetaArgs []instructions.ArgCommand, dockerTargetStageIndex int) *DockerStages {
 	ds := &DockerStages{
-		dockerStages:             dockerStages,
-		dockerTargetStageIndex:   dockerTargetStageIndex,
-		dockerBuildArgsHash:      dockerBuildArgsHash,
-		dockerMetaArgs:           dockerMetaArgs,
-		dockerStageArgsHash:      map[int]map[string]string{},
-		dockerStageEnvs:          map[int]map[string]string{},
-		imageOnBuildInstructions: map[string][]string{},
+		dockerStages:           dockerStages,
+		dockerTargetStageIndex: dockerTargetStageIndex,
+		dockerBuildArgsHash:    dockerBuildArgsHash,
+		dockerMetaArgs:         dockerMetaArgs,
+		dockerStageArgsHash:    map[int]map[string]string{},
+		dockerStageEnvs:        map[int]map[string]string{},
 	}
 
 	return ds
@@ -294,99 +290,11 @@ type dockerfileInstructionInterface interface {
 	Name() string
 }
 
-func (s *FullDockerfileStage) FetchDependencies(ctx context.Context, c Conveyor, containerBackend container_backend.ContainerBackend, dockerRegistry docker_registry.GenericApiInterface) error {
-	resolvedDependenciesArgsHash := ResolveDependenciesArgs(s.targetPlatform, s.dependencies, c)
-
-	resolvedDockerMetaArgsHash, err := s.resolveDockerMetaArgs(resolvedDependenciesArgsHash)
-	if err != nil {
-		return fmt.Errorf("unable to resolve docker meta args: %w", err)
-	}
-
-outerLoop:
-	for ind, stage := range s.dockerStages {
-		resolvedBaseName, err := s.ShlexProcessWordWithMetaArgs(stage.BaseName, resolvedDockerMetaArgsHash)
-		if err != nil {
-			return err
-		}
-
-		if resolvedBaseName == "" {
-			return ErrInvalidBaseImage
-		}
-
-		for relatedStageIndex, relatedStage := range s.dockerStages {
-			if ind == relatedStageIndex {
-				continue
-			}
-
-			if resolvedBaseName == relatedStage.Name {
-				continue outerLoop
-			}
-		}
-
-		_, ok := s.imageOnBuildInstructions[resolvedBaseName]
-		if ok || resolvedBaseName == "scratch" {
-			continue
-		}
-
-		getBaseImageOnBuildLocally := func() ([]string, error) {
-			info, err := containerBackend.GetImageInfo(ctx, resolvedBaseName, container_backend.GetImageInfoOpts{})
-			if err != nil {
-				return nil, err
-			}
-
-			if info == nil {
-				return nil, errImageNotExistLocally
-			}
-
-			return info.OnBuild, nil
-		}
-
-		getBaseImageOnBuildRemotely := func() ([]string, error) {
-			configFile, err := dockerRegistry.GetRepoImageConfigFile(ctx, resolvedBaseName)
-			if err != nil {
-				return nil, fmt.Errorf("get repo image %q config file failed: %w", resolvedBaseName, err)
-			}
-
-			return configFile.Config.OnBuild, nil
-		}
-
-		var onBuild []string
-		if onBuild, err = getBaseImageOnBuildLocally(); err != nil && err != errImageNotExistLocally {
-			return err
-		} else if err == errImageNotExistLocally {
-			var getRemotelyErr error
-			if onBuild, getRemotelyErr = getBaseImageOnBuildRemotely(); getRemotelyErr != nil {
-				if isUnsupportedMediaTypeError(getRemotelyErr) {
-					logboek.Context(ctx).Warn().LogF("WARNING: Could not get base image manifest from local docker and from docker registry: %s\n", getRemotelyErr)
-					logboek.Context(ctx).Warn().LogLn("WARNING: The base image pulling is necessary for calculating digest of image correctly\n")
-					if err := logboek.Context(ctx).Default().LogProcess("Pulling base image %s", resolvedBaseName).DoError(func() error {
-						return containerBackend.Pull(ctx, resolvedBaseName, container_backend.PullOpts{})
-					}); err != nil {
-						return err
-					}
-
-					if onBuild, err = getBaseImageOnBuildLocally(); err != nil {
-						return err
-					}
-				} else {
-					return getRemotelyErr
-				}
-			}
-		}
-
-		s.imageOnBuildInstructions[resolvedBaseName] = onBuild
-	}
-
+func (s *FullDockerfileStage) FetchDependencies(_ context.Context, _ Conveyor, _ container_backend.ContainerBackend, _ docker_registry.GenericApiInterface) error {
 	return nil
 }
 
-func isUnsupportedMediaTypeError(err error) bool {
-	return strings.Contains(err.Error(), "unsupported MediaType")
-}
-
-var errImageNotExistLocally = errors.New("IMAGE_NOT_EXIST_LOCALLY")
-
-func (s *FullDockerfileStage) GetDependencies(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+func (s *FullDockerfileStage) GetDependencies(ctx context.Context, c Conveyor, _ container_backend.ContainerBackend, _, _ *StageImage, _ container_backend.BuildContextArchiver) (string, error) {
 	resolvedDependenciesArgsHash := ResolveDependenciesArgs(s.targetPlatform, s.dependencies, c)
 
 	resolvedDockerMetaArgsHash, err := s.resolveDockerMetaArgs(resolvedDependenciesArgsHash)
@@ -408,20 +316,11 @@ func (s *FullDockerfileStage) GetDependencies(ctx context.Context, c Conveyor, c
 			return "", err
 		}
 
-		dependencies = append(dependencies, resolvedBaseName)
-
-		onBuildInstructions, ok := s.imageOnBuildInstructions[resolvedBaseName]
-		if ok {
-			for _, instruction := range onBuildInstructions {
-				_, iOnBuildDependencies, err := s.dockerfileOnBuildInstructionDependencies(ctx, c.GiterminismManager(), resolvedDockerMetaArgsHash, resolvedDependenciesArgsHash, ind, instruction, true)
-				if err != nil {
-					return "", err
-				}
-
-				dependencies = append(dependencies, iOnBuildDependencies...)
-			}
+		if resolvedBaseName == "" {
+			return "", ErrInvalidBaseImage
 		}
 
+		dependencies = append(dependencies, resolvedBaseName)
 		for _, cmd := range stage.Commands {
 			cmdDependencies, cmdOnBuildDependencies, err := s.dockerfileInstructionDependencies(ctx, c.GiterminismManager(), resolvedDockerMetaArgsHash, resolvedDependenciesArgsHash, ind, cmd, false, false)
 			if err != nil {
