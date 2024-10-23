@@ -8,7 +8,8 @@ require (
 	github.com/Masterminds/sprig/v3 v3.2.3
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d
 	github.com/alessio/shellescape v1.4.2
-	github.com/aws/aws-sdk-go v1.51.10
+	github.com/aws/aws-sdk-go-v2/config v1.26.6
+	github.com/aws/aws-sdk-go-v2/service/ecr v1.36.2
 	github.com/bmatcuk/doublestar v1.3.4
 	github.com/cenkalti/backoff/v4 v4.2.1
 	github.com/containerd/containerd v1.7.14
@@ -112,19 +113,18 @@ require (
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
 	github.com/avelino/slugify v0.0.0-20180501145920-855f152bd774 // indirect
-	github.com/aws/aws-sdk-go-v2 v1.25.0 // indirect
-	github.com/aws/aws-sdk-go-v2/config v1.26.6 // indirect
+	github.com/aws/aws-sdk-go-v2 v1.32.2 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.16.16 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.14.11 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.3.0 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.6.0 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.3.21 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.6.21 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.7.3 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.11.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.11.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sso v1.18.7 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.21.7 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.26.7 // indirect
-	github.com/aws/smithy-go v1.20.0 // indirect
+	github.com/aws/smithy-go v1.22.0 // indirect
 	github.com/aymanbagabas/go-udiff v0.2.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bugsnag/bugsnag-go v2.2.0+incompatible // indirect
