@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.10.11](https://www.github.com/werf/werf/compare/v2.10.10...v2.10.11) (2024-10-23)
+
+
+### Bug Fixes
+
+* **cleanup, ecr:** fix aws sso not supported ([157b3eb](https://www.github.com/werf/werf/commit/157b3ebe8a617beefcc7853514b4e5b847384219))
+
 ### [2.10.10](https://www.github.com/werf/werf/compare/v2.10.9...v2.10.10) (2024-10-17)
 
 
