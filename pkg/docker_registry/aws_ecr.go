@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/ecr"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/ecr"
+	"github.com/aws/aws-sdk-go-v2/service/ecr/types"
 	"github.com/google/go-containerregistry/pkg/name"
 
 	"github.com/werf/werf/pkg/image"
@@ -39,17 +39,20 @@ func newAwsEcr(options awsEcrOptions) (*awsEcr, error) {
 	return awsEcr, nil
 }
 
-func (r *awsEcr) DeleteRepoImage(_ context.Context, repoImage *image.Info) error {
+func (r *awsEcr) DeleteRepoImage(ctx context.Context, repoImage *image.Info) error {
 	_, region, repository, err := r.parseReference(repoImage.Repository)
 	if err != nil {
 		return err
 	}
 	digest := repoImage.GetDigest()
 
-	mySession := session.Must(session.NewSession())
-	service := ecr.New(mySession, aws.NewConfig().WithRegion(region))
-	_, err = service.BatchDeleteImage(&ecr.BatchDeleteImageInput{
-		ImageIds: []*ecr.ImageIdentifier{
+	client, err := r.awsClient(ctx, region)
+	if err != nil {
+		return err
+	}
+
+	_, err = client.BatchDeleteImage(ctx, &ecr.BatchDeleteImageInput{
+		ImageIds: []types.ImageIdentifier{
 			{
 				ImageDigest: &digest,
 			},
@@ -60,18 +63,19 @@ func (r *awsEcr) DeleteRepoImage(_ context.Context, repoImage *image.Info) error
 	return err
 }
 
-func (r *awsEcr) CreateRepo(_ context.Context, reference string) error {
+func (r *awsEcr) CreateRepo(ctx context.Context, reference string) error {
 	_, region, repository, err := r.parseReference(reference)
 	if err != nil {
 		return err
 	}
 
-	mySession := session.Must(session.NewSession())
-	service := ecr.New(mySession, aws.NewConfig().WithRegion(region))
+	client, err := r.awsClient(ctx, region)
+	if err != nil {
+		return err
+	}
 
-	if _, err := service.CreateRepository(&ecr.CreateRepositoryInput{
+	if _, err := client.CreateRepository(ctx, &ecr.CreateRepositoryInput{
 		ImageScanningConfiguration: nil,
-		ImageTagMutability:         nil,
 		RepositoryName:             &repository,
 		Tags:                       nil,
 	}); err != nil {
@@ -81,19 +85,19 @@ func (r *awsEcr) CreateRepo(_ context.Context, reference string) error {
 	return nil
 }
 
-func (r *awsEcr) DeleteRepo(_ context.Context, reference string) error {
+func (r *awsEcr) DeleteRepo(ctx context.Context, reference string) error {
 	_, region, repository, err := r.parseReference(reference)
 	if err != nil {
 		return err
 	}
 
-	force := true
+	client, err := r.awsClient(ctx, region)
+	if err != nil {
+		return err
+	}
 
-	mySession := session.Must(session.NewSession())
-	service := ecr.New(mySession, aws.NewConfig().WithRegion(region))
-
-	if _, err := service.DeleteRepository(&ecr.DeleteRepositoryInput{
-		Force:          &force,
+	if _, err := client.DeleteRepository(ctx, &ecr.DeleteRepositoryInput{
+		Force:          true,
 		RegistryId:     nil,
 		RepositoryName: &repository,
 	}); err != nil {
@@ -101,6 +105,16 @@ func (r *awsEcr) DeleteRepo(_ context.Context, reference string) error {
 	}
 
 	return nil
+}
+
+func (r *awsEcr) awsClient(ctx context.Context, region string) (*ecr.Client, error) {
+	cfg, err := config.LoadDefaultConfig(ctx, config.WithRegion(region))
+	if err != nil {
+		return nil, fmt.Errorf("failed to load aws configuration: %w", err)
+	}
+
+	client := ecr.NewFromConfig(cfg)
+	return client, nil
 }
 
 func (r *awsEcr) String() string {
