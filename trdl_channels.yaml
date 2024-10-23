@@ -28,9 +28,9 @@ groups:
       - name: alpha
         version: 1.2.330
       - name: beta
-        version: 1.2.329
+        version: 1.2.330
       - name: ea
-        version: 1.2.328
+        version: 1.2.329
       - name: stable
         version: 1.2.328
       - name: rock-solid
@@ -40,10 +40,10 @@ groups:
       - name: alpha
         version: 2.10.10
       - name: beta
-        version: 2.10.9
+        version: 2.10.10
       - name: ea
-        version: 2.10.7
+        version: 2.10.9
       - name: stable
-        version: 2.10.6
+        version: 2.10.7
       - name: rock-solid
-        version: 2.10.5
+        version: 2.10.6
