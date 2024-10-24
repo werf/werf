@@ -380,8 +380,6 @@ github.com/djherbis/buffer v1.2.0 h1:PH5Dd2ss0C7CRRhQCZ2u7MssF+No9ide8Ye71nPHcrQ
 github.com/djherbis/buffer v1.2.0/go.mod h1:fjnebbZjCUpPinBRD+TDwXSOeNQ7fPQWLfGQqiAiUyE=
 github.com/djherbis/nio/v3 v3.0.1 h1:6wxhnuppteMa6RHA4L81Dq7ThkZH8SwnDzXDYy95vB4=
 github.com/djherbis/nio/v3 v3.0.1/go.mod h1:Ng4h80pbZFMla1yKzm61cF0tqqilXZYrogmWgZxOcmg=
-github.com/docker/buildx v0.13.0-rc2 h1:ghn4z7+OoAQfLXlNLjY3AHQyVV7nh4Qas2s9BQZ9t3s=
-github.com/docker/buildx v0.13.0-rc2/go.mod h1:Q3gtkv8D3sdaa5LJXbzMooYR/A5vBiEB2yQ56wywohM=
 github.com/docker/cli v25.0.5+incompatible h1:3Llw3kcE1gOScEojA247iDD+p1l9hHeC7H3vf3Zd5fk=
 github.com/docker/cli v25.0.5+incompatible/go.mod h1:JLrzqnKDaYBop7H2jaqPtU4hHvMKP+vjCwu2uszcLI8=
 github.com/docker/cli-docs-tool v0.7.0 h1:M2Da98Unz2kz3A5d4yeSGbhyOge2mfYSNjAFt01Rw0M=
@@ -1388,6 +1386,8 @@ github.com/weppos/publicsuffix-go v0.13.1-0.20210123135404-5fd73613514e/go.mod h
 github.com/weppos/publicsuffix-go v0.15.1-0.20210511084619-b1f36a2d6c0b/go.mod h1:HYux0V0Zi04bHNwOHy4cXJVz/TQjYonnF6aoYhj+3QE=
 github.com/weppos/publicsuffix-go v0.30.2-0.20240219083929-48f3a5ae027a h1:s0Yp4S5jdEQFTJE1blGE5o+n7T0uI386YHXzocLKLR4=
 github.com/weppos/publicsuffix-go v0.30.2-0.20240219083929-48f3a5ae027a/go.mod h1:v7j8MuFp1CIYgAd2n7xEUctTbsreRd1vPmOwyzmGFiE=
+github.com/werf/3p-docker-buildx v0.13.0-rc2.0.20241024135542-5227009077a4 h1:J6qNuakRzaeXg5tLgUfowm2Kh2/S5XAzuEzpc3f1IuM=
+github.com/werf/3p-docker-buildx v0.13.0-rc2.0.20241024135542-5227009077a4/go.mod h1:Q3gtkv8D3sdaa5LJXbzMooYR/A5vBiEB2yQ56wywohM=
 github.com/werf/3p-helm v0.0.0-20240806141915-3137f4cc1557 h1:TCC9i3qb4Db+7Z6jgbLwWCWyV/kKvdTezmGUqLtdF54=
 github.com/werf/3p-helm v0.0.0-20240806141915-3137f4cc1557/go.mod h1:YJhOllAD8LqSnsocDhkwqOxaqOoxSnVbXwhcbqptkZg=
 github.com/werf/3p-oras v0.9.1-0.20240115121544-03962ecbd40a h1:PsU9szHZlIH+CjcuIuPXRLc5dsdoaFldvYjS6YHI7YQ=
