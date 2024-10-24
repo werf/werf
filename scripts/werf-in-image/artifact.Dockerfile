@@ -1,9 +1,9 @@
-ARG distro
+ARG distro_image
 ARG source_image
 
 FROM ${source_image} as source_image 
 
-FROM ${distro}
+FROM ${distro_image}
 ARG source
-ARG dest
-COPY --from=source_image ${source} ${dest}
+ARG destination
+COPY --from=source_image ${source} ${destination}

@@ -18,9 +18,17 @@ COPY trdl_channels.yaml /trdl_channels.yaml
 
 RUN for group in ${groups}; do \
         for channel in ${channels}; do \
-            echo "Perform trdl update for werf $group $channel ..." &&\
-            trdl update werf $group $channel && \
-            . $(trdl use werf $group $channel) && \
+            while true ; do \
+                echo "Perform trdl update for werf $group $channel ..." &&\
+                trdl update werf $group $channel &&\
+                . $(trdl use werf $group $channel) &&\
+                REQUIRED_VERSION=$(cat /trdl_channels.yaml | yq -e ".groups[] | select(.name == \"$group\") | .channels[] | select(.name == \"$channel\") | .version" -) &&\
+                DOWNLOADED_VERSION=$(werf version | sed -e 's|^v||') &&\
+                echo "werf $group $channel: required version $REQUIRED_VERSION, downloaded version $DOWNLOADED_VERSION" &&\
+                [[ "$REQUIRED_VERSION" != "$DOWNLOADED_VERSION" ]] || break &&\
+                echo "Version mismatch! Will retry update" &&\
+                sleep 1; \
+            done; \
             cp $(trdl bin-path werf $group $channel)/werf /usr/local/bin/werf-$group-$channel; \
         done \
     done

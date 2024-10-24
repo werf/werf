@@ -32,9 +32,9 @@ dependencies:
       targetBuildArg: source_image
 
 args:
-  distro: "{{ $distro }}"
+  distro_image: "{{ $distro }}"
   source: "/usr/local/bin/werf-{{ $group }}-{{ $channel }}"
-  dest: "/usr/local/bin/werf"
+  destination: "/usr/local/bin/werf"
     {{- end }}
   {{- end }}
 {{- end }}
@@ -57,9 +57,9 @@ dependencies:
       targetBuildArg: source_image
 
 args:
-  distro: "{{ $distro }}"
+  distro_image: "{{ $distro }}"
   source: "/usr/local/bin/werf-{{ $group }}-{{ $channel }}"
-  dest: "/usr/local/bin/werf"
+  destination: "/usr/local/bin/werf"
     {{- end }}
   {{- end }}
 {{- end }}
