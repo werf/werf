@@ -354,7 +354,7 @@ func (storage *LocalStagesStorage) PostClientIDRecord(_ context.Context, _ strin
 	panic("not implemented")
 }
 
-func (storage *LocalStagesStorage) PostMultiplatformImage(ctx context.Context, projectName, tag string, allPlatformsImages []*image.Info) error {
+func (storage *LocalStagesStorage) PostMultiplatformImage(_ context.Context, _, _ string, _ []*image.Info, _ []string) error {
 	return nil
 }
 

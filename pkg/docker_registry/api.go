@@ -688,15 +688,33 @@ func (api *api) PushManifestList(ctx context.Context, reference string, opts Man
 		if err != nil {
 			return fmt.Errorf("unable to parse reference %q: %w", info.Name, err)
 		}
+
 		// FIXME(multiarch): Optimize: do not get manifest, save v1.Image into the image.Info (optional)
-		desc, err := remote.Get(ref, api.defaultRemoteOptions(ctx)...)
-		if err != nil {
-			return fmt.Errorf("unable to get manifest of %q: %w", info.Name, err)
+		// FIXME(multiarch): add platform to image.Info.
+		var pl *v1.Platform
+		var desc *remote.Descriptor
+		var img v1.Image
+		for _, p := range opts.Platforms {
+			pl, err = v1.ParsePlatform(p)
+			if err != nil {
+				return fmt.Errorf("unable to parse platform %q: %w", p, err)
+			}
+
+			options := append(api.defaultRemoteOptions(ctx), remote.WithPlatform(*pl))
+			desc, err = remote.Get(ref, options...)
+			if err != nil {
+				return fmt.Errorf("unable to get manifest of %q: %w", info.Name, err)
+			}
+
+			img, err = desc.Image()
+			if err == nil {
+				break
+			}
 		}
-		img, err := desc.Image()
 		if err != nil {
 			return fmt.Errorf("unable to get image descriptor of %q: %w", info.Name, err)
 		}
+
 		cf, err := img.ConfigFile()
 		if err != nil {
 			return fmt.Errorf("unable to get config file of %q: %w", info.Name, err)
