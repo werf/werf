@@ -95,6 +95,17 @@ werf bundle publish --repo example.org/bundles/bundle2
 
 Также опция `--disable-default-values` для команды `werf bundle publish` позволяет исключить из публикуемого чарта файл `values.yaml`.
 
+## Использование произвольных тегов образов
+
+Для использования произвольных тегов образов для бандлов необходимо задать шаблон именования с помощью опции `--use-custom-tag` (`WERF_USE_CUSTOM_TAG`).
+
+Пример использования:
+```shell
+werf bundle publish --repo example.org/bundles/mybundle --tag "%image%-my-custom-tag"
+```
+
+Подробнее про кастомные теги можно прочитать в [документации]({{ "/usage/build/process.html#добавление-произвольных-тегов" | true_relative_url }}).
+
 ## Указание версии чарта при публикации
 
 По умолчанию чарт публикуется с тегом `latest`. Указать иной тег, например, семантическую версию для публикуемого чарта, можно опцией `--tag`:

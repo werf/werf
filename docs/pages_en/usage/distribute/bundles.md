@@ -95,6 +95,18 @@ The `.helmignore` file in the chart root can include filename filters that preve
 
 Also, the `--disable-default-values` flag for the `werf bundle publish` command excludes the `values.yaml` file from the chart being published.
 
+## Using custom image tags
+
+To use custom image tags for bundles, you need to set the naming template using the `--use-custom-tag` option (`WERF_USE_CUSTOM_TAG`).
+
+Example usage:
+
+```shell
+werf bundle publish --repo example.org/bundles/mybundle --tag "%image%-my-custom-tag"
+```
+
+You can read more about custom tags in the [documentation]({{ "/usage/build/process.html#adding-custom-tags" | true_relative_url }}).
+
 ## Specifying the chart version when publishing
 
 By default, the chart is tagged as `latest` when published. You can specify a different tag, e.g., a semantic version for the chart being published, using the `--tag` option:
