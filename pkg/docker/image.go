@@ -213,11 +213,8 @@ func CliBuild_LiveOutputWithCustomIn(ctx context.Context, rc io.ReadCloser, args
 	if useBuildx {
 		buildOpts.EnableBuildx = true
 
-		// disable buildkit output in background tasks due to https://github.com/docker/cli/issues/2889
-		// there is no true way to get output, because buildkit uses the standard output and error streams instead of defined ones in the cli instance
 		if ctx.Value(parallelConstant.CtxBackgroundTaskIDKey) != nil {
-			logboek.Context(ctx).Warn().LogLn("WARNING: BuildKit output in background tasks is not supported (--quiet) due to https://github.com/docker/cli/issues/2889")
-			args = append(args, "--quiet")
+			args = append(args, "--progress", "plain") // for displaying logs correctly
 		}
 	} else {
 		// ensure buildkit not enabled
