@@ -48,6 +48,7 @@ type ArchiveOpener interface {
 
 type ManifestListOptions struct {
 	Manifests []*image.Info
+	Platforms []string
 }
 
 type GetRepoImageOptions struct {

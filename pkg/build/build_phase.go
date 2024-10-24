@@ -269,7 +269,7 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 
 			// TODO: Separate LocalStagesStorage and RepoStagesStorage interfaces, local should not include metadata publishing methods at all
 			if _, isLocal := phase.Conveyor.StorageManager.GetStagesStorage().(*storage.LocalStagesStorage); !isLocal {
-				if err := logboek.Context(ctx).LogProcess(logging.ImageLogProcessName(name, false, "")).
+				if err := logboek.Context(ctx).LogProcess(logging.ImageLogProcessName(name, img.IsFinal, "")).
 					Options(func(options types.LogProcessOptionsInterface) {
 						options.Style(logging.ImageMetadataStyle())
 					}).
@@ -397,7 +397,7 @@ func (phase *BuildPhase) publishMultiplatformImageMetadata(ctx context.Context, 
 	container_backend.LogImageName(ctx, fullImageName)
 	container_backend.LogMultiplatformImageInfo(ctx, platforms)
 
-	if err := primaryStagesStorage.PostMultiplatformImage(ctx, phase.Conveyor.ProjectName(), img.GetStageID().String(), img.GetImagesInfoList()); err != nil {
+	if err := primaryStagesStorage.PostMultiplatformImage(ctx, phase.Conveyor.ProjectName(), img.GetStageID().String(), img.GetImagesInfoList(), platforms); err != nil {
 		return fmt.Errorf("unable to post multiplatform image %s %s: %w", name, img.GetStageID(), err)
 	}
 
