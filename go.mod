@@ -378,5 +378,6 @@ require (
 
 replace (
 	github.com/deislabs/oras => github.com/werf/3p-oras v0.9.1-0.20240115121544-03962ecbd40a // upstream not maintained
+	github.com/docker/buildx => github.com/werf/3p-docker-buildx v0.13.0-rc2.0.20241024135542-5227009077a4 // upstream not maintained
 	github.com/jaguilar/vt100 => github.com/tonistiigi/vt100 v0.0.0-20190402012908-ad4c4a574305 // upstream not maintained
 )
