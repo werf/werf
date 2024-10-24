@@ -400,7 +400,7 @@ func (storage *LocalStagesStorage) PostClientIDRecord(ctx context.Context, proje
 	return nil
 }
 
-func (storage *LocalStagesStorage) PostMultiplatformImage(ctx context.Context, projectName, tag string, allPlatformsImages []*image.Info) error {
+func (storage *LocalStagesStorage) PostMultiplatformImage(_ context.Context, _, _ string, _ []*image.Info, _ []string) error {
 	return nil
 }
 
