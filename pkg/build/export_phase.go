@@ -55,7 +55,7 @@ func (e *Exporter) Run(ctx context.Context) error {
 			// FIXME(multiarch): Support multiplatform manifest by pushing local images to repo first, then create manifest list.
 			// FIXME(multiarch): Also support multiplatform manifest in werf build command in local mode with enabled final-repo.
 			if _, isLocal := e.Conveyor.StorageManager.GetStagesStorage().(*storage.LocalStagesStorage); isLocal {
-				return fmt.Errorf("export command is not supported in multiplatform mode")
+				return fmt.Errorf("export command in multiplatform mode should be used with remote stages storage")
 			}
 
 			// multiplatform mode
