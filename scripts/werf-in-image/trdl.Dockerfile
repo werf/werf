@@ -21,7 +21,7 @@ RUN for group in ${groups}; do \
                 echo "Perform trdl update for werf $group $channel ..." &&\
                 trdl update werf $group $channel &&\
                 . $(trdl use werf $group $channel) &&\
-                REQUIRED_VERSION=$(cat ${trdl_channels_yaml} | yq -e ".groups[] | select(.name == \"$group\") | .channels[] | select(.name == \"$channel\") | .version" -) &&\
+                REQUIRED_VERSION=$(echo "${trdl_channels_yaml}" | yq -e ".groups[] | select(.name == \"$group\") | .channels[] | select(.name == \"$channel\") | .version") && \
                 DOWNLOADED_VERSION=$(werf version | sed -e 's|^v||') &&\
                 echo "werf $group $channel: required version $REQUIRED_VERSION, downloaded version $DOWNLOADED_VERSION" &&\
                 [[ "$REQUIRED_VERSION" != "$DOWNLOADED_VERSION" ]] || break &&\
