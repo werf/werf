@@ -28,13 +28,13 @@ jobs:
             {
                 "solved": {
                     "delay": "604800",
-                    "message": "Seems the issue was solved. Closing after 7 days of inactivity.",
+                    "message": "This issue appears to be resolved, so we’re closing it for now. If you encounter further issues, please feel free to reopen or create a new issue at any time.",
                     "remove_label_on_comment": true,
                     "remove_label_on_close": true
                 },
                 "awaiting response": {
                     "delay": "604800",
-                    "message": "Closing after 7 days of waiting for the additional info requested.",
+                    "message": "As we haven’t received additional information, we’re closing this issue for now. If there’s more to add, feel free to reopen or open a new issue whenever needed.",
                     "remove_label_on_comment": true,
                     "remove_label_on_close": true
                 }
