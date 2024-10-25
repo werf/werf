@@ -1,0 +1,40 @@
+{{- $default_distro := "ubuntu" }}
+{{- $default_channel := "stable" }}
+{{- $default_group := "2" }}
+{{- $distro_name := (printf "%s-%s" "argocd-cmp-sidecar" $default_distro )}}
+
+project: werf-in-image
+configVersion: 1
+build:
+  platform:
+    - linux/amd64
+    - linux/arm64
+---
+image: "argocd-cmp-sidecar-{{ $default_distro }}"
+dockerfile: "./argocd-cmp-sidecar-{{ $default_distro }}.Dockerfile"
+final: false
+
+{{- $values := .Files.Get "../../trdl_channels.yaml" | fromYaml -}}
+  {{- range $_, $group_object := $values.groups }}
+    {{ $group_name := $group_object.name }}
+    {{- if (eq $group_name "1.0") }}{{- continue }}{{- end }}
+
+    {{- range $i, $channel_object := $group_object.channels }}
+      {{ $channel_name := $channel_object.name }}
+      {{ $channel_version := $channel_object.version }}
+---
+{{- include "trdl base" (list $group_name $channel_name $channel_version)}}
+---
+{{- include "group channel" (list $group_name $channel_name $distro_name)}}
+---
+{{- include "group channel distro" (list $group_name $channel_name $default_distro $distro_name)}}
+      {{- if (eq $i 0) }}
+---
+{{- include "group" (list $group_name $default_channel $distro_name)}}
+      {{- end }}
+      {{- if and (eq $group_name $default_group) (eq $channel_name $default_channel) }}
+---
+{{- include "latest" (list $default_group $default_channel $distro_name)}}
+    {{- end }}
+  {{- end }}
+{{- end }}

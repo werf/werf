@@ -1,0 +1,16 @@
+{{- define "trdl base"}}
+
+{{- $group_name := index . 0}}
+{{- $channel_name := index . 1 }}
+{{- $channel_version := index . 2}}
+
+image: "trdl-{{ $group_name }}-{{ $channel_name }}"
+dockerfile: ./trdl.Dockerfile
+final: false
+args:
+  group: {{ $group_name }}
+  channel: {{ $channel_name }}
+  required_version: {{ $channel_version }}
+  
+{{- end }}
+

@@ -1,10 +1,11 @@
 FROM fedora:38
+ARG TARGETARCH
 
 RUN dnf -y install fuse-overlayfs git git-lfs gnupg nano jq bash make ca-certificates openssh-clients telnet iputils iproute dnsutils tzdata && \
     dnf clean all && rm -rf /var/cache /var/log/dnf* /var/log/yum.*
 
-RUN curl -sSLO https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 && \
-    mv yq_linux_amd64 /usr/local/bin/yq && \
+RUN curl -sSLO https://github.com/mikefarah/yq/releases/latest/download/yq_linux_${TARGETARCH} && \
+    mv yq_linux_${TARGETARCH} /usr/local/bin/yq && \
     chmod +x /usr/local/bin/yq
 
 RUN ARCH=`uname -m` && \

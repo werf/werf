@@ -1,67 +1,54 @@
+{{- $distro_images := list "alpine" "ubuntu" "centos" "fedora"}}
+{{- $default_distro := "alpine" }}
+{{- $default_channel := "stable" }}
+{{- $default_group := "2" }}
+
 project: werf-in-image
 configVersion: 1
-{{- $_ := set $ "Groups" (list "1.2" "2") }}
-{{- $_ := set $ "Channels" (list "alpha" "beta" "ea" "stable" "rock-solid") }}
 build:
   platform:
     - linux/amd64
     - linux/arm64
-
 ---
-image: trdl
-dockerfile: ./trdl.Dockerfile
-final: false
-args:
-  groups: 1.2 2
-  channels: alpha beta ea stable rock-solid
-  trdl_channels_yaml: |
-{{ .Files.Get "../../trdl_channels.yaml" | nindent 4 }}
 
-{{- range $_, $distro := list "alpine" "ubuntu" "centos" "fedora" }}
+{{- range $_, $distro := $distro_images }}
 ---
 image: "{{ $distro }}"
 dockerfile: "./{{ $distro }}.Dockerfile"
-
-  {{- range $_, $group := $.Groups }}
-    {{- range $_, $channel := $.Channels }}
----
-image: "{{ $group }}-{{ $channel }}-{{ $distro }}"
-dockerfile: ./artifact.Dockerfile
-dependencies:
-- image: trdl
-  imports:
-    - type: ImageName
-      targetBuildArg: source_image
-
-args:
-  distro_image: "{{ $distro }}"
-  source: "/usr/local/bin/werf-{{ $group }}-{{ $channel }}"
-  destination: "/usr/local/bin/werf"
-    {{- end }}
-  {{- end }}
+final: false
 {{- end }}
 
+{{- $values := .Files.Get "../../trdl_channels.yaml" | fromYaml -}}
+  {{- range $_, $group_object := $values.groups }}
+    {{ $group_name := $group_object.name }}
+    {{- if (eq $group_name "1.0") }}{{- continue }}{{- end }}
 
-{{- range $_, $distro := list "ubuntu" }}
+    {{- range $i, $channel_object := $group_object.channels }}
+      {{ $channel_name := $channel_object.name }}
+      {{ $channel_version := $channel_object.version }}
 ---
-image: "argocd-cmp-sidecar-{{ $distro }}"
-dockerfile: "./argocd-cmp-sidecar-{{ $distro }}.Dockerfile"
-
-  {{- range $_, $group := $.Groups }}
-    {{- range $_, $channel := $.Channels }}
+{{- include "trdl base" (list $group_name $channel_name $channel_version ) }}
 ---
-image: "argocd-cmp-sidecar-{{ $group }}-{{ $channel }}-{{ $distro }}"
-dockerfile: ./artifact.Dockerfile
-dependencies:
-- image: trdl
-  imports:
-    - type: ImageName
-      targetBuildArg: source_image
-
-args:
-  distro_image: "{{ $distro }}"
-  source: "/usr/local/bin/werf-{{ $group }}-{{ $channel }}"
-  destination: "/usr/local/bin/werf"
+{{ $distro_name := (printf "%s-%s-%s" $group_name $channel_name $default_distro ) }}
+{{- include "group channel" (list $group_name $channel_name $distro_name ) }}
+      {{- range $_, $distro := $distro_images }}
+---
+{{- include "group channel distro" (list $group_name $channel_name $distro $distro) }}
+      {{- if (eq $i 0) }}
+---
+{{ $distro_name := (printf "%s-%s-%s" $group_name $default_channel $distro ) }}
+{{- include "group distro" (list $group_name $default_channel $distro $distro_name ) }}
+      {{- end }}
+      {{- end }}
+      {{- if and (eq $group_name $default_group) (eq $channel_name $default_channel ) }}
+---
+{{ $distro_name := (printf "%s-%s-%s" $default_group $default_channel $default_distro ) }}
+{{- include "latest" (list $default_group $default_channel $distro_name)}}
+      {{- end }}
+      {{- if (eq $i 0) }}
+---
+{{ $distro_name := (printf "%s-%s-%s" $group_name $default_channel $default_distro ) }}
+{{- include "group" (list $group_name $default_channel $distro_name)}}
+      {{- end }}
     {{- end }}
   {{- end }}
-{{- end }}
