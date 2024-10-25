@@ -31,7 +31,13 @@ jobs:
                     "message": "Seems the issue was solved. Closing after 7 days of inactivity.",
                     "remove_label_on_comment": true,
                     "remove_label_on_close": true
-                }
+                },
+                "awaiting response": {
+                    "delay": "604800",
+                    "message": "Closing after 7 days of waiting for the additional info requested.",
+                    "remove_label_on_comment": true,
+                    "remove_label_on_close": true
+                },
             }
 
   notify:
