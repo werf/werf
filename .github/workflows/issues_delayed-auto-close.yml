@@ -37,7 +37,7 @@ jobs:
                     "message": "Closing after 7 days of waiting for the additional info requested.",
                     "remove_label_on_comment": true,
                     "remove_label_on_close": true
-                },
+                }
             }
 
   notify:
