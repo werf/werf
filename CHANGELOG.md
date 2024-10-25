@@ -1,5 +1,14 @@
 # Changelog
 
+### [2.10.11](https://www.github.com/werf/werf/compare/v2.10.10...v2.10.11) (2024-10-25)
+
+
+### Bug Fixes
+
+* **cleanup, ecr:** fix aws sso not supported ([157b3eb](https://www.github.com/werf/werf/commit/157b3ebe8a617beefcc7853514b4e5b847384219))
+* **export, multiplatform:** fix no child with platform linux/amd64 in index ([49a1540](https://www.github.com/werf/werf/commit/49a1540031ed3733b809a348722ccef631553c98))
+* **export, multiplatform:** fix unexpected condition: stage image without labels ([d3c67b8](https://www.github.com/werf/werf/commit/d3c67b8118ac7eac9436f551c508c37ed4a4deac))
+
 ### [2.10.10](https://www.github.com/werf/werf/compare/v2.10.9...v2.10.10) (2024-10-17)
 
 
