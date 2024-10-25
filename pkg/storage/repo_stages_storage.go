@@ -128,10 +128,6 @@ func (storage *RepoStagesStorage) ExportStage(ctx context.Context, stageDescript
 
 func mutateExportStageConfig(mutateConfigFunc func(config v1.Config) (v1.Config, error)) func(config v1.Config) (v1.Config, error) {
 	return func(config v1.Config) (v1.Config, error) {
-		if config.Labels == nil {
-			panic("unexpected condition: stage image without labels")
-		}
-
 		for name := range config.Labels {
 			if strings.HasPrefix(name, image.WerfLabelPrefix) {
 				delete(config.Labels, name)
