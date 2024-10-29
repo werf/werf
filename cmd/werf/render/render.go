@@ -104,6 +104,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupFinalRepo(&commonCmdData, cmd)
 	common.SetupStubTags(&commonCmdData, cmd)
 
+	common.SetupSynchronization(&commonCmdData, cmd)
 	common.SetupKubeConfig(&commonCmdData, cmd)
 	common.SetupKubeConfigBase64(&commonCmdData, cmd)
 	common.SetupKubeContext(&commonCmdData, cmd)
@@ -120,8 +121,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupLogOptionsDefaultQuiet(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
-
-	common.SetupSynchronization(&commonCmdData, cmd)
 
 	common.SetupRelease(&commonCmdData, cmd, true)
 	common.SetupNamespace(&commonCmdData, cmd, true)
@@ -477,12 +476,12 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 
 			headHash, err := giterminismManager.LocalGitRepo().HeadCommitHash(ctx)
 			if err != nil {
-				return fmt.Errorf("get HEAD commit hash: %w", err)
+				return fmt.Errorf("getting HEAD commit hash failed: %w", err)
 			}
 
 			headTime, err := giterminismManager.LocalGitRepo().HeadCommitTime(ctx)
 			if err != nil {
-				return fmt.Errorf("get HEAD commit time: %w", err)
+				return fmt.Errorf("getting HEAD commit time failed: %w", err)
 			}
 
 			if vals, err := helpers.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, imagesInfoGetters, helpers.ServiceValuesOptions{
