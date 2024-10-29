@@ -364,6 +364,8 @@ werf plan --repo registry.mydomain.com/web --env production
       --status-progress-period=5
             Status progress period in seconds. Set -1 to stop showing status progress. Defaults to  
             $WERF_STATUS_PROGRESS_PERIOD_SECONDS or 5 seconds
+      --stub-tags=false
+            Use stubs instead of real tags (default $WERF_STUB_TAGS)
   -S, --synchronization=''
             Address of synchronizer for multiple werf processes to work with a single repo.
             
@@ -394,5 +396,9 @@ werf plan --repo registry.mydomain.com/web --env production
       --virtual-merge=false
             Enable virtual/ephemeral merge commit mode when building current application state      
             ($WERF_VIRTUAL_MERGE by default)
+      --without-images=false
+            Disable building of images defined in the werf.yaml (if any) and usage of such images   
+            in the .helm/templates ($WERF_WITHOUT_IMAGES or false by default — e.g. enable all      
+            images defined in the werf.yaml by default)
 ```
 

@@ -51,6 +51,7 @@ import (
 	"github.com/werf/werf/pkg/giterminism_manager"
 	"github.com/werf/werf/pkg/image"
 	"github.com/werf/werf/pkg/ssh_agent"
+	"github.com/werf/werf/pkg/storage"
 	"github.com/werf/werf/pkg/storage/lrumeta"
 	"github.com/werf/werf/pkg/storage/manager"
 	"github.com/werf/werf/pkg/tmp_manager"
@@ -115,10 +116,6 @@ werf plan --repo registry.mydomain.com/web --env production`,
 		},
 	})
 
-	if isSpecificImagesEnabled() {
-		commonCmdData.SetupWithoutImages(cmd)
-	}
-
 	common.SetupDir(&commonCmdData, cmd)
 	common.SetupGitWorkTree(&commonCmdData, cmd)
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
@@ -176,6 +173,9 @@ werf plan --repo registry.mydomain.com/web --env production`,
 	commonCmdData.SetupDisableDefaultValues(cmd)
 	commonCmdData.SetupDisableDefaultSecretValues(cmd)
 	commonCmdData.SetupSkipDependenciesRepoRefresh(cmd)
+
+	commonCmdData.SetupWithoutImages(cmd)
+	common.SetupStubTags(&commonCmdData, cmd)
 
 	common.SetupSaveBuildReport(&commonCmdData, cmd)
 	common.SetupBuildReportPath(&commonCmdData, cmd)
@@ -301,12 +301,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		return fmt.Errorf("unable to load werf config: %w", err)
 	}
 
-	var withoutImages bool
-	if isSpecificImagesEnabled() {
-		withoutImages = *commonCmdData.WithoutImages
-	}
-
-	imagesToProcess, err := config.NewImagesToProcess(werfConfig, imageNameListFromArgs, true, withoutImages)
+	imagesToProcess, err := config.NewImagesToProcess(werfConfig, imageNameListFromArgs, true, *commonCmdData.WithoutImages)
 	if err != nil {
 		return err
 	}
@@ -332,9 +327,22 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 	}
 
 	var imagesInfoGetters []*image.InfoGetter
-	var imagesRepo string
+	var imagesRepository string
+	var isStub bool
+	var stubImageNameList []string
 
-	if !imagesToProcess.WithoutImages {
+	addr, err := commonCmdData.Repo.GetAddress()
+	if err != nil {
+		return err
+	}
+
+	switch {
+	case imagesToProcess.WithoutImages:
+	case *commonCmdData.StubTags || addr == storage.LocalStorageAddress:
+		imagesRepository = "REPO"
+		isStub = true
+		stubImageNameList = append(stubImageNameList, imagesToProcess.FinalImageNameList...)
+	default:
 		stagesStorage, err := common.GetStagesStorage(ctx, containerBackend, &commonCmdData)
 		if err != nil {
 			return err
@@ -367,7 +375,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 
 		storageManager := manager.NewStorageManager(projectName, stagesStorage, finalStagesStorage, secondaryStagesStorageList, cacheStagesStorageList, storageLockManager)
 
-		imagesRepo = storageManager.GetServiceValuesRepo()
+		imagesRepository = storageManager.GetServiceValuesRepo()
 
 		conveyorOptions, err := common.GetConveyorOptionsWithParallel(ctx, &commonCmdData, imagesToProcess, buildOptions)
 		if err != nil {
@@ -473,9 +481,12 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		return fmt.Errorf("getting HEAD commit time failed: %w", err)
 	}
 
-	if vals, err := helpers.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepo, imagesInfoGetters, helpers.ServiceValuesOptions{
+	if vals, err := helpers.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, imagesInfoGetters, helpers.ServiceValuesOptions{
 		Namespace:                namespace,
 		Env:                      *commonCmdData.Environment,
+				IsStub:                   isStub,
+				DisableEnvStub:           true,
+				StubImageNameList:        stubImageNameList,
 		SetDockerConfigJsonValue: *commonCmdData.SetDockerConfigJsonValue,
 		DockerConfigPath:         *commonCmdData.DockerConfig,
 		CommitHash:               headHash,

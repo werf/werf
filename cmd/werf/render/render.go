@@ -276,20 +276,25 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 	logboek.LogOptionalLn()
 
 	var imagesInfoGetters []*image.InfoGetter
-	var imagesRepo string
+	var imagesRepository string
 	var isStub bool
 	var stubImageNameList []string
 
-	if !imagesToProcess.WithoutImages {
-		addr, err := commonCmdData.Repo.GetAddress()
-		if err != nil {
+	addr, err := commonCmdData.Repo.GetAddress()
+	if err != nil {
+		return err
+	}
+
+	switch {
+	case imagesToProcess.WithoutImages:
+	case *commonCmdData.StubTags || addr == storage.LocalStorageAddress:
+		imagesRepository = "REPO"
+		isStub = true
+		stubImageNameList = append(stubImageNameList, imagesToProcess.FinalImageNameList...)
+	default:
+		if err := common.DockerRegistryInit(ctx, &commonCmdData, registryMirrors); err != nil {
 			return err
 		}
-
-		if !*commonCmdData.StubTags && addr != storage.LocalStorageAddress {
-			if err := common.DockerRegistryInit(ctx, &commonCmdData, registryMirrors); err != nil {
-				return err
-			}
 
 			stagesStorage, err := common.GetStagesStorage(ctx, containerBackend, &commonCmdData)
 			if err != nil {
@@ -320,56 +325,51 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 				return err
 			}
 
-			storageManager := manager.NewStorageManager(projectName, stagesStorage, finalStagesStorage, secondaryStagesStorageList, cacheStagesStorageList, storageLockManager)
+		storageManager := manager.NewStorageManager(projectName, stagesStorage, finalStagesStorage, secondaryStagesStorageList, cacheStagesStorageList, storageLockManager)
 
-			imagesRepo = storageManager.GetServiceValuesRepo()
+		imagesRepository = storageManager.GetServiceValuesRepo()
 
-			conveyorOptions, err := common.GetConveyorOptionsWithParallel(ctx, &commonCmdData, imagesToProcess, buildOptions)
-			if err != nil {
-				return err
-			}
+		conveyorOptions, err := common.GetConveyorOptionsWithParallel(ctx, &commonCmdData, imagesToProcess, buildOptions)
+		if err != nil {
+			return err
+		}
 
-			// Override default behaviour:
-			// Print build logs on error by default.
-			// Always print logs if --log-verbose is specified (level.Info).
-			isVerbose := logboek.Context(ctx).IsAcceptedLevel(level.Default)
-			conveyorOptions.DeferBuildLog = !isVerbose
+		// Override default behaviour:
+		// Print build logs on error by default.
+		// Always print logs if --log-verbose is specified (level.Info).
+		isVerbose := logboek.Context(ctx).IsAcceptedLevel(level.Default)
+		conveyorOptions.DeferBuildLog = !isVerbose
 
-			conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, giterminismManager.ProjectDir(), projectTmpDir, ssh_agent.SSHAuthSock, containerBackend, storageManager, storageLockManager, conveyorOptions)
-			defer conveyorWithRetry.Terminate()
+		conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, giterminismManager.ProjectDir(), projectTmpDir, ssh_agent.SSHAuthSock, containerBackend, storageManager, storageLockManager, conveyorOptions)
+		defer conveyorWithRetry.Terminate()
 
-			if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
-				if common.GetRequireBuiltImages(ctx, &commonCmdData) {
-					shouldBeBuiltOptions, err := common.GetShouldBeBuiltOptions(&commonCmdData, imagesToProcess)
-					if err != nil {
-						return err
-					}
-
-					if err := c.ShouldBeBuilt(ctx, shouldBeBuiltOptions); err != nil {
-						return err
-					}
-				} else {
-					if err := c.Build(ctx, buildOptions); err != nil {
-						return err
-					}
-				}
-
-				imagesInfoGetters, err = c.GetImageInfoGetters(image.InfoGetterOptions{CustomTagFunc: useCustomTagFunc})
+		if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
+			if common.GetRequireBuiltImages(ctx, &commonCmdData) {
+				shouldBeBuiltOptions, err := common.GetShouldBeBuiltOptions(&commonCmdData, imagesToProcess)
 				if err != nil {
 					return err
 				}
 
-				return nil
-			}); err != nil {
+				if err := c.ShouldBeBuilt(ctx, shouldBeBuiltOptions); err != nil {
+					return err
+				}
+			} else {
+				if err := c.Build(ctx, buildOptions); err != nil {
+					return err
+				}
+			}
+
+			imagesInfoGetters, err = c.GetImageInfoGetters(image.InfoGetterOptions{CustomTagFunc: useCustomTagFunc})
+			if err != nil {
 				return err
 			}
 
-			logboek.LogOptionalLn()
-		} else {
-			imagesRepo = "REPO"
-			isStub = true
-			stubImageNameList = append(stubImageNameList, imagesToProcess.FinalImageNameList...)
+			return nil
+		}); err != nil {
+			return err
 		}
+
+		logboek.LogOptionalLn()
 	}
 
 	secretsManager := secrets_manager.NewSecretsManager(secrets_manager.SecretsManagerOptions{DisableSecretsDecryption: *commonCmdData.IgnoreSecretKey})
@@ -406,7 +406,7 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 		return fmt.Errorf("getting HEAD commit time failed: %w", err)
 	}
 
-	if vals, err := helpers.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepo, imagesInfoGetters, helpers.ServiceValuesOptions{
+	if vals, err := helpers.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, imagesInfoGetters, helpers.ServiceValuesOptions{
 		Namespace:                namespace,
 		Env:                      *commonCmdData.Environment,
 		IsStub:                   isStub,
