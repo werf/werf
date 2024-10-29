@@ -47,6 +47,7 @@ var cmdData struct {
 
 var commonCmdData common.CmdData
 
+// TODO: support specific images in v3 by default.
 func isSpecificImagesEnabled() bool {
 	return util.GetBoolEnvironmentDefaultFalse("WERF_CONVERGE_ENABLE_IMAGES_PARAMS")
 }
@@ -94,10 +95,6 @@ werf converge --repo registry.mydomain.com/web --env production`,
 			})
 		},
 	})
-
-	if isSpecificImagesEnabled() {
-		commonCmdData.SetupWithoutImages(cmd)
-	}
 
 	common.SetupDir(&commonCmdData, cmd)
 	common.SetupGitWorkTree(&commonCmdData, cmd)
@@ -156,6 +153,7 @@ werf converge --repo registry.mydomain.com/web --env production`,
 	commonCmdData.SetupDisableDefaultValues(cmd)
 	commonCmdData.SetupDisableDefaultSecretValues(cmd)
 	commonCmdData.SetupSkipDependenciesRepoRefresh(cmd)
+	commonCmdData.SetupWithoutImages(cmd)
 
 	common.SetupSaveBuildReport(&commonCmdData, cmd)
 	common.SetupBuildReportPath(&commonCmdData, cmd)
@@ -286,12 +284,7 @@ func run(
 		return fmt.Errorf("unable to load werf config: %w", err)
 	}
 
-	var withoutImages bool
-	if isSpecificImagesEnabled() {
-		withoutImages = *commonCmdData.WithoutImages
-	}
-
-	imagesToProcess, err := config.NewImagesToProcess(werfConfig, imageNameListFromArgs, true, withoutImages)
+	imagesToProcess, err := config.NewImagesToProcess(werfConfig, imageNameListFromArgs, true, *commonCmdData.WithoutImages)
 	if err != nil {
 		return err
 	}

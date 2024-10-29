@@ -244,104 +244,104 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 	logboek.LogOptionalLn()
 
 	var imagesInfoGetters []*image.InfoGetter
-	var imagesRepo string
+	var imagesRepository string
 	var isStub bool
 	var stubImageNameList []string
 
-	if !imagesToProcess.WithoutImages {
-		addr, err := commonCmdData.Repo.GetAddress()
+	addr, err := commonCmdData.Repo.GetAddress()
+	if err != nil {
+		return err
+	}
+
+	switch {
+	case imagesToProcess.WithoutImages:
+	case *commonCmdData.StubTags || addr == storage.LocalStorageAddress:
+		imagesRepository = "REPO"
+		isStub = true
+		stubImageNameList = append(stubImageNameList, imagesToProcess.FinalImageNameList...)
+	default:
+		if err := common.DockerRegistryInit(ctx, &commonCmdData, registryMirrors); err != nil {
+			return err
+		}
+
+		stagesStorage, err := common.GetStagesStorage(ctx, containerBackend, &commonCmdData)
+		if err != nil {
+			return err
+		}
+		finalStagesStorage, err := common.GetOptionalFinalStagesStorage(ctx, containerBackend, &commonCmdData)
+		if err != nil {
+			return err
+		}
+		common.SetupOndemandKubeInitializer(*commonCmdData.KubeContext, *commonCmdData.KubeConfig, *commonCmdData.KubeConfigBase64, *commonCmdData.KubeConfigPathMergeList)
+		if err := common.GetOndemandKubeInitializer().Init(ctx); err != nil {
+			return err
+		}
+		synchronization, err := common.GetSynchronization(ctx, &commonCmdData, projectName, stagesStorage)
+		if err != nil {
+			return err
+		}
+		storageLockManager, err := common.GetStorageLockManager(ctx, synchronization)
+		if err != nil {
+			return err
+		}
+		secondaryStagesStorageList, err := common.GetSecondaryStagesStorageList(ctx, stagesStorage, containerBackend, &commonCmdData)
+		if err != nil {
+			return err
+		}
+		cacheStagesStorageList, err := common.GetCacheStagesStorageList(ctx, containerBackend, &commonCmdData)
+		if err != nil {
+			return err
+		}
+		useCustomTagFunc, err := common.GetUseCustomTagFunc(&commonCmdData, giterminismManager, imagesToProcess)
 		if err != nil {
 			return err
 		}
 
-		if !*commonCmdData.StubTags && addr != storage.LocalStorageAddress {
-			if err := common.DockerRegistryInit(ctx, &commonCmdData, registryMirrors); err != nil {
-				return err
-			}
+		storageManager := manager.NewStorageManager(projectName, stagesStorage, finalStagesStorage, secondaryStagesStorageList, cacheStagesStorageList, storageLockManager)
 
-			stagesStorage, err := common.GetStagesStorage(ctx, containerBackend, &commonCmdData)
-			if err != nil {
-				return err
-			}
-			finalStagesStorage, err := common.GetOptionalFinalStagesStorage(ctx, containerBackend, &commonCmdData)
-			if err != nil {
-				return err
-			}
-			common.SetupOndemandKubeInitializer(*commonCmdData.KubeContext, *commonCmdData.KubeConfig, *commonCmdData.KubeConfigBase64, *commonCmdData.KubeConfigPathMergeList)
-			if err := common.GetOndemandKubeInitializer().Init(ctx); err != nil {
-				return err
-			}
-			synchronization, err := common.GetSynchronization(ctx, &commonCmdData, projectName, stagesStorage)
-			if err != nil {
-				return err
-			}
-			storageLockManager, err := common.GetStorageLockManager(ctx, synchronization)
-			if err != nil {
-				return err
-			}
-			secondaryStagesStorageList, err := common.GetSecondaryStagesStorageList(ctx, stagesStorage, containerBackend, &commonCmdData)
-			if err != nil {
-				return err
-			}
-			cacheStagesStorageList, err := common.GetCacheStagesStorageList(ctx, containerBackend, &commonCmdData)
-			if err != nil {
-				return err
-			}
-			useCustomTagFunc, err := common.GetUseCustomTagFunc(&commonCmdData, giterminismManager, imagesToProcess)
-			if err != nil {
-				return err
-			}
+		imagesRepository = storageManager.GetServiceValuesRepo()
 
-			storageManager := manager.NewStorageManager(projectName, stagesStorage, finalStagesStorage, secondaryStagesStorageList, cacheStagesStorageList, storageLockManager)
+		conveyorOptions, err := common.GetConveyorOptionsWithParallel(ctx, &commonCmdData, imagesToProcess, buildOptions)
+		if err != nil {
+			return err
+		}
 
-			imagesRepo = storageManager.GetServiceValuesRepo()
+		// Override default behaviour:
+		// Print build logs on error by default.
+		// Always print logs if --log-verbose is specified (level.Info).
+		isVerbose := logboek.Context(ctx).IsAcceptedLevel(level.Default)
+		conveyorOptions.DeferBuildLog = !isVerbose
 
-			conveyorOptions, err := common.GetConveyorOptionsWithParallel(ctx, &commonCmdData, imagesToProcess, buildOptions)
-			if err != nil {
-				return err
-			}
+		conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, giterminismManager.ProjectDir(), projectTmpDir, ssh_agent.SSHAuthSock, containerBackend, storageManager, storageLockManager, conveyorOptions)
+		defer conveyorWithRetry.Terminate()
 
-			// Override default behaviour:
-			// Print build logs on error by default.
-			// Always print logs if --log-verbose is specified (level.Info).
-			isVerbose := logboek.Context(ctx).IsAcceptedLevel(level.Default)
-			conveyorOptions.DeferBuildLog = !isVerbose
-
-			conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, giterminismManager.ProjectDir(), projectTmpDir, ssh_agent.SSHAuthSock, containerBackend, storageManager, storageLockManager, conveyorOptions)
-			defer conveyorWithRetry.Terminate()
-
-			if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
-				if common.GetRequireBuiltImages(ctx, &commonCmdData) {
-					shouldBeBuiltOptions, err := common.GetShouldBeBuiltOptions(&commonCmdData, imagesToProcess)
-					if err != nil {
-						return err
-					}
-
-					if err := c.ShouldBeBuilt(ctx, shouldBeBuiltOptions); err != nil {
-						return err
-					}
-				} else {
-					if err := c.Build(ctx, buildOptions); err != nil {
-						return err
-					}
-				}
-
-				imagesInfoGetters, err = c.GetImageInfoGetters(image.InfoGetterOptions{CustomTagFunc: useCustomTagFunc})
+		if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
+			if common.GetRequireBuiltImages(ctx, &commonCmdData) {
+				shouldBeBuiltOptions, err := common.GetShouldBeBuiltOptions(&commonCmdData, imagesToProcess)
 				if err != nil {
 					return err
 				}
 
-				return nil
-			}); err != nil {
+				if err := c.ShouldBeBuilt(ctx, shouldBeBuiltOptions); err != nil {
+					return err
+				}
+			} else {
+				if err := c.Build(ctx, buildOptions); err != nil {
+					return err
+				}
+			}
+
+			imagesInfoGetters, err = c.GetImageInfoGetters(image.InfoGetterOptions{CustomTagFunc: useCustomTagFunc})
+			if err != nil {
 				return err
 			}
 
-			logboek.LogOptionalLn()
-		} else {
-			imagesRepo = "REPO"
-			isStub = true
-			stubImageNameList = append(stubImageNameList, imagesToProcess.FinalImageNameList...)
+			return nil
+		}); err != nil {
+			return err
 		}
+
+		logboek.LogOptionalLn()
 	}
 
 	relChartPath, err := common.GetHelmChartDir(
@@ -485,7 +485,7 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 				return fmt.Errorf("get HEAD commit time: %w", err)
 			}
 
-			if vals, err := helpers.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepo, imagesInfoGetters, helpers.ServiceValuesOptions{
+			if vals, err := helpers.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, imagesInfoGetters, helpers.ServiceValuesOptions{
 				Namespace:                releaseNamespace,
 				Env:                      *commonCmdData.Environment,
 				IsStub:                   isStub,

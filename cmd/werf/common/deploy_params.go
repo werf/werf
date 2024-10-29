@@ -3,9 +3,6 @@ package common
 import (
 	"fmt"
 	"strings"
-
-	"github.com/werf/werf/v2/pkg/config"
-	"github.com/werf/werf/v2/pkg/image"
 )
 
 func GetUserExtraAnnotations(cmdData *CmdData) (map[string]string, error) {
@@ -48,13 +45,4 @@ func KeyValueArrayToMap(pairs []string, sep string) (map[string]string, error) {
 	}
 
 	return keyValueMap, nil
-}
-
-func StubImageInfoGetters(imagesToProcess config.ImagesToProcess) []*image.InfoGetter {
-	var getters []*image.InfoGetter
-	for _, imageName := range imagesToProcess.FinalImageNameList {
-		getters = append(getters, image.NewInfoGetter(imageName, fmt.Sprintf("%s:%s", StubRepoAddress, StubTag), image.InfoGetterOptions{}))
-	}
-
-	return getters
 }
