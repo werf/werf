@@ -104,6 +104,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupFinalRepo(&commonCmdData, cmd)
 	common.SetupStubTags(&commonCmdData, cmd)
 
+	common.SetupSynchronization(&commonCmdData, cmd)
 	common.SetupKubeConfig(&commonCmdData, cmd)
 	common.SetupKubeConfigBase64(&commonCmdData, cmd)
 	common.SetupKubeContext(&commonCmdData, cmd)
@@ -120,8 +121,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupLogOptionsDefaultQuiet(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
-
-	common.SetupSynchronization(&commonCmdData, cmd)
 
 	common.SetupRelease(&commonCmdData, cmd, true)
 	common.SetupNamespace(&commonCmdData, cmd, true)
