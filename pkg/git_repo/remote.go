@@ -238,7 +238,7 @@ func (repo *Remote) FetchOrigin(ctx context.Context, opts FetchOptions) error {
 	}
 
 	return repo.withRemoteRepoLock(ctx, func() error {
-		rawRepo, err := git.PlainOpenWithOptions(repo.GetClonePath(), &git.PlainOpenOptions{EnableDotGitCommonDir: true})
+		rawRepo, err := repo.PlainOpen()
 		if err != nil {
 			return fmt.Errorf("cannot open repo: %w", err)
 		}
@@ -252,6 +252,10 @@ func (repo *Remote) FetchOrigin(ctx context.Context, opts FetchOptions) error {
 
 		return nil
 	})
+}
+
+func (repo *Remote) PlainOpen() (*git.Repository, error) {
+	return gitRepoPlainOpen(repo.GetClonePath())
 }
 
 func (repo *Remote) HeadCommitHash(ctx context.Context) (string, error) {
@@ -289,7 +293,7 @@ func (repo *Remote) findReference(rawRepo *git.Repository, reference string) (st
 func (repo *Remote) LatestBranchCommit(ctx context.Context, branch string) (string, error) {
 	var err error
 
-	rawRepo, err := git.PlainOpenWithOptions(repo.GetClonePath(), &git.PlainOpenOptions{EnableDotGitCommonDir: true})
+	rawRepo, err := repo.PlainOpen()
 	if err != nil {
 		return "", fmt.Errorf("cannot open repo: %w", err)
 	}
@@ -310,7 +314,7 @@ func (repo *Remote) LatestBranchCommit(ctx context.Context, branch string) (stri
 func (repo *Remote) TagCommit(ctx context.Context, tag string) (string, error) {
 	var err error
 
-	rawRepo, err := git.PlainOpenWithOptions(repo.GetClonePath(), &git.PlainOpenOptions{EnableDotGitCommonDir: true})
+	rawRepo, err := repo.PlainOpen()
 	if err != nil {
 		return "", fmt.Errorf("cannot open repo: %w", err)
 	}
@@ -387,7 +391,7 @@ func (repo *Remote) initRepoHandleBackedByWorkTree(ctx context.Context, commit s
 		defer werf.ReleaseHostLock(lock)
 	}
 
-	repository, err := git.PlainOpenWithOptions(repo.GetClonePath(), &git.PlainOpenOptions{EnableDotGitCommonDir: true})
+	repository, err := repo.PlainOpen()
 	if err != nil {
 		return nil, fmt.Errorf("cannot open git repository %q: %w", repo.GetClonePath(), err)
 	}

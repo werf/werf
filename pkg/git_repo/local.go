@@ -47,7 +47,7 @@ type ServiceBranchOptions struct {
 }
 
 func OpenLocalRepo(ctx context.Context, name, workTreeDir string, opts OpenLocalRepoOptions) (l *Local, err error) {
-	_, err = git.PlainOpenWithOptions(workTreeDir, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
+	_, err = gitRepoPlainOpen(workTreeDir)
 	if err != nil {
 		if err == git.ErrRepositoryNotExists {
 			return l, ErrLocalRepositoryNotExists
@@ -119,12 +119,7 @@ func (repo *Local) GetWorkTreeDir() string {
 }
 
 func (repo *Local) PlainOpen() (*git.Repository, error) {
-	repository, err := git.PlainOpenWithOptions(repo.WorkTreeDir, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
-	if err != nil {
-		return nil, fmt.Errorf("cannot open git work tree %q: %w", repo.WorkTreeDir, err)
-	}
-
-	return repository, nil
+	return gitRepoPlainOpen(repo.GetWorkTreeDir())
 }
 
 func (repo *Local) SyncWithOrigin(ctx context.Context) error {
