@@ -1,6 +1,6 @@
 FROM quay.io/centos/centos:stream9
 
-RUN dnf -y install fuse-overlayfs git git-lfs gnupg nano jq bash make ca-certificates openssh-clients telnet iputils iproute dnsutils && \
+RUN dnf -y install fuse-overlayfs git git-lfs gnupg nano jq bash make ca-certificates openssh-clients telnet iputils iproute dnsutils tzdata && \
     dnf clean all && rm -rf /var/cache /var/log/dnf* /var/log/yum.*
 
 RUN curl -sSLO https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 && \
