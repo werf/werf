@@ -31,7 +31,8 @@ require (
 	github.com/dustin/go-humanize v1.0.1
 	github.com/fluxcd/flagger v1.36.1
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
-	github.com/go-git/go-git/v5 v5.10.1
+	github.com/go-git/go-billy/v5 v5.5.0
+	github.com/go-git/go-git/v5 v5.12.0
 	github.com/go-openapi/spec v0.21.0
 	github.com/go-openapi/strfmt v0.23.0
 	github.com/go-openapi/validate v0.24.0
@@ -180,10 +181,8 @@ require (
 	github.com/fsouza/go-dockerclient v1.10.2 // indirect
 	github.com/fvbommel/sortorder v1.1.0 // indirect
 	github.com/garyburd/redigo v1.6.4 // indirect
-	github.com/gliderlabs/ssh v0.3.6 // indirect
 	github.com/go-errors/errors v1.5.1 // indirect
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
-	github.com/go-git/go-billy/v5 v5.5.0 // indirect
 	github.com/go-gorp/gorp/v3 v3.1.0 // indirect
 	github.com/go-jose/go-jose/v3 v3.0.3 // indirect
 	github.com/go-logr/logr v1.4.1 // indirect
@@ -293,7 +292,7 @@ require (
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/seccomp/libseccomp-golang v0.10.0 // indirect
 	github.com/secure-systems-lab/go-securesystemslib v0.8.0 // indirect
-	github.com/sergi/go-diff v1.3.1 // indirect
+	github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3 // indirect
 	github.com/shibumi/go-pathspec v1.3.0 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/sigstore/fulcio v1.4.4 // indirect

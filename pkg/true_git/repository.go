@@ -3,17 +3,26 @@ package true_git
 import (
 	"context"
 	"fmt"
+	"io"
+	"os"
+	"os/user"
 	"path/filepath"
 	"strings"
 
 	"github.com/Masterminds/semver"
+	"github.com/go-git/go-billy/v5"
+	"github.com/go-git/go-billy/v5/osfs"
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing/cache"
+	"github.com/go-git/go-git/v5/storage/filesystem"
+	"github.com/go-git/go-git/v5/storage/filesystem/dotgit"
+	"github.com/go-git/go-git/v5/utils/ioutil"
 
 	"github.com/werf/werf/pkg/util"
 )
 
 func GitOpenWithCustomWorktreeDir(gitDir, worktreeDir string) (*git.Repository, error) {
-	return git.PlainOpenWithOptions(worktreeDir, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
+	return PlainOpenWithOptions(worktreeDir, &PlainOpenOptions{EnableDotGitCommonDir: true})
 }
 
 type FetchOptions struct {
@@ -86,4 +95,187 @@ func IsShallowClone(ctx context.Context, path string) (bool, error) {
 	}
 
 	return strings.TrimSpace(checkShallowCmd.OutBuf.String()) == "true", nil
+}
+
+type PlainOpenOptions struct {
+	// DetectDotGit defines whether parent directories should be
+	// walked until a .git directory or file is found.
+	DetectDotGit bool
+	// Enable .git/commondir support (see https://git-scm.com/docs/gitrepository-layout#Documentation/gitrepository-layout.txt).
+	// NOTE: This option will only work with the filesystem storage.
+	EnableDotGitCommonDir bool
+}
+
+func PlainOpenWithOptions(path string, o *PlainOpenOptions) (*git.Repository, error) {
+	dot, wt, err := dotGitToOSFilesystems(path, o.DetectDotGit)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := dot.Stat(""); err != nil {
+		if os.IsNotExist(err) {
+			return nil, git.ErrRepositoryNotExists
+		}
+
+		return nil, err
+	}
+
+	var repositoryFs billy.Filesystem
+
+	if o.EnableDotGitCommonDir {
+		dotGitCommon, err := dotGitCommonDirectory(dot)
+		if err != nil {
+			return nil, err
+		}
+		repositoryFs = dotgit.NewRepositoryFilesystem(dot, dotGitCommon)
+	} else {
+		repositoryFs = dot
+	}
+
+	s := filesystem.NewStorageWithOptions(repositoryFs, cache.NewObjectLRUDefault(), filesystem.Options{
+		AlternatesFS: osfs.New("/", osfs.WithBoundOS()),
+	})
+
+	return git.Open(s, wt)
+}
+
+func dotGitToOSFilesystems(path string, detect bool) (dot, wt billy.Filesystem, err error) {
+	path, err = replaceTildeWithHome(path)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if path, err = filepath.Abs(path); err != nil {
+		return nil, nil, err
+	}
+
+	var fs billy.Filesystem
+	var fi os.FileInfo
+	for {
+		fs = osfs.New(path)
+
+		pathinfo, err := fs.Stat("/")
+		if !os.IsNotExist(err) {
+			if pathinfo == nil {
+				return nil, nil, err
+			}
+			if !pathinfo.IsDir() && detect {
+				fs = osfs.New(filepath.Dir(path))
+			}
+		}
+
+		fi, err = fs.Stat(git.GitDirName)
+		if err == nil {
+			// no error; stop
+			break
+		}
+		if !os.IsNotExist(err) {
+			// unknown error; stop
+			return nil, nil, err
+		}
+		if detect {
+			// try its parent as long as we haven't reached
+			// the root dir
+			if dir := filepath.Dir(path); dir != path {
+				path = dir
+				continue
+			}
+		}
+		// not detecting via parent dirs and the dir does not exist;
+		// stop
+		return fs, nil, nil
+	}
+
+	if fi.IsDir() {
+		dot, err = fs.Chroot(git.GitDirName)
+		return dot, fs, err
+	}
+
+	dot, err = dotGitFileToOSFilesystem(path, fs)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return dot, fs, nil
+}
+
+func replaceTildeWithHome(path string) (string, error) {
+	if strings.HasPrefix(path, "~") {
+		firstSlash := strings.Index(path, "/")
+		if firstSlash == 1 {
+			home, err := os.UserHomeDir()
+			if err != nil {
+				return path, err
+			}
+			return strings.Replace(path, "~", home, 1), nil
+		} else if firstSlash > 1 {
+			username := path[1:firstSlash]
+			userAccount, err := user.Lookup(username)
+			if err != nil {
+				return path, err
+			}
+			return strings.Replace(path, path[:firstSlash], userAccount.HomeDir, 1), nil
+		}
+	}
+
+	return path, nil
+}
+
+func dotGitFileToOSFilesystem(path string, fs billy.Filesystem) (bfs billy.Filesystem, err error) {
+	f, err := fs.Open(git.GitDirName)
+	if err != nil {
+		return nil, err
+	}
+	defer ioutil.CheckClose(f, &err)
+
+	b, err := io.ReadAll(f)
+	if err != nil {
+		return nil, err
+	}
+
+	line := string(b)
+	const prefix = "gitdir: "
+	if !strings.HasPrefix(line, prefix) {
+		return nil, fmt.Errorf(".git file has no %s prefix", prefix)
+	}
+
+	gitdir := strings.Split(line[len(prefix):], "\n")[0]
+	gitdir = strings.TrimSpace(gitdir)
+	if filepath.IsAbs(gitdir) {
+		return osfs.New(gitdir), nil
+	}
+
+	return osfs.New(fs.Join(path, gitdir)), nil
+}
+
+func dotGitCommonDirectory(fs billy.Filesystem) (commonDir billy.Filesystem, err error) {
+	f, err := fs.Open("commondir")
+	if os.IsNotExist(err) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	b, err := io.ReadAll(f)
+	if err != nil {
+		return nil, err
+	}
+	if len(b) > 0 {
+		path := strings.TrimSpace(string(b))
+		if filepath.IsAbs(path) {
+			commonDir = osfs.New(path)
+		} else {
+			commonDir = osfs.New(filepath.Join(fs.Root(), path))
+		}
+		if _, err := commonDir.Stat(""); err != nil {
+			if os.IsNotExist(err) {
+				return nil, git.ErrRepositoryIncomplete
+			}
+
+			return nil, err
+		}
+	}
+
+	return commonDir, nil
 }
