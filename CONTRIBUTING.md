@@ -113,6 +113,7 @@ Supported scopes are the following:
 - ci
 - release
 - dev
+- deps
 ```
 
 #### Subject
