@@ -219,3 +219,14 @@ func (p *Project) runCommand(opts runCommandOptions) string {
 
 	return string(outb)
 }
+
+func (p *Project) Compose(opts *BuildOptions) (combinedOut string) {
+	if opts == nil {
+		opts = &BuildOptions{}
+	}
+
+	args := append([]string{"compose"}, opts.ExtraArgs...)
+	outb := p.runCommand(runCommandOptions{Args: args, ShouldFail: opts.ShouldFail})
+
+	return string(outb)
+}

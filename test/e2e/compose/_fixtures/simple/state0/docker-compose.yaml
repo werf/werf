@@ -1,0 +1,5 @@
+services:
+  frontend:
+    image: $WERF_FRONTEND_DOCKER_IMAGE_NAME
+  backend:
+    image: $WERF_BACKEND_DOCKER_IMAGE_NAME

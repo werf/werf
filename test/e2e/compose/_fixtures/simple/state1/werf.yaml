@@ -1,0 +1,8 @@
+project: werf-test-e2e-build-simple
+configVersion: 1
+---
+image: frontend
+dockerfile: frontend.Dockerfile
+---
+image: backend
+dockerfile: backend.Dockerfile
