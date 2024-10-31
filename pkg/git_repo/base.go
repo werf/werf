@@ -83,8 +83,20 @@ func (repo *Base) TagCommit(ctx context.Context, branch string) (string, error) 
 	panic("not implemented")
 }
 
+func gitRepoPlainOpen(path string) (*git.Repository, error) {
+	repository, err := true_git.PlainOpenWithOptions(path, &true_git.PlainOpenOptions{EnableDotGitCommonDir: true})
+	if err != nil {
+		return nil, fmt.Errorf("cannot open git work tree %q: %w", path, err)
+	}
+	return repository, nil
+}
+
+func (repo *Base) PlainOpen(path string) (*git.Repository, error) {
+	return gitRepoPlainOpen(path)
+}
+
 func (repo *Base) remoteOriginUrl(repoPath string) (string, error) {
-	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
+	repository, err := repo.PlainOpen(repoPath)
 	if err != nil {
 		return "", fmt.Errorf("cannot open repo %q: %w", repoPath, err)
 	}
@@ -102,7 +114,7 @@ func (repo *Base) remoteOriginUrl(repoPath string) (string, error) {
 }
 
 func (repo *Base) isEmpty(ctx context.Context, repoPath string) (bool, error) {
-	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
+	repository, err := repo.PlainOpen(repoPath)
 	if err != nil {
 		return false, fmt.Errorf("cannot open repo %q: %w", repoPath, err)
 	}
@@ -183,7 +195,7 @@ func (repo *Base) createPatch(ctx context.Context, repoPath, gitDir, repoID, wor
 		return patch, err
 	}
 
-	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
+	repository, err := repo.PlainOpen(repoPath)
 	if err != nil {
 		return nil, fmt.Errorf("cannot open repo %q: %w", repoPath, err)
 	}
@@ -288,7 +300,7 @@ func (repo *Base) createDetachedMergeCommit(ctx context.Context, gitDir, path, w
 		defer werf.ReleaseHostLock(lock)
 	}
 
-	repository, err := git.PlainOpenWithOptions(path, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
+	repository, err := repo.PlainOpen(path)
 	if err != nil {
 		return "", fmt.Errorf("cannot open repo at %s: %w", path, err)
 	}
@@ -309,7 +321,7 @@ func (repo *Base) createDetachedMergeCommit(ctx context.Context, gitDir, path, w
 }
 
 func (repo *Base) getMergeCommitParents(gitDir, commit string) ([]string, error) {
-	repository, err := git.PlainOpenWithOptions(gitDir, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
+	repository, err := repo.PlainOpen(gitDir)
 	if err != nil {
 		return nil, fmt.Errorf("cannot open repo at %s: %w", gitDir, err)
 	}
@@ -369,7 +381,7 @@ func (repo *Base) createArchive(ctx context.Context, repoPath, gitDir, repoID, w
 		return archive, nil
 	}
 
-	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
+	repository, err := repo.PlainOpen(repoPath)
 	if err != nil {
 		return nil, fmt.Errorf("cannot open repo %q: %w", repoPath, err)
 	}
@@ -422,7 +434,7 @@ func (repo *Base) createArchive(ctx context.Context, repoPath, gitDir, repoID, w
 }
 
 func (repo *Base) isCommitExists(ctx context.Context, repoPath, gitDir, commit string) (bool, error) {
-	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
+	repository, err := repo.PlainOpen(repoPath)
 	if err != nil {
 		return false, fmt.Errorf("cannot open repo %q: %w", repoPath, err)
 	}
@@ -443,7 +455,7 @@ func (repo *Base) isCommitExists(ctx context.Context, repoPath, gitDir, commit s
 }
 
 func (repo *Base) tagsList(repoPath string) ([]string, error) {
-	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
+	repository, err := repo.PlainOpen(repoPath)
 	if err != nil {
 		return nil, fmt.Errorf("cannot open repo %q: %w", repoPath, err)
 	}
@@ -476,7 +488,7 @@ func (repo *Base) tagsList(repoPath string) ([]string, error) {
 }
 
 func (repo *Base) remoteBranchesList(repoPath string) ([]string, error) {
-	repository, err := git.PlainOpenWithOptions(repoPath, &git.PlainOpenOptions{EnableDotGitCommonDir: true})
+	repository, err := repo.PlainOpen(repoPath)
 	if err != nil {
 		return nil, fmt.Errorf("cannot open repo %q: %w", repoPath, err)
 	}
