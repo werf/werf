@@ -13,7 +13,7 @@ RUN setcap cap_setuid+ep /usr/bin/newuidmap && \
 
 RUN adduser -D build && echo 'build:100000:65536' | tee /etc/subuid >/etc/subgid
 USER build:build
-RUN mkdir -p /home/build/.local/share/containers
+RUN mkdir -p /home/build/.local/share/containers && mkdir /home/build/.werf
 VOLUME /home/build/.local/share/containers
 
 # Fix fatal: detected dubious ownership in repository.
