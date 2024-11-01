@@ -1,5 +1,24 @@
 # Changelog
 
+## [2.11.0](https://www.github.com/werf/werf/compare/v2.10.10...v2.11.0) (2024-11-01)
+
+
+### Features
+
+* **release:** add crane and tzdata to werf images ([9f0249c](https://www.github.com/werf/werf/commit/9f0249c394af23a2ab11447d285242eb207431d0))
+* **release:** distribute werf images for linux/arm64 plarform ([f653db8](https://www.github.com/werf/werf/commit/f653db85945be1f9696aad7db9bd132c4fbe74c4))
+
+
+### Bug Fixes
+
+* **build, docker:** remove quiet mode when using buildkit ([dc3a2c6](https://www.github.com/werf/werf/commit/dc3a2c622d1a22f7250ce05f6c27674450c5bc35))
+* **cleanup, ecr:** fix aws sso not supported ([157b3eb](https://www.github.com/werf/werf/commit/157b3ebe8a617beefcc7853514b4e5b847384219))
+* **deploy:** ensure werf commands run consistently with service values ([f2ba5fa](https://www.github.com/werf/werf/commit/f2ba5fa053db8e5fdb6f42dd5d1092e22b00f9ef))
+* **deploy:** ensure werf commands run consistently without images or with stubs ([10dec6e](https://www.github.com/werf/werf/commit/10dec6eb1d921c033ab56cbedaf5820354549108))
+* **export, multiplatform:** fix no child with platform linux/amd64 in index ([49a1540](https://www.github.com/werf/werf/commit/49a1540031ed3733b809a348722ccef631553c98))
+* **export, multiplatform:** fix unexpected condition: stage image without labels ([d3c67b8](https://www.github.com/werf/werf/commit/d3c67b8118ac7eac9436f551c508c37ed4a4deac))
+* **release:** fix /home/build/.werf: permission denied when volume is used with werf images ([#6382](https://www.github.com/werf/werf/issues/6382)) ([89bbf76](https://www.github.com/werf/werf/commit/89bbf76fe90fc2406ac497bb2827eac1c1f9f254))
+
 ### [2.10.10](https://www.github.com/werf/werf/compare/v2.10.9...v2.10.10) (2024-10-17)
 
 
