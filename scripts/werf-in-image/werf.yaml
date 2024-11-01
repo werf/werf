@@ -1,67 +1,7 @@
-project: werf-in-image
-configVersion: 1
-{{- $_ := set $ "Groups" (list "1.2" "2") }}
-{{- $_ := set $ "Channels" (list "alpha" "beta" "ea" "stable" "rock-solid") }}
-build:
-  platform:
-    - linux/amd64
-    - linux/arm64
+{{ $_ := set . "App" "werf" }}
+{{ $_ := set . "Distros" (list "alpine" "ubuntu" "centos" "fedora") }}
+{{ $_ := set . "DefaultGroupName" "2" }}
+{{ $_ := set . "DefaultChannelName" "stable" }}
+{{ $_ := set . "DefaultDistroName" "alpine" }}
 
----
-image: trdl
-dockerfile: ./trdl.Dockerfile
-final: false
-args:
-  groups: 1.2 2
-  channels: alpha beta ea stable rock-solid
-  trdl_channels_yaml: |
-{{ .Files.Get "../../trdl_channels.yaml" | nindent 4 }}
-
-{{- range $_, $distro := list "alpine" "ubuntu" "centos" "fedora" }}
----
-image: "{{ $distro }}"
-dockerfile: "./{{ $distro }}.Dockerfile"
-
-  {{- range $_, $group := $.Groups }}
-    {{- range $_, $channel := $.Channels }}
----
-image: "{{ $group }}-{{ $channel }}-{{ $distro }}"
-dockerfile: ./artifact.Dockerfile
-dependencies:
-- image: trdl
-  imports:
-    - type: ImageName
-      targetBuildArg: source_image
-
-args:
-  distro_image: "{{ $distro }}"
-  source: "/usr/local/bin/werf-{{ $group }}-{{ $channel }}"
-  destination: "/usr/local/bin/werf"
-    {{- end }}
-  {{- end }}
-{{- end }}
-
-
-{{- range $_, $distro := list "ubuntu" }}
----
-image: "argocd-cmp-sidecar-{{ $distro }}"
-dockerfile: "./argocd-cmp-sidecar-{{ $distro }}.Dockerfile"
-
-  {{- range $_, $group := $.Groups }}
-    {{- range $_, $channel := $.Channels }}
----
-image: "argocd-cmp-sidecar-{{ $group }}-{{ $channel }}-{{ $distro }}"
-dockerfile: ./artifact.Dockerfile
-dependencies:
-- image: trdl
-  imports:
-    - type: ImageName
-      targetBuildArg: source_image
-
-args:
-  distro_image: "{{ $distro }}"
-  source: "/usr/local/bin/werf-{{ $group }}-{{ $channel }}"
-  destination: "/usr/local/bin/werf"
-    {{- end }}
-  {{- end }}
-{{- end }}
+{{ include "templates/base_config.tmpl" . }}

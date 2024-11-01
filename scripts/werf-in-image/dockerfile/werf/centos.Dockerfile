@@ -1,14 +1,15 @@
-FROM fedora:38
+FROM quay.io/centos/centos:stream9
+ARG TARGETARCH
 
 RUN dnf -y install fuse-overlayfs git git-lfs gnupg nano jq bash make ca-certificates openssh-clients telnet iputils iproute dnsutils tzdata && \
     dnf clean all && rm -rf /var/cache /var/log/dnf* /var/log/yum.*
 
-RUN curl -sSLO https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 && \
-    mv yq_linux_amd64 /usr/local/bin/yq && \
+RUN curl -sSLO https://github.com/mikefarah/yq/releases/latest/download/yq_linux_${TARGETARCH} && \
+    mv yq_linux_${TARGETARCH} /usr/local/bin/yq && \
     chmod +x /usr/local/bin/yq
 
 RUN ARCH=`uname -m` && \
-    if [[ $ARCH -eq "aarch64" ]]; then ARCH=arm64; fi && \
+    case "$ARCH" in "aarch64") ARCH=arm64 ;; esac && \
     curl -sL "https://github.com/google/go-containerregistry/releases/download/v0.20.2/go-containerregistry_Linux_$ARCH.tar.gz" > go-containerregistry.tar.gz && \
     tar -zxvf go-containerregistry.tar.gz -C /usr/local/bin/ crane && \
     rm -f go-containerregistry.tar.gz
