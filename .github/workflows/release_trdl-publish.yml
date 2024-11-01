@@ -86,7 +86,7 @@ jobs:
           ./scripts/werf-in-image/build-and-publish.sh ${{ matrix.dest-registry }}
 
   cleanup:
-    name: Cleanup metadata in ghcr.io/werf/werf-storage
+    name: Cleanup cache repo
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout code
@@ -97,11 +97,12 @@ jobs:
       - name: Install werf
         uses: werf/actions/install@v2
 
-      - name: Cleanup ghcr.io/werf/werf-storage
-        run: |
-          werf cleanup --repo-github-token=${{ secrets.WERF_IN_IMAGE_CLEANUP_GHCR }} --without-kube
+      - name: Cleanup
+        run: werf cleanup
         env:
           WERF_REPO: ghcr.io/werf/werf-storage
+          WERF_REPO_GITHUB_TOKEN: ${{ secrets.WERF_IN_IMAGE_CLEANUP_GHCR }}
+          WERF_WITHOUT_KUBE: 1
 
   notify:
     if: always()
