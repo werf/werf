@@ -48,7 +48,8 @@ var _ = Describe("Complex compose", Label("e2e", "compose", "complex"), func() {
 						ExtraArgs: []string{
 							"up",
 							"--docker-compose-options", "-f docker-compose.yaml -f docker-compose-b.yaml",
-							"--docker-compose-command-options", "--always-recreate-deps"},
+							"--docker-compose-command-options", "--always-recreate-deps",
+						},
 					},
 				})
 				Expect(composeOut).To(ContainSubstring("image backend"))
