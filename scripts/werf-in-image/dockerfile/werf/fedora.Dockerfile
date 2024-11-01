@@ -9,7 +9,7 @@ RUN curl -sSLO https://github.com/mikefarah/yq/releases/latest/download/yq_linux
     chmod +x /usr/local/bin/yq
 
 RUN ARCH=`uname -m` && \
-    if [[ $ARCH -eq "aarch64" ]]; then ARCH=arm64; fi && \
+    case "$ARCH" in "aarch64") ARCH=arm64 ;; esac && \
     curl -sL "https://github.com/google/go-containerregistry/releases/download/v0.20.2/go-containerregistry_Linux_$ARCH.tar.gz" > go-containerregistry.tar.gz && \
     tar -zxvf go-containerregistry.tar.gz -C /usr/local/bin/ crane && \
     rm -f go-containerregistry.tar.gz

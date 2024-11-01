@@ -1,99 +1,47 @@
-{{define "group channel"}}
+{{- define "artifact" }}
+  {{- $image_name := index . 0 }}
+  {{- $group_name := index . 1 }}
+  {{- $channel_name := index . 2 }}
+  {{- $distro_name := index . 3 }}
+  {{- $ctx := index . 4 }}
+  {{- $source_image_name := (printf "trdl-%s-%s-%s" $ctx.App $group_name $channel_name) }}
+  {{- $base_image_name := (printf "%s-%s" $ctx.App $distro_name) }}
 
-{{- $group_name := index . 0}}
-{{- $channel_name := index . 1 }}
-{{- $distro := index . 2}}
-
-image: "{{ $group_name }}-{{ $channel_name }}"
-dockerfile: ./artifact.Dockerfile
+---
+image: "{{ $image_name }}"
+dockerfile: ./dockerfile/artifact.Dockerfile
 dependencies:
-  - image: "trdl-{{ $group_name }}-{{ $channel_name }}"
+  - image: "{{ $source_image_name }}"
     imports:
       - type: ImageName
         targetBuildArg: source_image
-  - image: "{{ $distro }}"
+  - image: "{{ $base_image_name }}"
     imports:
       - type: ImageName
-        targetBuildArg: distro_image
-{{- end}}
-
-{{ define "group channel distro" }}
-
-{{- $group_name := index . 0}}
-{{- $channel_name := index . 1 }}
-{{- $distro := index . 2}}
-{{- $distro_name := index . 3}}
-
-image: "{{ $group_name }}-{{ $channel_name }}-{{ $distro }}"
-dockerfile: ./artifact.Dockerfile
-dependencies:
-  - image: "trdl-{{ $group_name }}-{{ $channel_name }}"
-    imports:
-      - type: ImageName
-        targetBuildArg: source_image
-  - image: "{{ $distro_name }}"
-    imports:
-      - type: ImageName
-        targetBuildArg: distro_image
-args:
-  source: "/usr/local/bin/werf-{{ $group_name }}-{{ $channel_name }}"
-  destination: "/usr/local/bin/werf"
-{{- end }}
-
-{{- define "group distro"}}
-
-{{- $group_name := index . 0}}
-{{- $default_channel := index . 1 }}
-{{- $distro := index . 2}}
-{{- $distro_name := index . 3}}
-
-image: "{{ $group_name }}-{{ $distro }}"
-dockerfile: ./artifact.Dockerfile
-dependencies:
-  - image: "trdl-{{ $group_name }}-{{ $default_channel }}"
-    imports:
-      - type: ImageName
-        targetBuildArg: source_image
-  - image: "{{ $distro_name }}"
-    imports:
-      - type: ImageName
-        targetBuildArg: distro_image
+        targetBuildArg: base_image
 {{- end }}
 
 {{ define "latest" }}
-
-{{- $default_group := index . 0}}
-{{- $default_channel := index . 1 }}
-{{- $distro := index . 2}}
-
-image: latest
-dockerfile: ./artifact.Dockerfile
-dependencies:
-  - image: trdl-{{ $default_group }}-{{ $default_channel }}
-    imports:
-      - type: ImageName
-        targetBuildArg: source_image
-  - image: "{{ $distro }}"
-    imports:
-      - type: ImageName
-        targetBuildArg: distro_image
+{{- $image_name := "latest" }}
+{{- include "artifact" (list $image_name $.DefaultGroupName $.DefaultChannelName $.DefaultDistroName $) }}
 {{- end }}
 
-{{- define "group" }}
+{{- define "<group>" }}
+{{- $image_name := $.GroupName }}
+{{- include "artifact" (list $image_name $.GroupName $.DefaultChannelName $.DefaultDistroName $) }}
+{{- end }}
 
-{{- $group_name := index . 0}}
-{{- $default_channel := index . 1 }}
-{{- $distro := index . 2}}
+{{ define "<group>-<channel>" }}
+{{- $image_name := (printf "%s-%s" $.GroupName $.ChannelName) }}
+{{- include "artifact" (list $image_name $.GroupName $.ChannelName $.DefaultDistroName $) }}
+{{- end}}
 
-image: "{{ $group_name }}"
-dockerfile: ./artifact.Dockerfile
-dependencies:
-  - image: "trdl-{{ $group_name }}-{{ $default_channel }}"
-    imports:
-      - type: ImageName
-        targetBuildArg: source_image
-  - image: "{{ $distro }}"
-    imports:
-      - type: ImageName
-        targetBuildArg: distro_image
+{{- define "<group>-<distro>" }}
+{{- $image_name := (printf "%s-%s" $.GroupName $.DistroName) }}
+{{- include "artifact" (list $image_name $.GroupName $.DefaultChannelName $.DistroName $) }}
+{{- end }}
+
+{{ define "<group>-<channel>-<distro>" }}
+{{- $image_name := (printf "%s-%s-%s" $.GroupName $.ChannelName $.DistroName) }}
+{{- include "artifact" (list $image_name $.GroupName $.ChannelName $.DistroName $) }}
 {{- end }}

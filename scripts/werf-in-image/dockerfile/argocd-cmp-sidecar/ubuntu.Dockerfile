@@ -5,7 +5,7 @@ RUN apt-get -y update && apt-get -y install curl fuse-overlayfs git uidmap libca
     rm -rf /var/cache/apt/* /var/lib/apt/lists/* /var/log/*
 
 RUN ARCH=`uname -m` && \
-    if [[ $ARCH -eq "aarch64" ]]; then ARCH=arm64; fi && \
+    case "$ARCH" in "aarch64") ARCH=arm64 ;; esac && \
     curl -sL "https://github.com/google/go-containerregistry/releases/download/v0.20.2/go-containerregistry_Linux_$ARCH.tar.gz" > go-containerregistry.tar.gz && \
     tar -zxvf go-containerregistry.tar.gz -C /usr/local/bin/ crane && \
     rm -f go-containerregistry.tar.gz
@@ -18,7 +18,7 @@ RUN setcap cap_setuid+ep /usr/bin/newuidmap && \
 RUN useradd -m argocd -r && echo 'argocd:100000:65536' | tee /etc/subuid >/etc/subgid
 USER argocd:argocd
 
-COPY argocd-cmp-sidecar-plugin.yaml /home/argocd/cmp-server/config/plugin.yaml
+COPY ../../argocd-cmp-sidecar-plugin.yaml /home/argocd/cmp-server/config/plugin.yaml
 
 RUN mkdir -p /home/argocd/.local/share/containers
 VOLUME /home/argocd/.local/share/containers

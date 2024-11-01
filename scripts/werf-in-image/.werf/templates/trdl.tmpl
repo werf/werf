@@ -1,16 +1,12 @@
-{{- define "trdl base"}}
-
-{{- $group_name := index . 0}}
-{{- $channel_name := index . 1 }}
-{{- $channel_version := index . 2}}
-
-image: "trdl-{{ $group_name }}-{{ $channel_name }}"
-dockerfile: ./trdl.Dockerfile
+{{- define "trdl-<app>-<group>-<channel>" }}
+{{- $imageName := (printf "trdl-%s-%s-%s" $.App .GroupName .ChannelName) }}
+---
+image: {{ $imageName }}
+dockerfile: ./dockerfile/trdl.Dockerfile
 final: false
 args:
-  group: {{ $group_name }}
-  channel: {{ $channel_name }}
-  required_version: {{ $channel_version }}
-  
+  group: {{ .GroupName }}
+  channel: {{ .ChannelName }}
+  required_version: {{ .ChannelVersion }}
 {{- end }}
 

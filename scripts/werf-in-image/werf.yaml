@@ -1,54 +1,7 @@
-{{- $distro_images := list "alpine" "ubuntu" "centos" "fedora"}}
-{{- $default_distro := "alpine" }}
-{{- $default_channel := "stable" }}
-{{- $default_group := "2" }}
+{{ $_ := set . "App" "werf" }}
+{{ $_ := set . "Distros" (list "alpine" "ubuntu" "centos" "fedora") }}
+{{ $_ := set . "DefaultGroupName" "2" }}
+{{ $_ := set . "DefaultChannelName" "stable" }}
+{{ $_ := set . "DefaultDistroName" "alpine" }}
 
-project: werf-in-image
-configVersion: 1
-build:
-  platform:
-    - linux/amd64
-    - linux/arm64
----
-
-{{- range $_, $distro := $distro_images }}
----
-image: "{{ $distro }}"
-dockerfile: "./{{ $distro }}.Dockerfile"
-final: false
-{{- end }}
-
-{{- $values := .Files.Get "../../trdl_channels.yaml" | fromYaml -}}
-  {{- range $_, $group_object := $values.groups }}
-    {{ $group_name := $group_object.name }}
-    {{- if (eq $group_name "1.0") }}{{- continue }}{{- end }}
-
-    {{- range $i, $channel_object := $group_object.channels }}
-      {{ $channel_name := $channel_object.name }}
-      {{ $channel_version := $channel_object.version }}
----
-{{- include "trdl base" (list $group_name $channel_name $channel_version ) }}
----
-{{ $distro_name := (printf "%s-%s-%s" $group_name $channel_name $default_distro ) }}
-{{- include "group channel" (list $group_name $channel_name $distro_name ) }}
-      {{- range $_, $distro := $distro_images }}
----
-{{- include "group channel distro" (list $group_name $channel_name $distro $distro) }}
-      {{- if (eq $i 0) }}
----
-{{ $distro_name := (printf "%s-%s-%s" $group_name $default_channel $distro ) }}
-{{- include "group distro" (list $group_name $default_channel $distro $distro_name ) }}
-      {{- end }}
-      {{- end }}
-      {{- if and (eq $group_name $default_group) (eq $channel_name $default_channel ) }}
----
-{{ $distro_name := (printf "%s-%s-%s" $default_group $default_channel $default_distro ) }}
-{{- include "latest" (list $default_group $default_channel $distro_name)}}
-      {{- end }}
-      {{- if (eq $i 0) }}
----
-{{ $distro_name := (printf "%s-%s-%s" $group_name $default_channel $default_distro ) }}
-{{- include "group" (list $group_name $default_channel $distro_name)}}
-      {{- end }}
-    {{- end }}
-  {{- end }}
+{{ include "templates/base_config.tmpl" . }}

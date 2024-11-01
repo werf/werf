@@ -25,5 +25,5 @@ RUN while true ; do \
         [[ "${required_version}" != "$DOWNLOADED_VERSION" ]] || break &&\
         echo "Version mismatch! Will retry update" &&\
         sleep 1; \
-done; \
-cp $(trdl bin-path werf ${group} ${channel})/werf /usr/local/bin/werf-${group}-${channel}; \
+  done; \
+  cp $(trdl bin-path werf ${group} ${channel})/werf /usr/local/bin/werf; \

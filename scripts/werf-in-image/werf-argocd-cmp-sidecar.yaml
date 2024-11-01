@@ -1,0 +1,7 @@
+{{ $_ := set . "App" "argocd-cmp-sidecar" }}
+{{ $_ := set . "Distros" (list "ubuntu") }}
+{{ $_ := set . "DefaultGroupName" "2" }}
+{{ $_ := set . "DefaultChannelName" "stable" }}
+{{ $_ := set . "DefaultDistroName" "ubuntu" }}
+
+{{ include "templates/base_config.tmpl" . }}

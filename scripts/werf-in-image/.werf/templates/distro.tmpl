@@ -1,0 +1,6 @@
+{{- define "<app>-<distro>" }}
+---
+image: "{{ .App }}-{{ .DistroName }}"
+dockerfile: "./dockerfile/{{ .App }}/{{ .DistroName }}.Dockerfile"
+final: false
+{{- end }}

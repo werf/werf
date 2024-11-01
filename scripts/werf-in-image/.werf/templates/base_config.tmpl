@@ -1,0 +1,44 @@
+project: werf-in-image
+configVersion: 1
+build:
+  platform:
+    - linux/amd64
+    - linux/arm64
+---
+
+{{- range $distroInd, $distroName := $.Distros }}
+  {{ $_ := set $ "DistroName" $distroName }}
+  {{- include "<app>-<distro>" $ }}
+{{- end }}
+
+{{- include "latest" $ }}
+
+{{- $trdlChannelsValues := .Files.Get "../../trdl_channels.yaml" | fromYaml -}}
+{{- range $groupInd, $groupObject := $trdlChannelsValues.groups }}
+  {{ $_ := set $ "GroupName" $groupObject.name }}
+
+  # 1.0 is a non-supported group.
+  {{- if (eq $.GroupName "1.0") }}{{- continue }}{{- end }}
+
+{{- include "<group>" $ }}
+
+  {{- range $_, $channelObject := $groupObject.channels }}
+    {{ $_ := set $ "ChannelName" $channelObject.name }}
+    {{ $_ := set $ "ChannelVersion" $channelObject.version }}
+
+{{- include "trdl-<app>-<group>-<channel>" $ }}
+{{- include "<group>-<channel>" $ }}
+
+    {{- range $distroInd, $distroName := $.Distros }}
+        {{ $_ := set $ "DistroName" $distroName }}
+
+{{- include "<group>-<channel>-<distro>" $ }}
+    {{- end }}
+  {{- end }}
+
+  {{- range $distroInd, $distroName := $.Distros }}
+    {{ $_ := set $ "DistroName" $distroName }}
+
+{{- include "<group>-<distro>" $ }}
+  {{- end }}
+{{- end }}
