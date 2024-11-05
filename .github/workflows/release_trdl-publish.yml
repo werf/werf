@@ -82,8 +82,9 @@ jobs:
           password: ${{ secrets.WERF_IN_IMAGE_REPO_PASSWORD }}
 
       - name: Build and publish werf images
-        run: |
-          ./scripts/werf-in-image/build-and-publish.sh ${{ matrix.dest-registry }}
+        run: ./scripts/werf-in-image/build-and-publish.sh ${{ matrix.dest-registry }}
+        env:
+          DOCKER_BUILDKIT: 1
 
   notify:
     if: always()
