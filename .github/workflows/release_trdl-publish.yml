@@ -98,7 +98,11 @@ jobs:
         uses: werf/actions/install@v2
 
       - name: Cleanup
-        run: werf cleanup
+        continue-on-error: true
+        run: |
+          cd scripts/werf-in-image/
+          werf cleanup --config werf.yaml
+          werf cleanup --config werf-argocd-cmp-sidecar.yaml
         env:
           WERF_REPO: ghcr.io/werf/werf-storage
           WERF_REPO_GITHUB_TOKEN: ${{ secrets.WERF_IN_IMAGE_CLEANUP_GHCR }}
