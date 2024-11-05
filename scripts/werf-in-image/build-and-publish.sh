@@ -24,4 +24,4 @@ export WERF_EXPORT_ADD_LABEL_AH1=io.artifacthub.package.readme-url=https://raw.g
        WERF_EXPORT_ADD_LABEL_OC4=org.opencontainers.image.description="Official image to run werf in containers"
 
 werf export --tag "$DEST_SUBREPO/werf:%image%"
-werf export --config='werf-argocd-cmp-sidecar.yaml' --tag "$DEST_SUBREPO/werf-argocd-cmp-sidecar:%image%
+werf export --config='werf-argocd-cmp-sidecar.yaml' --tag "$DEST_SUBREPO/werf-argocd-cmp-sidecar:%image%"
