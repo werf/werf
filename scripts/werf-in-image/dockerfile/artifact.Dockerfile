@@ -1,3 +1,6 @@
+ARG source_image
+ARG base_image
+
 FROM ${source_image} AS source_image
 
 FROM ${base_image}
