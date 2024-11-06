@@ -8,7 +8,7 @@ import (
 	"github.com/werf/werf/v2/pkg/storage/manager"
 )
 
-type Option func(*NewStorageManagerConfig)
+type NewStorageManagerOption func(*NewStorageManagerConfig)
 
 type NewStorageManagerConfig struct {
 	ProjectName      string
@@ -18,7 +18,7 @@ type NewStorageManagerConfig struct {
 	hostPurge bool
 }
 
-func WithHostPurge() Option {
+func WithHostPurge() NewStorageManagerOption {
 	return func(config *NewStorageManagerConfig) {
 		config.hostPurge = true
 	}
@@ -28,7 +28,10 @@ func NewStorageManager(ctx context.Context, c *NewStorageManagerConfig) (*manage
 	return NewStorageManagerWithOptions(ctx, c)
 }
 
-func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfig, opts ...Option) (*manager.StorageManager, error) {
+func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfig, opts ...NewStorageManagerOption) (*manager.StorageManager, error) {
+	for _, opt := range opts {
+		opt(c)
+	}
 	stagesStorage, err := GetStagesStorage(ctx, c.ContainerBackend, c.CmdData)
 	if err != nil {
 		return nil, fmt.Errorf("error get stages storage: %w", err)

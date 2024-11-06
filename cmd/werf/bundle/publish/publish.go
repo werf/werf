@@ -285,6 +285,9 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 			ContainerBackend: containerBackend,
 			CmdData:          &commonCmdData,
 		})
+		if err != nil {
+			return fmt.Errorf("unable to init storage manager: %w", err)
+		}
 
 		imagesRepo = storageManager.GetServiceValuesRepo()
 
