@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/werf/werf/v2/pkg/container_backend"
+	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/storage/manager"
 )
 
@@ -32,9 +33,16 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
 	for _, opt := range opts {
 		opt(c)
 	}
-	stagesStorage, err := GetStagesStorage(ctx, c.ContainerBackend, c.CmdData)
-	if err != nil {
-		return nil, fmt.Errorf("error get stages storage: %w", err)
+	var stagesStorage storage.PrimaryStagesStorage
+
+	if c.hostPurge {
+		stagesStorage = GetLocalStagesStorage(c.ContainerBackend)
+	} else {
+		var stgErr error
+		stagesStorage, stgErr = GetStagesStorage(ctx, c.ContainerBackend, c.CmdData)
+		if stgErr != nil {
+			return nil, fmt.Errorf("error get stages storage: %w", stgErr)
+		}
 	}
 
 	synchronization, err := GetSynchronization(ctx, c.CmdData, c.ProjectName, stagesStorage)
