@@ -115,7 +115,7 @@ func runReset(ctx context.Context) error {
 			CmdData:          &commonCmdData,
 		}, common.WithHostPurge())
 		if err != nil {
-			fmt.Errorf("unable to init storage manager: %w", err)
+			return fmt.Errorf("unable to init storage manager: %w", err)
 		}
 
 		purgeOptions := cleaning.PurgeOptions{
