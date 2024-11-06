@@ -32,7 +32,7 @@ func NewConveyorWithRetryWrapper(werfConfig *config.WerfConfig, giterminismManag
 		SshAuthSock:        sshAuthSock,
 		ContainerBackend:   containerBackend,
 		StorageManager:     storageManager,
-		StorageLockManager: storageLockManager,
+		StorageLockManager: storageLockManager, // TODO: refactor
 		ConveyorOptions:    opts,
 	}
 }

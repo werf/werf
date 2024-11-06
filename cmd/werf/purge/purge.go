@@ -13,7 +13,6 @@ import (
 	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/storage/lrumeta"
-	"github.com/werf/werf/v2/pkg/storage/manager"
 	"github.com/werf/werf/v2/pkg/true_git"
 	"github.com/werf/werf/v2/pkg/werf"
 	"github.com/werf/werf/v2/pkg/werf/global_warnings"
@@ -155,33 +154,16 @@ func runPurge(ctx context.Context) error {
 It is worth noting that auto-cleaning is enabled by default, and manual use is usually not required (if not, we would appreciate feedback and creating an issue https://github.com/werf/werf/issues/new).`)
 		return err
 	}
-	stagesStorage, err := common.GetStagesStorage(ctx, containerBackend, &commonCmdData)
+
+	storageManager, err := common.NewStorageManager(ctx, &common.NewStorageManagerConfig{
+		ProjectName:      projectName,
+		ContainerBackend: containerBackend,
+		CmdData:          &commonCmdData,
+	})
 	if err != nil {
-		return err
-	}
-	finalStagesStorage, err := common.GetOptionalFinalStagesStorage(ctx, containerBackend, &commonCmdData)
-	if err != nil {
-		return err
+		return fmt.Errorf("unable to init storage manager: %w", err)
 	}
 
-	synchronization, err := common.GetSynchronization(ctx, &commonCmdData, projectName, stagesStorage)
-	if err != nil {
-		return err
-	}
-	storageLockManager, err := common.GetStorageLockManager(ctx, synchronization)
-	if err != nil {
-		return err
-	}
-	secondaryStagesStorageList, err := common.GetSecondaryStagesStorageList(ctx, stagesStorage, containerBackend, &commonCmdData)
-	if err != nil {
-		return err
-	}
-	cacheStagesStorageList, err := common.GetCacheStagesStorageList(ctx, containerBackend, &commonCmdData)
-	if err != nil {
-		return err
-	}
-
-	storageManager := manager.NewStorageManager(projectName, stagesStorage, finalStagesStorage, secondaryStagesStorageList, cacheStagesStorageList, storageLockManager)
 	if *commonCmdData.Parallel {
 		storageManager.EnableParallel(int(*commonCmdData.ParallelTasksLimit))
 	}
