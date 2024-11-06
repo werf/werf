@@ -32,7 +32,6 @@ import (
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/ssh_agent"
 	"github.com/werf/werf/v2/pkg/storage/lrumeta"
-	"github.com/werf/werf/v2/pkg/storage/manager"
 	"github.com/werf/werf/v2/pkg/tmp_manager"
 	"github.com/werf/werf/v2/pkg/true_git"
 	"github.com/werf/werf/v2/pkg/util"
@@ -306,41 +305,25 @@ func run(
 	var imagesRepo string
 
 	if !imagesToProcess.WithoutImages {
-		stagesStorage, err := common.GetStagesStorage(ctx, containerBackend, &commonCmdData)
-		if err != nil {
-			return err
-		}
-		finalStagesStorage, err := common.GetOptionalFinalStagesStorage(ctx, containerBackend, &commonCmdData)
-		if err != nil {
-			return err
-		}
 		logboek.LogOptionalLn()
 		common.SetupOndemandKubeInitializer(*commonCmdData.KubeContext, *commonCmdData.KubeConfig, *commonCmdData.KubeConfigBase64, *commonCmdData.KubeConfigPathMergeList)
 		if err := common.GetOndemandKubeInitializer().Init(ctx); err != nil {
 			return err
 		}
-		synchronization, err := common.GetSynchronization(ctx, &commonCmdData, projectName, stagesStorage)
-		if err != nil {
-			return err
-		}
-		storageLockManager, err := common.GetStorageLockManager(ctx, synchronization)
-		if err != nil {
-			return err
-		}
-		secondaryStagesStorageList, err := common.GetSecondaryStagesStorageList(ctx, stagesStorage, containerBackend, &commonCmdData)
-		if err != nil {
-			return err
-		}
-		cacheStagesStorageList, err := common.GetCacheStagesStorageList(ctx, containerBackend, &commonCmdData)
-		if err != nil {
-			return err
-		}
+
 		useCustomTagFunc, err := common.GetUseCustomTagFunc(&commonCmdData, giterminismManager, imagesToProcess)
 		if err != nil {
 			return err
 		}
 
-		storageManager := manager.NewStorageManager(projectName, stagesStorage, finalStagesStorage, secondaryStagesStorageList, cacheStagesStorageList, storageLockManager)
+		storageManager, err := common.NewStorageManager(ctx, &common.NewStorageManagerConfig{
+			ProjectName:      projectName,
+			ContainerBackend: containerBackend,
+			CmdData:          &commonCmdData,
+		})
+		if err != nil {
+			return fmt.Errorf("unable to init storage manager: %w", err)
+		}
 
 		imagesRepo = storageManager.GetServiceValuesRepo()
 
@@ -349,7 +332,7 @@ func run(
 			return err
 		}
 
-		conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, giterminismManager.ProjectDir(), projectTmpDir, ssh_agent.SSHAuthSock, containerBackend, storageManager, storageLockManager, conveyorOptions)
+		conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, giterminismManager.ProjectDir(), projectTmpDir, ssh_agent.SSHAuthSock, containerBackend, storageManager, storageManager.StorageLockManager, conveyorOptions)
 		defer conveyorWithRetry.Terminate()
 
 		if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {

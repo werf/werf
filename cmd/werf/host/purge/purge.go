@@ -14,7 +14,6 @@ import (
 	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
 	"github.com/werf/werf/v2/pkg/host_cleaning"
 	"github.com/werf/werf/v2/pkg/image"
-	"github.com/werf/werf/v2/pkg/storage/manager"
 	"github.com/werf/werf/v2/pkg/werf"
 	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
@@ -110,17 +109,15 @@ func runReset(ctx context.Context) error {
 			return nil
 		}
 
-		stagesStorage := common.GetLocalStagesStorage(containerBackend)
-		synchronization, err := common.GetSynchronization(ctx, &commonCmdData, projectName, stagesStorage)
+		storageManager, err := common.NewStorageManagerWithOptions(ctx, &common.NewStorageManagerConfig{
+			ProjectName:      projectName,
+			ContainerBackend: containerBackend,
+			CmdData:          &commonCmdData,
+		}, common.WithHostPurge())
 		if err != nil {
-			return err
-		}
-		storageLockManager, err := common.GetStorageLockManager(ctx, synchronization)
-		if err != nil {
-			return err
+			fmt.Errorf("unable to init storage manager: %w", err)
 		}
 
-		storageManager := manager.NewStorageManager(projectName, stagesStorage, nil, nil, nil, storageLockManager)
 		purgeOptions := cleaning.PurgeOptions{
 			RmContainersThatUseWerfImages: cmdData.Force,
 			DryRun:                        *commonCmdData.DryRun,

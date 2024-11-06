@@ -22,7 +22,6 @@ import (
 	"github.com/werf/werf/v2/pkg/slug"
 	"github.com/werf/werf/v2/pkg/ssh_agent"
 	"github.com/werf/werf/v2/pkg/storage/lrumeta"
-	"github.com/werf/werf/v2/pkg/storage/manager"
 	"github.com/werf/werf/v2/pkg/tmp_manager"
 	"github.com/werf/werf/v2/pkg/true_git"
 	"github.com/werf/werf/v2/pkg/util"
@@ -218,32 +217,14 @@ func run(ctx context.Context, imageNameListFromArgs, tagTemplateList []string, e
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
-	stagesStorage, err := common.GetStagesStorage(ctx, containerBackend, &commonCmdData)
+	storageManager, err := common.NewStorageManager(ctx, &common.NewStorageManagerConfig{
+		ProjectName:      projectName,
+		ContainerBackend: containerBackend,
+		CmdData:          &commonCmdData,
+	})
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to init storage manager: %w", err)
 	}
-	finalStagesStorage, err := common.GetOptionalFinalStagesStorage(ctx, containerBackend, &commonCmdData)
-	if err != nil {
-		return err
-	}
-	synchronization, err := common.GetSynchronization(ctx, &commonCmdData, projectName, stagesStorage)
-	if err != nil {
-		return err
-	}
-	storageLockManager, err := common.GetStorageLockManager(ctx, synchronization)
-	if err != nil {
-		return err
-	}
-	secondaryStagesStorageList, err := common.GetSecondaryStagesStorageList(ctx, stagesStorage, containerBackend, &commonCmdData)
-	if err != nil {
-		return err
-	}
-	cacheStagesStorageList, err := common.GetCacheStagesStorageList(ctx, containerBackend, &commonCmdData)
-	if err != nil {
-		return err
-	}
-
-	storageManager := manager.NewStorageManager(projectName, stagesStorage, finalStagesStorage, secondaryStagesStorageList, cacheStagesStorageList, storageLockManager)
 
 	buildOptions, err := common.GetBuildOptions(ctx, &commonCmdData, werfConfig, imagesToProcess)
 	if err != nil {
@@ -257,7 +238,7 @@ func run(ctx context.Context, imageNameListFromArgs, tagTemplateList []string, e
 		return err
 	}
 
-	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, giterminismManager.ProjectDir(), projectTmpDir, ssh_agent.SSHAuthSock, containerBackend, storageManager, storageLockManager, conveyorOptions)
+	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, giterminismManager.ProjectDir(), projectTmpDir, ssh_agent.SSHAuthSock, containerBackend, storageManager, storageManager.StorageLockManager, conveyorOptions)
 	defer conveyorWithRetry.Terminate()
 
 	return conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {

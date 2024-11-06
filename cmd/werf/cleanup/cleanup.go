@@ -15,7 +15,6 @@ import (
 	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/storage/lrumeta"
-	"github.com/werf/werf/v2/pkg/storage/manager"
 	"github.com/werf/werf/v2/pkg/tmp_manager"
 	"github.com/werf/werf/v2/pkg/true_git"
 	"github.com/werf/werf/v2/pkg/werf"
@@ -209,39 +208,21 @@ It is worth noting that auto-cleaning is enabled by default, and manual use is u
 
 		return err
 	}
-	stagesStorage, err := common.GetStagesStorage(ctx, containerBackend, &commonCmdData)
-	if err != nil {
-		return err
-	}
-	finalStagesStorage, err := common.GetOptionalFinalStagesStorage(ctx, containerBackend, &commonCmdData)
-	if err != nil {
-		return err
-	}
 
-	synchronization, err := common.GetSynchronization(ctx, &commonCmdData, projectName, stagesStorage)
+	storageManager, err := common.NewStorageManager(ctx, &common.NewStorageManagerConfig{
+		ProjectName:      projectName,
+		ContainerBackend: containerBackend,
+		CmdData:          &commonCmdData,
+	})
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to init storage manager: %w", err)
 	}
-	storageLockManager, err := common.GetStorageLockManager(ctx, synchronization)
-	if err != nil {
-		return err
-	}
-	secondaryStagesStorageList, err := common.GetSecondaryStagesStorageList(ctx, stagesStorage, containerBackend, &commonCmdData)
-	if err != nil {
-		return err
-	}
-	cacheStagesStorageList, err := common.GetCacheStagesStorageList(ctx, containerBackend, &commonCmdData)
-	if err != nil {
-		return err
-	}
-
-	storageManager := manager.NewStorageManager(projectName, stagesStorage, finalStagesStorage, secondaryStagesStorageList, cacheStagesStorageList, storageLockManager)
 
 	if *commonCmdData.Parallel {
 		storageManager.EnableParallel(int(*commonCmdData.ParallelTasksLimit))
 	}
 
-	imagesNames, err := common.GetManagedImagesNames(ctx, projectName, stagesStorage, werfConfig)
+	imagesNames, err := common.GetManagedImagesNames(ctx, projectName, storageManager.StagesStorage, werfConfig)
 	if err != nil {
 		return err
 	}
