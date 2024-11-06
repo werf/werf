@@ -108,7 +108,6 @@ func runReset(ctx context.Context) error {
 			logboek.Context(ctx).Warn().LogF("Skip cleaning local storage with buildah backend (not implemented)\n")
 			return nil
 		}
-
 		storageManager, err := common.NewStorageManagerWithOptions(ctx, &common.NewStorageManagerConfig{
 			ProjectName:      projectName,
 			ContainerBackend: containerBackend,
