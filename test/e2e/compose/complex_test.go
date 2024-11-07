@@ -1,59 +1,66 @@
 package e2e_compose_test
 
 import (
+	"fmt"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	"github.com/werf/werf/v2/test/pkg/werf"
 )
 
+const (
+	commandUp   = "up"
+	commandDown = "down"
+)
+
+type simpleTestOptions struct {
+	ExtraArgs        []string
+	State            string
+	StateDescription string
+}
+
 var _ = Describe("Complex compose", Label("e2e", "compose", "complex"), func() {
-	It("should succeed and deploy expected resources",
-		func() {
-			By("state0: starting")
+	DescribeTable("should",
+		func(opts simpleTestOptions) {
+			By(fmt.Sprintf("%s: starting", opts.State))
 			{
 				repoDirname := "repo0"
-				fixtureRelPath := "simple/state0"
+				fixtureRelPath := fmt.Sprintf("simple/%s", opts.State)
 
-				By("state0: preparing test repo")
+				By(fmt.Sprintf("%s: preparing test repo", opts.State))
 				SuiteData.InitTestRepo(repoDirname, fixtureRelPath)
 
-				By("state0: running compose up with no options")
+				By(fmt.Sprintf("%s: %s", opts.State, opts.StateDescription))
 				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
 				composeOut := werfProject.Compose(&werf.BuildOptions{
 					CommonOptions: werf.CommonOptions{
-						ExtraArgs: []string{"up"},
+						ExtraArgs: append([]string{commandUp}, opts.ExtraArgs...),
 					},
 				})
 				Expect(composeOut).To(ContainSubstring("Building stage"))
-				By("state0: running compose down")
+				Expect(composeOut).To(ContainSubstring("image backend"))
+				By(fmt.Sprintf("%s: running compose down", opts.State))
 				composeDownOut := werfProject.Compose(&werf.BuildOptions{
 					CommonOptions: werf.CommonOptions{
-						ExtraArgs: []string{"down"},
+						ExtraArgs: []string{commandDown},
 					},
 				})
 				Expect(composeDownOut).To(ContainSubstring("Removed"))
 			}
-			By("state1: starting")
-			{
-				repoDirname := "repo0"
-				fixtureRelPath := "simple/state1"
-				By("state1: preparing test repo")
-				SuiteData.InitTestRepo(repoDirname, fixtureRelPath)
-
-				By("state1: running compose with multiple compose files and args")
-				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
-				composeOut := werfProject.Compose(&werf.BuildOptions{
-					CommonOptions: werf.CommonOptions{
-						ExtraArgs: []string{
-							"up",
-							"--docker-compose-options", "-f docker-compose.yaml -f docker-compose-b.yaml",
-							"--docker-compose-command-options", "--always-recreate-deps",
-						},
-					},
-				})
-				Expect(composeOut).To(ContainSubstring("image backend"))
-			}
 		},
+		Entry("without additional options", simpleTestOptions{
+			ExtraArgs:        []string{},
+			State:            "state0",
+			StateDescription: "running compose up with no options",
+		}),
+		Entry("with multiple compose files", simpleTestOptions{
+			ExtraArgs: []string{
+				"--docker-compose-options", "-f docker-compose.yaml -f docker-compose-b.yaml",
+				"--docker-compose-command-options", "--always-recreate-deps",
+			},
+			State:            "state1",
+			StateDescription: "running compose up with multiple compose files and args",
+		}),
 	)
 })
