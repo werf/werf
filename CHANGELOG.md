@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.12.0](https://www.github.com/werf/werf/compare/v2.11.0...v2.12.0) (2024-11-07)
+
+
+### Features
+
+* **export:** export images concurrently([#6395](https://www.github.com/werf/werf/issues/6395)) ([de2f4a3](https://www.github.com/werf/werf/commit/de2f4a36b9bc6de208df402e81009817c715c68a))
+
+
+### Reverts
+
+* release werf images for linux/arm64 platform ([5295af2](https://www.github.com/werf/werf/commit/5295af218afcd1fbe7423b51ac92660e0f5c1439))
+
 ## [2.11.0](https://www.github.com/werf/werf/compare/v2.10.10...v2.11.0) (2024-11-01)
 
 
