@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.11.1](https://www.github.com/werf/werf/compare/v2.11.0...v2.11.1) (2024-11-07)
+
+
+### Reverts
+
+* release werf images for linux/arm64 platform ([5295af2](https://www.github.com/werf/werf/commit/5295af218afcd1fbe7423b51ac92660e0f5c1439))
+
 ## [2.11.0](https://www.github.com/werf/werf/compare/v2.10.10...v2.11.0) (2024-11-01)
 
 
