@@ -14,6 +14,7 @@ import (
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/util"
+	"github.com/werf/werf/v2/pkg/util/parallel"
 )
 
 type Exporter struct {
@@ -39,10 +40,16 @@ func (e *Exporter) Run(ctx context.Context) error {
 		return nil
 	}
 
-	for _, desc := range e.Conveyor.imagesTree.GetImagesByName(true) {
-		name, images := desc.Unpair()
-		if !slices.Contains(e.ExportImageNameList, name) {
-			continue
+	imageList := util.SliceToMapWithValue(e.ExportImageNameList, struct{}{})
+	images := e.Conveyor.imagesTree.GetImagesByName(true)
+
+	if err := parallel.DoTasks(ctx, len(e.ExportImageNameList), parallel.DoTasksOptions{
+		MaxNumberOfWorkers: int(e.Conveyor.ParallelTasksLimit),
+	}, func(ctx context.Context, taskId int) error {
+		pair := images[taskId]
+		name, images := pair.Unpair()
+		if _, ok := imageList[name]; !ok {
+			return nil
 		}
 
 		targetPlatforms := util.MapFuncToSlice(images, func(img *build_image.Image) string { return img.TargetPlatform })
@@ -64,6 +71,9 @@ func (e *Exporter) Run(ctx context.Context) error {
 				return fmt.Errorf("unable to export multiplatform image %q: %w", img.Name, err)
 			}
 		}
+		return nil
+	}); err != nil {
+		return fmt.Errorf("export failed: %w", err)
 	}
 
 	return nil
