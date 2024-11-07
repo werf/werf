@@ -32,6 +32,7 @@ import (
 	"github.com/werf/werf/pkg/storage"
 	"github.com/werf/werf/pkg/storage/manager"
 	"github.com/werf/werf/pkg/util"
+	"github.com/werf/werf/pkg/util/parallel"
 	"github.com/werf/werf/pkg/werf"
 )
 
@@ -156,7 +157,7 @@ func GenerateImageEnv(werfImageName, imageName string) string {
 		imageEnvName = "WERF_DOCKER_IMAGE_NAME"
 	} else {
 		werfImageName := strings.ToUpper(werfImageName)
-		for _, l := range []string{"/", "-"} {
+		for _, l := range []string{"/", "-", "."} {
 			werfImageName = strings.ReplaceAll(werfImageName, l, "_")
 		}
 
@@ -285,6 +286,10 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 				}
 			}
 		}
+
+		return nil
+	}); err != nil {
+		return err
 	}
 
 	return phase.createReport(ctx)
