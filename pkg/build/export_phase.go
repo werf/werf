@@ -46,7 +46,6 @@ func (e *Exporter) Run(ctx context.Context) error {
 	if err := parallel.DoTasks(ctx, len(e.ExportImageNameList), parallel.DoTasksOptions{
 		MaxNumberOfWorkers: int(e.Conveyor.ParallelTasksLimit),
 	}, func(ctx context.Context, taskId int) error {
-		fmt.Println(taskId)
 		pair := images[taskId]
 		name, images := pair.Unpair()
 		if _, ok := imageList[name]; !ok {
