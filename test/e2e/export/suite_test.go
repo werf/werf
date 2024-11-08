@@ -40,9 +40,9 @@ var (
 	_ = SuiteData.AppendSynchronizedBeforeSuiteAllNodesFunc(func(_ []byte) {
 		SuiteData.RegistryLocalAddress, SuiteData.RegistryInternalAddress, SuiteData.RegistryContainerName = docker.LocalDockerRegistryRun()
 	})
-	_ = SuiteData.AppendSynchronizedAfterSuiteAllNodesFunc(func() {
-		docker.ContainerStopAndRemove(SuiteData.RegistryContainerName)
-	})
+	// _ = SuiteData.AppendSynchronizedAfterSuiteAllNodesFunc(func() {
+	// 	docker.ContainerStopAndRemove(SuiteData.RegistryContainerName)
+	// })
 
 	_ = AfterEach(func() {
 		utils.RunSucceedCommand("", SuiteData.WerfBinPath, "host", "purge", "--force", "--project-name", SuiteData.ProjectName)
