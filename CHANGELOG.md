@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.12.1](https://www.github.com/werf/werf/compare/v2.12.0...v2.12.1) (2024-11-08)
+
+
+### Bug Fixes
+
+* **export:** fix worker log output ([#6399](https://www.github.com/werf/werf/issues/6399)) ([7263592](https://www.github.com/werf/werf/commit/7263592a1f35659d8fda0975693a4e37fec83a72))
+
 ## [2.12.0](https://www.github.com/werf/werf/compare/v2.11.0...v2.12.0) (2024-11-07)
 
 
