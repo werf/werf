@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -51,10 +52,10 @@ func doExecCommand(dir, binPath string, opts ExecCommandOptions, arg ...string) 
 	Ω(err).ShouldNot(HaveOccurred())
 	defer session.Kill()
 
-	var exitCode int
+	var exitCode int32
 	go func() {
 		Eventually(session, sessionTimeout).Should(gexec.Exit())
-		exitCode = session.ExitCode()
+		atomic.StoreInt32(&exitCode, int32(session.ExitCode()))
 		// Initiate EOF for consumeOutputUntilEOF
 		_ = writer.Close()
 	}()
@@ -95,8 +96,9 @@ func doExecCommand(dir, binPath string, opts ExecCommandOptions, arg ...string) 
 	})
 	Ω(err).ShouldNot(HaveOccurred(), fmt.Sprintf("unable to consume command output: %s", err))
 
-	if exitCode != 0 {
-		return fmt.Errorf("exit code %d", exitCode)
+	v := atomic.LoadInt32(&exitCode)
+	if v != 0 {
+		return fmt.Errorf("exit code %d", v)
 	}
 	return nil
 }

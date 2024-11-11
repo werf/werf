@@ -11,6 +11,10 @@ type GoroutineSafeBuffer struct {
 	m sync.Mutex
 }
 
+func NewGoroutineSafeBuffer() *GoroutineSafeBuffer {
+	return &GoroutineSafeBuffer{Buffer: bytes.NewBuffer([]byte{})}
+}
+
 func (b *GoroutineSafeBuffer) Read(p []byte) (n int, err error) {
 	b.m.Lock()
 	defer b.m.Unlock()

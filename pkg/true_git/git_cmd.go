@@ -1,7 +1,6 @@
 package true_git
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -9,6 +8,7 @@ import (
 	"os/exec"
 
 	"github.com/werf/logboek"
+	"github.com/werf/werf/v2/pkg/util"
 )
 
 func NewGitCmd(ctx context.Context, opts *GitCmdOptions, cliArgs ...string) GitCmd {
@@ -21,9 +21,9 @@ func NewGitCmd(ctx context.Context, opts *GitCmdOptions, cliArgs ...string) GitC
 	}
 
 	gitCmd := GitCmd{
-		OutBuf:    &bytes.Buffer{},
-		ErrBuf:    &bytes.Buffer{},
-		OutErrBuf: &bytes.Buffer{},
+		OutBuf:    util.NewGoroutineSafeBuffer(),
+		ErrBuf:    util.NewGoroutineSafeBuffer(),
+		OutErrBuf: util.NewGoroutineSafeBuffer(),
 	}
 
 	gitCmd.Cmd = exec.Command("git", append(getCommonGitOptions(), cliArgs...)...)
@@ -52,16 +52,15 @@ type GitCmd struct {
 	*exec.Cmd
 
 	// We always write to all of these buffs, unlike with exec.Cmd.Stdout(Stderr)
-	OutBuf    *bytes.Buffer
-	ErrBuf    *bytes.Buffer
-	OutErrBuf *bytes.Buffer
+	OutBuf    *util.GoroutineSafeBuffer
+	ErrBuf    *util.GoroutineSafeBuffer
+	OutErrBuf *util.GoroutineSafeBuffer
 }
 
 func (c *GitCmd) Run(ctx context.Context) error {
 	if debug() || liveGitOutput {
 		logboek.Context(ctx).Debug().LogF("Running command %q\n", c)
 	}
-
 	if err := c.Cmd.Run(); err != nil {
 		var errExit *exec.ExitError
 		if errors.As(err, &errExit) {
