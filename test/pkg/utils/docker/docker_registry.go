@@ -2,6 +2,7 @@ package docker
 
 import (
 	"fmt"
+	"net"
 	"strings"
 
 	. "github.com/onsi/gomega"
@@ -18,14 +19,17 @@ func LocalDockerRegistryRun() (string, string, string) {
 		Ω(err).ShouldNot(HaveOccurred(), "docker pull "+imageName)
 	}
 
+	port, err := getFreeEphemeralPort()
+	Ω(err).ShouldNot(HaveOccurred())
+
 	dockerCliRunArgs := []string{
 		"-d",
-		"-p", ":5000",
+		"-p", fmt.Sprintf("%d:5000", port),
 		"-e", "REGISTRY_STORAGE_DELETE_ENABLED=true",
 		"--name", containerName,
 		imageName,
 	}
-	err := CliRun(dockerCliRunArgs...)
+	err = CliRun(dockerCliRunArgs...)
 	Ω(err).ShouldNot(HaveOccurred(), "docker run "+strings.Join(dockerCliRunArgs, " "))
 
 	inspect := ContainerInspect(containerName)
@@ -33,10 +37,20 @@ func LocalDockerRegistryRun() (string, string, string) {
 	Ω(inspect.NetworkSettings.IPAddress).ShouldNot(BeEmpty())
 	registryInternalAddress := fmt.Sprintf("%s:%d", inspect.NetworkSettings.IPAddress, 5000)
 
-	registryLocalAddress := fmt.Sprintf("localhost:%s", ContainerHostPort(containerName, "5000/tcp"))
+	registryLocalAddress := fmt.Sprintf("localhost:%d", port)
 	registryWithScheme := fmt.Sprintf("http://%s", registryLocalAddress)
 
 	utils.WaitTillHostReadyToRespond(registryWithScheme, utils.DefaultWaitTillHostReadyToRespondMaxAttempts)
 
 	return registryLocalAddress, registryInternalAddress, containerName
+}
+
+func getFreeEphemeralPort() (int, error) {
+	listener, err := net.Listen("tcp", "localhost:0")
+	if err != nil {
+		return 0, err
+	}
+	defer listener.Close()
+	port := listener.Addr().(*net.TCPAddr).Port
+	return port, nil
 }
