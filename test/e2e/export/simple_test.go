@@ -1,12 +1,16 @@
 package e2e_export_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
+	"github.com/google/go-containerregistry/pkg/crane"
+	v1 "github.com/google/go-containerregistry/pkg/v1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	"github.com/werf/werf/v2/test/pkg/utils"
 	"github.com/werf/werf/v2/test/pkg/werf"
 )
 
@@ -14,14 +18,27 @@ type simpleTestOptions struct {
 	ExtraArgs []string
 }
 
+func GetManifest(imageName string) *v1.IndexManifest {
+	bytes, err := crane.Manifest(imageName)
+	if err != nil {
+		fmt.Errorf("Error %s", err)
+	}
+	var data v1.IndexManifest
+	err = json.Unmarshal(bytes, &data)
+	if err != nil {
+		fmt.Errorf("Error %s", err)
+	}
+	return &data
+}
+
 var _ = Describe("Simple export", Label("e2e", "export", "simple"), func() {
 	DescribeTable("should succeed and export images",
 		func(opts simpleTestOptions) {
-			SuiteData.WerfRepo = strings.Join([]string{SuiteData.RegistryLocalAddress, SuiteData.ProjectName}, "/")
-			SuiteData.Stubs.SetEnv("WERF_REPO", SuiteData.WerfRepo)
-			SuiteData.Stubs.SetEnv("DOCKER_BUILDKIT", "1")
 			By("initializating")
 			{
+				SuiteData.WerfRepo = strings.Join([]string{SuiteData.RegistryLocalAddress, SuiteData.ProjectName}, "/")
+				SuiteData.Stubs.SetEnv("WERF_REPO", SuiteData.WerfRepo)
+				SuiteData.Stubs.SetEnv("DOCKER_BUILDKIT", "1")
 				repoDirname := "repo"
 				fixtureRelPath := "simple"
 
@@ -29,15 +46,27 @@ var _ = Describe("Simple export", Label("e2e", "export", "simple"), func() {
 				SuiteData.InitTestRepo(repoDirname, fixtureRelPath)
 
 				By("running export")
+				imageName := fmt.Sprintf("%s/werf-export-%s", SuiteData.RegistryLocalAddress, utils.GetRandomString(10))
 				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
 				exportOut := werfProject.Export(&werf.ExportOptions{
 					CommonOptions: werf.CommonOptions{
 						ExtraArgs: append([]string{
 							"--tag",
-							fmt.Sprintf("%s/test", SuiteData.RegistryLocalAddress),
+							imageName,
 						}, opts.ExtraArgs...)},
 				})
 				Expect(exportOut).To(ContainSubstring("Exporting image..."))
+				By("check image architecture")
+				manifest := GetManifest(imageName)
+				for i := range manifest.Manifests {
+					if manifest.Manifests[i].Platform.Architecture == "amd64" {
+						Expect(manifest.Manifests[i].Platform.Architecture).To(Equal("amd64"))
+					} else {
+						if manifest.Manifests[i].Platform.Architecture != "unknown" {
+							Expect(manifest.Manifests[i].Platform.Architecture).To(Equal("arm64"))
+						}
+					}
+				}
 			}
 		},
 		Entry("Export single platform image", simpleTestOptions{
@@ -48,7 +77,6 @@ var _ = Describe("Simple export", Label("e2e", "export", "simple"), func() {
 				"--platform",
 				"linux/amd64,linux/arm64",
 			},
-		},
-		),
+		}),
 	)
 })
