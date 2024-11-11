@@ -88,11 +88,9 @@ func Init(ctx context.Context, opts InitOptions) error {
 		}
 	}
 
-	if v := os.Getenv("DOCKER_BUILDKIT"); v == "1" || v == "true" {
-		if err := os.Setenv("DOCKER_BUILDKIT", "0"); err != nil {
-			return fmt.Errorf("unable to set env var: %w", err)
-		}
-		useBuildx = true
+	useBuildx = true // use buildKit by default
+	if v := os.Getenv("DOCKER_BUILDKIT"); v == "0" || v == "false" {
+		useBuildx = false
 	}
 
 	return nil
