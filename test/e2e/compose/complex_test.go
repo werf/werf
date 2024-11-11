@@ -18,6 +18,7 @@ type simpleTestOptions struct {
 	ExtraArgs        []string
 	State            string
 	StateDescription string
+	Repo             string
 }
 
 var _ = Describe("Complex compose", Label("e2e", "compose", "complex"), func() {
@@ -25,7 +26,7 @@ var _ = Describe("Complex compose", Label("e2e", "compose", "complex"), func() {
 		func(opts simpleTestOptions) {
 			By(fmt.Sprintf("%s: starting", opts.State))
 			{
-				repoDirname := "repo0"
+				repoDirname := opts.Repo
 				fixtureRelPath := fmt.Sprintf("simple/%s", opts.State)
 
 				By(fmt.Sprintf("%s: preparing test repo", opts.State))
@@ -53,6 +54,7 @@ var _ = Describe("Complex compose", Label("e2e", "compose", "complex"), func() {
 			ExtraArgs:        []string{},
 			State:            "state0",
 			StateDescription: "running compose up with no options",
+			Repo:             "repo0",
 		}),
 		Entry("with multiple compose files", simpleTestOptions{
 			ExtraArgs: []string{
@@ -61,6 +63,7 @@ var _ = Describe("Complex compose", Label("e2e", "compose", "complex"), func() {
 			},
 			State:            "state1",
 			StateDescription: "running compose up with multiple compose files and args",
+			Repo:             "repo1",
 		}),
 	)
 })
