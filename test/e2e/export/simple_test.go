@@ -18,7 +18,7 @@ type simpleTestOptions struct {
 	ExtraArgs []string
 }
 
-func GetManifest(imageName string) *v1.IndexManifest {
+func ManifestGet(imageName string) *v1.IndexManifest {
 	bytes, err := crane.Manifest(imageName)
 	if err != nil {
 		fmt.Errorf("Error %s", err)
@@ -29,6 +29,24 @@ func GetManifest(imageName string) *v1.IndexManifest {
 		fmt.Errorf("Error %s", err)
 	}
 	return &data
+}
+
+func LabelsExist(imageName string) (result bool) {
+	bytes, err := crane.Config(imageName)
+	if err != nil {
+		fmt.Errorf("Error, %s", err)
+	}
+	var data v1.ConfigFile
+	err = json.Unmarshal(bytes, &data)
+	if err != nil {
+		fmt.Errorf("Error %s", err)
+	}
+	if data.Config.Labels == nil {
+		result = false
+	} else {
+		result = true
+	}
+	return
 }
 
 var _ = Describe("Simple export", Label("e2e", "export", "simple"), func() {
@@ -53,11 +71,12 @@ var _ = Describe("Simple export", Label("e2e", "export", "simple"), func() {
 						ExtraArgs: append([]string{
 							"--tag",
 							imageName,
-						}, opts.ExtraArgs...)},
+						},
+							opts.ExtraArgs...)},
 				})
 				Expect(exportOut).To(ContainSubstring("Exporting image..."))
 				By("check image architecture")
-				manifest := GetManifest(imageName)
+				manifest := ManifestGet(imageName)
 				for i := range manifest.Manifests {
 					if manifest.Manifests[i].Platform.Architecture == "amd64" {
 						Expect(manifest.Manifests[i].Platform.Architecture).To(Equal("amd64"))
@@ -67,6 +86,8 @@ var _ = Describe("Simple export", Label("e2e", "export", "simple"), func() {
 						}
 					}
 				}
+				By("check labels absence")
+				Expect(LabelsExist(imageName)).To(Equal(false))
 			}
 		},
 		Entry("Export single platform image", simpleTestOptions{
