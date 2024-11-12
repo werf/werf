@@ -1,1 +1,1 @@
-work with container registry: authenticate, list and remove images, etc.
+authenticate with container registry.
