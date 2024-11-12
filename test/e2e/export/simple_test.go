@@ -1,12 +1,12 @@
 package e2e_export_test
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 
-	"github.com/google/go-containerregistry/pkg/crane"
+	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
+	"github.com/google/go-containerregistry/pkg/v1/remote"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
@@ -15,38 +15,8 @@ import (
 )
 
 type simpleTestOptions struct {
-	ExtraArgs []string
-}
-
-func ManifestGet(imageName string) *v1.IndexManifest {
-	bytes, err := crane.Manifest(imageName)
-	if err != nil {
-		fmt.Errorf("Error %s", err)
-	}
-	var data v1.IndexManifest
-	err = json.Unmarshal(bytes, &data)
-	if err != nil {
-		fmt.Errorf("Error %s", err)
-	}
-	return &data
-}
-
-func LabelsExist(imageName string) (result bool) {
-	bytes, err := crane.Config(imageName)
-	if err != nil {
-		fmt.Errorf("Error, %s", err)
-	}
-	var data v1.ConfigFile
-	err = json.Unmarshal(bytes, &data)
-	if err != nil {
-		fmt.Errorf("Error %s", err)
-	}
-	if data.Config.Labels == nil {
-		result = false
-	} else {
-		result = true
-	}
-	return
+	Platforms    []string
+	CustomLabels []string
 }
 
 var _ = Describe("Simple export", Label("e2e", "export", "simple"), func() {
@@ -64,41 +34,132 @@ var _ = Describe("Simple export", Label("e2e", "export", "simple"), func() {
 				SuiteData.InitTestRepo(repoDirname, fixtureRelPath)
 
 				By("running export")
-				imageName := fmt.Sprintf("%s/werf-export-%s", SuiteData.RegistryLocalAddress, utils.GetRandomString(10))
 				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
+				imageName := fmt.Sprintf("%s/werf-export-%s", SuiteData.RegistryLocalAddress, utils.GetRandomString(10))
+
+				exportArgs := []string{
+					"--tag",
+					imageName,
+				}
+				if len(opts.Platforms) > 0 {
+					for _, platform := range opts.Platforms {
+						exportArgs = append(exportArgs, "--platform", platform)
+					}
+				}
+				if len(opts.CustomLabels) > 0 {
+					for _, label := range opts.CustomLabels {
+						exportArgs = append(exportArgs, "--add-label", label)
+					}
+				}
+
 				exportOut := werfProject.Export(&werf.ExportOptions{
 					CommonOptions: werf.CommonOptions{
-						ExtraArgs: append([]string{
-							"--tag",
-							imageName,
-						},
-							opts.ExtraArgs...),
+						ExtraArgs: exportArgs,
 					},
 				})
 				Expect(exportOut).To(ContainSubstring("Exporting image..."))
-				By("check image architecture")
-				manifest := ManifestGet(imageName)
-				for i := range manifest.Manifests {
-					if manifest.Manifests[i].Platform.Architecture == "amd64" {
-						Expect(manifest.Manifests[i].Platform.Architecture).To(Equal("amd64"))
-					} else {
-						if manifest.Manifests[i].Platform.Architecture != "unknown" {
-							Expect(manifest.Manifests[i].Platform.Architecture).To(Equal("arm64"))
+
+				By("checking result")
+				commonCheckImageConfigFunc := func(config v1.Config) {
+					for key := range config.Labels {
+						if strings.HasSuffix(key, "werf") {
+							Fail(fmt.Sprintf("labels %s should not contain werf service labels", config.Labels))
 						}
 					}
 				}
-				By("check labels absence")
-				Expect(LabelsExist(imageName)).To(Equal(false))
+
+				var checkImageConfigFunc func(v1.Config)
+				var checkIndexManifestFunc func(*v1.IndexManifest)
+				if len(opts.Platforms) > 0 {
+					checkIndexManifestFunc = func(manifest *v1.IndexManifest) {
+					platformLoop:
+						for _, platform := range opts.Platforms {
+							for _, i := range manifest.Manifests {
+								if i.Platform.String() == platform {
+									break platformLoop
+								}
+							}
+
+							Fail(fmt.Sprintf("platform %s not found in index manifest", platform))
+						}
+
+						Expect(len(opts.Platforms)).To(Equal(len(manifest.Manifests)), "unexpected number of platforms in index manifest")
+					}
+				}
+				if len(opts.CustomLabels) > 0 {
+					checkImageConfigFunc = func(config v1.Config) {
+						for _, label := range opts.CustomLabels {
+							labelParts := strings.Split(label, "=")
+							Expect(config.Labels).To(HaveKeyWithValue(labelParts[0], labelParts[1]))
+						}
+
+						commonCheckImageConfigFunc(config)
+					}
+				} else {
+					checkImageConfigFunc = commonCheckImageConfigFunc
+				}
+
+				if len(opts.Platforms) > 0 {
+					checkIndexManifest(imageName, checkIndexManifestFunc, checkImageConfigFunc)
+				} else {
+					checkImageManifest(imageName, checkImageConfigFunc)
+				}
 			}
 		},
-		Entry("Export single platform image", simpleTestOptions{
-			ExtraArgs: []string{},
+		Entry("base", simpleTestOptions{
+			CustomLabels: []string{
+				"TEST_LABEL=TEST_VALUE",
+			},
 		}),
-		Entry("Export multiplatform image", simpleTestOptions{
-			ExtraArgs: []string{
-				"--platform",
-				"linux/amd64,linux/arm64",
+		Entry("multiplatform", simpleTestOptions{
+			CustomLabels: []string{
+				"TEST_LABEL=TEST_VALUE",
+			},
+			Platforms: []string{
+				"linux/amd64",
+				"linux/arm64",
 			},
 		}),
 	)
 })
+
+func checkIndexManifest(reference string, checkIndexManifestFunc func(*v1.IndexManifest), checkImageConfigFunc func(v1.Config)) {
+	ref, err := name.ParseReference(reference)
+	Ω(err).ShouldNot(HaveOccurred(), err)
+
+	desc, err := remote.Get(ref)
+	Ω(err).ShouldNot(HaveOccurred(), err)
+
+	Ω(desc.MediaType.IsIndex()).Should(BeTrue(), "expected index, got image")
+
+	ii, err := desc.ImageIndex()
+	Ω(err).ShouldNot(HaveOccurred(), err)
+
+	im, err := ii.IndexManifest()
+	Ω(err).ShouldNot(HaveOccurred(), err)
+
+	checkIndexManifestFunc(im)
+
+	for _, m := range im.Manifests {
+		subref := fmt.Sprintf("%s@%s", reference, m.Digest)
+		checkImageManifest(subref, checkImageConfigFunc)
+	}
+}
+
+func checkImageManifest(reference string, checkImageConfigFunc func(v1.Config)) {
+	ref, err := name.ParseReference(reference)
+	Ω(err).ShouldNot(HaveOccurred(), err)
+
+	desc, err := remote.Get(ref)
+	Ω(err).ShouldNot(HaveOccurred(), err)
+
+	Ω(desc.MediaType.IsIndex()).ShouldNot(BeTrue(), "expected image, got index")
+
+	i, err := desc.Image()
+	Ω(err).ShouldNot(HaveOccurred(), err)
+
+	c, err := i.ConfigFile()
+	Ω(err).ShouldNot(HaveOccurred(), err)
+
+	checkImageConfigFunc(c.Config)
+}
