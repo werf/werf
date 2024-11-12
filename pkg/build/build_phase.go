@@ -198,8 +198,14 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 		commonTargetPlatforms = []string{phase.Conveyor.ContainerBackend.GetDefaultPlatform()}
 	}
 
-	for _, desc := range phase.Conveyor.imagesTree.GetImagesByName(false) {
-		name, images := desc.Unpair()
+	imagesPairs := phase.Conveyor.imagesTree.GetImagesByName(false)
+	if err := parallel.DoTasks(ctx, len(imagesPairs), parallel.DoTasksOptions{
+		MaxNumberOfWorkers: int(phase.Conveyor.ParallelTasksLimit),
+		LiveOutput:         true,
+	}, func(ctx context.Context, taskId int) error {
+		pair := imagesPairs[taskId]
+
+		name, images := pair.Unpair()
 		platforms := util.MapFuncToSlice(images, func(img *image.Image) string { return img.TargetPlatform })
 
 		// TODO: this target platforms assertion could be removed in future versions and now exists only as a additional self-testing code

@@ -382,8 +382,8 @@ require (
 
 replace (
 	github.com/deislabs/oras => github.com/werf/3p-oras v0.9.1-0.20240115121544-03962ecbd40a // upstream not maintained
+	github.com/docker/buildx => github.com/werf/3p-docker-buildx v0.13.0-rc2.0.20241111114615-d77c2e1444ad // upstream not maintained
 	github.com/helm/helm-2to3 => github.com/werf/3p-helm-2to3 v0.0.0-20230313155428-cf9dd655c0e3 // upstream not maintained, switch back to upstream when merged: https://github.com/helm/helm-2to3/pull/224
-	github.com/docker/buildx => github.com/werf/3p-docker-buildx v0.13.0-rc2.0.20241024135542-5227009077a4 // upstream not maintained
 	github.com/jaguilar/vt100 => github.com/tonistiigi/vt100 v0.0.0-20190402012908-ad4c4a574305 // upstream not maintained
 	helm.sh/helm/v3 => github.com/werf/3p-helm/v3 v3.0.0-20240405163812-3dc7244388e5 // helm 3
 	k8s.io/helm => github.com/werf/3p-helm v0.0.0-20210202111118-81e74d46da0f // helm 2
