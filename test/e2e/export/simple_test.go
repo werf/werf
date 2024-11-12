@@ -72,7 +72,8 @@ var _ = Describe("Simple export", Label("e2e", "export", "simple"), func() {
 							"--tag",
 							imageName,
 						},
-							opts.ExtraArgs...)},
+							opts.ExtraArgs...),
+					},
 				})
 				Expect(exportOut).To(ContainSubstring("Exporting image..."))
 				By("check image architecture")
