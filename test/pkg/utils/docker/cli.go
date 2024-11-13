@@ -89,15 +89,15 @@ func ImageRemoveIfExists(imageName string) {
 
 func IsImageExist(imageName string) bool {
 	_, err := imageInspect(imageName)
-	if err == nil {
-		return true
-	} else {
-		if !strings.HasPrefix(err.Error(), "Error: No such image") && !strings.HasPrefix(err.Error(), "No such image:") {
-			Ω(err).ShouldNot(HaveOccurred())
+	if err != nil {
+		if client.IsErrNotFound(err) {
+			return false
 		}
 
-		return false
+		Ω(err).ShouldNot(HaveOccurred(), err)
 	}
+
+	return true
 }
 
 func ImageParent(imageName string) string {
