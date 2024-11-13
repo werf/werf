@@ -9,13 +9,8 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/level"
 	"github.com/werf/werf/v2/cmd/werf/common"
-	"github.com/werf/werf/v2/pkg/git_repo"
-	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
-	"github.com/werf/werf/v2/pkg/image"
-	"github.com/werf/werf/v2/pkg/storage/lrumeta"
 	"github.com/werf/werf/v2/pkg/tmp_manager"
 	"github.com/werf/werf/v2/pkg/true_git"
-	"github.com/werf/werf/v2/pkg/werf"
 )
 
 var commonCmdData common.CmdData
@@ -76,48 +71,37 @@ func NewCmd(ctx context.Context) *cobra.Command {
 }
 
 func run(ctx context.Context) error {
-	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
-		return fmt.Errorf("initialization error: %w", err)
-	}
-
 	registryMirrors, err := common.GetContainerRegistryMirror(ctx, &commonCmdData)
 	if err != nil {
 		return fmt.Errorf("get container registry mirrors: %w", err)
 	}
 
-	containerBackend, processCtx, err := common.InitProcessContainerBackend(ctx, &commonCmdData, registryMirrors)
+	containerBackend, ctx, err := common.InitProcessContainerBackend(ctx, &commonCmdData, registryMirrors)
 	if err != nil {
 		return err
 	}
-	ctx = processCtx
+
+	err = common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
+		Cmd: &commonCmdData,
+		InitTrueGit: common.InitTrueGitOptions{
+			Init:    true,
+			Options: true_git.Options{LiveGitOutput: *commonCmdData.LogDebug},
+		},
+		InitDockerRegistry: common.InitDockerRegistryOptions{
+			Init:            true,
+			RegistryMirrors: registryMirrors,
+		},
+		InitWerf:    true,
+		InitGitRepo: true,
+		InitImage:   true,
+		InitLRUMeta: true,
+	})
+	if err != nil {
+		return fmt.Errorf("component init error: %w", err)
+	}
 
 	if logboek.Context(ctx).IsAcceptedLevel(level.Default) {
 		logboek.Context(ctx).SetAcceptedLevel(level.Error)
-	}
-
-	gitDataManager, err := gitdata.GetHostGitDataManager(ctx)
-	if err != nil {
-		return fmt.Errorf("error getting host git data manager: %w", err)
-	}
-
-	if err := git_repo.Init(gitDataManager); err != nil {
-		return err
-	}
-
-	if err := true_git.Init(ctx, true_git.Options{LiveGitOutput: *commonCmdData.LogDebug}); err != nil {
-		return err
-	}
-
-	if err := image.Init(); err != nil {
-		return err
-	}
-
-	if err := lrumeta.Init(); err != nil {
-		return err
-	}
-
-	if err := common.DockerRegistryInit(ctx, &commonCmdData, registryMirrors); err != nil {
-		return err
 	}
 
 	projectTmpDir, err := tmp_manager.CreateProjectDir(ctx)
@@ -143,38 +127,16 @@ func run(ctx context.Context) error {
 		return fmt.Errorf("run command in the project directory with werf.yaml")
 	}
 
-	stagesStorage, err := common.GetStagesStorage(ctx, containerBackend, &commonCmdData)
+	storageManager, err := common.NewStorageManager(ctx, &common.NewStorageManagerConfig{
+		ProjectName:      projectName,
+		ContainerBackend: containerBackend,
+		CmdData:          &commonCmdData,
+	})
 	if err != nil {
-		return err
-	}
-	finalStagesStorage, err := common.GetOptionalFinalStagesStorage(ctx, containerBackend, &commonCmdData)
-	if err != nil {
-		return err
-	}
-
-	synchronization, err := common.GetSynchronization(ctx, &commonCmdData, projectName, stagesStorage)
-	if err != nil {
-		return err
-	}
-	storageLockManager, err := common.GetStorageLockManager(ctx, synchronization)
-	if err != nil {
-		return err
-	}
-	secondaryStagesStorageList, err := common.GetSecondaryStagesStorageList(ctx, stagesStorage, containerBackend, &commonCmdData)
-	if err != nil {
-		return err
-	}
-	cacheStagesStorageList, err := common.GetCacheStagesStorageList(ctx, containerBackend, &commonCmdData)
-	if err != nil {
-		return err
+		return fmt.Errorf("unable to init storage manager: %w", err)
 	}
 
-	_ = finalStagesStorage
-	_ = storageLockManager
-	_ = secondaryStagesStorageList
-	_ = cacheStagesStorageList
-
-	if images, err := stagesStorage.GetManagedImages(ctx, projectName); err != nil {
+	if images, err := storageManager.StagesStorage.GetManagedImages(ctx, projectName); err != nil {
 		return fmt.Errorf("unable to list known config image names for project %q: %w", projectName, err)
 	} else {
 		for _, imgName := range images {

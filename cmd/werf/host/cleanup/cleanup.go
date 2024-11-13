@@ -9,11 +9,7 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/container_backend"
-	"github.com/werf/werf/v2/pkg/git_repo"
-	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
 	"github.com/werf/werf/v2/pkg/host_cleaning"
-	"github.com/werf/werf/v2/pkg/image"
-	"github.com/werf/werf/v2/pkg/storage/lrumeta"
 	"github.com/werf/werf/v2/pkg/true_git"
 	"github.com/werf/werf/v2/pkg/util"
 	"github.com/werf/werf/v2/pkg/werf"
@@ -88,36 +84,28 @@ func runCleanup(ctx context.Context) error {
 		return fmt.Errorf("get container registry mirrors: %w", err)
 	}
 
-	containerBackend, processCtx, err := common.InitProcessContainerBackend(ctx, &commonCmdData, registryMirrors)
+	containerBackend, ctx, err := common.InitProcessContainerBackend(ctx, &commonCmdData, registryMirrors)
 	if err != nil {
 		return err
 	}
-	ctx = processCtx
 
 	projectName := *commonCmdData.ProjectName
 	if projectName != "" {
 		return fmt.Errorf("no functionality for cleaning a certain project is implemented (--project-name=%s)", projectName)
 	}
 
-	gitDataManager, err := gitdata.GetHostGitDataManager(ctx)
+	err = common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
+		Cmd: &commonCmdData,
+		InitTrueGit: common.InitTrueGitOptions{
+			Init:    true,
+			Options: true_git.Options{LiveGitOutput: *commonCmdData.LogDebug},
+		},
+		InitGitRepo: true,
+		InitImage:   true,
+		InitLRUMeta: true,
+	})
 	if err != nil {
-		return fmt.Errorf("error getting host git data manager: %w", err)
-	}
-
-	if err := git_repo.Init(gitDataManager); err != nil {
-		return err
-	}
-
-	if err := image.Init(); err != nil {
-		return err
-	}
-
-	if err := lrumeta.Init(); err != nil {
-		return err
-	}
-
-	if err := true_git.Init(ctx, true_git.Options{LiveGitOutput: *commonCmdData.LogDebug}); err != nil {
-		return err
+		return fmt.Errorf("component init error: %w", err)
 	}
 
 	logboek.LogOptionalLn()

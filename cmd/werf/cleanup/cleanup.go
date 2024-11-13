@@ -12,12 +12,8 @@ import (
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/cleaning"
 	"github.com/werf/werf/v2/pkg/git_repo"
-	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
-	"github.com/werf/werf/v2/pkg/image"
-	"github.com/werf/werf/v2/pkg/storage/lrumeta"
 	"github.com/werf/werf/v2/pkg/tmp_manager"
 	"github.com/werf/werf/v2/pkg/true_git"
-	"github.com/werf/werf/v2/pkg/werf"
 	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
 
@@ -107,44 +103,35 @@ func NewCmd(ctx context.Context) *cobra.Command {
 }
 
 func runCleanup(ctx context.Context) error {
-	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
-		return fmt.Errorf("initialization error: %w", err)
-	}
-
 	registryMirrors, err := common.GetContainerRegistryMirror(ctx, &commonCmdData)
 	if err != nil {
 		return fmt.Errorf("get container registry mirrors: %w", err)
 	}
 
-	containerBackend, processCtx, err := common.InitProcessContainerBackend(ctx, &commonCmdData, registryMirrors)
+	containerBackend, ctx, err := common.InitProcessContainerBackend(ctx, &commonCmdData, registryMirrors)
 	if err != nil {
 		return err
 	}
-	ctx = processCtx
 
-	gitDataManager, err := gitdata.GetHostGitDataManager(ctx)
+	err = common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
+		Cmd: &commonCmdData,
+		InitTrueGit: common.InitTrueGitOptions{
+			Init:    true,
+			Options: true_git.Options{LiveGitOutput: *commonCmdData.LogDebug},
+		},
+		InitDockerRegistry: common.InitDockerRegistryOptions{
+			Init:            true,
+			RegistryMirrors: registryMirrors,
+		},
+		InitWerf:                     true,
+		InitGitRepo:                  true,
+		InitImage:                    true,
+		InitLRUMeta:                  true,
+		SetupOndemandKubeInitializer: true,
+	})
+
 	if err != nil {
-		return fmt.Errorf("error getting host git data manager: %w", err)
-	}
-
-	if err := git_repo.Init(gitDataManager); err != nil {
-		return err
-	}
-
-	if err := true_git.Init(ctx, true_git.Options{LiveGitOutput: *commonCmdData.LogDebug}); err != nil {
-		return err
-	}
-
-	if err := image.Init(); err != nil {
-		return err
-	}
-
-	if err := lrumeta.Init(); err != nil {
-		return err
-	}
-
-	if err := common.DockerRegistryInit(ctx, &commonCmdData, registryMirrors); err != nil {
-		return err
+		return fmt.Errorf("component init error: %w", err)
 	}
 
 	defer func() {
@@ -152,11 +139,6 @@ func runCleanup(ctx context.Context) error {
 			logboek.Context(ctx).Error().LogF("Auto host cleanup failed: %s\n", err)
 		}
 	}()
-
-	common.SetupOndemandKubeInitializer(cmdData.ScanContextOnly, *commonCmdData.KubeConfig, *commonCmdData.KubeConfigBase64, *commonCmdData.KubeConfigPathMergeList)
-	if err := common.GetOndemandKubeInitializer().Init(ctx); err != nil {
-		return err
-	}
 
 	giterminismManager, err := common.GetGiterminismManager(ctx, &commonCmdData)
 	if err != nil {

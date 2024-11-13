@@ -23,11 +23,8 @@ import (
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
 	"github.com/werf/werf/v2/pkg/deploy/helm/command_helpers"
-	"github.com/werf/werf/v2/pkg/git_repo"
-	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/ssh_agent"
-	"github.com/werf/werf/v2/pkg/storage/lrumeta"
 	"github.com/werf/werf/v2/pkg/tmp_manager"
 	"github.com/werf/werf/v2/pkg/true_git"
 	"github.com/werf/werf/v2/pkg/werf"
@@ -153,44 +150,36 @@ func NewCmd(ctx context.Context) *cobra.Command {
 func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 	global_warnings.PostponeMultiwerfNotUpToDateWarning()
 
-	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
-		return fmt.Errorf("initialization error: %w", err)
-	}
-
 	registryMirrors, err := common.GetContainerRegistryMirror(ctx, &commonCmdData)
 	if err != nil {
 		return fmt.Errorf("get container registry mirrors: %w", err)
 	}
 
-	containerBackend, processCtx, err := common.InitProcessContainerBackend(ctx, &commonCmdData, registryMirrors)
+	containerBackend, ctx, err := common.InitProcessContainerBackend(ctx, &commonCmdData, registryMirrors)
 	if err != nil {
 		return err
 	}
-	ctx = processCtx
 
-	gitDataManager, err := gitdata.GetHostGitDataManager(ctx)
+	err = common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
+		Cmd: &commonCmdData,
+		InitTrueGit: common.InitTrueGitOptions{
+			Init:    true,
+			Options: true_git.Options{LiveGitOutput: *commonCmdData.LogDebug},
+		},
+		InitDockerRegistry: common.InitDockerRegistryOptions{
+			Init:            true,
+			RegistryMirrors: registryMirrors,
+		},
+		InitWerf:     true,
+		InitGitRepo:  true,
+		InitImage:    true,
+		InitLRUMeta:  true,
+		InitSSHAgent: true,
+
+		SetupOndemandKubeInitializer: true,
+	})
 	if err != nil {
-		return fmt.Errorf("error getting host git data manager: %w", err)
-	}
-
-	if err := git_repo.Init(gitDataManager); err != nil {
-		return err
-	}
-
-	if err := image.Init(); err != nil {
-		return err
-	}
-
-	if err := lrumeta.Init(); err != nil {
-		return err
-	}
-
-	if err := true_git.Init(ctx, true_git.Options{LiveGitOutput: *commonCmdData.LogDebug}); err != nil {
-		return err
-	}
-
-	if err := common.DockerRegistryInit(ctx, &commonCmdData, registryMirrors); err != nil {
-		return err
+		return fmt.Errorf("component init error: %w", err)
 	}
 
 	defer func() {
@@ -199,9 +188,6 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 		}
 	}()
 
-	if err := ssh_agent.Init(ctx, common.GetSSHKey(&commonCmdData)); err != nil {
-		return fmt.Errorf("cannot initialize ssh agent: %w", err)
-	}
 	defer func() {
 		err := ssh_agent.Terminate()
 		if err != nil {
@@ -262,11 +248,6 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 	}
 	finalStagesStorage, err := common.GetOptionalFinalStagesStorage(ctx, containerBackend, &commonCmdData)
 	if err != nil {
-		return err
-	}
-
-	common.SetupOndemandKubeInitializer(*commonCmdData.KubeContext, *commonCmdData.KubeConfig, *commonCmdData.KubeConfigBase64, *commonCmdData.KubeConfigPathMergeList)
-	if err := common.GetOndemandKubeInitializer().Init(ctx); err != nil {
 		return err
 	}
 

@@ -8,10 +8,7 @@ import (
 
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/config/deploy_params"
-	"github.com/werf/werf/v2/pkg/git_repo"
-	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
 	"github.com/werf/werf/v2/pkg/true_git"
-	"github.com/werf/werf/v2/pkg/werf"
 	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
 
@@ -57,26 +54,27 @@ func NewGetReleaseCmd(ctx context.Context) *cobra.Command {
 }
 
 func runGetRelease(ctx context.Context) error {
-	if err := werf.Init(*getReleaseCmdData.TmpDir, *getReleaseCmdData.HomeDir); err != nil {
-		return fmt.Errorf("initialization error: %w", err)
-	}
-
-	gitDataManager, err := gitdata.GetHostGitDataManager(ctx)
-	if err != nil {
-		return fmt.Errorf("error getting host git data manager: %w", err)
-	}
-
-	if err := git_repo.Init(gitDataManager); err != nil {
-		return err
-	}
-
-	if err := true_git.Init(ctx, true_git.Options{LiveGitOutput: *getReleaseCmdData.LogVerbose || *getReleaseCmdData.LogDebug}); err != nil {
-		return err
-	}
-
 	giterminismManager, err := common.GetGiterminismManager(ctx, &getReleaseCmdData)
 	if err != nil {
 		return err
+	}
+
+	err = common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
+		Cmd: &getReleaseCmdData,
+		InitTrueGit: common.InitTrueGitOptions{
+			Init:    true,
+			Options: true_git.Options{LiveGitOutput: *getReleaseCmdData.LogVerbose || *getReleaseCmdData.LogDebug},
+		},
+		InitDockerRegistry:           common.InitDockerRegistryOptions{},
+		InitWerf:                     true,
+		InitGitRepo:                  true,
+		InitImage:                    false,
+		InitLRUMeta:                  false,
+		InitSSHAgent:                 false,
+		SetupOndemandKubeInitializer: false,
+	})
+	if err != nil {
+		return fmt.Errorf("component init error: %w", err)
 	}
 
 	_, werfConfig, err := common.GetRequiredWerfConfig(ctx, &getReleaseCmdData, giterminismManager, common.GetWerfConfigOptions(&getReleaseCmdData, false))

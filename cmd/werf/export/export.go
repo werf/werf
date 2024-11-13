@@ -16,16 +16,12 @@ import (
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/build"
 	"github.com/werf/werf/v2/pkg/config"
-	"github.com/werf/werf/v2/pkg/git_repo"
-	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/slug"
 	"github.com/werf/werf/v2/pkg/ssh_agent"
-	"github.com/werf/werf/v2/pkg/storage/lrumeta"
 	"github.com/werf/werf/v2/pkg/tmp_manager"
 	"github.com/werf/werf/v2/pkg/true_git"
 	"github.com/werf/werf/v2/pkg/util"
-	"github.com/werf/werf/v2/pkg/werf"
 	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
 
@@ -142,49 +138,36 @@ Also, can be specified with $WERF_EXPORT_ADD_LABEL_* (e.g. $WERF_EXPORT_ADD_LABE
 }
 
 func run(ctx context.Context, imageNameListFromArgs, tagTemplateList []string, extraLabels map[string]string) error {
-	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
-		return fmt.Errorf("initialization error: %w", err)
-	}
-
 	registryMirrors, err := common.GetContainerRegistryMirror(ctx, &commonCmdData)
 	if err != nil {
 		return fmt.Errorf("get container registry mirrors: %w", err)
 	}
 
-	containerBackend, processCtx, err := common.InitProcessContainerBackend(ctx, &commonCmdData, registryMirrors)
+	containerBackend, ctx, err := common.InitProcessContainerBackend(ctx, &commonCmdData, registryMirrors)
 	if err != nil {
 		return err
 	}
-	ctx = processCtx
 
-	gitDataManager, err := gitdata.GetHostGitDataManager(ctx)
+	err = common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
+		Cmd: &commonCmdData,
+		InitTrueGit: common.InitTrueGitOptions{
+			Init:    true,
+			Options: true_git.Options{LiveGitOutput: *commonCmdData.LogDebug},
+		},
+		InitDockerRegistry: common.InitDockerRegistryOptions{
+			Init:            true,
+			RegistryMirrors: registryMirrors,
+		},
+		InitWerf:     true,
+		InitGitRepo:  true,
+		InitImage:    true,
+		InitLRUMeta:  true,
+		InitSSHAgent: true,
+	})
 	if err != nil {
-		return fmt.Errorf("error getting host git data manager: %w", err)
+		return fmt.Errorf("component init error: %w", err)
 	}
 
-	if err := git_repo.Init(gitDataManager); err != nil {
-		return err
-	}
-
-	if err := image.Init(); err != nil {
-		return err
-	}
-
-	if err := lrumeta.Init(); err != nil {
-		return err
-	}
-
-	if err := true_git.Init(ctx, true_git.Options{LiveGitOutput: *commonCmdData.LogDebug}); err != nil {
-		return err
-	}
-
-	if err := common.DockerRegistryInit(ctx, &commonCmdData, registryMirrors); err != nil {
-		return err
-	}
-
-	if err := ssh_agent.Init(ctx, common.GetSSHKey(&commonCmdData)); err != nil {
-		return fmt.Errorf("cannot initialize ssh agent: %w", err)
-	}
 	defer func() {
 		err := ssh_agent.Terminate()
 		if err != nil {

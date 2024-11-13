@@ -12,7 +12,6 @@ import (
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/deploy/bundles"
 	"github.com/werf/werf/v2/pkg/docker_registry"
-	"github.com/werf/werf/v2/pkg/werf"
 	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
 
@@ -72,17 +71,22 @@ func NewCmd(ctx context.Context) *cobra.Command {
 }
 
 func runCopy(ctx context.Context) error {
-	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
-		return fmt.Errorf("initialization error: %w", err)
-	}
-
 	registryMirrors, err := common.GetContainerRegistryMirror(ctx, &commonCmdData)
 	if err != nil {
 		return fmt.Errorf("get container registry mirrors: %w", err)
 	}
 
-	if err := common.DockerRegistryInit(ctx, &commonCmdData, registryMirrors); err != nil {
-		return err
+	err = common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
+		Cmd: &commonCmdData,
+		InitDockerRegistry: common.InitDockerRegistryOptions{
+			Init:            true,
+			RegistryMirrors: registryMirrors,
+		},
+		InitWerf:    true,
+		InitGitRepo: true,
+	})
+	if err != nil {
+		return fmt.Errorf("component init error: %w", err)
 	}
 
 	helm_v3.Settings.Debug = *commonCmdData.LogDebug
