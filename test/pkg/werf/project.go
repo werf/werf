@@ -53,6 +53,10 @@ type ConvergeWithReportOptions struct {
 	CommonOptions
 }
 
+type ExportOptions struct {
+	CommonOptions
+}
+
 type KubeRunOptions struct {
 	CommonOptions
 	Command []string
@@ -226,6 +230,16 @@ func (p *Project) Compose(opts *BuildOptions) (combinedOut string) {
 	}
 
 	args := append([]string{"compose"}, opts.ExtraArgs...)
+	outb := p.runCommand(runCommandOptions{Args: args, ShouldFail: opts.ShouldFail})
+
+	return string(outb)
+}
+
+func (p *Project) Export(opts *ExportOptions) (combinedOut string) {
+	if opts == nil {
+		opts = &ExportOptions{}
+	}
+	args := append([]string{"export"}, opts.ExtraArgs...)
 	outb := p.runCommand(runCommandOptions{Args: args, ShouldFail: opts.ShouldFail})
 
 	return string(outb)
