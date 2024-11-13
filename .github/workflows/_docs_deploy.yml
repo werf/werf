@@ -49,12 +49,13 @@ jobs:
 
       - name: Deploy
         run: |
-          source "$(werf ci-env github --as-file)"
+          source "$(werf ci-env github ----as-file)"
           werf converge
         env:
           WERF_NAMESPACE: werfio-${{ inputs.env }}
           WERF_DIR: docs
           WERF_LOG_VERBOSE: on
+          WERF_LOG_DEBUG: true
           WERF_REPO: ghcr.io/${{ github.repository_owner }}/werfio
           WERF_ENV: ${{ inputs.env }}
           WERF_KUBE_CONFIG_BASE64: ${{ secrets.kubeConfig }}
