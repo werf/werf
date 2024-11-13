@@ -31,7 +31,7 @@ func ComputeWerfBinPath() []byte {
 		if runtime.GOOS == "linux" {
 			werfBinPath, err = gexec.BuildWithEnvironment("github.com/werf/werf/v2/cmd/werf", []string{"CGO_ENABLED=1"}, "-race", "-compiler", "gc", "-ldflags", "-linkmode external -extldflags=-static", "-tags", "dfrunsecurity dfrunnetwork dfrunmount dfssh containers_image_openpgp osusergo exclude_graphdriver_devicemapper netgo no_devmapper static_build cni")
 		} else {
-			werfBinPath, err = gexec.BuildWithEnvironment("github.com/werf/werf/v2/cmd/werf", nil, "-race", "-compiler", "gc", "-tags", "dfrunsecurity dfrunnetwork dfrunmount dfssh containers_image_openpgp")
+			werfBinPath, err = gexec.BuildWithEnvironment("github.com/werf/werf/v2/cmd/werf", nil, "-compiler", "gc", "-tags", "dfrunsecurity dfrunnetwork dfrunmount dfssh containers_image_openpgp")
 		}
 		Ω(err).ShouldNot(HaveOccurred())
 	}
