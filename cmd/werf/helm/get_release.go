@@ -65,13 +65,9 @@ func runGetRelease(ctx context.Context) error {
 			Init:    true,
 			Options: true_git.Options{LiveGitOutput: *getReleaseCmdData.LogVerbose || *getReleaseCmdData.LogDebug},
 		},
-		InitDockerRegistry:           common.InitDockerRegistryOptions{},
-		InitWerf:                     true,
-		InitGitRepo:                  true,
-		InitImage:                    false,
-		InitLRUMeta:                  false,
-		InitSSHAgent:                 false,
-		SetupOndemandKubeInitializer: false,
+		InitDockerRegistry: common.InitDockerRegistryOptions{},
+		InitWerf:           true,
+		InitGitRepo:        true,
 	})
 	if err != nil {
 		return fmt.Errorf("component init error: %w", err)

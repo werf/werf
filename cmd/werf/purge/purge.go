@@ -107,11 +107,10 @@ func runPurge(ctx context.Context) error {
 			Init:            true,
 			RegistryMirrors: registryMirrors,
 		},
-		InitWerf:                     true,
-		InitGitRepo:                  true,
-		InitImage:                    true,
-		InitLRUMeta:                  true,
-		SetupOndemandKubeInitializer: false,
+		InitWerf:    true,
+		InitGitRepo: true,
+		InitImage:   true,
+		InitLRUMeta: true,
 	})
 	if err != nil {
 		return fmt.Errorf("component init error: %w", err)

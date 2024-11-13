@@ -242,12 +242,11 @@ func runMain(ctx context.Context) error {
 			Init:            true,
 			RegistryMirrors: registryMirrors,
 		},
-		InitWerf:                     true,
-		InitGitRepo:                  true,
-		InitImage:                    true,
-		InitLRUMeta:                  true,
-		SetupOndemandKubeInitializer: false,
-		InitSSHAgent:                 true,
+		InitWerf:     true,
+		InitGitRepo:  true,
+		InitImage:    true,
+		InitLRUMeta:  true,
+		InitSSHAgent: true,
 	})
 
 	if err != nil {
