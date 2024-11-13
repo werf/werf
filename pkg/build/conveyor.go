@@ -312,6 +312,8 @@ func (c *Conveyor) GetImportServer(ctx context.Context, targetPlatform, imageNam
 }
 
 func (c *Conveyor) AppendOnTerminateFunc(f func() error) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
 	c.onTerminateFuncs = append(c.onTerminateFuncs, f)
 }
 
@@ -658,10 +660,12 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 
 				taskEndTime := time.Now()
 				taskDuration := taskEndTime.Sub(taskStartTime)
+				c.mutex.Lock()
 				setImageExecutionTimes = append(
 					setImageExecutionTimes,
 					fmt.Sprintf("%s (%.2f seconds)", taskImage.LogDetailedName(), taskDuration.Seconds()),
 				)
+				c.mutex.Unlock()
 			}
 
 			return nil
