@@ -59,3 +59,4 @@ jobs:
           WERF_REPO: ghcr.io/${{ github.repository_owner }}/werfio
           WERF_ENV: ${{ inputs.env }}
           WERF_KUBE_CONFIG_BASE64: ${{ secrets.kubeConfig }}
+          WERF_REPO_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
