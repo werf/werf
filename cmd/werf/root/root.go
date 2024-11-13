@@ -144,7 +144,7 @@ func dockerComposeCmd(ctx context.Context) *cobra.Command {
 func crCmd(ctx context.Context) *cobra.Command {
 	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:   "cr",
-		Short: "Work with container registry: authenticate, list and remove images, etc.",
+		Short: "Authenticate with container registry.",
 	})
 	cmd.AddCommand(
 		cr_login.NewCmd(ctx),

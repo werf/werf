@@ -3,5 +3,5 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Work with container registry: authenticate, list and remove images, etc.
+Authenticate with container registry.
 
