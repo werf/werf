@@ -49,7 +49,7 @@ jobs:
 
       - name: Deploy
         run: |
-          source "$(werf ci-env github ----as-file)"
+          source "$(werf ci-env github --as-file)"
           werf converge
         env:
           WERF_NAMESPACE: werfio-${{ inputs.env }}
