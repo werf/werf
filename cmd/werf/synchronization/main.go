@@ -81,9 +81,9 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 func runSynchronization(ctx context.Context) error {
 	err := common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
-		Cmd:         &commonCmdData,
-		InitWerf:    true,
-		InitGitRepo: true,
+		Cmd:                &commonCmdData,
+		InitWerf:           true,
+		InitGitDataManager: true,
 	})
 	if err != nil {
 		return fmt.Errorf("component init error: %w", err)

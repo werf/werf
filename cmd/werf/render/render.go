@@ -178,9 +178,9 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 		},
 		InitDockerRegistry: common.InitDockerRegistryOptions{},
 		InitWerf:           true,
-		InitGitRepo:        true,
-		InitImage:          true,
-		InitLRUMeta:        true,
+		InitGitDataManager: true,
+		InitManifestCache:  true,
+		InitLRUImagesCache: true,
 		InitSSHAgent:       true,
 	})
 	if err != nil {

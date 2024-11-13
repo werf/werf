@@ -59,8 +59,8 @@ func runGetNamespace(ctx context.Context) error {
 			Init:    true,
 			Options: true_git.Options{LiveGitOutput: *getNamespaceCmdData.LogVerbose || *getNamespaceCmdData.LogDebug},
 		},
-		InitWerf:    true,
-		InitGitRepo: true,
+		InitWerf:           true,
+		InitGitDataManager: true,
 	})
 
 	if err != nil {

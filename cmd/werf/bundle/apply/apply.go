@@ -168,8 +168,8 @@ func runApply(ctx context.Context) error {
 			Init:            true,
 			RegistryMirrors: registryMirrors,
 		},
-		InitWerf:    true,
-		InitGitRepo: true,
+		InitWerf:           true,
+		InitGitDataManager: true,
 
 		SetupOndemandKubeInitializer: true,
 	})

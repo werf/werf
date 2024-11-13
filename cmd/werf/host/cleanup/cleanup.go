@@ -100,9 +100,9 @@ func runCleanup(ctx context.Context) error {
 			Init:    true,
 			Options: true_git.Options{LiveGitOutput: *commonCmdData.LogDebug},
 		},
-		InitGitRepo: true,
-		InitImage:   true,
-		InitLRUMeta: true,
+		InitGitDataManager: true,
+		InitManifestCache:  true,
+		InitLRUImagesCache: true,
 	})
 	if err != nil {
 		return fmt.Errorf("component init error: %w", err)

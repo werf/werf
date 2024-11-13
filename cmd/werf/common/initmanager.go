@@ -14,17 +14,26 @@ import (
 )
 
 type InitCommonComponentsOptions struct {
+	// Command data
 	Cmd *CmdData
 
-	InitTrueGit        InitTrueGitOptions
+	// Initialize git
+	InitTrueGit InitTrueGitOptions
+	// Initialize Docker Registry
 	InitDockerRegistry InitDockerRegistryOptions
 
-	InitWerf     bool
-	InitGitRepo  bool
-	InitImage    bool
-	InitLRUMeta  bool
+	// Initialize werf
+	InitWerf bool
+	// Initialize CommonGitDataManager
+	InitGitDataManager bool
+	// Initialize CommonManifestCache
+	InitManifestCache bool
+	// Initialize CommonLRUImagesCache
+	InitLRUImagesCache bool
+	// Initialize SSH agent. Should be used with defer ssh_agent.Terminate()
 	InitSSHAgent bool
 
+	// Setup OndemandKubeInitializer
 	SetupOndemandKubeInitializer bool
 }
 
@@ -45,7 +54,7 @@ func InitCommonComponents(ctx context.Context, opts InitCommonComponentsOptions)
 		}
 	}
 
-	if opts.InitGitRepo {
+	if opts.InitGitDataManager {
 		gitDataManager, err := gitdata.GetHostGitDataManager(ctx)
 		if err != nil {
 			return fmt.Errorf("error getting host git data manager: %w", err)
@@ -56,13 +65,13 @@ func InitCommonComponents(ctx context.Context, opts InitCommonComponentsOptions)
 		}
 	}
 
-	if opts.InitImage {
+	if opts.InitManifestCache {
 		if err := image.Init(); err != nil {
 			return fmt.Errorf("manifest cache initialization error: %w", err)
 		}
 	}
 
-	if opts.InitLRUMeta {
+	if opts.InitLRUImagesCache {
 		if err := lrumeta.Init(); err != nil {
 			return fmt.Errorf("lru cache initialization error: %w", err)
 		}

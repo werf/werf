@@ -95,10 +95,10 @@ func run(ctx context.Context, imageName string) error {
 			Init:            true,
 			RegistryMirrors: registryMirrors,
 		},
-		InitWerf:    true,
-		InitGitRepo: true,
-		InitImage:   true,
-		InitLRUMeta: true,
+		InitWerf:           true,
+		InitGitDataManager: true,
+		InitManifestCache:  true,
+		InitLRUImagesCache: true,
 	})
 	if err != nil {
 		return fmt.Errorf("component init error: %w", err)

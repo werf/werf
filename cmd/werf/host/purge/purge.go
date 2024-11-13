@@ -75,10 +75,10 @@ func runReset(ctx context.Context) error {
 	}
 
 	err = common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
-		Cmd:         &commonCmdData,
-		InitWerf:    true,
-		InitGitRepo: true,
-		InitImage:   true,
+		Cmd:                &commonCmdData,
+		InitWerf:           true,
+		InitGitDataManager: true,
+		InitManifestCache:  true,
 	})
 	if err != nil {
 		return fmt.Errorf("component init error: %w", err)

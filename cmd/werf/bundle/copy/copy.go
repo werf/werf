@@ -82,8 +82,8 @@ func runCopy(ctx context.Context) error {
 			Init:            true,
 			RegistryMirrors: registryMirrors,
 		},
-		InitWerf:    true,
-		InitGitRepo: true,
+		InitWerf:           true,
+		InitGitDataManager: true,
 	})
 	if err != nil {
 		return fmt.Errorf("component init error: %w", err)

@@ -45,7 +45,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 				},
 				InitDockerRegistry: common.InitDockerRegistryOptions{},
 				InitWerf:           true,
-				InitGitRepo:        true,
+				InitGitDataManager: true,
 			})
 			if err != nil {
 				return fmt.Errorf("component init error: %w", err)

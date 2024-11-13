@@ -72,8 +72,8 @@ func runRotateSecretKey(
 			Init:    true,
 			Options: true_git.Options{LiveGitOutput: *commonCmdData.LogVerbose || *commonCmdData.LogDebug},
 		},
-		InitWerf:    true,
-		InitGitRepo: true,
+		InitWerf:           true,
+		InitGitDataManager: true,
 	})
 	if err != nil {
 		return fmt.Errorf("component init error: %w", err)

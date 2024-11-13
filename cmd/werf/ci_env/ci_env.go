@@ -100,7 +100,7 @@ func runCIEnv(cmd *cobra.Command, args []string) error {
 		},
 		InitDockerRegistry: common.InitDockerRegistryOptions{},
 		InitWerf:           true,
-		InitGitRepo:        true,
+		InitGitDataManager: true,
 	})
 
 	if err != nil {

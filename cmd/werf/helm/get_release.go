@@ -67,7 +67,7 @@ func runGetRelease(ctx context.Context) error {
 		},
 		InitDockerRegistry: common.InitDockerRegistryOptions{},
 		InitWerf:           true,
-		InitGitRepo:        true,
+		InitGitDataManager: true,
 	})
 	if err != nil {
 		return fmt.Errorf("component init error: %w", err)

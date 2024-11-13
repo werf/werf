@@ -131,11 +131,11 @@ func runMain(ctx context.Context, imageNameListFromArgs []string) error {
 	}
 
 	err = common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
-		Cmd:         &commonCmdData,
-		InitWerf:    true,
-		InitGitRepo: true,
-		InitImage:   true,
-		InitLRUMeta: true,
+		Cmd:                &commonCmdData,
+		InitWerf:           true,
+		InitGitDataManager: true,
+		InitManifestCache:  true,
+		InitLRUImagesCache: true,
 		InitTrueGit: common.InitTrueGitOptions{
 			Init:    true,
 			Options: true_git.Options{LiveGitOutput: *commonCmdData.LogDebug},

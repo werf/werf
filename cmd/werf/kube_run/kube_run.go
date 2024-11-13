@@ -250,9 +250,9 @@ func runMain(ctx context.Context) error {
 			RegistryMirrors: registryMirrors,
 		},
 		InitWerf:                     true,
-		InitGitRepo:                  true,
-		InitImage:                    true,
-		InitLRUMeta:                  true,
+		InitGitDataManager:           true,
+		InitManifestCache:            true,
+		InitLRUImagesCache:           true,
 		SetupOndemandKubeInitializer: true,
 		InitSSHAgent:                 true,
 	})

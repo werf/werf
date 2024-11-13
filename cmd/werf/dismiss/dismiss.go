@@ -144,10 +144,10 @@ func runDismiss(ctx context.Context) error {
 			Init:    true,
 			Options: true_git.Options{LiveGitOutput: *commonCmdData.LogDebug},
 		},
-		InitWerf:    true,
-		InitGitRepo: true,
-		InitImage:   true,
-		InitLRUMeta: true,
+		InitWerf:           true,
+		InitGitDataManager: true,
+		InitManifestCache:  true,
+		InitLRUImagesCache: true,
 	})
 
 	if err != nil {
