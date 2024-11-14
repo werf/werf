@@ -87,32 +87,23 @@ func NewCmd(ctx context.Context) *cobra.Command {
 }
 
 func runPurge(ctx context.Context) error {
-	registryMirrors, err := common.GetContainerRegistryMirror(ctx, &commonCmdData)
-	if err != nil {
-		return fmt.Errorf("get container registry mirrors: %w", err)
-	}
-
-	containerBackend, ctx, err := common.InitProcessContainerBackend(ctx, &commonCmdData, registryMirrors)
-	if err != nil {
-		return err
-	}
-
-	err = common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
+	commonManager, ctx, err := common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
 		Cmd: &commonCmdData,
 		InitTrueGitWithOptions: &common.InitTrueGitOptions{
 			Options: true_git.Options{LiveGitOutput: *commonCmdData.LogDebug},
 		},
-		InitDockerRegistryWithOptions: &common.InitDockerRegistryOptions{
-			RegistryMirrors: registryMirrors,
-		},
-		InitWerf:           true,
-		InitGitDataManager: true,
-		InitManifestCache:  true,
-		InitLRUImagesCache: true,
+		InitDockerRegistry:          true,
+		InitProcessContainerBackend: true,
+		InitWerf:                    true,
+		InitGitDataManager:          true,
+		InitManifestCache:           true,
+		InitLRUImagesCache:          true,
 	})
 	if err != nil {
 		return fmt.Errorf("component init error: %w", err)
 	}
+
+	containerBackend := commonManager.ContainerBackend()
 
 	giterminismManager, err := common.GetGiterminismManager(ctx, &commonCmdData)
 	if err != nil {

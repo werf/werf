@@ -119,18 +119,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 func runMain(ctx context.Context, imageNameListFromArgs []string) error {
 	global_warnings.PostponeMultiwerfNotUpToDateWarning()
-
-	registryMirrors, err := common.GetContainerRegistryMirror(ctx, &commonCmdData)
-	if err != nil {
-		return fmt.Errorf("get container registry mirrors: %w", err)
-	}
-
-	containerBackend, ctx, err := common.InitProcessContainerBackend(ctx, &commonCmdData, registryMirrors)
-	if err != nil {
-		return err
-	}
-
-	err = common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
+	commonManager, ctx, err := common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
 		Cmd:                &commonCmdData,
 		InitWerf:           true,
 		InitGitDataManager: true,
@@ -139,15 +128,16 @@ func runMain(ctx context.Context, imageNameListFromArgs []string) error {
 		InitTrueGitWithOptions: &common.InitTrueGitOptions{
 			Options: true_git.Options{LiveGitOutput: *commonCmdData.LogDebug},
 		},
-		InitDockerRegistryWithOptions: &common.InitDockerRegistryOptions{
-			RegistryMirrors: registryMirrors,
-		},
+		InitDockerRegistry:           true,
+		InitProcessContainerBackend:  true,
 		InitSSHAgent:                 true,
 		SetupOndemandKubeInitializer: true,
 	})
 	if err != nil {
 		return fmt.Errorf("component init error: %w", err)
 	}
+
+	containerBackend := commonManager.ContainerBackend()
 
 	defer func() {
 		if err := common.RunAutoHostCleanup(ctx, &commonCmdData, containerBackend); err != nil {
@@ -156,10 +146,7 @@ func runMain(ctx context.Context, imageNameListFromArgs []string) error {
 	}()
 
 	defer func() {
-		err := ssh_agent.Terminate()
-		if err != nil {
-			logboek.Warn().LogF("WARNING: ssh agent termination failed: %s\n", err)
-		}
+		commonManager.TerminateSSHAgent()
 	}()
 
 	giterminismManager, err := common.GetGiterminismManager(ctx, &commonCmdData)

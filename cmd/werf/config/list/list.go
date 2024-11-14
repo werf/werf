@@ -78,7 +78,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 }
 
 func run(ctx context.Context) error {
-	err := common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
+	_, ctx, err := common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
 		Cmd: &commonCmdData,
 		InitTrueGitWithOptions: &common.InitTrueGitOptions{
 			Options: true_git.Options{LiveGitOutput: *commonCmdData.LogDebug},

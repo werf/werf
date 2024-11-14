@@ -92,7 +92,7 @@ func runCIEnv(cmd *cobra.Command, args []string) error {
 
 	logboek.SetAcceptedLevel(level.Error)
 
-	err := common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
+	_, ctx, err := common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
 		Cmd: &commonCmdData,
 		InitTrueGitWithOptions: &common.InitTrueGitOptions{
 			Options: true_git.Options{LiveGitOutput: *commonCmdData.LogDebug},

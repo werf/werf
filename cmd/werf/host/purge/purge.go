@@ -64,25 +64,18 @@ func NewCmd(ctx context.Context) *cobra.Command {
 }
 
 func runReset(ctx context.Context) error {
-	registryMirrors, err := common.GetContainerRegistryMirror(ctx, &commonCmdData)
-	if err != nil {
-		return fmt.Errorf("get container registry mirrors: %w", err)
-	}
-
-	containerBackend, ctx, err := common.InitProcessContainerBackend(ctx, &commonCmdData, registryMirrors)
-	if err != nil {
-		return err
-	}
-
-	err = common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
-		Cmd:                &commonCmdData,
-		InitWerf:           true,
-		InitGitDataManager: true,
-		InitManifestCache:  true,
+	commonManager, ctx, err := common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
+		Cmd:                         &commonCmdData,
+		InitWerf:                    true,
+		InitGitDataManager:          true,
+		InitManifestCache:           true,
+		InitProcessContainerBackend: true,
 	})
 	if err != nil {
 		return fmt.Errorf("component init error: %w", err)
 	}
+
+	containerBackend := commonManager.ContainerBackend()
 
 	projectName := *commonCmdData.ProjectName
 	if projectName == "" {

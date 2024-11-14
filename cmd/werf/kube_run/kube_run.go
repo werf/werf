@@ -228,25 +228,13 @@ func processArgs(cmd *cobra.Command, args []string) error {
 
 func runMain(ctx context.Context) error {
 	global_warnings.PostponeMultiwerfNotUpToDateWarning()
-
-	registryMirrors, err := common.GetContainerRegistryMirror(ctx, &commonCmdData)
-	if err != nil {
-		return fmt.Errorf("get container registry mirrors: %w", err)
-	}
-
-	containerBackend, ctx, err := common.InitProcessContainerBackend(ctx, &commonCmdData, registryMirrors)
-	if err != nil {
-		return err
-	}
-
-	err = common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
+	commonManager, ctx, err := common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
 		Cmd: &commonCmdData,
 		InitTrueGitWithOptions: &common.InitTrueGitOptions{
 			Options: true_git.Options{LiveGitOutput: *commonCmdData.LogDebug},
 		},
-		InitDockerRegistryWithOptions: &common.InitDockerRegistryOptions{
-			RegistryMirrors: registryMirrors,
-		},
+		InitDockerRegistry:           true,
+		InitProcessContainerBackend:  true,
 		InitWerf:                     true,
 		InitGitDataManager:           true,
 		InitManifestCache:            true,
@@ -257,6 +245,8 @@ func runMain(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("component init error: %w", err)
 	}
+
+	containerBackend := commonManager.ContainerBackend()
 
 	defer func() {
 		if err := ssh_agent.Terminate(); err != nil {

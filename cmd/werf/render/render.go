@@ -160,17 +160,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 }
 
 func runRender(ctx context.Context, imageNameListFromArgs []string) error {
-	registryMirrors, err := common.GetContainerRegistryMirror(ctx, &commonCmdData)
-	if err != nil {
-		return fmt.Errorf("get container registry mirrors: %w", err)
-	}
-
-	containerBackend, ctx, err := common.InitProcessContainerBackend(ctx, &commonCmdData, registryMirrors)
-	if err != nil {
-		return err
-	}
-
-	err = common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
+	commonManager, ctx, err := common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
 		Cmd: &commonCmdData,
 		InitTrueGitWithOptions: &common.InitTrueGitOptions{
 			Options: true_git.Options{LiveGitOutput: *commonCmdData.LogDebug},
@@ -185,11 +175,10 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 		return fmt.Errorf("component init error: %w", err)
 	}
 
+	containerBackend := commonManager.ContainerBackend()
+
 	defer func() {
-		err := ssh_agent.Terminate()
-		if err != nil {
-			logboek.Warn().LogF("WARNING: ssh agent termination failed: %s\n", err)
-		}
+		commonManager.TerminateSSHAgent()
 	}()
 
 	giterminismManager, err := common.GetGiterminismManager(ctx, &commonCmdData)
@@ -241,7 +230,7 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 		isStub = true
 		stubImageNameList = append(stubImageNameList, imagesToProcess.FinalImageNameList...)
 	default:
-		if err := common.DockerRegistryInit(ctx, &commonCmdData, registryMirrors); err != nil {
+		if err := common.DockerRegistryInit(ctx, &commonCmdData, commonManager.RegistryMirrors()); err != nil {
 			return err
 		}
 

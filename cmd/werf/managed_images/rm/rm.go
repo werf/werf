@@ -75,24 +75,12 @@ func NewCmd(ctx context.Context) *cobra.Command {
 }
 
 func run(ctx context.Context, imageNames []string) error {
-	registryMirrors, err := common.GetContainerRegistryMirror(ctx, &commonCmdData)
-	if err != nil {
-		return fmt.Errorf("get container registry mirrors: %w", err)
-	}
-
-	containerBackend, ctx, err := common.InitProcessContainerBackend(ctx, &commonCmdData, registryMirrors)
-	if err != nil {
-		return err
-	}
-
-	err = common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
+	commonManager, ctx, err := common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
 		Cmd: &commonCmdData,
 		InitTrueGitWithOptions: &common.InitTrueGitOptions{
 			Options: true_git.Options{LiveGitOutput: *commonCmdData.LogDebug},
 		},
-		InitDockerRegistryWithOptions: &common.InitDockerRegistryOptions{
-			RegistryMirrors: registryMirrors,
-		},
+		InitDockerRegistry: true,
 		InitWerf:           true,
 		InitGitDataManager: true,
 		InitManifestCache:  true,
@@ -101,6 +89,8 @@ func run(ctx context.Context, imageNames []string) error {
 	if err != nil {
 		return fmt.Errorf("component init error: %w", err)
 	}
+
+	containerBackend := commonManager.ContainerBackend()
 
 	if logboek.Context(ctx).IsAcceptedLevel(level.Default) {
 		logboek.Context(ctx).SetAcceptedLevel(level.Error)

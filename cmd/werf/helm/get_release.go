@@ -59,7 +59,7 @@ func runGetRelease(ctx context.Context) error {
 		return err
 	}
 
-	err = common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
+	_, ctx, err = common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
 		Cmd: &getReleaseCmdData,
 		InitTrueGitWithOptions: &common.InitTrueGitOptions{
 			Options: true_git.Options{LiveGitOutput: *getReleaseCmdData.LogVerbose || *getReleaseCmdData.LogDebug},

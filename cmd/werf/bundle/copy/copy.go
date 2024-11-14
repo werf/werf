@@ -71,16 +71,9 @@ func NewCmd(ctx context.Context) *cobra.Command {
 }
 
 func runCopy(ctx context.Context) error {
-	registryMirrors, err := common.GetContainerRegistryMirror(ctx, &commonCmdData)
-	if err != nil {
-		return fmt.Errorf("get container registry mirrors: %w", err)
-	}
-
-	err = common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
-		Cmd: &commonCmdData,
-		InitDockerRegistryWithOptions: &common.InitDockerRegistryOptions{
-			RegistryMirrors: registryMirrors,
-		},
+	_, ctx, err := common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
+		Cmd:                &commonCmdData,
+		InitDockerRegistry: true,
 		InitWerf:           true,
 		InitGitDataManager: true,
 	})

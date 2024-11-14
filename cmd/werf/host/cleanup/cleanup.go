@@ -79,33 +79,26 @@ func NewCmd(ctx context.Context) *cobra.Command {
 }
 
 func runCleanup(ctx context.Context) error {
-	registryMirrors, err := common.GetContainerRegistryMirror(ctx, &commonCmdData)
-	if err != nil {
-		return fmt.Errorf("get container registry mirrors: %w", err)
-	}
-
-	containerBackend, ctx, err := common.InitProcessContainerBackend(ctx, &commonCmdData, registryMirrors)
-	if err != nil {
-		return err
-	}
-
 	projectName := *commonCmdData.ProjectName
 	if projectName != "" {
 		return fmt.Errorf("no functionality for cleaning a certain project is implemented (--project-name=%s)", projectName)
 	}
 
-	err = common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
+	commonManager, ctx, err := common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
 		Cmd: &commonCmdData,
 		InitTrueGitWithOptions: &common.InitTrueGitOptions{
 			Options: true_git.Options{LiveGitOutput: *commonCmdData.LogDebug},
 		},
-		InitGitDataManager: true,
-		InitManifestCache:  true,
-		InitLRUImagesCache: true,
+		InitProcessContainerBackend: true,
+		InitGitDataManager:          true,
+		InitManifestCache:           true,
+		InitLRUImagesCache:          true,
 	})
 	if err != nil {
 		return fmt.Errorf("component init error: %w", err)
 	}
+
+	containerBackend := commonManager.ContainerBackend()
 
 	logboek.LogOptionalLn()
 
