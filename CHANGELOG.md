@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.13.0](https://www.github.com/werf/werf/compare/v2.12.1...v2.13.0) (2024-11-14)
+
+
+### Features
+
+* **build, docker:** use buildkit by default ([#6401](https://www.github.com/werf/werf/issues/6401)) ([fc7eb8a](https://www.github.com/werf/werf/commit/fc7eb8a0f88d62708da6dcadff4083ee17a5914c))
+
 ### [2.12.1](https://www.github.com/werf/werf/compare/v2.12.0...v2.12.1) (2024-11-08)
 
 
