@@ -217,7 +217,6 @@ func runMain(ctx context.Context, imageNameListFromArgs []string) error {
 		InitLRUImagesCache: true,
 		InitSSHAgent:       true,
 	})
-
 	if err != nil {
 		return fmt.Errorf("component init error: %w", err)
 	}

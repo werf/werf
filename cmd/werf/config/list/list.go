@@ -86,7 +86,6 @@ func run(ctx context.Context) error {
 		InitWerf:           true,
 		InitGitDataManager: true,
 	})
-
 	if err != nil {
 		return fmt.Errorf("component init error: %w", err)
 	}

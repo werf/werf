@@ -100,7 +100,6 @@ func runCIEnv(cmd *cobra.Command, args []string) error {
 		InitWerf:           true,
 		InitGitDataManager: true,
 	})
-
 	if err != nil {
 		return fmt.Errorf("component init error: %w", err)
 	}

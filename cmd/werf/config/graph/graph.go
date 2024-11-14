@@ -63,7 +63,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 				InitWerf:           true,
 				InitGitDataManager: true,
 			})
-
 			if err != nil {
 				return fmt.Errorf("component init error: %w", err)
 			}

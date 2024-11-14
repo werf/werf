@@ -387,7 +387,6 @@ func runMain(ctx context.Context, dockerComposeCmdName string, cmdData composeCm
 		InitLRUImagesCache: true,
 		InitSSHAgent:       true,
 	})
-
 	if err != nil {
 		return fmt.Errorf("component init error: %w", err)
 	}

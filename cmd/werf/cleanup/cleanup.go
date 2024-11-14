@@ -126,7 +126,6 @@ func runCleanup(ctx context.Context) error {
 		InitManifestCache:  true,
 		InitLRUImagesCache: true,
 	})
-
 	if err != nil {
 		return fmt.Errorf("component init error: %w", err)
 	}
