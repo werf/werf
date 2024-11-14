@@ -50,7 +50,6 @@ jobs:
       - name: Deploy
         run: |
           source "$(werf ci-env github --as-file)"
-          werf cr login $WERF_REPO -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
           werf converge
         env:
           WERF_NAMESPACE: werfio-${{ inputs.env }}
@@ -59,3 +58,4 @@ jobs:
           WERF_REPO: ghcr.io/${{ github.repository_owner }}/werfio
           WERF_ENV: ${{ inputs.env }}
           WERF_KUBE_CONFIG_BASE64: ${{ secrets.kubeConfig }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
