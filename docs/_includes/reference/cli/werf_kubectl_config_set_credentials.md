@@ -113,6 +113,8 @@ werf kubectl config set-credentials NAME [--client-certificate=path/to/certfile]
             $WERF_KUBECONFIG_BASE64 or $KUBECONFIG_BASE64)
       --kubeconfig=''
             use a particular kubeconfig file
+      --log-flush-frequency=5s
+            Maximum number of seconds between log flushes
       --match-server-version=false
             Require server version to match client version
   -n, --namespace=''
@@ -134,6 +136,11 @@ werf kubectl config set-credentials NAME [--client-certificate=path/to/certfile]
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --user=''
             The name of the kubeconfig user to use
+  -v, --v=0
+            number for the log level verbosity
+      --vmodule=
+            comma-separated list of pattern=N settings for file-filtered logging (only works for    
+            the default text log format)
       --warnings-as-errors=false
             Treat warnings received from the server as errors and exit with a non-zero exit code
 ```
