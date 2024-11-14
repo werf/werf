@@ -226,12 +226,13 @@ func runMain(ctx context.Context) error {
 		InitTrueGitWithOptions: &common.InitTrueGitOptions{
 			Options: true_git.Options{LiveGitOutput: *commonCmdData.LogDebug},
 		},
-		InitDockerRegistry: true,
-		InitWerf:           true,
-		InitGitDataManager: true,
-		InitManifestCache:  true,
-		InitLRUImagesCache: true,
-		InitSSHAgent:       true,
+		InitDockerRegistry:          true,
+		InitProcessContainerBackend: true,
+		InitWerf:                    true,
+		InitGitDataManager:          true,
+		InitManifestCache:           true,
+		InitLRUImagesCache:          true,
+		InitSSHAgent:                true,
 	})
 	if err != nil {
 		return fmt.Errorf("component init error: %w", err)
