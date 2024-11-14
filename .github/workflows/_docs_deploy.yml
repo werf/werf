@@ -44,13 +44,18 @@ jobs:
           EOF
           fi
 
+      - name: Install werf
+        uses: werf/actions/install@v2
+
       - name: Deploy
-        uses: werf/actions/converge@v2
-        with:
-          env: ${{ inputs.env }}
-          kube-config-base64-data: ${{ secrets.kubeConfig }}
+        run: |
+          . $(werf ci-env github --as-file)
+          werf converge
         env:
           WERF_NAMESPACE: werfio-${{ inputs.env }}
           WERF_DIR: docs
           WERF_LOG_VERBOSE: on
           WERF_REPO: ghcr.io/${{ github.repository_owner }}/werfio
+          WERF_ENV: ${{ inputs.env }}
+          WERF_KUBE_CONFIG_BASE64: ${{ secrets.kubeConfig }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
