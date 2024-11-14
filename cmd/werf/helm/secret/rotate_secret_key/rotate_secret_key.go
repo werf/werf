@@ -68,8 +68,7 @@ func runRotateSecretKey(
 ) error {
 	err := common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
 		Cmd: &commonCmdData,
-		InitTrueGit: common.InitTrueGitOptions{
-			Init:    true,
+		InitTrueGitWithOptions: &common.InitTrueGitOptions{
 			Options: true_git.Options{LiveGitOutput: *commonCmdData.LogVerbose || *commonCmdData.LogDebug},
 		},
 		InitWerf:           true,

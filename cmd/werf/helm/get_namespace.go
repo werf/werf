@@ -55,8 +55,7 @@ func NewGetNamespaceCmd(ctx context.Context) *cobra.Command {
 func runGetNamespace(ctx context.Context) error {
 	err := common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
 		Cmd: &getNamespaceCmdData,
-		InitTrueGit: common.InitTrueGitOptions{
-			Init:    true,
+		InitTrueGitWithOptions: &common.InitTrueGitOptions{
 			Options: true_git.Options{LiveGitOutput: *getNamespaceCmdData.LogVerbose || *getNamespaceCmdData.LogDebug},
 		},
 		InitWerf:           true,

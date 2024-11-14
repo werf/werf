@@ -18,9 +18,9 @@ type InitCommonComponentsOptions struct {
 	Cmd *CmdData
 
 	// Initialize git
-	InitTrueGit InitTrueGitOptions
+	InitTrueGitWithOptions *InitTrueGitOptions
 	// Initialize Docker Registry
-	InitDockerRegistry InitDockerRegistryOptions
+	InitDockerRegistryWithOptions *InitDockerRegistryOptions
 
 	// Initialize werf
 	InitWerf bool
@@ -38,12 +38,10 @@ type InitCommonComponentsOptions struct {
 }
 
 type InitTrueGitOptions struct {
-	Init    bool
 	Options true_git.Options
 }
 
 type InitDockerRegistryOptions struct {
-	Init            bool
 	RegistryMirrors []string
 }
 
@@ -77,14 +75,14 @@ func InitCommonComponents(ctx context.Context, opts InitCommonComponentsOptions)
 		}
 	}
 
-	if opts.InitTrueGit.Init {
-		if err := true_git.Init(ctx, opts.InitTrueGit.Options); err != nil {
+	if opts.InitTrueGitWithOptions != nil {
+		if err := true_git.Init(ctx, opts.InitTrueGitWithOptions.Options); err != nil {
 			return fmt.Errorf("git initialization error: %w", err)
 		}
 	}
 
-	if opts.InitDockerRegistry.Init {
-		if err := DockerRegistryInit(ctx, opts.Cmd, opts.InitDockerRegistry.RegistryMirrors); err != nil {
+	if opts.InitDockerRegistryWithOptions != nil {
+		if err := DockerRegistryInit(ctx, opts.Cmd, opts.InitDockerRegistryWithOptions.RegistryMirrors); err != nil {
 			return fmt.Errorf("docker registry initialization error: %w", err)
 		}
 	}

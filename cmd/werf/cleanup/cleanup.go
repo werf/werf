@@ -115,19 +115,16 @@ func runCleanup(ctx context.Context) error {
 
 	err = common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
 		Cmd: &commonCmdData,
-		InitTrueGit: common.InitTrueGitOptions{
-			Init:    true,
+		InitTrueGitWithOptions: &common.InitTrueGitOptions{
 			Options: true_git.Options{LiveGitOutput: *commonCmdData.LogDebug},
 		},
-		InitDockerRegistry: common.InitDockerRegistryOptions{
-			Init:            true,
+		InitDockerRegistryWithOptions: &common.InitDockerRegistryOptions{
 			RegistryMirrors: registryMirrors,
 		},
-		InitWerf:                     true,
-		InitGitDataManager:           true,
-		InitManifestCache:            true,
-		InitLRUImagesCache:           true,
-		SetupOndemandKubeInitializer: true,
+		InitWerf:           true,
+		InitGitDataManager: true,
+		InitManifestCache:  true,
+		InitLRUImagesCache: true,
 	})
 
 	if err != nil {
@@ -139,6 +136,11 @@ func runCleanup(ctx context.Context) error {
 			logboek.Context(ctx).Error().LogF("Auto host cleanup failed: %s\n", err)
 		}
 	}()
+
+	common.SetupOndemandKubeInitializer(cmdData.ScanContextOnly, *commonCmdData.KubeConfig, *commonCmdData.KubeConfigBase64, *commonCmdData.KubeConfigPathMergeList)
+	if err := common.GetOndemandKubeInitializer().Init(ctx); err != nil {
+		return err
+	}
 
 	giterminismManager, err := common.GetGiterminismManager(ctx, &commonCmdData)
 	if err != nil {

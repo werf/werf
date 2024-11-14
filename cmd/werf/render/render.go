@@ -172,11 +172,9 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 
 	err = common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
 		Cmd: &commonCmdData,
-		InitTrueGit: common.InitTrueGitOptions{
-			Init:    true,
+		InitTrueGitWithOptions: &common.InitTrueGitOptions{
 			Options: true_git.Options{LiveGitOutput: *commonCmdData.LogDebug},
 		},
-		InitDockerRegistry: common.InitDockerRegistryOptions{},
 		InitWerf:           true,
 		InitGitDataManager: true,
 		InitManifestCache:  true,

@@ -136,12 +136,10 @@ func runMain(ctx context.Context, imageNameListFromArgs []string) error {
 		InitGitDataManager: true,
 		InitManifestCache:  true,
 		InitLRUImagesCache: true,
-		InitTrueGit: common.InitTrueGitOptions{
-			Init:    true,
+		InitTrueGitWithOptions: &common.InitTrueGitOptions{
 			Options: true_git.Options{LiveGitOutput: *commonCmdData.LogDebug},
 		},
-		InitDockerRegistry: common.InitDockerRegistryOptions{
-			Init:            true,
+		InitDockerRegistryWithOptions: &common.InitDockerRegistryOptions{
 			RegistryMirrors: registryMirrors,
 		},
 		InitSSHAgent:                 true,

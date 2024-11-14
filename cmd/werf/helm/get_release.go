@@ -61,11 +61,9 @@ func runGetRelease(ctx context.Context) error {
 
 	err = common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
 		Cmd: &getReleaseCmdData,
-		InitTrueGit: common.InitTrueGitOptions{
-			Init:    true,
+		InitTrueGitWithOptions: &common.InitTrueGitOptions{
 			Options: true_git.Options{LiveGitOutput: *getReleaseCmdData.LogVerbose || *getReleaseCmdData.LogDebug},
 		},
-		InitDockerRegistry: common.InitDockerRegistryOptions{},
 		InitWerf:           true,
 		InitGitDataManager: true,
 	})

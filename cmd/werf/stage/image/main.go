@@ -105,12 +105,10 @@ func run(ctx context.Context, imageName string) error {
 	}
 	err = common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
 		Cmd: &commonCmdData,
-		InitTrueGit: common.InitTrueGitOptions{
-			Init:    true,
+		InitTrueGitWithOptions: &common.InitTrueGitOptions{
 			Options: true_git.Options{LiveGitOutput: *commonCmdData.LogDebug},
 		},
-		InitDockerRegistry: common.InitDockerRegistryOptions{
-			Init:            true,
+		InitDockerRegistryWithOptions: &common.InitDockerRegistryOptions{
 			RegistryMirrors: registryMirrors,
 		},
 		InitWerf:           true,

@@ -78,8 +78,7 @@ func runCopy(ctx context.Context) error {
 
 	err = common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
 		Cmd: &commonCmdData,
-		InitDockerRegistry: common.InitDockerRegistryOptions{
-			Init:            true,
+		InitDockerRegistryWithOptions: &common.InitDockerRegistryOptions{
 			RegistryMirrors: registryMirrors,
 		},
 		InitWerf:           true,
