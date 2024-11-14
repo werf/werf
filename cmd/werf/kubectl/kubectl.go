@@ -8,6 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
+	"k8s.io/component-base/logs"
 	"k8s.io/kubectl/pkg/cmd"
 	"k8s.io/kubectl/pkg/cmd/plugin"
 	"k8s.io/kubectl/pkg/cmd/util"
@@ -32,6 +33,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 		ConfigFlags:   configFlags,
 		IOStreams:     genericclioptions.IOStreams{In: os.Stdin, Out: os.Stdout, ErrOut: os.Stderr},
 	})
+
+	logs.AddFlags(kubectlCmd.PersistentFlags())
 
 	common.SetupHomeDir(&commonCmdData, kubectlCmd, common.SetupHomeDirOptions{Persistent: true})
 	common.SetupTmpDir(&commonCmdData, kubectlCmd, common.SetupTmpDirOptions{Persistent: true})
