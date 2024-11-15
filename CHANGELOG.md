@@ -1,5 +1,25 @@
 # Changelog
 
+### [1.2.331](https://www.github.com/werf/werf/compare/v1.2.330...v1.2.331) (2024-11-15)
+
+
+### Features
+
+* **build, docker:** use buildkit by default ([#6401](https://www.github.com/werf/werf/issues/6401)) ([197e9cc](https://www.github.com/werf/werf/commit/197e9cc039e41a8500cb66266dcc51bbe4b77d88))
+* **export:** export images concurrently([#6395](https://www.github.com/werf/werf/issues/6395)) ([ddd804f](https://www.github.com/werf/werf/commit/ddd804fec61259a9ca74f4b49a37d1a2473292b3))
+
+
+### Bug Fixes
+
+* **build,docker:** remove quiet mode when using buildkit ([43d5668](https://www.github.com/werf/werf/commit/43d56687879a88b2288549553addb199f9a422cb))
+* **build/stages:** Add RWMutex to ImagesTree ([04f65d2](https://www.github.com/werf/werf/commit/04f65d2891c9157ecf5b5570ec442a97979839bb))
+* **cleanup, ecr:** fix aws sso not supported ([1a5465b](https://www.github.com/werf/werf/commit/1a5465b9c4a81d3ca9651151bc50d32df74cc110))
+* **deploy:** ensure werf commands run consistently with service values ([c0d5885](https://www.github.com/werf/werf/commit/c0d588560cff6b3967e7064e73a20b1a030b4fec))
+* **deploy:** ensure werf commands run consistently without images or with stubs ([ae00ef0](https://www.github.com/werf/werf/commit/ae00ef0bf5be2b028853d6e6e535ee66859cf42a))
+* **export, multiplatform:** fix no child with platform linux/amd64 in index ([e72f3ad](https://www.github.com/werf/werf/commit/e72f3adbf81dd8358956301aca8ed8b297494c5e))
+* **export, multiplatform:** fix unexpected condition: stage image without labels ([473b8e0](https://www.github.com/werf/werf/commit/473b8e0be57ec9ae1828ba6ecd46d92999cab317))
+* **export:** fix worker log output ([#6399](https://www.github.com/werf/werf/issues/6399)) ([bada54e](https://www.github.com/werf/werf/commit/bada54ebd4b962ac0c6b1d1dc9800a9c51fc51e0))
+
 ### [1.2.330](https://www.github.com/werf/werf/compare/v1.2.329...v1.2.330) (2024-10-17)
 
 
