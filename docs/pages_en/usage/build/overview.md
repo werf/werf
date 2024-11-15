@@ -7,6 +7,7 @@ Delivering an application to Kubernetes involves containerizing it (building one
 
 The build process is as follows: the user specifies the build instructions in the form of a Dockerfile or an alternative Stapel build syntax, and werf takes care of:
 
+* secure image building in rootless mode with the built-in Buildah or common building with the Docker daemon;
 * orchestration of simultaneous/parallel building of application images;
 * cross-platform and multi-platform image building;
 * shared cache for intermediate layers and images in the container registry which is accessible from any runners;

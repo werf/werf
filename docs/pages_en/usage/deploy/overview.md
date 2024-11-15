@@ -49,7 +49,7 @@ project: hello
 ```
 
 ```shell
-werf converge --repo registry.example.org/repo --env production
+werf converge --env production
 ```
 
 The above command will deploy the `hello` Deployment to the `hello-production` Namespace.

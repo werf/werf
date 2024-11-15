@@ -49,7 +49,7 @@ project: hello
 ```
 
 ```shell
-werf converge --repo registry.example.org/repo --env production
+werf converge --env production
 ```
 
 Результат: Deployment `hello` развёрнут в Namespace'е `hello-production`.

@@ -364,9 +364,11 @@ dependencies:
 
 ```Dockerfile
 # Dockerfile
-FROM alpine
 ARG BUILDER_IMAGE
-COPY --from=${BUILDER_IMAGE} /app/bin /app/bin
+FROM ${BUILDER_IMAGE} AS builder
+
+FROM alpine
+COPY --from=builder /app/bin /app/bin
 CMD [ "/app/bin/server", "server" ]
 ```
 
