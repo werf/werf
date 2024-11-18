@@ -22,6 +22,9 @@ const (
 
 	// HelmChartContentLayerMediaType is the reserved media type for Helm chart package content
 	HelmChartContentLayerMediaType = "application/tar+gzip"
+
+	// HelmChartContentLayerFullMediaType is the reserved media type for Helm chart package content, full variant
+	HelmChartContentLayerFullMediaType = "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
 )
 
 // KnownMediaTypes returns a list of layer mediaTypes that the Helm client knows about
@@ -29,5 +32,6 @@ func KnownMediaTypes() []string {
 	return []string{
 		HelmChartConfigMediaType,
 		HelmChartContentLayerMediaType,
+		HelmChartContentLayerFullMediaType,
 	}
 }
