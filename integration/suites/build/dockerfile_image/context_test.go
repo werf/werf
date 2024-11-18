@@ -60,14 +60,14 @@ var _ = Describe("context", func() {
 			SuiteData.WerfBinPath,
 			"build", "--debug",
 		)
-		Ω(err).ShouldNot(HaveOccurred())
+		Expect(err).ShouldNot(HaveOccurred())
 
 		if runtime.GOOS == "windows" && entry.expectedWindowsDigest != "" {
-			Ω(string(output)).Should(ContainSubstring(entry.expectedWindowsDigest))
+			Expect(string(output)).Should(ContainSubstring(entry.expectedWindowsDigest))
 		} else if entry.expectedUnixDigest != "" {
-			Ω(string(output)).Should(ContainSubstring(entry.expectedUnixDigest))
+			Expect(string(output)).Should(ContainSubstring(entry.expectedUnixDigest))
 		} else {
-			Ω(string(output)).Should(ContainSubstring(entry.expectedDigest))
+			Expect(string(output)).Should(ContainSubstring(entry.expectedDigest))
 		}
 	}
 

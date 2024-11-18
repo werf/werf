@@ -26,7 +26,7 @@ var renderItBody = func(entry renderEntry) {
 		werfArgs...,
 	)
 
-	Ω(output).Should(Equal(strings.ReplaceAll(entry.expectedOutput, "\n", utils.LineBreak)))
+	Expect(output).Should(Equal(strings.ReplaceAll(entry.expectedOutput, "\n", utils.LineBreak)))
 }
 
 var _ = DescribeTable("config render", renderItBody,

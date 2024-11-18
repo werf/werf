@@ -54,7 +54,7 @@ var _ = Describe("file lifecycle", func() {
 				gitArgs...,
 			)
 		} else {
-			Ω(os.Chmod(filePath, filePerm)).Should(Succeed())
+			Expect(os.Chmod(filePath, filePerm)).Should(Succeed())
 		}
 	}
 
@@ -62,7 +62,7 @@ var _ = Describe("file lifecycle", func() {
 		var commitMsg string
 		filePath := filepath.Join(SuiteData.TestDirPath, entry.relPath)
 		if entry.delete {
-			Ω(os.Remove(filePath)).Should(Succeed())
+			Expect(os.Remove(filePath)).Should(Succeed())
 			commitMsg = "Delete file " + entry.relPath
 		} else {
 			createFileFunc(entry.relPath, entry.data, entry.perm)
@@ -239,7 +239,7 @@ var _ = Describe("file lifecycle", func() {
 					var commitMsg string
 					filePath := filepath.Join(SuiteData.TestDirPath, entry.relPath)
 					if entry.delete {
-						Ω(os.Remove(filePath)).Should(Succeed())
+						Expect(os.Remove(filePath)).Should(Succeed())
 						commitMsg = "Delete file " + entry.relPath
 					} else {
 						hashBytes, _ := utils.RunCommandWithOptions(

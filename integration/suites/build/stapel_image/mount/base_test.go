@@ -35,7 +35,7 @@ var itBody = func(e entry) {
 	)
 
 	for _, match := range e.expectedFirstBuildOutputMatchers {
-		Ω(output).Should(match)
+		Expect(output).Should(match)
 	}
 
 	SuiteData.Stubs.SetEnv("FROM_CACHE_VERSION", "2")
@@ -47,7 +47,7 @@ var itBody = func(e entry) {
 	)
 
 	for _, match := range e.expectedSecondBuildOutputMatchers {
-		Ω(output).Should(match)
+		Expect(output).Should(match)
 	}
 
 	docker.RunSucceedContainerCommandWithStapel(SuiteData.WerfBinPath, SuiteData.GetProjectWorktree(SuiteData.ProjectName), []string{}, []string{"[[ -z \"$(ls -A /mount)\" ]]"})

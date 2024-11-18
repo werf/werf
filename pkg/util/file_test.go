@@ -12,7 +12,7 @@ type isSubpathOfBasePathEntry struct {
 }
 
 var _ = DescribeTable("IsSubpathOfBasePath", func(e isSubpathOfBasePathEntry) {
-	Ω(IsSubpathOfBasePath(e.basePath, e.path)).Should(BeEquivalentTo(e.isSubpath))
+	Expect(IsSubpathOfBasePath(e.basePath, e.path)).Should(BeEquivalentTo(e.isSubpath))
 },
 	Entry(`equal paths ("")`, isSubpathOfBasePathEntry{
 		basePath:  "",

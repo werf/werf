@@ -92,13 +92,13 @@ metadata:
 			)
 
 			if e.expectedErrSubstring != "" {
-				Ω(err).Should(HaveOccurred())
-				Ω(string(output)).Should(ContainSubstring(e.expectedErrSubstring))
+				Expect(err).Should(HaveOccurred())
+				Expect(string(output)).Should(ContainSubstring(e.expectedErrSubstring))
 			} else {
-				Ω(err).ShouldNot(HaveOccurred())
+				Expect(err).ShouldNot(HaveOccurred())
 
 				for _, relPath := range e.addFiles {
-					Ω(string(output)).Should(ContainSubstring(fmt.Sprintf(`test: %s`, relPath)))
+					Expect(string(output)).Should(ContainSubstring(fmt.Sprintf(`test: %s`, relPath)))
 				}
 			}
 		}
@@ -157,13 +157,13 @@ metadata:
 						)
 
 						if e.expectedErrSubstring != "" {
-							Ω(err).Should(HaveOccurred())
-							Ω(string(output)).Should(ContainSubstring(e.expectedErrSubstring))
+							Expect(err).Should(HaveOccurred())
+							Expect(string(output)).Should(ContainSubstring(e.expectedErrSubstring))
 						} else {
-							Ω(err).ShouldNot(HaveOccurred())
+							Expect(err).ShouldNot(HaveOccurred())
 
 							for _, relPath := range e.addFiles {
-								Ω(string(output)).Should(ContainSubstring(fmt.Sprintf(`test: %s`, relPath)))
+								Expect(string(output)).Should(ContainSubstring(fmt.Sprintf(`test: %s`, relPath)))
 							}
 						}
 					},

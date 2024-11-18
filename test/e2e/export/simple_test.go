@@ -125,18 +125,18 @@ var _ = Describe("Simple export", Label("e2e", "export", "simple"), func() {
 
 func checkIndexManifest(reference string, checkIndexManifestFunc func(*v1.IndexManifest), checkImageConfigFunc func(v1.Config)) {
 	ref, err := name.ParseReference(reference)
-	Ω(err).ShouldNot(HaveOccurred(), err)
+	Expect(err).ShouldNot(HaveOccurred(), err)
 
 	desc, err := remote.Get(ref)
-	Ω(err).ShouldNot(HaveOccurred(), err)
+	Expect(err).ShouldNot(HaveOccurred(), err)
 
-	Ω(desc.MediaType.IsIndex()).Should(BeTrue(), "expected index, got image")
+	Expect(desc.MediaType.IsIndex()).Should(BeTrue(), "expected index, got image")
 
 	ii, err := desc.ImageIndex()
-	Ω(err).ShouldNot(HaveOccurred(), err)
+	Expect(err).ShouldNot(HaveOccurred(), err)
 
 	im, err := ii.IndexManifest()
-	Ω(err).ShouldNot(HaveOccurred(), err)
+	Expect(err).ShouldNot(HaveOccurred(), err)
 
 	checkIndexManifestFunc(im)
 
@@ -148,18 +148,18 @@ func checkIndexManifest(reference string, checkIndexManifestFunc func(*v1.IndexM
 
 func checkImageManifest(reference string, checkImageConfigFunc func(v1.Config)) {
 	ref, err := name.ParseReference(reference)
-	Ω(err).ShouldNot(HaveOccurred(), err)
+	Expect(err).ShouldNot(HaveOccurred(), err)
 
 	desc, err := remote.Get(ref)
-	Ω(err).ShouldNot(HaveOccurred(), err)
+	Expect(err).ShouldNot(HaveOccurred(), err)
 
-	Ω(desc.MediaType.IsIndex()).ShouldNot(BeTrue(), "expected image, got index")
+	Expect(desc.MediaType.IsIndex()).ShouldNot(BeTrue(), "expected image, got index")
 
 	i, err := desc.Image()
-	Ω(err).ShouldNot(HaveOccurred(), err)
+	Expect(err).ShouldNot(HaveOccurred(), err)
 
 	c, err := i.ConfigFile()
-	Ω(err).ShouldNot(HaveOccurred(), err)
+	Expect(err).ShouldNot(HaveOccurred(), err)
 
 	checkImageConfigFunc(c.Config)
 }

@@ -13,11 +13,11 @@ import (
 
 func GetTempDir() string {
 	dir, err := ioutil.TempDir("", "werf-integration-tests-")
-	Ω(err).ShouldNot(HaveOccurred())
+	Expect(err).ShouldNot(HaveOccurred())
 
 	if runtime.GOOS == "darwin" || runtime.GOOS == "windows" {
 		dir, err = filepath.EvalSymlinks(dir)
-		Ω(err).ShouldNot(HaveOccurred(), fmt.Sprintf("eval symlinks of path %s failed: %s", dir, err))
+		Expect(err).ShouldNot(HaveOccurred(), fmt.Sprintf("eval symlinks of path %s failed: %s", dir, err))
 	}
 
 	return dir
@@ -25,7 +25,7 @@ func GetTempDir() string {
 
 func ProjectName() string {
 	val := os.Getenv("WERF_PROJECT_NAME")
-	Ω(val).NotTo(BeEmpty())
+	Expect(val).NotTo(BeEmpty())
 	return val
 }
 

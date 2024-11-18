@@ -23,7 +23,7 @@ func WaitTillHostReadyToRespond(url string, maxAttempts int) {
 		}
 
 		attemptCounter++
-		Ω(attemptCounter).Should(BeNumerically("<", maxAttempts), fmt.Sprintf("max attempts reached %d (%s): %s", maxAttempts, url, err))
+		Expect(attemptCounter).Should(BeNumerically("<", maxAttempts), fmt.Sprintf("max attempts reached %d (%s): %s", maxAttempts, url, err))
 		time.Sleep(1 * time.Second)
 	}
 }

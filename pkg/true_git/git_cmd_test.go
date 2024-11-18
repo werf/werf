@@ -37,7 +37,7 @@ var _ = Describe("Git command", func() {
 			"commit", "--allow-empty", "-m", "Initial commit",
 		)
 
-		Ω(Init(context.Background(), Options{})).Should(Succeed())
+		Expect(Init(context.Background(), Options{})).Should(Succeed())
 	})
 
 	When("looking for existent ref", func() {

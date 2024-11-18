@@ -9,8 +9,8 @@ var _ = Describe("false path matcher", func() {
 	It("all", func() {
 		matcher := NewFalsePathMatcher()
 
-		Ω(matcher.IsPathMatched("any")).Should(BeFalse())
-		Ω(matcher.ShouldGoThrough("any")).Should(BeFalse())
-		Ω(matcher.IsPathMatched("any")).Should(BeFalse())
+		Expect(matcher.IsPathMatched("any")).Should(BeFalse())
+		Expect(matcher.ShouldGoThrough("any")).Should(BeFalse())
+		Expect(matcher.IsPathMatched("any")).Should(BeFalse())
 	})
 })

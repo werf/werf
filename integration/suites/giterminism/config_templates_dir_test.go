@@ -72,17 +72,17 @@ config:
 			)
 
 			if e.expectedErrSubstring != "" {
-				Ω(err).Should(HaveOccurred())
-				Ω(string(output)).Should(ContainSubstring(e.expectedErrSubstring))
+				Expect(err).Should(HaveOccurred())
+				Expect(string(output)).Should(ContainSubstring(e.expectedErrSubstring))
 			} else {
-				Ω(err).ShouldNot(HaveOccurred())
+				Expect(err).ShouldNot(HaveOccurred())
 
 				if e.addTemplate1 {
-					Ω(string(output)).Should(ContainSubstring("# template .werf/templates/1.tmpl"))
+					Expect(string(output)).Should(ContainSubstring("# template .werf/templates/1.tmpl"))
 				}
 
 				if e.addTemplate2 {
-					Ω(string(output)).Should(ContainSubstring("# template .werf/templates/2.tmpl"))
+					Expect(string(output)).Should(ContainSubstring("# template .werf/templates/2.tmpl"))
 				}
 			}
 		},

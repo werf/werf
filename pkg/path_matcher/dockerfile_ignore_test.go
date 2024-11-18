@@ -17,9 +17,9 @@ var _ = Describe("dockerfile ignore path matcher", func() {
 	itBodyFunc := func(e entry) {
 		matcher := newDockerfileIgnorePathMatcher(e.dockerignorePatterns)
 
-		Ω(matcher.IsPathMatched(e.testPath)).Should(BeEquivalentTo(e.isPathMatched))
-		Ω(matcher.ShouldGoThrough(e.testPath)).Should(BeEquivalentTo(e.shouldGoThrough))
-		Ω(matcher.IsDirOrSubmodulePathMatched(e.testPath)).Should(BeEquivalentTo(e.isDirOrSubmodulePathMatched))
+		Expect(matcher.IsPathMatched(e.testPath)).Should(BeEquivalentTo(e.isPathMatched))
+		Expect(matcher.ShouldGoThrough(e.testPath)).Should(BeEquivalentTo(e.shouldGoThrough))
+		Expect(matcher.IsDirOrSubmodulePathMatched(e.testPath)).Should(BeEquivalentTo(e.isDirOrSubmodulePathMatched))
 	}
 
 	DescribeTable("empty pattern matcher", itBodyFunc,

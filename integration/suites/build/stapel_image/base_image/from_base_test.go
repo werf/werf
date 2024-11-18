@@ -22,11 +22,11 @@ var _ = XDescribe("from and fromLatest", func() {
 
 	registryProjectRepositoryLatestAs := func(imageName string) {
 		if !utilsDocker.IsImageExist(imageName) {
-			Ω(utilsDocker.Pull(imageName)).Should(Succeed(), "docker pull")
+			Expect(utilsDocker.Pull(imageName)).Should(Succeed(), "docker pull")
 		}
-		Ω(utilsDocker.CliTag(imageName, SuiteData.RegistryProjectRepository)).Should(Succeed(), "docker tag")
-		Ω(utilsDocker.CliPush(SuiteData.RegistryProjectRepository)).Should(Succeed(), "docker push")
-		Ω(utilsDocker.CliRmi(SuiteData.RegistryProjectRepository)).Should(Succeed(), "docker rmi")
+		Expect(utilsDocker.CliTag(imageName, SuiteData.RegistryProjectRepository)).Should(Succeed(), "docker tag")
+		Expect(utilsDocker.CliPush(SuiteData.RegistryProjectRepository)).Should(Succeed(), "docker push")
+		Expect(utilsDocker.CliRmi(SuiteData.RegistryProjectRepository)).Should(Succeed(), "docker rmi")
 	}
 
 	BeforeEach(func() {
@@ -58,13 +58,13 @@ var _ = XDescribe("from and fromLatest", func() {
 		)
 
 		if e.expectedErr {
-			Ω(err).Should(HaveOccurred())
+			Expect(err).Should(HaveOccurred())
 		} else {
-			Ω(err).ShouldNot(HaveOccurred())
+			Expect(err).ShouldNot(HaveOccurred())
 		}
 
 		for _, matcher := range e.expectedOutputMatchers {
-			Ω(string(res)).Should(matcher)
+			Expect(string(res)).Should(matcher)
 		}
 
 		if err == nil {
@@ -74,7 +74,7 @@ var _ = XDescribe("from and fromLatest", func() {
 				"stage", "image",
 			)
 
-			Ω(utilsDocker.ImageParent(strings.TrimSpace(resultImageName))).Should(Equal(e.expectedFromStageParent()))
+			Expect(utilsDocker.ImageParent(strings.TrimSpace(resultImageName))).Should(Equal(e.expectedFromStageParent()))
 		}
 	}
 
@@ -110,7 +110,7 @@ var _ = XDescribe("from and fromLatest", func() {
 
 			Context("when local from image exist", func() {
 				BeforeEach(func() {
-					Ω(utilsDocker.CliTag(suiteImage1, fromImage)).Should(Succeed(), "docker tag")
+					Expect(utilsDocker.CliTag(suiteImage1, fromImage)).Should(Succeed(), "docker tag")
 				})
 
 				AfterEach(func() {
@@ -158,7 +158,7 @@ var _ = XDescribe("from and fromLatest", func() {
 
 			Context("when local from image is actual", func() {
 				BeforeEach(func() {
-					Ω(utilsDocker.Pull(SuiteData.RegistryProjectRepository)).Should(Succeed(), "docker pull")
+					Expect(utilsDocker.Pull(SuiteData.RegistryProjectRepository)).Should(Succeed(), "docker pull")
 				})
 
 				DescribeTable("checking from stage logic",
@@ -211,7 +211,7 @@ var _ = XDescribe("from and fromLatest", func() {
 
 				Context("when from image exists locally", func() {
 					BeforeEach(func() {
-						Ω(utilsDocker.CliTag(suiteImage1, SuiteData.RegistryProjectRepository)).Should(Succeed(), "docker tag")
+						Expect(utilsDocker.CliTag(suiteImage1, SuiteData.RegistryProjectRepository)).Should(Succeed(), "docker tag")
 					})
 
 					DescribeTable("checking from stage logic",
@@ -275,7 +275,7 @@ var _ = XDescribe("from and fromLatest", func() {
 				entryWithPreBuildItBody,
 				Entry("should not be rebuilt (fromLatest: false)", entryWithPreBuild{
 					afterFirstBuildHook: func() {
-						Ω(utilsDocker.Pull(SuiteData.RegistryProjectRepository)).Should(Succeed(), "docker pull")
+						Expect(utilsDocker.Pull(SuiteData.RegistryProjectRepository)).Should(Succeed(), "docker pull")
 					},
 					entry: entry{
 						fromLatest: false,
@@ -289,7 +289,7 @@ var _ = XDescribe("from and fromLatest", func() {
 				}),
 				Entry("should not be rebuilt (fromLatest: true)", entryWithPreBuild{
 					afterFirstBuildHook: func() {
-						Ω(utilsDocker.Pull(SuiteData.RegistryProjectRepository)).Should(Succeed(), "docker pull")
+						Expect(utilsDocker.Pull(SuiteData.RegistryProjectRepository)).Should(Succeed(), "docker pull")
 					},
 					entry: entry{
 						fromLatest: true,
@@ -309,7 +309,7 @@ var _ = XDescribe("from and fromLatest", func() {
 				entryWithPreBuildItBody,
 				Entry("should not be rebuilt (fromLatest: false)", entryWithPreBuild{
 					afterFirstBuildHook: func() {
-						Ω(utilsDocker.CliRmi(SuiteData.RegistryProjectRepository)).Should(Succeed(), "docker rmi")
+						Expect(utilsDocker.CliRmi(SuiteData.RegistryProjectRepository)).Should(Succeed(), "docker rmi")
 						registryProjectRepositoryLatestAs(suiteImage1)
 					},
 					entry: entry{
@@ -324,7 +324,7 @@ var _ = XDescribe("from and fromLatest", func() {
 				}),
 				Entry("should be rebuilt with actual image (fromLatest: true)", entryWithPreBuild{
 					afterFirstBuildHook: func() {
-						Ω(utilsDocker.CliRmi(SuiteData.RegistryProjectRepository)).Should(Succeed(), "docker rmi")
+						Expect(utilsDocker.CliRmi(SuiteData.RegistryProjectRepository)).Should(Succeed(), "docker rmi")
 						registryProjectRepositoryLatestAs(suiteImage1)
 					},
 					entry: entry{
@@ -358,7 +358,7 @@ var _ = XDescribe("fromCacheVersion", func() {
 				"build",
 			)
 
-			Ω(output).Should(ContainSubstring("Building stage ~/from"))
+			Expect(output).Should(ContainSubstring("Building stage ~/from"))
 		}
 
 		specStep("0")

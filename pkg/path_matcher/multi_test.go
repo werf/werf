@@ -12,18 +12,18 @@ var _ = Describe("multi path matcher", func() {
 			NewFalsePathMatcher(),
 		)
 
-		Ω(matcher.IsPathMatched("any")).Should(BeFalse())
-		Ω(matcher.ShouldGoThrough("any")).Should(BeFalse())
-		Ω(matcher.IsDirOrSubmodulePathMatched("any")).Should(BeFalse())
+		Expect(matcher.IsPathMatched("any")).Should(BeFalse())
+		Expect(matcher.ShouldGoThrough("any")).Should(BeFalse())
+		Expect(matcher.IsDirOrSubmodulePathMatched("any")).Should(BeFalse())
 
 		matcher = NewMultiPathMatcher(
 			NewFalsePathMatcher(),
 			NewFalsePathMatcher(),
 		)
 
-		Ω(matcher.IsPathMatched("any")).Should(BeFalse())
-		Ω(matcher.ShouldGoThrough("any")).Should(BeFalse())
-		Ω(matcher.IsDirOrSubmodulePathMatched("any")).Should(BeFalse())
+		Expect(matcher.IsPathMatched("any")).Should(BeFalse())
+		Expect(matcher.ShouldGoThrough("any")).Should(BeFalse())
+		Expect(matcher.IsDirOrSubmodulePathMatched("any")).Should(BeFalse())
 	})
 
 	It("should return true if all matchers return true", func() {
@@ -32,9 +32,9 @@ var _ = Describe("multi path matcher", func() {
 			NewTruePathMatcher(),
 		)
 
-		Ω(matcher.IsPathMatched("any")).Should(BeTrue())
-		Ω(matcher.ShouldGoThrough("any")).Should(BeFalse())
-		Ω(matcher.IsDirOrSubmodulePathMatched("any")).Should(BeTrue())
+		Expect(matcher.IsPathMatched("any")).Should(BeTrue())
+		Expect(matcher.ShouldGoThrough("any")).Should(BeFalse())
+		Expect(matcher.IsDirOrSubmodulePathMatched("any")).Should(BeTrue())
 	})
 
 	type entry struct {
@@ -50,9 +50,9 @@ var _ = Describe("multi path matcher", func() {
 	)
 
 	DescribeTable("ShouldGoThrough", func(e entry) {
-		Ω(matcher.IsPathMatched(e.path)).Should(BeEquivalentTo(e.isPathMatched))
-		Ω(matcher.ShouldGoThrough(e.path)).Should(BeEquivalentTo(e.shouldGoThrough))
-		Ω(matcher.IsDirOrSubmodulePathMatched(e.path)).Should(BeEquivalentTo(e.isDirOrSubmodulePathMatched))
+		Expect(matcher.IsPathMatched(e.path)).Should(BeEquivalentTo(e.isPathMatched))
+		Expect(matcher.ShouldGoThrough(e.path)).Should(BeEquivalentTo(e.shouldGoThrough))
+		Expect(matcher.IsDirOrSubmodulePathMatched(e.path)).Should(BeEquivalentTo(e.isDirOrSubmodulePathMatched))
 	},
 		Entry(`""`, entry{
 			path:                        "",
