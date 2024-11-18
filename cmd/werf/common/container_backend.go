@@ -121,6 +121,11 @@ func InitProcessContainerBackend(ctx context.Context, cmdData *CmdData, registry
 			return nil, ctx, fmt.Errorf("unable to get buildah client: %w", err)
 		}
 
+		err = docker.InitDockerConfig(docker.InitOptions{DockerConfigDir: *cmdData.DockerConfig})
+		if err != nil {
+			return nil, ctx, fmt.Errorf("unable to set docker config for buildah client: %w", err)
+		}
+
 		return wrapContainerBackend(container_backend.NewBuildahBackend(b, container_backend.BuildahBackendOptions{TmpDir: filepath.Join(werf.GetServiceDir(), "tmp", "buildah")})), ctx, nil
 	}
 
@@ -141,7 +146,7 @@ func InitProcessDocker(ctx context.Context, cmdData *CmdData) (context.Context, 
 	}
 
 	if err := docker.Init(ctx, opts); err != nil {
-		return ctx, fmt.Errorf("unable to init docker for buildah container backend: %w", err)
+		return ctx, fmt.Errorf("unable to init docker: %w", err)
 	}
 
 	ctxWithDockerCli, err := docker.NewContext(ctx)

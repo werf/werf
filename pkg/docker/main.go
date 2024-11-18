@@ -48,16 +48,9 @@ type InitOptions struct {
 }
 
 func Init(ctx context.Context, opts InitOptions) error {
-	if opts.DockerConfigDir != "" {
-		DockerConfigDir = opts.DockerConfigDir
-		cliconfig.SetDir(opts.DockerConfigDir)
-	} else {
-		DockerConfigDir = filepath.Join(os.Getenv("HOME"), ".docker")
-	}
-
-	err := os.Setenv("DOCKER_CONFIG", DockerConfigDir)
+	err := InitDockerConfig(opts)
 	if err != nil {
-		return fmt.Errorf("cannot set DOCKER_CONFIG to %s: %w", DockerConfigDir, err)
+		return err
 	}
 
 	isDebug = os.Getenv("WERF_DEBUG_DOCKER") == "1"
@@ -91,6 +84,22 @@ func Init(ctx context.Context, opts InitOptions) error {
 	useBuildx = true // use buildKit by default
 	if v := os.Getenv("DOCKER_BUILDKIT"); v == "0" || v == "false" {
 		useBuildx = false
+	}
+
+	return nil
+}
+
+func InitDockerConfig(opts InitOptions) error {
+	if opts.DockerConfigDir != "" {
+		DockerConfigDir = opts.DockerConfigDir
+		cliconfig.SetDir(opts.DockerConfigDir)
+	} else {
+		DockerConfigDir = filepath.Join(os.Getenv("HOME"), ".docker")
+	}
+
+	err := os.Setenv("DOCKER_CONFIG", DockerConfigDir)
+	if err != nil {
+		return fmt.Errorf("cannot set DOCKER_CONFIG to %s: %w", DockerConfigDir, err)
 	}
 
 	return nil
