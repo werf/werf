@@ -73,7 +73,7 @@ var _ = Describe("custom tag", func() {
 
 			repoCustomTag := strings.Join([]string{SuiteData.K8sDockerRegistryRepo, customTagValue}, ":")
 			expectedSubstring := "image: " + repoCustomTag
-			Ω(output).Should(ContainSubstring(expectedSubstring))
+			Expect(output).Should(ContainSubstring(expectedSubstring))
 		})
 	})
 
@@ -111,7 +111,7 @@ var _ = Describe("custom tag", func() {
 			werfArgs...,
 		)
 
-		Ω(err).Should(HaveOccurred())
-		Ω(string(bytes)).Should(ContainSubstring("custom tag \"custom-tag\" image must be the same as associated content-based tag"))
+		Expect(err).Should(HaveOccurred())
+		Expect(string(bytes)).Should(ContainSubstring("custom tag \"custom-tag\" image must be the same as associated content-based tag"))
 	})
 })

@@ -520,7 +520,7 @@ func runStagesSpecSteps(steps []stagesSpecStep) {
 		}
 
 		for _, matcher := range step.expectedOutputMatchers {
-			Ω(out).Should(matcher)
+			Expect(out).Should(matcher)
 		}
 
 		out = utils.SucceedCommandOutputString(
@@ -528,7 +528,7 @@ func runStagesSpecSteps(steps []stagesSpecStep) {
 			SuiteData.WerfBinPath,
 			"build",
 		)
-		Ω(out).ShouldNot(ContainSubstring("Building stage"))
+		Expect(out).ShouldNot(ContainSubstring("Building stage"))
 	}
 }
 

@@ -17,7 +17,7 @@ var _ = Describe("docs", func() {
 		}
 
 		resolvedExpectationPath, err := filepath.EvalSymlinks(utils.FixturePath("cli", "docs"))
-		Ω(err).ShouldNot(HaveOccurred())
+		Expect(err).ShouldNot(HaveOccurred())
 
 		utils.CopyIn(resolvedExpectationPath, filepath.Join(SuiteData.TestDirPath, "docs"))
 

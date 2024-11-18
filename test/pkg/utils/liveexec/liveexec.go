@@ -38,17 +38,17 @@ func doExecCommand(dir, binPath string, opts ExecCommandOptions, arg ...string) 
 	}
 
 	absDir, err := filepath.Abs(dir)
-	Ω(err).ShouldNot(HaveOccurred())
+	Expect(err).ShouldNot(HaveOccurred())
 	_, _ = fmt.Fprintf(GinkgoWriter, "\n%s %s (dir: %s)\n\n", binPath, strings.Join(arg, " "), absDir)
 
 	reader, writer, err := os.Pipe()
-	Ω(err).ShouldNot(HaveOccurred(), fmt.Sprintf("unable to create os pipe: %s", err))
+	Expect(err).ShouldNot(HaveOccurred(), fmt.Sprintf("unable to create os pipe: %s", err))
 
 	multiOutWriter := io.MultiWriter(writer, GinkgoWriter)
 	multiErrWriter := io.MultiWriter(writer, GinkgoWriter)
 
 	session, err := gexec.Start(cmd, multiOutWriter, multiErrWriter)
-	Ω(err).ShouldNot(HaveOccurred())
+	Expect(err).ShouldNot(HaveOccurred())
 	defer session.Kill()
 
 	var exitCode int
@@ -93,7 +93,7 @@ func doExecCommand(dir, binPath string, opts ExecCommandOptions, arg ...string) 
 
 		return nil
 	})
-	Ω(err).ShouldNot(HaveOccurred(), fmt.Sprintf("unable to consume command output: %s", err))
+	Expect(err).ShouldNot(HaveOccurred(), fmt.Sprintf("unable to consume command output: %s", err))
 
 	if exitCode != 0 {
 		return fmt.Errorf("exit code %d", exitCode)

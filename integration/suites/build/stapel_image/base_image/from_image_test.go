@@ -21,7 +21,7 @@ var fromImageItFunc = func(appConfigName, fromImageConfigName string, extraAfter
 		"build",
 	)
 
-	Ω(strings.Count(output, fmt.Sprintf("Building stage %s/from", appConfigName))).Should(Equal(2))
+	Expect(strings.Count(output, fmt.Sprintf("Building stage %s/from", appConfigName))).Should(Equal(2))
 
 	extraAfterBuildChecks(appConfigName, fromImageConfigName)
 
@@ -34,7 +34,7 @@ var fromImageItFunc = func(appConfigName, fromImageConfigName string, extraAfter
 		"build",
 	)
 
-	Ω(strings.Count(output, fmt.Sprintf("Building stage %s/from", appConfigName))).Should(Equal(2))
+	Expect(strings.Count(output, fmt.Sprintf("Building stage %s/from", appConfigName))).Should(Equal(2))
 
 	extraAfterBuildChecks(appConfigName, fromImageConfigName)
 }
@@ -58,7 +58,7 @@ var _ = XDescribe("fromImage", func() {
 				"stage", "image", fromImageConfigName,
 			)
 
-			Ω(utilsDocker.ImageParent(strings.TrimSpace(appImageName))).Should(Equal(utilsDocker.ImageID(strings.TrimSpace(fromImageName))))
+			Expect(utilsDocker.ImageParent(strings.TrimSpace(appImageName))).Should(Equal(utilsDocker.ImageID(strings.TrimSpace(fromImageName))))
 		})
 	})
 })

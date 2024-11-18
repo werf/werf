@@ -12,9 +12,9 @@ type ResolveImplementationEntry struct {
 
 var _ = DescribeTable("ResolveImplementation", func(entry ResolveImplementationEntry) {
 	resolvedImplementation, err := ResolveImplementation(entry.imagesRepoAddress, "")
-	Ω(err).ShouldNot(HaveOccurred())
+	Expect(err).ShouldNot(HaveOccurred())
 
-	Ω(resolvedImplementation).Should(Equal(entry.expectation))
+	Expect(resolvedImplementation).Should(Equal(entry.expectation))
 },
 	Entry("ecr", ResolveImplementationEntry{
 		imagesRepoAddress: "123456789012.dkr.ecr.test.amazonaws.com/repo",

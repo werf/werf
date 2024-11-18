@@ -26,7 +26,7 @@ var _ = Describe("helm render", func() {
 			"# Source: %s/templates/020-backend.yaml",
 			"# Source: %s/templates/090-frontend.yaml",
 		} {
-			Ω(output).Should(ContainSubstring(fmt.Sprintf(substrFormat, utils.ProjectName())))
+			Expect(output).Should(ContainSubstring(fmt.Sprintf(substrFormat, utils.ProjectName())))
 		}
 	})
 })

@@ -27,10 +27,10 @@ var _ = It("should rotate secret key", func() {
 	SuiteData.CommitProjectWorktree(SuiteData.ProjectName, utils.FixturePath("rotate_secret_key"), "initial commit")
 
 	res, err := ioutil.ReadFile(filepath.Join(SuiteData.GetProjectWorktree(SuiteData.ProjectName), ".werf_secret_key"))
-	Ω(err).ShouldNot(HaveOccurred())
+	Expect(err).ShouldNot(HaveOccurred())
 
 	oldSecretKey := strings.TrimSpace(string(res))
-	Ω(os.Remove(filepath.Join(SuiteData.GetProjectWorktree(SuiteData.ProjectName), ".werf_secret_key"))).Should(Succeed())
+	Expect(os.Remove(filepath.Join(SuiteData.GetProjectWorktree(SuiteData.ProjectName), ".werf_secret_key"))).Should(Succeed())
 
 	output := utils.SucceedCommandOutputString(
 		SuiteData.GetProjectWorktree(SuiteData.ProjectName),
@@ -49,11 +49,11 @@ var _ = It("should rotate secret key", func() {
 
 	res, err = cmd.Output()
 	_, _ = fmt.Fprintf(GinkgoWriter, string(res))
-	Ω(err).ShouldNot(HaveOccurred())
+	Expect(err).ShouldNot(HaveOccurred())
 
 	filesShouldBeRegenerated := []string{".helm/secret/test", ".helm/secret/subdir/test", ".helm/secret-values.yaml"}
 	for _, path := range filesShouldBeRegenerated {
-		Ω(string(res)).Should(ContainSubstring(fmt.Sprintf("Regenerating file %q", filepath.FromSlash(path))))
+		Expect(string(res)).Should(ContainSubstring(fmt.Sprintf("Regenerating file %q", filepath.FromSlash(path))))
 	}
 })
 
@@ -90,7 +90,7 @@ var _ = Describe("helm secret encrypt/decrypt", func() {
 
 		result = string(bytes.TrimSpace(resultData))
 
-		Ω(result).Should(BeEquivalentTo(secret))
+		Expect(result).Should(BeEquivalentTo(secret))
 	})
 
 	It("should be decrypted", func() {
@@ -106,6 +106,6 @@ var _ = Describe("helm secret encrypt/decrypt", func() {
 
 		result := string(bytes.TrimSpace(resultData))
 
-		Ω(result).Should(BeEquivalentTo(secret))
+		Expect(result).Should(BeEquivalentTo(secret))
 	})
 })

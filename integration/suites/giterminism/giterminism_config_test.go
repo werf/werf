@@ -43,10 +43,10 @@ var _ = Describe("giterminism config", func() {
 			)
 
 			if e.expectedErrSubstring != "" {
-				Ω(err).Should(HaveOccurred())
-				Ω(string(output)).Should(ContainSubstring(e.expectedErrSubstring))
+				Expect(err).Should(HaveOccurred())
+				Expect(string(output)).Should(ContainSubstring(e.expectedErrSubstring))
 			} else {
-				Ω(err).ShouldNot(HaveOccurred())
+				Expect(err).ShouldNot(HaveOccurred())
 			}
 		},
 		Entry("the giterminism config not exist", entry{}),

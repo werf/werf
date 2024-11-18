@@ -55,9 +55,9 @@ var _ = Describe("host purge command", func() {
 					SuiteData.WerfBinPath,
 					"host", "purge",
 				)
-				Ω(err).ShouldNot(Succeed())
-				Ω(string(out)).Should(ContainSubstring("used by container"))
-				Ω(string(out)).Should(ContainSubstring("Use --force option to remove all containers that are based on deleting werf docker images"))
+				Expect(err).ShouldNot(Succeed())
+				Expect(string(out)).Should(ContainSubstring("used by container"))
+				Expect(string(out)).Should(ContainSubstring("Use --force option to remove all containers that are based on deleting werf docker images"))
 			})
 
 			It("should remove project images and related container", func() {
@@ -67,7 +67,7 @@ var _ = Describe("host purge command", func() {
 					"host", "purge", "--force",
 				)
 
-				Ω(StagesCount()).Should(Equal(0))
+				Expect(StagesCount()).Should(Equal(0))
 			})
 		})
 	})

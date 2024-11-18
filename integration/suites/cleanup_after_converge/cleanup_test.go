@@ -80,11 +80,11 @@ var _ = Describe("cleaning images and stages", func() {
 
 			By("Do cleanup and check result")
 			{
-				Ω(len(ImageMetadata(imageName))).Should(Equal(1))
+				Expect(len(ImageMetadata(imageName))).Should(Equal(1))
 				count := StagesCount()
-				Ω(count).Should(Equal(2))
-				Ω(len(CustomTags())).Should(Equal(2))
-				Ω(len(CustomTagsMetadataList())).Should(Equal(2))
+				Expect(count).Should(Equal(2))
+				Expect(len(CustomTags())).Should(Equal(2))
+				Expect(len(CustomTagsMetadataList())).Should(Equal(2))
 
 				utils.RunSucceedCommand(
 					SuiteData.GetProjectWorktree(SuiteData.ProjectName),
@@ -92,9 +92,9 @@ var _ = Describe("cleaning images and stages", func() {
 					"cleanup",
 				)
 
-				Ω(StagesCount()).Should(Equal(count))
-				Ω(len(CustomTags())).Should(Equal(2))
-				Ω(len(CustomTagsMetadataList())).Should(Equal(2))
+				Expect(StagesCount()).Should(Equal(count))
+				Expect(len(CustomTags())).Should(Equal(2))
+				Expect(len(CustomTagsMetadataList())).Should(Equal(2))
 			}
 		},
 			Entry("deployed stage", false),

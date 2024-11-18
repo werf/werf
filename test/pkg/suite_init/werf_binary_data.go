@@ -33,7 +33,7 @@ func ComputeWerfBinPath() []byte {
 		} else {
 			werfBinPath, err = gexec.BuildWithEnvironment("github.com/werf/werf/v2/cmd/werf", nil, "-compiler", "gc", "-tags", "dfrunsecurity dfrunnetwork dfrunmount dfssh containers_image_openpgp")
 		}
-		Ω(err).ShouldNot(HaveOccurred())
+		Expect(err).ShouldNot(HaveOccurred())
 	}
 
 	return []byte(werfBinPath)

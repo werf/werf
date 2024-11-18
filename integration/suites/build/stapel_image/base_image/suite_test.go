@@ -52,7 +52,7 @@ var (
 var _ = SuiteData.AppendSynchronizedBeforeSuiteNode1Func(func() {
 	for _, suiteImage := range []string{suiteImage1, suiteImage2} {
 		if !utilsDocker.IsImageExist(suiteImage) {
-			Ω(utilsDocker.Pull(suiteImage)).Should(Succeed(), "docker pull")
+			Expect(utilsDocker.Pull(suiteImage)).Should(Succeed(), "docker pull")
 		}
 	}
 })

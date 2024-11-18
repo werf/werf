@@ -50,13 +50,13 @@ config:
 			)
 
 			if e.expectedErrSubstring != "" {
-				Ω(err).Should(HaveOccurred())
-				Ω(string(output)).Should(ContainSubstring(e.expectedErrSubstring))
+				Expect(err).Should(HaveOccurred())
+				Expect(string(output)).Should(ContainSubstring(e.expectedErrSubstring))
 			} else {
-				Ω(err).ShouldNot(HaveOccurred())
+				Expect(err).ShouldNot(HaveOccurred())
 
 				for _, relPath := range e.addFiles {
-					Ω(string(output)).Should(ContainSubstring(fmt.Sprintf("# %s", relPath)))
+					Expect(string(output)).Should(ContainSubstring(fmt.Sprintf("# %s", relPath)))
 				}
 			}
 		}
@@ -209,11 +209,11 @@ config:
 				)
 
 				if e.expectedErrSubstring != "" {
-					Ω(err).Should(HaveOccurred())
-					Ω(string(output)).Should(ContainSubstring(e.expectedErrSubstring))
+					Expect(err).Should(HaveOccurred())
+					Expect(string(output)).Should(ContainSubstring(e.expectedErrSubstring))
 				} else {
-					Ω(err).ShouldNot(HaveOccurred())
-					Ω(string(output)).Should(ContainSubstring(fmt.Sprintf("# %s", e.addEnvName)))
+					Expect(err).ShouldNot(HaveOccurred())
+					Expect(string(output)).Should(ContainSubstring(fmt.Sprintf("# %s", e.addEnvName)))
 				}
 			},
 			Entry("the env name not allowed", entry{

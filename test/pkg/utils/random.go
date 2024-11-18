@@ -9,6 +9,6 @@ import (
 
 func GetRandomString(n int) string {
 	str, err := goutils.CryptoRandomAlphaNumeric(n)
-	Ω(err).ShouldNot(HaveOccurred())
+	Expect(err).ShouldNot(HaveOccurred())
 	return strings.ToLower(str)
 }

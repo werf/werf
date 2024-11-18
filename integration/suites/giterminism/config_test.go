@@ -86,10 +86,10 @@ config:
 				)
 
 				if e.expectedErrSubstring != "" {
-					Ω(err).Should(HaveOccurred())
-					Ω(string(output)).Should(ContainSubstring(e.expectedErrSubstring))
+					Expect(err).Should(HaveOccurred())
+					Expect(string(output)).Should(ContainSubstring(e.expectedErrSubstring))
 				} else {
-					Ω(err).ShouldNot(HaveOccurred())
+					Expect(err).ShouldNot(HaveOccurred())
 				}
 			}
 		}
@@ -145,10 +145,10 @@ config:
 						)
 
 						if e.expectedErrSubstring != "" {
-							Ω(err).Should(HaveOccurred())
-							Ω(string(output)).Should(ContainSubstring(e.expectedErrSubstring))
+							Expect(err).Should(HaveOccurred())
+							Expect(string(output)).Should(ContainSubstring(e.expectedErrSubstring))
 						} else {
-							Ω(err).ShouldNot(HaveOccurred())
+							Expect(err).ShouldNot(HaveOccurred())
 						}
 					},
 					Entry("the config file not found", entry{

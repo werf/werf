@@ -66,7 +66,7 @@ var _ = Describe("deploy and rollback chart", func() {
 				}
 
 				for _, expectedSubString := range expectedSubStrings {
-					Ω(output).Should(ContainSubstring(expectedSubString))
+					Expect(output).Should(ContainSubstring(expectedSubString))
 				}
 			})
 
@@ -102,11 +102,11 @@ var _ = Describe("deploy and rollback chart", func() {
 					}
 
 					for _, expectedSubString := range expectedSubStrings {
-						Ω(output).Should(ContainSubstring(expectedSubString))
+						Expect(output).Should(ContainSubstring(expectedSubString))
 					}
 
 					for _, notExpectedSubString := range notExpectedSubStrings {
-						Ω(output).ShouldNot(ContainSubstring(notExpectedSubString))
+						Expect(output).ShouldNot(ContainSubstring(notExpectedSubString))
 					}
 				})
 
@@ -117,7 +117,7 @@ var _ = Describe("deploy and rollback chart", func() {
 						"helm", "list", "--namespace", releaseNamespace,
 					)
 
-					Ω(output).Should(ContainSubstring(releaseName))
+					Expect(output).Should(ContainSubstring(releaseName))
 				})
 
 				It("should get release history", func() {
@@ -127,8 +127,8 @@ var _ = Describe("deploy and rollback chart", func() {
 						"helm", "history", releaseName, "--namespace", releaseNamespace,
 					)
 
-					Ω(strings.Count(output, "superseded")).Should(BeEquivalentTo(1))
-					Ω(strings.Count(output, "deployed")).Should(BeEquivalentTo(1))
+					Expect(strings.Count(output, "superseded")).Should(BeEquivalentTo(1))
+					Expect(strings.Count(output, "deployed")).Should(BeEquivalentTo(1))
 				})
 
 				It("should rollback release", func() {
@@ -144,7 +144,7 @@ var _ = Describe("deploy and rollback chart", func() {
 						"helm", "get", "all", releaseName, "--namespace", releaseNamespace,
 					)
 
-					Ω(output).Should(ContainSubstring("REVISION: 3"))
+					Expect(output).Should(ContainSubstring("REVISION: 3"))
 				})
 			})
 		})

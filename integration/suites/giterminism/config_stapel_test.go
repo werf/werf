@@ -43,10 +43,10 @@ config:
 				)
 
 				if e.expectedErrSubstring != "" {
-					Ω(err).Should(HaveOccurred())
-					Ω(string(output)).Should(ContainSubstring(e.expectedErrSubstring))
+					Expect(err).Should(HaveOccurred())
+					Expect(string(output)).Should(ContainSubstring(e.expectedErrSubstring))
 				} else {
-					Ω(err).ShouldNot(HaveOccurred())
+					Expect(err).ShouldNot(HaveOccurred())
 				}
 			},
 			Entry("the from latest directive not allowed", entry{
@@ -93,10 +93,10 @@ config:
 				)
 
 				if e.expectedErrSubstring != "" {
-					Ω(err).Should(HaveOccurred())
-					Ω(string(output)).Should(ContainSubstring(e.expectedErrSubstring))
+					Expect(err).Should(HaveOccurred())
+					Expect(string(output)).Should(ContainSubstring(e.expectedErrSubstring))
 				} else {
-					Ω(err).ShouldNot(HaveOccurred())
+					Expect(err).ShouldNot(HaveOccurred())
 				}
 			},
 			Entry("the remote git branch not allowed", entry{
@@ -142,10 +142,10 @@ config:
 				)
 
 				if e.expectedErrSubstring != "" {
-					Ω(err).Should(HaveOccurred())
-					Ω(string(output)).Should(ContainSubstring(e.expectedErrSubstring))
+					Expect(err).Should(HaveOccurred())
+					Expect(string(output)).Should(ContainSubstring(e.expectedErrSubstring))
 				} else {
-					Ω(err).ShouldNot(HaveOccurred())
+					Expect(err).ShouldNot(HaveOccurred())
 				}
 			},
 			Entry("the build_dir mount not allowed", entry{
@@ -192,10 +192,10 @@ config:
 				)
 
 				if e.expectedErrSubstring != "" {
-					Ω(err).Should(HaveOccurred())
-					Ω(string(output)).Should(ContainSubstring(e.expectedErrSubstring))
+					Expect(err).Should(HaveOccurred())
+					Expect(string(output)).Should(ContainSubstring(e.expectedErrSubstring))
 				} else {
-					Ω(err).ShouldNot(HaveOccurred())
+					Expect(err).ShouldNot(HaveOccurred())
 				}
 			},
 			Entry("the from path /a/b/c not allowed", entry{

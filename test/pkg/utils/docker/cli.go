@@ -77,13 +77,13 @@ func initApiClient() error {
 }
 
 func ContainerStopAndRemove(containerName string) {
-	Ω(CliStop(containerName)).Should(Succeed(), fmt.Sprintf("docker stop %s", containerName))
-	Ω(CliRm(containerName)).Should(Succeed(), fmt.Sprintf("docker rm %s", containerName))
+	Expect(CliStop(containerName)).Should(Succeed(), fmt.Sprintf("docker stop %s", containerName))
+	Expect(CliRm(containerName)).Should(Succeed(), fmt.Sprintf("docker rm %s", containerName))
 }
 
 func ImageRemoveIfExists(imageName string) {
 	if IsImageExist(imageName) {
-		Ω(CliRmi(imageName)).Should(Succeed(), "docker rmi")
+		Expect(CliRmi(imageName)).Should(Succeed(), "docker rmi")
 	}
 }
 
@@ -94,7 +94,7 @@ func IsImageExist(imageName string) bool {
 			return false
 		}
 
-		Ω(err).ShouldNot(HaveOccurred(), err)
+		Expect(err).ShouldNot(HaveOccurred(), err)
 	}
 
 	return true
@@ -110,24 +110,24 @@ func ImageID(imageName string) string {
 
 func ImageInspect(imageName string) *types.ImageInspect {
 	inspect, err := imageInspect(imageName)
-	Ω(err).ShouldNot(HaveOccurred())
+	Expect(err).ShouldNot(HaveOccurred())
 	return inspect
 }
 
 func ContainerInspect(ref string) types.ContainerJSON {
 	ctx := context.Background()
 	inspect, err := apiClient.ContainerInspect(ctx, ref)
-	Ω(err).ShouldNot(HaveOccurred())
+	Expect(err).ShouldNot(HaveOccurred())
 	return inspect
 }
 
 func ContainerHostPort(ref, containerPortNumberAndProtocol string) string {
 	inspect := ContainerInspect(ref)
-	Ω(inspect.NetworkSettings).ShouldNot(BeNil())
+	Expect(inspect.NetworkSettings).ShouldNot(BeNil())
 	portMap := inspect.NetworkSettings.Ports
-	Ω(portMap).ShouldNot(BeEmpty())
+	Expect(portMap).ShouldNot(BeEmpty())
 	portBindings := portMap[nat.Port(containerPortNumberAndProtocol)]
-	Ω(portBindings).ShouldNot(HaveLen(0))
+	Expect(portBindings).ShouldNot(HaveLen(0))
 	return portBindings[0].HostPort
 }
 

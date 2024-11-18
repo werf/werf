@@ -88,10 +88,10 @@ var _ = Describe("helm secret file/values encrypt/decrypt", func() {
 
 func fileContentsShouldBeEqual(path1, path2 string) {
 	data1, err := ioutil.ReadFile(filepath.Join(SuiteData.GetProjectWorktree(SuiteData.ProjectName), path1))
-	Ω(err).ShouldNot(HaveOccurred())
+	Expect(err).ShouldNot(HaveOccurred())
 
 	data2, err := ioutil.ReadFile(filepath.Join(SuiteData.GetProjectWorktree(SuiteData.ProjectName), path2))
-	Ω(err).ShouldNot(HaveOccurred())
+	Expect(err).ShouldNot(HaveOccurred())
 
 	data1 = bytes.ReplaceAll(data1, []byte(utils.LineBreak), []byte("\n"))
 	data2 = bytes.ReplaceAll(data2, []byte(utils.LineBreak), []byte("\n"))
@@ -104,13 +104,13 @@ func fileContentsShouldBeEqual(path1, path2 string) {
 	_, _ = fmt.Fprintf(GinkgoWriter, string(data2))
 	_, _ = fmt.Fprintf(GinkgoWriter, "=== %s ===\n", filepath.Join(SuiteData.GetProjectWorktree(SuiteData.ProjectName), path2))
 
-	Ω(bytes.Equal(data1, data2)).Should(BeTrue())
+	Expect(bytes.Equal(data1, data2)).Should(BeTrue())
 }
 
 func runSucceedCommandWithFileDataOnStdin(werfArgs []string, secretFileName string) {
 	data, err := ioutil.ReadFile(filepath.Join(SuiteData.GetProjectWorktree(SuiteData.ProjectName), secretFileName))
 
-	Ω(err).ShouldNot(HaveOccurred())
+	Expect(err).ShouldNot(HaveOccurred())
 
 	_, _ = utils.RunCommandWithOptions(
 		SuiteData.GetProjectWorktree(SuiteData.ProjectName),

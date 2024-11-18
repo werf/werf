@@ -16,7 +16,7 @@ import (
 
 var _ = Describe("base", func() {
 	BeforeEach(func() {
-		Ω(werf.Init("", "")).Should(Succeed())
+		Expect(werf.Init("", "")).Should(Succeed())
 		SuiteData.CommitProjectWorktree(SuiteData.ProjectName, utils.FixturePath("base"), "initial commit")
 	})
 
@@ -45,10 +45,10 @@ var _ = Describe("base", func() {
 
 				resultPath := strings.TrimSuffix(output, "\n")
 				matched, err := doublestar.PathMatch(expectedPathGlob, resultPath)
-				Ω(err).ShouldNot(HaveOccurred())
+				Expect(err).ShouldNot(HaveOccurred())
 
-				Ω(matched).Should(BeTrue(), output)
-				Ω(resultPath).Should(BeARegularFile())
+				Expect(matched).Should(BeTrue(), output)
+				Expect(resultPath).Should(BeARegularFile())
 			})
 
 			It("should print only shell script", func() {
@@ -66,13 +66,13 @@ var _ = Describe("base", func() {
 
 				scriptPath := strings.TrimSpace(useAsFileOutput)
 				scriptDataByte, err := ioutil.ReadFile(scriptPath)
-				Ω(err).ShouldNot(HaveOccurred())
+				Expect(err).ShouldNot(HaveOccurred())
 
 				re := regexp.MustCompile("(.*/tmp/werf-docker-config-)[0-9]+(.*)")
 				scriptData := re.ReplaceAllString(string(scriptDataByte), "${1}${2}")
 				output = re.ReplaceAllString(output, "${1}${2}")
 
-				Ω(len(scriptData)).Should(Equal(len(output)))
+				Expect(len(scriptData)).Should(Equal(len(output)))
 			})
 		})
 	}
