@@ -53,10 +53,10 @@ config:
 				)
 
 				if e.expectedErrSubstring != "" {
-					Ω(err).Should(HaveOccurred())
-					Ω(string(output)).Should(ContainSubstring(e.expectedErrSubstring))
+					Expect(err).Should(HaveOccurred())
+					Expect(string(output)).Should(ContainSubstring(e.expectedErrSubstring))
 				} else {
-					Ω(err).ShouldNot(HaveOccurred())
+					Expect(err).ShouldNot(HaveOccurred())
 				}
 			},
 			Entry("the contextAddFile a/b/c not allowed", entry{
@@ -133,11 +133,11 @@ config:
 						"run", "--require-built-images",
 					)
 
-					Ω(err).Should(HaveOccurred())
+					Expect(err).Should(HaveOccurred())
 					if e.expectedErrSubstring != "" {
-						Ω(string(output)).Should(ContainSubstring(e.expectedErrSubstring))
+						Expect(string(output)).Should(ContainSubstring(e.expectedErrSubstring))
 					} else {
-						Ω(string(output)).Should(ContainSubstring("stages required"))
+						Expect(string(output)).Should(ContainSubstring("stages required"))
 					}
 				},
 				Entry("the dockerfile not found", entry{
@@ -258,11 +258,11 @@ config:
 						"run", "--require-built-images",
 					)
 
-					Ω(err).Should(HaveOccurred())
+					Expect(err).Should(HaveOccurred())
 					if e.expectedErrSubstring != "" {
-						Ω(string(output)).Should(ContainSubstring(e.expectedErrSubstring))
+						Expect(string(output)).Should(ContainSubstring(e.expectedErrSubstring))
 					} else {
-						Ω(string(output)).Should(ContainSubstring("stages required"))
+						Expect(string(output)).Should(ContainSubstring("stages required"))
 					}
 				},
 				Entry("the dockerfile committed: Dockerfile -> a -> dir/Dockerfile", entry{
@@ -380,11 +380,11 @@ config:
 					"run", "--require-built-images",
 				)
 
-				Ω(err).Should(HaveOccurred())
+				Expect(err).Should(HaveOccurred())
 				if e.expectedErrSubstring != "" {
-					Ω(string(output)).Should(ContainSubstring(e.expectedErrSubstring))
+					Expect(string(output)).Should(ContainSubstring(e.expectedErrSubstring))
 				} else {
-					Ω(string(output)).Should(ContainSubstring("stages required"))
+					Expect(string(output)).Should(ContainSubstring("stages required"))
 				}
 			},
 			Entry("the dockerignore not found", entry{}),

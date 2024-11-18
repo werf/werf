@@ -65,7 +65,7 @@ func (data *ContainerRegistryPerImplementationData) TeardownRepo(ctx context.Con
 			docker_registry.IsHarborRepositoryNotFoundErr(err),
 			docker_registry.IsQuayRepositoryNotFoundErr(err):
 		default:
-			Ω(err).Should(Succeed())
+			Expect(err).Should(Succeed())
 		}
 	}
 

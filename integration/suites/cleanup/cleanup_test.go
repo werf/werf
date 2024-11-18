@@ -319,8 +319,8 @@ var _ = Describe("cleanup command", func() {
 							gitHistoryBasedCleanupCheck(
 								imageName, 3, 2,
 								func(imageMetadata map[string][]string) {
-									Ω(imageMetadata).Should(HaveKey(stageID2))
-									Ω(imageMetadata).Should(HaveKey(stageID3))
+									Expect(imageMetadata).Should(HaveKey(stageID2))
+									Expect(imageMetadata).Should(HaveKey(stageID3))
 								},
 							)
 						})
@@ -330,7 +330,7 @@ var _ = Describe("cleanup command", func() {
 							gitHistoryBasedCleanupCheck(
 								imageName, 3, 1,
 								func(imageMetadata map[string][]string) {
-									Ω(imageMetadata).Should(HaveKey(stageID3))
+									Expect(imageMetadata).Should(HaveKey(stageID3))
 								},
 							)
 						})
@@ -406,8 +406,8 @@ var _ = Describe("cleanup command", func() {
 							gitHistoryBasedCleanupCheck(
 								imageName, 3, 2,
 								func(imageMetadata map[string][]string) {
-									Ω(imageMetadata).Should(HaveKey(stageID2))
-									Ω(imageMetadata).Should(HaveKey(stageID3))
+									Expect(imageMetadata).Should(HaveKey(stageID2))
+									Expect(imageMetadata).Should(HaveKey(stageID3))
 								},
 							)
 						})
@@ -417,7 +417,7 @@ var _ = Describe("cleanup command", func() {
 							gitHistoryBasedCleanupCheck(
 								imageName, 3, 1,
 								func(imageMetadata map[string][]string) {
-									Ω(imageMetadata).Should(HaveKey(stageID3))
+									Expect(imageMetadata).Should(HaveKey(stageID3))
 								},
 							)
 						})
@@ -429,14 +429,14 @@ var _ = Describe("cleanup command", func() {
 						metaImagesCheckFunc := func(before, after int, afterExtraChecks ...func(commits []string)) {
 							imageMetadata := ImageMetadata(imageName)
 							for _, commitList := range imageMetadata {
-								Ω(commitList).Should(HaveLen(before))
+								Expect(commitList).Should(HaveLen(before))
 							}
 
 							gitHistoryBasedCleanupCheck(
 								imageName, 1, 1,
 								func(imageMetadata map[string][]string) {
 									for _, commitList := range imageMetadata {
-										Ω(commitList).Should(HaveLen(after))
+										Expect(commitList).Should(HaveLen(after))
 
 										for _, check := range afterExtraChecks {
 											check(commitList)
@@ -468,7 +468,7 @@ var _ = Describe("cleanup command", func() {
 							)
 
 							metaImagesCheckFunc(3, 1, func(commits []string) {
-								Ω(commits).Should(ContainElement(utils.GetHeadCommit(SuiteData.TestDirPath)))
+								Expect(commits).Should(ContainElement(utils.GetHeadCommit(SuiteData.TestDirPath)))
 							})
 						})
 
@@ -540,7 +540,7 @@ var _ = Describe("cleanup command", func() {
 						)
 
 						countAfterFirstBuild := StagesCount()
-						Ω(countAfterFirstBuild).Should(Equal(4))
+						Expect(countAfterFirstBuild).Should(Equal(4))
 
 						utils.RunSucceedCommand(
 							SuiteData.TestDirPath,
@@ -565,7 +565,7 @@ var _ = Describe("cleanup command", func() {
 						)
 
 						if SuiteData.TestImplementation != docker_registry.QuayImplementationName {
-							Ω(StagesCount()).Should(Equal(countAfterSecondBuild - countAfterFirstBuild))
+							Expect(StagesCount()).Should(Equal(countAfterSecondBuild - countAfterFirstBuild))
 						}
 					})
 
@@ -583,7 +583,7 @@ var _ = Describe("cleanup command", func() {
 						)
 
 						count := StagesCount()
-						Ω(count).Should(Equal(4))
+						Expect(count).Should(Equal(4))
 
 						utils.RunSucceedCommand(
 							SuiteData.TestDirPath,
@@ -591,7 +591,7 @@ var _ = Describe("cleanup command", func() {
 							"cleanup",
 						)
 
-						Ω(StagesCount()).Should(Equal(count))
+						Expect(StagesCount()).Should(Equal(count))
 					})
 
 					Context("custom tags", func() {
@@ -628,9 +628,9 @@ var _ = Describe("cleanup command", func() {
 							)
 
 							customTags := CustomTags()
-							Ω(customTags).Should(ContainElement(fmt.Sprintf(customTagValueFormat, customTag1)))
-							Ω(customTags).Should(ContainElement(fmt.Sprintf(customTagValueFormat, customTag2)))
-							Ω(len(CustomTagsMetadataList())).Should(Equal(2))
+							Expect(customTags).Should(ContainElement(fmt.Sprintf(customTagValueFormat, customTag1)))
+							Expect(customTags).Should(ContainElement(fmt.Sprintf(customTagValueFormat, customTag2)))
+							Expect(len(CustomTagsMetadataList())).Should(Equal(2))
 
 							utils.RunSucceedCommand(
 								SuiteData.TestDirPath,
@@ -639,9 +639,9 @@ var _ = Describe("cleanup command", func() {
 							)
 
 							customTags = CustomTags()
-							Ω(customTags).Should(ContainElement(fmt.Sprintf(customTagValueFormat, customTag1)))
-							Ω(customTags).ShouldNot(ContainElement(fmt.Sprintf(customTagValueFormat, customTag2)))
-							Ω(len(CustomTagsMetadataList())).Should(Equal(1))
+							Expect(customTags).Should(ContainElement(fmt.Sprintf(customTagValueFormat, customTag1)))
+							Expect(customTags).ShouldNot(ContainElement(fmt.Sprintf(customTagValueFormat, customTag2)))
+							Expect(len(CustomTagsMetadataList())).Should(Equal(1))
 						})
 					})
 				})
@@ -665,7 +665,7 @@ var _ = Describe("cleanup command", func() {
 						)
 
 						countAfterFirstBuild := StagesCount()
-						Ω(countAfterFirstBuild).Should(Equal(4))
+						Expect(countAfterFirstBuild).Should(Equal(4))
 
 						utils.RunSucceedCommand(
 							SuiteData.TestDirPath,
@@ -683,7 +683,7 @@ var _ = Describe("cleanup command", func() {
 
 						countAfterSecondBuild := StagesCount()
 						if SuiteData.TestImplementation != docker_registry.QuayImplementationName {
-							Ω(countAfterSecondBuild).Should(Equal(8))
+							Expect(countAfterSecondBuild).Should(Equal(8))
 						}
 
 						utils.RunSucceedCommand(
@@ -693,7 +693,7 @@ var _ = Describe("cleanup command", func() {
 						)
 
 						if SuiteData.TestImplementation != docker_registry.QuayImplementationName {
-							Ω(StagesCount()).Should(Equal(countAfterSecondBuild))
+							Expect(StagesCount()).Should(Equal(countAfterSecondBuild))
 						}
 					})
 				})
@@ -752,7 +752,7 @@ func cleanupBeforeEachBase() {
 }
 
 func gitHistoryBasedCleanupCheck(imageName string, expectedNumberOfMetadataTagsBefore, expectedNumberOfMetadataTagsAfter int, afterCleanupChecks ...func(map[string][]string)) {
-	Ω(ImageMetadata(imageName)).Should(HaveLen(expectedNumberOfMetadataTagsBefore))
+	Expect(ImageMetadata(imageName)).Should(HaveLen(expectedNumberOfMetadataTagsBefore))
 
 	utils.RunSucceedCommand(
 		SuiteData.TestDirPath,
@@ -762,7 +762,7 @@ func gitHistoryBasedCleanupCheck(imageName string, expectedNumberOfMetadataTagsB
 
 	if SuiteData.TestImplementation != docker_registry.QuayImplementationName {
 		imageMetadata := ImageMetadata(imageName)
-		Ω(imageMetadata).Should(HaveLen(expectedNumberOfMetadataTagsAfter))
+		Expect(imageMetadata).Should(HaveLen(expectedNumberOfMetadataTagsAfter))
 
 		for _, check := range afterCleanupChecks {
 			check(imageMetadata)

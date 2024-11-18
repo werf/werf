@@ -52,54 +52,54 @@ var _ = DescribeTable("docker instructions", itBody,
 	Entry("volume", entry{
 		werfYaml: "werf_volume.yaml",
 		inspectCheck: func(inspect *types.ImageInspect) {
-			Ω(inspect.Config.Volumes).Should(HaveKey("/test"))
+			Expect(inspect.Config.Volumes).Should(HaveKey("/test"))
 		},
 	}),
 	Entry("expose", entry{
 		werfYaml: "werf_expose.yaml",
 		inspectCheck: func(inspect *types.ImageInspect) {
-			Ω(inspect.Config.ExposedPorts).Should(HaveKey(nat.Port("80/udp")))
+			Expect(inspect.Config.ExposedPorts).Should(HaveKey(nat.Port("80/udp")))
 		},
 	}),
 	Entry("env", entry{
 		werfYaml: "werf_env.yaml",
 		inspectCheck: func(inspect *types.ImageInspect) {
-			Ω(inspect.Config.Env).Should(ContainElement("TEST_NAME=test_value"))
+			Expect(inspect.Config.Env).Should(ContainElement("TEST_NAME=test_value"))
 		},
 	}),
 	Entry("label", entry{
 		werfYaml: "werf_label.yaml",
 		inspectCheck: func(inspect *types.ImageInspect) {
-			Ω(inspect.Config.Labels).Should(HaveKeyWithValue("test_name", "test_value"))
+			Expect(inspect.Config.Labels).Should(HaveKeyWithValue("test_name", "test_value"))
 		},
 	}),
 	Entry("entrypoint", entry{
 		werfYaml: "werf_entrypoint.yaml",
 		inspectCheck: func(inspect *types.ImageInspect) {
-			Ω([]string(inspect.Config.Entrypoint)).Should(Equal([]string{"command", "param1", "param2"}))
+			Expect([]string(inspect.Config.Entrypoint)).Should(Equal([]string{"command", "param1", "param2"}))
 		},
 	}),
 	Entry("cmd", entry{
 		werfYaml: "werf_cmd.yaml",
 		inspectCheck: func(inspect *types.ImageInspect) {
-			Ω([]string(inspect.Config.Cmd)).Should(Equal([]string{"command", "param1", "param2"}))
+			Expect([]string(inspect.Config.Cmd)).Should(Equal([]string{"command", "param1", "param2"}))
 		},
 	}),
 	Entry("workdir", entry{
 		werfYaml: "werf_workdir.yaml",
 		inspectCheck: func(inspect *types.ImageInspect) {
-			Ω(inspect.Config.WorkingDir).Should(Equal("/test"))
+			Expect(inspect.Config.WorkingDir).Should(Equal("/test"))
 		},
 	}),
 	Entry("user", entry{
 		werfYaml: "werf_user.yaml",
 		inspectCheck: func(inspect *types.ImageInspect) {
-			Ω(inspect.Config.User).Should(Equal("test"))
+			Expect(inspect.Config.User).Should(Equal("test"))
 		},
 	}),
 	Entry("healthcheck", entry{
 		werfYaml: "werf_healthcheck.yaml",
 		inspectCheck: func(inspect *types.ImageInspect) {
-			Ω(inspect.Config.Healthcheck.Test).Should(Equal([]string{"CMD-SHELL", "true"}))
+			Expect(inspect.Config.Healthcheck.Test).Should(Equal([]string{"CMD-SHELL", "true"}))
 		},
 	}))

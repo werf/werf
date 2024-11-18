@@ -15,9 +15,9 @@ var _ = Describe("factory", func() {
 	}
 
 	itBodyFunc := func(e entry) {
-		Ω(e.matcher.IsPathMatched(e.testPath)).Should(BeEquivalentTo(e.isPathMatched))
-		Ω(e.matcher.ShouldGoThrough(e.testPath)).Should(BeEquivalentTo(e.shouldGoThrough))
-		Ω(e.matcher.IsDirOrSubmodulePathMatched(e.testPath)).Should(BeEquivalentTo(e.isDirOrSubmodulePathMatched))
+		Expect(e.matcher.IsPathMatched(e.testPath)).Should(BeEquivalentTo(e.isPathMatched))
+		Expect(e.matcher.ShouldGoThrough(e.testPath)).Should(BeEquivalentTo(e.shouldGoThrough))
+		Expect(e.matcher.IsDirOrSubmodulePathMatched(e.testPath)).Should(BeEquivalentTo(e.isDirOrSubmodulePathMatched))
 	}
 
 	DescribeTable("each one", itBodyFunc,

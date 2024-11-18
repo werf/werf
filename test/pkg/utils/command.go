@@ -59,7 +59,7 @@ func RunCommandWithOptions(dir, command string, args []string, options RunComman
 
 	if options.ShouldSucceed {
 		errorDesc := fmt.Sprintf("%[2]s %[3]s (dir: %[1]s)", dir, command, strings.Join(args, " "))
-		Ω(err).ShouldNot(HaveOccurred(), errorDesc)
+		Expect(err).ShouldNot(HaveOccurred(), errorDesc)
 	}
 
 	return res, err

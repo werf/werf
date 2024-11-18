@@ -15,7 +15,7 @@ func LocalDockerRegistryRun() (string, string, string) {
 	imageName := "registry:2"
 
 	port, err := getFreeEphemeralPort()
-	Ω(err).ShouldNot(HaveOccurred())
+	Expect(err).ShouldNot(HaveOccurred())
 
 	dockerCliRunArgs := []string{
 		"-d",
@@ -25,11 +25,11 @@ func LocalDockerRegistryRun() (string, string, string) {
 		imageName,
 	}
 	err = CliRun(dockerCliRunArgs...)
-	Ω(err).ShouldNot(HaveOccurred(), "docker run "+strings.Join(dockerCliRunArgs, " "))
+	Expect(err).ShouldNot(HaveOccurred(), "docker run "+strings.Join(dockerCliRunArgs, " "))
 
 	inspect := ContainerInspect(containerName)
-	Ω(inspect.NetworkSettings).ShouldNot(BeNil())
-	Ω(inspect.NetworkSettings.IPAddress).ShouldNot(BeEmpty())
+	Expect(inspect.NetworkSettings).ShouldNot(BeNil())
+	Expect(inspect.NetworkSettings.IPAddress).ShouldNot(BeEmpty())
 	registryInternalAddress := fmt.Sprintf("%s:%d", inspect.NetworkSettings.IPAddress, 5000)
 
 	registryLocalAddress := fmt.Sprintf("localhost:%d", port)

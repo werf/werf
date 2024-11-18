@@ -49,7 +49,7 @@ func CheckContainerDirectory(werfBinPath, projectPath, containerDirPath string, 
 
 func RunSucceedContainerCommandWithStapel(werfBinPath, projectPath string, extraDockerOptions, cmds []string) {
 	container, err := stapel.GetOrCreateContainer(context.Background())
-	Ω(err).ShouldNot(HaveOccurred())
+	Expect(err).ShouldNot(HaveOccurred())
 
 	dockerOptions := []string{
 		"--volumes-from",
@@ -76,7 +76,7 @@ func RunSucceedContainerCommandWithStapel(werfBinPath, projectPath string, extra
 	)
 
 	errorDesc := fmt.Sprintf("%[2]s (dir: %[1]s)", projectPath, strings.Join(append(baseWerfArgs, containerCommand), " "))
-	Ω(err).ShouldNot(HaveOccurred(), errorDesc)
+	Expect(err).ShouldNot(HaveOccurred(), errorDesc)
 }
 
 func CheckContainerFileCommand(containerDirPath string, directory, exist bool) string {

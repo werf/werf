@@ -33,12 +33,12 @@ var _ = Describe("managed images", func() {
 					"managed-images", "ls",
 				)
 
-				Ω(output).Should(BeEmpty())
+				Expect(output).Should(BeEmpty())
 			})
 
 			It("add should work properly", func() {
 				addManagedImage("test")
-				Ω(isManagedImage("test")).Should(BeTrue())
+				Expect(isManagedImage("test")).Should(BeTrue())
 			})
 
 			When("managed-images test has been added", func() {
@@ -49,12 +49,12 @@ var _ = Describe("managed images", func() {
 				})
 
 				It("ls should return managed image", func() {
-					Ω(isManagedImage(managedImage)).Should(BeTrue())
+					Expect(isManagedImage(managedImage)).Should(BeTrue())
 				})
 
 				It("rm should remove managed-image", func() {
 					rmManagedImage(managedImage)
-					Ω(isManagedImage(managedImage)).Should(BeFalse())
+					Expect(isManagedImage(managedImage)).Should(BeFalse())
 				})
 			})
 
@@ -68,10 +68,10 @@ var _ = Describe("managed images", func() {
 				})
 
 				It("ls should return managed image", func() {
-					Ω(isManagedImage("a")).Should(BeTrue())
-					Ω(isManagedImage("b")).Should(BeTrue())
-					Ω(isManagedImage("c")).Should(BeTrue())
-					Ω(isManagedImage("d")).Should(BeTrue())
+					Expect(isManagedImage("a")).Should(BeTrue())
+					Expect(isManagedImage("b")).Should(BeTrue())
+					Expect(isManagedImage("c")).Should(BeTrue())
+					Expect(isManagedImage("d")).Should(BeTrue())
 				})
 			})
 		})

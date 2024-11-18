@@ -51,7 +51,7 @@ var _ = XDescribe("persistent stage digests", func() {
 			"build", e.imageName,
 		)
 
-		Ω(err).NotTo(HaveOccurred())
+		Expect(err).NotTo(HaveOccurred())
 
 		var expectedDigests []string
 		if runtime.GOOS == "windows" && len(e.expectedWindowsDigests) != 0 {
@@ -61,7 +61,7 @@ var _ = XDescribe("persistent stage digests", func() {
 		}
 
 		for _, digest := range expectedDigests {
-			Ω(string(output)).Should(ContainSubstring(digest))
+			Expect(string(output)).Should(ContainSubstring(digest))
 		}
 	},
 		Entry("dockerfile_image", entry{

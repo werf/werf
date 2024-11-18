@@ -12,7 +12,7 @@ func StringToLines(s string) (lines []string) {
 	for scanner.Scan() {
 		lines = append(lines, scanner.Text())
 	}
-	Ω(scanner.Err()).Should(Succeed())
+	Expect(scanner.Err()).Should(Succeed())
 
 	return
 }

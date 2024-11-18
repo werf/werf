@@ -55,7 +55,7 @@ func perImplementationBeforeEach(implementationName string) func() {
 		SuiteData.TestImplementation = implementationName
 
 		containerRegistry, err := docker_registry.NewDockerRegistry(repo, werfImplementationName, docker_registry.DockerRegistryOptions{})
-		Ω(err).ShouldNot(HaveOccurred())
+		Expect(err).ShouldNot(HaveOccurred())
 
 		SuiteData.ContainerRegistry = containerRegistry
 	}
@@ -87,7 +87,7 @@ func ImportMetadataIDs() []string {
 
 func CustomTags() []string {
 	tags, err := SuiteData.ContainerRegistry.Tags(context.Background(), SuiteData.StagesStorage.String())
-	Ω(err).ShouldNot(HaveOccurred())
+	Expect(err).ShouldNot(HaveOccurred())
 
 	var result []string
 	for _, tag := range tags {

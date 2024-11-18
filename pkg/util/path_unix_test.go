@@ -22,13 +22,13 @@ type expandPathTest struct {
 var _ = DescribeTable("expand path",
 	func(e expandPathTest) {
 		usr, err := user.Current()
-		Ω(err).ShouldNot(HaveOccurred())
+		Expect(err).ShouldNot(HaveOccurred())
 
 		wd, err := os.Getwd()
-		Ω(err).ShouldNot(HaveOccurred())
+		Expect(err).ShouldNot(HaveOccurred())
 
 		expectedPath := fmt.Sprintf(e.expectedPathFormat, usr.HomeDir, wd)
-		Ω(util.ExpandPath(filepath.FromSlash(e.path))).Should(Equal(filepath.FromSlash(expectedPath)))
+		Expect(util.ExpandPath(filepath.FromSlash(e.path))).Should(Equal(filepath.FromSlash(expectedPath)))
 	},
 	Entry("~", expandPathTest{
 		path:               "~",

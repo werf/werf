@@ -27,11 +27,11 @@ var listItBody = func(entry listEntry) {
 
 	lines := utils.StringToLines(output)
 	for _, name := range entry.expectedImagesNames {
-		Ω(lines).Should(ContainElement(name))
+		Expect(lines).Should(ContainElement(name))
 	}
 
 	for _, name := range entry.notExpectedImagesNames {
-		Ω(lines).ShouldNot(ContainElement(name))
+		Expect(lines).ShouldNot(ContainElement(name))
 	}
 }
 

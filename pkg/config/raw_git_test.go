@@ -11,7 +11,7 @@ type entry struct {
 }
 
 var _ = DescribeTable("parsing git repository ID", func(e entry) {
-	Ω(getRepositoryID(e.repository)).Should(Equal(e.expectedID))
+	Expect(getRepositoryID(e.repository)).Should(Equal(e.expectedID))
 },
 	Entry("git", entry{
 		"git@github.com:company/name.git",

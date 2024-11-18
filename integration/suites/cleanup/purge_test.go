@@ -51,12 +51,12 @@ var _ = Describe("purge command", func() {
 					"build", "--add-custom-tag", fmt.Sprintf(customTagValueFormat, "1"),
 				)
 
-				Ω(StagesCount()).Should(BeNumerically(">", 0))
-				Ω(ManagedImagesCount()).Should(BeNumerically(">", 0))
-				Ω(len(ImageMetadata(imageName))).Should(BeNumerically(">", 0))
-				Ω(len(ImportMetadataIDs())).Should(BeNumerically(">", 0))
-				Ω(len(CustomTags())).Should(BeNumerically(">", 0))
-				Ω(len(CustomTagsMetadataList())).Should(BeNumerically(">", 0))
+				Expect(StagesCount()).Should(BeNumerically(">", 0))
+				Expect(ManagedImagesCount()).Should(BeNumerically(">", 0))
+				Expect(len(ImageMetadata(imageName))).Should(BeNumerically(">", 0))
+				Expect(len(ImportMetadataIDs())).Should(BeNumerically(">", 0))
+				Expect(len(CustomTags())).Should(BeNumerically(">", 0))
+				Expect(len(CustomTagsMetadataList())).Should(BeNumerically(">", 0))
 
 				utils.RunSucceedCommand(
 					SuiteData.TestDirPath,
@@ -65,12 +65,12 @@ var _ = Describe("purge command", func() {
 				)
 
 				if SuiteData.TestImplementation != docker_registry.QuayImplementationName {
-					Ω(StagesCount()).Should(Equal(0))
-					Ω(ManagedImagesCount()).Should(Equal(0))
-					Ω(len(ImageMetadata(imageName))).Should(Equal(0))
-					Ω(len(ImportMetadataIDs())).Should(Equal(0))
-					Ω(len(CustomTags())).Should(Equal(0))
-					Ω(len(CustomTagsMetadataList())).Should(Equal(0))
+					Expect(StagesCount()).Should(Equal(0))
+					Expect(ManagedImagesCount()).Should(Equal(0))
+					Expect(len(ImageMetadata(imageName))).Should(Equal(0))
+					Expect(len(ImportMetadataIDs())).Should(Equal(0))
+					Expect(len(CustomTags())).Should(Equal(0))
+					Expect(len(CustomTagsMetadataList())).Should(Equal(0))
 				}
 			})
 		})

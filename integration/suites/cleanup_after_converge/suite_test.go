@@ -48,7 +48,7 @@ var _ = BeforeEach(func() {
 	SuiteData.StagesStorage = utils.NewStagesStorage(SuiteData.K8sDockerRegistryRepo, "default", docker_registry.DockerRegistryOptions{})
 
 	containerRegistry, err := docker_registry.NewDockerRegistry(SuiteData.K8sDockerRegistryRepo, "", docker_registry.DockerRegistryOptions{})
-	Ω(err).ShouldNot(HaveOccurred())
+	Expect(err).ShouldNot(HaveOccurred())
 
 	SuiteData.ContainerRegistry = containerRegistry
 })
@@ -63,7 +63,7 @@ func ImageMetadata(imageName string) map[string][]string {
 
 func CustomTags() []string {
 	tags, err := SuiteData.ContainerRegistry.Tags(context.Background(), SuiteData.K8sDockerRegistryRepo)
-	Ω(err).ShouldNot(HaveOccurred())
+	Expect(err).ShouldNot(HaveOccurred())
 
 	var result []string
 	for _, tag := range tags {
