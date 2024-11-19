@@ -1,5 +1,13 @@
 # Changelog
 
+### [2.13.1](https://www.github.com/werf/werf/compare/v2.13.0...v2.13.1) (2024-11-19)
+
+
+### Bug Fixes
+
+* **build, buildah:** support custom docker config path ([#6421](https://www.github.com/werf/werf/issues/6421)) ([720e3d3](https://www.github.com/werf/werf/commit/720e3d37bf6b32e34e8e7210d4fcd9b8a9958fbe))
+* **bundle:** allow application/vnd.cncf.helm.chart.content.v1.tar+gzip media type ([#6424](https://www.github.com/werf/werf/issues/6424)) ([a8a03e2](https://www.github.com/werf/werf/commit/a8a03e21d6c402cbca69612ca39a1912dfd1f84f))
+
 ## [2.13.0](https://www.github.com/werf/werf/compare/v2.12.1...v2.13.0) (2024-11-14)
 
 
