@@ -12,12 +12,9 @@ import (
 	"github.com/werf/lockgate/pkg/distributed_locker"
 	"github.com/werf/lockgate/pkg/distributed_locker/optimistic_locking_store"
 	"github.com/werf/werf/v2/cmd/werf/common"
-	"github.com/werf/werf/v2/pkg/git_repo"
-	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
 	"github.com/werf/werf/v2/pkg/kubeutils"
 	"github.com/werf/werf/v2/pkg/storage/synchronization/server"
 	"github.com/werf/werf/v2/pkg/util"
-	"github.com/werf/werf/v2/pkg/werf"
 )
 
 var cmdData struct {
@@ -83,17 +80,13 @@ func NewCmd(ctx context.Context) *cobra.Command {
 }
 
 func runSynchronization(ctx context.Context) error {
-	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
-		return fmt.Errorf("initialization error: %w", err)
-	}
-
-	gitDataManager, err := gitdata.GetHostGitDataManager(ctx)
+	_, ctx, err := common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
+		Cmd:                &commonCmdData,
+		InitWerf:           true,
+		InitGitDataManager: true,
+	})
 	if err != nil {
-		return fmt.Errorf("error getting host git data manager: %w", err)
-	}
-
-	if err := git_repo.Init(gitDataManager); err != nil {
-		return err
+		return fmt.Errorf("component init error: %w", err)
 	}
 
 	host, port := cmdData.Host, cmdData.Port

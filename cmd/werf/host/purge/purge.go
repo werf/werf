@@ -10,11 +10,7 @@ import (
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/cleaning"
 	"github.com/werf/werf/v2/pkg/container_backend"
-	"github.com/werf/werf/v2/pkg/git_repo"
-	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
 	"github.com/werf/werf/v2/pkg/host_cleaning"
-	"github.com/werf/werf/v2/pkg/image"
-	"github.com/werf/werf/v2/pkg/werf"
 	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
 
@@ -68,33 +64,18 @@ func NewCmd(ctx context.Context) *cobra.Command {
 }
 
 func runReset(ctx context.Context) error {
-	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
-		return fmt.Errorf("initialization error: %w", err)
-	}
-
-	registryMirrors, err := common.GetContainerRegistryMirror(ctx, &commonCmdData)
+	commonManager, ctx, err := common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
+		Cmd:                         &commonCmdData,
+		InitWerf:                    true,
+		InitGitDataManager:          true,
+		InitManifestCache:           true,
+		InitProcessContainerBackend: true,
+	})
 	if err != nil {
-		return fmt.Errorf("get container registry mirrors: %w", err)
+		return fmt.Errorf("component init error: %w", err)
 	}
 
-	containerBackend, processCtx, err := common.InitProcessContainerBackend(ctx, &commonCmdData, registryMirrors)
-	if err != nil {
-		return err
-	}
-	ctx = processCtx
-
-	gitDataManager, err := gitdata.GetHostGitDataManager(ctx)
-	if err != nil {
-		return fmt.Errorf("error getting host git data manager: %w", err)
-	}
-
-	if err := git_repo.Init(gitDataManager); err != nil {
-		return err
-	}
-
-	if err := image.Init(); err != nil {
-		return err
-	}
+	containerBackend := commonManager.ContainerBackend()
 
 	projectName := *commonCmdData.ProjectName
 	if projectName == "" {

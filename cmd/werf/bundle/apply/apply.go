@@ -157,22 +157,16 @@ func NewCmd(ctx context.Context) *cobra.Command {
 func runApply(ctx context.Context) error {
 	global_warnings.PostponeMultiwerfNotUpToDateWarning()
 
-	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
-		return fmt.Errorf("initialization error: %w", err)
-	}
+	_, ctx, err := common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
+		Cmd:                &commonCmdData,
+		InitDockerRegistry: true,
+		InitWerf:           true,
+		InitGitDataManager: true,
 
-	registryMirrors, err := common.GetContainerRegistryMirror(ctx, &commonCmdData)
+		SetupOndemandKubeInitializer: true,
+	})
 	if err != nil {
-		return fmt.Errorf("get container registry mirrors: %w", err)
-	}
-
-	if err := common.DockerRegistryInit(ctx, &commonCmdData, registryMirrors); err != nil {
-		return err
-	}
-
-	common.SetupOndemandKubeInitializer(*commonCmdData.KubeContext, *commonCmdData.KubeConfig, *commonCmdData.KubeConfigBase64, *commonCmdData.KubeConfigPathMergeList)
-	if err := common.GetOndemandKubeInitializer().Init(ctx); err != nil {
-		return err
+		return fmt.Errorf("component init error: %w", err)
 	}
 
 	userExtraAnnotations, err := common.GetUserExtraAnnotations(&commonCmdData)
