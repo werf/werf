@@ -88,7 +88,7 @@ func InitCommonComponents(ctx context.Context, opts InitCommonComponentsOptions)
 		}
 
 		if err := git_repo.Init(gitDataManager); err != nil {
-			return nil, ctx, fmt.Errorf("cant' init git repo: %w", err)
+			return nil, ctx, fmt.Errorf("cannot initialize git repo: %w", err)
 		}
 	}
 
