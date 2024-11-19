@@ -44,9 +44,6 @@ jobs:
         run: |
           . $(werf ci-env github --as-file)
           werf converge
-        with:
-          env: production
-          kube-config-base64-data: ${{ secrets.KUBECONFIG_BASE64_PROD }}
         env:
           WERF_NAMESPACE: "werfio-production"
           WERF_DIR: "ci"
