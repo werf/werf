@@ -120,7 +120,7 @@ func (cache *Cache) FetchReference(ref *Reference) (*CacheRefSummary, error) {
 			var contentLayer *ocispec.Descriptor
 			for _, layer := range manifest.Layers {
 				layer := layer
-				if layer.MediaType == HelmChartContentLayerMediaType {
+				if layer.MediaType == HelmChartContentLayerMediaType || layer.MediaType == HelmChartContentLayerFullMediaType {
 					contentLayer = &layer
 				}
 			}
