@@ -23,6 +23,8 @@ type rawImageFromDockerfile struct {
 	Staged          bool                   `yaml:"staged,omitempty"`
 	Platform        []string               `yaml:"platform,omitempty"`
 
+	RawSecrets []*rawSecret `yaml:"secrets,omitempty"`
+
 	doc *doc `yaml:"-"` // parent
 
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
@@ -141,6 +143,29 @@ func (c *rawImageFromDockerfile) toImageFromDockerfileDirective(giterminismManag
 	image.Staged = c.Staged || util.GetBoolEnvironmentDefaultFalse("WERF_FORCE_STAGED_DOCKERFILE")
 	image.platform = append([]string{}, c.Platform...)
 	image.raw = c
+
+	secretIds := make(map[string]struct{})
+	for _, rawSecrets := range c.RawSecrets {
+
+		secret, err := rawSecrets.toDirective()
+		if err != nil {
+			return nil, err
+		}
+
+		secretId := secret.GetSecretId()
+		if v, ok := secretIds[secretId]; !ok {
+			secretIds[secretId] = struct{}{}
+		} else {
+			return nil, fmt.Errorf("duplicated secret id %s", v)
+		}
+
+		secretArg, err := secret.GetSecretStringArg()
+		if err != nil {
+			return nil, err
+		}
+
+		image.Secrets = append(image.Secrets, secretArg)
+	}
 
 	if err := image.validate(giterminismManager); err != nil {
 		return nil, err

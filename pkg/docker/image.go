@@ -212,6 +212,10 @@ func CliBuild_LiveOutputWithCustomIn(ctx context.Context, rc io.ReadCloser, args
 	if useBuildx {
 		buildOpts.EnableBuildx = true
 	} else {
+		err := failOnBuildKitOnlyOpts(args...)
+		if err != nil {
+			return err
+		}
 		// ensure buildkit not enabled
 		if err := os.Setenv("DOCKER_BUILDKIT", "0"); err != nil {
 			return err
@@ -231,4 +235,13 @@ func CliBuild_LiveOutputWithCustomIn(ctx context.Context, rc io.ReadCloser, args
 func CliBuild_LiveOutput(ctx context.Context, args ...string) error {
 	buildOpts := BuildOptions{EnableBuildx: useBuildx}
 	return doCliBuild(cli(ctx), buildOpts, args...)
+}
+
+func failOnBuildKitOnlyOpts(args ...string) error {
+	for _, arg := range args {
+		if strings.Contains(arg, "--secret") {
+			return fmt.Errorf("secrets are only available with Docker BuildKit")
+		}
+	}
+	return nil
 }

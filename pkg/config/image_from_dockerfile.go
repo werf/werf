@@ -21,6 +21,8 @@ type ImageFromDockerfile struct {
 	Dependencies    []*Dependency
 	Staged          bool
 
+	Secrets []string
+
 	platform []string
 	final    bool
 	raw      *rawImageFromDockerfile

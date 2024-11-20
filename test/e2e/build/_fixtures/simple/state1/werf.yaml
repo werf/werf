@@ -1,0 +1,21 @@
+project: werf-test-e2e-build-simple
+configVersion: 1
+
+---
+image: dockerfile
+dockerfile: Dockerfile
+secrets:
+  - env: ENV_SECRET
+  - src: "./file"
+  - id: "plainSecret"
+    value: "plainSecretValue"
+
+---
+image: stapel-shell
+from: ubuntu:22.04
+git:
+  - add: /file
+    to: /file
+shell:
+  setup:
+    - "touch /created-by-setup"

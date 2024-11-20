@@ -9,7 +9,6 @@ import (
 	"sort"
 
 	"github.com/containers/buildah/copier"
-
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/context_manager"

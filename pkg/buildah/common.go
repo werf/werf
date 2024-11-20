@@ -56,6 +56,7 @@ type BuildFromDockerfileOpts struct {
 	BuildArgs  map[string]string
 	Target     string
 	Labels     []string
+	Secrets    []string
 }
 
 type RunMount struct {

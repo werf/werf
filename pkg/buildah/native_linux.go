@@ -368,6 +368,10 @@ func (b *NativeBuildah) BuildFromDockerfile(ctx context.Context, dockerfile stri
 		Labels:                  opts.Labels,
 	}
 
+	if len(opts.Secrets) > 0 {
+		buildOpts.CommonBuildOpts.Secrets = opts.Secrets
+	}
+
 	if targetPlatform != b.GetRuntimePlatform() {
 		// Prevent local cache collisions in multiplatform build mode:
 		//   allow local cache only for the current runtime platform.
