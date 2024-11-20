@@ -470,7 +470,7 @@ func (m *cleanupManager) handleSavedStageIDs(ctx context.Context, savedStageIDs 
 	})
 }
 
-func (m *cleanupManager) deleteStages(ctx context.Context, stages []*image.StageDescription, isFinal bool) error {
+func (m *cleanupManager) deleteStages(ctx context.Context, stages []*image.StageDesc, isFinal bool) error {
 	deleteStageOptions := manager.ForEachDeleteStageOptions{
 		DeleteImageOptions: storage.DeleteImageOptions{
 			RmiForce: false,
@@ -485,7 +485,7 @@ func (m *cleanupManager) deleteStages(ctx context.Context, stages []*image.Stage
 	return deleteStages(ctx, m.StorageManager, m.DryRun, deleteStageOptions, stages, isFinal)
 }
 
-func deleteStages(ctx context.Context, storageManager manager.StorageManagerInterface, dryRun bool, deleteStageOptions manager.ForEachDeleteStageOptions, stages []*image.StageDescription, isFinal bool) error {
+func deleteStages(ctx context.Context, storageManager manager.StorageManagerInterface, dryRun bool, deleteStageOptions manager.ForEachDeleteStageOptions, stages []*image.StageDesc, isFinal bool) error {
 	if dryRun {
 		for _, stageDesc := range stages {
 			logboek.Context(ctx).Default().LogFDetails("  tag: %s\n", stageDesc.Info.Tag)
@@ -494,7 +494,7 @@ func deleteStages(ctx context.Context, storageManager manager.StorageManagerInte
 		return nil
 	}
 
-	onDeleteFunc := func(ctx context.Context, stageDesc *image.StageDescription, err error) error {
+	onDeleteFunc := func(ctx context.Context, stageDesc *image.StageDesc, err error) error {
 		if err != nil {
 			if err := handleDeletionError(err); err != nil {
 				return err
@@ -683,26 +683,26 @@ func deleteImageMetadata(ctx context.Context, projectName string, storageManager
 }
 
 func (m *cleanupManager) cleanupUnusedStages(ctx context.Context) error {
-	stageDescriptionList := m.stageManager.GetStageDescriptionList(stage_manager.StageDescriptionListOptions{})
-	stageDescriptionListCount := len(stageDescriptionList)
+	stageDescList := m.stageManager.GetStageDescList(stage_manager.StageDescListOptions{})
+	stageDescListCount := len(stageDescList)
 
 	if err := logboek.Context(ctx).Info().LogProcess("Fetching imports metadata").DoError(func() error {
-		return m.initImportsMetadata(ctx, stageDescriptionList)
+		return m.initImportsMetadata(ctx, stageDescList)
 	}); err != nil {
 		return fmt.Errorf("unable to init imports metadata: %w", err)
 	}
 
 	// skip stages and their relatives covered by Kubernetes- or git history-based cleanup policies
-	stageDescriptionListToDelete := stageDescriptionList
+	stageDescListToDelete := stageDescList
 
 	{
-		excludedSDListByReason := make(map[string][]*image.StageDescription)
+		excludedSDListByReason := make(map[string][]*image.StageDesc)
 
-		for reason, sdList := range m.stageManager.GetProtectedStageDescriptionListByReason() {
+		for reason, sdList := range m.stageManager.GetProtectedStageDescListByReason() {
 			for _, sd := range sdList {
-				var excludedSDListBySD []*image.StageDescription
+				var excludedSDListBySD []*image.StageDesc
 
-				stageDescriptionListToDelete, excludedSDListBySD = m.excludeStageAndRelativesByImage(stageDescriptionListToDelete, sd.Info)
+				stageDescListToDelete, excludedSDListBySD = m.excludeStageAndRelativesByImage(stageDescListToDelete, sd.Info)
 
 				for _, exclSD := range excludedSDListBySD {
 					if sd.Info.Name == exclSD.Info.Name {
@@ -720,7 +720,7 @@ func (m *cleanupManager) cleanupUnusedStages(ctx context.Context) error {
 			excludedCount += len(list)
 		}
 
-		logboek.Context(ctx).Default().LogBlock("Saved stages (%d/%d)", excludedCount, len(stageDescriptionList)).Do(func() {
+		logboek.Context(ctx).Default().LogBlock("Saved stages (%d/%d)", excludedCount, len(stageDescList)).Do(func() {
 			for reason, list := range excludedSDListByReason {
 				logboek.Context(ctx).Default().LogProcess("%s (%d)", reason, len(list)).Do(func() {
 					for _, excludedSD := range list {
@@ -737,17 +737,17 @@ func (m *cleanupManager) cleanupUnusedStages(ctx context.Context) error {
 	}
 
 	if !(m.ConfigMetaCleanup.DisableBuiltWithinLastNHoursPolicy || keepImagesBuiltWithinLastNHours == 0) {
-		var excludedSDList []*image.StageDescription
-		for _, sd := range stageDescriptionListToDelete {
+		var excludedSDList []*image.StageDesc
+		for _, sd := range stageDescListToDelete {
 			if (time.Since(sd.Info.GetCreatedAt()).Hours()) <= float64(keepImagesBuiltWithinLastNHours) {
-				var excludedRelativesSDList []*image.StageDescription
-				stageDescriptionListToDelete, excludedRelativesSDList = m.excludeStageAndRelativesByImage(stageDescriptionListToDelete, sd.Info)
+				var excludedRelativesSDList []*image.StageDesc
+				stageDescListToDelete, excludedRelativesSDList = m.excludeStageAndRelativesByImage(stageDescListToDelete, sd.Info)
 				excludedSDList = append(excludedSDList, excludedRelativesSDList...)
 			}
 		}
 
 		if len(excludedSDList) != 0 {
-			logboek.Context(ctx).Default().LogBlock("Saved stages that were built within last %d hours (%d/%d)", keepImagesBuiltWithinLastNHours, len(excludedSDList), len(stageDescriptionList)).Do(func() {
+			logboek.Context(ctx).Default().LogBlock("Saved stages that were built within last %d hours (%d/%d)", keepImagesBuiltWithinLastNHours, len(excludedSDList), len(stageDescList)).Do(func() {
 				for _, stage := range excludedSDList {
 					logboek.Context(ctx).Default().LogFDetails("  tag: %s\n", stage.Info.Tag)
 					logboek.Context(ctx).LogOptionalLn()
@@ -756,14 +756,14 @@ func (m *cleanupManager) cleanupUnusedStages(ctx context.Context) error {
 		}
 	}
 
-	if len(stageDescriptionListToDelete) != 0 {
-		if err := logboek.Context(ctx).Default().LogProcess("Deleting stages tags (%d/%d)", len(stageDescriptionListToDelete), stageDescriptionListCount).DoError(func() error {
-			return m.deleteStages(ctx, stageDescriptionListToDelete, false)
+	if len(stageDescListToDelete) != 0 {
+		if err := logboek.Context(ctx).Default().LogProcess("Deleting stages tags (%d/%d)", len(stageDescListToDelete), stageDescListCount).DoError(func() error {
+			return m.deleteStages(ctx, stageDescListToDelete, false)
 		}); err != nil {
 			return err
 		}
 
-		m.stageManager.ForgetDeletedStages(stageDescriptionListToDelete)
+		m.stageManager.ForgetDeletedStages(stageDescListToDelete)
 	}
 
 	if err := m.deleteUnusedCustomTags(ctx); err != nil {
@@ -782,13 +782,13 @@ func (m *cleanupManager) cleanupUnusedStages(ctx context.Context) error {
 }
 
 func (m *cleanupManager) cleanupFinalStages(ctx context.Context) error {
-	finalStagesDescriptionListFull := m.stageManager.GetFinalStageDescriptionList(stage_manager.StageDescriptionListOptions{})
-	finalStageDescriptionListFullCount := len(finalStagesDescriptionListFull)
+	finalStagesDescriptionListFull := m.stageManager.GetFinalStageDescList(stage_manager.StageDescListOptions{})
+	finalStageDescListFullCount := len(finalStagesDescriptionListFull)
 
-	finalStagesDescriptionList := m.stageManager.GetFinalStageDescriptionList(stage_manager.StageDescriptionListOptions{ExcludeProtected: true})
-	stagesDescriptionList := m.stageManager.GetStageDescriptionList(stage_manager.StageDescriptionListOptions{})
+	finalStagesDescriptionList := m.stageManager.GetFinalStageDescList(stage_manager.StageDescListOptions{ExcludeProtected: true})
+	stagesDescriptionList := m.stageManager.GetStageDescList(stage_manager.StageDescListOptions{})
 
-	var finalStagesDescriptionListToDelete []*image.StageDescription
+	var finalStagesDescriptionListToDelete []*image.StageDesc
 
 FilterOutFinalStages:
 	for _, finalStg := range finalStagesDescriptionList {
@@ -802,7 +802,7 @@ FilterOutFinalStages:
 	}
 
 	if len(finalStagesDescriptionListToDelete) != 0 {
-		if err := logboek.Context(ctx).Default().LogProcess("Deleting final stages tags (%d/%d)", len(finalStagesDescriptionListToDelete), finalStageDescriptionListFullCount).DoError(func() error {
+		if err := logboek.Context(ctx).Default().LogProcess("Deleting final stages tags (%d/%d)", len(finalStagesDescriptionListToDelete), finalStageDescListFullCount).DoError(func() error {
 			return m.deleteStages(ctx, finalStagesDescriptionListToDelete, true)
 		}); err != nil {
 			return err
@@ -814,7 +814,7 @@ FilterOutFinalStages:
 	return nil
 }
 
-func (m *cleanupManager) initImportsMetadata(ctx context.Context, stageDescriptionList []*image.StageDescription) error {
+func (m *cleanupManager) initImportsMetadata(ctx context.Context, stageDescList []*image.StageDesc) error {
 	importMetadataIDs, err := m.StorageManager.GetStagesStorage().GetImportMetadataIDs(ctx, m.ProjectName, storage.WithCache())
 	if err != nil {
 		return err
@@ -842,7 +842,7 @@ func (m *cleanupManager) initImportsMetadata(ctx context.Context, stageDescripti
 
 		sourceImageID := metadata.SourceImageID
 		importSourceID := metadata.ImportSourceID
-		stage := findStageByImageID(stageDescriptionList, sourceImageID)
+		stage := findStageByImageID(stageDescList, sourceImageID)
 		if stage == nil {
 			m.nonexistentImportMetadataIDs = append(m.nonexistentImportMetadataIDs, importSourceID)
 		}
@@ -881,16 +881,16 @@ func deleteImportsMetadata(ctx context.Context, projectName string, storageManag
 	})
 }
 
-func (m *cleanupManager) excludeStageAndRelativesByImage(stages []*image.StageDescription, excludeImage *image.Info) ([]*image.StageDescription, []*image.StageDescription) {
+func (m *cleanupManager) excludeStageAndRelativesByImage(stages []*image.StageDesc, excludeImage *image.Info) ([]*image.StageDesc, []*image.StageDesc) {
 	excludeStages := findStagesByImageID(stages, excludeImage)
 	if len(excludeStages) == 0 {
-		return stages, []*image.StageDescription{}
+		return stages, []*image.StageDesc{}
 	}
 	return m.excludeStageAndRelativesByStages(stages, excludeStages)
 }
 
 // findStagesByImage could return multiple stages when target image.Info is an image index
-func findStagesByImage(stages []*image.StageDescription, target *image.Info, imageMatcher, indexMatcher func(stg *image.StageDescription, target *image.Info) bool) (res []*image.StageDescription) {
+func findStagesByImage(stages []*image.StageDesc, target *image.Info, imageMatcher, indexMatcher func(stg *image.StageDesc, target *image.Info) bool) (res []*image.StageDesc) {
 	if target.IsIndex {
 		if indexMatcher != nil {
 			for _, stg := range stages {
@@ -912,28 +912,28 @@ func findStagesByImage(stages []*image.StageDescription, target *image.Info, ima
 	return
 }
 
-func findStagesByImageID(stages []*image.StageDescription, target *image.Info) []*image.StageDescription {
+func findStagesByImageID(stages []*image.StageDesc, target *image.Info) []*image.StageDesc {
 	return findStagesByImage(
 		stages, target,
-		func(stg *image.StageDescription, target *image.Info) bool {
+		func(stg *image.StageDesc, target *image.Info) bool {
 			return stg.Info.ID == target.ID
 		},
-		func(stg *image.StageDescription, target *image.Info) bool {
+		func(stg *image.StageDesc, target *image.Info) bool {
 			return stg.Info.Name == target.Name
 		},
 	)
 }
 
-func findStagesByImageParentID(stages []*image.StageDescription, target *image.Info) []*image.StageDescription {
+func findStagesByImageParentID(stages []*image.StageDesc, target *image.Info) []*image.StageDesc {
 	return findStagesByImage(
 		stages, target,
-		func(stg *image.StageDescription, target *image.Info) bool {
+		func(stg *image.StageDesc, target *image.Info) bool {
 			return stg.Info.ID == target.ParentID
 		}, nil,
 	)
 }
 
-func findStageByImageID(stages []*image.StageDescription, imageID string) *image.StageDescription {
+func findStageByImageID(stages []*image.StageDesc, imageID string) *image.StageDesc {
 	for _, stg := range stages {
 		if stg.Info.ID == imageID {
 			return stg
@@ -942,7 +942,7 @@ func findStageByImageID(stages []*image.StageDescription, imageID string) *image
 	return nil
 }
 
-func appendUniqueStageDescriptions(stages []*image.StageDescription, newStages ...*image.StageDescription) []*image.StageDescription {
+func appendUniqueStageDescs(stages []*image.StageDesc, newStages ...*image.StageDesc) []*image.StageDesc {
 appendUnique:
 	for _, newStg := range newStages {
 		for _, stg := range stages {
@@ -955,18 +955,18 @@ appendUnique:
 	return stages
 }
 
-func (m *cleanupManager) excludeStageAndRelativesByStages(stages, stagesToExclude []*image.StageDescription) ([]*image.StageDescription, []*image.StageDescription) {
-	var excludedStages []*image.StageDescription
+func (m *cleanupManager) excludeStageAndRelativesByStages(stages, stagesToExclude []*image.StageDesc) ([]*image.StageDesc, []*image.StageDesc) {
+	var excludedStages []*image.StageDesc
 	currentStagesToExclude := stagesToExclude
 
 	for len(currentStagesToExclude) > 0 {
 		stages = excludeStages(stages, currentStagesToExclude...)
-		excludedStages = appendUniqueStageDescriptions(excludedStages, currentStagesToExclude...)
+		excludedStages = appendUniqueStageDescs(excludedStages, currentStagesToExclude...)
 
-		var nextStagesToExclude []*image.StageDescription
+		var nextStagesToExclude []*image.StageDesc
 		for _, excludeStg := range currentStagesToExclude {
 			excludeByParents := findStagesByImageParentID(stages, excludeStg.Info)
-			nextStagesToExclude = appendUniqueStageDescriptions(nextStagesToExclude, excludeByParents...)
+			nextStagesToExclude = appendUniqueStageDescs(nextStagesToExclude, excludeByParents...)
 		}
 
 		currentStagesToExclude = nextStagesToExclude
@@ -1019,8 +1019,8 @@ func (m *cleanupManager) deleteUnusedCustomTags(ctx context.Context) error {
 	return nil
 }
 
-func excludeStages(stages []*image.StageDescription, stagesToExclude ...*image.StageDescription) []*image.StageDescription {
-	var updatedStageList []*image.StageDescription
+func excludeStages(stages []*image.StageDesc, stagesToExclude ...*image.StageDesc) []*image.StageDesc {
+	var updatedStageList []*image.StageDesc
 
 loop:
 	for _, stage := range stages {

@@ -31,11 +31,11 @@ type LegacyImageInterface interface {
 
 	IsExistsLocally() bool
 
-	SetStageDescription(stage *image.StageDescription)
-	GetStageDescription() *image.StageDescription
+	SetStageDesc(*image.StageDesc)
+	GetStageDesc() *image.StageDesc
 
-	GetFinalStageDescription() *image.StageDescription
-	SetFinalStageDescription(stage *image.StageDescription)
+	GetFinalStageDesc() *image.StageDesc
+	SetFinalStageDesc(*image.StageDesc)
 
 	GetCopy() LegacyImageInterface
 }

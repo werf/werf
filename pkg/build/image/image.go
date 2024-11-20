@@ -188,7 +188,7 @@ func (i *Image) GetStage(name stage.StageName) stage.Interface {
 }
 
 func (i *Image) GetStageID() string {
-	return i.GetLastNonEmptyStage().GetStageImage().Image.GetStageDescription().Info.Tag
+	return i.GetLastNonEmptyStage().GetStageImage().Image.GetStageDesc().Info.Tag
 }
 
 func (i *Image) UsesBuildContext() bool {
@@ -254,7 +254,7 @@ func (i *Image) SetupBaseImage(ctx context.Context, storageManager manager.Stora
 
 		// Do not override the base image description if it is already set.
 		// TODO: It might be a stage as base image (passed as dependency), and the absence of StageID in the description will lead to breaking the logic.
-		if i.baseStageImage.Image.GetStageDescription() != nil && i.baseStageImage.Image.GetStageDescription().Info != nil {
+		if i.baseStageImage.Image.GetStageDesc() != nil && i.baseStageImage.Image.GetStageDesc().Info != nil {
 			break
 		}
 
@@ -290,7 +290,7 @@ func (i *Image) SetupBaseImage(ctx context.Context, storageManager manager.Stora
 					}
 				}
 
-				i.baseStageImage.Image.SetStageDescription(&image.StageDescription{
+				i.baseStageImage.Image.SetStageDesc(&image.StageDesc{
 					StageID: nil, // this is not a stage actually, TODO
 					Info:    info,
 				})
@@ -306,7 +306,7 @@ func (i *Image) SetupBaseImage(ctx context.Context, storageManager manager.Stora
 		if werf.GetStagedDockerfileVersion() == werf.StagedDockerfileV1 {
 			switch i.baseImageType {
 			case StageAsBaseImage, ImageFromRegistryAsBaseImage:
-				if err := i.ExpandDependencies(ctx, EnvToMap(i.baseStageImage.Image.GetStageDescription().Info.Env)); err != nil {
+				if err := i.ExpandDependencies(ctx, EnvToMap(i.baseStageImage.Image.GetStageDesc().Info.Env)); err != nil {
 					return err
 				}
 			}
@@ -352,10 +352,10 @@ func (i *Image) FetchBaseImage(ctx context.Context) error {
 
 			// TODO: do not use container_backend.LegacyStageImage for base image
 			// TODO: It might be a stage as base image (passed as dependency), and the absence of StageID in the description will lead to breaking the logic.
-			if i.baseStageImage.Image.GetStageDescription() != nil {
-				i.baseStageImage.Image.GetStageDescription().Info = info
+			if i.baseStageImage.Image.GetStageDesc() != nil {
+				i.baseStageImage.Image.GetStageDesc().Info = info
 			} else {
-				i.baseStageImage.Image.SetStageDescription(&image.StageDescription{
+				i.baseStageImage.Image.SetStageDesc(&image.StageDesc{
 					StageID: nil, // this is not a stage actually, TODO
 					Info:    info,
 				})
@@ -395,10 +395,10 @@ func (i *Image) FetchBaseImage(ctx context.Context) error {
 		}
 
 		// TODO: It might be a stage as base image (passed as dependency), and the absence of StageID in the description will lead to breaking the logic.
-		if i.baseStageImage.Image.GetStageDescription() != nil {
-			i.baseStageImage.Image.GetStageDescription().Info = info
+		if i.baseStageImage.Image.GetStageDesc() != nil {
+			i.baseStageImage.Image.GetStageDesc().Info = info
 		} else {
-			i.baseStageImage.Image.SetStageDescription(&image.StageDescription{
+			i.baseStageImage.Image.SetStageDesc(&image.StageDesc{
 				StageID: nil, // this is not a stage actually, TODO
 				Info:    info,
 			})

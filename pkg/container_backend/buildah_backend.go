@@ -789,11 +789,11 @@ func (backend *BuildahBackend) RenameImage(ctx context.Context, img LegacyImageI
 		img.SetInfo(info)
 	}
 
-	if desc := img.GetStageDescription(); desc != nil {
+	if stageDesc := img.GetStageDesc(); stageDesc != nil {
 		repository, tag := image.ParseRepositoryAndTag(newImageName)
-		desc.Info.Name = newImageName
-		desc.Info.Repository = repository
-		desc.Info.Tag = tag
+		stageDesc.Info.Name = newImageName
+		stageDesc.Info.Repository = repository
+		stageDesc.Info.Tag = tag
 	}
 
 	return nil

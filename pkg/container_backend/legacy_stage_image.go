@@ -38,8 +38,8 @@ func (i *LegacyStageImage) GetTargetPlatform() string {
 
 func (i *LegacyStageImage) GetCopy() LegacyImageInterface {
 	ni := NewLegacyStageImage(i.fromImage, i.name, i.ContainerBackend, i.targetPlatform)
-	if desc := i.GetStageDescription(); desc != nil {
-		ni.SetStageDescription(desc.GetCopy())
+	if stageDesc := i.GetStageDesc(); stageDesc != nil {
+		ni.SetStageDesc(stageDesc.GetCopy())
 	} else if info := i.GetInfo(); info != nil {
 		ni.SetInfo(info.GetCopy())
 	}
@@ -62,7 +62,7 @@ func (i *LegacyStageImage) GetID() string {
 	if i.buildImage != nil {
 		return i.buildImage.Name()
 	} else {
-		return i.legacyBaseImage.GetStageDescription().Info.ID
+		return i.legacyBaseImage.GetStageDesc().Info.ID
 	}
 }
 
@@ -146,7 +146,7 @@ func (i *LegacyStageImage) Build(ctx context.Context, options BuildOptions) erro
 		return err
 	} else {
 		i.SetInfo(info)
-		i.SetStageDescription(&image.StageDescription{
+		i.SetStageDesc(&image.StageDesc{
 			StageID: nil, // stage id does not available at the moment
 			Info:    info,
 		})

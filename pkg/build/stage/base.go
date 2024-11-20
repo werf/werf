@@ -13,7 +13,7 @@ import (
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/docker_registry"
-	imagePkg "github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/slug"
 	"github.com/werf/werf/v2/pkg/util"
 	"github.com/werf/werf/v2/pkg/werf"
@@ -170,8 +170,8 @@ func (s *BaseStage) GetNextStageDependencies(_ context.Context, _ Conveyor) (str
 func (s *BaseStage) getNextStageGitDependencies(ctx context.Context, c Conveyor) (string, error) {
 	var args []string
 	for _, gitMapping := range s.gitMappings {
-		if s.stageImage != nil && s.stageImage.Image.GetStageDescription() != nil {
-			if commitInfo, err := gitMapping.GetBuiltImageCommitInfo(s.stageImage.Image.GetStageDescription().Info.Labels); err != nil {
+		if s.stageImage != nil && s.stageImage.Image.GetStageDesc() != nil {
+			if commitInfo, err := gitMapping.GetBuiltImageCommitInfo(s.stageImage.Image.GetStageDesc().Info.Labels); err != nil {
 				return "", fmt.Errorf("unable to get built image commit info from image %s: %w", s.stageImage.Image.Name(), err)
 			} else {
 				args = append(args, commitInfo.Commit)
@@ -195,8 +195,8 @@ func (s *BaseStage) IsEmpty(_ context.Context, _ Conveyor, _ *StageImage) (bool,
 	return false, nil
 }
 
-func (s *BaseStage) selectStageByOldestCreationTs(stages []*imagePkg.StageDescription) (*imagePkg.StageDescription, error) {
-	var oldestStage *imagePkg.StageDescription
+func (s *BaseStage) selectStageByOldestCreationTs(stages []*image.StageDesc) (*image.StageDesc, error) {
+	var oldestStage *image.StageDesc
 	for _, stageDesc := range stages {
 		if oldestStage == nil {
 			oldestStage = stageDesc
@@ -207,8 +207,8 @@ func (s *BaseStage) selectStageByOldestCreationTs(stages []*imagePkg.StageDescri
 	return oldestStage, nil
 }
 
-func (s *BaseStage) selectStagesAncestorsByGitMappings(ctx context.Context, c Conveyor, stages []*imagePkg.StageDescription) ([]*imagePkg.StageDescription, error) {
-	var suitableStages []*imagePkg.StageDescription
+func (s *BaseStage) selectStagesAncestorsByGitMappings(ctx context.Context, c Conveyor, stages []*image.StageDesc) ([]*image.StageDesc, error) {
+	var suitableStages []*image.StageDesc
 	var currentCommitsByIndex []string
 
 	for _, gitMapping := range s.gitMappings {
@@ -267,7 +267,7 @@ ScanImages:
 	return suitableStages, nil
 }
 
-func (s *BaseStage) SelectSuitableStage(_ context.Context, c Conveyor, stages []*imagePkg.StageDescription) (*imagePkg.StageDescription, error) {
+func (s *BaseStage) SelectSuitableStageDesc(_ context.Context, c Conveyor, stages []*image.StageDesc) (*image.StageDesc, error) {
 	return s.selectStageByOldestCreationTs(stages)
 }
 
@@ -277,7 +277,7 @@ func (s *BaseStage) PrepareImage(ctx context.Context, c Conveyor, cb container_b
 	 * NOTE: Take into account when adding new base PrepareImage steps.
 	 */
 
-	addLabels := map[string]string{imagePkg.WerfProjectRepoCommitLabel: c.GiterminismManager().HeadCommit()}
+	addLabels := map[string]string{image.WerfProjectRepoCommitLabel: c.GiterminismManager().HeadCommit()}
 	if c.UseLegacyStapelBuilder(cb) {
 		stageImage.Builder.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions().AddLabel(addLabels)
 	} else {
@@ -312,12 +312,12 @@ func (s *BaseStage) getServiceMountsFromLabels(prevBuiltImage *StageImage) map[s
 
 	var labels map[string]string
 	if prevBuiltImage != nil {
-		labels = prevBuiltImage.Image.GetStageDescription().Info.Labels
+		labels = prevBuiltImage.Image.GetStageDesc().Info.Labels
 	}
 
 	for _, labelMountType := range []struct{ Label, MountType string }{
-		{imagePkg.WerfMountTmpDirLabel, "tmp_dir"},
-		{imagePkg.WerfMountBuildDirLabel, "build_dir"},
+		{image.WerfMountTmpDirLabel, "tmp_dir"},
+		{image.WerfMountBuildDirLabel, "build_dir"},
 	} {
 		v, hasKey := labels[labelMountType.Label]
 		if !hasKey {
@@ -386,9 +386,9 @@ func (s *BaseStage) addServiceMountsLabels(mountpointsByType map[string][]string
 		var labelName string
 		switch mountType {
 		case "tmp_dir":
-			labelName = imagePkg.WerfMountTmpDirLabel
+			labelName = image.WerfMountTmpDirLabel
 		case "build_dir":
-			labelName = imagePkg.WerfMountBuildDirLabel
+			labelName = image.WerfMountBuildDirLabel
 		default:
 			panic(fmt.Sprintf("unknown mount type %s", mountType))
 		}
@@ -413,14 +413,14 @@ func (s *BaseStage) getCustomMountsFromLabels(prevBuiltImage *StageImage) map[st
 
 	var labels map[string]string
 	if prevBuiltImage != nil {
-		labels = prevBuiltImage.Image.GetStageDescription().Info.Labels
+		labels = prevBuiltImage.Image.GetStageDesc().Info.Labels
 	}
 	for k, v := range labels {
-		if !strings.HasPrefix(k, imagePkg.WerfMountCustomDirLabelPrefix) {
+		if !strings.HasPrefix(k, image.WerfMountCustomDirLabelPrefix) {
 			continue
 		}
 
-		parts := strings.SplitN(k, imagePkg.WerfMountCustomDirLabelPrefix, 2)
+		parts := strings.SplitN(k, image.WerfMountCustomDirLabelPrefix, 2)
 		fromPath := strings.ReplaceAll(parts[1], "--", "/")
 		fromFilepath := filepath.FromSlash(fromPath)
 
@@ -483,7 +483,7 @@ func (s *BaseStage) addCustomMountVolumes(mountpointsByFrom map[string][]string,
 
 func (s *BaseStage) addCustomMountLabels(mountpointsByFrom map[string][]string, c Conveyor, cr container_backend.ContainerBackend, stageImage *StageImage) {
 	for from, mountpoints := range mountpointsByFrom {
-		labelName := fmt.Sprintf("%s%s", imagePkg.WerfMountCustomDirLabelPrefix, strings.ReplaceAll(filepath.ToSlash(from), "/", "--"))
+		labelName := fmt.Sprintf("%s%s", image.WerfMountCustomDirLabelPrefix, strings.ReplaceAll(filepath.ToSlash(from), "/", "--"))
 		labelValue := strings.Join(mountpoints, ";")
 
 		addLabels := map[string]string{labelName: labelValue}
