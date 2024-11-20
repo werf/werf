@@ -66,11 +66,7 @@ func (s *GitLatestPatchStage) GetDependencies(ctx context.Context, c Conveyor, c
 }
 
 func (s *GitLatestPatchStage) SelectSuitableStageDesc(ctx context.Context, c Conveyor, stageDescSet image.StageDescSet) (*image.StageDesc, error) {
-	ancestorStageDescSet, err := s.selectAncestorStageDescSetByGitMappings(ctx, c, stageDescSet)
-	if err != nil {
-		return nil, fmt.Errorf("unable to select cache images ancestors by git mappings: %w", err)
-	}
-	return s.selectStageDescByOldestCreationTs(ancestorStageDescSet)
+	return selectSuitableStageDesc(ctx, c, stageDescSet, s)
 }
 
 func (s *GitLatestPatchStage) GetNextStageDependencies(ctx context.Context, c Conveyor) (string, error) {

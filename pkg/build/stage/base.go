@@ -267,7 +267,7 @@ ScanImages:
 	return resultStageDescSet, nil
 }
 
-func (s *BaseStage) SelectSuitableStageDesc(_ context.Context, _ Conveyor, stageDescSet image.StageDescSet) (*image.StageDesc, error) {
+func (s *BaseStage) SelectSuitableStageDesc(_ context.Context, c Conveyor, stageDescSet image.StageDescSet) (*image.StageDesc, error) {
 	return s.selectStageDescByOldestCreationTs(stageDescSet)
 }
 

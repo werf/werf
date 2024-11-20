@@ -39,11 +39,7 @@ type GitArchiveStage struct {
 }
 
 func (s *GitArchiveStage) SelectSuitableStageDesc(ctx context.Context, c Conveyor, stageDescSet image.StageDescSet) (*image.StageDesc, error) {
-	ancestorStageDescSet, err := s.selectAncestorStageDescSetByGitMappings(ctx, c, stageDescSet)
-	if err != nil {
-		return nil, fmt.Errorf("unable to select cache images ancestors by git mappings: %w", err)
-	}
-	return s.selectStageDescByOldestCreationTs(ancestorStageDescSet)
+	return selectSuitableStageDesc(ctx, c, stageDescSet, s)
 }
 
 // TODO: 1.3 add git mapping type (dir, file, ...) to gitArchive stage digest
