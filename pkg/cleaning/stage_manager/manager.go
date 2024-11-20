@@ -20,6 +20,8 @@ type Manager struct {
 func NewManager() Manager {
 	return Manager{
 		stageIDCustomTagList: map[string][]string{},
+		stageDescSet:         newManagedStageDescSet(image.NewStageDescSet()),
+		finalStageDescSet:    newManagedStageDescSet(image.NewStageDescSet()),
 	}
 }
 
