@@ -61,6 +61,6 @@ func (desc *StageDesc) GetCopy() *StageDesc {
 
 type StageDescSet mapset.Set[*StageDesc]
 
-func NewStageDescSet() StageDescSet {
-	return mapset.NewSet[*StageDesc]()
+func NewStageDescSet(descList ...*StageDesc) StageDescSet {
+	return mapset.NewSet[*StageDesc](descList...)
 }
