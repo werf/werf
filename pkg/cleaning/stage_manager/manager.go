@@ -11,30 +11,16 @@ import (
 )
 
 type Manager struct {
-	stages               map[string]*stage
+	stageDescSet         managedStageDescSet
+	finalStageDescSet    managedStageDescSet
 	stageIDCustomTagList map[string][]string
-	finalStages          map[string]*stage
 	imageMetadataList    []*imageMetadata
 }
 
 func NewManager() Manager {
 	return Manager{
-		stages:               map[string]*stage{},
 		stageIDCustomTagList: map[string][]string{},
-		finalStages:          map[string]*stage{},
 	}
-}
-
-type stage struct {
-	stageID          string
-	isMultiplatform  bool //nolint:unused
-	description      *image.StageDesc
-	isProtected      bool
-	protectionReason string
-}
-
-func newStage(stageID string, description *image.StageDesc) *stage {
-	return &stage{stageID: stageID, description: description}
 }
 
 type imageMetadata struct {
@@ -61,33 +47,27 @@ func (m *Manager) getOrCreateImageMetadata(imageName, stageID string) *imageMeta
 }
 
 func (m *Manager) newImageMetadata(imageName, stageID string) *imageMetadata {
-	return &imageMetadata{imageName: imageName, stageID: stageID, isNonexistentStage: !m.IsStageExist(stageID)}
+	return &imageMetadata{imageName: imageName, stageID: stageID, isNonexistentStage: !m.ContainsStageDescByStageID(stageID)}
 }
 
-func (m *Manager) InitStages(ctx context.Context, storageManager manager.StorageManagerInterface) error {
-	stageDescList, err := storageManager.GetStageDescListWithCache(ctx)
+func (m *Manager) InitStageDescSet(ctx context.Context, storageManager manager.StorageManagerInterface) error {
+	stageDescSet, err := storageManager.GetStageDescSetWithCache(ctx)
 	if err != nil {
 		return err
 	}
 
-	for _, description := range stageDescList {
-		stageID := description.Info.Tag
-		m.stages[stageID] = newStage(stageID, description)
-	}
+	m.stageDescSet = newManagedStageDescSet(stageDescSet)
 
 	return nil
 }
 
-func (m *Manager) InitFinalStages(ctx context.Context, storageManager manager.StorageManagerInterface) error {
-	finalStageDescList, err := storageManager.GetFinalStageDescList(ctx)
+func (m *Manager) InitFinalStageDescSet(ctx context.Context, storageManager manager.StorageManagerInterface) error {
+	finalStageDescSet, err := storageManager.GetFinalStageDescSet(ctx)
 	if err != nil {
 		return err
 	}
 
-	for _, description := range finalStageDescList {
-		stageID := description.Info.Tag
-		m.finalStages[stageID] = newStage(stageID, description)
-	}
+	m.finalStageDescSet = newManagedStageDescSet(finalStageDescSet)
 
 	return nil
 }
@@ -168,32 +148,21 @@ func GetCustomTagsMetadata(ctx context.Context, storageManager manager.StorageMa
 	return stageIDCustomTagList, nil
 }
 
-func (m *Manager) GetStageIDList() []string {
-	var result []string
-	for stageID := range m.stages {
-		result = append(result, stageID)
+func (m *Manager) MarkStageDescAsProtectedByStageID(stageID, reason string) {
+	stageDesc := m.GetStageDescByStageID(stageID)
+	if stageDesc == nil {
+		panic(fmt.Sprintf("stage description %s not found", stageID))
 	}
 
-	return result
+	m.stageDescSet.MarkStageDescAsProtected(m.GetStageDescByStageID(stageID), reason)
 }
 
-func (m *Manager) GetFinalStageIDList() []string {
-	var result []string
-	for stageID := range m.finalStages {
-		result = append(result, stageID)
-	}
-
-	return result
+func (m *Manager) MarkStageDescAsProtected(stageDesc *image.StageDesc, reason string) {
+	m.stageDescSet.MarkStageDescAsProtected(stageDesc, reason)
 }
 
-func (m *Manager) MarkStageAsProtected(stageID, reason string) {
-	m.stages[stageID].isProtected = true
-	m.stages[stageID].protectionReason = reason
-}
-
-func (m *Manager) MarkFinalStageAsProtected(stageID, reason string) {
-	m.finalStages[stageID].isProtected = true
-	m.finalStages[stageID].protectionReason = reason
+func (m *Manager) MarkFinalStageDescAsProtected(stageDesc *image.StageDesc, reason string) {
+	m.finalStageDescSet.MarkStageDescAsProtected(stageDesc, reason)
 }
 
 // GetImageStageIDCommitListToCleanup method returns existing stage IDs and related existing commits (for each managed image)
@@ -289,65 +258,40 @@ func (m *Manager) GetStageIDNonexistentCommitList(imageName string) map[string][
 	return result
 }
 
-func (m *Manager) ForgetDeletedStages(stages []*image.StageDesc) {
-	for _, stg := range stages {
-		if _, hasKey := m.stages[stg.StageID.String()]; hasKey {
-			delete(m.stages, stg.StageID.String())
-		}
-	}
+func (m *Manager) ForgetDeletedStageDescSet(stageDescSet image.StageDescSet) {
+	m.stageDescSet.DifferenceInPlace(stageDescSet)
 }
 
-func (m *Manager) ForgetDeletedFinalStages(stages []*image.StageDesc) {
-	for _, stg := range stages {
-		if _, hasKey := m.finalStages[stg.StageID.String()]; hasKey {
-			delete(m.finalStages, stg.StageID.String())
-		}
-	}
+func (m *Manager) ForgetDeletedFinalStageDescSet(stageDescSet image.StageDescSet) {
+	m.finalStageDescSet.DifferenceInPlace(stageDescSet)
 }
 
-type StageDescListOptions struct {
-	ExcludeProtected bool
-	OnlyProtected    bool
+func (m *Manager) GetStageDescSet() image.StageDescSet {
+	return m.stageDescSet.StageDescSet()
 }
 
-func getStageDescList(stages map[string]*stage, opts StageDescListOptions) (result []*image.StageDesc) {
-	for _, stage := range stages {
-		if stage.isProtected && opts.ExcludeProtected {
-			continue
-		}
-		if !stage.isProtected && opts.OnlyProtected {
-			continue
-		}
-		result = append(result, stage.description)
-	}
-
-	return
+func (m *Manager) GetFinalStageDescSet() image.StageDescSet {
+	return m.finalStageDescSet.StageDescSet()
 }
 
-func (m *Manager) GetStageDescList(opts StageDescListOptions) []*image.StageDesc {
-	return getStageDescList(m.stages, opts)
+func (m *Manager) GetProtectedStageDescSet() image.StageDescSet {
+	return m.stageDescSet.GetProtectedStageDescSet()
 }
 
-func (m *Manager) GetFinalStageDescList(opts StageDescListOptions) []*image.StageDesc {
-	return getStageDescList(m.finalStages, opts)
+func (m *Manager) GetFinalProtectedStageDescSet() image.StageDescSet {
+	return m.finalStageDescSet.GetProtectedStageDescSet()
 }
 
-func (m *Manager) GetProtectedStageDescListByReason() map[string][]*image.StageDesc {
-	res := make(map[string][]*image.StageDesc)
-
-	for _, stage := range m.stages {
-		if !stage.isProtected {
-			continue
-		}
-		res[stage.protectionReason] = append(res[stage.protectionReason], stage.description)
-	}
-
-	return res
+func (m *Manager) GetProtectedStageDescSetByReason() map[string]image.StageDescSet {
+	return m.stageDescSet.GetProtectedStageDescSetByReason()
 }
 
-func (m *Manager) IsStageExist(stageID string) bool {
-	_, exist := m.stages[stageID]
-	return exist
+func (m *Manager) GetStageDescByStageID(stageID string) *image.StageDesc {
+	return m.stageDescSet.GetStageDescByStageID(stageID)
+}
+
+func (m *Manager) ContainsStageDescByStageID(stageID string) bool {
+	return m.stageDescSet.GetStageDescByStageID(stageID) != nil
 }
 
 func (m *Manager) GetCustomTagsMetadata() map[string][]string {

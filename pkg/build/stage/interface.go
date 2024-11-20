@@ -35,7 +35,7 @@ type Interface interface {
 	SetGitMappings([]*GitMapping)
 	GetGitMappings() []*GitMapping
 
-	SelectSuitableStageDesc(_ context.Context, c Conveyor, stages []*image.StageDesc) (*image.StageDesc, error)
+	SelectSuitableStageDesc(context.Context, Conveyor, image.StageDescSet) (*image.StageDesc, error)
 
 	HasPrevStage() bool
 	IsStapelStage() bool
