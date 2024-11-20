@@ -1,0 +1,36 @@
+name: cleanup:werf-storage
+on:
+  push:
+    branches:
+      - main
+  repository_dispatch:
+    types: ["cleanup:werf-storage"]
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  name: cleanup werf-storage
+  runs-on: ubuntu-latest-16-cores
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Install werf
+      uses: werf/actions/install@v2
+      with:
+        channel: alpha
+
+    - name: Cleanup
+      run: werf cleanup
+      run: |
+        cd scripts/werf-in-image/
+        werf cleanup --config werf.yaml
+        werf cleanup --config werf-argocd-cmp-sidecar.yaml
+      env:
+        WERF_REPO: ghcr.io/werf/werf-storage
+        WERF_REPO_GITHUB_TOKEN: ${{ secrets.WERF_IN_IMAGE_CLEANUP_GHCR }}
