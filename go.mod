@@ -13,7 +13,7 @@ require (
 	github.com/bmatcuk/doublestar v1.3.4
 	github.com/cenkalti/backoff/v4 v4.2.1
 	github.com/containerd/containerd v1.7.14
-	github.com/containers/buildah v1.38.0
+	github.com/containers/buildah v1.35.1
 	github.com/containers/common v0.58.1
 	github.com/containers/image/v5 v5.30.0
 	github.com/containers/storage v1.53.0
