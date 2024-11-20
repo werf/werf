@@ -29,6 +29,7 @@ jobs:
       - name: Cleanup
         run: |
           cd scripts/werf-in-image/
+          . $(werf ci-env github --as-file)
           werf cleanup ${{ matrix.config }}
         env:
           WERF_REPO: ghcr.io/werf/werf-storage
