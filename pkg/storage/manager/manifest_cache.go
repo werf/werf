@@ -9,7 +9,7 @@ import (
 	"github.com/werf/werf/v2/pkg/storage"
 )
 
-func storeStageDescriptionIntoLocalManifestCache(ctx context.Context, projectName string, stageID image.StageID, stagesStorage storage.StagesStorage, stageDesc *image.StageDescription) error {
+func storeStageDescIntoLocalManifestCache(ctx context.Context, projectName string, stageID image.StageID, stagesStorage storage.StagesStorage, stageDesc *image.StageDesc) error {
 	stageImageName := stagesStorage.ConstructStageImageName(projectName, stageID.Digest, stageID.CreationTs)
 
 	logboek.Context(ctx).Debug().LogF("Storing image %s info into manifest cache\n", stageImageName)

@@ -132,7 +132,7 @@ var _ = Describe("GitMapping", func() {
 			gitRepo := NewGitRepoStub("own", true, data.CurrentCommit)
 			gitMapping.SetGitRepo(gitRepo)
 
-			prevBuiltImage := NewBuiltImageStub("stub", &image.StageDescription{
+			prevBuiltImage := NewBuiltImageStub("stub", &image.StageDesc{
 				Info: &image.Info{
 					Labels: map[string]string{
 						gitMapping.ImageGitCommitLabel():         data.BuiltCommitLabel,
@@ -233,14 +233,14 @@ var _ = Describe("GitMapping", func() {
 type BuiltImageStub struct {
 	container_backend.LegacyImageInterface
 
-	name             string
-	stageDescription *image.StageDescription
+	name      string
+	stageDesc *image.StageDesc
 }
 
-func NewBuiltImageStub(name string, stageDescription *image.StageDescription) *BuiltImageStub {
+func NewBuiltImageStub(name string, stageDesc *image.StageDesc) *BuiltImageStub {
 	return &BuiltImageStub{
-		name:             name,
-		stageDescription: stageDescription,
+		name:      name,
+		stageDesc: stageDesc,
 	}
 }
 
@@ -248,8 +248,8 @@ func (img *BuiltImageStub) Name() string {
 	return img.name
 }
 
-func (img *BuiltImageStub) GetStageDescription() *image.StageDescription {
-	return img.stageDescription
+func (img *BuiltImageStub) GetStageDesc() *image.StageDesc {
+	return img.stageDesc
 }
 
 type ConveyorStub struct {

@@ -37,7 +37,7 @@ func (id StageID) IsEqual(another StageID) bool {
 	return (id.Digest == another.Digest) && (id.CreationTs == another.CreationTs)
 }
 
-type StageDescription struct {
+type StageDesc struct {
 	StageID *StageID `json:"stageID"`
 	Info    *Info    `json:"info"`
 }
@@ -50,8 +50,8 @@ func ParseCreationTs(creationTs string) (int64, error) {
 	}
 }
 
-func (desc *StageDescription) GetCopy() *StageDescription {
-	return &StageDescription{
+func (desc *StageDesc) GetCopy() *StageDesc {
+	return &StageDesc{
 		StageID: NewStageID(desc.StageID.Digest, desc.StageID.CreationTs),
 		Info:    desc.Info.GetCopy(),
 	}

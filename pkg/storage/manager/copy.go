@@ -18,7 +18,7 @@ type CopyStageOptions struct {
 	IsMultiplatformImage bool
 }
 
-func (m *StorageManager) CopyStage(ctx context.Context, src, dest storage.StagesStorage, stageID image.StageID, opts CopyStageOptions) (*image.StageDescription, error) {
+func (m *StorageManager) CopyStage(ctx context.Context, src, dest storage.StagesStorage, stageID image.StageID, opts CopyStageOptions) (*image.StageDesc, error) {
 	switch typedSrc := src.(type) {
 	case *storage.LocalStagesStorage:
 		return m.copyStageFromLocalStorage(ctx, typedSrc, dest, stageID, opts)
@@ -29,7 +29,7 @@ func (m *StorageManager) CopyStage(ctx context.Context, src, dest storage.Stages
 	}
 }
 
-func (m *StorageManager) copyStageFromLocalStorage(ctx context.Context, src *storage.LocalStagesStorage, dest storage.StagesStorage, stageID image.StageID, opts CopyStageOptions) (*image.StageDescription, error) {
+func (m *StorageManager) copyStageFromLocalStorage(ctx context.Context, src *storage.LocalStagesStorage, dest storage.StagesStorage, stageID image.StageID, opts CopyStageOptions) (*image.StageDesc, error) {
 	if opts.LegacyImage == nil {
 		panic("expected non empty LegacyImage parameter")
 	}
@@ -53,11 +53,11 @@ func (m *StorageManager) copyStageFromLocalStorage(ctx context.Context, src *sto
 		return nil, fmt.Errorf("unable to store stage %s into the stages storage %s: %w", stageID.String(), dest.String(), err)
 	}
 
-	if err := storeStageDescriptionIntoLocalManifestCache(ctx, m.ProjectName, stageID, dest, ConvertStageDescriptionForStagesStorage(newImg.GetStageDescription(), dest)); err != nil {
+	if err := storeStageDescIntoLocalManifestCache(ctx, m.ProjectName, stageID, dest, ConvertStageDescForStagesStorage(newImg.GetStageDesc(), dest)); err != nil {
 		return nil, fmt.Errorf("error storing stage %s description into local manifest cache: %w", destImageName, err)
 	}
 	if err := lrumeta.CommonLRUImagesCache.AccessImage(ctx, destImageName); err != nil {
 		return nil, fmt.Errorf("error accessing last recently used images cache for %s: %w", destImageName, err)
 	}
-	return newImg.GetStageDescription(), nil
+	return newImg.GetStageDesc(), nil
 }

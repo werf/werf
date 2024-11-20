@@ -40,27 +40,27 @@ func NewLocalStagesStorage(containerBackend container_backend.ContainerBackend) 
 	return &LocalStagesStorage{ContainerBackend: containerBackend}
 }
 
-func (storage *LocalStagesStorage) FilterStagesAndProcessRelatedData(ctx context.Context, stageDescriptions []*image.StageDescription, opts FilterStagesAndProcessRelatedDataOptions) ([]*image.StageDescription, error) {
+func (storage *LocalStagesStorage) FilterStagesAndProcessRelatedData(ctx context.Context, stageDescs []*image.StageDesc, opts FilterStagesAndProcessRelatedDataOptions) ([]*image.StageDesc, error) {
 	containersOpts := container_backend.ContainersOptions{}
-	for _, stageDescription := range stageDescriptions {
-		containersOpts.Filters = append(containersOpts.Filters, image.ContainerFilter{Ancestor: stageDescription.Info.ID})
+	for _, stageDesc := range stageDescs {
+		containersOpts.Filters = append(containersOpts.Filters, image.ContainerFilter{Ancestor: stageDesc.Info.ID})
 	}
 	containers, err := storage.ContainerBackend.Containers(ctx, containersOpts)
 	if err != nil {
 		return nil, err
 	}
 
-	var stageDescriptionListToExcept []*image.StageDescription
+	var stageDescListToExcept []*image.StageDesc
 	var containerListToRemove []image.Container
 	for _, container := range containers {
-		for _, stageDescription := range stageDescriptions {
-			imageInfo := stageDescription.Info
+		for _, stageDesc := range stageDescs {
+			imageInfo := stageDesc.Info
 
 			if imageInfo.ID == container.ImageID {
 				switch {
 				case opts.SkipUsedImage:
 					logboek.Context(ctx).Default().LogFDetails("Skip image %s (used by container %s)\n", imageInfo.LogName(), container.LogName())
-					stageDescriptionListToExcept = append(stageDescriptionListToExcept, stageDescription)
+					stageDescListToExcept = append(stageDescListToExcept, stageDesc)
 				case opts.RmContainersThatUseImage:
 					containerListToRemove = append(containerListToRemove, container)
 				default:
@@ -74,15 +74,15 @@ func (storage *LocalStagesStorage) FilterStagesAndProcessRelatedData(ctx context
 		return nil, err
 	}
 
-	return exceptStageDescriptionList(stageDescriptions, stageDescriptionListToExcept...), nil
+	return exceptStageDescList(stageDescs, stageDescListToExcept...), nil
 }
 
-func exceptStageDescriptionList(stageDescriptionList []*image.StageDescription, stageDescriptionListToExcept ...*image.StageDescription) []*image.StageDescription {
-	var result []*image.StageDescription
+func exceptStageDescList(stageDescList []*image.StageDesc, stageDescListToExcept ...*image.StageDesc) []*image.StageDesc {
+	var result []*image.StageDesc
 
 loop:
-	for _, sd1 := range stageDescriptionList {
-		for _, sd2 := range stageDescriptionListToExcept {
+	for _, sd1 := range stageDescList {
+		for _, sd2 := range stageDescListToExcept {
 			if sd2 == sd1 {
 				continue loop
 			}
@@ -145,7 +145,7 @@ func (storage *LocalStagesStorage) GetStagesIDsByDigest(ctx context.Context, pro
 	return resultStageIDs, nil
 }
 
-func (storage *LocalStagesStorage) GetStageDescription(ctx context.Context, projectName string, stageID image.StageID) (*image.StageDescription, error) {
+func (storage *LocalStagesStorage) GetStageDesc(ctx context.Context, projectName string, stageID image.StageID) (*image.StageDesc, error) {
 	stageImageName := storage.ConstructStageImageName(projectName, stageID.Digest, stageID.CreationTs)
 	info, err := storage.ContainerBackend.GetImageInfo(ctx, stageImageName, container_backend.GetImageInfoOpts{})
 	if err != nil {
@@ -153,7 +153,7 @@ func (storage *LocalStagesStorage) GetStageDescription(ctx context.Context, proj
 	}
 
 	if info != nil {
-		return &image.StageDescription{
+		return &image.StageDesc{
 			StageID: image.NewStageID(stageID.Digest, stageID.CreationTs),
 			Info:    info,
 		}, nil
@@ -161,9 +161,9 @@ func (storage *LocalStagesStorage) GetStageDescription(ctx context.Context, proj
 	return nil, nil
 }
 
-func (storage *LocalStagesStorage) ExportStage(ctx context.Context, stageDescription *image.StageDescription, destinationReference string, mutateConfigFunc func(config v1.Config) (v1.Config, error)) error {
-	if err := storage.ContainerBackend.Tag(ctx, stageDescription.Info.Name, destinationReference, container_backend.TagOpts{}); err != nil {
-		return fmt.Errorf("unable to tag %q as %q: %w", stageDescription.Info.Name, destinationReference, err)
+func (storage *LocalStagesStorage) ExportStage(ctx context.Context, stageDesc *image.StageDesc, destinationReference string, mutateConfigFunc func(config v1.Config) (v1.Config, error)) error {
+	if err := storage.ContainerBackend.Tag(ctx, stageDesc.Info.Name, destinationReference, container_backend.TagOpts{}); err != nil {
+		return fmt.Errorf("unable to tag %q as %q: %w", stageDesc.Info.Name, destinationReference, err)
 	}
 	defer func() {
 		_ = storage.ContainerBackend.Rmi(ctx, destinationReference, container_backend.RmiOpts{Force: true})
@@ -175,9 +175,9 @@ func (storage *LocalStagesStorage) ExportStage(ctx context.Context, stageDescrip
 	return docker_registry.API().MutateAndPushImage(ctx, destinationReference, destinationReference, mutateExportStageConfig(mutateConfigFunc))
 }
 
-func (storage *LocalStagesStorage) DeleteStage(ctx context.Context, stageDescription *image.StageDescription, options DeleteImageOptions) error {
+func (storage *LocalStagesStorage) DeleteStage(ctx context.Context, stageDesc *image.StageDesc, options DeleteImageOptions) error {
 	var imageReferences []string
-	imageInfo := stageDescription.Info
+	imageInfo := stageDesc.Info
 
 	if imageInfo.Name == "" {
 		imageReferences = append(imageReferences, imageInfo.ID)
@@ -200,15 +200,15 @@ func (storage *LocalStagesStorage) DeleteStage(ctx context.Context, stageDescrip
 	return nil
 }
 
-func (storage *LocalStagesStorage) AddStageCustomTag(ctx context.Context, stageDescription *image.StageDescription, tag string) error {
+func (storage *LocalStagesStorage) AddStageCustomTag(_ context.Context, _ *image.StageDesc, _ string) error {
 	return fmt.Errorf("not implemented")
 }
 
-func (storage *LocalStagesStorage) CheckStageCustomTag(ctx context.Context, stageDescription *image.StageDescription, tag string) error {
+func (storage *LocalStagesStorage) CheckStageCustomTag(_ context.Context, _ *image.StageDesc, _ string) error {
 	return fmt.Errorf("not implemented")
 }
 
-func (storage *LocalStagesStorage) DeleteStageCustomTag(ctx context.Context, tag string) error {
+func (storage *LocalStagesStorage) DeleteStageCustomTag(_ context.Context, _ string) error {
 	return fmt.Errorf("not implemented")
 }
 
@@ -366,23 +366,23 @@ func (storage *LocalStagesStorage) Address() string {
 	return LocalStorageAddress
 }
 
-func (storage *LocalStagesStorage) GetStageCustomTagMetadataIDs(ctx context.Context, opts ...Option) ([]string, error) {
+func (storage *LocalStagesStorage) GetStageCustomTagMetadataIDs(_ context.Context, _ ...Option) ([]string, error) {
 	return nil, nil
 }
 
-func (storage *LocalStagesStorage) GetStageCustomTagMetadata(ctx context.Context, tagOrID string) (*CustomTagMetadata, error) {
+func (storage *LocalStagesStorage) GetStageCustomTagMetadata(_ context.Context, _ string) (*CustomTagMetadata, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
-func (storage *LocalStagesStorage) RegisterStageCustomTag(ctx context.Context, projectName string, stageDescription *image.StageDescription, tag string) error {
+func (storage *LocalStagesStorage) RegisterStageCustomTag(_ context.Context, _ string, _ *image.StageDesc, tag string) error {
 	return nil
 }
 
-func (storage *LocalStagesStorage) UnregisterStageCustomTag(ctx context.Context, tag string) error {
+func (storage *LocalStagesStorage) UnregisterStageCustomTag(_ context.Context, _ string) error {
 	return nil
 }
 
-func (storage *LocalStagesStorage) CopyFromStorage(ctx context.Context, src StagesStorage, projectName string, stageID image.StageID, opts CopyFromStorageOptions) (*image.StageDescription, error) {
+func (storage *LocalStagesStorage) CopyFromStorage(_ context.Context, _ StagesStorage, _ string, _ image.StageID, _ CopyFromStorageOptions) (*image.StageDesc, error) {
 	panic("not implemented")
 }
 

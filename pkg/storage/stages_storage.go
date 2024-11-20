@@ -33,12 +33,12 @@ type FilterStagesAndProcessRelatedDataOptions struct {
 type StagesStorage interface {
 	GetStagesIDs(ctx context.Context, projectName string, opts ...Option) ([]image.StageID, error)
 	GetStagesIDsByDigest(ctx context.Context, projectName, digest string, parentStageCreationTs int64, opts ...Option) ([]image.StageID, error)
-	GetStageDescription(ctx context.Context, projectName string, stageID image.StageID) (*image.StageDescription, error)
-	ExportStage(ctx context.Context, stageDescription *image.StageDescription, destinationReference string, mutateConfigFunc func(config v1.Config) (v1.Config, error)) error
-	DeleteStage(ctx context.Context, stageDescription *image.StageDescription, options DeleteImageOptions) error
+	GetStageDesc(ctx context.Context, projectName string, stageID image.StageID) (*image.StageDesc, error)
+	ExportStage(ctx context.Context, stageDesc *image.StageDesc, destinationReference string, mutateConfigFunc func(config v1.Config) (v1.Config, error)) error
+	DeleteStage(ctx context.Context, stageDesc *image.StageDesc, options DeleteImageOptions) error
 
-	AddStageCustomTag(ctx context.Context, stageDescription *image.StageDescription, tag string) error
-	CheckStageCustomTag(ctx context.Context, stageDescription *image.StageDescription, tag string) error
+	AddStageCustomTag(ctx context.Context, stageDesc *image.StageDesc, tag string) error
+	CheckStageCustomTag(ctx context.Context, stageDesc *image.StageDesc, tag string) error
 	DeleteStageCustomTag(ctx context.Context, tag string) error
 
 	RejectStage(ctx context.Context, projectName, digest string, creationTs int64) error
@@ -50,7 +50,7 @@ type StagesStorage interface {
 	// StoreImage will store a local image into the container-runtime, local built image should exist prior running store
 	StoreImage(ctx context.Context, img container_backend.LegacyImageInterface) error
 	ShouldFetchImage(ctx context.Context, img container_backend.LegacyImageInterface) (bool, error)
-	CopyFromStorage(ctx context.Context, src StagesStorage, projectName string, stageID image.StageID, opts CopyFromStorageOptions) (*image.StageDescription, error)
+	CopyFromStorage(ctx context.Context, src StagesStorage, projectName string, stageID image.StageID, opts CopyFromStorageOptions) (*image.StageDesc, error)
 
 	CreateRepo(ctx context.Context) error
 	DeleteRepo(ctx context.Context) error
@@ -79,7 +79,7 @@ type StagesStorage interface {
 	GetClientIDRecords(ctx context.Context, projectName string, opts ...Option) ([]*ClientIDRecord, error)
 	PostClientIDRecord(ctx context.Context, projectName string, rec *ClientIDRecord) error
 	PostMultiplatformImage(ctx context.Context, projectName, tag string, allPlatformsImages []*image.Info, platforms []string) error
-	FilterStagesAndProcessRelatedData(ctx context.Context, stageDescriptions []*image.StageDescription, options FilterStagesAndProcessRelatedDataOptions) ([]*image.StageDescription, error)
+	FilterStagesAndProcessRelatedData(ctx context.Context, stageDescs []*image.StageDesc, options FilterStagesAndProcessRelatedDataOptions) ([]*image.StageDesc, error)
 
 	String() string
 	Address() string
