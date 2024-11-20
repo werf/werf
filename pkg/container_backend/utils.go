@@ -27,13 +27,13 @@ func LogImageName(ctx context.Context, name string) {
 func LogImageInfo(ctx context.Context, img LegacyImageInterface, prevStageImageSize int64, withPlatform bool) {
 	LogImageName(ctx, img.Name())
 
-	logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "id", stringid.TruncateID(img.GetStageDescription().Info.ID))
-	logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "created", img.GetStageDescription().Info.GetCreatedAt())
+	logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "id", stringid.TruncateID(img.GetStageDesc().Info.ID))
+	logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "created", img.GetStageDesc().Info.GetCreatedAt())
 
 	if prevStageImageSize == 0 {
-		logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "size", byteCountBinary(img.GetStageDescription().Info.Size))
+		logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "size", byteCountBinary(img.GetStageDesc().Info.Size))
 	} else {
-		logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "size", fmt.Sprintf("%s (+%s)", byteCountBinary(img.GetStageDescription().Info.Size), byteCountBinary(img.GetStageDescription().Info.Size-prevStageImageSize)))
+		logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "size", fmt.Sprintf("%s (+%s)", byteCountBinary(img.GetStageDesc().Info.Size), byteCountBinary(img.GetStageDesc().Info.Size-prevStageImageSize)))
 	}
 
 	if withPlatform {

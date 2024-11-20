@@ -28,12 +28,12 @@ func NewManager() Manager {
 type stage struct {
 	stageID          string
 	isMultiplatform  bool //nolint:unused
-	description      *image.StageDescription
+	description      *image.StageDesc
 	isProtected      bool
 	protectionReason string
 }
 
-func newStage(stageID string, description *image.StageDescription) *stage {
+func newStage(stageID string, description *image.StageDesc) *stage {
 	return &stage{stageID: stageID, description: description}
 }
 
@@ -65,12 +65,12 @@ func (m *Manager) newImageMetadata(imageName, stageID string) *imageMetadata {
 }
 
 func (m *Manager) InitStages(ctx context.Context, storageManager manager.StorageManagerInterface) error {
-	stageDescriptionList, err := storageManager.GetStageDescriptionListWithCache(ctx)
+	stageDescList, err := storageManager.GetStageDescListWithCache(ctx)
 	if err != nil {
 		return err
 	}
 
-	for _, description := range stageDescriptionList {
+	for _, description := range stageDescList {
 		stageID := description.Info.Tag
 		m.stages[stageID] = newStage(stageID, description)
 	}
@@ -79,12 +79,12 @@ func (m *Manager) InitStages(ctx context.Context, storageManager manager.Storage
 }
 
 func (m *Manager) InitFinalStages(ctx context.Context, storageManager manager.StorageManagerInterface) error {
-	finalStageDescriptionList, err := storageManager.GetFinalStageDescriptionList(ctx)
+	finalStageDescList, err := storageManager.GetFinalStageDescList(ctx)
 	if err != nil {
 		return err
 	}
 
-	for _, description := range finalStageDescriptionList {
+	for _, description := range finalStageDescList {
 		stageID := description.Info.Tag
 		m.finalStages[stageID] = newStage(stageID, description)
 	}
@@ -289,7 +289,7 @@ func (m *Manager) GetStageIDNonexistentCommitList(imageName string) map[string][
 	return result
 }
 
-func (m *Manager) ForgetDeletedStages(stages []*image.StageDescription) {
+func (m *Manager) ForgetDeletedStages(stages []*image.StageDesc) {
 	for _, stg := range stages {
 		if _, hasKey := m.stages[stg.StageID.String()]; hasKey {
 			delete(m.stages, stg.StageID.String())
@@ -297,7 +297,7 @@ func (m *Manager) ForgetDeletedStages(stages []*image.StageDescription) {
 	}
 }
 
-func (m *Manager) ForgetDeletedFinalStages(stages []*image.StageDescription) {
+func (m *Manager) ForgetDeletedFinalStages(stages []*image.StageDesc) {
 	for _, stg := range stages {
 		if _, hasKey := m.finalStages[stg.StageID.String()]; hasKey {
 			delete(m.finalStages, stg.StageID.String())
@@ -305,12 +305,12 @@ func (m *Manager) ForgetDeletedFinalStages(stages []*image.StageDescription) {
 	}
 }
 
-type StageDescriptionListOptions struct {
+type StageDescListOptions struct {
 	ExcludeProtected bool
 	OnlyProtected    bool
 }
 
-func getStageDescriptionList(stages map[string]*stage, opts StageDescriptionListOptions) (result []*image.StageDescription) {
+func getStageDescList(stages map[string]*stage, opts StageDescListOptions) (result []*image.StageDesc) {
 	for _, stage := range stages {
 		if stage.isProtected && opts.ExcludeProtected {
 			continue
@@ -324,16 +324,16 @@ func getStageDescriptionList(stages map[string]*stage, opts StageDescriptionList
 	return
 }
 
-func (m *Manager) GetStageDescriptionList(opts StageDescriptionListOptions) []*image.StageDescription {
-	return getStageDescriptionList(m.stages, opts)
+func (m *Manager) GetStageDescList(opts StageDescListOptions) []*image.StageDesc {
+	return getStageDescList(m.stages, opts)
 }
 
-func (m *Manager) GetFinalStageDescriptionList(opts StageDescriptionListOptions) []*image.StageDescription {
-	return getStageDescriptionList(m.finalStages, opts)
+func (m *Manager) GetFinalStageDescList(opts StageDescListOptions) []*image.StageDesc {
+	return getStageDescList(m.finalStages, opts)
 }
 
-func (m *Manager) GetProtectedStageDescriptionListByReason() map[string][]*image.StageDescription {
-	res := make(map[string][]*image.StageDescription)
+func (m *Manager) GetProtectedStageDescListByReason() map[string][]*image.StageDesc {
+	res := make(map[string][]*image.StageDesc)
 
 	for _, stage := range m.stages {
 		if !stage.isProtected {

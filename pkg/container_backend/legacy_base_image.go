@@ -10,8 +10,8 @@ import (
 type legacyBaseImage struct {
 	name           string
 	info           *image.Info
-	stageDesc      *image.StageDescription
-	finalStageDesc *image.StageDescription
+	stageDesc      *image.StageDesc
+	finalStageDesc *image.StageDesc
 
 	ContainerBackend ContainerBackend
 }
@@ -56,20 +56,20 @@ func (i *legacyBaseImage) UnsetInfo() {
 	i.info = nil
 }
 
-func (i *legacyBaseImage) SetStageDescription(stageDesc *image.StageDescription) {
+func (i *legacyBaseImage) SetStageDesc(stageDesc *image.StageDesc) {
 	i.stageDesc = stageDesc
 	i.SetInfo(stageDesc.Info)
 }
 
-func (i *legacyBaseImage) GetStageDescription() *image.StageDescription {
+func (i *legacyBaseImage) GetStageDesc() *image.StageDesc {
 	return i.stageDesc
 }
 
-func (i *legacyBaseImage) SetFinalStageDescription(stageDesc *image.StageDescription) {
+func (i *legacyBaseImage) SetFinalStageDesc(stageDesc *image.StageDesc) {
 	i.finalStageDesc = stageDesc
 }
 
-func (i *legacyBaseImage) GetFinalStageDescription() *image.StageDescription {
+func (i *legacyBaseImage) GetFinalStageDesc() *image.StageDesc {
 	return i.finalStageDesc
 }
 

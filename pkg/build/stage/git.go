@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/werf/werf/v2/pkg/container_backend"
-	imagePkg "github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/image"
 )
 
 func newGitStage(name StageName, baseStageOptions *BaseStageOptions) *GitStage {
@@ -31,7 +31,7 @@ func (s *GitStage) PrepareImage(ctx context.Context, c Conveyor, cb container_ba
 	}
 
 	if c.GiterminismManager().Dev() {
-		addLabels := map[string]string{imagePkg.WerfDevLabel: "true"}
+		addLabels := map[string]string{image.WerfDevLabel: "true"}
 		if c.UseLegacyStapelBuilder(cb) {
 			stageImage.Builder.LegacyStapelStageBuilder().BuilderContainer().AddLabel(addLabels)
 		} else {

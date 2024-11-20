@@ -425,15 +425,15 @@ func (c *Conveyor) GetImageInfoGetters(opts imagePkg.InfoGetterOptions) ([]*imag
 
 		if len(platforms) == 1 {
 			img := images[0]
-			getter := c.StorageManager.GetImageInfoGetter(img.Name, img.GetLastNonEmptyStage().GetStageImage().Image.GetStageDescription(), opts)
+			getter := c.StorageManager.GetImageInfoGetter(img.Name, img.GetLastNonEmptyStage().GetStageImage().Image.GetStageDesc(), opts)
 			imagesGetters = append(imagesGetters, getter)
 		} else {
 			img := c.imagesTree.GetMultiplatformImage(name)
-			desc := img.GetFinalStageDescription()
-			if desc == nil {
-				desc = img.GetStageDescription()
+			stageDesc := img.GetFinalStageDesc()
+			if stageDesc == nil {
+				stageDesc = img.GetStageDesc()
 			}
-			getter := c.StorageManager.GetImageInfoGetter(img.Name, desc, opts)
+			getter := c.StorageManager.GetImageInfoGetter(img.Name, stageDesc, opts)
 			imagesGetters = append(imagesGetters, getter)
 		}
 	}
@@ -858,15 +858,15 @@ func (c *Conveyor) GetStageID(targetPlatform, imageName string) string {
 }
 
 func (c *Conveyor) GetImageIDForLastImageStage(targetPlatform, imageName string) string {
-	return c.GetImage(targetPlatform, imageName).GetLastNonEmptyStage().GetStageImage().Image.GetStageDescription().Info.ID
+	return c.GetImage(targetPlatform, imageName).GetLastNonEmptyStage().GetStageImage().Image.GetStageDesc().Info.ID
 }
 
 func (c *Conveyor) GetImageDigestForLastImageStage(targetPlatform, imageName string) string {
-	return c.GetImage(targetPlatform, imageName).GetLastNonEmptyStage().GetStageImage().Image.GetStageDescription().Info.GetDigest()
+	return c.GetImage(targetPlatform, imageName).GetLastNonEmptyStage().GetStageImage().Image.GetStageDesc().Info.GetDigest()
 }
 
 func (c *Conveyor) GetImageIDForImageStage(targetPlatform, imageName, stageName string) string {
-	return c.getImageStage(targetPlatform, imageName, stageName).GetStageImage().Image.GetStageDescription().Info.ID
+	return c.getImageStage(targetPlatform, imageName, stageName).GetStageImage().Image.GetStageDesc().Info.ID
 }
 
 func (c *Conveyor) GetImportMetadata(ctx context.Context, projectName, id string) (*storage.ImportMetadata, error) {

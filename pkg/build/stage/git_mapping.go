@@ -306,7 +306,7 @@ func (gm *GitMapping) GetBaseCommitForPrevBuiltImage(ctx context.Context, c Conv
 		return baseCommit, nil
 	}
 
-	prevBuiltImageCommitInfo, err := gm.GetBuiltImageCommitInfo(prevBuiltImage.Image.GetStageDescription().Info.Labels)
+	prevBuiltImageCommitInfo, err := gm.GetBuiltImageCommitInfo(prevBuiltImage.Image.GetStageDesc().Info.Labels)
 	if err != nil {
 		return "", fmt.Errorf("error getting prev built image %s commits info: %w", prevBuiltImage.Image.Name(), err)
 	}
@@ -388,7 +388,7 @@ func (gm *GitMapping) VirtualMergeIntoCommitLabel() string {
 }
 
 func (gm *GitMapping) baseApplyPatchCommand(ctx context.Context, fromCommit, toCommit string, prevBuiltImage *StageImage) ([]string, error) {
-	archiveType := git_repo.ArchiveType(prevBuiltImage.Image.GetStageDescription().Info.Labels[gm.getArchiveTypeLabelName()])
+	archiveType := git_repo.ArchiveType(prevBuiltImage.Image.GetStageDesc().Info.Labels[gm.getArchiveTypeLabelName()])
 
 	patchOpts, err := gm.makePatchOptions(ctx, fromCommit, toCommit, false, false)
 	if err != nil {

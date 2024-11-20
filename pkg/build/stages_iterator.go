@@ -66,12 +66,12 @@ func (iterator *StagesIterator) OnImageStage(ctx context.Context, img *build_ima
 		iterator.PrevNonEmptyStage = stg
 		logboek.Context(ctx).Debug().LogF("Set prev non empty stage = %q %s\n", iterator.PrevNonEmptyStage.Name(), iterator.PrevNonEmptyStage.GetDigest())
 
-		if iterator.PrevNonEmptyStage.GetStageImage().Image.GetStageDescription() != nil {
-			iterator.PrevNonEmptyStageImageSize = iterator.PrevNonEmptyStage.GetStageImage().Image.GetStageDescription().Info.Size
+		if iterator.PrevNonEmptyStage.GetStageImage().Image.GetStageDesc() != nil {
+			iterator.PrevNonEmptyStageImageSize = iterator.PrevNonEmptyStage.GetStageImage().Image.GetStageDesc().Info.Size
 			logboek.Context(ctx).Debug().LogF("Set prev non empty stage image size = %d %q %s\n", iterator.PrevNonEmptyStageImageSize, iterator.PrevNonEmptyStage.Name(), iterator.PrevNonEmptyStage.GetDigest())
 		}
 
-		if stg.GetStageImage().Image.GetStageDescription() != nil {
+		if stg.GetStageImage().Image.GetStageDesc() != nil {
 			iterator.PrevBuiltStage = stg
 			logboek.Context(ctx).Debug().LogF("Set prev built stage = %q (image %s)\n", iterator.PrevBuiltStage.Name(), iterator.PrevBuiltStage.GetStageImage().Image.Name())
 		}
