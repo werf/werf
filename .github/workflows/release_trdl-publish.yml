@@ -1,12 +1,56 @@
 name: release:trdl-publish
 on:
   push:
+    branches:
+      - main
+    paths:
+      - trdl_channels.yaml
+  repository_dispatch:
+    types: ["release:trdl-publish"]
+  workflow_dispatch:
 
 defaults:
   run:
     shell: bash
 
 jobs:
+  publish:
+    name: Publish release channels using trdl server
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Publish
+        uses: werf/trdl-vault-actions/publish@main
+        with:
+          vault-addr: ${{ secrets.TRDL_VAULT_ADDR }}
+          project-name: werf
+          vault-auth-method: approle
+          vault-role-id: ${{ secrets.TRDL_VAULT_ROLE_ID }}
+          vault-secret-id: ${{ secrets.TRDL_VAULT_SECRET_ID }}
+
+  deploy_channels_cm_prod:
+    name: Deploy trdl_channels.yaml to production
+    needs: publish
+    runs-on: ubuntu-latest-4-cores
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install werf
+        uses: werf/actions/install@v2
+
+      - name: Converge
+        run: |
+          . $(werf ci-env github --as-file)
+          werf converge
+        env:
+          WERF_NAMESPACE: "werfio-production"
+          WERF_DIR: "ci"
+          WERF_ENV: production
+          WERF_KUBE_CONFIG_BASE64: ${{ secrets.KUBECONFIG_BASE64_PROD }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   publish_werf_images:
     name: Publish images with werf by trdl group and channel
     strategy:
@@ -14,6 +58,7 @@ jobs:
         dest-registry:
           - ghcr.io
           - registry-write.werf.io
+    needs: publish
     runs-on: ubuntu-latest-16-cores
     steps:
       - name: Checkout code
@@ -50,3 +95,14 @@ jobs:
         run: ./scripts/werf-in-image/build-and-publish.sh ${{ matrix.dest-registry }}
         env:
           DOCKER_BUILDKIT: 1
+
+  notify:
+    if: always()
+    needs:
+      - publish
+      - deploy_channels_cm_prod
+      - publish_werf_images
+    uses: ./.github/workflows/_notification.yml
+    secrets:
+      mentionGroupID: ${{ secrets.SLACK_MENTION_GROUP_ID }}
+      webhook: ${{ secrets.SLACK_WEBHOOK }}

@@ -26,4 +26,4 @@ RUN while true ; do \
         echo "Version mismatch! Will retry update" &&\
         sleep 1; \
   done; \
-  cp $(trdl bin-path werf ${group} ${channel})/werf /usr/local/bin/werf; \
+  cp $(trdl bin-path werf ${group} ${channel})/werf /usr/local/bin/werf 
