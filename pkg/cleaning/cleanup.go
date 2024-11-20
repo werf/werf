@@ -152,6 +152,23 @@ func (m *cleanupManager) run(ctx context.Context) error {
 		}
 	}
 
+	// Built within last N hours policy.
+	{
+		keepImagesBuiltWithinLastNHours := m.ConfigMetaCleanup.KeepImagesBuiltWithinLastNHours
+		if m.KeepStagesBuiltWithinLastNHours != 0 {
+			keepImagesBuiltWithinLastNHours = m.KeepStagesBuiltWithinLastNHours
+		}
+
+		if !(m.ConfigMetaCleanup.DisableBuiltWithinLastNHoursPolicy || keepImagesBuiltWithinLastNHours == 0) {
+			reason := fmt.Sprintf("built within last %d hours", keepImagesBuiltWithinLastNHours)
+			for stageDescToDelete := range m.stageManager.GetStageDescSet().Iter() {
+				if (time.Since(stageDescToDelete.Info.GetCreatedAt()).Hours()) <= float64(keepImagesBuiltWithinLastNHours) {
+					m.stageManager.MarkStageDescAsProtected(stageDescToDelete, reason)
+				}
+			}
+		}
+	}
+
 	if err := logboek.Context(ctx).LogProcess("Cleanup unused stages").DoError(func() error {
 		return m.cleanupUnusedStages(ctx)
 	}); err != nil {
@@ -733,31 +750,6 @@ func (m *cleanupManager) cleanupUnusedStages(ctx context.Context) error {
 				})
 			}
 		})
-	}
-
-	keepImagesBuiltWithinLastNHours := m.ConfigMetaCleanup.KeepImagesBuiltWithinLastNHours
-	if m.KeepStagesBuiltWithinLastNHours != 0 {
-		keepImagesBuiltWithinLastNHours = m.KeepStagesBuiltWithinLastNHours
-	}
-
-	if !(m.ConfigMetaCleanup.DisableBuiltWithinLastNHoursPolicy || keepImagesBuiltWithinLastNHours == 0) {
-		var excludedSDList image.StageDescSet
-		for _, sd := range stageDescSetToDelete {
-			if (time.Since(sd.Info.GetCreatedAt()).Hours()) <= float64(keepImagesBuiltWithinLastNHours) {
-				var excludedRelativesSDList image.StageDescSet
-				stageDescSetToDelete, excludedRelativesSDList = m.excludeStageAndRelativesByImage(stageDescSetToDelete, sd.Info)
-				excludedSDList = append(excludedSDList, excludedRelativesSDList...)
-			}
-		}
-
-		if len(excludedSDList) != 0 {
-			logboek.Context(ctx).Default().LogBlock("Saved stages that were built within last %d hours (%d/%d)", keepImagesBuiltWithinLastNHours, len(excludedSDList), len(stageDescSet)).Do(func() {
-				for _, stage := range excludedSDList {
-					logboek.Context(ctx).Default().LogFDetails("  tag: %s\n", stage.Info.Tag)
-					logboek.Context(ctx).LogOptionalLn()
-				}
-			})
-		}
 	}
 
 	if len(stageDescSetToDelete) != 0 {
