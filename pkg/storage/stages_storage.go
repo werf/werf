@@ -79,7 +79,7 @@ type StagesStorage interface {
 	GetClientIDRecords(ctx context.Context, projectName string, opts ...Option) ([]*ClientIDRecord, error)
 	PostClientIDRecord(ctx context.Context, projectName string, rec *ClientIDRecord) error
 	PostMultiplatformImage(ctx context.Context, projectName, tag string, allPlatformsImages []*image.Info, platforms []string) error
-	FilterStagesAndProcessRelatedData(ctx context.Context, stageDescs []*image.StageDesc, options FilterStagesAndProcessRelatedDataOptions) ([]*image.StageDesc, error)
+	FilterStageDescSetAndProcessRelatedData(ctx context.Context, stageDescSet image.StageDescSet, options FilterStagesAndProcessRelatedDataOptions) (image.StageDescSet, error)
 
 	String() string
 	Address() string

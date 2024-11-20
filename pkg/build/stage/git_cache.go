@@ -21,12 +21,12 @@ type GitCacheStage struct {
 	*GitPatchStage
 }
 
-func (s *GitCacheStage) SelectSuitableStageDesc(ctx context.Context, c Conveyor, stages []*image.StageDesc) (*image.StageDesc, error) {
-	ancestorsImages, err := s.selectStagesAncestorsByGitMappings(ctx, c, stages)
+func (s *GitCacheStage) SelectSuitableStageDesc(ctx context.Context, c Conveyor, stageDescSet image.StageDescSet) (*image.StageDesc, error) {
+	ancestorStageDescSet, err := s.selectAncestorStageDescSetByGitMappings(ctx, c, stageDescSet)
 	if err != nil {
 		return nil, fmt.Errorf("unable to select cache images ancestors by git mappings: %w", err)
 	}
-	return s.selectStageByOldestCreationTs(ancestorsImages)
+	return s.selectStageDescByOldestCreationTs(ancestorStageDescSet)
 }
 
 func (s *GitCacheStage) IsEmpty(ctx context.Context, c Conveyor, prevBuiltImage *StageImage) (bool, error) {

@@ -40,9 +40,9 @@ func NewLocalStagesStorage(containerBackend container_backend.ContainerBackend) 
 	return &LocalStagesStorage{ContainerBackend: containerBackend}
 }
 
-func (storage *LocalStagesStorage) FilterStagesAndProcessRelatedData(ctx context.Context, stageDescs []*image.StageDesc, opts FilterStagesAndProcessRelatedDataOptions) ([]*image.StageDesc, error) {
+func (storage *LocalStagesStorage) FilterStageDescSetAndProcessRelatedData(ctx context.Context, stageDescSet image.StageDescSet, opts FilterStagesAndProcessRelatedDataOptions) (image.StageDescSet, error) {
 	containersOpts := container_backend.ContainersOptions{}
-	for _, stageDesc := range stageDescs {
+	for stageDesc := range stageDescSet.Iter() {
 		containersOpts.Filters = append(containersOpts.Filters, image.ContainerFilter{Ancestor: stageDesc.Info.ID})
 	}
 	containers, err := storage.ContainerBackend.Containers(ctx, containersOpts)
@@ -50,17 +50,16 @@ func (storage *LocalStagesStorage) FilterStagesAndProcessRelatedData(ctx context
 		return nil, err
 	}
 
-	var stageDescListToExcept []*image.StageDesc
 	var containerListToRemove []image.Container
 	for _, container := range containers {
-		for _, stageDesc := range stageDescs {
+		for stageDesc := range stageDescSet.Iter() {
 			imageInfo := stageDesc.Info
 
 			if imageInfo.ID == container.ImageID {
 				switch {
 				case opts.SkipUsedImage:
 					logboek.Context(ctx).Default().LogFDetails("Skip image %s (used by container %s)\n", imageInfo.LogName(), container.LogName())
-					stageDescListToExcept = append(stageDescListToExcept, stageDesc)
+					stageDescSet.Remove(stageDesc)
 				case opts.RmContainersThatUseImage:
 					containerListToRemove = append(containerListToRemove, container)
 				default:
@@ -74,24 +73,7 @@ func (storage *LocalStagesStorage) FilterStagesAndProcessRelatedData(ctx context
 		return nil, err
 	}
 
-	return exceptStageDescList(stageDescs, stageDescListToExcept...), nil
-}
-
-func exceptStageDescList(stageDescList []*image.StageDesc, stageDescListToExcept ...*image.StageDesc) []*image.StageDesc {
-	var result []*image.StageDesc
-
-loop:
-	for _, sd1 := range stageDescList {
-		for _, sd2 := range stageDescListToExcept {
-			if sd2 == sd1 {
-				continue loop
-			}
-		}
-
-		result = append(result, sd1)
-	}
-
-	return result
+	return stageDescSet, nil
 }
 
 func (storage *LocalStagesStorage) deleteContainers(ctx context.Context, containers []image.Container, rmForce bool) error {

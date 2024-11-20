@@ -195,22 +195,22 @@ func (s *BaseStage) IsEmpty(_ context.Context, _ Conveyor, _ *StageImage) (bool,
 	return false, nil
 }
 
-func (s *BaseStage) selectStageByOldestCreationTs(stages []*image.StageDesc) (*image.StageDesc, error) {
-	var oldestStage *image.StageDesc
-	for _, stageDesc := range stages {
-		if oldestStage == nil {
-			oldestStage = stageDesc
-		} else if stageDesc.StageID.CreationTsToTime().Before(oldestStage.StageID.CreationTsToTime()) {
-			oldestStage = stageDesc
+func (s *BaseStage) selectStageDescByOldestCreationTs(stageDescSet image.StageDescSet) (*image.StageDesc, error) {
+	var oldestStageDesc *image.StageDesc
+	for stageDesc := range stageDescSet.Iter() {
+		if oldestStageDesc == nil {
+			oldestStageDesc = stageDesc
+		} else if stageDesc.StageID.CreationTsToTime().Before(oldestStageDesc.StageID.CreationTsToTime()) {
+			oldestStageDesc = stageDesc
 		}
 	}
-	return oldestStage, nil
+	return oldestStageDesc, nil
 }
 
-func (s *BaseStage) selectStagesAncestorsByGitMappings(ctx context.Context, c Conveyor, stages []*image.StageDesc) ([]*image.StageDesc, error) {
-	var suitableStages []*image.StageDesc
-	var currentCommitsByIndex []string
+func (s *BaseStage) selectAncestorStageDescSetByGitMappings(ctx context.Context, c Conveyor, stageDescSet image.StageDescSet) (image.StageDescSet, error) {
+	resultStageDescSet := image.NewStageDescSet()
 
+	var currentCommitsByIndex []string
 	for _, gitMapping := range s.gitMappings {
 		currentCommitInfo, err := gitMapping.GetLatestCommitInfo(ctx, c)
 		if err != nil {
@@ -228,7 +228,7 @@ func (s *BaseStage) selectStagesAncestorsByGitMappings(ctx context.Context, c Co
 	}
 
 ScanImages:
-	for _, stageDesc := range stages {
+	for stageDesc := range stageDescSet.Iter() {
 		for i, gitMapping := range s.gitMappings {
 			currentCommit := currentCommitsByIndex[i]
 
@@ -261,14 +261,14 @@ ScanImages:
 			)
 		}
 
-		suitableStages = append(suitableStages, stageDesc)
+		resultStageDescSet.Add(stageDesc)
 	}
 
-	return suitableStages, nil
+	return resultStageDescSet, nil
 }
 
-func (s *BaseStage) SelectSuitableStageDesc(_ context.Context, c Conveyor, stages []*image.StageDesc) (*image.StageDesc, error) {
-	return s.selectStageByOldestCreationTs(stages)
+func (s *BaseStage) SelectSuitableStageDesc(_ context.Context, _ Conveyor, stageDescSet image.StageDescSet) (*image.StageDesc, error) {
+	return s.selectStageDescByOldestCreationTs(stageDescSet)
 }
 
 func (s *BaseStage) PrepareImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) error {

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strconv"
 	"time"
+
+	mapset "github.com/deckarep/golang-set/v2"
 )
 
 type StageID struct {
@@ -55,4 +57,10 @@ func (desc *StageDesc) GetCopy() *StageDesc {
 		StageID: NewStageID(desc.StageID.Digest, desc.StageID.CreationTs),
 		Info:    desc.Info.GetCopy(),
 	}
+}
+
+type StageDescSet mapset.Set[*StageDesc]
+
+func NewStageDescSet() StageDescSet {
+	return mapset.NewSet[*StageDesc]()
 }
