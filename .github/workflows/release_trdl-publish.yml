@@ -41,6 +41,11 @@ jobs:
           username: ${{ secrets.WERF_IN_IMAGE_REPO_LOGIN }}
           password: ${{ secrets.WERF_IN_IMAGE_REPO_PASSWORD }}
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: linux/amd64, linux/arm64
+
       - name: Build and publish werf images
         run: ./scripts/werf-in-image/build-and-publish.sh ${{ matrix.dest-registry }}
         env:
