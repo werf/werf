@@ -7,28 +7,29 @@ defaults:
     shell: bash
 
 jobs:
-  name: cleanup werf-storage
-  runs-on: ubuntu-latest-16-cores
-  strategy:
-    matrix:
-      config:
-        - --config werf.yaml
-        - --config werf-argocd-cmp-sidecar.yaml
-  steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+  cleanup:
+    name: cleanup werf-storage
+    runs-on: ubuntu-latest-16-cores
+    strategy:
+      matrix:
+        config:
+          - --config werf.yaml
+          - --config werf-argocd-cmp-sidecar.yaml
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - name: Install werf
-      uses: werf/actions/install@v2
-      with:
-        channel: alpha
+      - name: Install werf
+        uses: werf/actions/install@v2
+        with:
+          channel: alpha
 
-    - name: Cleanup
-      run: |
-        cd scripts/werf-in-image/
-        werf cleanup ${{ matrix.config }}
-      env:
-        WERF_REPO: ghcr.io/werf/werf-storage
-        WERF_REPO_GITHUB_TOKEN: ${{ secrets.WERF_IN_IMAGE_CLEANUP_GHCR }}
+      - name: Cleanup
+        run: |
+          cd scripts/werf-in-image/
+          werf cleanup ${{ matrix.config }}
+        env:
+          WERF_REPO: ghcr.io/werf/werf-storage
+          WERF_REPO_GITHUB_TOKEN: ${{ secrets.WERF_IN_IMAGE_CLEANUP_GHCR }}
