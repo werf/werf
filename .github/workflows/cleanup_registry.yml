@@ -26,7 +26,6 @@ jobs:
         channel: alpha
 
     - name: Cleanup
-      run: werf cleanup
       run: |
         cd scripts/werf-in-image/
         werf cleanup --config werf.yaml
