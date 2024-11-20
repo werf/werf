@@ -1,5 +1,10 @@
 project: werf-in-image
 configVersion: 1
+
+build:
+  platform:
+    - linux/amd64
+    - linux/arm64
 ---
 
 {{- range $distroInd, $distroName := $.Distros }}
