@@ -915,6 +915,6 @@ func (storage *RepoStagesStorage) CopyFromStorage(ctx context.Context, src Stage
 	return desc, nil
 }
 
-func (storage *RepoStagesStorage) FilterStagesAndProcessRelatedData(ctx context.Context, stageDescs []*image.StageDesc, options FilterStagesAndProcessRelatedDataOptions) ([]*image.StageDesc, error) {
-	return stageDescs, nil
+func (storage *RepoStagesStorage) FilterStageDescSetAndProcessRelatedData(_ context.Context, stageDescSet image.StageDescSet, _ FilterStagesAndProcessRelatedDataOptions) (image.StageDescSet, error) {
+	return stageDescSet, nil
 }

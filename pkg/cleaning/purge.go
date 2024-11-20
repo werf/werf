@@ -38,12 +38,12 @@ type purgeManager struct {
 
 func (m *purgeManager) run(ctx context.Context) error {
 	if err := logboek.Context(ctx).Default().LogProcess("Deleting stages").DoError(func() error {
-		stages, err := m.StorageManager.GetStageDescListWithCache(ctx)
+		stageDescSet, err := m.StorageManager.GetStageDescSetWithCache(ctx)
 		if err != nil {
 			return err
 		}
 
-		return m.deleteStages(ctx, stages, false)
+		return m.deleteStageDescSet(ctx, stageDescSet, false)
 	}); err != nil {
 		return err
 	}
@@ -84,12 +84,12 @@ func (m *purgeManager) run(ctx context.Context) error {
 
 	if m.StorageManager.GetFinalStagesStorage() != nil {
 		if err := logboek.Context(ctx).Default().LogProcess("Deleting final stages").DoError(func() error {
-			finalStages, err := m.StorageManager.GetFinalStageDescList(ctx)
+			finalDescSet, err := m.StorageManager.GetFinalStageDescSet(ctx)
 			if err != nil {
 				return err
 			}
 
-			return m.deleteStages(ctx, finalStages, true)
+			return m.deleteStageDescSet(ctx, finalDescSet, true)
 		}); err != nil {
 			return err
 		}
@@ -98,7 +98,7 @@ func (m *purgeManager) run(ctx context.Context) error {
 	return nil
 }
 
-func (m *purgeManager) deleteStages(ctx context.Context, stages []*image.StageDesc, isFinal bool) error {
+func (m *purgeManager) deleteStageDescSet(ctx context.Context, stageDescSet image.StageDescSet, isFinal bool) error {
 	deleteStageOptions := manager.ForEachDeleteStageOptions{
 		DeleteImageOptions: storage.DeleteImageOptions{
 			RmiForce: true,
@@ -110,7 +110,7 @@ func (m *purgeManager) deleteStages(ctx context.Context, stages []*image.StageDe
 		},
 	}
 
-	return deleteStages(ctx, m.StorageManager, m.DryRun, deleteStageOptions, stages, isFinal)
+	return deleteStageDescSet(ctx, m.StorageManager, m.DryRun, deleteStageOptions, stageDescSet, isFinal)
 }
 
 func (m *purgeManager) deleteImportsMetadata(ctx context.Context, importsMetadataIDs []string) error {
