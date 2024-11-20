@@ -35,6 +35,11 @@ func (s *managedStageDescSet) MarkStageDescAsProtected(stageDesc *image.StageDes
 		s.stageDescMetaMap[stageDesc] = &stageMeta{}
 	}
 
+	// If the stage is already protected, do not change the protection reason.
+	if s.stageDescMetaMap[stageDesc].isProtected {
+		return
+	}
+
 	s.stageDescMetaMap[stageDesc].isProtected = true
 	s.stageDescMetaMap[stageDesc].protectionReason = protectionReason
 }
