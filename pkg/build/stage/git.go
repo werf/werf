@@ -2,6 +2,7 @@ package stage
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/image"
@@ -40,4 +41,17 @@ func (s *GitStage) PrepareImage(ctx context.Context, c Conveyor, cb container_ba
 	}
 
 	return nil
+}
+
+type GitStageInterface interface {
+	selectAncestorStageDescSetByGitMappings(ctx context.Context, c Conveyor, stageDescSet image.StageDescSet) (image.StageDescSet, error)
+	selectStageDescByOldestCreationTs(stageDescSet image.StageDescSet) (*image.StageDesc, error)
+}
+
+func selectSuitableStageDesc(ctx context.Context, c Conveyor, stageDescSet image.StageDescSet, s GitStageInterface) (*image.StageDesc, error) {
+	ancestorStageDescSet, err := s.selectAncestorStageDescSetByGitMappings(ctx, c, stageDescSet)
+	if err != nil {
+		return nil, fmt.Errorf("unable to select ancestor stage description set by git mappings: %w", err)
+	}
+	return s.selectStageDescByOldestCreationTs(ancestorStageDescSet)
 }

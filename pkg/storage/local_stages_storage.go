@@ -50,6 +50,7 @@ func (storage *LocalStagesStorage) FilterStageDescSetAndProcessRelatedData(ctx c
 		return nil, err
 	}
 
+	stageDescSetToExclude := image.NewStageDescSet()
 	var containerListToRemove []image.Container
 	for _, container := range containers {
 		for stageDesc := range stageDescSet.Iter() {
@@ -59,7 +60,7 @@ func (storage *LocalStagesStorage) FilterStageDescSetAndProcessRelatedData(ctx c
 				switch {
 				case opts.SkipUsedImage:
 					logboek.Context(ctx).Default().LogFDetails("Skip image %s (used by container %s)\n", imageInfo.LogName(), container.LogName())
-					stageDescSet.Remove(stageDesc)
+					stageDescSetToExclude.Add(stageDesc)
 				case opts.RmContainersThatUseImage:
 					containerListToRemove = append(containerListToRemove, container)
 				default:
@@ -73,7 +74,7 @@ func (storage *LocalStagesStorage) FilterStageDescSetAndProcessRelatedData(ctx c
 		return nil, err
 	}
 
-	return stageDescSet, nil
+	return stageDescSet.Difference(stageDescSetToExclude), nil
 }
 
 func (storage *LocalStagesStorage) deleteContainers(ctx context.Context, containers []image.Container, rmForce bool) error {
