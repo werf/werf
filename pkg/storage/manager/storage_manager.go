@@ -318,12 +318,12 @@ func (m *StorageManager) GetFinalStageDescSet(ctx context.Context) (image.StageD
 	return stageDescSet, nil
 }
 
-func (m *StorageManager) ForEachDeleteFinalStage(ctx context.Context, options ForEachDeleteStageOptions, stagesDescSet image.StageDescSet, f func(ctx context.Context, stageDesc *image.StageDesc, err error) error) error {
-	return parallel.DoTasks(ctx, stagesDescSet.Cardinality(), parallel.DoTasksOptions{
+func (m *StorageManager) ForEachDeleteFinalStage(ctx context.Context, options ForEachDeleteStageOptions, stageDescSet image.StageDescSet, f func(ctx context.Context, stageDesc *image.StageDesc, err error) error) error {
+	return parallel.DoTasks(ctx, stageDescSet.Cardinality(), parallel.DoTasksOptions{
 		MaxNumberOfWorkers:         m.MaxNumberOfWorkers(),
 		InitDockerCLIForEachWorker: true,
 	}, func(ctx context.Context, taskId int) error {
-		stageDesc, _ := stagesDescSet.Pop()
+		stageDesc := stageDescSet.ToSlice()[taskId]
 		err := m.FinalStagesStorage.DeleteStage(ctx, stageDesc, options.DeleteImageOptions)
 		return f(ctx, stageDesc, err)
 	})
@@ -343,8 +343,7 @@ func (m *StorageManager) ForEachDeleteStage(ctx context.Context, options ForEach
 		MaxNumberOfWorkers:         m.MaxNumberOfWorkers(),
 		InitDockerCLIForEachWorker: true,
 	}, func(ctx context.Context, taskId int) error {
-		stageDesc, _ := stageDescSet.Pop()
-
+		stageDesc := stageDescSet.ToSlice()[taskId]
 		for _, cacheStagesStorage := range m.CacheStagesStorageList {
 			if err := cacheStagesStorage.DeleteStage(ctx, stageDesc, options.DeleteImageOptions); err != nil {
 				logboek.Context(ctx).Warn().LogF("Unable to delete stage %s from the cache stages storage %s: %s\n", stageDesc.StageID.String(), cacheStagesStorage.String(), err)
