@@ -26,6 +26,9 @@ type giterminismConfig interface {
 	IsConfigStapelMountBuildDirAccepted() bool
 	IsConfigStapelMountFromPathAccepted(fromPath string) bool
 	IsConfigDockerfileContextAddFileAccepted(relPath string) bool
+	IsConfigSecretsEnvNameAccepted(name string) bool
+	IsConfigSecretsAllowPathsSecretsAccepted(path string) bool
+	IsConfigSecretsValueIdAccepted(name string) bool
 }
 
 type fileReader interface {
