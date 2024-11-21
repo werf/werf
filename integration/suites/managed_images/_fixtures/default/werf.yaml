@@ -13,5 +13,6 @@ image: c
 from: alpine
 fromCacheVersion: c
 ---
-artifact: d
+image: d
+final: false
 from: alpine

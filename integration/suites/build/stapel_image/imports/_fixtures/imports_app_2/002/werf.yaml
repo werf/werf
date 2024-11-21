@@ -1,7 +1,8 @@
 project: none
 configVersion: 1
 ---
-artifact: artifact
+image: artifact
+final: false
 from: ubuntu:18.04
 shell:
   setup:
@@ -14,21 +15,21 @@ shell:
 image: app
 from: alpine
 import:
-  - artifact: artifact
+  - image: artifact
     add: /artifact/a/b/c
     includePaths:
       - added_file1
       - added_file2
     to: /dest1
     before: install
-  - artifact: artifact
+  - image: artifact
     add: /artifact/a/b/c
     excludePaths:
       - not_added_file3
       - not_added_file4
     to: /dest2
     after: install
-  - artifact: artifact
+  - image: artifact
     add: /artifact/a/b/c
     includePaths:
       - added_file1

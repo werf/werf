@@ -4,13 +4,15 @@ configVersion: 1
 image: image
 from: ubuntu
 import:
-- artifact: artifact
+- image: artifact
   add: /app
   to: /app
   after: setup
 ---
-artifact: artifact
+image: artifact
+final: false
 from: ubuntu
+disableGitAfterPatch: true
 git:
 - to: /app
 shell:
