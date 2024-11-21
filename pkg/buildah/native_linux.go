@@ -371,7 +371,8 @@ func (b *NativeBuildah) BuildFromDockerfile(ctx context.Context, dockerfile stri
 	if len(opts.Secrets) > 0 {
 		buildOpts.CommonBuildOpts.Secrets = opts.Secrets
 		if buildOpts.Isolation.String() == thirdparty.IsolationOCIRootless.String() {
-			buildOpts.AddCapabilities = append(buildOpts.AddCapabilities, "CAP_SYS_ADMIN")
+			// WA until buildah version upgrade
+			return "", fmt.Errorf("secrets in rootless mode are not supported yet")
 		}
 	}
 

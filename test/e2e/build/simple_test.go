@@ -95,7 +95,7 @@ var _ = Describe("Simple build", Label("e2e", "build", "simple"), func() {
 			ContainerBackendMode:        "native-rootless",
 			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: false,
-			State:                       "state1",
+			State:                       "state0", // TODO(iapershin): change after buildah version upgrade
 		}}),
 		Entry("with local repo using Native Buildah with chroot isolation", simpleTestOptions{setupEnvOptions{
 			ContainerBackendMode:        "native-chroot",

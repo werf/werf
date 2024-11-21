@@ -49,5 +49,4 @@ func setupEnv(opts setupEnvOptions) {
 	}
 
 	SuiteData.Stubs.SetEnv("ENV_SECRET", "WERF_BUILD_SECRET")
-
 }

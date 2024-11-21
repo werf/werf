@@ -65,7 +65,6 @@ func (s *SecretFromPlainValue) setPalinValueAsEnv() (*SecretFromEnv, error) {
 		Id:    s.Id,
 		Value: envKey,
 	}, nil
-
 }
 
 func (s *SecretFromEnv) GetSecretId() string {
@@ -75,6 +74,7 @@ func (s *SecretFromEnv) GetSecretId() string {
 func (s *SecretFromSrc) GetSecretId() string {
 	return s.Id
 }
+
 func (s *SecretFromPlainValue) GetSecretId() string {
 	return s.Id
 }
