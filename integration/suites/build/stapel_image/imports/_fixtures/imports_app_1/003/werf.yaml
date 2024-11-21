@@ -1,7 +1,8 @@
 project: none
 configVersion: 1
 ---
-artifact: myartifact
+image: myartifact
+final: false
 from: ubuntu:18.04
 shell:
   setup:
@@ -15,27 +16,27 @@ shell:
 image: ~
 from: alpine
 import:
-- artifact: myartifact
+- image: myartifact
   add: /myartifact/a/b/FILE
   to: /usr/local
   after: install
-- artifact: myartifact
+- image: myartifact
   add: /myartifact/a/b/FILE
   to: /usr/locallll
   after: install
-- artifact: myartifact
+- image: myartifact
   add: /myartifact/
   to: /usr/newlocal
   after: install
-- artifact: myartifact
+- image: myartifact
   add: /myartifact
   to: /usr/share
   after: install
-- artifact: myartifact
+- image: myartifact
   add: /myartifact/file
   to: /file2
   after: install
-- artifact: myartifact
+- image: myartifact
   add: /myartifact/file
   to: /file
   after: install

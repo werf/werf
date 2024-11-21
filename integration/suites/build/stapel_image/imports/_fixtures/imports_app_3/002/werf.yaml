@@ -1,7 +1,8 @@
 project: none
 configVersion: 1
 ---
-artifact: artifact
+image: artifact
+final: false
 from: ubuntu:18.04
 shell:
   setup:
@@ -12,7 +13,7 @@ shell:
 image: app
 from: alpine
 import:
-  - artifact: artifact
+  - image: artifact
     add: /link_dir
     to: /dir
     after: install

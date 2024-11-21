@@ -6,12 +6,13 @@ from: alpine
 shell:
   setup: date
 import:
-- artifact: artifact
+- image: artifact
   add: /artifact
   to: /artifact
   before: setup
 ---
-artifact: artifact
+image: artifact
+final: false
 from: alpine
 shell:
   install: echo "123" > /artifact
