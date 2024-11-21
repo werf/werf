@@ -22,8 +22,7 @@ type rawImageFromDockerfile struct {
 	RawDependencies []*rawDependency       `yaml:"dependencies,omitempty"`
 	Staged          bool                   `yaml:"staged,omitempty"`
 	Platform        []string               `yaml:"platform,omitempty"`
-
-	RawSecrets []*rawSecret `yaml:"secrets,omitempty"`
+	RawSecrets      []*rawSecret           `yaml:"secrets,omitempty"`
 
 	doc *doc `yaml:"-"` // parent
 
@@ -144,9 +143,11 @@ func (c *rawImageFromDockerfile) toImageFromDockerfileDirective(giterminismManag
 	image.platform = append([]string{}, c.Platform...)
 	image.raw = c
 
+	if len(c.RawSecrets) > 0 && image.Staged {
+		return nil, fmt.Errorf("secrets are not supported for staged build yet")
+	}
 	secretIds := make(map[string]struct{})
 	for _, rawSecrets := range c.RawSecrets {
-
 		secret, err := rawSecrets.toDirective()
 		if err != nil {
 			return nil, err

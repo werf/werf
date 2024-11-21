@@ -37,26 +37,9 @@ func (s *rawSecret) UnmarshalYAML(unmarshal func(interface{}) error) error {
 }
 
 func (s *rawSecret) validate() error {
-	switch {
-	case s.Env != "":
-		if s.Src != "" || s.PlainValue != "" {
-			return newDetailedConfigError("env can't be specified with other types", s, s.doc)
-		}
-	case s.Src != "":
-		if s.Env != "" || s.PlainValue != "" {
-			return newDetailedConfigError("src can't be specified with other types", s, s.doc)
-		}
-	case s.PlainValue != "":
-		if s.Id == "" {
-			return newDetailedConfigError("id is required field for type value", s, s.doc)
-		}
-		if s.Env != "" || s.Src != "" {
-			return newDetailedConfigError("value can't be specified with other types", s, s.doc)
-		}
-	default:
-		return newDetailedConfigError("one of env, source, value should be specified", s, s.doc)
+	if !oneOrNone([]bool{s.Env != "", s.Src != "", s.PlainValue != ""}) {
+		newDetailedConfigError("specify only env or src or value in secret", s, s.doc)
 	}
-
 	return nil
 }
 
@@ -79,6 +62,9 @@ func (s *rawSecret) toDirective() (Secret, error) {
 			Value: s.Src,
 		}, nil
 	case s.PlainValue != "":
+		if s.Id == "" {
+			return nil, fmt.Errorf("type value should be used with id parameter")
+		}
 		return &SecretFromPlainValue{
 			Id:    s.Id,
 			Value: s.PlainValue,

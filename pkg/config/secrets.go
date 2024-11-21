@@ -42,14 +42,14 @@ func (s *SecretFromSrc) GetSecretStringArg() (string, error) {
 }
 
 func (s *SecretFromPlainValue) GetSecretStringArg() (string, error) {
-	secret, err := s.setPalinValueAsEnv()
+	secret, err := s.setPlainValueAsEnv()
 	if err != nil {
 		return "", err
 	}
 	return secret.GetSecretStringArg()
 }
 
-func (s *SecretFromPlainValue) setPalinValueAsEnv() (*SecretFromEnv, error) {
+func (s *SecretFromPlainValue) setPlainValueAsEnv() (*SecretFromEnv, error) {
 	t := time.Now().Unix()
 	envKey := fmt.Sprintf("tmpbuild%d_%s", t, s.Id) // generate unique value
 	if _, e := os.LookupEnv(envKey); e {
