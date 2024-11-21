@@ -1,6 +1,11 @@
 name: cleanup:werf-storage
 on:
   push:
+    branches:
+      - main
+  repository_dispatch:
+    types: ["cleanup:werf-storage"]
+  workflow_dispatch:
 
 defaults:
   run:
