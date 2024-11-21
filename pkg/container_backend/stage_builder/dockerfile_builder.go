@@ -20,6 +20,7 @@ type DockerfileBuilderInterface interface {
 	SetSSH(ssh string)
 	AppendLabels(labels ...string)
 	SetBuildContextArchive(buildContextArchive container_backend.BuildContextArchiver)
+	AppendSecrets(secret ...string)
 }
 
 type DockerfileBuilder struct {
@@ -108,4 +109,8 @@ func (b *DockerfileBuilder) AppendLabels(labels ...string) {
 
 func (b *DockerfileBuilder) SetBuildContextArchive(buildContextArchive container_backend.BuildContextArchiver) {
 	b.BuildContextArchive = buildContextArchive
+}
+
+func (b *DockerfileBuilder) AppendSecrets(secret ...string) {
+	b.BuildDockerfileOptions.Secrets = append(b.BuildDockerfileOptions.Secrets, secret...)
 }

@@ -41,6 +41,7 @@ type BuildDockerfileOpts struct {
 	SSH                  string
 	Labels               []string
 	Tags                 []string
+	Secrets              []string
 }
 
 type BuildDockerfileStageOptions struct {

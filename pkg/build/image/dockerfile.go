@@ -331,6 +331,7 @@ func mapLegacyDockerfileToImage(ctx context.Context, dockerfileImageConfig *conf
 			dockerfileImageConfig.AddHost,
 			dockerfileImageConfig.Network,
 			dockerfileImageConfig.SSH,
+			dockerfileImageConfig.Secrets,
 		),
 		ds,
 		stage.NewContextChecksum(dockerIgnorePathMatcher),

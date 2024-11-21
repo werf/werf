@@ -81,6 +81,10 @@ func (backend *DockerServerBackend) BuildDockerfile(ctx context.Context, _ []byt
 		cliArgs = append(cliArgs, "--label", label)
 	}
 
+	for _, secret := range opts.Secrets {
+		cliArgs = append(cliArgs, "--secret", secret)
+	}
+
 	tempID := uuid.New().String()
 	opts.Tags = append(opts.Tags, tempID)
 	for _, tag := range opts.Tags {
