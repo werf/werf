@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"path/filepath"
 )
 
 type rawSecret struct {
@@ -38,7 +37,7 @@ func (s *rawSecret) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 func (s *rawSecret) validate() error {
 	if !oneOrNone([]bool{s.Env != "", s.Src != "", s.PlainValue != ""}) {
-		newDetailedConfigError("specify only env or src or value in secret", s, s.doc)
+		return newDetailedConfigError("specify only env or src or value in secret", s, s.doc)
 	}
 	return nil
 }
@@ -46,30 +45,12 @@ func (s *rawSecret) validate() error {
 func (s *rawSecret) toDirective() (Secret, error) {
 	switch {
 	case s.Env != "":
-		if s.Id == "" {
-			s.Id = s.Env
-		}
-		return &SecretFromEnv{
-			Id:    s.Id,
-			Value: s.Env,
-		}, nil
+		return newSecretFromEnv(s)
 	case s.Src != "":
-		if s.Id == "" {
-			s.Id = filepath.Base(s.Src)
-		}
-		return &SecretFromSrc{
-			Id:    s.Id,
-			Value: s.Src,
-		}, nil
+		return newSecretFromSrc(s)
 	case s.PlainValue != "":
-		if s.Id == "" {
-			return nil, fmt.Errorf("type value should be used with id parameter")
-		}
-		return &SecretFromPlainValue{
-			Id:    s.Id,
-			Value: s.PlainValue,
-		}, nil
+		return newSecretFromPlainValue(s)
 	default:
-		return nil, fmt.Errorf("secret type is not supported")
+		return nil, newDetailedConfigError("secret type is not supported", s, s.doc)
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -25,6 +26,36 @@ type SecretFromSrc struct {
 type SecretFromPlainValue struct {
 	Id    string
 	Value string
+}
+
+func newSecretFromEnv(s *rawSecret) (*SecretFromEnv, error) {
+	if s.Id == "" {
+		s.Id = s.Env
+	}
+	return &SecretFromEnv{
+		Id:    s.Id,
+		Value: s.Env,
+	}, nil
+}
+
+func newSecretFromSrc(s *rawSecret) (*SecretFromSrc, error) {
+	if s.Id == "" {
+		s.Id = filepath.Base(s.Src)
+	}
+	return &SecretFromSrc{
+		Id:    s.Id,
+		Value: s.Src,
+	}, nil
+}
+
+func newSecretFromPlainValue(s *rawSecret) (*SecretFromPlainValue, error) {
+	if s.Id == "" {
+		return nil, fmt.Errorf("type value should be used with id parameter")
+	}
+	return &SecretFromPlainValue{
+		Id:    s.Id,
+		Value: s.PlainValue,
+	}, nil
 }
 
 func (s *SecretFromEnv) GetSecretStringArg() (string, error) {
