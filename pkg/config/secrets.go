@@ -6,11 +6,14 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/werf/werf/v2/pkg/giterminism_manager"
 )
 
 type Secret interface {
 	GetSecretStringArg() (string, error)
 	GetSecretId() string
+	InspectByGiterminism(giterminismManager giterminism_manager.Interface) error
 }
 
 type SecretFromEnv struct {
@@ -108,4 +111,16 @@ func (s *SecretFromSrc) GetSecretId() string {
 
 func (s *SecretFromPlainValue) GetSecretId() string {
 	return s.Id
+}
+
+func (s *SecretFromEnv) InspectByGiterminism(giterminismManager giterminism_manager.Interface) error {
+	return giterminismManager.Inspector().InspectConfigSecretsEnvNameAccepted(s.Value)
+}
+
+func (s *SecretFromSrc) InspectByGiterminism(giterminismManager giterminism_manager.Interface) error {
+	return giterminismManager.Inspector().InspectConfigSecretsEnvNameAccepted(s.Value)
+}
+
+func (s *SecretFromPlainValue) InspectByGiterminism(giterminismManager giterminism_manager.Interface) error {
+	return giterminismManager.Inspector().InspectConfigSecretsEnvNameAccepted(s.Value)
 }
