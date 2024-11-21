@@ -728,6 +728,7 @@ func (backend *BuildahBackend) BuildDockerfile(ctx context.Context, dockerfileCo
 		BuildArgs:  buildArgs,
 		Target:     opts.Target,
 		Labels:     opts.Labels,
+		Secrets:    opts.Secrets,
 	})
 }
 

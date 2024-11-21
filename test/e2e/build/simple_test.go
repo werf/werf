@@ -1,6 +1,8 @@
 package e2e_build_test
 
 import (
+	"fmt"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
@@ -24,28 +26,28 @@ var _ = Describe("Simple build", Label("e2e", "build", "simple"), func() {
 				Fail(err.Error())
 			}
 
-			By("state0: starting")
+			By(fmt.Sprintf("%s: starting", testOpts.State))
 			{
 				repoDirname := "repo0"
-				fixtureRelPath := "simple/state0"
+				fixtureRelPath := fmt.Sprintf("simple/%s", testOpts.State)
 				buildReportName := "report0.json"
 
-				By("state0: preparing test repo")
+				By(fmt.Sprintf("%s: preparing test repo", testOpts.State))
 				SuiteData.InitTestRepo(repoDirname, fixtureRelPath)
 
-				By("state0: building images")
+				By(fmt.Sprintf("%s: building images", testOpts.State))
 				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
 				buildOut, buildReport := werfProject.BuildWithReport(SuiteData.GetBuildReportPath(buildReportName), nil)
 				Expect(buildOut).To(ContainSubstring("Building stage"))
 				Expect(buildOut).NotTo(ContainSubstring("Use previously built image"))
 
-				By("state0: rebuilding same images")
+				By(fmt.Sprintf("%s: rebuilding same images", testOpts.State))
 				Expect(werfProject.Build(nil)).To(And(
 					ContainSubstring("Use previously built image"),
 					Not(ContainSubstring("Building stage")),
 				))
 
-				By(`state0: checking "dockerfile" image content`)
+				By(fmt.Sprintf(`%s: checking "dockerfile" image content`, testOpts.State))
 				contRuntime.ExpectCmdsToSucceed(
 					buildReport.Images["dockerfile"].DockerImageName,
 					"test -f /file",
@@ -54,7 +56,7 @@ var _ = Describe("Simple build", Label("e2e", "build", "simple"), func() {
 					"test -f /created-by-run",
 				)
 
-				By(`state0: checking "stapel-shell" image content`)
+				By(fmt.Sprintf(`%s: checking "stapel-shell" image content`, testOpts.State))
 				contRuntime.ExpectCmdsToSucceed(
 					buildReport.Images["stapel-shell"].DockerImageName,
 					"test -f /file",
@@ -69,31 +71,37 @@ var _ = Describe("Simple build", Label("e2e", "build", "simple"), func() {
 			ContainerBackendMode:        "vanilla-docker",
 			WithLocalRepo:               false,
 			WithStagedDockerfileBuilder: false,
+			State:                       "state0",
 		}}),
 		Entry("with local repo using Vanilla Docker", simpleTestOptions{setupEnvOptions{
 			ContainerBackendMode:        "vanilla-docker",
 			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: false,
+			State:                       "state0",
 		}}),
 		Entry("without repo using BuildKit Docker", simpleTestOptions{setupEnvOptions{
 			ContainerBackendMode:        "buildkit-docker",
 			WithLocalRepo:               false,
 			WithStagedDockerfileBuilder: false,
+			State:                       "state1",
 		}}),
 		Entry("with local repo using BuildKit Docker", simpleTestOptions{setupEnvOptions{
 			ContainerBackendMode:        "buildkit-docker",
 			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: false,
+			State:                       "state1",
 		}}),
 		Entry("with local repo using Native Buildah with rootless isolation", simpleTestOptions{setupEnvOptions{
 			ContainerBackendMode:        "native-rootless",
 			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: false,
+			State:                       "state0", // TODO(iapershin): change after buildah version upgrade
 		}}),
 		Entry("with local repo using Native Buildah with chroot isolation", simpleTestOptions{setupEnvOptions{
 			ContainerBackendMode:        "native-chroot",
 			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: false,
+			State:                       "state1",
 		}}),
 		// TODO(ilya-lesikov): uncomment after Staged Dockerfile builder finished
 		// // TODO(1.3): after Full Dockerfile Builder removed and Staged Dockerfile Builder enabled by default this test no longer needed

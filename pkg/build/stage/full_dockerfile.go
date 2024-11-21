@@ -58,7 +58,7 @@ type FullDockerfileStage struct {
 	*BaseStage
 }
 
-func NewDockerRunArgs(dockerfile []byte, dockerfilePath, target, context string, contextAddFiles []string, buildArgs map[string]interface{}, addHost []string, network, ssh string) *DockerRunArgs {
+func NewDockerRunArgs(dockerfile []byte, dockerfilePath, target, context string, contextAddFiles []string, buildArgs map[string]interface{}, addHost []string, network, ssh string, secrets []string) *DockerRunArgs {
 	return &DockerRunArgs{
 		dockerfile:      dockerfile,
 		dockerfilePath:  dockerfilePath,
@@ -69,6 +69,7 @@ func NewDockerRunArgs(dockerfile []byte, dockerfilePath, target, context string,
 		addHost:         addHost,
 		network:         network,
 		ssh:             ssh,
+		secrets:         secrets,
 	}
 }
 
@@ -82,6 +83,7 @@ type DockerRunArgs struct {
 	addHost         []string
 	network         string
 	ssh             string
+	secrets         []string
 }
 
 func (d *DockerRunArgs) contextRelativeToGitWorkTree(giterminismManager giterminism_manager.Interface) string {
@@ -621,6 +623,12 @@ func (s *FullDockerfileStage) SetupDockerImageBuilder(b stage_builder.Dockerfile
 	if len(resolvedDependenciesArgsHash) > 0 {
 		for key, value := range resolvedDependenciesArgsHash {
 			b.AppendBuildArgs(fmt.Sprintf("%s=%v", key, value))
+		}
+	}
+
+	if len(s.secrets) > 0 {
+		for _, secret := range s.secrets {
+			b.AppendSecrets(secret)
 		}
 	}
 

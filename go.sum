@@ -310,8 +310,6 @@ github.com/containernetworking/cni v1.1.2 h1:wtRGZVv7olUHMOqouPpn3cXJWpJgM6+EUl3
 github.com/containernetworking/cni v1.1.2/go.mod h1:sDpYKmGVENF3s6uvMvGgldDWeG8dMxakj/u+i9ht9vw=
 github.com/containernetworking/plugins v1.4.1 h1:+sJRRv8PKhLkXIl6tH1D7RMi+CbbHutDGU+ErLBORWA=
 github.com/containernetworking/plugins v1.4.1/go.mod h1:n6FFGKcaY4o2o5msgu/UImtoC+fpQXM3076VHfHbj60=
-github.com/containers/buildah v1.35.1 h1:m4TF6V8b06cS4jH9/t39PUsUIjzDQg/P14FLpwjr40Y=
-github.com/containers/buildah v1.35.1/go.mod h1:vVSVUlTu8+99H5j43gBJscpkb/quZvdJg78+6X1HeTM=
 github.com/containers/common v0.58.1 h1:E1DN9Lr7kgMVQy7AXLv1CYQCiqnweklMiYWbf0KOnqY=
 github.com/containers/common v0.58.1/go.mod h1:l3vMqanJGj7tZ3W/i76gEJ128VXgFUO1tLaohJXPvdk=
 github.com/containers/image/v5 v5.30.0 h1:CmHeSwI6W2kTRWnUsxATDFY5TEX4b58gPkaQcEyrLIA=
@@ -1389,6 +1387,8 @@ github.com/weppos/publicsuffix-go v0.13.1-0.20210123135404-5fd73613514e/go.mod h
 github.com/weppos/publicsuffix-go v0.15.1-0.20210511084619-b1f36a2d6c0b/go.mod h1:HYux0V0Zi04bHNwOHy4cXJVz/TQjYonnF6aoYhj+3QE=
 github.com/weppos/publicsuffix-go v0.30.2-0.20240219083929-48f3a5ae027a h1:s0Yp4S5jdEQFTJE1blGE5o+n7T0uI386YHXzocLKLR4=
 github.com/weppos/publicsuffix-go v0.30.2-0.20240219083929-48f3a5ae027a/go.mod h1:v7j8MuFp1CIYgAd2n7xEUctTbsreRd1vPmOwyzmGFiE=
+github.com/werf/3p-buildah v1.35.2-0.20241120093816-5b80b7b735de h1:adTANOZyNmmnDGC3MvPs/fv59skzK7z9dkTIPnpKsS4=
+github.com/werf/3p-buildah v1.35.2-0.20241120093816-5b80b7b735de/go.mod h1:vVSVUlTu8+99H5j43gBJscpkb/quZvdJg78+6X1HeTM=
 github.com/werf/3p-docker-buildx v0.13.0-rc2.0.20241111114615-d77c2e1444ad h1:FBDNACfjjpDBwXhALF5LgvEiu08HpUurb/2G323SVsQ=
 github.com/werf/3p-docker-buildx v0.13.0-rc2.0.20241111114615-d77c2e1444ad/go.mod h1:Q3gtkv8D3sdaa5LJXbzMooYR/A5vBiEB2yQ56wywohM=
 github.com/werf/3p-helm v0.0.0-20240806141915-3137f4cc1557 h1:TCC9i3qb4Db+7Z6jgbLwWCWyV/kKvdTezmGUqLtdF54=

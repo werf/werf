@@ -8,6 +8,7 @@ type setupEnvOptions struct {
 	ContainerBackendMode        string
 	WithLocalRepo               bool
 	WithStagedDockerfileBuilder bool
+	State                       string
 }
 
 func setupEnv(opts setupEnvOptions) {
@@ -46,4 +47,6 @@ func setupEnv(opts setupEnvOptions) {
 	} else {
 		SuiteData.Stubs.UnsetEnv("WERF_FORCE_STAGED_DOCKERFILE")
 	}
+
+	SuiteData.Stubs.SetEnv("ENV_SECRET", "WERF_BUILD_SECRET")
 }

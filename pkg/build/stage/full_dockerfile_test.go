@@ -48,6 +48,7 @@ func newTestFullDockerfileStage(dockerfileData []byte, target string, buildArgs 
 			nil,
 			"",
 			"",
+			nil,
 		),
 		ds,
 		NewContextChecksum(nil),
