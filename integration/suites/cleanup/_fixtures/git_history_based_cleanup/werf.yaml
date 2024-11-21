@@ -90,12 +90,13 @@ fromCacheVersion: {{ env "FROM_CACHE_VERSION" }}
 shell:
   setup: date
 import:
-  - artifact: artifact
+  - image: artifact
     add: /artifact
     to: /artifact
     before: setup
 ---
-artifact: artifact
+image: artifact
+final: false
 from: alpine
 fromCacheVersion: {{ env "FROM_CACHE_VERSION" }}
 shell:

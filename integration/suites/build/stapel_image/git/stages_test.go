@@ -149,7 +149,7 @@ var _ = Describe("git stages", func() {
 		})
 	})
 
-	Context("artifact", func() {
+	Context("disableGitAfterPatch", func() {
 		toBuildGitArchiveStageStep := stagesSpecStep{
 			byText:                     "First build: gitArchive stage should be built",
 			beforeBuildHookFunc:        nil,
@@ -374,7 +374,7 @@ var _ = Describe("user stages", func() {
 		})
 	})
 
-	When("artifact", func() {
+	When("disableGitAfterPatch", func() {
 		toBuildGitArchiveStageStep := stagesSpecStep{
 			byText:                     "First build: gitArchive stage should be built",
 			beforeBuildHookFunc:        nil,
