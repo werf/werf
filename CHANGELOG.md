@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.13.2](https://www.github.com/werf/werf/compare/v2.13.1...v2.13.2) (2024-11-21)
+
+
+### Bug Fixes
+
+* **cleanup:** keep relatives for keepImagesBuiltWithinLastNHours policy ([a0eb160](https://www.github.com/werf/werf/commit/a0eb1600f984acacdb19a9a03aa10436695d2719))
+
 ### [2.13.1](https://www.github.com/werf/werf/compare/v2.13.0...v2.13.1) (2024-11-19)
 
 
