@@ -1,10 +1,9 @@
-name: cleanup:werf-storage
+name: release:registry-cleanup
 on:
-  push:
-    branches:
-      - main
+  schedule:
+    - cron: "0 8 */3 * *"
   repository_dispatch:
-    types: ["cleanup:werf-storage"]
+    types: ["release:registry-cleanup"]
   workflow_dispatch:
 
 defaults:
@@ -15,11 +14,6 @@ jobs:
   cleanup:
     name: cleanup werf-storage
     runs-on: ubuntu-latest-16-cores
-    strategy:
-      matrix:
-        config:
-          - --config werf.yaml
-          - --config werf-argocd-cmp-sidecar.yaml
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -35,9 +29,9 @@ jobs:
         run: |
           cd scripts/werf-in-image/
           . $(werf ci-env github --as-file)
-          werf cleanup ${{ matrix.config }}
+          werf cleanup
         env:
           WERF_REPO: ghcr.io/werf/werf-storage
-          WERF_REPO_GITHUB_TOKEN: ${{ secrets.WERF_IN_IMAGE_CLEANUP_GHCR }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           WERF_WITHOUT_KUBE: true
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WERF_REPO_GITHUB_TOKEN: ${{ secrets.WERF_IN_IMAGE_CLEANUP_GHCR }}
