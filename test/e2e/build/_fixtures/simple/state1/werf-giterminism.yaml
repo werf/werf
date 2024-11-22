@@ -2,7 +2,7 @@ giterminismConfigVersion: 1
 
 config:
   secrets:
-    allowEnvSecrets:
+    allowEnvVariables:
       - "ENV_SECRET"
-    allowPathsSecrets:
+    allowFiles:
       - "./file"

@@ -220,14 +220,14 @@ func pathMatcher(patterns []string) path_matcher.PathMatcher {
 }
 
 type secrets struct {
-	AllowEnvSecrets   []string `json:"allowEnvSecrets"`
-	AllowPathsSecrets []string `json:"allowPathsSecrets"`
+	AllowEnvVariables []string `json:"allowEnvVariables"`
+	AllowFiles        []string `json:"allowFiles"`
 }
 
 func (s *secrets) IsEnvNameAccepted(name string) bool {
-	return slices.Contains(s.AllowEnvSecrets, name)
+	return slices.Contains(s.AllowEnvVariables, name)
 }
 
 func (s *secrets) IsAllowPathsSecretsAccepted(path string) bool {
-	return isPathMatched(s.AllowPathsSecrets, path)
+	return isPathMatched(s.AllowFiles, path)
 }
