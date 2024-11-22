@@ -596,6 +596,7 @@ func (backend *BuildahBackend) GetImageInfo(ctx context.Context, ref string, opt
 		return nil, nil
 	}
 
+	// TODO: remove this legacy logic in v3.
 	parentID := string(inspect.Docker.Parent)
 	if parentID == "" {
 		if id, ok := inspect.Docker.Config.Labels[image.WerfBaseImageIDLabel]; ok { // built with werf

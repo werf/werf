@@ -13,6 +13,7 @@ const (
 	WerfProjectRepoCommitLabel    = "werf-project-repo-commit"
 	WerfImportChecksumLabelPrefix = "werf-import-checksum-"
 	WerfBaseImageIDLabel          = "werf.io/base-image-id"
+	WerfParentStageID             = "werf.io/parent-stage-id"
 
 	WerfImportMetadataChecksumLabel       = "checksum"
 	WerfImportMetadataSourceImageIDLabel  = "source-image-id"
