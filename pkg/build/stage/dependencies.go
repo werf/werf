@@ -108,7 +108,8 @@ func (s *DependenciesStage) prepareImageWithLegacyStapelBuilder(ctx context.Cont
 
 		imageServiceCommitChangeOptions := stageImage.Builder.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions()
 
-		labelKey := imagePkg.WerfImportChecksumLabelPrefix + getImportID(elm)
+		checksumLabelKey := imagePkg.WerfImportChecksumLabelPrefix + getImportID(elm)
+		sourceStageIDLabelKey := imagePkg.WerfImportSourceStageIDLabelPrefix + getImportID(elm)
 
 		importSourceID := getImportSourceID(c, s.targetPlatform, elm)
 		importMetadata, err := c.GetImportMetadata(ctx, s.projectName, importSourceID)
@@ -119,7 +120,10 @@ func (s *DependenciesStage) prepareImageWithLegacyStapelBuilder(ctx context.Cont
 		}
 		labelValue := importMetadata.Checksum
 
-		imageServiceCommitChangeOptions.AddLabel(map[string]string{labelKey: labelValue})
+		imageServiceCommitChangeOptions.AddLabel(map[string]string{
+			checksumLabelKey:      labelValue,
+			sourceStageIDLabelKey: importMetadata.SourceStageID,
+		})
 	}
 
 	for _, dep := range s.dependencies {
@@ -169,7 +173,8 @@ func (s *DependenciesStage) prepareImage(ctx context.Context, c Conveyor, cr con
 			sourceImageName = c.GetImageNameForImageStage(s.targetPlatform, sourceImageConfigName, elm.Stage)
 		}
 
-		labelKey := imagePkg.WerfImportChecksumLabelPrefix + getImportID(elm)
+		checksumLabelKey := imagePkg.WerfImportChecksumLabelPrefix + getImportID(elm)
+		sourceStageIDLabelKey := imagePkg.WerfImportSourceStageIDLabelPrefix + getImportID(elm)
 
 		importSourceID := getImportSourceID(c, s.targetPlatform, elm)
 		importMetadata, err := c.GetImportMetadata(ctx, s.projectName, importSourceID)
@@ -180,7 +185,10 @@ func (s *DependenciesStage) prepareImage(ctx context.Context, c Conveyor, cr con
 		}
 		labelValue := importMetadata.Checksum
 
-		stageImage.Builder.StapelStageBuilder().AddLabels(map[string]string{labelKey: labelValue})
+		stageImage.Builder.StapelStageBuilder().AddLabels(map[string]string{
+			checksumLabelKey:      labelValue,
+			sourceStageIDLabelKey: importMetadata.SourceStageID,
+		})
 		stageImage.Builder.StapelStageBuilder().AddDependencyImport(sourceImageName, elm.Add, elm.To, elm.IncludePaths, elm.ExcludePaths, elm.Owner, elm.Group)
 	}
 
