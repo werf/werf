@@ -105,8 +105,8 @@ func (c Config) IsConfigSecretsEnvNameAccepted(name string) bool {
 	return c.Config.Secrets.IsEnvNameAccepted(name)
 }
 
-func (c Config) IsConfigSecretsAllowPathsSecretsAccepted(path string) bool {
-	return c.Config.Secrets.IsAllowPathsSecretsAccepted(path)
+func (c Config) IsConfigSecretsFileAccepted(path string) bool {
+	return c.Config.Secrets.IsAllowSecretsFileAccepted(path)
 }
 
 type cli struct {
@@ -228,6 +228,6 @@ func (s *secrets) IsEnvNameAccepted(name string) bool {
 	return slices.Contains(s.AllowEnvVariables, name)
 }
 
-func (s *secrets) IsAllowPathsSecretsAccepted(path string) bool {
+func (s *secrets) IsAllowSecretsFileAccepted(path string) bool {
 	return isPathMatched(s.AllowFiles, path)
 }
