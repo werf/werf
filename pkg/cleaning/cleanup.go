@@ -882,22 +882,11 @@ func (m *cleanupManager) getRelativeStageDescSetByStageDesc(targetStageDesc *ima
 			relativeStageDescSet.Add(currentStageDesc)
 			currentStageDescSet.Remove(currentStageDesc)
 
-			relativeStageDescSet.Add(currentStageDesc)
-			currentStageDescSet.Remove(currentStageDesc)
-
-			// Parent stage checking.
-			{
-				// TODO: remove this legacy check in v3.
-				for stageDesc := range stageDescSet.Iter() {
-					if currentStageDesc.Info.ParentID == stageDesc.Info.ID {
-						currentStageDescSet.Add(stageDesc)
-						break
-					}
-				}
-
-				parentStageDesc := m.stageManager.GetStageDescByStageID(currentStageDesc.Info.Labels[image.WerfParentStageID])
-				if parentStageDesc != nil {
-					currentStageDescSet.Add(parentStageDesc)
+			for stageDesc := range stageDescSet.Iter() {
+				if currentStageDesc.Info.ParentID == stageDesc.Info.ID {
+					relativeStageDescSet.Add(stageDesc)
+					currentStageDescSet.Add(stageDesc)
+					break
 				}
 			}
 		}
