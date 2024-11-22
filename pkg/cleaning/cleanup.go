@@ -714,7 +714,7 @@ func (m *cleanupManager) cleanupUnusedStages(ctx context.Context) error {
 	// skip kept stages and their relatives.
 	{
 		for stageDescToKeep := range m.stageManager.GetProtectedStageDescSet().Iter() {
-			relativeStageDescSetToKeep := m.getRelativeStageDescSetByImageInfo(m.stageManager.GetStageDescSet(), stageDescToKeep.Info)
+			relativeStageDescSetToKeep := m.getRelativeStageDescSetByStageDesc(stageDescToKeep)
 			for relativeStageDescToKeep := range relativeStageDescSetToKeep.Iter() {
 				m.stageManager.MarkStageDescAsProtected(relativeStageDescToKeep, "ancestors")
 			}
@@ -852,60 +852,6 @@ func deleteImportsMetadata(ctx context.Context, projectName string, storageManag
 	})
 }
 
-func (m *cleanupManager) getRelativeStageDescSetByImageInfo(stageDescSet image.StageDescSet, imageInfo *image.Info) image.StageDescSet {
-	parentStageDescSet := findStageDescSetByImageID(stageDescSet, imageInfo)
-	if parentStageDescSet.IsEmpty() {
-		return image.NewStageDescSet()
-	}
-	return m.getRelativeStageDescSet(stageDescSet, parentStageDescSet)
-}
-
-// findStageDescSetByMatch could return multiple stages when target image.Info is an image index
-func findStageDescSetByMatch(stageDescSet image.StageDescSet, target *image.Info, imageMatcher, indexMatcher func(stageDesc *image.StageDesc, target *image.Info) bool) image.StageDescSet {
-	resultStageDescSet := image.NewStageDescSet()
-	if target.IsIndex {
-		if indexMatcher != nil {
-			for stg := range stageDescSet.Iter() {
-				if indexMatcher(stg, target) {
-					resultStageDescSet.Add(stg)
-				}
-			}
-		}
-		for _, subimg := range target.Index {
-			resultStageDescSet = resultStageDescSet.Union(findStageDescSetByMatch(stageDescSet, subimg, imageMatcher, indexMatcher))
-		}
-	} else if imageMatcher != nil {
-		for stg := range stageDescSet.Iter() {
-			if imageMatcher(stg, target) {
-				resultStageDescSet.Add(stg)
-			}
-		}
-	}
-
-	return resultStageDescSet
-}
-
-func findStageDescSetByImageID(stageDescSet image.StageDescSet, target *image.Info) image.StageDescSet {
-	return findStageDescSetByMatch(
-		stageDescSet, target,
-		func(stageDesc *image.StageDesc, target *image.Info) bool {
-			return stageDesc.Info.ID == target.ID
-		},
-		func(stageDesc *image.StageDesc, target *image.Info) bool {
-			return stageDesc.Info.Name == target.Name
-		},
-	)
-}
-
-func findStageDescSetByImageParentID(stageDescSet image.StageDescSet, target *image.Info) image.StageDescSet {
-	return findStageDescSetByMatch(
-		stageDescSet, target,
-		func(stageDesc *image.StageDesc, target *image.Info) bool {
-			return stageDesc.Info.ID == target.ParentID
-		}, nil,
-	)
-}
-
 func findStageDescByImageID(stageDescSet image.StageDescSet, imageID string) *image.StageDesc {
 	for stage := range stageDescSet.Iter() {
 		if stage.Info.ID == imageID {
@@ -915,18 +861,35 @@ func findStageDescByImageID(stageDescSet image.StageDescSet, imageID string) *im
 	return nil
 }
 
-func (m *cleanupManager) getRelativeStageDescSet(stageDescSet, parentStageDescSet image.StageDescSet) image.StageDescSet {
-	currentStageDescSet := parentStageDescSet
-	relativeStageDescSet := image.NewStageDescSet()
-	for !currentStageDescSet.IsEmpty() {
-		relativeStageDescSet = relativeStageDescSet.Union(currentStageDescSet)
-		nextStageDescSet := image.NewStageDescSet()
-		for stageDescToExclude := range currentStageDescSet.Iter() {
-			relativeStageDescSetByParentID := findStageDescSetByImageParentID(stageDescSet, stageDescToExclude.Info)
-			nextStageDescSet = nextStageDescSet.Union(relativeStageDescSetByParentID)
+func (m *cleanupManager) getRelativeStageDescSetByStageDesc(targetStageDesc *image.StageDesc) image.StageDescSet {
+	targetStageDescSet := image.NewStageDescSet()
+	if targetStageDesc.Info.IsIndex {
+		for _, platformImageInfo := range targetStageDesc.Info.Index {
+			stageID := platformImageInfo.Tag
+			if platformStageDesc := m.stageManager.GetStageDescByStageID(stageID); platformStageDesc != nil {
+				targetStageDescSet.Add(platformStageDesc)
+			}
 		}
+	} else {
+		targetStageDescSet.Add(targetStageDesc)
+	}
 
-		currentStageDescSet = nextStageDescSet
+	stageDescSet := m.stageManager.GetStageDescSet()
+	relativeStageDescSet := image.NewStageDescSet()
+	currentStageDescSet := targetStageDescSet
+	for !currentStageDescSet.IsEmpty() {
+		for currentStageDesc := range currentStageDescSet.Iter() {
+			relativeStageDescSet.Add(currentStageDesc)
+			currentStageDescSet.Remove(currentStageDesc)
+
+			for stageDesc := range stageDescSet.Iter() {
+				if currentStageDesc.Info.ParentID == stageDesc.Info.ID {
+					relativeStageDescSet.Add(stageDesc)
+					currentStageDescSet.Add(stageDesc)
+					break
+				}
+			}
+		}
 	}
 
 	return relativeStageDescSet
