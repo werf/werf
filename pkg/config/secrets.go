@@ -118,9 +118,9 @@ func (s *SecretFromEnv) InspectByGiterminism(giterminismManager giterminism_mana
 }
 
 func (s *SecretFromSrc) InspectByGiterminism(giterminismManager giterminism_manager.Interface) error {
-	return giterminismManager.Inspector().InspectConfigSecretsEnvNameAccepted(s.Value)
+	return giterminismManager.Inspector().InspectConfigSecretsAllowPathsSecretsAccepted(s.Value)
 }
 
 func (s *SecretFromPlainValue) InspectByGiterminism(giterminismManager giterminism_manager.Interface) error {
-	return giterminismManager.Inspector().InspectConfigSecretsEnvNameAccepted(s.Value)
+	return nil
 }

@@ -109,10 +109,6 @@ func (c Config) IsConfigSecretsAllowPathsSecretsAccepted(path string) bool {
 	return c.Config.Secrets.IsAllowPathsSecretsAccepted(path)
 }
 
-func (c Config) IsConfigSecretsValueIdAccepted(name string) bool {
-	return c.Config.Secrets.IsValueIdAccepted(name)
-}
-
 type cli struct {
 	AllowCustomTags bool `json:"allowCustomTags"`
 }
@@ -224,9 +220,8 @@ func pathMatcher(patterns []string) path_matcher.PathMatcher {
 }
 
 type secrets struct {
-	AllowEnvSecrets    []string `json:"allowEnvSecrets"`
-	AllowPathsSecrets  []string `json:"allowPathsSecrets"`
-	AllowValuesSecrets []string `json:"allowValuesSecrets"`
+	AllowEnvSecrets   []string `json:"allowEnvSecrets"`
+	AllowPathsSecrets []string `json:"allowPathsSecrets"`
 }
 
 func (s *secrets) IsEnvNameAccepted(name string) bool {
@@ -235,8 +230,4 @@ func (s *secrets) IsEnvNameAccepted(name string) bool {
 
 func (s *secrets) IsAllowPathsSecretsAccepted(path string) bool {
 	return isPathMatched(s.AllowPathsSecrets, path)
-}
-
-func (s *secrets) IsValueIdAccepted(name string) bool {
-	return slices.Contains(s.AllowEnvSecrets, name)
 }

@@ -51,5 +51,4 @@ type Inspector interface {
 	InspectBuildContextFiles(ctx context.Context, matcher path_matcher.PathMatcher) error
 	InspectConfigSecretsEnvNameAccepted(secret string) error
 	InspectConfigSecretsAllowPathsSecretsAccepted(secret string) error
-	InspectConfigSecretsValueIdAccepted(secret string) error
 }

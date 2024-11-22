@@ -31,15 +31,3 @@ func (i Inspector) InspectConfigSecretsAllowPathsSecretsAccepted(secret string) 
 
 	return NewExternalDependencyFoundError(fmt.Sprintf(secretsErrMsg, secret))
 }
-
-func (i Inspector) InspectConfigSecretsValueIdAccepted(secret string) error {
-	if i.sharedOptions.LooseGiterminism() {
-		return nil
-	}
-
-	if i.giterminismConfig.IsConfigSecretsValueIdAccepted(secret) {
-		return nil
-	}
-
-	return NewExternalDependencyFoundError(fmt.Sprintf(secretsErrMsg, secret))
-}
