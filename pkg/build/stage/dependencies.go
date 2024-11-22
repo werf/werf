@@ -108,7 +108,8 @@ func (s *DependenciesStage) prepareImageWithLegacyStapelBuilder(ctx context.Cont
 
 		imageServiceCommitChangeOptions := stageImage.Builder.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions()
 
-		labelKey := imagePkg.WerfImportChecksumLabelPrefix + getImportID(elm)
+		checksumLabelKey := imagePkg.WerfImportChecksumLabelPrefix + getImportID(elm)
+		sourceStageIDLabelKey := imagePkg.WerfImportSourceStageIDLabelPrefix + getImportID(elm)
 
 		importSourceID := getImportSourceID(c, s.targetPlatform, elm)
 		importMetadata, err := c.GetImportMetadata(ctx, s.projectName, importSourceID)
@@ -117,9 +118,11 @@ func (s *DependenciesStage) prepareImageWithLegacyStapelBuilder(ctx context.Cont
 		} else if importMetadata == nil {
 			panic(fmt.Sprintf("import metadata %s not found", importSourceID))
 		}
-		labelValue := importMetadata.Checksum
 
-		imageServiceCommitChangeOptions.AddLabel(map[string]string{labelKey: labelValue})
+		imageServiceCommitChangeOptions.AddLabel(map[string]string{
+			checksumLabelKey:      importMetadata.Checksum,
+			sourceStageIDLabelKey: importMetadata.SourceStageID,
+		})
 	}
 
 	for _, dep := range s.dependencies {
@@ -169,7 +172,8 @@ func (s *DependenciesStage) prepareImage(ctx context.Context, c Conveyor, cr con
 			sourceImageName = c.GetImageNameForImageStage(s.targetPlatform, sourceImageConfigName, elm.Stage)
 		}
 
-		labelKey := imagePkg.WerfImportChecksumLabelPrefix + getImportID(elm)
+		checksumLabelKey := imagePkg.WerfImportChecksumLabelPrefix + getImportID(elm)
+		sourceStageIDLabelKey := imagePkg.WerfImportSourceStageIDLabelPrefix + getImportID(elm)
 
 		importSourceID := getImportSourceID(c, s.targetPlatform, elm)
 		importMetadata, err := c.GetImportMetadata(ctx, s.projectName, importSourceID)
@@ -178,9 +182,11 @@ func (s *DependenciesStage) prepareImage(ctx context.Context, c Conveyor, cr con
 		} else if importMetadata == nil {
 			panic(fmt.Sprintf("import metadata %s not found", importSourceID))
 		}
-		labelValue := importMetadata.Checksum
 
-		stageImage.Builder.StapelStageBuilder().AddLabels(map[string]string{labelKey: labelValue})
+		stageImage.Builder.StapelStageBuilder().AddLabels(map[string]string{
+			checksumLabelKey:      importMetadata.Checksum,
+			sourceStageIDLabelKey: importMetadata.SourceStageID,
+		})
 		stageImage.Builder.StapelStageBuilder().AddDependencyImport(sourceImageName, elm.Add, elm.To, elm.IncludePaths, elm.ExcludePaths, elm.Owner, elm.Group)
 	}
 
@@ -240,10 +246,13 @@ func (s *DependenciesStage) getImportSourceChecksum(ctx context.Context, c Conve
 			return "", fmt.Errorf("unable to generate import source checksum: %w", err)
 		}
 
+		// TODO: remove this legacy logic in v3.
 		sourceImageID := getSourceImageID(c, s.targetPlatform, importElm)
+		sourceStageID := getSourceStageID(c, s.targetPlatform, importElm)
 		importMetadata = &storage.ImportMetadata{
 			ImportSourceID: importSourceID,
 			SourceImageID:  sourceImageID,
+			SourceStageID:  sourceStageID,
 			Checksum:       checksum,
 		}
 
@@ -453,6 +462,19 @@ func getSourceImageID(c Conveyor, targetPlatform string, importElm *config.Impor
 	}
 
 	return sourceImageID
+}
+
+func getSourceStageID(c Conveyor, targetPlatform string, importElm *config.Import) string {
+	sourceImageName := getSourceImageName(importElm)
+
+	var sourceStageID string
+	if importElm.Stage == "" {
+		sourceStageID = c.GetStageIDForLastImageStage(targetPlatform, sourceImageName)
+	} else {
+		sourceStageID = c.GetStageIDForImageStage(targetPlatform, sourceImageName, importElm.Stage)
+	}
+
+	return sourceStageID
 }
 
 func getSourceImageContentDigest(c Conveyor, targetPlatform string, importElm *config.Import) string {
