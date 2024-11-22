@@ -15,6 +15,7 @@ func NewInfoFromInspect(ref string, inspect *types.ImageInspect) *image.Info {
 		repoDigest = image.ExtractRepoDigest(inspect.RepoDigests, repository)
 	}
 
+	// TODO: remove this legacy logic in v3.
 	parentID := inspect.Config.Image
 	if parentID == "" {
 		if id, ok := inspect.Config.Labels[image.WerfBaseImageIDLabel]; ok { // built with werf

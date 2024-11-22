@@ -218,6 +218,7 @@ func (api *api) getRepoImageByDesc(ctx context.Context, originalTag string, desc
 		}
 		repoImage.Size = totalSize
 
+		// TODO: remove this legacy logic in v3.
 		parentID := configFile.Config.Image
 		if parentID == "" {
 			if id, ok := configFile.Config.Labels[image.WerfBaseImageIDLabel]; ok { // built with werf
