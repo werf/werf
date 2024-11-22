@@ -108,9 +108,6 @@ func (s *DependenciesStage) prepareImageWithLegacyStapelBuilder(ctx context.Cont
 
 		imageServiceCommitChangeOptions := stageImage.Builder.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions()
 
-		checksumLabelKey := imagePkg.WerfImportChecksumLabelPrefix + getImportID(elm)
-		sourceStageIDLabelKey := imagePkg.WerfImportSourceStageIDLabelPrefix + getImportID(elm)
-
 		importSourceID := getImportSourceID(c, s.targetPlatform, elm)
 		importMetadata, err := c.GetImportMetadata(ctx, s.projectName, importSourceID)
 		if err != nil {
@@ -118,12 +115,9 @@ func (s *DependenciesStage) prepareImageWithLegacyStapelBuilder(ctx context.Cont
 		} else if importMetadata == nil {
 			panic(fmt.Sprintf("import metadata %s not found", importSourceID))
 		}
-		labelValue := importMetadata.Checksum
 
-		imageServiceCommitChangeOptions.AddLabel(map[string]string{
-			checksumLabelKey:      labelValue,
-			sourceStageIDLabelKey: importMetadata.SourceStageID,
-		})
+		sourceStageIDLabelKey := imagePkg.WerfImportSourceStageIDLabelPrefix + getImportID(elm)
+		imageServiceCommitChangeOptions.AddLabel(map[string]string{sourceStageIDLabelKey: importMetadata.SourceStageID})
 	}
 
 	for _, dep := range s.dependencies {
@@ -173,9 +167,6 @@ func (s *DependenciesStage) prepareImage(ctx context.Context, c Conveyor, cr con
 			sourceImageName = c.GetImageNameForImageStage(s.targetPlatform, sourceImageConfigName, elm.Stage)
 		}
 
-		checksumLabelKey := imagePkg.WerfImportChecksumLabelPrefix + getImportID(elm)
-		sourceStageIDLabelKey := imagePkg.WerfImportSourceStageIDLabelPrefix + getImportID(elm)
-
 		importSourceID := getImportSourceID(c, s.targetPlatform, elm)
 		importMetadata, err := c.GetImportMetadata(ctx, s.projectName, importSourceID)
 		if err != nil {
@@ -183,12 +174,9 @@ func (s *DependenciesStage) prepareImage(ctx context.Context, c Conveyor, cr con
 		} else if importMetadata == nil {
 			panic(fmt.Sprintf("import metadata %s not found", importSourceID))
 		}
-		labelValue := importMetadata.Checksum
 
-		stageImage.Builder.StapelStageBuilder().AddLabels(map[string]string{
-			checksumLabelKey:      labelValue,
-			sourceStageIDLabelKey: importMetadata.SourceStageID,
-		})
+		sourceStageIDLabelKey := imagePkg.WerfImportSourceStageIDLabelPrefix + getImportID(elm)
+		stageImage.Builder.StapelStageBuilder().AddLabels(map[string]string{sourceStageIDLabelKey: importMetadata.SourceStageID})
 		stageImage.Builder.StapelStageBuilder().AddDependencyImport(sourceImageName, elm.Add, elm.To, elm.IncludePaths, elm.ExcludePaths, elm.Owner, elm.Group)
 	}
 
