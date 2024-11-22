@@ -20,10 +20,14 @@ type Conveyor interface {
 	FetchImageStage(ctx context.Context, targetPlatform, imageName, stageName string) error
 	FetchLastNonEmptyImageStage(ctx context.Context, targetPlatform, imageName string) error
 	GetImageNameForLastImageStage(targetPlatform, imageName string) string
+	GetStageIDForLastImageStage(targetPlatform, imageName string) string
+	// TODO: remove this legacy logic in v3.
 	GetImageIDForLastImageStage(targetPlatform, imageName string) string
 	GetImageDigestForLastImageStage(targetPlatform, imageName string) string
 
 	GetImageNameForImageStage(targetPlatform, imageName, stageName string) string
+	GetStageIDForImageStage(targetPlatform, imageName, stageName string) string
+	// TODO: remove this legacy logic in v3.
 	GetImageIDForImageStage(targetPlatform, imageName, stageName string) string
 
 	GetImportServer(ctx context.Context, targetPlatform, imageName, stageName string) (import_server.ImportServer, error)

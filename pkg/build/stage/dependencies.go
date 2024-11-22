@@ -240,10 +240,13 @@ func (s *DependenciesStage) getImportSourceChecksum(ctx context.Context, c Conve
 			return "", fmt.Errorf("unable to generate import source checksum: %w", err)
 		}
 
+		// TODO: remove this legacy logic in v3.
 		sourceImageID := getSourceImageID(c, s.targetPlatform, importElm)
+		sourceStageID := getSourceStageID(c, s.targetPlatform, importElm)
 		importMetadata = &storage.ImportMetadata{
 			ImportSourceID: importSourceID,
 			SourceImageID:  sourceImageID,
+			SourceStageID:  sourceStageID,
 			Checksum:       checksum,
 		}
 
@@ -453,6 +456,19 @@ func getSourceImageID(c Conveyor, targetPlatform string, importElm *config.Impor
 	}
 
 	return sourceImageID
+}
+
+func getSourceStageID(c Conveyor, targetPlatform string, importElm *config.Import) string {
+	sourceImageName := getSourceImageName(importElm)
+
+	var sourceStageID string
+	if importElm.Stage == "" {
+		sourceStageID = c.GetStageIDForLastImageStage(targetPlatform, sourceImageName)
+	} else {
+		sourceStageID = c.GetStageIDForImageStage(targetPlatform, sourceImageName, importElm.Stage)
+	}
+
+	return sourceStageID
 }
 
 func getSourceImageContentDigest(c Conveyor, targetPlatform string, importElm *config.Import) string {

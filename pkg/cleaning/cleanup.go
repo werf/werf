@@ -811,8 +811,15 @@ func (m *cleanupManager) initImportsMetadata(ctx context.Context) error {
 		mutex.Lock()
 		defer mutex.Unlock()
 
-		sourceImageID := metadata.SourceImageID
 		importSourceID := metadata.ImportSourceID
+		sourceStageID := metadata.SourceStageID
+		if !m.stageManager.ContainsStageDescByStageID(sourceStageID) {
+			m.nonexistentImportMetadataIDs = append(m.nonexistentImportMetadataIDs, importSourceID)
+			return nil
+		}
+
+		// TODO: remove this legacy logic in v3.
+		sourceImageID := metadata.SourceImageID
 		stage := findStageDescByImageID(m.stageManager.GetStageDescSet(), sourceImageID)
 		if stage == nil {
 			m.nonexistentImportMetadataIDs = append(m.nonexistentImportMetadataIDs, importSourceID)

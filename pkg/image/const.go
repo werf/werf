@@ -17,6 +17,7 @@ const (
 
 	WerfImportMetadataChecksumLabel       = "checksum"
 	WerfImportMetadataSourceImageIDLabel  = "source-image-id"
+	WerfImportMetadataSourceStageIDLabel  = "source-stage-id"
 	WerfImportMetadataImportSourceIDLabel = "import-source-id"
 
 	WerfCustomTagMetadataStageIDLabel = "stage-id"
