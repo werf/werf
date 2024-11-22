@@ -853,16 +853,26 @@ func (c *Conveyor) GetStageID(targetPlatform, imageName string) string {
 	return c.GetImage(targetPlatform, imageName).GetStageID()
 }
 
+// TODO: remove this legacy logic in v3.
 func (c *Conveyor) GetImageIDForLastImageStage(targetPlatform, imageName string) string {
 	return c.GetImage(targetPlatform, imageName).GetLastNonEmptyStage().GetStageImage().Image.GetStageDesc().Info.ID
+}
+
+func (c *Conveyor) GetStageIDForLastImageStage(targetPlatform, imageName string) string {
+	return c.GetImage(targetPlatform, imageName).GetLastNonEmptyStage().GetStageImage().Image.GetStageDesc().StageID.String()
 }
 
 func (c *Conveyor) GetImageDigestForLastImageStage(targetPlatform, imageName string) string {
 	return c.GetImage(targetPlatform, imageName).GetLastNonEmptyStage().GetStageImage().Image.GetStageDesc().Info.GetDigest()
 }
 
+// TODO: remove this legacy logic in v3.
 func (c *Conveyor) GetImageIDForImageStage(targetPlatform, imageName, stageName string) string {
 	return c.getImageStage(targetPlatform, imageName, stageName).GetStageImage().Image.GetStageDesc().Info.ID
+}
+
+func (c *Conveyor) GetStageIDForImageStage(targetPlatform, imageName, stageName string) string {
+	return c.getImageStage(targetPlatform, imageName, stageName).GetStageImage().Image.GetStageDesc().StageID.String()
 }
 
 func (c *Conveyor) GetImportMetadata(ctx context.Context, projectName, id string) (*storage.ImportMetadata, error) {
