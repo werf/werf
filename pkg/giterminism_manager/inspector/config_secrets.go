@@ -8,7 +8,7 @@ var secretsErrMsg = `secret %q is not allowed by giterminism
 
 	Using env and file secrets complicates the sharing and reproducibility of the configuration in CI jobs and among developers.`
 
-func (i Inspector) InspectConfigSecretsEnvNameAccepted(secret string) error {
+func (i Inspector) InspectConfigSecretEnvAccepted(secret string) error {
 	if i.sharedOptions.LooseGiterminism() {
 		return nil
 	}
@@ -20,7 +20,7 @@ func (i Inspector) InspectConfigSecretsEnvNameAccepted(secret string) error {
 	return NewExternalDependencyFoundError(fmt.Sprintf(secretsErrMsg, secret))
 }
 
-func (i Inspector) InspectConfigSecretsAllowPathsSecretsAccepted(secret string) error {
+func (i Inspector) InspectConfigSecretSrcAccepted(secret string) error {
 	if i.sharedOptions.LooseGiterminism() {
 		return nil
 	}

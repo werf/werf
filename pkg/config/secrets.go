@@ -114,11 +114,11 @@ func (s *SecretFromPlainValue) GetSecretId() string {
 }
 
 func (s *SecretFromEnv) InspectByGiterminism(giterminismManager giterminism_manager.Interface) error {
-	return giterminismManager.Inspector().InspectConfigSecretsEnvNameAccepted(s.Value)
+	return giterminismManager.Inspector().InspectConfigSecretEnvAccepted(s.Value)
 }
 
 func (s *SecretFromSrc) InspectByGiterminism(giterminismManager giterminism_manager.Interface) error {
-	return giterminismManager.Inspector().InspectConfigSecretsAllowPathsSecretsAccepted(s.Value)
+	return giterminismManager.Inspector().InspectConfigSecretSrcAccepted(s.Value)
 }
 
 func (s *SecretFromPlainValue) InspectByGiterminism(giterminismManager giterminism_manager.Interface) error {
