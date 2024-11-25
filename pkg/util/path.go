@@ -164,7 +164,7 @@ func SafeTrimGlobsAndSlashesFromPath(p string) string {
 func ReplaceTildeWithHome(path string) (string, error) {
 	if strings.HasPrefix(path, "~") {
 		firstSlash := strings.Index(path, "/")
-		if firstSlash == 1 {
+		if firstSlash == 1 || firstSlash == -1 {
 			home, err := os.UserHomeDir()
 			if err != nil {
 				return path, err
