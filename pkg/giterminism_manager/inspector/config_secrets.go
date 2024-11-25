@@ -13,7 +13,7 @@ func (i Inspector) InspectConfigSecretEnvAccepted(secret string) error {
 		return nil
 	}
 
-	if i.giterminismConfig.IsConfigSecretsEnvNameAccepted(secret) {
+	if i.giterminismConfig.IsConfigSecretEnvAccepted(secret) {
 		return nil
 	}
 
@@ -25,7 +25,7 @@ func (i Inspector) InspectConfigSecretSrcAccepted(secret string) error {
 		return nil
 	}
 
-	if i.giterminismConfig.IsConfigSecretsFileAccepted(secret) {
+	if i.giterminismConfig.IsConfigSecretSrcAccepted(secret) {
 		return nil
 	}
 

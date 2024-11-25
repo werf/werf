@@ -101,11 +101,11 @@ func (c Config) UncommittedHelmFilePathMatcher() path_matcher.PathMatcher {
 	return c.Helm.UncommittedHelmFilePathMatcher()
 }
 
-func (c Config) IsConfigSecretsEnvNameAccepted(name string) bool {
+func (c Config) IsConfigSecretEnvAccepted(name string) bool {
 	return c.Config.Secrets.IsEnvNameAccepted(name)
 }
 
-func (c Config) IsConfigSecretsFileAccepted(path string) bool {
+func (c Config) IsConfigSecretSrcAccepted(path string) bool {
 	return c.Config.Secrets.IsAllowSecretsFileAccepted(path)
 }
 
