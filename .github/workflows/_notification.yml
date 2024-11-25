@@ -3,21 +3,20 @@ name: xxxxx(internal)
 on:
   workflow_call:
     inputs:
-      message:
-        type: string
-      useCommitMessage:
-        default: true
+      taskSign:
+        description: "Text for task sign notification"
+        required: false
         type: string
     secrets:
       webhook:
-        description: "Slack webhook URL"
+        description: "Loop webhook URL"
         required: true
-      mentionUserID:
-        description: "Slack user ID to mention to (e.g. U0A19DD26)"
-      mapSlackUsers:
-        description: 'Mapping of GitHub users to Slack users. Contains lines of the following format: "github_username1:slack_memberID1"'
-      mentionGroupID:
-        description: "Slack group ID to mention to (e.g. SWS45DQ87)"
+      notificationChannel:
+        description: "Loop notification channel"
+        required: true
+      loopNotificationGroup:
+        description: "Loop notification group"
+        required: false
 
 defaults:
   run:
@@ -31,49 +30,50 @@ jobs:
       - name: Run workflow status conclusion manager
         uses: technote-space/workflow-conclusion-action@v3
 
-      # FIXME: we no longer use Slack, need to migrate notifications
-      # - if: inputs.useCommitMessage == 'true'
-      #   name: Checkout code
-      #   uses: actions/checkout@v4
-      #
-      # - if: inputs.useCommitMessage == 'true'
-      #   name: Get commit message
-      #   id: get_commit_message
-      #   uses: ./.github/actions/get-commit-message
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   with:
-      #     ignoreTitle: "true" # Don't use PR title.
-      #     ignoreDescription: "false" # Use the Pull Request description.
-      #     ignoreLatestCommitMessage: "false" # Use the latest commit message content.
-      #
-      # - if: env.WORKFLOW_CONCLUSION == 'failure'
-      #   name: Add mentions
-      #   id: msg_mention
-      #   env:
-      #     ACTOR_NAME: ${{ github.triggering_actor }}
-      #   run: |
-      #     if [ -n "${{ secrets.mapSlackUsers }}" ]; then
-      #       ACTOR_SLACK_ID=$( echo '${{ secrets.mapSlackUsers }}' | ( grep "^${ACTOR_NAME:-:}": || true) | cut -d: -f2 | head -n 1 )
-      #       echo "::debug:: ACTOR_SLACK_ID is '${ACTOR_SLACK_ID}'."
-      #       if [ -n "$ACTOR_SLACK_ID" ]; then
-      #         MSG_MENTION_STRING="<@${ACTOR_SLACK_ID}>";
-      #       else
-      #         echo "Slack ID for ${ACTOR_NAME} was not found."
-      #       fi
-      #     fi
-      #     if [ -n "${{ secrets.mentionGroupID }}" ] && [ -z "${MSG_MENTION_STRING}" ]; then MSG_MENTION_STRING="<!subteam^${{ secrets.mentionGroupID }}>"; fi
-      #     if [ -n "${{ secrets.mentionUserID }}" ]; then MSG_MENTION_STRING="$MSG_MENTION_STRING${MSG_MENTION_STRING:+, }<@${{ secrets.mentionUserID }}>"; fi
-      #     echo "::debug:: zMention string - '$MSG_MENTION_STRING'."
-      #     echo "::set-output name=content::$MSG_MENTION_STRING"
-      #
-      # - name: Notify
-      #   uses: rtCamp/action-slack-notify@v2
-      #   env:
-      #     SLACK_WEBHOOK: ${{ secrets.webhook }}
-      #     SLACK_COLOR: ${{ env.WORKFLOW_CONCLUSION }}
-      #     SLACK_LINK_NAMES: "true"
-      #     SLACK_MESSAGE: |
-      #       ${{ steps.get_commit_message.outputs.message }}
-      #       ${{ inputs.message }}
-      #       ${{ steps.msg_mention.outputs.content }} .
+      - if: env.WORKFLOW_CONCLUSION == 'failure'
+        name: get failed jobs
+        id: failed_jobs
+        run: |
+          echo 'failed<<EOF' >> $GITHUB_OUTPUT 
+          echo "$(curl ${{ github.api_url }}/repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs | jq -r '.jobs[]| select (.conclusion == "failure") | .html_url')" >> $GITHUB_OUTPUT
+          echo 'EOF' >> $GITHUB_OUTPUT
+      - if: (env.WORKFLOW_CONCLUSION == 'failure' && startsWith(github.ref, 'refs/pull/'))
+        name: get user
+        id: get_user
+        run: |
+          echo username=$(curl ${{ github.api_url }}/users/${{ github.triggering_actor }} | jq -r '.name' | tr '[:upper:]' '[:lower:]' | tr " " . ) >> $GITHUB_OUTPUT
+
+      - if: "(env.WORKFLOW_CONCLUSION == 'failure' && ! startsWith(github.ref, 'refs/pull/'))"
+        name: Failure notify
+        uses: mattermost/action-mattermost-notify@master
+        with:
+          MATTERMOST_WEBHOOK_URL: ${{ secrets.webhook }}
+          MATTERMOST_CHANNEL: ${{ secrets.notificationChannel }}
+          TEXT: |
+            ${{ secrets.loopNotificationGroup }} Прод упал :pepe_monkaw: 
+            [${{ github.workflow }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) ${{ github.ref_name }} :pepe_deadge: 
+            Упавшие джобы:
+            ${{ steps.failed_jobs.outputs.failed }}
+
+      - if: env.WORKFLOW_CONCLUSION == 'success'
+        name: Success notify
+        uses: mattermost/action-mattermost-notify@master
+        with:
+          MATTERMOST_WEBHOOK_URL: ${{ secrets.webhook }}
+          MATTERMOST_CHANNEL: ${{ secrets.notificationChannel }}
+          TEXT: |
+            Workflow успешно завершился :bender: 
+            [${{ github.workflow }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) ${{ github.ref_name }} :success: 
+            ${{ inputs.taskSign }}
+
+      - if: (env.WORKFLOW_CONCLUSION == 'failure' && startsWith(github.ref, 'refs/pull/'))
+        name: Failure notify for PRs
+        uses: mattermost/action-mattermost-notify@master
+        with:
+          MATTERMOST_WEBHOOK_URL: ${{ secrets.webhook }}
+          MATTERMOST_CHANNEL: ${{ secrets.notificationChannel }}
+          TEXT: |
+            @${{ steps.get_user.outputs.username }} Проблема в ветке :press_f:
+            [${{ github.workflow }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) ${{ github.ref_name }} :pepe_deadge: 
+            Упавшие джобы:
+            ${{ steps.failed_jobs.outputs.failed }}

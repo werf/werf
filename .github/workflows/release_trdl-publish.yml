@@ -108,6 +108,9 @@ jobs:
       - deploy_channels_cm_prod
       - publish_werf_images
     uses: ./.github/workflows/_notification.yml
+    with:
+      taskSign: "@${{ secrets.LOOP_NOTIFICATION_GROUP }} прожмите `task sign`"
     secrets:
-      mentionGroupID: ${{ secrets.SLACK_MENTION_GROUP_ID }}
-      webhook: ${{ secrets.SLACK_WEBHOOK }}
+      loopNotificationGroup: ${{ secrets.LOOP_NOTIFICATION_GROUP }}
+      webhook: ${{ secrets.LOOP_NOTIFICATION_WEBHOOK }}
+      notificationChannel: ${{ secrets.LOOP_NOTIFICATION_CHANNEL }}
