@@ -49,4 +49,6 @@ type Inspector interface {
 	InspectConfigStapelMountFromPath(fromPath string) error
 	InspectConfigDockerfileContextAddFile(relPath string) error
 	InspectBuildContextFiles(ctx context.Context, matcher path_matcher.PathMatcher) error
+	InspectConfigSecretEnvAccepted(secret string) error
+	InspectConfigSecretSrcAccepted(secret string) error
 }

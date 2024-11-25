@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/werf/werf/v2/pkg/path_matcher"
@@ -100,6 +101,14 @@ func (c Config) UncommittedHelmFilePathMatcher() path_matcher.PathMatcher {
 	return c.Helm.UncommittedHelmFilePathMatcher()
 }
 
+func (c Config) IsConfigSecretEnvAccepted(name string) bool {
+	return c.Config.Secrets.IsEnvNameAccepted(name)
+}
+
+func (c Config) IsConfigSecretSrcAccepted(path string) bool {
+	return c.Config.Secrets.IsAllowSecretsFileAccepted(path)
+}
+
 type cli struct {
 	AllowCustomTags bool `json:"allowCustomTags"`
 }
@@ -108,6 +117,7 @@ type config struct {
 	AllowUncommitted          bool                `json:"allowUncommitted"`
 	AllowUncommittedTemplates []string            `json:"allowUncommittedTemplates"`
 	GoTemplateRendering       goTemplateRendering `json:"goTemplateRendering"`
+	Secrets                   secrets             `json:"secrets"`
 	Stapel                    stapel              `json:"stapel"`
 	Dockerfile                dockerfile          `json:"dockerfile"`
 }
@@ -207,4 +217,17 @@ func pathMatcher(patterns []string) path_matcher.PathMatcher {
 	} else {
 		return path_matcher.NewFalsePathMatcher()
 	}
+}
+
+type secrets struct {
+	AllowEnvVariables []string `json:"allowEnvVariables"`
+	AllowFiles        []string `json:"allowFiles"`
+}
+
+func (s *secrets) IsEnvNameAccepted(name string) bool {
+	return slices.Contains(s.AllowEnvVariables, name)
+}
+
+func (s *secrets) IsAllowSecretsFileAccepted(path string) bool {
+	return isPathMatched(s.AllowFiles, path)
 }

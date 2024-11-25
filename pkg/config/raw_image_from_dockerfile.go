@@ -160,6 +160,11 @@ func (c *rawImageFromDockerfile) toImageFromDockerfileDirective(giterminismManag
 			return nil, fmt.Errorf("duplicated secret id %s", v)
 		}
 
+		err = secret.InspectByGiterminism(giterminismManager)
+		if err != nil {
+			return nil, newDetailedConfigError(err.Error(), nil, c.doc)
+		}
+
 		secretArg, err := secret.GetSecretStringArg()
 		if err != nil {
 			return nil, err
