@@ -449,7 +449,10 @@ func (s *BaseStage) getCustomMountsFromConfig() map[string][]string {
 
 func (s *BaseStage) addCustomMountVolumes(mountpointsByFrom map[string][]string, c Conveyor, cr container_backend.ContainerBackend, stageImage *StageImage, cleanupMountpoints bool) error {
 	for from, mountpoints := range mountpointsByFrom {
-		absoluteFrom := util.ExpandPath(from)
+		absoluteFrom, err := util.ExpandPath(from)
+		if err != nil {
+			return fmt.Errorf("error expanding path %q: %w", from, err)
+		}
 
 		exist, err := util.FileExists(absoluteFrom)
 		if err != nil {

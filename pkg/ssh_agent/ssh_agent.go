@@ -51,10 +51,18 @@ func getSshKeyConfig(path string) (sshKeyConfig, error) {
 
 		parts := strings.SplitN(userinfoWithPath, "@", 2)
 		passphrase = []byte(parts[0])
-		filePath = util.ExpandPath(parts[1])
 
+		var err error
+		filePath, err = util.ExpandPath(parts[1])
+		if err != nil {
+			return sshKeyConfig{}, fmt.Errorf("error expanding path %q: %w", parts[1], err)
+		}
 	default:
-		filePath = util.ExpandPath(path)
+		var err error
+		filePath, err = util.ExpandPath(path)
+		if err != nil {
+			return sshKeyConfig{}, fmt.Errorf("error expanding path %q: %w", path, err)
+		}
 	}
 
 	if keyExists, err := util.FileExists(filePath); !keyExists {
