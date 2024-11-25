@@ -63,14 +63,14 @@ func newSecretFromPlainValue(s *rawSecret) (*SecretFromPlainValue, error) {
 
 func (s *SecretFromEnv) GetSecretStringArg() (string, error) {
 	if _, exists := os.LookupEnv(s.Value); !exists {
-		return "", fmt.Errorf("specified env variable doesn't exist")
+		return "", fmt.Errorf("specified secret env %q doesn't exist", s.Value)
 	}
 	return fmt.Sprintf("id=%s,env=%s", s.Id, s.Value), nil
 }
 
 func (s *SecretFromSrc) GetSecretStringArg() (string, error) {
 	if _, err := os.Stat(s.Value); errors.Is(err, os.ErrNotExist) {
-		return "", fmt.Errorf("path %s doesn't exist", s.Value)
+		return "", fmt.Errorf("specified secret path %s doesn't exist", s.Value)
 	}
 	return fmt.Sprintf("id=%s,src=%s", s.Id, s.Value), nil
 }
