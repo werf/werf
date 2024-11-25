@@ -1,0 +1,8 @@
+giterminismConfigVersion: 1
+
+config:
+  secrets:
+    allowEnvVariables:
+      - "ENV_SECRET"
+    allowFiles:
+      - "./file"
