@@ -28,7 +28,9 @@ var _ = DescribeTable("expand path",
 		Expect(err).ShouldNot(HaveOccurred())
 
 		expectedPath := fmt.Sprintf(e.expectedPathFormat, usr.HomeDir, wd)
-		Expect(util.ExpandPath(filepath.FromSlash(e.path))).Should(Equal(filepath.FromSlash(expectedPath)))
+		path, err := util.ExpandPath(filepath.FromSlash(e.path))
+		Expect(err).ShouldNot(HaveOccurred())
+		Expect(path).Should(Equal(filepath.FromSlash(expectedPath)))
 	},
 	Entry("~", expandPathTest{
 		path:               "~",

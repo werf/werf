@@ -1,6 +1,7 @@
 package util
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -8,43 +9,52 @@ import (
 )
 
 // FileExists returns true if path exists
-func FileExists(path string) (bool, error) {
-	_, err := os.Lstat(path)
+func FileExists(p string) (bool, error) {
+	_, exist, err := fileExists(p)
 	if err != nil {
-		if isNotExistError(err) {
-			return false, nil
-		}
-
-		return false, err
+		return false, fmt.Errorf("unable to check if %q exists: %w", p, err)
 	}
 
-	return true, nil
+	return exist, nil
 }
 
 func RegularFileExists(path string) (bool, error) {
-	fileInfo, err := os.Lstat(path)
+	fileInfo, exist, err := fileExists(path)
 	if err != nil {
-		if isNotExistError(err) {
-			return false, nil
-		}
-
-		return false, err
+		return false, fmt.Errorf("unable to check if %q is a regular file: %w", path, err)
 	}
 
-	return fileInfo.Mode().IsRegular(), nil
+	regularFileExist := exist && fileInfo.Mode().IsRegular()
+	return regularFileExist, nil
 }
 
 func DirExists(path string) (bool, error) {
+	fileInfo, exist, err := fileExists(path)
+	if err != nil {
+		return false, fmt.Errorf("unable to check if %q is a directory: %w", path, err)
+	}
+
+	dirExist := exist && fileInfo.IsDir()
+	return dirExist, nil
+}
+
+func fileExists(path string) (os.FileInfo, bool, error) {
+	var err error
+	path, err = ExpandPath(path)
+	if err != nil {
+		return nil, false, fmt.Errorf("unable to expand path %q: %w", path, err)
+	}
+
 	fileInfo, err := os.Lstat(path)
 	if err != nil {
 		if isNotExistError(err) {
-			return false, nil
+			return nil, false, nil
 		}
 
-		return false, err
+		return nil, false, err
 	}
 
-	return fileInfo.IsDir(), nil
+	return fileInfo, true, nil
 }
 
 func isNotExistError(err error) bool {

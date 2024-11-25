@@ -11,31 +11,19 @@ import (
 	"unicode/utf8"
 )
 
-func ExpandPath(path string) string {
-	var result string
-
-	if strings.HasPrefix(path, "~") {
-		usr, err := user.Current()
-		if err != nil {
-			panic(err)
-		}
-
-		dir := usr.HomeDir
-
-		if path == "~" {
-			result = dir
-		} else {
-			result = filepath.Join(dir, path[2:])
-		}
-	} else {
-		var err error
-		result, err = filepath.Abs(path)
-		if err != nil {
-			panic(err) // stupid interface of filepath.Abs
-		}
+// ExpandPath expands the path, replacing the tilde with the home directory and resolving the absolute path.
+func ExpandPath(p string) (string, error) {
+	p, err := ReplaceTildeWithHome(p)
+	if err != nil {
+		return p, err
 	}
 
-	return result
+	p, err = filepath.Abs(p)
+	if err != nil {
+		return p, err
+	}
+
+	return p, nil
 }
 
 func SplitFilepath(path string) (result []string) {
@@ -171,4 +159,26 @@ func SafeTrimGlobsAndSlashesFromPath(p string) string {
 	}
 
 	return path.Join(parts...)
+}
+
+func ReplaceTildeWithHome(path string) (string, error) {
+	if strings.HasPrefix(path, "~") {
+		firstSlash := strings.Index(path, "/")
+		if firstSlash == 1 {
+			home, err := os.UserHomeDir()
+			if err != nil {
+				return path, err
+			}
+			return strings.Replace(path, "~", home, 1), nil
+		} else if firstSlash > 1 {
+			username := path[1:firstSlash]
+			userAccount, err := user.Lookup(username)
+			if err != nil {
+				return path, err
+			}
+			return strings.Replace(path, path[:firstSlash], userAccount.HomeDir, 1), nil
+		}
+	}
+
+	return path, nil
 }
