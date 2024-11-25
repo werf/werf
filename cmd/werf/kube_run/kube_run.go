@@ -1070,24 +1070,20 @@ func cleanCopyFromLocalPath(rawPath, srcBaseName string) (string, error) {
 		rawPath = filepath.Join(".", srcBaseName)
 	}
 
-	rawPath = filepath.Clean(util.ExpandPath(rawPath))
-
 	var err error
-	rawPath, err = filepath.Abs(rawPath)
+	rawPath, err = util.ExpandPath(rawPath)
 	if err != nil {
-		return "", fmt.Errorf("error converting path %q to an absolute path: %w", rawPath, err)
+		return "", fmt.Errorf("error expanding path %q: %w", rawPath, err)
 	}
 
 	return rawPath, nil
 }
 
 func cleanCopyToLocalPath(rawPath string) (string, error) {
-	rawPath = filepath.Clean(util.ExpandPath(rawPath))
-
 	var err error
-	rawPath, err = filepath.Abs(rawPath)
+	rawPath, err = util.ExpandPath(rawPath)
 	if err != nil {
-		return "", fmt.Errorf("error converting path %q to an absolute path: %w", rawPath, err)
+		return "", fmt.Errorf("error expanding path %q: %w", rawPath, err)
 	}
 
 	return rawPath, nil

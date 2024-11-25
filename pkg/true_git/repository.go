@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/user"
 	"path/filepath"
 	"strings"
 
@@ -140,12 +139,8 @@ func PlainOpenWithOptions(path string, o *PlainOpenOptions) (*git.Repository, er
 }
 
 func dotGitToOSFilesystems(path string, detect bool) (dot, wt billy.Filesystem, err error) {
-	path, err = replaceTildeWithHome(path)
+	path, err = util.ExpandPath(path)
 	if err != nil {
-		return nil, nil, err
-	}
-
-	if path, err = filepath.Abs(path); err != nil {
 		return nil, nil, err
 	}
 
@@ -197,28 +192,6 @@ func dotGitToOSFilesystems(path string, detect bool) (dot, wt billy.Filesystem, 
 	}
 
 	return dot, fs, nil
-}
-
-func replaceTildeWithHome(path string) (string, error) {
-	if strings.HasPrefix(path, "~") {
-		firstSlash := strings.Index(path, "/")
-		if firstSlash == 1 {
-			home, err := os.UserHomeDir()
-			if err != nil {
-				return path, err
-			}
-			return strings.Replace(path, "~", home, 1), nil
-		} else if firstSlash > 1 {
-			username := path[1:firstSlash]
-			userAccount, err := user.Lookup(username)
-			if err != nil {
-				return path, err
-			}
-			return strings.Replace(path, path[:firstSlash], userAccount.HomeDir, 1), nil
-		}
-	}
-
-	return path, nil
 }
 
 func dotGitFileToOSFilesystem(path string, fs billy.Filesystem) (bfs billy.Filesystem, err error) {
