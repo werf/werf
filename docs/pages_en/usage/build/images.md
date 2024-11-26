@@ -150,7 +150,7 @@ secrets:
   - env: AWS_ACCESS_KEY_ID
   - id: aws_secret_key
     env: AWS_SECRET_ACCESS_KEY
-  - src: $HOME/.aws/credentials
+  - src: "~/.aws/credentials"
   - id: plainSecret
     value: plainSecretValue
 ```
