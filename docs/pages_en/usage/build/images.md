@@ -135,7 +135,9 @@ A build secret is any sensitive information, such as a password or API token, re
 
 Build arguments and environment variables are not suitable for passing secrets to the build process, as they are retained in the final image. 
 
-Instead, you can define secrets in the `werf.yaml` file to use them during the build process.
+Instead, you can define secrets in the `werf.yaml` file to use them during the build process. 
+
+Example:
 
 ```yaml
 # werf.yaml
@@ -159,29 +161,41 @@ If an `id` is not specified for a secret in `werf.yaml`, the default value is as
 - For `env`, the `id` defaults to the name of the environment variable.
 - For `src`, the `id` defaults to the file name (e.g., for `/path/to/file`, the `id` will be `file`).
 
-```Dockerfile
-# Dockerfile
-FROM alpine:3.18
+Example for accessing an environment variable secret:
 
-# Example of using a secret from an environment variable
+```Dockerfile
 RUN --mount=type=secret,id=AWS_ACCESS_KEY_ID \
     export WERF_BUILD_SECRET="$(cat /run/secrets/AWS_ACCESS_KEY_ID)"
+```
 
-# Example of using a secret from a secrets file
+Example for accessing a secret from a file:
+
+```Dockerfile
 RUN --mount=type=secret,id=credentials \
     AWS_SHARED_CREDENTIALS_FILE=/run/secrets/credentials \
     aws s3 cp ...
+```
 
-# Example of mounting a secret as an environment variable
+To mount a secret as an **environment variable** rather than a file, use the `env` option:
+
+```Dockerfile
 RUN --mount=type=secret,id=AWS_ACCESS_KEY_ID,env=AWS_ACCESS_KEY_ID \
     --mount=type=secret,id=aws-secret-key,env=AWS_SECRET_ACCESS_KEY \
     aws s3 cp ...
+```
 
-# Example of mounting a secret as a file with a different name
+To mount a secret as a file with a different name, use the `target` option:
+
+```Dockerfile
 RUN --mount=type=secret,id=credentials,target=/root/.aws/credentials \
     aws s3 cp ...
+```
 
-# Example of using a raw value that will not be stored in the final image
+You can also use an arbitrary value that will not be stored in the final image. For this, use the `value` type. In this case, you must explicitly specify an `id` for the secret.
+
+Example:
+
+```Dockerfile
 RUN --mount=type=secret,id=plainSecret \
     export WERF_BUILD_SECRET="$(cat /run/secrets/plainSecret)"
 ```
