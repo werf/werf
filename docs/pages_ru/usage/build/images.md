@@ -141,6 +141,11 @@ dockerfile: Dockerfile
 Пример:
 
 ```yaml
+# werf.yaml
+project: example
+configVersion: 1
+---
+image: backend
 dockerfile: Dockerfile
 secrets:
   - env: AWS_ACCESS_KEY_ID

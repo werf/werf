@@ -141,6 +141,11 @@ Instead, you can define secrets in the `werf.yaml` file to use them during the b
 Example:
 
 ```yaml
+# werf.yaml
+project: example
+configVersion: 1
+---
+image: backend
 dockerfile: Dockerfile
 secrets:
   - env: AWS_ACCESS_KEY_ID
