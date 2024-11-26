@@ -252,28 +252,28 @@ sections:
       - name: secrets
         description:
           en: Secrets used in image build. Only one of the following options (`env`, `src`, or `value`) can be used in a single instance
-          ru: Секреты, используемые в сборке образа. В одном экземпляре можно использовать только одну из следующих опций (`env`, `src` или `value`) 
+          ru: Секреты, используемые при сборке образа. В одном экземпляре можно использовать только одну из следующих опций (`env`, `src` или `value`)
         directiveList:
           - name: id
             value: "string"
             description:
-              en: "Secret unique identifier (mandatory only for type value)"
-              ru: "Уникальный идентификатор секрета (обязателен только для секретов типа value)"
+              en: Secret unique identifier (mandatory only for the `value` type)
+              ru: Уникальный идентификатор секрета (обязателен только для секретов типа `value`)
           - name: env
             value: "string"
             description:
-              en: "Uses a secret from an environment variable."
-              ru: "Использует секрет из переменной окружения"
+              en: A secret from an environment variable
+              ru: Секрет из переменной окружения
           - name: src
             value: "string"
             description:
-              en: "Uses a secret from a file from given path"
-              ru: "Использует секрет из файла по указанному пути"
+              en: A secret from a file at the given path
+              ru: Секрет из файла по указанному пути
           - name: value
             value: "string"
             description:
-              en: "Custom string value"
-              ru: "Произвольное строковое значение"
+              en: Custom string value
+              ru: Произвольное строковое значение
       - name: dependencies
         description:
           en: "Dependencies images for current image"
