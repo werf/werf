@@ -251,8 +251,8 @@ sections:
           ru: Сокет агента SSH или ключи для сборки определённых слоёв (только если используется BuildKit) (подобно docker build --ssh)
       - name: secrets
         description:
-          en: Secrets used in image build. Only one of the following options (env, src, or value) can be used in a single instance
-          ru: Секреты, используемые при сборке образа. В одном экземпляре можно использовать только одну из следующих опций (env, src или value)
+          en: "Secrets used in image build. Only one of the following options can be used in a single instance: env, src, or value"
+          ru: "Секреты, используемые при сборке образа. В одном экземпляре можно использовать только одну из следующих опций: env, src или value"
         directiveList:
           - name: id
             value: "string"
