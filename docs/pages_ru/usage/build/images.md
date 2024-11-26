@@ -67,7 +67,6 @@ dockerfile: Dockerfile
 
 ```Dockerfile
 # Dockerfile
-
 FROM node as backend
 WORKDIR /app
 COPY package*.json /app/
@@ -129,6 +128,77 @@ dockerfile: Dockerfile
 ```
 
 Для образа `docs` будет использоваться Dockerfile по пути `docs/Dockerfile`, а для `service` — `service/Dockerfile`.
+
+#### Использование сборочных секретов
+
+Секрет сборки — это любая конфиденциальная информация, например пароль или токен API, используемая в процессе сборки вашего приложения.
+
+Аргументы сборки и переменные окружения не подходят для передачи секретов в сборку, поскольку они сохраняются в конечном образе.  
+
+Вы можете использовать секреты при сборке, описав их в `werf.yaml`. 
+
+Пример:
+
+```yaml
+# werf.yaml
+project: example
+configVersion: 1
+---
+image: backend
+dockerfile: Dockerfile
+secrets:
+  - env: AWS_ACCESS_KEY_ID
+  - id: aws_secret_key
+    env: AWS_SECRET_ACCESS_KEY
+  - src: "~/.aws/credentials"
+  - id: plainSecret
+    value: plainSecretValue
+```
+
+Чтобы использовать секрет в сборке и сделать его доступным для инструкции `RUN`, используйте флаг `--mount=type=secret` в Dockerfile. 
+
+При использовании секрета в Dockerfile, секрет монтируется в файл по умолчанию. Путь к файлу секрета по умолчанию внутри контейнера сборки — `/run/secrets/<id>`. Обратите внимание, если вы не укажете `id` секрета в `werf.yaml`, то в качестве `id` будет использовано значение по умолчанию:
+- Для `env` — имя переменной окружения.
+- Для `src` — имя конечного файла (например, для `/path/to/file` будет использован `id: file`).
+
+Пример для переменной окружения:
+
+```Dockerfile
+RUN --mount=type=secret,id=AWS_ACCESS_KEY_ID \
+    export WERF_BUILD_SECRET="$(cat /run/secrets/AWS_ACCESS_KEY_ID)"
+```
+
+Пример для файла с секретами:
+
+```Dockerfile
+RUN --mount=type=secret,id=credentials \
+    AWS_SHARED_CREDENTIALS_FILE=/run/secrets/credentials \
+    aws s3 cp ...
+```
+
+Чтобы смонтировать секрет как переменную среды, а не как файл, используйте опцию `env`:
+
+```Dockerfile
+RUN --mount=type=secret,id=AWS_ACCESS_KEY_ID,env=AWS_ACCESS_KEY_ID \
+    --mount=type=secret,id=aws-secret-key,env=AWS_SECRET_ACCESS_KEY \
+    aws s3 cp ...
+```
+
+Чтобы смонтировать секрет как файл с другим именем, используйте опцию `target`:
+
+```Dockerfile
+RUN --mount=type=secret,id=credentials,target=/root/.aws/credentials \
+    aws s3 cp ...
+```
+
+Вы также можете использовать произвольное значение, которое не будет сохранено в конечном образе. Для этого используйте тип `value`. В этом случае необходимо явно указать `id` для секрета.
+
+Пример:
+
+```Dockerfile
+RUN --mount=type=secret,id=plainSecret \
+    export WERF_BUILD_SECRET="$(cat /run/secrets/plainSecret)"
+```
 
 #### Добавление произвольных файлов в сборочный контекст
 
