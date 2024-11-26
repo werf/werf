@@ -1,5 +1,20 @@
 # Changelog
 
+## [2.14.0](https://www.github.com/werf/werf/compare/v2.13.1...v2.14.0) (2024-11-26)
+
+
+### Features
+
+* **build, docker, buildah, dockerfile:** add secrets support ([#6429](https://www.github.com/werf/werf/issues/6429)) ([dac370b](https://www.github.com/werf/werf/commit/dac370ba849730ad2b30dc3094fd0d028534d560))
+* **giterminism:** add build secrets ([#6436](https://www.github.com/werf/werf/issues/6436)) ([266dc99](https://www.github.com/werf/werf/commit/266dc990957e62b67daaed6857dd3863e9723f8d))
+* **release:** publish werf images for linux/arm64 platform ([#6427](https://www.github.com/werf/werf/issues/6427)) ([833b26d](https://www.github.com/werf/werf/commit/833b26dbe2fbf715ca5100a0142142bbb5b526f2))
+
+
+### Bug Fixes
+
+* **cleanup:** fix cleanup for Buildah images by switching to tag-based logic ([73fcc1b](https://www.github.com/werf/werf/commit/73fcc1b3b404580801ad4382ff7a2842991db46e))
+* **cleanup:** keep relatives for keepImagesBuiltWithinLastNHours policy ([a0eb160](https://www.github.com/werf/werf/commit/a0eb1600f984acacdb19a9a03aa10436695d2719))
+
 ### [2.13.1](https://www.github.com/werf/werf/compare/v2.13.0...v2.13.1) (2024-11-19)
 
 
