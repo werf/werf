@@ -67,7 +67,6 @@ You can also define multiple target images using various stages of the same Dock
 
 ```Dockerfile
 # Dockerfile
-
 FROM node as backend
 WORKDIR /app
 COPY package*.json /app/

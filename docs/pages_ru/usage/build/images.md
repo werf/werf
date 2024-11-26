@@ -67,7 +67,6 @@ dockerfile: Dockerfile
 
 ```Dockerfile
 # Dockerfile
-
 FROM node as backend
 WORKDIR /app
 COPY package*.json /app/
