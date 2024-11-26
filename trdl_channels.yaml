@@ -30,7 +30,7 @@ groups:
       - name: beta
         version: 1.2.331
       - name: ea
-        version: 1.2.330
+        version: 1.2.331
       - name: stable
         version: 1.2.330
       - name: rock-solid
@@ -46,4 +46,4 @@ groups:
       - name: stable
         version: 2.13.1
       - name: rock-solid
-        version: 2.10.10
+        version: 2.13.1
