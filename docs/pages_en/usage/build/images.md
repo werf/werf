@@ -134,8 +134,9 @@ In the example above, werf will use the Dockerfile at `docs/Dockerfile` to build
 
 A build secret is any sensitive information, such as a password or API token, required during the build process of your application.
 
-Build arguments and environment variables are not suitable for passing secrets to the build process, as they are retained in the final image.  
-Instead, you can define secrets in the `werf.yaml` file to use them during the build process:
+Build arguments and environment variables are not suitable for passing secrets to the build process, as they are retained in the final image. 
+
+Instead, you can define secrets in the `werf.yaml` file to use them during the build process. 
 
 Example:
 
@@ -150,8 +151,7 @@ secrets:
     value: plainSecretValue
 ```
 
-To access a secret during the build, use the `--mount=type=secret` flag in the Dockerfile's `RUN` instructions.  
-When a secret is mounted, it is available as a file by default. The default mount path for the secret file inside the build container is `/run/secrets/<id>`.
+To access a secret during the build, use the `--mount=type=secret` flag in the Dockerfile's `RUN` instructions. When a secret is mounted, it is available as a file by default. The default mount path for the secret file inside the build container is `/run/secrets/<id>`.
 
 If an `id` is not specified for a secret in `werf.yaml`, the default value is assigned automatically:
 - For `env`, the `id` defaults to the name of the environment variable.
@@ -187,8 +187,7 @@ RUN --mount=type=secret,id=credentials,target=/root/.aws/credentials \
     aws s3 cp ...
 ```
 
-You can also use an arbitrary value that will not be stored in the final image. For this, use the `value` type.  
-In this case, you must explicitly specify an `id` for the secret.
+You can also use an arbitrary value that will not be stored in the final image. For this, use the `value` type. In this case, you must explicitly specify an `id` for the secret.
 
 Example:
 
