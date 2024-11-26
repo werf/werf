@@ -249,6 +249,31 @@ sections:
         description:
           en: SSH agent socket or keys to the build (only if BuildKit enabled) (see docker build --ssh option)
           ru: Сокет агента SSH или ключи для сборки определённых слоёв (только если используется BuildKit) (подобно docker build --ssh)
+      - name: secrets
+        description:
+          en: Secrets used in image build. Only one of the following options (`env`, `src`, or `value`) can be used in a single instance
+          ru: Секреты, используемые в сборке образа. В одном экземпляре можно использовать только одну из следующих опций (`env`, `src` или `value`) 
+        directiveList:
+          - name: id
+            value: "string"
+            description:
+              en: "Secret unique identifier (mandatory only for type value)"
+              ru: "Уникальный идентификатор секрета (обязателен только для секретов типа value)"
+          - name: env
+            value: "string"
+            description:
+              en: "Uses a secret from an environment variable."
+              ru: "Использует секрет из переменной окружения"
+          - name: src
+            value: "string"
+            description:
+              en: "Uses a secret from a file from given path"
+              ru: "Использует секрет из файла по указанному пути"
+          - name: value
+            value: "string"
+            description:
+              en: "Custom string value"
+              ru: "Произвольное строковое значение"
       - name: dependencies
         description:
           en: "Dependencies images for current image"

@@ -199,6 +199,73 @@ COPY --from=build /log /log
 
 In this example, the `FROM` instruction is pinned to the build platform of the builder using the `--platform=$BUILDPLATFORM` option to prevent emulation. The `$BUILDPLATFORM` and `$TARGETPLATFORM` arguments are then used in the `RUN` instruction.
 
+##### Using Build Secrets
+
+A build secret is any sensitive information, such as a password or an API token, used during the build process of your application.
+
+Build arguments and environment variables are not suitable for passing secrets to the build process, as they are retained in the final image.  
+You can use secrets in the build by describing them in `werf.yaml`:
+
+Example:
+
+```yaml
+dockerfile: Dockerfile
+secrets:
+  - env: AWS_ACCESS_KEY_ID
+  - id: aws_secret_key
+    env: AWS_SECRET_ACCESS_KEY
+  - src: $HOME/.aws/credentials
+  - id: plainSecret
+    value: plainSecretValue
+```
+
+To use a secret in the build and make it accessible for a `RUN` instruction, use the `--mount=type=secret` flag in the Dockerfile.  
+When a secret is used in the Dockerfile, it is mounted as a file by default. The default path for the secret file inside the build container is `/run/secrets/<id>`.  
+Note that if you do not specify an `id` for a secret in `werf.yaml`, a default value will be used:  
+- For `env`, it will be the name of the environment variable.  
+- For `src`, it will be the name of the final file (e.g., for `/path/to/file`, the `id` will be `file`).  
+
+Example for an environment variable:  
+
+```Dockerfile
+RUN --mount=type=secret,id=AWS_ACCESS_KEY_ID \
+    export WERF_BUILD_SECRET="$(cat /run/secrets/AWS_ACCESS_KEY_ID)"
+```
+
+Example for a secrets file:  
+
+```Dockerfile
+RUN --mount=type=secret,id=credentials \
+    AWS_SHARED_CREDENTIALS_FILE=/run/secrets/credentials \
+    aws s3 cp ...
+```
+
+To mount a secret as an environment variable instead of a file, use the `env` option:
+
+```Dockerfile
+RUN --mount=type=secret,id=AWS_ACCESS_KEY_ID,env=AWS_ACCESS_KEY_ID \
+    --mount=type=secret,id=aws-secret-key,env=AWS_SECRET_ACCESS_KEY \
+    aws s3 cp ...
+```
+
+To mount a secret as a file with a different name, use the `target` option:
+
+```Dockerfile
+RUN --mount=type=secret,id=credentials,target=/root/.aws/credentials \
+    aws s3 cp ...
+```
+
+You can also use an arbitrary value that will not be stored in the final image. For this, use the `value` type.  
+In this case, you must explicitly specify an `id` for the secret.
+
+Example:
+
+```Dockerfile
+RUN --mount=type=secret,id=plainSecret \
+    export WERF_BUILD_SECRET="$(cat /run/secrets/plainSecret)"
+```
+
+
 ### Stapel
 
 Stapel is a built-in alternative syntax for describing build instructions. Detailed documentation on Stapel syntax is available [in the corresponding documentation section]({{"/usage/build/stapel/overview.html" | true_relative_url }}).
