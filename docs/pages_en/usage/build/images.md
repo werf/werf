@@ -67,7 +67,6 @@ You can also define multiple target images using various stages of the same Dock
 
 ```Dockerfile
 # Dockerfile
-
 FROM node as backend
 WORKDIR /app
 COPY package*.json /app/
@@ -129,6 +128,77 @@ dockerfile: Dockerfile
 ```
 
 In the example above, werf will use the Dockerfile at `docs/Dockerfile` to build the `docs` image and the Dockerfile at `service/Dockerfile` to build the `service` image.
+
+#### Using build secrets
+
+A build secret is any sensitive information, such as a password or API token, required during the build process of your application.
+
+Build arguments and environment variables are not suitable for passing secrets to the build process, as they are retained in the final image. 
+
+Instead, you can define secrets in the `werf.yaml` file to use them during the build process. 
+
+Example:
+
+```yaml
+# werf.yaml
+project: example
+configVersion: 1
+---
+image: backend
+dockerfile: Dockerfile
+secrets:
+  - env: AWS_ACCESS_KEY_ID
+  - id: aws_secret_key
+    env: AWS_SECRET_ACCESS_KEY
+  - src: "~/.aws/credentials"
+  - id: plainSecret
+    value: plainSecretValue
+```
+
+To access a secret during the build, use the `--mount=type=secret` flag in the Dockerfile's `RUN` instructions. When a secret is mounted, it is available as a file by default. The default mount path for the secret file inside the build container is `/run/secrets/<id>`.
+
+If an `id` is not specified for a secret in `werf.yaml`, the default value is assigned automatically:
+- For `env`, the `id` defaults to the name of the environment variable.
+- For `src`, the `id` defaults to the file name (e.g., for `/path/to/file`, the `id` will be `file`).
+
+Example for accessing an environment variable secret:
+
+```Dockerfile
+RUN --mount=type=secret,id=AWS_ACCESS_KEY_ID \
+    export WERF_BUILD_SECRET="$(cat /run/secrets/AWS_ACCESS_KEY_ID)"
+```
+
+Example for accessing a secret from a file:
+
+```Dockerfile
+RUN --mount=type=secret,id=credentials \
+    AWS_SHARED_CREDENTIALS_FILE=/run/secrets/credentials \
+    aws s3 cp ...
+```
+
+To mount a secret as an **environment variable** rather than a file, use the `env` option:
+
+```Dockerfile
+RUN --mount=type=secret,id=AWS_ACCESS_KEY_ID,env=AWS_ACCESS_KEY_ID \
+    --mount=type=secret,id=aws-secret-key,env=AWS_SECRET_ACCESS_KEY \
+    aws s3 cp ...
+```
+
+To mount a secret as a file with a different name, use the `target` option:
+
+```Dockerfile
+RUN --mount=type=secret,id=credentials,target=/root/.aws/credentials \
+    aws s3 cp ...
+```
+
+You can also use an arbitrary value that will not be stored in the final image. For this, use the `value` type. In this case, you must explicitly specify an `id` for the secret.
+
+Example:
+
+```Dockerfile
+RUN --mount=type=secret,id=plainSecret \
+    export WERF_BUILD_SECRET="$(cat /run/secrets/plainSecret)"
+```
 
 #### Adding arbitrary files to the build context
 
