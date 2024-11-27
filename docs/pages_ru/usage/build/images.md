@@ -135,9 +135,7 @@ dockerfile: Dockerfile
 
 Аргументы сборки и переменные окружения не подходят для передачи секретов в сборку, поскольку они сохраняются в конечном образе.  
 
-Вы можете использовать секреты при сборке, описав их в `werf.yaml`. 
-
-Пример:
+Вы можете использовать секреты при сборке, описав их в `werf.yaml`.
 
 ```yaml
 # werf.yaml
@@ -161,41 +159,29 @@ secrets:
 - Для `env` — имя переменной окружения.
 - Для `src` — имя конечного файла (например, для `/path/to/file` будет использован `id: file`).
 
-Пример для переменной окружения:
-
 ```Dockerfile
+# Dockerfile
+FROM alpine:3.18
+
+# Пример использования секрета из переменной окружения
 RUN --mount=type=secret,id=AWS_ACCESS_KEY_ID \
     export WERF_BUILD_SECRET="$(cat /run/secrets/AWS_ACCESS_KEY_ID)"
-```
 
-Пример для файла с секретами:
-
-```Dockerfile
+# Пример использования секрета из файла с секретами
 RUN --mount=type=secret,id=credentials \
     AWS_SHARED_CREDENTIALS_FILE=/run/secrets/credentials \
     aws s3 cp ...
-```
 
-Чтобы смонтировать секрет как переменную среды, а не как файл, используйте опцию `env`:
-
-```Dockerfile
+# Пример монтирования секрета как переменную окружения
 RUN --mount=type=secret,id=AWS_ACCESS_KEY_ID,env=AWS_ACCESS_KEY_ID \
     --mount=type=secret,id=aws-secret-key,env=AWS_SECRET_ACCESS_KEY \
     aws s3 cp ...
-```
 
-Чтобы смонтировать секрет как файл с другим именем, используйте опцию `target`:
-
-```Dockerfile
+# Пример монтирования секрета как файл с другим именем
 RUN --mount=type=secret,id=credentials,target=/root/.aws/credentials \
     aws s3 cp ...
-```
 
-Вы также можете использовать произвольное значение, которое не будет сохранено в конечном образе. Для этого используйте тип `value`. В этом случае необходимо явно указать `id` для секрета.
-
-Пример:
-
-```Dockerfile
+# Пример использования произвольного значения, которое не будет сохранено в конечном образе
 RUN --mount=type=secret,id=plainSecret \
     export WERF_BUILD_SECRET="$(cat /run/secrets/plainSecret)"
 ```
