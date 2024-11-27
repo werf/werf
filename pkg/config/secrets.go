@@ -171,7 +171,7 @@ func (s *SecretFromPlainValue) GetMountPath(stageHostTmpDir string) (string, err
 	return getMountPath(s.Id, stageHostTmpDir, []byte(s.Value))
 }
 
-func getMountPath(secretId string, stageHostTmpDir string, data []byte) (string, error) {
+func getMountPath(secretId, stageHostTmpDir string, data []byte) (string, error) {
 	tmpFile, err := writeToTmpFile(stageHostTmpDir, data)
 	if err != nil {
 		return "", fmt.Errorf("unable to mount secret: %w", err)
@@ -187,14 +187,14 @@ func writeToTmpFile(stageHostTmpDir string, data []byte) (string, error) {
 
 	tmpFilePath := tmpFile.Name()
 
-	if err := os.WriteFile(tmpFilePath, data, 0400); err != nil {
+	if err := os.WriteFile(tmpFilePath, data, 0o400); err != nil {
 		return "", err
 	}
 
 	return tmpFilePath, nil
 }
 
-func generateMountPath(id string, filepath string) string {
+func generateMountPath(id, filepath string) string {
 	containerPath := fmt.Sprintf("/run/secrets/%s", id)
 	return fmt.Sprintf("%s:%s:ro", filepath, containerPath)
 }

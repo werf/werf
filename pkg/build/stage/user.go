@@ -16,7 +16,7 @@ func getBuilder(imageBaseConfig *config.StapelImageBase, baseStageOptions *BaseS
 	if imageBaseConfig.Shell != nil {
 		b = builder.NewShellBuilder(imageBaseConfig.Shell, extra, imageBaseConfig.Secrets)
 	} else if imageBaseConfig.Ansible != nil {
-		b = builder.NewAnsibleBuilder(imageBaseConfig.Ansible, extra)
+		b = builder.NewAnsibleBuilder(imageBaseConfig.Ansible, extra, imageBaseConfig.Secrets)
 	}
 
 	return b
