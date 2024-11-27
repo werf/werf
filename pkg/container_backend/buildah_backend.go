@@ -849,19 +849,24 @@ func (backend *BuildahBackend) RemoveHostDirs(ctx context.Context, mountDir stri
 	})
 }
 
-func parseVolume(volume string) (string, string, error) {
-	volumeParts := strings.SplitN(volume, ":", 2)
-	if len(volumeParts) != 2 {
-		return "", "", fmt.Errorf("expected SOURCE:DESTINATION format")
+func parseVolume(volume string) (string, string, string, error) {
+	volumeParts := strings.Split(volume, ":")
+
+	switch len(volumeParts) {
+	case 2:
+		return volumeParts[0], volumeParts[1], "", nil
+	case 3:
+		return volumeParts[0], volumeParts[1], volumeParts[2], nil
+	default:
+		return "", "", "", fmt.Errorf("expected SOURCE:DESTINATION[:OPTIONS] format")
 	}
-	return volumeParts[0], volumeParts[1], nil
 }
 
 func makeBuildahMounts(volumes []string) ([]*specs.Mount, error) {
 	var mounts []*specs.Mount
 
 	for _, volume := range volumes {
-		from, to, err := parseVolume(volume)
+		from, to, mode, err := parseVolume(volume)
 		if err != nil {
 			return nil, fmt.Errorf("invalid volume %q: %w", volume, err)
 		}
@@ -870,6 +875,7 @@ func makeBuildahMounts(volumes []string) ([]*specs.Mount, error) {
 			Type:        "bind",
 			Source:      from,
 			Destination: to,
+			Options:     []string{mode},
 		})
 	}
 

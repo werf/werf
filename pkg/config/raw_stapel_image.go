@@ -24,6 +24,7 @@ type rawStapelImage struct {
 	RawImport            []*rawImport     `yaml:"import,omitempty"`
 	RawDependencies      []*rawDependency `yaml:"dependencies,omitempty"`
 	Platform             []string         `yaml:"platform,omitempty"`
+	RawSecrets           []*rawSecret     `yaml:"secrets,omitempty"`
 
 	doc *doc `yaml:"-"` // parent
 
@@ -294,6 +295,13 @@ func (c *rawStapelImage) toStapelImageBaseDirective(giterminismManager gitermini
 
 		imageBase.Dependencies = append(imageBase.Dependencies, dependencyDirective)
 	}
+
+	secrets, err := GetValidatedSecretsList(c.RawSecrets, giterminismManager, c.doc)
+	if err != nil {
+		return nil, err
+	}
+
+	imageBase.Secrets = secrets
 
 	if err := c.validateStapelImageBaseDirective(giterminismManager, imageBase); err != nil {
 		return nil, err

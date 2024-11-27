@@ -20,12 +20,13 @@ import (
 const scriptFileName = "script.sh"
 
 type Shell struct {
-	config *config.Shell
-	extra  *Extra
+	config  *config.Shell
+	extra   *Extra
+	secrets []config.Secret
 }
 
-func NewShellBuilder(config *config.Shell, extra *Extra) *Shell {
-	return &Shell{config: config, extra: extra}
+func NewShellBuilder(config *config.Shell, extra *Extra, secrets []config.Secret) *Shell {
+	return &Shell{config: config, extra: extra, secrets: secrets}
 }
 
 func (b *Shell) IsBeforeInstallEmpty(ctx context.Context) bool {
@@ -67,13 +68,12 @@ func (b *Shell) isEmptyStage(ctx context.Context, userStageName string) bool {
 }
 
 func (b *Shell) stage(cr container_backend.ContainerBackend, stageBuilder stage_builder.StageBuilderInterface, useLegacyStapelBuilder bool, userStageName string) error {
+	stageHostTmpDir, err := b.stageHostTmpDir(userStageName)
+	if err != nil {
+		return err
+	}
 	if useLegacyStapelBuilder {
 		container := stageBuilder.LegacyStapelStageBuilder().BuilderContainer()
-
-		stageHostTmpDir, err := b.stageHostTmpDir(userStageName)
-		if err != nil {
-			return err
-		}
 
 		container.AddVolume(
 			fmt.Sprintf("%s:%s:rw", stageHostTmpDir, b.containerTmpDir()),
@@ -86,9 +86,24 @@ func (b *Shell) stage(cr container_backend.ContainerBackend, stageBuilder stage_
 			return err
 		}
 
+		err := b.addBuildSecretsVolumes(stageHostTmpDir, func(secretPath string) {
+			container.AddVolume(secretPath)
+		})
+		if err != nil {
+			return fmt.Errorf("unable to add volumes: %w", err)
+		}
+
 		container.AddServiceRunCommands(containerTmpScriptFilePath)
+
 	} else {
 		stageBuilder.StapelStageBuilder().AddCommands(b.stageCommands(userStageName)...)
+
+		err = b.addBuildSecretsVolumes(stageHostTmpDir, func(secretPath string) {
+			stageBuilder.StapelStageBuilder().AddBuildVolumes(secretPath)
+		})
+		if err != nil {
+			return fmt.Errorf("unable to add volumes: %w", err)
+		}
 	}
 
 	return nil
@@ -178,4 +193,15 @@ func (b *Shell) stageHostTmpDir(userStageName string) (string, error) {
 
 func (b *Shell) containerTmpDir() string {
 	return path.Join(b.extra.ContainerWerfPath, "shell")
+}
+
+func (b *Shell) addBuildSecretsVolumes(stageHostTmpDir string, fn func(string)) error {
+	for _, s := range b.secrets {
+		secretPath, err := s.GetMountPath(stageHostTmpDir)
+		if err != nil {
+			return err
+		}
+		fn(secretPath)
+	}
+	return nil
 }

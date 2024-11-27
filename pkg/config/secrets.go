@@ -3,9 +3,10 @@ package config
 import (
 	"errors"
 	"fmt"
+	"math"
+	"math/rand/v2"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
 )
@@ -14,6 +15,7 @@ type Secret interface {
 	GetSecretStringArg() (string, error)
 	GetSecretId() string
 	InspectByGiterminism(giterminismManager giterminism_manager.Interface) error
+	GetMountPath(stageHostTmpDir string) (string, error)
 }
 
 type SecretFromEnv struct {
@@ -32,6 +34,9 @@ type SecretFromPlainValue struct {
 }
 
 func newSecretFromEnv(s *rawSecret) (*SecretFromEnv, error) {
+	if _, exists := os.LookupEnv(s.Env); !exists {
+		return nil, fmt.Errorf("specified env variable doesn't exist")
+	}
 	if s.Id == "" {
 		s.Id = s.Env
 	}
@@ -42,6 +47,9 @@ func newSecretFromEnv(s *rawSecret) (*SecretFromEnv, error) {
 }
 
 func newSecretFromSrc(s *rawSecret) (*SecretFromSrc, error) {
+	if _, err := os.Stat(s.Src); errors.Is(err, os.ErrNotExist) {
+		return nil, fmt.Errorf("path %s doesn't exist", s.Src)
+	}
 	if s.Id == "" {
 		s.Id = filepath.Base(s.Src)
 	}
@@ -62,16 +70,10 @@ func newSecretFromPlainValue(s *rawSecret) (*SecretFromPlainValue, error) {
 }
 
 func (s *SecretFromEnv) GetSecretStringArg() (string, error) {
-	if _, exists := os.LookupEnv(s.Value); !exists {
-		return "", fmt.Errorf("specified env variable doesn't exist")
-	}
 	return fmt.Sprintf("id=%s,env=%s", s.Id, s.Value), nil
 }
 
 func (s *SecretFromSrc) GetSecretStringArg() (string, error) {
-	if _, err := os.Stat(s.Value); errors.Is(err, os.ErrNotExist) {
-		return "", fmt.Errorf("path %s doesn't exist", s.Value)
-	}
 	return fmt.Sprintf("id=%s,src=%s", s.Id, s.Value), nil
 }
 
@@ -84,8 +86,7 @@ func (s *SecretFromPlainValue) GetSecretStringArg() (string, error) {
 }
 
 func (s *SecretFromPlainValue) setPlainValueAsEnv() (*SecretFromEnv, error) {
-	t := time.Now().Unix()
-	envKey := fmt.Sprintf("tmpbuild%d_%s", t, s.Id) // generate unique value
+	envKey := fmt.Sprintf("tmpbuild%d_%s", rand.IntN(math.MaxInt32), s.Id) // generate unique value
 	if _, e := os.LookupEnv(envKey); e {
 		return nil, fmt.Errorf("can't set secret %s: id is not unique", s.Id) // should never be here
 	}
@@ -123,4 +124,77 @@ func (s *SecretFromSrc) InspectByGiterminism(giterminismManager giterminism_mana
 
 func (s *SecretFromPlainValue) InspectByGiterminism(giterminismManager giterminism_manager.Interface) error {
 	return nil
+}
+
+func GetValidatedSecretsList(rawSecrets []*rawSecret, giterminismManager giterminism_manager.Interface, doc *doc) ([]Secret, error) {
+	secretIds := make(map[string]struct{})
+	secrets := make([]Secret, 0, len(rawSecrets))
+
+	for _, s := range rawSecrets {
+		secret, err := s.toDirective()
+		if err != nil {
+			return nil, err
+		}
+
+		secretId := secret.GetSecretId()
+		if _, ok := secretIds[secretId]; !ok {
+			secretIds[secretId] = struct{}{}
+		} else {
+			return nil, newDetailedConfigError("duplicated secret %s", secretId, s.doc)
+		}
+
+		err = secret.InspectByGiterminism(giterminismManager)
+		if err != nil {
+			return nil, err
+		}
+
+		secrets = append(secrets, secret)
+	}
+
+	return secrets, nil
+}
+
+func (s *SecretFromEnv) GetMountPath(stageHostTmpDir string) (string, error) {
+	data := []byte(os.Getenv(s.Value))
+	return getMountPath(s.Id, stageHostTmpDir, data)
+}
+
+func (s *SecretFromSrc) GetMountPath(stageHostTmpDir string) (string, error) {
+	if abs, err := filepath.Abs(s.Value); err != nil {
+		return "", fmt.Errorf("unable to set mount: %w", err)
+	} else { // TODO: (iapershin) create fix to use abs path everywhere
+		return generateMountPath(s.Id, abs), nil
+	}
+}
+
+func (s *SecretFromPlainValue) GetMountPath(stageHostTmpDir string) (string, error) {
+	return getMountPath(s.Id, stageHostTmpDir, []byte(s.Value))
+}
+
+func getMountPath(secretId string, stageHostTmpDir string, data []byte) (string, error) {
+	tmpFile, err := writeToTmpFile(stageHostTmpDir, data)
+	if err != nil {
+		return "", fmt.Errorf("unable to mount secret: %w", err)
+	}
+	return generateMountPath(secretId, tmpFile), nil
+}
+
+func writeToTmpFile(stageHostTmpDir string, data []byte) (string, error) {
+	tmpFile, err := os.CreateTemp(stageHostTmpDir, "stapel*")
+	if err != nil {
+		return "", err
+	}
+
+	tmpFilePath := tmpFile.Name()
+
+	if err := os.WriteFile(tmpFilePath, data, 0400); err != nil {
+		return "", err
+	}
+
+	return tmpFilePath, nil
+}
+
+func generateMountPath(id string, filepath string) string {
+	containerPath := fmt.Sprintf("/run/secrets/%s", id)
+	return fmt.Sprintf("%s:%s:ro", filepath, containerPath)
 }
