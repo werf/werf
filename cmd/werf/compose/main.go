@@ -279,10 +279,6 @@ func newCmd(ctx context.Context, composeCmdName string, options *newCmdOptions) 
 				cmdData.ComposeCommandOptions = strings.Fields(cmdData.RawComposeCommandOptions)
 			}
 
-			if err := checkComposeBin(cmdData); err != nil {
-				return err
-			}
-
 			return runMain(ctx, composeCmdName, cmdData, commonCmdData, options.FollowSupport)
 		},
 	})
@@ -349,18 +345,6 @@ func newCmd(ctx context.Context, composeCmdName string, options *newCmdOptions) 
 	cmd.Flags().StringVarP(&cmdData.ComposeBinPath, "docker-compose-bin-path", "", os.Getenv("WERF_DOCKER_COMPOSE_BIN_PATH"), "DEPRECATED: \"docker compose\" command always used now, this option is ignored. Define docker-compose bin path (default $WERF_DOCKER_COMPOSE_BIN_PATH)")
 
 	return cmd
-}
-
-func checkComposeBin(cmdData composeCmdData) error {
-	dockerComposeBinPath := "docker-compose"
-	if cmdData.ComposeBinPath != "" {
-		dockerComposeBinPath = cmdData.ComposeBinPath
-	}
-
-	if _, err := exec.LookPath(dockerComposeBinPath); err != nil {
-		return fmt.Errorf("%s: %w", dockerComposeBinPath, err)
-	}
-	return nil
 }
 
 func processArgs(cmdData *composeCmdData, cmd *cobra.Command, args []string) {
