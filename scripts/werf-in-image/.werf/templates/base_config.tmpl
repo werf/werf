@@ -7,6 +7,9 @@ build:
     - linux/arm64
 ---
 
+{{- $uniqueVersions := dict -}}
+{{ $_ := set $ "ChannelVersion" $.DefaultChannelVersion }}
+
 {{- range $distroInd, $distroName := $.Distros }}
   {{ $_ := set $ "DistroName" $distroName }}
   {{- include "<app>-<distro>" $ }}
@@ -18,18 +21,23 @@ build:
 {{- range $groupInd, $groupObject := $trdlChannelsValues.groups }}
   {{ $_ := set $ "GroupName" $groupObject.name }}
 
-  # 1.0 is a non-supported group.
+  {{/* # 1.0 is a non-supported group. */}}
   {{- if (eq $.GroupName "1.0") }}{{- continue }}{{- end }}
 
 {{- include "<group>" $ }}
 
   {{- range $_, $channelObject := $groupObject.channels }}
+    {{- if not (hasKey $uniqueVersions $channelObject.version) }}
+      {{ $_ := set $uniqueVersions $channelObject.version true }}
+      {{ $_ := set $ "ChannelName" $channelObject.name }}
+      {{ $_ := set $ "ChannelVersion" $channelObject.version }}
+      {{- include "trdl-<app>-<version>" $ }}
+    {{- end }}
+
     {{ $_ := set $ "ChannelName" $channelObject.name }}
     {{ $_ := set $ "ChannelVersion" $channelObject.version }}
 
-{{- include "trdl-<app>-<group>-<channel>" $ }}
 {{- include "<group>-<channel>" $ }}
-
     {{- range $distroInd, $distroName := $.Distros }}
         {{ $_ := set $ "DistroName" $distroName }}
 
