@@ -340,6 +340,50 @@ shell:
 
 In the example above the current commit hash will be inserted into the `echo ...` command, but this will happen in the very last moment — when the build instructions will be interpreted and executed by the shell. This way there will be no "install" stage rebuilds on every commit.
 
+## Using Build Secrets
+
+A build secret is any confidential information, such as a password or API token, used during the build process of your application.
+
+Build arguments and environment variables are not suitable for passing secrets during a build, as they may be retained in the final image.  
+You can use secrets during the build process by defining them in `werf.yaml`.
+
+```yaml
+image: stapel-shell
+from: ubuntu:22.04
+secrets:
+  - env: AWS_ACCESS_KEY_ID
+  - id: aws_secret_key
+    env: AWS_SECRET_ACCESS_KEY
+  - src: "~/.aws/credentials"
+  - id: plainSecret
+    value: plainSecretValue
+```
+
+When using a secret in Stapel instructions, the secret is mounted to a file by default. The default path for the secret file inside the build container is `/run/secrets/<id>`. Note that if you do not specify a secret's `id` in `werf.yaml`, the default value for `id` will be used:
+
+- For `env` — the name of the environment variable.  
+- For `src` — the name of the destination file (e.g., for `/path/to/file`, the id will be `file`).  
+- For `value` — the `id` field is mandatory.  
+
+### Example Usage
+
+```yaml
+image: stapel-shell
+from: ubuntu:22.04
+secrets:
+  - env: AWS_ACCESS_KEY_ID
+  - id: aws_secret_key
+    env: AWS_SECRET_ACCESS_KEY
+  - src: "~/.aws/credentials"
+  - id: plainSecret
+    value: plainSecretValue
+shell:
+  setup:
+    - AWS_ACCESS_KEY_ID=$(cat /run/secrets/AWS_ACCESS_KEY_ID) AWS_SECRET_ACCESS_KEY=$(cat /run/secrets/aws_secret_key) aws s3 cp ...
+    - AWS_SHARED_CREDENTIALS_FILE=$(cat /run/secrets/credentials) aws s3 cp ...
+    - export WERF_BUILD_SECRET=$(cat /run/secrets/plainSecret)  
+```
+
 ## User stage dependencies
 
 werf features the ability to define the dependencies that will cause the _stage_ to be rebuilt. _Stages_ are built sequentially, and the _digest_ is calculated for each _stage_. _Digests_ have various dependencies. When those dependencies change, the _stage digest_ changes as well. As a result, werf rebuilds the affected _stage_ and all the subsequent _stages_.
