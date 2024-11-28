@@ -29,6 +29,8 @@ var SuiteData = struct {
 	RegistryContainerName   string
 
 	WerfRepo string
+
+	TempFiles []string
 }{}
 
 var (
@@ -40,6 +42,7 @@ var (
 
 	_ = SuiteData.AppendSynchronizedBeforeSuiteAllNodesFunc(func(_ []byte) {
 		SuiteData.RegistryLocalAddress, SuiteData.RegistryInternalAddress, SuiteData.RegistryContainerName = docker.LocalDockerRegistryRun()
+		SuiteData.TempFiles = append([]string{}, utils.CreateTmpFileInHome("secret_file_in_home", "secret"))
 	})
 
 	_ = SuiteData.AppendSynchronizedAfterSuiteAllNodesFunc(func() {
