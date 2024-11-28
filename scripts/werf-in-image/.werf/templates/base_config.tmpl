@@ -38,6 +38,7 @@ build:
     {{ $_ := set $ "ChannelVersion" $channelObject.version }}
 
 {{- include "<group>-<channel>" $ }}
+
     {{- range $distroInd, $distroName := $.Distros }}
         {{ $_ := set $ "DistroName" $distroName }}
 
