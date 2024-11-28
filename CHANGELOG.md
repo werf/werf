@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.332](https://www.github.com/werf/werf/compare/v1.2.331...v1.2.332) (2024-11-28)
+
+
+### Bug Fixes
+
+* **compose:** fix exec: "docker-compose": executable file not found in $PATH ([5d6ad64](https://www.github.com/werf/werf/commit/5d6ad64f52f27ec04cb4e6568c90355da79c8995))
+
 ### [1.2.331](https://www.github.com/werf/werf/compare/v1.2.330...v1.2.331) (2024-11-15)
 
 
