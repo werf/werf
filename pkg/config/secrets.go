@@ -1,14 +1,15 @@
 package config
 
 import (
-	"errors"
 	"fmt"
 	"math"
 	"math/rand/v2"
 	"os"
 	"path/filepath"
 
+	"github.com/werf/kubedog/pkg/utils"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
+	"github.com/werf/werf/v2/pkg/util"
 )
 
 type Secret interface {
@@ -47,15 +48,21 @@ func newSecretFromEnv(s *rawSecret) (*SecretFromEnv, error) {
 }
 
 func newSecretFromSrc(s *rawSecret) (*SecretFromSrc, error) {
-	if _, err := os.Stat(s.Src); errors.Is(err, os.ErrNotExist) {
-		return nil, fmt.Errorf("path %s doesn't exist", s.Src)
+	absPath, err := util.ExpandPath(s.Src)
+	if err != nil {
+		return nil, fmt.Errorf("error load secret from src: %w", err)
 	}
+
+	if exists, _ := utils.FileExists(absPath); !exists {
+		return nil, fmt.Errorf("error load secret from src: path %s doesn't exist", absPath)
+	}
+
 	if s.Id == "" {
-		s.Id = filepath.Base(s.Src)
+		s.Id = filepath.Base(absPath)
 	}
 	return &SecretFromSrc{
 		Id:    s.Id,
-		Value: s.Src,
+		Value: absPath,
 	}, nil
 }
 
@@ -160,11 +167,7 @@ func (s *SecretFromEnv) GetMountPath(stageHostTmpDir string) (string, error) {
 }
 
 func (s *SecretFromSrc) GetMountPath(stageHostTmpDir string) (string, error) {
-	if abs, err := filepath.Abs(s.Value); err != nil {
-		return "", fmt.Errorf("unable to set mount: %w", err)
-	} else { // TODO: (iapershin) create fix to use abs path everywhere
-		return generateMountPath(s.Id, abs), nil
-	}
+	return generateMountPath(s.Id, s.Value), nil
 }
 
 func (s *SecretFromPlainValue) GetMountPath(stageHostTmpDir string) (string, error) {

@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/werf/werf/v2/pkg/path_matcher"
+	"github.com/werf/werf/v2/pkg/util"
 )
 
 func NewConfig(ctx context.Context, fileReader fileReader, configRelPath string) (c Config, err error) {
@@ -229,5 +230,17 @@ func (s *secrets) IsEnvNameAccepted(name string) bool {
 }
 
 func (s *secrets) IsAllowSecretsFileAccepted(path string) bool {
-	return isPathMatched(s.AllowFiles, path)
+	return isAbsPathMatched(s.AllowFiles, path)
+}
+
+func isAbsPathMatched(patterns []string, p string) bool {
+	absPath := make([]string, 0, len(patterns))
+	for _, p := range patterns {
+		path, err := util.ExpandPath(p)
+		if err != nil {
+			return false
+		}
+		absPath = append(absPath, path)
+	}
+	return isPathMatched(absPath, p)
 }
