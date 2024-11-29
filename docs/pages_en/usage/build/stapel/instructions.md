@@ -363,9 +363,7 @@ When using a secret in Stapel instructions, the secret is mounted to a file by d
 
 - For `env` — the name of the environment variable.  
 - For `src` — the name of the destination file (e.g., for `/path/to/file`, the id will be `file`).  
-- For `value` — the `id` field is mandatory.  
-
-### Example Usage
+- For `value` — the `id` field is mandatory.
 
 ```yaml
 image: stapel-shell

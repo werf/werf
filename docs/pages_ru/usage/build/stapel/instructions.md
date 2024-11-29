@@ -387,8 +387,6 @@ secrets:
 Для `src` — имя конечного файла (например, для /path/to/file будет использован id: file).
 Для `value` — поле id является обязательным.
 
-Пример использования
-
 ```yaml
 image: stapel-shell
 from: ubuntu:22.04
