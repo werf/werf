@@ -478,8 +478,8 @@ sections:
                   ru: "Глобы стадии setup"
       - <<: *dockerfile-secrets-section
         detailsArticle:
-          en: "https://werf.io/docs/v2/usage/build/stapel/instructions.html#using-build-secrets"
-          ru: "https://werf.io/docs/v2/usage/build/stapel/instructions.html#использование-сборочных-секретов"
+          en: "/usage/build/stapel/instructions.html#using-build-secrets"
+          ru: "/usage/build/stapel/instructions.html#использование-сборочных-секретов"
       - name: shell
         description:
           en: "Shell assembly instructions"
