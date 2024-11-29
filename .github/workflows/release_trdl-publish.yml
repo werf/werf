@@ -58,9 +58,9 @@ jobs:
         dest-registry:
           - ghcr.io
           - registry-write.werf.io
-        config:
-          - --config werf.yaml
-          - --config werf-argocd-cmp-sidecar.yaml
+        app:
+          - werf
+          - werf-argocd-cmp-sidecar
 
     needs: publish
     runs-on: ubuntu-latest-16-cores
@@ -97,7 +97,7 @@ jobs:
 
       - name: Build and publish werf images
         working-directory: ./scripts/werf-in-image
-        run: ./build-and-publish.sh ${{ matrix.dest-registry }} "${{ matrix.config }}"
+        run: ./build-and-publish.sh ${{ matrix.dest-registry }} ${{ matrix.app }}
         env:
           DOCKER_BUILDKIT: 1
 
