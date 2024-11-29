@@ -14,9 +14,9 @@ func getBuilder(imageBaseConfig *config.StapelImageBase, baseStageOptions *BaseS
 	var b builder.Builder
 	extra := &builder.Extra{ContainerWerfPath: baseStageOptions.ContainerWerfDir, TmpPath: baseStageOptions.ImageTmpDir}
 	if imageBaseConfig.Shell != nil {
-		b = builder.NewShellBuilder(imageBaseConfig.Shell, extra)
+		b = builder.NewShellBuilder(imageBaseConfig.Shell, extra, imageBaseConfig.Secrets)
 	} else if imageBaseConfig.Ansible != nil {
-		b = builder.NewAnsibleBuilder(imageBaseConfig.Ansible, extra)
+		b = builder.NewAnsibleBuilder(imageBaseConfig.Ansible, extra, imageBaseConfig.Secrets)
 	}
 
 	return b

@@ -146,32 +146,22 @@ func (c *rawImageFromDockerfile) toImageFromDockerfileDirective(giterminismManag
 	if len(c.RawSecrets) > 0 && image.Staged {
 		return nil, fmt.Errorf("secrets are not supported for staged build yet")
 	}
-	secretIds := make(map[string]struct{})
-	for _, rawSecrets := range c.RawSecrets {
-		secret, err := rawSecrets.toDirective()
-		if err != nil {
-			return nil, err
-		}
 
-		secretId := secret.GetSecretId()
-		if v, ok := secretIds[secretId]; !ok {
-			secretIds[secretId] = struct{}{}
-		} else {
-			return nil, fmt.Errorf("duplicated secret id %s", v)
-		}
-
-		err = secret.InspectByGiterminism(giterminismManager)
-		if err != nil {
-			return nil, newDetailedConfigError(err.Error(), nil, c.doc)
-		}
-
-		secretArg, err := secret.GetSecretStringArg()
-		if err != nil {
-			return nil, err
-		}
-
-		image.Secrets = append(image.Secrets, secretArg)
+	secrets, err := GetValidatedSecrets(c.RawSecrets, giterminismManager, c.doc)
+	if err != nil {
+		return nil, err
 	}
+
+	secretsArgs := make([]string, 0, len(secrets))
+	for _, s := range secrets {
+		secret, err := s.GetSecretStringArg()
+		if err != nil {
+			return nil, err
+		}
+		secretsArgs = append(secretsArgs, secret)
+	}
+
+	image.Secrets = secretsArgs
 
 	if err := image.validate(giterminismManager); err != nil {
 		return nil, err

@@ -23,8 +23,9 @@ import (
 )
 
 type Ansible struct {
-	config *config.Ansible
-	extra  *Extra
+	config  *config.Ansible
+	extra   *Extra
+	secrets []config.Secret
 }
 
 type Extra struct {
@@ -32,7 +33,7 @@ type Extra struct {
 	TmpPath           string
 }
 
-func NewAnsibleBuilder(config *config.Ansible, extra *Extra) *Ansible {
+func NewAnsibleBuilder(config *config.Ansible, extra *Extra, secrets []config.Secret) *Ansible {
 	return &Ansible{config: config, extra: extra}
 }
 
@@ -133,6 +134,13 @@ func (b *Ansible) stage(ctx context.Context, cr container_backend.ContainerBacke
 		command := strings.Join(commandParts, " ")
 		container.AddServiceRunCommands(command)
 
+		err = b.addBuildSecretsVolumes(stageHostTmpDir, func(secretPath string) {
+			container.AddVolume(secretPath)
+		})
+		if err != nil {
+			return fmt.Errorf("unable to add volumes: %w", err)
+		}
+
 		return nil
 	} else {
 		return fmt.Errorf("ansible builder is not supported when using buildah backend, please use shell builder instead")
@@ -232,4 +240,15 @@ func (b *Ansible) stageHostWorkDir(userStageName string) (string, error) {
 	}
 
 	return p, nil
+}
+
+func (b *Ansible) addBuildSecretsVolumes(stageHostTmpDir string, fn func(string)) error {
+	for _, s := range b.secrets {
+		secretPath, err := s.GetMountPath(stageHostTmpDir)
+		if err != nil {
+			return err
+		}
+		fn(secretPath)
+	}
+	return nil
 }
