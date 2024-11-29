@@ -296,7 +296,7 @@ func (c *rawStapelImage) toStapelImageBaseDirective(giterminismManager gitermini
 		imageBase.Dependencies = append(imageBase.Dependencies, dependencyDirective)
 	}
 
-	secrets, err := GetValidatedSecretsList(c.RawSecrets, giterminismManager, c.doc)
+	secrets, err := GetValidatedSecrets(c.RawSecrets, giterminismManager, c.doc)
 	if err != nil {
 		return nil, err
 	}

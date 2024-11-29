@@ -126,7 +126,7 @@ func (s *SecretFromPlainValue) InspectByGiterminism(giterminismManager gitermini
 	return nil
 }
 
-func GetValidatedSecretsList(rawSecrets []*rawSecret, giterminismManager giterminism_manager.Interface, doc *doc) ([]Secret, error) {
+func GetValidatedSecrets(rawSecrets []*rawSecret, giterminismManager giterminism_manager.Interface, doc *doc) ([]Secret, error) {
 	secretIds := make(map[string]struct{})
 	secrets := make([]Secret, 0, len(rawSecrets))
 
