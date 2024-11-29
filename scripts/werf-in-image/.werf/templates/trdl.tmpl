@@ -1,5 +1,5 @@
-{{- define "trdl-<app>-<group>-<channel>" }}
-{{- $imageName := (printf "trdl-%s-%s-%s" $.App .GroupName .ChannelName) }}
+{{- define "trdl-<app>-<version>" }}
+{{- $imageName := (printf "trdl-%s-%s" $.App .ChannelVersion) }}
 ---
 image: {{ $imageName }}
 dockerfile: ./dockerfile/trdl.Dockerfile
