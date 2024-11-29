@@ -7,7 +7,20 @@ build:
     - linux/arm64
 ---
 
-{{- $uniqueVersions := dict -}}
+{{- $uniqueVersions := list -}}
+
+{{/* set up default channel version  */}}
+{{- $trdlChannelsValues := .Files.Get "../../trdl_channels.yaml" | fromYaml -}}
+{{- range $_, $groupObject := $trdlChannelsValues.groups }}
+  {{- if eq $groupObject.name $.DefaultGroupName }}
+    {{- range $_, $channelObject := $groupObject.channels }}
+      {{- if eq $channelObject.name $.DefaultChannelName}}
+        {{ $_ := set $ "DefaultChannelVersion" $channelObject.version }}
+      {{- end}}
+    {{- end}}
+  {{- end}}
+{{- end}}
+
 {{ $_ := set $ "ChannelVersion" $.DefaultChannelVersion }}
 
 {{- range $distroInd, $distroName := $.Distros }}
@@ -27,8 +40,8 @@ build:
 {{- include "<group>" $ }}
 
   {{- range $_, $channelObject := $groupObject.channels }}
-    {{- if not (hasKey $uniqueVersions $channelObject.version) }}
-      {{ $_ := set $uniqueVersions $channelObject.version true }}
+    {{- if not (has $channelObject.version $uniqueVersions) }}
+      {{ $uniqueVersions = append $uniqueVersions $channelObject.version }}
       {{ $_ := set $ "ChannelName" $channelObject.name }}
       {{ $_ := set $ "ChannelVersion" $channelObject.version }}
       {{- include "trdl-<app>-<version>" $ }}

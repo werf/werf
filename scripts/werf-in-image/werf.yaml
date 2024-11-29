@@ -4,16 +4,4 @@
 {{ $_ := set . "DefaultChannelName" "stable" }}
 {{ $_ := set . "DefaultDistroName" "alpine" }}
 
-# set up default channel version  
-{{- $trdlChannelsValues := .Files.Get "../../trdl_channels.yaml" | fromYaml -}}
-{{- range $_, $groupObject := $trdlChannelsValues.groups }}
-  {{- if eq $groupObject.name $.DefaultGroupName }}
-    {{- range $_, $channelObject := $groupObject.channels }}
-      {{- if eq $channelObject.name $.DefaultChannelName}}
-        {{ $_ := set $ "DefaultChannelVersion" $channelObject.version }}
-      {{- end}}
-    {{- end}}
-  {{- end}}
-{{- end}}
-
 {{ include "templates/base_config.tmpl" . }}
