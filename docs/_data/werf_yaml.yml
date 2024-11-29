@@ -249,10 +249,14 @@ sections:
         description:
           en: SSH agent socket or keys to the build (only if BuildKit enabled) (see docker build --ssh option)
           ru: Сокет агента SSH или ключи для сборки определённых слоёв (только если используется BuildKit) (подобно docker build --ssh)
-      - name: secrets
+      - &dockerfile-secrets-section
+        name: secrets
         description:
           en: "Secrets used in image build. Only one of the following options can be used in a single instance: env, src, or value"
           ru: "Секреты, используемые при сборке образа. В одном экземпляре можно использовать только одну из следующих опций: env, src или value"
+        detailsArticle:
+          en: "/usage/build/images.html#using-build-secrets"
+          ru: "/usage/build/images.html#использование-сборочных-секретов"
         directiveList:
           - name: id
             value: "string"
@@ -472,6 +476,10 @@ sections:
                 description:
                   en: "Globs for setup stage"
                   ru: "Глобы стадии setup"
+      - <<: *dockerfile-secrets-section
+        detailsArticle:
+          en: "/usage/build/stapel/instructions.html#using-build-secrets"
+          ru: "/usage/build/stapel/instructions.html#использование-сборочных-секретов"
       - name: shell
         description:
           en: "Shell assembly instructions"
