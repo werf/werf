@@ -236,11 +236,11 @@ func (s *secrets) IsAllowSecretsFileAccepted(path string) bool {
 func isAbsPathMatched(patterns []string, p string) bool {
 	absPath := make([]string, 0, len(patterns))
 	for _, p := range patterns {
-		noTildePath, err := util.ReplaceTildeWithHome(p)
+		path, err := util.ExpandPath(p)
 		if err != nil {
 			return false
 		}
-		absPath = append(absPath, util.GetAbsoluteFilepath(noTildePath))
+		absPath = append(absPath, path)
 	}
 	return isPathMatched(absPath, p)
 }

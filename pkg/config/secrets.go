@@ -1,13 +1,13 @@
 package config
 
 import (
-	"errors"
 	"fmt"
 	"math"
 	"math/rand/v2"
 	"os"
 	"path/filepath"
 
+	"github.com/werf/kubedog/pkg/utils"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
 	"github.com/werf/werf/v2/pkg/util"
 )
@@ -48,14 +48,15 @@ func newSecretFromEnv(s *rawSecret) (*SecretFromEnv, error) {
 }
 
 func newSecretFromSrc(s *rawSecret) (*SecretFromSrc, error) {
-	noTildePath, err := util.ReplaceTildeWithHome(s.Src)
+	absPath, err := util.ExpandPath(s.Src)
 	if err != nil {
 		return nil, fmt.Errorf("error load secret from src: %w", err)
 	}
-	absPath := util.GetAbsoluteFilepath(noTildePath)
-	if _, err := os.Stat(absPath); errors.Is(err, os.ErrNotExist) {
+
+	if exists, _ := utils.FileExists(absPath); !exists {
 		return nil, fmt.Errorf("error load secret from src: path %s doesn't exist", absPath)
 	}
+
 	if s.Id == "" {
 		s.Id = filepath.Base(absPath)
 	}
