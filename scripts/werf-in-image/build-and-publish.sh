@@ -9,8 +9,8 @@ if [[ -z "$1" ]]; then
   exit 1
 fi
 
-if [[ -z "$2"]]; then
-  echo "script requires arguments <werf config> and <tag>" >&2
+if [[ -z "$2" ]]; then
+  echo "script requires arguments <werf config>" >&2
   exit 1
 fi
 
@@ -28,4 +28,10 @@ export WERF_EXPORT_ADD_LABEL_AH1=io.artifacthub.package.readme-url=https://raw.g
        WERF_EXPORT_ADD_LABEL_OC3=org.opencontainers.image.created=$(date -u +"%Y-%m-%dT%H:%M:%SZ") \
        WERF_EXPORT_ADD_LABEL_OC4=org.opencontainers.image.description="Official image to run werf in containers"
 
-werf export $2
+if [ "$2" = "--config werf.yaml" ]; then
+  werf export $2 --tag "$DEST_SUBREPO/werf:%image%"
+fi
+
+if [ "$2" = "--config werf-argocd-cmp-sidecar.yaml" ]; then
+  werf export $2 --tag "$DEST_SUBREPO/werf-argocd-cmp-sidecar:%image%"
+fi
