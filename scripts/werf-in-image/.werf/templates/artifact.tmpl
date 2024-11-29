@@ -4,7 +4,7 @@
   {{- $channel_name := index . 2 }}
   {{- $distro_name := index . 3 }}
   {{- $ctx := index . 4 }}
-  {{- $source_image_name := (printf "trdl-%s-%s-%s" $ctx.App $group_name $channel_name) }}
+  {{- $source_image_name := (printf "trdl-%s-%s" $ctx.App $ctx.ChannelVersion) }}
   {{- $base_image_name := (printf "%s-%s" $ctx.App $distro_name) }}
 
 ---
