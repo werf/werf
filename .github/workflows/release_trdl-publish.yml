@@ -58,6 +58,10 @@ jobs:
         dest-registry:
           - ghcr.io
           - registry-write.werf.io
+        app:
+          - werf
+          - werf-argocd-cmp-sidecar
+
     needs: publish
     runs-on: ubuntu-latest-16-cores
     steps:
@@ -92,7 +96,8 @@ jobs:
           platforms: linux/amd64, linux/arm64
 
       - name: Build and publish werf images
-        run: ./scripts/werf-in-image/build-and-publish.sh ${{ matrix.dest-registry }}
+        working-directory: ./scripts/werf-in-image
+        run: ./build-and-publish.sh ${{ matrix.dest-registry }} ${{ matrix.app }}
         env:
           DOCKER_BUILDKIT: 1
 
