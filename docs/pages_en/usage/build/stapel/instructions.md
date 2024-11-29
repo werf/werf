@@ -340,7 +340,7 @@ shell:
 
 In the example above the current commit hash will be inserted into the `echo ...` command, but this will happen in the very last moment — when the build instructions will be interpreted and executed by the shell. This way there will be no "install" stage rebuilds on every commit.
 
-## Using Build Secrets
+## Using build secrets
 
 A build secret is any confidential information, such as a password or API token, used during the build process of your application.
 

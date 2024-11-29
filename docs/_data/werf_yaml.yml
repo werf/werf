@@ -249,10 +249,14 @@ sections:
         description:
           en: SSH agent socket or keys to the build (only if BuildKit enabled) (see docker build --ssh option)
           ru: Сокет агента SSH или ключи для сборки определённых слоёв (только если используется BuildKit) (подобно docker build --ssh)
-      - name: secrets
+      - &dockerfile-secrets-section
+        name: secrets
         description:
           en: "Secrets used in image build. Only one of the following options can be used in a single instance: env, src, or value"
           ru: "Секреты, используемые при сборке образа. В одном экземпляре можно использовать только одну из следующих опций: env, src или value"
+        detailsArticle:
+          en: "/usage/build/images.html#using-build-secrets"
+          ru: "/usage/build/images.html#использование-сборочных-секретов"
         directiveList:
           - name: id
             value: "string"
@@ -472,31 +476,10 @@ sections:
                 description:
                   en: "Globs for setup stage"
                   ru: "Глобы стадии setup"
-      - name: secrets
-        description:
-          en: "Secrets used in image build. Only one of the following options can be used in a single instance: env, src, or value. Mounts to /run/secrets directory. Can be used in shell and ansile instructions"
-          ru: "Секреты, используемые при сборке образа. В одном экземпляре можно использовать только одну из следующих опций: env, src или value. Монтируются в директорию /run/secrets и могут быть использованы в shell и ansible инструкциях"
-        directiveList:
-          - name: id
-            value: "string"
-            description:
-              en: Secret unique identifier (mandatory only for the value type)
-              ru: Уникальный идентификатор секрета (обязателен только для секретов типа value)
-          - name: env
-            value: "string"
-            description:
-              en: A secret from an environment variable
-              ru: Секрет из переменной окружения
-          - name: src
-            value: "string"
-            description:
-              en: A secret from a file at the given path
-              ru: Секрет из файла по указанному пути
-          - name: value
-            value: "string"
-            description:
-              en: Custom string value
-              ru: Произвольное строковое значение
+      - <<: *dockerfile-secrets-section
+        detailsArticle:
+          en: "https://werf.io/docs/v2/usage/build/stapel/instructions.html#using-build-secrets"
+          ru: "https://werf.io/docs/v2/usage/build/stapel/instructions.html#использование-сборочных-секретов"
       - name: shell
         description:
           en: "Shell assembly instructions"
