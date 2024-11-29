@@ -359,11 +359,12 @@ secrets:
     value: plainSecretValue
 ```
 
-When using a secret in Stapel instructions, the secret is mounted to a file by default. The default path for the secret file inside the build container is `/run/secrets/<id>`. Note that if you do not specify a secret's `id` in `werf.yaml`, the default value for `id` will be used:
+When using a secret in Stapel instructions, the secret is mounted to a file. The path for the secret file inside the build container is `/run/secrets/<id>`. If an `id` is not specified for a secret in `werf.yaml`, the default value is assigned automatically:
 
-- For `env` — the name of the environment variable.  
-- For `src` — the name of the destination file (e.g., for `/path/to/file`, the id will be `file`).  
-- For `value` — the `id` field is mandatory.
+- For `env`, the `id` defaults to the name of the environment variable.
+- For `src`, the `id` defaults to the file name (e.g., for `/path/to/file`, the `id` will be `file`). 
+
+> For `value` — the `id` field is mandatory.
 
 ```yaml
 image: stapel-shell

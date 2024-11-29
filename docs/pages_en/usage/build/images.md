@@ -153,11 +153,14 @@ secrets:
     value: plainSecretValue
 ```
 
-To access a secret during the build, use the `--mount=type=secret` flag in the Dockerfile's `RUN` instructions. When a secret is mounted, it is available as a file by default. The default mount path for the secret file inside the build container is `/run/secrets/<id>`.
+To access a secret during the build, use the `--mount=type=secret` flag in the Dockerfile's `RUN` instructions.
 
-If an `id` is not specified for a secret in `werf.yaml`, the default value is assigned automatically:
+When a secret is mounted, it is available as a file by default. The default mount path for the secret file inside the build container is `/run/secrets/<id>`. If an `id` is not specified for a secret in `werf.yaml`, the default value is assigned automatically:
+
 - For `env`, the `id` defaults to the name of the environment variable.
 - For `src`, the `id` defaults to the file name (e.g., for `/path/to/file`, the `id` will be `file`).
+
+> For `value` — the `id` field is mandatory.
 
 ```Dockerfile
 # Dockerfile
