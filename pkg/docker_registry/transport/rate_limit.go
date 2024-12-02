@@ -35,6 +35,9 @@ func (t *RateLimit) RoundTrip(req *http.Request) (*http.Response, error) {
 			return nil
 		}
 
+		// Ensure response body is closed if retrying
+		defer resp.Body.Close()
+
 		return rateLimitError(errors.New(resp.Status))
 	}
 
