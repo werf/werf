@@ -231,8 +231,6 @@ werf supports multiplatform and cross-platform builds, allowing you to create im
 
 ##### Cross-compilation
 
-> This functionality is available when using BuildKit (DOCKER_BUILDKIT=1) or Buildah.
-
 If your project requires cross-compilation, you can use multi-stage builds to create artifacts for target platforms using the build platform. The following build arguments are available for this purpose:
 
 - `TARGETPLATFORM`: the platform for the build result (e.g., linux/amd64, linux/arm/v7, windows/amd64).
