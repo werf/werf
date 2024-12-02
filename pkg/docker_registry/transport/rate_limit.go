@@ -65,7 +65,7 @@ func (t *RateLimit) RoundTrip(req *http.Request) (*http.Response, error) {
 
 	initialInterval := 2 * time.Second
 	{
-		if err := operation(); err == nil || !errors.As(err, &rateLimitError{}) {
+		if err := operation(); !errors.As(err, &rateLimitError{}) {
 			return resp, err
 		}
 
