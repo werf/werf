@@ -436,6 +436,11 @@ func (b *NativeBuildah) RunCommand(ctx context.Context, container string, comman
 		return err
 	}
 
+	buildahSecrets, err := parse.Secrets(opts.Secrets)
+	if err != nil {
+		return fmt.Errorf("unable to parse secrets: %w", err)
+	}
+
 	runOpts := buildah.RunOptions{
 		Env:              opts.Envs,
 		ContextDir:       contextDir,
@@ -453,8 +458,7 @@ func (b *NativeBuildah) RunCommand(ctx context.Context, container string, comman
 		Cmd:              []string{},
 		Mounts:           globalMounts,
 		RunMounts:        runMounts,
-		// TODO(ilya-lesikov):
-		Secrets: nil,
+		Secrets:          buildahSecrets,
 		// TODO(ilya-lesikov):
 		SSHSources: nil,
 	}
