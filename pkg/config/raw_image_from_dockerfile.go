@@ -143,10 +143,6 @@ func (c *rawImageFromDockerfile) toImageFromDockerfileDirective(giterminismManag
 	image.platform = append([]string{}, c.Platform...)
 	image.raw = c
 
-	if len(c.RawSecrets) > 0 && image.Staged {
-		return nil, fmt.Errorf("secrets are not supported for staged build yet")
-	}
-
 	secrets, err := GetValidatedSecrets(c.RawSecrets, giterminismManager, c.doc)
 	if err != nil {
 		return nil, err

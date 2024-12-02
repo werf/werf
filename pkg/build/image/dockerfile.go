@@ -219,7 +219,7 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 			case *dockerfile.DockerfileStageInstruction[*instructions.OnbuildCommand]:
 				stg = stage_instruction.NewOnBuild(typedInstr, dockerfileImageConfig.Dependencies, !isFirstStage, &baseStageOptions)
 			case *dockerfile.DockerfileStageInstruction[*instructions.RunCommand]:
-				stg = stage_instruction.NewRun(typedInstr, dockerfileImageConfig.Dependencies, !isFirstStage, &baseStageOptions)
+				stg = stage_instruction.NewRun(typedInstr, dockerfileImageConfig.Dependencies, !isFirstStage, &baseStageOptions, dockerfileImageConfig.Secrets)
 			case *dockerfile.DockerfileStageInstruction[*instructions.ShellCommand]:
 				stg = stage_instruction.NewShell(typedInstr, dockerfileImageConfig.Dependencies, !isFirstStage, &baseStageOptions)
 			case *dockerfile.DockerfileStageInstruction[*instructions.StopSignalCommand]:
