@@ -18,7 +18,7 @@ type Run struct {
 	Secrets []string
 }
 
-func NewRun(i instructions.RunCommand, envs []string, secrets []string) *Run {
+func NewRun(i instructions.RunCommand, envs, secrets []string) *Run {
 	return &Run{RunCommand: i, Envs: envs, Secrets: secrets}
 }
 
