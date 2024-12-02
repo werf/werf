@@ -882,9 +882,6 @@ func (m *cleanupManager) getRelativeStageDescSetByStageDesc(targetStageDesc *ima
 			relativeStageDescSet.Add(currentStageDesc)
 			currentStageDescSet.Remove(currentStageDesc)
 
-			relativeStageDescSet.Add(currentStageDesc)
-			currentStageDescSet.Remove(currentStageDesc)
-
 			// Parent stage checking.
 			{
 				// TODO: remove this legacy check in v3.
