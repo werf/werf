@@ -277,6 +277,17 @@ func (backend *BuildahBackend) CalculateDependencyImportChecksum(ctx context.Con
 
 	for _, path := range files {
 		logboek.Context(ctx).Debug().LogF("Calculating checksum of container file %s\n", path)
+
+		fileInfo, err := os.Lstat(path)
+		if err != nil {
+			return "", fmt.Errorf("unable to get file info %q: %w", path, err)
+		}
+
+		if fileInfo.Mode()&os.ModeSymlink != 0 {
+			logboek.Context(ctx).Debug().LogF("Skipping symlink %s\n", path)
+			continue
+		}
+
 		f, err := os.Open(path)
 		if err != nil {
 			return "", fmt.Errorf("unable to open file %q: %w", path, err)
