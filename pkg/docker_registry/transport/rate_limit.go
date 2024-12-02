@@ -20,7 +20,9 @@ func NewRateLimit(underlying http.RoundTripper) http.RoundTripper {
 	return &RateLimit{underlying: underlying}
 }
 
-type rateLimitError error
+type rateLimitError struct {
+	error
+}
 
 func (t *RateLimit) RoundTrip(req *http.Request) (*http.Response, error) {
 	var resp *http.Response
@@ -38,8 +40,8 @@ func (t *RateLimit) RoundTrip(req *http.Request) (*http.Response, error) {
 		// Ensure response body is closed if retrying.
 		defer resp.Body.Close()
 
-		return rateLimitError(errors.New(resp.Status))
-	}
+		return rateLimitError{error: errors.New(resp.Status)}
+,	}
 
 	notify := func(err error, duration time.Duration) {
 		ctx := req.Context()
@@ -63,8 +65,8 @@ func (t *RateLimit) RoundTrip(req *http.Request) (*http.Response, error) {
 
 	initialInterval := 2 * time.Second
 	{
-		if err := operation(); err == nil {
-			return resp, nil
+		if err := operation(); err == nil || !errors.As(err, &rateLimitError{}) {
+			return resp, err
 		}
 
 		if retryAfterHeader := resp.Header.Get("Retry-After"); retryAfterHeader != "" {
