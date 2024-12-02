@@ -26,7 +26,7 @@ func (t *RateLimit) RoundTrip(req *http.Request) (*http.Response, error) {
 	var resp *http.Response
 	operation := func() error {
 		var err error
-		resp, err = t.underlying.RoundTrip(req)
+		resp, err = t.underlying.RoundTrip(req) //nolint:bodyclose
 		if err != nil {
 			return backoff.Permanent(err)
 		}
