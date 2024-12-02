@@ -41,7 +41,7 @@ func (t *RateLimit) RoundTrip(req *http.Request) (*http.Response, error) {
 		defer resp.Body.Close()
 
 		return rateLimitError{error: errors.New(resp.Status)}
-,	}
+	}
 
 	notify := func(err error, duration time.Duration) {
 		ctx := req.Context()
