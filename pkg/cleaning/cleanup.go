@@ -878,7 +878,7 @@ func (m *cleanupManager) getRelativeStageDescSetByStageDesc(targetStageDesc *ima
 	relativeStageDescSet := image.NewStageDescSet()
 	currentStageDescSet := targetStageDescSet
 	for !currentStageDescSet.IsEmpty() {
-		for currentStageDesc := range currentStageDescSet.Iter() {
+		for _, currentStageDesc := range currentStageDescSet.ToSlice() {
 			relativeStageDescSet.Add(currentStageDesc)
 			currentStageDescSet.Remove(currentStageDesc)
 
