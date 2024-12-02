@@ -17,7 +17,6 @@ import (
 type DoTasksOptions struct {
 	InitDockerCLIForEachWorker bool
 	MaxNumberOfWorkers         int
-	LiveOutput                 bool
 }
 
 func DoTasks(ctx context.Context, numberOfTasks int, options DoTasksOptions, taskFunc func(ctx context.Context, taskId int) error) error {
@@ -106,17 +105,10 @@ func DoTasks(ctx context.Context, numberOfTasks int, options DoTasksOptions, tas
 		}()
 	}
 
-	var err error
-	if options.LiveOutput {
-		err = workersHandlerLiveOutput(ctx, workers, taskResultDoneCh, taskResultFailedCh, quitCh, workerDoneCh)
-	} else {
-		err = workersHandlerStandard(ctx, workers, taskResultDoneCh, taskResultFailedCh, quitCh, workerDoneCh)
-	}
-
-	return err
+	return workersHandlerOutput(ctx, workers, taskResultDoneCh, taskResultFailedCh, quitCh, workerDoneCh)
 }
 
-func workersHandlerLiveOutput(ctx context.Context, workers []*bufWorker, taskResultDoneCh, taskResultFailedCh chan *bufWorkerTaskResult, quitCh chan bool, workerDoneCh chan *bufWorker) error {
+func workersHandlerOutput(ctx context.Context, workers []*bufWorker, taskResultDoneCh, taskResultFailedCh chan *bufWorkerTaskResult, quitCh chan bool, workerDoneCh chan *bufWorker) error {
 workerLoop:
 	for _, currentWorker := range workers {
 		for {
@@ -126,7 +118,7 @@ workerLoop:
 				close(quitCh)
 
 				if taskResult.worker != currentWorker {
-					logboek.Context(ctx).LogLn()
+					logboek.Context(ctx).LogOptionalLn()
 				}
 
 				if err := logboek.Context(ctx).Streams().DoErrorWithoutIndent(func() error {
@@ -164,41 +156,6 @@ workerLoop:
 	}
 
 	return nil
-}
-
-func workersHandlerStandard(ctx context.Context, workers []*bufWorker, taskResultDoneCh, taskResultFailedCh chan *bufWorkerTaskResult, quitCh chan bool, workerDoneCh chan *bufWorker) error {
-	var workerDoneCounter int
-	for {
-		select {
-		case taskResult := <-taskResultDoneCh:
-			if err := logboek.Context(ctx).Streams().DoErrorWithoutIndent(func() error {
-				_, err := io.Copy(logboek.Context(ctx).OutStream(), taskResult.worker.buf)
-				return err
-			}); err != nil {
-				return err
-			}
-
-			logboek.Context(ctx).LogOptionalLn()
-		case taskResult := <-taskResultFailedCh:
-			close(quitCh)
-
-			if err := logboek.Context(ctx).Streams().DoErrorWithoutIndent(func() error {
-				_, err := io.Copy(logboek.Context(ctx).OutStream(), taskResult.worker.buf)
-				return err
-			}); err != nil {
-				return err
-			}
-
-			logboek.Context(ctx).LogOptionalLn()
-
-			return taskResult.err
-		case <-workerDoneCh:
-			workerDoneCounter++
-			if workerDoneCounter == len(workers) {
-				return nil
-			}
-		}
-	}
 }
 
 func calculateTaskId(tasksNumber, workersNumber, workerInd, workerTaskId int) int {
