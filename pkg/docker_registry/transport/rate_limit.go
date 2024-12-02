@@ -48,12 +48,12 @@ func (t *RateLimit) RoundTrip(req *http.Request) (*http.Response, error) {
 		workerId := ctx.Value(parallelConstant.CtxBackgroundTaskIDKey)
 		if workerId != nil {
 			logboek.Context(ctx).Warn().LogF(
-				"WARNING: %s. Retrying in %v... (worker %d).\nThe --parallel ($WERF_PARALLEL) and --parallel-tasks-limit ($WERF_PARALLEL_TASKS_LIMIT) options can be used to regulate parallel tasks.\n",
+				"WARNING: %s. Retrying in %v... (worker %d)\nThe --parallel ($WERF_PARALLEL) and --parallel-tasks-limit ($WERF_PARALLEL_TASKS_LIMIT) options can be used to regulate parallel tasks.\n",
 				err,
 				duration,
 				workerId.(int),
 			)
-			logboek.Context(ctx).Warn().LogLn()
+			logboek.Context(ctx).Warn().LogOptionalLn()
 		} else {
 			logboek.Context(ctx).Warn().LogF(
 				"WARNING: %s. Retrying in %v...\n",
@@ -63,7 +63,7 @@ func (t *RateLimit) RoundTrip(req *http.Request) (*http.Response, error) {
 		}
 	}
 
-	initialInterval := 2 * time.Second
+	initialInterval := backoff.DefaultInitialInterval
 	{
 		if err := operation(); !errors.As(err, &rateLimitError{}) {
 			return resp, err
