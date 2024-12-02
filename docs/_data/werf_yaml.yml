@@ -227,28 +227,28 @@ sections:
       - name: target
         value: "string"
         description:
-          en: Specific Dockerfile stage (last one by default, see docker build --target option)
+          en: Specific Dockerfile stage (last one by default, similar to the docker build --target option)
           ru: Конкретная стадия Dockerfile (по умолчанию — последняя, подобно docker build --target)
       - name: args
         value: "{ name string: value string, ... }"
         description:
-          en: Variables for ARG dockerfile instructions (see docker build --build-arg option)
+          en: Variables for ARG dockerfile instructions (similar to the docker build --build-arg option)
           ru: Переменные для ARG Dockerfile-инструкций (подобно docker build --build-arg)
       - name: addHost
         value: "[ string, ... ]"
         description:
-          en: Custom host-to-IP mapping (host:ip) (see docker build --add-host option)
+          en: Custom host-to-IP mapping (host:ip) (similar to the docker build --add-host option)
           ru: Установить связь host-to-IP (host:ip) (подобно docker build --add-host)
       - name: network
         value: "string"
         description:
-          en: The networking mode for the RUN instructions during build (see docker build --network option)
+          en: The networking mode for the RUN instructions during build (similar to the docker build --network option)
           ru: Сетевой режим для инструкций RUN во время сборки (подобно docker build --network)
       - name: ssh
         value: "string"
         description:
-          en: SSH agent socket or keys to the build (only if BuildKit enabled) (see docker build --ssh option)
-          ru: Сокет агента SSH или ключи для сборки определённых слоёв (только если используется BuildKit) (подобно docker build --ssh)
+          en: SSH agent socket or keys to the build (similar to the docker build --ssh option)
+          ru: Сокет агента SSH или ключи для сборки (подобно docker build --ssh)
       - &dockerfile-secrets-section
         name: secrets
         description:
