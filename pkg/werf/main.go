@@ -11,6 +11,7 @@ import (
 	"github.com/werf/lockgate/pkg/file_lock"
 	"github.com/werf/lockgate/pkg/file_locker"
 	"github.com/werf/logboek"
+	"github.com/werf/nelm/pkg/secrets_manager"
 )
 
 var (
@@ -152,6 +153,7 @@ func Init(tmpDirOption, homeDirOption string) error {
 	sharedContextDir = filepath.Join(homeDir, "shared_context")
 	localCacheDir = filepath.Join(homeDir, "local_cache")
 	serviceDir = filepath.Join(homeDir, "service")
+	secrets_manager.WerfHomeDir = homeDir
 
 	file_lock.LegacyHashFunction = true
 
