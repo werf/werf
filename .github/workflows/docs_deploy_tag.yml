@@ -19,18 +19,10 @@ jobs:
     secrets:
       kubeConfig: ${{ secrets.KUBECONFIG_BASE64_PROD }}
 
-  deploy-test:
-    uses: ./.github/workflows/_docs_deploy.yml
-    with:
-      env: test
-    secrets:
-      kubeConfig: ${{ secrets.KUBECONFIG_BASE64_DEV }}
-
   notify:
     if: always()
     needs:
       - deploy-prod
-      - deploy-test
     uses: ./.github/workflows/_notification.yml
     secrets:
       loopNotificationGroup: ${{ secrets.LOOP_NOTIFICATION_GROUP }}
