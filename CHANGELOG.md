@@ -1,5 +1,13 @@
 # Changelog
 
+### [2.15.2](https://www.github.com/werf/werf/compare/v2.15.1...v2.15.2) (2024-12-03)
+
+
+### Bug Fixes
+
+* **ci:** try to fix error ([#6461](https://www.github.com/werf/werf/issues/6461)) ([5bc910e](https://www.github.com/werf/werf/commit/5bc910e0191080ae5ee1a15efcf52bf1294424ae))
+* **deploy:** global encryption key (~/.werf/global_secret_key) ignored ([8e78762](https://www.github.com/werf/werf/commit/8e7876259608f07e8057affebdbb9be4203ebb37))
+
 ### [2.15.1](https://www.github.com/werf/werf/compare/v2.15.0...v2.15.1) (2024-12-03)
 
 
