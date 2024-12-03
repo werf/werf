@@ -283,19 +283,33 @@ func (backend *BuildahBackend) CalculateDependencyImportChecksum(ctx context.Con
 			return "", fmt.Errorf("unable to get file info %q: %w", path, err)
 		}
 
+		var dataToHash []byte
 		if fileInfo.Mode()&os.ModeSymlink != 0 {
-			logboek.Context(ctx).Debug().LogF("Skipping symlink %s\n", path)
-			continue
-		}
+			link, err := os.Readlink(fileInfo.Name())
+			if err != nil {
+				return "", fmt.Errorf("unable to read symlink %q: %w", link, err)
+			}
 
-		f, err := os.Open(path)
-		if err != nil {
-			return "", fmt.Errorf("unable to open file %q: %w", path, err)
+			dataToHash = []byte(link)
+
+		} else {
+			f, err := os.Open(path)
+			if err != nil {
+				return "", fmt.Errorf("unable to open file %q: %w", path, err)
+			}
+			defer f.Close()
+
+			fileData, err := io.ReadAll(f)
+			if err != nil {
+				return "", fmt.Errorf("error reading file %q: %w", path, err)
+			}
+
+			dataToHash = fileData
 		}
 
 		fileHash := md5.New()
-		if _, err := io.Copy(fileHash, f); err != nil {
-			return "", fmt.Errorf("error reading file %q: %w", path, err)
+		if _, err := fileHash.Write(dataToHash); err != nil {
+			return "", fmt.Errorf("error calculatting hash for %q: %w", path, err)
 		}
 
 		if _, err := fmt.Fprintf(hash, "%x  %s\n", fileHash.Sum(nil), filepath.Join("/", util.GetRelativeToBaseFilepath(container.RootMount, path))); err != nil {
