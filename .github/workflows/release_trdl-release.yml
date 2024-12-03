@@ -26,8 +26,6 @@ jobs:
     if: always()
     needs: release
     uses: ./.github/workflows/_notification.yml
-    with:
-      taskSign: ${{ secrets.LOOP_NOTIFICATION_GROUP }} прожмите `task sign`
     secrets:
       loopNotificationGroup: ${{ secrets.LOOP_NOTIFICATION_GROUP }}
       webhook: ${{ secrets.LOOP_NOTIFICATION_WEBHOOK }}
