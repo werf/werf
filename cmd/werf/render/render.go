@@ -355,8 +355,6 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 		return fmt.Errorf("get user extra labels: %w", err)
 	}
 
-	secrets_manager.WerfHomeDir = werf.GetHomeDir()
-
 	if err := action.Render(ctx, action.RenderOptions{
 		ChartDirPath:               chartPath,
 		ChartRepositoryInsecure:    *commonCmdData.InsecureHelmDependencies,

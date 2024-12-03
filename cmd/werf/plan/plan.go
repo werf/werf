@@ -397,8 +397,6 @@ func run(
 		return fmt.Errorf("get user extra labels: %w", err)
 	}
 
-	secrets_manager.WerfHomeDir = werf.GetHomeDir()
-
 	if err := action.Plan(ctx, action.PlanOptions{
 		ChartDirPath:               chartPath,
 		ChartRepositoryInsecure:    *commonCmdData.InsecureHelmDependencies,

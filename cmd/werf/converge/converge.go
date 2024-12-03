@@ -402,8 +402,6 @@ func run(
 		logColorMode = action.LogColorMode(*commonCmdData.LogColorMode)
 	}
 
-	secrets_manager.WerfHomeDir = werf.GetHomeDir()
-
 	if err := action.Deploy(ctx, action.DeployOptions{
 		ChartDirPath:               chartPath,
 		ChartRepositoryInsecure:    *commonCmdData.InsecureHelmDependencies,
