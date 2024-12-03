@@ -2,11 +2,6 @@ name: xxxxx(internal)
 
 on:
   workflow_call:
-    inputs:
-      taskSign:
-        description: "Text for task sign notification"
-        required: false
-        type: string
     secrets:
       webhook:
         description: "Loop webhook URL"
@@ -63,8 +58,7 @@ jobs:
           MATTERMOST_CHANNEL: ${{ secrets.notificationChannel }}
           TEXT: |
             Workflow успешно завершился :bender: 
-            [${{ github.workflow }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) ${{ github.ref_name }} :success: 
-            ${{ inputs.taskSign }}
+            [${{ github.workflow }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) ${{ github.ref_name }} :success:
 
       - if: (env.WORKFLOW_CONCLUSION == 'failure' && startsWith(github.ref, 'refs/pull/'))
         name: Failure notify for PRs
