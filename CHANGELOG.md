@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.15.3](https://www.github.com/werf/werf/compare/v2.15.2...v2.15.3) (2024-12-03)
+
+
+### Miscellaneous Chores
+
+* **ci:** remove inputs in reusable workflow ([#6464](https://www.github.com/werf/werf/issues/6464)) ([b4486f6](https://www.github.com/werf/werf/commit/b4486f63700992f88864a2e610b2ee0523f3e653))
+
 ### [2.15.2](https://www.github.com/werf/werf/compare/v2.15.1...v2.15.2) (2024-12-03)
 
 
