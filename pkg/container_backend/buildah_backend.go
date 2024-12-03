@@ -283,24 +283,24 @@ func (backend *BuildahBackend) CalculateDependencyImportChecksum(ctx context.Con
 			return "", fmt.Errorf("unable to get file info %q: %w", path, err)
 		}
 
-		var dataToHash io.Reader
+		var reader io.Reader
 		if fileInfo.Mode()&os.ModeSymlink != 0 {
 			link, err := os.Readlink(path)
 			if err != nil {
 				return "", fmt.Errorf("unable to read symlink %q: %w", link, err)
 			}
-			dataToHash = strings.NewReader(link)
+			reader = strings.NewReader(link)
 		} else {
 			f, err := os.Open(path)
 			if err != nil {
 				return "", fmt.Errorf("unable to open file %q: %w", path, err)
 			}
 			defer f.Close()
-			dataToHash = f
+			reader = f
 		}
 
 		fileHash := md5.New()
-		if _, err := io.Copy(fileHash, dataToHash); err != nil {
+		if _, err := io.Copy(fileHash, reader); err != nil {
 			return "", fmt.Errorf("error calculatting hash for %q: %w", path, err)
 		}
 
