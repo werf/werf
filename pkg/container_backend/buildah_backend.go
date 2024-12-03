@@ -285,7 +285,7 @@ func (backend *BuildahBackend) CalculateDependencyImportChecksum(ctx context.Con
 
 		var dataToHash []byte
 		if fileInfo.Mode()&os.ModeSymlink != 0 {
-			link, err := os.Readlink(fileInfo.Name())
+			link, err := os.Readlink(path)
 			if err != nil {
 				return "", fmt.Errorf("unable to read symlink %q: %w", link, err)
 			}
