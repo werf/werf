@@ -1,5 +1,20 @@
 # Changelog
 
+## [2.15.0](https://www.github.com/werf/werf/compare/v2.14.0...v2.15.0) (2024-12-03)
+
+
+### Features
+
+* **build, buildah, dockerfile, staged:** add secrets support ([#6454](https://www.github.com/werf/werf/issues/6454)) ([051c4e4](https://www.github.com/werf/werf/commit/051c4e46214cd73163d543fdfe5e4430184a6842))
+* **build, docker, buildah, stapel:** add secrets support ([#6446](https://www.github.com/werf/werf/issues/6446)) ([bf39dac](https://www.github.com/werf/werf/commit/bf39dacc133f2da60dc405f0abcb6d0cebf8eeb1))
+
+
+### Bug Fixes
+
+* **build, buildah, stapel:** prevent build failure on invalid dest link ([#6453](https://www.github.com/werf/werf/issues/6453)) ([5c10f06](https://www.github.com/werf/werf/commit/5c10f0692c8bfea7eda4c91b14a859b7b0ccae33))
+* **cleanup:** handle Too Many Requests (429) ([#6455](https://www.github.com/werf/werf/issues/6455)) ([458dbcc](https://www.github.com/werf/werf/commit/458dbcc3aec12487a13ed51c4902f5920c6bd9ab))
+* **cleanup:** resolve potential deadlock issue ([a6b2530](https://www.github.com/werf/werf/commit/a6b25300bac490371d0ffb7f4d86831a0b8a069f))
+
 ## [2.14.0](https://www.github.com/werf/werf/compare/v2.13.1...v2.14.0) (2024-11-26)
 
 
