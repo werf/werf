@@ -277,14 +277,31 @@ func (backend *BuildahBackend) CalculateDependencyImportChecksum(ctx context.Con
 
 	for _, path := range files {
 		logboek.Context(ctx).Debug().LogF("Calculating checksum of container file %s\n", path)
-		f, err := os.Open(path)
+
+		fileInfo, err := os.Lstat(path)
 		if err != nil {
-			return "", fmt.Errorf("unable to open file %q: %w", path, err)
+			return "", fmt.Errorf("unable to get file info %q: %w", path, err)
+		}
+
+		var reader io.Reader
+		if fileInfo.Mode()&os.ModeSymlink != 0 {
+			link, err := os.Readlink(path)
+			if err != nil {
+				return "", fmt.Errorf("unable to read symlink %q: %w", link, err)
+			}
+			reader = strings.NewReader(link)
+		} else {
+			f, err := os.Open(path)
+			if err != nil {
+				return "", fmt.Errorf("unable to open file %q: %w", path, err)
+			}
+			defer f.Close()
+			reader = f
 		}
 
 		fileHash := md5.New()
-		if _, err := io.Copy(fileHash, f); err != nil {
-			return "", fmt.Errorf("error reading file %q: %w", path, err)
+		if _, err := io.Copy(fileHash, reader); err != nil {
+			return "", fmt.Errorf("error calculatting hash for %q: %w", path, err)
 		}
 
 		if _, err := fmt.Fprintf(hash, "%x  %s\n", fileHash.Sum(nil), filepath.Join("/", util.GetRelativeToBaseFilepath(container.RootMount, path))); err != nil {
