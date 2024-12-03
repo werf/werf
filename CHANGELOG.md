@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.15.1](https://www.github.com/werf/werf/compare/v2.15.0...v2.15.1) (2024-12-03)
+
+
+### Bug Fixes
+
+* **deploy:** "unable to release lock" errors in werf dismiss ([d3965e1](https://www.github.com/werf/werf/commit/d3965e1db0167b3981287b62bf0b1bd28004accb))
+
 ## [2.15.0](https://www.github.com/werf/werf/compare/v2.14.0...v2.15.0) (2024-12-03)
 
 
