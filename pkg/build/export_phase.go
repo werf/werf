@@ -43,18 +43,18 @@ func (e *Exporter) Run(ctx context.Context) error {
 	imageList := util.SliceToMapWithValue(e.ExportImageNameList, struct{}{})
 	images := e.Conveyor.imagesTree.GetImagesByName(true)
 
-	if err := parallel.DoTasks(ctx, len(e.ExportImageNameList), parallel.DoTasksOptions{
+	if err := parallel.DoTasks(ctx, len(images), parallel.DoTasksOptions{
 		MaxNumberOfWorkers: int(e.Conveyor.ParallelTasksLimit),
 	}, func(ctx context.Context, taskId int) error {
 		pair := images[taskId]
-		name, images := pair.Unpair()
+		name, imagesToExport := pair.Unpair()
 		if _, ok := imageList[name]; !ok {
 			return nil
 		}
 
-		targetPlatforms := util.MapFuncToSlice(images, func(img *build_image.Image) string { return img.TargetPlatform })
+		targetPlatforms := util.MapFuncToSlice(imagesToExport, func(img *build_image.Image) string { return img.TargetPlatform })
 		if len(targetPlatforms) == 1 {
-			img := images[0]
+			img := imagesToExport[0]
 			if err := e.exportImage(ctx, img); err != nil {
 				return fmt.Errorf("unable to export image %q: %w", img.Name, err)
 			}
