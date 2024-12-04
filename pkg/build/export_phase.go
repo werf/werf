@@ -40,17 +40,12 @@ func (e *Exporter) Run(ctx context.Context) error {
 		return nil
 	}
 
-	imageList := util.SliceToMapWithValue(e.ExportImageNameList, struct{}{})
-	images := e.Conveyor.imagesTree.GetImagesByName(true)
-
+	images := e.Conveyor.imagesTree.GetImagesByName(true, build_image.WithExportImageNameList(e.ExportImageNameList))
 	if err := parallel.DoTasks(ctx, len(images), parallel.DoTasksOptions{
 		MaxNumberOfWorkers: int(e.Conveyor.ParallelTasksLimit),
 	}, func(ctx context.Context, taskId int) error {
 		pair := images[taskId]
 		name, imagesToExport := pair.Unpair()
-		if _, ok := imageList[name]; !ok {
-			return nil
-		}
 
 		targetPlatforms := util.MapFuncToSlice(imagesToExport, func(img *build_image.Image) string { return img.TargetPlatform })
 		if len(targetPlatforms) == 1 {
@@ -80,7 +75,7 @@ func (e *Exporter) Run(ctx context.Context) error {
 }
 
 func (e *Exporter) exportMultiplatformImage(ctx context.Context, img *build_image.MultiplatformImage) error {
-	return logboek.Context(ctx).Default().LogProcess("Exporting image...").
+	return logboek.Context(ctx).Default().LogProcess(fmt.Sprintf("Exporting image %s", img.Name)).
 		Options(func(options types.LogProcessOptionsInterface) {
 			options.Style(style.Highlight())
 		}).
@@ -112,7 +107,7 @@ func (e *Exporter) exportImage(ctx context.Context, img *build_image.Image) erro
 		return nil
 	}
 
-	return logboek.Context(ctx).Default().LogProcess("Exporting image...").
+	return logboek.Context(ctx).Default().LogProcess(fmt.Sprintf("Exporting image %s", img.Name)).
 		Options(func(options types.LogProcessOptionsInterface) {
 			options.Style(style.Highlight())
 		}).

@@ -129,7 +129,27 @@ func (tree *ImagesTree) Calculate(ctx context.Context) error {
 	return nil
 }
 
-func (tree *ImagesTree) GetImagesByName(onlyFinal bool) []util.Pair[string, []*Image] {
+type GetImagesByNameOption func(*getImagesByNameConfig)
+
+type getImagesByNameConfig struct {
+	compareWithImagesList bool
+	exportImageNameList   map[string]struct{}
+}
+
+func WithExportImageNameList(l []string) GetImagesByNameOption {
+	return func(config *getImagesByNameConfig) {
+		config.exportImageNameList = util.SliceToMapWithValue(l, struct{}{})
+		config.compareWithImagesList = true
+	}
+}
+
+func (tree *ImagesTree) GetImagesByName(onlyFinal bool, opts ...GetImagesByNameOption) []util.Pair[string, []*Image] {
+	config := &getImagesByNameConfig{}
+
+	for _, opt := range opts {
+		opt(config)
+	}
+
 	images := make(map[string]map[string]*Image)
 	var names []string
 
@@ -144,6 +164,11 @@ func (tree *ImagesTree) GetImagesByName(onlyFinal bool) []util.Pair[string, []*I
 	for _, img := range tree.GetImages() {
 		if onlyFinal && !img.IsFinal {
 			continue
+		}
+		if config.compareWithImagesList {
+			if _, ok := config.exportImageNameList[img.Name]; !ok {
+				continue
+			}
 		}
 		appendImage(img)
 	}
