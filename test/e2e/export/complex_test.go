@@ -9,7 +9,6 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/werf/werf/v2/test/pkg/utils"
-	"github.com/werf/werf/v2/test/pkg/utils/docker"
 	"github.com/werf/werf/v2/test/pkg/werf"
 )
 
@@ -51,18 +50,13 @@ var _ = Describe("Complex converge", Label("e2e", "converge", "complex"), func()
 				}
 
 				By("state0: checking result")
-
-				var lookUpImages []string
-				for _, imageName := range opts.ImageNames {
-					lookUpImages = append(lookUpImages, fmt.Sprintf("werf-export-%s", imageName))
-				}
 				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 				defer cancel()
-				ok := docker.LookUpForRepositories(ctx, SuiteData.RegistryLocalAddress, lookUpImages)
-				Expect(ok).To(BeTrue())
-				for _, imageName := range lookUpImages {
-					ok := docker.LookUpForTag(ctx, SuiteData.RegistryLocalAddress, imageName, tag)
-					Expect(ok).To(BeTrue())
+
+				for _, imageName := range opts.ImageNames {
+					b, err := SuiteData.ContainerRegistry.IsTagExist(ctx, fmt.Sprintf("%s/werf-export-%s:%s", SuiteData.RegistryLocalAddress, imageName, tag))
+					Expect(err).NotTo(HaveOccurred())
+					Expect(b).To(BeTrue())
 				}
 			}
 		},
