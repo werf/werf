@@ -1201,6 +1201,14 @@ func GetHelmChartDir(werfConfigPath string, werfConfig *config.WerfConfig, giter
 	return helmChartDir, nil
 }
 
+func GetHelmChartConfigAppVersion(werfConfig *config.WerfConfig) string {
+	if werfConfig.Meta.Deploy.HelmChartConfig.AppVersion != nil {
+		return *werfConfig.Meta.Deploy.HelmChartConfig.AppVersion
+	}
+
+	return ""
+}
+
 func GetNamespace(cmdData *CmdData) string {
 	if *cmdData.Namespace == "" {
 		return "default"
