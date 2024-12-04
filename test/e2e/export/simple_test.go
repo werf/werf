@@ -24,9 +24,7 @@ var _ = Describe("Simple export", Label("e2e", "export", "simple"), func() {
 		func(opts simpleTestOptions) {
 			By("initializating")
 			{
-				SuiteData.WerfRepo = strings.Join([]string{SuiteData.RegistryLocalAddress, SuiteData.ProjectName}, "/")
-				SuiteData.Stubs.SetEnv("WERF_REPO", SuiteData.WerfRepo)
-				SuiteData.Stubs.SetEnv("DOCKER_BUILDKIT", "1")
+				setupEnv()
 				repoDirname := "repo"
 				fixtureRelPath := "simple"
 
@@ -37,27 +35,17 @@ var _ = Describe("Simple export", Label("e2e", "export", "simple"), func() {
 				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
 				imageName := fmt.Sprintf("%s/werf-export-%s", SuiteData.RegistryLocalAddress, utils.GetRandomString(10))
 
-				exportArgs := []string{
-					"--tag",
-					imageName,
-				}
-				if len(opts.Platforms) > 0 {
-					for _, platform := range opts.Platforms {
-						exportArgs = append(exportArgs, "--platform", platform)
-					}
-				}
-				if len(opts.CustomLabels) > 0 {
-					for _, label := range opts.CustomLabels {
-						exportArgs = append(exportArgs, "--add-label", label)
-					}
-				}
+				exportArgs := getExportArgs(imageName, commonTestOptions{
+					Platforms:    opts.Platforms,
+					CustomLabels: opts.CustomLabels,
+				})
 
 				exportOut := werfProject.Export(&werf.ExportOptions{
 					CommonOptions: werf.CommonOptions{
 						ExtraArgs: exportArgs,
 					},
 				})
-				Expect(exportOut).To(ContainSubstring("Exporting image..."))
+				Expect(exportOut).To(ContainSubstring("Exporting image"))
 
 				By("checking result")
 				commonCheckImageConfigFunc := func(config v1.Config) {
@@ -125,18 +113,18 @@ var _ = Describe("Simple export", Label("e2e", "export", "simple"), func() {
 
 func checkIndexManifest(reference string, checkIndexManifestFunc func(*v1.IndexManifest), checkImageConfigFunc func(v1.Config)) {
 	ref, err := name.ParseReference(reference)
-	Expect(err).ShouldNot(HaveOccurred(), err)
+	Expect(err).ShouldNot(HaveOccurred())
 
 	desc, err := remote.Get(ref)
-	Expect(err).ShouldNot(HaveOccurred(), err)
+	Expect(err).ShouldNot(HaveOccurred())
 
 	Expect(desc.MediaType.IsIndex()).Should(BeTrue(), "expected index, got image")
 
 	ii, err := desc.ImageIndex()
-	Expect(err).ShouldNot(HaveOccurred(), err)
+	Expect(err).ShouldNot(HaveOccurred())
 
 	im, err := ii.IndexManifest()
-	Expect(err).ShouldNot(HaveOccurred(), err)
+	Expect(err).ShouldNot(HaveOccurred())
 
 	checkIndexManifestFunc(im)
 
@@ -148,18 +136,18 @@ func checkIndexManifest(reference string, checkIndexManifestFunc func(*v1.IndexM
 
 func checkImageManifest(reference string, checkImageConfigFunc func(v1.Config)) {
 	ref, err := name.ParseReference(reference)
-	Expect(err).ShouldNot(HaveOccurred(), err)
+	Expect(err).ShouldNot(HaveOccurred())
 
 	desc, err := remote.Get(ref)
-	Expect(err).ShouldNot(HaveOccurred(), err)
+	Expect(err).ShouldNot(HaveOccurred())
 
 	Expect(desc.MediaType.IsIndex()).ShouldNot(BeTrue(), "expected image, got index")
 
 	i, err := desc.Image()
-	Expect(err).ShouldNot(HaveOccurred(), err)
+	Expect(err).ShouldNot(HaveOccurred())
 
 	c, err := i.ConfigFile()
-	Expect(err).ShouldNot(HaveOccurred(), err)
+	Expect(err).ShouldNot(HaveOccurred())
 
 	checkImageConfigFunc(c.Config)
 }

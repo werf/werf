@@ -1,0 +1,13 @@
+project: werf-test-e2e-export-complex
+configVersion: 1
+---
+image: backend
+from: ubuntu:22.04
+--- 
+image: frombackend
+fromImage: backend
+---
+image: frombackend2
+fromImage: frombackend
+shell:
+  install: date
