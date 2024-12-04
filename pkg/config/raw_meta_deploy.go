@@ -1,13 +1,22 @@
 package config
 
 type rawMetaDeploy struct {
-	HelmChartDir    *string `yaml:"helmChartDir,omitempty"`
-	HelmRelease     *string `yaml:"helmRelease,omitempty"`
-	HelmReleaseSlug *bool   `yaml:"helmReleaseSlug,omitempty"`
-	Namespace       *string `yaml:"namespace,omitempty"`
-	NamespaceSlug   *bool   `yaml:"namespaceSlug,omitempty"`
+	HelmChartConfig *rawMetaDeployHelmChartConfig `yaml:"helmChartConfig,omitempty"`
+	HelmChartDir    *string                       `yaml:"helmChartDir,omitempty"`
+	HelmRelease     *string                       `yaml:"helmRelease,omitempty"`
+	HelmReleaseSlug *bool                         `yaml:"helmReleaseSlug,omitempty"`
+	Namespace       *string                       `yaml:"namespace,omitempty"`
+	NamespaceSlug   *bool                         `yaml:"namespaceSlug,omitempty"`
 
 	rawMeta *rawMeta
+
+	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
+}
+
+type rawMetaDeployHelmChartConfig struct {
+	AppVersion *string `yaml:"appVersion,omitempty"`
+
+	rawMetaDeploy *rawMetaDeploy
 
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
 }
@@ -51,5 +60,36 @@ func (c *rawMetaDeploy) toMetaDeploy() MetaDeploy {
 	metaDeploy.HelmReleaseSlug = c.HelmReleaseSlug
 	metaDeploy.Namespace = c.Namespace
 	metaDeploy.NamespaceSlug = c.NamespaceSlug
+
+	if c.HelmChartConfig != nil {
+		metaDeploy.HelmChartConfig = c.HelmChartConfig.toMetaDeploy()
+	}
+
 	return metaDeploy
+}
+
+func (c *rawMetaDeployHelmChartConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	if parent, ok := parentStack.Peek().(*rawMetaDeploy); ok {
+		c.rawMetaDeploy = parent
+	}
+
+	parentStack.Push(c)
+	type plain rawMetaDeployHelmChartConfig
+	err := unmarshal((*plain)(c))
+	parentStack.Pop()
+	if err != nil {
+		return err
+	}
+
+	if err := checkOverflow(c.UnsupportedAttributes, nil, c.rawMetaDeploy.rawMeta.doc); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *rawMetaDeployHelmChartConfig) toMetaDeploy() MetaDeployHelmChartConfig {
+	return MetaDeployHelmChartConfig{
+		AppVersion: c.AppVersion,
+	}
 }
