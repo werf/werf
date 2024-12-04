@@ -3,9 +3,10 @@ package helpers
 import "github.com/werf/3p-helm/pkg/chart"
 
 type GetHelmChartMetadataOptions struct {
-	OverrideName   string
-	DefaultName    string
-	DefaultVersion string
+	OverrideAppVersion string
+	OverrideName       string
+	DefaultName        string
+	DefaultVersion     string
 }
 
 func AutosetChartMetadata(metadataIn *chart.Metadata, opts GetHelmChartMetadataOptions) *chart.Metadata {
@@ -22,6 +23,10 @@ func AutosetChartMetadata(metadataIn *chart.Metadata, opts GetHelmChartMetadataO
 		metadata.Name = opts.OverrideName
 	} else if metadata.Name == "" {
 		metadata.Name = opts.DefaultName
+	}
+
+	if opts.OverrideAppVersion != "" {
+		metadata.AppVersion = opts.OverrideAppVersion
 	}
 
 	if metadata.Version == "" {

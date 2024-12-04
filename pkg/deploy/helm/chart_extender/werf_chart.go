@@ -24,6 +24,7 @@ import (
 	"github.com/werf/3p-helm/pkg/registry"
 	"github.com/werf/logboek"
 	"github.com/werf/nelm/pkg/secrets_manager"
+	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/deploy/helm"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
@@ -131,6 +132,7 @@ func (wc *WerfChart) ChartLoaded(files []*chart.ChartExtenderBufferedFile) error
 	var opts helpers.GetHelmChartMetadataOptions
 	if wc.werfConfig != nil {
 		opts.DefaultName = wc.werfConfig.Meta.Project
+		opts.OverrideAppVersion = common.GetHelmChartConfigAppVersion(wc.werfConfig)
 	}
 	opts.DefaultVersion = "1.0.0"
 	wc.HelmChart.Metadata = helpers.AutosetChartMetadata(wc.HelmChart.Metadata, opts)
