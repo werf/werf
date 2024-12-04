@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.16.0](https://www.github.com/werf/werf/compare/v2.15.3...v2.16.0) (2024-12-04)
+
+
+### Features
+
+* **werf:** add helmChartConfig property to werf.yaml ([96a99b5](https://www.github.com/werf/werf/commit/96a99b56e8f883f4ad891bc7bb0fc558a9bae89f)), closes [#6390](https://www.github.com/werf/werf/issues/6390)
+
+
+### Bug Fixes
+
+* **deploy:** hooks might run twice ([5888927](https://www.github.com/werf/werf/commit/58889274133cd6c534d8c6bbc9f0c54f39028155))
+
 ### [2.15.3](https://www.github.com/werf/werf/compare/v2.15.2...v2.15.3) (2024-12-03)
 
 
