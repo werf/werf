@@ -618,6 +618,7 @@ func runApply(ctx context.Context) error {
 			wcompops, wfailops, wcancops, criterrs, noncriterrs := runFailureDeployPlan(
 				ctx,
 				releaseNamespace.Name(),
+				deployType,
 				plan,
 				taskStore,
 				resProcessor,
@@ -640,6 +641,7 @@ func runApply(ctx context.Context) error {
 					logStore,
 					releaseName,
 					releaseNamespace,
+					deployType,
 					newRel,
 					prevDeployedRelease,
 					newRevision,
@@ -728,6 +730,7 @@ func createReleaseNamespace(
 func runFailureDeployPlan(
 	ctx context.Context,
 	releaseNamespace string,
+	deployType helmcommon.DeployType,
 	failedPlan *pln.Plan,
 	taskStore *statestore.TaskStore,
 	resProcessor *resrcprocssr.DeployableResourcesProcessor,
@@ -742,6 +745,7 @@ func runFailureDeployPlan(
 	log.Default.Info(ctx, "Building failure deploy plan")
 	failurePlanBuilder := plnbuilder.NewDeployFailurePlanBuilder(
 		releaseNamespace,
+		deployType,
 		failedPlan,
 		taskStore,
 		resProcessor.DeployableHookResourcesInfos(),
@@ -803,6 +807,7 @@ func runRollbackPlan(
 	logStore *kubeutil.Concurrent[*logstore.LogStore],
 	releaseName string,
 	releaseNamespace *resrc.ReleaseNamespace,
+	deployType helmcommon.DeployType,
 	failedRelease, prevDeployedRelease *rls.Release,
 	failedRevision int,
 	history *rlshistor.History,
@@ -959,6 +964,7 @@ func runRollbackPlan(
 		wcompops, wfailops, wcancops, criterrs, noncriterrs := runFailureDeployPlan(
 			ctx,
 			releaseNamespace.Name(),
+			deployType,
 			rollbackPlan,
 			taskStore,
 			resProcessor,
