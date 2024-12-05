@@ -26,21 +26,21 @@ groups:
   - name: "1.2"
     channels:
       - name: alpha
-        version: 1.2.332
+        version: 1.2.333
       - name: beta
-        version: 1.2.331
+        version: 1.2.333
       - name: ea
-        version: 1.2.331
+        version: 1.2.333
       - name: stable
-        version: 1.2.331
+        version: 1.2.330
       - name: rock-solid
         version: 1.2.330
   - name: "2"
     channels:
       - name: alpha
-        version: 2.16.0
+        version: 2.16.1
       - name: beta
-        version: 2.15.3
+        version: 2.16.1
       - name: ea
         version: 2.13.1
       - name: stable
