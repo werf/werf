@@ -62,10 +62,9 @@ type Conveyor struct {
 
 	ConveyorOptions
 
-	mutex                 sync.Mutex
-	serviceRWMutex        map[string]*sync.RWMutex
-	stageDigestMutex      map[string]*sync.Mutex
-	onTerminateFuncsMutex sync.RWMutex
+	mutex            sync.Mutex
+	serviceRWMutex   map[string]*sync.RWMutex
+	stageDigestMutex map[string]*sync.Mutex
 }
 
 type ConveyorOptions struct {
@@ -313,8 +312,8 @@ func (c *Conveyor) GetImportServer(ctx context.Context, targetPlatform, imageNam
 }
 
 func (c *Conveyor) AppendOnTerminateFunc(f func() error) {
-	c.onTerminateFuncsMutex.Lock()
-	defer c.onTerminateFuncsMutex.Unlock()
+	c.GetServiceRWMutex("TerminateFunctions").Lock()
+	defer c.GetServiceRWMutex("TerminateFunctions").Unlock()
 	c.onTerminateFuncs = append(c.onTerminateFuncs, f)
 }
 
@@ -640,7 +639,7 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 		numberOfWorkers := int(c.ParallelTasksLimit)
 
 		var setImageExecutionTimes []string
-		var setImageExecutionTimesMutex sync.Mutex
+		setImageExecutionTimesMutex := c.GetServiceRWMutex("SetImageExecutionTimes")
 		if err := parallel.DoTasks(ctx, numberOfTasks, parallel.DoTasksOptions{
 			InitDockerCLIForEachWorker: true,
 			MaxNumberOfWorkers:         numberOfWorkers,
