@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.333](https://www.github.com/werf/werf/compare/v1.2.332...v1.2.333) (2024-12-05)
+
+
+### Bug Fixes
+
+* **export:** resolve issue with exporting specific images ([#6471](https://www.github.com/werf/werf/issues/6471)) ([fd7a569](https://www.github.com/werf/werf/commit/fd7a5696dd24d63d7c6bdbaa836a438383a22370))
+
 ### [1.2.332](https://www.github.com/werf/werf/compare/v1.2.331...v1.2.332) (2024-11-28)
 
 
