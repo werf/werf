@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver"
+	"github.com/werf/werf/v2/pkg/util"
 )
 
 type SyncSourceWorktreeWithServiceBranchOptions struct {
@@ -175,7 +176,7 @@ func addNewChangesInServiceWorktreeDir(ctx context.Context, sourceWorktreeDir, s
 	return err
 }
 
-func runGitAddCmd(ctx context.Context, sourceWorktreeDir, serviceWorktreeDir string, globExcludeList []string, dryRun bool) (*bytes.Buffer, error) {
+func runGitAddCmd(ctx context.Context, sourceWorktreeDir, serviceWorktreeDir string, globExcludeList []string, dryRun bool) (*util.GoroutineSafeBuffer, error) {
 	gitAddArgs := []string{
 		"--work-tree",
 		sourceWorktreeDir,

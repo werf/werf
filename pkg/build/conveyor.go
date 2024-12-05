@@ -62,9 +62,10 @@ type Conveyor struct {
 
 	ConveyorOptions
 
-	mutex            sync.Mutex
-	serviceRWMutex   map[string]*sync.RWMutex
-	stageDigestMutex map[string]*sync.Mutex
+	mutex                 sync.Mutex
+	serviceRWMutex        map[string]*sync.RWMutex
+	stageDigestMutex      map[string]*sync.Mutex
+	onTerminateFuncsMutex sync.RWMutex
 }
 
 type ConveyorOptions struct {
@@ -312,13 +313,19 @@ func (c *Conveyor) GetImportServer(ctx context.Context, targetPlatform, imageNam
 }
 
 func (c *Conveyor) AppendOnTerminateFunc(f func() error) {
+	c.onTerminateFuncsMutex.Lock()
+	defer c.onTerminateFuncsMutex.Unlock()
 	c.onTerminateFuncs = append(c.onTerminateFuncs, f)
 }
 
 func (c *Conveyor) Terminate(ctx context.Context) error {
 	var terminateErrors []error
 
-	for _, onTerminateFunc := range c.onTerminateFuncs {
+	c.onTerminateFuncsMutex.RLock()
+	funcs := append([]func() error{}, c.onTerminateFuncs...)
+	c.onTerminateFuncsMutex.RUnlock()
+
+	for _, onTerminateFunc := range funcs {
 		if err := onTerminateFunc(); err != nil {
 			terminateErrors = append(terminateErrors, err)
 		}
@@ -359,8 +366,8 @@ func (c *Conveyor) GetRemoteGitRepo(key string) *git_repo.Remote {
 }
 
 func (c *Conveyor) SetShouldAddManagedImagesRecords() {
-	c.GetServiceRWMutex("ShouldAddManagedImagesRecords").RLock()
-	defer c.GetServiceRWMutex("ShouldAddManagedImagesRecords").RUnlock()
+	c.GetServiceRWMutex("ShouldAddManagedImagesRecords").Lock()
+	defer c.GetServiceRWMutex("ShouldAddManagedImagesRecords").Unlock()
 	c.shouldAddManagedImagesRecords = true
 }
 
@@ -637,6 +644,7 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 		numberOfWorkers := int(c.ParallelTasksLimit)
 
 		var setImageExecutionTimes []string
+		var setImageExecutionTimesMutex sync.Mutex
 		if err := parallel.DoTasks(ctx, numberOfTasks, parallel.DoTasksOptions{
 			InitDockerCLIForEachWorker: true,
 			MaxNumberOfWorkers:         numberOfWorkers,
@@ -657,10 +665,12 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 
 				taskEndTime := time.Now()
 				taskDuration := taskEndTime.Sub(taskStartTime)
+				setImageExecutionTimesMutex.Lock()
 				setImageExecutionTimes = append(
 					setImageExecutionTimes,
 					fmt.Sprintf("%s (%.2f seconds)", taskImage.LogDetailedName(), taskDuration.Seconds()),
 				)
+				setImageExecutionTimesMutex.Unlock()
 			}
 
 			return nil
