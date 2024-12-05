@@ -1,5 +1,14 @@
 # Changelog
 
+### [2.16.1](https://www.github.com/werf/werf/compare/v2.16.0...v2.16.1) (2024-12-05)
+
+
+### Bug Fixes
+
+* **deploy:** ignore error "Additional property werf is not allowed" ([d66122e](https://www.github.com/werf/werf/commit/d66122e0d7c6cf885465240c60dfda68aeed77f7))
+* **deploy:** no resources deleted in uninstall if pre-delete hook present ([f6011ee](https://www.github.com/werf/werf/commit/f6011ee7186d2089968dc3ba353d0e9680b0f293))
+* **export:** resolve issue with exporting specific images ([#6471](https://www.github.com/werf/werf/issues/6471)) ([0b422d2](https://www.github.com/werf/werf/commit/0b422d20b8f6cc7624a98912f8b32be821ada237))
+
 ## [2.16.0](https://www.github.com/werf/werf/compare/v2.15.3...v2.16.0) (2024-12-04)
 
 
