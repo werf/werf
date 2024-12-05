@@ -321,11 +321,7 @@ func (c *Conveyor) AppendOnTerminateFunc(f func() error) {
 func (c *Conveyor) Terminate(ctx context.Context) error {
 	var terminateErrors []error
 
-	c.onTerminateFuncsMutex.RLock()
-	funcs := append([]func() error{}, c.onTerminateFuncs...)
-	c.onTerminateFuncsMutex.RUnlock()
-
-	for _, onTerminateFunc := range funcs {
+	for _, onTerminateFunc := range c.onTerminateFuncs {
 		if err := onTerminateFunc(); err != nil {
 			terminateErrors = append(terminateErrors, err)
 		}
