@@ -109,7 +109,7 @@ tasks:
         vars:
           outputDir: "{{.outputDir}}"
           extraGoBuildArgs: "{{.extraGoBuildArgs}}"
-          raceDetectorEnabled: '{{.raceDetectorEnabled}}'
+          raceDetectorEnabled: "{{.raceDetectorEnabled}}"
 
   build:dev:linux:amd64:cgo:
     desc: "Build werf dev binary for linux/amd64 with cgo."
@@ -120,7 +120,7 @@ tasks:
           targetArch: "amd64"
           outputDir: "{{.outputDir}}"
           extraGoBuildArgs: "{{.extraGoBuildArgs}}"
-          raceDetectorEnabled: '{{.raceDetectorEnabled}}'
+          raceDetectorEnabled: "{{.raceDetectorEnabled}}"
 
   build:dev:linux:amd64:go:
     desc: "Build werf dev binary for linux/amd64 without cgo."
@@ -131,7 +131,7 @@ tasks:
           targetArch: "amd64"
           outputDir: "{{.outputDir}}"
           extraGoBuildArgs: "{{.extraGoBuildArgs}}"
-          raceDetectorEnabled: '{{.raceDetectorEnabled}}'
+          raceDetectorEnabled: "{{.raceDetectorEnabled}}"
 
   build:dist:linux:amd64:
     desc: 'Build werf release binary for linux/amd64. Important vars: "version".'
@@ -152,7 +152,7 @@ tasks:
           cc: "aarch64-linux-gnu-gcc"
           outputDir: "{{.outputDir}}"
           extraGoBuildArgs: "{{.extraGoBuildArgs}}"
-          raceDetectorEnabled: '{{.raceDetectorEnabled}}'
+          raceDetectorEnabled: "{{.raceDetectorEnabled}}"
 
   build:dist:linux:arm64:
     desc: 'Build werf release binary for linux/arm64. Important vars: "version".'
@@ -173,7 +173,7 @@ tasks:
           targetArch: "amd64"
           outputDir: "{{.outputDir}}"
           extraGoBuildArgs: "{{.extraGoBuildArgs}}"
-          raceDetectorEnabled: '{{.raceDetectorEnabled}}'
+          raceDetectorEnabled: "{{.raceDetectorEnabled}}"
 
   build:dist:darwin:amd64:
     desc: 'Build werf release binary for darwin/amd64. Important vars: "version".'
@@ -193,7 +193,7 @@ tasks:
           targetArch: "arm64"
           outputDir: "{{.outputDir}}"
           extraGoBuildArgs: "{{.extraGoBuildArgs}}"
-          raceDetectorEnabled: '{{.raceDetectorEnabled}}'
+          raceDetectorEnabled: "{{.raceDetectorEnabled}}"
 
   build:dist:darwin:arm64:
     desc: 'Build werf release binary for darwin/arm64. Important vars: "version".'
@@ -213,7 +213,7 @@ tasks:
           targetArch: "amd64"
           outputDir: "{{.outputDir}}"
           extraGoBuildArgs: "{{.extraGoBuildArgs}}"
-          raceDetectorEnabled: '{{.raceDetectorEnabled}}'
+          raceDetectorEnabled: "{{.raceDetectorEnabled}}"
 
   build:dist:windows:amd64:
     desc: 'Build werf release binary for windows/amd64. Important vars: "version".'
