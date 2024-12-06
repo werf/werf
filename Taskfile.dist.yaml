@@ -40,13 +40,15 @@ tasks:
 
   _build:cgo:dev: &build_cgo_dev
     cmds:
-      - go build -o "{{.outputDir | default (printf "./build/%s-%s" .targetOS .targetArch)}}/werf{{if (eq .targetOS "windows")}}.exe{{end}}"
+      - go build {{if eq .raceDetectorEnabled "true" }}-race{{end}} -o "{{.outputDir | default (printf "./build/%s-%s" .targetOS .targetArch)}}/werf{{if (eq .targetOS "windows")}}.exe{{end}}"
         -compiler gc -ldflags="{{.cgoDevLDFlags}}" -tags="{{.cgoTags}}" {{.extraGoBuildArgs}} {{.CLI_ARGS}} {{.pkg | default .package}}
     env:
       CGO_ENABLED: "1"
       GOOS: "{{.targetOS}}"
       GOARCH: "{{.targetArch}}"
       CC: "{{.cc}}"
+    vars:
+      raceDetectorEnabled: '{{.raceDetectorEnabled | default "false"}}'
 
   _build:cgo:dist:
     <<: *build_cgo_dev
@@ -56,12 +58,14 @@ tasks:
 
   _build:go:dev: &build_go_dev
     cmds:
-      - go build -o "{{.outputDir | default (printf "./build/%s-%s" .targetOS .targetArch)}}/werf{{if (eq .targetOS "windows")}}.exe{{end}}"
+      - go build {{if eq .raceDetectorEnabled "true" }}-race{{end}} -o "{{.outputDir | default (printf "./build/%s-%s" .targetOS .targetArch)}}/werf{{if (eq .targetOS "windows")}}.exe{{end}}"
         -ldflags="{{.goDevLDFlags}}" -tags="{{.goTags}}" {{.extraGoBuildArgs}} {{.CLI_ARGS}} {{.pkg | default .package}}
     env:
       CGO_ENABLED: "0"
       GOOS: "{{.targetOS}}"
       GOARCH: "{{.targetArch}}"
+    vars:
+      raceDetectorEnabled: '{{.raceDetectorEnabled | default "false"}}'
 
   _build:go:dist:
     <<: *build_go_dev
@@ -77,6 +81,7 @@ tasks:
         vars:
           outputDir: '{{.outputDir | default "./bin"}}'
           extraGoBuildArgs: "{{.extraGoBuildArgs}}"
+          raceDetectorEnabled: '{{.raceDetectorEnabled | default "false"}}'
 
   build:dev:all:
     desc: "Build all werf dev binaries in parallel."
@@ -104,6 +109,7 @@ tasks:
         vars:
           outputDir: "{{.outputDir}}"
           extraGoBuildArgs: "{{.extraGoBuildArgs}}"
+          raceDetectorEnabled: '{{.raceDetectorEnabled}}'
 
   build:dev:linux:amd64:cgo:
     desc: "Build werf dev binary for linux/amd64 with cgo."
@@ -114,6 +120,7 @@ tasks:
           targetArch: "amd64"
           outputDir: "{{.outputDir}}"
           extraGoBuildArgs: "{{.extraGoBuildArgs}}"
+          raceDetectorEnabled: '{{.raceDetectorEnabled}}'
 
   build:dev:linux:amd64:go:
     desc: "Build werf dev binary for linux/amd64 without cgo."
@@ -124,6 +131,7 @@ tasks:
           targetArch: "amd64"
           outputDir: "{{.outputDir}}"
           extraGoBuildArgs: "{{.extraGoBuildArgs}}"
+          raceDetectorEnabled: '{{.raceDetectorEnabled}}'
 
   build:dist:linux:amd64:
     desc: 'Build werf release binary for linux/amd64. Important vars: "version".'
@@ -144,6 +152,7 @@ tasks:
           cc: "aarch64-linux-gnu-gcc"
           outputDir: "{{.outputDir}}"
           extraGoBuildArgs: "{{.extraGoBuildArgs}}"
+          raceDetectorEnabled: '{{.raceDetectorEnabled}}'
 
   build:dist:linux:arm64:
     desc: 'Build werf release binary for linux/arm64. Important vars: "version".'
@@ -164,6 +173,7 @@ tasks:
           targetArch: "amd64"
           outputDir: "{{.outputDir}}"
           extraGoBuildArgs: "{{.extraGoBuildArgs}}"
+          raceDetectorEnabled: '{{.raceDetectorEnabled}}'
 
   build:dist:darwin:amd64:
     desc: 'Build werf release binary for darwin/amd64. Important vars: "version".'
@@ -183,6 +193,7 @@ tasks:
           targetArch: "arm64"
           outputDir: "{{.outputDir}}"
           extraGoBuildArgs: "{{.extraGoBuildArgs}}"
+          raceDetectorEnabled: '{{.raceDetectorEnabled}}'
 
   build:dist:darwin:arm64:
     desc: 'Build werf release binary for darwin/arm64. Important vars: "version".'
@@ -202,6 +213,7 @@ tasks:
           targetArch: "amd64"
           outputDir: "{{.outputDir}}"
           extraGoBuildArgs: "{{.extraGoBuildArgs}}"
+          raceDetectorEnabled: '{{.raceDetectorEnabled}}'
 
   build:dist:windows:amd64:
     desc: 'Build werf release binary for windows/amd64. Important vars: "version".'
