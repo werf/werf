@@ -135,7 +135,7 @@ spec:
   ingressClassName: "nginx"
   tls:
   - hosts:
-      - {{ $host }}
+      - ru.{{ $host }}
     secretName: tls-{{ $host }}
   rules:
   - host: ru.{{ $host }}
