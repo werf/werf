@@ -80,6 +80,7 @@ converge:
       env:
         WERF_KUBECONFIG_BASE64: ${{ secrets.KUBE_CONFIG_BASE64_DATA }}
         WERF_ENV: production
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 {% endraw %}
 
