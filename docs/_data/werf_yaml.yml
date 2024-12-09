@@ -41,6 +41,19 @@ sections:
               en: Path to the helm chart directory of the project
               ru: Путь до директории helm чарта проекта
             default: ".helm"
+          - name: helmChartConfig
+            description:
+              en: Override Chart.yaml configuration
+              ru: Переопределить конфигурацию в Chart.yaml
+            collapsible: true
+            isCollapsedByDefault: false
+            directives:
+              - name: appVersion
+                value: "string"
+                description:
+                  en: Override appVersion in Chart.yaml
+                  ru: Переопределить appVersion в Chart.yaml
+                default: ""
           - name: helmRelease
             value: "string"
             description:
