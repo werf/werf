@@ -1,8 +1,12 @@
 package utils
 
 import (
+	"context"
 	"fmt"
+	"os"
 	"strings"
+
+	"github.com/go-git/go-git/v5"
 
 	"github.com/werf/werf/v2/test/pkg/utils/liveexec"
 )
@@ -28,4 +32,27 @@ func GetHeadCommit(workTreeDir string) string {
 	)
 
 	return strings.TrimSpace(out)
+}
+
+// LookupRepoAbsPath returns the absolute path to the git repository that contains the current directory.
+// same function from true_git.go can't be used due to the cyclic dependency
+func LookupRepoAbsPath(ctx context.Context) (string, error) {
+	currentDir, err := os.Getwd()
+	if err != nil {
+		return "", fmt.Errorf("unable to get current directory: %w", err)
+	}
+
+	repo, err := git.PlainOpenWithOptions(currentDir, &git.PlainOpenOptions{
+		DetectDotGit: true,
+	})
+	if err != nil {
+		return "", fmt.Errorf("unable to open repo: %w", err)
+	}
+
+	worktree, err := repo.Worktree()
+	if err != nil {
+		return "", fmt.Errorf("unable to get worktree: %w", err)
+	}
+
+	return worktree.Filesystem.Root(), nil
 }
