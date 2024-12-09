@@ -134,7 +134,7 @@ func (r *DockerRegistryWithCache) withCachedTags(reference string, f func([]stri
 		tags = value.([]string)
 	}
 
-	newTags, err := f(tags, isExist)
+	newTags, err := f(tags, isExist) // TODO(iapershin) fix data race here
 	if err != nil {
 		return nil, err
 	}
