@@ -32,13 +32,13 @@ jobs:
           echo 'failed<<EOF' >> $GITHUB_OUTPUT 
           echo "$(curl ${{ github.api_url }}/repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs | jq -r '.jobs[]| select (.conclusion == "failure") | .html_url')" >> $GITHUB_OUTPUT
           echo 'EOF' >> $GITHUB_OUTPUT
-      - if: (env.WORKFLOW_CONCLUSION == 'failure' && startsWith(github.ref, 'refs/pull/'))
+      - if: env.WORKFLOW_CONCLUSION == 'failure' && (startsWith(github.ref, 'refs/pull/') || github.event_name == 'workflow_dispatch')
         name: get user
         id: get_user
         run: |
           echo username=$(curl ${{ github.api_url }}/users/${{ github.triggering_actor }} | jq -r '.name' | tr '[:upper:]' '[:lower:]' | tr " " . ) >> $GITHUB_OUTPUT
 
-      - if: "(env.WORKFLOW_CONCLUSION == 'failure' && ! startsWith(github.ref, 'refs/pull/'))"
+      - if: "(env.WORKFLOW_CONCLUSION == 'failure' && ! startsWith(github.ref, 'refs/pull/') && github.event_name != 'workflow_dispatch' )"
         name: Failure notify
         uses: mattermost/action-mattermost-notify@master
         with:
@@ -60,7 +60,7 @@ jobs:
             Workflow успешно завершился :bender: 
             [${{ github.workflow }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) ${{ github.ref_name }} :success:
 
-      - if: (env.WORKFLOW_CONCLUSION == 'failure' && startsWith(github.ref, 'refs/pull/'))
+      - if: env.WORKFLOW_CONCLUSION == 'failure' && (startsWith(github.ref, 'refs/pull/') || github.event_name == 'workflow_dispatch')
         name: Failure notify for PRs
         uses: mattermost/action-mattermost-notify@master
         with:
