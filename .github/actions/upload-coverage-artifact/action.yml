@@ -20,6 +20,7 @@ runs:
 
     - if: inputs.coverage == 'true'
       name: Set timestamp
+      shell: bash
       run: echo "TIMESTAMP=$(date +%H%M%S)" >> $GITHUB_ENV
 
     - if: inputs.coverage == 'true'
