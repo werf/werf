@@ -54,11 +54,6 @@ func NewGetReleaseCmd(ctx context.Context) *cobra.Command {
 }
 
 func runGetRelease(ctx context.Context) error {
-	giterminismManager, err := common.GetGiterminismManager(ctx, &getReleaseCmdData)
-	if err != nil {
-		return err
-	}
-
 	_, ctx, err = common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
 		Cmd: &getReleaseCmdData,
 		InitTrueGitWithOptions: &common.InitTrueGitOptions{
@@ -69,6 +64,11 @@ func runGetRelease(ctx context.Context) error {
 	})
 	if err != nil {
 		return fmt.Errorf("component init error: %w", err)
+	}
+	
+	giterminismManager, err := common.GetGiterminismManager(ctx, &getReleaseCmdData)
+	if err != nil {
+		return err
 	}
 
 	_, werfConfig, err := common.GetRequiredWerfConfig(ctx, &getReleaseCmdData, giterminismManager, common.GetWerfConfigOptions(&getReleaseCmdData, false))
