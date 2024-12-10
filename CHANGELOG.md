@@ -1,5 +1,14 @@
 # Changelog
 
+### [2.16.2](https://www.github.com/werf/werf/compare/v2.16.1...v2.16.2) (2024-12-10)
+
+
+### Bug Fixes
+
+* **deploy:** deploy graph cycle if same external dependency on multiple resources ([f1a869d](https://www.github.com/werf/werf/commit/f1a869d7e31856bcd598c78c0dd68169da00cb19))
+* **deploy:** fix segfault in get-release ([#6486](https://www.github.com/werf/werf/issues/6486)) ([7125238](https://www.github.com/werf/werf/commit/71252387a323d612f8940262858bfe044e5b21c3))
+* **deploy:** initial resource status should be "unknown" instead of "created" ([7985a5a](https://www.github.com/werf/werf/commit/7985a5aa1e746bd46acbf44db4aded1334521d6e))
+
 ### [2.16.1](https://www.github.com/werf/werf/compare/v2.16.0...v2.16.1) (2024-12-05)
 
 
