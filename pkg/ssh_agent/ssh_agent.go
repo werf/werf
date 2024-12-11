@@ -8,6 +8,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/google/uuid"
@@ -197,7 +198,14 @@ func runSSHAgentWithKeys(ctx context.Context, keys []sshKey) (string, error) {
 }
 
 func runSSHAgent(ctx context.Context) (string, error) {
-	sockPath := filepath.Join(werf.GetTmpDir(), "werf-ssh-agent", uuid.NewString())
+	var sockPath string
+	// darwin does not support path more than 108 characters
+	if runtime.GOOS == "darwin" {
+		sockPath = filepath.Join("/private/tmp/werf/Listeners", uuid.NewString())
+	} else {
+		sockPath = filepath.Join(werf.GetTmpDir(), "werf-ssh-agent", uuid.NewString())
+	}
+
 	tmpSockPath = sockPath
 
 	err := os.MkdirAll(filepath.Dir(sockPath), os.ModePerm)

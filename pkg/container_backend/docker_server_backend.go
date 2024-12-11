@@ -14,6 +14,7 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/ssh_agent"
 	"github.com/werf/werf/v2/pkg/util"
 )
 
@@ -69,6 +70,10 @@ func (backend *DockerServerBackend) BuildDockerfile(ctx context.Context, _ []byt
 	}
 	if opts.SSH != "" {
 		cliArgs = append(cliArgs, "--ssh", opts.SSH)
+	} else {
+		if ssh_agent.SSHAuthSock != "" {
+			cliArgs = append(cliArgs, "--ssh", "default")
+		}
 	}
 
 	for _, addHost := range opts.AddHost {
