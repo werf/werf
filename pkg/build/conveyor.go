@@ -312,6 +312,8 @@ func (c *Conveyor) GetImportServer(ctx context.Context, targetPlatform, imageNam
 }
 
 func (c *Conveyor) AppendOnTerminateFunc(f func() error) {
+	c.GetServiceRWMutex("TerminateFunctions").Lock()
+	defer c.GetServiceRWMutex("TerminateFunctions").Unlock()
 	c.onTerminateFuncs = append(c.onTerminateFuncs, f)
 }
 
@@ -359,8 +361,8 @@ func (c *Conveyor) GetRemoteGitRepo(key string) *git_repo.Remote {
 }
 
 func (c *Conveyor) SetShouldAddManagedImagesRecords() {
-	c.GetServiceRWMutex("ShouldAddManagedImagesRecords").RLock()
-	defer c.GetServiceRWMutex("ShouldAddManagedImagesRecords").RUnlock()
+	c.GetServiceRWMutex("ShouldAddManagedImagesRecords").Lock()
+	defer c.GetServiceRWMutex("ShouldAddManagedImagesRecords").Unlock()
 	c.shouldAddManagedImagesRecords = true
 }
 
@@ -637,6 +639,7 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 		numberOfWorkers := int(c.ParallelTasksLimit)
 
 		var setImageExecutionTimes []string
+		setImageExecutionTimesMutex := c.GetServiceRWMutex("SetImageExecutionTimes")
 		if err := parallel.DoTasks(ctx, numberOfTasks, parallel.DoTasksOptions{
 			InitDockerCLIForEachWorker: true,
 			MaxNumberOfWorkers:         numberOfWorkers,
@@ -657,10 +660,12 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 
 				taskEndTime := time.Now()
 				taskDuration := taskEndTime.Sub(taskStartTime)
+				setImageExecutionTimesMutex.Lock()
 				setImageExecutionTimes = append(
 					setImageExecutionTimes,
 					fmt.Sprintf("%s (%.2f seconds)", taskImage.LogDetailedName(), taskDuration.Seconds()),
 				)
+				setImageExecutionTimesMutex.Unlock()
 			}
 
 			return nil
