@@ -4,11 +4,18 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"runtime"
 	"strings"
 
 	"github.com/docker/docker/pkg/stringid"
 
 	"github.com/werf/logboek"
+	"github.com/werf/werf/v2/pkg/ssh_agent"
+)
+
+const (
+	SSHHostAuthSockPath      = "/run/host-services/ssh-auth.sock"
+	SSHContainerAuthSockPath = "/.werf/tmp/ssh-auth-sock"
 )
 
 var (
@@ -56,4 +63,17 @@ func byteCountBinary(b int64) string {
 		exp++
 	}
 	return fmt.Sprintf("%.1f %ciB", float64(b)/float64(div), "KMGTPE"[exp])
+}
+
+func setSSHMountPoint(sshAuthSock string) (string, map[string]string) {
+	var vol string
+	env := make(map[string]string)
+	if runtime.GOOS == "darwin" {
+		vol = fmt.Sprintf("%s:%s", SSHHostAuthSockPath, SSHHostAuthSockPath)
+		env[ssh_agent.SSHAuthSockEnv] = SSHHostAuthSockPath
+	} else {
+		vol = (fmt.Sprintf("%s:%s", sshAuthSock, SSHHostAuthSockPath))
+		env[ssh_agent.SSHAuthSockEnv] = SSHHostAuthSockPath
+	}
+	return vol, env
 }

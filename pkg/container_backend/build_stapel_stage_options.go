@@ -22,6 +22,7 @@ type BuildStapelStageOptionsInterface interface {
 
 	AddBuildVolumes(volumes ...string) BuildStapelStageOptionsInterface
 	AddCommands(commands ...string) BuildStapelStageOptionsInterface
+	MountSSHAgentSocket(sshAuthSock string)
 
 	AddDataArchive(archive io.ReadCloser, archiveType ArchiveType, to string, o AddDataArchiveOptions) BuildStapelStageOptionsInterface
 	RemoveData(removeType RemoveType, paths, keepParentDirs []string) BuildStapelStageOptionsInterface
@@ -184,4 +185,13 @@ func (opts *BuildStapelStageOptions) AddDependencyImport(imageName, fromPath, to
 		Group:        group,
 	})
 	return opts
+}
+
+func (opts *BuildStapelStageOptions) MountSSHAgentSocket(sshAuthSock string) {
+	if sshAuthSock == "" {
+		return
+	}
+	vol, env := setSSHMountPoint(sshAuthSock)
+	opts.AddBuildVolumes(vol)
+	opts.AddEnvs(env)
 }

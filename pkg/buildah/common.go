@@ -57,6 +57,7 @@ type BuildFromDockerfileOpts struct {
 	Target     string
 	Labels     []string
 	Secrets    []string
+	SSH        string
 }
 
 type RunMount struct {
@@ -79,6 +80,7 @@ type RunCommandOpts struct {
 	User             string
 	Envs             []string
 	Secrets          []string
+	SSH              string
 	// Mounts as allowed to be passed from command line.
 	GlobalMounts []*specs.Mount
 	// Mounts as allowed in Dockerfile RUN --mount option. Have more restrictions than GlobalMounts (e.g. Source of bind-mount can't be outside of ContextDir or container root).

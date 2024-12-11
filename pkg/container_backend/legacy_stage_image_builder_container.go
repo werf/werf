@@ -29,3 +29,12 @@ func (c *LegacyStageImageBuilderContainer) AddEnv(envs map[string]string) {
 func (c *LegacyStageImageBuilderContainer) AddLabel(labels map[string]string) {
 	c.image.container.runOptions.AddLabel(labels)
 }
+
+func (c *LegacyStageImageBuilderContainer) MountSSHAgentSocket(sshAuthSock string) {
+	if sshAuthSock == "" {
+		return
+	}
+	vol, env := setSSHMountPoint(sshAuthSock)
+	c.AddVolume(vol)
+	c.AddEnv(env)
+}

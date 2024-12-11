@@ -376,6 +376,10 @@ func (b *NativeBuildah) BuildFromDockerfile(ctx context.Context, dockerfile stri
 		}
 	}
 
+	if len(opts.SSH) > 0 {
+		buildOpts.CommonBuildOpts.SSHSources = []string{opts.SSH}
+	}
+
 	if targetPlatform != b.GetRuntimePlatform() {
 		// Prevent local cache collisions in multiplatform build mode:
 		//   allow local cache only for the current runtime platform.
@@ -441,6 +445,11 @@ func (b *NativeBuildah) RunCommand(ctx context.Context, container string, comman
 		return fmt.Errorf("unable to parse secrets: %w", err)
 	}
 
+	sshSources, err := parse.SSH([]string{opts.SSH})
+	if err != nil {
+		return fmt.Errorf("unable to parse ssh sources: %w", err)
+	}
+
 	runOpts := buildah.RunOptions{
 		Env:              opts.Envs,
 		ContextDir:       contextDir,
@@ -459,8 +468,7 @@ func (b *NativeBuildah) RunCommand(ctx context.Context, container string, comman
 		Mounts:           globalMounts,
 		RunMounts:        runMounts,
 		Secrets:          buildahSecrets,
-		// TODO(ilya-lesikov):
-		SSHSources: nil,
+		SSHSources:       sshSources,
 	}
 
 	if err := builder.Run(command, runOpts); err != nil {

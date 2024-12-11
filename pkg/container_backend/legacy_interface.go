@@ -63,6 +63,7 @@ type LegacyBuilderContainer interface {
 	AddExpose(exposes ...string)
 	AddEnv(envs map[string]string)
 	AddLabel(labels map[string]string)
+	MountSSHAgentSocket(sshAuthSock string)
 }
 
 type LegacyContainerOptions interface {

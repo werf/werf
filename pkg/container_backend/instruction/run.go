@@ -16,10 +16,11 @@ type Run struct {
 	instructions.RunCommand
 	Envs    []string
 	Secrets []string
+	SSH     string
 }
 
-func NewRun(i instructions.RunCommand, envs, secrets []string) *Run {
-	return &Run{RunCommand: i, Envs: envs, Secrets: secrets}
+func NewRun(i instructions.RunCommand, envs, secrets []string, ssh string) *Run {
+	return &Run{RunCommand: i, Envs: envs, Secrets: secrets, SSH: ssh}
 }
 
 func (i *Run) UsesBuildContext() bool {
@@ -70,6 +71,7 @@ func (i *Run) Apply(ctx context.Context, containerName string, drv buildah.Build
 		RunMounts:       i.GetMounts(),
 		Envs:            i.Envs,
 		Secrets:         i.Secrets,
+		SSH:             i.SSH,
 	}); err != nil {
 		return fmt.Errorf("error running command %v for container %s: %w", i.CmdLine, containerName, err)
 	}

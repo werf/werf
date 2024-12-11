@@ -21,6 +21,10 @@ import (
 	"github.com/werf/werf/v2/pkg/werf"
 )
 
+const (
+	SSHAuthSockEnv = "SSH_AUTH_SOCK"
+)
+
 var (
 	SSHAuthSock string
 	tmpSockPath string
@@ -28,7 +32,7 @@ var (
 
 func setupProcessSSHAgent(sshAuthSock string) error {
 	SSHAuthSock = sshAuthSock
-	return os.Setenv("SSH_AUTH_SOCK", SSHAuthSock)
+	return os.Setenv(SSHAuthSockEnv, SSHAuthSock)
 }
 
 type sshKeyConfig struct {
@@ -128,7 +132,7 @@ func Init(ctx context.Context, userKeys []string) error {
 		}
 	}
 
-	systemAgentSock := os.Getenv("SSH_AUTH_SOCK")
+	systemAgentSock := os.Getenv(SSHAuthSockEnv)
 	systemAgentSockExists, _ := util.FileExists(systemAgentSock)
 	if systemAgentSock != "" && systemAgentSockExists {
 		SSHAuthSock = systemAgentSock

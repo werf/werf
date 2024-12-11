@@ -128,7 +128,11 @@ func (c *rawImageFromDockerfile) toImageFromDockerfileDirective(giterminismManag
 	}
 
 	image.Network = c.Network
-	image.SSH = c.SSH
+	if c.SSH == "" {
+		image.SSH = "default"
+	} else {
+		image.SSH = c.SSH
+	}
 
 	for _, rawDep := range c.RawDependencies {
 		dependencyDirective, err := rawDep.toDirective()

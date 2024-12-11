@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -1008,26 +1007,6 @@ func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *imag
 			stageImage.Builder.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions().AddLabel(serviceLabels)
 		} else {
 			stageImage.Builder.StapelStageBuilder().AddLabels(serviceLabels)
-		}
-
-		if phase.Conveyor.sshAuthSock != "" {
-			if runtime.GOOS == "darwin" {
-				if phase.Conveyor.UseLegacyStapelBuilder(phase.Conveyor.ContainerBackend) {
-					stageImage.Builder.LegacyStapelStageBuilder().Container().RunOptions().AddVolume("/run/host-services/ssh-auth.sock:/run/host-services/ssh-auth.sock")
-					stageImage.Builder.LegacyStapelStageBuilder().Container().RunOptions().AddEnv(map[string]string{"SSH_AUTH_SOCK": "/run/host-services/ssh-auth.sock"})
-				} else {
-					stageImage.Builder.StapelStageBuilder().AddBuildVolumes("/run/host-services/ssh-auth.sock:/run/host-services/ssh-auth.sock")
-					stageImage.Builder.StapelStageBuilder().AddEnvs(map[string]string{"SSH_AUTH_SOCK": "/run/host-services/ssh-auth.sock"})
-				}
-			} else {
-				if phase.Conveyor.UseLegacyStapelBuilder(phase.Conveyor.ContainerBackend) {
-					stageImage.Builder.LegacyStapelStageBuilder().Container().RunOptions().AddVolume(fmt.Sprintf("%s:/.werf/tmp/ssh-auth-sock", phase.Conveyor.sshAuthSock))
-					stageImage.Builder.LegacyStapelStageBuilder().Container().RunOptions().AddEnv(map[string]string{"SSH_AUTH_SOCK": "/.werf/tmp/ssh-auth-sock"})
-				} else {
-					stageImage.Builder.StapelStageBuilder().AddBuildVolumes(fmt.Sprintf("%s:/.werf/tmp/ssh-auth-sock", phase.Conveyor.sshAuthSock))
-					stageImage.Builder.StapelStageBuilder().AddEnvs(map[string]string{"SSH_AUTH_SOCK": "/.werf/tmp/ssh-auth-sock"})
-				}
-			}
 		}
 
 		headHash, err := phase.Conveyor.GiterminismManager().LocalGitRepo().HeadCommitHash(ctx)
