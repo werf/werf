@@ -40,8 +40,6 @@ type Conveyor struct {
 	baseImagesRepoIdsCache map[string]string
 	baseImagesRepoErrCache map[string]error
 
-	sshAuthSock string
-
 	imagesTree *image.ImagesTree
 
 	stageImages        map[string]*stage.StageImage
