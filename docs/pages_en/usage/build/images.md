@@ -189,6 +189,22 @@ RUN --mount=type=secret,id=plainSecret \
     export WERF_BUILD_SECRET="$(cat /run/secrets/plainSecret)"
 ```
 
+### Using the SSH Agent
+
+You can grant access to the SSH agent socket or keys during the build process. This can be useful if your Dockerfile includes commands requiring SSH authentication, such as cloning a private repository.
+
+To achieve this, use the `RUN --mount=type=ssh` flag.
+
+Example:  
+```Dockerfile
+FROM alpine
+RUN apk add --no-cache openssh-client
+RUN mkdir -p -m 0700 ~/.ssh && ssh-keyscan gitlab.com >> ~/.ssh/known_hosts
+RUN --mount=type=ssh ssh -q -T git@gitlab.com 2>&1 | tee /hello
+```
+
+You can find more details about using the SSH agent in werf [here](process.md#using-the-ssh-agent-in-build-instructions).
+
 #### Adding arbitrary files to the build context
 
 By default, the build context of a Dockerfile image only includes files from the current project repository commit. Files not added to Git or non-committed changes are not included in the build context. This logic follows the [giterminism configuration]({{"/usage/project_configuration/giterminism.html" | true_relative_url }}) default.
