@@ -7,7 +7,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/werf/nelm/pkg/secrets_manager"
+	"github.com/werf/3p-helm/pkg/werfcompat/secrets_manager"
+
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/cmd/werf/docs/replacers/helm"
 	secret_common "github.com/werf/werf/v2/cmd/werf/helm/secret/common"

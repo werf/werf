@@ -91,7 +91,7 @@ func NewCmd(ctx context.Context) (*cobra.Command, error) {
 					chartpath = filepath.Clean(args[0])
 				}
 
-				ch, err := loader.LoadDir(chartpath)
+				ch, err := loader.LoadDir(chartpath, opts)
 				if err != nil {
 					return fmt.Errorf("error loading chart %q: %w", chartpath, err)
 				}

@@ -7,10 +7,13 @@ import (
 	"text/template"
 
 	"github.com/werf/3p-helm/pkg/chart"
+	"github.com/werf/3p-helm/pkg/chart/loader"
 	"github.com/werf/3p-helm/pkg/chartutil"
 	"github.com/werf/3p-helm/pkg/cli"
 	"github.com/werf/3p-helm/pkg/postrender"
-	"github.com/werf/nelm/pkg/secrets_manager"
+
+	"github.com/werf/3p-helm/pkg/werfcompat/secrets_manager"
+
 	"github.com/werf/werf/v2/pkg/deploy/helm"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers/secrets"
@@ -69,7 +72,7 @@ func (wc *WerfChartStub) ChartCreated(c *chart.Chart) error {
 }
 
 // ChartLoaded method for the chart.Extender interface
-func (wc *WerfChartStub) ChartLoaded(files []*chart.ChartExtenderBufferedFile) error {
+func (wc *WerfChartStub) ChartLoaded(files []*loader.BufferedFile) error {
 	cwd, err := os.Getwd()
 	if err != nil {
 		return fmt.Errorf("error getting current process working directory: %w", err)
@@ -122,7 +125,7 @@ func (wc *WerfChartStub) SetupTemplateFuncs(t *template.Template, funcMap templa
 }
 
 // LoadDir method for the chart.Extender interface
-func (wc *WerfChartStub) LoadDir(dir string) (bool, []*chart.ChartExtenderBufferedFile, error) {
+func (wc *WerfChartStub) LoadDir(dir string) (bool, []*loader.BufferedFile, error) {
 	wc.ChartDir = dir
 	return false, nil, nil
 }

@@ -15,10 +15,11 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/crypto/ssh/terminal"
 
+	"github.com/werf/3p-helm/pkg/werfcompat/secret"
+	"github.com/werf/3p-helm/pkg/werfcompat/secrets_manager"
+
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/style"
-	"github.com/werf/nelm/pkg/secret"
-	"github.com/werf/nelm/pkg/secrets_manager"
 	"github.com/werf/werf/v2/pkg/util"
 	"github.com/werf/werf/v2/pkg/werf"
 )

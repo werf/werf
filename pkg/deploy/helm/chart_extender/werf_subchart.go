@@ -6,9 +6,12 @@ import (
 	"text/template"
 
 	"github.com/werf/3p-helm/pkg/chart"
+	"github.com/werf/3p-helm/pkg/chart/loader"
 	"github.com/werf/3p-helm/pkg/cli"
+
+	"github.com/werf/3p-helm/pkg/werfcompat/secrets_manager"
+
 	"github.com/werf/logboek"
-	"github.com/werf/nelm/pkg/secrets_manager"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers/secrets"
 )
@@ -51,7 +54,7 @@ func (wc *WerfSubchart) ChartCreated(c *chart.Chart) error {
 }
 
 // ChartLoaded method for the chart.Extender interface
-func (wc *WerfSubchart) ChartLoaded(files []*chart.ChartExtenderBufferedFile) error {
+func (wc *WerfSubchart) ChartLoaded(files []*loader.BufferedFile) error {
 	if wc.SecretsManager != nil {
 		if wc.DisableDefaultSecretValues {
 			logboek.Context(wc.ChartExtenderContext).Info().LogF("Disabled subchart secret values\n")
@@ -85,7 +88,7 @@ func (wc *WerfSubchart) SetupTemplateFuncs(t *template.Template, funcMap templat
 }
 
 // LoadDir method for the chart.Extender interface
-func (wc *WerfSubchart) LoadDir(dir string) (bool, []*chart.ChartExtenderBufferedFile, error) {
+func (wc *WerfSubchart) LoadDir(dir string) (bool, []*loader.BufferedFile, error) {
 	return false, nil, nil
 }
 

@@ -14,12 +14,14 @@ import (
 	"github.com/gookit/color"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
-	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-
 	helm_v3 "github.com/werf/3p-helm/cmd/helm"
 	"github.com/werf/3p-helm/pkg/action"
 	"github.com/werf/3p-helm/pkg/chart/loader"
+	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
+	"github.com/werf/3p-helm/pkg/werfcompat/secrets_manager"
+
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/kubedog/pkg/trackers/dyntracker/logstore"
 	"github.com/werf/kubedog/pkg/trackers/dyntracker/statestore"
@@ -41,7 +43,6 @@ import (
 	"github.com/werf/nelm/pkg/rls"
 	"github.com/werf/nelm/pkg/rlsdiff"
 	"github.com/werf/nelm/pkg/rlshistor"
-	"github.com/werf/nelm/pkg/secrets_manager"
 	"github.com/werf/nelm/pkg/track"
 	"github.com/werf/nelm/pkg/utls"
 	"github.com/werf/werf/v2/cmd/werf/common"
