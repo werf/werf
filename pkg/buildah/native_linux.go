@@ -45,6 +45,7 @@ import (
 
 	"github.com/werf/werf/v2/pkg/buildah/thirdparty"
 	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/ssh_agent"
 )
 
 const (
@@ -377,9 +378,7 @@ func (b *NativeBuildah) BuildFromDockerfile(ctx context.Context, dockerfile stri
 		}
 	}
 
-	if len(opts.SSH) > 0 {
-		buildOpts.CommonBuildOpts.SSHSources = []string{opts.SSH}
-	}
+	buildOpts.CommonBuildOpts.SSHSources = getSSHAgentSock(opts.SSH)
 
 	if targetPlatform != b.GetRuntimePlatform() {
 		// Prevent local cache collisions in multiplatform build mode:
@@ -447,8 +446,8 @@ func (b *NativeBuildah) RunCommand(ctx context.Context, container string, comman
 	}
 
 	var sshSources map[string]*sshagent.Source
-	if opts.SSH != "" {
-		sshSources, err = parse.SSH([]string{opts.SSH})
+	if s := getSSHAgentSock(opts.SSH); len(s) > 0 {
+		sshSources, err = parse.SSH(getSSHAgentSock(opts.SSH))
 		if err != nil {
 			return fmt.Errorf("unable to parse ssh sources: %w", err)
 		}
@@ -1262,4 +1261,14 @@ func generateGlobalMounts(rawGlobalMounts []*specs.Mount) []specs.Mount {
 	}
 
 	return globalMounts
+}
+
+func getSSHAgentSock(sock string) []string {
+	if len(sock) > 0 {
+		return []string{sock}
+	} else if sock == "" && ssh_agent.SSHAuthSock != "" {
+		return []string{"default"}
+	} else {
+		return []string{}
+	}
 }
