@@ -24,6 +24,7 @@ import (
 	"github.com/containers/buildah/docker"
 	"github.com/containers/buildah/imagebuildah"
 	"github.com/containers/buildah/pkg/parse"
+	"github.com/containers/buildah/pkg/sshagent"
 	"github.com/containers/common/libimage"
 	"github.com/containers/image/v5/manifest"
 	imgstor "github.com/containers/image/v5/storage"
@@ -445,9 +446,12 @@ func (b *NativeBuildah) RunCommand(ctx context.Context, container string, comman
 		return fmt.Errorf("unable to parse secrets: %w", err)
 	}
 
-	sshSources, err := parse.SSH([]string{opts.SSH})
-	if err != nil {
-		return fmt.Errorf("unable to parse ssh sources: %w", err)
+	var sshSources map[string]*sshagent.Source
+	if opts.SSH != "" {
+		sshSources, err = parse.SSH([]string{opts.SSH})
+		if err != nil {
+			return fmt.Errorf("unable to parse ssh sources: %w", err)
+		}
 	}
 
 	runOpts := buildah.RunOptions{
