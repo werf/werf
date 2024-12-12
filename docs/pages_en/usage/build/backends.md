@@ -38,7 +38,7 @@ For most users, enabling Buildah mode is as simple as setting `WERF_BUILDAH_MODE
 
 > **NOTE:** Currently, Buildah is available only for Linux users and Windows users with WSL2 enabled. Full support for macOS users is planned but not yet available. For macOS users, it is recommended to use a virtual machine to run werf in Buildah mode.
 
-## Storage Driver
+### Storage Driver
 
 werf can use either the `overlay` or `vfs` storage driver:
 
@@ -46,7 +46,7 @@ werf can use either the `overlay` or `vfs` storage driver:
 * `vfs`: Provides access to a virtual file system instead of OverlayFS. This option has lower performance and requires a privileged container, so it is not recommended. However, it may be useful in some cases.
 In general, the default driver (`overlay`) should suffice. The storage driver can be specified using the environment variable `WERF_BUILDAH_STORAGE_DRIVER`.
 
-## Ulimits
+### Ulimits
 
 By default, Buildah mode in werf inherits the system ulimits when launching build containers. Users can override these parameters using the `WERF_BUILDAH_ULIMIT` environment variable.
 
