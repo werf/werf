@@ -25,6 +25,11 @@ docker run --restart=always --name=qemu-user-static -d --privileged --entrypoint
 Buildah включается установкой переменной окружения `WERF_BUILDAH_MODE` в один из вариантов: `auto`, `native-chroot`, `native-rootless` или `docker`.
 Можно переключить сборочный бэкенд на Buildah, указав переменную окружения `WERF_BUILDAH_MODE=auto`
 
+```bash
+# Переключение на Buildah
+export WERF_BUILDAH_MODE=auto
+```
+
 * `auto` — автоматический выбор режима в зависимости от платформы и окружения;
 * `native-chroot` работает только в Linux и использует `chroot`-изоляцию для сборочных контейнеров;
 * `native-rootless` работает только в Linux и использует `rootless`-изоляцию для сборочных контейнеров. На этом уровне изоляции werf использует среду выполнения сборочных операций в контейнерах (runc, crun, kata или runsc).
