@@ -224,7 +224,7 @@ In this case, werf will compose the following sets to build:
 └ Concurrent builds plan (no more than 5 images at the same time)
 ```
 
-## Using the SSH agent in build instructions
+## Using the SSH agent in build instructions {#Using-the-SSH-agent-in-build-instructions}
 
 > **NOTE:** There is a restriction that only the `root` user inside the build container can access the UNIX socket defined by the `SSH_AUTH_SOCK` environment variable.
 
