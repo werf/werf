@@ -605,4 +605,4 @@ The build script can be used to download the `some-library-latest.tar.gz` archiv
 Working with remote Git repositories relies on the `SSH_AUTH_SOCK` UNIX socket, which is mounted in all build containers. This way, the build instructions can use the SSH agent over the specified UNIX socket.
 
 The SSH agent can also be used in custom instructions.  
-You can learn more about using the SSH agent in werf in [this section](../process.md#using-the-ssh-agent-in-build-instructions).
+You can learn more about using the SSH agent in werf in [this section]({{ "docs/pages_ru/usage/build/process.html#Using-the-SSH-agent-in-build-instructions" | true_relative_url }}).

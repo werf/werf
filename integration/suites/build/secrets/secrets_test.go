@@ -11,6 +11,7 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
 	"github.com/werf/werf/v2/test/pkg/contback"
 	"github.com/werf/werf/v2/test/pkg/utils"
 	"github.com/werf/werf/v2/test/pkg/werf"
@@ -43,7 +44,6 @@ var _ = Describe("build with secrets and ssh mounts", Label("integration", "buil
 				fixtureRelPath = "build_with_ssh"
 				keyFile, err := generateSSHKey(fmt.Sprintf("id_rsa_werf_test_%s", utils.GetRandomString(5)), 2048)
 				Expect(err).NotTo(HaveOccurred())
-				//defer utils.DeleteFile(key)
 				runOpts.ExtraArgs = append(runOpts.ExtraArgs, "--ssh-key", keyFile)
 			}
 
@@ -69,9 +69,9 @@ var _ = Describe("build with secrets and ssh mounts", Label("integration", "buil
 			ContainerBackendMode: "buildkit-docker",
 			SSH:                  false,
 		}),
-		//Entry("with Native Buildah with rootless isolation", testOptions{
+		// Entry("with Native Buildah with rootless isolation", testOptions{
 		//	ContainerBackendMode: "native-rootless",
-		//}),
+		// }),
 		Entry("with Native Buildah with chroot isolation", testOptions{
 			ContainerBackendMode: "native-chroot",
 			SSH:                  false,

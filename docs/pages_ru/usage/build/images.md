@@ -204,7 +204,7 @@ RUN mkdir -p -m 0700 ~/.ssh && ssh-keyscan gitlab.com >> ~/.ssh/known_hosts
 RUN --mount=type=ssh ssh -q -T git@gitlab.com 2>&1 | tee /hello
 ```
 
-Подробнее о работе SSH-агента в werf описано [здесь](process.md#использование-ssh-агента-при-сборке)
+Подробнее о работе SSH-агента в werf описано [здесь]({{ "docs/pages_ru/usage/build/process.html#Использование-SSH-агента-при-сборке" | true_relative_url }}).
 
 #### Добавление произвольных файлов в сборочный контекст
 
