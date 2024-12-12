@@ -70,10 +70,8 @@ func (backend *DockerServerBackend) BuildDockerfile(ctx context.Context, _ []byt
 	}
 	if opts.SSH != "" {
 		cliArgs = append(cliArgs, "--ssh", opts.SSH)
-	} else {
-		if ssh_agent.SSHAuthSock != "" {
-			cliArgs = append(cliArgs, "--ssh", "default")
-		}
+	} else if opts.SSH == "" && ssh_agent.SSHAuthSock != "" {
+		cliArgs = append(cliArgs, "--ssh", "default")
 	}
 
 	for _, addHost := range opts.AddHost {
