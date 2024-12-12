@@ -11,8 +11,6 @@ import (
 	"text/template"
 
 	"github.com/mitchellh/copystructure"
-	"sigs.k8s.io/yaml"
-
 	helm_v3 "github.com/werf/3p-helm/cmd/helm"
 	"github.com/werf/3p-helm/pkg/chart"
 	"github.com/werf/3p-helm/pkg/chart/loader"
@@ -22,9 +20,11 @@ import (
 	"github.com/werf/3p-helm/pkg/getter"
 	"github.com/werf/3p-helm/pkg/postrender"
 	"github.com/werf/3p-helm/pkg/registry"
+	"sigs.k8s.io/yaml"
+
+	"github.com/werf/3p-helm/pkg/werfcompat/secrets_manager"
+
 	"github.com/werf/logboek"
-	"github.com/werf/nelm/pkg/secrets_manager"
-	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/deploy/helm"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
@@ -114,7 +114,7 @@ func (wc *WerfChart) ChartCreated(c *chart.Chart) error {
 }
 
 // ChartLoaded method for the chart.Extender interface
-func (wc *WerfChart) ChartLoaded(files []*chart.ChartExtenderBufferedFile) error {
+func (wc *WerfChart) ChartLoaded(files []*loader.BufferedFile) error {
 	if wc.SecretsManager != nil {
 		if wc.DisableDefaultSecretValues {
 			logboek.Context(wc.ChartExtenderContext).Info().LogF("Disable default werf chart secret values\n")
@@ -205,7 +205,7 @@ func (wc *WerfChart) SetupTemplateFuncs(t *template.Template, funcMap template.F
 }
 
 // LoadDir method for the chart.Extender interface
-func (wc *WerfChart) LoadDir(dir string) (bool, []*chart.ChartExtenderBufferedFile, error) {
+func (wc *WerfChart) LoadDir(dir string) (bool, []*loader.BufferedFile, error) {
 	chartFiles, err := wc.GiterminismManager.FileReader().LoadChartDir(wc.ChartExtenderContext, dir)
 	if err != nil {
 		return true, nil, fmt.Errorf("giterministic files loader failed: %w", err)
@@ -271,7 +271,7 @@ func (wc *WerfChart) CreateNewBundle(
 	vals *values.Options,
 ) (*Bundle, error) {
 	chartPath := filepath.Join(wc.GiterminismManager.ProjectDir(), wc.ChartDir)
-	chrt, err := loader.LoadDir(chartPath)
+	chrt, err := loader.LoadDir(chartPath, opts)
 	if err != nil {
 		return nil, fmt.Errorf("error loading chart %q: %w", chartPath, err)
 	}

@@ -30,7 +30,7 @@ func Publish(ctx context.Context, bundle *chart_extender.Bundle, bundleRef strin
 			return err
 		}
 
-		ch, err := loader.Load(path)
+		ch, err := loader.Load(path, loader.LoadOptions{})
 		if err != nil {
 			return fmt.Errorf("error loading chart %q: %w", path, err)
 		}

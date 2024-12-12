@@ -14,8 +14,10 @@ import (
 	"github.com/werf/3p-helm/pkg/cli"
 	"github.com/werf/3p-helm/pkg/postrender"
 	"github.com/werf/3p-helm/pkg/registry"
+
+	"github.com/werf/3p-helm/pkg/werfcompat/secrets_manager"
+
 	"github.com/werf/logboek"
-	"github.com/werf/nelm/pkg/secrets_manager"
 	"github.com/werf/werf/v2/pkg/deploy/helm"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers/secrets"
@@ -114,7 +116,7 @@ func (bundle *Bundle) ChartCreated(c *chart.Chart) error {
 }
 
 // ChartLoaded method for the chart.Extender interface
-func (bundle *Bundle) ChartLoaded(files []*chart.ChartExtenderBufferedFile) error {
+func (bundle *Bundle) ChartLoaded(files []*loader.BufferedFile) error {
 	if bundle.secretsManager != nil {
 		wd, err := os.Getwd()
 		if err != nil {
@@ -153,18 +155,18 @@ func (bundle *Bundle) SetupTemplateFuncs(t *template.Template, funcMap template.
 	helpers.SetupIncludeWrapperFuncs(funcMap)
 }
 
-func convertBufferedFilesForChartExtender(files []*loader.BufferedFile) []*chart.ChartExtenderBufferedFile {
-	var res []*chart.ChartExtenderBufferedFile
+func convertBufferedFilesForChartExtender(files []*loader.BufferedFile) []*loader.BufferedFile {
+	var res []*loader.BufferedFile
 	for _, f := range files {
-		f1 := new(chart.ChartExtenderBufferedFile)
-		*f1 = chart.ChartExtenderBufferedFile(*f)
+		f1 := new(loader.BufferedFile)
+		*f1 = loader.BufferedFile(*f)
 		res = append(res, f1)
 	}
 	return res
 }
 
 // LoadDir method for the chart.Extender interface
-func (bundle *Bundle) LoadDir(dir string) (bool, []*chart.ChartExtenderBufferedFile, error) {
+func (bundle *Bundle) LoadDir(dir string) (bool, []*loader.BufferedFile, error) {
 	files, err := loader.GetFilesFromLocalFilesystem(dir)
 	if err != nil {
 		return true, nil, err
@@ -173,7 +175,7 @@ func (bundle *Bundle) LoadDir(dir string) (bool, []*chart.ChartExtenderBufferedF
 	res, err := LoadChartDependencies(bundle.ChartExtenderContext, func(
 		ctx context.Context,
 		dir string,
-	) ([]*chart.ChartExtenderBufferedFile, error) {
+	) ([]*loader.BufferedFile, error) {
 		files, err := loader.GetFilesFromLocalFilesystem(dir)
 		if err != nil {
 			return nil, err

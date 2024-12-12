@@ -3,8 +3,9 @@ package giterminism_manager
 import (
 	"context"
 
-	"github.com/werf/3p-helm/pkg/chart"
+	"github.com/werf/3p-helm/pkg/chart/loader"
 	"github.com/werf/3p-helm/pkg/cli"
+
 	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/path_matcher"
 )
@@ -37,7 +38,7 @@ type FileReader interface {
 type HelmChartExtender interface {
 	LocateChart(ctx context.Context, name string, settings *cli.EnvSettings) (string, error)
 	ReadChartFile(ctx context.Context, filePath string) ([]byte, error)
-	LoadChartDir(ctx context.Context, dir string) ([]*chart.ChartExtenderBufferedFile, error)
+	LoadChartDir(ctx context.Context, dir string) ([]*loader.BufferedFile, error)
 }
 
 type Inspector interface {

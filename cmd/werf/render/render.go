@@ -8,26 +8,29 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-
 	"github.com/werf/3p-helm/pkg/chart"
 	"github.com/werf/3p-helm/pkg/chart/loader"
 	"github.com/werf/3p-helm/pkg/cli"
 	"github.com/werf/3p-helm/pkg/registry"
+
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/level"
 	"github.com/werf/nelm/pkg/action"
 	"github.com/werf/nelm/pkg/secrets_manager"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/build"
-	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/config/deploy_params"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
 	"github.com/werf/werf/v2/pkg/deploy/helm/command_helpers"
 	"github.com/werf/werf/v2/pkg/docker"
+	"github.com/werf/werf/v2/pkg/git_repo"
+	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/ssh_agent"
 	"github.com/werf/werf/v2/pkg/storage"
+	"github.com/werf/werf/v2/pkg/storage/lrumeta"
+	"github.com/werf/werf/v2/pkg/storage/manager"
 	"github.com/werf/werf/v2/pkg/tmp_manager"
 	"github.com/werf/werf/v2/pkg/true_git"
 	"github.com/werf/werf/v2/pkg/util"
@@ -430,12 +433,12 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 
 			headHash, err := giterminismManager.LocalGitRepo().HeadCommitHash(ctx)
 			if err != nil {
-				return fmt.Errorf("getting HEAD commit hash failed: %w", err)
+				return fmt.Errorf("get HEAD commit hash: %w", err)
 			}
 
 			headTime, err := giterminismManager.LocalGitRepo().HeadCommitTime(ctx)
 			if err != nil {
-				return fmt.Errorf("getting HEAD commit time failed: %w", err)
+				return fmt.Errorf("get HEAD commit time: %w", err)
 			}
 
 			if vals, err := helpers.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, imagesInfoGetters, helpers.ServiceValuesOptions{
