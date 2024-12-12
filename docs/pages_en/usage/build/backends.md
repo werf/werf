@@ -1,5 +1,5 @@
 ---
-title: build backends
+title: Build backends
 permalink: usage/build/backends.html
 ---
 
