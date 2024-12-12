@@ -682,6 +682,9 @@ entries:
 
               - title: Build process
                 url: /usage/build/process.html
+              
+              # - title: build backends
+              #   url: /usage/build/backends.html
 
           - title: Deploy
             f:
@@ -816,6 +819,9 @@ entries:
 
               - title: Сборочный процесс
                 url: /usage/build/process.html
+
+              - title: Сборочные бэкенды
+                url: /usage/build/backends.html
 
           - title: Развертывание
             f:
