@@ -3,7 +3,7 @@ title: Сборочные бэкенды
 permalink: usage/build/backends.html
 ---
 
-> ПРИМЕЧАНИЕ: werf поддерживает сборку образов с _использованием Docker-сервера_ или _с использованием Buildah_. Поддерживается сборка как Dockerfile-образов, так и stapel-образов через Buildah.
+> ПРИМЕЧАНИЕ: werf поддерживает сборку образов с _использованием Docker-демона_ или _с использованием Buildah_. Поддерживается сборка как Dockerfile-образов, так и stapel-образов через Buildah.
 
 ## Docker
 
@@ -20,7 +20,7 @@ docker run --restart=always --name=qemu-user-static -d --privileged --entrypoint
 
 ## Buildah
 
-Для сборки без Docker-сервера werf использует встроенный Buildah.
+Для сборки без Docker-демона werf использует встроенный Buildah.
 
 Buildah включается установкой переменной окружения `WERF_BUILDAH_MODE` в один из вариантов: `auto`, `native-chroot`, `native-rootless` или `docker`.
 Можно переключить сборочный бэкенд на Buildah, указав переменную окружения `WERF_BUILDAH_MODE=auto`
