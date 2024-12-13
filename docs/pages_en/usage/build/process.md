@@ -224,7 +224,7 @@ In this case, werf will compose the following sets to build:
 └ Concurrent builds plan (no more than 5 images at the same time)
 ```
 
-## Using the SSH Agent
+## Using the SSH agent
 
 werf allows using the SSH agent for authentication when accessing remote Git repositories or executing commands in build containers.
 
@@ -234,7 +234,7 @@ By default, werf attempts to use the system's running SSH agent by detecting it 
 
 If an SSH agent is not running, werf can automatically launch a temporary agent and load available keys (`~/.ssh/id_rsa|id_dsa`). This agent operates only during the execution of the command and does not conflict with the system's SSH agent.
 
-### Specifying Specific SSH Keys
+### Specifying specific SSH keys
 
 The `--ssh-key PRIVATE_KEY_FILE_PATH` flag allows restricting the SSH agent to specific keys (it can be used multiple times to add several keys). werf will start a temporary SSH agent with only the specified keys.
 

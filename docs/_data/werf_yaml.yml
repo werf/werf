@@ -262,6 +262,9 @@ sections:
         description:
           en: SSH agent socket or keys to the build (similar to the docker build --ssh option) (DEPRECATED)
           ru: Сокет агента SSH или ключи для сборки (подобно docker build --ssh) (DEPRECATED)
+        detailsArticle:
+          en: "/usage/build/images.html#using-build-secrets"
+          ru: "/usage/build/images.html#использование-сборочных-секретов"
       - &dockerfile-secrets-section
         name: secrets
         description:
