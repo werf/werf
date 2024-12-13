@@ -15,7 +15,6 @@ type ConveyorWithRetryWrapper struct {
 	GiterminismManager giterminism_manager.Interface
 	ProjectDir         string
 	BaseTmpDir         string
-	SshAuthSock        string
 	ContainerBackend   container_backend.ContainerBackend
 	StorageManager     *manager.StorageManager
 	StorageLockManager lock_manager.Interface
@@ -23,13 +22,12 @@ type ConveyorWithRetryWrapper struct {
 	ConveyorOptions ConveyorOptions
 }
 
-func NewConveyorWithRetryWrapper(werfConfig *config.WerfConfig, giterminismManager giterminism_manager.Interface, projectDir, baseTmpDir, sshAuthSock string, containerBackend container_backend.ContainerBackend, storageManager *manager.StorageManager, storageLockManager lock_manager.Interface, opts ConveyorOptions) *ConveyorWithRetryWrapper {
+func NewConveyorWithRetryWrapper(werfConfig *config.WerfConfig, giterminismManager giterminism_manager.Interface, projectDir, baseTmpDir string, containerBackend container_backend.ContainerBackend, storageManager *manager.StorageManager, storageLockManager lock_manager.Interface, opts ConveyorOptions) *ConveyorWithRetryWrapper {
 	return &ConveyorWithRetryWrapper{
 		WerfConfig:         werfConfig,
 		GiterminismManager: giterminismManager,
 		ProjectDir:         projectDir,
 		BaseTmpDir:         baseTmpDir,
-		SshAuthSock:        sshAuthSock,
 		ContainerBackend:   containerBackend,
 		StorageManager:     storageManager,
 		StorageLockManager: storageLockManager, // TODO: refactor
@@ -48,7 +46,6 @@ func (wrapper *ConveyorWithRetryWrapper) WithRetryBlock(ctx context.Context, f f
 			wrapper.GiterminismManager,
 			wrapper.ProjectDir,
 			wrapper.BaseTmpDir,
-			wrapper.SshAuthSock,
 			wrapper.ContainerBackend,
 			wrapper.StorageManager,
 			wrapper.StorageLockManager,

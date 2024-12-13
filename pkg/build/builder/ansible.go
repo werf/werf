@@ -23,9 +23,10 @@ import (
 )
 
 type Ansible struct {
-	config  *config.Ansible
-	extra   *Extra
-	secrets []config.Secret
+	config      *config.Ansible
+	extra       *Extra
+	secrets     []config.Secret
+	sshAuthSock string
 }
 
 type Extra struct {
@@ -33,8 +34,8 @@ type Extra struct {
 	TmpPath           string
 }
 
-func NewAnsibleBuilder(config *config.Ansible, extra *Extra, secrets []config.Secret) *Ansible {
-	return &Ansible{config: config, extra: extra}
+func NewAnsibleBuilder(config *config.Ansible, extra *Extra, secrets []config.Secret, sshAuthSock string) *Ansible {
+	return &Ansible{config: config, extra: extra, secrets: secrets, sshAuthSock: sshAuthSock}
 }
 
 func (b *Ansible) IsBeforeInstallEmpty(ctx context.Context) bool {
@@ -115,6 +116,8 @@ func (b *Ansible) stage(ctx context.Context, cr container_backend.ContainerBacke
 			fmt.Sprintf("%s:%s:ro", stageHostWorkDir, b.containerWorkDir()),
 			fmt.Sprintf("%s:%s:rw", stageHostTmpDir, b.containerTmpDir()),
 		)
+
+		container.MountSSHAgentSocket(b.sshAuthSock)
 
 		containerName, err := stapel.GetOrCreateContainer(ctx)
 		if err != nil {

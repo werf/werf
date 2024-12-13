@@ -24,6 +24,7 @@ import (
 	"github.com/containers/buildah/docker"
 	"github.com/containers/buildah/imagebuildah"
 	"github.com/containers/buildah/pkg/parse"
+	"github.com/containers/buildah/pkg/sshagent"
 	"github.com/containers/common/libimage"
 	"github.com/containers/image/v5/manifest"
 	imgstor "github.com/containers/image/v5/storage"
@@ -44,6 +45,7 @@ import (
 
 	"github.com/werf/werf/v2/pkg/buildah/thirdparty"
 	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/ssh_agent"
 )
 
 const (
@@ -376,6 +378,8 @@ func (b *NativeBuildah) BuildFromDockerfile(ctx context.Context, dockerfile stri
 		}
 	}
 
+	buildOpts.CommonBuildOpts.SSHSources = getSSHAgentSock(opts.SSH)
+
 	if targetPlatform != b.GetRuntimePlatform() {
 		// Prevent local cache collisions in multiplatform build mode:
 		//   allow local cache only for the current runtime platform.
@@ -441,6 +445,14 @@ func (b *NativeBuildah) RunCommand(ctx context.Context, container string, comman
 		return fmt.Errorf("unable to parse secrets: %w", err)
 	}
 
+	var sshSources map[string]*sshagent.Source
+	if s := getSSHAgentSock(opts.SSH); len(s) > 0 {
+		sshSources, err = parse.SSH(getSSHAgentSock(opts.SSH))
+		if err != nil {
+			return fmt.Errorf("unable to parse ssh sources: %w", err)
+		}
+	}
+
 	runOpts := buildah.RunOptions{
 		Env:              opts.Envs,
 		ContextDir:       contextDir,
@@ -459,8 +471,7 @@ func (b *NativeBuildah) RunCommand(ctx context.Context, container string, comman
 		Mounts:           globalMounts,
 		RunMounts:        runMounts,
 		Secrets:          buildahSecrets,
-		// TODO(ilya-lesikov):
-		SSHSources: nil,
+		SSHSources:       sshSources,
 	}
 
 	if err := builder.Run(command, runOpts); err != nil {
@@ -1250,4 +1261,14 @@ func generateGlobalMounts(rawGlobalMounts []*specs.Mount) []specs.Mount {
 	}
 
 	return globalMounts
+}
+
+func getSSHAgentSock(sock string) []string {
+	if len(sock) > 0 {
+		return []string{sock}
+	} else if sock == "" && ssh_agent.SSHAuthSock != "" {
+		return []string{"default"}
+	} else {
+		return []string{}
+	}
 }

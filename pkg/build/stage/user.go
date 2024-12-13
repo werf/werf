@@ -7,6 +7,7 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/build/builder"
 	"github.com/werf/werf/v2/pkg/config"
+	"github.com/werf/werf/v2/pkg/ssh_agent"
 	"github.com/werf/werf/v2/pkg/util"
 )
 
@@ -14,9 +15,9 @@ func getBuilder(imageBaseConfig *config.StapelImageBase, baseStageOptions *BaseS
 	var b builder.Builder
 	extra := &builder.Extra{ContainerWerfPath: baseStageOptions.ContainerWerfDir, TmpPath: baseStageOptions.ImageTmpDir}
 	if imageBaseConfig.Shell != nil {
-		b = builder.NewShellBuilder(imageBaseConfig.Shell, extra, imageBaseConfig.Secrets)
+		b = builder.NewShellBuilder(imageBaseConfig.Shell, extra, imageBaseConfig.Secrets, ssh_agent.SSHAuthSock)
 	} else if imageBaseConfig.Ansible != nil {
-		b = builder.NewAnsibleBuilder(imageBaseConfig.Ansible, extra, imageBaseConfig.Secrets)
+		b = builder.NewAnsibleBuilder(imageBaseConfig.Ansible, extra, imageBaseConfig.Secrets, ssh_agent.SSHAuthSock)
 	}
 
 	return b

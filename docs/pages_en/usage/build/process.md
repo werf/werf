@@ -224,6 +224,24 @@ In this case, werf will compose the following sets to build:
 └ Concurrent builds plan (no more than 5 images at the same time)
 ```
 
+## Using the SSH agent
+
+werf allows using the SSH agent for authentication when accessing remote Git repositories or executing commands in build containers.
+
+> **Note:** Only the `root` user inside the build container can access the UNIX socket specified by the `SSH_AUTH_SOCK` environment variable.
+
+By default, werf attempts to use the system's running SSH agent by detecting it via the `SSH_AUTH_SOCK` environment variable.
+
+If an SSH agent is not running, werf can automatically launch a temporary agent and load available keys (`~/.ssh/id_rsa|id_dsa`). This agent operates only during the execution of the command and does not conflict with the system's SSH agent.
+
+### Specifying specific SSH keys
+
+The `--ssh-key PRIVATE_KEY_FILE_PATH` flag allows restricting the SSH agent to specific keys (it can be used multiple times to add several keys). werf will start a temporary SSH agent with only the specified keys.
+
+```bash
+werf build --ssh-key ~/.ssh/private_key_1 --ssh-key ~/.ssh/private_key_2
+```
+
 ## Multi-platform and cross-platform building
 
 werf can build images for either the native host platform in which it is running, or for arbitrary platform in cross-platform mode using emulation. It is also possible to build images for multiple target platforms at once (i.e. manifest-list images).

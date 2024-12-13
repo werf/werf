@@ -40,8 +40,6 @@ type Conveyor struct {
 	baseImagesRepoIdsCache map[string]string
 	baseImagesRepoErrCache map[string]error
 
-	sshAuthSock string
-
 	imagesTree *image.ImagesTree
 
 	stageImages        map[string]*stage.StageImage
@@ -76,15 +74,13 @@ type ConveyorOptions struct {
 	ImagesToProcess                 config.ImagesToProcess
 }
 
-func NewConveyor(werfConfig *config.WerfConfig, giterminismManager giterminism_manager.Interface, projectDir, baseTmpDir, sshAuthSock string, containerBackend container_backend.ContainerBackend, storageManager manager.StorageManagerInterface, storageLockManager lock_manager.Interface, opts ConveyorOptions) *Conveyor {
+func NewConveyor(werfConfig *config.WerfConfig, giterminismManager giterminism_manager.Interface, projectDir, baseTmpDir string, containerBackend container_backend.ContainerBackend, storageManager manager.StorageManagerInterface, storageLockManager lock_manager.Interface, opts ConveyorOptions) *Conveyor {
 	c := &Conveyor{
 		werfConfig: werfConfig,
 
 		projectDir:       projectDir,
 		containerWerfDir: "/.werf",
 		baseTmpDir:       baseTmpDir,
-
-		sshAuthSock: sshAuthSock,
 
 		giterminismManager: giterminismManager,
 

@@ -189,6 +189,21 @@ RUN --mount=type=secret,id=plainSecret \
     export WERF_BUILD_SECRET="$(cat /run/secrets/plainSecret)"
 ```
 
+#### Использование SSH-агента
+
+Вы можете предоставить доступ к сокету SSH-агента или SSH-ключам во время сборки. Это удобно, если ваш Dockerfile содержит команды, требующие SSH-аутентификации, например, для клонирования приватных репозиториев.
+
+Для этого используйте флаг `--mount=type=ssh` в командах RUN:
+
+```Dockerfile
+FROM alpine
+RUN apk add --no-cache openssh-client
+RUN mkdir -p -m 0700 ~/.ssh && ssh-keyscan gitlab.com >> ~/.ssh/known_hosts
+RUN --mount=type=ssh ssh -q -T git@gitlab.com 2>&1 | tee /hello
+```
+
+Подробную информацию об использовании SSH-агента можно найти [здесь]({{ "/usage/build/process.html#использование-ssh-агента" | true_relative_url }}).
+
 #### Добавление произвольных файлов в сборочный контекст
 
 По умолчанию контекст сборки Dockerfile-образа включает только файлы из текущего коммита репозитория проекта. Файлы, не добавленные в Git, или некоммитнутые изменения не попадают в сборочный контекст. Такая логика действует в соответствии [с настройками гитерминизма]({{ "/usage/project_configuration/giterminism.html" | true_relative_url }}) по умолчанию.

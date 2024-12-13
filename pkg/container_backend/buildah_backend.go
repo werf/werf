@@ -174,9 +174,9 @@ fi
 	}
 }
 
-func (backend *BuildahBackend) applyCommands(ctx context.Context, container *containerDesc, buildVolumes, commands []string, opts CommonOpts) error {
+func (backend *BuildahBackend) applyCommands(ctx context.Context, container *containerDesc, opts BuildStapelStageOptions, commonOpts CommonOpts) error {
 	hostScriptPath := filepath.Join(backend.TmpDir, fmt.Sprintf("script-%s.sh", uuid.New().String()))
-	if err := os.WriteFile(hostScriptPath, makeScript(commands, logboek.Context(ctx).IsAcceptedLevel(level.Info)), os.FileMode(0o555)); err != nil {
+	if err := os.WriteFile(hostScriptPath, makeScript(opts.Commands, logboek.Context(ctx).IsAcceptedLevel(level.Info)), os.FileMode(0o555)); err != nil {
 		return fmt.Errorf("unable to write script file %q: %w", hostScriptPath, err)
 	}
 	defer os.RemoveAll(hostScriptPath)
@@ -192,7 +192,7 @@ func (backend *BuildahBackend) applyCommands(ctx context.Context, container *con
 		Destination: destScriptPath,
 	})
 
-	if m, err := makeBuildahMounts(buildVolumes); err != nil {
+	if m, err := makeBuildahMounts(opts.BuildVolumes); err != nil {
 		return err
 	} else {
 		mounts = append(mounts, m...)
@@ -203,6 +203,7 @@ func (backend *BuildahBackend) applyCommands(ctx context.Context, container *con
 		User:         "0:0",
 		WorkingDir:   "/",
 		GlobalMounts: mounts,
+		Envs:         makeBuildahEnvs(opts.Envs),
 	}); err != nil {
 		return fmt.Errorf("unable to run commands script: %w", err)
 	}
@@ -566,7 +567,7 @@ func (backend *BuildahBackend) BuildStapelStage(ctx context.Context, baseImage s
 		}
 	}
 	if len(opts.Commands) > 0 {
-		if err := backend.applyCommands(ctx, container, opts.BuildVolumes, opts.Commands, commonOpts); err != nil {
+		if err := backend.applyCommands(ctx, container, opts, commonOpts); err != nil {
 			return "", err
 		}
 	}
@@ -747,6 +748,7 @@ func (backend *BuildahBackend) BuildDockerfile(ctx context.Context, dockerfileCo
 		Target:     opts.Target,
 		Labels:     opts.Labels,
 		Secrets:    opts.Secrets,
+		SSH:        opts.SSH,
 	})
 }
 
@@ -898,6 +900,14 @@ func makeBuildahMounts(volumes []string) ([]*specs.Mount, error) {
 	}
 
 	return mounts, nil
+}
+
+func makeBuildahEnvs(envs map[string]string) []string {
+	env := make([]string, 0, len(envs))
+	for k, v := range envs {
+		env = append(env, fmt.Sprintf("%s=%s", k, v))
+	}
+	return env
 }
 
 func getUIDAndGID(userNameOrUID, groupNameOrGID, fsRoot string) (*uint32, *uint32, error) {

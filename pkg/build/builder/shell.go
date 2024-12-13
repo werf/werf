@@ -20,13 +20,14 @@ import (
 const scriptFileName = "script.sh"
 
 type Shell struct {
-	config  *config.Shell
-	extra   *Extra
-	secrets []config.Secret
+	config      *config.Shell
+	extra       *Extra
+	secrets     []config.Secret
+	sshAuthSock string
 }
 
-func NewShellBuilder(config *config.Shell, extra *Extra, secrets []config.Secret) *Shell {
-	return &Shell{config: config, extra: extra, secrets: secrets}
+func NewShellBuilder(config *config.Shell, extra *Extra, secrets []config.Secret, sshAuthSock string) *Shell {
+	return &Shell{config: config, extra: extra, secrets: secrets, sshAuthSock: sshAuthSock}
 }
 
 func (b *Shell) IsBeforeInstallEmpty(ctx context.Context) bool {
@@ -75,6 +76,7 @@ func (b *Shell) stage(cr container_backend.ContainerBackend, stageBuilder stage_
 	if useLegacyStapelBuilder {
 		container := stageBuilder.LegacyStapelStageBuilder().BuilderContainer()
 
+		container.MountSSHAgentSocket(b.sshAuthSock)
 		container.AddVolume(
 			fmt.Sprintf("%s:%s:rw", stageHostTmpDir, b.containerTmpDir()),
 		)
@@ -96,6 +98,7 @@ func (b *Shell) stage(cr container_backend.ContainerBackend, stageBuilder stage_
 		container.AddServiceRunCommands(containerTmpScriptFilePath)
 
 	} else {
+		stageBuilder.StapelStageBuilder().MountSSHAgentSocket(b.sshAuthSock)
 		stageBuilder.StapelStageBuilder().AddCommands(b.stageCommands(userStageName)...)
 
 		err = b.addBuildSecretsVolumes(stageHostTmpDir, func(secretPath string) {

@@ -19,8 +19,8 @@ type Run struct {
 	*Base[*instructions.RunCommand, *backend_instruction.Run]
 }
 
-func NewRun(i *dockerfile.DockerfileStageInstruction[*instructions.RunCommand], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions, secrets []string) *Run {
-	return &Run{Base: NewBase(i, backend_instruction.NewRun(*i.Data, nil, secrets), dependencies, hasPrevStage, opts)}
+func NewRun(i *dockerfile.DockerfileStageInstruction[*instructions.RunCommand], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions, secrets []string, ssh string) *Run {
+	return &Run{Base: NewBase(i, backend_instruction.NewRun(*i.Data, nil, secrets, ssh), dependencies, hasPrevStage, opts)}
 }
 
 func (stg *Run) ExpandDependencies(ctx context.Context, c stage.Conveyor, baseEnv map[string]string) error {

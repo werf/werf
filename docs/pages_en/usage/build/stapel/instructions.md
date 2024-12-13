@@ -600,20 +600,8 @@ shell:
 
 The build script can be used to download the `some-library-latest.tar.gz` archive and then run the `werf build` command. Any changes to the file will trigger the rebuild of the _install user stage_ and all the subsequent stages.
 
-## How to use the SSH agent in build instructions
+## Using the SSH agent
 
-Working with remote Git repositories relies on the `SSH_AUTH_SOCK` UNIX socket, which is mounted in all build containers. This way, the build instructions can use the SSH agent over the specified UNIX socket.
+By default, werf mounts the SSH agent socket into all build containers, allowing your instructions to use the SSH agent for authentication. This is especially useful for commands that require SSH access, such as cloning private repositories.
 
-> **NOTE:** There is a restriction that only the `root` user inside the build container can access the UNIX socket defined by the `SSH_AUTH_SOCK` environment variable.
-
-By default (if no parameters are specified), werf tries to use the SSH-agent running on the system by checking its availability via the `SSH_AUTH_SOCK` environment variable.
-
-If no SSH agent is running on the system, werf tries to act as an SSH client, using the user's default SSH key (`~/.ssh/id_rsa|id_dsa`). If werf finds one of these files, it runs a temporary SSH agent and adds to it the keys it has found.
-
-You have to specify the `--ssh-key PRIVATE_KEY_FILE_PATH` startup option to use specific SSH keys only (you can use this option more than once to specify multiple SSH keys). In this case, werf runs a temporary SSH agent and adds to it only the specified SSH keys.
-
-### Temporary SSH agent
-
-werf can start a temporary SSH agent to run some commands. Such an SSH agent is terminated when the corresponding werf command finishes its work.
-
-If there is an SSH agent running on the system, the temporary SSH agent started by werf does not conflict with the one running on the system.
+You can find detailed information about using the SSH agent in werf [here]({{ "/usage/build/process.html#using-the-ssh-agent" | true_relative_url }}).
