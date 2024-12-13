@@ -191,11 +191,10 @@ RUN --mount=type=secret,id=plainSecret \
 
 ### Using the SSH Agent
 
-You can grant access to the SSH agent socket or keys during the build process. This can be useful if your Dockerfile includes commands requiring SSH authentication, such as cloning a private repository.
+You can provide access to the SSH agent socket or SSH keys during the build process. This is particularly useful if your Dockerfile contains commands that require SSH authentication, such as cloning a private repository.
 
-To achieve this, use the `RUN --mount=type=ssh` flag.
+To enable this, use the `--mount=type=ssh` flag with RUN commands:
 
-Example:  
 ```Dockerfile
 FROM alpine
 RUN apk add --no-cache openssh-client
@@ -203,7 +202,7 @@ RUN mkdir -p -m 0700 ~/.ssh && ssh-keyscan gitlab.com >> ~/.ssh/known_hosts
 RUN --mount=type=ssh ssh -q -T git@gitlab.com 2>&1 | tee /hello
 ```
 
-You can find more details about using the SSH agent in werf [here]({{ "docs/pages_ru/usage/build/process.html#Using-the-SSH-agent-in-build-instructions" | true_relative_url }}).
+You can find more details about configuring and using the SSH agent in werf [here]({{ "/usage/build/process.html#Using-the-SSH-agent-in-build-instructions" | true_relative_url }}).
 
 #### Adding arbitrary files to the build context
 
