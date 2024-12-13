@@ -260,11 +260,8 @@ sections:
       - name: ssh
         value: "string"
         description:
-          en: (deprecated) SSH agent socket. 
-          ru: (устарело) Сокет агента SSH. По умолчанию используется запущенный ssh агент или werf запустит временный агент.
-        detailsArticle:
-          en: "/usage/build/images.html#using-build-secrets"
-          ru: "/usage/build/images.html#использование-сборочных-секретов"
+          en: SSH agent socket or keys to the build (similar to the docker build --ssh option) (DEPRECATED)
+          ru: Сокет агента SSH или ключи для сборки (подобно docker build --ssh) (DEPRECATED)
       - &dockerfile-secrets-section
         name: secrets
         description:
