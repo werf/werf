@@ -224,21 +224,23 @@ In this case, werf will compose the following sets to build:
 └ Concurrent builds plan (no more than 5 images at the same time)
 ```
 
-## Using the SSH agent in build instructions {#Using-the-SSH-agent-in-build-instructions}
+## Using the SSH Agent
 
-> **NOTE:** There is a restriction that only the `root` user inside the build container can access the UNIX socket defined by the `SSH_AUTH_SOCK` environment variable.
+werf allows using the SSH agent for authentication when accessing remote Git repositories or executing commands in build containers.
 
-By default (if no parameters are specified), werf tries to use the SSH-agent running on the system by checking its availability via the `SSH_AUTH_SOCK` environment variable.
+> **Note:** Only the `root` user inside the build container can access the UNIX socket specified by the `SSH_AUTH_SOCK` environment variable.
 
-If no SSH agent is running on the system, werf tries to act as an SSH client, using the user's default SSH key (`~/.ssh/id_rsa|id_dsa`). If werf finds one of these files, it runs a temporary SSH agent and adds to it the keys it has found.
+By default, werf attempts to use the system's running SSH agent by detecting it via the `SSH_AUTH_SOCK` environment variable.
 
-You have to specify the `--ssh-key PRIVATE_KEY_FILE_PATH` startup option to use specific SSH keys only (you can use this option more than once to specify multiple SSH keys). In this case, werf runs a temporary SSH agent and adds to it only the specified SSH keys.
+If an SSH agent is not running, werf can automatically launch a temporary agent and load available keys (`~/.ssh/id_rsa|id_dsa`). This agent operates only during the execution of the command and does not conflict with the system's SSH agent.
 
-### Temporary SSH agent
+### Specifying Specific SSH Keys
 
-werf can start a temporary SSH agent to run some commands. Such an SSH agent is terminated when the corresponding werf command finishes its work.
+The `--ssh-key PRIVATE_KEY_FILE_PATH` flag allows restricting the SSH agent to specific keys (it can be used multiple times to add several keys). werf will start a temporary SSH agent with only the specified keys.
 
-If there is an SSH agent running on the system, the temporary SSH agent started by werf does not conflict with the one running on the system.
+```bash
+werf build --ssh-key ~/.ssh/private_key_1 --ssh-key ~/.ssh/private_key_2
+```
 
 ## Multi-platform and cross-platform building
 
