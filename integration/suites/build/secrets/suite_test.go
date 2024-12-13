@@ -40,7 +40,7 @@ func setupEnv(opts testOptions) {
 	if opts.ContainerBackendMode == "buildkit-docker" {
 		SuiteData.Stubs.SetEnv("DOCKER_BUILDKIT", "1")
 	} else {
-		SuiteData.Stubs.UnsetEnv("DOCKER_BUILDKIT")
+		SuiteData.Stubs.SetEnv("DOCKER_BUILDKIT", "0")
 	}
 
 	if opts.WithStagedDockerfileBuilder {

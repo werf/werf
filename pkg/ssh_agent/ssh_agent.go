@@ -201,7 +201,8 @@ func runSSHAgent(ctx context.Context) (string, error) {
 	var sockPath string
 	// darwin does not support path more than 108 characters
 	if runtime.GOOS == "darwin" {
-		sockPath = filepath.Join("/private/tmp/werf/Listeners", uuid.NewString())
+		// TODO(iapershin): needs refactoring. since user can change tmpDir we want to prevent it from setting path more than 108 chars
+		sockPath = filepath.Join(os.TempDir(), "werf", "Listeners", uuid.NewString())
 	} else {
 		sockPath = filepath.Join(werf.GetTmpDir(), "werf-ssh-agent", uuid.NewString())
 	}

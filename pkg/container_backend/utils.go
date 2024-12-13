@@ -69,11 +69,12 @@ func setSSHMountPoint(sshAuthSock string) (string, map[string]string) {
 	var vol string
 	env := make(map[string]string)
 	if runtime.GOOS == "darwin" {
+		// On MacOs Docker Desktop creates /run/host-services/ssh-auth.sock as a special bridge to your host system’s SSH_AUTH_SOCK.
 		vol = fmt.Sprintf("%s:%s", SSHHostAuthSockPath, SSHHostAuthSockPath)
 		env[ssh_agent.SSHAuthSockEnv] = SSHHostAuthSockPath
 	} else {
-		vol = (fmt.Sprintf("%s:%s", sshAuthSock, SSHHostAuthSockPath))
-		env[ssh_agent.SSHAuthSockEnv] = SSHHostAuthSockPath
+		vol = fmt.Sprintf("%s:%s", sshAuthSock, SSHContainerAuthSockPath)
+		env[ssh_agent.SSHAuthSockEnv] = SSHContainerAuthSockPath
 	}
 	return vol, env
 }
