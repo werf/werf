@@ -3,26 +3,59 @@ title: Сборочные бэкенды
 permalink: usage/build/backends.html
 ---
 
-> ПРИМЕЧАНИЕ: werf поддерживает сборку образов с _использованием Docker-демона_ или _с использованием Buildah_. Поддерживается сборка как Dockerfile-образов, так и stapel-образов через Buildah.
+> ПРИМЕЧАНИЕ: werf поддерживает сборку образов с _использованием Docker-сервера_ или _с использованием Buildah_. Поддерживается сборка как Dockerfile-образов, так и stapel-образов через Buildah.
 
 ## Docker
 
-Docker - сборочный бэкенд по умолчанию. Werf использует `docker buildkit` по умолчанию, его можно отключить, указав переменную окружения `DOCKER_BUILDKIT=0`
-Более подробно прочитать про `docker buildkit` можно [здесь](https://docs.docker.com/build/buildkit/)
+Docker - сборочный бэкенд по умолчанию.
 
-### Мультиплатформенная сборка
+### Подготовка системы к кроссплатформенной сборке (опционально)
 
-Вы можете создавать мультиплатформенные образы, используя эмуляцию QEMU
+> Данный шаг требуется только для сборки образов для платформ, отличных от платформы системы, где запущен werf.
+
+Регистрируем в системе эмуляторы с помощью образа qemu-user-static:
 
 ```bash
 docker run --restart=always --name=qemu-user-static -d --privileged --entrypoint=/bin/sh multiarch/qemu-user-static -c "/register --reset -p yes && tail -f /dev/null"
 ```
 
+### Использование зеркал для docker.io
+
+Если вы используете Docker для сборки, добавьте `registry-mirrors` в файл `/etc/docker/daemon.json`:
+
+```json
+{
+  "registry-mirrors": ["https://<my-docker-io-mirror-host>"]
+}
+```
+
+После этого перезапустите Docker и разлогиньтесь из `docker.io` с помощью команды:
+
+```bash
+werf cr logout
+```
+
+### Переопределение директории хранилища Docker
+
+Параметр `--docker-server-storage-path` (или переменная окружения `WERF_DOCKER_SERVER_STORAGE_PATH`) позволяет явно задать директорию хранилища Docker в случае, если werf не может правильно определить её автоматически.
+
+### Изменение порога занимаемого места и глубины очистки хранилища Docker
+
+Параметр `--allowed-docker-storage-volume-usage` (`WERF_ALLOWED_DOCKER_STORAGE_VOLUME_USAGE`) позволяет изменить порог занимаемого места на томе, при достижении которого выполняется очистка хранилища Docker (по умолчанию 70%).
+
+Параметр `--allowed-docker-storage-volume-usage-margin` (`WERF_ALLOWED_DOCKER_STORAGE_VOLUME_USAGE_MARGIN`) позволяет установить глубину очистки относительно установленного порога занимаемого места хранилища Docker (по умолчанию 5%).
+
+### Изменение порога занимаемого места и глубины очистки локального кэша
+
+Параметр `--allowed-local-cache-volume-usage` (`WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE`) позволяет изменить порог занимаемого места на томе, при достижении которого выполняется очистка локального кэша (по умолчанию 70%).
+
+Параметр `--allowed-docker-storage-volume-usage-margin` (`WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE_MARGIN`) позволяет установить глубину очистки относительно установленного порога занимаемого места локального кэша (по умолчанию 5%).
+
 ## Buildah
 
-Для сборки без Docker-демона werf использует встроенный Buildah.
+Для сборки без Docker-сервера werf использует встроенный Buildah.
 
-Buildah включается установкой переменной окружения `WERF_BUILDAH_MODE` в один из вариантов: `auto`, `native-chroot`, `native-rootless` или `docker`.
+Buildah включается установкой переменной окружения `WERF_BUILDAH_MODE` в один из вариантов: `auto`, `native-chroot`, `native-rootless`.
 Можно переключить сборочный бэкенд на Buildah, указав переменную окружения `WERF_BUILDAH_MODE=auto`
 
 ```bash
@@ -68,59 +101,121 @@ werf может использовать драйвер хранилища `over
  * "sigpending": maximum number of pending signals (ulimit -i)
  * "stack": maximum stack size (ulimit -s)
 
-## Доступные образы werf
+### Использование зеркал для docker.io
 
-Ниже приведен список образов со встроенной утилитой werf. Каждый образ обновляется в рамках релизного процесса, основанного на менеджере пакетов trdl ([подробнее о каналах обновлений]({{ site.url }}/about/release_channels.html)).
+Если вы используете Buildah для сборки, вместо редактирования `daemon.json` используйте опцию `--container-registry-mirror` для werf-команд. Например:
 
-* `registry.werf.io/werf/werf:latest` -> `registry.werf.io/werf/werf:1.2-stable`;
-* `registry.werf.io/werf/werf:1.2-alpha` -> `registry.werf.io/werf/werf:1.2-alpha-alpine`;
-* `registry.werf.io/werf/werf:1.2-beta` -> `registry.werf.io/werf/werf:1.2-beta-alpine`;
-* `registry.werf.io/werf/werf:1.2-ea` -> `registry.werf.io/werf/werf:1.2-ea-alpine`;
-* `registry.werf.io/werf/werf:1.2-stable` -> `registry.werf.io/werf/werf:1.2-stable-alpine`;
-* `registry.werf.io/werf/werf:1.2-rock-solid` -> `registry.werf.io/werf/werf:1.2-rock-solid-alpine`;
-* `registry.werf.io/werf/werf:1.2-alpha-alpine`;
-* `registry.werf.io/werf/werf:1.2-beta-alpine`;
-* `registry.werf.io/werf/werf:1.2-ea-alpine`;
-* `registry.werf.io/werf/werf:1.2-stable-alpine`;
-* `registry.werf.io/werf/werf:1.2-rock-solid-alpine`;
-* `registry.werf.io/werf/werf:1.2-alpha-ubuntu`;
-* `registry.werf.io/werf/werf:1.2-beta-ubuntu`;
-* `registry.werf.io/werf/werf:1.2-ea-ubuntu`;
-* `registry.werf.io/werf/werf:1.2-stable-ubuntu`;
-* `registry.werf.io/werf/werf:1.2-rock-solid-ubuntu`;
-* `registry.werf.io/werf/werf:1.2-alpha-fedora`;
-* `registry.werf.io/werf/werf:1.2-beta-fedora`;
-* `registry.werf.io/werf/werf:1.2-ea-fedora`;
-* `registry.werf.io/werf/werf:1.2-stable-fedora`;
-* `registry.werf.io/werf/werf:1.2-rock-solid-fedora`.
+```shell
+werf build --container-registry-mirror=mirror.gcr.io
+```
 
-## Пример локальной сборки
+Для добавления нескольких зеркал используйте опцию `--container-registry-mirror` несколько раз.
+
+Помимо опции, поддерживается использование переменных окружения `WERF_CONTAINER_REGISTRY_MIRROR_*`, например:
+
+```bash
+export WERF_CONTAINER_REGISTRY_MIRROR_GCR=mirror.gcr.io
+export WERF_CONTAINER_REGISTRY_MIRROR_LOCAL=docker.mirror.local
+```
+
+
+## Мультиплатформенная и кроссплатформенная сборка
+
+werf позволяет собирать образы как для родной архитектуры хоста, где запущен werf, так и в кроссплатформенном режиме с помощью эмуляции целевой архитектуры, которая может быть отлична от архитектуры хоста. Также werf позволяет собрать образ сразу для множества целевых платформ.
+
+Мультиплатформенная сборка использует механизмы кроссплатформенного исполнения инструкций, предоставляемые [ядром Linux](https://en.wikipedia.org/wiki/Binfmt_misc) и эмулятором QEMU. [Перечень поддерживаемых архитектур](https://www.qemu.org/docs/master/about/emulation.html). Подготовка хост-системы для мультиплатформенной сборки рассмотрена [в разделе установки werf](https://ru.werf.io/getting_started/)
+
+Поддержка мультиплатформенной сборки для разных вариантов синтаксиса сборки, режимов сборки и используемого бекенда:
+
+|                         | buildah            | docker-server        |
+|---                      |---                 |---                   |
+| **Dockerfile**          | полная поддержка   | полная поддержка     |
+| **staged Dockerfile**   | полная поддержка   | не поддерживается    |
+| **stapel**              | полная поддержка   | только linux/amd64   |
+
+### Сборка образов под одну целевую платформу
+
+По умолчанию в качестве целевой используется платформа хоста, где запущен werf. Выбор другой целевой платформы для собираемых образов осуществляется с помощью параметра `--platform`:
+
+```shell
+werf build --platform linux/arm64
+```
+
+— все конечные образы, указанные в werf.yaml, будут собраны для указанной платформы с использованием эмуляции.
+
+Целевую платформу можно также указать директивой конфигурации `build.platform`:
 
 ```yaml
 # werf.yaml
-project: app
+project: example
 configVersion: 1
 build:
   platform:
-    - linux/amd64
-    - linux/arm64
+  - linux/arm64
 ---
-image: alpine
-dockerfile: Dockerfile
+image: frontend
+dockerfile: frontend/Dockerfile
+---
+image: backend
+dockerfile: backend/Dockerfile
 ```
 
-```
-# Dockerfile
-FROM alpine
-```
-Сборка с помощью docker
+В этом случае запуск `werf build` без параметров вызовет сборку образов для указанной платформы (при этом явно указанный параметр `--platform` переопределяет значение из werf.yaml).
 
-```bash
-werf build # или DOCKER_BUILDKIT=0 werf build
+### Сборка образов под множество целевых платформ
+
+Поддерживается и сборка образов сразу для набора архитектур. В этом случае в container registry публикуется манифест включающий в себя собранные образы под каждую из указанных платформ (во время скачивания такого образа автоматически будет выбираться образ под требуемую архитектуру).
+
+Можно определить общий список платформ для всех образов в werf.yaml с помощью конфигурации:
+
+```yaml
+# werf.yaml
+project: example
+configVersion: 1
+build:
+  platform:
+  - linux/arm64
+  - linux/amd64
+  - linux/arm/v7
 ```
 
-Сборка с помощью buildah
+Можно определить список целевых платформ отдельно для каждого собираемого образа (такая настройка будет иметь приоритет над общим списком определённым в werf.yaml):
 
-```bash
-WERF_BUILDAH_MODE=auto werf build
+```yaml
+# werf.yaml
+project: example
+configVersion: 1
+---
+image: mysql
+dockerfile: ./Dockerfile.mysql
+platform:
+- linux/amd64
+---
+image: backend
+dockerfile: ./Dockerfile.backend
+platform:
+- linux/amd64
+- linux/arm64
+```
+
+Общий список можно также переопределить параметром `--platform` непосредственно в момент вызова сборки:
+
+```shell
+werf build --platform=linux/amd64,linux/i386
+```
+
+— такой параметр переопределяет список целевых платформ указанных в werf.yaml (как общих, так и для отдельных образов).
+
+## Автоматическая очистка хоста
+
+Очистка хоста удаляет неактуальных данные и сокращает размер кеша **автоматически** в рамках вызова основных команд werf и сразу **для всех проектов**. При необходимости очистку можно выполнять в ручном режиме с помощью команды [**werf host cleanup**]({{ "reference/cli/werf_host_cleanup.html" | true_relative_url }}).
+
+## Выключение автоматической очистки
+
+Пользователь может выключить автоматическую очистку неактуальных данных хоста с помощью параметра `--disable-auto-host-cleanup` (`WERF_DISABLE_AUTO_HOST_CLEANUP`). В этом случае рекомендуется добавить команду `werf host cleanup` в cron, например, следующим образом:
+
+```shell
+# /etc/cron.d/werf-host-cleanup
+SHELL=/bin/bash
+*/30 * * * * gitlab-runner source ~/.profile ; source $(trdl use werf 2 stable) ; werf host cleanup
 ```

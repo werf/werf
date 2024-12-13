@@ -3,12 +3,11 @@ title: Build backends
 permalink: usage/build/backends.html
 ---
 
-> **NOTE:** werf supports building images using either the _Docker daemon_ or _Buildah_. Both Dockerfile-based and stapel-based image builds are supported via Buildah.
+> **NOTE:** werf supports building images using either the _Docker-server_ or _Buildah_. Both Dockerfile-based and stapel-based image builds are supported via Buildah.
 
 ## Docker
 
-Docker is the default build backend. Werf uses `docker buildkit` by default, which can be disabled by setting the environment variable `DOCKER_BUILDKIT=0`.  
-You can read more about `docker buildkit` [here](https://docs.docker.com/build/buildkit/).
+Docker is the default build backend. 
 
 ### Multi-platform builds
 
@@ -22,7 +21,7 @@ docker run --restart=always --name=qemu-user-static -d --privileged --entrypoint
 
 For daemonless builds, werf uses the integrated Buildah.
 
-Buildah can be enabled by setting the environment variable `WERF_BUILDAH_MODE` to one of the following: `auto`, `native-chroot`, `native-rootless`, or `docker`.
+Buildah can be enabled by setting the environment variable `WERF_BUILDAH_MODE` to one of the following: `auto`, `native-chroot`, `native-rootless`.
 You can switch the build backend to Buildah by setting `WERF_BUILDAH_MODE=auto`.
 
 ```bash
