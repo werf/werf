@@ -1,0 +1,39 @@
+name: docs:registry-cleanup
+
+on:
+  schedule:
+    - cron: "0 8 */3 * *"
+  repository_dispatch:
+    types: ["docs:registry-cleanup"]
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  cleanup:
+    name: cleanup werf-storage
+    runs-on: ubuntu-latest-16-cores
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install werf
+        uses: werf/actions/install@v2
+        with:
+          channel: alpha
+
+      - name: Cleanup
+        run: |
+          cd scripts/werf-in-image/
+          . $(werf ci-env github --as-file)
+          werf cleanup
+        env:
+          WERF_REPO: ghcr.io/${{ github.repository_owner }}/werfio
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WERF_REPO_GITHUB_TOKEN: ${{ secrets.WERF_IN_IMAGE_CLEANUP_GHCR }}
+          WERF_KUBE_CONFIG_BASE64: ${{ secrets.KUBECONFIG_BASE64_DEV }}
+
