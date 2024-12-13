@@ -600,9 +600,8 @@ shell:
 
 The build script can be used to download the `some-library-latest.tar.gz` archive and then run the `werf build` command. Any changes to the file will trigger the rebuild of the _install user stage_ and all the subsequent stages.
 
-## How to use the SSH agent in build instructions
+## Using the SSH agent
 
-Working with remote Git repositories relies on the `SSH_AUTH_SOCK` UNIX socket, which is mounted in all build containers. This way, the build instructions can use the SSH agent over the specified UNIX socket.
+By default, werf mounts the SSH agent socket into all build containers, allowing your instructions to use the SSH agent for authentication. This is especially useful for commands that require SSH access, such as cloning private repositories.
 
-The SSH agent can also be used in custom instructions.  
-You can learn more about using the SSH agent in werf in [this section]({{ "docs/pages_ru/usage/build/process.html#Using-the-SSH-agent-in-build-instructions" | true_relative_url }}).
+You can find detailed information about using the SSH agent in werf [here]({{ “/usage/build/process.html#Using-the-SSH-agent-in-build-instructions” | true_relative_url }}).
