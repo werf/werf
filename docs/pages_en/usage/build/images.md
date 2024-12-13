@@ -202,7 +202,7 @@ RUN mkdir -p -m 0700 ~/.ssh && ssh-keyscan gitlab.com >> ~/.ssh/known_hosts
 RUN --mount=type=ssh ssh -q -T git@gitlab.com 2>&1 | tee /hello
 ```
 
-You can find detailed information about using the SSH agent in werf [here]({{ “/usage/build/process.html#using-the-ssh-agent” | true_relative_url }}).
+You can find detailed information about using the SSH agent in werf [here]({{ "/usage/build/process.html#using-the-ssh-agent" | true_relative_url }}).
 
 #### Adding arbitrary files to the build context
 

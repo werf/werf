@@ -202,7 +202,7 @@ RUN mkdir -p -m 0700 ~/.ssh && ssh-keyscan gitlab.com >> ~/.ssh/known_hosts
 RUN --mount=type=ssh ssh -q -T git@gitlab.com 2>&1 | tee /hello
 ```
 
-Подробную информацию об использовании SSH-агента можно найти [здесь]({{ “/usage/build/process.html#использование-ssh-агента” | true_relative_url }}).
+Подробную информацию об использовании SSH-агента можно найти [здесь]({{ "/usage/build/process.html#использование-ssh-агента" | true_relative_url }}).
 
 #### Добавление произвольных файлов в сборочный контекст
 
