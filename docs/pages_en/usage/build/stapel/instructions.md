@@ -604,4 +604,4 @@ The build script can be used to download the `some-library-latest.tar.gz` archiv
 
 By default, werf mounts the SSH agent socket into all build containers, allowing your instructions to use the SSH agent for authentication. This is especially useful for commands that require SSH access, such as cloning private repositories.
 
-You can find detailed information about using the SSH agent in werf [here]({{ “/usage/build/process.html#Using-the-SSH-agent-in-build-instructions” | true_relative_url }}).
+You can find detailed information about using the SSH agent in werf [here]({{ “/usage/build/process.html#using-the-ssh-agent” | true_relative_url }}).

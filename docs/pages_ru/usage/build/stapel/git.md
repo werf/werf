@@ -281,7 +281,7 @@ git:
 - url: git@gitlab.company.name:project_group/project.git
 ```
 
-Подробную информацию об использовании SSH-агента можно найти [здесь]({{ “/usage/build/process.html#Использование-SSH-агента-при-сборке” | true_relative_url }}).
+Подробную информацию об использовании SSH-агента можно найти [здесь]({{ “/usage/build/process.html#использование-ssh-агента” | true_relative_url }}).
 
 ## Подробнее про gitArchive, gitCache, gitLatestPatch
 

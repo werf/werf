@@ -259,7 +259,7 @@ git:
 - url: git@gitlab.company.name:project_group/project.git
 ```
 
-You can find detailed information about using the SSH agent in werf [here]({{ “/usage/build/process.html#Using-the-SSH-agent-in-build-instructions” | true_relative_url }}).
+You can find detailed information about using the SSH agent in werf [here]({{ “/usage/build/process.html#using-the-ssh-agent” | true_relative_url }}).
 
 ## More details: gitArchive, gitCache, gitLatestPatch
 
