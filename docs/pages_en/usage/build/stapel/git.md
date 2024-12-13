@@ -259,22 +259,7 @@ git:
 - url: git@gitlab.company.name:project_group/project.git
 ```
 
-A good understanding of how werf searches for access keys is required to use the remote repositories over SSH (read more below).
-
-#### Working with SSH keys
-
-The ssh-agent provides keys for SSH connections. It is a daemon operating via a file socket. The path to the socket is stored in the `SSH_AUTH_SOCK` environment variable. werf mounts this file socket into all _assembly containers_ and sets the `SSH_AUTH_SOCK` environment variable, i.e., connection to remote Git repositories is established using keys registered in the running ssh-agent.
-
-werf applies the following algorithm for using the ssh-agent:
-
-- If werf is started with the `--ssh-key` flag (there might be multiple flags):
-  - A temporary ssh-agent starts and uses the defined keys; it is used for all Git operations with remote repositories.
-  - The already running ssh-agent is ignored in this case.
-- No `--ssh-key` flag(s) is specified and ssh-agent is running:
-  - werf uses the `SSH_AUTH_SOCK` environment variable; keys that are added to this agent are used for Git operations.
-- No `--ssh-key` flag(s) is specified and ssh-agent is not running:
-  - If the `~/.ssh/id_rsa` file exists, werf runs the temporary ssh-agent with the key from the `~/.ssh/id_rsa` file.
-- If none of the previous options is applicable, the ssh-agent no SSH keys will be used for operations on external Git repositories. Building an image with the remote repositories defined in the _git mapping_ will fail.
+You can find detailed information about using the SSH agent in werf [here]({{ “/usage/build/process.html#Using-the-SSH-agent-in-build-instructions” | true_relative_url }}).
 
 ## More details: gitArchive, gitCache, gitLatestPatch
 
