@@ -402,6 +402,7 @@ func run(
 	}
 
 	if err := action.Deploy(ctx, action.DeployOptions{
+		AutoRollback:               cmdData.AutoRollback,
 		ChartDirPath:               chartPath,
 		ChartRepositoryInsecure:    *commonCmdData.InsecureHelmDependencies,
 		ChartRepositorySkipUpdate:  *commonCmdData.SkipDependenciesRepoRefresh,
