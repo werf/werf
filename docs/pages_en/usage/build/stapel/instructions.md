@@ -37,7 +37,7 @@ Before running the _build container_, werf prepares a set of instructions. This 
 
 The Stapel builder uses its own set of tools and libraries and does not depend on the base image in any way. When the _build container_ is started, werf mounts everything it needs from the special service image named `registry.werf.io/werf/stapel`.
 
-The _build container_ [gets the socket to communicate with the SSH-agent on the host](#how-to-use-the-ssh-agent-in-build-instructions); [custom mounts]({{"usage/build/stapel/mounts.html" | true_relative_url }}) can also be used.
+The _build container_ [gets the socket to communicate with the SSH-agent on the host](#using-the-ssh-agent); [custom mounts]({{"usage/build/stapel/mounts.html" | true_relative_url }}) can also be used.
 
 
 
