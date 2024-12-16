@@ -32,7 +32,6 @@ jobs:
           werf cleanup
         env:
           WERF_DIR: docs
-          WERF_REPO: ghcr.io/${{ github.repository_owner }}/werfio
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           WERF_REPO_GITHUB_TOKEN: ${{ secrets.WERF_IN_IMAGE_CLEANUP_GHCR }}
           WERF_KUBE_CONFIG_BASE64: ${{ secrets.KUBECONFIG_BASE64_DEV }}
