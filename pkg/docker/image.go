@@ -212,7 +212,8 @@ func CliBuild_LiveOutputWithCustomIn(ctx context.Context, rc io.ReadCloser, args
 	if useBuildx {
 		buildOpts.EnableBuildx = true
 	} else {
-		err := failOnBuildKitOnlyOpts(args...)
+		var err error
+		args, err = checkForUnsupportedOptions(ctx, args...)
 		if err != nil {
 			return err
 		}
@@ -237,11 +238,24 @@ func CliBuild_LiveOutput(ctx context.Context, args ...string) error {
 	return doCliBuild(cli(ctx), buildOpts, args...)
 }
 
-func failOnBuildKitOnlyOpts(args ...string) error {
-	for _, arg := range args {
+func checkForUnsupportedOptions(ctx context.Context, args ...string) ([]string, error) {
+	borderIndex := 0
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
 		if strings.Contains(arg, "--secret") {
-			return fmt.Errorf("secrets are only available with Docker BuildKit")
+			return nil, fmt.Errorf("secrets are only available with Docker BuildKit")
 		}
+		// since we use our ssh agent as default we need to pop ssh options
+		// to be able to run build with legacy backend
+		if strings.Contains(arg, "--ssh") {
+			logboek.Context(ctx).Info().LogF("--ssh is not supported by legacy Docker builder so it will be skipped")
+			if i+1 < len(args) {
+				i++
+			}
+			continue
+		}
+		args[borderIndex] = args[i]
+		borderIndex++
 	}
-	return nil
+	return args[:borderIndex], nil
 }
