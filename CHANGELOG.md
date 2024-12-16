@@ -1,5 +1,13 @@
 # Changelog
 
+### [2.16.3](https://www.github.com/werf/werf/compare/v2.16.2...v2.16.3) (2024-12-16)
+
+
+### Bug Fixes
+
+* **build:** fix data races ([#6477](https://www.github.com/werf/werf/issues/6477)) ([4e94905](https://www.github.com/werf/werf/commit/4e94905ff54cde92d8b5ca29a904786dc160665d))
+* **deploy:** autorollback in converge was always disabled ([f1fd80d](https://www.github.com/werf/werf/commit/f1fd80d31bf1ad8ac618427460c387030a0d03e0))
+
 ### [2.16.2](https://www.github.com/werf/werf/compare/v2.16.1...v2.16.2) (2024-12-10)
 
 
