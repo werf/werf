@@ -42,10 +42,16 @@ var _ = Describe("build with secrets and ssh mounts", Label("integration", "buil
 			if testOpts.SSH {
 				By(fmt.Sprintf("%s: generating sekret key for ssh agent", testOpts.State))
 				fixtureRelPath = "build_with_ssh"
-				keyFile, err := generateSSHKey(fmt.Sprintf("id_rsa_werf_test_%s", utils.GetRandomString(5)), 2048)
+				keyFile, err = generateSSHKey(fmt.Sprintf("id_rsa_werf_test_%s", utils.GetRandomString(5)), 2048)
 				Expect(err).NotTo(HaveOccurred())
 				runOpts.ExtraArgs = append(runOpts.ExtraArgs, "--ssh-key", keyFile)
 			}
+
+			defer func() {
+				if len(keyFile) > 0 {
+					utils.DeleteFile(keyFile)
+				}
+			}()
 
 			Expect(err).NotTo(HaveOccurred())
 
@@ -54,16 +60,15 @@ var _ = Describe("build with secrets and ssh mounts", Label("integration", "buil
 
 			By(fmt.Sprintf("%s: building images", testOpts.State))
 			werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
+			if testOpts.ContainerBackendMode == "vanilla-docker" {
+				runOpts.ExtraArgs = append([]string{"stapel-shell"}, runOpts.ExtraArgs...)
+			}
 			buildOut := werfProject.Build(runOpts)
 			Expect(buildOut).To(ContainSubstring("Building stage"))
 			Expect(buildOut).NotTo(ContainSubstring("Use previously built image"))
-			if len(keyFile) > 0 {
-				utils.DeleteFile(keyFile)
-			}
 		},
 		Entry("with Vanilla Docker", testOptions{
 			ContainerBackendMode: "vanilla-docker",
-			SSH:                  false,
 		}),
 		Entry("with BuildKit Docker", testOptions{
 			ContainerBackendMode: "buildkit-docker",

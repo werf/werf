@@ -10,7 +10,7 @@ import (
 	"github.com/werf/werf/v2/test/pkg/utils"
 )
 
-var testSuiteEntrypointFunc = suite_init.MakeTestSuiteEntrypointFunc("Build/Common suite", suite_init.TestSuiteEntrypointFuncOptions{})
+var testSuiteEntrypointFunc = suite_init.MakeTestSuiteEntrypointFunc("Build/Secrets suite", suite_init.TestSuiteEntrypointFuncOptions{})
 
 func TestSuite(t *testing.T) {
 	testSuiteEntrypointFunc(t)
@@ -25,7 +25,9 @@ var (
 	_ = SuiteData.SetupProjectName(suite_init.NewProjectNameData(SuiteData.StubsData))
 	_ = SuiteData.SetupTmp(suite_init.NewTmpDirData())
 
-	_ = utils.CreateTmpFileInHome("secret_file_in_home", "secret")
+	_ = SuiteData.AppendSynchronizedBeforeSuiteAllNodesFunc(func(_ []byte) {
+		_ = utils.CreateTmpFileInHome("secret_file_in_home", "secret")
+	})
 
 	_ = AfterEach(func() {
 		utils.RunSucceedCommand("", SuiteData.WerfBinPath, "host", "purge", "--force", "--project-name", SuiteData.ProjectName)
