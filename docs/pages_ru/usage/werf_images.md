@@ -5,14 +5,29 @@ permalink: usage/werf_images.html
 
 ## Доступные образы werf
 
-Ниже приведен список образов со встроенной утилитой werf. Каждый образ обновляется в рамках релизного процесса, основанного на менеджере пакетов trdl ([подробнее о каналах обновлений]({{ site.url }}/about/release_channels.html)).
+[Релизный процесс]({{ site.url }}/about/release_channels.html) поддерживает следующие форматы тегов:
 
-* `registry.werf.io/werf/werf:latest` -> `registry.werf.io/werf/werf:1.2-stable`;
-* `registry.werf.io/werf/werf:1.2-alpha` -> `registry.werf.io/werf/werf:1.2-alpha-alpine`;
-* `registry.werf.io/werf/werf:1.2-beta` -> `registry.werf.io/werf/werf:1.2-beta-alpine`;
-* `registry.werf.io/werf/werf:1.2-ea` -> `registry.werf.io/werf/werf:1.2-ea-alpine`;
-* `registry.werf.io/werf/werf:1.2-stable` -> `registry.werf.io/werf/werf:1.2-stable-alpine`;
-* `registry.werf.io/werf/werf:1.2-rock-solid` -> `registry.werf.io/werf/werf:1.2-rock-solid-alpine`;
+* registry.werf.io/werf/werf:<group>-<channel>-<os> (например, registry.werf.io/werf/werf:2-stable-alpine);
+* registry.werf.io/werf/werf:<group>-<channel> (например, registry.werf.io/werf/werf:2-stable);
+* registry.werf.io/werf/werf:<group> (например, registry.werf.io/werf/werf:2);
+* registry.werf.io/werf/werf:latest,
+
+Где:
+
+* <group>: группа (например, 1.2, 2);
+* <channel>: канал выпуска (например, stable, edge);
+* <os>: операционная система (например, alpine, ubuntu, fedora).
+
+Канал по умолчанию - stable, операционная система - alpine.
+
+Полный список готовых образов:
+
+* `registry.werf.io/werf/werf:latest`;
+* `registry.werf.io/werf/werf:1.2-alpha`;
+* `registry.werf.io/werf/werf:1.2-beta`;
+* `registry.werf.io/werf/werf:1.2-ea`;
+* `registry.werf.io/werf/werf:1.2-stable`;
+* `registry.werf.io/werf/werf:1.2-rock-solid`;
 * `registry.werf.io/werf/werf:1.2-alpha-alpine`;
 * `registry.werf.io/werf/werf:1.2-beta-alpine`;
 * `registry.werf.io/werf/werf:1.2-ea-alpine`;
