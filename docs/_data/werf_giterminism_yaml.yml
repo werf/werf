@@ -53,7 +53,7 @@ directives:
           ru: Правила использования значений секретов
         directives:
           - name: allowEnvVariables
-            value: "[ string || /REGEXP/, ... ]"
+            value: "[ string, ... ]"
             description:
               en: Allow the use of specific environment variables as secrets
               ru: Разрешить использование определённых переменных окружения в качестве секретов
