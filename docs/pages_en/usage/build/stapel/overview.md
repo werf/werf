@@ -9,7 +9,7 @@ werf has a built-in alternative syntax for describing assembly instructions call
 2. Dedicated commands for integrating with Git to enable incremental rebuilds based on the Git repository history.
 3. Image inheritance and importing files from images (similar to the Dockerfile multi-stage mechanism).
 4. Run arbitrary build instructions, specify directory mount options, and use other advanced tools to build images.
-5. More efficient caching mechanics for layers (a similar scheme is supported for Dockerfile layers when building with Buildah (currently pre-alpha)).
+5. More efficient caching mechanics for layers.
 
 <!-- TODO(staged-dockerfile): delete point 5 as no longer relevant -->
 
