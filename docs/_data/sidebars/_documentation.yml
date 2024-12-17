@@ -49,7 +49,7 @@ entries:
               - title: Build process
                 url: /usage/build/process.html
               
-              - title: build backends
+              - title: Build backends
                 url: /usage/build/backends.html
 
           - title: Deploy
