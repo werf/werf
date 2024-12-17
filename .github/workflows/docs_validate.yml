@@ -79,7 +79,7 @@ jobs:
       - doc_unit
       - doc_integration
       - check_broken_links
-    uses: ./.github/workflows/_notification.yml
+    uses: werf/ci-reusable-workflows/.github/workflows/notification.yml@main
     secrets:
       loopNotificationGroup: ${{ secrets.LOOP_NOTIFICATION_GROUP }}
       webhook: ${{ secrets.LOOP_NOTIFICATION_WEBHOOK }}

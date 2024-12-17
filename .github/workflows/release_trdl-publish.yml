@@ -107,7 +107,7 @@ jobs:
       - publish
       - deploy_channels_cm_prod
       - publish_werf_images
-    uses: ./.github/workflows/_notification.yml
+    uses: werf/ci-reusable-workflows/.github/workflows/notification.yml@main
     secrets:
       loopNotificationGroup: ${{ secrets.LOOP_NOTIFICATION_GROUP }}
       webhook: ${{ secrets.LOOP_NOTIFICATION_WEBHOOK }}
