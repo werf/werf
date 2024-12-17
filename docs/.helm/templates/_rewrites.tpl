@@ -60,6 +60,8 @@ rewrite ^/docs/(?<ver>v1\.2(?:\.\d+(?:[^/]+)?)?|latest)/reference/cli/?$        
 rewrite ^/docs/(?<ver>v1\.2(?:\.\d+(?:[^/]+)?)?|latest)/resources/?$                          /docs/$ver/resources/cheat_sheet.html                           redirect;
 
 rewrite ^/docs/(?<ver>v1\.1(?:\.\d+(?:[^/]+)?)?|latest)/?$                                    /docs/$ver/index.html                                           redirect;
+rewrite ^/docs/(?<ver>v1\.1(?:\.\d+(?:[^/]+)?)?|latest)/usage/?$                              /docs/$ver/index.html                                           redirect;
+rewrite ^/docs/(?<ver>v1\.1(?:\.\d+(?:[^/]+)?)?|latest)/usage/project_configuration/?$        /docs/$ver/index.html                                           redirect;
 rewrite ^/docs/(?<ver>v1\.1(?:\.\d+(?:[^/]+)?)?|latest)/configuration/?$                      /docs/$ver/configuration/introduction.html                      redirect;
 rewrite ^/docs/(?<ver>v1\.1(?:\.\d+(?:[^/]+)?)?|latest)/configuration/stapel_image/?$         /docs/$ver/configuration/stapel_image/naming.html               redirect;
 rewrite ^/docs/(?<ver>v1\.1(?:\.\d+(?:[^/]+)?)?|latest)/reference/?$                          /docs/$ver/reference/stages_and_images.html                     redirect;
