@@ -9,8 +9,8 @@ import (
 
 	"golang.org/x/crypto/ssh/terminal"
 
-	"github.com/werf/nelm/pkg/secret"
-	"github.com/werf/nelm/pkg/secrets_manager"
+	"github.com/werf/nelm-for-werf-helm/pkg/secret"
+	"github.com/werf/nelm-for-werf-helm/pkg/secrets_manager"
 )
 
 func SecretFileDecrypt(

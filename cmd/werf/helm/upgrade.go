@@ -6,13 +6,13 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/werf/3p-helm/cmd/helm"
-	"github.com/werf/3p-helm/pkg/action"
-	"github.com/werf/nelm/pkg/lock_manager"
+	"github.com/werf/3p-helm-for-werf-helm/cmd/helm"
+	"github.com/werf/3p-helm-for-werf-helm/pkg/action"
+	"github.com/werf/nelm-for-werf-helm/pkg/lock_manager"
 	"github.com/werf/werf/v2/cmd/werf/common"
-	"github.com/werf/werf/v2/pkg/deploy/helm"
-	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender"
-	"github.com/werf/werf/v2/pkg/deploy/helm/command_helpers"
+	helm "github.com/werf/werf/v2/pkg/deploy/helm_for_werf_helm"
+	chart_extender "github.com/werf/werf/v2/pkg/deploy/helm_for_werf_helm/chart_extender_for_werf_helm"
+	command_helpers "github.com/werf/werf/v2/pkg/deploy/helm_for_werf_helm/command_helpers_for_werf_helm"
 )
 
 var upgradeCmdData common.CmdData

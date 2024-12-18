@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	kube_legacy "github.com/werf/kubedog-for-werf-helm/pkg/kube"
 	"github.com/werf/kubedog/pkg/kube"
 )
 
@@ -43,6 +44,15 @@ func (initializer *OndemandKubeInitializer) Init(ctx context.Context) error {
 		ConfigPathMergeList: initializer.KubeConfigPathMergeList,
 	}}); err != nil {
 		return fmt.Errorf("cannot initialize kube: %w", err)
+	}
+
+	if err := kube_legacy.Init(kube_legacy.InitOptions{KubeConfigOptions: kube_legacy.KubeConfigOptions{
+		Context:             initializer.KubeContext,
+		ConfigPath:          initializer.KubeConfig,
+		ConfigDataBase64:    initializer.KubeConfigBase64,
+		ConfigPathMergeList: initializer.KubeConfigPathMergeList,
+	}}); err != nil {
+		return fmt.Errorf("cannot initialize legacy kube: %w", err)
 	}
 
 	if err := InitKubedog(ctx); err != nil {

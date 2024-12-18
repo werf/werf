@@ -11,8 +11,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/werf/logboek"
-	"github.com/werf/nelm/pkg/secret"
-	"github.com/werf/nelm/pkg/secrets_manager"
+	"github.com/werf/nelm-for-werf-helm/pkg/secret"
+	"github.com/werf/nelm-for-werf-helm/pkg/secrets_manager"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/cmd/werf/docs/replacers/helm"
 	"github.com/werf/werf/v2/pkg/true_git"

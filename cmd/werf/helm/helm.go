@@ -9,11 +9,11 @@ import (
 
 	"github.com/spf13/cobra"
 
-	helm_v3 "github.com/werf/3p-helm/cmd/helm"
-	"github.com/werf/3p-helm/pkg/action"
-	"github.com/werf/3p-helm/pkg/chart"
-	"github.com/werf/3p-helm/pkg/chart/loader"
-	"github.com/werf/kubedog/pkg/kube"
+	helm_v3 "github.com/werf/3p-helm-for-werf-helm/cmd/helm"
+	"github.com/werf/3p-helm-for-werf-helm/pkg/action"
+	"github.com/werf/3p-helm-for-werf-helm/pkg/chart"
+	"github.com/werf/3p-helm-for-werf-helm/pkg/chart/loader"
+	"github.com/werf/kubedog-for-werf-helm/pkg/kube"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	helm2 "github.com/werf/werf/v2/cmd/werf/docs/replacers/helm"
 	helm_secret_decrypt "github.com/werf/werf/v2/cmd/werf/helm/secret/decrypt"
@@ -26,9 +26,9 @@ import (
 	helm_secret_values_decrypt "github.com/werf/werf/v2/cmd/werf/helm/secret/values/decrypt"
 	helm_secret_values_edit "github.com/werf/werf/v2/cmd/werf/helm/secret/values/edit"
 	helm_secret_values_encrypt "github.com/werf/werf/v2/cmd/werf/helm/secret/values/encrypt"
-	"github.com/werf/werf/v2/pkg/deploy/helm"
-	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender"
-	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
+	helm "github.com/werf/werf/v2/pkg/deploy/helm_for_werf_helm"
+	chart_extender "github.com/werf/werf/v2/pkg/deploy/helm_for_werf_helm/chart_extender_for_werf_helm"
+	helpers "github.com/werf/werf/v2/pkg/deploy/helm_for_werf_helm/chart_extender_for_werf_helm/helpers_for_werf_helm"
 	"github.com/werf/werf/v2/pkg/werf"
 )
 
@@ -47,7 +47,7 @@ func NewCmd(ctx context.Context) (*cobra.Command, error) {
 		SilenceUsage: true,
 	})
 
-	registryClient, err := common.NewHelmRegistryClientWithoutInit(ctx)
+	registryClient, err := common.NewHelmRegistryClientWithoutInitForWerfHelm(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create helm registry client: %w", err)
 	}
@@ -195,7 +195,7 @@ func NewCmd(ctx context.Context) (*cobra.Command, error) {
 					wc.SetStubServiceValues(vals)
 				}
 
-				common.InitHelmRegistryClient(registryClient, *_commonCmdData.DockerConfig, *_commonCmdData.InsecureHelmDependencies)
+				common.InitHelmRegistryClientForWerfHelm(registryClient, *_commonCmdData.DockerConfig, *_commonCmdData.InsecureHelmDependencies)
 
 				common.SetupOndemandKubeInitializer(*_commonCmdData.KubeContext, *_commonCmdData.KubeConfig, *_commonCmdData.KubeConfigBase64, *_commonCmdData.KubeConfigPathMergeList)
 

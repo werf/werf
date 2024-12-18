@@ -8,6 +8,7 @@ import (
 	"k8s.io/klog"
 	klog_v2 "k8s.io/klog/v2"
 
+	display_legacy "github.com/werf/kubedog-for-werf-helm/pkg/display"
 	"github.com/werf/kubedog/pkg/display"
 	"github.com/werf/logboek"
 )
@@ -18,6 +19,9 @@ func InitKubedog(ctx context.Context) error {
 
 	display.SetOut(logboek.Context(ctx).OutStream())
 	display.SetErr(logboek.Context(ctx).ErrStream())
+
+	display_legacy.SetOut(logboek.Context(ctx).OutStream())
+	display_legacy.SetErr(logboek.Context(ctx).ErrStream())
 
 	if err := SilenceKlog(ctx); err != nil {
 		return err

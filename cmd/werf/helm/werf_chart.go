@@ -5,9 +5,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/werf/nelm/pkg/secrets_manager"
+	"github.com/werf/nelm-for-werf-helm/pkg/secrets_manager"
 	"github.com/werf/werf/v2/cmd/werf/common"
-	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender"
+	chart_extender "github.com/werf/werf/v2/pkg/deploy/helm_for_werf_helm/chart_extender_for_werf_helm"
 )
 
 func SetupRenderRelatedWerfChartParams(cmd *cobra.Command, commonCmdData *common.CmdData) {
