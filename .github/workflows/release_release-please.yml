@@ -51,7 +51,7 @@ jobs:
   notify:
     if: failure()
     needs: release-please
-    uses: werf/ci-reusable-workflows/.github/workflows/notification.yml@main
+    uses: werf/common-ci/.github/workflows/notification.yml@main
     secrets:
       loopNotificationGroup: ${{ secrets.LOOP_NOTIFICATION_GROUP }}
       webhook: ${{ secrets.LOOP_NOTIFICATION_WEBHOOK }}
