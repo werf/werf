@@ -81,15 +81,13 @@ The use of the [fromPath]({{"usage/build/stapel/mounts.html" | true_relative_url
 
 The `fromPath` directive can be activated using [werf-giterminism.yaml]({{"reference/werf_giterminism_yaml.html" | true_relative_url }}), but we strongly recommend that you carefully consider the possible implications of this.
 
-#### Using Build Secrets
-
-Using secrets from environment variables and files complicates the sharing and reproducibility of configuration in CI jobs and among developers.
-
-The `allowEnvVariables` function allows the use of certain environment variables as secrets.  
-To enable the use of secret values from files, you need to use the `allowFiles` function, specifying a relative or absolute path to the file containing the secret. 
-To enable the use of arbitrary secret values ​​of type `value`, you must specify their identifiers (`id`) in the `allowValueIds` function.
-
-To activate `allowEnvVariables`, `allowFiles` and `allowValueIds`, you need to use [werf-giterminism.yaml]({{ "reference/werf_giterminism_yaml.html" | true_relative_url }}), but we strongly recommend that you carefully consider the possible implications of this.
+#### Using build secrets
+The use of secrets complicates the sharing and reproducibility of configuration in CI jobs and among developers.
+To manage secrets and ensure their consistent use, you can configure the [werf-giterminism.yaml]({{ "reference/werf_giterminism_yaml.html" | true_relative_url }}) file with the following:
+- `allowEnvVariables` — allows the use of specific environment variables.
+- `allowFiles` — grants access to secrets stored in specified files.
+- `allowValueIds` — enables the use of arbitrary secret values identified by IDs.
+We strongly recommend carefully considering the potential implications and avoiding the use of secrets unless absolutely necessary.
 
 ### Deploying
 

@@ -131,7 +131,7 @@ In the example above, werf will use the Dockerfile at `docs/Dockerfile` to build
 
 #### Using build secrets
 
-> **NOTE:** In order to use secrets in builds, you must explicitly enable their use in the hyterminism settings. Find more about this ([here]({{ "/usage/project_configuration/giterminism.html#using-build-secrets" | true_relative_url }}))
+> **NOTE:** To use secrets in builds, you need to enable them explicitly in the giterminism settings. Learn more ([here]({{ "/usage/project_configuration/giterminism.html#using-build-secrets" | true_relative_url }}))
 
 A build secret is any sensitive information, such as a password or API token, required during the build process of your application.
 

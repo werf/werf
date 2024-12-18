@@ -63,10 +63,10 @@ directives:
               en: Allow the use of specific paths to files as secrets
               ru: Разрешить использование определённых путей к файлам в качестве секретов
           - name: allowValueIds
-            value: "[ glob, ... ]"
+            value: "[ string, ... ]"
             description:
-              en: Allow the use of specific identifiers of arbitrary secret values ​​described in werf.yaml
-              ru: Разрешить использование определённых идентификаторов произвольных значений секретов, описанных в werf.yaml
+              en: Allow the use of specific identifiers of arbitrary secret values
+              ru: Разрешить использование определённых идентификаторов произвольных значений секретов
       - name: stapel
         description:
           en: The rules for the stapel image
