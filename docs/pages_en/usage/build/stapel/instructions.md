@@ -342,7 +342,7 @@ In the example above the current commit hash will be inserted into the `echo ...
 
 ## Using build secrets
 
-> **NOTE:** In order to use secrets in builds, you must explicitly enable their use in the hyterminism settings. Find more about this ([here]({{ "usage/project_configuration/giterminism.html#Using-Build-Secrets" | true_relative_url }}))
+> **NOTE:** In order to use secrets in builds, you must explicitly enable their use in the hyterminism settings. Find more about this ([here]({{ "/usage/project_configuration/giterminism.html#using-build-secrets" | true_relative_url }}))
 
 A build secret is any confidential information, such as a password or API token, used during the build process of your application.
 
