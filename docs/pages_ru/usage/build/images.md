@@ -154,6 +154,19 @@ secrets:
   - id: plainSecret
     value: plainSecretValue
 ```
+```yaml
+# werf-giterminism.yaml
+giterminismConfigVersion: 1
+
+config:
+  secrets:
+    allowEnvVariables:
+      - "AWS_ACCESS_KEY_ID"
+    allowFiles:
+      - "~/.aws/credentials"
+    allowValueIds:
+      - plainSecret
+```
 
 Чтобы использовать секрет в сборке и сделать его доступным для инструкции `RUN`, используйте флаг `--mount=type=secret` в Dockerfile. 
 

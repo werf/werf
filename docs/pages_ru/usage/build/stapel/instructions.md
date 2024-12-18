@@ -372,6 +372,10 @@ shell:
 Вы можете использовать секреты при сборке, описав их в `werf.yaml`. 
 
 ```yaml
+# werf.yaml
+project: example
+configVersion: 1
+---
 image: stapel-shell
 from: ubuntu:22.04
 secrets:
@@ -381,6 +385,20 @@ secrets:
   - src: "~/.aws/credentials"
   - id: plainSecret
     value: plainSecretValue
+```
+
+```yaml
+# werf-giterminism.yaml
+giterminismConfigVersion: 1
+
+config:
+  secrets:
+    allowEnvVariables:
+      - "AWS_ACCESS_KEY_ID"
+    allowFiles:
+      - "~/.aws/credentials"
+    allowValueIds:
+      - plainSecret
 ```
 
 При использовании секрета в Stapel инструкциях, секрет монтируется в файл по умолчанию. Путь к файлу секрета по умолчанию внутри контейнера сборки — `/run/secrets/<id>`. Если `id` секрета явно не указан в `werf.yaml`, то в качестве `id` будет использовано значение по умолчанию:

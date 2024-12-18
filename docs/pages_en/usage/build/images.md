@@ -155,6 +155,20 @@ secrets:
     value: plainSecretValue
 ```
 
+```yaml
+# werf-giterminism.yaml
+giterminismConfigVersion: 1
+
+config:
+  secrets:
+    allowEnvVariables:
+      - "AWS_ACCESS_KEY_ID"
+    allowFiles:
+      - "~/.aws/credentials"
+    allowValueIds:
+      - plainSecret
+```
+
 To access a secret during the build, use the `--mount=type=secret` flag in the Dockerfile's `RUN` instructions.
 
 When a secret is mounted, it is available as a file by default. The default mount path for the secret file inside the build container is `/run/secrets/<id>`. If an `id` is not specified for a secret in `werf.yaml`, the default value is assigned automatically:
