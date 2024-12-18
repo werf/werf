@@ -31,3 +31,15 @@ func (i Inspector) InspectConfigSecretSrcAccepted(secret string) error {
 
 	return NewExternalDependencyFoundError(fmt.Sprintf(secretsErrMsg, secret))
 }
+
+func (i Inspector) InspectConfigSecretValueAccepted(secret string) error {
+	if i.sharedOptions.LooseGiterminism() {
+		return nil
+	}
+
+	if i.giterminismConfig.IsConfigSecretValueAccepted(secret) {
+		return nil
+	}
+
+	return NewExternalDependencyFoundError(fmt.Sprintf(secretsErrMsg, secret))
+}

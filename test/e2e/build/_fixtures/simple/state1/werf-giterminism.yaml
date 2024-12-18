@@ -7,3 +7,5 @@ config:
     allowFiles:
       - "./file"
       - "~/secret_file_in_home"
+    allowValueIds:
+      - plainSecret

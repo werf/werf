@@ -86,8 +86,10 @@ The `fromPath` directive can be activated using [werf-giterminism.yaml]({{"refer
 Using secrets from environment variables and files complicates the sharing and reproducibility of configuration in CI jobs and among developers.
 
 The `allowEnvVariables` function allows the use of certain environment variables as secrets.  
-To enable the use of secret values from files, you need to use the `allowFiles` function, specifying a relative or absolute path to the file containing the secret.  
-To activate `allowEnvVariables` and `allowFiles`, you need to use [werf-giterminism.yaml]({{ "reference/werf_giterminism_yaml.html" | true_relative_url }}), but we strongly recommend that you carefully consider the possible implications of this.
+To enable the use of secret values from files, you need to use the `allowFiles` function, specifying a relative or absolute path to the file containing the secret. 
+To enable the use of arbitrary secret values ​​of type `value`, you must specify their identifiers (`id`) in the `allowValueIds` function.
+
+To activate `allowEnvVariables`, `allowFiles` and `allowValueIds`, you need to use [werf-giterminism.yaml]({{ "reference/werf_giterminism_yaml.html" | true_relative_url }}), but we strongly recommend that you carefully consider the possible implications of this.
 
 ### Deploying
 
