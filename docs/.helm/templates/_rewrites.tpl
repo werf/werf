@@ -1,6 +1,6 @@
 # SHOULD BE IN SYNC WITH github.com/werf/website/.helm/templates/_rewrites.tpl
 {{- define "rewrites" }}
-
+rewrite_log on;
 ############################################
 # Normalize urls
 ############################################
@@ -46,6 +46,9 @@ rewrite ^/docs/(?<ver>v2(?:\.\d+(?:\.\d+(?:[^/]+)?)?)?|latest)/usage/cleanup/?$ 
 rewrite ^/docs/(?<ver>v2(?:\.\d+(?:\.\d+(?:[^/]+)?)?)?|latest)/reference/?$                   /docs/$ver/reference/werf_yaml.html                             redirect;
 rewrite ^/docs/(?<ver>v2(?:\.\d+(?:\.\d+(?:[^/]+)?)?)?|latest)/reference/cli/?$               /docs/$ver/reference/cli/overview.html                          redirect;
 rewrite ^/docs/(?<ver>v2(?:\.\d+(?:\.\d+(?:[^/]+)?)?)?|latest)/resources/?$                   /docs/$ver/resources/cheat_sheet.html                           redirect;
+rewrite ^/docs/(?<ver>v2(?:\.\d+(?:[^/]+)?)?|latest)/cli/management/(?<tail1>[^/]+)/(?<tail2>[^/]+)$                                 /docs/$ver/reference/cli/werf_${tail1}_${tail2}                   redirect;
+rewrite ^/docs/(?<ver>v2(?:\.\d+(?:[^/]+)?)?|latest)/cli/management/(?<tail1>[^/]+)/(?<tail2>[^/]+)/(?<tail3>[^/]+)$                 /docs/$ver/reference/cli/werf_${tail1}_${tail2}_${tail3}          redirect;
+rewrite ^/docs/(?<ver>v2(?:\.\d+(?:[^/]+)?)?|latest)/cli/management/(?<tail1>[^/]+)/(?<tail2>[^/]+)/(?<tail3>[^/]+)/(?<tail4>[^/]+)$ /docs/$ver/reference/cli/werf_${tail1}_${tail2}_${tail3}_${tail4} redirect;
 
 rewrite ^/docs/(?<ver>v1\.2(?:\.\d+(?:[^/]+)?)?|latest)/?$                                    /docs/$ver/usage/project_configuration/overview.html            redirect;
 rewrite ^/docs/(?<ver>v1\.2(?:\.\d+(?:[^/]+)?)?|latest)/usage/?$                              /docs/$ver/usage/project_configuration/overview.html            redirect;
