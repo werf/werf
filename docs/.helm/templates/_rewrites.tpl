@@ -72,7 +72,6 @@ rewrite ^/docs/(?<ver>v1\.1(?:\.\d+(?:[^/]+)?)?|latest)/reference/deploy_process
 rewrite ^/docs/(?<ver>v1\.1(?:\.\d+(?:[^/]+)?)?|latest)/reference/plugging_into_cicd/?$       /docs/$ver/reference/plugging_into_cicd/overview.html           redirect;
 rewrite ^/docs/(?<ver>v1\.1(?:\.\d+(?:[^/]+)?)?|latest)/reference/development_and_debug/?$    /docs/$ver/reference/development_and_debug/setup_minikube.html  redirect;
 rewrite ^/docs/(?<ver>v1\.1(?:\.\d+(?:[^/]+)?)?|latest)/reference/toolbox/?$                  /docs/$ver/reference/toolbox/slug.html                          redirect;
-rewrite ^/docs/(?<ver>v1\.1(?:\.\d+(?:[^/]+)?)?|latest)/usage/build/process.html              /docs/$ver/reference/build_process.html                         redirect;
 
 ############################################
 # Redirects for moved or deleted urls
@@ -153,7 +152,6 @@ rewrite ^/docs/(?<ver>v1\.[12](?:\.\d+(?:[^/]+)?)?|latest)/internals/how_ci_cd_i
 rewrite ^/docs/(?<ver>v1\.[12](?:\.\d+(?:[^/]+)?)?|latest)/internals/how_ci_cd_integration_works/github_actions\.html$                        /docs/$ver/usage/integration_with_ci_cd_systems.html    redirect;
 rewrite ^/docs/(?<ver>v1\.[12](?:\.\d+(?:[^/]+)?)?|latest)/internals/how_ci_cd_integration_works/gitlab_ci_cd\.html$                          /docs/$ver/usage/integration_with_ci_cd_systems.html    redirect;
 rewrite ^/docs/(?<ver>v1\.[12](?:\.\d+(?:[^/]+)?)?|latest)/internals/integration_with_ssh_agent\.html$                                        /docs/$ver/usage/build/stapel/base.html                 redirect;
-rewrite ^/docs/(?<ver>v1\.[12](?:\.\d+(?:[^/]+)?)?|latest)/internals/stages_and_storage\.html$                                                /docs/$ver/usage/build/process.html                     redirect;
 rewrite ^/docs/(?<ver>v1\.[12](?:\.\d+(?:[^/]+)?)?|latest)/internals/telemetry\.html$                                                         /docs/$ver/resources/telemetry.html                     redirect;
 
 rewrite ^/docs/(?<ver>v1\.[12](?:\.\d+(?:[^/]+)?)?|latest)/reference/build/artifact\.html$                                                    /docs/$ver/usage/build/stapel/imports.html              redirect;
@@ -209,6 +207,8 @@ rewrite ^/docs/(?<ver>v1\.2(?:\.\d+(?:[^/]+)?)?|latest)/reference/toolbox/slug\.
 rewrite ^/docs/(?<ver>v1\.2(?:\.\d+(?:[^/]+)?)?|latest)/reference/toolbox/ssh\.html$                                                    /docs/$ver/usage/build/stapel/base.html                           redirect;
 rewrite ^/docs/(?<ver>v1\.2(?:\.\d+(?:[^/]+)?)?|latest)/reference/working_with_docker_registries\.html$                                 /docs/$ver/usage/cleanup/cr_cleanup.html                          redirect;
 
+rewrite ^/docs/(?<ver>v1\.2(?:\.\d+(?:[^/]+)?)?|latest)/internals/stages_and_storage\.html$                                             /docs/$ver/usage/build/process.html                               redirect;
+
 rewrite ^/docs/(?<ver>v1\.2(?:\.\d+(?:[^/]+)?)?|latest)/whats_new_in_v1_2/changelog\.html$                                              /docs/$ver/resources/how_to_migrate_from_v1_1_to_v1_2.html        redirect;
 rewrite ^/docs/(?<ver>v1\.2(?:\.\d+(?:[^/]+)?)?|latest)/whats_new_in_v1_2/how_to_migrate_from_v1_1_to_v1_2\.html$                       /docs/$ver/resources/how_to_migrate_from_v1_1_to_v1_2.html        redirect;
 
@@ -259,6 +259,8 @@ rewrite ^/docs/(?<ver>v1\.1(?:\.\d+(?:[^/]+)?)?|latest)/reference/registry/image
 rewrite ^/docs/(?<ver>v1\.1(?:\.\d+(?:[^/]+)?)?|latest)/reference/registry/publish\.html$                          /docs/$ver/reference/publish_process.html                             redirect;
 rewrite ^/docs/(?<ver>v1\.1(?:\.\d+(?:[^/]+)?)?|latest)/reference/registry/push\.html$                             /docs/$ver/reference/publish_process.html                             redirect;
 rewrite ^/docs/(?<ver>v1\.1(?:\.\d+(?:[^/]+)?)?|latest)/reference/registry/tag\.html$                              /docs/$ver/reference/publish_process.html                             redirect;
+
+rewrite ^/docs/(?<ver>v1\.1(?:\.\d+(?:[^/]+)?)?|latest)/internals/stages_and_storage\.html$                        /docs/$ver/reference/build_process.html                               redirect;
 
 {{- end }}
 
