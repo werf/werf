@@ -238,7 +238,7 @@ rewrite ^/docs/(?<ver>v1\.1(?:\.\d+(?:[^/]+)?)?|latest)/configuration/stapel_ima
 
 rewrite ^/docs/(?<ver>v1\.1(?:\.\d+(?:[^/]+)?)?|latest)/reference/cleanup_process\.html$                           /docs/$ver/reference/cleaning_process.html                            redirect;
 rewrite ^/docs/(?<ver>v1\.1(?:\.\d+(?:[^/]+)?)?|latest)/reference/config\.html$                                    /docs/$ver/configuration/introduction.html                            redirect;
-rewrite ^/docs/(?<ver>v1\.1(?:\.\d+(?:[^/]+)?)?|latest)/reference/stages_and_images\.html$                         /docs/$ver/internals/stages_and_storage.html                          redirect;
+rewrite ^/docs/(?<ver>v1\.1(?:\.\d+(?:[^/]+)?)?|latest)/reference/stages_and_images\.html$                         /docs/$ver/reference/build_process.html                               redirect;
 rewrite ^/docs/(?<ver>v1\.1(?:\.\d+(?:[^/]+)?)?|latest)/reference/build/as_layers\.html$                           /docs/$ver/reference/development_and_debug/as_layers.html             redirect;
 rewrite ^/docs/(?<ver>v1\.1(?:\.\d+(?:[^/]+)?)?|latest)/reference/build/stage_introspection\.html$                 /docs/$ver/reference/development_and_debug/stage_introspection.html   redirect;
 rewrite ^/docs/(?<ver>v1\.1(?:\.\d+(?:[^/]+)?)?|latest)/reference/build/(?<tail>.+)                                /docs/$ver/configuration/stapel_image/$tail                           redirect;
@@ -259,8 +259,6 @@ rewrite ^/docs/(?<ver>v1\.1(?:\.\d+(?:[^/]+)?)?|latest)/reference/registry/image
 rewrite ^/docs/(?<ver>v1\.1(?:\.\d+(?:[^/]+)?)?|latest)/reference/registry/publish\.html$                          /docs/$ver/reference/publish_process.html                             redirect;
 rewrite ^/docs/(?<ver>v1\.1(?:\.\d+(?:[^/]+)?)?|latest)/reference/registry/push\.html$                             /docs/$ver/reference/publish_process.html                             redirect;
 rewrite ^/docs/(?<ver>v1\.1(?:\.\d+(?:[^/]+)?)?|latest)/reference/registry/tag\.html$                              /docs/$ver/reference/publish_process.html                             redirect;
-
-rewrite ^/docs/(?<ver>v1\.1(?:\.\d+(?:[^/]+)?)?|latest)/internals/stages_and_storage\.html$                        /docs/$ver/reference/build_process.html                               redirect;
 
 {{- end }}
 
