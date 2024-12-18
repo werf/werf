@@ -1,6 +1,6 @@
 ---
 title: Очистка container registry
-permalink: usage/cleanup/cr_cleanup.html
+permalink: usage/cr_cleanup.html
 ---
 
 ## Обзор
