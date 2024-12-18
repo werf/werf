@@ -121,7 +121,6 @@ rewrite ^/docs/(?<ver>v1\.[12](?:\.\d+(?:[^/]+)?)?|latest)/advanced/cleanup\.htm
 rewrite ^/docs/(?<ver>v1\.[12](?:\.\d+(?:[^/]+)?)?|latest)/advanced/configuration/giterminism\.html$                                          /docs/$ver/usage/project_configuration/giterminism.html redirect;
 rewrite ^/docs/(?<ver>v1\.[12](?:\.\d+(?:[^/]+)?)?|latest)/advanced/configuration/organizing_configuration\.html$                             /docs/$ver/reference/werf_yaml_template_engine.html     redirect;
 rewrite ^/docs/(?<ver>v1\.[12](?:\.\d+(?:[^/]+)?)?|latest)/advanced/configuration/supported_go_templates\.html$                               /docs/$ver/reference/werf_yaml_template_engine.html     redirect;
-rewrite ^/docs/(?<ver>v1\.[12](?:\.\d+(?:[^/]+)?)?|latest)/advanced/development_and_debug/stage_introspection\.html$                          /docs/$ver/usage/build/stapel/base.html                 redirect;
 rewrite ^/docs/(?<ver>v1\.[12](?:\.\d+(?:[^/]+)?)?|latest)/advanced/giterminism\.html$                                                        /docs/$ver/usage/project_configuration/giterminism.html redirect;
 rewrite ^/docs/(?<ver>v1\.[12](?:\.\d+(?:[^/]+)?)?|latest)/advanced/helm/configuration/chart\.html$                                           /docs/$ver/usage/deploy/charts.html                     redirect;
 rewrite ^/docs/(?<ver>v1\.[12](?:\.\d+(?:[^/]+)?)?|latest)/advanced/helm/configuration/chart_dependencies\.html$                              /docs/$ver/usage/deploy/charts.html                     redirect;
