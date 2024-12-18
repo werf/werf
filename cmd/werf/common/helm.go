@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	registry_legacy "github.com/werf/3p-helm-for-werf-helm/pkg/registry"
 	helm_v3 "github.com/werf/3p-helm/cmd/helm"
 	"github.com/werf/3p-helm/pkg/action"
 	"github.com/werf/3p-helm/pkg/registry"
@@ -32,10 +33,24 @@ func NewHelmRegistryClientWithoutInit(ctx context.Context) (*registry.Client, er
 	)
 }
 
+func NewHelmRegistryClientWithoutInitForWerfHelm(ctx context.Context) (*registry_legacy.Client, error) {
+	return registry_legacy.NewClient(
+		registry_legacy.ClientOptDebug(logboek.Context(ctx).Debug().IsAccepted()),
+		registry_legacy.ClientOptWriter(logboek.Context(ctx).OutStream()),
+	)
+}
+
 func InitHelmRegistryClient(registryClient *registry.Client, dockerConfig string, insecureHelmDependencies bool) {
 	registry.ClientOptCredentialsFile(docker.GetDockerConfigCredentialsFile(dockerConfig))(registryClient)
 	if insecureHelmDependencies {
 		registry.ClientOptPlainHTTP()
+	}
+}
+
+func InitHelmRegistryClientForWerfHelm(registryClient *registry_legacy.Client, dockerConfig string, insecureHelmDependencies bool) {
+	registry_legacy.ClientOptCredentialsFile(docker.GetDockerConfigCredentialsFile(dockerConfig))(registryClient)
+	if insecureHelmDependencies {
+		registry_legacy.ClientOptPlainHTTP()
 	}
 }
 

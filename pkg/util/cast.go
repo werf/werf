@@ -1,6 +1,8 @@
 package util
 
-import "fmt"
+import (
+	"fmt"
+)
 
 func MapStringInterfaceToMapStringString(value map[string]interface{}) map[string]string {
 	result := map[string]string{}

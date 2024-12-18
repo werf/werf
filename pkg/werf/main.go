@@ -11,6 +11,7 @@ import (
 	"github.com/werf/lockgate/pkg/file_lock"
 	"github.com/werf/lockgate/pkg/file_locker"
 	"github.com/werf/logboek"
+	secrets_manager_legacy "github.com/werf/nelm-for-werf-helm/pkg/secrets_manager"
 	"github.com/werf/nelm/pkg/secrets_manager"
 )
 
@@ -154,6 +155,7 @@ func Init(tmpDirOption, homeDirOption string) error {
 	localCacheDir = filepath.Join(homeDir, "local_cache")
 	serviceDir = filepath.Join(homeDir, "service")
 	secrets_manager.WerfHomeDir = homeDir
+	secrets_manager_legacy.WerfHomeDir = homeDir
 
 	file_lock.LegacyHashFunction = true
 
