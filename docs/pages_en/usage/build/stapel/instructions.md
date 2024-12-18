@@ -342,12 +342,18 @@ In the example above the current commit hash will be inserted into the `echo ...
 
 ## Using build secrets
 
+> **NOTE:** To use secrets in builds, you need to enable them explicitly in the giterminism settings. Learn more ([here]({{ "/usage/project_configuration/giterminism.html#using-build-secrets" | true_relative_url }}))
+
 A build secret is any confidential information, such as a password or API token, used during the build process of your application.
 
 Build arguments and environment variables are not suitable for passing secrets during a build, as they may be retained in the final image.  
 You can use secrets during the build process by defining them in `werf.yaml`.
 
 ```yaml
+# werf.yaml
+project: example
+configVersion: 1
+---
 image: stapel-shell
 from: ubuntu:22.04
 secrets:
@@ -359,6 +365,20 @@ secrets:
     value: plainSecretValue
 ```
 
+```yaml
+# werf-giterminism.yaml
+giterminismConfigVersion: 1
+
+config:
+  secrets:
+    allowEnvVariables:
+      - "AWS_ACCESS_KEY_ID"
+    allowFiles:
+      - "~/.aws/credentials"
+    allowValueIds:
+      - plainSecret
+```
+
 When using a secret in Stapel instructions, the secret is mounted to a file. The path for the secret file inside the build container is `/run/secrets/<id>`. If an `id` is not specified for a secret in `werf.yaml`, the default value is assigned automatically:
 
 - For `env`, the `id` defaults to the name of the environment variable.
@@ -367,6 +387,10 @@ When using a secret in Stapel instructions, the secret is mounted to a file. The
 > For `value` — the `id` field is mandatory.
 
 ```yaml
+# werf.yaml
+project: example
+configVersion: 1
+---
 image: stapel-shell
 from: ubuntu:22.04
 secrets:

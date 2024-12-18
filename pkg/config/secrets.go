@@ -130,7 +130,7 @@ func (s *SecretFromSrc) InspectByGiterminism(giterminismManager giterminism_mana
 }
 
 func (s *SecretFromPlainValue) InspectByGiterminism(giterminismManager giterminism_manager.Interface) error {
-	return nil
+	return giterminismManager.Inspector().InspectConfigSecretValueAccepted(s.Id)
 }
 
 func GetValidatedSecrets(rawSecrets []*rawSecret, giterminismManager giterminism_manager.Interface, doc *doc) ([]Secret, error) {

@@ -131,6 +131,8 @@ dockerfile: Dockerfile
 
 #### Использование сборочных секретов
 
+> **ЗАМЕЧАНИЕ:** Чтобы использовать секреты в сборках, их нужно явно разрешить в настройках гитерминизма. Подробнее ([здесь]({{ "/usage/project_configuration/giterminism.html#использование-сборочных-секретов" | true_relative_url }}))
+
 Секрет сборки — это любая конфиденциальная информация, например пароль или токен API, используемая в процессе сборки вашего приложения.
 
 Аргументы сборки и переменные окружения не подходят для передачи секретов в сборку, поскольку они сохраняются в конечном образе.  
@@ -151,6 +153,19 @@ secrets:
   - src: "~/.aws/credentials"
   - id: plainSecret
     value: plainSecretValue
+```
+```yaml
+# werf-giterminism.yaml
+giterminismConfigVersion: 1
+
+config:
+  secrets:
+    allowEnvVariables:
+      - "AWS_ACCESS_KEY_ID"
+    allowFiles:
+      - "~/.aws/credentials"
+    allowValueIds:
+      - plainSecret
 ```
 
 Чтобы использовать секрет в сборке и сделать его доступным для инструкции `RUN`, используйте флаг `--mount=type=secret` в Dockerfile. 

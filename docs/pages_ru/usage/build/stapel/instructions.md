@@ -364,12 +364,18 @@ shell:
 
 ## Использование сборочных секретов
 
+> **ЗАМЕЧАНИЕ:** Чтобы использовать секреты в сборках, их нужно явно разрешить в настройках гитерминизма. Подробнее ([здесь]({{ "/usage/project_configuration/giterminism.html#использование-сборочных-секретов" | true_relative_url }}))
+
 Секрет сборки — это любая конфиденциальная информация, например пароль или токен API, используемая в процессе сборки вашего приложения.
 
 Аргументы сборки и переменные окружения не подходят для передачи секретов в сборку, поскольку они сохраняются в конечном образе.
 Вы можете использовать секреты при сборке, описав их в `werf.yaml`. 
 
 ```yaml
+# werf.yaml
+project: example
+configVersion: 1
+---
 image: stapel-shell
 from: ubuntu:22.04
 secrets:
@@ -379,6 +385,20 @@ secrets:
   - src: "~/.aws/credentials"
   - id: plainSecret
     value: plainSecretValue
+```
+
+```yaml
+# werf-giterminism.yaml
+giterminismConfigVersion: 1
+
+config:
+  secrets:
+    allowEnvVariables:
+      - "AWS_ACCESS_KEY_ID"
+    allowFiles:
+      - "~/.aws/credentials"
+    allowValueIds:
+      - plainSecret
 ```
 
 При использовании секрета в Stapel инструкциях, секрет монтируется в файл по умолчанию. Путь к файлу секрета по умолчанию внутри контейнера сборки — `/run/secrets/<id>`. Если `id` секрета явно не указан в `werf.yaml`, то в качестве `id` будет использовано значение по умолчанию:

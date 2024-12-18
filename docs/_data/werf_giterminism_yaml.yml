@@ -53,7 +53,7 @@ directives:
           ru: Правила использования значений секретов
         directives:
           - name: allowEnvVariables
-            value: "[ string || /REGEXP/, ... ]"
+            value: "[ string, ... ]"
             description:
               en: Allow the use of specific environment variables as secrets
               ru: Разрешить использование определённых переменных окружения в качестве секретов
@@ -62,6 +62,11 @@ directives:
             description:
               en: Allow the use of specific paths to files as secrets
               ru: Разрешить использование определённых путей к файлам в качестве секретов
+          - name: allowValueIds
+            value: "[ string, ... ]"
+            description:
+              en: Allow the use of specific identifiers of arbitrary secret values
+              ru: Разрешить использование определённых идентификаторов произвольных значений секретов
       - name: stapel
         description:
           en: The rules for the stapel image

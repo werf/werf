@@ -131,6 +131,8 @@ In the example above, werf will use the Dockerfile at `docs/Dockerfile` to build
 
 #### Using build secrets
 
+> **NOTE:** To use secrets in builds, you need to enable them explicitly in the giterminism settings. Learn more ([here]({{ "/usage/project_configuration/giterminism.html#using-build-secrets" | true_relative_url }}))
+
 A build secret is any sensitive information, such as a password or API token, required during the build process of your application.
 
 Build arguments and environment variables are not suitable for passing secrets to the build process, as they are retained in the final image. 
@@ -151,6 +153,20 @@ secrets:
   - src: "~/.aws/credentials"
   - id: plainSecret
     value: plainSecretValue
+```
+
+```yaml
+# werf-giterminism.yaml
+giterminismConfigVersion: 1
+
+config:
+  secrets:
+    allowEnvVariables:
+      - "AWS_ACCESS_KEY_ID"
+    allowFiles:
+      - "~/.aws/credentials"
+    allowValueIds:
+      - plainSecret
 ```
 
 To access a secret during the build, use the `--mount=type=secret` flag in the Dockerfile's `RUN` instructions.

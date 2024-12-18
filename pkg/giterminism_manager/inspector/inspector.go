@@ -28,6 +28,7 @@ type giterminismConfig interface {
 	IsConfigDockerfileContextAddFileAccepted(relPath string) bool
 	IsConfigSecretEnvAccepted(name string) bool
 	IsConfigSecretSrcAccepted(path string) bool
+	IsConfigSecretValueAccepted(name string) bool
 }
 
 type fileReader interface {
