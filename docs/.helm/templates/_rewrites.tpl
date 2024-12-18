@@ -72,6 +72,7 @@ rewrite ^/docs/(?<ver>v1\.1(?:\.\d+(?:[^/]+)?)?|latest)/reference/deploy_process
 rewrite ^/docs/(?<ver>v1\.1(?:\.\d+(?:[^/]+)?)?|latest)/reference/plugging_into_cicd/?$       /docs/$ver/reference/plugging_into_cicd/overview.html           redirect;
 rewrite ^/docs/(?<ver>v1\.1(?:\.\d+(?:[^/]+)?)?|latest)/reference/development_and_debug/?$    /docs/$ver/reference/development_and_debug/setup_minikube.html  redirect;
 rewrite ^/docs/(?<ver>v1\.1(?:\.\d+(?:[^/]+)?)?|latest)/reference/toolbox/?$                  /docs/$ver/reference/toolbox/slug.html                          redirect;
+rewrite ^/docs/(?<ver>v1\.1(?:\.\d+(?:[^/]+)?)?|latest)/usage/build/process.html              /docs/$ver/reference/build_process.html                         redirect;
 
 ############################################
 # Redirects for moved or deleted urls
