@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.17.0](https://www.github.com/werf/werf/compare/v2.16.3...v2.17.0) (2024-12-18)
+
+
+### Features
+
+* **build, secrets:** include plain secret values in giterminism scope ([#6495](https://www.github.com/werf/werf/issues/6495)) ([1508e30](https://www.github.com/werf/werf/commit/1508e30e143ef950b312d53b75e1ad6e14d12685))
+
 ### [2.16.3](https://www.github.com/werf/werf/compare/v2.16.2...v2.16.3) (2024-12-16)
 
 
