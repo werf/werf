@@ -8,9 +8,9 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/werf/3p-helm/pkg/chart"
+	"github.com/werf/3p-helm/pkg/werf/file"
 	"github.com/werf/nelm/pkg/secret"
 	"github.com/werf/nelm/pkg/secrets_manager"
-	"github.com/werf/werf/v2/pkg/giterminism_manager"
 	"github.com/werf/werf/v2/pkg/util/secretvalues"
 )
 
@@ -27,7 +27,7 @@ func NewSecretsRuntimeData() *SecretsRuntimeData {
 }
 
 type DecodeAndLoadSecretsOptions struct {
-	GiterminismManager         giterminism_manager.Interface
+	ChartFileReader            file.ChartFileReader
 	CustomSecretValueFiles     []string
 	LoadFromLocalFilesystem    bool
 	WithoutDefaultSecretValues bool
@@ -60,7 +60,7 @@ func (secretsRuntimeData *SecretsRuntimeData) DecodeAndLoadSecrets(
 			}
 			file.Data = data
 		} else {
-			data, err := opts.GiterminismManager.FileReader().ReadChartFile(ctx, customSecretValuesFileName)
+			data, err := opts.ChartFileReader.ReadChartFile(ctx, customSecretValuesFileName)
 			if err != nil {
 				return fmt.Errorf("unable to read custom secret values file %q: %w", customSecretValuesFileName, err)
 			}

@@ -60,7 +60,7 @@ require (
 	github.com/spaolacci/murmur3 v1.1.0
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.5
-	github.com/werf/3p-helm v0.0.0-20241205082853-108ebc6258fe
+	github.com/werf/3p-helm v0.0.0-20241219091230-dfacf3b3c42a
 	github.com/werf/3p-helm-for-werf-helm v0.0.0-20241217155820-089f92cd5c9d
 	github.com/werf/copy-recurse v0.2.7
 	github.com/werf/kubedog v0.12.4-0.20241206094259-0fc2d1a1aff7
