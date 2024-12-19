@@ -7,12 +7,12 @@ import (
 	"path/filepath"
 	"runtime"
 
+	"github.com/werf/common-go/pkg/secrets_manager"
 	"github.com/werf/lockgate"
 	"github.com/werf/lockgate/pkg/file_lock"
 	"github.com/werf/lockgate/pkg/file_locker"
 	"github.com/werf/logboek"
 	secrets_manager_legacy "github.com/werf/nelm-for-werf-helm/pkg/secrets_manager"
-	"github.com/werf/nelm/pkg/secrets_manager"
 )
 
 var (

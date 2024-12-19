@@ -10,10 +10,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/werf/common-go/pkg/util"
+	"github.com/werf/common-go/pkg/util/timestamps"
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/util"
-	"github.com/werf/werf/v2/pkg/util/timestamps"
 	"github.com/werf/werf/v2/pkg/werf"
 )
 

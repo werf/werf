@@ -7,10 +7,10 @@ import (
 	"os"
 	"time"
 
+	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/style"
 	"github.com/werf/werf/v2/pkg/docker"
-	"github.com/werf/werf/v2/pkg/util"
 	"github.com/werf/werf/v2/pkg/util/parallel/constant"
 )
 

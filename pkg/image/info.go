@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/werf/werf/v2/pkg/util"
+	"github.com/werf/common-go/pkg/util"
 )
 
 const (

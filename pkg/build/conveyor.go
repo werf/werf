@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	stylePkg "github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
@@ -26,7 +27,6 @@ import (
 	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/storage/manager"
 	"github.com/werf/werf/v2/pkg/storage/synchronization/lock_manager"
-	"github.com/werf/werf/v2/pkg/util"
 	"github.com/werf/werf/v2/pkg/util/parallel"
 )
 

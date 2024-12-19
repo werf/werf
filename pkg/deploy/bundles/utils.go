@@ -3,7 +3,7 @@ package bundles
 import (
 	"strings"
 
-	"github.com/werf/werf/v2/pkg/util"
+	"github.com/werf/common-go/pkg/util"
 )
 
 func GetChartNameOverwrite(targetRepo, renameChart string, helmCompatibleChart bool) *string {

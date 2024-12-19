@@ -8,10 +8,10 @@ import (
 	"sigs.k8s.io/yaml"
 
 	chart "github.com/werf/3p-helm-for-werf-helm/pkg/chart"
+	"github.com/werf/common-go/pkg/secretvalues"
 	secret "github.com/werf/nelm-for-werf-helm/pkg/secret"
 	secrets_manager "github.com/werf/nelm-for-werf-helm/pkg/secrets_manager"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
-	"github.com/werf/werf/v2/pkg/util/secretvalues"
 )
 
 type SecretsRuntimeData struct {
