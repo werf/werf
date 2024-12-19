@@ -457,9 +457,10 @@ func run(
 		) error {
 			wc := chart_extender.NewWerfChart(
 				ctx,
-				giterminismManager,
+				giterminismManager.FileReader(),
 				secretsManager,
 				relChartPath,
+				giterminismManager.ProjectDir(),
 				helmSettings,
 				helmRegistryClient,
 				chart_extender.WerfChartOptions{

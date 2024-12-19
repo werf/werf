@@ -22,6 +22,7 @@ import (
 	"github.com/werf/3p-helm/pkg/getter"
 	"github.com/werf/3p-helm/pkg/postrender"
 	"github.com/werf/3p-helm/pkg/registry"
+	"github.com/werf/3p-helm/pkg/werf/file"
 	"github.com/werf/logboek"
 	"github.com/werf/nelm/pkg/secrets_manager"
 	"github.com/werf/werf/v2/cmd/werf/common"
@@ -30,7 +31,6 @@ import (
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers/secrets"
 	"github.com/werf/werf/v2/pkg/deploy/helm/command_helpers"
-	"github.com/werf/werf/v2/pkg/giterminism_manager"
 	"github.com/werf/werf/v2/pkg/util"
 )
 
@@ -46,21 +46,23 @@ type WerfChartOptions struct {
 
 func NewWerfChart(
 	ctx context.Context,
-	giterminismManager giterminism_manager.Interface,
+	chartFileReader file.ChartFileReader,
 	secretsManager *secrets_manager.SecretsManager,
 	chartDir string,
+	projectDir string,
 	helmEnvSettings *cli.EnvSettings,
 	registryClient *registry.Client,
 	opts WerfChartOptions,
 ) *WerfChart {
 	wc := &WerfChart{
 		ChartDir:         chartDir,
+		ProjectDir:       projectDir,
 		SecretValueFiles: opts.SecretValueFiles,
 		HelmEnvSettings:  helmEnvSettings,
 		RegistryClient:   registryClient,
 
-		GiterminismManager: giterminismManager,
-		SecretsManager:     secretsManager,
+		ChartFileReader: chartFileReader,
+		SecretsManager:  secretsManager,
 
 		extraAnnotationsAndLabelsPostRenderer: helm.NewExtraAnnotationsAndLabelsPostRenderer(nil, nil, opts.IgnoreInvalidAnnotationsAndLabels),
 
@@ -87,6 +89,7 @@ type WerfChart struct {
 	HelmChart *chart.Chart
 
 	ChartDir                   string
+	ProjectDir                 string
 	SecretValueFiles           []string
 	HelmEnvSettings            *cli.EnvSettings
 	RegistryClient             *registry.Client
@@ -94,8 +97,8 @@ type WerfChart struct {
 	DisableDefaultValues       bool
 	DisableDefaultSecretValues bool
 
-	GiterminismManager giterminism_manager.Interface
-	SecretsManager     *secrets_manager.SecretsManager
+	ChartFileReader file.ChartFileReader
+	SecretsManager  *secrets_manager.SecretsManager
 
 	extraAnnotationsAndLabelsPostRenderer *helm.ExtraAnnotationsAndLabelsPostRenderer
 	werfConfig                            *config.WerfConfig
@@ -120,8 +123,8 @@ func (wc *WerfChart) ChartLoaded(files []*chart.ChartExtenderBufferedFile) error
 			logboek.Context(wc.ChartExtenderContext).Info().LogF("Disable default werf chart secret values\n")
 		}
 
-		if err := wc.SecretsRuntimeData.DecodeAndLoadSecrets(wc.ChartExtenderContext, files, wc.ChartDir, wc.GiterminismManager.ProjectDir(), wc.SecretsManager, secrets.DecodeAndLoadSecretsOptions{
-			GiterminismManager:         wc.GiterminismManager,
+		if err := wc.SecretsRuntimeData.DecodeAndLoadSecrets(wc.ChartExtenderContext, files, wc.ChartDir, wc.ProjectDir, wc.SecretsManager, secrets.DecodeAndLoadSecretsOptions{
+			ChartFileReader:            wc.ChartFileReader,
 			CustomSecretValueFiles:     wc.SecretValueFiles,
 			WithoutDefaultSecretValues: wc.DisableDefaultSecretValues,
 		}); err != nil {
@@ -195,7 +198,7 @@ func (wc *WerfChart) MakeBundleSecretValues(
 	if helpers.DebugSecretValues() {
 		helpers.DebugPrintValues(wc.ChartExtenderContext, "secret", wc.SecretsRuntimeData.DecryptedSecretValues)
 	}
-	return secretsRuntimeData.GetEncodedSecretValues(ctx, wc.SecretsManager, wc.GiterminismManager.ProjectDir())
+	return secretsRuntimeData.GetEncodedSecretValues(ctx, wc.SecretsManager, wc.ProjectDir)
 }
 
 // SetupTemplateFuncs method for the chart.Extender interface
@@ -206,12 +209,12 @@ func (wc *WerfChart) SetupTemplateFuncs(t *template.Template, funcMap template.F
 
 // LoadDir method for the chart.Extender interface
 func (wc *WerfChart) LoadDir(dir string) (bool, []*chart.ChartExtenderBufferedFile, error) {
-	chartFiles, err := wc.GiterminismManager.FileReader().LoadChartDir(wc.ChartExtenderContext, dir)
+	chartFiles, err := wc.ChartFileReader.LoadChartDir(wc.ChartExtenderContext, dir)
 	if err != nil {
 		return true, nil, fmt.Errorf("giterministic files loader failed: %w", err)
 	}
 
-	res, err := LoadChartDependencies(wc.ChartExtenderContext, wc.GiterminismManager.FileReader().LoadChartDir, dir, chartFiles, wc.HelmEnvSettings, wc.RegistryClient, wc.BuildChartDependenciesOpts)
+	res, err := LoadChartDependencies(wc.ChartExtenderContext, wc.ChartFileReader.LoadChartDir, dir, chartFiles, wc.HelmEnvSettings, wc.RegistryClient, wc.BuildChartDependenciesOpts)
 	if err != nil {
 		return true, res, fmt.Errorf("chart dependencies loader failed: %w", err)
 	}
@@ -221,13 +224,13 @@ func (wc *WerfChart) LoadDir(dir string) (bool, []*chart.ChartExtenderBufferedFi
 
 // LocateChart method for the chart.Extender interface
 func (wc *WerfChart) LocateChart(name string, settings *cli.EnvSettings) (bool, string, error) {
-	res, err := wc.GiterminismManager.FileReader().LocateChart(wc.ChartExtenderContext, name, settings)
+	res, err := wc.ChartFileReader.LocateChart(wc.ChartExtenderContext, name, settings)
 	return true, res, err
 }
 
 // ReadFile method for the chart.Extender interface
 func (wc *WerfChart) ReadFile(filePath string) (bool, []byte, error) {
-	res, err := wc.GiterminismManager.FileReader().ReadChartFile(wc.ChartExtenderContext, filePath)
+	res, err := wc.ChartFileReader.ReadChartFile(wc.ChartExtenderContext, filePath)
 	return true, res, err
 }
 
@@ -270,7 +273,7 @@ func (wc *WerfChart) CreateNewBundle(
 	destDir, chartVersion string,
 	vals *values.Options,
 ) (*Bundle, error) {
-	chartPath := filepath.Join(wc.GiterminismManager.ProjectDir(), wc.ChartDir)
+	chartPath := filepath.Join(wc.ProjectDir, wc.ChartDir)
 	chrt, err := loader.LoadDir(chartPath)
 	if err != nil {
 		return nil, fmt.Errorf("error loading chart %q: %w", chartPath, err)
@@ -369,7 +372,7 @@ func (wc *WerfChart) CreateNewBundle(
 		}
 	}
 
-	chartDirAbs := filepath.Join(wc.GiterminismManager.ProjectDir(), wc.ChartDir)
+	chartDirAbs := filepath.Join(wc.ProjectDir, wc.ChartDir)
 
 	ignoreChartValuesFiles := []string{secrets.DefaultSecretValuesFileName}
 

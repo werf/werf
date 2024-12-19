@@ -1425,8 +1425,8 @@ github.com/werf/3p-buildah v1.35.2-0.20241120093816-5b80b7b735de h1:adTANOZyNmmn
 github.com/werf/3p-buildah v1.35.2-0.20241120093816-5b80b7b735de/go.mod h1:vVSVUlTu8+99H5j43gBJscpkb/quZvdJg78+6X1HeTM=
 github.com/werf/3p-docker-buildx v0.13.0-rc2.0.20241111114615-d77c2e1444ad h1:FBDNACfjjpDBwXhALF5LgvEiu08HpUurb/2G323SVsQ=
 github.com/werf/3p-docker-buildx v0.13.0-rc2.0.20241111114615-d77c2e1444ad/go.mod h1:Q3gtkv8D3sdaa5LJXbzMooYR/A5vBiEB2yQ56wywohM=
-github.com/werf/3p-helm v0.0.0-20241205082853-108ebc6258fe h1:iwYtUcq6FI6qRc8VTLkdfHHtk4pyJn0rNsbFwZEu7Fc=
-github.com/werf/3p-helm v0.0.0-20241205082853-108ebc6258fe/go.mod h1:YJhOllAD8LqSnsocDhkwqOxaqOoxSnVbXwhcbqptkZg=
+github.com/werf/3p-helm v0.0.0-20241219091230-dfacf3b3c42a h1:VrgiMZg2kON9YSvd/5N7mOBCzskf75tzPgcLpZ4P7YQ=
+github.com/werf/3p-helm v0.0.0-20241219091230-dfacf3b3c42a/go.mod h1:YJhOllAD8LqSnsocDhkwqOxaqOoxSnVbXwhcbqptkZg=
 github.com/werf/3p-helm-for-werf-helm v0.0.0-20241217155820-089f92cd5c9d h1:HN9jmAG2Gyhf8hJca9yoAO2xawNZQ/6OYDomxkKr5Sw=
 github.com/werf/3p-helm-for-werf-helm v0.0.0-20241217155820-089f92cd5c9d/go.mod h1:fozJ+C/Llp1e+jHxrJOZUu+D4QEw+laQK6W6RFqvTsg=
 github.com/werf/3p-oras v0.9.1-0.20240115121544-03962ecbd40a h1:PsU9szHZlIH+CjcuIuPXRLc5dsdoaFldvYjS6YHI7YQ=

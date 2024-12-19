@@ -312,7 +312,7 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 		return err
 	}
 
-	wc := chart_extender.NewWerfChart(ctx, giterminismManager, secretsManager, chartDir, helm_v3.Settings, helmRegistryClient, chart_extender.WerfChartOptions{
+	wc := chart_extender.NewWerfChart(ctx, giterminismManager.FileReader(), secretsManager, chartDir, giterminismManager.ProjectDir(), helm_v3.Settings, helmRegistryClient, chart_extender.WerfChartOptions{
 		BuildChartDependenciesOpts:        command_helpers.BuildChartDependenciesOptions{SkipUpdate: *commonCmdData.SkipDependenciesRepoRefresh},
 		SecretValueFiles:                  common.GetSecretValues(&commonCmdData),
 		ExtraAnnotations:                  userExtraAnnotations,
