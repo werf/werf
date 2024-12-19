@@ -57,27 +57,26 @@ require (
 	github.com/rodaine/table v1.1.1
 	github.com/samber/lo v1.39.0
 	github.com/sirupsen/logrus v1.9.3
-	github.com/spaolacci/murmur3 v1.1.0
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.5
-	github.com/werf/3p-helm v0.0.0-20241219091230-dfacf3b3c42a
+	github.com/werf/3p-helm v0.0.0-20241219105936-95c628236af1
 	github.com/werf/3p-helm-for-werf-helm v0.0.0-20241217155820-089f92cd5c9d
+	github.com/werf/common-go v0.0.0-20241219162404-a6b652fcdb74
 	github.com/werf/copy-recurse v0.2.7
 	github.com/werf/kubedog v0.12.4-0.20241206094259-0fc2d1a1aff7
 	github.com/werf/kubedog-for-werf-helm v0.0.0-20241217155728-9d45c48b82b6
 	github.com/werf/lockgate v0.1.1
 	github.com/werf/logboek v0.6.1
-	github.com/werf/nelm v0.0.0-20241216162242-55b6be64eca4
+	github.com/werf/nelm v0.0.0-20241219162949-8c08a9e630fb
 	github.com/werf/nelm-for-werf-helm v0.0.0-20241217155925-b0e6734d1dbf
 	go.opentelemetry.io/otel v1.24.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.24.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.24.0
 	go.opentelemetry.io/otel/sdk v1.24.0
 	go.opentelemetry.io/otel/trace v1.24.0
-	golang.org/x/crypto v0.28.0
-	golang.org/x/mod v0.20.0
-	golang.org/x/net v0.30.0
-	golang.org/x/sys v0.27.0
+	golang.org/x/crypto v0.31.0
+	golang.org/x/net v0.33.0
+	golang.org/x/sys v0.28.0
 	gopkg.in/errgo.v2 v2.1.0
 	gopkg.in/ini.v1 v1.67.0
 	gopkg.in/oleiade/reflections.v1 v1.0.0
@@ -111,7 +110,9 @@ require (
 	github.com/muesli/cancelreader v0.2.2 // indirect
 	github.com/radovskyb/watcher v1.0.7 // indirect
 	github.com/sajari/fuzzy v1.0.0 // indirect
+	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	github.com/zeebo/xxh3 v1.0.2 // indirect
+	golang.org/x/mod v0.21.0 // indirect
 	mvdan.cc/sh/v3 v3.10.0 // indirect
 )
 
@@ -225,7 +226,7 @@ require (
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/go-intervals v0.0.2 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
-	github.com/google/pprof v0.0.0-20240827171923-fa2c70bbbfe5 // indirect
+	github.com/google/pprof v0.0.0-20241029153458-d1b30febd7db // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/gorilla/websocket v1.5.1 // indirect
@@ -368,11 +369,11 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56 // indirect
 	golang.org/x/oauth2 v0.18.0 // indirect
-	golang.org/x/sync v0.9.0 // indirect
-	golang.org/x/term v0.26.0 // indirect
-	golang.org/x/text v0.19.0 // indirect
+	golang.org/x/sync v0.10.0 // indirect
+	golang.org/x/term v0.27.0 // indirect
+	golang.org/x/text v0.21.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
-	golang.org/x/tools v0.24.0 // indirect
+	golang.org/x/tools v0.26.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/genproto v0.0.0-20240325203815-454cdb8f5daa // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240325203815-454cdb8f5daa // indirect

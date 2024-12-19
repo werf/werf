@@ -7,10 +7,10 @@ import (
 
 	"github.com/werf/3p-helm/pkg/chart"
 	"github.com/werf/3p-helm/pkg/cli"
+	"github.com/werf/common-go/pkg/secrets"
+	"github.com/werf/common-go/pkg/secrets_manager"
 	"github.com/werf/logboek"
-	"github.com/werf/nelm/pkg/secrets_manager"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
-	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers/secrets"
 )
 
 // NOTE: maybe in the future we will need a support for the werf project to be used as a chart.

@@ -8,8 +8,8 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/pkg/path_matcher"
-	"github.com/werf/werf/v2/pkg/util"
 )
 
 func NewConfig(ctx context.Context, fileReader fileReader, configRelPath string) (c Config, err error) {

@@ -8,13 +8,13 @@ import (
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/lockgate/pkg/distributed_locker"
 	"github.com/werf/lockgate/pkg/distributed_locker/optimistic_locking_store"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/kubeutils"
 	"github.com/werf/werf/v2/pkg/storage/synchronization/server"
-	"github.com/werf/werf/v2/pkg/util"
 )
 
 var cmdData struct {

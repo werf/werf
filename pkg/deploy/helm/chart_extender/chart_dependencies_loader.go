@@ -20,11 +20,11 @@ import (
 	"github.com/werf/3p-helm/pkg/cli"
 	"github.com/werf/3p-helm/pkg/provenance"
 	"github.com/werf/3p-helm/pkg/registry"
+	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/types"
 	"github.com/werf/werf/v2/pkg/deploy/helm/command_helpers"
-	"github.com/werf/werf/v2/pkg/util"
 	"github.com/werf/werf/v2/pkg/werf"
 )
 

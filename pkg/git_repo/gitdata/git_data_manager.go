@@ -11,10 +11,10 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/lockgate"
 	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/true_git"
-	"github.com/werf/werf/v2/pkg/util"
 	"github.com/werf/werf/v2/pkg/werf"
 )
 

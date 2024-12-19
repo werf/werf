@@ -23,15 +23,15 @@ import (
 	"github.com/werf/3p-helm/pkg/postrender"
 	"github.com/werf/3p-helm/pkg/registry"
 	"github.com/werf/3p-helm/pkg/werf/file"
+	secrets2 "github.com/werf/common-go/pkg/secrets"
+	"github.com/werf/common-go/pkg/secrets_manager"
+	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
-	"github.com/werf/nelm/pkg/secrets_manager"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/deploy/helm"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
-	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers/secrets"
 	"github.com/werf/werf/v2/pkg/deploy/helm/command_helpers"
-	"github.com/werf/werf/v2/pkg/util"
 )
 
 type WerfChartOptions struct {
@@ -103,7 +103,7 @@ type WerfChart struct {
 	extraAnnotationsAndLabelsPostRenderer *helm.ExtraAnnotationsAndLabelsPostRenderer
 	werfConfig                            *config.WerfConfig
 
-	*secrets.SecretsRuntimeData
+	*secrets2.SecretsRuntimeData
 	*helpers.ChartExtenderServiceValuesData
 	*helpers.ChartExtenderContextData
 	*helpers.ChartExtenderValuesMerger
@@ -112,7 +112,7 @@ type WerfChart struct {
 // ChartCreated method for the chart.Extender interface
 func (wc *WerfChart) ChartCreated(c *chart.Chart) error {
 	wc.HelmChart = c
-	wc.SecretsRuntimeData = secrets.NewSecretsRuntimeData()
+	wc.SecretsRuntimeData = secrets2.NewSecretsRuntimeData()
 	return nil
 }
 
@@ -123,7 +123,7 @@ func (wc *WerfChart) ChartLoaded(files []*chart.ChartExtenderBufferedFile) error
 			logboek.Context(wc.ChartExtenderContext).Info().LogF("Disable default werf chart secret values\n")
 		}
 
-		if err := wc.SecretsRuntimeData.DecodeAndLoadSecrets(wc.ChartExtenderContext, files, wc.ChartDir, wc.ProjectDir, wc.SecretsManager, secrets.DecodeAndLoadSecretsOptions{
+		if err := wc.SecretsRuntimeData.DecodeAndLoadSecrets(wc.ChartExtenderContext, files, wc.ChartDir, wc.ProjectDir, wc.SecretsManager, secrets2.DecodeAndLoadSecretsOptions{
 			ChartFileReader:            wc.ChartFileReader,
 			CustomSecretValueFiles:     wc.SecretValueFiles,
 			WithoutDefaultSecretValues: wc.DisableDefaultSecretValues,
@@ -193,7 +193,7 @@ func (wc *WerfChart) MakeBundleValues(
 
 func (wc *WerfChart) MakeBundleSecretValues(
 	ctx context.Context,
-	secretsRuntimeData *secrets.SecretsRuntimeData,
+	secretsRuntimeData *secrets2.SecretsRuntimeData,
 ) (map[string]interface{}, error) {
 	if helpers.DebugSecretValues() {
 		helpers.DebugPrintValues(wc.ChartExtenderContext, "secret", wc.SecretsRuntimeData.DecryptedSecretValues)
@@ -374,7 +374,7 @@ func (wc *WerfChart) CreateNewBundle(
 
 	chartDirAbs := filepath.Join(wc.ProjectDir, wc.ChartDir)
 
-	ignoreChartValuesFiles := []string{secrets.DefaultSecretValuesFileName}
+	ignoreChartValuesFiles := []string{secrets2.DefaultSecretValuesFileName}
 
 	// Do not publish into the bundle no custom values nor custom secret values.
 	// Final bundle values and secret values will be preconstructed, merged and

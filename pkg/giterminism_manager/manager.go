@@ -3,13 +3,13 @@ package giterminism_manager
 import (
 	"context"
 
+	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/giterminism_manager/config"
 	"github.com/werf/werf/v2/pkg/giterminism_manager/errors"
 	"github.com/werf/werf/v2/pkg/giterminism_manager/file_reader"
 	"github.com/werf/werf/v2/pkg/giterminism_manager/inspector"
-	"github.com/werf/werf/v2/pkg/util"
 )
 
 type NewManagerOptions struct {

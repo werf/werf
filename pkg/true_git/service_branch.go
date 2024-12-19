@@ -11,7 +11,7 @@ import (
 
 	"github.com/Masterminds/semver"
 
-	"github.com/werf/werf/v2/pkg/util"
+	"github.com/werf/common-go/pkg/util"
 )
 
 type SyncSourceWorktreeWithServiceBranchOptions struct {

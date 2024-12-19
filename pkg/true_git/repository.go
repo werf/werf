@@ -17,7 +17,7 @@ import (
 	"github.com/go-git/go-git/v5/storage/filesystem/dotgit"
 	"github.com/go-git/go-git/v5/utils/ioutil"
 
-	"github.com/werf/werf/v2/pkg/util"
+	"github.com/werf/common-go/pkg/util"
 )
 
 func GitOpenWithCustomWorktreeDir(gitDir, worktreeDir string) (*git.Repository, error) {

@@ -10,8 +10,8 @@ import (
 
 	chart "github.com/werf/3p-helm-for-werf-helm/pkg/chart"
 	chartutil "github.com/werf/3p-helm-for-werf-helm/pkg/chartutil"
+	"github.com/werf/common-go/pkg/util"
 	secret "github.com/werf/nelm-for-werf-helm/pkg/secret"
-	"github.com/werf/werf/v2/pkg/util"
 )
 
 const (

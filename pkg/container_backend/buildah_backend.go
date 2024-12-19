@@ -20,6 +20,7 @@ import (
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
 	"github.com/opencontainers/runtime-spec/specs-go"
 
+	"github.com/werf/common-go/pkg/util"
 	copyrec "github.com/werf/copy-recurse"
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/level"
@@ -27,7 +28,6 @@ import (
 	"github.com/werf/werf/v2/pkg/buildah/thirdparty"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/path_matcher"
-	"github.com/werf/werf/v2/pkg/util"
 )
 
 type BuildahBackend struct {

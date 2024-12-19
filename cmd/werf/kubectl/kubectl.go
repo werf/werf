@@ -13,9 +13,9 @@ import (
 	"k8s.io/kubectl/pkg/cmd/plugin"
 	"k8s.io/kubectl/pkg/cmd/util"
 
+	util2 "github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/tmp_manager"
-	util2 "github.com/werf/werf/v2/pkg/util"
 	"github.com/werf/werf/v2/pkg/werf"
 )
 

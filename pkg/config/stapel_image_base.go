@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
-	"github.com/werf/werf/v2/pkg/util"
 	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
 

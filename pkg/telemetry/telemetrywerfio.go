@@ -16,7 +16,7 @@ import (
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/werf/werf/v2/pkg/util"
+	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/pkg/werf"
 )
 
