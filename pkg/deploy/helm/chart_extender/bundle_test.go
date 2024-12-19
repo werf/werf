@@ -10,7 +10,7 @@ import (
 
 	helm_v3 "github.com/werf/3p-helm/cmd/helm"
 	"github.com/werf/3p-helm/pkg/chart"
-	"github.com/werf/nelm/pkg/secrets_manager"
+	"github.com/werf/common-go/pkg/secrets_manager"
 )
 
 var _ = Describe("Bundle", func() {

@@ -4,11 +4,11 @@ import (
 	"context"
 	"strings"
 
+	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/pkg/build/stage"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/container_backend/stage_builder"
 	"github.com/werf/werf/v2/pkg/dockerfile"
-	"github.com/werf/werf/v2/pkg/util"
 )
 
 func NewDockerfileStageInstructionWithDependencyStages[T dockerfile.InstructionDataInterface](data T, dependencyStages []string) *dockerfile.DockerfileStageInstruction[T] {

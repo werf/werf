@@ -10,9 +10,9 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/lockgate/pkg/distributed_locker"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/util"
 )
 
 var DefaultAddress = "https://synchronization.werf.io"

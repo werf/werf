@@ -16,9 +16,9 @@ import (
 	"golang.org/x/crypto/ssh/agent"
 	"golang.org/x/crypto/ssh/terminal"
 
+	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	secret_common "github.com/werf/werf/v2/cmd/werf/helm/secret/common"
-	"github.com/werf/werf/v2/pkg/util"
 	"github.com/werf/werf/v2/pkg/werf"
 )
 

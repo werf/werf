@@ -7,9 +7,9 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/kubedog/pkg/utils"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
-	"github.com/werf/werf/v2/pkg/util"
 )
 
 type Secret interface {

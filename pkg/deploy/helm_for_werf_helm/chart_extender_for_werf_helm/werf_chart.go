@@ -25,6 +25,7 @@ import (
 	registry "github.com/werf/3p-helm-for-werf-helm/pkg/registry"
 	chart_new "github.com/werf/3p-helm/pkg/chart"
 	cli_new "github.com/werf/3p-helm/pkg/cli"
+	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	secrets_manager "github.com/werf/nelm-for-werf-helm/pkg/secrets_manager"
 	"github.com/werf/werf/v2/cmd/werf/common"
@@ -34,7 +35,6 @@ import (
 	secrets "github.com/werf/werf/v2/pkg/deploy/helm_for_werf_helm/chart_extender_for_werf_helm/helpers_for_werf_helm/secrets_for_werf_helm"
 	command_helpers "github.com/werf/werf/v2/pkg/deploy/helm_for_werf_helm/command_helpers_for_werf_helm"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
-	"github.com/werf/werf/v2/pkg/util"
 )
 
 type WerfChartOptions struct {

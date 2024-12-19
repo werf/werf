@@ -11,10 +11,10 @@ import (
 	"oras.land/oras-go/pkg/auth"
 	"oras.land/oras-go/pkg/auth/docker"
 
+	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	secret_common "github.com/werf/werf/v2/cmd/werf/helm/secret/common"
-	"github.com/werf/werf/v2/pkg/util"
 	"github.com/werf/werf/v2/pkg/werf"
 	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )

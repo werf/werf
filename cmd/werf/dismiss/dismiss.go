@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/cobra"
 
 	helmrelease "github.com/werf/3p-helm/pkg/release"
+	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
 	"github.com/werf/nelm/pkg/action"
@@ -18,7 +19,6 @@ import (
 	"github.com/werf/werf/v2/pkg/config/deploy_params"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
 	"github.com/werf/werf/v2/pkg/true_git"
-	"github.com/werf/werf/v2/pkg/util"
 	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
 

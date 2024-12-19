@@ -1,6 +1,6 @@
 package status
 
-import "github.com/werf/werf/v2/pkg/util"
+import "github.com/werf/common-go/pkg/util"
 
 type Result struct {
 	Index             Index

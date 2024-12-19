@@ -5,9 +5,9 @@ import (
 
 	. "github.com/onsi/gomega"
 
+	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend/stage_builder"
-	"github.com/werf/werf/v2/pkg/util"
 )
 
 type TestDependencies struct {

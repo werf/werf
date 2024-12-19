@@ -7,8 +7,8 @@ import (
 	. "github.com/onsi/gomega"
 	"sigs.k8s.io/yaml"
 
+	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/kubedog/pkg/kube"
-	"github.com/werf/werf/v2/pkg/util"
 	"github.com/werf/werf/v2/test/pkg/utils"
 	"github.com/werf/werf/v2/test/pkg/utils/liveexec"
 )

@@ -9,6 +9,7 @@ import (
 	"sort"
 	"sync"
 
+	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/types"
 	"github.com/werf/werf/v2/pkg/build/stage"
@@ -16,7 +17,6 @@ import (
 	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
 	"github.com/werf/werf/v2/pkg/logging"
-	"github.com/werf/werf/v2/pkg/util"
 )
 
 type ImagesTree struct {

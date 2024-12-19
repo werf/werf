@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/werf/3p-helm/pkg/chartutil"
-	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers/secrets"
+	"github.com/werf/common-go/pkg/secrets"
 )
 
 type ChartExtenderValuesMerger struct{}

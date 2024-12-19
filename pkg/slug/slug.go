@@ -7,7 +7,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/util/validation"
 
-	"github.com/werf/werf/v2/pkg/util"
+	"github.com/werf/common-go/pkg/util"
 )
 
 const slugSeparator = "-"
