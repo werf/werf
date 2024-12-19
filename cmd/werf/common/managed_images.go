@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/storage"
-	"github.com/werf/werf/v2/pkg/util"
 )
 
 func GetManagedImageName(userSpecifiedImageName string) string {

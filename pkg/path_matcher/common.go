@@ -6,7 +6,7 @@ import (
 
 	"github.com/bmatcuk/doublestar"
 
-	"github.com/werf/werf/v2/pkg/util"
+	"github.com/werf/common-go/pkg/util"
 )
 
 func matchGlobs(pathPart string, globs []string) (inProgressGlobs, matchedGlobs []string) {

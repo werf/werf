@@ -9,11 +9,11 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/runconfig/opts"
 
+	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/stapel"
-	"github.com/werf/werf/v2/pkg/util"
 )
 
 type LegacyStageImageContainer struct {

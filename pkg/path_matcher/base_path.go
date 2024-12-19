@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/werf/werf/v2/pkg/util"
+	"github.com/werf/common-go/pkg/util"
 )
 
 func newBasePathMatcher(basePath string, matcher PathMatcher) basePathMatcher {

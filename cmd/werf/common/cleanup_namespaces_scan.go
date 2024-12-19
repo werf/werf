@@ -5,9 +5,9 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/util"
 )
 
 func SetupScanContextNamespaceOnly(cmdData *CmdData, cmd *cobra.Command) {

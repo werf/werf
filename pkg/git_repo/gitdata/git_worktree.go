@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/werf/common-go/pkg/util/timestamps"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/util/timestamps"
 	"github.com/werf/werf/v2/pkg/volumeutils"
 )
 

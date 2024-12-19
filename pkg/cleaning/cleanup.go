@@ -11,6 +11,7 @@ import (
 	"github.com/gookit/color"
 	"github.com/rodaine/table"
 
+	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/cleaning/allow_list"
@@ -22,7 +23,6 @@ import (
 	"github.com/werf/werf/v2/pkg/logging"
 	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/storage/manager"
-	"github.com/werf/werf/v2/pkg/util"
 )
 
 type CleanupOptions struct {

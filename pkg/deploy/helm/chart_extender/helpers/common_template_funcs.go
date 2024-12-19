@@ -6,7 +6,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers/secrets"
+	"github.com/werf/common-go/pkg/secrets"
 )
 
 func SetupIncludeWrapperFuncs(funcMap template.FuncMap) {

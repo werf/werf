@@ -7,8 +7,8 @@ import (
 	"io"
 	"os/exec"
 
+	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/util"
 )
 
 func NewGitCmd(ctx context.Context, opts *GitCmdOptions, cliArgs ...string) GitCmd {

@@ -9,9 +9,9 @@ import (
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
 
+	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/pkg/container_backend/thirdparty/platformutil"
 	"github.com/werf/werf/v2/pkg/dockerfile"
-	"github.com/werf/werf/v2/pkg/util"
 )
 
 func ParseDockerfileWithBuildkit(dockerfileID string, dockerfileBytes []byte, werfImageName string, opts dockerfile.DockerfileOptions) (*dockerfile.Dockerfile, error) {

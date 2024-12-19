@@ -10,8 +10,8 @@ import (
 
 	"github.com/Masterminds/semver"
 
+	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/util"
 )
 
 const lastMultiwerfVersion = "1.5.0"

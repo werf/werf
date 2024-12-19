@@ -8,11 +8,11 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/types"
 	"github.com/werf/werf/v2/pkg/giterminism_manager/errors"
 	"github.com/werf/werf/v2/pkg/path_matcher"
-	"github.com/werf/werf/v2/pkg/util"
 )
 
 func (r FileReader) projectRelativePathToAbsolutePath(relPath string) string {

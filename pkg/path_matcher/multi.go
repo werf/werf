@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/werf/werf/v2/pkg/util"
+	"github.com/werf/common-go/pkg/util"
 )
 
 func NewMultiPathMatcher(matchers ...PathMatcher) PathMatcher {

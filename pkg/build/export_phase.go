@@ -7,13 +7,13 @@ import (
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"k8s.io/utils/strings/slices"
 
+	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
 	build_image "github.com/werf/werf/v2/pkg/build/image"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/storage"
-	"github.com/werf/werf/v2/pkg/util"
 	"github.com/werf/werf/v2/pkg/util/parallel"
 )
 

@@ -12,11 +12,11 @@ import (
 
 	"github.com/go-git/go-git/v5/plumbing/filemode"
 
+	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/git_repo/repo_handle"
 	"github.com/werf/werf/v2/pkg/path_matcher"
 	"github.com/werf/werf/v2/pkg/true_git/ls_tree"
-	"github.com/werf/werf/v2/pkg/util"
 )
 
 type ArchiveOptions struct {
