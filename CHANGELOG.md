@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.17.1](https://www.github.com/werf/werf/compare/v2.17.0...v2.17.1) (2024-12-19)
+
+
+### Bug Fixes
+
+* **test:** add giterminism for plain secret value ([74f081f](https://www.github.com/werf/werf/commit/74f081f635d107caffc191a50c171c59785e23a6))
+
 ## [2.17.0](https://www.github.com/werf/werf/compare/v2.16.3...v2.17.0) (2024-12-18)
 
 
