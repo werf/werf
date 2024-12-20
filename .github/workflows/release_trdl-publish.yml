@@ -102,14 +102,14 @@ jobs:
         env:
           DOCKER_BUILDKIT: 1
 
-  notify:
-    if: always()
-    needs:
-      - publish
-      - deploy_channels_cm_prod
-      - publish_werf_images
-    uses: werf/common-ci/.github/workflows/notification.yml@main
-    secrets:
-      loopNotificationGroup: ${{ secrets.LOOP_NOTIFICATION_GROUP }}
-      webhook: ${{ secrets.LOOP_NOTIFICATION_WEBHOOK }}
-      notificationChannel: ${{ secrets.LOOP_NOTIFICATION_CHANNEL }}
+  # notify:
+  #   if: always()
+  #   needs:
+  #     - publish
+  #     - deploy_channels_cm_prod
+  #     - publish_werf_images
+  #   uses: werf/common-ci/.github/workflows/notification.yml@main
+  #   secrets:
+  #     loopNotificationGroup: ${{ secrets.LOOP_NOTIFICATION_GROUP }}
+  #     webhook: ${{ secrets.LOOP_NOTIFICATION_WEBHOOK }}
+  #     notificationChannel: ${{ secrets.LOOP_NOTIFICATION_CHANNEL }}
