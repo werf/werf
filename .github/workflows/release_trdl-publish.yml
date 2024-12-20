@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Publish
-        uses: werf/trdl-vault-actions/publish@main
+        uses: werf/trdl-vault-actions/publish@feat/relase/backoff-and-notification
         with:
           vault-addr: ${{ secrets.TRDL_VAULT_ADDR }}
           project-name: werf
