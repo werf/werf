@@ -26,6 +26,7 @@ jobs:
           vault-auth-method: approle
           vault-role-id: ${{ secrets.TRDL_VAULT_ROLE_ID }}
           vault-secret-id: ${{ secrets.TRDL_VAULT_SECRET_ID }}
+          retry: true
 
   deploy_channels_cm_prod:
     name: Deploy trdl_channels.yaml to production
