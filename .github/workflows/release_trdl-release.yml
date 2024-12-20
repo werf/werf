@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Release
-        uses: werf/trdl-vault-actions/release@main
+        uses: werf/trdl-vault-actions/release@feat/relase/backoff-and-notification
         with:
           vault-addr: ${{ secrets.TRDL_VAULT_ADDR }}
           project-name: werf
@@ -21,6 +21,7 @@ jobs:
           vault-auth-method: approle
           vault-role-id: ${{ secrets.TRDL_VAULT_ROLE_ID }}
           vault-secret-id: ${{ secrets.TRDL_VAULT_SECRET_ID }}
+          retry: true
 
   notify:
     if: always()

@@ -19,13 +19,14 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Publish
-        uses: werf/trdl-vault-actions/publish@main
+        uses: werf/trdl-vault-actions/publish@feat/relase/backoff-and-notification
         with:
           vault-addr: ${{ secrets.TRDL_VAULT_ADDR }}
           project-name: werf
           vault-auth-method: approle
           vault-role-id: ${{ secrets.TRDL_VAULT_ROLE_ID }}
           vault-secret-id: ${{ secrets.TRDL_VAULT_SECRET_ID }}
+          retry: true
 
   deploy_channels_cm_prod:
     name: Deploy trdl_channels.yaml to production
@@ -101,14 +102,14 @@ jobs:
         env:
           DOCKER_BUILDKIT: 1
 
-  notify:
-    if: always()
-    needs:
-      - publish
-      - deploy_channels_cm_prod
-      - publish_werf_images
-    uses: werf/common-ci/.github/workflows/notification.yml@main
-    secrets:
-      loopNotificationGroup: ${{ secrets.LOOP_NOTIFICATION_GROUP }}
-      webhook: ${{ secrets.LOOP_NOTIFICATION_WEBHOOK }}
-      notificationChannel: ${{ secrets.LOOP_NOTIFICATION_CHANNEL }}
+  # notify:
+  #   if: always()
+  #   needs:
+  #     - publish
+  #     - deploy_channels_cm_prod
+  #     - publish_werf_images
+  #   uses: werf/common-ci/.github/workflows/notification.yml@main
+  #   secrets:
+  #     loopNotificationGroup: ${{ secrets.LOOP_NOTIFICATION_GROUP }}
+  #     webhook: ${{ secrets.LOOP_NOTIFICATION_WEBHOOK }}
+  #     notificationChannel: ${{ secrets.LOOP_NOTIFICATION_CHANNEL }}
