@@ -968,7 +968,6 @@ func (storage *RepoStagesStorage) GetSyncServerRecords(ctx context.Context, proj
 func (storage *RepoStagesStorage) PostSyncServerRecord(ctx context.Context, projectName string, rec *SyncServerRecord) error {
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PostSyncServer %s for project %s\n", rec.Server, projectName)
 
-	//server := strings.ReplaceAll(rec.Server, ":", "_")
 	fullImageName := fmt.Sprintf(RepoSyncServerRecord_ImageNameFormat, storage.RepoAddress)
 
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PostSyncServer full image name: %s\n", fullImageName)
@@ -978,7 +977,8 @@ func (storage *RepoStagesStorage) PostSyncServerRecord(ctx context.Context, proj
 			image.WerfLabel:                     projectName,
 			RepoSyncServerRecord_LabelAddress:   rec.Server,
 			RepoSyncServerRecord_LabelTimestamp: fmt.Sprint(rec.TimestampMillisec),
-		}}
+		},
+	}
 
 	if err := storage.DockerRegistry.PushImage(ctx, fullImageName, opts); err != nil {
 		return fmt.Errorf("unable to push image %s: %w", fullImageName, err)
