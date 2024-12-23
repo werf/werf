@@ -18,7 +18,27 @@ jobs:
     name: Publish release channels using trdl server
     runs-on: ubuntu-22.04
     steps:
-      - name: Publish
+      - name: Publish without retry
+        id: publish
+        uses: werf/trdl-vault-actions/publish@feat/relase/backoff-and-notification
+        with:
+          vault-addr: ${{ secrets.TRDL_VAULT_ADDR }}
+          project-name: werf
+          vault-auth-method: approle
+          vault-role-id: ${{ secrets.TRDL_VAULT_ROLE_ID }}
+          vault-secret-id: ${{ secrets.TRDL_VAULT_SECRET_ID }}
+
+      - name: notify
+        if: always()
+        uses: mattermost/action-mattermost-notify@master
+        with:
+          MATTERMOST_WEBHOOK_URL: ${{ secrets.webhook }}
+          MATTERMOST_CHANNEL: ${{ secrets.notificationChannel }}
+          TEXT: |
+            ${{ secrets.loopNotificationGroup }} task sign pls
+
+      - name: Publish with retry
+        if: ${{ steps.buildStep.outcome == 'failure' }}
         uses: werf/trdl-vault-actions/publish@feat/relase/backoff-and-notification
         with:
           vault-addr: ${{ secrets.TRDL_VAULT_ADDR }}
