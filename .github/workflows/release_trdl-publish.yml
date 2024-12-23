@@ -38,7 +38,7 @@ jobs:
             ${{ secrets.LOOP_NOTIFICATION_GROUP }} task sign pls
 
       - name: Publish with retry
-        if: ${{ steps.buildStep.outcome == 'failure' }}
+        if: ${{ steps.publish.outcome == 'failure' }}
         uses: werf/trdl-vault-actions/publish@feat/relase/backoff-and-notification
         with:
           vault-addr: ${{ secrets.TRDL_VAULT_ADDR }}
