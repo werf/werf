@@ -3,9 +3,9 @@ package docker
 import (
 	"context"
 
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/system"
 )
 
-func Info(ctx context.Context) (types.Info, error) {
+func Info(ctx context.Context) (system.Info, error) {
 	return apiCli(ctx).Info(ctx)
 }

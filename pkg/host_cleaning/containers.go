@@ -6,6 +6,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 
+	docker_container "github.com/docker/docker/api/types/container"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/image"
@@ -30,7 +31,7 @@ func werfContainersByFilterSet(ctx context.Context, filterSet filters.Args) ([]t
 }
 
 func containersByFilterSet(ctx context.Context, filterSet filters.Args) ([]types.Container, error) {
-	containersOptions := types.ContainerListOptions{}
+	containersOptions := docker_container.ListOptions{}
 	containersOptions.All = true
 	containersOptions.Filters = filterSet
 
@@ -43,7 +44,7 @@ func containersRemove(ctx context.Context, containers []types.Container, options
 			logboek.Context(ctx).LogLn(logContainerName(container))
 			logboek.Context(ctx).LogOptionalLn()
 		} else {
-			if err := docker.ContainerRemove(ctx, container.ID, types.ContainerRemoveOptions{Force: options.RmForce}); err != nil {
+			if err := docker.ContainerRemove(ctx, container.ID, docker_container.RemoveOptions{Force: options.RmForce}); err != nil {
 				return err
 			}
 		}

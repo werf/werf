@@ -15,6 +15,7 @@ import (
 	"github.com/docker/docker/api/types/filters"
 	"github.com/dustin/go-humanize"
 
+	docker_image "github.com/docker/docker/api/types/image"
 	"github.com/werf/kubedog/pkg/utils"
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
@@ -107,14 +108,14 @@ func GetLocalDockerServerStorageCheck(ctx context.Context, dockerServerStoragePa
 	}
 	res.VolumeUsage = vu
 
-	var images []types.ImageSummary
+	var images []docker_image.Summary
 
 	{
 		filterSet := filters.NewArgs()
 		filterSet.Add("label", image.WerfLabel)
 		filterSet.Add("label", image.WerfStageDigestLabel)
 
-		imgs, err := docker.Images(ctx, types.ImageListOptions{Filters: filterSet})
+		imgs, err := docker.Images(ctx, docker_image.ListOptions{Filters: filterSet})
 		if err != nil {
 			return nil, fmt.Errorf("unable to get werf docker images: %w", err)
 		}
@@ -141,7 +142,7 @@ func GetLocalDockerServerStorageCheck(ctx context.Context, dockerServerStoragePa
 		filterSet.Add("label", image.WerfLabel)
 		filterSet.Add("label", "werf-stage-signature") // v1.1 legacy images
 
-		imgs, err := docker.Images(ctx, types.ImageListOptions{Filters: filterSet})
+		imgs, err := docker.Images(ctx, docker_image.ListOptions{Filters: filterSet})
 		if err != nil {
 			return nil, fmt.Errorf("unable to get werf v1.1 legacy docker images: %w", err)
 		}
@@ -184,7 +185,7 @@ func GetLocalDockerServerStorageCheck(ctx context.Context, dockerServerStoragePa
 			filterSet.Add("reference", "werf-images-metadata-by-commit/*")
 			filterSet.Add("reference", "werf-import-metadata/*")
 
-			imgs, err := docker.Images(ctx, types.ImageListOptions{Filters: filterSet})
+			imgs, err := docker.Images(ctx, docker_image.ListOptions{Filters: filterSet})
 			if err != nil {
 				return nil, fmt.Errorf("unable to get werf service images: %w", err)
 			}
@@ -467,7 +468,7 @@ func removeImage(ctx context.Context, ref string, force, dryRun bool) error {
 }
 
 type LocalImageDesc struct {
-	ImageSummary types.ImageSummary
+	ImageSummary docker_image.Summary
 	LastUsedAt   time.Time
 }
 
@@ -485,7 +486,7 @@ func safeDanglingImagesCleanup(ctx context.Context, options CommonOptions) error
 		return err
 	}
 
-	var imagesToRemove []types.ImageSummary
+	var imagesToRemove []docker_image.Summary
 	for _, img := range images {
 		imagesToRemove = append(imagesToRemove, img)
 	}

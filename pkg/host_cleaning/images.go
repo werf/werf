@@ -10,6 +10,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 
+	docker_image "github.com/docker/docker/api/types/image"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/docker"
 )
@@ -32,7 +33,7 @@ func werfImagesFlushByFilterSet(ctx context.Context, filterSet filters.Args, opt
 	return nil
 }
 
-func trueDanglingImages(ctx context.Context) ([]types.ImageSummary, error) {
+func trueDanglingImages(ctx context.Context) ([]docker_image.Summary, error) {
 	filterSet := filters.NewArgs()
 	filterSet.Add("dangling", "true")
 	danglingImageList, err := imagesByFilterSet(ctx, filterSet)
@@ -40,7 +41,7 @@ func trueDanglingImages(ctx context.Context) ([]types.ImageSummary, error) {
 		return nil, err
 	}
 
-	var trueDanglingImageList []types.ImageSummary
+	var trueDanglingImageList []docker_image.Summary
 	for _, image := range danglingImageList {
 		if len(image.RepoTags) == 0 && len(image.RepoDigests) == 0 {
 			trueDanglingImageList = append(trueDanglingImageList, image)
@@ -50,12 +51,12 @@ func trueDanglingImages(ctx context.Context) ([]types.ImageSummary, error) {
 	return trueDanglingImageList, nil
 }
 
-func imagesByFilterSet(ctx context.Context, filterSet filters.Args) ([]types.ImageSummary, error) {
-	options := types.ImageListOptions{Filters: filterSet}
+func imagesByFilterSet(ctx context.Context, filterSet filters.Args) ([]docker_image.Summary, error) {
+	options := docker_image.ListOptions{Filters: filterSet}
 	return docker.Images(ctx, options)
 }
 
-func processUsedImages(ctx context.Context, images []types.ImageSummary, options CommonOptions) ([]types.ImageSummary, error) {
+func processUsedImages(ctx context.Context, images []docker_image.Summary, options CommonOptions) ([]docker_image.Summary, error) {
 	filterSet := filters.NewArgs()
 	for _, img := range images {
 		filterSet.Add("ancestor", img.ID)
@@ -66,7 +67,7 @@ func processUsedImages(ctx context.Context, images []types.ImageSummary, options
 		return nil, err
 	}
 
-	var imagesToExclude []types.ImageSummary
+	var imagesToExclude []docker_image.Summary
 	var containersToRemove []types.Container
 	for _, container := range containers {
 		for _, img := range images {
@@ -102,8 +103,8 @@ func processUsedImages(ctx context.Context, images []types.ImageSummary, options
 	return images, nil
 }
 
-func exceptImage(images []types.ImageSummary, imageToExclude types.ImageSummary) []types.ImageSummary {
-	var newImages []types.ImageSummary
+func exceptImage(images []docker_image.Summary, imageToExclude docker_image.Summary) []docker_image.Summary {
+	var newImages []docker_image.Summary
 	for _, img := range images {
 		if !reflect.DeepEqual(imageToExclude, img) {
 			newImages = append(newImages, img)
@@ -113,7 +114,7 @@ func exceptImage(images []types.ImageSummary, imageToExclude types.ImageSummary)
 	return newImages
 }
 
-func imagesRemove(ctx context.Context, images []types.ImageSummary, options CommonOptions) error {
+func imagesRemove(ctx context.Context, images []docker_image.Summary, options CommonOptions) error {
 	var imageReferences []string
 
 	for _, img := range images {

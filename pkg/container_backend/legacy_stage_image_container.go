@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/runconfig/opts"
 
+	docker_container "github.com/docker/docker/api/types/container"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/docker"
@@ -346,7 +346,7 @@ func (c *LegacyStageImageContainer) commit(ctx context.Context) (string, error) 
 		return "", err
 	}
 
-	commitOptions := types.ContainerCommitOptions{Changes: commitChanges}
+	commitOptions := docker_container.CommitOptions{Changes: commitChanges}
 	id, err := docker.ContainerCommit(ctx, c.name, commitOptions)
 	if err != nil {
 		return "", err
@@ -358,7 +358,7 @@ func (c *LegacyStageImageContainer) commit(ctx context.Context) (string, error) 
 func (c *LegacyStageImageContainer) rm(ctx context.Context) error {
 	_ = c.image.ContainerBackend.(*DockerServerBackend)
 
-	err := docker.ContainerRemove(ctx, c.name, types.ContainerRemoveOptions{RemoveVolumes: true, Force: true})
+	err := docker.ContainerRemove(ctx, c.name, docker_container.RemoveOptions{RemoveVolumes: true, Force: true})
 	if err != nil {
 		if strings.Contains(err.Error(), fmt.Sprintf("removal of container %s is already in progress", c.name)) {
 			return nil

@@ -6,11 +6,12 @@ import (
 	"github.com/docker/cli/cli/command"
 	"github.com/docker/cli/cli/command/container"
 	"github.com/docker/docker/api/types"
+	docker_container "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"golang.org/x/net/context"
 )
 
-func Containers(ctx context.Context, options types.ContainerListOptions) ([]types.Container, error) {
+func Containers(ctx context.Context, options docker_container.ListOptions) ([]types.Container, error) {
 	return apiCli(ctx).ContainerList(ctx, options)
 }
 
@@ -24,7 +25,7 @@ func ContainerExist(ctx context.Context, ref string) (bool, error) {
 	return true, nil
 }
 
-func ContainerAttach(ctx context.Context, ref string, options types.ContainerAttachOptions) (types.HijackedResponse, error) {
+func ContainerAttach(ctx context.Context, ref string, options docker_container.AttachOptions) (types.HijackedResponse, error) {
 	return apiCli(ctx).ContainerAttach(ctx, ref, options)
 }
 
@@ -32,7 +33,7 @@ func ContainerInspect(ctx context.Context, ref string) (types.ContainerJSON, err
 	return apiCli(ctx).ContainerInspect(ctx, ref)
 }
 
-func ContainerCommit(ctx context.Context, ref string, commitOptions types.ContainerCommitOptions) (string, error) {
+func ContainerCommit(ctx context.Context, ref string, commitOptions docker_container.CommitOptions) (string, error) {
 	response, err := apiCli(ctx).ContainerCommit(ctx, ref, commitOptions)
 	if err != nil {
 		return "", err
@@ -41,7 +42,7 @@ func ContainerCommit(ctx context.Context, ref string, commitOptions types.Contai
 	return response.ID, nil
 }
 
-func ContainerRemove(ctx context.Context, ref string, options types.ContainerRemoveOptions) error {
+func ContainerRemove(ctx context.Context, ref string, options docker_container.RemoveOptions) error {
 	return apiCli(ctx).ContainerRemove(ctx, ref, options)
 }
 

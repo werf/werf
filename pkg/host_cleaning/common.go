@@ -1,6 +1,9 @@
 package host_cleaning
 
-import "github.com/docker/docker/api/types"
+import (
+	"github.com/docker/docker/api/types"
+	docker_image "github.com/docker/docker/api/types/image"
+)
 
 type CommonOptions struct {
 	RmForce                       bool
@@ -10,7 +13,7 @@ type CommonOptions struct {
 	DryRun                        bool
 }
 
-func logImageName(image types.ImageSummary) string {
+func logImageName(image docker_image.Summary) string {
 	name := image.ID
 	if len(image.RepoTags) != 0 {
 		name = image.RepoTags[0]

@@ -38,7 +38,7 @@ func init() {
 }
 
 func initCli() error {
-	cliOpts := []command.DockerCliOption{
+	cliOpts := []command.CLIOption{
 		command.WithContentTrust(false),
 		command.WithOutputStream(GinkgoWriter),
 		command.WithErrorStream(GinkgoWriter),

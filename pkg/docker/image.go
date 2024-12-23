@@ -16,6 +16,7 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 
+	docker_image "github.com/docker/docker/api/types/image"
 	"github.com/werf/logboek"
 )
 
@@ -24,7 +25,7 @@ type CreateImageOptions struct {
 }
 
 func CreateImage(ctx context.Context, ref string, opts CreateImageOptions) error {
-	var importOpts types.ImageImportOptions
+	var importOpts docker_image.ImportOptions
 	if len(opts.Labels) > 0 {
 		changeOption := "LABEL"
 		for _, label := range opts.Labels {
@@ -32,11 +33,11 @@ func CreateImage(ctx context.Context, ref string, opts CreateImageOptions) error
 		}
 		importOpts.Changes = append(importOpts.Changes, changeOption)
 	}
-	_, err := apiCli(ctx).ImageImport(ctx, types.ImageImportSource{SourceName: "-"}, ref, importOpts)
+	_, err := apiCli(ctx).ImageImport(ctx, docker_image.ImportSource{SourceName: "-"}, ref, importOpts)
 	return err
 }
 
-func Images(ctx context.Context, options types.ImageListOptions) ([]types.ImageSummary, error) {
+func Images(ctx context.Context, options docker_image.ListOptions) ([]docker_image.Summary, error) {
 	images, err := apiCli(ctx).ImageList(ctx, options)
 	if err != nil {
 		return nil, err
@@ -223,7 +224,7 @@ func CliBuild_LiveOutputWithCustomIn(ctx context.Context, rc io.ReadCloser, args
 		}
 	}
 
-	return cliWithCustomOptions(ctx, []command.DockerCliOption{
+	return cliWithCustomOptions(ctx, []command.CLIOption{
 		func(cli *command.DockerCli) error {
 			cli.SetIn(streams.NewIn(rc))
 			return nil

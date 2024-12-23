@@ -11,6 +11,8 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/google/uuid"
 
+	docker_container "github.com/docker/docker/api/types/container"
+	docker_image "github.com/docker/docker/api/types/image"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/docker"
@@ -244,7 +246,7 @@ func (backend *DockerServerBackend) Rmi(ctx context.Context, ref string, opts Rm
 }
 
 func (backend *DockerServerBackend) Rm(ctx context.Context, ref string, opts RmOpts) error {
-	return docker.ContainerRemove(ctx, ref, types.ContainerRemoveOptions{Force: opts.Force})
+	return docker.ContainerRemove(ctx, ref, docker_container.RemoveOptions{Force: opts.Force})
 }
 
 func (backend *DockerServerBackend) PushImage(ctx context.Context, img LegacyImageInterface) error {
@@ -296,7 +298,7 @@ func (backend *DockerServerBackend) Images(ctx context.Context, opts ImagesOptio
 	for _, item := range opts.Filters {
 		filterSet.Add(item.First, item.Second)
 	}
-	images, err := docker.Images(ctx, types.ImageListOptions{Filters: filterSet})
+	images, err := docker.Images(ctx, docker_image.ListOptions{Filters: filterSet})
 	if err != nil {
 		return nil, fmt.Errorf("unable to get docker images: %w", err)
 	}
@@ -324,7 +326,7 @@ func (backend *DockerServerBackend) Containers(ctx context.Context, opts Contain
 		}
 	}
 
-	containersOptions := types.ContainerListOptions{}
+	containersOptions := docker_container.ListOptions{}
 	containersOptions.All = true
 	containersOptions.Filters = filterSet
 
