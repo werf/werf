@@ -144,6 +144,15 @@ func GetSynchronization(
 		var err error
 		if err := logboek.Info().LogProcess(fmt.Sprintf("Getting client id for the http synchronization server")).
 			DoError(func() error {
+				if len(lock_manager.ForceSyncServerRepo) > 0 {
+					logboek.Info().LogProcess(fmt.Sprintf("Checking synchronization server"))
+					repoSyncServer, err := checkRepoSyncServer(ctx, projectName, serverAddress, stagesStorage)
+					if err != nil {
+						return err
+					}
+					serverAddress = repoSyncServer
+				}
+
 				clientID, err = lock_manager.GetHttpClientID(ctx, projectName, serverAddress, stagesStorage)
 				if err != nil {
 					return fmt.Errorf("unable to get client id for the http synchronization server: %w", err)
@@ -207,4 +216,25 @@ func GetStorageLockManager(
 	default:
 		panic(fmt.Sprintf("unsupported synchronization type %q", synchronization.SynchronizationType))
 	}
+}
+
+func checkRepoSyncServer(ctx context.Context, projectName, serverAddress string, stagesStorage storage.StagesStorage) (string, error) {
+	repoSyncServer, err := lock_manager.GetOrCreateSyncServer(ctx, projectName, serverAddress, stagesStorage)
+	if err != nil {
+		return "", fmt.Errorf("unable to get synchronization server address: %w", err)
+	}
+
+	if repoSyncServer != serverAddress {
+		err := lock_manager.PromptRewriteSyncRepoServer(ctx, serverAddress, repoSyncServer)
+		if err != nil {
+			return "", err
+		}
+		err = lock_manager.OverwriteSyncServerRepo(ctx, projectName, serverAddress, stagesStorage)
+		if err != nil {
+			return "", fmt.Errorf("unable to overwrite synchronization server: %w", err)
+		}
+		repoSyncServer = serverAddress
+	}
+
+	return repoSyncServer, nil
 }
