@@ -21,6 +21,8 @@ import (
 	"github.com/werf/3p-helm/pkg/provenance"
 	"github.com/werf/3p-helm/pkg/registry"
 	"github.com/werf/3p-helm/pkg/werf/file"
+	"github.com/werf/3p-helm/pkg/werf/secrets"
+	"github.com/werf/3p-helm/pkg/werf/secrets/runtimedata"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
@@ -182,6 +184,9 @@ func GetPreparedChartDependenciesDir(ctx context.Context, metadataFile, metadata
 		buildChartDependenciesOpts.LoadOptions = &loader.LoadOptions{
 			ChartExtender:               NewWerfChartStub(ctx, buildChartDependenciesOpts.IgnoreInvalidAnnotationsAndLabels),
 			SubchartExtenderFactoryFunc: nil,
+			SecretsRuntimeDataFactoryFunc: func() runtimedata.RuntimeData {
+				return secrets.NewSecretsRuntimeData()
+			},
 		}
 		if err := command_helpers.BuildChartDependenciesInDir(ctx, tmpDepsDir, helmEnvSettings, registryClient, buildChartDependenciesOpts); err != nil {
 			return fmt.Errorf("error building chart dependencies: %w", err)
