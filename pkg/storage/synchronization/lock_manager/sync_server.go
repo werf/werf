@@ -9,14 +9,13 @@ import (
 	"time"
 
 	"github.com/gookit/color"
+	"golang.org/x/crypto/ssh/terminal"
+
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/storage"
-	"golang.org/x/crypto/ssh/terminal"
 )
 
-var (
-	ErrNoSyncServerFound = errors.New("no synchronization server found")
-)
+var ErrNoSyncServerFound = errors.New("no synchronization server found")
 
 // go build -ldflags github.com/werf/werf/v2/pkg/storage/synchronization/lock_manager.ForceSyncServerRepo=true"
 var ForceSyncServerRepo string
@@ -116,7 +115,6 @@ func selectOldestSyncServerRecord(records []*storage.SyncServerRecord) *storage.
 
 // It shows prompt message. Could be used if sync server differs from specified
 func PromptRewriteSyncRepoServer(ctx context.Context, specified, repoServer string) error {
-
 	timeout := 2 * time.Minute // magic number
 	ctxWithTimeout, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
