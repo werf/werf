@@ -32,10 +32,10 @@ jobs:
         if: always()
         uses: mattermost/action-mattermost-notify@master
         with:
-          MATTERMOST_WEBHOOK_URL: ${{ secrets.webhook }}
-          MATTERMOST_CHANNEL: ${{ secrets.notificationChannel }}
+          MATTERMOST_WEBHOOK_URL: ${{ secrets.LOOP_NOTIFICATION_WEBHOOK }}
+          MATTERMOST_CHANNEL: ${{ secrets.LOOP_NOTIFICATION_CHANNEL }}
           TEXT: |
-            ${{ secrets.loopNotificationGroup }} task sign pls
+            ${{ secrets.LOOP_NOTIFICATION_GROUP }} task sign pls
 
       - name: Publish with retry
         if: ${{ steps.buildStep.outcome == 'failure' }}
