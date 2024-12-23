@@ -14,13 +14,14 @@ import (
 	"github.com/werf/3p-helm/pkg/cli"
 	"github.com/werf/3p-helm/pkg/postrender"
 	"github.com/werf/3p-helm/pkg/registry"
-	"github.com/werf/common-go/pkg/secrets"
-	"github.com/werf/common-go/pkg/secrets_manager"
+	"github.com/werf/3p-helm/pkg/werf/file"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/deploy/helm"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
 	"github.com/werf/werf/v2/pkg/deploy/helm/command_helpers"
 )
+
+var _ chart.ChartExtender = (*Bundle)(nil)
 
 type BundleOptions struct {
 	SecretValueFiles                  []string
@@ -36,7 +37,6 @@ func NewBundle(
 	dir string,
 	helmEnvSettings *cli.EnvSettings,
 	registryClient *registry.Client,
-	secretsManager *secrets_manager.SecretsManager,
 	opts BundleOptions,
 ) (*Bundle, error) {
 	bundle := &Bundle{
@@ -47,7 +47,6 @@ func NewBundle(
 		BuildChartDependenciesOpts:     opts.BuildChartDependenciesOpts,
 		ChartExtenderServiceValuesData: helpers.NewChartExtenderServiceValuesData(),
 		ChartExtenderContextData:       helpers.NewChartExtenderContextData(ctx),
-		secretsManager:                 secretsManager,
 		DisableDefaultValues:           opts.DisableDefaultValues,
 	}
 
@@ -86,12 +85,8 @@ type Bundle struct {
 	DisableDefaultValues                  bool
 	ExtraAnnotationsAndLabelsPostRenderer *helm.ExtraAnnotationsAndLabelsPostRenderer
 
-	secretsManager *secrets_manager.SecretsManager
-
-	*secrets.SecretsRuntimeData
 	*helpers.ChartExtenderServiceValuesData
 	*helpers.ChartExtenderContextData
-	*helpers.ChartExtenderValuesMerger
 }
 
 func (bundle *Bundle) ChainPostRenderer(postRenderer postrender.PostRenderer) postrender.PostRenderer {
@@ -109,27 +104,11 @@ func (bundle *Bundle) ChainPostRenderer(postRenderer postrender.PostRenderer) po
 // ChartCreated method for the chart.Extender interface
 func (bundle *Bundle) ChartCreated(c *chart.Chart) error {
 	bundle.HelmChart = c
-	bundle.SecretsRuntimeData = secrets.NewSecretsRuntimeData()
 	return nil
 }
 
 // ChartLoaded method for the chart.Extender interface
-func (bundle *Bundle) ChartLoaded(files []*chart.ChartExtenderBufferedFile) error {
-	if bundle.secretsManager != nil {
-		wd, err := os.Getwd()
-		if err != nil {
-			return fmt.Errorf("unable to get current working dir: %w", err)
-		}
-
-		if err := bundle.SecretsRuntimeData.DecodeAndLoadSecrets(bundle.ChartExtenderContext, files, bundle.Dir, wd, bundle.secretsManager, secrets.DecodeAndLoadSecretsOptions{
-			LoadFromLocalFilesystem:    true,
-			CustomSecretValueFiles:     bundle.SecretValueFiles,
-			WithoutDefaultSecretValues: false,
-		}); err != nil {
-			return fmt.Errorf("error decoding secrets: %w", err)
-		}
-	}
-
+func (bundle *Bundle) ChartLoaded(files []*file.ChartExtenderBufferedFile) error {
 	if bundle.DisableDefaultValues {
 		logboek.Context(bundle.ChartExtenderContext).Info().LogF("Disable default werf chart values\n")
 		bundle.HelmChart.Values = nil
@@ -145,26 +124,25 @@ func (bundle *Bundle) ChartDependenciesLoaded() error {
 
 // MakeValues method for the chart.Extender interface
 func (bundle *Bundle) MakeValues(inputVals map[string]interface{}) (map[string]interface{}, error) {
-	return bundle.MergeValues(bundle.ChartExtenderContext, inputVals, bundle.ServiceValues, bundle.SecretsRuntimeData)
+	return inputVals, nil
 }
 
 // SetupTemplateFuncs method for the chart.Extender interface
 func (bundle *Bundle) SetupTemplateFuncs(t *template.Template, funcMap template.FuncMap) {
-	helpers.SetupIncludeWrapperFuncs(funcMap)
 }
 
-func convertBufferedFilesForChartExtender(files []*loader.BufferedFile) []*chart.ChartExtenderBufferedFile {
-	var res []*chart.ChartExtenderBufferedFile
+func convertBufferedFilesForChartExtender(files []*loader.BufferedFile) []*file.ChartExtenderBufferedFile {
+	var res []*file.ChartExtenderBufferedFile
 	for _, f := range files {
-		f1 := new(chart.ChartExtenderBufferedFile)
-		*f1 = chart.ChartExtenderBufferedFile(*f)
+		f1 := new(file.ChartExtenderBufferedFile)
+		*f1 = file.ChartExtenderBufferedFile(*f)
 		res = append(res, f1)
 	}
 	return res
 }
 
 // LoadDir method for the chart.Extender interface
-func (bundle *Bundle) LoadDir(dir string) (bool, []*chart.ChartExtenderBufferedFile, error) {
+func (bundle *Bundle) LoadDir(dir string) (bool, []*file.ChartExtenderBufferedFile, error) {
 	files, err := loader.GetFilesFromLocalFilesystem(dir)
 	if err != nil {
 		return true, nil, err
@@ -173,7 +151,7 @@ func (bundle *Bundle) LoadDir(dir string) (bool, []*chart.ChartExtenderBufferedF
 	res, err := LoadChartDependencies(bundle.ChartExtenderContext, func(
 		ctx context.Context,
 		dir string,
-	) ([]*chart.ChartExtenderBufferedFile, error) {
+	) ([]*file.ChartExtenderBufferedFile, error) {
 		files, err := loader.GetFilesFromLocalFilesystem(dir)
 		if err != nil {
 			return nil, err
@@ -191,6 +169,30 @@ func (bundle *Bundle) LocateChart(name string, settings *cli.EnvSettings) (bool,
 // ReadFile method for the chart.Extender interface
 func (bundle *Bundle) ReadFile(filePath string) (bool, []byte, error) {
 	return false, nil, nil
+}
+
+func (bundle *Bundle) Type() string {
+	return "bundle"
+}
+
+func (bundle *Bundle) GetChartFileReader() file.ChartFileReader {
+	panic("not implemented")
+}
+
+func (bundle *Bundle) GetDisableDefaultSecretValues() bool {
+	panic("not implemented")
+}
+
+func (bundle *Bundle) GetSecretValueFiles() []string {
+	return bundle.SecretValueFiles
+}
+
+func (bundle *Bundle) GetProjectDir() string {
+	panic("not implemented")
+}
+
+func (bundle *Bundle) GetChartDir() string {
+	return bundle.Dir
 }
 
 func writeBundleJsonMap(dataMap map[string]string, path string) error {

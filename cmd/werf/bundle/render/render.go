@@ -24,6 +24,8 @@ import (
 	kubefake "github.com/werf/3p-helm/pkg/kube/fake"
 	helmstorage "github.com/werf/3p-helm/pkg/storage"
 	"github.com/werf/3p-helm/pkg/storage/driver"
+	"github.com/werf/3p-helm/pkg/werf/secrets"
+	"github.com/werf/3p-helm/pkg/werf/secrets/runtimedata"
 	"github.com/werf/common-go/pkg/secrets_manager"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/nelm/pkg/chrttree"
@@ -210,9 +212,9 @@ func runRender(ctx context.Context) error {
 		}
 	}
 
-	secretsManager := secrets_manager.NewSecretsManager(secrets_manager.SecretsManagerOptions{DisableSecretsDecryption: *commonCmdData.IgnoreSecretKey})
+	secrets_manager.DefaultManager = secrets_manager.NewSecretsManager(secrets_manager.SecretsManagerOptions{DisableSecretsDecryption: *commonCmdData.IgnoreSecretKey})
 
-	bundle, err := chart_extender.NewBundle(ctx, bundleDir, helm_v3.Settings, helmRegistryClient, secretsManager, chart_extender.BundleOptions{
+	bundle, err := chart_extender.NewBundle(ctx, bundleDir, helm_v3.Settings, helmRegistryClient, chart_extender.BundleOptions{
 		SecretValueFiles:                  common.GetSecretValues(&commonCmdData),
 		BuildChartDependenciesOpts:        command_helpers.BuildChartDependenciesOptions{IgnoreInvalidAnnotationsAndLabels: false},
 		IgnoreInvalidAnnotationsAndLabels: false,
@@ -237,9 +239,12 @@ func runRender(ctx context.Context) error {
 	loader.GlobalLoadOptions = &loader.LoadOptions{
 		ChartExtender: bundle,
 		SubchartExtenderFactoryFunc: func() chart.ChartExtender {
-			return chart_extender.NewWerfSubchart(ctx, secretsManager, chart_extender.WerfSubchartOptions{
+			return chart_extender.NewWerfSubchart(ctx, chart_extender.WerfSubchartOptions{
 				DisableDefaultSecretValues: *commonCmdData.DisableDefaultSecretValues,
 			})
+		},
+		SecretsRuntimeDataFactoryFunc: func() runtimedata.RuntimeData {
+			return secrets.NewSecretsRuntimeData()
 		},
 	}
 

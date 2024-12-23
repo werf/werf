@@ -20,6 +20,7 @@ import (
 	"github.com/werf/3p-helm/pkg/cli"
 	"github.com/werf/3p-helm/pkg/provenance"
 	"github.com/werf/3p-helm/pkg/registry"
+	"github.com/werf/3p-helm/pkg/werf/file"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
@@ -32,7 +33,7 @@ func GetChartDependenciesCacheDir() string {
 	return filepath.Join(werf.GetLocalCacheDir(), "helm_chart_dependencies", "1")
 }
 
-func LoadMetadata(files []*chart.ChartExtenderBufferedFile) (*chart.Metadata, error) {
+func LoadMetadata(files []*file.ChartExtenderBufferedFile) (*chart.Metadata, error) {
 	var metadata *chart.Metadata
 
 	for _, f := range files {
@@ -157,7 +158,7 @@ func createChartDependenciesDir(destDir string, metadataBytes, metadataLockBytes
 		return fmt.Errorf("error creating dir %q: %w", destDir, err)
 	}
 
-	files := []*chart.ChartExtenderBufferedFile{
+	files := []*file.ChartExtenderBufferedFile{
 		{Name: "Chart.yaml", Data: metadataBytes},
 		{Name: "Chart.lock", Data: metadataLockBytes},
 	}
@@ -176,7 +177,7 @@ func createChartDependenciesDir(destDir string, metadataBytes, metadataLockBytes
 	return nil
 }
 
-func GetPreparedChartDependenciesDir(ctx context.Context, metadataFile, metadataLockFile *chart.ChartExtenderBufferedFile, helmEnvSettings *cli.EnvSettings, registryClient *registry.Client, buildChartDependenciesOpts command_helpers.BuildChartDependenciesOptions) (string, error) {
+func GetPreparedChartDependenciesDir(ctx context.Context, metadataFile, metadataLockFile *file.ChartExtenderBufferedFile, helmEnvSettings *cli.EnvSettings, registryClient *registry.Client, buildChartDependenciesOpts command_helpers.BuildChartDependenciesOptions) (string, error) {
 	return prepareDependenciesDir(ctx, metadataFile.Data, metadataLockFile.Data, func(tmpDepsDir string) error {
 		buildChartDependenciesOpts.LoadOptions = &loader.LoadOptions{
 			ChartExtender:               NewWerfChartStub(ctx, buildChartDependenciesOpts.IgnoreInvalidAnnotationsAndLabels),
@@ -198,7 +199,7 @@ func NewChartDependenciesConfiguration(chartMetadata *chart.Metadata, chartMetad
 	return &ChartDependenciesConfiguration{ChartMetadata: chartMetadata, ChartMetadataLock: chartMetadataLock}
 }
 
-func (conf *ChartDependenciesConfiguration) GetExternalDependenciesFiles(loadedChartFiles []*chart.ChartExtenderBufferedFile) (bool, *chart.ChartExtenderBufferedFile, *chart.ChartExtenderBufferedFile, error) {
+func (conf *ChartDependenciesConfiguration) GetExternalDependenciesFiles(loadedChartFiles []*file.ChartExtenderBufferedFile) (bool, *file.ChartExtenderBufferedFile, *file.ChartExtenderBufferedFile, error) {
 	metadataBytes, err := yaml.Marshal(conf.ChartMetadata)
 	if err != nil {
 		return false, nil, nil, fmt.Errorf("unable to marshal original chart metadata into yaml: %w", err)
@@ -282,14 +283,14 @@ FindExternalDependencies:
 		metadataLock.Digest = newDigest
 	}
 
-	metadataFile := &chart.ChartExtenderBufferedFile{Name: "Chart.yaml"}
+	metadataFile := &file.ChartExtenderBufferedFile{Name: "Chart.yaml"}
 	if data, err := yaml.Marshal(metadata); err != nil {
 		return false, nil, nil, fmt.Errorf("unable to marshal chart metadata file with external dependencies: %w", err)
 	} else {
 		metadataFile.Data = data
 	}
 
-	metadataLockFile := &chart.ChartExtenderBufferedFile{Name: "Chart.lock"}
+	metadataLockFile := &file.ChartExtenderBufferedFile{Name: "Chart.lock"}
 	if data, err := yaml.Marshal(metadataLock); err != nil {
 		return false, nil, nil, fmt.Errorf("unable to marshal chart metadata lock file with external dependencies: %w", err)
 	} else {
@@ -299,7 +300,7 @@ FindExternalDependencies:
 	return true, metadataFile, metadataLockFile, nil
 }
 
-func LoadChartDependencies(ctx context.Context, loadChartDirFunc func(ctx context.Context, dir string) ([]*chart.ChartExtenderBufferedFile, error), chartDir string, loadedChartFiles []*chart.ChartExtenderBufferedFile, helmEnvSettings *cli.EnvSettings, registryClient *registry.Client, buildChartDependenciesOpts command_helpers.BuildChartDependenciesOptions) ([]*chart.ChartExtenderBufferedFile, error) {
+func LoadChartDependencies(ctx context.Context, loadChartDirFunc func(ctx context.Context, dir string) ([]*file.ChartExtenderBufferedFile, error), chartDir string, loadedChartFiles []*file.ChartExtenderBufferedFile, helmEnvSettings *cli.EnvSettings, registryClient *registry.Client, buildChartDependenciesOpts command_helpers.BuildChartDependenciesOptions) ([]*file.ChartExtenderBufferedFile, error) {
 	res := loadedChartFiles
 
 	var chartMetadata *chart.Metadata
@@ -403,8 +404,8 @@ func LoadChartDependencies(ctx context.Context, loadChartDirFunc func(ctx contex
 
 	for _, f := range localFiles {
 		if strings.HasPrefix(f.Name, "charts/") {
-			f1 := new(chart.ChartExtenderBufferedFile)
-			*f1 = chart.ChartExtenderBufferedFile(*f)
+			f1 := new(file.ChartExtenderBufferedFile)
+			*f1 = file.ChartExtenderBufferedFile(*f)
 			res = append(res, f1)
 			logboek.Context(ctx).Debug().LogF("-- LoadChartDependencies: loading subchart %q from the dependencies dir %q\n", f.Name, depsDir)
 		}
