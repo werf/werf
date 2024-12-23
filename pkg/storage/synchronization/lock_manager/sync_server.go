@@ -25,7 +25,7 @@ func GetOrCreateSyncServer(ctx context.Context, projectName, serverAddress strin
 	server, err := getSyncServer(ctx, projectName, stagesStorage)
 	if err != nil {
 		if errors.Is(err, ErrNoSyncServerFound) {
-			createErr := СreateSyncServerRecord(ctx, projectName, serverAddress, stagesStorage)
+			createErr := CreateSyncServerRecord(ctx, projectName, serverAddress, stagesStorage)
 			if createErr != nil {
 				return "", fmt.Errorf("can't create synchronization server record: %w", err)
 			}
@@ -52,7 +52,7 @@ func getSyncServer(ctx context.Context, projectName string, stagesStorage storag
 }
 
 // Create sync server name from repository or try to create record is doesn't exist
-func СreateSyncServerRecord(ctx context.Context, projectName, serverAddress string, stagesStorage storage.StagesStorage) error {
+func CreateSyncServerRecord(ctx context.Context, projectName, serverAddress string, stagesStorage storage.StagesStorage) error {
 	now := time.Now()
 	timestampMillisec := now.Unix()*1000 + now.UnixNano()/1000_000
 	rec := &storage.SyncServerRecord{Server: serverAddress, TimestampMillisec: timestampMillisec}
@@ -136,7 +136,7 @@ func PromptRewriteSyncRepoServer(ctx context.Context, specified, repoServer stri
 	case <-ctxWithTimeout.Done():
 		return fmt.Errorf("input timeout: no response within %s minutes. aborted", timeout.String())
 	case err := <-errCh:
-		return fmt.Errorf("error geting prompt response: %w", err)
+		return fmt.Errorf("error getting prompt response: %w", err)
 	case response := <-respCh:
 		if !response {
 			return fmt.Errorf("operation aborted. please use the synchronization server from the repository or overwrite the server from the repository. please consider the consequences and proceed at your own risk.")
