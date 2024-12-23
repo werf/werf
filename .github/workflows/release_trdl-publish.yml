@@ -29,7 +29,7 @@ jobs:
           vault-secret-id: ${{ secrets.TRDL_VAULT_SECRET_ID }}
 
       - name: notify
-        if: ${{ steps.publish.outcome == 'failure' }}
+        if: ${{ steps.publish.conclusion == 'failure' }}
         uses: mattermost/action-mattermost-notify@master
         with:
           MATTERMOST_WEBHOOK_URL: ${{ secrets.LOOP_NOTIFICATION_WEBHOOK }}
@@ -38,7 +38,7 @@ jobs:
             ${{ secrets.LOOP_NOTIFICATION_GROUP }} task sign pls
 
       - name: Publish with retry
-        if: ${{ steps.publish.outcome == 'failure' }}
+        if: ${{ steps.publish.conclusion == 'failure' }}
         uses: werf/trdl-vault-actions/publish@feat/relase/backoff-and-notification
         with:
           vault-addr: ${{ secrets.TRDL_VAULT_ADDR }}
