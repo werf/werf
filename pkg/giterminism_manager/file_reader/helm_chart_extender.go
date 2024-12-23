@@ -5,12 +5,11 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/werf/3p-helm/pkg/chart"
-	"github.com/werf/3p-helm/pkg/cli"
+	"github.com/werf/3p-helm/pkg/werf/file"
 )
 
-func (r FileReader) LocateChart(ctx context.Context, chartDir string, settings *cli.EnvSettings) (string, error) {
-	chartDir, err := r.locateChart(ctx, chartDir, settings)
+func (r FileReader) LocateChart(ctx context.Context, chartDir string) (string, error) {
+	chartDir, err := r.locateChart(ctx, chartDir)
 	if err != nil {
 		return "", fmt.Errorf("unable to locate chart directory: %w", err)
 	}
@@ -18,7 +17,7 @@ func (r FileReader) LocateChart(ctx context.Context, chartDir string, settings *
 	return chartDir, nil
 }
 
-func (r FileReader) locateChart(ctx context.Context, chartDir string, _ *cli.EnvSettings) (string, error) {
+func (r FileReader) locateChart(ctx context.Context, chartDir string) (string, error) {
 	relDir := r.absolutePathToProjectDirRelativePath(chartDir)
 
 	files, err := r.loadChartDir(ctx, relDir)
@@ -48,7 +47,7 @@ func (r FileReader) readChartFile(ctx context.Context, relPath string) ([]byte, 
 	return r.ReadAndCheckConfigurationFile(ctx, relPath, r.giterminismConfig.UncommittedHelmFilePathMatcher().IsPathMatched)
 }
 
-func (r FileReader) LoadChartDir(ctx context.Context, chartDir string) ([]*chart.ChartExtenderBufferedFile, error) {
+func (r FileReader) LoadChartDir(ctx context.Context, chartDir string) ([]*file.ChartExtenderBufferedFile, error) {
 	relDir := r.absolutePathToProjectDirRelativePath(chartDir)
 
 	files, err := r.loadChartDir(ctx, relDir)
@@ -60,8 +59,8 @@ func (r FileReader) LoadChartDir(ctx context.Context, chartDir string) ([]*chart
 }
 
 // TODO helmignore support
-func (r FileReader) loadChartDir(ctx context.Context, relDir string) ([]*chart.ChartExtenderBufferedFile, error) {
-	var res []*chart.ChartExtenderBufferedFile
+func (r FileReader) loadChartDir(ctx context.Context, relDir string) ([]*file.ChartExtenderBufferedFile, error) {
+	var res []*file.ChartExtenderBufferedFile
 
 	if err := r.WalkConfigurationFilesWithGlob(
 		ctx,
@@ -74,7 +73,7 @@ func (r FileReader) loadChartDir(ctx context.Context, relDir string) ([]*chart.C
 			}
 
 			relativeToDirNotResolvedPath = filepath.ToSlash(relativeToDirNotResolvedPath)
-			res = append(res, &chart.ChartExtenderBufferedFile{Name: relativeToDirNotResolvedPath, Data: data})
+			res = append(res, &file.ChartExtenderBufferedFile{Name: relativeToDirNotResolvedPath, Data: data})
 
 			return nil
 		},

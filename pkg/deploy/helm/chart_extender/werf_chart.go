@@ -23,7 +23,8 @@ import (
 	"github.com/werf/3p-helm/pkg/postrender"
 	"github.com/werf/3p-helm/pkg/registry"
 	"github.com/werf/3p-helm/pkg/werf/file"
-	secrets2 "github.com/werf/common-go/pkg/secrets"
+	secrets2 "github.com/werf/3p-helm/pkg/werf/secrets"
+	"github.com/werf/3p-helm/pkg/werf/secrets/runtimedata"
 	"github.com/werf/common-go/pkg/secrets_manager"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
@@ -33,6 +34,8 @@ import (
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
 	"github.com/werf/werf/v2/pkg/deploy/helm/command_helpers"
 )
+
+var _ chart.ChartExtender = (*WerfChart)(nil)
 
 type WerfChartOptions struct {
 	SecretValueFiles                  []string
@@ -47,7 +50,6 @@ type WerfChartOptions struct {
 func NewWerfChart(
 	ctx context.Context,
 	chartFileReader file.ChartFileReader,
-	secretsManager *secrets_manager.SecretsManager,
 	chartDir string,
 	projectDir string,
 	helmEnvSettings *cli.EnvSettings,
@@ -62,7 +64,6 @@ func NewWerfChart(
 		RegistryClient:   registryClient,
 
 		ChartFileReader: chartFileReader,
-		SecretsManager:  secretsManager,
 
 		extraAnnotationsAndLabelsPostRenderer: helm.NewExtraAnnotationsAndLabelsPostRenderer(nil, nil, opts.IgnoreInvalidAnnotationsAndLabels),
 
@@ -79,12 +80,6 @@ func NewWerfChart(
 	return wc
 }
 
-type WerfChartRuntimeData struct {
-	DecryptedSecretValues    map[string]interface{}
-	DecryptedSecretFilesData map[string]string
-	SecretValuesToMask       []string
-}
-
 type WerfChart struct {
 	HelmChart *chart.Chart
 
@@ -98,40 +93,22 @@ type WerfChart struct {
 	DisableDefaultSecretValues bool
 
 	ChartFileReader file.ChartFileReader
-	SecretsManager  *secrets_manager.SecretsManager
 
 	extraAnnotationsAndLabelsPostRenderer *helm.ExtraAnnotationsAndLabelsPostRenderer
 	werfConfig                            *config.WerfConfig
 
-	*secrets2.SecretsRuntimeData
 	*helpers.ChartExtenderServiceValuesData
 	*helpers.ChartExtenderContextData
-	*helpers.ChartExtenderValuesMerger
 }
 
 // ChartCreated method for the chart.Extender interface
 func (wc *WerfChart) ChartCreated(c *chart.Chart) error {
 	wc.HelmChart = c
-	wc.SecretsRuntimeData = secrets2.NewSecretsRuntimeData()
 	return nil
 }
 
 // ChartLoaded method for the chart.Extender interface
-func (wc *WerfChart) ChartLoaded(files []*chart.ChartExtenderBufferedFile) error {
-	if wc.SecretsManager != nil {
-		if wc.DisableDefaultSecretValues {
-			logboek.Context(wc.ChartExtenderContext).Info().LogF("Disable default werf chart secret values\n")
-		}
-
-		if err := wc.SecretsRuntimeData.DecodeAndLoadSecrets(wc.ChartExtenderContext, files, wc.ChartDir, wc.ProjectDir, wc.SecretsManager, secrets2.DecodeAndLoadSecretsOptions{
-			ChartFileReader:            wc.ChartFileReader,
-			CustomSecretValueFiles:     wc.SecretValueFiles,
-			WithoutDefaultSecretValues: wc.DisableDefaultSecretValues,
-		}); err != nil {
-			return fmt.Errorf("error decoding secrets: %w", err)
-		}
-	}
-
+func (wc *WerfChart) ChartLoaded(files []*file.ChartExtenderBufferedFile) error {
 	var opts helpers.GetHelmChartMetadataOptions
 	if wc.werfConfig != nil {
 		opts.DefaultName = wc.werfConfig.Meta.Project
@@ -159,16 +136,16 @@ func (wc *WerfChart) ChartDependenciesLoaded() error {
 
 // MakeValues method for the chart.Extender interface
 func (wc *WerfChart) MakeValues(inputVals map[string]interface{}) (map[string]interface{}, error) {
-	return wc.MergeValues(wc.ChartExtenderContext, inputVals, wc.ServiceValues, wc.SecretsRuntimeData)
+	return inputVals, nil
 }
 
 func (wc *WerfChart) MakeBundleValues(
 	chrt *chart.Chart,
 	inputVals map[string]interface{},
 ) (map[string]interface{}, error) {
-	helpers.DebugPrintValues(wc.ChartExtenderContext, "input", inputVals)
+	chartutil.DebugPrintValues(wc.ChartExtenderContext, "input", inputVals)
 
-	vals, err := wc.MergeValues(wc.ChartExtenderContext, inputVals, wc.ServiceValues, nil)
+	vals, err := chartutil.MergeInternal(wc.ChartExtenderContext, inputVals, wc.ServiceValues, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to coalesce werf chart values: %w", err)
 	}
@@ -186,29 +163,27 @@ func (wc *WerfChart) MakeBundleValues(
 
 	chartutil.CoalesceChartValues(chrt, valsCopy, true)
 
-	helpers.DebugPrintValues(wc.ChartExtenderContext, "all", valsCopy)
+	chartutil.DebugPrintValues(wc.ChartExtenderContext, "all", valsCopy)
 
 	return valsCopy, nil
 }
 
 func (wc *WerfChart) MakeBundleSecretValues(
 	ctx context.Context,
-	secretsRuntimeData *secrets2.SecretsRuntimeData,
+	secretsRuntimeData runtimedata.RuntimeData,
 ) (map[string]interface{}, error) {
-	if helpers.DebugSecretValues() {
-		helpers.DebugPrintValues(wc.ChartExtenderContext, "secret", wc.SecretsRuntimeData.DecryptedSecretValues)
+	if chartutil.DebugSecretValues() {
+		chartutil.DebugPrintValues(wc.ChartExtenderContext, "secret", secretsRuntimeData.GetDecryptedSecretValues())
 	}
-	return secretsRuntimeData.GetEncodedSecretValues(ctx, wc.SecretsManager, wc.ProjectDir)
+	return secretsRuntimeData.GetEncodedSecretValues(ctx, secrets_manager.DefaultManager, wc.ProjectDir)
 }
 
 // SetupTemplateFuncs method for the chart.Extender interface
 func (wc *WerfChart) SetupTemplateFuncs(t *template.Template, funcMap template.FuncMap) {
-	helpers.SetupWerfSecretFile(wc.SecretsRuntimeData, funcMap)
-	helpers.SetupIncludeWrapperFuncs(funcMap)
 }
 
 // LoadDir method for the chart.Extender interface
-func (wc *WerfChart) LoadDir(dir string) (bool, []*chart.ChartExtenderBufferedFile, error) {
+func (wc *WerfChart) LoadDir(dir string) (bool, []*file.ChartExtenderBufferedFile, error) {
 	chartFiles, err := wc.ChartFileReader.LoadChartDir(wc.ChartExtenderContext, dir)
 	if err != nil {
 		return true, nil, fmt.Errorf("giterministic files loader failed: %w", err)
@@ -224,7 +199,7 @@ func (wc *WerfChart) LoadDir(dir string) (bool, []*chart.ChartExtenderBufferedFi
 
 // LocateChart method for the chart.Extender interface
 func (wc *WerfChart) LocateChart(name string, settings *cli.EnvSettings) (bool, string, error) {
-	res, err := wc.ChartFileReader.LocateChart(wc.ChartExtenderContext, name, settings)
+	res, err := wc.ChartFileReader.LocateChart(wc.ChartExtenderContext, name)
 	return true, res, err
 }
 
@@ -299,8 +274,8 @@ func (wc *WerfChart) CreateNewBundle(
 	}
 
 	var secretValsData []byte
-	if wc.SecretsRuntimeData != nil && !wc.SecretsManager.IsMissedSecretKeyModeEnabled() {
-		vals, err := wc.MakeBundleSecretValues(ctx, wc.SecretsRuntimeData)
+	if chrt.SecretsRuntimeData != nil && !secrets_manager.DefaultManager.IsMissedSecretKeyModeEnabled() {
+		vals, err := wc.MakeBundleSecretValues(ctx, chrt.SecretsRuntimeData)
 		if err != nil {
 			return nil, fmt.Errorf("unable to construct bundle secret values: %w", err)
 		}
@@ -442,11 +417,35 @@ WritingFiles:
 		}
 	}
 
-	return NewBundle(ctx, destDir, wc.HelmEnvSettings, wc.RegistryClient, wc.SecretsManager, BundleOptions{
+	return NewBundle(ctx, destDir, wc.HelmEnvSettings, wc.RegistryClient, BundleOptions{
 		BuildChartDependenciesOpts:        wc.BuildChartDependenciesOpts,
 		IgnoreInvalidAnnotationsAndLabels: wc.extraAnnotationsAndLabelsPostRenderer.IgnoreInvalidAnnotationsAndLabels,
 		DisableDefaultValues:              wc.DisableDefaultValues,
 	})
+}
+
+func (wc *WerfChart) Type() string {
+	return "chart"
+}
+
+func (wc *WerfChart) GetChartFileReader() file.ChartFileReader {
+	return wc.ChartFileReader
+}
+
+func (wc *WerfChart) GetDisableDefaultSecretValues() bool {
+	return wc.DisableDefaultSecretValues
+}
+
+func (wc *WerfChart) GetSecretValueFiles() []string {
+	return wc.SecretValueFiles
+}
+
+func (wc *WerfChart) GetProjectDir() string {
+	return wc.ProjectDir
+}
+
+func (wc *WerfChart) GetChartDir() string {
+	return wc.ChartDir
 }
 
 func writeChartFile(ctx context.Context, destDir, fileName string, fileData []byte) error {

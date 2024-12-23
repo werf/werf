@@ -13,7 +13,8 @@ import (
 	"github.com/werf/3p-helm/pkg/chart/loader"
 	"github.com/werf/3p-helm/pkg/cli"
 	"github.com/werf/3p-helm/pkg/registry"
-	"github.com/werf/common-go/pkg/secrets_manager"
+	"github.com/werf/3p-helm/pkg/werf/secrets"
+	"github.com/werf/3p-helm/pkg/werf/secrets/runtimedata"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/nelm/pkg/action"
@@ -426,7 +427,6 @@ func run(
 			ctx context.Context,
 			releaseNamespace string,
 			helmRegistryClient *registry.Client,
-			secretsManager *secrets_manager.SecretsManager,
 			registryCredentialsPath string,
 			chartRepositorySkipUpdate bool,
 			secretValuesPaths []string,
@@ -439,7 +439,6 @@ func run(
 			wc := chart_extender.NewWerfChart(
 				ctx,
 				giterminismManager.FileReader(),
-				secretsManager,
 				relChartPath,
 				giterminismManager.ProjectDir(),
 				helmSettings,
@@ -496,11 +495,13 @@ func run(
 				SubchartExtenderFactoryFunc: func() chart.ChartExtender {
 					return chart_extender.NewWerfSubchart(
 						ctx,
-						secretsManager,
 						chart_extender.WerfSubchartOptions{
 							DisableDefaultSecretValues: defaultSecretValuesDisable,
 						},
 					)
+				},
+				SecretsRuntimeDataFactoryFunc: func() runtimedata.RuntimeData {
+					return secrets.NewSecretsRuntimeData()
 				},
 			}
 

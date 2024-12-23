@@ -23,8 +23,8 @@ import (
 	getter "github.com/werf/3p-helm-for-werf-helm/pkg/getter"
 	postrender "github.com/werf/3p-helm-for-werf-helm/pkg/postrender"
 	registry "github.com/werf/3p-helm-for-werf-helm/pkg/registry"
-	chart_new "github.com/werf/3p-helm/pkg/chart"
 	cli_new "github.com/werf/3p-helm/pkg/cli"
+	"github.com/werf/3p-helm/pkg/werf/file"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	secrets_manager "github.com/werf/nelm-for-werf-helm/pkg/secrets_manager"
@@ -235,7 +235,7 @@ func (wc *WerfChart) LoadDir(dir string) (bool, []*chart.ChartExtenderBufferedFi
 
 // LocateChart method for the chart.Extender interface
 func (wc *WerfChart) LocateChart(name string, settings *cli.EnvSettings) (bool, string, error) {
-	res, err := wc.GiterminismManager.FileReader().LocateChart(wc.ChartExtenderContext, name, CastToEnvSettingsFromHelmWerf(settings))
+	res, err := wc.GiterminismManager.FileReader().LocateChart(wc.ChartExtenderContext, name)
 	return true, res, err
 }
 
@@ -475,7 +475,7 @@ func writeChartFile(ctx context.Context, destDir, fileName string, fileData []by
 	return nil
 }
 
-func CastToChartExtenderBufferedFilesForHelmWerf(files []*chart_new.ChartExtenderBufferedFile) []*chart.ChartExtenderBufferedFile {
+func CastToChartExtenderBufferedFilesForHelmWerf(files []*file.ChartExtenderBufferedFile) []*chart.ChartExtenderBufferedFile {
 	resultFiles := make([]*chart.ChartExtenderBufferedFile, 0)
 	for _, file := range files {
 		resultFiles = append(resultFiles, lo.ToPtr(chart.ChartExtenderBufferedFile(*file)))

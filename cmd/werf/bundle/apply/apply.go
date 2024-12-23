@@ -20,6 +20,8 @@ import (
 	helm_v3 "github.com/werf/3p-helm/cmd/helm"
 	"github.com/werf/3p-helm/pkg/action"
 	"github.com/werf/3p-helm/pkg/chart/loader"
+	"github.com/werf/3p-helm/pkg/werf/secrets"
+	"github.com/werf/3p-helm/pkg/werf/secrets/runtimedata"
 	"github.com/werf/common-go/pkg/secrets_manager"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/kubedog/pkg/kube"
@@ -232,9 +234,9 @@ func runApply(ctx context.Context) error {
 		lockManager = m
 	}
 
-	secretsManager := secrets_manager.NewSecretsManager(secrets_manager.SecretsManagerOptions{DisableSecretsDecryption: *commonCmdData.IgnoreSecretKey})
+	secrets_manager.DefaultManager = secrets_manager.NewSecretsManager(secrets_manager.SecretsManagerOptions{DisableSecretsDecryption: *commonCmdData.IgnoreSecretKey})
 
-	bundle, err := chart_extender.NewBundle(ctx, bundleTmpDir, helm_v3.Settings, helmRegistryClient, secretsManager, chart_extender.BundleOptions{
+	bundle, err := chart_extender.NewBundle(ctx, bundleTmpDir, helm_v3.Settings, helmRegistryClient, chart_extender.BundleOptions{
 		SecretValueFiles: common.GetSecretValues(&commonCmdData),
 		BuildChartDependenciesOpts: command_helpers.BuildChartDependenciesOptions{
 			IgnoreInvalidAnnotationsAndLabels: true,
@@ -261,6 +263,9 @@ func runApply(ctx context.Context) error {
 
 	loader.GlobalLoadOptions = &loader.LoadOptions{
 		ChartExtender: bundle,
+		SecretsRuntimeDataFactoryFunc: func() runtimedata.RuntimeData {
+			return secrets.NewSecretsRuntimeData()
+		},
 	}
 
 	trackReadinessTimeout := *common.NewDuration(time.Duration(cmdData.Timeout) * time.Second)

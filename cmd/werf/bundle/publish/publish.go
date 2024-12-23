@@ -14,6 +14,8 @@ import (
 	"github.com/werf/3p-helm/pkg/chart"
 	"github.com/werf/3p-helm/pkg/chart/loader"
 	"github.com/werf/3p-helm/pkg/cli/values"
+	"github.com/werf/3p-helm/pkg/werf/secrets"
+	"github.com/werf/3p-helm/pkg/werf/secrets/runtimedata"
 	"github.com/werf/common-go/pkg/secrets_manager"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/cmd/werf/common"
@@ -303,16 +305,16 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 		return err
 	}
 
-	secretsManager := secrets_manager.NewSecretsManager(secrets_manager.SecretsManagerOptions{
+	secrets_manager.DefaultManager = secrets_manager.NewSecretsManager(secrets_manager.SecretsManagerOptions{
 		DisableSecretsDecryption: *commonCmdData.IgnoreSecretKey,
 	})
 
 	// FIXME(1.3): compatibility mode with older 1.2 versions, which do not require WERF_SECRET_KEY in the 'werf bundle publish' command
-	if err := secretsManager.AllowMissedSecretKeyMode(giterminismManager.ProjectDir()); err != nil {
+	if err := secrets_manager.DefaultManager.AllowMissedSecretKeyMode(giterminismManager.ProjectDir()); err != nil {
 		return err
 	}
 
-	wc := chart_extender.NewWerfChart(ctx, giterminismManager.FileReader(), secretsManager, chartDir, giterminismManager.ProjectDir(), helm_v3.Settings, helmRegistryClient, chart_extender.WerfChartOptions{
+	wc := chart_extender.NewWerfChart(ctx, giterminismManager.FileReader(), chartDir, giterminismManager.ProjectDir(), helm_v3.Settings, helmRegistryClient, chart_extender.WerfChartOptions{
 		BuildChartDependenciesOpts:        command_helpers.BuildChartDependenciesOptions{SkipUpdate: *commonCmdData.SkipDependenciesRepoRefresh},
 		SecretValueFiles:                  common.GetSecretValues(&commonCmdData),
 		ExtraAnnotations:                  userExtraAnnotations,
@@ -354,9 +356,12 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 	loader.GlobalLoadOptions = &loader.LoadOptions{
 		ChartExtender: wc,
 		SubchartExtenderFactoryFunc: func() chart.ChartExtender {
-			return chart_extender.NewWerfSubchart(ctx, secretsManager, chart_extender.WerfSubchartOptions{
+			return chart_extender.NewWerfSubchart(ctx, chart_extender.WerfSubchartOptions{
 				DisableDefaultSecretValues: *commonCmdData.DisableDefaultSecretValues,
 			})
+		},
+		SecretsRuntimeDataFactoryFunc: func() runtimedata.RuntimeData {
+			return secrets.NewSecretsRuntimeData()
 		},
 	}
 
