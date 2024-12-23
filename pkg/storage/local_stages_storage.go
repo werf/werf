@@ -377,3 +377,10 @@ func makeLocalImportMetadataName(projectName, importSourceID string) string {
 		}, ":",
 	)
 }
+
+func (storage *LocalStagesStorage) GetSyncServerRecords(ctx context.Context, projectName string, opts ...Option) ([]*SyncServerRecord, error) {
+	panic("not implemented")
+}
+func (storage *LocalStagesStorage) PostSyncServerRecord(ctx context.Context, projectName string, rec *SyncServerRecord) error {
+	panic("not implemented")
+}

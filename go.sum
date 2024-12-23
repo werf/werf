@@ -1433,6 +1433,8 @@ github.com/werf/3p-oras v0.9.1-0.20240115121544-03962ecbd40a h1:PsU9szHZlIH+Cjcu
 github.com/werf/3p-oras v0.9.1-0.20240115121544-03962ecbd40a/go.mod h1:XTePf8biMMCkqbuuWBZ24xOwo3hZej+BBM0uvd8aGqk=
 github.com/werf/common-go v0.0.0-20241219162404-a6b652fcdb74 h1:7oYFSzxMof5RiK6S2JKtY7v9UqTr1HH/7kepMUT1YfM=
 github.com/werf/common-go v0.0.0-20241219162404-a6b652fcdb74/go.mod h1:7pkHNfgZ2wvdwcMWCuDjdkY7iR3mIX5snYwbd1Iu7T4=
+github.com/werf/common-go v0.0.0-20241220111527-ccaf0c2d1381 h1:CCxV4UFEuPHrbDig/Rxea29H8fTjAk/kzt3UdT2lNlQ=
+github.com/werf/common-go v0.0.0-20241220111527-ccaf0c2d1381/go.mod h1:7pkHNfgZ2wvdwcMWCuDjdkY7iR3mIX5snYwbd1Iu7T4=
 github.com/werf/copy-recurse v0.2.7 h1:3FTOarbJ9uhFLi75oeUCioK9zxZwuV7o28kuUBPDZPM=
 github.com/werf/copy-recurse v0.2.7/go.mod h1:6Ypb+qN+hRBJgoCgEkX1vpbqcQ+8q69BQ3hi8s8Y6Qc=
 github.com/werf/kubedog v0.12.4-0.20241206094259-0fc2d1a1aff7 h1:aK5J2MVuaRxBs+ZlPTK7Nylv78nvrHEP1G1IW1uR718=

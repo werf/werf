@@ -78,6 +78,8 @@ type StagesStorage interface {
 
 	GetClientIDRecords(ctx context.Context, projectName string, opts ...Option) ([]*ClientIDRecord, error)
 	PostClientIDRecord(ctx context.Context, projectName string, rec *ClientIDRecord) error
+	GetSyncServerRecords(ctx context.Context, projectName string, opts ...Option) ([]*SyncServerRecord, error)
+	PostSyncServerRecord(ctx context.Context, projectName string, rec *SyncServerRecord) error
 	PostMultiplatformImage(ctx context.Context, projectName, tag string, allPlatformsImages []*image.Info, platforms []string) error
 	FilterStageDescSetAndProcessRelatedData(ctx context.Context, stageDescSet image.StageDescSet, options FilterStagesAndProcessRelatedDataOptions) (image.StageDescSet, error)
 
@@ -100,4 +102,9 @@ type ImageMetadata struct {
 
 type CopyFromStorageOptions struct {
 	IsMultiplatformImage bool
+}
+
+type SyncServerRecord struct {
+	Server            string
+	TimestampMillisec int64
 }
