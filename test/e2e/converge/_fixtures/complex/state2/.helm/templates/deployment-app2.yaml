@@ -22,3 +22,8 @@ spec:
             - |
               echo app2 started
               false
+          readinessProbe:
+            exec:
+              command:
+                - fail
+            periodSeconds: 1
