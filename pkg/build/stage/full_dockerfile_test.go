@@ -18,7 +18,7 @@ func testDockerfileToDockerStages(dockerfileData []byte) ([]instructions.Stage, 
 	p, err := parser.Parse(bytes.NewReader(dockerfileData))
 	Expect(err).To(Succeed())
 
-	dockerStages, dockerMetaArgs, err := instructions.Parse(p.AST)
+	dockerStages, dockerMetaArgs, err := instructions.Parse(p.AST, nil)
 	Expect(err).To(Succeed())
 
 	frontend.ResolveDockerStagesFromValue(dockerStages)
