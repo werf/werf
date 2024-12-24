@@ -455,7 +455,7 @@ func (phase *BuildPhase) publishMultiplatformImageMetadata(ctx context.Context, 
 }
 
 func (phase *BuildPhase) createReport(ctx context.Context) error {
-	for _, desc := range phase.Conveyor.imagesTree.GetImagesByName(true) {
+	for _, desc := range phase.Conveyor.imagesTree.GetImagesByName(false) {
 		name, images := desc.Unpair()
 		targetPlatforms := util.MapFuncToSlice(images, func(img *image.Image) string { return img.TargetPlatform })
 
