@@ -17,6 +17,8 @@ jobs:
   publish:
     name: Publish release channels using trdl server
     runs-on: ubuntu-22.04
+    outputs:
+      publish_status: ${{ steps.job-conclusion.outputs.status }}
     steps:
       - name: Publish without retry
         id: publish
@@ -29,7 +31,7 @@ jobs:
           vault-secret-id: ${{ secrets.TRDL_VAULT_SECRET_ID }}
 
       - name: notify
-        if: ${{ steps.publish.conclusion == 'failure' }}
+        if: ${{ failure() && steps.publish.conclusion == 'failure' }}
         uses: mattermost/action-mattermost-notify@master
         with:
           MATTERMOST_WEBHOOK_URL: ${{ secrets.LOOP_NOTIFICATION_WEBHOOK }}
@@ -38,8 +40,9 @@ jobs:
             ${{ secrets.LOOP_NOTIFICATION_GROUP }} task sign pls
 
       - name: Publish with retry
-        if: ${{ steps.publish.conclusion == 'failure' }}
+        if: ${{ failure() && steps.publish.conclusion == 'failure' }}
         uses: werf/trdl-vault-actions/publish@feat/relase/backoff-and-notification
+        id: publish-after-sign
         with:
           vault-addr: ${{ secrets.TRDL_VAULT_ADDR }}
           project-name: werf
@@ -48,7 +51,13 @@ jobs:
           vault-secret-id: ${{ secrets.TRDL_VAULT_SECRET_ID }}
           retry: true
 
+      - name: set job conclusion
+        if: ${{ failure() && steps.publish-after-sign.conclusion == 'success' }}
+        id: job-conclusion
+        run: echo "status=success" >> $GITHUB_OUTPUT
+
   deploy_channels_cm_prod:
+    if: ${{ failure() && needs.publish.outputs.publish_status == 'success' }}
     name: Deploy trdl_channels.yaml to production
     needs: publish
     runs-on: ubuntu-latest-4-cores
@@ -73,6 +82,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   publish_werf_images:
+    if: ${{ failure() && needs.publish.outputs.publish_status == 'success' }}
     name: Publish images with werf by trdl group and channel
     strategy:
       matrix:
@@ -122,14 +132,14 @@ jobs:
         env:
           DOCKER_BUILDKIT: 1
 
-  # notify:
-  #   if: always()
-  #   needs:
-  #     - publish
-  #     - deploy_channels_cm_prod
-  #     - publish_werf_images
-  #   uses: werf/common-ci/.github/workflows/notification.yml@main
-  #   secrets:
-  #     loopNotificationGroup: ${{ secrets.LOOP_NOTIFICATION_GROUP }}
-  #     webhook: ${{ secrets.LOOP_NOTIFICATION_WEBHOOK }}
-  #     notificationChannel: ${{ secrets.LOOP_NOTIFICATION_CHANNEL }}
+  notify:
+    if: always()
+    needs:
+      - publish
+      - deploy_channels_cm_prod
+      - publish_werf_images
+    uses: werf/common-ci/.github/workflows/notification.yml@main
+    secrets:
+      loopNotificationGroup: ${{ secrets.LOOP_NOTIFICATION_GROUP }}
+      webhook: ${{ secrets.LOOP_NOTIFICATION_WEBHOOK }}
+      notificationChannel: ${{ secrets.LOOP_NOTIFICATION_CHANNEL }}
