@@ -17,5 +17,5 @@ func NewShlexExpanderFactory(escapeToken rune) *ShlexExpanderFactory {
 func (factory *ShlexExpanderFactory) GetExpander(opts dockerfile.ExpandOptions) dockerfile.Expander {
 	shlex := shell.NewLex(factory.EscapeToken)
 	shlex.SkipUnsetEnv = opts.SkipUnsetEnv
-	return shlex
+	return NewShlexAdapter(shlex)
 }

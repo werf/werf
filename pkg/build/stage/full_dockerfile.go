@@ -270,7 +270,7 @@ func toArgsArray(argsHashes ...map[string]string) []string {
 
 func shlexProcessWord(value string, argsArray []string) (string, error) {
 	shlex := shell.NewLex(parser.DefaultEscapeToken)
-	resolvedValue, err := shlex.ProcessWord(value, argsArray)
+	resolvedValue, _, err := shlex.ProcessWord(value, shell.EnvsFromSlice(argsArray))
 	if err != nil {
 		return "", err
 	}
