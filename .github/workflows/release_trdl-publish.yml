@@ -22,7 +22,7 @@ jobs:
     steps:
       - name: Publish without retry
         id: publish
-        uses: werf/trdl-vault-actions/publish@feat/relase/backoff-and-notification
+        uses: werf/trdl-vault-actions/publish@main
         with:
           vault-addr: ${{ secrets.TRDL_VAULT_ADDR }}
           project-name: werf
@@ -41,7 +41,7 @@ jobs:
 
       - name: Publish with retry
         if: ${{ failure() && steps.publish.conclusion == 'failure' }}
-        uses: werf/trdl-vault-actions/publish@feat/relase/backoff-and-notification
+        uses: werf/trdl-vault-actions/publish@main
         id: publish-after-sign
         with:
           vault-addr: ${{ secrets.TRDL_VAULT_ADDR }}
