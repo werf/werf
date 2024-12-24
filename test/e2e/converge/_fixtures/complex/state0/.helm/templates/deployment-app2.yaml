@@ -23,3 +23,8 @@ spec:
             - |
               echo app2 started
               false
+          startupProbe:
+            exec:
+              command:
+                - fail
+            periodSeconds: 1
