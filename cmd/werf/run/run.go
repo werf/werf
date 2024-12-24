@@ -8,10 +8,10 @@ import (
 	"time"
 
 	"github.com/docker/cli/cli"
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/spf13/cobra"
 
+	docker_container "github.com/docker/docker/api/types/container"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/build"
@@ -277,7 +277,7 @@ func runMain(ctx context.Context) error {
 				time.Sleep(500 * time.Millisecond)
 				fmt.Printf("Attaching to container %s ...\n", containerName)
 
-				resp, err := docker.ContainerAttach(ctx, containerName, types.ContainerAttachOptions{
+				resp, err := docker.ContainerAttach(ctx, containerName, docker_container.AttachOptions{
 					Stream: true,
 					Stdout: true,
 					Stderr: true,
