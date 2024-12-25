@@ -890,7 +890,7 @@ func (b *NativeBuildah) Images(ctx context.Context, opts ImagesOptions) (image.I
 	for _, filter := range opts.Filters {
 		listOpts.Filters = append(listOpts.Filters, fmt.Sprintf("%s=%s", filter.First, filter.Second))
 	}
-	images, err := runtime.ListImages(ctx, opts.Names, listOpts)
+	images, err := runtime.ListImages(ctx, listOpts)
 	if err != nil {
 		return nil, err
 	}
