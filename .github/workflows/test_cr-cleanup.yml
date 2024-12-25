@@ -26,7 +26,7 @@ jobs:
           # - gcr
           # - github
           # - harbor
-          - quay
+          # - quay
     runs-on: ubuntu-22.04
     env:
       GOOGLE_PROJECT_ID: ${{ secrets.GOOGLE_PROJECT_ID }}
