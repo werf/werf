@@ -21,7 +21,7 @@ runs:
     - if: inputs.coverage == 'true'
       name: Set timestamp
       shell: bash
-      run: echo "TIMESTAMP=$(date +%H%M%S)" >> $GITHUB_ENV
+      run: echo "TIMESTAMP=$(date +%H%M%S%N)" >> $GITHUB_ENV
 
     - if: inputs.coverage == 'true'
       name: Upload coverage artifact
