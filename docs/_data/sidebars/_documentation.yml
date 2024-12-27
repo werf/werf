@@ -46,6 +46,9 @@ entries:
                   - title: Reducing image size and speeding up a build by mounts
                     url: /usage/build/stapel/mounts.html
 
+              - title: Build backends
+                url: /usage/build/backends.html
+
               - title: Build process
                 url: /usage/build/process.html
 
@@ -117,6 +120,9 @@ entries:
           - title: Deploy annotations
             url: /reference/deploy_annotations.html
 
+          - title: werf images
+            url: /reference/werf_images.html
+
           - title: Command line interface
             f: "#!*cli"
 
@@ -179,6 +185,9 @@ entries:
 
                   - title: Ускорение сборки и уменьшение размера за счёт монтирования
                     url: /usage/build/stapel/mounts.html
+
+              - title: Сборочные бэкенды
+                url: /usage/build/backends.html
 
               - title: Сборочный процесс
                 url: /usage/build/process.html
@@ -250,6 +259,9 @@ entries:
 
           - title: Аннотации для деплоя
             url: /reference/deploy_annotations.html
+
+          - title: Образы werf
+            url: /reference/werf_images.html
 
           - title: Интерфейс командной строки
             f: "#!*cli"
