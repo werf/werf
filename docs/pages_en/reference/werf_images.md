@@ -7,10 +7,10 @@ The [release process]({{ site.url }}/about/release_channels.html) for werf inclu
 
 The images follow the naming convention:
 
-- `registry.werf.io/werf/werf:<group>-<channel>-<os>` (e.g., `registry.werf.io/werf/werf:2-stable-alpine`);
-- `registry.werf.io/werf/werf:<group>-<channel>` (e.g., `registry.werf.io/werf/werf:2-stable`);
-- `registry.werf.io/werf/werf:<group>` (e.g., `registry.werf.io/werf/werf:2`);
 - `registry.werf.io/werf/werf:latest`.
+- `registry.werf.io/werf/werf:<group>` (e.g., `registry.werf.io/werf/werf:2`);
+- `registry.werf.io/werf/werf:<group>-<channel>` (e.g., `registry.werf.io/werf/werf:2-stable`);
+- `registry.werf.io/werf/werf:<group>-<channel>-<os>` (e.g., `registry.werf.io/werf/werf:2-stable-alpine`);
 
 Where:
 
