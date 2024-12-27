@@ -42,18 +42,18 @@ werf может использовать драйвер хранилища `over
 
 Формат `WERF_BUILDAH_ULIMIT=type:softlimit[:hardlimit][,type:softlimit[:hardlimit],...]` — конфигурация лимитов, указанные через запятую:
 
-* `core`: maximum core dump size (ulimit -c).
-* `cpu`: maximum CPU time (ulimit -t).
-* `data`: maximum size of a process's data segment (ulimit -d).
-* `fsize`: maximum size of new files (ulimit -f).
-* `locks`: maximum number of file locks (ulimit -x).
-* `memlock`: maximum amount of locked memory (ulimit -l).
-* `msgqueue`: maximum amount of data in message queues (ulimit -q).
-* `nice`: niceness adjustment (nice -n, ulimit -e).
-* `nofile`: maximum number of open files (ulimit -n).
-* `nproc`: maximum number of processes (ulimit -u).
-* `rss`: maximum size of a process's resident set size (ulimit -m).
-* `rtprio`: maximum real-time scheduling priority (ulimit -r).
-* `rttime`: maximum real-time execution between blocking syscalls.
-* `sigpending`: maximum number of pending signals (ulimit -i).
-* `stack`: maximum stack size (ulimit -s).
+* `core`: максимальный размер дампа ядра (ulimit -c).
+* `cpu`: максимальное время процессора (ulimit -t).
+* `data`: максимальный размер сегмента данных процесса (ulimit -d).
+* `fsize`: максимальный размер новых файлов (ulimit -f).
+* `locks`: максимальное количество блокировок файлов (ulimit -x).
+* `memlock`: максимальное количество заблокированной памяти (ulimit -l).
+* `msgqueue`: максимальное количество данных в очередях сообщений (ulimit -q).
+* `nice`: настройка "niceness" (nice -n, ulimit -e).
+* `nofile`: максимальное количество открытых файлов (ulimit -n).
+* `nproc`: максимальное количество процессов (ulimit -u).
+* `rss`: максимальный размер резидентного набора памяти процесса (ulimit -m).
+* `rtprio`: максимальный приоритет для реального времени (ulimit -r).
+* `rttime`: максимальное время реального исполнения между блокирующими системными вызовами.
+* `sigpending`: максимальное количество ожидающих сигналов (ulimit -i).
+* `stack`: максимальный размер стека (ulimit -s).
