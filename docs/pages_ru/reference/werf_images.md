@@ -14,6 +14,6 @@ permalink: reference/werf_images.html
 
 Где:
 
-* <group>: группа `1.2` или `2` (по умолчанию);
-* <channel>: канал выпуска `alpha`, `beta`, `ea`, `stable` (по умолчанию) или `rock-solid`;
-* <os>: операционная система `alpine` (по умолчанию), `ubuntu` или `fedora`.
+* `<group>`: группа `1.2` или `2` (по умолчанию);
+* `<channel>`: канал выпуска `alpha`, `beta`, `ea`, `stable` (по умолчанию) или `rock-solid`;
+* `<os>`: операционная система `alpine` (по умолчанию), `ubuntu` или `fedora`.
