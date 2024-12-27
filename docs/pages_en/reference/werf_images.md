@@ -15,5 +15,5 @@ The images follow the naming convention:
 Where:
 
 - `<group>`: version group, such as `1.2` or `2` (default);
-- `<channel>`: release channel, such as `alpha`, `beta`, `ea`, `stable` (default), or `rock-solid` — representing different stages of stability;
+- `<channel>`: release channel, such as `alpha`, `beta`, `ea`, `stable` (default), or `rock-solid`;
 - `<os>`: operating system, such as `alpine` (default), `ubuntu`, or `fedora`.
