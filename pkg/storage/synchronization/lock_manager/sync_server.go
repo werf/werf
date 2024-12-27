@@ -123,7 +123,8 @@ func PromptRewriteSyncRepoServer(ctx context.Context, specified, repoServer stri
 	errCh := make(chan error)
 
 	go func() {
-		prompt := fmt.Sprintf("Specified synchronization server %s is different from synchronization server from repo %s. Do you want to proceed? (Y/n): ", specified, repoServer)
+		logboek.Context(ctx).Warn().LogLn("WARNING: A different sync server was detected than the one registered in the repository. This may cause inconsistencies in image builds. Ensure consistency or force the new one!")
+		prompt := fmt.Sprintf("Do you want to overwite current server %s to %s? (Y/n): ", repoServer, specified)
 		resp, err := askForConfirmation(prompt)
 		if err != nil {
 			errCh <- err
@@ -149,7 +150,7 @@ func PromptRewriteSyncRepoServer(ctx context.Context, specified, repoServer stri
 func askForConfirmation(prompt string) (bool, error) {
 	r := os.Stdin
 
-	fmt.Println(logboek.Colorize(color.Style{color.FgLightYellow}, prompt))
+	fmt.Println(logboek.Colorize(color.Style{color.Bold}, prompt))
 
 	isTerminal := terminal.IsTerminal(int(r.Fd()))
 	if isTerminal {
