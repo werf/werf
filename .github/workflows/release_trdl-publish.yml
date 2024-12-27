@@ -51,7 +51,7 @@ jobs:
           vault-secret-id: ${{ secrets.TRDL_VAULT_SECRET_ID }}
           retry: true
 
-      - name: set job conclusion
+      - name: Set job conclusion
         if: ${{ failure() && steps.publish-after-sign.conclusion == 'success' }}
         id: job-conclusion
         run: echo "status=success" >> $GITHUB_OUTPUT
