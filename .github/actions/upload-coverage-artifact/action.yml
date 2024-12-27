@@ -27,5 +27,5 @@ runs:
       name: Upload coverage artifact
       uses: actions/upload-artifact@v4
       with:
-        name: coverage-${{ env.TIMESTAMP }}
+        name: coverage-${{ github.job }}-${{ env.TIMESTAMP }}
         path: coverage
