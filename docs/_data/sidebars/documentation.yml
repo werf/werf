@@ -682,7 +682,7 @@ entries:
 
               - title: Build process
                 url: /usage/build/process.html
-              
+
               - title: Build backends
                 url: /usage/build/backends.html
 
@@ -866,15 +866,17 @@ entries:
               - title: Бандлы и чарты
                 url: /usage/distribute/bundles.html
 
-          - title: Очистка container registry
-            url: /usage/cr_cleanup.html
+          - title: Очистка
+            f:
+              - title: Очистка container registry
+                url: /usage/cleanup/cr_cleanup.html
+
+              - title: Автоматическая очистка хоста
+                url: /usage/cleanup/host_cleanup.html
 
           - title: Интеграция с CI/CD-системами
             url: /usage/integration_with_ci_cd_systems.html
 
-          - title: Доступные образа werf
-            url: /usage/werf_images.md
-            
       - title: Справочник
         f:
           - title: werf.yaml

@@ -3,39 +3,29 @@ title: Build backends
 permalink: usage/build/backends.html
 ---
 
-> **NOTE:** werf supports building images using either the _Docker-server_ or _Buildah_. Both Dockerfile-based and stapel-based image builds are supported via Buildah.
+## Overview
 
-## Docker
+werf supports the following build backends:
 
-Docker is the default build backend. 
+-	Docker — the traditional method that uses the system Docker Daemon.
+-	Buildah — a secure, daemonless build option that supports rootless mode and is fully embedded into werf.
 
-### Multi-platform builds
-
-You can create multi-platform images using QEMU emulation:
-
-```bash
-docker run --restart=always --name=qemu-user-static -d --privileged --entrypoint=/bin/sh multiarch/qemu-user-static -c "/register --reset -p yes && tail -f /dev/null"
-```
+> The requirements and system preparation steps for using these build backends are described in the [Getting Started]({{ site.url }}/getting_started/) section of the website.
 
 ## Buildah
 
-For daemonless builds, werf uses the integrated Buildah.
+> **NOTE:** Currently, Buildah is available only for Linux users and Windows users with WSL2 enabled. For macOS users, it is recommended to use a virtual machine to run werf in Buildah mode.
 
 Buildah can be enabled by setting the environment variable `WERF_BUILDAH_MODE` to one of the following: `auto`, `native-chroot`, `native-rootless`.
-You can switch the build backend to Buildah by setting `WERF_BUILDAH_MODE=auto`.
 
 ```bash
 # Switching to Buildah
 export WERF_BUILDAH_MODE=auto
 ```
 
-* `auto`: Automatic mode selection based on the platform and environment.
-* `native-chroot`: Works only on Linux and uses chroot isolation for build containers.
-* `native-rootless`: Works only on Linux and uses rootless isolation for build containers. At this isolation level, werf uses container runtime environments (runc, crun, kata, or runsc).
-
-For most users, enabling Buildah mode is as simple as setting `WERF_BUILDAH_MODE=auto`.
-
-> **NOTE:** Currently, Buildah is available only for Linux users and Windows users with WSL2 enabled. Full support for macOS users is planned but not yet available. For macOS users, it is recommended to use a virtual machine to run werf in Buildah mode.
+* auto — automatic mode selection based on the platform and environment.
+*	native-chroot — uses chroot isolation for build containers.
+*	native-rootless — uses rootless isolation for build containers. At this level, werf utilizes a container runtime for build operations (e.g., runc, crun, kata, or runsc).
 
 ### Storage Driver
 
@@ -43,6 +33,7 @@ werf can use either the `overlay` or `vfs` storage driver:
 
 * `overlay`: Uses the OverlayFS file system. Either kernel-integrated OverlayFS support (if available) or the fuse-overlayfs implementation can be used. This is the recommended default option.
 * `vfs`: Provides access to a virtual file system instead of OverlayFS. This option has lower performance and requires a privileged container, so it is not recommended. However, it may be useful in some cases.
+
 In general, the default driver (`overlay`) should suffice. The storage driver can be specified using the environment variable `WERF_BUILDAH_STORAGE_DRIVER`.
 
 ### Ulimits
@@ -66,61 +57,3 @@ Format: `WERF_BUILDAH_ULIMIT=type:softlimit[:hardlimit][,type:softlimit[:hardlim
 * "rttime": maximum real-time execution between blocking syscalls
 * "sigpending": maximum number of pending signals (ulimit -i)
 * "stack": maximum stack size (ulimit -s)
-
-## Available werf images
-
-Below is a list of images with the built-in werf utility. Each image is updated as part of the release process, based on the trdl package manager ([more about update channels]({{ site.url }}/about/release_channels.html)).
-
-* `registry.werf.io/werf/werf:latest` -> `registry.werf.io/werf/werf:1.2-stable`;
-* `registry.werf.io/werf/werf:1.2-alpha` -> `registry.werf.io/werf/werf:1.2-alpha-alpine`;
-* `registry.werf.io/werf/werf:1.2-beta` -> `registry.werf.io/werf/werf:1.2-beta-alpine`;
-* `registry.werf.io/werf/werf:1.2-ea` -> `registry.werf.io/werf/werf:1.2-ea-alpine`;
-* `registry.werf.io/werf/werf:1.2-stable` -> `registry.werf.io/werf/werf:1.2-stable-alpine`;
-* `registry.werf.io/werf/werf:1.2-rock-solid` -> `registry.werf.io/werf/werf:1.2-rock-solid-alpine`;
-* `registry.werf.io/werf/werf:1.2-alpha-alpine`;
-* `registry.werf.io/werf/werf:1.2-beta-alpine`;
-* `registry.werf.io/werf/werf:1.2-ea-alpine`;
-* `registry.werf.io/werf/werf:1.2-stable-alpine`;
-* `registry.werf.io/werf/werf:1.2-rock-solid-alpine`;
-* `registry.werf.io/werf/werf:1.2-alpha-ubuntu`;
-* `registry.werf.io/werf/werf:1.2-beta-ubuntu`;
-* `registry.werf.io/werf/werf:1.2-ea-ubuntu`;
-* `registry.werf.io/werf/werf:1.2-stable-ubuntu`;
-* `registry.werf.io/werf/werf:1.2-rock-solid-ubuntu`;
-* `registry.werf.io/werf/werf:1.2-alpha-fedora`;
-* `registry.werf.io/werf/werf:1.2-beta-fedora`;
-* `registry.werf.io/werf/werf:1.2-ea-fedora`;
-* `registry.werf.io/werf/werf:1.2-stable-fedora`;
-* `registry.werf.io/werf/werf:1.2-rock-solid-fedora`.
-
-## Example local build
-
-```yaml
-# werf.yaml
-project: app
-configVersion: 1
-build:
-  platform:
-    - linux/amd64
-    - linux/arm64
----
-image: alpine
-dockerfile: Dockerfile
-```
-
-```
-# Dockerfile
-FROM alpine
-```
-Building with docker
-
-```bash
-werf build # или DOCKER_BUILDKIT=0 werf build
-```
-
-Building with buildah
-
-```bash
-WERF_BUILDAH_MODE=auto werf build
-```
-
