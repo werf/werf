@@ -37,7 +37,7 @@ buildah-test
 *.DS_Store
 ._*
 
-/Taskfile.ya?ml
+/Taskfile.yaml
 /build
 /dist
 /.github/actions/get-commit-message/node_modules/

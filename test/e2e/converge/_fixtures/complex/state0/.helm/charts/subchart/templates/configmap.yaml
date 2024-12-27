@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-subchart
+data:
+  werf_namespace: "{{ .Values.werf.namespace }}"
+  werf_env: "{{ .Values.werf.env }}"
+
+  chart_name: "{{ .Chart.Name }}"
+  chart_version: "{{ .Chart.Version }}"
+
+  template_base_path: "{{ .Template.BasePath }}"
+  template_name: "{{ .Template.Name }}"
+
+  global_preserved: "{{ .Values.global.preserved }}"
+  preserved: "{{ .Values.preserved }}"
+  added_via_set: "{{ .Values.added_via_set }}"
+  added_via_parent_values: "{{ .Values.added_via_parent_values }}"
+  overridden_via_set: "{{ .Values.overridden_via_set }}"
+  overridden_via_parent_values: "{{ .Values.overridden_via_parent_values }}"
+
+  overridden_via_parent_values_list: "{{ .Values.overridden_via_parent_values_list | join ", " }}"

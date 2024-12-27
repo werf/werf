@@ -1,0 +1,8 @@
+preserved: preserved
+overridden_via_parent_values: will_be_overridden
+overridden_via_parent_values_list:
+  - will_be_overridden1
+  - will_be_overridden2
+
+import:
+  added_via_import: added_via_import

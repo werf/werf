@@ -1,12 +1,35 @@
-apiVersion: v2
-name: werf-test-e2e-converge-complex
-version: 0.1.0
+name: rootchart
+appVersion: "0.1.0"
+deprecated: false
+icon: myicon
+description: mydescription
+home: myhome
+sources:
+  - mysource
+keywords:
+  - mykeyword
+annotations:
+  myanno: myannovalue
+maintainers:
+  - name: myname
+    email: myemail
+    url: myurl
 dependencies:
-  - name: hello
-    version: 0.1.0
-    repository: oci://ghcr.io/werf
-  - name: local-chart
+  - name: subchart
     version: 0.1.0
     export-values:
       - parent: werf
         child: werf
+    import-values:
+      - child: import
+        parent: import
+  - name: subchart2
+    alias: disabledchart
+    version: 0.1.0
+    condition: disabledchart.enabled
+  - name: subchart2
+    alias: aliasedchart
+    version: 0.1.0
+  - name: hello
+    version: 0.1.0
+    repository: oci://ghcr.io/werf

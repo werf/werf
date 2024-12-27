@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deployment-subsubchart
+  annotations:
+    werf.io/deploy-dependency-subchart: state=ready,kind=Deployment,name=deployment-subchart
+    sa.external-dependency.werf.io/resource: serviceaccount/default
+spec:
+  selector:
+    matchLabels:
+      app: deployment-subsubchart
+  template:
+    metadata:
+      labels:
+        app: deployment-subsubchart
+    spec:
+      imagePullSecrets:
+        - name: registry
+      containers:
+        - name: deployment-subsubchart
+          image: {{ .Values.werf.image.app2 }}
+          command:
+            - sh
+            - -ec
+            - |
+              echo deployment-subsubchart started
+
+              if ! curl service-subchart:80; then
+                echo "service-subchart:80 is not available"
+                exit 1
+              fi
+
+              echo deployment-subsubchart running
+
+              tail -f /dev/null
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            periodSeconds: 1

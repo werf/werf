@@ -1,0 +1,31 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: hook-subchart
+  annotations:
+    helm.sh/hook: pre-upgrade,pre-install,post-upgrade,post-install
+    helm.sh/hook-weight: "10"
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+    sa.external-dependency.werf.io/resource: serviceaccount/default
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      imagePullSecrets:
+        - name: registry
+      containers:
+        - name: hook-subchart
+          image: {{ .Values.werf.image.app2 }}
+          command:
+            - sh
+            - -ec
+            - |
+              echo hook-subchart started
+
+              if ! curl service-hook-rootchart:80; then
+                echo "service-hook-rootchart:80 is not available"
+                exit 1
+              fi
+
+              echo hook-subchart completed
+      restartPolicy: Never
