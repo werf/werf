@@ -1,0 +1,4 @@
+apiVersion: example.org/v1
+kind: CRDRootchart
+metadata:
+  name: cr-rootchart

@@ -1,0 +1,9 @@
+apiVersion: v2
+name: subchart
+version: 0.1.0
+dependencies:
+  - name: subsubchart
+    version: 0.1.0
+    export-values:
+      - parent: werf
+        child: werf

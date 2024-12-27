@@ -1,5 +1,25 @@
-app1:
-  option: wouldBeOverridden
+global:
+  preserved: preserved
 
-local-chart:
-  option: optionValue
+preserved: preserved
+overridden_via_set: will_be_overridden
+overridden_via_set_string: will_be_overridden
+overridden_via_values: will_be_overridden
+overridden_via_secret_values: will_be_overridden
+preserved_list:
+  - preserved
+overridden_via_set_list:
+  - will_be_overridden1
+  - will_be_overridden2
+overridden_via_values_list:
+  - will_be_overridden1
+  - will_be_overridden2
+
+subchart:
+  overridden_via_parent_values: overridden_via_parent_values
+  added_via_parent_values: added_via_parent_values
+  overridden_via_parent_values_list:
+    - overridden_via_parent_values
+
+import:
+  preserved_via_import: preserved_via_import

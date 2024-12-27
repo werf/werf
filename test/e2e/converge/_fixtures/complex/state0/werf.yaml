@@ -3,8 +3,8 @@ configVersion: 1
 
 ---
 image: app1
-from: ubuntu:22.04
+dockerfile: Dockerfile
 
 ---
 image: app2
-from: ubuntu:22.04
+dockerfile: Dockerfile

@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-rootchart
+data:
+  release_is_install: "{{ .Release.IsInstall }}"
+  release_is_upgrade: "{{ .Release.IsUpgrade }}"
+  release_revision: "{{ .Release.Revision }}"
+
+  reset_after_manual_changes_in_cluster: "reset_after_manual_changes_in_cluster"
