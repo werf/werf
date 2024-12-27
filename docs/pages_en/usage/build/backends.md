@@ -14,7 +14,7 @@ werf supports the following build backends:
 
 ## Buildah
 
-> **NOTE:** Currently, Buildah is available only for Linux users and Windows users with WSL2 enabled. For macOS users, it is recommended to use a virtual machine to run werf in Buildah mode.
+> Currently, Buildah is available only for Linux users and Windows users with WSL2 enabled. For macOS users, it is recommended to use a virtual machine to run werf in Buildah mode.
 
 Buildah can be enabled by setting the environment variable `WERF_BUILDAH_MODE` to one of the following: `auto`, `native-chroot`, `native-rootless`.
 
