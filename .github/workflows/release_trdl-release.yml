@@ -23,7 +23,7 @@ jobs:
           vault-role-id: ${{ secrets.TRDL_VAULT_ROLE_ID }}
           vault-secret-id: ${{ secrets.TRDL_VAULT_SECRET_ID }}
 
-      - name: notify
+      - name: Notify
         if: ${{ failure() && steps.release.conclusion == 'failure' }}
         uses: mattermost/action-mattermost-notify@master
         with:
