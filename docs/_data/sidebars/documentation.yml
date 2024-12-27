@@ -754,6 +754,9 @@ entries:
           - title: Deploy annotations
             url: /reference/deploy_annotations.html
 
+          - title: werf images
+            url: /reference/werf_images.html
+
           - title: Command line interface
             f: *cli
 
@@ -890,6 +893,9 @@ entries:
 
           - title: Аннотации для деплоя
             url: /reference/deploy_annotations.html
+
+          - title: Образы werf
+            url: /reference/werf_images.html
 
           - title: Интерфейс командной строки
             f: *cli

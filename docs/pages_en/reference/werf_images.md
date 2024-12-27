@@ -1,0 +1,19 @@
+---
+title: werf images
+permalink: reference/werf_images.html
+---
+
+The [release process]({{ site.url }}/about/release_channels.html) for werf includes the publication of images with pre-installed werf, necessary utilities, and pre-configured settings for building with the Buildah backend.
+
+The images follow the naming convention:
+
+- `registry.werf.io/werf/werf:<group>-<channel>-<os>` (e.g., `registry.werf.io/werf/werf:2-stable-alpine`);
+- `registry.werf.io/werf/werf:<group>-<channel>` (e.g., `registry.werf.io/werf/werf:2-stable`);
+- `registry.werf.io/werf/werf:<group>` (e.g., `registry.werf.io/werf/werf:2`);
+- `registry.werf.io/werf/werf:latest`.
+
+Where:
+
+- `<group>`: version group, such as `1.2` or `2` (default);
+- `<channel>`: release channel, such as `alpha`, `beta`, `ea`, `stable` (default), or `rock-solid` — representing different stages of stability;
+- `<os>`: operating system, such as `alpine` (default), `ubuntu`, or `fedora`.
