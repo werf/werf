@@ -3,7 +3,7 @@ title: werf images
 permalink: reference/werf_images.html
 ---
 
-The [release process]({{ site.url }}/about/release_channels.html) for werf includes the publication of images with pre-installed werf, necessary utilities, and pre-configured settings for building with the Buildah backend.
+The [release process]({{ site.url }}/about/release_channels.html) for werf includes the publication of images with werf, necessary utilities, and pre-configured settings for building with the Buildah backend.
 
 The images follow the naming convention:
 
