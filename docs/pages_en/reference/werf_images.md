@@ -5,6 +5,8 @@ permalink: reference/werf_images.html
 
 The [release process]({{ site.url }}/about/release_channels.html) for werf includes the publication of images with werf, necessary utilities, and pre-configured settings for building with the Buildah backend.
 
+> You can find examples of using werf images in the [Getting Started]({{ site.url }}/getting_started/).
+
 The images follow the naming convention:
 
 - `registry.werf.io/werf/werf:latest`.
