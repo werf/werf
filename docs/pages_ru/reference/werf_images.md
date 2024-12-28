@@ -5,6 +5,8 @@ permalink: reference/werf_images.html
 
 [Релизный процесс]({{ site.url }}/about/release_channels.html) werf включает публикацию образов с werf, необходимыми утилитами и предустановленными настройками для сборки со сборочным бэкендом Buildah. 
 
+> Примеры использования образов werf можно посмотреть в разделе [Быстрый старт]({{ site.url }}/getting_started/).
+
 Поддерживаются образы, публикуемые по следующему принципу:
 
 * `registry.werf.io/werf/werf:latest`,

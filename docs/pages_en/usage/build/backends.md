@@ -16,16 +16,15 @@ werf supports the following build backends:
 
 > Currently, Buildah is available only for Linux users and Windows users with WSL2 enabled. For macOS users, it is recommended to use a virtual machine to run werf in Buildah mode.
 
-Buildah can be enabled by setting the environment variable `WERF_BUILDAH_MODE` to one of the following: `auto`, `native-chroot`, `native-rootless`.
-
-```bash
-# Switching to Buildah
-export WERF_BUILDAH_MODE=auto
-```
+Buildah can be enabled by setting the environment variable `WERF_BUILDAH_MODE` to one of the following:
 
 * auto — automatic mode selection based on the platform and environment.
 *	native-chroot — uses chroot isolation for build containers.
 *	native-rootless — uses rootless isolation for build containers. At this level, werf utilizes a container runtime for build operations (e.g., runc, crun, kata, or runsc).
+
+```shell
+export WERF_BUILDAH_MODE=auto
+```
 
 ### Storage Driver
 
