@@ -182,6 +182,10 @@ func NewCmd(ctx context.Context) (*cobra.Command, error) {
 				os.Setenv("WERF_HELM3_MODE", "1")
 				os.Setenv("HELM_NAMESPACE", namespace)
 
+				if _commonCmdData.LogDebug != nil && *_commonCmdData.LogDebug {
+					helm_v3.Settings.Debug = *_commonCmdData.LogDebug
+				}
+
 				stubCommitDate := time.Unix(0, 0)
 
 				if vals, err := helpers.GetServiceValues(ctx, "PROJECT", "REPO", nil, helpers.ServiceValuesOptions{
