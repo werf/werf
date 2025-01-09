@@ -1,5 +1,15 @@
 # Changelog
 
+### [2.17.1](https://www.github.com/werf/werf/compare/v2.17.0...v2.17.1) (2025-01-09)
+
+
+### Bug Fixes
+
+* **build, report:** add non-final images ([cc4424b](https://www.github.com/werf/werf/commit/cc4424b92fae76ea4ae5ac82b797a35eb23aaf39))
+* **deploy:** kube-run should not require any namespace permissions ([12e5052](https://www.github.com/werf/werf/commit/12e50529e9c93ccc3187be88f16c5aa086e6cad7))
+* **deploy:** panics with subcharts ([15c1981](https://www.github.com/werf/werf/commit/15c1981286aa07a56fbb57be4b0ee4465f168a7e))
+* **test:** add giterminism for plain secret value ([74f081f](https://www.github.com/werf/werf/commit/74f081f635d107caffc191a50c171c59785e23a6))
+
 ## [2.17.0](https://www.github.com/werf/werf/compare/v2.16.3...v2.17.0) (2024-12-18)
 
 
