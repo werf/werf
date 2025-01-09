@@ -767,21 +767,21 @@ func cleanupResources(ctx context.Context, pod, secret, namespace string) {
 		return
 	}
 
-	if isPodExist, err := isPodExist(ctx, pod, namespace); err != nil {
-		logboek.Context(ctx).Warn().LogF("WARNING: unable to check for pod existence: %s\n", err)
-	} else if isPodExist {
-		logboek.Context(ctx).LogF("Cleaning up pod %q ...\n", pod)
-		if err := kube.Client.CoreV1().Pods(namespace).Delete(ctx, pod, v1.DeleteOptions{}); err != nil {
+	logboek.Context(ctx).LogF("Cleaning up pod %q ...\n", pod)
+	if err := kube.Client.CoreV1().Pods(namespace).Delete(ctx, pod, v1.DeleteOptions{}); err != nil {
+		if errors.IsNotFound(err) {
+			logboek.Context(ctx).LogF("Pod %q not found\n", pod)
+		} else {
 			logboek.Context(ctx).Warn().LogF("WARNING: pod cleaning up failed: %s\n", err)
 		}
 	}
 
 	if cmdData.AutoPullSecret && cmdData.registryCredsFound {
-		if isSecretExist, err := isSecretExist(ctx, secret, namespace); err != nil {
-			logboek.Context(ctx).Warn().LogF("WARNING: unable to check for secret existence: %s\n", err)
-		} else if isSecretExist {
-			logboek.Context(ctx).LogF("Cleaning up secret %q ...\n", secret)
-			if err := kube.Client.CoreV1().Secrets(namespace).Delete(ctx, secret, v1.DeleteOptions{}); err != nil {
+		logboek.Context(ctx).LogF("Cleaning up secret %q ...\n", secret)
+		if err := kube.Client.CoreV1().Secrets(namespace).Delete(ctx, secret, v1.DeleteOptions{}); err != nil {
+			if errors.IsNotFound(err) {
+				logboek.Context(ctx).LogF("Secret %q not found\n", secret)
+			} else {
 				logboek.Context(ctx).Warn().LogF("WARNING: secret cleaning up failed: %s\n", err)
 			}
 		}
@@ -867,30 +867,6 @@ func createDockerRegistrySecret(ctx context.Context, name, namespace string, ref
 	}
 
 	return nil
-}
-
-func isPodExist(ctx context.Context, pod, namespace string) (bool, error) {
-	if matchedPods, err := kube.Client.CoreV1().Pods(namespace).List(ctx, v1.ListOptions{
-		FieldSelector: fields.OneTermEqualSelector("metadata.name", pod).String(),
-	}); err != nil {
-		return false, fmt.Errorf("unable to list pods: %w", err)
-	} else if len(matchedPods.Items) > 0 {
-		return true, nil
-	}
-
-	return false, nil
-}
-
-func isSecretExist(ctx context.Context, secret, namespace string) (bool, error) {
-	if matchedSecrets, err := kube.Client.CoreV1().Secrets(namespace).List(ctx, v1.ListOptions{
-		FieldSelector: fields.OneTermEqualSelector("metadata.name", secret).String(),
-	}); err != nil {
-		return false, fmt.Errorf("unable to list secrets: %w", err)
-	} else if len(matchedSecrets.Items) > 0 {
-		return true, nil
-	}
-
-	return false, nil
 }
 
 // Might return empty DockerAuthConfig.
