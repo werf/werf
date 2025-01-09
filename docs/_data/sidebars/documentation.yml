@@ -822,7 +822,7 @@ entries:
 
               - title: Сборочные бэкенды
                 url: /usage/build/backends.html
-                
+
               - title: Сборочный процесс
                 url: /usage/build/process.html
 
