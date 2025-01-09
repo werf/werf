@@ -17,6 +17,7 @@ import (
 	imgtypes "github.com/containers/image/v5/types"
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -766,13 +767,6 @@ func cleanupResources(ctx context.Context, pod, secret, namespace string) {
 		return
 	}
 
-	if isNsExist, err := isNamespaceExist(ctx, namespace); err != nil {
-		logboek.Context(ctx).Warn().LogF("WARNING: unable to check for namespace existence: %s\n", err)
-		return
-	} else if !isNsExist {
-		return
-	}
-
 	if isPodExist, err := isPodExist(ctx, pod, namespace); err != nil {
 		logboek.Context(ctx).Warn().LogF("WARNING: unable to check for pod existence: %s\n", err)
 	} else if isPodExist {
@@ -806,12 +800,6 @@ func createNamespace(ctx context.Context, namespace string) error {
 		return nil
 	}
 
-	if isNsExist, err := isNamespaceExist(ctx, namespace); err != nil {
-		return fmt.Errorf("unable to check for namespace existence: %w", err)
-	} else if isNsExist {
-		return nil
-	}
-
 	logboek.Context(ctx).LogF("Creating namespace %q ...\n", namespace)
 
 	if _, err := kube.Client.CoreV1().Namespaces().Create(
@@ -823,7 +811,14 @@ func createNamespace(ctx context.Context, namespace string) error {
 		},
 		v1.CreateOptions{},
 	); err != nil {
-		return fmt.Errorf("error creating namespace %q: %w", namespace, err)
+		if errors.IsAlreadyExists(err) {
+			logboek.Context(ctx).LogF("Namespace %q already exists\n", namespace)
+			return nil
+		} else if errors.IsForbidden(err) {
+			logboek.Context(ctx).Warn().LogF("WARNING: unable to create namespace %q: %s\n", namespace, err)
+		} else {
+			return fmt.Errorf("error creating namespace %q: %w", namespace, err)
+		}
 	}
 
 	return nil
@@ -872,18 +867,6 @@ func createDockerRegistrySecret(ctx context.Context, name, namespace string, ref
 	}
 
 	return nil
-}
-
-func isNamespaceExist(ctx context.Context, namespace string) (bool, error) {
-	if matchedNamespaces, err := kube.Client.CoreV1().Namespaces().List(ctx, v1.ListOptions{
-		FieldSelector: fields.OneTermEqualSelector("metadata.name", namespace).String(),
-	}); err != nil {
-		return false, fmt.Errorf("unable to list namespaces: %w", err)
-	} else if len(matchedNamespaces.Items) > 0 {
-		return true, nil
-	}
-
-	return false, nil
 }
 
 func isPodExist(ctx context.Context, pod, namespace string) (bool, error) {
