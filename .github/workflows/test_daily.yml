@@ -9,7 +9,10 @@ on:
 
 jobs:
   lint:
-    uses: ./.github/workflows/_lint.yml
+    uses: werf/common-ci/.github/workflows/lint.yml@chore/ci/lint
+    with:
+      directories: '["."]'
+      cmd: task -p lint:golangci-lint
 
   unit:
     uses: ./.github/workflows/_test_unit.yml
