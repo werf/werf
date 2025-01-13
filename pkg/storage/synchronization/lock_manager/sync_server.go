@@ -140,7 +140,7 @@ func PromptRewriteSyncRepoServer(ctx context.Context, specified, repoServer stri
 		return fmt.Errorf("error getting prompt response: %w", err)
 	case response := <-respCh:
 		if !response {
-			return fmt.Errorf("operation aborted. please use the synchronization server from the repository or overwrite the server from the repository. please consider the consequences and proceed at your own risk.")
+			return fmt.Errorf("operation aborted. You may use the synchronization server from the repository or overwrite the existing server. Please be aware of the potential consequences and proceed with caution")
 		}
 	}
 
