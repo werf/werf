@@ -43,7 +43,7 @@ jobs:
     with:
       install-packages: "true"
       packages: libbtrfs-dev
-      forceSkip: ${{ github.event_name == 'pull_request' && needs.detect-changes.outputs.workflow_proceed == 'false' }}
+      force-skip: ${{ github.event_name == 'pull_request' && needs.detect-changes.outputs.workflow_proceed == 'false' }}
 
   unit:
     needs: detect-changes
