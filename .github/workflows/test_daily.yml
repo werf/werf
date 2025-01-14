@@ -11,8 +11,8 @@ jobs:
   lint:
     uses: werf/common-ci/.github/workflows/lint.yml@chore/ci/lint
     with:
-      directories: '["."]'
-      cmd: task -p lint:golangci-lint
+      install-packages: "true"
+      packages: libbtrfs-dev
 
   unit:
     uses: ./.github/workflows/_test_unit.yml
