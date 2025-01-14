@@ -21,7 +21,7 @@ const (
 )
 
 type Synchronization interface {
-	// Returns lock manager interface based on synchronization server type
+	// GetStorageLockManager returns lock manager interface based on synchronization server type
 	GetStorageLockManager(ctx context.Context) (lock_manager.Interface, error)
 }
 
@@ -91,7 +91,7 @@ func checkSynchronizationKubernetesParamsForWarnings(cmdData *CmdData) {
 	}
 }
 
-// Determinate the type of a synchronization server
+// GetSynchronization determines the type of synchronization server
 func GetSynchronization(ctx context.Context, cmdData *CmdData, projectName string, stagesStorage storage.StagesStorage) (Synchronization, error) {
 	params := lock_manager.SynchronizationParams{
 		ProjectName:   projectName,

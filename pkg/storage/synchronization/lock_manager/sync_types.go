@@ -31,7 +31,7 @@ type LocalSynchronization struct {
 	address string
 }
 
-// Returns local synchronization parameters
+// NewLocalSynchronization returns local synchronization parameters
 func NewLocalSynchronization(ctx context.Context, params SynchronizationParams) (*LocalSynchronization, error) {
 	serverAddress := storage.LocalStorageAddress
 	if ForceSyncServerRepo == "true" {
@@ -46,7 +46,7 @@ func NewLocalSynchronization(ctx context.Context, params SynchronizationParams) 
 	}, nil
 }
 
-func (s *LocalSynchronization) GetStorageLockManager(ctx context.Context) (Interface, error) {
+func (s *LocalSynchronization) GetStorageLockManager(_ context.Context) (Interface, error) {
 	return NewGeneric(werf.GetHostLocker()), nil
 }
 
@@ -55,7 +55,7 @@ type HttpSynchronization struct {
 	clientId string
 }
 
-// Returns http/https synchronization parameters
+// NewHttpSynchronization returns http/https synchronization parameters
 func NewHttpSynchronization(ctx context.Context, params SynchronizationParams) (*HttpSynchronization, error) {
 	var clientID string
 	var err error
@@ -81,6 +81,7 @@ func NewHttpSynchronization(ctx context.Context, params SynchronizationParams) (
 		}); err != nil {
 		return nil, fmt.Errorf("unable to init http synchronization: %w", err)
 	}
+
 	return &HttpSynchronization{
 		address:  serverAddress,
 		clientId: clientID,
@@ -96,7 +97,7 @@ type KubernetesSynchronization struct {
 	kubeParams *KubernetesParams
 }
 
-// Returns kubernetes synchronization parameters
+// NewKubernetesSynchronization returns kubernetes synchronization parameters
 func NewKubernetesSynchronization(ctx context.Context, params SynchronizationParams) (*KubernetesSynchronization, error) {
 	serverAddress := params.ServerAddress
 	if ForceSyncServerRepo == "true" {
@@ -130,7 +131,7 @@ func NewKubernetesSynchronization(ctx context.Context, params SynchronizationPar
 	}, nil
 }
 
-func (s *KubernetesSynchronization) GetStorageLockManager(ctx context.Context) (Interface, error) {
+func (s *KubernetesSynchronization) GetStorageLockManager(_ context.Context) (Interface, error) {
 	if config, err := kube.GetKubeConfig(kube.KubeConfigOptions{
 		ConfigPath:          s.kubeParams.ConfigPath,
 		ConfigDataBase64:    s.kubeParams.ConfigDataBase64,

@@ -925,7 +925,7 @@ func (storage *RepoStagesStorage) FilterStageDescSetAndProcessRelatedData(_ cont
 	return stageDescSet, nil
 }
 
-// Get sync server address from repo
+// GetSyncServerRecords gets sync server address from repo
 func (storage *RepoStagesStorage) GetSyncServerRecords(ctx context.Context, projectName string, opts ...Option) ([]*SyncServerRecord, error) {
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetSyncServerRecords for project %s\n", projectName)
 
@@ -964,7 +964,7 @@ func (storage *RepoStagesStorage) GetSyncServerRecords(ctx context.Context, proj
 	return res, nil
 }
 
-// Update sync server address from repo
+// PostSyncServerRecord posts sync server address to repo
 func (storage *RepoStagesStorage) PostSyncServerRecord(ctx context.Context, projectName string, rec *SyncServerRecord) error {
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PostSyncServer %s for project %s\n", rec.Server, projectName)
 

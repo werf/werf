@@ -20,7 +20,7 @@ var ErrNoSyncServerFound = errors.New("no synchronization server found")
 // go build -ldflags github.com/werf/werf/v2/pkg/storage/synchronization/lock_manager.ForceSyncServerRepo=true"
 var ForceSyncServerRepo string
 
-// Get sync server name from repository or try to create record is doesn't exist
+// GetOrCreateSyncServer gets sync server record from container registry or try to create one if not exist
 func GetOrCreateSyncServer(ctx context.Context, projectName, serverAddress string, stagesStorage storage.StagesStorage) (string, error) {
 	server, err := getSyncServer(ctx, projectName, stagesStorage)
 	if err != nil {
@@ -51,7 +51,7 @@ func getSyncServer(ctx context.Context, projectName string, stagesStorage storag
 	return "", ErrNoSyncServerFound
 }
 
-// Create sync server name from repository or try to create record is doesn't exist
+// CreateSyncServerRecord creates sync server record or try to create one if not exist
 func CreateSyncServerRecord(ctx context.Context, projectName, serverAddress string, stagesStorage storage.StagesStorage) error {
 	now := time.Now()
 	timestampMillisec := now.Unix()*1000 + now.UnixNano()/1000_000
@@ -60,7 +60,7 @@ func CreateSyncServerRecord(ctx context.Context, projectName, serverAddress stri
 	_, err := getSyncServer(ctx, projectName, stagesStorage)
 	if err != nil {
 		if errors.Is(err, ErrNoSyncServerFound) {
-			logboek.Context(ctx).Debug().LogF("СreateSyncServerRecord no syncserver found. Creating: %s\n", serverAddress)
+			logboek.Context(ctx).Debug().LogF("CreateSyncServerRecord no sync server found. Creating: %s\n", serverAddress)
 			if err := stagesStorage.PostSyncServerRecord(ctx, projectName, rec); err != nil {
 				return err
 			}
@@ -74,13 +74,13 @@ func CreateSyncServerRecord(ctx context.Context, projectName, serverAddress stri
 	return nil
 }
 
-// Overwrite sync existed sync server
+// OverwriteSyncServerRepo overwrites sync server record
 func OverwriteSyncServerRepo(ctx context.Context, projectName, serverAddress string, stagesStorage storage.StagesStorage) error {
 	now := time.Now()
 	timestampMillisec := now.Unix()*1000 + now.UnixNano()/1000_000
 	rec := &storage.SyncServerRecord{Server: serverAddress, TimestampMillisec: timestampMillisec}
 
-	logboek.Context(ctx).Debug().LogF("СreateSyncServerRecord no synchronization server found. Creating: %s\n", serverAddress)
+	logboek.Context(ctx).Debug().LogF("CreateSyncServerRecord no synchronization server found. Creating: %s\n", serverAddress)
 	if err := stagesStorage.PostSyncServerRecord(ctx, projectName, rec); err != nil {
 		return fmt.Errorf("unable to overwrite sync server: %w", err)
 	}
@@ -89,13 +89,13 @@ func OverwriteSyncServerRepo(ctx context.Context, projectName, serverAddress str
 }
 
 func getSyncServerFromStorage(ctx context.Context, projectName string, stagesStorage storage.StagesStorage) (string, error) {
-	syncServerReords, err := stagesStorage.GetSyncServerRecords(ctx, projectName)
+	syncServerRecords, err := stagesStorage.GetSyncServerRecords(ctx, projectName)
 	if err != nil {
 		return "", fmt.Errorf("can't get synchronization server records: %w", err)
 	}
 
-	if len(syncServerReords) > 0 {
-		res := selectOldestSyncServerRecord(syncServerReords)
+	if len(syncServerRecords) > 0 {
+		res := selectOldestSyncServerRecord(syncServerRecords)
 		logboek.Context(ctx).Debug().LogF("GetSyncServerFromStorage %s selected server: %s\n", projectName, res.Server)
 		return res.Server, nil
 	}
@@ -113,7 +113,7 @@ func selectOldestSyncServerRecord(records []*storage.SyncServerRecord) *storage.
 	return foundRec
 }
 
-// It shows prompt message. Could be used if sync server differs from specified
+// PromptRewriteSyncRepoServer shows prompt message. Could be used if sync server differs from specified
 func PromptRewriteSyncRepoServer(ctx context.Context, specified, repoServer string) error {
 	timeout := 2 * time.Minute // magic number
 	ctxWithTimeout, cancel := context.WithTimeout(ctx, timeout)
@@ -124,7 +124,7 @@ func PromptRewriteSyncRepoServer(ctx context.Context, specified, repoServer stri
 
 	go func() {
 		logboek.Context(ctx).Warn().LogLn("WARNING: A different sync server was detected than the one registered in the repository. This may cause inconsistencies in image builds. Ensure consistency or force the new one!")
-		prompt := fmt.Sprintf("Do you want to overwite current server %s to %s? (Y/n): ", repoServer, specified)
+		prompt := fmt.Sprintf("Do you want to overwrite the server in use from %s to %s? (Y/n): ", repoServer, specified)
 		resp, err := askForConfirmation(prompt)
 		if err != nil {
 			errCh <- err
@@ -135,7 +135,7 @@ func PromptRewriteSyncRepoServer(ctx context.Context, specified, repoServer stri
 
 	select {
 	case <-ctxWithTimeout.Done():
-		return fmt.Errorf("input timeout: no response within %s minutes. aborted", timeout.String())
+		return fmt.Errorf("input timeout: no response within %s minutes. Aborted", timeout.String())
 	case err := <-errCh:
 		return fmt.Errorf("error getting prompt response: %w", err)
 	case response := <-respCh:
