@@ -34,16 +34,16 @@ groups:
       - name: stable
         version: 1.2.333
       - name: rock-solid
-        version: 1.2.330
+        version: 1.2.333
   - name: "2"
     channels:
       - name: alpha
-        version: 2.17.0
+        version: 2.18.0
       - name: beta
-        version: 2.16.3
+        version: 2.17.0
       - name: ea
-        version: 2.16.2
+        version: 2.16.3
       - name: stable
-        version: 2.16.1+fix1
+        version: 2.16.2
       - name: rock-solid
         version: 2.16.1+fix1
