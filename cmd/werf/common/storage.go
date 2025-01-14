@@ -50,7 +50,7 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
 		return nil, fmt.Errorf("error get synchronization: %w", err)
 	}
 
-	storageLockManager, err := GetStorageLockManager(ctx, synchronization)
+	storageLockManager, err := synchronization.GetStorageLockManager(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error get storage lock manager: %w", err)
 	}
