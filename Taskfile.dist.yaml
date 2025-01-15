@@ -19,13 +19,13 @@ vars:
   withCoverageBinary: './bin/werf-with-coverage{{if (eq .targetOS "windows")}}.exe{{end}}'
   package: "github.com/werf/werf/v2/cmd/werf"
 
-  cgoTags: "dfrunsecurity dfrunnetwork dfrunmount dfssh containers_image_openpgp osusergo exclude_graphdriver_devicemapper netgo no_devmapper static_build cni"
-  cgoDevLDFlags: "-linkmode external -extldflags=-static"
-  cgoReleaseLDFlags: "-linkmode external -extldflags=-static -s -w -X github.com/werf/werf/v2/pkg/werf.Version={{.version}}"
-
   goTags: "dfrunsecurity dfrunnetwork dfrunmount dfssh containers_image_openpgp"
   goDevLDFlags: ""
   goReleaseLDFlags: "-s -w -X github.com/werf/werf/v2/pkg/werf.Version={{.version}}"
+
+  cgoTags: "{{.goTags}} osusergo exclude_graphdriver_devicemapper netgo no_devmapper static_build cni"
+  cgoDevLDFlags: "-linkmode external -extldflags=-static"
+  cgoReleaseLDFlags: "{{.cgoDevLDFlags}} {{.goReleaseLDFlags}}"
 
 tasks:
   _build-and-lint:
