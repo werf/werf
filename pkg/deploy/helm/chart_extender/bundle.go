@@ -10,7 +10,6 @@ import (
 	"text/template"
 
 	"github.com/werf/3p-helm/pkg/chart"
-	"github.com/werf/3p-helm/pkg/chart/loader"
 	"github.com/werf/3p-helm/pkg/cli"
 	"github.com/werf/3p-helm/pkg/postrender"
 	"github.com/werf/3p-helm/pkg/registry"
@@ -18,14 +17,13 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/deploy/helm"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
-	"github.com/werf/werf/v2/pkg/deploy/helm/command_helpers"
 )
 
 var _ chart.ChartExtender = (*Bundle)(nil)
 
 type BundleOptions struct {
 	SecretValueFiles                  []string
-	BuildChartDependenciesOpts        command_helpers.BuildChartDependenciesOptions
+	BuildChartDependenciesOpts        chart.BuildChartDependenciesOptions
 	ExtraAnnotations                  map[string]string
 	ExtraLabels                       map[string]string
 	IgnoreInvalidAnnotationsAndLabels bool
@@ -46,7 +44,6 @@ func NewBundle(
 		RegistryClient:                 registryClient,
 		BuildChartDependenciesOpts:     opts.BuildChartDependenciesOpts,
 		ChartExtenderServiceValuesData: helpers.NewChartExtenderServiceValuesData(),
-		ChartExtenderContextData:       helpers.NewChartExtenderContextData(ctx),
 		DisableDefaultValues:           opts.DisableDefaultValues,
 	}
 
@@ -81,12 +78,11 @@ type Bundle struct {
 	HelmChart                             *chart.Chart
 	HelmEnvSettings                       *cli.EnvSettings
 	RegistryClient                        *registry.Client
-	BuildChartDependenciesOpts            command_helpers.BuildChartDependenciesOptions
+	BuildChartDependenciesOpts            chart.BuildChartDependenciesOptions
 	DisableDefaultValues                  bool
 	ExtraAnnotationsAndLabelsPostRenderer *helm.ExtraAnnotationsAndLabelsPostRenderer
 
 	*helpers.ChartExtenderServiceValuesData
-	*helpers.ChartExtenderContextData
 }
 
 func (bundle *Bundle) ChainPostRenderer(postRenderer postrender.PostRenderer) postrender.PostRenderer {
@@ -110,7 +106,7 @@ func (bundle *Bundle) ChartCreated(c *chart.Chart) error {
 // ChartLoaded method for the chart.Extender interface
 func (bundle *Bundle) ChartLoaded(files []*file.ChartExtenderBufferedFile) error {
 	if bundle.DisableDefaultValues {
-		logboek.Context(bundle.ChartExtenderContext).Info().LogF("Disable default werf chart values\n")
+		logboek.Context(context.Background()).Info().LogF("Disable default werf chart values\n")
 		bundle.HelmChart.Values = nil
 	}
 
@@ -131,34 +127,9 @@ func (bundle *Bundle) MakeValues(inputVals map[string]interface{}) (map[string]i
 func (bundle *Bundle) SetupTemplateFuncs(t *template.Template, funcMap template.FuncMap) {
 }
 
-func convertBufferedFilesForChartExtender(files []*loader.BufferedFile) []*file.ChartExtenderBufferedFile {
-	var res []*file.ChartExtenderBufferedFile
-	for _, f := range files {
-		f1 := new(file.ChartExtenderBufferedFile)
-		*f1 = file.ChartExtenderBufferedFile(*f)
-		res = append(res, f1)
-	}
-	return res
-}
-
 // LoadDir method for the chart.Extender interface
 func (bundle *Bundle) LoadDir(dir string) (bool, []*file.ChartExtenderBufferedFile, error) {
-	files, err := loader.GetFilesFromLocalFilesystem(dir)
-	if err != nil {
-		return true, nil, err
-	}
-
-	res, err := LoadChartDependencies(bundle.ChartExtenderContext, func(
-		ctx context.Context,
-		dir string,
-	) ([]*file.ChartExtenderBufferedFile, error) {
-		files, err := loader.GetFilesFromLocalFilesystem(dir)
-		if err != nil {
-			return nil, err
-		}
-		return convertBufferedFilesForChartExtender(files), nil
-	}, dir, convertBufferedFilesForChartExtender(files), bundle.HelmEnvSettings, bundle.RegistryClient, bundle.BuildChartDependenciesOpts)
-	return true, res, err
+	return false, nil, nil
 }
 
 // LocateChart method for the chart.Extender interface
@@ -193,6 +164,14 @@ func (bundle *Bundle) GetProjectDir() string {
 
 func (bundle *Bundle) GetChartDir() string {
 	return bundle.Dir
+}
+
+func (bundle *Bundle) SetChartDir(dir string) {
+	bundle.Dir = dir
+}
+
+func (bundle *Bundle) GetBuildChartDependenciesOpts() chart.BuildChartDependenciesOptions {
+	return bundle.BuildChartDependenciesOpts
 }
 
 func writeBundleJsonMap(dataMap map[string]string, path string) error {

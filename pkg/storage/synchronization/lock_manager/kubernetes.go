@@ -9,12 +9,12 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 
+	"github.com/werf/common-go/pkg/lock"
 	"github.com/werf/lockgate"
 	"github.com/werf/lockgate/pkg/distributed_locker"
 	"github.com/werf/logboek"
 	"github.com/werf/nelm/pkg/locker_with_retry"
 	"github.com/werf/werf/v2/pkg/kubeutils"
-	"github.com/werf/werf/v2/pkg/werf"
 )
 
 func NewKubernetes(
@@ -79,7 +79,7 @@ func (manager *Kubernetes) LockStage(
 	if locker, err := manager.getLockerForProject(ctx, projectName); err != nil {
 		return LockHandle{}, err
 	} else {
-		_, lock, err := locker.Acquire(kubernetesStageLockName(projectName, digest), werf.SetupLockerDefaultOptions(ctx, lockgate.AcquireOptions{}))
+		_, lock, err := locker.Acquire(kubernetesStageLockName(projectName, digest), chart.SetupLockerDefaultOptions(ctx, lockgate.AcquireOptions{}))
 		return LockHandle{LockgateHandle: lock, ProjectName: projectName}, err
 	}
 }

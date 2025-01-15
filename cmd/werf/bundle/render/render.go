@@ -21,6 +21,8 @@ import (
 	"github.com/werf/3p-helm/pkg/chart"
 	"github.com/werf/3p-helm/pkg/chart/loader"
 	"github.com/werf/3p-helm/pkg/chartutil"
+	"github.com/werf/3p-helm/pkg/downloader"
+	"github.com/werf/3p-helm/pkg/getter"
 	kubefake "github.com/werf/3p-helm/pkg/kube/fake"
 	helmstorage "github.com/werf/3p-helm/pkg/storage"
 	"github.com/werf/3p-helm/pkg/storage/driver"
@@ -28,6 +30,7 @@ import (
 	"github.com/werf/3p-helm/pkg/werf/secrets/runtimedata"
 	"github.com/werf/common-go/pkg/secrets_manager"
 	"github.com/werf/common-go/pkg/util"
+	"github.com/werf/logboek"
 	"github.com/werf/nelm/pkg/chrttree"
 	helmcommon "github.com/werf/nelm/pkg/common"
 	"github.com/werf/nelm/pkg/kubeclnt"
@@ -40,7 +43,6 @@ import (
 	"github.com/werf/werf/v2/pkg/deploy/helm"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
-	"github.com/werf/werf/v2/pkg/deploy/helm/command_helpers"
 	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/werf"
 	"github.com/werf/werf/v2/pkg/werf/global_warnings"
@@ -216,7 +218,7 @@ func runRender(ctx context.Context) error {
 
 	bundle, err := chart_extender.NewBundle(ctx, bundleDir, helm_v3.Settings, helmRegistryClient, chart_extender.BundleOptions{
 		SecretValueFiles:                  common.GetSecretValues(&commonCmdData),
-		BuildChartDependenciesOpts:        command_helpers.BuildChartDependenciesOptions{IgnoreInvalidAnnotationsAndLabels: false},
+		BuildChartDependenciesOpts:        chart.BuildChartDependenciesOptions{},
 		IgnoreInvalidAnnotationsAndLabels: false,
 		ExtraAnnotations:                  userExtraAnnotations,
 		ExtraLabels:                       userExtraLabels,
@@ -236,7 +238,7 @@ func runRender(ctx context.Context) error {
 		bundle.SetServiceValues(vals)
 	}
 
-	loader.GlobalLoadOptions = &loader.LoadOptions{
+	loader.GlobalLoadOptions = &chart.LoadOptions{
 		ChartExtender: bundle,
 		SubchartExtenderFactoryFunc: func() chart.ChartExtender {
 			return chart_extender.NewWerfSubchart(ctx, chart_extender.WerfSubchartOptions{
@@ -247,6 +249,7 @@ func runRender(ctx context.Context) error {
 			return secrets.NewSecretsRuntimeData()
 		},
 	}
+	secrets.CoalesceTablesFunc = chartutil.CoalesceTables
 
 	networkParallelism := common.GetNetworkParallelism(&commonCmdData)
 
@@ -349,6 +352,19 @@ func runRender(ctx context.Context) error {
 	} else {
 		deployType = helmcommon.DeployTypeInitial
 	}
+
+	downloader := &downloader.Manager{
+		Out:               logboek.Context(ctx).OutStream(),
+		ChartPath:         bundle.Dir,
+		AllowMissingRepos: true,
+		Getters:           getter.All(helm_v3.Settings),
+		RegistryClient:    helmRegistryClient,
+		RepositoryConfig:  helm_v3.Settings.RepositoryConfig,
+		RepositoryCache:   helm_v3.Settings.RepositoryCache,
+		Debug:             helm_v3.Settings.Debug,
+	}
+	loader.SetChartPathFunc = downloader.SetChartPath
+	loader.DepsBuildFunc = downloader.Build
 
 	chartTreeOptions := chrttree.ChartTreeOptions{
 		StringSetValues: common.GetSetString(&commonCmdData),

@@ -7,10 +7,10 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 
+	chart "github.com/werf/common-go/pkg/lock"
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/storage"
-	"github.com/werf/werf/v2/pkg/werf"
 )
 
 type SynchronizationParams struct {
@@ -47,7 +47,7 @@ func NewLocalSynchronization(ctx context.Context, params SynchronizationParams) 
 }
 
 func (s *LocalSynchronization) GetStorageLockManager(_ context.Context) (Interface, error) {
-	return NewGeneric(werf.GetHostLocker()), nil
+	return NewGeneric(chart.HostLocker), nil
 }
 
 type HttpSynchronization struct {

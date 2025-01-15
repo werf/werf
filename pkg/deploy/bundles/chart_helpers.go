@@ -38,7 +38,7 @@ func ChartToBytes(ch *chart.Chart) ([]byte, error) {
 
 func BytesToChart(data []byte) (*chart.Chart, error) {
 	dataReader := bytes.NewBuffer(data)
-	return loader.LoadArchiveWithOptions(dataReader, loader.LoadOptions{})
+	return loader.LoadArchiveWithOptions(dataReader, chart.LoadOptions{})
 }
 
 func SaveChartValues(ctx context.Context, ch *chart.Chart) error {

@@ -13,6 +13,7 @@ import (
 	helm_v3 "github.com/werf/3p-helm/cmd/helm"
 	"github.com/werf/3p-helm/pkg/chart"
 	"github.com/werf/3p-helm/pkg/chart/loader"
+	"github.com/werf/3p-helm/pkg/chartutil"
 	"github.com/werf/3p-helm/pkg/cli/values"
 	"github.com/werf/3p-helm/pkg/werf/secrets"
 	"github.com/werf/3p-helm/pkg/werf/secrets/runtimedata"
@@ -24,7 +25,6 @@ import (
 	"github.com/werf/werf/v2/pkg/deploy/bundles"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
-	"github.com/werf/werf/v2/pkg/deploy/helm/command_helpers"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/tmp_manager"
 	"github.com/werf/werf/v2/pkg/true_git"
@@ -315,7 +315,7 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 	}
 
 	wc := chart_extender.NewWerfChart(ctx, giterminismManager.FileReader(), chartDir, giterminismManager.ProjectDir(), helm_v3.Settings, helmRegistryClient, chart_extender.WerfChartOptions{
-		BuildChartDependenciesOpts:        command_helpers.BuildChartDependenciesOptions{SkipUpdate: *commonCmdData.SkipDependenciesRepoRefresh},
+		BuildChartDependenciesOpts:        chart.BuildChartDependenciesOptions{},
 		SecretValueFiles:                  common.GetSecretValues(&commonCmdData),
 		ExtraAnnotations:                  userExtraAnnotations,
 		ExtraLabels:                       userExtraLabels,
@@ -353,7 +353,7 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 
 	helm_v3.Settings.Debug = *commonCmdData.LogDebug
 
-	loader.GlobalLoadOptions = &loader.LoadOptions{
+	loader.GlobalLoadOptions = &chart.LoadOptions{
 		ChartExtender: wc,
 		SubchartExtenderFactoryFunc: func() chart.ChartExtender {
 			return chart_extender.NewWerfSubchart(ctx, chart_extender.WerfSubchartOptions{
@@ -364,6 +364,7 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 			return secrets.NewSecretsRuntimeData()
 		},
 	}
+	secrets.CoalesceTablesFunc = chartutil.CoalesceTables
 
 	sv, err := bundles.BundleTagToChartVersion(ctx, cmdData.Tag, time.Now())
 	if err != nil {

@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/werf/common-go/pkg/lock"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/lockgate"
 	"github.com/werf/werf/v2/pkg/git_repo"
@@ -27,7 +28,7 @@ func GetHostGitDataManager(ctx context.Context) (*GitDataManager, error) {
 	if lock, err := lockGC(ctx, true); err != nil {
 		return nil, err
 	} else {
-		defer werf.ReleaseHostLock(lock)
+		defer chart.ReleaseHostLock(lock)
 	}
 
 	archivesCacheDir := filepath.Join(werf.GetLocalCacheDir(), "git_archives", GitArchivesCacheVersion)
@@ -86,13 +87,13 @@ func (manager *GitDataManager) GetArchiveFile(ctx context.Context, repoID string
 	if lock, err := lockGC(ctx, true); err != nil {
 		return nil, err
 	} else {
-		defer werf.ReleaseHostLock(lock)
+		defer chart.ReleaseHostLock(lock)
 	}
 
-	if _, lock, err := werf.AcquireHostLock(ctx, fmt.Sprintf("git_archive.%s_%s", repoID, true_git.ArchiveOptions(opts).ID()), lockgate.AcquireOptions{}); err != nil {
+	if _, lock, err := chart.AcquireHostLock(ctx, fmt.Sprintf("git_archive.%s_%s", repoID, true_git.ArchiveOptions(opts).ID()), lockgate.AcquireOptions{}); err != nil {
 		return nil, err
 	} else {
-		defer werf.ReleaseHostLock(lock)
+		defer chart.ReleaseHostLock(lock)
 	}
 
 	metadataPath := filepath.Join(manager.ArchivesCacheDir, archiveMetadataFilePath(repoID, opts))
@@ -142,13 +143,13 @@ func (manager *GitDataManager) CreateArchiveFile(ctx context.Context, repoID str
 	if lock, err := lockGC(ctx, true); err != nil {
 		return nil, err
 	} else {
-		defer werf.ReleaseHostLock(lock)
+		defer chart.ReleaseHostLock(lock)
 	}
 
-	if _, lock, err := werf.AcquireHostLock(ctx, fmt.Sprintf("git_archive.%s_%s", repoID, true_git.ArchiveOptions(opts).ID()), lockgate.AcquireOptions{}); err != nil {
+	if _, lock, err := chart.AcquireHostLock(ctx, fmt.Sprintf("git_archive.%s_%s", repoID, true_git.ArchiveOptions(opts).ID()), lockgate.AcquireOptions{}); err != nil {
 		return nil, err
 	} else {
-		defer werf.ReleaseHostLock(lock)
+		defer chart.ReleaseHostLock(lock)
 	}
 
 	metadata := &ArchiveMetadata{
@@ -183,13 +184,13 @@ func (manager *GitDataManager) GetPatchFile(ctx context.Context, repoID string, 
 	if lock, err := lockGC(ctx, true); err != nil {
 		return nil, err
 	} else {
-		defer werf.ReleaseHostLock(lock)
+		defer chart.ReleaseHostLock(lock)
 	}
 
-	if _, lock, err := werf.AcquireHostLock(ctx, fmt.Sprintf("git_patch.%s_%s", repoID, true_git.PatchOptions(opts).ID()), lockgate.AcquireOptions{}); err != nil {
+	if _, lock, err := chart.AcquireHostLock(ctx, fmt.Sprintf("git_patch.%s_%s", repoID, true_git.PatchOptions(opts).ID()), lockgate.AcquireOptions{}); err != nil {
 		return nil, err
 	} else {
-		defer werf.ReleaseHostLock(lock)
+		defer chart.ReleaseHostLock(lock)
 	}
 
 	metadataPath := filepath.Join(manager.PatchesCacheDir, patchMetadataFilePath(repoID, opts))
@@ -243,13 +244,13 @@ func (manager *GitDataManager) CreatePatchFile(ctx context.Context, repoID strin
 	if lock, err := lockGC(ctx, true); err != nil {
 		return nil, err
 	} else {
-		defer werf.ReleaseHostLock(lock)
+		defer chart.ReleaseHostLock(lock)
 	}
 
-	if _, lock, err := werf.AcquireHostLock(ctx, fmt.Sprintf("git_patch.%s_%s", repoID, true_git.PatchOptions(opts).ID()), lockgate.AcquireOptions{}); err != nil {
+	if _, lock, err := chart.AcquireHostLock(ctx, fmt.Sprintf("git_patch.%s_%s", repoID, true_git.PatchOptions(opts).ID()), lockgate.AcquireOptions{}); err != nil {
 		return nil, err
 	} else {
-		defer werf.ReleaseHostLock(lock)
+		defer chart.ReleaseHostLock(lock)
 	}
 
 	metadata := &PatchMetadata{

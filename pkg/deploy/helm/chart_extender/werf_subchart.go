@@ -7,7 +7,6 @@ import (
 	"github.com/werf/3p-helm/pkg/chart"
 	"github.com/werf/3p-helm/pkg/cli"
 	"github.com/werf/3p-helm/pkg/werf/file"
-	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
 )
 
 var _ chart.ChartExtender = (*WerfSubchart)(nil)
@@ -24,7 +23,6 @@ func NewWerfSubchart(
 	opts WerfSubchartOptions,
 ) *WerfSubchart {
 	return &WerfSubchart{
-		ChartExtenderContextData:   helpers.NewChartExtenderContextData(ctx),
 		DisableDefaultSecretValues: opts.DisableDefaultSecretValues,
 	}
 }
@@ -33,8 +31,6 @@ type WerfSubchart struct {
 	HelmChart *chart.Chart
 
 	DisableDefaultSecretValues bool
-
-	*helpers.ChartExtenderContextData
 }
 
 // ChartCreated method for the chart.Extender interface
@@ -105,5 +101,13 @@ func (wc *WerfSubchart) GetProjectDir() string {
 }
 
 func (wc *WerfSubchart) GetChartDir() string {
+	panic("not implemented")
+}
+
+func (wc *WerfSubchart) SetChartDir(dir string) {
+	panic("not implemented")
+}
+
+func (wc *WerfSubchart) GetBuildChartDependenciesOpts() chart.BuildChartDependenciesOptions {
 	panic("not implemented")
 }
