@@ -13,6 +13,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	"gopkg.in/ini.v1"
 
+	"github.com/werf/common-go/pkg/lock"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/common-go/pkg/util/timestamps"
 	"github.com/werf/lockgate"
@@ -20,7 +21,6 @@ import (
 	"github.com/werf/werf/v2/pkg/git_repo/repo_handle"
 	"github.com/werf/werf/v2/pkg/path_matcher"
 	"github.com/werf/werf/v2/pkg/true_git"
-	"github.com/werf/werf/v2/pkg/werf"
 )
 
 type Remote struct {
@@ -126,10 +126,10 @@ func (repo *Remote) isCloneExists() (bool, error) {
 func (repo *Remote) updateLastAccessAt(ctx context.Context, repoPath string) error {
 	path := filepath.Join(repoPath, "last_access_at")
 
-	if _, lock, err := werf.AcquireHostLock(ctx, path, lockgate.AcquireOptions{}); err != nil {
+	if _, lock, err := chart.AcquireHostLock(ctx, path, lockgate.AcquireOptions{}); err != nil {
 		return fmt.Errorf("error locking path %q: %w", path, err)
 	} else {
-		defer werf.ReleaseHostLock(lock)
+		defer chart.ReleaseHostLock(lock)
 	}
 
 	return timestamps.WriteTimestampFile(path, time.Now())
@@ -143,7 +143,7 @@ func (repo *Remote) Clone(ctx context.Context) (bool, error) {
 	if lock, err := CommonGitDataManager.LockGC(ctx, true); err != nil {
 		return false, err
 	} else {
-		defer werf.ReleaseHostLock(lock)
+		defer chart.ReleaseHostLock(lock)
 	}
 
 	var err error
@@ -373,7 +373,7 @@ func (repo *Remote) getWorkTreeCacheDir(repoID string) string {
 
 func (repo *Remote) withRemoteRepoLock(ctx context.Context, f func() error) error {
 	lockName := fmt.Sprintf("remote_git_mapping.%s", repo.Name)
-	return werf.WithHostLock(ctx, lockName, lockgate.AcquireOptions{Timeout: 600 * time.Second}, f)
+	return chart.WithHostLock(ctx, lockName, lockgate.AcquireOptions{Timeout: 600 * time.Second}, f)
 }
 
 func (repo *Remote) TagsList(_ context.Context) ([]string, error) {
@@ -388,7 +388,7 @@ func (repo *Remote) initRepoHandleBackedByWorkTree(ctx context.Context, commit s
 	if lock, err := CommonGitDataManager.LockGC(ctx, true); err != nil {
 		return nil, err
 	} else {
-		defer werf.ReleaseHostLock(lock)
+		defer chart.ReleaseHostLock(lock)
 	}
 
 	repository, err := repo.PlainOpen()

@@ -11,6 +11,7 @@ import (
 
 	"github.com/werf/3p-helm/pkg/chart"
 	"github.com/werf/3p-helm/pkg/chart/loader"
+	"github.com/werf/3p-helm/pkg/chartutil"
 	"github.com/werf/3p-helm/pkg/cli"
 	"github.com/werf/3p-helm/pkg/registry"
 	"github.com/werf/3p-helm/pkg/werf/secrets"
@@ -25,7 +26,6 @@ import (
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
-	"github.com/werf/werf/v2/pkg/deploy/helm/command_helpers"
 	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
 	"github.com/werf/werf/v2/pkg/image"
@@ -444,9 +444,7 @@ func run(
 				helmSettings,
 				helmRegistryClient,
 				chart_extender.WerfChartOptions{
-					BuildChartDependenciesOpts: command_helpers.BuildChartDependenciesOptions{
-						SkipUpdate: chartRepositorySkipUpdate,
-					},
+					BuildChartDependenciesOpts:        chart.BuildChartDependenciesOptions{},
 					SecretValueFiles:                  secretValuesPaths,
 					ExtraAnnotations:                  extraAnnotations,
 					ExtraLabels:                       extraLabels,
@@ -490,7 +488,7 @@ func run(
 				wc.SetServiceValues(vals)
 			}
 
-			loader.GlobalLoadOptions = &loader.LoadOptions{
+			loader.GlobalLoadOptions = &chart.LoadOptions{
 				ChartExtender: wc,
 				SubchartExtenderFactoryFunc: func() chart.ChartExtender {
 					return chart_extender.NewWerfSubchart(
@@ -504,6 +502,7 @@ func run(
 					return secrets.NewSecretsRuntimeData()
 				},
 			}
+			secrets.CoalesceTablesFunc = chartutil.CoalesceTables
 
 			return nil
 		},

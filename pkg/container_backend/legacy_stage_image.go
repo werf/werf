@@ -6,11 +6,11 @@ import (
 	"os"
 	"strings"
 
+	"github.com/werf/common-go/pkg/lock"
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/image"
-	"github.com/werf/werf/v2/pkg/werf"
 )
 
 type LegacyStageImage struct {
@@ -83,10 +83,10 @@ func (i *LegacyStageImage) Build(ctx context.Context, options BuildOptions) erro
 	}
 
 	containerLockName := ContainerLockName(i.container.Name())
-	if _, lock, err := werf.AcquireHostLock(ctx, containerLockName, lockgate.AcquireOptions{}); err != nil {
+	if _, lock, err := chart.AcquireHostLock(ctx, containerLockName, lockgate.AcquireOptions{}); err != nil {
 		return fmt.Errorf("failed to lock %s: %w", containerLockName, err)
 	} else {
-		defer werf.ReleaseHostLock(lock)
+		defer chart.ReleaseHostLock(lock)
 	}
 
 	if debugDockerRunCommand() {

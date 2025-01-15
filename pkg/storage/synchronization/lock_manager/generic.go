@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/werf/common-go/pkg/lock"
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/werf"
 )
 
 func NewGeneric(locker lockgate.Locker) *Generic {
@@ -19,7 +19,7 @@ type Generic struct {
 }
 
 func (manager *Generic) LockStage(ctx context.Context, projectName, digest string) (LockHandle, error) {
-	_, lock, err := manager.Locker.Acquire(genericStageLockName(projectName, digest), werf.SetupLockerDefaultOptions(ctx, lockgate.AcquireOptions{}))
+	_, lock, err := manager.Locker.Acquire(genericStageLockName(projectName, digest), chart.SetupLockerDefaultOptions(ctx, lockgate.AcquireOptions{}))
 	return LockHandle{LockgateHandle: lock, ProjectName: projectName}, err
 }
 

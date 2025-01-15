@@ -15,6 +15,7 @@ import (
 	"github.com/docker/docker/api/types/filters"
 	"github.com/dustin/go-humanize"
 
+	"github.com/werf/common-go/pkg/lock"
 	"github.com/werf/kubedog/pkg/utils"
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
@@ -312,7 +313,7 @@ func RunGCForLocalDockerServer(ctx context.Context, allowedVolumeUsagePercentage
 							} else {
 								lockName := container_backend.ImageLockName(ref)
 
-								isLocked, lock, err := werf.AcquireHostLock(ctx, lockName, lockgate.AcquireOptions{NonBlocking: true})
+								isLocked, lock, err := chart.AcquireHostLock(ctx, lockName, lockgate.AcquireOptions{NonBlocking: true})
 								if err != nil {
 									return fmt.Errorf("error locking image %q: %w", lockName, err)
 								}
@@ -382,7 +383,7 @@ func RunGCForLocalDockerServer(ctx context.Context, allowedVolumeUsagePercentage
 		}
 
 		for _, lock := range acquiredHostLocks {
-			if err := werf.ReleaseHostLock(lock); err != nil {
+			if err := chart.ReleaseHostLock(lock); err != nil {
 				return fmt.Errorf("unable to release lock %q: %w", lock.LockName, err)
 			}
 		}
@@ -532,7 +533,7 @@ ProcessContainers:
 
 		if err := func() error {
 			containerLockName := container_backend.ContainerLockName(containerName)
-			isLocked, lock, err := werf.AcquireHostLock(ctx, containerLockName, lockgate.AcquireOptions{NonBlocking: true})
+			isLocked, lock, err := chart.AcquireHostLock(ctx, containerLockName, lockgate.AcquireOptions{NonBlocking: true})
 			if err != nil {
 				return fmt.Errorf("failed to lock %s for container %s: %w", containerLockName, logContainerName(container), err)
 			}
@@ -541,7 +542,7 @@ ProcessContainers:
 				logboek.Context(ctx).Default().LogFDetails("Ignore container %s used by another process\n", logContainerName(container))
 				return nil
 			}
-			defer werf.ReleaseHostLock(lock)
+			defer chart.ReleaseHostLock(lock)
 
 			if err := containersRemove(ctx, []types.Container{container}, options); err != nil {
 				return fmt.Errorf("failed to remove container %s: %w", logContainerName(container), err)

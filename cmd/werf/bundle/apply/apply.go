@@ -19,7 +19,11 @@ import (
 
 	helm_v3 "github.com/werf/3p-helm/cmd/helm"
 	"github.com/werf/3p-helm/pkg/action"
+	"github.com/werf/3p-helm/pkg/chart"
 	"github.com/werf/3p-helm/pkg/chart/loader"
+	"github.com/werf/3p-helm/pkg/chartutil"
+	"github.com/werf/3p-helm/pkg/downloader"
+	"github.com/werf/3p-helm/pkg/getter"
 	"github.com/werf/3p-helm/pkg/werf/secrets"
 	"github.com/werf/3p-helm/pkg/werf/secrets/runtimedata"
 	"github.com/werf/common-go/pkg/secrets_manager"
@@ -52,7 +56,6 @@ import (
 	"github.com/werf/werf/v2/pkg/deploy/helm"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
-	"github.com/werf/werf/v2/pkg/deploy/helm/command_helpers"
 	"github.com/werf/werf/v2/pkg/werf"
 	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
@@ -237,11 +240,8 @@ func runApply(ctx context.Context) error {
 	secrets_manager.DefaultManager = secrets_manager.NewSecretsManager(secrets_manager.SecretsManagerOptions{DisableSecretsDecryption: *commonCmdData.IgnoreSecretKey})
 
 	bundle, err := chart_extender.NewBundle(ctx, bundleTmpDir, helm_v3.Settings, helmRegistryClient, chart_extender.BundleOptions{
-		SecretValueFiles: common.GetSecretValues(&commonCmdData),
-		BuildChartDependenciesOpts: command_helpers.BuildChartDependenciesOptions{
-			IgnoreInvalidAnnotationsAndLabels: true,
-			SkipUpdate:                        *commonCmdData.SkipDependenciesRepoRefresh,
-		},
+		SecretValueFiles:                  common.GetSecretValues(&commonCmdData),
+		BuildChartDependenciesOpts:        chart.BuildChartDependenciesOptions{},
 		IgnoreInvalidAnnotationsAndLabels: true,
 		ExtraAnnotations:                  userExtraAnnotations,
 		ExtraLabels:                       userExtraLabels,
@@ -261,12 +261,13 @@ func runApply(ctx context.Context) error {
 		bundle.SetServiceValues(vals)
 	}
 
-	loader.GlobalLoadOptions = &loader.LoadOptions{
+	loader.GlobalLoadOptions = &chart.LoadOptions{
 		ChartExtender: bundle,
 		SecretsRuntimeDataFactoryFunc: func() runtimedata.RuntimeData {
 			return secrets.NewSecretsRuntimeData()
 		},
 	}
+	secrets.CoalesceTablesFunc = chartutil.CoalesceTables
 
 	trackReadinessTimeout := *common.NewDuration(time.Duration(cmdData.Timeout) * time.Second)
 	trackDeletionTimeout := trackReadinessTimeout
@@ -335,7 +336,7 @@ func runApply(ctx context.Context) error {
 		return fmt.Errorf("create release namespace: %w", err)
 	}
 
-	return command_helpers.LockReleaseWrapper(ctx, releaseName, lockManager, func() error {
+	return lockReleaseWrapper(ctx, releaseName, lockManager, func() error {
 		log.Default.Info(ctx, color.Style{color.Bold, color.Green}.Render("Starting release")+" %q (namespace: %q)", releaseName, releaseNamespace.Name())
 
 		log.Default.Info(ctx, "Constructing release history")
@@ -374,6 +375,19 @@ func runApply(ctx context.Context) error {
 		} else {
 			deployType = helmcommon.DeployTypeInitial
 		}
+
+		downloader := &downloader.Manager{
+			Out:               logboek.Context(ctx).OutStream(),
+			ChartPath:         bundle.Dir,
+			AllowMissingRepos: true,
+			Getters:           getter.All(helm_v3.Settings),
+			RegistryClient:    helmRegistryClient,
+			RepositoryConfig:  helm_v3.Settings.RepositoryConfig,
+			RepositoryCache:   helm_v3.Settings.RepositoryCache,
+			Debug:             helm_v3.Settings.Debug,
+		}
+		loader.SetChartPathFunc = downloader.SetChartPath
+		loader.DepsBuildFunc = downloader.Build
 
 		log.Default.Info(ctx, "Constructing chart tree")
 		chartTree, err := chrttree.NewChartTree(
@@ -1033,4 +1047,19 @@ func printNotes(ctx context.Context, notes string) {
 	log.Default.InfoBlock(ctx, color.Style{color.Bold, color.Blue}.Render("Release notes")).Do(func() {
 		log.Default.Info(ctx, notes)
 	})
+}
+
+func lockReleaseWrapper(
+	ctx context.Context,
+	releaseName string,
+	lockManager *lock_manager.LockManager,
+	cmdFunc func() error,
+) error {
+	if lock, err := lockManager.LockRelease(ctx, releaseName); err != nil {
+		return err
+	} else {
+		defer lockManager.Unlock(lock)
+	}
+
+	return cmdFunc()
 }

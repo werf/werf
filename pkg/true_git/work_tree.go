@@ -10,11 +10,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/werf/common-go/pkg/lock"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/common-go/pkg/util/timestamps"
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/werf"
 )
 
 var ErrInvalidDotGit = errors.New("invalid file format: expected gitdir record")
@@ -48,7 +48,7 @@ func WithWorkTree(ctx context.Context, gitDir, workTreeCacheDir, commit string, 
 
 func withWorkTreeCacheLock(ctx context.Context, workTreeCacheDir string, f func() error) error {
 	lockName := fmt.Sprintf("git_work_tree_cache %s", workTreeCacheDir)
-	return werf.WithHostLock(ctx, lockName, lockgate.AcquireOptions{Timeout: 600 * time.Second}, f)
+	return chart.WithHostLock(ctx, lockName, lockgate.AcquireOptions{Timeout: 600 * time.Second}, f)
 }
 
 func prepareWorkTree(ctx context.Context, repoDir, workTreeCacheDir, commit string, withSubmodules bool) (string, error) {

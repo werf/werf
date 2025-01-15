@@ -22,6 +22,7 @@ import (
 	"github.com/werf/3p-helm/pkg/getter"
 	"github.com/werf/3p-helm/pkg/postrender"
 	"github.com/werf/3p-helm/pkg/registry"
+	"github.com/werf/3p-helm/pkg/werf/chartextender"
 	"github.com/werf/3p-helm/pkg/werf/file"
 	secrets2 "github.com/werf/3p-helm/pkg/werf/secrets"
 	"github.com/werf/3p-helm/pkg/werf/secrets/runtimedata"
@@ -32,7 +33,6 @@ import (
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/deploy/helm"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
-	"github.com/werf/werf/v2/pkg/deploy/helm/command_helpers"
 )
 
 var _ chart.ChartExtender = (*WerfChart)(nil)
@@ -41,7 +41,7 @@ type WerfChartOptions struct {
 	SecretValueFiles                  []string
 	ExtraAnnotations                  map[string]string
 	ExtraLabels                       map[string]string
-	BuildChartDependenciesOpts        command_helpers.BuildChartDependenciesOptions
+	BuildChartDependenciesOpts        chart.BuildChartDependenciesOptions
 	IgnoreInvalidAnnotationsAndLabels bool
 	DisableDefaultValues              bool
 	DisableDefaultSecretValues        bool
@@ -68,7 +68,6 @@ func NewWerfChart(
 		extraAnnotationsAndLabelsPostRenderer: helm.NewExtraAnnotationsAndLabelsPostRenderer(nil, nil, opts.IgnoreInvalidAnnotationsAndLabels),
 
 		ChartExtenderServiceValuesData: helpers.NewChartExtenderServiceValuesData(),
-		ChartExtenderContextData:       helpers.NewChartExtenderContextData(ctx),
 
 		DisableDefaultValues:       opts.DisableDefaultValues,
 		DisableDefaultSecretValues: opts.DisableDefaultSecretValues,
@@ -88,7 +87,7 @@ type WerfChart struct {
 	SecretValueFiles           []string
 	HelmEnvSettings            *cli.EnvSettings
 	RegistryClient             *registry.Client
-	BuildChartDependenciesOpts command_helpers.BuildChartDependenciesOptions
+	BuildChartDependenciesOpts chart.BuildChartDependenciesOptions
 	DisableDefaultValues       bool
 	DisableDefaultSecretValues bool
 
@@ -98,7 +97,6 @@ type WerfChart struct {
 	werfConfig                            *config.WerfConfig
 
 	*helpers.ChartExtenderServiceValuesData
-	*helpers.ChartExtenderContextData
 }
 
 // ChartCreated method for the chart.Extender interface
@@ -109,20 +107,20 @@ func (wc *WerfChart) ChartCreated(c *chart.Chart) error {
 
 // ChartLoaded method for the chart.Extender interface
 func (wc *WerfChart) ChartLoaded(files []*file.ChartExtenderBufferedFile) error {
-	var opts helpers.GetHelmChartMetadataOptions
+	var opts chartextender.GetHelmChartMetadataOptions
 	if wc.werfConfig != nil {
 		opts.DefaultName = wc.werfConfig.Meta.Project
 		opts.OverrideAppVersion = common.GetHelmChartConfigAppVersion(wc.werfConfig)
 	}
 	opts.DefaultVersion = "1.0.0"
-	wc.HelmChart.Metadata = helpers.AutosetChartMetadata(wc.HelmChart.Metadata, opts)
+	wc.HelmChart.Metadata = chartextender.AutosetChartMetadata(wc.HelmChart.Metadata, opts)
 
 	wc.HelmChart.Templates = append(wc.HelmChart.Templates, &chart.File{
 		Name: "templates/_werf_helpers.tpl",
 	})
 
 	if wc.DisableDefaultValues {
-		logboek.Context(wc.ChartExtenderContext).Info().LogF("Disable default werf chart values\n")
+		logboek.Context(context.Background()).Info().LogF("Disable default werf chart values\n")
 		wc.HelmChart.Values = nil
 	}
 
@@ -143,9 +141,9 @@ func (wc *WerfChart) MakeBundleValues(
 	chrt *chart.Chart,
 	inputVals map[string]interface{},
 ) (map[string]interface{}, error) {
-	chartutil.DebugPrintValues(wc.ChartExtenderContext, "input", inputVals)
+	chartutil.DebugPrintValues(context.Background(), "input", inputVals)
 
-	vals, err := chartutil.MergeInternal(wc.ChartExtenderContext, inputVals, wc.ServiceValues, nil)
+	vals, err := chartutil.MergeInternal(context.Background(), inputVals, wc.ServiceValues, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to coalesce werf chart values: %w", err)
 	}
@@ -163,7 +161,7 @@ func (wc *WerfChart) MakeBundleValues(
 
 	chartutil.CoalesceChartValues(chrt, valsCopy, true)
 
-	chartutil.DebugPrintValues(wc.ChartExtenderContext, "all", valsCopy)
+	chartutil.DebugPrintValues(context.Background(), "all", valsCopy)
 
 	return valsCopy, nil
 }
@@ -173,7 +171,7 @@ func (wc *WerfChart) MakeBundleSecretValues(
 	secretsRuntimeData runtimedata.RuntimeData,
 ) (map[string]interface{}, error) {
 	if chartutil.DebugSecretValues() {
-		chartutil.DebugPrintValues(wc.ChartExtenderContext, "secret", secretsRuntimeData.GetDecryptedSecretValues())
+		chartutil.DebugPrintValues(context.Background(), "secret", secretsRuntimeData.GetDecryptedSecretValues())
 	}
 	return secretsRuntimeData.GetEncodedSecretValues(ctx, secrets_manager.DefaultManager, wc.ProjectDir)
 }
@@ -184,28 +182,18 @@ func (wc *WerfChart) SetupTemplateFuncs(t *template.Template, funcMap template.F
 
 // LoadDir method for the chart.Extender interface
 func (wc *WerfChart) LoadDir(dir string) (bool, []*file.ChartExtenderBufferedFile, error) {
-	chartFiles, err := wc.ChartFileReader.LoadChartDir(wc.ChartExtenderContext, dir)
-	if err != nil {
-		return true, nil, fmt.Errorf("giterministic files loader failed: %w", err)
-	}
-
-	res, err := LoadChartDependencies(wc.ChartExtenderContext, wc.ChartFileReader.LoadChartDir, dir, chartFiles, wc.HelmEnvSettings, wc.RegistryClient, wc.BuildChartDependenciesOpts)
-	if err != nil {
-		return true, res, fmt.Errorf("chart dependencies loader failed: %w", err)
-	}
-
-	return true, res, err
+	return false, nil, nil
 }
 
 // LocateChart method for the chart.Extender interface
 func (wc *WerfChart) LocateChart(name string, settings *cli.EnvSettings) (bool, string, error) {
-	res, err := wc.ChartFileReader.LocateChart(wc.ChartExtenderContext, name)
+	res, err := wc.ChartFileReader.LocateChart(context.Background(), name)
 	return true, res, err
 }
 
 // ReadFile method for the chart.Extender interface
 func (wc *WerfChart) ReadFile(filePath string) (bool, []byte, error) {
-	res, err := wc.ChartFileReader.ReadChartFile(wc.ChartExtenderContext, filePath)
+	res, err := wc.ChartFileReader.ReadChartFile(context.Background(), filePath)
 	return true, res, err
 }
 
@@ -446,6 +434,14 @@ func (wc *WerfChart) GetProjectDir() string {
 
 func (wc *WerfChart) GetChartDir() string {
 	return wc.ChartDir
+}
+
+func (wc *WerfChart) SetChartDir(dir string) {
+	wc.ChartDir = dir
+}
+
+func (wc *WerfChart) GetBuildChartDependenciesOpts() chart.BuildChartDependenciesOptions {
+	return wc.BuildChartDependenciesOpts
 }
 
 func writeChartFile(ctx context.Context, destDir, fileName string, fileData []byte) error {

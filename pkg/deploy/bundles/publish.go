@@ -2,10 +2,13 @@ package bundles
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path/filepath"
 
+	"github.com/werf/3p-helm/pkg/chart"
 	"github.com/werf/3p-helm/pkg/chart/loader"
+	"github.com/werf/3p-helm/pkg/downloader"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/deploy/bundles/registry"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender"
@@ -22,7 +25,7 @@ func Publish(ctx context.Context, bundle *chart_extender.Bundle, bundleRef strin
 		return fmt.Errorf("error parsing bundle ref %q: %w", bundleRef, err)
 	}
 
-	loader.GlobalLoadOptions = &loader.LoadOptions{}
+	loader.GlobalLoadOptions = &chart.LoadOptions{}
 
 	if err := logboek.Context(ctx).Default().LogProcess("Saving bundle to the local chart helm cache").DoError(func() error {
 		path, err := filepath.Abs(bundle.Dir)
@@ -32,6 +35,11 @@ func Publish(ctx context.Context, bundle *chart_extender.Bundle, bundleRef strin
 
 		ch, err := loader.Load(path)
 		if err != nil {
+			var e *downloader.ErrRepoNotFound
+			if errors.As(err, &e) {
+				return fmt.Errorf("%w. Please add the missing repos via 'helm repo add'", e)
+			}
+
 			return fmt.Errorf("error loading chart %q: %w", path, err)
 		}
 
