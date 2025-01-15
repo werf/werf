@@ -142,7 +142,7 @@ func Login(ctx context.Context, registry string, opts LoginOptions) error {
 		settings.Username = opts.Username
 		settings.Secret = password
 		settings.Insecure = opts.InsecureRegistry
-		settings.UserAgent = fmt.Sprintf("werf %s", werf.Version)
+		settings.UserAgent = werf.UserAgent
 	}); err != nil {
 		return fmt.Errorf("unable to login into %q: %w", registry, err)
 	}
