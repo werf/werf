@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.18.1](https://www.github.com/werf/werf/compare/v2.18.0...v2.18.1) (2025-01-15)
+
+
+### Bug Fixes
+
+* **deploy:** `hidden sensitive output` message in plan for Secrets even if no sensitive changes ([bf4e709](https://www.github.com/werf/werf/commit/bf4e7099341bfed6efc9ba1e07b22190a6b55047))
+
 ## [2.18.0](https://www.github.com/werf/werf/compare/v2.17.0...v2.18.0) (2025-01-14)
 
 
