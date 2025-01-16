@@ -154,4 +154,4 @@ Each pull request title should clearly reflect the changes introduced, adhering 
 
 ## Improving the documentation
 
-The documentation is made with [Jekyll](https://jekyllrb.com/) and contained within `./docs`. See the [docs DEVELOPMENT.md](./docs/DEVELOPMENT.md) for information about developing process.
+The documentation is created using [Jekyll](https://jekyllrb.com/) and is located in `./docs`. Please refer to the [docs DEVELOPMENT.md](./docs/DEVELOPMENT.md) for information about the development process.
