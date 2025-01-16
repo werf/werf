@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.19.0](https://www.github.com/werf/werf/compare/v2.18.0...v2.19.0) (2025-01-16)
+
+
+### Features
+
+* **deploy:** ExternalSecret CR tracking works again ([a8e5ff9](https://www.github.com/werf/werf/commit/a8e5ff9d7e9abc99fbeb95b1d51eae60b79778fc))
+
+
+### Bug Fixes
+
+* **cr-login:** fix UserAgent ([99fd230](https://www.github.com/werf/werf/commit/99fd2307d254e827924e6e6e20291bfb6dc79d20))
+* **deploy:** `hidden sensitive output` message in plan for Secrets even if no sensitive changes ([bf4e709](https://www.github.com/werf/werf/commit/bf4e7099341bfed6efc9ba1e07b22190a6b55047))
+* **deploy:** LastError empty in logs on failures for some resources ([de25dcd](https://www.github.com/werf/werf/commit/de25dcd51da3306f626e64e3f71dc493564088cd))
+
 ## [2.18.0](https://www.github.com/werf/werf/compare/v2.17.0...v2.18.0) (2025-01-14)
 
 
