@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.20.0](https://www.github.com/werf/werf/compare/v2.19.0...v2.20.0) (2025-01-17)
+
+
+### Features
+
+* **build:** add field final to build report ([2d6b6f2](https://www.github.com/werf/werf/commit/2d6b6f2afec04c435cf791b9c6b825f318dfd22d))
+* **deploy:** add `--kube-context`, `--kube-config`, `--kube-config-base64` flags to `bundle apply` ([0d6bbe1](https://www.github.com/werf/werf/commit/0d6bbe100a673e908aa4e0d8d8e2ce0c16cf1ca1))
+
 ## [2.19.0](https://www.github.com/werf/werf/compare/v2.18.0...v2.19.0) (2025-01-16)
 
 
