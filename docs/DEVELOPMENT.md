@@ -11,7 +11,7 @@ ___
 
 Run `jekyll serve` with --watch option to test changes in "real time". Requires to run werf compose in werf/website to access documentation in browser.
 
-- Install [werf](http://werf.io/installation.html).
+- Install [werf](http://werf.io/getting_started/).
 - Install [task](https://taskfile.dev/installation/).
 - Run:
   ```shell
@@ -29,7 +29,7 @@ Run `jekyll serve` with --watch option to test changes in "real time". Requires 
 
 Run `jekyll serve` with --watch option to test changes in "real time". Use scripts/styles/images from werf.io site.
 
-- Install [werf](http://werf.io/installation.html). 
+- Install [werf](http://werf.io/getting_started/). 
 - Install [task](https://taskfile.dev/installation/)
 - Run (add `--follow --docker-compose-command-options="-d"` if necessary):
   ```shell

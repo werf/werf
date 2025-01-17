@@ -23,13 +23,9 @@ What makes werf special:
 - **Gluing common technologies**: Git, Buildah, Helm, Kubernetes, and your CI system of choice.
 - **Production-ready**: werf has been used in production since 2017; thousands of projects rely on it to build & deploy various apps.
 
-## Quickstart
-
-The [quickstart guide](https://werf.io/docs/quickstart.html) shows how to set up the deployment of an example application (a cool voting app in our case) using werf.
-
 ## Installation
 
-The [installation guide](https://werf.io/installation.html) helps set up and use werf both locally and in your CI system.
+The [Getting Started guide](https://werf.io/getting_started/) helps set up and use werf both locally and in your CI system.
 
 ## Documentation
 
