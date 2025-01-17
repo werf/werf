@@ -39,6 +39,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/gookit/color v1.5.4
 	github.com/gosuri/uitable v0.0.4
+	github.com/goware/urlx v0.3.2
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/go-version v1.6.0
 	github.com/mitchellh/copystructure v1.2.0
@@ -92,12 +93,13 @@ require (
 	k8s.io/kubectl v0.29.3
 	k8s.io/utils v0.0.0-20240310230437-4693a0247e57
 	mvdan.cc/xurls v1.1.0
-	oras.land/oras-go v1.2.5
 	sigs.k8s.io/yaml v1.4.0
 )
 
 require (
 	github.com/Ladicle/tabwriter v1.0.0 // indirect
+	github.com/PuerkitoBio/purell v1.1.1 // indirect
+	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
 	github.com/alecthomas/chroma/v2 v2.14.0 // indirect
 	github.com/chainguard-dev/git-urls v1.0.2 // indirect
 	github.com/dlclark/regexp2 v1.11.0 // indirect
@@ -114,6 +116,7 @@ require (
 	github.com/zeebo/xxh3 v1.0.2 // indirect
 	golang.org/x/mod v0.21.0 // indirect
 	mvdan.cc/sh/v3 v3.10.0 // indirect
+	oras.land/oras-go v1.2.5 // indirect
 )
 
 require (

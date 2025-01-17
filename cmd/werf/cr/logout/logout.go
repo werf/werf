@@ -3,14 +3,14 @@ package logout
 import (
 	"context"
 	"fmt"
-	"os"
-	"path/filepath"
 
+	"github.com/docker/cli/cli/config/types"
+	"github.com/goware/urlx"
 	"github.com/spf13/cobra"
-	"oras.land/oras-go/pkg/auth/docker"
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/cmd/werf/common"
+	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
 
@@ -61,19 +61,15 @@ type LogoutOptions struct {
 }
 
 func Logout(ctx context.Context, registry string, opts LogoutOptions) error {
-	var dockerConfigDir string
-	if opts.DockerConfigDir != "" {
-		dockerConfigDir = opts.DockerConfigDir
-	} else {
-		dockerConfigDir = filepath.Join(os.Getenv("HOME"), ".docker")
-	}
-
-	cli, err := docker.NewClient(filepath.Join(dockerConfigDir, "config.json"))
+	u, err := urlx.Parse(registry)
 	if err != nil {
-		return fmt.Errorf("unable to create auth client: %w", err)
+		return fmt.Errorf("unable to parse %q: %w", registry, err)
 	}
 
-	if err := cli.Logout(ctx, registry); err != nil {
+	err = docker.EraseCredentials(opts.DockerConfigDir, types.AuthConfig{
+		ServerAddress: u.Host,
+	})
+	if err != nil {
 		return fmt.Errorf("unable to logout from %q: %w", registry, err)
 	}
 
