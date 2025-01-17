@@ -32,7 +32,7 @@ jobs:
           release-notes-footer: |
             ## Installation
 
-            To install `werf` we strongly recommend following [these instructions](https://werf.io/installation.html).
+            To install `werf` we strongly recommend following [these instructions](https://werf.io/getting_started/).
 
             Alternatively, you can download `werf` binaries from here:
             * [Linux amd64](https://tuf.werf.io/targets/releases/{{> version }}/linux-amd64/bin/werf) ([PGP signature](https://tuf.werf.io/targets/signatures/{{> version }}/linux-amd64/bin/werf.sig))
