@@ -39,9 +39,11 @@ jobs:
 
   lint:
     needs: detect-changes
-    uses: ./.github/workflows/_lint.yml
+    uses: werf/common-ci/.github/workflows/lint.yml@chore/ci/lint
     with:
-      forceSkip: ${{ github.event_name == 'pull_request' && needs.detect-changes.outputs.workflow_proceed == 'false' }}
+      install-packages: "true"
+      packages: libbtrfs-dev
+      force-skip: ${{ github.event_name == 'pull_request' && needs.detect-changes.outputs.workflow_proceed == 'false' }}
 
   unit:
     needs: detect-changes
