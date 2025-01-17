@@ -174,6 +174,7 @@ type ReportImageRecord struct {
 	DockerImageDigest string
 	DockerImageName   string
 	Rebuilt           bool
+	Final             bool
 }
 
 func (phase *BuildPhase) Name() string {
@@ -474,6 +475,7 @@ func (phase *BuildPhase) createReport(ctx context.Context) error {
 				DockerImageDigest: stageDesc.Info.GetDigest(),
 				DockerImageName:   stageDesc.Info.Name,
 				Rebuilt:           img.GetRebuilt(),
+				Final:             img.IsFinal,
 			}
 
 			if os.Getenv("WERF_ENABLE_REPORT_BY_PLATFORM") == "1" {
@@ -506,6 +508,7 @@ func (phase *BuildPhase) createReport(ctx context.Context) error {
 					DockerImageDigest: stageDesc.Info.GetDigest(),
 					DockerImageName:   stageDesc.Info.Name,
 					Rebuilt:           isRebuilt,
+					Final:             img.IsFinal,
 				}
 				phase.ImagesReport.SetImageRecord(img.Name, record)
 			}
