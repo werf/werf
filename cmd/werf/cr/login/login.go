@@ -4,17 +4,18 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"path/filepath"
 
+	"github.com/docker/cli/cli/config/types"
+	"github.com/goware/urlx"
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh/terminal"
-	"oras.land/oras-go/pkg/auth"
-	"oras.land/oras-go/pkg/auth/docker"
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	secret_common "github.com/werf/werf/v2/cmd/werf/helm/secret/common"
+	"github.com/werf/werf/v2/pkg/docker"
+	"github.com/werf/werf/v2/pkg/docker_registry/auth"
 	"github.com/werf/werf/v2/pkg/werf"
 	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
@@ -94,16 +95,9 @@ type LoginOptions struct {
 }
 
 func Login(ctx context.Context, registry string, opts LoginOptions) error {
-	var dockerConfigDir string
-	if opts.DockerConfigDir != "" {
-		dockerConfigDir = opts.DockerConfigDir
-	} else {
-		dockerConfigDir = filepath.Join(os.Getenv("HOME"), ".docker")
-	}
-
-	cli, err := docker.NewClient(filepath.Join(dockerConfigDir, "config.json"))
+	u, err := urlx.Parse(registry)
 	if err != nil {
-		return fmt.Errorf("unable to create oras auth client: %w", err)
+		return fmt.Errorf("unable to parse %q: %w", registry, err)
 	}
 
 	if opts.Username == "" {
@@ -136,15 +130,25 @@ func Login(ctx context.Context, registry string, opts LoginOptions) error {
 		return fmt.Errorf("provide --password or --password-stdin")
 	}
 
-	if err := cli.LoginWithOpts(func(settings *auth.LoginSettings) {
-		settings.Context = ctx
-		settings.Hostname = registry
-		settings.Username = opts.Username
-		settings.Secret = password
-		settings.Insecure = opts.InsecureRegistry
-		settings.UserAgent = werf.UserAgent
-	}); err != nil {
-		return fmt.Errorf("unable to login into %q: %w", registry, err)
+	token, err := auth.Auth(ctx, auth.Options{
+		Username:  opts.Username,
+		Password:  password,
+		UserAgent: werf.UserAgent,
+		Hostname:  u.Host,
+		Insecure:  opts.InsecureRegistry,
+	})
+	if err != nil {
+		return fmt.Errorf("unable to authenticate into %q: %w", registry, err)
+	}
+
+	err = docker.StoreCredentials(opts.DockerConfigDir, types.AuthConfig{
+		ServerAddress: u.Host,
+		Username:      opts.Username,
+		Password:      password,
+		IdentityToken: token,
+	})
+	if err != nil {
+		return fmt.Errorf("unable to store credentials: %w", err)
 	}
 
 	logboek.Context(ctx).Default().LogFHighlight("Successful login\n")
