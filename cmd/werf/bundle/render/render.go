@@ -30,6 +30,7 @@ import (
 	"github.com/werf/3p-helm/pkg/werf/secrets/runtimedata"
 	"github.com/werf/common-go/pkg/secrets_manager"
 	"github.com/werf/common-go/pkg/util"
+	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
 	"github.com/werf/nelm/pkg/chrttree"
 	helmcommon "github.com/werf/nelm/pkg/common"
@@ -111,6 +112,10 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupIgnoreSecretKey(&commonCmdData, cmd)
 	commonCmdData.SetupDisableDefaultSecretValues(cmd)
 
+	common.SetupKubeConfig(&commonCmdData, cmd)
+	common.SetupKubeConfigBase64(&commonCmdData, cmd)
+	common.SetupKubeContext(&commonCmdData, cmd)
+
 	common.SetupRelease(&commonCmdData, cmd, false)
 	common.SetupNamespace(&commonCmdData, cmd, false)
 
@@ -179,7 +184,21 @@ func runRender(ctx context.Context) error {
 	releaseName := common.GetOptionalRelease(&commonCmdData)
 
 	actionConfig := new(action.Configuration)
-	if err := helm.InitActionConfig(ctx, nil, namespace, helm_v3.Settings, actionConfig, helm.InitActionConfigOptions{RegistryClient: helmRegistryClient}); err != nil {
+	if err := helm.InitActionConfig(
+		ctx,
+		nil,
+		namespace,
+		helm_v3.Settings,
+		actionConfig,
+		helm.InitActionConfigOptions{
+			KubeConfigOptions: kube.KubeConfigOptions{
+				Context:             *commonCmdData.KubeContext,
+				ConfigPath:          *commonCmdData.KubeConfig,
+				ConfigDataBase64:    *commonCmdData.KubeConfigBase64,
+				ConfigPathMergeList: *commonCmdData.KubeConfigPathMergeList,
+			},
+		},
+	); err != nil {
 		return err
 	}
 
