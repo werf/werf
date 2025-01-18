@@ -3,11 +3,12 @@ package docker
 import (
 	"fmt"
 	"io"
-	"math/rand"
 	"os"
+	"slices"
 	"strings"
 	"time"
 
+	"github.com/cenkalti/backoff/v4"
 	"github.com/docker/cli/cli/command"
 	"github.com/docker/cli/cli/command/image"
 	"github.com/docker/cli/cli/streams"
@@ -77,36 +78,57 @@ func CliPull(ctx context.Context, args ...string) error {
 const cliPullMaxAttempts = 5
 
 func doCliPullWithRetries(ctx context.Context, c command.Cli, args ...string) error {
-	var attempt int
+	op := func() error {
+		return doCliPull(c, args...)
+	}
+	notify := func(attempt uint16, err error, duration time.Duration) {
+		logboek.Context(ctx).Warn().LogF("Retrying docker pull in %d seconds (%d/%d) ...\n", duration.Seconds(), attempt, cliPullMaxAttempts)
+	}
+	return doCliOperationWithRetries(ctx, op, cliPullMaxAttempts, notify)
+}
 
-tryPull:
-	if err := doCliPull(c, args...); err != nil {
-		if attempt < cliPullMaxAttempts {
-			specificErrors := []string{
-				"Client.Timeout exceeded while awaiting headers",
-				"TLS handshake timeout",
-				"i/o timeout",
-				"504 Gateway Time-out",
-				"504 Gateway Timeout",
-				"Internal Server Error",
-			}
+func doCliOperationWithRetries(ctx context.Context, op func() error, opMaxAttempts uint64, notify func(uint16, error, time.Duration)) error {
+	var attempt uint16 = 0
 
-			for _, specificError := range specificErrors {
-				if strings.Contains(err.Error(), specificError) {
-					attempt++
-					seconds := rand.Intn(30-15) + 15 // from 15 to 30 seconds
-
-					logboek.Context(ctx).Warn().LogF("Retrying docker pull in %d seconds (%d/%d) ...\n", seconds, attempt, cliPullMaxAttempts)
-					time.Sleep(time.Duration(seconds) * time.Second)
-					goto tryPull
-				}
-			}
-		}
-
-		return err
+	isTemporaryErrorMessage := func(errMsg string) bool {
+		return slices.ContainsFunc([]string{
+			"Client.Timeout exceeded while awaiting headers",
+			"TLS handshake timeout",
+			"i/o timeout",
+			"Only schema version 2 is supported",
+			"429 Too Many Requests",
+			"504 Gateway Time-out",
+			"504 Gateway Timeout",
+			"Internal Server Error",
+		}, func(msgPart string) bool {
+			return strings.Contains(errMsg, msgPart)
+		})
 	}
 
-	return nil
+	opWrapper := func() error {
+		attempt++
+		err := op()
+		if err != nil {
+			if isTemporaryErrorMessage(err.Error()) {
+				return err
+			}
+			// Do not retry on other errors.
+			return backoff.Permanent(err)
+		}
+		return nil
+	}
+
+	notifyWrapper := func(err error, duration time.Duration) {
+		notify(attempt, err, duration)
+	}
+
+	eb := backoff.NewExponentialBackOff()
+	eb.MaxInterval = 30 * time.Second
+
+	ebm := backoff.WithMaxRetries(eb, opMaxAttempts)
+	ebmc := backoff.WithContext(ebm, ctx)
+
+	return backoff.RetryNotify(opWrapper, ebmc, notifyWrapper)
 }
 
 func CliPullWithRetries(ctx context.Context, args ...string) error {
@@ -121,45 +143,19 @@ func doCliPush(c command.Cli, args ...string) error {
 
 const cliPushMaxAttempts = 10
 
-func doCliPushWithRetries(c command.Cli, args ...string) error {
-	var attempt int
-
-tryPush:
-	if err := doCliPush(c, args...); err != nil {
-		if attempt < cliPushMaxAttempts {
-			specificErrors := []string{
-				"Client.Timeout exceeded while awaiting headers",
-				"TLS handshake timeout",
-				"i/o timeout",
-				"Only schema version 2 is supported",
-				"504 Gateway Time-out",
-				"504 Gateway Timeout",
-				"Internal Server Error",
-			}
-
-			for _, specificError := range specificErrors {
-				if strings.Contains(err.Error(), specificError) {
-					attempt++
-					seconds := rand.Intn(30-15) + 15 // from 15 to 30 seconds
-
-					msg := fmt.Sprintf("Retrying docker push in %d seconds (%d/%d) ...\n", seconds, attempt, cliPushMaxAttempts)
-					_, _ = c.Err().Write([]byte(msg))
-
-					time.Sleep(time.Duration(seconds) * time.Second)
-					goto tryPush
-				}
-			}
-		}
-
-		return err
+func doCliPushWithRetries(ctx context.Context, c command.Cli, args ...string) error {
+	op := func() error {
+		return doCliPush(c, args...)
 	}
-
-	return nil
+	notify := func(attempt uint16, err error, duration time.Duration) {
+		logboek.Context(ctx).Warn().LogF("Retrying docker push in %d seconds (%d/%d) ...\n", duration.Seconds(), attempt, cliPushMaxAttempts)
+	}
+	return doCliOperationWithRetries(ctx, op, cliPushMaxAttempts, notify)
 }
 
 func CliPushWithRetries(ctx context.Context, args ...string) error {
 	return callCliWithAutoOutput(ctx, func(c command.Cli) error {
-		return doCliPushWithRetries(c, args...)
+		return doCliPushWithRetries(ctx, c, args...)
 	})
 }
 
