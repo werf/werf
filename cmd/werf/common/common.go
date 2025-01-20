@@ -600,6 +600,60 @@ func SetupSkipTlsVerifyRegistry(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(cmdData.SkipTlsVerifyRegistry, "skip-tls-verify-registry", "", util.GetBoolEnvironmentDefaultFalse("WERF_SKIP_TLS_VERIFY_REGISTRY"), "Skip TLS certificate validation when accessing a registry (default $WERF_SKIP_TLS_VERIFY_REGISTRY)")
 }
 
+func SetupSkipTLSVerifyKube(cmdData *CmdData, cmd *cobra.Command) {
+	if cmdData.SkipTlsVerifyKube != nil {
+		return
+	}
+
+	cmdData.SkipTlsVerifyKube = new(bool)
+	cmd.Flags().BoolVarP(cmdData.SkipTlsVerifyKube, "skip-tls-verify-kube", "", util.GetBoolEnvironmentDefaultFalse("WERF_SKIP_TLS_VERIFY_KUBE"), "Skip TLS certificate validation when accessing a Kubernetes cluster (default $WERF_SKIP_TLS_VERIFY_KUBE)")
+}
+
+func SetupKubeApiServer(cmdData *CmdData, cmd *cobra.Command) {
+	if cmdData.KubeApiServer != nil {
+		return
+	}
+
+	cmdData.KubeApiServer = new(string)
+	cmd.Flags().StringVarP(cmdData.KubeApiServer, "kube-api-server", "", os.Getenv("WERF_KUBE_API_SERVER"), "Kubernetes API server address (default $WERF_KUBE_API_SERVER)")
+}
+
+func SetupKubeCaPath(cmdData *CmdData, cmd *cobra.Command) {
+	if cmdData.KubeCaPath != nil {
+		return
+	}
+
+	cmdData.KubeCaPath = new(string)
+	cmd.Flags().StringVarP(cmdData.KubeCaPath, "kube-ca-path", "", os.Getenv("WERF_KUBE_CA_PATH"), "Kubernetes API server CA path (default $WERF_KUBE_CA_PATH)")
+}
+
+func SetupKubeTlsServer(cmdData *CmdData, cmd *cobra.Command) {
+	if cmdData.KubeTlsServer != nil {
+		return
+	}
+
+	cmdData.KubeTlsServer = new(string)
+	cmd.Flags().StringVarP(cmdData.KubeTlsServer, "kube-tls-server", "", os.Getenv("WERF_KUBE_TLS_SERVER"), "Server name to use for Kubernetes API server certificate validation. If it is not provided, the hostname used to contact the server is used (default $WERF_KUBE_TLS_SERVER)")
+}
+
+func SetupKubeToken(cmdData *CmdData, cmd *cobra.Command) {
+	if cmdData.KubeToken != nil {
+		return
+	}
+
+	cmdData.KubeToken = new(string)
+	cmd.Flags().StringVarP(cmdData.KubeToken, "kube-token", "", os.Getenv("WERF_KUBE_TOKEN"), "Kubernetes bearer token used for authentication (default $WERF_KUBE_TOKEN)")
+}
+
+func SetupSkipTlsVerifyHelmDependencies(cmdData *CmdData, cmd *cobra.Command) {
+	if cmdData.SkipTlsVerifyHelmDependencies != nil {
+		return
+	}
+
+	cmdData.SkipTlsVerifyHelmDependencies = new(bool)
+	cmd.Flags().BoolVarP(cmdData.SkipTlsVerifyHelmDependencies, "skip-tls-verify-helm-dependencies", "", util.GetBoolEnvironmentDefaultFalse("WERF_SKIP_TLS_VERIFY_HELM_DEPENDENCIES"), "Skip TLS certificate validation when accessing a Helm charts repository (default $WERF_SKIP_TLS_VERIFY_HELM_DEPENDENCIES)")
+}
+
 func SetupDryRun(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.DryRun = new(bool)
 	cmd.Flags().BoolVarP(cmdData.DryRun, "dry-run", "", util.GetBoolEnvironmentDefaultFalse("WERF_DRY_RUN"), "Indicate what the command would do without actually doing that (default $WERF_DRY_RUN)")

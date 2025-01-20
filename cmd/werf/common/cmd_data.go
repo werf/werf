@@ -69,6 +69,12 @@ type CmdData struct {
 	DockerConfig                    *string
 	InsecureRegistry                *bool
 	SkipTlsVerifyRegistry           *bool
+	SkipTlsVerifyKube               *bool
+	SkipTlsVerifyHelmDependencies   *bool
+	KubeApiServer                   *string
+	KubeCaPath                      *string
+	KubeTlsServer                   *string
+	KubeToken                       *string
 	InsecureHelmDependencies        *bool
 	DryRun                          *bool
 	KeepStagesBuiltWithinLastNHours *uint64
