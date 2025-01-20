@@ -1,6 +1,6 @@
 module github.com/werf/werf/v2
 
-go 1.22.7
+go 1.23
 
 require (
 	github.com/Masterminds/goutils v1.1.1
@@ -11,7 +11,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.26.6
 	github.com/aws/aws-sdk-go-v2/service/ecr v1.36.2
 	github.com/bmatcuk/doublestar v1.3.4
-	github.com/cenkalti/backoff/v4 v4.2.1
+	github.com/cenkalti/backoff/v5 v5.0.1
 	github.com/containerd/containerd v1.7.14
 	github.com/containers/buildah v1.35.1
 	github.com/containers/common v0.58.1
@@ -101,6 +101,7 @@ require (
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
 	github.com/alecthomas/chroma/v2 v2.14.0 // indirect
+	github.com/cenkalti/backoff/v4 v4.2.1 // indirect
 	github.com/chainguard-dev/git-urls v1.0.2 // indirect
 	github.com/dlclark/regexp2 v1.11.0 // indirect
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect

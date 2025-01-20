@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cenkalti/backoff/v4"
+	"github.com/cenkalti/backoff/v5"
 	"github.com/docker/cli/cli/command"
 	"github.com/docker/cli/cli/command/image"
 	"github.com/docker/cli/cli/streams"
@@ -75,21 +75,20 @@ func CliPull(ctx context.Context, args ...string) error {
 	})
 }
 
-const cliPullMaxAttempts = 5
+const cliPullMaxAttempts uint8 = 5
 
 func doCliPullWithRetries(ctx context.Context, c command.Cli, args ...string) error {
-	op := func() error {
-		return doCliPull(c, args...)
+	var attempt uint8
+	op := func() (bool, error) {
+		return false, doCliPull(c, args...)
 	}
-	notify := func(attempt uint16, err error, duration time.Duration) {
+	notify := func(err error, duration time.Duration) {
 		logboek.Context(ctx).Warn().LogF("Retrying docker pull in %d seconds (%d/%d) ...\n", duration.Seconds(), attempt, cliPullMaxAttempts)
 	}
-	return doCliOperationWithRetries(ctx, op, cliPullMaxAttempts, notify)
+	return doCliOperationWithRetries(ctx, op, &attempt, cliPullMaxAttempts, notify)
 }
 
-func doCliOperationWithRetries(ctx context.Context, op func() error, opMaxAttempts uint64, notify func(uint16, error, time.Duration)) error {
-	var attempt uint16 = 0
-
+func doCliOperationWithRetries(ctx context.Context, op backoff.Operation[bool], opAttempt *uint8, opMaxAttempts uint8, notify backoff.Notify) error {
 	isTemporaryErrorMessage := func(errMsg string) bool {
 		return slices.ContainsFunc([]string{
 			"Client.Timeout exceeded while awaiting headers",
@@ -105,30 +104,31 @@ func doCliOperationWithRetries(ctx context.Context, op func() error, opMaxAttemp
 		})
 	}
 
-	opWrapper := func() error {
-		attempt++
-		err := op()
+	opWrapper := func() (bool, error) {
+		*opAttempt++
+		_, err := op()
 		if err != nil {
 			if isTemporaryErrorMessage(err.Error()) {
-				return err
+				return false, err
 			}
 			// Do not retry on other errors.
-			return backoff.Permanent(err)
+			return false, backoff.Permanent(err)
 		}
-		return nil
-	}
-
-	notifyWrapper := func(err error, duration time.Duration) {
-		notify(attempt, err, duration)
+		return false, nil
 	}
 
 	eb := backoff.NewExponentialBackOff()
 	eb.MaxInterval = 30 * time.Second
 
-	ebm := backoff.WithMaxRetries(eb, opMaxAttempts)
-	ebmc := backoff.WithContext(ebm, ctx)
+	_, err := backoff.Retry(ctx, opWrapper,
+		backoff.WithBackOff(eb),
+		backoff.WithMaxTries(uint(opMaxAttempts)),
+		backoff.WithNotify(notify))
+	if err != nil {
+		return err
+	}
 
-	return backoff.RetryNotify(opWrapper, ebmc, notifyWrapper)
+	return nil
 }
 
 func CliPullWithRetries(ctx context.Context, args ...string) error {
@@ -141,16 +141,18 @@ func doCliPush(c command.Cli, args ...string) error {
 	return prepareCliCmd(image.NewPushCommand(c), args...).Execute()
 }
 
-const cliPushMaxAttempts = 10
+const cliPushMaxAttempts uint8 = 10
 
 func doCliPushWithRetries(ctx context.Context, c command.Cli, args ...string) error {
-	op := func() error {
-		return doCliPush(c, args...)
+	var attempt uint8
+	op := func() (bool, error) {
+		err := doCliPush(c, args...)
+		return false, err
 	}
-	notify := func(attempt uint16, err error, duration time.Duration) {
+	notify := func(err error, duration time.Duration) {
 		logboek.Context(ctx).Warn().LogF("Retrying docker push in %d seconds (%d/%d) ...\n", duration.Seconds(), attempt, cliPushMaxAttempts)
 	}
-	return doCliOperationWithRetries(ctx, op, cliPushMaxAttempts, notify)
+	return doCliOperationWithRetries(ctx, op, &attempt, cliPushMaxAttempts, notify)
 }
 
 func CliPushWithRetries(ctx context.Context, args ...string) error {
