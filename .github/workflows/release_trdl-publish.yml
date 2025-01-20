@@ -60,7 +60,7 @@ jobs:
     if: ${{ failure() && needs.publish.outputs.publish_status == 'success' }}
     name: Deploy trdl_channels.yaml to production
     needs: publish
-    runs-on: ubuntu-latest-4-cores
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -94,7 +94,7 @@ jobs:
           - werf-argocd-cmp-sidecar
 
     needs: publish
-    runs-on: ubuntu-latest-16-cores
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
