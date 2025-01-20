@@ -140,6 +140,10 @@ werf dismiss [options]
             configuration (default $WERF_INSECURE_HELM_DEPENDENCIES)
       --insecure-registry=false
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
+      --kube-api-server=''
+            Kubernetes API server address (default $WERF_KUBE_API_SERVER)
+      --kube-ca-path=''
+            Kubernetes API server CA path (default $WERF_KUBE_CA_PATH)
       --kube-config=''
             Kubernetes config file path (default $WERF_KUBE_CONFIG, or $WERF_KUBECONFIG, or         
             $KUBECONFIG)
@@ -148,6 +152,12 @@ werf dismiss [options]
             $WERF_KUBECONFIG_BASE64 or $KUBECONFIG_BASE64)
       --kube-context=''
             Kubernetes config context (default $WERF_KUBE_CONTEXT)
+      --kube-tls-server=''
+            Server name to use for Kubernetes API server certificate validation. If it is not       
+            provided, the hostname used to contact the server is used (default                      
+            $WERF_KUBE_TLS_SERVER)
+      --kube-token=''
+            Kubernetes bearer token used for authentication (default $WERF_KUBE_TOKEN)
       --log-color-mode='auto'
             Set log color mode.
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
@@ -214,6 +224,9 @@ werf dismiss [options]
             cache.
             Also, can be specified with $WERF_SECONDARY_REPO_* (e.g. $WERF_SECONDARY_REPO_1=...,    
             $WERF_SECONDARY_REPO_2=...)
+      --skip-tls-verify-kube=false
+            Skip TLS certificate validation when accessing a Kubernetes cluster (default            
+            $WERF_SKIP_TLS_VERIFY_KUBE)
       --skip-tls-verify-registry=false
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)
