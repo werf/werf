@@ -95,7 +95,7 @@ func newHttpTransport(skipTlsVerify bool) http.RoundTripper {
 	t = transport.NewRetry(t)
 
 	// Wrap the transport with rate limit logic.
-	t = transport2.NewRateLimit(t)
+	t = transport2.NewTransport(t)
 
 	return t
 }

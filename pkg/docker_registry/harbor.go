@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cenkalti/backoff/v4"
+	"github.com/cenkalti/backoff/v5"
 	"github.com/google/go-containerregistry/pkg/name"
 
 	"github.com/werf/logboek"
@@ -65,19 +65,16 @@ func newHarbor(options harborOptions) (*harbor, error) {
 }
 
 func (r *harbor) GetRepoImage(ctx context.Context, reference string) (*image.Info, error) {
-	var info *image.Info
-	operation := func() error {
-		var err error
-		info, err = r.api.GetRepoImage(ctx, reference)
+	operation := func() (*image.Info, error) {
+		info, err := r.api.GetRepoImage(ctx, reference)
 		if err != nil {
 			if strings.Contains(err.Error(), "PROJECTPOLICYVIOLATION") {
-				return err
+				return nil, err
 			}
-
 			// Do not retry on other errors.
-			return backoff.Permanent(err)
+			return nil, backoff.Permanent(err)
 		}
-		return nil
+		return info, nil
 	}
 
 	notify := func(err error, duration time.Duration) {
@@ -86,14 +83,11 @@ func (r *harbor) GetRepoImage(ctx context.Context, reference string) (*image.Inf
 
 	eb := backoff.NewExponentialBackOff()
 	eb.InitialInterval = 2 * time.Second
-	eb.MaxElapsedTime = 2 * time.Minute // Maximum time for all retries.
 
-	err := backoff.RetryNotify(operation, eb, notify)
-	if err != nil {
-		return nil, err
-	}
-
-	return info, nil
+	return backoff.Retry(ctx, operation,
+		backoff.WithBackOff(eb),
+		backoff.WithMaxElapsedTime(2*time.Minute), // Maximum time for all retries.
+		backoff.WithNotify(notify))
 }
 
 func (r *harbor) DeleteRepo(ctx context.Context, reference string) error {

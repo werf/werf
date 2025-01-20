@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cenkalti/backoff/v4"
+	"github.com/cenkalti/backoff/v5"
 	apiregistry "github.com/docker/docker/api/types/registry"
 	"github.com/docker/docker/registry"
 )
@@ -57,10 +57,9 @@ func Auth(ctx context.Context, options Options) (string, error) {
 		return token, nil
 	}
 
-	eb := backoff.NewExponentialBackOff()
-	eb.MaxElapsedTime = 5 * time.Minute // Maximum time for all retries.
-
-	token, err := backoff.RetryWithData(operation, eb)
+	token, err := backoff.Retry(ctx, operation,
+		backoff.WithBackOff(backoff.NewExponentialBackOff()),
+		backoff.WithMaxElapsedTime(5*time.Minute)) // Maximum time for all retries.
 	if err != nil {
 		return "", err
 	}
