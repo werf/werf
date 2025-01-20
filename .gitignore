@@ -3,6 +3,7 @@
 .tags
 /.vscode
 /.idea
+/.run
 
 /docs/vendor
 /docs/.ruby-version
