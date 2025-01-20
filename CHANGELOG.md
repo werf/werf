@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.21.0](https://www.github.com/werf/werf/compare/v2.20.0...v2.21.0) (2025-01-20)
+
+
+### Features
+
+* **deploy:** add --skip-tls-verify-kube, --kube-api-server, --kube-ca-path, --kube-tls-server, --kube-token, --skip-tls-verify-helm-dependencies options (retrigger CI) ([402e7ca](https://www.github.com/werf/werf/commit/402e7ca4f9fec914cf2c6928c0ce49f3de02f373))
+
 ## [2.20.0](https://www.github.com/werf/werf/compare/v2.19.0...v2.20.0) (2025-01-17)
 
 
