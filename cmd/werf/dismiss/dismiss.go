@@ -97,6 +97,11 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupKubeConfig(&commonCmdData, cmd)
 	common.SetupKubeConfigBase64(&commonCmdData, cmd)
 	common.SetupKubeContext(&commonCmdData, cmd)
+	common.SetupSkipTLSVerifyKube(&commonCmdData, cmd)
+	common.SetupKubeApiServer(&commonCmdData, cmd)
+	common.SetupKubeCaPath(&commonCmdData, cmd)
+	common.SetupKubeTlsServer(&commonCmdData, cmd)
+	common.SetupKubeToken(&commonCmdData, cmd)
 
 	common.SetupStatusProgressPeriod(&commonCmdData, cmd)
 	common.SetupHooksStatusProgressPeriod(&commonCmdData, cmd)
@@ -165,9 +170,14 @@ func runDismiss(ctx context.Context) error {
 	if err := action.Uninstall(ctx, action.UninstallOptions{
 		DeleteHooks:                cmdData.WithHooks,
 		DeleteReleaseNamespace:     cmdData.WithNamespace,
+		KubeAPIServerName:          *commonCmdData.KubeApiServer,
+		KubeCAPath:                 *commonCmdData.KubeCaPath,
 		KubeConfigBase64:           *commonCmdData.KubeConfigBase64,
 		KubeConfigPaths:            append([]string{*commonCmdData.KubeConfig}, *commonCmdData.KubeConfigPathMergeList...),
 		KubeContext:                *commonCmdData.KubeContext,
+		KubeSkipTLSVerify:          *commonCmdData.SkipTlsVerifyKube,
+		KubeTLSServerName:          *commonCmdData.KubeTlsServer,
+		KubeToken:                  *commonCmdData.KubeToken,
 		LogDebug:                   *commonCmdData.LogDebug,
 		ProgressTablePrintInterval: time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
 		ReleaseHistoryLimit:        *commonCmdData.ReleasesHistoryMax,

@@ -117,6 +117,12 @@ werf plan --repo registry.mydomain.com/web --env production`,
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
 	common.SetupInsecureHelmDependencies(&commonCmdData, cmd, true)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
+	common.SetupSkipTLSVerifyKube(&commonCmdData, cmd)
+	common.SetupKubeApiServer(&commonCmdData, cmd)
+	common.SetupSkipTlsVerifyHelmDependencies(&commonCmdData, cmd)
+	common.SetupKubeCaPath(&commonCmdData, cmd)
+	common.SetupKubeTlsServer(&commonCmdData, cmd)
+	common.SetupKubeToken(&commonCmdData, cmd)
 	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
@@ -398,31 +404,37 @@ func run(
 	}
 
 	if err := action.Plan(ctx, action.PlanOptions{
-		ChartDirPath:               chartPath,
-		ChartRepositoryInsecure:    *commonCmdData.InsecureHelmDependencies,
-		ChartRepositorySkipUpdate:  *commonCmdData.SkipDependenciesRepoRefresh,
-		DefaultSecretValuesDisable: *commonCmdData.DisableDefaultSecretValues,
-		DefaultValuesDisable:       *commonCmdData.DisableDefaultValues,
-		ErrorIfChangesPlanned:      cmdData.DetailedExitCode,
-		ExtraAnnotations:           extraAnnotations,
-		ExtraLabels:                extraLabels,
-		ExtraRuntimeAnnotations:    serviceAnnotations,
-		KubeConfigBase64:           *commonCmdData.KubeConfigBase64,
-		KubeConfigPaths:            append([]string{*commonCmdData.KubeConfig}, *commonCmdData.KubeConfigPathMergeList...),
-		KubeContext:                *commonCmdData.KubeContext,
-		LogDebug:                   *commonCmdData.LogDebug,
-		LogRegistryStreamOut:       os.Stdout,
-		NetworkParallelism:         common.GetNetworkParallelism(&commonCmdData),
-		RegistryCredentialsPath:    docker.GetDockerConfigCredentialsFile(*commonCmdData.DockerConfig),
-		ReleaseName:                releaseName,
-		ReleaseNamespace:           releaseNamespace,
-		ReleaseStorageDriver:       action.ReleaseStorageDriver(os.Getenv("HELM_DRIVER")),
-		SecretKeyIgnore:            *commonCmdData.IgnoreSecretKey,
-		SecretValuesPaths:          common.GetSecretValues(&commonCmdData),
-		ValuesFileSets:             common.GetSetFile(&commonCmdData),
-		ValuesFilesPaths:           common.GetValues(&commonCmdData),
-		ValuesSets:                 common.GetSet(&commonCmdData),
-		ValuesStringSets:           common.GetSetString(&commonCmdData),
+		ChartDirPath:                 chartPath,
+		ChartRepositoryInsecure:      *commonCmdData.InsecureHelmDependencies,
+		ChartRepositorySkipTLSVerify: *commonCmdData.SkipTlsVerifyHelmDependencies,
+		ChartRepositorySkipUpdate:    *commonCmdData.SkipDependenciesRepoRefresh,
+		DefaultSecretValuesDisable:   *commonCmdData.DisableDefaultSecretValues,
+		DefaultValuesDisable:         *commonCmdData.DisableDefaultValues,
+		ErrorIfChangesPlanned:        cmdData.DetailedExitCode,
+		ExtraAnnotations:             extraAnnotations,
+		ExtraLabels:                  extraLabels,
+		ExtraRuntimeAnnotations:      serviceAnnotations,
+		KubeAPIServerName:            *commonCmdData.KubeApiServer,
+		KubeCAPath:                   *commonCmdData.KubeCaPath,
+		KubeConfigBase64:             *commonCmdData.KubeConfigBase64,
+		KubeConfigPaths:              append([]string{*commonCmdData.KubeConfig}, *commonCmdData.KubeConfigPathMergeList...),
+		KubeContext:                  *commonCmdData.KubeContext,
+		KubeSkipTLSVerify:            *commonCmdData.SkipTlsVerifyKube,
+		KubeTLSServerName:            *commonCmdData.KubeTlsServer,
+		KubeToken:                    *commonCmdData.KubeToken,
+		LogDebug:                     *commonCmdData.LogDebug,
+		LogRegistryStreamOut:         os.Stdout,
+		NetworkParallelism:           common.GetNetworkParallelism(&commonCmdData),
+		RegistryCredentialsPath:      docker.GetDockerConfigCredentialsFile(*commonCmdData.DockerConfig),
+		ReleaseName:                  releaseName,
+		ReleaseNamespace:             releaseNamespace,
+		ReleaseStorageDriver:         action.ReleaseStorageDriver(os.Getenv("HELM_DRIVER")),
+		SecretKeyIgnore:              *commonCmdData.IgnoreSecretKey,
+		SecretValuesPaths:            common.GetSecretValues(&commonCmdData),
+		ValuesFileSets:               common.GetSetFile(&commonCmdData),
+		ValuesFilesPaths:             common.GetValues(&commonCmdData),
+		ValuesSets:                   common.GetSet(&commonCmdData),
+		ValuesStringSets:             common.GetSetString(&commonCmdData),
 		LegacyPrePlanHook: func(
 			ctx context.Context,
 			releaseNamespace string,

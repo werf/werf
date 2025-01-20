@@ -113,6 +113,12 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
 	common.SetupInsecureHelmDependencies(&commonCmdData, cmd, true)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
+	common.SetupSkipTLSVerifyKube(&commonCmdData, cmd)
+	common.SetupKubeApiServer(&commonCmdData, cmd)
+	common.SetupSkipTlsVerifyHelmDependencies(&commonCmdData, cmd)
+	common.SetupKubeCaPath(&commonCmdData, cmd)
+	common.SetupKubeTlsServer(&commonCmdData, cmd)
+	common.SetupKubeToken(&commonCmdData, cmd)
 	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
 
 	common.SetupLogOptionsDefaultQuiet(&commonCmdData, cmd)
@@ -356,36 +362,42 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 	}
 
 	if err := action.Render(ctx, action.RenderOptions{
-		ChartDirPath:               chartPath,
-		ChartRepositoryInsecure:    *commonCmdData.InsecureHelmDependencies,
-		ChartRepositorySkipUpdate:  *commonCmdData.SkipDependenciesRepoRefresh,
-		DefaultSecretValuesDisable: *commonCmdData.DisableDefaultSecretValues,
-		DefaultValuesDisable:       *commonCmdData.DisableDefaultValues,
-		ExtraAnnotations:           extraAnnotations,
-		ExtraLabels:                extraLabels,
-		ExtraRuntimeAnnotations:    serviceAnnotations,
-		KubeConfigBase64:           *commonCmdData.KubeConfigBase64,
-		KubeConfigPaths:            append([]string{*commonCmdData.KubeConfig}, *commonCmdData.KubeConfigPathMergeList...),
-		KubeContext:                *commonCmdData.KubeContext,
-		Local:                      !cmdData.Validate,
-		LocalKubeVersion:           *commonCmdData.KubeVersion,
-		LogDebug:                   *commonCmdData.LogDebug,
-		LogRegistryStreamOut:       os.Stdout,
-		NetworkParallelism:         *commonCmdData.NetworkParallelism,
-		RegistryCredentialsPath:    docker.GetDockerConfigCredentialsFile(*commonCmdData.DockerConfig),
-		ReleaseName:                releaseName,
-		ReleaseNamespace:           releaseNamespace,
-		ReleaseStorageDriver:       action.ReleaseStorageDriver(os.Getenv("HELM_DRIVER")),
-		OutputFileSave:             cmdData.RenderOutput != "",
-		OutputFilePath:             cmdData.RenderOutput,
-		SecretKeyIgnore:            *commonCmdData.IgnoreSecretKey,
-		SecretValuesPaths:          common.GetSecretValues(&commonCmdData),
-		ShowCRDs:                   cmdData.IncludeCRDs,
-		ShowOnlyFiles:              append(util.PredefinedValuesByEnvNamePrefix("WERF_SHOW_ONLY"), cmdData.ShowOnly...),
-		ValuesFileSets:             common.GetSetFile(&commonCmdData),
-		ValuesFilesPaths:           common.GetValues(&commonCmdData),
-		ValuesSets:                 common.GetSet(&commonCmdData),
-		ValuesStringSets:           common.GetSetString(&commonCmdData),
+		ChartDirPath:                 chartPath,
+		ChartRepositoryInsecure:      *commonCmdData.InsecureHelmDependencies,
+		ChartRepositorySkipTLSVerify: *commonCmdData.SkipTlsVerifyHelmDependencies,
+		ChartRepositorySkipUpdate:    *commonCmdData.SkipDependenciesRepoRefresh,
+		DefaultSecretValuesDisable:   *commonCmdData.DisableDefaultSecretValues,
+		DefaultValuesDisable:         *commonCmdData.DisableDefaultValues,
+		ExtraAnnotations:             extraAnnotations,
+		ExtraLabels:                  extraLabels,
+		ExtraRuntimeAnnotations:      serviceAnnotations,
+		KubeAPIServerName:            *commonCmdData.KubeApiServer,
+		KubeCAPath:                   *commonCmdData.KubeCaPath,
+		KubeConfigBase64:             *commonCmdData.KubeConfigBase64,
+		KubeConfigPaths:              append([]string{*commonCmdData.KubeConfig}, *commonCmdData.KubeConfigPathMergeList...),
+		KubeContext:                  *commonCmdData.KubeContext,
+		KubeSkipTLSVerify:            *commonCmdData.SkipTlsVerifyKube,
+		KubeTLSServerName:            *commonCmdData.KubeTlsServer,
+		KubeToken:                    *commonCmdData.KubeToken,
+		Local:                        !cmdData.Validate,
+		LocalKubeVersion:             *commonCmdData.KubeVersion,
+		LogDebug:                     *commonCmdData.LogDebug,
+		LogRegistryStreamOut:         os.Stdout,
+		NetworkParallelism:           *commonCmdData.NetworkParallelism,
+		OutputFilePath:               cmdData.RenderOutput,
+		OutputFileSave:               cmdData.RenderOutput != "",
+		RegistryCredentialsPath:      docker.GetDockerConfigCredentialsFile(*commonCmdData.DockerConfig),
+		ReleaseName:                  releaseName,
+		ReleaseNamespace:             releaseNamespace,
+		ReleaseStorageDriver:         action.ReleaseStorageDriver(os.Getenv("HELM_DRIVER")),
+		SecretKeyIgnore:              *commonCmdData.IgnoreSecretKey,
+		SecretValuesPaths:            common.GetSecretValues(&commonCmdData),
+		ShowCRDs:                     cmdData.IncludeCRDs,
+		ShowOnlyFiles:                append(util.PredefinedValuesByEnvNamePrefix("WERF_SHOW_ONLY"), cmdData.ShowOnly...),
+		ValuesFileSets:               common.GetSetFile(&commonCmdData),
+		ValuesFilesPaths:             common.GetValues(&commonCmdData),
+		ValuesSets:                   common.GetSet(&commonCmdData),
+		ValuesStringSets:             common.GetSetString(&commonCmdData),
 		LegacyPreRenderHook: func(
 			ctx context.Context,
 			releaseNamespace string,
