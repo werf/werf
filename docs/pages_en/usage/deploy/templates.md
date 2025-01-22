@@ -862,7 +862,7 @@ The named templates declared in `templates/_*.tpl` cannot use the root and relat
 
 {% endraw %}
 
-### include in include
+### Nested and recursive include
 
 You can also use the `include` function in the `define` blocks to include named templates:
 
