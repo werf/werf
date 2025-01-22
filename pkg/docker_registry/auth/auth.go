@@ -47,8 +47,12 @@ func Auth(ctx context.Context, options Options) (string, error) {
 
 	operation := func() (string, error) {
 		_, token, err := remote.Auth(ctx, authConfig, options.UserAgent)
-		if err != nil && strings.Contains(err.Error(), "failed with status: 429") {
-			return "", err
+		if err != nil {
+			if strings.Contains(err.Error(), "failed with status: 429") {
+				return "", err
+			}
+			// Do not retry on other errors.
+			return "", backoff.Permanent(err)
 		}
 		return token, nil
 	}
