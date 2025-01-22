@@ -157,8 +157,8 @@ func RunHostCleanup(ctx context.Context, backend container_backend.ContainerBack
 			AllowedStorageVolumeUsagePercentage:       allowedDockerStorageVolumeUsagePercentage,
 			AllowedStorageVolumeUsageMarginPercentage: allowedDockerStorageVolumeUsageMarginPercentage,
 			StoragePath: *options.DockerServerStoragePath,
-			force:       options.Force,
-			dryRun:      options.DryRun,
+			Force:       options.Force,
+			DryRun:      options.DryRun,
 		})
 		if err != nil {
 			return fmt.Errorf("local %s backend GC failed: %w", cleaner.BackendName(), err)
