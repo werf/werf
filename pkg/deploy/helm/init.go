@@ -28,6 +28,11 @@ type InitActionConfigOptions struct {
 	KubeConfigOptions         kube.KubeConfigOptions
 	ReleasesHistoryMax        int
 	RegistryClient            *registry.Client
+	KubeToken                 string
+	KubeAPIServerName         string
+	KubeCAPath                string
+	KubeTLSServerName         string
+	KubeSkipTLSVerify         bool
 	QPSLimit                  int
 	BurstLimit                int
 }
@@ -36,6 +41,11 @@ func InitActionConfig(ctx context.Context, kubeInitializer KubeInitializer, name
 	configGetter, err := kube.NewKubeConfigGetter(kube.KubeConfigGetterOptions{
 		KubeConfigOptions: opts.KubeConfigOptions,
 		Namespace:         namespace,
+		BearerToken:       opts.KubeToken,
+		APIServer:         opts.KubeAPIServerName,
+		CAFile:            opts.KubeCAPath,
+		TLSServerName:     opts.KubeTLSServerName,
+		SkipTLSVerify:     opts.KubeSkipTLSVerify,
 		QPSLimit:          opts.QPSLimit,
 		BurstLimit:        opts.BurstLimit,
 	})
