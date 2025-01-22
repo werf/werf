@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.22.0](https://www.github.com/werf/werf/compare/v2.21.0...v2.22.0) (2025-01-22)
+
+
+### Features
+
+* **deploy:** add --kube-qps-limit and --kube-burst-limit flags, increase default QPS/Burst ([71f79ef](https://www.github.com/werf/werf/commit/71f79ef4c415f36a54e88e340cbb4159c15def0c))
+* **deploy:** add --skip-tls-verify-kube, --kube-api-server, --kube-ca-path, --kube-tls-server, --kube-token, --skip-tls-verify-helm-dependencies options to bundles ([a2a810c](https://www.github.com/werf/werf/commit/a2a810ccf9e2b465d2323dd81df879a5819be173))
+* **kube-run:** support %container_image% in overrides ([#6553](https://www.github.com/werf/werf/issues/6553)) ([c3ab1aa](https://www.github.com/werf/werf/commit/c3ab1aa5c0e27b571118a9f955b928248882514d))
+
 ## [2.21.0](https://www.github.com/werf/werf/compare/v2.20.0...v2.21.0) (2025-01-20)
 
 
