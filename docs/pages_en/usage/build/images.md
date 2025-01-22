@@ -382,6 +382,90 @@ import:
 
 For more info on how to write Stapel instructions refer to the [documentation]({{"usage/build/stapel/base.html" | true_relative_url }}).
 
+## Changing image configuration spec
+
+In OCI (Open Container Initiative) ([imageSpec](https://github.com/opencontainers/image-spec/blob/main/config.md)) – it is an image specification that describes its structure and metadata. The `imageSpec` directive in `werf.yaml` provides the following features:
+- Adding author for images.
+- Managing labels (`labels`): adding new ones and removing existing ones.
+- Inheriting global settings (`user`, `env`, `entrypoint`, `volumes`, etc.) with the possibility of supplementing and modifying them.
+- Removing certain parameter values (`volumes`, `env`, `labels`).
+- Cleaning the image build history.
+
+### Global imageSpec configuration
+
+An example of an imageSpec configuration for a single image that will apply to all images in the project:
+
+```yaml
+project: test
+configVersion: 1
+build:
+  imageSpec:
+    author: "Frontend Maintainer <frontend@example.com>"
+    clearHistory: true
+    config:
+      removeLabels:
+        - "unnecessary-label"
+        - /org.opencontainers.image\..*/
+      labels:
+        app: "my-app"
+```
+
+### ImageSpec configuration for individual images
+
+An example of an imageSpec configuration for a specific image:
+
+**Important:** The configuration of an individual image takes precedence, so string values will be overridden, and directives with multiple values will merge the data according to the priority.
+
+```yaml
+image: frontend_image
+imageSpec:
+  author: "Frontend Maintainer <frontend@example.com>"
+  clearHistory: true
+  config:
+    user: "1001:1001"
+    exposedPorts:
+      - "8080/tcp"
+    env:
+      NODE_ENV: "production"
+      API_URL: "https://api.example.com"
+    entrypoint:
+      - "/usr/local/bin/start.sh"
+    volumes:
+      - "/app/data"
+    workingDir: "/app"
+    labels:
+      frontend-version: "1.2.3"
+    stopSignal: "SIGTERM"
+    removeLabels:
+      - "old-frontend-label"
+      - /old-regex-label.*/
+    removeVolumes:
+      - "/var/cache"
+    removeEnv:
+      - "DEBUG"
+```
+
+For stapel images, the configuration is identical.
+
+**Important:** Changing these settings does not affect the build process; however, you can create a separate base image where you can remove unnecessary `VOLUME` or add `ENV`.
+
+Example configuration:
+
+```yaml
+image: base
+from: ubuntu:22.04
+imageSpec:
+  config:
+    removeVolumes:
+      - "/var/lib/postgresql/data"
+---
+image: app
+fromImage: base
+git:
+  add: /postgresql/data
+  to: /var/lib/postgresql/data
+```
+
 ## Linking images
 
 ### Inheritance and importing files

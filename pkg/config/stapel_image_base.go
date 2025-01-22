@@ -23,6 +23,7 @@ type StapelImageBase struct {
 	Import           []*Import
 	Dependencies     []*Dependency
 	Secrets          []Secret
+	ImageSpec        *ImageSpec
 
 	final    bool
 	platform []string

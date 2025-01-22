@@ -17,18 +17,18 @@ type Info struct {
 	Name       string `json:"name"`
 	Repository string `json:"repository"`
 	Tag        string `json:"tag"`
-
 	// FIXME remove RepoDigest from Info and use Digest everywhere instead cause it's more clear and repo part is not needed.
 	// repo@sha256:digest
 	RepoDigest string `json:"repoDigest"`
 
-	OnBuild           []string          `json:"onBuild"`
-	Env               []string          `json:"env"`
-	ID                string            `json:"ID"`
-	ParentID          string            `json:"parentID"`
-	Labels            map[string]string `json:"labels"`
-	Size              int64             `json:"size"`
-	CreatedAtUnixNano int64             `json:"createdAtUnixNano"`
+	OnBuild           []string            `json:"onBuild"`
+	Env               []string            `json:"env"`
+	ID                string              `json:"ID"`
+	ParentID          string              `json:"parentID"`
+	Labels            map[string]string   `json:"labels"`
+	Size              int64               `json:"size"`
+	CreatedAtUnixNano int64               `json:"createdAtUnixNano"`
+	Volumes           map[string]struct{} `json:"volumes"`
 
 	IsIndex bool
 	Index   []*Info

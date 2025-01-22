@@ -37,6 +37,7 @@ const (
 	DockerInstructions        StageName = "dockerInstructions"
 
 	Dockerfile StageName = "dockerfile"
+	ImageSpec  StageName = "imageSpec"
 )
 
 // TODO(compatibility): remove in v3
@@ -71,6 +72,7 @@ var AllStages = []StageName{
 	DockerInstructions,
 
 	Dockerfile,
+	ImageSpec,
 }
 
 type BaseStageOptions struct {
@@ -109,6 +111,14 @@ type BaseStage struct {
 	containerWerfDir string
 	configMounts     []*config.Mount
 	projectName      string
+}
+
+func (s *BaseStage) IsBuildable() bool {
+	return true
+}
+
+func (s *BaseStage) IsMutable() bool {
+	return false
 }
 
 func (s *BaseStage) HasPrevStage() bool {

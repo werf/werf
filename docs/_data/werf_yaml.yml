@@ -33,6 +33,47 @@ sections:
             description:
               en: "Enable layer-by-layer caching of Dockerfile instructions in container registry globally for all images"
               ru: "Включить послойное кеширование инструкций Dockerfile в container registry глобально для всех образов"
+          - name: imageSpec
+            description:
+              en: Global image configuration options according to the OCI specification, which will be applied to all images in the project
+              ru: Глобальная конфигурация образов согласно OCI спецификации, которая применится ко всем образам в проекте
+            collapsible: true
+            isCollapsedByDefault: false
+            detailsCustomLinks:
+              en:
+                - text: Изменение конфигурации образов 
+                  article: "/usage/build/images.md#changing-image-configuration-spec"
+              ru:
+                - text: Изменение конфигурации образов 
+                  article: "/usage/build/images.md#изменение-конфигурации-образов"
+            directives:
+              - name: author
+                value: "string"
+                description:
+                  en: Author of the image
+                  ru: Автор образа
+              - name: clearHistory
+                value: "bool"
+                description:
+                  en: Remove all image build history
+                  ru: Удалить всю историю сборки образа
+              - name: config
+                description:
+                  en: Common image configuration
+                  ru: Общая конфигурация образа
+                collapsible: true
+                isCollapsedByDefault: false
+                directives:
+                  - name: removeWerfLabels
+                    value: "bool"
+                    description:
+                      en: Whether to remove Werf labels
+                      ru: Удалять все метки Werf
+                  - name: removeLabels
+                    value: "[ string || /REGEXP/, ... ]"
+                    description:
+                      en: List of labels to remove
+                      ru: Список меток для удаления
       - name: deploy
         description:
           en: Settings for deployment
@@ -328,6 +369,126 @@ sections:
               description:
                 en: "Name of build argument which will contain specified type of information about image"
                 ru: "Имя аргумента (Dockerfile build-args), который будет содержать указанный тип информации об образе"
+      - &common_image_spec_config
+        name: imageSpec
+        description:
+          en: Image configuration according to the OCI specification
+          ru: Конфигурация образа согласно OCI спецификации
+        detailsCustomLinks:
+          en:
+            - text: Изменение конфигурации образов 
+              article: "/usage/build/images.md#изменение-конфигурации-образов"
+          ru:
+            - text: Изменение конфигурации образов 
+              article: "/usage/build/images.md#изменение-конфигурации-образов"
+        directives: 
+          - name: author
+            value: "string"
+            description:
+              en: Author of the image
+              ru: Автор образа
+          - name: clearHistory
+            value: "bool"
+            description:
+              en: Remove all image build history
+              ru: Удалить всю историю сборки образа
+          - name: config
+            description:
+              en: Common image configuration
+              ru: Общая конфигурация образа
+            collapsible: true
+            isCollapsedByDefault: false
+            directives:
+              - name: removeWerfLabels
+                value: "bool"
+                description:
+                  en: Whether to remove Werf labels
+                  ru: Удалять все метки Werf
+              - name: removeLabels
+                value: "[ string || /REGEXP/, ... ]"
+                description:
+                  en: List of labels to remove
+                  ru: Список меток для удаления
+              - name: removeVolumes
+                value: "[string, ...]"
+                description:
+                  en: List of volumes to remove
+                  ru: Список томов для удаления
+              - name: removeEnv
+                value: "[string, ...]"
+                description:
+                  en: List of environment variables to remove
+                  ru: Список переменных окружения для удаления
+              - name: clearEntrypoint
+                value: "[string, ...]"
+                description:
+                  en: Remove ENTRYPOINT
+                  ru: Очистить ENTRYPOINT
+              - name: clearCmd
+                value: "[string, ...]"
+                description:
+                  en: Remove CMD
+                  ru: Очистить CMD
+              - name: volumes
+                value: "[string, ...]"
+                description:
+                  en: List of volumes to add
+                  ru: Список томов для добавления
+                detailsLink: "https://docs.docker.com/engine/reference/builder/#volume"
+              - name: labels
+                value: "{ name string: value string, ... }"
+                description:
+                  en: List of labels to add
+                  ru: Список меток для добавления
+                detailsLink: "https://docs.docker.com/engine/reference/builder/#label"
+              - name: env
+                value: "{ name string: value string, ... }"
+                description:
+                  en: List of environment variables to add
+                  ru: Список переменных окружения для добавления
+                detailsLink: "https://docs.docker.com/engine/reference/builder/#env"
+              - name: expose
+                value: "[string, ...]"
+                description:
+                  en: Set exposed ports
+                  ru: Установить порты открытые порты
+                detailsLink: "https://docs.docker.com/engine/reference/builder/#expose"
+              - name: user
+                value: "string"
+                description:
+                  en: Set user
+                  ru: Установить пользователя
+                detailsLink: "https://docs.docker.com/engine/reference/builder/#user"
+              - name: cmd
+                value: "[string, ...]"
+                description:
+                  en: Set CMD
+                  ru: Установить CMD
+                detailsLink: "https://docs.docker.com/engine/reference/builder/#cmd"
+              - name: entrypoint
+                value: "[string, ...]"
+                description:
+                  en: Set ENTRYPOINT
+                  ru: Установить ENTRYPOINT
+                detailsLink: "https://docs.docker.com/engine/reference/builder/#entrypoint"
+              - name: workingDir
+                value: "string"
+                description:
+                  en: Set WORKDIR
+                  ru: Установить WORKDIR
+                detailsLink: "https://docs.docker.com/engine/reference/builder/#workdir"
+              - name: stopSignal
+                value: "string"
+                description:
+                  en: Set STOPSIGNAL
+                  ru: Установить STOPSIGNAL
+                detailsLink: "https://docs.docker.com/engine/reference/builder/#stopsignal"
+              - name: healthcheck
+                value: "{ test: [string, ...], interval: string, retries: int }"
+                description:
+                  en: Healthcheck configuration. Intervals are in seconds.
+                  ru: Конфигурация проверки состояния. Интервалы в секундах.
+                detailsLink: https://docs.docker.com/engine/reference/builder/#healthcheck"
 
   - id: stapel-section
     description:
@@ -655,10 +816,11 @@ sections:
             detailsArticle:
               en: "/usage/build/stapel/instructions.html#dependency-on-the-cacheversion"
               ru: "/usage/build/stapel/instructions.html#зависимость-от-значения-cacheversion"
+      - <<: *common_image_spec_config
       - name: docker
         description:
-          en: "Set of directives to effect on an image manifest"
-          ru: "Набор директив для изменения манифеста образа"
+          en: "Set of directives to change the image manifest. Incompatible with the imageSpec directive"
+          ru: "Набор директив для изменения манифеста образа. Несовместимо с директивой imageSpec"
         detailsArticle:
           all: "/usage/build/stapel/dockerfile.html"
         collapsible: true
@@ -864,4 +1026,3 @@ sections:
               description:
                 en: "Name of environment variable which will contain specified type of information about image"
                 ru: "Имя переменной окружения, которая будет содержать указанный тип информации об образе"
-

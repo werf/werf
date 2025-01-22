@@ -196,7 +196,7 @@ werf plan --repo registry.mydomain.com/web --env production
             STAGE_NAME should be one of the following: from, beforeInstall,                         
             dependenciesBeforeInstall, gitArchive, install, dependenciesAfterInstall, beforeSetup,  
             dependenciesBeforeSetup, setup, dependenciesAfterSetup, gitCache, gitLatestPatch,       
-            dockerInstructions, dockerfile
+            dockerInstructions, dockerfile, imageSpec
       --kube-api-server=''
             Kubernetes API server address (default $WERF_KUBE_API_SERVER)
       --kube-burst-limit=100

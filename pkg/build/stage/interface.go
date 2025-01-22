@@ -13,6 +13,8 @@ type Interface interface {
 	LogDetailedName() string
 
 	IsEmpty(ctx context.Context, c Conveyor, prevBuiltImage *StageImage) (bool, error)
+	IsBuildable() bool
+	IsMutable() bool
 
 	ExpandDependencies(ctx context.Context, c Conveyor, baseEnv map[string]string) error
 	FetchDependencies(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, dockerRegistry docker_registry.GenericApiInterface) error

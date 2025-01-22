@@ -1,0 +1,136 @@
+package config
+
+type rawImageSpec struct {
+	Author       string              `yaml:"author,omitempty"`
+	ClearHistory bool                `yaml:"clearHistory,omitempty"`
+	Config       *rawImageSpecConfig `yaml:"config,omitempty"`
+
+	doc *doc `yaml:"-"` // parent
+
+	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
+}
+
+type rawImageSpecConfig struct {
+	RemoveWerfLabels bool     `yaml:"removeWerfLabels,omitempty"`
+	RemoveLabels     []string `yaml:"removeLabels,omitempty"`
+	RemoveVolumes    []string `yaml:"removeVolumes,omitempty"`
+	RemoveEnv        []string `yaml:"removeEnv,omitempty"`
+	ClearCmd         bool     `yaml:"clearCmd,omitempty"`
+	ClearEntrypoint  bool     `yaml:"clearEntrypoint,omitempty"`
+
+	Volumes     []string          `yaml:"volumes,omitempty"`
+	Labels      map[string]string `yaml:"labels,omitempty"`
+	Env         map[string]string `yaml:"env,omitempty"`
+	Expose      []string          `yaml:"expose,omitempty"`
+	User        string            `yaml:"user,omitempty"`
+	Cmd         []string          `yaml:"cmd,omitempty"`
+	Entrypoint  []string          `yaml:"entrypoint,omitempty"`
+	WorkingDir  string            `yaml:"workingDir,omitempty"`
+	StopSignal  string            `yaml:"stopSignal,omitempty"`
+	Healthcheck *healthConfig     `yaml:"healthcheck,omitempty"`
+
+	doc *doc `yaml:"-"` // parent
+
+	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
+}
+
+type healthConfig struct {
+	Test        []string `json:"test,omitempty"`
+	Interval    int      `json:"interval,omitempty"`
+	Timeout     int      `json:"timeout,omitempty"`
+	StartPeriod int      `json:"startPeriod,omitempty"`
+	Retries     int      `json:"retries,omitempty"`
+}
+
+func (s *rawImageSpec) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	type plain rawImageSpec
+	if err := unmarshal((*plain)(s)); err != nil {
+		return err
+	}
+
+	if err := checkOverflow(s.UnsupportedAttributes, nil, s.doc); err != nil {
+		return err
+	}
+
+	if err := checkOverflow(s.Config.UnsupportedAttributes, nil, s.Config.doc); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *rawImageSpec) toDirective() *ImageSpec {
+	imageSpec := &ImageSpec{raw: s}
+
+	imageSpec.Author = s.Author
+	imageSpec.ClearHistory = s.ClearHistory
+
+	imageSpec.RemoveWerfLabels = s.Config.RemoveWerfLabels
+	imageSpec.RemoveLabels = s.Config.RemoveLabels
+	imageSpec.RemoveVolumes = s.Config.RemoveVolumes
+	imageSpec.RemoveEnv = s.Config.RemoveEnv
+	imageSpec.ClearCmd = s.Config.ClearCmd
+	imageSpec.ClearEntrypoint = s.Config.ClearEntrypoint
+
+	imageSpec.Volumes = s.Config.Volumes
+	imageSpec.Labels = s.Config.Labels
+	imageSpec.User = s.Config.User
+	imageSpec.Cmd = s.Config.Cmd
+	imageSpec.Env = s.Config.Env
+	imageSpec.Entrypoint = s.Config.Entrypoint
+	imageSpec.WorkingDir = s.Config.WorkingDir
+	imageSpec.StopSignal = s.Config.StopSignal
+	imageSpec.Expose = s.Config.Expose
+
+	imageSpec.Healthcheck = s.Config.Healthcheck
+
+	return imageSpec
+}
+
+type rawImageSpecGlobal struct {
+	Author       string                    `yaml:"author,omitempty"`
+	ClearHistory bool                      `yaml:"clearHistory,omitempty"`
+	Config       *rawImageSpecGlobalConfig `yaml:"config,omitempty"`
+
+	doc *doc `yaml:"-"` // parent
+
+	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
+}
+
+type rawImageSpecGlobalConfig struct {
+	RemoveWerfLabels bool              `yaml:"removeWerfLabels,omitempty"`
+	RemoveLabels     []string          `yaml:"removeLabels,omitempty"`
+	Labels           map[string]string `yaml:"labels,omitempty"`
+
+	doc *doc `yaml:"-"` // parent
+
+	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
+}
+
+func (s *rawImageSpecGlobal) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	type plain rawImageSpecGlobal
+	if err := unmarshal((*plain)(s)); err != nil {
+		return err
+	}
+
+	if err := checkOverflow(s.UnsupportedAttributes, nil, s.doc); err != nil {
+		return err
+	}
+
+	if err := checkOverflow(s.Config.UnsupportedAttributes, nil, s.Config.doc); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *rawImageSpecGlobal) toDirective() *ImageSpec {
+	imageSpec := &ImageSpec{rawGlobal: s}
+	imageSpec.Author = s.Author
+	imageSpec.ClearHistory = s.ClearHistory
+	imageSpec.RemoveWerfLabels = s.Config.RemoveWerfLabels
+	imageSpec.RemoveLabels = s.Config.RemoveLabels
+	imageSpec.Labels = s.Config.Labels
+
+	return imageSpec
+}

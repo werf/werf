@@ -772,3 +772,56 @@ func IsStatusNotFoundErr(err error) bool {
 
 	return false
 }
+
+func (api *api) MutateAndPushImageConfigFile(ctx context.Context, sourceReference, destinationReference string, mutateManifestConfigFunc func(cfg v1.ConfigFile) (v1.ConfigFile, error)) error {
+	dstRef, err := name.ParseReference(destinationReference, api.parseReferenceOptions()...)
+	if err != nil {
+		return fmt.Errorf("parsing reference %q: %w", destinationReference, err)
+	}
+	_, isDstDigest := dstRef.(name.Digest)
+
+	desc, _, err := api.getImageDesc(ctx, sourceReference)
+	if err != nil {
+		return fmt.Errorf("error reading image %q: %w", sourceReference, err)
+	}
+	switch {
+	case desc.MediaType.IsImage():
+		img, err := desc.Image()
+		if err != nil {
+			return fmt.Errorf("error getting image manifest: %w", err)
+		}
+		_, err = api.mutateImageConfigFile(ctx, img, mutateManifestConfigFunc, dstRef, isDstDigest)
+		return err
+	default:
+		return fmt.Errorf("unsupported media type %q: %w", desc.MediaType, err)
+	}
+}
+
+func (api *api) mutateImageConfigFile(ctx context.Context, image v1.Image, mutateManifestConfigFunc func(cfg v1.ConfigFile) (v1.ConfigFile, error), ref name.Reference, isRefByDigest bool) (interface{}, error) {
+	cf, err := image.ConfigFile()
+	if err != nil {
+		return nil, fmt.Errorf("error reading config file: %w", err)
+	}
+	newconf, err := mutateManifestConfigFunc(*cf)
+	if err != nil {
+		return nil, err
+	}
+	newimg, err := mutate.ConfigFile(image, &newconf)
+	if err != nil {
+		return nil, fmt.Errorf("unable to mutate image config: %w", err)
+	}
+	newdigest, err := newimg.Digest()
+	if err != nil {
+		return nil, fmt.Errorf("unable to get new image digest: %w", err)
+	}
+	var destref name.Reference
+	if isRefByDigest {
+		destref = ref.Context().Digest(newdigest.String())
+	} else {
+		destref = ref
+	}
+	if err := api.writeToRemote(ctx, destref, newimg); err != nil {
+		return nil, fmt.Errorf("unable to write image: %w", err)
+	}
+	return newimg, nil
+}

@@ -381,6 +381,90 @@ import:
 
 Подробная документация по написанию доступна [в разделе stapel]({{ "usage/build/stapel/base.html" | true_relative_url }}).
 
+## Изменение конфигурации образов
+
+В OCI (Open Container Initiative) ([imageSpec](https://github.com/opencontainers/image-spec/blob/main/config.md)) – это спецификация образа, описывающая его структуру и метаданные. Директива `imageSpec` в `werf.yaml` предоставляет следующие возможности:
+- Добавление автора для образов.
+- Управление метками (`labels`): добавление новых и удаление существующих.
+- Наследование глобальных настроек (`user`, `env`, `entrypoint`, `volumes`, и др.). с возможностью их дополнения и изменения.
+- Удаление определённых значений параметров (`volumes`, `env`, `labels`).
+- Очистка истории сборки обрза.
+
+### Глобальная настройка imageSpec
+
+Пример конфигурации imageSpec для отдельного образа, которая будет применена ко всем образам в проекте:
+
+```yaml
+project: test
+configVersion: 1
+build:
+  imageSpec:
+    author: "Frontend Maintainer <frontend@example.com>"
+    clearHistory: true
+    config:
+      removeLabels:
+        - "unnecessary-label"
+        - /org.opencontainers.image\..*/
+      labels:
+        app: "my-app"
+```
+
+### Настройка imageSpec для отдельных образов
+
+Пример конфигурации imageSpec для отдельного образа:
+
+**Важно:** Конфигурация отдельного образа имеет больший приоритет, соответственно строковые значения будут переопределены, а для директив с множественными значениями будет выполнено слияние данных в соответствии с приоритетом.
+
+```yaml
+image: frontend_image
+imageSpec:
+  author: "Frontend Maintainer <frontend@example.com>"
+  clearHistory: true
+  config:
+    user: "1001:1001"
+    exposedPorts:
+      - "8080/tcp"
+    env:
+      NODE_ENV: "production"
+      API_URL: "https://api.example.com"
+    entrypoint:
+      - "/usr/local/bin/start.sh"
+    volumes:
+      - "/app/data"
+    workingDir: "/app"
+    labels:
+      frontend-version: "1.2.3"
+    stopSignal: "SIGTERM"
+    removeLabels:
+      - "old-frontend-label"
+      - /old-regex-label.*/
+    removeVolumes:
+      - "/var/cache"
+    removeEnv:
+      - "DEBUG"
+```
+
+Для stapel образов конфигурация идентична
+
+**Важно:** Изменение данных настроек не влияет на сборочный процесс, однако вы можете создать отдельный базовый образ, в котором можно удалить ненужные `VOLUME` или добавить `ENV`. 
+
+Пример конфигурации:
+
+```yaml
+image: base
+from: ubuntu:22.04
+imageSpec:
+  config:
+    removeVolumes:
+      - "/var/lib/postgresql/data"
+---
+image: app
+fromImage: base
+git:
+  add: /postgresql/data
+  to: /var/lib/postgresql/data
+```
+
 ## Взаимодействие между образами
 
 ### Наследование и импортирование файлов

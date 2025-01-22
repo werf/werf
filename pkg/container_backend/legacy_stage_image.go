@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/werf/common-go/pkg/lock"
+	chart "github.com/werf/common-go/pkg/lock"
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/docker"
@@ -21,6 +21,7 @@ type LegacyStageImage struct {
 	builtID             string
 	commitChangeOptions LegacyCommitChangeOptions
 	targetPlatform      string
+	imageSpecConfig     *image.Config
 }
 
 func NewLegacyStageImage(fromImage *LegacyStageImage, name string, containerBackend ContainerBackend, targetPlatform string) *LegacyStageImage {
@@ -62,7 +63,7 @@ func (i *LegacyStageImage) GetID() string {
 	if i.buildImage != nil {
 		return i.buildImage.Name()
 	} else {
-		return i.legacyBaseImage.GetStageDesc().Info.ID
+		return i.legacyBaseImage.GetStageDesc().Info.Name
 	}
 }
 
@@ -246,4 +247,12 @@ func (i *LegacyStageImage) Push(ctx context.Context) error {
 
 func debugDockerRunCommand() bool {
 	return os.Getenv("WERF_DEBUG_DOCKER_RUN_COMMAND") == "1"
+}
+
+func (i *LegacyStageImage) SetImageSpecConfig(config *image.Config) {
+	i.imageSpecConfig = config
+}
+
+func (i *LegacyStageImage) GetImageSpecConfig() *image.Config {
+	return i.imageSpecConfig
 }
