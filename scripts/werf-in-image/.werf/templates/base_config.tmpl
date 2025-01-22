@@ -7,7 +7,8 @@ build:
     - linux/arm64
 ---
 
-{{- $uniqueVersions := list -}}
+{{- $uniqueChannelVersions := list -}}
+{{- $uniqueArtifactVersions := list -}}
 
 {{/* set up default channel version  */}}
 {{- $trdlChannelsValues := .Files.Get "../../trdl_channels.yaml" | fromYaml -}}
@@ -37,14 +38,18 @@ build:
   {{/* # 1.0 is a non-supported group. */}}
   {{- if (eq $.GroupName "1.0") }}{{- continue }}{{- end }}
 
-{{- include "<group>" $ }}
-
   {{- range $_, $channelObject := $groupObject.channels }}
-    {{- if not (has $channelObject.version $uniqueVersions) }}
-      {{ $uniqueVersions = append $uniqueVersions $channelObject.version }}
+    {{- if not (has $channelObject.version $uniqueArtifactVersions) }}
+      {{ $uniqueArtifactVersions = append $uniqueArtifactVersions $channelObject.version }}
       {{ $_ := set $ "ChannelName" $channelObject.name }}
       {{ $_ := set $ "ChannelVersion" $channelObject.version }}
       {{- include "trdl-<app>-<version>" $ }}
+      {{- if contains "+" $.ChannelVersion }}
+        {{ $_ := set $ "replacedVersion" ($.ChannelVersion | replace "+" ".") }}
+      {{- else }}
+        {{ $_ := set $ "replacedVersion" $.ChannelVersion }}
+      {{- end}}
+      {{- include "<channel_version>" $ }}
     {{- end }}
 
     {{ $_ := set $ "ChannelName" $channelObject.name }}
@@ -53,7 +58,19 @@ build:
 {{- include "<group>-<channel>" $ }}
 
     {{- range $distroInd, $distroName := $.Distros }}
-        {{ $_ := set $ "DistroName" $distroName }}
+      {{ $_ := set $ "DistroName" $distroName }}
+      {{- if not (has $channelObject.version $uniqueChannelVersions) }}
+      {{ $uniqueChannelVersions = append $uniqueChannelVersions $channelObject.version }}
+      {{ $_ := set $ "ChannelName" $channelObject.name }}
+      {{ $_ := set $ "ChannelVersion" $channelObject.version }}
+      {{- if contains "+" $.ChannelVersion }}
+        {{ $_ := set $ "replacedVersion" ($.ChannelVersion | replace "+" ".") }}
+      {{- else }}
+        {{ $_ := set $ "replacedVersion" $.ChannelVersion }}
+      {{- end}}
+      {{- include "<channel_version>-<distro>" $ }}
+    {{- end }}
+
 
 {{- include "<group>-<channel>-<distro>" $ }}
     {{- end }}
@@ -62,6 +79,6 @@ build:
   {{- range $distroInd, $distroName := $.Distros }}
     {{ $_ := set $ "DistroName" $distroName }}
 
-{{- include "<group>-<distro>" $ }}
   {{- end }}
+{{- include "<group>" $ }}
 {{- end }}
