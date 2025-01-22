@@ -78,7 +78,8 @@ build:
 
   {{- range $distroInd, $distroName := $.Distros }}
     {{ $_ := set $ "DistroName" $distroName }}
-
+    
+{{- include "<group>-<distro>" $ }}
   {{- end }}
 {{- include "<group>" $ }}
 {{- end }}
