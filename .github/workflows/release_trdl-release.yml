@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Release without retry
-        id: release
+        if: inputs.retry == 'false'
         uses: werf/trdl-vault-actions/release@main
         with:
           vault-addr: ${{ secrets.TRDL_VAULT_ADDR }}
@@ -22,18 +22,17 @@ jobs:
           vault-auth-method: approle
           vault-role-id: ${{ secrets.TRDL_VAULT_ROLE_ID }}
           vault-secret-id: ${{ secrets.TRDL_VAULT_SECRET_ID }}
+          retry: false
 
       - name: Notify
-        if: ${{ failure() && steps.release.conclusion == 'failure' }}
         uses: mattermost/action-mattermost-notify@master
         with:
           MATTERMOST_WEBHOOK_URL: ${{ secrets.LOOP_NOTIFICATION_WEBHOOK }}
           MATTERMOST_CHANNEL: ${{ secrets.LOOP_NOTIFICATION_CHANNEL }}
           TEXT: |
-            ${{ secrets.LOOP_NOTIFICATION_GROUP }} task sign pls
+            ${{ secrets.LOOP_NOTIFICATION_GROUP }} [${{ github.workflow }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) task sign pls
 
       - name: Release with retry
-        if: ${{ failure() && steps.release.conclusion == 'failure' }}
         uses: werf/trdl-vault-actions/release@main
         with:
           vault-addr: ${{ secrets.TRDL_VAULT_ADDR }}
@@ -42,7 +41,6 @@ jobs:
           vault-auth-method: approle
           vault-role-id: ${{ secrets.TRDL_VAULT_ROLE_ID }}
           vault-secret-id: ${{ secrets.TRDL_VAULT_SECRET_ID }}
-          retry: true
 
   notify:
     if: always()
