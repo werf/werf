@@ -103,6 +103,12 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified repo, to pull base images")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
 	common.SetupInsecureHelmDependencies(&commonCmdData, cmd, false)
+	common.SetupSkipTLSVerifyKube(&commonCmdData, cmd)
+	common.SetupKubeApiServer(&commonCmdData, cmd)
+	common.SetupSkipTlsVerifyHelmDependencies(&commonCmdData, cmd)
+	common.SetupKubeCaPath(&commonCmdData, cmd)
+	common.SetupKubeTlsServer(&commonCmdData, cmd)
+	common.SetupKubeToken(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
 
@@ -221,6 +227,11 @@ func runApply(ctx context.Context) error {
 		},
 		ReleasesHistoryMax: *commonCmdData.ReleasesHistoryMax,
 		RegistryClient:     helmRegistryClient,
+		KubeToken:          *commonCmdData.KubeToken,
+		KubeAPIServerName:  *commonCmdData.KubeApiServer,
+		KubeCAPath:         *commonCmdData.KubeCaPath,
+		KubeTLSServerName:  *commonCmdData.KubeTlsServer,
+		KubeSkipTLSVerify:  *commonCmdData.SkipTlsVerifyKube,
 		QPSLimit:           *commonCmdData.KubeQpsLimit,
 		BurstLimit:         *commonCmdData.KubeBurstLimit,
 	}); err != nil {
@@ -330,8 +341,10 @@ func runApply(ctx context.Context) error {
 		Mapper: clientFactory.Mapper(),
 	})
 
-	// FIXME(ilya-lesikov): there is more chartpath options, are they needed?
-	chartPathOptions := action.ChartPathOptions{}
+	chartPathOptions := action.ChartPathOptions{
+		InsecureSkipTLSverify: *commonCmdData.SkipTlsVerifyHelmDependencies,
+		PlainHTTP:             *commonCmdData.InsecureHelmDependencies,
+	}
 	chartPathOptions.SetRegistryClient(actionConfig.RegistryClient)
 
 	actionConfig.Releases.MaxHistory = *commonCmdData.ReleasesHistoryMax
