@@ -180,6 +180,8 @@ werf converge --repo registry.mydomain.com/web --env production`,
 	common.SetupDockerServerStoragePath(&commonCmdData, cmd)
 
 	common.SetupNetworkParallelism(&commonCmdData, cmd)
+	common.SetupKubeQpsLimit(&commonCmdData, cmd)
+	common.SetupKubeBurstLimit(&commonCmdData, cmd)
 	common.SetupDeployGraphPath(&commonCmdData, cmd)
 	common.SetupRollbackGraphPath(&commonCmdData, cmd)
 
@@ -424,10 +426,12 @@ func run(
 		ExtraLabels:                  extraLabels,
 		ExtraRuntimeAnnotations:      serviceAnnotations,
 		KubeAPIServerName:            *commonCmdData.KubeApiServer,
+		KubeBurstLimit:               *commonCmdData.KubeBurstLimit,
 		KubeCAPath:                   *commonCmdData.KubeCaPath,
 		KubeConfigBase64:             *commonCmdData.KubeConfigBase64,
 		KubeConfigPaths:              append([]string{*commonCmdData.KubeConfig}, *commonCmdData.KubeConfigPathMergeList...),
 		KubeContext:                  *commonCmdData.KubeContext,
+		KubeQPSLimit:                 *commonCmdData.KubeQpsLimit,
 		KubeSkipTLSVerify:            *commonCmdData.SkipTlsVerifyKube,
 		KubeTLSServerName:            *commonCmdData.KubeTlsServer,
 		KubeToken:                    *commonCmdData.KubeToken,

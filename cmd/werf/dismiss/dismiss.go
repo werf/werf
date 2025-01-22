@@ -124,6 +124,9 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
 
+	common.SetupKubeQpsLimit(&commonCmdData, cmd)
+	common.SetupKubeBurstLimit(&commonCmdData, cmd)
+
 	commonCmdData.SetupPlatform(cmd)
 
 	cmd.Flags().BoolVarP(&cmdData.WithNamespace, "with-namespace", "", util.GetBoolEnvironmentDefaultFalse("WERF_WITH_NAMESPACE"), "Delete Kubernetes Namespace after purging Helm Release (default $WERF_WITH_NAMESPACE)")
@@ -171,10 +174,12 @@ func runDismiss(ctx context.Context) error {
 		DeleteHooks:                cmdData.WithHooks,
 		DeleteReleaseNamespace:     cmdData.WithNamespace,
 		KubeAPIServerName:          *commonCmdData.KubeApiServer,
+		KubeBurstLimit:             *commonCmdData.KubeBurstLimit,
 		KubeCAPath:                 *commonCmdData.KubeCaPath,
 		KubeConfigBase64:           *commonCmdData.KubeConfigBase64,
 		KubeConfigPaths:            append([]string{*commonCmdData.KubeConfig}, *commonCmdData.KubeConfigPathMergeList...),
 		KubeContext:                *commonCmdData.KubeContext,
+		KubeQPSLimit:               *commonCmdData.KubeQpsLimit,
 		KubeSkipTLSVerify:          *commonCmdData.SkipTlsVerifyKube,
 		KubeTLSServerName:          *commonCmdData.KubeTlsServer,
 		KubeToken:                  *commonCmdData.KubeToken,

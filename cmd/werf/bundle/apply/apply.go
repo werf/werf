@@ -136,6 +136,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupReleasesHistoryMax(&commonCmdData, cmd)
 
 	common.SetupNetworkParallelism(&commonCmdData, cmd)
+	common.SetupKubeQpsLimit(&commonCmdData, cmd)
+	common.SetupKubeBurstLimit(&commonCmdData, cmd)
 	common.SetupDeployGraphPath(&commonCmdData, cmd)
 	common.SetupRollbackGraphPath(&commonCmdData, cmd)
 
@@ -219,6 +221,8 @@ func runApply(ctx context.Context) error {
 		},
 		ReleasesHistoryMax: *commonCmdData.ReleasesHistoryMax,
 		RegistryClient:     helmRegistryClient,
+		QPSLimit:           *commonCmdData.KubeQpsLimit,
+		BurstLimit:         *commonCmdData.KubeBurstLimit,
 	}); err != nil {
 		return err
 	}

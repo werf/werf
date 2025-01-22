@@ -122,6 +122,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupKubeVersion(&commonCmdData, cmd)
 
 	common.SetupNetworkParallelism(&commonCmdData, cmd)
+	common.SetupKubeQpsLimit(&commonCmdData, cmd)
+	common.SetupKubeBurstLimit(&commonCmdData, cmd)
 
 	defaultTag := os.Getenv("WERF_TAG")
 	if defaultTag == "" {
@@ -197,6 +199,8 @@ func runRender(ctx context.Context) error {
 				ConfigDataBase64:    *commonCmdData.KubeConfigBase64,
 				ConfigPathMergeList: *commonCmdData.KubeConfigPathMergeList,
 			},
+			QPSLimit:   *commonCmdData.KubeQpsLimit,
+			BurstLimit: *commonCmdData.KubeBurstLimit,
 		},
 	); err != nil {
 		return err

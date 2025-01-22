@@ -28,12 +28,16 @@ type InitActionConfigOptions struct {
 	KubeConfigOptions         kube.KubeConfigOptions
 	ReleasesHistoryMax        int
 	RegistryClient            *registry.Client
+	QPSLimit                  int
+	BurstLimit                int
 }
 
 func InitActionConfig(ctx context.Context, kubeInitializer KubeInitializer, namespace string, envSettings *cli.EnvSettings, actionConfig *action.Configuration, opts InitActionConfigOptions) error {
 	configGetter, err := kube.NewKubeConfigGetter(kube.KubeConfigGetterOptions{
 		KubeConfigOptions: opts.KubeConfigOptions,
 		Namespace:         namespace,
+		QPSLimit:          opts.QPSLimit,
+		BurstLimit:        opts.BurstLimit,
 	})
 	if err != nil {
 		return fmt.Errorf("error creating kube config getter: %w", err)

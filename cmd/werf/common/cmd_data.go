@@ -65,6 +65,8 @@ type CmdData struct {
 	Parallel           *bool
 	ParallelTasksLimit *int64
 	NetworkParallelism *int
+	KubeQpsLimit       *int
+	KubeBurstLimit     *int
 
 	DockerConfig                    *string
 	InsecureRegistry                *bool
