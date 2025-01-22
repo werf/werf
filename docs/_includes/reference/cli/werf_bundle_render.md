@@ -62,6 +62,8 @@ werf bundle render [options]
             (default $WERF_INSECURE_HELM_DEPENDENCIES)
       --insecure-registry=false
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
+      --kube-burst-limit=100
+            Kubernetes client burst limit (default $WERF_KUBE_BURST_LIMIT or 100)
       --kube-config=''
             Kubernetes config file path (default $WERF_KUBE_CONFIG, or $WERF_KUBECONFIG, or         
             $KUBECONFIG)
@@ -70,6 +72,8 @@ werf bundle render [options]
             $WERF_KUBECONFIG_BASE64 or $KUBECONFIG_BASE64)
       --kube-context=''
             Kubernetes config context (default $WERF_KUBE_CONTEXT)
+      --kube-qps-limit=30
+            Kubernetes client QPS limit (default $WERF_KUBE_QPS_LIMIT or 30)
       --kube-version=''
             Set specific Capabilities.KubeVersion (default $WERF_KUBE_VERSION)
       --log-color-mode='auto'

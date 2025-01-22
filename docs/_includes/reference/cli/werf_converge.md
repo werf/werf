@@ -211,6 +211,8 @@ werf converge --repo registry.mydomain.com/web --env production
             dockerInstructions, dockerfile
       --kube-api-server=''
             Kubernetes API server address (default $WERF_KUBE_API_SERVER)
+      --kube-burst-limit=100
+            Kubernetes client burst limit (default $WERF_KUBE_BURST_LIMIT or 100)
       --kube-ca-path=''
             Kubernetes API server CA path (default $WERF_KUBE_CA_PATH)
       --kube-config=''
@@ -221,6 +223,8 @@ werf converge --repo registry.mydomain.com/web --env production
             $WERF_KUBECONFIG_BASE64 or $KUBECONFIG_BASE64)
       --kube-context=''
             Kubernetes config context (default $WERF_KUBE_CONTEXT)
+      --kube-qps-limit=30
+            Kubernetes client QPS limit (default $WERF_KUBE_QPS_LIMIT or 30)
       --kube-tls-server=''
             Server name to use for Kubernetes API server certificate validation. If it is not       
             provided, the hostname used to contact the server is used (default                      
