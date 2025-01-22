@@ -60,8 +60,12 @@ werf bundle apply [options]
             (default $WERF_INSECURE_HELM_DEPENDENCIES)
       --insecure-registry=false
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
+      --kube-api-server=''
+            Kubernetes API server address (default $WERF_KUBE_API_SERVER)
       --kube-burst-limit=100
             Kubernetes client burst limit (default $WERF_KUBE_BURST_LIMIT or 100)
+      --kube-ca-path=''
+            Kubernetes API server CA path (default $WERF_KUBE_CA_PATH)
       --kube-config=''
             Kubernetes config file path (default $WERF_KUBE_CONFIG, or $WERF_KUBECONFIG, or         
             $KUBECONFIG)
@@ -72,6 +76,12 @@ werf bundle apply [options]
             Kubernetes config context (default $WERF_KUBE_CONTEXT)
       --kube-qps-limit=30
             Kubernetes client QPS limit (default $WERF_KUBE_QPS_LIMIT or 30)
+      --kube-tls-server=''
+            Server name to use for Kubernetes API server certificate validation. If it is not       
+            provided, the hostname used to contact the server is used (default                      
+            $WERF_KUBE_TLS_SERVER)
+      --kube-token=''
+            Kubernetes bearer token used for authentication (default $WERF_KUBE_TOKEN)
       --log-color-mode='auto'
             Set log color mode.
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
@@ -160,6 +170,12 @@ werf bundle apply [options]
             $WERF_SET_STRING_2=key2=val2)
   -L, --skip-dependencies-repo-refresh=false
             Do not refresh helm chart repositories locally cached index
+      --skip-tls-verify-helm-dependencies=false
+            Skip TLS certificate validation when accessing a Helm charts repository (default        
+            $WERF_SKIP_TLS_VERIFY_HELM_DEPENDENCIES)
+      --skip-tls-verify-kube=false
+            Skip TLS certificate validation when accessing a Kubernetes cluster (default            
+            $WERF_SKIP_TLS_VERIFY_KUBE)
       --skip-tls-verify-registry=false
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)
