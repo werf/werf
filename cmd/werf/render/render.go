@@ -155,6 +155,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupKubeVersion(&commonCmdData, cmd)
 
 	common.SetupNetworkParallelism(&commonCmdData, cmd)
+	common.SetupKubeQpsLimit(&commonCmdData, cmd)
+	common.SetupKubeBurstLimit(&commonCmdData, cmd)
 
 	cmd.Flags().BoolVarP(&cmdData.Validate, "validate", "", util.GetBoolEnvironmentDefaultFalse("WERF_VALIDATE"), "Validate your manifests against the Kubernetes cluster you are currently pointing at (default $WERF_VALIDATE)")
 	cmd.Flags().BoolVarP(&cmdData.IncludeCRDs, "include-crds", "", util.GetBoolEnvironmentDefaultTrue("WERF_INCLUDE_CRDS"), "Include CRDs in the templated output (default $WERF_INCLUDE_CRDS)")
@@ -372,10 +374,12 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 		ExtraLabels:                  extraLabels,
 		ExtraRuntimeAnnotations:      serviceAnnotations,
 		KubeAPIServerName:            *commonCmdData.KubeApiServer,
+		KubeBurstLimit:               *commonCmdData.KubeBurstLimit,
 		KubeCAPath:                   *commonCmdData.KubeCaPath,
 		KubeConfigBase64:             *commonCmdData.KubeConfigBase64,
 		KubeConfigPaths:              append([]string{*commonCmdData.KubeConfig}, *commonCmdData.KubeConfigPathMergeList...),
 		KubeContext:                  *commonCmdData.KubeContext,
+		KubeQPSLimit:                 *commonCmdData.KubeQpsLimit,
 		KubeSkipTLSVerify:            *commonCmdData.SkipTlsVerifyKube,
 		KubeTLSServerName:            *commonCmdData.KubeTlsServer,
 		KubeToken:                    *commonCmdData.KubeToken,

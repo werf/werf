@@ -16,6 +16,7 @@ import (
 	"github.com/werf/logboek/pkg/level"
 	"github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
+	"github.com/werf/nelm/pkg/action"
 	"github.com/werf/werf/v2/pkg/build"
 	"github.com/werf/werf/v2/pkg/build/stage"
 	"github.com/werf/werf/v2/pkg/buildah"
@@ -239,15 +240,13 @@ func GetUseDeployReport(cmdData *CmdData) bool {
 func SetupNetworkParallelism(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.NetworkParallelism = new(int)
 
-	fallbackVal := 30
-
 	var defVal int
 	if val, err := util.GetIntEnvVar("WERF_NETWORK_PARALLELISM"); err != nil {
 		TerminateWithError(fmt.Sprintf("bad WERF_NETWORK_PARALLELISM value: %s", err), 1)
 	} else if val != nil {
 		defVal = int(*val)
 	} else {
-		defVal = fallbackVal
+		defVal = action.DefaultNetworkParallelism
 	}
 
 	cmd.Flags().IntVarP(
@@ -255,7 +254,49 @@ func SetupNetworkParallelism(cmdData *CmdData, cmd *cobra.Command) {
 		"network-parallelism",
 		"",
 		defVal,
-		fmt.Sprintf("Parallelize some network operations (default $WERF_NETWORK_PARALLELISM or %d)", fallbackVal),
+		fmt.Sprintf("Parallelize some network operations (default $WERF_NETWORK_PARALLELISM or %d)", action.DefaultNetworkParallelism),
+	)
+}
+
+func SetupKubeQpsLimit(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.KubeQpsLimit = new(int)
+
+	var defVal int
+	if val, err := util.GetIntEnvVar("WERF_KUBE_QPS_LIMIT"); err != nil {
+		TerminateWithError(fmt.Sprintf("bad WERF_KUBE_QPS_LIMIT value: %s", err), 1)
+	} else if val != nil {
+		defVal = int(*val)
+	} else {
+		defVal = action.DefaultQPSLimit
+	}
+
+	cmd.Flags().IntVarP(
+		cmdData.KubeQpsLimit,
+		"kube-qps-limit",
+		"",
+		defVal,
+		fmt.Sprintf("Kubernetes client QPS limit (default $WERF_KUBE_QPS_LIMIT or %d)", action.DefaultQPSLimit),
+	)
+}
+
+func SetupKubeBurstLimit(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.KubeBurstLimit = new(int)
+
+	var defVal int
+	if val, err := util.GetIntEnvVar("WERF_KUBE_BURST_LIMIT"); err != nil {
+		TerminateWithError(fmt.Sprintf("bad WERF_KUBE_BURST_LIMIT value: %s", err), 1)
+	} else if val != nil {
+		defVal = int(*val)
+	} else {
+		defVal = action.DefaultBurstLimit
+	}
+
+	cmd.Flags().IntVarP(
+		cmdData.KubeBurstLimit,
+		"kube-burst-limit",
+		"",
+		defVal,
+		fmt.Sprintf("Kubernetes client burst limit (default $WERF_KUBE_BURST_LIMIT or %d)", action.DefaultBurstLimit),
 	)
 }
 
