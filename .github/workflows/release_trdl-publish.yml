@@ -17,47 +17,25 @@ jobs:
   publish:
     name: Publish release channels using trdl server
     runs-on: ubuntu-22.04
-    outputs:
-      publish_status: ${{ steps.job-conclusion.outputs.status }}
     steps:
-      - name: Publish without retry
-        id: publish
-        uses: werf/trdl-vault-actions/publish@main
-        with:
-          vault-addr: ${{ secrets.TRDL_VAULT_ADDR }}
-          project-name: werf
-          vault-auth-method: approle
-          vault-role-id: ${{ secrets.TRDL_VAULT_ROLE_ID }}
-          vault-secret-id: ${{ secrets.TRDL_VAULT_SECRET_ID }}
-
       - name: Notify
-        if: ${{ failure() && steps.publish.conclusion == 'failure' }}
         uses: mattermost/action-mattermost-notify@master
         with:
           MATTERMOST_WEBHOOK_URL: ${{ secrets.LOOP_NOTIFICATION_WEBHOOK }}
           MATTERMOST_CHANNEL: ${{ secrets.LOOP_NOTIFICATION_CHANNEL }}
           TEXT: |
-            ${{ secrets.LOOP_NOTIFICATION_GROUP }} task sign pls
+            ${{ secrets.LOOP_NOTIFICATION_GROUP }} [${{ github.workflow }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) task sign pls
 
       - name: Publish with retry
-        if: ${{ failure() && steps.publish.conclusion == 'failure' }}
         uses: werf/trdl-vault-actions/publish@main
-        id: publish-after-sign
         with:
           vault-addr: ${{ secrets.TRDL_VAULT_ADDR }}
           project-name: werf
           vault-auth-method: approle
           vault-role-id: ${{ secrets.TRDL_VAULT_ROLE_ID }}
           vault-secret-id: ${{ secrets.TRDL_VAULT_SECRET_ID }}
-          retry: true
-
-      - name: Set job conclusion
-        if: ${{ failure() && steps.publish-after-sign.conclusion == 'success' }}
-        id: job-conclusion
-        run: echo "status=success" >> $GITHUB_OUTPUT
 
   deploy_channels_cm_prod:
-    if: ${{ failure() && needs.publish.outputs.publish_status == 'success' }}
     name: Deploy trdl_channels.yaml to production
     needs: publish
     runs-on: ubuntu-22.04
@@ -82,7 +60,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   publish_werf_images:
-    if: ${{ failure() && needs.publish.outputs.publish_status == 'success' }}
     name: Publish images with werf by trdl group and channel
     strategy:
       matrix:
