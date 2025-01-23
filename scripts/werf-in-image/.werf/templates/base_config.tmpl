@@ -59,18 +59,10 @@ build:
 
     {{- range $distroInd, $distroName := $.Distros }}
       {{ $_ := set $ "DistroName" $distroName }}
-      {{- if not (has $channelObject.version $uniqueChannelVersions) }}
-      {{ $uniqueChannelVersions = append $uniqueChannelVersions $channelObject.version }}
-      {{ $_ := set $ "ChannelName" $channelObject.name }}
-      {{ $_ := set $ "ChannelVersion" $channelObject.version }}
-      {{- if contains "+" $.ChannelVersion }}
-        {{ $_ := set $ "replacedVersion" ($.ChannelVersion | replace "+" ".") }}
-      {{- else }}
-        {{ $_ := set $ "replacedVersion" $.ChannelVersion }}
-      {{- end}}
-      {{- include "<channel_version>-<distro>" $ }}
-    {{- end }}
-
+        {{- if not (has (printf "%s-%s" $.ChannelVersion $.DistroName) $uniqueChannelVersions) }}
+          {{ $uniqueChannelVersions = append $uniqueChannelVersions (printf "%s-%s" $.ChannelVersion $.DistroName) }}
+          {{- include "<channel_version>-<distro>" $ }}
+        {{- end }}
 
 {{- include "<group>-<channel>-<distro>" $ }}
     {{- end }}
