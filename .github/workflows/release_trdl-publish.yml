@@ -18,18 +18,6 @@ jobs:
     name: Publish release channels using trdl server
     runs-on: ubuntu-22.04
     steps:
-      - name: Publish without retry
-        if: inputs.retry == 'false'
-        continue-on-error: true
-        uses: werf/trdl-vault-actions/publish@main
-        with:
-          vault-addr: ${{ secrets.TRDL_VAULT_ADDR }}
-          project-name: werf
-          vault-auth-method: approle
-          vault-role-id: ${{ secrets.TRDL_VAULT_ROLE_ID }}
-          vault-secret-id: ${{ secrets.TRDL_VAULT_SECRET_ID }}
-          retry: false
-
       - name: Notify
         uses: mattermost/action-mattermost-notify@master
         with:
