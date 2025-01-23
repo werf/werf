@@ -7,40 +7,41 @@ import (
 	"strings"
 	"time"
 
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/filters"
-
+	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/docker"
+	"github.com/werf/werf/v2/pkg/container_backend"
+	"github.com/werf/werf/v2/pkg/image"
 )
 
-func werfImagesFlushByFilterSet(ctx context.Context, filterSet filters.Args, options CommonOptions) error {
-	images, err := imagesByFilterSet(ctx, filterSet)
+func werfImagesFlushByFilterSet(ctx context.Context, backend container_backend.ContainerBackend, imagesOptions container_backend.ImagesOptions, options CommonOptions) error {
+	images, err := backend.Images(ctx, imagesOptions)
 	if err != nil {
 		return err
 	}
 
-	images, err = processUsedImages(ctx, images, options)
+	images, err = processUsedImages(ctx, backend, images, options)
 	if err != nil {
 		return err
 	}
 
-	if err := imagesRemove(ctx, images, options); err != nil {
+	if err = imagesRemove(ctx, backend, images, options); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func trueDanglingImages(ctx context.Context) ([]types.ImageSummary, error) {
-	filterSet := filters.NewArgs()
-	filterSet.Add("dangling", "true")
-	danglingImageList, err := imagesByFilterSet(ctx, filterSet)
+func trueDanglingImages(ctx context.Context, backend container_backend.ContainerBackend) (image.ImagesList, error) {
+	imagesOptions := buildImagesOptions(
+		util.NewPair("dangling", "true"),
+	)
+
+	danglingImageList, err := backend.Images(ctx, imagesOptions)
 	if err != nil {
 		return nil, err
 	}
 
-	var trueDanglingImageList []types.ImageSummary
+	var trueDanglingImageList image.ImagesList
 	for _, image := range danglingImageList {
 		if len(image.RepoTags) == 0 && len(image.RepoDigests) == 0 {
 			trueDanglingImageList = append(trueDanglingImageList, image)
@@ -50,24 +51,19 @@ func trueDanglingImages(ctx context.Context) ([]types.ImageSummary, error) {
 	return trueDanglingImageList, nil
 }
 
-func imagesByFilterSet(ctx context.Context, filterSet filters.Args) ([]types.ImageSummary, error) {
-	options := types.ImageListOptions{Filters: filterSet}
-	return docker.Images(ctx, options)
-}
-
-func processUsedImages(ctx context.Context, images []types.ImageSummary, options CommonOptions) ([]types.ImageSummary, error) {
-	filterSet := filters.NewArgs()
-	for _, img := range images {
-		filterSet.Add("ancestor", img.ID)
+func processUsedImages(ctx context.Context, backend container_backend.ContainerBackend, images image.ImagesList, options CommonOptions) (image.ImagesList, error) {
+	containersOptionsFilters := make([]image.ContainerFilter, len(images))
+	for i, img := range images {
+		containersOptionsFilters[i] = image.ContainerFilter{Ancestor: img.ID}
 	}
 
-	containers, err := containersByFilterSet(ctx, filterSet)
+	containers, err := backend.Containers(ctx, buildContainersOptions(containersOptionsFilters...))
 	if err != nil {
 		return nil, err
 	}
 
-	var imagesToExclude []types.ImageSummary
-	var containersToRemove []types.Container
+	var imagesToExclude image.ImagesList
+	var containersToRemove []image.Container
 	for _, container := range containers {
 		for _, img := range images {
 			if img.ID == container.ImageID {
@@ -84,13 +80,13 @@ func processUsedImages(ctx context.Context, images []types.ImageSummary, options
 		}
 	}
 
-	if err := containersRemove(ctx, containersToRemove, options); err != nil {
+	if err = containersRemove(ctx, backend, containersToRemove, options); err != nil {
 		return nil, err
 	}
 
 	for _, img := range images {
 		// IMPORTANT: Prevent freshly built images, but not saved into the stages storage yet from being deleted
-		if time.Since(time.Unix(img.Created, 0)) < 3*time.Hour {
+		if time.Since(img.Created) < 3*time.Hour {
 			imagesToExclude = append(imagesToExclude, img)
 		}
 	}
@@ -102,8 +98,8 @@ func processUsedImages(ctx context.Context, images []types.ImageSummary, options
 	return images, nil
 }
 
-func exceptImage(images []types.ImageSummary, imageToExclude types.ImageSummary) []types.ImageSummary {
-	var newImages []types.ImageSummary
+func exceptImage(images image.ImagesList, imageToExclude image.Summary) image.ImagesList {
+	var newImages image.ImagesList
 	for _, img := range images {
 		if !reflect.DeepEqual(imageToExclude, img) {
 			newImages = append(newImages, img)
@@ -113,7 +109,7 @@ func exceptImage(images []types.ImageSummary, imageToExclude types.ImageSummary)
 	return newImages
 }
 
-func imagesRemove(ctx context.Context, images []types.ImageSummary, options CommonOptions) error {
+func imagesRemove(ctx context.Context, backend container_backend.ContainerBackend, images image.ImagesList, options CommonOptions) error {
 	var imageReferences []string
 
 	for _, img := range images {
@@ -133,31 +129,33 @@ func imagesRemove(ctx context.Context, images []types.ImageSummary, options Comm
 		}
 	}
 
-	if err := imageReferencesRemove(ctx, imageReferences, options); err != nil {
+	if err := imageReferencesRemove(ctx, backend, imageReferences, options); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func imageReferencesRemove(ctx context.Context, references []string, options CommonOptions) error {
-	if len(references) != 0 {
+func imageReferencesRemove(ctx context.Context, backend container_backend.ContainerBackend, references []string, options CommonOptions) error {
+	for _, ref := range references {
 		if options.DryRun {
-			logboek.Context(ctx).LogLn(strings.Join(references, "\n"))
+			logboek.Context(ctx).LogLn(ref)
 			logboek.Context(ctx).LogOptionalLn()
 		} else {
-			var args []string
-
-			if options.RmiForce {
-				args = append(args, "--force")
-			}
-			args = append(args, references...)
-
-			if err := docker.CliRmi_LiveOutput(ctx, args...); err != nil {
-				return err
+			err := backend.Rmi(ctx, ref, container_backend.RmiOpts{
+				Force: options.RmiForce,
+			})
+			if err != nil {
+				return fmt.Errorf("container_backend rmi: %w", err)
 			}
 		}
 	}
 
 	return nil
+}
+
+func buildImagesOptions(filters ...util.Pair[string, string]) container_backend.ImagesOptions {
+	opts := container_backend.ImagesOptions{}
+	opts.Filters = filters
+	return opts
 }
