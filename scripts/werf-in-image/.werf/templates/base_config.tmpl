@@ -45,9 +45,9 @@ build:
       {{ $_ := set $ "ChannelVersion" $channelObject.version }}
       {{- include "trdl-<app>-<version>" $ }}
       {{- if contains "+" $.ChannelVersion }}
-        {{ $_ := set $ "replacedVersion" ($.ChannelVersion | replace "+" ".") }}
+        {{ $_ := set $ "normalizedChannelVersion" ($.ChannelVersion | replace "+" ".") }}
       {{- else }}
-        {{ $_ := set $ "replacedVersion" $.ChannelVersion }}
+        {{ $_ := set $ "normalizedChannelVersion" $.ChannelVersion }}
       {{- end}}
       {{- include "<version>" $ }}
     {{- end }}

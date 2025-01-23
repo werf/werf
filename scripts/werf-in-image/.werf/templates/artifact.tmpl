@@ -47,11 +47,11 @@ dependencies:
 {{- end }}
 
 {{ define "<version>" }}
-{{- $image_name := $.replacedVersion }}
+{{- $image_name := $.normalizedChannelVersion }}
 {{- include "artifact" (list $image_name $.GroupName $.ChannelName $.DefaultDistroName $) }}
 {{- end }}
 
 {{ define "<version>-<distro>" }}
-{{- $image_name := (printf "%s-%s" $.replacedVersion $.DistroName) }}
+{{- $image_name := (printf "%s-%s" $.normalizedChannelVersion $.DistroName) }}
 {{- include "artifact" (list $image_name $.GroupName $.ChannelVersion $.DistroName $) }}
 {{- end }}
