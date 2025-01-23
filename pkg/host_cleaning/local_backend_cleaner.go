@@ -3,19 +3,20 @@ package host_cleaning
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"runtime"
-	"sort"
+	"slices"
 	"strings"
 	"time"
 
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/filters"
 	"github.com/dustin/go-humanize"
 
 	"github.com/werf/common-go/pkg/lock"
+	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/kubedog/pkg/utils"
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
@@ -27,44 +28,72 @@ import (
 	"github.com/werf/werf/v2/pkg/werf"
 )
 
-const (
-	// TODO: move to param method param
-	MinImagesToDelete = 10
-)
+var ErrUnsupportedContainerBackend = errors.New("unsupported container backend")
 
-type localCleanerDocker struct {
-	containerBackend container_backend.ContainerBackend
+type RunGCOptions struct {
+	AllowedStorageVolumeUsagePercentage       float64
+	AllowedStorageVolumeUsageMarginPercentage float64
+	StoragePath                               string
+	force                                     bool
+	dryRun                                    bool
 }
 
-// TODO: try to use containerBackend.Rmi() intstead of the private function
-// TODO: try to separate calculation layer from OS via mocks
+type RunAutoGCOptions struct {
+	AllowedStorageVolumeUsagePercentage float64
+	StoragePath                         string
+}
 
-func NewLocalCleanerDocker(containerBackend container_backend.ContainerBackend) *localCleanerDocker {
-	return &localCleanerDocker{
-		containerBackend: containerBackend,
+type LocalBackendCleaner struct {
+	backend           container_backend.ContainerBackend
+	backendName       string
+	minImagesToDelete uint64
+}
+
+func NewLocalBackendCleaner(backend container_backend.ContainerBackend) (*LocalBackendCleaner, error) {
+	cleaner := &LocalBackendCleaner{
+		backend:           backend,
+		minImagesToDelete: 10,
+	}
+
+	switch backend.(type) {
+	case *container_backend.DockerServerBackend:
+		cleaner.backendName = "docker"
+		return cleaner, nil
+	case *container_backend.BuildahBackend:
+		cleaner.backendName = "buildah"
+		return cleaner, nil
+	default:
+		return nil, ErrUnsupportedContainerBackend
 	}
 }
 
-func (cleaner *localCleanerDocker) Name() string {
-	return "docker"
+// TODO: replace docker.Info() with ... backend.SystemInfo() need implement
+
+// TODO: backend_buildah does not implement img.SharedSize out from the box.
+// But is has ImageDiskUsage https://pkg.go.dev/github.com/containers/common/libimage@v0.58.1#Image.Size
+// via https://pkg.go.dev/github.com/containers/common/libimage@v0.58.1#Runtime.DiskUsage
+
+func (cleaner *LocalBackendCleaner) BackendName() string {
+	return cleaner.backendName
 }
 
-func (cleaner *localCleanerDocker) getStoragePath(ctx context.Context, storagePath string) (string, error) {
+func (cleaner *LocalBackendCleaner) backendStoragePath(ctx context.Context, storagePath string) (string, error) {
 	if storagePath != "" {
 		return storagePath, nil
 	}
-	return getLocalDockerServerStoragePath(ctx)
+	return cleaner.localBackendStoragePath(ctx)
 }
 
-func getLocalDockerServerStoragePath(ctx context.Context) (string, error) {
-	dockerInfo, err := docker.Info(ctx)
+func (cleaner *LocalBackendCleaner) localBackendStoragePath(ctx context.Context) (string, error) {
+	// TODO: use container backend to extract info
+	info, err := docker.Info(ctx)
 	if err != nil {
 		return "", fmt.Errorf("unable to get docker info: %w", err)
 	}
 
 	var storagePath string
 
-	if dockerInfo.OperatingSystem == "Docker Desktop" {
+	if info.OperatingSystem == "Docker Desktop" {
 		switch runtime.GOOS {
 		case "windows":
 			storagePath = filepath.Join(os.Getenv("HOMEDRIVE"), `\\ProgramData\DockerDesktop\vm-data\`)
@@ -73,7 +102,7 @@ func getLocalDockerServerStoragePath(ctx context.Context) (string, error) {
 			storagePath = filepath.Join(os.Getenv("HOME"), "Library/Containers/com.docker.docker/Data")
 		}
 	} else {
-		storagePath = dockerInfo.DockerRootDir
+		storagePath = info.DockerRootDir
 	}
 
 	if _, err := os.Stat(storagePath); os.IsNotExist(err) {
@@ -84,51 +113,51 @@ func getLocalDockerServerStoragePath(ctx context.Context) (string, error) {
 	return storagePath, nil
 }
 
-func (cleaner *localCleanerDocker) ShouldRunAutoGC(ctx context.Context, options RunAutoGCOptions) (bool, error) {
-	dockerServerStoragePath, err := cleaner.getStoragePath(ctx, options.StoragePath)
+func (cleaner *LocalBackendCleaner) ShouldRunAutoGC(ctx context.Context, options RunAutoGCOptions) (bool, error) {
+	backendStoragePath, err := cleaner.backendStoragePath(ctx, options.StoragePath)
 	if err != nil {
-		return false, fmt.Errorf("error getting local docker server storage path: %w", err)
+		return false, fmt.Errorf("error getting local %s backend storage path: %w", cleaner.BackendName(), err)
 	}
 
-	vu, err := volumeutils.GetVolumeUsageByPath(ctx, dockerServerStoragePath)
+	vu, err := volumeutils.GetVolumeUsageByPath(ctx, backendStoragePath)
 	if err != nil {
-		return false, fmt.Errorf("error getting volume usage by path %q: %w", dockerServerStoragePath, err)
+		return false, fmt.Errorf("error getting volume usage by path %q: %w", backendStoragePath, err)
 	}
 
 	return vu.Percentage > options.AllowedStorageVolumeUsagePercentage, nil
 }
 
-type LocalDockerServerStorageCheckResult struct {
+type CheckResultBackendStorage struct {
 	VolumeUsage      volumeutils.VolumeUsage
 	TotalImagesBytes uint64
 	ImagesDescs      []*LocalImageDesc
 }
 
-func (checkResult *LocalDockerServerStorageCheckResult) GetBytesToFree(targetVolumeUsage float64) uint64 {
+func (checkResult *CheckResultBackendStorage) GetBytesToFree(targetVolumeUsage float64) uint64 {
 	allowedVolumeUsageToFree := checkResult.VolumeUsage.Percentage - targetVolumeUsage
 	bytesToFree := uint64((float64(checkResult.VolumeUsage.TotalBytes) / 100.0) * allowedVolumeUsageToFree)
 	return bytesToFree
 }
 
-func getLocalDockerServerStorageCheck(ctx context.Context, dockerServerStoragePath string) (*LocalDockerServerStorageCheckResult, error) {
-	res := &LocalDockerServerStorageCheckResult{}
+func (cleaner *LocalBackendCleaner) checkBackendStorage(ctx context.Context, backendStoragePath string) (*CheckResultBackendStorage, error) {
+	res := &CheckResultBackendStorage{}
 
-	vu, err := volumeutils.GetVolumeUsageByPath(ctx, dockerServerStoragePath)
+	vu, err := volumeutils.GetVolumeUsageByPath(ctx, backendStoragePath)
 	if err != nil {
-		return nil, fmt.Errorf("error getting volume usage by path %q: %w", dockerServerStoragePath, err)
+		return nil, fmt.Errorf("error getting volume usage by path %q: %w", backendStoragePath, err)
 	}
 	res.VolumeUsage = vu
 
-	var images []types.ImageSummary
+	var images image.ImagesList
 
 	{
-		filterSet := filters.NewArgs()
-		filterSet.Add("label", image.WerfLabel)
-		filterSet.Add("label", image.WerfStageDigestLabel)
 
-		imgs, err := docker.Images(ctx, types.ImageListOptions{Filters: filterSet})
+		imgs, err := cleaner.backend.Images(ctx, buildImagesOptions(
+			util.NewPair("label", image.WerfLabel),
+			util.NewPair("label", image.WerfStageDigestLabel),
+		))
 		if err != nil {
-			return nil, fmt.Errorf("unable to get werf docker images: %w", err)
+			return nil, fmt.Errorf("unable to get werf %s images: %w", cleaner.BackendName(), err)
 		}
 
 		// Do not remove stages-storage=:local images, because this is primary stages storage data,
@@ -149,13 +178,12 @@ func getLocalDockerServerStorageCheck(ctx context.Context, dockerServerStoragePa
 
 	// Process legacy v1.1 images
 	{
-		filterSet := filters.NewArgs()
-		filterSet.Add("label", image.WerfLabel)
-		filterSet.Add("label", "werf-stage-signature") // v1.1 legacy images
-
-		imgs, err := docker.Images(ctx, types.ImageListOptions{Filters: filterSet})
+		imgs, err := cleaner.backend.Images(ctx, buildImagesOptions(
+			util.NewPair("label", image.WerfLabel),
+			util.NewPair("label", "werf-stage-signature"), // v1.1 legacy images
+		))
 		if err != nil {
-			return nil, fmt.Errorf("unable to get werf v1.1 legacy docker images: %w", err)
+			return nil, fmt.Errorf("unable to get werf v1.1 legacy %s images: %w", cleaner.BackendName(), err)
 		}
 
 		// Do not remove stages-storage=:local images, because this is primary stages storage data,
@@ -183,20 +211,18 @@ func getLocalDockerServerStorageCheck(ctx context.Context, dockerServerStoragePa
 		// No werf v1.1 runs on this host.
 		// This is stupid check, but the only available safe option at the moment.
 		if t.IsZero() {
-			filterSet := filters.NewArgs()
+			imgs, err := cleaner.backend.Images(ctx, buildImagesOptions(
+				util.NewPair("reference", "*client-id-*"),
+				util.NewPair("reference", "*managed-image-*"),
+				util.NewPair("reference", "*meta-*"),
+				util.NewPair("reference", "*import-metadata-*"),
+				util.NewPair("reference", "*-rejected"),
 
-			filterSet.Add("reference", "*client-id-*")
-			filterSet.Add("reference", "*managed-image-*")
-			filterSet.Add("reference", "*meta-*")
-			filterSet.Add("reference", "*import-metadata-*")
-			filterSet.Add("reference", "*-rejected")
-
-			filterSet.Add("reference", "werf-client-id/*")
-			filterSet.Add("reference", "werf-managed-images/*")
-			filterSet.Add("reference", "werf-images-metadata-by-commit/*")
-			filterSet.Add("reference", "werf-import-metadata/*")
-
-			imgs, err := docker.Images(ctx, types.ImageListOptions{Filters: filterSet})
+				util.NewPair("reference", "werf-client-id/*"),
+				util.NewPair("reference", "werf-managed-images/*"),
+				util.NewPair("reference", "werf-images-metadata-by-commit/*"),
+				util.NewPair("reference", "werf-import-metadata/*"),
+			))
 			if err != nil {
 				return nil, fmt.Errorf("unable to get werf service images: %w", err)
 			}
@@ -218,9 +244,9 @@ CreateImagesDescs:
 		data, _ := json.Marshal(imageSummary)
 		logboek.Context(ctx).Debug().LogF("Image summary:\n%s\n---\n", data)
 
-		res.TotalImagesBytes += uint64(imageSummary.VirtualSize - imageSummary.SharedSize)
+		res.TotalImagesBytes += uint64(imageSummary.Size - imageSummary.SharedSize)
 
-		lastUsedAt := time.Unix(imageSummary.Created, 0)
+		lastUsedAt := imageSummary.Created
 
 	CheckEachRef:
 		for _, ref := range imageSummary.RepoTags {
@@ -249,32 +275,31 @@ CreateImagesDescs:
 		res.ImagesDescs = append(res.ImagesDescs, desc)
 	}
 
-	sort.Sort(ImagesLruSort(res.ImagesDescs))
+	slices.SortFunc(res.ImagesDescs, func(a, b *LocalImageDesc) int {
+		return a.LastUsedAt.Compare(b.LastUsedAt)
+	})
 
 	return res, nil
 }
 
-func (cleaner *localCleanerDocker) RunGC(ctx context.Context, options RunGCOptions) error {
-	dockerServerStoragePath, err := cleaner.getStoragePath(ctx, options.StoragePath)
+func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOptions) error {
+	backendStoragePath, err := cleaner.backendStoragePath(ctx, options.StoragePath)
 	if err != nil {
-		return fmt.Errorf("error getting local docker server storage path: %w", err)
+		return fmt.Errorf("error getting local %s backend storage path: %w", cleaner.BackendName(), err)
 	}
 
-	targetVolumeUsage := options.AllowedStorageVolumeUsagePercentage - options.AllowedStorageVolumeUsageMarginPercentage
-	if targetVolumeUsage < 0 {
-		targetVolumeUsage = 0
-	}
+	targetVolumeUsage := math.Max(options.AllowedStorageVolumeUsagePercentage-options.AllowedStorageVolumeUsageMarginPercentage, 0)
 
-	checkResult, err := getLocalDockerServerStorageCheck(ctx, dockerServerStoragePath)
+	checkResult, err := cleaner.checkBackendStorage(ctx, backendStoragePath)
 	if err != nil {
-		return fmt.Errorf("error getting local docker server storage check: %w", err)
+		return fmt.Errorf("error getting local %s backend storage check: %w", cleaner.BackendName(), err)
 	}
 
 	bytesToFree := checkResult.GetBytesToFree(targetVolumeUsage)
 
 	if checkResult.VolumeUsage.Percentage <= options.AllowedStorageVolumeUsagePercentage {
-		logboek.Context(ctx).Default().LogBlock("Local docker server storage check").Do(func() {
-			logboek.Context(ctx).Default().LogF("Docker server storage path: %s\n", dockerServerStoragePath)
+		logboek.Context(ctx).Default().LogBlock("Local %s backend storage check", cleaner.BackendName()).Do(func() {
+			logboek.Context(ctx).Default().LogF("Storage path: %s\n", backendStoragePath)
 			logboek.Context(ctx).Default().LogF("Volume usage: %s / %s\n", humanize.Bytes(checkResult.VolumeUsage.UsedBytes), humanize.Bytes(checkResult.VolumeUsage.TotalBytes))
 			logboek.Context(ctx).Default().LogF("Allowed volume usage percentage: %s <= %s — %s\n", utils.GreenF("%0.2f%%", checkResult.VolumeUsage.Percentage), utils.BlueF("%0.2f%%", options.AllowedStorageVolumeUsagePercentage), utils.GreenF("OK"))
 		})
@@ -282,8 +307,8 @@ func (cleaner *localCleanerDocker) RunGC(ctx context.Context, options RunGCOptio
 		return nil
 	}
 
-	logboek.Context(ctx).Default().LogBlock("Local docker server storage check").Do(func() {
-		logboek.Context(ctx).Default().LogF("Docker server storage path: %s\n", dockerServerStoragePath)
+	logboek.Context(ctx).Default().LogBlock("Local %s backend storage check", cleaner.BackendName()).Do(func() {
+		logboek.Context(ctx).Default().LogF("Storage path: %s\n", backendStoragePath)
 		logboek.Context(ctx).Default().LogF("Volume usage: %s / %s\n", humanize.Bytes(checkResult.VolumeUsage.UsedBytes), humanize.Bytes(checkResult.VolumeUsage.TotalBytes))
 		logboek.Context(ctx).Default().LogF("Allowed percentage level exceeded: %s > %s — %s\n", utils.RedF("%0.2f%%", checkResult.VolumeUsage.Percentage), utils.YellowF("%0.2f%%", options.AllowedStorageVolumeUsagePercentage), utils.RedF("HIGH VOLUME USAGE"))
 		logboek.Context(ctx).Default().LogF("Target percentage level after cleanup: %0.2f%% - %0.2f%% (margin) = %s\n", options.AllowedStorageVolumeUsagePercentage, options.AllowedStorageVolumeUsageMarginPercentage, utils.BlueF("%0.2f%%", targetVolumeUsage))
@@ -291,8 +316,8 @@ func (cleaner *localCleanerDocker) RunGC(ctx context.Context, options RunGCOptio
 		logboek.Context(ctx).Default().LogF("Available images to free: %s\n", utils.YellowF("%d", len(checkResult.ImagesDescs)))
 	})
 
-	var processedDockerImagesIDs []string
-	var processedDockerContainersIDs []string
+	var processedImagesIDs []string
+	var processedContainersIDs []string
 
 	for {
 		var freedBytes uint64
@@ -300,16 +325,16 @@ func (cleaner *localCleanerDocker) RunGC(ctx context.Context, options RunGCOptio
 		var acquiredHostLocks []lockgate.LockHandle
 
 		if len(checkResult.ImagesDescs) > 0 {
-			if err := logboek.Context(ctx).Default().LogProcess("Running cleanup for least recently used docker images created by werf").DoError(func() error {
+			if err := logboek.Context(ctx).Default().LogProcess("Running cleanup for least recently used % images created by werf", cleaner.BackendName()).DoError(func() error {
 			DeleteImages:
 				for _, desc := range checkResult.ImagesDescs {
-					for _, id := range processedDockerImagesIDs {
+					for _, id := range processedImagesIDs {
 						if desc.ImageSummary.ID == id {
 							logboek.Context(ctx).Default().LogFDetails("Skip already processed image %q\n", desc.ImageSummary.ID)
 							continue DeleteImages
 						}
 					}
-					processedDockerImagesIDs = append(processedDockerImagesIDs, desc.ImageSummary.ID)
+					processedImagesIDs = append(processedImagesIDs, desc.ImageSummary.ID)
 
 					imageRemoved := false
 
@@ -318,8 +343,8 @@ func (cleaner *localCleanerDocker) RunGC(ctx context.Context, options RunGCOptio
 
 						for _, ref := range desc.ImageSummary.RepoTags {
 							if ref == "<none>:<none>" {
-								if err := removeImage(ctx, desc.ImageSummary.ID, options.force, options.dryRun); err != nil {
-									logboek.Context(ctx).Warn().LogF("failed to remove local docker image by ID %q: %s\n", desc.ImageSummary.ID, err)
+								if err := cleaner.removeImage(ctx, desc.ImageSummary.ID, options.force, options.dryRun); err != nil {
+									logboek.Context(ctx).Warn().LogF("failed to remove local %s image by ID %q: %s\n", cleaner.BackendName(), desc.ImageSummary.ID, err)
 									allTagsRemoved = false
 								}
 							} else {
@@ -337,8 +362,8 @@ func (cleaner *localCleanerDocker) RunGC(ctx context.Context, options RunGCOptio
 
 								acquiredHostLocks = append(acquiredHostLocks, lock)
 
-								if err := removeImage(ctx, ref, options.force, options.dryRun); err != nil {
-									logboek.Context(ctx).Warn().LogF("failed to remove local docker image by repo tag %q: %s\n", ref, err)
+								if err := cleaner.removeImage(ctx, ref, options.force, options.dryRun); err != nil {
+									logboek.Context(ctx).Warn().LogF("failed to remove local %s image by repo tag %q: %s\n", cleaner.BackendName(), ref, err)
 									allTagsRemoved = false
 								}
 							}
@@ -351,8 +376,8 @@ func (cleaner *localCleanerDocker) RunGC(ctx context.Context, options RunGCOptio
 						allDigestsRemoved := true
 
 						for _, repoDigest := range desc.ImageSummary.RepoDigests {
-							if err := removeImage(ctx, repoDigest, options.force, options.dryRun); err != nil {
-								logboek.Context(ctx).Warn().LogF("failed to remove local docker image by repo digest %q: %s\n", repoDigest, err)
+							if err := cleaner.removeImage(ctx, repoDigest, options.force, options.dryRun); err != nil {
+								logboek.Context(ctx).Warn().LogF("failed to remove local %s image by repo digest %q: %s\n", cleaner.BackendName(), repoDigest, err)
 								allDigestsRemoved = false
 							}
 						}
@@ -363,11 +388,11 @@ func (cleaner *localCleanerDocker) RunGC(ctx context.Context, options RunGCOptio
 					}
 
 					if imageRemoved {
-						freedBytes += uint64(desc.ImageSummary.VirtualSize - desc.ImageSummary.SharedSize)
+						freedBytes += uint64(desc.ImageSummary.Size - desc.ImageSummary.SharedSize)
 						freedImagesCount++
 					}
 
-					if freedImagesCount < MinImagesToDelete {
+					if freedImagesCount < cleaner.minImagesToDelete {
 						continue
 					}
 
@@ -385,7 +410,7 @@ func (cleaner *localCleanerDocker) RunGC(ctx context.Context, options RunGCOptio
 		}
 
 		if freedImagesCount == 0 {
-			logboek.Context(ctx).Warn().LogF("WARNING: Detected high docker storage volume usage, while no werf images available to cleanup!\n")
+			logboek.Context(ctx).Warn().LogF("WARNING: Detected high %s storage volume usage, while no werf images available to cleanup!\n", cleaner.BackendName())
 			logboek.Context(ctx).Warn().LogF("WARNING:\n")
 			logboek.Context(ctx).Warn().LogF("WARNING: Werf tries to maintain host clean by deleting:\n")
 			logboek.Context(ctx).Warn().LogF("WARNING:  - old unused files from werf caches (which are stored in the ~/.werf/local_cache);\n")
@@ -408,21 +433,21 @@ func (cleaner *localCleanerDocker) RunGC(ctx context.Context, options RunGCOptio
 			DryRun:                        options.dryRun,
 		}
 
-		if err := logboek.Context(ctx).Default().LogProcess("Running cleanup for docker containers created by werf").DoError(func() error {
-			newProcessedContainersIDs, err := safeContainersCleanup(ctx, processedDockerContainersIDs, commonOptions)
+		if err := logboek.Context(ctx).Default().LogProcess("Running cleanup for %s containers created by werf", cleaner.BackendName()).DoError(func() error {
+			newProcessedContainersIDs, err := cleaner.safeContainersCleanup(ctx, processedContainersIDs, commonOptions)
 			if err != nil {
 				return fmt.Errorf("safe containers cleanup failed: %w", err)
 			}
 
-			processedDockerContainersIDs = newProcessedContainersIDs
+			processedContainersIDs = newProcessedContainersIDs
 
 			return nil
 		}); err != nil {
 			return err
 		}
 
-		if err := logboek.Context(ctx).Default().LogProcess("Running cleanup for dangling docker images created by werf").DoError(func() error {
-			return safeDanglingImagesCleanup(ctx, commonOptions)
+		if err := logboek.Context(ctx).Default().LogProcess("Running cleanup for dangling %s images created by werf", cleaner.BackendName()).DoError(func() error {
+			return cleaner.safeDanglingImagesCleanup(ctx, commonOptions)
 		}); err != nil {
 			return err
 		}
@@ -436,14 +461,14 @@ func (cleaner *localCleanerDocker) RunGC(ctx context.Context, options RunGCOptio
 
 		logboek.Context(ctx).Default().LogOptionalLn()
 
-		checkResult, err = getLocalDockerServerStorageCheck(ctx, dockerServerStoragePath)
+		checkResult, err = cleaner.checkBackendStorage(ctx, backendStoragePath)
 		if err != nil {
-			return fmt.Errorf("error getting local docker server storage check: %w", err)
+			return fmt.Errorf("error getting local %s backend storage check: %w", cleaner.BackendName(), err)
 		}
 
 		if checkResult.VolumeUsage.Percentage <= targetVolumeUsage {
-			logboek.Context(ctx).Default().LogBlock("Local docker server storage check").Do(func() {
-				logboek.Context(ctx).Default().LogF("Docker server storage path: %s\n", dockerServerStoragePath)
+			logboek.Context(ctx).Default().LogBlock("Local %s backend storage check", cleaner.BackendName()).Do(func() {
+				logboek.Context(ctx).Default().LogF("Storage path: %s\n", backendStoragePath)
 				logboek.Context(ctx).Default().LogF("Volume usage: %s / %s\n", humanize.Bytes(checkResult.VolumeUsage.UsedBytes), humanize.Bytes(checkResult.VolumeUsage.TotalBytes))
 				logboek.Context(ctx).Default().LogF("Target volume usage percentage: %s <= %s — %s\n", utils.GreenF("%0.2f%%", checkResult.VolumeUsage.Percentage), utils.BlueF("%0.2f%%", targetVolumeUsage), utils.GreenF("OK"))
 			})
@@ -453,8 +478,8 @@ func (cleaner *localCleanerDocker) RunGC(ctx context.Context, options RunGCOptio
 
 		bytesToFree = checkResult.GetBytesToFree(targetVolumeUsage)
 
-		logboek.Context(ctx).Default().LogBlock("Local docker server storage check").Do(func() {
-			logboek.Context(ctx).Default().LogF("Docker server storage path: %s\n", dockerServerStoragePath)
+		logboek.Context(ctx).Default().LogBlock("Local %s backend storage check", cleaner.BackendName()).Do(func() {
+			logboek.Context(ctx).Default().LogF("Storage path: %s\n", backendStoragePath)
 			logboek.Context(ctx).Default().LogF("Volume usage: %s / %s\n", humanize.Bytes(checkResult.VolumeUsage.UsedBytes), humanize.Bytes(checkResult.VolumeUsage.TotalBytes))
 			logboek.Context(ctx).Default().LogF("Target volume usage percentage: %s > %s — %s\n", utils.RedF("%0.2f%%", checkResult.VolumeUsage.Percentage), utils.BlueF("%0.2f%%", targetVolumeUsage), utils.RedF("HIGH VOLUME USAGE"))
 			logboek.Context(ctx).Default().LogF("Needed to free: %s\n", utils.RedF("%s", humanize.Bytes(bytesToFree)))
@@ -465,70 +490,60 @@ func (cleaner *localCleanerDocker) RunGC(ctx context.Context, options RunGCOptio
 	return nil
 }
 
-func removeImage(ctx context.Context, ref string, force, dryRun bool) error {
+func (cleaner *LocalBackendCleaner) removeImage(ctx context.Context, ref string, force, dryRun bool) error {
 	logboek.Context(ctx).Default().LogF("Removing %s\n", ref)
+
 	if dryRun {
 		return nil
 	}
 
-	args := []string{ref}
-	if force {
-		args = append(args, "--force")
-	}
-
-	return docker.CliRmi(ctx, args...)
+	return cleaner.backend.Rmi(ctx, ref, container_backend.RmiOpts{
+		Force: force,
+	})
 }
 
 type LocalImageDesc struct {
-	ImageSummary types.ImageSummary
+	ImageSummary image.Summary
 	LastUsedAt   time.Time
 }
 
-type ImagesLruSort []*LocalImageDesc
-
-func (a ImagesLruSort) Len() int { return len(a) }
-func (a ImagesLruSort) Less(i, j int) bool {
-	return a[i].LastUsedAt.Before(a[j].LastUsedAt)
-}
-func (a ImagesLruSort) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
-
-func safeDanglingImagesCleanup(ctx context.Context, options CommonOptions) error {
-	images, err := trueDanglingImages(ctx)
+func (cleaner *LocalBackendCleaner) safeDanglingImagesCleanup(ctx context.Context, options CommonOptions) error {
+	images, err := trueDanglingImages(ctx, cleaner.backend)
 	if err != nil {
 		return err
 	}
 
-	var imagesToRemove []types.ImageSummary
+	var imagesToRemove image.ImagesList
 	for _, img := range images {
 		imagesToRemove = append(imagesToRemove, img)
 	}
 
-	imagesToRemove, err = processUsedImages(ctx, imagesToRemove, options)
+	imagesToRemove, err = processUsedImages(ctx, cleaner.backend, imagesToRemove, options)
 	if err != nil {
 		return err
 	}
 
-	if err := imagesRemove(ctx, imagesToRemove, options); err != nil {
+	if err := imagesRemove(ctx, cleaner.backend, imagesToRemove, options); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func safeContainersCleanup(ctx context.Context, processedDockerContainersIDs []string, options CommonOptions) ([]string, error) {
-	containers, err := werfContainersByFilterSet(ctx, filters.NewArgs())
+func (cleaner *LocalBackendCleaner) safeContainersCleanup(ctx context.Context, processedContainersIDs []string, options CommonOptions) ([]string, error) {
+	containers, err := werfContainersByContainersOptions(ctx, cleaner.backend, buildContainersOptions())
 	if err != nil {
 		return nil, fmt.Errorf("cannot get stages build containers: %w", err)
 	}
 
 ProcessContainers:
 	for _, container := range containers {
-		for _, id := range processedDockerContainersIDs {
+		for _, id := range processedContainersIDs {
 			if id == container.ID {
 				continue ProcessContainers
 			}
 		}
-		processedDockerContainersIDs = append(processedDockerContainersIDs, container.ID)
+		processedContainersIDs = append(processedContainersIDs, container.ID)
 
 		var containerName string
 		for _, name := range container.Names {
@@ -556,7 +571,7 @@ ProcessContainers:
 			}
 			defer chart.ReleaseHostLock(lock)
 
-			if err := containersRemove(ctx, []types.Container{container}, options); err != nil {
+			if err := containersRemove(ctx, cleaner.backend, []image.Container{container}, options); err != nil {
 				return fmt.Errorf("failed to remove container %s: %w", logContainerName(container), err)
 			}
 
@@ -566,5 +581,5 @@ ProcessContainers:
 		}
 	}
 
-	return processedDockerContainersIDs, nil
+	return processedContainersIDs, nil
 }

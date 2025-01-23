@@ -48,9 +48,9 @@ func getOptionValueOrDefault(optionValue *uint, defaultValue float64) float64 {
 	return res
 }
 
-func RunAutoHostCleanup(ctx context.Context, containerBackend container_backend.ContainerBackend, options AutoHostCleanupOptions) error {
+func RunAutoHostCleanup(ctx context.Context, backend container_backend.ContainerBackend, options AutoHostCleanupOptions) error {
 	if !options.ForceShouldRun {
-		shouldRun, err := ShouldRunAutoHostCleanup(ctx, containerBackend, options.HostCleanupOptions)
+		shouldRun, err := ShouldRunAutoHostCleanup(ctx, backend, options.HostCleanupOptions)
 		if err != nil {
 			logboek.Context(ctx).Warn().LogF("WARNING: unable to check if auto host cleanup should be run: %s\n", err)
 			return nil
@@ -119,9 +119,9 @@ func RunAutoHostCleanup(ctx context.Context, containerBackend container_backend.
 	return nil
 }
 
-func RunHostCleanup(ctx context.Context, containerBackend container_backend.ContainerBackend, options HostCleanupOptions) error {
+func RunHostCleanup(ctx context.Context, backend container_backend.ContainerBackend, options HostCleanupOptions) error {
 	if err := logboek.Context(ctx).LogProcess("Running GC for tmp data").DoError(func() error {
-		if err := tmp_manager.RunGC(ctx, options.DryRun, containerBackend); err != nil {
+		if err := tmp_manager.RunGC(ctx, options.DryRun, backend); err != nil {
 			return fmt.Errorf("tmp files GC failed: %w", err)
 		}
 		return nil
@@ -144,7 +144,7 @@ func RunHostCleanup(ctx context.Context, containerBackend container_backend.Cont
 	allowedDockerStorageVolumeUsagePercentage := getOptionValueOrDefault(options.AllowedDockerStorageVolumeUsagePercentage, DefaultAllowedDockerStorageVolumeUsagePercentage)
 	allowedDockerStorageVolumeUsageMarginPercentage := getOptionValueOrDefault(options.AllowedDockerStorageVolumeUsageMarginPercentage, DefaultAllowedDockerStorageVolumeUsageMarginPercentage)
 
-	cleaner, err := CreateCleaner(containerBackend)
+	cleaner, err := NewLocalBackendCleaner(backend)
 	if errors.Is(err, ErrUnsupportedContainerBackend) {
 		// if cleaner not implemented, skip cleaning
 		return nil
@@ -152,7 +152,7 @@ func RunHostCleanup(ctx context.Context, containerBackend container_backend.Cont
 		return err
 	}
 
-	return logboek.Context(ctx).Default().LogProcess("Running GC for local %s server", cleaner.Name()).DoError(func() error {
+	return logboek.Context(ctx).Default().LogProcess("Running GC for local %s backend", cleaner.BackendName()).DoError(func() error {
 		err := cleaner.RunGC(ctx, RunGCOptions{
 			AllowedStorageVolumeUsagePercentage:       allowedDockerStorageVolumeUsagePercentage,
 			AllowedStorageVolumeUsageMarginPercentage: allowedDockerStorageVolumeUsageMarginPercentage,
@@ -161,13 +161,13 @@ func RunHostCleanup(ctx context.Context, containerBackend container_backend.Cont
 			dryRun:      options.DryRun,
 		})
 		if err != nil {
-			return fmt.Errorf("local %s server GC failed: %w", cleaner.Name(), err)
+			return fmt.Errorf("local %s backend GC failed: %w", cleaner.BackendName(), err)
 		}
 		return nil
 	})
 }
 
-func ShouldRunAutoHostCleanup(ctx context.Context, containerBackend container_backend.ContainerBackend, options HostCleanupOptions) (bool, error) {
+func ShouldRunAutoHostCleanup(ctx context.Context, backend container_backend.ContainerBackend, options HostCleanupOptions) (bool, error) {
 	shouldRun, err := tmp_manager.ShouldRunAutoGC()
 	if err != nil {
 		return false, fmt.Errorf("failed to check tmp manager GC: %w", err)
@@ -188,7 +188,7 @@ func ShouldRunAutoHostCleanup(ctx context.Context, containerBackend container_ba
 
 	allowedDockerStorageVolumeUsagePercentage := getOptionValueOrDefault(options.AllowedDockerStorageVolumeUsagePercentage, DefaultAllowedDockerStorageVolumeUsagePercentage)
 
-	cleaner, err := CreateCleaner(containerBackend)
+	cleaner, err := NewLocalBackendCleaner(backend)
 	if errors.Is(err, ErrUnsupportedContainerBackend) {
 		// if cleaner not implemented, skip cleaning
 		return false, nil

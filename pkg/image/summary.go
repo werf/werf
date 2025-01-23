@@ -3,11 +3,17 @@ package image
 import (
 	"fmt"
 	"strings"
+	"time"
 )
 
 type Summary struct {
+	ID          string
 	RepoTags    []string
 	RepoDigests []string
+	Labels      map[string]string
+	Created     time.Time
+	Size        int64
+	SharedSize  int64
 }
 
 type ImagesList []Summary
