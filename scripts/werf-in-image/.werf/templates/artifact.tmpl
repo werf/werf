@@ -46,12 +46,12 @@ dependencies:
 {{- include "artifact" (list $image_name $.GroupName $.ChannelName $.DistroName $) }}
 {{- end }}
 
-{{ define "<channel_version>" }}
+{{ define "<version>" }}
 {{- $image_name := $.replacedVersion }}
 {{- include "artifact" (list $image_name $.GroupName $.ChannelName $.DefaultDistroName $) }}
 {{- end }}
 
-{{ define "<channel_version>-<distro>" }}
+{{ define "<version>-<distro>" }}
 {{- $image_name := (printf "%s-%s" $.replacedVersion $.DistroName) }}
 {{- include "artifact" (list $image_name $.GroupName $.ChannelVersion $.DistroName $) }}
 {{- end }}
