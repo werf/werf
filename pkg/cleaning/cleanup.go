@@ -882,15 +882,6 @@ func deleteImportsMetadata(ctx context.Context, projectName string, storageManag
 	})
 }
 
-func findStageDescByImageID(stageDescSet image.StageDescSet, imageID string) *image.StageDesc {
-	for stage := range stageDescSet.Iter() {
-		if stage.Info.ID == imageID {
-			return stage
-		}
-	}
-	return nil
-}
-
 func (m *cleanupManager) protectRelativeStageDescSetByStageDesc(targetStageDesc *image.StageDesc, withImportSource bool) {
 	targetStageDescSet := image.NewStageDescSet()
 	if targetStageDesc.Info.IsIndex {
