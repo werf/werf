@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 
@@ -14,6 +16,7 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
+	"github.com/werf/werf/v2/pkg/container_backend/info"
 	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/ssh_agent"
@@ -23,6 +26,29 @@ type DockerServerBackend struct{}
 
 func NewDockerServerBackend() *DockerServerBackend {
 	return &DockerServerBackend{}
+}
+
+func (backend *DockerServerBackend) Info(ctx context.Context) (info.Info, error) {
+	res := info.Info{}
+
+	sysInfo, err := docker.Info(ctx)
+	if err != nil {
+		return res, fmt.Errorf("unable to get info: %w", err)
+	}
+
+	if sysInfo.OperatingSystem == "Docker Desktop" {
+		switch runtime.GOOS {
+		case "windows":
+			res.StoreGraphRoot = filepath.Join(os.Getenv("HOMEDRIVE"), `\\ProgramData\DockerDesktop\vm-data\`)
+
+		case "darwin":
+			res.StoreGraphRoot = filepath.Join(os.Getenv("HOME"), "Library/Containers/com.docker.docker/Data")
+		}
+	} else {
+		res.StoreGraphRoot = sysInfo.DockerRootDir
+	}
+
+	return res, nil
 }
 
 func (backend *DockerServerBackend) ClaimTargetPlatforms(ctx context.Context, targetPlatforms []string) {

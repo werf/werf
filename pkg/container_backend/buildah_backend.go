@@ -26,6 +26,7 @@ import (
 	"github.com/werf/logboek/pkg/level"
 	"github.com/werf/werf/v2/pkg/buildah"
 	"github.com/werf/werf/v2/pkg/buildah/thirdparty"
+	"github.com/werf/werf/v2/pkg/container_backend/info"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/path_matcher"
 )
@@ -41,6 +42,10 @@ type BuildahBackendOptions struct {
 
 func NewBuildahBackend(buildah buildah.Buildah, opts BuildahBackendOptions) *BuildahBackend {
 	return &BuildahBackend{buildah: buildah, BuildahBackendOptions: opts}
+}
+
+func (backend *BuildahBackend) Info(ctx context.Context) (info.Info, error) {
+	return backend.buildah.Info(ctx)
 }
 
 func (backend *BuildahBackend) HasStapelBuildSupport() bool {

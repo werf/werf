@@ -44,6 +44,7 @@ import (
 	"gopkg.in/errgo.v2/fmt/errors"
 
 	"github.com/werf/werf/v2/pkg/buildah/thirdparty"
+	"github.com/werf/werf/v2/pkg/container_backend/info"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/ssh_agent"
 )
@@ -86,6 +87,12 @@ type NativeBuildah struct {
 	defaultPlatform              string
 	defaultPlatformOverrideSpecs []struct{ OS, Arch, Variant string }
 	runtimePlatform              string
+}
+
+func (b *NativeBuildah) Info(ctx context.Context) (info.Info, error) {
+	return info.Info{
+		StoreGraphRoot: b.Store.GraphRoot(),
+	}, nil
 }
 
 func NewNativeBuildah(commonOpts CommonBuildahOpts, opts NativeModeOpts) (*NativeBuildah, error) {

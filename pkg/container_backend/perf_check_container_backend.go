@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/werf/logboek"
+	"github.com/werf/werf/v2/pkg/container_backend/info"
 	"github.com/werf/werf/v2/pkg/image"
 )
 
@@ -13,6 +14,10 @@ type PerfCheckContainerBackend struct {
 
 func NewPerfCheckContainerBackend(containerBackend ContainerBackend) *PerfCheckContainerBackend {
 	return &PerfCheckContainerBackend{ContainerBackend: containerBackend}
+}
+
+func (runtime *PerfCheckContainerBackend) Info(ctx context.Context) (info.Info, error) {
+	return runtime.ContainerBackend.Info(ctx)
 }
 
 func (runtime *PerfCheckContainerBackend) HasStapelBuildSupport() bool {
