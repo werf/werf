@@ -150,21 +150,21 @@ func GetCustomTagsMetadata(ctx context.Context, storageManager manager.StorageMa
 	return stageIDCustomTagList, nil
 }
 
-func (m *Manager) MarkStageDescAsProtectedByStageID(stageID, reason string) {
+func (m *Manager) MarkStageDescAsProtectedByStageID(stageID string, reason *protectionReason, forceReason bool) {
 	stageDesc := m.GetStageDescByStageID(stageID)
 	if stageDesc == nil {
 		panic(fmt.Sprintf("stage description %s not found", stageID))
 	}
 
-	m.stageDescSet.MarkStageDescAsProtected(m.GetStageDescByStageID(stageID), reason)
+	m.stageDescSet.MarkStageDescAsProtected(m.GetStageDescByStageID(stageID), reason, forceReason)
 }
 
-func (m *Manager) MarkStageDescAsProtected(stageDesc *image.StageDesc, reason string) {
-	m.stageDescSet.MarkStageDescAsProtected(stageDesc, reason)
+func (m *Manager) MarkStageDescAsProtected(stageDesc *image.StageDesc, reason *protectionReason, forceReason bool) {
+	m.stageDescSet.MarkStageDescAsProtected(stageDesc, reason, forceReason)
 }
 
-func (m *Manager) MarkFinalStageDescAsProtected(stageDesc *image.StageDesc, reason string) {
-	m.finalStageDescSet.MarkStageDescAsProtected(stageDesc, reason)
+func (m *Manager) MarkFinalStageDescAsProtected(stageDesc *image.StageDesc, reason *protectionReason, forceReason bool) {
+	m.finalStageDescSet.MarkStageDescAsProtected(stageDesc, reason, forceReason)
 }
 
 // GetImageStageIDCommitListToCleanup method returns existing stage IDs and related existing commits (for each managed image)
@@ -284,7 +284,7 @@ func (m *Manager) GetFinalProtectedStageDescSet() image.StageDescSet {
 	return m.finalStageDescSet.GetProtectedStageDescSet()
 }
 
-func (m *Manager) GetProtectedStageDescSetByReason() map[string]image.StageDescSet {
+func (m *Manager) GetProtectedStageDescSetByReason() map[*protectionReason]image.StageDescSet {
 	return m.stageDescSet.GetProtectedStageDescSetByReason()
 }
 

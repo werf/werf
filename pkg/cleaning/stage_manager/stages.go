@@ -11,8 +11,33 @@ type managedStageDescSet struct {
 
 type stageMeta struct {
 	isProtected      bool
-	protectionReason string
+	protectionReason *protectionReason
 }
+
+type protectionReason struct {
+	description string
+}
+
+func (r *protectionReason) String() string {
+	return r.description
+}
+
+func newProtectionReason(desc string) *protectionReason {
+	return &protectionReason{description: desc}
+}
+
+func (r *protectionReason) SetDescription(desc string) {
+	r.description = desc
+}
+
+var (
+	ProtectionReasonKubernetesBasedPolicy       = newProtectionReason("used in Kubernetes")
+	ProtectionReasonGitPolicy                   = newProtectionReason("git policy")
+	ProtectionReasonBuiltWithinLastNHoursPolicy = newProtectionReason("built within last N hours")
+	ProtectionReasonImportSource                = newProtectionReason("import source")
+	ProtectionReasonAncestor                    = newProtectionReason("ancestor")
+	ProtectionReasonNotFoundInRepo              = newProtectionReason("not found in repo")
+)
 
 func newManagedStageDescSet(set image.StageDescSet) managedStageDescSet {
 	return managedStageDescSet{
@@ -29,19 +54,19 @@ func (s *managedStageDescSet) DifferenceInPlace(stageDescSet image.StageDescSet)
 	s.stageDescSet = s.stageDescSet.Difference(stageDescSet)
 }
 
-func (s *managedStageDescSet) MarkStageDescAsProtected(stageDesc *image.StageDesc, protectionReason string) {
+func (s *managedStageDescSet) MarkStageDescAsProtected(stageDesc *image.StageDesc, reason *protectionReason, forceReason bool) {
 	_, ok := s.stageDescMetaMap[stageDesc]
 	if !ok {
 		s.stageDescMetaMap[stageDesc] = &stageMeta{}
 	}
 
 	// If the stage is already protected, do not change the protection reason.
-	if s.stageDescMetaMap[stageDesc].isProtected {
+	if s.stageDescMetaMap[stageDesc].isProtected && !forceReason {
 		return
 	}
 
 	s.stageDescMetaMap[stageDesc].isProtected = true
-	s.stageDescMetaMap[stageDesc].protectionReason = protectionReason
+	s.stageDescMetaMap[stageDesc].protectionReason = reason
 }
 
 func (s *managedStageDescSet) GetProtectedStageDescSet() image.StageDescSet {
@@ -53,8 +78,8 @@ func (s *managedStageDescSet) GetProtectedStageDescSet() image.StageDescSet {
 	return stageDescSet
 }
 
-func (s *managedStageDescSet) GetProtectedStageDescSetByReason() map[string]image.StageDescSet {
-	stageDescSetByReason := make(map[string]image.StageDescSet)
+func (s *managedStageDescSet) GetProtectedStageDescSetByReason() map[*protectionReason]image.StageDescSet {
+	stageDescSetByReason := make(map[*protectionReason]image.StageDescSet)
 	for stageDesc, meta := range s.stageDescMetaMap {
 		if !meta.isProtected {
 			continue
