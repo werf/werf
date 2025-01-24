@@ -17,7 +17,6 @@ const (
 	WerfParentStageID                  = "werf.io/parent-stage-id"
 
 	WerfImportMetadataChecksumLabel       = "checksum"
-	WerfImportMetadataSourceImageIDLabel  = "source-image-id"
 	WerfImportMetadataSourceStageIDLabel  = "source-stage-id"
 	WerfImportMetadataImportSourceIDLabel = "import-source-id"
 
