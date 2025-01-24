@@ -1,9 +1,8 @@
 {{- define "artifact" }}
   {{- $image_name := index . 0 }}
   {{- $group_name := index . 1 }}
-  {{- $channel_name := index . 2 }}
-  {{- $distro_name := index . 3 }}
-  {{- $ctx := index . 4 }}
+  {{- $distro_name := index . 2 }}
+  {{- $ctx := index . 3 }}
   {{- $source_image_name := (printf "trdl-%s-%s" $ctx.App $ctx.ChannelVersion) }}
   {{- $base_image_name := (printf "%s-%s" $ctx.App $distro_name) }}
 
@@ -23,25 +22,35 @@ dependencies:
 
 {{ define "latest" }}
 {{- $image_name := "latest" }}
-{{- include "artifact" (list $image_name $.DefaultGroupName $.DefaultChannelName $.DefaultDistroName $) }}
+{{- include "artifact" (list $image_name $.DefaultGroupName $.DefaultDistroName $) }}
 {{- end }}
 
 {{- define "<group>" }}
 {{- $image_name := $.GroupName }}
-{{- include "artifact" (list $image_name $.GroupName $.DefaultChannelName $.DefaultDistroName $) }}
+{{- include "artifact" (list $image_name $.GroupName $.DefaultDistroName $) }}
 {{- end }}
 
 {{ define "<group>-<channel>" }}
 {{- $image_name := (printf "%s-%s" $.GroupName $.ChannelName) }}
-{{- include "artifact" (list $image_name $.GroupName $.ChannelName $.DefaultDistroName $) }}
+{{- include "artifact" (list $image_name $.GroupName $.DefaultDistroName $) }}
 {{- end}}
 
 {{- define "<group>-<distro>" }}
 {{- $image_name := (printf "%s-%s" $.GroupName $.DistroName) }}
-{{- include "artifact" (list $image_name $.GroupName $.DefaultChannelName $.DistroName $) }}
+{{- include "artifact" (list $image_name $.GroupName $.DistroName $) }}
 {{- end }}
 
 {{ define "<group>-<channel>-<distro>" }}
 {{- $image_name := (printf "%s-%s-%s" $.GroupName $.ChannelName $.DistroName) }}
-{{- include "artifact" (list $image_name $.GroupName $.ChannelName $.DistroName $) }}
+{{- include "artifact" (list $image_name $.GroupName $.DistroName $) }}
+{{- end }}
+
+{{ define "<version>" }}
+{{- $image_name := $.normalizedChannelVersion }}
+{{- include "artifact" (list $image_name $.GroupName $.DefaultDistroName $) }}
+{{- end }}
+
+{{ define "<version>-<distro>" }}
+{{- $image_name := (printf "%s-%s" $.normalizedChannelVersion $.DistroName) }}
+{{- include "artifact" (list $image_name $.GroupName $.DistroName $) }}
 {{- end }}
