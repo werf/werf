@@ -13,6 +13,9 @@ layout: sidebar
         $(document).ready(function(){
             let version = encodeURIComponent(getDocVersionFromPage());
             if (version.length > 0) {
+                if (version === 'latest') {
+                    version = 'main';
+                }
                 let needCheckURL = false;
                 let pageURL = 'https://github.com{{ site.github_repo_path }}/blob/' + version + '/docs/{{ page.path }}';
                 let checkURL = 'https://api.github.com/repos{{ site.github_repo_path }}/contents/docs/{{ page.path }}?ref=' + version;
