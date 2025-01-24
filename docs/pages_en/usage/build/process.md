@@ -125,7 +125,7 @@ If you run a build with storing images in the repository, werf will first check 
 
 By default, Dockerfile images are cached by a single image in the container registry.
 
-To enable layered caching of Dockerfile instructions in the container registry, use the `staged` directive in werf.yaml:
+To enable layered caching of Dockerfile instructions in the container registry, use the `staged` directive in werf.yaml. The directive can be set globally at the root level of werf.yaml for all images, or locally for specific images where the local setting will override the global one:
 
 ```yaml
 # werf.yaml

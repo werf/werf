@@ -123,7 +123,7 @@ werf build --repo REPO --add-custom-tag "%image%-latest"
 
 По умолчанию Dockerfile-образы кешируются одним образом в container registry. 
 
-Для включения послойного кеширования Dockerfile-инструкций в container registry необходимо использовать директиву `staged` в werf.yaml:
+Для включения послойного кеширования Dockerfile-инструкций в container registry необходимо использовать директиву `staged` в werf.yaml. Директива может быть установлена глобально на корневом уровне werf.yaml для всех образов или локально для конкретных образов, где локальная настройка переопределит глобальную:
 
 ```yaml
 # werf.yaml
