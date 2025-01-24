@@ -7,8 +7,6 @@ import (
 	"fmt"
 	"math"
 	"os"
-	"path/filepath"
-	"runtime"
 	"slices"
 	"strings"
 	"time"
@@ -21,7 +19,6 @@ import (
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/container_backend"
-	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/storage/lrumeta"
 	"github.com/werf/werf/v2/pkg/volumeutils"
@@ -67,8 +64,6 @@ func NewLocalBackendCleaner(backend container_backend.ContainerBackend) (*LocalB
 	}
 }
 
-// TODO: replace docker.Info() with ... backend.SystemInfo() need implement
-
 // TODO: backend_buildah does not implement img.SharedSize out from the box.
 // But is has ImageDiskUsage https://pkg.go.dev/github.com/containers/common/libimage@v0.58.1#Image.Size
 // via https://pkg.go.dev/github.com/containers/common/libimage@v0.58.1#Runtime.DiskUsage
@@ -78,39 +73,24 @@ func (cleaner *LocalBackendCleaner) BackendName() string {
 }
 
 func (cleaner *LocalBackendCleaner) backendStoragePath(ctx context.Context, storagePath string) (string, error) {
-	if storagePath != "" {
-		return storagePath, nil
-	}
-	return cleaner.localBackendStoragePath(ctx)
-}
+	backendStoragePath := storagePath
 
-func (cleaner *LocalBackendCleaner) localBackendStoragePath(ctx context.Context) (string, error) {
-	// TODO: use container backend to extract info
-	info, err := docker.Info(ctx)
-	if err != nil {
-		return "", fmt.Errorf("unable to get docker info: %w", err)
-	}
-
-	var storagePath string
-
-	if info.OperatingSystem == "Docker Desktop" {
-		switch runtime.GOOS {
-		case "windows":
-			storagePath = filepath.Join(os.Getenv("HOMEDRIVE"), `\\ProgramData\DockerDesktop\vm-data\`)
-
-		case "darwin":
-			storagePath = filepath.Join(os.Getenv("HOME"), "Library/Containers/com.docker.docker/Data")
+	if backendStoragePath == "" {
+		info, err := cleaner.backend.Info(ctx)
+		if err != nil {
+			return "", fmt.Errorf("errot getting local %s backend info: %w", cleaner.BackendName(), err)
 		}
-	} else {
-		storagePath = info.DockerRootDir
+		backendStoragePath = info.StoreGraphRoot
 	}
 
-	if _, err := os.Stat(storagePath); os.IsNotExist(err) {
+	// assert permissions
+	if _, err := os.Stat(backendStoragePath); os.IsNotExist(err) {
 		return "", nil
 	} else if err != nil {
-		return "", fmt.Errorf("error accessing %q: %w", storagePath, err)
+		return "", fmt.Errorf("error accessing %q: %w", backendStoragePath, err)
 	}
-	return storagePath, nil
+
+	return backendStoragePath, nil
 }
 
 func (cleaner *LocalBackendCleaner) ShouldRunAutoGC(ctx context.Context, options RunAutoGCOptions) (bool, error) {
@@ -325,7 +305,7 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 		var acquiredHostLocks []lockgate.LockHandle
 
 		if len(checkResult.ImagesDescs) > 0 {
-			if err := logboek.Context(ctx).Default().LogProcess("Running cleanup for least recently used % images created by werf", cleaner.BackendName()).DoError(func() error {
+			if err := logboek.Context(ctx).Default().LogProcess("Running cleanup for least recently used %s images created by werf", cleaner.BackendName()).DoError(func() error {
 			DeleteImages:
 				for _, desc := range checkResult.ImagesDescs {
 					for _, id := range processedImagesIDs {

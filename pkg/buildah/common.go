@@ -15,6 +15,7 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/pkg/buildah/thirdparty"
+	"github.com/werf/werf/v2/pkg/container_backend/info"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/werf"
 )
@@ -163,6 +164,7 @@ type (
 )
 
 type Buildah interface {
+	Info(ctx context.Context) (info.Info, error)
 	GetDefaultPlatform() string
 	GetRuntimePlatform() string
 	Tag(ctx context.Context, ref, newRef string, opts TagOpts) error
