@@ -113,28 +113,3 @@ In this case, the application will be deployed to the `backend-production` Names
 Namespace generated using a custom pattern or specified by the `--namespace` option is converted to the [RFC 1123 Label Names](https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#dns-label-names) format automatically. You can disable automatic formatting using the `deploy.namespaceSlug` directive in `werf.yaml`.
 
 You can manually format any string according to RFC 1123 Label Names format using the `werf slugify -f kubernetes-namespace` command.
-
-## Deploying to different Kubernetes clusters
-
-By default, werf deploys Kubernetes resources to the cluster set for the `werf kubectl` command. You can use different kube-contexts of a single kube-config file (the default is `$HOME/.kube/config`) to deploy to different clusters:
-
-```shell
-werf converge --kube-context staging  # or $WERF_KUBE_CONTEXT=...
-werf converge --kube-context production
-```
-
-... or use different kube-config files:
-
-```shell
-werf converge --kube-config "$HOME/.kube/staging.config"  # or $WERF_KUBE_CONFIG=...
-werf converge --kube-config-base64 "$KUBE_PRODUCTION_CONFIG_IN_BASE64"  # or $WERF_KUBE_CONFIG_BASE64=...
-```
-
-## Deploying as a different Kubernetes user
-
-By default, werf uses the Kubernetes user set for the `werf kubectl` command for deployment. You can use several kube contexts to deploy as different users:
-
-```shell
-werf converge --kube-context admin  # or $WERF_KUBE_CONTEXT=...
-werf converge --kube-context regular-user
-```

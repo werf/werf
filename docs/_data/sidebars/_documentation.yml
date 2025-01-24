@@ -81,6 +81,9 @@ entries:
               - title: Resource tracking
                 url: /usage/deploy/tracking.html
 
+              - title: Authentication
+                url: /usage/deploy/authentication.html
+
               - title: Release management
                 url: /usage/deploy/releases.html
 
@@ -220,6 +223,9 @@ entries:
 
               - title: Отслеживание ресурсов
                 url: /usage/deploy/tracking.html
+
+              - title: Аутентификация
+                url: /usage/deploy/authentication.html
 
               - title: Управление релизами
                 url: /usage/deploy/releases.html
