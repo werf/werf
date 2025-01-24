@@ -2,8 +2,8 @@ package config
 
 type rawMetaBuild struct {
 	Platform []string `yaml:"platform,omitempty"`
-
-	rawMeta *rawMeta
+	Staged   bool     `yaml:"staged,omitempty"`
+	rawMeta  *rawMeta
 
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
 }
@@ -31,5 +31,6 @@ func (c *rawMetaBuild) UnmarshalYAML(unmarshal func(interface{}) error) error {
 func (c *rawMetaBuild) toMetaBuild() MetaBuild {
 	metaBuild := MetaBuild{}
 	metaBuild.Platform = c.Platform
+	metaBuild.Staged = c.Staged
 	return metaBuild
 }

@@ -502,6 +502,9 @@ func prepareWerfConfig(giterminismManager giterminism_manager.Interface, rawImag
 		}
 
 		for _, image := range imageList {
+			if !rawImage.isFillStaged {
+				image.Staged = meta.Build.Staged
+			}
 			images = append(images, image)
 		}
 	}
@@ -571,6 +574,9 @@ func splitByMetaAndRawImages(docs []*doc) (*Meta, []*rawStapelImage, []*rawImage
 			resultMeta = rawMeta.toMeta()
 		case isImageFromDockerfileDoc(raw):
 			imageFromDockerfile := &rawImageFromDockerfile{doc: doc}
+			if isStagedDoc(raw) {
+				imageFromDockerfile.isFillStaged = true
+			}
 			err := yaml.UnmarshalStrict(doc.Content, &imageFromDockerfile)
 			if err != nil {
 				return nil, nil, nil, newYamlUnmarshalError(err, doc)
@@ -611,6 +617,14 @@ func isImageDoc(h map[string]interface{}) bool {
 
 func isImageFromDockerfileDoc(h map[string]interface{}) bool {
 	if _, ok := h["dockerfile"]; ok {
+		return true
+	}
+
+	return false
+}
+
+func isStagedDoc(h map[string]interface{}) bool {
+	if _, ok := h["staged"]; ok {
 		return true
 	}
 

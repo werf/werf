@@ -28,6 +28,11 @@ sections:
               en: Common list of target platforms for all images (for example ['linux/amd64', 'linux/arm64', 'linux/arm/v8'])
               ru: Общий список целевых платформ для всех образов (например ['linux/amd64', 'linux/arm64', 'linux/arm/v8'])
             value: "[ string, ... ]"
+          - name: staged
+            value: "bool"
+            description:
+              en: "Enable layer-by-layer caching of Dockerfile instructions in container registry globally for all images"
+              ru: "Включить послойное кеширование инструкций Dockerfile в container registry глобально для всех образов"
       - name: deploy
         description:
           en: Settings for deployment

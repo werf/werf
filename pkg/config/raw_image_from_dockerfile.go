@@ -24,7 +24,8 @@ type rawImageFromDockerfile struct {
 	Platform        []string               `yaml:"platform,omitempty"`
 	RawSecrets      []*rawSecret           `yaml:"secrets,omitempty"`
 
-	doc *doc `yaml:"-"` // parent
+	doc          *doc `yaml:"-"` // parent
+	isFillStaged bool `yaml:"-"` // indicates whether 'staged' field is explicitly set in the image section
 
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
 }
