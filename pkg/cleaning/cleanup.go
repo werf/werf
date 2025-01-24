@@ -30,7 +30,7 @@ type CleanupOptions struct {
 	LocalGit                                GitRepo
 	KubernetesContextClients                []*kube.ContextClient
 	KubernetesNamespaceRestrictionByContext map[string]string
-	WithoutKube                             bool // legacy
+	WithoutKube                             bool // TODO: remove this legacy logic in v3.
 	ConfigMetaCleanup                       config.MetaCleanup
 	KeepStagesBuiltWithinLastNHours         uint64
 	DryRun                                  bool
@@ -59,7 +59,8 @@ func newCleanupManager(projectName string, storageManager *manager.StorageManage
 type cleanupManager struct {
 	stageManager stage_manager.Manager
 
-	nonexistentImportMetadataIDs []string
+	checksumSourceStageIDs map[string][]string
+	sourceStageIDImportIDs map[string][]string
 
 	ProjectName                             string
 	StorageManager                          manager.StorageManagerInterface
@@ -158,12 +159,12 @@ func (m *cleanupManager) run(ctx context.Context) error {
 		if m.KeepStagesBuiltWithinLastNHours != 0 {
 			keepImagesBuiltWithinLastNHours = m.KeepStagesBuiltWithinLastNHours
 		}
+		stage_manager.ProtectionReasonBuiltWithinLastNHoursPolicy.SetDescription(fmt.Sprintf("built within last %d hours", keepImagesBuiltWithinLastNHours))
 
 		if !(m.ConfigMetaCleanup.DisableBuiltWithinLastNHoursPolicy || keepImagesBuiltWithinLastNHours == 0) {
-			reason := fmt.Sprintf("built within last %d hours", keepImagesBuiltWithinLastNHours)
 			for stageDescToDelete := range m.stageManager.GetStageDescSet().Iter() {
 				if (time.Since(stageDescToDelete.Info.GetCreatedAt()).Hours()) <= float64(keepImagesBuiltWithinLastNHours) {
-					m.stageManager.MarkStageDescAsProtected(stageDescToDelete, reason)
+					m.stageManager.MarkStageDescAsProtected(stageDescToDelete, stage_manager.ProtectionReasonBuiltWithinLastNHoursPolicy, false)
 				}
 			}
 		}
@@ -222,7 +223,7 @@ func (m *cleanupManager) skipStageIDsThatAreUsedInKubernetes(ctx context.Context
 		stageID := stageDesc.StageID.String()
 
 		handleTagFunc(tag, stageID, func() {
-			m.stageManager.MarkStageDescAsProtected(stageDesc, "used in the Kubernetes")
+			m.stageManager.MarkStageDescAsProtected(stageDesc, stage_manager.ProtectionReasonKubernetesBasedPolicy, false)
 		})
 	}
 
@@ -232,7 +233,7 @@ func (m *cleanupManager) skipStageIDsThatAreUsedInKubernetes(ctx context.Context
 				stageDesc := m.stageManager.GetStageDescByStageID(stageID)
 				if stageDesc != nil {
 					// keep existent stage and associated custom tags
-					m.stageManager.MarkStageDescAsProtected(stageDesc, "used in the Kubernetes")
+					m.stageManager.MarkStageDescAsProtected(stageDesc, stage_manager.ProtectionReasonKubernetesBasedPolicy, false)
 				} else {
 					// keep custom tags that do not have associated existent stage
 					m.stageManager.ForgetCustomTagsByStageID(stageID)
@@ -254,7 +255,7 @@ Loop:
 		for _, deployedDockerImage := range deployedDockerImages {
 			if deployedDockerImage.Name == dockerImageName {
 				if !handledDeployedFinalStages[stageID] {
-					m.stageManager.MarkFinalStageDescAsProtected(stageDesc, "used in the Kubernetes")
+					m.stageManager.MarkFinalStageDescAsProtected(stageDesc, stage_manager.ProtectionReasonKubernetesBasedPolicy, false)
 
 					logboek.Context(ctx).Default().LogFDetails("  tag: %s\n", stageID)
 					logboek.Context(ctx).LogOptionalLn()
@@ -485,7 +486,7 @@ func (m *cleanupManager) prepareStageIDTableRows(ctx context.Context, stageIDCus
 func (m *cleanupManager) handleSavedStageIDs(ctx context.Context, savedStageIDs []string) {
 	logboek.Context(ctx).Default().LogBlock("Saved tags").Do(func() {
 		for _, stageID := range savedStageIDs {
-			m.stageManager.MarkStageDescAsProtectedByStageID(stageID, "found in the git history")
+			m.stageManager.MarkStageDescAsProtectedByStageID(stageID, stage_manager.ProtectionReasonGitPolicy, true)
 			logboek.Context(ctx).Default().LogFDetails("  tag: %s\n", stageID)
 			logboek.Context(ctx).LogOptionalLn()
 		}
@@ -713,10 +714,11 @@ func (m *cleanupManager) cleanupUnusedStages(ctx context.Context) error {
 
 	// skip kept stages and their relatives.
 	{
-		for stageDescToKeep := range m.stageManager.GetProtectedStageDescSet().Iter() {
-			relativeStageDescSetToKeep := m.getRelativeStageDescSetByStageDesc(stageDescToKeep)
-			for relativeStageDescToKeep := range relativeStageDescSetToKeep.Iter() {
-				m.stageManager.MarkStageDescAsProtected(relativeStageDescToKeep, "ancestors")
+		for protectionReason, stageDescToKeepSet := range m.stageManager.GetProtectedStageDescSetByReason() {
+			// Git history based policy keeps import sources more effectively, other policies do not keep them.
+			withImportSources := protectionReason != stage_manager.ProtectionReasonGitPolicy
+			for stageDescToKeep := range stageDescToKeepSet.Iter() {
+				m.protectRelativeStageDescSetByStageDesc(stageDescToKeep, withImportSources)
 			}
 		}
 
@@ -746,9 +748,34 @@ func (m *cleanupManager) cleanupUnusedStages(ctx context.Context) error {
 		return fmt.Errorf("unable to cleanup custom tags metadata: %w", err)
 	}
 
-	if len(m.nonexistentImportMetadataIDs) != 0 {
-		if err := logboek.Context(ctx).Default().LogProcess("Cleaning imports metadata (%d)", len(m.nonexistentImportMetadataIDs)).DoError(func() error {
-			return m.deleteImportsMetadata(ctx, m.nonexistentImportMetadataIDs)
+	if err := m.deleteUnusedImportsMetadata(ctx); err != nil {
+		return fmt.Errorf("unable to cleanup imports metadata: %w", err)
+	}
+
+	return nil
+}
+
+func (m *cleanupManager) deleteUnusedImportsMetadata(ctx context.Context) error {
+	if len(m.sourceStageIDImportIDs) == 0 {
+		return nil
+	}
+
+	var importMetadataIDsToDelete []string
+outerLoop:
+	for sourceStageID, importMetadataIDs := range m.sourceStageIDImportIDs {
+		for protectedStageDesc := range m.stageManager.GetProtectedStageDescSet().Iter() {
+			// Skip existent/protected stages.
+			if sourceStageID == protectedStageDesc.StageID.String() {
+				continue outerLoop
+			}
+		}
+
+		importMetadataIDsToDelete = append(importMetadataIDsToDelete, importMetadataIDs...)
+	}
+
+	if len(importMetadataIDsToDelete) != 0 {
+		if err := logboek.Context(ctx).Default().LogProcess("Cleaning imports metadata (%d)", len(importMetadataIDsToDelete)).DoError(func() error {
+			return m.deleteImportsMetadata(ctx, importMetadataIDsToDelete)
 		}); err != nil {
 			return err
 		}
@@ -768,7 +795,7 @@ FilterOutFinalStages:
 			}
 		}
 
-		m.stageManager.MarkFinalStageDescAsProtected(finalStageDesc, "not exist in the repo")
+		m.stageManager.MarkFinalStageDescAsProtected(finalStageDesc, stage_manager.ProtectionReasonNotFoundInRepo, false)
 	}
 
 	finalStageDescSetToDelete := m.stageManager.GetFinalStageDescSet().Difference(m.stageManager.GetFinalProtectedStageDescSet())
@@ -786,6 +813,9 @@ FilterOutFinalStages:
 }
 
 func (m *cleanupManager) initImportsMetadata(ctx context.Context) error {
+	m.checksumSourceStageIDs = map[string][]string{}
+	m.sourceStageIDImportIDs = map[string][]string{}
+
 	importMetadataIDs, err := m.StorageManager.GetStagesStorage().GetImportMetadataIDs(ctx, m.ProjectName, storage.WithCache())
 	if err != nil {
 		return err
@@ -813,17 +843,10 @@ func (m *cleanupManager) initImportsMetadata(ctx context.Context) error {
 
 		importSourceID := metadata.ImportSourceID
 		sourceStageID := metadata.SourceStageID
-		if !m.stageManager.ContainsStageDescByStageID(sourceStageID) {
-			m.nonexistentImportMetadataIDs = append(m.nonexistentImportMetadataIDs, importSourceID)
-			return nil
-		}
+		checksum := metadata.Checksum
 
-		// TODO: remove this legacy logic in v3.
-		sourceImageID := metadata.SourceImageID
-		stage := findStageDescByImageID(m.stageManager.GetStageDescSet(), sourceImageID)
-		if stage == nil {
-			m.nonexistentImportMetadataIDs = append(m.nonexistentImportMetadataIDs, importSourceID)
-		}
+		m.checksumSourceStageIDs[checksum] = append(m.checksumSourceStageIDs[checksum], sourceStageID)
+		m.sourceStageIDImportIDs[sourceStageID] = append(m.sourceStageIDImportIDs[sourceStageID], importSourceID)
 
 		return nil
 	})
@@ -868,7 +891,7 @@ func findStageDescByImageID(stageDescSet image.StageDescSet, imageID string) *im
 	return nil
 }
 
-func (m *cleanupManager) getRelativeStageDescSetByStageDesc(targetStageDesc *image.StageDesc) image.StageDescSet {
+func (m *cleanupManager) protectRelativeStageDescSetByStageDesc(targetStageDesc *image.StageDesc, withImportSource bool) {
 	targetStageDescSet := image.NewStageDescSet()
 	if targetStageDesc.Info.IsIndex {
 		for _, platformImageInfo := range targetStageDesc.Info.Index {
@@ -881,13 +904,39 @@ func (m *cleanupManager) getRelativeStageDescSetByStageDesc(targetStageDesc *ima
 		targetStageDescSet.Add(targetStageDesc)
 	}
 
+	handledStageDescSet := image.NewStageDescSet()
 	stageDescSet := m.stageManager.GetStageDescSet()
-	relativeStageDescSet := image.NewStageDescSet()
 	currentStageDescSet := targetStageDescSet
 	for !currentStageDescSet.IsEmpty() {
 		for _, currentStageDesc := range currentStageDescSet.ToSlice() {
-			relativeStageDescSet.Add(currentStageDesc)
 			currentStageDescSet.Remove(currentStageDesc)
+
+			// Avoid potential cyclical dependency.
+			if handledStageDescSet.Contains(currentStageDesc) {
+				continue
+			} else {
+				handledStageDescSet.Add(currentStageDesc)
+			}
+
+			// Import source checking.
+			if withImportSource {
+				for label, checksum := range currentStageDesc.Info.Labels {
+					if strings.HasPrefix(label, image.WerfImportChecksumLabelPrefix) {
+						sourceStageIDs, ok := m.checksumSourceStageIDs[checksum]
+						if !ok {
+							continue
+						}
+
+						for _, sourceStageID := range sourceStageIDs {
+							sourceStageDesc := m.stageManager.GetStageDescByStageID(sourceStageID)
+							if sourceStageDesc != nil {
+								currentStageDescSet.Add(sourceStageDesc)
+								m.stageManager.MarkStageDescAsProtected(sourceStageDesc, stage_manager.ProtectionReasonImportSource, false)
+							}
+						}
+					}
+				}
+			}
 
 			// Parent stage checking.
 			{
@@ -895,19 +944,19 @@ func (m *cleanupManager) getRelativeStageDescSetByStageDesc(targetStageDesc *ima
 				for stageDesc := range stageDescSet.Iter() {
 					if currentStageDesc.Info.ParentID == stageDesc.Info.ID {
 						currentStageDescSet.Add(stageDesc)
+						m.stageManager.MarkStageDescAsProtected(stageDesc, stage_manager.ProtectionReasonAncestor, false)
 						break
 					}
 				}
 
 				parentStageDesc := m.stageManager.GetStageDescByStageID(currentStageDesc.Info.Labels[image.WerfParentStageID])
 				if parentStageDesc != nil {
+					m.stageManager.MarkStageDescAsProtected(parentStageDesc, stage_manager.ProtectionReasonAncestor, false)
 					currentStageDescSet.Add(parentStageDesc)
 				}
 			}
 		}
 	}
-
-	return relativeStageDescSet
 }
 
 func (m *cleanupManager) deleteUnusedCustomTags(ctx context.Context) error {
