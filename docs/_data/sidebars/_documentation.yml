@@ -224,7 +224,7 @@ entries:
               - title: Отслеживание ресурсов
                 url: /usage/deploy/tracking.html
 
-              - title: Аутентификация
+              - title: Аутентификация и авторизация
                 url: /usage/deploy/authentication.html
 
               - title: Управление релизами
