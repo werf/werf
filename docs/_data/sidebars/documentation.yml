@@ -715,7 +715,7 @@ entries:
               - title: Resource tracking
                 url: /usage/deploy/tracking.html
 
-              - title: Authentication
+              - title: Authentication and authorization
                 url: /usage/deploy/authentication.html
 
               - title: Release management
