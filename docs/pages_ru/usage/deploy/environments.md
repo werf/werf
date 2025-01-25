@@ -114,28 +114,3 @@ werf converge --namespace backend-production --release backend-production
 Namespace, сформированный по специальному шаблону или указанный опцией `--namespace`, приводится к формату [RFC 1123 Label Names](https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#dns-label-names) автоматически. Отключить автоматическое форматирование можно директивой `deploy.namespaceSlug` файла `werf.yaml`.
 
 Вручную отформатировать любую строку согласно формату RFC 1123 Label Names можно командой `werf slugify -f kubernetes-namespace`.
-
-## Развертывание в разные кластеры Kubernetes
-
-По умолчанию werf развертывает Kubernetes-ресурсы в кластер, на который настроена команда `werf kubectl`. Для развертывания в разные кластеры можно использовать разные kube-контексты единого kube-config файла (по умолчанию — `$HOME/.kube/config`):
-
-```shell
-werf converge --kube-context staging  # или $WERF_KUBE_CONTEXT=...
-werf converge --kube-context production
-```
-
-... или использовать разные kube-config файлы:
-
-```shell
-werf converge --kube-config "$HOME/.kube/staging.config"  # или $WERF_KUBE_CONFIG=...
-werf converge --kube-config-base64 "$KUBE_PRODUCTION_CONFIG_IN_BASE64"  # или $WERF_KUBE_CONFIG_BASE64=...
-```
-
-## Развертывание из-под разных пользователей Kubernetes
-
-По умолчанию werf для развертывания использует пользователя Kubernetes, через которого работает команда `werf kubectl`. Для развертывания из-под разных пользователей используйте разные kube-контексты:
-
-```shell
-werf converge --kube-context admin  # или $WERF_KUBE_CONTEXT=...
-werf converge --kube-context regular-user
-```
