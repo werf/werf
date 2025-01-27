@@ -1,9 +1,11 @@
 project: none
 configVersion: 1
+cleanup:
+  disableKubernetesBasedPolicy: true
 ---
 image: image
 from: alpine
-fromCacheVersion: 2 # +
+fromCacheVersion: {{ env "FROM_CACHE_VERSION" }}
 shell:
   setup: date
 import:
@@ -15,6 +17,6 @@ import:
 image: artifact
 final: false
 from: alpine
-fromCacheVersion: 2 # +
+fromCacheVersion: {{ env "FROM_CACHE_VERSION" }}
 shell:
-  install: echo "1234" > /artifact # +
+  install: echo "123" > /artifact

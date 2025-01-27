@@ -77,10 +77,6 @@ func ImageMetadata(imageName string) map[string][]string {
 	return utils.ImageMetadata(context.Background(), SuiteData.StagesStorage, imageName)
 }
 
-func RmImportMetadata(importSourceID string) {
-	utils.RmImportMetadata(context.Background(), SuiteData.StagesStorage, importSourceID)
-}
-
 func ImportMetadataIDs() []string {
 	return utils.ImportMetadataIDs(context.Background(), SuiteData.StagesStorage)
 }
