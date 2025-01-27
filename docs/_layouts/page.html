@@ -19,8 +19,6 @@ layout: sidebar
                 let needCheckURL = false;
                 let pageURL = 'https://github.com{{ site.github_repo_path }}/blob/' + version + '/docs/{{ page.path }}';
                 console.log("PageURL:", pageURL);
-                console.log("GitHub repo path:", repoPath);
-                console.log("Page path:", pagePath);
                 console.log("Version:", version);
                 let checkURL = 'https://api.github.com/repos{{ site.github_repo_path }}/contents/docs/{{ page.path }}?ref=' + version;
                 let $link = $('#editme_link');
