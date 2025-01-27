@@ -41,4 +41,5 @@ buildah-test
 /Taskfile.yaml
 /build
 /dist
+/node_modules/
 /.github/actions/get-commit-message/node_modules/
