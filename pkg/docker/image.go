@@ -83,7 +83,7 @@ func doCliPullWithRetries(ctx context.Context, c command.Cli, args ...string) er
 		return false, doCliPull(c, args...)
 	}
 	notify := func(err error, duration time.Duration) {
-		logboek.Context(ctx).Warn().LogF("Retrying docker pull in %d seconds (%d/%d) ...\n", duration.Seconds(), attempt, cliPullMaxAttempts)
+		logboek.Context(ctx).Warn().LogF("Retrying docker pull in %0.2f seconds (%d/%d) ...\n", duration.Seconds(), attempt, cliPullMaxAttempts)
 	}
 	return doCliOperationWithRetries(ctx, op, &attempt, cliPullMaxAttempts, notify)
 }
@@ -150,7 +150,7 @@ func doCliPushWithRetries(ctx context.Context, c command.Cli, args ...string) er
 		return false, err
 	}
 	notify := func(err error, duration time.Duration) {
-		logboek.Context(ctx).Warn().LogF("Retrying docker push in %d seconds (%d/%d) ...\n", duration.Seconds(), attempt, cliPushMaxAttempts)
+		logboek.Context(ctx).Warn().LogF("Retrying docker push in %0.2f seconds (%d/%d) ...\n", duration.Seconds(), attempt, cliPushMaxAttempts)
 	}
 	return doCliOperationWithRetries(ctx, op, &attempt, cliPushMaxAttempts, notify)
 }
