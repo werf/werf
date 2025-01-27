@@ -2,8 +2,10 @@
 
 project: none
 configVersion: 1
-  {{ with (eq $policySetNumber "1") }}
 cleanup:
+  disableKubernetesBasedPolicy: true
+  disableBuiltWithinLastNHoursPolicy: true
+  {{ with (eq $policySetNumber "1") }}
   keepPolicies:
     - references:
         branch: test
@@ -11,7 +13,6 @@ cleanup:
         last: -1
   {{ end }}
   {{ with (eq $policySetNumber "2") }}
-cleanup:
   keepPolicies:
     - references:
         branch: test
@@ -19,7 +20,6 @@ cleanup:
         last: 0
   {{ end }}
   {{ with (eq $policySetNumber "3") }}
-cleanup:
   keepPolicies:
     - references:
         branch: test
@@ -27,7 +27,6 @@ cleanup:
         in: 24h
   {{ end }}
   {{ with (eq $policySetNumber "4") }}
-cleanup:
   keepPolicies:
     - references:
         branch: test
@@ -35,7 +34,6 @@ cleanup:
           in: 12h
   {{ end }}
   {{ with (eq $policySetNumber "5") }}
-cleanup:
   keepPolicies:
     - references:
         branch: /.*/
@@ -45,7 +43,6 @@ cleanup:
           operator: Or
   {{ end }}
   {{ with (eq $policySetNumber "6") }}
-cleanup:
   keepPolicies:
     - references:
         branch: /.*/
@@ -55,7 +52,6 @@ cleanup:
           operator: And
   {{ end }}
   {{ with (eq $policySetNumber "7") }}
-cleanup:
   keepPolicies:
     - references:
         branch: test
@@ -65,7 +61,6 @@ cleanup:
         operator: Or
   {{ end }}
   {{ with (eq $policySetNumber "8") }}
-cleanup:
   keepPolicies:
     - references:
         branch: test
@@ -75,7 +70,6 @@ cleanup:
         operator: And
   {{ end }}
   {{ with (eq $policySetNumber "9") }}
-cleanup:
   keepPolicies:
     - references:
         branch: /.*/
