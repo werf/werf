@@ -10,95 +10,89 @@ import (
 	"github.com/werf/werf/v2/test/pkg/utils"
 )
 
-const (
-	customTagValuePrefix = "user-custom-tag-"
-	customTagValueFormat = "user-custom-tag-%v"
-)
+var _ = Describe("cleanup command", func() {
+	const (
+		artifactCacheVersion1                  = "1"
+		artifactCacheVersion2                  = "2"
+		artifactData1                          = "1"
+		artifactData2                          = "2"
+		expectedStageCountAfterFirstBuild      = 5
+	)
 
-var _ = Describe("cleaning images and stages", func() {
-	BeforeEach(func() {
+	setImageCredentialsEnv := func() {
+		SuiteData.Stubs.SetEnv("WERF_SET_IMAGE_CREDENTIALS_REGISTRY", fmt.Sprintf("imageCredentials.registry=%s", os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY")))
+		SuiteData.Stubs.SetEnv("WERF_SET_IMAGE_CREDENTIALS_USERNAME", fmt.Sprintf("imageCredentials.username=%s", os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME")))
+		SuiteData.Stubs.SetEnv("WERF_SET_IMAGE_CREDENTIALS_PASSWORD", fmt.Sprintf("imageCredentials.password=%s", os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD")))
+	}
+
+	setupProject := func() {
 		SuiteData.CommitProjectWorktree(SuiteData.ProjectName, utils.FixturePath("default"), "initial commit")
+		setImageCredentialsEnv()
+	}
+
+	runCommand := func(args ...string) {
+		utils.RunSucceedCommand(SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, args...)
+	}
+
+	BeforeEach(func() {
+		setupProject()
 	})
 
-	_ = AfterEach(func() {
-		utils.RunSucceedCommand(
-			SuiteData.GetProjectWorktree(SuiteData.ProjectName),
-			SuiteData.WerfBinPath,
-			"dismiss", "--with-namespace",
-		)
-
-		utils.RunSucceedCommand(
-			SuiteData.GetProjectWorktree(SuiteData.ProjectName),
-			SuiteData.WerfBinPath,
-			"purge",
-		)
+	AfterEach(func() {
+		runCommand("dismiss", "--with-namespace")
+		runCommand("purge")
 	})
 
-	When("KeepStageSetsBuiltWithinLastNHours policy is disabled", func() {
+	Context("kubernetes based policy", func() {
 		BeforeEach(func() {
-			SuiteData.Stubs.SetEnv("WERF_KEEP_STAGES_BUILT_WITHIN_LAST_N_HOURS", "0")
+			SuiteData.Stubs.SetEnv("ARTIFACT_CACHE_VERSION", artifactCacheVersion1)
+			SuiteData.Stubs.SetEnv("ARTIFACT_DATA", artifactData1)
+			runCommand("build")
 		})
 
-		DescribeTable("should keep stages and custom tags", func(useCustomTag bool) {
-			addCustomTagValue1 := fmt.Sprintf(customTagValueFormat, "1")
-			addCustomTagValue2 := fmt.Sprintf(customTagValueFormat, "2")
-			useCustomTagValue := addCustomTagValue1
+		It("should remove all stages", func() {
+			Expect(StagesCount()).Should(Equal(expectedStageCountAfterFirstBuild))
+			runCommand("cleanup")
+			Expect(StagesCount()).Should(Equal(0))
+		})
 
-			By("Do build")
-			{
-				utils.RunSucceedCommand(
-					SuiteData.GetProjectWorktree(SuiteData.ProjectName),
-					SuiteData.WerfBinPath,
-					"build",
-					"--add-custom-tag", addCustomTagValue1,
-					"--add-custom-tag", addCustomTagValue2,
-				)
-			}
+		It("should keep all stages", func() {
+			runCommand("converge", "--require-built-images")
+			Expect(StagesCount()).Should(Equal(expectedStageCountAfterFirstBuild))
+			runCommand("cleanup")
+			Expect(StagesCount()).Should(Equal(expectedStageCountAfterFirstBuild))
+		})
 
-			By("Do deploy")
-			{
-				var werfArgs []string
-				werfArgs = append(werfArgs, "converge")
-				werfArgs = append(
-					werfArgs,
-					"--set", fmt.Sprintf("imageCredentials.registry=%s", os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY")),
-					"--set", fmt.Sprintf("imageCredentials.username=%s", os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME")),
-					"--set", fmt.Sprintf("imageCredentials.password=%s", os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD")),
-				)
-				werfArgs = append(werfArgs, "--require-built-images")
+		Context("artifact", func() {
+			BeforeEach(func() {
+				SuiteData.Stubs.SetEnv("ARTIFACT_CACHE_VERSION", artifactCacheVersion2)
+			})
 
-				if useCustomTag {
-					werfArgs = append(werfArgs, "--use-custom-tag", useCustomTagValue)
-				}
+			It("should keep both by import checksum", func() {
+				SuiteData.Stubs.SetEnv("ARTIFACT_DATA", artifactData1)
+				runCommand("converge")
 
-				utils.RunSucceedCommand(
-					SuiteData.GetProjectWorktree(SuiteData.ProjectName),
-					SuiteData.WerfBinPath,
-					werfArgs...,
-				)
-			}
+				Expect(StagesCount()).Should(Equal(expectedStageCountAfterFirstBuild+2))
+				Expect(len(ImportMetadataIDs())).Should(Equal(2))
 
-			By("Do cleanup and check result")
-			{
-				Expect(len(ImageMetadata(imageName))).Should(Equal(1))
-				count := StagesCount()
-				Expect(count).Should(Equal(2))
-				Expect(len(CustomTags())).Should(Equal(2))
-				Expect(len(CustomTagsMetadataList())).Should(Equal(2))
+				runCommand("cleanup")
 
-				utils.RunSucceedCommand(
-					SuiteData.GetProjectWorktree(SuiteData.ProjectName),
-					SuiteData.WerfBinPath,
-					"cleanup",
-				)
+				Expect(StagesCount()).Should(Equal(expectedStageCountAfterFirstBuild+2))
+				Expect(len(ImportMetadataIDs())).Should(Equal(2))
+			})
 
-				Expect(StagesCount()).Should(Equal(count))
-				Expect(len(CustomTags())).Should(Equal(2))
-				Expect(len(CustomTagsMetadataList())).Should(Equal(2))
-			}
-		},
-			Entry("deployed stage", false),
-			Entry("deployed custom tag", true),
-		)
+			It("should keep one", func() {
+				SuiteData.Stubs.SetEnv("ARTIFACT_DATA", artifactData2)
+				runCommand("converge")
+
+				Expect(StagesCount()).Should(Equal(expectedStageCountAfterFirstBuild+3))
+				Expect(len(ImportMetadataIDs())).Should(Equal(2))
+
+				runCommand("cleanup")
+
+				Expect(StagesCount()).Should(Equal(expectedStageCountAfterFirstBuild))
+				Expect(len(ImportMetadataIDs())).Should(Equal(1))
+			})
+		})
 	})
 })
