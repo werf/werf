@@ -46,6 +46,8 @@ type LocalBackendCleaner struct {
 	minImagesToDelete uint64
 }
 
+//go:generate mockgen -source ../container_backend/interface.go -package host_cleaning_test -destination mock_backend_test.go
+
 func NewLocalBackendCleaner(backend container_backend.ContainerBackend) (*LocalBackendCleaner, error) {
 	cleaner := &LocalBackendCleaner{
 		backend:           backend,
@@ -62,7 +64,9 @@ func NewLocalBackendCleaner(backend container_backend.ContainerBackend) (*LocalB
 		// cleaner.backendName = "buildah"
 		// return cleaner, nil
 	default:
-		return nil, ErrUnsupportedContainerBackend
+		// returns cleaner for testing with mock
+		cleaner.backendName = "unknown"
+		return cleaner, ErrUnsupportedContainerBackend
 	}
 }
 
