@@ -57,8 +57,10 @@ func NewLocalBackendCleaner(backend container_backend.ContainerBackend) (*LocalB
 		cleaner.backendName = "docker"
 		return cleaner, nil
 	case *container_backend.BuildahBackend:
-		cleaner.backendName = "buildah"
-		return cleaner, nil
+		return nil, ErrUnsupportedContainerBackend
+		// TODO: add buildah backend support
+		// cleaner.backendName = "buildah"
+		// return cleaner, nil
 	default:
 		return nil, ErrUnsupportedContainerBackend
 	}
