@@ -2,7 +2,6 @@ package cleanup_with_k8s_test
 
 import (
 	"context"
-	"strings"
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -13,8 +12,6 @@ import (
 	"github.com/werf/werf/v2/test/pkg/suite_init"
 	"github.com/werf/werf/v2/test/pkg/utils"
 )
-
-const imageName = "backend"
 
 var testSuiteEntrypointFunc = suite_init.MakeTestSuiteEntrypointFunc("Cleanup after converge suite", suite_init.TestSuiteEntrypointFuncOptions{
 	RequiredSuiteTools: []string{"git", "docker"},
@@ -57,24 +54,6 @@ func StagesCount() int {
 	return utils.StagesCount(context.Background(), SuiteData.StagesStorage)
 }
 
-func ImageMetadata(imageName string) map[string][]string {
-	return utils.ImageMetadata(context.Background(), SuiteData.StagesStorage, imageName)
-}
-
-func CustomTags() []string {
-	tags, err := SuiteData.ContainerRegistry.Tags(context.Background(), SuiteData.K8sDockerRegistryRepo)
-	Expect(err).ShouldNot(HaveOccurred())
-
-	var result []string
-	for _, tag := range tags {
-		if strings.HasPrefix(tag, customTagValuePrefix) {
-			result = append(result, tag)
-		}
-	}
-
-	return result
-}
-
-func CustomTagsMetadataList() []*storage.CustomTagMetadata {
-	return utils.CustomTagsMetadataList(context.Background(), SuiteData.StagesStorage)
+func ImportMetadataIDs() []string {
+	return utils.ImportMetadataIDs(context.Background(), SuiteData.StagesStorage)
 }

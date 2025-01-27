@@ -1,5 +1,8 @@
 project: none
 configVersion: 1
+cleanup:
+  disableGitHistoryBasedPolicy: true
+  disableBuiltWithinLastNHoursPolicy: true
 gitWorktree:
   allowFetchOriginBranchesAndTags: false
 ---
@@ -22,3 +25,16 @@ ansible:
           </body>
         </html>
       dest: /app/index.html
+import:
+  - image: artifact
+    add: /artifact
+    to: /artifact
+    before: setup
+---
+image: artifact
+final: false
+from: alpine
+fromCacheVersion: {{ env "ARTIFACT_CACHE_VERSION" }}
+shell:
+  install:
+    - echo {{ env "ARTIFACT_DATA" }} > /artifact
