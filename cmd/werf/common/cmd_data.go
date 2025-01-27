@@ -79,7 +79,7 @@ type CmdData struct {
 	KubeToken                       *string
 	InsecureHelmDependencies        *bool
 	DryRun                          *bool
-	KeepStagesBuiltWithinLastNHours *uint64
+	keepStagesBuiltWithinLastNHours *uint64
 	WithoutKube                     *bool
 	KubeVersion                     *string
 	ContainerRegistryMirror         *[]string

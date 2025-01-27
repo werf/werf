@@ -46,7 +46,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 			common.LogVersion()
 
 			return common.LogRunningTime(func() error {
-				return runCleanup(ctx)
+				return runCleanup(ctx, cmd)
 			})
 		},
 	})
@@ -102,7 +102,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	return cmd
 }
 
-func runCleanup(ctx context.Context) error {
+func runCleanup(ctx context.Context, cmd *cobra.Command) error {
 	commonManager, ctx, err := common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
 		Cmd: &commonCmdData,
 		InitTrueGitWithOptions: &common.InitTrueGitOptions{
@@ -220,7 +220,7 @@ It is worth noting that auto-cleaning is enabled by default, and manual use is u
 		KubernetesNamespaceRestrictionByContext: kubernetesNamespaceRestrictionByContext,
 		WithoutKube:                             *commonCmdData.WithoutKube,
 		ConfigMetaCleanup:                       werfConfig.Meta.Cleanup,
-		KeepStagesBuiltWithinLastNHours:         *commonCmdData.KeepStagesBuiltWithinLastNHours,
+		KeepStagesBuiltWithinLastNHours:         common.GetKeepStagesBuiltWithinLastNHours(&commonCmdData, cmd),
 		DryRun:                                  *commonCmdData.DryRun,
 	}
 
