@@ -363,22 +363,26 @@ func SetupWithoutKube(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(cmdData.WithoutKube, "without-kube", "", util.GetBoolEnvironmentDefaultFalse("WERF_WITHOUT_KUBE"), "Do not skip deployed Kubernetes images (default $WERF_WITHOUT_KUBE)")
 }
 
-func SetupKeepStagesBuiltWithinLastNHours(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.KeepStagesBuiltWithinLastNHours = new(uint64)
+const flagNameKeepStagesBuiltWithinLastNHours = "keep-stages-built-within-last-n-hours"
 
+func SetupKeepStagesBuiltWithinLastNHours(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.keepStagesBuiltWithinLastNHours = new(uint64)
+	cmd.Flags().Uint64VarP(cmdData.keepStagesBuiltWithinLastNHours, flagNameKeepStagesBuiltWithinLastNHours, "", config.DefaultKeepImagesBuiltWithinLastNHours, fmt.Sprintf("Keep stages that were built within last hours (default $WERF_KEEP_STAGES_BUILT_WITHIN_LAST_N_HOURS or %d)", config.DefaultKeepImagesBuiltWithinLastNHours))
+}
+
+func GetKeepStagesBuiltWithinLastNHours(cmdData *CmdData, cmd *cobra.Command) *uint64 {
 	envValue, err := util.GetUint64EnvVar("WERF_KEEP_STAGES_BUILT_WITHIN_LAST_N_HOURS")
 	if err != nil {
 		TerminateWithError(err.Error(), 1)
 	}
 
-	var defaultValue uint64
-	if envValue != nil {
-		defaultValue = *envValue
+	if cmd.Flags().Changed(flagNameKeepStagesBuiltWithinLastNHours) {
+		return cmdData.keepStagesBuiltWithinLastNHours
+	} else if envValue != nil {
+		return envValue
 	} else {
-		defaultValue = 2
+		return nil
 	}
-
-	cmd.Flags().Uint64VarP(cmdData.KeepStagesBuiltWithinLastNHours, "keep-stages-built-within-last-n-hours", "", defaultValue, "Keep stages that were built within last hours (default $WERF_KEEP_STAGES_BUILT_WITHIN_LAST_N_HOURS or 2)")
 }
 
 func SetupEnvironment(cmdData *CmdData, cmd *cobra.Command) {

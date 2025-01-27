@@ -32,7 +32,7 @@ type CleanupOptions struct {
 	KubernetesNamespaceRestrictionByContext map[string]string
 	WithoutKube                             bool // TODO: remove this legacy logic in v3.
 	ConfigMetaCleanup                       config.MetaCleanup
-	KeepStagesBuiltWithinLastNHours         uint64
+	KeepStagesBuiltWithinLastNHours         *uint64
 	DryRun                                  bool
 }
 
@@ -70,7 +70,7 @@ type cleanupManager struct {
 	KubernetesNamespaceRestrictionByContext map[string]string
 	WithoutKube                             bool
 	ConfigMetaCleanup                       config.MetaCleanup
-	KeepStagesBuiltWithinLastNHours         uint64
+	KeepStagesBuiltWithinLastNHours         *uint64
 	DryRun                                  bool
 }
 
@@ -156,8 +156,8 @@ func (m *cleanupManager) run(ctx context.Context) error {
 	// Built within last N hours policy.
 	{
 		keepImagesBuiltWithinLastNHours := m.ConfigMetaCleanup.KeepImagesBuiltWithinLastNHours
-		if m.KeepStagesBuiltWithinLastNHours != 0 {
-			keepImagesBuiltWithinLastNHours = m.KeepStagesBuiltWithinLastNHours
+		if m.KeepStagesBuiltWithinLastNHours != nil {
+			keepImagesBuiltWithinLastNHours = *m.KeepStagesBuiltWithinLastNHours
 		}
 		stage_manager.ProtectionReasonBuiltWithinLastNHoursPolicy.SetDescription(fmt.Sprintf("built within last %d hours", keepImagesBuiltWithinLastNHours))
 

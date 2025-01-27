@@ -7,6 +7,8 @@ import (
 	"time"
 )
 
+const DefaultKeepImagesBuiltWithinLastNHours uint64 = 2
+
 type rawMetaCleanup struct {
 	DisableKubernetesBasedPolicy       bool                        `yaml:"disableKubernetesBasedPolicy,omitempty"`
 	DisableGitHistoryBasedPolicy       bool                        `yaml:"disableGitHistoryBasedPolicy,omitempty"`
@@ -64,11 +66,6 @@ func (c *rawMetaCleanup) UnmarshalYAML(unmarshal func(interface{}) error) error 
 
 	if err := checkOverflow(c.UnsupportedAttributes, c, c.rawMeta.doc); err != nil {
 		return err
-	}
-
-	if c.KeepImagesBuiltWithinLastNHours == nil {
-		defaultKeepImagesBuiltWithinLastNHours := uint64(2)
-		c.KeepImagesBuiltWithinLastNHours = &defaultKeepImagesBuiltWithinLastNHours
 	}
 
 	return nil
@@ -195,7 +192,11 @@ func (c *rawMetaCleanup) toMetaCleanup() MetaCleanup {
 		metaCleanup.KeepPolicies = append(metaCleanup.KeepPolicies, policy.toMetaCleanupKeepPolicy())
 	}
 
-	metaCleanup.KeepImagesBuiltWithinLastNHours = *c.KeepImagesBuiltWithinLastNHours
+	if c.KeepImagesBuiltWithinLastNHours != nil {
+		metaCleanup.KeepImagesBuiltWithinLastNHours = *c.KeepImagesBuiltWithinLastNHours
+	} else {
+		metaCleanup.KeepImagesBuiltWithinLastNHours = DefaultKeepImagesBuiltWithinLastNHours
+	}
 
 	return metaCleanup
 }
