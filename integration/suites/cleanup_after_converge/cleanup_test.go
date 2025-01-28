@@ -12,11 +12,11 @@ import (
 
 var _ = Describe("cleanup command", func() {
 	const (
-		artifactCacheVersion1                  = "1"
-		artifactCacheVersion2                  = "2"
-		artifactData1                          = "1"
-		artifactData2                          = "2"
-		expectedStageCountAfterFirstBuild      = 5
+		artifactCacheVersion1             = "1"
+		artifactCacheVersion2             = "2"
+		artifactData1                     = "1"
+		artifactData2                     = "2"
+		expectedStageCountAfterFirstBuild = 5
 	)
 
 	setImageCredentialsEnv := func() {
@@ -72,12 +72,12 @@ var _ = Describe("cleanup command", func() {
 				SuiteData.Stubs.SetEnv("ARTIFACT_DATA", artifactData1)
 				runCommand("converge")
 
-				Expect(StagesCount()).Should(Equal(expectedStageCountAfterFirstBuild+2))
+				Expect(StagesCount()).Should(Equal(expectedStageCountAfterFirstBuild + 2))
 				Expect(len(ImportMetadataIDs())).Should(Equal(2))
 
 				runCommand("cleanup")
 
-				Expect(StagesCount()).Should(Equal(expectedStageCountAfterFirstBuild+2))
+				Expect(StagesCount()).Should(Equal(expectedStageCountAfterFirstBuild + 2))
 				Expect(len(ImportMetadataIDs())).Should(Equal(2))
 			})
 
@@ -85,7 +85,7 @@ var _ = Describe("cleanup command", func() {
 				SuiteData.Stubs.SetEnv("ARTIFACT_DATA", artifactData2)
 				runCommand("converge")
 
-				Expect(StagesCount()).Should(Equal(expectedStageCountAfterFirstBuild+3))
+				Expect(StagesCount()).Should(Equal(expectedStageCountAfterFirstBuild + 3))
 				Expect(len(ImportMetadataIDs())).Should(Equal(2))
 
 				runCommand("cleanup")
