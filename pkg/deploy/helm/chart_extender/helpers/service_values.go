@@ -18,19 +18,19 @@ import (
 )
 
 func NewChartExtenderServiceValuesData() *ChartExtenderServiceValuesData {
-	return &ChartExtenderServiceValuesData{ServiceValues: make(map[string]interface{})}
+	return &ChartExtenderServiceValuesData{serviceValues: make(map[string]interface{})}
 }
 
 type ChartExtenderServiceValuesData struct {
-	ServiceValues map[string]interface{}
+	serviceValues map[string]interface{}
 }
 
 func (d *ChartExtenderServiceValuesData) GetServiceValues() map[string]interface{} {
-	return d.ServiceValues
+	return d.serviceValues
 }
 
 func (d *ChartExtenderServiceValuesData) SetServiceValues(vals map[string]interface{}) {
-	d.ServiceValues = vals
+	d.serviceValues = vals
 }
 
 type ServiceValuesOptions struct {
@@ -45,18 +45,6 @@ type ServiceValuesOptions struct {
 
 	SetDockerConfigJsonValue bool
 	DockerConfigPath         string
-}
-
-func GetEnvServiceValues(env string) map[string]interface{} {
-	result := map[string]interface{}{
-		"werf": map[string]interface{}{"env": env},
-	}
-
-	if exposeGlobalServiceValues() {
-		result["global"] = map[string]interface{}{"env": env}
-	}
-
-	return result
 }
 
 func GetServiceValues(ctx context.Context, projectName, repo string, imageInfoGetters []*image.InfoGetter, opts ServiceValuesOptions) (map[string]interface{}, error) {
