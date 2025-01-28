@@ -7,15 +7,9 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"text/template"
 
 	"github.com/werf/3p-helm/pkg/chart"
-	"github.com/werf/3p-helm/pkg/cli"
-	"github.com/werf/3p-helm/pkg/postrender"
-	"github.com/werf/3p-helm/pkg/registry"
 	"github.com/werf/3p-helm/pkg/werf/file"
-	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/deploy/helm"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
 )
 
@@ -33,37 +27,30 @@ type BundleOptions struct {
 func NewBundle(
 	ctx context.Context,
 	dir string,
-	helmEnvSettings *cli.EnvSettings,
-	registryClient *registry.Client,
 	opts BundleOptions,
 ) (*Bundle, error) {
 	bundle := &Bundle{
 		Dir:                            dir,
 		SecretValueFiles:               opts.SecretValueFiles,
-		HelmEnvSettings:                helmEnvSettings,
-		RegistryClient:                 registryClient,
 		BuildChartDependenciesOpts:     opts.BuildChartDependenciesOpts,
 		ChartExtenderServiceValuesData: helpers.NewChartExtenderServiceValuesData(),
 		DisableDefaultValues:           opts.DisableDefaultValues,
 	}
 
-	extraAnnotationsAndLabelsPostRenderer := helm.NewExtraAnnotationsAndLabelsPostRenderer(nil, nil, opts.IgnoreInvalidAnnotationsAndLabels)
-
 	if dataMap, err := readBundleJsonMap(filepath.Join(bundle.Dir, "extra_annotations.json")); err != nil {
 		return nil, err
 	} else {
-		extraAnnotationsAndLabelsPostRenderer.Add(dataMap, nil)
+		bundle.AddExtraAnnotations(dataMap)
 	}
 
 	if dataMap, err := readBundleJsonMap(filepath.Join(bundle.Dir, "extra_labels.json")); err != nil {
 		return nil, err
 	} else {
-		extraAnnotationsAndLabelsPostRenderer.Add(nil, dataMap)
+		bundle.AddExtraLabels(dataMap)
 	}
 
-	extraAnnotationsAndLabelsPostRenderer.Add(opts.ExtraAnnotations, opts.ExtraLabels)
-
-	bundle.ExtraAnnotationsAndLabelsPostRenderer = extraAnnotationsAndLabelsPostRenderer
+	bundle.AddExtraAnnotations(opts.ExtraAnnotations)
+	bundle.AddExtraLabels(opts.ExtraLabels)
 
 	return bundle, nil
 }
@@ -73,73 +60,20 @@ func NewBundle(
  * which could be used during helm install/upgrade process
  */
 type Bundle struct {
-	Dir                                   string
-	SecretValueFiles                      []string
-	HelmChart                             *chart.Chart
-	HelmEnvSettings                       *cli.EnvSettings
-	RegistryClient                        *registry.Client
-	BuildChartDependenciesOpts            chart.BuildChartDependenciesOptions
-	DisableDefaultValues                  bool
-	ExtraAnnotationsAndLabelsPostRenderer *helm.ExtraAnnotationsAndLabelsPostRenderer
+	Dir                        string
+	SecretValueFiles           []string
+	HelmChart                  *chart.Chart
+	BuildChartDependenciesOpts chart.BuildChartDependenciesOptions
+	DisableDefaultValues       bool
+
+	extraAnnotations map[string]string
+	extraLabels      map[string]string
 
 	*helpers.ChartExtenderServiceValuesData
 }
 
-func (bundle *Bundle) ChainPostRenderer(postRenderer postrender.PostRenderer) postrender.PostRenderer {
-	var chain []postrender.PostRenderer
-
-	if postRenderer != nil {
-		chain = append(chain, postRenderer)
-	}
-
-	chain = append(chain, bundle.ExtraAnnotationsAndLabelsPostRenderer)
-
-	return helm.NewPostRendererChain(chain...)
-}
-
-// ChartCreated method for the chart.Extender interface
-func (bundle *Bundle) ChartCreated(c *chart.Chart) error {
+func (bundle *Bundle) SetHelmChart(c *chart.Chart) {
 	bundle.HelmChart = c
-	return nil
-}
-
-// ChartLoaded method for the chart.Extender interface
-func (bundle *Bundle) ChartLoaded(files []*file.ChartExtenderBufferedFile) error {
-	if bundle.DisableDefaultValues {
-		logboek.Context(context.Background()).Info().LogF("Disable default werf chart values\n")
-		bundle.HelmChart.Values = nil
-	}
-
-	return nil
-}
-
-// ChartDependenciesLoaded method for the chart.Extender interface
-func (bundle *Bundle) ChartDependenciesLoaded() error {
-	return nil
-}
-
-// MakeValues method for the chart.Extender interface
-func (bundle *Bundle) MakeValues(inputVals map[string]interface{}) (map[string]interface{}, error) {
-	return inputVals, nil
-}
-
-// SetupTemplateFuncs method for the chart.Extender interface
-func (bundle *Bundle) SetupTemplateFuncs(t *template.Template, funcMap template.FuncMap) {
-}
-
-// LoadDir method for the chart.Extender interface
-func (bundle *Bundle) LoadDir(dir string) (bool, []*file.ChartExtenderBufferedFile, error) {
-	return false, nil, nil
-}
-
-// LocateChart method for the chart.Extender interface
-func (bundle *Bundle) LocateChart(name string, settings *cli.EnvSettings) (bool, string, error) {
-	return false, "", nil
-}
-
-// ReadFile method for the chart.Extender interface
-func (bundle *Bundle) ReadFile(filePath string) (bool, []byte, error) {
-	return false, nil, nil
 }
 
 func (bundle *Bundle) Type() string {
@@ -148,6 +82,10 @@ func (bundle *Bundle) Type() string {
 
 func (bundle *Bundle) GetChartFileReader() file.ChartFileReader {
 	panic("not implemented")
+}
+
+func (bundle *Bundle) GetDisableDefaultValues() bool {
+	return bundle.DisableDefaultValues
 }
 
 func (bundle *Bundle) GetDisableDefaultSecretValues() bool {
@@ -172,6 +110,34 @@ func (bundle *Bundle) SetChartDir(dir string) {
 
 func (bundle *Bundle) GetBuildChartDependenciesOpts() chart.BuildChartDependenciesOptions {
 	return bundle.BuildChartDependenciesOpts
+}
+
+func (bundle *Bundle) AddExtraAnnotations(annotations map[string]string) {
+	if bundle.extraAnnotations == nil {
+		bundle.extraAnnotations = make(map[string]string)
+	}
+
+	for k, v := range annotations {
+		bundle.extraAnnotations[k] = v
+	}
+}
+
+func (bundle *Bundle) AddExtraLabels(labels map[string]string) {
+	if bundle.extraLabels == nil {
+		bundle.extraLabels = make(map[string]string)
+	}
+
+	for k, v := range labels {
+		bundle.extraLabels[k] = v
+	}
+}
+
+func (bundle *Bundle) GetExtraAnnotations() map[string]string {
+	return bundle.extraAnnotations
+}
+
+func (bundle *Bundle) GetExtraLabels() map[string]string {
+	return bundle.extraLabels
 }
 
 func writeBundleJsonMap(dataMap map[string]string, path string) error {

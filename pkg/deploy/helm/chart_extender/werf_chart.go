@@ -8,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"text/template"
 
 	"github.com/mitchellh/copystructure"
 	"sigs.k8s.io/yaml"
@@ -20,18 +19,13 @@ import (
 	"github.com/werf/3p-helm/pkg/cli"
 	"github.com/werf/3p-helm/pkg/cli/values"
 	"github.com/werf/3p-helm/pkg/getter"
-	"github.com/werf/3p-helm/pkg/postrender"
 	"github.com/werf/3p-helm/pkg/registry"
-	"github.com/werf/3p-helm/pkg/werf/chartextender"
 	"github.com/werf/3p-helm/pkg/werf/file"
 	secrets2 "github.com/werf/3p-helm/pkg/werf/secrets"
 	"github.com/werf/3p-helm/pkg/werf/secrets/runtimedata"
 	"github.com/werf/common-go/pkg/secrets_manager"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/cmd/werf/common"
-	"github.com/werf/werf/v2/pkg/config"
-	"github.com/werf/werf/v2/pkg/deploy/helm"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
 )
 
@@ -65,8 +59,6 @@ func NewWerfChart(
 
 		ChartFileReader: chartFileReader,
 
-		extraAnnotationsAndLabelsPostRenderer: helm.NewExtraAnnotationsAndLabelsPostRenderer(nil, nil, opts.IgnoreInvalidAnnotationsAndLabels),
-
 		ChartExtenderServiceValuesData: helpers.NewChartExtenderServiceValuesData(),
 
 		DisableDefaultValues:       opts.DisableDefaultValues,
@@ -74,7 +66,8 @@ func NewWerfChart(
 		BuildChartDependenciesOpts: opts.BuildChartDependenciesOpts,
 	}
 
-	wc.extraAnnotationsAndLabelsPostRenderer.Add(opts.ExtraAnnotations, opts.ExtraLabels)
+	wc.AddExtraAnnotations(opts.ExtraAnnotations)
+	wc.AddExtraLabels(opts.ExtraLabels)
 
 	return wc
 }
@@ -93,48 +86,15 @@ type WerfChart struct {
 
 	ChartFileReader file.ChartFileReader
 
-	extraAnnotationsAndLabelsPostRenderer *helm.ExtraAnnotationsAndLabelsPostRenderer
-	werfConfig                            *config.WerfConfig
+	extraAnnotations map[string]string
+	extraLabels      map[string]string
 
 	*helpers.ChartExtenderServiceValuesData
 }
 
-// ChartCreated method for the chart.Extender interface
-func (wc *WerfChart) ChartCreated(c *chart.Chart) error {
+// SetHelmChart method for the chart.Extender interface
+func (wc *WerfChart) SetHelmChart(c *chart.Chart) {
 	wc.HelmChart = c
-	return nil
-}
-
-// ChartLoaded method for the chart.Extender interface
-func (wc *WerfChart) ChartLoaded(files []*file.ChartExtenderBufferedFile) error {
-	var opts chartextender.GetHelmChartMetadataOptions
-	if wc.werfConfig != nil {
-		opts.DefaultName = wc.werfConfig.Meta.Project
-		opts.OverrideAppVersion = common.GetHelmChartConfigAppVersion(wc.werfConfig)
-	}
-	opts.DefaultVersion = "1.0.0"
-	wc.HelmChart.Metadata = chartextender.AutosetChartMetadata(wc.HelmChart.Metadata, opts)
-
-	wc.HelmChart.Templates = append(wc.HelmChart.Templates, &chart.File{
-		Name: "templates/_werf_helpers.tpl",
-	})
-
-	if wc.DisableDefaultValues {
-		logboek.Context(context.Background()).Info().LogF("Disable default werf chart values\n")
-		wc.HelmChart.Values = nil
-	}
-
-	return nil
-}
-
-// ChartDependenciesLoaded method for the chart.Extender interface
-func (wc *WerfChart) ChartDependenciesLoaded() error {
-	return nil
-}
-
-// MakeValues method for the chart.Extender interface
-func (wc *WerfChart) MakeValues(inputVals map[string]interface{}) (map[string]interface{}, error) {
-	return inputVals, nil
 }
 
 func (wc *WerfChart) MakeBundleValues(
@@ -143,7 +103,7 @@ func (wc *WerfChart) MakeBundleValues(
 ) (map[string]interface{}, error) {
 	chartutil.DebugPrintValues(context.Background(), "input", inputVals)
 
-	vals, err := chartutil.MergeInternal(context.Background(), inputVals, wc.ServiceValues, nil)
+	vals, err := chartutil.MergeInternal(context.Background(), inputVals, wc.GetServiceValues(), nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to coalesce werf chart values: %w", err)
 	}
@@ -176,55 +136,32 @@ func (wc *WerfChart) MakeBundleSecretValues(
 	return secretsRuntimeData.GetEncodedSecretValues(ctx, secrets_manager.DefaultManager, wc.ProjectDir)
 }
 
-// SetupTemplateFuncs method for the chart.Extender interface
-func (wc *WerfChart) SetupTemplateFuncs(t *template.Template, funcMap template.FuncMap) {
-}
-
-// LoadDir method for the chart.Extender interface
-func (wc *WerfChart) LoadDir(dir string) (bool, []*file.ChartExtenderBufferedFile, error) {
-	return false, nil, nil
-}
-
-// LocateChart method for the chart.Extender interface
-func (wc *WerfChart) LocateChart(name string, settings *cli.EnvSettings) (bool, string, error) {
-	res, err := wc.ChartFileReader.LocateChart(context.Background(), name)
-	return true, res, err
-}
-
-// ReadFile method for the chart.Extender interface
-func (wc *WerfChart) ReadFile(filePath string) (bool, []byte, error) {
-	res, err := wc.ChartFileReader.ReadChartFile(context.Background(), filePath)
-	return true, res, err
-}
-
-func (wc *WerfChart) ChainPostRenderer(postRenderer postrender.PostRenderer) postrender.PostRenderer {
-	var chain []postrender.PostRenderer
-
-	if postRenderer != nil {
-		chain = append(chain, postRenderer)
+func (wc *WerfChart) AddExtraAnnotations(annotations map[string]string) {
+	if wc.extraAnnotations == nil {
+		wc.extraAnnotations = make(map[string]string)
 	}
 
-	chain = append(chain, wc.extraAnnotationsAndLabelsPostRenderer)
-
-	return helm.NewPostRendererChain(chain...)
+	for k, v := range annotations {
+		wc.extraAnnotations[k] = v
+	}
 }
 
-func (wc *WerfChart) SetWerfConfig(werfConfig *config.WerfConfig) error {
-	wc.extraAnnotationsAndLabelsPostRenderer.Add(map[string]string{
-		"project.werf.io/name": werfConfig.Meta.Project,
-	}, nil)
+func (wc *WerfChart) AddExtraLabels(labels map[string]string) {
+	if wc.extraLabels == nil {
+		wc.extraLabels = make(map[string]string)
+	}
 
-	wc.werfConfig = werfConfig
-
-	return nil
+	for k, v := range labels {
+		wc.extraLabels[k] = v
+	}
 }
 
-func (wc *WerfChart) SetEnv(env string) error {
-	wc.extraAnnotationsAndLabelsPostRenderer.Add(map[string]string{
-		"project.werf.io/env": env,
-	}, nil)
+func (wc *WerfChart) GetExtraAnnotations() map[string]string {
+	return wc.extraAnnotations
+}
 
-	return nil
+func (wc *WerfChart) GetExtraLabels() map[string]string {
+	return wc.extraLabels
 }
 
 /*
@@ -393,22 +330,21 @@ WritingFiles:
 		}
 	}
 
-	if wc.extraAnnotationsAndLabelsPostRenderer.ExtraAnnotations != nil {
-		if err := writeBundleJsonMap(wc.extraAnnotationsAndLabelsPostRenderer.ExtraAnnotations, filepath.Join(destDir, "extra_annotations.json")); err != nil {
+	if len(wc.extraAnnotations) > 0 {
+		if err := writeBundleJsonMap(wc.extraAnnotations, filepath.Join(destDir, "extra_annotations.json")); err != nil {
 			return nil, err
 		}
 	}
 
-	if wc.extraAnnotationsAndLabelsPostRenderer.ExtraLabels != nil {
-		if err := writeBundleJsonMap(wc.extraAnnotationsAndLabelsPostRenderer.ExtraLabels, filepath.Join(destDir, "extra_labels.json")); err != nil {
+	if len(wc.extraLabels) > 0 {
+		if err := writeBundleJsonMap(wc.extraLabels, filepath.Join(destDir, "extra_labels.json")); err != nil {
 			return nil, err
 		}
 	}
 
-	return NewBundle(ctx, destDir, wc.HelmEnvSettings, wc.RegistryClient, BundleOptions{
-		BuildChartDependenciesOpts:        wc.BuildChartDependenciesOpts,
-		IgnoreInvalidAnnotationsAndLabels: wc.extraAnnotationsAndLabelsPostRenderer.IgnoreInvalidAnnotationsAndLabels,
-		DisableDefaultValues:              wc.DisableDefaultValues,
+	return NewBundle(ctx, destDir, BundleOptions{
+		BuildChartDependenciesOpts: wc.BuildChartDependenciesOpts,
+		DisableDefaultValues:       wc.DisableDefaultValues,
 	})
 }
 
@@ -418,6 +354,10 @@ func (wc *WerfChart) Type() string {
 
 func (wc *WerfChart) GetChartFileReader() file.ChartFileReader {
 	return wc.ChartFileReader
+}
+
+func (wc *WerfChart) GetDisableDefaultValues() bool {
+	return wc.DisableDefaultValues
 }
 
 func (wc *WerfChart) GetDisableDefaultSecretValues() bool {

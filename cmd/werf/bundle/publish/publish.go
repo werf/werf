@@ -15,6 +15,7 @@ import (
 	"github.com/werf/3p-helm/pkg/chart/loader"
 	"github.com/werf/3p-helm/pkg/chartutil"
 	"github.com/werf/3p-helm/pkg/cli/values"
+	"github.com/werf/3p-helm/pkg/werf/chartextender"
 	"github.com/werf/3p-helm/pkg/werf/secrets"
 	"github.com/werf/3p-helm/pkg/werf/secrets/runtimedata"
 	"github.com/werf/common-go/pkg/secrets_manager"
@@ -324,12 +325,10 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 		DisableDefaultSecretValues:        *commonCmdData.DisableDefaultSecretValues,
 	})
 
-	if err := wc.SetEnv(*commonCmdData.Environment); err != nil {
-		return err
-	}
-	if err := wc.SetWerfConfig(werfConfig); err != nil {
-		return err
-	}
+	wc.AddExtraAnnotations(map[string]string{
+		"project.werf.io/name": werfConfig.Meta.Project,
+		"project.werf.io/env":  *commonCmdData.Environment,
+	})
 
 	headHash, err := giterminismManager.LocalGitRepo().HeadCommitHash(ctx)
 	if err != nil {
@@ -365,6 +364,10 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 		},
 	}
 	secrets.CoalesceTablesFunc = chartutil.CoalesceTables
+
+	chartextender.DefaultChartAPIVersion = chart.APIVersionV2
+	chartextender.DefaultChartName = werfConfig.Meta.Project
+	chartextender.DefaultChartVersion = "1.0.0"
 
 	sv, err := bundles.BundleTagToChartVersion(ctx, cmdData.Tag, time.Now())
 	if err != nil {

@@ -250,7 +250,7 @@ func runRender(ctx context.Context) error {
 
 	secrets_manager.DefaultManager = secrets_manager.NewSecretsManager(secrets_manager.SecretsManagerOptions{DisableSecretsDecryption: *commonCmdData.IgnoreSecretKey})
 
-	bundle, err := chart_extender.NewBundle(ctx, bundleDir, helm_v3.Settings, helmRegistryClient, chart_extender.BundleOptions{
+	bundle, err := chart_extender.NewBundle(ctx, bundleDir, chart_extender.BundleOptions{
 		SecretValueFiles:                  common.GetSecretValues(&commonCmdData),
 		BuildChartDependenciesOpts:        chart.BuildChartDependenciesOptions{},
 		IgnoreInvalidAnnotationsAndLabels: false,
@@ -289,7 +289,7 @@ func runRender(ctx context.Context) error {
 
 	serviceAnnotations := map[string]string{}
 	extraAnnotations := map[string]string{}
-	for key, value := range bundle.ExtraAnnotationsAndLabelsPostRenderer.ExtraAnnotations {
+	for key, value := range bundle.GetExtraAnnotations() {
 		if strings.HasPrefix(key, "project.werf.io/") ||
 			strings.Contains(key, "ci.werf.io/") ||
 			key == "werf.io/release-channel" {
@@ -304,7 +304,7 @@ func runRender(ctx context.Context) error {
 		serviceAnnotations["project.werf.io/env"] = *commonCmdData.Environment
 	}
 
-	extraLabels := bundle.ExtraAnnotationsAndLabelsPostRenderer.ExtraLabels
+	extraLabels := bundle.GetExtraLabels()
 
 	var clientFactory *kubeclnt.ClientFactory
 	if cmdData.Validate {

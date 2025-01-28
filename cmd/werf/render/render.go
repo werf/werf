@@ -364,10 +364,14 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 	}
 
 	if err := action.Render(ctx, action.RenderOptions{
+		ChartAppVersion:              common.GetHelmChartConfigAppVersion(werfConfig),
 		ChartDirPath:                 chartPath,
 		ChartRepositoryInsecure:      *commonCmdData.InsecureHelmDependencies,
 		ChartRepositorySkipTLSVerify: *commonCmdData.SkipTlsVerifyHelmDependencies,
 		ChartRepositorySkipUpdate:    *commonCmdData.SkipDependenciesRepoRefresh,
+		DefaultChartAPIVersion:       chart.APIVersionV2,
+		DefaultChartName:             werfConfig.Meta.Project,
+		DefaultChartVersion:          "1.0.0",
 		DefaultSecretValuesDisable:   *commonCmdData.DisableDefaultSecretValues,
 		DefaultValuesDisable:         *commonCmdData.DisableDefaultValues,
 		ExtraAnnotations:             extraAnnotations,
@@ -433,13 +437,10 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 				},
 			)
 
-			if err := wc.SetEnv(*commonCmdData.Environment); err != nil {
-				return fmt.Errorf("set werf chart environment: %w", err)
-			}
-
-			if err := wc.SetWerfConfig(werfConfig); err != nil {
-				return fmt.Errorf("set werf chart werf config: %w", err)
-			}
+			wc.AddExtraAnnotations(map[string]string{
+				"project.werf.io/name": werfConfig.Meta.Project,
+				"project.werf.io/env":  *commonCmdData.Environment,
+			})
 
 			headHash, err := giterminismManager.LocalGitRepo().HeadCommitHash(ctx)
 			if err != nil {

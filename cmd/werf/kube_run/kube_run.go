@@ -31,11 +31,11 @@ import (
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/config/deploy_params"
 	"github.com/werf/werf/v2/pkg/container_backend"
-	"github.com/werf/werf/v2/pkg/deploy/helm"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
 	"github.com/werf/werf/v2/pkg/ssh_agent"
 	"github.com/werf/werf/v2/pkg/tmp_manager"
 	"github.com/werf/werf/v2/pkg/true_git"
+	"github.com/werf/werf/v2/pkg/werf"
 	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
 
@@ -311,13 +311,14 @@ func run(ctx context.Context, pod, secret, namespace string, werfConfig *config.
 	if err != nil {
 		return err
 	}
-	userExtraAnnotations = util.MergeMaps(userExtraAnnotations, helm.WerfRuntimeAnnotations)
+	userExtraAnnotations = util.MergeMaps(userExtraAnnotations, map[string]string{
+		"werf.io/version": werf.Version,
+	})
 
 	userExtraLabels, err := common.GetUserExtraLabels(&commonCmdData)
 	if err != nil {
 		return err
 	}
-	userExtraLabels = util.MergeMaps(userExtraLabels, helm.WerfRuntimeLabels)
 
 	projectTmpDir, err := tmp_manager.CreateProjectDir(ctx)
 	if err != nil {
