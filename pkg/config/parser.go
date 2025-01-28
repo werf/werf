@@ -502,7 +502,9 @@ func prepareWerfConfig(giterminismManager giterminism_manager.Interface, rawImag
 		}
 
 		for _, image := range imageList {
-			if !rawImage.isFillStaged {
+			if util.GetBoolEnvironmentDefaultFalse("WERF_FORCE_STAGED_DOCKERFILE") {
+				image.Staged = true
+			} else if !rawImage.isFillStaged {
 				image.Staged = meta.Build.Staged
 			}
 			images = append(images, image)

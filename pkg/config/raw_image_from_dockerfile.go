@@ -3,7 +3,6 @@ package config
 import (
 	"fmt"
 
-	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
 )
 
@@ -140,7 +139,7 @@ func (c *rawImageFromDockerfile) toImageFromDockerfileDirective(giterminismManag
 		image.Dependencies = append(image.Dependencies, dependencyDirective)
 	}
 
-	image.Staged = c.Staged || util.GetBoolEnvironmentDefaultFalse("WERF_FORCE_STAGED_DOCKERFILE")
+	image.Staged = c.Staged
 	image.platform = append([]string{}, c.Platform...)
 	image.raw = c
 
