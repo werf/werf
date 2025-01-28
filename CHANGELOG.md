@@ -1,5 +1,25 @@
 # Changelog
 
+## [2.23.0](https://www.github.com/werf/werf/compare/v2.22.0...v2.23.0) (2025-01-28)
+
+
+### Features
+
+* **build:** add global staged directive ([d99cff3](https://www.github.com/werf/werf/commit/d99cff3d8b04f1b7daccf9bac327b7ef72c6ec87))
+* **build:** fix typo ([1c92d7c](https://www.github.com/werf/werf/commit/1c92d7cc1de698132a856b04e5b64ee00204366e))
+* **build:** retry 429 err for "werf cr login <registry>" ([792493b](https://www.github.com/werf/werf/commit/792493b2681d8f8cef21ff2f9bf5b06661b1d379))
+* **build:** retry 429 err for docker cli push/pull ([ad7b592](https://www.github.com/werf/werf/commit/ad7b592aa8c2f4bcc2f59430f8f286b3d3c90a4c))
+* **cleanup:** keep import source images ([20940ea](https://www.github.com/werf/werf/commit/20940ea5117aea31a565608239b60519d51dfeb6))
+* **release:** add channel version images ([#6565](https://www.github.com/werf/werf/issues/6565)) ([eb28dd2](https://www.github.com/werf/werf/commit/eb28dd2ae88ad2ab8358b05e4a3b491b74af79e5))
+
+
+### Bug Fixes
+
+* **build:** try to fix response body closed error ([a8c261b](https://www.github.com/werf/werf/commit/a8c261b0ff28f4af902289f7d86c023e1088a686))
+* **cleanup:** handle --keep-stages-built-within-last-n-hours=0 properly ([f6f1b9a](https://www.github.com/werf/werf/commit/f6f1b9a0e95ea090e9608074a70878e5a00f9cf5))
+* **deploy:** plan should not require --repo ([ec669e2](https://www.github.com/werf/werf/commit/ec669e2f7440e57830babb6c0df989f9812351a1))
+* **docs:** replace latest with main ([2354d8d](https://www.github.com/werf/werf/commit/2354d8d3a8f2658e12c1d2769201849ec9b095c7))
+
 ## [2.22.0](https://www.github.com/werf/werf/compare/v2.21.0...v2.22.0) (2025-01-22)
 
 
