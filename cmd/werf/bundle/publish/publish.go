@@ -368,6 +368,7 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 	chartextender.DefaultChartAPIVersion = chart.APIVersionV2
 	chartextender.DefaultChartName = werfConfig.Meta.Project
 	chartextender.DefaultChartVersion = "1.0.0"
+	chartextender.ChartAppVersion = common.GetHelmChartConfigAppVersion(werfConfig)
 
 	sv, err := bundles.BundleTagToChartVersion(ctx, cmdData.Tag, time.Now())
 	if err != nil {
