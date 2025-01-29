@@ -461,8 +461,6 @@ func run(
 				giterminismManager.FileReader(),
 				relChartPath,
 				giterminismManager.ProjectDir(),
-				helmSettings,
-				helmRegistryClient,
 				chart_extender.WerfChartOptions{
 					BuildChartDependenciesOpts:        chart.BuildChartDependenciesOptions{},
 					SecretValueFiles:                  secretValuesPaths,

@@ -140,16 +140,6 @@ func (bundle *Bundle) GetExtraLabels() map[string]string {
 	return bundle.extraLabels
 }
 
-func writeBundleJsonMap(dataMap map[string]string, path string) error {
-	if data, err := json.Marshal(dataMap); err != nil {
-		return fmt.Errorf("unable to prepare %q data: %w", path, err)
-	} else if err := ioutil.WriteFile(path, append(data, []byte("\n")...), os.ModePerm); err != nil {
-		return fmt.Errorf("unable to write %q: %w", path, err)
-	} else {
-		return nil
-	}
-}
-
 func readBundleJsonMap(path string) (map[string]string, error) {
 	var res map[string]string
 	if _, err := os.Stat(path); os.IsNotExist(err) {
