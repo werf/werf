@@ -3,11 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/containers/storage/pkg/reexec"
 	"log"
 	"os"
 	"path/filepath"
 
-	"github.com/containers/storage/pkg/reexec"
 	"github.com/containers/storage/pkg/unshare"
 	"github.com/sirupsen/logrus"
 
@@ -20,14 +20,20 @@ const newImage = "ilyalesikov/test:test"
 func init() {
 	logrus.SetLevel(logrus.TraceLevel)
 
-	unshare.MaybeReexecUsingUserNamespace(false)
-}
-
-func main() {
 	if reexec.Init() {
 		return
 	}
 
+	result, err := unshare.HasCapSysAdmin()
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("has_cap_sys_admin=%t", result)
+
+	unshare.MaybeReexecUsingUserNamespace(false)
+}
+
+func main() {
 	if err := werf.Init("", ""); err != nil {
 		log.Fatal(err)
 	}
@@ -85,23 +91,18 @@ func runCommand(b buildah.Buildah) error {
 }
 
 func buildFromDockerfile(b buildah.Buildah) (string, error) {
-	contextFile := filepath.Join(os.Getenv("HOME"), "go", "src", "github.com", "werf", "werf", "playground", "native_buildah", "context.tar")
-	tarFileReader, err := os.OpenFile(contextFile, os.O_RDONLY, 0)
-	if err != nil {
-		return "", err
-	}
-	defer tarFileReader.Close()
-
-	imageId, err := b.BuildFromDockerfile(context.Background(),
-		[]byte(`FROM ubuntu:20.04
+	dockerfileContent := `
+FROM ubuntu:20.04
 RUN apt update
 COPY . /app
-`), buildah.BuildFromDockerfileOpts{
-			ContextTar: tarFileReader,
-			CommonOpts: buildah.CommonOpts{
-				LogWriter: os.Stdout,
-			},
-		})
+`
+
+	imageId, err := b.BuildFromDockerfile(context.Background(), dockerfileContent, buildah.BuildFromDockerfileOpts{
+		ContextDir: filepath.Join(os.Getenv("PWD"), "playground/native_rootless_buildah"),
+		CommonOpts: buildah.CommonOpts{
+			LogWriter: os.Stdout,
+		},
+	})
 	if err != nil {
 		return "", fmt.Errorf("BuildFromDockerfile failed: %w", err)
 	}
