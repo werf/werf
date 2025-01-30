@@ -20,6 +20,7 @@ import (
 	"github.com/werf/3p-helm/pkg/chart/loader"
 	"github.com/werf/3p-helm/pkg/chartutil"
 	"github.com/werf/3p-helm/pkg/cli/values"
+	"github.com/werf/3p-helm/pkg/downloader"
 	"github.com/werf/3p-helm/pkg/getter"
 	"github.com/werf/3p-helm/pkg/werf/chartextender"
 	"github.com/werf/3p-helm/pkg/werf/secrets"
@@ -303,6 +304,11 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 		logboek.LogOptionalLn()
 	}
 
+	helmRegistryClient, err := common.NewHelmRegistryClient(ctx, *commonCmdData.DockerConfig, *commonCmdData.InsecureHelmDependencies)
+	if err != nil {
+		return err
+	}
+
 	bundlesRegistryClient, err := common.NewBundlesRegistryClient(ctx, &commonCmdData)
 	if err != nil {
 		return err
@@ -386,6 +392,19 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 
 	bundleTmpDir := filepath.Join(werf.GetServiceDir(), "tmp", "bundles", uuid.NewString())
 	defer os.RemoveAll(bundleTmpDir)
+
+	downloader := &downloader.Manager{
+		Out:               logboek.Context(ctx).OutStream(),
+		ChartPath:         bundleTmpDir,
+		AllowMissingRepos: true,
+		Getters:           getter.All(helm_v3.Settings),
+		RegistryClient:    helmRegistryClient,
+		RepositoryConfig:  helm_v3.Settings.RepositoryConfig,
+		RepositoryCache:   helm_v3.Settings.RepositoryCache,
+		Debug:             helm_v3.Settings.Debug,
+	}
+	loader.SetChartPathFunc = downloader.SetChartPath
+	loader.DepsBuildFunc = downloader.Build
 
 	bundle, err := createNewBundle(
 		ctx,
