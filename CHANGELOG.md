@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.22.1](https://www.github.com/werf/werf/compare/v2.22.0...v2.22.1) (2025-01-30)
+
+
+### Bug Fixes
+
+* **deploy:** `bundle publish` panics if remote dependencies cache not up to date ([0b3e117](https://www.github.com/werf/werf/commit/0b3e117447d622905954ff071f1045b11380ce26))
+
 ## [2.22.0](https://www.github.com/werf/werf/compare/v2.21.0...v2.22.0) (2025-01-22)
 
 
