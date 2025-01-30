@@ -581,7 +581,7 @@ WritingFiles:
 		case strings.HasPrefix(dep.Repository, "file://"):
 			depPath = strings.TrimPrefix(dep.Repository, "file://")
 		default:
-			continue
+			depPath = fmt.Sprintf("charts/%s-%s.tgz", dep.Name, dep.Version)
 		}
 
 		for _, f := range wc.HelmChart.Raw {
