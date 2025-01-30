@@ -59,20 +59,14 @@ func NewLocalBackendCleaner(backend container_backend.ContainerBackend) (*LocalB
 		cleaner.backendName = "docker"
 		return cleaner, nil
 	case *container_backend.BuildahBackend:
-		return nil, ErrUnsupportedContainerBackend
-		// TODO: add buildah backend support
-		// cleaner.backendName = "buildah"
-		// return cleaner, nil
+		cleaner.backendName = "buildah"
+		return cleaner, nil
 	default:
 		// returns cleaner for testing with mock
 		cleaner.backendName = "unknown"
 		return cleaner, ErrUnsupportedContainerBackend
 	}
 }
-
-// TODO: backend_buildah does not implement img.SharedSize out from the box.
-// But is has ImageDiskUsage https://pkg.go.dev/github.com/containers/common/libimage@v0.58.1#Image.Size
-// via https://pkg.go.dev/github.com/containers/common/libimage@v0.58.1#Runtime.DiskUsage
 
 func (cleaner *LocalBackendCleaner) BackendName() string {
 	return cleaner.backendName
@@ -230,7 +224,7 @@ CreateImagesDescs:
 		data, _ := json.Marshal(imageSummary)
 		logboek.Context(ctx).Debug().LogF("Image summary:\n%s\n---\n", data)
 
-		res.TotalImagesBytes += uint64(imageSummary.Size - imageSummary.SharedSize)
+		res.TotalImagesBytes += uint64(imageSummary.Size - normalizeSharedSize(imageSummary.SharedSize))
 
 		lastUsedAt := imageSummary.Created
 
@@ -374,7 +368,7 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 					}
 
 					if imageRemoved {
-						freedBytes += uint64(desc.ImageSummary.Size - desc.ImageSummary.SharedSize)
+						freedBytes += uint64(desc.ImageSummary.Size - normalizeSharedSize(desc.ImageSummary.SharedSize))
 						freedImagesCount++
 					}
 
@@ -568,4 +562,14 @@ ProcessContainers:
 	}
 
 	return processedContainersIDs, nil
+}
+
+// normalizeSharedSize SharedSize is not calculated by default. `-1` indicates that the value has not been set / calculated.
+//
+// See https://pkg.go.dev/github.com/docker/docker/api/types/image@v25.0.5+incompatible#Summary.SharedSize
+func normalizeSharedSize(size int64) int64 {
+	if size == -1 {
+		return 0
+	}
+	return size
 }
