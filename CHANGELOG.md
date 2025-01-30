@@ -1,5 +1,13 @@
 # Changelog
 
+### [2.23.1](https://www.github.com/werf/werf/compare/v2.23.0...v2.23.1) (2025-01-30)
+
+
+### Bug Fixes
+
+* **deploy:** `bundle publish` panics if remote dependencies cache not up to date ([9ad3e33](https://www.github.com/werf/werf/commit/9ad3e33b101582df10de5249d9caba8f179aff10))
+* **deploy:** deploy.helmChartConfig.appVersion in werf.yaml ignored for bundles ([3f86c11](https://www.github.com/werf/werf/commit/3f86c1144ddc29a9f1360fff40b039de92964090))
+
 ## [2.23.0](https://www.github.com/werf/werf/compare/v2.22.0...v2.23.0) (2025-01-28)
 
 
