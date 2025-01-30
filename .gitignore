@@ -4,6 +4,7 @@
 /.vscode
 /.idea
 /.run
+/.help
 
 /docs/vendor
 /docs/.ruby-version
