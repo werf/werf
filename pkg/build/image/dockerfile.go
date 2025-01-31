@@ -342,7 +342,7 @@ func mapLegacyDockerfileToImage(ctx context.Context, dockerfileImageConfig *conf
 	img.stages = append(img.stages, dockerfileStage)
 
 	if dockerfileImageConfig.ImageSpec != nil {
-		img.stages = append(img.stages, stage.GenerateImageSpecMutateStage(dockerfileImageConfig.ImageSpec, baseStageOptions))
+		img.stages = append(img.stages, stage.GenerateImageSpecStage(dockerfileImageConfig.ImageSpec, baseStageOptions))
 	}
 
 	logboek.Context(ctx).Info().LogFDetails("Using stage %s\n", dockerfileStage.Name())

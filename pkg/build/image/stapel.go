@@ -117,7 +117,7 @@ func initStages(ctx context.Context, image *Image, metaConfig *config.Meta, stap
 	}
 
 	if imageBaseConfig.ImageSpec != nil {
-		stages = appendIfExist(ctx, stages, stage.GenerateImageSpecMutateStage(imageBaseConfig.ImageSpec, baseStageOptions))
+		stages = appendIfExist(ctx, stages, stage.GenerateImageSpecStage(imageBaseConfig.ImageSpec, baseStageOptions))
 	}
 
 	if len(gitMappings) != 0 {

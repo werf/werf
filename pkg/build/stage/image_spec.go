@@ -16,31 +16,31 @@ import (
 
 var ErrImageSpecMutateStageIsNotSupported = fmt.Errorf("error running image spec mutate stage: can't mutate local image. please provide repo with --repo flag or WERF_REPO env variable")
 
-type ImageSpecMutateStage struct {
+type ImageSpecStage struct {
 	*BaseStage
 	imageSpec *config.ImageSpec
 }
 
-func GenerateImageSpecMutateStage(imageSpec *config.ImageSpec, baseStageOptions *BaseStageOptions) *ImageSpecMutateStage {
-	return newImageSpecMutateStage(imageSpec, baseStageOptions)
+func GenerateImageSpecStage(imageSpec *config.ImageSpec, baseStageOptions *BaseStageOptions) *ImageSpecStage {
+	return newImageSpecStage(imageSpec, baseStageOptions)
 }
 
-func newImageSpecMutateStage(imageSpec *config.ImageSpec, baseStageOptions *BaseStageOptions) *ImageSpecMutateStage {
-	s := &ImageSpecMutateStage{}
+func newImageSpecStage(imageSpec *config.ImageSpec, baseStageOptions *BaseStageOptions) *ImageSpecStage {
+	s := &ImageSpecStage{}
 	s.imageSpec = imageSpec
 	s.BaseStage = NewBaseStage(ImageSpec, baseStageOptions)
 	return s
 }
 
-func (s *ImageSpecMutateStage) IsBuildable() bool {
+func (s *ImageSpecStage) IsBuildable() bool {
 	return false
 }
 
-func (s *ImageSpecMutateStage) IsMutable() bool {
+func (s *ImageSpecStage) IsMutable() bool {
 	return true
 }
 
-func (s *ImageSpecMutateStage) PrepareImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) error {
+func (s *ImageSpecStage) PrepareImage(_ context.Context, _ Conveyor, _ container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, _ container_backend.BuildContextArchiver) error {
 	if s.imageSpec != nil {
 		imageInfo := prevBuiltImage.Image.GetStageDesc().Info
 
@@ -86,8 +86,8 @@ func (s *ImageSpecMutateStage) PrepareImage(ctx context.Context, c Conveyor, cb 
 	return nil
 }
 
-func (s *ImageSpecMutateStage) GetDependencies(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
-	args := []string{}
+func (s *ImageSpecStage) GetDependencies(_ context.Context, _ Conveyor, _ container_backend.ContainerBackend, _, _ *StageImage, _ container_backend.BuildContextArchiver) (string, error) {
+	var args []string
 
 	args = append(args, s.imageSpec.Author)
 	args = append(args, fmt.Sprint(s.imageSpec.ClearHistory))
