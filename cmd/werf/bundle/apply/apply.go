@@ -95,6 +95,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupSecretValues(&commonCmdData, cmd, false)
 	common.SetupIgnoreSecretKey(&commonCmdData, cmd)
 
+	commonCmdData.SetupDisableDefaultValues(cmd)
+	commonCmdData.SetupDisableDefaultSecretValues(cmd)
 	commonCmdData.SetupSkipDependenciesRepoRefresh(cmd)
 
 	common.SetupSaveDeployReport(&commonCmdData, cmd)
@@ -230,6 +232,8 @@ func runApply(ctx context.Context) error {
 		ChartRepositoryInsecure:      *commonCmdData.InsecureHelmDependencies,
 		ChartRepositorySkipTLSVerify: *commonCmdData.SkipTlsVerifyHelmDependencies,
 		ChartRepositorySkipUpdate:    *commonCmdData.SkipDependenciesRepoRefresh,
+		DefaultSecretValuesDisable:   *commonCmdData.DisableDefaultSecretValues,
+		DefaultValuesDisable:         *commonCmdData.DisableDefaultValues,
 		DeployGraphPath:              common.GetDeployGraphPath(&commonCmdData),
 		DeployGraphSave:              common.GetDeployGraphPath(&commonCmdData) != "",
 		DeployReportPath:             deployReportPath,
