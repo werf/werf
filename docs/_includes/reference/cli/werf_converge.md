@@ -59,15 +59,15 @@ werf converge --repo registry.mydomain.com/web --env production
             Format: labelName=labelValue.
             Also, can be specified with $WERF_ADD_LABEL_* (e.g.                                     
             $WERF_ADD_LABEL_1=labelName1=labelValue1, $WERF_ADD_LABEL_2=labelName2=labelValue2)
-      --allowed-docker-storage-volume-usage=70
-            Set allowed percentage of docker storage volume usage which will cause cleanup of least 
-            recently used local docker images (default 70% or                                       
-            $WERF_ALLOWED_DOCKER_STORAGE_VOLUME_USAGE)
-      --allowed-docker-storage-volume-usage-margin=5
-            During cleanup of least recently used local docker images werf would delete images      
-            until volume usage becomes below "allowed-docker-storage-volume-usage -                 
-            allowed-docker-storage-volume-usage-margin" level (default 5% or                        
-            $WERF_ALLOWED_DOCKER_STORAGE_VOLUME_USAGE_MARGIN)
+      --allowed-backend-storage-volume-usage=70
+            Set allowed percentage of backend (Docker or Buildah) storage volume usage which will   
+            cause cleanup of least recently used local backend images (default 70% or               
+            $WERF_ALLOWED_BACKEND_STORAGE_VOLUME_USAGE)
+      --allowed-backend-storage-volume-usage-margin=5
+            During cleanup of least recently used local backend (Docker or Buildah) images werf     
+            would delete images until volume usage becomes below                                    
+            "allowed-backend-storage-volume-usage - allowed-backend-storage-volume-usage-margin"    
+            level (default 5% or $WERF_ALLOWED_BACKEND_STORAGE_VOLUME_USAGE_MARGIN)
       --allowed-local-cache-volume-usage=70
             Set allowed percentage of local cache (~/.werf/local_cache by default) volume usage     
             which will cause cleanup of least recently used data from the local cache (default 70%  
@@ -83,6 +83,10 @@ werf converge --repo registry.mydomain.com/web --env production
   -R, --auto-rollback=false
             Enable auto rollback of the failed release to the previous deployed release version     
             when current deploy process have failed ($WERF_AUTO_ROLLBACK by default)
+      --backend-storage-path=''
+            Use specified path to the local backend (Docker or Buildah) storage to check backend    
+            storage volume usage while performing garbage collection of local backend images        
+            (detect local backend storage path by default or use $WERF_BACKEND_STORAGE_PATH)
       --build-report-path=''
             Change build report path and format (by default $WERF_BUILD_REPORT_PATH or              
             ".werf-build-report.json" if not set). Extension must be either .json for JSON format   
@@ -137,10 +141,6 @@ werf converge --repo registry.mydomain.com/web --env production
             ~/.docker (in the order of priority)
             Command needs granted permissions to read, pull and push images into the specified      
             repo, to pull base images
-      --docker-server-storage-path=''
-            Use specified path to the local docker server storage to check docker storage volume    
-            usage while performing garbage collection of local docker images (detect local docker   
-            server storage path by default or use $WERF_DOCKER_SERVER_STORAGE_PATH)
       --env=''
             Use specified environment (default $WERF_ENV)
       --final-repo=''
