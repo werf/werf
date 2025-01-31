@@ -21,7 +21,7 @@ The `--allowed-docker-storage-volume-usage-margin` (`WERF_ALLOWED_DOCKER_STORAGE
 
 The `--allowed-local-cache-volume-usage` (`WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE`) parameter allows you to adjust the threshold of space used on the volume at which the local cache cleanup is triggered (the default is 70%).
 
-The `--allowed-docker-storage-volume-usage-margin` (`WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE_MARGIN`) parameter allows to set the cleanup margin relative to the local cache usage threshold (the default is 5%).
+The `--allowed-local-storage-volume-usage-margin` (`WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE_MARGIN`) parameter allows to set the cleanup margin relative to the local cache usage threshold (the default is 5%).
 
 ## Turning off automatic cleaning
 

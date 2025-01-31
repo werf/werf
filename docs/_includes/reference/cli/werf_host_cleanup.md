@@ -37,9 +37,9 @@ werf host cleanup [options]
             which will cause cleanup of least recently used data from the local cache (default 70%  
             or $WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE)
       --allowed-local-cache-volume-usage-margin=5
-            During cleanup of least recently used local docker images werf would delete images      
-            until volume usage becomes below "allowed-docker-storage-volume-usage -                 
-            allowed-docker-storage-volume-usage-margin" level (default 5% or                        
+            During cleanup of local cache werf would delete local cache data until volume usage     
+            becomes below "allowed-local-cache-volume-usage -                                       
+            allowed-local-cache-volume-usage-margin" level (default 5% or                           
             $WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE_MARGIN)
       --container-registry-mirror=[]
             (Buildah-only) Use specified mirrors for docker.io
