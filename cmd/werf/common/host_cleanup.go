@@ -113,5 +113,5 @@ func SetupAllowedLocalCacheVolumeUsageMargin(cmdData *CmdData, cmd *cobra.Comman
 	}
 
 	cmdData.AllowedLocalCacheVolumeUsageMargin = new(uint)
-	cmd.Flags().UintVarP(cmdData.AllowedLocalCacheVolumeUsageMargin, "allowed-local-cache-volume-usage-margin", "", defaultVal, fmt.Sprintf("During cleanup of least recently used local docker images werf would delete images until volume usage becomes below \"allowed-docker-storage-volume-usage - allowed-docker-storage-volume-usage-margin\" level (default %d%% or $%s)", uint(host_cleaning.DefaultAllowedLocalCacheVolumeUsageMarginPercentage), envVarName))
+	cmd.Flags().UintVarP(cmdData.AllowedLocalCacheVolumeUsageMargin, "allowed-local-cache-volume-usage-margin", "", defaultVal, fmt.Sprintf("During cleanup of local cache werf would delete local cache data until volume usage becomes below \"allowed-local-cache-volume-usage - allowed-local-cache-volume-usage-margin\" level (default %d%% or $%s)", uint(host_cleaning.DefaultAllowedLocalCacheVolumeUsageMarginPercentage), envVarName))
 }
