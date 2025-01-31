@@ -169,12 +169,12 @@ func modifyEnv(env, removeKeys []string, addMap map[string]string) []string {
 		}
 	}
 
-	for key, value := range addMap {
-		envMap[key] = value
-	}
-
 	for _, key := range removeKeys {
 		delete(envMap, key)
+	}
+
+	for key, value := range addMap {
+		envMap[key] = value
 	}
 
 	result := make([]string, 0, len(envMap))
