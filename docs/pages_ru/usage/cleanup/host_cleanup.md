@@ -7,15 +7,15 @@ permalink: usage/cleanup/host_cleanup.html
 
 Очистка хоста удаляет неактуальных данные и сокращает размер кеша **автоматически** в рамках вызова основных команд werf и сразу **для всех проектов**. При необходимости очистку можно выполнять в ручном режиме с помощью команды [**werf host cleanup**]({{ "reference/cli/werf_host_cleanup.html" | true_relative_url }}).
 
-## Переопределение директории хранилища Docker
+## Переопределение директории хранилища Backend (Docker or Buildah)
 
-Параметр `--docker-server-storage-path` (или переменная окружения `WERF_DOCKER_SERVER_STORAGE_PATH`) позволяет явно задать директорию хранилища Docker в случае, если werf не может правильно определить её автоматически.
+Параметр `--backend-storage-path` (или переменная окружения `WERF_BACKEND_STORAGE_PATH`) позволяет явно задать директорию хранилища backend в случае, если werf не может правильно определить её автоматически.
 
-## Изменение порога занимаемого места и глубины очистки хранилища Docker
+## Изменение порога занимаемого места и глубины очистки хранилища backend (Docker or Buildah)
 
-Параметр `--allowed-docker-storage-volume-usage` (`WERF_ALLOWED_DOCKER_STORAGE_VOLUME_USAGE`) позволяет изменить порог занимаемого места на томе, при достижении которого выполняется очистка хранилища Docker (по умолчанию 70%).
+Параметр `--allowed-backend-storage-volume-usage` (`WERF_ALLOWED_BACKEND_STORAGE_VOLUME_USAGE`) позволяет изменить порог занимаемого места на томе, при достижении которого выполняется очистка хранилища backend (по умолчанию 70%).
 
-Параметр `--allowed-docker-storage-volume-usage-margin` (`WERF_ALLOWED_DOCKER_STORAGE_VOLUME_USAGE_MARGIN`) позволяет установить глубину очистки относительно установленного порога занимаемого места хранилища Docker (по умолчанию 5%).
+Параметр `--allowed-backend-storage-volume-usage-margin` (`WERF_ALLOWED_BACKEND_STORAGE_VOLUME_USAGE_MARGIN`) позволяет установить глубину очистки относительно установленного порога занимаемого места хранилища backend (по умолчанию 5%).
 
 ## Изменение порога занимаемого места и глубины очистки локального кэша
 

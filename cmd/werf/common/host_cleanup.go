@@ -10,6 +10,7 @@ import (
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/host_cleaning"
+	"github.com/werf/werf/v2/pkg/util/option"
 )
 
 func RunAutoHostCleanup(ctx context.Context, cmdData *CmdData, containerBackend container_backend.ContainerBackend) error {
@@ -17,8 +18,8 @@ func RunAutoHostCleanup(ctx context.Context, cmdData *CmdData, containerBackend 
 		return nil
 	}
 
-	if *cmdData.AllowedDockerStorageVolumeUsageMargin >= *cmdData.AllowedDockerStorageVolumeUsage {
-		return fmt.Errorf("incompatible params --allowed-docker-storage-volume-usage=%d and --allowed-docker-storage-volume-usage-margin=%d: margin percentage should be less than allowed volume usage level percentage", *cmdData.AllowedDockerStorageVolumeUsage, *cmdData.AllowedDockerStorageVolumeUsageMargin)
+	if *cmdData.AllowedBackendStorageVolumeUsageMargin >= *cmdData.AllowedBackendStorageVolumeUsage {
+		return fmt.Errorf("incompatible params --allowed-backend-storage-volume-usage=%d and --allowed-backend-storage-volume-usage-margin=%d: margin percentage should be less than allowed volume usage level percentage", *cmdData.AllowedBackendStorageVolumeUsage, *cmdData.AllowedBackendStorageVolumeUsageMargin)
 	}
 
 	if *cmdData.AllowedLocalCacheVolumeUsageMargin >= *cmdData.AllowedLocalCacheVolumeUsage {
@@ -29,11 +30,11 @@ func RunAutoHostCleanup(ctx context.Context, cmdData *CmdData, containerBackend 
 		HostCleanupOptions: host_cleaning.HostCleanupOptions{
 			DryRun: false,
 			Force:  false,
-			AllowedDockerStorageVolumeUsagePercentage:       cmdData.AllowedDockerStorageVolumeUsage,
-			AllowedDockerStorageVolumeUsageMarginPercentage: cmdData.AllowedDockerStorageVolumeUsageMargin,
-			AllowedLocalCacheVolumeUsagePercentage:          cmdData.AllowedLocalCacheVolumeUsage,
-			AllowedLocalCacheVolumeUsageMarginPercentage:    cmdData.AllowedLocalCacheVolumeUsageMargin,
-			DockerServerStoragePath:                         cmdData.DockerServerStoragePath,
+			AllowedBackendStorageVolumeUsagePercentage:       cmdData.AllowedBackendStorageVolumeUsage,
+			AllowedBackendStorageVolumeUsageMarginPercentage: cmdData.AllowedBackendStorageVolumeUsageMargin,
+			AllowedLocalCacheVolumeUsagePercentage:           cmdData.AllowedLocalCacheVolumeUsage,
+			AllowedLocalCacheVolumeUsageMarginPercentage:     cmdData.AllowedLocalCacheVolumeUsageMargin,
+			BackendStoragePath:                               cmdData.BackendStoragePath,
 		},
 	})
 }
@@ -43,43 +44,108 @@ func SetupDisableAutoHostCleanup(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(cmdData.DisableAutoHostCleanup, "disable-auto-host-cleanup", "", util.GetBoolEnvironmentDefaultFalse("WERF_DISABLE_AUTO_HOST_CLEANUP"), "Disable auto host cleanup procedure in main werf commands like werf-build, werf-converge and other (default disabled or WERF_DISABLE_AUTO_HOST_CLEANUP)")
 }
 
-func SetupAllowedDockerStorageVolumeUsage(cmdData *CmdData, cmd *cobra.Command) {
-	envVarName := "WERF_ALLOWED_DOCKER_STORAGE_VOLUME_USAGE"
-
-	var defaultVal uint
-	if v := GetUint64EnvVarStrict(envVarName); v != nil {
-		defaultVal = uint(*v)
-	} else {
-		defaultVal = uint(host_cleaning.DefaultAllowedDockerStorageVolumeUsagePercentage)
+func SetupAllowedBackendStorageVolumeUsage(cmdData *CmdData, cmd *cobra.Command) {
+	aliases := []struct {
+		ParamName string
+		EnvName   string
+	}{
+		{"allowed-backend-storage-volume-usage", "WERF_ALLOWED_BACKEND_STORAGE_VOLUME_USAGE"},
+		{"allowed-docker-storage-volume-usage", "WERF_ALLOWED_DOCKER_STORAGE_VOLUME_USAGE"},
 	}
+
+	defaultValUint64 := option.PtrValueOrDefault(GetUint64EnvVarStrict(aliases[0].EnvName),
+		// keep backward compatibility
+		option.PtrValueOrDefault(GetUint64EnvVarStrict(aliases[1].EnvName),
+			uint64(host_cleaning.DefaultAllowedBackendStorageVolumeUsagePercentage)))
+
+	defaultVal := uint(defaultValUint64)
+
 	if defaultVal > 100 {
-		TerminateWithError(fmt.Sprintf("bad %s value: specify percentage between 0 and 100", envVarName), 1)
+		TerminateWithError(fmt.Sprintf("bad %s value: specify percentage between 0 and 100", aliases[0].EnvName), 1)
 	}
 
-	cmdData.AllowedDockerStorageVolumeUsage = new(uint)
-	cmd.Flags().UintVarP(cmdData.AllowedDockerStorageVolumeUsage, "allowed-docker-storage-volume-usage", "", defaultVal, fmt.Sprintf("Set allowed percentage of docker storage volume usage which will cause cleanup of least recently used local docker images (default %d%% or $%s)", uint(host_cleaning.DefaultAllowedDockerStorageVolumeUsagePercentage), envVarName))
+	cmdData.AllowedBackendStorageVolumeUsage = new(uint)
+
+	for _, alias := range aliases {
+		cmd.Flags().UintVarP(
+			cmdData.AllowedBackendStorageVolumeUsage,
+			alias.ParamName,
+			"",
+			defaultVal,
+			fmt.Sprintf("Set allowed percentage of backend (Docker or Buildah) storage volume usage which will cause cleanup of least recently used local backend images (default %d%% or $%s)", uint(host_cleaning.DefaultAllowedBackendStorageVolumeUsagePercentage), alias.EnvName),
+		)
+	}
+
+	if err := cmd.Flags().MarkHidden(aliases[1].ParamName); err != nil {
+		panic(err)
+	}
 }
 
-func SetupAllowedDockerStorageVolumeUsageMargin(cmdData *CmdData, cmd *cobra.Command) {
-	envVarName := "WERF_ALLOWED_DOCKER_STORAGE_VOLUME_USAGE_MARGIN"
-
-	var defaultVal uint
-	if v := GetUint64EnvVarStrict(envVarName); v != nil {
-		defaultVal = uint(*v)
-	} else {
-		defaultVal = uint(host_cleaning.DefaultAllowedDockerStorageVolumeUsageMarginPercentage)
+func SetupAllowedBackendStorageVolumeUsageMargin(cmdData *CmdData, cmd *cobra.Command) {
+	aliases := []struct {
+		ParamName string
+		EnvName   string
+	}{
+		{"allowed-backend-storage-volume-usage-margin", "WERF_ALLOWED_BACKEND_STORAGE_VOLUME_USAGE_MARGIN"},
+		{"allowed-docker-storage-volume-usage-margin", "WERF_ALLOWED_DOCKER_STORAGE_VOLUME_USAGE_MARGIN"},
 	}
+
+	defaultValUint64 := option.PtrValueOrDefault(GetUint64EnvVarStrict(aliases[0].EnvName),
+		// keep backward compatibility
+		option.PtrValueOrDefault(GetUint64EnvVarStrict(aliases[1].EnvName),
+			uint64(host_cleaning.DefaultAllowedBackendStorageVolumeUsageMarginPercentage)))
+
+	defaultVal := uint(defaultValUint64)
+
 	if defaultVal > 100 {
-		TerminateWithError(fmt.Sprintf("bad %s value: specify percentage between 0 and 100", envVarName), 1)
+		TerminateWithError(fmt.Sprintf("bad %s value: specify percentage between 0 and 100", aliases[0].EnvName), 1)
 	}
 
-	cmdData.AllowedDockerStorageVolumeUsageMargin = new(uint)
-	cmd.Flags().UintVarP(cmdData.AllowedDockerStorageVolumeUsageMargin, "allowed-docker-storage-volume-usage-margin", "", defaultVal, fmt.Sprintf("During cleanup of least recently used local docker images werf would delete images until volume usage becomes below \"allowed-docker-storage-volume-usage - allowed-docker-storage-volume-usage-margin\" level (default %d%% or $%s)", uint(host_cleaning.DefaultAllowedDockerStorageVolumeUsageMarginPercentage), envVarName))
+	cmdData.AllowedBackendStorageVolumeUsageMargin = new(uint)
+
+	for _, alias := range aliases {
+		cmd.Flags().UintVarP(
+			cmdData.AllowedBackendStorageVolumeUsageMargin,
+			alias.ParamName,
+			"",
+			defaultVal,
+			fmt.Sprintf("During cleanup of least recently used local backend (Docker or Buildah) images werf would delete images until volume usage becomes below \"allowed-backend-storage-volume-usage - allowed-backend-storage-volume-usage-margin\" level (default %d%% or $%s)", uint(host_cleaning.DefaultAllowedBackendStorageVolumeUsageMarginPercentage), alias.EnvName),
+		)
+	}
+
+	if err := cmd.Flags().MarkHidden(aliases[1].ParamName); err != nil {
+		panic(err)
+	}
 }
 
-func SetupDockerServerStoragePath(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.DockerServerStoragePath = new(string)
-	cmd.Flags().StringVarP(cmdData.DockerServerStoragePath, "docker-server-storage-path", "", os.Getenv("WERF_DOCKER_SERVER_STORAGE_PATH"), "Use specified path to the local docker server storage to check docker storage volume usage while performing garbage collection of local docker images (detect local docker server storage path by default or use $WERF_DOCKER_SERVER_STORAGE_PATH)")
+func SetupBackendStoragePath(cmdData *CmdData, cmd *cobra.Command) {
+	aliases := []struct {
+		ParamName string
+		EnvName   string
+	}{
+		{"backend-storage-path", "WERF_BACKEND_STORAGE_PATH"},
+		{"docker-server-storage-path", "WERF_DOCKER_SERVER_STORAGE_PATH"},
+	}
+
+	defaultVal := option.ValueOrDefault(os.Getenv(aliases[0].EnvName),
+		// keep backward compatibility
+		os.Getenv(aliases[1].EnvName))
+
+	cmdData.BackendStoragePath = new(string)
+
+	for _, alias := range aliases {
+		cmd.Flags().StringVarP(
+			cmdData.BackendStoragePath,
+			alias.ParamName,
+			"",
+			defaultVal,
+			fmt.Sprintf("Use specified path to the local backend (Docker or Buildah) storage to check backend storage volume usage while performing garbage collection of local backend images (detect local backend storage path by default or use $%s)", alias.EnvName),
+		)
+	}
+
+	if err := cmd.Flags().MarkHidden(aliases[1].ParamName); err != nil {
+		panic(err)
+	}
 }
 
 func SetupAllowedLocalCacheVolumeUsage(cmdData *CmdData, cmd *cobra.Command) {

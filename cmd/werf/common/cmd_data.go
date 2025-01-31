@@ -122,12 +122,12 @@ type CmdData struct {
 	ScanContextNamespaceOnly *bool
 
 	// Host storage cleanup options
-	DisableAutoHostCleanup                *bool
-	DockerServerStoragePath               *string
-	AllowedDockerStorageVolumeUsage       *uint
-	AllowedDockerStorageVolumeUsageMargin *uint
-	AllowedLocalCacheVolumeUsage          *uint
-	AllowedLocalCacheVolumeUsageMargin    *uint
+	DisableAutoHostCleanup                 *bool
+	BackendStoragePath                     *string
+	AllowedBackendStorageVolumeUsage       *uint
+	AllowedBackendStorageVolumeUsageMargin *uint
+	AllowedLocalCacheVolumeUsage           *uint
+	AllowedLocalCacheVolumeUsageMargin     *uint
 
 	Platform *[]string
 }
