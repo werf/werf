@@ -53,12 +53,12 @@ func (s *ImageSpecStage) PrepareImage(_ context.Context, _ Conveyor, _ container
 			StopSignal: s.imageSpec.StopSignal,
 		}
 
-		newLables, err := modifyLabels(imageInfo.Labels, s.imageSpec.Labels, s.imageSpec.RemoveLabels, s.imageSpec.RemoveWerfLabels)
+		newLabels, err := modifyLabels(imageInfo.Labels, s.imageSpec.Labels, s.imageSpec.RemoveLabels, s.imageSpec.RemoveWerfLabels)
 		if err != nil {
 			return fmt.Errorf("unable to modify labels: %s", err)
 		}
 
-		newConfig.Labels = newLables
+		newConfig.Labels = newLabels
 		newConfig.Env = modifyEnv(imageInfo.Env, s.imageSpec.RemoveEnv, s.imageSpec.Env)
 		newConfig.Volumes = modifyVolumes(imageInfo.Volumes, s.imageSpec.RemoveVolumes, s.imageSpec.Volumes)
 
