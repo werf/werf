@@ -53,7 +53,7 @@ func (s *ImageSpecStage) PrepareImage(ctx context.Context, _ Conveyor, _ contain
 		}
 
 		serviceLabels := s.stageImage.Image.GetBuildServiceLabels()
-		mergedLabels := util.MergeMaps(serviceLabels, s.imageSpec.Labels)
+		mergedLabels := util.MergeMaps(s.imageSpec.Labels, serviceLabels)
 		resultLabels, err := modifyLabels(ctx, mergedLabels, s.imageSpec.Labels, s.imageSpec.RemoveLabels, s.imageSpec.ClearWerfLabels)
 		if err != nil {
 			return fmt.Errorf("unable to modify labels: %s", err)
