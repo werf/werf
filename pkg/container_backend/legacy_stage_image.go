@@ -66,7 +66,7 @@ func (i *LegacyStageImage) GetID() string {
 	if i.buildImage != nil {
 		return i.buildImage.Name()
 	} else {
-		return i.legacyBaseImage.GetStageDesc().Info.Name
+		return i.legacyBaseImage.GetStageDesc().Info.ID
 	}
 }
 
