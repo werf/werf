@@ -14,6 +14,7 @@ import (
 	"github.com/werf/werf/v2/pkg/image"
 )
 
+// TODO
 var ErrImageSpecMutateStageIsNotSupported = fmt.Errorf("error running image spec mutate stage: can't mutate local image. please provide repo with --repo flag or WERF_REPO env variable")
 
 type ImageSpecStage struct {
@@ -148,6 +149,7 @@ func modifyLabels(labels, addLabels map[string]string, removeLabels []string, re
 			delete(labels, key)
 			continue
 		}
+		// TODO: handle
 		if removeWerfLabels && strings.HasPrefix(key, "werf") {
 			delete(labels, key)
 		}

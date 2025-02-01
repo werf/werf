@@ -108,7 +108,7 @@ type rawImageSpecGlobal struct {
 	ClearHistory bool                      `yaml:"clearHistory,omitempty"`
 	Config       *rawImageSpecGlobalConfig `yaml:"config,omitempty"`
 
-	rawMetaBuild *rawMetaBuild  // parent
+	rawMetaBuild *rawMetaBuild  `yaml:"-"` // parent
 
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
 }
@@ -118,7 +118,7 @@ type rawImageSpecGlobalConfig struct {
 	RemoveLabels     []string          `yaml:"removeLabels,omitempty"`
 	Labels           map[string]string `yaml:"labels,omitempty"`
 
-	rawImageSpecGlobal *rawImageSpecGlobal // parent
+	rawImageSpecGlobal *rawImageSpecGlobal `yaml:"-"` // parent
 
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
 }
