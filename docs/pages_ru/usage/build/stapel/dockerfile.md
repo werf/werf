@@ -5,6 +5,8 @@ author: Alexey Igrychev <alexey.igrychev@flant.com>
 directive_summary: docker
 ---
 
+> Директива `docker` устарела и будет удалена в версии v3. Вместо неё используйте директиву `imageSpec`. Подробнее о директиве `imageSpec` можно прочитать [здесь]({{ "usage/build/images.html#изменение-конфигурации-образов" | true_relative_url }}).
+
 Инструкции [в Dockerfile](https://docs.docker.com/engine/reference/builder/) можно условно разделить на две группы: сборочные инструкции и инструкции, которые влияют на manifest Docker-образа.
 Так как werf-сборщик использует свой синтаксис для описания сборки, поддерживаются только следующие Dockerfile-инструкции второй группы:
 

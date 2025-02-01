@@ -15,6 +15,9 @@ type LegacyImageInterface interface {
 	Pull(ctx context.Context) error
 	Push(ctx context.Context) error
 
+	SetBuildServiceLabels(labels map[string]string)
+	GetBuildServiceLabels() map[string]string
+
 	// TODO: build specifics for stapel builder and dockerfile builder
 	// TODO: should be under a single separate interface
 	Container() LegacyContainer
@@ -38,6 +41,9 @@ type LegacyImageInterface interface {
 	SetFinalStageDesc(*image.StageDesc)
 
 	GetCopy() LegacyImageInterface
+
+	SetImageSpecConfig(config *image.Config)
+	GetImageSpecConfig() *image.Config
 }
 
 type LegacyContainer interface {

@@ -502,6 +502,11 @@ func prepareWerfConfig(giterminismManager giterminism_manager.Interface, rawImag
 		}
 
 		for _, image := range imageList {
+			if meta.Build.ImageSpec != nil {
+				merged := mergeImageSpec(image.ImageSpec, meta.Build.ImageSpec)
+				image.ImageSpec = &merged
+			}
+
 			if util.GetBoolEnvironmentDefaultFalse("WERF_FORCE_STAGED_DOCKERFILE") {
 				image.Staged = true
 			} else if !rawImage.isFillStaged {
@@ -519,12 +524,20 @@ func prepareWerfConfig(giterminismManager giterminism_manager.Interface, rawImag
 			}
 
 			for _, image := range imageList {
+				if meta.Build.ImageSpec != nil {
+					merged := mergeImageSpec(image.ImageSpec, meta.Build.ImageSpec)
+					image.ImageSpec = &merged
+				}
 				images = append(images, image)
 			}
 		} else {
 			if image, err := rawImage.toStapelImageArtifactDirectives(giterminismManager); err != nil {
 				return nil, err
 			} else {
+				if meta.Build.ImageSpec != nil {
+					merged := mergeImageSpec(image.ImageSpec, meta.Build.ImageSpec)
+					image.ImageSpec = &merged
+				}
 				images = append(images, image)
 			}
 		}

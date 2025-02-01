@@ -1,6 +1,7 @@
 package config
 
 type MetaBuild struct {
-	Platform []string
-	Staged   bool
+	Platform  []string
+	Staged    bool
+	ImageSpec *ImageSpec
 }

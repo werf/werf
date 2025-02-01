@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/werf/common-go/pkg/lock"
+	chart "github.com/werf/common-go/pkg/lock"
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/docker"
@@ -21,6 +21,10 @@ type LegacyStageImage struct {
 	builtID             string
 	commitChangeOptions LegacyCommitChangeOptions
 	targetPlatform      string
+	imageSpecConfig     *image.Config
+
+	// TODO: remove after refactoring
+	buildServiceLabels map[string]string
 }
 
 func NewLegacyStageImage(fromImage *LegacyStageImage, name string, containerBackend ContainerBackend, targetPlatform string) *LegacyStageImage {
@@ -246,4 +250,20 @@ func (i *LegacyStageImage) Push(ctx context.Context) error {
 
 func debugDockerRunCommand() bool {
 	return os.Getenv("WERF_DEBUG_DOCKER_RUN_COMMAND") == "1"
+}
+
+func (i *LegacyStageImage) SetBuildServiceLabels(labels map[string]string) {
+	i.buildServiceLabels = labels
+}
+
+func (i *LegacyStageImage) GetBuildServiceLabels() map[string]string {
+	return i.buildServiceLabels
+}
+
+func (i *LegacyStageImage) SetImageSpecConfig(config *image.Config) {
+	i.imageSpecConfig = config
+}
+
+func (i *LegacyStageImage) GetImageSpecConfig() *image.Config {
+	return i.imageSpecConfig
 }

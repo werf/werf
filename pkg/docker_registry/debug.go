@@ -100,6 +100,17 @@ func (r *DockerRegistryTracer) MutateAndPushImage(ctx context.Context, sourceRef
 	return
 }
 
+func (r *DockerRegistryTracer) MutateAndPushImageConfigFile(ctx context.Context, sourceReference, destinationReference string, mutateManifestConfigFunc func(cfg v1.ConfigFile) (v1.ConfigFile, error)) (err error) {
+	logboek.Context(ctx).Default().LogProcess("DockerRegistryTracer.MutateAndPushImage %q -> %q", sourceReference, destinationReference).Do(func() {
+		if r.DockerRegistry != nil {
+			err = r.DockerRegistry.MutateAndPushImageConfigFile(ctx, sourceReference, destinationReference, mutateManifestConfigFunc)
+		} else {
+			err = r.DockerRegistryApi.MutateAndPushImageConfigFile(ctx, sourceReference, destinationReference, mutateManifestConfigFunc)
+		}
+	})
+	return
+}
+
 func (r *DockerRegistryTracer) CopyImage(ctx context.Context, sourceReference, destinationReference string, opts CopyImageOptions) (err error) {
 	logboek.Context(ctx).Default().LogProcess("DockerRegistryTracer.CopyImage %q -> %q", sourceReference, destinationReference).Do(func() {
 		err = r.DockerRegistry.CopyImage(ctx, sourceReference, destinationReference, opts)

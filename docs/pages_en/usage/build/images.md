@@ -382,6 +382,97 @@ import:
 
 For more info on how to write Stapel instructions refer to the [documentation]({{"usage/build/stapel/base.html" | true_relative_url }}).
 
+## Changing image configuration spec
+
+In OCI (Open Container Initiative), [image configuration spec](https://github.com/opencontainers/image-spec/blob/main/config.md) is the image specification that describes its structure and metadata. The `imageSpec` directive in `werf.yaml` provides flexible options for managing and configuring various aspects of images:
+
+- Flexibility in managing specification fields.
+- Removal or resetting of unnecessary components: labels, environment variables, volumes, commands, and build history.
+- A unified configuration mechanism for all supported backends and syntaxes.
+- Rules that apply both to all images in a project and to individual images.
+
+### Global configuration
+
+Example configuration that will apply to all images in the project:
+
+```yaml
+project: test
+configVersion: 1
+build:
+  imageSpec:
+    author: "Frontend Maintainer <frontend@example.com>"
+    clearHistory: true
+    config:
+      removeLabels:
+        - "unnecessary-label"
+        - /org.opencontainers.image..*/
+      labels:
+        app: "my-app"
+```
+
+This configuration will be applied to all images in the project: labels and author will be set for all images, and unnecessary labels will be removed.
+
+### Configuration for a specific image
+
+Example configuration for an individual image:
+
+```yaml
+project: test
+configVersion: 1
+---
+image: frontend_image
+from: alpine
+imageSpec:
+  author: "Frontend Maintainer <frontend@example.com>"
+  clearHistory: true
+  config:
+    user: "1001:1001"
+    exposedPorts:
+      - "8080/tcp"
+    env:
+      NODE_ENV: "production"
+      API_URL: "https://api.example.com"
+    entrypoint:
+      - "/usr/local/bin/start.sh"
+    volumes:
+      - "/app/data"
+    workingDir: "/app"
+    labels:
+      frontend-version: "1.2.3"
+    stopSignal: "SIGTERM"
+    removeLabels:
+      - "old-frontend-label"
+      - /old-regex-label.*/
+    removeVolumes:
+      - "/var/cache"
+    removeEnv:
+      - "DEBUG"
+```
+
+> **Note:** Configuration for a specific image takes precedence over global configuration. String values will be overwritten, and for multi-valued directives, the data will be merged based on priority.
+
+### Build process changes
+
+Changing the image configuration does not directly affect the build process but allows you to configure aspects such as removing unnecessary volumes or adding environment variables for the base image. Example:
+
+```yaml
+image: base
+from: postgres:12.22-bookworm
+imageSpec:
+  config:
+    removeVolumes:
+      - "/var/lib/postgresql/data"
+---
+image: app
+fromImage: base
+git:
+  add: /postgresql/data
+  to: /var/lib/postgresql/data
+```
+
+In this example, the base image `postgres:12.22-bookworm` has unnecessary volumes removed, which can then be used in the `app` image.
+
+
 ## Linking images
 
 ### Inheritance and importing files

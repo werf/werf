@@ -1,0 +1,63 @@
+project: demo-app
+configVersion: 1
+build:
+  platform:
+    - linux/amd64
+  imageSpec:
+    author: "werf"
+    config:
+      removeLabels:
+        - /^org\.opencontainers.*/
+        - /^desktop\.docker\.io.*/
+        - test
+      labels:
+        Test_Global: "YES"
+
+---
+image: dockerfile
+dockerfile: Dockerfile
+imageSpec:
+  author: "TEST"
+  config:
+    clearWerfLabels: true
+    removeEnv:
+      - PATH
+    env:
+      TEST: "test"
+    removeVolumes:
+      - "/var/lib/postgresql/data"
+    volumes:
+      - "/var/lib/test/data"
+    entrypoint:
+      - "/bin/sh"
+    cmd:
+      - "echo"
+    labels:
+      Test: "YES"
+    user: "root"
+
+---
+image: stapel-shell
+from: ubuntu:22.04
+shell:
+  setup:
+    - echo 'setup'
+imageSpec:
+  author: "TEST"
+  config:
+    clearWerfLabels: true
+    removeEnv:
+      - PATH
+    env:
+      TEST: "test"
+    removeVolumes:
+      - "/var/lib/postgresql/data"
+    volumes:
+      - "/var/lib/test/data"
+    user: root
+    entrypoint:
+      - "/bin/sh"
+    cmd:
+      - "echo"
+    labels:
+      Test: "YES"

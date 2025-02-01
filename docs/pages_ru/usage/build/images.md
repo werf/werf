@@ -381,6 +381,96 @@ import:
 
 Подробная документация по написанию доступна [в разделе stapel]({{ "usage/build/stapel/base.html" | true_relative_url }}).
 
+## Изменение конфигурации образов
+
+В OCI (Open Container Initiative) [image configuration spec](https://github.com/opencontainers/image-spec/blob/main/config.md) — это спецификация образа, которая описывает его структуру и метаданные. Директива `imageSpec` в `werf.yaml` предоставляет гибкие возможности управления и настройки различных аспектов образов:
+
+- Гибкость в управлении полями спецификации.
+- Удаление или сброс ненужных полей: меток, переменных окружения, томов, команд и истории сборки.
+- Единый механизм конфигурации для всех поддерживаемых бэкендов и синтаксисов.
+- Правила, которые применимы как ко всем образам в проекте, так и к отдельным образам.
+
+### Глобальная конфигурация
+
+Пример конфигурации, которая применяется ко всем образам в проекте:
+
+```yaml
+project: test
+configVersion: 1
+build:
+  imageSpec:
+    author: "Frontend Maintainer <frontend@example.com>"
+    clearHistory: true
+    config:
+      removeLabels:
+        - "unnecessary-label"
+        - /org.opencontainers.image..*/
+      labels:
+        app: "my-app"
+```
+
+Эта настройка будет применяться ко всем образам в проекте: метки и автор будут установлены для всех образов, а ненужные метки будут удалены.
+
+### Конфигурация для конкретного образа
+
+Пример настройки для отдельного образа:
+
+```yaml
+project: test
+configVersion: 1
+---
+image: frontend_image
+from: alpine
+imageSpec:
+  author: "Frontend Maintainer <frontend@example.com>"
+  clearHistory: true
+  config:
+    user: "1001:1001"
+    exposedPorts:
+      - "8080/tcp"
+    env:
+      NODE_ENV: "production"
+      API_URL: "https://api.example.com"
+    entrypoint:
+      - "/usr/local/bin/start.sh"
+    volumes:
+      - "/app/data"
+    workingDir: "/app"
+    labels:
+      frontend-version: "1.2.3"
+    stopSignal: "SIGTERM"
+    removeLabels:
+      - "old-frontend-label"
+      - /old-regex-label.*/
+    removeVolumes:
+      - "/var/cache"
+    removeEnv:
+      - "DEBUG"
+```
+
+> **Примечание:** Конфигурация для конкретного образа имеет приоритет перед глобальной конфигурацией. Строковые значения будут переопределены, а для множественных значений данные будут объединяться в соответствии с приоритетом.
+
+### Изменения в процессе сборки
+
+Изменение конфигурации образа не влияет напрямую на процесс сборки образа, но позволяет настроить такие аспекты, как удаление ненужных томов или добавление переменных окружения для базового образа. Пример:
+
+```yaml
+image: base
+from: postgres:12.22-bookworm
+imageSpec:
+  config:
+    removeVolumes:
+      - "/var/lib/postgresql/data"
+---
+image: app
+fromImage: base
+git:
+  add: /postgresql/data
+  to: /var/lib/postgresql/data
+```
+
+В этом примере базовый образ `postgres:12.22-bookworm` имеет удаленный ненужный том и теперь путь может быть использованы в образе `app`.
+
 ## Взаимодействие между образами
 
 ### Наследование и импортирование файлов
