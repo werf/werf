@@ -14,9 +14,6 @@ import (
 	"github.com/werf/werf/v2/pkg/image"
 )
 
-// TODO
-var ErrImageSpecMutateStageIsNotSupported = fmt.Errorf("error running image spec mutate stage: can't mutate local image. please provide repo with --repo flag or WERF_REPO env variable")
-
 type ImageSpecStage struct {
 	*BaseStage
 	imageSpec *config.ImageSpec

@@ -1427,8 +1427,7 @@ func (phase *BuildPhase) atomicMutateStageImage(ctx context.Context, img *image.
 			case *storage.RepoStagesStorage:
 				registry = phase.Conveyor.StorageManager.GetStagesStorage().(*storage.RepoStagesStorage).DockerRegistry
 			default:
-				return stage.ErrImageSpecMutateStageIsNotSupported
-			}
+				return fmt.Errorf("unable to builde stage %q: local storage are not supported at the moment. Please provide repo with --repo flag or WERF_REPO env variable", stg.Name())			}
 			err := imagePkg.MutateImageSpecConfigRepo(ctx, prevImage, newImage, *stageImage.Image.GetImageSpecConfig(), registry)
 			if err != nil {
 				return fmt.Errorf("error mutating image spec %s: %w", stg.Name(), err)
