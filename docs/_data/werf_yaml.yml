@@ -488,7 +488,7 @@ sections:
                 description:
                   en: Healthcheck configuration. Intervals are in seconds.
                   ru: Конфигурация проверки состояния. Интервалы в секундах.
-                detailsLink: "ttps://docs.docker.com/engine/reference/builder/#healthcheck"
+                detailsLink: "https://docs.docker.com/engine/reference/builder/#healthcheck"
 
   - id: stapel-section
     description:
