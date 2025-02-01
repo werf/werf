@@ -5,6 +5,8 @@ author: Alexey Igrychev <alexey.igrychev@flant.com>
 directive_summary: docker
 ---
 
+> The `docker` directive is deprecated and will be removed in v3. Please use the `imageSpec` directive instead. Read more about the `imageSpec` directive [here]({{ "usage/build/stapel/image_spec.html" | true_relative_url }}).
+
 [Dockerfile instructions](https://docs.docker.com/engine/reference/builder/) can be divided into two groups: build-time instructions and other instructions affecting an image manifest. Build-time instructions do not make sense in a werf build process. Thus, werf supports only following instructions:
 
 * `USER` to set the user name (or UID) and optionally the user group (or GID) (read more [here](https://docs.docker.com/engine/reference/builder/#user)).

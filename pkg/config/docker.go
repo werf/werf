@@ -1,5 +1,10 @@
 package config
 
+import (
+	"context"
+	"github.com/werf/werf/v2/pkg/werf/global_warnings"
+)
+
 type Docker struct {
 	Volume      []string
 	Expose      []string
@@ -17,5 +22,7 @@ type Docker struct {
 }
 
 func (c *Docker) validate() error {
+	global_warnings.GlobalDeprecationWarningLn(context.Background(), "The `docker` directive is deprecated and will be removed in v3. Please use the `imageSpec` directive instead.")
+
 	return nil
 }
