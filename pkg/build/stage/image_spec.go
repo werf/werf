@@ -12,6 +12,7 @@ import (
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
 
 type ImageSpecStage struct {
@@ -38,7 +39,7 @@ func (s *ImageSpecStage) IsMutable() bool {
 	return true
 }
 
-func (s *ImageSpecStage) PrepareImage(_ context.Context, _ Conveyor, _ container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, _ container_backend.BuildContextArchiver) error {
+func (s *ImageSpecStage) PrepareImage(ctx context.Context, _ Conveyor, _ container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, _ container_backend.BuildContextArchiver) error {
 	if s.imageSpec != nil {
 		imageInfo := prevBuiltImage.Image.GetStageDesc().Info
 
@@ -51,14 +52,14 @@ func (s *ImageSpecStage) PrepareImage(_ context.Context, _ Conveyor, _ container
 			StopSignal: s.imageSpec.StopSignal,
 		}
 
-		newLabels, err := modifyLabels(imageInfo.Labels, s.imageSpec.Labels, s.imageSpec.RemoveLabels, s.imageSpec.ClearWerfLabels)
+		newLabels, err := modifyLabels(ctx, imageInfo.Labels, s.imageSpec.Labels, s.imageSpec.RemoveLabels, s.imageSpec.ClearWerfLabels)
 		if err != nil {
 			return fmt.Errorf("unable to modify labels: %s", err)
 		}
 
 		newConfig.Labels = newLabels
-		newConfig.Env = modifyEnv(imageInfo.Env, s.imageSpec.RemoveEnv, s.imageSpec.Env)
-		newConfig.Volumes = modifyVolumes(imageInfo.Volumes, s.imageSpec.RemoveVolumes, s.imageSpec.Volumes)
+		newConfig.Env = modifyEnv(ctx, imageInfo.Env, s.imageSpec.RemoveEnv, s.imageSpec.Env)
+		newConfig.Volumes = modifyVolumes(ctx, imageInfo.Volumes, s.imageSpec.RemoveVolumes, s.imageSpec.Volumes)
 
 		for _, expose := range s.imageSpec.Expose {
 			newConfig.ExposedPorts[expose] = struct{}{}
@@ -109,7 +110,7 @@ func (s *ImageSpecStage) GetDependencies(_ context.Context, _ Conveyor, _ contai
 	return util.Sha256Hash(args...), nil
 }
 
-func modifyLabels(labels, addLabels map[string]string, removeLabels []string, clearWerfLabels bool) (map[string]string, error) {
+func modifyLabels(ctx context.Context, labels, addLabels map[string]string, removeLabels []string, clearWerfLabels bool) (map[string]string, error) {
 	if labels == nil {
 		labels = make(map[string]string)
 	}
@@ -143,10 +144,14 @@ func modifyLabels(labels, addLabels map[string]string, removeLabels []string, cl
 			return nil, err
 		}
 		if match {
+			if !clearWerfLabels && strings.HasPrefix(key, "werf") {
+				global_warnings.GlobalWarningLn(ctx, fmt.Sprintf("Removal of the werf label %q requires explicit use of the `clearWerfLabels` directive. Some labels are purely informational, while others are essential for cleanup operations.", key))
+				continue
+			}
 			delete(labels, key)
 			continue
 		}
-		// TODO: handle
+
 		if clearWerfLabels && strings.HasPrefix(key, "werf") {
 			delete(labels, key)
 		}
@@ -159,7 +164,7 @@ func modifyLabels(labels, addLabels map[string]string, removeLabels []string, cl
 	return labels, nil
 }
 
-func modifyEnv(env, removeKeys []string, addMap map[string]string) []string {
+func modifyEnv(_ context.Context, env, removeKeys []string, addMap map[string]string) []string {
 	envMap := make(map[string]string, len(env))
 	for _, entry := range env {
 		parts := strings.SplitN(entry, "=", 2)
@@ -184,7 +189,7 @@ func modifyEnv(env, removeKeys []string, addMap map[string]string) []string {
 	return result
 }
 
-func modifyVolumes(volumes map[string]struct{}, removeVolumes, addVolumes []string) map[string]struct{} {
+func modifyVolumes(_ context.Context, volumes map[string]struct{}, removeVolumes, addVolumes []string) map[string]struct{} {
 	if volumes == nil {
 		volumes = make(map[string]struct{})
 	}
