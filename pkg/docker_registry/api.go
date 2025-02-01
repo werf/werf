@@ -784,17 +784,13 @@ func (api *api) MutateAndPushImageConfigFile(ctx context.Context, sourceReferenc
 	if err != nil {
 		return fmt.Errorf("error reading image %q: %w", sourceReference, err)
 	}
-	switch {
-	case desc.MediaType.IsImage():
-		img, err := desc.Image()
-		if err != nil {
-			return fmt.Errorf("error getting image manifest: %w", err)
-		}
-		_, err = api.mutateImageConfigFile(ctx, img, mutateManifestConfigFunc, dstRef, isDstDigest)
-		return err
-	default:
-		return fmt.Errorf("unsupported media type %q", desc.MediaType)
+
+	img, err := desc.Image()
+	if err != nil {
+		return fmt.Errorf("error getting image manifest: %w", err)
 	}
+	_, err = api.mutateImageConfigFile(ctx, img, mutateManifestConfigFunc, dstRef, isDstDigest)
+	return err
 }
 
 func (api *api) mutateImageConfigFile(ctx context.Context, image v1.Image, mutateManifestConfigFunc func(cfg v1.ConfigFile) (v1.ConfigFile, error), ref name.Reference, isRefByDigest bool) (interface{}, error) {
