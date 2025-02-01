@@ -14,10 +14,10 @@ type rawImageSpec struct {
 type rawImageSpecConfig struct {
 	ClearWerfLabels bool     `yaml:"clearWerfLabels,omitempty"`
 	RemoveLabels    []string `yaml:"removeLabels,omitempty"`
-	RemoveVolumes    []string `yaml:"removeVolumes,omitempty"`
-	RemoveEnv        []string `yaml:"removeEnv,omitempty"`
-	ClearCmd         bool     `yaml:"clearCmd,omitempty"`
-	ClearEntrypoint  bool     `yaml:"clearEntrypoint,omitempty"`
+	RemoveVolumes   []string `yaml:"removeVolumes,omitempty"`
+	RemoveEnv       []string `yaml:"removeEnv,omitempty"`
+	ClearCmd        bool     `yaml:"clearCmd,omitempty"`
+	ClearEntrypoint bool     `yaml:"clearEntrypoint,omitempty"`
 
 	Volumes     []string          `yaml:"volumes,omitempty"`
 	Labels      map[string]string `yaml:"labels,omitempty"`
@@ -108,15 +108,15 @@ type rawImageSpecGlobal struct {
 	ClearHistory bool                      `yaml:"clearHistory,omitempty"`
 	Config       *rawImageSpecGlobalConfig `yaml:"config,omitempty"`
 
-	rawMetaBuild *rawMetaBuild  `yaml:"-"` // parent
+	rawMetaBuild *rawMetaBuild `yaml:"-"` // parent
 
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
 }
 
 type rawImageSpecGlobalConfig struct {
-	ClearWerfLabels bool     `yaml:"clearWerfLabels,omitempty"`
-	RemoveLabels    []string `yaml:"removeLabels,omitempty"`
-	Labels           map[string]string `yaml:"labels,omitempty"`
+	ClearWerfLabels bool              `yaml:"clearWerfLabels,omitempty"`
+	RemoveLabels    []string          `yaml:"removeLabels,omitempty"`
+	Labels          map[string]string `yaml:"labels,omitempty"`
 
 	rawImageSpecGlobal *rawImageSpecGlobal `yaml:"-"` // parent
 
