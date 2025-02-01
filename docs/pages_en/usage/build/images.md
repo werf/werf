@@ -410,7 +410,7 @@ build:
         app: "my-app"
 ```
 
-This configuration will be applied to all images in the project. For example, labels and author will be set for all images, and unnecessary labels will be removed.
+This configuration will be applied to all images in the project: labels and author will be set for all images, and unnecessary labels will be removed.
 
 ### Configuration for a specific image
 
