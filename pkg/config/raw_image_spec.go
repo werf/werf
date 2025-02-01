@@ -5,7 +5,8 @@ type rawImageSpec struct {
 	ClearHistory bool                `yaml:"clearHistory,omitempty"`
 	Config       *rawImageSpecConfig `yaml:"config,omitempty"`
 
-	doc *doc `yaml:"-"` // parent
+	rawStapelImage         *rawStapelImage         `yaml:"-"` // possible parent
+	rawImageFromDockerfile *rawImageFromDockerfile `yaml:"-"` // possible parent
 
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
 }
@@ -29,7 +30,7 @@ type rawImageSpecConfig struct {
 	StopSignal  string            `yaml:"stopSignal,omitempty"`
 	Healthcheck *healthConfig     `yaml:"healthcheck,omitempty"`
 
-	doc *doc `yaml:"-"` // parent
+	rawImageSpec *rawImageSpec `yaml:"-"` // parent
 
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
 }
@@ -42,17 +43,30 @@ type healthConfig struct {
 	Retries     int      `json:"retries,omitempty"`
 }
 
-func (s *rawImageSpec) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	type plain rawImageSpec
-	if err := unmarshal((*plain)(s)); err != nil {
+func (s *rawImageSpec) doc() *doc {
+	if s.rawStapelImage != nil {
+		return s.rawStapelImage.doc
+	} else if s.rawImageFromDockerfile != nil {
+		return s.rawImageFromDockerfile.doc
+	} else {
+		panic("runtime error")
+	}
+}
+
+func (s *rawImageSpecConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	if parent, ok := parentStack.Peek().(*rawImageSpec); ok {
+		s.rawImageSpec = parent
+	}
+
+	parentStack.Push(s)
+	type plain rawImageSpecConfig
+	err := unmarshal((*plain)(s))
+	parentStack.Pop()
+	if err != nil {
 		return err
 	}
 
-	if err := checkOverflow(s.UnsupportedAttributes, nil, s.doc); err != nil {
-		return err
-	}
-
-	if err := checkOverflow(s.Config.UnsupportedAttributes, nil, s.Config.doc); err != nil {
+	if err := checkOverflow(s.UnsupportedAttributes, nil, s.rawImageSpec.doc()); err != nil {
 		return err
 	}
 
