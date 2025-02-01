@@ -1017,6 +1017,9 @@ func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *imag
 		serviceLabels[imagePkg.WerfBaseImageIDLabel] = prevBuiltImage.Image.GetStageDesc().Info.ID
 	}
 
+	// TODO: refactor this workaround required for the image spec stage.
+	stageImage.Image.SetBuildServiceLabels(serviceLabels)
+
 	if stg.IsStapelStage() {
 		if phase.Conveyor.UseLegacyStapelBuilder(phase.Conveyor.ContainerBackend) {
 			stageImage.Builder.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions().AddLabel(serviceLabels)

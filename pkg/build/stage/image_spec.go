@@ -52,12 +52,14 @@ func (s *ImageSpecStage) PrepareImage(ctx context.Context, _ Conveyor, _ contain
 			StopSignal: s.imageSpec.StopSignal,
 		}
 
-		newLabels, err := modifyLabels(ctx, imageInfo.Labels, s.imageSpec.Labels, s.imageSpec.RemoveLabels, s.imageSpec.ClearWerfLabels)
+		serviceLabels := s.stageImage.Image.GetBuildServiceLabels()
+		mergedLabels := util.MergeMaps(serviceLabels, s.imageSpec.Labels)
+		resultLabels, err := modifyLabels(ctx, mergedLabels, s.imageSpec.Labels, s.imageSpec.RemoveLabels, s.imageSpec.ClearWerfLabels)
 		if err != nil {
 			return fmt.Errorf("unable to modify labels: %s", err)
 		}
 
-		newConfig.Labels = newLabels
+		newConfig.Labels = resultLabels
 		newConfig.Env = modifyEnv(ctx, imageInfo.Env, s.imageSpec.RemoveEnv, s.imageSpec.Env)
 		newConfig.Volumes = modifyVolumes(ctx, imageInfo.Volumes, s.imageSpec.RemoveVolumes, s.imageSpec.Volumes)
 
