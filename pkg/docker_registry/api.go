@@ -793,7 +793,7 @@ func (api *api) MutateAndPushImageConfigFile(ctx context.Context, sourceReferenc
 		_, err = api.mutateImageConfigFile(ctx, img, mutateManifestConfigFunc, dstRef, isDstDigest)
 		return err
 	default:
-		return fmt.Errorf("unsupported media type %q: %w", desc.MediaType, err)
+		return fmt.Errorf("unsupported media type %q", desc.MediaType)
 	}
 }
 
