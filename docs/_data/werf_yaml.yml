@@ -41,10 +41,10 @@ sections:
             isCollapsedByDefault: false
             detailsCustomLinks:
               en:
-                - text: Изменение конфигурации образов 
+                - text: Changing image configuration spec
                   article: "/usage/build/images.md#changing-image-configuration-spec"
               ru:
-                - text: Изменение конфигурации образов 
+                - text: Изменение конфигурации образов
                   article: "/usage/build/images.md#изменение-конфигурации-образов"
             directives:
               - name: author
@@ -376,12 +376,12 @@ sections:
           ru: Конфигурация образа согласно OCI спецификации
         detailsCustomLinks:
           en:
-            - text: Изменение конфигурации образов 
+            - text: Changing image configuration spec
               article: "/usage/build/images.md#изменение-конфигурации-образов"
           ru:
-            - text: Изменение конфигурации образов 
+            - text: Изменение конфигурации образов
               article: "/usage/build/images.md#изменение-конфигурации-образов"
-        directives: 
+        directives:
           - name: author
             value: "string"
             description:
@@ -420,12 +420,12 @@ sections:
                   en: List of environment variables to remove
                   ru: Список переменных окружения для удаления
               - name: clearEntrypoint
-                value: "[string, ...]"
+                value: "bool"
                 description:
                   en: Remove ENTRYPOINT
                   ru: Очистить ENTRYPOINT
               - name: clearCmd
-                value: "[string, ...]"
+                value: "bool"
                 description:
                   en: Remove CMD
                   ru: Очистить CMD
@@ -819,8 +819,8 @@ sections:
       - <<: *common_image_spec_config
       - name: docker
         description:
-          en: "Set of directives to change the image manifest. Incompatible with the imageSpec directive"
-          ru: "Набор директив для изменения манифеста образа. Несовместимо с директивой imageSpec"
+          en: "Set of directives to change the image manifest (DEPRECATED). Incompatible with the imageSpec directive"
+          ru: "Набор директив для изменения манифеста образа (DEPRECATED). Несовместимо с директивой imageSpec"
         detailsArticle:
           all: "/usage/build/stapel/dockerfile.html"
         collapsible: true
@@ -1026,3 +1026,4 @@ sections:
               description:
                 en: "Name of environment variable which will contain specified type of information about image"
                 ru: "Имя переменной окружения, которая будет содержать указанный тип информации об образе"
+

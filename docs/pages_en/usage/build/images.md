@@ -384,7 +384,8 @@ For more info on how to write Stapel instructions refer to the [documentation]({
 
 ## Changing image configuration spec
 
-In OCI (Open Container Initiative) ([imageSpec](https://github.com/opencontainers/image-spec/blob/main/config.md)) – it is an image specification that describes its structure and metadata. The `imageSpec` directive in `werf.yaml` provides the following features:
+In OCI (Open Container Initiative) [image specification](https://github.com/opencontainers/image-spec/blob/main/config.md) – it is an image specification that describes its structure and metadata. The `imageSpec` directive in `werf.yaml` provides the following features:
+
 - Adding author for images.
 - Managing labels (`labels`): adding new ones and removing existing ones.
 - Inheriting global settings (`user`, `env`, `entrypoint`, `volumes`, etc.) with the possibility of supplementing and modifying them.
@@ -405,7 +406,7 @@ build:
     config:
       removeLabels:
         - "unnecessary-label"
-        - /org.opencontainers.image\..*/
+        - /org.opencontainers.image..*/
       labels:
         app: "my-app"
 ```
