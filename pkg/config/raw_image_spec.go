@@ -65,24 +65,26 @@ func (s *rawImageSpec) toDirective() *ImageSpec {
 	imageSpec.Author = s.Author
 	imageSpec.ClearHistory = s.ClearHistory
 
-	imageSpec.RemoveWerfLabels = s.Config.RemoveWerfLabels
-	imageSpec.RemoveLabels = s.Config.RemoveLabels
-	imageSpec.RemoveVolumes = s.Config.RemoveVolumes
-	imageSpec.RemoveEnv = s.Config.RemoveEnv
-	imageSpec.ClearCmd = s.Config.ClearCmd
-	imageSpec.ClearEntrypoint = s.Config.ClearEntrypoint
+	if s.Config != nil {
+		imageSpec.RemoveWerfLabels = s.Config.RemoveWerfLabels
+		imageSpec.RemoveLabels = s.Config.RemoveLabels
+		imageSpec.RemoveVolumes = s.Config.RemoveVolumes
+		imageSpec.RemoveEnv = s.Config.RemoveEnv
+		imageSpec.ClearCmd = s.Config.ClearCmd
+		imageSpec.ClearEntrypoint = s.Config.ClearEntrypoint
 
-	imageSpec.Volumes = s.Config.Volumes
-	imageSpec.Labels = s.Config.Labels
-	imageSpec.User = s.Config.User
-	imageSpec.Cmd = s.Config.Cmd
-	imageSpec.Env = s.Config.Env
-	imageSpec.Entrypoint = s.Config.Entrypoint
-	imageSpec.WorkingDir = s.Config.WorkingDir
-	imageSpec.StopSignal = s.Config.StopSignal
-	imageSpec.Expose = s.Config.Expose
+		imageSpec.Volumes = s.Config.Volumes
+		imageSpec.Labels = s.Config.Labels
+		imageSpec.User = s.Config.User
+		imageSpec.Cmd = s.Config.Cmd
+		imageSpec.Env = s.Config.Env
+		imageSpec.Entrypoint = s.Config.Entrypoint
+		imageSpec.WorkingDir = s.Config.WorkingDir
+		imageSpec.StopSignal = s.Config.StopSignal
+		imageSpec.Expose = s.Config.Expose
 
-	imageSpec.Healthcheck = s.Config.Healthcheck
+		imageSpec.Healthcheck = s.Config.Healthcheck
+	}
 
 	return imageSpec
 }
@@ -151,9 +153,12 @@ func (s *rawImageSpecGlobal) toDirective() *ImageSpec {
 	imageSpec := &ImageSpec{rawGlobal: s}
 	imageSpec.Author = s.Author
 	imageSpec.ClearHistory = s.ClearHistory
-	imageSpec.RemoveWerfLabels = s.Config.RemoveWerfLabels
-	imageSpec.RemoveLabels = s.Config.RemoveLabels
-	imageSpec.Labels = s.Config.Labels
+
+	if s.Config != nil {
+		imageSpec.RemoveWerfLabels = s.Config.RemoveWerfLabels
+		imageSpec.RemoveLabels = s.Config.RemoveLabels
+		imageSpec.Labels = s.Config.Labels
+	}
 
 	return imageSpec
 }
