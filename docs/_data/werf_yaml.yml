@@ -64,11 +64,11 @@ sections:
                 collapsible: true
                 isCollapsedByDefault: false
                 directives:
-                  - name: removeWerfLabels
+                  - name: clearWerfLabels
                     value: "bool"
                     description:
-                      en: Whether to remove Werf labels
-                      ru: Удалять все метки Werf
+                      en: Clear werf labels
+                      ru: Сбросить метки werf
                   - name: removeLabels
                     value: "[ string || /REGEXP/, ... ]"
                     description:
@@ -399,11 +399,11 @@ sections:
             collapsible: true
             isCollapsedByDefault: false
             directives:
-              - name: removeWerfLabels
+              - name: clearWerfLabels
                 value: "bool"
                 description:
-                  en: Whether to remove Werf labels
-                  ru: Удалять все метки Werf
+                  en: Clear werf labels
+                  ru: Сбросить метки werf
               - name: removeLabels
                 value: "[ string || /REGEXP/, ... ]"
                 description:

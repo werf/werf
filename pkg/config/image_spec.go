@@ -4,9 +4,9 @@ import "slices"
 
 type ImageSpec struct {
 	Author           string            `yaml:"author,omitempty"`
-	ClearHistory     bool              `yaml:"clearHistory,omitempty"`
-	RemoveWerfLabels bool              `yaml:"removeWerfLabels,omitempty"`
-	RemoveLabels     []string          `yaml:"removeLabels,omitempty"`
+	ClearHistory    bool     `yaml:"clearHistory,omitempty"`
+	ClearWerfLabels bool     `yaml:"clearWerfLabels,omitempty"`
+	RemoveLabels    []string `yaml:"removeLabels,omitempty"`
 	RemoveVolumes    []string          `yaml:"removeVolumes,omitempty"`
 	RemoveEnv        []string          `yaml:"removeEnv,omitempty"`
 	ClearCmd         bool              `yaml:"clearCmd,omitempty"`
@@ -44,8 +44,8 @@ func mergeImageSpec(priority, fallback *ImageSpec) ImageSpec {
 	if priority.ClearHistory {
 		merged.ClearHistory = priority.ClearHistory
 	}
-	if priority.RemoveWerfLabels {
-		merged.RemoveWerfLabels = priority.RemoveWerfLabels
+	if priority.ClearWerfLabels {
+		merged.ClearWerfLabels = priority.ClearWerfLabels
 	}
 
 	merged.RemoveLabels = mergeSlices(fallback.RemoveLabels, priority.RemoveLabels)

@@ -51,7 +51,7 @@ func (s *ImageSpecStage) PrepareImage(_ context.Context, _ Conveyor, _ container
 			StopSignal: s.imageSpec.StopSignal,
 		}
 
-		newLabels, err := modifyLabels(imageInfo.Labels, s.imageSpec.Labels, s.imageSpec.RemoveLabels, s.imageSpec.RemoveWerfLabels)
+		newLabels, err := modifyLabels(imageInfo.Labels, s.imageSpec.Labels, s.imageSpec.RemoveLabels, s.imageSpec.ClearWerfLabels)
 		if err != nil {
 			return fmt.Errorf("unable to modify labels: %s", err)
 		}
@@ -90,7 +90,7 @@ func (s *ImageSpecStage) GetDependencies(_ context.Context, _ Conveyor, _ contai
 	args = append(args, s.imageSpec.Author)
 	args = append(args, fmt.Sprint(s.imageSpec.ClearHistory))
 
-	args = append(args, fmt.Sprint(s.imageSpec.RemoveWerfLabels))
+	args = append(args, fmt.Sprint(s.imageSpec.ClearWerfLabels))
 	args = append(args, sortSliceWithNewSlice(s.imageSpec.RemoveLabels)...)
 	args = append(args, sortSliceWithNewSlice(s.imageSpec.RemoveVolumes)...)
 	args = append(args, sortSliceWithNewSlice(s.imageSpec.RemoveEnv)...)
@@ -109,7 +109,7 @@ func (s *ImageSpecStage) GetDependencies(_ context.Context, _ Conveyor, _ contai
 	return util.Sha256Hash(args...), nil
 }
 
-func modifyLabels(labels, addLabels map[string]string, removeLabels []string, removeWerfLabels bool) (map[string]string, error) {
+func modifyLabels(labels, addLabels map[string]string, removeLabels []string, clearWerfLabels bool) (map[string]string, error) {
 	if labels == nil {
 		labels = make(map[string]string)
 	}
@@ -147,7 +147,7 @@ func modifyLabels(labels, addLabels map[string]string, removeLabels []string, re
 			continue
 		}
 		// TODO: handle
-		if removeWerfLabels && strings.HasPrefix(key, "werf") {
+		if clearWerfLabels && strings.HasPrefix(key, "werf") {
 			delete(labels, key)
 		}
 	}
