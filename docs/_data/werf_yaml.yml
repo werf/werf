@@ -36,7 +36,7 @@ sections:
           - name: imageSpec
             description:
               en: Global image configuration options according to the OCI specification, which will be applied to all images
-              ru: Глобальная конфигурация образов согласно OCI спецификации, которая применится ко всем образам
+              ru: Глобальная конфигурация образов согласно OCI спецификации, которая применяется ко всем образам
             collapsible: true
             isCollapsedByDefault: false
             detailsCustomLinks:
