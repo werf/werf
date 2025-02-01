@@ -384,17 +384,16 @@ For more info on how to write Stapel instructions refer to the [documentation]({
 
 ## Changing image configuration spec
 
-In OCI (Open Container Initiative) [image specification](https://github.com/opencontainers/image-spec/blob/main/config.md) – it is an image specification that describes its structure and metadata. The `imageSpec` directive in `werf.yaml` provides the following features:
+In OCI (Open Container Initiative), [image configuration spec](https://github.com/opencontainers/image-spec/blob/main/config.md) is the image specification that describes its structure and metadata. The `imageSpec` directive in `werf.yaml` provides flexible options for managing and configuring various aspects of images:
 
-- Adding author for images.
-- Managing labels (`labels`): adding new ones and removing existing ones.
-- Inheriting global settings (`user`, `env`, `entrypoint`, `volumes`, etc.) with the possibility of supplementing and modifying them.
-- Removing certain parameter values (`volumes`, `env`, `labels`).
-- Cleaning the image build history.
+- Flexibility in managing specification fields.
+- Removal or resetting of unnecessary components: labels, environment variables, volumes, commands, and build history.
+- A unified configuration mechanism for all supported backends and syntaxes.
+- Rules that apply both to all images in a project and to individual images.
 
-### Global imageSpec configuration
+### Global configuration
 
-An example of an imageSpec configuration for a single image that will apply to all images in the project:
+Example configuration that will apply to all images in the project:
 
 ```yaml
 project: test
@@ -411,14 +410,18 @@ build:
         app: "my-app"
 ```
 
-### ImageSpec configuration for individual images
+This configuration will be applied to all images in the project. For example, labels and author will be set for all images, and unnecessary labels will be removed.
 
-An example of an imageSpec configuration for a specific image:
+### Configuration for a specific image
 
-**Important:** The configuration of an individual image takes precedence, so string values will be overridden, and directives with multiple values will merge the data according to the priority.
+Example configuration for an individual image:
 
 ```yaml
+project: test
+configVersion: 1
+---
 image: frontend_image
+from: alpine
 imageSpec:
   author: "Frontend Maintainer <frontend@example.com>"
   clearHistory: true
@@ -446,15 +449,15 @@ imageSpec:
       - "DEBUG"
 ```
 
-For stapel images, the configuration is identical.
+> **Note:** Configuration for a specific image takes precedence over global configuration. String values will be overwritten, and for multi-valued directives, the data will be merged based on priority.
 
-**Important:** Changing these settings does not affect the build process; however, you can create a separate base image where you can remove unnecessary `VOLUME` or add `ENV`.
+### Build process changes
 
-Example configuration:
+Changing the image configuration does not directly affect the build process but allows you to configure aspects such as removing unnecessary volumes or adding environment variables for the base image. Example:
 
 ```yaml
 image: base
-from: ubuntu:22.04
+from: postgres:12.22-bookworm
 imageSpec:
   config:
     removeVolumes:
@@ -466,6 +469,9 @@ git:
   add: /postgresql/data
   to: /var/lib/postgresql/data
 ```
+
+In this example, the base image `postgres:12.22-bookworm` has unnecessary volumes removed, which can then be used in the `app` image.
+
 
 ## Linking images
 

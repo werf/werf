@@ -35,8 +35,8 @@ sections:
               ru: "Включить послойное кеширование инструкций Dockerfile в container registry глобально для всех образов"
           - name: imageSpec
             description:
-              en: Global image configuration options according to the OCI specification, which will be applied to all images in the project
-              ru: Глобальная конфигурация образов согласно OCI спецификации, которая применится ко всем образам в проекте
+              en: Global image configuration options according to the OCI specification, which will be applied to all images
+              ru: Глобальная конфигурация образов согласно OCI спецификации, которая применится ко всем образам
             collapsible: true
             isCollapsedByDefault: false
             detailsCustomLinks:
@@ -377,7 +377,7 @@ sections:
         detailsCustomLinks:
           en:
             - text: Changing image configuration spec
-              article: "/usage/build/images.md#изменение-конфигурации-образов"
+              article: "/usage/build/images.md#changing-image-configuration-spec"
           ru:
             - text: Изменение конфигурации образов
               article: "/usage/build/images.md#изменение-конфигурации-образов"
