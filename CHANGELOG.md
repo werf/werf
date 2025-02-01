@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.24.0](https://www.github.com/werf/werf/compare/v2.23.1...v2.24.0) (2025-02-01)
+
+
+### Features
+
+* **build:** add mutate image spec config feature ([#6578](https://www.github.com/werf/werf/issues/6578)) ([799193e](https://www.github.com/werf/werf/commit/799193ee85475ee0602d19bb410336c81a6ee084))
+* **deploy:** add --disable-default-values and --disable-default-secret-values flags to `bundle apply` ([722f1b9](https://www.github.com/werf/werf/commit/722f1b9a5120af0741737e8b8a227ed7c0366785))
+* **deploy:** vendor chart dependencies in bundle during `bundle publish` ([0d37ce0](https://www.github.com/werf/werf/commit/0d37ce0e42a5763dab65d94dd83a0af53c5fb88c))
+
 ### [2.23.1](https://www.github.com/werf/werf/compare/v2.23.0...v2.23.1) (2025-01-30)
 
 
