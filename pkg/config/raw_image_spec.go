@@ -92,7 +92,7 @@ type rawImageSpecGlobal struct {
 	ClearHistory bool                      `yaml:"clearHistory,omitempty"`
 	Config       *rawImageSpecGlobalConfig `yaml:"config,omitempty"`
 
-	doc *doc `yaml:"-"` // parent
+	rawMetaBuild *rawMetaBuild  // parent
 
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
 }
@@ -102,22 +102,45 @@ type rawImageSpecGlobalConfig struct {
 	RemoveLabels     []string          `yaml:"removeLabels,omitempty"`
 	Labels           map[string]string `yaml:"labels,omitempty"`
 
-	doc *doc `yaml:"-"` // parent
+	rawImageSpecGlobal *rawImageSpecGlobal // parent
 
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
 }
 
 func (s *rawImageSpecGlobal) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	if parent, ok := parentStack.Peek().(*rawMetaBuild); ok {
+		s.rawMetaBuild = parent
+	}
+
+	parentStack.Push(s)
 	type plain rawImageSpecGlobal
-	if err := unmarshal((*plain)(s)); err != nil {
+	err := unmarshal((*plain)(s))
+	parentStack.Pop()
+	if err != nil {
 		return err
 	}
 
-	if err := checkOverflow(s.UnsupportedAttributes, nil, s.doc); err != nil {
+	if err := checkOverflow(s.UnsupportedAttributes, nil, s.rawMetaBuild.rawMeta.doc); err != nil {
 		return err
 	}
 
-	if err := checkOverflow(s.Config.UnsupportedAttributes, nil, s.Config.doc); err != nil {
+	return nil
+}
+
+func (s *rawImageSpecGlobalConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	if parent, ok := parentStack.Peek().(*rawImageSpecGlobal); ok {
+		s.rawImageSpecGlobal = parent
+	}
+
+	parentStack.Push(s)
+	type plain rawImageSpecGlobalConfig
+	err := unmarshal((*plain)(s))
+	parentStack.Pop()
+	if err != nil {
+		return err
+	}
+
+	if err := checkOverflow(s.UnsupportedAttributes, nil, s.rawImageSpecGlobal.rawMetaBuild.rawMeta.doc); err != nil {
 		return err
 	}
 
