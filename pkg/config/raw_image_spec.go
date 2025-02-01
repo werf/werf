@@ -53,6 +53,29 @@ func (s *rawImageSpec) doc() *doc {
 	}
 }
 
+func (s *rawImageSpec) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	switch parent := parentStack.Peek().(type) {
+	case *rawStapelImage:
+		s.rawStapelImage = parent
+	case *rawImageFromDockerfile:
+		s.rawImageFromDockerfile = parent
+	}
+
+	parentStack.Push(s)
+	type plain rawImageSpec
+	err := unmarshal((*plain)(s))
+	parentStack.Pop()
+	if err != nil {
+		return err
+	}
+
+	if err := checkOverflow(s.UnsupportedAttributes, s, s.doc()); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (s *rawImageSpecConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if parent, ok := parentStack.Peek().(*rawImageSpec); ok {
 		s.rawImageSpec = parent
