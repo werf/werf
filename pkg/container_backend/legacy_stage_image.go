@@ -260,7 +260,6 @@ func (i *LegacyStageImage) GetBuildServiceLabels() map[string]string {
 	return i.buildServiceLabels
 }
 
-
 func (i *LegacyStageImage) SetImageSpecConfig(config *image.Config) {
 	i.imageSpecConfig = config
 }
