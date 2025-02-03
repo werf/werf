@@ -12,7 +12,7 @@ type rawParent interface {
 }
 
 type rawSecret struct {
-	Id         string `yaml:"id"`
+	Id         string `yaml:"id,omitempty"`
 	Env        string `yaml:"env,omitempty"`
 	Src        string `yaml:"src,omitempty"`
 	PlainValue string `yaml:"value,omitempty"`
