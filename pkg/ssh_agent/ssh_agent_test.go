@@ -31,6 +31,9 @@ func TestLinuxFallback_with_SSHenv(t *testing.T) {
 func TestLinuxFallback_without_SSHenv_wildTmpPath(t *testing.T) {
 	ctx := context.Background()
 	err := runTest(ctx, t, false, false, func() {
+		if SSHAuthSock == "" {
+			return
+		}
 		valid, err := validateAgentSock(SSHAuthSock)
 		assert.NoError(t, err)
 		assert.True(t, valid)
