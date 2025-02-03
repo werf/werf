@@ -35,6 +35,7 @@ var cmdData struct {
 	RenderOutput string
 	Validate     bool
 	IncludeCRDs  bool
+	ShowOnly     []string
 }
 
 var commonCmdData common.CmdData
@@ -96,7 +97,9 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupValues(&commonCmdData, cmd, false)
 	common.SetupSecretValues(&commonCmdData, cmd, false)
 	common.SetupIgnoreSecretKey(&commonCmdData, cmd)
+	commonCmdData.SetupDisableDefaultValues(cmd)
 	commonCmdData.SetupDisableDefaultSecretValues(cmd)
+	commonCmdData.SetupSkipDependenciesRepoRefresh(cmd)
 
 	common.SetupKubeConfig(&commonCmdData, cmd)
 	common.SetupKubeConfigBase64(&commonCmdData, cmd)
@@ -126,6 +129,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 		"Get extracted bundle from directory instead of registry (default $WERF_BUNDLE_DIR)")
 
 	cmd.Flags().BoolVarP(&cmdData.Validate, "validate", "", util.GetBoolEnvironmentDefaultFalse("WERF_VALIDATE"), "Validate your manifests against the Kubernetes cluster you are currently pointing at (default $WERF_VALIDATE)")
+	cmd.Flags().StringArrayVarP(&cmdData.ShowOnly, "show-only", "s", []string{}, "only show manifests rendered from the given templates")
 
 	return cmd
 }
@@ -226,7 +230,9 @@ func runRender(ctx context.Context) error {
 		ChartDirPath:                 bundle.Dir,
 		ChartRepositoryInsecure:      *commonCmdData.InsecureHelmDependencies,
 		ChartRepositorySkipTLSVerify: *commonCmdData.SkipTlsVerifyHelmDependencies,
+		ChartRepositorySkipUpdate:    *commonCmdData.SkipDependenciesRepoRefresh,
 		DefaultSecretValuesDisable:   *commonCmdData.DisableDefaultSecretValues,
+		DefaultValuesDisable:         *commonCmdData.DisableDefaultValues,
 		ExtraAnnotations:             extraAnnotations,
 		ExtraLabels:                  extraLabels,
 		ExtraRuntimeAnnotations:      serviceAnnotations,
@@ -254,6 +260,7 @@ func runRender(ctx context.Context) error {
 		SecretKeyIgnore:              *commonCmdData.IgnoreSecretKey,
 		SecretValuesPaths:            common.GetSecretValues(&commonCmdData),
 		ShowCRDs:                     cmdData.IncludeCRDs,
+		ShowOnlyFiles:                append(util.PredefinedValuesByEnvNamePrefix("WERF_SHOW_ONLY"), cmdData.ShowOnly...),
 		ValuesFileSets:               common.GetSetFile(&commonCmdData),
 		ValuesFilesPaths:             common.GetValues(&commonCmdData),
 		ValuesSets:                   common.GetSet(&commonCmdData),
