@@ -197,11 +197,10 @@ func runApply(ctx context.Context) error {
 	}
 
 	bundle, err := chart_extender.NewBundle(ctx, bundlePath, chart_extender.BundleOptions{
-		SecretValueFiles:                  common.GetSecretValues(&commonCmdData),
-		BuildChartDependenciesOpts:        chart.BuildChartDependenciesOptions{},
-		IgnoreInvalidAnnotationsAndLabels: true,
-		ExtraAnnotations:                  userExtraAnnotations,
-		ExtraLabels:                       userExtraLabels,
+		SecretValueFiles:           common.GetSecretValues(&commonCmdData),
+		BuildChartDependenciesOpts: chart.BuildChartDependenciesOptions{},
+		ExtraAnnotations:           userExtraAnnotations,
+		ExtraLabels:                userExtraLabels,
 	})
 	if err != nil {
 		return fmt.Errorf("construct bundle: %w", err)
