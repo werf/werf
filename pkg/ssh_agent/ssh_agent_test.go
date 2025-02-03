@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
 	"github.com/werf/werf/v2/pkg/werf"
 )
 
@@ -57,7 +58,7 @@ func TestLinuxFallback_withLongSSHenv(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func testInit(ctx context.Context, t *testing.T, unsetSSHenv bool, wildTmpPath bool) error {
+func testInit(ctx context.Context, t *testing.T, unsetSSHenv, wildTmpPath bool) error {
 	if unsetSSHenv {
 		os.Unsetenv("SSH_AUTH_SOCK")
 	}
