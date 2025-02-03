@@ -36,7 +36,7 @@ type SecretFromPlainValue struct {
 
 func newSecretFromEnv(s *rawSecret) (*SecretFromEnv, error) {
 	if _, exists := os.LookupEnv(s.Env); !exists {
-		return nil, fmt.Errorf("specified env variable doesn't exist")
+		return nil, fmt.Errorf("specified env variable `%s` doesn't exist", s.Env)
 	}
 	if s.Id == "" {
 		s.Id = s.Env
@@ -140,14 +140,14 @@ func GetValidatedSecrets(rawSecrets []*rawSecret, giterminismManager giterminism
 	for _, s := range rawSecrets {
 		secret, err := s.toDirective()
 		if err != nil {
-			return nil, err
+			return nil, newDetailedConfigError(fmt.Sprintf("unable to load build secrets: %s", err.Error()), s, s.parent.getDoc())
 		}
 
 		secretId := secret.GetSecretId()
 		if _, ok := secretIds[secretId]; !ok {
 			secretIds[secretId] = struct{}{}
 		} else {
-			return nil, newDetailedConfigError("duplicated secret %s", secretId, s.doc)
+			return nil, newDetailedConfigError("duplicated secret %s", secretId, s.parent.getDoc())
 		}
 
 		err = secret.InspectByGiterminism(giterminismManager)

@@ -4,32 +4,40 @@ import (
 	"fmt"
 )
 
+// TODO (iapershin)
+// rawOrigin is not suitable here since image stack contains `doc` property and coudn't be used along with doc()
+// refactor to use common approach
+type rawParent interface {
+	getDoc() *doc
+}
+
 type rawSecret struct {
 	Id         string `yaml:"id"`
 	Env        string `yaml:"env,omitempty"`
 	Src        string `yaml:"src,omitempty"`
 	PlainValue string `yaml:"value,omitempty"`
 
-	doc *doc `yaml:"-"` // parent
+	parent rawParent `yaml:"-"` // parent
 
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
 }
 
 func (s *rawSecret) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	parentStack.Push(s)
+	if parent, ok := parentStack.Peek().(rawParent); ok {
+		s.parent = parent
+	}
+
 	type plain rawSecret
-	err := unmarshal((*plain)(s))
-	parentStack.Pop()
-	if err != nil {
-		return fmt.Errorf("secrets parsing error: %w", err)
+	if err := unmarshal((*plain)(s)); err != nil {
+		return err
 	}
 
 	if err := s.validate(); err != nil {
-		return fmt.Errorf("secrets validation error: %w", err)
+		return newDetailedConfigError(fmt.Sprintf("secrets validation error: %s", err.Error()), s, s.parent.getDoc())
 	}
 
-	if err := checkOverflow(s.UnsupportedAttributes, nil, s.doc); err != nil {
-		return fmt.Errorf("secrets validation error: %w", err)
+	if err := checkOverflow(s.UnsupportedAttributes, nil, s.parent.getDoc()); err != nil {
+		return err
 	}
 
 	return nil
@@ -37,7 +45,7 @@ func (s *rawSecret) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 func (s *rawSecret) validate() error {
 	if !oneOrNone([]bool{s.Env != "", s.Src != "", s.PlainValue != ""}) {
-		return newDetailedConfigError("specify only env or src or value in secret", s, s.doc)
+		return fmt.Errorf("secret type could be ONLY `env`, `src` or `value`")
 	}
 	return nil
 }
@@ -51,6 +59,6 @@ func (s *rawSecret) toDirective() (Secret, error) {
 	case s.PlainValue != "":
 		return newSecretFromPlainValue(s)
 	default:
-		return nil, newDetailedConfigError("secret type is not supported", s, s.doc)
+		return nil, newDetailedConfigError("unknown secret type. only `env`, `src` and `value` is supported", s, s.parent.getDoc())
 	}
 }

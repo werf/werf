@@ -342,3 +342,7 @@ func (c *rawStapelImage) toBaseStapelImageBaseDirective(giterminismManager giter
 
 	return imageBase, nil
 }
+
+func (r *rawStapelImage) getDoc() *doc {
+	return r.doc
+}
