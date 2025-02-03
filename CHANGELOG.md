@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.24.1](https://www.github.com/werf/werf/compare/v2.24.0...v2.24.1) (2025-02-03)
+
+
+### Bug Fixes
+
+* **deploy:** subchart secret values not disabled via --disable-default-secret-values in `bundle apply` ([2821eed](https://www.github.com/werf/werf/commit/2821eedaaea570f207cf24de3066197c7d0e9e8f))
+
 ## [2.24.0](https://www.github.com/werf/werf/compare/v2.23.1...v2.24.0) (2025-02-01)
 
 
