@@ -375,6 +375,22 @@ func (f files) Glob(pattern string) map[string]interface{} {
 	}
 }
 
+func (f files) Exists(relPath string) bool {
+	exist, err := f.giterminismManager.FileReader().IsFileExist(f.ctx, relPath)
+	if err != nil {
+		panic(err.Error())
+	}
+	return exist
+}
+
+func (f files) IsDir(relPath string) bool {
+	exist, err := f.giterminismManager.FileReader().IsDirectoryExist(f.ctx, relPath)
+	if err != nil {
+		panic(err.Error())
+	}
+	return exist
+}
+
 func splitContent(content []byte) (docsContents [][]byte) {
 	const (
 		stateLineBegin   = "stateLineBegin"

@@ -28,6 +28,8 @@ type FileReader interface {
 	ConfigGoTemplateFilesGlob(ctx context.Context, pattern string) (map[string]interface{}, error)
 	ReadDockerfile(ctx context.Context, relPath string) ([]byte, error)
 	IsDockerignoreExistAnywhere(ctx context.Context, relPath string) (bool, error)
+	IsDirectoryExist(ctx context.Context, relPath string) (exist bool, err error)
+	IsFileExist(ctx context.Context, relPath string) (exist bool, err error)
 	ReadDockerignore(ctx context.Context, relPath string) ([]byte, error)
 
 	file.ChartFileReader

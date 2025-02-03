@@ -447,6 +447,26 @@ func (r FileReader) IsRegularFileExist(ctx context.Context, relPath string) (exi
 	return
 }
 
+// IsFileExist resolves symlinks and returns true if the resolved file exists.
+func (r FileReader) IsFileExist(ctx context.Context, relPath string) (exist bool, err error) {
+	logboek.Context(ctx).Debug().
+		LogBlock("IsFileExist %q", relPath).
+		Options(func(options types.LogBlockOptionsInterface) {
+			if !debug() {
+				options.Mute()
+			}
+		}).
+		Do(func() {
+			exist, err = r.isFileExist(ctx, relPath)
+
+			if debug() {
+				logboek.Context(ctx).Debug().LogF("exist: %v\nerr: %q\n", exist, err)
+			}
+		})
+
+	return
+}
+
 func (r FileReader) isRegularFileExist(ctx context.Context, relPath string) (bool, error) {
 	resolvedPath, err := r.ResolveFilePath(ctx, relPath)
 	if err != nil {
@@ -459,6 +479,25 @@ func (r FileReader) isRegularFileExist(ctx context.Context, relPath string) (boo
 
 	absPath := r.projectRelativePathToAbsolutePath(resolvedPath)
 	exist, err := util.RegularFileExists(absPath)
+	if err != nil {
+		return false, fmt.Errorf("unable to check existence of regular file %q: %w", absPath, err)
+	}
+
+	return exist, nil
+}
+
+func (r FileReader) isFileExist(ctx context.Context, relPath string) (bool, error) {
+	resolvedPath, err := r.ResolveFilePath(ctx, relPath)
+	if err != nil {
+		if IsFileNotFoundInProjectDirectoryError(err) {
+			return false, nil
+		}
+
+		return false, fmt.Errorf("unable to resolve file path %q: %w", relPath, err)
+	}
+
+	absPath := r.projectRelativePathToAbsolutePath(resolvedPath)
+	exist, err := util.FileExists(absPath)
 	if err != nil {
 		return false, fmt.Errorf("unable to check existence of file %q: %w", absPath, err)
 	}
