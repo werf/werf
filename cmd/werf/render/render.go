@@ -105,8 +105,11 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupKubeConfigBase64(&commonCmdData, cmd)
 	common.SetupKubeContext(&commonCmdData, cmd)
 
+	// TODO(v3): remove, useless
 	common.SetupStatusProgressPeriod(&commonCmdData, cmd)
+	// TODO(v3): remove or hide this in all commands, already ignored in v2
 	common.SetupHooksStatusProgressPeriod(&commonCmdData, cmd)
+	// TODO(v3): remove, useless for render
 	common.SetupReleasesHistoryMax(&commonCmdData, cmd)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified repo and to pull base images")
