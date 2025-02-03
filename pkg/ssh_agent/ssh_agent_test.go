@@ -20,22 +20,22 @@ func TestLinuxFallback_with_SSHenv(t *testing.T) {
 		t.Skip("Skipping test because SSH_AUTH_SOCK is not set")
 	}
 	ctx := context.Background()
-	err := testInit(ctx, t, false, false)
+	err := runTest(ctx, t, false, false, func() {
+		valid, err := validateAgentSock(SSHAuthSock)
+		assert.NoError(t, err)
+		assert.True(t, valid)
+	})
 	assert.NoError(t, err)
-
-	valid, err := validatesystemAgentSock(SSHAuthSock)
-	assert.NoError(t, err)
-	assert.True(t, valid)
 }
 
 func TestLinuxFallback_without_SSHenv_wildTmpPath(t *testing.T) {
 	ctx := context.Background()
-	err := testInit(ctx, t, false, false)
+	err := runTest(ctx, t, false, false, func() {
+		valid, err := validateAgentSock(SSHAuthSock)
+		assert.NoError(t, err)
+		assert.True(t, valid)
+	})
 	assert.NoError(t, err)
-
-	valid, err := validatesystemAgentSock(SSHAuthSock)
-	assert.NoError(t, err)
-	assert.True(t, valid)
 }
 
 func TestLinuxFallback_with_SSHenv_wildTmpPath(t *testing.T) {
@@ -43,22 +43,22 @@ func TestLinuxFallback_with_SSHenv_wildTmpPath(t *testing.T) {
 		t.Skip("Skipping test because SSH_AUTH_SOCK is not set")
 	}
 	ctx := context.Background()
-	err := testInit(ctx, t, false, false)
+	err := runTest(ctx, t, false, false, func() {
+		valid, err := validateAgentSock(SSHAuthSock)
+		assert.NoError(t, err)
+		assert.True(t, valid)
+	})
 	assert.NoError(t, err)
-
-	valid, err := validatesystemAgentSock(SSHAuthSock)
-	assert.NoError(t, err)
-	assert.True(t, valid)
 }
 
 func TestLinuxFallback_withLongSSHenv(t *testing.T) {
 	ctx := context.Background()
 	os.Setenv(SSHAuthSockEnv, longPath)
-	err := testInit(ctx, t, false, false)
+	err := runTest(ctx, t, false, false, func() {})
 	assert.Error(t, err)
 }
 
-func testInit(ctx context.Context, t *testing.T, unsetSSHenv, wildTmpPath bool) error {
+func runTest(ctx context.Context, t *testing.T, unsetSSHenv, wildTmpPath bool, validationfunc func()) error {
 	if unsetSSHenv {
 		os.Unsetenv("SSH_AUTH_SOCK")
 	}
@@ -88,6 +88,8 @@ func testInit(ctx context.Context, t *testing.T, unsetSSHenv, wildTmpPath bool) 
 	if err != nil {
 		return err
 	}
+
+	validationfunc()
 
 	return nil
 }

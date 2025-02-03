@@ -140,7 +140,7 @@ func Init(ctx context.Context, userKeys []string) error {
 	}
 
 	systemAgentSock := os.Getenv(SSHAuthSockEnv)
-	validSystemAgentSock, err := validatesystemAgentSock(systemAgentSock)
+	validSystemAgentSock, err := validateAgentSock(systemAgentSock)
 	if err != nil {
 		if errors.Is(err, ErrSocketPathEmpty) {
 			logboek.Context(ctx).Debug().LogF("System ssh agent not found\n")
@@ -148,7 +148,7 @@ func Init(ctx context.Context, userKeys []string) error {
 			return err
 		}
 	}
-	if validSystemAgentSock {
+	if systemAgentSock != "" && validSystemAgentSock {
 		SSHAuthSock = systemAgentSock
 		logboek.Context(ctx).Info().LogF("Using system ssh-agent: %s\n", systemAgentSock)
 		return nil
@@ -323,29 +323,29 @@ func parsePrivateSSHKey(cfg sshKeyConfig) (sshKey, error) {
 	return sshKey{Config: cfg, PrivateKey: privateKey}, nil
 }
 
-func validatesystemAgentSock(systemAgentSock string) (bool, error) {
-	if systemAgentSock == "" {
+func validateAgentSock(sock string) (bool, error) {
+	if sock == "" {
 		return false, ErrSocketPathEmpty
 	}
 
-	err := validateSockPathLength(systemAgentSock)
+	err := validateSockPathLength(sock)
 	if err != nil {
-		return false, fmt.Errorf("unable to use system ssh sock '%s': %w", systemAgentSock, err)
+		return false, fmt.Errorf("unable to use system ssh sock '%s': %w", sock, err)
 	}
 
 	if runtime.GOOS != "windows" {
-		info, err := os.Stat(systemAgentSock)
+		info, err := os.Stat(sock)
 		if err != nil {
 			return false, err
 		}
 
 		if info.Mode()&os.ModeSocket == 0 {
-			return false, fmt.Errorf("system ssh-agent socket `%s` is not a socket", systemAgentSock)
+			return false, fmt.Errorf("system ssh-agent socket `%s` is not a socket", sock)
 		}
 	}
-	conn, err := net.Dial("unix", systemAgentSock)
+	conn, err := net.Dial("unix", sock)
 	if err != nil {
-		return false, fmt.Errorf("unable to connect to system ssh-agent socket %s: %w", systemAgentSock, err)
+		return false, fmt.Errorf("unable to connect to system ssh-agent socket %s: %w", sock, err)
 	}
 	defer conn.Close()
 
