@@ -2,6 +2,7 @@ package ssh_agent
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -29,6 +30,11 @@ const (
 var (
 	SSHAuthSock string
 	tmpSockPath string
+)
+
+var (
+	ErrSocketPathTooLong = errors.New("system ssh-agent socket path length exceeds the limit")
+	ErrSocketPathEmpty   = errors.New("system ssh-agent socket path is empty")
 )
 
 func setupProcessSSHAgent(sshAuthSock string) error {
@@ -134,8 +140,15 @@ func Init(ctx context.Context, userKeys []string) error {
 	}
 
 	systemAgentSock := os.Getenv(SSHAuthSockEnv)
-	systemAgentSockExists, _ := util.FileExists(systemAgentSock)
-	if systemAgentSock != "" && systemAgentSockExists {
+	validSystemAgentSock, err := validateAgentSock(systemAgentSock)
+	if err != nil {
+		if errors.Is(err, ErrSocketPathEmpty) {
+			logboek.Context(ctx).Debug().LogF("System ssh agent not found\n")
+		} else {
+			return err
+		}
+	}
+	if systemAgentSock != "" && validSystemAgentSock {
 		SSHAuthSock = systemAgentSock
 		logboek.Context(ctx).Info().LogF("Using system ssh-agent: %s\n", systemAgentSock)
 		return nil
@@ -198,18 +211,17 @@ func runSSHAgentWithKeys(ctx context.Context, keys []sshKey) (string, error) {
 }
 
 func runSSHAgent(ctx context.Context) (string, error) {
-	var sockPath string
-	// darwin does not support path more than 108 characters
-	if runtime.GOOS == "darwin" {
-		// TODO(iapershin): needs refactoring. since user can change tmpDir we want to prevent it from setting path more than 108 chars
-		sockPath = filepath.Join(os.TempDir(), "werf", "Listeners", uuid.NewString())
-	} else {
-		sockPath = filepath.Join(werf.GetTmpDir(), "werf-ssh-agent", uuid.NewString())
+	sockPath := filepath.Join(werf.GetTmpDir(), "werf-ssh-agent", uuid.NewString())
+	err := validateSockPathLength(sockPath)
+	if err != nil {
+		logboek.Context(ctx).Warn().LogF("WARNING: unable to use unix sock path %s: %s\n", sockPath, err)
+		sockPath = fallbackToDefaultUnix()
+		logboek.Context(ctx).Warn().LogF("WARNING: fallback to %s\n", sockPath)
 	}
 
 	tmpSockPath = sockPath
 
-	err := os.MkdirAll(filepath.Dir(sockPath), os.ModePerm)
+	err = os.MkdirAll(filepath.Dir(sockPath), os.ModePerm)
 	if err != nil {
 		return "", err
 	}
@@ -309,4 +321,54 @@ func parsePrivateSSHKey(cfg sshKeyConfig) (sshKey, error) {
 	}
 
 	return sshKey{Config: cfg, PrivateKey: privateKey}, nil
+}
+
+func validateAgentSock(sock string) (bool, error) {
+	if sock == "" {
+		return false, ErrSocketPathEmpty
+	}
+
+	err := validateSockPathLength(sock)
+	if err != nil {
+		return false, fmt.Errorf("unable to use system ssh sock '%s': %w", sock, err)
+	}
+
+	if runtime.GOOS != "windows" {
+		info, err := os.Stat(sock)
+		if err != nil {
+			return false, err
+		}
+
+		if info.Mode()&os.ModeSocket == 0 {
+			return false, fmt.Errorf("system ssh-agent socket `%s` is not a socket", sock)
+		}
+	}
+	conn, err := net.Dial("unix", sock)
+	if err != nil {
+		return false, fmt.Errorf("unable to connect to system ssh-agent socket %s: %w", sock, err)
+	}
+	defer conn.Close()
+
+	return true, nil
+}
+
+func getUnixSocketPathLimit() int {
+	switch runtime.GOOS {
+	case "darwin", "freebsd", "openbsd", "netbsd":
+		return 104
+	default:
+		return 108
+	}
+}
+
+func validateSockPathLength(sockPath string) error {
+	if len(sockPath) > getUnixSocketPathLimit() {
+		return ErrSocketPathTooLong
+	}
+	return nil
+}
+
+func fallbackToDefaultUnix() string {
+	// since user can change tmpDir we want to prevent it from setting path more than 104/108 chars
+	return filepath.Join(os.TempDir(), "werf-ssh-agent", uuid.NewString())
 }
