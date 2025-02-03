@@ -9,7 +9,6 @@ import (
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/cmd/werf/common"
-	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/host_cleaning"
 	"github.com/werf/werf/v2/pkg/true_git"
 	"github.com/werf/werf/v2/pkg/werf"
@@ -98,19 +97,11 @@ func runCleanup(ctx context.Context) error {
 		return fmt.Errorf("component init error: %w", err)
 	}
 
-	containerBackend := commonManager.ContainerBackend()
-
 	logboek.LogOptionalLn()
 
-	cleanupDockerServer := false
-	if _, match := containerBackend.(*container_backend.DockerServerBackend); match {
-		cleanupDockerServer = true
-	}
-
 	hostCleanupOptions := host_cleaning.HostCleanupOptions{
-		DryRun:              *commonCmdData.DryRun,
-		Force:               cmdData.Force,
-		CleanupDockerServer: cleanupDockerServer,
+		DryRun: *commonCmdData.DryRun,
+		Force:  cmdData.Force,
 		AllowedDockerStorageVolumeUsagePercentage:       commonCmdData.AllowedDockerStorageVolumeUsage,
 		AllowedDockerStorageVolumeUsageMarginPercentage: commonCmdData.AllowedDockerStorageVolumeUsageMargin,
 		AllowedLocalCacheVolumeUsagePercentage:          commonCmdData.AllowedLocalCacheVolumeUsage,
@@ -118,5 +109,5 @@ func runCleanup(ctx context.Context) error {
 		DockerServerStoragePath:                         commonCmdData.DockerServerStoragePath,
 	}
 
-	return host_cleaning.RunHostCleanup(ctx, containerBackend, hostCleanupOptions)
+	return host_cleaning.RunHostCleanup(ctx, commonManager.ContainerBackend(), hostCleanupOptions)
 }

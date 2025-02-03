@@ -44,6 +44,7 @@ import (
 	"gopkg.in/errgo.v2/fmt/errors"
 
 	"github.com/werf/werf/v2/pkg/buildah/thirdparty"
+	"github.com/werf/werf/v2/pkg/container_backend/info"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/ssh_agent"
 )
@@ -86,6 +87,12 @@ type NativeBuildah struct {
 	defaultPlatform              string
 	defaultPlatformOverrideSpecs []struct{ OS, Arch, Variant string }
 	runtimePlatform              string
+}
+
+func (b *NativeBuildah) Info(ctx context.Context) (info.Info, error) {
+	return info.Info{
+		StoreGraphRoot: b.Store.GraphRoot(),
+	}, nil
 }
 
 func NewNativeBuildah(commonOpts CommonBuildahOpts, opts NativeModeOpts) (*NativeBuildah, error) {
@@ -895,8 +902,8 @@ func (b *NativeBuildah) Images(ctx context.Context, opts ImagesOptions) (image.I
 		return nil, err
 	}
 
-	var res image.ImagesList
-	for _, img := range images {
+	res := make(image.ImagesList, len(images))
+	for i, img := range images {
 		repoTags, err := img.RepoTags()
 		if err != nil {
 			return nil, fmt.Errorf("unable to get image %s repo tags: %w", img.ID(), err)
@@ -905,7 +912,23 @@ func (b *NativeBuildah) Images(ctx context.Context, opts ImagesOptions) (image.I
 		if err != nil {
 			return nil, fmt.Errorf("unable to get image %s repo digests: %w", img.ID(), err)
 		}
-		res = append(res, image.Summary{RepoTags: repoTags, RepoDigests: repoDigests})
+		size, err := img.Size()
+		if err != nil {
+			return nil, fmt.Errorf("unable to get image %s size: %w", img.ID(), err)
+		}
+		labels, err := img.Labels(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("unable to get image %s labels: %w", img.ID(), err)
+		}
+		res[i] = image.Summary{
+			ID:          img.ID(),
+			RepoTags:    repoTags,
+			RepoDigests: repoDigests,
+			Labels:      labels,
+			Created:     img.Created(),
+			Size:        size,
+			SharedSize:  0, // TODO: not implemented yet. See pkg/host_cleaning/local_cleaner.go:74
+		}
 	}
 
 	return res, nil

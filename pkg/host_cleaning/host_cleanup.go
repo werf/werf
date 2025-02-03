@@ -2,6 +2,7 @@ package host_cleaning
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -27,9 +28,8 @@ type HostCleanupOptions struct {
 	AllowedLocalCacheVolumeUsageMarginPercentage    *uint
 	DockerServerStoragePath                         *string
 
-	CleanupDockerServer bool
-	DryRun              bool
-	Force               bool
+	DryRun bool
+	Force  bool
 }
 
 type AutoHostCleanupOptions struct {
@@ -48,9 +48,9 @@ func getOptionValueOrDefault(optionValue *uint, defaultValue float64) float64 {
 	return res
 }
 
-func RunAutoHostCleanup(ctx context.Context, options AutoHostCleanupOptions) error {
+func RunAutoHostCleanup(ctx context.Context, backend container_backend.ContainerBackend, options AutoHostCleanupOptions) error {
 	if !options.ForceShouldRun {
-		shouldRun, err := ShouldRunAutoHostCleanup(ctx, options.HostCleanupOptions)
+		shouldRun, err := ShouldRunAutoHostCleanup(ctx, backend, options.HostCleanupOptions)
 		if err != nil {
 			logboek.Context(ctx).Warn().LogF("WARNING: unable to check if auto host cleanup should be run: %s\n", err)
 			return nil
@@ -119,9 +119,9 @@ func RunAutoHostCleanup(ctx context.Context, options AutoHostCleanupOptions) err
 	return nil
 }
 
-func RunHostCleanup(ctx context.Context, containerBackend container_backend.ContainerBackend, options HostCleanupOptions) error {
+func RunHostCleanup(ctx context.Context, backend container_backend.ContainerBackend, options HostCleanupOptions) error {
 	if err := logboek.Context(ctx).LogProcess("Running GC for tmp data").DoError(func() error {
-		if err := tmp_manager.RunGC(ctx, options.DryRun, containerBackend); err != nil {
+		if err := tmp_manager.RunGC(ctx, options.DryRun, backend); err != nil {
 			return fmt.Errorf("tmp files GC failed: %w", err)
 		}
 		return nil
@@ -132,9 +132,6 @@ func RunHostCleanup(ctx context.Context, containerBackend container_backend.Cont
 	allowedLocalCacheVolumeUsagePercentage := getOptionValueOrDefault(options.AllowedLocalCacheVolumeUsagePercentage, DefaultAllowedLocalCacheVolumeUsagePercentage)
 	allowedLocalCacheVolumeUsageMarginPercentage := getOptionValueOrDefault(options.AllowedLocalCacheVolumeUsageMarginPercentage, DefaultAllowedLocalCacheVolumeUsageMarginPercentage)
 
-	allowedDockerStorageVolumeUsagePercentage := getOptionValueOrDefault(options.AllowedDockerStorageVolumeUsagePercentage, DefaultAllowedDockerStorageVolumeUsagePercentage)
-	allowedDockerStorageVolumeUsageMarginPercentage := getOptionValueOrDefault(options.AllowedDockerStorageVolumeUsageMarginPercentage, DefaultAllowedDockerStorageVolumeUsageMarginPercentage)
-
 	if err := logboek.Context(ctx).Default().LogProcess("Running GC for git data").DoError(func() error {
 		if err := gitdata.RunGC(ctx, allowedLocalCacheVolumeUsagePercentage, allowedLocalCacheVolumeUsageMarginPercentage); err != nil {
 			return fmt.Errorf("git repo GC failed: %w", err)
@@ -144,24 +141,33 @@ func RunHostCleanup(ctx context.Context, containerBackend container_backend.Cont
 		return err
 	}
 
-	if options.CleanupDockerServer {
-		dockerServerStoragePath, err := getDockerServerStoragePath(ctx, options.DockerServerStoragePath)
-		if err != nil {
-			return fmt.Errorf("error getting local docker server storage path: %w", err)
-		}
+	allowedDockerStorageVolumeUsagePercentage := getOptionValueOrDefault(options.AllowedDockerStorageVolumeUsagePercentage, DefaultAllowedDockerStorageVolumeUsagePercentage)
+	allowedDockerStorageVolumeUsageMarginPercentage := getOptionValueOrDefault(options.AllowedDockerStorageVolumeUsageMarginPercentage, DefaultAllowedDockerStorageVolumeUsageMarginPercentage)
 
-		return logboek.Context(ctx).Default().LogProcess("Running GC for local docker server").DoError(func() error {
-			if err := RunGCForLocalDockerServer(ctx, allowedDockerStorageVolumeUsagePercentage, allowedDockerStorageVolumeUsageMarginPercentage, dockerServerStoragePath, options.Force, options.DryRun); err != nil {
-				return fmt.Errorf("local docker server GC failed: %w", err)
-			}
-			return nil
-		})
+	cleaner, err := NewLocalBackendCleaner(backend)
+	if errors.Is(err, ErrUnsupportedContainerBackend) {
+		// if cleaner not implemented, skip cleaning
+		return nil
+	} else if err != nil {
+		return err
 	}
 
-	return nil
+	return logboek.Context(ctx).Default().LogProcess("Running GC for local %s backend", cleaner.BackendName()).DoError(func() error {
+		err := cleaner.RunGC(ctx, RunGCOptions{
+			AllowedStorageVolumeUsagePercentage:       allowedDockerStorageVolumeUsagePercentage,
+			AllowedStorageVolumeUsageMarginPercentage: allowedDockerStorageVolumeUsageMarginPercentage,
+			StoragePath: *options.DockerServerStoragePath,
+			force:       options.Force,
+			dryRun:      options.DryRun,
+		})
+		if err != nil {
+			return fmt.Errorf("local %s backend GC failed: %w", cleaner.BackendName(), err)
+		}
+		return nil
+	})
 }
 
-func ShouldRunAutoHostCleanup(ctx context.Context, options HostCleanupOptions) (bool, error) {
+func ShouldRunAutoHostCleanup(ctx context.Context, backend container_backend.ContainerBackend, options HostCleanupOptions) (bool, error) {
 	shouldRun, err := tmp_manager.ShouldRunAutoGC()
 	if err != nil {
 		return false, fmt.Errorf("failed to check tmp manager GC: %w", err)
@@ -170,30 +176,35 @@ func ShouldRunAutoHostCleanup(ctx context.Context, options HostCleanupOptions) (
 		return true, nil
 	}
 
-	if options.CleanupDockerServer {
-		allowedLocalCacheVolumeUsagePercentage := getOptionValueOrDefault(options.AllowedLocalCacheVolumeUsagePercentage, DefaultAllowedLocalCacheVolumeUsagePercentage)
-		allowedDockerStorageVolumeUsagePercentage := getOptionValueOrDefault(options.AllowedDockerStorageVolumeUsagePercentage, DefaultAllowedDockerStorageVolumeUsagePercentage)
+	allowedLocalCacheVolumeUsagePercentage := getOptionValueOrDefault(options.AllowedLocalCacheVolumeUsagePercentage, DefaultAllowedLocalCacheVolumeUsagePercentage)
 
-		shouldRun, err = gitdata.ShouldRunAutoGC(ctx, allowedLocalCacheVolumeUsagePercentage)
-		if err != nil {
-			return false, fmt.Errorf("failed to check git repo GC: %w", err)
-		}
-		if shouldRun {
-			return true, nil
-		}
+	shouldRun, err = gitdata.ShouldRunAutoGC(ctx, allowedLocalCacheVolumeUsagePercentage)
+	if err != nil {
+		return false, fmt.Errorf("failed to check git repo GC: %w", err)
+	}
+	if shouldRun {
+		return true, nil
+	}
 
-		dockerServerStoragePath, err := getDockerServerStoragePath(ctx, options.DockerServerStoragePath)
-		if err != nil {
-			return false, fmt.Errorf("error getting local docker server storage path: %w", err)
-		}
+	allowedDockerStorageVolumeUsagePercentage := getOptionValueOrDefault(options.AllowedDockerStorageVolumeUsagePercentage, DefaultAllowedDockerStorageVolumeUsagePercentage)
 
-		shouldRun, err = ShouldRunAutoGCForLocalDockerServer(ctx, allowedDockerStorageVolumeUsagePercentage, dockerServerStoragePath)
-		if err != nil {
-			return false, fmt.Errorf("failed to check local docker server host cleaner GC: %w", err)
-		}
-		if shouldRun {
-			return true, nil
-		}
+	cleaner, err := NewLocalBackendCleaner(backend)
+	if errors.Is(err, ErrUnsupportedContainerBackend) {
+		// if cleaner not implemented, skip cleaning
+		return false, nil
+	} else if err != nil {
+		return false, err
+	}
+
+	shouldRun, err = cleaner.ShouldRunAutoGC(ctx, RunAutoGCOptions{
+		AllowedStorageVolumeUsagePercentage: allowedDockerStorageVolumeUsagePercentage,
+		StoragePath:                         *options.DockerServerStoragePath,
+	})
+	if err != nil {
+		return false, fmt.Errorf("failed to check local docker server host cleaner GC: %w", err)
+	}
+	if shouldRun {
+		return true, nil
 	}
 
 	return false, nil

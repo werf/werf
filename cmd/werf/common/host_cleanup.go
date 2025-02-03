@@ -17,11 +17,6 @@ func RunAutoHostCleanup(ctx context.Context, cmdData *CmdData, containerBackend 
 		return nil
 	}
 
-	cleanupDockerServer := false
-	if _, match := containerBackend.(*container_backend.DockerServerBackend); match {
-		cleanupDockerServer = true
-	}
-
 	if *cmdData.AllowedDockerStorageVolumeUsageMargin >= *cmdData.AllowedDockerStorageVolumeUsage {
 		return fmt.Errorf("incompatible params --allowed-docker-storage-volume-usage=%d and --allowed-docker-storage-volume-usage-margin=%d: margin percentage should be less than allowed volume usage level percentage", *cmdData.AllowedDockerStorageVolumeUsage, *cmdData.AllowedDockerStorageVolumeUsageMargin)
 	}
@@ -30,11 +25,10 @@ func RunAutoHostCleanup(ctx context.Context, cmdData *CmdData, containerBackend 
 		return fmt.Errorf("incompatible params --allowed-local-cache-volume-usage=%d and --allowed-local-cache-volume-usage-margin=%d: margin percentage should be less than allowed volume usage level percentage", *cmdData.AllowedLocalCacheVolumeUsage, *cmdData.AllowedLocalCacheVolumeUsageMargin)
 	}
 
-	return host_cleaning.RunAutoHostCleanup(ctx, host_cleaning.AutoHostCleanupOptions{
+	return host_cleaning.RunAutoHostCleanup(ctx, containerBackend, host_cleaning.AutoHostCleanupOptions{
 		HostCleanupOptions: host_cleaning.HostCleanupOptions{
-			DryRun:              false,
-			Force:               false,
-			CleanupDockerServer: cleanupDockerServer,
+			DryRun: false,
+			Force:  false,
 			AllowedDockerStorageVolumeUsagePercentage:       cmdData.AllowedDockerStorageVolumeUsage,
 			AllowedDockerStorageVolumeUsageMarginPercentage: cmdData.AllowedDockerStorageVolumeUsageMargin,
 			AllowedLocalCacheVolumeUsagePercentage:          cmdData.AllowedLocalCacheVolumeUsage,

@@ -4,7 +4,10 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
+	"runtime"
 	"strings"
+	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
@@ -13,6 +16,7 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
+	"github.com/werf/werf/v2/pkg/container_backend/info"
 	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/ssh_agent"
@@ -22,6 +26,29 @@ type DockerServerBackend struct{}
 
 func NewDockerServerBackend() *DockerServerBackend {
 	return &DockerServerBackend{}
+}
+
+func (backend *DockerServerBackend) Info(ctx context.Context) (info.Info, error) {
+	res := info.Info{}
+
+	sysInfo, err := docker.Info(ctx)
+	if err != nil {
+		return res, fmt.Errorf("unable to get info: %w", err)
+	}
+
+	if sysInfo.OperatingSystem == "Docker Desktop" {
+		switch runtime.GOOS {
+		case "windows":
+			res.StoreGraphRoot = filepath.Join(os.Getenv("HOMEDRIVE"), `\\ProgramData\DockerDesktop\vm-data\`)
+
+		case "darwin":
+			res.StoreGraphRoot = filepath.Join(os.Getenv("HOME"), "Library/Containers/com.docker.docker/Data")
+		}
+	} else {
+		res.StoreGraphRoot = sysInfo.DockerRootDir
+	}
+
+	return res, nil
 }
 
 func (backend *DockerServerBackend) ClaimTargetPlatforms(ctx context.Context, targetPlatforms []string) {
@@ -301,11 +328,17 @@ func (backend *DockerServerBackend) Images(ctx context.Context, opts ImagesOptio
 		return nil, fmt.Errorf("unable to get docker images: %w", err)
 	}
 
-	var res image.ImagesList
-	for _, img := range images {
-		res = append(res, image.Summary{
-			RepoTags: img.RepoTags,
-		})
+	res := make(image.ImagesList, len(images))
+	for i, img := range images {
+		res[i] = image.Summary{
+			ID:          img.ID,
+			RepoDigests: img.RepoDigests,
+			RepoTags:    img.RepoTags,
+			Labels:      img.Labels,
+			Created:     time.Unix(img.Created, 0),
+			Size:        img.Size,
+			SharedSize:  img.SharedSize,
+		}
 	}
 	return res, nil
 }
@@ -333,13 +366,13 @@ func (backend *DockerServerBackend) Containers(ctx context.Context, opts Contain
 		return nil, err
 	}
 
-	var res image.ContainerList
-	for _, container := range containers {
-		res = append(res, image.Container{
+	res := make(image.ContainerList, len(containers))
+	for i, container := range containers {
+		res[i] = image.Container{
 			ID:      container.ID,
 			ImageID: container.ImageID,
 			Names:   container.Names,
-		})
+		}
 	}
 
 	return res, nil

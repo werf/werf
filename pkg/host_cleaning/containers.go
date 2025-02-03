@@ -2,52 +2,38 @@ package host_cleaning
 
 import (
 	"context"
-
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/filters"
+	"fmt"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/docker"
+	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/image"
 )
 
-func werfContainersFlushByFilterSet(ctx context.Context, filterSet filters.Args, options CommonOptions) error {
-	containers, err := werfContainersByFilterSet(ctx, filterSet)
-	if err != nil {
-		return err
-	}
-
-	if err := containersRemove(ctx, containers, options); err != nil {
-		return err
-	}
-
-	return nil
+func werfContainersByContainersOptions(ctx context.Context, backend container_backend.ContainerBackend, containersOptions container_backend.ContainersOptions) (image.ContainerList, error) {
+	containersOptions.Filters = append(containersOptions.Filters, image.ContainerFilter{Name: image.StageContainerNamePrefix})
+	return backend.Containers(ctx, containersOptions)
 }
 
-func werfContainersByFilterSet(ctx context.Context, filterSet filters.Args) ([]types.Container, error) {
-	filterSet.Add("name", image.StageContainerNamePrefix)
-	return containersByFilterSet(ctx, filterSet)
-}
-
-func containersByFilterSet(ctx context.Context, filterSet filters.Args) ([]types.Container, error) {
-	containersOptions := types.ContainerListOptions{}
-	containersOptions.All = true
-	containersOptions.Filters = filterSet
-
-	return docker.Containers(ctx, containersOptions)
-}
-
-func containersRemove(ctx context.Context, containers []types.Container, options CommonOptions) error {
+func containersRemove(ctx context.Context, backend container_backend.ContainerBackend, containers image.ContainerList, options CommonOptions) error {
 	for _, container := range containers {
 		if options.DryRun {
 			logboek.Context(ctx).LogLn(logContainerName(container))
 			logboek.Context(ctx).LogOptionalLn()
 		} else {
-			if err := docker.ContainerRemove(ctx, container.ID, types.ContainerRemoveOptions{Force: options.RmForce}); err != nil {
-				return err
+			err := backend.Rm(ctx, container.ID, container_backend.RmOpts{
+				Force: options.RmForce,
+			})
+			if err != nil {
+				return fmt.Errorf("container backend rm: %w", err)
 			}
 		}
 	}
 
 	return nil
+}
+
+func buildContainersOptions(filters ...image.ContainerFilter) container_backend.ContainersOptions {
+	opts := container_backend.ContainersOptions{}
+	opts.Filters = filters
+	return opts
 }
