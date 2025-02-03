@@ -44,6 +44,9 @@ werf bundle render [options]
       --disable-default-secret-values=false
             Do not use secret values from the default .helm/secret-values.yaml file (default        
             $WERF_DISABLE_DEFAULT_SECRET_VALUES or false)
+      --disable-default-values=false
+            Do not use values from the default .helm/values.yaml file (default                      
+            $WERF_DISABLE_DEFAULT_VALUES or false)
       --docker-config=''
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)
@@ -164,6 +167,10 @@ werf bundle render [options]
             with commas: key1=val1,key2=val2).
             Also, can be defined with $WERF_SET_STRING_* (e.g. $WERF_SET_STRING_1=key1=val1,        
             $WERF_SET_STRING_2=key2=val2)
+  -s, --show-only=[]
+            only show manifests rendered from the given templates
+  -L, --skip-dependencies-repo-refresh=false
+            Do not refresh helm chart repositories locally cached index
       --skip-tls-verify-helm-dependencies=false
             Skip TLS certificate validation when accessing a Helm charts repository (default        
             $WERF_SKIP_TLS_VERIFY_HELM_DEPENDENCIES)
