@@ -223,6 +223,38 @@ __Синтаксис__:
 
 ### Файлы проекта
 
+#### .Files.Exists
+
+Функция `.Files.Exists` проверят наличие файла/директории в рамках проекта и возвращает результат `true` или `false`.
+
+__Синтаксис__:
+{% raw %}
+```yaml
+{{ .Files.Exists "<FILE_PATH>" }}
+```
+{% endraw %}
+
+> По умолчанию, использование файлов, которые имеют незакоммиченные изменения, запрещено гитерминизмом (подробнее об этом в [статье]({{ "usage/project_configuration/giterminism.html" | true_relative_url }}))
+
+##### Пример: создание директории в stapel-образе в зависимости от наличия определённого файла
+
+{% raw %}
+```yaml
+project: my-project
+configVersion: 1
+---
+
+image: app
+from: alpine
+shell:
+  setup:
+  - |
+    {{ if .Files.Exists "./werf.yaml" }}
+      mkdir /opt/test
+    {{ end }}
+```
+{% endraw %}
+
 #### .Files.Get
 
 Функция `.Files.Get` получает содержимое определенного файла проекта.
@@ -333,6 +365,38 @@ ansible:
 {{ $content | indent 8 }}
       dest: /app/{{ base $path }}
 {{ end }}
+```
+{% endraw %}
+
+#### .Files.IsDir
+
+Функция `.Files.IsDir` проверят, является ли путь директорией и возвращает результат `true` или `false`.
+
+__Синтаксис__:
+{% raw %}
+```yaml
+{{ .Files.IsDir "<PATH>" }}
+```
+{% endraw %}
+
+> По умолчанию, использование файлов, которые имеют незакоммиченные изменения, запрещено гитерминизмом (подробнее об этом в [статье]({{ "usage/project_configuration/giterminism.html" | true_relative_url }}))
+
+##### Пример: создание файла в stapel-образе, если определенная директория проекта существует
+
+{% raw %}
+```yaml
+project: my-project
+configVersion: 1
+---
+
+image: app
+from: alpine
+shell:
+  setup:
+  - |
+    {{ if .Files.IsDir "./my-project-dir" }}
+      touch ${HOME}/test-file.txt
+    {{ end }}
 ```
 {% endraw %}
 
