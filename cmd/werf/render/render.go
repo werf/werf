@@ -423,7 +423,6 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 					BuildChartDependenciesOpts: chart.BuildChartDependenciesOptions{},
 					SecretValueFiles:           secretValuesPaths,
 					DisableDefaultValues:       defaultValuesDisable,
-					DisableDefaultSecretValues: defaultSecretValuesDisable,
 				},
 			)
 
@@ -455,18 +454,11 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 
 			loader.GlobalLoadOptions = &chart.LoadOptions{
 				ChartExtender: wc,
-				SubchartExtenderFactoryFunc: func() chart.ChartExtender {
-					return chart_extender.NewWerfSubchart(
-						ctx,
-						chart_extender.WerfSubchartOptions{
-							DisableDefaultSecretValues: defaultSecretValuesDisable,
-						},
-					)
-				},
 				SecretsRuntimeDataFactoryFunc: func() runtimedata.RuntimeData {
 					return secrets.NewSecretsRuntimeData()
 				},
 			}
+			loader.WithoutDefaultSecretValues = defaultSecretValuesDisable
 			secrets.CoalesceTablesFunc = chartutil.CoalesceTables
 
 			return nil

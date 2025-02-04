@@ -11,10 +11,9 @@ import (
 var _ chart.ChartExtender = (*Bundle)(nil)
 
 type BundleOptions struct {
-	SecretValueFiles                  []string
-	BuildChartDependenciesOpts        chart.BuildChartDependenciesOptions
-	IgnoreInvalidAnnotationsAndLabels bool
-	DisableDefaultValues              bool
+	SecretValueFiles           []string
+	BuildChartDependenciesOpts chart.BuildChartDependenciesOptions
+	DisableDefaultValues       bool
 }
 
 func NewBundle(
@@ -61,10 +60,6 @@ func (bundle *Bundle) GetChartFileReader() file.ChartFileReader {
 
 func (bundle *Bundle) GetDisableDefaultValues() bool {
 	return bundle.DisableDefaultValues
-}
-
-func (bundle *Bundle) GetDisableDefaultSecretValues() bool {
-	panic("not implemented")
 }
 
 func (bundle *Bundle) GetSecretValueFiles() []string {

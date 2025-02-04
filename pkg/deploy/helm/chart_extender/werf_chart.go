@@ -11,11 +11,9 @@ import (
 var _ chart.ChartExtender = (*WerfChart)(nil)
 
 type WerfChartOptions struct {
-	SecretValueFiles                  []string
-	BuildChartDependenciesOpts        chart.BuildChartDependenciesOptions
-	IgnoreInvalidAnnotationsAndLabels bool
-	DisableDefaultValues              bool
-	DisableDefaultSecretValues        bool
+	SecretValueFiles           []string
+	BuildChartDependenciesOpts chart.BuildChartDependenciesOptions
+	DisableDefaultValues       bool
 }
 
 func NewWerfChart(
@@ -35,7 +33,6 @@ func NewWerfChart(
 		ChartExtenderServiceValuesData: helpers.NewChartExtenderServiceValuesData(),
 
 		DisableDefaultValues:       opts.DisableDefaultValues,
-		DisableDefaultSecretValues: opts.DisableDefaultSecretValues,
 		BuildChartDependenciesOpts: opts.BuildChartDependenciesOpts,
 	}
 
@@ -50,7 +47,6 @@ type WerfChart struct {
 	SecretValueFiles           []string
 	BuildChartDependenciesOpts chart.BuildChartDependenciesOptions
 	DisableDefaultValues       bool
-	DisableDefaultSecretValues bool
 
 	ChartFileReader file.ChartFileReader
 
@@ -72,10 +68,6 @@ func (wc *WerfChart) GetChartFileReader() file.ChartFileReader {
 
 func (wc *WerfChart) GetDisableDefaultValues() bool {
 	return wc.DisableDefaultValues
-}
-
-func (wc *WerfChart) GetDisableDefaultSecretValues() bool {
-	return wc.DisableDefaultSecretValues
 }
 
 func (wc *WerfChart) GetSecretValueFiles() []string {
