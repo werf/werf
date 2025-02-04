@@ -148,7 +148,7 @@ func (r FileReader) readConfigurationFile(ctx context.Context, relPath string, i
 	}
 }
 
-// CheckConfigurationFileExistenceAndAcceptance does CheckFileExistenceAndAcceptance or CheckCommitFileExistenceAndLocalChanges depending on the giterminism config.
+// CheckConfigurationFileExistenceAndAcceptance does CheckRegularFileExistenceAndAcceptance or CheckCommitFileExistenceAndLocalChanges depending on the giterminism config.
 func (r FileReader) CheckConfigurationFileExistenceAndAcceptance(ctx context.Context, relPath string, isFileAcceptedCheckFunc func(relPath string) bool) (err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("CheckConfigurationFileExistenceAndAcceptance %q", relPath).
@@ -175,7 +175,7 @@ func (r FileReader) checkConfigurationFileExistenceAndAcceptance(ctx context.Con
 	}
 
 	if shouldFileBeReadFromFS {
-		return r.CheckFileExistenceAndAcceptance(ctx, relPath, isFileAcceptedCheckFunc)
+		return r.CheckRegularFileExistenceAndAcceptance(ctx, relPath, isFileAcceptedCheckFunc)
 	}
 
 	return r.CheckCommitFileExistenceAndLocalChanges(ctx, relPath)

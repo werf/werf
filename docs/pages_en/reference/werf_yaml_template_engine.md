@@ -236,25 +236,6 @@ __Syntax__:
 
 > By default, the use of files that have non-committed changes is not allowed by giterminism (read more about it [here]({{ "usage/project_configuration/giterminism.html" | true_relative_url }}))
 
-##### Example: how to create a dir in stapel image depending on existence of a file
-
-{% raw %}
-```yaml
-project: my-project
-configVersion: 1
----
-
-image: app
-from: alpine
-shell:
-  setup:
-  - |
-    {{ if .Files.Exists "./werf.yaml" }}
-      mkdir /opt/test
-    {{ end }}
-```
-{% endraw %}
-
 #### .Files.Get
 
 The function `.Files.Get` gets a certain project file content.
@@ -380,25 +361,6 @@ __Syntax__:
 {% endraw %}
 
 > By default, the use of files that have non-committed changes is not allowed by giterminism (read more about it [here]({{ "usage/project_configuration/giterminism.html" | true_relative_url }}))
-
-##### Example: how to create a file in stapel image if certain project's directory exists
-
-{% raw %}
-```yaml
-project: my-project
-configVersion: 1
----
-
-image: app
-from: alpine
-shell:
-  setup:
-  - |
-    {{ if .Files.IsDir "./my-project-dir" }}
-      touch ${HOME}/test-file.txt
-    {{ end }}
-```
-{% endraw %}
 
 ### others
 

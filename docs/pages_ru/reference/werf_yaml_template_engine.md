@@ -236,25 +236,6 @@ __Синтаксис__:
 
 > По умолчанию, использование файлов, которые имеют незакоммиченные изменения, запрещено гитерминизмом (подробнее об этом в [статье]({{ "usage/project_configuration/giterminism.html" | true_relative_url }}))
 
-##### Пример: создание директории в stapel-образе в зависимости от наличия определённого файла
-
-{% raw %}
-```yaml
-project: my-project
-configVersion: 1
----
-
-image: app
-from: alpine
-shell:
-  setup:
-  - |
-    {{ if .Files.Exists "./werf.yaml" }}
-      mkdir /opt/test
-    {{ end }}
-```
-{% endraw %}
-
 #### .Files.Get
 
 Функция `.Files.Get` получает содержимое определенного файла проекта.
@@ -380,25 +361,6 @@ __Синтаксис__:
 {% endraw %}
 
 > По умолчанию, использование файлов, которые имеют незакоммиченные изменения, запрещено гитерминизмом (подробнее об этом в [статье]({{ "usage/project_configuration/giterminism.html" | true_relative_url }}))
-
-##### Пример: создание файла в stapel-образе, если определенная директория проекта существует
-
-{% raw %}
-```yaml
-project: my-project
-configVersion: 1
----
-
-image: app
-from: alpine
-shell:
-  setup:
-  - |
-    {{ if .Files.IsDir "./my-project-dir" }}
-      touch ${HOME}/test-file.txt
-    {{ end }}
-```
-{% endraw %}
 
 ### Другие
 
