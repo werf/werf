@@ -272,7 +272,7 @@ func (r FileReader) CheckFileExistenceAndAcceptance(ctx context.Context, relPath
 			}
 		}).
 		Do(func() {
-			err = r.checkFileExistenceAndAcceptance(ctx, relPath, isFileAcceptedCheckFunc)
+			err = r.checkFileExistenceAndAcceptance(ctx, relPath, r.IsFileExist, isFileAcceptedCheckFunc)
 
 			if debug() {
 				logboek.Context(ctx).Debug().LogF("err: %q\n", err)
@@ -282,9 +282,34 @@ func (r FileReader) CheckFileExistenceAndAcceptance(ctx context.Context, relPath
 	return
 }
 
-func (r FileReader) checkFileExistenceAndAcceptance(ctx context.Context, relPath string, isFileAcceptedCheckFunc func(relPath string) bool) error {
+// CheckRegularFileExistenceAndAcceptance returns nil if the resolved regular file exists and is fully accepted by the giterminism config (each symlink target must be accepted if the file path accepted)
+func (r FileReader) CheckRegularFileExistenceAndAcceptance(ctx context.Context, relPath string, isFileAcceptedCheckFunc func(relPath string) bool) (err error) {
+	logboek.Context(ctx).Debug().
+		LogBlock("CheckRegularFileExistenceAndAcceptance %q", relPath).
+		Options(func(options types.LogBlockOptionsInterface) {
+			if !debug() {
+				options.Mute()
+			}
+		}).
+		Do(func() {
+			err = r.checkFileExistenceAndAcceptance(ctx, relPath, r.IsRegularFileExist, isFileAcceptedCheckFunc)
+
+			if debug() {
+				logboek.Context(ctx).Debug().LogF("err: %q\n", err)
+			}
+		})
+
+	return
+}
+
+func (r FileReader) checkFileExistenceAndAcceptance(
+	ctx context.Context,
+	relPath string,
+	checkFileFunc func(ctx context.Context, relPath string) (bool, error),
+	isFileAcceptedCheckFunc func(relPath string) bool,
+) error {
 	if r.sharedOptions.LooseGiterminism() {
-		exist, err := r.IsRegularFileExist(ctx, relPath)
+		exist, err := checkFileFunc(ctx, relPath)
 		if err != nil {
 			return err
 		}

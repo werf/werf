@@ -376,7 +376,7 @@ func (f files) Glob(pattern string) map[string]interface{} {
 }
 
 func (f files) Exists(relPath string) bool {
-	exist, err := f.giterminismManager.FileReader().IsFileExist(f.ctx, relPath)
+	exist, err := f.giterminismManager.FileReader().ConfigGoTemplateFilesExists(f.ctx, relPath)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -384,7 +384,7 @@ func (f files) Exists(relPath string) bool {
 }
 
 func (f files) IsDir(relPath string) bool {
-	exist, err := f.giterminismManager.FileReader().IsDirectoryExist(f.ctx, relPath)
+	exist, err := f.giterminismManager.FileReader().ConfigGoTemplateFilesIsDir(f.ctx, relPath)
 	if err != nil {
 		panic(err.Error())
 	}
