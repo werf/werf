@@ -39,15 +39,10 @@ func NewBundle(
 type Bundle struct {
 	Dir                        string
 	SecretValueFiles           []string
-	HelmChart                  *chart.Chart
 	BuildChartDependenciesOpts chart.BuildChartDependenciesOptions
 	DisableDefaultValues       bool
 
 	*helpers.ChartExtenderServiceValuesData
-}
-
-func (bundle *Bundle) SetHelmChart(c *chart.Chart) {
-	bundle.HelmChart = c
 }
 
 func (bundle *Bundle) Type() string {

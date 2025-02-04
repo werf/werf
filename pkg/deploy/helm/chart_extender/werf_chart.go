@@ -40,8 +40,6 @@ func NewWerfChart(
 }
 
 type WerfChart struct {
-	HelmChart *chart.Chart
-
 	ChartDir                   string
 	ProjectDir                 string
 	SecretValueFiles           []string
@@ -51,11 +49,6 @@ type WerfChart struct {
 	ChartFileReader file.ChartFileReader
 
 	*helpers.ChartExtenderServiceValuesData
-}
-
-// SetHelmChart method for the chart.Extender interface
-func (wc *WerfChart) SetHelmChart(c *chart.Chart) {
-	wc.HelmChart = c
 }
 
 func (wc *WerfChart) Type() string {
