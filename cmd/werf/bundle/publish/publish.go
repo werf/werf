@@ -493,7 +493,7 @@ func createNewBundle(
 	}
 
 	if destDir == "" {
-		destDir = wc.HelmChart.Metadata.Name
+		destDir = chrt.Metadata.Name
 	}
 
 	if err := os.RemoveAll(destDir); err != nil {
@@ -517,11 +517,11 @@ func createNewBundle(
 		}
 	}
 
-	if wc.HelmChart.Metadata == nil {
+	if chrt.Metadata == nil {
 		panic("unexpected condition")
 	}
 
-	bundleMetadata := *wc.HelmChart.Metadata
+	bundleMetadata := *chrt.Metadata
 	// Force api v2
 	bundleMetadata.APIVersion = chart.APIVersionV2
 	bundleMetadata.Version = chartVersion
@@ -533,9 +533,9 @@ func createNewBundle(
 		return nil, fmt.Errorf("unable to write %q: %w", chartYamlFile, err)
 	}
 
-	if wc.HelmChart.Lock != nil {
+	if chrt.Lock != nil {
 		chartLockFile := filepath.Join(destDir, "Chart.lock")
-		if data, err := json.Marshal(wc.HelmChart.Lock); err != nil {
+		if data, err := json.Marshal(chrt.Lock); err != nil {
 			return nil, fmt.Errorf("unable to prepare Chart.lock data: %w", err)
 		} else if err := ioutil.WriteFile(chartLockFile, append(data, []byte("\n")...), os.ModePerm); err != nil {
 			return nil, fmt.Errorf("unable to write %q: %w", chartLockFile, err)
@@ -547,7 +547,7 @@ func createNewBundle(
 		return nil, fmt.Errorf("unable to create dir %q: %w", templatesDir, err)
 	}
 
-	for _, f := range wc.HelmChart.Templates {
+	for _, f := range chrt.Templates {
 		if err := writeChartFile(ctx, destDir, f.Name, f.Data); err != nil {
 			return nil, fmt.Errorf("error writing chart template: %w", err)
 		}
@@ -568,7 +568,7 @@ func createNewBundle(
 	}
 
 WritingFiles:
-	for _, f := range wc.HelmChart.Files {
+	for _, f := range chrt.Files {
 		for _, ignoreValuesFile := range ignoreChartValuesFiles {
 			if f.Name == ignoreValuesFile {
 				continue WritingFiles
@@ -580,7 +580,7 @@ WritingFiles:
 		}
 	}
 
-	for _, dep := range wc.HelmChart.Metadata.Dependencies {
+	for _, dep := range chrt.Metadata.Dependencies {
 		var depPath string
 
 		switch {
@@ -592,7 +592,7 @@ WritingFiles:
 			depPath = fmt.Sprintf("charts/%s-%s.tgz", dep.Name, dep.Version)
 		}
 
-		for _, f := range wc.HelmChart.Raw {
+		for _, f := range chrt.Raw {
 			if strings.HasPrefix(f.Name, depPath) {
 				if err := writeChartFile(ctx, destDir, f.Name, f.Data); err != nil {
 					return nil, fmt.Errorf("error writing subchart file: %w", err)
@@ -601,12 +601,12 @@ WritingFiles:
 		}
 	}
 
-	if wc.HelmChart.Schema != nil {
+	if chrt.Schema != nil {
 		schemaFile := filepath.Join(destDir, "values.schema.json")
-		if err := writeChartFile(ctx, destDir, "values.schema.json", wc.HelmChart.Schema); err != nil {
+		if err := writeChartFile(ctx, destDir, "values.schema.json", chrt.Schema); err != nil {
 			return nil, fmt.Errorf("error writing chart values schema: %w", err)
 		}
-		if err := ioutil.WriteFile(schemaFile, wc.HelmChart.Schema, os.ModePerm); err != nil {
+		if err := ioutil.WriteFile(schemaFile, chrt.Schema, os.ModePerm); err != nil {
 			return nil, fmt.Errorf("unable to write %q: %w", schemaFile, err)
 		}
 	}
