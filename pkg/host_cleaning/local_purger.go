@@ -18,7 +18,7 @@ type localPurger struct {
 	backend container_backend.ContainerBackend
 }
 
-func NewLocalPurger(backend container_backend.ContainerBackend) *localPurger {
+func newLocalPurger(backend container_backend.ContainerBackend) *localPurger {
 	return &localPurger{
 		backend: backend,
 	}

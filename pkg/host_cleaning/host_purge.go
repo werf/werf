@@ -15,7 +15,7 @@ type HostPurgeOptions struct {
 }
 
 func HostPurge(ctx context.Context, backend container_backend.ContainerBackend, options HostPurgeOptions) error {
-	purger := NewLocalPurger(backend)
+	purger := newLocalPurger(backend)
 
 	commonOptions := CommonOptions{
 		RmiForce:                      true,
