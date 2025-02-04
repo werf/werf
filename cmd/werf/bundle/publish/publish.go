@@ -12,6 +12,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/mitchellh/copystructure"
+	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 	"sigs.k8s.io/yaml"
 
@@ -220,14 +221,28 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
-	userExtraAnnotations, err := common.GetUserExtraAnnotations(&commonCmdData)
-	if err != nil {
-		return err
+	serviceAnnotations := map[string]string{}
+	extraAnnotations := map[string]string{}
+	if annos, err := common.GetUserExtraAnnotations(&commonCmdData); err != nil {
+		return fmt.Errorf("get user extra annotations: %w", err)
+	} else {
+		for key, value := range annos {
+			if strings.HasPrefix(key, "project.werf.io/") ||
+				strings.Contains(key, "ci.werf.io/") ||
+				key == "werf.io/release-channel" {
+				serviceAnnotations[key] = value
+			} else {
+				extraAnnotations[key] = value
+			}
+		}
 	}
 
-	userExtraLabels, err := common.GetUserExtraLabels(&commonCmdData)
+	serviceAnnotations["project.werf.io/name"] = werfConfig.Meta.Project
+	serviceAnnotations["project.werf.io/env"] = *commonCmdData.Environment
+
+	extraLabels, err := common.GetUserExtraLabels(&commonCmdData)
 	if err != nil {
-		return err
+		return fmt.Errorf("get user extra labels: %w", err)
 	}
 
 	buildOptions, err := common.GetBuildOptions(ctx, &commonCmdData, werfConfig, imagesToProcess)
@@ -329,20 +344,12 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 		chartDir,
 		giterminismManager.ProjectDir(),
 		chart_extender.WerfChartOptions{
-			BuildChartDependenciesOpts:        chart.BuildChartDependenciesOptions{},
-			SecretValueFiles:                  common.GetSecretValues(&commonCmdData),
-			ExtraAnnotations:                  userExtraAnnotations,
-			ExtraLabels:                       userExtraLabels,
-			IgnoreInvalidAnnotationsAndLabels: true,
-			DisableDefaultValues:              *commonCmdData.DisableDefaultValues,
-			DisableDefaultSecretValues:        *commonCmdData.DisableDefaultSecretValues,
+			BuildChartDependenciesOpts: chart.BuildChartDependenciesOptions{},
+			SecretValueFiles:           common.GetSecretValues(&commonCmdData),
+			DisableDefaultValues:       *commonCmdData.DisableDefaultValues,
+			DisableDefaultSecretValues: *commonCmdData.DisableDefaultSecretValues,
 		},
 	)
-
-	wc.AddExtraAnnotations(map[string]string{
-		"project.werf.io/name": werfConfig.Meta.Project,
-		"project.werf.io/env":  *commonCmdData.Environment,
-	})
 
 	headHash, err := giterminismManager.LocalGitRepo().HeadCommitHash(ctx)
 	if err != nil {
@@ -409,6 +416,9 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 	bundle, err := createNewBundle(
 		ctx,
 		wc,
+		extraAnnotations,
+		serviceAnnotations,
+		extraLabels,
 		giterminismManager.ProjectDir(),
 		chartDir,
 		bundleTmpDir,
@@ -440,6 +450,9 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 func createNewBundle(
 	ctx context.Context,
 	wc *chart_extender.WerfChart,
+	extraAnnotations map[string]string,
+	serviceAnnotations map[string]string,
+	extraLabels map[string]string,
 	projectDir string,
 	chartDir string,
 	destDir string,
@@ -603,14 +616,15 @@ WritingFiles:
 		}
 	}
 
-	if len(wc.GetExtraAnnotations()) > 0 {
-		if err := writeBundleJsonMap(wc.GetExtraAnnotations(), filepath.Join(destDir, "extra_annotations.json")); err != nil {
+	annotations := lo.Assign(extraAnnotations, serviceAnnotations)
+	if len(annotations) > 0 {
+		if err := writeBundleJsonMap(annotations, filepath.Join(destDir, "extra_annotations.json")); err != nil {
 			return nil, err
 		}
 	}
 
-	if len(wc.GetExtraLabels()) > 0 {
-		if err := writeBundleJsonMap(wc.GetExtraLabels(), filepath.Join(destDir, "extra_labels.json")); err != nil {
+	if len(extraLabels) > 0 {
+		if err := writeBundleJsonMap(extraLabels, filepath.Join(destDir, "extra_labels.json")); err != nil {
 			return nil, err
 		}
 	}

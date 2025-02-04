@@ -2,11 +2,6 @@ package chart_extender
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"io/ioutil"
-	"os"
-	"path/filepath"
 
 	"github.com/werf/3p-helm/pkg/chart"
 	"github.com/werf/3p-helm/pkg/werf/file"
@@ -18,8 +13,6 @@ var _ chart.ChartExtender = (*Bundle)(nil)
 type BundleOptions struct {
 	SecretValueFiles                  []string
 	BuildChartDependenciesOpts        chart.BuildChartDependenciesOptions
-	ExtraAnnotations                  map[string]string
-	ExtraLabels                       map[string]string
 	IgnoreInvalidAnnotationsAndLabels bool
 	DisableDefaultValues              bool
 }
@@ -37,21 +30,6 @@ func NewBundle(
 		DisableDefaultValues:           opts.DisableDefaultValues,
 	}
 
-	if dataMap, err := readBundleJsonMap(filepath.Join(bundle.Dir, "extra_annotations.json")); err != nil {
-		return nil, err
-	} else {
-		bundle.AddExtraAnnotations(dataMap)
-	}
-
-	if dataMap, err := readBundleJsonMap(filepath.Join(bundle.Dir, "extra_labels.json")); err != nil {
-		return nil, err
-	} else {
-		bundle.AddExtraLabels(dataMap)
-	}
-
-	bundle.AddExtraAnnotations(opts.ExtraAnnotations)
-	bundle.AddExtraLabels(opts.ExtraLabels)
-
 	return bundle, nil
 }
 
@@ -65,9 +43,6 @@ type Bundle struct {
 	HelmChart                  *chart.Chart
 	BuildChartDependenciesOpts chart.BuildChartDependenciesOptions
 	DisableDefaultValues       bool
-
-	extraAnnotations map[string]string
-	extraLabels      map[string]string
 
 	*helpers.ChartExtenderServiceValuesData
 }
@@ -110,47 +85,4 @@ func (bundle *Bundle) SetChartDir(dir string) {
 
 func (bundle *Bundle) GetBuildChartDependenciesOpts() chart.BuildChartDependenciesOptions {
 	return bundle.BuildChartDependenciesOpts
-}
-
-func (bundle *Bundle) AddExtraAnnotations(annotations map[string]string) {
-	if bundle.extraAnnotations == nil {
-		bundle.extraAnnotations = make(map[string]string)
-	}
-
-	for k, v := range annotations {
-		bundle.extraAnnotations[k] = v
-	}
-}
-
-func (bundle *Bundle) AddExtraLabels(labels map[string]string) {
-	if bundle.extraLabels == nil {
-		bundle.extraLabels = make(map[string]string)
-	}
-
-	for k, v := range labels {
-		bundle.extraLabels[k] = v
-	}
-}
-
-func (bundle *Bundle) GetExtraAnnotations() map[string]string {
-	return bundle.extraAnnotations
-}
-
-func (bundle *Bundle) GetExtraLabels() map[string]string {
-	return bundle.extraLabels
-}
-
-func readBundleJsonMap(path string) (map[string]string, error) {
-	var res map[string]string
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return nil, nil
-	} else if err != nil {
-		return nil, fmt.Errorf("error accessing %q: %w", path, err)
-	} else if data, err := ioutil.ReadFile(path); err != nil {
-		return nil, fmt.Errorf("error reading %q: %w", path, err)
-	} else if err := json.Unmarshal(data, &res); err != nil {
-		return nil, fmt.Errorf("error unmarshalling json from %q: %w", path, err)
-	} else {
-		return res, nil
-	}
 }
