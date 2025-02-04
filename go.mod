@@ -60,7 +60,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.5
-	github.com/werf/3p-helm v0.0.0-20250128150227-931df3a1905f
+	github.com/werf/3p-helm v0.0.0-20250204035049-c3dd8fd7b6ce
 	github.com/werf/3p-helm-for-werf-helm v0.0.0-20241217155820-089f92cd5c9d
 	github.com/werf/common-go v0.0.0-20250115100423-863829c6587b
 	github.com/werf/copy-recurse v0.2.7
@@ -326,7 +326,7 @@ require (
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/spf13/cast v1.6.0 // indirect
 	github.com/stefanberger/go-pkcs11uri v0.0.0-20230803200340-78284954bff6 // indirect
-	github.com/stretchr/testify v1.10.0 // indirect
+	github.com/stretchr/testify v1.10.0
 	github.com/sylabs/sif/v2 v2.16.0 // indirect
 	github.com/syndtr/gocapability v0.0.0-20200815063812-42c35b437635 // indirect
 	github.com/tchap/go-patricia/v2 v2.3.1 // indirect

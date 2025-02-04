@@ -12,8 +12,6 @@ var _ chart.ChartExtender = (*WerfChart)(nil)
 
 type WerfChartOptions struct {
 	SecretValueFiles                  []string
-	ExtraAnnotations                  map[string]string
-	ExtraLabels                       map[string]string
 	BuildChartDependenciesOpts        chart.BuildChartDependenciesOptions
 	IgnoreInvalidAnnotationsAndLabels bool
 	DisableDefaultValues              bool
@@ -41,9 +39,6 @@ func NewWerfChart(
 		BuildChartDependenciesOpts: opts.BuildChartDependenciesOpts,
 	}
 
-	wc.AddExtraAnnotations(opts.ExtraAnnotations)
-	wc.AddExtraLabels(opts.ExtraLabels)
-
 	return wc
 }
 
@@ -59,43 +54,12 @@ type WerfChart struct {
 
 	ChartFileReader file.ChartFileReader
 
-	extraAnnotations map[string]string
-	extraLabels      map[string]string
-
 	*helpers.ChartExtenderServiceValuesData
 }
 
 // SetHelmChart method for the chart.Extender interface
 func (wc *WerfChart) SetHelmChart(c *chart.Chart) {
 	wc.HelmChart = c
-}
-
-func (wc *WerfChart) AddExtraAnnotations(annotations map[string]string) {
-	if wc.extraAnnotations == nil {
-		wc.extraAnnotations = make(map[string]string)
-	}
-
-	for k, v := range annotations {
-		wc.extraAnnotations[k] = v
-	}
-}
-
-func (wc *WerfChart) AddExtraLabels(labels map[string]string) {
-	if wc.extraLabels == nil {
-		wc.extraLabels = make(map[string]string)
-	}
-
-	for k, v := range labels {
-		wc.extraLabels[k] = v
-	}
-}
-
-func (wc *WerfChart) GetExtraAnnotations() map[string]string {
-	return wc.extraAnnotations
-}
-
-func (wc *WerfChart) GetExtraLabels() map[string]string {
-	return wc.extraLabels
 }
 
 func (wc *WerfChart) Type() string {

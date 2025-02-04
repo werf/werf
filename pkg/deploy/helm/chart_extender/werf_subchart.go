@@ -75,19 +75,3 @@ func (wc *WerfSubchart) SetChartDir(dir string) {
 func (wc *WerfSubchart) GetBuildChartDependenciesOpts() chart.BuildChartDependenciesOptions {
 	panic("not implemented")
 }
-
-func (wc *WerfSubchart) AddExtraAnnotations(annotations map[string]string) {
-	panic("not implemented")
-}
-
-func (wc *WerfSubchart) AddExtraLabels(labels map[string]string) {
-	panic("not implemented")
-}
-
-func (wc *WerfSubchart) GetExtraAnnotations() map[string]string {
-	panic("not implemented")
-}
-
-func (wc *WerfSubchart) GetExtraLabels() map[string]string {
-	panic("not implemented")
-}

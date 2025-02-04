@@ -2,12 +2,15 @@ package render
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	ioutil "io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 
 	"github.com/werf/3p-helm/pkg/chart"
@@ -165,16 +168,6 @@ func runRender(ctx context.Context) error {
 	releaseNamespace := common.GetNamespace(&commonCmdData)
 	releaseName := common.GetOptionalRelease(&commonCmdData)
 
-	userExtraAnnotations, err := common.GetUserExtraAnnotations(&commonCmdData)
-	if err != nil {
-		return fmt.Errorf("get user extra annotations: %w", err)
-	}
-
-	userExtraLabels, err := common.GetUserExtraLabels(&commonCmdData)
-	if err != nil {
-		return fmt.Errorf("get user extra labels: %w", err)
-	}
-
 	var bundlePath string
 	if isLocalBundle {
 		bundlePath = cmdData.BundleDir
@@ -200,31 +193,15 @@ func runRender(ctx context.Context) error {
 	bundle, err := chart_extender.NewBundle(ctx, bundlePath, chart_extender.BundleOptions{
 		SecretValueFiles:           common.GetSecretValues(&commonCmdData),
 		BuildChartDependenciesOpts: chart.BuildChartDependenciesOptions{},
-		ExtraAnnotations:           userExtraAnnotations,
-		ExtraLabels:                userExtraLabels,
 	})
 	if err != nil {
 		return fmt.Errorf("construct bundle: %w", err)
 	}
 
-	serviceAnnotations := map[string]string{}
-	extraAnnotations := map[string]string{}
-	for key, value := range bundle.GetExtraAnnotations() {
-		if strings.HasPrefix(key, "project.werf.io/") ||
-			strings.Contains(key, "ci.werf.io/") ||
-			key == "werf.io/release-channel" {
-			serviceAnnotations[key] = value
-		} else {
-			extraAnnotations[key] = value
-		}
+	serviceAnnotations, extraAnnotations, extraLabels, err := getAnnotationsAndLabels(bundlePath)
+	if err != nil {
+		return fmt.Errorf("get annotations and labels: %w", err)
 	}
-
-	serviceAnnotations["werf.io/version"] = werf.Version
-	if *commonCmdData.Environment != "" {
-		serviceAnnotations["project.werf.io/env"] = *commonCmdData.Environment
-	}
-
-	extraLabels := bundle.GetExtraLabels()
 
 	if err := action.Render(ctx, action.RenderOptions{
 		ChartDirPath:                 bundle.Dir,
@@ -309,4 +286,62 @@ func runRender(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func getAnnotationsAndLabels(bundleDir string) (map[string]string, map[string]string, map[string]string, error) {
+	bundleExtraAnnotations, err := readBundleJsonMap(filepath.Join(bundleDir, "extra_annotations.json"))
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("read bundle extra_annotations.json: %w", err)
+	}
+
+	userExtraAnnotations, err := common.GetUserExtraAnnotations(&commonCmdData)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("get user extra annotations: %w", err)
+	}
+
+	serviceAnnotations := map[string]string{}
+	extraAnnotations := map[string]string{}
+	for key, value := range lo.Assign(bundleExtraAnnotations, userExtraAnnotations) {
+		if strings.HasPrefix(key, "project.werf.io/") ||
+			strings.Contains(key, "ci.werf.io/") ||
+			key == "werf.io/release-channel" {
+			serviceAnnotations[key] = value
+		} else {
+			extraAnnotations[key] = value
+		}
+	}
+
+	serviceAnnotations["werf.io/version"] = werf.Version
+	if *commonCmdData.Environment != "" {
+		serviceAnnotations["project.werf.io/env"] = *commonCmdData.Environment
+	}
+
+	bundleExtraLabels, err := readBundleJsonMap(filepath.Join(bundleDir, "extra_labels.json"))
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("read bundle extra_labels.json: %w", err)
+	}
+
+	userExtraLabels, err := common.GetUserExtraLabels(&commonCmdData)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("get user extra labels: %w", err)
+	}
+
+	extraLabels := lo.Assign(bundleExtraLabels, userExtraLabels)
+
+	return serviceAnnotations, extraAnnotations, extraLabels, nil
+}
+
+func readBundleJsonMap(path string) (map[string]string, error) {
+	var res map[string]string
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return nil, nil
+	} else if err != nil {
+		return nil, fmt.Errorf("error accessing %q: %w", path, err)
+	} else if data, err := ioutil.ReadFile(path); err != nil {
+		return nil, fmt.Errorf("error reading %q: %w", path, err)
+	} else if err := json.Unmarshal(data, &res); err != nil {
+		return nil, fmt.Errorf("error unmarshalling json from %q: %w", path, err)
+	} else {
+		return res, nil
+	}
 }

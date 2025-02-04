@@ -379,12 +379,7 @@ func run(
 		return fmt.Errorf("get helm release: %w", err)
 	}
 
-	serviceAnnotations := map[string]string{
-		"werf.io/version":      werf.Version,
-		"project.werf.io/name": projectName,
-		"project.werf.io/env":  *commonCmdData.Environment,
-	}
-
+	serviceAnnotations := map[string]string{}
 	extraAnnotations := map[string]string{}
 	if annos, err := common.GetUserExtraAnnotations(&commonCmdData); err != nil {
 		return fmt.Errorf("get user extra annotations: %w", err)
@@ -399,6 +394,10 @@ func run(
 			}
 		}
 	}
+
+	serviceAnnotations["werf.io/version"] = werf.Version
+	serviceAnnotations["project.werf.io/name"] = projectName
+	serviceAnnotations["project.werf.io/env"] = *commonCmdData.Environment
 
 	extraLabels, err := common.GetUserExtraLabels(&commonCmdData)
 	if err != nil {
@@ -462,20 +461,12 @@ func run(
 				relChartPath,
 				giterminismManager.ProjectDir(),
 				chart_extender.WerfChartOptions{
-					BuildChartDependenciesOpts:        chart.BuildChartDependenciesOptions{},
-					SecretValueFiles:                  secretValuesPaths,
-					ExtraAnnotations:                  extraAnnotations,
-					ExtraLabels:                       extraLabels,
-					IgnoreInvalidAnnotationsAndLabels: true,
-					DisableDefaultValues:              defaultValuesDisable,
-					DisableDefaultSecretValues:        defaultSecretValuesDisable,
+					BuildChartDependenciesOpts: chart.BuildChartDependenciesOptions{},
+					SecretValueFiles:           secretValuesPaths,
+					DisableDefaultValues:       defaultValuesDisable,
+					DisableDefaultSecretValues: defaultSecretValuesDisable,
 				},
 			)
-
-			wc.AddExtraAnnotations(map[string]string{
-				"project.werf.io/name": werfConfig.Meta.Project,
-				"project.werf.io/env":  *commonCmdData.Environment,
-			})
 
 			headHash, err := giterminismManager.LocalGitRepo().HeadCommitHash(ctx)
 			if err != nil {
