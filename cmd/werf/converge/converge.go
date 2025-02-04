@@ -13,8 +13,6 @@ import (
 	"github.com/werf/3p-helm/pkg/chart"
 	"github.com/werf/3p-helm/pkg/chart/loader"
 	"github.com/werf/3p-helm/pkg/chartutil"
-	"github.com/werf/3p-helm/pkg/cli"
-	"github.com/werf/3p-helm/pkg/registry"
 	"github.com/werf/3p-helm/pkg/werf/secrets"
 	"github.com/werf/3p-helm/pkg/werf/secrets/runtimedata"
 	"github.com/werf/common-go/pkg/util"
@@ -464,15 +462,10 @@ func run(
 		LegacyPreDeployHook: func(
 			ctx context.Context,
 			releaseNamespace string,
-			helmRegistryClient *registry.Client,
 			registryCredentialsPath string,
-			chartRepositorySkipUpdate bool,
 			secretValuesPaths []string,
-			extraAnnotations map[string]string,
-			extraLabels map[string]string,
 			defaultValuesDisable bool,
 			defaultSecretValuesDisable bool,
-			helmSettings *cli.EnvSettings,
 		) error {
 			wc := chart_extender.NewWerfChart(
 				ctx,

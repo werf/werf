@@ -16,8 +16,6 @@ import (
 	"github.com/werf/3p-helm/pkg/chart"
 	"github.com/werf/3p-helm/pkg/chart/loader"
 	"github.com/werf/3p-helm/pkg/chartutil"
-	"github.com/werf/3p-helm/pkg/cli"
-	"github.com/werf/3p-helm/pkg/registry"
 	"github.com/werf/3p-helm/pkg/werf/secrets"
 	"github.com/werf/3p-helm/pkg/werf/secrets/runtimedata"
 	"github.com/werf/common-go/pkg/util"
@@ -245,15 +243,10 @@ func runRender(ctx context.Context) error {
 		LegacyPreRenderHook: func(
 			ctx context.Context,
 			releaseNamespace string,
-			helmRegistryClient *registry.Client,
 			registryCredentialsPath string,
-			chartRepositorySkipUpdate bool,
 			secretValuesPaths []string,
-			extraAnnotations map[string]string,
-			extraLabels map[string]string,
-			defaultValuesDisable bool,
+			_ bool,
 			defaultSecretValuesDisable bool,
-			helmSettings *cli.EnvSettings,
 		) error {
 			if vals, err := helpers.GetBundleServiceValues(ctx, helpers.ServiceValuesOptions{
 				Env:                      *commonCmdData.Environment,
@@ -270,7 +263,7 @@ func runRender(ctx context.Context) error {
 				ChartExtender: bundle,
 				SubchartExtenderFactoryFunc: func() chart.ChartExtender {
 					return chart_extender.NewWerfSubchart(ctx, chart_extender.WerfSubchartOptions{
-						DisableDefaultSecretValues: *commonCmdData.DisableDefaultSecretValues,
+						DisableDefaultSecretValues: defaultSecretValuesDisable,
 					})
 				},
 				SecretsRuntimeDataFactoryFunc: func() runtimedata.RuntimeData {
