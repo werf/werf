@@ -29,6 +29,7 @@ func NewManager(ctx context.Context, configRelPath, projectDir string, localGitR
 	if options.LooseGiterminism {
 		err := errors.NewError(`We recommend using werf-giterminism.yaml to loosen giterminism instead of using --loose-giterminism/WERF_LOOSE_GITERMINISM`)
 		logboek.Context(ctx).Warn().LogLn(err)
+		logboek.Context(ctx).LogOptionalLn()
 	}
 
 	fr := file_reader.NewFileReader(sharedOptions)
