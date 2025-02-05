@@ -170,3 +170,7 @@ func (c *rawImageFromDockerfile) toImageFromDockerfileDirective(giterminismManag
 
 	return image, nil
 }
+
+func (r *rawImageFromDockerfile) getDoc() *doc {
+	return r.doc
+}
