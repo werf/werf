@@ -17,22 +17,6 @@ import (
 	"github.com/werf/werf/v2/pkg/werf"
 )
 
-func NewChartExtenderServiceValuesData() *ChartExtenderServiceValuesData {
-	return &ChartExtenderServiceValuesData{serviceValues: make(map[string]interface{})}
-}
-
-type ChartExtenderServiceValuesData struct {
-	serviceValues map[string]interface{}
-}
-
-func (d *ChartExtenderServiceValuesData) GetServiceValues() map[string]interface{} {
-	return d.serviceValues
-}
-
-func (d *ChartExtenderServiceValuesData) SetServiceValues(vals map[string]interface{}) {
-	d.serviceValues = vals
-}
-
 type ServiceValuesOptions struct {
 	Namespace         string
 	Env               string

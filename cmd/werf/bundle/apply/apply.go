@@ -200,6 +200,18 @@ func runApply(ctx context.Context) error {
 		return fmt.Errorf("get annotations and labels: %w", err)
 	}
 
+	registryCredentialsPath := docker.GetDockerConfigCredentialsFile(*commonCmdData.DockerConfig)
+
+	chartutil.ServiceValues, err = helpers.GetBundleServiceValues(ctx, helpers.ServiceValuesOptions{
+		Env:                      *commonCmdData.Environment,
+		Namespace:                releaseNamespace,
+		SetDockerConfigJsonValue: *commonCmdData.SetDockerConfigJsonValue,
+		DockerConfigPath:         filepath.Dir(registryCredentialsPath),
+	})
+	if err != nil {
+		return fmt.Errorf("get service values: %w", err)
+	}
+
 	if err := action.Deploy(ctx, action.DeployOptions{
 		AutoRollback:                 cmdData.AutoRollback,
 		ChartDirPath:                 bundle.Dir,
@@ -231,7 +243,7 @@ func runApply(ctx context.Context) error {
 		NetworkParallelism:           common.GetNetworkParallelism(&commonCmdData),
 		ProgressTablePrint:           *commonCmdData.StatusProgressPeriodSeconds != -1,
 		ProgressTablePrintInterval:   time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
-		RegistryCredentialsPath:      docker.GetDockerConfigCredentialsFile(*commonCmdData.DockerConfig),
+		RegistryCredentialsPath:      registryCredentialsPath,
 		ReleaseHistoryLimit:          *commonCmdData.ReleasesHistoryMax,
 		ReleaseName:                  releaseName,
 		ReleaseNamespace:             releaseNamespace,
@@ -251,22 +263,10 @@ func runApply(ctx context.Context) error {
 		LegacyPreDeployHook: func(
 			ctx context.Context,
 			releaseNamespace string,
-			registryCredentialsPath string,
 			_ []string,
 			_ bool,
 			defaultSecretValuesDisable bool,
 		) error {
-			if vals, err := helpers.GetBundleServiceValues(ctx, helpers.ServiceValuesOptions{
-				Env:                      *commonCmdData.Environment,
-				Namespace:                releaseNamespace,
-				SetDockerConfigJsonValue: *commonCmdData.SetDockerConfigJsonValue,
-				DockerConfigPath:         filepath.Dir(registryCredentialsPath),
-			}); err != nil {
-				return fmt.Errorf("get service values: %w", err)
-			} else {
-				bundle.SetServiceValues(vals)
-			}
-
 			loader.GlobalLoadOptions = &chart.LoadOptions{
 				ChartExtender: bundle,
 				SecretsRuntimeDataFactoryFunc: func() runtimedata.RuntimeData {
