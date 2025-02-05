@@ -38,7 +38,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 werf cr login -u username -p password registry.example.com
 
 # Login with token from command line
-werf cr login -p token registry.example.com
+werf cr login -u username -p token registry.example.com
 
 # Login into insecure registry (over http)
 werf cr login --insecure-registry registry.example.com`,
