@@ -49,24 +49,28 @@ werf build [IMAGE_NAME...] [options]
             For cleaning custom tags and associated content-based tag are treated as one.
             Also can be defined with $WERF_ADD_CUSTOM_TAG_* (e.g.                                   
             $WERF_ADD_CUSTOM_TAG_1="%image%-tag1", $WERF_ADD_CUSTOM_TAG_2="%image%-tag2")
-      --allowed-docker-storage-volume-usage=70
-            Set allowed percentage of docker storage volume usage which will cause cleanup of least 
-            recently used local docker images (default 70% or                                       
-            $WERF_ALLOWED_DOCKER_STORAGE_VOLUME_USAGE)
-      --allowed-docker-storage-volume-usage-margin=5
-            During cleanup of least recently used local docker images werf would delete images      
-            until volume usage becomes below "allowed-docker-storage-volume-usage -                 
-            allowed-docker-storage-volume-usage-margin" level (default 5% or                        
-            $WERF_ALLOWED_DOCKER_STORAGE_VOLUME_USAGE_MARGIN)
+      --allowed-backend-storage-volume-usage=70
+            Set allowed percentage of backend (Docker or Buildah) storage volume usage which will   
+            cause cleanup of least recently used local backend images (default 70% or               
+            $WERF_ALLOWED_BACKEND_STORAGE_VOLUME_USAGE)
+      --allowed-backend-storage-volume-usage-margin=5
+            During cleanup of least recently used local backend (Docker or Buildah) images werf     
+            would delete images until volume usage becomes below                                    
+            "allowed-backend-storage-volume-usage - allowed-backend-storage-volume-usage-margin"    
+            level (default 5% or $WERF_ALLOWED_BACKEND_STORAGE_VOLUME_USAGE_MARGIN)
       --allowed-local-cache-volume-usage=70
             Set allowed percentage of local cache (~/.werf/local_cache by default) volume usage     
             which will cause cleanup of least recently used data from the local cache (default 70%  
             or $WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE)
       --allowed-local-cache-volume-usage-margin=5
-            During cleanup of least recently used local docker images werf would delete images      
-            until volume usage becomes below "allowed-docker-storage-volume-usage -                 
-            allowed-docker-storage-volume-usage-margin" level (default 5% or                        
+            During cleanup of local cache werf would delete local cache data until volume usage     
+            becomes below "allowed-local-cache-volume-usage -                                       
+            allowed-local-cache-volume-usage-margin" level (default 5% or                           
             $WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE_MARGIN)
+      --backend-storage-path=''
+            Use specified path to the local backend (Docker or Buildah) storage to check backend    
+            storage volume usage while performing garbage collection of local backend images        
+            (detect local backend storage path by default or use $WERF_BACKEND_STORAGE_PATH)
       --build-report-path=''
             Change build report path and format (by default $WERF_BUILD_REPORT_PATH or              
             ".werf-build-report.json" if not set). Extension must be either .json for JSON format   
@@ -108,10 +112,6 @@ werf build [IMAGE_NAME...] [options]
             ~/.docker (in the order of priority)
             Command needs granted permissions to read, pull and push images into the specified      
             repo, to pull base images
-      --docker-server-storage-path=''
-            Use specified path to the local docker server storage to check docker storage volume    
-            usage while performing garbage collection of local docker images (detect local docker   
-            server storage path by default or use $WERF_DOCKER_SERVER_STORAGE_PATH)
       --env=''
             Use specified environment (default $WERF_ENV)
       --final-repo=''

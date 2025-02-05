@@ -72,6 +72,8 @@ type PostManifestOpts struct {
 	Manifests []*image.Info
 }
 
+//go:generate mockgen -source interface.go -package mock -destination ../../test/mock/container_backend.go
+
 type ContainerBackend interface {
 	Info(ctx context.Context) (info.Info, error)
 
