@@ -147,7 +147,7 @@ func GetValidatedSecrets(rawSecrets []*rawSecret, giterminismManager giterminism
 		if _, ok := secretIds[secretId]; !ok {
 			secretIds[secretId] = struct{}{}
 		} else {
-			return nil, newDetailedConfigError("duplicated secret %s", secretId, s.parent.getDoc())
+			return nil, newDetailedConfigError(fmt.Sprintf("duplicated secret %q", secretId), nil, s.parent.getDoc())
 		}
 
 		err = secret.InspectByGiterminism(giterminismManager)

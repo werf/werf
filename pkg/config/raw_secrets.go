@@ -5,7 +5,7 @@ import (
 )
 
 // TODO (iapershin)
-// rawOrigin is not suitable here since image stack contains `doc` property and coudn't be used along with doc()
+// rawOrigin is not suitable here since image stack contains `doc` property and couldn't be used along with doc()
 // refactor to use common approach
 type rawParent interface {
 	getDoc() *doc
@@ -59,6 +59,6 @@ func (s *rawSecret) toDirective() (Secret, error) {
 	case s.PlainValue != "":
 		return newSecretFromPlainValue(s)
 	default:
-		return nil, newDetailedConfigError("unknown secret type. only `env`, `src` and `value` is supported", s, s.parent.getDoc())
+		return nil, newDetailedConfigError("secret should be defined as `env`, `src` or `value`", s, s.parent.getDoc())
 	}
 }
