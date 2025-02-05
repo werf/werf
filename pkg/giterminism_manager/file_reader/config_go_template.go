@@ -38,3 +38,19 @@ func (r FileReader) ConfigGoTemplateFilesGet(ctx context.Context, relPath string
 
 	return data, nil
 }
+
+func (r FileReader) ConfigGoTemplateFilesExists(ctx context.Context, relPath string) (bool, error) {
+	err := r.CheckFileExistenceAndAcceptance(ctx, relPath, r.giterminismConfig.UncommittedConfigGoTemplateRenderingFilePathMatcher().IsPathMatched)
+	if err != nil {
+		return false, fmt.Errorf("{{ .Files.Exists %q }}: %w", relPath, err)
+	}
+	return r.isFileExist(ctx, relPath)
+}
+
+func (r FileReader) ConfigGoTemplateFilesIsDir(ctx context.Context, relPath string) (bool, error) {
+	err := r.CheckFileExistenceAndAcceptance(ctx, relPath, r.giterminismConfig.UncommittedConfigGoTemplateRenderingFilePathMatcher().IsPathMatched)
+	if err != nil {
+		return false, fmt.Errorf("{{ .Files.IsDir %q }}: %w", relPath, err)
+	}
+	return r.IsDirectoryExist(ctx, relPath)
+}
