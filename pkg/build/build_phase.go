@@ -851,7 +851,14 @@ func (phase *BuildPhase) findAndFetchStageFromSecondaryStagesStorage(ctx context
 				stg.SetStageImage(i)
 
 				// The stage digest remains the same, but the content digest may differ (e.g., the content digest of git and some user stages depends on the git commit).
-				stg.SetContentDigest(stageDescCopy.Info.Labels[imagePkg.WerfStageContentDigestLabel])
+				contentDigest, exist := stageDescCopy.Info.Labels[imagePkg.WerfStageContentDigestLabel]
+				if exist {
+					stg.SetContentDigest(contentDigest)
+				} else if stg.Name() == stage.ImageSpec { // The content digest tag might be missing for the imageSpec stage (removed by the user).
+					stg.SetContentDigest(stageDescCopy.Info.GetDigest())
+				} else {
+					panic(fmt.Sprintf("expected stage %q content digest label to be set!", stg.Name()))
+				}
 
 				logboek.Context(ctx).Default().LogFHighlight("Use previously built image for %s\n", stg.LogDetailedName())
 				container_backend.LogImageInfo(ctx, stg.GetStageImage().Image, phase.getPrevNonEmptyStageImageSize(), img.ShouldLogPlatform())
@@ -969,7 +976,14 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, s
 		foundSuitableStage = true
 
 		// The stage digest remains the same, but the content digest may differ (e.g., the content digest of git and some user stages depends on the git commit).
-		stageContentSig = stageDesc.Info.Labels[imagePkg.WerfStageContentDigestLabel]
+		contentDigest, exist := stageDesc.Info.Labels[imagePkg.WerfStageContentDigestLabel]
+		if exist {
+			stageContentSig = contentDigest
+		} else if stg.Name() == stage.ImageSpec { // The content digest tag might be missing for the imageSpec stage (removed by the user).
+			stageContentSig = stageDesc.Info.GetDigest()
+		} else {
+			panic(fmt.Sprintf("expected stage %q content digest label to be set!", stg.Name()))
+		}
 	} else {
 		stageContentSig, err = calculateDigest(ctx, fmt.Sprintf("%s-content", stg.Name()), "", stg, phase.Conveyor, calculateDigestOptions{TargetPlatform: img.TargetPlatform})
 		if err != nil {
@@ -1167,8 +1181,15 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 			i.Image.SetStageDesc(stageDesc)
 			stg.SetStageImage(i)
 
-			// The stage digest is equal but stage content digest might be different.
-			stg.SetContentDigest(stageDesc.Info.Labels[imagePkg.WerfStageContentDigestLabel])
+			// The stage digest remains the same, but the content digest may differ (e.g., the content digest of git and some user stages depends on the git commit).
+			contentDigest, exist := stageDesc.Info.Labels[imagePkg.WerfStageContentDigestLabel]
+			if exist {
+				stg.SetContentDigest(contentDigest)
+			} else if stg.Name() == stage.ImageSpec { // The content digest tag might be missing for the imageSpec stage (removed by the user).
+				stg.SetContentDigest(stageDesc.Info.GetDigest())
+			} else {
+				panic(fmt.Sprintf("expected stage %q content digest label to be set!", stg.Name()))
+			}
 
 			return nil
 		}
