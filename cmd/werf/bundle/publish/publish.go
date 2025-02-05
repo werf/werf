@@ -210,40 +210,11 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 
 	projectName := werfConfig.Meta.Project
 
-	chartDir, err := common.GetHelmChartDir(werfConfigPath, werfConfig, giterminismManager)
-	if err != nil {
-		return fmt.Errorf("getting helm chart dir failed: %w", err)
-	}
-
 	projectTmpDir, err := tmp_manager.CreateProjectDir(ctx)
 	if err != nil {
 		return fmt.Errorf("getting project tmp dir failed: %w", err)
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
-
-	serviceAnnotations := map[string]string{}
-	extraAnnotations := map[string]string{}
-	if annos, err := common.GetUserExtraAnnotations(&commonCmdData); err != nil {
-		return fmt.Errorf("get user extra annotations: %w", err)
-	} else {
-		for key, value := range annos {
-			if strings.HasPrefix(key, "project.werf.io/") ||
-				strings.Contains(key, "ci.werf.io/") ||
-				key == "werf.io/release-channel" {
-				serviceAnnotations[key] = value
-			} else {
-				extraAnnotations[key] = value
-			}
-		}
-	}
-
-	serviceAnnotations["project.werf.io/name"] = werfConfig.Meta.Project
-	serviceAnnotations["project.werf.io/env"] = *commonCmdData.Environment
-
-	extraLabels, err := common.GetUserExtraLabels(&commonCmdData)
-	if err != nil {
-		return fmt.Errorf("get user extra labels: %w", err)
-	}
 
 	buildOptions, err := common.GetBuildOptions(ctx, &commonCmdData, werfConfig, imagesToProcess)
 	if err != nil {
@@ -319,6 +290,35 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 		logboek.LogOptionalLn()
 	}
 
+	chartDir, err := common.GetHelmChartDir(werfConfigPath, werfConfig, giterminismManager)
+	if err != nil {
+		return fmt.Errorf("getting helm chart dir failed: %w", err)
+	}
+
+	serviceAnnotations := map[string]string{}
+	extraAnnotations := map[string]string{}
+	if annos, err := common.GetUserExtraAnnotations(&commonCmdData); err != nil {
+		return fmt.Errorf("get user extra annotations: %w", err)
+	} else {
+		for key, value := range annos {
+			if strings.HasPrefix(key, "project.werf.io/") ||
+				strings.Contains(key, "ci.werf.io/") ||
+				key == "werf.io/release-channel" {
+				serviceAnnotations[key] = value
+			} else {
+				extraAnnotations[key] = value
+			}
+		}
+	}
+
+	serviceAnnotations["project.werf.io/name"] = werfConfig.Meta.Project
+	serviceAnnotations["project.werf.io/env"] = *commonCmdData.Environment
+
+	extraLabels, err := common.GetUserExtraLabels(&commonCmdData)
+	if err != nil {
+		return fmt.Errorf("get user extra labels: %w", err)
+	}
+
 	helmRegistryClient, err := common.NewHelmRegistryClient(ctx, *commonCmdData.DockerConfig, *commonCmdData.InsecureHelmDependencies)
 	if err != nil {
 		return err
@@ -360,14 +360,13 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 		return fmt.Errorf("getting HEAD commit time failed: %w", err)
 	}
 
-	if vals, err := helpers.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepo, imagesInfoGetters, helpers.ServiceValuesOptions{
+	chartutil.ServiceValues, err = helpers.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepo, imagesInfoGetters, helpers.ServiceValuesOptions{
 		Env:        *commonCmdData.Environment,
 		CommitHash: headHash,
 		CommitDate: headTime,
-	}); err != nil {
-		return fmt.Errorf("error creating service values: %w", err)
-	} else {
-		wc.SetServiceValues(vals)
+	})
+	if err != nil {
+		return fmt.Errorf("get service values: %w", err)
 	}
 
 	helm_v3.Settings.Debug = *commonCmdData.LogDebug
@@ -662,7 +661,7 @@ func makeBundleValues(
 ) (map[string]interface{}, error) {
 	chartutil.DebugPrintValues(context.Background(), "input", inputVals)
 
-	vals, err := chartutil.MergeInternal(context.Background(), inputVals, wc.GetServiceValues(), nil)
+	vals, err := chartutil.MergeInternal(context.Background(), inputVals, chartutil.ServiceValues, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to coalesce werf chart values: %w", err)
 	}

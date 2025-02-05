@@ -5,7 +5,6 @@ import (
 
 	"github.com/werf/3p-helm/pkg/chart"
 	"github.com/werf/3p-helm/pkg/werf/file"
-	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
 )
 
 var _ chart.ChartExtender = (*WerfChart)(nil)
@@ -30,8 +29,6 @@ func NewWerfChart(
 
 		ChartFileReader: chartFileReader,
 
-		ChartExtenderServiceValuesData: helpers.NewChartExtenderServiceValuesData(),
-
 		DisableDefaultValues:       opts.DisableDefaultValues,
 		BuildChartDependenciesOpts: opts.BuildChartDependenciesOpts,
 	}
@@ -47,8 +44,6 @@ type WerfChart struct {
 	DisableDefaultValues       bool
 
 	ChartFileReader file.ChartFileReader
-
-	*helpers.ChartExtenderServiceValuesData
 }
 
 func (wc *WerfChart) Type() string {

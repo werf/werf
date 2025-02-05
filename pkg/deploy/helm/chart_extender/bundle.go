@@ -5,7 +5,6 @@ import (
 
 	"github.com/werf/3p-helm/pkg/chart"
 	"github.com/werf/3p-helm/pkg/werf/file"
-	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
 )
 
 var _ chart.ChartExtender = (*Bundle)(nil)
@@ -22,11 +21,10 @@ func NewBundle(
 	opts BundleOptions,
 ) (*Bundle, error) {
 	bundle := &Bundle{
-		Dir:                            dir,
-		SecretValueFiles:               opts.SecretValueFiles,
-		BuildChartDependenciesOpts:     opts.BuildChartDependenciesOpts,
-		ChartExtenderServiceValuesData: helpers.NewChartExtenderServiceValuesData(),
-		DisableDefaultValues:           opts.DisableDefaultValues,
+		Dir:                        dir,
+		SecretValueFiles:           opts.SecretValueFiles,
+		BuildChartDependenciesOpts: opts.BuildChartDependenciesOpts,
+		DisableDefaultValues:       opts.DisableDefaultValues,
 	}
 
 	return bundle, nil
@@ -41,8 +39,6 @@ type Bundle struct {
 	SecretValueFiles           []string
 	BuildChartDependenciesOpts chart.BuildChartDependenciesOptions
 	DisableDefaultValues       bool
-
-	*helpers.ChartExtenderServiceValuesData
 }
 
 func (bundle *Bundle) Type() string {

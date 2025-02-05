@@ -201,6 +201,18 @@ func runRender(ctx context.Context) error {
 		return fmt.Errorf("get annotations and labels: %w", err)
 	}
 
+	registryCredentialsPath := docker.GetDockerConfigCredentialsFile(*commonCmdData.DockerConfig)
+
+	chartutil.ServiceValues, err = helpers.GetBundleServiceValues(ctx, helpers.ServiceValuesOptions{
+		Env:                      *commonCmdData.Environment,
+		Namespace:                releaseNamespace,
+		SetDockerConfigJsonValue: *commonCmdData.SetDockerConfigJsonValue,
+		DockerConfigPath:         filepath.Dir(registryCredentialsPath),
+	})
+	if err != nil {
+		return fmt.Errorf("get service values: %w", err)
+	}
+
 	if err := action.Render(ctx, action.RenderOptions{
 		ChartDirPath:                 bundle.Dir,
 		ChartRepositoryInsecure:      *commonCmdData.InsecureHelmDependencies,
@@ -228,7 +240,7 @@ func runRender(ctx context.Context) error {
 		NetworkParallelism:           *commonCmdData.NetworkParallelism,
 		OutputFilePath:               cmdData.RenderOutput,
 		OutputFileSave:               cmdData.RenderOutput != "",
-		RegistryCredentialsPath:      docker.GetDockerConfigCredentialsFile(*commonCmdData.DockerConfig),
+		RegistryCredentialsPath:      registryCredentialsPath,
 		ReleaseName:                  releaseName,
 		ReleaseNamespace:             releaseNamespace,
 		ReleaseStorageDriver:         action.ReleaseStorageDriver(os.Getenv("HELM_DRIVER")),
@@ -243,22 +255,10 @@ func runRender(ctx context.Context) error {
 		LegacyPreRenderHook: func(
 			ctx context.Context,
 			releaseNamespace string,
-			registryCredentialsPath string,
 			secretValuesPaths []string,
 			_ bool,
 			defaultSecretValuesDisable bool,
 		) error {
-			if vals, err := helpers.GetBundleServiceValues(ctx, helpers.ServiceValuesOptions{
-				Env:                      *commonCmdData.Environment,
-				Namespace:                releaseNamespace,
-				SetDockerConfigJsonValue: *commonCmdData.SetDockerConfigJsonValue,
-				DockerConfigPath:         filepath.Dir(registryCredentialsPath),
-			}); err != nil {
-				return fmt.Errorf("get service values: %w", err)
-			} else {
-				bundle.SetServiceValues(vals)
-			}
-
 			loader.GlobalLoadOptions = &chart.LoadOptions{
 				ChartExtender: bundle,
 				SecretsRuntimeDataFactoryFunc: func() runtimedata.RuntimeData {

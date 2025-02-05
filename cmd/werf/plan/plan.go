@@ -402,6 +402,33 @@ func run(
 		return fmt.Errorf("get user extra labels: %w", err)
 	}
 
+	headHash, err := giterminismManager.LocalGitRepo().HeadCommitHash(ctx)
+	if err != nil {
+		return fmt.Errorf("get HEAD commit hash: %w", err)
+	}
+
+	headTime, err := giterminismManager.LocalGitRepo().HeadCommitTime(ctx)
+	if err != nil {
+		return fmt.Errorf("get HEAD commit time: %w", err)
+	}
+
+	registryCredentialsPath := docker.GetDockerConfigCredentialsFile(*commonCmdData.DockerConfig)
+
+	chartutil.ServiceValues, err = helpers.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, imagesInfoGetters, helpers.ServiceValuesOptions{
+		Namespace:                releaseNamespace,
+		Env:                      *commonCmdData.Environment,
+		IsStub:                   isStub,
+		DisableEnvStub:           true,
+		StubImageNameList:        stubImageNameList,
+		SetDockerConfigJsonValue: *commonCmdData.SetDockerConfigJsonValue,
+		DockerConfigPath:         filepath.Dir(registryCredentialsPath),
+		CommitHash:               headHash,
+		CommitDate:               headTime,
+	})
+	if err != nil {
+		return fmt.Errorf("get service values: %w", err)
+	}
+
 	if err := action.Plan(ctx, action.PlanOptions{
 		ChartAppVersion:              common.GetHelmChartConfigAppVersion(werfConfig),
 		ChartDirPath:                 chartPath,
@@ -430,7 +457,7 @@ func run(
 		LogDebug:                     *commonCmdData.LogDebug,
 		LogRegistryStreamOut:         os.Stdout,
 		NetworkParallelism:           common.GetNetworkParallelism(&commonCmdData),
-		RegistryCredentialsPath:      docker.GetDockerConfigCredentialsFile(*commonCmdData.DockerConfig),
+		RegistryCredentialsPath:      registryCredentialsPath,
 		ReleaseName:                  releaseName,
 		ReleaseNamespace:             releaseNamespace,
 		ReleaseStorageDriver:         action.ReleaseStorageDriver(os.Getenv("HELM_DRIVER")),
@@ -443,7 +470,6 @@ func run(
 		LegacyPrePlanHook: func(
 			ctx context.Context,
 			releaseNamespace string,
-			registryCredentialsPath string,
 			secretValuesPaths []string,
 			defaultValuesDisable bool,
 			defaultSecretValuesDisable bool,
@@ -459,32 +485,6 @@ func run(
 					DisableDefaultValues:       defaultValuesDisable,
 				},
 			)
-
-			headHash, err := giterminismManager.LocalGitRepo().HeadCommitHash(ctx)
-			if err != nil {
-				return fmt.Errorf("get HEAD commit hash: %w", err)
-			}
-
-			headTime, err := giterminismManager.LocalGitRepo().HeadCommitTime(ctx)
-			if err != nil {
-				return fmt.Errorf("get HEAD commit time: %w", err)
-			}
-
-			if vals, err := helpers.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, imagesInfoGetters, helpers.ServiceValuesOptions{
-				Namespace:                releaseNamespace,
-				Env:                      *commonCmdData.Environment,
-				IsStub:                   isStub,
-				DisableEnvStub:           true,
-				StubImageNameList:        stubImageNameList,
-				SetDockerConfigJsonValue: *commonCmdData.SetDockerConfigJsonValue,
-				DockerConfigPath:         filepath.Dir(registryCredentialsPath),
-				CommitHash:               headHash,
-				CommitDate:               headTime,
-			}); err != nil {
-				return fmt.Errorf("get service values: %w", err)
-			} else {
-				wc.SetServiceValues(vals)
-			}
 
 			loader.GlobalLoadOptions = &chart.LoadOptions{
 				ChartExtender: wc,
