@@ -15,15 +15,11 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/werf/3p-helm/pkg/chart"
-	"github.com/werf/3p-helm/pkg/chart/loader"
 	"github.com/werf/3p-helm/pkg/chartutil"
-	"github.com/werf/3p-helm/pkg/werf/secrets"
-	"github.com/werf/3p-helm/pkg/werf/secrets/runtimedata"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/nelm/pkg/action"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/deploy/bundles"
-	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
 	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/werf"
@@ -187,15 +183,7 @@ func runApply(ctx context.Context) error {
 		return fmt.Errorf("pull bundle: %w", err)
 	}
 
-	bundle, err := chart_extender.NewBundle(ctx, bundlePath, chart_extender.BundleOptions{
-		SecretValueFiles:           common.GetSecretValues(&commonCmdData),
-		BuildChartDependenciesOpts: chart.BuildChartDependenciesOptions{},
-	})
-	if err != nil {
-		return fmt.Errorf("construct bundle: %w", err)
-	}
-
-	serviceAnnotations, extraAnnotations, extraLabels, err := getAnnotationsAndLabels(bundle.Dir)
+	serviceAnnotations, extraAnnotations, extraLabels, err := getAnnotationsAndLabels(bundlePath)
 	if err != nil {
 		return fmt.Errorf("get annotations and labels: %w", err)
 	}
@@ -212,9 +200,11 @@ func runApply(ctx context.Context) error {
 		return fmt.Errorf("get service values: %w", err)
 	}
 
+	chart.CurrentChartType = chart.ChartTypeBundle
+
 	if err := action.Deploy(ctx, action.DeployOptions{
 		AutoRollback:                 cmdData.AutoRollback,
-		ChartDirPath:                 bundle.Dir,
+		ChartDirPath:                 bundlePath,
 		ChartRepositoryInsecure:      *commonCmdData.InsecureHelmDependencies,
 		ChartRepositorySkipTLSVerify: *commonCmdData.SkipTlsVerifyHelmDependencies,
 		ChartRepositorySkipUpdate:    *commonCmdData.SkipDependenciesRepoRefresh,
@@ -260,24 +250,6 @@ func runApply(ctx context.Context) error {
 		ValuesFilesPaths:             common.GetValues(&commonCmdData),
 		ValuesSets:                   common.GetSet(&commonCmdData),
 		ValuesStringSets:             common.GetSetString(&commonCmdData),
-		LegacyPreDeployHook: func(
-			ctx context.Context,
-			releaseNamespace string,
-			_ []string,
-			_ bool,
-			defaultSecretValuesDisable bool,
-		) error {
-			loader.GlobalLoadOptions = &chart.LoadOptions{
-				ChartExtender: bundle,
-				SecretsRuntimeDataFactoryFunc: func() runtimedata.RuntimeData {
-					return secrets.NewSecretsRuntimeData()
-				},
-			}
-			loader.WithoutDefaultSecretValues = defaultSecretValuesDisable
-			secrets.CoalesceTablesFunc = chartutil.CoalesceTables
-
-			return nil
-		},
 	}); err != nil {
 		return fmt.Errorf("release deploy: %w", err)
 	}

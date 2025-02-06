@@ -12,8 +12,6 @@ import (
 	"github.com/werf/3p-helm/pkg/chart"
 	"github.com/werf/3p-helm/pkg/chart/loader"
 	"github.com/werf/3p-helm/pkg/chartutil"
-	"github.com/werf/3p-helm/pkg/werf/secrets"
-	"github.com/werf/3p-helm/pkg/werf/secrets/runtimedata"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/level"
@@ -22,7 +20,6 @@ import (
 	"github.com/werf/werf/v2/pkg/build"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/config/deploy_params"
-	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
 	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/image"
@@ -390,6 +387,8 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 		return fmt.Errorf("get service values: %w", err)
 	}
 
+	loader.ChartFileReader = giterminismManager.FileReader()
+
 	if err := action.Render(ctx, action.RenderOptions{
 		ChartAppVersion:              common.GetHelmChartConfigAppVersion(werfConfig),
 		ChartDirPath:                 chartPath,
@@ -427,42 +426,13 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 		ReleaseStorageDriver:         action.ReleaseStorageDriver(os.Getenv("HELM_DRIVER")),
 		SecretKeyIgnore:              *commonCmdData.IgnoreSecretKey,
 		SecretValuesPaths:            common.GetSecretValues(&commonCmdData),
+		SecretWorkDir:                giterminismManager.ProjectDir(),
 		ShowCRDs:                     cmdData.IncludeCRDs,
 		ShowOnlyFiles:                append(util.PredefinedValuesByEnvNamePrefix("WERF_SHOW_ONLY"), cmdData.ShowOnly...),
 		ValuesFileSets:               common.GetSetFile(&commonCmdData),
 		ValuesFilesPaths:             common.GetValues(&commonCmdData),
 		ValuesSets:                   common.GetSet(&commonCmdData),
 		ValuesStringSets:             common.GetSetString(&commonCmdData),
-		LegacyPreRenderHook: func(
-			ctx context.Context,
-			releaseNamespace string,
-			secretValuesPaths []string,
-			defaultValuesDisable bool,
-			defaultSecretValuesDisable bool,
-		) error {
-			wc := chart_extender.NewWerfChart(
-				ctx,
-				giterminismManager.FileReader(),
-				relChartPath,
-				giterminismManager.ProjectDir(),
-				chart_extender.WerfChartOptions{
-					BuildChartDependenciesOpts: chart.BuildChartDependenciesOptions{},
-					SecretValueFiles:           secretValuesPaths,
-					DisableDefaultValues:       defaultValuesDisable,
-				},
-			)
-
-			loader.GlobalLoadOptions = &chart.LoadOptions{
-				ChartExtender: wc,
-				SecretsRuntimeDataFactoryFunc: func() runtimedata.RuntimeData {
-					return secrets.NewSecretsRuntimeData()
-				},
-			}
-			loader.WithoutDefaultSecretValues = defaultSecretValuesDisable
-			secrets.CoalesceTablesFunc = chartutil.CoalesceTables
-
-			return nil
-		},
 	}); err != nil {
 		return fmt.Errorf("render manifests: %w", err)
 	}

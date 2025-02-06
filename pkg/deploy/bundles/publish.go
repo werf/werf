@@ -11,7 +11,6 @@ import (
 	"github.com/werf/3p-helm/pkg/downloader"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/deploy/bundles/registry"
-	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender"
 )
 
 type PublishOptions struct {
@@ -19,7 +18,7 @@ type PublishOptions struct {
 	RenameChart         string
 }
 
-func Publish(ctx context.Context, bundle *chart_extender.Bundle, bundleRef string, bundlesRegistryClient *registry.Client, opts PublishOptions) error {
+func Publish(ctx context.Context, bundleDir, bundleRef string, bundlesRegistryClient *registry.Client, opts PublishOptions) error {
 	r, err := registry.ParseReference(bundleRef)
 	if err != nil {
 		return fmt.Errorf("error parsing bundle ref %q: %w", bundleRef, err)
@@ -28,7 +27,7 @@ func Publish(ctx context.Context, bundle *chart_extender.Bundle, bundleRef strin
 	loader.GlobalLoadOptions = &chart.LoadOptions{}
 
 	if err := logboek.Context(ctx).Default().LogProcess("Saving bundle to the local chart helm cache").DoError(func() error {
-		path, err := filepath.Abs(bundle.Dir)
+		path, err := filepath.Abs(bundleDir)
 		if err != nil {
 			return err
 		}
