@@ -63,8 +63,11 @@ func (s *ImageSpecStage) PrepareImage(ctx context.Context, _ Conveyor, _ contain
 		newConfig.Env = modifyEnv(ctx, imageInfo.Env, s.imageSpec.RemoveEnv, s.imageSpec.Env)
 		newConfig.Volumes = modifyVolumes(ctx, imageInfo.Volumes, s.imageSpec.RemoveVolumes, s.imageSpec.Volumes)
 
-		for _, expose := range s.imageSpec.Expose {
-			newConfig.ExposedPorts[expose] = struct{}{}
+		if s.imageSpec.Expose != nil {
+			newConfig.ExposedPorts = make(map[string]struct{}, len(s.imageSpec.Expose))
+			for _, expose := range s.imageSpec.Expose {
+				newConfig.ExposedPorts[expose] = struct{}{}
+			}
 		}
 
 		if s.imageSpec.Healthcheck != nil {
