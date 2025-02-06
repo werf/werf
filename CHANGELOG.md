@@ -10,7 +10,6 @@
 
 ### Bug Fixes
 
-* **build:** fix incorrect base image when imageSpec used ([980e0ba](https://www.github.com/werf/werf/commit/980e0ba2eac0171944c6008b38f67bc27636d842))
 * **build:** fix incorrect base image when user removes werf labels ([b2475b6](https://www.github.com/werf/werf/commit/b2475b60aaab68fb701f817615f17ff154e7c77f))
 * **build:** fix no such image error ([e9a1d71](https://www.github.com/werf/werf/commit/e9a1d71484a99251f0dd50dbd370b582dc84bfe5))
 * **build:** fix secret config validation not working ([#6598](https://www.github.com/werf/werf/issues/6598)) ([e9269c0](https://www.github.com/werf/werf/commit/e9269c05aa59df317166c273c2311e647de9dd43))
