@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.25.1](https://www.github.com/werf/werf/compare/v2.25.0...v2.25.1) (2025-02-06)
+
+
+### Bug Fixes
+
+* **build:** panic: assignment to entry in nil map ([a190c15](https://www.github.com/werf/werf/commit/a190c152b2f71748067ac218737ef308eae0caac))
+
 ## [2.25.0](https://www.github.com/werf/werf/compare/v2.24.0...v2.25.0) (2025-02-05)
 
 
