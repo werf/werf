@@ -1,5 +1,22 @@
 # Changelog
 
+## [2.25.0](https://www.github.com/werf/werf/compare/v2.24.0...v2.25.0) (2025-02-05)
+
+
+### Features
+
+* **deploy:** add --skip-dependencies-repo-refresh, --show-only, --disable-default-values to `bundle render` ([dae5be5](https://www.github.com/werf/werf/commit/dae5be5dca8c75dc94f33e4383141ad73dccf5b7))
+
+
+### Bug Fixes
+
+* **build:** fix incorrect base image when user removes werf labels ([b2475b6](https://www.github.com/werf/werf/commit/b2475b60aaab68fb701f817615f17ff154e7c77f))
+* **build:** fix no such image error ([e9a1d71](https://www.github.com/werf/werf/commit/e9a1d71484a99251f0dd50dbd370b582dc84bfe5))
+* **build:** fix secret config validation not working ([#6598](https://www.github.com/werf/werf/issues/6598)) ([e9269c0](https://www.github.com/werf/werf/commit/e9269c05aa59df317166c273c2311e647de9dd43))
+* **build:** fix ssh auth sock validation ([#6599](https://www.github.com/werf/werf/issues/6599)) ([3d7d21c](https://www.github.com/werf/werf/commit/3d7d21c11f9db6495bc1ff7358d91ddb73a6b712))
+* **deploy:** subchart secret values not disabled via --disable-default-secret-values in `bundle apply` ([2821eed](https://www.github.com/werf/werf/commit/2821eedaaea570f207cf24de3066197c7d0e9e8f))
+* **deploy:** subcharts rendered incorrectly ([05e41e4](https://www.github.com/werf/werf/commit/05e41e4143b4bfb88f6ee9e3d5b9a2d6e764f4bd))
+
 ## [2.24.0](https://www.github.com/werf/werf/compare/v2.23.1...v2.24.0) (2025-02-01)
 
 
