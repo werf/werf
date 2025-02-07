@@ -174,34 +174,43 @@ func modifyLabels(ctx context.Context, labels, addLabels map[string]string, remo
 	return labels, nil
 }
 
-func modifyEnv(env, removeKeys []string, addMap map[string]string) ([]string, error) {
-	envMap := make(map[string]string, len(env))
+func modifyEnv(env, removeKeys []string, addKeysMap map[string]string) ([]string, error) {
+	baseEnvMap := make(map[string]string, len(env))
 	for _, entry := range env {
 		parts := strings.SplitN(entry, "=", 2)
 		if len(parts) == 2 {
-			envMap[parts[0]] = parts[1]
+			baseEnvMap[parts[0]] = parts[1]
 		}
 	}
 
 	for _, key := range removeKeys {
-		delete(envMap, key)
+		delete(baseEnvMap, key)
 	}
 
-	addMapExpanded, err := expandEnv(envMap, addMap, dockerfile.ExpandOptions{})
+	envMapToExpand := make(map[string]string)
+	for key, value := range baseEnvMap {
+		envMapToExpand[key] = value
+	}
+	for key, value := range addKeysMap {
+		// Do not add PATH to the baseEnvMap, because it is a special case for the expandEnv function.
+		if key != "PATH" {
+			baseEnvMap[key] = value
+		}
+
+		envMapToExpand[key] = value
+	}
+
+	expandedEnvMap, err := expandEnv(baseEnvMap, envMapToExpand, dockerfile.ExpandOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("unable to expand env: %w", err)
 	}
 
-	for key, value := range addMapExpanded {
-		envMap[key] = value
+	resultEnv := make([]string, 0, len(baseEnvMap))
+	for key, value := range expandedEnvMap {
+		resultEnv = append(resultEnv, fmt.Sprintf("%s=%s", key, value))
 	}
 
-	result := make([]string, 0, len(envMap))
-	for key, value := range envMap {
-		result = append(result, fmt.Sprintf("%s=%s", key, value))
-	}
-
-	return result, nil
+	return resultEnv, nil
 }
 
 func modifyVolumes(_ context.Context, volumes map[string]struct{}, removeVolumes, addVolumes []string) map[string]struct{} {
@@ -230,11 +239,11 @@ func toDuration(seconds int) time.Duration {
 	return time.Duration(seconds) * time.Second
 }
 
-func expandEnv(baseEnv, addenv map[string]string, opts dockerfile.ExpandOptions) (map[string]string, error) {
+func expandEnv(baseEnvMap, envMapToExpand map[string]string, opts dockerfile.ExpandOptions) (map[string]string, error) {
 	expander := frontend.NewShlexExpanderFactory('\\').GetExpander(opts)
 	res := make(map[string]string)
-	for k, v := range addenv {
-		newValue, err := expander.ProcessWordWithMap(v, baseEnv)
+	for k, v := range envMapToExpand {
+		newValue, err := expander.ProcessWordWithMap(v, baseEnvMap)
 		if err != nil {
 			return nil, fmt.Errorf("error processing word %q: %w", v, err)
 		}
