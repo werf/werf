@@ -33,7 +33,6 @@ import (
 	"github.com/werf/werf/v2/pkg/build"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/deploy/bundles"
-	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/tmp_manager"
@@ -338,17 +337,7 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 		return err
 	}
 
-	wc := chart_extender.NewWerfChart(
-		ctx,
-		giterminismManager.FileReader(),
-		chartDir,
-		giterminismManager.ProjectDir(),
-		chart_extender.WerfChartOptions{
-			BuildChartDependenciesOpts: chart.BuildChartDependenciesOptions{},
-			SecretValueFiles:           common.GetSecretValues(&commonCmdData),
-			DisableDefaultValues:       *commonCmdData.DisableDefaultValues,
-		},
-	)
+	loader.ChartFileReader = giterminismManager.FileReader()
 
 	headHash, err := giterminismManager.LocalGitRepo().HeadCommitHash(ctx)
 	if err != nil {
@@ -371,14 +360,10 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 
 	helm_v3.Settings.Debug = *commonCmdData.LogDebug
 
-	loader.GlobalLoadOptions = &chart.LoadOptions{
-		ChartExtender: wc,
-		SecretsRuntimeDataFactoryFunc: func() runtimedata.RuntimeData {
-			return secrets.NewSecretsRuntimeData()
-		},
-	}
 	loader.WithoutDefaultSecretValues = *commonCmdData.DisableDefaultSecretValues
+	loader.WithoutDefaultValues = *commonCmdData.DisableDefaultValues
 	secrets.CoalesceTablesFunc = chartutil.CoalesceTables
+	secrets.SecretsWorkingDir = giterminismManager.ProjectDir()
 
 	chartextender.DefaultChartAPIVersion = chart.APIVersionV2
 	chartextender.DefaultChartName = werfConfig.Meta.Project
@@ -407,9 +392,8 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 	loader.SetChartPathFunc = downloader.SetChartPath
 	loader.DepsBuildFunc = downloader.Build
 
-	bundle, err := createNewBundle(
+	if err = createNewBundle(
 		ctx,
-		wc,
 		extraAnnotations,
 		serviceAnnotations,
 		extraLabels,
@@ -423,9 +407,8 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 			Values:       common.GetSet(&commonCmdData),
 			FileValues:   common.GetSetFile(&commonCmdData),
 		},
-	)
-	if err != nil {
-		return fmt.Errorf("unable to create bundle: %w", err)
+	); err != nil {
+		return fmt.Errorf("create bundle: %w", err)
 	}
 
 	var bundleRepo string
@@ -435,7 +418,7 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 		bundleRepo = stagesStorage.Address()
 	}
 
-	return bundles.Publish(ctx, bundle, fmt.Sprintf("%s:%s", bundleRepo, cmdData.Tag), bundlesRegistryClient, bundles.PublishOptions{
+	return bundles.Publish(ctx, bundleTmpDir, fmt.Sprintf("%s:%s", bundleRepo, cmdData.Tag), bundlesRegistryClient, bundles.PublishOptions{
 		HelmCompatibleChart: *commonCmdData.HelmCompatibleChart,
 		RenameChart:         *commonCmdData.RenameChart,
 	})
@@ -443,7 +426,6 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 
 func createNewBundle(
 	ctx context.Context,
-	wc *chart_extender.WerfChart,
 	extraAnnotations map[string]string,
 	serviceAnnotations map[string]string,
 	extraLabels map[string]string,
@@ -452,42 +434,42 @@ func createNewBundle(
 	destDir string,
 	chartVersion string,
 	vals *values.Options,
-) (*chart_extender.Bundle, error) {
+) error {
 	chartPath := filepath.Join(projectDir, chartDir)
 	chrt, err := loader.LoadDir(chartPath)
 	if err != nil {
-		return nil, fmt.Errorf("error loading chart %q: %w", chartPath, err)
+		return fmt.Errorf("error loading chart %q: %w", chartPath, err)
 	}
 
 	var valsData []byte
 	{
 		p := getter.All(helm_v3.Settings)
-		vals, err := vals.MergeValues(p, wc)
+		vals, err := vals.MergeValues(p)
 		if err != nil {
-			return nil, fmt.Errorf("unable to merge input values: %w", err)
+			return fmt.Errorf("unable to merge input values: %w", err)
 		}
 
-		bundleVals, err := makeBundleValues(chrt, wc, vals)
+		bundleVals, err := makeBundleValues(chrt, vals)
 		if err != nil {
-			return nil, fmt.Errorf("unable to construct bundle values: %w", err)
+			return fmt.Errorf("unable to construct bundle values: %w", err)
 		}
 
 		valsData, err = yaml.Marshal(bundleVals)
 		if err != nil {
-			return nil, fmt.Errorf("unable to marshal bundle values: %w", err)
+			return fmt.Errorf("unable to marshal bundle values: %w", err)
 		}
 	}
 
 	var secretValsData []byte
 	if chrt.SecretsRuntimeData != nil && !secrets_manager.DefaultManager.IsMissedSecretKeyModeEnabled() {
-		vals, err := makeBundleSecretValues(ctx, wc, chrt.SecretsRuntimeData)
+		vals, err := makeBundleSecretValues(ctx, chrt.SecretsRuntimeData)
 		if err != nil {
-			return nil, fmt.Errorf("unable to construct bundle secret values: %w", err)
+			return fmt.Errorf("unable to construct bundle secret values: %w", err)
 		}
 
 		secretValsData, err = yaml.Marshal(vals)
 		if err != nil {
-			return nil, fmt.Errorf("unable to marshal bundle secret values: %w", err)
+			return fmt.Errorf("unable to marshal bundle secret values: %w", err)
 		}
 	}
 
@@ -495,24 +477,26 @@ func createNewBundle(
 		destDir = chrt.Metadata.Name
 	}
 
+	secrets.ChartDir = destDir
+
 	if err := os.RemoveAll(destDir); err != nil {
-		return nil, fmt.Errorf("unable to remove %q: %w", destDir, err)
+		return fmt.Errorf("unable to remove %q: %w", destDir, err)
 	}
 	if err := os.MkdirAll(destDir, os.ModePerm); err != nil {
-		return nil, fmt.Errorf("unable to create dir %q: %w", destDir, err)
+		return fmt.Errorf("unable to create dir %q: %w", destDir, err)
 	}
 
 	logboek.Context(ctx).Debug().LogF("Saving bundle values:\n%s\n---\n", valsData)
 
 	valuesFile := filepath.Join(destDir, "values.yaml")
 	if err := ioutil.WriteFile(valuesFile, valsData, os.ModePerm); err != nil {
-		return nil, fmt.Errorf("unable to write %q: %w", valuesFile, err)
+		return fmt.Errorf("unable to write %q: %w", valuesFile, err)
 	}
 
 	if secretValsData != nil {
 		secretValuesFile := filepath.Join(destDir, "secret-values.yaml")
 		if err := ioutil.WriteFile(secretValuesFile, secretValsData, os.ModePerm); err != nil {
-			return nil, fmt.Errorf("unable to write %q: %w", secretValuesFile, err)
+			return fmt.Errorf("unable to write %q: %w", secretValuesFile, err)
 		}
 	}
 
@@ -527,39 +511,39 @@ func createNewBundle(
 
 	chartYamlFile := filepath.Join(destDir, "Chart.yaml")
 	if data, err := json.Marshal(bundleMetadata); err != nil {
-		return nil, fmt.Errorf("unable to prepare Chart.yaml data: %w", err)
+		return fmt.Errorf("unable to prepare Chart.yaml data: %w", err)
 	} else if err := ioutil.WriteFile(chartYamlFile, append(data, []byte("\n")...), os.ModePerm); err != nil {
-		return nil, fmt.Errorf("unable to write %q: %w", chartYamlFile, err)
+		return fmt.Errorf("unable to write %q: %w", chartYamlFile, err)
 	}
 
 	if chrt.Lock != nil {
 		chartLockFile := filepath.Join(destDir, "Chart.lock")
 		if data, err := json.Marshal(chrt.Lock); err != nil {
-			return nil, fmt.Errorf("unable to prepare Chart.lock data: %w", err)
+			return fmt.Errorf("unable to prepare Chart.lock data: %w", err)
 		} else if err := ioutil.WriteFile(chartLockFile, append(data, []byte("\n")...), os.ModePerm); err != nil {
-			return nil, fmt.Errorf("unable to write %q: %w", chartLockFile, err)
+			return fmt.Errorf("unable to write %q: %w", chartLockFile, err)
 		}
 	}
 
 	templatesDir := filepath.Join(destDir, "templates")
 	if err := os.MkdirAll(templatesDir, os.ModePerm); err != nil {
-		return nil, fmt.Errorf("unable to create dir %q: %w", templatesDir, err)
+		return fmt.Errorf("unable to create dir %q: %w", templatesDir, err)
 	}
 
 	for _, f := range chrt.Templates {
 		if err := writeChartFile(ctx, destDir, f.Name, f.Data); err != nil {
-			return nil, fmt.Errorf("error writing chart template: %w", err)
+			return fmt.Errorf("error writing chart template: %w", err)
 		}
 	}
 
-	chartDirAbs := filepath.Join(wc.ProjectDir, wc.ChartDir)
+	chartDirAbs := filepath.Join(projectDir, chartDir)
 
 	ignoreChartValuesFiles := []string{secrets.DefaultSecretValuesFileName}
 
 	// Do not publish into the bundle no custom values nor custom secret values.
 	// Final bundle values and secret values will be preconstructed, merged and
 	//  embedded into the bundle using only 2 files: values.yaml and secret-values.yaml.
-	for _, customValuesPath := range append(wc.SecretValueFiles, vals.ValueFiles...) {
+	for _, customValuesPath := range append(common.GetSecretValues(&commonCmdData), vals.ValueFiles...) {
 		path := util.GetAbsoluteFilepath(customValuesPath)
 		if util.IsSubpathOfBasePath(chartDirAbs, path) {
 			ignoreChartValuesFiles = append(ignoreChartValuesFiles, util.GetRelativeToBaseFilepath(chartDirAbs, path))
@@ -575,7 +559,7 @@ WritingFiles:
 		}
 
 		if err := writeChartFile(ctx, destDir, f.Name, f.Data); err != nil {
-			return nil, fmt.Errorf("error writing miscellaneous chart file: %w", err)
+			return fmt.Errorf("error writing miscellaneous chart file: %w", err)
 		}
 	}
 
@@ -594,7 +578,7 @@ WritingFiles:
 		for _, f := range chrt.Raw {
 			if strings.HasPrefix(f.Name, depPath) {
 				if err := writeChartFile(ctx, destDir, f.Name, f.Data); err != nil {
-					return nil, fmt.Errorf("error writing subchart file: %w", err)
+					return fmt.Errorf("error writing subchart file: %w", err)
 				}
 			}
 		}
@@ -603,30 +587,27 @@ WritingFiles:
 	if chrt.Schema != nil {
 		schemaFile := filepath.Join(destDir, "values.schema.json")
 		if err := writeChartFile(ctx, destDir, "values.schema.json", chrt.Schema); err != nil {
-			return nil, fmt.Errorf("error writing chart values schema: %w", err)
+			return fmt.Errorf("error writing chart values schema: %w", err)
 		}
 		if err := ioutil.WriteFile(schemaFile, chrt.Schema, os.ModePerm); err != nil {
-			return nil, fmt.Errorf("unable to write %q: %w", schemaFile, err)
+			return fmt.Errorf("unable to write %q: %w", schemaFile, err)
 		}
 	}
 
 	annotations := lo.Assign(extraAnnotations, serviceAnnotations)
 	if len(annotations) > 0 {
 		if err := writeBundleJsonMap(annotations, filepath.Join(destDir, "extra_annotations.json")); err != nil {
-			return nil, err
+			return err
 		}
 	}
 
 	if len(extraLabels) > 0 {
 		if err := writeBundleJsonMap(extraLabels, filepath.Join(destDir, "extra_labels.json")); err != nil {
-			return nil, err
+			return err
 		}
 	}
 
-	return chart_extender.NewBundle(ctx, destDir, chart_extender.BundleOptions{
-		BuildChartDependenciesOpts: wc.BuildChartDependenciesOpts,
-		DisableDefaultValues:       wc.DisableDefaultValues,
-	})
+	return nil
 }
 
 func writeChartFile(ctx context.Context, destDir, fileName string, fileData []byte) error {
@@ -656,7 +637,6 @@ func writeBundleJsonMap(dataMap map[string]string, path string) error {
 
 func makeBundleValues(
 	chrt *chart.Chart,
-	wc *chart_extender.WerfChart,
 	inputVals map[string]interface{},
 ) (map[string]interface{}, error) {
 	chartutil.DebugPrintValues(context.Background(), "input", inputVals)
@@ -686,11 +666,10 @@ func makeBundleValues(
 
 func makeBundleSecretValues(
 	ctx context.Context,
-	wc *chart_extender.WerfChart,
 	secretsRuntimeData runtimedata.RuntimeData,
 ) (map[string]interface{}, error) {
 	if chartutil.DebugSecretValues() {
 		chartutil.DebugPrintValues(context.Background(), "secret", secretsRuntimeData.GetDecryptedSecretValues())
 	}
-	return secretsRuntimeData.GetEncodedSecretValues(ctx, secrets_manager.DefaultManager, wc.ProjectDir)
+	return secretsRuntimeData.GetEncodedSecretValues(ctx, secrets_manager.DefaultManager, false)
 }

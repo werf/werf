@@ -47,7 +47,12 @@ func NewLocalSynchronization(ctx context.Context, params SynchronizationParams) 
 }
 
 func (s *LocalSynchronization) GetStorageLockManager(_ context.Context) (Interface, error) {
-	return NewGeneric(chart.HostLocker), nil
+	hostLocker, err := chart.HostLocker()
+	if err != nil {
+		return nil, fmt.Errorf("get host locker: %w", err)
+	}
+
+	return NewGeneric(hostLocker), nil
 }
 
 type HttpSynchronization struct {

@@ -112,9 +112,9 @@ func Init(tmpDirOption, homeDirOption string) error {
 
 	sharedContextDir = filepath.Join(homeDir, "shared_context")
 	localCacheDir = filepath.Join(homeDir, "local_cache")
-	loader.LocalCacheDir = localCacheDir
+	loader.SetLocalCacheDir(localCacheDir)
 	serviceDir = filepath.Join(homeDir, "service")
-	secrets_manager.WerfHomeDir = homeDir
+	secrets_manager.SetWerfHomeDir(homeDir)
 	secrets_manager_legacy.WerfHomeDir = homeDir
 
 	file_lock.LegacyHashFunction = true
@@ -122,7 +122,7 @@ func Init(tmpDirOption, homeDirOption string) error {
 	if locker, err := file_locker.NewFileLocker(filepath.Join(serviceDir, "locks")); err != nil {
 		return fmt.Errorf("error creating werf host file locker: %w", err)
 	} else {
-		chart.HostLocker = locker
+		chart.SetHostLocker(locker)
 	}
 
 	if err := SetWerfFirstRunAt(context.Background()); err != nil {

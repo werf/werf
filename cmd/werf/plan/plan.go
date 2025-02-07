@@ -12,8 +12,6 @@ import (
 	"github.com/werf/3p-helm/pkg/chart"
 	"github.com/werf/3p-helm/pkg/chart/loader"
 	"github.com/werf/3p-helm/pkg/chartutil"
-	"github.com/werf/3p-helm/pkg/werf/secrets"
-	"github.com/werf/3p-helm/pkg/werf/secrets/runtimedata"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/nelm/pkg/action"
@@ -22,7 +20,6 @@ import (
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/config/deploy_params"
 	"github.com/werf/werf/v2/pkg/container_backend"
-	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
 	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
@@ -429,6 +426,8 @@ func run(
 		return fmt.Errorf("get service values: %w", err)
 	}
 
+	loader.ChartFileReader = giterminismManager.FileReader()
+
 	if err := action.Plan(ctx, action.PlanOptions{
 		ChartAppVersion:              common.GetHelmChartConfigAppVersion(werfConfig),
 		ChartDirPath:                 chartPath,
@@ -463,40 +462,11 @@ func run(
 		ReleaseStorageDriver:         action.ReleaseStorageDriver(os.Getenv("HELM_DRIVER")),
 		SecretKeyIgnore:              *commonCmdData.IgnoreSecretKey,
 		SecretValuesPaths:            common.GetSecretValues(&commonCmdData),
+		SecretWorkDir:                giterminismManager.ProjectDir(),
 		ValuesFileSets:               common.GetSetFile(&commonCmdData),
 		ValuesFilesPaths:             common.GetValues(&commonCmdData),
 		ValuesSets:                   common.GetSet(&commonCmdData),
 		ValuesStringSets:             common.GetSetString(&commonCmdData),
-		LegacyPrePlanHook: func(
-			ctx context.Context,
-			releaseNamespace string,
-			secretValuesPaths []string,
-			defaultValuesDisable bool,
-			defaultSecretValuesDisable bool,
-		) error {
-			wc := chart_extender.NewWerfChart(
-				ctx,
-				giterminismManager.FileReader(),
-				relChartPath,
-				giterminismManager.ProjectDir(),
-				chart_extender.WerfChartOptions{
-					BuildChartDependenciesOpts: chart.BuildChartDependenciesOptions{},
-					SecretValueFiles:           secretValuesPaths,
-					DisableDefaultValues:       defaultValuesDisable,
-				},
-			)
-
-			loader.GlobalLoadOptions = &chart.LoadOptions{
-				ChartExtender: wc,
-				SecretsRuntimeDataFactoryFunc: func() runtimedata.RuntimeData {
-					return secrets.NewSecretsRuntimeData()
-				},
-			}
-			loader.WithoutDefaultSecretValues = defaultSecretValuesDisable
-			secrets.CoalesceTablesFunc = chartutil.CoalesceTables
-
-			return nil
-		},
 	}); err != nil {
 		return fmt.Errorf("plan release: %w", err)
 	}
