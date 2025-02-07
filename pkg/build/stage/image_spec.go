@@ -187,17 +187,17 @@ func modifyEnv(env, removeKeys []string, addMap map[string]string) ([]string, er
 		delete(envMap, key)
 	}
 
-	for key, value := range addMap {
-		envMap[key] = value
-	}
-
-	envMapExpanded, err := expandEnv(envMap, addMap, dockerfile.ExpandOptions{})
+	addMapExpanded, err := expandEnv(envMap, addMap, dockerfile.ExpandOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("unable to expand env: %w", err)
 	}
 
-	result := make([]string, 0, len(envMapExpanded))
-	for key, value := range envMapExpanded {
+	for key, value := range addMapExpanded {
+		envMap[key] = value
+	}
+
+	result := make([]string, 0, len(envMap))
+	for key, value := range envMap {
 		result = append(result, fmt.Sprintf("%s=%s", key, value))
 	}
 
@@ -230,7 +230,7 @@ func toDuration(seconds int) time.Duration {
 	return time.Duration(seconds) * time.Second
 }
 
-func expandEnv(baseEnv map[string]string, addenv map[string]string, opts dockerfile.ExpandOptions) (map[string]string, error) {
+func expandEnv(baseEnv, addenv map[string]string, opts dockerfile.ExpandOptions) (map[string]string, error) {
 	expander := frontend.NewShlexExpanderFactory('\\').GetExpander(opts)
 	res := make(map[string]string)
 	for k, v := range addenv {
