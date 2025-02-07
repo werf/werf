@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.26.2](https://www.github.com/werf/werf/compare/v2.26.1...v2.26.2) (2025-02-07)
+
+
+### Bug Fixes
+
+* **build:** invalidate imageSpec cache ([cf2bd2c](https://www.github.com/werf/werf/commit/cf2bd2ca3a9f09082f6ab9d44c31932ce1c8dcc2))
+
 ### [2.26.1](https://www.github.com/werf/werf/compare/v2.26.0...v2.26.1) (2025-02-07)
 
 
