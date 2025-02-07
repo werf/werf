@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.26.0](https://www.github.com/werf/werf/compare/v2.25.1...v2.26.0) (2025-02-07)
+
+
+### Features
+
+* **build:** apply global imageSpec only for final images ([70d9e21](https://www.github.com/werf/werf/commit/70d9e2123388a546c79c1114a785674612cba5af))
+
 ### [2.25.1](https://www.github.com/werf/werf/compare/v2.25.0...v2.25.1) (2025-02-06)
 
 
