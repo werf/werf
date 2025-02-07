@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.26.1](https://www.github.com/werf/werf/compare/v2.26.0...v2.26.1) (2025-02-07)
+
+
+### Bug Fixes
+
+* **build:** ensure imageSpec.config.env variables are expanded ([#6618](https://www.github.com/werf/werf/issues/6618)) ([535619d](https://www.github.com/werf/werf/commit/535619d3757667757cd63d5397068d18285e959d))
+
 ## [2.26.0](https://www.github.com/werf/werf/compare/v2.25.1...v2.26.0) (2025-02-07)
 
 
