@@ -36,19 +36,6 @@ var _ = Describe("Complex converge", Label("e2e", "converge", "complex"), func()
 
 		werfProject.KubeCtl(&werf.KubeCtlOptions{
 			werf.CommonOptions{
-				ExtraArgs: append(
-					[]string{
-						"delete",
-						"crd",
-						"--ignore-not-found",
-					},
-					crdsNames...,
-				),
-			},
-		})
-
-		werfProject.KubeCtl(&werf.KubeCtlOptions{
-			werf.CommonOptions{
 				ExtraArgs: []string{
 					"delete",
 					"namespace",
