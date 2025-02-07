@@ -11,6 +11,8 @@ import (
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
+	"github.com/werf/werf/v2/pkg/dockerfile"
+	"github.com/werf/werf/v2/pkg/dockerfile/frontend"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
@@ -60,7 +62,10 @@ func (s *ImageSpecStage) PrepareImage(ctx context.Context, _ Conveyor, _ contain
 		}
 
 		newConfig.Labels = resultLabels
-		newConfig.Env = modifyEnv(ctx, imageInfo.Env, s.imageSpec.RemoveEnv, s.imageSpec.Env)
+		newConfig.Env, err = modifyEnv(imageInfo.Env, s.imageSpec.RemoveEnv, s.imageSpec.Env)
+		if err != nil {
+			return fmt.Errorf("unable to modify env: %w", err)
+		}
 		newConfig.Volumes = modifyVolumes(ctx, imageInfo.Volumes, s.imageSpec.RemoveVolumes, s.imageSpec.Volumes)
 
 		if s.imageSpec.Expose != nil {
@@ -169,29 +174,43 @@ func modifyLabels(ctx context.Context, labels, addLabels map[string]string, remo
 	return labels, nil
 }
 
-func modifyEnv(_ context.Context, env, removeKeys []string, addMap map[string]string) []string {
-	envMap := make(map[string]string, len(env))
+func modifyEnv(env, removeKeys []string, addKeysMap map[string]string) ([]string, error) {
+	baseEnvMap := make(map[string]string, len(env))
 	for _, entry := range env {
 		parts := strings.SplitN(entry, "=", 2)
 		if len(parts) == 2 {
-			envMap[parts[0]] = parts[1]
+			baseEnvMap[parts[0]] = parts[1]
 		}
 	}
 
 	for _, key := range removeKeys {
-		delete(envMap, key)
+		delete(baseEnvMap, key)
 	}
 
-	for key, value := range addMap {
-		envMap[key] = value
+	envMapToExpand := make(map[string]string)
+	for key, value := range baseEnvMap {
+		envMapToExpand[key] = value
+	}
+	for key, value := range addKeysMap {
+		// Do not add PATH to the baseEnvMap, because it is a special case for the expandEnv function.
+		if key != "PATH" {
+			baseEnvMap[key] = value
+		}
+
+		envMapToExpand[key] = value
 	}
 
-	result := make([]string, 0, len(envMap))
-	for key, value := range envMap {
-		result = append(result, fmt.Sprintf("%s=%s", key, value))
+	expandedEnvMap, err := expandEnv(baseEnvMap, envMapToExpand, dockerfile.ExpandOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("unable to expand env: %w", err)
 	}
 
-	return result
+	resultEnv := make([]string, 0, len(baseEnvMap))
+	for key, value := range expandedEnvMap {
+		resultEnv = append(resultEnv, fmt.Sprintf("%s=%s", key, value))
+	}
+
+	return resultEnv, nil
 }
 
 func modifyVolumes(_ context.Context, volumes map[string]struct{}, removeVolumes, addVolumes []string) map[string]struct{} {
@@ -218,4 +237,17 @@ func sortSliceWithNewSlice(original []string) []string {
 
 func toDuration(seconds int) time.Duration {
 	return time.Duration(seconds) * time.Second
+}
+
+func expandEnv(baseEnvMap, envMapToExpand map[string]string, opts dockerfile.ExpandOptions) (map[string]string, error) {
+	expander := frontend.NewShlexExpanderFactory('\\').GetExpander(opts)
+	res := make(map[string]string)
+	for k, v := range envMapToExpand {
+		newValue, err := expander.ProcessWordWithMap(v, baseEnvMap)
+		if err != nil {
+			return nil, fmt.Errorf("error processing word %q: %w", v, err)
+		}
+		res[k] = newValue
+	}
+	return res, nil
 }
