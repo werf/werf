@@ -502,7 +502,7 @@ func prepareWerfConfig(giterminismManager giterminism_manager.Interface, rawImag
 		}
 
 		for _, image := range imageList {
-			if meta.Build.ImageSpec != nil {
+			if meta.Build.ImageSpec != nil && image.final {
 				merged := mergeImageSpec(image.ImageSpec, meta.Build.ImageSpec)
 				image.ImageSpec = &merged
 			}
@@ -524,7 +524,7 @@ func prepareWerfConfig(giterminismManager giterminism_manager.Interface, rawImag
 			}
 
 			for _, image := range imageList {
-				if meta.Build.ImageSpec != nil {
+				if meta.Build.ImageSpec != nil && image.final {
 					merged := mergeImageSpec(image.ImageSpec, meta.Build.ImageSpec)
 					image.ImageSpec = &merged
 				}
@@ -534,7 +534,7 @@ func prepareWerfConfig(giterminismManager giterminism_manager.Interface, rawImag
 			if image, err := rawImage.toStapelImageArtifactDirectives(giterminismManager); err != nil {
 				return nil, err
 			} else {
-				if meta.Build.ImageSpec != nil {
+				if meta.Build.ImageSpec != nil && image.final {
 					merged := mergeImageSpec(image.ImageSpec, meta.Build.ImageSpec)
 					image.ImageSpec = &merged
 				}
