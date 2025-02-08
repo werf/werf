@@ -98,13 +98,14 @@ func run(ctx context.Context, imageName string) error {
 		InitTrueGitWithOptions: &common.InitTrueGitOptions{
 			Options: true_git.Options{LiveGitOutput: *commonCmdData.LogDebug},
 		},
-		InitDockerRegistry:          true,
-		InitProcessContainerBackend: true,
-		InitWerf:                    true,
-		InitGitDataManager:          true,
-		InitManifestCache:           true,
-		InitLRUImagesCache:          true,
-		InitSSHAgent:                true,
+		InitDockerRegistry:           true,
+		InitProcessContainerBackend:  true,
+		InitWerf:                     true,
+		InitGitDataManager:           true,
+		InitManifestCache:            true,
+		InitLRUImagesCache:           true,
+		InitSSHAgent:                 true,
+		SetupOndemandKubeInitializer: true,
 	})
 	if err != nil {
 		return fmt.Errorf("component init error: %w", err)
