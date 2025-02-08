@@ -1,4 +1,4 @@
-package e2e_converge_test
+package e2e_bundle_publish_apply_test
 
 import (
 	"context"
@@ -9,11 +9,12 @@ import (
 
 	"github.com/werf/3p-helm/pkg/release"
 	"github.com/werf/kubedog/pkg/kube"
+	"github.com/werf/werf/v2/test/pkg/contback"
 	"github.com/werf/werf/v2/test/pkg/utils"
 	"github.com/werf/werf/v2/test/pkg/werf"
 )
 
-var _ = Describe("Simple converge", Label("e2e", "converge", "simple"), func() {
+var _ = Describe("Simple bundle publish/apply", Label("e2e", "bundle-publish-apply", "simple"), func() {
 	var repoDirname string
 	var werfProject *werf.Project
 
@@ -22,6 +23,10 @@ var _ = Describe("Simple converge", Label("e2e", "converge", "simple"), func() {
 			SuiteData.GetTestRepoPath(repoDirname),
 			SuiteData.WerfBinPath,
 			"dismiss",
+			"--release",
+			werfProject.Release(),
+			"--namespace",
+			werfProject.Namespace(),
 			"--with-namespace",
 		)
 
@@ -42,18 +47,37 @@ var _ = Describe("Simple converge", Label("e2e", "converge", "simple"), func() {
 			By("initializing")
 			repoDirname = "repo0"
 			setupEnv()
+			contRuntime, err := contback.NewContainerBackend("vanilla-docker")
+			if err == contback.ErrRuntimeUnavailable {
+				Skip(err.Error())
+			} else if err != nil {
+				Fail(err.Error())
+			}
 
 			By("state0: starting")
 			{
 				fixtureRelPath := "simple/state0"
+				buildReportName := ".werf-build-report.json"
 				deployReportName := ".werf-deploy-report.json"
 
 				By("state0: preparing test repo")
 				SuiteData.InitTestRepo(repoDirname, fixtureRelPath)
 				werfProject = werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
 
-				By("state0: execute converge")
-				_, deployReport := werfProject.ConvergeWithReport(SuiteData.GetDeployReportPath(deployReportName), &werf.ConvergeWithReportOptions{})
+				By("state0: execute bundle publish")
+				_, buildReport := werfProject.BundlePublishWithReport(SuiteData.GetBuildReportPath(buildReportName), nil)
+
+				By(`state0: checking "dockerfile" image content`)
+				contRuntime.ExpectCmdsToSucceed(
+					buildReport.Images["dockerfile"].DockerImageName,
+					"test -f /file",
+					"echo 'filecontent' | diff /file -",
+
+					"test -f /created-by-run",
+				)
+
+				By("state0: execute bundle apply")
+				_, deployReport := werfProject.BundleApplyWithReport(werfProject.Release(), werfProject.Namespace(), SuiteData.GetDeployReportPath(deployReportName), nil)
 
 				By("state0: check deploy report")
 				Expect(deployReport.Release).To(Equal(werfProject.Release()))

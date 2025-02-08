@@ -53,6 +53,22 @@ type ConvergeWithReportOptions struct {
 	CommonOptions
 }
 
+type BundlePublishOptions struct {
+	CommonOptions
+}
+
+type BundlePublishWithReportOptions struct {
+	CommonOptions
+}
+
+type BundleApplyOptions struct {
+	CommonOptions
+}
+
+type BundleApplyWithReportOptions struct {
+	CommonOptions
+}
+
 type ExportOptions struct {
 	CommonOptions
 }
@@ -117,6 +133,62 @@ func (p *Project) ConvergeWithReport(deployReportPath string, opts *ConvergeWith
 	}
 
 	args := append([]string{"converge", "--save-deploy-report", "--deploy-report-path", deployReportPath}, opts.ExtraArgs...)
+	out := p.runCommand(runCommandOptions{Args: args, ShouldFail: opts.ShouldFail})
+
+	deployReportRaw, err := os.ReadFile(deployReportPath)
+	Expect(err).NotTo(HaveOccurred())
+
+	var deployReport release.DeployReport
+	Expect(json.Unmarshal(deployReportRaw, &deployReport)).To(Succeed())
+
+	return out, deployReport
+}
+
+func (p *Project) BundlePublish(opts *BundlePublishOptions) (combinedOut string) {
+	if opts == nil {
+		opts = &BundlePublishOptions{}
+	}
+
+	args := append([]string{"bundle", "publish"}, opts.ExtraArgs...)
+	outb := p.runCommand(runCommandOptions{Args: args, ShouldFail: opts.ShouldFail})
+
+	return string(outb)
+}
+
+func (p *Project) BundlePublishWithReport(buildReportPath string, opts *BundlePublishWithReportOptions) (string, build.ImagesReport) {
+	if opts == nil {
+		opts = &BundlePublishWithReportOptions{}
+	}
+
+	args := append([]string{"bundle", "publish", "--save-build-report", "--build-report-path", buildReportPath}, opts.ExtraArgs...)
+	out := p.runCommand(runCommandOptions{Args: args, ShouldFail: opts.ShouldFail})
+
+	buildReportRaw, err := os.ReadFile(buildReportPath)
+	Expect(err).NotTo(HaveOccurred())
+
+	var buildReport build.ImagesReport
+	Expect(json.Unmarshal(buildReportRaw, &buildReport)).To(Succeed())
+
+	return out, buildReport
+}
+
+func (p *Project) BundleApply(releaseName, namespace string, opts *BundleApplyOptions) (combinedOut string) {
+	if opts == nil {
+		opts = &BundleApplyOptions{}
+	}
+
+	args := append([]string{"bundle", "apply", "--release", releaseName, "--namespace", namespace}, opts.ExtraArgs...)
+	outb := p.runCommand(runCommandOptions{Args: args, ShouldFail: opts.ShouldFail})
+
+	return string(outb)
+}
+
+func (p *Project) BundleApplyWithReport(releaseName, namespace, deployReportPath string, opts *BundleApplyWithReportOptions) (string, release.DeployReport) {
+	if opts == nil {
+		opts = &BundleApplyWithReportOptions{}
+	}
+
+	args := append([]string{"bundle", "apply", "--release", releaseName, "--namespace", namespace, "--save-deploy-report", "--deploy-report-path", deployReportPath}, opts.ExtraArgs...)
 	out := p.runCommand(runCommandOptions{Args: args, ShouldFail: opts.ShouldFail})
 
 	deployReportRaw, err := os.ReadFile(deployReportPath)
