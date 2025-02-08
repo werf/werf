@@ -54,6 +54,26 @@ func (s *ImageSpecStage) PrepareImage(ctx context.Context, _ Conveyor, _ contain
 			StopSignal: s.imageSpec.StopSignal,
 		}
 
+		// Entrypoint and Cmd handling.
+		{
+			// If CMD is defined from the base image, setting ENTRYPOINT will reset CMD to an empty value.
+			// In this scenario, CMD must be defined in the current image to have a value.
+			// rel https://docs.docker.com/reference/dockerfile/#understand-how-cmd-and-entrypoint-interact
+			if s.imageSpec.Entrypoint != nil {
+				newConfig.Entrypoint = s.imageSpec.Entrypoint
+				if s.imageSpec.Cmd == nil {
+					newConfig.ClearCmd = true
+				}
+			}
+
+			if s.imageSpec.Cmd != nil {
+				newConfig.Cmd = s.imageSpec.Cmd
+			}
+
+			newConfig.ClearCmd = newConfig.ClearCmd || s.imageSpec.ClearCmd
+			newConfig.ClearEntrypoint = newConfig.ClearEntrypoint || s.imageSpec.ClearEntrypoint
+		}
+
 		serviceLabels := s.stageImage.Image.GetBuildServiceLabels()
 		mergedLabels := util.MergeMaps(s.imageSpec.Labels, serviceLabels)
 		resultLabels, err := modifyLabels(ctx, mergedLabels, s.imageSpec.Labels, s.imageSpec.RemoveLabels, s.imageSpec.ClearWerfLabels)
@@ -86,8 +106,6 @@ func (s *ImageSpecStage) PrepareImage(ctx context.Context, _ Conveyor, _ contain
 		}
 
 		newConfig.ClearHistory = s.imageSpec.ClearHistory
-		newConfig.ClearCmd = s.imageSpec.ClearCmd
-		newConfig.ClearEntrypoint = s.imageSpec.ClearEntrypoint
 
 		stageImage.Image.SetImageSpecConfig(&newConfig)
 	}
@@ -95,10 +113,12 @@ func (s *ImageSpecStage) PrepareImage(ctx context.Context, _ Conveyor, _ contain
 	return nil
 }
 
+const imageSpecStageCacheVersion = "2"
+
 func (s *ImageSpecStage) GetDependencies(_ context.Context, _ Conveyor, _ container_backend.ContainerBackend, _, _ *StageImage, _ container_backend.BuildContextArchiver) (string, error) {
 	var args []string
 
-	args = append(args, "1")
+	args = append(args, imageSpecStageCacheVersion)
 	args = append(args, s.imageSpec.Author)
 	args = append(args, fmt.Sprint(s.imageSpec.ClearHistory))
 
