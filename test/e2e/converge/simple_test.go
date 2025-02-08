@@ -15,9 +15,26 @@ import (
 
 var _ = Describe("Simple converge", Label("e2e", "converge", "simple"), func() {
 	var repoDirname string
+	var werfProject *werf.Project
 
 	AfterEach(func() {
-		utils.RunSucceedCommand(SuiteData.GetTestRepoPath(repoDirname), SuiteData.WerfBinPath, "dismiss", "--with-namespace")
+		utils.RunSucceedCommand(
+			SuiteData.GetTestRepoPath(repoDirname),
+			SuiteData.WerfBinPath,
+			"dismiss",
+			"--with-namespace",
+		)
+
+		werfProject.KubeCtl(&werf.KubeCtlOptions{
+			werf.CommonOptions{
+				ExtraArgs: []string{
+					"delete",
+					"namespace",
+					"--ignore-not-found",
+					werfProject.Namespace(),
+				},
+			},
+		})
 	})
 
 	It("should succeed and deploy expected resources",
@@ -33,7 +50,7 @@ var _ = Describe("Simple converge", Label("e2e", "converge", "simple"), func() {
 
 				By("state0: preparing test repo")
 				SuiteData.InitTestRepo(repoDirname, fixtureRelPath)
-				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
+				werfProject = werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
 
 				By("state0: execute converge")
 				_, deployReport := werfProject.ConvergeWithReport(SuiteData.GetDeployReportPath(deployReportName), &werf.ConvergeWithReportOptions{})
