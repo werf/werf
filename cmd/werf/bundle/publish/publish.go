@@ -328,15 +328,6 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 		return err
 	}
 
-	secrets_manager.DefaultManager = secrets_manager.NewSecretsManager(secrets_manager.SecretsManagerOptions{
-		DisableSecretsDecryption: *commonCmdData.IgnoreSecretKey,
-	})
-
-	// FIXME(1.3): compatibility mode with older 1.2 versions, which do not require WERF_SECRET_KEY in the 'werf bundle publish' command
-	if err := secrets_manager.DefaultManager.AllowMissedSecretKeyMode(giterminismManager.ProjectDir()); err != nil {
-		return err
-	}
-
 	loader.ChartFileReader = giterminismManager.FileReader()
 
 	headHash, err := giterminismManager.LocalGitRepo().HeadCommitHash(ctx)
@@ -364,11 +355,17 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 	loader.WithoutDefaultValues = *commonCmdData.DisableDefaultValues
 	secrets.CoalesceTablesFunc = chartutil.CoalesceTables
 	secrets.SecretsWorkingDir = giterminismManager.ProjectDir()
+	secrets_manager.DisableSecretsDecryption = *commonCmdData.IgnoreSecretKey
 
 	chartextender.DefaultChartAPIVersion = chart.APIVersionV2
 	chartextender.DefaultChartName = werfConfig.Meta.Project
 	chartextender.DefaultChartVersion = "1.0.0"
 	chartextender.ChartAppVersion = common.GetHelmChartConfigAppVersion(werfConfig)
+
+	// FIXME(1.3): compatibility mode with older 1.2 versions, which do not require WERF_SECRET_KEY in the 'werf bundle publish' command
+	if err := secrets_manager.Manager.AllowMissedSecretKeyMode(giterminismManager.ProjectDir()); err != nil {
+		return err
+	}
 
 	sv, err := bundles.BundleTagToChartVersion(ctx, cmdData.Tag, time.Now())
 	if err != nil {
@@ -463,7 +460,7 @@ func createNewBundle(
 	}
 
 	var secretValsData []byte
-	if chrt.SecretsRuntimeData != nil && !secrets_manager.DefaultManager.IsMissedSecretKeyModeEnabled() {
+	if chrt.SecretsRuntimeData != nil && !secrets_manager.Manager.IsMissedSecretKeyModeEnabled() {
 		vals, err := makeBundleSecretValues(ctx, chrt.SecretsRuntimeData)
 		if err != nil {
 			return fmt.Errorf("unable to construct bundle secret values: %w", err)
@@ -673,5 +670,5 @@ func makeBundleSecretValues(
 	if chartutil.DebugSecretValues() {
 		chartutil.DebugPrintValues(context.Background(), "secret", secretsRuntimeData.GetDecryptedSecretValues())
 	}
-	return secretsRuntimeData.GetEncodedSecretValues(ctx, secrets_manager.DefaultManager, false)
+	return secretsRuntimeData.GetEncodedSecretValues(ctx, secrets_manager.Manager, false)
 }

@@ -16,6 +16,8 @@ import (
 
 	"github.com/werf/3p-helm/pkg/chart"
 	"github.com/werf/3p-helm/pkg/chartutil"
+	"github.com/werf/3p-helm/pkg/werf/secrets"
+	"github.com/werf/common-go/pkg/secrets_manager"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/nelm/pkg/action"
 	"github.com/werf/werf/v2/cmd/werf/common"
@@ -179,17 +181,10 @@ func runApply(ctx context.Context) error {
 		return fmt.Errorf("construct bundles registry client: %w", err)
 	}
 
-	if err := bundles.Pull(ctx, fmt.Sprintf("%s:%s", repoAddress, cmdData.Tag), bundlePath, bundlesRegistryClient); err != nil {
-		return fmt.Errorf("pull bundle: %w", err)
-	}
-
-	serviceAnnotations, extraAnnotations, extraLabels, err := getAnnotationsAndLabels(bundlePath)
-	if err != nil {
-		return fmt.Errorf("get annotations and labels: %w", err)
-	}
-
 	registryCredentialsPath := docker.GetDockerConfigCredentialsFile(*commonCmdData.DockerConfig)
 
+	secrets.CoalesceTablesFunc = chartutil.CoalesceTables
+	secrets_manager.DisableSecretsDecryption = *commonCmdData.IgnoreSecretKey
 	chartutil.ServiceValues, err = helpers.GetBundleServiceValues(ctx, helpers.ServiceValuesOptions{
 		Env:                      *commonCmdData.Environment,
 		Namespace:                releaseNamespace,
@@ -198,6 +193,15 @@ func runApply(ctx context.Context) error {
 	})
 	if err != nil {
 		return fmt.Errorf("get service values: %w", err)
+	}
+
+	if err := bundles.Pull(ctx, fmt.Sprintf("%s:%s", repoAddress, cmdData.Tag), bundlePath, bundlesRegistryClient); err != nil {
+		return fmt.Errorf("pull bundle: %w", err)
+	}
+
+	serviceAnnotations, extraAnnotations, extraLabels, err := getAnnotationsAndLabels(bundlePath)
+	if err != nil {
+		return fmt.Errorf("get annotations and labels: %w", err)
 	}
 
 	chart.CurrentChartType = chart.ChartTypeBundle
