@@ -1,5 +1,13 @@
 # Changelog
 
+### [2.26.4](https://www.github.com/werf/werf/compare/v2.26.3...v2.26.4) (2025-02-08)
+
+
+### Bug Fixes
+
+* **build:** account for imagesSpec.clearCmd/clearEntrypoint when generating image tag ([f775fc4](https://www.github.com/werf/werf/commit/f775fc4cedeefa78686bf9373c84881569f9c2fb))
+* **build:** ensure imageSpec preserves CMD and ENTRYPOINT behavior for compatibility ([6ba7af1](https://www.github.com/werf/werf/commit/6ba7af18a1618f93197cf93e157607eebc67c273))
+
 ### [2.26.3](https://www.github.com/werf/werf/compare/v2.26.2...v2.26.3) (2025-02-08)
 
 
