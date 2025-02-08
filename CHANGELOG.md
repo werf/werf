@@ -1,5 +1,15 @@
 # Changelog
 
+### [2.26.3](https://www.github.com/werf/werf/compare/v2.26.2...v2.26.3) (2025-02-08)
+
+
+### Bug Fixes
+
+* **cleanup:** panic in `werf cleanup` ([022696d](https://www.github.com/werf/werf/commit/022696df1b67dae5b5d8e49d5835b609f7270982))
+* **deploy:** bundle publish might publish empty bundle ([e71bbf1](https://www.github.com/werf/werf/commit/e71bbf1101749084d29a6dec026ce05a0fb69521))
+* **deploy:** panic in many commands when `--synchronization=kubernetes://...` ([ae429b0](https://www.github.com/werf/werf/commit/ae429b0d58ad4b4b4bbc275039769e97cb9d9e87))
+* **deploy:** panics in bundle apply and bundle render ([2db5699](https://www.github.com/werf/werf/commit/2db5699642a747969977641d79ead2cbdd2ac22b))
+
 ### [2.26.2](https://www.github.com/werf/werf/compare/v2.26.1...v2.26.2) (2025-02-07)
 
 
