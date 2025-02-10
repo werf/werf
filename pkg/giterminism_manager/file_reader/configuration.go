@@ -2,6 +2,7 @@ package file_reader
 
 import (
 	"context"
+	"errors"
 	"path/filepath"
 
 	"github.com/werf/common-go/pkg/util"
@@ -58,11 +59,11 @@ func (r FileReader) walkConfigurationFilesWithGlob(ctx context.Context, dir, glo
 		data, err := r.ReadAndCheckConfigurationFile(ctx, relPath, acceptedFilePathMatcher.IsPathMatched)
 		err = handleFileFunc(relToDirPath, data, err)
 		if err != nil {
-			switch err.(type) {
-			case UntrackedFilesError:
+			switch {
+			case errors.As(err, &UntrackedFilesError{}):
 				relPathListWithUntrackedFiles = append(relPathListWithUntrackedFiles, relPath)
 				continue
-			case UncommittedFilesError:
+			case errors.As(err, &UncommittedFilesError{}):
 				relPathListWithUncommittedFiles = append(relPathListWithUncommittedFiles, relPath)
 				continue
 			}

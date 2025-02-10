@@ -2,6 +2,7 @@ package file_reader
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/werf/logboek"
@@ -64,8 +65,8 @@ func (r FileReader) readConfig(ctx context.Context, customRelPath string) (strin
 			return r.giterminismConfig.IsUncommittedConfigAccepted()
 		})
 		if err != nil {
-			switch err.(type) {
-			case FileNotFoundInProjectDirectoryError, FileNotFoundInProjectRepositoryError:
+			if errors.As(err, &FileNotFoundInProjectDirectoryError{}) ||
+				errors.As(err, &FileNotFoundInProjectRepositoryError{}) {
 				continue
 			}
 

@@ -2,6 +2,7 @@ package file_reader
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -10,7 +11,7 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/giterminism_manager/errors"
+	giterminismErrors "github.com/werf/werf/v2/pkg/giterminism_manager/errors"
 	"github.com/werf/werf/v2/pkg/path_matcher"
 )
 
@@ -316,7 +317,7 @@ func (r FileReader) checkFileExistenceAndAcceptance(ctx context.Context, relPath
 
 	if err := func() error {
 		notAcceptedError := func(resolvedPath string) error {
-			return errors.NewError(fmt.Sprintf("the link target %q should be also accepted by giterminism config", resolvedPath))
+			return giterminismErrors.NewError(fmt.Sprintf("the link target %q should be also accepted by giterminism config", resolvedPath))
 		}
 
 		resolvedPath, err := r.ResolveAndCheckFilePath(ctx, relPath, func(resolvedRelPath string) (bool, error) {
@@ -445,7 +446,7 @@ func (r FileReader) IsFileExist(ctx context.Context, relPath string) (exist bool
 func (r FileReader) isFileExist(ctx context.Context, relPath string, isFileExisted testPathFunc) (bool, error) {
 	resolvedPath, err := r.ResolveFilePath(ctx, relPath)
 	if err != nil {
-		if IsFileNotFoundInProjectDirectoryError(err) {
+		if errors.As(err, &FileNotFoundInProjectDirectoryError{}) {
 			return false, nil
 		}
 
