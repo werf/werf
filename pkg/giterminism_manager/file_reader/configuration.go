@@ -6,7 +6,6 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
-	"github.com/werf/logboek/pkg/types"
 	"github.com/werf/werf/v2/pkg/path_matcher"
 )
 
@@ -15,11 +14,7 @@ import (
 func (r FileReader) WalkConfigurationFilesWithGlob(ctx context.Context, dir, glob string, acceptedFilePathMatcher path_matcher.PathMatcher, handleFileFunc func(relativeToDirNotResolvedPath string, data []byte, err error) error) (err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("WalkConfigurationFilesWithGlob %q %q", dir, glob).
-		Options(func(options types.LogBlockOptionsInterface) {
-			if !debug() {
-				options.Mute()
-			}
-		}).
+		Options(applyDebugToLogboek).
 		Do(func() {
 			err = r.walkConfigurationFilesWithGlob(ctx, dir, glob, acceptedFilePathMatcher, handleFileFunc)
 
@@ -91,11 +86,7 @@ func (r FileReader) walkConfigurationFilesWithGlob(ctx context.Context, dir, glo
 func (r FileReader) ReadAndCheckConfigurationFile(ctx context.Context, relPath string, isFileAcceptedCheckFunc func(relPath string) bool) (data []byte, err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("ReadAndCheckConfigurationFile %q", relPath).
-		Options(func(options types.LogBlockOptionsInterface) {
-			if !debug() {
-				options.Mute()
-			}
-		}).
+		Options(applyDebugToLogboek).
 		Do(func() {
 			data, err = r.readAndCheckConfigurationFile(ctx, relPath, isFileAcceptedCheckFunc)
 
@@ -119,11 +110,7 @@ func (r FileReader) readAndCheckConfigurationFile(ctx context.Context, relPath s
 func (r FileReader) ReadConfigurationFile(ctx context.Context, relPath string, isFileAcceptedCheckFunc func(relPath string) bool) (data []byte, err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("ReadConfigurationFile %q", relPath).
-		Options(func(options types.LogBlockOptionsInterface) {
-			if !debug() {
-				options.Mute()
-			}
-		}).
+		Options(applyDebugToLogboek).
 		Do(func() {
 			data, err = r.readConfigurationFile(ctx, relPath, isFileAcceptedCheckFunc)
 
@@ -152,11 +139,7 @@ func (r FileReader) readConfigurationFile(ctx context.Context, relPath string, i
 func (r FileReader) CheckConfigurationFileExistenceAndAcceptance(ctx context.Context, relPath string, isFileAcceptedCheckFunc func(relPath string) bool) (err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("CheckConfigurationFileExistenceAndAcceptance %q", relPath).
-		Options(func(options types.LogBlockOptionsInterface) {
-			if !debug() {
-				options.Mute()
-			}
-		}).
+		Options(applyDebugToLogboek).
 		Do(func() {
 			err = r.checkConfigurationFileExistenceAndAcceptance(ctx, relPath, isFileAcceptedCheckFunc)
 
@@ -185,11 +168,7 @@ func (r FileReader) checkConfigurationFileExistenceAndAcceptance(ctx context.Con
 func (r FileReader) IsConfigurationFileExistAnywhere(ctx context.Context, relPath string) (exist bool, err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("IsConfigurationFileExistAnywhere %q", relPath).
-		Options(func(options types.LogBlockOptionsInterface) {
-			if !debug() {
-				options.Mute()
-			}
-		}).
+		Options(applyDebugToLogboek).
 		Do(func() {
 			exist, err = r.isConfigurationFileExistAnywhere(ctx, relPath)
 

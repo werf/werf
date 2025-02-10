@@ -3,6 +3,7 @@ package file_reader
 import (
 	"os"
 
+	"github.com/werf/logboek/pkg/types"
 	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/path_matcher"
 )
@@ -40,4 +41,10 @@ type sharedOptions interface {
 
 func debug() bool {
 	return os.Getenv("WERF_DEBUG_GITERMINISM_MANAGER") == "1"
+}
+
+func applyDebugToLogboek(options types.LogBlockOptionsInterface) {
+	if !debug() {
+		options.Mute()
+	}
 }
