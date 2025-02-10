@@ -44,7 +44,7 @@ func (r FileReader) ConfigGoTemplateFilesGet(ctx context.Context, relPath string
 }
 
 func (r FileReader) ConfigGoTemplateFilesExists(ctx context.Context, relPath string) (bool, error) {
-	err := r.CheckFileExistenceAndAcceptance(ctx, relPath,
+	ok, err := r.CheckConfigurationFileExistenceAndAcceptance(ctx, relPath,
 		r.giterminismConfig.UncommittedConfigGoTemplateRenderingFilePathMatcher().IsPathMatched,
 		func(path string) (bool, error) {
 			return r.IsFileExist(ctx, path)
@@ -52,12 +52,11 @@ func (r FileReader) ConfigGoTemplateFilesExists(ctx context.Context, relPath str
 	if err != nil {
 		return false, fmt.Errorf("{{ .Files.Exists %q }}: %w", relPath, err)
 	}
-
-	return r.IsFileExist(ctx, relPath)
+	return ok, nil
 }
 
 func (r FileReader) ConfigGoTemplateFilesIsDir(ctx context.Context, relPath string) (bool, error) {
-	err := r.CheckFileExistenceAndAcceptance(ctx, relPath,
+	ok, err := r.CheckConfigurationFileExistenceAndAcceptance(ctx, relPath,
 		r.giterminismConfig.UncommittedConfigGoTemplateRenderingFilePathMatcher().IsPathMatched,
 		func(path string) (bool, error) {
 			return r.IsDirectoryExist(ctx, path)
@@ -65,5 +64,5 @@ func (r FileReader) ConfigGoTemplateFilesIsDir(ctx context.Context, relPath stri
 	if err != nil {
 		return false, fmt.Errorf("{{ .Files.IsDir %q }}: %w", relPath, err)
 	}
-	return r.IsDirectoryExist(ctx, relPath)
+	return ok, nil
 }

@@ -104,7 +104,7 @@ func (r FileReader) ReadAndCheckConfigurationFile(ctx context.Context, relPath s
 }
 
 func (r FileReader) readAndCheckConfigurationFile(ctx context.Context, relPath string, isPathMatched matchPathFunc, isFileExisted testFileFunc) ([]byte, error) {
-	if err := r.CheckConfigurationFileExistenceAndAcceptance(ctx, relPath, isPathMatched, isFileExisted); err != nil {
+	if _, err := r.CheckConfigurationFileExistenceAndAcceptance(ctx, relPath, isPathMatched, isFileExisted); err != nil {
 		return nil, err
 	}
 
@@ -141,12 +141,12 @@ func (r FileReader) readConfigurationFile(ctx context.Context, relPath string, i
 }
 
 // CheckConfigurationFileExistenceAndAcceptance does CheckFileExistenceAndAcceptance or CheckCommitFileExistenceAndLocalChanges depending on the giterminism config.
-func (r FileReader) CheckConfigurationFileExistenceAndAcceptance(ctx context.Context, relPath string, isPathMatched matchPathFunc, isFileExisted testFileFunc) (err error) {
+func (r FileReader) CheckConfigurationFileExistenceAndAcceptance(ctx context.Context, relPath string, isPathMatched matchPathFunc, isFileExisted testFileFunc) (ok bool, err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("CheckConfigurationFileExistenceAndAcceptance %q", relPath).
 		Options(applyDebugToLogboek).
 		Do(func() {
-			err = r.checkConfigurationFileExistenceAndAcceptance(ctx, relPath, isPathMatched, isFileExisted)
+			ok, err = r.checkConfigurationFileExistenceAndAcceptance(ctx, relPath, isPathMatched, isFileExisted)
 
 			if debug() {
 				logboek.Context(ctx).Debug().LogF("err: %q\n", err)
@@ -156,10 +156,10 @@ func (r FileReader) CheckConfigurationFileExistenceAndAcceptance(ctx context.Con
 	return
 }
 
-func (r FileReader) checkConfigurationFileExistenceAndAcceptance(ctx context.Context, relPath string, isPathMatched matchPathFunc, isFileExisted testFileFunc) error {
+func (r FileReader) checkConfigurationFileExistenceAndAcceptance(ctx context.Context, relPath string, isPathMatched matchPathFunc, isFileExisted testFileFunc) (bool, error) {
 	shouldFileBeReadFromFS, err := r.ShouldFileBeRead(ctx, relPath, isPathMatched, isFileExisted)
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	if shouldFileBeReadFromFS {

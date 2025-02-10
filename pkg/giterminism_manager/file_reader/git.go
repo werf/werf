@@ -178,12 +178,12 @@ func (r FileReader) ReadCommitFile(ctx context.Context, relPath string) ([]byte,
 }
 
 // CheckCommitFileExistenceAndLocalChanges returns nil if the file exists and does not have any uncommitted changes locally (each symlink target).
-func (r FileReader) CheckCommitFileExistenceAndLocalChanges(ctx context.Context, relPath string) (err error) {
+func (r FileReader) CheckCommitFileExistenceAndLocalChanges(ctx context.Context, relPath string) (ok bool, err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("CheckCommitFileExistenceAndLocalChanges %q", relPath).
 		Options(applyDebugToLogboek).
 		Do(func() {
-			err = r.checkCommitFileExistenceAndLocalChanges(ctx, relPath)
+			ok, err = r.checkCommitFileExistenceAndLocalChanges(ctx, relPath)
 
 			if debug() {
 				logboek.Context(ctx).Debug().LogF("err: %q\n", err)
@@ -193,24 +193,24 @@ func (r FileReader) CheckCommitFileExistenceAndLocalChanges(ctx context.Context,
 	return
 }
 
-func (r FileReader) checkCommitFileExistenceAndLocalChanges(ctx context.Context, relPath string) error {
+func (r FileReader) checkCommitFileExistenceAndLocalChanges(ctx context.Context, relPath string) (bool, error) {
 	if err := r.ValidateFileByStatusResult(ctx, relPath); err != nil { // check not resolved path
-		return err
+		return false, err
 	}
 
 	commitTreeEntryExist, err := r.IsCommitTreeEntryExist(ctx, relPath)
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	if !commitTreeEntryExist {
 		commitFileExist, err := r.IsCommitFileExist(ctx, relPath)
 		if err != nil {
-			return err
+			return false, err
 		}
 
 		if !commitFileExist {
-			return r.NewFileNotFoundInProjectRepositoryError(relPath)
+			return false, r.NewFileNotFoundInProjectRepositoryError(relPath)
 		}
 	}
 
@@ -232,10 +232,10 @@ func (r FileReader) checkCommitFileExistenceAndLocalChanges(ctx context.Context,
 
 		return nil
 	}(); err != nil {
-		return fmt.Errorf("symlink %q check failed: %w", relPath, err)
+		return false, fmt.Errorf("symlink %q check failed: %w", relPath, err)
 	}
 
-	return nil
+	return true, nil
 }
 
 // IsFileModifiedLocally checks for the file changes in worktree or index.
