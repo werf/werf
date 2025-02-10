@@ -5,17 +5,12 @@ import (
 	"fmt"
 
 	"github.com/werf/logboek"
-	"github.com/werf/logboek/pkg/types"
 )
 
 func (r FileReader) IsGiterminismConfigExistAnywhere(ctx context.Context, relPath string) (exist bool, err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("IsGiterminismConfigExistAnywhere").
-		Options(func(options types.LogBlockOptionsInterface) {
-			if !debug() {
-				options.Mute()
-			}
-		}).
+		Options(applyDebugToLogboek).
 		Do(func() {
 			exist, err = r.IsConfigurationFileExistAnywhere(ctx, relPath)
 
@@ -30,11 +25,7 @@ func (r FileReader) IsGiterminismConfigExistAnywhere(ctx context.Context, relPat
 func (r FileReader) ReadGiterminismConfig(ctx context.Context, relPath string) (data []byte, err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("ReadGiterminismConfig").
-		Options(func(options types.LogBlockOptionsInterface) {
-			if !debug() {
-				options.Mute()
-			}
-		}).
+		Options(applyDebugToLogboek).
 		Do(func() {
 			data, err = r.readGiterminismConfig(ctx, relPath)
 

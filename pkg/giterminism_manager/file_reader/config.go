@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/werf/logboek"
-	"github.com/werf/logboek/pkg/types"
 )
 
 var DefaultWerfConfigNames = []string{"werf.yaml", "werf.yml"}
@@ -13,11 +12,7 @@ var DefaultWerfConfigNames = []string{"werf.yaml", "werf.yml"}
 func (r FileReader) IsConfigExistAnywhere(ctx context.Context, customRelPath string) (exist bool, err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("IsConfigExistAnywhere %q", customRelPath).
-		Options(func(options types.LogBlockOptionsInterface) {
-			if !debug() {
-				options.Mute()
-			}
-		}).
+		Options(applyDebugToLogboek).
 		Do(func() {
 			exist, err = r.isConfigExistAnywhere(ctx, customRelPath)
 
@@ -45,11 +40,7 @@ func (r FileReader) isConfigExistAnywhere(ctx context.Context, customRelPath str
 func (r FileReader) ReadConfig(ctx context.Context, customRelPath string) (path string, data []byte, err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("ReadConfig %q", customRelPath).
-		Options(func(options types.LogBlockOptionsInterface) {
-			if !debug() {
-				options.Mute()
-			}
-		}).
+		Options(applyDebugToLogboek).
 		Do(func() {
 			path, data, err = r.readConfig(ctx, customRelPath)
 
@@ -90,11 +81,7 @@ func (r FileReader) readConfig(ctx context.Context, customRelPath string) (strin
 func (r FileReader) PrepareConfigNotFoundError(ctx context.Context, configPathsToCheck []string) (err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("PrepareConfigNotFoundError %v", configPathsToCheck).
-		Options(func(options types.LogBlockOptionsInterface) {
-			if !debug() {
-				options.Mute()
-			}
-		}).
+		Options(applyDebugToLogboek).
 		Do(func() {
 			err = r.prepareConfigNotFoundError(configPathsToCheck)
 

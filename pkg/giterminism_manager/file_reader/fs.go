@@ -10,7 +10,6 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
-	"github.com/werf/logboek/pkg/types"
 	"github.com/werf/werf/v2/pkg/giterminism_manager/errors"
 	"github.com/werf/werf/v2/pkg/path_matcher"
 )
@@ -33,11 +32,7 @@ func (r FileReader) absolutePathToProjectDirRelativePath(absPath string) string 
 func (r FileReader) ListFilesWithGlob(ctx context.Context, relDir, glob string, skipFileFunc func(ctx context.Context, r FileReader, existingRelPath string) (bool, error)) (files []string, err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("ListFilesWithGlob %q %q", relDir, glob).
-		Options(func(options types.LogBlockOptionsInterface) {
-			if !debug() {
-				options.Mute()
-			}
-		}).
+		Options(applyDebugToLogboek).
 		Do(func() {
 			files, err = r.listFilesWithGlob(ctx, relDir, glob, skipFileFunc)
 
@@ -207,11 +202,7 @@ func (r FileReader) SkipFileFunc(acceptedFilePathMatcher path_matcher.PathMatche
 	return func(ctx context.Context, r FileReader, existingRelPath string) (skip bool, err error) {
 		logboek.Context(ctx).Debug().
 			LogBlock("SkipFile %q", existingRelPath).
-			Options(func(options types.LogBlockOptionsInterface) {
-				if !debug() {
-					options.Mute()
-				}
-			}).
+			Options(applyDebugToLogboek).
 			Do(func() {
 				skip, err = r.skipFileFunc(acceptedFilePathMatcher)(ctx, r, existingRelPath)
 
@@ -271,18 +262,11 @@ func (r FileReader) skipFileFunc(acceptedFilePathMatcher path_matcher.PathMatche
 }
 
 // CheckFileExistenceAndAcceptance returns nil if the resolved file exists and is fully accepted by the giterminism config (each symlink target must be accepted if the file path accepted)
-func (r FileReader) CheckFileExistenceAndAcceptance(ctx context.Context, relPath string, isPathMatched matchPathFunc) (err error) {
+func (r FileReader) CheckFileExistenceAndAcceptance(ctx context.Context, relPath string, isFileExisted testPathFunc, isPathMatched matchPathFunc) (err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("CheckFileExistenceAndAcceptance %q", relPath).
-		Options(func(options types.LogBlockOptionsInterface) {
-			if !debug() {
-				options.Mute()
-			}
-		}).
+		Options(applyDebugToLogboek).
 		Do(func() {
-			isFileExisted := func(path string) (bool, error) {
-				return r.IsFileExist(ctx, path)
-			}
 			err = r.checkFileExistenceAndAcceptance(ctx, relPath, isFileExisted, isPathMatched)
 
 			if debug() {
@@ -297,11 +281,7 @@ func (r FileReader) CheckFileExistenceAndAcceptance(ctx context.Context, relPath
 func (r FileReader) CheckRegularFileExistenceAndAcceptance(ctx context.Context, relPath string, isPathMatched matchPathFunc) (err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("CheckRegularFileExistenceAndAcceptance %q", relPath).
-		Options(func(options types.LogBlockOptionsInterface) {
-			if !debug() {
-				options.Mute()
-			}
-		}).
+		Options(applyDebugToLogboek).
 		Do(func() {
 			isFileExisted := func(path string) (bool, error) {
 				return r.IsRegularFileExist(ctx, path)
@@ -368,11 +348,7 @@ func (r FileReader) checkFileExistenceAndAcceptance(ctx context.Context, relPath
 func (r FileReader) ShouldFileBeRead(ctx context.Context, relPath string, isPathMatched matchPathFunc) (should bool, err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("ShouldFileBeRead %q", relPath).
-		Options(func(options types.LogBlockOptionsInterface) {
-			if !debug() {
-				options.Mute()
-			}
-		}).
+		Options(applyDebugToLogboek).
 		Do(func() {
 			should, err = r.shouldFileBeRead(relPath, isPathMatched)
 
@@ -396,11 +372,7 @@ func (r FileReader) shouldFileBeRead(relPath string, isPathMatched matchPathFunc
 func (r FileReader) ReadFile(ctx context.Context, relPath string) (data []byte, err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("ReadFile %q", relPath).
-		Options(func(options types.LogBlockOptionsInterface) {
-			if !debug() {
-				options.Mute()
-			}
-		}).
+		Options(applyDebugToLogboek).
 		Do(func() {
 			data, err = r.readFile(relPath)
 
@@ -426,11 +398,7 @@ func (r FileReader) readFile(relPath string) ([]byte, error) {
 func (r FileReader) IsDirectoryExist(ctx context.Context, relPath string) (exist bool, err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("IsDirectoryExist %q", relPath).
-		Options(func(options types.LogBlockOptionsInterface) {
-			if !debug() {
-				options.Mute()
-			}
-		}).
+		Options(applyDebugToLogboek).
 		Do(func() {
 			exist, err = r.isFileExist(ctx, relPath, util.DirExists)
 
@@ -446,11 +414,7 @@ func (r FileReader) IsDirectoryExist(ctx context.Context, relPath string) (exist
 func (r FileReader) IsRegularFileExist(ctx context.Context, relPath string) (exist bool, err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("IsRegularFileExist %q", relPath).
-		Options(func(options types.LogBlockOptionsInterface) {
-			if !debug() {
-				options.Mute()
-			}
-		}).
+		Options(applyDebugToLogboek).
 		Do(func() {
 			exist, err = r.isFileExist(ctx, relPath, util.RegularFileExists)
 
@@ -466,11 +430,7 @@ func (r FileReader) IsRegularFileExist(ctx context.Context, relPath string) (exi
 func (r FileReader) IsFileExist(ctx context.Context, relPath string) (exist bool, err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("IsFileExist %q", relPath).
-		Options(func(options types.LogBlockOptionsInterface) {
-			if !debug() {
-				options.Mute()
-			}
-		}).
+		Options(applyDebugToLogboek).
 		Do(func() {
 			exist, err = r.isFileExist(ctx, relPath, util.FileExists)
 
@@ -505,20 +465,12 @@ func (r FileReader) isFileExist(ctx context.Context, relPath string, isFileExist
 func (r FileReader) ResolveAndCheckFilePath(ctx context.Context, relPath string, checkFunc testPathFunc) (resolvedPath string, err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("ResolveAndCheckFilePath %q", relPath).
-		Options(func(options types.LogBlockOptionsInterface) {
-			if !debug() {
-				options.Mute()
-			}
-		}).
+		Options(applyDebugToLogboek).
 		Do(func() {
 			checkWithDebugFunc := func(resolvedPath string) (exists bool, err error) {
 				logboek.Context(ctx).Debug().
 					LogBlock("-- check %q", resolvedPath).
-					Options(func(options types.LogBlockOptionsInterface) {
-						if !debug() {
-							options.Mute()
-						}
-					}).
+					Options(applyDebugToLogboek).
 					Do(func() {
 						exists, err = checkFunc(resolvedPath)
 
@@ -547,11 +499,7 @@ func (r FileReader) resolveAndCheckFilePath(ctx context.Context, relPath string,
 func (r FileReader) ResolveFilePath(ctx context.Context, relPath string) (resolvedPath string, err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("ResolveFilePath %q", relPath).
-		Options(func(options types.LogBlockOptionsInterface) {
-			if !debug() {
-				options.Mute()
-			}
-		}).
+		Options(applyDebugToLogboek).
 		Do(func() {
 			resolvedPath, err = r.resolveFilePath(ctx, relPath, 0, nil)
 
