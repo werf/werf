@@ -36,6 +36,8 @@ const (
 	DirectoryArchive ArchiveType = "directory"
 )
 
+//go:generate mockgen -source git_repo.go -package mock -destination ../../test/mock/git_repo.go
+
 type GitRepo interface {
 	String() string
 	GetName() string

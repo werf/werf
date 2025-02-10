@@ -43,7 +43,9 @@ func (r FileReader) ReadDockerfile(ctx context.Context, relPath string) (data []
 }
 
 func (r FileReader) readDockerfile(ctx context.Context, relPath string) ([]byte, error) {
-	return r.ReadAndCheckConfigurationFile(ctx, relPath, r.giterminismConfig.IsUncommittedDockerfileAccepted)
+	return r.ReadAndCheckConfigurationFile(ctx, relPath, r.giterminismConfig.IsUncommittedDockerfileAccepted, func(path string) (bool, error) {
+		return r.IsRegularFileExist(ctx, path)
+	})
 }
 
 func (r FileReader) ReadDockerignore(ctx context.Context, relPath string) (data []byte, err error) {
@@ -66,5 +68,7 @@ func (r FileReader) ReadDockerignore(ctx context.Context, relPath string) (data 
 }
 
 func (r FileReader) readDockerignore(ctx context.Context, relPath string) ([]byte, error) {
-	return r.ReadAndCheckConfigurationFile(ctx, relPath, r.giterminismConfig.IsUncommittedDockerignoreAccepted)
+	return r.ReadAndCheckConfigurationFile(ctx, relPath, r.giterminismConfig.IsUncommittedDockerignoreAccepted, func(path string) (bool, error) {
+		return r.IsRegularFileExist(ctx, path)
+	})
 }

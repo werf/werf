@@ -30,6 +30,10 @@ func NewFileReader(sharedOptions sharedOptions) FileReader {
 	}
 }
 
+//go:generate mockgen -source file_reader.go -package file_reader_test -destination file_reader_deps_mock_test.go
+
+//go:generate mockgen -package file_reader_test -destination file_reader_deps_fileinfo_mock_test.go os FileInfo
+
 type giterminismConfig interface {
 	IsUncommittedConfigAccepted() bool
 	UncommittedConfigTemplateFilePathMatcher() path_matcher.PathMatcher
