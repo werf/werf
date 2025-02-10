@@ -14,6 +14,7 @@ import (
 	"github.com/werf/werf/v2/pkg/dockerfile"
 	"github.com/werf/werf/v2/pkg/dockerfile/frontend"
 	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/ssh_agent"
 	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
 
@@ -113,7 +114,7 @@ func (s *ImageSpecStage) PrepareImage(ctx context.Context, _ Conveyor, _ contain
 	return nil
 }
 
-const imageSpecStageCacheVersion = "1"
+const imageSpecStageCacheVersion = "2"
 
 func (s *ImageSpecStage) GetDependencies(_ context.Context, _ Conveyor, _ container_backend.ContainerBackend, _, _ *StageImage, _ container_backend.BuildContextArchiver) (string, error) {
 	var args []string
@@ -210,13 +211,18 @@ func modifyEnv(env, removeKeys []string, addKeysMap map[string]string) ([]string
 		delete(baseEnvMap, key)
 	}
 
-	// FIXME: This is a temporary solution to remove werf labels that persist after build.
+	// FIXME: This is a temporary solution to remove werf commit envs that persist after build.
 	for _, key := range []string{
 		"WERF_COMMIT_HASH",
 		"WERF_COMMIT_TIME_HUMAN",
 		"WERF_COMMIT_TIME_UNIX",
 	} {
 		delete(baseEnvMap, key)
+	}
+
+	// FIXME: This is a temporary solution to remove werf SSH_AUTH_SOCK that persist after build.
+	if envValue, hasEnv := baseEnvMap[ssh_agent.SSHAuthSockEnv]; hasEnv && envValue == container_backend.SSHContainerAuthSockPath {
+		delete(baseEnvMap, ssh_agent.SSHAuthSockEnv)
 	}
 
 	envMapToExpand := make(map[string]string)
