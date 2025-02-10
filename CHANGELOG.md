@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.26.5](https://www.github.com/werf/werf/compare/v2.26.4...v2.26.5) (2025-02-10)
+
+
+### Bug Fixes
+
+* **build, image-spec:** remove werf envs that persist after build ([5ae64f0](https://www.github.com/werf/werf/commit/5ae64f068d5434053b1ce83a6ef3a05ba582105e))
+
 ### [2.26.4](https://www.github.com/werf/werf/compare/v2.26.3...v2.26.4) (2025-02-08)
 
 
