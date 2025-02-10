@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.26.6](https://www.github.com/werf/werf/compare/v2.26.5...v2.26.6) (2025-02-10)
+
+
+### Bug Fixes
+
+* **build, image-spec:** remove werf SSH_AUTH_SOCK env that persist after build ([251332b](https://www.github.com/werf/werf/commit/251332b7a4d3370c5619a04d514c1b802f763665))
+
 ### [2.26.5](https://www.github.com/werf/werf/compare/v2.26.4...v2.26.5) (2025-02-10)
 
 
