@@ -42,7 +42,9 @@ func (r FileReader) ReadGiterminismConfig(ctx context.Context, relPath string) (
 }
 
 func (r FileReader) readGiterminismConfig(ctx context.Context, relPath string) ([]byte, error) {
-	return r.ReadAndCheckConfigurationFile(ctx, relPath, func(path string) bool {
+	return r.ReadAndCheckConfigurationFile(ctx, relPath, func(_ string) bool {
 		return false
+	}, func(path string) (bool, error) {
+		return r.IsRegularFileExist(ctx, path)
 	})
 }
