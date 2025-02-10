@@ -31,7 +31,11 @@ func (r FileReader) ConfigGoTemplateFilesGlob(ctx context.Context, glob string) 
 }
 
 func (r FileReader) ConfigGoTemplateFilesGet(ctx context.Context, relPath string) ([]byte, error) {
-	data, err := r.ReadAndCheckConfigurationFile(ctx, relPath, r.giterminismConfig.UncommittedConfigGoTemplateRenderingFilePathMatcher().IsPathMatched)
+	data, err := r.ReadAndCheckConfigurationFile(ctx, relPath,
+		r.giterminismConfig.UncommittedConfigGoTemplateRenderingFilePathMatcher().IsPathMatched,
+		func(path string) (bool, error) {
+			return r.IsRegularFileExist(ctx, path)
+		})
 	if err != nil {
 		return nil, fmt.Errorf("{{ .Files.Get %q }}: %w", relPath, err)
 	}
@@ -40,7 +44,11 @@ func (r FileReader) ConfigGoTemplateFilesGet(ctx context.Context, relPath string
 }
 
 func (r FileReader) ConfigGoTemplateFilesExists(ctx context.Context, relPath string) (bool, error) {
-	err := r.CheckFileExistenceAndAcceptance(ctx, relPath, r.giterminismConfig.UncommittedConfigGoTemplateRenderingFilePathMatcher().IsPathMatched)
+	err := r.CheckFileExistenceAndAcceptance(ctx, relPath,
+		r.giterminismConfig.UncommittedConfigGoTemplateRenderingFilePathMatcher().IsPathMatched,
+		func(path string) (bool, error) {
+			return r.IsFileExist(ctx, path)
+		})
 	if err != nil {
 		return false, fmt.Errorf("{{ .Files.Exists %q }}: %w", relPath, err)
 	}
@@ -49,7 +57,11 @@ func (r FileReader) ConfigGoTemplateFilesExists(ctx context.Context, relPath str
 }
 
 func (r FileReader) ConfigGoTemplateFilesIsDir(ctx context.Context, relPath string) (bool, error) {
-	err := r.CheckFileExistenceAndAcceptance(ctx, relPath, r.giterminismConfig.UncommittedConfigGoTemplateRenderingFilePathMatcher().IsPathMatched)
+	err := r.CheckFileExistenceAndAcceptance(ctx, relPath,
+		r.giterminismConfig.UncommittedConfigGoTemplateRenderingFilePathMatcher().IsPathMatched,
+		func(path string) (bool, error) {
+			return r.IsDirectoryExist(ctx, path)
+		})
 	if err != nil {
 		return false, fmt.Errorf("{{ .Files.IsDir %q }}: %w", relPath, err)
 	}

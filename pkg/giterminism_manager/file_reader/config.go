@@ -63,6 +63,8 @@ func (r FileReader) readConfig(ctx context.Context, customRelPath string) (strin
 	for _, configPath := range configRelPathList {
 		data, err := r.ReadAndCheckConfigurationFile(ctx, configPath, func(_ string) bool {
 			return r.giterminismConfig.IsUncommittedConfigAccepted()
+		}, func(path string) (bool, error) {
+			return r.IsRegularFileExist(ctx, path)
 		})
 		if err != nil {
 			if errors.As(err, &FileNotFoundInProjectDirectoryError{}) ||

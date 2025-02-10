@@ -17,7 +17,7 @@ import (
 
 type (
 	matchPathFunc func(path string) bool
-	testPathFunc  func(file string) (bool, error)
+	testFileFunc  func(file string) (bool, error)
 )
 
 func (r FileReader) projectRelativePathToAbsolutePath(relPath string) string {
@@ -98,7 +98,7 @@ func (r FileReader) listFilesWithGlob(ctx context.Context, relDir, glob string, 
 	return result, err
 }
 
-func (r FileReader) walkFilesWithPathMatcher(ctx context.Context, relDir string, pathMatcher path_matcher.PathMatcher, skipFileFunc func(ctx context.Context, r FileReader, existingRelPath string) (bool, error), fileFunc testPathFunc) error {
+func (r FileReader) walkFilesWithPathMatcher(ctx context.Context, relDir string, pathMatcher path_matcher.PathMatcher, skipFileFunc func(ctx context.Context, r FileReader, existingRelPath string) (bool, error), fileFunc testFileFunc) error {
 	if !pathMatcher.IsDirOrSubmodulePathMatched(relDir) {
 		return nil
 	}
@@ -263,12 +263,12 @@ func (r FileReader) skipFileFunc(acceptedFilePathMatcher path_matcher.PathMatche
 }
 
 // CheckFileExistenceAndAcceptance returns nil if the resolved file exists and is fully accepted by the giterminism config (each symlink target must be accepted if the file path accepted)
-func (r FileReader) CheckFileExistenceAndAcceptance(ctx context.Context, relPath string, isFileExisted testPathFunc, isPathMatched matchPathFunc) (err error) {
+func (r FileReader) CheckFileExistenceAndAcceptance(ctx context.Context, relPath string, isPathMatched matchPathFunc, isFileExisted testFileFunc) (err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("CheckFileExistenceAndAcceptance %q", relPath).
 		Options(applyDebugToLogboek).
 		Do(func() {
-			err = r.checkFileExistenceAndAcceptance(ctx, relPath, isFileExisted, isPathMatched)
+			err = r.checkFileExistenceAndAcceptance(ctx, relPath, isPathMatched, isFileExisted)
 
 			if debug() {
 				logboek.Context(ctx).Debug().LogF("err: %q\n", err)
@@ -278,26 +278,7 @@ func (r FileReader) CheckFileExistenceAndAcceptance(ctx context.Context, relPath
 	return
 }
 
-// CheckRegularFileExistenceAndAcceptance returns nil if the resolved regular file exists and is fully accepted by the giterminism config (each symlink target must be accepted if the file path accepted)
-func (r FileReader) CheckRegularFileExistenceAndAcceptance(ctx context.Context, relPath string, isPathMatched matchPathFunc) (err error) {
-	logboek.Context(ctx).Debug().
-		LogBlock("CheckRegularFileExistenceAndAcceptance %q", relPath).
-		Options(applyDebugToLogboek).
-		Do(func() {
-			isFileExisted := func(path string) (bool, error) {
-				return r.IsRegularFileExist(ctx, path)
-			}
-			err = r.checkFileExistenceAndAcceptance(ctx, relPath, isFileExisted, isPathMatched)
-
-			if debug() {
-				logboek.Context(ctx).Debug().LogF("err: %q\n", err)
-			}
-		})
-
-	return
-}
-
-func (r FileReader) checkFileExistenceAndAcceptance(ctx context.Context, relPath string, isFileExisted testPathFunc, isPathMatched matchPathFunc) error {
+func (r FileReader) checkFileExistenceAndAcceptance(ctx context.Context, relPath string, isPathMatched matchPathFunc, isFileExisted testFileFunc) error {
 	if r.sharedOptions.LooseGiterminism() {
 		exist, err := isFileExisted(relPath)
 		if err != nil {
@@ -346,12 +327,12 @@ func (r FileReader) checkFileExistenceAndAcceptance(ctx context.Context, relPath
 }
 
 // ShouldFileBeRead return true if not resolved path accepted by giterminism config.
-func (r FileReader) ShouldFileBeRead(ctx context.Context, relPath string, isPathMatched matchPathFunc) (should bool, err error) {
+func (r FileReader) ShouldFileBeRead(ctx context.Context, relPath string, isPathMatched matchPathFunc, isFileExisted testFileFunc) (should bool, err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("ShouldFileBeRead %q", relPath).
 		Options(applyDebugToLogboek).
 		Do(func() {
-			should, err = r.shouldFileBeRead(relPath, isPathMatched)
+			should, err = r.shouldFileBeRead(relPath, isPathMatched, isFileExisted)
 
 			if debug() {
 				logboek.Context(ctx).Debug().LogF("should: %v\nerr: %q\n", should, err)
@@ -361,7 +342,7 @@ func (r FileReader) ShouldFileBeRead(ctx context.Context, relPath string, isPath
 	return
 }
 
-func (r FileReader) shouldFileBeRead(relPath string, isPathMatched matchPathFunc) (bool, error) {
+func (r FileReader) shouldFileBeRead(relPath string, isPathMatched matchPathFunc, _ testFileFunc) (bool, error) {
 	if r.sharedOptions.LooseGiterminism() {
 		return true, nil
 	}
@@ -443,7 +424,7 @@ func (r FileReader) IsFileExist(ctx context.Context, relPath string) (exist bool
 	return
 }
 
-func (r FileReader) isFileExist(ctx context.Context, relPath string, isFileExisted testPathFunc) (bool, error) {
+func (r FileReader) isFileExist(ctx context.Context, relPath string, isFileExisted testFileFunc) (bool, error) {
 	resolvedPath, err := r.ResolveFilePath(ctx, relPath)
 	if err != nil {
 		if errors.As(err, &FileNotFoundInProjectDirectoryError{}) {
@@ -463,7 +444,7 @@ func (r FileReader) isFileExist(ctx context.Context, relPath string, isFileExist
 }
 
 // ResolveAndCheckFilePath resolves the path and run checkFunc for every file path resolve.
-func (r FileReader) ResolveAndCheckFilePath(ctx context.Context, relPath string, checkFunc testPathFunc) (resolvedPath string, err error) {
+func (r FileReader) ResolveAndCheckFilePath(ctx context.Context, relPath string, checkFunc testFileFunc) (resolvedPath string, err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("ResolveAndCheckFilePath %q", relPath).
 		Options(applyDebugToLogboek).
@@ -493,7 +474,7 @@ func (r FileReader) ResolveAndCheckFilePath(ctx context.Context, relPath string,
 	return
 }
 
-func (r FileReader) resolveAndCheckFilePath(ctx context.Context, relPath string, checkSymlinkTargetFunc testPathFunc) (resolvedPath string, err error) {
+func (r FileReader) resolveAndCheckFilePath(ctx context.Context, relPath string, checkSymlinkTargetFunc testFileFunc) (resolvedPath string, err error) {
 	return r.resolveFilePath(ctx, relPath, 0, checkSymlinkTargetFunc)
 }
 
@@ -512,7 +493,7 @@ func (r FileReader) ResolveFilePath(ctx context.Context, relPath string) (resolv
 	return
 }
 
-func (r FileReader) resolveFilePath(ctx context.Context, relPath string, depth int, checkSymlinkTargetFunc testPathFunc) (string, error) {
+func (r FileReader) resolveFilePath(ctx context.Context, relPath string, depth int, checkSymlinkTargetFunc testFileFunc) (string, error) {
 	if depth > 1000 {
 		return "", fmt.Errorf("too many levels of symbolic links")
 	}
