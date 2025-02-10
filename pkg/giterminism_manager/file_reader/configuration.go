@@ -88,7 +88,7 @@ func (r FileReader) walkConfigurationFilesWithGlob(ctx context.Context, dir, glo
 }
 
 // ReadAndCheckConfigurationFile does CheckConfigurationFileExistenceAndAcceptance and ReadConfigurationFile.
-func (r FileReader) ReadAndCheckConfigurationFile(ctx context.Context, relPath string, isFileAcceptedCheckFunc func(relPath string) bool) (data []byte, err error) {
+func (r FileReader) ReadAndCheckConfigurationFile(ctx context.Context, relPath string, isPathMatched matchPathFunc) (data []byte, err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("ReadAndCheckConfigurationFile %q", relPath).
 		Options(func(options types.LogBlockOptionsInterface) {
@@ -97,7 +97,7 @@ func (r FileReader) ReadAndCheckConfigurationFile(ctx context.Context, relPath s
 			}
 		}).
 		Do(func() {
-			data, err = r.readAndCheckConfigurationFile(ctx, relPath, isFileAcceptedCheckFunc)
+			data, err = r.readAndCheckConfigurationFile(ctx, relPath, isPathMatched)
 
 			if debug() {
 				logboek.Context(ctx).Debug().LogF("dataLength: %v\nerr: %q\n", len(data), err)
@@ -107,16 +107,16 @@ func (r FileReader) ReadAndCheckConfigurationFile(ctx context.Context, relPath s
 	return
 }
 
-func (r FileReader) readAndCheckConfigurationFile(ctx context.Context, relPath string, isFileAcceptedCheckFunc func(relPath string) bool) ([]byte, error) {
-	if err := r.CheckConfigurationFileExistenceAndAcceptance(ctx, relPath, isFileAcceptedCheckFunc); err != nil {
+func (r FileReader) readAndCheckConfigurationFile(ctx context.Context, relPath string, isPathMatched matchPathFunc) ([]byte, error) {
+	if err := r.CheckConfigurationFileExistenceAndAcceptance(ctx, relPath, isPathMatched); err != nil {
 		return nil, err
 	}
 
-	return r.ReadConfigurationFile(ctx, relPath, isFileAcceptedCheckFunc)
+	return r.ReadConfigurationFile(ctx, relPath, isPathMatched)
 }
 
 // ReadConfigurationFile does ReadFile or ReadCommitFile depending on the giterminism config.
-func (r FileReader) ReadConfigurationFile(ctx context.Context, relPath string, isFileAcceptedCheckFunc func(relPath string) bool) (data []byte, err error) {
+func (r FileReader) ReadConfigurationFile(ctx context.Context, relPath string, isPathMatched matchPathFunc) (data []byte, err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("ReadConfigurationFile %q", relPath).
 		Options(func(options types.LogBlockOptionsInterface) {
@@ -125,7 +125,7 @@ func (r FileReader) ReadConfigurationFile(ctx context.Context, relPath string, i
 			}
 		}).
 		Do(func() {
-			data, err = r.readConfigurationFile(ctx, relPath, isFileAcceptedCheckFunc)
+			data, err = r.readConfigurationFile(ctx, relPath, isPathMatched)
 
 			if debug() {
 				logboek.Context(ctx).Debug().LogF("dataLength: %v\nerr: %q\n", len(data), err)
@@ -135,8 +135,8 @@ func (r FileReader) ReadConfigurationFile(ctx context.Context, relPath string, i
 	return
 }
 
-func (r FileReader) readConfigurationFile(ctx context.Context, relPath string, isFileAcceptedCheckFunc func(relPath string) bool) ([]byte, error) {
-	shouldFileBeReadFromFS, err := r.ShouldFileBeRead(ctx, relPath, isFileAcceptedCheckFunc)
+func (r FileReader) readConfigurationFile(ctx context.Context, relPath string, isPathMatched matchPathFunc) ([]byte, error) {
+	shouldFileBeReadFromFS, err := r.ShouldFileBeRead(ctx, relPath, isPathMatched)
 	if err != nil {
 		return nil, err
 	}
@@ -149,7 +149,7 @@ func (r FileReader) readConfigurationFile(ctx context.Context, relPath string, i
 }
 
 // CheckConfigurationFileExistenceAndAcceptance does CheckRegularFileExistenceAndAcceptance or CheckCommitFileExistenceAndLocalChanges depending on the giterminism config.
-func (r FileReader) CheckConfigurationFileExistenceAndAcceptance(ctx context.Context, relPath string, isFileAcceptedCheckFunc func(relPath string) bool) (err error) {
+func (r FileReader) CheckConfigurationFileExistenceAndAcceptance(ctx context.Context, relPath string, isPathMatched matchPathFunc) (err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("CheckConfigurationFileExistenceAndAcceptance %q", relPath).
 		Options(func(options types.LogBlockOptionsInterface) {
@@ -158,7 +158,7 @@ func (r FileReader) CheckConfigurationFileExistenceAndAcceptance(ctx context.Con
 			}
 		}).
 		Do(func() {
-			err = r.checkConfigurationFileExistenceAndAcceptance(ctx, relPath, isFileAcceptedCheckFunc)
+			err = r.checkConfigurationFileExistenceAndAcceptance(ctx, relPath, isPathMatched)
 
 			if debug() {
 				logboek.Context(ctx).Debug().LogF("err: %q\n", err)
@@ -168,14 +168,14 @@ func (r FileReader) CheckConfigurationFileExistenceAndAcceptance(ctx context.Con
 	return
 }
 
-func (r FileReader) checkConfigurationFileExistenceAndAcceptance(ctx context.Context, relPath string, isFileAcceptedCheckFunc func(relPath string) bool) error {
-	shouldFileBeReadFromFS, err := r.ShouldFileBeRead(ctx, relPath, isFileAcceptedCheckFunc)
+func (r FileReader) checkConfigurationFileExistenceAndAcceptance(ctx context.Context, relPath string, isPathMatched matchPathFunc) error {
+	shouldFileBeReadFromFS, err := r.ShouldFileBeRead(ctx, relPath, isPathMatched)
 	if err != nil {
 		return err
 	}
 
 	if shouldFileBeReadFromFS {
-		return r.CheckRegularFileExistenceAndAcceptance(ctx, relPath, isFileAcceptedCheckFunc)
+		return r.CheckRegularFileExistenceAndAcceptance(ctx, relPath, isPathMatched)
 	}
 
 	return r.CheckCommitFileExistenceAndLocalChanges(ctx, relPath)
@@ -213,40 +213,6 @@ func (r FileReader) isConfigurationFileExistAnywhere(ctx context.Context, relPat
 
 	if r.sharedOptions.LooseGiterminism() {
 		return false, nil
-	} else {
-		return r.IsCommitFileExist(ctx, relPath)
-	}
-}
-
-// IsConfigurationFileExist checks the configuration file existence taking into account the giterminism config.
-// The method does not check acceptance for each symlink target if the configuration file is symlink.
-func (r FileReader) IsConfigurationFileExist(ctx context.Context, relPath string, isFileAcceptedCheckFunc func(relPath string) bool) (exist bool, err error) {
-	logboek.Context(ctx).Debug().
-		LogBlock("IsConfigurationFileExist %q", relPath).
-		Options(func(options types.LogBlockOptionsInterface) {
-			if !debug() {
-				options.Mute()
-			}
-		}).
-		Do(func() {
-			exist, err = r.isConfigurationFileExist(ctx, relPath, isFileAcceptedCheckFunc)
-
-			if debug() {
-				logboek.Context(ctx).Debug().LogF("exist: %v\nerr: %q\n", exist, err)
-			}
-		})
-
-	return
-}
-
-func (r FileReader) isConfigurationFileExist(ctx context.Context, relPath string, isFileAcceptedCheckFunc func(relPath string) bool) (bool, error) {
-	shouldFileBeReadFromFS, err := r.ShouldFileBeRead(ctx, relPath, isFileAcceptedCheckFunc)
-	if err != nil {
-		return false, err
-	}
-
-	if shouldFileBeReadFromFS {
-		return r.IsRegularFileExist(ctx, relPath)
 	} else {
 		return r.IsCommitFileExist(ctx, relPath)
 	}

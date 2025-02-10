@@ -44,7 +44,8 @@ func (r FileReader) ConfigGoTemplateFilesExists(ctx context.Context, relPath str
 	if err != nil {
 		return false, fmt.Errorf("{{ .Files.Exists %q }}: %w", relPath, err)
 	}
-	return r.isFileExist(ctx, relPath)
+
+	return r.IsFileExist(ctx, relPath)
 }
 
 func (r FileReader) ConfigGoTemplateFilesIsDir(ctx context.Context, relPath string) (bool, error) {
