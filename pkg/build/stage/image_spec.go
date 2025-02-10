@@ -113,9 +113,12 @@ func (s *ImageSpecStage) PrepareImage(ctx context.Context, _ Conveyor, _ contain
 	return nil
 }
 
+const imageSpecStageCacheVersion = "1"
+
 func (s *ImageSpecStage) GetDependencies(_ context.Context, _ Conveyor, _ container_backend.ContainerBackend, _, _ *StageImage, _ container_backend.BuildContextArchiver) (string, error) {
 	var args []string
 
+	args = append(args, imageSpecStageCacheVersion)
 	args = append(args, s.imageSpec.Author)
 	args = append(args, fmt.Sprint(s.imageSpec.ClearHistory))
 
@@ -204,6 +207,15 @@ func modifyEnv(env, removeKeys []string, addKeysMap map[string]string) ([]string
 	}
 
 	for _, key := range removeKeys {
+		delete(baseEnvMap, key)
+	}
+
+	// FIXME: This is a temporary solution to remove werf labels that persist after build.
+	for _, key := range []string{
+		"WERF_COMMIT_HASH",
+		"WERF_COMMIT_TIME_HUMAN",
+		"WERF_COMMIT_TIME_UNIX",
+	} {
 		delete(baseEnvMap, key)
 	}
 
