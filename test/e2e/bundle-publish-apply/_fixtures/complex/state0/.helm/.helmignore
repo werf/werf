@@ -1,0 +1,2 @@
+.helmignore
+templates/ignored.yaml

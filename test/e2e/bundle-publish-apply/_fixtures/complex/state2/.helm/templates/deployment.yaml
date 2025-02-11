@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deployment-rootchart
+  annotations:
+    werf.io/failures-allowed-per-replica: "0"
+spec:
+  selector:
+    matchLabels:
+      app: deployment-rootchart
+  template:
+    metadata:
+      labels:
+        app: deployment-rootchart
+    spec:
+      containers:
+        - name: deployment-rootchart
+          image: alpine:3.21
+          command:
+            - sh
+            - -ec
+            - |
+              echo deployment-rootchart started
+              tail -f /dev/null
+          readinessProbe:
+            exec:
+              command:
+                - /bin/false
+            periodSeconds: 1

@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-rootchart
+spec:
+  selector:
+    app: deployment-rootchart
+  ports:
+    - port: 80

@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-subchart
+spec:
+  selector:
+    app: deployment-subchart
+  ports:
+    - port: 80

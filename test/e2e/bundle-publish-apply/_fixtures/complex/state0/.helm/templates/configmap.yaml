@@ -1,0 +1,56 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-rootchart
+data:
+  werf_namespace: "{{ .Values.werf.namespace }}"
+  werf_env: "{{ .Values.werf.env }}"
+
+  chart_name: "{{ .Chart.Name }}"
+  chart_app_version: "{{ .Chart.AppVersion }}"
+  chart_deprecated: "{{ .Chart.Deprecated }}"
+  chart_icon: "{{ .Chart.Icon }}"
+  chart_description: "{{ .Chart.Description }}"
+  chart_home: "{{ .Chart.Home }}"
+  chart_first_source: "{{ first .Chart.Sources }}"
+  chart_first_keyword: "{{ first .Chart.Keywords }}"
+  chart_first_annotation: "{{ .Chart.Annotations.myanno }}"
+  chart_first_maintainer_name: "{{ (first .Chart.Maintainers).Name }}"
+  chart_first_maintainer_email: "{{ (first .Chart.Maintainers).Email }}"
+  chart_first_maintainer_url: "{{ (first .Chart.Maintainers).URL }}"
+
+  release_is_install: "{{ .Release.IsInstall }}"
+  release_is_upgrade: "{{ .Release.IsUpgrade }}"
+  release_name: "{{ .Release.Name }}"
+  release_namespace: "{{ .Release.Namespace }}"
+  release_revision: "{{ .Release.Revision }}"
+
+  template_base_path: "{{ .Template.BasePath }}"
+  template_name: "{{ .Template.Name }}"
+
+  capabilities_kube_version_major: "{{ .Capabilities.KubeVersion.Major }}"
+  capabilities_api_versions_has_v1: "{{ .Capabilities.APIVersions.Has "v1" }}"
+
+  global_preserved: "{{ .Values.global.preserved }}"
+  preserved: "{{ .Values.preserved }}"
+  added_via_set: "{{ .Values.added_via_set }}"
+  added_via_set_string: "{{ .Values.added_via_set_string }}"
+  added_via_values: "{{ .Values.added_via_values }}"
+  added_via_secret_values: "{{ .Values.added_via_secret_values }}"
+  added_via_secret_values_extra: "{{ .Values.added_via_secret_values_extra }}"
+  added_via_set_list: "{{ .Values.added_via_set_list | join ", " }}"
+  overridden_via_set: "{{ .Values.overridden_via_set }}"
+  overridden_via_set_string: "{{ .Values.overridden_via_set_string }}"
+  overridden_via_values: "{{ .Values.overridden_via_values }}"
+  overridden_via_secret_values: "{{ .Values.overridden_via_secret_values }}"
+  overridden_via_secret_values_extra: "{{ .Values.overridden_via_secret_values_extra }}"
+
+  preserved_list: "{{ .Values.preserved_list | join ", " }}"
+  overridden_via_set_list: "{{ .Values.overridden_via_set_list | join ", " }}"
+  overridden_via_values_list: "{{ .Values.overridden_via_values_list | join ", " }}"
+
+  import_preserved_via_import: "{{ .Values.import.preserved_via_import }}"
+  import_added_via_import: "{{ .Values.import.added_via_import }}"
+
+  secret_config: {{ werf_secret_file "secret-config.txt" }}
+

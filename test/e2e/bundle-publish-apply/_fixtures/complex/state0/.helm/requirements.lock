@@ -1,0 +1,15 @@
+dependencies:
+- name: subchart
+  repository: ""
+  version: 0.1.0
+- name: subchart2
+  repository: ""
+  version: 0.1.0
+- name: subchart2
+  repository: ""
+  version: 0.1.0
+- name: hello
+  repository: oci://ghcr.io/werf
+  version: 0.1.0
+digest: sha256:ab5a9eaef0d165f3ca87105ea49ccdbf6a6766d84eb2c0e49471ea9003d66aa0
+generated: "2024-12-27T14:45:32.96509642+03:00"
