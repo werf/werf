@@ -263,12 +263,12 @@ func (r FileReader) skipFileFunc(acceptedFilePathMatcher path_matcher.PathMatche
 }
 
 // CheckFileExistenceAndAcceptance returns nil if the resolved file exists and is fully accepted by the giterminism config (each symlink target must be accepted if the file path accepted)
-func (r FileReader) CheckFileExistenceAndAcceptance(ctx context.Context, relPath string, isPathMatched matchPathFunc, isFileExisted testFileFunc) (ok bool, err error) {
+func (r FileReader) CheckFileExistenceAndAcceptance(ctx context.Context, relPath string, isPathMatched matchPathFunc, isFileExist testFileFunc) (ok bool, err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("CheckFileExistenceAndAcceptance %q", relPath).
 		Options(applyDebugToLogboek).
 		Do(func() {
-			ok, err = r.checkFileExistenceAndAcceptance(ctx, relPath, isPathMatched, isFileExisted)
+			ok, err = r.checkFileExistenceAndAcceptance(ctx, relPath, isPathMatched, isFileExist)
 
 			if debug() {
 				logboek.Context(ctx).Debug().LogF("err: %q\n", err)
@@ -278,9 +278,9 @@ func (r FileReader) CheckFileExistenceAndAcceptance(ctx context.Context, relPath
 	return
 }
 
-func (r FileReader) checkFileExistenceAndAcceptance(ctx context.Context, relPath string, isPathMatched matchPathFunc, isFileExisted testFileFunc) (bool, error) {
+func (r FileReader) checkFileExistenceAndAcceptance(ctx context.Context, relPath string, isPathMatched matchPathFunc, isFileExist testFileFunc) (bool, error) {
 	if r.sharedOptions.LooseGiterminism() {
-		exist, err := isFileExisted(relPath)
+		exist, err := isFileExist(relPath)
 		if err != nil {
 			return false, err
 		}
@@ -327,12 +327,12 @@ func (r FileReader) checkFileExistenceAndAcceptance(ctx context.Context, relPath
 }
 
 // ShouldFileBeRead return true if not resolved path accepted by giterminism config.
-func (r FileReader) ShouldFileBeRead(ctx context.Context, relPath string, isPathMatched matchPathFunc, isFileExisted testFileFunc) (should bool, err error) {
+func (r FileReader) ShouldFileBeRead(ctx context.Context, relPath string, isPathMatched matchPathFunc, isFileExist testFileFunc) (should bool, err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("ShouldFileBeRead %q", relPath).
 		Options(applyDebugToLogboek).
 		Do(func() {
-			should, err = r.shouldFileBeRead(relPath, isPathMatched, isFileExisted)
+			should, err = r.shouldFileBeRead(relPath, isPathMatched, isFileExist)
 
 			if debug() {
 				logboek.Context(ctx).Debug().LogF("should: %v\nerr: %q\n", should, err)
@@ -424,7 +424,7 @@ func (r FileReader) IsFileExist(ctx context.Context, relPath string) (exist bool
 	return
 }
 
-func (r FileReader) isFileExist(ctx context.Context, relPath string, isFileExisted testFileFunc) (bool, error) {
+func (r FileReader) isFileExist(ctx context.Context, relPath string, isFileExist testFileFunc) (bool, error) {
 	resolvedPath, err := r.ResolveFilePath(ctx, relPath)
 	if err != nil {
 		if errors.As(err, &FileNotFoundInProjectDirectoryError{}) {
@@ -435,7 +435,7 @@ func (r FileReader) isFileExist(ctx context.Context, relPath string, isFileExist
 	}
 
 	absPath := r.projectRelativePathToAbsolutePath(resolvedPath)
-	exist, err := isFileExisted(absPath)
+	exist, err := isFileExist(absPath)
 	if err != nil {
 		return false, fmt.Errorf("unable to check existence of file %q: %w", absPath, err)
 	}
