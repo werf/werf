@@ -177,6 +177,12 @@ func runRender(ctx context.Context) error {
 		return fmt.Errorf("get service values: %w", err)
 	}
 
+	secretWorkDir, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("get current working directory: %w", err)
+	}
+	secrets.SecretsWorkingDir = secretWorkDir
+
 	var bundlePath string
 	if isLocalBundle {
 		bundlePath = cmdData.BundleDir
@@ -239,6 +245,7 @@ func runRender(ctx context.Context) error {
 		ReleaseStorageDriver:         action.ReleaseStorageDriver(os.Getenv("HELM_DRIVER")),
 		SecretKeyIgnore:              *commonCmdData.IgnoreSecretKey,
 		SecretValuesPaths:            common.GetSecretValues(&commonCmdData),
+		SecretWorkDir:                secretWorkDir,
 		ShowCRDs:                     cmdData.IncludeCRDs,
 		ShowOnlyFiles:                append(util.PredefinedValuesByEnvNamePrefix("WERF_SHOW_ONLY"), cmdData.ShowOnly...),
 		ValuesFileSets:               common.GetSetFile(&commonCmdData),

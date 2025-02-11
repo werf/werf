@@ -195,6 +195,12 @@ func runApply(ctx context.Context) error {
 		return fmt.Errorf("get service values: %w", err)
 	}
 
+	secretWorkDir, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("get current working directory: %w", err)
+	}
+	secrets.SecretsWorkingDir = secretWorkDir
+
 	if err := bundles.Pull(ctx, fmt.Sprintf("%s:%s", repoAddress, cmdData.Tag), bundlePath, bundlesRegistryClient); err != nil {
 		return fmt.Errorf("pull bundle: %w", err)
 	}
@@ -246,6 +252,7 @@ func runApply(ctx context.Context) error {
 		RollbackGraphSave:            common.GetRollbackGraphPath(&commonCmdData) != "",
 		SecretKeyIgnore:              *commonCmdData.IgnoreSecretKey,
 		SecretValuesPaths:            common.GetSecretValues(&commonCmdData),
+		SecretWorkDir:                secretWorkDir,
 		SubNotes:                     *commonCmdData.RenderSubchartNotes,
 		TrackCreationTimeout:         time.Duration(cmdData.Timeout) * time.Second,
 		TrackDeletionTimeout:         time.Duration(cmdData.Timeout) * time.Second,
