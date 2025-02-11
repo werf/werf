@@ -61,7 +61,6 @@ func (s *ImageSpecStage) PrepareImage(ctx context.Context, _ Conveyor, _ contain
 		}
 
 		newConfig.Labels = resultLabels
-		//newConfig.Env, err = modifyEnv(imageInfo.Env, s.imageSpec.RemoveEnv, s.imageSpec.Env)
 		newConfig.Env, err = modifyEnv(imageInfo.Env, s.imageSpec.RemoveEnv, s.imageSpec.Env)
 		if err != nil {
 			return fmt.Errorf("unable to modify env: %w", err)
