@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.26.7](https://www.github.com/werf/werf/compare/v2.26.6...v2.26.7) (2025-02-11)
+
+
+### Bug Fixes
+
+* **deploy:** `inconsistent data, unpad failed` error in bundle apply/render ([fd09291](https://www.github.com/werf/werf/commit/fd092915fa753972319bf44104263a848ccfd09d))
+
 ### [2.26.6](https://www.github.com/werf/werf/compare/v2.26.5...v2.26.6) (2025-02-10)
 
 
