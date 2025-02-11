@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "deploymentRootchart" . }}
+spec:
+  selector:
+    matchLabels:
+      app: deployment-rootchart
+  template:
+    metadata:
+      labels:
+        app: deployment-rootchart
+    spec:
+      imagePullSecrets:
+        - name: registry
+      containers:
+        - name: deployment-rootchart
+          image: {{ .Values.werf.image.app1 }}
+          command:
+            - sh
+            - -ec
+            - |
+              echo deployment-rootchart started
+              echo deployment-rootchart listening
+
+              while true; do
+                echo -e "HTTP/1.1 200 OK\n\n" | nc -Nl 0.0.0.0 80
+              done
+          ports:
+            - name: http
+              containerPort: 80
+          startupProbe:
+            exec:
+              command:
+                - /bin/true
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            periodSeconds: 1

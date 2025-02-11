@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deployment-subchart
+  annotations:
+    werf.io/weight: "10"
+spec:
+  selector:
+    matchLabels:
+      app: deployment-subchart
+  template:
+    metadata:
+      labels:
+        app: deployment-subchart
+    spec:
+      imagePullSecrets:
+        - name: registry
+      containers:
+        - name: deployment-subchart
+          image: {{ .Values.werf.image.app2 }}
+          command:
+            - sh
+            - -ec
+            - |
+              echo deployment-subchart started
+
+              if ! curl service-rootchart:80; then
+                echo "service-rootchart:80 is not available"
+                exit 1
+              fi
+
+              echo deployment-subchart listening
+
+              while true; do
+                echo -e "HTTP/1.1 200 OK\n\n" | nc -Nl 0.0.0.0 80
+              done
+          ports:
+            - name: http
+              containerPort: 80
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            periodSeconds: 1

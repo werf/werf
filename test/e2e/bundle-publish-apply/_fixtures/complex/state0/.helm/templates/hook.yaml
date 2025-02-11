@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hook-rootchart
+  annotations:
+    helm.sh/hook: pre-upgrade,pre-install
+    helm.sh/hook-delete-policy: ""
+spec:
+  selector:
+    matchLabels:
+      app: hook-rootchart
+  template:
+    metadata:
+      labels:
+        app: hook-rootchart
+    spec:
+      imagePullSecrets:
+        - name: registry
+      containers:
+        - name: hook-rootchart
+          image: {{ .Values.werf.image.app1 }}
+          command:
+            - sh
+            - -ec
+            - |
+              echo hook-rootchart started
+              echo hook-rootchart listening
+
+              while true; do
+                echo -e "HTTP/1.1 200 OK\n\n" | nc -Nl 0.0.0.0 80
+              done
+          ports:
+            - name: http
+              containerPort: 80

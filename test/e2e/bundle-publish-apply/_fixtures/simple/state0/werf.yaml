@@ -1,6 +1,2 @@
 project: werf-test-e2e-bundle-publish-apply-simple
 configVersion: 1
-
----
-image: dockerfile
-dockerfile: Dockerfile

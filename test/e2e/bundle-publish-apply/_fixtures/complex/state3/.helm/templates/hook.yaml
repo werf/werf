@@ -1,0 +1,22 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: hook-rootchart
+  annotations:
+    helm.sh/hook: pre-upgrade,pre-install
+    werf.io/failures-allowed-per-replica: "0"
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      containers:
+        - name: hook-rootchart
+          image: alpine:3.21
+          command:
+            - sh
+            - -ec
+            - |
+              echo hook-rootchart started
+              echo hook-rootchart failing
+              exit 1
+      restartPolicy: Never
