@@ -2,7 +2,6 @@ package transport
 
 import (
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/cenkalti/backoff/v5"
@@ -26,18 +25,7 @@ func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
 			return nil, backoff.Permanent(err)
 		}
 
-		if resp.StatusCode == http.StatusTooManyRequests {
-			// IMPORTANT: This is constraint with uint8 (bitSize).
-			// It means max=255, what is 255/60 = 4.25 min or 4 min 15 sec
-			seconds, err := strconv.ParseUint(resp.Header.Get("Retry-After"), 10, 8)
-			// Consider str_conv err as permanent one
-			if err != nil {
-				return nil, backoff.Permanent(err)
-			}
-			return nil, backoff.RetryAfter(int(seconds))
-		}
-
-		return resp, nil
+		return backoffHttpRetryAfterHandler(resp)
 	}
 
 	notify := func(err error, duration time.Duration) {
