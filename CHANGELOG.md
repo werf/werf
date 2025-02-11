@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.27.0](https://www.github.com/werf/werf/compare/v2.26.6...v2.27.0) (2025-02-11)
+
+
+### Features
+
+* **deploy:** support `werf_secret_file` Helm function in bundle apply/render ([f7fb2a8](https://www.github.com/werf/werf/commit/f7fb2a8b3f39f8b2a23fbf852709db5c37014cd3))
+
+
+### Bug Fixes
+
+* **deploy:** `inconsistent data, unpad failed` error in bundle apply/render ([fd09291](https://www.github.com/werf/werf/commit/fd092915fa753972319bf44104263a848ccfd09d))
+
 ### [2.26.6](https://www.github.com/werf/werf/compare/v2.26.5...v2.26.6) (2025-02-10)
 
 
