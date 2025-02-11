@@ -37,29 +37,23 @@ func backoffHttpRetryAfterHandler(resp *http.Response) (*http.Response, error) {
 	// date or seconds
 	headerValue := resp.Header.Get(retryAfterHeaderKey)
 
-	// ------------------
-	// Is it <http-date>? Sample: 'Tue, 29 Oct 2024 16:56:32 GMT'
-	// ------------------
-	if strings.Count(headerValue, " ") == 5 {
-		retryAfterTime, err := time.Parse(time.RFC1123, headerValue)
-		if err != nil {
-			return nil, backoff.Permanent(err)
-		}
+// ------------------
+// Try parsing as <http-date> (RFC1123 format).
+// Example: 'Tue, 29 Oct 2024 16:56:32 GMT'.
+// ------------------
+if retryAfterTime, err := time.Parse(time.RFC1123, headerValue); err == nil {
+	seconds := time.Until(retryAfterTime).Seconds()
+	return nil, backoff.RetryAfter(int(math.Max(0, seconds)))
+}
 
-		seconds := retryAfterTime.Sub(time.Now()).Seconds()
-		return nil, backoff.RetryAfter(int(seconds))
-	}
+// ------------------
+// Try parsing as <delay-seconds>.
+// IMPORTANT: Constraint with uint8 (bitSize) → max=255 (4 min 15 sec).
+seconds, err := strconv.ParseUint(headerValue, 10, 8)
+// ------------------
+if err != nil {
+	return nil, backoff.Permanent(err) // Consider parsing error as permanent.
+}
 
-	// ------------------
-	// It is <delay-seconds>.
-	// ------------------
-	// IMPORTANT: This is constraint with uint8 (bitSize).
-	// It means max=255, what is 255/60 = 4.25 min or 4 min 15 sec
-	seconds, err := strconv.ParseUint(headerValue, 10, 8)
-	// Consider str_conv err as permanent one
-	if err != nil {
-		return nil, backoff.Permanent(err)
-	}
-
-	return nil, backoff.RetryAfter(int(seconds))
+return nil, backoff.RetryAfter(int(seconds))
 }
