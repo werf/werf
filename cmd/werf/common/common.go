@@ -19,7 +19,6 @@ import (
 	"github.com/werf/nelm/pkg/action"
 	"github.com/werf/werf/v2/pkg/build"
 	"github.com/werf/werf/v2/pkg/build/stage"
-	"github.com/werf/werf/v2/pkg/buildah"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/docker"
@@ -1341,18 +1340,6 @@ func GetSecondaryStagesStorage(cmdData *CmdData) []string {
 
 func GetContainerRegistryMirror(ctx context.Context, cmdData *CmdData) ([]string, error) {
 	mirrors := append(util.PredefinedValuesByEnvNamePrefix("WERF_CONTAINER_REGISTRY_MIRROR_"), *cmdData.ContainerRegistryMirror...)
-
-	if len(mirrors) > 0 {
-		buildahMode, _, err := GetBuildahMode()
-		if err != nil {
-			return nil, fmt.Errorf("get buildah mode: %w", err)
-		}
-
-		if *buildahMode == buildah.ModeDisabled {
-			global_warnings.GlobalWarningLn(ctx, "In Docker mode container registry mirrors should be configured in daemon.json file, not via --container-registry-mirrors: https://werf.io/docs/usage/build/process.html#using-mirrors-for-dockerio.")
-			return nil, nil
-		}
-	}
 
 	// init registry mirrors if docker cli initialized in context
 	if docker.IsEnabled() && docker.IsContext(ctx) {
