@@ -262,12 +262,12 @@ func (r FileReader) skipFileFunc(acceptedFilePathMatcher path_matcher.PathMatche
 }
 
 // CheckFileExistenceAndAcceptance returns nil if the resolved file exists and is fully accepted by the giterminism config (each symlink target must be accepted if the file path accepted)
-func (r FileReader) CheckFileExistenceAndAcceptance(ctx context.Context, relPath string, isPathMatched matchPathFunc, isFileExist testFileFunc) (ok bool, err error) {
+func (r FileReader) CheckFileExistenceAndAcceptance(ctx context.Context, relPath string, isPathMatched matchPathFunc, isFileExist testFileFunc) (err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("CheckFileExistenceAndAcceptance %q", relPath).
 		Options(applyDebugToLogboek).
 		Do(func() {
-			ok, err = r.checkFileExistenceAndAcceptance(ctx, relPath, isPathMatched, isFileExist)
+			err = r.checkFileExistenceAndAcceptance(ctx, relPath, isPathMatched, isFileExist)
 
 			if debug() {
 				logboek.Context(ctx).Debug().LogF("err: %q\n", err)
@@ -277,22 +277,22 @@ func (r FileReader) CheckFileExistenceAndAcceptance(ctx context.Context, relPath
 	return
 }
 
-func (r FileReader) checkFileExistenceAndAcceptance(ctx context.Context, relPath string, isPathMatched matchPathFunc, isFileExist testFileFunc) (bool, error) {
+func (r FileReader) checkFileExistenceAndAcceptance(ctx context.Context, relPath string, isPathMatched matchPathFunc, isFileExist testFileFunc) error {
 	if r.sharedOptions.LooseGiterminism() {
 		exist, err := isFileExist(relPath)
 		if err != nil {
-			return false, err
+			return err
 		}
 
 		if !exist {
-			return false, r.NewFileNotFoundInProjectDirectoryError(relPath)
+			return r.NewFileNotFoundInProjectDirectoryError(relPath)
 		}
 
-		return true, nil
+		return nil
 	}
 
 	if !isPathMatched(relPath) {
-		return false, FileNotAcceptedError{fmt.Errorf("the file %q not accepted by giterminism config", relPath)}
+		return FileNotAcceptedError{fmt.Errorf("the file %q not accepted by giterminism config", relPath)}
 	}
 
 	if err := func() error {
@@ -319,10 +319,10 @@ func (r FileReader) checkFileExistenceAndAcceptance(ctx context.Context, relPath
 
 		return nil
 	}(); err != nil {
-		return false, fmt.Errorf("accepted file %q check failed: %w", relPath, err)
+		return fmt.Errorf("accepted file %q check failed: %w", relPath, err)
 	}
 
-	return true, nil
+	return nil
 }
 
 // ShouldFileBeRead return true if not resolved path accepted by giterminism config.

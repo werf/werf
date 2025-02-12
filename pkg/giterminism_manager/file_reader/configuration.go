@@ -163,10 +163,20 @@ func (r FileReader) checkConfigurationFileExistenceAndAcceptance(ctx context.Con
 	}
 
 	if shouldFileBeReadFromFS {
-		return r.CheckFileExistenceAndAcceptance(ctx, relPath, isPathMatched, isFileExist)
+		err = r.CheckFileExistenceAndAcceptance(ctx, relPath, isPathMatched, isFileExist)
+		if err != nil {
+			return false, err
+		}
+
+		return isFileExist(relPath)
 	}
 
-	return r.CheckCommitFileExistenceAndLocalChanges(ctx, relPath)
+	err = r.CheckCommitFileExistenceAndLocalChanges(ctx, relPath)
+	if err != nil {
+		return false, err
+	}
+
+	return isFileExist(relPath)
 }
 
 // IsConfigurationFileExistAnywhere returns true if the configuration file exists in the project directory or in the project repository.

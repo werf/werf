@@ -2,6 +2,7 @@ package file_reader
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path/filepath"
 )
@@ -50,7 +51,12 @@ func (r FileReader) ConfigGoTemplateFilesExists(ctx context.Context, relPath str
 			return r.IsFileExist(ctx, path)
 		})
 	if err != nil {
-		return false, fmt.Errorf("{{ .Files.Exists %q }}: %w", relPath, err)
+		switch {
+		case errors.As(err, &UncommittedFilesError{}), errors.As(err, &UntrackedFilesError{}):
+			return false, nil
+		default:
+			return false, fmt.Errorf("{{ .Files.Exists %q }}: %w", relPath, err)
+		}
 	}
 	return ok, nil
 }
@@ -62,7 +68,12 @@ func (r FileReader) ConfigGoTemplateFilesIsDir(ctx context.Context, relPath stri
 			return r.IsDirectoryExist(ctx, path)
 		})
 	if err != nil {
-		return false, fmt.Errorf("{{ .Files.IsDir %q }}: %w", relPath, err)
+		switch {
+		case errors.As(err, &UncommittedFilesError{}), errors.As(err, &UntrackedFilesError{}):
+			return false, nil
+		default:
+			return false, fmt.Errorf("{{ .Files.IsDir %q }}: %w", relPath, err)
+		}
 	}
 	return ok, nil
 }
