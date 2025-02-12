@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -72,7 +71,7 @@ func (r FileReader) listFilesWithGlob(ctx context.Context, relDir, glob string, 
 		return false, nil
 	}
 
-	isRegularFile, err := r.isFileExist(ctx, relDirOrFileWithGlobPart, util.RegularFileExists)
+	isRegularFile, err := r.isFileExist(ctx, relDirOrFileWithGlobPart, r.fileSystem.RegularFileExists)
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +126,7 @@ func (r FileReader) walkFilesWithPathMatcher(ctx context.Context, relDir string,
 	}
 
 	absDirPath := r.projectRelativePathToAbsolutePath(resolvedDir)
-	return filepath.Walk(absDirPath, func(path string, f os.FileInfo, err error) error {
+	return r.fileSystem.Walk(absDirPath, func(path string, f os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -163,7 +162,7 @@ func (r FileReader) walkFilesWithPathMatcher(ctx context.Context, relDir string,
 		}
 
 		if f.Mode()&os.ModeSymlink == os.ModeSymlink {
-			link, err := os.Readlink(path)
+			link, err := r.fileSystem.Readlink(path)
 			if err != nil {
 				return fmt.Errorf("unable to read symlink %q: %w", path, err)
 			}
@@ -177,7 +176,7 @@ func (r FileReader) walkFilesWithPathMatcher(ctx context.Context, relDir string,
 				return r.NewFileNotFoundInProjectDirectoryError(resolvedLink)
 			}
 
-			lstat, err := os.Lstat(resolvedLink)
+			lstat, err := r.fileSystem.Lstat(resolvedLink)
 			if err != nil {
 				return err
 			}
@@ -368,7 +367,7 @@ func (r FileReader) ReadFile(ctx context.Context, relPath string) (data []byte, 
 
 func (r FileReader) readFile(relPath string) ([]byte, error) {
 	absPath := r.projectRelativePathToAbsolutePath(relPath)
-	data, err := ioutil.ReadFile(absPath)
+	data, err := r.fileSystem.ReadFile(absPath)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read file %q: %w", absPath, err)
 	}
@@ -382,7 +381,7 @@ func (r FileReader) IsDirectoryExist(ctx context.Context, relPath string) (exist
 		LogBlock("IsDirectoryExist %q", relPath).
 		Options(applyDebugToLogboek).
 		Do(func() {
-			exist, err = r.isFileExist(ctx, relPath, util.DirExists)
+			exist, err = r.isFileExist(ctx, relPath, r.fileSystem.DirExists)
 
 			if debug() {
 				logboek.Context(ctx).Debug().LogF("exist: %v\nerr: %q\n", exist, err)
@@ -398,7 +397,7 @@ func (r FileReader) IsRegularFileExist(ctx context.Context, relPath string) (exi
 		LogBlock("IsRegularFileExist %q", relPath).
 		Options(applyDebugToLogboek).
 		Do(func() {
-			exist, err = r.isFileExist(ctx, relPath, util.RegularFileExists)
+			exist, err = r.isFileExist(ctx, relPath, r.fileSystem.RegularFileExists)
 
 			if debug() {
 				logboek.Context(ctx).Debug().LogF("exist: %v\nerr: %q\n", exist, err)
@@ -414,7 +413,7 @@ func (r FileReader) IsFileExist(ctx context.Context, relPath string) (exist bool
 		LogBlock("IsFileExist %q", relPath).
 		Options(applyDebugToLogboek).
 		Do(func() {
-			exist, err = r.isFileExist(ctx, relPath, util.FileExists)
+			exist, err = r.isFileExist(ctx, relPath, r.fileSystem.FileExists)
 
 			if debug() {
 				logboek.Context(ctx).Debug().LogF("exist: %v\nerr: %q\n", exist, err)
@@ -507,7 +506,7 @@ func (r FileReader) resolveFilePath(ctx context.Context, relPath string, depth i
 		pathToResolve := filepath.Join(resolvedPath, pathParts[ind])
 		absPathToResolve := r.projectRelativePathToAbsolutePath(pathToResolve)
 
-		lstat, err := os.Lstat(absPathToResolve)
+		lstat, err := r.fileSystem.Lstat(absPathToResolve)
 
 		if debug() {
 			var logStat string
@@ -518,7 +517,7 @@ func (r FileReader) resolveFilePath(ctx context.Context, relPath string, depth i
 		}
 
 		if err != nil {
-			if os.IsNotExist(err) || util.IsNotADirectoryError(err) {
+			if r.fileSystem.IsNotExist(err) || util.IsNotADirectoryError(err) {
 				return "", r.NewFileNotFoundInProjectDirectoryError(pathToResolve)
 			}
 
@@ -527,7 +526,7 @@ func (r FileReader) resolveFilePath(ctx context.Context, relPath string, depth i
 
 		switch {
 		case lstat.Mode()&os.ModeSymlink == os.ModeSymlink:
-			link, err := os.Readlink(absPathToResolve)
+			link, err := r.fileSystem.Readlink(absPathToResolve)
 			if err != nil {
 				return "", fmt.Errorf("unable to read symlink %q: %w", link, err)
 			}
