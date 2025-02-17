@@ -264,8 +264,11 @@ func (i *Image) SetupBaseImage(ctx context.Context, storageManager manager.Stora
 
 				if i.baseImageReference != "scratch" {
 					var err error
-					info, err = storageManager.GetImageInfo(ctx, i.baseImageReference, storageOpts)
-					if isUnsupportedMediaTypeError(err) {
+					info, err = i.ContainerBackend.GetImageInfo(ctx, i.baseImageReference, container_backend.GetImageInfoOpts{})
+					if err != nil {
+						return fmt.Errorf("unable to get base image %q manifest: %w", i.baseImageReference, err)
+					}
+					if info == nil {
 						if err := logboek.Context(ctx).Default().LogProcess("Pulling base image %s", i.baseStageImage.Image.Name()).
 							Options(func(options types.LogProcessOptionsInterface) {
 								options.Style(style.Highlight())
@@ -280,8 +283,6 @@ func (i *Image) SetupBaseImage(ctx context.Context, storageManager manager.Stora
 						if err != nil {
 							return fmt.Errorf("unable to get base image %q manifest: %w", i.baseImageReference, err)
 						}
-					} else if err != nil {
-						return fmt.Errorf("unable to get base image %q manifest: %w", i.baseImageReference, err)
 					}
 				} else {
 					info = &image.Info{
