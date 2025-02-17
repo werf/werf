@@ -136,11 +136,11 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultBuildParallelTasksLimit)
 
 	common.SetupDisableAutoHostCleanup(&commonCmdData, cmd)
-	common.SetupAllowedDockerStorageVolumeUsage(&commonCmdData, cmd)
-	common.SetupAllowedDockerStorageVolumeUsageMargin(&commonCmdData, cmd)
+	common.SetupAllowedBackendStorageVolumeUsage(&commonCmdData, cmd)
+	common.SetupAllowedBackendStorageVolumeUsageMargin(&commonCmdData, cmd)
 	common.SetupAllowedLocalCacheVolumeUsage(&commonCmdData, cmd)
 	common.SetupAllowedLocalCacheVolumeUsageMargin(&commonCmdData, cmd)
-	common.SetupDockerServerStoragePath(&commonCmdData, cmd)
+	common.SetupBackendStoragePath(&commonCmdData, cmd)
 
 	common.SetupRequireBuiltImages(&commonCmdData, cmd)
 	commonCmdData.SetupPlatform(cmd)

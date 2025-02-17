@@ -62,11 +62,11 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupDryRun(&commonCmdData, cmd)
 
 	common.SetupDisableAutoHostCleanup(&commonCmdData, cmd)
-	common.SetupAllowedDockerStorageVolumeUsage(&commonCmdData, cmd)
-	common.SetupAllowedDockerStorageVolumeUsageMargin(&commonCmdData, cmd)
+	common.SetupAllowedBackendStorageVolumeUsage(&commonCmdData, cmd)
+	common.SetupAllowedBackendStorageVolumeUsageMargin(&commonCmdData, cmd)
 	common.SetupAllowedLocalCacheVolumeUsage(&commonCmdData, cmd)
 	common.SetupAllowedLocalCacheVolumeUsageMargin(&commonCmdData, cmd)
-	common.SetupDockerServerStoragePath(&commonCmdData, cmd)
+	common.SetupBackendStoragePath(&commonCmdData, cmd)
 	commonCmdData.SetupPlatform(cmd)
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
@@ -102,11 +102,11 @@ func runCleanup(ctx context.Context) error {
 	hostCleanupOptions := host_cleaning.HostCleanupOptions{
 		DryRun: *commonCmdData.DryRun,
 		Force:  cmdData.Force,
-		AllowedDockerStorageVolumeUsagePercentage:       commonCmdData.AllowedDockerStorageVolumeUsage,
-		AllowedDockerStorageVolumeUsageMarginPercentage: commonCmdData.AllowedDockerStorageVolumeUsageMargin,
-		AllowedLocalCacheVolumeUsagePercentage:          commonCmdData.AllowedLocalCacheVolumeUsage,
-		AllowedLocalCacheVolumeUsageMarginPercentage:    commonCmdData.AllowedLocalCacheVolumeUsageMargin,
-		DockerServerStoragePath:                         commonCmdData.DockerServerStoragePath,
+		AllowedBackendStorageVolumeUsagePercentage:       commonCmdData.AllowedBackendStorageVolumeUsage,
+		AllowedBackendStorageVolumeUsageMarginPercentage: commonCmdData.AllowedBackendStorageVolumeUsageMargin,
+		AllowedLocalCacheVolumeUsagePercentage:           commonCmdData.AllowedLocalCacheVolumeUsage,
+		AllowedLocalCacheVolumeUsageMarginPercentage:     commonCmdData.AllowedLocalCacheVolumeUsageMargin,
+		BackendStoragePath:                               commonCmdData.BackendStoragePath,
 	}
 
 	return host_cleaning.RunHostCleanup(ctx, commonManager.ContainerBackend(), hostCleanupOptions)
