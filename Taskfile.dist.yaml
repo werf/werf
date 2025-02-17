@@ -429,6 +429,11 @@ tasks:
     cmds:
       - prettier -c "**/*.yaml" "**/*.yml"
 
+  mock:generate:
+    desc: "Generate mocks."
+    cmds:
+      - go generate -run mockgen ./cmd/... ./pkg/...
+
   doc:
     desc: "Run all docs generators, formatters and linters."
     cmds:
@@ -554,6 +559,11 @@ tasks:
     desc: "Install prettier."
     cmds:
       - npm install -g prettier
+
+  deps:install:mockgen:
+    desc: "Install mockgen library."
+    cmds:
+      - go install go.uber.org/mock/mockgen@v0.5.0
 
   sign:
     desc: 'Sign last version tag + origin/main and push signatures. Important vars: "refs".'
