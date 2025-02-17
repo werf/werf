@@ -24,8 +24,10 @@ type FileReader interface {
 	IsConfigExistAnywhere(ctx context.Context, relPath string) (bool, error)
 	ReadConfig(ctx context.Context, customRelPath string) (string, []byte, error)
 	ReadConfigTemplateFiles(ctx context.Context, customRelDirPath string, tmplFunc func(templatePathInsideDir string, data []byte, err error) error) error
+	ConfigGoTemplateFilesExists(ctx context.Context, relPath string) (bool, error)
 	ConfigGoTemplateFilesGet(ctx context.Context, relPath string) ([]byte, error)
 	ConfigGoTemplateFilesGlob(ctx context.Context, pattern string) (map[string]interface{}, error)
+	ConfigGoTemplateFilesIsDir(ctx context.Context, relPath string) (bool, error)
 	ReadDockerfile(ctx context.Context, relPath string) ([]byte, error)
 	IsDockerignoreExistAnywhere(ctx context.Context, relPath string) (bool, error)
 	ReadDockerignore(ctx context.Context, relPath string) ([]byte, error)

@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 
 	"github.com/werf/logboek"
-	"github.com/werf/logboek/pkg/types"
 )
 
 var DefaultWerfConfigTemplatesDirName = ".werf"
@@ -14,11 +13,7 @@ var DefaultWerfConfigTemplatesDirName = ".werf"
 func (r FileReader) ReadConfigTemplateFiles(ctx context.Context, customDirRelPath string, tmplFunc func(templatePathInsideDir string, data []byte, err error) error) (err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("ReadConfigTemplateFiles %q", customDirRelPath).
-		Options(func(options types.LogBlockOptionsInterface) {
-			if !debug() {
-				options.Mute()
-			}
-		}).
+		Options(applyDebugToLogboek).
 		Do(func() {
 			err = r.readConfigTemplateFiles(ctx, customDirRelPath, tmplFunc)
 

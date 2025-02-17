@@ -223,6 +223,19 @@ __Syntax__:
 
 ### project files
 
+#### .Files.Exists
+
+The function `.Files.Exists` checks existence of a file (regular/directory) in project and returns the result `true` or `false`.
+
+__Syntax__:
+{% raw %}
+```yaml
+{{ .Files.Exists "<FILE_PATH>" }}
+```
+{% endraw %}
+
+> By default, the use of files that have non-committed changes is not allowed by giterminism (read more about it [here]({{ "usage/project_configuration/giterminism.html" | true_relative_url }}))
+
 #### .Files.Get
 
 The function `.Files.Get` gets a certain project file content.
@@ -335,6 +348,19 @@ ansible:
 {{ end }}
 ```
 {% endraw %}
+
+#### .Files.IsDir
+
+The function `.Files.IsDir` checks path is a directory and returns `true` or `false`.
+
+__Syntax__:
+{% raw %}
+```yaml
+{{ .Files.IsDir "<PATH>" }}
+```
+{% endraw %}
+
+> By default, the use of files that have non-committed changes is not allowed by giterminism (read more about it [here]({{ "usage/project_configuration/giterminism.html" | true_relative_url }}))
 
 ### others
 

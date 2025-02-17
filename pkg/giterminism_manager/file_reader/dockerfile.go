@@ -6,17 +6,12 @@ import (
 	"path/filepath"
 
 	"github.com/werf/logboek"
-	"github.com/werf/logboek/pkg/types"
 )
 
 func (r FileReader) IsDockerignoreExistAnywhere(ctx context.Context, relPath string) (exist bool, err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("IsDockerignoreExistAnywhere %q", relPath).
-		Options(func(options types.LogBlockOptionsInterface) {
-			if !debug() {
-				options.Mute()
-			}
-		}).
+		Options(applyDebugToLogboek).
 		Do(func() {
 			exist, err = r.IsConfigurationFileExistAnywhere(ctx, relPath)
 
@@ -31,11 +26,7 @@ func (r FileReader) IsDockerignoreExistAnywhere(ctx context.Context, relPath str
 func (r FileReader) ReadDockerfile(ctx context.Context, relPath string) (data []byte, err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("ReadDockerfile %q", relPath).
-		Options(func(options types.LogBlockOptionsInterface) {
-			if !debug() {
-				options.Mute()
-			}
-		}).
+		Options(applyDebugToLogboek).
 		Do(func() {
 			data, err = r.readDockerfile(ctx, relPath)
 
@@ -52,17 +43,15 @@ func (r FileReader) ReadDockerfile(ctx context.Context, relPath string) (data []
 }
 
 func (r FileReader) readDockerfile(ctx context.Context, relPath string) ([]byte, error) {
-	return r.ReadAndCheckConfigurationFile(ctx, relPath, r.giterminismConfig.IsUncommittedDockerfileAccepted)
+	return r.ReadAndCheckConfigurationFile(ctx, relPath, r.giterminismConfig.IsUncommittedDockerfileAccepted, func(path string) (bool, error) {
+		return r.IsRegularFileExist(ctx, path)
+	})
 }
 
 func (r FileReader) ReadDockerignore(ctx context.Context, relPath string) (data []byte, err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("ReadDockerignore %q", relPath).
-		Options(func(options types.LogBlockOptionsInterface) {
-			if !debug() {
-				options.Mute()
-			}
-		}).
+		Options(applyDebugToLogboek).
 		Do(func() {
 			data, err = r.readDockerignore(ctx, relPath)
 
@@ -79,5 +68,7 @@ func (r FileReader) ReadDockerignore(ctx context.Context, relPath string) (data 
 }
 
 func (r FileReader) readDockerignore(ctx context.Context, relPath string) ([]byte, error) {
-	return r.ReadAndCheckConfigurationFile(ctx, relPath, r.giterminismConfig.IsUncommittedDockerignoreAccepted)
+	return r.ReadAndCheckConfigurationFile(ctx, relPath, r.giterminismConfig.IsUncommittedDockerignoreAccepted, func(path string) (bool, error) {
+		return r.IsRegularFileExist(ctx, path)
+	})
 }

@@ -8,7 +8,6 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
-	"github.com/werf/logboek/pkg/types"
 	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/path_matcher"
 )
@@ -41,11 +40,7 @@ func (r FileReader) ValidateFileByStatusResult(ctx context.Context, relPath stri
 func (r FileReader) ValidateStatusResult(ctx context.Context, pathMatcher path_matcher.PathMatcher) (err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("ValidateStatusResult %q", pathMatcher.String()).
-		Options(func(options types.LogBlockOptionsInterface) {
-			if !debug() {
-				options.Mute()
-			}
-		}).
+		Options(applyDebugToLogboek).
 		Do(func() {
 			err = r.validateStatusResult(ctx, pathMatcher)
 
@@ -93,11 +88,7 @@ func (r FileReader) HandleValidateStatusResultError(err error) error {
 func (r FileReader) StatusPathList(ctx context.Context, pathMatcher path_matcher.PathMatcher) (list []string, err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("StatusPathList %q", pathMatcher.String()).
-		Options(func(options types.LogBlockOptionsInterface) {
-			if !debug() {
-				options.Mute()
-			}
-		}).
+		Options(applyDebugToLogboek).
 		Do(func() {
 			list, err = r.statusPathList(ctx, pathMatcher)
 
@@ -150,11 +141,7 @@ func (r FileReader) ResolveAndCheckCommitFilePath(ctx context.Context, relPath s
 func (r FileReader) ListCommitFilesWithGlob(ctx context.Context, dir, pattern string) (files []string, err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("ListCommitFilesWithGlob %q %q", dir, pattern).
-		Options(func(options types.LogBlockOptionsInterface) {
-			if !debug() {
-				options.Mute()
-			}
-		}).
+		Options(applyDebugToLogboek).
 		Do(func() {
 			files, err = r.listCommitFilesWithGlob(ctx, dir, pattern)
 
@@ -194,11 +181,7 @@ func (r FileReader) ReadCommitFile(ctx context.Context, relPath string) ([]byte,
 func (r FileReader) CheckCommitFileExistenceAndLocalChanges(ctx context.Context, relPath string) (err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("CheckCommitFileExistenceAndLocalChanges %q", relPath).
-		Options(func(options types.LogBlockOptionsInterface) {
-			if !debug() {
-				options.Mute()
-			}
-		}).
+		Options(applyDebugToLogboek).
 		Do(func() {
 			err = r.checkCommitFileExistenceAndLocalChanges(ctx, relPath)
 
@@ -259,11 +242,7 @@ func (r FileReader) checkCommitFileExistenceAndLocalChanges(ctx context.Context,
 func (r FileReader) IsFileModifiedLocally(ctx context.Context, relPath string) (modified bool, err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("IsFileModifiedLocally %q", relPath).
-		Options(func(options types.LogBlockOptionsInterface) {
-			if !debug() {
-				options.Mute()
-			}
-		}).
+		Options(applyDebugToLogboek).
 		Do(func() {
 			modified, err = r.isFileModifiedLocally(ctx, relPath)
 

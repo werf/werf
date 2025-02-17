@@ -1,5 +1,7 @@
 package path_matcher
 
+//go:generate mockgen -source interface.go -package mock -destination ../../test/mock/path_matcher.go
+
 type PathMatcher interface {
 	// IsPathMatched checks for a complete matching of the path
 	IsPathMatched(string) bool

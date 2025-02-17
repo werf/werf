@@ -19,15 +19,6 @@ type (
 	}
 )
 
-func IsFileNotFoundInProjectDirectoryError(err error) bool {
-	switch err.(type) {
-	case FileNotFoundInProjectDirectoryError:
-		return true
-	default:
-		return false
-	}
-}
-
 func (r FileReader) NewFileNotFoundInProjectDirectoryError(relPath string) error {
 	return FileNotFoundInProjectDirectoryError{errors.NewError(fmt.Sprintf("the file %q not found in the project directory", filepath.ToSlash(relPath)))}
 }
