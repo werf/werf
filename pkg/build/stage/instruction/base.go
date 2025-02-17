@@ -103,6 +103,14 @@ func (stg *Base[T, BT]) ExpandInstruction(_ stage.Conveyor, env map[string]strin
 	return stg.instruction.Expand(env, dockerfile.ExpandOptions{})
 }
 
+func (stg *Base[T, BT]) addImageCacheVersionToDependencies(args []string) []string {
+	cacheVersion := stg.ImageCacheVersion()
+	if cacheVersion != "" {
+		args = append(args, "ImageCacheVersion", cacheVersion)
+	}
+	return args
+}
+
 type InstructionExpander interface {
 	ExpandInstruction(c stage.Conveyor, env map[string]string) error
 }

@@ -10,6 +10,7 @@ import (
 	"github.com/werf/werf/v2/pkg/build/stage"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/git_repo"
+	"github.com/werf/werf/v2/pkg/util/option"
 )
 
 func MapStapelConfigToImagesSets(ctx context.Context, metaConfig *config.Meta, stapelImageConfig config.StapelImageInterface, targetPlatform string, opts CommonImageOptions) (ImagesSets, error) {
@@ -18,9 +19,7 @@ func MapStapelConfigToImagesSets(ctx context.Context, metaConfig *config.Meta, s
 		return nil, err
 	}
 
-	var ret ImagesSets
-
-	ret = append(ret, []*Image{img})
+	ret := ImagesSets{[]*Image{img}}
 
 	return ret, nil
 }
@@ -64,12 +63,13 @@ func initStages(ctx context.Context, image *Image, metaConfig *config.Meta, stap
 	imageName := imageBaseConfig.Name
 
 	baseStageOptions := &stage.BaseStageOptions{
-		TargetPlatform:   image.TargetPlatform,
-		ImageName:        imageName,
-		ConfigMounts:     imageBaseConfig.Mount,
-		ImageTmpDir:      filepath.Join(opts.TmpDir, "image", imageBaseConfig.Name),
-		ContainerWerfDir: opts.ContainerWerfDir,
-		ProjectName:      opts.ProjectName,
+		TargetPlatform:    image.TargetPlatform,
+		ImageName:         imageName,
+		ImageCacheVersion: option.ValueOrDefault(stapelImageConfig.CacheVersion(), metaConfig.Build.CacheVersion),
+		ConfigMounts:      imageBaseConfig.Mount,
+		ImageTmpDir:       filepath.Join(opts.TmpDir, "image", imageBaseConfig.Name),
+		ContainerWerfDir:  opts.ContainerWerfDir,
+		ProjectName:       opts.ProjectName,
 	}
 
 	gitArchiveStageOptions := &stage.NewGitArchiveStageOptions{

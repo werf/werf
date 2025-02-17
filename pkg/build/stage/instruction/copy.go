@@ -63,5 +63,7 @@ func (stg *Copy) GetDependencies(ctx context.Context, c stage.Conveyor, cb conta
 
 	// TODO(staged-dockerfile): support --link option: https://docs.docker.com/engine/reference/builder/#copy---link
 
+	args = stg.addImageCacheVersionToDependencies(args)
+
 	return util.Sha256Hash(args...), nil
 }

@@ -25,6 +25,7 @@ func (stg *StopSignal) GetDependencies(ctx context.Context, c stage.Conveyor, cb
 	var args []string
 
 	args = append(args, "Signal", stg.instruction.Data.Signal)
+	args = stg.addImageCacheVersionToDependencies(args)
 
 	return util.Sha256Hash(args...), nil
 }

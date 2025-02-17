@@ -51,5 +51,7 @@ func (stg *Add) GetDependencies(ctx context.Context, c stage.Conveyor, cb contai
 	// TODO(staged-dockerfile): support --keep-git-dir for git: https://docs.docker.com/engine/reference/builder/#adding-a-git-repository-add-git-ref-dir
 	// TODO(staged-dockerfile): support --link
 
+	args = stg.addImageCacheVersionToDependencies(args)
+
 	return util.Sha256Hash(args...), nil
 }
