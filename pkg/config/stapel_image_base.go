@@ -25,9 +25,14 @@ type StapelImageBase struct {
 	Secrets          []Secret
 	ImageSpec        *ImageSpec
 
-	final    bool
-	platform []string
-	raw      *rawStapelImage
+	cacheVersion string
+	final        bool
+	platform     []string
+	raw          *rawStapelImage
+}
+
+func (c *StapelImageBase) CacheVersion() string {
+	return c.cacheVersion
 }
 
 func (c *StapelImageBase) GetName() string {

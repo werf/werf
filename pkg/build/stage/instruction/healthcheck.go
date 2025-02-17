@@ -30,6 +30,7 @@ func (stg *Healthcheck) GetDependencies(ctx context.Context, c stage.Conveyor, c
 	args = append(args, "Timeout", stg.instruction.Data.Health.Timeout.String())
 	args = append(args, "StartPeriod", stg.instruction.Data.Health.StartPeriod.String())
 	args = append(args, "Retries", fmt.Sprintf("%d", stg.instruction.Data.Health.Retries))
+	args = stg.addImageCacheVersionToDependencies(args)
 
 	return util.Sha256Hash(args...), nil
 }

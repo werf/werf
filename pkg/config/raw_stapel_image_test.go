@@ -23,6 +23,49 @@ var _ = Describe("rawStapelImage", func() {
 		giterminismManager = NewGiterminismManagerStub(localGitRepo)
 	})
 
+	DescribeTable("unmarshal and convert to directive succeed w/o Dependencies",
+		func(yamlMap map[string]interface{}, expectedImage *StapelImage) {
+			if len(yamlMap) == 0 {
+				Fail("yamlMap should not be empty")
+			}
+
+			rawYaml, err := yaml.Marshal(yamlMap)
+			Expect(err).To(Succeed())
+
+			doc := &doc{Content: rawYaml}
+			rawStapelImage := &rawStapelImage{doc: doc}
+
+			Expect(yaml.UnmarshalStrict(doc.Content, rawStapelImage)).To(Succeed())
+
+			stapelImage, err := rawStapelImage.toStapelImageDirective(giterminismManager, "image1")
+			Expect(err).To(Succeed())
+
+			stapelImage.StapelImageBase.raw = nil // set to nil for correct deep comparison
+			Expect(&stapelImage).To(Equal(&expectedImage))
+		},
+		Entry(
+			"simple case",
+			map[string]interface{}{
+				"image":        "image1",
+				"from":         "alpine:latest",
+				"cacheVersion": "docker-cache-version",
+			},
+			&StapelImage{
+				StapelImageBase: &StapelImageBase{
+					Name:    "image1",
+					From:    "alpine:latest",
+					Git:     &GitManager{},
+					Secrets: []Secret{},
+
+					cacheVersion: "docker-cache-version",
+					platform:     []string{},
+					final:        true,
+				},
+				Docker: nil,
+			},
+		),
+	)
+
 	DescribeTable("unmarshal and convert to directive succeed and produce expected Dependencies",
 		func(yamlMap map[string]interface{}, expected []*Dependency) {
 			switch {

@@ -25,6 +25,7 @@ func (stg *OnBuild) GetDependencies(ctx context.Context, c stage.Conveyor, cb co
 	var args []string
 
 	args = append(args, "Expression", stg.instruction.Data.Expression)
+	args = stg.addImageCacheVersionToDependencies(args)
 
 	return util.Sha256Hash(args...), nil
 }

@@ -30,9 +30,9 @@ func GenerateFromStage(imageBaseConfig *config.StapelImageBase, baseImageRepoId 
 	return newFromStage(fromImageOrArtifactImageName, baseImageRepoIdOrNone, imageBaseConfig.FromCacheVersion, baseStageOptions)
 }
 
-func newFromStage(fromImageOrArtifactImageName, baseImageRepoIdOrNone, cacheVersion string, baseStageOptions *BaseStageOptions) *FromStage {
+func newFromStage(fromImageOrArtifactImageName, baseImageRepoIdOrNone, fromCacheVersion string, baseStageOptions *BaseStageOptions) *FromStage {
 	s := &FromStage{}
-	s.cacheVersion = cacheVersion
+	s.fromCacheVersion = fromCacheVersion
 	s.fromImageOrArtifactImageName = fromImageOrArtifactImageName
 	s.baseImageRepoIdOrNone = baseImageRepoIdOrNone
 	s.BaseStage = NewBaseStage(From, baseStageOptions)
@@ -42,9 +42,9 @@ func newFromStage(fromImageOrArtifactImageName, baseImageRepoIdOrNone, cacheVers
 type FromStage struct {
 	*BaseStage
 
-	fromImageOrArtifactImageName string
 	baseImageRepoIdOrNone        string
-	cacheVersion                 string
+	fromCacheVersion             string
+	fromImageOrArtifactImageName string
 }
 
 func (s *FromStage) HasPrevStage() bool {
@@ -52,10 +52,14 @@ func (s *FromStage) HasPrevStage() bool {
 }
 
 func (s *FromStage) GetDependencies(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
-	var args []string
+	args := make([]string, 0, len(s.configMounts)+4)
 
-	if s.cacheVersion != "" {
-		args = append(args, s.cacheVersion)
+	if s.BaseStage.ImageCacheVersion() != "" {
+		args = append(args, s.BaseStage.ImageCacheVersion())
+	}
+
+	if s.fromCacheVersion != "" {
+		args = append(args, s.fromCacheVersion)
 	}
 
 	if s.baseImageRepoIdOrNone != "" {
