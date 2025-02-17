@@ -4,10 +4,10 @@ import (
 	"context"
 	"io/fs"
 
-	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/types"
+	"go.uber.org/mock/gomock"
 
 	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/giterminism_manager/file_reader"
@@ -28,7 +28,7 @@ var _ = Describe("Template file functions", func() {
 	)
 
 	BeforeEach(func() {
-		ctrl := gomock.NewController(t)
+		ctrl := gomock.NewController(t, gomock.WithOverridableExpectations())
 
 		sharedOptions = NewMocksharedOptions(ctrl)
 		giterminismConfig = NewMockgiterminismConfig(ctrl)
@@ -43,7 +43,7 @@ var _ = Describe("Template file functions", func() {
 	})
 
 	DescribeTable("ConfigGoTemplateFilesExists",
-		func(setupMock MockFunc, conf TestConfTemplateFileFunc, expectation TestExpectationTemplateFileFunc) {
+		func(setupMock MockFunc, expectation TestExpectationTemplateFileFunc) {
 			ctx := context.Background()
 
 			commit := "git head commit"
@@ -53,9 +53,9 @@ var _ = Describe("Template file functions", func() {
 
 			sharedOptions.EXPECT().ProjectDir().Return(t.TempDir()).AnyTimes()
 			sharedOptions.EXPECT().RelativeToGitProjectDir().Return(t.TempDir()).AnyTimes()
-			sharedOptions.EXPECT().Dev().Return(conf.SharedOptionsDev).AnyTimes()
+			sharedOptions.EXPECT().Dev().Return(false).AnyTimes()
 			sharedOptions.EXPECT().HeadCommit().Return(commit).AnyTimes()
-			sharedOptions.EXPECT().LooseGiterminism().Return(conf.SharedOptionsLooseGiterminism).AnyTimes()
+			sharedOptions.EXPECT().LooseGiterminism().Return(false).AnyTimes()
 
 			giterminismConfig.EXPECT().UncommittedConfigGoTemplateRenderingFilePathMatcher().Return(pathMatcher)
 
@@ -72,7 +72,6 @@ var _ = Describe("Template file functions", func() {
 
 				gitRepo.EXPECT().ValidateStatusResult(ctx, gomock.Any()).Return(git_repo.UntrackedFilesFoundError{PathList: []string{"foo.txt"}})
 			},
-			TestConfTemplateFileFunc{},
 			TestExpectationTemplateFileFunc{
 				OkMatcher:  BeFalse(),
 				ErrMatcher: BeNil(),
@@ -84,7 +83,6 @@ var _ = Describe("Template file functions", func() {
 
 				gitRepo.EXPECT().ValidateStatusResult(ctx, gomock.Any()).Return(git_repo.UncommittedFilesFoundError{PathList: []string{"foo.txt"}})
 			},
-			TestConfTemplateFileFunc{},
 			TestExpectationTemplateFileFunc{
 				OkMatcher:  BeFalse(),
 				ErrMatcher: BeNil(),
@@ -103,7 +101,6 @@ var _ = Describe("Template file functions", func() {
 				fileInfo.EXPECT().Mode().Return(fs.ModePerm)
 				fileSystemLayer.EXPECT().FileExists(gomock.Any()).Return(true, nil)
 			},
-			TestConfTemplateFileFunc{},
 			TestExpectationTemplateFileFunc{
 				OkMatcher:  BeTrue(),
 				ErrMatcher: BeNil(),
@@ -111,12 +108,11 @@ var _ = Describe("Template file functions", func() {
 		),
 		Entry("should return true if uncommitted file exists in the Git repository and --loose-giterminism enabled for that file",
 			func(ctx context.Context, relPath string) {
+				sharedOptions.EXPECT().LooseGiterminism().Return(true).AnyTimes() // override
+
 				fileSystemLayer.EXPECT().Lstat(gomock.Any()).Return(fileInfo, nil).Times(2)
 				fileInfo.EXPECT().Mode().Return(fs.ModePerm).Times(2)
 				fileSystemLayer.EXPECT().FileExists(gomock.Any()).Return(true, nil).Times(2)
-			},
-			TestConfTemplateFileFunc{
-				SharedOptionsLooseGiterminism: true,
 			},
 			TestExpectationTemplateFileFunc{
 				OkMatcher:  BeTrue(),
@@ -125,6 +121,8 @@ var _ = Describe("Template file functions", func() {
 		),
 		Entry("should return true if the uncommitted file exists in the Git repository and --dev",
 			func(ctx context.Context, relPath string) {
+				sharedOptions.EXPECT().Dev().Return(true).AnyTimes() // override
+
 				pathMatcher.EXPECT().IsPathMatched(relPath).Return(false)
 
 				gitRepo.EXPECT().IsCommitTreeEntryExist(ctx, gomock.Any(), gomock.Any()).Return(true, nil)
@@ -134,9 +132,6 @@ var _ = Describe("Template file functions", func() {
 				fileInfo.EXPECT().Mode().Return(fs.ModePerm)
 				fileSystemLayer.EXPECT().FileExists(gomock.Any()).Return(true, nil)
 			},
-			TestConfTemplateFileFunc{
-				SharedOptionsDev: true,
-			},
 			TestExpectationTemplateFileFunc{
 				OkMatcher:  BeTrue(),
 				ErrMatcher: BeNil(),
@@ -145,7 +140,7 @@ var _ = Describe("Template file functions", func() {
 	)
 
 	DescribeTable("ConfigGoTemplateFilesIsDir",
-		func(setupMock MockFunc, conf TestConfTemplateFileFunc, expectation TestExpectationTemplateFileFunc) {
+		func(setupMock MockFunc, expectation TestExpectationTemplateFileFunc) {
 			ctx := context.Background()
 
 			commit := "git head commit"
@@ -155,9 +150,9 @@ var _ = Describe("Template file functions", func() {
 
 			sharedOptions.EXPECT().ProjectDir().Return(t.TempDir()).AnyTimes()
 			sharedOptions.EXPECT().RelativeToGitProjectDir().Return(t.TempDir()).AnyTimes()
-			sharedOptions.EXPECT().Dev().Return(conf.SharedOptionsDev).AnyTimes()
+			sharedOptions.EXPECT().Dev().Return(false).AnyTimes()
 			sharedOptions.EXPECT().HeadCommit().Return(commit).AnyTimes()
-			sharedOptions.EXPECT().LooseGiterminism().Return(conf.SharedOptionsLooseGiterminism).AnyTimes()
+			sharedOptions.EXPECT().LooseGiterminism().Return(false).AnyTimes()
 
 			giterminismConfig.EXPECT().UncommittedConfigGoTemplateRenderingFilePathMatcher().Return(pathMatcher)
 
@@ -174,7 +169,6 @@ var _ = Describe("Template file functions", func() {
 
 				gitRepo.EXPECT().ValidateStatusResult(ctx, gomock.Any()).Return(git_repo.UntrackedFilesFoundError{PathList: []string{"foo.txt"}})
 			},
-			TestConfTemplateFileFunc{},
 			TestExpectationTemplateFileFunc{
 				OkMatcher:  BeFalse(),
 				ErrMatcher: BeNil(),
@@ -186,7 +180,6 @@ var _ = Describe("Template file functions", func() {
 
 				gitRepo.EXPECT().ValidateStatusResult(ctx, gomock.Any()).Return(git_repo.UncommittedFilesFoundError{PathList: []string{"foo.txt"}})
 			},
-			TestConfTemplateFileFunc{},
 			TestExpectationTemplateFileFunc{
 				OkMatcher:  BeFalse(),
 				ErrMatcher: BeNil(),
@@ -204,7 +197,6 @@ var _ = Describe("Template file functions", func() {
 				fileInfo.EXPECT().Mode().Return(fs.ModePerm)
 				fileSystemLayer.EXPECT().DirExists(gomock.Any()).Return(false, nil)
 			},
-			TestConfTemplateFileFunc{},
 			TestExpectationTemplateFileFunc{
 				OkMatcher:  BeFalse(),
 				ErrMatcher: BeNil(),
@@ -212,12 +204,11 @@ var _ = Describe("Template file functions", func() {
 		),
 		Entry("should return true if uncommitted dir exists in the Git repository and --loose-giterminism enabled for that dir",
 			func(ctx context.Context, relPath string) {
+				sharedOptions.EXPECT().LooseGiterminism().Return(true).AnyTimes() // override
+
 				fileSystemLayer.EXPECT().Lstat(gomock.Any()).Return(fileInfo, nil).Times(2)
 				fileInfo.EXPECT().Mode().Return(fs.ModePerm).Times(2)
 				fileSystemLayer.EXPECT().DirExists(gomock.Any()).Return(true, nil).Times(2)
-			},
-			TestConfTemplateFileFunc{
-				SharedOptionsLooseGiterminism: true,
 			},
 			TestExpectationTemplateFileFunc{
 				OkMatcher:  BeTrue(),
@@ -226,6 +217,8 @@ var _ = Describe("Template file functions", func() {
 		),
 		Entry("should return true if the uncommitted dir exists in the Git repository and --dev",
 			func(ctx context.Context, relPath string) {
+				sharedOptions.EXPECT().Dev().Return(true).AnyTimes() // override
+
 				pathMatcher.EXPECT().IsPathMatched(relPath).Return(false)
 
 				gitRepo.EXPECT().IsCommitTreeEntryExist(ctx, gomock.Any(), gomock.Any()).Return(true, nil)
@@ -235,9 +228,6 @@ var _ = Describe("Template file functions", func() {
 				fileInfo.EXPECT().Mode().Return(fs.ModePerm)
 				fileSystemLayer.EXPECT().DirExists(gomock.Any()).Return(true, nil)
 			},
-			TestConfTemplateFileFunc{
-				SharedOptionsDev: true,
-			},
 			TestExpectationTemplateFileFunc{
 				OkMatcher:  BeTrue(),
 				ErrMatcher: BeNil(),
@@ -245,13 +235,6 @@ var _ = Describe("Template file functions", func() {
 		),
 	)
 })
-
-type TestConfTemplateFileFunc struct {
-	SharedOptionsDev              bool
-	SharedOptionsLooseGiterminism bool
-
-	PathMatcherIsPathMatched bool
-}
 
 type TestExpectationTemplateFileFunc struct {
 	OkMatcher  types.GomegaMatcher
