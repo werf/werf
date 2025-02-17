@@ -4,12 +4,14 @@ import (
 	"fmt"
 
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
+	"github.com/werf/werf/v2/pkg/util/option"
 )
 
 type rawImageFromDockerfile struct {
 	Images          []string               `yaml:"-"`
 	Final           *bool                  `yaml:"final,omitempty"`
 	Dockerfile      string                 `yaml:"dockerfile,omitempty"`
+	CacheVersion    string                 `yaml:"cacheVersion,omitempty"`
 	Context         string                 `yaml:"context,omitempty"`
 	ContextAddFile  interface{}            `yaml:"contextAddFile,omitempty"`
 	ContextAddFiles interface{}            `yaml:"contextAddFiles,omitempty"`
@@ -92,14 +94,8 @@ func (c *rawImageFromDockerfile) toImageFromDockerfileDirective(giterminismManag
 	image.Dockerfile = c.Dockerfile
 	image.Context = c.Context
 
-	// Set final.
-	{
-		final := true
-		if c.Final != nil {
-			final = *c.Final
-		}
-		image.final = final
-	}
+	image.cacheVersion = c.CacheVersion
+	image.final = option.PtrValueOrDefault(c.Final, true)
 
 	contextAddFile, err := InterfaceToStringArray(c.ContextAddFile, nil, c.doc)
 	if err != nil {

@@ -23,6 +23,11 @@ sections:
         collapsible: true
         isCollapsedByDefault: false
         directives:
+          - name: cacheVersion
+            description:
+              en: A static parameter used when forming tags for all image configurations. Helps to invalidate the cache.
+              ru: Статический параметр используемый при формировании тегов для всех конфигураций образов. Помогает инвалидировать кеш.
+            value: "string"
           - name: platform
             description:
               en: Common list of target platforms for all images (for example ['linux/amd64', 'linux/arm64', 'linux/arm/v8'])
@@ -268,6 +273,12 @@ sections:
         description:
           en: "Enable layer-by-layer caching of Dockerfile instructions in container registry"
           ru: "Включить послойное кеширование Dockerfile-инструкций в container registry"
+      - &image-section-cache-version
+        name: cacheVersion
+        description:
+          en: A static parameter used when forming tags for all image configurations. Helps to invalidate the cache. Overrides the global build.cacheVersion.
+          ru: Статический параметр используемый при формировании тегов для всех конфигураций образов. Помогает инвалидировать кеш. Переопределяет глобальный build.cacheVersion.
+          value: "string"
       - name: context
         value: "string"
         description:
@@ -505,6 +516,7 @@ sections:
         detailsArticle:
           all: "/usage/build/stapel/imports.html"
       - << : *dockerfile-image-section-final
+      - << : *image-section-cache-version
       - name: platform
         description:
           en: List of target platforms for this image (for example ['linux/amd64', 'linux/arm64', 'linux/arm/v8'])

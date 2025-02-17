@@ -86,4 +86,26 @@ var _ = DescribeTable("CMD digest",
 			},
 		},
 	)),
+
+	Entry("CMD with cacheVersion", NewTestData(
+		NewCmd(
+			dockerfile.NewDockerfileStageInstruction(
+				&instructions.CmdCommand{},
+				dockerfile.DockerfileStageInstructionOptions{},
+			),
+			nil, false,
+			&stage.BaseStageOptions{
+				ImageName:         "example-image",
+				ImageCacheVersion: "test-cache-version",
+				ProjectName:       "example-project",
+			},
+		),
+		"c26a996c7ceedf4b745d5ca879139d0153498c78462f84529c37ff288d295c6f",
+		TestDataOptions{
+			Files: []*FileData{
+				{Name: "src/main/java/worker/Worker.java", Data: []byte(`package worker2;`)},
+				{Name: "src/Worker/Program.cs", Data: []byte(`namespace Worker2 {}`)},
+			},
+		},
+	)),
 )

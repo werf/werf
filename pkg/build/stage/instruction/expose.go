@@ -25,6 +25,7 @@ func (stg *Expose) GetDependencies(ctx context.Context, c stage.Conveyor, cb con
 	var args []string
 
 	args = append(args, append([]string{"Ports"}, stg.instruction.Data.Ports...)...)
+	args = stg.addImageCacheVersionToDependencies(args)
 
 	return util.Sha256Hash(args...), nil
 }

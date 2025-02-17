@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
@@ -385,7 +386,12 @@ func (s *FullDockerfileStage) GetDependencies(ctx context.Context, c Conveyor, _
 		logboek.Context(ctx).LogLn(dockerfileStageDependencies)
 	}
 
-	return util.Sha256Hash(dockerfileStageDependencies...), nil
+	dependencies := slices.Grow(dockerfileStageDependencies, 1)
+	if s.BaseStage.ImageCacheVersion() != "" {
+		dependencies = append(dependencies, s.BaseStage.ImageCacheVersion())
+	}
+
+	return util.Sha256Hash(dependencies...), nil
 }
 
 func (s *FullDockerfileStage) HasPrevStage() bool {

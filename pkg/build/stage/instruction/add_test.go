@@ -196,4 +196,27 @@ var _ = DescribeTable("ADD digest",
 			},
 		},
 	)),
+
+	Entry("ADD with cacheVersion", NewTestData(
+		NewAdd(
+			dockerfile.NewDockerfileStageInstruction(
+				&instructions.AddCommand{},
+				dockerfile.DockerfileStageInstructionOptions{},
+			),
+			nil, false,
+			&stage.BaseStageOptions{
+				ImageName:         "example-image",
+				ImageCacheVersion: "test-cache-version",
+				ProjectName:       "example-project",
+			},
+		),
+		"3bfe2357beec3ade3bddc1a33df57fd77dcc7752d79bd599b6bbbdc92cb2c997",
+		TestDataOptions{
+			Files: []*FileData{
+				{Name: "src/main/java/worker/Worker.java", Data: []byte(`package worker2;`)},
+				{Name: "src/Worker/Program.cs", Data: []byte(`namespace Worker2 {}`)},
+				{Name: "pom.xml", Data: []byte(`<?xml version="1.0" encoding="UTF-8"?>`)},
+			},
+		},
+	)),
 )

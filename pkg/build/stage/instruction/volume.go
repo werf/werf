@@ -25,6 +25,7 @@ func (stg *Volume) GetDependencies(ctx context.Context, c stage.Conveyor, cb con
 	var args []string
 
 	args = append(args, append([]string{"Volumes"}, stg.instruction.Data.Volumes...)...)
+	args = stg.addImageCacheVersionToDependencies(args)
 
 	return util.Sha256Hash(args...), nil
 }
