@@ -25,7 +25,6 @@ func (stg *Maintainer) GetDependencies(ctx context.Context, c stage.Conveyor, cb
 	var args []string
 
 	args = append(args, "Maintainer", stg.instruction.Data.Maintainer)
-	args = stg.addImageCacheVersionToDependencies(args)
 
 	return util.Sha256Hash(args...), nil
 }

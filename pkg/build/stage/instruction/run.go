@@ -90,8 +90,6 @@ func (stg *Run) GetDependencies(ctx context.Context, c stage.Conveyor, cb contai
 		}
 	}
 
-	args = stg.addImageCacheVersionToDependencies(args)
-
 	return util.Sha256Hash(args...), nil
 }
 
