@@ -10,7 +10,7 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/werf/common-go/pkg/lock"
+	lock "github.com/werf/common-go/pkg/lock"
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/style"
@@ -67,8 +67,6 @@ type StorageManagerInterface interface {
 	EnableParallel(parallelTasksLimit int)
 	MaxNumberOfWorkers() int
 	GenerateStageDescCreationTs(digest string, stageDescSet image.StageDescSet) (string, int64)
-
-	GetImageInfo(ctx context.Context, ref string, opts StorageOptions) (*image.Info, error)
 
 	LockStageImage(ctx context.Context, imageName string) error
 	GetStageDescSetByDigest(ctx context.Context, stageName, stageDigest string, parentStageCreationTs int64) (image.StageDescSet, error)
@@ -358,34 +356,15 @@ func (m *StorageManager) ForEachDeleteStage(ctx context.Context, options ForEach
 	})
 }
 
-func (m *StorageManager) GetImageInfo(ctx context.Context, ref string, opts StorageOptions) (*image.Info, error) {
-	info, err := m.getImageInfoFromContainerBackend(ctx, ref, opts.ContainerBackend)
-	if err != nil {
-		return nil, err
-	}
-	if info != nil {
-		return info, err
-	}
-	return m.getImageInfoFromRegistry(ctx, ref, opts.DockerRegistry)
-}
-
-func (m *StorageManager) getImageInfoFromContainerBackend(ctx context.Context, ref string, containerBackend container_backend.ContainerBackend) (*image.Info, error) {
-	return containerBackend.GetImageInfo(ctx, ref, container_backend.GetImageInfoOpts{})
-}
-
-func (m *StorageManager) getImageInfoFromRegistry(ctx context.Context, ref string, dockerRegistry docker_registry.GenericApiInterface) (*image.Info, error) {
-	return dockerRegistry.GetRepoImage(ctx, ref)
-}
-
 func (m *StorageManager) LockStageImage(ctx context.Context, imageName string) error {
 	imageLockName := container_backend.ImageLockName(imageName)
 
-	_, lock, err := chart.AcquireHostLock(ctx, imageLockName, lockgate.AcquireOptions{Shared: true})
+	_, l, err := lock.AcquireHostLock(ctx, imageLockName, lockgate.AcquireOptions{Shared: true})
 	if err != nil {
 		return fmt.Errorf("error locking %q shared lock: %w", imageLockName, err)
 	}
 
-	m.SharedHostImagesLocks = append(m.SharedHostImagesLocks, lock)
+	m.SharedHostImagesLocks = append(m.SharedHostImagesLocks, l)
 
 	return nil
 }
