@@ -279,7 +279,7 @@ func (i *Image) SetupBaseImage(ctx context.Context, storageManager manager.Stora
 							return err
 						}
 
-						info, err = storageManager.GetImageInfo(ctx, i.baseImageReference, storageOpts)
+						info, err = i.ContainerBackend.GetImageInfo(ctx, i.baseImageReference, container_backend.GetImageInfoOpts{})
 						if err != nil {
 							return fmt.Errorf("unable to get base image %q manifest: %w", i.baseImageReference, err)
 						}
