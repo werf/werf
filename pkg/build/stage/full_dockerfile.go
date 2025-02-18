@@ -35,23 +35,25 @@ func IsErrInvalidBaseImage(err error) bool {
 	return err != nil && errors.Is(err, ErrInvalidBaseImage)
 }
 
-func GenerateFullDockerfileStage(dockerRunArgs *DockerRunArgs, dockerStages *DockerStages, contextChecksum *ContextChecksum, baseStageOptions *BaseStageOptions, dependencies []*config.Dependency) *FullDockerfileStage {
-	return newFullDockerfileStage(dockerRunArgs, dockerStages, contextChecksum, baseStageOptions, dependencies)
+func GenerateFullDockerfileStage(dockerRunArgs *DockerRunArgs, dockerStages *DockerStages, contextChecksum *ContextChecksum, baseStageOptions *BaseStageOptions, dependencies []*config.Dependency, imageCacheVersion string) *FullDockerfileStage {
+	return newFullDockerfileStage(dockerRunArgs, dockerStages, contextChecksum, baseStageOptions, dependencies, imageCacheVersion)
 }
 
-func newFullDockerfileStage(dockerRunArgs *DockerRunArgs, dockerStages *DockerStages, contextChecksum *ContextChecksum, baseStageOptions *BaseStageOptions, dependencies []*config.Dependency) *FullDockerfileStage {
+func newFullDockerfileStage(dockerRunArgs *DockerRunArgs, dockerStages *DockerStages, contextChecksum *ContextChecksum, baseStageOptions *BaseStageOptions, dependencies []*config.Dependency, imageCacheVersion string) *FullDockerfileStage {
 	s := &FullDockerfileStage{}
 	s.DockerRunArgs = dockerRunArgs
 	s.DockerStages = dockerStages
 	s.ContextChecksum = contextChecksum
 	s.BaseStage = NewBaseStage(Dockerfile, baseStageOptions)
 	s.dependencies = dependencies
+	s.imageCacheVersion = imageCacheVersion
 
 	return s
 }
 
 type FullDockerfileStage struct {
-	dependencies []*config.Dependency
+	dependencies      []*config.Dependency
+	imageCacheVersion string
 
 	*DockerRunArgs
 	*DockerStages
@@ -387,8 +389,8 @@ func (s *FullDockerfileStage) GetDependencies(ctx context.Context, c Conveyor, _
 	}
 
 	dependencies := slices.Grow(dockerfileStageDependencies, 1)
-	if s.BaseStage.ImageCacheVersion() != "" {
-		dependencies = append(dependencies, s.BaseStage.ImageCacheVersion())
+	if s.imageCacheVersion != "" {
+		dependencies = append(dependencies, s.imageCacheVersion)
 	}
 
 	return util.Sha256Hash(dependencies...), nil

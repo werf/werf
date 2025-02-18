@@ -63,13 +63,12 @@ func initStages(ctx context.Context, image *Image, metaConfig *config.Meta, stap
 	imageName := imageBaseConfig.Name
 
 	baseStageOptions := &stage.BaseStageOptions{
-		TargetPlatform:    image.TargetPlatform,
-		ImageName:         imageName,
-		ImageCacheVersion: option.ValueOrDefault(stapelImageConfig.CacheVersion(), metaConfig.Build.CacheVersion),
-		ConfigMounts:      imageBaseConfig.Mount,
-		ImageTmpDir:       filepath.Join(opts.TmpDir, "image", imageBaseConfig.Name),
-		ContainerWerfDir:  opts.ContainerWerfDir,
-		ProjectName:       opts.ProjectName,
+		TargetPlatform:   image.TargetPlatform,
+		ImageName:        imageName,
+		ConfigMounts:     imageBaseConfig.Mount,
+		ImageTmpDir:      filepath.Join(opts.TmpDir, "image", imageBaseConfig.Name),
+		ContainerWerfDir: opts.ContainerWerfDir,
+		ProjectName:      opts.ProjectName,
 	}
 
 	gitArchiveStageOptions := &stage.NewGitArchiveStageOptions{
@@ -92,7 +91,9 @@ func initStages(ctx context.Context, image *Image, metaConfig *config.Meta, stap
 
 	gitMappingsExist := len(gitMappings) != 0
 
-	stages = appendIfExist(ctx, stages, stage.GenerateFromStage(imageBaseConfig, image.baseImageRepoId, baseStageOptions))
+	imageCacheVersion := option.ValueOrDefault(stapelImageConfig.CacheVersion(), metaConfig.Build.CacheVersion)
+
+	stages = appendIfExist(ctx, stages, stage.GenerateFromStage(imageBaseConfig, image.baseImageRepoId, imageCacheVersion, baseStageOptions))
 	stages = appendIfExist(ctx, stages, stage.GenerateBeforeInstallStage(ctx, imageBaseConfig, baseStageOptions))
 	stages = appendIfExist(ctx, stages, stage.GenerateDependenciesBeforeInstallStage(imageBaseConfig, baseStageOptions))
 

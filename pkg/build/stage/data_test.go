@@ -11,8 +11,9 @@ import (
 )
 
 type TestDependencies struct {
-	Dependencies   []*TestDependency
-	ExpectedDigest string
+	Dependencies      []*TestDependency
+	ImageCacheVersion string
+	ExpectedDigest    string
 }
 
 type TestDependency struct {

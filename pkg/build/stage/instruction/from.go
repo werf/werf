@@ -15,9 +15,11 @@ type From struct {
 
 	BaseImageReference  string
 	BaseImageRepoDigest string
+
+	imageCacheVersion string
 }
 
-func NewFrom(baseImageReference, baseImageRepoDigest string, opts *stage.BaseStageOptions) *From {
+func NewFrom(baseImageReference, baseImageRepoDigest, imageCacheVersion string, opts *stage.BaseStageOptions) *From {
 	return &From{
 		BaseImageReference:  baseImageReference,
 		BaseImageRepoDigest: baseImageRepoDigest,
@@ -25,6 +27,7 @@ func NewFrom(baseImageReference, baseImageRepoDigest string, opts *stage.BaseSta
 			stage.StageName("FROM"),
 			opts,
 		),
+		imageCacheVersion: imageCacheVersion,
 	}
 }
 
@@ -66,9 +69,8 @@ func (s *From) GetDependencies(ctx context.Context, c stage.Conveyor, cb contain
 	if s.BaseImageRepoDigest != "" {
 		args = append(args, "BaseImageRepoDigest", s.BaseImageRepoDigest)
 	}
-	cacheVersion := s.ImageCacheVersion()
-	if cacheVersion != "" {
-		args = append(args, "ImageCacheVersion", cacheVersion)
+	if s.imageCacheVersion != "" {
+		args = append(args, "ImageCacheVersion", s.imageCacheVersion)
 	}
 	return util.Sha256Hash(args...), nil
 }

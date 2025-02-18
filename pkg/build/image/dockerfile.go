@@ -154,12 +154,11 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 		}
 
 		commonBaseStageOptions := &stage.BaseStageOptions{
-			TargetPlatform:    img.TargetPlatform,
-			ImageName:         img.Name,
-			ImageCacheVersion: option.ValueOrDefault(dockerfileImageConfig.CacheVersion(), metaConfig.Build.CacheVersion),
-			ImageTmpDir:       img.TmpDir,
-			ContainerWerfDir:  img.ContainerWerfDir,
-			ProjectName:       opts.ProjectName,
+			TargetPlatform:   img.TargetPlatform,
+			ImageName:        img.Name,
+			ImageTmpDir:      img.TmpDir,
+			ContainerWerfDir: img.ContainerWerfDir,
+			ProjectName:      opts.ProjectName,
 		}
 
 		var instrNum int
@@ -167,10 +166,11 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 		if werf.GetStagedDockerfileVersion() == werf.StagedDockerfileV2 {
 			baseStageOptions := *commonBaseStageOptions
 			baseStageOptions.LogName = "FROM1"
-			img.stages = append(img.stages, stage_instruction.NewFrom(
-				img.GetBaseImageReference(), img.GetBaseImageRepoDigest(),
-				&baseStageOptions,
-			))
+
+			imageCacheVersion := option.ValueOrDefault(dockerfileImageConfig.CacheVersion(), metaConfig.Build.CacheVersion)
+			fromStage := stage_instruction.NewFrom(img.GetBaseImageReference(), img.GetBaseImageRepoDigest(), imageCacheVersion, &baseStageOptions)
+
+			img.stages = append(img.stages, fromStage)
 			instrNum = 1
 		} else {
 			instrNum = 0
@@ -315,30 +315,25 @@ func mapLegacyDockerfileToImage(ctx context.Context, metaConfig *config.Meta, do
 	)
 
 	baseStageOptions := &stage.BaseStageOptions{
-		TargetPlatform:    targetPlatform,
-		ImageName:         dockerfileImageConfig.Name,
-		ImageCacheVersion: option.ValueOrDefault(dockerfileImageConfig.CacheVersion(), metaConfig.Build.CacheVersion),
-		ProjectName:       opts.ProjectName,
+		TargetPlatform: targetPlatform,
+		ImageName:      dockerfileImageConfig.Name,
+		ProjectName:    opts.ProjectName,
 	}
 
-	dockerfileStage := stage.GenerateFullDockerfileStage(
-		stage.NewDockerRunArgs(
-			dockerfileData,
-			dockerfileImageConfig.Dockerfile,
-			dockerfileImageConfig.Target,
-			dockerfileImageConfig.Context,
-			dockerfileImageConfig.ContextAddFiles,
-			dockerfileImageConfig.Args,
-			dockerfileImageConfig.AddHost,
-			dockerfileImageConfig.Network,
-			dockerfileImageConfig.SSH,
-			dockerfileImageConfig.Secrets,
-		),
-		ds,
-		stage.NewContextChecksum(dockerIgnorePathMatcher),
-		baseStageOptions,
-		dockerfileImageConfig.Dependencies,
-	)
+	imageCacheVersion := option.ValueOrDefault(dockerfileImageConfig.CacheVersion(), metaConfig.Build.CacheVersion)
+
+	dockerfileStage := stage.GenerateFullDockerfileStage(stage.NewDockerRunArgs(
+		dockerfileData,
+		dockerfileImageConfig.Dockerfile,
+		dockerfileImageConfig.Target,
+		dockerfileImageConfig.Context,
+		dockerfileImageConfig.ContextAddFiles,
+		dockerfileImageConfig.Args,
+		dockerfileImageConfig.AddHost,
+		dockerfileImageConfig.Network,
+		dockerfileImageConfig.SSH,
+		dockerfileImageConfig.Secrets,
+	), ds, stage.NewContextChecksum(dockerIgnorePathMatcher), baseStageOptions, dockerfileImageConfig.Dependencies, imageCacheVersion)
 
 	img.stages = append(img.stages, dockerfileStage)
 

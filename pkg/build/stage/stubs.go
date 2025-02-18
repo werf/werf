@@ -96,6 +96,10 @@ func (c *ConveyorStub) GetImageDigestForLastImageStage(targetPlatform, imageName
 	return c.lastStageImageDigestByImageName[imageName]
 }
 
+func (c *ConveyorStub) GetImageContentDigest(targetPlatform, imageName string) string {
+	return c.lastStageImageDigestByImageName[imageName]
+}
+
 func (c *ConveyorStub) GiterminismManager() giterminism_manager.Interface {
 	return c.giterminismManager
 }
