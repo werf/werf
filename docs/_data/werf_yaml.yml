@@ -25,8 +25,8 @@ sections:
         directives:
           - name: cacheVersion
             description:
-              en: A static parameter used when forming tags for all image configurations. Helps to invalidate the cache.
-              ru: Статический параметр используемый при формировании тегов для всех конфигураций образов. Помогает инвалидировать кеш.
+              en: A static parameter used when forming tags for all image configurations.
+              ru: Статический параметр используемый при формировании тегов для всех конфигураций образов.
             value: "string"
           - name: platform
             description:
@@ -276,8 +276,8 @@ sections:
       - &image-section-cache-version
         name: cacheVersion
         description:
-          en: A static parameter used when forming tags for all image configurations. Helps to invalidate the cache. Overrides the global build.cacheVersion.
-          ru: Статический параметр используемый при формировании тегов для всех конфигураций образов. Помогает инвалидировать кеш. Переопределяет глобальный build.cacheVersion.
+          en: A static parameter used when forming tags for all image configurations. Overrides the global build.cacheVersion.
+          ru: Статический параметр используемый при формировании тегов для всех конфигураций образов. Переопределяет глобальный build.cacheVersion.
           value: "string"
       - name: context
         value: "string"
