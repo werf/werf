@@ -92,7 +92,6 @@ func NewBaseStage(name StageName, options *BaseStageOptions) *BaseStage {
 	s.logName = options.LogName
 	s.targetPlatform = options.TargetPlatform
 	s.imageName = options.ImageName
-	s.imageCacheVersion = options.ImageCacheVersion
 	s.configMounts = options.ConfigMounts
 	s.imageTmpDir = options.ImageTmpDir
 	s.containerWerfDir = options.ContainerWerfDir
@@ -101,19 +100,18 @@ func NewBaseStage(name StageName, options *BaseStageOptions) *BaseStage {
 }
 
 type BaseStage struct {
-	name              StageName
-	logName           string
-	targetPlatform    string
-	imageName         string
-	imageCacheVersion string
-	digest            string
-	contentDigest     string
-	stageImage        *StageImage
-	gitMappings       []*GitMapping
-	imageTmpDir       string
-	containerWerfDir  string
-	configMounts      []*config.Mount
-	projectName       string
+	name             StageName
+	logName          string
+	targetPlatform   string
+	imageName        string
+	digest           string
+	contentDigest    string
+	stageImage       *StageImage
+	gitMappings      []*GitMapping
+	imageTmpDir      string
+	containerWerfDir string
+	configMounts     []*config.Mount
+	projectName      string
 }
 
 func (s *BaseStage) IsBuildable() bool {
@@ -147,10 +145,6 @@ func (s *BaseStage) TargetPlatform() string {
 
 func (s *BaseStage) ImageName() string {
 	return s.imageName
-}
-
-func (s *BaseStage) ImageCacheVersion() string {
-	return s.imageCacheVersion
 }
 
 func (s *BaseStage) LogName() string {
