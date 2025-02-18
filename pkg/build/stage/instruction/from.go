@@ -66,5 +66,9 @@ func (s *From) GetDependencies(ctx context.Context, c stage.Conveyor, cb contain
 	if s.BaseImageRepoDigest != "" {
 		args = append(args, "BaseImageRepoDigest", s.BaseImageRepoDigest)
 	}
+	cacheVersion := s.ImageCacheVersion()
+	if cacheVersion != "" {
+		args = append(args, "ImageCacheVersion", cacheVersion)
+	}
 	return util.Sha256Hash(args...), nil
 }

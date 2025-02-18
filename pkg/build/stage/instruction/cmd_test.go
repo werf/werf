@@ -1,13 +1,15 @@
-package instruction
+package instruction_test
 
 import (
 	"context"
 	"fmt"
 
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	"github.com/werf/werf/v2/pkg/build/stage"
+	"github.com/werf/werf/v2/pkg/build/stage/instruction"
 	"github.com/werf/werf/v2/pkg/dockerfile"
 )
 
@@ -25,7 +27,7 @@ var _ = DescribeTable("CMD digest",
 	},
 
 	Entry("CMD basic", NewTestData(
-		NewCmd(
+		instruction.NewCmd(
 			dockerfile.NewDockerfileStageInstruction(
 				&instructions.CmdCommand{ShellDependantCmdLine: instructions.ShellDependantCmdLine{CmdLine: []string{"/bin/bash", "-lec", "while true ; do date ; sleep 1 ; done"}, PrependShell: false}},
 				dockerfile.DockerfileStageInstructionOptions{},
@@ -46,7 +48,7 @@ var _ = DescribeTable("CMD digest",
 	)),
 
 	Entry("CMD with shell", NewTestData(
-		NewCmd(
+		instruction.NewCmd(
 			dockerfile.NewDockerfileStageInstruction(
 				&instructions.CmdCommand{ShellDependantCmdLine: instructions.ShellDependantCmdLine{CmdLine: []string{"/bin/bash", "-lec", "while true ; do date ; sleep 1 ; done"}, PrependShell: true}},
 				dockerfile.DockerfileStageInstructionOptions{},
@@ -67,7 +69,7 @@ var _ = DescribeTable("CMD digest",
 	)),
 
 	Entry("CMD with changed context", NewTestData(
-		NewCmd(
+		instruction.NewCmd(
 			dockerfile.NewDockerfileStageInstruction(
 				&instructions.CmdCommand{ShellDependantCmdLine: instructions.ShellDependantCmdLine{CmdLine: []string{"/bin/bash", "-lec", "while true ; do date ; sleep 1 ; done"}, PrependShell: true}},
 				dockerfile.DockerfileStageInstructionOptions{},
@@ -79,28 +81,6 @@ var _ = DescribeTable("CMD digest",
 			},
 		),
 		"1ba4c1cdfa5bce43a107e540d20c7d2655fcaeeba20e6b1f4feac2284a06f27a",
-		TestDataOptions{
-			Files: []*FileData{
-				{Name: "src/main/java/worker/Worker.java", Data: []byte(`package worker2;`)},
-				{Name: "src/Worker/Program.cs", Data: []byte(`namespace Worker2 {}`)},
-			},
-		},
-	)),
-
-	Entry("CMD with cacheVersion", NewTestData(
-		NewCmd(
-			dockerfile.NewDockerfileStageInstruction(
-				&instructions.CmdCommand{},
-				dockerfile.DockerfileStageInstructionOptions{},
-			),
-			nil, false,
-			&stage.BaseStageOptions{
-				ImageName:         "example-image",
-				ImageCacheVersion: "test-cache-version",
-				ProjectName:       "example-project",
-			},
-		),
-		"c26a996c7ceedf4b745d5ca879139d0153498c78462f84529c37ff288d295c6f",
 		TestDataOptions{
 			Files: []*FileData{
 				{Name: "src/main/java/worker/Worker.java", Data: []byte(`package worker2;`)},

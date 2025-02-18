@@ -27,7 +27,6 @@ func (stg *Entrypoint) GetDependencies(ctx context.Context, c stage.Conveyor, cb
 
 	args = append(args, append([]string{"Entrypoint"}, stg.instruction.Data.CmdLine...)...)
 	args = append(args, "PrependShell", fmt.Sprintf("%v", stg.instruction.Data.PrependShell))
-	args = stg.addImageCacheVersionToDependencies(args)
 
 	return util.Sha256Hash(args...), nil
 }

@@ -1,13 +1,15 @@
-package instruction
+package instruction_test
 
 import (
 	"context"
 	"fmt"
 
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	"github.com/werf/werf/v2/pkg/build/stage"
+	"github.com/werf/werf/v2/pkg/build/stage/instruction"
 	"github.com/werf/werf/v2/pkg/dockerfile"
 )
 
@@ -25,7 +27,7 @@ var _ = DescribeTable("ADD digest",
 	},
 
 	Entry("ADD basic", NewTestData(
-		NewAdd(
+		instruction.NewAdd(
 			dockerfile.NewDockerfileStageInstruction(
 				&instructions.AddCommand{
 					SourcesAndDest: instructions.SourcesAndDest{
@@ -53,7 +55,7 @@ var _ = DescribeTable("ADD digest",
 	)),
 
 	Entry("ADD with changed chown", NewTestData(
-		NewAdd(
+		instruction.NewAdd(
 			dockerfile.NewDockerfileStageInstruction(
 				&instructions.AddCommand{
 					SourcesAndDest: instructions.SourcesAndDest{
@@ -82,7 +84,7 @@ var _ = DescribeTable("ADD digest",
 	)),
 
 	Entry("ADD with changed chmod", NewTestData(
-		NewAdd(
+		instruction.NewAdd(
 			dockerfile.NewDockerfileStageInstruction(
 				&instructions.AddCommand{
 					SourcesAndDest: instructions.SourcesAndDest{
@@ -111,7 +113,7 @@ var _ = DescribeTable("ADD digest",
 	)),
 
 	Entry("ADD with changed sources paths", NewTestData(
-		NewAdd(
+		instruction.NewAdd(
 			dockerfile.NewDockerfileStageInstruction(
 				&instructions.AddCommand{
 					SourcesAndDest: instructions.SourcesAndDest{
@@ -140,7 +142,7 @@ var _ = DescribeTable("ADD digest",
 	)),
 
 	Entry("ADD with changed source files", NewTestData(
-		NewAdd(
+		instruction.NewAdd(
 			dockerfile.NewDockerfileStageInstruction(
 				&instructions.AddCommand{
 					SourcesAndDest: instructions.SourcesAndDest{
@@ -169,7 +171,7 @@ var _ = DescribeTable("ADD digest",
 	)),
 
 	Entry("ADD with changed destination path", NewTestData(
-		NewAdd(
+		instruction.NewAdd(
 			dockerfile.NewDockerfileStageInstruction(
 				&instructions.AddCommand{
 					SourcesAndDest: instructions.SourcesAndDest{
@@ -188,29 +190,6 @@ var _ = DescribeTable("ADD digest",
 			},
 		),
 		"825c66ecb926ed7897fc99f7686ed4fc2a7f8133d6a66860c8755772764d0293",
-		TestDataOptions{
-			Files: []*FileData{
-				{Name: "src/main/java/worker/Worker.java", Data: []byte(`package worker2;`)},
-				{Name: "src/Worker/Program.cs", Data: []byte(`namespace Worker2 {}`)},
-				{Name: "pom.xml", Data: []byte(`<?xml version="1.0" encoding="UTF-8"?>`)},
-			},
-		},
-	)),
-
-	Entry("ADD with cacheVersion", NewTestData(
-		NewAdd(
-			dockerfile.NewDockerfileStageInstruction(
-				&instructions.AddCommand{},
-				dockerfile.DockerfileStageInstructionOptions{},
-			),
-			nil, false,
-			&stage.BaseStageOptions{
-				ImageName:         "example-image",
-				ImageCacheVersion: "test-cache-version",
-				ProjectName:       "example-project",
-			},
-		),
-		"3bfe2357beec3ade3bddc1a33df57fd77dcc7752d79bd599b6bbbdc92cb2c997",
 		TestDataOptions{
 			Files: []*FileData{
 				{Name: "src/main/java/worker/Worker.java", Data: []byte(`package worker2;`)},
