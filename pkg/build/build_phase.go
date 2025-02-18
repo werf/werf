@@ -779,9 +779,12 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *image.Image, stg
 		i := phase.Conveyor.GetOrCreateStageImage(uuid.New().String(), phase.StagesIterator.GetPrevImage(img, stg), stg, img)
 		stg.SetStageImage(i)
 
-		if err := phase.fetchBaseImageForStage(ctx, img, stg); err != nil {
-			return err
+		if stg.IsBuildable() {
+			if err := phase.fetchBaseImageForStage(ctx, img, stg); err != nil {
+				return err
+			}
 		}
+
 		if err := phase.prepareStageInstructions(ctx, img, stg); err != nil {
 			return err
 		}
