@@ -150,6 +150,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	commonCmdData.SetupHelmCompatibleChart(cmd, false)
 	commonCmdData.SetupRenameChart(cmd)
 
+	commonCmdData.SetupSkipImageSpecStage(cmd)
+
 	defaultTag := os.Getenv("WERF_TAG")
 	if defaultTag == "" {
 		defaultTag = "latest"

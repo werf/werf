@@ -132,6 +132,8 @@ type CmdData struct {
 	AllowedLocalCacheVolumeUsageMargin     *uint
 
 	Platform *[]string
+
+	SkipImageSpecStage *bool
 }
 
 func (cmdData *CmdData) SetupWithoutImages(cmd *cobra.Command) {
@@ -191,4 +193,9 @@ func (cmdData *CmdData) SetupHelmCompatibleChart(cmd *cobra.Command, defaultEnab
 func (cmdData *CmdData) SetupRenameChart(cmd *cobra.Command) {
 	cmdData.RenameChart = new(string)
 	cmd.Flags().StringVarP(cmdData.RenameChart, "rename-chart", "", os.Getenv("WERF_RENAME_CHART"), `Force setting of chart name in the Chart.yaml of the published chart to the specified value (can be set by the $WERF_RENAME_CHART, no rename by default, could not be used together with the '--helm-compatible-chart' option).`)
+}
+
+func (cmdData *CmdData) SetupSkipImageSpecStage(cmd *cobra.Command) {
+	cmdData.SkipImageSpecStage = new(bool)
+	cmd.Flags().BoolVarP(cmdData.SkipImageSpecStage, "skip-image-spec-stage", "", false, "Force skipping `imageSpec` stage even if imageSpec config was set in werf.yaml")
 }

@@ -201,6 +201,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	cmd.Flags().StringArrayVarP(&cmdData.CopyFrom, "copy-from", "", []string{}, "Copy file/dir from container to local machine after user command execution. Example: \"/from/file:to\". Can be specified multiple times. Can also be defined with \"$WERF_COPY_FROM_*\", e.g. \"WERF_COPY_FROM_1=from:to\".")
 	cmd.Flags().StringArrayVarP(&cmdData.CopyTo, "copy-to", "", []string{}, "Copy file/dir from local machine to container before user command execution. Example: \"from:/to/file\". Can be specified multiple times. Can also be defined with \"$WERF_COPY_TO_*\", e.g. \"WERF_COPY_TO_1=from:to\".")
 
+	commonCmdData.SetupSkipImageSpecStage(cmd)
+
 	return cmd
 }
 

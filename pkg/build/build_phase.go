@@ -49,6 +49,8 @@ type BuildOptions struct {
 
 	SkipImageMetadataPublication bool
 	CustomTagFuncList            []imagePkg.CustomTagFunc
+
+	SkipImageSpecStage bool
 }
 
 type IntrospectOptions struct {

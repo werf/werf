@@ -37,7 +37,9 @@ func GetConveyorOptions(ctx context.Context, commonCmdData *CmdData, imagesToPro
 	}
 
 	conveyorOptions.DeferBuildLog = GetDeferredBuildLog(ctx, commonCmdData)
-
+	if commonCmdData.SkipImageSpecStage != nil {
+		conveyorOptions.SkipImageSpecStage = *commonCmdData.SkipImageSpecStage
+	}
 	return conveyorOptions, nil
 }
 
@@ -105,6 +107,9 @@ func GetBuildOptions(ctx context.Context, commonCmdData *CmdData, werfConfig *co
 		if err != nil {
 			return buildOptions, fmt.Errorf("getting build report path failed: %w", err)
 		}
+	}
+	if commonCmdData.SkipImageSpecStage != nil {
+		buildOptions.SkipImageSpecStage = *commonCmdData.SkipImageSpecStage
 	}
 
 	return buildOptions, nil
