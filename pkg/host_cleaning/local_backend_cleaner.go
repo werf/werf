@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/containers/image/v5/docker/reference"
 	"github.com/dustin/go-humanize"
 
 	"github.com/werf/common-go/pkg/lock"
@@ -42,7 +43,7 @@ type RunAutoGCOptions struct {
 
 type LocalBackendCleaner struct {
 	backend           container_backend.ContainerBackend
-	backendName       string
+	backendType       containerBackendType
 	minImagesToDelete uint64
 	// refs for stubbing in testing
 	volumeutilsGetVolumeUsageByPath func(ctx context.Context, path string) (volumeutils.VolumeUsage, error)
@@ -62,20 +63,20 @@ func NewLocalBackendCleaner(backend container_backend.ContainerBackend) (*LocalB
 
 	switch backend.(type) {
 	case *container_backend.DockerServerBackend:
-		cleaner.backendName = "docker"
+		cleaner.backendType = containerBackendDocker
 		return cleaner, nil
 	case *container_backend.BuildahBackend:
-		cleaner.backendName = "buildah"
+		cleaner.backendType = containerBackendBuildah
 		return cleaner, nil
 	default:
 		// returns cleaner for testing with mock
-		cleaner.backendName = "test"
+		cleaner.backendType = containerBackendTest
 		return cleaner, ErrUnsupportedContainerBackend
 	}
 }
 
 func (cleaner *LocalBackendCleaner) BackendName() string {
-	return cleaner.backendName
+	return cleaner.backendType.String()
 }
 
 func (cleaner *LocalBackendCleaner) backendStoragePath(ctx context.Context, storagePath string) (string, error) {
@@ -153,7 +154,11 @@ func (cleaner *LocalBackendCleaner) checkBackendStorage(ctx context.Context, bac
 			projectName := img.Labels[image.WerfLabel]
 
 			for _, ref := range img.RepoTags {
-				if strings.HasPrefix(ref, fmt.Sprintf("%s:", projectName)) {
+				normalizedTag, err := cleaner.normalizeReference(ref)
+				if err != nil {
+					return nil, err
+				}
+				if strings.HasPrefix(normalizedTag, fmt.Sprintf("%s:", projectName)) {
 					continue ExcludeLocalV1_2StagesStorage
 				}
 			}
@@ -177,7 +182,11 @@ func (cleaner *LocalBackendCleaner) checkBackendStorage(ctx context.Context, bac
 	ExcludeLocalV1_1StagesStorage:
 		for _, img := range imgs {
 			for _, ref := range img.RepoTags {
-				if strings.HasPrefix(ref, "werf-stages-storage/") {
+				normalizedTag, err := cleaner.normalizeReference(ref)
+				if err != nil {
+					return nil, err
+				}
+				if strings.HasPrefix(normalizedTag, "werf-stages-storage/") {
 					continue ExcludeLocalV1_1StagesStorage
 				}
 			}
@@ -266,6 +275,34 @@ CreateImagesDescs:
 	})
 
 	return res, nil
+}
+
+// normalizeReference Normalizes image reference (repository tag) to docker backend repository tag format.
+func (cleaner *LocalBackendCleaner) normalizeReference(ref string) (string, error) {
+	switch cleaner.backendType {
+	case containerBackendDocker, containerBackendTest:
+		return ref, nil
+	case containerBackendBuildah:
+		// ------------
+		// WORKAROUND for Buildah
+		// ------------
+		// Buildah repository tag contains hostname (domain) prefix currently.
+		// Example (buildah repo tag): localhost/werf-guide-app:e5c6ebcd2718ccfe74d01069a0d758e03d5a2554155ccdc01be0daff-1739265965865
+		// We need normalize the tag to docker image repository tag format because our host cleanup algorithm based on docker backend.
+		// Example: (docker repo tag): werf-guide-app:e5c6ebcd2718ccfe74d01069a0d758e03d5a2554155ccdc01be0daff-1739265936011
+		// https://flant.kaiten.ru/space/193531/boards/card/26364854?focus=comment&focusId=56944076
+		// TODO: unify repository tags in v3 on build stage
+
+		named, err := reference.ParseNamed(ref)
+		if err != nil {
+			return "", err
+		}
+		hostnamePrefix := fmt.Sprintf("%s/", reference.Domain(named))
+
+		return strings.TrimPrefix(ref, hostnamePrefix), nil
+	default:
+		return "", ErrUnsupportedContainerBackend
+	}
 }
 
 func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOptions) error {

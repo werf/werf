@@ -434,6 +434,11 @@ tasks:
     cmds:
       - go generate -run mockgen ./cmd/... ./pkg/...
 
+  enum:generate:
+    desc: "Generate enums."
+    cmds:
+      - go generate -run enumer ./cmd/... ./pkg/...
+
   doc:
     desc: "Run all docs generators, formatters and linters."
     cmds:
@@ -564,6 +569,11 @@ tasks:
     desc: "Install mockgen library."
     cmds:
       - go install go.uber.org/mock/mockgen@v0.5.0
+
+  deps:install:enumer:
+    desc: "Install enumer library."
+    cmds:
+      - go install github.com/dmarkham/enumer@v1.5.11
 
   sign:
     desc: 'Sign last version tag + origin/main and push signatures. Important vars: "refs".'
