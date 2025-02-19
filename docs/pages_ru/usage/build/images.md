@@ -411,6 +411,8 @@ build:
 
 Эта настройка будет применяться ко всем образам в проекте: метки и автор будут установлены для всех образов, а ненужные метки будут удалены.
 
+> **Примечание:** Глобальная конфигурация применяется только конечным (`final`) образам. Подробнее смотретите [здесь](#использование-промежуточных-и-конечных-образов)
+
 ### Конфигурация для конкретного образа
 
 Пример настройки для отдельного образа:
@@ -470,6 +472,56 @@ git:
 ```
 
 В этом примере базовый образ `postgres:12.22-bookworm` имеет удаленный ненужный том и теперь путь может быть использованы в образе `app`.
+
+### Работа с CMD и ENTRYPOINT
+
+Если в базовом образе был задан `CMD`, а в текущем образе устанавливается `ENTRYPOINT`, то `CMD` сбросится в пустое значение.
+Таким образом для при изменении `ENTRYPOINT` необходимо так же задать `CMD`. К примеру, в базовом образе `CMD` и `ENTRYPOINT` определны следущим образом:
+
+```json
+"Cmd": ["/bin/bash"],
+"Entrypoint": null,
+```
+То для изменения `ENTRYPOINT` конфигурация должна выглядеть следующим образом:
+
+```yaml
+project: test
+configVersion: 1
+---
+image: frontend_image
+from: alpine
+imageSpec:
+  author: "Frontend Maintainer <frontend@example.com>"
+  clearHistory: true
+  config:
+    cmd:
+      - "/bin/bash"
+    entrypoint: 
+      - entrypoint.sh
+```
+Более подробно о нюансах работы с `CMD` и `ENTRYPOINT` можете узнать [здесь]("https://docs.docker.com/reference/dockerfile/#understand-how-cmd-and-entrypoint-interact")
+
+### Работа с переменными окружения
+
+При работе с переменными окружения вы можете ссылаться на перменные из базового образа, а так же ссылаться на вновь заданные переменные
+
+```yaml
+project: test
+configVersion: 1
+---
+image: backend_image
+from: alpine
+imageSpec:
+  author: "Backend Maintainer <backend@example.com>"
+  clearHistory: true
+  config:
+    env:
+      GOROOT: "/usr/local/go"
+      GOPATH: "/go"
+      PATH: "${PATH}:${GOROOT}/bin:${GOPATH}/bin" # пример результата: /usr/bin:/usr/local/go/bin/:/go/bin
+                                                  # ${PATH} в данном случае получен из базового образа
+```
+
 
 ## Взаимодействие между образами
 
