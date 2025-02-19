@@ -72,6 +72,7 @@ type ConveyorOptions struct {
 	TargetPlatforms                 []string
 	DeferBuildLog                   bool
 	ImagesToProcess                 config.ImagesToProcess
+	SkipImageSpecStage              bool
 }
 
 func NewConveyor(werfConfig *config.WerfConfig, giterminismManager giterminism_manager.Interface, projectDir, baseTmpDir string, containerBackend container_backend.ContainerBackend, storageManager manager.StorageManagerInterface, storageLockManager lock_manager.Interface, opts ConveyorOptions) *Conveyor {
@@ -354,6 +355,13 @@ func (c *Conveyor) GetRemoteGitRepo(key string) *git_repo.Remote {
 	defer c.GetServiceRWMutex("RemoteGitRepo").RUnlock()
 
 	return c.remoteGitRepos[key]
+}
+
+func (c *Conveyor) SkipImageSpecStage() bool {
+	c.GetServiceRWMutex("SkipImageSpecStage").RLock()
+	defer c.GetServiceRWMutex("SkipImageSpecStage").RUnlock()
+
+	return c.ConveyorOptions.SkipImageSpecStage
 }
 
 func (c *Conveyor) SetShouldAddManagedImagesRecords() {

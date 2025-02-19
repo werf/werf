@@ -20,7 +20,8 @@ import (
 )
 
 const (
-	lablesGlobalWarning = "Removal of the werf labels '%s' requires explicit use of the clearWerfLabels directive. Some labels are purely informational, while others are essential for cleanup operations."
+	lablesGlobalWarning  = "Removal of the werf labels requires explicit use of the clearWerfLabels directive. Some labels are purely informational, while others are essential for cleanup operations."
+	lablesCleanUpWarning = "Removal of the %s label will affect host auto cleanup. Proper work of auto cleanup is not guaranteed."
 )
 
 type ImageSpecStage struct {
@@ -185,19 +186,27 @@ func modifyLabels(ctx context.Context, labels, addLabels map[string]string, remo
 		return false
 	}
 
-	globalWarnKeys := []string{}
+	shouldDoGolbalWarn := false
+	cleanUpWarnKeys := []string{}
 	for key := range labels {
 		if shouldRemove(key) {
 			if !clearWerfLabels && strings.HasPrefix(key, "werf") {
-				globalWarnKeys = append(globalWarnKeys, key)
+				shouldDoGolbalWarn = true
+				if key == image.WerfStageDigestLabel {
+					cleanUpWarnKeys = append(cleanUpWarnKeys, key)
+				}
 			} else {
 				delete(labels, key)
 			}
 		}
 	}
 
-	if len(globalWarnKeys) > 0 {
-		global_warnings.GlobalWarningLn(ctx, fmt.Sprintf(lablesGlobalWarning, strings.Join(globalWarnKeys, "','")))
+	if shouldDoGolbalWarn {
+		global_warnings.GlobalWarningLn(ctx, lablesGlobalWarning)
+	}
+
+	if len(cleanUpWarnKeys) > 0 {
+		global_warnings.GlobalWarningLn(ctx, fmt.Sprintf(lablesCleanUpWarning, strings.Join(cleanUpWarnKeys, "','")))
 	}
 
 	for key, value := range addLabels {
@@ -220,7 +229,7 @@ func modifyEnv(env, removeKeys []string, addKeysMap map[string]string) ([]string
 		delete(baseEnvMap, key)
 	}
 
-	// FIXME: This is a temporary solution to remove werf commit envs that persist after build.
+	// FIXME: (v3) This is a temporary solution to remove werf commit envs that persist after build.
 	for _, key := range []string{
 		"WERF_COMMIT_HASH",
 		"WERF_COMMIT_TIME_HUMAN",
@@ -229,7 +238,7 @@ func modifyEnv(env, removeKeys []string, addKeysMap map[string]string) ([]string
 		delete(baseEnvMap, key)
 	}
 
-	// FIXME: This is a temporary solution to remove werf SSH_AUTH_SOCK that persist after build.
+	// FIXME: (v3) This is a temporary solution to remove werf SSH_AUTH_SOCK that persist after build.
 	if envValue, hasEnv := baseEnvMap[ssh_agent.SSHAuthSockEnv]; hasEnv && envValue == container_backend.SSHContainerAuthSockPath {
 		delete(baseEnvMap, ssh_agent.SSHAuthSockEnv)
 	}

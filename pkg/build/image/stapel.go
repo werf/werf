@@ -117,7 +117,7 @@ func initStages(ctx context.Context, image *Image, metaConfig *config.Meta, stap
 		stages = appendIfExist(ctx, stages, stage.GenerateStapelDockerInstructionsStage(stapelImageConfig.(*config.StapelImage), baseStageOptions))
 	}
 
-	if imageBaseConfig.ImageSpec != nil {
+	if imageBaseConfig.ImageSpec != nil && !opts.Conveyor.SkipImageSpecStage() {
 		stages = appendIfExist(ctx, stages, stage.GenerateImageSpecStage(imageBaseConfig.ImageSpec, baseStageOptions))
 	}
 
