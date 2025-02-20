@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.27.1](https://www.github.com/werf/werf/compare/v2.27.0...v2.27.1) (2025-02-18)
+
+
+### Bug Fixes
+
+* **build, buildah, dockerfile, staged:** fix <bin>: no found (invalid PATH) ([d667dc3](https://www.github.com/werf/werf/commit/d667dc38a6ef7b7be7363e0213a1937027d4f5cb))
+
 ## [2.27.0](https://www.github.com/werf/werf/compare/v2.26.6...v2.27.0) (2025-02-11)
 
 
