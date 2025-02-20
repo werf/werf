@@ -108,9 +108,6 @@ func GetBuildOptions(ctx context.Context, commonCmdData *CmdData, werfConfig *co
 			return buildOptions, fmt.Errorf("getting build report path failed: %w", err)
 		}
 	}
-	if commonCmdData.SkipImageSpecStage != nil {
-		buildOptions.SkipImageSpecStage = *commonCmdData.SkipImageSpecStage
-	}
 
 	return buildOptions, nil
 }
