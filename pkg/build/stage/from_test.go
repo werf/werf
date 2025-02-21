@@ -41,10 +41,8 @@ var _ = Describe("FromStage", func() {
 			digest, err := fromStage.GetDependencies(ctx, conveyor, nil, prevImage, nil, nil)
 			Expect(err).To(Succeed())
 
-			fmt.Printf("calculated digest: %s\n", digest)
-			fmt.Printf("expected digest: %s\n", data.ExpectedDigest)
-
-			Expect(digest).To(Equal(data.ExpectedDigest))
+			Expect(digest).To(Equal(data.ExpectedDigest),
+				fmt.Sprintf("\ncalculated digest: %s\nexpected digest: %s\n", digest, data.ExpectedDigest))
 		},
 
 		Entry("should calculate from stage digest without any param",
