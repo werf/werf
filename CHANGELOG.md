@@ -2926,7 +2926,7 @@
 
 * **build:** werf does not reset stages storage cache when import source image not found ([262412a](https://www.github.com/werf/werf/commit/262412ad3c908d900970cf428a1a454fc82e703c))
 * host-cleanup procedure not running in gitlab-ci ([a78df7c](https://www.github.com/werf/werf/commit/a78df7c27d71b3d8be0efd0412fe02a19b0a3068))
-* **host-cleanup:** host cleanup not working without --backend-storage-path option ([dfa159c](https://www.github.com/werf/werf/commit/dfa159cba16be7ecf0ca73764f9b57e0d5f3f38c))
+* **host-cleanup:** host cleanup not working without --docker-server-storage-path option ([dfa159c](https://www.github.com/werf/werf/commit/dfa159cba16be7ecf0ca73764f9b57e0d5f3f38c))
 * more correct handling of storage.ErrBrokenImage ([fbbdd54](https://www.github.com/werf/werf/commit/fbbdd5471eaae770cdf5976bbd54979459d9b2af))
 
 ### [1.2.67](https://www.github.com/werf/werf/compare/v1.2.66...v1.2.67) (2022-02-15)
