@@ -11,7 +11,7 @@ permalink: usage/cleanup/host_cleanup.html
 
 Параметр `--backend-storage-path` (или переменная окружения `WERF_BACKEND_STORAGE_PATH`) позволяет явно задать директорию хранилища backend в случае, если werf не может правильно определить её автоматически.
 
-## Изменение порога занимаемого места и глубины очистки хранилища backend (Docker or Buildah)
+## Изменение порога занимаемого места и глубины очистки хранилища бекенда (Docker or Buildah)
 
 Параметр `--allowed-backend-storage-volume-usage` (`WERF_ALLOWED_BACKEND_STORAGE_VOLUME_USAGE`) позволяет изменить порог занимаемого места на томе, при достижении которого выполняется очистка хранилища backend (по умолчанию 70%).
 
