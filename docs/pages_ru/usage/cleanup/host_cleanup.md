@@ -15,7 +15,7 @@ permalink: usage/cleanup/host_cleanup.html
 
 Параметр `--allowed-backend-storage-volume-usage` (`WERF_ALLOWED_BACKEND_STORAGE_VOLUME_USAGE`) позволяет изменить порог занимаемого места на томе, при достижении которого выполняется очистка хранилища backend (по умолчанию 70%).
 
-Параметр `--allowed-backend-storage-volume-usage-margin` (`WERF_ALLOWED_BACKEND_STORAGE_VOLUME_USAGE_MARGIN`) позволяет установить глубину очистки относительно установленного порога занимаемого места хранилища backend (по умолчанию 5%).
+Параметр `--allowed-backend-storage-volume-usage-margin` (`WERF_ALLOWED_BACKEND_STORAGE_VOLUME_USAGE_MARGIN`) позволяет установить глубину очистки относительно установленного порога занимаемого места хранилища бекенда (по умолчанию 5%).
 
 ## Изменение порога занимаемого места и глубины очистки локального кэша
 
