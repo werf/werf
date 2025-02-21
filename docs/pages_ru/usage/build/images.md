@@ -499,7 +499,7 @@ imageSpec:
     entrypoint: 
       - entrypoint.sh
 ```
-Более подробно о нюансах работы с `CMD` и `ENTRYPOINT` можете узнать [здесь]("https://docs.docker.com/reference/dockerfile/#understand-how-cmd-and-entrypoint-interact")
+Более подробно о нюансах работы с `CMD` и `ENTRYPOINT` можете узнать [здесь](https://docs.docker.com/reference/dockerfile/#understand-how-cmd-and-entrypoint-interact)
 
 ### Работа с переменными окружения
 
