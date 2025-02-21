@@ -648,3 +648,30 @@ dependencies:
   - type: ImageName
     targetBuildArg: BUILDER_IMAGE_NAME
 ```
+
+## Manual management of image rebuilding
+
+You can use the global directive `build.cacheVersion`, or its local alternative `<image>.cacheVersion`, 
+to manually control the image rebuilding. If both directives are specified, the local one takes precedence.
+
+Usage example:
+
+```yaml
+project: werf-guide-app
+configVersion: 1
+build:
+  cacheVersion: global-cache-token
+---
+image: app-docker
+cacheVersion: docker-cache-token
+dockerfile: Dockerfile
+---
+image: app-buildah-staged
+cacheVersion: stapel-buildah-cache-token
+dockerfile: Dockerfile
+staged: true
+---
+image: app-docker-stapel
+cacheVersion: stapel-docker-cache-token
+from: alpine:3.14
+```
