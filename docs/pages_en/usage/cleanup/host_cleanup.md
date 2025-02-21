@@ -11,7 +11,7 @@ Host cleanup removes irrelevant data and reduces cache size **automatically** as
 
 The `--backend-storage-path` parameter (or the `WERF_BACKEND_STORAGE_PATH` environment variable) allows you to explicitly specify the backend storage directory in case werf fails to detect it automatically.
 
-## Changing the space usage threshold and cleanup depth of the Backend (Docker or Buildah) storage
+## Changing the space usage threshold and cleanup depth of build backend (Docker or Buildah) storage
 
 The `--allowed-backend-storage-volume-usage` (`WERF_ALLOWED_BACKEND_STORAGE_VOLUME_USAGE`) parameter allows you to adjust the volume usage threshold (the default is 70%). Reaching it will trigger a backend storage cleanup.
 
