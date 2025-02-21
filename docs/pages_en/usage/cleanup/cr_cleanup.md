@@ -5,24 +5,24 @@ permalink: usage/cleanup/cr_cleanup.html
 
 ## Overview
 
-The number of images can grow rapidly, taking up more space in the container registry and thus leading to a significant increase in costs. To control the growth and keep it at an acceptable level, werf offers its cleanup approach. It takes into account the images used in Kubernetes as well as their relevance based on the Git history when deciding which images to delete.
+The images are defined in werf.yaml, and their built versions accumulate over time, rapidly increasing storage usage in the container registry and driving up costs. werf provides a cleanup approach to control this growth and keep it at an acceptable level. It considers the image versions used in Kubernetes and their relevance based on Git history when deciding which ones to delete.
 
 The [**werf cleanup**]({{ "reference/cli/werf_cleanup.html" | true_relative_url }}) command is designed to run on a schedule. werf performs the (safe) cleanup according to the cleanup policies.
 
 Most likely, the default cleanup policies will cover all your needs, and no additional configuration will be necessary.
 
-Note that the cleanup does not free up space occupied by images in the container registry. werf only removes tags for irrelevant images (manifests). You will have to run the container registry garbage collector periodically to clean up the associated data.
+Note that the cleanup does not free up space occupied by the images in the container registry. werf only removes tags for irrelevant images (manifests). You will have to run the container registry garbage collector periodically to clean up the associated data.
 
 > The issue of cleaning up images in the container registry and our approach to addressing it are covered in detail in the article [The problem of "smart" cleanup of container images and addressing it in werf](https://www.cncf.io/blog/2020/10/15/overcoming-the-challenges-of-cleaning-up-container-images/)
 
 ## Automating the container registry cleanup
 
-Perform the following steps to automate the removal of irrelevant images from the container registry:
+Perform the following steps to automate the removal of irrelevant image versions from the container registry:
 
 - Set [**werf cleanup**]({{ "reference/cli/werf_cleanup.html" | true_relative_url }}) to run periodically to remove the no-longer-relevant tags from the container registry. 
 - Set [garbage collector](#container-registrys-garbage-collector) to run on intervals to free up space in the container registry.
 
-## Ignoring images that Kubernetes uses
+## Ignoring image versions that Kubernetes uses
 
 werf connects to **all Kubernetes clusters** described in **all configuration contexts** of kubectl. It then collects image names for the following object types: `pod`, `deployment`, `replicaset`, `statefulset`, `daemonset`, `job`, `cronjob`, `replicationcontroller`.
 
@@ -38,11 +38,11 @@ cleanup:
   disableKubernetesBasedPolicy: true
 ```
 
-As long as some object in the Kubernetes cluster uses an image, werf will never delete this image from the container registry. In other words, if you run some object in a Kubernetes cluster, werf will not delete its related images under any circumstances during the cleanup.
+As long as some object in the Kubernetes cluster uses an image version, werf will never delete this image version from the container registry. In other words, if you run some object in a Kubernetes cluster, werf will not delete its related images under any circumstances during the cleanup.
 
-## Ignoring freshly built images
+## Ignoring freshly built image versions
 
-When cleaning up, werf ignores images built during a specified time period (the default is 2 hours). If necessary, the period can be adjusted or the policy can be disabled altogether using the following directives in `werf.yaml`:
+When cleaning up, werf ignores image versions that were built during a specified time period (the default is 2 hours). If necessary, the period can be adjusted or the policy can be disabled altogether using the following directives in `werf.yaml`:
 
 ```yaml
 cleanup:
@@ -52,11 +52,11 @@ cleanup:
 
 ## Configuring Git history-based cleanup policies
 
-The cleanup configuration consists of a set of policies called `keepPolicies`. They are used to select relevant images using the git history. Thus, during a cleanup, __images not meeting the criteria of any policy are deleted__.
+The cleanup configuration consists of a set of policies called `keepPolicies`. They are used to select relevant image versions using the git history. Thus, during a cleanup, __image versions that do not meet the criteria of any policy will be deleted__.
 
 Each policy consists of two parts:
 - `references` defines a set of references, git tags, or git branches to perform scanning on.
-- `imagesPerReference` defines the limit on the number of images for each reference contained in the set.
+- `imagesPerReference` defines the limit on the number of image versions for each reference contained in the set.
 
 Each policy must be associated with a set of git tags (`tag`) or git branches (`branch`). You can specify a specific reference name or a specific group using [golang regular expression syntax](https://golang.org/pkg/regexp/syntax/#hdr-Syntax).
 
@@ -84,7 +84,7 @@ In the example above, werf selects no more than 10 latest branches that have the
 - The `in` parameter (see the [documentation](https://golang.org/pkg/time/#ParseDuration) to learn more) allows you to select git tags that were created during the specified period, or git branches with activity within the period. It can also be used for a specific set of `branch` / `tag`.
 - The `operator` parameter defines the references resulting from the policy. They may satisfy both conditions or either of them (`And` is set by default).
 
-When scanning references, the number of images is not limited by default. However, you can configure this behavior using the `imagesPerReference` set of parameters:
+When scanning references, the number of image versions is not limited by default. However, you can configure this behavior using the `imagesPerReference` set of parameters:
 
 ```yaml
 imagesPerReference:
@@ -92,8 +92,8 @@ imagesPerReference:
   in: string
 ```
 
-- The `last` parameter specifies the number of images for each reference. By default, there is one image (`1`).
-- The `in` parameter (refer to the [documentation](https://golang.org/pkg/time/#ParseDuration) to learn more) defines the period for which to search for images.
+- The `last` parameter specifies the number of image versions for each reference. By default, there is one version (`1`).
+- The `in` parameter (refer to the [documentation](https://golang.org/pkg/time/#ParseDuration) to learn more) defines the period for which to search for image versions.
 
 > In the case of git tags, werf checks the HEAD commit only; the value of `last`>1 does not make any sense and is invalid
 
@@ -141,11 +141,11 @@ cleanup:
       last: 10
 ``` 
 
-Let us examine each policy individually:
+Let’s break down each policy separately. For each image in werf.yaml:
 
-1. Keep an image for the last 10 tags (by date of creation).
-2. Keep no more than two images published over the past week, for no more than 10 branches active over the past week.
-3. Keep the 10 latest images for main, staging, and production branches.
+1.	Keep by **one version** for **the last 10 Git tags** (based on the HEAD commit creation date).
+2.	Keep by **up to two versions** from **the past week** for **the 10 most active Git branches** (based on the HEAD commit creation date).
+3.	Keep by **the last 10 versions** for **the Git branches main, master, staging, and production**.
 
 ### Disabling policies
 
