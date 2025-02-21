@@ -329,6 +329,8 @@ werf plan --repo registry.mydomain.com/web --env production
             $WERF_SET_STRING_2=key2=val2)
   -L, --skip-dependencies-repo-refresh=false
             Do not refresh helm chart repositories locally cached index
+      --skip-image-spec-stage=false
+            Force skipping `imageSpec` stage even if imageSpec config was set in werf.yaml
       --skip-tls-verify-helm-dependencies=false
             Skip TLS certificate validation when accessing a Helm charts repository (default        
             $WERF_SKIP_TLS_VERIFY_HELM_DEPENDENCIES)

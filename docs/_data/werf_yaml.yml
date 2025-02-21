@@ -46,8 +46,8 @@ sections:
             collapsible: true
             isCollapsedByDefault: false
             detailsArticle:
-              en: "/usage/build/images.md#changing-image-configuration-spec"
-              ru: "/usage/build/images.md#изменение-конфигурации-образов"
+              en: "/usage/build/images.html#changing-image-configuration-spec"
+              ru: "/usage/build/images.html#изменение-конфигурации-образов"
             directives:
               - name: author
                 value: "string"
@@ -378,8 +378,8 @@ sections:
           en: Image configuration according to the OCI specification
           ru: Конфигурация образа согласно OCI спецификации
         detailsArticle:
-          en: "/usage/build/images.md#changing-image-configuration-spec"
-          ru: "/usage/build/images.md#изменение-конфигурации-образов"
+          en: "/usage/build/images.html#changing-image-configuration-spec"
+          ru: "/usage/build/images.html#изменение-конфигурации-образов"
         directives:
           - name: author
             value: "string"
