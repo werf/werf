@@ -168,11 +168,11 @@ werf converge --repo registry.mydomain.com/web --env production`,
 	common.SetupFollow(&commonCmdData, cmd)
 
 	common.SetupDisableAutoHostCleanup(&commonCmdData, cmd)
-	common.SetupAllowedDockerStorageVolumeUsage(&commonCmdData, cmd)
-	common.SetupAllowedDockerStorageVolumeUsageMargin(&commonCmdData, cmd)
+	common.SetupAllowedBackendStorageVolumeUsage(&commonCmdData, cmd)
+	common.SetupAllowedBackendStorageVolumeUsageMargin(&commonCmdData, cmd)
 	common.SetupAllowedLocalCacheVolumeUsage(&commonCmdData, cmd)
 	common.SetupAllowedLocalCacheVolumeUsageMargin(&commonCmdData, cmd)
-	common.SetupDockerServerStoragePath(&commonCmdData, cmd)
+	common.SetupBackendStoragePath(&commonCmdData, cmd)
 
 	common.SetupNetworkParallelism(&commonCmdData, cmd)
 	common.SetupKubeQpsLimit(&commonCmdData, cmd)

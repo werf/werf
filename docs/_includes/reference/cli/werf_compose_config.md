@@ -68,24 +68,28 @@ werf compose config [IMAGE_NAME...] [options] [--docker-compose-options="OPTIONS
 {{ header }} Options
 
 ```shell
-      --allowed-docker-storage-volume-usage=70
-            Set allowed percentage of docker storage volume usage which will cause cleanup of least 
-            recently used local docker images (default 70% or                                       
-            $WERF_ALLOWED_DOCKER_STORAGE_VOLUME_USAGE)
-      --allowed-docker-storage-volume-usage-margin=5
-            During cleanup of least recently used local docker images werf would delete images      
-            until volume usage becomes below "allowed-docker-storage-volume-usage -                 
-            allowed-docker-storage-volume-usage-margin" level (default 5% or                        
-            $WERF_ALLOWED_DOCKER_STORAGE_VOLUME_USAGE_MARGIN)
+      --allowed-backend-storage-volume-usage=70
+            Set allowed percentage of backend (Docker or Buildah) storage volume usage which will   
+            cause cleanup of least recently used local backend images (default 70% or               
+            $WERF_ALLOWED_BACKEND_STORAGE_VOLUME_USAGE)
+      --allowed-backend-storage-volume-usage-margin=5
+            During cleanup of least recently used local backend (Docker or Buildah) images werf     
+            would delete images until volume usage becomes below                                    
+            "allowed-backend-storage-volume-usage - allowed-backend-storage-volume-usage-margin"    
+            level (default 5% or $WERF_ALLOWED_BACKEND_STORAGE_VOLUME_USAGE_MARGIN)
       --allowed-local-cache-volume-usage=70
             Set allowed percentage of local cache (~/.werf/local_cache by default) volume usage     
             which will cause cleanup of least recently used data from the local cache (default 70%  
             or $WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE)
       --allowed-local-cache-volume-usage-margin=5
-            During cleanup of least recently used local docker images werf would delete images      
-            until volume usage becomes below "allowed-docker-storage-volume-usage -                 
-            allowed-docker-storage-volume-usage-margin" level (default 5% or                        
+            During cleanup of local cache werf would delete local cache data until volume usage     
+            becomes below "allowed-local-cache-volume-usage -                                       
+            allowed-local-cache-volume-usage-margin" level (default 5% or                           
             $WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE_MARGIN)
+      --backend-storage-path=''
+            Use specified path to the local backend (Docker or Buildah) storage to check backend    
+            storage volume usage while performing garbage collection of local backend images        
+            (detect local backend storage path by default or use $WERF_BACKEND_STORAGE_PATH)
       --cache-repo=[]
             Specify one or multiple cache repos with images that will be used as a cache. Cache     
             will be populated when pushing newly built images into the primary repo and when        
@@ -129,10 +133,6 @@ werf compose config [IMAGE_NAME...] [options] [--docker-compose-options="OPTIONS
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)
             Command needs granted permissions to read and pull images from the specified repo
-      --docker-server-storage-path=''
-            Use specified path to the local docker server storage to check docker storage volume    
-            usage while performing garbage collection of local docker images (detect local docker   
-            server storage path by default or use $WERF_DOCKER_SERVER_STORAGE_PATH)
       --dry-run=false
             Indicate what the command would do without actually doing that (default $WERF_DRY_RUN)
       --env=''

@@ -113,11 +113,11 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
 	common.SetupDisableAutoHostCleanup(&commonCmdData, cmd)
-	common.SetupAllowedDockerStorageVolumeUsage(&commonCmdData, cmd)
-	common.SetupAllowedDockerStorageVolumeUsageMargin(&commonCmdData, cmd)
+	common.SetupAllowedBackendStorageVolumeUsage(&commonCmdData, cmd)
+	common.SetupAllowedBackendStorageVolumeUsageMargin(&commonCmdData, cmd)
 	common.SetupAllowedLocalCacheVolumeUsage(&commonCmdData, cmd)
 	common.SetupAllowedLocalCacheVolumeUsageMargin(&commonCmdData, cmd)
-	common.SetupDockerServerStoragePath(&commonCmdData, cmd)
+	common.SetupBackendStoragePath(&commonCmdData, cmd)
 
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
 	common.SetupInsecureHelmDependencies(&commonCmdData, cmd, true)

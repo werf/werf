@@ -15,18 +15,18 @@ import (
 )
 
 const (
-	DefaultAllowedDockerStorageVolumeUsagePercentage       float64 = 70.0
-	DefaultAllowedDockerStorageVolumeUsageMarginPercentage float64 = 5.0
-	DefaultAllowedLocalCacheVolumeUsagePercentage          float64 = 70.0
-	DefaultAllowedLocalCacheVolumeUsageMarginPercentage    float64 = 5.0
+	DefaultAllowedBackendStorageVolumeUsagePercentage       float64 = 70.0
+	DefaultAllowedBackendStorageVolumeUsageMarginPercentage float64 = 5.0
+	DefaultAllowedLocalCacheVolumeUsagePercentage           float64 = 70.0
+	DefaultAllowedLocalCacheVolumeUsageMarginPercentage     float64 = 5.0
 )
 
 type HostCleanupOptions struct {
-	AllowedDockerStorageVolumeUsagePercentage       *uint
-	AllowedDockerStorageVolumeUsageMarginPercentage *uint
-	AllowedLocalCacheVolumeUsagePercentage          *uint
-	AllowedLocalCacheVolumeUsageMarginPercentage    *uint
-	DockerServerStoragePath                         *string
+	BackendStoragePath                               *string
+	AllowedBackendStorageVolumeUsagePercentage       *uint
+	AllowedBackendStorageVolumeUsageMarginPercentage *uint
+	AllowedLocalCacheVolumeUsagePercentage           *uint
+	AllowedLocalCacheVolumeUsageMarginPercentage     *uint
 
 	DryRun bool
 	Force  bool
@@ -70,20 +70,20 @@ func RunAutoHostCleanup(ctx context.Context, backend container_backend.Container
 		fmt.Sprintf("--force=%v", options.Force),
 	)
 
-	if options.AllowedDockerStorageVolumeUsagePercentage != nil {
-		args = append(args, "--allowed-docker-storage-volume-usage", fmt.Sprintf("%d", *options.AllowedDockerStorageVolumeUsagePercentage))
+	if options.AllowedBackendStorageVolumeUsagePercentage != nil {
+		args = append(args, "--allowed-backend-storage-volume-usage", fmt.Sprintf("%d", *options.AllowedBackendStorageVolumeUsagePercentage))
 	}
-	if options.AllowedDockerStorageVolumeUsageMarginPercentage != nil {
-		args = append(args, "--allowed-docker-storage-volume-usage-margin", fmt.Sprintf("%d", *options.AllowedDockerStorageVolumeUsageMarginPercentage))
+	if options.AllowedBackendStorageVolumeUsageMarginPercentage != nil {
+		args = append(args, "--allowed-backend-storage-volume-usage-margin", fmt.Sprintf("%d", *options.AllowedBackendStorageVolumeUsageMarginPercentage))
 	}
 	if options.AllowedLocalCacheVolumeUsagePercentage != nil {
 		args = append(args, "--allowed-local-cache-volume-usage", fmt.Sprintf("%d", *options.AllowedLocalCacheVolumeUsagePercentage))
 	}
 	if options.AllowedLocalCacheVolumeUsageMarginPercentage != nil {
-		args = append(args, "--allowed-docker-storage-volume-usage-margin", fmt.Sprintf("%d", *options.AllowedLocalCacheVolumeUsageMarginPercentage))
+		args = append(args, "--allowed-local-cache-volume-usage-margin", fmt.Sprintf("%d", *options.AllowedLocalCacheVolumeUsageMarginPercentage))
 	}
-	if options.DockerServerStoragePath != nil && *options.DockerServerStoragePath != "" {
-		args = append(args, "--docker-server-storage-path", *options.DockerServerStoragePath)
+	if options.BackendStoragePath != nil && *options.BackendStoragePath != "" {
+		args = append(args, "--backend-storage-path", *options.BackendStoragePath)
 	}
 
 	executableName := os.Getenv("WERF_ORIGINAL_EXECUTABLE")
@@ -141,8 +141,8 @@ func RunHostCleanup(ctx context.Context, backend container_backend.ContainerBack
 		return err
 	}
 
-	allowedDockerStorageVolumeUsagePercentage := getOptionValueOrDefault(options.AllowedDockerStorageVolumeUsagePercentage, DefaultAllowedDockerStorageVolumeUsagePercentage)
-	allowedDockerStorageVolumeUsageMarginPercentage := getOptionValueOrDefault(options.AllowedDockerStorageVolumeUsageMarginPercentage, DefaultAllowedDockerStorageVolumeUsageMarginPercentage)
+	allowedBackendStorageVolumeUsagePercentage := getOptionValueOrDefault(options.AllowedBackendStorageVolumeUsagePercentage, DefaultAllowedBackendStorageVolumeUsagePercentage)
+	allowedBackendStorageVolumeUsageMarginPercentage := getOptionValueOrDefault(options.AllowedBackendStorageVolumeUsageMarginPercentage, DefaultAllowedBackendStorageVolumeUsageMarginPercentage)
 
 	cleaner, err := NewLocalBackendCleaner(backend)
 	if errors.Is(err, ErrUnsupportedContainerBackend) {
@@ -154,11 +154,11 @@ func RunHostCleanup(ctx context.Context, backend container_backend.ContainerBack
 
 	return logboek.Context(ctx).Default().LogProcess("Running GC for local %s backend", cleaner.BackendName()).DoError(func() error {
 		err := cleaner.RunGC(ctx, RunGCOptions{
-			AllowedStorageVolumeUsagePercentage:       allowedDockerStorageVolumeUsagePercentage,
-			AllowedStorageVolumeUsageMarginPercentage: allowedDockerStorageVolumeUsageMarginPercentage,
-			StoragePath: *options.DockerServerStoragePath,
-			force:       options.Force,
-			dryRun:      options.DryRun,
+			AllowedStorageVolumeUsagePercentage:       allowedBackendStorageVolumeUsagePercentage,
+			AllowedStorageVolumeUsageMarginPercentage: allowedBackendStorageVolumeUsageMarginPercentage,
+			StoragePath: *options.BackendStoragePath,
+			Force:       options.Force,
+			DryRun:      options.DryRun,
 		})
 		if err != nil {
 			return fmt.Errorf("local %s backend GC failed: %w", cleaner.BackendName(), err)
@@ -186,7 +186,7 @@ func ShouldRunAutoHostCleanup(ctx context.Context, backend container_backend.Con
 		return true, nil
 	}
 
-	allowedDockerStorageVolumeUsagePercentage := getOptionValueOrDefault(options.AllowedDockerStorageVolumeUsagePercentage, DefaultAllowedDockerStorageVolumeUsagePercentage)
+	allowedBackendStorageVolumeUsagePercentage := getOptionValueOrDefault(options.AllowedBackendStorageVolumeUsagePercentage, DefaultAllowedBackendStorageVolumeUsagePercentage)
 
 	cleaner, err := NewLocalBackendCleaner(backend)
 	if errors.Is(err, ErrUnsupportedContainerBackend) {
@@ -197,8 +197,8 @@ func ShouldRunAutoHostCleanup(ctx context.Context, backend container_backend.Con
 	}
 
 	shouldRun, err = cleaner.ShouldRunAutoGC(ctx, RunAutoGCOptions{
-		AllowedStorageVolumeUsagePercentage: allowedDockerStorageVolumeUsagePercentage,
-		StoragePath:                         *options.DockerServerStoragePath,
+		AllowedStorageVolumeUsagePercentage: allowedBackendStorageVolumeUsagePercentage,
+		StoragePath:                         *options.BackendStoragePath,
 	})
 	if err != nil {
 		return false, fmt.Errorf("failed to check local docker server host cleaner GC: %w", err)
