@@ -5,6 +5,12 @@ build:
   platform:
     - linux/amd64
     - linux/arm64
+cleanup:
+  keepPolicies:
+  - references:  
+      branch: main
+    imagesPerReference:
+      last: 1
 ---
 
 {{- $uniqueChannelVersions := list -}}
