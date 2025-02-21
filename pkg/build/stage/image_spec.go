@@ -13,8 +13,6 @@ import (
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
-	"github.com/werf/werf/v2/pkg/dockerfile"
-	"github.com/werf/werf/v2/pkg/dockerfile/frontend"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/ssh_agent"
 	"github.com/werf/werf/v2/pkg/werf/global_warnings"
@@ -291,17 +289,4 @@ func sortSliceWithNewSlice(original []string) []string {
 
 func toDuration(seconds int) time.Duration {
 	return time.Duration(seconds) * time.Second
-}
-
-func expandEnv(baseEnvMap, envMapToExpand map[string]string, opts dockerfile.ExpandOptions) (map[string]string, error) {
-	expander := frontend.NewShlexExpanderFactory('\\').GetExpander(opts)
-	res := make(map[string]string)
-	for k, v := range envMapToExpand {
-		newValue, err := expander.ProcessWordWithMap(v, baseEnvMap)
-		if err != nil {
-			return nil, fmt.Errorf("error processing word %q: %w", v, err)
-		}
-		res[k] = newValue
-	}
-	return res, nil
 }
