@@ -22,7 +22,7 @@ Perform the following steps to automate the removal of irrelevant image versions
 - Set [**werf cleanup**]({{ "reference/cli/werf_cleanup.html" | true_relative_url }}) to run periodically to remove the no-longer-relevant tags from the container registry. 
 - Set [garbage collector](#container-registrys-garbage-collector) to run on intervals to free up space in the container registry.
 
-## Ignoring image versions that Kubernetes uses
+## Keeping image versions that Kubernetes uses
 
 werf connects to **all Kubernetes clusters** described in **all configuration contexts** of kubectl. It then collects image names for the following object types: `pod`, `deployment`, `replicaset`, `statefulset`, `daemonset`, `job`, `cronjob`, `replicationcontroller`.
 
@@ -40,9 +40,9 @@ cleanup:
 
 As long as some object in the Kubernetes cluster uses an image version, werf will never delete this image version from the container registry. In other words, if you run some object in a Kubernetes cluster, werf will not delete its related images under any circumstances during the cleanup.
 
-## Ignoring freshly built image versions
+## Keeping freshly built image versions
 
-When cleaning up, werf ignores image versions that were built during a specified time period (the default is 2 hours). If necessary, the period can be adjusted or the policy can be disabled altogether using the following directives in `werf.yaml`:
+When cleaning up, werf keeps image versions that were built during a specified time period (the default is 2 hours). If necessary, the period can be adjusted or the policy can be disabled altogether using the following directives in `werf.yaml`:
 
 ```yaml
 cleanup:
@@ -50,7 +50,7 @@ cleanup:
   keepImagesBuiltWithinLastNHours: 2
 ```
 
-## Configuring Git history-based cleanup policies
+## Keeping image versions with Git history-based policies
 
 The cleanup configuration consists of a set of policies called `keepPolicies`. They are used to select relevant image versions using the git history. Thus, during a cleanup, __image versions that do not meet the criteria of any policy will be deleted__.
 
