@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.28.0](https://www.github.com/werf/werf/compare/v2.27.1...v2.28.0) (2025-02-24)
+
+
+### Features
+
+* **config:** add .Files.Exists and .Files.IsDir Go template functions ([8d4e06c](https://www.github.com/werf/werf/commit/8d4e06c5dbb7712f3be7c26890e82ae50439650a))
+* **host-cleanup:** support Buildah backend ([#6575](https://www.github.com/werf/werf/issues/6575)) ([2414b23](https://www.github.com/werf/werf/commit/2414b231ba98e27bf979f9d213295e41a834b621))
+
 ### [2.27.1](https://www.github.com/werf/werf/compare/v2.27.0...v2.27.1) (2025-02-18)
 
 
