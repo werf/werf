@@ -76,13 +76,14 @@ var AllStages = []StageName{
 }
 
 type BaseStageOptions struct {
-	LogName          string
-	TargetPlatform   string
-	ImageName        string
-	ConfigMounts     []*config.Mount
-	ImageTmpDir      string
-	ContainerWerfDir string
-	ProjectName      string
+	LogName           string
+	TargetPlatform    string
+	ImageName         string
+	ImageCacheVersion string
+	ConfigMounts      []*config.Mount
+	ImageTmpDir       string
+	ContainerWerfDir  string
+	ProjectName       string
 }
 
 func NewBaseStage(name StageName, options *BaseStageOptions) *BaseStage {

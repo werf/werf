@@ -1,13 +1,15 @@
-package instruction
+package instruction_test
 
 import (
 	"context"
 	"fmt"
 
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	"github.com/werf/werf/v2/pkg/build/stage"
+	"github.com/werf/werf/v2/pkg/build/stage/instruction"
 	"github.com/werf/werf/v2/pkg/dockerfile"
 )
 
@@ -25,7 +27,7 @@ var _ = DescribeTable("ADD digest",
 	},
 
 	Entry("ADD basic", NewTestData(
-		NewAdd(
+		instruction.NewAdd(
 			dockerfile.NewDockerfileStageInstruction(
 				&instructions.AddCommand{
 					SourcesAndDest: instructions.SourcesAndDest{
@@ -53,7 +55,7 @@ var _ = DescribeTable("ADD digest",
 	)),
 
 	Entry("ADD with changed chown", NewTestData(
-		NewAdd(
+		instruction.NewAdd(
 			dockerfile.NewDockerfileStageInstruction(
 				&instructions.AddCommand{
 					SourcesAndDest: instructions.SourcesAndDest{
@@ -82,7 +84,7 @@ var _ = DescribeTable("ADD digest",
 	)),
 
 	Entry("ADD with changed chmod", NewTestData(
-		NewAdd(
+		instruction.NewAdd(
 			dockerfile.NewDockerfileStageInstruction(
 				&instructions.AddCommand{
 					SourcesAndDest: instructions.SourcesAndDest{
@@ -111,7 +113,7 @@ var _ = DescribeTable("ADD digest",
 	)),
 
 	Entry("ADD with changed sources paths", NewTestData(
-		NewAdd(
+		instruction.NewAdd(
 			dockerfile.NewDockerfileStageInstruction(
 				&instructions.AddCommand{
 					SourcesAndDest: instructions.SourcesAndDest{
@@ -140,7 +142,7 @@ var _ = DescribeTable("ADD digest",
 	)),
 
 	Entry("ADD with changed source files", NewTestData(
-		NewAdd(
+		instruction.NewAdd(
 			dockerfile.NewDockerfileStageInstruction(
 				&instructions.AddCommand{
 					SourcesAndDest: instructions.SourcesAndDest{
@@ -169,7 +171,7 @@ var _ = DescribeTable("ADD digest",
 	)),
 
 	Entry("ADD with changed destination path", NewTestData(
-		NewAdd(
+		instruction.NewAdd(
 			dockerfile.NewDockerfileStageInstruction(
 				&instructions.AddCommand{
 					SourcesAndDest: instructions.SourcesAndDest{

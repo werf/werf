@@ -1,13 +1,15 @@
-package instruction
+package instruction_test
 
 import (
 	"context"
 	"fmt"
 
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	"github.com/werf/werf/v2/pkg/build/stage"
+	"github.com/werf/werf/v2/pkg/build/stage/instruction"
 	"github.com/werf/werf/v2/pkg/dockerfile"
 )
 
@@ -25,7 +27,7 @@ var _ = DescribeTable("CMD digest",
 	},
 
 	Entry("CMD basic", NewTestData(
-		NewCmd(
+		instruction.NewCmd(
 			dockerfile.NewDockerfileStageInstruction(
 				&instructions.CmdCommand{ShellDependantCmdLine: instructions.ShellDependantCmdLine{CmdLine: []string{"/bin/bash", "-lec", "while true ; do date ; sleep 1 ; done"}, PrependShell: false}},
 				dockerfile.DockerfileStageInstructionOptions{},
@@ -46,7 +48,7 @@ var _ = DescribeTable("CMD digest",
 	)),
 
 	Entry("CMD with shell", NewTestData(
-		NewCmd(
+		instruction.NewCmd(
 			dockerfile.NewDockerfileStageInstruction(
 				&instructions.CmdCommand{ShellDependantCmdLine: instructions.ShellDependantCmdLine{CmdLine: []string{"/bin/bash", "-lec", "while true ; do date ; sleep 1 ; done"}, PrependShell: true}},
 				dockerfile.DockerfileStageInstructionOptions{},
@@ -67,7 +69,7 @@ var _ = DescribeTable("CMD digest",
 	)),
 
 	Entry("CMD with changed context", NewTestData(
-		NewCmd(
+		instruction.NewCmd(
 			dockerfile.NewDockerfileStageInstruction(
 				&instructions.CmdCommand{ShellDependantCmdLine: instructions.ShellDependantCmdLine{CmdLine: []string{"/bin/bash", "-lec", "while true ; do date ; sleep 1 ; done"}, PrependShell: true}},
 				dockerfile.DockerfileStageInstructionOptions{},

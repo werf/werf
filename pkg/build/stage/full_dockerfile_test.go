@@ -3,6 +3,7 @@ package stage
 import (
 	"bytes"
 	"context"
+	"fmt"
 
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
@@ -26,7 +27,7 @@ func testDockerfileToDockerStages(dockerfileData []byte) ([]instructions.Stage, 
 	return dockerStages, dockerMetaArgs
 }
 
-func newTestFullDockerfileStage(dockerfileData []byte, target string, buildArgs map[string]interface{}, dockerStages []instructions.Stage, dockerMetaArgs []instructions.ArgCommand, dependencies []*TestDependency) *FullDockerfileStage {
+func newTestFullDockerfileStage(dockerfileData []byte, target string, buildArgs map[string]interface{}, dockerStages []instructions.Stage, dockerMetaArgs []instructions.ArgCommand, dependencies []*TestDependency, imageCacheVersion string) *FullDockerfileStage {
 	dockerTargetIndex, err := frontend.GetDockerTargetStageIndex(dockerStages, target)
 	Expect(err).To(Succeed())
 
@@ -37,27 +38,21 @@ func newTestFullDockerfileStage(dockerfileData []byte, target string, buildArgs 
 		dockerTargetIndex,
 	)
 
-	return newFullDockerfileStage(
-		NewDockerRunArgs(
-			dockerfileData,
-			"no-such-path",
-			target,
-			"",
-			nil,
-			buildArgs,
-			nil,
-			"",
-			"",
-			nil,
-		),
-		ds,
-		NewContextChecksum(nil),
-		&BaseStageOptions{
-			ImageName:   "example-image",
-			ProjectName: "example-project",
-		},
-		GetConfigDependencies(dependencies),
-	)
+	return newFullDockerfileStage(NewDockerRunArgs(
+		dockerfileData,
+		"no-such-path",
+		target,
+		"",
+		nil,
+		buildArgs,
+		nil,
+		"",
+		"",
+		nil,
+	), ds, NewContextChecksum(nil), &BaseStageOptions{
+		ImageName:   "example-image",
+		ProjectName: "example-project",
+	}, GetConfigDependencies(dependencies), imageCacheVersion)
 }
 
 var _ = Describe("FullDockerfileStage", func() {
@@ -70,7 +65,7 @@ var _ = Describe("FullDockerfileStage", func() {
 
 			dockerStages, dockerMetaArgs := testDockerfileToDockerStages(data.DockerfileData)
 
-			stage := newTestFullDockerfileStage(data.DockerfileData, data.Target, data.BuildArgs, dockerStages, dockerMetaArgs, data.TestDependencies.Dependencies)
+			stage := newTestFullDockerfileStage(data.DockerfileData, data.Target, data.BuildArgs, dockerStages, dockerMetaArgs, data.TestDependencies.Dependencies, data.TestDependencies.ImageCacheVersion)
 
 			img := NewLegacyImageStub()
 			stageBuilder := stage_builder.NewStageBuilder(containerBackend, "", img)
@@ -81,6 +76,8 @@ var _ = Describe("FullDockerfileStage", func() {
 
 			digest, err := stage.GetDependencies(ctx, conveyor, containerBackend, nil, stageImage, nil)
 			Expect(err).To(Succeed())
+			fmt.Printf("calculated digest: %s\n", digest)
+			fmt.Printf("expected digest: %s\n", data.TestDependencies.ExpectedDigest)
 			Expect(digest).To(Equal(data.TestDependencies.ExpectedDigest))
 
 			err = stage.PrepareImage(ctx, conveyor, containerBackend, nil, stageImage, nil)
@@ -277,6 +274,22 @@ RUN echo hello
 				},
 			},
 		),
+
+		Entry("should change dockerfile stage digest when image cache version specified",
+			TestDockerfileDependencies{
+				DockerfileData: []byte(`
+ARG BASE_IMAGE=alpine:latest
+
+FROM ${BASE_IMAGE}
+RUN echo hello
+`),
+				TestDependencies: &TestDependencies{
+					ExpectedDigest:    "08298d918e51f6572692ca642027870539a71c46beafd403719360928ffe11de",
+					ImageCacheVersion: "image-cache-version",
+					Dependencies:      []*TestDependency{},
+				},
+			},
+		),
 	)
 
 	When("Dockerfile uses undefined build argument", func() {
@@ -294,7 +307,7 @@ RUN echo hello
 
 			dockerStages, dockerMetaArgs := testDockerfileToDockerStages(dockerfile)
 
-			stage := newTestFullDockerfileStage(dockerfile, "", nil, dockerStages, dockerMetaArgs, nil)
+			stage := newTestFullDockerfileStage(dockerfile, "", nil, dockerStages, dockerMetaArgs, nil, "")
 
 			containerBackend := NewContainerBackendStub()
 
@@ -325,7 +338,7 @@ RUN --mount=type=bind,from=build,source=/usr/local/test_project/dist,target=/usr
 
 			dockerStages, dockerMetaArgs := testDockerfileToDockerStages(dockerfile)
 
-			stage := newTestFullDockerfileStage(dockerfile, "", nil, dockerStages, dockerMetaArgs, nil)
+			stage := newTestFullDockerfileStage(dockerfile, "", nil, dockerStages, dockerMetaArgs, nil, "")
 
 			containerBackend := NewContainerBackendStub()
 
@@ -357,5 +370,6 @@ type TestDockerfileDependencies struct {
 	Target         string
 	BuildArgs      map[string]interface{}
 
-	TestDependencies *TestDependencies
+	TestDependencies  *TestDependencies
+	ImageCacheVersion string
 }
