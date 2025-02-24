@@ -166,12 +166,7 @@ func runApply(ctx context.Context) error {
 		return fmt.Errorf("get deploy report path: %w", err)
 	}
 
-	var logColorMode action.LogColorMode
-	if *commonCmdData.LogColorMode == "auto" {
-		logColorMode = action.LogColorModeDefault
-	} else {
-		logColorMode = action.LogColorMode(*commonCmdData.LogColorMode)
-	}
+	logColorMode := action.LogColorMode(*commonCmdData.LogColorMode)
 
 	bundlePath := filepath.Join(werf.GetServiceDir(), "tmp", "bundles", uuid.NewString())
 	defer os.RemoveAll(bundlePath)

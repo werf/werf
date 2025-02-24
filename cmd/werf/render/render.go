@@ -369,7 +369,6 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 	if err != nil {
 		return fmt.Errorf("getting HEAD commit time failed: %w", err)
 	}
-
 	registryCredentialsPath := docker.GetDockerConfigCredentialsFile(*commonCmdData.DockerConfig)
 
 	chartutil.ServiceValues, err = helpers.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, imagesInfoGetters, helpers.ServiceValuesOptions{
