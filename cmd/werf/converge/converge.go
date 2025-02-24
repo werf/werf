@@ -397,12 +397,7 @@ func run(
 		return fmt.Errorf("get deploy report path: %w", err)
 	}
 
-	var logColorMode action.LogColorMode
-	if *commonCmdData.LogColorMode == "auto" {
-		logColorMode = action.LogColorModeDefault
-	} else {
-		logColorMode = action.LogColorMode(*commonCmdData.LogColorMode)
-	}
+	logColorMode := action.LogColorMode(*commonCmdData.LogColorMode)
 
 	headHash, err := giterminismManager.LocalGitRepo().HeadCommitHash(ctx)
 	if err != nil {
