@@ -341,7 +341,7 @@ func mapLegacyDockerfileToImage(ctx context.Context, dockerfileImageConfig *conf
 
 	img.stages = append(img.stages, dockerfileStage)
 
-	if dockerfileImageConfig.ImageSpec != nil {
+	if dockerfileImageConfig.ImageSpec != nil && !opts.Conveyor.SkipImageSpecStage() {
 		img.stages = append(img.stages, stage.GenerateImageSpecStage(dockerfileImageConfig.ImageSpec, baseStageOptions))
 	}
 

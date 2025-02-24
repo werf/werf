@@ -133,6 +133,8 @@ It is necessary to use image name shortcut %image% or %image_slug% if multiple i
 Format: labelName=labelValue.
 Also, can be specified with $WERF_EXPORT_ADD_LABEL_* (e.g. $WERF_EXPORT_ADD_LABEL_1=labelName1=labelValue1, $WERF_EXPORT_ADD_LABEL_2=labelName2=labelValue2)`)
 
+	commonCmdData.SetupSkipImageSpecStage(cmd)
+
 	return cmd
 }
 
