@@ -62,6 +62,7 @@ jobs:
   publish_werf_images:
     name: Publish images with werf by trdl group and channel
     strategy:
+      fail-fast: false
       matrix:
         dest-registry:
           - ghcr.io
