@@ -23,6 +23,7 @@ This article contains description of annotations which control werf resource ope
  - [`werf.io/skip-logs-for-containers`](#skip-logs-for-containers) — disable logs of specified containers of the resource.
  - [`werf.io/show-logs-only-for-containers`](#show-logs-only-for-containers) — enable logging only for specified containers of the resource.
  - [`werf.io/show-service-messages`](#show-service-messages) — enable additional logging of Kubernetes related service messages for resource.
+ - [`werf.io/sensitive`](#mark-resource-as-sensitive) — mark the resource as sensitive, so werf will not show diffs for this resource in `werf plan`.
 
 More info about chart templates and other stuff is available in the [helm chapter]({{ "usage/deploy/overview.html" | true_relative_url }}).
 
@@ -191,3 +192,9 @@ The comma-separated list of containers in all Pods owned by a resource with this
 Set to `"true"` to enable additional real-time debugging info (including Kubernetes events) for a resource during tracking. By default, werf would show these service messages only if the resource has failed the entire deploy process.
 
 <img src="https://raw.githubusercontent.com/werf/demos/master/deploy/werf-new-track-modes-1.gif" />
+
+## Mark resource as sensitive
+
+`"werf.io/sensitive": "true"|"false"`
+
+Set to `"true"` to mark the resource as sensitive, so werf will not show diffs for this resource in `werf plan`. By default, werf shows diffs for all resources, except Secrets.

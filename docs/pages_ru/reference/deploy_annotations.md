@@ -22,6 +22,7 @@ toc: false
  - [`werf.io/skip-logs-for-containers`](#skip-logs-for-containers) — выключить логирование вывода для указанного контейнера.
  - [`werf.io/show-logs-only-for-containers`](#show-logs-only-for-containers) — включить логирование вывода только для указанных контейнеров ресурса.
  - [`werf.io/show-service-messages`](#show-service-messages) — включить вывод сервисных сообщений и событий Kubernetes для данного ресурса.
+ - [`werf.io/sensitive`](#mark-resource-as-sensitive) — пометить ресурс как содержащий чувствительные данные, чтобы werf не показывал диффы для этого ресурса в `werf plan`.
 
 Больше информации о том, что такое чарт, шаблоны и пр. доступно в [главе про Helm]({{ "usage/deploy/overview.html" | true_relative_url }}).
 
@@ -184,3 +185,9 @@ readiness-пробы указано `failureThreshold: 1`, тогда перва
 Если установлена в `"true"`, то при отслеживании для ресурсов будет выводиться дополнительная отладочная информация, такая как события Kubernetes. По умолчанию, werf выводит такую отладочную информацию только в случае если ошибка ресурса приводит к ошибке всего процесса деплоя.
 
 <img src="https://raw.githubusercontent.com/werf/demos/master/deploy/werf-new-track-modes-1.gif" />
+
+## Mark resource as sensitive
+
+`"werf.io/sensitive": "true"|"false"`
+
+Если установлена в `"true"`, то werf не будет показывать диффы для этого ресурса в `werf plan`. По умолчанию, werf показывает диффы для всех ресурсов, кроме Secret.
