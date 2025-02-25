@@ -103,6 +103,7 @@ jobs:
         uses: docker/setup-qemu-action@v3
         with:
           platforms: linux/amd64, linux/arm64
+          image: tonistiigi/binfmt:qemu-v7.0.0-28
 
       - name: Build and publish werf images
         working-directory: ./scripts/werf-in-image
