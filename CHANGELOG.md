@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.29.0](https://www.github.com/werf/werf/compare/v2.28.0...v2.29.0) (2025-02-25)
+
+
+### Features
+
+* **deploy:** add `werf.io/sensitive` annotation ([fda649c](https://www.github.com/werf/werf/commit/fda649c5b9dc0f654bbddf0dbdb3b300a8e10bd0))
+
+
+### Bug Fixes
+
+* **deploy:** External Secret CR falsely readying if has no status early on ([6616936](https://www.github.com/werf/werf/commit/6616936309017c8807f264b3de830122aee3a30b))
+
 ## [2.28.0](https://www.github.com/werf/werf/compare/v2.27.1...v2.28.0) (2025-02-24)
 
 
