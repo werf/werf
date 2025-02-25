@@ -1,6 +1,7 @@
 package config
 
 type rawMetaBuild struct {
+	CacheVersion string              `yaml:"cacheVersion,omitempty"`
 	Platform     []string            `yaml:"platform,omitempty"`
 	Staged       bool                `yaml:"staged,omitempty"`
 	RawImageSpec *rawImageSpecGlobal `yaml:"imageSpec,omitempty"`
@@ -31,6 +32,7 @@ func (c *rawMetaBuild) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 func (c *rawMetaBuild) toMetaBuild() MetaBuild {
 	metaBuild := MetaBuild{}
+	metaBuild.CacheVersion = c.CacheVersion
 	metaBuild.Platform = c.Platform
 	metaBuild.Staged = c.Staged
 	if c.RawImageSpec != nil {
