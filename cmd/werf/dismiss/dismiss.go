@@ -183,7 +183,7 @@ func runDismiss(ctx context.Context) error {
 		KubeSkipTLSVerify:          *commonCmdData.SkipTlsVerifyKube,
 		KubeTLSServerName:          *commonCmdData.KubeTlsServer,
 		KubeToken:                  *commonCmdData.KubeToken,
-		LogDebug:                   *commonCmdData.LogDebug,
+		LogLevel:                   common.GetNelmLogLevel(&commonCmdData),
 		ProgressTablePrintInterval: time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
 		ReleaseHistoryLimit:        *commonCmdData.ReleasesHistoryMax,
 		ReleaseName:                releaseName,
