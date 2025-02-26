@@ -414,7 +414,7 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 		KubeToken:                    *commonCmdData.KubeToken,
 		Local:                        !cmdData.Validate,
 		LocalKubeVersion:             *commonCmdData.KubeVersion,
-		LogDebug:                     *commonCmdData.LogDebug,
+		LogLevel:                     common.GetNelmLogLevel(&commonCmdData),
 		LogRegistryStreamOut:         os.Stdout,
 		NetworkParallelism:           *commonCmdData.NetworkParallelism,
 		OutputFilePath:               cmdData.RenderOutput,

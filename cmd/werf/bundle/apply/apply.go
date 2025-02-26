@@ -233,7 +233,7 @@ func runApply(ctx context.Context) error {
 		KubeTLSServerName:            *commonCmdData.KubeTlsServer,
 		KubeToken:                    *commonCmdData.KubeToken,
 		LogColorMode:                 logColorMode,
-		LogDebug:                     *commonCmdData.LogDebug,
+		LogLevel:                     common.GetNelmLogLevel(&commonCmdData),
 		LogRegistryStreamOut:         os.Stdout,
 		NetworkParallelism:           common.GetNetworkParallelism(&commonCmdData),
 		ProgressTablePrint:           *commonCmdData.StatusProgressPeriodSeconds != -1,
