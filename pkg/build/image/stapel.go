@@ -10,6 +10,7 @@ import (
 	"github.com/werf/werf/v2/pkg/build/stage"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/git_repo"
+	"github.com/werf/werf/v2/pkg/util/option"
 )
 
 func MapStapelConfigToImagesSets(ctx context.Context, metaConfig *config.Meta, stapelImageConfig config.StapelImageInterface, targetPlatform string, opts CommonImageOptions) (ImagesSets, error) {
@@ -18,9 +19,7 @@ func MapStapelConfigToImagesSets(ctx context.Context, metaConfig *config.Meta, s
 		return nil, err
 	}
 
-	var ret ImagesSets
-
-	ret = append(ret, []*Image{img})
+	ret := ImagesSets{[]*Image{img}}
 
 	return ret, nil
 }
@@ -92,7 +91,9 @@ func initStages(ctx context.Context, image *Image, metaConfig *config.Meta, stap
 
 	gitMappingsExist := len(gitMappings) != 0
 
-	stages = appendIfExist(ctx, stages, stage.GenerateFromStage(imageBaseConfig, image.baseImageRepoId, baseStageOptions))
+	imageCacheVersion := option.ValueOrDefault(stapelImageConfig.CacheVersion(), metaConfig.Build.CacheVersion)
+
+	stages = appendIfExist(ctx, stages, stage.GenerateFromStage(imageBaseConfig, image.baseImageRepoId, imageCacheVersion, baseStageOptions))
 	stages = appendIfExist(ctx, stages, stage.GenerateBeforeInstallStage(ctx, imageBaseConfig, baseStageOptions))
 	stages = appendIfExist(ctx, stages, stage.GenerateDependenciesBeforeInstallStage(imageBaseConfig, baseStageOptions))
 

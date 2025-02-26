@@ -20,10 +20,11 @@ import (
 	"github.com/werf/werf/v2/pkg/dockerfile/frontend"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
 	"github.com/werf/werf/v2/pkg/path_matcher"
+	"github.com/werf/werf/v2/pkg/util/option"
 	"github.com/werf/werf/v2/pkg/werf"
 )
 
-func MapDockerfileConfigToImagesSets(ctx context.Context, dockerfileImageConfig *config.ImageFromDockerfile, targetPlatform string, opts CommonImageOptions) (ImagesSets, error) {
+func MapDockerfileConfigToImagesSets(ctx context.Context, metaConfig *config.Meta, dockerfileImageConfig *config.ImageFromDockerfile, targetPlatform string, opts CommonImageOptions) (ImagesSets, error) {
 	if dockerfileImageConfig.Staged {
 		relDockerfilePath := filepath.Join(dockerfileImageConfig.Context, dockerfileImageConfig.Dockerfile)
 		dockerfileData, err := opts.GiterminismManager.FileReader().ReadDockerfile(ctx, relDockerfilePath)
@@ -46,22 +47,20 @@ func MapDockerfileConfigToImagesSets(ctx context.Context, dockerfileImageConfig 
 			return nil, fmt.Errorf("unable to parse dockerfile %s: %w", relDockerfilePath, err)
 		}
 
-		return mapDockerfileToImagesSets(ctx, d, dockerfileImageConfig, targetPlatform, opts)
+		return mapDockerfileToImagesSets(ctx, d, metaConfig, dockerfileImageConfig, targetPlatform, opts)
 	}
 
-	img, err := mapLegacyDockerfileToImage(ctx, dockerfileImageConfig, targetPlatform, opts)
+	img, err := mapLegacyDockerfileToImage(ctx, metaConfig, dockerfileImageConfig, targetPlatform, opts)
 	if err != nil {
 		return nil, err
 	}
 
-	var ret ImagesSets
-
-	ret = append(ret, []*Image{img})
+	ret := ImagesSets{[]*Image{img}}
 
 	return ret, nil
 }
 
-func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, dockerfileImageConfig *config.ImageFromDockerfile, targetPlatform string, opts CommonImageOptions) (ImagesSets, error) {
+func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, metaConfig *config.Meta, dockerfileImageConfig *config.ImageFromDockerfile, targetPlatform string, opts CommonImageOptions) (ImagesSets, error) {
 	var ret ImagesSets
 
 	targetStage, err := cfg.GetTargetStage()
@@ -167,10 +166,11 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 		if werf.GetStagedDockerfileVersion() == werf.StagedDockerfileV2 {
 			baseStageOptions := *commonBaseStageOptions
 			baseStageOptions.LogName = "FROM1"
-			img.stages = append(img.stages, stage_instruction.NewFrom(
-				img.GetBaseImageReference(), img.GetBaseImageRepoDigest(),
-				&baseStageOptions,
-			))
+
+			imageCacheVersion := option.ValueOrDefault(dockerfileImageConfig.CacheVersion(), metaConfig.Build.CacheVersion)
+			fromStage := stage_instruction.NewFrom(img.GetBaseImageReference(), img.GetBaseImageRepoDigest(), imageCacheVersion, &baseStageOptions)
+
+			img.stages = append(img.stages, fromStage)
 			instrNum = 1
 		} else {
 			instrNum = 0
@@ -255,7 +255,7 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 	return ret, nil
 }
 
-func mapLegacyDockerfileToImage(ctx context.Context, dockerfileImageConfig *config.ImageFromDockerfile, targetPlatform string, opts CommonImageOptions) (*Image, error) {
+func mapLegacyDockerfileToImage(ctx context.Context, metaConfig *config.Meta, dockerfileImageConfig *config.ImageFromDockerfile, targetPlatform string, opts CommonImageOptions) (*Image, error) {
 	img, err := NewImage(ctx, targetPlatform, dockerfileImageConfig.Name, NoBaseImage, ImageOptions{
 		CommonImageOptions:    opts,
 		IsFinal:               dockerfileImageConfig.IsFinal(),
@@ -320,24 +320,20 @@ func mapLegacyDockerfileToImage(ctx context.Context, dockerfileImageConfig *conf
 		ProjectName:    opts.ProjectName,
 	}
 
-	dockerfileStage := stage.GenerateFullDockerfileStage(
-		stage.NewDockerRunArgs(
-			dockerfileData,
-			dockerfileImageConfig.Dockerfile,
-			dockerfileImageConfig.Target,
-			dockerfileImageConfig.Context,
-			dockerfileImageConfig.ContextAddFiles,
-			dockerfileImageConfig.Args,
-			dockerfileImageConfig.AddHost,
-			dockerfileImageConfig.Network,
-			dockerfileImageConfig.SSH,
-			dockerfileImageConfig.Secrets,
-		),
-		ds,
-		stage.NewContextChecksum(dockerIgnorePathMatcher),
-		baseStageOptions,
-		dockerfileImageConfig.Dependencies,
-	)
+	imageCacheVersion := option.ValueOrDefault(dockerfileImageConfig.CacheVersion(), metaConfig.Build.CacheVersion)
+
+	dockerfileStage := stage.GenerateFullDockerfileStage(stage.NewDockerRunArgs(
+		dockerfileData,
+		dockerfileImageConfig.Dockerfile,
+		dockerfileImageConfig.Target,
+		dockerfileImageConfig.Context,
+		dockerfileImageConfig.ContextAddFiles,
+		dockerfileImageConfig.Args,
+		dockerfileImageConfig.AddHost,
+		dockerfileImageConfig.Network,
+		dockerfileImageConfig.SSH,
+		dockerfileImageConfig.Secrets,
+	), ds, stage.NewContextChecksum(dockerIgnorePathMatcher), baseStageOptions, dockerfileImageConfig.Dependencies, imageCacheVersion)
 
 	img.stages = append(img.stages, dockerfileStage)
 

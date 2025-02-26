@@ -4,12 +4,14 @@ import (
 	"fmt"
 
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
+	"github.com/werf/werf/v2/pkg/util/option"
 )
 
 type rawStapelImage struct {
 	Images               []string         `yaml:"-"`
 	Final                *bool            `yaml:"final,omitempty"`
 	Artifact             string           `yaml:"artifact,omitempty"`
+	CacheVersion         string           `yaml:"cacheVersion,omitempty"`
 	From                 string           `yaml:"from,omitempty"`
 	FromLatest           bool             `yaml:"fromLatest,omitempty"`
 	FromCacheVersion     string           `yaml:"fromCacheVersion,omitempty"`
@@ -144,14 +146,7 @@ func (c *rawStapelImage) toStapelImageDirective(giterminismManager giterminism_m
 		image.StapelImageBase = imageBase
 	}
 
-	// Set final.
-	{
-		final := true
-		if c.Final != nil {
-			final = *c.Final
-		}
-		image.StapelImageBase.final = final
-	}
+	image.StapelImageBase.final = option.PtrValueOrDefault(c.Final, true)
 
 	if c.RawDocker != nil {
 		if docker, err := c.RawDocker.toDirective(); err != nil {
@@ -238,6 +233,8 @@ func (c *rawStapelImage) toStapelImageBaseDirective(giterminismManager gitermini
 	imageBase.FromArtifactName = c.FromArtifact
 	imageBase.FromLatest = c.FromLatest
 	imageBase.FromCacheVersion = c.FromCacheVersion
+
+	imageBase.cacheVersion = c.CacheVersion
 	imageBase.platform = append([]string{}, c.Platform...)
 
 	for _, git := range c.RawGit {
