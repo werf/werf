@@ -138,14 +138,14 @@ cleanup:
   - references:  
       branch: /^(main|master|staging|production)$/
     imagesPerReference:
-      last: 10
+      last: 2
 ``` 
 
 Let us examine each policy individually:
 
-1. Keep an image for the last 10 tags (by date of creation).
-2. Keep no more than two images published over the past week, for no more than 10 branches active over the past week.
-3. Keep the 10 latest images for main, staging, and production branches.
+1.	Keep by **one version** for **the last 10 Git tags** (based on the HEAD commit creation date).
+2.	Keep by **up to two versions** from **the past week** for **the 10 most active Git branches** within that period (based on the HEAD commit creation date).
+3.	Keep by **two versions** for **the Git branches main, master, staging, and production**.
 
 ### Disabling policies
 
