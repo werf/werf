@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.334](https://www.github.com/werf/werf/compare/v1.2.333...v1.2.334) (2025-02-27)
+
+
+### Features
+
+* **cleanup:** make cleanup defaults more aggressive ([5a33a51](https://www.github.com/werf/werf/commit/5a33a51f8d3a3ecbce45561ce850cbad483adbe3))
+
 ### [1.2.333](https://www.github.com/werf/werf/compare/v1.2.332...v1.2.333) (2024-12-05)
 
 
