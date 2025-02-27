@@ -927,8 +927,6 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, s
 	}
 
 	var opts calculateDigestOptions
-	// TODO: common cache version / per image cache version / fromCacheVersion goes into this
-	opts.CacheVersionParts = nil
 	opts.TargetPlatform = img.TargetPlatform
 
 	if img.IsDockerfileImage && img.DockerfileImageConfig.Staged {
@@ -1269,9 +1267,8 @@ func introspectStage(ctx context.Context, s stage.Interface) error {
 }
 
 type calculateDigestOptions struct {
-	TargetPlatform    string
-	CacheVersionParts []string
-	BaseImage         string // TODO(staged-dockerfile): legacy compatibility field
+	TargetPlatform string
+	BaseImage      string // TODO(staged-dockerfile): legacy compatibility field
 }
 
 func calculateDigest(ctx context.Context, stageName, stageDependencies string, prevNonEmptyStage stage.Interface, conveyor *Conveyor, opts calculateDigestOptions) (string, error) {
@@ -1302,14 +1299,6 @@ func calculateDigest(ctx context.Context, stageName, stageDependencies string, p
 			"PrevNonEmptyStage digest",
 			"PrevNonEmptyStage dependencies for next stage",
 		)
-	}
-
-	if len(opts.CacheVersionParts) > 0 {
-		for i, cacheVersion := range opts.CacheVersionParts {
-			name := fmt.Sprintf("CacheVersion%d", i)
-			checksumArgsNames = append(checksumArgsNames, name)
-			checksumArgs = append(checksumArgs, name, cacheVersion)
-		}
 	}
 
 	if opts.BaseImage != "" {

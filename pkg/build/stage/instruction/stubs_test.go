@@ -1,4 +1,4 @@
-package instruction
+package instruction_test
 
 import (
 	"context"

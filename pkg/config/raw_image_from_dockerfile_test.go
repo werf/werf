@@ -23,6 +23,45 @@ var _ = Describe("rawImageFromDockerfile", func() {
 		giterminismManager = NewGiterminismManagerStub(localGitRepo)
 	})
 
+	DescribeTable("unmarshal and convert to directive succeed w/o Dependencies",
+		func(yamlMap map[string]interface{}, expectedImage *ImageFromDockerfile) {
+			if len(yamlMap) == 0 {
+				Fail("yamlMap should not be empty")
+			}
+
+			rawYaml, err := yaml.Marshal(yamlMap)
+			Expect(err).To(Succeed())
+
+			doc := &doc{Content: rawYaml}
+			rawDockerfileImage := &rawImageFromDockerfile{doc: doc}
+
+			Expect(yaml.UnmarshalStrict(doc.Content, rawDockerfileImage)).To(Succeed())
+
+			dockerfileImage, err := rawDockerfileImage.toImageFromDockerfileDirective(giterminismManager, "image1")
+			Expect(err).To(Succeed())
+
+			dockerfileImage.raw = nil // set to nil for correct deep comparison
+			Expect(&dockerfileImage).To(Equal(&expectedImage))
+		},
+		Entry(
+			"simple case",
+			map[string]interface{}{
+				"image":        "image1",
+				"cacheVersion": "docker-cache-version",
+			},
+			&ImageFromDockerfile{
+				Name:            "image1",
+				ContextAddFiles: []string{},
+				AddHost:         []string{},
+				Secrets:         []string{},
+
+				cacheVersion: "docker-cache-version",
+				platform:     []string{},
+				final:        true,
+			},
+		),
+	)
+
 	DescribeTable("unmarshal and convert to directive succeed and produce expected Dependencies",
 		func(yamlMap map[string]interface{}, expected []*Dependency) {
 			switch {

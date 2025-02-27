@@ -12,39 +12,38 @@ import (
 	"github.com/werf/werf/v2/pkg/container_backend"
 	imagePkg "github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/stapel"
+	"github.com/werf/werf/v2/pkg/util/option"
 )
 
-func GenerateFromStage(imageBaseConfig *config.StapelImageBase, baseImageRepoId string, baseStageOptions *BaseStageOptions) *FromStage {
+func GenerateFromStage(imageBaseConfig *config.StapelImageBase, baseImageRepoId, imageCacheVersion string, baseStageOptions *BaseStageOptions) *FromStage {
 	var baseImageRepoIdOrNone string
 	if imageBaseConfig.FromLatest {
 		baseImageRepoIdOrNone = baseImageRepoId
 	}
 
-	var fromImageOrArtifactImageName string
-	if imageBaseConfig.FromImageName != "" {
-		fromImageOrArtifactImageName = imageBaseConfig.FromImageName
-	} else if imageBaseConfig.FromArtifactName != "" {
-		fromImageOrArtifactImageName = imageBaseConfig.FromArtifactName
-	}
+	fromImageOrArtifactImageName := option.ValueOrDefault(imageBaseConfig.FromImageName, imageBaseConfig.FromArtifactName)
 
-	return newFromStage(fromImageOrArtifactImageName, baseImageRepoIdOrNone, imageBaseConfig.FromCacheVersion, baseStageOptions)
+	return newFromStage(fromImageOrArtifactImageName, baseImageRepoIdOrNone, imageBaseConfig.FromCacheVersion, imageCacheVersion, baseStageOptions)
 }
 
-func newFromStage(fromImageOrArtifactImageName, baseImageRepoIdOrNone, cacheVersion string, baseStageOptions *BaseStageOptions) *FromStage {
+func newFromStage(fromImageOrArtifactImageName, baseImageRepoIdOrNone, fromCacheVersion, imageCacheVersion string, baseStageOptions *BaseStageOptions) *FromStage {
 	s := &FromStage{}
-	s.cacheVersion = cacheVersion
+	s.fromCacheVersion = fromCacheVersion
 	s.fromImageOrArtifactImageName = fromImageOrArtifactImageName
 	s.baseImageRepoIdOrNone = baseImageRepoIdOrNone
 	s.BaseStage = NewBaseStage(From, baseStageOptions)
+	s.imageCacheVersion = imageCacheVersion
 	return s
 }
 
 type FromStage struct {
 	*BaseStage
 
-	fromImageOrArtifactImageName string
 	baseImageRepoIdOrNone        string
-	cacheVersion                 string
+	fromCacheVersion             string
+	fromImageOrArtifactImageName string
+
+	imageCacheVersion string
 }
 
 func (s *FromStage) HasPrevStage() bool {
@@ -54,8 +53,12 @@ func (s *FromStage) HasPrevStage() bool {
 func (s *FromStage) GetDependencies(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
 	var args []string
 
-	if s.cacheVersion != "" {
-		args = append(args, s.cacheVersion)
+	if s.imageCacheVersion != "" {
+		args = append(args, s.imageCacheVersion)
+	}
+
+	if s.fromCacheVersion != "" {
+		args = append(args, s.fromCacheVersion)
 	}
 
 	if s.baseImageRepoIdOrNone != "" {

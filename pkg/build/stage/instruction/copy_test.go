@@ -1,13 +1,15 @@
-package instruction
+package instruction_test
 
 import (
 	"context"
 	"fmt"
 
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	"github.com/werf/werf/v2/pkg/build/stage"
+	"github.com/werf/werf/v2/pkg/build/stage/instruction"
 	"github.com/werf/werf/v2/pkg/dockerfile"
 )
 
@@ -25,7 +27,7 @@ var _ = DescribeTable("COPY digest",
 	},
 
 	Entry("COPY basic", NewTestData(
-		NewCopy(
+		instruction.NewCopy(
 			dockerfile.NewDockerfileStageInstruction(
 				&instructions.CopyCommand{
 					SourcesAndDest: instructions.SourcesAndDest{
@@ -52,7 +54,7 @@ var _ = DescribeTable("COPY digest",
 	)),
 
 	Entry("COPY with changed context files", NewTestData(
-		NewCopy(
+		instruction.NewCopy(
 			dockerfile.NewDockerfileStageInstruction(
 				&instructions.CopyCommand{
 					SourcesAndDest: instructions.SourcesAndDest{
@@ -79,7 +81,7 @@ var _ = DescribeTable("COPY digest",
 	)),
 
 	Entry("COPY from stage", NewTestData(
-		NewCopy(
+		instruction.NewCopy(
 			NewDockerfileStageInstructionWithDependencyStages(
 				&instructions.CopyCommand{
 					From: "base",
@@ -105,7 +107,7 @@ var _ = DescribeTable("COPY digest",
 	)),
 
 	Entry("COPY from changed stage", NewTestData(
-		NewCopy(
+		instruction.NewCopy(
 			NewDockerfileStageInstructionWithDependencyStages(
 				&instructions.CopyCommand{
 					From: "base",
@@ -131,7 +133,7 @@ var _ = DescribeTable("COPY digest",
 	)),
 
 	Entry("COPY from same stage, with changed context", NewTestData(
-		NewCopy(
+		instruction.NewCopy(
 			NewDockerfileStageInstructionWithDependencyStages(
 				&instructions.CopyCommand{
 					From: "base",
@@ -162,7 +164,7 @@ var _ = DescribeTable("COPY digest",
 	)),
 
 	Entry("COPY from same stage, with changed destination", NewTestData(
-		NewCopy(
+		instruction.NewCopy(
 			NewDockerfileStageInstructionWithDependencyStages(
 				&instructions.CopyCommand{
 					From: "base",
@@ -193,7 +195,7 @@ var _ = DescribeTable("COPY digest",
 	)),
 
 	Entry("COPY from same stage, with changed owner and modes", NewTestData(
-		NewCopy(
+		instruction.NewCopy(
 			NewDockerfileStageInstructionWithDependencyStages(
 				&instructions.CopyCommand{
 					From: "base",

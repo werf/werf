@@ -152,6 +152,32 @@ There are several generations of the staged dockerfile builder. You can switch b
 
 Stapel images are cached layer-by-layer in the container registry by default and do not require any configuration.
 
+### Cache versioning
+
+You can use the global directive `build.cacheVersion` or its local alternative `<image>.cacheVersion` to explicitly manage the cache version of images through configuration and ensure reproducibility of all previous builds. If both directives are specified, the local one takes precedence.
+
+**Usage example:**
+
+```yaml
+project: test
+configVersion: 1
+build:
+  cacheVersion: global-cache-version
+---
+image: backend
+cacheVersion: user-cache-version
+dockerfile: Dockerfile
+---
+image: frontend
+cacheVersion: frontend-cache-version
+dockerfile: Dockerfile
+staged: true
+---
+image: user
+cacheVersion: user-cache-version
+from: alpine:3.14
+```
+
 ## Parallelism and image assembly order
 
 <!-- reference: https://werf.io/docs/v2/internals/build_process.html#parallel-build -->

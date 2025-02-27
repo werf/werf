@@ -104,7 +104,7 @@ func (tree *ImagesTree) Calculate(ctx context.Context) error {
 								return fmt.Errorf("unable to map stapel config to images sets: %w", err)
 							}
 						case *config.ImageFromDockerfile:
-							newImagesSets, err = MapDockerfileConfigToImagesSets(ctx, imageConfig, targetPlatform, commonImageOpts)
+							newImagesSets, err = MapDockerfileConfigToImagesSets(ctx, tree.werfConfig.Meta, imageConfig, targetPlatform, commonImageOpts)
 							if err != nil {
 								return fmt.Errorf("unable to map dockerfile to images sets: %w", err)
 							}

@@ -23,6 +23,12 @@ sections:
         collapsible: true
         isCollapsedByDefault: false
         directives:
+          - &meta-section-build-cache-version
+            name: cacheVersion
+            description:
+              en: "Cache version"
+              ru: "Версия кеша"
+            value: "string"
           - name: platform
             description:
               en: Common list of target platforms for all images (for example ['linux/amd64', 'linux/arm64', 'linux/arm/v8'])
@@ -268,6 +274,7 @@ sections:
         description:
           en: "Enable layer-by-layer caching of Dockerfile instructions in container registry"
           ru: "Включить послойное кеширование Dockerfile-инструкций в container registry"
+      - << : *meta-section-build-cache-version
       - name: context
         value: "string"
         description:
@@ -505,6 +512,7 @@ sections:
         detailsArticle:
           all: "/usage/build/stapel/imports.html"
       - << : *dockerfile-image-section-final
+      - << : *meta-section-build-cache-version
       - name: platform
         description:
           en: List of target platforms for this image (for example ['linux/amd64', 'linux/arm64', 'linux/arm/v8'])

@@ -23,9 +23,10 @@ type ImageFromDockerfile struct {
 	Secrets         []string
 	ImageSpec       *ImageSpec
 
-	platform []string
-	final    bool
-	raw      *rawImageFromDockerfile
+	cacheVersion string
+	platform     []string
+	final        bool
+	raw          *rawImageFromDockerfile
 }
 
 func (c *ImageFromDockerfile) validate(giterminismManager giterminism_manager.Interface) error {
@@ -55,6 +56,10 @@ func (c *ImageFromDockerfile) validate(giterminismManager giterminism_manager.In
 	}
 
 	return nil
+}
+
+func (c *ImageFromDockerfile) CacheVersion() string {
+	return c.cacheVersion
 }
 
 func (c *ImageFromDockerfile) GetName() string {
