@@ -23,11 +23,11 @@ sections:
         collapsible: true
         isCollapsedByDefault: false
         directives:
-          - &meta-section-build-cache-version 
+          - &meta-section-build-cache-version
             name: cacheVersion
             description:
-              en: A static parameter used when forming tags for all image configurations.
-              ru: Статический параметр используемый при формировании тегов для всех конфигураций образов.
+              en: "Cache version"
+              ru: "Версия кеша"
             value: "string"
           - name: platform
             description:

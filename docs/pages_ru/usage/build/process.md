@@ -150,6 +150,33 @@ staged: true
 
 Образы stapel кешируются в режиме послойного кеширования в container registry по умолчанию без дополнительной конфигурации.
 
+### Версионирование кеша
+
+Вы можете использовать глобальную директиву `build.cacheVersion` или её локальный аналог `<image>.cacheVersion`,
+чтобы явно управлять версией кеша образов через конфигурацию и сохранять воспроизводимость всех сборок. Если обе директивы указаны, локальная имеет приоритет.
+
+**Пример использования:**
+
+```yaml
+project: test
+configVersion: 1
+build:
+  cacheVersion: global-cache-version
+---
+image: backend
+cacheVersion: user-cache-version
+dockerfile: Dockerfile
+---
+image: frontend
+cacheVersion: frontend-cache-version
+dockerfile: Dockerfile
+staged: true
+---
+image: user
+cacheVersion: user-cache-version
+from: alpine:3.14
+```
+
 ## Параллельность и порядок сборки образов
 
 <!-- прим. для перевода: на основе https://werf.io/docs/v2/internals/build_process.html#parallel-build -->
