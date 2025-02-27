@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.30.0](https://www.github.com/werf/werf/compare/v2.29.0...v2.30.0) (2025-02-27)
+
+
+### Features
+
+* **cleanup:** make cleanup defaults more aggressive ([225080e](https://www.github.com/werf/werf/commit/225080ee8f81b99d891758337288b6a7aaebccb7))
+
 ## [2.29.0](https://www.github.com/werf/werf/compare/v2.28.0...v2.29.0) (2025-02-26)
 
 
