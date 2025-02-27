@@ -138,14 +138,14 @@ cleanup:
   - references:  
       branch: /^(main|master|staging|production)$/
     imagesPerReference:
-      last: 10
+      last: 2
 ``` 
 
 Let’s break down each policy separately. For each image in werf.yaml:
 
 1.	Keep by **one version** for **the last 10 Git tags** (based on the HEAD commit creation date).
-2.	Keep by **up to two versions** from **the past week** for **the 10 most active Git branches** (based on the HEAD commit creation date).
-3.	Keep by **the last 10 versions** for **the Git branches main, master, staging, and production**.
+2.	Keep by **up to two versions** from **the past week** for **the 10 most active Git branches** within that period (based on the HEAD commit creation date).
+3.	Keep by **two versions** for **the Git branches main, master, staging, and production**.
 
 ### Disabling policies
 
