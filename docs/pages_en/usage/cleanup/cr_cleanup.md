@@ -156,7 +156,7 @@ cleanup:
   disableGitHistoryBasedPolicy: true
 ```
 
-## Features of working with different container registries
+## Specifics of working with different container registries
 
 By default, werf uses the [_Docker Registry API_](https://docs.docker.com/registry/spec/api/) for deleting tags. The user must be authenticated and have a sufficient set of permissions. If the _Docker Registry API_ isn't supported and tags are deleted using the native API, then some additional container registry-specific actions are required on the user's part.
 
