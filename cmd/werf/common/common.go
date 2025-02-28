@@ -50,7 +50,7 @@ const (
 )
 
 func init() {
-	loader.NoChartLockWarning = `Cannot automatically download chart dependencies without .helm/Chart.lock or .helm/requirements.lock. Run "werf helm dependency update .helm" and commit resulting .helm/Chart.lock or .helm/requirements.lock. Commiting .tgz files in .helm/charts is not required, better add "/.helm/charts/*.tgz" to the .gitignore.`
+	loader.NoChartLockWarning = `Cannot automatically download chart dependencies without .helm/Chart.lock or .helm/requirements.lock. Run "werf helm dependency update .helm" and commit resulting .helm/Chart.lock or .helm/requirements.lock. Committing .tgz files in .helm/charts is not required, better add "/.helm/charts/*.tgz" to the .gitignore.`
 }
 
 type GitWorktreeNotFoundError struct{}
