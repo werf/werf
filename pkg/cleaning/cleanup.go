@@ -23,7 +23,6 @@ import (
 	"github.com/werf/werf/v2/pkg/logging"
 	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/storage/manager"
-	"github.com/werf/werf/v2/pkg/util/parallel"
 )
 
 type CleanupOptions struct {
@@ -35,8 +34,6 @@ type CleanupOptions struct {
 	ConfigMetaCleanup                       config.MetaCleanup
 	KeepStagesBuiltWithinLastNHours         *uint64
 	DryRun                                  bool
-	Parallel                                bool
-	ParallelTasksLimit                      int64
 }
 
 func Cleanup(ctx context.Context, projectName string, storageManager *manager.StorageManager, options CleanupOptions) error {
@@ -46,8 +43,6 @@ func Cleanup(ctx context.Context, projectName string, storageManager *manager.St
 func newCleanupManager(projectName string, storageManager *manager.StorageManager, options CleanupOptions) *cleanupManager {
 	return &cleanupManager{
 		stageManager:                            stage_manager.NewManager(),
-		parallel:                                options.Parallel,
-		parallelTasksLimit:                      options.ParallelTasksLimit,
 		ProjectName:                             projectName,
 		StorageManager:                          storageManager,
 		ImageNameList:                           options.ImageNameList,
@@ -77,9 +72,6 @@ type cleanupManager struct {
 	ConfigMetaCleanup                       config.MetaCleanup
 	KeepStagesBuiltWithinLastNHours         *uint64
 	DryRun                                  bool
-
-	parallel           bool
-	parallelTasksLimit int64
 }
 
 type GitRepo interface {
@@ -364,17 +356,7 @@ func (m *cleanupManager) gitHistoryBasedCleanup(ctx context.Context) error {
 		return err
 	}
 
-	var imagePairs []util.Pair[string, map[string][]string]
-	for k, v := range m.stageManager.GetImageStageIDCommitListToCleanup() {
-		p := util.NewPair(k, v)
-		imagePairs = append(imagePairs, p)
-	}
-
-	if err := parallel.DoTasks(ctx, len(imagePairs), parallel.DoTasksOptions{
-		MaxNumberOfWorkers: int(m.parallelTasksLimit),
-	}, func(ctx context.Context, taskId int) error {
-		pair := imagePairs[taskId]
-		imageName, stageIDCommitList := pair.Unpair()
+	for imageName, stageIDCommitList := range m.stageManager.GetImageStageIDCommitListToCleanup() {
 		var reachedStageIDs []string
 		var hitStageIDCommitList map[string][]string
 		// TODO(multiarch): iterate target platforms
@@ -422,9 +404,6 @@ func (m *cleanupManager) gitHistoryBasedCleanup(ctx context.Context) error {
 		}); err != nil {
 			return err
 		}
-		return nil
-	}); err != nil {
-		return fmt.Errorf("git history-based cleanup failed: %w", err)
 	}
 
 	if err := m.cleanupNonexistentImageMetadata(ctx); err != nil {
@@ -1038,17 +1017,4 @@ Be aware that the token provided to GitHub Actions workflow is not enough to rem
 
 		return nil
 	}
-}
-
-func (m *cleanupManager) EnableParallel(parallelTasksLimit int64) {
-	m.parallel = true
-	m.parallelTasksLimit = parallelTasksLimit
-}
-
-func (m *cleanupManager) MaxNumberOfWorkers() int64 {
-	if m.parallel && m.parallelTasksLimit > 0 {
-		return m.parallelTasksLimit
-	}
-
-	return 1
 }
