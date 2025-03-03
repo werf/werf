@@ -565,6 +565,11 @@ tasks:
     cmds:
       - curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin {{.golangcilintVersion | default "v1.57.1"}}
 
+  deps:install:gofumpt:
+    desc: "Install gofumpt binary."
+    cmds:
+      - go install mvdan.cc/gofumpt@v0.7.0
+
   deps:install:prettier:
     desc: "Install prettier."
     cmds:
