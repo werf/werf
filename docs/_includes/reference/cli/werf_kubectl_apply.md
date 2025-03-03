@@ -42,9 +42,9 @@ werf kubectl apply (-f FILENAME | -k DIRECTORY) [options]
 {{ header }} Options
 
 ```shell
-      --all="false"
+      --all=false
             Select all resources in the namespace of the specified resource types.
-      --allow-missing-template-keys="true"
+      --allow-missing-template-keys=true
             If true, ignore any errors in templates when a field or map key is missing in the       
             template. Only applies to golang and jsonpath output formats.
       --cascade="background"
@@ -57,50 +57,50 @@ werf kubectl apply (-f FILENAME | -k DIRECTORY) [options]
             without persisting the resource.
       --field-manager="kubectl-client-side-apply"
             Name of the manager used to track field ownership.
-  -f, --filename="[]"
+  -f, --filename=[]
             The files that contain the configurations to apply.
-      --force="false"
+      --force=false
             If true, immediately remove resources from API and bypass graceful deletion. Note that  
             immediate deletion of some resources may result in inconsistency or data loss and       
             requires confirmation.
-      --force-conflicts="false"
+      --force-conflicts=false
             If true, server-side apply will force the changes against conflicts.
-      --grace-period="-1"
+      --grace-period=-1
             Period of time in seconds given to the resource to terminate gracefully. Ignored if     
             negative. Set to 1 for immediate shutdown. Can only be set to 0 when --force is true    
             (force deletion).
   -k, --kustomize=""
             Process a kustomization directory. This flag can`t be used together with -f or -R.
-      --openapi-patch="true"
+      --openapi-patch=true
             If true, use openapi to calculate diff when the openapi presents and the resource can   
             be found in the openapi spec. Otherwise, fall back to use baked-in types.
   -o, --output=""
             Output format. One of: (json, yaml, name, go-template, go-template-file, template,      
             templatefile, jsonpath, jsonpath-as-json, jsonpath-file).
-      --overwrite="true"
+      --overwrite=true
             Automatically resolve conflicts between the modified and live configuration by using    
             values from the modified configuration
-      --prune="false"
+      --prune=false
             Automatically delete resource objects, that do not appear in the configs and are        
             created by either apply or create --save-config. Should be used with either -l or --all.
-      --prune-allowlist="[]"
+      --prune-allowlist=[]
             Overwrite the default allowlist with <group/version/kind> for --prune
-  -R, --recursive="false"
+  -R, --recursive=false
             Process the directory used in -f, --filename recursively. Useful when you want to       
             manage related manifests organized within the same directory.
   -l, --selector=""
             Selector (label query) to filter on, supports `=`, `==`, and `!=`.(e.g. -l              
             key1=value1,key2=value2). Matching objects must satisfy all of the specified label      
             constraints.
-      --server-side="false"
+      --server-side=false
             If true, apply runs in the server instead of the client.
-      --show-managed-fields="false"
+      --show-managed-fields=false
             If true, keep the managedFields when printing objects in JSON or YAML format.
       --template=""
             Template string or path to template file to use when -o=go-template,                    
             -o=go-template-file. The template format is golang templates                            
             [http://golang.org/pkg/text/template/#pkg-overview].
-      --timeout="0s"
+      --timeout=0s
             The length of time to wait before giving up on a delete, zero means determine a timeout 
             from the size of the object
       --validate="strict"
@@ -113,7 +113,7 @@ werf kubectl apply (-f FILENAME | -k DIRECTORY) [options]
             otherwise.
             		"false" or "ignore" will not perform any schema validation, silently dropping any     
             unknown or duplicate fields.
-      --wait="false"
+      --wait=false
             If true, wait for resources to be gone before returning. This waits for finalizers.
 ```
 
@@ -123,7 +123,7 @@ werf kubectl apply (-f FILENAME | -k DIRECTORY) [options]
       --as=""
             Username to impersonate for the operation. User could be a regular user or a service    
             account in a namespace.
-      --as-group="[]"
+      --as-group=[]
             Group to impersonate for the operation, this flag can be repeated to specify multiple   
             groups.
       --as-uid=""
@@ -140,11 +140,11 @@ werf kubectl apply (-f FILENAME | -k DIRECTORY) [options]
             The name of the kubeconfig cluster to use
       --context=""
             The name of the kubeconfig context to use (default $WERF_KUBE_CONTEXT)
-      --disable-compression="false"
+      --disable-compression=false
             If true, opt-out of response compression for all requests to the server
       --home-dir=""
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
-      --insecure-skip-tls-verify="false"
+      --insecure-skip-tls-verify=false
             If true, the server`s certificate will not be checked for validity. This will make your 
             HTTPS connections insecure (default $WERF_SKIP_TLS_VERIFY_REGISTRY)
       --kube-config-base64=""
@@ -153,9 +153,9 @@ werf kubectl apply (-f FILENAME | -k DIRECTORY) [options]
       --kubeconfig=""
             Path to the kubeconfig file to use for CLI requests (default $WERF_KUBE_CONFIG, or      
             $WERF_KUBECONFIG, or $KUBECONFIG). Ignored if kubeconfig passed as base64.
-      --log-flush-frequency="5s"
+      --log-flush-frequency=5s
             Maximum number of seconds between log flushes
-      --match-server-version="false"
+      --match-server-version=false
             Require server version to match client version
   -n, --namespace=""
             If present, the namespace scope for this CLI request
@@ -182,12 +182,12 @@ werf kubectl apply (-f FILENAME | -k DIRECTORY) [options]
             The name of the kubeconfig user to use
       --username=""
             Username for basic authentication to the API server
-  -v, --v="0"
+  -v, --v=0
             number for the log level verbosity
-      --vmodule=""
+      --vmodule=
             comma-separated list of pattern=N settings for file-filtered logging (only works for    
             the default text log format)
-      --warnings-as-errors="false"
+      --warnings-as-errors=false
             Treat warnings received from the server as errors and exit with a non-zero exit code
 ```
 

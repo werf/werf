@@ -36,32 +36,32 @@ werf kubectl diff -f FILENAME [options]
 {{ header }} Options
 
 ```shell
-      --concurrency="1"
+      --concurrency=1
             Number of objects to process in parallel when diffing against the live version. Larger  
             number = faster, but more memory, I/O and CPU over that shorter period of time.
       --field-manager="kubectl-client-side-apply"
             Name of the manager used to track field ownership.
-  -f, --filename="[]"
+  -f, --filename=[]
             Filename, directory, or URL to files contains the configuration to diff
-      --force-conflicts="false"
+      --force-conflicts=false
             If true, server-side apply will force the changes against conflicts.
   -k, --kustomize=""
             Process the kustomization directory. This flag can`t be used together with -f or -R.
-      --prune="false"
+      --prune=false
             Include resources that would be deleted by pruning. Can be used with -l and default     
             shows all resources would be pruned
-      --prune-allowlist="[]"
+      --prune-allowlist=[]
             Overwrite the default whitelist with <group/version/kind> for --prune
-  -R, --recursive="false"
+  -R, --recursive=false
             Process the directory used in -f, --filename recursively. Useful when you want to       
             manage related manifests organized within the same directory.
   -l, --selector=""
             Selector (label query) to filter on, supports `=`, `==`, and `!=`.(e.g. -l              
             key1=value1,key2=value2). Matching objects must satisfy all of the specified label      
             constraints.
-      --server-side="false"
+      --server-side=false
             If true, apply runs in the server instead of the client.
-      --show-managed-fields="false"
+      --show-managed-fields=false
             If true, include managed fields in the diff.
 ```
 
@@ -71,7 +71,7 @@ werf kubectl diff -f FILENAME [options]
       --as=""
             Username to impersonate for the operation. User could be a regular user or a service    
             account in a namespace.
-      --as-group="[]"
+      --as-group=[]
             Group to impersonate for the operation, this flag can be repeated to specify multiple   
             groups.
       --as-uid=""
@@ -88,11 +88,11 @@ werf kubectl diff -f FILENAME [options]
             The name of the kubeconfig cluster to use
       --context=""
             The name of the kubeconfig context to use (default $WERF_KUBE_CONTEXT)
-      --disable-compression="false"
+      --disable-compression=false
             If true, opt-out of response compression for all requests to the server
       --home-dir=""
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
-      --insecure-skip-tls-verify="false"
+      --insecure-skip-tls-verify=false
             If true, the server`s certificate will not be checked for validity. This will make your 
             HTTPS connections insecure (default $WERF_SKIP_TLS_VERIFY_REGISTRY)
       --kube-config-base64=""
@@ -101,9 +101,9 @@ werf kubectl diff -f FILENAME [options]
       --kubeconfig=""
             Path to the kubeconfig file to use for CLI requests (default $WERF_KUBE_CONFIG, or      
             $WERF_KUBECONFIG, or $KUBECONFIG). Ignored if kubeconfig passed as base64.
-      --log-flush-frequency="5s"
+      --log-flush-frequency=5s
             Maximum number of seconds between log flushes
-      --match-server-version="false"
+      --match-server-version=false
             Require server version to match client version
   -n, --namespace=""
             If present, the namespace scope for this CLI request
@@ -130,12 +130,12 @@ werf kubectl diff -f FILENAME [options]
             The name of the kubeconfig user to use
       --username=""
             Username for basic authentication to the API server
-  -v, --v="0"
+  -v, --v=0
             number for the log level verbosity
-      --vmodule=""
+      --vmodule=
             comma-separated list of pattern=N settings for file-filtered logging (only works for    
             the default text log format)
-      --warnings-as-errors="false"
+      --warnings-as-errors=false
             Treat warnings received from the server as errors and exit with a non-zero exit code
 ```
 

@@ -39,10 +39,10 @@ werf kubectl create secret generic NAME [--type=string] [--from-file=[key=]sourc
 {{ header }} Options
 
 ```shell
-      --allow-missing-template-keys="true"
+      --allow-missing-template-keys=true
             If true, ignore any errors in templates when a field or map key is missing in the       
             template. Only applies to golang and jsonpath output formats.
-      --append-hash="false"
+      --append-hash=false
             Append a hash of the secret to its name.
       --dry-run="none"
             Must be "none", "server", or "client". If client strategy, only print the object that   
@@ -50,23 +50,23 @@ werf kubectl create secret generic NAME [--type=string] [--from-file=[key=]sourc
             without persisting the resource.
       --field-manager="kubectl-create"
             Name of the manager used to track field ownership.
-      --from-env-file="[]"
+      --from-env-file=[]
             Specify the path to a file to read lines of key=val pairs to create a secret.
-      --from-file="[]"
+      --from-file=[]
             Key files can be specified using their file path, in which case a default name will be  
             given to them, or optionally with a name and file path, in which case the given name    
             will be used.  Specifying a directory will iterate each named file in the directory     
             that is a valid secret key.
-      --from-literal="[]"
+      --from-literal=[]
             Specify a key and literal value to insert in secret (i.e. mykey=somevalue)
   -o, --output=""
             Output format. One of: (json, yaml, name, go-template, go-template-file, template,      
             templatefile, jsonpath, jsonpath-as-json, jsonpath-file).
-      --save-config="false"
+      --save-config=false
             If true, the configuration of current object will be saved in its annotation.           
             Otherwise, the annotation will be unchanged. This flag is useful when you want to       
             perform kubectl apply on this object in the future.
-      --show-managed-fields="false"
+      --show-managed-fields=false
             If true, keep the managedFields when printing objects in JSON or YAML format.
       --template=""
             Template string or path to template file to use when -o=go-template,                    
@@ -92,7 +92,7 @@ werf kubectl create secret generic NAME [--type=string] [--from-file=[key=]sourc
       --as=""
             Username to impersonate for the operation. User could be a regular user or a service    
             account in a namespace.
-      --as-group="[]"
+      --as-group=[]
             Group to impersonate for the operation, this flag can be repeated to specify multiple   
             groups.
       --as-uid=""
@@ -109,11 +109,11 @@ werf kubectl create secret generic NAME [--type=string] [--from-file=[key=]sourc
             The name of the kubeconfig cluster to use
       --context=""
             The name of the kubeconfig context to use (default $WERF_KUBE_CONTEXT)
-      --disable-compression="false"
+      --disable-compression=false
             If true, opt-out of response compression for all requests to the server
       --home-dir=""
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
-      --insecure-skip-tls-verify="false"
+      --insecure-skip-tls-verify=false
             If true, the server`s certificate will not be checked for validity. This will make your 
             HTTPS connections insecure (default $WERF_SKIP_TLS_VERIFY_REGISTRY)
       --kube-config-base64=""
@@ -122,9 +122,9 @@ werf kubectl create secret generic NAME [--type=string] [--from-file=[key=]sourc
       --kubeconfig=""
             Path to the kubeconfig file to use for CLI requests (default $WERF_KUBE_CONFIG, or      
             $WERF_KUBECONFIG, or $KUBECONFIG). Ignored if kubeconfig passed as base64.
-      --log-flush-frequency="5s"
+      --log-flush-frequency=5s
             Maximum number of seconds between log flushes
-      --match-server-version="false"
+      --match-server-version=false
             Require server version to match client version
   -n, --namespace=""
             If present, the namespace scope for this CLI request
@@ -151,12 +151,12 @@ werf kubectl create secret generic NAME [--type=string] [--from-file=[key=]sourc
             The name of the kubeconfig user to use
       --username=""
             Username for basic authentication to the API server
-  -v, --v="0"
+  -v, --v=0
             number for the log level verbosity
-      --vmodule=""
+      --vmodule=
             comma-separated list of pattern=N settings for file-filtered logging (only works for    
             the default text log format)
-      --warnings-as-errors="false"
+      --warnings-as-errors=false
             Treat warnings received from the server as errors and exit with a non-zero exit code
 ```
 

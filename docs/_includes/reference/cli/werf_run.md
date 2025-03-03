@@ -31,9 +31,9 @@ werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
 {{ header }} Options
 
 ```shell
-      --bash="false"
+      --bash=false
             Use predefined docker options and command for debug
-      --cache-repo="[]"
+      --cache-repo=[]
             Specify one or multiple cache repos with images that will be used as a cache. Cache     
             will be populated when pushing newly built images into the primary repo and when        
             pulling existing images from the primary repo. Cache repo will be used to pull images   
@@ -46,15 +46,15 @@ werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
       --config-templates-dir=""
             Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf   
             in working directory)
-      --container-registry-mirror="[]"
+      --container-registry-mirror=[]
             (Buildah-only) Use specified mirrors for docker.io
-      --dev="false"
+      --dev=false
             Enable development mode (default $WERF_DEV).
             The mode allows working with project files without doing redundant commits during       
             debugging and development
       --dev-branch="_werf-dev"
             Set dev git branch name (default $WERF_DEV_BRANCH or "_werf-dev")
-      --dev-ignore="[]"
+      --dev-ignore=[]
             Add rules to ignore tracked and untracked changes in development mode (can specify      
             multiple).
             Also, can be specified with $WERF_DEV_IGNORE_* (e.g. $WERF_DEV_IGNORE_TESTS=*_test.go,  
@@ -68,7 +68,7 @@ werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
             Command needs granted permissions to read and pull images from the specified repo
       --docker-options=""
             Define docker run options (default $WERF_DOCKER_OPTIONS)
-      --dry-run="false"
+      --dry-run=false
             Indicate what the command would do without actually doing that (default $WERF_DRY_RUN)
       --env=""
             Use specified environment (default $WERF_ENV)
@@ -94,7 +94,7 @@ werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
             final-repo Harbor username (default $WERF_FINAL_REPO_HARBOR_USERNAME)
       --final-repo-quay-token=""
             final-repo quay.io token (default $WERF_FINAL_REPO_QUAY_TOKEN)
-      --follow="false"
+      --follow=false
             Enable follow mode (default $WERF_FOLLOW).
             The mode allows restarting the command on a new commit.
             In development mode (--dev), werf restarts the command on any changes (including        
@@ -107,10 +107,10 @@ werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
             (default $WERF_GITERMINISM_CONFIG or werf-giterminism.yaml in working directory)
       --home-dir=""
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
-      --insecure-helm-dependencies="false"
+      --insecure-helm-dependencies=false
             Allow insecure oci registries to be used in the .helm/Chart.yaml dependencies           
             configuration (default $WERF_INSECURE_HELM_DEPENDENCIES)
-      --insecure-registry="false"
+      --insecure-registry=false
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
       --kube-config=""
             Kubernetes config file path (default $WERF_KUBE_CONFIG, or $WERF_KUBECONFIG, or         
@@ -125,30 +125,30 @@ werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
             terminal) modes.
             Default $WERF_LOG_COLOR_MODE or auto mode.
-      --log-debug="false"
+      --log-debug=false
             Enable debug (default $WERF_LOG_DEBUG).
-      --log-pretty="true"
+      --log-pretty=true
             Enable emojis, auto line wrapping and log process border (default $WERF_LOG_PRETTY or   
             true).
-      --log-project-dir="false"
+      --log-project-dir=false
             Print current project directory path (default $WERF_LOG_PROJECT_DIR)
-      --log-quiet="false"
+      --log-quiet=false
             Disable explanatory output (default $WERF_LOG_QUIET).
-      --log-terminal-width="-1"
+      --log-terminal-width=-1
             Set log terminal width.
             Defaults to:
             * $WERF_LOG_TERMINAL_WIDTH
             * interactive terminal width or 140
-      --log-time="false"
+      --log-time=false
             Add time to log entries for precise event time tracking (default $WERF_LOG_TIME or      
             false).
       --log-time-format="2006-01-02T15:04:05Z07:00"
             Specify custom log time format (default $WERF_LOG_TIME_FORMAT or RFC3339 format).
-      --log-verbose="false"
+      --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
-      --loose-giterminism="false"
+      --loose-giterminism=false
             Loose werf giterminism mode restrictions
-      --platform="[]"
+      --platform=[]
             Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT]     
             ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)
       --repo=""
@@ -173,21 +173,21 @@ werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
             repo Harbor username (default $WERF_REPO_HARBOR_USERNAME)
       --repo-quay-token=""
             repo quay.io token (default $WERF_REPO_QUAY_TOKEN)
-  -Z, --require-built-images="false"
+  -Z, --require-built-images=false
             Requires all used images to be previously built and exist in repo. Exits with error if  
             needed images are not cached and so require to run build instructions (default          
             $WERF_REQUIRE_BUILT_IMAGES)
-      --secondary-repo="[]"
+      --secondary-repo=[]
             Specify one or multiple secondary read-only repos with images that will be used as a    
             cache.
             Also, can be specified with $WERF_SECONDARY_REPO_* (e.g. $WERF_SECONDARY_REPO_1=...,    
             $WERF_SECONDARY_REPO_2=...)
-      --shell="false"
+      --shell=false
             Use predefined docker options and command for debug
-      --skip-tls-verify-registry="false"
+      --skip-tls-verify-registry=false
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)
-      --ssh-key="[]"
+      --ssh-key=[]
             Use only specific ssh key(s).
             Can be specified with $WERF_SSH_KEY_* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa,         
             $WERF_SSH_KEY_NODEJS=~/.ssh/nodejs_rsa).
@@ -204,7 +204,7 @@ werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
             repo. :local address allows execution of werf processes from a single host only
       --tmp-dir=""
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
-      --virtual-merge="false"
+      --virtual-merge=false
             Enable virtual/ephemeral merge commit mode when building current application state      
             ($WERF_VIRTUAL_MERGE by default)
 ```

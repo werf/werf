@@ -32,25 +32,25 @@ werf kubectl drain NODE [options]
 {{ header }} Options
 
 ```shell
-      --chunk-size="500"
+      --chunk-size=500
             Return large lists in chunks rather than all at once. Pass 0 to disable. This flag is   
             beta and may change in the future.
-      --delete-emptydir-data="false"
+      --delete-emptydir-data=false
             Continue even if there are pods using emptyDir (local data that will be deleted when    
             the node is drained).
-      --disable-eviction="false"
+      --disable-eviction=false
             Force drain to use delete, even if eviction is supported. This will bypass checking     
             PodDisruptionBudgets, use with caution.
       --dry-run="none"
             Must be "none", "server", or "client". If client strategy, only print the object that   
             would be sent, without sending it. If server strategy, submit server-side request       
             without persisting the resource.
-      --force="false"
+      --force=false
             Continue even if there are pods that do not declare a controller.
-      --grace-period="-1"
+      --grace-period=-1
             Period of time in seconds given to each pod to terminate gracefully. If negative, the   
             default value specified in the pod will be used.
-      --ignore-daemonsets="false"
+      --ignore-daemonsets=false
             Ignore DaemonSet-managed pods.
       --pod-selector=""
             Label selector to filter pods on the node
@@ -58,10 +58,10 @@ werf kubectl drain NODE [options]
             Selector (label query) to filter on, supports `=`, `==`, and `!=`.(e.g. -l              
             key1=value1,key2=value2). Matching objects must satisfy all of the specified label      
             constraints.
-      --skip-wait-for-delete-timeout="0"
+      --skip-wait-for-delete-timeout=0
             If pod DeletionTimestamp older than N seconds, skip waiting for the pod.  Seconds must  
             be greater than 0 to skip.
-      --timeout="0s"
+      --timeout=0s
             The length of time to wait before giving up, zero means infinite
 ```
 
@@ -71,7 +71,7 @@ werf kubectl drain NODE [options]
       --as=""
             Username to impersonate for the operation. User could be a regular user or a service    
             account in a namespace.
-      --as-group="[]"
+      --as-group=[]
             Group to impersonate for the operation, this flag can be repeated to specify multiple   
             groups.
       --as-uid=""
@@ -88,11 +88,11 @@ werf kubectl drain NODE [options]
             The name of the kubeconfig cluster to use
       --context=""
             The name of the kubeconfig context to use (default $WERF_KUBE_CONTEXT)
-      --disable-compression="false"
+      --disable-compression=false
             If true, opt-out of response compression for all requests to the server
       --home-dir=""
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
-      --insecure-skip-tls-verify="false"
+      --insecure-skip-tls-verify=false
             If true, the server`s certificate will not be checked for validity. This will make your 
             HTTPS connections insecure (default $WERF_SKIP_TLS_VERIFY_REGISTRY)
       --kube-config-base64=""
@@ -101,9 +101,9 @@ werf kubectl drain NODE [options]
       --kubeconfig=""
             Path to the kubeconfig file to use for CLI requests (default $WERF_KUBE_CONFIG, or      
             $WERF_KUBECONFIG, or $KUBECONFIG). Ignored if kubeconfig passed as base64.
-      --log-flush-frequency="5s"
+      --log-flush-frequency=5s
             Maximum number of seconds between log flushes
-      --match-server-version="false"
+      --match-server-version=false
             Require server version to match client version
   -n, --namespace=""
             If present, the namespace scope for this CLI request
@@ -130,12 +130,12 @@ werf kubectl drain NODE [options]
             The name of the kubeconfig user to use
       --username=""
             Username for basic authentication to the API server
-  -v, --v="0"
+  -v, --v=0
             number for the log level verbosity
-      --vmodule=""
+      --vmodule=
             comma-separated list of pattern=N settings for file-filtered logging (only works for    
             the default text log format)
-      --warnings-as-errors="false"
+      --warnings-as-errors=false
             Treat warnings received from the server as errors and exit with a non-zero exit code
 ```
 
