@@ -136,8 +136,11 @@ werf converge --repo registry.mydomain.com/web --env production`,
 
 	common.SetupRelease(&commonCmdData, cmd, true)
 	common.SetupNamespace(&commonCmdData, cmd, true)
+
 	common.SetupAddAnnotations(&commonCmdData, cmd)
+	common.SetupAddAnnotationSeparator(&commonCmdData, cmd)
 	common.SetupAddLabels(&commonCmdData, cmd)
+	common.SetupAddLabelSeparator(&commonCmdData, cmd)
 
 	common.SetupSetDockerConfigJsonValue(&commonCmdData, cmd)
 	common.SetupSet(&commonCmdData, cmd)

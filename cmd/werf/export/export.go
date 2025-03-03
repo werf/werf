@@ -70,7 +70,7 @@ func NewExportCmd(ctx context.Context) *cobra.Command {
 			var err error
 			{
 				addLabelArray := append(util.PredefinedValuesByEnvNamePrefix("WERF_EXPORT_ADD_LABEL_"), addLabelArray...)
-				addLabelMap, err = common.KeyValueArrayToMap(addLabelArray, "=")
+				addLabelMap, err = common.InputArrayToKeyValueMap(addLabelArray, "=", ",")
 				if err != nil {
 					common.PrintHelp(cmd)
 					return fmt.Errorf("unsupported --add-label value: %w", err)
