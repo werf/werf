@@ -4,14 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
-	"os/exec"
-	"strings"
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
 	"github.com/werf/werf/v2/pkg/tmp_manager"
+	"github.com/werf/werf/v2/pkg/werf/exec"
 )
 
 const (
@@ -86,37 +84,7 @@ func RunAutoHostCleanup(ctx context.Context, backend container_backend.Container
 		args = append(args, "--backend-storage-path", *options.BackendStoragePath)
 	}
 
-	executableName := os.Getenv("WERF_ORIGINAL_EXECUTABLE")
-	if executableName == "" {
-		executableName = os.Args[0]
-	}
-
-	cmd := exec.Command(executableName, args...)
-
-	var env []string
-	for _, spec := range os.Environ() {
-		k := strings.SplitN(spec, "=", 2)[0]
-		if k == "WERF_ENABLE_PROCESS_EXTERMINATOR" {
-			continue
-		}
-
-		env = append(env, spec)
-	}
-	env = append(env, "_WERF_BACKGROUND_MODE_ENABLED=1")
-
-	cmd.Env = env
-
-	if err := cmd.Start(); err != nil {
-		logboek.Context(ctx).Warn().LogF("WARNING: unable to start background auto host cleanup process: %s\n", err)
-		return nil
-	}
-
-	if err := cmd.Process.Release(); err != nil {
-		logboek.Context(ctx).Warn().LogF("WARNING: unable to detach background auto host cleanup process: %s\n", err)
-		return nil
-	}
-
-	return nil
+	return exec.Detach(ctx, args)
 }
 
 func RunHostCleanup(ctx context.Context, backend container_backend.ContainerBackend, options HostCleanupOptions) error {
