@@ -231,11 +231,6 @@ func CliBuild_LiveOutputWithCustomIn(ctx context.Context, rc io.ReadCloser, args
 	})
 }
 
-func CliBuild_LiveOutput(ctx context.Context, args ...string) error {
-	buildOpts := BuildOptions{EnableBuildx: useBuildx}
-	return doCliBuild(cli(ctx), buildOpts, args...)
-}
-
 func checkForUnsupportedOptions(ctx context.Context, args ...string) ([]string, error) {
 	borderIndex := 0
 	for i := 0; i < len(args); i++ {
