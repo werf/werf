@@ -1210,7 +1210,10 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 				case *storage.RepoStagesStorage:
 					registry = phase.Conveyor.StorageManager.GetStagesStorage().(*storage.RepoStagesStorage).DockerRegistry
 				default:
-					return fmt.Errorf("unable to builde stage %q: local storage are not supported at the moment. Please provide repo with --repo flag or WERF_REPO env variable", stg.Name())
+					return fmt.Errorf(`unable to build stage %q: local storage is not supported. Please specify a repo using the --repo flag or the WERF_REPO environment variable.
+
+Building a stage without a repo is not supported due to the excessive overhead caused by build backend limitations.
+To debug the build locally, consider running a local registry or skipping the imageSpec stage using the option --skip-image-spec-stage (WERF_SKIP_IMAGE_SPEC_STAGE).`, stg.Name())
 				}
 
 				err := imagePkg.MutateImageSpecConfigRepo(ctx, prevImage, newImage, *stageImage.Image.GetImageSpecConfig(), registry)
