@@ -13,6 +13,19 @@
 
 * **build, docker, dockerfile:** fix panic expected stage "dockerfile" content digest label to be set! ([2748609](https://www.github.com/werf/werf/commit/2748609c1166090fe2b41c6a0eea306a318829a7))
 
+## [2.31.0](https://www.github.com/werf/werf/compare/v2.30.1...v2.31.0) (2025-03-03)
+
+
+### Features
+
+* **converge:** support multiple values within --add-annotation/--add-label flag ([29ef9c4](https://www.github.com/werf/werf/commit/29ef9c4959b938a0eb3b931e59786f7dc3ecd4c7))
+* **export:** support multiple values within --add-label flag ([df38cca](https://www.github.com/werf/werf/commit/df38ccaf918da78e857b0ad239e083d48634c9fc))
+
+
+### Bug Fixes
+
+* **build, docker, dockerfile:** fix panic expected stage "dockerfile" content digest label to be set! ([2748609](https://www.github.com/werf/werf/commit/2748609c1166090fe2b41c6a0eea306a318829a7))
+
 ### [2.30.1](https://www.github.com/werf/werf/compare/v2.30.0...v2.30.1) (2025-03-02)
 
 
