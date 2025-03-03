@@ -412,6 +412,8 @@ build:
 
 This configuration will be applied to all images in the project: labels and author will be set for all images, and unnecessary labels will be removed.
 
+> **Note:** Global configuration applies only for `final` images. See more [here](#using-intermediate-and-final-images)
+
 ### Configuration for a specific image
 
 Example configuration for an individual image:
@@ -472,6 +474,52 @@ git:
 
 In this example, the base image `postgres:12.22-bookworm` has unnecessary volumes removed, which can then be used in the `app` image.
 
+### Working with CMD and ENTRYPOINT  
+
+If the base image defines `CMD`, and `ENTRYPOINT` is set in the current image, `CMD` will be cleared.
+Thus, when modifying `ENTRYPOINT`, you must explicitly specify `CMD`. For example, if the base image contains the following configuration:
+
+```json
+"Cmd": ["/bin/bash"],
+"Entrypoint": null
+```  
+
+Then, to change `ENTRYPOINT`, the configuration should be: 
+
+```yaml
+project: test
+configVersion: 1
+---
+image: frontend_image
+from: alpine
+imageSpec:
+  config:
+    cmd:
+      - "/bin/bash"
+    entrypoint: 
+      - entrypoint.sh
+```  
+
+This behavior is consistent with Docker’s handling of CMD and ENTRYPOINT, as described in [the official documentation](https://docs.docker.com/reference/dockerfile/#understand-how-cmd-and-entrypoint-interact).
+
+### Working with environment variables  
+
+When working with environment variables, you can reference variables from the base image as well as newly defined variables.  
+
+```yaml
+project: test
+configVersion: 1
+---
+image: backend_image
+from: alpine
+imageSpec:
+  config:
+    env:
+      GOROOT: "/usr/local/go"
+      GOPATH: "/go"
+      PATH: "${PATH}:${GOROOT}/bin:${GOPATH}/bin" # Example result: /usr/bin:/usr/local/go/bin/:/go/bin
+                                                  # ${PATH} is inherited from the base image
+```
 
 ## Linking images
 
