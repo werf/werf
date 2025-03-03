@@ -29,88 +29,88 @@ werf helm list [flags] [options]
 {{ header }} Options
 
 ```shell
-  -a, --all=false
+  -a, --all="false"
             show all releases without any filter applied
-  -A, --all-namespaces=false
+  -A, --all-namespaces="false"
             list releases across all namespaces
-  -d, --date=false
+  -d, --date="false"
             sort by release date
-      --deployed=false
+      --deployed="false"
             show deployed releases. If no other is specified, this will be automatically enabled
-      --failed=false
+      --failed="false"
             show failed releases
-  -f, --filter=''
+  -f, --filter=""
             a regular expression (Perl compatible). Any releases that match the expression will be  
             included in the results
-  -m, --max=256
+  -m, --max="256"
             maximum number of releases to fetch
-      --no-headers=false
+      --no-headers="false"
             don`t print headers when using the default output format
-      --offset=0
+      --offset="0"
             next release index in the list, used to offset from start value
-  -o, --output=table
+  -o, --output="table"
             prints the output in the specified format. Allowed values: table, json, yaml
-      --pending=false
+      --pending="false"
             show pending releases
-  -r, --reverse=false
+  -r, --reverse="false"
             reverse the sort order
-  -l, --selector=''
+  -l, --selector=""
             Selector (label query) to filter on, supports `=`, `==`, and `!=`.(e.g. -l              
             key1=value1,key2=value2). Works only for secret(default) and configmap storage backends.
-  -q, --short=false
+  -q, --short="false"
             output short (quiet) listing format
-      --superseded=false
+      --superseded="false"
             show superseded releases
-      --time-format=''
+      --time-format=""
             format time using golang time formatter. Example: --time-format "2006-01-02             
             15:04:05Z0700"
-      --uninstalled=false
+      --uninstalled="false"
             show uninstalled releases (if `helm uninstall --keep-history` was used)
-      --uninstalling=false
+      --uninstalling="false"
             show releases that are currently being uninstalled
 ```
 
 {{ header }} Options inherited from parent commands
 
 ```shell
-      --hooks-status-progress-period=5
+      --hooks-status-progress-period="5"
             Hooks status progress period in seconds. Set 0 to stop showing hooks status progress.   
             Defaults to $WERF_HOOKS_STATUS_PROGRESS_PERIOD_SECONDS or status progress period value
-      --kube-config=''
+      --kube-config=""
             Kubernetes config file path (default $WERF_KUBE_CONFIG, or $WERF_KUBECONFIG, or         
             $KUBECONFIG)
-      --kube-config-base64=''
+      --kube-config-base64=""
             Kubernetes config data as base64 string (default $WERF_KUBE_CONFIG_BASE64 or            
             $WERF_KUBECONFIG_BASE64 or $KUBECONFIG_BASE64)
-      --kube-context=''
+      --kube-context=""
             Kubernetes config context (default $WERF_KUBE_CONTEXT)
-      --log-color-mode='auto'
+      --log-color-mode="auto"
             Set log color mode.
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
             terminal) modes.
             Default $WERF_LOG_COLOR_MODE or auto mode.
-      --log-debug=false
+      --log-debug="false"
             Enable debug (default $WERF_LOG_DEBUG).
-      --log-pretty=true
+      --log-pretty="true"
             Enable emojis, auto line wrapping and log process border (default $WERF_LOG_PRETTY or   
             true).
-      --log-quiet=false
+      --log-quiet="false"
             Disable explanatory output (default $WERF_LOG_QUIET).
-      --log-terminal-width=-1
+      --log-terminal-width="-1"
             Set log terminal width.
             Defaults to:
             * $WERF_LOG_TERMINAL_WIDTH
             * interactive terminal width or 140
-      --log-time=false
+      --log-time="false"
             Add time to log entries for precise event time tracking (default $WERF_LOG_TIME or      
             false).
-      --log-time-format='2006-01-02T15:04:05Z07:00'
+      --log-time-format="2006-01-02T15:04:05Z07:00"
             Specify custom log time format (default $WERF_LOG_TIME_FORMAT or RFC3339 format).
-      --log-verbose=false
+      --log-verbose="false"
             Enable verbose output (default $WERF_LOG_VERBOSE).
-  -n, --namespace=''
+  -n, --namespace=""
             namespace scope for this request
-      --status-progress-period=5
+      --status-progress-period="5"
             Status progress period in seconds. Set -1 to stop showing status progress. Defaults to  
             $WERF_STATUS_PROGRESS_PERIOD_SECONDS or 5 seconds
 ```

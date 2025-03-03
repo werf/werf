@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"text/template"
 	"unicode"
@@ -225,16 +226,13 @@ func FlagsUsages(f *flag.FlagSet) string {
 func flagLeftPart(flag *flag.Flag) string {
 	format := "--%s=%s"
 
-	if flag.Value.Type() == "string" {
-		format = "--%s='%s'"
-	}
-
+	value := strconv.Quote(flag.DefValue)
 	if len(flag.Shorthand) > 0 {
 		format = "  -%s, " + format
-		return fmt.Sprintf(format, flag.Shorthand, flag.Name, flag.DefValue)
+		return fmt.Sprintf(format, flag.Shorthand, flag.Name, value)
 	} else {
 		format = "      " + format
-		return fmt.Sprintf(format, flag.Name, flag.DefValue)
+		return fmt.Sprintf(format, flag.Name, value)
 	}
 }
 
