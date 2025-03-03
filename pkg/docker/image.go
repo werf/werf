@@ -209,6 +209,9 @@ func CliBuild_LiveOutputWithCustomIn(ctx context.Context, rc io.ReadCloser, args
 
 	if useBuildx {
 		buildOpts.EnableBuildx = true
+
+		// TODO: --provenance=false is a workaround for index manifests that we cannot handle properly with current code base (fix in v3).
+		args = append([]string{"--provenance=false"}, args...)
 	} else {
 		var err error
 		args, err = checkForUnsupportedOptions(ctx, args...)
