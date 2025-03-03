@@ -37,10 +37,14 @@ werf export [IMAGE_NAME...] [options]
 ```shell
       --add-label="[]"
             Add label to exported images (can specify multiple).
-            Format: labelName=labelValue.
+            Format: labelName=labelValue[<separator>labelName=labelValue ...]. The default          
+            separator is a newline ("\n"), but it can be customized using the --add-label-separator 
+            flag.
             Also, can be specified with $WERF_EXPORT_ADD_LABEL_* (e.g.                              
             $WERF_EXPORT_ADD_LABEL_1=labelName1=labelValue1,                                        
             $WERF_EXPORT_ADD_LABEL_2=labelName2=labelValue2)
+      --add-label-separator="\n"
+            Separator for --add-label values (default $WERF_EXPORT_ADD_LABEL_SEPARATOR or "\n")
       --cache-repo="[]"
             Specify one or multiple cache repos with images that will be used as a cache. Cache     
             will be populated when pushing newly built images into the primary repo and when        
