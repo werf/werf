@@ -113,7 +113,9 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupKubeContext(&commonCmdData, cmd)
 
 	common.SetupAddAnnotations(&commonCmdData, cmd)
+	common.SetupAddAnnotationSeparator(&commonCmdData, cmd)
 	common.SetupAddLabels(&commonCmdData, cmd)
+	common.SetupAddLabelSeparator(&commonCmdData, cmd)
 
 	common.SetupSet(&commonCmdData, cmd)
 	common.SetupSetString(&commonCmdData, cmd)
