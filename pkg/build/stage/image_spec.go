@@ -19,8 +19,8 @@ import (
 )
 
 const (
-	lablesGlobalWarning  = "Removal of the werf labels requires explicit use of the clearWerfLabels directive. Some labels are purely informational, while others are essential for cleanup operations."
-	lablesCleanUpWarning = "Removal of the %s label will affect host auto cleanup. Proper work of auto cleanup is not guaranteed."
+	werfLabelsGlobalWarning      = "Removal of the werf labels requires explicit use of the clearWerfLabels directive. Some labels are purely informational, while others are essential for cleanup operations."
+	werfLabelsHostCleanupWarning = "Removal of the %s label will affect host auto cleanup. Proper work of auto cleanup is not guaranteed."
 )
 
 type ImageSpecStage struct {
@@ -185,14 +185,14 @@ func modifyLabels(ctx context.Context, labels, addLabels map[string]string, remo
 		return false
 	}
 
-	shouldDoGolbalWarn := false
-	cleanUpWarnKeys := []string{}
+	shouldPrintGlobalWarn := false
+	var cleanupWarnKeys []string
 	for key := range labels {
 		if shouldRemove(key) {
 			if !clearWerfLabels && strings.HasPrefix(key, "werf") {
-				shouldDoGolbalWarn = true
+				shouldPrintGlobalWarn = true
 				if key == image.WerfStageDigestLabel {
-					cleanUpWarnKeys = append(cleanUpWarnKeys, key)
+					cleanupWarnKeys = append(cleanupWarnKeys, key)
 				}
 			} else {
 				delete(labels, key)
@@ -200,12 +200,12 @@ func modifyLabels(ctx context.Context, labels, addLabels map[string]string, remo
 		}
 	}
 
-	if shouldDoGolbalWarn {
-		global_warnings.GlobalWarningLn(ctx, lablesGlobalWarning)
+	if shouldPrintGlobalWarn {
+		global_warnings.GlobalWarningLn(ctx, werfLabelsGlobalWarning)
 	}
 
-	if len(cleanUpWarnKeys) > 0 {
-		global_warnings.GlobalWarningLn(ctx, fmt.Sprintf(lablesCleanUpWarning, strings.Join(cleanUpWarnKeys, "','")))
+	if len(cleanupWarnKeys) > 0 {
+		global_warnings.GlobalWarningLn(ctx, fmt.Sprintf(werfLabelsHostCleanupWarning, strings.Join(cleanupWarnKeys, "','")))
 	}
 
 	for key, value := range addLabels {
@@ -282,9 +282,9 @@ func modifyVolumes(_ context.Context, volumes map[string]struct{}, removeVolumes
 }
 
 func sortSliceWithNewSlice(original []string) []string {
-	new := append([]string(nil), original...)
-	sort.Strings(new)
-	return new
+	result := append([]string(nil), original...)
+	sort.Strings(result)
+	return result
 }
 
 func toDuration(seconds int) time.Duration {
