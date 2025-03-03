@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.30.2](https://www.github.com/werf/werf/compare/v2.30.1...v2.30.2) (2025-03-03)
+
+
+### Bug Fixes
+
+* **build, docker, dockerfile:** fix panic expected stage "dockerfile" content digest label to be set! ([2748609](https://www.github.com/werf/werf/commit/2748609c1166090fe2b41c6a0eea306a318829a7))
+
 ### [2.30.1](https://www.github.com/werf/werf/compare/v2.30.0...v2.30.1) (2025-03-02)
 
 
