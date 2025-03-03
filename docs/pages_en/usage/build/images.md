@@ -476,15 +476,15 @@ In this example, the base image `postgres:12.22-bookworm` has unnecessary volume
 
 ### Working with CMD and ENTRYPOINT  
 
-If `CMD` is defined in the base image and `ENTRYPOINT` is set in the current image, `CMD` will be reset to an empty value.  
-Therefore, when changing `ENTRYPOINT`, you must also specify `CMD`. For example, if the base image defines `CMD` and `ENTRYPOINT` as follows:  
+If the base image defines `CMD`, and `ENTRYPOINT` is set in the current image, `CMD` will be cleared.
+Thus, when modifying `ENTRYPOINT`, you must explicitly specify `CMD`. For example, if the base image contains the following configuration:
 
 ```json
 "Cmd": ["/bin/bash"],
 "Entrypoint": null
 ```  
 
-Then, to modify `ENTRYPOINT`, the configuration should look like this:  
+Then, to change `ENTRYPOINT`, the configuration should be: 
 
 ```yaml
 project: test
@@ -493,8 +493,6 @@ configVersion: 1
 image: frontend_image
 from: alpine
 imageSpec:
-  author: "Frontend Maintainer <frontend@example.com>"
-  clearHistory: true
   config:
     cmd:
       - "/bin/bash"
@@ -502,7 +500,7 @@ imageSpec:
       - entrypoint.sh
 ```  
 
-You can learn more about the nuances of working with `CMD` and `ENTRYPOINT` [here](https://docs.docker.com/reference/dockerfile/#understand-how-cmd-and-entrypoint-interact).
+This behavior is consistent with Docker’s handling of CMD and ENTRYPOINT, as described in [the official documentation](https://docs.docker.com/reference/dockerfile/#understand-how-cmd-and-entrypoint-interact).
 
 ### Working with environment variables  
 
@@ -515,8 +513,6 @@ configVersion: 1
 image: backend_image
 from: alpine
 imageSpec:
-  author: "Backend Maintainer <backend@example.com>"
-  clearHistory: true
   config:
     env:
       GOROOT: "/usr/local/go"

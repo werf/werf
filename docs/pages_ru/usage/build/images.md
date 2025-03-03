@@ -475,14 +475,15 @@ git:
 
 ### Работа с CMD и ENTRYPOINT
 
-Если в базовом образе был задан `CMD`, а в текущем образе устанавливается `ENTRYPOINT`, то `CMD` сбросится в пустое значение.
-Таким образом для при изменении `ENTRYPOINT` необходимо так же задать `CMD`. К примеру, в базовом образе `CMD` и `ENTRYPOINT` определны следущим образом:
+Если в базовом образе задан `CMD`, а в текущем образе указан `ENTRYPOINT`, то `CMD` будет сброшен.
+Поэтому при изменении `ENTRYPOINT` необходимо явно задавать `CMD`. Например, если в базовом образе указана следующая конфигурация:
 
 ```json
 "Cmd": ["/bin/bash"],
 "Entrypoint": null,
 ```
-То для изменения `ENTRYPOINT` конфигурация должна выглядеть следующим образом:
+
+То для изменения `ENTRYPOINT` конфигурация должна выглядеть так:
 
 ```yaml
 project: test
@@ -491,19 +492,18 @@ configVersion: 1
 image: frontend_image
 from: alpine
 imageSpec:
-  author: "Frontend Maintainer <frontend@example.com>"
-  clearHistory: true
   config:
     cmd:
       - "/bin/bash"
     entrypoint: 
       - entrypoint.sh
 ```
-Более подробно о нюансах работы с `CMD` и `ENTRYPOINT` можете узнать [здесь](https://docs.docker.com/reference/dockerfile/#understand-how-cmd-and-entrypoint-interact)
+
+Такое поведение соответствует работе Docker с `CMD` и `ENTRYPOINT`, подробнее об этом можно узнать в [официальной документации](https://docs.docker.com/reference/dockerfile/#understand-how-cmd-and-entrypoint-interact)
 
 ### Работа с переменными окружения
 
-При работе с переменными окружения вы можете ссылаться на перменные из базового образа, а так же ссылаться на вновь заданные переменные
+При работе с переменными окружения вы можете ссылаться на переменные из базового образа, а также на заданные переменные:
 
 ```yaml
 project: test
@@ -512,8 +512,6 @@ configVersion: 1
 image: backend_image
 from: alpine
 imageSpec:
-  author: "Backend Maintainer <backend@example.com>"
-  clearHistory: true
   config:
     env:
       GOROOT: "/usr/local/go"
@@ -521,7 +519,6 @@ imageSpec:
       PATH: "${PATH}:${GOROOT}/bin:${GOPATH}/bin" # пример результата: /usr/bin:/usr/local/go/bin/:/go/bin
                                                   # ${PATH} в данном случае получен из базового образа
 ```
-
 
 ## Взаимодействие между образами
 
