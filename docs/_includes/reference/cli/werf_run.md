@@ -185,7 +185,7 @@ werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
       --shell=false
             Use predefined docker options and command for debug
       --skip-image-spec-stage=false
-            Force skipping `imageSpec` stage even if imageSpec config was set in werf.yaml
+            Force skipping "imageSpec" build stage (default $WERF_SKIP_IMAGE_SPEC_STAGE or false)
       --skip-tls-verify-registry=false
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)
