@@ -24,15 +24,15 @@ werf host purge [options]
 {{ header }} Options
 
 ```shell
-      --container-registry-mirror="[]"
+      --container-registry-mirror=[]
             (Buildah-only) Use specified mirrors for docker.io
-      --dev="false"
+      --dev=false
             Enable development mode (default $WERF_DEV).
             The mode allows working with project files without doing redundant commits during       
             debugging and development
       --dev-branch="_werf-dev"
             Set dev git branch name (default $WERF_DEV_BRANCH or "_werf-dev")
-      --dev-ignore="[]"
+      --dev-ignore=[]
             Add rules to ignore tracked and untracked changes in development mode (can specify      
             multiple).
             Also, can be specified with $WERF_DEV_IGNORE_* (e.g. $WERF_DEV_IGNORE_TESTS=*_test.go,  
@@ -40,46 +40,46 @@ werf host purge [options]
       --docker-config=""
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)
-      --dry-run="false"
+      --dry-run=false
             Indicate what the command would do without actually doing that (default $WERF_DRY_RUN)
-      --force="false"
+      --force=false
             First remove containers that use werf docker images which are going to be deleted
       --home-dir=""
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
-      --insecure-registry="false"
+      --insecure-registry=false
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
       --log-color-mode="auto"
             Set log color mode.
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
             terminal) modes.
             Default $WERF_LOG_COLOR_MODE or auto mode.
-      --log-debug="false"
+      --log-debug=false
             Enable debug (default $WERF_LOG_DEBUG).
-      --log-pretty="true"
+      --log-pretty=true
             Enable emojis, auto line wrapping and log process border (default $WERF_LOG_PRETTY or   
             true).
-      --log-quiet="false"
+      --log-quiet=false
             Disable explanatory output (default $WERF_LOG_QUIET).
-      --log-terminal-width="-1"
+      --log-terminal-width=-1
             Set log terminal width.
             Defaults to:
             * $WERF_LOG_TERMINAL_WIDTH
             * interactive terminal width or 140
-      --log-time="false"
+      --log-time=false
             Add time to log entries for precise event time tracking (default $WERF_LOG_TIME or      
             false).
       --log-time-format="2006-01-02T15:04:05Z07:00"
             Specify custom log time format (default $WERF_LOG_TIME_FORMAT or RFC3339 format).
-      --log-verbose="false"
+      --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
-      --loose-giterminism="false"
+      --loose-giterminism=false
             Loose werf giterminism mode restrictions
-      --platform="[]"
+      --platform=[]
             Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT]     
             ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)
   -N, --project-name=""
             Set a specific project name (default $WERF_PROJECT_NAME)
-      --skip-tls-verify-registry="false"
+      --skip-tls-verify-registry=false
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)
   -S, --synchronization=""

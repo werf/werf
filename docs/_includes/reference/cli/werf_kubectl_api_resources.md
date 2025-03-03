@@ -38,14 +38,14 @@ werf kubectl api-resources [flags] [options]
 ```shell
       --api-group=""
             Limit to resources in the specified API group.
-      --cached="false"
+      --cached=false
             Use the cached list of resources if available.
-      --categories="[]"
+      --categories=[]
             Limit to resources that belong to the specified categories.
-      --namespaced="true"
+      --namespaced=true
             If false, non-namespaced resources will be returned, otherwise returning namespaced     
             resources by default.
-      --no-headers="false"
+      --no-headers=false
             When using the default or custom-column output format, don`t print headers (default     
             print headers).
   -o, --output=""
@@ -53,7 +53,7 @@ werf kubectl api-resources [flags] [options]
       --sort-by=""
             If non-empty, sort list of resources using specified field. The field can be either     
             `name` or `kind`.
-      --verbs="[]"
+      --verbs=[]
             Limit to resources that support the specified verbs.
 ```
 
@@ -63,7 +63,7 @@ werf kubectl api-resources [flags] [options]
       --as=""
             Username to impersonate for the operation. User could be a regular user or a service    
             account in a namespace.
-      --as-group="[]"
+      --as-group=[]
             Group to impersonate for the operation, this flag can be repeated to specify multiple   
             groups.
       --as-uid=""
@@ -80,11 +80,11 @@ werf kubectl api-resources [flags] [options]
             The name of the kubeconfig cluster to use
       --context=""
             The name of the kubeconfig context to use (default $WERF_KUBE_CONTEXT)
-      --disable-compression="false"
+      --disable-compression=false
             If true, opt-out of response compression for all requests to the server
       --home-dir=""
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
-      --insecure-skip-tls-verify="false"
+      --insecure-skip-tls-verify=false
             If true, the server`s certificate will not be checked for validity. This will make your 
             HTTPS connections insecure (default $WERF_SKIP_TLS_VERIFY_REGISTRY)
       --kube-config-base64=""
@@ -93,9 +93,9 @@ werf kubectl api-resources [flags] [options]
       --kubeconfig=""
             Path to the kubeconfig file to use for CLI requests (default $WERF_KUBE_CONFIG, or      
             $WERF_KUBECONFIG, or $KUBECONFIG). Ignored if kubeconfig passed as base64.
-      --log-flush-frequency="5s"
+      --log-flush-frequency=5s
             Maximum number of seconds between log flushes
-      --match-server-version="false"
+      --match-server-version=false
             Require server version to match client version
   -n, --namespace=""
             If present, the namespace scope for this CLI request
@@ -122,12 +122,12 @@ werf kubectl api-resources [flags] [options]
             The name of the kubeconfig user to use
       --username=""
             Username for basic authentication to the API server
-  -v, --v="0"
+  -v, --v=0
             number for the log level verbosity
-      --vmodule=""
+      --vmodule=
             comma-separated list of pattern=N settings for file-filtered logging (only works for    
             the default text log format)
-      --warnings-as-errors="false"
+      --warnings-as-errors=false
             Treat warnings received from the server as errors and exit with a non-zero exit code
 ```
 

@@ -15,7 +15,7 @@ werf bundle copy [options]
 {{ header }} Options
 
 ```shell
-      --container-registry-mirror="[]"
+      --container-registry-mirror=[]
             (Buildah-only) Use specified mirrors for docker.io
       --docker-config=""
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
@@ -25,7 +25,7 @@ werf bundle copy [options]
             Source address of the bundle to copy, specify bundle archive using schema               
             `archive:PATH_TO_ARCHIVE.tar.gz`, specify remote bundle with schema                     
             `[docker://]REPO:TAG` or without schema.
-  -C, --helm-compatible-chart="true"
+  -C, --helm-compatible-chart=true
             Set chart name in the Chart.yaml of the published chart to the last path component of   
             container registry repo (for REGISTRY/PATH/TO/REPO address chart name will be REPO,     
             more info https://helm.sh/docs/topics/registries/#oci-feature-deprecation-and-behavior-c
@@ -33,45 +33,45 @@ werf bundle copy [options]
             OCI registry requirements. Default true or $WERF_HELM_COMPATIBLE_CHART.
       --home-dir=""
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
-      --insecure-helm-dependencies="false"
+      --insecure-helm-dependencies=false
             Allow insecure oci registries to be used in the Chart.yaml dependencies configuration   
             (default $WERF_INSECURE_HELM_DEPENDENCIES)
-      --insecure-registry="false"
+      --insecure-registry=false
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
       --log-color-mode="auto"
             Set log color mode.
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
             terminal) modes.
             Default $WERF_LOG_COLOR_MODE or auto mode.
-      --log-debug="false"
+      --log-debug=false
             Enable debug (default $WERF_LOG_DEBUG).
-      --log-pretty="true"
+      --log-pretty=true
             Enable emojis, auto line wrapping and log process border (default $WERF_LOG_PRETTY or   
             true).
-      --log-project-dir="false"
+      --log-project-dir=false
             Print current project directory path (default $WERF_LOG_PROJECT_DIR)
-      --log-quiet="false"
+      --log-quiet=false
             Disable explanatory output (default $WERF_LOG_QUIET).
-      --log-terminal-width="-1"
+      --log-terminal-width=-1
             Set log terminal width.
             Defaults to:
             * $WERF_LOG_TERMINAL_WIDTH
             * interactive terminal width or 140
-      --log-time="false"
+      --log-time=false
             Add time to log entries for precise event time tracking (default $WERF_LOG_TIME or      
             false).
       --log-time-format="2006-01-02T15:04:05Z07:00"
             Specify custom log time format (default $WERF_LOG_TIME_FORMAT or RFC3339 format).
-      --log-verbose="false"
+      --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
-      --platform="[]"
+      --platform=[]
             Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT]     
             ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)
       --rename-chart=""
             Force setting of chart name in the Chart.yaml of the published chart to the specified   
             value (can be set by the $WERF_RENAME_CHART, no rename by default, could not be used    
             together with the `--helm-compatible-chart` option).
-      --skip-tls-verify-registry="false"
+      --skip-tls-verify-registry=false
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)
       --tmp-dir=""

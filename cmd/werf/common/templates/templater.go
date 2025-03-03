@@ -226,13 +226,17 @@ func FlagsUsages(f *flag.FlagSet) string {
 func flagLeftPart(flag *flag.Flag) string {
 	format := "--%s=%s"
 
-	value := strconv.Quote(flag.DefValue)
+	defValue := flag.DefValue
+	if flag.Value.Type() == "string" {
+		defValue = strconv.Quote(defValue)
+	}
+
 	if len(flag.Shorthand) > 0 {
 		format = "  -%s, " + format
-		return fmt.Sprintf(format, flag.Shorthand, flag.Name, value)
+		return fmt.Sprintf(format, flag.Shorthand, flag.Name, defValue)
 	} else {
 		format = "      " + format
-		return fmt.Sprintf(format, flag.Name, value)
+		return fmt.Sprintf(format, flag.Name, defValue)
 	}
 }
 

@@ -16,7 +16,7 @@ werf helm lint PATH [flags] [options]
 {{ header }} Options
 
 ```shell
-      --add-annotation="[]"
+      --add-annotation=[]
             Add annotation to deploying resources (can specify multiple).
             Format: annoName=annoValue[<separator>annoName=annoValue ...]. The default separator is 
             a newline ("\n"), but it can be customized using the --add-annotation-separator flag.
@@ -25,7 +25,7 @@ werf helm lint PATH [flags] [options]
             $WERF_ADD_ANNOTATION_2=annoName2=annoValue2)
       --add-annotation-separator="\n"
             Separator for --add-annotation values (default $WERF_ADD_ANNOTATION_SEPARATOR or "\n")
-      --add-label="[]"
+      --add-label=[]
             Add label to deploying resources (can specify multiple).
             Format: labelName=labelValue[<separator>labelName=labelValue ...]. The default          
             separator is a newline ("\n"), but it can be customized using the --add-label-separator 
@@ -36,42 +36,42 @@ werf helm lint PATH [flags] [options]
             Separator for --add-label values (default $WERF_ADD_LABEL_SEPARATOR or "\n")
       --env=""
             Use specified environment (default $WERF_ENV)
-      --ignore-secret-key="false"
+      --ignore-secret-key=false
             Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)
       --kube-version=""
             Kubernetes version used for capabilities and deprecation checks
-      --quiet="false"
+      --quiet=false
             print only warnings and errors
-      --secret-values="[]"
+      --secret-values=[]
             Specify helm secret values in a YAML file (can specify multiple). Also, can be defined  
             with $WERF_SECRET_VALUES_* (e.g. $WERF_SECRET_VALUES_ENV=.helm/secret_values_test.yaml, 
             $WERF_SECRET_VALUES_DB=.helm/secret_values_db.yaml)
-      --set="[]"
+      --set=[]
             set values on the command line (can specify multiple or separate values with commas:    
             key1=val1,key2=val2)
-      --set-file="[]"
+      --set-file=[]
             set values from respective files specified via the command line (can specify multiple   
             or separate values with commas: key1=path1,key2=path2)
-      --set-json="[]"
+      --set-json=[]
             set JSON values on the command line (can specify multiple or separate values with       
             commas: key1=jsonval1,key2=jsonval2)
-      --set-literal="[]"
+      --set-literal=[]
             set a literal STRING value on the command line
-      --set-string="[]"
+      --set-string=[]
             set STRING values on the command line (can specify multiple or separate values with     
             commas: key1=val1,key2=val2)
-      --strict="false"
+      --strict=false
             fail on lint warnings
-  -f, --values="[]"
+  -f, --values=[]
             specify values in a YAML file or a URL (can specify multiple)
-      --with-subcharts="false"
+      --with-subcharts=false
             lint dependent charts
 ```
 
 {{ header }} Options inherited from parent commands
 
 ```shell
-      --hooks-status-progress-period="5"
+      --hooks-status-progress-period=5
             Hooks status progress period in seconds. Set 0 to stop showing hooks status progress.   
             Defaults to $WERF_HOOKS_STATUS_PROGRESS_PERIOD_SECONDS or status progress period value
       --kube-config=""
@@ -87,28 +87,28 @@ werf helm lint PATH [flags] [options]
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
             terminal) modes.
             Default $WERF_LOG_COLOR_MODE or auto mode.
-      --log-debug="false"
+      --log-debug=false
             Enable debug (default $WERF_LOG_DEBUG).
-      --log-pretty="true"
+      --log-pretty=true
             Enable emojis, auto line wrapping and log process border (default $WERF_LOG_PRETTY or   
             true).
-      --log-quiet="false"
+      --log-quiet=false
             Disable explanatory output (default $WERF_LOG_QUIET).
-      --log-terminal-width="-1"
+      --log-terminal-width=-1
             Set log terminal width.
             Defaults to:
             * $WERF_LOG_TERMINAL_WIDTH
             * interactive terminal width or 140
-      --log-time="false"
+      --log-time=false
             Add time to log entries for precise event time tracking (default $WERF_LOG_TIME or      
             false).
       --log-time-format="2006-01-02T15:04:05Z07:00"
             Specify custom log time format (default $WERF_LOG_TIME_FORMAT or RFC3339 format).
-      --log-verbose="false"
+      --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
   -n, --namespace=""
             namespace scope for this request
-      --status-progress-period="5"
+      --status-progress-period=5
             Status progress period in seconds. Set -1 to stop showing status progress. Defaults to  
             $WERF_STATUS_PROGRESS_PERIOD_SECONDS or 5 seconds
 ```

@@ -15,7 +15,7 @@ werf bundle apply [options]
 {{ header }} Options
 
 ```shell
-      --add-annotation="[]"
+      --add-annotation=[]
             Add annotation to deploying resources (can specify multiple).
             Format: annoName=annoValue[<separator>annoName=annoValue ...]. The default separator is 
             a newline ("\n"), but it can be customized using the --add-annotation-separator flag.
@@ -24,7 +24,7 @@ werf bundle apply [options]
             $WERF_ADD_ANNOTATION_2=annoName2=annoValue2)
       --add-annotation-separator="\n"
             Separator for --add-annotation values (default $WERF_ADD_ANNOTATION_SEPARATOR or "\n")
-      --add-label="[]"
+      --add-label=[]
             Add label to deploying resources (can specify multiple).
             Format: labelName=labelValue[<separator>labelName=labelValue ...]. The default          
             separator is a newline ("\n"), but it can be customized using the --add-label-separator 
@@ -33,13 +33,13 @@ werf bundle apply [options]
             $WERF_ADD_LABEL_1=labelName1=labelValue1, $WERF_ADD_LABEL_2=labelName2=labelValue2)
       --add-label-separator="\n"
             Separator for --add-label values (default $WERF_ADD_LABEL_SEPARATOR or "\n")
-      --atomic="false"
+      --atomic=false
             Enable auto rollback of the failed release to the previous deployed release version     
             when current deploy process have failed ($WERF_ATOMIC by default)
-  -R, --auto-rollback="false"
+  -R, --auto-rollback=false
             Enable auto rollback of the failed release to the previous deployed release version     
             when current deploy process have failed ($WERF_AUTO_ROLLBACK by default)
-      --container-registry-mirror="[]"
+      --container-registry-mirror=[]
             (Buildah-only) Use specified mirrors for docker.io
       --deploy-graph-path=""
             Save deploy graph path to the specified file (by default $WERF_DEPLOY_GRAPH_PATH).      
@@ -48,10 +48,10 @@ werf bundle apply [options]
             Change deploy report path and format (by default $WERF_DEPLOY_REPORT_PATH or            
             ".werf-deploy-report.json" if not set). Extension must be .json for JSON format. If     
             extension not specified, then .json is used
-      --disable-default-secret-values="false"
+      --disable-default-secret-values=false
             Do not use secret values from the default .helm/secret-values.yaml file (default        
             $WERF_DISABLE_DEFAULT_SECRET_VALUES or false)
-      --disable-default-values="false"
+      --disable-default-values=false
             Do not use values from the default .helm/values.yaml file (default                      
             $WERF_DISABLE_DEFAULT_VALUES or false)
       --docker-config=""
@@ -63,19 +63,19 @@ werf bundle apply [options]
             Use specified environment (default $WERF_ENV)
       --home-dir=""
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
-      --hooks-status-progress-period="5"
+      --hooks-status-progress-period=5
             Hooks status progress period in seconds. Set 0 to stop showing hooks status progress.   
             Defaults to $WERF_HOOKS_STATUS_PROGRESS_PERIOD_SECONDS or status progress period value
-      --ignore-secret-key="false"
+      --ignore-secret-key=false
             Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)
-      --insecure-helm-dependencies="false"
+      --insecure-helm-dependencies=false
             Allow insecure oci registries to be used in the Chart.yaml dependencies configuration   
             (default $WERF_INSECURE_HELM_DEPENDENCIES)
-      --insecure-registry="false"
+      --insecure-registry=false
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
       --kube-api-server=""
             Kubernetes API server address (default $WERF_KUBE_API_SERVER)
-      --kube-burst-limit="100"
+      --kube-burst-limit=100
             Kubernetes client burst limit (default $WERF_KUBE_BURST_LIMIT or 100)
       --kube-ca-path=""
             Kubernetes API server CA path (default $WERF_KUBE_CA_PATH)
@@ -87,7 +87,7 @@ werf bundle apply [options]
             $WERF_KUBECONFIG_BASE64 or $KUBECONFIG_BASE64)
       --kube-context=""
             Kubernetes config context (default $WERF_KUBE_CONTEXT)
-      --kube-qps-limit="30"
+      --kube-qps-limit=30
             Kubernetes client QPS limit (default $WERF_KUBE_QPS_LIMIT or 30)
       --kube-tls-server=""
             Server name to use for Kubernetes API server certificate validation. If it is not       
@@ -100,36 +100,36 @@ werf bundle apply [options]
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
             terminal) modes.
             Default $WERF_LOG_COLOR_MODE or auto mode.
-      --log-debug="false"
+      --log-debug=false
             Enable debug (default $WERF_LOG_DEBUG).
-      --log-pretty="true"
+      --log-pretty=true
             Enable emojis, auto line wrapping and log process border (default $WERF_LOG_PRETTY or   
             true).
-      --log-project-dir="false"
+      --log-project-dir=false
             Print current project directory path (default $WERF_LOG_PROJECT_DIR)
-      --log-quiet="false"
+      --log-quiet=false
             Disable explanatory output (default $WERF_LOG_QUIET).
-      --log-terminal-width="-1"
+      --log-terminal-width=-1
             Set log terminal width.
             Defaults to:
             * $WERF_LOG_TERMINAL_WIDTH
             * interactive terminal width or 140
-      --log-time="false"
+      --log-time=false
             Add time to log entries for precise event time tracking (default $WERF_LOG_TIME or      
             false).
       --log-time-format="2006-01-02T15:04:05Z07:00"
             Specify custom log time format (default $WERF_LOG_TIME_FORMAT or RFC3339 format).
-      --log-verbose="false"
+      --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
       --namespace=""
             Use specified Kubernetes namespace (default $WERF_NAMESPACE)
-      --network-parallelism="30"
+      --network-parallelism=30
             Parallelize some network operations (default $WERF_NETWORK_PARALLELISM or 30)
       --release=""
             Use specified Helm release name (default $WERF_RELEASE)
-      --releases-history-max="5"
+      --releases-history-max=5
             Max releases to keep in release storage ($WERF_RELEASES_HISTORY_MAX or 5 by default)
-      --render-subchart-notes="false"
+      --render-subchart-notes=false
             If set, render subchart notes along with the parent (by default                         
             $WERF_RENDER_SUBCHART_NOTES or false)
       --repo=""
@@ -157,52 +157,52 @@ werf bundle apply [options]
       --rollback-graph-path=""
             Save rollback graph path to the specified file (by default $WERF_ROLLBACK_GRAPH_PATH).  
             Extension must be .dot or not specified. If extension not specified, then .dot is used
-      --save-deploy-report="false"
+      --save-deploy-report=false
             Save deploy report (by default $WERF_SAVE_DEPLOY_REPORT or false). Its path and format  
             configured with --deploy-report-path
-      --secret-values="[]"
+      --secret-values=[]
             Specify helm secret values in a YAML file (can specify multiple). Also, can be defined  
             with $WERF_SECRET_VALUES_* (e.g. $WERF_SECRET_VALUES_ENV=secret_values_test.yaml,       
             $WERF_SECRET_VALUES_DB=secret_values_db.yaml)
-      --set="[]"
+      --set=[]
             Set helm values on the command line (can specify multiple or separate values with       
             commas: key1=val1,key2=val2).
             Also, can be defined with $WERF_SET_* (e.g. $WERF_SET_1=key1=val1,                      
             $WERF_SET_2=key2=val2)
-      --set-docker-config-json-value="false"
+      --set-docker-config-json-value=false
             Shortcut to set current docker config into the .Values.dockerconfigjson
-      --set-file="[]"
+      --set-file=[]
             Set values from respective files specified via the command line (can specify multiple   
             or separate values with commas: key1=path1,key2=path2).
             Also, can be defined with $WERF_SET_FILE_* (e.g. $WERF_SET_FILE_1=key1=path1,           
             $WERF_SET_FILE_2=key2=val2)
-      --set-string="[]"
+      --set-string=[]
             Set STRING helm values on the command line (can specify multiple or separate values     
             with commas: key1=val1,key2=val2).
             Also, can be defined with $WERF_SET_STRING_* (e.g. $WERF_SET_STRING_1=key1=val1,        
             $WERF_SET_STRING_2=key2=val2)
-  -L, --skip-dependencies-repo-refresh="false"
+  -L, --skip-dependencies-repo-refresh=false
             Do not refresh helm chart repositories locally cached index
-      --skip-tls-verify-helm-dependencies="false"
+      --skip-tls-verify-helm-dependencies=false
             Skip TLS certificate validation when accessing a Helm charts repository (default        
             $WERF_SKIP_TLS_VERIFY_HELM_DEPENDENCIES)
-      --skip-tls-verify-kube="false"
+      --skip-tls-verify-kube=false
             Skip TLS certificate validation when accessing a Kubernetes cluster (default            
             $WERF_SKIP_TLS_VERIFY_KUBE)
-      --skip-tls-verify-registry="false"
+      --skip-tls-verify-registry=false
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)
-      --status-progress-period="5"
+      --status-progress-period=5
             Status progress period in seconds. Set -1 to stop showing status progress. Defaults to  
             $WERF_STATUS_PROGRESS_PERIOD_SECONDS or 5 seconds
       --tag="latest"
             Provide exact tag version or semver-based pattern, werf will install or upgrade to the  
             latest version of the specified bundle ($WERF_TAG or latest by default)
-  -t, --timeout="0"
+  -t, --timeout=0
             Resources tracking timeout in seconds ($WERF_TIMEOUT by default)
       --tmp-dir=""
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
-      --values="[]"
+      --values=[]
             Specify helm values in a YAML file or a URL (can specify multiple). Also, can be        
             defined with $WERF_VALUES_* (e.g. $WERF_VALUES_1=values_1.yaml,                         
             $WERF_VALUES_2=values_2.yaml)

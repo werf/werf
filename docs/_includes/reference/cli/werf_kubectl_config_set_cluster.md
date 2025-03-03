@@ -37,9 +37,9 @@ werf kubectl config set-cluster NAME [--server=server] [--certificate-authority=
 ```shell
       --certificate-authority=""
             Path to certificate-authority file for the cluster entry in kubeconfig
-      --embed-certs="false"
+      --embed-certs=false
             embed-certs for the cluster entry in kubeconfig
-      --insecure-skip-tls-verify="false"
+      --insecure-skip-tls-verify=false
             insecure-skip-tls-verify for the cluster entry in kubeconfig
       --proxy-url=""
             proxy-url for the cluster entry in kubeconfig
@@ -55,7 +55,7 @@ werf kubectl config set-cluster NAME [--server=server] [--certificate-authority=
       --as=""
             Username to impersonate for the operation. User could be a regular user or a service    
             account in a namespace.
-      --as-group="[]"
+      --as-group=[]
             Group to impersonate for the operation, this flag can be repeated to specify multiple   
             groups.
       --as-uid=""
@@ -70,7 +70,7 @@ werf kubectl config set-cluster NAME [--server=server] [--certificate-authority=
             The name of the kubeconfig cluster to use
       --context=""
             The name of the kubeconfig context to use (default $WERF_KUBE_CONTEXT)
-      --disable-compression="false"
+      --disable-compression=false
             If true, opt-out of response compression for all requests to the server
       --home-dir=""
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
@@ -79,9 +79,9 @@ werf kubectl config set-cluster NAME [--server=server] [--certificate-authority=
             $WERF_KUBECONFIG_BASE64 or $KUBECONFIG_BASE64)
       --kubeconfig=""
             use a particular kubeconfig file
-      --log-flush-frequency="5s"
+      --log-flush-frequency=5s
             Maximum number of seconds between log flushes
-      --match-server-version="false"
+      --match-server-version=false
             Require server version to match client version
   -n, --namespace=""
             If present, the namespace scope for this CLI request
@@ -103,12 +103,12 @@ werf kubectl config set-cluster NAME [--server=server] [--certificate-authority=
             The name of the kubeconfig user to use
       --username=""
             Username for basic authentication to the API server
-  -v, --v="0"
+  -v, --v=0
             number for the log level verbosity
-      --vmodule=""
+      --vmodule=
             comma-separated list of pattern=N settings for file-filtered logging (only works for    
             the default text log format)
-      --warnings-as-errors="false"
+      --warnings-as-errors=false
             Treat warnings received from the server as errors and exit with a non-zero exit code
 ```
 

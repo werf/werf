@@ -28,7 +28,7 @@ werf kube-run [options] [IMAGE_NAME] [-- COMMAND ARG...]
 {{ header }} Options
 
 ```shell
-      --add-annotation="[]"
+      --add-annotation=[]
             Add annotation to deploying resources (can specify multiple).
             Format: annoName=annoValue[<separator>annoName=annoValue ...]. The default separator is 
             a newline ("\n"), but it can be customized using the --add-annotation-separator flag.
@@ -37,7 +37,7 @@ werf kube-run [options] [IMAGE_NAME] [-- COMMAND ARG...]
             $WERF_ADD_ANNOTATION_2=annoName2=annoValue2)
       --add-annotation-separator="\n"
             Separator for --add-annotation values (default $WERF_ADD_ANNOTATION_SEPARATOR or "\n")
-      --add-label="[]"
+      --add-label=[]
             Add label to deploying resources (can specify multiple).
             Format: labelName=labelValue[<separator>labelName=labelValue ...]. The default          
             separator is a newline ("\n"), but it can be customized using the --add-label-separator 
@@ -46,11 +46,11 @@ werf kube-run [options] [IMAGE_NAME] [-- COMMAND ARG...]
             $WERF_ADD_LABEL_1=labelName1=labelValue1, $WERF_ADD_LABEL_2=labelName2=labelValue2)
       --add-label-separator="\n"
             Separator for --add-label values (default $WERF_ADD_LABEL_SEPARATOR or "\n")
-      --auto-pull-secret="true"
+      --auto-pull-secret=true
             Automatically create docker config secret in the namespace and plug it via pod`s        
             imagePullSecrets for private registry access (default $WERF_AUTO_PULL_SECRET or true if 
             not specified)
-      --cache-repo="[]"
+      --cache-repo=[]
             Specify one or multiple cache repos with images that will be used as a cache. Cache     
             will be populated when pushing newly built images into the primary repo and when        
             pulling existing images from the primary repo. Cache repo will be used to pull images   
@@ -63,23 +63,23 @@ werf kube-run [options] [IMAGE_NAME] [-- COMMAND ARG...]
       --config-templates-dir=""
             Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf   
             in working directory)
-      --container-registry-mirror="[]"
+      --container-registry-mirror=[]
             (Buildah-only) Use specified mirrors for docker.io
-      --copy-from="[]"
+      --copy-from=[]
             Copy file/dir from container to local machine after user command execution. Example:    
             "/from/file:to". Can be specified multiple times. Can also be defined with              
             "$WERF_COPY_FROM_*", e.g. "WERF_COPY_FROM_1=from:to".
-      --copy-to="[]"
+      --copy-to=[]
             Copy file/dir from local machine to container before user command execution. Example:   
             "from:/to/file". Can be specified multiple times. Can also be defined with              
             "$WERF_COPY_TO_*", e.g. "WERF_COPY_TO_1=from:to".
-      --dev="false"
+      --dev=false
             Enable development mode (default $WERF_DEV).
             The mode allows working with project files without doing redundant commits during       
             debugging and development
       --dev-branch="_werf-dev"
             Set dev git branch name (default $WERF_DEV_BRANCH or "_werf-dev")
-      --dev-ignore="[]"
+      --dev-ignore=[]
             Add rules to ignore tracked and untracked changes in development mode (can specify      
             multiple).
             Also, can be specified with $WERF_DEV_IGNORE_* (e.g. $WERF_DEV_IGNORE_TESTS=*_test.go,  
@@ -91,7 +91,7 @@ werf kube-run [options] [IMAGE_NAME] [-- COMMAND ARG...]
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)
             Command needs granted permissions to read and pull images from the specified repo
-      --dry-run="false"
+      --dry-run=false
             Indicate what the command would do without actually doing that (default $WERF_DRY_RUN)
       --env=""
             Use specified environment (default $WERF_ENV)
@@ -120,7 +120,7 @@ werf kube-run [options] [IMAGE_NAME] [-- COMMAND ARG...]
             final-repo Harbor username (default $WERF_FINAL_REPO_HARBOR_USERNAME)
       --final-repo-quay-token=""
             final-repo quay.io token (default $WERF_FINAL_REPO_QUAY_TOKEN)
-      --follow="false"
+      --follow=false
             Enable follow mode (default $WERF_FOLLOW).
             The mode allows restarting the command on a new commit.
             In development mode (--dev), werf restarts the command on any changes (including        
@@ -133,9 +133,9 @@ werf kube-run [options] [IMAGE_NAME] [-- COMMAND ARG...]
             (default $WERF_GITERMINISM_CONFIG or werf-giterminism.yaml in working directory)
       --home-dir=""
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
-      --insecure-registry="false"
+      --insecure-registry=false
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
-  -i, --interactive="false"
+  -i, --interactive=false
             Enable interactive mode (default $WERF_INTERACTIVE or false if not specified)
       --kube-config=""
             Kubernetes config file path (default $WERF_KUBE_CONFIG, or $WERF_KUBECONFIG, or         
@@ -150,28 +150,28 @@ werf kube-run [options] [IMAGE_NAME] [-- COMMAND ARG...]
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
             terminal) modes.
             Default $WERF_LOG_COLOR_MODE or auto mode.
-      --log-debug="false"
+      --log-debug=false
             Enable debug (default $WERF_LOG_DEBUG).
-      --log-pretty="true"
+      --log-pretty=true
             Enable emojis, auto line wrapping and log process border (default $WERF_LOG_PRETTY or   
             true).
-      --log-project-dir="false"
+      --log-project-dir=false
             Print current project directory path (default $WERF_LOG_PROJECT_DIR)
-      --log-quiet="false"
+      --log-quiet=false
             Disable explanatory output (default $WERF_LOG_QUIET).
-      --log-terminal-width="-1"
+      --log-terminal-width=-1
             Set log terminal width.
             Defaults to:
             * $WERF_LOG_TERMINAL_WIDTH
             * interactive terminal width or 140
-      --log-time="false"
+      --log-time=false
             Add time to log entries for precise event time tracking (default $WERF_LOG_TIME or      
             false).
       --log-time-format="2006-01-02T15:04:05Z07:00"
             Specify custom log time format (default $WERF_LOG_TIME_FORMAT or RFC3339 format).
-      --log-verbose="false"
+      --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
-      --loose-giterminism="false"
+      --loose-giterminism=false
             Loose werf giterminism mode restrictions
       --namespace=""
             Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or         
@@ -181,7 +181,7 @@ werf kube-run [options] [IMAGE_NAME] [-- COMMAND ARG...]
             field (default $WERF_OVERRIDES). %pod_name%, %container_name%, and %container_image%    
             will be replaced with the names of the created pod, container, and container image,     
             respectively.
-      --platform="[]"
+      --platform=[]
             Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT]     
             ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)
       --pod=""
@@ -208,25 +208,25 @@ werf kube-run [options] [IMAGE_NAME] [-- COMMAND ARG...]
             repo Harbor username (default $WERF_REPO_HARBOR_USERNAME)
       --repo-quay-token=""
             repo quay.io token (default $WERF_REPO_QUAY_TOKEN)
-  -Z, --require-built-images="false"
+  -Z, --require-built-images=false
             Requires all used images to be previously built and exist in repo. Exits with error if  
             needed images are not cached and so require to run build instructions (default          
             $WERF_REQUIRE_BUILT_IMAGES)
-      --rm="true"
+      --rm=true
             Remove pod and other created resources after command completion (default $WERF_RM or    
             true if not specified)
-      --rm-with-namespace="false"
+      --rm-with-namespace=false
             Remove also a namespace after command completion (default $WERF_RM_WITH_NAMESPACE or    
             false if not specified)
-      --secondary-repo="[]"
+      --secondary-repo=[]
             Specify one or multiple secondary read-only repos with images that will be used as a    
             cache.
             Also, can be specified with $WERF_SECONDARY_REPO_* (e.g. $WERF_SECONDARY_REPO_1=...,    
             $WERF_SECONDARY_REPO_2=...)
-      --skip-tls-verify-registry="false"
+      --skip-tls-verify-registry=false
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)
-      --ssh-key="[]"
+      --ssh-key=[]
             Use only specific ssh key(s).
             Can be specified with $WERF_SSH_KEY_* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa,         
             $WERF_SSH_KEY_NODEJS=~/.ssh/nodejs_rsa).
@@ -243,9 +243,9 @@ werf kube-run [options] [IMAGE_NAME] [-- COMMAND ARG...]
             repo. :local address allows execution of werf processes from a single host only
       --tmp-dir=""
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
-  -t, --tty="false"
+  -t, --tty=false
             Allocate a TTY (default $WERF_TTY or false if not specified)
-      --virtual-merge="false"
+      --virtual-merge=false
             Enable virtual/ephemeral merge commit mode when building current application state      
             ($WERF_VIRTUAL_MERGE by default)
 ```
