@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 	"text/template"
 
@@ -29,6 +30,7 @@ var commonCmdData common.CmdData
 func NewExportCmd(ctx context.Context) *cobra.Command {
 	var tagTemplateList []string
 	var addLabelArray []string
+	var addLabelSeparator string
 
 	ctx = common.NewContextWithCmdData(ctx, &commonCmdData)
 	cmd := common.SetCommandContext(ctx, &cobra.Command{
@@ -66,18 +68,17 @@ func NewExportCmd(ctx context.Context) *cobra.Command {
 				return fmt.Errorf("required at least one tag template: use the --tag option to specify templates")
 			}
 
-			var addLabelMap map[string]string
-			var err error
-			{
-				addLabelArray := append(util.PredefinedValuesByEnvNamePrefix("WERF_EXPORT_ADD_LABEL_"), addLabelArray...)
-				addLabelMap, err = common.InputArrayToKeyValueMap(addLabelArray, "=", ",")
-				if err != nil {
-					common.PrintHelp(cmd)
-					return fmt.Errorf("unsupported --add-label value: %w", err)
-				}
+			result, err := common.InputArrayToKeyValueMap(
+				append(util.PredefinedValuesByEnvNamePrefix("WERF_EXPORT_ADD_LABEL_"), addLabelArray...),
+				addLabelSeparator,
+				common.DefaultKeyValueSeparator,
+			)
+			if err != nil {
+				common.PrintHelp(cmd)
+				return fmt.Errorf("unsupported --add-label value: %w", err)
 			}
 
-			return run(ctx, args, tagTemplateList, addLabelMap)
+			return run(ctx, args, tagTemplateList, result)
 		},
 	})
 
@@ -130,8 +131,15 @@ func NewExportCmd(ctx context.Context) *cobra.Command {
 It is necessary to use image name shortcut %image% or %image_slug% if multiple images are exported (e.g. REPO:TAG-%image% or REPO-%image%:TAG)`)
 
 	cmd.Flags().StringArrayVarP(&addLabelArray, "add-label", "", []string{}, `Add label to exported images (can specify multiple).
-Format: labelName=labelValue.
+Format: labelName=labelValue[<separator>labelName=labelValue ...]. The default separator is a newline ("\n"), but it can be customized using the --add-label-separator flag.
 Also, can be specified with $WERF_EXPORT_ADD_LABEL_* (e.g. $WERF_EXPORT_ADD_LABEL_1=labelName1=labelValue1, $WERF_EXPORT_ADD_LABEL_2=labelName2=labelValue2)`)
+
+	defaultValue := common.DefaultAnnoAndLabelPairSeparator
+	if os.Getenv("WERF_EXPORT_ADD_LABEL_SEPARATOR") != "" {
+		defaultValue = os.Getenv("WERF_EXPORT_ADD_LABEL_SEPARATOR")
+	}
+
+	cmd.Flags().StringVarP(&addLabelSeparator, "add-label-separator", "", defaultValue, `Separator for --add-label values (default $WERF_EXPORT_ADD_LABEL_SEPARATOR or "\n")`)
 
 	return cmd
 }
