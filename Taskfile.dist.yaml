@@ -548,6 +548,11 @@ tasks:
     cmds:
       - rm -rf ./dist
 
+  deps:install:gci:
+    desc: "Install gci binary."
+    cmds:
+      - go install github.com/daixiang0/gci@v0.13.5
+
   deps:install:ginkgo:
     desc: "Install ginkgo binary."
     cmds:
