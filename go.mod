@@ -40,7 +40,6 @@ require (
 	github.com/gookit/color v1.5.4
 	github.com/gosuri/uitable v0.0.4
 	github.com/goware/urlx v0.3.2
-	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/go-version v1.6.0
 	github.com/mitchellh/copystructure v1.2.0
 	github.com/moby/buildkit v0.13.1
@@ -79,7 +78,6 @@ require (
 	golang.org/x/crypto v0.31.0
 	golang.org/x/net v0.33.0
 	golang.org/x/sys v0.28.0
-	gopkg.in/errgo.v2 v2.1.0
 	gopkg.in/ini.v1 v1.67.0
 	gopkg.in/oleiade/reflections.v1 v1.0.0
 	gopkg.in/yaml.v2 v2.4.0
@@ -108,6 +106,7 @@ require (
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
 	github.com/go-task/template v0.1.0 // indirect
 	github.com/goccy/go-yaml v1.15.23 // indirect
+	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.7 // indirect
 	github.com/mattn/go-zglob v0.0.6 // indirect

@@ -2,13 +2,13 @@ package config
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/go-openapi/spec"
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/validate"
 	"github.com/go-openapi/validate/post"
-	"github.com/hashicorp/go-multierror"
 	"sigs.k8s.io/yaml"
 )
 
@@ -162,8 +162,5 @@ func processWithOpenAPISchema(dataObj *[]byte) error {
 		return nil
 	}
 
-	var allErrs *multierror.Error
-	allErrs = multierror.Append(allErrs, result.Errors...)
-
-	return allErrs.ErrorOrNil()
+	return errors.Join(result.Errors...)
 }

@@ -6,8 +6,10 @@ package buildah
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"io/ioutil"
 	"math/rand"
 	"os"
@@ -37,11 +39,9 @@ import (
 	"github.com/containers/storage/pkg/homedir"
 	"github.com/containers/storage/pkg/reexec"
 	"github.com/containers/storage/pkg/unshare"
-	"github.com/hashicorp/go-multierror"
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/sirupsen/logrus"
-	"gopkg.in/errgo.v2/fmt/errors"
 
 	"github.com/werf/werf/v2/pkg/buildah/thirdparty"
 	"github.com/werf/werf/v2/pkg/container_backend/info"
@@ -589,8 +589,7 @@ func (b *NativeBuildah) Rmi(ctx context.Context, ref string, opts RmiOpts) error
 		// Filters: []string{"readonly=false", "intermediate=false", "dangling=true"},
 	})
 
-	var multiErr *multierror.Error
-	return multierror.Append(multiErr, rmiErrors...).ErrorOrNil()
+	return errors.Join(rmiErrors...)
 }
 
 func (b *NativeBuildah) Commit(ctx context.Context, container string, opts CommitOpts) (string, error) {
@@ -839,7 +838,7 @@ func (b *NativeBuildah) getBuilderFromContainer(ctx context.Context, container s
 	var err error
 
 	builder, err = buildah.OpenBuilder(b.Store, container)
-	if os.IsNotExist(errors.Cause(err)) {
+	if errors.Is(err, fs.ErrNotExist) {
 		builder, err = buildah.ImportBuilder(ctx, b.Store, buildah.ImportOptions{
 			Container:           container,
 			SignaturePolicyPath: b.SignaturePolicyPath,
@@ -858,7 +857,7 @@ func (b *NativeBuildah) getBuilderFromContainer(ctx context.Context, container s
 func (b *NativeBuildah) openContainerBuilder(ctx context.Context, container string) (*buildah.Builder, error) {
 	builder, err := buildah.OpenBuilder(b.Store, container)
 	switch {
-	case os.IsNotExist(errors.Cause(err)):
+	case errors.Is(err, fs.ErrNotExist):
 		builder, err = buildah.ImportBuilder(ctx, b.Store, buildah.ImportOptions{
 			Container:           container,
 			SignaturePolicyPath: b.SignaturePolicyPath,
