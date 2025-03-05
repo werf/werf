@@ -10,7 +10,7 @@ The first thing we recommend is to check the existing [issues](https://github.co
 
 1. [Fork the project](https://github.com/werf/werf/fork).
 2. Clone the project:
-     
+
    ```shell
    git clone https://github.com/[GITHUB_USERNAME]/werf
    ```
@@ -23,13 +23,33 @@ The first thing we recommend is to check the existing [issues](https://github.co
    - [go-task](https://taskfile.dev/installation/) (build tool to run common workflows)
    - [ginkgo](https://onsi.github.io/ginkgo/#installing-ginkgo) (testing framework required to run tests)
 
+   To run `task` commands for formatting and linting (`task lint`, `task format`), as well as install dependencies (`task deps:install`), you can either:
+
+   - **Build and run a development container**  
+     You can use the provided `Dockerfile` to build an image with all necessary dependencies:
+
+     ```
+     docker build -f werf-dev/Dockerfile -t werf-dev .
+     ```
+
+     Once built, you can run command below to list all available tasks:
+
+     ```
+     docker run --rm -v $(pwd):/home/dev/werf werf-dev -l
+     ```
+
+   - **Install dependencies manually**  
+      If you prefer working outside a container, install the required dependencies and run `task deps:install`
+
+   This will install all necessary tools except prettier for running `task lint` and `task format`.
+
 4. Make changes.
 5. Build werf:
 
    ```shell
    task build # The built werf binary will be available in the bin directory.
    ```
-   
+
 6. Do manual testing.
 7. Run tests:
 
@@ -38,13 +58,13 @@ The first thing we recommend is to check the existing [issues](https://github.co
    task test:integration
    task test:e2e
    ```
-   
-8. Format and lint your code: 
+
+8. Format and lint your code:
 
    ```shell
    task format lint
    ```
-   
+
 9. Commit changes:
 
    - Follow [The Conventional Commits specification](https://www.conventionalcommits.org/en/v1.0.0/).
@@ -69,12 +89,12 @@ Each commit message consists of a **header** and a [**body**](#body). The header
 
 Must be one of the following:
 
-* **feat**: new features or capabilities that enhance the user's experience.
-* **fix**: bug fixes that enhance the user's experience.
-* **refactor**: a code changes that neither fixes a bug nor adds a feature.
-* **docs**: updates or improvements to documentation.
-* **test**: additions or corrections to tests.
-* **chore**: updates that don't fit into other types.
+- **feat**: new features or capabilities that enhance the user's experience.
+- **fix**: bug fixes that enhance the user's experience.
+- **refactor**: a code changes that neither fixes a bug nor adds a feature.
+- **docs**: updates or improvements to documentation.
+- **test**: additions or corrections to tests.
+- **chore**: updates that don't fit into other types.
 
 #### Scope
 
@@ -109,7 +129,7 @@ Supported scopes are the following:
 - compose
 - ci-env
 
-# Maintaining, improving code quality and development workflow. 
+# Maintaining, improving code quality and development workflow.
 - ci
 - release
 - dev
@@ -120,9 +140,9 @@ Supported scopes are the following:
 
 The subject contains a succinct description of the change:
 
-  - use the imperative, present tense: "change" not "changed" nor "changes"
-  - don't capitalize the first letter
-  - no dot (.) at the end
+- use the imperative, present tense: "change" not "changed" nor "changes"
+- don't capitalize the first letter
+- no dot (.) at the end
 
 #### Body
 
@@ -146,7 +166,7 @@ A concise, hyphen-separated phrase in kebab-case that clearly describes the main
 ### Pull request name
 
 Each pull request title should clearly reflect the changes introduced, adhering to [**the header format** of a commit message](#commit-message), typically mirroring the main commit's text in the PR.
-    
+
 ### Coding Conventions
 
 - [Effective Go](https://golang.org/doc/effective_go.html).
