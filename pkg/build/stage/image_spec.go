@@ -237,7 +237,6 @@ func modifyEnv(env, removeKeys []string, addKeysMap map[string]string) ([]string
 	if envValue, hasEnv := baseEnvMap[ssh_agent.SSHAuthSockEnv]; hasEnv && envValue == container_backend.SSHContainerAuthSockPath {
 		delete(baseEnvMap, ssh_agent.SSHAuthSockEnv)
 	}
-	//finalEnvMap := make(map[string]string)
 
 	for k, v := range addKeysMap {
 		newVal, err := parseEnv(v, baseEnvMap, addKeysMap)
