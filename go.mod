@@ -68,7 +68,7 @@ require (
 	github.com/werf/kubedog-for-werf-helm v0.0.0-20241217155728-9d45c48b82b6
 	github.com/werf/lockgate v0.1.1
 	github.com/werf/logboek v0.6.1
-	github.com/werf/nelm v0.0.0-20250228131609-df3d1e8122b7
+	github.com/werf/nelm v0.0.0-20250305125909-b803fe240685
 	github.com/werf/nelm-for-werf-helm v0.0.0-20241217155925-b0e6734d1dbf
 	go.opentelemetry.io/otel v1.24.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.24.0
@@ -107,6 +107,7 @@ require (
 	github.com/dlclark/regexp2 v1.11.0 // indirect
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
 	github.com/go-task/template v0.1.0 // indirect
+	github.com/goccy/go-yaml v1.15.23 // indirect
 	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.7 // indirect
 	github.com/mattn/go-zglob v0.0.6 // indirect
