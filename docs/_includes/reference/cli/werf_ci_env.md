@@ -35,42 +35,42 @@ werf ci-env CI_SYSTEM [options]
             Create the .env file and print the path for sourcing (default $WERF_AS_ENV_FILE).
       --as-file=false
             Create the script and print the path for sourcing (default $WERF_AS_FILE).
-      --config=''
+      --config=""
             Use custom configuration file (default $WERF_CONFIG or werf.yaml in the project         
             directory)
-      --config-templates-dir=''
+      --config-templates-dir=""
             Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf   
             in working directory)
       --dev=false
             Enable development mode (default $WERF_DEV).
             The mode allows working with project files without doing redundant commits during       
             debugging and development
-      --dev-branch='_werf-dev'
+      --dev-branch="_werf-dev"
             Set dev git branch name (default $WERF_DEV_BRANCH or "_werf-dev")
       --dev-ignore=[]
             Add rules to ignore tracked and untracked changes in development mode (can specify      
             multiple).
             Also, can be specified with $WERF_DEV_IGNORE_* (e.g. $WERF_DEV_IGNORE_TESTS=*_test.go,  
             $WERF_DEV_IGNORE_DOCS=path/to/docs)
-      --dir=''
+      --dir=""
             Use specified project directory where project’s werf.yaml and other configuration files 
             should reside (default $WERF_DIR or current working directory)
-      --docker-config=''
+      --docker-config=""
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)
             Command will copy specified or default (~/.docker) config to the temporary directory    
             and may perform additional login with new config.
-      --env=''
+      --env=""
             Use specified environment (default $WERF_ENV)
-      --git-work-tree=''
+      --git-work-tree=""
             Use specified git work tree dir (default $WERF_WORK_TREE or lookup for directory that   
             contains .git in the current or parent directories)
-      --giterminism-config=''
+      --giterminism-config=""
             Custom path to the giterminism configuration file relative to working directory         
             (default $WERF_GITERMINISM_CONFIG or werf-giterminism.yaml in working directory)
-      --home-dir=''
+      --home-dir=""
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
-      --log-color-mode='auto'
+      --log-color-mode="auto"
             Set log color mode.
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
             terminal) modes.
@@ -90,7 +90,7 @@ werf ci-env CI_SYSTEM [options]
       --log-time=false
             Add time to log entries for precise event time tracking (default $WERF_LOG_TIME or      
             false).
-      --log-time-format='2006-01-02T15:04:05Z07:00'
+      --log-time-format="2006-01-02T15:04:05Z07:00"
             Specify custom log time format (default $WERF_LOG_TIME_FORMAT or RFC3339 format).
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
@@ -99,15 +99,15 @@ werf ci-env CI_SYSTEM [options]
             $WERF_LOGIN_TO_REGISTRY).
       --loose-giterminism=false
             Loose werf giterminism mode restrictions
-  -o, --output-file-path=''
+  -o, --output-file-path=""
             Write to custom file (default $WERF_OUTPUT_FILE_PATH).
       --platform=[]
             Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT]     
             ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)
-      --shell=''
+      --shell=""
             Set to cmdexe, powershell or use the default behaviour that is compatible with any unix 
             shell (default $WERF_SHELL).
-      --tmp-dir=''
+      --tmp-dir=""
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
 ```
 

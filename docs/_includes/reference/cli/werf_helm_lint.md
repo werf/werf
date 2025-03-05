@@ -18,20 +18,27 @@ werf helm lint PATH [flags] [options]
 ```shell
       --add-annotation=[]
             Add annotation to deploying resources (can specify multiple).
-            Format: annoName=annoValue.
+            Format: annoName=annoValue[<separator>annoName=annoValue ...]. The default separator is 
+            a newline ("\n"), but it can be customized using the --add-annotation-separator flag.
             Also, can be specified with $WERF_ADD_ANNOTATION_* (e.g.                                
             $WERF_ADD_ANNOTATION_1=annoName1=annoValue1,                                            
             $WERF_ADD_ANNOTATION_2=annoName2=annoValue2)
+      --add-annotation-separator="\n"
+            Separator for --add-annotation values (default $WERF_ADD_ANNOTATION_SEPARATOR or "\n")
       --add-label=[]
             Add label to deploying resources (can specify multiple).
-            Format: labelName=labelValue.
+            Format: labelName=labelValue[<separator>labelName=labelValue ...]. The default          
+            separator is a newline ("\n"), but it can be customized using the --add-label-separator 
+            flag.
             Also, can be specified with $WERF_ADD_LABEL_* (e.g.                                     
             $WERF_ADD_LABEL_1=labelName1=labelValue1, $WERF_ADD_LABEL_2=labelName2=labelValue2)
-      --env=''
+      --add-label-separator="\n"
+            Separator for --add-label values (default $WERF_ADD_LABEL_SEPARATOR or "\n")
+      --env=""
             Use specified environment (default $WERF_ENV)
       --ignore-secret-key=false
             Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)
-      --kube-version=''
+      --kube-version=""
             Kubernetes version used for capabilities and deprecation checks
       --quiet=false
             print only warnings and errors
@@ -67,15 +74,15 @@ werf helm lint PATH [flags] [options]
       --hooks-status-progress-period=5
             Hooks status progress period in seconds. Set 0 to stop showing hooks status progress.   
             Defaults to $WERF_HOOKS_STATUS_PROGRESS_PERIOD_SECONDS or status progress period value
-      --kube-config=''
+      --kube-config=""
             Kubernetes config file path (default $WERF_KUBE_CONFIG, or $WERF_KUBECONFIG, or         
             $KUBECONFIG)
-      --kube-config-base64=''
+      --kube-config-base64=""
             Kubernetes config data as base64 string (default $WERF_KUBE_CONFIG_BASE64 or            
             $WERF_KUBECONFIG_BASE64 or $KUBECONFIG_BASE64)
-      --kube-context=''
+      --kube-context=""
             Kubernetes config context (default $WERF_KUBE_CONTEXT)
-      --log-color-mode='auto'
+      --log-color-mode="auto"
             Set log color mode.
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
             terminal) modes.
@@ -95,11 +102,11 @@ werf helm lint PATH [flags] [options]
       --log-time=false
             Add time to log entries for precise event time tracking (default $WERF_LOG_TIME or      
             false).
-      --log-time-format='2006-01-02T15:04:05Z07:00'
+      --log-time-format="2006-01-02T15:04:05Z07:00"
             Specify custom log time format (default $WERF_LOG_TIME_FORMAT or RFC3339 format).
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
-  -n, --namespace=''
+  -n, --namespace=""
             namespace scope for this request
       --status-progress-period=5
             Status progress period in seconds. Set -1 to stop showing status progress. Defaults to  

@@ -28,16 +28,23 @@ werf bundle render [options]
 ```shell
       --add-annotation=[]
             Add annotation to deploying resources (can specify multiple).
-            Format: annoName=annoValue.
+            Format: annoName=annoValue[<separator>annoName=annoValue ...]. The default separator is 
+            a newline ("\n"), but it can be customized using the --add-annotation-separator flag.
             Also, can be specified with $WERF_ADD_ANNOTATION_* (e.g.                                
             $WERF_ADD_ANNOTATION_1=annoName1=annoValue1,                                            
             $WERF_ADD_ANNOTATION_2=annoName2=annoValue2)
+      --add-annotation-separator="\n"
+            Separator for --add-annotation values (default $WERF_ADD_ANNOTATION_SEPARATOR or "\n")
       --add-label=[]
             Add label to deploying resources (can specify multiple).
-            Format: labelName=labelValue.
+            Format: labelName=labelValue[<separator>labelName=labelValue ...]. The default          
+            separator is a newline ("\n"), but it can be customized using the --add-label-separator 
+            flag.
             Also, can be specified with $WERF_ADD_LABEL_* (e.g.                                     
             $WERF_ADD_LABEL_1=labelName1=labelValue1, $WERF_ADD_LABEL_2=labelName2=labelValue2)
-  -b, --bundle-dir=''
+      --add-label-separator="\n"
+            Separator for --add-label values (default $WERF_ADD_LABEL_SEPARATOR or "\n")
+  -b, --bundle-dir=""
             Get extracted bundle from directory instead of registry (default $WERF_BUNDLE_DIR)
       --container-registry-mirror=[]
             (Buildah-only) Use specified mirrors for docker.io
@@ -47,14 +54,14 @@ werf bundle render [options]
       --disable-default-values=false
             Do not use values from the default .helm/values.yaml file (default                      
             $WERF_DISABLE_DEFAULT_VALUES or false)
-      --docker-config=''
+      --docker-config=""
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)
             Command needs granted permissions to read, pull and push images into the specified      
             repo, to pull base images
-      --env=''
+      --env=""
             Use specified environment (default $WERF_ENV)
-      --home-dir=''
+      --home-dir=""
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --ignore-secret-key=false
             Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)
@@ -65,31 +72,31 @@ werf bundle render [options]
             (default $WERF_INSECURE_HELM_DEPENDENCIES)
       --insecure-registry=false
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
-      --kube-api-server=''
+      --kube-api-server=""
             Kubernetes API server address (default $WERF_KUBE_API_SERVER)
       --kube-burst-limit=100
             Kubernetes client burst limit (default $WERF_KUBE_BURST_LIMIT or 100)
-      --kube-ca-path=''
+      --kube-ca-path=""
             Kubernetes API server CA path (default $WERF_KUBE_CA_PATH)
-      --kube-config=''
+      --kube-config=""
             Kubernetes config file path (default $WERF_KUBE_CONFIG, or $WERF_KUBECONFIG, or         
             $KUBECONFIG)
-      --kube-config-base64=''
+      --kube-config-base64=""
             Kubernetes config data as base64 string (default $WERF_KUBE_CONFIG_BASE64 or            
             $WERF_KUBECONFIG_BASE64 or $KUBECONFIG_BASE64)
-      --kube-context=''
+      --kube-context=""
             Kubernetes config context (default $WERF_KUBE_CONTEXT)
       --kube-qps-limit=30
             Kubernetes client QPS limit (default $WERF_KUBE_QPS_LIMIT or 30)
-      --kube-tls-server=''
+      --kube-tls-server=""
             Server name to use for Kubernetes API server certificate validation. If it is not       
             provided, the hostname used to contact the server is used (default                      
             $WERF_KUBE_TLS_SERVER)
-      --kube-token=''
+      --kube-token=""
             Kubernetes bearer token used for authentication (default $WERF_KUBE_TOKEN)
-      --kube-version=''
+      --kube-version=""
             Set specific Capabilities.KubeVersion (default $WERF_KUBE_VERSION)
-      --log-color-mode='auto'
+      --log-color-mode="auto"
             Set log color mode.
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
             terminal) modes.
@@ -111,40 +118,40 @@ werf bundle render [options]
       --log-time=false
             Add time to log entries for precise event time tracking (default $WERF_LOG_TIME or      
             false).
-      --log-time-format='2006-01-02T15:04:05Z07:00'
+      --log-time-format="2006-01-02T15:04:05Z07:00"
             Specify custom log time format (default $WERF_LOG_TIME_FORMAT or RFC3339 format).
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
-      --namespace=''
+      --namespace=""
             Use specified Kubernetes namespace (default $WERF_NAMESPACE)
       --network-parallelism=30
             Parallelize some network operations (default $WERF_NETWORK_PARALLELISM or 30)
-      --output=''
+      --output=""
             Write render output to the specified file instead of stdout ($WERF_RENDER_OUTPUT by     
             default)
-      --release=''
+      --release=""
             Use specified Helm release name (default $WERF_RELEASE)
-      --repo=''
+      --repo=""
             Container registry storage address (default $WERF_REPO)
-      --repo-container-registry=''
+      --repo-container-registry=""
             Choose repo container registry implementation.
             The following container registries are supported: ecr, acr, default, dockerhub, gcr,    
             github, gitlab, harbor, quay.
             Default $WERF_REPO_CONTAINER_REGISTRY or auto mode (detect container registry by repo   
             address).
-      --repo-docker-hub-password=''
+      --repo-docker-hub-password=""
             repo Docker Hub password (default $WERF_REPO_DOCKER_HUB_PASSWORD)
-      --repo-docker-hub-token=''
+      --repo-docker-hub-token=""
             repo Docker Hub token (default $WERF_REPO_DOCKER_HUB_TOKEN)
-      --repo-docker-hub-username=''
+      --repo-docker-hub-username=""
             repo Docker Hub username (default $WERF_REPO_DOCKER_HUB_USERNAME)
-      --repo-github-token=''
+      --repo-github-token=""
             repo GitHub token (default $WERF_REPO_GITHUB_TOKEN)
-      --repo-harbor-password=''
+      --repo-harbor-password=""
             repo Harbor password (default $WERF_REPO_HARBOR_PASSWORD)
-      --repo-harbor-username=''
+      --repo-harbor-username=""
             repo Harbor username (default $WERF_REPO_HARBOR_USERNAME)
-      --repo-quay-token=''
+      --repo-quay-token=""
             repo quay.io token (default $WERF_REPO_QUAY_TOKEN)
       --secret-values=[]
             Specify helm secret values in a YAML file (can specify multiple). Also, can be defined  
@@ -180,10 +187,10 @@ werf bundle render [options]
       --skip-tls-verify-registry=false
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)
-      --tag='latest'
+      --tag="latest"
             Provide exact tag version or semver-based pattern, werf will render the latest version  
             of the specified bundle ($WERF_TAG or latest by default)
-      --tmp-dir=''
+      --tmp-dir=""
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --validate=false
             Validate your manifests against the Kubernetes cluster you are currently pointing at    

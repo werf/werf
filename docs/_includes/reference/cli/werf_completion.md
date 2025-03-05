@@ -33,7 +33,7 @@ werf completion [options]
 {{ header }} Options
 
 ```shell
-      --shell='bash'
+      --shell="bash"
             Set to bash, zsh, fish or powershell (default $WERF_SHELL or bash)
 ```
 

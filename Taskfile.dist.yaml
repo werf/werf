@@ -548,6 +548,11 @@ tasks:
     cmds:
       - rm -rf ./dist
 
+  deps:install:gci:
+    desc: "Install gci binary."
+    cmds:
+      - go install github.com/daixiang0/gci@v0.13.5
+
   deps:install:ginkgo:
     desc: "Install ginkgo binary."
     cmds:
@@ -559,6 +564,11 @@ tasks:
     desc: "Install golangci-lint binary."
     cmds:
       - curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin {{.golangcilintVersion | default "v1.57.1"}}
+
+  deps:install:gofumpt:
+    desc: "Install gofumpt binary."
+    cmds:
+      - go install mvdan.cc/gofumpt@v0.7.0
 
   deps:install:prettier:
     desc: "Install prettier."

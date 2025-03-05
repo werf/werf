@@ -40,11 +40,11 @@ werf slugify STRING [options]
 {{ header }} Options
 
 ```shell
-  -f, --format=''
+  -f, --format=""
               r|helm-release:         suitable for Helm Release
              ns|kubernetes-namespace: suitable for Kubernetes Namespace
             tag|docker-tag:           suitable for Docker Tag
-      --log-color-mode='auto'
+      --log-color-mode="auto"
             Set log color mode.
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
             terminal) modes.
@@ -64,7 +64,7 @@ werf slugify STRING [options]
       --log-time=false
             Add time to log entries for precise event time tracking (default $WERF_LOG_TIME or      
             false).
-      --log-time-format='2006-01-02T15:04:05Z07:00'
+      --log-time-format="2006-01-02T15:04:05Z07:00"
             Specify custom log time format (default $WERF_LOG_TIME_FORMAT or RFC3339 format).
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).

@@ -17,11 +17,11 @@ werf bundle copy [options]
 ```shell
       --container-registry-mirror=[]
             (Buildah-only) Use specified mirrors for docker.io
-      --docker-config=''
+      --docker-config=""
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)
             Command needs granted permissions to read, pull and push images into the specified repos
-      --from=''
+      --from=""
             Source address of the bundle to copy, specify bundle archive using schema               
             `archive:PATH_TO_ARCHIVE.tar.gz`, specify remote bundle with schema                     
             `[docker://]REPO:TAG` or without schema.
@@ -31,14 +31,14 @@ werf bundle copy [options]
             more info https://helm.sh/docs/topics/registries/#oci-feature-deprecation-and-behavior-c
             hanges-with-v370). In helm compatibility mode chart is fully conforming with the helm   
             OCI registry requirements. Default true or $WERF_HELM_COMPATIBLE_CHART.
-      --home-dir=''
+      --home-dir=""
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --insecure-helm-dependencies=false
             Allow insecure oci registries to be used in the Chart.yaml dependencies configuration   
             (default $WERF_INSECURE_HELM_DEPENDENCIES)
       --insecure-registry=false
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
-      --log-color-mode='auto'
+      --log-color-mode="auto"
             Set log color mode.
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
             terminal) modes.
@@ -60,23 +60,23 @@ werf bundle copy [options]
       --log-time=false
             Add time to log entries for precise event time tracking (default $WERF_LOG_TIME or      
             false).
-      --log-time-format='2006-01-02T15:04:05Z07:00'
+      --log-time-format="2006-01-02T15:04:05Z07:00"
             Specify custom log time format (default $WERF_LOG_TIME_FORMAT or RFC3339 format).
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
       --platform=[]
             Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT]     
             ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)
-      --rename-chart=''
+      --rename-chart=""
             Force setting of chart name in the Chart.yaml of the published chart to the specified   
             value (can be set by the $WERF_RENAME_CHART, no rename by default, could not be used    
             together with the `--helm-compatible-chart` option).
       --skip-tls-verify-registry=false
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)
-      --tmp-dir=''
+      --tmp-dir=""
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
-      --to=''
+      --to=""
             Destination address of the bundle to copy, specify bundle archive using schema          
             `archive:PATH_TO_ARCHIVE.tar.gz`, specify remote bundle with schema                     
             `[docker://]REPO:TAG` or without schema.

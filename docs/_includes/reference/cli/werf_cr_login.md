@@ -27,12 +27,12 @@ werf cr login --insecure-registry registry.example.com
 {{ header }} Options
 
 ```shell
-      --docker-config=''
+      --docker-config=""
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)
       --insecure-registry=false
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
-      --log-color-mode='auto'
+      --log-color-mode="auto"
             Set log color mode.
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
             terminal) modes.
@@ -52,15 +52,15 @@ werf cr login --insecure-registry registry.example.com
       --log-time=false
             Add time to log entries for precise event time tracking (default $WERF_LOG_TIME or      
             false).
-      --log-time-format='2006-01-02T15:04:05Z07:00'
+      --log-time-format="2006-01-02T15:04:05Z07:00"
             Specify custom log time format (default $WERF_LOG_TIME_FORMAT or RFC3339 format).
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
-  -p, --password=''
+  -p, --password=""
             Use specified password for login (default $WERF_PASSWORD)
       --password-stdin=false
             Read password from stdin for login (default $WERF_PASSWORD_STDIN)
-  -u, --username=''
+  -u, --username=""
             Use specified username for login (default $WERF_USERNAME)
 ```
 

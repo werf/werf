@@ -41,7 +41,7 @@ werf host cleanup [options]
             becomes below "allowed-local-cache-volume-usage -                                       
             allowed-local-cache-volume-usage-margin" level (default 5% or                           
             $WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE_MARGIN)
-      --backend-storage-path=''
+      --backend-storage-path=""
             Use specified path to the local backend (Docker or Buildah) storage to check backend    
             storage volume usage while performing garbage collection of local backend images        
             (detect local backend storage path by default or use $WERF_BACKEND_STORAGE_PATH)
@@ -51,7 +51,7 @@ werf host cleanup [options]
             Enable development mode (default $WERF_DEV).
             The mode allows working with project files without doing redundant commits during       
             debugging and development
-      --dev-branch='_werf-dev'
+      --dev-branch="_werf-dev"
             Set dev git branch name (default $WERF_DEV_BRANCH or "_werf-dev")
       --dev-ignore=[]
             Add rules to ignore tracked and untracked changes in development mode (can specify      
@@ -61,18 +61,18 @@ werf host cleanup [options]
       --disable-auto-host-cleanup=false
             Disable auto host cleanup procedure in main werf commands like werf-build,              
             werf-converge and other (default disabled or WERF_DISABLE_AUTO_HOST_CLEANUP)
-      --docker-config=''
+      --docker-config=""
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)
       --dry-run=false
             Indicate what the command would do without actually doing that (default $WERF_DRY_RUN)
       --force=false
             Force deletion of images which are being used by some containers (default $WERF_FORCE)
-      --home-dir=''
+      --home-dir=""
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --insecure-registry=false
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
-      --log-color-mode='auto'
+      --log-color-mode="auto"
             Set log color mode.
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
             terminal) modes.
@@ -92,7 +92,7 @@ werf host cleanup [options]
       --log-time=false
             Add time to log entries for precise event time tracking (default $WERF_LOG_TIME or      
             false).
-      --log-time-format='2006-01-02T15:04:05Z07:00'
+      --log-time-format="2006-01-02T15:04:05Z07:00"
             Specify custom log time format (default $WERF_LOG_TIME_FORMAT or RFC3339 format).
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
@@ -101,12 +101,12 @@ werf host cleanup [options]
       --platform=[]
             Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT]     
             ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)
-  -N, --project-name=''
+  -N, --project-name=""
             Set a specific project name (default $WERF_PROJECT_NAME)
       --skip-tls-verify-registry=false
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)
-      --tmp-dir=''
+      --tmp-dir=""
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
 ```
 

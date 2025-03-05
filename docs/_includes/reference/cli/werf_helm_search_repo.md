@@ -41,7 +41,7 @@ werf helm search repo [keyword] [flags] [options]
             prints the output in the specified format. Allowed values: table, json, yaml
   -r, --regexp=false
             use regular expressions for searching repositories you have added
-      --version=''
+      --version=""
             search using semantic versioning constraints on repositories you have added
   -l, --versions=false
             show the long listing, with each version of each chart on its own line, for             
@@ -54,15 +54,15 @@ werf helm search repo [keyword] [flags] [options]
       --hooks-status-progress-period=5
             Hooks status progress period in seconds. Set 0 to stop showing hooks status progress.   
             Defaults to $WERF_HOOKS_STATUS_PROGRESS_PERIOD_SECONDS or status progress period value
-      --kube-config=''
+      --kube-config=""
             Kubernetes config file path (default $WERF_KUBE_CONFIG, or $WERF_KUBECONFIG, or         
             $KUBECONFIG)
-      --kube-config-base64=''
+      --kube-config-base64=""
             Kubernetes config data as base64 string (default $WERF_KUBE_CONFIG_BASE64 or            
             $WERF_KUBECONFIG_BASE64 or $KUBECONFIG_BASE64)
-      --kube-context=''
+      --kube-context=""
             Kubernetes config context (default $WERF_KUBE_CONTEXT)
-      --log-color-mode='auto'
+      --log-color-mode="auto"
             Set log color mode.
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
             terminal) modes.
@@ -82,11 +82,11 @@ werf helm search repo [keyword] [flags] [options]
       --log-time=false
             Add time to log entries for precise event time tracking (default $WERF_LOG_TIME or      
             false).
-      --log-time-format='2006-01-02T15:04:05Z07:00'
+      --log-time-format="2006-01-02T15:04:05Z07:00"
             Specify custom log time format (default $WERF_LOG_TIME_FORMAT or RFC3339 format).
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
-  -n, --namespace=''
+  -n, --namespace=""
             namespace scope for this request
       --status-progress-period=5
             Status progress period in seconds. Set -1 to stop showing status progress. Defaults to  

@@ -150,8 +150,11 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupGiterminismConfigPath(&commonCmdData, cmd)
 	common.SetupEnvironment(&commonCmdData, cmd)
 	common.SetupNamespace(&commonCmdData, cmd, true)
+
 	common.SetupAddAnnotations(&commonCmdData, cmd)
+	common.SetupAddAnnotationSeparator(&commonCmdData, cmd)
 	common.SetupAddLabels(&commonCmdData, cmd)
+	common.SetupAddLabelSeparator(&commonCmdData, cmd)
 
 	common.SetupGiterminismOptions(&commonCmdData, cmd)
 

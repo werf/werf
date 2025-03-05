@@ -39,10 +39,13 @@ werf plan --repo registry.mydomain.com/web --env production
 ```shell
       --add-annotation=[]
             Add annotation to deploying resources (can specify multiple).
-            Format: annoName=annoValue.
+            Format: annoName=annoValue[<separator>annoName=annoValue ...]. The default separator is 
+            a newline ("\n"), but it can be customized using the --add-annotation-separator flag.
             Also, can be specified with $WERF_ADD_ANNOTATION_* (e.g.                                
             $WERF_ADD_ANNOTATION_1=annoName1=annoValue1,                                            
             $WERF_ADD_ANNOTATION_2=annoName2=annoValue2)
+      --add-annotation-separator="\n"
+            Separator for --add-annotation values (default $WERF_ADD_ANNOTATION_SEPARATOR or "\n")
       --add-custom-tag=[]
             Set tag alias for the content-based tag.
             The alias may contain the following shortcuts:
@@ -54,9 +57,13 @@ werf plan --repo registry.mydomain.com/web --env production
             $WERF_ADD_CUSTOM_TAG_1="%image%-tag1", $WERF_ADD_CUSTOM_TAG_2="%image%-tag2")
       --add-label=[]
             Add label to deploying resources (can specify multiple).
-            Format: labelName=labelValue.
+            Format: labelName=labelValue[<separator>labelName=labelValue ...]. The default          
+            separator is a newline ("\n"), but it can be customized using the --add-label-separator 
+            flag.
             Also, can be specified with $WERF_ADD_LABEL_* (e.g.                                     
             $WERF_ADD_LABEL_1=labelName1=labelValue1, $WERF_ADD_LABEL_2=labelName2=labelValue2)
+      --add-label-separator="\n"
+            Separator for --add-label values (default $WERF_ADD_LABEL_SEPARATOR or "\n")
       --allowed-backend-storage-volume-usage=70
             Set allowed percentage of backend (Docker or Buildah) storage volume usage which will   
             cause cleanup of least recently used local backend images (default 70% or               
@@ -75,11 +82,11 @@ werf plan --repo registry.mydomain.com/web --env production
             becomes below "allowed-local-cache-volume-usage -                                       
             allowed-local-cache-volume-usage-margin" level (default 5% or                           
             $WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE_MARGIN)
-      --backend-storage-path=''
+      --backend-storage-path=""
             Use specified path to the local backend (Docker or Buildah) storage to check backend    
             storage volume usage while performing garbage collection of local backend images        
             (detect local backend storage path by default or use $WERF_BACKEND_STORAGE_PATH)
-      --build-report-path=''
+      --build-report-path=""
             Change build report path and format (by default $WERF_BUILD_REPORT_PATH or              
             ".werf-build-report.json" if not set). Extension must be either .json for JSON format   
             or .env for env-file format. If extension not specified, then .json is used
@@ -90,10 +97,10 @@ werf plan --repo registry.mydomain.com/web --env production
             and to get manifests before making requests to the primary repo.
             Also, can be specified with $WERF_CACHE_REPO_* (e.g. $WERF_CACHE_REPO_1=...,            
             $WERF_CACHE_REPO_2=...)
-      --config=''
+      --config=""
             Use custom configuration file (default $WERF_CONFIG or werf.yaml in the project         
             directory)
-      --config-templates-dir=''
+      --config-templates-dir=""
             Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf   
             in working directory)
       --container-registry-mirror=[]
@@ -102,14 +109,14 @@ werf plan --repo registry.mydomain.com/web --env production
             Enable development mode (default $WERF_DEV).
             The mode allows working with project files without doing redundant commits during       
             debugging and development
-      --dev-branch='_werf-dev'
+      --dev-branch="_werf-dev"
             Set dev git branch name (default $WERF_DEV_BRANCH or "_werf-dev")
       --dev-ignore=[]
             Add rules to ignore tracked and untracked changes in development mode (can specify      
             multiple).
             Also, can be specified with $WERF_DEV_IGNORE_* (e.g. $WERF_DEV_IGNORE_TESTS=*_test.go,  
             $WERF_DEV_IGNORE_DOCS=path/to/docs)
-      --dir=''
+      --dir=""
             Use specified project directory where project’s werf.yaml and other configuration files 
             should reside (default $WERF_DIR or current working directory)
       --disable-auto-host-cleanup=false
@@ -121,50 +128,50 @@ werf plan --repo registry.mydomain.com/web --env production
       --disable-default-values=false
             Do not use values from the default .helm/values.yaml file (default                      
             $WERF_DISABLE_DEFAULT_VALUES or false)
-      --docker-config=''
+      --docker-config=""
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)
             Command needs granted permissions to read, pull and push images into the specified      
             repo, to pull base images
-      --env=''
+      --env=""
             Use specified environment (default $WERF_ENV)
       --exit-code=false
             If true, returns exit code 0 if no changes, exit code 2 if any changes planned or exit  
             code 1 in case of an error (default $WERF_EXIT_CODE or false)
-      --final-repo=''
+      --final-repo=""
             Container registry storage address (default $WERF_FINAL_REPO)
-      --final-repo-container-registry=''
+      --final-repo-container-registry=""
             Choose final-repo container registry implementation.
             The following container registries are supported: ecr, acr, default, dockerhub, gcr,    
             github, gitlab, harbor, quay.
             Default $WERF_FINAL_REPO_CONTAINER_REGISTRY or auto mode (detect container registry by  
             repo address).
-      --final-repo-docker-hub-password=''
+      --final-repo-docker-hub-password=""
             final-repo Docker Hub password (default $WERF_FINAL_REPO_DOCKER_HUB_PASSWORD)
-      --final-repo-docker-hub-token=''
+      --final-repo-docker-hub-token=""
             final-repo Docker Hub token (default $WERF_FINAL_REPO_DOCKER_HUB_TOKEN)
-      --final-repo-docker-hub-username=''
+      --final-repo-docker-hub-username=""
             final-repo Docker Hub username (default $WERF_FINAL_REPO_DOCKER_HUB_USERNAME)
-      --final-repo-github-token=''
+      --final-repo-github-token=""
             final-repo GitHub token (default $WERF_FINAL_REPO_GITHUB_TOKEN)
-      --final-repo-harbor-password=''
+      --final-repo-harbor-password=""
             final-repo Harbor password (default $WERF_FINAL_REPO_HARBOR_PASSWORD)
-      --final-repo-harbor-username=''
+      --final-repo-harbor-username=""
             final-repo Harbor username (default $WERF_FINAL_REPO_HARBOR_USERNAME)
-      --final-repo-quay-token=''
+      --final-repo-quay-token=""
             final-repo quay.io token (default $WERF_FINAL_REPO_QUAY_TOKEN)
       --follow=false
             Enable follow mode (default $WERF_FOLLOW).
             The mode allows restarting the command on a new commit.
             In development mode (--dev), werf restarts the command on any changes (including        
             untracked files) in the git repository worktree
-      --git-work-tree=''
+      --git-work-tree=""
             Use specified git work tree dir (default $WERF_WORK_TREE or lookup for directory that   
             contains .git in the current or parent directories)
-      --giterminism-config=''
+      --giterminism-config=""
             Custom path to the giterminism configuration file relative to working directory         
             (default $WERF_GITERMINISM_CONFIG or werf-giterminism.yaml in working directory)
-      --home-dir=''
+      --home-dir=""
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --hooks-status-progress-period=5
             Hooks status progress period in seconds. Set 0 to stop showing hooks status progress.   
@@ -197,29 +204,29 @@ werf plan --repo registry.mydomain.com/web --env production
             dependenciesBeforeInstall, gitArchive, install, dependenciesAfterInstall, beforeSetup,  
             dependenciesBeforeSetup, setup, dependenciesAfterSetup, gitCache, gitLatestPatch,       
             dockerInstructions, dockerfile, imageSpec
-      --kube-api-server=''
+      --kube-api-server=""
             Kubernetes API server address (default $WERF_KUBE_API_SERVER)
       --kube-burst-limit=100
             Kubernetes client burst limit (default $WERF_KUBE_BURST_LIMIT or 100)
-      --kube-ca-path=''
+      --kube-ca-path=""
             Kubernetes API server CA path (default $WERF_KUBE_CA_PATH)
-      --kube-config=''
+      --kube-config=""
             Kubernetes config file path (default $WERF_KUBE_CONFIG, or $WERF_KUBECONFIG, or         
             $KUBECONFIG)
-      --kube-config-base64=''
+      --kube-config-base64=""
             Kubernetes config data as base64 string (default $WERF_KUBE_CONFIG_BASE64 or            
             $WERF_KUBECONFIG_BASE64 or $KUBECONFIG_BASE64)
-      --kube-context=''
+      --kube-context=""
             Kubernetes config context (default $WERF_KUBE_CONTEXT)
       --kube-qps-limit=30
             Kubernetes client QPS limit (default $WERF_KUBE_QPS_LIMIT or 30)
-      --kube-tls-server=''
+      --kube-tls-server=""
             Server name to use for Kubernetes API server certificate validation. If it is not       
             provided, the hostname used to contact the server is used (default                      
             $WERF_KUBE_TLS_SERVER)
-      --kube-token=''
+      --kube-token=""
             Kubernetes bearer token used for authentication (default $WERF_KUBE_TOKEN)
-      --log-color-mode='auto'
+      --log-color-mode="auto"
             Set log color mode.
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
             terminal) modes.
@@ -241,13 +248,13 @@ werf plan --repo registry.mydomain.com/web --env production
       --log-time=false
             Add time to log entries for precise event time tracking (default $WERF_LOG_TIME or      
             false).
-      --log-time-format='2006-01-02T15:04:05Z07:00'
+      --log-time-format="2006-01-02T15:04:05Z07:00"
             Specify custom log time format (default $WERF_LOG_TIME_FORMAT or RFC3339 format).
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
       --loose-giterminism=false
             Loose werf giterminism mode restrictions
-      --namespace=''
+      --namespace=""
             Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or         
             deploy.namespace custom template from werf.yaml or $WERF_NAMESPACE)
       --network-parallelism=30
@@ -260,32 +267,32 @@ werf plan --repo registry.mydomain.com/web --env production
       --platform=[]
             Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT]     
             ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)
-      --release=''
+      --release=""
             Use specified Helm release name (default [[ project ]]-[[ env ]] template or            
             deploy.helmRelease custom template from werf.yaml or $WERF_RELEASE)
       --releases-history-max=5
             Max releases to keep in release storage ($WERF_RELEASES_HISTORY_MAX or 5 by default)
-      --repo=''
+      --repo=""
             Container registry storage address (default $WERF_REPO)
-      --repo-container-registry=''
+      --repo-container-registry=""
             Choose repo container registry implementation.
             The following container registries are supported: ecr, acr, default, dockerhub, gcr,    
             github, gitlab, harbor, quay.
             Default $WERF_REPO_CONTAINER_REGISTRY or auto mode (detect container registry by repo   
             address).
-      --repo-docker-hub-password=''
+      --repo-docker-hub-password=""
             repo Docker Hub password (default $WERF_REPO_DOCKER_HUB_PASSWORD)
-      --repo-docker-hub-token=''
+      --repo-docker-hub-token=""
             repo Docker Hub token (default $WERF_REPO_DOCKER_HUB_TOKEN)
-      --repo-docker-hub-username=''
+      --repo-docker-hub-username=""
             repo Docker Hub username (default $WERF_REPO_DOCKER_HUB_USERNAME)
-      --repo-github-token=''
+      --repo-github-token=""
             repo GitHub token (default $WERF_REPO_GITHUB_TOKEN)
-      --repo-harbor-password=''
+      --repo-harbor-password=""
             repo Harbor password (default $WERF_REPO_HARBOR_PASSWORD)
-      --repo-harbor-username=''
+      --repo-harbor-username=""
             repo Harbor username (default $WERF_REPO_HARBOR_USERNAME)
-      --repo-quay-token=''
+      --repo-quay-token=""
             repo quay.io token (default $WERF_REPO_QUAY_TOKEN)
   -Z, --require-built-images=false
             Requires all used images to be previously built and exist in repo. Exits with error if  
@@ -343,7 +350,7 @@ werf plan --repo registry.mydomain.com/web --env production
             $WERF_STATUS_PROGRESS_PERIOD_SECONDS or 5 seconds
       --stub-tags=false
             Use stubs instead of real tags (default $WERF_STUB_TAGS)
-  -S, --synchronization=''
+  -S, --synchronization=""
             Address of synchronizer for multiple werf processes to work with a single repo.
             
             Default:
@@ -355,9 +362,9 @@ werf plan --repo registry.mydomain.com/web --env production
             repo. :local address allows execution of werf processes from a single host only
   -t, --timeout=0
             Resources tracking timeout in seconds ($WERF_TIMEOUT by default)
-      --tmp-dir=''
+      --tmp-dir=""
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
-      --use-custom-tag=''
+      --use-custom-tag=""
             Use a tag alias in helm templates instead of an image content-based tag (NOT            
             RECOMMENDED).
             The alias may contain the following shortcuts:
