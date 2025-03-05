@@ -21,8 +21,8 @@ func TestEnvExpander(t *testing.T) {
 		}
 		specified := map[string]string{
 			"PATH":   "${PATH}:${GOROOT}/bin:${GOPATH}/bin",
-			"GOROOT": "/usr/local/go",
 			"GOPATH": "${GOROOT}/go",
+			"GOROOT": "/usr/local/go",
 		}
 		env, err := modifyEnv(existed, []string{}, specified)
 		assert.NoError(t, err)

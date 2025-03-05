@@ -287,6 +287,9 @@ func parseEnv(input string, envMap, envoyEnvMap map[string]string) (string, erro
 	var circularDependencyErr error
 	expand = func(value string, visited map[string]bool) (string, error) {
 		expanded := re.ReplaceAllStringFunc(value, func(match string) string {
+			if circularDependencyErr != nil {
+				return ""
+			}
 			key := match[2 : len(match)-1]
 
 			if visited[key] {
