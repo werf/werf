@@ -548,6 +548,16 @@ tasks:
     cmds:
       - rm -rf ./dist
 
+  deps:install:
+    desc: "Install all dependencies"
+    deps:
+      - deps:install:gci
+      - deps:install:ginkgo
+      - deps:install:golangci-lint
+      - deps:install:gofumpt
+      - deps:install:mockgen
+      - deps:install:enumer
+
   deps:install:gci:
     desc: "Install gci binary."
     cmds:
