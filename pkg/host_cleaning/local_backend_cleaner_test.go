@@ -118,41 +118,12 @@ var _ = Describe("LocalBackendCleaner", func() {
 				},
 			}, nil).Times(1)
 
-			stubs.StubFunc(&cleaner.werfGetWerfLastRunAtV1_1, time.Time{}, nil)
-
-			backend.EXPECT().Images(ctx, buildImagesOptions(
-				util.NewPair("reference", "*client-id-*"),
-				util.NewPair("reference", "*managed-image-*"),
-				util.NewPair("reference", "*meta-*"),
-				util.NewPair("reference", "*import-metadata-*"),
-				util.NewPair("reference", "*-rejected"),
-
-				util.NewPair("reference", "werf-client-id/*"),
-				util.NewPair("reference", "werf-managed-images/*"),
-				util.NewPair("reference", "werf-images-metadata-by-commit/*"),
-				util.NewPair("reference", "werf-import-metadata/*"),
-			)).Return(image.ImagesList{
-				{
-					Size: 1,
-				},
-				// -------------
-				{
-					RepoTags: []string{"<none>:<none>"},
-				},
-				{
-					RepoTags: []string{"lru_tag"},
-				},
-			}, nil)
-
 			stubs.StubFunc(&cleaner.lrumetaGetImageLastAccessTime, time.Time{}, nil)
 
 			result, err := cleaner.checkBackendStorage(ctx, t.TempDir())
 			Expect(err).To(Succeed())
 			Expect(result.VolumeUsage).To(BeZero())
-			Expect(result.ImagesDescs).To(HaveLen(1))
-			Expect(result.ImagesDescs[0].ImageSummary).To(Equal(image.Summary{
-				RepoTags: []string{"lru_tag"},
-			}))
+			Expect(result.ImagesDescs).To(BeEmpty())
 		})
 	})
 

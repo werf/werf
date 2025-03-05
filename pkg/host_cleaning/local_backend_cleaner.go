@@ -23,7 +23,6 @@ import (
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/storage/lrumeta"
 	"github.com/werf/werf/v2/pkg/volumeutils"
-	"github.com/werf/werf/v2/pkg/werf"
 )
 
 var ErrUnsupportedContainerBackend = errors.New("unsupported container backend")
@@ -47,7 +46,6 @@ type LocalBackendCleaner struct {
 	minImagesToDelete uint64
 	// refs for stubbing in testing
 	volumeutilsGetVolumeUsageByPath func(ctx context.Context, path string) (volumeutils.VolumeUsage, error)
-	werfGetWerfLastRunAtV1_1        func(ctx context.Context) (time.Time, error)
 	lrumetaGetImageLastAccessTime   func(ctx context.Context, imageRef string) (time.Time, error)
 }
 
@@ -57,7 +55,6 @@ func NewLocalBackendCleaner(backend container_backend.ContainerBackend) (*LocalB
 		minImagesToDelete: 10,
 		// refs for stubbing in testing
 		volumeutilsGetVolumeUsageByPath: volumeutils.GetVolumeUsageByPath,
-		werfGetWerfLastRunAtV1_1:        werf.GetWerfLastRunAtV1_1,
 		lrumetaGetImageLastAccessTime:   lrumeta.CommonLRUImagesCache.GetImageLastAccessTime,
 	}
 
@@ -191,45 +188,6 @@ func (cleaner *LocalBackendCleaner) checkBackendStorage(ctx context.Context, bac
 			}
 
 			images = append(images, img)
-		}
-	}
-
-	{
-		// **NOTICE** Remove v1.1 last-run-at timestamp check when v1.1 reaches its end of life
-
-		t, err := cleaner.werfGetWerfLastRunAtV1_1(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("error getting v1.1 last run timestamp: %w", err)
-		}
-
-		// No werf v1.1 runs on this host.
-		// This is stupid check, but the only available safe option at the moment.
-		if t.IsZero() {
-			imgs, err := cleaner.backend.Images(ctx, buildImagesOptions(
-				util.NewPair("reference", "*client-id-*"),
-				util.NewPair("reference", "*managed-image-*"),
-				util.NewPair("reference", "*meta-*"),
-				util.NewPair("reference", "*import-metadata-*"),
-				util.NewPair("reference", "*-rejected"),
-
-				util.NewPair("reference", "werf-client-id/*"),
-				util.NewPair("reference", "werf-managed-images/*"),
-				util.NewPair("reference", "werf-images-metadata-by-commit/*"),
-				util.NewPair("reference", "werf-import-metadata/*"),
-			))
-			if err != nil {
-				return nil, fmt.Errorf("unable to get werf service images: %w", err)
-			}
-
-			for _, img := range imgs {
-				// **NOTICE.** Cannot remove by werf label, because currently there is no such label for service-images by historical reasons.
-				// So check by size at least for now.
-				if img.Size != 0 {
-					continue
-				}
-
-				images = append(images, img)
-			}
 		}
 	}
 
