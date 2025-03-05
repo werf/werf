@@ -135,7 +135,7 @@ Format: labelName=labelValue[<separator>labelName=labelValue ...]. The default s
 Also, can be specified with $WERF_EXPORT_ADD_LABEL_* (e.g. $WERF_EXPORT_ADD_LABEL_1=labelName1=labelValue1, $WERF_EXPORT_ADD_LABEL_2=labelName2=labelValue2)`)
 
 	commonCmdData.SetupSkipImageSpecStage(cmd)
-  
+
 	defaultValue := common.DefaultAnnoAndLabelPairSeparator
 	if os.Getenv("WERF_EXPORT_ADD_LABEL_SEPARATOR") != "" {
 		defaultValue = os.Getenv("WERF_EXPORT_ADD_LABEL_SEPARATOR")
