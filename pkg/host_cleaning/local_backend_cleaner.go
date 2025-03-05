@@ -115,9 +115,8 @@ func (cleaner *LocalBackendCleaner) ShouldRunAutoGC(ctx context.Context, options
 }
 
 type CheckResultBackendStorage struct {
-	VolumeUsage      volumeutils.VolumeUsage
-	TotalImagesBytes uint64
-	ImagesDescs      []*LocalImageDesc
+	VolumeUsage volumeutils.VolumeUsage
+	ImagesDescs []*LocalImageDesc
 }
 
 func (checkResult *CheckResultBackendStorage) GetBytesToFree(targetVolumeUsage float64) uint64 {
@@ -238,8 +237,6 @@ CreateImagesDescs:
 	for _, imageSummary := range images {
 		data, _ := json.Marshal(imageSummary)
 		logboek.Context(ctx).Debug().LogF("Image summary:\n%s\n---\n", data)
-
-		res.TotalImagesBytes += uint64(imageSummary.Size - normalizeSharedSize(imageSummary.SharedSize))
 
 		lastUsedAt := imageSummary.Created
 

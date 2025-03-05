@@ -149,7 +149,6 @@ var _ = Describe("LocalBackendCleaner", func() {
 			result, err := cleaner.checkBackendStorage(ctx, t.TempDir())
 			Expect(err).To(Succeed())
 			Expect(result.VolumeUsage).To(BeZero())
-			Expect(result.TotalImagesBytes).To(BeZero())
 			Expect(result.ImagesDescs).To(HaveLen(1))
 			Expect(result.ImagesDescs[0].ImageSummary).To(Equal(image.Summary{
 				RepoTags: []string{"lru_tag"},
