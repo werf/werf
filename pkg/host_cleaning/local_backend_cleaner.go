@@ -163,12 +163,14 @@ func (cleaner *LocalBackendCleaner) checkBackendStorage(ctx context.Context, bac
 		}
 	}
 
+	lastUsedAtMap := make(map[string]time.Time, len(images))
+
 CreateImagesDescs:
 	for _, imageSummary := range images {
 		data, _ := json.Marshal(imageSummary)
 		logboek.Context(ctx).Debug().LogF("Image summary:\n%s\n---\n", data)
 
-		lastUsedAt := imageSummary.Created
+		lastUsedAtMap[imageSummary.ID] = imageSummary.Created
 
 	CheckEachRef:
 		for _, ref := range imageSummary.RepoTags {
@@ -188,19 +190,21 @@ CreateImagesDescs:
 				continue CheckEachRef
 			}
 
-			lastUsedAt = lastRecentlyUsedAt
-			break
+			if lastRecentlyUsedAt.After(lastUsedAtMap[imageSummary.ID]) {
+				lastUsedAtMap[imageSummary.ID] = lastRecentlyUsedAt
+			}
 		}
 
 		desc := &LocalImageDesc{
 			ImageSummary: imageSummary,
-			LastUsedAt:   lastUsedAt,
 		}
 		res.ImagesDescs = append(res.ImagesDescs, desc)
 	}
 
 	slices.SortFunc(res.ImagesDescs, func(a, b *LocalImageDesc) int {
-		return a.LastUsedAt.Compare(b.LastUsedAt)
+		aTime := lastUsedAtMap[a.ImageSummary.ID]
+		bTime := lastUsedAtMap[a.ImageSummary.ID]
+		return aTime.Compare(bTime)
 	})
 
 	return res, nil
@@ -456,7 +460,6 @@ func (cleaner *LocalBackendCleaner) removeImage(ctx context.Context, ref string,
 
 type LocalImageDesc struct {
 	ImageSummary image.Summary
-	LastUsedAt   time.Time
 }
 
 func (cleaner *LocalBackendCleaner) safeDanglingImagesCleanup(ctx context.Context, options CommonOptions) error {
