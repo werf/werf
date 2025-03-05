@@ -109,15 +109,6 @@ var _ = Describe("LocalBackendCleaner", func() {
 				},
 			}, nil).Times(1)
 
-			backend.EXPECT().Images(ctx, buildImagesOptions(
-				util.NewPair("label", image.WerfLabel),
-				util.NewPair("label", "werf-stage-signature"), // v1.1 legacy images
-			)).Return(image.ImagesList{
-				{
-					RepoTags: []string{"werf-stages-storage/something"},
-				},
-			}, nil).Times(1)
-
 			stubs.StubFunc(&cleaner.lrumetaGetImageLastAccessTime, time.Time{}, nil)
 
 			result, err := cleaner.checkBackendStorage(ctx, t.TempDir())

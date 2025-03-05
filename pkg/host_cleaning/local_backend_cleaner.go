@@ -163,34 +163,6 @@ func (cleaner *LocalBackendCleaner) checkBackendStorage(ctx context.Context, bac
 		}
 	}
 
-	// Process legacy v1.1 images
-	{
-		imgs, err := cleaner.backend.Images(ctx, buildImagesOptions(
-			util.NewPair("label", image.WerfLabel),
-			util.NewPair("label", "werf-stage-signature"), // v1.1 legacy images
-		))
-		if err != nil {
-			return nil, fmt.Errorf("unable to get werf v1.1 legacy %s images: %w", cleaner.BackendName(), err)
-		}
-
-		// Do not remove stages-storage=:local images, because this is primary stages storage data,
-		// and it can only be cleaned by the werf-cleanup command
-	ExcludeLocalV1_1StagesStorage:
-		for _, img := range imgs {
-			for _, ref := range img.RepoTags {
-				normalizedTag, err := cleaner.normalizeReference(ref)
-				if err != nil {
-					return nil, err
-				}
-				if strings.HasPrefix(normalizedTag, "werf-stages-storage/") {
-					continue ExcludeLocalV1_1StagesStorage
-				}
-			}
-
-			images = append(images, img)
-		}
-	}
-
 CreateImagesDescs:
 	for _, imageSummary := range images {
 		data, _ := json.Marshal(imageSummary)
