@@ -114,7 +114,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 			result, err := cleaner.checkBackendStorage(ctx, t.TempDir())
 			Expect(err).To(Succeed())
 			Expect(result.VolumeUsage).To(BeZero())
-			Expect(result.ImagesDescs).To(BeEmpty())
+			Expect(result.ImagesList).To(BeEmpty())
 		})
 	})
 

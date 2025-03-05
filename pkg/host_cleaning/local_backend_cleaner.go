@@ -113,7 +113,7 @@ func (cleaner *LocalBackendCleaner) ShouldRunAutoGC(ctx context.Context, options
 
 type CheckResultBackendStorage struct {
 	VolumeUsage volumeutils.VolumeUsage
-	ImagesDescs []*LocalImageDesc
+	ImagesList  image.ImagesList
 }
 
 func (checkResult *CheckResultBackendStorage) GetBytesToFree(targetVolumeUsage float64) uint64 {
@@ -195,15 +195,12 @@ CreateImagesDescs:
 			}
 		}
 
-		desc := &LocalImageDesc{
-			ImageSummary: imageSummary,
-		}
-		res.ImagesDescs = append(res.ImagesDescs, desc)
+		res.ImagesList = append(res.ImagesList, imageSummary)
 	}
 
-	slices.SortFunc(res.ImagesDescs, func(a, b *LocalImageDesc) int {
-		aTime := lastUsedAtMap[a.ImageSummary.ID]
-		bTime := lastUsedAtMap[a.ImageSummary.ID]
+	slices.SortFunc(res.ImagesList, func(a, b image.Summary) int {
+		aTime := lastUsedAtMap[a.ID]
+		bTime := lastUsedAtMap[a.ID]
 		return aTime.Compare(bTime)
 	})
 
@@ -269,7 +266,7 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 		logboek.Context(ctx).Default().LogF("Allowed percentage level exceeded: %s > %s — %s\n", utils.RedF("%0.2f%%", checkResult.VolumeUsage.Percentage), utils.YellowF("%0.2f%%", options.AllowedStorageVolumeUsagePercentage), utils.RedF("HIGH VOLUME USAGE"))
 		logboek.Context(ctx).Default().LogF("Target percentage level after cleanup: %0.2f%% - %0.2f%% (margin) = %s\n", options.AllowedStorageVolumeUsagePercentage, options.AllowedStorageVolumeUsageMarginPercentage, utils.BlueF("%0.2f%%", targetVolumeUsage))
 		logboek.Context(ctx).Default().LogF("Needed to free: %s\n", utils.RedF("%s", humanize.Bytes(bytesToFree)))
-		logboek.Context(ctx).Default().LogF("Available werf images to free: %s\n", utils.YellowF("%d", len(checkResult.ImagesDescs)))
+		logboek.Context(ctx).Default().LogF("Available werf images to free: %s\n", utils.YellowF("%d", len(checkResult.ImagesList)))
 	})
 
 	var processedImagesIDs []string
@@ -280,27 +277,27 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 		var freedImagesCount uint64
 		var acquiredHostLocks []lockgate.LockHandle
 
-		if len(checkResult.ImagesDescs) > 0 {
+		if len(checkResult.ImagesList) > 0 {
 			if err := logboek.Context(ctx).Default().LogProcess("Running cleanup for least recently used %s images created by werf", cleaner.BackendName()).DoError(func() error {
 			DeleteImages:
-				for _, desc := range checkResult.ImagesDescs {
+				for _, imgSummary := range checkResult.ImagesList {
 					for _, id := range processedImagesIDs {
-						if desc.ImageSummary.ID == id {
-							logboek.Context(ctx).Default().LogFDetails("Skip already processed image %q\n", desc.ImageSummary.ID)
+						if imgSummary.ID == id {
+							logboek.Context(ctx).Default().LogFDetails("Skip already processed image %q\n", imgSummary.ID)
 							continue DeleteImages
 						}
 					}
-					processedImagesIDs = append(processedImagesIDs, desc.ImageSummary.ID)
+					processedImagesIDs = append(processedImagesIDs, imgSummary.ID)
 
 					imageRemoved := false
 
-					if len(desc.ImageSummary.RepoTags) > 0 {
+					if len(imgSummary.RepoTags) > 0 {
 						allTagsRemoved := true
 
-						for _, ref := range desc.ImageSummary.RepoTags {
+						for _, ref := range imgSummary.RepoTags {
 							if ref == "<none>:<none>" {
-								if err := cleaner.removeImage(ctx, desc.ImageSummary.ID, options.Force, options.DryRun); err != nil {
-									logboek.Context(ctx).Warn().LogF("failed to remove local %s image by ID %q: %s\n", cleaner.BackendName(), desc.ImageSummary.ID, err)
+								if err := cleaner.removeImage(ctx, imgSummary.ID, options.Force, options.DryRun); err != nil {
+									logboek.Context(ctx).Warn().LogF("failed to remove local %s image by ID %q: %s\n", cleaner.BackendName(), imgSummary.ID, err)
 									allTagsRemoved = false
 								}
 							} else {
@@ -328,10 +325,10 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 						if allTagsRemoved {
 							imageRemoved = true
 						}
-					} else if len(desc.ImageSummary.RepoDigests) > 0 {
+					} else if len(imgSummary.RepoDigests) > 0 {
 						allDigestsRemoved := true
 
-						for _, repoDigest := range desc.ImageSummary.RepoDigests {
+						for _, repoDigest := range imgSummary.RepoDigests {
 							if err := cleaner.removeImage(ctx, repoDigest, options.Force, options.DryRun); err != nil {
 								logboek.Context(ctx).Warn().LogF("failed to remove local %s image by repo digest %q: %s\n", cleaner.BackendName(), repoDigest, err)
 								allDigestsRemoved = false
@@ -344,7 +341,7 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 					}
 
 					if imageRemoved {
-						freedBytes += uint64(desc.ImageSummary.Size - normalizeSharedSize(desc.ImageSummary.SharedSize))
+						freedBytes += uint64(imgSummary.Size - normalizeSharedSize(imgSummary.SharedSize))
 						freedImagesCount++
 					}
 
@@ -439,7 +436,7 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 			logboek.Context(ctx).Default().LogF("Volume usage: %s / %s\n", humanize.Bytes(checkResult.VolumeUsage.UsedBytes), humanize.Bytes(checkResult.VolumeUsage.TotalBytes))
 			logboek.Context(ctx).Default().LogF("Target volume usage percentage: %s > %s — %s\n", utils.RedF("%0.2f%%", checkResult.VolumeUsage.Percentage), utils.BlueF("%0.2f%%", targetVolumeUsage), utils.RedF("HIGH VOLUME USAGE"))
 			logboek.Context(ctx).Default().LogF("Needed to free: %s\n", utils.RedF("%s", humanize.Bytes(bytesToFree)))
-			logboek.Context(ctx).Default().LogF("Available werf images to free: %s\n", utils.YellowF("%d", len(checkResult.ImagesDescs)))
+			logboek.Context(ctx).Default().LogF("Available werf images to free: %s\n", utils.YellowF("%d", len(checkResult.ImagesList)))
 		})
 	}
 
@@ -456,10 +453,6 @@ func (cleaner *LocalBackendCleaner) removeImage(ctx context.Context, ref string,
 	return cleaner.backend.Rmi(ctx, ref, container_backend.RmiOpts{
 		Force: force,
 	})
-}
-
-type LocalImageDesc struct {
-	ImageSummary image.Summary
 }
 
 func (cleaner *LocalBackendCleaner) safeDanglingImagesCleanup(ctx context.Context, options CommonOptions) error {
