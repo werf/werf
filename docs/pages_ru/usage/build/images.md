@@ -428,7 +428,7 @@ imageSpec:
   clearHistory: true
   config:
     user: "1001:1001"
-    exposedPorts:
+    expose:
       - "8080/tcp"
     env:
       NODE_ENV: "production"

@@ -8,8 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/moby/buildkit/frontend/dockerfile/shell"
-
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
@@ -92,7 +90,7 @@ func (s *ImageSpecStage) PrepareImage(ctx context.Context, _ Conveyor, _ contain
 		if err != nil {
 			return fmt.Errorf("unable to modify env: %w", err)
 		}
-		newConfig.Volumes = modifyVolumes(ctx, imageInfo.Volumes, s.imageSpec.RemoveVolumes, s.imageSpec.Volumes)
+		newConfig.Volumes = modifyVolumes(imageInfo.Volumes, s.imageSpec.RemoveVolumes, s.imageSpec.Volumes)
 
 		if s.imageSpec.Expose != nil {
 			newConfig.ExposedPorts = make(map[string]struct{}, len(s.imageSpec.Expose))
@@ -224,16 +222,14 @@ func modifyEnv(env, removeKeys []string, addKeysMap map[string]string) ([]string
 		}
 	}
 
-	for _, key := range removeKeys {
-		delete(baseEnvMap, key)
-	}
-
 	// FIXME: (v3) This is a temporary solution to remove werf commit envs that persist after build.
-	for _, key := range []string{
+	removeKeys = append(removeKeys, []string{
 		"WERF_COMMIT_HASH",
 		"WERF_COMMIT_TIME_HUMAN",
 		"WERF_COMMIT_TIME_UNIX",
-	} {
+	}...)
+
+	for _, key := range removeKeys {
 		delete(baseEnvMap, key)
 	}
 
@@ -241,31 +237,25 @@ func modifyEnv(env, removeKeys []string, addKeysMap map[string]string) ([]string
 	if envValue, hasEnv := baseEnvMap[ssh_agent.SSHAuthSockEnv]; hasEnv && envValue == container_backend.SSHContainerAuthSockPath {
 		delete(baseEnvMap, ssh_agent.SSHAuthSockEnv)
 	}
-
-	shlex := shell.NewLex('\\')
-	shlex.SkipUnsetEnv = true
-
-	buildEnvList := func() []string {
-		newEnv := make([]string, 0, len(baseEnvMap))
-		for k, v := range baseEnvMap {
-			newEnv = append(newEnv, fmt.Sprintf("%s=%s", k, v))
-		}
-		return newEnv
-	}
+	//finalEnvMap := make(map[string]string)
 
 	for k, v := range addKeysMap {
-		newVal, err := shlex.ProcessWord(v, buildEnvList())
+		newVal, err := parseEnv(v, baseEnvMap, addKeysMap)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("unable to parse env %s: %w", k, err)
 		}
+
 		baseEnvMap[k] = newVal
 	}
 
-	newEnv := buildEnvList()
+	newEnv := make([]string, 0, len(baseEnvMap))
+	for k, v := range baseEnvMap {
+		newEnv = append(newEnv, fmt.Sprintf("%s=%s", k, v))
+	}
 	return newEnv, nil
 }
 
-func modifyVolumes(_ context.Context, volumes map[string]struct{}, removeVolumes, addVolumes []string) map[string]struct{} {
+func modifyVolumes(volumes map[string]struct{}, removeVolumes, addVolumes []string) map[string]struct{} {
 	if volumes == nil {
 		volumes = make(map[string]struct{})
 	}
@@ -289,4 +279,52 @@ func sortSliceWithNewSlice(original []string) []string {
 
 func toDuration(seconds int) time.Duration {
 	return time.Duration(seconds) * time.Second
+}
+
+func parseEnv(input string, envMap, envoyEnvMap map[string]string) (string, error) {
+	re := regexp.MustCompile(`\$\{([A-Za-z0-9_]+)\}`)
+	var expand func(string, map[string]bool) (string, error)
+
+	var circularDependencyErr error
+	expand = func(value string, visited map[string]bool) (string, error) {
+		return re.ReplaceAllStringFunc(value, func(match string) string {
+			key := match[2 : len(match)-1]
+
+			if visited[key] {
+				circularDependencyErr = fmt.Errorf("circular dependency found in key %s", key)
+				return ""
+			}
+
+			visited[key] = true
+			defer delete(visited, key)
+
+			var resolvedValue string
+			var exists bool
+
+			if resolvedValue, exists = envMap[key]; !exists {
+				resolvedValue, exists = envoyEnvMap[key]
+			}
+
+			if !exists {
+				return match
+			}
+
+			expandedValue, err := expand(resolvedValue, visited)
+			if err != nil {
+				return ""
+			}
+			return expandedValue
+		}), nil
+	}
+
+	expanded, err := expand(input, map[string]bool{})
+	if err != nil {
+		return "", err
+	}
+
+	if circularDependencyErr != nil {
+		return "", fmt.Errorf("unable to expand env: %w", circularDependencyErr)
+	}
+
+	return expanded, nil
 }
