@@ -172,7 +172,9 @@ CreateImagesDescs:
 
 	CheckEachRef:
 		for _, ref := range imageSummary.RepoTags {
-			// IMPORTANT: ignore none images, these may be either orphans or just built fresh images and we shall not delete these
+			// IMPORTANT: <none>:<none> images are dangling or intermediate images.
+			// Right now we don't know what kind of <none>:<none> image is.
+			// But we assume backend native garbage collector removes dangling images.
 			if ref == "<none>:<none>" {
 				continue CreateImagesDescs
 			}
@@ -263,7 +265,7 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 		logboek.Context(ctx).Default().LogF("Allowed percentage level exceeded: %s > %s — %s\n", utils.RedF("%0.2f%%", checkResult.VolumeUsage.Percentage), utils.YellowF("%0.2f%%", options.AllowedStorageVolumeUsagePercentage), utils.RedF("HIGH VOLUME USAGE"))
 		logboek.Context(ctx).Default().LogF("Target percentage level after cleanup: %0.2f%% - %0.2f%% (margin) = %s\n", options.AllowedStorageVolumeUsagePercentage, options.AllowedStorageVolumeUsageMarginPercentage, utils.BlueF("%0.2f%%", targetVolumeUsage))
 		logboek.Context(ctx).Default().LogF("Needed to free: %s\n", utils.RedF("%s", humanize.Bytes(bytesToFree)))
-		logboek.Context(ctx).Default().LogF("Available images to free: %s\n", utils.YellowF("%d", len(checkResult.ImagesDescs)))
+		logboek.Context(ctx).Default().LogF("Available werf images to free: %s\n", utils.YellowF("%d", len(checkResult.ImagesDescs)))
 	})
 
 	var processedImagesIDs []string
@@ -433,7 +435,7 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 			logboek.Context(ctx).Default().LogF("Volume usage: %s / %s\n", humanize.Bytes(checkResult.VolumeUsage.UsedBytes), humanize.Bytes(checkResult.VolumeUsage.TotalBytes))
 			logboek.Context(ctx).Default().LogF("Target volume usage percentage: %s > %s — %s\n", utils.RedF("%0.2f%%", checkResult.VolumeUsage.Percentage), utils.BlueF("%0.2f%%", targetVolumeUsage), utils.RedF("HIGH VOLUME USAGE"))
 			logboek.Context(ctx).Default().LogF("Needed to free: %s\n", utils.RedF("%s", humanize.Bytes(bytesToFree)))
-			logboek.Context(ctx).Default().LogF("Available images to free: %s\n", utils.YellowF("%d", len(checkResult.ImagesDescs)))
+			logboek.Context(ctx).Default().LogF("Available werf images to free: %s\n", utils.YellowF("%d", len(checkResult.ImagesDescs)))
 		})
 	}
 
