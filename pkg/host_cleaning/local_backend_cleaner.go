@@ -123,88 +123,99 @@ func (checkResult *CheckResultBackendStorage) GetBytesToFree(targetVolumeUsage f
 }
 
 func (cleaner *LocalBackendCleaner) checkBackendStorage(ctx context.Context, backendStoragePath string) (*CheckResultBackendStorage, error) {
-	res := &CheckResultBackendStorage{}
-
 	vu, err := cleaner.volumeutilsGetVolumeUsageByPath(ctx, backendStoragePath)
 	if err != nil {
 		return nil, fmt.Errorf("error getting volume usage by path %q: %w", backendStoragePath, err)
 	}
-	res.VolumeUsage = vu
 
-	var images image.ImagesList
+	images, err := cleaner.backend.Images(ctx, buildImagesOptions(
+		util.NewPair("label", image.WerfLabel),
+		util.NewPair("label", image.WerfStageDigestLabel),
+	))
+	if err != nil {
+		return nil, fmt.Errorf("unable to get werf %s images: %w", cleaner.BackendName(), err)
+	}
 
-	{
-
-		imgs, err := cleaner.backend.Images(ctx, buildImagesOptions(
-			util.NewPair("label", image.WerfLabel),
-			util.NewPair("label", image.WerfStageDigestLabel),
-		))
-		if err != nil {
-			return nil, fmt.Errorf("unable to get werf %s images: %w", cleaner.BackendName(), err)
-		}
-
-		// Do not remove stages-storage=:local images, because this is primary stages storage data,
-		// and it can only be cleaned by the werf-cleanup command
-	ExcludeLocalV1_2StagesStorage:
-		for _, img := range imgs {
-			projectName := img.Labels[image.WerfLabel]
-
-			for _, ref := range img.RepoTags {
-				normalizedTag, err := cleaner.normalizeReference(ref)
-				if err != nil {
-					return nil, err
-				}
-				if strings.HasPrefix(normalizedTag, fmt.Sprintf("%s:", projectName)) {
-					continue ExcludeLocalV1_2StagesStorage
-				}
-			}
-
-			images = append(images, img)
-		}
+	images, err = cleaner.filterOutImages(ctx, images)
+	if err != nil {
+		return nil, fmt.Errorf("unable to filter out images: %w", err)
 	}
 
 	lastUsedAtMap := make(map[string]time.Time, len(images))
 
-CreateImagesDescs:
-	for _, imageSummary := range images {
-		data, _ := json.Marshal(imageSummary)
+	for _, img := range images {
+		data, _ := json.Marshal(img)
 		logboek.Context(ctx).Debug().LogF("Image summary:\n%s\n---\n", data)
 
-		lastUsedAtMap[imageSummary.ID] = imageSummary.Created
-
-	CheckEachRef:
-		for _, ref := range imageSummary.RepoTags {
-			// IMPORTANT: <none>:<none> images are dangling or intermediate images.
-			// Right now we don't know what kind of <none>:<none> image is.
-			// But we assume backend native garbage collector removes dangling images.
-			if ref == "<none>:<none>" {
-				continue CreateImagesDescs
-			}
-
-			lastRecentlyUsedAt, err := cleaner.lrumetaGetImageLastAccessTime(ctx, ref)
-			if err != nil {
-				return nil, fmt.Errorf("error accessing last recently used images cache: %w", err)
-			}
-
-			if lastRecentlyUsedAt.IsZero() {
-				continue CheckEachRef
-			}
-
-			if lastRecentlyUsedAt.After(lastUsedAtMap[imageSummary.ID]) {
-				lastUsedAtMap[imageSummary.ID] = lastRecentlyUsedAt
-			}
+		lastUsedAtMap[img.ID], err = cleaner.maxLastUsedAtForImage(ctx, img)
+		if err != nil {
+			return nil, fmt.Errorf("unable to max last used at for image: %w", err)
 		}
-
-		res.ImagesList = append(res.ImagesList, imageSummary)
 	}
 
-	slices.SortFunc(res.ImagesList, func(a, b image.Summary) int {
+	slices.SortFunc(images, func(a, b image.Summary) int {
 		aTime := lastUsedAtMap[a.ID]
 		bTime := lastUsedAtMap[a.ID]
 		return aTime.Compare(bTime)
 	})
 
+	res := &CheckResultBackendStorage{
+		VolumeUsage: vu,
+		ImagesList:  images,
+	}
+
 	return res, nil
+}
+
+func (cleaner *LocalBackendCleaner) filterOutImages(_ context.Context, images image.ImagesList) (image.ImagesList, error) {
+	var list image.ImagesList
+
+skipImage:
+	for _, img := range images {
+		projectName := img.Labels[image.WerfLabel]
+
+		for _, ref := range img.RepoTags {
+			// Do not remove <none>:<none> images.
+			// Note: <none>:<none> images are dangling or intermediate images.
+			// Right now we don't know what kind of <none>:<none> image is.
+			// But we assume backend native garbage collector removes dangling images.
+			if ref == "<none>:<none>" {
+				continue skipImage
+			}
+
+			normalizedTag, err := cleaner.normalizeReference(ref)
+			if err != nil {
+				return nil, err
+			}
+
+			// Do not remove stages-storage=:local images, because this is primary stages storage data,
+			// and it can only be cleaned by the werf-cleanup command
+			if strings.HasPrefix(normalizedTag, fmt.Sprintf("%s:", projectName)) {
+				continue skipImage
+			}
+		}
+
+		list = append(list, img)
+	}
+
+	return list, nil
+}
+
+func (cleaner *LocalBackendCleaner) maxLastUsedAtForImage(ctx context.Context, img image.Summary) (time.Time, error) {
+	lastUsedAt := img.Created
+
+	for _, ref := range img.RepoTags {
+		lastRecentlyUsedAt, err := cleaner.lrumetaGetImageLastAccessTime(ctx, ref)
+		if err != nil {
+			return time.Time{}, fmt.Errorf("error accessing last recently used images cache: %w", err)
+		}
+
+		if lastUsedAt.Before(lastRecentlyUsedAt) {
+			lastUsedAt = lastRecentlyUsedAt
+		}
+	}
+
+	return lastUsedAt, nil
 }
 
 // normalizeReference Normalizes image reference (repository tag) to docker backend repository tag format.
