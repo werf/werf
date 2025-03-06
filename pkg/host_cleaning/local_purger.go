@@ -30,7 +30,7 @@ func (purger *localPurger) FlushContainers(ctx context.Context, options CommonOp
 		return err
 	}
 
-	if err = containersRemove(ctx, nil, containers, options); err != nil {
+	if err = containersRemove(ctx, purger.backend, containers, options); err != nil {
 		return err
 	}
 

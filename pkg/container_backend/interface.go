@@ -5,6 +5,7 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/pkg/container_backend/info"
+	"github.com/werf/werf/v2/pkg/container_backend/prune"
 	"github.com/werf/werf/v2/pkg/image"
 )
 
@@ -98,6 +99,15 @@ type ContainerBackend interface {
 	Containers(ctx context.Context, opts ContainersOptions) (image.ContainerList, error)
 
 	ClaimTargetPlatforms(ctx context.Context, targetPlatforms []string)
+
+	// PruneBuildCache removes all unused cache
+	PruneBuildCache(ctx context.Context, options prune.Options) (prune.Report, error)
+	// PruneContainers removes all stopped containers
+	PruneContainers(ctx context.Context, options prune.Options) (prune.Report, error)
+	// PruneImages removes all dangling images
+	PruneImages(ctx context.Context, options prune.Options) (prune.Report, error)
+	// PruneVolumes removes all anonymous volumes not used by at least one container
+	PruneVolumes(ctx context.Context, options prune.Options) (prune.Report, error)
 
 	String() string
 
