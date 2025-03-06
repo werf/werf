@@ -12,7 +12,10 @@ import (
 type VolumeUsage struct {
 	UsedBytes  uint64
 	TotalBytes uint64
-	Percentage float64
+}
+
+func (vu VolumeUsage) Percentage() float64 {
+	return (float64(vu.UsedBytes) / float64(vu.TotalBytes)) * 100
 }
 
 func GetVolumeUsageByPath(ctx context.Context, path string) (VolumeUsage, error) {
@@ -25,7 +28,6 @@ func GetVolumeUsageByPath(ctx context.Context, path string) (VolumeUsage, error)
 	return VolumeUsage{
 		UsedBytes:  usedBytes,
 		TotalBytes: di.Total,
-		Percentage: (float64(usedBytes) / float64(di.Total)) * 100,
 	}, nil
 }
 
