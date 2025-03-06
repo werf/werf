@@ -51,7 +51,7 @@ The first thing we recommend is to check the existing [issues](https://github.co
    task format lint
    ```
 
-   Note: The `task format` will run Prettier inside a container.
+   Note: The `task format` and `task lint` will run Prettier inside a container.
 
 9. Commit changes:
 

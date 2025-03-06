@@ -427,7 +427,7 @@ tasks:
   lint:prettier:yaml:
     desc: "Check if yaml files are prettier-formatted."
     cmds:
-      - prettier -c "**/*.yaml" "**/*.yml"
+      - docker run --rm -v $(pwd):/work tmknom/prettier -c "**/*.yaml" "**/*.yml"
 
   mock:generate:
     desc: "Generate mocks."
