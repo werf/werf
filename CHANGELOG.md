@@ -1,6 +1,6 @@
 # Changelog
 
-### [2.27.2](https://www.github.com/werf/werf/compare/v2.27.1...v2.27.2) (2025-03-06)
+### [2.27.1+fix2](https://www.github.com/werf/werf/compare/v2.27.1...v2.27.1+fix2) (2025-03-06)
 
 
 ### Bug Fixes
