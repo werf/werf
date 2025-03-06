@@ -17,6 +17,7 @@ import (
 
 	container_backend "github.com/werf/werf/v2/pkg/container_backend"
 	info "github.com/werf/werf/v2/pkg/container_backend/info"
+	prune "github.com/werf/werf/v2/pkg/container_backend/prune"
 	image "github.com/werf/werf/v2/pkg/image"
 )
 
@@ -235,6 +236,66 @@ func (m *MockContainerBackend) PostManifest(ctx context.Context, ref string, opt
 func (mr *MockContainerBackendMockRecorder) PostManifest(ctx, ref, opts any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostManifest", reflect.TypeOf((*MockContainerBackend)(nil).PostManifest), ctx, ref, opts)
+}
+
+// PruneBuildCache mocks base method.
+func (m *MockContainerBackend) PruneBuildCache(ctx context.Context, options prune.Options) (prune.Report, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PruneBuildCache", ctx, options)
+	ret0, _ := ret[0].(prune.Report)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PruneBuildCache indicates an expected call of PruneBuildCache.
+func (mr *MockContainerBackendMockRecorder) PruneBuildCache(ctx, options any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PruneBuildCache", reflect.TypeOf((*MockContainerBackend)(nil).PruneBuildCache), ctx, options)
+}
+
+// PruneContainers mocks base method.
+func (m *MockContainerBackend) PruneContainers(ctx context.Context, options prune.Options) (prune.Report, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PruneContainers", ctx, options)
+	ret0, _ := ret[0].(prune.Report)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PruneContainers indicates an expected call of PruneContainers.
+func (mr *MockContainerBackendMockRecorder) PruneContainers(ctx, options any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PruneContainers", reflect.TypeOf((*MockContainerBackend)(nil).PruneContainers), ctx, options)
+}
+
+// PruneImages mocks base method.
+func (m *MockContainerBackend) PruneImages(ctx context.Context, options prune.Options) (prune.Report, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PruneImages", ctx, options)
+	ret0, _ := ret[0].(prune.Report)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PruneImages indicates an expected call of PruneImages.
+func (mr *MockContainerBackendMockRecorder) PruneImages(ctx, options any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PruneImages", reflect.TypeOf((*MockContainerBackend)(nil).PruneImages), ctx, options)
+}
+
+// PruneVolumes mocks base method.
+func (m *MockContainerBackend) PruneVolumes(ctx context.Context, options prune.Options) (prune.Report, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PruneVolumes", ctx, options)
+	ret0, _ := ret[0].(prune.Report)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PruneVolumes indicates an expected call of PruneVolumes.
+func (mr *MockContainerBackendMockRecorder) PruneVolumes(ctx, options any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PruneVolumes", reflect.TypeOf((*MockContainerBackend)(nil).PruneVolumes), ctx, options)
 }
 
 // Pull mocks base method.

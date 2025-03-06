@@ -17,6 +17,7 @@ import (
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/container_backend/info"
+	"github.com/werf/werf/v2/pkg/container_backend/prune"
 	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/ssh_agent"
@@ -381,4 +382,36 @@ func (backend *DockerServerBackend) Containers(ctx context.Context, opts Contain
 
 func (backend *DockerServerBackend) PostManifest(ctx context.Context, ref string, opts PostManifestOpts) error {
 	return docker.CreateImage(ctx, ref, docker.CreateImageOptions{Labels: opts.Labels})
+}
+
+func (backend *DockerServerBackend) PruneBuildCache(ctx context.Context, options prune.Options) (prune.Report, error) {
+	report, err := docker.BuildCachePrune(ctx, docker.BuildCachePruneOptions(options))
+	if err != nil {
+		return prune.Report{}, fmt.Errorf("unable to prune docker build cache: %w", err)
+	}
+	return prune.Report(report), nil
+}
+
+func (backend *DockerServerBackend) PruneContainers(ctx context.Context, options prune.Options) (prune.Report, error) {
+	report, err := docker.ContainersPrune(ctx, docker.ContainersPruneOptions(options))
+	if err != nil {
+		return prune.Report{}, fmt.Errorf("unable to prune docker containers: %w", err)
+	}
+	return prune.Report(report), nil
+}
+
+func (backend *DockerServerBackend) PruneImages(ctx context.Context, options prune.Options) (prune.Report, error) {
+	report, err := docker.ImagesPrune(ctx, docker.ImagesPruneOptions(options))
+	if err != nil {
+		return prune.Report{}, err
+	}
+	return prune.Report(report), err
+}
+
+func (backend *DockerServerBackend) PruneVolumes(ctx context.Context, options prune.Options) (prune.Report, error) {
+	report, err := docker.VolumesPrune(ctx, docker.VolumesPruneOptions(options))
+	if err != nil {
+		return prune.Report{}, err
+	}
+	return prune.Report(report), err
 }
