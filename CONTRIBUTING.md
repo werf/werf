@@ -23,25 +23,11 @@ The first thing we recommend is to check the existing [issues](https://github.co
    - [go-task](https://taskfile.dev/installation/) (build tool to run common workflows)
    - [ginkgo](https://onsi.github.io/ginkgo/#installing-ginkgo) (testing framework required to run tests)
 
-   To run `task` commands for formatting and linting (`task lint`, `task format`), as well as install dependencies (`task deps:install`), you can either:
+   To install dependencies, use the following task:
 
-   - **Build and run a development container**  
-     You can use the provided `Dockerfile` to build an image with all necessary dependencies:
+   - `task deps:install`
 
-     ```
-     docker build -f werf-dev/Dockerfile -t werf-dev .
-     ```
-
-     Once built, you can run command below to list all available tasks:
-
-     ```
-     docker run --rm -v $(pwd):/home/dev/werf werf-dev -l
-     ```
-
-   - **Install dependencies manually**  
-      If you prefer working outside a container, install the required dependencies and run `task deps:install`
-
-   This will install all necessary tools except prettier for running `task lint` and `task format`.
+   Additionally, to build the `werf` binary, you need to install the `libbtrfs-dev` package.
 
 4. Make changes.
 5. Build werf:
@@ -64,6 +50,8 @@ The first thing we recommend is to check the existing [issues](https://github.co
    ```shell
    task format lint
    ```
+
+   Note: The `task format` will run Prettier inside a container.
 
 9. Commit changes:
 
