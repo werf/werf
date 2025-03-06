@@ -1,5 +1,13 @@
 # Changelog
 
+### [2.27.2](https://www.github.com/werf/werf/compare/v2.27.1...v2.27.2) (2025-03-06)
+
+
+### Bug Fixes
+
+* **build, docker, dockerfile:** fix panic expected stage "dockerfile" content digest label to be set! ([1168c0d](https://www.github.com/werf/werf/commit/1168c0de386e9810396a67ed3d62bbf19d8bf629))
+* **deploy:** `bundle copy` panics ([c025e0f](https://www.github.com/werf/werf/commit/c025e0febaa0a5375af2425e610a0af3c46a94d1))
+
 ### [2.27.1](https://www.github.com/werf/werf/compare/v2.27.0...v2.27.1) (2025-02-18)
 
 
