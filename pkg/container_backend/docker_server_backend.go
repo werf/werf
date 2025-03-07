@@ -357,9 +357,6 @@ func (backend *DockerServerBackend) Containers(ctx context.Context, opts Contain
 		if filter.Ancestor != "" {
 			filterSet.Add("ancestor", filter.Ancestor)
 		}
-		if filter.Status != "" {
-			filterSet.Add("status", filter.Status)
-		}
 	}
 
 	containersOptions := types.ContainerListOptions{}
