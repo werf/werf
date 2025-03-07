@@ -9,8 +9,8 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh/terminal"
 
-	"github.com/werf/nelm-for-werf-helm/pkg/secret"
-	"github.com/werf/nelm-for-werf-helm/pkg/secrets_manager"
+	"github.com/werf/common-go/pkg/secret"
+	"github.com/werf/common-go/pkg/secrets_manager"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/cmd/werf/docs/replacers/helm"
 	secret_common "github.com/werf/werf/v2/cmd/werf/helm/secret/common"
@@ -85,7 +85,7 @@ func runSecretDecrypt(ctx context.Context) error {
 
 	workingDir := common.GetWorkingDir(&commonCmdData)
 
-	return secretDecrypt(ctx, secrets_manager.NewSecretsManager(secrets_manager.SecretsManagerOptions{}), workingDir)
+	return secretDecrypt(ctx, secrets_manager.Manager, workingDir)
 }
 
 func secretDecrypt(
