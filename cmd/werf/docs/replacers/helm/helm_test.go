@@ -4,10 +4,10 @@ import (
 	"os"
 	"testing"
 
-	helm_v3 "github.com/werf/3p-helm/cmd/helm"
-	"github.com/werf/3p-helm/pkg/action"
+	helm_v3 "github.com/werf/3p-helm-for-werf-helm/cmd/helm"
+	"github.com/werf/3p-helm-for-werf-helm/pkg/action"
 	"github.com/werf/werf/v2/cmd/werf/common"
-	"github.com/werf/werf/v2/pkg/deploy/helm"
+	helm "github.com/werf/werf/v2/pkg/deploy/helm_for_werf_helm"
 )
 
 func TestReplaceHelmCreateDocs(t *testing.T) {
