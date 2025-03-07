@@ -375,7 +375,7 @@ tasks:
   format:prettier:yaml:
     desc: "Format yaml files with prettier."
     cmds:
-      - prettier -w "**/*.yaml" "**/*.yml"
+      - docker run --rm -v $(pwd):/work tmknom/prettier -w "**/*.yaml" "**/*.yml"
 
   lint:
     desc: 'Run all linters in parallel. Important vars: "paths".'
@@ -427,7 +427,7 @@ tasks:
   lint:prettier:yaml:
     desc: "Check if yaml files are prettier-formatted."
     cmds:
-      - prettier -c "**/*.yaml" "**/*.yml"
+      - docker run --rm -v $(pwd):/work tmknom/prettier -c "**/*.yaml" "**/*.yml"
 
   mock:generate:
     desc: "Generate mocks."
@@ -548,6 +548,16 @@ tasks:
     cmds:
       - rm -rf ./dist
 
+  deps:install:
+    desc: "Install all dependencies"
+    deps:
+      - deps:install:gci
+      - deps:install:ginkgo
+      - deps:install:golangci-lint
+      - deps:install:gofumpt
+      - deps:install:mockgen
+      - deps:install:enumer
+
   deps:install:gci:
     desc: "Install gci binary."
     cmds:
@@ -569,11 +579,6 @@ tasks:
     desc: "Install gofumpt binary."
     cmds:
       - go install mvdan.cc/gofumpt@v0.7.0
-
-  deps:install:prettier:
-    desc: "Install prettier."
-    cmds:
-      - npm install -g prettier
 
   deps:install:mockgen:
     desc: "Install mockgen library."
