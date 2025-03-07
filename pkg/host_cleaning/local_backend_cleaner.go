@@ -14,10 +14,8 @@ import (
 	"github.com/containers/image/v5/docker/reference"
 	"github.com/dustin/go-humanize"
 
-	"github.com/werf/common-go/pkg/lock"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/kubedog/pkg/utils"
-	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/container_backend/prune"
@@ -453,18 +451,15 @@ func (cleaner *LocalBackendCleaner) removeWerfArtifactsOld(ctx context.Context, 
 	for {
 		var freedBytes uint64
 		var freedImagesCount uint64
-		var acquiredHostLocks []lockgate.LockHandle
 
 		if len(images) > 0 {
 			if err := logboek.Context(ctx).LogProcess("Running cleanup for least recently used %s images created by werf", cleaner.BackendName()).DoError(func() error {
-			DeleteImages:
 				for _, imgSummary := range images {
-					for _, id := range processedImagesIDs {
-						if imgSummary.ID == id {
-							logboek.Context(ctx).LogFDetails("Skip already processed image %q\n", imgSummary.ID)
-							continue DeleteImages
-						}
+					if slices.Contains(processedImagesIDs, imgSummary.ID) {
+						logboek.Context(ctx).LogFDetails("Skip already processed image %q\n", imgSummary.ID)
+						continue
 					}
+
 					processedImagesIDs = append(processedImagesIDs, imgSummary.ID)
 
 					imageRemoved := false
@@ -479,23 +474,15 @@ func (cleaner *LocalBackendCleaner) removeWerfArtifactsOld(ctx context.Context, 
 									allTagsRemoved = false
 								}
 							} else {
-								lockName := container_backend.ImageLockName(ref)
-
-								isLocked, lock, err := chart.AcquireHostLock(ctx, lockName, lockgate.AcquireOptions{NonBlocking: true})
+								err = withHostLock(ctx, container_backend.ImageLockName(ref), func() error {
+									if err = cleaner.removeImage(ctx, ref, options.Force, options.DryRun); err != nil {
+										logboek.Context(ctx).Warn().LogF("failed to remove local %s image by repo tag %q: %s\n", cleaner.BackendName(), ref, err)
+										allTagsRemoved = false
+									}
+									return nil
+								})
 								if err != nil {
-									return fmt.Errorf("error locking image %q: %w", lockName, err)
-								}
-
-								if !isLocked {
-									logboek.Context(ctx).LogFDetails("Image %q is locked at the moment: skip removal\n", ref)
-									continue DeleteImages
-								}
-
-								acquiredHostLocks = append(acquiredHostLocks, lock)
-
-								if err := cleaner.removeImage(ctx, ref, options.Force, options.DryRun); err != nil {
-									logboek.Context(ctx).Warn().LogF("failed to remove local %s image by repo tag %q: %s\n", cleaner.BackendName(), ref, err)
-									allTagsRemoved = false
+									return err
 								}
 							}
 						}
@@ -542,12 +529,6 @@ func (cleaner *LocalBackendCleaner) removeWerfArtifactsOld(ctx context.Context, 
 				return nil
 			}); err != nil {
 				return report, err
-			}
-		}
-
-		for _, lock := range acquiredHostLocks {
-			if err := chart.ReleaseHostLock(lock); err != nil {
-				return report, fmt.Errorf("unable to release lock %q: %w", lock.LockName, err)
 			}
 		}
 
@@ -643,13 +624,15 @@ func (cleaner *LocalBackendCleaner) safeContainersCleanup(ctx context.Context, p
 
 		processedContainersIDs = append(processedContainersIDs, container.ID)
 
-		if werfContainerName(container) == "" {
+		containerName := werfContainerName(container)
+
+		if containerName == "" {
 			logboek.Context(ctx).Warn().LogF("Ignore bad container %s\n", container.ID)
 			continue
 		}
 
-		err = doWithContainerLock(ctx, container, func() error {
-			if err := containersRemove(ctx, cleaner.backend, []image.Container{container}, options); err != nil {
+		err = withHostLock(ctx, container_backend.ContainerLockName(containerName), func() error {
+			if err = containersRemove(ctx, cleaner.backend, []image.Container{container}, options); err != nil {
 				return fmt.Errorf("failed to remove container %s: %w", logContainerName(container), err)
 			}
 			return nil
