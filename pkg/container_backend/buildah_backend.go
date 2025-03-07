@@ -1102,11 +1102,11 @@ func (backend *BuildahBackend) PostManifest(ctx context.Context, ref string, opt
 func (backend *BuildahBackend) ClaimTargetPlatforms(ctx context.Context, targetPlatforms []string) {}
 
 func (backend *BuildahBackend) PruneBuildCache(_ context.Context, _ prune.Options) (prune.Report, error) {
-	return prune.Report{}, nil
+	return prune.Report{}, ErrUnsupportedFeature
 }
 
 func (backend *BuildahBackend) PruneContainers(_ context.Context, _ prune.Options) (prune.Report, error) {
-	return prune.Report{}, nil
+	return prune.Report{}, ErrUnsupportedFeature
 }
 
 func (backend *BuildahBackend) PruneImages(ctx context.Context, options prune.Options) (prune.Report, error) {
@@ -1118,5 +1118,5 @@ func (backend *BuildahBackend) PruneImages(ctx context.Context, options prune.Op
 }
 
 func (backend *BuildahBackend) PruneVolumes(_ context.Context, _ prune.Options) (prune.Report, error) {
-	return prune.Report{}, nil
+	return prune.Report{}, ErrUnsupportedFeature
 }

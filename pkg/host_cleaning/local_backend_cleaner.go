@@ -28,6 +28,8 @@ import (
 
 var ErrUnsupportedContainerBackend = errors.New("unsupported container backend")
 
+var errOptionDryRunNotSupported = errors.New("option dry-run not supported")
+
 type RunGCOptions struct {
 	AllowedStorageVolumeUsagePercentage       float64
 	AllowedStorageVolumeUsageMarginPercentage float64
@@ -232,8 +234,8 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 		return fmt.Errorf("error getting local %s backend storage path: %w", cleaner.BackendName(), err)
 	}
 
-	logboek.Context(ctx).Default().LogF("Storage path: %s\n", backendStoragePath)
-	logboek.Context(ctx).Default().LogOptionalLn()
+	logboek.Context(ctx).LogF("Storage path: %s\n", backendStoragePath)
+	logboek.Context(ctx).LogOptionalLn()
 
 	vu, err := cleaner.volumeutilsGetVolumeUsageByPath(ctx, backendStoragePath)
 	if err != nil {
@@ -241,9 +243,9 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 	}
 
 	if vu.Percentage() <= options.AllowedStorageVolumeUsagePercentage {
-		logboek.Context(ctx).Default().LogBlock("Check storage").Do(func() {
-			logboek.Context(ctx).Default().LogF("Volume usage: %s / %s\n", humanize.Bytes(vu.UsedBytes), humanize.Bytes(vu.TotalBytes))
-			logboek.Context(ctx).Default().LogF("Allowed volume usage percentage: %s <= %s — %s\n", utils.GreenF("%0.2f%%", vu.Percentage()), utils.BlueF("%0.2f%%", options.AllowedStorageVolumeUsagePercentage), utils.GreenF("OK"))
+		logboek.Context(ctx).LogBlock("Check storage").Do(func() {
+			logboek.Context(ctx).LogF("Volume usage: %s / %s\n", humanize.Bytes(vu.UsedBytes), humanize.Bytes(vu.TotalBytes))
+			logboek.Context(ctx).LogF("Allowed volume usage percentage: %s <= %s — %s\n", utils.GreenF("%0.2f%%", vu.Percentage()), utils.BlueF("%0.2f%%", options.AllowedStorageVolumeUsagePercentage), utils.GreenF("OK"))
 		})
 
 		return nil
@@ -251,78 +253,105 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 
 	targetVolumeUsage := uint64(math.Max(options.AllowedStorageVolumeUsagePercentage-options.AllowedStorageVolumeUsageMarginPercentage, 0))
 
-	logboek.Context(ctx).Default().LogBlock("Check storage").Do(func() {
-		logboek.Context(ctx).Default().LogF("Volume usage: %s / %s\n", humanize.Bytes(vu.UsedBytes), humanize.Bytes(vu.TotalBytes))
-		logboek.Context(ctx).Default().LogF("Allowed percentage level exceeded: %s > %s — %s\n", utils.RedF("%0.2f%%", vu.Percentage()), utils.YellowF("%0.2f%%", options.AllowedStorageVolumeUsagePercentage), utils.RedF("HIGH VOLUME USAGE"))
-		logboek.Context(ctx).Default().LogF("Target percentage level after cleanup: %0.2f%% - %0.2f%% (margin) = %s\n", options.AllowedStorageVolumeUsagePercentage, options.AllowedStorageVolumeUsageMarginPercentage, utils.BlueF("%d", targetVolumeUsage))
-		logboek.Context(ctx).Default().LogF("Needed to free: %s\n", utils.RedF("%s", humanize.Bytes(calculateBytesToFree(vu, targetVolumeUsage))))
+	logboek.Context(ctx).LogBlock("Check storage").Do(func() {
+		logboek.Context(ctx).LogF("Volume usage: %s / %s\n", humanize.Bytes(vu.UsedBytes), humanize.Bytes(vu.TotalBytes))
+		logboek.Context(ctx).LogF("Allowed percentage level exceeded: %s > %s — %s\n", utils.RedF("%0.2f%%", vu.Percentage()), utils.YellowF("%0.2f%%", options.AllowedStorageVolumeUsagePercentage), utils.RedF("HIGH VOLUME USAGE"))
+		logboek.Context(ctx).LogF("Target percentage level after cleanup: %0.2f%% - %0.2f%% (margin) = %s\n", options.AllowedStorageVolumeUsagePercentage, options.AllowedStorageVolumeUsageMarginPercentage, utils.BlueF("%d", targetVolumeUsage))
+		logboek.Context(ctx).LogF("Needed to free: %s\n", utils.RedF("%s", humanize.Bytes(calculateBytesToFree(vu, targetVolumeUsage))))
 	})
 
 	// Step 1. Prune unused build cache
-	reportBuildCache, err := cleaner.pruneBuildCache(ctx, options, vu.UsedBytes, targetVolumeUsage)
+	var reportBuildCache prune.Report
+	err = logboek.Context(ctx).LogBlock("Prune unused build cache").DoError(func() error {
+		reportBuildCache, err = cleaner.pruneBuildCache(ctx, options)
+		if handleError(ctx, err) != nil {
+			return err
+		}
+
+		vu.UsedBytes -= reportBuildCache.SpaceReclaimed
+
+		logboek.Context(ctx).LogF("Volume usage: %s / %s\n", humanize.Bytes(vu.UsedBytes), humanize.Bytes(vu.TotalBytes))
+		logboek.Context(ctx).LogF("Target volume usage percentage: %s > %s — %s\n", utils.RedF("%0.2f%%", vu.Percentage()), utils.BlueF("%d", targetVolumeUsage), utils.RedF("HIGH VOLUME USAGE"))
+		logboek.Context(ctx).LogF("Freed space: %s\n", utils.RedF("%s", humanize.Bytes(reportBuildCache.SpaceReclaimed)))
+		logDeletedItems(ctx, reportBuildCache.ItemsDeleted)
+
+		return nil
+	})
 	if err != nil {
 		return fmt.Errorf("unable to prune unused build cache: %w", err)
 	}
-	vu.UsedBytes -= reportBuildCache.SpaceReclaimed
 
-	logboek.Context(ctx).Default().LogBlock("Prune unused build cache").Do(func() {
-		logboek.Context(ctx).Default().LogF("Volume usage: %s / %s\n", humanize.Bytes(vu.UsedBytes), humanize.Bytes(vu.TotalBytes))
-		logboek.Context(ctx).Default().LogF("Target volume usage percentage: %s > %s — %s\n", utils.RedF("%0.2f%%", vu.Percentage()), utils.BlueF("%d", targetVolumeUsage), utils.RedF("HIGH VOLUME USAGE"))
-		logboek.Context(ctx).Default().LogF("Freed space: %s\n", utils.RedF("%s", humanize.Bytes(reportBuildCache.SpaceReclaimed)))
-		logDeletedItems(ctx, reportBuildCache.ItemsDeleted)
+	// Step 2. Prune stopped containers
+	var reportContainers prune.Report
+	err = logboek.Context(ctx).LogBlock("Prune stopped containers").DoError(func() error {
+		reportContainers, err = cleaner.pruneContainers(ctx, options)
+		if handleError(ctx, err) != nil {
+			return err
+		}
+
+		vu.UsedBytes -= reportContainers.SpaceReclaimed
+
+		logboek.Context(ctx).LogF("Volume usage: %s / %s\n", humanize.Bytes(vu.UsedBytes), humanize.Bytes(vu.TotalBytes))
+		logboek.Context(ctx).LogF("Target volume usage percentage: %s > %s — %s\n", utils.RedF("%0.2f%%", vu.Percentage()), utils.BlueF("%d", targetVolumeUsage), utils.RedF("HIGH VOLUME USAGE"))
+		logboek.Context(ctx).LogF("Freed space: %s\n", utils.RedF("%s", humanize.Bytes(reportContainers.SpaceReclaimed)))
+		logDeletedItems(ctx, reportContainers.ItemsDeleted)
+
+		return nil
 	})
-
-	// Step 2. Prune dangling images
-	reportImages, err := cleaner.pruneImages(ctx, options, vu.UsedBytes, targetVolumeUsage)
-	if err != nil {
-		return fmt.Errorf("unable to prune dangling images: %w", err)
-	}
-	vu.UsedBytes -= reportImages.SpaceReclaimed
-
-	logboek.Context(ctx).Default().LogBlock("Prune dangling images").Do(func() {
-		logboek.Context(ctx).Default().LogF("Volume usage: %s / %s\n", humanize.Bytes(vu.UsedBytes), humanize.Bytes(vu.TotalBytes))
-		logboek.Context(ctx).Default().LogF("Target volume usage percentage: %s > %s — %s\n", utils.RedF("%0.2f%%", vu.Percentage()), utils.BlueF("%d", targetVolumeUsage), utils.RedF("HIGH VOLUME USAGE"))
-		logboek.Context(ctx).Default().LogF("Freed space: %s\n", utils.RedF("%s", humanize.Bytes(reportImages.SpaceReclaimed)))
-		logDeletedItems(ctx, reportImages.ItemsDeleted)
-	})
-
-	// Step 3. Prune stopped containers
-	reportContainers, err := cleaner.pruneContainers(ctx, options, vu.UsedBytes, targetVolumeUsage)
 	if err != nil {
 		return fmt.Errorf("unable to prune stopped containers: %w", err)
 	}
-	vu.UsedBytes -= reportContainers.SpaceReclaimed
 
-	logboek.Context(ctx).Default().LogBlock("Prune stopped containers").Do(func() {
-		logboek.Context(ctx).Default().LogF("Volume usage: %s / %s\n", humanize.Bytes(vu.UsedBytes), humanize.Bytes(vu.TotalBytes))
-		logboek.Context(ctx).Default().LogF("Target volume usage percentage: %s > %s — %s\n", utils.RedF("%0.2f%%", vu.Percentage()), utils.BlueF("%d", targetVolumeUsage), utils.RedF("HIGH VOLUME USAGE"))
-		logboek.Context(ctx).Default().LogF("Freed space: %s\n", utils.RedF("%s", humanize.Bytes(reportContainers.SpaceReclaimed)))
-		logDeletedItems(ctx, reportContainers.ItemsDeleted)
+	// Step 3. Prune unused anonymous volumes
+	var reportVolumes prune.Report
+	err = logboek.Context(ctx).LogBlock("Prune unused anonymous volumes").DoError(func() error {
+		reportVolumes, err = cleaner.pruneVolumes(ctx, options)
+		if handleError(ctx, err) != nil {
+			return err
+		}
+
+		vu.UsedBytes -= reportVolumes.SpaceReclaimed
+
+		logboek.Context(ctx).LogF("Volume usage: %s / %s\n", humanize.Bytes(vu.UsedBytes), humanize.Bytes(vu.TotalBytes))
+		logboek.Context(ctx).LogF("Target volume usage percentage: %s > %s — %s\n", utils.RedF("%0.2f%%", vu.Percentage()), utils.BlueF("%d", targetVolumeUsage), utils.RedF("HIGH VOLUME USAGE"))
+		logboek.Context(ctx).LogF("Freed space: %s\n", utils.RedF("%s", humanize.Bytes(reportVolumes.SpaceReclaimed)))
+		logDeletedItems(ctx, reportVolumes.ItemsDeleted)
+
+		return nil
 	})
-
-	// Step 4. Prune unused anonymous volumes
-	reportVolumes, err := cleaner.pruneVolumes(ctx, options, vu.UsedBytes, targetVolumeUsage)
 	if err != nil {
 		return fmt.Errorf("unable to prune unused anonymous volumes: %w", err)
 	}
-	vu.UsedBytes -= reportVolumes.SpaceReclaimed
 
-	logboek.Context(ctx).Default().LogBlock("Prune unused anonymous volumes").Do(func() {
-		logboek.Context(ctx).Default().LogF("Volume usage: %s / %s\n", humanize.Bytes(vu.UsedBytes), humanize.Bytes(vu.TotalBytes))
-		logboek.Context(ctx).Default().LogF("Target volume usage percentage: %s > %s — %s\n", utils.RedF("%0.2f%%", vu.Percentage()), utils.BlueF("%d", targetVolumeUsage), utils.RedF("HIGH VOLUME USAGE"))
-		logboek.Context(ctx).Default().LogF("Freed space: %s\n", utils.RedF("%s", humanize.Bytes(reportVolumes.SpaceReclaimed)))
-		logDeletedItems(ctx, reportVolumes.ItemsDeleted)
+	// Step 4. Prune dangling images
+	var reportImages prune.Report
+	err = logboek.Context(ctx).LogBlock("Prune dangling images").DoError(func() error {
+		reportImages, err = cleaner.pruneImages(ctx, options)
+		if handleError(ctx, err) != nil {
+			return err
+		}
+
+		vu.UsedBytes -= reportImages.SpaceReclaimed
+
+		logboek.Context(ctx).LogF("Volume usage: %s / %s\n", humanize.Bytes(vu.UsedBytes), humanize.Bytes(vu.TotalBytes))
+		logboek.Context(ctx).LogF("Target volume usage percentage: %s > %s — %s\n", utils.RedF("%0.2f%%", vu.Percentage()), utils.BlueF("%d", targetVolumeUsage), utils.RedF("HIGH VOLUME USAGE"))
+		logboek.Context(ctx).LogF("Freed space: %s\n", utils.RedF("%s", humanize.Bytes(reportImages.SpaceReclaimed)))
+		logDeletedItems(ctx, reportImages.ItemsDeleted)
+
+		return nil
 	})
+	if err != nil {
+		return fmt.Errorf("unable to prune dangling images: %w", err)
+	}
 
 	totalFreedBytes := reportBuildCache.SpaceReclaimed + reportImages.SpaceReclaimed + reportContainers.SpaceReclaimed + reportVolumes.SpaceReclaimed
 
 	if vu.Percentage() <= options.AllowedStorageVolumeUsagePercentage {
-		logboek.Context(ctx).Default().LogBlock("Local %s backend storage check", cleaner.BackendName()).Do(func() {
-			logboek.Context(ctx).Default().LogF("Storage path: %s\n", backendStoragePath)
-			logboek.Context(ctx).Default().LogF("Total freed space: %s\n", utils.RedF("%s", humanize.Bytes(totalFreedBytes)))
-			logboek.Context(ctx).Default().LogF("Volume usage: %s / %s\n", humanize.Bytes(vu.UsedBytes), humanize.Bytes(vu.TotalBytes))
-			logboek.Context(ctx).Default().LogF("Allowed percentage level exceeded: %s > %s — %s\n", utils.RedF("%0.2f%%", vu.Percentage()), utils.YellowF("%0.2f%%", options.AllowedStorageVolumeUsagePercentage), utils.RedF("HIGH VOLUME USAGE"))
-			logboek.Context(ctx).Default().LogF("Target percentage level after cleanup: %0.2f%% - %0.2f%% (margin) = %s\n", options.AllowedStorageVolumeUsagePercentage, options.AllowedStorageVolumeUsageMarginPercentage, utils.BlueF("%0.2f%%", targetVolumeUsage))
+		logboek.Context(ctx).LogBlock("Check storage", cleaner.BackendName()).Do(func() {
+			logboek.Context(ctx).LogF("Total freed space: %s\n", utils.RedF("%s", humanize.Bytes(totalFreedBytes)))
+			logboek.Context(ctx).LogF("Volume usage: %s / %s\n", humanize.Bytes(vu.UsedBytes), humanize.Bytes(vu.TotalBytes))
+			logboek.Context(ctx).LogF("Allowed percentage level exceeded: %s > %s — %s\n", utils.RedF("%0.2f%%", vu.Percentage()), utils.YellowF("%0.2f%%", options.AllowedStorageVolumeUsagePercentage), utils.RedF("HIGH VOLUME USAGE"))
+			logboek.Context(ctx).LogF("Target percentage level after cleanup: %0.2f%% - %0.2f%% (margin) = %s\n", options.AllowedStorageVolumeUsagePercentage, options.AllowedStorageVolumeUsageMarginPercentage, utils.BlueF("%0.2f%%", targetVolumeUsage))
 		})
 
 		return nil
@@ -335,10 +364,10 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 	}
 	vu.UsedBytes -= reportVolumes.SpaceReclaimed
 
-	logboek.Context(ctx).Default().LogBlock("Remove werf images and containers", cleaner.BackendName()).Do(func() {
-		logboek.Context(ctx).Default().LogF("Volume usage: %s / %s\n", humanize.Bytes(vu.UsedBytes), humanize.Bytes(vu.TotalBytes))
-		logboek.Context(ctx).Default().LogF("Target volume usage percentage: %s > %s — %s\n", utils.RedF("%0.2f%%", vu.Percentage()), utils.BlueF("%d", targetVolumeUsage), utils.RedF("HIGH VOLUME USAGE"))
-		logboek.Context(ctx).Default().LogF("Freed space: %s\n", utils.RedF("%s", humanize.Bytes(reportWerfArtifacts.SpaceReclaimed)))
+	logboek.Context(ctx).LogBlock("Remove werf images and containers", cleaner.BackendName()).Do(func() {
+		logboek.Context(ctx).LogF("Volume usage: %s / %s\n", humanize.Bytes(vu.UsedBytes), humanize.Bytes(vu.TotalBytes))
+		logboek.Context(ctx).LogF("Target volume usage percentage: %s > %s — %s\n", utils.RedF("%0.2f%%", vu.Percentage()), utils.BlueF("%d", targetVolumeUsage), utils.RedF("HIGH VOLUME USAGE"))
+		logboek.Context(ctx).LogF("Freed space: %s\n", utils.RedF("%s", humanize.Bytes(reportWerfArtifacts.SpaceReclaimed)))
 		logDeletedItems(ctx, reportWerfArtifacts.ItemsDeleted)
 	})
 
@@ -357,26 +386,54 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 }
 
 // pruneBuildCache removes all unused cache
-func (cleaner *LocalBackendCleaner) pruneBuildCache(ctx context.Context, _ RunGCOptions, _, _ uint64) (prune.Report, error) {
-	// TODO(a.zaytsev): handle dry-run mode
+func (cleaner *LocalBackendCleaner) pruneBuildCache(ctx context.Context, options RunGCOptions) (prune.Report, error) {
+	if options.DryRun {
+		// NOTE: Buildah does not give us a way to precalculate pruned size.
+		// NOTE: Docker does not give us a way to precalculate pruned size.
+		return prune.Report{}, errOptionDryRunNotSupported
+	}
+
 	return cleaner.backend.PruneBuildCache(ctx, prune.Options{})
 }
 
 // pruneContainers removes all stopped containers
-func (cleaner *LocalBackendCleaner) pruneContainers(ctx context.Context, _ RunGCOptions, _, _ uint64) (prune.Report, error) {
-	// TODO(a.zaytsev): handle dry-run mode
+func (cleaner *LocalBackendCleaner) pruneContainers(ctx context.Context, options RunGCOptions) (prune.Report, error) {
+	if options.DryRun {
+		// NOTE: Buildah does not give us a way to precalculate pruned size.
+
+		// NOTE: Docker give us an ability to precalculate container.Size, however it is expensive operation.
+		// In docker case we could list containers using: status=exited AND size=true AND all=true:
+		// https://pkg.go.dev/github.com/docker/docker/client@v25.0.5+incompatible#ContainerAPIClient.ContainerList
+
+		return prune.Report{}, errOptionDryRunNotSupported
+	}
+
 	return cleaner.backend.PruneContainers(ctx, prune.Options{})
 }
 
 // pruneImages removes all dangling images
-func (cleaner *LocalBackendCleaner) pruneImages(ctx context.Context, _ RunGCOptions, _, _ uint64) (prune.Report, error) {
-	// TODO(a.zaytsev): handle dry-run mode
+func (cleaner *LocalBackendCleaner) pruneImages(ctx context.Context, options RunGCOptions) (prune.Report, error) {
+	if options.DryRun {
+		list, err := cleaner.backend.Images(ctx, buildImagesOptions(
+			util.NewPair("dangling", "true"),
+		))
+		if err != nil {
+			return prune.Report{}, err
+		}
+		return mapImageListToPruneReport(list), nil
+	}
+
 	return cleaner.backend.PruneImages(ctx, prune.Options{})
 }
 
 // pruneVolumes removes all anonymous volumes not used by at least one container
-func (cleaner *LocalBackendCleaner) pruneVolumes(ctx context.Context, _ RunGCOptions, _, _ uint64) (prune.Report, error) {
-	// TODO(a.zaytsev): handle dry-run mode
+func (cleaner *LocalBackendCleaner) pruneVolumes(ctx context.Context, options RunGCOptions) (prune.Report, error) {
+	if options.DryRun {
+		// NOTE: Buildah does not give us a way to precalculate pruned size.
+		// NOTE: Docker does not give us a way to precalculate pruned size.
+		return prune.Report{}, errOptionDryRunNotSupported
+	}
+
 	return cleaner.backend.PruneVolumes(ctx, prune.Options{})
 }
 
@@ -399,12 +456,12 @@ func (cleaner *LocalBackendCleaner) removeWerfArtifactsOld(ctx context.Context, 
 		var acquiredHostLocks []lockgate.LockHandle
 
 		if len(images) > 0 {
-			if err := logboek.Context(ctx).Default().LogProcess("Running cleanup for least recently used %s images created by werf", cleaner.BackendName()).DoError(func() error {
+			if err := logboek.Context(ctx).LogProcess("Running cleanup for least recently used %s images created by werf", cleaner.BackendName()).DoError(func() error {
 			DeleteImages:
 				for _, imgSummary := range images {
 					for _, id := range processedImagesIDs {
 						if imgSummary.ID == id {
-							logboek.Context(ctx).Default().LogFDetails("Skip already processed image %q\n", imgSummary.ID)
+							logboek.Context(ctx).LogFDetails("Skip already processed image %q\n", imgSummary.ID)
 							continue DeleteImages
 						}
 					}
@@ -430,7 +487,7 @@ func (cleaner *LocalBackendCleaner) removeWerfArtifactsOld(ctx context.Context, 
 								}
 
 								if !isLocked {
-									logboek.Context(ctx).Default().LogFDetails("Image %q is locked at the moment: skip removal\n", ref)
+									logboek.Context(ctx).LogFDetails("Image %q is locked at the moment: skip removal\n", ref)
 									continue DeleteImages
 								}
 
@@ -480,7 +537,7 @@ func (cleaner *LocalBackendCleaner) removeWerfArtifactsOld(ctx context.Context, 
 					}
 				}
 
-				logboek.Context(ctx).Default().LogF("Freed images: %s\n", utils.GreenF("%d", freedImagesCount))
+				logboek.Context(ctx).LogF("Freed images: %s\n", utils.GreenF("%d", freedImagesCount))
 
 				return nil
 			}); err != nil {
@@ -502,7 +559,7 @@ func (cleaner *LocalBackendCleaner) removeWerfArtifactsOld(ctx context.Context, 
 			DryRun:                        options.DryRun,
 		}
 
-		if err := logboek.Context(ctx).Default().LogProcess("Running cleanup for %s containers created by werf", cleaner.BackendName()).DoError(func() error {
+		if err := logboek.Context(ctx).LogProcess("Running cleanup for %s containers created by werf", cleaner.BackendName()).DoError(func() error {
 			newProcessedContainersIDs, err := cleaner.safeContainersCleanup(ctx, processedContainersIDs, commonOptions)
 			if err != nil {
 				return fmt.Errorf("safe containers cleanup failed: %w", err)
@@ -515,7 +572,7 @@ func (cleaner *LocalBackendCleaner) removeWerfArtifactsOld(ctx context.Context, 
 			return report, err
 		}
 
-		if err := logboek.Context(ctx).Default().LogProcess("Running cleanup for dangling %s images created by werf", cleaner.BackendName()).DoError(func() error {
+		if err := logboek.Context(ctx).LogProcess("Running cleanup for dangling %s images created by werf", cleaner.BackendName()).DoError(func() error {
 			return cleaner.safeDanglingImagesCleanup(ctx, commonOptions)
 		}); err != nil {
 			return report, err
@@ -539,7 +596,7 @@ func (cleaner *LocalBackendCleaner) removeWerfArtifactsOld(ctx context.Context, 
 }
 
 func (cleaner *LocalBackendCleaner) removeImage(ctx context.Context, ref string, force, dryRun bool) error {
-	logboek.Context(ctx).Default().LogF("Removing %s\n", ref)
+	logboek.Context(ctx).LogF("Removing %s\n", ref)
 
 	if dryRun {
 		return nil
@@ -609,7 +666,7 @@ ProcessContainers:
 			}
 
 			if !isLocked {
-				logboek.Context(ctx).Default().LogFDetails("Ignore container %s used by another process\n", logContainerName(container))
+				logboek.Context(ctx).LogFDetails("Ignore container %s used by another process\n", logContainerName(container))
 				return nil
 			}
 			defer chart.ReleaseHostLock(lock)
@@ -645,6 +702,33 @@ func calculateBytesToFree(vu volumeutils.VolumeUsage, targetVolumeUsage uint64) 
 
 func logDeletedItems(ctx context.Context, deletedItems []string) {
 	for _, item := range deletedItems {
-		logboek.Context(ctx).Default().LogLn(item)
+		logboek.Context(ctx).LogLn(item)
 	}
+}
+
+func mapImageListToPruneReport(list image.ImagesList) prune.Report {
+	report := prune.Report{
+		ItemsDeleted:   make([]string, 0, len(list)),
+		SpaceReclaimed: 0,
+	}
+	for _, img := range list {
+		report.ItemsDeleted = append(report.ItemsDeleted, img.ID)
+		report.SpaceReclaimed += uint64(img.Size)
+	}
+	return report
+}
+
+// handleError is common error handler
+func handleError(ctx context.Context, err error) error {
+	switch {
+	case errors.Is(err, container_backend.ErrUnsupportedFeature):
+		logboek.Context(ctx).Warn().LogLn("Backend does not support this feature")
+		return nil
+	case errors.Is(err, errOptionDryRunNotSupported):
+		logboek.Context(ctx).Warn().LogLn("There is not an able to precalculate size in --dry-run mode")
+		return nil
+	case err != nil:
+		return err
+	}
+	return nil
 }
