@@ -8,6 +8,10 @@ import (
 	"github.com/spf13/cobra"
 
 	helm_v3 "github.com/werf/3p-helm/cmd/helm"
+	"github.com/werf/3p-helm/pkg/chart"
+	"github.com/werf/3p-helm/pkg/chartutil"
+	"github.com/werf/3p-helm/pkg/werf/secrets"
+	"github.com/werf/common-go/pkg/secrets_manager"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/deploy/bundles"
@@ -128,6 +132,17 @@ func runCopy(ctx context.Context) error {
 	if *commonCmdData.HelmCompatibleChart && *commonCmdData.RenameChart != "" {
 		return fmt.Errorf("incompatible options specified, could not use --helm-compatible-chart and --rename-chart=%q at the same time", *commonCmdData.RenameChart)
 	}
+
+	secrets.CoalesceTablesFunc = chartutil.CoalesceTables
+	secrets_manager.DisableSecretsDecryption = true
+
+	secretWorkDir, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("get current working directory: %w", err)
+	}
+	secrets.SecretsWorkingDir = secretWorkDir
+
+	chart.CurrentChartType = chart.ChartTypeBundle
 
 	return logboek.Context(ctx).LogProcess("Copy bundle").DoError(func() error {
 		logboek.Context(ctx).LogFDetails("From: %s\n", fromAddr.String())

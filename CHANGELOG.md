@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.31.1](https://www.github.com/werf/werf/compare/v2.31.0...v2.31.1) (2025-03-06)
+
+
+### Bug Fixes
+
+* **deploy:** `bundle copy` panics ([8159b00](https://www.github.com/werf/werf/commit/8159b0077083c57d16ec785ae1e3d504a8fdebca))
+
 ## [2.31.0](https://www.github.com/werf/werf/compare/v2.30.1...v2.31.0) (2025-03-03)
 
 
