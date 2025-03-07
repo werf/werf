@@ -10,10 +10,10 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/werf/common-go/pkg/secret"
+	"github.com/werf/common-go/pkg/secrets_manager"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
-	"github.com/werf/nelm-for-werf-helm/pkg/secret"
-	"github.com/werf/nelm-for-werf-helm/pkg/secrets_manager"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/cmd/werf/docs/replacers/helm"
 	"github.com/werf/werf/v2/pkg/true_git"
@@ -93,7 +93,7 @@ func runRotateSecretKey(
 		return fmt.Errorf("getting helm chart dir failed: %w", err)
 	}
 
-	secretsManager := secrets_manager.NewSecretsManager(secrets_manager.SecretsManagerOptions{})
+	secretsManager := secrets_manager.Manager
 
 	newEncoder, err := secretsManager.GetYamlEncoder(ctx, giterminismManager.ProjectDir())
 	if err != nil {

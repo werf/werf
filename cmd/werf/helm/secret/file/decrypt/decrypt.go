@@ -7,7 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/werf/nelm-for-werf-helm/pkg/secrets_manager"
+	"github.com/werf/common-go/pkg/secrets_manager"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/cmd/werf/docs/replacers/helm"
 	secret_common "github.com/werf/werf/v2/cmd/werf/helm/secret/common"
@@ -94,5 +94,5 @@ func runSecretDecrypt(ctx context.Context, filePath string) error {
 
 	workingDir := common.GetWorkingDir(&commonCmdData)
 
-	return secret_common.SecretFileDecrypt(ctx, secrets_manager.NewSecretsManager(secrets_manager.SecretsManagerOptions{}), workingDir, filePath, CmdData.OutputFilePath)
+	return secret_common.SecretFileDecrypt(ctx, secrets_manager.Manager, workingDir, filePath, CmdData.OutputFilePath)
 }
