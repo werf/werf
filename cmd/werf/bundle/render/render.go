@@ -236,6 +236,7 @@ func runRender(ctx context.Context) error {
 		KubeToken:                    *commonCmdData.KubeToken,
 		Local:                        !cmdData.Validate,
 		LocalKubeVersion:             *commonCmdData.KubeVersion,
+		LogColorMode:                 action.LogColorMode(*commonCmdData.LogColorMode),
 		LogLevel:                     common.GetNelmLogLevel(&commonCmdData),
 		LogRegistryStreamOut:         os.Stdout,
 		NetworkParallelism:           *commonCmdData.NetworkParallelism,
