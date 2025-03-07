@@ -13,7 +13,9 @@ import (
 	"github.com/werf/3p-helm-for-werf-helm/pkg/action"
 	"github.com/werf/3p-helm-for-werf-helm/pkg/chart"
 	"github.com/werf/3p-helm-for-werf-helm/pkg/chart/loader"
+	registry_legacy "github.com/werf/3p-helm-for-werf-helm/pkg/registry"
 	"github.com/werf/kubedog-for-werf-helm/pkg/kube"
+	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	helm2 "github.com/werf/werf/v2/cmd/werf/docs/replacers/helm"
 	helm_secret_decrypt "github.com/werf/werf/v2/cmd/werf/helm/secret/decrypt"
@@ -29,6 +31,7 @@ import (
 	helm "github.com/werf/werf/v2/pkg/deploy/helm_for_werf_helm"
 	chart_extender "github.com/werf/werf/v2/pkg/deploy/helm_for_werf_helm/chart_extender_for_werf_helm"
 	helpers "github.com/werf/werf/v2/pkg/deploy/helm_for_werf_helm/chart_extender_for_werf_helm/helpers_for_werf_helm"
+	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/werf"
 )
 
@@ -47,7 +50,10 @@ func NewCmd(ctx context.Context) (*cobra.Command, error) {
 		SilenceUsage: true,
 	})
 
-	registryClient, err := common.NewHelmRegistryClientWithoutInitForWerfHelm(ctx)
+	registryClient, err := registry_legacy.NewClient(
+		registry_legacy.ClientOptDebug(logboek.Context(ctx).Debug().IsAccepted()),
+		registry_legacy.ClientOptWriter(logboek.Context(ctx).OutStream()),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create helm registry client: %w", err)
 	}
@@ -199,7 +205,10 @@ func NewCmd(ctx context.Context) (*cobra.Command, error) {
 					wc.SetStubServiceValues(vals)
 				}
 
-				common.InitHelmRegistryClientForWerfHelm(registryClient, *_commonCmdData.DockerConfig, *_commonCmdData.InsecureHelmDependencies)
+				registry_legacy.ClientOptCredentialsFile(docker.GetDockerConfigCredentialsFile(*_commonCmdData.DockerConfig))(registryClient)
+				if *_commonCmdData.InsecureHelmDependencies {
+					registry_legacy.ClientOptPlainHTTP()
+				}
 
 				common.SetupOndemandKubeInitializer(*_commonCmdData.KubeContext, *_commonCmdData.KubeConfig, *_commonCmdData.KubeConfigBase64, *_commonCmdData.KubeConfigPathMergeList)
 
