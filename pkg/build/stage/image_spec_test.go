@@ -18,34 +18,46 @@ func TestEnvExpander(t *testing.T) {
 	t.Run("multiple expand", func(t *testing.T) {
 		existed := []string{
 			"PATH=/usr/bin",
+			"TEST=test",
 		}
 		specified := map[string]string{
-			"PATH":   "${PATH}:${GOROOT}/bin:${GOPATH}/bin",
-			"GOPATH": "${GOROOT}/go",
+			"PATH":   "${PATH}:/some/path",
+			"GOPATH": "/bin/go",
 			"GOROOT": "/usr/local/go",
 		}
 		env, err := modifyEnv(existed, []string{}, specified)
 		assert.NoError(t, err)
 		expceted := []string{
-			"PATH=/usr/bin:/usr/local/go/bin:/usr/local/go/go/bin",
+			"PATH=/usr/bin:/some/path",
 			"GOROOT=/usr/local/go",
-			"GOPATH=/usr/local/go/go",
+			"GOPATH=/bin/go",
+			"TEST=test",
 		}
-		for _, e := range expceted {
-			assert.Contains(t, env, e)
+		for _, e := range env {
+			assert.Contains(t, expceted, e)
 		}
 	})
 	t.Run("multiple expand witch circular dependency", func(t *testing.T) {
 		existed := []string{
 			"PATH=/usr/bin",
+			"TEST=test",
 		}
 		specified := map[string]string{
 			"PATH":   "${PATH}:${GOROOT}/bin:${GOPATH}/bin",
 			"GOROOT": "${GOPATH}/usr/local/go",
 			"GOPATH": "${GOROOT}/go",
 		}
-		_, err := modifyEnv(existed, []string{}, specified)
-		assert.Error(t, err)
+		expceted := []string{
+			"PATH=/usr/bin:/bin:/bin",
+			"GOROOT=/usr/local/go",
+			"GOPATH=/go",
+			"TEST=test",
+		}
+		env, err := modifyEnv(existed, []string{}, specified)
+		assert.NoError(t, err)
+		for _, e := range env {
+			assert.Contains(t, expceted, e)
+		}
 	})
 	t.Run("remove env", func(t *testing.T) {
 		existed := []string{

@@ -239,11 +239,10 @@ func modifyEnv(env, removeKeys []string, addKeysMap map[string]string) ([]string
 	}
 
 	for k, v := range addKeysMap {
-		newVal, err := parseEnv(v, baseEnvMap, addKeysMap)
+		newVal, err := shlexProcessWord(v, env)
 		if err != nil {
-			return nil, fmt.Errorf("unable to parse env %s: %w", k, err)
+			return nil, err
 		}
-
 		baseEnvMap[k] = newVal
 	}
 
@@ -278,56 +277,4 @@ func sortSliceWithNewSlice(original []string) []string {
 
 func toDuration(seconds int) time.Duration {
 	return time.Duration(seconds) * time.Second
-}
-
-func parseEnv(input string, envMap, envoyEnvMap map[string]string) (string, error) {
-	re := regexp.MustCompile(`\$\{([A-Za-z0-9_]+)\}`)
-	var expand func(string, map[string]bool) (string, error)
-
-	var circularDependencyErr error
-	expand = func(value string, visited map[string]bool) (string, error) {
-		expanded := re.ReplaceAllStringFunc(value, func(match string) string {
-			if circularDependencyErr != nil {
-				return ""
-			}
-			key := match[2 : len(match)-1]
-
-			if visited[key] {
-				circularDependencyErr = fmt.Errorf("circular dependency found in key %s", key)
-				return ""
-			}
-
-			visited[key] = true
-			defer delete(visited, key)
-
-			var resolvedValue string
-			var exists bool
-
-			if resolvedValue, exists = envMap[key]; !exists {
-				resolvedValue, exists = envoyEnvMap[key]
-			}
-
-			if !exists {
-				return match
-			}
-
-			expandedValue, err := expand(resolvedValue, visited)
-			if err != nil {
-				return ""
-			}
-			return expandedValue
-		})
-
-		if circularDependencyErr != nil {
-			return "", fmt.Errorf("unable to expand env: %w", circularDependencyErr)
-		}
-		return expanded, nil
-	}
-
-	expanded, err := expand(input, map[string]bool{})
-	if err != nil {
-		return "", err
-	}
-
-	return expanded, nil
 }
