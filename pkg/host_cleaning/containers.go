@@ -3,7 +3,10 @@ package host_cleaning
 import (
 	"context"
 	"fmt"
+	"strings"
 
+	chart "github.com/werf/common-go/pkg/lock"
+	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/image"
@@ -31,6 +34,40 @@ func containersRemove(ctx context.Context, backend container_backend.ContainerBa
 	}
 
 	return nil
+}
+
+func werfContainerName(container image.Container) string {
+	var containerName string
+	for _, name := range container.Names {
+		if strings.HasPrefix(name, fmt.Sprintf("/%s", image.StageContainerNamePrefix)) {
+			containerName = strings.TrimPrefix(name, "/")
+			break
+		}
+	}
+	return containerName
+}
+
+func doWithContainerLock(ctx context.Context, container image.Container, fn func() error) error {
+	containerName := werfContainerName(container)
+	containerLockName := container_backend.ContainerLockName(containerName)
+
+	isLocked, lock, err := chart.AcquireHostLock(ctx, containerLockName, lockgate.AcquireOptions{NonBlocking: true})
+	if err != nil {
+		return fmt.Errorf("failed to lock %s for container %s: %w", containerLockName, logContainerName(container), err)
+	}
+
+	if err != nil {
+		return fmt.Errorf("failed to lock %s for container %s: %w", containerLockName, logContainerName(container), err)
+	}
+
+	if !isLocked {
+		logboek.Context(ctx).LogFDetails("Ignore container %s used by another process\n", logContainerName(container))
+		return nil
+	}
+
+	defer chart.ReleaseHostLock(lock)
+
+	return fn()
 }
 
 func buildContainersOptions(filters ...image.ContainerFilter) container_backend.ContainersOptions {
