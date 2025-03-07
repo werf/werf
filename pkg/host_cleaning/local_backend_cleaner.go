@@ -636,47 +636,25 @@ func (cleaner *LocalBackendCleaner) safeContainersCleanup(ctx context.Context, p
 		return nil, fmt.Errorf("cannot get stages build containers: %w", err)
 	}
 
-ProcessContainers:
 	for _, container := range containers {
-		for _, id := range processedContainersIDs {
-			if id == container.ID {
-				continue ProcessContainers
-			}
+		if slices.Contains(processedContainersIDs, container.ID) {
+			continue
 		}
+
 		processedContainersIDs = append(processedContainersIDs, container.ID)
 
-		var containerName string
-		for _, name := range container.Names {
-			if strings.HasPrefix(name, fmt.Sprintf("/%s", image.StageContainerNamePrefix)) {
-				containerName = strings.TrimPrefix(name, "/")
-				break
-			}
-		}
-
-		if containerName == "" {
+		if werfContainerName(container) == "" {
 			logboek.Context(ctx).Warn().LogF("Ignore bad container %s\n", container.ID)
 			continue
 		}
 
-		if err := func() error {
-			containerLockName := container_backend.ContainerLockName(containerName)
-			isLocked, lock, err := chart.AcquireHostLock(ctx, containerLockName, lockgate.AcquireOptions{NonBlocking: true})
-			if err != nil {
-				return fmt.Errorf("failed to lock %s for container %s: %w", containerLockName, logContainerName(container), err)
-			}
-
-			if !isLocked {
-				logboek.Context(ctx).LogFDetails("Ignore container %s used by another process\n", logContainerName(container))
-				return nil
-			}
-			defer chart.ReleaseHostLock(lock)
-
+		err = doWithContainerLock(ctx, container, func() error {
 			if err := containersRemove(ctx, cleaner.backend, []image.Container{container}, options); err != nil {
 				return fmt.Errorf("failed to remove container %s: %w", logContainerName(container), err)
 			}
-
 			return nil
-		}(); err != nil {
+		})
+		if err != nil {
 			return nil, err
 		}
 	}
