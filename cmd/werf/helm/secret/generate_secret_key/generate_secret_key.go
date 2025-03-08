@@ -6,7 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/werf/common-go/pkg/secrets_manager"
+	"github.com/werf/nelm/pkg/action"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/cmd/werf/docs/replacers/helm"
 )
@@ -34,22 +34,15 @@ func NewCmd(ctx context.Context) *cobra.Command {
 				return err
 			}
 
-			return runGenerateSecretKey()
+			if _, err := action.SecretKeyCreate(ctx, action.SecretKeyCreateOptions{}); err != nil {
+				return fmt.Errorf("create secret key: %w", err)
+			}
+
+			return nil
 		},
 	})
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 
 	return cmd
-}
-
-func runGenerateSecretKey() error {
-	key, err := secrets_manager.GenerateSecretKey()
-	if err != nil {
-		return err
-	}
-
-	fmt.Println(string(key))
-
-	return nil
 }
