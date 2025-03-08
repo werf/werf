@@ -6,10 +6,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/werf/common-go/pkg/secrets_manager"
+	"github.com/werf/nelm/pkg/action"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/cmd/werf/docs/replacers/helm"
-	secret_common "github.com/werf/werf/v2/cmd/werf/helm/secret/common"
 	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
 	"github.com/werf/werf/v2/pkg/werf"
@@ -73,5 +72,12 @@ func runSecretEdit(ctx context.Context, filepPath string) error {
 
 	workingDir := common.GetWorkingDir(&commonCmdData)
 
-	return secret_common.SecretEdit(ctx, secrets_manager.Manager, workingDir, filepPath, true)
+	if err := action.SecretValuesFileEdit(ctx, filepPath, action.SecretValuesFileEditOptions{
+		LogLevel:      common.GetNelmLogLevel(&commonCmdData),
+		SecretWorkDir: workingDir,
+	}); err != nil {
+		return fmt.Errorf("secret values file edit: %w", err)
+	}
+
+	return nil
 }

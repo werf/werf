@@ -7,7 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/werf/common-go/pkg/secrets_manager"
+	"github.com/werf/nelm/pkg/action"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/cmd/werf/docs/replacers/helm"
 	secret_common "github.com/werf/werf/v2/cmd/werf/helm/secret/common"
@@ -90,5 +90,15 @@ func runSecretEncrypt(ctx context.Context, filePath string) error {
 
 	workingDir := common.GetWorkingDir(&commonCmdData)
 
-	return secret_common.SecretFileEncrypt(ctx, secrets_manager.Manager, workingDir, filePath, cmdData.OutputFilePath)
+	if err := action.SecretFileEncrypt(ctx, filePath, action.SecretFileEncryptOptions{
+		LogLevel:       common.GetNelmLogLevel(&commonCmdData),
+		OutputFilePath: cmdData.OutputFilePath,
+		OutputFileSave: cmdData.OutputFilePath != "",
+		SecretWorkDir:  workingDir,
+		TempDirPath:    *commonCmdData.TmpDir,
+	}); err != nil {
+		return fmt.Errorf("secret file encrypt: %w", err)
+	}
+
+	return nil
 }
