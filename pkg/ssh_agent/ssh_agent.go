@@ -19,7 +19,7 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
-	secret_common "github.com/werf/werf/v2/cmd/werf/helm/secret/common"
+	secret_common "github.com/werf/nelm/pkg/secret"
 	"github.com/werf/werf/v2/pkg/werf"
 )
 

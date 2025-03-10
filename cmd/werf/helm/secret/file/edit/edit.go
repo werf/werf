@@ -75,6 +75,7 @@ func runSecretEdit(ctx context.Context, filePath string) error {
 	if err := action.SecretFileEdit(ctx, filePath, action.SecretFileEditOptions{
 		LogLevel:      common.GetNelmLogLevel(&commonCmdData),
 		SecretWorkDir: workingDir,
+		TempDirPath:   werf.GetTmpDir(),
 	}); err != nil {
 		return fmt.Errorf("secret file edit: %w", err)
 	}
