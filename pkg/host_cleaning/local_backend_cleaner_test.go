@@ -12,6 +12,7 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/pkg/container_backend/info"
+	"github.com/werf/werf/v2/pkg/container_backend/prune"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/volumeutils"
 	"github.com/werf/werf/v2/test/mock"
@@ -93,32 +94,114 @@ var _ = Describe("LocalBackendCleaner", func() {
 		})
 	})
 
-	Describe("checkBackendStorage", func() {
-		It("should return 1 image, 0 volume usage and 0 total images bytes when we cover all nested cases", func() {
-			// testdata covers all nested "if cases" in cleaner.checkBackendStorage()
+	Describe("pruneBuildCache", func() {
+		It("should return err if opts.DryRun=true", func() {
+			_, err := cleaner.pruneBuildCache(ctx, RunGCOptions{
+				DryRun: true,
+			})
+			Expect(errors.Is(err, errOptionDryRunNotSupported)).To(BeTrue())
+		})
+		It("should call backend.PruneBuildCache() if opts.DryRun=false", func() {
+			backend.EXPECT().PruneBuildCache(ctx, prune.Options{}).Return(prune.Report{}, nil)
 
-			stubs.StubFunc(&cleaner.volumeutilsGetVolumeUsageByPath, volumeutils.VolumeUsage{}, nil)
+			report, err := cleaner.pruneBuildCache(ctx, RunGCOptions{})
+			Expect(err).To(Succeed())
+			Expect(report).To(Equal(newCleanupReport()))
+		})
+	})
+
+	Describe("pruneContainers", func() {
+		It("should return err if opts.DryRun=true", func() {
+			_, err := cleaner.pruneContainers(ctx, RunGCOptions{
+				DryRun: true,
+			})
+			Expect(errors.Is(err, errOptionDryRunNotSupported)).To(BeTrue())
+		})
+		It("should call backend.PruneContainers() if opts.DryRun=true", func() {
+			backend.EXPECT().PruneContainers(ctx, prune.Options{}).Return(prune.Report{}, nil)
+
+			report, err := cleaner.pruneContainers(ctx, RunGCOptions{})
+			Expect(err).To(Succeed())
+			Expect(report).To(Equal(newCleanupReport()))
+		})
+	})
+
+	Describe("pruneImages", func() {
+		It("should call backend.Images() to find dandling images if opts.DryRun=true", func() {
+			backend.EXPECT().Images(ctx, buildImagesOptions(
+				util.NewPair("dangling", "true"),
+			)).Return(image.ImagesList{}, nil)
+
+			report, err := cleaner.pruneImages(ctx, RunGCOptions{
+				DryRun: true,
+			})
+			Expect(err).To(Succeed())
+			Expect(report).To(Equal(newCleanupReport()))
+		})
+		It("should call backend.PruneImages() if opts.DryRun=false", func() {
+			backend.EXPECT().PruneImages(ctx, prune.Options{}).Return(prune.Report{}, nil)
+
+			report, err := cleaner.pruneImages(ctx, RunGCOptions{})
+			Expect(err).To(Succeed())
+			Expect(report).To(Equal(newCleanupReport()))
+		})
+	})
+
+	Describe("pruneVolumes", func() {
+		It("should return err if opts.DryRun=true", func() {
+			_, err := cleaner.pruneVolumes(ctx, RunGCOptions{
+				DryRun: true,
+			})
+			Expect(errors.Is(err, errOptionDryRunNotSupported)).To(BeTrue())
+		})
+		It("should call backend.PruneVolumes() if opts.DryRun=false", func() {
+			backend.EXPECT().PruneVolumes(ctx, prune.Options{}).Return(prune.Report{}, nil)
+
+			report, err := cleaner.pruneVolumes(ctx, RunGCOptions{})
+			Expect(err).To(Succeed())
+			Expect(report).To(Equal(newCleanupReport()))
+		})
+	})
+
+	Describe("safeCleanupWerfContainers", func() {
+		BeforeEach(func() {
+			backend.EXPECT().Containers(ctx, buildContainersOptions(
+				image.ContainerFilter{Name: image.StageContainerNamePrefix},
+				image.ContainerFilter{Name: image.ImportServerContainerNamePrefix},
+			)).Return(image.ContainerList{}, nil)
+		})
+		It("should call backend.Containers() and return result if opts.DryRun=true", func() {
+			report, err := cleaner.safeCleanupWerfContainers(ctx, RunGCOptions{
+				DryRun: true,
+			}, volumeutils.VolumeUsage{})
+
+			Expect(err).To(Succeed())
+			Expect(report).To(Equal(newCleanupReport()))
+		})
+		It("should call backend.Containers() and call cleanup.doSafeCleanupWerfContainers() if opts.DryRun=false", func() {
+			report, err := cleaner.safeCleanupWerfContainers(ctx, RunGCOptions{}, volumeutils.VolumeUsage{})
+			Expect(err).To(Succeed())
+			Expect(report).To(Equal(newCleanupReport()))
+		})
+	})
+
+	Describe("werfImages", func() {
+		It("should return images as merged and sorted result of several backend calls", func() {
+			expectedImages := []image.Summary{
+				{ID: "one", Created: time.Unix(300, 0)},
+				{ID: "two", Created: time.Unix(200, 0)},
+				{ID: "three", Created: time.Unix(100, 0)},
+			}
 
 			backend.EXPECT().Images(ctx, buildImagesOptions(
 				util.NewPair("label", image.WerfLabel),
 				util.NewPair("label", image.WerfStageDigestLabel),
-			)).Return(image.ImagesList{
-				{
-					Labels:   map[string]string{image.WerfLabel: "project-name"},
-					RepoTags: []string{"project-name:"},
-				},
-			}, nil).Times(1)
+			)).Return(image.ImagesList{expectedImages[0]}, nil)
 
 			backend.EXPECT().Images(ctx, buildImagesOptions(
 				util.NewPair("label", image.WerfLabel),
 				util.NewPair("label", "werf-stage-signature"), // v1.1 legacy images
-			)).Return(image.ImagesList{
-				{
-					RepoTags: []string{"werf-stages-storage/something"},
-				},
-			}, nil).Times(1)
-
-			stubs.StubFunc(&cleaner.werfGetWerfLastRunAtV1_1, time.Time{}, nil)
+			)).Return(image.ImagesList{expectedImages[1]}, nil)
 
 			backend.EXPECT().Images(ctx, buildImagesOptions(
 				util.NewPair("reference", "*client-id-*"),
@@ -131,29 +214,46 @@ var _ = Describe("LocalBackendCleaner", func() {
 				util.NewPair("reference", "werf-managed-images/*"),
 				util.NewPair("reference", "werf-images-metadata-by-commit/*"),
 				util.NewPair("reference", "werf-import-metadata/*"),
-			)).Return(image.ImagesList{
-				{
-					Size: 1,
-				},
-				// -------------
-				{
-					RepoTags: []string{"<none>:<none>"},
-				},
-				{
-					RepoTags: []string{"lru_tag"},
-				},
-			}, nil)
+			)).Return(image.ImagesList{expectedImages[2]}, nil)
 
-			stubs.StubFunc(&cleaner.lrumetaGetImageLastAccessTime, time.Time{}, nil)
+			stubs.StubFunc(&cleaner.werfGetWerfLastRunAtV1_1, time.Time{}, nil)
 
-			result, err := cleaner.checkBackendStorage(ctx, t.TempDir())
+			images, err := cleaner.werfImages(ctx)
 			Expect(err).To(Succeed())
-			Expect(result.VolumeUsage).To(BeZero())
-			Expect(result.TotalImagesBytes).To(BeZero())
-			Expect(result.ImagesDescs).To(HaveLen(1))
-			Expect(result.ImagesDescs[0].ImageSummary).To(Equal(image.Summary{
-				RepoTags: []string{"lru_tag"},
-			}))
+			Expect(images).To(HaveLen(len(expectedImages)))
+
+			Expect(images[0].ID).To(Equal(expectedImages[2].ID))
+			Expect(images[1].ID).To(Equal(expectedImages[1].ID))
+			Expect(images[2].ID).To(Equal(expectedImages[0].ID))
+		})
+	})
+
+	Describe("safeCleanupWerfImages", func() {
+		BeforeEach(func() {
+			backend.EXPECT().Images(ctx, buildImagesOptions(
+				util.NewPair("label", image.WerfLabel),
+				util.NewPair("label", image.WerfStageDigestLabel),
+			)).Return(image.ImagesList{}, nil)
+
+			backend.EXPECT().Images(ctx, buildImagesOptions(
+				util.NewPair("label", image.WerfLabel),
+				util.NewPair("label", "werf-stage-signature"), // v1.1 legacy images
+			)).Return(image.ImagesList{}, nil)
+
+			stubs.StubFunc(&cleaner.werfGetWerfLastRunAtV1_1, time.Unix(1, 0), nil)
+		})
+		It("should call backend.Images() multiple times and return result if opts.DryRun=true", func() {
+			report, err := cleaner.safeCleanupWerfImages(ctx, RunGCOptions{
+				DryRun: true,
+			}, volumeutils.VolumeUsage{}, 0)
+
+			Expect(err).To(Succeed())
+			Expect(report).To(Equal(newCleanupReport()))
+		})
+		It("should call backend.Images() multiple times and call cleanup.doSafeCleanupWerfImages() if opts.DryRun=false", func() {
+			report, err := cleaner.safeCleanupWerfImages(ctx, RunGCOptions{}, volumeutils.VolumeUsage{}, 0)
+			Expect(err).To(Succeed())
+			Expect(report).To(Equal(newCleanupReport()))
 		})
 	})
 

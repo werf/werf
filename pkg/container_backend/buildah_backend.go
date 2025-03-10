@@ -27,6 +27,7 @@ import (
 	"github.com/werf/werf/v2/pkg/buildah"
 	"github.com/werf/werf/v2/pkg/buildah/thirdparty"
 	"github.com/werf/werf/v2/pkg/container_backend/info"
+	"github.com/werf/werf/v2/pkg/container_backend/prune"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/path_matcher"
 )
@@ -1099,3 +1100,23 @@ func (backend *BuildahBackend) PostManifest(ctx context.Context, ref string, opt
 }
 
 func (backend *BuildahBackend) ClaimTargetPlatforms(ctx context.Context, targetPlatforms []string) {}
+
+func (backend *BuildahBackend) PruneBuildCache(_ context.Context, _ prune.Options) (prune.Report, error) {
+	return prune.Report{}, ErrUnsupportedFeature
+}
+
+func (backend *BuildahBackend) PruneContainers(_ context.Context, _ prune.Options) (prune.Report, error) {
+	return prune.Report{}, ErrUnsupportedFeature
+}
+
+func (backend *BuildahBackend) PruneImages(ctx context.Context, options prune.Options) (prune.Report, error) {
+	report, err := backend.buildah.PruneImages(ctx, buildah.PruneImagesOptions{})
+	if err != nil {
+		return prune.Report{}, fmt.Errorf("unable to prune images: %w", err)
+	}
+	return prune.Report(report), nil
+}
+
+func (backend *BuildahBackend) PruneVolumes(_ context.Context, _ prune.Options) (prune.Report, error) {
+	return prune.Report{}, ErrUnsupportedFeature
+}

@@ -13,7 +13,6 @@ type Summary struct {
 	Labels      map[string]string
 	Created     time.Time
 	Size        int64
-	SharedSize  int64
 }
 
 type ImagesList []Summary

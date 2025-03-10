@@ -33,11 +33,11 @@ func ShouldRunAutoGC(ctx context.Context, allowedVolumeUsagePercentage float64) 
 		return false, fmt.Errorf("error getting volume usage by path %q: %w", werf.GetLocalCacheDir(), err)
 	}
 
-	return vu.Percentage > allowedVolumeUsagePercentage, nil
+	return vu.Percentage() > allowedVolumeUsagePercentage, nil
 }
 
 func getBytesToFree(vu volumeutils.VolumeUsage, targetVolumeUsagePercentage float64) uint64 {
-	allowedVolumeUsageToFree := vu.Percentage - targetVolumeUsagePercentage
+	allowedVolumeUsageToFree := vu.Percentage() - targetVolumeUsagePercentage
 	return uint64((float64(vu.TotalBytes) / 100.0) * allowedVolumeUsageToFree)
 }
 
@@ -129,11 +129,11 @@ func RunGC(ctx context.Context, allowedVolumeUsagePercentage, allowedVolumeUsage
 
 	bytesToFree := getBytesToFree(vu, targetVolumeUsagePercentage)
 
-	if vu.Percentage <= allowedVolumeUsagePercentage {
+	if vu.Percentage() <= allowedVolumeUsagePercentage {
 		logboek.Context(ctx).Default().LogBlock("Git data storage check").Do(func() {
 			logboek.Context(ctx).Default().LogF("Werf local cache dir: %s\n", werf.GetLocalCacheDir())
 			logboek.Context(ctx).Default().LogF("Volume usage: %s / %s\n", humanize.Bytes(vu.UsedBytes), humanize.Bytes(vu.TotalBytes))
-			logboek.Context(ctx).Default().LogF("Allowed volume usage percentage: %s <= %s — %s\n", utils.GreenF("%0.2f%%", vu.Percentage), utils.BlueF("%0.2f%%", allowedVolumeUsagePercentage), utils.GreenF("OK"))
+			logboek.Context(ctx).Default().LogF("Allowed volume usage percentage: %s <= %s — %s\n", utils.GreenF("%0.2f%%", vu.Percentage()), utils.BlueF("%0.2f%%", allowedVolumeUsagePercentage), utils.GreenF("OK"))
 		})
 
 		return nil
@@ -142,7 +142,7 @@ func RunGC(ctx context.Context, allowedVolumeUsagePercentage, allowedVolumeUsage
 	logboek.Context(ctx).Default().LogBlock("Git data storage check").Do(func() {
 		logboek.Context(ctx).Default().LogF("Werf local cache dir: %s\n", werf.GetLocalCacheDir())
 		logboek.Context(ctx).Default().LogF("Volume usage: %s / %s\n", humanize.Bytes(vu.UsedBytes), humanize.Bytes(vu.TotalBytes))
-		logboek.Context(ctx).Default().LogF("Allowed percentage level exceeded: %s > %s — %s\n", utils.RedF("%0.2f%%", vu.Percentage), utils.YellowF("%0.2f%%", allowedVolumeUsagePercentage), utils.RedF("HIGH VOLUME USAGE"))
+		logboek.Context(ctx).Default().LogF("Allowed percentage level exceeded: %s > %s — %s\n", utils.RedF("%0.2f%%", vu.Percentage()), utils.YellowF("%0.2f%%", allowedVolumeUsagePercentage), utils.RedF("HIGH VOLUME USAGE"))
 		logboek.Context(ctx).Default().LogF("Target percentage level after cleanup: %0.2f%% - %0.2f%% (margin) = %s\n", allowedVolumeUsagePercentage, allowedVolumeUsageMarginPercentage, utils.BlueF("%0.2f%%", targetVolumeUsagePercentage))
 		logboek.Context(ctx).Default().LogF("Needed to free: %s\n", utils.RedF("%s", humanize.Bytes(bytesToFree)))
 	})

@@ -15,6 +15,7 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/docker"
+	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/stapel"
 )
 
@@ -33,7 +34,7 @@ func RunRsyncServer(ctx context.Context, dockerImageName, tmpDir string) (*Rsync
 
 	srv := &RsyncServer{
 		Port:                rsyncServerPort,
-		DockerContainerName: fmt.Sprintf("import-server-%s", uuid.New().String()),
+		DockerContainerName: fmt.Sprintf("%s%s", image.ImportServerContainerNamePrefix, uuid.New().String()),
 		AuthUser:            fmt.Sprintf("werf-%s", generateSecureRandomString(4)),
 		AuthPassword:        generateSecureRandomString(16),
 	}

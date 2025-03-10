@@ -13,7 +13,10 @@ import (
 	"github.com/docker/cli/cli/command/image"
 	"github.com/docker/cli/cli/streams"
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/filters"
+	dockerImage "github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
+	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 
@@ -63,6 +66,25 @@ func ImageInspect(ctx context.Context, ref string) (*types.ImageInspect, error) 
 	}
 
 	return &inspect, nil
+}
+
+type (
+	ImagesPruneOptions BuildCachePruneOptions
+	ImagesPruneReport  BuildCachePruneReport
+)
+
+func ImagesPrune(ctx context.Context, _ ImagesPruneOptions) (ImagesPruneReport, error) {
+	report, err := apiCli(ctx).ImagesPrune(ctx, filters.NewArgs())
+	if err != nil {
+		return ImagesPruneReport{}, err
+	}
+	itemsDeleted := lo.Map(report.ImagesDeleted, func(item dockerImage.DeleteResponse, _ int) string {
+		return item.Deleted
+	})
+	return ImagesPruneReport{
+		ItemsDeleted:   itemsDeleted,
+		SpaceReclaimed: report.SpaceReclaimed,
+	}, err
 }
 
 func doCliPull(c command.Cli, args ...string) error {
