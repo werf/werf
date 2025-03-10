@@ -360,25 +360,16 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 
 	// Step 5. Remove werf containers
 	err = logboek.Context(ctx).LogBlock("Cleanup werf containers").DoError(func() error {
-		vuBefore = vu
-
-		reportWerfContainers, err := cleaner.safeCleanupWerfContainers(ctx, options)
+		reportWerfContainers, err := cleaner.safeCleanupWerfContainers(ctx, options, vu)
 		if err != nil {
 			return err
 		}
 
-		// No explicit way to calculate reclaimed containers' size at all.
-		// But we can calculate it implicitly via disk usage check.
-		vu, err = cleaner.volumeutilsGetVolumeUsageByPath(ctx, options.StoragePath)
-		if err != nil {
-			return fmt.Errorf("error getting volume usage by path %q: %w", options.StoragePath, err)
-		}
-
-		freedBytes := vuBefore.UsedBytes - vu.UsedBytes
+		vu.UsedBytes -= reportWerfContainers.SpaceReclaimed
 
 		logboek.Context(ctx).LogF("Volume usage: %s / %s\n", humanize.Bytes(vu.UsedBytes), humanize.Bytes(vu.TotalBytes))
 		logboek.Context(ctx).LogF("Target volume usage percentage: %s > %s — %s\n", utils.RedF("%0.2f%%", vu.Percentage()), utils.BlueF("%d", targetVolumeUsagePercentage), utils.RedF("HIGH VOLUME USAGE"))
-		logboek.Context(ctx).LogF("Freed space: %s\n", utils.RedF("%s", humanize.Bytes(freedBytes)))
+		logboek.Context(ctx).LogF("Freed space: %s\n", utils.RedF("%s", humanize.Bytes(reportWerfContainers.SpaceReclaimed)))
 
 		logDeletedItems(ctx, reportWerfContainers.ItemsDeleted)
 
@@ -479,7 +470,7 @@ func (cleaner *LocalBackendCleaner) pruneVolumes(ctx context.Context, options Ru
 }
 
 // safeCleanupWerfContainers cleanups werf containers safely using host locks
-func (cleaner *LocalBackendCleaner) safeCleanupWerfContainers(ctx context.Context, options RunGCOptions) (cleanupReport, error) {
+func (cleaner *LocalBackendCleaner) safeCleanupWerfContainers(ctx context.Context, options RunGCOptions, vu volumeutils.VolumeUsage) (cleanupReport, error) {
 	// TODO(a.zaytsev): add werf build containers
 	containers, err := werfContainersByContainersOptions(ctx, cleaner.backend, buildContainersOptions())
 	if err != nil {
@@ -490,15 +481,19 @@ func (cleaner *LocalBackendCleaner) safeCleanupWerfContainers(ctx context.Contex
 		return mapContainerListToCleanupReport(containers), nil
 	}
 
-	err = cleaner.doSafeCleanupWerfContainers(ctx, options, containers)
+	report, err := cleaner.doSafeCleanupWerfContainers(ctx, options, vu, containers)
 	if err != nil {
 		return cleanupReport{}, err
 	}
 
-	return mapContainerListToCleanupReport(containers), nil
+	return report, nil
 }
 
-func (cleaner *LocalBackendCleaner) doSafeCleanupWerfContainers(ctx context.Context, options RunGCOptions, containers image.ContainerList) error {
+func (cleaner *LocalBackendCleaner) doSafeCleanupWerfContainers(ctx context.Context, options RunGCOptions, vu volumeutils.VolumeUsage, containers image.ContainerList) (cleanupReport, error) {
+	report := cleanupReport{
+		ItemsDeleted: make([]string, 0, len(containers)),
+	}
+
 	for _, container := range containers {
 		containerName := werfContainerName(container)
 
@@ -517,11 +512,21 @@ func (cleaner *LocalBackendCleaner) doSafeCleanupWerfContainers(ctx context.Cont
 			return nil
 		})
 		if err != nil {
-			return err
+			return cleanupReport{}, err
 		}
+
+		report.ItemsDeleted = append(report.ItemsDeleted, container.ID)
 	}
 
-	return nil
+	// No explicit way to calculate reclaimed containers' size.
+	// But we can calculate it implicitly via disk usage check.
+	vuAfter, err := cleaner.volumeutilsGetVolumeUsageByPath(ctx, options.StoragePath)
+	if err != nil {
+		return cleanupReport{}, fmt.Errorf("error getting volume usage by path %q: %w", options.StoragePath, err)
+	}
+	report.SpaceReclaimed = vu.UsedBytes - vuAfter.UsedBytes
+
+	return report, nil
 }
 
 // safeCleanupWerfImages cleanups werf images safely using host locks
