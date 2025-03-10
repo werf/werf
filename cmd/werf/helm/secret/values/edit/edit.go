@@ -74,6 +74,7 @@ func runSecretEdit(ctx context.Context, filepPath string) error {
 
 	if err := action.SecretValuesFileEdit(ctx, filepPath, action.SecretValuesFileEditOptions{
 		LogLevel:      common.GetNelmLogLevel(&commonCmdData),
+		TempDirPath:   werf.GetTmpDir(),
 		SecretWorkDir: workingDir,
 	}); err != nil {
 		return fmt.Errorf("secret values file edit: %w", err)
