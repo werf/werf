@@ -31,26 +31,6 @@ func werfImagesFlushByFilterSet(ctx context.Context, backend container_backend.C
 	return nil
 }
 
-func trueDanglingImages(ctx context.Context, backend container_backend.ContainerBackend) (image.ImagesList, error) {
-	imagesOptions := buildImagesOptions(
-		util.NewPair("dangling", "true"),
-	)
-
-	danglingImageList, err := backend.Images(ctx, imagesOptions)
-	if err != nil {
-		return nil, err
-	}
-
-	var trueDanglingImageList image.ImagesList
-	for _, image := range danglingImageList {
-		if len(image.RepoTags) == 0 && len(image.RepoDigests) == 0 {
-			trueDanglingImageList = append(trueDanglingImageList, image)
-		}
-	}
-
-	return trueDanglingImageList, nil
-}
-
 func processUsedImages(ctx context.Context, backend container_backend.ContainerBackend, images image.ImagesList, options CommonOptions) (image.ImagesList, error) {
 	containersOptionsFilters := make([]image.ContainerFilter, len(images))
 	for i, img := range images {

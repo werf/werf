@@ -113,8 +113,8 @@ func (cleaner *LocalBackendCleaner) ShouldRunAutoGC(ctx context.Context, options
 	return vu.Percentage() > options.AllowedStorageVolumeUsagePercentage, nil
 }
 
-// safeWerfImages returns werf images are safe for removing
-func (cleaner *LocalBackendCleaner) safeWerfImages(ctx context.Context) (image.ImagesList, error) {
+// werfImages returns werf images are safe for removing
+func (cleaner *LocalBackendCleaner) werfImages(ctx context.Context) (image.ImagesList, error) {
 	images, err := cleaner.backend.Images(ctx, buildImagesOptions(
 		util.NewPair("label", image.WerfLabel),
 		util.NewPair("label", image.WerfStageDigestLabel),
@@ -389,7 +389,7 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 	err = logboek.Context(ctx).LogBlock("Cleanup werf images").DoError(func() error {
 		vuBefore = vu
 
-		reportWerfImages, err := cleaner.safeRemoveWerfImages(ctx, options, vu.UsedBytes, targetVolumeUsage)
+		reportWerfImages, err := cleaner.safeCleanupWerfImages(ctx, options, vu.UsedBytes, targetVolumeUsage)
 		if err != nil {
 			return err
 		}
@@ -484,6 +484,7 @@ func (cleaner *LocalBackendCleaner) pruneVolumes(ctx context.Context, options Ru
 	return cleanupReport(report), err
 }
 
+// safeCleanupWerfContainers cleanups werf containers safely using host locks
 func (cleaner *LocalBackendCleaner) safeCleanupWerfContainers(ctx context.Context, options RunGCOptions) (cleanupReport, error) {
 	containers, err := werfContainersByContainersOptions(ctx, cleaner.backend, buildContainersOptions())
 	if err != nil {
@@ -494,6 +495,15 @@ func (cleaner *LocalBackendCleaner) safeCleanupWerfContainers(ctx context.Contex
 		return mapContainerListToCleanupReport(containers), nil
 	}
 
+	err = cleaner.doSafeCleanupWerfContainers(ctx, options, containers)
+	if err != nil {
+		return cleanupReport{}, err
+	}
+
+	return mapContainerListToCleanupReport(containers), nil
+}
+
+func (cleaner *LocalBackendCleaner) doSafeCleanupWerfContainers(ctx context.Context, options RunGCOptions, containers image.ContainerList) error {
 	for _, container := range containers {
 		containerName := werfContainerName(container)
 
@@ -502,8 +512,8 @@ func (cleaner *LocalBackendCleaner) safeCleanupWerfContainers(ctx context.Contex
 			continue
 		}
 
-		err = withHostLock(ctx, container_backend.ContainerLockName(containerName), func() error {
-			err = cleaner.backend.Rm(ctx, container.ID, container_backend.RmOpts{
+		err := withHostLock(ctx, container_backend.ContainerLockName(containerName), func() error {
+			err := cleaner.backend.Rm(ctx, container.ID, container_backend.RmOpts{
 				Force: options.Force,
 			})
 			if err != nil {
@@ -512,23 +522,37 @@ func (cleaner *LocalBackendCleaner) safeCleanupWerfContainers(ctx context.Contex
 			return nil
 		})
 		if err != nil {
-			return cleanupReport{}, err
+			return err
 		}
 	}
 
-	return mapContainerListToCleanupReport(containers), nil
+	return nil
 }
 
-// safeRemoveWerfImages is old removal process implementation
-func (cleaner *LocalBackendCleaner) safeRemoveWerfImages(ctx context.Context, options RunGCOptions, actualVolumeUsage, targetVolumeUsage uint64) (cleanupReport, error) {
-	bytesToFree := targetVolumeUsage - actualVolumeUsage
-
-	images, err := cleaner.safeWerfImages(ctx)
+// safeCleanupWerfImages cleanups werf images safely using host locks
+func (cleaner *LocalBackendCleaner) safeCleanupWerfImages(ctx context.Context, options RunGCOptions, actualVolumeUsage, targetVolumeUsage uint64) (cleanupReport, error) {
+	images, err := cleaner.werfImages(ctx)
 	if err != nil {
 		return cleanupReport{}, err
 	}
 
-	var report cleanupReport
+	if options.DryRun {
+		return mapImageListToCleanupReport(images), nil
+	}
+
+	n, err := cleaner.doSafeCleanupWerfImages(ctx, options, actualVolumeUsage, targetVolumeUsage, images)
+	if err != nil {
+		return cleanupReport{}, err
+	}
+
+	return mapImageListToCleanupReport(images[:n]), nil
+}
+
+func (cleaner *LocalBackendCleaner) doSafeCleanupWerfImages(ctx context.Context, options RunGCOptions, actualVolumeUsage, targetVolumeUsage uint64, images image.ImagesList) (uint, error) {
+	var n uint
+
+	bytesToFree := targetVolumeUsage - actualVolumeUsage
+
 	var processedImagesIDs []string
 
 	for {
@@ -557,8 +581,8 @@ func (cleaner *LocalBackendCleaner) safeRemoveWerfImages(ctx context.Context, op
 									allTagsRemoved = false
 								}
 							} else {
-								err = withHostLock(ctx, container_backend.ImageLockName(ref), func() error {
-									if err = cleaner.removeImage(ctx, ref, options.Force, options.DryRun); err != nil {
+								err := withHostLock(ctx, container_backend.ImageLockName(ref), func() error {
+									if err := cleaner.removeImage(ctx, ref, options.Force, options.DryRun); err != nil {
 										logboek.Context(ctx).Warn().LogF("failed to remove local %s image by repo tag %q: %s\n", cleaner.BackendName(), ref, err)
 										allTagsRemoved = false
 									}
@@ -594,8 +618,8 @@ func (cleaner *LocalBackendCleaner) safeRemoveWerfImages(ctx context.Context, op
 						freedBytes += freedImgBytes
 						freedImagesCount++
 
-						report.ItemsDeleted = append(report.ItemsDeleted, imgSummary.ID)
-						report.SpaceReclaimed += freedImgBytes
+						// report.ItemsDeleted = append(report.ItemsDeleted, imgSummary.ID)
+						n += 1
 					}
 
 					if freedImagesCount < cleaner.minImagesToDelete {
@@ -611,22 +635,8 @@ func (cleaner *LocalBackendCleaner) safeRemoveWerfImages(ctx context.Context, op
 
 				return nil
 			}); err != nil {
-				return report, err
+				return 0, err
 			}
-		}
-
-		commonOptions := CommonOptions{
-			RmContainersThatUseWerfImages: options.Force,
-			SkipUsedImages:                !options.Force,
-			RmiForce:                      options.Force,
-			RmForce:                       true,
-			DryRun:                        options.DryRun,
-		}
-
-		if err := logboek.Context(ctx).LogProcess("Running cleanup for dangling %s images created by werf", cleaner.BackendName()).DoError(func() error {
-			return cleaner.safeDanglingImagesCleanup(ctx, commonOptions)
-		}); err != nil {
-			return report, err
 		}
 
 		if freedImagesCount == 0 {
@@ -643,7 +653,7 @@ func (cleaner *LocalBackendCleaner) safeRemoveWerfImages(ctx context.Context, op
 		}
 	}
 
-	return report, nil
+	return n, nil
 }
 
 func (cleaner *LocalBackendCleaner) removeImage(ctx context.Context, ref string, force, dryRun bool) error {
@@ -656,29 +666,6 @@ func (cleaner *LocalBackendCleaner) removeImage(ctx context.Context, ref string,
 	return cleaner.backend.Rmi(ctx, ref, container_backend.RmiOpts{
 		Force: force,
 	})
-}
-
-func (cleaner *LocalBackendCleaner) safeDanglingImagesCleanup(ctx context.Context, options CommonOptions) error {
-	images, err := trueDanglingImages(ctx, cleaner.backend)
-	if err != nil {
-		return err
-	}
-
-	var imagesToRemove image.ImagesList
-	for _, img := range images {
-		imagesToRemove = append(imagesToRemove, img)
-	}
-
-	imagesToRemove, err = processUsedImages(ctx, cleaner.backend, imagesToRemove, options)
-	if err != nil {
-		return err
-	}
-
-	if err := imagesRemove(ctx, cleaner.backend, imagesToRemove, options); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 // normalizeSharedSize SharedSize is not calculated by default. `-1` indicates that the value has not been set / calculated.
