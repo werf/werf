@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.32.0](https://www.github.com/werf/werf/compare/v2.31.1...v2.32.0) (2025-03-10)
+
+
+### Features
+
+* **deploy:** add syntax highlight to `render` and `bundle render` ([6e703e3](https://www.github.com/werf/werf/commit/6e703e380cceb1d291fbfcd236f725fe04d7e6c8))
+
+
+### Bug Fixes
+
+* **host-cleanup:** auto host cleanup doesn't work on linux ([a5f07f7](https://www.github.com/werf/werf/commit/a5f07f71100d436472dd594de930c471380d5d2c))
+* **host-cleanup:** test werf/exec process detach ([09f0599](https://www.github.com/werf/werf/commit/09f05993ce19e2179878a98121732692a263b34a))
+
 ### [2.31.1](https://www.github.com/werf/werf/compare/v2.31.0...v2.31.1) (2025-03-06)
 
 
