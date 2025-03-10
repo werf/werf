@@ -650,6 +650,9 @@ func (cleaner *LocalBackendCleaner) doSafeCleanupWerfImages(ctx context.Context,
 				}
 			} else {
 				ok, err = cleaner.removeImageByRepoDigests(ctx, options, imgSummary)
+				if err != nil {
+					return report, err
+				}
 			}
 
 			if ok {
@@ -691,7 +694,7 @@ func (cleaner *LocalBackendCleaner) removeImageByRepoTags(ctx context.Context, o
 				unRemovedCount++
 			}
 		} else {
-			_ = withHostLock(ctx, container_backend.ImageLockName(ref), func() error {
+			err := withHostLock(ctx, container_backend.ImageLockName(ref), func() error {
 				err := cleaner.backend.Rmi(ctx, ref, container_backend.RmiOpts{
 					Force: options.Force,
 				})
@@ -701,6 +704,10 @@ func (cleaner *LocalBackendCleaner) removeImageByRepoTags(ctx context.Context, o
 				}
 				return nil
 			})
+			// here err is host lock deferred err
+			if err != nil {
+				return false, err
+			}
 		}
 	}
 
