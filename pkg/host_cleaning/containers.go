@@ -12,7 +12,8 @@ import (
 
 func werfContainersByContainersOptions(ctx context.Context, backend container_backend.ContainerBackend, containersOptions container_backend.ContainersOptions) (image.ContainerList, error) {
 	containersOptions.Filters = append(containersOptions.Filters,
-		image.ContainerFilter{Name: image.StageContainerNamePrefix})
+		image.ContainerFilter{Name: image.StageContainerNamePrefix},
+		image.ContainerFilter{Name: image.ImportServerContainerNamePrefix})
 	return backend.Containers(ctx, containersOptions)
 }
 
