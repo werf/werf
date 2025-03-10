@@ -931,14 +931,6 @@ func (b *NativeBuildah) Images(ctx context.Context, opts ImagesOptions) (image.I
 			Labels:      labels,
 			Created:     img.Created(),
 			Size:        size,
-			// Current buildah api does not provide a way to calculate SharedSize per image.
-			// We can get aggregate result only via
-			// https://pkg.go.dev/github.com/containers/common/libimage@v0.58.1#Runtime.DiskUsage
-			//
-			// IMPORTANT NOTES
-			// We assume that all handled images are unshared ones.
-			// We set constant `-1` to keep compatibility with docker which uses -1 to indicate unshared images.
-			SharedSize: -1,
 		}
 	}
 

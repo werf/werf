@@ -338,8 +338,6 @@ func (backend *DockerServerBackend) Images(ctx context.Context, opts ImagesOptio
 			Labels:      img.Labels,
 			Created:     time.Unix(img.Created, 0),
 			Size:        img.Size,
-			// SharedSize is not calculated by default. `-1` indicates that the value has not been set / calculated.
-			SharedSize: img.SharedSize,
 		}
 	}
 	return res, nil
