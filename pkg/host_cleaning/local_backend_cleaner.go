@@ -22,6 +22,7 @@ import (
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/storage/lrumeta"
 	"github.com/werf/werf/v2/pkg/volumeutils"
+	"github.com/werf/werf/v2/pkg/werf"
 )
 
 var ErrUnsupportedContainerBackend = errors.New("unsupported container backend")
@@ -42,11 +43,11 @@ type RunAutoGCOptions struct {
 }
 
 type LocalBackendCleaner struct {
-	backend           container_backend.ContainerBackend
-	backendType       containerBackendType
-	minImagesToDelete uint64
+	backend     container_backend.ContainerBackend
+	backendType containerBackendType
 	// refs for stubbing in testing
 	volumeutilsGetVolumeUsageByPath func(ctx context.Context, path string) (volumeutils.VolumeUsage, error)
+	werfGetWerfLastRunAtV1_1        func(ctx context.Context) (time.Time, error)
 	lrumetaGetImageLastAccessTime   func(ctx context.Context, imageRef string) (time.Time, error)
 }
 
@@ -54,10 +55,10 @@ type cleanupReport prune.Report
 
 func NewLocalBackendCleaner(backend container_backend.ContainerBackend) (*LocalBackendCleaner, error) {
 	cleaner := &LocalBackendCleaner{
-		backend:           backend,
-		minImagesToDelete: 10,
+		backend: backend,
 		// refs for stubbing in testing
 		volumeutilsGetVolumeUsageByPath: volumeutils.GetVolumeUsageByPath,
+		werfGetWerfLastRunAtV1_1:        werf.GetWerfLastRunAtV1_1,
 		lrumetaGetImageLastAccessTime:   lrumeta.CommonLRUImagesCache.GetImageLastAccessTime,
 	}
 
@@ -115,18 +116,20 @@ func (cleaner *LocalBackendCleaner) ShouldRunAutoGC(ctx context.Context, options
 
 // werfImages returns werf images are safe for removing
 func (cleaner *LocalBackendCleaner) werfImages(ctx context.Context) (image.ImagesList, error) {
-	images, err := cleaner.backend.Images(ctx, buildImagesOptions(
-		util.NewPair("label", image.WerfLabel),
-		util.NewPair("label", image.WerfStageDigestLabel),
-	))
+	images0, err := cleaner.werfImagesByLabels(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("unable to get werf %s images: %w", cleaner.BackendName(), err)
+		return nil, err
+	}
+	images1, err := cleaner.werfImagesByLegacyLabels(ctx)
+	if err != nil {
+		return nil, err
+	}
+	images2, err := cleaner.werfImagesByLastRun(ctx)
+	if err != nil {
+		return nil, err
 	}
 
-	images, err = cleaner.filterOutImages(ctx, images)
-	if err != nil {
-		return nil, fmt.Errorf("unable to filter out images: %w", err)
-	}
+	images := slices.Concat(images0, images1, images2)
 
 	lastUsedAtMap := make(map[string]time.Time, len(images))
 
@@ -149,22 +152,22 @@ func (cleaner *LocalBackendCleaner) werfImages(ctx context.Context) (image.Image
 	return images, nil
 }
 
-func (cleaner *LocalBackendCleaner) filterOutImages(_ context.Context, images image.ImagesList) (image.ImagesList, error) {
-	var list image.ImagesList
+func (cleaner *LocalBackendCleaner) werfImagesByLabels(ctx context.Context) (image.ImagesList, error) {
+	list, err := cleaner.backend.Images(ctx, buildImagesOptions(
+		util.NewPair("label", image.WerfLabel),
+		util.NewPair("label", image.WerfStageDigestLabel),
+	))
+	if err != nil {
+		return nil, fmt.Errorf("unable to get werf %s images: %w", cleaner.BackendName(), err)
+	}
+
+	images := make(image.ImagesList, 0, len(list))
 
 skipImage:
-	for _, img := range images {
+	for _, img := range list {
 		projectName := img.Labels[image.WerfLabel]
 
 		for _, ref := range img.RepoTags {
-			// Do not remove <none>:<none> images.
-			// Note: <none>:<none> images are dangling or intermediate images.
-			// Right now we don't know what kind of <none>:<none> image is.
-			// But we assume backend native garbage collector removes dangling images.
-			if ref == "<none>:<none>" {
-				continue skipImage
-			}
-
 			normalizedTag, err := cleaner.normalizeReference(ref)
 			if err != nil {
 				return nil, err
@@ -177,10 +180,87 @@ skipImage:
 			}
 		}
 
-		list = append(list, img)
+		images = append(images, img)
 	}
 
-	return list, nil
+	return images, nil
+}
+
+func (cleaner *LocalBackendCleaner) werfImagesByLegacyLabels(ctx context.Context) (image.ImagesList, error) {
+	// Process legacy v1.1 images
+	list, err := cleaner.backend.Images(ctx, buildImagesOptions(
+		util.NewPair("label", image.WerfLabel),
+		util.NewPair("label", "werf-stage-signature"), // v1.1 legacy images
+	))
+	if err != nil {
+		return nil, fmt.Errorf("unable to get werf v1.1 legacy %s images: %w", cleaner.BackendName(), err)
+	}
+
+	images := make(image.ImagesList, 0, len(list))
+
+	// Do not remove stages-storage=:local images, because this is primary stages storage data,
+	// and it can only be cleaned by the werf-cleanup command
+skipImage:
+	for _, img := range list {
+		for _, ref := range img.RepoTags {
+			normalizedTag, err := cleaner.normalizeReference(ref)
+			if err != nil {
+				return nil, err
+			}
+			if strings.HasPrefix(normalizedTag, "werf-stages-storage/") {
+				continue skipImage
+			}
+		}
+
+		images = append(images, img)
+	}
+
+	return images, nil
+}
+
+func (cleaner *LocalBackendCleaner) werfImagesByLastRun(ctx context.Context) (image.ImagesList, error) {
+	// **NOTICE** Remove v1.1 last-run-at timestamp check when v1.1 reaches its end of life
+
+	t, err := cleaner.werfGetWerfLastRunAtV1_1(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("error getting v1.1 last run timestamp: %w", err)
+	}
+
+	var images image.ImagesList
+
+	// No werf v1.1 runs on this host.
+	// This is stupid check, but the only available safe option at the moment.
+	if t.IsZero() {
+		list, err := cleaner.backend.Images(ctx, buildImagesOptions(
+			util.NewPair("reference", "*client-id-*"),
+			util.NewPair("reference", "*managed-image-*"),
+			util.NewPair("reference", "*meta-*"),
+			util.NewPair("reference", "*import-metadata-*"),
+			util.NewPair("reference", "*-rejected"),
+
+			util.NewPair("reference", "werf-client-id/*"),
+			util.NewPair("reference", "werf-managed-images/*"),
+			util.NewPair("reference", "werf-images-metadata-by-commit/*"),
+			util.NewPair("reference", "werf-import-metadata/*"),
+		))
+		if err != nil {
+			return nil, fmt.Errorf("unable to get werf service images: %w", err)
+		}
+
+		images = slices.Grow(images, len(list))
+
+		for _, img := range list {
+			// **NOTICE.** Cannot remove by werf label, because currently there is no such label for service-images by historical reasons.
+			// So check by size at least for now.
+			if img.Size != 0 {
+				continue
+			}
+
+			images = append(images, img)
+		}
+	}
+
+	return images, err
 }
 
 func (cleaner *LocalBackendCleaner) maxLastUsedAtForImage(ctx context.Context, img image.Summary) (time.Time, error) {
@@ -577,12 +657,12 @@ func (cleaner *LocalBackendCleaner) doSafeCleanupWerfImages(ctx context.Context,
 			}
 		}
 
-		// Here we actually don't know how much space we reclaimed. There are several reasons of why:
+		// Here we actually don't know how much space was reclaimed. There are several reasons of why:
 		//	1. Image can have "shared size" but backend cannot calculate the shared size properly.
 		//  2. An error can happen while removing of img.RepoTags of img.RepoDigests.
 		//
 		// So there is only one way to handle this is re-calculate of disk usage size (expensive operation):
-		vuAfter, err := volumeutils.GetVolumeUsageByPath(ctx, options.StoragePath)
+		vuAfter, err := cleaner.volumeutilsGetVolumeUsageByPath(ctx, options.StoragePath)
 		if err != nil {
 			return report, fmt.Errorf("error getting volume usage by path %q: %w", options.StoragePath, err)
 		}
@@ -599,7 +679,10 @@ func (cleaner *LocalBackendCleaner) removeImageByRepoTags(ctx context.Context, o
 	unRemovedCount := 0
 
 	for _, ref := range imgSummary.RepoTags {
-		if ref == "<none>:<none>" { // an intermediate image
+		// NOTE. <none:none> image is an intermediate image or a dandling image.
+		// Here <none:none> image is the intermediate image.
+		// We can assert this because we had remove all dandling images before via pruning.
+		if ref == "<none>:<none>" {
 			err := cleaner.backend.Rmi(ctx, ref, container_backend.RmiOpts{
 				Force: options.Force,
 			})
