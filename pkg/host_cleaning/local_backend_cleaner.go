@@ -471,7 +471,6 @@ func (cleaner *LocalBackendCleaner) pruneVolumes(ctx context.Context, options Ru
 
 // safeCleanupWerfContainers cleanups werf containers safely using host locks
 func (cleaner *LocalBackendCleaner) safeCleanupWerfContainers(ctx context.Context, options RunGCOptions, vu volumeutils.VolumeUsage) (cleanupReport, error) {
-	// TODO(a.zaytsev): add werf build containers
 	containers, err := werfContainersByContainersOptions(ctx, cleaner.backend, buildContainersOptions())
 	if err != nil {
 		return cleanupReport{}, fmt.Errorf("cannot get build containers: %w", err)
