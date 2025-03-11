@@ -412,6 +412,8 @@ build:
 
 This configuration will be applied to all images in the project: labels and author will be set for all images, and unnecessary labels will be removed.
 
+> **Note:** Global configuration applies only for `final` images. See more [here](#using-intermediate-and-final-images)
+
 ### Configuration for a specific image
 
 Example configuration for an individual image:
@@ -427,7 +429,7 @@ imageSpec:
   clearHistory: true
   config:
     user: "1001:1001"
-    exposedPorts:
+    expose:
       - "8080/tcp"
     env:
       NODE_ENV: "production"
@@ -472,6 +474,51 @@ git:
 
 In this example, the base image `postgres:12.22-bookworm` has unnecessary volumes removed, which can then be used in the `app` image.
 
+### Working with CMD and ENTRYPOINT  
+
+If `CMD` is set in the image and `ENTRYPOINT` is specified in `imageSpec`, the `CMD` will be reset. Therefore, when modifying `ENTRYPOINT`, `CMD` must be explicitly defined if required.
+
+For example, if the image has the following configuration:
+
+```json
+"Entrypoint": null
+"Cmd": ["node", "server.js"],
+```  
+
+Then, to modify `ENTRYPOINT`, `CMD` must also be explicitly specified. The configuration should look like this:
+
+```yaml
+project: test
+configVersion: 1
+---
+image: frontend_image
+from: alpine
+imageSpec:
+  config:
+    entrypoint:
+    - "/app/entrypoint.sh"
+    cmd:
+      - "node"
+      - "server.js"
+```  
+
+This behavior is consistent with Docker’s handling of `CMD` and `ENTRYPOINT`, as described in [the official documentation](https://docs.docker.com/reference/dockerfile/#understand-how-cmd-and-entrypoint-interact).
+
+### Working with environment variables  
+
+When working with environment variables, you can reference existing ones from the image using `${ENV_NAME}`:
+
+```yaml
+project: test
+configVersion: 1
+---
+image: backend
+from: alpine:3.21
+imageSpec:
+  config:
+    env:
+      PATH: "${PATH}:/app/bin"
+```
 
 ## Linking images
 

@@ -11,11 +11,14 @@ import (
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
-	"github.com/werf/werf/v2/pkg/dockerfile"
-	"github.com/werf/werf/v2/pkg/dockerfile/frontend"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/ssh_agent"
 	"github.com/werf/werf/v2/pkg/werf/global_warnings"
+)
+
+const (
+	werfLabelsGlobalWarning      = "Removal of the werf labels requires explicit use of the clearWerfLabels directive. Some labels are purely informational, while others are essential for cleanup operations."
+	werfLabelsHostCleanupWarning = "Removal of the %s label will affect host auto cleanup. Proper work of auto cleanup is not guaranteed."
 )
 
 type ImageSpecStage struct {
@@ -87,7 +90,7 @@ func (s *ImageSpecStage) PrepareImage(ctx context.Context, _ Conveyor, _ contain
 		if err != nil {
 			return fmt.Errorf("unable to modify env: %w", err)
 		}
-		newConfig.Volumes = modifyVolumes(ctx, imageInfo.Volumes, s.imageSpec.RemoveVolumes, s.imageSpec.Volumes)
+		newConfig.Volumes = modifyVolumes(imageInfo.Volumes, s.imageSpec.RemoveVolumes, s.imageSpec.Volumes)
 
 		if s.imageSpec.Expose != nil {
 			newConfig.ExposedPorts = make(map[string]struct{}, len(s.imageSpec.Expose))
@@ -149,46 +152,58 @@ func modifyLabels(ctx context.Context, labels, addLabels map[string]string, remo
 		labels = make(map[string]string)
 	}
 
-	shouldRemove := func(key string) (bool, error) {
-		for _, pattern := range removeLabels {
-			match, err := func() (bool, error) {
-				if strings.HasPrefix(pattern, "/") && strings.HasSuffix(pattern, "/") {
-					expr := fmt.Sprintf("^%s$", pattern[1:len(pattern)-1])
-					re, err := regexp.Compile(expr)
-					if err != nil {
-						return false, err
-					}
-					return re.MatchString(key), nil
-				}
-				return pattern == key, nil
-			}()
+	exactMatches := make(map[string]struct{})
+	var regexPatterns []*regexp.Regexp
+
+	for _, pattern := range removeLabels {
+		if strings.HasPrefix(pattern, "/") && strings.HasSuffix(pattern, "/") {
+			expr := fmt.Sprintf("^%s$", pattern[1:len(pattern)-1])
+			re, err := regexp.Compile(expr)
 			if err != nil {
-				return false, err
+				return nil, err
 			}
-			if match {
-				return true, nil
-			}
+			regexPatterns = append(regexPatterns, re)
+		} else {
+			exactMatches[pattern] = struct{}{}
 		}
-		return false, nil
 	}
 
-	for key := range labels {
-		match, err := shouldRemove(key)
-		if err != nil {
-			return nil, err
+	shouldRemove := func(key string) bool {
+		if _, found := exactMatches[key]; found {
+			return true
 		}
-		if match {
-			if !clearWerfLabels && strings.HasPrefix(key, "werf") {
-				global_warnings.GlobalWarningLn(ctx, fmt.Sprintf("Removal of the werf label %q requires explicit use of the `clearWerfLabels` directive. Some labels are purely informational, while others are essential for cleanup operations.", key))
-				continue
+		for _, re := range regexPatterns {
+			if re.MatchString(key) {
+				return true
 			}
-			delete(labels, key)
-			continue
 		}
-
 		if clearWerfLabels && strings.HasPrefix(key, "werf") {
-			delete(labels, key)
+			return true
 		}
+		return false
+	}
+
+	shouldPrintGlobalWarn := false
+	var cleanupWarnKeys []string
+	for key := range labels {
+		if shouldRemove(key) {
+			if !clearWerfLabels && strings.HasPrefix(key, "werf") {
+				shouldPrintGlobalWarn = true
+				if key == image.WerfStageDigestLabel {
+					cleanupWarnKeys = append(cleanupWarnKeys, key)
+				}
+			} else {
+				delete(labels, key)
+			}
+		}
+	}
+
+	if shouldPrintGlobalWarn {
+		global_warnings.GlobalWarningLn(ctx, werfLabelsGlobalWarning)
+	}
+
+	if len(cleanupWarnKeys) > 0 {
+		global_warnings.GlobalWarningLn(ctx, fmt.Sprintf(werfLabelsHostCleanupWarning, strings.Join(cleanupWarnKeys, "','")))
 	}
 
 	for key, value := range addLabels {
@@ -207,51 +222,38 @@ func modifyEnv(env, removeKeys []string, addKeysMap map[string]string) ([]string
 		}
 	}
 
+	// FIXME: (v3) This is a temporary solution to remove werf commit envs that persist after build.
+	removeKeys = append(removeKeys, []string{
+		"WERF_COMMIT_HASH",
+		"WERF_COMMIT_TIME_HUMAN",
+		"WERF_COMMIT_TIME_UNIX",
+	}...)
+
 	for _, key := range removeKeys {
 		delete(baseEnvMap, key)
 	}
 
-	// FIXME: This is a temporary solution to remove werf commit envs that persist after build.
-	for _, key := range []string{
-		"WERF_COMMIT_HASH",
-		"WERF_COMMIT_TIME_HUMAN",
-		"WERF_COMMIT_TIME_UNIX",
-	} {
-		delete(baseEnvMap, key)
-	}
-
-	// FIXME: This is a temporary solution to remove werf SSH_AUTH_SOCK that persist after build.
+	// FIXME: (v3) This is a temporary solution to remove werf SSH_AUTH_SOCK that persist after build.
 	if envValue, hasEnv := baseEnvMap[ssh_agent.SSHAuthSockEnv]; hasEnv && envValue == container_backend.SSHContainerAuthSockPath {
 		delete(baseEnvMap, ssh_agent.SSHAuthSockEnv)
 	}
 
-	envMapToExpand := make(map[string]string)
-	for key, value := range baseEnvMap {
-		envMapToExpand[key] = value
-	}
-	for key, value := range addKeysMap {
-		// Do not add PATH to the baseEnvMap, because it is a special case for the expandEnv function.
-		if key != "PATH" {
-			baseEnvMap[key] = value
+	for k, v := range addKeysMap {
+		newVal, err := shlexProcessWord(v, env)
+		if err != nil {
+			return nil, err
 		}
-
-		envMapToExpand[key] = value
+		baseEnvMap[k] = newVal
 	}
 
-	expandedEnvMap, err := expandEnv(baseEnvMap, envMapToExpand, dockerfile.ExpandOptions{})
-	if err != nil {
-		return nil, fmt.Errorf("unable to expand env: %w", err)
+	newEnv := make([]string, 0, len(baseEnvMap))
+	for k, v := range baseEnvMap {
+		newEnv = append(newEnv, fmt.Sprintf("%s=%s", k, v))
 	}
-
-	resultEnv := make([]string, 0, len(baseEnvMap))
-	for key, value := range expandedEnvMap {
-		resultEnv = append(resultEnv, fmt.Sprintf("%s=%s", key, value))
-	}
-
-	return resultEnv, nil
+	return newEnv, nil
 }
 
-func modifyVolumes(_ context.Context, volumes map[string]struct{}, removeVolumes, addVolumes []string) map[string]struct{} {
+func modifyVolumes(volumes map[string]struct{}, removeVolumes, addVolumes []string) map[string]struct{} {
 	if volumes == nil {
 		volumes = make(map[string]struct{})
 	}
@@ -268,24 +270,11 @@ func modifyVolumes(_ context.Context, volumes map[string]struct{}, removeVolumes
 }
 
 func sortSliceWithNewSlice(original []string) []string {
-	new := append([]string(nil), original...)
-	sort.Strings(new)
-	return new
+	result := append([]string(nil), original...)
+	sort.Strings(result)
+	return result
 }
 
 func toDuration(seconds int) time.Duration {
 	return time.Duration(seconds) * time.Second
-}
-
-func expandEnv(baseEnvMap, envMapToExpand map[string]string, opts dockerfile.ExpandOptions) (map[string]string, error) {
-	expander := frontend.NewShlexExpanderFactory('\\').GetExpander(opts)
-	res := make(map[string]string)
-	for k, v := range envMapToExpand {
-		newValue, err := expander.ProcessWordWithMap(v, baseEnvMap)
-		if err != nil {
-			return nil, fmt.Errorf("error processing word %q: %w", v, err)
-		}
-		res[k] = newValue
-	}
-	return res, nil
 }
