@@ -386,7 +386,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 	} else {
 		return logboek.Streams().DoErrorWithoutProxyStreamDataFormatting(func() error {
 			return common.WithoutTerminationSignalsTrap(func() error {
-				return docker.CliRun_LiveOutput(ctx, dockerRunArgs...)
+				return docker.CliRun_ProvidedOutput(ctx, os.Stdout, os.Stderr, dockerRunArgs...)
 			})
 		})
 	}
