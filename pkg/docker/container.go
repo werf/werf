@@ -8,9 +8,6 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 	"golang.org/x/net/context"
-
-	"github.com/werf/logboek/pkg/level"
-	"github.com/werf/werf/v2/pkg/logging"
 )
 
 func Containers(ctx context.Context, options types.ContainerListOptions) ([]types.Container, error) {
@@ -75,12 +72,7 @@ func CliRun_ProvidedOutput(ctx context.Context, stdoutWriter, stderrWriter io.Wr
 }
 
 func CliRun_LiveOutput(ctx context.Context, args ...string) error {
-	// "werf run --log-quiet" doesn't print anything because logboek has level.Error.
-	//
-	// We assume that cli live running expects at least level.Info.
-	return logging.DoWithLevel(ctx, level.Info, func() error {
-		return doCliRun(cli(ctx), args...)
-	})
+	return doCliRun(cli(ctx), args...)
 }
 
 func CliRun_RecordedOutput(ctx context.Context, args ...string) (string, error) {
