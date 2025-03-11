@@ -565,9 +565,9 @@ func (b *NativeBuildah) Pull(ctx context.Context, ref string, opts PullOpts) err
 }
 
 func (b *NativeBuildah) Rm(ctx context.Context, ref string, opts RmOpts) error {
-	builder, err := b.getBuilderFromContainer(ctx, ref)
+	builder, err := b.openContainerBuilder(ctx, ref)
 	if err != nil {
-		return fmt.Errorf("error getting builder: %w", err)
+		return fmt.Errorf("unable to open container %q builder: %w", ref, err)
 	}
 
 	return builder.Delete()
@@ -593,9 +593,9 @@ func (b *NativeBuildah) Rmi(ctx context.Context, ref string, opts RmiOpts) error
 }
 
 func (b *NativeBuildah) Commit(ctx context.Context, container string, opts CommitOpts) (string, error) {
-	builder, err := b.getBuilderFromContainer(ctx, container)
+	builder, err := b.openContainerBuilder(ctx, container)
 	if err != nil {
-		return "", fmt.Errorf("error getting builder: %w", err)
+		return "", fmt.Errorf("unable to open container %q builder: %w", container, err)
 	}
 
 	var imageRef types.ImageReference
@@ -631,9 +631,9 @@ func (b *NativeBuildah) Commit(ctx context.Context, container string, opts Commi
 }
 
 func (b *NativeBuildah) Config(ctx context.Context, container string, opts ConfigOpts) error {
-	builder, err := b.getBuilderFromContainer(ctx, container)
+	builder, err := b.openContainerBuilder(ctx, container)
 	if err != nil {
-		return fmt.Errorf("error getting builder: %w", err)
+		return fmt.Errorf("unable to open container %q builder: %w", container, err)
 	}
 
 	for _, label := range opts.Labels {
@@ -732,9 +732,9 @@ func (b *NativeBuildah) Config(ctx context.Context, container string, opts Confi
 }
 
 func (b *NativeBuildah) Copy(ctx context.Context, container, contextDir string, src []string, dst string, opts CopyOpts) error {
-	builder, err := b.getBuilderFromContainer(ctx, container)
+	builder, err := b.openContainerBuilder(ctx, container)
 	if err != nil {
-		return fmt.Errorf("error getting builder: %w", err)
+		return fmt.Errorf("unable to open container %q builder: %w", container, err)
 	}
 
 	var absSrc []string
@@ -756,9 +756,9 @@ func (b *NativeBuildah) Copy(ctx context.Context, container, contextDir string, 
 }
 
 func (b *NativeBuildah) Add(ctx context.Context, container string, src []string, dst string, opts AddOpts) error {
-	builder, err := b.getBuilderFromContainer(ctx, container)
+	builder, err := b.openContainerBuilder(ctx, container)
 	if err != nil {
-		return fmt.Errorf("error getting builder: %w", err)
+		return fmt.Errorf("unable to open container %q builder: %w", container, err)
 	}
 
 	var expandedSrc []string
@@ -828,27 +828,6 @@ func (b *NativeBuildah) getBuilderFromImage(ctx context.Context, imgName string,
 		return nil, fmt.Errorf("error getting builder from image %q: %w", imgName, err)
 	case builder == nil:
 		panic("error mocking up build configuration")
-	}
-
-	return builder, nil
-}
-
-func (b *NativeBuildah) getBuilderFromContainer(ctx context.Context, container string) (*buildah.Builder, error) {
-	var builder *buildah.Builder
-	var err error
-
-	builder, err = buildah.OpenBuilder(b.Store, container)
-	if errors.Is(err, fs.ErrNotExist) {
-		builder, err = buildah.ImportBuilder(ctx, b.Store, buildah.ImportOptions{
-			Container:           container,
-			SignaturePolicyPath: b.SignaturePolicyPath,
-		})
-	}
-	if err != nil {
-		return nil, fmt.Errorf("unable to open builder: %w", err)
-	}
-	if builder == nil {
-		return nil, fmt.Errorf("error finding build container")
 	}
 
 	return builder, nil
