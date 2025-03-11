@@ -134,7 +134,7 @@ func ServerVersion(ctx context.Context) (*types.Version, error) {
 	return &version, nil
 }
 
-func newDockerCli(opts []command.DockerCliOption) (command.Cli, error) {
+func newDockerCli(opts []command.CLIOption) (command.Cli, error) {
 	newCli, err := command.NewDockerCli(opts...)
 	if err != nil {
 		return nil, err
@@ -186,8 +186,8 @@ func apiCli(ctx context.Context) client.APIClient {
 	return cli(ctx).Client()
 }
 
-func defaultCliOptions(ctx context.Context) []command.DockerCliOption {
-	return []command.DockerCliOption{
+func defaultCliOptions(ctx context.Context) []command.CLIOption {
+	return []command.CLIOption{
 		command.WithInputStream(os.Stdin),
 		command.WithOutputStream(logboek.Context(ctx).OutStream()),
 		command.WithErrorStream(logboek.Context(ctx).ErrStream()),
@@ -195,7 +195,7 @@ func defaultCliOptions(ctx context.Context) []command.DockerCliOption {
 	}
 }
 
-func cliWithCustomOptions(ctx context.Context, options []command.DockerCliOption, f func(cli command.Cli) error) error {
+func cliWithCustomOptions(ctx context.Context, options []command.CLIOption, f func(cli command.Cli) error) error {
 	if err := cli(ctx).Apply(options...); err != nil {
 		return err
 	}
@@ -236,7 +236,7 @@ func callCliWithProvidedOutput(ctx context.Context, stdoutWriter, stderrWriter i
 
 	if err := cliWithCustomOptions(
 		ctx,
-		[]command.DockerCliOption{
+		[]command.CLIOption{
 			command.WithOutputStream(stdoutWriter),
 			command.WithErrorStream(io.MultiWriter(stderrWriter, &errOutput)),
 		},
@@ -253,7 +253,7 @@ func callCliWithRecordedOutput(ctx context.Context, commandCaller func(c command
 
 	if err := cliWithCustomOptions(
 		ctx,
-		[]command.DockerCliOption{
+		[]command.CLIOption{
 			command.WithOutputStream(&output),
 			command.WithErrorStream(&output),
 		},
