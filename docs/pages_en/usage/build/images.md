@@ -476,15 +476,16 @@ In this example, the base image `postgres:12.22-bookworm` has unnecessary volume
 
 ### Working with CMD and ENTRYPOINT  
 
-If the base image defines `CMD`, and `ENTRYPOINT` is set in the current image, `CMD` will be cleared.
-Thus, when modifying `ENTRYPOINT`, you must explicitly specify `CMD`. For example, if the base image contains the following configuration:
+If `CMD` is set in the image and `ENTRYPOINT` is specified in `imageSpec`, the `CMD` will be reset. Therefore, when modifying `ENTRYPOINT`, `CMD` must be explicitly defined if required.
+
+For example, if the image has the following configuration:
 
 ```json
-"Cmd": ["/bin/bash"],
 "Entrypoint": null
+"Cmd": ["node", "server.js"],
 ```  
 
-Then, to change `ENTRYPOINT`, the configuration should be: 
+Then, to modify `ENTRYPOINT`, `CMD` must also be explicitly specified. The configuration should look like this:
 
 ```yaml
 project: test
@@ -494,31 +495,29 @@ image: frontend_image
 from: alpine
 imageSpec:
   config:
+    entrypoint:
+    - "/app/entrypoint.sh"
     cmd:
-      - "/bin/bash"
-    entrypoint: 
-      - entrypoint.sh
+      - "node"
+      - "server.js"
 ```  
 
-This behavior is consistent with Docker’s handling of CMD and ENTRYPOINT, as described in [the official documentation](https://docs.docker.com/reference/dockerfile/#understand-how-cmd-and-entrypoint-interact).
+This behavior is consistent with Docker’s handling of `CMD` and `ENTRYPOINT`, as described in [the official documentation](https://docs.docker.com/reference/dockerfile/#understand-how-cmd-and-entrypoint-interact).
 
 ### Working with environment variables  
 
-When working with environment variables, you can reference variables from the base image as well as newly defined variables.  
+When working with environment variables, you can reference existing ones from the image using `${ENV_NAME}`:
 
 ```yaml
 project: test
 configVersion: 1
 ---
-image: backend_image
-from: alpine
+image: backend
+from: alpine:3.21
 imageSpec:
   config:
     env:
-      GOROOT: "/usr/local/go"
-      GOPATH: "/go"
-      PATH: "${PATH}:${GOROOT}/bin:${GOPATH}/bin" # Example result: /usr/bin:/usr/local/go/bin/:/go/bin
-                                                  # ${PATH} is inherited from the base image
+      PATH: "${PATH}:/app/bin"
 ```
 
 ## Linking images

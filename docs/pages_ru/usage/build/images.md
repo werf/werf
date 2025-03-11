@@ -475,15 +475,16 @@ git:
 
 ### Работа с CMD и ENTRYPOINT
 
-Если в базовом образе задан `CMD`, а в текущем образе указан `ENTRYPOINT`, то `CMD` будет сброшен.
-Поэтому при изменении `ENTRYPOINT` необходимо явно задавать `CMD`. Например, если в базовом образе указана следующая конфигурация:
+Если в образе задан `CMD`, а в `imageSpec` указан `ENTRYPOINT`, то `CMD` будет сброшен. Таким образом, при изменении `ENTRYPOINT` необходимо явно задавать `CMD`, если он требуется.
+
+Например, если в образе указана следующая конфигурация:
 
 ```json
-"Cmd": ["/bin/bash"],
-"Entrypoint": null,
+"Cmd": ["node", "server.js"],
+"Entrypoint": null
 ```
 
-То для изменения `ENTRYPOINT` конфигурация должна выглядеть так:
+То для изменения `ENTRYPOINT`, `CMD` должен быть также явно указан. Конфигурация будет выглядеть так:
 
 ```yaml
 project: test
@@ -493,31 +494,29 @@ image: frontend_image
 from: alpine
 imageSpec:
   config:
+    entrypoint:
+      - "/app/entrypoint.sh"
     cmd:
-      - "/bin/bash"
-    entrypoint: 
-      - entrypoint.sh
+      - "node"
+      - "server.js"
 ```
 
 Такое поведение соответствует работе Docker с `CMD` и `ENTRYPOINT`, подробнее об этом можно узнать в [официальной документации](https://docs.docker.com/reference/dockerfile/#understand-how-cmd-and-entrypoint-interact)
 
 ### Работа с переменными окружения
 
-При работе с переменными окружения вы можете ссылаться на переменные из базового образа, а также на заданные переменные:
+При работе с переменными окружения вы можете ссылаться на существующие переменные в образе (`${ENV_NAME}`):
 
 ```yaml
 project: test
 configVersion: 1
 ---
-image: backend_image
-from: alpine
+image: backend
+from: alpine:3.21
 imageSpec:
   config:
     env:
-      GOROOT: "/usr/local/go"
-      GOPATH: "/go"
-      PATH: "${PATH}:${GOROOT}/bin:${GOPATH}/bin" # пример результата: /usr/bin:/usr/local/go/bin/:/go/bin
-                                                  # ${PATH} в данном случае получен из базового образа
+      PATH: "${PATH}:/app/bin"
 ```
 
 ## Взаимодействие между образами
