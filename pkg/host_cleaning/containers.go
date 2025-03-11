@@ -36,9 +36,13 @@ func containersRemove(ctx context.Context, backend container_backend.ContainerBa
 }
 
 func werfContainerName(container image.Container) string {
+	prefixes := []string{
+		fmt.Sprintf("/%s", image.StageContainerNamePrefix),
+		fmt.Sprintf("/%s", image.ImportServerContainerNamePrefix),
+	}
 	var containerName string
 	for _, name := range container.Names {
-		if strings.HasPrefix(name, fmt.Sprintf("/%s", image.StageContainerNamePrefix)) {
+		if strings.HasPrefix(name, prefixes[0]) || strings.HasPrefix(name, prefixes[1]) {
 			containerName = strings.TrimPrefix(name, "/")
 			break
 		}
