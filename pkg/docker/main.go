@@ -227,10 +227,6 @@ func IsContext(ctx context.Context) bool {
 	return ctx.Value(ctxDockerCliKey) != nil
 }
 
-func SyncContextCliWithLogger(ctx context.Context) error {
-	return cli(ctx).Apply(defaultCliOptions(ctx)...)
-}
-
 func callCliWithProvidedOutput(ctx context.Context, stdoutWriter, stderrWriter io.Writer, commandCaller func(c command.Cli) error) error {
 	var errOutput bytes.Buffer
 
