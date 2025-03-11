@@ -92,21 +92,41 @@ func (m *Manager) InitImagesMetadata(ctx context.Context, storageManager manager
 		}
 	}
 
+	if err := processImageMetadata(ctx, imageMetadataByImageName, localGit, m); err != nil {
+		return fmt.Errorf("unable init images metadata: %w", err)
+	}
+
+	return nil
+}
+
+func processImageMetadata(ctx context.Context, imageMetadataByImageName map[string]map[string][]string, localGit GitRepo, m *Manager) error {
+	commitCache := make(map[string]bool)
+
 	for imageName, stageIDCommitList := range imageMetadataByImageName {
 		for stageID, commitList := range stageIDCommitList {
 			im := m.getOrCreateImageMetadata(imageName, stageID)
+			var toKeep, toDelete []string
+
 			for _, commit := range commitList {
-				exist, err := localGit.IsCommitExists(ctx, commit)
-				if err != nil {
-					return fmt.Errorf("check commit %s in local git failed: %w", commit, err)
+				exist, ok := commitCache[commit]
+				if !ok {
+					var err error
+					exist, err = localGit.IsCommitExists(ctx, commit)
+					if err != nil {
+						return fmt.Errorf("check commit %s in local git failed: %w", commit, err)
+					}
+					commitCache[commit] = exist
 				}
 
 				if exist {
-					im.commitList = append(im.commitList, commit)
+					toKeep = append(toKeep, commit)
 				} else {
-					im.commitListToDelete = append(im.commitListToDelete, commit)
+					toDelete = append(toDelete, commit)
 				}
 			}
+
+			im.commitList = append(im.commitList, toKeep...)
+			im.commitListToDelete = append(im.commitListToDelete, toDelete...)
 		}
 	}
 
