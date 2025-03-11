@@ -257,6 +257,35 @@ var _ = Describe("LocalBackendCleaner", func() {
 		})
 	})
 
+	Describe("doSafeCleanupWerfImages", func() {
+		It("should call cleaner.volumeutilsGetVolumeUsageByPath() two times if after first cleanup iteration reclaimed space not enough", func() {
+			vu := volumeutils.VolumeUsage{
+				UsedBytes:  800,
+				TotalBytes: 1000,
+			}
+			targetVolumeUsagePercentage := 40.00
+			list := image.ImagesList{
+				{ID: "one", Size: 300},
+				{ID: "two", Size: 500},
+				{ID: "three", Size: 200},
+			}
+
+			vuAfterFirstCleanupIteration := volumeutils.VolumeUsage{
+				UsedBytes:  600,
+				TotalBytes: 1000,
+			}
+			stubs.StubFunc(&cleaner.volumeutilsGetVolumeUsageByPath, vuAfterFirstCleanupIteration, nil)
+
+			report, err := cleaner.doSafeCleanupWerfImages(ctx, RunGCOptions{}, vu, targetVolumeUsagePercentage, list)
+			Expect(err).To(Succeed())
+
+			expectedReport := newCleanupReport()
+			expectedReport.SpaceReclaimed = 200
+			expectedReport.ItemsDeleted = append(expectedReport.ItemsDeleted, list[0].ID, list[1].ID, list[2].ID)
+			Expect(report).To(Equal(expectedReport))
+		})
+	})
+
 	Describe("RunGC", func() {
 		// TODO: cover it
 	})

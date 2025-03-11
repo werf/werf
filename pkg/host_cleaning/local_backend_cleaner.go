@@ -338,7 +338,7 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 		logboek.Context(ctx).LogF("Volume usage: %s / %s\n", humanize.Bytes(vu.UsedBytes), humanize.Bytes(vu.TotalBytes))
 		logboek.Context(ctx).LogF("Allowed percentage level exceeded: %s > %s — %s\n", utils.RedF("%0.2f%%", vu.Percentage()), utils.YellowF("%0.2f%%", options.AllowedStorageVolumeUsagePercentage), utils.RedF("HIGH VOLUME USAGE"))
 		logboek.Context(ctx).LogF("Target percentage level after cleanup: %0.2f%% - %0.2f%% (margin) = %s\n", options.AllowedStorageVolumeUsagePercentage, options.AllowedStorageVolumeUsageMarginPercentage, utils.BlueF("%0.2f%%", targetVolumeUsagePercentage))
-		logboek.Context(ctx).LogF("Needed to free: %s\n", utils.RedF("%s", humanize.Bytes(calculateBytesToFree(vu, targetVolumeUsagePercentage))))
+		logboek.Context(ctx).LogF("Needed to free: %s\n", utils.RedF("%s", humanize.Bytes(calcBytesToFree(vu, targetVolumeUsagePercentage))))
 	})
 
 	vuBefore := vu
@@ -607,8 +607,11 @@ func (cleaner *LocalBackendCleaner) safeCleanupWerfImages(ctx context.Context, o
 	}
 
 	if options.DryRun {
-		n := calculateImagesCountToFree(images, 0, vu, targetVolumeUsagePercentage)
-		return mapImageListToCleanupReport(images[:n]), nil
+		n := countImagesToFree(images, 0, calcBytesToFree(vu, targetVolumeUsagePercentage))
+		if n == -1 {
+			return newCleanupReport(), nil
+		}
+		return mapImageListToCleanupReport(images[:n+1]), nil
 	}
 
 	report, err := cleaner.doSafeCleanupWerfImages(ctx, options, vu, targetVolumeUsagePercentage, images)
@@ -620,14 +623,14 @@ func (cleaner *LocalBackendCleaner) safeCleanupWerfImages(ctx context.Context, o
 }
 
 func (cleaner *LocalBackendCleaner) doSafeCleanupWerfImages(ctx context.Context, options RunGCOptions, vu volumeutils.VolumeUsage, targetVolumeUsagePercentage float64, images image.ImagesList) (cleanupReport, error) {
-	calcN := calculateImagesCountToFree
-	tVu := targetVolumeUsagePercentage
-
 	report := newCleanupReport()
 	report.ItemsDeleted = make([]string, 0, len(images))
 
-	for i, n := 0, calcN(images, 0, vu, tVu); i < n; i, n = n, calcN(images, n, vu, tVu) {
-		for _, imgSummary := range images[i:n] {
+	tVu := targetVolumeUsagePercentage
+
+	for i, n := 0, countImagesToFree(images, 0, calcBytesToFree(vu, tVu)); n != -1; i, n = n+1, countImagesToFree(images, n+1, calcBytesToFree(vu, tVu)) {
+
+		for _, imgSummary := range images[i : n+1] {
 
 			var ok bool
 			var err error
@@ -719,8 +722,9 @@ func (cleaner *LocalBackendCleaner) removeImageByRepoDigests(ctx context.Context
 	return unRemovedCount == 0, nil
 }
 
-func calculateBytesToFree(vu volumeutils.VolumeUsage, targetVolumeUsage float64) uint64 {
-	allowedVolumeUsageToFree := math.Max(vu.Percentage()-targetVolumeUsage, 0)
+func calcBytesToFree(vu volumeutils.VolumeUsage, targetVolumeUsagePercentage float64) uint64 {
+	diffPercentage := vu.Percentage() - targetVolumeUsagePercentage
+	allowedVolumeUsageToFree := math.Max(diffPercentage, 0)
 	bytesToFree := uint64((float64(vu.TotalBytes) / 100.0) * allowedVolumeUsageToFree)
 	return bytesToFree
 }
@@ -746,35 +750,17 @@ func handleError(ctx context.Context, err error) error {
 	return nil
 }
 
-func mapImageListToCleanupReport(list image.ImagesList) cleanupReport {
-	report := newCleanupReport()
-	report.ItemsDeleted = make([]string, 0, len(list))
-	for _, img := range list {
-		report.ItemsDeleted = append(report.ItemsDeleted, img.ID)
-		report.SpaceReclaimed += uint64(img.Size)
+// countImagesToFree returns index ∈ [0, len(images) - 1] or -1 otherwise
+func countImagesToFree(list image.ImagesList, startIndex int, bytesToFree uint64) int {
+	if bytesToFree == 0 || startIndex < 0 || startIndex >= len(list) {
+		return -1
 	}
-	return report
-}
-
-func mapContainerListToCleanupReport(list image.ContainerList) cleanupReport {
-	report := newCleanupReport()
-	report.ItemsDeleted = make([]string, 0, len(list))
-	for _, container := range list {
-		report.ItemsDeleted = append(report.ItemsDeleted, container.ID)
-	}
-	return report
-}
-
-// calculateImagesCountToFree returns index ∈ [0, len(images)] derived from actual and target volume usage
-func calculateImagesCountToFree(images image.ImagesList, startIndex int, vu volumeutils.VolumeUsage, targetVolumeUsagePercentage float64) int {
-	bytesToFree := calculateBytesToFree(vu, targetVolumeUsagePercentage)
 
 	i := startIndex
-	var freedBytes uint64
 
-	for ; i < len(images) && freedBytes < bytesToFree; i++ {
-		freedBytes += uint64(images[i].Size)
+	for freedBytes := uint64(0); i < len(list) && freedBytes < bytesToFree; i++ {
+		freedBytes += uint64(list[i].Size)
 	}
 
-	return i
+	return int(math.Max(float64(i-1), float64(startIndex)))
 }
