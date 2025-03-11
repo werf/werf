@@ -462,7 +462,7 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 		return fmt.Errorf("unable to cleanup werf images: %w", err)
 	}
 
-	logboek.Context(ctx).LogBlock("Check storage", cleaner.BackendName()).Do(func() {
+	logboek.Context(ctx).LogBlock("Check storage").Do(func() {
 		logboek.Context(ctx).LogF("Total freed space: %s\n", utils.RedF("%s", humanize.Bytes(vuBefore.UsedBytes-vu.UsedBytes)))
 		logboek.Context(ctx).LogF("Volume usage: %s / %s\n", humanize.Bytes(vu.UsedBytes), humanize.Bytes(vu.TotalBytes))
 		logboek.Context(ctx).LogF("Allowed percentage level exceeded: %s > %s — %s\n", utils.RedF("%0.2f%%", vu.Percentage()), utils.YellowF("%0.2f%%", options.AllowedStorageVolumeUsagePercentage), utils.RedF("HIGH VOLUME USAGE"))

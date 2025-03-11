@@ -3,6 +3,7 @@ package host_cleaning
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -11,6 +12,7 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"github.com/werf/common-go/pkg/util"
+	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/container_backend/info"
 	"github.com/werf/werf/v2/pkg/container_backend/prune"
 	"github.com/werf/werf/v2/pkg/image"
@@ -287,6 +289,63 @@ var _ = Describe("LocalBackendCleaner", func() {
 	})
 
 	Describe("RunGC", func() {
-		// TODO: cover it
+		It("should keep order of backend calls", func() {
+			options := RunGCOptions{
+				AllowedStorageVolumeUsagePercentage:       0,
+				AllowedStorageVolumeUsageMarginPercentage: 0,
+				StoragePath: t.TempDir(),
+				Force:       true,
+			}
+
+			stubs.StubFunc(&cleaner.volumeutilsGetVolumeUsageByPath, volumeutils.VolumeUsage{
+				UsedBytes:  500,
+				TotalBytes: 1000,
+			}, nil)
+
+			// prevent backend.Images() werfImagesByLastRun call
+			stubs.StubFunc(&cleaner.werfGetWerfLastRunAtV1_1, time.Unix(1, 0), nil)
+
+			containers := image.ContainerList{
+				{ID: "import-server", Names: []string{fmt.Sprintf("/%s", image.ImportServerContainerNamePrefix)}},
+			}
+
+			images := image.ImagesList{
+				{ID: "one", RepoDigests: []string{"digest one"}},
+			}
+
+			// keep orders of backend calls
+			gomock.InOrder(
+				// use backend native GC pruning
+				backend.EXPECT().PruneBuildCache(ctx, prune.Options{}).Return(prune.Report{}, nil),
+				backend.EXPECT().PruneContainers(ctx, prune.Options{}).Return(prune.Report{}, nil),
+				backend.EXPECT().PruneVolumes(ctx, prune.Options{}).Return(prune.Report{}, nil),
+				backend.EXPECT().PruneImages(ctx, prune.Options{}).Return(prune.Report{}, nil),
+
+				// list and remove werf containers
+				backend.EXPECT().Containers(ctx, buildContainersOptions(
+					image.ContainerFilter{Name: image.StageContainerNamePrefix},
+					image.ContainerFilter{Name: image.ImportServerContainerNamePrefix},
+				)).Return(containers, nil),
+				backend.EXPECT().Rm(ctx, containers[0].ID, container_backend.RmOpts{
+					Force: options.Force,
+				}),
+
+				// list and remove werf images
+				backend.EXPECT().Images(ctx, buildImagesOptions(
+					util.NewPair("label", image.WerfLabel),
+					util.NewPair("label", image.WerfStageDigestLabel),
+				)).Return(images, nil),
+				backend.EXPECT().Images(ctx, buildImagesOptions(
+					util.NewPair("label", image.WerfLabel),
+					util.NewPair("label", "werf-stage-signature"), // v1.1 legacy images
+				)).Return(image.ImagesList{}, nil),
+				backend.EXPECT().Rmi(ctx, images[0].RepoDigests[0], container_backend.RmiOpts{
+					Force: options.Force,
+				}),
+			)
+
+			err := cleaner.RunGC(ctx, options)
+			Expect(err).To(Succeed())
+		})
 	})
 })
