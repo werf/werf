@@ -23,6 +23,7 @@ import (
 	"github.com/werf/werf/v2/pkg/logging"
 	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/storage/manager"
+	"github.com/werf/werf/v2/pkg/util/parallel"
 )
 
 type CleanupOptions struct {
@@ -34,6 +35,8 @@ type CleanupOptions struct {
 	ConfigMetaCleanup                       config.MetaCleanup
 	KeepStagesBuiltWithinLastNHours         *uint64
 	DryRun                                  bool
+	Parallel                                bool
+	ParallelTasksLimit                      int64
 }
 
 func Cleanup(ctx context.Context, projectName string, storageManager *manager.StorageManager, options CleanupOptions) error {
@@ -43,6 +46,8 @@ func Cleanup(ctx context.Context, projectName string, storageManager *manager.St
 func newCleanupManager(projectName string, storageManager *manager.StorageManager, options CleanupOptions) *cleanupManager {
 	return &cleanupManager{
 		stageManager:                            stage_manager.NewManager(),
+		parallel:                                options.Parallel,
+		parallelTasksLimit:                      options.ParallelTasksLimit,
 		ProjectName:                             projectName,
 		StorageManager:                          storageManager,
 		ImageNameList:                           options.ImageNameList,
@@ -72,6 +77,9 @@ type cleanupManager struct {
 	ConfigMetaCleanup                       config.MetaCleanup
 	KeepStagesBuiltWithinLastNHours         *uint64
 	DryRun                                  bool
+
+	parallel           bool
+	parallelTasksLimit int64
 }
 
 type GitRepo interface {
@@ -343,20 +351,30 @@ func (m *cleanupManager) deployedDockerImages(ctx context.Context) ([]*DeployedD
 }
 
 func (m *cleanupManager) gitHistoryBasedCleanup(ctx context.Context) error {
-	gitRepository, err := m.LocalGit.PlainOpen()
+	gitRepository, err := git_history_based_cleanup.NewGitRepositoryWithCache(m.LocalGit)
 	if err != nil {
-		return fmt.Errorf("git plain open failed: %w", err)
+		return fmt.Errorf("unable to open git repo: %w", err)
 	}
 
 	var referencesToScan []*git_history_based_cleanup.ReferenceToScan
 	if err := logboek.Context(ctx).Default().LogProcess("Preparing references to scan").DoError(func() error {
-		referencesToScan, err = git_history_based_cleanup.ReferencesToScan(ctx, gitRepository, m.ConfigMetaCleanup.KeepPolicies)
+		referencesToScan, err = git_history_based_cleanup.ReferencesToScan(ctx, gitRepository.GitRepo, m.ConfigMetaCleanup.KeepPolicies)
 		return err
 	}); err != nil {
 		return err
 	}
 
-	for imageName, stageIDCommitList := range m.stageManager.GetImageStageIDCommitListToCleanup() {
+	var imagePairs []util.Pair[string, map[string][]string]
+	for k, v := range m.stageManager.GetImageStageIDCommitListToCleanup() {
+		p := util.NewPair(k, v)
+		imagePairs = append(imagePairs, p)
+	}
+
+	if err := parallel.DoTasks(ctx, len(imagePairs), parallel.DoTasksOptions{
+		MaxNumberOfWorkers: int(m.parallelTasksLimit),
+	}, func(ctx context.Context, taskId int) error {
+		pair := imagePairs[taskId]
+		imageName, stageIDCommitList := pair.Unpair()
 		var reachedStageIDs []string
 		var hitStageIDCommitList map[string][]string
 		// TODO(multiarch): iterate target platforms
@@ -404,7 +422,12 @@ func (m *cleanupManager) gitHistoryBasedCleanup(ctx context.Context) error {
 		}); err != nil {
 			return err
 		}
+		return nil
+	}); err != nil {
+		return fmt.Errorf("git history-based cleanup failed: %w", err)
 	}
+
+	gitRepository.ClearCache()
 
 	if err := m.cleanupNonexistentImageMetadata(ctx); err != nil {
 		return fmt.Errorf("ubable to cleanup nonexistent image metadata: %w", err)

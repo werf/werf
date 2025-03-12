@@ -16,6 +16,10 @@ import (
 	"github.com/werf/werf/v2/pkg/config"
 )
 
+type LocalGit interface {
+	CommitObject(plumbing.Hash) (*object.Commit, error)
+}
+
 type ReferenceToScan struct {
 	*plumbing.Reference
 	CreatedAt  time.Time
@@ -148,7 +152,7 @@ func ReferencesToScan(ctx context.Context, gitRepository *git.Repository, keepPo
 			),
 		})
 
-		mainBranchImagesPerReferenceLast := 2
+		mainBranchImagesPerReferenceLast := 10
 		keepPolicies = append(keepPolicies, &config.MetaCleanupKeepPolicy{
 			References: config.MetaCleanupKeepPolicyReferences{
 				BranchRegexp: regexp.MustCompile("^(main|master|staging|production)$"),
