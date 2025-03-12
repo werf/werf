@@ -7,7 +7,6 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
-	"github.com/go-git/go-git/v5/plumbing/storer"
 )
 
 type GitRepo interface {
@@ -54,10 +53,6 @@ func (g *GitRepositoryWithCache) CommitObject(commitHash plumbing.Hash) (*object
 func (g *GitRepositoryWithCache) ClearCache() {
 	g.CommitChache.Clear()
 	g.mutexes.Clear()
-}
-
-func (g *GitRepositoryWithCache) References() (storer.ReferenceIter, error) {
-	return g.GitRepo.References()
 }
 
 func (g *GitRepositoryWithCache) addToCache(commitHash plumbing.Hash, obj *object.Commit) {
