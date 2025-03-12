@@ -1,0 +1,84 @@
+package git_history_based_cleanup
+
+import (
+	"fmt"
+	"sync"
+
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/go-git/go-git/v5/plumbing/storer"
+)
+
+type GitRepo interface {
+	PlainOpen() (*git.Repository, error)
+}
+
+type GitRepositoryWithCache struct {
+	GitRepo      *git.Repository
+	CommitChache sync.Map
+	mutexes      sync.Map
+}
+
+func NewGitRepositoryWithCache(gitRepo GitRepo) (*GitRepositoryWithCache, error) {
+	gitRepository, err := gitRepo.PlainOpen()
+	if err != nil {
+		return nil, fmt.Errorf("git plain open failed: %w", err)
+	}
+	return &GitRepositoryWithCache{
+		GitRepo:      gitRepository,
+		CommitChache: sync.Map{},
+		mutexes:      sync.Map{},
+	}, nil
+}
+
+func (g *GitRepositoryWithCache) CommitObject(commitHash plumbing.Hash) (*object.Commit, error) {
+	if c, ok := g.getFromCache(commitHash); ok {
+		return c, nil
+	}
+	g.lockCommit(commitHash.String())
+	defer g.unlockCommit(commitHash.String())
+	c, err := g.GitRepo.CommitObject(commitHash)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get commit object for %s: %s", commitHash.String(), err)
+	}
+	g.addToCache(commitHash, c)
+	return c, nil
+}
+
+func (g *GitRepositoryWithCache) ClearCache() {
+	g.CommitChache.Clear()
+	g.mutexes.Clear()
+}
+
+func (g *GitRepositoryWithCache) References() (storer.ReferenceIter, error) {
+	return g.GitRepo.References()
+}
+
+func (g *GitRepositoryWithCache) addToCache(commitHash plumbing.Hash, obj *object.Commit) {
+	g.CommitChache.Store(commitHash, obj)
+}
+
+func (g *GitRepositoryWithCache) getFromCache(commitHash plumbing.Hash) (*object.Commit, bool) {
+	value, ok := g.CommitChache.Load(commitHash)
+	if !ok {
+		return nil, false
+	}
+	commit, ok := value.(*object.Commit)
+	return commit, ok
+}
+
+func (g *GitRepositoryWithCache) getMutex(commitHash string) *sync.Mutex {
+	mu, _ := g.mutexes.LoadOrStore(commitHash, &sync.Mutex{})
+	return mu.(*sync.Mutex)
+}
+
+func (g *GitRepositoryWithCache) lockCommit(commitHash string) {
+	mu := g.getMutex(commitHash)
+	mu.Lock()
+}
+
+func (g *GitRepositoryWithCache) unlockCommit(commitHash string) {
+	mu := g.getMutex(commitHash)
+	mu.Unlock()
+}
