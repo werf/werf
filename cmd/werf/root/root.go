@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
+	"strconv"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -255,4 +258,28 @@ func SetupTelemetryInit(rootCmd *cobra.Command) {
 			}
 		}
 	}
+}
+
+func PrintStackTraces() {
+	if os.Getenv("WERF_PRINT_STACK_TRACES") != "1" {
+		return
+	}
+
+	period := 5
+	if prd := os.Getenv("WERF_PRINT_STACK_TRACES_PERIOD"); prd != "" {
+		p, err := strconv.Atoi(prd)
+		if err == nil {
+			period = p
+		}
+	}
+
+	go func() {
+		for {
+			buf := make([]byte, 1<<16)
+			runtime.Stack(buf, true)
+			fmt.Printf("%s", buf)
+
+			time.Sleep(time.Second * time.Duration(period))
+		}
+	}()
 }
