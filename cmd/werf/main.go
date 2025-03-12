@@ -19,6 +19,8 @@ import (
 func main() {
 	ctx := common.GetContextWithLogger()
 
+	root.PrintStackTraces()
+
 	shouldTerminate, err := common.ContainerBackendProcessStartupHook()
 	if err != nil {
 		common.TerminateWithError(err.Error(), 1)
