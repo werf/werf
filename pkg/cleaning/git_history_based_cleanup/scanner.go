@@ -15,6 +15,10 @@ import (
 	"github.com/werf/werf/v2/pkg/config"
 )
 
+type LocalGit interface {
+	CommitObject(plumbing.Hash) (*object.Commit, error)
+}
+
 func ScanReferencesHistory(ctx context.Context, gitRepository LocalGit, refs []*ReferenceToScan, expectedStageIDCommitList map[string][]string) ([]string, map[string][]string, error) {
 	var reachedStageIDs []string
 	var stopCommitList []string

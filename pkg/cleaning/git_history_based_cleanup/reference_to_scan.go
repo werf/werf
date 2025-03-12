@@ -16,10 +16,6 @@ import (
 	"github.com/werf/werf/v2/pkg/config"
 )
 
-type LocalGit interface {
-	CommitObject(plumbing.Hash) (*object.Commit, error)
-}
-
 type ReferenceToScan struct {
 	*plumbing.Reference
 	CreatedAt  time.Time

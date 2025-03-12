@@ -32,6 +32,11 @@ func NewGitRepositoryWithCache(gitRepo GitRepo) (*GitRepositoryWithCache, error)
 	}, nil
 }
 
+// CommitObject tries to load a commit object from the cache.
+// If the commit is not found in the cache, it locks the commit and attempts to load it from disk.
+// It doesn't actually protect any data and works like a semaphore.
+// We need this workaround because go-git is not thread-safe. It should be fixed in go-git v6.
+// Ref: https://github.com/go-git/go-git/issues/773
 func (g *GitRepositoryWithCache) CommitObject(commitHash plumbing.Hash) (*object.Commit, error) {
 	if c, ok := g.getFromCache(commitHash); ok {
 		return c, nil

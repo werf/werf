@@ -386,7 +386,11 @@ func (m *cleanupManager) gitHistoryBasedCleanup(ctx context.Context) error {
 
 			if err := logboek.Context(ctx).LogProcess("Scanning git references history").DoError(func() error {
 				if countStageIDCommitList(stageIDCommitList) != 0 {
-					reachedStageIDs, hitStageIDCommitList, err = git_history_based_cleanup.ScanReferencesHistory(ctx, gitRepository, referencesToScan, stageIDCommitList)
+					var scanErr error
+					reachedStageIDs, hitStageIDCommitList, scanErr = git_history_based_cleanup.ScanReferencesHistory(ctx, gitRepository, referencesToScan, stageIDCommitList)
+					if scanErr != nil {
+						return scanErr
+					}
 				} else {
 					logboek.Context(ctx).LogLn("Scanning stopped due to nothing to seek")
 				}
