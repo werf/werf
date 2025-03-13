@@ -96,6 +96,7 @@ func (s *DependenciesStage) GetDependencies(ctx context.Context, c Conveyor, cb 
 }
 
 func (s *DependenciesStage) prepareImageWithLegacyStapelBuilder(ctx context.Context, c Conveyor, cr container_backend.ContainerBackend, _, stageImage *StageImage) error {
+	imageServiceCommitChangeOptions := stageImage.Builder.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions()
 	for _, elm := range s.imports {
 		sourceImageName := getSourceImageName(elm)
 		srv, err := c.GetImportServer(ctx, s.targetPlatform, sourceImageName, elm.Stage)
@@ -105,8 +106,6 @@ func (s *DependenciesStage) prepareImageWithLegacyStapelBuilder(ctx context.Cont
 
 		command := srv.GetCopyCommand(ctx, elm)
 		stageImage.Builder.LegacyStapelStageBuilder().Container().AddServiceRunCommands(command)
-
-		imageServiceCommitChangeOptions := stageImage.Builder.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions()
 
 		checksumLabelKey := imagePkg.WerfImportChecksumLabelPrefix + getImportID(elm)
 		sourceStageIDLabelKey := imagePkg.WerfImportSourceStageIDLabelPrefix + getImportID(elm)
@@ -157,6 +156,11 @@ func (s *DependenciesStage) prepareImageWithLegacyStapelBuilder(ctx context.Cont
 				})
 			}
 		}
+
+		depStageID := c.GetStageIDForLastImageStage(s.targetPlatform, dep.ImageName)
+		imageServiceCommitChangeOptions.AddLabel(map[string]string{
+			dependencyLabelKey(depStageID): depStageID,
+		})
 	}
 
 	return nil
@@ -220,6 +224,10 @@ func (s *DependenciesStage) prepareImage(ctx context.Context, c Conveyor, cr con
 				})
 			}
 		}
+		depStageID := c.GetStageIDForLastImageStage(s.targetPlatform, dep.ImageName)
+		stageImage.Builder.StapelStageBuilder().AddLabels(map[string]string{
+			dependencyLabelKey(depStageID): depStageID,
+		})
 	}
 
 	return nil

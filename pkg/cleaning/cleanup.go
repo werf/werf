@@ -716,9 +716,9 @@ func (m *cleanupManager) cleanupUnusedStages(ctx context.Context) error {
 	{
 		for protectionReason, stageDescToKeepSet := range m.stageManager.GetProtectedStageDescSetByReason() {
 			// Git history based policy keeps import sources more effectively, other policies do not keep them.
-			withImportSources := protectionReason != stage_manager.ProtectionReasonGitPolicy
+			withImportOrDependencySources := protectionReason != stage_manager.ProtectionReasonGitPolicy
 			for stageDescToKeep := range stageDescToKeepSet.Iter() {
-				m.protectRelativeStageDescSetByStageDesc(stageDescToKeep, withImportSources)
+				m.protectRelativeStageDescSetByStageDesc(stageDescToKeep, withImportOrDependencySources)
 			}
 		}
 
@@ -882,7 +882,7 @@ func deleteImportsMetadata(ctx context.Context, projectName string, storageManag
 	})
 }
 
-func (m *cleanupManager) protectRelativeStageDescSetByStageDesc(targetStageDesc *image.StageDesc, withImportSource bool) {
+func (m *cleanupManager) protectRelativeStageDescSetByStageDesc(targetStageDesc *image.StageDesc, withImportOrDependencySources bool) {
 	targetStageDescSet := image.NewStageDescSet()
 	if targetStageDesc.Info.IsIndex {
 		for _, platformImageInfo := range targetStageDesc.Info.Index {
@@ -909,11 +909,11 @@ func (m *cleanupManager) protectRelativeStageDescSetByStageDesc(targetStageDesc 
 				handledStageDescSet.Add(currentStageDesc)
 			}
 
-			// Import source checking.
-			if withImportSource {
-				for label, checksum := range currentStageDesc.Info.Labels {
+			// Import or Dependency source checking.
+			if withImportOrDependencySources {
+				for label, value := range currentStageDesc.Info.Labels {
 					if strings.HasPrefix(label, image.WerfImportChecksumLabelPrefix) {
-						sourceStageIDs, ok := m.checksumSourceStageIDs[checksum]
+						sourceStageIDs, ok := m.checksumSourceStageIDs[value]
 						if !ok {
 							continue
 						}
@@ -924,6 +924,12 @@ func (m *cleanupManager) protectRelativeStageDescSetByStageDesc(targetStageDesc 
 								currentStageDescSet.Add(sourceStageDesc)
 								m.stageManager.MarkStageDescAsProtected(sourceStageDesc, stage_manager.ProtectionReasonImportSource, false)
 							}
+						}
+					} else if strings.HasPrefix(label, image.WerfDependencySourceStageIDLabelPrefix) {
+						sourceStageDesc := m.stageManager.GetStageDescByStageID(value)
+						if sourceStageDesc != nil {
+							currentStageDescSet.Add(sourceStageDesc)
+							m.stageManager.MarkStageDescAsProtected(sourceStageDesc, stage_manager.ProtectionReasonDependencySource, false)
 						}
 					}
 				}

@@ -35,6 +35,7 @@ var (
 	ProtectionReasonGitPolicy                   = newProtectionReason("git policy")
 	ProtectionReasonBuiltWithinLastNHoursPolicy = newProtectionReason("built within last N hours")
 	ProtectionReasonImportSource                = newProtectionReason("import source")
+	ProtectionReasonDependencySource            = newProtectionReason("dependency source")
 	ProtectionReasonAncestor                    = newProtectionReason("ancestor")
 	ProtectionReasonNotFoundInRepo              = newProtectionReason("not found in repo")
 )
