@@ -104,6 +104,10 @@ func (c *ConveyorStub) GiterminismManager() giterminism_manager.Interface {
 	return c.giterminismManager
 }
 
+func (c *ConveyorStub) GetStageIDForLastImageStage(targetPlatform, imageName string) string {
+	return c.lastStageImageDigestByImageName[imageName]
+}
+
 type GiterminismInspectorStub struct {
 	giterminism_manager.Inspector
 }
