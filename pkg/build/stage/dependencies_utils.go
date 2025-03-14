@@ -3,6 +3,7 @@ package stage
 import (
 	"fmt"
 
+	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/image"
 )
@@ -45,9 +46,5 @@ func ResolveDependenciesArgs(targetPlatform string, dependencies []*config.Depen
 }
 
 func dependencyLabelKey(depStageID string) string {
-	id := depStageID
-	if len(depStageID) > 8 {
-		id = depStageID[:8]
-	}
-	return fmt.Sprintf("%s%s", image.WerfDependencySourceStageIDLabelPrefix, id)
+	return fmt.Sprintf("%s%s", image.WerfDependencySourceStageIDLabelPrefix, util.Sha256Hash(depStageID))
 }
