@@ -45,5 +45,9 @@ func ResolveDependenciesArgs(targetPlatform string, dependencies []*config.Depen
 }
 
 func dependencyLabelKey(depStageID string) string {
-	return fmt.Sprintf("%s%s", image.WerfDependencySourceStageIDLabelPrefix, depStageID[:8])
+	id := depStageID
+	if len(depStageID) > 8 {
+		id = depStageID[:8]
+	}
+	return fmt.Sprintf("%s%s", image.WerfDependencySourceStageIDLabelPrefix, id)
 }
