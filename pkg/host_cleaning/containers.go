@@ -3,6 +3,7 @@ package host_cleaning
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/container_backend"
@@ -10,7 +11,9 @@ import (
 )
 
 func werfContainersByContainersOptions(ctx context.Context, backend container_backend.ContainerBackend, containersOptions container_backend.ContainersOptions) (image.ContainerList, error) {
-	containersOptions.Filters = append(containersOptions.Filters, image.ContainerFilter{Name: image.StageContainerNamePrefix})
+	containersOptions.Filters = append(containersOptions.Filters,
+		image.ContainerFilter{Name: image.StageContainerNamePrefix},
+		image.ContainerFilter{Name: image.ImportServerContainerNamePrefix})
 	return backend.Containers(ctx, containersOptions)
 }
 
@@ -30,6 +33,21 @@ func containersRemove(ctx context.Context, backend container_backend.ContainerBa
 	}
 
 	return nil
+}
+
+func werfContainerName(container image.Container) string {
+	prefixes := []string{
+		fmt.Sprintf("/%s", image.StageContainerNamePrefix),
+		fmt.Sprintf("/%s", image.ImportServerContainerNamePrefix),
+	}
+	var containerName string
+	for _, name := range container.Names {
+		if strings.HasPrefix(name, prefixes[0]) || strings.HasPrefix(name, prefixes[1]) {
+			containerName = strings.TrimPrefix(name, "/")
+			break
+		}
+	}
+	return containerName
 }
 
 func buildContainersOptions(filters ...image.ContainerFilter) container_backend.ContainersOptions {

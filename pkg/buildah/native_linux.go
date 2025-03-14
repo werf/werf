@@ -592,6 +592,32 @@ func (b *NativeBuildah) Rmi(ctx context.Context, ref string, opts RmiOpts) error
 	return errors.Join(rmiErrors...)
 }
 
+// PruneImages removes dangling images but not touches containers.
+func (b *NativeBuildah) PruneImages(ctx context.Context, opts PruneImagesOptions) (PruneImagesReport, error) {
+	sysCtx, err := b.getSystemContext(opts.TargetPlatform)
+	if err != nil {
+		return PruneImagesReport{}, err
+	}
+
+	runtime, err := b.getRuntime(sysCtx)
+	if err != nil {
+		return PruneImagesReport{}, err
+	}
+
+	imageReports, rmiErrors := runtime.RemoveImages(ctx, []string{}, &libimage.RemoveImagesOptions{
+		Force:    false, // not remove containers
+		Filters:  []string{"dangling=true"},
+		WithSize: true,
+		NoPrune:  false,
+	})
+
+	if len(rmiErrors) > 0 {
+		return PruneImagesReport{}, errors.Join(rmiErrors...)
+	}
+
+	return mapImageReportsToPruneImagesReport(imageReports), nil
+}
+
 func (b *NativeBuildah) Commit(ctx context.Context, container string, opts CommitOpts) (string, error) {
 	builder, err := b.openContainerBuilder(ctx, container)
 	if err != nil {
@@ -905,14 +931,6 @@ func (b *NativeBuildah) Images(ctx context.Context, opts ImagesOptions) (image.I
 			Labels:      labels,
 			Created:     img.Created(),
 			Size:        size,
-			// Current buildah api does not provide a way to calculate SharedSize per image.
-			// We can get aggregate result only via
-			// https://pkg.go.dev/github.com/containers/common/libimage@v0.58.1#Runtime.DiskUsage
-			//
-			// IMPORTANT NOTES
-			// We assume that all handled images are unshared ones.
-			// We set constant `-1` to keep compatibility with docker which uses -1 to indicate unshared images.
-			SharedSize: -1,
 		}
 	}
 
@@ -1279,4 +1297,19 @@ func getSSHAgentSock(sock string) []string {
 	} else {
 		return []string{}
 	}
+}
+
+func mapImageReportsToPruneImagesReport(reports []*libimage.RemoveImageReport) PruneImagesReport {
+	report := PruneImagesReport{
+		ItemsDeleted: make([]string, 0, len(reports)),
+	}
+
+	for _, imageReport := range reports {
+		if imageReport.Removed {
+			report.ItemsDeleted = append(report.ItemsDeleted, imageReport.ID)
+			report.SpaceReclaimed += uint64(imageReport.Size)
+		}
+	}
+
+	return report
 }

@@ -5,6 +5,7 @@ import (
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/container_backend/info"
+	"github.com/werf/werf/v2/pkg/container_backend/prune"
 	"github.com/werf/werf/v2/pkg/image"
 )
 
@@ -195,4 +196,36 @@ func (runtime *PerfCheckContainerBackend) TagImageByName(ctx context.Context, im
 func (runtime *PerfCheckContainerBackend) ClaimTargetPlatforms(ctx context.Context, targetPlatforms []string) {
 	logboek.Context(ctx).Default().LogProcess("ContainerBackend.ClaimTargetPlatforms %v", targetPlatforms).
 		Do(func() { runtime.ContainerBackend.ClaimTargetPlatforms(ctx, targetPlatforms) })
+}
+
+func (runtime *PerfCheckContainerBackend) PruneBuildCache(ctx context.Context, options prune.Options) (report prune.Report, err error) {
+	logboek.Context(ctx).Default().LogProcess("ContainerBackend.PruneBuildCache %v", options).
+		Do(func() {
+			report, err = runtime.ContainerBackend.PruneBuildCache(ctx, options)
+		})
+	return
+}
+
+func (runtime *PerfCheckContainerBackend) PruneContainers(ctx context.Context, options prune.Options) (report prune.Report, err error) {
+	logboek.Context(ctx).Default().LogProcess("ContainerBackend.PruneContainers %v", options).
+		Do(func() {
+			report, err = runtime.ContainerBackend.PruneContainers(ctx, options)
+		})
+	return
+}
+
+func (runtime *PerfCheckContainerBackend) PruneImages(ctx context.Context, options prune.Options) (report prune.Report, err error) {
+	logboek.Context(ctx).Default().LogProcess("ContainerBackend.PruneImages %v", options).
+		Do(func() {
+			report, err = runtime.ContainerBackend.PruneImages(ctx, options)
+		})
+	return
+}
+
+func (runtime *PerfCheckContainerBackend) PruneVolumes(ctx context.Context, options prune.Options) (report prune.Report, err error) {
+	logboek.Context(ctx).Default().LogProcess("ContainerBackend.PruneVolumes %v", options).
+		Do(func() {
+			report, err = runtime.ContainerBackend.PruneVolumes(ctx, options)
+		})
+	return
 }

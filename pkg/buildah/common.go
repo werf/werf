@@ -100,6 +100,15 @@ type CommitOpts struct {
 	Image string
 }
 
+type PruneImagesOptions struct {
+	CommonOpts
+}
+
+type PruneImagesReport struct {
+	ItemsDeleted   []string
+	SpaceReclaimed uint64
+}
+
 type ConfigOpts struct {
 	CommonOpts
 
@@ -184,6 +193,7 @@ type Buildah interface {
 	Add(ctx context.Context, container string, src []string, dst string, opts AddOpts) error
 	Images(ctx context.Context, opts ImagesOptions) (image.ImagesList, error)
 	Containers(ctx context.Context, opts ContainersOptions) (image.ContainerList, error)
+	PruneImages(ctx context.Context, opts PruneImagesOptions) (PruneImagesReport, error)
 }
 
 type Mode string

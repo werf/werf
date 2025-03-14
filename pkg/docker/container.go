@@ -6,6 +6,7 @@ import (
 	"github.com/docker/cli/cli/command"
 	"github.com/docker/cli/cli/command/container"
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
 	"golang.org/x/net/context"
 )
@@ -43,6 +44,22 @@ func ContainerCommit(ctx context.Context, ref string, commitOptions types.Contai
 
 func ContainerRemove(ctx context.Context, ref string, options types.ContainerRemoveOptions) error {
 	return apiCli(ctx).ContainerRemove(ctx, ref, options)
+}
+
+type (
+	ContainersPruneOptions BuildCachePruneOptions
+	ContainersPruneReport  BuildCachePruneReport
+)
+
+func ContainersPrune(ctx context.Context, _ ContainersPruneOptions) (ContainersPruneReport, error) {
+	report, err := apiCli(ctx).ContainersPrune(ctx, filters.NewArgs())
+	if err != nil {
+		return ContainersPruneReport{}, err
+	}
+	return ContainersPruneReport{
+		ItemsDeleted:   report.ContainersDeleted,
+		SpaceReclaimed: report.SpaceReclaimed,
+	}, nil
 }
 
 func doCliCreate(c command.Cli, args ...string) error {

@@ -29,5 +29,6 @@ const (
 
 	BuildCacheVersion = "1.2"
 
-	StageContainerNamePrefix = "werf.build."
+	StageContainerNamePrefix        = "werf.build."
+	ImportServerContainerNamePrefix = "import-server-"
 )
