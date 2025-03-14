@@ -156,8 +156,8 @@ sections:
             default: "2"
           - name: keepPolicies
             description:
-              en: Set of policies to select relevant images using the Git history
-              ru: Набор политик для выборки актуальных образов, используя историю Git
+              en: Set of policies to select relevant image versions using the Git history
+              ru: Набор политик для выборки актуальных версий образов, используя историю Git
             directiveList:
               - name: references
                 description:
@@ -198,14 +198,14 @@ sections:
                           ru: Определяет какие references будут результатом политики, те которые удовлетворяют оба условия или любое из них
               - name: imagesPerReference
                 description:
-                  en: The limit on the number of images for each reference contained in the set
-                  ru: Лимит искомых образов для каждого reference из множества
+                  en: The limit on the number of image versions for each reference contained in the set
+                  ru: Лимит искомых версий образов для каждого reference из множества
                 directives:
                   - name: last
                     value: "int"
                     description:
-                      en: The number of images to search for each reference
-                      ru: Количество искомых образов для каждого reference
+                      en: The number of image versions to search for each reference
+                      ru: Количество искомых версий образов для каждого reference
                     default: "-1"
                   - name: in
                     value: "duration string"
