@@ -32,13 +32,13 @@ groups:
       - name: ea
         version: 1.2.334
       - name: stable
-        version: 1.2.333
+        version: 1.2.334
       - name: rock-solid
         version: 1.2.333
   - name: "2"
     channels:
       - name: alpha
-        version: 2.31.1
+        version: 2.32.0
       - name: beta
         version: 2.31.1
       - name: ea
