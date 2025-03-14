@@ -14,9 +14,7 @@
 ### Bug Fixes
 
 * **build, imageSpec:** resolve env issues, labels warning, and add --skip-image-spec-stage flag ([#6651](https://www.github.com/werf/werf/issues/6651)) ([7a8c96b](https://www.github.com/werf/werf/commit/7a8c96bc2b92ae2944cb9d01d0d49edd9063ad32))
-* **cleanup:** speed-up image metadata inition ([2cf0bf9](https://www.github.com/werf/werf/commit/2cf0bf978e7ef0f46054f79669a22e92363fdf6e))
 * **host-cleanup:** auto host cleanup doesn't work on linux ([a5f07f7](https://www.github.com/werf/werf/commit/a5f07f71100d436472dd594de930c471380d5d2c))
-* **host-cleanup:** test werf/exec process detach ([09f0599](https://www.github.com/werf/werf/commit/09f05993ce19e2179878a98121732692a263b34a))
 
 ### [2.31.1](https://www.github.com/werf/werf/compare/v2.31.0...v2.31.1) (2025-03-06)
 
