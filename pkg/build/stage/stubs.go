@@ -49,16 +49,26 @@ func (c *LegacyContainerStub) ServiceCommitChangeOptions() container_backend.Leg
 type LegacyContainerOptionsStub struct {
 	container_backend.LegacyContainerOptions
 
-	Env map[string]string
+	Env    map[string]string
+	Labels map[string]string
 }
 
 func NewLegacyContainerOptionsStub() *LegacyContainerOptionsStub {
-	return &LegacyContainerOptionsStub{Env: make(map[string]string)}
+	return &LegacyContainerOptionsStub{
+		Env:    make(map[string]string),
+		Labels: make(map[string]string),
+	}
 }
 
 func (opts *LegacyContainerOptionsStub) AddEnv(envs map[string]string) {
 	for k, v := range envs {
 		opts.Env[k] = v
+	}
+}
+
+func (opts *LegacyContainerOptionsStub) AddLabel(labels map[string]string) {
+	for k, v := range labels {
+		opts.Labels[k] = v
 	}
 }
 
