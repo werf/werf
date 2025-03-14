@@ -1,5 +1,23 @@
 # Changelog
 
+## [2.32.0](https://www.github.com/werf/werf/compare/v2.31.1...v2.32.0) (2025-03-14)
+
+
+### Features
+
+* **cleanup:** keep dependencies ([#6704](https://www.github.com/werf/werf/issues/6704)) ([5e6575d](https://www.github.com/werf/werf/commit/5e6575debaecfed4d69cf40f82a51ce4140c8d5e))
+* **deploy:** add syntax highlight to `render` and `bundle render` ([6e703e3](https://www.github.com/werf/werf/commit/6e703e380cceb1d291fbfcd236f725fe04d7e6c8))
+* **host-cleanup:** clean up dangling and regular images, unused volumes, stopped containers, build cache ([#6687](https://www.github.com/werf/werf/issues/6687)) ([1f5613a](https://www.github.com/werf/werf/commit/1f5613a5ef3461cb0e5b6f73d2ce118f9198d639))
+* support `WERF_PRINT_STACK_TRACES=1` env var for period stack traces ([f72d6c5](https://www.github.com/werf/werf/commit/f72d6c5529ec4e11091c5be708c4ec008c37bd9a))
+
+
+### Bug Fixes
+
+* **build, imageSpec:** resolve env issues, labels warning, and add --skip-image-spec-stage flag ([#6651](https://www.github.com/werf/werf/issues/6651)) ([7a8c96b](https://www.github.com/werf/werf/commit/7a8c96bc2b92ae2944cb9d01d0d49edd9063ad32))
+* **cleanup:** speed-up image metadata inition ([2cf0bf9](https://www.github.com/werf/werf/commit/2cf0bf978e7ef0f46054f79669a22e92363fdf6e))
+* **host-cleanup:** auto host cleanup doesn't work on linux ([a5f07f7](https://www.github.com/werf/werf/commit/a5f07f71100d436472dd594de930c471380d5d2c))
+* **host-cleanup:** test werf/exec process detach ([09f0599](https://www.github.com/werf/werf/commit/09f05993ce19e2179878a98121732692a263b34a))
+
 ### [2.31.1](https://www.github.com/werf/werf/compare/v2.31.0...v2.31.1) (2025-03-06)
 
 
