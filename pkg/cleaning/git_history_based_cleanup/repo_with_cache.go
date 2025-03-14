@@ -14,9 +14,9 @@ type GitRepo interface {
 }
 
 type GitRepositoryWithCache struct {
-	GitRepo      *git.Repository
-	CommitChache sync.Map
-	mutexes      sync.Map
+	GitRepo     *git.Repository
+	CommitCache sync.Map
+	mutexes     sync.Map
 }
 
 func NewGitRepositoryWithCache(gitRepo GitRepo) (*GitRepositoryWithCache, error) {
@@ -25,9 +25,9 @@ func NewGitRepositoryWithCache(gitRepo GitRepo) (*GitRepositoryWithCache, error)
 		return nil, fmt.Errorf("git plain open failed: %w", err)
 	}
 	return &GitRepositoryWithCache{
-		GitRepo:      gitRepository,
-		CommitChache: sync.Map{},
-		mutexes:      sync.Map{},
+		GitRepo:     gitRepository,
+		CommitCache: sync.Map{},
+		mutexes:     sync.Map{},
 	}, nil
 }
 
@@ -51,16 +51,16 @@ func (g *GitRepositoryWithCache) CommitObject(commitHash plumbing.Hash) (*object
 }
 
 func (g *GitRepositoryWithCache) ClearCache() {
-	g.CommitChache.Clear()
+	g.CommitCache.Clear()
 	g.mutexes.Clear()
 }
 
 func (g *GitRepositoryWithCache) addToCache(commitHash plumbing.Hash, obj *object.Commit) {
-	g.CommitChache.Store(commitHash, obj)
+	g.CommitCache.Store(commitHash, obj)
 }
 
 func (g *GitRepositoryWithCache) getFromCache(commitHash plumbing.Hash) (*object.Commit, bool) {
-	value, ok := g.CommitChache.Load(commitHash)
+	value, ok := g.CommitCache.Load(commitHash)
 	if !ok {
 		return nil, false
 	}
