@@ -34,7 +34,10 @@ func NewCmd(ctx context.Context) *cobra.Command {
 				return err
 			}
 
-			if _, err := action.SecretKeyCreate(ctx, action.SecretKeyCreateOptions{}); err != nil {
+			if _, err := action.SecretKeyCreate(ctx, action.SecretKeyCreateOptions{
+				LogColorMode: action.LogColorMode(*commonCmdData.LogColorMode),
+				LogLevel:     common.GetNelmLogLevel(&commonCmdData),
+			}); err != nil {
 				return fmt.Errorf("create secret key: %w", err)
 			}
 

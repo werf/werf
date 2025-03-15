@@ -402,8 +402,6 @@ func run(
 		return fmt.Errorf("get deploy report path: %w", err)
 	}
 
-	logColorMode := action.LogColorMode(*commonCmdData.LogColorMode)
-
 	headHash, err := giterminismManager.LocalGitRepo().HeadCommitHash(ctx)
 	if err != nil {
 		return fmt.Errorf("get HEAD commit hash: %w", err)
@@ -430,7 +428,7 @@ func run(
 
 	loader.ChartFileReader = giterminismManager.FileReader()
 
-	if err := action.Deploy(ctx, action.DeployOptions{
+	if err := action.ReleaseInstall(ctx, releaseName, releaseNamespace, action.ReleaseInstallOptions{
 		AutoRollback:                 cmdData.AutoRollback,
 		ChartAppVersion:              common.GetHelmChartConfigAppVersion(werfConfig),
 		ChartDirPath:                 chartPath,
@@ -442,10 +440,10 @@ func run(
 		DefaultChartVersion:          "1.0.0",
 		DefaultSecretValuesDisable:   *commonCmdData.DisableDefaultSecretValues,
 		DefaultValuesDisable:         *commonCmdData.DisableDefaultValues,
-		DeployGraphPath:              common.GetDeployGraphPath(&commonCmdData),
-		DeployGraphSave:              common.GetDeployGraphPath(&commonCmdData) != "",
-		DeployReportPath:             deployReportPath,
-		DeployReportSave:             common.GetSaveDeployReport(&commonCmdData),
+		InstallGraphPath:             common.GetDeployGraphPath(&commonCmdData),
+		InstallGraphSave:             common.GetDeployGraphPath(&commonCmdData) != "",
+		InstallReportPath:            deployReportPath,
+		InstallReportSave:            common.GetSaveDeployReport(&commonCmdData),
 		ExtraAnnotations:             extraAnnotations,
 		ExtraLabels:                  extraLabels,
 		ExtraRuntimeAnnotations:      serviceAnnotations,
@@ -459,7 +457,7 @@ func run(
 		KubeSkipTLSVerify:            *commonCmdData.SkipTlsVerifyKube,
 		KubeTLSServerName:            *commonCmdData.KubeTlsServer,
 		KubeToken:                    *commonCmdData.KubeToken,
-		LogColorMode:                 logColorMode,
+		LogColorMode:                 action.LogColorMode(*commonCmdData.LogColorMode),
 		LogLevel:                     common.GetNelmLogLevel(&commonCmdData),
 		LogRegistryStreamOut:         os.Stdout,
 		NetworkParallelism:           common.GetNetworkParallelism(&commonCmdData),
@@ -467,8 +465,6 @@ func run(
 		ProgressTablePrintInterval:   time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
 		RegistryCredentialsPath:      registryCredentialsPath,
 		ReleaseHistoryLimit:          *commonCmdData.ReleasesHistoryMax,
-		ReleaseName:                  releaseName,
-		ReleaseNamespace:             releaseNamespace,
 		ReleaseStorageDriver:         action.ReleaseStorageDriver(os.Getenv("HELM_DRIVER")),
 		RollbackGraphPath:            common.GetRollbackGraphPath(&commonCmdData),
 		RollbackGraphSave:            common.GetRollbackGraphPath(&commonCmdData) != "",
@@ -484,7 +480,7 @@ func run(
 		ValuesSets:                   common.GetSet(&commonCmdData),
 		ValuesStringSets:             common.GetSetString(&commonCmdData),
 	}); err != nil {
-		return fmt.Errorf("release deploy: %w", err)
+		return fmt.Errorf("release install: %w", err)
 	}
 
 	return nil

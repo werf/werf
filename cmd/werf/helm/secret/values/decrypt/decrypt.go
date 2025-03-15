@@ -100,6 +100,7 @@ func runSecretDecrypt(ctx context.Context, filePath string) error {
 	workingDir := common.GetWorkingDir(&commonCmdData)
 
 	if err := action.SecretValuesFileDecrypt(ctx, filePath, action.SecretValuesFileDecryptOptions{
+		LogColorMode:   action.LogColorMode(*commonCmdData.LogColorMode),
 		LogLevel:       common.GetNelmLogLevel(&commonCmdData),
 		OutputFilePath: cmdData.OutputFilePath,
 		OutputFileSave: cmdData.OutputFilePath != "",

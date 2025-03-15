@@ -393,7 +393,7 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 
 	loader.ChartFileReader = giterminismManager.FileReader()
 
-	if err := action.Render(ctx, action.RenderOptions{
+	if err := action.ChartRender(ctx, action.ChartRenderOptions{
 		ChartAppVersion:              common.GetHelmChartConfigAppVersion(werfConfig),
 		ChartDirPath:                 chartPath,
 		ChartRepositoryInsecure:      *commonCmdData.InsecureHelmDependencies,
@@ -439,7 +439,7 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 		ValuesSets:                   common.GetSet(&commonCmdData),
 		ValuesStringSets:             common.GetSetString(&commonCmdData),
 	}); err != nil {
-		return fmt.Errorf("render manifests: %w", err)
+		return fmt.Errorf("chart render: %w", err)
 	}
 
 	return nil

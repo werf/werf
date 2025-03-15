@@ -214,7 +214,7 @@ func runRender(ctx context.Context) error {
 
 	chart.CurrentChartType = chart.ChartTypeBundle
 
-	if err := action.Render(ctx, action.RenderOptions{
+	if err := action.ChartRender(ctx, action.ChartRenderOptions{
 		ChartDirPath:                 bundlePath,
 		ChartRepositoryInsecure:      *commonCmdData.InsecureHelmDependencies,
 		ChartRepositorySkipTLSVerify: *commonCmdData.SkipTlsVerifyHelmDependencies,
@@ -256,7 +256,7 @@ func runRender(ctx context.Context) error {
 		ValuesSets:                   common.GetSet(&commonCmdData),
 		ValuesStringSets:             common.GetSetString(&commonCmdData),
 	}); err != nil {
-		return fmt.Errorf("render manifests: %w", err)
+		return fmt.Errorf("chart render: %w", err)
 	}
 
 	return nil

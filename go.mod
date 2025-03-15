@@ -60,13 +60,13 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/werf/3p-helm v0.0.0-20250228131406-d579a5860ae3
 	github.com/werf/3p-helm-for-werf-helm v0.0.0-20241217155820-089f92cd5c9d
-	github.com/werf/common-go v0.0.0-20250225170837-c0fe1ae7c6a2
+	github.com/werf/common-go v0.0.0-20250315175823-f08787c56be1
 	github.com/werf/copy-recurse v0.2.7
 	github.com/werf/kubedog v0.13.1-0.20250225170820-367e45be4347
 	github.com/werf/kubedog-for-werf-helm v0.0.0-20241217155728-9d45c48b82b6
 	github.com/werf/lockgate v0.1.1
 	github.com/werf/logboek v0.6.1
-	github.com/werf/nelm v0.0.0-20250310131447-0f306be11247
+	github.com/werf/nelm v0.0.0-20250315180032-d061795d7b74
 	github.com/werf/nelm-for-werf-helm v0.0.0-20241217155925-b0e6734d1dbf
 	go.opentelemetry.io/otel v1.24.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.24.0
@@ -98,10 +98,10 @@ require (
 	github.com/Ladicle/tabwriter v1.0.0 // indirect
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
-	github.com/alecthomas/chroma/v2 v2.14.0 // indirect
+	github.com/alecthomas/chroma/v2 v2.15.0 // indirect
 	github.com/cenkalti/backoff/v4 v4.2.1 // indirect
 	github.com/chainguard-dev/git-urls v1.0.2 // indirect
-	github.com/dlclark/regexp2 v1.11.0 // indirect
+	github.com/dlclark/regexp2 v1.11.4 // indirect
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
 	github.com/go-task/template v0.1.0 // indirect
 	github.com/goccy/go-yaml v1.15.23 // indirect

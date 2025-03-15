@@ -73,6 +73,7 @@ func runSecretEdit(ctx context.Context, filepPath string) error {
 	workingDir := common.GetWorkingDir(&commonCmdData)
 
 	if err := action.SecretValuesFileEdit(ctx, filepPath, action.SecretValuesFileEditOptions{
+		LogColorMode:  action.LogColorMode(*commonCmdData.LogColorMode),
 		LogLevel:      common.GetNelmLogLevel(&commonCmdData),
 		TempDirPath:   werf.GetTmpDir(),
 		SecretWorkDir: workingDir,

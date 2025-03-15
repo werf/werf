@@ -433,7 +433,7 @@ func run(
 
 	loader.ChartFileReader = giterminismManager.FileReader()
 
-	if err := action.Plan(ctx, action.PlanOptions{
+	if err := action.ReleasePlanInstall(ctx, releaseName, releaseNamespace, action.ReleasePlanInstallOptions{
 		ChartAppVersion:              common.GetHelmChartConfigAppVersion(werfConfig),
 		ChartDirPath:                 chartPath,
 		ChartRepositoryInsecure:      *commonCmdData.InsecureHelmDependencies,
@@ -458,12 +458,11 @@ func run(
 		KubeSkipTLSVerify:            *commonCmdData.SkipTlsVerifyKube,
 		KubeTLSServerName:            *commonCmdData.KubeTlsServer,
 		KubeToken:                    *commonCmdData.KubeToken,
+		LogColorMode:                 action.LogColorMode(*commonCmdData.LogColorMode),
 		LogLevel:                     common.GetNelmLogLevel(&commonCmdData),
 		LogRegistryStreamOut:         os.Stdout,
 		NetworkParallelism:           common.GetNetworkParallelism(&commonCmdData),
 		RegistryCredentialsPath:      registryCredentialsPath,
-		ReleaseName:                  releaseName,
-		ReleaseNamespace:             releaseNamespace,
 		ReleaseStorageDriver:         action.ReleaseStorageDriver(os.Getenv("HELM_DRIVER")),
 		SecretKeyIgnore:              *commonCmdData.IgnoreSecretKey,
 		SecretValuesPaths:            common.GetSecretValues(&commonCmdData),
@@ -473,7 +472,7 @@ func run(
 		ValuesSets:                   common.GetSet(&commonCmdData),
 		ValuesStringSets:             common.GetSetString(&commonCmdData),
 	}); err != nil {
-		return fmt.Errorf("plan release: %w", err)
+		return fmt.Errorf("release plan install: %w", err)
 	}
 
 	return nil
