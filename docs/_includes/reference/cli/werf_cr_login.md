@@ -21,7 +21,7 @@ werf cr login -u username -p password registry.example.com
 werf cr login -u username -p token registry.example.com
 
 # Login into insecure registry (over http)
-werf cr login --insecure-registry registry.example.com
+werf cr login -u username -p password --insecure-registry registry.example.com
 ```
 
 {{ header }} Options
