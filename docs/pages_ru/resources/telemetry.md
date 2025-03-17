@@ -77,6 +77,7 @@ permalink: resources/telemetry.html
 * `eventType` — тип события:
   * `CommandStarted`;
   * `CommandExited`;
+  * `UnshallowFailed`.
 * `eventData` — данные события, включают в себя:
   * exit code;
   * длительность работы команды;
