@@ -16,7 +16,7 @@ type GitRepo interface {
 type GitRepositoryWithCache struct {
 	GitRepo     *git.Repository
 	CommitCache sync.Map
-	mutexes     sync.Map
+	mu          sync.Mutex
 }
 
 func NewGitRepositoryWithCache(gitRepo GitRepo) (*GitRepositoryWithCache, error) {
@@ -25,23 +25,22 @@ func NewGitRepositoryWithCache(gitRepo GitRepo) (*GitRepositoryWithCache, error)
 		return nil, fmt.Errorf("git plain open failed: %w", err)
 	}
 	return &GitRepositoryWithCache{
-		GitRepo:     gitRepository,
-		CommitCache: sync.Map{},
-		mutexes:     sync.Map{},
+		GitRepo: gitRepository,
 	}, nil
 }
 
 // CommitObject tries to load a commit object from the cache.
-// If the commit is not found in the cache, it locks the commit and attempts to load it from disk.
+// If the commit is not found in the cache, it locks the critical section where we try to load commit data from disk.
 // It doesn't actually protect any data and works like a semaphore.
+// Locking particular commit only is not safe beacuse of inner go-git logic.
 // We need this workaround because go-git is not thread-safe. It should be fixed in go-git v6.
 // Ref: https://github.com/go-git/go-git/issues/773
 func (g *GitRepositoryWithCache) CommitObject(commitHash plumbing.Hash) (*object.Commit, error) {
 	if c, ok := g.getFromCache(commitHash); ok {
 		return c, nil
 	}
-	g.lockCommit(commitHash.String())
-	defer g.unlockCommit(commitHash.String())
+	g.mu.Lock()
+	defer g.mu.Unlock()
 	c, err := g.GitRepo.CommitObject(commitHash)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get commit object for %s: %s", commitHash.String(), err)
@@ -52,7 +51,6 @@ func (g *GitRepositoryWithCache) CommitObject(commitHash plumbing.Hash) (*object
 
 func (g *GitRepositoryWithCache) ClearCache() {
 	g.CommitCache.Clear()
-	g.mutexes.Clear()
 }
 
 func (g *GitRepositoryWithCache) addToCache(commitHash plumbing.Hash, obj *object.Commit) {
@@ -66,19 +64,4 @@ func (g *GitRepositoryWithCache) getFromCache(commitHash plumbing.Hash) (*object
 	}
 	commit, ok := value.(*object.Commit)
 	return commit, ok
-}
-
-func (g *GitRepositoryWithCache) getMutex(commitHash string) *sync.Mutex {
-	mu, _ := g.mutexes.LoadOrStore(commitHash, &sync.Mutex{})
-	return mu.(*sync.Mutex)
-}
-
-func (g *GitRepositoryWithCache) lockCommit(commitHash string) {
-	mu := g.getMutex(commitHash)
-	mu.Lock()
-}
-
-func (g *GitRepositoryWithCache) unlockCommit(commitHash string) {
-	mu := g.getMutex(commitHash)
-	mu.Unlock()
 }
