@@ -276,7 +276,7 @@ func (backend *DockerServerBackend) Rm(ctx context.Context, ref string, opts RmO
 }
 
 func (backend *DockerServerBackend) PushImage(ctx context.Context, img LegacyImageInterface) error {
-	if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Pushing %s", img.Name())).DoError(func() error {
+	if err := logboek.Context(ctx).LogProcess(fmt.Sprintf("Pushing %s", img.Name())).DoError(func() error {
 		return docker.CliPushWithRetries(ctx, img.Name())
 	}); err != nil {
 		return err
