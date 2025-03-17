@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.32.1](https://www.github.com/werf/werf/compare/v2.32.0...v2.32.1) (2025-03-17)
+
+
+### Miscellaneous Chores
+
+* release 2.32.1 ([80820ad](https://www.github.com/werf/werf/commit/80820ad7437ebe780cdf22db61b249a7ef603551))
+
 ## [2.32.0](https://www.github.com/werf/werf/compare/v2.31.1...v2.32.0) (2025-03-14)
 
 
