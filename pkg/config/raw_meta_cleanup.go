@@ -175,7 +175,7 @@ func (c *rawMetaCleanupKeepPolicyReferences) processRegexpString(name, configVal
 	expr := fmt.Sprintf("^%s$", value)
 	regex, err := regexp.Compile(expr)
 	if err != nil {
-		return nil, newDetailedConfigError(fmt.Sprintf("invalid value %q for `%s: string|REGEX`!", configValue, name), c, c.rawMetaCleanup.rawMeta.doc)
+		return nil, newDetailedConfigError(fmt.Sprintf("invalid value %q for %q: %s", configValue, name, err.Error()), c, c.rawMetaCleanup.rawMeta.doc)
 	}
 
 	return regex, nil
