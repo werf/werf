@@ -7,6 +7,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 
@@ -15,11 +16,7 @@ import (
 	"github.com/werf/werf/v2/pkg/config"
 )
 
-type LocalGit interface {
-	CommitObject(plumbing.Hash) (*object.Commit, error)
-}
-
-func ScanReferencesHistory(ctx context.Context, gitRepository LocalGit, refs []*ReferenceToScan, expectedStageIDCommitList map[string][]string) ([]string, map[string][]string, error) {
+func ScanReferencesHistory(ctx context.Context, gitRepository *git.Repository, refs []*ReferenceToScan, expectedStageIDCommitList map[string][]string) ([]string, map[string][]string, error) {
 	var reachedStageIDs []string
 	var stopCommitList []string
 	stageIDHitCommitList := map[string][]string{}
@@ -67,7 +64,7 @@ func ScanReferencesHistory(ctx context.Context, gitRepository LocalGit, refs []*
 	return reachedStageIDs, stageIDHitCommitList, nil
 }
 
-func applyImagesCleanupInPolicy(gitRepository LocalGit, stageIDCommitList map[string][]string, in *time.Duration) map[string][]string {
+func applyImagesCleanupInPolicy(gitRepository *git.Repository, stageIDCommitList map[string][]string, in *time.Duration) map[string][]string {
 	if in == nil {
 		return stageIDCommitList
 	}
@@ -96,7 +93,7 @@ func applyImagesCleanupInPolicy(gitRepository LocalGit, stageIDCommitList map[st
 }
 
 type commitHistoryScanner struct {
-	gitRepository             LocalGit
+	gitRepository             *git.Repository
 	expectedStageIDCommitList map[string][]string
 	reachedStageIDCommitList  map[string][]string
 	reachedCommitList         []string
@@ -118,7 +115,7 @@ func (s *commitHistoryScanner) reachedStageIDList() []string {
 	return reachedStageIDList
 }
 
-func scanReferenceHistory(ctx context.Context, gitRepository LocalGit, ref *ReferenceToScan, expectedStageIDCommitList map[string][]string, stopCommitList []string) ([]string, []string, map[string][]string, error) {
+func scanReferenceHistory(ctx context.Context, gitRepository *git.Repository, ref *ReferenceToScan, expectedStageIDCommitList map[string][]string, stopCommitList []string) ([]string, []string, map[string][]string, error) {
 	refExpectedStageIDCommitList := expectedStageIDCommitList
 	{
 		// Last == 0 means that we should not keep any images.
