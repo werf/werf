@@ -205,7 +205,7 @@ RUN --mount=type=secret,id=plainSecret \
     export WERF_BUILD_SECRET="$(cat /run/secrets/plainSecret)"
 ```
 
-### Using the SSH agent
+#### Using the SSH agent
 
 You can provide access to the SSH agent socket or SSH keys during the build process. This is particularly useful if your Dockerfile contains commands that require SSH authentication, such as cloning a private repository.
 
