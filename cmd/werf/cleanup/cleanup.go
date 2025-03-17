@@ -222,8 +222,6 @@ It is worth noting that auto-cleaning is enabled by default, and manual use is u
 		ConfigMetaCleanup:                       werfConfig.Meta.Cleanup,
 		KeepStagesBuiltWithinLastNHours:         common.GetKeepStagesBuiltWithinLastNHours(&commonCmdData, cmd),
 		DryRun:                                  *commonCmdData.DryRun,
-		Parallel:                                *commonCmdData.Parallel,
-		ParallelTasksLimit:                      *commonCmdData.ParallelTasksLimit,
 	}
 
 	logboek.LogOptionalLn()

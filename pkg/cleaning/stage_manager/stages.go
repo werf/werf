@@ -1,15 +1,12 @@
 package stage_manager
 
 import (
-	"sync"
-
 	"github.com/werf/werf/v2/pkg/image"
 )
 
 type managedStageDescSet struct {
 	stageDescSet     image.StageDescSet
 	stageDescMetaMap map[*image.StageDesc]*stageMeta
-	mu               sync.Mutex
 }
 
 type stageMeta struct {
@@ -59,8 +56,6 @@ func (s *managedStageDescSet) DifferenceInPlace(stageDescSet image.StageDescSet)
 }
 
 func (s *managedStageDescSet) MarkStageDescAsProtected(stageDesc *image.StageDesc, reason *protectionReason, forceReason bool) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
 	_, ok := s.stageDescMetaMap[stageDesc]
 	if !ok {
 		s.stageDescMetaMap[stageDesc] = &stageMeta{}
