@@ -77,6 +77,7 @@ In the examples above, the following usage data is sent:
 * `eventType` — type of event:
   * `CommandStarted`;
   * `CommandExited`;
+  * `UnshallowFailed`.
 * `eventData` — event data that includes:
   * exit code;
   * command running time;
