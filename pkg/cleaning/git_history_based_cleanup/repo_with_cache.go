@@ -48,7 +48,7 @@ func (g *GitRepositoryWithCache) CommitObject(commitHash plumbing.Hash) (*object
 	}
 	c, err := g.GitRepo.CommitObject(commitHash)
 	if err != nil {
-		return nil, fmt.Errorf("unable to get commit object for %s: %s", commitHash.String(), err)
+		return nil, fmt.Errorf("unable to get commit object for %s: %w", commitHash.String(), err)
 	}
 	g.addToCache(commitHash, c)
 	return c, nil
