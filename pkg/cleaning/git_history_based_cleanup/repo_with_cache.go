@@ -39,8 +39,13 @@ func (g *GitRepositoryWithCache) CommitObject(commitHash plumbing.Hash) (*object
 	if c, ok := g.getFromCache(commitHash); ok {
 		return c, nil
 	}
+	
 	g.mu.Lock()
 	defer g.mu.Unlock()
+	
+	if c, ok := g.getFromCache(commitHash); ok {
+		return c, nil
+	}
 	c, err := g.GitRepo.CommitObject(commitHash)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get commit object for %s: %s", commitHash.String(), err)
