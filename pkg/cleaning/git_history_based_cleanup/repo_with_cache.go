@@ -39,10 +39,10 @@ func (g *GitRepositoryWithCache) CommitObject(commitHash plumbing.Hash) (*object
 	if c, ok := g.getFromCache(commitHash); ok {
 		return c, nil
 	}
-	
+
 	g.mu.Lock()
 	defer g.mu.Unlock()
-	
+
 	if c, ok := g.getFromCache(commitHash); ok {
 		return c, nil
 	}
