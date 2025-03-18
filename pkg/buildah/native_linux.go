@@ -481,11 +481,6 @@ func (b *NativeBuildah) RunCommand(ctx context.Context, container string, comman
 		SSHSources:       sshSources,
 	}
 
-	fmt.Println("@@@@@@@", opts)
-
-	fmt.Println("@@@@@@@", globalMounts)
-	fmt.Println("@@@@@@@", runMounts)
-
 	if err := builder.Run(command, runOpts); err != nil {
 		return fmt.Errorf("RunCommand failed:\n%s\n%w", stderrBuf.String(), err)
 	}
