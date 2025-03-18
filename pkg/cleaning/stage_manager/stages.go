@@ -43,8 +43,8 @@ var (
 	ProtectionReasonNotFoundInRepo              = newProtectionReason("not found in repo")
 )
 
-func newManagedStageDescSet(set image.StageDescSet) managedStageDescSet {
-	return managedStageDescSet{
+func newManagedStageDescSet(set image.StageDescSet) *managedStageDescSet {
+	return &managedStageDescSet{
 		stageDescSet:     set,
 		stageDescMetaMap: map[*image.StageDesc]*stageMeta{},
 	}
