@@ -11,8 +11,8 @@ import (
 )
 
 type Manager struct {
-	stageDescSet         managedStageDescSet
-	finalStageDescSet    managedStageDescSet
+	stageDescSet         *managedStageDescSet
+	finalStageDescSet    *managedStageDescSet
 	stageIDCustomTagList map[string][]string
 	imageMetadataList    []*imageMetadata
 }

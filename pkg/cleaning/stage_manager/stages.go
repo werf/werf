@@ -1,12 +1,15 @@
 package stage_manager
 
 import (
+	"sync"
+
 	"github.com/werf/werf/v2/pkg/image"
 )
 
 type managedStageDescSet struct {
 	stageDescSet     image.StageDescSet
 	stageDescMetaMap map[*image.StageDesc]*stageMeta
+	mu               sync.Mutex
 }
 
 type stageMeta struct {
@@ -40,8 +43,8 @@ var (
 	ProtectionReasonNotFoundInRepo              = newProtectionReason("not found in repo")
 )
 
-func newManagedStageDescSet(set image.StageDescSet) managedStageDescSet {
-	return managedStageDescSet{
+func newManagedStageDescSet(set image.StageDescSet) *managedStageDescSet {
+	return &managedStageDescSet{
 		stageDescSet:     set,
 		stageDescMetaMap: map[*image.StageDesc]*stageMeta{},
 	}
@@ -56,6 +59,8 @@ func (s *managedStageDescSet) DifferenceInPlace(stageDescSet image.StageDescSet)
 }
 
 func (s *managedStageDescSet) MarkStageDescAsProtected(stageDesc *image.StageDesc, reason *protectionReason, forceReason bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	_, ok := s.stageDescMetaMap[stageDesc]
 	if !ok {
 		s.stageDescMetaMap[stageDesc] = &stageMeta{}

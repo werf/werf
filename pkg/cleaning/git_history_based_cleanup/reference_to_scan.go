@@ -148,7 +148,7 @@ func ReferencesToScan(ctx context.Context, gitRepository *git.Repository, keepPo
 			),
 		})
 
-		mainBranchImagesPerReferenceLast := 2
+		mainBranchImagesPerReferenceLast := 10
 		keepPolicies = append(keepPolicies, &config.MetaCleanupKeepPolicy{
 			References: config.MetaCleanupKeepPolicyReferences{
 				BranchRegexp: regexp.MustCompile("^(main|master|staging|production)$"),
