@@ -1,6 +1,6 @@
 configVersion: 1
 project: ansible-general
-{{- range $_, $fromImg := (list "alpine" "ubuntu" "centos") }}
+{{- range $_, $fromImg := (list "alpine" "ubuntu") }}
 ---
 image: {{ $fromImg }}-test
 from: {{ $fromImg }}
