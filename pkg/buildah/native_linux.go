@@ -1148,9 +1148,14 @@ func generateRunMounts(mounts []*instructions.Mount) []string {
 				options = append(options, fmt.Sprintf("id=%s", mount.CacheID))
 			}
 			if mount.ReadOnly {
+				// Common Options:
+				// · ro, read-only: (default true for `type=bind`, false for `type=tmpfs`, `type=cache`).
+				// Options specific to cache:
+				// · ro, readonly: read only cache if set.
+				// rw is default, and if you specify it explicitly, it will not work
+				// Ref: https://github.com/containers/buildah/blob/main/docs/buildah-run.1.md
+				// possibly buildah bug
 				options = append(options, "ro")
-			} else {
-				options = append(options, "rw")
 			}
 			if mount.CacheSharing != "" {
 				options = append(options, fmt.Sprintf("sharing=%s", mount.CacheSharing))
