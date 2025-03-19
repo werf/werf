@@ -1,5 +1,13 @@
 # Changelog
 
+### [2.32.2](https://www.github.com/werf/werf/compare/v2.32.1...v2.32.2) (2025-03-19)
+
+
+### Bug Fixes
+
+* **build, staged:** fix cache mounts ([#6714](https://www.github.com/werf/werf/issues/6714)) ([3c7530a](https://www.github.com/werf/werf/commit/3c7530aa37b5c79e1c5c526f02d6a9ec480d3b76))
+* **run:** "docker run" should control output direcly ([0b61e48](https://www.github.com/werf/werf/commit/0b61e4890d29287970e14314ce3cd01a49f7ea6a))
+
 ### [2.32.1](https://www.github.com/werf/werf/compare/v2.32.0...v2.32.1) (2025-03-17)
 
 
