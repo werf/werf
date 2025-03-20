@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 
 	helm_v3 "github.com/werf/3p-helm/cmd/helm"
 	"github.com/werf/logboek"
@@ -43,6 +44,10 @@ func main() {
 	}
 
 	root.SetupTelemetryInit(rootCmd)
+
+	// WARNING this behaviour could be changed
+	// https://github.com/spf13/cobra/pull/2167 is not accepted yet
+	cobra.EnableErrorOnUnknownSubcommand = true
 
 	if err := rootCmd.Execute(); err != nil {
 		if helm_v3.IsPluginError(err) {
