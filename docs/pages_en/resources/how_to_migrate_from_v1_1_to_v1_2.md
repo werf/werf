@@ -10,7 +10,7 @@ Simply follow this guide to migrate your project from v1.1 to v1.2.
 
 1.  Keep using v1.1 version until this feature is [added into the werf v1.2](https://github.com/werf/werf/issues/3318).
 2.  Completely remove `mounts` usage and wait until this feature is [added into the werf v1.2](https://github.com/werf/werf/issues/3318).
-3.  Describe and enable your `mounts` in werf v1.2 using the [`werf-giterminism.yaml`](https://werf.io/docs/v1.2.333/reference/werf_giterminism_yaml.html) (**not recommended**).
+3.  Describe and enable your `mounts` in werf v1.2 using the [`werf-giterminism.yaml`](https://werf.io/docs/v1.2/reference/werf_giterminism_yaml.html) (**not recommended**).
 
 ## Key moments
 
