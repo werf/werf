@@ -98,7 +98,7 @@ jobs:
 
       - if: inputs.coverage == 'true'
         name: Upload coverage artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: coverage
+          name: coverage_e2e_regular
           path: coverage

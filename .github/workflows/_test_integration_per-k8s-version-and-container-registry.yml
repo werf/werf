@@ -145,7 +145,7 @@ jobs:
 
       - if: inputs.coverage == 'true'
         name: Upload coverage artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: coverage
+          name: coverage_integration_per_k8s_and_registry
           path: coverage
