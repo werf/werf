@@ -10,7 +10,7 @@ on:
         default: false
         type: string
       runner:
-        default: ubuntu-latest-4-cores
+        default: ubuntu-22.04
         type: string
     secrets:
       kubeConfig:
