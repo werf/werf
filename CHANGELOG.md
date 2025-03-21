@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.33.0](https://www.github.com/werf/werf/compare/v2.32.2...v2.33.0) (2025-03-21)
+
+
+### Features
+
+* **deploy:** save service annotations inside Helm release ([24b47ad](https://www.github.com/werf/werf/commit/24b47ada48bd1917efd5e9304a5d0c9656197f69))
+
 ### [2.32.2](https://www.github.com/werf/werf/compare/v2.32.1...v2.32.2) (2025-03-19)
 
 
