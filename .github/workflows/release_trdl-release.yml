@@ -12,6 +12,14 @@ jobs:
     name: Perform werf release using trdl server
     runs-on: ubuntu-22.04
     steps:
+      - name: Notify
+        uses: mattermost/action-mattermost-notify@master
+        with:
+          MATTERMOST_WEBHOOK_URL: ${{ secrets.LOOP_NOTIFICATION_WEBHOOK }}
+          MATTERMOST_CHANNEL: ${{ secrets.LOOP_NOTIFICATION_CHANNEL }}
+          TEXT: |
+            ${{ secrets.LOOP_NOTIFICATION_GROUP }} [${{ github.repository }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) task sign pls
+
       - name: Release
         uses: werf/trdl-vault-actions/release@main
         with:
@@ -25,7 +33,8 @@ jobs:
   notify:
     if: always()
     needs: release
-    uses: ./.github/workflows/_notification.yml
+    uses: werf/common-ci/.github/workflows/notification.yml@main
     secrets:
-      mentionGroupID: ${{ secrets.SLACK_MENTION_GROUP_ID }}
-      webhook: ${{ secrets.SLACK_WEBHOOK }}
+      loopNotificationGroup: ${{ secrets.LOOP_NOTIFICATION_GROUP }}
+      webhook: ${{ secrets.LOOP_NOTIFICATION_WEBHOOK }}
+      notificationChannel: ${{ secrets.LOOP_NOTIFICATION_CHANNEL }}
