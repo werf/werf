@@ -1,10 +1,5 @@
 run:
   timeout: 10m
-  skip-dirs:
-    - playground
-    - docs
-    - scripts
-    - stapel
 
 linters-settings:
   gofumpt:
@@ -50,3 +45,8 @@ issues:
   exclude:
     # TODO use %w in the future.
     - "non-wrapping format verb for fmt.Errorf" # errorlint
+  exclude-dirs:
+    - playground
+    - docs
+    - scripts
+    - stapel

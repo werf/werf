@@ -39,7 +39,7 @@ jobs:
       packages: integration/suites/docs
 
   check_broken_links:
-    runs-on: ubuntu-latest-4-cores
+    runs-on: ubuntu-22.04
     timeout-minutes: 60
     steps:
       - name: Install werf build dependencies
@@ -79,7 +79,8 @@ jobs:
       - doc_unit
       - doc_integration
       - check_broken_links
-    uses: ./.github/workflows/_notification.yml
+    uses: werf/common-ci/.github/workflows/notification.yml@main
     secrets:
-      mentionGroupID: ${{ secrets.SLACK_MENTION_GROUP_ID }}
-      webhook: ${{ secrets.SLACK_WEBHOOK }}
+      loopNotificationGroup: ${{ secrets.LOOP_NOTIFICATION_GROUP }}
+      webhook: ${{ secrets.LOOP_NOTIFICATION_WEBHOOK }}
+      notificationChannel: ${{ secrets.LOOP_NOTIFICATION_CHANNEL }}

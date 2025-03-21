@@ -58,12 +58,12 @@ Deploy to Production:
 К примеру, задание для выката на production может выглядеть следующим образом:
 
 {% raw %}
+
 ```yaml
 converge:
   name: Converge
-  runs-on: ubuntu-latest
+  runs-on: ubuntu-22.04
   steps:
-
     - name: Checkout code
       uses: actions/checkout@v3
       with:
@@ -80,6 +80,7 @@ converge:
         WERF_KUBECONFIG_BASE64: ${{ secrets.KUBE_CONFIG_BASE64_DATA }}
         WERF_ENV: production
 ```
+
 {% endraw %}
 
 > Полный набор конфигураций (`.github/workflows/*.yml`) для готовых рабочих процессов можно найти [в соответствующей статье руководства](/guides/nodejs/400_ci_cd_workflow/040_github_actions.html).

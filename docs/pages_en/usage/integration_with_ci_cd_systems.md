@@ -49,7 +49,6 @@ Deploy to Production:
 
 Just like with GitLab CI/CD, the integration boils down to invoking the [ci-env]({{"reference/cli/werf_ci_env.html" | true_relative_url }}) command and then following the instructions the command prints to stdout.
 
-
 ```shell
 . $(werf ci-env github --as-file)
 ```
@@ -59,12 +58,12 @@ Then, within a particular step, all werf commands will use the preset values by 
 For example, the job to deploy to production might look as follows:
 
 {% raw %}
+
 ```yaml
 converge:
   name: Converge
-  runs-on: ubuntu-latest
+  runs-on: ubuntu-22.04
   steps:
-
     - name: Checkout code
       uses: actions/checkout@v3
       with:
@@ -81,6 +80,7 @@ converge:
         WERF_KUBECONFIG_BASE64: ${{ secrets.KUBE_CONFIG_BASE64_DATA }}
         WERF_ENV: production
 ```
+
 {% endraw %}
 
 > The complete set of configurations (`.github/workflows/*.yml`) for the ready-to-use workflows can be found [in the corresponding section](/guides/nodejs/400_ci_cd_workflow/040_github_actions.html) of the manual.
