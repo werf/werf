@@ -484,9 +484,9 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 	if vals, err := helpers.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, imagesInfoGetters, helpers.ServiceValuesOptions{
 		Namespace:                namespace,
 		Env:                      *commonCmdData.Environment,
-				IsStub:                   isStub,
-				DisableEnvStub:           true,
-				StubImageNameList:        stubImageNameList,
+		IsStub:                   isStub,
+		DisableEnvStub:           true,
+		StubImageNameList:        stubImageNameList,
 		SetDockerConfigJsonValue: *commonCmdData.SetDockerConfigJsonValue,
 		DockerConfigPath:         *commonCmdData.DockerConfig,
 		CommitHash:               headHash,

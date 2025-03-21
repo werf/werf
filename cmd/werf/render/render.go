@@ -295,34 +295,34 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 			return err
 		}
 
-			stagesStorage, err := common.GetStagesStorage(ctx, containerBackend, &commonCmdData)
-			if err != nil {
-				return err
-			}
-			finalStagesStorage, err := common.GetOptionalFinalStagesStorage(ctx, containerBackend, &commonCmdData)
-			if err != nil {
-				return err
-			}
-			synchronization, err := common.GetSynchronization(ctx, &commonCmdData, projectName, stagesStorage)
-			if err != nil {
-				return err
-			}
-			storageLockManager, err := common.GetStorageLockManager(ctx, synchronization)
-			if err != nil {
-				return err
-			}
-			secondaryStagesStorageList, err := common.GetSecondaryStagesStorageList(ctx, stagesStorage, containerBackend, &commonCmdData)
-			if err != nil {
-				return err
-			}
-			cacheStagesStorageList, err := common.GetCacheStagesStorageList(ctx, containerBackend, &commonCmdData)
-			if err != nil {
-				return err
-			}
-			useCustomTagFunc, err := common.GetUseCustomTagFunc(&commonCmdData, giterminismManager, imagesToProcess)
-			if err != nil {
-				return err
-			}
+		stagesStorage, err := common.GetStagesStorage(ctx, containerBackend, &commonCmdData)
+		if err != nil {
+			return err
+		}
+		finalStagesStorage, err := common.GetOptionalFinalStagesStorage(ctx, containerBackend, &commonCmdData)
+		if err != nil {
+			return err
+		}
+		synchronization, err := common.GetSynchronization(ctx, &commonCmdData, projectName, stagesStorage)
+		if err != nil {
+			return err
+		}
+		storageLockManager, err := common.GetStorageLockManager(ctx, synchronization)
+		if err != nil {
+			return err
+		}
+		secondaryStagesStorageList, err := common.GetSecondaryStagesStorageList(ctx, stagesStorage, containerBackend, &commonCmdData)
+		if err != nil {
+			return err
+		}
+		cacheStagesStorageList, err := common.GetCacheStagesStorageList(ctx, containerBackend, &commonCmdData)
+		if err != nil {
+			return err
+		}
+		useCustomTagFunc, err := common.GetUseCustomTagFunc(&commonCmdData, giterminismManager, imagesToProcess)
+		if err != nil {
+			return err
+		}
 
 		storageManager := manager.NewStorageManager(projectName, stagesStorage, finalStagesStorage, secondaryStagesStorageList, cacheStagesStorageList, storageLockManager)
 
