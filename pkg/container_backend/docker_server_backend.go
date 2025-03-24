@@ -2,6 +2,7 @@ package container_backend
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -272,7 +273,15 @@ func (backend *DockerServerBackend) Rmi(ctx context.Context, ref string, opts Rm
 }
 
 func (backend *DockerServerBackend) Rm(ctx context.Context, ref string, opts RmOpts) error {
-	return docker.ContainerRemove(ctx, ref, types.ContainerRemoveOptions{Force: opts.Force})
+	err := docker.ContainerRemove(ctx, ref, types.ContainerRemoveOptions{Force: opts.Force})
+	switch {
+	case docker.IsErrContainerPaused(err):
+		return errors.Join(ErrCannotRemovePausedContainer, err)
+	case docker.IsErrContainerRunning(err):
+		return errors.Join(ErrCannotRemoveRunningContainer, err)
+	default:
+		return err // err or nil
+	}
 }
 
 func (backend *DockerServerBackend) PushImage(ctx context.Context, img LegacyImageInterface) error {
