@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.33.0](https://www.github.com/werf/werf/compare/v2.32.2...v2.33.0) (2025-03-24)
+
+
+### Features
+
+* **deploy:** save service annotations inside Helm release ([24b47ad](https://www.github.com/werf/werf/commit/24b47ada48bd1917efd5e9304a5d0c9656197f69))
+
+
+### Bug Fixes
+
+* **common:** add error handling in case of non-existent command entered ([d5c548c](https://www.github.com/werf/werf/commit/d5c548cc357a7255713b65cdf879e71da5c618fb))
+* **host-cleanup:** don't stop removing werf containers on paused or running ones ([3373d0c](https://www.github.com/werf/werf/commit/3373d0c2c26643cdb3110d96b9f1ee42cfee7be0))
+
 ### [2.32.2](https://www.github.com/werf/werf/compare/v2.32.1...v2.32.2) (2025-03-19)
 
 
