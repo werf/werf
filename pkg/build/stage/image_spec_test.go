@@ -152,12 +152,14 @@ func TestModifyLabels(t *testing.T) {
 			removeLabels:    []string{"remove"},
 			clearWerfLabels: true,
 			addLabels: map[string]string{
-				"new": "added",
+				"new":                  "added",
+				"project-%project%-id": "image-%image%-name",
 			},
 			expectedLabels: map[string]string{
-				"test-label": "bar",
-				"keep":       "me",
-				"new":        "added",
+				"test-label":              "bar",
+				"keep":                    "me",
+				"new":                     "added",
+				"project-TEST-PROJECT-id": "image-TEST-IMAGE-name",
 			},
 		},
 	}
@@ -169,7 +171,14 @@ func TestModifyLabels(t *testing.T) {
 				labelsCopy[k] = v
 			}
 
-			modifiedLabels, err := modifyLabels(ctx, labelsCopy, tt.addLabels, tt.removeLabels, tt.clearWerfLabels)
+			s := ImageSpecStage{
+				BaseStage: &BaseStage{
+					projectName: "TEST-PROJECT",
+					imageName:   "TEST-IMAGE",
+				},
+			}
+
+			modifiedLabels, err := s.modifyLabels(ctx, labelsCopy, tt.addLabels, tt.removeLabels, tt.clearWerfLabels)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.expectedLabels, modifiedLabels)
 		})
