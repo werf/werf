@@ -416,7 +416,7 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 	}
 
 	if vu.Percentage() <= options.AllowedStorageVolumeUsagePercentage {
-		logboek.Context(ctx).LogBlock("Check storage", cleaner.BackendName()).Do(func() {
+		logboek.Context(ctx).LogBlock("Check storage").Do(func() {
 			logboek.Context(ctx).LogF("Total freed space: %s\n", utils.RedF("%s", humanize.Bytes(vuBefore.UsedBytes-vu.UsedBytes)))
 			logboek.Context(ctx).LogF("Volume usage: %s / %s\n", humanize.Bytes(vu.UsedBytes), humanize.Bytes(vu.TotalBytes))
 			logboek.Context(ctx).LogF("Allowed percentage level exceeded: %s > %s — %s\n", utils.RedF("%0.2f%%", vu.Percentage()), utils.YellowF("%0.2f%%", options.AllowedStorageVolumeUsagePercentage), utils.RedF("HIGH VOLUME USAGE"))
@@ -574,7 +574,14 @@ func (cleaner *LocalBackendCleaner) doSafeCleanupWerfContainers(ctx context.Cont
 			err := cleaner.backend.Rm(ctx, container.ID, container_backend.RmOpts{
 				Force: options.Force,
 			})
-			if err != nil {
+			switch {
+			case errors.Is(err, container_backend.ErrCannotRemovePausedContainer):
+				logboek.Context(ctx).Warn().LogF("Ignore paused container %s\n", logContainerName(container))
+				return nil
+			case errors.Is(err, container_backend.ErrCannotRemoveRunningContainer):
+				logboek.Context(ctx).Warn().LogF("Ignore running container %s\n", logContainerName(container))
+				return nil
+			case err != nil:
 				return fmt.Errorf("failed to remove container %s: %w", logContainerName(container), err)
 			}
 			return nil

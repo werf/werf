@@ -187,6 +187,33 @@ var _ = Describe("LocalBackendCleaner", func() {
 		})
 	})
 
+	Describe("doSafeCleanupWerfContainers", func() {
+		It("should not return err if backend.Rm() returns 'container is paused' error", func() {
+			container := image.Container{
+				ID:    "id-stage",
+				Names: []string{fmt.Sprintf("/%s", image.StageContainerNamePrefix)},
+			}
+
+			backend.EXPECT().Rm(ctx, container.ID, container_backend.RmOpts{Force: false}).Return(container_backend.ErrCannotRemovePausedContainer)
+			stubs.StubFunc(&cleaner.volumeutilsGetVolumeUsageByPath, volumeutils.VolumeUsage{}, nil)
+
+			_, err := cleaner.doSafeCleanupWerfContainers(ctx, RunGCOptions{}, volumeutils.VolumeUsage{}, image.ContainerList{container})
+			Expect(err).To(Succeed())
+		})
+		It("should not return err if backend.Rm() returns 'container is running' error", func() {
+			container := image.Container{
+				ID:    "id-import-server",
+				Names: []string{fmt.Sprintf("/%s", image.ImportServerContainerNamePrefix)},
+			}
+
+			backend.EXPECT().Rm(ctx, container.ID, container_backend.RmOpts{Force: false}).Return(container_backend.ErrCannotRemoveRunningContainer)
+			stubs.StubFunc(&cleaner.volumeutilsGetVolumeUsageByPath, volumeutils.VolumeUsage{}, nil)
+
+			_, err := cleaner.doSafeCleanupWerfContainers(ctx, RunGCOptions{}, volumeutils.VolumeUsage{}, image.ContainerList{container})
+			Expect(err).To(Succeed())
+		})
+	})
+
 	Describe("werfImages", func() {
 		It("should return images as merged and sorted result of several backend calls", func() {
 			expectedImages := []image.Summary{
