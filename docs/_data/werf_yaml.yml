@@ -70,7 +70,7 @@ sections:
                     value: "bool"
                     description:
                       en: Clear werf labels
-                      ru: Сбросить метки werf
+                      ru: Сбросить лейблы werf
                   - name: removeLabels
                     value: "[ string || /REGEXP/, ... ]"
                     description:
@@ -402,7 +402,7 @@ sections:
                 value: "bool"
                 description:
                   en: Clear werf labels
-                  ru: Сбросить метки werf
+                  ru: Сбросить лейблы werf
               - name: removeLabels
                 value: "[ string || /REGEXP/, ... ]"
                 description:
