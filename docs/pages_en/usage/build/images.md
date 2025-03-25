@@ -520,6 +520,26 @@ imageSpec:
       PATH: "${PATH}:/app/bin"
 ```
 
+### Working with labels
+
+When working with labels, you can use templating. The following variables are currently available:
+
+- %image% – the name of the image
+- %project% – the name of the project
+
+```yaml
+project: test  
+configVersion: 1  
+---  
+image: backend  
+from: alpine:3.21  
+imageSpec:  
+  config:  
+    labels:   
+      frontend-version: "1.2.3"  
+      project-%project%: "%image%-image"  
+```
+
 ## Linking images
 
 ### Inheritance and importing files

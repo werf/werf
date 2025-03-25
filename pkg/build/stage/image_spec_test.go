@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/werf/werf/v2/pkg/config"
+	"github.com/werf/werf/v2/pkg/container_backend"
 )
 
 func TestEnvExpander(t *testing.T) {
@@ -97,6 +98,7 @@ func TestModifyLabels(t *testing.T) {
 			clearWerfLabels: false,
 			expectedLabels: map[string]string{
 				"werf": "should-stay",
+				"stub": "true",
 			},
 		},
 		{
@@ -109,6 +111,7 @@ func TestModifyLabels(t *testing.T) {
 			clearWerfLabels: false,
 			expectedLabels: map[string]string{
 				"test-label": "bar",
+				"stub":       "true",
 			},
 		},
 		{
@@ -124,6 +127,7 @@ func TestModifyLabels(t *testing.T) {
 			expectedLabels: map[string]string{
 				"test-label": "bar",
 				"not-werf":   "keep",
+				"stub":       "true",
 			},
 		},
 		{
@@ -139,6 +143,7 @@ func TestModifyLabels(t *testing.T) {
 				"test-label": "bar",
 				"new":        "value",
 				"other":      "123",
+				"stub":       "true",
 			},
 		},
 		{
@@ -152,12 +157,15 @@ func TestModifyLabels(t *testing.T) {
 			removeLabels:    []string{"remove"},
 			clearWerfLabels: true,
 			addLabels: map[string]string{
-				"new": "added",
+				"new":                  "added",
+				"project-%project%-id": "image-%image%-name",
 			},
 			expectedLabels: map[string]string{
-				"test-label": "bar",
-				"keep":       "me",
-				"new":        "added",
+				"test-label":              "bar",
+				"keep":                    "me",
+				"new":                     "added",
+				"project-TEST-PROJECT-id": "image-TEST-IMAGE-name",
+				"stub":                    "true",
 			},
 		},
 	}
@@ -169,11 +177,29 @@ func TestModifyLabels(t *testing.T) {
 				labelsCopy[k] = v
 			}
 
-			modifiedLabels, err := modifyLabels(ctx, labelsCopy, tt.addLabels, tt.removeLabels, tt.clearWerfLabels)
+			s := ImageSpecStage{
+				BaseStage: &BaseStage{
+					projectName: "TEST-PROJECT",
+					imageName:   "TEST-IMAGE",
+					stageImage: &StageImage{
+						Image: NewLegacyImageStub(),
+					},
+				},
+			}
+
+			modifiedLabels, err := s.modifyLabels(ctx, labelsCopy, tt.addLabels, tt.removeLabels, tt.clearWerfLabels)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.expectedLabels, modifiedLabels)
 		})
 	}
+}
+
+type MockImage struct {
+	Labels map[string]string
+}
+
+func (i *MockImage) Build(_ context.Context, _ container_backend.BuildOptions) error {
+	return nil
 }
 
 func TestModifyVolumes(t *testing.T) {

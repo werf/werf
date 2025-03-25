@@ -30,6 +30,12 @@ func (img *LegacyImageStub) Container() container_backend.LegacyContainer {
 	return img._Container
 }
 
+func (img *LegacyImageStub) GetBuildServiceLabels() map[string]string {
+	return map[string]string{
+		"stub": "true",
+	}
+}
+
 type LegacyContainerStub struct {
 	container_backend.LegacyContainer
 

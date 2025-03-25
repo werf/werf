@@ -1,8 +1,10 @@
 package stage
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"html/template"
 	"regexp"
 	"sort"
 	"strings"
@@ -17,6 +19,9 @@ import (
 )
 
 const (
+	labelTemplateImage           = "image"
+	labelTemplateProject         = "project"
+	labelTemplateDelimiter       = "%"
 	werfLabelsGlobalWarning      = "Removal of the werf labels requires explicit use of the clearWerfLabels directive. Some labels are purely informational, while others are essential for cleanup operations."
 	werfLabelsHostCleanupWarning = "Removal of the %s label will affect host auto cleanup. Proper work of auto cleanup is not guaranteed."
 )
@@ -78,9 +83,7 @@ func (s *ImageSpecStage) PrepareImage(ctx context.Context, _ Conveyor, _ contain
 			newConfig.ClearEntrypoint = newConfig.ClearEntrypoint || s.imageSpec.ClearEntrypoint
 		}
 
-		serviceLabels := s.stageImage.Image.GetBuildServiceLabels()
-		mergedLabels := util.MergeMaps(s.imageSpec.Labels, serviceLabels)
-		resultLabels, err := modifyLabels(ctx, mergedLabels, s.imageSpec.Labels, s.imageSpec.RemoveLabels, s.imageSpec.ClearWerfLabels)
+		resultLabels, err := s.modifyLabels(ctx, imageInfo.Labels, s.imageSpec.Labels, s.imageSpec.RemoveLabels, s.imageSpec.ClearWerfLabels)
 		if err != nil {
 			return fmt.Errorf("unable to modify labels: %s", err)
 		}
@@ -147,10 +150,29 @@ func (s *ImageSpecStage) GetDependencies(_ context.Context, _ Conveyor, _ contai
 	return util.Sha256Hash(args...), nil
 }
 
-func modifyLabels(ctx context.Context, labels, addLabels map[string]string, removeLabels []string, clearWerfLabels bool) (map[string]string, error) {
+func (s *ImageSpecStage) modifyLabels(ctx context.Context, labels, addLabels map[string]string, removeLabels []string, clearWerfLabels bool) (map[string]string, error) {
 	if labels == nil {
 		labels = make(map[string]string)
 	}
+
+	serviceLabels := s.stageImage.Image.GetBuildServiceLabels()
+	labels = util.MergeMaps(labels, serviceLabels)
+
+	processedAddLabels := make(map[string]string, len(addLabels))
+	data := labelsTemplateData{
+		Project: s.projectName,
+		Image:   s.imageName,
+	}
+
+	for key, value := range addLabels {
+		newKey, newValue, err := replaceLabelTemplate(key, value, data)
+		if err != nil {
+			return nil, err
+		}
+		processedAddLabels[newKey] = newValue
+	}
+
+	labels = util.MergeMaps(labels, processedAddLabels)
 
 	exactMatches := make(map[string]struct{})
 	var regexPatterns []*regexp.Regexp
@@ -206,11 +228,43 @@ func modifyLabels(ctx context.Context, labels, addLabels map[string]string, remo
 		global_warnings.GlobalWarningLn(ctx, fmt.Sprintf(werfLabelsHostCleanupWarning, strings.Join(cleanupWarnKeys, "','")))
 	}
 
-	for key, value := range addLabels {
-		labels[key] = value
+	return labels, nil
+}
+
+type labelsTemplateData struct {
+	Project string
+	Image   string
+}
+
+func replaceLabelTemplate(k, v string, data labelsTemplateData) (string, string, error) {
+	funcMap := template.FuncMap{
+		labelTemplateProject: func() string { return data.Project },
+		labelTemplateImage:   func() string { return data.Image },
 	}
 
-	return labels, nil
+	keyTmpl := template.New("key").Delims(labelTemplateDelimiter, labelTemplateDelimiter).Funcs(funcMap)
+	valueTmpl := template.New("value").Delims(labelTemplateDelimiter, labelTemplateDelimiter).Funcs(funcMap)
+
+	parsedKeyTmpl, err := keyTmpl.Parse(k)
+	if err != nil {
+		return "", "", err
+	}
+
+	parsedValueTmpl, err := valueTmpl.Parse(v)
+	if err != nil {
+		return "", "", err
+	}
+
+	var keyBuf, valueBuf bytes.Buffer
+
+	if err := parsedKeyTmpl.Execute(&keyBuf, data); err != nil {
+		return "", "", err
+	}
+
+	if err := parsedValueTmpl.Execute(&valueBuf, data); err != nil {
+		return "", "", err
+	}
+	return keyBuf.String(), valueBuf.String(), nil
 }
 
 func modifyEnv(env, removeKeys []string, addKeysMap map[string]string) ([]string, error) {
