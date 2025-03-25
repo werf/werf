@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.34.0](https://www.github.com/werf/werf/compare/v2.33.0...v2.34.0) (2025-03-25)
+
+
+### Features
+
+* **build, imageSpec:** support template werf variables (%image%, %project%) for labels ([#6724](https://www.github.com/werf/werf/issues/6724)) ([bb2dfc4](https://www.github.com/werf/werf/commit/bb2dfc41c0bdd2c16fd82b1ffe3670732981c1ab))
+
+
+### Bug Fixes
+
+* **host-cleanup:** fix locking doesn't work as expected [#6725](https://www.github.com/werf/werf/issues/6725) ([bbd7a55](https://www.github.com/werf/werf/commit/bbd7a55c13245c5648f83c78a75087871d9d3060))
+
 ## [2.33.0](https://www.github.com/werf/werf/compare/v2.32.2...v2.33.0) (2025-03-24)
 
 
