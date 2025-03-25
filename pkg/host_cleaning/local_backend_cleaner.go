@@ -570,7 +570,7 @@ func (cleaner *LocalBackendCleaner) doSafeCleanupWerfContainers(ctx context.Cont
 			continue
 		}
 
-		err := withHostLock(ctx, container_backend.ContainerLockName(containerName), func() error {
+		err := withHostLockOrNothing(ctx, container_backend.ContainerLockName(containerName), func() error {
 			err := cleaner.backend.Rm(ctx, container.ID, container_backend.RmOpts{
 				Force: options.Force,
 			})
@@ -693,7 +693,7 @@ func (cleaner *LocalBackendCleaner) removeImageByRepoTags(ctx context.Context, o
 				unRemovedCount++
 			}
 		} else {
-			err := withHostLock(ctx, container_backend.ImageLockName(ref), func() error {
+			err := withHostLockOrNothing(ctx, container_backend.ImageLockName(ref), func() error {
 				err := cleaner.backend.Rmi(ctx, ref, container_backend.RmiOpts{
 					Force: options.Force,
 				})

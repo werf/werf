@@ -5,9 +5,26 @@ import (
 
 	chart "github.com/werf/common-go/pkg/lock"
 	"github.com/werf/lockgate"
+	"github.com/werf/logboek"
 )
 
-func withHostLock(ctx context.Context, lockName string, fn func() error) error {
+// withHostLockOrNothing executes callback function if "soft" (NonBlocking=true) lock is acquired. Otherwise, does nothing.
+func withHostLockOrNothing(ctx context.Context, lockName string, callback func() error) (err error) {
 	lockOptions := lockgate.AcquireOptions{NonBlocking: true}
-	return chart.WithHostLock(ctx, lockName, lockOptions, fn)
+
+	acquired, lock, err := chart.AcquireHostLock(ctx, lockName, lockOptions)
+	if err != nil {
+		return err
+	}
+
+	if !acquired {
+		logboek.Context(ctx).Warn().LogF("Ignore locked %s\n", lockName)
+		return nil
+	}
+
+	defer func() {
+		err = chart.ReleaseHostLock(lock)
+	}()
+
+	return callback()
 }

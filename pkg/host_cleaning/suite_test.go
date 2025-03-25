@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func TestStage(t *testing.T) {
+func TestHostCleaning(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Host Cleaning Suite")
 }
