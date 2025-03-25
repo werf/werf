@@ -522,10 +522,10 @@ imageSpec:
 
 ### Working with labels
 
-When working with labels, you can use templating. The following variables are currently available:
+When adding labels, you can use built-in variables:
 
-- %image% – the name of the image
-- %project% – the name of the project
+- %image% — the name of the image.
+- %project% — the name of the project.
 
 ```yaml
 project: test  
