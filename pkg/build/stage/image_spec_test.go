@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/werf/werf/v2/pkg/config"
+	"github.com/werf/werf/v2/pkg/container_backend"
 )
 
 func TestEnvExpander(t *testing.T) {
@@ -97,6 +98,7 @@ func TestModifyLabels(t *testing.T) {
 			clearWerfLabels: false,
 			expectedLabels: map[string]string{
 				"werf": "should-stay",
+				"stub": "true",
 			},
 		},
 		{
@@ -109,6 +111,7 @@ func TestModifyLabels(t *testing.T) {
 			clearWerfLabels: false,
 			expectedLabels: map[string]string{
 				"test-label": "bar",
+				"stub":       "true",
 			},
 		},
 		{
@@ -124,6 +127,7 @@ func TestModifyLabels(t *testing.T) {
 			expectedLabels: map[string]string{
 				"test-label": "bar",
 				"not-werf":   "keep",
+				"stub":       "true",
 			},
 		},
 		{
@@ -139,6 +143,7 @@ func TestModifyLabels(t *testing.T) {
 				"test-label": "bar",
 				"new":        "value",
 				"other":      "123",
+				"stub":       "true",
 			},
 		},
 		{
@@ -160,6 +165,7 @@ func TestModifyLabels(t *testing.T) {
 				"keep":                    "me",
 				"new":                     "added",
 				"project-TEST-PROJECT-id": "image-TEST-IMAGE-name",
+				"stub":                    "true",
 			},
 		},
 	}
@@ -175,6 +181,9 @@ func TestModifyLabels(t *testing.T) {
 				BaseStage: &BaseStage{
 					projectName: "TEST-PROJECT",
 					imageName:   "TEST-IMAGE",
+					stageImage: &StageImage{
+						Image: NewLegacyImageStub(),
+					},
 				},
 			}
 
@@ -183,6 +192,14 @@ func TestModifyLabels(t *testing.T) {
 			assert.Equal(t, tt.expectedLabels, modifiedLabels)
 		})
 	}
+}
+
+type MockImage struct {
+	Labels map[string]string
+}
+
+func (i *MockImage) Build(_ context.Context, _ container_backend.BuildOptions) error {
+	return nil
 }
 
 func TestModifyVolumes(t *testing.T) {

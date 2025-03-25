@@ -83,9 +83,7 @@ func (s *ImageSpecStage) PrepareImage(ctx context.Context, _ Conveyor, _ contain
 			newConfig.ClearEntrypoint = newConfig.ClearEntrypoint || s.imageSpec.ClearEntrypoint
 		}
 
-		serviceLabels := s.stageImage.Image.GetBuildServiceLabels()
-		mergedLabels := util.MergeMaps(s.imageSpec.Labels, serviceLabels)
-		resultLabels, err := s.modifyLabels(ctx, mergedLabels, s.imageSpec.Labels, s.imageSpec.RemoveLabels, s.imageSpec.ClearWerfLabels)
+		resultLabels, err := s.modifyLabels(ctx, imageInfo.Labels, s.imageSpec.Labels, s.imageSpec.RemoveLabels, s.imageSpec.ClearWerfLabels)
 		if err != nil {
 			return fmt.Errorf("unable to modify labels: %s", err)
 		}
@@ -157,6 +155,25 @@ func (s *ImageSpecStage) modifyLabels(ctx context.Context, labels, addLabels map
 		labels = make(map[string]string)
 	}
 
+	serviceLabels := s.stageImage.Image.GetBuildServiceLabels()
+	labels = util.MergeMaps(labels, serviceLabels)
+
+	processedAddLabels := make(map[string]string, len(addLabels))
+	data := labelsTemplateData{
+		Project: s.projectName,
+		Image:   s.imageName,
+	}
+
+	for key, value := range addLabels {
+		newKey, newValue, err := replaceLabelTemplate(key, value, data)
+		if err != nil {
+			return nil, err
+		}
+		processedAddLabels[newKey] = newValue
+	}
+
+	labels = util.MergeMaps(labels, processedAddLabels)
+
 	exactMatches := make(map[string]struct{})
 	var regexPatterns []*regexp.Regexp
 
@@ -211,18 +228,6 @@ func (s *ImageSpecStage) modifyLabels(ctx context.Context, labels, addLabels map
 		global_warnings.GlobalWarningLn(ctx, fmt.Sprintf(werfLabelsHostCleanupWarning, strings.Join(cleanupWarnKeys, "','")))
 	}
 
-	data := labelsTemplateData{
-		Project: s.projectName,
-		Image:   s.imageName,
-	}
-
-	for key, value := range addLabels {
-		newKey, newValue, err := replaceLabelTemplate(key, value, data)
-		if err != nil {
-			return nil, err
-		}
-		labels[newKey] = newValue
-	}
 	return labels, nil
 }
 
