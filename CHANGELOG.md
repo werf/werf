@@ -10,7 +10,7 @@
 
 ### Bug Fixes
 
-* **common:** add error handling in case of non-existent command entered ([d5c548c](https://www.github.com/werf/werf/commit/d5c548cc357a7255713b65cdf879e71da5c618fb))
+* **cli:** add error handling in case of non-existent command entered ([d5c548c](https://www.github.com/werf/werf/commit/d5c548cc357a7255713b65cdf879e71da5c618fb))
 * **host-cleanup:** don't stop removing werf containers on paused or running ones ([3373d0c](https://www.github.com/werf/werf/commit/3373d0c2c26643cdb3110d96b9f1ee42cfee7be0))
 
 ### [2.32.2](https://www.github.com/werf/werf/compare/v2.32.1...v2.32.2) (2025-03-19)
