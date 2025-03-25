@@ -36,16 +36,19 @@ func NewCmd(ctx context.Context) *cobra.Command {
 				return fmt.Errorf("initialization error: %w", err)
 			}
 
-			return common.WithContext(func(ctx context.Context) error {
-				defer global_warnings.PrintGlobalWarnings(ctx)
+			ctx := cmd.Context()
 
-				if err := common.ProcessLogOptions(&commonCmdData); err != nil {
-					common.PrintHelp(cmd)
-					return err
-				}
-				common.LogVersion()
+			defer global_warnings.PrintGlobalWarnings(ctx)
 
-				return common.LogRunningTime(func() error { return runCleanup(ctx) })
+			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
+				common.PrintHelp(cmd)
+				return err
+			}
+
+			common.LogVersion()
+
+			return common.LogRunningTime(func() error {
+				return runCleanup(ctx)
 			})
 		},
 	})

@@ -8,6 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/werf/werf/v2/pkg/logging"
 	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/storage/synchronization/lock_manager"
 	"github.com/werf/werf/v2/pkg/storage/synchronization/server"
@@ -45,7 +46,9 @@ func checkSynchronizationKubernetesParamsForWarnings(cmdData *CmdData) {
 		return
 	}
 
-	ctx := GetContextWithLogger()
+	ctx, closeOutput := logging.WithLogger(context.Background())
+	defer closeOutput()
+
 	doPrintWarning := false
 	kubeConfigEnv := os.Getenv("KUBECONFIG")
 	switch {
