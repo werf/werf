@@ -519,6 +519,26 @@ imageSpec:
       PATH: "${PATH}:/app/bin"
 ```
 
+### Работа с лейблами образов
+
+При работе с лейблами вы можете использовать шаблонизацию. На текущий момент доступны следующие переменные:
+
+ - `%image%` - имя образа
+ - `%project%` - имя проекта
+
+```yaml
+project: test
+configVersion: 1
+---
+image: backend
+from: alpine:3.21
+imageSpec:
+  config:
+    labels: 
+      frontend-version: "1.2.3"
+      project-%project%: "%image%-image"
+```
+
 ## Взаимодействие между образами
 
 ### Наследование и импортирование файлов
