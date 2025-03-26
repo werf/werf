@@ -4,7 +4,6 @@ const (
 	WerfLabelPrefix                        = "werf"
 	WerfLabel                              = "werf"
 	WerfVersionLabel                       = "werf-version"
-	WerfStageDigestLabel                   = "werf-stage-digest"
 	WerfStageContentDigestLabel            = "werf-stage-content-digest"
 	WerfProjectRepoCommitLabel             = "werf-project-repo-commit"
 	WerfImportChecksumLabelPrefix          = "werf-import-checksum-"

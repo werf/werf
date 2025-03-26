@@ -224,7 +224,6 @@ var _ = Describe("LocalBackendCleaner", func() {
 
 			backend.EXPECT().Images(ctx, buildImagesOptions(
 				util.NewPair("label", image.WerfLabel),
-				util.NewPair("label", image.WerfStageDigestLabel),
 			)).Return(image.ImagesList{expectedImages[0]}, nil)
 
 			backend.EXPECT().Images(ctx, buildImagesOptions(
@@ -261,7 +260,6 @@ var _ = Describe("LocalBackendCleaner", func() {
 		BeforeEach(func() {
 			backend.EXPECT().Images(ctx, buildImagesOptions(
 				util.NewPair("label", image.WerfLabel),
-				util.NewPair("label", image.WerfStageDigestLabel),
 			)).Return(image.ImagesList{}, nil)
 
 			backend.EXPECT().Images(ctx, buildImagesOptions(
@@ -360,7 +358,6 @@ var _ = Describe("LocalBackendCleaner", func() {
 				// list and remove werf images
 				backend.EXPECT().Images(ctx, buildImagesOptions(
 					util.NewPair("label", image.WerfLabel),
-					util.NewPair("label", image.WerfStageDigestLabel),
 				)).Return(images, nil),
 				backend.EXPECT().Images(ctx, buildImagesOptions(
 					util.NewPair("label", image.WerfLabel),

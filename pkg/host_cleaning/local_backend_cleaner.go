@@ -153,7 +153,6 @@ func (cleaner *LocalBackendCleaner) werfImages(ctx context.Context) (image.Image
 func (cleaner *LocalBackendCleaner) werfImagesByLabels(ctx context.Context) (image.ImagesList, error) {
 	list, err := cleaner.backend.Images(ctx, buildImagesOptions(
 		util.NewPair("label", image.WerfLabel),
-		util.NewPair("label", image.WerfStageDigestLabel),
 	))
 	if err != nil {
 		return nil, fmt.Errorf("unable to get werf %s images: %w", cleaner.BackendName(), err)
