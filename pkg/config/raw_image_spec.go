@@ -12,12 +12,13 @@ type rawImageSpec struct {
 }
 
 type rawImageSpecConfig struct {
-	ClearWerfLabels bool     `yaml:"clearWerfLabels,omitempty"`
-	RemoveLabels    []string `yaml:"removeLabels,omitempty"`
-	RemoveVolumes   []string `yaml:"removeVolumes,omitempty"`
-	RemoveEnv       []string `yaml:"removeEnv,omitempty"`
-	ClearCmd        bool     `yaml:"clearCmd,omitempty"`
-	ClearEntrypoint bool     `yaml:"clearEntrypoint,omitempty"`
+	KeepEssentialWerfLabels bool     `yaml:"keepEssentialWerfLabels,omitempty"`
+	ClearWerfLabels         bool     `yaml:"clearWerfLabels,omitempty"`
+	RemoveLabels            []string `yaml:"removeLabels,omitempty"`
+	RemoveVolumes           []string `yaml:"removeVolumes,omitempty"`
+	RemoveEnv               []string `yaml:"removeEnv,omitempty"`
+	ClearCmd                bool     `yaml:"clearCmd,omitempty"`
+	ClearEntrypoint         bool     `yaml:"clearEntrypoint,omitempty"`
 
 	Volumes     []string          `yaml:"volumes,omitempty"`
 	Labels      map[string]string `yaml:"labels,omitempty"`
@@ -103,6 +104,7 @@ func (s *rawImageSpec) toDirective() *ImageSpec {
 	imageSpec.ClearHistory = s.ClearHistory
 
 	if s.Config != nil {
+		imageSpec.KeepEssentialWerfLabels = s.Config.KeepEssentialWerfLabels
 		imageSpec.ClearWerfLabels = s.Config.ClearWerfLabels
 		imageSpec.RemoveLabels = s.Config.RemoveLabels
 		imageSpec.RemoveVolumes = s.Config.RemoveVolumes
@@ -137,9 +139,10 @@ type rawImageSpecGlobal struct {
 }
 
 type rawImageSpecGlobalConfig struct {
-	ClearWerfLabels bool              `yaml:"clearWerfLabels,omitempty"`
-	RemoveLabels    []string          `yaml:"removeLabels,omitempty"`
-	Labels          map[string]string `yaml:"labels,omitempty"`
+	KeepEssentialWerfLabels bool              `yaml:"keepEssentialWerfLabels,omitempty"`
+	ClearWerfLabels         bool              `yaml:"clearWerfLabels,omitempty"`
+	RemoveLabels            []string          `yaml:"removeLabels,omitempty"`
+	Labels                  map[string]string `yaml:"labels,omitempty"`
 
 	rawImageSpecGlobal *rawImageSpecGlobal `yaml:"-"` // parent
 
@@ -192,6 +195,7 @@ func (s *rawImageSpecGlobal) toDirective() *ImageSpec {
 	imageSpec.ClearHistory = s.ClearHistory
 
 	if s.Config != nil {
+		imageSpec.KeepEssentialWerfLabels = s.Config.KeepEssentialWerfLabels
 		imageSpec.ClearWerfLabels = s.Config.ClearWerfLabels
 		imageSpec.RemoveLabels = s.Config.RemoveLabels
 		imageSpec.Labels = s.Config.Labels

@@ -19,11 +19,14 @@ import (
 )
 
 const (
-	labelTemplateImage           = "image"
-	labelTemplateProject         = "project"
-	labelTemplateDelimiter       = "%"
-	werfLabelsGlobalWarning      = "Removal of the werf labels requires explicit use of the clearWerfLabels directive. Some labels are purely informational, while others are essential for cleanup operations."
-	werfLabelsHostCleanupWarning = "Removal of the %s label will affect host auto cleanup. Proper work of auto cleanup is not guaranteed."
+	labelTemplateImage      = "image"
+	labelTemplateProject    = "project"
+	labelTemplateDelimiter  = "%"
+	werfLabelsGlobalWarning = `The "werf" and "werf-parent-stage-id" labels cannot be removed within the imageSpec stage, as they are essential for the proper operation of host and container registry cleanup.
+
+If you need to remove all werf labels, use the werf export command. By default, this command removes all werf labels and fully detaches images from werf control, transferring host and container registry cleanup entirely to the user.
+
+To disable this warning, explicitly set the "keepEssentialWerfLabels" directive.`
 )
 
 type ImageSpecStage struct {
@@ -83,7 +86,7 @@ func (s *ImageSpecStage) PrepareImage(ctx context.Context, _ Conveyor, _ contain
 			newConfig.ClearEntrypoint = newConfig.ClearEntrypoint || s.imageSpec.ClearEntrypoint
 		}
 
-		resultLabels, err := s.modifyLabels(ctx, imageInfo.Labels, s.imageSpec.Labels, s.imageSpec.RemoveLabels, s.imageSpec.ClearWerfLabels)
+		resultLabels, err := s.modifyLabels(ctx, imageInfo.Labels, s.imageSpec.Labels, s.imageSpec.RemoveLabels, s.imageSpec.KeepEssentialWerfLabels)
 		if err != nil {
 			return fmt.Errorf("unable to modify labels: %s", err)
 		}
@@ -150,7 +153,7 @@ func (s *ImageSpecStage) GetDependencies(_ context.Context, _ Conveyor, _ contai
 	return util.Sha256Hash(args...), nil
 }
 
-func (s *ImageSpecStage) modifyLabels(ctx context.Context, labels, addLabels map[string]string, removeLabels []string, clearWerfLabels bool) (map[string]string, error) {
+func (s *ImageSpecStage) modifyLabels(ctx context.Context, labels, addLabels map[string]string, removeLabels []string, keepEssentialWerfLabels bool) (map[string]string, error) {
 	if labels == nil {
 		labels = make(map[string]string)
 	}
@@ -190,7 +193,7 @@ func (s *ImageSpecStage) modifyLabels(ctx context.Context, labels, addLabels map
 		}
 	}
 
-	shouldRemove := func(key string) bool {
+	matchFunc := func(key string) bool {
 		if _, found := exactMatches[key]; found {
 			return true
 		}
@@ -199,30 +202,28 @@ func (s *ImageSpecStage) modifyLabels(ctx context.Context, labels, addLabels map
 				return true
 			}
 		}
-		if clearWerfLabels && strings.HasPrefix(key, "werf") {
-			return true
-		}
 		return false
 	}
 
 	shouldPrintGlobalWarn := false
-	var cleanupWarnKeys []string
 	for key := range labels {
-		if shouldRemove(key) {
-			if !clearWerfLabels && strings.HasPrefix(key, "werf") {
-				shouldPrintGlobalWarn = true
-			} else {
-				delete(labels, key)
-			}
+		if !matchFunc(key) {
+			continue
 		}
+
+		if key == image.WerfLabel || key == image.WerfParentStageID {
+			if !keepEssentialWerfLabels {
+				shouldPrintGlobalWarn = true
+			}
+
+			continue
+		}
+
+		delete(labels, key)
 	}
 
 	if shouldPrintGlobalWarn {
 		global_warnings.GlobalWarningLn(ctx, werfLabelsGlobalWarning)
-	}
-
-	if len(cleanupWarnKeys) > 0 {
-		global_warnings.GlobalWarningLn(ctx, fmt.Sprintf(werfLabelsHostCleanupWarning, strings.Join(cleanupWarnKeys, "','")))
 	}
 
 	return labels, nil
