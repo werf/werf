@@ -66,16 +66,21 @@ sections:
                 collapsible: true
                 isCollapsedByDefault: false
                 directives:
-                  - name: clearWerfLabels
-                    value: "bool"
+                  - name: labels
+                    value: "{ name string: value string, ... }"
                     description:
-                      en: Clear werf labels
-                      ru: Сбросить лейблы werf
+                      en: List of labels to add
+                      ru: Список лейблов для добавления
                   - name: removeLabels
                     value: "[ string || /REGEXP/, ... ]"
                     description:
                       en: List of labels to remove
-                      ru: Список меток для удаления
+                      ru: Список лейблов для удаления
+                  - name: keepEssentialWerfLabels
+                    value: "bool"
+                    description:
+                      en: Do not remove werf labels necessary for normal operation
+                      ru: Не удалять необходимые для штатной работы werf лейблы
       - name: deploy
         description:
           en: Settings for deployment
@@ -101,7 +106,6 @@ sections:
                 description:
                   en: Override appVersion in Chart.yaml
                   ru: Переопределить appVersion в Chart.yaml
-                default: ""
           - name: helmRelease
             value: "string"
             description:
@@ -398,54 +402,43 @@ sections:
             collapsible: true
             isCollapsedByDefault: false
             directives:
-              - name: clearWerfLabels
-                value: "bool"
-                description:
-                  en: Clear werf labels
-                  ru: Сбросить лейблы werf
-              - name: removeLabels
-                value: "[ string || /REGEXP/, ... ]"
-                description:
-                  en: List of labels to remove
-                  ru: Список меток для удаления
-              - name: removeVolumes
-                value: "[string, ...]"
-                description:
-                  en: List of volumes to remove
-                  ru: Список томов для удаления
-              - name: removeEnv
-                value: "[string, ...]"
-                description:
-                  en: List of environment variables to remove
-                  ru: Список переменных окружения для удаления
-              - name: clearEntrypoint
-                value: "bool"
-                description:
-                  en: Remove ENTRYPOINT
-                  ru: Очистить ENTRYPOINT
-              - name: clearCmd
-                value: "bool"
-                description:
-                  en: Remove CMD
-                  ru: Очистить CMD
               - name: volumes
                 value: "[string, ...]"
                 description:
                   en: List of volumes to add
                   ru: Список томов для добавления
                 detailsLink: "https://docs.docker.com/engine/reference/builder/#volume"
-              - name: labels
-                value: "{ name string: value string, ... }"
+              - name: removeVolumes
+                value: "[string, ...]"
                 description:
-                  en: List of labels to add
-                  ru: Список меток для добавления
-                detailsLink: "https://docs.docker.com/engine/reference/builder/#label"
+                  en: List of volumes to remove
+                  ru: Список томов для удаления
               - name: env
                 value: "{ name string: value string, ... }"
                 description:
                   en: List of environment variables to add
                   ru: Список переменных окружения для добавления
                 detailsLink: "https://docs.docker.com/engine/reference/builder/#env"
+              - name: removeEnv
+                value: "[string, ...]"
+                description:
+                  en: List of environment variables to remove
+                  ru: Список переменных окружения для удаления
+              - name: labels
+                value: "{ name string: value string, ... }"
+                description:
+                  en: List of labels to add
+                  ru: Список лейблов для добавления
+              - name: removeLabels
+                value: "[ string || /REGEXP/, ... ]"
+                description:
+                  en: List of labels to remove
+                  ru: Список лейблов для удаления
+              - name: keepEssentialWerfLabels
+                value: "bool"
+                description:
+                  en: Do not remove werf labels necessary for normal operation
+                  ru: Не удалять необходимые для штатной работы werf лейблы
               - name: expose
                 value: "[string, ...]"
                 description:
@@ -464,12 +457,22 @@ sections:
                   en: Set CMD
                   ru: Установить CMD
                 detailsLink: "https://docs.docker.com/engine/reference/builder/#cmd"
+              - name: clearCmd
+                value: "bool"
+                description:
+                  en: Remove CMD
+                  ru: Очистить CMD
               - name: entrypoint
                 value: "[string, ...]"
                 description:
                   en: Set ENTRYPOINT
                   ru: Установить ENTRYPOINT
                 detailsLink: "https://docs.docker.com/engine/reference/builder/#entrypoint"
+              - name: clearEntrypoint
+                value: "bool"
+                description:
+                  en: Remove ENTRYPOINT
+                  ru: Очистить ENTRYPOINT
               - name: workingDir
                 value: "string"
                 description:
