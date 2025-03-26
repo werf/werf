@@ -611,10 +611,6 @@ func (s *FullDockerfileStage) PrepareImage(ctx context.Context, c Conveyor, cb c
 		stageImage.Builder.DockerfileBuilder().AppendLabels(fmt.Sprintf("%s=%s", dependencyLabelKey(depStageID), depStageID))
 	}
 
-	if c.GiterminismManager().Dev() {
-		stageImage.Builder.DockerfileBuilder().AppendLabels(fmt.Sprintf("%s=true", image.WerfDevLabel))
-	}
-
 	return nil
 }
 
