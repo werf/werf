@@ -8,7 +8,6 @@
 * **build, buildah, staged:** fix panic in run instruction ([#6733](https://www.github.com/werf/werf/issues/6733)) ([579de54](https://www.github.com/werf/werf/commit/579de54a4dd242c3e4422cafab145c6327d0db9d))
 * **build, imageSpec:** keep essential werf labels ([469a065](https://www.github.com/werf/werf/commit/469a065d18d1ccd1ab667ada2853d09782d3a847))
 * **cleanup:** handle fromImage properly by kubernetes and builtWithinLastNHours policies ([7cffc4b](https://www.github.com/werf/werf/commit/7cffc4b86242bee7841ec2d47863abf7de927a23))
-* **host-cleanup:** don't overwrite err in deferred function ([#6732](https://www.github.com/werf/werf/issues/6732)) ([802b7fa](https://www.github.com/werf/werf/commit/802b7faf482b192b3dd32c1c42c72d7b088c638c))
 
 ## [2.34.0](https://www.github.com/werf/werf/compare/v2.33.0...v2.34.0) (2025-03-25)
 
