@@ -84,7 +84,6 @@ func TestModifyLabels(t *testing.T) {
 		labels           map[string]string
 		addLabels        map[string]string
 		removeLabels     []string
-		clearWerfLabels  bool
 		expectedLabels   map[string]string
 		expectedWarnings []string
 	}{
@@ -94,8 +93,7 @@ func TestModifyLabels(t *testing.T) {
 				"test-label": "bar",
 				"werf":       "should-stay",
 			},
-			removeLabels:    []string{"test-label"},
-			clearWerfLabels: false,
+			removeLabels: []string{"test-label"},
 			expectedLabels: map[string]string{
 				"werf": "should-stay",
 				"stub": "true",
@@ -107,26 +105,9 @@ func TestModifyLabels(t *testing.T) {
 				"test-label": "bar",
 				"test123":    "should-remove",
 			},
-			removeLabels:    []string{"/test[0-9]+/"},
-			clearWerfLabels: false,
+			removeLabels: []string{"/test[0-9]+/"},
 			expectedLabels: map[string]string{
 				"test-label": "bar",
-				"stub":       "true",
-			},
-		},
-		{
-			name: "clear werf labels",
-			labels: map[string]string{
-				"test-label":  "bar",
-				"werf.test":   "should-remove",
-				"werf.other":  "should-remove",
-				"not-werf":    "keep",
-				"werf-random": "should-remove",
-			},
-			clearWerfLabels: true,
-			expectedLabels: map[string]string{
-				"test-label": "bar",
-				"not-werf":   "keep",
 				"stub":       "true",
 			},
 		},
@@ -152,10 +133,8 @@ func TestModifyLabels(t *testing.T) {
 				"test-label": "bar",
 				"remove":     "this",
 				"keep":       "me",
-				"werf.me":    "delete",
 			},
-			removeLabels:    []string{"remove"},
-			clearWerfLabels: true,
+			removeLabels: []string{"remove"},
 			addLabels: map[string]string{
 				"new":                  "added",
 				"project-%project%-id": "image-%image%-name",
@@ -187,7 +166,7 @@ func TestModifyLabels(t *testing.T) {
 				},
 			}
 
-			modifiedLabels, err := s.modifyLabels(ctx, labelsCopy, tt.addLabels, tt.removeLabels, tt.clearWerfLabels)
+			modifiedLabels, err := s.modifyLabels(ctx, labelsCopy, tt.addLabels, tt.removeLabels, false)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.expectedLabels, modifiedLabels)
 		})
