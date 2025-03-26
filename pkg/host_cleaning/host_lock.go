@@ -2,6 +2,7 @@ package host_cleaning
 
 import (
 	"context"
+	"errors"
 
 	chart "github.com/werf/common-go/pkg/lock"
 	"github.com/werf/lockgate"
@@ -9,7 +10,7 @@ import (
 )
 
 // withHostLockOrNothing executes callback function if "soft" (NonBlocking=true) lock is acquired. Otherwise, does nothing.
-func withHostLockOrNothing(ctx context.Context, lockName string, callback func() error) (err error) {
+func withHostLockOrNothing(ctx context.Context, lockName string, callback func() error) error {
 	lockOptions := lockgate.AcquireOptions{NonBlocking: true}
 
 	acquired, lock, err := chart.AcquireHostLock(ctx, lockName, lockOptions)
@@ -22,9 +23,5 @@ func withHostLockOrNothing(ctx context.Context, lockName string, callback func()
 		return nil
 	}
 
-	defer func() {
-		err = chart.ReleaseHostLock(lock)
-	}()
-
-	return callback()
+	return errors.Join(callback(), chart.ReleaseHostLock(lock)) // join non-nil errors or return nil
 }
