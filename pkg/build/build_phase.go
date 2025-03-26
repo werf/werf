@@ -1006,7 +1006,6 @@ func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *imag
 	serviceLabels := map[string]string{
 		imagePkg.WerfLabel:                   phase.Conveyor.ProjectName(),
 		imagePkg.WerfVersionLabel:            werf.Version,
-		imagePkg.WerfStageDigestLabel:        stg.GetDigest(),
 		imagePkg.WerfStageContentDigestLabel: stg.GetContentDigest(),
 	}
 

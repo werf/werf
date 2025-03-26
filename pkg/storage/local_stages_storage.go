@@ -15,9 +15,10 @@ import (
 )
 
 const (
-	LocalStage_ImageRepoFormat           = "%s"
-	LocalStage_ImageFormatWithCreationTs = "%s:%s-%d"
-	LocalStage_ImageFormat               = "%s:%s"
+	LocalStage_ImageRepoFormat              = "%s"
+	LocalStage_ImageFormatWithCreationTs    = "%s:%s-%d"
+	FilterReferenceLocalStageByDigestFormat = "%s:%s*"
+	LocalStage_ImageFormat                  = "%s:%s"
 
 	LocalImportMetadata_ImageNameFormat = "werf-import-metadata/%s"
 	LocalImportMetadata_TagFormat       = "%s"
@@ -97,9 +98,7 @@ func (storage *LocalStagesStorage) GetStagesIDs(ctx context.Context, projectName
 
 func (storage *LocalStagesStorage) GetStagesIDsByDigest(ctx context.Context, projectName, digest string, parentStageCreationTs int64, _ ...Option) ([]image.StageID, error) {
 	imagesOpts := container_backend.ImagesOptions{}
-	imagesOpts.Filters = append(imagesOpts.Filters, util.NewPair("reference", fmt.Sprintf(LocalStage_ImageRepoFormat, projectName)))
-	// NOTE digest already depends on build-cache-version
-	imagesOpts.Filters = append(imagesOpts.Filters, util.NewPair("label", fmt.Sprintf("%s=%s", image.WerfStageDigestLabel, digest)))
+	imagesOpts.Filters = append(imagesOpts.Filters, util.NewPair("reference", fmt.Sprintf(FilterReferenceLocalStageByDigestFormat, projectName, digest)))
 
 	images, err := storage.ContainerBackend.Images(ctx, imagesOpts)
 	if err != nil {

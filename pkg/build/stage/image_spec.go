@@ -211,9 +211,6 @@ func (s *ImageSpecStage) modifyLabels(ctx context.Context, labels, addLabels map
 		if shouldRemove(key) {
 			if !clearWerfLabels && strings.HasPrefix(key, "werf") {
 				shouldPrintGlobalWarn = true
-				if key == image.WerfStageDigestLabel {
-					cleanupWarnKeys = append(cleanupWarnKeys, key)
-				}
 			} else {
 				delete(labels, key)
 			}
