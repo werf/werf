@@ -461,6 +461,7 @@ func (b *NativeBuildah) RunCommand(ctx context.Context, container string, comman
 	}
 
 	runOpts := buildah.RunOptions{
+		Logger:           logrus.StandardLogger(),
 		Env:              opts.Envs,
 		ContextDir:       contextDir,
 		AddCapabilities:  opts.AddCapabilities,
