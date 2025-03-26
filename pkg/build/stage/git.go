@@ -27,20 +27,7 @@ func (s *GitStage) isEmpty(_ context.Context) bool {
 }
 
 func (s *GitStage) PrepareImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) error {
-	if err := s.BaseStage.PrepareImage(ctx, c, cb, prevBuiltImage, stageImage, nil); err != nil {
-		return err
-	}
-
-	if c.GiterminismManager().Dev() {
-		addLabels := map[string]string{image.WerfDevLabel: "true"}
-		if c.UseLegacyStapelBuilder(cb) {
-			stageImage.Builder.LegacyStapelStageBuilder().BuilderContainer().AddLabel(addLabels)
-		} else {
-			stageImage.Builder.StapelStageBuilder().AddLabels(addLabels)
-		}
-	}
-
-	return nil
+	return s.BaseStage.PrepareImage(ctx, c, cb, prevBuiltImage, stageImage, nil)
 }
 
 type GitStageInterface interface {

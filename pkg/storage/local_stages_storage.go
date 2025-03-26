@@ -22,9 +22,6 @@ const (
 	LocalImportMetadata_ImageNameFormat = "werf-import-metadata/%s"
 	LocalImportMetadata_TagFormat       = "%s"
 
-	LocalClientIDRecord_ImageNameFormat = "werf-client-id/%s"
-	LocalClientIDRecord_ImageFormat     = "werf-client-id/%s:%s-%d"
-
 	ImageDeletionFailedDueToUsedByContainerErrorTip = "Use --force option to remove all containers that are based on deleting werf docker images"
 )
 
@@ -90,7 +87,6 @@ func (storage *LocalStagesStorage) GetStagesIDs(ctx context.Context, projectName
 	imagesOpts := container_backend.ImagesOptions{}
 	imagesOpts.Filters = append(imagesOpts.Filters, util.NewPair("reference", fmt.Sprintf(LocalStage_ImageRepoFormat, projectName)))
 	imagesOpts.Filters = append(imagesOpts.Filters, util.NewPair("label", fmt.Sprintf("%s=%s", image.WerfLabel, projectName)))
-	imagesOpts.Filters = append(imagesOpts.Filters, util.NewPair("label", fmt.Sprintf("%s=%s", image.WerfCacheVersionLabel, image.BuildCacheVersion)))
 
 	images, err := storage.ContainerBackend.Images(ctx, imagesOpts)
 	if err != nil {
