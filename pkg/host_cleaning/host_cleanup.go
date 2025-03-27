@@ -30,12 +30,6 @@ type HostCleanupOptions struct {
 	Force  bool
 }
 
-type AutoHostCleanupOptions struct {
-	HostCleanupOptions
-
-	ForceShouldRun bool
-}
-
 func getOptionValueOrDefault(optionValue *uint, defaultValue float64) float64 {
 	var res float64
 	if optionValue != nil {
@@ -46,16 +40,16 @@ func getOptionValueOrDefault(optionValue *uint, defaultValue float64) float64 {
 	return res
 }
 
-func RunAutoHostCleanup(ctx context.Context, backend container_backend.ContainerBackend, options AutoHostCleanupOptions) error {
-	if !options.ForceShouldRun {
-		shouldRun, err := ShouldRunAutoHostCleanup(ctx, backend, options.HostCleanupOptions)
-		if err != nil {
-			logboek.Context(ctx).Warn().LogF("WARNING: unable to check if auto host cleanup should be run: %s\n", err)
-			return nil
-		}
-		if !shouldRun {
-			return nil
-		}
+func RunAutoHostCleanup(ctx context.Context, backend container_backend.ContainerBackend, options HostCleanupOptions) error {
+	locker := newAutoHostCleanupLocker()
+
+	if shouldRun, err := locker.TryLockOrNothing(ctx, func() (bool, error) {
+		return shouldRunAutoHostCleanup(ctx, backend, options)
+	}); err != nil {
+		logboek.Context(ctx).Warn().LogF("WARNING: unable to check if auto host cleanup should be run: %s\n", err)
+		return nil
+	} else if !shouldRun {
+		return nil
 	}
 
 	logboek.Context(ctx).Debug().LogF("RunAutoHostCleanup forking ...\n")
@@ -88,6 +82,13 @@ func RunAutoHostCleanup(ctx context.Context, backend container_backend.Container
 }
 
 func RunHostCleanup(ctx context.Context, backend container_backend.ContainerBackend, options HostCleanupOptions) error {
+	locker := newAutoHostCleanupLocker()
+	return locker.Unlock(ctx, func() error {
+		return runHostCleanup(ctx, backend, options)
+	})
+}
+
+func runHostCleanup(ctx context.Context, backend container_backend.ContainerBackend, options HostCleanupOptions) error {
 	if err := logboek.Context(ctx).LogProcess("Running GC for tmp data").DoError(func() error {
 		if err := tmp_manager.RunGC(ctx, options.DryRun, backend); err != nil {
 			return fmt.Errorf("tmp files GC failed: %w", err)
@@ -135,7 +136,7 @@ func RunHostCleanup(ctx context.Context, backend container_backend.ContainerBack
 	})
 }
 
-func ShouldRunAutoHostCleanup(ctx context.Context, backend container_backend.ContainerBackend, options HostCleanupOptions) (bool, error) {
+func shouldRunAutoHostCleanup(ctx context.Context, backend container_backend.ContainerBackend, options HostCleanupOptions) (bool, error) {
 	shouldRun, err := tmp_manager.ShouldRunAutoGC()
 	if err != nil {
 		return false, fmt.Errorf("failed to check tmp manager GC: %w", err)

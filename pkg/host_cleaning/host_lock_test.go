@@ -7,34 +7,43 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("withHostLockOrNothing", func() {
+var _ = Describe("host lock", func() {
 	var ctx context.Context
-	var spy *spyHostLockCallback
 	BeforeEach(func() {
 		ctx = context.Background()
-		spy = &spyHostLockCallback{}
 	})
-	It("should call callback function if lock is acquired", func() {
-		lockName := "test"
-		err := withHostLockOrNothing(ctx, lockName, spy.Method)
-		Expect(err).To(Succeed())
-		Expect(spy.callsCount).To(Equal(1))
-	})
-	It("should not call callback function if lock isn't acquired", func() {
-		lockName := "test"
-		err := withHostLockOrNothing(ctx, lockName, func() error {
-			return withHostLockOrNothing(ctx, lockName, spy.Method) // lock is already acquired in parent function
+	Describe("withHostLockOrNothing", func() {
+		It("should call callback function if lock is acquired", func() {
+			spy := &spyHostLock{}
+			lockName := "test"
+			err := withHostLockOrNothing(ctx, lockName, spy.Handle1)
+			Expect(err).To(Succeed())
+			Expect(spy.callsCount).To(Equal(1))
 		})
-		Expect(err).To(Succeed())
-		Expect(spy.callsCount).To(Equal(0))
+		It("should not call callback function if lock isn't acquired", func() {
+			spy := &spyHostLock{}
+			lockName := "test"
+			err := withHostLockOrNothing(ctx, lockName, func() error {
+				return withHostLockOrNothing(ctx, lockName, spy.Handle1) // lock is already acquired in parent function
+			})
+			Expect(err).To(Succeed())
+			Expect(spy.callsCount).To(Equal(0))
+		})
 	})
 })
 
-type spyHostLockCallback struct {
+type spyHostLock struct {
 	callsCount int
+	err        error
+	ok         bool
 }
 
-func (s *spyHostLockCallback) Method() error {
+func (s *spyHostLock) Handle1() error {
 	s.callsCount++
-	return nil
+	return s.err
+}
+
+func (s *spyHostLock) Handle2() (bool, error) {
+	s.callsCount++
+	return s.ok, s.err
 }

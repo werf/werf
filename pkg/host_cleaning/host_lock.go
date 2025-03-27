@@ -9,7 +9,8 @@ import (
 	"github.com/werf/logboek"
 )
 
-// withHostLockOrNothing executes callback function if "soft" (NonBlocking=true) lock is acquired. Otherwise, does nothing.
+// withHostLockOrNothing if "soft" (NonBlocking=true) lock is acquired, executes callback and releases lock after.
+// If "soft" lock is NOT acquired, does nothing.
 func withHostLockOrNothing(ctx context.Context, lockName string, callback func() error) error {
 	lockOptions := lockgate.AcquireOptions{NonBlocking: true}
 
