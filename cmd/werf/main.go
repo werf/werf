@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"os"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -14,17 +13,20 @@ import (
 	"github.com/werf/nelm/pkg/resrcchangcalc"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/cmd/werf/root"
+	"github.com/werf/werf/v2/pkg/graceful"
 	"github.com/werf/werf/v2/pkg/process_exterminator"
 )
 
 func main() {
+	defer graceful.Shutdown()
+
 	ctx := common.GetContextWithLogger()
 
 	root.PrintStackTraces()
 
 	shouldTerminate, err := common.ContainerBackendProcessStartupHook()
 	if err != nil {
-		common.TerminateWithError(err.Error(), 1)
+		graceful.Panic(err.Error(), 1)
 	}
 	if shouldTerminate {
 		return
@@ -35,12 +37,12 @@ func main() {
 	logrus.StandardLogger().SetOutput(logboek.OutStream())
 
 	if err := process_exterminator.Init(); err != nil {
-		common.TerminateWithError(fmt.Sprintf("process exterminator initialization failed: %s", err), 1)
+		graceful.Panic(fmt.Sprintf("process exterminator initialization failed: %s", err), 1)
 	}
 
 	rootCmd, err := root.ConstructRootCmd(ctx)
 	if err != nil {
-		common.TerminateWithError(err.Error(), 1)
+		graceful.Panic(err.Error(), 1)
 	}
 
 	root.SetupTelemetryInit(rootCmd)
@@ -52,13 +54,13 @@ func main() {
 	if err := rootCmd.Execute(); err != nil {
 		if helm_v3.IsPluginError(err) {
 			common.ShutdownTelemetry(ctx, helm_v3.PluginErrorCode(err))
-			common.TerminateWithError(err.Error(), helm_v3.PluginErrorCode(err))
+			graceful.Panic(err.Error(), helm_v3.PluginErrorCode(err))
 		} else if errors.Is(err, resrcchangcalc.ErrChangesPlanned) {
 			common.ShutdownTelemetry(ctx, 2)
-			os.Exit(2)
+			graceful.Panic(fmt.Sprintf("nelm: %v", resrcchangcalc.ErrChangesPlanned), 2)
 		} else {
 			common.ShutdownTelemetry(ctx, 1)
-			common.TerminateWithError(err.Error(), 1)
+			graceful.Panic(err.Error(), 1)
 		}
 	}
 
