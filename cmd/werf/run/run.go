@@ -20,6 +20,7 @@ import (
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
+	"github.com/werf/werf/v2/pkg/graceful"
 	"github.com/werf/werf/v2/pkg/tmp_manager"
 	"github.com/werf/werf/v2/pkg/true_git"
 	"github.com/werf/werf/v2/pkg/werf/global_warnings"
@@ -300,7 +301,7 @@ func runMain(ctx context.Context) error {
 	} else {
 		if err := run(ctx, containerBackend, giterminismManager); err != nil {
 			if statusErr, ok := err.(cli.StatusError); ok {
-				common.TerminateWithError(err.Error(), statusErr.StatusCode)
+				graceful.Terminate(err.Error(), statusErr.StatusCode)
 			}
 
 			return err

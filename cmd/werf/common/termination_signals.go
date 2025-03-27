@@ -6,6 +6,7 @@ import (
 	"syscall"
 
 	"github.com/werf/werf/v2/pkg/container_backend"
+	"github.com/werf/werf/v2/pkg/graceful"
 )
 
 var (
@@ -25,7 +26,7 @@ func EnableTerminationSignalsTrap() {
 		case <-terminationSignalsChan:
 			container_backend.TerminateRunningDockerContainers()
 
-			TerminateWithError("interrupted", 17)
+			graceful.TerminateGoroutine("interrupted", 17)
 		case <-disableTerminationSignalsTrapChan:
 			return
 		}

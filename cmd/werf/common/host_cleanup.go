@@ -9,6 +9,7 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/pkg/container_backend"
+	"github.com/werf/werf/v2/pkg/graceful"
 	"github.com/werf/werf/v2/pkg/host_cleaning"
 	"github.com/werf/werf/v2/pkg/util/option"
 )
@@ -59,7 +60,7 @@ func SetupAllowedBackendStorageVolumeUsage(cmdData *CmdData, cmd *cobra.Command)
 	defaultVal := uint(defaultValUint64)
 
 	if defaultVal > 100 {
-		TerminateWithError(fmt.Sprintf("bad %s value: specify percentage between 0 and 100", aliases[0].EnvName), 1)
+		graceful.Terminate(fmt.Sprintf("bad %s value: specify percentage between 0 and 100", aliases[0].EnvName), 1)
 	}
 
 	cmdData.AllowedBackendStorageVolumeUsage = new(uint)
@@ -96,7 +97,7 @@ func SetupAllowedBackendStorageVolumeUsageMargin(cmdData *CmdData, cmd *cobra.Co
 	defaultVal := uint(defaultValUint64)
 
 	if defaultVal > 100 {
-		TerminateWithError(fmt.Sprintf("bad %s value: specify percentage between 0 and 100", aliases[0].EnvName), 1)
+		graceful.Terminate(fmt.Sprintf("bad %s value: specify percentage between 0 and 100", aliases[0].EnvName), 1)
 	}
 
 	cmdData.AllowedBackendStorageVolumeUsageMargin = new(uint)
@@ -156,7 +157,7 @@ func SetupAllowedLocalCacheVolumeUsage(cmdData *CmdData, cmd *cobra.Command) {
 		defaultVal = uint(host_cleaning.DefaultAllowedLocalCacheVolumeUsagePercentage)
 	}
 	if defaultVal > 100 {
-		TerminateWithError(fmt.Sprintf("bad %s value: specify percentage between 0 and 100", envVarName), 1)
+		graceful.Terminate(fmt.Sprintf("bad %s value: specify percentage between 0 and 100", envVarName), 1)
 	}
 
 	cmdData.AllowedLocalCacheVolumeUsage = new(uint)
@@ -173,7 +174,7 @@ func SetupAllowedLocalCacheVolumeUsageMargin(cmdData *CmdData, cmd *cobra.Comman
 		defaultVal = uint(host_cleaning.DefaultAllowedLocalCacheVolumeUsageMarginPercentage)
 	}
 	if defaultVal > 100 {
-		TerminateWithError(fmt.Sprintf("bad %s value: specify percentage between 0 and 100", envVarName), 1)
+		graceful.Terminate(fmt.Sprintf("bad %s value: specify percentage between 0 and 100", envVarName), 1)
 	}
 
 	cmdData.AllowedLocalCacheVolumeUsageMargin = new(uint)
