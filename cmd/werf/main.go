@@ -14,10 +14,18 @@ import (
 	"github.com/werf/nelm/pkg/resrcchangcalc"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/cmd/werf/root"
+	"github.com/werf/werf/v2/pkg/background"
 	"github.com/werf/werf/v2/pkg/process_exterminator"
 )
 
 func main() {
+	// IMPORTANT. In background mode we MUST take host-lock to prevent parallel "werf host cleanup" processes.
+	// The processes write data to the same log files that causes "data race".
+	// We don't need to release the lock manually, because it does automatically when the background process will end.
+	if background.IsBackgroundModeEnabled() && !background.TryLock() {
+		return
+	}
+
 	ctx := common.GetContextWithLogger()
 
 	root.PrintStackTraces()

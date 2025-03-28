@@ -19,6 +19,7 @@ import (
 	"github.com/werf/logboek/pkg/types"
 	"github.com/werf/nelm/pkg/action"
 	"github.com/werf/nelm/pkg/log"
+	"github.com/werf/werf/v2/pkg/background"
 	"github.com/werf/werf/v2/pkg/build"
 	"github.com/werf/werf/v2/pkg/build/stage"
 	"github.com/werf/werf/v2/pkg/config"
@@ -1659,7 +1660,7 @@ func GetContextWithLogger() context.Context {
 func WithContext(allowBackgroundMode bool, f func(ctx context.Context) error) error {
 	var ctx context.Context
 
-	if allowBackgroundMode && IsBackgroundModeEnabled() {
+	if allowBackgroundMode && background.IsBackgroundModeEnabled() {
 		out, err := os.OpenFile(GetBackgroundOutputFile(), os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0o644)
 		if err != nil {
 			return fmt.Errorf("unable to open background output file %q: %w", GetBackgroundOutputFile(), err)
@@ -1706,10 +1707,6 @@ func GetAndRemoveLastBackgroundError() (error, error) {
 	}
 
 	return nil, nil
-}
-
-func IsBackgroundModeEnabled() bool {
-	return os.Getenv("_WERF_BACKGROUND_MODE_ENABLED") == "1"
 }
 
 func GetBackgroundOutputFile() string {
