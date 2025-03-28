@@ -35,15 +35,9 @@ var _ = Describe("host lock", func() {
 type spyHostLock struct {
 	callsCount int
 	err        error
-	ok         bool
 }
 
 func (s *spyHostLock) Handle1() error {
 	s.callsCount++
 	return s.err
-}
-
-func (s *spyHostLock) Handle2() (bool, error) {
-	s.callsCount++
-	return s.ok, s.err
 }

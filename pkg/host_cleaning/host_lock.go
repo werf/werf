@@ -9,8 +9,8 @@ import (
 	"github.com/werf/logboek"
 )
 
-// withHostLockOrNothing if "soft" (NonBlocking=true) lock is acquired, executes callback and releases lock after.
-// If "soft" lock is NOT acquired, does nothing.
+// withHostLockOrNothing tries a lock. If the lock is acquired, executes callback and releases the lock after.
+// If the lock is NOT acquired, does nothing.
 func withHostLockOrNothing(ctx context.Context, lockName string, callback func() error) error {
 	lockOptions := lockgate.AcquireOptions{NonBlocking: true}
 
@@ -24,5 +24,6 @@ func withHostLockOrNothing(ctx context.Context, lockName string, callback func()
 		return nil
 	}
 
+	// Should we handle panic here and release the lock anyway?
 	return errors.Join(callback(), chart.ReleaseHostLock(lock)) // join non-nil errors or return nil
 }

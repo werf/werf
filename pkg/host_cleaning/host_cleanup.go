@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/werf/logboek"
+	"github.com/werf/werf/v2/pkg/background"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
 	"github.com/werf/werf/v2/pkg/tmp_manager"
@@ -41,11 +42,7 @@ func getOptionValueOrDefault(optionValue *uint, defaultValue float64) float64 {
 }
 
 func RunAutoHostCleanup(ctx context.Context, backend container_backend.ContainerBackend, options HostCleanupOptions) error {
-	locker := newAutoHostCleanupLocker()
-
-	if shouldRun, err := locker.TryLockOrNothing(ctx, func() (bool, error) {
-		return shouldRunAutoHostCleanup(ctx, backend, options)
-	}); err != nil {
+	if shouldRun, err := shouldRunAutoHostCleanup(ctx, backend, options); err != nil {
 		logboek.Context(ctx).Warn().LogF("WARNING: unable to check if auto host cleanup should be run: %s\n", err)
 		return nil
 	} else if !shouldRun {
@@ -82,8 +79,14 @@ func RunAutoHostCleanup(ctx context.Context, backend container_backend.Container
 }
 
 func RunHostCleanup(ctx context.Context, backend container_backend.ContainerBackend, options HostCleanupOptions) error {
-	locker := newAutoHostCleanupLocker()
-	return locker.Unlock(ctx, func() error {
+	if !background.IsBackgroundModeEnabled() {
+		return runHostCleanup(ctx, backend, options)
+	}
+	locker, err := newAutoHostCleanupLocker()
+	if err != nil {
+		return fmt.Errorf("unable to create auto-host-cleanup locker: %w", err)
+	}
+	return locker.WithLockOrNothing(ctx, func() error {
 		return runHostCleanup(ctx, backend, options)
 	})
 }
@@ -137,6 +140,18 @@ func runHostCleanup(ctx context.Context, backend container_backend.ContainerBack
 }
 
 func shouldRunAutoHostCleanup(ctx context.Context, backend container_backend.ContainerBackend, options HostCleanupOptions) (bool, error) {
+	locker, err := newAutoHostCleanupLocker()
+	if err != nil {
+		return false, fmt.Errorf("unable to create auto-host-cleanup locker: %w", err)
+	}
+	isLockFree, err := locker.isLockFree(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to try-and-release auto host lock: %w", err)
+	}
+	if !isLockFree {
+		return false, nil
+	}
+
 	shouldRun, err := tmp_manager.ShouldRunAutoGC()
 	if err != nil {
 		return false, fmt.Errorf("failed to check tmp manager GC: %w", err)
