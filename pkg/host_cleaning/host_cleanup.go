@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/background"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
 	"github.com/werf/werf/v2/pkg/tmp_manager"
@@ -79,19 +78,6 @@ func RunAutoHostCleanup(ctx context.Context, backend container_backend.Container
 }
 
 func RunHostCleanup(ctx context.Context, backend container_backend.ContainerBackend, options HostCleanupOptions) error {
-	if !background.IsBackgroundModeEnabled() {
-		return runHostCleanup(ctx, backend, options)
-	}
-	locker, err := newAutoHostCleanupLocker()
-	if err != nil {
-		return fmt.Errorf("unable to create auto-host-cleanup locker: %w", err)
-	}
-	return locker.WithLockOrNothing(ctx, func() error {
-		return runHostCleanup(ctx, backend, options)
-	})
-}
-
-func runHostCleanup(ctx context.Context, backend container_backend.ContainerBackend, options HostCleanupOptions) error {
 	if err := logboek.Context(ctx).LogProcess("Running GC for tmp data").DoError(func() error {
 		if err := tmp_manager.RunGC(ctx, options.DryRun, backend); err != nil {
 			return fmt.Errorf("tmp files GC failed: %w", err)
@@ -140,18 +126,6 @@ func runHostCleanup(ctx context.Context, backend container_backend.ContainerBack
 }
 
 func shouldRunAutoHostCleanup(ctx context.Context, backend container_backend.ContainerBackend, options HostCleanupOptions) (bool, error) {
-	locker, err := newAutoHostCleanupLocker()
-	if err != nil {
-		return false, fmt.Errorf("unable to create auto-host-cleanup locker: %w", err)
-	}
-	isLockFree, err := locker.isLockFree(ctx)
-	if err != nil {
-		return false, fmt.Errorf("failed to try-and-release auto host lock: %w", err)
-	}
-	if !isLockFree {
-		return false, nil
-	}
-
 	shouldRun, err := tmp_manager.ShouldRunAutoGC()
 	if err != nil {
 		return false, fmt.Errorf("failed to check tmp manager GC: %w", err)
