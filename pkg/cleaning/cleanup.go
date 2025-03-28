@@ -126,6 +126,27 @@ func (m *cleanupManager) run(ctx context.Context) error {
 		return err
 	}
 
+	if m.ConfigMetaCleanup.DisbaleCleanup {
+		if err := logboek.Context(ctx).Default().LogProcess("Deleting managed images").DoError(func() error {
+			managedImages, err := m.StorageManager.GetStagesStorage().GetManagedImages(ctx, m.ProjectName, storage.WithCache())
+			if err != nil {
+				return err
+			}
+
+			if err := m.deleteManagedImages(ctx, managedImages); err != nil {
+				return err
+			}
+
+			if err := m.purgeImageMetadata(ctx); err != nil {
+				return err
+			}
+			return nil
+		}); err != nil {
+			return err
+		}
+		return nil
+	}
+
 	if !(m.WithoutKube || m.ConfigMetaCleanup.DisableKubernetesBasedPolicy) {
 		if len(m.KubernetesContextClients) == 0 {
 			return fmt.Errorf("no kubernetes configs found to skip images being used in the Kubernetes, pass --without-kube option (or WERF_WITHOUT_KUBE env var) to suppress this error")
@@ -681,6 +702,10 @@ func (m *cleanupManager) deleteImageMetadata(ctx context.Context, imageName stri
 	return nil
 }
 
+func (m *cleanupManager) deleteManagedImages(ctx context.Context, managedImages []string) error {
+	return deleteManagedImages(ctx, m.ProjectName, m.StorageManager, managedImages, m.DryRun)
+}
+
 func purgeImageMetadata(ctx context.Context, projectName string, storageManager manager.StorageManagerInterface, dryRun bool) error {
 	return logboek.Context(ctx).Default().LogProcess("Deleting images metadata").DoError(func() error {
 		_, imageMetadataByImageName, err := storageManager.GetStagesStorage().GetAllAndGroupImageMetadataByImageName(ctx, projectName, []string{}, storage.WithCache())
@@ -693,6 +718,32 @@ func purgeImageMetadata(ctx context.Context, projectName string, storageManager 
 				return err
 			}
 		}
+
+		return nil
+	})
+}
+
+func deleteManagedImages(ctx context.Context, projectName string, storageManager manager.StorageManagerInterface, managedImages []string, dryRun bool) error {
+	if dryRun {
+		for _, managedImage := range managedImages {
+			logboek.Context(ctx).Default().LogFDetails("  name: %s\n", logging.ImageLogName(managedImage))
+			logboek.Context(ctx).LogOptionalLn()
+		}
+		return nil
+	}
+
+	return storageManager.ForEachRmManagedImage(ctx, projectName, managedImages, func(ctx context.Context, managedImage string, err error) error {
+		if err != nil {
+			if err := handleDeletionError(err); err != nil {
+				return err
+			}
+
+			logboek.Context(ctx).Warn().LogF("WARNING: Managed image %s deletion failed: %s\n", managedImage, err)
+
+			return nil
+		}
+
+		logboek.Context(ctx).Default().LogFDetails("  name: %s\n", logging.ImageLogName(managedImage))
 
 		return nil
 	})

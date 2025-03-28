@@ -6,7 +6,6 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/cleaning/stage_manager"
 	"github.com/werf/werf/v2/pkg/image"
-	"github.com/werf/werf/v2/pkg/logging"
 	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/storage/manager"
 )
@@ -118,29 +117,7 @@ func (m *purgeManager) deleteImportsMetadata(ctx context.Context, importsMetadat
 }
 
 func (m *purgeManager) deleteManagedImages(ctx context.Context, managedImages []string) error {
-	if m.DryRun {
-		for _, managedImage := range managedImages {
-			logboek.Context(ctx).Default().LogFDetails("  name: %s\n", logging.ImageLogName(managedImage))
-			logboek.Context(ctx).LogOptionalLn()
-		}
-		return nil
-	}
-
-	return m.StorageManager.ForEachRmManagedImage(ctx, m.ProjectName, managedImages, func(ctx context.Context, managedImage string, err error) error {
-		if err != nil {
-			if err := handleDeletionError(err); err != nil {
-				return err
-			}
-
-			logboek.Context(ctx).Warn().LogF("WARNING: Managed image %s deletion failed: %s\n", managedImage, err)
-
-			return nil
-		}
-
-		logboek.Context(ctx).Default().LogFDetails("  name: %s\n", logging.ImageLogName(managedImage))
-
-		return nil
-	})
+	return deleteManagedImages(ctx, m.ProjectName, m.StorageManager, managedImages, m.DryRun)
 }
 
 func (m *purgeManager) purgeImageMetadata(ctx context.Context) error {
