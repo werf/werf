@@ -697,10 +697,6 @@ func (m *cleanupManager) deleteImageMetadata(ctx context.Context, imageName stri
 	return nil
 }
 
-func (m *cleanupManager) deleteManagedImages(ctx context.Context, managedImages []string) error {
-	return deleteManagedImages(ctx, m.ProjectName, m.StorageManager, managedImages, m.DryRun)
-}
-
 func purgeImageMetadata(ctx context.Context, projectName string, storageManager manager.StorageManagerInterface, dryRun bool) error {
 	return logboek.Context(ctx).Default().LogProcess("Deleting images metadata").DoError(func() error {
 		_, imageMetadataByImageName, err := storageManager.GetStagesStorage().GetAllAndGroupImageMetadataByImageName(ctx, projectName, []string{}, storage.WithCache())
