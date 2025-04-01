@@ -105,10 +105,6 @@ func (m *purgeManager) deleteImportsMetadata(ctx context.Context, importsMetadat
 	return deleteImportsMetadata(ctx, m.ProjectName, m.StorageManager, importsMetadataIDs, m.DryRun)
 }
 
-func (m *purgeManager) deleteManagedImages(ctx context.Context, managedImages []string) error {
-	return deleteManagedImages(ctx, m.ProjectName, m.StorageManager, managedImages, m.DryRun)
-}
-
 func (m *purgeManager) purgeImageMetadata(ctx context.Context) error {
 	return purgeImageMetadata(ctx, m.ProjectName, m.StorageManager, m.DryRun)
 }
