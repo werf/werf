@@ -10,7 +10,7 @@ import (
 const DefaultKeepImagesBuiltWithinLastNHours uint64 = 2
 
 type rawMetaCleanup struct {
-	DisbaleCleanup                     bool                        `yaml:"disableCleanup,omitempty"`
+	DisableCleanup                     bool                        `yaml:"disableCleanup,omitempty"`
 	DisableKubernetesBasedPolicy       bool                        `yaml:"disableKubernetesBasedPolicy,omitempty"`
 	DisableGitHistoryBasedPolicy       bool                        `yaml:"disableGitHistoryBasedPolicy,omitempty"`
 	DisableBuiltWithinLastNHoursPolicy bool                        `yaml:"disableBuiltWithinLastNHoursPolicy,omitempty"`
@@ -188,7 +188,7 @@ func (c *rawMetaCleanup) toMetaCleanup() MetaCleanup {
 	metaCleanup.DisableKubernetesBasedPolicy = c.DisableKubernetesBasedPolicy
 	metaCleanup.DisableBuiltWithinLastNHoursPolicy = c.DisableBuiltWithinLastNHoursPolicy
 	metaCleanup.DisableGitHistoryBasedPolicy = c.DisableGitHistoryBasedPolicy
-	metaCleanup.DisbaleCleanup = c.DisbaleCleanup
+	metaCleanup.DisableCleanup = c.DisableCleanup
 
 	for _, policy := range c.KeepPolicies {
 		metaCleanup.KeepPolicies = append(metaCleanup.KeepPolicies, policy.toMetaCleanupKeepPolicy())

@@ -126,7 +126,7 @@ func (m *cleanupManager) run(ctx context.Context) error {
 		return err
 	}
 
-	if m.ConfigMetaCleanup.DisbaleCleanup {
+	if m.ConfigMetaCleanup.DisableCleanup {
 		if err := logboek.Context(ctx).Default().LogProcess("Deleting managed images").DoError(func() error {
 			managedImages, err := m.StorageManager.GetStagesStorage().GetManagedImages(ctx, m.ProjectName, storage.WithCache())
 			if err != nil {

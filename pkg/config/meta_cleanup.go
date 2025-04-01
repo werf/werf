@@ -18,7 +18,7 @@ var (
 )
 
 type MetaCleanup struct {
-	DisbaleCleanup                     bool
+	DisableCleanup                     bool
 	DisableKubernetesBasedPolicy       bool
 	DisableGitHistoryBasedPolicy       bool
 	DisableBuiltWithinLastNHoursPolicy bool
