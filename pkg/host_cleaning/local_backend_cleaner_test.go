@@ -120,7 +120,11 @@ var _ = Describe("LocalBackendCleaner", func() {
 			Expect(errors.Is(err, errOptionDryRunNotSupported)).To(BeTrue())
 		})
 		It("should call backend.PruneContainers() if opts.DryRun=true", func() {
-			backend.EXPECT().PruneContainers(ctx, prune.Options{}).Return(prune.Report{}, nil)
+			containersFilters := []util.Pair[string, string]{
+				util.NewPair("until", "1h"),
+			}
+
+			backend.EXPECT().PruneContainers(ctx, prune.Options{Filters: containersFilters}).Return(prune.Report{}, nil)
 
 			report, err := cleaner.pruneContainers(ctx, RunGCOptions{})
 			Expect(err).To(Succeed())
@@ -314,6 +318,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 	})
 
 	Describe("RunGC", func() {
+		BeforeEach(func() {})
 		It("should keep order of backend calls", func() {
 			options := RunGCOptions{
 				AllowedStorageVolumeUsagePercentage:       0,
@@ -338,11 +343,15 @@ var _ = Describe("LocalBackendCleaner", func() {
 				{ID: "one", RepoDigests: []string{"digest one"}},
 			}
 
+			containersFilters := []util.Pair[string, string]{
+				util.NewPair("until", "1h"),
+			}
+
 			// keep orders of backend calls
 			gomock.InOrder(
 				// use backend native GC pruning
 				backend.EXPECT().PruneBuildCache(ctx, prune.Options{}).Return(prune.Report{}, nil),
-				backend.EXPECT().PruneContainers(ctx, prune.Options{}).Return(prune.Report{}, nil),
+				backend.EXPECT().PruneContainers(ctx, prune.Options{Filters: containersFilters}).Return(prune.Report{}, nil),
 				backend.EXPECT().PruneVolumes(ctx, prune.Options{}).Return(prune.Report{}, nil),
 				backend.EXPECT().PruneImages(ctx, prune.Options{}).Return(prune.Report{}, nil),
 

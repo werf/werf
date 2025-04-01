@@ -506,7 +506,13 @@ func (cleaner *LocalBackendCleaner) pruneContainers(ctx context.Context, options
 		return newCleanupReport(), errOptionDryRunNotSupported
 	}
 
-	report, err := cleaner.backend.PruneContainers(ctx, prune.Options{})
+	report, err := cleaner.backend.PruneContainers(ctx, prune.Options{
+		// Guard "exited" containers for "werf build" with Stapel.
+		// werf relies on an "exited" container for some time before committing the container as an image.
+		Filters: []util.Pair[string, string]{
+			util.NewPair("until", "1h"),
+		},
+	})
 	return mapPruneReportToCleanupReport(report), err
 }
 
