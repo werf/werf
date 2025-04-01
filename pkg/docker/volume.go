@@ -3,6 +3,8 @@ package docker
 import (
 	"github.com/docker/docker/api/types/filters"
 	"golang.org/x/net/context"
+
+	"github.com/werf/werf/v2/pkg/container_backend/prune"
 )
 
 func VolumeRm(ctx context.Context, volumeName string, force bool) error {
@@ -10,8 +12,8 @@ func VolumeRm(ctx context.Context, volumeName string, force bool) error {
 }
 
 type (
-	VolumesPruneOptions BuildCachePruneOptions
-	VolumesPruneReport  BuildCachePruneReport
+	VolumesPruneOptions prune.Options
+	VolumesPruneReport  prune.Report
 )
 
 func VolumesPrune(ctx context.Context, _ VolumesPruneOptions) (VolumesPruneReport, error) {

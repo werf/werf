@@ -96,22 +96,6 @@ var _ = Describe("LocalBackendCleaner", func() {
 		})
 	})
 
-	Describe("pruneBuildCache", func() {
-		It("should return err if opts.DryRun=true", func() {
-			_, err := cleaner.pruneBuildCache(ctx, RunGCOptions{
-				DryRun: true,
-			})
-			Expect(errors.Is(err, errOptionDryRunNotSupported)).To(BeTrue())
-		})
-		It("should call backend.PruneBuildCache() if opts.DryRun=false", func() {
-			backend.EXPECT().PruneBuildCache(ctx, prune.Options{}).Return(prune.Report{}, nil)
-
-			report, err := cleaner.pruneBuildCache(ctx, RunGCOptions{})
-			Expect(err).To(Succeed())
-			Expect(report).To(Equal(newCleanupReport()))
-		})
-	})
-
 	Describe("pruneContainers", func() {
 		It("should return err if opts.DryRun=true", func() {
 			_, err := cleaner.pruneContainers(ctx, RunGCOptions{
@@ -341,7 +325,6 @@ var _ = Describe("LocalBackendCleaner", func() {
 			// keep orders of backend calls
 			gomock.InOrder(
 				// use backend native GC pruning
-				backend.EXPECT().PruneBuildCache(ctx, prune.Options{}).Return(prune.Report{}, nil),
 				backend.EXPECT().PruneContainers(ctx, prune.Options{}).Return(prune.Report{}, nil),
 				backend.EXPECT().PruneVolumes(ctx, prune.Options{}).Return(prune.Report{}, nil),
 				backend.EXPECT().PruneImages(ctx, prune.Options{}).Return(prune.Report{}, nil),

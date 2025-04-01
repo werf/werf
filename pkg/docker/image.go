@@ -21,6 +21,7 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/werf/logboek"
+	"github.com/werf/werf/v2/pkg/container_backend/prune"
 )
 
 type CreateImageOptions struct {
@@ -69,8 +70,8 @@ func ImageInspect(ctx context.Context, ref string) (*types.ImageInspect, error) 
 }
 
 type (
-	ImagesPruneOptions BuildCachePruneOptions
-	ImagesPruneReport  BuildCachePruneReport
+	ImagesPruneOptions prune.Options
+	ImagesPruneReport  prune.Report
 )
 
 func ImagesPrune(ctx context.Context, _ ImagesPruneOptions) (ImagesPruneReport, error) {

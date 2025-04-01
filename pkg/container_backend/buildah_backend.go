@@ -1101,10 +1101,6 @@ func (backend *BuildahBackend) PostManifest(ctx context.Context, ref string, opt
 
 func (backend *BuildahBackend) ClaimTargetPlatforms(ctx context.Context, targetPlatforms []string) {}
 
-func (backend *BuildahBackend) PruneBuildCache(_ context.Context, _ prune.Options) (prune.Report, error) {
-	return prune.Report{}, ErrUnsupportedFeature
-}
-
 func (backend *BuildahBackend) PruneContainers(_ context.Context, _ prune.Options) (prune.Report, error) {
 	return prune.Report{}, ErrUnsupportedFeature
 }
