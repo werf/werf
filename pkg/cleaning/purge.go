@@ -58,18 +58,7 @@ func (m *purgeManager) run(ctx context.Context) error {
 		return err
 	}
 
-	if err := logboek.Context(ctx).Default().LogProcess("Deleting managed images").DoError(func() error {
-		managedImages, err := m.StorageManager.GetStagesStorage().GetManagedImages(ctx, m.ProjectName, storage.WithCache())
-		if err != nil {
-			return err
-		}
-
-		if err := m.deleteManagedImages(ctx, managedImages); err != nil {
-			return err
-		}
-
-		return nil
-	}); err != nil {
+	if err := m.purgeManagedImages(ctx); err != nil {
 		return err
 	}
 
@@ -122,6 +111,10 @@ func (m *purgeManager) deleteManagedImages(ctx context.Context, managedImages []
 
 func (m *purgeManager) purgeImageMetadata(ctx context.Context) error {
 	return purgeImageMetadata(ctx, m.ProjectName, m.StorageManager, m.DryRun)
+}
+
+func (m *purgeManager) purgeManagedImages(ctx context.Context) error {
+	return purgeManagedImages(ctx, m.ProjectName, m.StorageManager, m.DryRun)
 }
 
 func (m *purgeManager) deleteCustomTags(ctx context.Context) error {

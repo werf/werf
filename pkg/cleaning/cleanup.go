@@ -120,31 +120,22 @@ func (m *cleanupManager) init(ctx context.Context) error {
 }
 
 func (m *cleanupManager) run(ctx context.Context) error {
+	if m.ConfigMetaCleanup.DisableCleanup {
+		if err := m.purgeManagedImages(ctx); err != nil {
+			return err
+		}
+
+		if err := m.purgeImageMetadata(ctx); err != nil {
+			return err
+		}
+
+		return nil
+	}
+
 	if err := logboek.Context(ctx).LogProcess("Fetching manifests and metadata").DoError(func() error {
 		return m.init(ctx)
 	}); err != nil {
 		return err
-	}
-
-	if m.ConfigMetaCleanup.DisableCleanup {
-		if err := logboek.Context(ctx).Default().LogProcess("Deleting managed images").DoError(func() error {
-			managedImages, err := m.StorageManager.GetStagesStorage().GetManagedImages(ctx, m.ProjectName, storage.WithCache())
-			if err != nil {
-				return err
-			}
-
-			if err := m.deleteManagedImages(ctx, managedImages); err != nil {
-				return err
-			}
-
-			if err := m.purgeImageMetadata(ctx); err != nil {
-				return err
-			}
-			return nil
-		}); err != nil {
-			return err
-		}
-		return nil
 	}
 
 	if !(m.WithoutKube || m.ConfigMetaCleanup.DisableKubernetesBasedPolicy) {
@@ -214,6 +205,10 @@ func (m *cleanupManager) run(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (m *cleanupManager) purgeManagedImages(ctx context.Context) error {
+	return purgeManagedImages(ctx, m.ProjectName, m.StorageManager, m.DryRun)
 }
 
 func (m *cleanupManager) purgeImageMetadata(ctx context.Context) error {
@@ -744,6 +739,21 @@ func deleteManagedImages(ctx context.Context, projectName string, storageManager
 		}
 
 		logboek.Context(ctx).Default().LogFDetails("  name: %s\n", logging.ImageLogName(managedImage))
+
+		return nil
+	})
+}
+
+func purgeManagedImages(ctx context.Context, projectName string, storageManager manager.StorageManagerInterface, dryRun bool) error {
+	return logboek.Context(ctx).Default().LogProcess("Deleting managed images").DoError(func() error {
+		managedImages, err := storageManager.GetStagesStorage().GetManagedImages(ctx, projectName, storage.WithCache())
+		if err != nil {
+			return err
+		}
+
+		if err := deleteManagedImages(ctx, projectName, storageManager, managedImages, dryRun); err != nil {
+			return err
+		}
 
 		return nil
 	})
