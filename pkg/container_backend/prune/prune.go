@@ -1,6 +1,10 @@
 package prune
 
-type Options struct{}
+import "github.com/werf/common-go/pkg/util"
+
+type Options struct {
+	Filters []util.Pair[string, string]
+}
 
 type Report struct {
 	ItemsDeleted   []string

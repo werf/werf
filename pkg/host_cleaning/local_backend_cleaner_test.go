@@ -125,7 +125,11 @@ var _ = Describe("LocalBackendCleaner", func() {
 			Expect(report).To(Equal(newCleanupReport()))
 		})
 		It("should call backend.PruneImages() if opts.DryRun=false", func() {
-			backend.EXPECT().PruneImages(ctx, prune.Options{}).Return(prune.Report{}, nil)
+			imagesFilters := []util.Pair[string, string]{
+				util.NewPair("label!", image.WerfLabel),
+			}
+
+			backend.EXPECT().PruneImages(ctx, prune.Options{Filters: imagesFilters}).Return(prune.Report{}, nil)
 
 			report, err := cleaner.pruneImages(ctx, RunGCOptions{})
 			Expect(err).To(Succeed())
@@ -322,12 +326,16 @@ var _ = Describe("LocalBackendCleaner", func() {
 				{ID: "one", RepoDigests: []string{"digest one"}},
 			}
 
+			imagesFilters := []util.Pair[string, string]{
+				util.NewPair("label!", image.WerfLabel),
+			}
+
 			// keep orders of backend calls
 			gomock.InOrder(
 				// use backend native GC pruning
 				backend.EXPECT().PruneContainers(ctx, prune.Options{}).Return(prune.Report{}, nil),
 				backend.EXPECT().PruneVolumes(ctx, prune.Options{}).Return(prune.Report{}, nil),
-				backend.EXPECT().PruneImages(ctx, prune.Options{}).Return(prune.Report{}, nil),
+				backend.EXPECT().PruneImages(ctx, prune.Options{Filters: imagesFilters}).Return(prune.Report{}, nil),
 
 				// list and remove werf containers
 				backend.EXPECT().Containers(ctx, buildContainersOptions(
