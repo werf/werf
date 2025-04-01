@@ -121,6 +121,7 @@ func doCliOperationWithRetries(ctx context.Context, op backoff.Operation[bool], 
 			"504 Gateway Time-out",
 			"504 Gateway Timeout",
 			"Internal Server Error",
+			"authentication required",
 		}, func(msgPart string) bool {
 			return strings.Contains(errMsg, msgPart)
 		})
