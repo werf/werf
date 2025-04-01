@@ -10,7 +10,7 @@ import (
 const DefaultKeepImagesBuiltWithinLastNHours uint64 = 2
 
 type rawMetaCleanup struct {
-	DisableCleanup                     bool                        `yaml:"disableCleanup,omitempty"`
+	DisableCleanup                     bool                        `yaml:"disable,omitempty"`
 	DisableKubernetesBasedPolicy       bool                        `yaml:"disableKubernetesBasedPolicy,omitempty"`
 	DisableGitHistoryBasedPolicy       bool                        `yaml:"disableGitHistoryBasedPolicy,omitempty"`
 	DisableBuiltWithinLastNHoursPolicy bool                        `yaml:"disableBuiltWithinLastNHoursPolicy,omitempty"`
