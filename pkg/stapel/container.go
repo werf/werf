@@ -14,12 +14,14 @@ import (
 type container struct {
 	Name      string
 	ImageName string
-	Volume    string
+	label     string
+	volume    string
 }
 
 func (c *container) Create(ctx context.Context) error {
 	name := fmt.Sprintf("--name=%s", c.Name)
-	volume := fmt.Sprintf("--volume=%s", c.Volume)
+	volume := fmt.Sprintf("--volume=%s", c.volume)
+	label := fmt.Sprintf("--label=%s", c.label)
 
 	if exist, err := docker.ImageExist(ctx, c.ImageName); err != nil {
 		return err
@@ -29,7 +31,7 @@ func (c *container) Create(ctx context.Context) error {
 		}
 	}
 
-	return docker.CliCreate(ctx, name, volume, c.ImageName)
+	return docker.CliCreate(ctx, name, volume, label, c.ImageName)
 }
 
 func (c *container) CreateIfNotExist(ctx context.Context) error {
