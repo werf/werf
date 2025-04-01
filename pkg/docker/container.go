@@ -8,8 +8,10 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
+	"github.com/samber/lo"
 	"golang.org/x/net/context"
 
+	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/pkg/container_backend/prune"
 )
 
@@ -53,8 +55,10 @@ type (
 	ContainersPruneReport  prune.Report
 )
 
-func ContainersPrune(ctx context.Context, _ ContainersPruneOptions) (ContainersPruneReport, error) {
-	report, err := apiCli(ctx).ContainersPrune(ctx, filters.NewArgs())
+// ContainersPrune containers using opts.Filters.
+// List of accepted filters is there https://github.com/moby/moby/blob/25.0/daemon/prune.go#L27
+func ContainersPrune(ctx context.Context, opts ContainersPruneOptions) (ContainersPruneReport, error) {
+	report, err := apiCli(ctx).ContainersPrune(ctx, mapContainersPruneOptionsToContainersPruneFilters(opts))
 	if err != nil {
 		return ContainersPruneReport{}, err
 	}
@@ -62,6 +66,13 @@ func ContainersPrune(ctx context.Context, _ ContainersPruneOptions) (ContainersP
 		ItemsDeleted:   report.ContainersDeleted,
 		SpaceReclaimed: report.SpaceReclaimed,
 	}, nil
+}
+
+func mapContainersPruneOptionsToContainersPruneFilters(opts ContainersPruneOptions) filters.Args {
+	args := lo.Map(opts.Filters, func(pair util.Pair[string, string], _ int) filters.KeyValuePair {
+		return filters.Arg(pair.First, pair.Second)
+	})
+	return filters.NewArgs(args...)
 }
 
 func doCliCreate(c command.Cli, args ...string) error {
