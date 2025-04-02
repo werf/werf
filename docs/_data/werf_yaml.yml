@@ -140,8 +140,8 @@ sections:
           - name: disable
             value: "bool"
             description:
-              en: Disable cleanup entirely. This prevents meta images from being published to the container registry. After disabling, you can run werf cleanup to remove existing meta images.
-              ru: Отключить очистку полностью, что предотвращает публикацию мета-образов в container registry. После отключения можно выполнить werf cleanup для удаления существующих мета-образов.
+              en: Disable cleanup entirely. This prevents meta images from being published to the container registry. After disabling, you can run werf cleanup to remove existing meta images
+              ru: Отключить очистку полностью, что предотвращает публикацию мета-образов в container registry. После отключения можно выполнить werf cleanup для удаления существующих мета-образов
           - name: disableKubernetesBasedPolicy
             value: "bool"
             description:
