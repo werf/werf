@@ -275,10 +275,12 @@ var _ = Describe("LocalBackendCleaner", func() {
 				TotalBytes: 1000,
 			}
 			targetVolumeUsagePercentage := 40.00
+
+			imgDigest := "digest"
 			list := image.ImagesList{
-				{ID: "one", Size: 300},
-				{ID: "two", Size: 500},
-				{ID: "three", Size: 200},
+				{ID: "one", Size: 300, RepoDigests: []string{imgDigest}},
+				{ID: "two", Size: 500, RepoDigests: []string{imgDigest}},
+				{ID: "three", Size: 200, RepoDigests: []string{imgDigest}},
 			}
 
 			vuAfterFirstCleanupIteration := volumeutils.VolumeUsage{
@@ -287,6 +289,8 @@ var _ = Describe("LocalBackendCleaner", func() {
 			}
 			stubs.StubFunc(&cleaner.volumeutilsGetVolumeUsageByPath, vuAfterFirstCleanupIteration, nil)
 
+			backend.EXPECT().Rmi(ctx, imgDigest, container_backend.RmiOpts{}).Return(nil).Times(3)
+
 			report, err := cleaner.doSafeCleanupWerfImages(ctx, RunGCOptions{}, vu, targetVolumeUsagePercentage, list)
 			Expect(err).To(Succeed())
 
@@ -294,6 +298,38 @@ var _ = Describe("LocalBackendCleaner", func() {
 			expectedReport.SpaceReclaimed = 200
 			expectedReport.ItemsDeleted = append(expectedReport.ItemsDeleted, list[0].ID, list[1].ID, list[2].ID)
 			Expect(report).To(Equal(expectedReport))
+		})
+		It("should not remove a dangling image and return empty report", func() {
+			vu := volumeutils.VolumeUsage{
+				UsedBytes:  800,
+				TotalBytes: 1000,
+			}
+
+			stubs.StubFunc(&cleaner.volumeutilsGetVolumeUsageByPath, vu, nil)
+
+			list := image.ImagesList{
+				{ID: "one-dangling", Size: 300}, // img without RepoTags and RegoDigests is always dangling image
+			}
+
+			report, err := cleaner.doSafeCleanupWerfImages(ctx, RunGCOptions{}, vu, 40.00, list)
+			Expect(err).To(Succeed())
+			Expect(report).To(Equal(newCleanupReport()))
+		})
+	})
+
+	Describe("removeImageByRepoTags", func() {
+		It("should return (false,nil) if no repo tags", func() {
+			ok, err := cleaner.removeImageByRepoTags(ctx, RunGCOptions{}, image.Summary{})
+			Expect(err).To(Succeed())
+			Expect(ok).To(BeFalse())
+		})
+	})
+
+	Describe("removeImageByRepoDigests", func() {
+		It("should return (false,nil) if no repo digests", func() {
+			ok, err := cleaner.removeImageByRepoDigests(ctx, RunGCOptions{}, image.Summary{})
+			Expect(err).To(Succeed())
+			Expect(ok).To(BeFalse())
 		})
 	})
 

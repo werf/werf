@@ -616,7 +616,7 @@ func (cleaner *LocalBackendCleaner) doSafeCleanupWerfImages(ctx context.Context,
 				if err != nil {
 					return report, err
 				}
-			} else {
+			} else if len(imgSummary.RepoDigests) > 0 {
 				ok, err = cleaner.removeImageByRepoDigests(ctx, options, imgSummary)
 				if err != nil {
 					return report, err
@@ -647,6 +647,7 @@ func (cleaner *LocalBackendCleaner) doSafeCleanupWerfImages(ctx context.Context,
 }
 
 func (cleaner *LocalBackendCleaner) removeImageByRepoTags(ctx context.Context, options RunGCOptions, imgSummary image.Summary) (bool, error) {
+	tagsCount := len(imgSummary.RepoTags)
 	unRemovedCount := 0
 
 	for _, ref := range imgSummary.RepoTags {
@@ -679,10 +680,11 @@ func (cleaner *LocalBackendCleaner) removeImageByRepoTags(ctx context.Context, o
 		}
 	}
 
-	return unRemovedCount == 0, nil
+	return unRemovedCount == 0 && tagsCount > 0, nil
 }
 
 func (cleaner *LocalBackendCleaner) removeImageByRepoDigests(ctx context.Context, options RunGCOptions, imgSummary image.Summary) (bool, error) {
+	digestCount := len(imgSummary.RepoDigests)
 	unRemovedCount := 0
 
 	for _, repoDigest := range imgSummary.RepoDigests {
@@ -695,7 +697,7 @@ func (cleaner *LocalBackendCleaner) removeImageByRepoDigests(ctx context.Context
 		}
 	}
 
-	return unRemovedCount == 0, nil
+	return unRemovedCount == 0 && digestCount > 0, nil
 }
 
 func calcBytesToFree(vu volumeutils.VolumeUsage, targetVolumeUsagePercentage float64) uint64 {
