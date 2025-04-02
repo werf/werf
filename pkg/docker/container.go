@@ -9,6 +9,8 @@ import (
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
 	"golang.org/x/net/context"
+
+	"github.com/werf/werf/v2/pkg/container_backend/prune"
 )
 
 func Containers(ctx context.Context, options types.ContainerListOptions) ([]types.Container, error) {
@@ -47,8 +49,8 @@ func ContainerRemove(ctx context.Context, ref string, options types.ContainerRem
 }
 
 type (
-	ContainersPruneOptions BuildCachePruneOptions
-	ContainersPruneReport  BuildCachePruneReport
+	ContainersPruneOptions prune.Options
+	ContainersPruneReport  prune.Report
 )
 
 func ContainersPrune(ctx context.Context, _ ContainersPruneOptions) (ContainersPruneReport, error) {

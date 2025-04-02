@@ -238,21 +238,6 @@ func (mr *MockContainerBackendMockRecorder) PostManifest(ctx, ref, opts any) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostManifest", reflect.TypeOf((*MockContainerBackend)(nil).PostManifest), ctx, ref, opts)
 }
 
-// PruneBuildCache mocks base method.
-func (m *MockContainerBackend) PruneBuildCache(ctx context.Context, options prune.Options) (prune.Report, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PruneBuildCache", ctx, options)
-	ret0, _ := ret[0].(prune.Report)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// PruneBuildCache indicates an expected call of PruneBuildCache.
-func (mr *MockContainerBackendMockRecorder) PruneBuildCache(ctx, options any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PruneBuildCache", reflect.TypeOf((*MockContainerBackend)(nil).PruneBuildCache), ctx, options)
-}
-
 // PruneContainers mocks base method.
 func (m *MockContainerBackend) PruneContainers(ctx context.Context, options prune.Options) (prune.Report, error) {
 	m.ctrl.T.Helper()

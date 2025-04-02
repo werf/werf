@@ -100,8 +100,6 @@ type ContainerBackend interface {
 
 	ClaimTargetPlatforms(ctx context.Context, targetPlatforms []string)
 
-	// PruneBuildCache removes all unused cache
-	PruneBuildCache(ctx context.Context, options prune.Options) (prune.Report, error)
 	// PruneContainers removes all stopped containers
 	PruneContainers(ctx context.Context, options prune.Options) (prune.Report, error)
 	// PruneImages removes all dangling images
