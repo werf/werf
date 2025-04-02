@@ -61,7 +61,6 @@ func mergeImageSpec(meta, image *ImageSpec) ImageSpec {
 	image.RemoveLabels = mergeSlices(image.RemoveLabels, meta.RemoveLabels)
 
 	return *image
-
 }
 
 func mergeSlices(a, b []string) []string {
