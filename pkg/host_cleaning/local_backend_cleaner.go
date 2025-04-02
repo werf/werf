@@ -492,7 +492,13 @@ func (cleaner *LocalBackendCleaner) pruneImages(ctx context.Context, options Run
 		return mapImageListToCleanupReport(list), nil
 	}
 
-	report, err := cleaner.backend.PruneImages(ctx, prune.Options{})
+	report, err := cleaner.backend.PruneImages(ctx, prune.Options{
+		// werf relies on a "dangling" image for some time before tagging its image.
+		// Guard dangling images for "werf build" with Stapel.
+		Filters: []util.Pair[string, string]{
+			util.NewPair("label!", image.WerfLabel),
+		},
+	})
 	return mapPruneReportToCleanupReport(report), err
 }
 
