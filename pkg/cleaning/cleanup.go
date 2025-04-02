@@ -120,6 +120,18 @@ func (m *cleanupManager) init(ctx context.Context) error {
 }
 
 func (m *cleanupManager) run(ctx context.Context) error {
+	if m.ConfigMetaCleanup.DisableCleanup {
+		if err := m.purgeManagedImages(ctx); err != nil {
+			return err
+		}
+
+		if err := m.purgeImageMetadata(ctx); err != nil {
+			return err
+		}
+
+		return nil
+	}
+
 	if err := logboek.Context(ctx).LogProcess("Fetching manifests and metadata").DoError(func() error {
 		return m.init(ctx)
 	}); err != nil {
@@ -193,6 +205,10 @@ func (m *cleanupManager) run(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (m *cleanupManager) purgeManagedImages(ctx context.Context) error {
+	return purgeManagedImages(ctx, m.ProjectName, m.StorageManager, m.DryRun)
 }
 
 func (m *cleanupManager) purgeImageMetadata(ctx context.Context) error {
@@ -682,16 +698,72 @@ func (m *cleanupManager) deleteImageMetadata(ctx context.Context, imageName stri
 }
 
 func purgeImageMetadata(ctx context.Context, projectName string, storageManager manager.StorageManagerInterface, dryRun bool) error {
-	return logboek.Context(ctx).Default().LogProcess("Deleting images metadata").DoError(func() error {
-		_, imageMetadataByImageName, err := storageManager.GetStagesStorage().GetAllAndGroupImageMetadataByImageName(ctx, projectName, []string{}, storage.WithCache())
-		if err != nil {
-			return err
-		}
+	var imageMetadataByImageName map[string]map[string][]string
+	if err := logboek.Context(ctx).Default().LogProcess("Fetching images metadata").DoError(func() error {
+		var err error
+		_, imageMetadataByImageName, err = storageManager.GetStagesStorage().GetAllAndGroupImageMetadataByImageName(ctx, projectName, []string{}, storage.WithCache())
+		return err
+	}); err != nil {
+		return err
+	}
 
+	var number int
+	for _, stageIDCommitList := range imageMetadataByImageName {
+		for _, commitList := range stageIDCommitList {
+			number += len(commitList)
+		}
+	}
+
+	return logboek.Context(ctx).Default().LogProcess("Deleting images metadata (%d)", number).DoError(func() error {
 		for imageNameID, stageIDCommitList := range imageMetadataByImageName {
 			if err := deleteImageMetadata(ctx, projectName, storageManager, imageNameID, stageIDCommitList, dryRun); err != nil {
 				return err
 			}
+		}
+
+		return nil
+	})
+}
+
+func deleteManagedImages(ctx context.Context, projectName string, storageManager manager.StorageManagerInterface, managedImages []string, dryRun bool) error {
+	if dryRun {
+		for _, managedImage := range managedImages {
+			logboek.Context(ctx).Default().LogFDetails("  name: %s\n", logging.ImageLogName(managedImage))
+			logboek.Context(ctx).LogOptionalLn()
+		}
+		return nil
+	}
+
+	return storageManager.ForEachRmManagedImage(ctx, projectName, managedImages, func(ctx context.Context, managedImage string, err error) error {
+		if err != nil {
+			if err := handleDeletionError(err); err != nil {
+				return err
+			}
+
+			logboek.Context(ctx).Warn().LogF("WARNING: Managed image %s deletion failed: %s\n", managedImage, err)
+
+			return nil
+		}
+
+		logboek.Context(ctx).Default().LogFDetails("  name: %s\n", logging.ImageLogName(managedImage))
+
+		return nil
+	})
+}
+
+func purgeManagedImages(ctx context.Context, projectName string, storageManager manager.StorageManagerInterface, dryRun bool) error {
+	var managedImages []string
+	if err := logboek.Context(ctx).Default().LogProcess("Fetching managed images").DoError(func() error {
+		var err error
+		managedImages, err = storageManager.GetStagesStorage().GetManagedImages(ctx, projectName, storage.WithCache())
+		return err
+	}); err != nil {
+		return err
+	}
+
+	return logboek.Context(ctx).Default().LogProcess("Deleting managed images (%d)", len(managedImages)).DoError(func() error {
+		if err := deleteManagedImages(ctx, projectName, storageManager, managedImages, dryRun); err != nil {
+			return err
 		}
 
 		return nil

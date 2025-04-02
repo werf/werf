@@ -48,6 +48,7 @@ type BuildOptions struct {
 	ReportFormat ReportFormat
 
 	SkipImageMetadataPublication bool
+	SkipAddManagedImagesRecords  bool
 	CustomTagFuncList            []imagePkg.CustomTagFunc
 }
 
@@ -800,7 +801,9 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *image.Image, stg
 	}
 
 	// Add managed image record only if there was at least one newly built stage
-	phase.Conveyor.SetShouldAddManagedImagesRecords()
+	if !phase.BuildOptions.SkipAddManagedImagesRecords {
+		phase.Conveyor.SetShouldAddManagedImagesRecords()
+	}
 
 	return nil
 }

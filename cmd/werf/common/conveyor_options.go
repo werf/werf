@@ -93,7 +93,8 @@ func GetBuildOptions(ctx context.Context, commonCmdData *CmdData, werfConfig *co
 	}
 
 	buildOptions = build.BuildOptions{
-		SkipImageMetadataPublication: *commonCmdData.Dev || werfConfig.Meta.Cleanup.DisableGitHistoryBasedPolicy,
+		SkipAddManagedImagesRecords:  werfConfig.Meta.Cleanup.DisableCleanup,
+		SkipImageMetadataPublication: *commonCmdData.Dev || werfConfig.Meta.Cleanup.DisableGitHistoryBasedPolicy || werfConfig.Meta.Cleanup.DisableCleanup,
 		CustomTagFuncList:            customTagFuncList,
 		ImageBuildOptions: container_backend.BuildOptions{
 			IntrospectAfterError:  *commonCmdData.IntrospectAfterError,
