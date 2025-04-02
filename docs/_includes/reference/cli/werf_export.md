@@ -78,8 +78,6 @@ werf export [IMAGE_NAME...] [options]
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)
             Command needs granted permissions to read and pull images from the specified repo
-      --dry-run=false
-            Indicate what the command would do without actually doing that (default $WERF_DRY_RUN)
       --env=""
             Use specified environment (default $WERF_ENV)
       --final-repo=""
