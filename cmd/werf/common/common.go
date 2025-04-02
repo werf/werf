@@ -18,7 +18,6 @@ import (
 	"github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
 	"github.com/werf/nelm/pkg/action"
-	"github.com/werf/nelm/pkg/log"
 	"github.com/werf/werf/v2/pkg/background"
 	"github.com/werf/werf/v2/pkg/build"
 	"github.com/werf/werf/v2/pkg/build/stage"
@@ -1539,15 +1538,15 @@ func ProcessLogOptions(cmdData *CmdData) error {
 	return nil
 }
 
-func GetNelmLogLevel(cmdData *CmdData) log.Level {
-	var logLevel log.Level
+func GetNelmLogLevel(cmdData *CmdData) string {
+	var logLevel string
 	switch {
 	case *cmdData.LogDebug:
-		logLevel = log.TraceLevel
+		logLevel = action.TraceLogLevel
 	case *cmdData.LogQuiet:
-		logLevel = log.ErrorLevel
+		logLevel = action.ErrorLogLevel
 	default:
-		logLevel = log.InfoLevel
+		logLevel = action.InfoLogLevel
 	}
 
 	return logLevel
