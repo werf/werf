@@ -15,6 +15,8 @@ import (
 const (
 	VERSION = "0.6.2"
 	IMAGE   = "registry.werf.io/werf/stapel"
+
+	LabelAssemblingContainer = "werf.guard.stapel-assembling-container=true"
 )
 
 func getVersion() string {
@@ -41,7 +43,8 @@ func getContainer() container {
 	return container{
 		Name:      fmt.Sprintf("stapel_%s", getVersion()),
 		ImageName: ImageName(),
-		Volume:    "/.werf/stapel",
+		label:     LabelAssemblingContainer,
+		volume:    "/.werf/stapel",
 	}
 }
 

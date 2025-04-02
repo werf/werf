@@ -20,6 +20,7 @@ import (
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/container_backend/prune"
 	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/stapel"
 	"github.com/werf/werf/v2/pkg/storage/lrumeta"
 	"github.com/werf/werf/v2/pkg/volumeutils"
 	"github.com/werf/werf/v2/pkg/werf"
@@ -477,9 +478,11 @@ func (cleaner *LocalBackendCleaner) pruneContainers(ctx context.Context, options
 	}
 
 	report, err := cleaner.backend.PruneContainers(ctx, prune.Options{
-		// Guard "exited" containers for "werf build" with Stapel.
-		// werf relies on an "exited" container for some time before committing the container as an image.
+		// werf relies on "created" and "exited" containers for "werf build" with Stapel:
 		Filters: []util.Pair[string, string]{
+			// a) Guard a "created" container from registry.werf.io/werf/stapel to use it while building
+			util.NewPair("label!", stapel.LabelAssemblingContainer),
+			// b) Guard an "exited" container for some time before committing the container as an image
 			util.NewPair("until", "1h"),
 		},
 	})

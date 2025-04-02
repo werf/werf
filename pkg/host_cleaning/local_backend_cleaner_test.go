@@ -16,6 +16,7 @@ import (
 	"github.com/werf/werf/v2/pkg/container_backend/info"
 	"github.com/werf/werf/v2/pkg/container_backend/prune"
 	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/stapel"
 	"github.com/werf/werf/v2/pkg/volumeutils"
 	"github.com/werf/werf/v2/test/mock"
 )
@@ -105,6 +106,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 		})
 		It("should call backend.PruneContainers() if opts.DryRun=true", func() {
 			containersFilters := []util.Pair[string, string]{
+				util.NewPair("label!", stapel.LabelAssemblingContainer),
 				util.NewPair("until", "1h"),
 			}
 
@@ -327,6 +329,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 			}
 
 			containersFilters := []util.Pair[string, string]{
+				util.NewPair("label!", stapel.LabelAssemblingContainer),
 				util.NewPair("until", "1h"),
 			}
 
