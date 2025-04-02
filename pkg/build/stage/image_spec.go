@@ -39,10 +39,10 @@ func GenerateImageSpecStage(imageSpec *config.ImageSpec, baseStageOptions *BaseS
 }
 
 func newImageSpecStage(imageSpec *config.ImageSpec, baseStageOptions *BaseStageOptions) *ImageSpecStage {
-	s := &ImageSpecStage{}
-	s.imageSpec = imageSpec
-	s.BaseStage = NewBaseStage(ImageSpec, baseStageOptions)
-	return s
+	return &ImageSpecStage{
+		imageSpec: imageSpec,
+		BaseStage: NewBaseStage(ImageSpec, baseStageOptions),
+	}
 }
 
 func (s *ImageSpecStage) IsBuildable() bool {
@@ -56,67 +56,55 @@ func (s *ImageSpecStage) IsMutable() bool {
 func (s *ImageSpecStage) PrepareImage(ctx context.Context, _ Conveyor, _ container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, _ container_backend.BuildContextArchiver) error {
 	if s.imageSpec != nil {
 		imageInfo := prevBuiltImage.Image.GetStageDesc().Info
+		newConfig := s.baseConfig()
 
-		newConfig := image.Config{
-			Author:     s.imageSpec.Author,
-			User:       s.imageSpec.User,
-			Entrypoint: s.imageSpec.Entrypoint,
-			Cmd:        s.imageSpec.Cmd,
-			WorkingDir: s.imageSpec.WorkingDir,
-			StopSignal: s.imageSpec.StopSignal,
+		{
+			// lables
+			resultLabels, err := s.modifyLabels(ctx, imageInfo.Labels, s.imageSpec.Labels, s.imageSpec.RemoveLabels, s.imageSpec.KeepEssentialWerfLabels)
+			if err != nil {
+				return fmt.Errorf("unable to modify labels: %s", err)
+			}
+			newConfig.Labels = resultLabels
 		}
 
-		// Entrypoint and Cmd handling.
 		{
-			// If CMD is defined from the base image, setting ENTRYPOINT will reset CMD to an empty value.
-			// In this scenario, CMD must be defined in the current image to have a value.
-			// rel https://docs.docker.com/reference/dockerfile/#understand-how-cmd-and-entrypoint-interact
-			if s.imageSpec.Entrypoint != nil {
-				newConfig.Entrypoint = s.imageSpec.Entrypoint
-				if s.imageSpec.Cmd == nil {
-					newConfig.ClearCmd = true
+			// envs
+			resultEnvs, err := modifyEnv(imageInfo.Env, s.imageSpec.RemoveEnv, s.imageSpec.Env)
+			if err != nil {
+				return fmt.Errorf("unable to modify env: %w", err)
+			}
+			newConfig.Env = resultEnvs
+		}
+
+		{
+			// volumes
+			newConfig.Volumes = modifyVolumes(imageInfo.Volumes, s.imageSpec.RemoveVolumes, s.imageSpec.Volumes)
+		}
+
+		{
+			// expose
+			if s.imageSpec.Expose != nil {
+				newConfig.ExposedPorts = make(map[string]struct{}, len(s.imageSpec.Expose))
+				for _, expose := range s.imageSpec.Expose {
+					newConfig.ExposedPorts[expose] = struct{}{}
 				}
 			}
-
-			if s.imageSpec.Cmd != nil {
-				newConfig.Cmd = s.imageSpec.Cmd
-			}
-
-			newConfig.ClearCmd = newConfig.ClearCmd || s.imageSpec.ClearCmd
-			newConfig.ClearEntrypoint = newConfig.ClearEntrypoint || s.imageSpec.ClearEntrypoint
 		}
 
-		resultLabels, err := s.modifyLabels(ctx, imageInfo.Labels, s.imageSpec.Labels, s.imageSpec.RemoveLabels, s.imageSpec.KeepEssentialWerfLabels)
-		if err != nil {
-			return fmt.Errorf("unable to modify labels: %s", err)
-		}
-
-		newConfig.Labels = resultLabels
-		newConfig.Env, err = modifyEnv(imageInfo.Env, s.imageSpec.RemoveEnv, s.imageSpec.Env)
-		if err != nil {
-			return fmt.Errorf("unable to modify env: %w", err)
-		}
-		newConfig.Volumes = modifyVolumes(imageInfo.Volumes, s.imageSpec.RemoveVolumes, s.imageSpec.Volumes)
-
-		if s.imageSpec.Expose != nil {
-			newConfig.ExposedPorts = make(map[string]struct{}, len(s.imageSpec.Expose))
-			for _, expose := range s.imageSpec.Expose {
-				newConfig.ExposedPorts[expose] = struct{}{}
+		{
+			// healthcheck
+			if s.imageSpec.Healthcheck != nil {
+				newConfig.HealthConfig = &image.HealthConfig{
+					Test:        s.imageSpec.Healthcheck.Test,
+					Interval:    toDuration(s.imageSpec.Healthcheck.Interval),
+					Timeout:     toDuration(s.imageSpec.Healthcheck.Timeout),
+					StartPeriod: toDuration(s.imageSpec.Healthcheck.StartPeriod),
+					Retries:     s.imageSpec.Healthcheck.Retries,
+				}
 			}
 		}
 
-		if s.imageSpec.Healthcheck != nil {
-			newConfig.HealthConfig = &image.HealthConfig{
-				Test:        s.imageSpec.Healthcheck.Test,
-				Interval:    toDuration(s.imageSpec.Healthcheck.Interval),
-				Timeout:     toDuration(s.imageSpec.Healthcheck.Timeout),
-				StartPeriod: toDuration(s.imageSpec.Healthcheck.StartPeriod),
-				Retries:     s.imageSpec.Healthcheck.Retries,
-			}
-		}
-
-		newConfig.ClearHistory = s.imageSpec.ClearHistory
-
+		// set config
 		stageImage.Image.SetImageSpecConfig(&newConfig)
 	}
 
@@ -150,7 +138,54 @@ func (s *ImageSpecStage) GetDependencies(_ context.Context, _ Conveyor, _ contai
 	args = append(args, s.imageSpec.StopSignal)
 	args = append(args, fmt.Sprint(s.imageSpec.Healthcheck))
 
+	if s.imageSpec.ClearUser {
+		args = append(args, fmt.Sprint(s.imageSpec.ClearUser))
+	}
+
+	if s.imageSpec.ClearWorkingDir {
+		args = append(args, fmt.Sprint(s.imageSpec.ClearWorkingDir))
+	}
+
+	if s.imageSpec.KeepEssentialWerfLabels {
+		args = append(args, fmt.Sprint(s.imageSpec.KeepEssentialWerfLabels))
+	}
+
 	return util.Sha256Hash(args...), nil
+}
+
+func (s *ImageSpecStage) baseConfig() image.Config {
+	newConfig := image.Config{
+		Author:          s.imageSpec.Author,
+		User:            s.imageSpec.User,
+		Entrypoint:      s.imageSpec.Entrypoint,
+		Cmd:             s.imageSpec.Cmd,
+		WorkingDir:      s.imageSpec.WorkingDir,
+		StopSignal:      s.imageSpec.StopSignal,
+		ClearHistory:    s.imageSpec.ClearHistory,
+		ClearUser:       s.imageSpec.ClearUser,
+		ClearWorkingDir: s.imageSpec.ClearWorkingDir,
+	}
+
+	// Entrypoint and Cmd handling.
+	{
+		// If CMD is defined from the base image, setting ENTRYPOINT will reset CMD to an empty value.
+		// In this scenario, CMD must be defined in the current image to have a value.
+		// rel https://docs.docker.com/reference/dockerfile/#understand-how-cmd-and-entrypoint-interact
+		if s.imageSpec.Entrypoint != nil {
+			newConfig.Entrypoint = s.imageSpec.Entrypoint
+			if s.imageSpec.Cmd == nil {
+				newConfig.ClearCmd = true
+			}
+		}
+
+		if s.imageSpec.Cmd != nil {
+			newConfig.Cmd = s.imageSpec.Cmd
+		}
+
+		newConfig.ClearCmd = newConfig.ClearCmd || s.imageSpec.ClearCmd
+		newConfig.ClearEntrypoint = newConfig.ClearEntrypoint || s.imageSpec.ClearEntrypoint
+	}
+	return newConfig
 }
 
 func (s *ImageSpecStage) modifyLabels(ctx context.Context, labels, addLabels map[string]string, removeLabels []string, keepEssentialWerfLabels bool) (map[string]string, error) {
@@ -160,22 +195,6 @@ func (s *ImageSpecStage) modifyLabels(ctx context.Context, labels, addLabels map
 
 	serviceLabels := s.stageImage.Image.GetBuildServiceLabels()
 	labels = util.MergeMaps(labels, serviceLabels)
-
-	processedAddLabels := make(map[string]string, len(addLabels))
-	data := labelsTemplateData{
-		Project: s.projectName,
-		Image:   s.imageName,
-	}
-
-	for key, value := range addLabels {
-		newKey, newValue, err := replaceLabelTemplate(key, value, data)
-		if err != nil {
-			return nil, err
-		}
-		processedAddLabels[newKey] = newValue
-	}
-
-	labels = util.MergeMaps(labels, processedAddLabels)
 
 	exactMatches := make(map[string]struct{})
 	var regexPatterns []*regexp.Regexp
@@ -225,6 +244,22 @@ func (s *ImageSpecStage) modifyLabels(ctx context.Context, labels, addLabels map
 	if shouldPrintGlobalWarn {
 		global_warnings.GlobalWarningLn(ctx, werfLabelsGlobalWarning)
 	}
+
+	processedAddLabels := make(map[string]string, len(addLabels))
+	data := labelsTemplateData{
+		Project: s.projectName,
+		Image:   s.imageName,
+	}
+
+	for key, value := range addLabels {
+		newKey, newValue, err := replaceLabelTemplate(key, value, data)
+		if err != nil {
+			return nil, err
+		}
+		processedAddLabels[newKey] = newValue
+	}
+
+	labels = util.MergeMaps(labels, processedAddLabels)
 
 	return labels, nil
 }

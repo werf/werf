@@ -8,6 +8,7 @@ import (
 
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
+	"github.com/werf/werf/v2/pkg/image"
 )
 
 func TestEnvExpander(t *testing.T) {
@@ -313,4 +314,65 @@ func TestGetDependencies_StableHash(t *testing.T) {
 	assert.NoError(t, err1)
 	assert.NoError(t, err2)
 	assert.Equal(t, hash1, hash2, "Hashes should be identical regardless of element order")
+}
+
+func TestBaseConfig(t *testing.T) {
+	tests := []struct {
+		name     string
+		spec     config.ImageSpec
+		expected image.Config
+	}{
+		{
+			name: "Entrypoint and Cmd are set",
+			spec: config.ImageSpec{
+				Entrypoint: []string{"/bin/sh", "-c"},
+				Cmd:        []string{"echo", "hello"},
+			},
+			expected: image.Config{
+				Entrypoint: []string{"/bin/sh", "-c"},
+				Cmd:        []string{"echo", "hello"},
+			},
+		},
+		{
+			name: "Entrypoint is set, but Cmd is empty",
+			spec: config.ImageSpec{
+				Entrypoint: []string{"/bin/sh", "-c"},
+				Cmd:        nil,
+			},
+			expected: image.Config{
+				Entrypoint: []string{"/bin/sh", "-c"},
+				ClearCmd:   true,
+			},
+		},
+		{
+			name: "Entrypoint is empty, ClearCmd and ClearEntrypoint are set",
+			spec: config.ImageSpec{
+				ClearCmd:        true,
+				ClearEntrypoint: true,
+			},
+			expected: image.Config{
+				ClearCmd:        true,
+				ClearEntrypoint: true,
+			},
+		},
+		{
+			name: "Entrypoint and Cmd are both empty, ClearCmd is false",
+			spec: config.ImageSpec{
+				ClearCmd:        false,
+				ClearEntrypoint: false,
+			},
+			expected: image.Config{
+				ClearCmd:        false,
+				ClearEntrypoint: false,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			stage := ImageSpecStage{imageSpec: &tt.spec}
+			result := stage.baseConfig()
+			assert.Equal(t, tt.expected, result)
+		})
+	}
 }

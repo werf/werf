@@ -25,6 +25,8 @@ type Config struct {
 	ClearHistory    bool
 	ClearCmd        bool
 	ClearEntrypoint bool
+	ClearUser       bool
+	ClearWorkingDir bool
 }
 
 // RootFS represents the `rootfs` object
@@ -75,6 +77,9 @@ func updateConfigFile(updates Config, target *v1.ConfigFile) {
 	if updates.ExposedPorts != nil {
 		target.Config.ExposedPorts = updates.ExposedPorts
 	}
+	if updates.ClearUser {
+		target.Config.User = ""
+	}
 	if updates.User != "" {
 		target.Config.User = updates.User
 	}
@@ -85,10 +90,13 @@ func updateConfigFile(updates Config, target *v1.ConfigFile) {
 		target.Config.Cmd = updates.Cmd
 	}
 	if updates.ClearEntrypoint {
-		target.Config.Cmd = []string{}
+		target.Config.Entrypoint = []string{}
 	}
 	if len(updates.Entrypoint) > 0 {
 		target.Config.Entrypoint = updates.Entrypoint
+	}
+	if updates.ClearWorkingDir {
+		target.Config.WorkingDir = ""
 	}
 	if updates.WorkingDir != "" {
 		target.Config.WorkingDir = updates.WorkingDir
