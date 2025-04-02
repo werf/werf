@@ -698,12 +698,23 @@ func (m *cleanupManager) deleteImageMetadata(ctx context.Context, imageName stri
 }
 
 func purgeImageMetadata(ctx context.Context, projectName string, storageManager manager.StorageManagerInterface, dryRun bool) error {
-	return logboek.Context(ctx).Default().LogProcess("Deleting images metadata").DoError(func() error {
-		_, imageMetadataByImageName, err := storageManager.GetStagesStorage().GetAllAndGroupImageMetadataByImageName(ctx, projectName, []string{}, storage.WithCache())
-		if err != nil {
-			return err
-		}
+	var imageMetadataByImageName map[string]map[string][]string
+	if err := logboek.Context(ctx).Default().LogProcess("Fetching images metadata").DoError(func() error {
+		var err error
+		_, imageMetadataByImageName, err = storageManager.GetStagesStorage().GetAllAndGroupImageMetadataByImageName(ctx, projectName, []string{}, storage.WithCache())
+		return err
+	}); err != nil {
+		return err
+	}
 
+	var number int
+	for _, stageIDCommitList := range imageMetadataByImageName {
+		for _, commitList := range stageIDCommitList {
+			number += len(commitList)
+		}
+	}
+
+	return logboek.Context(ctx).Default().LogProcess("Deleting images metadata (%d)", number).DoError(func() error {
 		for imageNameID, stageIDCommitList := range imageMetadataByImageName {
 			if err := deleteImageMetadata(ctx, projectName, storageManager, imageNameID, stageIDCommitList, dryRun); err != nil {
 				return err
@@ -741,12 +752,16 @@ func deleteManagedImages(ctx context.Context, projectName string, storageManager
 }
 
 func purgeManagedImages(ctx context.Context, projectName string, storageManager manager.StorageManagerInterface, dryRun bool) error {
-	return logboek.Context(ctx).Default().LogProcess("Deleting managed images").DoError(func() error {
-		managedImages, err := storageManager.GetStagesStorage().GetManagedImages(ctx, projectName, storage.WithCache())
-		if err != nil {
-			return err
-		}
+	var managedImages []string
+	if err := logboek.Context(ctx).Default().LogProcess("Fetching managed images").DoError(func() error {
+		var err error
+		managedImages, err = storageManager.GetStagesStorage().GetManagedImages(ctx, projectName, storage.WithCache())
+		return err
+	}); err != nil {
+		return err
+	}
 
+	return logboek.Context(ctx).Default().LogProcess("Deleting managed images (%d)", len(managedImages)).DoError(func() error {
 		if err := deleteManagedImages(ctx, projectName, storageManager, managedImages, dryRun); err != nil {
 			return err
 		}
