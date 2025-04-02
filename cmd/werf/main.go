@@ -11,7 +11,7 @@ import (
 
 	helm_v3 "github.com/werf/3p-helm/cmd/helm"
 	"github.com/werf/logboek"
-	"github.com/werf/nelm/pkg/resrcchangcalc"
+	"github.com/werf/nelm/pkg/action"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/cmd/werf/root"
 	"github.com/werf/werf/v2/pkg/background"
@@ -61,7 +61,7 @@ func main() {
 		if helm_v3.IsPluginError(err) {
 			common.ShutdownTelemetry(ctx, helm_v3.PluginErrorCode(err))
 			common.TerminateWithError(err.Error(), helm_v3.PluginErrorCode(err))
-		} else if errors.Is(err, resrcchangcalc.ErrChangesPlanned) {
+		} else if errors.Is(err, action.ErrChangesPlanned) {
 			common.ShutdownTelemetry(ctx, 2)
 			os.Exit(2)
 		} else {

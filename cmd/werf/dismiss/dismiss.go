@@ -183,11 +183,11 @@ func runDismiss(ctx context.Context) error {
 		KubeSkipTLSVerify:          *commonCmdData.SkipTlsVerifyKube,
 		KubeTLSServerName:          *commonCmdData.KubeTlsServer,
 		KubeToken:                  *commonCmdData.KubeToken,
-		LogColorMode:               action.LogColorMode(*commonCmdData.LogColorMode),
+		LogColorMode:               *commonCmdData.LogColorMode,
 		LogLevel:                   common.GetNelmLogLevel(&commonCmdData),
 		ProgressTablePrintInterval: time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
 		ReleaseHistoryLimit:        *commonCmdData.ReleasesHistoryMax,
-		ReleaseStorageDriver:       action.ReleaseStorageDriver(os.Getenv("HELM_DRIVER")),
+		ReleaseStorageDriver:       os.Getenv("HELM_DRIVER"),
 	}); err != nil {
 		return fmt.Errorf("release uninstall: %w", err)
 	}

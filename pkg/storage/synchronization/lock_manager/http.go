@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/werf/common-go/pkg/locker_with_retry"
 	"github.com/werf/lockgate/pkg/distributed_locker"
-	"github.com/werf/nelm/pkg/locker_with_retry"
 )
 
 func NewHttp(ctx context.Context, address, clientID string) (Interface, error) {
