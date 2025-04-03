@@ -238,21 +238,6 @@ func (mr *MockContainerBackendMockRecorder) PostManifest(ctx, ref, opts any) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostManifest", reflect.TypeOf((*MockContainerBackend)(nil).PostManifest), ctx, ref, opts)
 }
 
-// PruneContainers mocks base method.
-func (m *MockContainerBackend) PruneContainers(ctx context.Context, options prune.Options) (prune.Report, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PruneContainers", ctx, options)
-	ret0, _ := ret[0].(prune.Report)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// PruneContainers indicates an expected call of PruneContainers.
-func (mr *MockContainerBackendMockRecorder) PruneContainers(ctx, options any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PruneContainers", reflect.TypeOf((*MockContainerBackend)(nil).PruneContainers), ctx, options)
-}
-
 // PruneImages mocks base method.
 func (m *MockContainerBackend) PruneImages(ctx context.Context, options prune.Options) (prune.Report, error) {
 	m.ctrl.T.Helper()

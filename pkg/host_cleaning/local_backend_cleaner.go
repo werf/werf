@@ -342,25 +342,7 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 
 	vuBefore := vu
 
-	// Step 1. Prune stopped containers
-	err = logboek.Context(ctx).LogBlock("Prune stopped containers").DoError(func() error {
-		reportContainers, err := cleaner.pruneContainers(ctx, options)
-		if handleError(ctx, err) != nil {
-			return err
-		}
-
-		vu.UsedBytes -= reportContainers.SpaceReclaimed
-
-		logboek.Context(ctx).LogF("Freed space: %s\n", utils.RedF("%s", humanize.Bytes(reportContainers.SpaceReclaimed)))
-		logDeletedItems(ctx, reportContainers.ItemsDeleted)
-
-		return nil
-	})
-	if err != nil {
-		return fmt.Errorf("unable to prune stopped containers: %w", err)
-	}
-
-	// Step 2. Prune unused anonymous volumes
+	// Step 1. Prune unused anonymous volumes
 	err = logboek.Context(ctx).LogBlock("Prune unused anonymous volumes").DoError(func() error {
 		reportVolumes, err := cleaner.pruneVolumes(ctx, options)
 		if handleError(ctx, err) != nil {
@@ -378,7 +360,7 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 		return fmt.Errorf("unable to prune unused anonymous volumes: %w", err)
 	}
 
-	// Step 3. Prune dangling images
+	// Step 2. Prune dangling images
 	err = logboek.Context(ctx).LogBlock("Prune dangling images").DoError(func() error {
 		reportImages, err := cleaner.pruneImages(ctx, options)
 		if handleError(ctx, err) != nil {
@@ -407,7 +389,7 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 		return nil
 	}
 
-	// Step 4. Remove werf containers
+	// Step 3. Remove werf containers
 	err = logboek.Context(ctx).LogBlock("Cleanup werf containers").DoError(func() error {
 		reportWerfContainers, err := cleaner.safeCleanupWerfContainers(ctx, options, vu)
 		if err != nil {
@@ -425,7 +407,7 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 		return fmt.Errorf("unable to remove werf containers: %w", err)
 	}
 
-	// Step 5. Remove werf images
+	// Step 4. Remove werf images
 	err = logboek.Context(ctx).LogBlock("Cleanup werf images").DoError(func() error {
 		reportWerfImages, err := cleaner.safeCleanupWerfImages(ctx, options, vu, targetVolumeUsagePercentage)
 		if err != nil {
@@ -462,22 +444,6 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 	}
 
 	return nil
-}
-
-// pruneContainers removes all stopped containers
-func (cleaner *LocalBackendCleaner) pruneContainers(ctx context.Context, options RunGCOptions) (cleanupReport, error) {
-	if options.DryRun {
-		// NOTE: Buildah does not give us a way to precalculate pruned size.
-
-		// NOTE: Docker give us an ability to precalculate container.Size, however it is expensive operation.
-		// In docker case we could list containers using: status=exited AND size=true AND all=true:
-		// https://pkg.go.dev/github.com/docker/docker/client@v25.0.5+incompatible#ContainerAPIClient.ContainerList
-
-		return newCleanupReport(), errOptionDryRunNotSupported
-	}
-
-	report, err := cleaner.backend.PruneContainers(ctx, prune.Options{})
-	return mapPruneReportToCleanupReport(report), err
 }
 
 // pruneImages removes all dangling images

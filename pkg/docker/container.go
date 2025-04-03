@@ -6,11 +6,8 @@ import (
 	"github.com/docker/cli/cli/command"
 	"github.com/docker/cli/cli/command/container"
 	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
 	"golang.org/x/net/context"
-
-	"github.com/werf/werf/v2/pkg/container_backend/prune"
 )
 
 func Containers(ctx context.Context, options types.ContainerListOptions) ([]types.Container, error) {
@@ -46,22 +43,6 @@ func ContainerCommit(ctx context.Context, ref string, commitOptions types.Contai
 
 func ContainerRemove(ctx context.Context, ref string, options types.ContainerRemoveOptions) error {
 	return apiCli(ctx).ContainerRemove(ctx, ref, options)
-}
-
-type (
-	ContainersPruneOptions prune.Options
-	ContainersPruneReport  prune.Report
-)
-
-func ContainersPrune(ctx context.Context, _ ContainersPruneOptions) (ContainersPruneReport, error) {
-	report, err := apiCli(ctx).ContainersPrune(ctx, filters.NewArgs())
-	if err != nil {
-		return ContainersPruneReport{}, err
-	}
-	return ContainersPruneReport{
-		ItemsDeleted:   report.ContainersDeleted,
-		SpaceReclaimed: report.SpaceReclaimed,
-	}, nil
 }
 
 func doCliCreate(c command.Cli, args ...string) error {

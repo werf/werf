@@ -100,8 +100,6 @@ type ContainerBackend interface {
 
 	ClaimTargetPlatforms(ctx context.Context, targetPlatforms []string)
 
-	// PruneContainers removes all stopped containers
-	PruneContainers(ctx context.Context, options prune.Options) (prune.Report, error)
 	// PruneImages removes all dangling images
 	PruneImages(ctx context.Context, options prune.Options) (prune.Report, error)
 	// PruneVolumes removes all anonymous volumes not used by at least one container

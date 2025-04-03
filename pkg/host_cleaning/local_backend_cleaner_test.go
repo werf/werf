@@ -96,22 +96,6 @@ var _ = Describe("LocalBackendCleaner", func() {
 		})
 	})
 
-	Describe("pruneContainers", func() {
-		It("should return err if opts.DryRun=true", func() {
-			_, err := cleaner.pruneContainers(ctx, RunGCOptions{
-				DryRun: true,
-			})
-			Expect(errors.Is(err, errOptionDryRunNotSupported)).To(BeTrue())
-		})
-		It("should call backend.PruneContainers() if opts.DryRun=true", func() {
-			backend.EXPECT().PruneContainers(ctx, prune.Options{}).Return(prune.Report{}, nil)
-
-			report, err := cleaner.pruneContainers(ctx, RunGCOptions{})
-			Expect(err).To(Succeed())
-			Expect(report).To(Equal(newCleanupReport()))
-		})
-	})
-
 	Describe("pruneImages", func() {
 		It("should call backend.Images() to find dandling images if opts.DryRun=true", func() {
 			backend.EXPECT().Images(ctx, buildImagesOptions(
@@ -369,7 +353,6 @@ var _ = Describe("LocalBackendCleaner", func() {
 			// keep orders of backend calls
 			gomock.InOrder(
 				// use backend native GC pruning
-				backend.EXPECT().PruneContainers(ctx, prune.Options{}).Return(prune.Report{}, nil),
 				backend.EXPECT().PruneVolumes(ctx, prune.Options{}).Return(prune.Report{}, nil),
 				backend.EXPECT().PruneImages(ctx, prune.Options{Filters: imagesFilters}).Return(prune.Report{}, nil),
 
