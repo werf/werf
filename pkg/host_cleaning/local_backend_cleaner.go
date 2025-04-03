@@ -18,6 +18,7 @@ import (
 	"github.com/werf/kubedog/pkg/utils"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/container_backend"
+	"github.com/werf/werf/v2/pkg/container_backend/filter"
 	"github.com/werf/werf/v2/pkg/container_backend/prune"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/storage/lrumeta"
@@ -361,7 +362,7 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 	}
 
 	// Step 2. Prune unused anonymous volumes
-	err = logboek.Context(ctx).LogBlock("Prune unused anonymous volumes").DoError(func() error {
+	err = logboek.Context(ctx).LogBlock("Prune all unused anonymous volumes").DoError(func() error {
 		reportVolumes, err := cleaner.pruneVolumes(ctx, options)
 		if handleError(ctx, err) != nil {
 			return err
@@ -378,8 +379,8 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 		return fmt.Errorf("unable to prune unused anonymous volumes: %w", err)
 	}
 
-	// Step 3. Prune dangling images
-	err = logboek.Context(ctx).LogBlock("Prune dangling images").DoError(func() error {
+	// Step 3. Prune werf dangling images
+	err = logboek.Context(ctx).LogBlock("Prune werf dangling images created more than 1 hour ago").DoError(func() error {
 		reportImages, err := cleaner.pruneImages(ctx, options)
 		if handleError(ctx, err) != nil {
 			return err
@@ -480,25 +481,31 @@ func (cleaner *LocalBackendCleaner) pruneContainers(ctx context.Context, options
 	return mapPruneReportToCleanupReport(report), err
 }
 
-// pruneImages removes all dangling images
+// pruneImages removes werf dangling images
 func (cleaner *LocalBackendCleaner) pruneImages(ctx context.Context, options RunGCOptions) (cleanupReport, error) {
+	filters := filter.FilterList{
+		// 1. Select all dangling images.
+		filter.DanglingTrue,
+		// 2. From all dangling images select only werf's dangling images.
+		filter.NewFilter("label", image.WerfLabel),
+		// 3. From werf's dangling images select only images which were created more than 1 hour ago.
+		// Explanation: in Stapel mode werf relies on a "dangling" image for some time before tagging its image.
+		filter.NewFilter("until", "1h"),
+
+		// Both backends support filters listed above:
+		// Docker: https://github.com/moby/moby/blob/25.0/daemon/containerd/image_prune.go#L22
+		// Buildah: https://github.com/containers/common/blob/v0.58/libimage/filters.go#L111
+	}
+
 	if options.DryRun {
-		list, err := cleaner.backend.Images(ctx, buildImagesOptions(
-			util.NewPair("dangling", "true"),
-		))
+		list, err := cleaner.backend.Images(ctx, buildImagesOptions(filters.ToPairs()...))
 		if err != nil {
 			return newCleanupReport(), err
 		}
 		return mapImageListToCleanupReport(list), nil
 	}
 
-	report, err := cleaner.backend.PruneImages(ctx, prune.Options{
-		// werf relies on a "dangling" image for some time before tagging its image.
-		// Guard dangling images for "werf build" with Stapel.
-		Filters: []util.Pair[string, string]{
-			util.NewPair("label!", image.WerfLabel),
-		},
-	})
+	report, err := cleaner.backend.PruneImages(ctx, prune.Options{Filters: filters})
 	return mapPruneReportToCleanupReport(report), err
 }
 

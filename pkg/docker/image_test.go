@@ -5,13 +5,13 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/common-go/pkg/util"
+	"github.com/werf/werf/v2/pkg/container_backend/filter"
 )
 
 var _ = Describe("docker images", func() {
-	DescribeTable("mapImagesPruneOptionsToImagesPruneFilters",
+	DescribeTable("mapBackendFiltersToImagesPruneFilters",
 		func(opts ImagesPruneOptions, expected filters.Args) {
-			actual := mapImagesPruneOptionsToImagesPruneFilters(opts)
+			actual := mapBackendFiltersToImagesPruneFilters(opts.Filters)
 			Expect(actual).To(Equal(expected))
 		},
 		Entry(
@@ -21,8 +21,8 @@ var _ = Describe("docker images", func() {
 		),
 		Entry("should work with 'label' filter",
 			ImagesPruneOptions{
-				Filters: []util.Pair[string, string]{
-					util.NewPair("label", "foo=bar"),
+				Filters: filter.FilterList{
+					filter.NewFilter("label", "foo=bar"),
 				},
 			},
 			filters.NewArgs(
