@@ -25,7 +25,9 @@ func newLocalPurger(backend container_backend.ContainerBackend) *localPurger {
 }
 
 func (purger *localPurger) FlushContainers(ctx context.Context, options CommonOptions) error {
-	containers, err := werfContainersByContainersOptions(ctx, purger.backend, buildContainersOptions())
+	containers, err := werfContainersByContainersOptions(ctx, purger.backend, buildContainersOptions(image.ContainerFilter{
+		Name: image.AssemblingContainerNamePrefix,
+	}))
 	if err != nil {
 		return err
 	}
