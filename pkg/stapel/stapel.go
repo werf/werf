@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/werf/werf/v2/pkg/docker"
+	"github.com/werf/werf/v2/pkg/image"
 )
 
 const (
@@ -39,7 +40,7 @@ func ImageName() string {
 
 func getContainer() container {
 	return container{
-		Name:      fmt.Sprintf("stapel_%s", getVersion()),
+		Name:      fmt.Sprintf("%s%s", image.AssemblingContainerNamePrefix, getVersion()),
 		ImageName: ImageName(),
 		Volume:    "/.werf/stapel",
 	}
