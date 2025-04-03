@@ -8,10 +8,9 @@ import (
 	"runtime"
 
 	"github.com/werf/3p-helm/pkg/chart/loader"
-	"github.com/werf/common-go/pkg/lock"
+	"github.com/werf/common-go/pkg/locker"
 	"github.com/werf/common-go/pkg/secrets_manager"
 	"github.com/werf/lockgate/pkg/file_lock"
-	"github.com/werf/lockgate/pkg/file_locker"
 	secrets_manager_legacy "github.com/werf/nelm-for-werf-helm/pkg/secrets_manager"
 )
 
@@ -27,7 +26,16 @@ var (
 	sharedContextDir string
 	localCacheDir    string
 	serviceDir       string
+
+	hostLocker *locker.HostLocker
 )
+
+func HostLocker() *locker.HostLocker {
+	if hostLocker == nil {
+		panic("bug: init required!")
+	}
+	return hostLocker
+}
 
 func GetSharedContextDir() string {
 	if sharedContextDir == "" {
@@ -121,10 +129,9 @@ func Init(tmpDirOption, homeDirOption string) error {
 
 	file_lock.LegacyHashFunction = true
 
-	if locker, err := file_locker.NewFileLocker(filepath.Join(GetServiceDir(), "locks")); err != nil {
+	var err error
+	if hostLocker, err = locker.NewHostLocker(filepath.Join(GetServiceDir(), "locks")); err != nil {
 		return fmt.Errorf("error creating werf host file locker: %w", err)
-	} else {
-		chart.SetHostLocker(locker)
 	}
 
 	if err := SetWerfFirstRunAt(context.Background()); err != nil {
