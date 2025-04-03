@@ -65,8 +65,10 @@ func TestEnvExpander(t *testing.T) {
 		existed := []string{
 			"GOROOT=/usr/local/go",
 			"GOPATH=/go",
+			"REMOVE_ME_THIS=1",
+			"REMOVE_ME_THAT=2",
 		}
-		toRemove := []string{"GOROOT"}
+		toRemove := []string{"GOROOT", "/^REMOVE_ME_.*/"}
 
 		env, err := modifyEnv(existed, toRemove, nil)
 		assert.NoError(t, err)
@@ -74,6 +76,28 @@ func TestEnvExpander(t *testing.T) {
 			"GOPATH=/go",
 		}
 		assert.Equal(t, expceted, env)
+	})
+	t.Run("remove all envs expand existed and add some new", func(t *testing.T) {
+		existed := []string{
+			"GOROOT=/usr/local/go",
+			"GOPATH=/go",
+			"REMOVE_ME_THIS=1",
+			"REMOVE_ME_THAT=2",
+			"PATH=/usr/bin",
+		}
+		toRemove := []string{"/*/"}
+		toAdd := map[string]string{
+			"PATH":   "${PATH}:/some/path",
+			"GOPATH": "/bin/go",
+			"GOROOT": "/usr/local/go",
+		}
+
+		env, err := modifyEnv(existed, toRemove, toAdd)
+		assert.NoError(t, err)
+		expceted := []string{"PATH=/usr/bin:/some/path", "GOROOT=/usr/local/go", "GOPATH=/bin/go"}
+		for _, e := range env {
+			assert.Contains(t, expceted, e)
+		}
 	})
 }
 

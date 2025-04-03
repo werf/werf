@@ -196,37 +196,14 @@ func (s *ImageSpecStage) modifyLabels(ctx context.Context, labels, addLabels map
 	serviceLabels := s.stageImage.Image.GetBuildServiceLabels()
 	labels = util.MergeMaps(labels, serviceLabels)
 
-	exactMatches := make(map[string]struct{})
-	var regexPatterns []*regexp.Regexp
-
-	for _, pattern := range removeLabels {
-		if strings.HasPrefix(pattern, "/") && strings.HasSuffix(pattern, "/") {
-			expr := fmt.Sprintf("^%s$", pattern[1:len(pattern)-1])
-			re, err := regexp.Compile(expr)
-			if err != nil {
-				return nil, err
-			}
-			regexPatterns = append(regexPatterns, re)
-		} else {
-			exactMatches[pattern] = struct{}{}
-		}
-	}
-
-	matchFunc := func(key string) bool {
-		if _, found := exactMatches[key]; found {
-			return true
-		}
-		for _, re := range regexPatterns {
-			if re.MatchString(key) {
-				return true
-			}
-		}
-		return false
+	exactMatches, regexPatterns, err := compileRemovePatterns(removeLabels)
+	if err != nil {
+		return nil, err
 	}
 
 	shouldPrintGlobalWarn := false
 	for key := range labels {
-		if !matchFunc(key) {
+		if !matchKey(key, exactMatches, regexPatterns) {
 			continue
 		}
 
@@ -234,7 +211,6 @@ func (s *ImageSpecStage) modifyLabels(ctx context.Context, labels, addLabels map
 			if !keepEssentialWerfLabels {
 				shouldPrintGlobalWarn = true
 			}
-
 			continue
 		}
 
@@ -316,11 +292,17 @@ func modifyEnv(env, removeKeys []string, addKeysMap map[string]string) ([]string
 		"WERF_COMMIT_TIME_UNIX",
 	}...)
 
-	for _, key := range removeKeys {
-		delete(baseEnvMap, key)
+	exactMatches, regexPatterns, err := compileRemovePatterns(removeKeys)
+	if err != nil {
+		return nil, err
 	}
 
-	// FIXME: (v3) This is a temporary solution to remove werf SSH_AUTH_SOCK that persist after build.
+	for key := range baseEnvMap {
+		if matchKey(key, exactMatches, regexPatterns) {
+			delete(baseEnvMap, key)
+		}
+	}
+
 	if envValue, hasEnv := baseEnvMap[ssh_agent.SSHAuthSockEnv]; hasEnv && envValue == container_backend.SSHContainerAuthSockPath {
 		delete(baseEnvMap, ssh_agent.SSHAuthSockEnv)
 	}
@@ -364,4 +346,36 @@ func sortSliceWithNewSlice(original []string) []string {
 
 func toDuration(seconds int) time.Duration {
 	return time.Duration(seconds) * time.Second
+}
+
+func compileRemovePatterns(removePatterns []string) (map[string]struct{}, []*regexp.Regexp, error) {
+	exactMatches := make(map[string]struct{})
+	var regexPatterns []*regexp.Regexp
+
+	for _, pattern := range removePatterns {
+		if strings.HasPrefix(pattern, "/") && strings.HasSuffix(pattern, "/") {
+			expr := fmt.Sprintf("^%s$", pattern[1:len(pattern)-1])
+			re, err := regexp.Compile(expr)
+			if err != nil {
+				return nil, nil, err
+			}
+			regexPatterns = append(regexPatterns, re)
+		} else {
+			exactMatches[pattern] = struct{}{}
+		}
+	}
+
+	return exactMatches, regexPatterns, nil
+}
+
+func matchKey(key string, exactMatches map[string]struct{}, regexPatterns []*regexp.Regexp) bool {
+	if _, found := exactMatches[key]; found {
+		return true
+	}
+	for _, re := range regexPatterns {
+		if re.MatchString(key) {
+			return true
+		}
+	}
+	return false
 }

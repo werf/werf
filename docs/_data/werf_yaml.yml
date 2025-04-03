@@ -420,7 +420,7 @@ sections:
                   ru: Список переменных окружения для добавления
                 detailsLink: "https://docs.docker.com/engine/reference/builder/#env"
               - name: removeEnv
-                value: "[string, ...]"
+                value: "[ string || /REGEXP/, ... ]"
                 description:
                   en: List of environment variables to remove
                   ru: Список переменных окружения для удаления
