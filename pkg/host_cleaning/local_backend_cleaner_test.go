@@ -17,6 +17,7 @@ import (
 	"github.com/werf/werf/v2/pkg/container_backend/prune"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/volumeutils"
+	"github.com/werf/werf/v2/pkg/werf"
 	"github.com/werf/werf/v2/test/mock"
 )
 
@@ -37,6 +38,8 @@ var _ = Describe("LocalBackendCleaner", func() {
 		Expect(cleaner).NotTo(BeNil())
 		ctx = context.Background()
 		stubs = gostub.New()
+
+		Expect(werf.Init(t.TempDir(), "")).To(Succeed())
 	})
 	AfterEach(func() {
 		stubs.Reset()

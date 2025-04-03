@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/werf/common-go/pkg/lock"
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/docker"
+	"github.com/werf/werf/v2/pkg/werf"
 )
 
 type container struct {
@@ -39,7 +39,7 @@ func (c *container) CreateIfNotExist(ctx context.Context) error {
 	}
 
 	if !exist {
-		err := chart.WithHostLock(ctx, fmt.Sprintf("stapel.container.%s", c.Name), lockgate.AcquireOptions{Timeout: time.Second * 600}, func() error {
+		err := werf.HostLocker().WithLock(ctx, fmt.Sprintf("stapel.container.%s", c.Name), lockgate.AcquireOptions{Timeout: time.Second * 600}, func() error {
 			return logboek.Context(ctx).LogProcess("Creating container %s from image %s", c.Name, c.ImageName).DoError(func() error {
 				exist, err := docker.ContainerExist(ctx, c.Name)
 				if err != nil {

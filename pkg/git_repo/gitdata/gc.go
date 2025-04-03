@@ -12,7 +12,6 @@ import (
 
 	"github.com/dustin/go-humanize"
 
-	"github.com/werf/common-go/pkg/lock"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/kubedog/pkg/utils"
 	"github.com/werf/lockgate"
@@ -45,7 +44,7 @@ func RunGC(ctx context.Context, allowedVolumeUsagePercentage, allowedVolumeUsage
 	if lock, err := lockGC(ctx, false); err != nil {
 		return err
 	} else {
-		defer chart.ReleaseHostLock(lock)
+		defer werf.HostLocker().ReleaseLock(lock)
 	}
 
 	var keepGitDataV1_1 bool
@@ -302,6 +301,6 @@ WipeCacheDirs:
 }
 
 func lockGC(ctx context.Context, shared bool) (lockgate.LockHandle, error) {
-	_, handle, err := chart.AcquireHostLock(ctx, "git_data_manager", lockgate.AcquireOptions{Shared: shared})
+	_, handle, err := werf.HostLocker().AcquireLock(ctx, "git_data_manager", lockgate.AcquireOptions{Shared: shared})
 	return handle, err
 }
