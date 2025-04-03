@@ -153,6 +153,7 @@ func (cleaner *LocalBackendCleaner) werfImages(ctx context.Context) (image.Image
 
 func (cleaner *LocalBackendCleaner) werfImagesByLabels(ctx context.Context) (image.ImagesList, error) {
 	list, err := cleaner.backend.Images(ctx, buildImagesOptions(
+		filter.DanglingFalse.ToPair(),
 		util.NewPair("label", image.WerfLabel),
 	))
 	if err != nil {
@@ -187,6 +188,7 @@ skipImage:
 func (cleaner *LocalBackendCleaner) werfImagesByLegacyLabels(ctx context.Context) (image.ImagesList, error) {
 	// Process legacy v1.1 images
 	list, err := cleaner.backend.Images(ctx, buildImagesOptions(
+		filter.DanglingFalse.ToPair(),
 		util.NewPair("label", image.WerfLabel),
 		util.NewPair("label", "werf-stage-signature"), // v1.1 legacy images
 	))
@@ -230,6 +232,8 @@ func (cleaner *LocalBackendCleaner) werfImagesByLastRun(ctx context.Context) (im
 	// This is stupid check, but the only available safe option at the moment.
 	if t.IsZero() {
 		list, err := cleaner.backend.Images(ctx, buildImagesOptions(
+			filter.DanglingFalse.ToPair(),
+
 			util.NewPair("reference", "*client-id-*"),
 			util.NewPair("reference", "*managed-image-*"),
 			util.NewPair("reference", "*meta-*"),

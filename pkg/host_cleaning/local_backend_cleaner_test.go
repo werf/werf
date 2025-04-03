@@ -214,15 +214,19 @@ var _ = Describe("LocalBackendCleaner", func() {
 			}
 
 			backend.EXPECT().Images(ctx, buildImagesOptions(
+				filter.DanglingFalse.ToPair(),
 				util.NewPair("label", image.WerfLabel),
 			)).Return(image.ImagesList{expectedImages[0]}, nil)
 
 			backend.EXPECT().Images(ctx, buildImagesOptions(
+				filter.DanglingFalse.ToPair(),
 				util.NewPair("label", image.WerfLabel),
 				util.NewPair("label", "werf-stage-signature"), // v1.1 legacy images
 			)).Return(image.ImagesList{expectedImages[1]}, nil)
 
 			backend.EXPECT().Images(ctx, buildImagesOptions(
+				filter.DanglingFalse.ToPair(),
+
 				util.NewPair("reference", "*client-id-*"),
 				util.NewPair("reference", "*managed-image-*"),
 				util.NewPair("reference", "*meta-*"),
@@ -250,10 +254,12 @@ var _ = Describe("LocalBackendCleaner", func() {
 	Describe("safeCleanupWerfImages", func() {
 		BeforeEach(func() {
 			backend.EXPECT().Images(ctx, buildImagesOptions(
+				filter.DanglingFalse.ToPair(),
 				util.NewPair("label", image.WerfLabel),
 			)).Return(image.ImagesList{}, nil)
 
 			backend.EXPECT().Images(ctx, buildImagesOptions(
+				filter.DanglingFalse.ToPair(),
 				util.NewPair("label", image.WerfLabel),
 				util.NewPair("label", "werf-stage-signature"), // v1.1 legacy images
 			)).Return(image.ImagesList{}, nil)
@@ -389,9 +395,11 @@ var _ = Describe("LocalBackendCleaner", func() {
 
 				// list and remove werf images
 				backend.EXPECT().Images(ctx, buildImagesOptions(
+					filter.DanglingFalse.ToPair(),
 					util.NewPair("label", image.WerfLabel),
 				)).Return(images, nil),
 				backend.EXPECT().Images(ctx, buildImagesOptions(
+					filter.DanglingFalse.ToPair(),
 					util.NewPair("label", image.WerfLabel),
 					util.NewPair("label", "werf-stage-signature"), // v1.1 legacy images
 				)).Return(image.ImagesList{}, nil),

@@ -12,3 +12,7 @@ func NewFilter(key, value string) Filter {
 		Second: value,
 	}
 }
+
+func (f *Filter) ToPair() util.Pair[string, string] {
+	return util.NewPair(f.First, f.Second)
+}

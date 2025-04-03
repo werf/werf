@@ -22,6 +22,6 @@ func (list *FilterList) Remove(filter Filter) {
 
 func (list *FilterList) ToPairs() []util.Pair[string, string] {
 	return lo.Map(*list, func(f Filter, _ int) util.Pair[string, string] {
-		return util.NewPair(f.First, f.Second)
+		return f.ToPair()
 	})
 }
