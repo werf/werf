@@ -865,6 +865,7 @@ func ConvertStageDescForStagesStorage(stageDesc *image.StageDesc, stagesStorage 
 			CreatedAtUnixNano: stageDesc.Info.CreatedAtUnixNano,
 			OnBuild:           stageDesc.Info.OnBuild,
 			Env:               stageDesc.Info.Env,
+			Volumes:           stageDesc.Info.Volumes,
 		},
 	}
 }

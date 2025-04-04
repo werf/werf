@@ -85,7 +85,7 @@ func TestEnvExpander(t *testing.T) {
 			"REMOVE_ME_THAT=2",
 			"PATH=/usr/bin",
 		}
-		toRemove := []string{"/*/"}
+		toRemove := []string{"/.*/"}
 		toAdd := map[string]string{
 			"PATH":   "${PATH}:/some/path",
 			"GOPATH": "/bin/go",
@@ -95,6 +95,25 @@ func TestEnvExpander(t *testing.T) {
 		env, err := modifyEnv(existed, toRemove, toAdd)
 		assert.NoError(t, err)
 		expceted := []string{"PATH=/usr/bin:/some/path", "GOROOT=/usr/local/go", "GOPATH=/bin/go"}
+		for _, e := range env {
+			assert.Contains(t, expceted, e)
+		}
+	})
+	t.Run("remove all", func(t *testing.T) {
+		existed := []string{
+			"LANG=C.UTF-8",
+			"LC_ALL=C.UTF-8",
+			"WERF_COMMIT_HASH=1ee88b265286348b1e501fb6b631d8c3d5a1816e",
+			"WERF_COMMIT_TIME_HUMAN=2025-04-02 15:15:45 +0100 +0100",
+			"WERF_COMMIT_TIME_UNIX=1743603345",
+			"COLUMNS=243",
+		}
+		toRemove := []string{"/.*/"}
+		toAdd := map[string]string{}
+
+		env, err := modifyEnv(existed, toRemove, toAdd)
+		assert.NoError(t, err)
+		expceted := []string{}
 		for _, e := range env {
 			assert.Contains(t, expceted, e)
 		}

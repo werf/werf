@@ -71,9 +71,9 @@ func updateConfigFile(updates Config, target *v1.ConfigFile) {
 	if updates.Labels != nil {
 		target.Config.Labels = updates.Labels
 	}
-	if len(updates.Env) > 0 {
-		target.Config.Env = updates.Env
-	}
+
+	target.Config.Env = updates.Env
+
 	if updates.ExposedPorts != nil {
 		target.Config.ExposedPorts = updates.ExposedPorts
 	}

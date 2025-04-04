@@ -203,6 +203,7 @@ func (api *api) getRepoImageByDesc(ctx context.Context, originalTag string, desc
 		repoImage.OnBuild = configFile.Config.OnBuild
 		repoImage.Env = configFile.Config.Env
 		repoImage.SetCreatedAtUnix(configFile.Created.Unix())
+		repoImage.Volumes = configFile.Config.Volumes
 
 		var totalSize int64
 		if layers, err := imageInfo.Layers(); err != nil {
