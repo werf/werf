@@ -1101,10 +1101,6 @@ func (backend *BuildahBackend) PostManifest(ctx context.Context, ref string, opt
 
 func (backend *BuildahBackend) ClaimTargetPlatforms(ctx context.Context, targetPlatforms []string) {}
 
-func (backend *BuildahBackend) PruneContainers(_ context.Context, _ prune.Options) (prune.Report, error) {
-	return prune.Report{}, ErrUnsupportedFeature
-}
-
 func (backend *BuildahBackend) PruneImages(ctx context.Context, options prune.Options) (prune.Report, error) {
 	report, err := backend.buildah.PruneImages(ctx, buildah.PruneImagesOptions{})
 	if err != nil {

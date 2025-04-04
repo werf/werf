@@ -412,7 +412,7 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 		return nil
 	}
 
-	// Step 4. Remove werf containers
+	// Step 3. Remove werf containers
 	err = logboek.Context(ctx).LogBlock("Cleanup werf containers").DoError(func() error {
 		reportWerfContainers, err := cleaner.safeCleanupWerfContainers(ctx, options, vu)
 		if err != nil {
@@ -430,7 +430,7 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 		return fmt.Errorf("unable to remove werf containers: %w", err)
 	}
 
-	// Step 5. Remove werf images
+	// Step 4. Remove werf images
 	err = logboek.Context(ctx).LogBlock("Cleanup werf images").DoError(func() error {
 		reportWerfImages, err := cleaner.safeCleanupWerfImages(ctx, options, vu, targetVolumeUsagePercentage)
 		if err != nil {

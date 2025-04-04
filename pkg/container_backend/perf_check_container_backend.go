@@ -198,14 +198,6 @@ func (runtime *PerfCheckContainerBackend) ClaimTargetPlatforms(ctx context.Conte
 		Do(func() { runtime.ContainerBackend.ClaimTargetPlatforms(ctx, targetPlatforms) })
 }
 
-func (runtime *PerfCheckContainerBackend) PruneContainers(ctx context.Context, options prune.Options) (report prune.Report, err error) {
-	logboek.Context(ctx).Default().LogProcess("ContainerBackend.PruneContainers %v", options).
-		Do(func() {
-			report, err = runtime.ContainerBackend.PruneContainers(ctx, options)
-		})
-	return
-}
-
 func (runtime *PerfCheckContainerBackend) PruneImages(ctx context.Context, options prune.Options) (report prune.Report, err error) {
 	logboek.Context(ctx).Default().LogProcess("ContainerBackend.PruneImages %v", options).
 		Do(func() {
