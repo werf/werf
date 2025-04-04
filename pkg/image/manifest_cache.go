@@ -9,11 +9,11 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/werf/common-go/pkg/lock"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/slug"
+	"github.com/werf/werf/v2/pkg/werf"
 )
 
 const (
@@ -125,7 +125,7 @@ func (cache *ManifestCache) constructFilePathForImage(storageName, imageName str
 
 func (cache *ManifestCache) lock(ctx context.Context, storageName, imageName string) (lockgate.LockHandle, error) {
 	lockName := fmt.Sprintf("manifest_cache.%s.%s", slug.Slug(storageName), imageName)
-	if _, lock, err := chart.AcquireHostLock(ctx, lockName, lockgate.AcquireOptions{}); err != nil {
+	if _, lock, err := werf.HostLocker().AcquireLock(ctx, lockName, lockgate.AcquireOptions{}); err != nil {
 		return lockgate.LockHandle{}, fmt.Errorf("cannot acquire %s host lock: %w", lockName, err)
 	} else {
 		return lock, nil
@@ -133,7 +133,7 @@ func (cache *ManifestCache) lock(ctx context.Context, storageName, imageName str
 }
 
 func (cache *ManifestCache) unlock(lock lockgate.LockHandle) error {
-	if err := chart.ReleaseHostLock(lock); err != nil {
+	if err := werf.HostLocker().ReleaseLock(lock); err != nil {
 		return fmt.Errorf("cannot release %s host lock: %w", lock.LockName, err)
 	}
 	return nil

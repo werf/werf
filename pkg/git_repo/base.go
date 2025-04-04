@@ -16,7 +16,6 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/filemode"
 	"github.com/go-git/go-git/v5/plumbing/object"
 
-	"github.com/werf/common-go/pkg/lock"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/types"
@@ -24,6 +23,7 @@ import (
 	"github.com/werf/werf/v2/pkg/path_matcher"
 	"github.com/werf/werf/v2/pkg/true_git"
 	"github.com/werf/werf/v2/pkg/true_git/ls_tree"
+	"github.com/werf/werf/v2/pkg/werf"
 )
 
 type Base struct {
@@ -186,7 +186,7 @@ func (repo *Base) createPatch(ctx context.Context, repoPath, gitDir, repoID, wor
 	if lock, err := CommonGitDataManager.LockGC(ctx, true); err != nil {
 		return nil, err
 	} else {
-		defer chart.ReleaseHostLock(lock)
+		defer werf.HostLocker().ReleaseLock(lock)
 	}
 
 	if patch, err := CommonGitDataManager.GetPatchFile(ctx, repoID, opts); err != nil {
@@ -297,7 +297,7 @@ func (repo *Base) createDetachedMergeCommit(ctx context.Context, gitDir, path, w
 	if lock, err := CommonGitDataManager.LockGC(ctx, true); err != nil {
 		return "", err
 	} else {
-		defer chart.ReleaseHostLock(lock)
+		defer werf.HostLocker().ReleaseLock(lock)
 	}
 
 	repository, err := repo.PlainOpen(path)
@@ -372,7 +372,7 @@ func (repo *Base) createArchive(ctx context.Context, repoPath, gitDir, repoID, w
 	if lock, err := CommonGitDataManager.LockGC(ctx, true); err != nil {
 		return nil, err
 	} else {
-		defer chart.ReleaseHostLock(lock)
+		defer werf.HostLocker().ReleaseLock(lock)
 	}
 
 	if archive, err := CommonGitDataManager.GetArchiveFile(ctx, repoID, opts); err != nil {
