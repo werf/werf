@@ -3,6 +3,7 @@ package docker
 import (
 	"github.com/docker/buildx/commands"
 	_ "github.com/docker/buildx/driver/docker"
+	_ "github.com/docker/buildx/driver/docker-container"
 	"github.com/docker/cli/cli/command"
 	"github.com/spf13/cobra"
 )
