@@ -15,6 +15,7 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/pkg/buildah/thirdparty"
+	"github.com/werf/werf/v2/pkg/container_backend/filter"
 	"github.com/werf/werf/v2/pkg/container_backend/info"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/werf"
@@ -102,6 +103,8 @@ type CommitOpts struct {
 
 type PruneImagesOptions struct {
 	CommonOpts
+
+	Filters filter.FilterList
 }
 
 type PruneImagesReport struct {

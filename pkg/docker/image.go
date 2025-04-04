@@ -20,8 +20,8 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 
-	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
+	"github.com/werf/werf/v2/pkg/container_backend/filter"
 	"github.com/werf/werf/v2/pkg/container_backend/prune"
 )
 
@@ -78,7 +78,7 @@ type (
 // ImagesPrune containers using opts.Filters.
 // List of accepted filters is there https://github.com/moby/moby/blob/25.0/daemon/containerd/image_prune.go#L22
 func ImagesPrune(ctx context.Context, opts ImagesPruneOptions) (ImagesPruneReport, error) {
-	report, err := apiCli(ctx).ImagesPrune(ctx, mapImagesPruneOptionsToImagesPruneFilters(opts))
+	report, err := apiCli(ctx).ImagesPrune(ctx, mapBackendFiltersToImagesPruneFilters(opts.Filters))
 	if err != nil {
 		return ImagesPruneReport{}, err
 	}
@@ -91,9 +91,9 @@ func ImagesPrune(ctx context.Context, opts ImagesPruneOptions) (ImagesPruneRepor
 	}, err
 }
 
-func mapImagesPruneOptionsToImagesPruneFilters(opts ImagesPruneOptions) filters.Args {
-	args := lo.Map(opts.Filters, func(pair util.Pair[string, string], _ int) filters.KeyValuePair {
-		return filters.Arg(pair.First, pair.Second)
+func mapBackendFiltersToImagesPruneFilters(list filter.FilterList) filters.Args {
+	args := lo.Map(list, func(filter filter.Filter, _ int) filters.KeyValuePair {
+		return filters.Arg(filter.First, filter.Second)
 	})
 	return filters.NewArgs(args...)
 }

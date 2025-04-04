@@ -41,9 +41,12 @@ import (
 	"github.com/containers/storage/pkg/unshare"
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 	"github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"
 
+	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/pkg/buildah/thirdparty"
+	"github.com/werf/werf/v2/pkg/container_backend/filter"
 	"github.com/werf/werf/v2/pkg/container_backend/info"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/ssh_agent"
@@ -605,9 +608,14 @@ func (b *NativeBuildah) PruneImages(ctx context.Context, opts PruneImagesOptions
 		return PruneImagesReport{}, err
 	}
 
+	// ensure dangling=true
+	filters := opts.Filters
+	filters.Remove(filter.DanglingFalse)
+	filters.Add(filter.DanglingTrue)
+
 	imageReports, rmiErrors := runtime.RemoveImages(ctx, []string{}, &libimage.RemoveImagesOptions{
 		Force:    false, // not remove containers
-		Filters:  []string{"dangling=true"},
+		Filters:  mapBackendOldFiltersToBuildahImageFilters(filters.ToPairs()),
 		WithSize: true,
 		NoPrune:  false,
 	})
@@ -898,10 +906,10 @@ func (b *NativeBuildah) Images(ctx context.Context, opts ImagesOptions) (image.I
 		return nil, err
 	}
 
-	listOpts := &libimage.ListImagesOptions{}
-	for _, filter := range opts.Filters {
-		listOpts.Filters = append(listOpts.Filters, fmt.Sprintf("%s=%s", filter.First, filter.Second))
+	listOpts := &libimage.ListImagesOptions{
+		Filters: mapBackendOldFiltersToBuildahImageFilters(opts.Filters),
 	}
+
 	images, err := runtime.ListImages(ctx, opts.Names, listOpts)
 	if err != nil {
 		return nil, err
@@ -936,6 +944,13 @@ func (b *NativeBuildah) Images(ctx context.Context, opts ImagesOptions) (image.I
 	}
 
 	return res, nil
+}
+
+// mapBackendOldFiltersToBuildahImageFilters returns filters in key=value format
+func mapBackendOldFiltersToBuildahImageFilters(filters []util.Pair[string, string]) []string {
+	return lo.Map(filters, func(pair util.Pair[string, string], _ int) string {
+		return fmt.Sprintf("%s=%s", pair.First, pair.Second)
+	})
 }
 
 func (b *NativeBuildah) Containers(ctx context.Context, opts ContainersOptions) (image.ContainerList, error) {

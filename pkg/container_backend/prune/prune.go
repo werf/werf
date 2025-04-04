@@ -1,9 +1,11 @@
 package prune
 
-import "github.com/werf/common-go/pkg/util"
+import (
+	"github.com/werf/werf/v2/pkg/container_backend/filter"
+)
 
 type Options struct {
-	Filters []util.Pair[string, string]
+	Filters filter.FilterList
 }
 
 type Report struct {
