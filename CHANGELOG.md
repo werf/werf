@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.35.1](https://www.github.com/werf/werf/compare/v2.35.0...v2.35.1) (2025-04-04)
+
+
+### Bug Fixes
+
+* **release, werf-in-image:** disable auto host cleanup ([0d5dde2](https://www.github.com/werf/werf/commit/0d5dde2d63559172e1361fc045908d0d83e1b1a2))
+
 ## [2.35.0](https://www.github.com/werf/werf/compare/v2.34.1...v2.35.0) (2025-04-04)
 
 
