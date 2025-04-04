@@ -27,5 +27,6 @@ WORKDIR /home/argocd
 
 ENV WERF_CONTAINERIZED=yes
 ENV WERF_BUILDAH_MODE=auto
+ENV WERF_DISABLE_AUTO_HOST_CLEANUP=1
 
 ENTRYPOINT ["/var/run/argocd/argocd-cmp-server"]
