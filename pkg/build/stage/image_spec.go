@@ -59,7 +59,7 @@ func (s *ImageSpecStage) PrepareImage(ctx context.Context, _ Conveyor, _ contain
 		newConfig := s.baseConfig()
 
 		{
-			// lables
+			// labels
 			resultLabels, err := s.modifyLabels(ctx, imageInfo.Labels, s.imageSpec.Labels, s.imageSpec.RemoveLabels, s.imageSpec.KeepEssentialWerfLabels)
 			if err != nil {
 				return fmt.Errorf("unable to modify labels: %s", err)
