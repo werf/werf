@@ -13,6 +13,7 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/pkg/container_backend"
+	"github.com/werf/werf/v2/pkg/container_backend/filter"
 	"github.com/werf/werf/v2/pkg/container_backend/info"
 	"github.com/werf/werf/v2/pkg/container_backend/prune"
 	"github.com/werf/werf/v2/pkg/image"
@@ -97,10 +98,16 @@ var _ = Describe("LocalBackendCleaner", func() {
 	})
 
 	Describe("pruneImages", func() {
+		var filters filter.FilterList
+		BeforeEach(func() {
+			filters = filter.FilterList{
+				filter.DanglingTrue,
+				filter.NewFilter("label", image.WerfLabel),
+				filter.NewFilter("until", "1h"),
+			}
+		})
 		It("should call backend.Images() to find dandling images if opts.DryRun=true", func() {
-			backend.EXPECT().Images(ctx, buildImagesOptions(
-				util.NewPair("dangling", "true"),
-			)).Return(image.ImagesList{}, nil)
+			backend.EXPECT().Images(ctx, buildImagesOptions(filters.ToPairs()...)).Return(image.ImagesList{}, nil)
 
 			report, err := cleaner.pruneImages(ctx, RunGCOptions{
 				DryRun: true,
@@ -109,11 +116,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 			Expect(report).To(Equal(newCleanupReport()))
 		})
 		It("should call backend.PruneImages() if opts.DryRun=false", func() {
-			imagesFilters := []util.Pair[string, string]{
-				util.NewPair("label!", image.WerfLabel),
-			}
-
-			backend.EXPECT().PruneImages(ctx, prune.Options{Filters: imagesFilters}).Return(prune.Report{}, nil)
+			backend.EXPECT().PruneImages(ctx, prune.Options{Filters: filters}).Return(prune.Report{}, nil)
 
 			report, err := cleaner.pruneImages(ctx, RunGCOptions{})
 			Expect(err).To(Succeed())
@@ -195,15 +198,19 @@ var _ = Describe("LocalBackendCleaner", func() {
 			}
 
 			backend.EXPECT().Images(ctx, buildImagesOptions(
+				filter.DanglingFalse.ToPair(),
 				util.NewPair("label", image.WerfLabel),
 			)).Return(image.ImagesList{expectedImages[0]}, nil)
 
 			backend.EXPECT().Images(ctx, buildImagesOptions(
+				filter.DanglingFalse.ToPair(),
 				util.NewPair("label", image.WerfLabel),
 				util.NewPair("label", "werf-stage-signature"), // v1.1 legacy images
 			)).Return(image.ImagesList{expectedImages[1]}, nil)
 
 			backend.EXPECT().Images(ctx, buildImagesOptions(
+				filter.DanglingFalse.ToPair(),
+
 				util.NewPair("reference", "*client-id-*"),
 				util.NewPair("reference", "*managed-image-*"),
 				util.NewPair("reference", "*meta-*"),
@@ -231,10 +238,12 @@ var _ = Describe("LocalBackendCleaner", func() {
 	Describe("safeCleanupWerfImages", func() {
 		BeforeEach(func() {
 			backend.EXPECT().Images(ctx, buildImagesOptions(
+				filter.DanglingFalse.ToPair(),
 				util.NewPair("label", image.WerfLabel),
 			)).Return(image.ImagesList{}, nil)
 
 			backend.EXPECT().Images(ctx, buildImagesOptions(
+				filter.DanglingFalse.ToPair(),
 				util.NewPair("label", image.WerfLabel),
 				util.NewPair("label", "werf-stage-signature"), // v1.1 legacy images
 			)).Return(image.ImagesList{}, nil)
@@ -346,8 +355,10 @@ var _ = Describe("LocalBackendCleaner", func() {
 				{ID: "one", RepoDigests: []string{"digest one"}},
 			}
 
-			imagesFilters := []util.Pair[string, string]{
-				util.NewPair("label!", image.WerfLabel),
+			imagesFilters := filter.FilterList{
+				filter.DanglingTrue,
+				filter.NewFilter("label", image.WerfLabel),
+				filter.NewFilter("until", "1h"),
 			}
 
 			// keep orders of backend calls
@@ -367,9 +378,11 @@ var _ = Describe("LocalBackendCleaner", func() {
 
 				// list and remove werf images
 				backend.EXPECT().Images(ctx, buildImagesOptions(
+					filter.DanglingFalse.ToPair(),
 					util.NewPair("label", image.WerfLabel),
 				)).Return(images, nil),
 				backend.EXPECT().Images(ctx, buildImagesOptions(
+					filter.DanglingFalse.ToPair(),
 					util.NewPair("label", image.WerfLabel),
 					util.NewPair("label", "werf-stage-signature"), // v1.1 legacy images
 				)).Return(image.ImagesList{}, nil),

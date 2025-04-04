@@ -18,6 +18,7 @@ import (
 	"github.com/werf/kubedog/pkg/utils"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/container_backend"
+	"github.com/werf/werf/v2/pkg/container_backend/filter"
 	"github.com/werf/werf/v2/pkg/container_backend/prune"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/storage/lrumeta"
@@ -152,6 +153,7 @@ func (cleaner *LocalBackendCleaner) werfImages(ctx context.Context) (image.Image
 
 func (cleaner *LocalBackendCleaner) werfImagesByLabels(ctx context.Context) (image.ImagesList, error) {
 	list, err := cleaner.backend.Images(ctx, buildImagesOptions(
+		filter.DanglingFalse.ToPair(),
 		util.NewPair("label", image.WerfLabel),
 	))
 	if err != nil {
@@ -186,6 +188,7 @@ skipImage:
 func (cleaner *LocalBackendCleaner) werfImagesByLegacyLabels(ctx context.Context) (image.ImagesList, error) {
 	// Process legacy v1.1 images
 	list, err := cleaner.backend.Images(ctx, buildImagesOptions(
+		filter.DanglingFalse.ToPair(),
 		util.NewPair("label", image.WerfLabel),
 		util.NewPair("label", "werf-stage-signature"), // v1.1 legacy images
 	))
@@ -229,6 +232,8 @@ func (cleaner *LocalBackendCleaner) werfImagesByLastRun(ctx context.Context) (im
 	// This is stupid check, but the only available safe option at the moment.
 	if t.IsZero() {
 		list, err := cleaner.backend.Images(ctx, buildImagesOptions(
+			filter.DanglingFalse.ToPair(),
+
 			util.NewPair("reference", "*client-id-*"),
 			util.NewPair("reference", "*managed-image-*"),
 			util.NewPair("reference", "*meta-*"),
@@ -342,8 +347,26 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 
 	vuBefore := vu
 
-	// Step 1. Prune unused anonymous volumes
-	err = logboek.Context(ctx).LogBlock("Prune unused anonymous volumes").DoError(func() error {
+	// Step 1. Prune stopped containers
+	err = logboek.Context(ctx).LogBlock("Prune stopped containers").DoError(func() error {
+		reportContainers, err := cleaner.pruneContainers(ctx, options)
+		if handleError(ctx, err) != nil {
+			return err
+		}
+
+		vu.UsedBytes -= reportContainers.SpaceReclaimed
+
+		logboek.Context(ctx).LogF("Freed space: %s\n", utils.RedF("%s", humanize.Bytes(reportContainers.SpaceReclaimed)))
+		logDeletedItems(ctx, reportContainers.ItemsDeleted)
+
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("unable to prune stopped containers: %w", err)
+	}
+
+	// Step 2. Prune unused anonymous volumes
+	err = logboek.Context(ctx).LogBlock("Prune all unused anonymous volumes").DoError(func() error {
 		reportVolumes, err := cleaner.pruneVolumes(ctx, options)
 		if handleError(ctx, err) != nil {
 			return err
@@ -360,8 +383,8 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 		return fmt.Errorf("unable to prune unused anonymous volumes: %w", err)
 	}
 
-	// Step 2. Prune dangling images
-	err = logboek.Context(ctx).LogBlock("Prune dangling images").DoError(func() error {
+	// Step 3. Prune werf dangling images
+	err = logboek.Context(ctx).LogBlock("Prune werf dangling images created more than 1 hour ago").DoError(func() error {
 		reportImages, err := cleaner.pruneImages(ctx, options)
 		if handleError(ctx, err) != nil {
 			return err
@@ -446,25 +469,47 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 	return nil
 }
 
-// pruneImages removes all dangling images
-func (cleaner *LocalBackendCleaner) pruneImages(ctx context.Context, options RunGCOptions) (cleanupReport, error) {
+// pruneContainers removes all stopped containers
+func (cleaner *LocalBackendCleaner) pruneContainers(ctx context.Context, options RunGCOptions) (cleanupReport, error) {
 	if options.DryRun {
-		list, err := cleaner.backend.Images(ctx, buildImagesOptions(
-			util.NewPair("dangling", "true"),
-		))
+		// NOTE: Buildah does not give us a way to precalculate pruned size.
+
+		// NOTE: Docker give us an ability to precalculate container.Size, however it is expensive operation.
+		// In docker case we could list containers using: status=exited AND size=true AND all=true:
+		// https://pkg.go.dev/github.com/docker/docker/client@v25.0.5+incompatible#ContainerAPIClient.ContainerList
+
+		return newCleanupReport(), errOptionDryRunNotSupported
+	}
+
+	report, err := cleaner.backend.PruneContainers(ctx, prune.Options{})
+	return mapPruneReportToCleanupReport(report), err
+}
+
+// pruneImages removes werf dangling images
+func (cleaner *LocalBackendCleaner) pruneImages(ctx context.Context, options RunGCOptions) (cleanupReport, error) {
+	filters := filter.FilterList{
+		// 1. Select all dangling images.
+		filter.DanglingTrue,
+		// 2. From all dangling images select only werf's dangling images.
+		filter.NewFilter("label", image.WerfLabel),
+		// 3. From werf's dangling images select only images which were created more than 1 hour ago.
+		// Explanation: in Stapel mode werf relies on a "dangling" image for some time before tagging its image.
+		filter.NewFilter("until", "1h"),
+
+		// Both backends support filters listed above:
+		// Docker: https://github.com/moby/moby/blob/25.0/daemon/containerd/image_prune.go#L22
+		// Buildah: https://github.com/containers/common/blob/v0.58/libimage/filters.go#L111
+	}
+
+	if options.DryRun {
+		list, err := cleaner.backend.Images(ctx, buildImagesOptions(filters.ToPairs()...))
 		if err != nil {
 			return newCleanupReport(), err
 		}
 		return mapImageListToCleanupReport(list), nil
 	}
 
-	report, err := cleaner.backend.PruneImages(ctx, prune.Options{
-		// werf relies on a "dangling" image for some time before tagging its image.
-		// Guard dangling images for "werf build" with Stapel.
-		Filters: []util.Pair[string, string]{
-			util.NewPair("label!", image.WerfLabel),
-		},
-	})
+	report, err := cleaner.backend.PruneImages(ctx, prune.Options{Filters: filters})
 	return mapPruneReportToCleanupReport(report), err
 }
 
