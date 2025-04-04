@@ -1,5 +1,25 @@
 # Changelog
 
+## [2.35.0](https://www.github.com/werf/werf/compare/v2.34.1...v2.35.0) (2025-04-04)
+
+
+### Features
+
+* **build:** add clearUser and clearWorkingDir options to imageSpec config ([#6759](https://www.github.com/werf/werf/issues/6759)) ([36f3d6a](https://www.github.com/werf/werf/commit/36f3d6af114b140464bb131cc8e98676b5aba0c1))
+* **build:** add pull/push retries when authentication is required (short-term token case) [#6750](https://www.github.com/werf/werf/issues/6750) ([26ccd15](https://www.github.com/werf/werf/commit/26ccd150fa6f64920c6c3e3868028418eb2677cb))
+* **cleanup:** add disable cleanup feature ([#6737](https://www.github.com/werf/werf/issues/6737)) ([78f4e20](https://www.github.com/werf/werf/commit/78f4e20b6ddd6150d5e92cb326e6326acacc9c2e))
+
+
+### Bug Fixes
+
+* **build, docker:** fix failed to find driver "docker-container" ([#6760](https://www.github.com/werf/werf/issues/6760)) ([63dcbfb](https://www.github.com/werf/werf/commit/63dcbfbd0b42040b0c8708f7dcec52445e393b90))
+* **host-cleanup:** don't prune backend build cache ([7963926](https://www.github.com/werf/werf/commit/7963926c6c33a0519dd0b8ebb8e52ac599e0b882))
+* **host-cleanup:** don't prune containers [#6762](https://www.github.com/werf/werf/issues/6762) ([fa242d8](https://www.github.com/werf/werf/commit/fa242d8e0f0cbcef1682da101aeaacbec913fa71))
+* **host-cleanup:** don't prune dangling werf images for some time ([#6767](https://www.github.com/werf/werf/issues/6767)) ([fd9b2ca](https://www.github.com/werf/werf/commit/fd9b2ca3d3ea2559af3b49510002ca03df0b64cd))
+* **host-cleanup:** don't prune dangling werf images for some time (Docker) ([#6752](https://www.github.com/werf/werf/issues/6752)) ([c0d3413](https://www.github.com/werf/werf/commit/c0d3413eeb67d0dfbb3712fe902b542a3c504a37))
+* **host-cleanup:** ensure no parallel processes of auto host cleanup ([#6736](https://www.github.com/werf/werf/issues/6736)) ([9b43ad0](https://www.github.com/werf/werf/commit/9b43ad032ddba10b8c5f9b58a704f610e689a5eb))
+* **host-cleanup:** purge Stapel assembling container ([785fa77](https://www.github.com/werf/werf/commit/785fa778efec10d2797a08727378f5a84cc7dae5))
+
 ### [2.34.1](https://www.github.com/werf/werf/compare/v2.34.0...v2.34.1) (2025-03-26)
 
 
