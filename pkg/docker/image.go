@@ -229,7 +229,7 @@ func doCliBuild(c command.Cli, opts BuildOptions, args ...string) error {
 
 	if opts.EnableBuildx {
 		cmd = NewBuildxCommand(c)
-		finalArgs = append([]string{"build"}, args...)
+		finalArgs = append([]string{"build", "--load"}, args...)
 	} else {
 		cmd = image.NewBuildCommand(c)
 		finalArgs = args

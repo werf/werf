@@ -87,8 +87,6 @@ func (backend *DockerServerBackend) BuildDockerfile(ctx context.Context, _ []byt
 
 	var cliArgs []string
 
-	cliArgs = append(cliArgs, "--load")
-
 	cliArgs = append(cliArgs, "--file", opts.DockerfileCtxRelPath)
 
 	if opts.TargetPlatform != "" {
