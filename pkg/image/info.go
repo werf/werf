@@ -72,6 +72,7 @@ func (info *Info) GetCopy() *Info {
 		Labels:            util.CopyMap(info.Labels),
 		Size:              info.Size,
 		CreatedAtUnixNano: info.CreatedAtUnixNano,
+		Volumes:           util.CopyMap(info.Volumes),
 
 		IsIndex: info.IsIndex,
 	}

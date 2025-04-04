@@ -8,6 +8,7 @@ import (
 
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
+	"github.com/werf/werf/v2/pkg/image"
 )
 
 func TestEnvExpander(t *testing.T) {
@@ -64,8 +65,10 @@ func TestEnvExpander(t *testing.T) {
 		existed := []string{
 			"GOROOT=/usr/local/go",
 			"GOPATH=/go",
+			"REMOVE_ME_THIS=1",
+			"REMOVE_ME_THAT=2",
 		}
-		toRemove := []string{"GOROOT"}
+		toRemove := []string{"GOROOT", "/^REMOVE_ME_.*/"}
 
 		env, err := modifyEnv(existed, toRemove, nil)
 		assert.NoError(t, err)
@@ -73,6 +76,47 @@ func TestEnvExpander(t *testing.T) {
 			"GOPATH=/go",
 		}
 		assert.Equal(t, expceted, env)
+	})
+	t.Run("remove all envs expand existed and add some new", func(t *testing.T) {
+		existed := []string{
+			"GOROOT=/usr/local/go",
+			"GOPATH=/go",
+			"REMOVE_ME_THIS=1",
+			"REMOVE_ME_THAT=2",
+			"PATH=/usr/bin",
+		}
+		toRemove := []string{"/.*/"}
+		toAdd := map[string]string{
+			"PATH":   "${PATH}:/some/path",
+			"GOPATH": "/bin/go",
+			"GOROOT": "/usr/local/go",
+		}
+
+		env, err := modifyEnv(existed, toRemove, toAdd)
+		assert.NoError(t, err)
+		expceted := []string{"PATH=/usr/bin:/some/path", "GOROOT=/usr/local/go", "GOPATH=/bin/go"}
+		for _, e := range env {
+			assert.Contains(t, expceted, e)
+		}
+	})
+	t.Run("remove all", func(t *testing.T) {
+		existed := []string{
+			"LANG=C.UTF-8",
+			"LC_ALL=C.UTF-8",
+			"WERF_COMMIT_HASH=1ee88b265286348b1e501fb6b631d8c3d5a1816e",
+			"WERF_COMMIT_TIME_HUMAN=2025-04-02 15:15:45 +0100 +0100",
+			"WERF_COMMIT_TIME_UNIX=1743603345",
+			"COLUMNS=243",
+		}
+		toRemove := []string{"/.*/"}
+		toAdd := map[string]string{}
+
+		env, err := modifyEnv(existed, toRemove, toAdd)
+		assert.NoError(t, err)
+		expceted := []string{}
+		for _, e := range env {
+			assert.Contains(t, expceted, e)
+		}
 	})
 }
 
@@ -313,4 +357,65 @@ func TestGetDependencies_StableHash(t *testing.T) {
 	assert.NoError(t, err1)
 	assert.NoError(t, err2)
 	assert.Equal(t, hash1, hash2, "Hashes should be identical regardless of element order")
+}
+
+func TestBaseConfig(t *testing.T) {
+	tests := []struct {
+		name     string
+		spec     config.ImageSpec
+		expected image.Config
+	}{
+		{
+			name: "Entrypoint and Cmd are set",
+			spec: config.ImageSpec{
+				Entrypoint: []string{"/bin/sh", "-c"},
+				Cmd:        []string{"echo", "hello"},
+			},
+			expected: image.Config{
+				Entrypoint: []string{"/bin/sh", "-c"},
+				Cmd:        []string{"echo", "hello"},
+			},
+		},
+		{
+			name: "Entrypoint is set, but Cmd is empty",
+			spec: config.ImageSpec{
+				Entrypoint: []string{"/bin/sh", "-c"},
+				Cmd:        nil,
+			},
+			expected: image.Config{
+				Entrypoint: []string{"/bin/sh", "-c"},
+				ClearCmd:   true,
+			},
+		},
+		{
+			name: "Entrypoint is empty, ClearCmd and ClearEntrypoint are set",
+			spec: config.ImageSpec{
+				ClearCmd:        true,
+				ClearEntrypoint: true,
+			},
+			expected: image.Config{
+				ClearCmd:        true,
+				ClearEntrypoint: true,
+			},
+		},
+		{
+			name: "Entrypoint and Cmd are both empty, ClearCmd is false",
+			spec: config.ImageSpec{
+				ClearCmd:        false,
+				ClearEntrypoint: false,
+			},
+			expected: image.Config{
+				ClearCmd:        false,
+				ClearEntrypoint: false,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			stage := ImageSpecStage{imageSpec: &tt.spec}
+			result := stage.baseConfig()
+			assert.Equal(t, tt.expected, result)
+		})
+	}
 }

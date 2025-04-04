@@ -519,7 +519,7 @@ func prepareWerfConfig(giterminismManager giterminism_manager.Interface, rawImag
 
 		for _, image := range imageList {
 			if meta.Build.ImageSpec != nil && image.final {
-				merged := mergeImageSpec(image.ImageSpec, meta.Build.ImageSpec)
+				merged := mergeImageSpec(meta.Build.ImageSpec, image.ImageSpec)
 				image.ImageSpec = &merged
 			}
 
@@ -541,7 +541,7 @@ func prepareWerfConfig(giterminismManager giterminism_manager.Interface, rawImag
 
 			for _, image := range imageList {
 				if meta.Build.ImageSpec != nil && image.final {
-					merged := mergeImageSpec(image.ImageSpec, meta.Build.ImageSpec)
+					merged := mergeImageSpec(meta.Build.ImageSpec, image.ImageSpec)
 					image.ImageSpec = &merged
 				}
 				images = append(images, image)
@@ -551,7 +551,7 @@ func prepareWerfConfig(giterminismManager giterminism_manager.Interface, rawImag
 				return nil, err
 			} else {
 				if meta.Build.ImageSpec != nil && image.final {
-					merged := mergeImageSpec(image.ImageSpec, meta.Build.ImageSpec)
+					merged := mergeImageSpec(meta.Build.ImageSpec, image.ImageSpec)
 					image.ImageSpec = &merged
 				}
 				images = append(images, image)

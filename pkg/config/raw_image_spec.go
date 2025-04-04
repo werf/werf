@@ -12,13 +12,17 @@ type rawImageSpec struct {
 }
 
 type rawImageSpecConfig struct {
-	KeepEssentialWerfLabels bool     `yaml:"keepEssentialWerfLabels,omitempty"`
-	ClearWerfLabels         bool     `yaml:"clearWerfLabels,omitempty"`
-	RemoveLabels            []string `yaml:"removeLabels,omitempty"`
-	RemoveVolumes           []string `yaml:"removeVolumes,omitempty"`
-	RemoveEnv               []string `yaml:"removeEnv,omitempty"`
-	ClearCmd                bool     `yaml:"clearCmd,omitempty"`
-	ClearEntrypoint         bool     `yaml:"clearEntrypoint,omitempty"`
+	KeepEssentialWerfLabels bool `yaml:"keepEssentialWerfLabels,omitempty"`
+
+	ClearWerfLabels bool `yaml:"clearWerfLabels,omitempty"`
+	ClearCmd        bool `yaml:"clearCmd,omitempty"`
+	ClearEntrypoint bool `yaml:"clearEntrypoint,omitempty"`
+	ClearUser       bool `yaml:"clearUser,omitempty"`
+	ClearWorkingDir bool `yaml:"clearWorkingDir,omitempty"`
+
+	RemoveLabels  []string `yaml:"removeLabels,omitempty"`
+	RemoveVolumes []string `yaml:"removeVolumes,omitempty"`
+	RemoveEnv     []string `yaml:"removeEnv,omitempty"`
 
 	Volumes     []string          `yaml:"volumes,omitempty"`
 	Labels      map[string]string `yaml:"labels,omitempty"`
@@ -105,12 +109,16 @@ func (s *rawImageSpec) toDirective() *ImageSpec {
 
 	if s.Config != nil {
 		imageSpec.KeepEssentialWerfLabels = s.Config.KeepEssentialWerfLabels
+
 		imageSpec.ClearWerfLabels = s.Config.ClearWerfLabels
+		imageSpec.ClearCmd = s.Config.ClearCmd
+		imageSpec.ClearEntrypoint = s.Config.ClearEntrypoint
+		imageSpec.ClearUser = s.Config.ClearUser
+		imageSpec.ClearWorkingDir = s.Config.ClearWorkingDir
+
 		imageSpec.RemoveLabels = s.Config.RemoveLabels
 		imageSpec.RemoveVolumes = s.Config.RemoveVolumes
 		imageSpec.RemoveEnv = s.Config.RemoveEnv
-		imageSpec.ClearCmd = s.Config.ClearCmd
-		imageSpec.ClearEntrypoint = s.Config.ClearEntrypoint
 
 		imageSpec.Volumes = s.Config.Volumes
 		imageSpec.Labels = s.Config.Labels

@@ -14,6 +14,8 @@ type ImageSpec struct {
 	RemoveEnv               []string          `yaml:"removeEnv,omitempty"`
 	ClearCmd                bool              `yaml:"clearCmd,omitempty"`
 	ClearEntrypoint         bool              `yaml:"clearEntrypoint,omitempty"`
+	ClearUser               bool              `yaml:"clearUser,omitempty"`
+	ClearWorkingDir         bool              `yaml:"clearWorkingDir,omitempty"`
 	Volumes                 []string          `yaml:"volumes,omitempty"`
 	Labels                  map[string]string `yaml:"labels,omitempty"`
 	Env                     map[string]string `yaml:"env,omitempty"`
@@ -29,75 +31,36 @@ type ImageSpec struct {
 	rawGlobal *rawImageSpecGlobal
 }
 
-func mergeImageSpec(priority, fallback *ImageSpec) ImageSpec {
-	if priority == nil {
-		priority = &ImageSpec{}
+func mergeImageSpec(meta, image *ImageSpec) ImageSpec {
+	if image == nil {
+		image = &ImageSpec{}
 	}
 
-	var merged ImageSpec
-	if fallback == nil {
-		fallback = &ImageSpec{}
-	} else {
-		merged = *fallback
+	if meta.Author != "" {
+		image.Author = meta.Author
 	}
 
-	if priority.Author != "" {
-		merged.Author = priority.Author
-	}
-	if priority.ClearHistory {
-		merged.ClearHistory = priority.ClearHistory
-	}
-	if priority.ClearWerfLabels {
-		merged.ClearWerfLabels = priority.ClearWerfLabels
-	}
-	if priority.KeepEssentialWerfLabels {
-		merged.KeepEssentialWerfLabels = priority.KeepEssentialWerfLabels
+	if meta.ClearHistory {
+		image.ClearHistory = true
 	}
 
-	merged.RemoveLabels = mergeSlices(fallback.RemoveLabels, priority.RemoveLabels)
-	merged.RemoveVolumes = mergeSlices(fallback.RemoveVolumes, priority.RemoveVolumes)
-	merged.RemoveEnv = mergeSlices(fallback.RemoveEnv, priority.RemoveEnv)
-	merged.Volumes = mergeSlices(fallback.Volumes, priority.Volumes)
+	if meta.KeepEssentialWerfLabels {
+		image.KeepEssentialWerfLabels = true
+	}
 
-	if priority.Labels != nil {
-		if merged.Labels == nil {
-			merged.Labels = make(map[string]string)
-		}
-		for k, v := range priority.Labels {
-			merged.Labels[k] = v
+	if meta.Labels != nil {
+		if image.Labels == nil {
+			image.Labels = meta.Labels
+		} else {
+			for k, v := range meta.Labels {
+				image.Labels[k] = v
+			}
 		}
 	}
-	if priority.Env != nil {
-		if merged.Env == nil {
-			merged.Env = make(map[string]string)
-		}
-		for k, v := range priority.Env {
-			merged.Env[k] = v
-		}
-	}
-	if priority.User != "" {
-		merged.User = priority.User
-	}
-	if len(priority.Cmd) > 0 {
-		merged.Cmd = priority.Cmd
-	}
-	if len(priority.Entrypoint) > 0 {
-		merged.Entrypoint = priority.Entrypoint
-	}
-	if priority.WorkingDir != "" {
-		merged.WorkingDir = priority.WorkingDir
-	}
-	if priority.StopSignal != "" {
-		merged.StopSignal = priority.StopSignal
-	}
-	if len(priority.Expose) > 0 {
-		merged.Expose = priority.Expose
-	}
-	if priority.Healthcheck != nil {
-		merged.Healthcheck = priority.Healthcheck
-	}
 
-	return merged
+	image.RemoveLabels = mergeSlices(image.RemoveLabels, meta.RemoveLabels)
+
+	return *image
 }
 
 func mergeSlices(a, b []string) []string {

@@ -652,6 +652,7 @@ func (backend *BuildahBackend) GetImageInfo(ctx context.Context, ref string, opt
 		ID:                fmt.Sprintf("sha256:%x", inspect.Docker.ID),
 		ParentID:          parentID,
 		Size:              inspect.Docker.Size,
+		Volumes:           inspect.Docker.Config.Volumes,
 	}, nil
 }
 

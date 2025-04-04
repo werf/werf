@@ -42,5 +42,6 @@ func NewInfoFromInspect(ref string, inspect *types.ImageInspect) *image.Info {
 		ID:                inspect.ID,
 		ParentID:          parentID,
 		Size:              inspect.Size,
+		Volumes:           inspect.Config.Volumes,
 	}
 }
