@@ -20,6 +20,7 @@ import (
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
+	"github.com/werf/werf/v2/pkg/graceful"
 	"github.com/werf/werf/v2/pkg/tmp_manager"
 	"github.com/werf/werf/v2/pkg/true_git"
 	"github.com/werf/werf/v2/pkg/werf/global_warnings"
@@ -413,7 +414,7 @@ func runMain(ctx context.Context, dockerComposeCmdName string, cmdData composeCm
 			// TODO: use docker cli StatusError after switching on docker compose command
 			if exitErr, ok := err.(*exec.ExitError); ok {
 				if status, ok := exitErr.Sys().(syscall.WaitStatus); ok {
-					common.TerminateWithError(err.Error(), status.ExitStatus())
+					graceful.Terminate(err.Error(), status.ExitStatus())
 				}
 			}
 
