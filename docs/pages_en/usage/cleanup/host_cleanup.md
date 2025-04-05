@@ -17,6 +17,15 @@ The `--allowed-backend-storage-volume-usage` (`WERF_ALLOWED_BACKEND_STORAGE_VOLU
 
 The `--allowed-backend-storage-volume-usage-margin` (`WERF_ALLOWED_BACKEND_STORAGE_VOLUME_USAGE_MARGIN`) parameter allows you to set the extra cleanup margin relative to the backend storage usage threshold (the default is 5%).
 
+## Build cache (Docker or Buildah)
+
+werf doesn't clean build cache of **Buildah** and **Docker**.
+
+For **Docker** backend (buildx / buildkit) the user is free to choose from next cleanup strategies:
+
++ Define build cache threshold in builder's [configuration](https://docs.docker.com/build/cache/garbage-collection/#configuration).
++ Schedule build cache cleanup via `cron` and [`docker buildx prune --max-used-space=bytes`](https://docs.docker.com/reference/cli/docker/buildx/prune/).
+
 ## Changing the space usage threshold and cleanup depth of the local cache
 
 The `--allowed-local-cache-volume-usage` (`WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE`) parameter allows you to adjust the threshold of space used on the volume at which the local cache cleanup is triggered (the default is 70%).
