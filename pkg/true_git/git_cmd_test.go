@@ -14,28 +14,15 @@ import (
 var _ = Describe("Git command", func() {
 	var gitRepoPath string
 
-	BeforeEach(func() {
+	BeforeEach(func(ctx SpecContext) {
 		gitRepoPath = filepath.Join(SuiteData.TestDirPath, "repo")
 		utils.MkdirAll(gitRepoPath)
 
-		utils.RunSucceedCommand(
-			gitRepoPath,
-			"git",
-			"-c", "init.defaultBranch=main",
-			"init",
-		)
+		utils.RunSucceedCommand(ctx, gitRepoPath, "git", "-c", "init.defaultBranch=main", "init")
 
-		utils.RunSucceedCommand(
-			gitRepoPath,
-			"git",
-			"checkout", "-b", "main",
-		)
+		utils.RunSucceedCommand(ctx, gitRepoPath, "git", "checkout", "-b", "main")
 
-		utils.RunSucceedCommand(
-			gitRepoPath,
-			"git",
-			"commit", "--allow-empty", "-m", "Initial commit",
-		)
+		utils.RunSucceedCommand(ctx, gitRepoPath, "git", "commit", "--allow-empty", "-m", "Initial commit")
 
 		Expect(Init(context.Background(), Options{})).Should(Succeed())
 	})

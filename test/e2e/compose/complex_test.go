@@ -23,18 +23,18 @@ type simpleTestOptions struct {
 
 var _ = Describe("Complex compose", Label("e2e", "compose", "complex"), func() {
 	DescribeTable("should",
-		func(opts simpleTestOptions) {
+		func(ctx SpecContext, opts simpleTestOptions) {
 			By(fmt.Sprintf("%s: starting", opts.State))
 			{
 				repoDirname := opts.Repo
 				fixtureRelPath := fmt.Sprintf("simple/%s", opts.State)
 
 				By(fmt.Sprintf("%s: preparing test repo", opts.State))
-				SuiteData.InitTestRepo(repoDirname, fixtureRelPath)
+				SuiteData.InitTestRepo(ctx, repoDirname, fixtureRelPath)
 
 				By(fmt.Sprintf("%s: %s", opts.State, opts.StateDescription))
 				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
-				composeOut := werfProject.Compose(&werf.BuildOptions{
+				composeOut := werfProject.Compose(ctx, &werf.BuildOptions{
 					CommonOptions: werf.CommonOptions{
 						ExtraArgs: append([]string{commandUp}, opts.ExtraArgs...),
 					},
@@ -42,7 +42,7 @@ var _ = Describe("Complex compose", Label("e2e", "compose", "complex"), func() {
 				Expect(composeOut).To(ContainSubstring("Building stage"))
 				Expect(composeOut).To(ContainSubstring("image backend"))
 				By(fmt.Sprintf("%s: running compose down", opts.State))
-				composeDownOut := werfProject.Compose(&werf.BuildOptions{
+				composeDownOut := werfProject.Compose(ctx, &werf.BuildOptions{
 					CommonOptions: werf.CommonOptions{
 						ExtraArgs: []string{commandDown},
 					},
