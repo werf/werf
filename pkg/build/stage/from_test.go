@@ -1,7 +1,6 @@
 package stage
 
 import (
-	"context"
 	"fmt"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -13,7 +12,7 @@ import (
 
 var _ = Describe("FromStage", func() {
 	DescribeTable("GetDependencies()",
-		func(data testDataFrom) {
+		func(ctx SpecContext, data testDataFrom) {
 			ctrl := gomock.NewController(GinkgoT())
 
 			conveyor := NewConveyorStubForDependencies(NewGiterminismManagerStub(NewLocalGitRepoStub("9d8059842b6fde712c58315ca0ab4713d90761c0"), NewGiterminismInspectorStub()), make([]*TestDependency, 0))
@@ -37,7 +36,6 @@ var _ = Describe("FromStage", func() {
 				legacyImage.EXPECT().Name().Return(data.PrevImageImageName)
 			}
 
-			ctx := context.Background()
 			digest, err := fromStage.GetDependencies(ctx, conveyor, nil, prevImage, nil, nil)
 			Expect(err).To(Succeed())
 

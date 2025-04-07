@@ -1,7 +1,6 @@
 package stage
 
 import (
-	"context"
 	"fmt"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -13,9 +12,7 @@ import (
 
 var _ = Describe("DependenciesStage", func() {
 	DescribeTable("configuring images dependencies for dependencies stage",
-		func(data TestDependencies) {
-			ctx := context.Background()
-
+		func(ctx SpecContext, data TestDependencies) {
 			conveyor := NewConveyorStubForDependencies(NewGiterminismManagerStub(NewLocalGitRepoStub("9d8059842b6fde712c58315ca0ab4713d90761c0"), NewGiterminismInspectorStub()), data.Dependencies)
 			containerBackend := NewContainerBackendStub()
 

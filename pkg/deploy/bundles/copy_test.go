@@ -13,14 +13,15 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/werf/3p-helm/pkg/chart"
+	"github.com/werf/logboek"
 	bundles_registry "github.com/werf/werf/v2/pkg/deploy/bundles/registry"
 	"github.com/werf/werf/v2/pkg/docker_registry"
 )
 
 var _ = Describe("Bundle copy", func() {
-	It("should copy archive to archive", func() {
+	It("should copy archive to archive", func(ctx context.Context) {
 		{
-			ctx := context.Background()
+			ctx = logboek.NewContext(ctx, logboek.DefaultLogger())
 
 			ch := &chart.Chart{
 				Metadata: &chart.Metadata{
@@ -78,8 +79,8 @@ werf:
 		}
 	})
 
-	It("should copy archive to remote", func() {
-		ctx := context.Background()
+	It("should copy archive to remote", func(ctx context.Context) {
+		ctx = logboek.NewContext(ctx, logboek.DefaultLogger())
 
 		ch := &chart.Chart{
 			Metadata: &chart.Metadata{
@@ -152,8 +153,8 @@ werf:
 		}
 	})
 
-	It("should copy archive to remote (without chart rename)", func() {
-		ctx := context.Background()
+	It("should copy archive to remote (without chart rename)", func(ctx context.Context) {
+		ctx = logboek.NewContext(ctx, logboek.DefaultLogger())
 
 		ch := &chart.Chart{
 			Metadata: &chart.Metadata{
@@ -226,8 +227,8 @@ werf:
 		}
 	})
 
-	It("should copy archive to remote (without chart rename)", func() {
-		ctx := context.Background()
+	It("should copy archive to remote (without chart rename)", func(ctx context.Context) {
+		ctx = logboek.NewContext(ctx, logboek.DefaultLogger())
 
 		ch := &chart.Chart{
 			Metadata: &chart.Metadata{
@@ -300,8 +301,8 @@ werf:
 		}
 	})
 
-	It("should copy remote to archive", func() {
-		ctx := context.Background()
+	It("should copy remote to archive", func(ctx context.Context) {
+		ctx = logboek.NewContext(ctx, logboek.DefaultLogger())
 
 		ch := &chart.Chart{
 			Metadata: &chart.Metadata{
@@ -375,8 +376,8 @@ werf:
 		}
 	})
 
-	It("should copy remote to remote", func() {
-		ctx := context.Background()
+	It("should copy remote to remote", func(ctx context.Context) {
+		ctx = logboek.NewContext(ctx, logboek.DefaultLogger())
 
 		ch := &chart.Chart{
 			Metadata: &chart.Metadata{

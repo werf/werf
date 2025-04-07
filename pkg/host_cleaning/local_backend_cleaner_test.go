@@ -12,6 +12,7 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"github.com/werf/common-go/pkg/util"
+	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/container_backend/filter"
 	"github.com/werf/werf/v2/pkg/container_backend/info"
@@ -36,7 +37,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 		cleaner, err = NewLocalBackendCleaner(backend)
 		Expect(errors.Is(err, ErrUnsupportedContainerBackend)).To(BeTrue())
 		Expect(cleaner).NotTo(BeNil())
-		ctx = context.Background()
+		ctx = logboek.NewContext(context.TODO(), logboek.DefaultLogger())
 		stubs = gostub.New()
 	})
 	AfterEach(func() {
