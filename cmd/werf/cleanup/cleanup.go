@@ -150,6 +150,8 @@ func runCleanup(ctx context.Context, cmd *cobra.Command) error {
 		return fmt.Errorf("unable to load werf config: %w", err)
 	}
 
+	logboek.Context(ctx).LogOptionalLn()
+
 	if !werfConfig.Meta.Cleanup.DisableGitHistoryBasedPolicy {
 		if !werfConfig.Meta.GitWorktree.GetForceShallowClone() && !werfConfig.Meta.GitWorktree.GetAllowFetchingOriginBranchesAndTags() {
 			isShallow, err := giterminismManager.LocalGitRepo().IsShallowClone(ctx)

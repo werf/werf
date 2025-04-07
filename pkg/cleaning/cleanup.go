@@ -527,7 +527,7 @@ func (m *cleanupManager) prepareStageIDTableRows(ctx context.Context, stageIDCus
 }
 
 func (m *cleanupManager) handleSavedStageIDs(ctx context.Context, savedStageIDs []string) {
-	logboek.Context(ctx).Default().LogBlock("Saved tags").Do(func() {
+	logboek.Context(ctx).Default().LogBlock("Saved tags (%d)", len(savedStageIDs)).Do(func() {
 		for _, stageID := range savedStageIDs {
 			m.stageManager.MarkStageDescAsProtectedByStageID(stageID, stage_manager.ProtectionReasonGitPolicy, true)
 			logboek.Context(ctx).Default().LogFDetails("  tag: %s\n", stageID)
