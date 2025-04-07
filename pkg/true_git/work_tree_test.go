@@ -43,40 +43,21 @@ var _ = Describe("Work tree helpers", func() {
 		When("no submodules are used", func() {
 			var mainWtDir, sideWtDir string
 
-			BeforeEach(func() {
+			BeforeEach(func(ctx SpecContext) {
 				mainWtDir = filepath.Join(SuiteData.TestDirPath, "main-wt")
 				sideWtDir = filepath.Join(SuiteData.TestDirPath, "side-wt")
 
 				Expect(os.MkdirAll(mainWtDir, os.ModePerm)).To(Succeed())
 
-				utils.RunSucceedCommand(
-					mainWtDir,
-					"git",
-					"-c", "init.defaultBranch=main",
-					"init",
-				)
+				utils.RunSucceedCommand(ctx, mainWtDir, "git", "-c", "init.defaultBranch=main", "init")
 
-				utils.RunSucceedCommand(
-					mainWtDir,
-					"git",
-					"checkout", "-b", "main",
-				)
+				utils.RunSucceedCommand(ctx, mainWtDir, "git", "checkout", "-b", "main")
 
-				utils.RunSucceedCommand(
-					mainWtDir,
-					"git",
-					"commit", "--allow-empty", "-m", "Initial commit",
-				)
+				utils.RunSucceedCommand(ctx, mainWtDir, "git", "commit", "--allow-empty", "-m", "Initial commit")
 
-				utils.RunSucceedCommand(
-					mainWtDir,
-					"git", "worktree", "add", sideWtDir,
-				)
+				utils.RunSucceedCommand(ctx, mainWtDir, "git", "worktree", "add", sideWtDir)
 
-				utils.RunSucceedCommand(
-					mainWtDir,
-					"git", "worktree", "lock", sideWtDir,
-				)
+				utils.RunSucceedCommand(ctx, mainWtDir, "git", "worktree", "lock", sideWtDir)
 
 				err := os.RemoveAll(sideWtDir)
 				Expect(err).To(Succeed())
@@ -94,35 +75,19 @@ var _ = Describe("Work tree helpers", func() {
 
 	Describe("verifyWorkTreeConsistency", func() {
 		var mainWtDir, sideWtDir string
-		BeforeEach(func() {
+		BeforeEach(func(ctx SpecContext) {
 			mainWtDir = filepath.Join(SuiteData.TestDirPath, "main-wt")
 			sideWtDir = filepath.Join(SuiteData.TestDirPath, "side-wt")
 
 			Expect(os.MkdirAll(mainWtDir, os.ModePerm)).To(Succeed())
 
-			utils.RunSucceedCommand(
-				mainWtDir,
-				"git",
-				"-c", "init.defaultBranch=main",
-				"init",
-			)
+			utils.RunSucceedCommand(ctx, mainWtDir, "git", "-c", "init.defaultBranch=main", "init")
 
-			utils.RunSucceedCommand(
-				mainWtDir,
-				"git",
-				"checkout", "-b", "main",
-			)
+			utils.RunSucceedCommand(ctx, mainWtDir, "git", "checkout", "-b", "main")
 
-			utils.RunSucceedCommand(
-				mainWtDir,
-				"git",
-				"commit", "--allow-empty", "-m", "Initial commit",
-			)
+			utils.RunSucceedCommand(ctx, mainWtDir, "git", "commit", "--allow-empty", "-m", "Initial commit")
 
-			utils.RunSucceedCommand(
-				mainWtDir,
-				"git", "worktree", "add", sideWtDir,
-			)
+			utils.RunSucceedCommand(ctx, mainWtDir, "git", "worktree", "add", sideWtDir)
 		})
 
 		It("passes correct work tree", func() {

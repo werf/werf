@@ -9,12 +9,8 @@ import (
 	"github.com/werf/werf/v2/test/pkg/utils/docker"
 )
 
-var _ = AfterEach(func() {
-	utils.RunSucceedCommand(
-		SuiteData.GetProjectWorktree(SuiteData.ProjectName),
-		SuiteData.WerfBinPath,
-		"host", "purge", "--force",
-	)
+var _ = AfterEach(func(ctx SpecContext) {
+	utils.RunSucceedCommand(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "host", "purge", "--force")
 })
 
 type entry struct {
@@ -23,16 +19,12 @@ type entry struct {
 	expectedSecondBuildOutputMatchers []types.GomegaMatcher
 }
 
-var itBody = func(e entry) {
-	SuiteData.CommitProjectWorktree(SuiteData.ProjectName, e.fixturePath, "initial commit")
+var itBody = func(ctx SpecContext, e entry) {
+	SuiteData.CommitProjectWorktree(ctx, SuiteData.ProjectName, e.fixturePath, "initial commit")
 
 	SuiteData.Stubs.SetEnv("FROM_CACHE_VERSION", "1")
 
-	output := utils.SucceedCommandOutputString(
-		SuiteData.GetProjectWorktree(SuiteData.ProjectName),
-		SuiteData.WerfBinPath,
-		"build",
-	)
+	output := utils.SucceedCommandOutputString(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "build")
 
 	for _, match := range e.expectedFirstBuildOutputMatchers {
 		Expect(output).Should(match)
@@ -40,17 +32,13 @@ var itBody = func(e entry) {
 
 	SuiteData.Stubs.SetEnv("FROM_CACHE_VERSION", "2")
 
-	output = utils.SucceedCommandOutputString(
-		SuiteData.GetProjectWorktree(SuiteData.ProjectName),
-		SuiteData.WerfBinPath,
-		"build",
-	)
+	output = utils.SucceedCommandOutputString(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "build")
 
 	for _, match := range e.expectedSecondBuildOutputMatchers {
 		Expect(output).Should(match)
 	}
 
-	docker.RunSucceedContainerCommandWithStapel(SuiteData.WerfBinPath, SuiteData.GetProjectWorktree(SuiteData.ProjectName), []string{}, []string{"[[ -z \"$(ls -A /mount)\" ]]"})
+	docker.RunSucceedContainerCommandWithStapel(ctx, SuiteData.WerfBinPath, SuiteData.GetProjectWorktree(SuiteData.ProjectName), []string{}, []string{"[[ -z \"$(ls -A /mount)\" ]]"})
 }
 
 var _ = BeforeEach(func() {

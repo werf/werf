@@ -22,52 +22,32 @@ var _ = Describe("purge command", func() {
 				SuiteData.Stubs.SetEnv("WERF_WITHOUT_KUBE", "1")
 			})
 
-			BeforeEach(func() {
+			BeforeEach(func(ctx SpecContext) {
 				utils.CopyIn(utils.FixturePath("purge"), SuiteData.TestDirPath)
 
-				utils.RunSucceedCommand(
-					SuiteData.TestDirPath,
-					"git",
-					"init",
-				)
+				utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "init")
 
-				utils.RunSucceedCommand(
-					SuiteData.TestDirPath,
-					"git",
-					"add", "werf.yaml", "werf-giterminism.yaml",
-				)
+				utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "add", "werf.yaml", "werf-giterminism.yaml")
 
-				utils.RunSucceedCommand(
-					SuiteData.TestDirPath,
-					"git",
-					"commit", "-m", "Initial commit",
-				)
+				utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "commit", "-m", "Initial commit")
 			})
 
-			It("should remove all project data", func() {
-				utils.RunSucceedCommand(
-					SuiteData.TestDirPath,
-					SuiteData.WerfBinPath,
-					"build", "--add-custom-tag", fmt.Sprintf(customTagValueFormat, "1"),
-				)
+			It("should remove all project data", func(ctx SpecContext) {
+				utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build", "--add-custom-tag", fmt.Sprintf(customTagValueFormat, "1"))
 
-				Expect(StagesCount()).Should(BeNumerically(">", 0))
-				Expect(ManagedImagesCount()).Should(BeNumerically(">", 0))
-				Expect(len(ImageMetadata(imageName))).Should(BeNumerically(">", 0))
+				Expect(StagesCount(ctx)).Should(BeNumerically(">", 0))
+				Expect(ManagedImagesCount(ctx)).Should(BeNumerically(">", 0))
+				Expect(len(ImageMetadata(ctx, imageName))).Should(BeNumerically(">", 0))
 				Expect(len(ImportMetadataIDs())).Should(BeNumerically(">", 0))
 				Expect(len(CustomTags())).Should(BeNumerically(">", 0))
 				Expect(len(CustomTagsMetadataList())).Should(BeNumerically(">", 0))
 
-				utils.RunSucceedCommand(
-					SuiteData.TestDirPath,
-					SuiteData.WerfBinPath,
-					"purge",
-				)
+				utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "purge")
 
 				if SuiteData.TestImplementation != docker_registry.QuayImplementationName {
-					Expect(StagesCount()).Should(Equal(0))
-					Expect(ManagedImagesCount()).Should(Equal(0))
-					Expect(len(ImageMetadata(imageName))).Should(Equal(0))
+					Expect(StagesCount(ctx)).Should(Equal(0))
+					Expect(ManagedImagesCount(ctx)).Should(Equal(0))
+					Expect(len(ImageMetadata(ctx, imageName))).Should(Equal(0))
 					Expect(len(ImportMetadataIDs())).Should(Equal(0))
 					Expect(len(CustomTags())).Should(Equal(0))
 					Expect(len(CustomTagsMetadataList())).Should(Equal(0))
