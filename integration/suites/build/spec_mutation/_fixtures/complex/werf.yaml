@@ -1,0 +1,77 @@
+project: demo-app
+configVersion: 1
+build:
+  platform:
+    - 'linux/amd64'
+  imageSpec:
+    config:
+      labels: 
+        global_label: yes
+      removeLabels:
+        - remove_global_label
+      keepEssentialWerfLabels: false
+
+---
+image: base
+dockerfile: Dockerfile
+---
+image: basic-test
+fromImage: base
+imageSpec:
+  author: "testauthor"
+  clearHistory: true
+  config:
+    volumes:
+      - "/test/volume"
+      - "/second/test/volume"
+    removeVolumes:
+      - "/home/remove/me"
+    env:
+      ADD: me 
+      ADD_ANOTHER: me
+    removeEnv:
+      - /^APP_.*/
+      - REMOVE
+    labels:
+      test: yes
+    removeLabels:
+      - pleaseremove
+      - /^remove.*/
+      - /^werf.*/
+    expose:
+      - "99"
+    user: testuser
+    cmd:
+      - /bin/sh
+    entrypoint:
+      - test
+    workingDir: /test/work
+    stopSignal: SIGINT
+    healthcheck:
+      test:
+        - "curl -f http://localhost/ || exit 1"
+      interval: 30
+      retries: 3
+    keepEssentialWerfLabels: true
+---
+image: clean-test
+fromImage: base
+imageSpec:
+  author: ""
+  clearHistory: true
+  config:
+    removeVolumes:
+      - "/home/remove/me"
+      - "/home/app/data"
+    removeEnv:
+      - "/.*/"
+    removeLabels:
+      - "/.*/"
+    expose:
+      - ""
+    clearUser: true
+    clearWorkingDir: true
+    clearCmd: true
+    clearEntrypoint: true
+    keepEssentialWerfLabels: false # it will not work without clearWerfLabels
+    clearWerfLabels: true

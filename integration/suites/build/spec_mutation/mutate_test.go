@@ -7,6 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/werf/werf/v2/test/pkg/contback"
+	"github.com/werf/werf/v2/test/pkg/thirdparty/contruntime/manifest"
 	"github.com/werf/werf/v2/test/pkg/werf"
 )
 
@@ -29,7 +30,7 @@ var _ = Describe("build and mutate image spec", Label("integration", "build", "m
 			By(fmt.Sprintf("%s: starting", testOpts.State))
 			{
 				repoDirname := "repo0"
-				fixtureRelPath := "simple"
+				fixtureRelPath := "complex"
 				buildReportName := "report0.json"
 
 				By(fmt.Sprintf("%s: preparing test repo", testOpts.State))
@@ -47,14 +48,63 @@ var _ = Describe("build and mutate image spec", Label("integration", "build", "m
 					imgCfg := inspectOfImage.Config
 
 					By("checking image metadata")
-					Expect(imgCfg.Env).Should(ContainElement("TEST=test"))
-					Expect(imgCfg.Env).ShouldNot(ContainElement(ContainSubstring("PATH")))
-					Expect(imgCfg.Volumes).Should(HaveKey("/var/lib/test/data"))
-					Expect(imgCfg.Entrypoint).Should(ContainElement("/bin/sh"))
-					Expect(imgCfg.Cmd).Should(ContainElement("echo"))
-					Expect(imgCfg.Labels).Should(HaveKey("Test"))
-					Expect(imgCfg.Labels).Should(HaveKey("Test_Global"))
-					Expect(imgCfg.User).Should(Equal("root"))
+					switch imageName {
+					case "basic-test":
+
+						Expect(inspectOfImage.Author).Should(Equal("testauthor"))
+
+						Expect(imgCfg.Env).Should(ContainElement("ADD=me"))
+						Expect(imgCfg.Env).Should(ContainElement("ADD_ANOTHER=me"))
+						Expect(imgCfg.Env).ShouldNot(ContainElement("APP_ENV=test"))
+						Expect(imgCfg.Env).ShouldNot(ContainElement("APP_VERSION=0.0.1"))
+						Expect(imgCfg.Env).ShouldNot(ContainElement("REMOVE=ME"))
+
+						Expect(imgCfg.Volumes).Should(HaveKey("/home/app/data"))
+						Expect(imgCfg.Volumes).Should(HaveKey("/test/volume"))
+						Expect(imgCfg.Volumes).Should(HaveKey("/second/test/volume"))
+						Expect(imgCfg.Volumes).ShouldNot(HaveKey("/home/remove/me"))
+
+						Expect(imgCfg.Cmd).Should(ContainElement("/bin/sh"))
+						Expect(imgCfg.Entrypoint).Should(ContainElement("test"))
+
+						Expect(imgCfg.Labels).Should(HaveKey("maintainer"))
+						Expect(imgCfg.Labels).Should(HaveKey("save"))
+						Expect(imgCfg.Labels).Should(HaveKey("test"))
+						Expect(imgCfg.Labels).Should(HaveKey("werf"))
+						Expect(imgCfg.Labels).Should(HaveKey("global_label"))
+						Expect(imgCfg.Labels).Should(HaveKey("werf.io/parent-stage-id"))
+						Expect(imgCfg.Labels).ShouldNot(HaveKey("pleaseremove"))
+						Expect(imgCfg.Labels).ShouldNot(HaveKey("remove.completely"))
+						Expect(imgCfg.Labels).ShouldNot(HaveKey("remove.all"))
+
+						Expect(imgCfg.User).Should(Equal("testuser"))
+
+						Expect(imgCfg.ExposedPorts).Should(Equal(manifest.Schema2PortSet{"99": {}}))
+						Expect(imgCfg.ExposedPorts).ShouldNot(HaveKey("1234/tcp"))
+
+						Expect(imgCfg.WorkingDir).Should(Equal("/test/work"))
+
+						Expect(imgCfg.StopSignal).Should(Equal("SIGINT"))
+
+					case "clean-test":
+
+						Expect(inspectOfImage.Author).Should(Equal(""))
+
+						Expect(imgCfg.Env).Should(BeEmpty())
+
+						Expect(imgCfg.Volumes).Should(BeEmpty())
+
+						Expect(imgCfg.Cmd).Should(BeEmpty())
+						Expect(imgCfg.Entrypoint).Should(BeEmpty())
+
+						Expect(imgCfg.Labels).Should(HaveKey("global_label"))
+
+						Expect(imgCfg.User).Should(Equal(""))
+
+						Expect(imgCfg.ExposedPorts).Should(Equal(manifest.Schema2PortSet{"": {}}))
+
+						Expect(imgCfg.WorkingDir).Should(Equal(""))
+					}
 				}
 			}
 		},
