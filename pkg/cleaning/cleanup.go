@@ -985,9 +985,19 @@ func (m *cleanupManager) protectRelativeStageDescSetByStageDesc(targetStageDesc 
 	targetStageDescSet := image.NewStageDescSet()
 	if targetStageDesc.Info.IsIndex {
 		for _, platformImageInfo := range targetStageDesc.Info.Index {
-			stageID := platformImageInfo.Tag
-			if platformStageDesc := m.stageManager.GetStageDescByStageID(stageID); platformStageDesc != nil {
-				targetStageDescSet.Add(platformStageDesc)
+			platformImageDigest := platformImageInfo.GetDigest()
+			if platformImageDigest == "" {
+				continue
+			}
+
+			// platformImageInfo.Tag cannot be used as a stage ID because it matches the index manifest tag,
+			// and the index manifest itself does not contain platform tag information.
+			for platformStageDesc := range m.stageManager.GetStageDescSet().Iter() {
+				if platformStageDesc.Info.GetDigest() == platformImageDigest {
+					m.stageManager.MarkStageDescAsProtected(platformStageDesc, stage_manager.ProtectionReasonImageIndexPlatform, false)
+					targetStageDescSet.Add(platformStageDesc)
+					break
+				}
 			}
 		}
 	} else {
