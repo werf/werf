@@ -813,11 +813,15 @@ func (m *cleanupManager) cleanupUnusedStages(ctx context.Context) error {
 
 	// skip kept stages and their relatives.
 	{
+		stageByID := make(map[string]*image.StageDesc)
+		for stage := range m.stageManager.GetStageDescSet().Iter() {
+			stageByID[stage.Info.ID] = stage
+		}
 		for protectionReason, stageDescToKeepSet := range m.stageManager.GetProtectedStageDescSetByReason() {
 			// Git history based policy keeps import sources more effectively, other policies do not keep them.
 			withImportOrDependencySources := protectionReason != stage_manager.ProtectionReasonGitPolicy
 			for stageDescToKeep := range stageDescToKeepSet.Iter() {
-				m.protectRelativeStageDescSetByStageDesc(stageDescToKeep, withImportOrDependencySources)
+				m.protectRelativeStageDescSetByStageDesc(stageDescToKeep, withImportOrDependencySources, stageByID)
 			}
 		}
 
@@ -981,7 +985,7 @@ func deleteImportsMetadata(ctx context.Context, projectName string, storageManag
 	})
 }
 
-func (m *cleanupManager) protectRelativeStageDescSetByStageDesc(targetStageDesc *image.StageDesc, withImportOrDependencySources bool) {
+func (m *cleanupManager) protectRelativeStageDescSetByStageDesc(targetStageDesc *image.StageDesc, withImportOrDependencySources bool, stageByID map[string]*image.StageDesc) {
 	targetStageDescSet := image.NewStageDescSet()
 	if targetStageDesc.Info.IsIndex {
 		for _, platformImageInfo := range targetStageDesc.Info.Index {
@@ -995,7 +999,6 @@ func (m *cleanupManager) protectRelativeStageDescSetByStageDesc(targetStageDesc 
 	}
 
 	handledStageDescSet := image.NewStageDescSet()
-	stageDescSet := m.stageManager.GetStageDescSet()
 	currentStageDescSet := targetStageDescSet
 	for !currentStageDescSet.IsEmpty() {
 		for _, currentStageDesc := range currentStageDescSet.ToSlice() {
@@ -1037,12 +1040,10 @@ func (m *cleanupManager) protectRelativeStageDescSetByStageDesc(targetStageDesc 
 			// Parent stage checking.
 			{
 				// TODO: remove this legacy check in v3.
-				for stageDesc := range stageDescSet.Iter() {
-					if currentStageDesc.Info.ParentID == stageDesc.Info.ID {
-						currentStageDescSet.Add(stageDesc)
-						m.stageManager.MarkStageDescAsProtected(stageDesc, stage_manager.ProtectionReasonAncestor, false)
-						break
-					}
+				if stageDesc, ok := stageByID[currentStageDesc.Info.ParentID]; ok {
+					currentStageDescSet.Add(stageDesc)
+					m.stageManager.MarkStageDescAsProtected(stageDesc, stage_manager.ProtectionReasonAncestor, false)
+					break
 				}
 
 				parentStageDesc := m.stageManager.GetStageDescByStageID(currentStageDesc.Info.Labels[image.WerfParentStageID])
