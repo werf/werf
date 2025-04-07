@@ -17,6 +17,7 @@ import (
 	"github.com/werf/werf/v2/pkg/container_backend/info"
 	"github.com/werf/werf/v2/pkg/container_backend/prune"
 	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/logging"
 	"github.com/werf/werf/v2/pkg/volumeutils"
 	"github.com/werf/werf/v2/pkg/werf"
 	"github.com/werf/werf/v2/test/mock"
@@ -29,7 +30,6 @@ var _ = Describe("LocalBackendCleaner", func() {
 	var backend *mock.MockContainerBackend
 
 	var stubs *gostub.Stubs
-	var ctx context.Context
 
 	BeforeEach(func() {
 		backend = mock.NewMockContainerBackend(gomock.NewController(t))
@@ -37,7 +37,6 @@ var _ = Describe("LocalBackendCleaner", func() {
 		cleaner, err = NewLocalBackendCleaner(backend)
 		Expect(errors.Is(err, ErrUnsupportedContainerBackend)).To(BeTrue())
 		Expect(cleaner).NotTo(BeNil())
-		ctx = context.Background()
 		stubs = gostub.New()
 
 		Expect(werf.Init(t.TempDir(), "")).To(Succeed())
@@ -71,7 +70,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 	)
 
 	Describe("backendStoragePath", func() {
-		It("should return err if backend.Info() returns err", func() {
+		It("should return err if backend.Info() returns err", func(ctx SpecContext) {
 			err0 := errors.New("some err")
 			backend.EXPECT().Info(ctx).Return(info.Info{}, err0)
 
@@ -82,7 +81,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 	})
 
 	Describe("ShouldRunAutoGC", func() {
-		It("should return true if cleanup needed", func() {
+		It("should return true if cleanup needed", func(ctx SpecContext) {
 			result, err := cleaner.ShouldRunAutoGC(ctx, RunAutoGCOptions{
 				AllowedStorageVolumeUsagePercentage: 0,
 				StoragePath:                         t.TempDir(),
@@ -90,7 +89,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 			Expect(err).To(Succeed())
 			Expect(result).To(BeTrue())
 		})
-		It("should return false if cleanup not needed", func() {
+		It("should return false if cleanup not needed", func(ctx SpecContext) {
 			result, err := cleaner.ShouldRunAutoGC(ctx, RunAutoGCOptions{
 				AllowedStorageVolumeUsagePercentage: 1000,
 				StoragePath:                         t.TempDir(),
@@ -109,7 +108,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 				filter.NewFilter("until", "1h"),
 			}
 		})
-		It("should return err=nil and full report if opts.DryRun=true calling backend.Images() to find dandling images", func() {
+		It("should return err=nil and full report if opts.DryRun=true calling backend.Images() to find dandling images", func(ctx SpecContext) {
 			list := image.ImagesList{
 				{ID: "one"},
 			}
@@ -121,7 +120,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 			Expect(err).To(Succeed())
 			Expect(report).To(Equal(mapImageListToCleanupReport(list)))
 		})
-		It("should return err=some_err and empty report if opts.DryRun=false calling backend.PruneImages() which returns pruneErr=err", func() {
+		It("should return err=some_err and empty report if opts.DryRun=false calling backend.PruneImages() which returns pruneErr=err", func(ctx SpecContext) {
 			err0 := errors.New("some_err")
 			backend.EXPECT().PruneImages(ctx, prune.Options{Filters: filters}).Return(prune.Report{}, err0)
 
@@ -129,21 +128,25 @@ var _ = Describe("LocalBackendCleaner", func() {
 			Expect(err).To(Equal(err0))
 			Expect(report).To(Equal(newCleanupReport()))
 		})
-		It("should return err=nil and empty report if opts.DryRun=false calling backend.PruneImages() which returns pruneErr=ErrImageUsedByContainer", func() {
+		It("should return err=nil and empty report if opts.DryRun=false calling backend.PruneImages() which returns pruneErr=ErrImageUsedByContainer", func(ctx context.Context) {
+			ctx = logging.WithLogger(ctx)
+
 			backend.EXPECT().PruneImages(ctx, prune.Options{Filters: filters}).Return(prune.Report{}, container_backend.ErrImageUsedByContainer)
 
 			report, err := cleaner.pruneImages(ctx, RunGCOptions{})
 			Expect(err).To(Succeed())
 			Expect(report).To(Equal(newCleanupReport()))
 		})
-		It("should return err=nil and empty report if opts.DryRun=false calling backend.PruneImages() which returns pruneErr=ErrPruneIsAlreadyRunning", func() {
+		It("should return err=nil and empty report if opts.DryRun=false calling backend.PruneImages() which returns pruneErr=ErrPruneIsAlreadyRunning", func(ctx context.Context) {
+			ctx = logging.WithLogger(ctx)
+
 			backend.EXPECT().PruneImages(ctx, prune.Options{Filters: filters}).Return(prune.Report{}, container_backend.ErrPruneIsAlreadyRunning)
 
 			report, err := cleaner.pruneImages(ctx, RunGCOptions{})
 			Expect(err).To(Succeed())
 			Expect(report).To(Equal(newCleanupReport()))
 		})
-		It("should return err=nil and full report if opts.DryRun=false calling backend.PruneImages() which returns pruneErr=nil", func() {
+		It("should return err=nil and full report if opts.DryRun=false calling backend.PruneImages() which returns pruneErr=nil", func(ctx SpecContext) {
 			pruneReport := prune.Report{
 				ItemsDeleted: []string{"one"},
 			}
@@ -156,21 +159,23 @@ var _ = Describe("LocalBackendCleaner", func() {
 	})
 
 	Describe("pruneVolumes", func() {
-		It("should return err=errOptionDryRunNotSupported and empty report if opts.DryRun=true", func() {
+		It("should return err=errOptionDryRunNotSupported and empty report if opts.DryRun=true", func(ctx SpecContext) {
 			report, err := cleaner.pruneVolumes(ctx, RunGCOptions{
 				DryRun: true,
 			})
 			Expect(errors.Is(err, errOptionDryRunNotSupported)).To(BeTrue())
 			Expect(report).To(Equal(newCleanupReport()))
 		})
-		It("should return err=nil and empty report if opts.DryRun=false calling backend.PruneVolumes() which returns returns pruneErr=ErrPruneIsAlreadyRunning", func() {
+		It("should return err=nil and empty report if opts.DryRun=false calling backend.PruneVolumes() which returns returns pruneErr=ErrPruneIsAlreadyRunning", func(ctx context.Context) {
+			ctx = logging.WithLogger(ctx)
+
 			backend.EXPECT().PruneVolumes(ctx, prune.Options{}).Return(prune.Report{}, container_backend.ErrPruneIsAlreadyRunning)
 
 			report, err := cleaner.pruneVolumes(ctx, RunGCOptions{})
 			Expect(err).To(Succeed())
 			Expect(report).To(Equal(newCleanupReport()))
 		})
-		It("should return err=some_err and empty report if opts.DryRun=false calling backend.PruneVolumes() which returns returns pruneErr=err", func() {
+		It("should return err=some_err and empty report if opts.DryRun=false calling backend.PruneVolumes() which returns returns pruneErr=err", func(ctx SpecContext) {
 			err0 := errors.New("some_err")
 			backend.EXPECT().PruneVolumes(ctx, prune.Options{}).Return(prune.Report{}, err0)
 
@@ -178,7 +183,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 			Expect(err).To(Equal(err0))
 			Expect(report).To(Equal(newCleanupReport()))
 		})
-		It("should return err=nil and full report if opts.DryRun=false calling backend.PruneVolumes() which returns pruneErr=nil", func() {
+		It("should return err=nil and full report if opts.DryRun=false calling backend.PruneVolumes() which returns pruneErr=nil", func(ctx SpecContext) {
 			pruneReport := prune.Report{
 				ItemsDeleted: []string{"one"},
 			}
@@ -191,7 +196,10 @@ var _ = Describe("LocalBackendCleaner", func() {
 	})
 
 	Describe("safeCleanupWerfContainers", func() {
-		BeforeEach(func() {
+		var ctx context.Context
+		BeforeEach(func(ctx0 SpecContext) {
+			ctx = ctx0
+
 			backend.EXPECT().Containers(ctx, buildContainersOptions(
 				image.ContainerFilter{Name: image.StageContainerNamePrefix},
 				image.ContainerFilter{Name: image.ImportServerContainerNamePrefix},
@@ -213,6 +221,10 @@ var _ = Describe("LocalBackendCleaner", func() {
 	})
 
 	Describe("doSafeCleanupWerfContainers", func() {
+		var ctx context.Context
+		BeforeEach(func(ctx0 context.Context) {
+			ctx = logging.WithLogger(ctx0)
+		})
 		It("should not return err if backend.Rm() returns 'container is paused' error", func() {
 			container := image.Container{
 				ID:    "id-stage",
@@ -240,7 +252,9 @@ var _ = Describe("LocalBackendCleaner", func() {
 	})
 
 	Describe("werfImages", func() {
-		It("should return images as merged and sorted result of several backend calls", func() {
+		It("should return images as merged and sorted result of several backend calls", func(ctx context.Context) {
+			ctx = logging.WithLogger(ctx)
+
 			expectedImages := []image.Summary{
 				{ID: "one", Created: time.Unix(300, 0)},
 				{ID: "two", Created: time.Unix(200, 0)},
@@ -286,7 +300,10 @@ var _ = Describe("LocalBackendCleaner", func() {
 	})
 
 	Describe("safeCleanupWerfImages", func() {
-		BeforeEach(func() {
+		var ctx context.Context
+		BeforeEach(func(ctx0 context.Context) {
+			ctx = ctx0
+
 			backend.EXPECT().Images(ctx, buildImagesOptions(
 				filter.DanglingFalse.ToPair(),
 				util.NewPair("label", image.WerfLabel),
@@ -316,7 +333,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 	})
 
 	Describe("doSafeCleanupWerfImages", func() {
-		It("should call cleaner.volumeutilsGetVolumeUsageByPath() two times if after first cleanup iteration reclaimed space not enough", func() {
+		It("should call cleaner.volumeutilsGetVolumeUsageByPath() two times if after first cleanup iteration reclaimed space not enough", func(ctx SpecContext) {
 			vu := volumeutils.VolumeUsage{
 				UsedBytes:  800,
 				TotalBytes: 1000,
@@ -346,7 +363,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 			expectedReport.ItemsDeleted = append(expectedReport.ItemsDeleted, list[0].ID, list[1].ID, list[2].ID)
 			Expect(report).To(Equal(expectedReport))
 		})
-		It("should not remove a dangling image and return empty report", func() {
+		It("should not remove a dangling image and return empty report", func(ctx SpecContext) {
 			vu := volumeutils.VolumeUsage{
 				UsedBytes:  800,
 				TotalBytes: 1000,
@@ -365,7 +382,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 	})
 
 	Describe("removeImageByRepoTags", func() {
-		It("should return (false,nil) if no repo tags", func() {
+		It("should return (false,nil) if no repo tags", func(ctx SpecContext) {
 			ok, err := cleaner.removeImageByRepoTags(ctx, RunGCOptions{}, image.Summary{})
 			Expect(err).To(Succeed())
 			Expect(ok).To(BeFalse())
@@ -373,7 +390,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 	})
 
 	Describe("removeImageByRepoDigests", func() {
-		It("should return (false,nil) if no repo digests", func() {
+		It("should return (false,nil) if no repo digests", func(ctx SpecContext) {
 			ok, err := cleaner.removeImageByRepoDigests(ctx, RunGCOptions{}, image.Summary{})
 			Expect(err).To(Succeed())
 			Expect(ok).To(BeFalse())
@@ -381,7 +398,9 @@ var _ = Describe("LocalBackendCleaner", func() {
 	})
 
 	Describe("RunGC", func() {
-		It("should keep order of backend calls", func() {
+		It("should keep order of backend calls", func(ctx context.Context) {
+			ctx = logging.WithLogger(ctx)
+
 			options := RunGCOptions{
 				AllowedStorageVolumeUsagePercentage:       0,
 				AllowedStorageVolumeUsageMarginPercentage: 0,
