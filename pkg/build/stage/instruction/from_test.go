@@ -1,7 +1,6 @@
 package instruction_test
 
 import (
-	"context"
 	"fmt"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -12,9 +11,7 @@ import (
 )
 
 var _ = DescribeTable("FROM digest",
-	func(data *TestData) {
-		ctx := context.Background()
-
+	func(ctx SpecContext, data *TestData) {
 		digest, err := data.Stage.GetDependencies(ctx, data.Conveyor, data.ContainerBackend, nil, data.StageImage, data.BuildContext)
 		Expect(err).To(Succeed())
 

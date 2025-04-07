@@ -121,7 +121,7 @@ func TestEnvExpander(t *testing.T) {
 }
 
 func TestModifyLabels(t *testing.T) {
-	ctx := context.Background()
+	ctx := context.TODO()
 
 	tests := []struct {
 		name             string
@@ -306,7 +306,7 @@ func TestModifyVolumes(t *testing.T) {
 }
 
 func TestGetDependencies_StableHash(t *testing.T) {
-	ctx := context.Background()
+	ctx := context.TODO()
 
 	imageSpec1 := &config.ImageSpec{
 		Author:          "test-author",

@@ -6,27 +6,27 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	"github.com/werf/werf/v2/pkg/logging"
 	"github.com/werf/werf/v2/pkg/werf"
 )
 
 var _ = Describe("host lock", func() {
 	t := GinkgoT()
 
-	var ctx context.Context
 	BeforeEach(func() {
-		ctx = context.Background()
-
 		Expect(werf.Init(t.TempDir(), "")).To(Succeed())
 	})
 	Describe("withHostLockOrNothing", func() {
-		It("should call callback function if lock is acquired", func() {
+		It("should call callback function if lock is acquired", func(ctx SpecContext) {
 			spy := &spyHostLock{}
 			lockName := "test"
 			err := withHostLockOrNothing(ctx, lockName, spy.Handle1)
 			Expect(err).To(Succeed())
 			Expect(spy.callsCount).To(Equal(1))
 		})
-		It("should not call callback function if lock isn't acquired", func() {
+		It("should not call callback function if lock isn't acquired", func(ctx context.Context) {
+			ctx = logging.WithLogger(ctx)
+
 			spy := &spyHostLock{}
 			lockName := "test"
 			err := withHostLockOrNothing(ctx, lockName, func() error {
