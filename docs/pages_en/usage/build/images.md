@@ -395,7 +395,7 @@ In OCI (Open Container Initiative), [image configuration spec](https://github.co
 
 ### Global configuration
 
-Example configuration that will apply to all images in the project:
+You can set a default configuration for all images:
 
 ```yaml
 project: test
@@ -407,18 +407,18 @@ build:
     config:
       removeLabels:
         - "unnecessary-label"
-        - /org.opencontainers.image..*/
+        - /org\.opencontainers\.image..*/
       labels:
         app: "my-app"
 ```
 
 This configuration will be applied to all images in the project: labels and author will be set for all images, and unnecessary labels will be removed.
 
-> **Note:** Global configuration applies only for `final` images. See more [here](#using-intermediate-and-final-images)
+> **Note:** Global configuration does not apply for intermediate images (`final: false`).
 
 ### Configuration for a specific image
 
-Example configuration for an individual image:
+You can override or extend the global configuration:
 
 ```yaml
 project: test
@@ -430,27 +430,39 @@ imageSpec:
   author: "Frontend Maintainer <frontend@example.com>"
   clearHistory: true
   config:
-    user: "1001:1001"
-    expose:
-      - "8080/tcp"
+    cmd: ["/usr/bin/start", "--help"]
+    entrypoint: ["/bin/sh"]
     env:
+      PATH: "/usr/local/bin"
       NODE_ENV: "production"
-      API_URL: "https://api.example.com"
-    entrypoint:
-      - "/usr/local/bin/start.sh"
-    volumes:
-      - "/app/data"
-    workingDir: "/app"
+    expose: ["8080", "443"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: "30s"
+      retries: 3
     labels:
-      frontend-version: "1.2.3"
+      app: "frontend"
+      version: "v1"
     stopSignal: "SIGTERM"
-    removeLabels:
-      - "old-frontend-label"
-      - /old-regex-label.*/
-    removeVolumes:
-      - "/var/cache"
+    user: "node"
+    volumes:
+      - "/data"
+      - "/config"
+    workingDir: "/app"
     removeEnv:
       - "DEBUG"
+      - "/^TEMP_.*$/"
+    removeLabels:
+      - "beta"
+      - "/^experimental.*$/"
+    removeVolumes:
+      - "/tmp"
+      - "/var/log"
+    keepEssentialWerfLabels: true
+    clearCmd: true
+    clearEntrypoint: true
+    clearUser: true
+    clearWorkingDir: true
 ```
 
 > **Note:** Configuration for a specific image takes precedence over global configuration. String values will be overwritten, and for multi-valued directives, the data will be merged based on priority.
@@ -483,9 +495,9 @@ If `CMD` is set in the image and `ENTRYPOINT` is specified in `imageSpec`, the `
 For example, if the image has the following configuration:
 
 ```json
-"Entrypoint": null
 "Cmd": ["node", "server.js"],
-```  
+"Entrypoint": null
+```
 
 Then, to modify `ENTRYPOINT`, `CMD` must also be explicitly specified. The configuration should look like this:
 
@@ -498,11 +510,11 @@ from: alpine
 imageSpec:
   config:
     entrypoint:
-    - "/app/entrypoint.sh"
+      - "/app/entrypoint.sh"
     cmd:
       - "node"
       - "server.js"
-```  
+```
 
 This behavior is consistent with Docker’s handling of `CMD` and `ENTRYPOINT`, as described in [the official documentation](https://docs.docker.com/reference/dockerfile/#understand-how-cmd-and-entrypoint-interact).
 
@@ -522,6 +534,25 @@ imageSpec:
       PATH: "${PATH}:/app/bin"
 ```
 
+Environment variables declared in `imageSpec` cannot be used the same way. For example:
+
+```yaml
+project: test
+configVersion: 1
+---
+image: backend
+from: alpine:3.21
+imageSpec:
+  config:
+    env:
+      MY_ENV: MY_VAL
+      CUSTOM: "${MY_ENV}"
+```
+
+In this case, `CUSTOM` will have an empty value, not `MY_VAL`.
+
+This behavior is consistent with Docker’s handling of `ENV`.
+
 ### Working with labels
 
 When adding labels, you can use built-in variables:
@@ -530,16 +561,16 @@ When adding labels, you can use built-in variables:
 - %project% — the name of the project.
 
 ```yaml
-project: test  
-configVersion: 1  
----  
-image: backend  
-from: alpine:3.21  
-imageSpec:  
-  config:  
-    labels:   
-      frontend-version: "1.2.3"  
-      project-%project%: "%image%-image"  
+project: test
+configVersion: 1
+---
+image: backend
+from: alpine:3.21
+imageSpec:
+  config:
+    labels: 
+      frontend-version: "1.2.3"
+      project-%project%: "%image%-image"
 ```
 
 ## Linking images
