@@ -1,6 +1,8 @@
 ---
 title: Образы и зависимости
 permalink: usage/build/images.html
+keywords: dockerfile, инструкции docker, образы werf, контекст сборки, секреты сборки, ssh агент, многоплатформенная сборка, stapel, переменные окружения, метки образов, наследование образов, промежуточные образы, конечные образы, конфигурация werf
+tags: [docker, образы, dockerfile, сборка, конфигурация, секреты, ssh, многоархитектурная]
 ---
 
 <!-- прим. для перевода: на основе https://werf.io/docs/v2/reference/werf_yaml.html#image-section -->

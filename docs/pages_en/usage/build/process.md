@@ -1,6 +1,8 @@
 ---
 title: Build process
 permalink: usage/build/process.html
+keywords: werf build process, container registry authentication, image tagging, build cache, multi-platform build, cross-platform building, ssh agent, build secrets, buildah, docker, stapel, dockerfile, cache versioning, parallel builds, docker.io mirrors, image synchronization, k8s build sync, custom tags, target platform builds
+tags: [build, docker, buildah, ssh, cache, registry, multi-arch, stapel, sync]
 ---
 
 {% include pages/en/cr_login.md.liquid %}
