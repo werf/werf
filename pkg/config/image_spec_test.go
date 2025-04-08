@@ -88,7 +88,7 @@ func TestMergeImageSpec(t *testing.T) {
 	}
 
 	expected := ImageSpec{
-		Author:                  "image_author",
+		Author:                  "meta_author",
 		ClearHistory:            true,
 		KeepEssentialWerfLabels: true,
 		ClearWerfLabels:         true,
