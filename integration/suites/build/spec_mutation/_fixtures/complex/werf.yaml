@@ -4,6 +4,8 @@ build:
   platform:
     - 'linux/amd64'
   imageSpec:
+    author: globalAuthor
+    clearHistory: true
     config:
       labels: 
         global_label: yes
@@ -19,7 +21,6 @@ image: basic-test
 fromImage: base
 imageSpec:
   author: "testauthor"
-  clearHistory: true
   config:
     volumes:
       - "/test/volume"
@@ -29,6 +30,7 @@ imageSpec:
     env:
       ADD: me 
       ADD_ANOTHER: me
+      PATH: ${PATH}:/add/path
     removeEnv:
       - /^APP_.*/
       - REMOVE
@@ -58,7 +60,6 @@ image: clean-test
 fromImage: base
 imageSpec:
   author: ""
-  clearHistory: true
   config:
     removeVolumes:
       - "/home/remove/me"
@@ -75,3 +76,10 @@ imageSpec:
     clearEntrypoint: true
     keepEssentialWerfLabels: false # it will not work without clearWerfLabels
     clearWerfLabels: true
+---
+image: cmd-test
+fromImage: base
+imageSpec:
+  config:
+    entrypoint:
+      - /bin/test

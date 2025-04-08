@@ -16,3 +16,7 @@ func StringToLines(s string) (lines []string) {
 
 	return
 }
+
+func PointerString(s string) *string {
+	return &s
+}
