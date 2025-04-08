@@ -170,8 +170,10 @@ func runDismiss(ctx context.Context) error {
 		return fmt.Errorf("get release name and namespace: %w", err)
 	}
 
+	ctx = action.SetupLogging(ctx, common.GetNelmLogLevel(&commonCmdData), action.DefaultReleaseUninstallLogLevel)
+
 	if err := action.ReleaseUninstall(ctx, releaseName, releaseNamespace, action.ReleaseUninstallOptions{
-		DeleteHooks:                cmdData.WithHooks,
+		NoDeleteHooks:              !cmdData.WithHooks,
 		DeleteReleaseNamespace:     cmdData.WithNamespace,
 		KubeAPIServerName:          *commonCmdData.KubeApiServer,
 		KubeBurstLimit:             *commonCmdData.KubeBurstLimit,
@@ -184,7 +186,6 @@ func runDismiss(ctx context.Context) error {
 		KubeTLSServerName:          *commonCmdData.KubeTlsServer,
 		KubeToken:                  *commonCmdData.KubeToken,
 		LogColorMode:               *commonCmdData.LogColorMode,
-		LogLevel:                   common.GetNelmLogLevel(&commonCmdData),
 		ProgressTablePrintInterval: time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
 		ReleaseHistoryLimit:        *commonCmdData.ReleasesHistoryMax,
 		ReleaseStorageDriver:       os.Getenv("HELM_DRIVER"),

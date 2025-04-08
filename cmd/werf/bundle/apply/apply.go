@@ -163,9 +163,12 @@ func runApply(ctx context.Context) error {
 		return fmt.Errorf("get release name: %w", err)
 	}
 
-	deployReportPath, err := common.GetDeployReportPath(&commonCmdData)
-	if err != nil {
-		return fmt.Errorf("get deploy report path: %w", err)
+	var deployReportPath string
+	if common.GetSaveDeployReport(&commonCmdData) {
+		deployReportPath, err = common.GetDeployReportPath(&commonCmdData)
+		if err != nil {
+			return fmt.Errorf("get deploy report path: %w", err)
+		}
 	}
 
 	bundlePath := filepath.Join(werf.GetServiceDir(), "tmp", "bundles", uuid.NewString())
@@ -207,6 +210,8 @@ func runApply(ctx context.Context) error {
 
 	chart.CurrentChartType = chart.ChartTypeBundle
 
+	ctx = action.SetupLogging(ctx, common.GetNelmLogLevel(&commonCmdData), action.DefaultReleaseInstallLogLevel)
+
 	if err := action.ReleaseInstall(ctx, releaseName, releaseNamespace, action.ReleaseInstallOptions{
 		AutoRollback:                 cmdData.AutoRollback,
 		ChartDirPath:                 bundlePath,
@@ -219,9 +224,7 @@ func runApply(ctx context.Context) error {
 		ExtraLabels:                  extraLabels,
 		ExtraRuntimeAnnotations:      serviceAnnotations,
 		InstallGraphPath:             common.GetDeployGraphPath(&commonCmdData),
-		InstallGraphSave:             common.GetDeployGraphPath(&commonCmdData) != "",
 		InstallReportPath:            deployReportPath,
-		InstallReportSave:            common.GetSaveDeployReport(&commonCmdData),
 		KubeAPIServerName:            *commonCmdData.KubeApiServer,
 		KubeBurstLimit:               *commonCmdData.KubeBurstLimit,
 		KubeCAPath:                   *commonCmdData.KubeCaPath,
@@ -233,17 +236,15 @@ func runApply(ctx context.Context) error {
 		KubeTLSServerName:            *commonCmdData.KubeTlsServer,
 		KubeToken:                    *commonCmdData.KubeToken,
 		LogColorMode:                 *commonCmdData.LogColorMode,
-		LogLevel:                     common.GetNelmLogLevel(&commonCmdData),
 		LogRegistryStreamOut:         os.Stdout,
 		NetworkParallelism:           common.GetNetworkParallelism(&commonCmdData),
-		ProgressTablePrint:           *commonCmdData.StatusProgressPeriodSeconds != -1,
+		NoProgressTablePrint:         *commonCmdData.StatusProgressPeriodSeconds == -1,
 		ProgressTablePrintInterval:   time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
 		RegistryCredentialsPath:      registryCredentialsPath,
 		ReleaseHistoryLimit:          *commonCmdData.ReleasesHistoryMax,
 		ReleaseInfoAnnotations:       serviceAnnotations,
 		ReleaseStorageDriver:         os.Getenv("HELM_DRIVER"),
 		RollbackGraphPath:            common.GetRollbackGraphPath(&commonCmdData),
-		RollbackGraphSave:            common.GetRollbackGraphPath(&commonCmdData) != "",
 		SecretKeyIgnore:              *commonCmdData.IgnoreSecretKey,
 		SecretValuesPaths:            common.GetSecretValues(&commonCmdData),
 		SecretWorkDir:                secretWorkDir,
