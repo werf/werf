@@ -1,5 +1,7 @@
 FROM scratch
 
+MAINTAINER name
+
 LABEL maintainer="i@example.com"
 LABEL save=me
 LABEL pleaseremove=me
