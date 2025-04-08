@@ -515,7 +515,7 @@ imageSpec:
       - "server.js"
 ```
 
-Такое поведение соответствует работе Docker с `CMD` и `ENTRYPOINT`, подробнее об этом можно узнать в [официальной документации](https://docs.docker.com/reference/dockerfile/#understand-how-cmd-and-entrypoint-interact)
+Такое поведение соответствует работе Docker с `CMD` и `ENTRYPOINT` (подробнее об этом можно узнать в [официальной документации](https://docs.docker.com/reference/dockerfile/#understand-how-cmd-and-entrypoint-interact)).
 
 ### Работа с переменными окружения
 
