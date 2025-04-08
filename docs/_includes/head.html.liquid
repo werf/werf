@@ -45,7 +45,7 @@
 <!-- Primary Meta Tags -->
 <meta name="title" content="{{ generated_title }}">
 <meta name="description" content="{{ description }}">
-<meta name="keywords" content="{{page.tags}}{% if page.tags %}, {% endif %} {{page.keywords}}">
+<meta name="keywords" content="{{ page.tags  | join: ", " }}{% if page.tags %}, {% endif %} {{page.keywords}}">
 
 <!-- Open Graph / Facebook -->
 <meta property="og:type" content="website">
