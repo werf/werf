@@ -395,6 +395,8 @@ In OCI (Open Container Initiative), [image configuration spec](https://github.co
 
 ### Global configuration
 
+You can set a default configuration for all images:
+
 ```yaml
 project: test
 configVersion: 1
@@ -416,7 +418,7 @@ This configuration will be applied to all images in the project: labels and auth
 
 ### Configuration for a specific image
 
-Example configuration for an individual image:
+You can override or extend the global configuration:
 
 ```yaml
 project: test
