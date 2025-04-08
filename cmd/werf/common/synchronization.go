@@ -107,7 +107,6 @@ func GetSynchronization(ctx context.Context, cmdData *CmdData, projectName strin
 		return lock_manager.NewLocalSynchronization(ctx, params)
 	} else if protocolIsKube(params.ServerAddress) {
 		checkSynchronizationKubernetesParamsForWarnings(ctx, cmdData)
-
 		return initKube(ctx, params)
 	} else if protocolIsHttpOrHttps(params.ServerAddress) {
 		return lock_manager.NewHttpSynchronization(ctx, params)

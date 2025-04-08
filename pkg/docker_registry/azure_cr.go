@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/go-containerregistry/pkg/name"
 
+	"github.com/werf/common-go/pkg/graceful"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/image"
 )
@@ -119,7 +120,7 @@ func (r *azureCr) azRun(ctx context.Context, args ...string) error {
 
 	command := strings.Join(append([]string{"az"}, args...), " ")
 	logboek.Context(ctx).Debug().LogLn(command)
-	c := exec.Command("az", args...)
+	c := graceful.ExecCommandContext(ctx, "az", args...)
 
 	output, err := c.CombinedOutput()
 	logboek.Context(ctx).Debug().LogLn("output:", string(output))

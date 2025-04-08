@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"sync"
 
+	"github.com/werf/common-go/pkg/graceful"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/pkg/path_matcher"
 )
@@ -107,7 +107,7 @@ func writePatch(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir str
 		diffOpts = append(diffOpts, "--binary")
 	}
 
-	var cmd *exec.Cmd
+	var cmd *graceful.Cmd
 
 	if withSubmodules {
 		workTreeDir, err := prepareWorkTree(ctx, gitDir, workTreeCacheDir, opts.ToCommit, withSubmodules)
@@ -125,7 +125,7 @@ func writePatch(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir str
 			fmt.Printf("# git %s\n", strings.Join(gitArgs, " "))
 		}
 
-		cmd = exec.Command("git", gitArgs...)
+		cmd = graceful.ExecCommandContext(ctx, "git", gitArgs...)
 
 		cmd.Dir = workTreeDir // required for `git diff` with submodules
 	} else {
@@ -139,7 +139,7 @@ func writePatch(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir str
 			fmt.Printf("# git %s\n", strings.Join(gitArgs, " "))
 		}
 
-		cmd = exec.Command("git", gitArgs...)
+		cmd = graceful.ExecCommandContext(ctx, "git", gitArgs...)
 	}
 
 	stdoutPipe, err := cmd.StdoutPipe()

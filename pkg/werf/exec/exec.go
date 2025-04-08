@@ -33,7 +33,7 @@ func Detach(ctx context.Context, args, envs []string) error {
 		return err
 	}
 
-	cmd := exec.Command(name, args...)
+	cmd := exec.CommandContext(ctx, name, args...)
 	cmd.Env = env
 	cmd.Stdout = outStream
 	cmd.Stderr = errStream

@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 
 	helm_v3 "github.com/werf/3p-helm/cmd/helm"
+	"github.com/werf/common-go/pkg/graceful"
 	"github.com/werf/nelm/pkg/action"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/cmd/werf/root"
@@ -25,27 +26,35 @@ func main() {
 		return
 	}
 
+	terminationCtx := graceful.WithTermination(context.Background())
+	defer graceful.Shutdown(terminationCtx, func(err error, exitCode int) {
+		logging.Error(err.Error())
+		os.Exit(exitCode)
+	})
+
 	ctx := logging.WithLogger(context.Background())
 
 	root.PrintStackTraces()
 
 	shouldTerminate, err := common.ContainerBackendProcessStartupHook()
 	if err != nil {
-		common.TerminateWithError(err.Error(), 1)
-	}
-	if shouldTerminate {
+		graceful.Terminate(err, 1)
+		return
+	} else if shouldTerminate {
 		return
 	}
 
 	common.EnableTerminationSignalsTrap()
 
 	if err := process_exterminator.Init(); err != nil {
-		common.TerminateWithError(fmt.Sprintf("process exterminator initialization failed: %s", err), 1)
+		graceful.Terminate(fmt.Errorf("process exterminator initialization failed: %w", err), 1)
+		return
 	}
 
 	rootCmd, err := root.ConstructRootCmd(ctx)
 	if err != nil {
-		common.TerminateWithError(err.Error(), 1)
+		graceful.Terminate(err, 1)
+		return
 	}
 
 	root.SetupTelemetryInit(rootCmd)
@@ -54,16 +63,24 @@ func main() {
 	// https://github.com/spf13/cobra/pull/2167 is not accepted yet
 	cobra.EnableErrorOnUnknownSubcommand = true
 
+	// Do early exit if termination is started
+	if graceful.IsTerminating(ctx) {
+		return
+	}
+
 	if err := rootCmd.Execute(); err != nil {
 		if helm_v3.IsPluginError(err) {
 			common.ShutdownTelemetry(ctx, helm_v3.PluginErrorCode(err))
-			common.TerminateWithError(err.Error(), helm_v3.PluginErrorCode(err))
+			graceful.Terminate(err, helm_v3.PluginErrorCode(err))
+			return
 		} else if errors.Is(err, action.ErrChangesPlanned) {
 			common.ShutdownTelemetry(ctx, 2)
-			os.Exit(2)
+			graceful.Terminate(action.ErrChangesPlanned, 2)
+			return
 		} else {
 			common.ShutdownTelemetry(ctx, 1)
-			common.TerminateWithError(err.Error(), 1)
+			graceful.Terminate(err, 1)
+			return
 		}
 	}
 
