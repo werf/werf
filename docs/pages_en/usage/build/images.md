@@ -1,6 +1,8 @@
 ---
 title: Images and dependencies
 permalink: usage/build/images.html
+keywords: dockerfile, docker instructions, werf images, build context, build secrets, ssh agent, multi-platform build, stapel, environment variables, image labels, image inheritance, intermediate images, final images, werf config
+tags: [docker, images, dockerfile, build, config, secrets, ssh, multi-arch]
 ---
 
 <!-- reference: https://werf.io/docs/v2/reference/werf_yaml.html#image-section -->
