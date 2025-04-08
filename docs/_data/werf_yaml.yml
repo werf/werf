@@ -407,96 +407,105 @@ sections:
             collapsible: true
             isCollapsedByDefault: false
             directives:
-              - name: volumes
-                value: "[string, ...]"
-                description:
-                  en: List of volumes to add
-                  ru: Список томов для добавления
-                detailsLink: "https://docs.docker.com/engine/reference/builder/#volume"
-              - name: removeVolumes
-                value: "[string, ...]"
-                description:
-                  en: List of volumes to remove
-                  ru: Список томов для удаления
-              - name: env
-                value: "{ name string: value string, ... }"
-                description:
-                  en: List of environment variables to add
-                  ru: Список переменных окружения для добавления
-                detailsLink: "https://docs.docker.com/engine/reference/builder/#env"
-              - name: removeEnv
-                value: "[ string || /REGEXP/, ... ]"
-                description:
-                  en: List of environment variables to remove
-                  ru: Список переменных окружения для удаления
-              - name: labels
-                value: "{ name string: value string, ... }"
-                description:
-                  en: List of labels to add
-                  ru: Список лейблов для добавления
-              - name: removeLabels
-                value: "[ string || /REGEXP/, ... ]"
-                description:
-                  en: List of labels to remove
-                  ru: Список лейблов для удаления
-              - name: keepEssentialWerfLabels
-                value: "bool"
-                description:
-                  en: Do not remove werf labels necessary for normal operation
-                  ru: Не удалять необходимые для штатной работы werf лейблы
-              - name: expose
-                value: "[string, ...]"
-                description:
-                  en: Set exposed ports
-                  ru: Установить порты открытые порты
-                detailsLink: "https://docs.docker.com/engine/reference/builder/#expose"
-              - name: user
-                value: "string"
-                description:
-                  en: Set user
-                  ru: Установить пользователя
-                detailsLink: "https://docs.docker.com/engine/reference/builder/#user"
               - name: cmd
                 value: "[string, ...]"
                 description:
                   en: Set CMD
                   ru: Установить CMD
                 detailsLink: "https://docs.docker.com/engine/reference/builder/#cmd"
-              - name: clearCmd
-                value: "bool"
-                description:
-                  en: Remove CMD
-                  ru: Очистить CMD
               - name: entrypoint
                 value: "[string, ...]"
                 description:
                   en: Set ENTRYPOINT
                   ru: Установить ENTRYPOINT
                 detailsLink: "https://docs.docker.com/engine/reference/builder/#entrypoint"
-              - name: clearEntrypoint
-                value: "bool"
+              - name: env
+                value: "{ name string: value string, ... }"
                 description:
-                  en: Remove ENTRYPOINT
-                  ru: Очистить ENTRYPOINT
-              - name: workingDir
-                value: "string"
+                  en: List of environment variables to add
+                  ru: Список переменных окружения для добавления
+                detailsLink: "https://docs.docker.com/engine/reference/builder/#env"
+              - name: expose
+                value: "[string, ...]"
                 description:
-                  en: Set WORKDIR
-                  ru: Установить WORKDIR
-                detailsLink: "https://docs.docker.com/engine/reference/builder/#workdir"
-              - name: stopSignal
-                value: "string"
-                description:
-                  en: Set STOPSIGNAL
-                  ru: Установить STOPSIGNAL
-                detailsLink: "https://docs.docker.com/engine/reference/builder/#stopsignal"
+                  en: Set exposed ports
+                  ru: Установить порты открытые порты
+                detailsLink: "https://docs.docker.com/engine/reference/builder/#expose"
               - name: healthcheck
                 value: "{ test: [string, ...], interval: string, retries: int }"
                 description:
                   en: Healthcheck configuration. Intervals are in seconds.
                   ru: Конфигурация проверки состояния. Интервалы в секундах.
                 detailsLink: "https://docs.docker.com/engine/reference/builder/#healthcheck"
-
+              - name: labels
+                value: "{ name string: value string, ... }"
+                description:
+                  en: List of labels to add
+                  ru: Список лейблов для добавления
+              - name: stopSignal
+                value: "string"
+                description:
+                  en: Set STOPSIGNAL
+                  ru: Установить STOPSIGNAL
+                detailsLink: "https://docs.docker.com/engine/reference/builder/#stopsignal"
+              - name: user
+                value: "string"
+                description:
+                  en: Set USER
+                  ru: Установить USER
+                detailsLink: "https://docs.docker.com/engine/reference/builder/#user"
+              - name: volumes
+                value: "[string, ...]"
+                description:
+                  en: List of volumes to add
+                  ru: Список томов для добавления
+                detailsLink: "https://docs.docker.com/engine/reference/builder/#volume"
+              - name: workingDir
+                value: "string"
+                description:
+                  en: Set WORKDIR
+                  ru: Установить WORKDIR
+                detailsLink: "https://docs.docker.com/engine/reference/builder/#workdir"
+              - name: removeEnv
+                value: "[ string || /REGEXP/, ... ]"
+                description:
+                  en: List of environment variables to remove
+                  ru: Список переменных окружения для удаления
+              - name: removeLabels
+                value: "[ string || /REGEXP/, ... ]"
+                description:
+                  en: List of labels to remove
+                  ru: Список лейблов для удаления
+              - name: removeVolumes
+                value: "[string, ...]"
+                description:
+                  en: List of volumes to remove
+                  ru: Список томов для удаления
+              - name: keepEssentialWerfLabels
+                value: "bool"
+                description:
+                  en: Do not remove werf labels necessary for normal operation
+                  ru: Не удалять необходимые для штатной работы werf лейблы
+              - name: clearCmd
+                value: "bool"
+                description:
+                  en: Remove CMD
+                  ru: Очистить CMD
+              - name: clearEntrypoint
+                value: "bool"
+                description:
+                  en: Remove ENTRYPOINT
+                  ru: Очистить ENTRYPOINT
+              - name: clearUser
+                value: "bool"
+                description:
+                  en: Remove USER
+                  ru: Очистить USER
+              - name: clearWorkingDir
+                value: "bool"
+                description:
+                  en: Remove WORKDIR
+                  ru: Очистить WORKDIR
   - id: stapel-section
     description:
       en: "Stapel image section: optional, define as many image sections as you need"
