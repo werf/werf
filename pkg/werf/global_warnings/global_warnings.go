@@ -10,6 +10,7 @@ import (
 
 	"github.com/Masterminds/semver"
 
+	"github.com/werf/common-go/pkg/graceful"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 )
@@ -62,13 +63,13 @@ func GlobalWarningLn(ctx context.Context, line string) {
 	printGlobalWarningLn(ctx, "WARNING! "+line)
 }
 
-func IsMultiwerfUpToDate() (bool, error) {
+func IsMultiwerfUpToDate(ctx context.Context) (bool, error) {
 	multiwerfPath, err := exec.LookPath("multiwerf")
 	if err != nil {
 		return true, nil
 	}
 
-	cmd := exec.Command(multiwerfPath, "version")
+	cmd := graceful.ExecCommandContext(ctx, multiwerfPath, "version")
 	var stdout bytes.Buffer
 	cmd.Stdout = &stdout
 	if err := cmd.Run(); err != nil {
@@ -93,8 +94,8 @@ func IsMultiwerfUpToDate() (bool, error) {
 	return !installedMultiwerfVersion.LessThan(lastMultiwerfVersion), nil
 }
 
-func PostponeMultiwerfNotUpToDateWarning() {
-	if multiwerfIsUpToDate, err := IsMultiwerfUpToDate(); err != nil {
+func PostponeMultiwerfNotUpToDateWarning(ctx context.Context) {
+	if multiwerfIsUpToDate, err := IsMultiwerfUpToDate(ctx); err != nil {
 		msg := fmt.Sprintf(`Failure detecting whether multiwerf (if present) is outdated: %s
 multiwerf is deprecated, so if you are still using it we strongly recommend removing multiwerf and switching to trdl
 `, err)

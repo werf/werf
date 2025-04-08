@@ -140,7 +140,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 }
 
 func runApply(ctx context.Context) error {
-	global_warnings.PostponeMultiwerfNotUpToDateWarning()
+	global_warnings.PostponeMultiwerfNotUpToDateWarning(ctx)
 
 	_, ctx, err := common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
 		Cmd:                &commonCmdData,

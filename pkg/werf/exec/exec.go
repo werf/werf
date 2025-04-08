@@ -24,7 +24,7 @@ func Detach(ctx context.Context, args []string) error {
 		return !strings.HasPrefix(item, "WERF_ENABLE_PROCESS_EXTERMINATOR=")
 	})
 
-	cmd := exec.Command(name, args...)
+	cmd := exec.CommandContext(ctx, name, args...)
 	cmd.Env = env
 
 	cmd = exec2.MakeDetachable(cmd)

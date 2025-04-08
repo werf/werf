@@ -7,6 +7,7 @@ import (
 	"io"
 	"os/exec"
 
+	"github.com/werf/common-go/pkg/graceful"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 )
@@ -26,7 +27,7 @@ func NewGitCmd(ctx context.Context, opts *GitCmdOptions, cliArgs ...string) GitC
 		OutErrBuf: util.NewGoroutineSafeBuffer(),
 	}
 
-	gitCmd.Cmd = exec.Command("git", append(getCommonGitOptions(), cliArgs...)...)
+	gitCmd.Cmd = graceful.ExecCommandContext(ctx, "git", append(getCommonGitOptions(), cliArgs...)...)
 
 	gitCmd.Dir = opts.RepoDir
 
@@ -49,7 +50,7 @@ type GitCmdOptions struct {
 }
 
 type GitCmd struct {
-	*exec.Cmd
+	*graceful.Cmd
 
 	// We always write to all of these buffs, unlike with exec.Cmd.Stdout(Stderr)
 	OutBuf    *util.GoroutineSafeBuffer
