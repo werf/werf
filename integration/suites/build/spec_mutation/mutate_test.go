@@ -52,7 +52,7 @@ var _ = Describe("build and mutate image spec", Label("integration", "build", "m
 					switch imageName {
 					case "basic-test":
 
-						Expect(inspectOfImage.Author).Should(Equal("testauthor"))
+						Expect(inspectOfImage.Author).Should(Equal("globalAuthor"))
 
 						Expect(imgCfg.Env).Should(ContainElement("ADD=me"))
 						Expect(imgCfg.Env).Should(ContainElement("ADD_ANOTHER=me"))
@@ -90,7 +90,7 @@ var _ = Describe("build and mutate image spec", Label("integration", "build", "m
 
 					case "clean-test":
 
-						Expect(inspectOfImage.Author).Should(Equal("")) // ????
+						Expect(inspectOfImage.Author).Should(Equal("globalAuthor"))
 
 						Expect(imgCfg.Env).Should(BeEmpty())
 
@@ -108,6 +108,7 @@ var _ = Describe("build and mutate image spec", Label("integration", "build", "m
 						Expect(imgCfg.WorkingDir).Should(Equal(""))
 
 					case "cmd-test":
+						Expect(inspectOfImage.Author).Should(Equal("globalAuthor"))
 						Expect(imgCfg.Cmd).Should(BeEmpty())
 						Expect(imgCfg.Entrypoint).Should(ContainElement("/bin/test"))
 					}

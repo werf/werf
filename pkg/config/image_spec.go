@@ -5,7 +5,7 @@ import (
 )
 
 type ImageSpec struct {
-	Author                  *string           `yaml:"author,omitempty"`
+	Author                  string            `yaml:"author,omitempty"`
 	ClearHistory            bool              `yaml:"clearHistory,omitempty"`
 	KeepEssentialWerfLabels bool              `yaml:"keepEssentialWerfLabels,omitempty"`
 	ClearWerfLabels         bool              `yaml:"clearWerfLabels,omitempty"` // TODO: remove in v3.
@@ -36,7 +36,7 @@ func mergeImageSpec(meta, image *ImageSpec) ImageSpec {
 		image = &ImageSpec{}
 	}
 
-	if meta.Author != nil && image.Author == nil {
+	if meta.Author != "" {
 		image.Author = meta.Author
 	}
 

@@ -74,7 +74,7 @@ imageSpec:
     clearWorkingDir: true
     clearCmd: true
     clearEntrypoint: true
-    keepEssentialWerfLabels: false # it will not work without clearWerfLabels
+    keepEssentialWerfLabels: false
     clearWerfLabels: true
 ---
 image: cmd-test
