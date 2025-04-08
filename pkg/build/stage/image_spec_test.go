@@ -9,6 +9,7 @@ import (
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/test/pkg/utils"
 )
 
 func TestEnvExpander(t *testing.T) {
@@ -309,7 +310,7 @@ func TestGetDependencies_StableHash(t *testing.T) {
 	ctx := context.Background()
 
 	imageSpec1 := &config.ImageSpec{
-		Author:          "test-author",
+		Author:          utils.PointerString("test-author"),
 		ClearHistory:    true,
 		ClearWerfLabels: false,
 		RemoveLabels:    []string{"label1", "label2"},
@@ -329,7 +330,7 @@ func TestGetDependencies_StableHash(t *testing.T) {
 	}
 
 	imageSpec2 := &config.ImageSpec{
-		Author:          "test-author",
+		Author:          utils.PointerString("test-author"),
 		ClearHistory:    true,
 		ClearWerfLabels: false,
 		RemoveLabels:    []string{"label2", "label1"},

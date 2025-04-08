@@ -46,6 +46,7 @@ var _ = Describe("build and mutate image spec", Label("integration", "build", "m
 					contRuntime.Pull(buildReport.Images[imageName].DockerImageName)
 					inspectOfImage := contRuntime.GetImageInspect(buildReport.Images[imageName].DockerImageName)
 					imgCfg := inspectOfImage.Config
+					SuiteData.ImagesToClean = append(SuiteData.ImagesToClean, buildReport.Images[imageName].DockerImageName)
 
 					By("checking image metadata")
 					switch imageName {
@@ -55,6 +56,7 @@ var _ = Describe("build and mutate image spec", Label("integration", "build", "m
 
 						Expect(imgCfg.Env).Should(ContainElement("ADD=me"))
 						Expect(imgCfg.Env).Should(ContainElement("ADD_ANOTHER=me"))
+						Expect(imgCfg.Env).Should(ContainElement("PATH=/usr/bin:/add/path"))
 						Expect(imgCfg.Env).ShouldNot(ContainElement("APP_ENV=test"))
 						Expect(imgCfg.Env).ShouldNot(ContainElement("APP_VERSION=0.0.1"))
 						Expect(imgCfg.Env).ShouldNot(ContainElement("REMOVE=ME"))
@@ -88,7 +90,7 @@ var _ = Describe("build and mutate image spec", Label("integration", "build", "m
 
 					case "clean-test":
 
-						Expect(inspectOfImage.Author).Should(Equal(""))
+						Expect(inspectOfImage.Author).Should(Equal("")) // ????
 
 						Expect(imgCfg.Env).Should(BeEmpty())
 
@@ -104,6 +106,10 @@ var _ = Describe("build and mutate image spec", Label("integration", "build", "m
 						Expect(imgCfg.ExposedPorts).Should(Equal(manifest.Schema2PortSet{"": {}}))
 
 						Expect(imgCfg.WorkingDir).Should(Equal(""))
+
+					case "cmd-test":
+						Expect(imgCfg.Cmd).Should(BeEmpty())
+						Expect(imgCfg.Entrypoint).Should(ContainElement("/bin/test"))
 					}
 				}
 			}

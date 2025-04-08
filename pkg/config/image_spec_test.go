@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/werf/werf/v2/test/pkg/utils"
 )
 
 func TestMergeSlices(t *testing.T) {
@@ -57,7 +58,7 @@ func TestMergeSlices(t *testing.T) {
 
 func TestMergeImageSpec(t *testing.T) {
 	meta := &ImageSpec{
-		Author:                  "meta_author",
+		Author:                  utils.PointerString("meta_author"),
 		ClearHistory:            true,
 		KeepEssentialWerfLabels: true,
 		RemoveLabels:            []string{"label1", "label2"},
@@ -65,7 +66,7 @@ func TestMergeImageSpec(t *testing.T) {
 	}
 
 	image := &ImageSpec{
-		Author:                  "image_author",
+		Author:                  utils.PointerString("image_author"),
 		ClearHistory:            false,
 		KeepEssentialWerfLabels: false,
 		ClearWerfLabels:         true,
@@ -88,7 +89,7 @@ func TestMergeImageSpec(t *testing.T) {
 	}
 
 	expected := ImageSpec{
-		Author:                  "meta_author",
+		Author:                  utils.PointerString("image_author"),
 		ClearHistory:            true,
 		KeepEssentialWerfLabels: true,
 		ClearWerfLabels:         true,
@@ -117,7 +118,7 @@ func TestMergeImageSpec(t *testing.T) {
 
 func TestRawImageSpecToDirective(t *testing.T) {
 	raw := &rawImageSpec{
-		Author:       "raw_author",
+		Author:       utils.PointerString("raw_author"),
 		ClearHistory: true,
 		Config: &rawImageSpecConfig{
 			KeepEssentialWerfLabels: true,
@@ -142,7 +143,7 @@ func TestRawImageSpecToDirective(t *testing.T) {
 	}
 
 	expected := &ImageSpec{
-		Author:                  "raw_author",
+		Author:                  utils.PointerString("raw_author"),
 		ClearHistory:            true,
 		KeepEssentialWerfLabels: true,
 		ClearWerfLabels:         true,

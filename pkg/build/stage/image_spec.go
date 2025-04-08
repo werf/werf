@@ -115,7 +115,7 @@ func (s *ImageSpecStage) GetDependencies(_ context.Context, _ Conveyor, _ contai
 	var args []string
 
 	// imageSpec
-	args = append(args, s.imageSpec.Author)
+	args = append(args, *s.imageSpec.Author)
 	args = append(args, fmt.Sprint(s.imageSpec.ClearHistory))
 
 	// imageSpec.config
@@ -145,7 +145,7 @@ func (s *ImageSpecStage) GetDependencies(_ context.Context, _ Conveyor, _ contai
 
 func (s *ImageSpecStage) baseConfig() image.Config {
 	newConfig := image.Config{
-		Author:          s.imageSpec.Author,
+		Author:          *s.imageSpec.Author,
 		User:            s.imageSpec.User,
 		Entrypoint:      s.imageSpec.Entrypoint,
 		Cmd:             s.imageSpec.Cmd,

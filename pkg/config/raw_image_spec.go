@@ -1,7 +1,7 @@
 package config
 
 type rawImageSpec struct {
-	Author       string              `yaml:"author,omitempty"`
+	Author       *string             `yaml:"author,omitempty"`
 	ClearHistory bool                `yaml:"clearHistory,omitempty"`
 	Config       *rawImageSpecConfig `yaml:"config,omitempty"`
 
@@ -137,7 +137,7 @@ func (s *rawImageSpec) toDirective() *ImageSpec {
 }
 
 type rawImageSpecGlobal struct {
-	Author       string                    `yaml:"author,omitempty"`
+	Author       *string                   `yaml:"author,omitempty"`
 	ClearHistory bool                      `yaml:"clearHistory,omitempty"`
 	Config       *rawImageSpecGlobalConfig `yaml:"config,omitempty"`
 
