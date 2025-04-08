@@ -10,10 +10,10 @@ import (
 	"os/exec"
 	"regexp"
 	"strings"
-	"syscall"
 
 	"github.com/spf13/cobra"
 
+	"github.com/werf/common-go/pkg/graceful"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/build"
@@ -45,7 +45,7 @@ type composeCmdData struct {
 	ImageNameListFromArgs []string
 }
 
-func (d *composeCmdData) extractImageNameListFromComposeConfig(werfConfig *config.WerfConfig) ([]string, error) {
+func (d *composeCmdData) extractImageNameListFromComposeConfig(ctx context.Context, werfConfig *config.WerfConfig) ([]string, error) {
 	// Replace all special characters in image name with empty string to find the same image name in werf config.
 	replaceAllFunc := func(s string) string {
 		for _, l := range []string{"_", "-", "/", "."} {
@@ -54,7 +54,7 @@ func (d *composeCmdData) extractImageNameListFromComposeConfig(werfConfig *confi
 		return s
 	}
 
-	extractedImageNameList, err := extractImageNamesFromComposeConfig(d.getComposeFileCustomPathList())
+	extractedImageNameList, err := extractImageNamesFromComposeConfig(ctx, d.getComposeFileCustomPathList())
 	if err != nil {
 		return nil, fmt.Errorf("unable to extract image names from docker-compose file: %w", err)
 	}
@@ -95,14 +95,15 @@ func (d *composeCmdData) getComposeFileCustomPathList() []string {
 	return result
 }
 
-func extractImageNamesFromComposeConfig(customConfigPathList []string) ([]string, error) {
+func extractImageNamesFromComposeConfig(ctx context.Context, customConfigPathList []string) ([]string, error) {
 	composeArgs := []string{"compose"}
 	for _, p := range customConfigPathList {
 		composeArgs = append(composeArgs, "--file", p)
 	}
 	composeArgs = append(composeArgs, "config", "--no-interpolate")
 
-	cmd := exec.Command("docker", composeArgs...)
+	cmd := graceful.ExecCommandContext(ctx, "docker", composeArgs...)
+	cmd.GracefulAnyContext(true)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -409,18 +410,7 @@ func runMain(ctx context.Context, dockerComposeCmdName string, cmdData composeCm
 			return run(ctx, containerBackend, headCommitGiterminismManager, commonCmdData, cmdData, dockerComposeCmdName)
 		})
 	} else {
-		if err := run(ctx, containerBackend, giterminismManager, commonCmdData, cmdData, dockerComposeCmdName); err != nil {
-			// TODO: use docker cli StatusError after switching on docker compose command
-			if exitErr, ok := err.(*exec.ExitError); ok {
-				if status, ok := exitErr.Sys().(syscall.WaitStatus); ok {
-					common.TerminateWithError(err.Error(), status.ExitStatus())
-				}
-			}
-
-			return err
-		}
-
-		return nil
+		return run(ctx, containerBackend, giterminismManager, commonCmdData, cmdData, dockerComposeCmdName)
 	}
 }
 
@@ -434,7 +424,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 	if len(cmdData.ImageNameListFromArgs) != 0 {
 		imageNameList = cmdData.ImageNameListFromArgs
 	} else {
-		imageNameListFromComposeConfig, err := cmdData.extractImageNameListFromComposeConfig(werfConfig)
+		imageNameListFromComposeConfig, err := cmdData.extractImageNameListFromComposeConfig(ctx, werfConfig)
 		if err != nil {
 			return err
 		}
@@ -531,7 +521,8 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 	} else {
 		dockerComposeArgs = append([]string{"compose"}, dockerComposeArgs...)
 
-		cmd := exec.Command("docker", dockerComposeArgs...)
+		cmd := graceful.ExecCommandContext(ctx, "docker", dockerComposeArgs...)
+		cmd.GracefulAnyContext(true)
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr

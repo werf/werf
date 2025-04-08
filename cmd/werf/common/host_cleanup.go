@@ -63,7 +63,7 @@ func SetupAllowedBackendStorageVolumeUsage(cmdData *CmdData, cmd *cobra.Command)
 	defaultVal := uint(defaultValUint64)
 
 	if defaultVal > 100 {
-		TerminateWithError(fmt.Sprintf("bad %s value: specify percentage between 0 and 100", aliases[0].EnvName), 1)
+		panic(fmt.Sprintf("bad %s value: specify percentage between 0 and 100", aliases[0].EnvName))
 	}
 
 	cmdData.AllowedBackendStorageVolumeUsage = new(uint)
@@ -100,7 +100,7 @@ func SetupAllowedBackendStorageVolumeUsageMargin(cmdData *CmdData, cmd *cobra.Co
 	defaultVal := uint(defaultValUint64)
 
 	if defaultVal > 100 {
-		TerminateWithError(fmt.Sprintf("bad %s value: specify percentage between 0 and 100", aliases[0].EnvName), 1)
+		panic(fmt.Sprintf("bad %s value: specify percentage between 0 and 100", aliases[0].EnvName))
 	}
 
 	cmdData.AllowedBackendStorageVolumeUsageMargin = new(uint)
@@ -160,7 +160,7 @@ func SetupAllowedLocalCacheVolumeUsage(cmdData *CmdData, cmd *cobra.Command) {
 		defaultVal = uint(host_cleaning.DefaultAllowedLocalCacheVolumeUsagePercentage)
 	}
 	if defaultVal > 100 {
-		TerminateWithError(fmt.Sprintf("bad %s value: specify percentage between 0 and 100", envVarName), 1)
+		panic(fmt.Sprintf("bad %s value: specify percentage between 0 and 100", envVarName))
 	}
 
 	cmdData.AllowedLocalCacheVolumeUsage = new(uint)
@@ -177,7 +177,7 @@ func SetupAllowedLocalCacheVolumeUsageMargin(cmdData *CmdData, cmd *cobra.Comman
 		defaultVal = uint(host_cleaning.DefaultAllowedLocalCacheVolumeUsageMarginPercentage)
 	}
 	if defaultVal > 100 {
-		TerminateWithError(fmt.Sprintf("bad %s value: specify percentage between 0 and 100", envVarName), 1)
+		panic(fmt.Sprintf("bad %s value: specify percentage between 0 and 100", envVarName))
 	}
 
 	cmdData.AllowedLocalCacheVolumeUsageMargin = new(uint)

@@ -245,7 +245,7 @@ func SetupNetworkParallelism(cmdData *CmdData, cmd *cobra.Command) {
 
 	var defVal int
 	if val, err := util.GetIntEnvVar("WERF_NETWORK_PARALLELISM"); err != nil {
-		TerminateWithError(fmt.Sprintf("bad WERF_NETWORK_PARALLELISM value: %s", err), 1)
+		panic(fmt.Sprintf("bad WERF_NETWORK_PARALLELISM value: %s", err))
 	} else if val != nil {
 		defVal = int(*val)
 	} else {
@@ -266,7 +266,7 @@ func SetupKubeQpsLimit(cmdData *CmdData, cmd *cobra.Command) {
 
 	var defVal int
 	if val, err := util.GetIntEnvVar("WERF_KUBE_QPS_LIMIT"); err != nil {
-		TerminateWithError(fmt.Sprintf("bad WERF_KUBE_QPS_LIMIT value: %s", err), 1)
+		panic(fmt.Sprintf("bad WERF_KUBE_QPS_LIMIT value: %s", err))
 	} else if val != nil {
 		defVal = int(*val)
 	} else {
@@ -287,7 +287,7 @@ func SetupKubeBurstLimit(cmdData *CmdData, cmd *cobra.Command) {
 
 	var defVal int
 	if val, err := util.GetIntEnvVar("WERF_KUBE_BURST_LIMIT"); err != nil {
-		TerminateWithError(fmt.Sprintf("bad WERF_KUBE_BURST_LIMIT value: %s", err), 1)
+		panic(fmt.Sprintf("bad WERF_KUBE_BURST_LIMIT value: %s", err))
 	} else if val != nil {
 		defVal = int(*val)
 	} else {
@@ -305,7 +305,7 @@ func SetupKubeBurstLimit(cmdData *CmdData, cmd *cobra.Command) {
 
 func GetNetworkParallelism(cmdData *CmdData) int {
 	if *cmdData.NetworkParallelism < 1 {
-		TerminateWithError(fmt.Sprintf("bad network parallelism value: %d (should be >= 1)", *cmdData.NetworkParallelism), 1)
+		panic(fmt.Sprintf("bad network parallelism value: %d (should be >= 1)", *cmdData.NetworkParallelism))
 	}
 
 	return *cmdData.NetworkParallelism
@@ -340,8 +340,7 @@ func GetDeployGraphPath(cmdData *CmdData) string {
 	case "":
 		return *cmdData.DeployGraphPath + ".dot"
 	default:
-		TerminateWithError(fmt.Sprintf("invalid --deploy-graph-path %q: extension must be either .dot or unspecified", *cmdData.DeployGraphPath), 1)
-		return ""
+		panic(fmt.Sprintf("invalid --deploy-graph-path %q: extension must be either .dot or unspecified", *cmdData.DeployGraphPath))
 	}
 }
 
@@ -356,8 +355,7 @@ func GetRollbackGraphPath(cmdData *CmdData) string {
 	case "":
 		return *cmdData.RollbackGraphPath + ".dot"
 	default:
-		TerminateWithError(fmt.Sprintf("invalid --rollback-graph-path %q: extension must be either .dot or unspecified", *cmdData.RollbackGraphPath), 1)
-		return ""
+		panic(fmt.Sprintf("invalid --rollback-graph-path %q: extension must be either .dot or unspecified", *cmdData.RollbackGraphPath))
 	}
 }
 
@@ -376,7 +374,7 @@ func SetupKeepStagesBuiltWithinLastNHours(cmdData *CmdData, cmd *cobra.Command) 
 func GetKeepStagesBuiltWithinLastNHours(cmdData *CmdData, cmd *cobra.Command) *uint64 {
 	envValue, err := util.GetUint64EnvVar("WERF_KEEP_STAGES_BUILT_WITHIN_LAST_N_HOURS")
 	if err != nil {
-		TerminateWithError(err.Error(), 1)
+		panic(err)
 	}
 
 	if cmd.Flags().Changed(flagNameKeepStagesBuiltWithinLastNHours) {
@@ -554,7 +552,7 @@ func SetupReleasesHistoryMax(cmdData *CmdData, cmd *cobra.Command) {
 
 	defaultValueP, err := util.GetIntEnvVar("WERF_RELEASES_HISTORY_MAX")
 	if err != nil {
-		TerminateWithError(fmt.Sprintf("bad WERF_RELEASES_HISTORY_MAX value: %s", err), 1)
+		panic(fmt.Sprintf("bad WERF_RELEASES_HISTORY_MAX value: %s", err))
 	}
 
 	var defaultValue int
@@ -578,13 +576,13 @@ func statusProgressPeriodDefaultValue() *int64 {
 
 	v, err := util.GetIntEnvVar("WERF_STATUS_PROGRESS_PERIOD_SECONDS")
 	if err != nil {
-		TerminateWithError(err.Error(), 1)
+		panic(err)
 	}
 
 	if v == nil {
 		v, err = util.GetIntEnvVar("WERF_STATUS_PROGRESS_PERIOD")
 		if err != nil {
-			TerminateWithError(err.Error(), 1)
+			panic(err)
 		}
 
 		if v == nil {
@@ -617,13 +615,13 @@ func hooksStatusProgressPeriodDefaultValue() *int64 {
 
 	v, err := util.GetIntEnvVar("WERF_HOOKS_STATUS_PROGRESS_PERIOD_SECONDS")
 	if err != nil {
-		TerminateWithError(err.Error(), 1)
+		panic(err)
 	}
 
 	if v == nil {
 		v, err = util.GetIntEnvVar("WERF_HOOKS_STATUS_PROGRESS_PERIOD")
 		if err != nil {
-			TerminateWithError(err.Error(), 1)
+			panic(err)
 		}
 
 		if v == nil {
@@ -1048,7 +1046,7 @@ func allStagesNames() []string {
 func GetIntEnvVarStrict(varName string) *int64 {
 	valP, err := util.GetIntEnvVar(varName)
 	if err != nil {
-		TerminateWithError(fmt.Sprintf("bad %s value: %s", varName, err), 1)
+		panic(fmt.Sprintf("bad %s value: %s", varName, err))
 	}
 	return valP
 }
@@ -1056,7 +1054,7 @@ func GetIntEnvVarStrict(varName string) *int64 {
 func GetUint64EnvVarStrict(varName string) *uint64 {
 	valP, err := util.GetUint64EnvVar(varName)
 	if err != nil {
-		TerminateWithError(fmt.Sprintf("bad %s value: %s", varName, err), 1)
+		panic(fmt.Sprintf("bad %s value: %s", varName, err))
 	}
 	return valP
 }
@@ -1633,16 +1631,6 @@ func LogRunningTime(f func() error) error {
 
 func LogVersion() {
 	logboek.LogF("Version: %s\n", werf.Version)
-}
-
-func TerminateWithError(errMsg string, exitCode int) {
-	msg := fmt.Sprintf("Error: %s", errMsg)
-	msg = strings.TrimSuffix(msg, "\n")
-
-	logboek.Streams().DisablePrefix()
-	logboek.Streams().DisableLineWrapping()
-	logboek.Error().LogLn(msg)
-	os.Exit(exitCode)
 }
 
 func SetupVirtualMerge(cmdData *CmdData, cmd *cobra.Command) {
