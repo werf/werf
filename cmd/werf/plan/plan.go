@@ -433,6 +433,8 @@ func run(
 
 	loader.ChartFileReader = giterminismManager.FileReader()
 
+	ctx = action.SetupLogging(ctx, common.GetNelmLogLevel(&commonCmdData), action.DefaultReleasePlanInstallLogLevel)
+
 	if err := action.ReleasePlanInstall(ctx, releaseName, releaseNamespace, action.ReleasePlanInstallOptions{
 		ChartAppVersion:              common.GetHelmChartConfigAppVersion(werfConfig),
 		ChartDirPath:                 chartPath,
@@ -459,7 +461,6 @@ func run(
 		KubeTLSServerName:            *commonCmdData.KubeTlsServer,
 		KubeToken:                    *commonCmdData.KubeToken,
 		LogColorMode:                 *commonCmdData.LogColorMode,
-		LogLevel:                     common.GetNelmLogLevel(&commonCmdData),
 		LogRegistryStreamOut:         os.Stdout,
 		NetworkParallelism:           common.GetNetworkParallelism(&commonCmdData),
 		RegistryCredentialsPath:      registryCredentialsPath,
