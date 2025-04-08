@@ -394,8 +394,6 @@ import:
 
 ### Глобальная конфигурация
 
-Пример конфигурации, которая применяется ко всем образам в проекте:
-
 ```yaml
 project: test
 configVersion: 1
@@ -406,18 +404,16 @@ build:
     config:
       removeLabels:
         - "unnecessary-label"
-        - /org.opencontainers.image..*/
+        - /org\.opencontainers\.image..*/
       labels:
         app: "my-app"
 ```
 
 Эта настройка будет применяться ко всем образам в проекте: лейблы и автор будут установлены для всех образов, а ненужные лейблы будут удалены.
 
-> **Примечание:** Глобальная конфигурация применяется только конечным (`final`) образам. Подробнее смотретите [здесь](#использование-промежуточных-и-конечных-образов)
+> **Примечание:** Глобальная конфигурация не применяется к промежуточным образам (`final: false`).
 
 ### Конфигурация для конкретного образа
-
-Пример настройки для отдельного образа:
 
 ```yaml
 project: test
@@ -429,34 +425,46 @@ imageSpec:
   author: "Frontend Maintainer <frontend@example.com>"
   clearHistory: true
   config:
-    user: "1001:1001"
-    expose:
-      - "8080/tcp"
+    cmd: ["/usr/bin/start", "--help"]
+    entrypoint: ["/bin/sh"]
     env:
+      PATH: "/usr/local/bin"
       NODE_ENV: "production"
-      API_URL: "https://api.example.com"
-    entrypoint:
-      - "/usr/local/bin/start.sh"
-    volumes:
-      - "/app/data"
-    workingDir: "/app"
+    expose: ["8080", "443"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: "30s"
+      retries: 3
     labels:
-      frontend-version: "1.2.3"
+      app: "frontend"
+      version: "v1"
     stopSignal: "SIGTERM"
-    removeLabels:
-      - "old-frontend-label"
-      - /old-regex-label.*/
-    removeVolumes:
-      - "/var/cache"
+    user: "node"
+    volumes:
+      - "/data"
+      - "/config"
+    workingDir: "/app"
     removeEnv:
       - "DEBUG"
+      - "/^TEMP_.*$/"
+    removeLabels:
+      - "beta"
+      - "/^experimental.*$/"
+    removeVolumes:
+      - "/tmp"
+      - "/var/log"
+    keepEssentialWerfLabels: true
+    clearCmd: true
+    clearEntrypoint: true
+    clearUser: true
+    clearWorkingDir: true
 ```
 
 > **Примечание:** Конфигурация для конкретного образа имеет приоритет перед глобальной конфигурацией. Строковые значения будут переопределены, а для множественных значений данные будут объединяться в соответствии с приоритетом.
 
-### Изменения в процессе сборки
+### Изменения, влияющие на сборочный процесс
 
-Изменение конфигурации образа не влияет напрямую на процесс сборки образа, но позволяет настроить такие аспекты, как удаление ненужных томов или добавление переменных окружения для базового образа. Пример:
+Изменение конфигурации образа не влияет напрямую на процесс сборки образа, но позволяет настроить такие аспекты, как удаление ненужных томов или добавление переменных окружения для промежуточных образов. Пример:
 
 ```yaml
 image: base
@@ -520,6 +528,25 @@ imageSpec:
     env:
       PATH: "${PATH}:/app/bin"
 ```
+
+При этом переменные окружения, объявленные в `imageSpec`, не могут использоваться подобным образом. Например:
+
+```yaml
+project: test
+configVersion: 1
+---
+image: backend
+from: alpine:3.21
+imageSpec:
+  config:
+    env:
+      MY_ENV: MY_VAL
+      CUSTOM: "${MY_ENV}"
+```
+
+В этом случае `CUSTOM` будет иметь пустое значение, а не `MY_VAL`.
+
+Такое поведение соответствует работе Docker с `ENV`.
 
 ### Работа с лейблами
 
