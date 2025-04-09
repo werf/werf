@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/werf/common-go/pkg/lock"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
@@ -125,7 +124,7 @@ func (cache *LRUImagesCache) constructFilePathForImage(imageRef string) string {
 
 func (cache *LRUImagesCache) lock(ctx context.Context, imageRef string) (lockgate.LockHandle, error) {
 	lockName := fmt.Sprintf("lru_images_cache.%s", imageRef)
-	if _, lock, err := chart.AcquireHostLock(ctx, lockName, lockgate.AcquireOptions{}); err != nil {
+	if _, lock, err := werf.HostLocker().AcquireLock(ctx, lockName, lockgate.AcquireOptions{}); err != nil {
 		return lockgate.LockHandle{}, fmt.Errorf("cannot acquire %s host lock: %w", lockName, err)
 	} else {
 		return lock, nil
@@ -133,7 +132,7 @@ func (cache *LRUImagesCache) lock(ctx context.Context, imageRef string) (lockgat
 }
 
 func (cache *LRUImagesCache) unlock(lock lockgate.LockHandle) error {
-	if err := chart.ReleaseHostLock(lock); err != nil {
+	if err := werf.HostLocker().ReleaseLock(lock); err != nil {
 		return fmt.Errorf("cannot release %s host lock: %w", lock.LockName, err)
 	}
 	return nil

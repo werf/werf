@@ -10,7 +10,6 @@ import (
 
 	"github.com/go-git/go-git/v5"
 
-	"github.com/werf/common-go/pkg/lock"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
@@ -20,6 +19,7 @@ import (
 	"github.com/werf/werf/v2/pkg/telemetry"
 	"github.com/werf/werf/v2/pkg/true_git"
 	"github.com/werf/werf/v2/pkg/true_git/status"
+	"github.com/werf/werf/v2/pkg/werf"
 )
 
 var ErrLocalRepositoryNotExists = git.ErrRepositoryNotExists
@@ -70,7 +70,7 @@ func OpenLocalRepo(ctx context.Context, name, workTreeDir string, opts OpenLocal
 		if lock, err := CommonGitDataManager.LockGC(ctx, true); err != nil {
 			return nil, err
 		} else {
-			defer chart.ReleaseHostLock(lock)
+			defer werf.HostLocker().ReleaseLock(lock)
 		}
 
 		devHeadCommit, err := true_git.SyncSourceWorktreeWithServiceBranch(
@@ -154,7 +154,7 @@ func (repo *Local) SyncWithOrigin(ctx context.Context) error {
 }
 
 func (repo *Local) acquireFetchLock(ctx context.Context) (lockgate.LockHandle, error) {
-	_, lock, err := chart.AcquireHostLock(ctx, fmt.Sprintf("local_git_repo.fetch.%s", repo.GitDir), lockgate.AcquireOptions{})
+	_, lock, err := werf.HostLocker().AcquireLock(ctx, fmt.Sprintf("local_git_repo.fetch.%s", repo.GitDir), lockgate.AcquireOptions{})
 	return lock, err
 }
 
@@ -162,7 +162,7 @@ func (repo *Local) Unshallow(ctx context.Context) error {
 	if lock, err := repo.acquireFetchLock(ctx); err != nil {
 		return fmt.Errorf("unable to acquire fetch lock: %w", err)
 	} else {
-		defer chart.ReleaseHostLock(lock)
+		defer werf.HostLocker().ReleaseLock(lock)
 	}
 
 	isShallow, err := repo.IsShallowClone(ctx)
@@ -185,7 +185,7 @@ func (repo *Local) FetchOrigin(ctx context.Context, opts FetchOptions) error {
 	if lock, err := repo.acquireFetchLock(ctx); err != nil {
 		return fmt.Errorf("unable to acquire fetch lock: %w", err)
 	} else {
-		defer chart.ReleaseHostLock(lock)
+		defer werf.HostLocker().ReleaseLock(lock)
 	}
 
 	var unshallow bool
@@ -521,7 +521,7 @@ func (repo *Local) initRepoHandleBackedByWorkTree(ctx context.Context, commit st
 		if lock, err := CommonGitDataManager.LockGC(ctx, true); err != nil {
 			return nil, err
 		} else {
-			defer chart.ReleaseHostLock(lock)
+			defer werf.HostLocker().ReleaseLock(lock)
 		}
 
 		var repoHandle repo_handle.Handle
