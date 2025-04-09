@@ -20,7 +20,7 @@ type ImageFromDockerfile struct {
 	SSH             string
 	Dependencies    []*Dependency
 	Staged          bool
-	Secrets         []string
+	Secrets         []Secret
 	ImageSpec       *ImageSpec
 
 	cacheVersion string
