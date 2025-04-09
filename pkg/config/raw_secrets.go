@@ -59,6 +59,6 @@ func (s *rawSecret) toDirective() (Secret, error) {
 	case s.PlainValue != "":
 		return newSecretFromPlainValue(s)
 	default:
-		return nil, newDetailedConfigError("secret should be defined as `env`, `src` or `value`", s, s.parent.getDoc())
+		return Secret{}, newDetailedConfigError("secret should be defined as `env`, `src` or `value`", s, s.parent.getDoc())
 	}
 }

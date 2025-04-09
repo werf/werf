@@ -235,7 +235,11 @@ func (s *secrets) IsEnvNameAccepted(name string) bool {
 }
 
 func (s *secrets) IsAllowSecretsFileAccepted(path string) bool {
-	return isAbsPathMatched(s.AllowFiles, path)
+	absPath, err := util.ExpandPath(path)
+	if err != nil {
+		return false
+	}
+	return isAbsPathMatched(s.AllowFiles, absPath)
 }
 
 func (s *secrets) IsValueIdAccepted(name string) bool {
