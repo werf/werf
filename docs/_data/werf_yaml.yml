@@ -294,7 +294,7 @@ sections:
         value: "[ string, ... ]"
         description:
           en: Untracked files and directories for adding to build context. The paths must be relative to context PATH
-          ru: Добавление не хранящихся в git файлов и директорий в сборочный контекст. Пути должны быть относительно директории контекста
+          ru: Добавление нехранящихся в git файлов и директорий в сборочный контекст. Пути должны быть относительно директории контекста
       - name: target
         value: "string"
         description:
