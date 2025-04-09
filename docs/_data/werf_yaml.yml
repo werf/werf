@@ -133,7 +133,7 @@ sections:
       - name: cleanup
         description:
           en: Settings for cleaning up irrelevant images
-          ru: Настройка удаления неактульных образов
+          ru: Настройка удаления неактуальных образов
         collapsible: true
         isCollapsedByDefault: false
         directives:
@@ -191,7 +191,7 @@ sections:
                       - name: last
                         value: "int"
                         description:
-                          en: To select n last references last n references from those defined in the branch or tag
+                          en: To select n last references from those defined in the branch or tag
                           ru: Выборка последних n references из определённого в branch/tag множества
                         default: "-1"
                       - name: in
@@ -354,7 +354,7 @@ sections:
               ru: Произвольное строковое значение
       - name: dependencies
         description:
-          en: "Dependencies images for current image"
+          en: "Dependency images for current image"
           ru: "Образы-зависимости для текущего образа"
         collapsible: true
         isCollapsedByDefault: false
@@ -429,7 +429,7 @@ sections:
                 value: "[string, ...]"
                 description:
                   en: Set exposed ports
-                  ru: Установить порты открытые порты
+                  ru: Установить открытые порты
                 detailsLink: "https://docs.docker.com/engine/reference/builder/#expose"
               - name: healthcheck
                 value: "{ test: [string, ...], interval: string, retries: int }"
@@ -852,7 +852,7 @@ sections:
             value: "string"
             description:
               en: "The user name (or UID) and optionally the user group (or GID)"
-              ru: "Имя пользователя (или UID) и опционально пользовательская группа (или GID)"
+              ru: "Имя пользователя (или UID) и необязательная пользовательская группа (или GID)"
             detailsLink: "https://docs.docker.com/engine/reference/builder/#user"
           - name: WORKDIR
             value: "string"
