@@ -847,7 +847,7 @@ sections:
             value: "bool"
             description:
               en: "Set specified options values as-is, including unescaped quotes and spaces. Option affects only docker-server backend and does not affect buildah backend."
-              ru: "Включить использование не заэкранированных символов (например кавычки и пробелы) в значениях опций. Опция имеет действие только при использовании docker-server backend, и не влияет на работу buildah backend."
+              ru: "Включить использование незаэкранированных символов (например кавычки и пробелы) в значениях опций. Опция имеет действие только при использовании docker-server backend, и не влияет на работу buildah backend."
           - name: USER
             value: "string"
             description:
