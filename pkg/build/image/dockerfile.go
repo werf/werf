@@ -13,6 +13,7 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
+	"github.com/werf/werf/v2/pkg/build/secrets"
 	"github.com/werf/werf/v2/pkg/build/stage"
 	stage_instruction "github.com/werf/werf/v2/pkg/build/stage/instruction"
 	"github.com/werf/werf/v2/pkg/config"
@@ -84,6 +85,15 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 			Level         int
 			IsTargetStage bool
 		}{WerfImageName: werfImageName, Stage: stage, Level: level})
+	}
+
+	buildSecrets := make([]string, 0, len(dockerfileImageConfig.Secrets))
+	for _, s := range dockerfileImageConfig.Secrets {
+		secret, err := secrets.GetSecretStringArg(s)
+		if err != nil {
+			return nil, fmt.Errorf("unable to get build secrets: %w", err)
+		}
+		buildSecrets = append(buildSecrets, secret)
 	}
 
 	for len(queue) > 0 {
@@ -219,7 +229,7 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 			case *dockerfile.DockerfileStageInstruction[*instructions.OnbuildCommand]:
 				stg = stage_instruction.NewOnBuild(typedInstr, dockerfileImageConfig.Dependencies, !isFirstStage, &baseStageOptions)
 			case *dockerfile.DockerfileStageInstruction[*instructions.RunCommand]:
-				stg = stage_instruction.NewRun(typedInstr, dockerfileImageConfig.Dependencies, !isFirstStage, &baseStageOptions, dockerfileImageConfig.Secrets, dockerfileImageConfig.SSH)
+				stg = stage_instruction.NewRun(typedInstr, dockerfileImageConfig.Dependencies, !isFirstStage, &baseStageOptions, buildSecrets, dockerfileImageConfig.SSH)
 			case *dockerfile.DockerfileStageInstruction[*instructions.ShellCommand]:
 				stg = stage_instruction.NewShell(typedInstr, dockerfileImageConfig.Dependencies, !isFirstStage, &baseStageOptions)
 			case *dockerfile.DockerfileStageInstruction[*instructions.StopSignalCommand]:
@@ -320,6 +330,15 @@ func mapLegacyDockerfileToImage(ctx context.Context, metaConfig *config.Meta, do
 		ProjectName:    opts.ProjectName,
 	}
 
+	buildSecrets := make([]string, 0, len(dockerfileImageConfig.Secrets))
+	for _, s := range dockerfileImageConfig.Secrets {
+		secret, err := secrets.GetSecretStringArg(s)
+		if err != nil {
+			return nil, fmt.Errorf("unable to get build secrets: %w", err)
+		}
+		buildSecrets = append(buildSecrets, secret)
+	}
+
 	imageCacheVersion := option.ValueOrDefault(dockerfileImageConfig.CacheVersion(), metaConfig.Build.CacheVersion)
 
 	dockerfileStage := stage.GenerateFullDockerfileStage(stage.NewDockerRunArgs(
@@ -332,7 +351,7 @@ func mapLegacyDockerfileToImage(ctx context.Context, metaConfig *config.Meta, do
 		dockerfileImageConfig.AddHost,
 		dockerfileImageConfig.Network,
 		dockerfileImageConfig.SSH,
-		dockerfileImageConfig.Secrets,
+		buildSecrets,
 	), ds, stage.NewContextChecksum(dockerIgnorePathMatcher), baseStageOptions, dockerfileImageConfig.Dependencies, imageCacheVersion)
 
 	img.stages = append(img.stages, dockerfileStage)

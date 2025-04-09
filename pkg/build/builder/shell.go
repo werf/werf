@@ -11,6 +11,7 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
+	"github.com/werf/werf/v2/pkg/build/secrets"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/container_backend/stage_builder"
@@ -200,7 +201,7 @@ func (b *Shell) containerTmpDir() string {
 
 func (b *Shell) addBuildSecretsVolumes(stageHostTmpDir string, fn func(string)) error {
 	for _, s := range b.secrets {
-		secretPath, err := s.GetMountPath(stageHostTmpDir)
+		secretPath, err := secrets.GetMountPath(s, stageHostTmpDir)
 		if err != nil {
 			return err
 		}

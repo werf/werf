@@ -53,7 +53,7 @@ var _ = Describe("rawImageFromDockerfile", func() {
 				Name:            "image1",
 				ContextAddFiles: []string{},
 				AddHost:         []string{},
-				Secrets:         []string{},
+				Secrets:         []Secret{},
 
 				cacheVersion: "docker-cache-version",
 				platform:     []string{},
