@@ -133,7 +133,7 @@ sections:
       - name: cleanup
         description:
           en: Settings for cleaning up irrelevant images
-          ru: Настройка удаления неактульных образов
+          ru: Настройка удаления неактуальных образов
         collapsible: true
         isCollapsedByDefault: false
         directives:
@@ -191,7 +191,7 @@ sections:
                       - name: last
                         value: "int"
                         description:
-                          en: To select n last references last n references from those defined in the branch or tag
+                          en: To select n last references from those defined in the branch or tag
                           ru: Выборка последних n references из определённого в branch/tag множества
                         default: "-1"
                       - name: in
@@ -294,7 +294,7 @@ sections:
         value: "[ string, ... ]"
         description:
           en: Untracked files and directories for adding to build context. The paths must be relative to context PATH
-          ru: Добавление нехранящихся в git файлов и директорий в сборочный контекст. Пути должны быть относительно директории контекста
+          ru: Добавление не хранящихся в git файлов и директорий в сборочный контекст. Пути должны быть относительно директории контекста
       - name: target
         value: "string"
         description:
@@ -354,7 +354,7 @@ sections:
               ru: Произвольное строковое значение
       - name: dependencies
         description:
-          en: "Dependencies images for current image"
+          en: "Dependency images for current image"
           ru: "Образы-зависимости для текущего образа"
         collapsible: true
         isCollapsedByDefault: false
@@ -429,7 +429,7 @@ sections:
                 value: "[string, ...]"
                 description:
                   en: Set exposed ports
-                  ru: Установить порты открытые порты
+                  ru: Установить открытые порты
                 detailsLink: "https://docs.docker.com/engine/reference/builder/#expose"
               - name: healthcheck
                 value: "{ test: [string, ...], interval: string, retries: int }"
@@ -847,12 +847,12 @@ sections:
             value: "bool"
             description:
               en: "Set specified options values as-is, including unescaped quotes and spaces. Option affects only docker-server backend and does not affect buildah backend."
-              ru: "Включить использование незаэкранированных символов (например кавычки и пробелы) в значениях опций. Опция имеет действие только при использовании docker-server backend, и не влияет на работу buildah backend."
+              ru: "Включить использование не заэкранированных символов (например кавычки и пробелы) в значениях опций. Опция имеет действие только при использовании docker-server backend, и не влияет на работу buildah backend."
           - name: USER
             value: "string"
             description:
               en: "The user name (or UID) and optionally the user group (or GID)"
-              ru: "Имя пользователя (или UID) и опционально пользовательская группа (или GID)"
+              ru: "Имя пользователя (или UID) и необязательная пользовательская группа (или GID)"
             detailsLink: "https://docs.docker.com/engine/reference/builder/#user"
           - name: WORKDIR
             value: "string"
