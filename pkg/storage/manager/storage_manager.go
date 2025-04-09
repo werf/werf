@@ -256,7 +256,7 @@ func (m *StorageManager) getStageDescSet(ctx context.Context, opts ...storage.Op
 	}
 
 	stageDescSet := image.NewStageDescSet()
-	if err := parallel.DoTasks(ctx, len(stageIDs), parallel.DoTasksOptions{
+	if err := parallel.DoTasks(ctx, 1000 /*len(stageIDs)*/, parallel.DoTasksOptions{
 		MaxNumberOfWorkers: m.MaxNumberOfWorkers(),
 	}, func(ctx context.Context, taskId int) error {
 		stageID := stageIDs[taskId]
@@ -291,7 +291,7 @@ func (m *StorageManager) GetFinalStageDescSet(ctx context.Context) (image.StageD
 
 	stageIDs := existingStagesListCache.GetStageIDs()
 	stageDescSet := image.NewStageDescSet()
-	if err := parallel.DoTasks(ctx, len(stageIDs), parallel.DoTasksOptions{
+	if err := parallel.DoTasks(ctx, 1000 /*len(stageIDs)*/, parallel.DoTasksOptions{
 		MaxNumberOfWorkers: m.MaxNumberOfWorkers(),
 	}, func(ctx context.Context, taskId int) error {
 		stageID := stageIDs[taskId]
@@ -990,7 +990,7 @@ func (m *StorageManager) ForEachRmManagedImage(ctx context.Context, projectName 
 }
 
 func (m *StorageManager) ForEachGetImportMetadata(ctx context.Context, projectName string, ids []string, f func(ctx context.Context, metadataID string, metadata *storage.ImportMetadata, err error) error) error {
-	return parallel.DoTasks(ctx, len(ids), parallel.DoTasksOptions{
+	return parallel.DoTasks(ctx, 1000 /*len(ids)*/, parallel.DoTasksOptions{
 		MaxNumberOfWorkers: m.MaxNumberOfWorkers(),
 	}, func(ctx context.Context, taskId int) error {
 		id := ids[taskId]

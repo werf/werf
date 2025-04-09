@@ -67,6 +67,9 @@ type cleanupManager struct {
 	checksumSourceStageIDs map[string][]string
 	sourceStageIDImportIDs map[string][]string
 
+	checksumSourceStageIDsSync sync.Map
+	sourceStageIDImportIDsSync sync.Map
+
 	ProjectName                             string
 	StorageManager                          manager.StorageManagerInterface
 	ImageNameList                           []string
@@ -813,15 +816,20 @@ func (m *cleanupManager) cleanupUnusedStages(ctx context.Context) error {
 
 	// skip kept stages and their relatives.
 	{
-		stageByID := make(map[string]*image.StageDesc)
-		for stage := range m.stageManager.GetStageDescSet().Iter() {
-			stageByID[stage.Info.ID] = stage
-		}
+
+		/*
+			var stageDescSetByIdCache map[string]*image.StageDesc
+			if e := os.Getenv("C_TEST"); e == "1" {
+				stageDescSetByIdCache := initStageDescSetByIdCache(m)
+				defer purgeStageDescSetChache(stageDescSetByIdCache)
+			}*/
+
+		handledStageDescSet := image.NewStageDescSet()
 		for protectionReason, stageDescToKeepSet := range m.stageManager.GetProtectedStageDescSetByReason() {
 			// Git history based policy keeps import sources more effectively, other policies do not keep them.
 			withImportOrDependencySources := protectionReason != stage_manager.ProtectionReasonGitPolicy
 			for stageDescToKeep := range stageDescToKeepSet.Iter() {
-				m.protectRelativeStageDescSetByStageDesc(stageDescToKeep, withImportOrDependencySources, stageByID)
+				m.protectRelativeStageDescSetByStageDesc(stageDescToKeep, withImportOrDependencySources, handledStageDescSet)
 			}
 		}
 
@@ -856,6 +864,18 @@ func (m *cleanupManager) cleanupUnusedStages(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func initStageDescSetByIdCache(m *cleanupManager) map[string]*image.StageDesc {
+	cacheStageDescById := make(map[string]*image.StageDesc)
+	for stage := range m.stageManager.GetStageDescSet().Iter() {
+		cacheStageDescById[stage.Info.ID] = stage
+	}
+	return cacheStageDescById
+}
+
+func purgeStageDescSetChache(m map[string]*image.StageDesc) {
+	clear(m)
 }
 
 func (m *cleanupManager) deleteUnusedImportsMetadata(ctx context.Context) error {
@@ -985,7 +1005,7 @@ func deleteImportsMetadata(ctx context.Context, projectName string, storageManag
 	})
 }
 
-func (m *cleanupManager) protectRelativeStageDescSetByStageDesc(targetStageDesc *image.StageDesc, withImportOrDependencySources bool, stageByID map[string]*image.StageDesc) {
+func (m *cleanupManager) protectRelativeStageDescSetByStageDesc(targetStageDesc *image.StageDesc, withImportOrDependencySources bool, handledStageDescSet image.StageDescSet) {
 	targetStageDescSet := image.NewStageDescSet()
 	if targetStageDesc.Info.IsIndex {
 		for _, platformImageInfo := range targetStageDesc.Info.Index {
@@ -997,8 +1017,7 @@ func (m *cleanupManager) protectRelativeStageDescSetByStageDesc(targetStageDesc 
 	} else {
 		targetStageDescSet.Add(targetStageDesc)
 	}
-
-	handledStageDescSet := image.NewStageDescSet()
+	stageDescSet := m.stageManager.GetStageDescSet()
 	currentStageDescSet := targetStageDescSet
 	for !currentStageDescSet.IsEmpty() {
 		for _, currentStageDesc := range currentStageDescSet.ToSlice() {
@@ -1040,10 +1059,12 @@ func (m *cleanupManager) protectRelativeStageDescSetByStageDesc(targetStageDesc 
 			// Parent stage checking.
 			{
 				// TODO: remove this legacy check in v3.
-				if stageDesc, ok := stageByID[currentStageDesc.Info.ParentID]; ok {
-					currentStageDescSet.Add(stageDesc)
-					m.stageManager.MarkStageDescAsProtected(stageDesc, stage_manager.ProtectionReasonAncestor, false)
-					break
+				for stageDesc := range stageDescSet.Iter() {
+					if currentStageDesc.Info.ParentID == stageDesc.Info.ID {
+						currentStageDescSet.Add(stageDesc)
+						m.stageManager.MarkStageDescAsProtected(stageDesc, stage_manager.ProtectionReasonAncestor, false)
+						break
+					}
 				}
 
 				parentStageDesc := m.stageManager.GetStageDescByStageID(currentStageDesc.Info.Labels[image.WerfParentStageID])
