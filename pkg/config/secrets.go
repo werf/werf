@@ -50,7 +50,7 @@ func inspectSecretByGiterminism(giterminismManager giterminism_manager.Interface
 	} else if secret.ValueFromSrc != "" {
 		return giterminismManager.Inspector().InspectConfigSecretSrcAccepted(secret.ValueFromSrc)
 	} else if secret.ValueFromPlain != "" {
-		return giterminismManager.Inspector().InspectConfigSecretValueAccepted(secret.ValueFromPlain)
+		return giterminismManager.Inspector().InspectConfigSecretValueAccepted(secret.Id)
 	}
 	return nil
 }

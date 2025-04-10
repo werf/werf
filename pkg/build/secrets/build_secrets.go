@@ -106,11 +106,11 @@ func newSecretFromSrc(s config.Secret) (*SecretFromSrc, error) {
 	if exists, _ := util.FileExists(absPath); !exists {
 		return nil, fmt.Errorf("error load secret from src: path %s doesn't exist", absPath)
 	}
-	return &SecretFromSrc{Id: s.Id, Value: s.ValueFromSrc}, nil
+	return &SecretFromSrc{Id: s.Id, Value: absPath}, nil
 }
 
 func newSecretFromPlainValue(s config.Secret) (*SecretFromPlainValue, error) {
-	return &SecretFromPlainValue{Id: s.Id, Value: s.ValueFromSrc}, nil
+	return &SecretFromPlainValue{Id: s.Id, Value: s.ValueFromPlain}, nil
 }
 
 func (s *SecretFromEnv) GetMountPath(stageHostTmpDir string) (string, error) {
