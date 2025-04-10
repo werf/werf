@@ -111,44 +111,35 @@ func (s *ImageSpecStage) PrepareImage(ctx context.Context, _ Conveyor, _ contain
 	return nil
 }
 
-const imageSpecStageCacheVersion = "2"
 
 func (s *ImageSpecStage) GetDependencies(_ context.Context, _ Conveyor, _ container_backend.ContainerBackend, _, _ *StageImage, _ container_backend.BuildContextArchiver) (string, error) {
 	var args []string
 
-	args = append(args, imageSpecStageCacheVersion)
+	// imageSpec
 	args = append(args, s.imageSpec.Author)
 	args = append(args, fmt.Sprint(s.imageSpec.ClearHistory))
 
-	args = append(args, fmt.Sprint(s.imageSpec.ClearWerfLabels))
+	// imageSpec.config
+	args = append(args, strings.Join(s.imageSpec.Cmd, " "))
+	args = append(args, strings.Join(s.imageSpec.Entrypoint, " "))
+	args = append(args, mapToSortedArgs(s.imageSpec.Env)...)
+	args = append(args, sortSliceWithNewSlice(s.imageSpec.Expose)...)
+	args = append(args, fmt.Sprint(s.imageSpec.Healthcheck))
+	args = append(args, mapToSortedArgs(s.imageSpec.Labels)...)
+	args = append(args, s.imageSpec.StopSignal)
+	args = append(args, s.imageSpec.User)
+	args = append(args, sortSliceWithNewSlice(s.imageSpec.Volumes)...)
+	args = append(args, s.imageSpec.WorkingDir)
+
 	args = append(args, sortSliceWithNewSlice(s.imageSpec.RemoveLabels)...)
 	args = append(args, sortSliceWithNewSlice(s.imageSpec.RemoveVolumes)...)
 	args = append(args, sortSliceWithNewSlice(s.imageSpec.RemoveEnv)...)
+	args = append(args, fmt.Sprint(s.imageSpec.KeepEssentialWerfLabels))
 
-	args = append(args, sortSliceWithNewSlice(s.imageSpec.Volumes)...)
-	args = append(args, mapToSortedArgs(s.imageSpec.Labels)...)
-	args = append(args, mapToSortedArgs(s.imageSpec.Env)...)
-	args = append(args, sortSliceWithNewSlice(s.imageSpec.Expose)...)
-	args = append(args, s.imageSpec.User)
-	args = append(args, strings.Join(s.imageSpec.Cmd, " "))
 	args = append(args, fmt.Sprint(s.imageSpec.ClearCmd))
-	args = append(args, strings.Join(s.imageSpec.Entrypoint, " "))
 	args = append(args, fmt.Sprint(s.imageSpec.ClearEntrypoint))
-	args = append(args, s.imageSpec.WorkingDir)
-	args = append(args, s.imageSpec.StopSignal)
-	args = append(args, fmt.Sprint(s.imageSpec.Healthcheck))
-
-	if s.imageSpec.ClearUser {
-		args = append(args, fmt.Sprint(s.imageSpec.ClearUser))
-	}
-
-	if s.imageSpec.ClearWorkingDir {
-		args = append(args, fmt.Sprint(s.imageSpec.ClearWorkingDir))
-	}
-
-	if s.imageSpec.KeepEssentialWerfLabels {
-		args = append(args, fmt.Sprint(s.imageSpec.KeepEssentialWerfLabels))
-	}
+	args = append(args, fmt.Sprint(s.imageSpec.ClearUser))
+	args = append(args, fmt.Sprint(s.imageSpec.ClearWorkingDir))
 
 	return util.Sha256Hash(args...), nil
 }
