@@ -805,7 +805,7 @@ func deleteImageMetadata(ctx context.Context, projectName string, storageManager
 }
 
 func (m *cleanupManager) cleanupUnusedStages(ctx context.Context) error {
-	if err := logboek.Context(ctx).Info().LogProcess("Fetching imports metadata").DoError(func() error {
+	if err := logboek.Context(ctx).Default().LogProcess("Fetching imports metadata").DoError(func() error {
 		return m.initImportsMetadata(ctx)
 	}); err != nil {
 		return fmt.Errorf("unable to init imports metadata: %w", err)
@@ -813,14 +813,16 @@ func (m *cleanupManager) cleanupUnusedStages(ctx context.Context) error {
 
 	// skip kept stages and their relatives.
 	{
-		handledStageDescSet := image.NewStageDescSet()
-		for protectionReason, stageDescToKeepSet := range m.stageManager.GetProtectedStageDescSetByReason() {
-			// Git history based policy keeps import sources more effectively, other policies do not keep them.
-			withImportOrDependencySources := protectionReason != stage_manager.ProtectionReasonGitPolicy
-			for stageDescToKeep := range stageDescToKeepSet.Iter() {
-				m.protectRelativeStageDescSetByStageDesc(stageDescToKeep, withImportOrDependencySources, handledStageDescSet)
+		logboek.Context(ctx).Default().LogProcess("Skipping relative stages for protected stages").Do(func() {
+			handledStageDescSet := image.NewStageDescSet()
+			for protectionReason, stageDescToKeepSet := range m.stageManager.GetProtectedStageDescSetByReason() {
+				// Git history based policy keeps import sources more effectively, other policies do not keep them.
+				withImportOrDependencySources := protectionReason != stage_manager.ProtectionReasonGitPolicy
+				for stageDescToKeep := range stageDescToKeepSet.Iter() {
+					m.protectRelativeStageDescSetByStageDesc(stageDescToKeep, withImportOrDependencySources, handledStageDescSet)
+				}
 			}
-		}
+		})
 
 		logboek.Context(ctx).Default().LogBlock("Saved stages (%d/%d)", m.stageManager.GetProtectedStageDescSet().Cardinality(), m.stageManager.GetStageDescSet().Cardinality()).Do(func() {
 			for reason, stageDescSetToKeep := range m.stageManager.GetProtectedStageDescSetByReason() {
