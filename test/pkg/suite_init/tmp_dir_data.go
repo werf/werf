@@ -1,6 +1,7 @@
 package suite_init
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -40,11 +41,11 @@ func (data *TmpDirData) GetProjectWorktree(projectName string) string {
 	return filepath.Join(data.TestDirPath, fmt.Sprintf("%s.worktree", projectName))
 }
 
-func (data *TmpDirData) CommitProjectWorktree(projectName, worktreeFixtureDir, commitMessage string) {
+func (data *TmpDirData) CommitProjectWorktree(ctx context.Context, projectName, worktreeFixtureDir, commitMessage string) {
 	worktreeDir := data.GetProjectWorktree(projectName)
 	repoDir := filepath.Join(data.TestDirPath, fmt.Sprintf("%s.repo", projectName))
 
 	Expect(os.RemoveAll(worktreeDir)).To(Succeed())
 	utils.CopyIn(worktreeFixtureDir, worktreeDir)
-	Expect(utils.SetGitRepoState(worktreeDir, repoDir, commitMessage)).To(Succeed())
+	Expect(utils.SetGitRepoState(ctx, worktreeDir, repoDir, commitMessage)).To(Succeed())
 }

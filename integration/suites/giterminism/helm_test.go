@@ -35,7 +35,7 @@ var _ = Describe("helm chart files", func() {
 			skipOnWindows              bool
 		}
 
-		symlinkBody := func(e symlinkEntry) {
+		symlinkBody := func(ctx SpecContext, e symlinkEntry) {
 			if e.skipOnWindows && runtime.GOOS == "windows" {
 				Skip("skip on windows")
 			}
@@ -47,7 +47,7 @@ helm:
   allowUncommittedFiles: ["%s"]
 `, strings.Join(e.allowUncommittedFilesGlobs, `", "`))
 					fileCreateOrAppend(werfGiterminismRelPath, contentToAppend)
-					gitAddAndCommit(werfGiterminismRelPath)
+					gitAddAndCommit(ctx, werfGiterminismRelPath)
 				}
 			}
 
@@ -64,7 +64,7 @@ metadata:
 				}
 
 				for _, relPath := range e.commitFiles {
-					gitAddAndCommit(relPath)
+					gitAddAndCommit(ctx, relPath)
 				}
 
 				for _, relPath := range e.changeFilesAfterCommit {
@@ -72,24 +72,20 @@ metadata:
 				}
 
 				for path, link := range e.addSymlinks {
-					symlinkFileCreateOrModify(path, link)
+					symlinkFileCreateOrModify(ctx, path, link)
 				}
 
 				for path, link := range e.addAndCommitSymlinks {
-					symlinkFileCreateOrModifyAndAdd(path, link)
-					gitAddAndCommit(path)
+					symlinkFileCreateOrModifyAndAdd(ctx, path, link)
+					gitAddAndCommit(ctx, path)
 				}
 
 				for path, link := range e.changeSymlinksAfterCommit {
-					symlinkFileCreateOrModify(path, link)
+					symlinkFileCreateOrModify(ctx, path, link)
 				}
 			}
 
-			output, err := utils.RunCommand(
-				filepath.Join(SuiteData.TestDirPath, projectRelPath),
-				SuiteData.WerfBinPath,
-				"render",
-			)
+			output, err := utils.RunCommand(ctx, filepath.Join(SuiteData.TestDirPath, projectRelPath), SuiteData.WerfBinPath, "render")
 
 			if e.expectedErrSubstring != "" {
 				Expect(err).Should(HaveOccurred())
@@ -104,11 +100,11 @@ metadata:
 		}
 
 		runCommonTests := func() {
-			BeforeEach(func() {
-				gitInit()
+			BeforeEach(func(ctx SpecContext) {
+				gitInit(ctx)
 				utils.CopyIn(utils.FixturePath("default"), filepath.Join(SuiteData.TestDirPath, projectRelPath))
-				gitAddAndCommit(werfGiterminismRelPath)
-				gitAddAndCommit(werfConfigRelPath)
+				gitAddAndCommit(ctx, werfGiterminismRelPath)
+				gitAddAndCommit(ctx, werfConfigRelPath)
 			})
 
 			Context("regular files", func() {
@@ -121,14 +117,14 @@ metadata:
 				}
 
 				DescribeTable("helm.allowUncommittedFiles",
-					func(e entry) {
+					func(ctx SpecContext, e entry) {
 						var contentToAppend string
 						if e.allowUncommittedFilesGlob != "" {
 							contentToAppend = fmt.Sprintf(`
 helm:
   allowUncommittedFiles: ["%s"]`, e.allowUncommittedFilesGlob)
 							fileCreateOrAppend(werfGiterminismRelPath, contentToAppend)
-							gitAddAndCommit(werfGiterminismRelPath)
+							gitAddAndCommit(ctx, werfGiterminismRelPath)
 						}
 
 						for _, relPath := range e.addFiles {
@@ -143,18 +139,14 @@ metadata:
 						}
 
 						for _, relPath := range e.commitFiles {
-							gitAddAndCommit(relPath)
+							gitAddAndCommit(ctx, relPath)
 						}
 
 						for _, relPath := range e.changeFilesAfterCommit {
 							fileCreateOrAppend(relPath, "\n")
 						}
 
-						output, err := utils.RunCommand(
-							filepath.Join(SuiteData.TestDirPath, projectRelPath),
-							SuiteData.WerfBinPath,
-							"render",
-						)
+						output, err := utils.RunCommand(ctx, filepath.Join(SuiteData.TestDirPath, projectRelPath), SuiteData.WerfBinPath, "render")
 
 						if e.expectedErrSubstring != "" {
 							Expect(err).Should(HaveOccurred())
@@ -290,8 +282,8 @@ metadata:
 			Context("custom project directory", func() {
 				runCommonTests()
 
-				It("the symlink to the chart dir outside project directory: .helm -> ../../helm", func() {
-					symlinkBody(symlinkEntry{
+				It("the symlink to the chart dir outside project directory: .helm -> ../../helm", func(ctx SpecContext) {
+					symlinkBody(ctx, symlinkEntry{
 						skipOnWindows: true, // TODO does not appear to be a gzipped archive; got 'application/octet-stream'
 						addFiles:      []string{"helm/templates/template1.yaml"},
 						commitFiles:   []string{"helm/templates/template1.yaml"},
@@ -301,8 +293,8 @@ metadata:
 					})
 				})
 
-				It("the symlink to the uncommitted directory outside project directory: .helm -> ../../helm", func() {
-					symlinkBody(symlinkEntry{
+				It("the symlink to the uncommitted directory outside project directory: .helm -> ../../helm", func(ctx SpecContext) {
+					symlinkBody(ctx, symlinkEntry{
 						skipOnWindows: true,
 						addFiles:      []string{"helm/templates/template1.yaml"},
 						addAndCommitSymlinks: map[string]string{
@@ -312,8 +304,8 @@ metadata:
 					})
 				})
 
-				It("helm.allowUncommittedFiles (.helm) does not cover uncommitted files: .helm -> ../../helm", func() {
-					symlinkBody(symlinkEntry{
+				It("helm.allowUncommittedFiles (.helm) does not cover uncommitted files: .helm -> ../../helm", func(ctx SpecContext) {
+					symlinkBody(ctx, symlinkEntry{
 						skipOnWindows:              true,
 						allowUncommittedFilesGlobs: []string{".helm"},
 						addFiles:                   []string{"helm/templates/template1.yaml"},
@@ -324,8 +316,8 @@ metadata:
 					})
 				})
 
-				It("helm.allowUncommittedFiles (.helm, ../../helm) covers uncommitted files: .helm -> ../../helm", func() {
-					symlinkBody(symlinkEntry{
+				It("helm.allowUncommittedFiles (.helm, ../../helm) covers uncommitted files: .helm -> ../../helm", func(ctx SpecContext) {
+					symlinkBody(ctx, symlinkEntry{
 						skipOnWindows:              true,
 						allowUncommittedFilesGlobs: []string{".helm", "../../helm"},
 						addFiles:                   []string{"helm/templates/template1.yaml"},
@@ -335,8 +327,8 @@ metadata:
 					})
 				})
 
-				It("helm.allowUncommittedFiles (**/*) covers uncommitted files: .helm -> ../../helm", func() {
-					symlinkBody(symlinkEntry{
+				It("helm.allowUncommittedFiles (**/*) covers uncommitted files: .helm -> ../../helm", func(ctx SpecContext) {
+					symlinkBody(ctx, symlinkEntry{
 						skipOnWindows:              true,
 						allowUncommittedFilesGlobs: []string{"**/*"},
 						addFiles:                   []string{"helm/templates/template1.yaml"},

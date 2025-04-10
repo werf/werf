@@ -1,6 +1,7 @@
 package suite_init
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 
@@ -72,18 +73,18 @@ func (data *SuiteData) GetDeployReportPath(filename string) string {
 	return filepath.Join(deployReportsDir, filename)
 }
 
-func (data *SuiteData) InitTestRepo(dirname, fixtureRelPath string) {
+func (data *SuiteData) InitTestRepo(ctx context.Context, dirname, fixtureRelPath string) {
 	testRepoPath := data.GetTestRepoPath(dirname)
 	utils.CopyIn(utils.FixturePath(fixtureRelPath), testRepoPath)
-	utils.RunSucceedCommand(testRepoPath, "git", "init")
-	utils.RunSucceedCommand(testRepoPath, "git", "add", ".")
-	utils.RunSucceedCommand(testRepoPath, "git", "commit", "-m", "initial")
+	utils.RunSucceedCommand(ctx, testRepoPath, "git", "init")
+	utils.RunSucceedCommand(ctx, testRepoPath, "git", "add", ".")
+	utils.RunSucceedCommand(ctx, testRepoPath, "git", "commit", "-m", "initial")
 }
 
-func (data *SuiteData) UpdateTestRepo(dirname, fixtureRelPath string) {
+func (data *SuiteData) UpdateTestRepo(ctx context.Context, dirname, fixtureRelPath string) {
 	testRepoPath := data.GetTestRepoPath(dirname)
-	utils.RunSucceedCommand(testRepoPath, "git", "rm", "--ignore-unmatch", "-rf", ".")
+	utils.RunSucceedCommand(ctx, testRepoPath, "git", "rm", "--ignore-unmatch", "-rf", ".")
 	utils.CopyIn(utils.FixturePath(fixtureRelPath), testRepoPath)
-	utils.RunSucceedCommand(testRepoPath, "git", "add", ".")
-	utils.RunSucceedCommand(testRepoPath, "git", "commit", "-m", "updated")
+	utils.RunSucceedCommand(ctx, testRepoPath, "git", "add", ".")
+	utils.RunSucceedCommand(ctx, testRepoPath, "git", "commit", "-m", "updated")
 }

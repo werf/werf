@@ -21,7 +21,7 @@ var _ = Describe("config templates dir", func() {
 	}
 
 	DescribeTable("config.allowUncommittedTemplates",
-		func(e entry) {
+		func(ctx SpecContext, e entry) {
 			tmpl1RelPath := ".werf/templates/1.tmpl"
 			tmpl2RelPath := ".werf/templates/2.tmpl"
 
@@ -38,7 +38,7 @@ config:
 
 			if contentToAppend != "" {
 				fileCreateOrAppend("werf-giterminism.yaml", contentToAppend)
-				gitAddAndCommit("werf-giterminism.yaml")
+				gitAddAndCommit(ctx, "werf-giterminism.yaml")
 			}
 
 			if e.addTemplate1 {
@@ -46,11 +46,11 @@ config:
 # template .werf/templates/1.tmpl
 `)
 				fileCreateOrAppend("werf.yaml", `{{ include "templates/1.tmpl" . }}`)
-				gitAddAndCommit("werf.yaml")
+				gitAddAndCommit(ctx, "werf.yaml")
 			}
 
 			if e.commitTemplate1 {
-				gitAddAndCommit(tmpl1RelPath)
+				gitAddAndCommit(ctx, tmpl1RelPath)
 			}
 
 			if e.addTemplate2 {
@@ -58,7 +58,7 @@ config:
 # template .werf/templates/2.tmpl
 `)
 				fileCreateOrAppend("werf.yaml", `{{ include "templates/2.tmpl" . }}`)
-				gitAddAndCommit("werf.yaml")
+				gitAddAndCommit(ctx, "werf.yaml")
 			}
 
 			if e.changeTemplate1AfterCommit {
@@ -66,6 +66,7 @@ config:
 			}
 
 			output, err := utils.RunCommand(
+				ctx,
 				SuiteData.TestDirPath,
 				SuiteData.WerfBinPath,
 				"config", "render",

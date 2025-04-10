@@ -16,7 +16,7 @@ type simpleTestOptions struct {
 
 var _ = Describe("Simple build", Label("e2e", "build", "simple"), func() {
 	DescribeTable("should succeed and produce expected image",
-		func(testOpts simpleTestOptions) {
+		func(ctx SpecContext, testOpts simpleTestOptions) {
 			By("initializing")
 			setupEnv(testOpts.setupEnvOptions)
 			contRuntime, err := contback.NewContainerBackend(testOpts.ContainerBackendMode)
@@ -33,38 +33,25 @@ var _ = Describe("Simple build", Label("e2e", "build", "simple"), func() {
 				buildReportName := "report0.json"
 
 				By(fmt.Sprintf("%s: preparing test repo", testOpts.State))
-				SuiteData.InitTestRepo(repoDirname, fixtureRelPath)
+				SuiteData.InitTestRepo(ctx, repoDirname, fixtureRelPath)
 
 				By(fmt.Sprintf("%s: building images", testOpts.State))
 				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
-				buildOut, buildReport := werfProject.BuildWithReport(SuiteData.GetBuildReportPath(buildReportName), nil)
+				buildOut, buildReport := werfProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), nil)
 				Expect(buildOut).To(ContainSubstring("Building stage"))
 				Expect(buildOut).NotTo(ContainSubstring("Use previously built image"))
 
 				By(fmt.Sprintf("%s: rebuilding same images", testOpts.State))
-				Expect(werfProject.Build(nil)).To(And(
+				Expect(werfProject.Build(ctx, nil)).To(And(
 					ContainSubstring("Use previously built image"),
 					Not(ContainSubstring("Building stage")),
 				))
 
 				By(fmt.Sprintf(`%s: checking "dockerfile" image content`, testOpts.State))
-				contRuntime.ExpectCmdsToSucceed(
-					buildReport.Images["dockerfile"].DockerImageName,
-					"test -f /file",
-					"echo 'filecontent' | diff /file -",
-
-					"test -f /created-by-run",
-				)
+				contRuntime.ExpectCmdsToSucceed(ctx, buildReport.Images["dockerfile"].DockerImageName, "test -f /file", "echo 'filecontent' | diff /file -", "test -f /created-by-run")
 
 				By(fmt.Sprintf(`%s: checking "stapel-shell" image content`, testOpts.State))
-				contRuntime.ExpectCmdsToSucceed(
-					buildReport.Images["stapel-shell"].DockerImageName,
-					"test -f /file",
-					"stat -c %u:%g /file | diff <(echo 0:0) -",
-					"echo 'filecontent' | diff /file -",
-
-					"test -f /created-by-setup",
-				)
+				contRuntime.ExpectCmdsToSucceed(ctx, buildReport.Images["stapel-shell"].DockerImageName, "test -f /file", "stat -c %u:%g /file | diff <(echo 0:0) -", "echo 'filecontent' | diff /file -", "test -f /created-by-setup")
 			}
 		},
 		Entry("without repo using Vanilla Docker", simpleTestOptions{setupEnvOptions{
