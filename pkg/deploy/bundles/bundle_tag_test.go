@@ -7,11 +7,14 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"github.com/werf/logboek"
 )
 
 var _ = Describe("BundleTagToSemver", func() {
-	It("converts arbitrary tag to semver if tag not already semver", func() {
-		ctx := context.Background()
+	It("converts arbitrary tag to semver if tag not already semver", func(ctx context.Context) {
+		ctx = logboek.NewContext(ctx, logboek.DefaultLogger())
+
 		now := time.Now()
 
 		{

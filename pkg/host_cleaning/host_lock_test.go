@@ -5,22 +5,22 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"github.com/werf/logboek"
 )
 
 var _ = Describe("host lock", func() {
-	var ctx context.Context
-	BeforeEach(func() {
-		ctx = context.Background()
-	})
 	Describe("withHostLockOrNothing", func() {
-		It("should call callback function if lock is acquired", func() {
+		It("should call callback function if lock is acquired", func(ctx SpecContext) {
 			spy := &spyHostLock{}
 			lockName := "test"
 			err := withHostLockOrNothing(ctx, lockName, spy.Handle1)
 			Expect(err).To(Succeed())
 			Expect(spy.callsCount).To(Equal(1))
 		})
-		It("should not call callback function if lock isn't acquired", func() {
+		It("should not call callback function if lock isn't acquired", func(ctx context.Context) {
+			ctx = logboek.NewContext(ctx, logboek.DefaultLogger())
+
 			spy := &spyHostLock{}
 			lockName := "test"
 			err := withHostLockOrNothing(ctx, lockName, func() error {

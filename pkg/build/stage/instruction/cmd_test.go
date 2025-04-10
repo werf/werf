@@ -1,7 +1,6 @@
 package instruction_test
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
@@ -14,9 +13,7 @@ import (
 )
 
 var _ = DescribeTable("CMD digest",
-	func(data *TestData) {
-		ctx := context.Background()
-
+	func(ctx SpecContext, data *TestData) {
 		digest, err := data.Stage.GetDependencies(ctx, data.Conveyor, data.ContainerBackend, nil, data.StageImage, data.BuildContext)
 		Expect(err).To(Succeed())
 
