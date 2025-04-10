@@ -860,8 +860,6 @@ func (phase *BuildPhase) findAndFetchStageFromSecondaryStagesStorage(ctx context
 				contentDigest, exist := stageDescCopy.Info.Labels[imagePkg.WerfStageContentDigestLabel]
 				if exist {
 					stg.SetContentDigest(contentDigest)
-				} else if stg.Name() == stage.ImageSpec { // The content digest tag might be missing for the imageSpec stage (removed by the user).
-					stg.SetContentDigest(stageDescCopy.Info.GetDigest())
 				} else {
 					panic(fmt.Sprintf("expected stage %q content digest label to be set!", stg.Name()))
 				}
@@ -983,8 +981,6 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, s
 		contentDigest, exist := stageDesc.Info.Labels[imagePkg.WerfStageContentDigestLabel]
 		if exist {
 			stageContentSig = contentDigest
-		} else if stg.Name() == stage.ImageSpec { // The content digest tag might be missing for the imageSpec stage (removed by the user).
-			stageContentSig = stageDesc.Info.GetDigest()
 		} else {
 			panic(fmt.Sprintf("expected stage %q content digest label to be set!", stg.Name()))
 		}
@@ -1188,8 +1184,6 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 			contentDigest, exist := stageDesc.Info.Labels[imagePkg.WerfStageContentDigestLabel]
 			if exist {
 				stg.SetContentDigest(contentDigest)
-			} else if stg.Name() == stage.ImageSpec { // The content digest tag might be missing for the imageSpec stage (removed by the user).
-				stg.SetContentDigest(stageDesc.Info.GetDigest())
 			} else {
 				panic(fmt.Sprintf("expected stage %q content digest label to be set!", stg.Name()))
 			}
