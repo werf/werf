@@ -18,7 +18,6 @@ import (
 	"github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
 	"github.com/werf/nelm/pkg/action"
-	"github.com/werf/werf/v2/pkg/background"
 	"github.com/werf/werf/v2/pkg/build"
 	"github.com/werf/werf/v2/pkg/build/stage"
 	"github.com/werf/werf/v2/pkg/config"
@@ -31,7 +30,6 @@ import (
 	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/true_git"
 	"github.com/werf/werf/v2/pkg/werf"
-	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
 
 const (
@@ -1650,70 +1648,6 @@ func TerminateWithError(errMsg string, exitCode int) {
 func SetupVirtualMerge(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.VirtualMerge = new(bool)
 	cmd.Flags().BoolVarP(cmdData.VirtualMerge, "virtual-merge", "", util.GetBoolEnvironmentDefaultFalse("WERF_VIRTUAL_MERGE"), "Enable virtual/ephemeral merge commit mode when building current application state ($WERF_VIRTUAL_MERGE by default)")
-}
-
-func GetContextWithLogger() context.Context {
-	return logboek.NewContext(context.Background(), logboek.DefaultLogger())
-}
-
-func WithContext(allowBackgroundMode bool, f func(ctx context.Context) error) error {
-	var ctx context.Context
-
-	if allowBackgroundMode && background.IsBackgroundModeEnabled() {
-		out, err := os.OpenFile(GetBackgroundOutputFile(), os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0o644)
-		if err != nil {
-			return fmt.Errorf("unable to open background output file %q: %w", GetBackgroundOutputFile(), err)
-		}
-		defer out.Close()
-
-		ctx = logboek.NewContext(context.Background(), logboek.NewLogger(out, out))
-
-		if err := f(ctx); err != nil {
-			if err := os.WriteFile(GetLastBackgroundErrorFile(), []byte(err.Error()+"\n"), 0o644); err != nil {
-				logboek.Context(ctx).Warn().LogF("ERROR: unable to write %q: %s\n", GetLastBackgroundErrorFile(), err)
-			}
-			return err
-		}
-
-		return nil
-	} else {
-		ctx = logboek.NewContext(context.Background(), logboek.DefaultLogger())
-
-		if allowBackgroundMode {
-			if backgroundErr, err := GetAndRemoveLastBackgroundError(); err != nil {
-				return fmt.Errorf("unable to get last background error: %w", err)
-			} else if backgroundErr != nil {
-				global_warnings.GlobalWarningLn(ctx, fmt.Sprintf("Last background error: %s", backgroundErr))
-			}
-		}
-
-		return f(ctx)
-	}
-}
-
-func GetAndRemoveLastBackgroundError() (error, error) {
-	data, err := os.ReadFile(GetLastBackgroundErrorFile())
-	if err != nil {
-		return nil, nil
-	}
-
-	if err := os.RemoveAll(GetLastBackgroundErrorFile()); err != nil {
-		return nil, fmt.Errorf("unable to remove %q: %w", GetLastBackgroundErrorFile(), err)
-	}
-
-	if len(data) != 0 {
-		return fmt.Errorf("%s", string(data)), nil
-	}
-
-	return nil, nil
-}
-
-func GetBackgroundOutputFile() string {
-	return filepath.Join(werf.GetServiceDir(), "background_output.log")
-}
-
-func GetLastBackgroundErrorFile() string {
-	return filepath.Join(werf.GetServiceDir(), "last_background_error")
 }
 
 func getFlags(cmd *cobra.Command, persistent bool) *pflag.FlagSet {
