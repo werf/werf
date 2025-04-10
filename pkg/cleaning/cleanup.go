@@ -813,7 +813,7 @@ func (m *cleanupManager) cleanupUnusedStages(ctx context.Context) error {
 
 	// skip kept stages and their relatives.
 	{
-		logboek.Context(ctx).Default().LogProcess("Skipping relative stages for protected stages").Do(func() {
+		logboek.Context(ctx).Default().LogProcess("Processing relative stages for saved stages").Do(func() {
 			handledStageDescSet := image.NewStageDescSet()
 			for protectionReason, stageDescToKeepSet := range m.stageManager.GetProtectedStageDescSetByReason() {
 				// Git history based policy keeps import sources more effectively, other policies do not keep them.
