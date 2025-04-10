@@ -8,6 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/werf/werf/v2/pkg/logging"
 	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/storage/synchronization/lock_manager"
 	"github.com/werf/werf/v2/pkg/storage/synchronization/server"
@@ -40,12 +41,17 @@ Default:
 The same address should be specified for all werf processes that work with a single repo. :local address allows execution of werf processes from a single host only`, server.DefaultAddress))
 }
 
-func checkSynchronizationKubernetesParamsForWarnings(cmdData *CmdData) {
+func checkSynchronizationKubernetesParamsForWarnings(ctx context.Context, cmdData *CmdData) error {
 	if *cmdData.Synchronization != "" {
-		return
+		return nil
 	}
 
-	ctx := GetContextWithLogger()
+	var err error
+	ctx, err = logging.WithLogger(ctx)
+	if err != nil {
+		return err
+	}
+
 	doPrintWarning := false
 	kubeConfigEnv := os.Getenv("KUBECONFIG")
 	switch {
@@ -89,6 +95,7 @@ func checkSynchronizationKubernetesParamsForWarnings(cmdData *CmdData) {
 ##  — these same settings required to be used in every werf invocation for your project.
 ###`)
 	}
+	return nil
 }
 
 // GetSynchronization determines the type of synchronization server
@@ -104,7 +111,10 @@ func GetSynchronization(ctx context.Context, cmdData *CmdData, projectName strin
 	} else if protocolIsLocal(params.ServerAddress) {
 		return lock_manager.NewLocalSynchronization(ctx, params)
 	} else if protocolIsKube(params.ServerAddress) {
-		checkSynchronizationKubernetesParamsForWarnings(cmdData)
+		if err := checkSynchronizationKubernetesParamsForWarnings(ctx, cmdData); err != nil {
+			return nil, err
+		}
+
 		return initKube(ctx, params)
 	} else if protocolIsHttpOrHttps(params.ServerAddress) {
 		return lock_manager.NewHttpSynchronization(ctx, params)
