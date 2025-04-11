@@ -12,6 +12,7 @@ import (
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/spf13/cobra"
 
+	"github.com/werf/common-go/pkg/graceful"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/build"
@@ -221,7 +222,7 @@ func getContainerName() string {
 }
 
 func runMain(ctx context.Context) error {
-	global_warnings.PostponeMultiwerfNotUpToDateWarning()
+	global_warnings.PostponeMultiwerfNotUpToDateWarning(ctx)
 	commonManager, ctx, err := common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
 		Cmd: &commonCmdData,
 		InitTrueGitWithOptions: &common.InitTrueGitOptions{
@@ -300,7 +301,8 @@ func runMain(ctx context.Context) error {
 	} else {
 		if err := run(ctx, containerBackend, giterminismManager); err != nil {
 			if statusErr, ok := err.(cli.StatusError); ok {
-				common.TerminateWithError(err.Error(), statusErr.StatusCode)
+				graceful.Terminate(err, statusErr.StatusCode)
+				return err
 			}
 
 			return err
@@ -385,9 +387,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		return nil
 	} else {
 		return logboek.Streams().DoErrorWithoutProxyStreamDataFormatting(func() error {
-			return common.WithoutTerminationSignalsTrap(func() error {
-				return docker.CliRun_ProvidedOutput(ctx, os.Stdout, os.Stderr, dockerRunArgs...)
-			})
+			return docker.CliRun_ProvidedOutput(ctx, os.Stdout, os.Stderr, dockerRunArgs...)
 		})
 	}
 }

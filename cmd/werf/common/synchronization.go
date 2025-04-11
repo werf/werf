@@ -40,12 +40,12 @@ Default:
 The same address should be specified for all werf processes that work with a single repo. :local address allows execution of werf processes from a single host only`, server.DefaultAddress))
 }
 
-func checkSynchronizationKubernetesParamsForWarnings(cmdData *CmdData) {
+func checkSynchronizationKubernetesParamsForWarnings(ctx context.Context, cmdData *CmdData) {
 	if *cmdData.Synchronization != "" {
 		return
 	}
 
-	ctx := GetContextWithLogger()
+	ctx = GetContextWithLogger(ctx)
 	doPrintWarning := false
 	kubeConfigEnv := os.Getenv("KUBECONFIG")
 	switch {
@@ -104,7 +104,7 @@ func GetSynchronization(ctx context.Context, cmdData *CmdData, projectName strin
 	} else if protocolIsLocal(params.ServerAddress) {
 		return lock_manager.NewLocalSynchronization(ctx, params)
 	} else if protocolIsKube(params.ServerAddress) {
-		checkSynchronizationKubernetesParamsForWarnings(cmdData)
+		checkSynchronizationKubernetesParamsForWarnings(ctx, cmdData)
 		return initKube(ctx, params)
 	} else if protocolIsHttpOrHttps(params.ServerAddress) {
 		return lock_manager.NewHttpSynchronization(ctx, params)

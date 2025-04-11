@@ -232,7 +232,7 @@ func processArgs(cmd *cobra.Command, args []string) error {
 }
 
 func runMain(ctx context.Context) error {
-	global_warnings.PostponeMultiwerfNotUpToDateWarning()
+	global_warnings.PostponeMultiwerfNotUpToDateWarning(ctx)
 	commonManager, ctx, err := common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
 		Cmd: &commonCmdData,
 		InitTrueGitWithOptions: &common.InitTrueGitOptions{
@@ -418,35 +418,33 @@ func run(ctx context.Context, pod, secret, namespace string, werfConfig *config.
 	}
 
 	return logboek.Streams().DoErrorWithoutProxyStreamDataFormatting(func() error {
-		return common.WithoutTerminationSignalsTrap(func() error {
-			if err := createPod(ctx, namespace, pod, image, secret, commonArgs, userExtraAnnotations, userExtraLabels); err != nil {
-				return fmt.Errorf("error creating Pod: %w", err)
+		if err := createPod(ctx, namespace, pod, image, secret, commonArgs, userExtraAnnotations, userExtraLabels); err != nil {
+			return fmt.Errorf("error creating Pod: %w", err)
+		}
+
+		if err := waitPodReadiness(ctx, namespace, pod, commonArgs); err != nil {
+			return fmt.Errorf("error waiting for Pod readiness: %w", err)
+		}
+
+		defer stopContainer(ctx, namespace, pod, pod, commonArgs)
+
+		for _, copyTo := range getCopyTo() {
+			if err := copyToPod(ctx, namespace, pod, pod, copyTo, commonArgs); err != nil {
+				return fmt.Errorf("error copying to Pod: %w", err)
 			}
+		}
 
-			if err := waitPodReadiness(ctx, namespace, pod, commonArgs); err != nil {
-				return fmt.Errorf("error waiting for Pod readiness: %w", err)
+		defer func() {
+			for _, copyFrom := range getCopyFrom() {
+				copyFromPod(ctx, namespace, pod, pod, copyFrom, commonArgs)
 			}
+		}()
 
-			defer stopContainer(ctx, namespace, pod, pod, commonArgs)
+		if err := execCommandInPod(ctx, namespace, pod, pod, cmdData.Command, commonArgs); err != nil {
+			return fmt.Errorf("error running command in Pod: %w", err)
+		}
 
-			for _, copyTo := range getCopyTo() {
-				if err := copyToPod(ctx, namespace, pod, pod, copyTo, commonArgs); err != nil {
-					return fmt.Errorf("error copying to Pod: %w", err)
-				}
-			}
-
-			defer func() {
-				for _, copyFrom := range getCopyFrom() {
-					copyFromPod(ctx, namespace, pod, pod, copyFrom, commonArgs)
-				}
-			}()
-
-			if err := execCommandInPod(ctx, namespace, pod, pod, cmdData.Command, commonArgs); err != nil {
-				return fmt.Errorf("error running command in Pod: %w", err)
-			}
-
-			return nil
-		})
+		return nil
 	})
 }
 
@@ -482,7 +480,7 @@ func createPod(ctx context.Context, namespace, pod, image, secret string, extraA
 		return fmt.Errorf("error creating kubectl run args: %w", err)
 	}
 
-	cmd := util.ExecKubectlCmd(args...)
+	cmd := util.ExecKubectlCmdContext(ctx, args...)
 
 	if *commonCmdData.DryRun {
 		fmt.Println(cmd.String())
@@ -604,7 +602,7 @@ func waitPodReadiness(ctx context.Context, namespace, pod string, extraArgs []st
 	logboek.Context(ctx).LogF("Waiting for pod to be ready ...\n")
 
 	for {
-		phase, err := getPodPhase(namespace, pod, extraArgs)
+		phase, err := getPodPhase(ctx, namespace, pod, extraArgs)
 		if err != nil {
 			return fmt.Errorf("error getting Pod phase: %w", err)
 		}
@@ -615,7 +613,7 @@ func waitPodReadiness(ctx context.Context, namespace, pod string, extraArgs []st
 		case corev1.PodSucceeded:
 			return fmt.Errorf("pod %s/%s stopped too early", namespace, pod)
 		case corev1.PodRunning:
-			if ready, err := isPodReady(namespace, pod, extraArgs); err != nil {
+			if ready, err := isPodReady(ctx, namespace, pod, extraArgs); err != nil {
 				return fmt.Errorf("error checking pod readiness: %w", err)
 			} else if ready {
 				return nil
@@ -628,14 +626,14 @@ func waitPodReadiness(ctx context.Context, namespace, pod string, extraArgs []st
 	}
 }
 
-func getPodPhase(namespace, pod string, extraArgs []string) (corev1.PodPhase, error) {
+func getPodPhase(ctx context.Context, namespace, pod string, extraArgs []string) (corev1.PodPhase, error) {
 	args := []string{
 		"get", "pod", "--template", "{{.status.phase}}", pod,
 	}
 
 	args = append(args, extraArgs...)
 
-	cmd := util.ExecKubectlCmd(args...)
+	cmd := util.ExecKubectlCmdContext(ctx, args...)
 
 	var stdout bytes.Buffer
 	cmd.Stdout = &stdout
@@ -647,14 +645,14 @@ func getPodPhase(namespace, pod string, extraArgs []string) (corev1.PodPhase, er
 	return corev1.PodPhase(strings.TrimSpace(stdout.String())), nil
 }
 
-func isPodReady(namespace, pod string, extraArgs []string) (bool, error) {
+func isPodReady(ctx context.Context, namespace, pod string, extraArgs []string) (bool, error) {
 	args := []string{
 		"get", "pod", "--template", "{{range .status.conditions}}{{if eq .type \"Ready\"}}{{.status}}{{end}}{{end}}", pod,
 	}
 
 	args = append(args, extraArgs...)
 
-	cmd := util.ExecKubectlCmd(args...)
+	cmd := util.ExecKubectlCmdContext(ctx, args...)
 
 	var stdout bytes.Buffer
 	cmd.Stdout = &stdout
@@ -680,7 +678,7 @@ func copyFromPod(ctx context.Context, namespace, pod, container string, copyFrom
 
 	args = append(args, extraArgs...)
 
-	cmd := util.ExecKubectlCmd(args...)
+	cmd := util.ExecKubectlCmdContext(ctx, args...)
 
 	if *commonCmdData.DryRun {
 		fmt.Println(cmd.String())
@@ -701,7 +699,7 @@ func copyToPod(ctx context.Context, namespace, pod, container string, copyFrom c
 
 	args = append(args, extraArgs...)
 
-	cmd := util.ExecKubectlCmd(args...)
+	cmd := util.ExecKubectlCmdContext(ctx, args...)
 
 	if *commonCmdData.DryRun {
 		fmt.Println(cmd.String())
@@ -725,7 +723,7 @@ func stopContainer(ctx context.Context, namespace, pod, container string, extraA
 	args = append(args, extraArgs...)
 	args = append(args, "--", "touch", "/tmp/werf-kube-run-quit")
 
-	cmd := util.ExecKubectlCmd(args...)
+	cmd := util.ExecKubectlCmdContext(ctx, args...)
 
 	if *commonCmdData.DryRun {
 		fmt.Println(cmd.String())
@@ -757,7 +755,7 @@ func execCommandInPod(ctx context.Context, namespace, pod, container string, com
 	args = append(args, "--")
 	args = append(args, command...)
 
-	cmd := util.ExecKubectlCmd(args...)
+	cmd := util.ExecKubectlCmdContext(ctx, args...)
 
 	if *commonCmdData.DryRun {
 		fmt.Println(cmd.String())
