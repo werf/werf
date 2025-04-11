@@ -145,16 +145,7 @@ func (c *rawImageFromDockerfile) toImageFromDockerfileDirective(giterminismManag
 		return nil, err
 	}
 
-	secretsArgs := make([]string, 0, len(secrets))
-	for _, s := range secrets {
-		secret, err := s.GetSecretStringArg()
-		if err != nil {
-			return nil, err
-		}
-		secretsArgs = append(secretsArgs, secret)
-	}
-
-	image.Secrets = secretsArgs
+	image.Secrets = secrets
 
 	if c.RawImageSpec != nil {
 		image.ImageSpec = c.RawImageSpec.toDirective()
