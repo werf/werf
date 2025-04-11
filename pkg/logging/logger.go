@@ -2,9 +2,12 @@ package logging
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"log"
+	"os"
 
 	"github.com/sirupsen/logrus"
 
@@ -27,10 +30,8 @@ func WithLogger(ctx context.Context) (context.Context, error) {
 // NewLogger returns new logger for both foreground and background modes.
 // Also, it checks existence of errors in recent background running, and it warns globally, if there were.
 func NewLogger(ctx context.Context) (types.LoggerInterface, error) {
-	// We are forced to do werf.Init() here to get serviceDir value.
-	// But we will do werf.Init() again after creation of command.
-	// Is this correct approach?
-	if err := werf.Init("", ""); err != nil {
+	// We need initialize werf variables to be able to call werf.GetServiceDir().
+	if err := werf.PartialInit("", ""); err != nil {
 		return nil, err
 	}
 
@@ -65,8 +66,10 @@ func captureOutputFromAnotherLoggers(writer io.Writer) {
 func globalWarnIfBackgroundErrorHappened(ctx context.Context, werfServiceDir string) error {
 	errFilename := backgroundErrorFilename(werfServiceDir)
 
-	file, err := openFile(errFilename)
-	if err != nil {
+	file, err := openFile(errFilename, os.O_RDONLY)
+	if errors.Is(err, fs.ErrNotExist) {
+		return nil
+	} else if err != nil {
 		return err
 	}
 	defer file.Close()
