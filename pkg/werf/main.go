@@ -69,11 +69,8 @@ func GetTmpDir() string {
 	return tmpDir
 }
 
-func GetStagesStorageCacheDir() string {
-	return filepath.Join(GetSharedContextDir(), "storage", "stages_storage_cache", "1")
-}
-
-func Init(tmpDirOption, homeDirOption string) error {
+// PartialInit initialize variables only
+func PartialInit(tmpDirOption, homeDirOption string) error {
 	val, ok := os.LookupEnv("WERF_TMP_DIR")
 	switch {
 	case ok:
@@ -112,14 +109,30 @@ func Init(tmpDirOption, homeDirOption string) error {
 
 	sharedContextDir = filepath.Join(homeDir, "shared_context")
 	localCacheDir = filepath.Join(homeDir, "local_cache")
-	loader.SetLocalCacheDir(localCacheDir)
 	serviceDir = filepath.Join(homeDir, "service")
-	secrets_manager.SetWerfHomeDir(homeDir)
-	secrets_manager_legacy.WerfHomeDir = homeDir
+
+	return nil
+}
+
+func GetStagesStorageCacheDir() string {
+	return filepath.Join(GetSharedContextDir(), "storage", "stages_storage_cache", "1")
+}
+
+// Init initialize variables, locks, secrets, etc.
+func Init(tmpDirOption, homeDirOption string) error {
+	if err := PartialInit(tmpDirOption, homeDirOption); err != nil {
+		return err
+	}
+
+	// TODO: options + update purgeHomeWerfFiles
+
+	loader.SetLocalCacheDir(GetLocalCacheDir())
+	secrets_manager.SetWerfHomeDir(GetHomeDir())
+	secrets_manager_legacy.WerfHomeDir = GetHomeDir()
 
 	file_lock.LegacyHashFunction = true
 
-	if locker, err := file_locker.NewFileLocker(filepath.Join(serviceDir, "locks")); err != nil {
+	if locker, err := file_locker.NewFileLocker(filepath.Join(GetServiceDir(), "locks")); err != nil {
 		return fmt.Errorf("error creating werf host file locker: %w", err)
 	} else {
 		chart.SetHostLocker(locker)

@@ -11,12 +11,14 @@ func backgroundOutput(werfServiceDir string) (io.Writer, io.Writer, error) {
 	outFileName := backgroundOutputFilename(werfServiceDir)
 	errFileName := backgroundErrorFilename(werfServiceDir)
 
-	outFile, err := openFile(outFileName)
+	fileFlag := os.O_APPEND | os.O_WRONLY | os.O_CREATE
+
+	outFile, err := openFile(outFileName, fileFlag)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to open %q: %w", outFileName, err)
 	}
 
-	errFile, err := openFile(errFileName)
+	errFile, err := openFile(errFileName, fileFlag)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to open %q: %w", outFileName, err)
 	}
@@ -36,6 +38,6 @@ func backgroundErrorFilename(werfServiceDir string) string {
 	return filepath.Join(werfServiceDir, "background_error.log")
 }
 
-func openFile(name string) (*os.File, error) {
-	return os.OpenFile(name, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0o644)
+func openFile(name string, flag int) (*os.File, error) {
+	return os.OpenFile(name, flag, 0o644)
 }
