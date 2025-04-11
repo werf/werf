@@ -116,6 +116,7 @@ func (s *ImageSpecStage) GetDependencies(_ context.Context, _ Conveyor, _ contai
 
 	// imageSpec
 	args = append(args, s.imageSpec.Author)
+
 	args = append(args, fmt.Sprint(s.imageSpec.ClearHistory))
 
 	// imageSpec.config

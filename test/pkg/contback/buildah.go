@@ -80,9 +80,11 @@ func (r *NativeBuildahBackend) GetImageInspect(image string) DockerImageInspect 
 
 type BuildahInspect struct {
 	Docker struct {
+		Author       string                 `json:"author"`
 		Config       manifest.Schema2Config `json:"config"`
 		Architecture string                 `json:"architecture"`
 		Os           string                 `json:"os"`
 		Variant      string                 `json:"variant"`
+		History      interface{}            `json:"history"`
 	} `json:"Docker"`
 }

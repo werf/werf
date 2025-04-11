@@ -29,12 +29,6 @@ type Config struct {
 	ClearWorkingDir bool
 }
 
-// RootFS represents the `rootfs` object
-type RootFS struct {
-	DiffIDs []string `json:"diff_ids"`
-	Type    string   `json:"type"`
-}
-
 type HealthConfig struct {
 	Test        []string      `json:",omitempty"`
 	Interval    time.Duration `json:",omitempty"`
