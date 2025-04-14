@@ -1,5 +1,16 @@
 # Changelog
 
+### [2.35.2](https://www.github.com/werf/werf/compare/v2.35.1...v2.35.2) (2025-04-14)
+
+
+### Bug Fixes
+
+* **build, imageSpec:** invalidate cache (breaking changes) ([c827491](https://www.github.com/werf/werf/commit/c827491bb77fc410da7591eeac295dd186ccd46a))
+* **build, imageSpec:** keep essential werf-stage-content-digest label ([73fcd70](https://www.github.com/werf/werf/commit/73fcd70ba3291ae1f20a79ac8c3eb6b3b944f466))
+* **build, secrets:** fix secrets validation error when rendering config ([94b4333](https://www.github.com/werf/werf/commit/94b433383cc042d6326cd0c95025300477b8959e))
+* **deploy:** allow `werf.io/sensitive: false` for Secrets ([9d4fcec](https://www.github.com/werf/werf/commit/9d4fcec4a87b56eedf26d042cb30877ceb72a86b))
+* **deploy:** possible panic in tracking Flux Canary resource ([047fb12](https://www.github.com/werf/werf/commit/047fb12f920b5063cde54daefd4255b1b8c1378e))
+
 ### [2.35.1](https://www.github.com/werf/werf/compare/v2.35.0...v2.35.1) (2025-04-10)
 
 
