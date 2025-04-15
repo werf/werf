@@ -677,7 +677,7 @@ tasks:
         WERF_JEKYLL_BASE_DOCKER_IMAGE_NAME=nginx:latest \
         werf compose down
 
-  test:clenup:environment:
+  test:cleanup:environment:
     desc: "Cleanup environment"
     cmds:
       - kind delete cluster || true
