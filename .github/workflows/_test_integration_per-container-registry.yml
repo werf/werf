@@ -30,7 +30,6 @@ jobs:
           - default
           - dockerhub
           - ecr
-          - gcr
           - github
           - harbor
           - quay
