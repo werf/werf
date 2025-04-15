@@ -27,32 +27,35 @@ var _ = Describe("Detach", func() {
 
 	var progBinary string
 
-	BeforeEach(func() {
+	BeforeEach(func(ctx SpecContext) {
 		cwd, err := os.Getwd()
 		Expect(err).To(Succeed())
 
 		progSrc := filepath.Join(cwd, "testdata/prog.go")
 		progBinary = filepath.Join(t.TempDir(), fmt.Sprintf("prog_%s_%s", runtime.GOOS, runtime.GOARCH))
 
-		cmd := exec.Command("go", "build", "-o", progBinary, progSrc)
+		cmd := exec.CommandContext(ctx, "go", "build", "-o", progBinary, progSrc)
 		Expect(cmd.Run()).To(Succeed())
 
 		Expect(os.Chmod(progBinary, 0o755)).To(Succeed())
 	})
 
-	It("should start new detached process from binary", func() {
-		cmd := exec.Command(progBinary)
+	It("should start new detached process from binary", func(ctx SpecContext) {
+		cmd := exec.CommandContext(ctx, progBinary)
+		cmd.Dir = t.TempDir()
 		cmd.Env = append(cmd.Env, fmt.Sprintf("WERF_ORIGINAL_EXECUTABLE=%v", progBinary))
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
 		Expect(cmd.Run()).To(Succeed())
 
-		proc, err := findProcessByCommand(progBinary)
+		proc, err := findProcessByCommand(ctx, progBinary)
 		Expect(err).To(Succeed())
 		Expect(proc.Kill()).To(Succeed())
 	})
 })
 
-func findProcessByCommand(command string) (*os.Process, error) {
-	line, err := findProcessLineByCommand(command)
+func findProcessByCommand(ctx context.Context, command string) (*os.Process, error) {
+	line, err := findProcessLineByCommand(ctx, command)
 	Expect(err).To(Succeed())
 
 	// line example: " 166938 /tmp/ginkgo2394386441/prog_linux_amd64"
@@ -70,11 +73,11 @@ func findProcessByCommand(command string) (*os.Process, error) {
 	return p, nil
 }
 
-func findProcessLineByCommand(command string) (string, error) {
+func findProcessLineByCommand(ctx context.Context, command string) (string, error) {
 	b := backoff.NewConstantBackOff(time.Millisecond * 10)
 
 	operation := func() (string, error) {
-		cmd := exec.Command("ps", "-eo", "pid,cmd")
+		cmd := exec.CommandContext(ctx, "ps", "-eo", "pid,cmd")
 		outBytes, err := cmd.Output()
 		Expect(err).To(Succeed())
 

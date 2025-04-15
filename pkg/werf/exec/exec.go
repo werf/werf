@@ -9,8 +9,10 @@ import (
 	"github.com/samber/lo"
 
 	"github.com/werf/logboek"
+	"github.com/werf/werf/v2/pkg/logging"
 	exec2 "github.com/werf/werf/v2/pkg/util/exec"
 	"github.com/werf/werf/v2/pkg/util/option"
+	"github.com/werf/werf/v2/pkg/werf"
 )
 
 // Detach executes werf binary in new detached process.
@@ -24,8 +26,15 @@ func Detach(ctx context.Context, args []string) error {
 		return !strings.HasPrefix(item, "WERF_ENABLE_PROCESS_EXTERMINATOR=")
 	})
 
+	outStream, errStream, err := logging.BackgroundStreams(werf.GetServiceDir())
+	if err != nil {
+		return err
+	}
+
 	cmd := exec.Command(name, args...)
 	cmd.Env = env
+	cmd.Stdout = outStream
+	cmd.Stderr = errStream
 
 	cmd = exec2.MakeDetachable(cmd)
 
