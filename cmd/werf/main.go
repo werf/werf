@@ -25,10 +25,7 @@ func main() {
 		return
 	}
 
-	ctx, err := logging.WithLogger(context.Background())
-	if err != nil {
-		panic(err)
-	}
+	ctx := logging.WithLogger(context.Background())
 
 	root.PrintStackTraces()
 

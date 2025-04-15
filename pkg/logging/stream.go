@@ -1,13 +1,18 @@
 package logging
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
+
+	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
 
-func backgroundOutput(werfServiceDir string) (io.Writer, io.Writer, error) {
+func BackgroundStreams(werfServiceDir string) (io.Writer, io.Writer, error) {
 	outFileName := backgroundOutputFilename(werfServiceDir)
 	errFileName := backgroundErrorFilename(werfServiceDir)
 
@@ -40,4 +45,31 @@ func backgroundErrorFilename(werfServiceDir string) string {
 
 func openFile(name string, flag int) (*os.File, error) {
 	return os.OpenFile(name, flag, 0o644)
+}
+
+func GlobalWarnIfBackgroundErrorHappened(ctx context.Context, werfServiceDir string) error {
+	errFilename := backgroundErrorFilename(werfServiceDir)
+
+	file, err := openFile(errFilename, os.O_RDONLY)
+	if errors.Is(err, fs.ErrNotExist) {
+		return nil
+	} else if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	stat, err := file.Stat()
+	if err != nil {
+		return err
+	}
+
+	if stat.Size() == 0 {
+		return nil
+	}
+
+	global_warnings.GlobalWarningLn(ctx, fmt.Sprintf(`Recent running of "werf host cleanup" in background mode was ended with errors.
+Please, check these errors in %s file and remove its file after.
+`, errFilename))
+
+	return nil
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
 	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/logging"
 	"github.com/werf/werf/v2/pkg/ssh_agent"
 	"github.com/werf/werf/v2/pkg/storage/lrumeta"
 	"github.com/werf/werf/v2/pkg/true_git"
@@ -55,6 +56,10 @@ func InitCommonComponents(ctx context.Context, opts InitCommonComponentsOptions)
 	if opts.InitWerf {
 		if err := werf.Init(*opts.Cmd.TmpDir, *opts.Cmd.HomeDir); err != nil {
 			return nil, ctx, fmt.Errorf("initialization error: %w", err)
+		}
+
+		if err := logging.GlobalWarnIfBackgroundErrorHappened(ctx, werf.GetServiceDir()); err != nil {
+			return nil, ctx, err
 		}
 	}
 

@@ -69,8 +69,12 @@ func GetTmpDir() string {
 	return tmpDir
 }
 
-// PartialInit initialize variables only
-func PartialInit(tmpDirOption, homeDirOption string) error {
+func GetStagesStorageCacheDir() string {
+	return filepath.Join(GetSharedContextDir(), "storage", "stages_storage_cache", "1")
+}
+
+// Init initialize variables, locks, secrets, etc.
+func Init(tmpDirOption, homeDirOption string) error {
 	val, ok := os.LookupEnv("WERF_TMP_DIR")
 	switch {
 	case ok:
@@ -105,24 +109,9 @@ func PartialInit(tmpDirOption, homeDirOption string) error {
 		homeDir = filepath.Join(userHomeDir, ".werf")
 	}
 
-	// TODO: options + update purgeHomeWerfFiles
-
 	sharedContextDir = filepath.Join(homeDir, "shared_context")
 	localCacheDir = filepath.Join(homeDir, "local_cache")
 	serviceDir = filepath.Join(homeDir, "service")
-
-	return nil
-}
-
-func GetStagesStorageCacheDir() string {
-	return filepath.Join(GetSharedContextDir(), "storage", "stages_storage_cache", "1")
-}
-
-// Init initialize variables, locks, secrets, etc.
-func Init(tmpDirOption, homeDirOption string) error {
-	if err := PartialInit(tmpDirOption, homeDirOption); err != nil {
-		return err
-	}
 
 	// TODO: options + update purgeHomeWerfFiles
 

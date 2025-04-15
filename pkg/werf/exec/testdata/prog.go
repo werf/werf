@@ -8,25 +8,32 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/werf/werf/v2/pkg/background"
+	"github.com/werf/werf/v2/pkg/werf"
 	"github.com/werf/werf/v2/pkg/werf/exec"
 )
 
 func main() {
-	if isForegroundMode() {
-		startDetachedProcess()
-	} else {
+	if background.IsBackgroundModeEnabled() {
 		handleDetachedProcess()
+	} else {
+		startDetachedProcess()
 	}
-}
-
-func isForegroundMode() bool {
-	return os.Getenv("_WERF_BACKGROUND_MODE_ENABLED") != "1"
 }
 
 // startDetachedProcess starts detached process and exits currently running process.
 func startDetachedProcess() {
 	ctx := context.Background()
 	args := os.Args[1:]
+
+	workingDir, err := os.Getwd()
+	if err != nil {
+		log.Fatalf("unable to get working directory: %s\n", err.Error())
+	}
+
+	if err := werf.Init(workingDir, workingDir); err != nil {
+		log.Fatalf("werf init error: %s\n", err.Error())
+	}
 
 	if err := exec.Detach(ctx, args); err != nil {
 		log.Fatalf("detaching error: %s\n", err.Error())
