@@ -9,7 +9,7 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 
-	"github.com/werf/common-go/pkg/lock"
+	lockerPkg "github.com/werf/common-go/pkg/locker"
 	"github.com/werf/common-go/pkg/locker_with_retry"
 	"github.com/werf/lockgate"
 	"github.com/werf/lockgate/pkg/distributed_locker"
@@ -79,7 +79,8 @@ func (manager *Kubernetes) LockStage(
 	if locker, err := manager.getLockerForProject(ctx, projectName); err != nil {
 		return LockHandle{}, err
 	} else {
-		_, lock, err := locker.Acquire(kubernetesStageLockName(projectName, digest), chart.SetupLockerDefaultOptions(ctx, lockgate.AcquireOptions{}))
+		options := lockerPkg.SetupDefaultOptions(ctx, lockgate.AcquireOptions{})
+		_, lock, err := locker.Acquire(kubernetesStageLockName(projectName, digest), options)
 		return LockHandle{LockgateHandle: lock, ProjectName: projectName}, err
 	}
 }
