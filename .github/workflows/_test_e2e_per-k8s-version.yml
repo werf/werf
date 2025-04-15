@@ -36,11 +36,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        k8s-version:
-          - major: 1
-            minor: 27
-          - major: 1
-            minor: 29
+        kubeVersion: [1.29.14, 1.31.6]
+          
     runs-on: ubuntu-22.04
     timeout-minutes: ${{ inputs.timeout }}
     steps:
@@ -77,15 +74,18 @@ jobs:
       - name: Install ginkgo
         run: task -p deps:install:ginkgo
 
+      - name: Setup environment
+        run: task test:setup:environment
+
       - name: Test
         run: |
+          export WERF_TEST_K8S_BASE64_KUBECONFIG=$(cat ~/.kube/config | base64 -w 0)
           source ./scripts/ci/integration_k8s_tests_before_hook.sh
           test -n "${{ inputs.packages }}" && paths=paths="$(echo ${{ inputs.packages }} | tr , ' ')"
-          task -p test:e2e:${{ inputs.scope }} $paths -- --keep-going --skip-package '${{ inputs.excludePackages }}'
+          task -p test:e2e:${{ inputs.scope }} $paths kubeVersion=${{ matrix.kubeVersion }} -- --keep-going --skip-package '${{ inputs.excludePackages }}'
           echo loadavg: $(cat /proc/loadavg)
         env:
-          WERF_TEST_K8S_BASE64_KUBECONFIG: ${{ secrets[format('WERF_TEST_K8S_BASE64_KUBECONFIG_{0}_{1}', matrix.k8s-version.major, matrix.k8s-version.minor)] }}
-          WERF_TEST_K8S_DOCKER_REGISTRY: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY }}
+          WERF_TEST_K8S_DOCKER_REGISTRY: "localhost:5000"
           WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME }}
           WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD }}
           GOCOVERDIR: ${{ env.WERF_TEST_COVER_DIR }}
