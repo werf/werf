@@ -16,6 +16,7 @@ import (
 const (
 	SSHHostAuthSockPath      = "/run/host-services/ssh-auth.sock"
 	SSHContainerAuthSockPath = "/.werf/tmp/ssh-auth-sock"
+	hostCleanupServiceImage  = "alpine:3.14"
 )
 
 var (
@@ -77,4 +78,13 @@ func setSSHMountPoint(sshAuthSock string) (string, map[string]string) {
 		env[ssh_agent.SSHAuthSockEnv] = SSHContainerAuthSockPath
 	}
 	return vol, env
+}
+
+func getHostCleanupServiceImage() string {
+	image := hostCleanupServiceImage
+	if v := os.Getenv("WERF_HOST_CLEANUP_SERVICE_IMAGE"); v != "" {
+		image = v
+	}
+
+	return image
 }

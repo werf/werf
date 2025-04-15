@@ -320,7 +320,7 @@ func (backend *DockerServerBackend) RemoveHostDirs(ctx context.Context, mountDir
 	args := []string{
 		"--rm",
 		"--volume", fmt.Sprintf("%s:%s", mountDir, util.ToLinuxContainerPath(mountDir)),
-		"alpine",
+		getHostCleanupServiceImage(),
 		"rm", "-rf",
 	}
 
