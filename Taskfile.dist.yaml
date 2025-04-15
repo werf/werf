@@ -350,7 +350,7 @@ tasks:
 
   test:setup:registry:
     desc: "Setup dev registry."
-    cmd: docker run -d -p 5000:5000 --restart=always --name kind-registry registry:2
+    cmd: docker run -d -p 5000:5000 -e REGISTRY_STORAGE_DELETE_ENABLED=true --restart=always --name kind-registry registry:2
 
   test:setup:kubernetes:
     desc: "Setup dev kubernetes cluster."
@@ -680,5 +680,5 @@ tasks:
   test:clenup:environment:
     desc: "Cleanup environment"
     cmds:
-      - kind delete cluster
-      - docker rm -f kind-registry
+      - kind delete cluster || true
+      - docker rm -f kind-registry || true

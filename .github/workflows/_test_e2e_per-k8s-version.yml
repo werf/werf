@@ -94,3 +94,7 @@ jobs:
         uses: ./.github/actions/upload-coverage-artifact
         with:
           coverage: ${{ inputs.coverage }}
+
+      - name: Cleanup environment
+        if: always()
+        run: task test:cleanup:environment
