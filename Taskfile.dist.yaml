@@ -355,14 +355,15 @@ tasks:
   test:setup:kubernetes:
     desc: "Setup dev kubernetes cluster."
     cmd: |
-      kind create cluster --image kindest/node:v{{.kubeVersion}} --config=<(echo "
+      kind create cluster  --image kindest/node:v{{.kubeVersion}} --config=<(echo "
         kind: Cluster
         apiVersion: kind.x-k8s.io/v1alpha4
         containerdConfigPatches:
           - |
             [plugins.\"io.containerd.grpc.v1.cri\".registry.mirrors.\"localhost:5000\"]
-              endpoint = [\"http://localhost:5000\"]
+              endpoint = [\"http://kind-registry:5000\"]
       ")
+      docker network connect kind kind-registry 2>/dev/null || true
 
   verify:binaries:dist:all:
     desc: 'Verify that the distributable binaries are built and have correct platform/arch. Important vars: "version".'
@@ -675,3 +676,9 @@ tasks:
         # Workaround: set image variable to stub image.
         WERF_JEKYLL_BASE_DOCKER_IMAGE_NAME=nginx:latest \
         werf compose down
+
+  test:clenup:environment:
+    desc: "Cleanup environment"
+    cmds:
+      - kind delete cluster
+      - docker rm -f kind-registry
