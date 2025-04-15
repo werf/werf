@@ -205,7 +205,7 @@ dependencies:
 - name: backend
 ```
 
-If you want to connect multiple dependent charts with the same name or connect the same dependent chart several times, use the parent chart's `dependencies[].alias' directive to add alias for the charts to be included, for example:
+If you want to connect multiple dependent charts with the same name or connect the same dependent chart several times, use the parent chart's `dependencies[].alias` directive to add alias for the charts to be included, for example:
 
 ```yaml
 # .helm/Chart.yaml:
