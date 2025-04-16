@@ -7,9 +7,10 @@ import (
 )
 
 type managedStageDescSet struct {
-	stageDescSet     image.StageDescSet
-	stageDescMetaMap map[*image.StageDesc]*stageMeta
-	mu               sync.Mutex
+	stageDescSet       image.StageDescSet
+	stageDescByStageID map[string]*image.StageDesc // To optimize access by stageID instead of by stageDescSet iteration.
+	stageDescMetaMap   map[*image.StageDesc]*stageMeta
+	mu                 sync.Mutex
 }
 
 type stageMeta struct {
@@ -46,8 +47,9 @@ var (
 
 func newManagedStageDescSet(set image.StageDescSet) *managedStageDescSet {
 	return &managedStageDescSet{
-		stageDescSet:     set,
-		stageDescMetaMap: map[*image.StageDesc]*stageMeta{},
+		stageDescSet:            set,
+		stageDescMetaMap:        map[*image.StageDesc]*stageMeta{},
+		stageDescByStageIDCache: initStageDescByStageIDCache(set),
 	}
 }
 
@@ -57,6 +59,9 @@ func (s *managedStageDescSet) StageDescSet() image.StageDescSet {
 
 func (s *managedStageDescSet) DifferenceInPlace(stageDescSet image.StageDescSet) {
 	s.stageDescSet = s.stageDescSet.Difference(stageDescSet)
+	for stageDesc := range stageDescSet.Iter() {
+		delete(s.stageDescByStageIDCache, stageDesc.StageID.String())
+	}
 }
 
 func (s *managedStageDescSet) MarkStageDescAsProtected(stageDesc *image.StageDesc, reason *protectionReason, forceReason bool) {
@@ -104,11 +109,18 @@ func (s *managedStageDescSet) GetProtectedStageDescSetByReason() map[*protection
 }
 
 func (s *managedStageDescSet) GetStageDescByStageID(stageID string) *image.StageDesc {
-	for stageDesc := range s.stageDescSet.Iter() {
-		if stageDesc.StageID.String() == stageID {
-			return stageDesc
-		}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if stageDesc, ok := s.stageDescByStageIDCache[stageID]; ok {
+		return stageDesc
 	}
-
 	return nil
+}
+
+func initStageDescByStageIDCache(stageDescSet image.StageDescSet) map[string]*image.StageDesc {
+	cache := make(map[string]*image.StageDesc)
+	for stageDesc := range stageDescSet.Iter() {
+		cache[stageDesc.StageID.String()] = stageDesc
+	}
+	return cache
 }
