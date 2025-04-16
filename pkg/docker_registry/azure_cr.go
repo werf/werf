@@ -2,6 +2,7 @@ package docker_registry
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os/exec"
 	"strings"
@@ -11,6 +12,7 @@ import (
 	"github.com/werf/common-go/pkg/graceful"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/image"
+	exec2 "github.com/werf/werf/v2/pkg/werf/exec"
 )
 
 const (
@@ -120,12 +122,17 @@ func (r *azureCr) azRun(ctx context.Context, args ...string) error {
 
 	command := strings.Join(append([]string{"az"}, args...), " ")
 	logboek.Context(ctx).Debug().LogLn(command)
-	c := graceful.ExecCommandContext(ctx, "az", args...)
+
+	c := exec2.CommandContextCancellation(ctx, "az", args...)
 
 	output, err := c.CombinedOutput()
 	logboek.Context(ctx).Debug().LogLn("output:", string(output))
 
 	if err != nil {
+		if errors.Is(ctx.Err(), context.Canceled) {
+			graceful.Terminate(err, exec2.ExitCode(err))
+		}
+
 		return fmt.Errorf(
 			"command: %s\n%s\nerror: %w", command,
 			strings.TrimSpace(string(output)),

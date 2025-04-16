@@ -3,7 +3,6 @@ package exec
 import (
 	"context"
 	"os"
-	"os/exec"
 	"slices"
 	"strings"
 
@@ -33,7 +32,7 @@ func Detach(ctx context.Context, args, envs []string) error {
 		return err
 	}
 
-	cmd := exec.CommandContext(ctx, name, args...)
+	cmd := CommandContextCancellation(ctx, name, args...)
 	cmd.Env = env
 	cmd.Stdout = outStream
 	cmd.Stderr = errStream

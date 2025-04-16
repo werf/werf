@@ -2,9 +2,11 @@ package true_git
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -12,6 +14,7 @@ import (
 	"github.com/werf/common-go/pkg/graceful"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/pkg/path_matcher"
+	exec2 "github.com/werf/werf/v2/pkg/werf/exec"
 )
 
 type PatchOptions struct {
@@ -107,7 +110,7 @@ func writePatch(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir str
 		diffOpts = append(diffOpts, "--binary")
 	}
 
-	var cmd *graceful.Cmd
+	var cmd *exec.Cmd
 
 	if withSubmodules {
 		workTreeDir, err := prepareWorkTree(ctx, gitDir, workTreeCacheDir, opts.ToCommit, withSubmodules)
@@ -125,7 +128,7 @@ func writePatch(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir str
 			fmt.Printf("# git %s\n", strings.Join(gitArgs, " "))
 		}
 
-		cmd = graceful.ExecCommandContext(ctx, "git", gitArgs...)
+		cmd = exec2.CommandContextCancellation(ctx, "git", gitArgs...)
 
 		cmd.Dir = workTreeDir // required for `git diff` with submodules
 	} else {
@@ -139,7 +142,7 @@ func writePatch(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir str
 			fmt.Printf("# git %s\n", strings.Join(gitArgs, " "))
 		}
 
-		cmd = graceful.ExecCommandContext(ctx, "git", gitArgs...)
+		cmd = exec2.CommandContextCancellation(ctx, "git", gitArgs...)
 	}
 
 	stdoutPipe, err := cmd.StdoutPipe()
@@ -227,6 +230,9 @@ WaitForData:
 	}
 
 	if err := cmd.Wait(); err != nil {
+		if errors.Is(ctx.Err(), context.Canceled) {
+			graceful.Terminate(err, exec2.ExitCode(err))
+		}
 		return nil, fmt.Errorf("git diff error: %w\nunrecognized output:\n%s", err, p.UnrecognizedCapture.String())
 	}
 
