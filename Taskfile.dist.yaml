@@ -659,7 +659,7 @@ tasks:
           standalone: "yes"
 
   dev:setup:website:
-    desc: "Run jekyll in werf compose for local development. Use lang=en or lang=ru to run only specified lang. Run task compose:up in werf/website repository to access documentation."
+    desc: "Run jekyll in werf compose for local development. Use lang=en or lang=ru to run only specified lang. Run task dev:setup:website in werf/website repository to access documentation."
     cmds:
       - task: _dev:run:compose:up
         vars:
