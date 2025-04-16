@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.35.3](https://www.github.com/werf/werf/compare/v2.35.2...v2.35.3) (2025-04-16)
+
+
+### Bug Fixes
+
+* **deploy:** default kubeconfig not used ([cbf9f55](https://www.github.com/werf/werf/commit/cbf9f55bd14f60ece0b6c39f611cb14814117479))
+
 ### [2.35.2](https://www.github.com/werf/werf/compare/v2.35.1...v2.35.2) (2025-04-14)
 
 
