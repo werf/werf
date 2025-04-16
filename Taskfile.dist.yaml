@@ -539,23 +539,6 @@ tasks:
           imageName:
             sh: "echo registry-write.werf.io/werf/builder:$(git rev-parse HEAD)"
 
-  compose:up:local-telemetry:
-    desc: "Up local telemetry dev server."
-    dir: ./scripts/local-telemetry
-    cmds:
-      - docker-compose {{.CLI_ARGS}} up -d
-
-  compose:down:local-telemetry:
-    desc: "Down local telemetry dev server."
-    dir: ./scripts/local-telemetry
-    cmds:
-      - docker-compose {{.CLI_ARGS}} down
-
-  clean:
-    desc: "Clean all temporary files and build artifacts."
-    deps:
-      - clean:binaries
-
   clean:binaries:
     desc: "Clean all built binaries."
     deps:
@@ -631,7 +614,19 @@ tasks:
         done
       - git signatures push {{.CLI_ARGS}}
 
-  docker:network:create:
+  dev:setup:local-telemetry:
+    desc: "Setup telemetry dev server."
+    dir: ./scripts/local-telemetry
+    cmds:
+      - docker-compose {{.CLI_ARGS}} up -d
+
+  dev:cleanup:local-telemetry:
+    desc: "Cleanup telemetry dev server."
+    dir: ./scripts/local-telemetry
+    cmds:
+      - docker-compose {{.CLI_ARGS}} down
+
+  dev:setup:docker-network:
     desc: "Create shared docker network werfio-dev to use with werf/website"
     vars:
       NETWORK_NAME: werfio-dev
@@ -640,9 +635,9 @@ tasks:
     status:
       - docker network inspect {{.NETWORK_NAME}}
 
-  _compose:up:
+  _dev:run:compose:up:
     deps:
-      - docker:network:create
+      - dev:setup:docker-network
     cmds:
       - |
         services="{{ .lang }}"
@@ -656,21 +651,21 @@ tasks:
         which werf >/dev/null || source $(trdl use werf 2 beta)
         werf compose up jekyll_base --dev --docker-compose-command-options="$services" --platform=linux/amd64 || true
 
-  compose:up:standalone:
+  dev:setup:website:standalone:
     desc: "Run jekyll in werf compose for content editing without werf/website (scripts/styles/images are proxied from werf.io). Use lang=en or lang=ru to run only specified lang."
     cmds:
-      - task: _compose:up
+      - task: _dev:run:compose:up
         vars:
           standalone: "yes"
 
-  compose:up:
+  dev:setup:website:
     desc: "Run jekyll in werf compose for local development. Use lang=en or lang=ru to run only specified lang. Run task compose:up in werf/website repository to access documentation."
     cmds:
-      - task: _compose:up
+      - task: _dev:run:compose:up
         vars:
           standalone: "no"
 
-  compose:down:
+  dev:cleanup:website:
     desc: "Stop and clean after werf compose"
     cmds:
       - |
