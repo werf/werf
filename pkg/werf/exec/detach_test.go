@@ -18,7 +18,7 @@ import (
 	"github.com/samber/lo"
 )
 
-var _ = Describe("Detach", func() {
+var _ = Describe("detach", func() {
 	t := GinkgoT()
 
 	if runtime.GOOS != "linux" && runtime.GOOS != "darwin" {

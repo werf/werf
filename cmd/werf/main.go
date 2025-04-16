@@ -44,8 +44,6 @@ func main() {
 		return
 	}
 
-	common.EnableTerminationSignalsTrap()
-
 	if err := process_exterminator.Init(); err != nil {
 		graceful.Terminate(fmt.Errorf("process exterminator initialization failed: %w", err), 1)
 		return

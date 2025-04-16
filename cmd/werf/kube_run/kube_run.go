@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math/rand"
 	"os"
@@ -17,12 +18,13 @@ import (
 	imgtypes "github.com/containers/image/v5/types"
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	errorsK8s "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/kubectl/pkg/scheme"
 
+	"github.com/werf/common-go/pkg/graceful"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
@@ -36,6 +38,7 @@ import (
 	"github.com/werf/werf/v2/pkg/tmp_manager"
 	"github.com/werf/werf/v2/pkg/true_git"
 	"github.com/werf/werf/v2/pkg/werf"
+	exec2 "github.com/werf/werf/v2/pkg/werf/exec"
 	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
 
@@ -480,7 +483,7 @@ func createPod(ctx context.Context, namespace, pod, image, secret string, extraA
 		return fmt.Errorf("error creating kubectl run args: %w", err)
 	}
 
-	cmd := util.ExecKubectlCmdContext(ctx, args...)
+	cmd := exec2.PrepareGracefulCancellation(util.ExecKubectlCmdContext(ctx, args...))
 
 	if *commonCmdData.DryRun {
 		fmt.Println(cmd.String())
@@ -488,6 +491,9 @@ func createPod(ctx context.Context, namespace, pod, image, secret string, extraA
 	}
 
 	if err := cmd.Run(); err != nil {
+		if errors.Is(ctx.Err(), context.Canceled) {
+			graceful.Terminate(err, exec2.ExitCode(err))
+		}
 		return fmt.Errorf("error running pod: %w", err)
 	}
 
@@ -633,12 +639,15 @@ func getPodPhase(ctx context.Context, namespace, pod string, extraArgs []string)
 
 	args = append(args, extraArgs...)
 
-	cmd := util.ExecKubectlCmdContext(ctx, args...)
+	cmd := exec2.PrepareGracefulCancellation(util.ExecKubectlCmdContext(ctx, args...))
 
 	var stdout bytes.Buffer
 	cmd.Stdout = &stdout
 
 	if err := cmd.Run(); err != nil {
+		if errors.Is(ctx.Err(), context.Canceled) {
+			graceful.Terminate(err, exec2.ExitCode(err))
+		}
 		return "", fmt.Errorf("error getting pod %s/%s spec: %w", namespace, pod, err)
 	}
 
@@ -652,12 +661,15 @@ func isPodReady(ctx context.Context, namespace, pod string, extraArgs []string) 
 
 	args = append(args, extraArgs...)
 
-	cmd := util.ExecKubectlCmdContext(ctx, args...)
+	cmd := exec2.PrepareGracefulCancellation(util.ExecKubectlCmdContext(ctx, args...))
 
 	var stdout bytes.Buffer
 	cmd.Stdout = &stdout
 
 	if err := cmd.Run(); err != nil {
+		if errors.Is(ctx.Err(), context.Canceled) {
+			graceful.Terminate(err, exec2.ExitCode(err))
+		}
 		return false, fmt.Errorf("error getting pod %s/%s spec: %w", namespace, pod, err)
 	}
 
@@ -678,7 +690,7 @@ func copyFromPod(ctx context.Context, namespace, pod, container string, copyFrom
 
 	args = append(args, extraArgs...)
 
-	cmd := util.ExecKubectlCmdContext(ctx, args...)
+	cmd := exec2.PrepareGracefulCancellation(util.ExecKubectlCmdContext(ctx, args...))
 
 	if *commonCmdData.DryRun {
 		fmt.Println(cmd.String())
@@ -686,6 +698,9 @@ func copyFromPod(ctx context.Context, namespace, pod, container string, copyFrom
 	}
 
 	if err := cmd.Run(); err != nil {
+		if errors.Is(ctx.Err(), context.Canceled) {
+			graceful.Terminate(err, exec2.ExitCode(err))
+		}
 		logboek.Context(ctx).Warn().LogF("Error copying %q from pod %s/s: %s\n", copyFrom.Src, namespace, pod, err)
 	}
 }
@@ -699,7 +714,7 @@ func copyToPod(ctx context.Context, namespace, pod, container string, copyFrom c
 
 	args = append(args, extraArgs...)
 
-	cmd := util.ExecKubectlCmdContext(ctx, args...)
+	cmd := exec2.PrepareGracefulCancellation(util.ExecKubectlCmdContext(ctx, args...))
 
 	if *commonCmdData.DryRun {
 		fmt.Println(cmd.String())
@@ -707,6 +722,9 @@ func copyToPod(ctx context.Context, namespace, pod, container string, copyFrom c
 	}
 
 	if err := cmd.Run(); err != nil {
+		if errors.Is(ctx.Err(), context.Canceled) {
+			graceful.Terminate(err, exec2.ExitCode(err))
+		}
 		return fmt.Errorf("error copying %q to pod %s/%s: %w", copyFrom.Src, namespace, pod, err)
 	}
 
@@ -723,7 +741,7 @@ func stopContainer(ctx context.Context, namespace, pod, container string, extraA
 	args = append(args, extraArgs...)
 	args = append(args, "--", "touch", "/tmp/werf-kube-run-quit")
 
-	cmd := util.ExecKubectlCmdContext(ctx, args...)
+	cmd := exec2.PrepareGracefulCancellation(util.ExecKubectlCmdContext(ctx, args...))
 
 	if *commonCmdData.DryRun {
 		fmt.Println(cmd.String())
@@ -731,6 +749,9 @@ func stopContainer(ctx context.Context, namespace, pod, container string, extraA
 	}
 
 	if err := cmd.Run(); err != nil {
+		if errors.Is(ctx.Err(), context.Canceled) {
+			graceful.Terminate(err, exec2.ExitCode(err))
+		}
 		logboek.Context(ctx).Warn().LogF("Error stopping service container %s/%s/%s for copying files: %s\n", namespace, pod, container, err)
 	}
 }
@@ -755,7 +776,7 @@ func execCommandInPod(ctx context.Context, namespace, pod, container string, com
 	args = append(args, "--")
 	args = append(args, command...)
 
-	cmd := util.ExecKubectlCmdContext(ctx, args...)
+	cmd := exec2.PrepareGracefulCancellation(util.ExecKubectlCmdContext(ctx, args...))
 
 	if *commonCmdData.DryRun {
 		fmt.Println(cmd.String())
@@ -763,6 +784,9 @@ func execCommandInPod(ctx context.Context, namespace, pod, container string, com
 	}
 
 	if err := cmd.Run(); err != nil {
+		if errors.Is(ctx.Err(), context.Canceled) {
+			graceful.Terminate(err, exec2.ExitCode(err))
+		}
 		return fmt.Errorf("error running command %q in pod %s/%s: %w", cmd, namespace, pod, err)
 	}
 
@@ -776,7 +800,7 @@ func cleanupResources(ctx context.Context, pod, secret, namespace string) {
 
 	logboek.Context(ctx).LogF("Cleaning up pod %q ...\n", pod)
 	if err := kube.Client.CoreV1().Pods(namespace).Delete(ctx, pod, v1.DeleteOptions{}); err != nil {
-		if errors.IsNotFound(err) {
+		if errorsK8s.IsNotFound(err) {
 			logboek.Context(ctx).LogF("Pod %q not found\n", pod)
 		} else {
 			logboek.Context(ctx).Warn().LogF("WARNING: pod cleaning up failed: %s\n", err)
@@ -786,7 +810,7 @@ func cleanupResources(ctx context.Context, pod, secret, namespace string) {
 	if cmdData.AutoPullSecret && cmdData.registryCredsFound {
 		logboek.Context(ctx).LogF("Cleaning up secret %q ...\n", secret)
 		if err := kube.Client.CoreV1().Secrets(namespace).Delete(ctx, secret, v1.DeleteOptions{}); err != nil {
-			if errors.IsNotFound(err) {
+			if errorsK8s.IsNotFound(err) {
 				logboek.Context(ctx).LogF("Secret %q not found\n", secret)
 			} else {
 				logboek.Context(ctx).Warn().LogF("WARNING: secret cleaning up failed: %s\n", err)
@@ -818,10 +842,10 @@ func createNamespace(ctx context.Context, namespace string) error {
 		},
 		v1.CreateOptions{},
 	); err != nil {
-		if errors.IsAlreadyExists(err) {
+		if errorsK8s.IsAlreadyExists(err) {
 			logboek.Context(ctx).LogF("Namespace %q already exists\n", namespace)
 			return nil
-		} else if errors.IsForbidden(err) {
+		} else if errorsK8s.IsForbidden(err) {
 			logboek.Context(ctx).Warn().LogF("WARNING: unable to create namespace %q: %s\n", namespace, err)
 		} else {
 			return fmt.Errorf("error creating namespace %q: %w", namespace, err)

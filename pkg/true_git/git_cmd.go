@@ -10,6 +10,7 @@ import (
 	"github.com/werf/common-go/pkg/graceful"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
+	exec2 "github.com/werf/werf/v2/pkg/werf/exec"
 )
 
 func NewGitCmd(ctx context.Context, opts *GitCmdOptions, cliArgs ...string) GitCmd {
@@ -27,7 +28,7 @@ func NewGitCmd(ctx context.Context, opts *GitCmdOptions, cliArgs ...string) GitC
 		OutErrBuf: util.NewGoroutineSafeBuffer(),
 	}
 
-	gitCmd.Cmd = graceful.ExecCommandContext(ctx, "git", append(getCommonGitOptions(), cliArgs...)...)
+	gitCmd.Cmd = exec2.CommandContextCancellation(ctx, "git", append(getCommonGitOptions(), cliArgs...)...)
 
 	gitCmd.Dir = opts.RepoDir
 
@@ -50,7 +51,7 @@ type GitCmdOptions struct {
 }
 
 type GitCmd struct {
-	*graceful.Cmd
+	*exec.Cmd
 
 	// We always write to all of these buffs, unlike with exec.Cmd.Stdout(Stderr)
 	OutBuf    *util.GoroutineSafeBuffer
@@ -64,6 +65,10 @@ func (c *GitCmd) Run(ctx context.Context) error {
 	}
 
 	if err := c.Cmd.Run(); err != nil {
+		if errors.Is(ctx.Err(), context.Canceled) {
+			graceful.Terminate(err, exec2.ExitCode(err))
+		}
+
 		var errExit *exec.ExitError
 		if errors.As(err, &errExit) {
 			return fmt.Errorf("error running command %q: %w\nStdout:\n%s\nStderr:\n%s", c, err, c.OutBuf, c.ErrBuf)
