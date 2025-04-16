@@ -35,7 +35,7 @@ func startDetachedProcess() {
 		log.Fatalf("werf init error: %s\n", err.Error())
 	}
 
-	if err := exec.Detach(ctx, args); err != nil {
+	if err := exec.Detach(ctx, args, nil); err != nil {
 		log.Fatalf("detaching error: %s\n", err.Error())
 	}
 	return
