@@ -42,8 +42,10 @@ type ContainerBackend interface {
 }
 
 type DockerImageInspect struct {
+	Author       string
 	Config       manifest.Schema2Config
 	Architecture string
 	Os           string
 	Variant      string
+	History      interface{}
 }
