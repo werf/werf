@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.35.4](https://www.github.com/werf/werf/compare/v2.35.3...v2.35.4) (2025-04-16)
+
+
+### Miscellaneous Chores
+
+* **release:** release v2.35.4 ([336b284](https://www.github.com/werf/werf/commit/336b284a023a151eaf769d7e2781d4a051220a6e))
+
 ### [2.35.3](https://www.github.com/werf/werf/compare/v2.35.2...v2.35.3) (2025-04-16)
 
 
