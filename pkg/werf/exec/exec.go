@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"os/exec"
+	"slices"
 	"strings"
 
 	"github.com/samber/lo"
@@ -17,10 +18,11 @@ import (
 
 // Detach executes werf binary in new detached process.
 // The detached process will continue to work after termination of parent process.
-func Detach(ctx context.Context, args []string) error {
+func Detach(ctx context.Context, args, envs []string) error {
 	name := option.ValueOrDefault(os.Getenv("WERF_ORIGINAL_EXECUTABLE"), os.Args[0])
 
-	env := append(os.Environ(), "_WERF_BACKGROUND_MODE_ENABLED=1")
+	env := slices.Concat(envs, os.Environ(), []string{"_WERF_BACKGROUND_MODE_ENABLED=1"})
+	env = lo.Uniq(env)
 
 	env = lo.Filter(env, func(item string, _ int) bool {
 		return !strings.HasPrefix(item, "WERF_ENABLE_PROCESS_EXTERMINATOR=")
