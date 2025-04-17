@@ -8,7 +8,7 @@ import (
 
 type managedStageDescSet struct {
 	stageDescSet       image.StageDescSet
-	stageDescByStageID map[string]*image.StageDesc // To optimize access by stageID instead of by stageDescSet iteration.
+	stageDescByStageID map[string]*image.StageDesc // To avoid iterating over the stageDescSet accessing the stageDesc by ID.
 	stageDescMetaMap   map[*image.StageDesc]*stageMeta
 	mu                 sync.Mutex
 }
