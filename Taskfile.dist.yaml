@@ -5,6 +5,9 @@ silent: true
 env:
   GO111MODULE: "on"
   HELM_PLUGINS: ""
+  WERF_TEST_K8S_DOCKER_REGISTRY: "localhost:5000"
+  KUBECONFIG:
+    sh: echo "$HOME/.kube/config"
 
 vars:
   version: "dev"
