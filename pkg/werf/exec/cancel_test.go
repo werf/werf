@@ -12,7 +12,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	exec2 "github.com/werf/werf/v2/pkg/werf/exec"
+	werfExec "github.com/werf/werf/v2/pkg/werf/exec"
 )
 
 var _ = DescribeTable("cancel",
@@ -31,7 +31,7 @@ var _ = DescribeTable("cancel",
 
 		ctx, _ := context.WithTimeout(ctx0, cmdExecutionTimeout)
 
-		cmd := exec2.CommandContextCancellation(ctx, script, scriptParamSleepTimeout.String(), strconv.Itoa(scriptParamExitCode))
+		cmd := werfExec.CommandContextCancellation(ctx, script, scriptParamSleepTimeout.String(), strconv.Itoa(scriptParamExitCode))
 		cmd.WaitDelay = cmdCancellationWaitDelay
 
 		err = cmd.Run()

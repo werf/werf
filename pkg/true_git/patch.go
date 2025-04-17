@@ -14,7 +14,7 @@ import (
 	"github.com/werf/common-go/pkg/graceful"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/pkg/path_matcher"
-	exec2 "github.com/werf/werf/v2/pkg/werf/exec"
+	werfExec "github.com/werf/werf/v2/pkg/werf/exec"
 )
 
 type PatchOptions struct {
@@ -128,7 +128,7 @@ func writePatch(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir str
 			fmt.Printf("# git %s\n", strings.Join(gitArgs, " "))
 		}
 
-		cmd = exec2.CommandContextCancellation(ctx, "git", gitArgs...)
+		cmd = werfExec.CommandContextCancellation(ctx, "git", gitArgs...)
 
 		cmd.Dir = workTreeDir // required for `git diff` with submodules
 	} else {
@@ -142,7 +142,7 @@ func writePatch(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir str
 			fmt.Printf("# git %s\n", strings.Join(gitArgs, " "))
 		}
 
-		cmd = exec2.CommandContextCancellation(ctx, "git", gitArgs...)
+		cmd = werfExec.CommandContextCancellation(ctx, "git", gitArgs...)
 	}
 
 	stdoutPipe, err := cmd.StdoutPipe()
@@ -231,7 +231,7 @@ WaitForData:
 
 	if err := cmd.Wait(); err != nil {
 		if errors.Is(ctx.Err(), context.Canceled) {
-			graceful.Terminate(err, exec2.ExitCode(err))
+			graceful.Terminate(err, werfExec.ExitCode(err))
 		}
 		return nil, fmt.Errorf("git diff error: %w\nunrecognized output:\n%s", err, p.UnrecognizedCapture.String())
 	}

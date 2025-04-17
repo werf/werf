@@ -38,7 +38,7 @@ import (
 	"github.com/werf/werf/v2/pkg/tmp_manager"
 	"github.com/werf/werf/v2/pkg/true_git"
 	"github.com/werf/werf/v2/pkg/werf"
-	exec2 "github.com/werf/werf/v2/pkg/werf/exec"
+	werfExec "github.com/werf/werf/v2/pkg/werf/exec"
 	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
 
@@ -483,7 +483,7 @@ func createPod(ctx context.Context, namespace, pod, image, secret string, extraA
 		return fmt.Errorf("error creating kubectl run args: %w", err)
 	}
 
-	cmd := exec2.PrepareGracefulCancellation(util.ExecKubectlCmdContext(ctx, args...))
+	cmd := werfExec.PrepareGracefulCancellation(util.ExecKubectlCmdContext(ctx, args...))
 
 	if *commonCmdData.DryRun {
 		fmt.Println(cmd.String())
@@ -492,7 +492,7 @@ func createPod(ctx context.Context, namespace, pod, image, secret string, extraA
 
 	if err := cmd.Run(); err != nil {
 		if errors.Is(ctx.Err(), context.Canceled) {
-			graceful.Terminate(err, exec2.ExitCode(err))
+			graceful.Terminate(err, werfExec.ExitCode(err))
 		}
 		return fmt.Errorf("error running pod: %w", err)
 	}
@@ -639,14 +639,14 @@ func getPodPhase(ctx context.Context, namespace, pod string, extraArgs []string)
 
 	args = append(args, extraArgs...)
 
-	cmd := exec2.PrepareGracefulCancellation(util.ExecKubectlCmdContext(ctx, args...))
+	cmd := werfExec.PrepareGracefulCancellation(util.ExecKubectlCmdContext(ctx, args...))
 
 	var stdout bytes.Buffer
 	cmd.Stdout = &stdout
 
 	if err := cmd.Run(); err != nil {
 		if errors.Is(ctx.Err(), context.Canceled) {
-			graceful.Terminate(err, exec2.ExitCode(err))
+			graceful.Terminate(err, werfExec.ExitCode(err))
 		}
 		return "", fmt.Errorf("error getting pod %s/%s spec: %w", namespace, pod, err)
 	}
@@ -661,14 +661,14 @@ func isPodReady(ctx context.Context, namespace, pod string, extraArgs []string) 
 
 	args = append(args, extraArgs...)
 
-	cmd := exec2.PrepareGracefulCancellation(util.ExecKubectlCmdContext(ctx, args...))
+	cmd := werfExec.PrepareGracefulCancellation(util.ExecKubectlCmdContext(ctx, args...))
 
 	var stdout bytes.Buffer
 	cmd.Stdout = &stdout
 
 	if err := cmd.Run(); err != nil {
 		if errors.Is(ctx.Err(), context.Canceled) {
-			graceful.Terminate(err, exec2.ExitCode(err))
+			graceful.Terminate(err, werfExec.ExitCode(err))
 		}
 		return false, fmt.Errorf("error getting pod %s/%s spec: %w", namespace, pod, err)
 	}
@@ -690,7 +690,7 @@ func copyFromPod(ctx context.Context, namespace, pod, container string, copyFrom
 
 	args = append(args, extraArgs...)
 
-	cmd := exec2.PrepareGracefulCancellation(util.ExecKubectlCmdContext(ctx, args...))
+	cmd := werfExec.PrepareGracefulCancellation(util.ExecKubectlCmdContext(ctx, args...))
 
 	if *commonCmdData.DryRun {
 		fmt.Println(cmd.String())
@@ -699,7 +699,7 @@ func copyFromPod(ctx context.Context, namespace, pod, container string, copyFrom
 
 	if err := cmd.Run(); err != nil {
 		if errors.Is(ctx.Err(), context.Canceled) {
-			graceful.Terminate(err, exec2.ExitCode(err))
+			graceful.Terminate(err, werfExec.ExitCode(err))
 		}
 		logboek.Context(ctx).Warn().LogF("Error copying %q from pod %s/s: %s\n", copyFrom.Src, namespace, pod, err)
 	}
@@ -714,7 +714,7 @@ func copyToPod(ctx context.Context, namespace, pod, container string, copyFrom c
 
 	args = append(args, extraArgs...)
 
-	cmd := exec2.PrepareGracefulCancellation(util.ExecKubectlCmdContext(ctx, args...))
+	cmd := werfExec.PrepareGracefulCancellation(util.ExecKubectlCmdContext(ctx, args...))
 
 	if *commonCmdData.DryRun {
 		fmt.Println(cmd.String())
@@ -723,7 +723,7 @@ func copyToPod(ctx context.Context, namespace, pod, container string, copyFrom c
 
 	if err := cmd.Run(); err != nil {
 		if errors.Is(ctx.Err(), context.Canceled) {
-			graceful.Terminate(err, exec2.ExitCode(err))
+			graceful.Terminate(err, werfExec.ExitCode(err))
 		}
 		return fmt.Errorf("error copying %q to pod %s/%s: %w", copyFrom.Src, namespace, pod, err)
 	}
@@ -741,7 +741,7 @@ func stopContainer(ctx context.Context, namespace, pod, container string, extraA
 	args = append(args, extraArgs...)
 	args = append(args, "--", "touch", "/tmp/werf-kube-run-quit")
 
-	cmd := exec2.PrepareGracefulCancellation(util.ExecKubectlCmdContext(ctx, args...))
+	cmd := werfExec.PrepareGracefulCancellation(util.ExecKubectlCmdContext(ctx, args...))
 
 	if *commonCmdData.DryRun {
 		fmt.Println(cmd.String())
@@ -750,7 +750,7 @@ func stopContainer(ctx context.Context, namespace, pod, container string, extraA
 
 	if err := cmd.Run(); err != nil {
 		if errors.Is(ctx.Err(), context.Canceled) {
-			graceful.Terminate(err, exec2.ExitCode(err))
+			graceful.Terminate(err, werfExec.ExitCode(err))
 		}
 		logboek.Context(ctx).Warn().LogF("Error stopping service container %s/%s/%s for copying files: %s\n", namespace, pod, container, err)
 	}
@@ -776,7 +776,7 @@ func execCommandInPod(ctx context.Context, namespace, pod, container string, com
 	args = append(args, "--")
 	args = append(args, command...)
 
-	cmd := exec2.PrepareGracefulCancellation(util.ExecKubectlCmdContext(ctx, args...))
+	cmd := werfExec.PrepareGracefulCancellation(util.ExecKubectlCmdContext(ctx, args...))
 
 	if *commonCmdData.DryRun {
 		fmt.Println(cmd.String())
@@ -785,7 +785,7 @@ func execCommandInPod(ctx context.Context, namespace, pod, container string, com
 
 	if err := cmd.Run(); err != nil {
 		if errors.Is(ctx.Err(), context.Canceled) {
-			graceful.Terminate(err, exec2.ExitCode(err))
+			graceful.Terminate(err, werfExec.ExitCode(err))
 		}
 		return fmt.Errorf("error running command %q in pod %s/%s: %w", cmd, namespace, pod, err)
 	}

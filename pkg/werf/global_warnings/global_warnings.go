@@ -13,7 +13,7 @@ import (
 	"github.com/werf/common-go/pkg/graceful"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
-	exec2 "github.com/werf/werf/v2/pkg/werf/exec"
+	werfExec "github.com/werf/werf/v2/pkg/werf/exec"
 )
 
 const lastMultiwerfVersion = "1.5.0"
@@ -70,11 +70,11 @@ func IsMultiwerfUpToDate(ctx context.Context) (bool, error) {
 		return true, nil
 	}
 
-	cmd := exec2.CommandContextCancellation(ctx, multiwerfPath, "version")
+	cmd := werfExec.CommandContextCancellation(ctx, multiwerfPath, "version")
 	var stdout bytes.Buffer
 	cmd.Stdout = &stdout
 	if err := cmd.Run(); err != nil {
-		graceful.Terminate(err, exec2.ExitCode(err))
+		graceful.Terminate(err, werfExec.ExitCode(err))
 		return false, fmt.Errorf("unable to get installed version of multiwerf: %w", err)
 	}
 

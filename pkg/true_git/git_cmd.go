@@ -10,7 +10,7 @@ import (
 	"github.com/werf/common-go/pkg/graceful"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
-	exec2 "github.com/werf/werf/v2/pkg/werf/exec"
+	werfExec "github.com/werf/werf/v2/pkg/werf/exec"
 )
 
 func NewGitCmd(ctx context.Context, opts *GitCmdOptions, cliArgs ...string) GitCmd {
@@ -28,7 +28,7 @@ func NewGitCmd(ctx context.Context, opts *GitCmdOptions, cliArgs ...string) GitC
 		OutErrBuf: util.NewGoroutineSafeBuffer(),
 	}
 
-	gitCmd.Cmd = exec2.CommandContextCancellation(ctx, "git", append(getCommonGitOptions(), cliArgs...)...)
+	gitCmd.Cmd = werfExec.CommandContextCancellation(ctx, "git", append(getCommonGitOptions(), cliArgs...)...)
 
 	gitCmd.Dir = opts.RepoDir
 
@@ -66,7 +66,7 @@ func (c *GitCmd) Run(ctx context.Context) error {
 
 	if err := c.Cmd.Run(); err != nil {
 		if errors.Is(ctx.Err(), context.Canceled) {
-			graceful.Terminate(err, exec2.ExitCode(err))
+			graceful.Terminate(err, werfExec.ExitCode(err))
 		}
 
 		var errExit *exec.ExitError
