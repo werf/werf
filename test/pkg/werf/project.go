@@ -93,7 +93,7 @@ func (p *Project) Build(opts *BuildOptions) (combinedOut string) {
 		opts = &BuildOptions{}
 	}
 
-	args := append([]string{"build"}, opts.ExtraArgs...)
+	args := append([]string{"build", "--disable-auto-host-cleanup"}, opts.ExtraArgs...)
 	outb := p.runCommand(runCommandOptions{Args: args, ShouldFail: opts.ShouldFail})
 
 	return string(outb)
@@ -104,7 +104,7 @@ func (p *Project) BuildWithReport(buildReportPath string, opts *BuildWithReportO
 		opts = &BuildWithReportOptions{}
 	}
 
-	args := append([]string{"build", "--save-build-report", "--build-report-path", buildReportPath}, opts.ExtraArgs...)
+	args := append([]string{"build", "--disable-auto-host-cleanup", "--save-build-report", "--build-report-path", buildReportPath}, opts.ExtraArgs...)
 	out := p.runCommand(runCommandOptions{Args: args, ShouldFail: opts.ShouldFail})
 
 	buildReportRaw, err := os.ReadFile(buildReportPath)
@@ -121,7 +121,7 @@ func (p *Project) Converge(opts *ConvergeOptions) (combinedOut string) {
 		opts = &ConvergeOptions{}
 	}
 
-	args := append([]string{"converge"}, opts.ExtraArgs...)
+	args := append([]string{"converge", "--disable-auto-host-cleanup"}, opts.ExtraArgs...)
 	outb := p.runCommand(runCommandOptions{Args: args, ShouldFail: opts.ShouldFail})
 
 	return string(outb)
@@ -132,7 +132,7 @@ func (p *Project) ConvergeWithReport(deployReportPath string, opts *ConvergeWith
 		opts = &ConvergeWithReportOptions{}
 	}
 
-	args := append([]string{"converge", "--save-deploy-report", "--deploy-report-path", deployReportPath}, opts.ExtraArgs...)
+	args := append([]string{"converge", "--disable-auto-host-cleanup", "--save-deploy-report", "--deploy-report-path", deployReportPath}, opts.ExtraArgs...)
 	out := p.runCommand(runCommandOptions{Args: args, ShouldFail: opts.ShouldFail})
 
 	deployReportRaw, err := os.ReadFile(deployReportPath)
@@ -149,7 +149,7 @@ func (p *Project) BundlePublish(opts *BundlePublishOptions) (combinedOut string)
 		opts = &BundlePublishOptions{}
 	}
 
-	args := append([]string{"bundle", "publish"}, opts.ExtraArgs...)
+	args := append([]string{"bundle", "publish", "--disable-auto-host-cleanup"}, opts.ExtraArgs...)
 	outb := p.runCommand(runCommandOptions{Args: args, ShouldFail: opts.ShouldFail})
 
 	return string(outb)
@@ -160,7 +160,7 @@ func (p *Project) BundlePublishWithReport(buildReportPath string, opts *BundlePu
 		opts = &BundlePublishWithReportOptions{}
 	}
 
-	args := append([]string{"bundle", "publish", "--save-build-report", "--build-report-path", buildReportPath}, opts.ExtraArgs...)
+	args := append([]string{"bundle", "publish", "--disable-auto-host-cleanup", "--save-build-report", "--build-report-path", buildReportPath}, opts.ExtraArgs...)
 	out := p.runCommand(runCommandOptions{Args: args, ShouldFail: opts.ShouldFail})
 
 	buildReportRaw, err := os.ReadFile(buildReportPath)
@@ -301,7 +301,7 @@ func (p *Project) Compose(opts *BuildOptions) (combinedOut string) {
 		opts = &BuildOptions{}
 	}
 
-	args := append([]string{"compose"}, opts.ExtraArgs...)
+	args := append([]string{"compose", "--disable-auto-host-cleanup"}, opts.ExtraArgs...)
 	outb := p.runCommand(runCommandOptions{Args: args, ShouldFail: opts.ShouldFail})
 
 	return string(outb)
