@@ -11,17 +11,17 @@ import (
 )
 
 type Manager struct {
-	stageDescSet         *managedStageDescSet
-	finalStageDescSet    *managedStageDescSet
-	stageIDCustomTagList map[string][]string
-	imageMetadataList    []*imageMetadata
+	managedStageDescSet      *managedStageDescSet
+	finalManagedStageDescSet *managedStageDescSet
+	stageIDCustomTagList     map[string][]string
+	imageMetadataList        []*imageMetadata
 }
 
 func NewManager() Manager {
 	return Manager{
-		stageIDCustomTagList: map[string][]string{},
-		stageDescSet:         newManagedStageDescSet(image.NewStageDescSet()),
-		finalStageDescSet:    newManagedStageDescSet(image.NewStageDescSet()),
+		stageIDCustomTagList:     map[string][]string{},
+		managedStageDescSet:      newManagedStageDescSet(image.NewStageDescSet()),
+		finalManagedStageDescSet: newManagedStageDescSet(image.NewStageDescSet()),
 	}
 }
 
@@ -58,7 +58,7 @@ func (m *Manager) InitStageDescSet(ctx context.Context, storageManager manager.S
 		return err
 	}
 
-	m.stageDescSet = newManagedStageDescSet(stageDescSet)
+	m.managedStageDescSet = newManagedStageDescSet(stageDescSet)
 
 	return nil
 }
@@ -69,7 +69,7 @@ func (m *Manager) InitFinalStageDescSet(ctx context.Context, storageManager mana
 		return err
 	}
 
-	m.finalStageDescSet = newManagedStageDescSet(finalStageDescSet)
+	m.finalManagedStageDescSet = newManagedStageDescSet(finalStageDescSet)
 
 	return nil
 }
@@ -176,15 +176,15 @@ func (m *Manager) MarkStageDescAsProtectedByStageID(stageID string, reason *prot
 		panic(fmt.Sprintf("stage description %s not found", stageID))
 	}
 
-	m.stageDescSet.MarkStageDescAsProtected(m.GetStageDescByStageID(stageID), reason, forceReason)
+	m.managedStageDescSet.MarkStageDescAsProtected(m.GetStageDescByStageID(stageID), reason, forceReason)
 }
 
 func (m *Manager) MarkStageDescAsProtected(stageDesc *image.StageDesc, reason *protectionReason, forceReason bool) {
-	m.stageDescSet.MarkStageDescAsProtected(stageDesc, reason, forceReason)
+	m.managedStageDescSet.MarkStageDescAsProtected(stageDesc, reason, forceReason)
 }
 
 func (m *Manager) MarkFinalStageDescAsProtected(stageDesc *image.StageDesc, reason *protectionReason, forceReason bool) {
-	m.finalStageDescSet.MarkStageDescAsProtected(stageDesc, reason, forceReason)
+	m.finalManagedStageDescSet.MarkStageDescAsProtected(stageDesc, reason, forceReason)
 }
 
 // GetImageStageIDCommitListToCleanup method returns existing stage IDs and related existing commits (for each managed image)
@@ -281,39 +281,39 @@ func (m *Manager) GetStageIDNonexistentCommitList(imageName string) map[string][
 }
 
 func (m *Manager) ForgetDeletedStageDescSet(stageDescSet image.StageDescSet) {
-	m.stageDescSet.DifferenceInPlace(stageDescSet)
+	m.managedStageDescSet.DifferenceInPlace(stageDescSet)
 }
 
 func (m *Manager) ForgetDeletedFinalStageDescSet(stageDescSet image.StageDescSet) {
-	m.finalStageDescSet.DifferenceInPlace(stageDescSet)
+	m.finalManagedStageDescSet.DifferenceInPlace(stageDescSet)
 }
 
 func (m *Manager) GetStageDescSet() image.StageDescSet {
-	return m.stageDescSet.StageDescSet()
+	return m.managedStageDescSet.StageDescSet()
 }
 
 func (m *Manager) GetFinalStageDescSet() image.StageDescSet {
-	return m.finalStageDescSet.StageDescSet()
+	return m.finalManagedStageDescSet.StageDescSet()
 }
 
 func (m *Manager) GetProtectedStageDescSet() image.StageDescSet {
-	return m.stageDescSet.GetProtectedStageDescSet()
+	return m.managedStageDescSet.GetProtectedStageDescSet()
 }
 
 func (m *Manager) GetFinalProtectedStageDescSet() image.StageDescSet {
-	return m.finalStageDescSet.GetProtectedStageDescSet()
+	return m.finalManagedStageDescSet.GetProtectedStageDescSet()
 }
 
 func (m *Manager) GetProtectedStageDescSetByReason() map[*protectionReason]image.StageDescSet {
-	return m.stageDescSet.GetProtectedStageDescSetByReason()
+	return m.managedStageDescSet.GetProtectedStageDescSetByReason()
 }
 
 func (m *Manager) GetStageDescByStageID(stageID string) *image.StageDesc {
-	return m.stageDescSet.GetStageDescByStageID(stageID)
+	return m.managedStageDescSet.GetStageDescByStageID(stageID)
 }
 
 func (m *Manager) ContainsStageDescByStageID(stageID string) bool {
-	return m.stageDescSet.GetStageDescByStageID(stageID) != nil
+	return m.managedStageDescSet.GetStageDescByStageID(stageID) != nil
 }
 
 func (m *Manager) GetCustomTagsMetadata() map[string][]string {
