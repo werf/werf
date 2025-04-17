@@ -58,12 +58,12 @@ func InitCommonComponents(ctx context.Context, opts InitCommonComponentsOptions)
 		}
 
 		/*
-		// TODO (zaytsev): enable warning after fixing the issue
-		if ok, warning, err := logging.BackgroundWarning(werf.GetServiceDir()); err != nil {
-			return nil, ctx, err
-		} else if ok {
-			global_warnings.GlobalWarningLn(ctx, warning)
-		}
+			// TODO (zaytsev): enable warning after fixing the issue
+			if ok, warning, err := logging.BackgroundWarning(werf.GetServiceDir()); err != nil {
+				return nil, ctx, err
+			} else if ok {
+				global_warnings.GlobalWarningLn(ctx, warning)
+			}
 		*/
 	}
 

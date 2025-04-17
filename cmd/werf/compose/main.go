@@ -22,7 +22,7 @@ import (
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
 	"github.com/werf/werf/v2/pkg/tmp_manager"
 	"github.com/werf/werf/v2/pkg/true_git"
-	exec2 "github.com/werf/werf/v2/pkg/werf/exec"
+	werfExec "github.com/werf/werf/v2/pkg/werf/exec"
 	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
 
@@ -103,7 +103,7 @@ func extractImageNamesFromComposeConfig(ctx context.Context, customConfigPathLis
 	}
 	composeArgs = append(composeArgs, "config", "--no-interpolate")
 
-	cmd := exec2.CommandContextCancellation(ctx, "docker", composeArgs...)
+	cmd := werfExec.CommandContextCancellation(ctx, "docker", composeArgs...)
 
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
@@ -111,7 +111,7 @@ func extractImageNamesFromComposeConfig(ctx context.Context, customConfigPathLis
 
 	err := cmd.Run()
 	if err != nil {
-		graceful.Terminate(err, exec2.ExitCode(err))
+		graceful.Terminate(err, werfExec.ExitCode(err))
 		var ee *exec.ExitError
 		if errors.As(err, &ee) {
 			return nil, fmt.Errorf("error running command %q: %w\n\nStdout:\n%s\nStderr:\n%s", cmd, err, stdout.String(), stderr.String())
@@ -523,7 +523,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 	} else {
 		dockerComposeArgs = append([]string{"compose"}, dockerComposeArgs...)
 
-		cmd := exec2.CommandContextCancellation(ctx, "docker", dockerComposeArgs...)
+		cmd := werfExec.CommandContextCancellation(ctx, "docker", dockerComposeArgs...)
 
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
@@ -531,7 +531,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		cmd.Env = append(os.Environ(), envArray...)
 
 		if err := cmd.Run(); err != nil {
-			graceful.Terminate(err, exec2.ExitCode(err))
+			graceful.Terminate(err, werfExec.ExitCode(err))
 			return fmt.Errorf("error running command %q: %s", cmd, err)
 		}
 	}
