@@ -10,7 +10,6 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	lock "github.com/werf/common-go/pkg/lock"
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/style"
@@ -23,6 +22,7 @@ import (
 	"github.com/werf/werf/v2/pkg/storage/lrumeta"
 	"github.com/werf/werf/v2/pkg/storage/synchronization/lock_manager"
 	"github.com/werf/werf/v2/pkg/util/parallel"
+	"github.com/werf/werf/v2/pkg/werf"
 )
 
 var (
@@ -359,7 +359,7 @@ func (m *StorageManager) ForEachDeleteStage(ctx context.Context, options ForEach
 func (m *StorageManager) LockStageImage(ctx context.Context, imageName string) error {
 	imageLockName := container_backend.ImageLockName(imageName)
 
-	_, l, err := lock.AcquireHostLock(ctx, imageLockName, lockgate.AcquireOptions{Shared: true})
+	_, l, err := werf.HostLocker().AcquireLock(ctx, imageLockName, lockgate.AcquireOptions{Shared: true})
 	if err != nil {
 		return fmt.Errorf("error locking %q shared lock: %w", imageLockName, err)
 	}

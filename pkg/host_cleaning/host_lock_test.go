@@ -5,12 +5,18 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"github.com/werf/werf/v2/pkg/werf"
 )
 
 var _ = Describe("host lock", func() {
+	t := GinkgoT()
+
 	var ctx context.Context
 	BeforeEach(func() {
 		ctx = context.Background()
+
+		Expect(werf.Init(t.TempDir(), "")).To(Succeed())
 	})
 	Describe("withHostLockOrNothing", func() {
 		It("should call callback function if lock is acquired", func() {

@@ -20,7 +20,6 @@ import (
 	cli "github.com/werf/3p-helm-for-werf-helm/pkg/cli"
 	provenance "github.com/werf/3p-helm-for-werf-helm/pkg/provenance"
 	registry "github.com/werf/3p-helm-for-werf-helm/pkg/registry"
-	commonlock "github.com/werf/common-go/pkg/lock"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
@@ -112,11 +111,11 @@ func prepareDependenciesDir(ctx context.Context, metadataBytes, metadataLockByte
 	case os.IsNotExist(err):
 		if err := logger.LogProcess("Preparing chart dependencies").DoError(func() error {
 			logger.LogF("Using chart dependencies directory: %s\n", depsDir)
-			_, lock, err := commonlock.AcquireHostLock(ctx, depsDir, lockgate.AcquireOptions{})
+			_, lock, err := werf.HostLocker().AcquireLock(ctx, depsDir, lockgate.AcquireOptions{})
 			if err != nil {
 				return fmt.Errorf("error acquiring lock for %q: %w", depsDir, err)
 			}
-			defer commonlock.ReleaseHostLock(lock)
+			defer werf.HostLocker().ReleaseLock(lock)
 
 			switch _, err := os.Stat(depsDir); {
 			case os.IsNotExist(err):

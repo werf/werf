@@ -393,6 +393,8 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 	loader.SetChartPathFunc = downloader.SetChartPath
 	loader.DepsBuildFunc = downloader.Build
 
+	loader.SetServiceDir(werf.GetServiceDir())
+
 	if err = createNewBundle(
 		ctx,
 		extraAnnotations,
