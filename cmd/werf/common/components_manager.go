@@ -57,11 +57,14 @@ func InitCommonComponents(ctx context.Context, opts InitCommonComponentsOptions)
 			return nil, ctx, fmt.Errorf("initialization error: %w", err)
 		}
 
+		/*
 		// TODO (zaytsev): enable warning after fixing the issue
-		// if err := logging.GlobalWarnIfBackgroundErrorHappened(ctx, werf.GetServiceDir()); err != nil {
-		// 	 return nil, ctx, err
-		// }
-		//
+		if ok, warning, err := logging.BackgroundWarning(werf.GetServiceDir()); err != nil {
+			return nil, ctx, err
+		} else if ok {
+			global_warnings.GlobalWarningLn(ctx, warning)
+		}
+		*/
 	}
 
 	if opts.InitDockerRegistry || opts.InitProcessContainerBackend {
