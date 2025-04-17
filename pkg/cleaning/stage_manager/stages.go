@@ -46,11 +46,17 @@ var (
 )
 
 func newManagedStageDescSet(set image.StageDescSet) *managedStageDescSet {
-	return &managedStageDescSet{
-		stageDescSet:            set,
-		stageDescMetaMap:        map[*image.StageDesc]*stageMeta{},
-		stageDescByStageIDCache: initStageDescByStageIDCache(set),
+	s := &managedStageDescSet{
+		stageDescSet:       set,
+		stageDescMetaMap:   map[*image.StageDesc]*stageMeta{},
+		stageDescByStageID: map[string]*image.StageDesc{},
 	}
+
+	for stageDesc := range set.Iter() {
+		s.stageDescByStageID[stageDesc.StageID.String()] = stageDesc
+	}
+
+	return s
 }
 
 func (s *managedStageDescSet) StageDescSet() image.StageDescSet {
@@ -60,7 +66,7 @@ func (s *managedStageDescSet) StageDescSet() image.StageDescSet {
 func (s *managedStageDescSet) DifferenceInPlace(stageDescSet image.StageDescSet) {
 	s.stageDescSet = s.stageDescSet.Difference(stageDescSet)
 	for stageDesc := range stageDescSet.Iter() {
-		delete(s.stageDescByStageIDCache, stageDesc.StageID.String())
+		delete(s.stageDescByStageID, stageDesc.StageID.String())
 	}
 }
 
@@ -111,16 +117,6 @@ func (s *managedStageDescSet) GetProtectedStageDescSetByReason() map[*protection
 func (s *managedStageDescSet) GetStageDescByStageID(stageID string) *image.StageDesc {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if stageDesc, ok := s.stageDescByStageIDCache[stageID]; ok {
-		return stageDesc
-	}
-	return nil
-}
 
-func initStageDescByStageIDCache(stageDescSet image.StageDescSet) map[string]*image.StageDesc {
-	cache := make(map[string]*image.StageDesc)
-	for stageDesc := range stageDescSet.Iter() {
-		cache[stageDesc.StageID.String()] = stageDesc
-	}
-	return cache
+	return s.stageDescByStageID[stageID]
 }
