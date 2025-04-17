@@ -62,14 +62,9 @@ jobs:
 
       - name: Test
         run: |
-          export WERF_TEST_K8S_BASE64_KUBECONFIG=$(cat ~/.kube/config | base64 -w 0)
-          source ./scripts/ci/integration_k8s_tests_before_hook.sh
           task -p test:integration kubeVersion=${{ matrix.kubeVersion }} paths="integration/suites/cleanup_after_converge integration/suites/deploy integration/suites/helm/deploy_rollback" -- --keep-going
           echo loadavg: $(cat /proc/loadavg)
         env:
-          WERF_TEST_K8S_DOCKER_REGISTRY: "localhost:5000"
-          WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME }}
-          WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD }}
           GOCOVERDIR: ${{ env.WERF_TEST_COVER_DIR }}
 
       - name: Upload coverage artifact
