@@ -9,7 +9,6 @@ import (
 	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
 	"github.com/werf/werf/v2/pkg/image"
-	"github.com/werf/werf/v2/pkg/logging"
 	"github.com/werf/werf/v2/pkg/ssh_agent"
 	"github.com/werf/werf/v2/pkg/storage/lrumeta"
 	"github.com/werf/werf/v2/pkg/true_git"
@@ -58,9 +57,11 @@ func InitCommonComponents(ctx context.Context, opts InitCommonComponentsOptions)
 			return nil, ctx, fmt.Errorf("initialization error: %w", err)
 		}
 
-		if err := logging.GlobalWarnIfBackgroundErrorHappened(ctx, werf.GetServiceDir()); err != nil {
-			return nil, ctx, err
-		}
+		// TODO (zaytsev): enable warning after fixing the issue
+		// if err := logging.GlobalWarnIfBackgroundErrorHappened(ctx, werf.GetServiceDir()); err != nil {
+		// 	 return nil, ctx, err
+		// }
+		//
 	}
 
 	if opts.InitDockerRegistry || opts.InitProcessContainerBackend {
