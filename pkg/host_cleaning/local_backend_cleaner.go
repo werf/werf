@@ -438,14 +438,14 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 	})
 
 	if vu.Percentage() > targetVolumeUsagePercentage {
-		logboek.Context(ctx).Warn().LogOptionalLn()
-		logboek.Context(ctx).Warn().LogF("WARNING: Detected high %s storage volume usage, while no werf images available to cleanup!\n", cleaner.BackendName())
-		logboek.Context(ctx).Warn().LogF("WARNING:\n")
-		logboek.Context(ctx).Warn().LogF("WARNING: Werf tries to maintain host clean by deleting:\n")
-		logboek.Context(ctx).Warn().LogF("WARNING:  - old unused files from werf caches (which are stored in the ~/.werf/local_cache);\n")
-		logboek.Context(ctx).Warn().LogF("WARNING:  - old temporary service files /tmp/werf-project-data-* and /tmp/werf-config-render-*;\n")
-		logboek.Context(ctx).Warn().LogF("WARNING:  - least recently used werf images except local stages storage images (images built with 'werf build' without '--repo' param, or with '--stages-storage=:local' param for the werf v1.1).\n")
-		logboek.Context(ctx).Warn().LogOptionalLn()
+		logboek.Context(ctx).Info().LogOptionalLn()
+		logboek.Context(ctx).Info().LogF("NOTE: Detected high %s storage volume usage, while no werf images available to cleanup!\n", cleaner.BackendName())
+		logboek.Context(ctx).Info().LogF("NOTE:\n")
+		logboek.Context(ctx).Info().LogF("NOTE: Werf tries to maintain host clean by deleting:\n")
+		logboek.Context(ctx).Info().LogF("NOTE:  - old unused files from werf caches (which are stored in the ~/.werf/local_cache);\n")
+		logboek.Context(ctx).Info().LogF("NOTE:  - old temporary service files /tmp/werf-project-data-* and /tmp/werf-config-render-*;\n")
+		logboek.Context(ctx).Info().LogF("NOTE:  - least recently used werf images except local stages storage images (images built with 'werf build' without '--repo' param, or with '--stages-storage=:local' param for the werf v1.1).\n")
+		logboek.Context(ctx).Info().LogOptionalLn()
 	}
 
 	return nil
@@ -518,7 +518,7 @@ func (cleaner *LocalBackendCleaner) doSafeCleanupWerfContainers(ctx context.Cont
 		containerName := werfContainerName(container)
 
 		if containerName == "" {
-			logboek.Context(ctx).Warn().LogF("Ignore bad container %s\n", container.ID)
+			logboek.Context(ctx).Info().LogF("Ignore bad container %s\n", container.ID)
 			continue
 		}
 
@@ -528,10 +528,10 @@ func (cleaner *LocalBackendCleaner) doSafeCleanupWerfContainers(ctx context.Cont
 			})
 			switch {
 			case errors.Is(err, container_backend.ErrCannotRemovePausedContainer):
-				logboek.Context(ctx).Warn().LogF("Ignore paused container %s\n", logContainerName(container))
+				logboek.Context(ctx).Info().LogF("Ignore paused container %s\n", logContainerName(container))
 				return nil
 			case errors.Is(err, container_backend.ErrCannotRemoveRunningContainer):
-				logboek.Context(ctx).Warn().LogF("Ignore running container %s\n", logContainerName(container))
+				logboek.Context(ctx).Info().LogF("Ignore running container %s\n", logContainerName(container))
 				return nil
 			case err != nil:
 				return fmt.Errorf("failed to remove container %s: %w", logContainerName(container), err)
@@ -642,7 +642,7 @@ func (cleaner *LocalBackendCleaner) removeImageByRepoTags(ctx context.Context, o
 				Force: options.Force,
 			})
 			if err != nil {
-				logboek.Context(ctx).Warn().LogF("failed to remove local image by ID %q: %s\n", imgSummary.ID, err)
+				logboek.Context(ctx).Info().LogF("Cannot remove local image by ID %q: %s\n", imgSummary.ID, err)
 				unRemovedCount++
 			}
 		} else {
@@ -651,7 +651,7 @@ func (cleaner *LocalBackendCleaner) removeImageByRepoTags(ctx context.Context, o
 					Force: options.Force,
 				})
 				if err != nil {
-					logboek.Context(ctx).Warn().LogF("failed to remove local image by repo tag %q: %s\n", ref, err)
+					logboek.Context(ctx).Info().LogF("Cannot remove local image by repo tag %q: %s\n", ref, err)
 					unRemovedCount++
 				}
 				return nil
@@ -675,7 +675,7 @@ func (cleaner *LocalBackendCleaner) removeImageByRepoDigests(ctx context.Context
 			Force: options.Force,
 		})
 		if err != nil {
-			logboek.Context(ctx).Warn().LogF("failed to remove local image by repo digest %q: %s\n", repoDigest, err)
+			logboek.Context(ctx).Info().LogF("Cannot remove local image by repo digest %q: %s\n", repoDigest, err)
 			unRemovedCount++
 		}
 	}
@@ -700,10 +700,10 @@ func logDeletedItems(ctx context.Context, deletedItems []string) {
 func handleError(ctx context.Context, err error) error {
 	switch {
 	case errors.Is(err, container_backend.ErrUnsupportedFeature):
-		logboek.Context(ctx).Warn().LogLn("Backend does not support this feature")
+		logboek.Context(ctx).Info().LogLn("Backend does not support this feature")
 		return nil
 	case errors.Is(err, errOptionDryRunNotSupported):
-		logboek.Context(ctx).Warn().LogLn("There is not an able to calculate reclaimed size in --dry-run mode")
+		logboek.Context(ctx).Info().LogLn("There is not an able to calculate reclaimed size in --dry-run mode")
 		return nil
 	case err != nil:
 		return err

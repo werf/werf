@@ -13,7 +13,7 @@ func BackgroundStreams(werfServiceDir string) (io.Writer, io.Writer, error) {
 	outFileName := backgroundOutputFilename(werfServiceDir)
 	errFileName := backgroundErrorFilename(werfServiceDir)
 
-	fileFlag := os.O_APPEND | os.O_WRONLY | os.O_CREATE
+	fileFlag := os.O_TRUNC | os.O_WRONLY | os.O_CREATE
 
 	outFile, err := openFile(outFileName, fileFlag)
 	if err != nil {
