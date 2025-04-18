@@ -9,10 +9,12 @@ import (
 	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
 	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/logging"
 	"github.com/werf/werf/v2/pkg/ssh_agent"
 	"github.com/werf/werf/v2/pkg/storage/lrumeta"
 	"github.com/werf/werf/v2/pkg/true_git"
 	"github.com/werf/werf/v2/pkg/werf"
+	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
 
 type ComponentsManager struct {
@@ -57,14 +59,11 @@ func InitCommonComponents(ctx context.Context, opts InitCommonComponentsOptions)
 			return nil, ctx, fmt.Errorf("initialization error: %w", err)
 		}
 
-		/*
-			// TODO (zaytsev): enable warning after fixing the issue
-			if ok, warning, err := logging.BackgroundWarning(werf.GetServiceDir()); err != nil {
-				return nil, ctx, err
-			} else if ok {
-				global_warnings.GlobalWarningLn(ctx, warning)
-			}
-		*/
+		if ok, warning, err := logging.BackgroundWarning(werf.GetServiceDir()); err != nil {
+			return nil, ctx, err
+		} else if ok {
+			global_warnings.GlobalWarningLn(ctx, warning)
+		}
 	}
 
 	if opts.InitDockerRegistry || opts.InitProcessContainerBackend {
