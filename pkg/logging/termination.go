@@ -9,3 +9,7 @@ func Error(message string) {
 	logboek.Streams().DisableLineWrapping()
 	logboek.Error().LogLn(message)
 }
+
+func Default(message string) {
+	logboek.Default().LogLn(message)
+}

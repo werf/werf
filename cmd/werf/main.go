@@ -27,12 +27,9 @@ func main() {
 	}
 
 	terminationCtx := graceful.WithTermination(context.Background())
-	defer graceful.Shutdown(terminationCtx, func(err error, exitCode int) {
-		logging.Error(err.Error())
-		os.Exit(exitCode)
-	})
+	defer graceful.Shutdown(terminationCtx, onShutdown)
 
-	ctx := logging.WithLogger(context.Background())
+	ctx := logging.WithLogger(terminationCtx)
 
 	root.PrintStackTraces()
 
@@ -83,4 +80,13 @@ func main() {
 	}
 
 	common.ShutdownTelemetry(ctx, 0)
+}
+
+func onShutdown(err error, exitCode int) {
+	if exitCode != 0 { // exitCode could be -1, 0, or >0; see pkg/werf/exec/cancel_test.go
+		logging.Error(err.Error())
+	} else {
+		logging.Default(err.Error())
+	}
+	os.Exit(exitCode)
 }
