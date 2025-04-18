@@ -78,7 +78,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 func runCleanup(ctx context.Context) error {
 	projectName := *commonCmdData.ProjectName
 	if projectName != "" {
-		return fmt.Errorf("no functionality for cleaning a certain project is implemented (--project-name=%s)", projectName)
+		return fmt.Errorf("no functionality for cleaning a certain project is implemented (--project-name or WERF_PROJECT_NAME = %s)", projectName)
 	}
 
 	commonManager, ctx, err := common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{

@@ -23,8 +23,9 @@ const (
 type AutoHostCleanupOptions struct {
 	HostCleanupOptions
 
-	TmpDir  *string
-	HomeDir *string
+	TmpDir      *string
+	HomeDir     *string
+	ProjectName *string
 }
 
 type HostCleanupOptions struct {
@@ -49,7 +50,7 @@ func getOptionValueOrDefault(optionValue *uint, defaultValue float64) float64 {
 }
 
 func RunAutoHostCleanup(ctx context.Context, backend container_backend.ContainerBackend, options AutoHostCleanupOptions) error {
-	if shouldRun, err := shouldRunAutoHostCleanup(ctx, backend, options.HostCleanupOptions); err != nil {
+	if shouldRun, err := shouldRunAutoHostCleanup(ctx, backend, options); err != nil {
 		logboek.Context(ctx).Warn().LogF("WARNING: unable to check if auto host cleanup should be run: %s\n", err)
 		return nil
 	} else if !shouldRun {
@@ -140,7 +141,12 @@ func RunHostCleanup(ctx context.Context, backend container_backend.ContainerBack
 	})
 }
 
-func shouldRunAutoHostCleanup(ctx context.Context, backend container_backend.ContainerBackend, options HostCleanupOptions) (bool, error) {
+func shouldRunAutoHostCleanup(ctx context.Context, backend container_backend.ContainerBackend, options AutoHostCleanupOptions) (bool, error) {
+	// host cleanup is not supported for certain project
+	if options.ProjectName != nil {
+		return false, nil
+	}
+
 	shouldRun, err := tmp_manager.ShouldRunAutoGC()
 	if err != nil {
 		return false, fmt.Errorf("failed to check tmp manager GC: %w", err)
