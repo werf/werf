@@ -1,5 +1,20 @@
 # Changelog
 
+### [2.35.5](https://www.github.com/werf/werf/compare/v2.35.4...v2.35.5) (2025-04-18)
+
+
+### Bug Fixes
+
+* **build:** use ctx for graceful shutdown ([be456ca](https://www.github.com/werf/werf/commit/be456cac367931d987b96452d137b537e8281dd2))
+* **host-cleanup:** disable auto host cleanup for certain project ([5ace16a](https://www.github.com/werf/werf/commit/5ace16ad8df8abaf3f468527ea955234017f8347))
+* **host-cleanup:** disable background warning temporary ([eeb7508](https://www.github.com/werf/werf/commit/eeb7508fedb3563349dec58aee1c95a0cbc84a2a))
+* **host-cleanup:** fix service host cleanup image cannot be replaced ([eb05266](https://www.github.com/werf/werf/commit/eb05266d4a636b9cc14c5d89b2eee69501ed0639))
+* **host-cleanup:** preserve --tmp-dir and --home-dir options for auto host cleanup ([9f6bcbd](https://www.github.com/werf/werf/commit/9f6bcbdfc08109bdcc3c4d78476f5e6580391168))
+* **host-cleanup:** rename import name due to review note ([5aa4f26](https://www.github.com/werf/werf/commit/5aa4f2643cc76cd83af6c4c042cf7567d1f94352))
+* **host-cleanup:** resolve "cycled import" error ([9141966](https://www.github.com/werf/werf/commit/9141966fba808641985cf4fb9982479bc49a1b9a))
+* **host-cleanup:** separate the responsibility of graceful and exec ([7c58d88](https://www.github.com/werf/werf/commit/7c58d88062b0a77917d6431053bfbd0345dda61c))
+* **host-cleanup:** termination logging should be able to handle different exit codes ([e5f305b](https://www.github.com/werf/werf/commit/e5f305b614ffdbcba0f58340c507ad52d2b4b7f9))
+
 ### [2.35.4](https://www.github.com/werf/werf/compare/v2.35.3...v2.35.4) (2025-04-16)
 
 
