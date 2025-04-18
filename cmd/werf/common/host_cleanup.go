@@ -36,8 +36,9 @@ func RunAutoHostCleanup(ctx context.Context, cmdData *CmdData, containerBackend 
 			AllowedLocalCacheVolumeUsageMarginPercentage:     cmdData.AllowedLocalCacheVolumeUsageMargin,
 			BackendStoragePath:                               cmdData.BackendStoragePath,
 		},
-		TmpDir:  cmdData.TmpDir,
-		HomeDir: cmdData.HomeDir,
+		TmpDir:      cmdData.TmpDir,
+		HomeDir:     cmdData.HomeDir,
+		ProjectName: cmdData.ProjectName,
 	})
 }
 
