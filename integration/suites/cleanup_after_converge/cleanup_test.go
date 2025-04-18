@@ -21,8 +21,6 @@ var _ = Describe("cleanup command", func() {
 
 	setImageCredentialsEnv := func() {
 		SuiteData.Stubs.SetEnv("WERF_SET_IMAGE_CREDENTIALS_REGISTRY", fmt.Sprintf("imageCredentials.registry=%s", os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY")))
-		SuiteData.Stubs.SetEnv("WERF_SET_IMAGE_CREDENTIALS_USERNAME", fmt.Sprintf("imageCredentials.username=%s", os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME")))
-		SuiteData.Stubs.SetEnv("WERF_SET_IMAGE_CREDENTIALS_PASSWORD", fmt.Sprintf("imageCredentials.password=%s", os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD")))
 	}
 
 	setupProject := func() {
