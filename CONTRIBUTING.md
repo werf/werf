@@ -36,30 +36,38 @@ The first thing we recommend is to check the existing [issues](https://github.co
    task build # The built werf binary will be available in the bin directory.
    ```
 
-6. Do manual testing.
-7. Run tests:
+6. Format and lint your code:
+
+    ```shell
+    task format lint
+    ```
+
+    Note: The `task format` and `task lint` will run Prettier inside a container.
+
+7. Setup testing environment:
+   ```shell
+   task test:setup:environment
+   ```
+8. Run tests:
 
    ```shell
    task test:unit
    task test:integration
    task test:e2e
    ```
-
-8. Format and lint your code:
-
+9. Cleanup testing environment:
    ```shell
-   task format lint
+   task test:cleanup:environment
    ```
+10. Do manual testing (if needed).
 
-   Note: The `task format` and `task lint` will run Prettier inside a container.
+11. Commit changes:
 
-9. Commit changes:
+    - Follow [The Conventional Commits specification](https://www.conventionalcommits.org/en/v1.0.0/).
+    - Sign off every commit you contributed as an acknowledgment of the [DCO](https://developercertificate.org/).
 
-   - Follow [The Conventional Commits specification](https://www.conventionalcommits.org/en/v1.0.0/).
-   - Sign off every commit you contributed as an acknowledgment of the [DCO](https://developercertificate.org/).
-
-10. Push commits.
-11. Create a pull request.
+12. Push commits.
+13. Create a pull request.
 
 ## Conventions
 
