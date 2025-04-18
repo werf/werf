@@ -9,7 +9,6 @@ import (
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
 	"github.com/werf/werf/v2/pkg/tmp_manager"
-	"github.com/werf/werf/v2/pkg/util/option"
 	"github.com/werf/werf/v2/pkg/werf/exec"
 )
 
@@ -85,9 +84,13 @@ func RunAutoHostCleanup(ctx context.Context, backend container_backend.Container
 
 	// We should pass tmpDir and homeDir via environment variables
 	// because background.TryLock() uses them before parsing cli options doing werf.Init().
-	envs := []string{
-		fmt.Sprintf("WERF_TMP_DIR=%v", option.PtrValueOrDefault(options.TmpDir, "")),
-		fmt.Sprintf("WERF_HOME=%v", option.PtrValueOrDefault(options.HomeDir, "")),
+	var envs []string
+
+	if options.TmpDir != nil && *options.TmpDir != "" {
+		envs = append(envs, fmt.Sprintf("WERF_TMP_DIR=%v", options.TmpDir))
+	}
+	if options.HomeDir != nil && *options.HomeDir != "" {
+		envs = append(envs, fmt.Sprintf("WERF_HOME=%v", options.HomeDir))
 	}
 
 	return exec.Detach(ctx, args, envs)
