@@ -222,7 +222,7 @@ config:
 						addSymlinks: map[string]string{
 							aFilePath: configFilePath,
 						},
-						expectedErrSubstring: ` unable to read werf config: symlink "werf.yaml" check failed: the untracked file "a" must be committed`,
+						expectedErrSubstring: `unable to read werf config: symlink "werf.yaml" check failed: the untracked file "a" must be committed`,
 					}),
 					Entry("the symlink to the config file changed after commit: werf.yaml (changed) -> a -> dir/werf.yaml", symlinkEntry{
 						addConfigFile:    true,
