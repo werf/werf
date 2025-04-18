@@ -121,6 +121,8 @@ func (m *cleanupManager) init(ctx context.Context) error {
 
 func (m *cleanupManager) run(ctx context.Context) error {
 	if m.ConfigMetaCleanup.DisableCleanup {
+		logboek.Context(ctx).Default().LogLnDetails("Cleanup is disabled via werf.yaml — only metadata will be cleaned up, image tags will NOT be removed.")
+
 		if err := m.purgeManagedImages(ctx); err != nil {
 			return err
 		}
