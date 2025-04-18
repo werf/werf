@@ -41,7 +41,7 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
 		var stgErr error
 		stagesStorage, stgErr = GetStagesStorage(ctx, c.ContainerBackend, c.CmdData)
 		if stgErr != nil {
-			return nil, fmt.Errorf("error get stages storage: %w", stgErr)
+			return nil, stgErr
 		}
 	}
 

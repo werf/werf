@@ -65,7 +65,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupSecondaryStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
-	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{})
+	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{OptionalRepo: false})
 	common.SetupFinalRepo(&commonCmdData, cmd)
 	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultCleanupParallelTasksLimit)
 
@@ -176,14 +176,6 @@ func runCleanup(ctx context.Context, cmd *cobra.Command) error {
 	}
 
 	projectName := werfConfig.Meta.Project
-
-	_, err = commonCmdData.Repo.GetAddress()
-	if err != nil {
-		logboek.Context(ctx).Default().LogLnDetails(`The "werf cleanup" command is only used to cleaning the container registry. In case you need to clean the runner or the localhost, use the commands of the "werf host" group.
-It is worth noting that auto-cleaning is enabled by default, and manual use is usually not required (if not, we would appreciate feedback and creating an issue https://github.com/werf/werf/issues/new).`)
-
-		return err
-	}
 
 	storageManager, err := common.NewStorageManager(ctx, &common.NewStorageManagerConfig{
 		ProjectName:      projectName,
