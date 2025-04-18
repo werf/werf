@@ -36,7 +36,14 @@ The first thing we recommend is to check the existing [issues](https://github.co
    task build # The built werf binary will be available in the bin directory.
    ```
 
-6. Do manual testing.
+6. Format and lint your code:
+
+    ```shell
+    task format lint
+    ```
+
+    Note: The `task format` and `task lint` will run Prettier inside a container.
+
 7. Setup testing environment:
    ```shell
    task test:setup:environment
@@ -52,13 +59,7 @@ The first thing we recommend is to check the existing [issues](https://github.co
    ```shell
    task test:cleanup:environment
    ```
-10. Format and lint your code:
-
-    ```shell
-    task format lint
-    ```
-
-    Note: The `task format` and `task lint` will run Prettier inside a container.
+10. Do manual testing (if needed).
 
 11. Commit changes:
 
