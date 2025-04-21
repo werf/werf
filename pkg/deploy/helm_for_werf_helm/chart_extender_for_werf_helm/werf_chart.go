@@ -23,7 +23,6 @@ import (
 	getter "github.com/werf/3p-helm-for-werf-helm/pkg/getter"
 	postrender "github.com/werf/3p-helm-for-werf-helm/pkg/postrender"
 	registry "github.com/werf/3p-helm-for-werf-helm/pkg/registry"
-	cli_new "github.com/werf/3p-helm/pkg/cli"
 	"github.com/werf/3p-helm/pkg/werf/file"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
@@ -482,31 +481,4 @@ func CastToChartExtenderBufferedFilesForHelmWerf(files []*file.ChartExtenderBuff
 	}
 
 	return resultFiles
-}
-
-func CastToEnvSettingsFromHelmWerf(settings *cli.EnvSettings) *cli_new.EnvSettings {
-	resultSettings := &cli_new.EnvSettings{
-		KubeConfig:                settings.KubeConfig,
-		KubeContext:               settings.KubeContext,
-		KubeToken:                 settings.KubeToken,
-		KubeAsUser:                settings.KubeAsUser,
-		KubeAsGroups:              settings.KubeAsGroups,
-		KubeAPIServer:             settings.KubeAPIServer,
-		KubeCaFile:                settings.KubeCaFile,
-		KubeInsecureSkipTLSVerify: settings.KubeInsecureSkipTLSVerify,
-		KubeTLSServerName:         settings.KubeTLSServerName,
-		Debug:                     settings.Debug,
-		RegistryConfig:            settings.RegistryConfig,
-		RepositoryConfig:          settings.RepositoryConfig,
-		RepositoryCache:           settings.RepositoryCache,
-		PluginsDirectory:          settings.PluginsDirectory,
-		MaxHistory:                settings.MaxHistory,
-		BurstLimit:                settings.BurstLimit,
-		QPS:                       settings.QPS,
-	}
-
-	*resultSettings.GetConfigP() = settings.RESTClientGetter()
-	*resultSettings.GetNamespaceP() = settings.Namespace()
-
-	return resultSettings
 }
