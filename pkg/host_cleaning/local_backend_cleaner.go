@@ -703,7 +703,7 @@ func handleError(ctx context.Context, err error) error {
 		logboek.Context(ctx).Info().LogLn("Backend does not support this feature")
 		return nil
 	case errors.Is(err, errOptionDryRunNotSupported):
-		logboek.Context(ctx).Info().LogLn("There is not an able to calculate reclaimed size in --dry-run mode")
+		logboek.Context(ctx).Info().LogLn("There is not able to calculate reclaimed size in --dry-run mode")
 		return nil
 	case err != nil:
 		return err
