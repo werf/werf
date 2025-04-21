@@ -110,6 +110,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupAllowedLocalCacheVolumeUsage(&commonCmdData, cmd)
 	common.SetupAllowedLocalCacheVolumeUsageMargin(&commonCmdData, cmd)
 	common.SetupBackendStoragePath(&commonCmdData, cmd)
+	common.SetupProjectName(&commonCmdData, cmd, false)
 
 	commonCmdData.SetupPlatform(cmd)
 

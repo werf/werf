@@ -51,7 +51,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupTmpDir(&commonCmdData, cmd, common.SetupTmpDirOptions{})
 	common.SetupHomeDir(&commonCmdData, cmd, common.SetupHomeDirOptions{})
 	common.SetupDockerConfig(&commonCmdData, cmd, "")
-	common.SetupProjectName(&commonCmdData, cmd)
+	common.SetupProjectName(&commonCmdData, cmd, true)
 
 	common.SetupGiterminismOptions(&commonCmdData, cmd)
 
