@@ -14,8 +14,6 @@ spec:
       labels:
         service: {{ .Chart.Name }}-backend
     spec:
-      imagePullSecrets:
-      - name: registrysecret
       containers:
       - name: backend
         workingDir: /app

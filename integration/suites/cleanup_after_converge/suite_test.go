@@ -17,8 +17,6 @@ var testSuiteEntrypointFunc = suite_init.MakeTestSuiteEntrypointFunc("Cleanup af
 	RequiredSuiteTools: []string{"git", "docker"},
 	RequiredSuiteEnvs: []string{
 		"WERF_TEST_K8S_DOCKER_REGISTRY",
-		"WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME",
-		"WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD",
 	},
 })
 
