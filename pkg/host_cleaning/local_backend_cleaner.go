@@ -441,7 +441,7 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 		logboek.Context(ctx).Info().LogOptionalLn()
 		logboek.Context(ctx).Info().LogF("NOTE: Detected high %s storage volume usage, while no werf images available to cleanup!\n", cleaner.BackendName())
 		logboek.Context(ctx).Info().LogF("NOTE:\n")
-		logboek.Context(ctx).Info().LogF("NOTE: Werf tries to maintain host clean by deleting:\n")
+		logboek.Context(ctx).Info().LogF("NOTE: werf tries to maintain host clean by deleting:\n")
 		logboek.Context(ctx).Info().LogF("NOTE:  - old unused files from werf caches (which are stored in the ~/.werf/local_cache);\n")
 		logboek.Context(ctx).Info().LogF("NOTE:  - old temporary service files /tmp/werf-project-data-* and /tmp/werf-config-render-*;\n")
 		logboek.Context(ctx).Info().LogF("NOTE:  - least recently used werf images except local stages storage images (images built with 'werf build' without '--repo' param, or with '--stages-storage=:local' param for the werf v1.1).\n")
