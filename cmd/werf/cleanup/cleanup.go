@@ -93,6 +93,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupAllowedLocalCacheVolumeUsage(&commonCmdData, cmd)
 	common.SetupAllowedLocalCacheVolumeUsageMargin(&commonCmdData, cmd)
 	common.SetupBackendStoragePath(&commonCmdData, cmd)
+	common.SetupProjectName(&commonCmdData, cmd, false)
+
 	commonCmdData.SetupPlatform(cmd)
 
 	// aliases, but only WERF_SCAN_ONLY_CONTEXT env var is supported

@@ -175,6 +175,7 @@ werf plan --repo registry.mydomain.com/web --env production`,
 	common.SetupAllowedLocalCacheVolumeUsage(&commonCmdData, cmd)
 	common.SetupAllowedLocalCacheVolumeUsageMargin(&commonCmdData, cmd)
 	common.SetupBackendStoragePath(&commonCmdData, cmd)
+	common.SetupProjectName(&commonCmdData, cmd, false)
 
 	common.SetupNetworkParallelism(&commonCmdData, cmd)
 	common.SetupKubeQpsLimit(&commonCmdData, cmd)

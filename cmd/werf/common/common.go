@@ -71,11 +71,6 @@ func SetupGitWorkTree(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringVarP(cmdData.GitWorkTree, "git-work-tree", "", os.Getenv("WERF_GIT_WORK_TREE"), "Use specified git work tree dir (default $WERF_WORK_TREE or lookup for directory that contains .git in the current or parent directories)")
 }
 
-func SetupProjectName(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.ProjectName = new(string)
-	cmd.Flags().StringVarP(cmdData.ProjectName, "project-name", "N", os.Getenv("WERF_PROJECT_NAME"), "Set a specific project name (default $WERF_PROJECT_NAME)")
-}
-
 func SetupDir(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.Dir = new(string)
 	cmd.Flags().StringVarP(cmdData.Dir, "dir", "", os.Getenv("WERF_DIR"), "Use specified project directory where project’s werf.yaml and other configuration files should reside (default $WERF_DIR or current working directory)")

@@ -184,3 +184,16 @@ func SetupAllowedLocalCacheVolumeUsageMargin(cmdData *CmdData, cmd *cobra.Comman
 	cmdData.AllowedLocalCacheVolumeUsageMargin = new(uint)
 	cmd.Flags().UintVarP(cmdData.AllowedLocalCacheVolumeUsageMargin, "allowed-local-cache-volume-usage-margin", "", defaultVal, fmt.Sprintf("During cleanup of local cache werf would delete local cache data until volume usage becomes below \"allowed-local-cache-volume-usage - allowed-local-cache-volume-usage-margin\" level (default %d%% or $%s)", uint(host_cleaning.DefaultAllowedLocalCacheVolumeUsageMarginPercentage), envVarName))
 }
+
+func SetupProjectName(cmdData *CmdData, cmd *cobra.Command, visible bool) {
+	const name = "project-name"
+
+	cmdData.ProjectName = new(string)
+	cmd.Flags().StringVarP(cmdData.ProjectName, name, "N", os.Getenv("WERF_PROJECT_NAME"), "Set a specific project name (default $WERF_PROJECT_NAME)")
+
+	if !visible {
+		if err := cmd.Flags().MarkHidden(name); err != nil {
+			panic(err)
+		}
+	}
+}
