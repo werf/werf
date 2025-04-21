@@ -20,7 +20,7 @@ func withHostLockOrNothing(ctx context.Context, lockName string, callback func()
 	}
 
 	if !acquired {
-		logboek.Context(ctx).Warn().LogF("Ignore locked %s\n", lockName)
+		logboek.Context(ctx).Info().LogF("Ignore locked %s\n", lockName)
 		return nil
 	}
 
