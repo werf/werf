@@ -239,6 +239,19 @@ func parseWerfConfig(ctx context.Context, tmpl *template.Template, giterminismMa
 	return configPath, nil
 }
 
+func parseWerfDependencyConfig(ctx context.Context, tmpl *template.Template, giterminismManager giterminism_manager.Interface, relWerfDependencyConfigPath string) (string, error) {
+	configPath, configData, err := giterminismManager.FileReader().ReadConfig(ctx, relWerfDependencyConfigPath)
+	if err != nil {
+		return "", err
+	}
+
+	if _, err := tmpl.Parse(string(configData)); err != nil {
+		return "", err
+	}
+
+	return configPath, nil
+}
+
 func parseWerfConfigTemplatesDir(ctx context.Context, tmpl *template.Template, giterminismManager giterminism_manager.Interface, customWerfConfigTemplatesDirRelPath string) error {
 	return giterminismManager.FileReader().ReadConfigTemplateFiles(ctx, customWerfConfigTemplatesDirRelPath, func(templatePathInsideDir string, data []byte, err error) error {
 		if err != nil {
