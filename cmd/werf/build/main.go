@@ -12,6 +12,7 @@ import (
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
+	"github.com/werf/werf/v2/pkg/includes"
 	"github.com/werf/werf/v2/pkg/tmp_manager"
 	"github.com/werf/werf/v2/pkg/true_git"
 	"github.com/werf/werf/v2/pkg/werf/global_warnings"
@@ -154,6 +155,18 @@ func runMain(ctx context.Context, imageNameListFromArgs []string) error {
 	if err != nil {
 		return err
 	}
+
+	////
+	includesConfig, err := includes.NewConfig(ctx, giterminismManager.FileReader(), "werf-includes.yaml")
+	if err != nil {
+		return fmt.Errorf("unable to load werf-includes.yaml: %w", err)
+	}
+
+	err = includes.GetIncludes(includesConfig)
+	if err != nil {
+		return fmt.Errorf("unable to get includes: %w", err)
+	}
+	////
 
 	common.ProcessLogProjectDir(&commonCmdData, giterminismManager.ProjectDir())
 
