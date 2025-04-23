@@ -9,5 +9,5 @@ gem "jekyll-include-cache", "~> 0.2"
 gem "jekyll-sass-converter", "~> 3.0"
 
 gem "sprockets", "~> 4.2"
-gem "nokogiri", ">= 1.12.5"
+gem "nokogiri", ">= 1.18.8"
 gem "kramdown", ">= 2.5.1"
