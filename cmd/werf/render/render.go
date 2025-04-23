@@ -393,7 +393,7 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 
 	loader.ChartFileReader = giterminismManager.FileReader()
 
-	ctx = action.SetupLogging(ctx, common.GetNelmLogLevel(&commonCmdData), action.DefaultChartRenderLogLevel)
+	ctx = action.SetupLogging(ctx, common.GetNelmLogLevel(&commonCmdData), action.DefaultChartRenderLogLevel, *commonCmdData.LogColorMode)
 
 	if err := action.ChartRender(ctx, action.ChartRenderOptions{
 		ChartAppVersion:              common.GetHelmChartConfigAppVersion(werfConfig),
@@ -421,7 +421,6 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 		KubeToken:                    *commonCmdData.KubeToken,
 		Remote:                       cmdData.Validate,
 		LocalKubeVersion:             *commonCmdData.KubeVersion,
-		LogColorMode:                 *commonCmdData.LogColorMode,
 		LogRegistryStreamOut:         os.Stdout,
 		NetworkParallelism:           *commonCmdData.NetworkParallelism,
 		OutputFilePath:               cmdData.RenderOutput,
