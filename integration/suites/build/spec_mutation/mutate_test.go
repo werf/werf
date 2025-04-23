@@ -46,7 +46,6 @@ var _ = Describe("build and mutate image spec", Label("integration", "build", "m
 					contRuntime.Pull(buildReport.Images[imageName].DockerImageName)
 					inspectOfImage := contRuntime.GetImageInspect(buildReport.Images[imageName].DockerImageName)
 					imgCfg := inspectOfImage.Config
-					SuiteData.ImagesToClean = append(SuiteData.ImagesToClean, buildReport.Images[imageName].DockerImageName)
 
 					By("checking image metadata")
 					switch imageName {
