@@ -89,11 +89,10 @@ func runRotateSecretKey(
 
 	chartPath := filepath.Join(giterminismManager.ProjectDir(), relChartPath)
 
-	ctx = action.SetupLogging(ctx, common.GetNelmLogLevel(&commonCmdData), action.DefaultSecretKeyRotateLogLevel)
+	ctx = action.SetupLogging(ctx, common.GetNelmLogLevel(&commonCmdData), action.DefaultSecretKeyRotateLogLevel, *commonCmdData.LogColorMode)
 
 	if err := action.SecretKeyRotate(ctx, action.SecretKeyRotateOptions{
 		ChartDirPath:      chartPath,
-		LogColorMode:      *commonCmdData.LogColorMode,
 		SecretValuesPaths: secretValuesPaths,
 		SecretWorkDir:     giterminismManager.ProjectDir(),
 	}); err != nil {

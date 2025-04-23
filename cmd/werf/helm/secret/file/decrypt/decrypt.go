@@ -94,10 +94,9 @@ func runSecretDecrypt(ctx context.Context, filePath string) error {
 
 	workingDir := common.GetWorkingDir(&commonCmdData)
 
-	ctx = action.SetupLogging(ctx, common.GetNelmLogLevel(&commonCmdData), action.DefaultSecretFileDecryptLogLevel)
+	ctx = action.SetupLogging(ctx, common.GetNelmLogLevel(&commonCmdData), action.DefaultSecretFileDecryptLogLevel, *commonCmdData.LogColorMode)
 
 	if err := action.SecretFileDecrypt(ctx, filePath, action.SecretFileDecryptOptions{
-		LogColorMode:   *commonCmdData.LogColorMode,
 		OutputFilePath: CmdData.OutputFilePath,
 		SecretWorkDir:  workingDir,
 		TempDirPath:    *commonCmdData.TmpDir,

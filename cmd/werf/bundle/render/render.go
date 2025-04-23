@@ -214,7 +214,7 @@ func runRender(ctx context.Context) error {
 
 	chart.CurrentChartType = chart.ChartTypeBundle
 
-	ctx = action.SetupLogging(ctx, common.GetNelmLogLevel(&commonCmdData), action.DefaultChartRenderLogLevel)
+	ctx = action.SetupLogging(ctx, common.GetNelmLogLevel(&commonCmdData), action.DefaultChartRenderLogLevel, *commonCmdData.LogColorMode)
 
 	if err := action.ChartRender(ctx, action.ChartRenderOptions{
 		ChartDirPath:                 bundlePath,
@@ -238,7 +238,6 @@ func runRender(ctx context.Context) error {
 		KubeToken:                    *commonCmdData.KubeToken,
 		Remote:                       cmdData.Validate,
 		LocalKubeVersion:             *commonCmdData.KubeVersion,
-		LogColorMode:                 *commonCmdData.LogColorMode,
 		LogRegistryStreamOut:         os.Stdout,
 		NetworkParallelism:           *commonCmdData.NetworkParallelism,
 		OutputFilePath:               cmdData.RenderOutput,
