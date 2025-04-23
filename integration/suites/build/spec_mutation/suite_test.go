@@ -32,8 +32,7 @@ var SuiteData = struct {
 	RegistryInternalAddress string
 	RegistryContainerName   string
 
-	WerfRepo      string
-	ImagesToClean []string
+	WerfRepo string
 }{}
 
 var (
@@ -52,9 +51,6 @@ var (
 	})
 
 	_ = AfterEach(func() {
-		for _, i := range SuiteData.ImagesToClean {
-			utils.RunSucceedCommand("", "docker", "rmi", i)
-		}
 		utils.RunSucceedCommand("", SuiteData.WerfBinPath, "host", "purge", "--force", "--project-name", SuiteData.ProjectName)
 	})
 )
