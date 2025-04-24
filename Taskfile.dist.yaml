@@ -5,7 +5,6 @@ silent: true
 env:
   GO111MODULE: "on"
   HELM_PLUGINS: ""
-  WERF_TEST_K8S_DOCKER_REGISTRY: "localhost:5000"
   KUBECONFIG:
     sh: echo "$HOME/.kube/config"
 
@@ -346,27 +345,44 @@ tasks:
 
   test:setup:environment:
     desc: "Setup environment on which the tests will be run."
-    deps:
-      - deps:install:kind
-      - test:setup:kubernetes
-      - test:setup:registry
+    cmds:
+      - task: deps:install:kind
+      - task: test:setup:registry
+      - task: test:setup:kubernetes
+      - task: test:env:generate
 
   test:setup:registry:
     desc: "Setup dev registry."
-    cmd: docker run -d -p 5000:5000 -e REGISTRY_STORAGE_DELETE_ENABLED=true --restart=always --name kind-registry registry:2
+    cmds:
+      - docker network create kind || true
+      - docker run -d -p 0.0.0.0::5000 --network kind -e REGISTRY_STORAGE_DELETE_ENABLED=true --restart=always --name kind-registry registry:2
 
   test:setup:kubernetes:
     desc: "Setup dev kubernetes cluster."
+    vars:
+      registryPort:
+        sh: docker inspect kind-registry --format '{{"{{"}}(index (index .NetworkSettings.Ports "5000/tcp") 0).HostPort{{"}}"}}'
     cmd: |
-      kind create cluster  --image kindest/node:v{{.kubeVersion}} --config=<(echo "
+      kind create cluster --image kindest/node:v{{.kubeVersion}} --config=<(echo "
         kind: Cluster
         apiVersion: kind.x-k8s.io/v1alpha4
         containerdConfigPatches:
           - |
-            [plugins.\"io.containerd.grpc.v1.cri\".registry.mirrors.\"localhost:5000\"]
+            [plugins.\"io.containerd.grpc.v1.cri\".registry.mirrors.\"localhost:{{.registryPort}}\"]
               endpoint = [\"http://kind-registry:5000\"]
       ")
       docker network connect kind kind-registry 2>/dev/null || true
+
+  test:env:generate:
+    desc: "Generate .env file for test environment"
+    vars:
+      registryPort:
+        sh: docker inspect kind-registry --format '{{"{{"}}(index (index .NetworkSettings.Ports "5000/tcp") 0).HostPort{{"}}"}}'
+    cmds:
+      - echo "KUBECONFIG=${HOME}/.kube/config" > .env
+      - echo "WERF_TEST_K8S_DOCKER_REGISTRY=localhost:{{.registryPort}}" >> .env
+      - echo "Environment file '.env' generated."
+      - echo "Run 'export $(xargs < .env)' to start working with tests or the environment."
 
   verify:binaries:dist:all:
     desc: 'Verify that the distributable binaries are built and have correct platform/arch. Important vars: "version".'
