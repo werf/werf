@@ -44,30 +44,30 @@ The first thing we recommend is to check the existing [issues](https://github.co
 
     Note: The `task format` and `task lint` will run Prettier inside a container.
 
-7. Setup testing environment:
-   ```shell
-   task test:setup:environment
-   ```
-8. Run tests:
+7. Testing:
+   1. Setup testing environment:
+      ```shell
+      task test:setup:environment
+      ```
+   2. Run tests:
+      ```shell
+      task test:unit
+      task test:integration
+      task test:e2e
+      ```
+   3. Cleanup testing environment:
+      ```shell
+      task test:cleanup:environment
+      ```
+   4.  Do manual testing (if needed).
 
-   ```shell
-   task test:unit
-   task test:integration
-   task test:e2e
-   ```
-9. Cleanup testing environment:
-   ```shell
-   task test:cleanup:environment
-   ```
-10. Do manual testing (if needed).
-
-11. Commit changes:
+8.  Commit changes:
 
     - Follow [The Conventional Commits specification](https://www.conventionalcommits.org/en/v1.0.0/).
     - Sign off every commit you contributed as an acknowledgment of the [DCO](https://developercertificate.org/).
 
-12. Push commits.
-13. Create a pull request.
+9.  Push commits.
+10. Create a pull request.
 
 ## Conventions
 
