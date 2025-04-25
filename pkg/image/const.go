@@ -28,4 +28,5 @@ const (
 	StageContainerNamePrefix        = "werf.build."
 	ImportServerContainerNamePrefix = "import-server-"
 	AssemblingContainerNamePrefix   = "werf.stapel."
+	SBOMScannerContainerNamePrefix  = "werf.sbom.scanner."
 )

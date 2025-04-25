@@ -19,6 +19,7 @@ import (
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
 	"github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/samber/lo"
 
 	"github.com/werf/common-go/pkg/util"
 	copyrec "github.com/werf/copy-recurse"
@@ -30,6 +31,7 @@ import (
 	"github.com/werf/werf/v2/pkg/container_backend/prune"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/path_matcher"
+	"github.com/werf/werf/v2/pkg/sbom"
 )
 
 type BuildahBackend struct {
@@ -1113,4 +1115,48 @@ func (backend *BuildahBackend) PruneImages(ctx context.Context, options prune.Op
 
 func (backend *BuildahBackend) PruneVolumes(_ context.Context, _ prune.Options) (prune.Report, error) {
 	return prune.Report{}, ErrUnsupportedFeature
+}
+
+func (backend *BuildahBackend) GenerateSBOM(ctx context.Context, sourceImg string) (string, error) {
+	workingTree := sbom.NewWorkingTree()
+
+	if err := workingTree.Create(ctx, backend.TmpDir, []string{"spdx"}); err != nil {
+		return "", err
+	}
+	defer workingTree.Cleanup(ctx)
+
+	scannerContainerName := fmt.Sprintf("%s%s", image.SBOMScannerContainerNamePrefix, uuid.New().String())
+	scannerContainerRef, err := backend.buildah.FromCommand(ctx, scannerContainerName, sourceImg, buildah.FromCommandOpts{})
+	if err != nil {
+		return "", fmt.Errorf("unable to from scanner container: %w", err)
+	}
+
+	scanOptions := lo.Map(workingTree.BillList(), func(result string, _ int) sbom.ScanOptions {
+		return sbom.ScanOptions{
+			Image:      sbom.ScannerImage,
+			PullPolicy: sbom.PullIfMissing,
+			SBOMOutput: result,
+		}
+	})
+
+	imageRef, err := backend.buildah.Commit(ctx, scannerContainerRef, buildah.CommitOpts{
+		SBOMScanOptions: scanOptions,
+	})
+	if err != nil {
+		return "", fmt.Errorf("unable to commit scanner container %q: %w", scannerContainerName, err)
+	}
+	defer func() {
+		if err = backend.buildah.Rmi(ctx, imageRef, buildah.RmiOpts{Force: true}); err != nil {
+			logboek.Context(ctx).Warn().LogF("removing image %q and container %q\n", imageRef, scannerContainerName)
+		}
+	}()
+
+	imageId, err := backend.buildah.BuildFromDockerfile(ctx, workingTree.Containerfile(), buildah.BuildFromDockerfileOpts{
+		ContextDir: workingTree.RootDir(),
+	})
+	if err != nil {
+		return "", fmt.Errorf("unable to build sbom result image: %w", err)
+	}
+
+	return imageId, nil
 }
