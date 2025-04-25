@@ -21,10 +21,10 @@ type GiterminismManagerFileReader interface {
 }
 
 type Config struct {
-	Includes []Include `json:"includes"`
+	Includes []includeConf `json:"includes"`
 }
 
-type Include struct {
+type includeConf struct {
 	Name         string   `yaml:"name"`
 	Git          string   `yaml:"git"`
 	Ref          string   `yaml:"ref"`
@@ -34,11 +34,11 @@ type Include struct {
 	ExcludePaths []string `yaml:"excludePaths"`
 }
 
-type IncludeA struct {
+type Include struct {
 	Name    string `yaml:"name"`
-	Repo    *git_repo.Remote
-	Commit  *object.Commit
-	Objects map[string]string
+	repo    *git_repo.Remote
+	commit  *object.Commit
+	objects map[string]string
 }
 
 func GetWerfIncludesConfigRelPath(path string) string {
@@ -71,10 +71,10 @@ func NewConfig(ctx context.Context, fileReader GiterminismManagerFileReader, con
 	return config, err
 }
 
-func GetIncludes(cfg Config) ([]*IncludeA, error) {
+func GetIncludes(cfg Config) ([]*Include, error) {
 	ctx := context.Background()
 
-	inc := []*IncludeA{}
+	inc := []*Include{}
 	for _, i := range cfg.Includes {
 		repo, err := git_repo.OpenRemoteRepo(i.Name, i.Git)
 		if err != nil {
@@ -128,40 +128,49 @@ func GetIncludes(cfg Config) ([]*IncludeA, error) {
 		}
 
 		fmt.Println("matchedMap", matchedMap)
-		IncludeA := &IncludeA{
+		include := &Include{
 			Name:    i.Name,
-			Repo:    repo,
-			Commit:  commit,
-			Objects: matchedMap,
+			repo:    repo,
+			commit:  commit,
+			objects: matchedMap,
 		}
 
-		inc = append(inc, IncludeA)
+		inc = append(inc, include)
 	}
 	return inc, nil
 }
 
-func (i *IncludeA) GetFile(ctx context.Context, relPath string) ([]byte, error) {
+func (i *Include) WalkObjects(fn func(toPath string, origPath string) error) error {
+	for toPath, origPath := range i.objects {
+		if err := fn(toPath, origPath); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (i *Include) GetFile(ctx context.Context, relPath string) ([]byte, error) {
 	fmt.Println("GetFile", relPath)
-	filePath, ok := i.Objects[relPath]
+	filePath, ok := i.objects[relPath]
 	if !ok {
 		return nil, fmt.Errorf("file not found in include: %s", relPath)
 	}
 
-	data, err := i.Repo.ReadCommitFile(ctx, i.Commit.Hash.String(), filePath)
+	data, err := i.repo.ReadCommitFile(ctx, i.commit.Hash.String(), filePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read commit file: %w", err)
 	}
 	return data, nil
 }
 
-func (i *IncludeA) GetFilesByGlob(ctx context.Context, pattern string) (map[string][]byte, error) {
+func (i *Include) GetFilesByGlob(ctx context.Context, pattern string) (map[string][]byte, error) {
 	result := make(map[string][]byte)
 
 	pm := path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{
 		IncludeGlobs: []string{pattern},
 	})
 
-	for relPath := range i.Objects {
+	for relPath := range i.objects {
 		if pm.IsPathMatched(relPath) {
 			data, err := i.GetFile(ctx, relPath)
 			if err != nil {
