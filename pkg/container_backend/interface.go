@@ -105,6 +105,9 @@ type ContainerBackend interface {
 	// PruneVolumes removes all anonymous volumes not used by at least one container
 	PruneVolumes(ctx context.Context, options prune.Options) (prune.Report, error)
 
+	// GenerateSBOM scans and generates SBOM from source image into another result image
+	GenerateSBOM(ctx context.Context, sourceImg string) (string, error)
+
 	String() string
 
 	// TODO: Util method for cleanup, which possibly should be avoided in the future
