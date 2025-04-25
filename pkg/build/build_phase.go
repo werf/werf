@@ -206,44 +206,14 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 		pair := imagesPairs[taskId]
 
 		name, images := pair.Unpair()
-		platforms := util.MapFuncToSlice(images, func(img *image.Image) string { return img.TargetPlatform })
 
-		// TODO: this target platforms assertion could be removed in future versions and now exists only as a additional self-testing code
-		var targetPlatforms []string
-		if len(forcedTargetPlatforms) > 0 {
-			targetPlatforms = forcedTargetPlatforms
-		} else {
-			targetName := name
-			nameParts := strings.SplitN(name, "/", 3)
-			if len(nameParts) == 3 && nameParts[1] == "stage" {
-				targetName = nameParts[0]
-			}
-
-			imageTargetPlatforms, err := phase.Conveyor.GetImageTargetPlatforms(targetName)
-			if err != nil {
-				return fmt.Errorf("invalid image %q target platforms: %w", name, err)
-			}
-			if len(imageTargetPlatforms) > 0 {
-				targetPlatforms = imageTargetPlatforms
-			} else {
-				targetPlatforms = commonTargetPlatforms
-			}
+		targetPlatforms, err := phase.targetPlatforms(ctx, forcedTargetPlatforms, commonTargetPlatforms, name, images)
+		if err != nil {
+			return err
 		}
 
-	AssertAllTargetPlatformsPresent:
-		for _, targetPlatform := range targetPlatforms {
-			for _, platform := range platforms {
-				if targetPlatform == platform {
-					logboek.Context(ctx).Debug().LogF("Found image %q built for target platform %q\n", name, targetPlatform)
-					continue AssertAllTargetPlatformsPresent
-				}
-			}
-			panic(fmt.Sprintf("There is no image %q built for target platform %q. Please report a bug.", name, targetPlatform))
-		}
-
-		if len(targetPlatforms) != len(platforms) {
-			panic(fmt.Sprintf("We have built image %q for platforms %v, expected exactly these platforms: %v. Please report a bug.", name, platforms, targetPlatforms))
-		}
+		// TODO (zaytsev): handle case with multiplatform images
+		// TODO: SBOM source could use images[0].lastNonEmptyStage.GetStageImage().Image.GetStageDesc().Info
 
 		if len(targetPlatforms) == 1 {
 			img := images[0]
@@ -299,6 +269,49 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 	}
 
 	return phase.createReport(ctx)
+}
+
+func (phase *BuildPhase) targetPlatforms(ctx context.Context, forcedTargetPlatforms, commonTargetPlatforms []string, name string, images []*image.Image) ([]string, error) {
+	// TODO: this target platforms assertion could be removed in future versions and now exists only as a additional self-testing code
+	var targetPlatforms []string
+	if len(forcedTargetPlatforms) > 0 {
+		targetPlatforms = forcedTargetPlatforms
+	} else {
+		targetName := name
+		nameParts := strings.SplitN(name, "/", 3)
+		if len(nameParts) == 3 && nameParts[1] == "stage" {
+			targetName = nameParts[0]
+		}
+
+		imageTargetPlatforms, err := phase.Conveyor.GetImageTargetPlatforms(targetName)
+		if err != nil {
+			return []string{}, fmt.Errorf("invalid image %q target platforms: %w", name, err)
+		}
+		if len(imageTargetPlatforms) > 0 {
+			targetPlatforms = imageTargetPlatforms
+		} else {
+			targetPlatforms = commonTargetPlatforms
+		}
+	}
+
+	platforms := util.MapFuncToSlice(images, func(img *image.Image) string { return img.TargetPlatform })
+
+AssertAllTargetPlatformsPresent:
+	for _, targetPlatform := range targetPlatforms {
+		for _, platform := range platforms {
+			if targetPlatform == platform {
+				logboek.Context(ctx).Debug().LogF("Found image %q built for target platform %q\n", name, targetPlatform)
+				continue AssertAllTargetPlatformsPresent
+			}
+		}
+		panic(fmt.Sprintf("There is no image %q built for target platform %q. Please report a bug.", name, targetPlatform))
+	}
+
+	if len(targetPlatforms) != len(platforms) {
+		panic(fmt.Sprintf("We have built image %q for platforms %v, expected exactly these platforms: %v. Please report a bug.", name, platforms, targetPlatforms))
+	}
+
+	return targetPlatforms, nil
 }
 
 func (phase *BuildPhase) publishFinalImage(ctx context.Context, name string, img *image.Image, finalStagesStorage storage.StagesStorage) error {
