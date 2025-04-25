@@ -49,6 +49,7 @@ import (
 	"github.com/werf/werf/v2/pkg/container_backend/filter"
 	"github.com/werf/werf/v2/pkg/container_backend/info"
 	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/sbom"
 	"github.com/werf/werf/v2/pkg/ssh_agent"
 )
 
@@ -658,12 +659,23 @@ func (b *NativeBuildah) Commit(ctx context.Context, container string, opts Commi
 		SystemContext:         sysCtx,
 		MaxRetries:            MaxPullPushRetries,
 		RetryDelay:            PullPushRetryDelay,
+		SBOMScanOptions:       mapWerfSbomScanOptsToBuildahSbomScanOpts(opts.SBOMScanOptions),
 	})
 	if err != nil {
 		return "", fmt.Errorf("error doing commit: %w", err)
 	}
 
 	return imgID, nil
+}
+
+func mapWerfSbomScanOptsToBuildahSbomScanOpts(options []sbom.ScanOptions) []buildah.SBOMScanOptions {
+	return lo.Map(options, func(opt sbom.ScanOptions, _ int) buildah.SBOMScanOptions {
+		return buildah.SBOMScanOptions{
+			Image:      opt.Image,
+			PullPolicy: buildah.PullPolicy(opt.PullPolicy),
+			SBOMOutput: opt.SBOMOutput,
+		}
+	})
 }
 
 func (b *NativeBuildah) Config(ctx context.Context, container string, opts ConfigOpts) error {
