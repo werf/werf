@@ -18,6 +18,7 @@ import (
 	"github.com/werf/werf/v2/pkg/container_backend/filter"
 	"github.com/werf/werf/v2/pkg/container_backend/info"
 	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/sbom"
 	"github.com/werf/werf/v2/pkg/werf"
 )
 
@@ -98,7 +99,8 @@ type RmiOpts struct {
 type CommitOpts struct {
 	CommonOpts
 
-	Image string
+	Image           string
+	SBOMScanOptions []sbom.ScanOptions
 }
 
 type PruneImagesOptions struct {

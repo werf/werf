@@ -18,6 +18,7 @@ type rawStapelImage struct {
 	FromImage            string           `yaml:"fromImage,omitempty"`
 	FromArtifact         string           `yaml:"fromArtifact,omitempty"`
 	DisableGitAfterPatch bool             `yaml:"disableGitAfterPatch,omitempty"`
+	Sbom                 *bool            `yaml:"sbom,omitempty"`
 	RawGit               []*rawGit        `yaml:"git,omitempty"`
 	RawShell             *rawShell        `yaml:"shell,omitempty"`
 	RawAnsible           *rawAnsible      `yaml:"ansible,omitempty"`
@@ -147,6 +148,7 @@ func (c *rawStapelImage) toStapelImageDirective(giterminismManager giterminism_m
 	}
 
 	image.StapelImageBase.final = option.PtrValueOrDefault(c.Final, true)
+	image.StapelImageBase.sbom = option.PtrValueOrDefault(c.Sbom, false)
 
 	if c.RawDocker != nil {
 		if docker, err := c.RawDocker.toDirective(); err != nil {

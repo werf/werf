@@ -213,3 +213,11 @@ func (runtime *PerfCheckContainerBackend) PruneVolumes(ctx context.Context, opti
 		})
 	return
 }
+
+func (runtime *PerfCheckContainerBackend) GenerateSBOM(ctx context.Context, sourceImg string) (imgId string, err error) {
+	logboek.Context(ctx).Default().LogProcess("ContainerBackend.GenerateSBOM %v", sourceImg).
+		Do(func() {
+			imgId, err = runtime.ContainerBackend.GenerateSBOM(ctx, sourceImg)
+		})
+	return
+}

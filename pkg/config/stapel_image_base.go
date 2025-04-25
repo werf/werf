@@ -27,6 +27,7 @@ type StapelImageBase struct {
 
 	cacheVersion string
 	final        bool
+	sbom         bool
 	platform     []string
 	raw          *rawStapelImage
 }
