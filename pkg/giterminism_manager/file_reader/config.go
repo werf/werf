@@ -26,7 +26,7 @@ func (r FileReader) IsConfigExistAnywhere(ctx context.Context, customRelPath str
 }
 
 func (r FileReader) isConfigExistAnywhere(ctx context.Context, customRelPath string) (bool, error) {
-	configRelPathList := r.configPathList(customRelPath)
+	configRelPathList := ConfigPathList(customRelPath)
 	for _, configRelPath := range configRelPathList {
 		if exist, err := r.IsConfigurationFileExistAnywhere(ctx, configRelPath); err != nil {
 			return false, err
@@ -58,7 +58,7 @@ func (r FileReader) ReadConfig(ctx context.Context, customRelPath string) (path 
 }
 
 func (r FileReader) readConfig(ctx context.Context, customRelPath string) (string, []byte, error) {
-	configRelPathList := r.configPathList(customRelPath)
+	configRelPathList := ConfigPathList(customRelPath)
 
 	for _, configPath := range configRelPathList {
 		data, err := r.ReadAndCheckConfigurationFile(ctx, configPath, func(_ string) bool {
@@ -111,7 +111,7 @@ func (r FileReader) prepareConfigNotFoundError(configPathsToCheck []string) erro
 	}
 }
 
-func (r FileReader) configPathList(customRelPath string) []string {
+func ConfigPathList(customRelPath string) []string {
 	var configRelPathList []string
 	if customRelPath != "" {
 		configRelPathList = append(configRelPathList, customRelPath)

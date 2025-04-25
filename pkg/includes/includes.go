@@ -3,9 +3,12 @@ package includes
 import (
 	"context"
 	"fmt"
-	"os"
+	"path"
 	"path/filepath"
+	"strings"
 
+	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/path_matcher"
@@ -29,6 +32,13 @@ type Include struct {
 	To           string   `yaml:"to,omitempty"`
 	IncludePaths []string `yaml:"includePaths"`
 	ExcludePaths []string `yaml:"excludePaths"`
+}
+
+type IncludeA struct {
+	Name    string `yaml:"name"`
+	Repo    *git_repo.Remote
+	Commit  *object.Commit
+	Objects map[string]string
 }
 
 func GetWerfIncludesConfigRelPath(path string) string {
@@ -61,29 +71,21 @@ func NewConfig(ctx context.Context, fileReader GiterminismManagerFileReader, con
 	return config, err
 }
 
-func GetIncludes(cfg Config) error {
+func GetIncludes(cfg Config) ([]*IncludeA, error) {
 	ctx := context.Background()
+
+	inc := []*IncludeA{}
 	for _, i := range cfg.Includes {
 		repo, err := git_repo.OpenRemoteRepo(i.Name, i.Git)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Refreshing %s repository", i.Name)).
 			DoError(func() error {
 				return repo.CloneAndFetch(ctx)
 			}); err != nil {
-			return err
-		}
-
-		fileRenames, err := i.getFileRenames(ctx, i.Ref, repo)
-		if err != nil {
-			return fmt.Errorf("unable to make git archive options: %w", err)
-		}
-
-		pathScope, err := i.getPathScope(ctx, i.Ref, repo)
-		if err != nil {
-			return fmt.Errorf("unable to make git archive options: %w", err)
+			return nil, fmt.Errorf("unable to clone %s repository: %w", i.Name, err)
 		}
 
 		pm := path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{
@@ -91,21 +93,83 @@ func GetIncludes(cfg Config) error {
 			IncludeGlobs: i.IncludePaths,
 			ExcludeGlobs: i.ExcludePaths,
 		})
-		archive, err := repo.GetOrCreateArchive(ctx, git_repo.ArchiveOptions{
-			PathScope:   pathScope,
-			PathMatcher: pm,
-			Commit:      i.Ref,
-			FileRenames: fileRenames,
-		})
+
+		r, _ := repo.PlainOpen()
+
+		ref, err := r.Reference(plumbing.NewBranchReferenceName("main"), true)
 		if err != nil {
-			return fmt.Errorf("unable to create git archive for commit %s with path scope %s: %w", i.Ref, pathScope, err)
+			return nil, fmt.Errorf("failed to resolve ref: %w", err)
 		}
 
-		wd, _ := os.Getwd()
-		err = extractTar(archive.GetFilePath(), wd+i.To)
+		commit, err := r.CommitObject(ref.Hash())
 		if err != nil {
-			return fmt.Errorf("unable to extract tar archive %s to %s: %w", archive.GetFilePath(), wd+i.To, err)
+			return nil, fmt.Errorf("failed to get commit object: %w", err)
+		}
+
+		tree, err := commit.Tree()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get tree: %w", err)
+		}
+
+		matchedMap := map[string]string{}
+		err = tree.Files().ForEach(func(f *object.File) error {
+			if pm.IsPathMatched(f.Name) {
+				relPath := strings.TrimPrefix(f.Name, filepath.Clean(i.Add))
+				relPath = strings.TrimPrefix(relPath, string(filepath.Separator))
+				newPath := path.Join(i.To, relPath)
+				newPath = strings.TrimPrefix(newPath, string(filepath.Separator))
+
+				matchedMap[newPath] = f.Name
+			}
+			return nil
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to iterate over files: %w", err)
+		}
+
+		fmt.Println("matchedMap", matchedMap)
+		IncludeA := &IncludeA{
+			Name:    i.Name,
+			Repo:    repo,
+			Commit:  commit,
+			Objects: matchedMap,
+		}
+
+		inc = append(inc, IncludeA)
+	}
+	return inc, nil
+}
+
+func (i *IncludeA) GetFile(ctx context.Context, relPath string) ([]byte, error) {
+	fmt.Println("GetFile", relPath)
+	filePath, ok := i.Objects[relPath]
+	if !ok {
+		return nil, fmt.Errorf("file not found in include: %s", relPath)
+	}
+
+	data, err := i.Repo.ReadCommitFile(ctx, i.Commit.Hash.String(), filePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read commit file: %w", err)
+	}
+	return data, nil
+}
+
+func (i *IncludeA) GetFilesByGlob(ctx context.Context, pattern string) (map[string][]byte, error) {
+	result := make(map[string][]byte)
+
+	pm := path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{
+		IncludeGlobs: []string{pattern},
+	})
+
+	for relPath := range i.Objects {
+		if pm.IsPathMatched(relPath) {
+			data, err := i.GetFile(ctx, relPath)
+			if err != nil {
+				return nil, fmt.Errorf("failed to read file %q: %w", relPath, err)
+			}
+			result[relPath] = data
 		}
 	}
-	return nil
+
+	return result, nil
 }
