@@ -26,6 +26,7 @@ type ImageFromDockerfile struct {
 	cacheVersion string
 	platform     []string
 	final        bool
+	sbom         bool
 	raw          *rawImageFromDockerfile
 }
 
