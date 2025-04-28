@@ -20,7 +20,7 @@ func newSbomContextArchiver(rootDir string) *sbomBuildContextArchiver {
 }
 
 func (a *sbomBuildContextArchiver) Create(_ context.Context, opts BuildContextArchiveCreateOptions) error {
-	tarFile, err := os.CreateTemp(a.rootDir, "sbom-docker-******")
+	tarFile, err := os.Create(filepath.Join(a.rootDir, "sbom-docker.tar"))
 	if err != nil {
 		return fmt.Errorf("unable to create tar file: %w", err)
 	}
