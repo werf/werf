@@ -259,6 +259,19 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 			}
 		}
 
+		// TODO (zaytsev): handle case with multiplatform images
+
+		/*
+			TODO: uncomment these lines to manual debug SBOM
+
+			sbomSourceImageRef := images[0].GetLastNonEmptyStage().GetStageImage().Image.GetStageDesc().Info.Name
+			sbomImageId, err := phase.Conveyor.ContainerBackend.GenerateSBOM(ctx, sbomSourceImageRef)
+			if err != nil {
+				return err
+			}
+			fmt.Printf("sbomImageId=%s\n", sbomImageId)
+		*/
+
 		return nil
 	}); err != nil {
 		return err
