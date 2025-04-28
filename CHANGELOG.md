@@ -1,5 +1,19 @@
 # Changelog
 
+### [2.35.5](https://www.github.com/werf/werf/compare/v2.35.4...v2.35.5) (2025-04-25)
+
+
+### Bug Fixes
+
+* **build:** print "Error: " prefix on termination error ([0d011b8](https://www.github.com/werf/werf/commit/0d011b86f67b915ce36426816009c9c48a9e3662))
+* **build:** use ctx for graceful shutdown ([be456ca](https://www.github.com/werf/werf/commit/be456cac367931d987b96452d137b537e8281dd2))
+* **deploy:** `plan` shows insignificant changes for no reason ([11400e4](https://www.github.com/werf/werf/commit/11400e4b473071f7555d3b0af37d439ebd8422e5))
+* **deploy:** allow `werf.io/sensitive: false` for Secrets; update Nelm ([c1aaa2a](https://www.github.com/werf/werf/commit/c1aaa2ababcf1f034088774136888baa205ae9e0))
+* **host-cleanup:** enable warning for the recent problem background run ([#6813](https://www.github.com/werf/werf/issues/6813)) ([de4cb98](https://www.github.com/werf/werf/commit/de4cb98d419922bf81ad1b06af775383f9517b22))
+* **host-cleanup:** fix service host cleanup image cannot be replaced ([eb05266](https://www.github.com/werf/werf/commit/eb05266d4a636b9cc14c5d89b2eee69501ed0639))
+* **host-cleanup:** parse host cleanup options if cmd uses auto host cleanup ([8520d20](https://www.github.com/werf/werf/commit/8520d206fd4dcf445836226b9c5ac2067598b97a))
+* **host-cleanup:** preserve --tmp-dir and --home-dir options for auto host cleanup ([9f6bcbd](https://www.github.com/werf/werf/commit/9f6bcbdfc08109bdcc3c4d78476f5e6580391168))
+
 ### [2.35.4](https://www.github.com/werf/werf/compare/v2.35.3...v2.35.4) (2025-04-16)
 
 
