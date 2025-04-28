@@ -19,5 +19,5 @@ const (
 )
 
 func (p PullPolicy) String() string {
-	return p.String()
+	return define.PullPolicy(p).String()
 }
