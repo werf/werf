@@ -1120,7 +1120,7 @@ func (backend *BuildahBackend) PruneVolumes(_ context.Context, _ prune.Options) 
 func (backend *BuildahBackend) GenerateSBOM(ctx context.Context, sourceImg string) (string, error) {
 	workingTree := sbom.NewWorkingTree()
 
-	if err := workingTree.Create(ctx, backend.TmpDir, []string{"spdx"}); err != nil {
+	if err := workingTree.Create(ctx, os.TempDir(), []string{"spdx.json"}); err != nil {
 		return "", err
 	}
 	defer workingTree.Cleanup(ctx)
@@ -1131,11 +1131,11 @@ func (backend *BuildahBackend) GenerateSBOM(ctx context.Context, sourceImg strin
 		return "", fmt.Errorf("unable to from scanner container: %w", err)
 	}
 
-	scanOptions := lo.Map(workingTree.BillList(), func(result string, _ int) sbom.ScanOptions {
+	scanOptions := lo.Map(workingTree.BillPaths(), func(result string, _ int) sbom.ScanOptions {
 		return sbom.ScanOptions{
 			Image:      sbom.ScannerImage,
 			PullPolicy: sbom.PullIfMissing,
-			SBOMOutput: result,
+			SBOMOutput: filepath.Join(workingTree.RootDir(), result),
 		}
 	})
 
