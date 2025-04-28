@@ -1,7 +1,6 @@
 package sbom
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"os"
@@ -17,8 +16,10 @@ type workingTree struct {
 
 	// billDir is relative path to SBOM scanning artifacts.
 	billDir string
-	// billList is list of relative file paths.
-	billList []string
+	// billFiles is list of files.
+	billFiles []*os.File
+	// billPaths is list of relative file paths.
+	billPaths []string
 
 	// containerfile is relative path to Containerfile.
 	containerfile string
@@ -28,8 +29,8 @@ type workingTree struct {
 
 func NewWorkingTree() *workingTree {
 	return &workingTree{
-		billDir:  "sbom",
-		billList: nil,
+		billDir:   "sbom",
+		billFiles: nil,
 
 		containerfile: "Containerfile",
 		containerfileContent: []byte(`
@@ -51,16 +52,18 @@ func (wt *workingTree) Create(_ context.Context, baseDir string, names []string)
 		return fmt.Errorf("unable to create artifacts directory in sbom working tree: %w", err)
 	}
 
-	wt.billList = make([]string, len(names))
+	l1 := len(names)
+
+	wt.billFiles = make([]*os.File, l1)
+	wt.billPaths = make([]string, l1)
 
 	for i, name := range names {
-		wt.billList[i] = filepath.Join(wt.billDir, name)
-
-		var file *os.File
-		if file, err = os.Create(wt.billList[i]); err != nil {
-			return fmt.Errorf("unable to create %q: %w", wt.billList[i], err)
+		billRelPath := filepath.Join(wt.billDir, name)
+		billAbsPath := filepath.Join(wt.rootDir, billRelPath)
+		if wt.billFiles[i], err = os.OpenFile(billAbsPath, os.O_CREATE|os.O_WRONLY, 0o666); err != nil {
+			return fmt.Errorf("unable to create %q: %w", billAbsPath, err)
 		}
-		file.Close()
+		wt.billPaths[i] = billRelPath
 	}
 
 	var containerFile *os.File
@@ -77,6 +80,11 @@ func (wt *workingTree) Create(_ context.Context, baseDir string, names []string)
 }
 
 func (wt *workingTree) Cleanup(ctx context.Context) {
+	for _, billFile := range wt.billFiles {
+		if err := billFile.Close(); err != nil {
+			logboek.Context(ctx).Warn().LogF("closing bill file %q\n", billFile.Name())
+		}
+	}
 	if err := os.RemoveAll(wt.rootDir); err != nil {
 		logboek.Context(ctx).Warn().LogF("removing sbom working tree %q\n", wt.rootDir)
 	}
@@ -86,14 +94,22 @@ func (wt *workingTree) RootDir() string {
 	return wt.rootDir
 }
 
+func (wt *workingTree) BillsDir() string {
+	return wt.billDir
+}
+
 func (wt *workingTree) Containerfile() string {
 	return wt.containerfile
 }
 
 func (wt *workingTree) ContainerfileContent() []byte {
-	return bytes.Clone(wt.containerfileContent)
+	return slices.Clone(wt.containerfileContent)
 }
 
-func (wt *workingTree) BillList() []string {
-	return slices.Clone(wt.billList)
+func (wt *workingTree) BillFiles() []*os.File {
+	return slices.Clone(wt.billFiles)
+}
+
+func (wt *workingTree) BillPaths() []string {
+	return slices.Clone(wt.billPaths)
 }

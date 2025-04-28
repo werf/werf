@@ -1,7 +1,7 @@
 package sbom
 
 const (
-	ScannerImage = "ghcr.io/anchore/syft:v1.22.0"
+	ScannerImage = "ghcr.io/anchore/syft:v1.23.1"
 )
 
 type ScanOptions struct {

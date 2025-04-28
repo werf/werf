@@ -422,27 +422,28 @@ func (backend *DockerServerBackend) PruneVolumes(ctx context.Context, options pr
 func (backend *DockerServerBackend) GenerateSBOM(ctx context.Context, sourceImg string) (string, error) {
 	workingTree := sbom.NewWorkingTree()
 
-	if err := workingTree.Create(ctx, os.TempDir(), []string{"spdx"}); err != nil {
+	if err := workingTree.Create(ctx, os.TempDir(), []string{"spdx.json"}); err != nil {
 		return "", err
 	}
 	defer workingTree.Cleanup(ctx)
 
-	for _, billName := range workingTree.BillList() {
-		const containerResultPath = "/sbom-result"
-
+	for _, bill := range workingTree.BillFiles() {
 		args := []string{
 			"--rm",
 			"--name", fmt.Sprintf("%s%s", image.SBOMScannerContainerNamePrefix, uuid.New().String()),
-			"--volume", "/var/run/docker.sock:/var/run/docker.sock:ro", // TODO: how to handle non-Unix systems?
-			"--volume", fmt.Sprintf("%s:%s:wo", billName, containerResultPath),
-			"--pull", sbom.PullIfMissing.String(),
+			"--volume", "/var/run/docker.sock:/var/run/docker.sock", // TODO: how to handle non-Unix systems?
+			"--pull", fmt.Sprintf("%s", sbom.PullIfMissing),
 			sbom.ScannerImage,
-			fmt.Sprintf("scan docker:%s --output=%s", sourceImg, containerResultPath),
+			// syft command with options
+			"scan", fmt.Sprintf("docker:%s", sourceImg), "--output=spdx-json",
 		}
 
-		err := docker.CliRun(ctx, args...)
+		output, err := docker.CliRun_RecordedOutput(ctx, args...)
 		if err != nil {
 			return "", fmt.Errorf("unable to run scanner inside of container: %w", err)
+		}
+		if _, err = bill.WriteString(output); err != nil {
+			return "", fmt.Errorf("unable to write bill %q: %w", bill.Name(), err)
 		}
 	}
 
@@ -450,7 +451,7 @@ func (backend *DockerServerBackend) GenerateSBOM(ctx context.Context, sourceImg 
 
 	if err := archive.Create(ctx, BuildContextArchiveCreateOptions{
 		DockerfileRelToContextPath: workingTree.Containerfile(),
-		ContextAddFiles:            workingTree.BillList(),
+		ContextAddFiles:            append(workingTree.BillPaths(), workingTree.Containerfile()),
 	}); err != nil {
 		return "", fmt.Errorf("unable to create sbom scanning results archive: %w", err)
 	}
