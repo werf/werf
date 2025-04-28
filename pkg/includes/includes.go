@@ -15,6 +15,10 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+const (
+	defaultIncludesConfigFileName = "werf-includes.yaml"
+)
+
 type GiterminismManagerFileReader interface {
 	IsIncludesConfigExistAnywhere(ctx context.Context, relPath string) (bool, error)
 	ReadIncludesConfig(ctx context.Context, relPath string) ([]byte, error)
@@ -35,7 +39,7 @@ type includeConf struct {
 }
 
 type Include struct {
-	Name    string `yaml:"name"`
+	Name    string
 	repo    *git_repo.Remote
 	commit  *object.Commit
 	objects map[string]string
@@ -43,13 +47,32 @@ type Include struct {
 
 func GetWerfIncludesConfigRelPath(path string) string {
 	if path == "" {
-		return "werf-includes.yaml"
+		return defaultIncludesConfigFileName
 	}
 	return filepath.ToSlash(path)
 }
 
+func Init(ctx context.Context, fileReader GiterminismManagerFileReader, configRelPath string) ([]*Include, error) {
+	config, err := NewConfig(ctx, fileReader, GetWerfIncludesConfigRelPath(configRelPath))
+	if err != nil {
+		return nil, fmt.Errorf("unable to initialize includes: %w", err)
+	}
+
+	includes, err := GetIncludes(ctx, config)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get includes: %w", err)
+	}
+
+	for _, include := range includes {
+		fmt.Println(&include)
+	}
+
+	return includes, nil
+}
+
 func NewConfig(ctx context.Context, fileReader GiterminismManagerFileReader, configRelPath string) (Config, error) {
 	config := Config{}
+	logboek.Context(ctx).Debug().LogF("Reading includes config from %q\n", configRelPath)
 	exist, err := fileReader.IsIncludesConfigExistAnywhere(ctx, configRelPath)
 	if err != nil {
 		return config, err
@@ -71,30 +94,27 @@ func NewConfig(ctx context.Context, fileReader GiterminismManagerFileReader, con
 	return config, err
 }
 
-func GetIncludes(cfg Config) ([]*Include, error) {
-	ctx := context.Background()
-
-	inc := []*Include{}
+func GetIncludes(ctx context.Context, cfg Config) ([]*Include, error) {
+	includes := []*Include{}
 	for _, i := range cfg.Includes {
 		repo, err := git_repo.OpenRemoteRepo(i.Name, i.Git)
 		if err != nil {
 			return nil, err
 		}
 
-		if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Refreshing %s repository", i.Name)).
-			DoError(func() error {
-				return repo.CloneAndFetch(ctx)
-			}); err != nil {
+		if err := repo.CloneAndFetch(ctx); err != nil {
 			return nil, fmt.Errorf("unable to clone %s repository: %w", i.Name, err)
 		}
-
 		pm := path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{
 			BasePath:     i.Add,
 			IncludeGlobs: i.IncludePaths,
 			ExcludeGlobs: i.ExcludePaths,
 		})
 
-		r, _ := repo.PlainOpen()
+		r, err := repo.PlainOpen()
+		if err != nil {
+			return nil, fmt.Errorf("failed to open repository: %w", err)
+		}
 
 		ref, err := r.Reference(plumbing.NewBranchReferenceName("main"), true)
 		if err != nil {
@@ -127,7 +147,6 @@ func GetIncludes(cfg Config) ([]*Include, error) {
 			return nil, fmt.Errorf("failed to iterate over files: %w", err)
 		}
 
-		fmt.Println("matchedMap", matchedMap)
 		include := &Include{
 			Name:    i.Name,
 			repo:    repo,
@@ -135,9 +154,9 @@ func GetIncludes(cfg Config) ([]*Include, error) {
 			objects: matchedMap,
 		}
 
-		inc = append(inc, include)
+		includes = append(includes, include)
 	}
-	return inc, nil
+	return includes, nil
 }
 
 func (i *Include) WalkObjects(fn func(toPath string, origPath string) error) error {
@@ -150,7 +169,6 @@ func (i *Include) WalkObjects(fn func(toPath string, origPath string) error) err
 }
 
 func (i *Include) GetFile(ctx context.Context, relPath string) ([]byte, error) {
-	fmt.Println("GetFile", relPath)
 	filePath, ok := i.objects[relPath]
 	if !ok {
 		return nil, fmt.Errorf("file not found in include: %s", relPath)
@@ -181,4 +199,49 @@ func (i *Include) GetFilesByGlob(ctx context.Context, pattern string) (map[strin
 	}
 
 	return result, nil
+}
+
+func IsDirExists(ctx context.Context, includes []*Include, relPath string) bool {
+	for _, i := range includes {
+		if i == nil {
+			continue
+		}
+		exists, _ := i.repo.IsCommitDirectoryExist(ctx, i.commit.Hash.String(), relPath)
+		if exists {
+			return true
+		}
+	}
+	return false
+}
+
+func IsFileExists(ctx context.Context, includes []*Include, relPath string) bool {
+	for _, i := range includes {
+		if i == nil {
+			continue
+		}
+		exists, _ := i.repo.IsCommitFileExist(ctx, i.commit.Hash.String(), relPath)
+		if exists {
+			return true
+		}
+	}
+	return false
+}
+
+func FindWerfConfig(ctx context.Context, includes []*Include, cfgPaths []string) (string, []byte, error) {
+	for _, include := range includes {
+		if include == nil {
+			continue
+		}
+		for _, cfgPath := range cfgPaths {
+			if _, ok := include.objects[cfgPath]; ok {
+				data, err := include.GetFile(ctx, cfgPath)
+				if err != nil {
+					return "", nil, fmt.Errorf("unable to read config file %q: %w", cfgPath, err)
+				}
+				logboek.Context(ctx).Debug().LogF("Found config file %q in %q\n", cfgPath, include.repo.Url)
+				return cfgPath, data, nil
+			}
+		}
+	}
+	return "", nil, fmt.Errorf("unable to find config file in includes")
 }
