@@ -674,6 +674,7 @@ func mapWerfSbomScanOptsToBuildahSbomScanOpts(options []sbom.ScanOptions) []buil
 			Image:      opt.Image,
 			PullPolicy: buildah.PullPolicy(opt.PullPolicy),
 			SBOMOutput: opt.SBOMOutput,
+			Commands:   opt.Commands,
 		}
 	})
 }
