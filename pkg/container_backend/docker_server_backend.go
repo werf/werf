@@ -441,7 +441,7 @@ func (backend *DockerServerBackend) GenerateSBOM(ctx context.Context, sourceImg 
 
 	if err := archive.Create(ctx, BuildContextArchiveCreateOptions{
 		DockerfileRelToContextPath: workingTree.Containerfile(),
-		ContextAddFiles:            append(workingTree.BillPaths(), workingTree.Containerfile()),
+		ContextAddFiles:            append(workingTree.BillNames(), workingTree.Containerfile()),
 	}); err != nil {
 		return "", fmt.Errorf("unable to create sbom scanning results archive: %w", err)
 	}

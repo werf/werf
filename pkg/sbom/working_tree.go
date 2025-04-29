@@ -18,8 +18,8 @@ type workingTree struct {
 	billDir string
 	// billFiles is list of files.
 	billFiles []*os.File
-	// billPaths is list of relative file paths.
-	billPaths []string
+	// billNames is list of relative file names.
+	billNames []string
 
 	// containerfile is relative path to Containerfile.
 	containerfile string
@@ -55,15 +55,14 @@ func (wt *workingTree) Create(_ context.Context, baseDir string, names []string)
 	l1 := len(names)
 
 	wt.billFiles = make([]*os.File, l1)
-	wt.billPaths = make([]string, l1)
+	wt.billNames = make([]string, l1)
 
 	for i, name := range names {
-		billRelPath := filepath.Join(wt.billDir, name)
-		billAbsPath := filepath.Join(wt.rootDir, billRelPath)
+		wt.billNames[i] = name
+		billAbsPath := filepath.Join(wt.rootDir, wt.billDir, wt.billNames[i])
 		if wt.billFiles[i], err = os.OpenFile(billAbsPath, os.O_CREATE|os.O_WRONLY, 0o666); err != nil {
 			return fmt.Errorf("unable to create %q: %w", billAbsPath, err)
 		}
-		wt.billPaths[i] = billRelPath
 	}
 
 	var containerFile *os.File
@@ -110,6 +109,6 @@ func (wt *workingTree) BillFiles() []*os.File {
 	return slices.Clone(wt.billFiles)
 }
 
-func (wt *workingTree) BillPaths() []string {
-	return slices.Clone(wt.billPaths)
+func (wt *workingTree) BillNames() []string {
+	return slices.Clone(wt.billNames)
 }
