@@ -1131,11 +1131,12 @@ func (backend *BuildahBackend) GenerateSBOM(ctx context.Context, sourceImg strin
 		return "", fmt.Errorf("unable to from scanner container: %w", err)
 	}
 
-	scanOptions := lo.Map(workingTree.BillPaths(), func(result string, _ int) sbom.ScanOptions {
+	scanOptions := lo.Map(workingTree.BillNames(), func(billName string, _ int) sbom.ScanOptions {
 		return sbom.ScanOptions{
 			Image:      sbom.ScannerImage,
 			PullPolicy: sbom.PullIfMissing,
-			SBOMOutput: filepath.Join(workingTree.RootDir(), result),
+			SBOMOutput: filepath.Join(workingTree.RootDir(), workingTree.BillsDir(), billName),
+			Commands:   []string{"/syft scan dir:{ROOTFS} --output cyclonedx-json={OUTPUT}"},
 		}
 	})
 
