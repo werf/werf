@@ -19,8 +19,6 @@ import (
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
-	"github.com/werf/werf/v2/pkg/giterminism_manager/file_reader"
-	"github.com/werf/werf/v2/pkg/includes"
 	"github.com/werf/werf/v2/pkg/slug"
 	"github.com/werf/werf/v2/pkg/tmp_manager"
 )
@@ -205,32 +203,26 @@ type renderWerfConfigYamlOpts struct {
 }
 
 func renderWerfConfigYaml(ctx context.Context, opts renderWerfConfigYamlOpts) (string, string, error) {
-	includes, err := includes.Init(ctx, opts.giterminismManager.FileReader(), opts.includesConfigRelPath)
-	if err != nil {
-		return "", "", fmt.Errorf("unable to get includes: %w", err)
-	}
-
 	tmpl := template.New("werfConfig")
 	tmpl.Funcs(funcMap(tmpl, opts.giterminismManager))
 
-	templatePathCache := make(map[string]bool)
-
-	err = parseWerfConfigTemplatesDir(ctx, parseWerfConfigTemplatesDirOpts{
+	err := parseWerfConfigTemplatesDir(ctx, parseWerfConfigTemplatesDirOpts{
 		tmpl:                                tmpl,
 		customWerfConfigTemplatesDirRelPath: opts.customWerfConfigTemplatesDirRelPath,
-		giterminismManager:                  opts.giterminismManager,
-		includes:                            includes,
-		templatePathCache:                   templatePathCache,
+		giterminismManager:                  opts.giterminismManager.(*giterminism_manager.Manager),
 	})
 	if err != nil {
 		return "", "", err
 	}
 
+	for _, t := range tmpl.Templates() {
+		fmt.Println(t)
+	}
+
 	configPath, err := parseWerfConfig(ctx, parseWerfConfigOpts{
 		tmpl:               tmpl,
-		giterminismManager: opts.giterminismManager,
+		giterminismManager: opts.giterminismManager.(*giterminism_manager.Manager),
 		relWerfConfigPath:  opts.customWerfConfigRelPath,
-		includes:           includes,
 	})
 	if err != nil {
 		return "", "", err
@@ -239,9 +231,7 @@ func renderWerfConfigYaml(ctx context.Context, opts renderWerfConfigYamlOpts) (s
 	templateData := make(map[string]interface{})
 	templateData["Files"] = files{
 		ctx:                ctx,
-		giterminismManager: opts.giterminismManager,
-		includes:           includes,
-		includesCache:      templatePathCache,
+		giterminismManager: opts.giterminismManager.(*giterminism_manager.Manager),
 	}
 	templateData["Env"] = opts.env
 
@@ -270,29 +260,14 @@ func renderWerfConfigYaml(ctx context.Context, opts renderWerfConfigYamlOpts) (s
 
 type parseWerfConfigOpts struct {
 	tmpl               *template.Template
-	giterminismManager giterminism_manager.Interface
+	giterminismManager *giterminism_manager.Manager
 	relWerfConfigPath  string
-	includes           []*includes.Include
 }
 
 func parseWerfConfig(ctx context.Context, opts parseWerfConfigOpts) (string, error) {
-	var (
-		configPath string
-		configData []byte
-	)
-	exists, _ := opts.giterminismManager.FileReader().IsConfigExistAnywhere(ctx, opts.relWerfConfigPath)
-	if !exists {
-		var includeErr error
-		configPath, configData, includeErr = includes.FindWerfConfig(ctx, opts.includes, file_reader.ConfigPathList(opts.relWerfConfigPath))
-		if includeErr != nil {
-			return "", fmt.Errorf("unable to find config file %q in includes: %w", opts.relWerfConfigPath, includeErr)
-		}
-	} else {
-		var localErr error
-		configPath, configData, localErr = opts.giterminismManager.FileReader().ReadConfig(ctx, opts.relWerfConfigPath)
-		if localErr != nil {
-			return "", localErr
-		}
+	configPath, configData, err := opts.giterminismManager.FileManager.ReadConfig(ctx, opts.relWerfConfigPath)
+	if err != nil {
+		return "", fmt.Errorf("unable to read config file %q: %w", opts.relWerfConfigPath, err)
 	}
 
 	if _, err := opts.tmpl.Parse(string(configData)); err != nil {
@@ -302,81 +277,21 @@ func parseWerfConfig(ctx context.Context, opts parseWerfConfigOpts) (string, err
 	return configPath, nil
 }
 
-type processWerfTemplatesInIncludesOpts struct {
-	tmpl                       *template.Template
-	includes                   []*includes.Include
-	relWerfConfigTemplatesPath string
-	templatePathCache          map[string]bool
-}
-
-func processWerfTemplatesInIncludes(ctx context.Context, opts processWerfTemplatesInIncludesOpts) error {
-	relWerfConfigTemplatesPath := file_reader.ConfigTemplatesPathList(opts.relWerfConfigTemplatesPath)
-	for _, include := range opts.includes {
-		err := include.WalkObjects(func(toPath, _ string) error {
-			// TODO: to path matcher
-			normToPath := filepath.ToSlash(toPath)
-
-			if strings.HasPrefix(normToPath, filepath.ToSlash(relWerfConfigTemplatesPath)) {
-				if _, ok := opts.templatePathCache[normToPath]; ok {
-					return nil
-				}
-
-				data, err := include.GetFile(ctx, normToPath)
-				if err != nil {
-					return fmt.Errorf("unable to read included template %q from %s: %w", normToPath, include.Name, err)
-				}
-
-				if err := addTemplate(opts.tmpl, normToPath, string(data)); err != nil {
-					return fmt.Errorf("unable to add included template %q: %w", normToPath, err)
-				}
-
-				opts.templatePathCache[normToPath] = true
-			}
-
-			return nil
-		})
-
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
 type parseWerfConfigTemplatesDirOpts struct {
 	tmpl                                *template.Template
 	customWerfConfigTemplatesDirRelPath string
-	giterminismManager                  giterminism_manager.Interface
-	includes                            []*includes.Include
-	templatePathCache                   map[string]bool
+	giterminismManager                  *giterminism_manager.Manager
 }
 
 func parseWerfConfigTemplatesDir(ctx context.Context, opts parseWerfConfigTemplatesDirOpts) error {
-	err := opts.giterminismManager.FileReader().ReadConfigTemplateFiles(ctx, opts.customWerfConfigTemplatesDirRelPath, func(templatePathInsideDir string, data []byte, err error) error {
-		if err != nil {
-			return err
-		}
-		templateName := filepath.ToSlash(templatePathInsideDir)
-		path := filepath.Join(file_reader.ConfigTemplatesPathList(opts.customWerfConfigTemplatesDirRelPath), templatePathInsideDir)
-		opts.templatePathCache[path] = false
-		if err := addTemplate(opts.tmpl, templateName, string(data)); err != nil {
-			return err
-		}
-		return nil
+	err := opts.giterminismManager.FileManager.ReadConfigTemplateFiles(ctx, opts.customWerfConfigTemplatesDirRelPath, func(name, content string) error {
+		return addTemplate(opts.tmpl, name, content)
 	})
+
 	if err != nil {
 		return fmt.Errorf("unable to read werf config templates: %w", err)
 	}
 
-	if err := processWerfTemplatesInIncludes(ctx, processWerfTemplatesInIncludesOpts{
-		tmpl:                       opts.tmpl,
-		includes:                   opts.includes,
-		relWerfConfigTemplatesPath: opts.customWerfConfigTemplatesDirRelPath,
-		templatePathCache:          opts.templatePathCache,
-	}); err != nil {
-		return fmt.Errorf("unable to process templates from includes: %w", err)
-	}
 	return nil
 }
 
@@ -469,33 +384,11 @@ func executeTemplate(tmpl *template.Template, name string, data interface{}) (st
 
 type files struct {
 	ctx                context.Context
-	giterminismManager giterminism_manager.Interface
-	includes           []*includes.Include
-	includesCache      map[string]bool
-}
-
-func (f *files) shouldReadFromIncludes(relPath string) bool {
-	return f.includesCache[relPath]
-}
-
-func (f *files) tryReadFromInludes(relPath string) ([]byte, error) {
-	for _, include := range f.includes {
-		data, err := include.GetFile(f.ctx, relPath)
-		if err == nil {
-			return data, nil
-		}
-	}
-	return nil, fmt.Errorf("unable to read file %q from includes: not found", relPath)
+	giterminismManager *giterminism_manager.Manager
 }
 
 func (f files) Get(relPath string) string {
-	if f.shouldReadFromIncludes(relPath) {
-		data, inclErr := f.tryReadFromInludes(relPath)
-		if inclErr == nil {
-			return string(data)
-		}
-	}
-	if res, err := f.giterminismManager.FileReader().ConfigGoTemplateFilesGet(f.ctx, relPath); err != nil {
+	if res, err := f.giterminismManager.FileManager.ConfigGoTemplateFilesGet(f.ctx, relPath); err != nil {
 		panic(err.Error())
 	} else {
 		return string(res)
@@ -503,21 +396,9 @@ func (f files) Get(relPath string) string {
 }
 
 func (f files) doGlob(ctx context.Context, pattern string) (map[string]interface{}, error) {
-	res, err := f.giterminismManager.FileReader().ConfigGoTemplateFilesGlob(ctx, pattern)
+	res, err := f.giterminismManager.FileManager.ConfigGoTemplateFilesGlob(ctx, pattern)
 	if err != nil {
 		return nil, err
-	}
-
-	for _, include := range f.includes {
-		includeGlobs, err := include.GetFilesByGlob(ctx, pattern)
-		if err != nil {
-			return nil, fmt.Errorf("unable to get files by glob from includes: %w", err)
-		}
-		for relPath, data := range includeGlobs {
-			if _, ok := res[relPath]; !ok {
-				res[relPath] = string(data)
-			}
-		}
 	}
 
 	if len(res) == 0 {
@@ -536,22 +417,16 @@ func (f files) Glob(pattern string) map[string]interface{} {
 }
 
 func (f files) Exists(relPath string) bool {
-	exist, err := f.giterminismManager.FileReader().ConfigGoTemplateFilesExists(f.ctx, relPath)
+	exist, err := f.giterminismManager.FileManager.ConfigGoTemplateFilesExists(f.ctx, relPath)
 	if err != nil {
-		if includes.IsFileExists(f.ctx, f.includes, relPath) {
-			return true
-		}
 		panic(err.Error())
 	}
 	return exist
 }
 
 func (f files) IsDir(relPath string) bool {
-	exist, err := f.giterminismManager.FileReader().ConfigGoTemplateFilesIsDir(f.ctx, relPath)
+	exist, err := f.giterminismManager.FileManager.ConfigGoTemplateFilesIsDir(f.ctx, relPath)
 	if err != nil {
-		if includes.IsDirExists(f.ctx, f.includes, relPath) {
-			return true
-		}
 		panic(err.Error())
 	}
 	return exist

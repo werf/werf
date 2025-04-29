@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/werf/logboek"
@@ -31,7 +32,9 @@ type Config struct {
 type includeConf struct {
 	Name         string   `yaml:"name"`
 	Git          string   `yaml:"git"`
-	Ref          string   `yaml:"ref"`
+	Branch       string   `yaml:"branch"`
+	Tag          string   `yaml:"tag"`
+	Commit       string   `yaml:"commit"`
 	Add          string   `yaml:"add,omitempty"`
 	To           string   `yaml:"to,omitempty"`
 	IncludePaths []string `yaml:"includePaths"`
@@ -95,41 +98,42 @@ func NewConfig(ctx context.Context, fileReader GiterminismManagerFileReader, con
 }
 
 func GetIncludes(ctx context.Context, cfg Config) ([]*Include, error) {
+	repoChache := make(map[string]*git_repo.Remote)
 	includes := []*Include{}
 	for _, i := range cfg.Includes {
-		repo, err := git_repo.OpenRemoteRepo(i.Name, i.Git)
-		if err != nil {
-			return nil, err
+		var remoteRepo *git_repo.Remote
+		if remote, ok := repoChache[i.Git]; !ok {
+			repo, err := git_repo.OpenRemoteRepo(i.Name, i.Git)
+			if err != nil {
+				return nil, err
+			}
+			if err := repo.CloneAndFetch(ctx); err != nil {
+				return nil, fmt.Errorf("unable to clone %s repository: %w", i.Git, err)
+			}
+			repoChache[repo.Url] = repo
+			remoteRepo = repo
+		} else {
+			remoteRepo = remote
 		}
-
-		if err := repo.CloneAndFetch(ctx); err != nil {
-			return nil, fmt.Errorf("unable to clone %s repository: %w", i.Name, err)
-		}
-		pm := path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{
-			BasePath:     i.Add,
-			IncludeGlobs: i.IncludePaths,
-			ExcludeGlobs: i.ExcludePaths,
-		})
-
-		r, err := repo.PlainOpen()
+		r, err := remoteRepo.PlainOpen()
 		if err != nil {
 			return nil, fmt.Errorf("failed to open repository: %w", err)
 		}
-
-		ref, err := r.Reference(plumbing.NewBranchReferenceName("main"), true)
+		commit, err := getCommit(r, &i)
 		if err != nil {
-			return nil, fmt.Errorf("failed to resolve ref: %w", err)
-		}
-
-		commit, err := r.CommitObject(ref.Hash())
-		if err != nil {
-			return nil, fmt.Errorf("failed to get commit object: %w", err)
+			return nil, fmt.Errorf("failed to get commit: %w", err)
 		}
 
 		tree, err := commit.Tree()
 		if err != nil {
 			return nil, fmt.Errorf("failed to get tree: %w", err)
 		}
+
+		pm := path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{
+			BasePath:     i.Add,
+			IncludeGlobs: i.IncludePaths,
+			ExcludeGlobs: i.ExcludePaths,
+		})
 
 		matchedMap := map[string]string{}
 		err = tree.Files().ForEach(func(f *object.File) error {
@@ -149,7 +153,7 @@ func GetIncludes(ctx context.Context, cfg Config) ([]*Include, error) {
 
 		include := &Include{
 			Name:    i.Name,
-			repo:    repo,
+			repo:    remoteRepo,
 			commit:  commit,
 			objects: matchedMap,
 		}
@@ -244,4 +248,41 @@ func FindWerfConfig(ctx context.Context, includes []*Include, cfgPaths []string)
 		}
 	}
 	return "", nil, fmt.Errorf("unable to find config file in includes")
+}
+
+func getCommit(r *git.Repository, i *includeConf) (*object.Commit, error) {
+	switch {
+	case i.Commit != "":
+		return commitRef(r, i.Commit)
+	case i.Tag != "":
+		return tagRef(r, i.Tag)
+	case i.Branch != "":
+		return branchRef(r, i.Branch)
+	default:
+		return nil, fmt.Errorf("no commit, tag or branch specified for include %s", i.Name)
+	}
+}
+
+func commitRef(r *git.Repository, commit string) (*object.Commit, error) {
+	rev := plumbing.Revision(commit)
+	h, err := r.ResolveRevision(rev)
+	if err != nil {
+		return nil, fmt.Errorf("cannot resolve commit %s: %w", commit, err)
+	}
+	return r.CommitObject(*h)
+}
+
+func tagRef(r *git.Repository, tag string) (*object.Commit, error) {
+	tagRef, err := r.Reference(plumbing.NewTagReferenceName(tag), true)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tag %s: %w", tag, err)
+	}
+	return commitRef(r, tagRef.Hash().String())
+}
+func branchRef(r *git.Repository, branch string) (*object.Commit, error) {
+	branchRef, err := r.Reference(plumbing.NewBranchReferenceName(branch), true)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get branch %s: %w", branch, err)
+	}
+	return commitRef(r, branchRef.Hash().String())
 }

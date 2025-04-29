@@ -20,7 +20,6 @@ import (
 	"github.com/werf/werf/v2/pkg/dockerfile"
 	"github.com/werf/werf/v2/pkg/dockerfile/frontend"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
-	"github.com/werf/werf/v2/pkg/includes"
 	"github.com/werf/werf/v2/pkg/path_matcher"
 	"github.com/werf/werf/v2/pkg/util/option"
 	"github.com/werf/werf/v2/pkg/werf"
@@ -296,7 +295,7 @@ func mapLegacyDockerfileToImage(ctx context.Context, metaConfig *config.Meta, do
 	}
 
 	relDockerfilePath := filepath.Join(dockerfileImageConfig.Context, dockerfileImageConfig.Dockerfile)
-	dockerfileData, err := readDockerfile(ctx, opts.GiterminismManager, relDockerfilePath)
+	dockerfileData, err := opts.GiterminismManager.(*giterminism_manager.Manager).FileManager.ReadDockerfile(ctx, relDockerfilePath)
 	if err != nil {
 		return nil, err
 	}
@@ -412,32 +411,4 @@ func createDockerIgnorePathMatcher(ctx context.Context, giterminismMgr gitermini
 	}
 
 	return dockerIgnorePathMatcher, nil
-}
-
-func readDockerfile(ctx context.Context, giterminismMgr giterminism_manager.Interface, relPath string) ([]byte, error) {
-	if exist, _ := util.FileExists(util.GetAbsoluteFilepath(relPath)); exist {
-		dockerfileData, err := giterminismMgr.FileReader().ReadDockerfile(ctx, relPath)
-		if err != nil {
-			return nil, err
-		}
-		return dockerfileData, nil
-	}
-
-	logboek.Context(ctx).Debug().LogF("Dockerfile %q not found in the local filesystem. Try find in includes\n", relPath)
-
-	includes, err := includes.Init(ctx, giterminismMgr.FileReader(), "werf-includes.yaml")
-	if err != nil {
-		return nil, fmt.Errorf("unable to init includes: %w", err)
-	}
-	for _, i := range includes {
-		if i == nil {
-			continue
-		}
-		dockerfileData, err := i.GetFile(ctx, relPath)
-		if err == nil {
-			logboek.Context(ctx).Debug().LogF("Found dockerfile %q in includes\n", relPath)
-			return dockerfileData, nil
-		}
-	}
-	return nil, fmt.Errorf("unable to read dockerfile %q: file not found", filepath.ToSlash(relPath))
 }
