@@ -8,8 +8,7 @@ type ScanOptions struct {
 	Image      string
 	PullPolicy PullPolicy
 
-	// TODO (zaytsev): give an able to use multiple source locations
-	// Commands        []string      // one or more commands to invoke for the image rootfs or ContextDir locations
+	Commands []string // one or more commands to invoke for the image rootfs or ContextDir locations
 	// ContextDir      []string      // one or more "source" directory locations
 	// MergeStrategy   MergeStrategy // how to merge the outputs of multiple scans
 
