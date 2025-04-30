@@ -108,7 +108,6 @@ func (s *DependenciesStage) GetDependencies(ctx context.Context, c Conveyor, cb 
 		return "", err
 	}
 
-
 	return util.Sha256Hash(args...), nil
 }
 
