@@ -1,0 +1,12 @@
+project: test
+configVersion: 1
+build:
+  imageSpec:
+    config:
+      labels:
+        a: 2
+---
+image: test
+from: registry.astralinux.ru/library/astra/ubi18:latest
+shell:
+  install: apt-get update && apt-get install -y bsign
