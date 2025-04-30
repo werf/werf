@@ -419,8 +419,6 @@ Format: annoName=annoValue[<separator>annoName=annoValue ...]. The default separ
 Also, can be specified with $WERF_ADD_ANNOTATION_* (e.g. $WERF_ADD_ANNOTATION_1=annoName1=annoValue1, $WERF_ADD_ANNOTATION_2=annoName2=annoValue2)`, DefaultPairSeparator))
 }
 
-const DefaultAnnoAndLabelPairSeparator = "\n"
-
 func SetupAddAnnotationSeparator(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.AddAnnotationSeparator = new(string)
 

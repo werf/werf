@@ -128,16 +128,16 @@ func NewExportCmd(ctx context.Context) *cobra.Command {
 	cmd.Flags().StringArrayVarP(&tagTemplateList, "tag", "", []string{}, `Set a tag template (can specify multiple).
 It is necessary to use image name shortcut %image% or %image_slug% if multiple images are exported (e.g. REPO:TAG-%image% or REPO-%image%:TAG)`)
 
-	cmd.Flags().StringArrayVarP(&addLabelArray, "add-label", "", []string{}, `Add label to exported images (can specify multiple).
-Format: labelName=labelValue[<separator>labelName=labelValue ...]. The default separator is a newline ("\n"), but it can be customized using the --add-label-separator flag.
-Also, can be specified with $WERF_EXPORT_ADD_LABEL_* (e.g. $WERF_EXPORT_ADD_LABEL_1=labelName1=labelValue1, $WERF_EXPORT_ADD_LABEL_2=labelName2=labelValue2)`)
+	cmd.Flags().StringArrayVarP(&addLabelArray, "add-label", "", []string{}, fmt.Sprintf(`Add label to exported images (can specify multiple).
+Format: labelName=labelValue[<separator>labelName=labelValue ...]. The default separator is a newline %q, but it can be customized using the --add-label-separator flag.
+Also, can be specified with $WERF_EXPORT_ADD_LABEL_* (e.g. $WERF_EXPORT_ADD_LABEL_1=labelName1=labelValue1, $WERF_EXPORT_ADD_LABEL_2=labelName2=labelValue2)`, common.DefaultPairSeparator))
 
-	defaultValue := common.DefaultAnnoAndLabelPairSeparator
+	defaultValue := common.DefaultPairSeparator
 	if os.Getenv("WERF_EXPORT_ADD_LABEL_SEPARATOR") != "" {
 		defaultValue = os.Getenv("WERF_EXPORT_ADD_LABEL_SEPARATOR")
 	}
 
-	cmd.Flags().StringVarP(&addLabelSeparator, "add-label-separator", "", defaultValue, `Separator for --add-label values (default $WERF_EXPORT_ADD_LABEL_SEPARATOR or "\n")`)
+	cmd.Flags().StringVarP(&addLabelSeparator, "add-label-separator", "", defaultValue, fmt.Sprintf(`Separator for --add-label values (default $WERF_EXPORT_ADD_LABEL_SEPARATOR or %q)`, common.DefaultPairSeparator))
 
 	commonCmdData.SetupSkipImageSpecStage(cmd)
 
