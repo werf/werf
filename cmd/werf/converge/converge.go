@@ -433,7 +433,7 @@ func run(
 
 	loader.ChartFileReader = giterminismManager.FileReader()
 
-	ctx = action.SetupLogging(ctx, common.GetNelmLogLevel(&commonCmdData), action.DefaultReleaseInstallLogLevel, *commonCmdData.LogColorMode)
+	ctx = action.SetupLogging(ctx, common.GetNelmLogLevel(&commonCmdData), action.DefaultReleaseInstallLogLevel, *commonCmdData.LogColorMode, false)
 
 	if err := action.ReleaseInstall(ctx, releaseName, releaseNamespace, action.ReleaseInstallOptions{
 		AutoRollback:                 cmdData.AutoRollback,

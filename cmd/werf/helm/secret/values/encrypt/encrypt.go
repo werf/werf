@@ -90,7 +90,7 @@ func runSecretEncrypt(ctx context.Context, filePath string) error {
 
 	workingDir := common.GetWorkingDir(&commonCmdData)
 
-	ctx = action.SetupLogging(ctx, common.GetNelmLogLevel(&commonCmdData), action.DefaultSecretValuesFileEncryptLogLevel, *commonCmdData.LogColorMode)
+	ctx = action.SetupLogging(ctx, common.GetNelmLogLevel(&commonCmdData), action.DefaultSecretValuesFileEncryptLogLevel, *commonCmdData.LogColorMode, true)
 
 	if err := action.SecretValuesFileEncrypt(ctx, filePath, action.SecretValuesFileEncryptOptions{
 		OutputFilePath: cmdData.OutputFilePath,

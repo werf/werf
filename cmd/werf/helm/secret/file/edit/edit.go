@@ -72,7 +72,7 @@ func runSecretEdit(ctx context.Context, filePath string) error {
 
 	workingDir := common.GetWorkingDir(&commonCmdData)
 
-	ctx = action.SetupLogging(ctx, common.GetNelmLogLevel(&commonCmdData), action.DefaultSecretFileEditLogLevel, *commonCmdData.LogColorMode)
+	ctx = action.SetupLogging(ctx, common.GetNelmLogLevel(&commonCmdData), action.DefaultSecretFileEditLogLevel, *commonCmdData.LogColorMode, false)
 
 	if err := action.SecretFileEdit(ctx, filePath, action.SecretFileEditOptions{
 		SecretWorkDir: workingDir,
