@@ -1,5 +1,13 @@
 # Changelog
 
+### [2.35.7](https://www.github.com/werf/werf/compare/v2.35.6...v2.35.7) (2025-04-30)
+
+
+### Bug Fixes
+
+* **deploy:** label/annotation separator options have no effect ([c9e2eff](https://www.github.com/werf/werf/commit/c9e2eff208f19950a2557e540240eb0a94e8bd93))
+* **export:** align label separator default (comma) with other commands ([c04db26](https://www.github.com/werf/werf/commit/c04db264e96f37d9588dc6f26f3b86c2927f445a))
+
 ### [2.35.6](https://www.github.com/werf/werf/compare/v2.35.5...v2.35.6) (2025-04-30)
 
 
