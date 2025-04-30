@@ -170,7 +170,7 @@ func runDismiss(ctx context.Context) error {
 		return fmt.Errorf("get release name and namespace: %w", err)
 	}
 
-	ctx = action.SetupLogging(ctx, common.GetNelmLogLevel(&commonCmdData), action.DefaultReleaseUninstallLogLevel, *commonCmdData.LogColorMode)
+	ctx = action.SetupLogging(ctx, common.GetNelmLogLevel(&commonCmdData), action.DefaultReleaseUninstallLogLevel, *commonCmdData.LogColorMode, false)
 
 	if err := action.ReleaseUninstall(ctx, releaseName, releaseNamespace, action.ReleaseUninstallOptions{
 		NoDeleteHooks:              !cmdData.WithHooks,

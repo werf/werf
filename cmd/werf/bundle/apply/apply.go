@@ -210,7 +210,7 @@ func runApply(ctx context.Context) error {
 
 	chart.CurrentChartType = chart.ChartTypeBundle
 
-	ctx = action.SetupLogging(ctx, common.GetNelmLogLevel(&commonCmdData), action.DefaultReleaseInstallLogLevel, *commonCmdData.LogColorMode)
+	ctx = action.SetupLogging(ctx, common.GetNelmLogLevel(&commonCmdData), action.DefaultReleaseInstallLogLevel, *commonCmdData.LogColorMode, false)
 
 	if err := action.ReleaseInstall(ctx, releaseName, releaseNamespace, action.ReleaseInstallOptions{
 		AutoRollback:                 cmdData.AutoRollback,
