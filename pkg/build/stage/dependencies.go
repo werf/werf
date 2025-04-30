@@ -89,7 +89,7 @@ func (s *DependenciesStage) GetDependencies(ctx context.Context, c Conveyor, cb 
 				importTitle = fmt.Sprintf("import[%s]", importTitle)
 			}
 
-			logboek.Context(ctx).Default().LogF("%s (%s)\n", sourceChecksum, importTitle)
+			logboek.Context(ctx).Default().LogF("%s: %s\n", sourceChecksum, importTitle)
 
 			args = append(args, sourceChecksum)
 			args = append(args, elm.To)
