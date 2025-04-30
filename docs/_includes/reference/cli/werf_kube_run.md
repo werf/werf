@@ -31,21 +31,20 @@ werf kube-run [options] [IMAGE_NAME] [-- COMMAND ARG...]
       --add-annotation=[]
             Add annotation to deploying resources (can specify multiple).
             Format: annoName=annoValue[<separator>annoName=annoValue ...]. The default separator is 
-            a newline ("\n"), but it can be customized using the --add-annotation-separator flag.
+            ",", but it can be customized using the --add-annotation-separator flag.
             Also, can be specified with $WERF_ADD_ANNOTATION_* (e.g.                                
             $WERF_ADD_ANNOTATION_1=annoName1=annoValue1,                                            
             $WERF_ADD_ANNOTATION_2=annoName2=annoValue2)
-      --add-annotation-separator="\n"
-            Separator for --add-annotation values (default $WERF_ADD_ANNOTATION_SEPARATOR or "\n")
+      --add-annotation-separator=","
+            Separator for --add-annotation values (default $WERF_ADD_ANNOTATION_SEPARATOR or ",")
       --add-label=[]
             Add label to deploying resources (can specify multiple).
             Format: labelName=labelValue[<separator>labelName=labelValue ...]. The default          
-            separator is a newline ("\n"), but it can be customized using the --add-label-separator 
-            flag.
+            separator is ",", but it can be customized using the --add-label-separator flag.
             Also, can be specified with $WERF_ADD_LABEL_* (e.g.                                     
             $WERF_ADD_LABEL_1=labelName1=labelValue1, $WERF_ADD_LABEL_2=labelName2=labelValue2)
-      --add-label-separator="\n"
-            Separator for --add-label values (default $WERF_ADD_LABEL_SEPARATOR or "\n")
+      --add-label-separator=","
+            Separator for --add-label values (default $WERF_ADD_LABEL_SEPARATOR or ",")
       --auto-pull-secret=true
             Automatically create docker config secret in the namespace and plug it via pod`s        
             imagePullSecrets for private registry access (default $WERF_AUTO_PULL_SECRET or true if 
