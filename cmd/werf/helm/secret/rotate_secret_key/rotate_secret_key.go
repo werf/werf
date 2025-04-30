@@ -1,6 +1,7 @@
 package secret
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"path/filepath"
@@ -89,7 +90,9 @@ func runRotateSecretKey(
 
 	chartPath := filepath.Join(giterminismManager.ProjectDir(), relChartPath)
 
-	ctx = action.SetupLogging(ctx, common.GetNelmLogLevel(&commonCmdData), action.DefaultSecretKeyRotateLogLevel, *commonCmdData.LogColorMode, false)
+	ctx = action.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultSecretKeyRotateLogLevel), action.SetupLoggingOptions{
+		ColorMode: *commonCmdData.LogColorMode,
+	})
 
 	if err := action.SecretKeyRotate(ctx, action.SecretKeyRotateOptions{
 		ChartDirPath:      chartPath,

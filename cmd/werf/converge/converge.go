@@ -1,6 +1,7 @@
 package converge
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"os"
@@ -433,7 +434,9 @@ func run(
 
 	loader.ChartFileReader = giterminismManager.FileReader()
 
-	ctx = action.SetupLogging(ctx, common.GetNelmLogLevel(&commonCmdData), action.DefaultReleaseInstallLogLevel, *commonCmdData.LogColorMode, false)
+	ctx = action.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultReleaseInstallLogLevel), action.SetupLoggingOptions{
+		ColorMode: *commonCmdData.LogColorMode,
+	})
 
 	if err := action.ReleaseInstall(ctx, releaseName, releaseNamespace, action.ReleaseInstallOptions{
 		AutoRollback:                 cmdData.AutoRollback,

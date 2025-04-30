@@ -1,6 +1,7 @@
 package secret
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"strings"
@@ -90,7 +91,10 @@ func runSecretEncrypt(ctx context.Context, filePath string) error {
 
 	workingDir := common.GetWorkingDir(&commonCmdData)
 
-	ctx = action.SetupLogging(ctx, common.GetNelmLogLevel(&commonCmdData), action.DefaultSecretValuesFileEncryptLogLevel, *commonCmdData.LogColorMode, true)
+	ctx = action.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultSecretValuesFileEncryptLogLevel), action.SetupLoggingOptions{
+		ColorMode:      *commonCmdData.LogColorMode,
+		LogIsParseable: true,
+	})
 
 	if err := action.SecretValuesFileEncrypt(ctx, filePath, action.SecretValuesFileEncryptOptions{
 		OutputFilePath: cmdData.OutputFilePath,
