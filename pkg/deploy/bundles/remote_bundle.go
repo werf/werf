@@ -96,7 +96,7 @@ func (bundle *RemoteBundle) CopyFromArchive(ctx context.Context, fromArchive *Bu
 					if imageRef, ok := v.(string); ok {
 						ref, err := bundles_registry.ParseReference(imageRef)
 						if err != nil {
-							return fmt.Errorf("unable to parse bundle image %s: %w", imageRef, err)
+							return err
 						}
 						ref.Repo = bundle.RegistryAddress.Repo
 
@@ -168,7 +168,7 @@ func (bundle *RemoteBundle) CopyFromRemote(ctx context.Context, fromRemote *Remo
 					if image, ok := v.(string); ok {
 						ref, err := bundles_registry.ParseReference(image)
 						if err != nil {
-							return fmt.Errorf("unable to parse bundle image %s: %w", image, err)
+							return err
 						}
 
 						ref.Repo = bundle.RegistryAddress.Repo

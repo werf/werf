@@ -32,11 +32,11 @@ var _ = Describe("Bundle copy", func() {
 				Values: map[string]interface{}{
 					"werf": map[string]interface{}{
 						"image": map[string]interface{}{
-							"image-1": "REPO:tag-1",
-							"image-2": "REPO:tag-2",
-							"image-3": "REPO:tag-3",
+							"image-1": "repo:tag-1",
+							"image-2": "repo:tag-2",
+							"image-3": "repo:tag-3",
 						},
-						"repo": "REPO",
+						"repo": "repo",
 					},
 				},
 				Raw: []*chart.File{
@@ -45,10 +45,10 @@ var _ = Describe("Bundle copy", func() {
 						Data: []byte(`
 werf:
   image:
-    image-1: REPO:tag-1
-    image-2: REPO:tag-2
-    image-3: REPO:tag-3
-  repo: REPO
+    image-1: repo:tag-1
+    image-2: repo:tag-2
+    image-3: repo:tag-3
+  repo: repo
   `),
 					},
 				},
@@ -91,11 +91,11 @@ werf:
 			Values: map[string]interface{}{
 				"werf": map[string]interface{}{
 					"image": map[string]interface{}{
-						"image-1": "REPO:tag-1",
-						"image-2": "REPO:tag-2",
-						"image-3": "REPO:tag-3",
+						"image-1": "repo:tag-1",
+						"image-2": "repo:tag-2",
+						"image-3": "repo:tag-3",
 					},
-					"repo": "REPO",
+					"repo": "repo",
 				},
 			},
 			Raw: []*chart.File{
@@ -104,10 +104,10 @@ werf:
 					Data: []byte(`
 werf:
   image:
-    image-1: REPO:tag-1
-    image-2: REPO:tag-2
-    image-3: REPO:tag-3
-  repo: REPO
+    image-1: repo:tag-1
+    image-2: repo:tag-2
+    image-3: repo:tag-3
+  repo: repo
 `),
 				},
 			},
@@ -165,11 +165,11 @@ werf:
 			Values: map[string]interface{}{
 				"werf": map[string]interface{}{
 					"image": map[string]interface{}{
-						"image-1": "REPO:tag-1",
-						"image-2": "REPO:tag-2",
-						"image-3": "REPO:tag-3",
+						"image-1": "repo:tag-1",
+						"image-2": "repo:tag-2",
+						"image-3": "repo:tag-3",
 					},
-					"repo": "REPO",
+					"repo": "repo",
 				},
 			},
 			Raw: []*chart.File{
@@ -178,10 +178,10 @@ werf:
 					Data: []byte(`
 werf:
   image:
-    image-1: REPO:tag-1
-    image-2: REPO:tag-2
-    image-3: REPO:tag-3
-  repo: REPO
+    image-1: repo:tag-1
+    image-2: repo:tag-2
+    image-3: repo:tag-3
+  repo: repo
 `),
 				},
 			},
@@ -239,11 +239,11 @@ werf:
 			Values: map[string]interface{}{
 				"werf": map[string]interface{}{
 					"image": map[string]interface{}{
-						"image-1": "REPO:tag-1",
-						"image-2": "REPO:tag-2",
-						"image-3": "REPO:tag-3",
+						"image-1": "repo:tag-1",
+						"image-2": "repo:tag-2",
+						"image-3": "repo:tag-3",
 					},
-					"repo": "REPO",
+					"repo": "repo",
 				},
 			},
 			Raw: []*chart.File{
@@ -252,10 +252,10 @@ werf:
 					Data: []byte(`
 werf:
   image:
-    image-1: REPO:tag-1
-    image-2: REPO:tag-2
-    image-3: REPO:tag-3
-  repo: REPO
+    image-1: repo:tag-1
+    image-2: repo:tag-2
+    image-3: repo:tag-3
+  repo: repo
 `),
 				},
 			},
