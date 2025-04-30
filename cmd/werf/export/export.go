@@ -69,7 +69,7 @@ func NewExportCmd(ctx context.Context) *cobra.Command {
 			}
 
 			result, err := common.InputArrayToKeyValueMap(
-				append(util.PredefinedValuesByEnvNamePrefix("WERF_EXPORT_ADD_LABEL_"), addLabelArray...),
+				append(util.PredefinedValuesByEnvNamePrefix("WERF_EXPORT_ADD_LABEL_", "WERF_EXPORT_ADD_LABEL_SEPARATOR"), addLabelArray...),
 				addLabelSeparator,
 				common.DefaultKeyValueSeparator,
 			)

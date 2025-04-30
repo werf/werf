@@ -1342,11 +1342,11 @@ func GetSSHKey(cmdData *CmdData) []string {
 }
 
 func GetAddLabels(cmdData *CmdData) []string {
-	return append(util.PredefinedValuesByEnvNamePrefix("WERF_ADD_LABEL_"), *cmdData.AddLabels...)
+	return append(util.PredefinedValuesByEnvNamePrefix("WERF_ADD_LABEL_", "WERF_ADD_LABEL_SEPARATOR"), *cmdData.AddLabels...)
 }
 
 func GetAddAnnotations(cmdData *CmdData) []string {
-	return append(util.PredefinedValuesByEnvNamePrefix("WERF_ADD_ANNOTATION_"), *cmdData.AddAnnotations...)
+	return append(util.PredefinedValuesByEnvNamePrefix("WERF_ADD_ANNOTATION_", "WERF_ADD_ANNOTATION_SEPARATOR"), *cmdData.AddAnnotations...)
 }
 
 func GetCacheStagesStorage(cmdData *CmdData) []string {
