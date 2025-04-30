@@ -1,6 +1,7 @@
 package render
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"os"
@@ -395,7 +396,10 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 
 	// TODO(v3): get rid of forcing color mode via ci-env and use color mode detection logic from
 	// Nelm instead. Until then, color will be always off here.
-	ctx = action.SetupLogging(ctx, common.GetNelmLogLevel(&commonCmdData), action.DefaultChartRenderLogLevel, action.LogColorModeOff, true)
+	ctx = action.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultChartRenderLogLevel), action.SetupLoggingOptions{
+		ColorMode:      action.LogColorModeOff,
+		LogIsParseable: true,
+	})
 
 	if err := action.ChartRender(ctx, action.ChartRenderOptions{
 		ChartAppVersion:              common.GetHelmChartConfigAppVersion(werfConfig),

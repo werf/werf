@@ -1,6 +1,7 @@
 package plan
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"os"
@@ -434,7 +435,9 @@ func run(
 
 	loader.ChartFileReader = giterminismManager.FileReader()
 
-	ctx = action.SetupLogging(ctx, common.GetNelmLogLevel(&commonCmdData), action.DefaultReleasePlanInstallLogLevel, *commonCmdData.LogColorMode, false)
+	ctx = action.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultReleasePlanInstallLogLevel), action.SetupLoggingOptions{
+		ColorMode: *commonCmdData.LogColorMode,
+	})
 
 	if err := action.ReleasePlanInstall(ctx, releaseName, releaseNamespace, action.ReleasePlanInstallOptions{
 		ChartAppVersion:              common.GetHelmChartConfigAppVersion(werfConfig),

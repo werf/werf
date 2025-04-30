@@ -1,6 +1,7 @@
 package secret
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 
@@ -34,7 +35,10 @@ func NewCmd(ctx context.Context) *cobra.Command {
 				return err
 			}
 
-			ctx = action.SetupLogging(ctx, common.GetNelmLogLevel(&commonCmdData), action.DefaultSecretKeyCreateLogLevel, *commonCmdData.LogColorMode, true)
+			ctx = action.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultSecretKeyCreateLogLevel), action.SetupLoggingOptions{
+				ColorMode:      *commonCmdData.LogColorMode,
+				LogIsParseable: true,
+			})
 
 			if _, err := action.SecretKeyCreate(ctx, action.SecretKeyCreateOptions{}); err != nil {
 				return fmt.Errorf("create secret key: %w", err)

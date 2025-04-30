@@ -1,6 +1,7 @@
 package secret
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 
@@ -72,7 +73,9 @@ func runSecretEdit(ctx context.Context, filepPath string) error {
 
 	workingDir := common.GetWorkingDir(&commonCmdData)
 
-	ctx = action.SetupLogging(ctx, common.GetNelmLogLevel(&commonCmdData), action.DefaultSecretValuesFileEditLogLevel, *commonCmdData.LogColorMode, false)
+	ctx = action.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultSecretValuesFileEditLogLevel), action.SetupLoggingOptions{
+		ColorMode: *commonCmdData.LogColorMode,
+	})
 
 	if err := action.SecretValuesFileEdit(ctx, filepPath, action.SecretValuesFileEditOptions{
 		TempDirPath:   werf.GetTmpDir(),

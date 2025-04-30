@@ -1,6 +1,7 @@
 package dismiss
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"errors"
@@ -170,7 +171,9 @@ func runDismiss(ctx context.Context) error {
 		return fmt.Errorf("get release name and namespace: %w", err)
 	}
 
-	ctx = action.SetupLogging(ctx, common.GetNelmLogLevel(&commonCmdData), action.DefaultReleaseUninstallLogLevel, *commonCmdData.LogColorMode, false)
+	ctx = action.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultReleaseUninstallLogLevel), action.SetupLoggingOptions{
+		ColorMode: *commonCmdData.LogColorMode,
+	})
 
 	if err := action.ReleaseUninstall(ctx, releaseName, releaseNamespace, action.ReleaseUninstallOptions{
 		NoDeleteHooks:              !cmdData.WithHooks,

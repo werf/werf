@@ -1,6 +1,7 @@
 package apply
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -210,7 +211,9 @@ func runApply(ctx context.Context) error {
 
 	chart.CurrentChartType = chart.ChartTypeBundle
 
-	ctx = action.SetupLogging(ctx, common.GetNelmLogLevel(&commonCmdData), action.DefaultReleaseInstallLogLevel, *commonCmdData.LogColorMode, false)
+	ctx = action.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultReleaseInstallLogLevel), action.SetupLoggingOptions{
+		ColorMode: *commonCmdData.LogColorMode,
+	})
 
 	if err := action.ReleaseInstall(ctx, releaseName, releaseNamespace, action.ReleaseInstallOptions{
 		AutoRollback:                 cmdData.AutoRollback,
