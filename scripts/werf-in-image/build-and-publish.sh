@@ -19,6 +19,7 @@ DEST_SUBREPO=$1/werf
 export WERF_REPO=ghcr.io/werf/werf-storage
 
 # Extra labels for artifacthub
+export WERF_EXPORT_ADD_LABEL_SEPARATOR='\n'
 export WERF_EXPORT_ADD_LABEL_AH1=io.artifacthub.package.readme-url=https://raw.githubusercontent.com/werf/werf/main/README.md \
        WERF_EXPORT_ADD_LABEL_AH2=io.artifacthub.package.logo-url=https://raw.githubusercontent.com/werf/website/main/assets/images/werf-logo.svg \
        WERF_EXPORT_ADD_LABEL_AH3=io.artifacthub.package.category=integration-delivery \
