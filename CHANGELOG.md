@@ -1,5 +1,13 @@
 # Changelog
 
+### [2.35.6](https://www.github.com/werf/werf/compare/v2.35.5...v2.35.6) (2025-04-30)
+
+
+### Bug Fixes
+
+* **bundle:** incorrect parsing of image reference with colon in tag ([ba851eb](https://www.github.com/werf/werf/commit/ba851ebe26cfb3572f627515a0eebddcf931b9fe))
+* **deploy:** improve log color detection ([c113429](https://www.github.com/werf/werf/commit/c113429c5cc7e9f5282ca5983be675fb067e3c61))
+
 ### [2.35.5](https://www.github.com/werf/werf/compare/v2.35.4...v2.35.5) (2025-04-25)
 
 
