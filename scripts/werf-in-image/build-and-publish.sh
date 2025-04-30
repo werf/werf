@@ -16,6 +16,8 @@ fi
 
 DEST_SUBREPO=$1/werf
 
+unset WERF_PLATFORM
+
 export WERF_REPO=ghcr.io/werf/werf-storage
 
 # Extra labels for artifacthub
