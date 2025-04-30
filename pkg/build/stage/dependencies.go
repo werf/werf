@@ -67,22 +67,39 @@ type DependenciesStage struct {
 	dependencies []*config.Dependency
 }
 
-func (s *DependenciesStage) GetDependencies(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+func (s *DependenciesStage) GetDependencies(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, _, _ *StageImage, _ container_backend.BuildContextArchiver) (string, error) {
 	var args []string
 
-	for ind, elm := range s.imports {
-		var sourceChecksum string
-		var err error
-		if err := logboek.Context(ctx).Info().LogProcess("Getting import %d source checksum ...", ind).DoError(func() error {
-			sourceChecksum, err = s.getImportSourceChecksum(ctx, c, cb, elm)
-			return err
-		}); err != nil {
-			return "", fmt.Errorf("unable to get import %d source checksum: %w", ind, err)
-		}
+	if len(s.imports) != 0 {
+		if err := logboek.Context(ctx).Default().LogProcess("Calculating import checksums").DoError(func() error {
+			for ind, elm := range s.imports {
+				sourceChecksum, err := s.getImportSourceChecksum(ctx, c, cb, elm)
+				if err != nil {
+					return fmt.Errorf("unable to get import %d source checksum: %w", ind, err)
+				}
 
-		args = append(args, sourceChecksum)
-		args = append(args, elm.To)
-		args = append(args, elm.Group, elm.Owner)
+				var importTitle string
+				{
+					importTitle = fmt.Sprintf("image=%s add=%s to=%s", elm.ImageName, elm.Add, elm.To)
+					if len(elm.IncludePaths) != 0 {
+						importTitle += fmt.Sprintf(" includePaths=%v", elm.IncludePaths)
+					}
+					if len(elm.ExcludePaths) != 0 {
+						importTitle += fmt.Sprintf(" excludePaths=%v", elm.ExcludePaths)
+					}
+					importTitle = fmt.Sprintf("import[%s]", importTitle)
+				}
+
+				logboek.Context(ctx).Default().LogF("%s: %s\n", sourceChecksum, importTitle)
+
+				args = append(args, sourceChecksum)
+				args = append(args, elm.To)
+				args = append(args, elm.Group, elm.Owner)
+			}
+			return nil
+		}); err != nil {
+			return "", err
+		}
 	}
 
 	for _, dep := range s.dependencies {
