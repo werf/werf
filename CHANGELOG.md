@@ -1,5 +1,13 @@
 # Changelog
 
+### [2.35.8](https://www.github.com/werf/werf/compare/v2.35.7...v2.35.8) (2025-05-05)
+
+
+### Bug Fixes
+
+* don't parse WERF_ADD_*_SEPARATOR as label or annotation value ([#6835](https://www.github.com/werf/werf/issues/6835)) ([a9289b1](https://www.github.com/werf/werf/commit/a9289b12e5a7c3e0080e86619368e71de45f7dde))
+* **host-cleanup:** disable git data cleaning temporary ([7d38726](https://www.github.com/werf/werf/commit/7d38726ed2df0d23a3725246cd59648be119071b))
+
 ### [2.35.7](https://www.github.com/werf/werf/compare/v2.35.6...v2.35.7) (2025-04-30)
 
 
