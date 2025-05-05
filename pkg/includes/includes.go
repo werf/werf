@@ -2,6 +2,8 @@ package includes
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"path"
 	"path/filepath"
@@ -13,7 +15,7 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/path_matcher"
-	"gopkg.in/yaml.v3"
+	"gopkg.in/yaml.v2"
 )
 
 const (
@@ -23,22 +25,7 @@ const (
 type GiterminismManagerFileReader interface {
 	IsIncludesConfigExistAnywhere(ctx context.Context, relPath string) (bool, error)
 	ReadIncludesConfig(ctx context.Context, relPath string) ([]byte, error)
-}
-
-type Config struct {
-	Includes []includeConf `json:"includes"`
-}
-
-type includeConf struct {
-	Name         string   `yaml:"name"`
-	Git          string   `yaml:"git"`
-	Branch       string   `yaml:"branch"`
-	Tag          string   `yaml:"tag"`
-	Commit       string   `yaml:"commit"`
-	Add          string   `yaml:"add,omitempty"`
-	To           string   `yaml:"to,omitempty"`
-	IncludePaths []string `yaml:"includePaths"`
-	ExcludePaths []string `yaml:"excludePaths"`
+	ReadIncludesLockFile(ctx context.Context, relPath string) ([]byte, error)
 }
 
 type Include struct {
@@ -56,48 +43,28 @@ func GetWerfIncludesConfigRelPath(path string) string {
 }
 
 func Init(ctx context.Context, fileReader GiterminismManagerFileReader, configRelPath string) ([]*Include, error) {
-	config, err := NewConfig(ctx, fileReader, GetWerfIncludesConfigRelPath(configRelPath))
+	config, err := NewConfig(ctx, fileReader, GetWerfIncludesConfigRelPath(configRelPath), "werf-includes.lock")
 	if err != nil {
 		return nil, fmt.Errorf("unable to initialize includes: %w", err)
 	}
 
-	includes, err := GetIncludes(ctx, config)
-	if err != nil {
-		return nil, fmt.Errorf("unable to get includes: %w", err)
+	if len(config.Includes) > 0 {
+		lockInfo, err := parseLockConfig(ctx, fileReader, "werf-includes.lock")
+		if err != nil {
+			return nil, fmt.Errorf("unable to parse werf-includes.lock: %w", err)
+		}
+
+		includes, err := GetIncludes(ctx, config, lockInfo)
+		if err != nil {
+			return nil, fmt.Errorf("unable to get includes: %w", err)
+		}
+		return includes, nil
 	}
 
-	for _, include := range includes {
-		fmt.Println(&include)
-	}
-
-	return includes, nil
+	return []*Include{}, nil
 }
 
-func NewConfig(ctx context.Context, fileReader GiterminismManagerFileReader, configRelPath string) (Config, error) {
-	config := Config{}
-	logboek.Context(ctx).Debug().LogF("Reading includes config from %q\n", configRelPath)
-	exist, err := fileReader.IsIncludesConfigExistAnywhere(ctx, configRelPath)
-	if err != nil {
-		return config, err
-	}
-
-	if !exist {
-		return config, nil
-	}
-
-	data, err := fileReader.ReadIncludesConfig(ctx, configRelPath)
-	if err != nil {
-		return config, err
-	}
-
-	if err := yaml.Unmarshal(data, &config); err != nil {
-		return config, fmt.Errorf("the includes config validation failed: %w", err)
-	}
-
-	return config, err
-}
-
-func GetIncludes(ctx context.Context, cfg Config) ([]*Include, error) {
+func GetIncludes(ctx context.Context, cfg Config, lockInfo *LockInfo) ([]*Include, error) {
 	repoChache := make(map[string]*git_repo.Remote)
 	includes := []*Include{}
 	for _, i := range cfg.Includes {
@@ -122,6 +89,11 @@ func GetIncludes(ctx context.Context, cfg Config) ([]*Include, error) {
 		commit, err := getCommit(r, &i)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get commit: %w", err)
+		}
+
+		err = lockInfo.CheckVersion(i.GetName(), commit.Hash.String())
+		if err != nil {
+			return nil, err
 		}
 
 		tree, err := commit.Tree()
@@ -157,6 +129,8 @@ func GetIncludes(ctx context.Context, cfg Config) ([]*Include, error) {
 			commit:  commit,
 			objects: matchedMap,
 		}
+
+		fmt.Println(matchedMap)
 
 		includes = append(includes, include)
 	}
@@ -285,4 +259,13 @@ func branchRef(r *git.Repository, branch string) (*object.Commit, error) {
 		return nil, fmt.Errorf("failed to get branch %s: %w", branch, err)
 	}
 	return commitRef(r, branchRef.Hash().String())
+}
+
+func (i *includeConf) GetName() string {
+	if i.Name != "" {
+		return i.Name
+	}
+	data, _ := yaml.Marshal(i)
+	hash := sha256.Sum256(data)
+	return hex.EncodeToString(hash[:])
 }

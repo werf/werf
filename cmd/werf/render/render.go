@@ -391,7 +391,7 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 		return fmt.Errorf("get service values: %w", err)
 	}
 
-	loader.ChartFileReader = giterminismManager.FileReader()
+	loader.ChartFileReader = giterminismManager.FileManager
 
 	ctx = action.SetupLogging(ctx, common.GetNelmLogLevel(&commonCmdData), action.DefaultChartRenderLogLevel)
 

@@ -159,7 +159,7 @@ func runMain(ctx context.Context, imageNameListFromArgs []string) error {
 
 	if *commonCmdData.Follow {
 		logboek.LogOptionalLn()
-		return common.FollowGitHead(ctx, &commonCmdData, func(ctx context.Context, headCommitGiterminismManager giterminism_manager.Interface) error {
+		return common.FollowGitHead(ctx, &commonCmdData, func(ctx context.Context, headCommitGiterminismManager *giterminism_manager.Manager) error {
 			return run(ctx, containerBackend, headCommitGiterminismManager, imageNameListFromArgs)
 		})
 	} else {

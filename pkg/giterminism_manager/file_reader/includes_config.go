@@ -48,3 +48,29 @@ func (r FileReader) readIncludesConfig(ctx context.Context, relPath string) ([]b
 		return r.IsRegularFileExist(ctx, path)
 	})
 }
+
+func (r FileReader) ReadIncludesLockFile(ctx context.Context, relPath string) (data []byte, err error) {
+	logboek.Context(ctx).Debug().
+		LogBlock("ReadIncludesLockFile").
+		Options(applyDebugToLogboek).
+		Do(func() {
+			data, err = r.readIncludesLockFile(ctx, relPath)
+
+			if debug() {
+				logboek.Context(ctx).Debug().LogF("dataLength: %v\nerr: %q\n", len(data), err)
+			}
+		})
+
+	if err != nil {
+		return nil, fmt.Errorf("unable to read werf giterminism lock file: %w", err)
+	}
+	return
+}
+
+func (r FileReader) readIncludesLockFile(ctx context.Context, relPath string) ([]byte, error) {
+	return r.ReadAndCheckConfigurationFile(ctx, relPath, func(_ string) bool {
+		return false
+	}, func(path string) (bool, error) {
+		return r.IsRegularFileExist(ctx, path)
+	})
+}

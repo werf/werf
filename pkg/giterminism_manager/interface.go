@@ -11,7 +11,6 @@ import (
 type Interface interface {
 	FileReader() FileReader
 	Inspector() Inspector
-
 	LocalGitRepo() git_repo.GitRepo
 	HeadCommit() string
 	ProjectDir() string

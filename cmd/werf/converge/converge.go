@@ -241,7 +241,7 @@ func runMain(ctx context.Context, imageNameListFromArgs []string) error {
 		logboek.LogOptionalLn()
 		return common.FollowGitHead(ctx, &commonCmdData, func(
 			ctx context.Context,
-			headCommitGiterminismManager giterminism_manager.Interface,
+			headCommitGiterminismManager *giterminism_manager.Manager,
 		) error {
 			return run(ctx, containerBackend, headCommitGiterminismManager, imageNameListFromArgs)
 		})
@@ -430,7 +430,7 @@ func run(
 		return fmt.Errorf("get service values: %w", err)
 	}
 
-	loader.ChartFileReader = giterminismManager.FileReader()
+	loader.ChartFileReader = giterminismManager.(*giterminism_manager.Manager).FileManager
 
 	ctx = action.SetupLogging(ctx, common.GetNelmLogLevel(&commonCmdData), action.DefaultReleaseInstallLogLevel)
 

@@ -27,6 +27,7 @@ type FileReader interface {
 
 	IsIncludesConfigExistAnywhere(ctx context.Context, relPath string) (bool, error)
 	ReadIncludesConfig(ctx context.Context, relPath string) ([]byte, error)
+	ReadIncludesLockFile(ctx context.Context, relPath string) (data []byte, err error)
 
 	file.ChartFileReader
 }
@@ -103,8 +104,6 @@ func (f *FileManager) ReadConfigTemplateFiles(ctx context.Context, customRelDirP
 			return err
 		}
 	}
-
-	fmt.Println("templatePathCache", f.werfTemplatesCache)
 
 	return nil
 }
@@ -203,10 +202,122 @@ func (f *FileManager) ReadDockerfile(ctx context.Context, relPath string) ([]byt
 }
 
 func (f *FileManager) IsDockerignoreExistAnywhere(ctx context.Context, relPath string) (bool, error) {
-	logboek.Context(ctx).Debug().LogLn("Dockerignore will not be read from includes")
-	return f.fileReader.IsDockerignoreExistAnywhere(ctx, relPath)
+	exists, err := f.fileReader.IsDockerignoreExistAnywhere(ctx, relPath)
+	if err != nil {
+		return false, fmt.Errorf("unable to check dockerignore existence: %w", err)
+	}
+	if !exists {
+		_, err := f.tryReadFromInludes(ctx, relPath)
+		if err == nil {
+			return true, nil
+		}
+	}
+	return exists, nil
 }
 func (f *FileManager) ReadDockerignore(ctx context.Context, relPath string) ([]byte, error) {
-	logboek.Context(ctx).Debug().LogLn("Dockerignore will not be read from includes")
-	return f.fileReader.ReadDockerignore(ctx, relPath)
+	exists, err := f.fileReader.IsDockerignoreExistAnywhere(ctx, relPath)
+	if err != nil {
+		return nil, fmt.Errorf("unable to check dockerignore existence: %w", err)
+	}
+
+	if exists {
+		data, err := f.fileReader.ReadDockerignore(ctx, relPath)
+		if err != nil {
+			return nil, fmt.Errorf("unable to read dockerignore file %q: %w", filepath.ToSlash(relPath), err)
+		}
+		return data, nil
+	}
+
+	data, err := f.tryReadFromInludes(ctx, relPath)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read dockerignore file %q: %w", filepath.ToSlash(relPath), err)
+	}
+
+	return data, nil
+}
+
+func (f *FileManager) LocateChart(ctx context.Context, name string) (string, error) {
+	chartDir, err := f.fileReader.LocateChart(ctx, name)
+	if err != nil {
+		logboek.Context(ctx).Debug().LogF("Chart directory %q not found in the local filesystem. Try find in includes\n", name)
+		if includes.IsDirExists(ctx, f.includes, name) {
+			return name, nil
+		}
+		return "", fmt.Errorf("unable to locate chart directory: %w", err)
+	}
+	return chartDir, nil
+}
+
+func (f *FileManager) ReadChartFile(ctx context.Context, filePath string) ([]byte, error) {
+	path := util.GetAbsoluteFilepath(filePath)
+	if exist, _ := util.FileExists(path); exist {
+		data, err := f.fileReader.ReadChartFile(ctx, path)
+		if err != nil {
+			return nil, fmt.Errorf("unable to read chart file %q: %w", path, err)
+		}
+		return data, nil
+	}
+
+	logboek.Context(ctx).Debug().LogF("Chart file %q not found in the local filesystem. Try find in includes\n", filePath)
+	data, err := f.tryReadFromInludes(ctx, filePath)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read chart file %q: %w", filepath.ToSlash(filePath), err)
+	}
+
+	return data, nil
+}
+
+func (f *FileManager) LoadChartDir(ctx context.Context, dir string) ([]*file.ChartExtenderBufferedFile, error) {
+	path := util.GetAbsoluteFilepath(dir)
+	processed := make(map[string]bool)
+
+	var chartDir []*file.ChartExtenderBufferedFile
+
+	if exist, _ := util.DirExists(path); exist {
+		var err error
+		chartDir, err = f.fileReader.LoadChartDir(ctx, dir)
+		if err != nil {
+			return nil, fmt.Errorf("unable to load chart directory: %w", err)
+		}
+		for _, file := range chartDir {
+			processed[filepath.ToSlash(file.Name)] = true
+		}
+	}
+
+	logboek.Context(ctx).Debug().LogF("Try to read additional files from includes\n")
+
+	for _, include := range f.includes {
+		err := include.WalkObjects(func(toPath, _ string) error {
+			normToPath := filepath.ToSlash(toPath)
+			normDir := filepath.ToSlash(dir)
+			if !strings.HasPrefix(normToPath, normDir+"/") && normToPath != normDir {
+				return nil
+			}
+
+			if _, ok := processed[normToPath]; ok {
+				return nil
+			}
+
+			data, err := include.GetFile(ctx, normToPath)
+			if err != nil {
+				return fmt.Errorf("unable to read included chart file %q from %s: %w", normToPath, include.Name, err)
+			}
+
+			chartDir = append(chartDir, &file.ChartExtenderBufferedFile{
+				Name: normToPath,
+				Data: data,
+			})
+			processed[normToPath] = false
+			return nil
+		})
+		if err != nil {
+			return nil, fmt.Errorf("unable to walk includes for chart dir: %w", err)
+		}
+	}
+
+	if len(chartDir) == 0 {
+		return nil, fmt.Errorf("the directory %q not found in the project git repository or includes", dir)
+	}
+
+	return chartDir, nil
 }

@@ -1235,7 +1235,7 @@ func OpenGitRepo(ctx context.Context, cmdData *CmdData, workingDir, gitWorkTree 
 	return git_repo.OpenLocalRepo(ctx, "own", gitWorkTree, openLocalRepoOptions)
 }
 
-func GetGiterminismManager(ctx context.Context, cmdData *CmdData) (giterminism_manager.Interface, error) {
+func GetGiterminismManager(ctx context.Context, cmdData *CmdData) (*giterminism_manager.Manager, error) {
 	workingDir := GetWorkingDir(cmdData)
 
 	gitWorkTree, err := GetGitWorkTree(ctx, cmdData, workingDir)
