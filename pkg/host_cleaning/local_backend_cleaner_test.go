@@ -109,17 +109,38 @@ var _ = Describe("LocalBackendCleaner", func() {
 				filter.NewFilter("until", "1h"),
 			}
 		})
-		It("should call backend.Images() to find dandling images if opts.DryRun=true", func() {
-			backend.EXPECT().Images(ctx, buildImagesOptions(filters.ToPairs()...)).Return(image.ImagesList{}, nil)
+		It("should return err=nil and full report if opts.DryRun=true calling backend.Images() to find dandling images", func() {
+			list := image.ImagesList{
+				{ID: "one"},
+			}
+			backend.EXPECT().Images(ctx, buildImagesOptions(filters.ToPairs()...)).Return(list, nil)
 
 			report, err := cleaner.pruneImages(ctx, RunGCOptions{
 				DryRun: true,
 			})
 			Expect(err).To(Succeed())
+			Expect(report).To(Equal(mapImageListToCleanupReport(list)))
+		})
+		It("should return err=nil and full report if opts.DryRun=false calling backend.PruneImages() which returns pruneErr=nil", func() {
+			pruneReport := prune.Report{
+				ItemsDeleted: []string{"one"},
+			}
+			backend.EXPECT().PruneImages(ctx, prune.Options{Filters: filters}).Return(pruneReport, nil)
+
+			report, err := cleaner.pruneImages(ctx, RunGCOptions{})
+			Expect(err).To(Succeed())
+			Expect(report).To(Equal(mapPruneReportToCleanupReport(pruneReport)))
+		})
+		It("should return err=some_err and empty report if opts.DryRun=false calling backend.PruneImages() which returns pruneErr=err", func() {
+			err0 := errors.New("some_err")
+			backend.EXPECT().PruneImages(ctx, prune.Options{Filters: filters}).Return(prune.Report{}, err0)
+
+			report, err := cleaner.pruneImages(ctx, RunGCOptions{})
+			Expect(err).To(Equal(err0))
 			Expect(report).To(Equal(newCleanupReport()))
 		})
-		It("should call backend.PruneImages() if opts.DryRun=false", func() {
-			backend.EXPECT().PruneImages(ctx, prune.Options{Filters: filters}).Return(prune.Report{}, nil)
+		It("should return err=nil and empty report if opts.DryRun=false calling backend.PruneImages() which returns pruneErr=ErrImageUsedByContainer", func() {
+			backend.EXPECT().PruneImages(ctx, prune.Options{Filters: filters}).Return(prune.Report{}, container_backend.ErrImageUsedByContainer)
 
 			report, err := cleaner.pruneImages(ctx, RunGCOptions{})
 			Expect(err).To(Succeed())
