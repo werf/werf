@@ -27,9 +27,7 @@ type CmdData struct {
 	Release                          *string
 	Namespace                        *string
 	AddAnnotations                   *[]string
-	AddAnnotationSeparator           *string
 	AddLabels                        *[]string
-	AddLabelSeparator                *string
 	KubeContext                      *string
 	KubeConfig                       *string
 	KubeConfigBase64                 *string

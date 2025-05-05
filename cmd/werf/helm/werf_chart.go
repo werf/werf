@@ -12,9 +12,7 @@ import (
 
 func SetupRenderRelatedWerfChartParams(cmd *cobra.Command, commonCmdData *common.CmdData) {
 	common.SetupAddAnnotations(commonCmdData, cmd)
-	common.SetupAddAnnotationSeparator(commonCmdData, cmd)
 	common.SetupAddLabels(commonCmdData, cmd)
-	common.SetupAddLabelSeparator(commonCmdData, cmd)
 
 	common.SetupSecretValues(commonCmdData, cmd, true)
 	common.SetupIgnoreSecretKey(commonCmdData, cmd)

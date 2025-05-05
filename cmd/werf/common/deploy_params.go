@@ -13,18 +13,18 @@ const (
 )
 
 func GetUserExtraAnnotations(cmdData *CmdData) (map[string]string, error) {
-	result, err := InputArrayToKeyValueMap(GetAddAnnotations(cmdData), *cmdData.AddAnnotationSeparator, DefaultKeyValueSeparator)
+	result, err := keyValueArrayToMap(GetAddAnnotations(cmdData), DefaultKeyValueSeparator)
 	if err != nil {
-		return nil, fmt.Errorf("unsupported --add-annotation value: %w", err)
+		return nil, fmt.Errorf("invalid --add-annotation value: %w", err)
 	}
 
 	return result, nil
 }
 
 func GetUserExtraLabels(cmdData *CmdData) (map[string]string, error) {
-	result, err := InputArrayToKeyValueMap(GetAddLabels(cmdData), *cmdData.AddLabelSeparator, DefaultKeyValueSeparator)
+	result, err := keyValueArrayToMap(GetAddLabels(cmdData), DefaultKeyValueSeparator)
 	if err != nil {
-		return nil, fmt.Errorf("unsupported --add-label value: %w", err)
+		return nil, fmt.Errorf("invalid --add-label value: %w", err)
 	}
 
 	return result, nil

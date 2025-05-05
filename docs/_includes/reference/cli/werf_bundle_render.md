@@ -28,21 +28,15 @@ werf bundle render [options]
 ```shell
       --add-annotation=[]
             Add annotation to deploying resources (can specify multiple).
-            Format: annoName=annoValue[<separator>annoName=annoValue ...]. The default separator is 
-            ",", but it can be customized using the --add-annotation-separator flag.
+            Format: annoName=annoValue.
             Also, can be specified with $WERF_ADD_ANNOTATION_* (e.g.                                
             $WERF_ADD_ANNOTATION_1=annoName1=annoValue1,                                            
             $WERF_ADD_ANNOTATION_2=annoName2=annoValue2)
-      --add-annotation-separator=","
-            Separator for --add-annotation values (default $WERF_ADD_ANNOTATION_SEPARATOR or ",")
       --add-label=[]
             Add label to deploying resources (can specify multiple).
-            Format: labelName=labelValue[<separator>labelName=labelValue ...]. The default          
-            separator is ",", but it can be customized using the --add-label-separator flag.
+            Format: labelName=labelValue.
             Also, can be specified with $WERF_ADD_LABEL_* (e.g.                                     
             $WERF_ADD_LABEL_1=labelName1=labelValue1, $WERF_ADD_LABEL_2=labelName2=labelValue2)
-      --add-label-separator=","
-            Separator for --add-label values (default $WERF_ADD_LABEL_SEPARATOR or ",")
   -b, --bundle-dir=""
             Get extracted bundle from directory instead of registry (default $WERF_BUNDLE_DIR)
       --container-registry-mirror=[]
