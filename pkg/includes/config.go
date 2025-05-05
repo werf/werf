@@ -33,14 +33,10 @@ type lockConfig struct {
 }
 
 type includeLockConf struct {
-	Name   string `yaml:"name"`
+	Git    string `yaml:"git"`
+	Branch string `yaml:"branch"`
+	Tag    string `yaml:"tag"`
 	Commit string `yaml:"commit"`
-}
-
-type NewConfigOptions struct {
-	configRelPath     string
-	lockConfigRelPath string
-	ignoreLockfile    bool
 }
 
 func NewConfig(ctx context.Context, fileReader GiterminismManagerFileReader, configRelPath, lockConfigRelPath string) (Config, error) {
@@ -95,18 +91,43 @@ func parseLockConfig(ctx context.Context, fileReader GiterminismManagerFileReade
 	}
 
 	for _, l := range config.IncludeLock {
-		lockInfo.includeToCommitMapper[l.Name] = l.Commit
+		ref, err := l.Ref()
+		if err != nil {
+			return nil, fmt.Errorf("unable to get ref for include %s: %w", l.Git, err)
+		}
+		key := fmt.Sprintf("%s@%s", l.Git, ref)
+		lockInfo.includeToCommitMapper[key] = l.Commit
 	}
 
 	return lockInfo, nil
 }
 
-func (l *LockInfo) CheckVersion(includeName, commitHash string) error {
-	if commit, ok := l.includeToCommitMapper[includeName]; ok {
-		if commit != commitHash {
-			return fmt.Errorf("include %q commit hash %q does not match the lock file commit hash %q", includeName, commitHash, commit)
-		}
-		return nil
+func (l *LockInfo) CheckVersion(git, ref, commit string) error {
+	lockCommit, ok := l.includeToCommitMapper[fmt.Sprintf("%s@%s", git, ref)]
+	if !ok {
+		return fmt.Errorf("lock config not found for %s", git)
 	}
-	return fmt.Errorf("include %q commit hash %q not found in the lock file", includeName, commitHash)
+
+	if lockCommit != commit {
+		return fmt.Errorf("commit mismatch for %s: expected %s, got %s", git, lockCommit, commit)
+	}
+
+	return nil
+}
+
+func (i *includeLockConf) Ref() (string, error) {
+	return ref(i.Git, i.Tag, i.Branch, i.Commit)
+}
+
+func ref(git, tag, branch, commit string) (string, error) {
+	switch {
+	case tag != "":
+		return tag, nil
+	case branch != "":
+		return branch, nil
+	case commit != "":
+		return commit, nil
+	default:
+		return "", fmt.Errorf("no ref specified for include %s", git)
+	}
 }

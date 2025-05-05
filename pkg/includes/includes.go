@@ -91,7 +91,12 @@ func GetIncludes(ctx context.Context, cfg Config, lockInfo *LockInfo) ([]*Includ
 			return nil, fmt.Errorf("failed to get commit: %w", err)
 		}
 
-		err = lockInfo.CheckVersion(i.GetName(), commit.Hash.String())
+		ref, err := i.Ref()
+		if err != nil {
+			return nil, err
+		}
+
+		err = lockInfo.CheckVersion(i.Git, ref, commit.Hash.String())
 		if err != nil {
 			return nil, err
 		}
@@ -129,8 +134,6 @@ func GetIncludes(ctx context.Context, cfg Config, lockInfo *LockInfo) ([]*Includ
 			commit:  commit,
 			objects: matchedMap,
 		}
-
-		fmt.Println(matchedMap)
 
 		includes = append(includes, include)
 	}
@@ -222,6 +225,10 @@ func FindWerfConfig(ctx context.Context, includes []*Include, cfgPaths []string)
 		}
 	}
 	return "", nil, fmt.Errorf("unable to find config file in includes")
+}
+
+func (i *includeConf) Ref() (string, error) {
+	return ref(i.Git, i.Commit, i.Tag, i.Branch)
 }
 
 func getCommit(r *git.Repository, i *includeConf) (*object.Commit, error) {
