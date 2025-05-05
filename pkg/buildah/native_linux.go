@@ -374,6 +374,7 @@ func (b *NativeBuildah) BuildFromDockerfile(ctx context.Context, dockerfile stri
 		MaxPullPushRetries:      MaxPullPushRetries,
 		PullPushRetryDelay:      PullPushRetryDelay,
 		Layers:                  true,
+		LayerLabels:             opts.Labels,
 		RemoveIntermediateCtrs:  true,
 		ForceRmIntermediateCtrs: false,
 		NoCache:                 false,
