@@ -1,5 +1,15 @@
 # Changelog
 
+### [2.35.9](https://www.github.com/werf/werf/compare/v2.35.8...v2.35.9) (2025-05-05)
+
+
+### Bug Fixes
+
+* **build, dockerfile, buildah:** label intermediate and dangling images ([0efd655](https://www.github.com/werf/werf/commit/0efd65530fe2a0da1451ddf46fa5f852865dfebb))
+* **deploy:** remove add-(label|annotation)-separator to keep reproducibility ([8827f58](https://www.github.com/werf/werf/commit/8827f5840a80923e1be2e73bd10cdd2836bbac9f))
+* **export:** use a new line (\n) as a default --add-label-separator ([bb536d8](https://www.github.com/werf/werf/commit/bb536d8841115b959a5e6123ef9fe1d09761f964))
+* **host-cleanup, buildah:** translate Buildah's error "image is in use by a container" to a notice ([b6749b9](https://www.github.com/werf/werf/commit/b6749b984b0bd697307f5b539b5da1d87948f9fd))
+
 ### [2.35.8](https://www.github.com/werf/werf/compare/v2.35.7...v2.35.8) (2025-05-05)
 
 
