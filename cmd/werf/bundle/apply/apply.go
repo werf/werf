@@ -85,9 +85,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
 	common.SetupAddAnnotations(&commonCmdData, cmd)
-	common.SetupAddAnnotationSeparator(&commonCmdData, cmd)
 	common.SetupAddLabels(&commonCmdData, cmd)
-	common.SetupAddLabelSeparator(&commonCmdData, cmd)
 
 	common.SetupSetDockerConfigJsonValue(&commonCmdData, cmd)
 	common.SetupSet(&commonCmdData, cmd)

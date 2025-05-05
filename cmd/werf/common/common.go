@@ -414,38 +414,16 @@ func SetupNamespace(cmdData *CmdData, cmd *cobra.Command, projectConfigParsed bo
 
 func SetupAddAnnotations(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.AddAnnotations = new([]string)
-	cmd.Flags().StringArrayVarP(cmdData.AddAnnotations, "add-annotation", "", []string{}, fmt.Sprintf(`Add annotation to deploying resources (can specify multiple).
-Format: annoName=annoValue[<separator>annoName=annoValue ...]. The default separator is %q, but it can be customized using the --add-annotation-separator flag.
-Also, can be specified with $WERF_ADD_ANNOTATION_* (e.g. $WERF_ADD_ANNOTATION_1=annoName1=annoValue1, $WERF_ADD_ANNOTATION_2=annoName2=annoValue2)`, DefaultPairSeparator))
-}
-
-func SetupAddAnnotationSeparator(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.AddAnnotationSeparator = new(string)
-
-	defaultValue := DefaultPairSeparator
-	if os.Getenv("WERF_ADD_ANNOTATION_SEPARATOR") != "" {
-		defaultValue = os.Getenv("WERF_ADD_ANNOTATION_SEPARATOR")
-	}
-
-	cmd.Flags().StringVarP(cmdData.AddAnnotationSeparator, "add-annotation-separator", "", defaultValue, fmt.Sprintf(`Separator for --add-annotation values (default $WERF_ADD_ANNOTATION_SEPARATOR or %q)`, DefaultPairSeparator))
+	cmd.Flags().StringArrayVarP(cmdData.AddAnnotations, "add-annotation", "", []string{}, `Add annotation to deploying resources (can specify multiple).
+Format: annoName=annoValue.
+Also, can be specified with $WERF_ADD_ANNOTATION_* (e.g. $WERF_ADD_ANNOTATION_1=annoName1=annoValue1, $WERF_ADD_ANNOTATION_2=annoName2=annoValue2)`)
 }
 
 func SetupAddLabels(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.AddLabels = new([]string)
-	cmd.Flags().StringArrayVarP(cmdData.AddLabels, "add-label", "", []string{}, fmt.Sprintf(`Add label to deploying resources (can specify multiple).
-Format: labelName=labelValue[<separator>labelName=labelValue ...]. The default separator is %q, but it can be customized using the --add-label-separator flag.
-Also, can be specified with $WERF_ADD_LABEL_* (e.g. $WERF_ADD_LABEL_1=labelName1=labelValue1, $WERF_ADD_LABEL_2=labelName2=labelValue2)`, DefaultPairSeparator))
-}
-
-func SetupAddLabelSeparator(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.AddLabelSeparator = new(string)
-
-	defaultValue := DefaultPairSeparator
-	if os.Getenv("WERF_ADD_LABEL_SEPARATOR") != "" {
-		defaultValue = os.Getenv("WERF_ADD_LABEL_SEPARATOR")
-	}
-
-	cmd.Flags().StringVarP(cmdData.AddLabelSeparator, "add-label-separator", "", defaultValue, fmt.Sprintf(`Separator for --add-label values (default $WERF_ADD_LABEL_SEPARATOR or %q)`, DefaultPairSeparator))
+	cmd.Flags().StringArrayVarP(cmdData.AddLabels, "add-label", "", []string{}, `Add label to deploying resources (can specify multiple).
+Format: labelName=labelValue.
+Also, can be specified with $WERF_ADD_LABEL_* (e.g. $WERF_ADD_LABEL_1=labelName1=labelValue1, $WERF_ADD_LABEL_2=labelName2=labelValue2)`)
 }
 
 func SetupKubeContext(cmdData *CmdData, cmd *cobra.Command) {
@@ -1342,11 +1320,11 @@ func GetSSHKey(cmdData *CmdData) []string {
 }
 
 func GetAddLabels(cmdData *CmdData) []string {
-	return append(util.PredefinedValuesByEnvNamePrefix("WERF_ADD_LABEL_", "WERF_ADD_LABEL_SEPARATOR"), *cmdData.AddLabels...)
+	return append(util.PredefinedValuesByEnvNamePrefix("WERF_ADD_LABEL_"), *cmdData.AddLabels...)
 }
 
 func GetAddAnnotations(cmdData *CmdData) []string {
-	return append(util.PredefinedValuesByEnvNamePrefix("WERF_ADD_ANNOTATION_", "WERF_ADD_ANNOTATION_SEPARATOR"), *cmdData.AddAnnotations...)
+	return append(util.PredefinedValuesByEnvNamePrefix("WERF_ADD_ANNOTATION_"), *cmdData.AddAnnotations...)
 }
 
 func GetCacheStagesStorage(cmdData *CmdData) []string {
