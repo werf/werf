@@ -19,6 +19,7 @@ type rawImageFromDockerfile struct {
 	Args            map[string]interface{} `yaml:"args,omitempty"`
 	AddHost         interface{}            `yaml:"addHost,omitempty"`
 	Network         string                 `yaml:"network,omitempty"`
+	Sbom            *bool                  `yaml:"sbom,omitempty"`
 	SSH             string                 `yaml:"ssh,omitempty"`
 	RawDependencies []*rawDependency       `yaml:"dependencies,omitempty"`
 	Staged          bool                   `yaml:"staged,omitempty"`
@@ -96,6 +97,7 @@ func (c *rawImageFromDockerfile) toImageFromDockerfileDirective(giterminismManag
 
 	image.cacheVersion = c.CacheVersion
 	image.final = option.PtrValueOrDefault(c.Final, true)
+	image.sbom = option.PtrValueOrDefault(c.Sbom, false)
 
 	contextAddFile, err := InterfaceToStringArray(c.ContextAddFile, nil, c.doc)
 	if err != nil {

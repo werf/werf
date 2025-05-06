@@ -21,6 +21,7 @@ import (
 	"github.com/werf/werf/v2/pkg/container_backend/prune"
 	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/sbom"
 	"github.com/werf/werf/v2/pkg/ssh_agent"
 )
 
@@ -406,4 +407,52 @@ func (backend *DockerServerBackend) PruneVolumes(ctx context.Context, options pr
 		return prune.Report{}, err
 	}
 	return prune.Report(report), err
+}
+
+func (backend *DockerServerBackend) GenerateSBOM(ctx context.Context, sourceImg string) (string, error) {
+	workingTree := sbom.NewWorkingTree()
+
+	if err := workingTree.Create(ctx, os.TempDir(), []string{"spdx.json"}); err != nil {
+		return "", err
+	}
+	defer workingTree.Cleanup(ctx)
+
+	for _, bill := range workingTree.BillFiles() {
+		args := []string{
+			"--rm",
+			"--name", fmt.Sprintf("%s%s", image.SBOMScannerContainerNamePrefix, uuid.New().String()),
+			"--volume", "/var/run/docker.sock:/var/run/docker.sock", // TODO: how to handle non-Unix systems?
+			"--pull", fmt.Sprintf("%s", sbom.PullIfMissing),
+			sbom.ScannerImage,
+			// syft command with options
+			"scan", fmt.Sprintf("docker:%s", sourceImg), "--output=spdx-json",
+		}
+
+		output, err := docker.CliRun_RecordedOutput(ctx, args...)
+		if err != nil {
+			return "", fmt.Errorf("unable to run scanner inside of container: %w", err)
+		}
+		if _, err = bill.WriteString(output); err != nil {
+			return "", fmt.Errorf("unable to write bill %q: %w", bill.Name(), err)
+		}
+	}
+
+	archive := newSbomContextArchiver(workingTree.RootDir())
+
+	if err := archive.Create(ctx, BuildContextArchiveCreateOptions{
+		DockerfileRelToContextPath: workingTree.Containerfile(),
+		ContextAddFiles:            append(workingTree.BillNames(), workingTree.Containerfile()),
+	}); err != nil {
+		return "", fmt.Errorf("unable to create sbom scanning results archive: %w", err)
+	}
+
+	imageId, err := backend.BuildDockerfile(ctx, workingTree.ContainerfileContent(), BuildDockerfileOpts{
+		DockerfileCtxRelPath: workingTree.Containerfile(),
+		BuildContextArchive:  archive,
+	})
+	if err != nil {
+		return "", fmt.Errorf("unable to build sbom result image: %w", err)
+	}
+
+	return imageId, nil
 }
