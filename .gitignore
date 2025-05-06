@@ -5,6 +5,7 @@
 /.idea
 /.run
 /.help
+.env
 
 /docs/vendor
 /docs/.ruby-version
