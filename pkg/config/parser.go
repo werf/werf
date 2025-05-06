@@ -215,10 +215,6 @@ func renderWerfConfigYaml(ctx context.Context, opts renderWerfConfigYamlOpts) (s
 		return "", "", err
 	}
 
-	for _, t := range tmpl.Templates() {
-		fmt.Println(t)
-	}
-
 	configPath, err := parseWerfConfig(ctx, parseWerfConfigOpts{
 		tmpl:               tmpl,
 		giterminismManager: opts.giterminismManager.(*giterminism_manager.Manager),
@@ -267,7 +263,7 @@ type parseWerfConfigOpts struct {
 func parseWerfConfig(ctx context.Context, opts parseWerfConfigOpts) (string, error) {
 	configPath, configData, err := opts.giterminismManager.FileManager.ReadConfig(ctx, opts.relWerfConfigPath)
 	if err != nil {
-		return "", fmt.Errorf("unable to read config file %q: %w", opts.relWerfConfigPath, err)
+		return "", err
 	}
 
 	if _, err := opts.tmpl.Parse(string(configData)); err != nil {

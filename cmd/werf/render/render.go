@@ -319,8 +319,6 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 		return fmt.Errorf("get relative helm chart directory: %w", err)
 	}
 
-	chartPath := filepath.Join(giterminismManager.ProjectDir(), relChartPath)
-
 	releaseNamespace, err := deploy_params.GetKubernetesNamespace(
 		*commonCmdData.Namespace,
 		*commonCmdData.Environment,
@@ -397,7 +395,7 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 
 	if err := action.ChartRender(ctx, action.ChartRenderOptions{
 		ChartAppVersion:              common.GetHelmChartConfigAppVersion(werfConfig),
-		ChartDirPath:                 chartPath,
+		ChartDirPath:                 relChartPath,
 		ChartRepositoryInsecure:      *commonCmdData.InsecureHelmDependencies,
 		ChartRepositorySkipTLSVerify: *commonCmdData.SkipTlsVerifyHelmDependencies,
 		ChartRepositorySkipUpdate:    *commonCmdData.SkipDependenciesRepoRefresh,

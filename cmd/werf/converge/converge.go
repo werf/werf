@@ -253,7 +253,7 @@ func runMain(ctx context.Context, imageNameListFromArgs []string) error {
 func run(
 	ctx context.Context,
 	containerBackend container_backend.ContainerBackend,
-	giterminismManager giterminism_manager.Interface,
+	giterminismManager *giterminism_manager.Manager,
 	imageNameListFromArgs []string,
 ) error {
 	werfConfigPath, werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
@@ -351,8 +351,6 @@ func run(
 		return fmt.Errorf("get relative helm chart directory: %w", err)
 	}
 
-	chartPath := filepath.Join(giterminismManager.ProjectDir(), relChartPath)
-
 	releaseNamespace, err := deploy_params.GetKubernetesNamespace(
 		*commonCmdData.Namespace,
 		*commonCmdData.Environment,
@@ -430,14 +428,14 @@ func run(
 		return fmt.Errorf("get service values: %w", err)
 	}
 
-	loader.ChartFileReader = giterminismManager.(*giterminism_manager.Manager).FileManager
+	loader.ChartFileReader = giterminismManager.FileManager
 
 	ctx = action.SetupLogging(ctx, common.GetNelmLogLevel(&commonCmdData), action.DefaultReleaseInstallLogLevel)
 
 	if err := action.ReleaseInstall(ctx, releaseName, releaseNamespace, action.ReleaseInstallOptions{
 		AutoRollback:                 cmdData.AutoRollback,
 		ChartAppVersion:              common.GetHelmChartConfigAppVersion(werfConfig),
-		ChartDirPath:                 chartPath,
+		ChartDirPath:                 relChartPath,
 		ChartRepositoryInsecure:      *commonCmdData.InsecureHelmDependencies,
 		ChartRepositorySkipTLSVerify: *commonCmdData.SkipTlsVerifyHelmDependencies,
 		ChartRepositorySkipUpdate:    *commonCmdData.SkipDependenciesRepoRefresh,

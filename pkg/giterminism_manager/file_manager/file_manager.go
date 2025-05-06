@@ -2,7 +2,9 @@ package filemanager
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -55,7 +57,10 @@ func (f *FileManager) ReadConfig(ctx context.Context, relPath string) (string, [
 	if !exists {
 		configPath, configData, includeErr := includes.FindWerfConfig(ctx, f.includes, file_reader.ConfigPathList(relPath))
 		if includeErr != nil {
-			return "", nil, fmt.Errorf("unable to find config file %q in includes: %w", relPath, includeErr)
+			if errors.Is(includeErr, includes.ErrConfigFileNotFound) {
+				return "", nil, fmt.Errorf("unable to find any config files %v: %w", file_reader.ConfigPathList(relPath), includeErr)
+			}
+			return "", nil, fmt.Errorf("unable to read config file %q from includes: %w", relPath, includeErr)
 		}
 		return configPath, configData, nil
 	}
@@ -237,7 +242,8 @@ func (f *FileManager) ReadDockerignore(ctx context.Context, relPath string) ([]b
 }
 
 func (f *FileManager) LocateChart(ctx context.Context, name string) (string, error) {
-	chartDir, err := f.fileReader.LocateChart(ctx, name)
+	path := util.GetAbsoluteFilepath(name)
+	chartDir, err := f.fileReader.LocateChart(ctx, path)
 	if err != nil {
 		logboek.Context(ctx).Debug().LogF("Chart directory %q not found in the local filesystem. Try find in includes\n", name)
 		if includes.IsDirExists(ctx, f.includes, name) {
@@ -268,19 +274,21 @@ func (f *FileManager) ReadChartFile(ctx context.Context, filePath string) ([]byt
 }
 
 func (f *FileManager) LoadChartDir(ctx context.Context, dir string) ([]*file.ChartExtenderBufferedFile, error) {
-	path := util.GetAbsoluteFilepath(dir)
+	absDir := util.GetAbsoluteFilepath(dir)
 	processed := make(map[string]bool)
 
 	var chartDir []*file.ChartExtenderBufferedFile
 
-	if exist, _ := util.DirExists(path); exist {
+	if exist, _ := util.DirExists(absDir); exist {
 		var err error
-		chartDir, err = f.fileReader.LoadChartDir(ctx, dir)
+		chartDir, err = f.fileReader.LoadChartDir(ctx, absDir)
 		if err != nil {
 			return nil, fmt.Errorf("unable to load chart directory: %w", err)
 		}
 		for _, file := range chartDir {
-			processed[filepath.ToSlash(file.Name)] = true
+			processedPath := filepath.ToSlash(filepath.Join(dir, file.Name))
+			logboek.Context(ctx).Debug().LogF("--- %s read from filesystem \n", processedPath)
+			processed[processedPath] = true
 		}
 	}
 
@@ -303,8 +311,10 @@ func (f *FileManager) LoadChartDir(ctx context.Context, dir string) ([]*file.Cha
 				return fmt.Errorf("unable to read included chart file %q from %s: %w", normToPath, include.Name, err)
 			}
 
+			logboek.Context(ctx).Debug().LogF("--- %s read from includes \n", normToPath)
+
 			chartDir = append(chartDir, &file.ChartExtenderBufferedFile{
-				Name: normToPath,
+				Name: strings.TrimPrefix(normToPath, normDir+"/"),
 				Data: data,
 			})
 			processed[normToPath] = false
@@ -320,4 +330,46 @@ func (f *FileManager) LoadChartDir(ctx context.Context, dir string) ([]*file.Cha
 	}
 
 	return chartDir, nil
+}
+
+func (f *FileManager) ChartIsDir(relPath string) (bool, error) {
+	absPath := util.GetAbsoluteFilepath(relPath)
+
+	if fi, err := os.Stat(absPath); err == nil {
+		if fi.IsDir() {
+			return true, nil
+		}
+		return false, nil
+	} else if !os.IsNotExist(err) {
+		return false, fmt.Errorf("os.Stat failed for %q: %w", absPath, err)
+	}
+
+	normRelPath := filepath.ToSlash(relPath)
+	hasFile := false
+
+	for _, include := range f.includes {
+		err := include.WalkObjects(func(toPath, _ string) error {
+			normToPath := filepath.ToSlash(toPath)
+
+			if normToPath == normRelPath {
+				hasFile = true
+			} else if strings.HasPrefix(normToPath, normRelPath+"/") {
+				// has files - hence directory
+				return errors.New("foundDir")
+			}
+			return nil
+		})
+		if err != nil {
+			if err.Error() == "foundDir" {
+				return true, nil
+			}
+			return false, fmt.Errorf("walkObjects failed for include %q: %w", include.Name, err)
+		}
+	}
+
+	if hasFile {
+		return false, nil
+	}
+
+	return false, fmt.Errorf("path %q not found in local filesystem or includes", relPath)
 }

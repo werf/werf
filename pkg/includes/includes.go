@@ -208,6 +208,8 @@ func IsFileExists(ctx context.Context, includes []*Include, relPath string) bool
 	return false
 }
 
+var ErrConfigFileNotFound = fmt.Errorf("config file not found")
+
 func FindWerfConfig(ctx context.Context, includes []*Include, cfgPaths []string) (string, []byte, error) {
 	for _, include := range includes {
 		if include == nil {
@@ -224,7 +226,7 @@ func FindWerfConfig(ctx context.Context, includes []*Include, cfgPaths []string)
 			}
 		}
 	}
-	return "", nil, fmt.Errorf("unable to find config file in includes")
+	return "", nil, ErrConfigFileNotFound
 }
 
 func (i *includeConf) Ref() (string, error) {

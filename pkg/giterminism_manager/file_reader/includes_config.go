@@ -7,6 +7,10 @@ import (
 	"github.com/werf/logboek"
 )
 
+func (r FileReader) ChartIsDir(relPath string) (bool, error) {
+	panic("not implemented")
+}
+
 func (r FileReader) IsIncludesConfigExistAnywhere(ctx context.Context, relPath string) (exist bool, err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("IsGiterminismConfigExistAnywhere").
