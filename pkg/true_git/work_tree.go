@@ -178,21 +178,21 @@ func verifyWorkTreeConsistency(ctx context.Context, repoDir, workTreeDir string)
 		return false, err
 	}
 
-	resolvedGitDir, err := resolveDotGitFile(ctx, dotGitFilePath)
+	resolvedGitFile, err := resolveDotGitFile(ctx, dotGitFilePath)
 	if err != nil {
 		return false, fmt.Errorf("unable to resolve dot-git file %q: %w", filepath.Join(workTreeDir, ".git"), err)
 	}
 
-	if !util.IsSubpathOfBasePath(repoDir, resolvedGitDir) {
+	if !util.IsSubpathOfBasePath(repoDir, resolvedGitFile) {
 		return false, nil
 	}
 
-	_, err = os.Stat(resolvedGitDir)
+	_, err = os.Stat(resolvedGitFile)
 	switch {
 	case os.IsNotExist(err):
 		return false, nil
 	case err != nil:
-		return false, fmt.Errorf("error accessing resolved dot git dir %q: %w", resolvedGitDir, err)
+		return false, fmt.Errorf("error accessing resolved dot git file %q: %w", resolvedGitFile, err)
 	}
 
 	return true, nil
