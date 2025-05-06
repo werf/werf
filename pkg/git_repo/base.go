@@ -263,7 +263,7 @@ func (repo *Base) createPatch(ctx context.Context, repoPath, gitDir, repoID, wor
 			goto TryCreatePatch
 		}
 	} else {
-		desc, err = true_git.Patch(ctx, fileHandler, gitDir, true_git.PatchOptions(opts))
+		desc, err = true_git.Patch(ctx, fileHandler, gitDir, workTreeCacheDir, true_git.PatchOptions(opts))
 	}
 
 	if err != nil {

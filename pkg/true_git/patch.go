@@ -67,8 +67,16 @@ func PatchWithSubmodules(ctx context.Context, out io.Writer, gitDir, workTreeCac
 	return res, err
 }
 
-func Patch(ctx context.Context, out io.Writer, gitDir string, opts PatchOptions) (*PatchDescriptor, error) {
-	return writePatch(ctx, out, gitDir, "", false, opts)
+func Patch(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir string, opts PatchOptions) (*PatchDescriptor, error) {
+	var res *PatchDescriptor
+
+	err := withWorkTreeCacheLock(ctx, workTreeCacheDir, func() error {
+		writePatchRes, err := writePatch(ctx, out, gitDir, workTreeCacheDir, false, opts)
+		res = writePatchRes
+		return err
+	})
+
+	return res, err
 }
 
 func debugPatch() bool {
