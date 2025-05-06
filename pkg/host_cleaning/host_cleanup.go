@@ -106,19 +106,17 @@ func RunHostCleanup(ctx context.Context, backend container_backend.ContainerBack
 		return err
 	}
 
-	/*
-		allowedLocalCacheVolumeUsagePercentage := getOptionValueOrDefault(options.AllowedLocalCacheVolumeUsagePercentage, DefaultAllowedLocalCacheVolumeUsagePercentage)
-		allowedLocalCacheVolumeUsageMarginPercentage := getOptionValueOrDefault(options.AllowedLocalCacheVolumeUsageMarginPercentage, DefaultAllowedLocalCacheVolumeUsageMarginPercentage)
+	allowedLocalCacheVolumeUsagePercentage := getOptionValueOrDefault(options.AllowedLocalCacheVolumeUsagePercentage, DefaultAllowedLocalCacheVolumeUsagePercentage)
+	allowedLocalCacheVolumeUsageMarginPercentage := getOptionValueOrDefault(options.AllowedLocalCacheVolumeUsageMarginPercentage, DefaultAllowedLocalCacheVolumeUsageMarginPercentage)
 
-		if err := logboek.Context(ctx).Default().LogProcess("Running GC for git data").DoError(func() error {
-			if err := gitdata.RunGC(ctx, allowedLocalCacheVolumeUsagePercentage, allowedLocalCacheVolumeUsageMarginPercentage); err != nil {
-				return fmt.Errorf("git repo GC failed: %w", err)
-			}
-			return nil
-		}); err != nil {
-			return err
+	if err := logboek.Context(ctx).Default().LogProcess("Running GC for git data").DoError(func() error {
+		if err := gitdata.RunGC(ctx, allowedLocalCacheVolumeUsagePercentage, allowedLocalCacheVolumeUsageMarginPercentage); err != nil {
+			return fmt.Errorf("git repo GC failed: %w", err)
 		}
-	*/
+		return nil
+	}); err != nil {
+		return err
+	}
 
 	allowedBackendStorageVolumeUsagePercentage := getOptionValueOrDefault(options.AllowedBackendStorageVolumeUsagePercentage, DefaultAllowedBackendStorageVolumeUsagePercentage)
 	allowedBackendStorageVolumeUsageMarginPercentage := getOptionValueOrDefault(options.AllowedBackendStorageVolumeUsageMarginPercentage, DefaultAllowedBackendStorageVolumeUsageMarginPercentage)
