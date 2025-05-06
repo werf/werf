@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/fs"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -167,7 +168,17 @@ func prepareWorkTree(ctx context.Context, repoDir, workTreeCacheDir, commit stri
 }
 
 func verifyWorkTreeConsistency(ctx context.Context, repoDir, workTreeDir string) (bool, error) {
-	resolvedGitDir, err := resolveDotGitFile(ctx, filepath.Join(workTreeDir, ".git"))
+	dotGitFilePath := filepath.Join(workTreeDir, ".git")
+
+	_, err := os.Stat(dotGitFilePath)
+	switch {
+	case errors.Is(err, fs.ErrNotExist):
+		return false, nil
+	case err != nil:
+		return false, err
+	}
+
+	resolvedGitDir, err := resolveDotGitFile(ctx, dotGitFilePath)
 	if err != nil {
 		return false, fmt.Errorf("unable to resolve dot-git file %q: %w", filepath.Join(workTreeDir, ".git"), err)
 	}
