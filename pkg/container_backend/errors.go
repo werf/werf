@@ -11,4 +11,5 @@ var (
 	ErrCannotRemovePausedContainer  = errors.New("cannot remove paused container")
 	ErrCannotRemoveRunningContainer = errors.New("cannot remove running container")
 	ErrImageUsedByContainer         = types.ErrImageUsedByContainer
+	ErrPruneIsAlreadyRunning        = errors.New("a prune operation is already running")
 )

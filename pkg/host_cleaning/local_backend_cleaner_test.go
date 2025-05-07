@@ -121,16 +121,6 @@ var _ = Describe("LocalBackendCleaner", func() {
 			Expect(err).To(Succeed())
 			Expect(report).To(Equal(mapImageListToCleanupReport(list)))
 		})
-		It("should return err=nil and full report if opts.DryRun=false calling backend.PruneImages() which returns pruneErr=nil", func() {
-			pruneReport := prune.Report{
-				ItemsDeleted: []string{"one"},
-			}
-			backend.EXPECT().PruneImages(ctx, prune.Options{Filters: filters}).Return(pruneReport, nil)
-
-			report, err := cleaner.pruneImages(ctx, RunGCOptions{})
-			Expect(err).To(Succeed())
-			Expect(report).To(Equal(mapPruneReportToCleanupReport(pruneReport)))
-		})
 		It("should return err=some_err and empty report if opts.DryRun=false calling backend.PruneImages() which returns pruneErr=err", func() {
 			err0 := errors.New("some_err")
 			backend.EXPECT().PruneImages(ctx, prune.Options{Filters: filters}).Return(prune.Report{}, err0)
@@ -146,21 +136,57 @@ var _ = Describe("LocalBackendCleaner", func() {
 			Expect(err).To(Succeed())
 			Expect(report).To(Equal(newCleanupReport()))
 		})
+		It("should return err=nil and empty report if opts.DryRun=false calling backend.PruneImages() which returns pruneErr=ErrPruneIsAlreadyRunning", func() {
+			backend.EXPECT().PruneImages(ctx, prune.Options{Filters: filters}).Return(prune.Report{}, container_backend.ErrPruneIsAlreadyRunning)
+
+			report, err := cleaner.pruneImages(ctx, RunGCOptions{})
+			Expect(err).To(Succeed())
+			Expect(report).To(Equal(newCleanupReport()))
+		})
+		It("should return err=nil and full report if opts.DryRun=false calling backend.PruneImages() which returns pruneErr=nil", func() {
+			pruneReport := prune.Report{
+				ItemsDeleted: []string{"one"},
+			}
+			backend.EXPECT().PruneImages(ctx, prune.Options{Filters: filters}).Return(pruneReport, nil)
+
+			report, err := cleaner.pruneImages(ctx, RunGCOptions{})
+			Expect(err).To(Succeed())
+			Expect(report).To(Equal(mapPruneReportToCleanupReport(pruneReport)))
+		})
 	})
 
 	Describe("pruneVolumes", func() {
-		It("should return err if opts.DryRun=true", func() {
-			_, err := cleaner.pruneVolumes(ctx, RunGCOptions{
+		It("should return err=errOptionDryRunNotSupported and empty report if opts.DryRun=true", func() {
+			report, err := cleaner.pruneVolumes(ctx, RunGCOptions{
 				DryRun: true,
 			})
 			Expect(errors.Is(err, errOptionDryRunNotSupported)).To(BeTrue())
+			Expect(report).To(Equal(newCleanupReport()))
 		})
-		It("should call backend.PruneVolumes() if opts.DryRun=false", func() {
-			backend.EXPECT().PruneVolumes(ctx, prune.Options{}).Return(prune.Report{}, nil)
+		It("should return err=nil and empty report if opts.DryRun=false calling backend.PruneVolumes() which returns returns pruneErr=ErrPruneIsAlreadyRunning", func() {
+			backend.EXPECT().PruneVolumes(ctx, prune.Options{}).Return(prune.Report{}, container_backend.ErrPruneIsAlreadyRunning)
 
 			report, err := cleaner.pruneVolumes(ctx, RunGCOptions{})
 			Expect(err).To(Succeed())
 			Expect(report).To(Equal(newCleanupReport()))
+		})
+		It("should return err=some_err and empty report if opts.DryRun=false calling backend.PruneVolumes() which returns returns pruneErr=err", func() {
+			err0 := errors.New("some_err")
+			backend.EXPECT().PruneVolumes(ctx, prune.Options{}).Return(prune.Report{}, err0)
+
+			report, err := cleaner.pruneVolumes(ctx, RunGCOptions{})
+			Expect(err).To(Equal(err0))
+			Expect(report).To(Equal(newCleanupReport()))
+		})
+		It("should return err=nil and full report if opts.DryRun=false calling backend.PruneVolumes() which returns pruneErr=nil", func() {
+			pruneReport := prune.Report{
+				ItemsDeleted: []string{"one"},
+			}
+			backend.EXPECT().PruneVolumes(ctx, prune.Options{}).Return(pruneReport, nil)
+
+			report, err := cleaner.pruneVolumes(ctx, RunGCOptions{})
+			Expect(err).To(Succeed())
+			Expect(report).To(Equal(mapPruneReportToCleanupReport(pruneReport)))
 		})
 	})
 

@@ -31,3 +31,14 @@ func IsErrContainerRunning(err error) bool {
 	}
 	return strings.HasSuffix(cause.Error(), "container is running: stop the container before removing or force remove")
 }
+
+// IsErrPruneRunning returns true if err is "a prune operation is already running" error
+// https://github.com/moby/moby/blob/25.0/volume/service/service.go#L212
+// https://github.com/moby/moby/blob/25.0/daemon/images/image_prune.go#L38
+func IsErrPruneRunning(err error) bool {
+	if err == nil {
+		return false
+	}
+	cause := errors.Cause(err)
+	return strings.HasSuffix(cause.Error(), "a prune operation is already running")
+}

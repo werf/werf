@@ -31,4 +31,15 @@ var _ = Describe("docker errors", func() {
 			Expect(IsErrContainerRunning(err0)).To(BeFalse())
 		})
 	})
+	Describe("IsErrPruneRunning", func() {
+		It("should return true if err is \"prune running\" error", func() {
+			causeErr := errors.New("a prune operation is already running")
+			err0 := errorsPkg.WithMessage(causeErr, "some text")
+			Expect(IsErrPruneRunning(err0)).To(BeTrue())
+		})
+		It("should return false otherwise", func() {
+			err0 := errors.New("some err")
+			Expect(IsErrPruneRunning(err0)).To(BeFalse())
+		})
+	})
 })
