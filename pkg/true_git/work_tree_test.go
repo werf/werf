@@ -128,8 +128,16 @@ var _ = Describe("Work tree helpers", func() {
 		It("passes correct work tree", func() {
 			ctx := context.Background()
 			valid, err := verifyWorkTreeConsistency(ctx, mainWtDir, sideWtDir)
-			Expect(err).To((Succeed()))
+			Expect(err).To(Succeed())
 			Expect(valid).To(BeTrue())
+		})
+
+		It("should return false,nil if got git file is removed in working tree dir", func(ctx SpecContext) {
+			Expect(os.RemoveAll(filepath.Join(sideWtDir, ".git"))).To(Succeed())
+
+			valid, err := verifyWorkTreeConsistency(ctx, mainWtDir, sideWtDir)
+			Expect(err).To(Succeed())
+			Expect(valid).To(BeFalse())
 		})
 
 		It("detects side work tree with incorrect back dot git link", func() {
@@ -138,7 +146,7 @@ var _ = Describe("Work tree helpers", func() {
 			Expect(os.WriteFile(filepath.Join(sideWtDir, ".git"), []byte(fmt.Sprintf("gitdir: %s\n", filepath.Join(mainWtDir, ".git", "worktrees", "no-such-worktree"))), os.ModePerm)).To(Succeed())
 
 			valid, err := verifyWorkTreeConsistency(ctx, mainWtDir, sideWtDir)
-			Expect(err).To((Succeed()))
+			Expect(err).To(Succeed())
 			Expect(valid).To(BeFalse())
 		})
 	})
