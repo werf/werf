@@ -21,14 +21,14 @@ var _ = Describe("config go template", func() {
 			expectedErrSubstring      string
 		}
 
-		bodyFuncBase := func(e entryBase) {
+		bodyFuncBase := func(ctx SpecContext, e entryBase) {
 			if e.allowUncommittedFilesGlob != "" {
 				contentToAppend := fmt.Sprintf(`
 config:
   goTemplateRendering:
     allowUncommittedFiles: ["%s"]`, e.allowUncommittedFilesGlob)
 				fileCreateOrAppend("werf-giterminism.yaml", contentToAppend)
-				gitAddAndCommit("werf-giterminism.yaml")
+				gitAddAndCommit(ctx, "werf-giterminism.yaml")
 			}
 
 			for _, relPath := range e.addFiles {
@@ -36,7 +36,7 @@ config:
 			}
 
 			for _, relPath := range e.commitFiles {
-				gitAddAndCommit(relPath)
+				gitAddAndCommit(ctx, relPath)
 			}
 
 			for _, relPath := range e.changeFilesAfterCommit {
@@ -44,6 +44,7 @@ config:
 			}
 
 			output, err := utils.RunCommand(
+				ctx,
 				SuiteData.TestDirPath,
 				SuiteData.WerfBinPath,
 				"config", "render",
@@ -63,11 +64,11 @@ config:
 
 		Context(".Files.Get", func() {
 			DescribeTable("config.goTemplateRendering.allowUncommittedFiles",
-				func(e entryBase) {
+				func(ctx SpecContext, e entryBase) {
 					fileCreateOrAppend("werf.yaml", fmt.Sprintf(`{{ .Files.Get %q }}`, ".werf/file"))
-					gitAddAndCommit("werf.yaml")
+					gitAddAndCommit(ctx, "werf.yaml")
 
-					bodyFuncBase(e)
+					bodyFuncBase(ctx, e)
 				},
 				Entry("the file not found", entryBase{
 					expectedErrSubstring: `error calling Get: {{ .Files.Get ".werf/file" }}: the file ".werf/file" not found in the project git repository`,
@@ -105,17 +106,17 @@ config:
 			}
 
 			DescribeTable("config.goTemplateRendering.allowUncommittedFiles",
-				func(e entry) {
+				func(ctx SpecContext, e entry) {
 					if len(e.addFiles) != 0 {
 						fileCreateOrAppend("werf.yaml", fmt.Sprintf(`
 {{ range $path, $content := .Files.Glob %q }}
 {{ $content }}
 {{ end }}
 `, e.filesGlob))
-						gitAddAndCommit("werf.yaml")
+						gitAddAndCommit(ctx, "werf.yaml")
 					}
 
-					bodyFuncBase(e.entryBase)
+					bodyFuncBase(ctx, e.entryBase)
 				},
 				Entry("nothing found", entry{}),
 				Entry("the file1 not tracked", entry{
@@ -188,9 +189,9 @@ config:
 		}
 
 		DescribeTable("config.goTemplateRendering.allowEnvVariables",
-			func(e entry) {
+			func(ctx SpecContext, e entry) {
 				fileCreateOrAppend("werf.yaml", fmt.Sprintf(`{{ env "%s" }}`, e.addEnvName))
-				gitAddAndCommit("werf.yaml")
+				gitAddAndCommit(ctx, "werf.yaml")
 
 				if e.allowEnvVariablesRegexp != "" {
 					contentToAppend := fmt.Sprintf(`
@@ -198,11 +199,12 @@ config:
   goTemplateRendering:
     allowEnvVariables: ["%s"]`, e.allowEnvVariablesRegexp)
 					fileCreateOrAppend("werf-giterminism.yaml", contentToAppend)
-					gitAddAndCommit("werf-giterminism.yaml")
+					gitAddAndCommit(ctx, "werf-giterminism.yaml")
 				}
 
 				SuiteData.Stubs.SetEnv(e.addEnvName, fmt.Sprintf("# %s", e.addEnvName))
 				output, err := utils.RunCommand(
+					ctx,
 					SuiteData.TestDirPath,
 					SuiteData.WerfBinPath,
 					"config", "render",

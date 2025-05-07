@@ -28,15 +28,15 @@ var _ = Describe("Helm releases manager", Pending, func() {
 	})
 
 	Context("when releases-history-max option has been specified from the beginning", func() {
-		AfterEach(func() {
-			utils.RunCommand(SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "dismiss", "--with-namespace")
+		AfterEach(func(ctx SpecContext) {
+			utils.RunCommand(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "dismiss", "--with-namespace")
 		})
 
-		It("should keep no more than specified number of releases", func() {
-			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, "helm_releases_manager_app1-001", "initial commit")
+		It("should keep no more than specified number of releases", func(ctx SpecContext) {
+			SuiteData.CommitProjectWorktree(ctx, SuiteData.ProjectName, "helm_releases_manager_app1-001", "initial commit")
 
 			for i := 0; i < 9; i++ {
-				Expect(werfConverge(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
+				Expect(werfConverge(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
 					Env: map[string]string{"WERF_RELEASES_HISTORY_MAX": "5"},
 				})).Should(Succeed())
 				Expect(len(getReleasesHistory(releaseName, releaseName)) <= 5).To(BeTrue())
@@ -46,20 +46,20 @@ var _ = Describe("Helm releases manager", Pending, func() {
 	})
 
 	Context("when releases-history-max was not specified initially and then specified", func() {
-		AfterEach(func() {
-			utils.RunCommand(SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "dismiss", "--with-namespace")
+		AfterEach(func(ctx SpecContext) {
+			utils.RunCommand(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "dismiss", "--with-namespace")
 		})
 
-		It("should keep no more than specified number of releases", func() {
-			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, "helm_releases_manager_app1-001", "initial commit")
+		It("should keep no more than specified number of releases", func(ctx SpecContext) {
+			SuiteData.CommitProjectWorktree(ctx, SuiteData.ProjectName, "helm_releases_manager_app1-001", "initial commit")
 
 			for i := 0; i < 4; i++ {
-				Expect(werfConverge(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{})).Should(Succeed())
+				Expect(werfConverge(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{})).Should(Succeed())
 			}
 			Expect(len(getReleasesHistory(releaseName, releaseName))).To(Equal(4))
 
 			for i := 0; i < 2; i++ {
-				Expect(werfConverge(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{}, "--releases-history-max=2")).Should(Succeed())
+				Expect(werfConverge(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{}, "--releases-history-max=2")).Should(Succeed())
 				Expect(len(getReleasesHistory(releaseName, releaseName))).To(Equal(2))
 			}
 		})
