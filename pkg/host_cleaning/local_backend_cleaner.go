@@ -477,14 +477,15 @@ func (cleaner *LocalBackendCleaner) pruneImages(ctx context.Context, options Run
 
 	report, err := cleaner.backend.PruneImages(ctx, prune.Options{Filters: filters})
 	switch {
-	case errors.Is(container_backend.ErrImageUsedByContainer, err):
-		logboek.Context(ctx).Info().LogF("Ignore image pruning: %s\n", err.Error())
+	case errors.Is(err, container_backend.ErrImageUsedByContainer),
+		errors.Is(err, container_backend.ErrPruneIsAlreadyRunning):
+		logboek.Context(ctx).Info().LogF("NOTE: Ignore image pruning: %s\n", err.Error())
 		return newCleanupReport(), nil
 	case err != nil:
 		return newCleanupReport(), err
-	default:
-		return mapPruneReportToCleanupReport(report), err
 	}
+
+	return mapPruneReportToCleanupReport(report), err
 }
 
 // pruneVolumes removes all anonymous volumes not used by at least one container
@@ -496,6 +497,15 @@ func (cleaner *LocalBackendCleaner) pruneVolumes(ctx context.Context, options Ru
 	}
 
 	report, err := cleaner.backend.PruneVolumes(ctx, prune.Options{})
+
+	switch {
+	case errors.Is(err, container_backend.ErrPruneIsAlreadyRunning):
+		logboek.Context(ctx).Info().LogF("NOTE: Ignore volume pruning: %s\n", err.Error())
+		return newCleanupReport(), nil
+	case err != nil:
+		return newCleanupReport(), err
+	}
+
 	return mapPruneReportToCleanupReport(report), err
 }
 

@@ -394,16 +394,26 @@ func (backend *DockerServerBackend) PostManifest(ctx context.Context, ref string
 
 func (backend *DockerServerBackend) PruneImages(ctx context.Context, options prune.Options) (prune.Report, error) {
 	report, err := docker.ImagesPrune(ctx, docker.ImagesPruneOptions(options))
-	if err != nil {
+
+	switch {
+	case docker.IsErrPruneRunning(err):
+		return prune.Report{}, errors.Join(ErrPruneIsAlreadyRunning, err)
+	case err != nil:
 		return prune.Report{}, err
 	}
+
 	return prune.Report(report), err
 }
 
 func (backend *DockerServerBackend) PruneVolumes(ctx context.Context, options prune.Options) (prune.Report, error) {
 	report, err := docker.VolumesPrune(ctx, docker.VolumesPruneOptions(options))
-	if err != nil {
+
+	switch {
+	case docker.IsErrPruneRunning(err):
+		return prune.Report{}, errors.Join(ErrPruneIsAlreadyRunning, err)
+	case err != nil:
 		return prune.Report{}, err
 	}
+
 	return prune.Report(report), err
 }
