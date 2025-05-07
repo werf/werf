@@ -15,13 +15,18 @@ import (
 	"github.com/werf/3p-helm/pkg/chart"
 	bundles_registry "github.com/werf/werf/v2/pkg/deploy/bundles/registry"
 	"github.com/werf/werf/v2/pkg/docker_registry"
+	"github.com/werf/werf/v2/pkg/logging"
 )
 
 var _ = Describe("Bundle copy", func() {
+	var ctx context.Context
+
+	BeforeEach(func(ctx0 context.Context) {
+		ctx = logging.WithLogger(ctx0)
+	})
+
 	It("should copy archive to archive", func() {
 		{
-			ctx := context.Background()
-
 			ch := &chart.Chart{
 				Metadata: &chart.Metadata{
 					APIVersion: "v2",
@@ -79,8 +84,6 @@ werf:
 	})
 
 	It("should copy archive to remote", func() {
-		ctx := context.Background()
-
 		ch := &chart.Chart{
 			Metadata: &chart.Metadata{
 				APIVersion: "v2",
@@ -153,8 +156,6 @@ werf:
 	})
 
 	It("should copy archive to remote (without chart rename)", func() {
-		ctx := context.Background()
-
 		ch := &chart.Chart{
 			Metadata: &chart.Metadata{
 				APIVersion: "v2",
@@ -227,8 +228,6 @@ werf:
 	})
 
 	It("should copy archive to remote (without chart rename)", func() {
-		ctx := context.Background()
-
 		ch := &chart.Chart{
 			Metadata: &chart.Metadata{
 				APIVersion: "v2",
@@ -301,8 +300,6 @@ werf:
 	})
 
 	It("should copy remote to archive", func() {
-		ctx := context.Background()
-
 		ch := &chart.Chart{
 			Metadata: &chart.Metadata{
 				APIVersion: "v2",
@@ -376,8 +373,6 @@ werf:
 	})
 
 	It("should copy remote to remote", func() {
-		ctx := context.Background()
-
 		ch := &chart.Chart{
 			Metadata: &chart.Metadata{
 				APIVersion: "v2",

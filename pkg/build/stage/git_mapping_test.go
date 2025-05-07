@@ -11,6 +11,7 @@ import (
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/logging"
 )
 
 var _ = Describe("GitMapping", func() {
@@ -76,8 +77,9 @@ var _ = Describe("GitMapping", func() {
 	}
 
 	DescribeTable("getting latest commit info",
-		func(data LatestCommitInfoCheckData, checkResultFunc func(stage.ImageCommitInfo, LatestCommitInfoCheckData)) {
-			ctx := context.Background()
+		func(ctx context.Context, data LatestCommitInfoCheckData, checkResultFunc func(stage.ImageCommitInfo, LatestCommitInfoCheckData)) {
+			ctx = logging.WithLogger(ctx)
+
 			c := NewConveyorStub(stage.VirtualMergeOptions{VirtualMerge: data.IsCurrentCommitVirtualMerge})
 
 			gitRepo := NewGitRepoStub("own", true, data.CurrentCommit)
@@ -124,8 +126,9 @@ var _ = Describe("GitMapping", func() {
 	}
 
 	DescribeTable("getting base commit from prev built image",
-		func(data BaseCommitForPrevBuiltImageCheckData, checkResultFunc func(string, BaseCommitForPrevBuiltImageCheckData)) {
-			ctx := context.Background()
+		func(ctx context.Context, data BaseCommitForPrevBuiltImageCheckData, checkResultFunc func(string, BaseCommitForPrevBuiltImageCheckData)) {
+			ctx = logging.WithLogger(ctx)
+
 			c := NewConveyorStub(stage.VirtualMergeOptions{VirtualMerge: data.IsCurrentCommitVirtualMerge})
 			containerBackend := stage.NewContainerBackendStub()
 
