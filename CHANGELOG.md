@@ -1,5 +1,16 @@
 # Changelog
 
+### [2.35.10](https://www.github.com/werf/werf/compare/v2.35.9...v2.35.10) (2025-05-07)
+
+
+### Bug Fixes
+
+* **giterminism:** guard the git patch with host lock ([6733b2f](https://www.github.com/werf/werf/commit/6733b2f863ab82eaa96ad9f632508de1fa50f12e))
+* **giterminism:** prevent consistency error if .git file is not exist ([03e435a](https://www.github.com/werf/werf/commit/03e435a7f112839dee53f8dfff3939444bf784bb))
+* **giterminism:** resolve naming confusion about dot git ([439d8ae](https://www.github.com/werf/werf/commit/439d8aec72a9f9230086080526e8942c023a1439))
+* **host-cleanup:** enable git data cleaning ([1038bb2](https://www.github.com/werf/werf/commit/1038bb23ecc42e1817d01e35f2390506e4f10ed8))
+* **host-cleanup:** translate and handle docker prune error ([42df434](https://www.github.com/werf/werf/commit/42df434f58b1e555384e2f7c698f82bf692a1d72))
+
 ### [2.35.9](https://www.github.com/werf/werf/compare/v2.35.8...v2.35.9) (2025-05-05)
 
 
