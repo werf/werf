@@ -66,7 +66,7 @@ func (r FileReader) ReadIncludesLockFile(ctx context.Context, relPath string) (d
 		})
 
 	if err != nil {
-		return nil, fmt.Errorf("unable to read werf giterminism lock file: %w", err)
+		return nil, fmt.Errorf("unable to read werf includes lock file: %w", err)
 	}
 	return
 }

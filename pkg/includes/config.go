@@ -3,8 +3,14 @@ package includes
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
+	"github.com/werf/werf/v2/pkg/git_repo"
 	"gopkg.in/yaml.v3"
 )
 
@@ -34,12 +40,12 @@ type lockConfig struct {
 
 type includeLockConf struct {
 	Git    string `yaml:"git"`
-	Branch string `yaml:"branch"`
-	Tag    string `yaml:"tag"`
+	Branch string `yaml:"branch,omitempty"`
+	Tag    string `yaml:"tag,omitempty"`
 	Commit string `yaml:"commit"`
 }
 
-func NewConfig(ctx context.Context, fileReader GiterminismManagerFileReader, configRelPath, lockConfigRelPath string) (Config, error) {
+func NewConfig(ctx context.Context, fileReader GiterminismManagerFileReader, configRelPath string) (Config, error) {
 	logboek.Context(ctx).Debug().LogF("Reading includes config from %q\n", configRelPath)
 	exist, err := fileReader.IsIncludesConfigExistAnywhere(ctx, configRelPath)
 	if err != nil {
@@ -68,22 +74,26 @@ func parseConfig(ctx context.Context, fileReader GiterminismManagerFileReader, c
 		return config, fmt.Errorf("the includes config validation failed: %w", err)
 	}
 
-	for i, include := range config.Includes {
-		config.Includes[i].Name = include.GetName()
-	}
-
 	return config, nil
 }
 
-func parseLockConfig(ctx context.Context, fileReader GiterminismManagerFileReader, configRelPath string) (*LockInfo, error) {
-	config := lockConfig{}
-	data, err := fileReader.ReadIncludesLockFile(ctx, configRelPath)
+func getLockInfo(ctx context.Context, opts InitIncludesOptions) (*LockInfo, error) {
+	lockInfo, err := readLockInfo(ctx, opts.FileReader, opts.ConfigRelPath)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to parse werf-includes.lock: %w", err)
 	}
 
-	if err := yaml.Unmarshal(data, &config); err != nil {
-		return nil, fmt.Errorf("the includes lock config validation failed: %w", err)
+	if len(lockInfo.includeToCommitMapper) == 0 {
+		return nil, fmt.Errorf("no includes found in werf-includes.lock")
+	}
+
+	return lockInfo, nil
+}
+
+func readLockInfo(ctx context.Context, fileReader GiterminismManagerFileReader, configRelPath string) (*LockInfo, error) {
+	config, err := parseLockConfig(ctx, fileReader, configRelPath)
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse werf-includes.lock: %w", err)
 	}
 
 	lockInfo := &LockInfo{
@@ -100,6 +110,76 @@ func parseLockConfig(ctx context.Context, fileReader GiterminismManagerFileReade
 	}
 
 	return lockInfo, nil
+}
+
+func parseLockConfig(ctx context.Context, fileReader GiterminismManagerFileReader, configRelPath string) (*lockConfig, error) {
+	config := lockConfig{}
+	data, err := fileReader.ReadIncludesLockFile(ctx, configRelPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := yaml.Unmarshal(data, &config); err != nil {
+		return nil, fmt.Errorf("the includes lock config validation failed: %w", err)
+	}
+	return &config, nil
+}
+
+type createLockConfigOptions struct {
+	fileReader       GiterminismManagerFileReader
+	includesConfig   Config
+	includesLockPath string
+	reomteRepos      map[string]*git_repo.Remote
+}
+
+func CreateOrUpdateLockConfig(ctx context.Context, opts createLockConfigOptions) error {
+	exists, _ := util.FileExists(opts.includesLockPath)
+	if exists {
+		err := UpdateLockConfig(ctx, opts)
+		if err != nil {
+			return fmt.Errorf("error update includes lock file: %w", err)
+		}
+		logboek.Context(ctx).Info().LogF("Successfully updated %q file\n", opts.includesLockPath)
+		return nil
+	}
+	err := CreateLockConfig(ctx, opts)
+	if err != nil {
+		return fmt.Errorf("error create includes lock file: %w", err)
+	}
+	logboek.Context(ctx).Info().LogF("Successfully created %q file\n", opts.includesLockPath)
+	return nil
+}
+
+func CreateLockConfig(ctx context.Context, opts createLockConfigOptions) error {
+	includesMap := make(map[string]bool)
+	var lockConfs []includeLockConf
+	for _, c := range opts.includesConfig.Includes {
+		ref, err := c.Ref()
+		if err != nil {
+			return fmt.Errorf("get ref for include %s: %w", c.Git, err)
+		}
+		key := fmt.Sprintf("%s@%s", c.Git, ref)
+		fmt.Println(key)
+		if !includesMap[key] {
+			lockConfs = append(lockConfs, includeLockConf{
+				Git:    c.Git,
+				Branch: c.Branch,
+				Tag:    c.Tag,
+			})
+			includesMap[key] = true
+		}
+	}
+
+	return writeLockConfig(lockConfs, opts.includesLockPath, opts.reomteRepos)
+}
+
+func UpdateLockConfig(ctx context.Context, opts createLockConfigOptions) error {
+	cfg, err := parseLockConfig(ctx, opts.fileReader, opts.includesLockPath)
+	if err != nil {
+		return fmt.Errorf("parse includes lock config: %w", err)
+	}
+
+	return writeLockConfig(cfg.IncludeLock, opts.includesLockPath, opts.reomteRepos)
 }
 
 func (l *LockInfo) CheckVersion(git, ref, commit string) error {
@@ -130,4 +210,59 @@ func ref(git, tag, branch, commit string) (string, error) {
 	default:
 		return "", fmt.Errorf("no ref specified for include %s", git)
 	}
+}
+
+func (i *includeLockConf) getCommit(r *git.Repository) (*object.Commit, error) {
+	return getCommit(r, i.Git, i.Tag, i.Branch, i.Commit)
+}
+
+func writeLockConfig(inputConfs []includeLockConf, configRelPath string, remoteRepos map[string]*git_repo.Remote) error {
+	newLockConfig := lockConfig{
+		IncludeLock: make([]includeLockConf, 0, len(inputConfs)),
+	}
+
+	for _, c := range inputConfs {
+		updated, err := c.updateCommit(remoteRepos)
+		if err != nil {
+			return err
+		}
+		newLockConfig.IncludeLock = append(newLockConfig.IncludeLock, *updated)
+	}
+
+	outData, err := yaml.Marshal(newLockConfig)
+	if err != nil {
+		return fmt.Errorf("marshal new lock config: %w", err)
+	}
+
+	fp, _ := filepath.Abs(configRelPath)
+	if err := os.WriteFile(fp, outData, os.ModePerm); err != nil {
+		return fmt.Errorf("write new lock config: %w", err)
+	}
+
+	return nil
+}
+
+func (c *includeLockConf) updateCommit(remoteRepos map[string]*git_repo.Remote) (*includeLockConf, error) {
+	fmt.Println(remoteRepos)
+	repo, ok := remoteRepos[c.Git]
+	if !ok || repo == nil {
+		return nil, fmt.Errorf("remote repo %s not found", c.Git)
+	}
+
+	r, err := repo.PlainOpen()
+	if err != nil {
+		return nil, fmt.Errorf("plain open: %w", err)
+	}
+
+	commit, err := c.getCommit(r)
+	if err != nil {
+		return nil, fmt.Errorf("get commit: %w", err)
+	}
+
+	return &includeLockConf{
+		Git:    c.Git,
+		Branch: c.Branch,
+		Tag:    c.Tag,
+		Commit: commit.Hash.String(),
+	}, nil
 }

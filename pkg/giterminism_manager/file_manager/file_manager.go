@@ -40,8 +40,11 @@ type FileManager struct {
 	werfTemplatesCache map[string]bool
 }
 
-func NewFileManager(ctx context.Context, fr FileReader) (*FileManager, error) {
-	inlcudes, err := includes.Init(ctx, fr, "")
+func NewFileManager(ctx context.Context, fr FileReader, createIncludesLockFile bool) (*FileManager, error) {
+	inlcudes, err := includes.Init(ctx, includes.InitIncludesOptions{
+		FileReader:             fr,
+		CreateOrUpdateLockFile: createIncludesLockFile,
+	})
 	if err != nil {
 		return nil, err
 	}

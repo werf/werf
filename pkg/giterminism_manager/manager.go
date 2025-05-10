@@ -14,8 +14,9 @@ import (
 )
 
 type NewManagerOptions struct {
-	LooseGiterminism bool
-	Dev              bool
+	LooseGiterminism       bool
+	Dev                    bool
+	CreateIncludesLockFile bool
 }
 
 func NewManager(ctx context.Context, configRelPath, projectDir string, localGitRepo *git_repo.Local, headCommit string, options NewManagerOptions) (*Manager, error) {
@@ -50,7 +51,7 @@ func NewManager(ctx context.Context, configRelPath, projectDir string, localGitR
 		inspector:     i,
 	}
 
-	m.FileManager, err = filemanager.NewFileManager(ctx, fr)
+	m.FileManager, err = filemanager.NewFileManager(ctx, fr, options.CreateIncludesLockFile)
 	if err != nil {
 		return nil, err
 	}

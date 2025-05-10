@@ -35,6 +35,7 @@ import (
 	"github.com/werf/werf/v2/cmd/werf/helm"
 	host_cleanup "github.com/werf/werf/v2/cmd/werf/host/cleanup"
 	host_purge "github.com/werf/werf/v2/cmd/werf/host/purge"
+	includes_update "github.com/werf/werf/v2/cmd/werf/includes/update"
 	"github.com/werf/werf/v2/cmd/werf/kube_run"
 	"github.com/werf/werf/v2/cmd/werf/kubectl"
 	managed_images_add "github.com/werf/werf/v2/cmd/werf/managed_images/add"
@@ -98,6 +99,7 @@ func ConstructRootCmd(ctx context.Context) (*cobra.Command, error) {
 				dockerComposeCmd(ctx),
 				slugify.NewCmd(ctx),
 				render.NewCmd(ctx),
+				includesCmd(ctx),
 			},
 		},
 		{
@@ -224,6 +226,18 @@ func hostCmd(ctx context.Context) *cobra.Command {
 	)
 
 	return hostCmd
+}
+
+func includesCmd(ctx context.Context) *cobra.Command {
+	cmd := common.SetCommandContext(ctx, &cobra.Command{
+		Use:   "includes",
+		Short: "Work with werf includes",
+	})
+	cmd.AddCommand(
+		includes_update.NewCmd(ctx),
+	)
+
+	return cmd
 }
 
 func SetupTelemetryInit(rootCmd *cobra.Command) {

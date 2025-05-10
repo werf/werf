@@ -33,6 +33,7 @@ type FileReader interface {
 
 	IsIncludesConfigExistAnywhere(ctx context.Context, relPath string) (bool, error)
 	ReadIncludesConfig(ctx context.Context, relPath string) ([]byte, error)
+	ReadIncludesLockFile(ctx context.Context, relPath string) (data []byte, err error)
 
 	file.ChartFileReader
 }

@@ -2,8 +2,6 @@ package includes
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"path"
 	"path/filepath"
@@ -15,7 +13,6 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/path_matcher"
-	"gopkg.in/yaml.v2"
 )
 
 const (
@@ -42,19 +39,47 @@ func GetWerfIncludesConfigRelPath(path string) string {
 	return filepath.ToSlash(path)
 }
 
-func Init(ctx context.Context, fileReader GiterminismManagerFileReader, configRelPath string) ([]*Include, error) {
-	config, err := NewConfig(ctx, fileReader, GetWerfIncludesConfigRelPath(configRelPath), "werf-includes.lock")
+type InitIncludesOptions struct {
+	FileReader             GiterminismManagerFileReader
+	ConfigRelPath          string
+	CreateOrUpdateLockFile bool
+}
+
+func Init(ctx context.Context, opts InitIncludesOptions) ([]*Include, error) {
+	config, err := NewConfig(ctx, opts.FileReader, GetWerfIncludesConfigRelPath(opts.ConfigRelPath))
 	if err != nil {
 		return nil, fmt.Errorf("unable to initialize includes: %w", err)
 	}
 
 	if len(config.Includes) > 0 {
-		lockInfo, err := parseLockConfig(ctx, fileReader, "werf-includes.lock")
+
+		remoteRepos, err := initRemoteRepos(ctx, config)
+		if err != nil {
+			return nil, fmt.Errorf("unable to initialize remote repositories: %w", err)
+		}
+
+		if opts.CreateOrUpdateLockFile {
+			if err := CreateOrUpdateLockConfig(ctx, createLockConfigOptions{
+				fileReader:       opts.FileReader,
+				includesConfig:   config,
+				includesLockPath: "werf-includes.lock",
+				reomteRepos:      remoteRepos,
+			}); err != nil {
+				return nil, fmt.Errorf("create or update werf-includes.lock: %w", err)
+			}
+			return nil, nil
+		}
+
+		lockInfo, err := getLockInfo(ctx, InitIncludesOptions{
+			FileReader:             opts.FileReader,
+			ConfigRelPath:          "werf-includes.lock",
+			CreateOrUpdateLockFile: opts.CreateOrUpdateLockFile,
+		})
 		if err != nil {
 			return nil, fmt.Errorf("unable to parse werf-includes.lock: %w", err)
 		}
 
-		includes, err := GetIncludes(ctx, config, lockInfo)
+		includes, err := GetIncludes(ctx, config, lockInfo, remoteRepos)
 		if err != nil {
 			return nil, fmt.Errorf("unable to get includes: %w", err)
 		}
@@ -64,29 +89,35 @@ func Init(ctx context.Context, fileReader GiterminismManagerFileReader, configRe
 	return []*Include{}, nil
 }
 
-func GetIncludes(ctx context.Context, cfg Config, lockInfo *LockInfo) ([]*Include, error) {
-	repoChache := make(map[string]*git_repo.Remote)
-	includes := []*Include{}
+func initRemoteRepos(ctx context.Context, cfg Config) (map[string]*git_repo.Remote, error) {
+	repoCache := make(map[string]*git_repo.Remote)
 	for _, i := range cfg.Includes {
-		var remoteRepo *git_repo.Remote
-		if remote, ok := repoChache[i.Git]; !ok {
-			repo, err := git_repo.OpenRemoteRepo(i.Name, i.Git)
+		if _, ok := repoCache[i.Git]; !ok {
+			repo, err := git_repo.OpenRemoteRepo(i.Git, i.Git)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("unable to open remote repository %s: %w", i.Git, err)
 			}
 			if err := repo.CloneAndFetch(ctx); err != nil {
 				return nil, fmt.Errorf("unable to clone %s repository: %w", i.Git, err)
 			}
-			repoChache[repo.Url] = repo
-			remoteRepo = repo
-		} else {
-			remoteRepo = remote
+			repoCache[i.Git] = repo
+		}
+	}
+	return repoCache, nil
+}
+
+func GetIncludes(ctx context.Context, cfg Config, lockInfo *LockInfo, remoteRepos map[string]*git_repo.Remote) ([]*Include, error) {
+	includes := []*Include{}
+	for _, i := range cfg.Includes {
+		remoteRepo, ok := remoteRepos[i.Git]
+		if !ok || remoteRepo == nil {
+			return nil, fmt.Errorf("unable to find remote repository %s", i.Git)
 		}
 		r, err := remoteRepo.PlainOpen()
 		if err != nil {
 			return nil, fmt.Errorf("failed to open repository: %w", err)
 		}
-		commit, err := getCommit(r, &i)
+		commit, err := i.getCommit(r)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get commit: %w", err)
 		}
@@ -233,16 +264,20 @@ func (i *includeConf) Ref() (string, error) {
 	return ref(i.Git, i.Commit, i.Tag, i.Branch)
 }
 
-func getCommit(r *git.Repository, i *includeConf) (*object.Commit, error) {
+func (i *includeConf) getCommit(r *git.Repository) (*object.Commit, error) {
+	return getCommit(r, i.Git, i.Tag, i.Branch, i.Commit)
+}
+
+func getCommit(r *git.Repository, git, tag, branch, commit string) (*object.Commit, error) {
 	switch {
-	case i.Commit != "":
-		return commitRef(r, i.Commit)
-	case i.Tag != "":
-		return tagRef(r, i.Tag)
-	case i.Branch != "":
-		return branchRef(r, i.Branch)
+	case commit != "":
+		return commitRef(r, commit)
+	case tag != "":
+		return tagRef(r, tag)
+	case branch != "":
+		return branchRef(r, branch)
 	default:
-		return nil, fmt.Errorf("no commit, tag or branch specified for include %s", i.Name)
+		return nil, fmt.Errorf("no commit, tag or branch specified for include %s", git)
 	}
 }
 
@@ -268,13 +303,4 @@ func branchRef(r *git.Repository, branch string) (*object.Commit, error) {
 		return nil, fmt.Errorf("failed to get branch %s: %w", branch, err)
 	}
 	return commitRef(r, branchRef.Hash().String())
-}
-
-func (i *includeConf) GetName() string {
-	if i.Name != "" {
-		return i.Name
-	}
-	data, _ := yaml.Marshal(i)
-	hash := sha256.Sum256(data)
-	return hex.EncodeToString(hash[:])
 }
