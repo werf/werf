@@ -43,6 +43,7 @@ type InitIncludesOptions struct {
 	FileReader             GiterminismManagerFileReader
 	ConfigRelPath          string
 	CreateOrUpdateLockFile bool
+	UseLatestVersion       bool
 }
 
 func Init(ctx context.Context, opts InitIncludesOptions) ([]*Include, error) {
@@ -63,17 +64,18 @@ func Init(ctx context.Context, opts InitIncludesOptions) ([]*Include, error) {
 				fileReader:       opts.FileReader,
 				includesConfig:   config,
 				includesLockPath: "werf-includes.lock",
-				reomteRepos:      remoteRepos,
+				remoteRepos:      remoteRepos,
 			}); err != nil {
 				return nil, fmt.Errorf("create or update werf-includes.lock: %w", err)
 			}
 			return nil, nil
 		}
 
-		lockInfo, err := getLockInfo(ctx, InitIncludesOptions{
+		lockInfo, err := getLockInfo(ctx, config, remoteRepos, InitIncludesOptions{
 			FileReader:             opts.FileReader,
 			ConfigRelPath:          "werf-includes.lock",
 			CreateOrUpdateLockFile: opts.CreateOrUpdateLockFile,
+			//UseLatestVersion:       true, // to opts
 		})
 		if err != nil {
 			return nil, fmt.Errorf("unable to parse werf-includes.lock: %w", err)
@@ -117,19 +119,20 @@ func GetIncludes(ctx context.Context, cfg Config, lockInfo *LockInfo, remoteRepo
 		if err != nil {
 			return nil, fmt.Errorf("failed to open repository: %w", err)
 		}
-		commit, err := i.getCommit(r)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get commit: %w", err)
-		}
 
 		ref, err := i.Ref()
 		if err != nil {
 			return nil, err
 		}
 
-		err = lockInfo.CheckVersion(i.Git, ref, commit.Hash.String())
+		commitFromLockInfo, err := lockInfo.GetCommit(i.Git, ref)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("unable to get commit from lock info: %w", err)
+		}
+
+		commit, err := r.CommitObject(plumbing.NewHash(commitFromLockInfo))
+		if err != nil {
+			return nil, fmt.Errorf("failed to get commit object: %w", err)
 		}
 
 		tree, err := commit.Tree()
@@ -262,10 +265,6 @@ func FindWerfConfig(ctx context.Context, includes []*Include, cfgPaths []string)
 
 func (i *includeConf) Ref() (string, error) {
 	return ref(i.Git, i.Commit, i.Tag, i.Branch)
-}
-
-func (i *includeConf) getCommit(r *git.Repository) (*object.Commit, error) {
-	return getCommit(r, i.Git, i.Tag, i.Branch, i.Commit)
 }
 
 func getCommit(r *git.Repository, git, tag, branch, commit string) (*object.Commit, error) {
