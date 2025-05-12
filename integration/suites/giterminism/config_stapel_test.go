@@ -19,13 +19,13 @@ var _ = Describe("config stapel", func() {
 		}
 
 		DescribeTable("config.stapel.allowFromLatest",
-			func(e entry) {
+			func(ctx SpecContext, e entry) {
 				fileCreateOrAppend("werf.yaml", `
 fromLatest: true
 image: test
 from: alpine
 `)
-				gitAddAndCommit("werf.yaml")
+				gitAddAndCommit(ctx, "werf.yaml")
 
 				if e.allowStapelFromLatest {
 					contentToAppend := `
@@ -33,10 +33,11 @@ config:
   stapel:
     allowFromLatest: true`
 					fileCreateOrAppend("werf-giterminism.yaml", contentToAppend)
-					gitAddAndCommit("werf-giterminism.yaml")
+					gitAddAndCommit(ctx, "werf-giterminism.yaml")
 				}
 
 				output, err := utils.RunCommand(
+					ctx,
 					SuiteData.TestDirPath,
 					SuiteData.WerfBinPath,
 					"config", "render",
@@ -65,7 +66,7 @@ config:
 		}
 
 		DescribeTable("config.stapel.git.allowBranch",
-			func(e entry) {
+			func(ctx SpecContext, e entry) {
 				fileCreateOrAppend("werf.yaml", `
 image: test
 from: alpine
@@ -74,7 +75,7 @@ git:
   branch: test
   to: /app
 `)
-				gitAddAndCommit("werf.yaml")
+				gitAddAndCommit(ctx, "werf.yaml")
 
 				if e.allowStapelGitBranch {
 					contentToAppend := `
@@ -83,10 +84,11 @@ config:
     git:
       allowBranch: true`
 					fileCreateOrAppend("werf-giterminism.yaml", contentToAppend)
-					gitAddAndCommit("werf-giterminism.yaml")
+					gitAddAndCommit(ctx, "werf-giterminism.yaml")
 				}
 
 				output, err := utils.RunCommand(
+					ctx,
 					SuiteData.TestDirPath,
 					SuiteData.WerfBinPath,
 					"config", "render",
@@ -115,7 +117,7 @@ config:
 		}
 
 		DescribeTable("config.stapel.mount.allowBuildDir",
-			func(e entry) {
+			func(ctx SpecContext, e entry) {
 				fileCreateOrAppend("werf.yaml", `
 image: test
 from: alpine
@@ -123,7 +125,7 @@ mount:
 - from: build_dir
   to: /test
 `)
-				gitAddAndCommit("werf.yaml")
+				gitAddAndCommit(ctx, "werf.yaml")
 
 				if e.allowStapelMountBuildDir {
 					contentToAppend := `
@@ -132,10 +134,11 @@ config:
     mount:
       allowBuildDir: true`
 					fileCreateOrAppend("werf-giterminism.yaml", contentToAppend)
-					gitAddAndCommit("werf-giterminism.yaml")
+					gitAddAndCommit(ctx, "werf-giterminism.yaml")
 				}
 
 				output, err := utils.RunCommand(
+					ctx,
 					SuiteData.TestDirPath,
 					SuiteData.WerfBinPath,
 					"config", "render",
@@ -165,7 +168,7 @@ config:
 		}
 
 		DescribeTable("config.stapel.mount.allowFromPaths",
-			func(e entry) {
+			func(ctx SpecContext, e entry) {
 				fileCreateOrAppend("werf.yaml", fmt.Sprintf(`
 image: test
 from: alpine
@@ -173,7 +176,7 @@ mount:
 - fromPath: %s
   to: /test
 `, e.fromPath))
-				gitAddAndCommit("werf.yaml")
+				gitAddAndCommit(ctx, "werf.yaml")
 
 				if e.allowStapelMountFromPathsGlob != "" {
 					contentToAppend := fmt.Sprintf(`
@@ -182,10 +185,11 @@ config:
     mount:
       allowFromPaths: ["%s"]`, e.allowStapelMountFromPathsGlob)
 					fileCreateOrAppend("werf-giterminism.yaml", contentToAppend)
-					gitAddAndCommit("werf-giterminism.yaml")
+					gitAddAndCommit(ctx, "werf-giterminism.yaml")
 				}
 
 				output, err := utils.RunCommand(
+					ctx,
 					SuiteData.TestDirPath,
 					SuiteData.WerfBinPath,
 					"config", "render",

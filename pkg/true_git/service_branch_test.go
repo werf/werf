@@ -19,34 +19,21 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 	var sourceHeadCommit string
 	defaultOptions := SyncSourceWorktreeWithServiceBranchOptions{ServiceBranch: "_werf-dev"}
 
-	BeforeEach(func() {
+	BeforeEach(func(ctx SpecContext) {
 		sourceWorkTreeDir = filepath.Join(SuiteData.TestDirPath, "source")
 		utils.MkdirAll(sourceWorkTreeDir)
 		workTreeCacheDir = filepath.Join(SuiteData.TestDirPath, "worktree")
 		utils.MkdirAll(workTreeCacheDir)
 
-		utils.RunSucceedCommand(
-			sourceWorkTreeDir,
-			"git",
-			"-c", "init.defaultBranch=main",
-			"init",
-		)
+		utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "-c", "init.defaultBranch=main", "init")
 
-		utils.RunSucceedCommand(
-			sourceWorkTreeDir,
-			"git",
-			"checkout", "-b", "main",
-		)
+		utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "checkout", "-b", "main")
 
 		gitDir = filepath.Join(sourceWorkTreeDir, ".git")
 
-		utils.RunSucceedCommand(
-			sourceWorkTreeDir,
-			"git",
-			"commit", "--allow-empty", "-m", "Initial commit",
-		)
+		utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "commit", "--allow-empty", "-m", "Initial commit")
 
-		sourceHeadCommit = utils.GetHeadCommit(sourceWorkTreeDir)
+		sourceHeadCommit = utils.GetHeadCommit(ctx, sourceWorkTreeDir)
 
 		Expect(werf.Init("", "")).Should(Succeed())
 		Expect(Init(context.Background(), Options{})).Should(Succeed())
@@ -70,18 +57,19 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 		const trackedFileRelPath = "tracked_file"
 		var trackedFilePath string
 
-		BeforeEach(func() {
+		BeforeEach(func(ctx SpecContext) {
 			trackedFilePath = filepath.Join(sourceWorkTreeDir, trackedFileRelPath)
 			utils.WriteFile(trackedFilePath, []byte("state"))
 
 			utils.RunSucceedCommand(
+				ctx,
 				sourceWorkTreeDir,
 				"git",
 				"add", trackedFilePath,
 			)
 		})
 
-		It("add and reproducibility", func() {
+		It("add and reproducibility", func(ctx SpecContext) {
 			serviceCommit1, err := SyncSourceWorktreeWithServiceBranch(
 				context.Background(),
 				gitDir,
@@ -94,11 +82,7 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 			Expect(err).Should(Succeed())
 			Expect(serviceCommit1).ShouldNot(Equal(sourceHeadCommit))
 
-			diff := utils.SucceedCommandOutputString(
-				sourceWorkTreeDir,
-				"git",
-				"diff", serviceCommit1, trackedFileRelPath,
-			)
+			diff := utils.SucceedCommandOutputString(ctx, sourceWorkTreeDir, "git", "diff", serviceCommit1, trackedFileRelPath)
 
 			Expect(diff).Should(BeEmpty())
 
@@ -126,7 +110,7 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 			utils.WriteFile(trackedFilePath, trackedFileContent1)
 		})
 
-		It("add and reproducibility", func() {
+		It("add and reproducibility", func(ctx SpecContext) {
 			serviceCommit1, err := SyncSourceWorktreeWithServiceBranch(
 				context.Background(),
 				gitDir,
@@ -140,6 +124,7 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 			Expect(serviceCommit1).ShouldNot(Equal(sourceHeadCommit))
 
 			content := utils.SucceedCommandOutputString(
+				ctx,
 				sourceWorkTreeDir,
 				"git",
 				"show", serviceCommit1+":"+trackedFileRelPath,
@@ -179,7 +164,7 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 				serviceCommitUntrackedFileAdded = serviceCommit
 			})
 
-			It("change", func() {
+			It("change", func(ctx SpecContext) {
 				utils.WriteFile(trackedFilePath, trackedFileContent2)
 
 				serviceCommit, err := SyncSourceWorktreeWithServiceBranch(
@@ -195,6 +180,7 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 				Expect(serviceCommit).ShouldNot(Equal(serviceCommitUntrackedFileAdded))
 
 				content := utils.SucceedCommandOutputString(
+					ctx,
 					sourceWorkTreeDir,
 					"git",
 					"show", serviceCommit+":"+trackedFileRelPath,
@@ -203,8 +189,9 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 				Expect(content).Should(Equal(string(trackedFileContent2)))
 			})
 
-			It("stage", func() {
+			It("stage", func(ctx SpecContext) {
 				utils.RunSucceedCommand(
+					ctx,
 					sourceWorkTreeDir,
 					"git",
 					"add", trackedFilePath,
@@ -223,6 +210,7 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 				Expect(serviceCommit).Should(Equal(serviceCommitUntrackedFileAdded))
 
 				content := utils.SucceedCommandOutputString(
+					ctx,
 					sourceWorkTreeDir,
 					"git",
 					"show", serviceCommit+":"+trackedFileRelPath,
@@ -231,7 +219,7 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 				Expect(content).Should(Equal(string(trackedFileContent1)))
 			})
 
-			It("delete", func() {
+			It("delete", func(ctx SpecContext) {
 				utils.DeleteFile(trackedFilePath)
 
 				serviceCommit, err := SyncSourceWorktreeWithServiceBranch(
@@ -247,6 +235,7 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 				Expect(serviceCommit).ShouldNot(Equal(serviceCommitUntrackedFileAdded))
 
 				bytes, err := utils.RunCommand(
+					ctx,
 					sourceWorkTreeDir,
 					"git",
 					"show", serviceCommit+":"+trackedFileRelPath,
@@ -257,8 +246,8 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 				Expect(output).Should(ContainSubstring(fmt.Sprintf("'%s' does not exist in '%s'", trackedFileRelPath, serviceCommit)))
 			})
 
-			It("staged and synced, then modified, staged and synced: service branch contains last main branch commit", func() {
-				utils.RunSucceedCommand(sourceWorkTreeDir, "git", "add", trackedFilePath)
+			It("staged and synced, then modified, staged and synced: service branch contains last main branch commit", func(ctx SpecContext) {
+				utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "add", trackedFilePath)
 
 				_, err := SyncSourceWorktreeWithServiceBranch(
 					context.Background(),
@@ -272,7 +261,7 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 
 				utils.WriteFile(trackedFilePath, trackedFileContent2)
 
-				utils.RunSucceedCommand(sourceWorkTreeDir, "git", "add", trackedFilePath)
+				utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "add", trackedFilePath)
 
 				_, err = SyncSourceWorktreeWithServiceBranch(
 					context.Background(),
@@ -284,11 +273,11 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 				)
 				Expect(err).Should(Succeed())
 
-				utils.RunSucceedCommand(filepath.Join(workTreeCacheDir, "worktree"), "git", "merge-base", "--is-ancestor", "main", "HEAD")
+				utils.RunSucceedCommand(ctx, filepath.Join(workTreeCacheDir, "worktree"), "git", "merge-base", "--is-ancestor", "main", "HEAD")
 			})
 
-			It("staged and synced, then committed and synced: service branch contains last main branch commit", func() {
-				utils.RunSucceedCommand(sourceWorkTreeDir, "git", "add", trackedFilePath)
+			It("staged and synced, then committed and synced: service branch contains last main branch commit", func(ctx SpecContext) {
+				utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "add", trackedFilePath)
 
 				_, err := SyncSourceWorktreeWithServiceBranch(
 					context.Background(),
@@ -300,8 +289,8 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 				)
 				Expect(err).Should(Succeed())
 
-				utils.RunSucceedCommand(sourceWorkTreeDir, "git", "commit", "-m", "1")
-				sourceHeadCommit = utils.GetHeadCommit(sourceWorkTreeDir)
+				utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "commit", "-m", "1")
+				sourceHeadCommit = utils.GetHeadCommit(ctx, sourceWorkTreeDir)
 
 				_, err = SyncSourceWorktreeWithServiceBranch(
 					context.Background(),
@@ -313,13 +302,13 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 				)
 				Expect(err).Should(Succeed())
 
-				utils.RunSucceedCommand(filepath.Join(workTreeCacheDir, "worktree"), "git", "merge-base", "--is-ancestor", "main", "HEAD")
+				utils.RunSucceedCommand(ctx, filepath.Join(workTreeCacheDir, "worktree"), "git", "merge-base", "--is-ancestor", "main", "HEAD")
 			})
 
-			It("try to trigger a merge conflict: merge conflict not happening", func() {
-				utils.RunSucceedCommand(sourceWorkTreeDir, "git", "add", ".")
-				utils.RunSucceedCommand(sourceWorkTreeDir, "git", "commit", "-m", "1")
-				sourceHeadCommit = utils.GetHeadCommit(sourceWorkTreeDir)
+			It("try to trigger a merge conflict: merge conflict not happening", func(ctx SpecContext) {
+				utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "add", ".")
+				utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "commit", "-m", "1")
+				sourceHeadCommit = utils.GetHeadCommit(ctx, sourceWorkTreeDir)
 
 				_, err := SyncSourceWorktreeWithServiceBranch(
 					context.Background(),
@@ -333,7 +322,7 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 
 				trackedFilePathMoved := fmt.Sprintf("%s-moved", trackedFilePath)
 
-				utils.RunSucceedCommand(sourceWorkTreeDir, "mv", trackedFilePath, trackedFilePathMoved)
+				utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "mv", trackedFilePath, trackedFilePathMoved)
 				utils.WriteFile(trackedFilePathMoved, trackedFileContent2)
 
 				_, err = SyncSourceWorktreeWithServiceBranch(
@@ -346,13 +335,13 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 				)
 				Expect(err).Should(Succeed())
 
-				utils.RunSucceedCommand(sourceWorkTreeDir, "git", "reset", "--hard")
-				utils.RunSucceedCommand(sourceWorkTreeDir, "git", "clean", "-f")
+				utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "reset", "--hard")
+				utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "clean", "-f")
 
-				utils.RunSucceedCommand(sourceWorkTreeDir, "mv", trackedFilePath, trackedFilePathMoved)
-				utils.RunSucceedCommand(sourceWorkTreeDir, "git", "add", ".")
-				utils.RunSucceedCommand(sourceWorkTreeDir, "git", "commit", "-m", "2")
-				sourceHeadCommit = utils.GetHeadCommit(sourceWorkTreeDir)
+				utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "mv", trackedFilePath, trackedFilePathMoved)
+				utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "add", ".")
+				utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "commit", "-m", "2")
+				sourceHeadCommit = utils.GetHeadCommit(ctx, sourceWorkTreeDir)
 
 				_, err = SyncSourceWorktreeWithServiceBranch(
 					context.Background(),
@@ -406,7 +395,7 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 			Expect(serviceCommit).Should(Equal(serviceCommitUntrackedFileAdded))
 		})
 
-		It("ignore", func() {
+		It("ignore", func(ctx SpecContext) {
 			defaultOptions.GlobExcludeList = []string{"*.ext"}
 
 			serviceCommit, err := SyncSourceWorktreeWithServiceBranch(
@@ -422,6 +411,7 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 			Expect(serviceCommit).ShouldNot(Equal(serviceCommitUntrackedFileAdded))
 
 			bytes, err := utils.RunCommand(
+				ctx,
 				sourceWorkTreeDir,
 				"git",
 				"show", serviceCommit+":"+untrackedFileRelPath,

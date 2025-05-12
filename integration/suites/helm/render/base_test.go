@@ -10,16 +10,12 @@ import (
 )
 
 var _ = Describe("helm render", func() {
-	BeforeEach(func() {
-		SuiteData.CommitProjectWorktree(SuiteData.ProjectName, utils.FixturePath("base"), "initial commit")
+	BeforeEach(func(ctx SpecContext) {
+		SuiteData.CommitProjectWorktree(ctx, SuiteData.ProjectName, utils.FixturePath("base"), "initial commit")
 	})
 
-	It("should be rendered", func() {
-		output := utils.SucceedCommandOutputString(
-			SuiteData.GetProjectWorktree(SuiteData.ProjectName),
-			SuiteData.WerfBinPath,
-			"render",
-		)
+	It("should be rendered", func(ctx SpecContext) {
+		output := utils.SucceedCommandOutputString(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "render")
 
 		for _, substrFormat := range []string{
 			"# Source: %s/templates/010-secret.yaml",
