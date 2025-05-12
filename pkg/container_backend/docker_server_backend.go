@@ -14,6 +14,7 @@ import (
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
 	"github.com/google/uuid"
+	"github.com/samber/lo"
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
@@ -418,7 +419,7 @@ func (backend *DockerServerBackend) PruneVolumes(ctx context.Context, options pr
 	return prune.Report(report), err
 }
 
-func (backend *DockerServerBackend) GenerateSBOM(ctx context.Context, sourceImg string) (string, error) {
+func (backend *DockerServerBackend) GenerateSBOM(ctx context.Context, srcImgRef string, dstImgLabels []string) (string, error) {
 	workingTree := sbom.NewWorkingTree()
 
 	if err := workingTree.Create(ctx, os.TempDir(), []string{"spdx.json"}); err != nil {
@@ -434,7 +435,7 @@ func (backend *DockerServerBackend) GenerateSBOM(ctx context.Context, sourceImg 
 			"--pull", fmt.Sprintf("%s", sbom.PullIfMissing),
 			sbom.ScannerImage,
 			// syft command with options
-			"scan", fmt.Sprintf("docker:%s", sourceImg), "--output=spdx-json",
+			"scan", fmt.Sprintf("docker:%s", srcImgRef), "--output=spdx-json",
 		}
 
 		output, err := docker.CliRun_RecordedOutput(ctx, args...)
@@ -446,11 +447,16 @@ func (backend *DockerServerBackend) GenerateSBOM(ctx context.Context, sourceImg 
 		}
 	}
 
+	contextAddFiles := lo.Map(workingTree.BillNames(), func(billName string, _ int) string {
+		return filepath.Join(workingTree.BillsDir(), billName)
+	})
+	contextAddFiles = append(contextAddFiles, workingTree.Containerfile())
+
 	archive := newSbomContextArchiver(workingTree.RootDir())
 
 	if err := archive.Create(ctx, BuildContextArchiveCreateOptions{
 		DockerfileRelToContextPath: workingTree.Containerfile(),
-		ContextAddFiles:            append(workingTree.BillNames(), workingTree.Containerfile()),
+		ContextAddFiles:            contextAddFiles,
 	}); err != nil {
 		return "", fmt.Errorf("unable to create sbom scanning results archive: %w", err)
 	}
@@ -458,6 +464,7 @@ func (backend *DockerServerBackend) GenerateSBOM(ctx context.Context, sourceImg 
 	imageId, err := backend.BuildDockerfile(ctx, workingTree.ContainerfileContent(), BuildDockerfileOpts{
 		DockerfileCtxRelPath: workingTree.Containerfile(),
 		BuildContextArchive:  archive,
+		Labels:               dstImgLabels,
 	})
 	if err != nil {
 		return "", fmt.Errorf("unable to build sbom result image: %w", err)

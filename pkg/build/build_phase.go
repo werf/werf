@@ -14,6 +14,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
+	"github.com/samber/lo"
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
@@ -230,6 +231,13 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 					return fmt.Errorf("unable to publish image %q metadata: %w", name, err)
 				}
 			}
+
+			// sbom
+			if img.IsFinal {
+				if err := phase.convergeSbom(ctx, img.GetLastNonEmptyStage().GetStageImage().Image.GetStageDesc()); err != nil {
+					return fmt.Errorf("unable to converge sbom: %w", err)
+				}
+			}
 		} else {
 			img := image.NewMultiplatformImage(name, images, taskId, len(imagesPairs))
 			phase.Conveyor.imagesTree.SetMultiplatformImage(img)
@@ -257,20 +265,14 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 					}
 				}
 			}
-		}
 
-		// TODO (zaytsev): handle case with multiplatform images
-
-		/*
-			TODO: uncomment these lines to manual debug SBOM
-
-			sbomSourceImageRef := images[0].GetLastNonEmptyStage().GetStageImage().Image.GetStageDesc().Info.Name
-			sbomImageId, err := phase.Conveyor.ContainerBackend.GenerateSBOM(ctx, sbomSourceImageRef)
-			if err != nil {
-				return err
+			// sbom
+			if img.IsFinal {
+				if err := phase.convergeSbom(ctx, img.GetStageDesc()); err != nil {
+					return fmt.Errorf("unable to converge sbom: %w", err)
+				}
 			}
-			fmt.Printf("sbomImageId=%s\n", sbomImageId)
-		*/
+		}
 
 		return nil
 	}); err != nil {
@@ -1387,4 +1389,38 @@ E.g.:
 func (phase *BuildPhase) Clone() Phase {
 	u := *phase
 	return &u
+}
+
+// convergeSbom searches relevant SBOM image in local and remote storages.
+// If the relevant image is found, it does nothing.
+// Otherwise, it generates new sbom image and puts the image into local and remote storages.
+func (phase *BuildPhase) convergeSbom(ctx context.Context, stageDesc *imagePkg.StageDesc) error {
+	// TODO (zaytsev): 1) search relevant sbom image locally
+	// TODO (zaytsev): 2) search relevant sbom image remotely
+
+	dstImgLabels := lo.MapToSlice(stageDesc.Info.Labels, func(key, value string) string {
+		return fmt.Sprintf("%s=%s", key, value)
+	})
+	dstImgLabels = append(dstImgLabels, imagePkg.WerfSbomLabel)
+
+	// 3) Generate and label new sbom image
+	// TODO (zaytsev): how to guard temporal image from werf host cleanup?
+	tmpImgId, err := phase.Conveyor.ContainerBackend.GenerateSBOM(ctx, stageDesc.Info.ID, dstImgLabels)
+	if err != nil {
+		return fmt.Errorf("unable to generate sbom image: %w", err)
+	}
+
+	sbomTag := fmt.Sprintf("%s-sbom", stageDesc.Info.Name)
+	if err = phase.Conveyor.ContainerBackend.Tag(ctx, tmpImgId, sbomTag, container_backend.TagOpts{}); err != nil {
+		return fmt.Errorf("unable to tag sbom image: %w", err)
+	}
+
+	if err = phase.Conveyor.ContainerBackend.Rmi(ctx, tmpImgId, container_backend.RmiOpts{}); err != nil {
+		return fmt.Errorf("unable to rmi sbom temporal tag: %w", err)
+	}
+
+	// TODO (zaytsev): 4) store generated SBOM image locally
+	// TODO (zaytsev): 5) store generated SBOM image remotely
+
+	return nil
 }

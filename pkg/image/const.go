@@ -11,6 +11,7 @@ const (
 	WerfDependencySourceStageIDLabelPrefix = "werf-dependency-stage-id-"
 	WerfBaseImageIDLabel                   = "werf.io/base-image-id"
 	WerfParentStageID                      = "werf.io/parent-stage-id"
+	WerfSbomLabel                          = "werf-sbom"
 
 	WerfImportMetadataChecksumLabel       = "checksum"
 	WerfImportMetadataSourceStageIDLabel  = "source-stage-id"
