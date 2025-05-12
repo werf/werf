@@ -26,7 +26,7 @@ type testOptions struct {
 
 var _ = Describe("build with secrets and ssh mounts", Label("integration", "build", "with secrets"), func() {
 	DescribeTable("should succeed",
-		func(ctx SpecContext, testOpts testOptions) {
+		func(testOpts testOptions) {
 			setupEnv(testOpts)
 			_, err := contback.NewContainerBackend(testOpts.ContainerBackendMode)
 			if err == contback.ErrRuntimeUnavailable {
@@ -56,14 +56,14 @@ var _ = Describe("build with secrets and ssh mounts", Label("integration", "buil
 			Expect(err).NotTo(HaveOccurred())
 
 			By(fmt.Sprintf("%s: preparing test repo", testOpts.State))
-			SuiteData.InitTestRepo(ctx, repoDirname, fixtureRelPath)
+			SuiteData.InitTestRepo(repoDirname, fixtureRelPath)
 
 			By(fmt.Sprintf("%s: building images", testOpts.State))
 			werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
 			if testOpts.ContainerBackendMode == "vanilla-docker" {
 				runOpts.ExtraArgs = append([]string{"stapel-shell"}, runOpts.ExtraArgs...)
 			}
-			buildOut := werfProject.Build(ctx, runOpts)
+			buildOut := werfProject.Build(runOpts)
 			Expect(buildOut).To(ContainSubstring("Building stage"))
 			Expect(buildOut).NotTo(ContainSubstring("Use previously built image"))
 		},

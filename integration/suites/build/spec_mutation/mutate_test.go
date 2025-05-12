@@ -17,7 +17,7 @@ type simpleTestOptions struct {
 
 var _ = Describe("build and mutate image spec", Label("integration", "build", "mutate spec config"), func() {
 	DescribeTable("should succeed and produce expected image",
-		func(ctx SpecContext, testOpts simpleTestOptions) {
+		func(testOpts simpleTestOptions) {
 			By("initializing")
 			setupEnv(testOpts.setupEnvOptions)
 			contRuntime, err := contback.NewContainerBackend(testOpts.ContainerBackendMode)
@@ -34,17 +34,17 @@ var _ = Describe("build and mutate image spec", Label("integration", "build", "m
 				buildReportName := "report0.json"
 
 				By(fmt.Sprintf("%s: preparing test repo", testOpts.State))
-				SuiteData.InitTestRepo(ctx, repoDirname, fixtureRelPath)
+				SuiteData.InitTestRepo(repoDirname, fixtureRelPath)
 
 				By(fmt.Sprintf("%s: building images", testOpts.State))
 				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
-				buildOut, buildReport := werfProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), nil)
+				buildOut, buildReport := werfProject.BuildWithReport(SuiteData.GetBuildReportPath(buildReportName), nil)
 				Expect(buildOut).To(ContainSubstring("Building stage"))
 
 				By("getting built images metadata")
 				for imageName := range buildReport.Images {
-					contRuntime.Pull(ctx, buildReport.Images[imageName].DockerImageName)
-					inspectOfImage := contRuntime.GetImageInspect(ctx, buildReport.Images[imageName].DockerImageName)
+					contRuntime.Pull(buildReport.Images[imageName].DockerImageName)
+					inspectOfImage := contRuntime.GetImageInspect(buildReport.Images[imageName].DockerImageName)
 					imgCfg := inspectOfImage.Config
 
 					By("checking image metadata")

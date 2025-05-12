@@ -38,8 +38,8 @@ project: none
 			skipOnWindows             bool
 		}
 
-		symlinkBodyFunc := func(configFilePath string) func(ctx SpecContext, e symlinkEntry) {
-			return func(ctx SpecContext, e symlinkEntry) {
+		symlinkBodyFunc := func(configFilePath string) func(e symlinkEntry) {
+			return func(e symlinkEntry) {
 				if e.skipOnWindows && runtime.GOOS == "windows" {
 					Skip("skip on windows")
 				}
@@ -56,31 +56,30 @@ config:
 				}
 
 				fileCreateOrAppend(werfGiterminismRelPath, contentToAppend)
-				gitAddAndCommit(ctx, werfGiterminismRelPath)
+				gitAddAndCommit(werfGiterminismRelPath)
 
 				if e.addConfigFile {
 					fileCreateOrAppend(configFilePath, minimalConfigContent)
 				}
 
 				if e.commitConfigFile {
-					gitAddAndCommit(ctx, configFilePath)
+					gitAddAndCommit(configFilePath)
 				}
 
 				for path, link := range e.addSymlinks {
-					symlinkFileCreateOrModify(ctx, path, link)
+					symlinkFileCreateOrModify(path, link)
 				}
 
 				for path, link := range e.addAndCommitSymlinks {
-					symlinkFileCreateOrModifyAndAdd(ctx, path, link)
-					gitAddAndCommit(ctx, path)
+					symlinkFileCreateOrModifyAndAdd(path, link)
+					gitAddAndCommit(path)
 				}
 
 				for path, link := range e.changeSymlinksAfterCommit {
-					symlinkFileCreateOrModify(ctx, path, link)
+					symlinkFileCreateOrModify(path, link)
 				}
 
 				output, err := utils.RunCommand(
-					ctx,
 					filepath.Join(SuiteData.TestDirPath, projectRelPath),
 					SuiteData.WerfBinPath,
 					"config", "render",
@@ -96,10 +95,10 @@ config:
 		}
 
 		runCommonTests := func() {
-			BeforeEach(func(ctx SpecContext) {
-				gitInit(ctx)
+			BeforeEach(func() {
+				gitInit()
 				utils.CopyIn(utils.FixturePath("config"), filepath.Join(SuiteData.TestDirPath, projectRelPath))
-				gitAddAndCommit(ctx, werfGiterminismRelPath)
+				gitAddAndCommit(werfGiterminismRelPath)
 			})
 
 			Context("regular files", func() {
@@ -112,7 +111,7 @@ config:
 				}
 
 				DescribeTable("config.allowUncommitted",
-					func(ctx SpecContext, e entry) {
+					func(e entry) {
 						var contentToAppend string
 						if e.allowUncommitted {
 							contentToAppend = `
@@ -125,14 +124,14 @@ config:
 						}
 
 						fileCreateOrAppend(werfGiterminismRelPath, contentToAppend)
-						gitAddAndCommit(ctx, werfGiterminismRelPath)
+						gitAddAndCommit(werfGiterminismRelPath)
 
 						if e.addConfig {
 							fileCreateOrAppend(werfConfigRelPath, minimalConfigContent)
 						}
 
 						if e.commitConfig {
-							gitAddAndCommit(ctx, werfConfigRelPath)
+							gitAddAndCommit(werfConfigRelPath)
 						}
 
 						if e.changeConfigAfterCommit {
@@ -140,7 +139,6 @@ config:
 						}
 
 						output, err := utils.RunCommand(
-							ctx,
 							filepath.Join(SuiteData.TestDirPath, projectRelPath),
 							SuiteData.WerfBinPath,
 							"config", "render",
@@ -278,8 +276,8 @@ config:
 			Context("custom project directory", func() {
 				runCommonTests()
 
-				It("the symlink to the config file outside project directory: werf.yaml -> ../../werf.yaml", func(ctx SpecContext) {
-					symlinkBodyFunc("werf.yaml")(ctx, symlinkEntry{
+				It("the symlink to the config file outside project directory: werf.yaml -> ../../werf.yaml", func() {
+					symlinkBodyFunc("werf.yaml")(symlinkEntry{
 						addConfigFile:    true,
 						commitConfigFile: true,
 						addAndCommitSymlinks: map[string]string{
@@ -288,8 +286,8 @@ config:
 					})
 				})
 
-				It("config.allowUncommitted allows the symlink to the config file outside project directory: werf.yaml -> ../../werf.yaml", func(ctx SpecContext) {
-					symlinkBodyFunc("werf.yaml")(ctx, symlinkEntry{
+				It("config.allowUncommitted allows the symlink to the config file outside project directory: werf.yaml -> ../../werf.yaml", func() {
+					symlinkBodyFunc("werf.yaml")(symlinkEntry{
 						skipOnWindows:    true,
 						allowUncommitted: true,
 						addConfigFile:    true,

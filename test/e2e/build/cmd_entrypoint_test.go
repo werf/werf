@@ -16,7 +16,7 @@ type cmdEntrypointTestOptions struct {
 }
 
 var _ = Describe("CMD and ENTRYPOINT combinations", Label("e2e", "build", "extra"), func() {
-	checkFunc := func(ctx SpecContext, testOpts cmdEntrypointTestOptions, imageName string, expectedEntrypoint, expectedCmd strslice.StrSlice) {
+	checkFunc := func(testOpts cmdEntrypointTestOptions, imageName string, expectedEntrypoint, expectedCmd strslice.StrSlice) {
 		SuiteData.Stubs.SetEnv("WERF_STAGED_DOCKERFILE_VERSION", "v2")
 
 		repoDirname := "repo"
@@ -33,17 +33,19 @@ var _ = Describe("CMD and ENTRYPOINT combinations", Label("e2e", "build", "extra
 		}
 
 		By("preparing test repo")
-		SuiteData.InitTestRepo(ctx, repoDirname, fixtureRelPath)
+		SuiteData.InitTestRepo(repoDirname, fixtureRelPath)
 
 		By("building images")
 		werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
-		buildOut, buildReport := werfProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), &werf.BuildWithReportOptions{CommonOptions: werf.CommonOptions{
-			ExtraArgs: []string{imageName},
-		}})
+		buildOut, buildReport := werfProject.BuildWithReport(
+			SuiteData.GetBuildReportPath(buildReportName),
+			&werf.BuildWithReportOptions{CommonOptions: werf.CommonOptions{
+				ExtraArgs: []string{imageName},
+			}})
 		Expect(buildOut).To(ContainSubstring("Building stage"))
 
 		By("getting built images metadata")
-		inspectOfImage := contRuntime.GetImageInspect(ctx, buildReport.Images[imageName].DockerImageName)
+		inspectOfImage := contRuntime.GetImageInspect(buildReport.Images[imageName].DockerImageName)
 		imgCfg := inspectOfImage.Config
 
 		By("checking image metadata")

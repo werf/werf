@@ -19,7 +19,7 @@ type complexTestOptions struct {
 
 var _ = Describe("Complex converge", Label("e2e", "converge", "complex"), func() {
 	DescribeTable("should succeed and export images",
-		func(ctx SpecContext, opts complexTestOptions) {
+		func(opts complexTestOptions) {
 			By("initializating")
 			setupEnv()
 			repoDirname := "repo0"
@@ -28,7 +28,7 @@ var _ = Describe("Complex converge", Label("e2e", "converge", "complex"), func()
 				fixtureRelPath := "complex/state0"
 
 				By("state0: preparing test repo")
-				SuiteData.InitTestRepo(ctx, repoDirname, fixtureRelPath)
+				SuiteData.InitTestRepo(repoDirname, fixtureRelPath)
 
 				By("state0: running export")
 				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
@@ -40,7 +40,7 @@ var _ = Describe("Complex converge", Label("e2e", "converge", "complex"), func()
 					Platforms: opts.Platforms,
 				})
 
-				exportOut := werfProject.Export(ctx, &werf.ExportOptions{
+				exportOut := werfProject.Export(&werf.ExportOptions{
 					CommonOptions: werf.CommonOptions{
 						ExtraArgs: exportArgs,
 					},
@@ -50,7 +50,7 @@ var _ = Describe("Complex converge", Label("e2e", "converge", "complex"), func()
 				}
 
 				By("state0: checking result")
-				ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 				defer cancel()
 
 				for _, imageName := range opts.ImageNames {

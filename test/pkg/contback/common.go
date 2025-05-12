@@ -1,7 +1,6 @@
 package contback
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"runtime"
@@ -33,13 +32,13 @@ func NewContainerBackend(mode string) (ContainerBackend, error) {
 }
 
 type ContainerBackend interface {
-	Pull(ctx context.Context, image string)
-	Exec(ctx context.Context, containerName string, cmds ...string)
-	Rm(ctx context.Context, containerName string)
+	Pull(image string)
+	Exec(containerName string, cmds ...string)
+	Rm(containerName string)
 
-	RunSleepingContainer(ctx context.Context, containerName, image string)
-	GetImageInspect(ctx context.Context, image string) DockerImageInspect
-	ExpectCmdsToSucceed(ctx context.Context, image string, cmds ...string)
+	RunSleepingContainer(containerName, image string)
+	GetImageInspect(image string) DockerImageInspect
+	ExpectCmdsToSucceed(image string, cmds ...string)
 }
 
 type DockerImageInspect struct {

@@ -13,8 +13,12 @@ import (
 	utilsDocker "github.com/werf/werf/v2/test/pkg/utils/docker"
 )
 
-var _ = AfterEach(func(ctx SpecContext) {
-	utils.RunSucceedCommand(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "host", "purge", "--force")
+var _ = AfterEach(func() {
+	utils.RunSucceedCommand(
+		SuiteData.GetProjectWorktree(SuiteData.ProjectName),
+		SuiteData.WerfBinPath,
+		"host", "purge", "--force",
+	)
 })
 
 type entry struct {
@@ -22,15 +26,18 @@ type entry struct {
 	inspectCheck func(inspect *types.ImageInspect)
 }
 
-var itBody = func(ctx SpecContext, e entry) {
-	SuiteData.CommitProjectWorktree(ctx, SuiteData.ProjectName, utils.FixturePath("base"), "initial commit")
+var itBody = func(e entry) {
+	SuiteData.CommitProjectWorktree(SuiteData.ProjectName, utils.FixturePath("base"), "initial commit")
 
 	SuiteData.Stubs.SetEnv("WERF_CONFIG", filepath.Join(SuiteData.GetProjectWorktree(SuiteData.ProjectName), e.werfYaml))
 
-	utils.RunSucceedCommand(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "build")
+	utils.RunSucceedCommand(
+		SuiteData.GetProjectWorktree(SuiteData.ProjectName),
+		SuiteData.WerfBinPath,
+		"build",
+	)
 
 	resultImageName := utils.SucceedCommandOutputString(
-		ctx,
 		SuiteData.GetProjectWorktree(SuiteData.ProjectName),
 		SuiteData.WerfBinPath,
 		"stage", "image",

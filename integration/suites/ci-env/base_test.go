@@ -15,9 +15,9 @@ import (
 )
 
 var _ = Describe("base", func() {
-	BeforeEach(func(ctx SpecContext) {
+	BeforeEach(func() {
 		Expect(werf.Init("", "")).Should(Succeed())
-		SuiteData.CommitProjectWorktree(ctx, SuiteData.ProjectName, utils.FixturePath("base"), "initial commit")
+		SuiteData.CommitProjectWorktree(SuiteData.ProjectName, utils.FixturePath("base"), "initial commit")
 	})
 
 	ciSystems := []string{
@@ -29,8 +29,12 @@ var _ = Describe("base", func() {
 		ciSystem := ciSystems[i]
 
 		Context(ciSystem, func() {
-			It("should print only script path", func(ctx SpecContext) {
-				output := utils.SucceedCommandOutputString(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "ci-env", ciSystem, "--as-file")
+			It("should print only script path", func() {
+				output := utils.SucceedCommandOutputString(
+					SuiteData.GetProjectWorktree(SuiteData.ProjectName),
+					SuiteData.WerfBinPath,
+					"ci-env", ciSystem, "--as-file",
+				)
 
 				expectedPathGlob := filepath.Join(
 					werf.GetServiceDir(),
@@ -47,15 +51,18 @@ var _ = Describe("base", func() {
 				Expect(resultPath).Should(BeARegularFile())
 			})
 
-			It("should print only shell script", func(ctx SpecContext) {
+			It("should print only shell script", func() {
 				output := utils.SucceedCommandOutputString(
-					ctx,
 					SuiteData.GetProjectWorktree(SuiteData.ProjectName),
 					SuiteData.WerfBinPath,
 					"ci-env", ciSystem,
 				)
 
-				useAsFileOutput := utils.SucceedCommandOutputString(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "ci-env", ciSystem, "--as-file")
+				useAsFileOutput := utils.SucceedCommandOutputString(
+					SuiteData.GetProjectWorktree(SuiteData.ProjectName),
+					SuiteData.WerfBinPath,
+					"ci-env", ciSystem, "--as-file",
+				)
 
 				scriptPath := strings.TrimSpace(useAsFileOutput)
 				scriptDataByte, err := ioutil.ReadFile(scriptPath)

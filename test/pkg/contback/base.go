@@ -1,8 +1,6 @@
 package contback
 
 import (
-	"context"
-
 	"github.com/google/uuid"
 
 	"github.com/werf/werf/v2/pkg/buildah/thirdparty"
@@ -13,9 +11,9 @@ type BaseContainerBackend struct {
 	Isolation     thirdparty.Isolation
 }
 
-func expectCmdsToSucceed(ctx context.Context, r ContainerBackend, image string, cmds ...string) {
+func expectCmdsToSucceed(r ContainerBackend, image string, cmds ...string) {
 	containerName := uuid.New().String()
-	r.RunSleepingContainer(ctx, containerName, image)
-	r.Exec(ctx, containerName, cmds...)
-	r.Rm(ctx, containerName)
+	r.RunSleepingContainer(containerName, image)
+	r.Exec(containerName, cmds...)
+	r.Rm(containerName)
 }

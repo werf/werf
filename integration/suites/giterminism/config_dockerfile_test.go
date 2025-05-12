@@ -28,14 +28,14 @@ FROM alpine
 		}
 
 		DescribeTable("config.dockerfile.allowContextAddFiles",
-			func(ctx SpecContext, e entry) {
+			func(e entry) {
 				fileCreateOrAppend("werf.yaml", fmt.Sprintf(`
 image: test
 dockerfile: Dockerfile
 context: %s
 contextAddFiles: [%s]
 `, e.context, e.contextAddFiles))
-				gitAddAndCommit(ctx, "werf.yaml")
+				gitAddAndCommit("werf.yaml")
 
 				if e.configDockerfileContextAddFilesGlob != "" {
 					contentToAppend := fmt.Sprintf(`
@@ -43,11 +43,10 @@ config:
   dockerfile:
     allowContextAddFiles: ["%s"]`, e.configDockerfileContextAddFilesGlob)
 					fileCreateOrAppend("werf-giterminism.yaml", contentToAppend)
-					gitAddAndCommit(ctx, "werf-giterminism.yaml")
+					gitAddAndCommit("werf-giterminism.yaml")
 				}
 
 				output, err := utils.RunCommand(
-					ctx,
 					SuiteData.TestDirPath,
 					SuiteData.WerfBinPath,
 					"config", "render",
@@ -98,13 +97,13 @@ config:
 			}
 
 			DescribeTable("config.dockerfile.allowUncommitted",
-				func(ctx SpecContext, e entry) {
+				func(e entry) {
 					fileCreateOrAppend("werf.yaml", fmt.Sprintf(`
 image: test
 dockerfile: Dockerfile
 context: %s
 `, e.context))
-					gitAddAndCommit(ctx, "werf.yaml")
+					gitAddAndCommit("werf.yaml")
 
 					if e.configDockerfileAllowUncommittedGlob != "" {
 						contentToAppend := fmt.Sprintf(`
@@ -112,7 +111,7 @@ config:
   dockerfile:
     allowUncommitted: ["%s"]`, e.configDockerfileAllowUncommittedGlob)
 						fileCreateOrAppend("werf-giterminism.yaml", contentToAppend)
-						gitAddAndCommit(ctx, "werf-giterminism.yaml")
+						gitAddAndCommit("werf-giterminism.yaml")
 					}
 
 					dockerfileRelPath := filepath.Join(e.context, "Dockerfile")
@@ -121,7 +120,7 @@ config:
 					}
 
 					if e.commitDockerfile {
-						gitAddAndCommit(ctx, dockerfileRelPath)
+						gitAddAndCommit(dockerfileRelPath)
 					}
 
 					if e.changeDockerfileAfterCommit {
@@ -129,7 +128,6 @@ config:
 					}
 
 					output, err := utils.RunCommand(
-						ctx,
 						SuiteData.TestDirPath,
 						SuiteData.WerfBinPath,
 						"run", "--require-built-images",
@@ -206,7 +204,7 @@ config:
 			}
 
 			DescribeTable("config.dockerfile.allowUncommitted",
-				func(ctx SpecContext, e entry) {
+				func(e entry) {
 					if e.skipOnWindows && runtime.GOOS == "windows" {
 						Skip("skip on windows")
 					}
@@ -216,7 +214,7 @@ config:
 image: test
 dockerfile: Dockerfile
 `))
-						gitAddAndCommit(ctx, "werf.yaml")
+						gitAddAndCommit("werf.yaml")
 					}
 
 					{ // werf-giterminism.yaml
@@ -227,7 +225,7 @@ config:
     allowUncommitted: ["%s"]
 `, strings.Join(e.allowUncommittedGlobs, `", "`))
 							fileCreateOrAppend("werf-giterminism.yaml", contentToAppend)
-							gitAddAndCommit(ctx, "werf-giterminism.yaml")
+							gitAddAndCommit("werf-giterminism.yaml")
 						}
 					}
 
@@ -237,25 +235,24 @@ config:
 						}
 
 						if e.commitDockerfile {
-							gitAddAndCommit(ctx, dockerfilePath)
+							gitAddAndCommit(dockerfilePath)
 						}
 
 						for path, link := range e.addSymlinks {
-							symlinkFileCreateOrModify(ctx, path, link)
+							symlinkFileCreateOrModify(path, link)
 						}
 
 						for path, link := range e.addAndCommitSymlinks {
-							symlinkFileCreateOrModifyAndAdd(ctx, path, link)
-							gitAddAndCommit(ctx, path)
+							symlinkFileCreateOrModifyAndAdd(path, link)
+							gitAddAndCommit(path)
 						}
 
 						for path, link := range e.changeSymlinksAfterCommit {
-							symlinkFileCreateOrModify(ctx, path, link)
+							symlinkFileCreateOrModify(path, link)
 						}
 					}
 
 					output, err := utils.RunCommand(
-						ctx,
 						SuiteData.TestDirPath,
 						SuiteData.WerfBinPath,
 						"run", "--require-built-images",
@@ -341,17 +338,17 @@ config:
 		}
 
 		DescribeTable("config.dockerfile.allowUncommittedDockerignoreFiles",
-			func(ctx SpecContext, e entry) {
+			func(e entry) {
 				fileCreateOrAppend("werf.yaml", fmt.Sprintf(`
 image: test
 dockerfile: Dockerfile
 context: %s
 `, e.context))
-				gitAddAndCommit(ctx, "werf.yaml")
+				gitAddAndCommit("werf.yaml")
 
 				dockerfileRelPath := filepath.Join(e.context, "Dockerfile")
 				fileCreateOrAppend(dockerfileRelPath, fmt.Sprintf(minimalDockerfile))
-				gitAddAndCommit(ctx, dockerfileRelPath)
+				gitAddAndCommit(dockerfileRelPath)
 
 				if e.configDockerfileAllowUncommittedDockerignoreFilesGlob != "" {
 					contentToAppend := fmt.Sprintf(`
@@ -359,7 +356,7 @@ config:
   dockerfile:
     allowUncommittedDockerignoreFiles: ["%s"]`, e.configDockerfileAllowUncommittedDockerignoreFilesGlob)
 					fileCreateOrAppend("werf-giterminism.yaml", contentToAppend)
-					gitAddAndCommit(ctx, "werf-giterminism.yaml")
+					gitAddAndCommit("werf-giterminism.yaml")
 				}
 
 				dockerignoreRelPath := filepath.Join(e.context, ".dockerignore")
@@ -370,7 +367,7 @@ config:
 				}
 
 				if e.commitDockerignore {
-					gitAddAndCommit(ctx, dockerignoreRelPath)
+					gitAddAndCommit(dockerignoreRelPath)
 				}
 
 				if e.changeDockerignoreAfterCommit {
@@ -378,7 +375,6 @@ config:
 				}
 
 				output, err := utils.RunCommand(
-					ctx,
 					SuiteData.TestDirPath,
 					SuiteData.WerfBinPath,
 					"run", "--require-built-images",

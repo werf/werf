@@ -1,7 +1,6 @@
 package git_test
 
 import (
-	"context"
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -22,8 +21,12 @@ func TestSuite(t *testing.T) {
 
 var SuiteData suite_init.SuiteData
 
-var _ = AfterEach(func(ctx SpecContext) {
-	utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "host", "purge", "--force")
+var _ = AfterEach(func() {
+	utils.RunSucceedCommand(
+		SuiteData.TestDirPath,
+		SuiteData.WerfBinPath,
+		"host", "purge", "--force",
+	)
 })
 
 var (
@@ -34,17 +37,24 @@ var (
 	_ = SuiteData.SetupTmp(suite_init.NewTmpDirData())
 )
 
-func commonBeforeEach(ctx context.Context, fixturePath string) {
+func commonBeforeEach(fixturePath string) {
 	utils.CopyIn(fixturePath, SuiteData.TestDirPath)
 
-	utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "init")
+	utils.RunSucceedCommand(
+		SuiteData.TestDirPath,
+		"git",
+		"init",
+	)
 
 	utils.RunSucceedCommand(
-		ctx,
 		SuiteData.TestDirPath,
 		"git",
 		"add", "werf*.yaml",
 	)
 
-	utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "commit", "-m", "Initial commit")
+	utils.RunSucceedCommand(
+		SuiteData.TestDirPath,
+		"git",
+		"commit", "-m", "Initial commit",
+	)
 }

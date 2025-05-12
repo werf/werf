@@ -13,18 +13,18 @@ import (
 
 var _ = Describe("Simple kube-run", Label("e2e", "kube-run", "simple"), func() {
 	DescribeTable("should",
-		func(ctx SpecContext, kubeRunOpts *werf.KubeRunOptions, expectOutFn func(out string)) {
+		func(kubeRunOpts *werf.KubeRunOptions, expectOutFn func(out string)) {
 			By("initializing")
 			setupEnv()
 			repoDirname := "repo0"
 			fixtureRelPath := "simple/state0"
 
 			By("state0: preparing test repo")
-			SuiteData.InitTestRepo(ctx, repoDirname, fixtureRelPath)
+			SuiteData.InitTestRepo(repoDirname, fixtureRelPath)
 			werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
 
 			By("state0: execute kube-run")
-			combinedOut := werfProject.KubeRun(ctx, kubeRunOpts)
+			combinedOut := werfProject.KubeRun(kubeRunOpts)
 			expectOutFn(combinedOut)
 		},
 		Entry(
