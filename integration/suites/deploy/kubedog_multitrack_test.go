@@ -91,16 +91,16 @@ func isTooManyProbesTriggered(line, probeName string, maxAllowed int) bool {
 
 var _ = Describe("Kubedog multitrack — werf's kubernetes resources tracker", Pending, func() {
 	Context("when chart contains valid resource", func() {
-		AfterEach(func() {
-			utils.RunCommand(SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "dismiss", "--with-namespace")
+		AfterEach(func(ctx SpecContext) {
+			utils.RunCommand(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "dismiss", "--with-namespace")
 		})
 
-		It("should report Deployment is ready before werf exit", func() {
-			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, "kubedog_multitrack_app1", "initial commit")
+		It("should report Deployment is ready before werf exit", func(ctx SpecContext) {
+			SuiteData.CommitProjectWorktree(ctx, SuiteData.ProjectName, "kubedog_multitrack_app1", "initial commit")
 
 			gotDeploymentReadyLine := false
 
-			Expect(werfConverge(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
+			Expect(werfConverge(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
 				OutputLineHandler: func(line string) {
 					line = stripansi.Strip(line)
 					if statusProgressLine := releaseResourcesStatusProgressLine(line); statusProgressLine != "" {
@@ -120,18 +120,18 @@ var _ = Describe("Kubedog multitrack — werf's kubernetes resources tracker", P
 	})
 
 	Context("when chart contains resource with invalid docker image", func() {
-		AfterEach(func() {
-			utils.RunCommand(SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "dismiss", "--with-namespace")
+		AfterEach(func(ctx SpecContext) {
+			utils.RunCommand(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "dismiss", "--with-namespace")
 		})
 
-		It("should report ImagePullBackoff occurred in Deployment and werf should fail", func() {
-			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, "kubedog_multitrack_app2", "initial commit")
+		It("should report ImagePullBackoff occurred in Deployment and werf should fail", func(ctx SpecContext) {
+			SuiteData.CommitProjectWorktree(ctx, SuiteData.ProjectName, "kubedog_multitrack_app2", "initial commit")
 
 			gotImagePullBackoffLine := false
 			gotAllowedErrorsWarning := false
 			gotAllowedErrorsExceeded := false
 
-			Expect(werfConverge(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
+			Expect(werfConverge(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
 				OutputLineHandler: func(line string) {
 					if strings.Contains(line, `1/1 allowed errors occurred for deploy/mydeploy1: continue tracking`) {
 						gotAllowedErrorsWarning = true
@@ -158,16 +158,16 @@ var _ = Describe("Kubedog multitrack — werf's kubernetes resources tracker", P
 	})
 
 	Context("when chart contains resource with succeeding probes", func() {
-		AfterEach(func() {
-			utils.RunCommand(SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "dismiss", "--with-namespace")
+		AfterEach(func(ctx SpecContext) {
+			utils.RunCommand(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "dismiss", "--with-namespace")
 		})
 
-		It("should report Deployment is ready before werf exit", func() {
-			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, "kubedog_multitrack_app3", "initial commit")
+		It("should report Deployment is ready before werf exit", func(ctx SpecContext) {
+			SuiteData.CommitProjectWorktree(ctx, SuiteData.ProjectName, "kubedog_multitrack_app3", "initial commit")
 
 			var gotDeploymentReadyLine bool
 
-			Expect(werfConverge(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
+			Expect(werfConverge(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
 				OutputLineHandler: func(line string) {
 					line = stripansi.Strip(line)
 					if statusProgressLine := releaseResourcesStatusProgressLine(line); statusProgressLine != "" {
@@ -187,18 +187,18 @@ var _ = Describe("Kubedog multitrack — werf's kubernetes resources tracker", P
 	})
 
 	Context("when chart contains resource with failing startup probe", func() {
-		AfterEach(func() {
-			utils.RunCommand(SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "dismiss", "--with-namespace")
+		AfterEach(func(ctx SpecContext) {
+			utils.RunCommand(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "dismiss", "--with-namespace")
 		})
 
-		It("should report container killed by startup probe and werf should fail", func() {
-			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, "kubedog_multitrack_app4", "initial commit")
+		It("should report container killed by startup probe and werf should fail", func(ctx SpecContext) {
+			SuiteData.CommitProjectWorktree(ctx, SuiteData.ProjectName, "kubedog_multitrack_app4", "initial commit")
 
 			var gotKilledByStartupProbe, gotAllowedErrorsExceeded bool
 
 			startupFailRegex := regexp.MustCompile("deploy/mydeploy4 ERROR: po/mydeploy4-[a-z0-9]+-[a-z0-9]+ container/main: Killing: Container main failed startup probe, will be restarted")
 
-			Expect(werfConverge(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
+			Expect(werfConverge(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
 				OutputLineHandler: func(line string) {
 					if startupFailRegex.MatchString(line) {
 						gotKilledByStartupProbe = true
@@ -221,18 +221,18 @@ var _ = Describe("Kubedog multitrack — werf's kubernetes resources tracker", P
 	})
 
 	Context("when chart contains resource with failing readiness probe", func() {
-		AfterEach(func() {
-			utils.RunCommand(SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "dismiss", "--with-namespace")
+		AfterEach(func(ctx SpecContext) {
+			utils.RunCommand(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "dismiss", "--with-namespace")
 		})
 
-		It("should report that the container readiness probe failed multiple times and werf should fail", func() {
-			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, "kubedog_multitrack_app5", "initial commit")
+		It("should report that the container readiness probe failed multiple times and werf should fail", func(ctx SpecContext) {
+			SuiteData.CommitProjectWorktree(ctx, SuiteData.ProjectName, "kubedog_multitrack_app5", "initial commit")
 
 			var gotStoppedByReadinessProbe, gotAllowedErrorsExceeded, gotTooManyProbesTriggered bool
 
 			readinessFailRegex := regexp.MustCompile("deploy/mydeploy5 ERROR: po/mydeploy5-[a-z0-9]+-[a-z0-9]+ container/main: Unhealthy: Readiness probe failed")
 
-			Expect(werfConverge(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
+			Expect(werfConverge(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
 				OutputLineHandler: func(line string) {
 					if readinessFailRegex.MatchString(line) {
 						gotStoppedByReadinessProbe = true
@@ -259,18 +259,18 @@ var _ = Describe("Kubedog multitrack — werf's kubernetes resources tracker", P
 	})
 
 	Context("when chart contains resource with failing liveness probe", func() {
-		AfterEach(func() {
-			utils.RunCommand(SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "dismiss", "--with-namespace")
+		AfterEach(func(ctx SpecContext) {
+			utils.RunCommand(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "dismiss", "--with-namespace")
 		})
 
-		It("should report that the container liveness probe failed and werf should fail", func() {
-			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, "kubedog_multitrack_app6", "initial commit")
+		It("should report that the container liveness probe failed and werf should fail", func(ctx SpecContext) {
+			SuiteData.CommitProjectWorktree(ctx, SuiteData.ProjectName, "kubedog_multitrack_app6", "initial commit")
 
 			var gotKilledByLivenessProbe, gotAllowedErrorsExceeded bool
 
 			livenessFailRegex := regexp.MustCompile("deploy/mydeploy6 ERROR: po/mydeploy6-[a-z0-9]+-[a-z0-9]+ container/main: Killing: Container main failed liveness probe, will be restarted")
 
-			Expect(werfConverge(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
+			Expect(werfConverge(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
 				OutputLineHandler: func(line string) {
 					if livenessFailRegex.MatchString(line) {
 						gotKilledByLivenessProbe = true

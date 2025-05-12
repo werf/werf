@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	"github.com/werf/werf/v2/pkg/docker_registry"
@@ -45,13 +46,13 @@ var (
 	_ = SuiteData.SetupContainerRegistryPerImplementation(suite_init.NewContainerRegistryPerImplementationData(SuiteData.SynchronizedSuiteCallbacksData, true))
 )
 
-func perImplementationBeforeEach(implementationName string) func() {
-	return func() {
+func perImplementationBeforeEach(implementationName string) func(ctx SpecContext) {
+	return func(ctx SpecContext) {
 		werfImplementationName := SuiteData.ContainerRegistryPerImplementation[implementationName].WerfImplementationName
 
 		repo := fmt.Sprintf("%s/%s", SuiteData.ContainerRegistryPerImplementation[implementationName].RegistryAddress, SuiteData.ProjectName)
 		InitStagesStorage(repo, werfImplementationName, SuiteData.ContainerRegistryPerImplementation[implementationName].RegistryOptions)
-		SuiteData.SetupRepo(context.Background(), repo, implementationName, SuiteData.StubsData)
+		SuiteData.SetupRepo(ctx, repo, implementationName, SuiteData.StubsData)
 		SuiteData.TestImplementation = implementationName
 
 		containerRegistry, err := docker_registry.NewDockerRegistry(repo, werfImplementationName, docker_registry.DockerRegistryOptions{})
@@ -65,16 +66,16 @@ func InitStagesStorage(stagesStorageAddress, implementationName string, dockerRe
 	SuiteData.StagesStorage = utils.NewStagesStorage(stagesStorageAddress, implementationName, dockerRegistryOptions)
 }
 
-func StagesCount() int {
-	return utils.StagesCount(context.Background(), SuiteData.StagesStorage)
+func StagesCount(ctx context.Context) int {
+	return utils.StagesCount(ctx, SuiteData.StagesStorage)
 }
 
-func ManagedImagesCount() int {
-	return utils.ManagedImagesCount(context.Background(), SuiteData.StagesStorage)
+func ManagedImagesCount(ctx context.Context) int {
+	return utils.ManagedImagesCount(ctx, SuiteData.StagesStorage)
 }
 
-func ImageMetadata(imageName string) map[string][]string {
-	return utils.ImageMetadata(context.Background(), SuiteData.StagesStorage, imageName)
+func ImageMetadata(ctx context.Context, imageName string) map[string][]string {
+	return utils.ImageMetadata(ctx, SuiteData.StagesStorage, imageName)
 }
 
 func ImportMetadataIDs() []string {
