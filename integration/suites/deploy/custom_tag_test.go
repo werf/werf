@@ -14,24 +14,27 @@ import (
 const customTagValue = "custom-tag"
 
 var _ = Describe("custom tag", func() {
-	BeforeEach(func(ctx SpecContext) {
-		SuiteData.CommitProjectWorktree(ctx, SuiteData.ProjectName, "custom_tag", "initial commit")
+	BeforeEach(func() {
+		SuiteData.CommitProjectWorktree(SuiteData.ProjectName, "custom_tag", "initial commit")
 		SuiteData.Stubs.SetEnv("FROM_CACHE_VERSION", "1")
 	})
 
 	When("should do release", func() {
-		_ = AfterEach(func(ctx SpecContext) {
+		_ = AfterEach(func() {
 			utils.RunSucceedCommand(
-				ctx,
 				SuiteData.GetProjectWorktree(SuiteData.ProjectName),
 				SuiteData.WerfBinPath,
 				"dismiss", "--with-namespace",
 			)
 
-			utils.RunSucceedCommand(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "purge")
+			utils.RunSucceedCommand(
+				SuiteData.GetProjectWorktree(SuiteData.ProjectName),
+				SuiteData.WerfBinPath,
+				"purge",
+			)
 		})
 
-		It("should use custom tag", func(ctx SpecContext) {
+		It("should use custom tag", func() {
 			var werfArgs []string
 			werfArgs = append(werfArgs, "converge")
 			werfArgs = append(
@@ -42,10 +45,13 @@ var _ = Describe("custom tag", func() {
 			)
 			werfArgs = append(werfArgs, "--use-custom-tag", customTagValue)
 
-			utils.RunSucceedCommand(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, werfArgs...)
+			utils.RunSucceedCommand(
+				SuiteData.GetProjectWorktree(SuiteData.ProjectName),
+				SuiteData.WerfBinPath,
+				werfArgs...,
+			)
 
 			output := utils.SucceedCommandOutputString(
-				ctx,
 				SuiteData.GetProjectWorktree(SuiteData.ProjectName),
 				SuiteData.WerfBinPath,
 				"helm", "get-release",
@@ -53,14 +59,17 @@ var _ = Describe("custom tag", func() {
 			releaseName := strings.TrimSpace(output)
 
 			output = utils.SucceedCommandOutputString(
-				ctx,
 				SuiteData.GetProjectWorktree(SuiteData.ProjectName),
 				SuiteData.WerfBinPath,
 				"helm", "get-namespace",
 			)
 			namespaceName := strings.TrimSpace(output)
 
-			output = utils.SucceedCommandOutputString(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "helm", "get", "manifest", "--namespace", namespaceName, releaseName)
+			output = utils.SucceedCommandOutputString(
+				SuiteData.GetProjectWorktree(SuiteData.ProjectName),
+				SuiteData.WerfBinPath,
+				"helm", "get", "manifest", "--namespace", namespaceName, releaseName,
+			)
 
 			repoCustomTag := strings.Join([]string{SuiteData.K8sDockerRegistryRepo, customTagValue}, ":")
 			expectedSubstring := "image: " + repoCustomTag
@@ -68,14 +77,22 @@ var _ = Describe("custom tag", func() {
 		})
 	})
 
-	It("should fail with outdated custom tag", func(ctx SpecContext) {
+	It("should fail with outdated custom tag", func() {
 		SuiteData.Stubs.SetEnv("FROM_CACHE_VERSION", "1")
 
-		utils.RunSucceedCommand(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "build", "--add-custom-tag", customTagValue)
+		utils.RunSucceedCommand(
+			SuiteData.GetProjectWorktree(SuiteData.ProjectName),
+			SuiteData.WerfBinPath,
+			"build", "--add-custom-tag", customTagValue,
+		)
 
 		SuiteData.Stubs.SetEnv("FROM_CACHE_VERSION", "2")
 
-		utils.RunSucceedCommand(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "build")
+		utils.RunSucceedCommand(
+			SuiteData.GetProjectWorktree(SuiteData.ProjectName),
+			SuiteData.WerfBinPath,
+			"build",
+		)
 
 		var werfArgs []string
 		werfArgs = append(werfArgs, "converge")
@@ -88,7 +105,11 @@ var _ = Describe("custom tag", func() {
 		werfArgs = append(werfArgs, "--use-custom-tag", customTagValue)
 		werfArgs = append(werfArgs, "--require-built-images")
 
-		bytes, err := utils.RunCommand(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, werfArgs...)
+		bytes, err := utils.RunCommand(
+			SuiteData.GetProjectWorktree(SuiteData.ProjectName),
+			SuiteData.WerfBinPath,
+			werfArgs...,
+		)
 
 		Expect(err).Should(HaveOccurred())
 		Expect(string(bytes)).Should(ContainSubstring("custom tag \"custom-tag\" image must be the same as associated content-based tag"))

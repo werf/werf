@@ -11,22 +11,21 @@ import (
 	"github.com/werf/werf/v2/test/pkg/utils/liveexec"
 )
 
-func SetGitRepoState(ctx context.Context, workTreeDir, repoDir, commitMessage string) error {
-	if err := liveexec.ExecCommand(ctx, ".", "git", liveexec.ExecCommandOptions{}, []string{"init", workTreeDir, "--separate-git-dir", repoDir}...); err != nil {
+func SetGitRepoState(workTreeDir, repoDir, commitMessage string) error {
+	if err := liveexec.ExecCommand(".", "git", liveexec.ExecCommandOptions{}, []string{"init", workTreeDir, "--separate-git-dir", repoDir}...); err != nil {
 		return fmt.Errorf("unable to init git repo %s with work tree %s: %w", repoDir, workTreeDir, err)
 	}
-	if err := liveexec.ExecCommand(ctx, ".", "git", liveexec.ExecCommandOptions{}, []string{"-C", workTreeDir, "add", "."}...); err != nil {
+	if err := liveexec.ExecCommand(".", "git", liveexec.ExecCommandOptions{}, []string{"-C", workTreeDir, "add", "."}...); err != nil {
 		return fmt.Errorf("unable to add work tree %s files to git repo %s: %w", workTreeDir, repoDir, err)
 	}
-	if err := liveexec.ExecCommand(ctx, ".", "git", liveexec.ExecCommandOptions{}, []string{"-C", workTreeDir, "commit", "-m", commitMessage}...); err != nil {
+	if err := liveexec.ExecCommand(".", "git", liveexec.ExecCommandOptions{}, []string{"-C", workTreeDir, "commit", "-m", commitMessage}...); err != nil {
 		return fmt.Errorf("unable to commit work tree %s files to git repo %s: %w", workTreeDir, repoDir, err)
 	}
 	return nil
 }
 
-func GetHeadCommit(ctx context.Context, workTreeDir string) string {
+func GetHeadCommit(workTreeDir string) string {
 	out := SucceedCommandOutputString(
-		ctx,
 		workTreeDir,
 		"git",
 		"rev-parse", "HEAD",

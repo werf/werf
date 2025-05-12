@@ -8,10 +8,10 @@ import (
 )
 
 var _ = Describe("giterminism config", func() {
-	BeforeEach(func(ctx SpecContext) {
-		gitInit(ctx)
+	BeforeEach(func() {
+		gitInit()
 		utils.CopyIn(utils.FixturePath("giterminism_config"), SuiteData.TestDirPath)
-		gitAddAndCommit(ctx, "werf.yaml")
+		gitAddAndCommit("werf.yaml")
 	})
 
 	type entry struct {
@@ -22,14 +22,14 @@ var _ = Describe("giterminism config", func() {
 	}
 
 	DescribeTable("",
-		func(ctx SpecContext, e entry) {
+		func(e entry) {
 			if e.addConfig {
 				contentToAppend := `giterminismConfigVersion: "1"`
 				fileCreateOrAppend("werf-giterminism.yaml", contentToAppend)
 			}
 
 			if e.commitConfig {
-				gitAddAndCommit(ctx, "werf-giterminism.yaml")
+				gitAddAndCommit("werf-giterminism.yaml")
 			}
 
 			if e.changeConfigAfterCommit {
@@ -37,7 +37,6 @@ var _ = Describe("giterminism config", func() {
 			}
 
 			output, err := utils.RunCommand(
-				ctx,
 				SuiteData.TestDirPath,
 				SuiteData.WerfBinPath,
 				"config", "render",

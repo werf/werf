@@ -1,6 +1,7 @@
 package deploy_test
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -29,20 +30,20 @@ var _ = Describe("Resources adopter", Pending, func() {
 			releaseName = projectName
 		})
 
-		AfterEach(func(ctx SpecContext) {
-			utils.RunCommand(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "dismiss", "--with-namespace")
+		AfterEach(func() {
+			utils.RunCommand(SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "dismiss", "--with-namespace")
 		})
 
-		It("should fail to deploy release when resources already exist; should adopt already existing resources when adoption annotation is set", func(ctx SpecContext) {
+		It("should fail to deploy release when resources already exist; should adopt already existing resources when adoption annotation is set", func() {
 			By("Installing release first time without mydeploy2 and mydeploy4")
 
-			SuiteData.CommitProjectWorktree(ctx, SuiteData.ProjectName, "resources_adopter_app1-001", "initial commit")
+			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, "resources_adopter_app1-001", "initial commit")
 
-			Expect(werfConverge(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{})).To(Succeed())
+			Expect(werfConverge(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{})).To(Succeed())
 
 			By("creating mydeploy2 and mydeploy4 using API in the cluster")
 
-			mydeploy2Original, err := kube.Client.AppsV1().Deployments(namespace).Create(ctx, resourcesfactory.NewDeployment(`
+			mydeploy2Original, err := kube.Client.AppsV1().Deployments(namespace).Create(context.Background(), resourcesfactory.NewDeployment(`
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -69,7 +70,7 @@ spec:
 `), metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
-			mydeploy4Original, err := kube.Client.AppsV1().Deployments(namespace).Create(ctx, resourcesfactory.NewDeployment(`
+			mydeploy4Original, err := kube.Client.AppsV1().Deployments(namespace).Create(context.Background(), resourcesfactory.NewDeployment(`
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -104,11 +105,11 @@ spec:
 
 			By("redeploying release with added mydeploy2 and mydeploy4")
 
-			SuiteData.CommitProjectWorktree(ctx, SuiteData.ProjectName, "resources_adopter_app1-002", "add mydeploy2 and mydeploy4")
+			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, "resources_adopter_app1-002", "add mydeploy2 and mydeploy4")
 
 			gotMydeploy2AlreadyExists := false
 			gotMydeploy4AlreadyExists := false
-			Expect(werfConverge(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
+			Expect(werfConverge(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
 				OutputLineHandler: func(line string) {
 					if strings.Contains(line, fmt.Sprintf(`Deployment "mydeploy2" in namespace "%s" exists and cannot be imported into the current release`, namespace)) {
 						gotMydeploy2AlreadyExists = true
@@ -121,37 +122,37 @@ spec:
 			})).NotTo(Succeed())
 			Expect(gotMydeploy2AlreadyExists || gotMydeploy4AlreadyExists).Should(BeTrue())
 
-			mydeploy2AfterDeploy, err := kube.Client.AppsV1().Deployments(namespace).Get(ctx, "mydeploy2", metav1.GetOptions{})
+			mydeploy2AfterDeploy, err := kube.Client.AppsV1().Deployments(namespace).Get(context.Background(), "mydeploy2", metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(mydeploy2AfterDeploy.UID).To(Equal(mydeploy2Original.UID))
 
-			mydeploy4AfterDeploy, err := kube.Client.AppsV1().Deployments(namespace).Get(ctx, "mydeploy4", metav1.GetOptions{})
+			mydeploy4AfterDeploy, err := kube.Client.AppsV1().Deployments(namespace).Get(context.Background(), "mydeploy4", metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(mydeploy4AfterDeploy.UID).To(Equal(mydeploy4Original.UID))
 
 			By("redeploying release after first failure")
 
-			Expect(werfConverge(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{})).NotTo(Succeed())
+			Expect(werfConverge(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{})).NotTo(Succeed())
 
 			By("redeploying release with adoption annotations set to wrong release name")
 
 		GetAndUpdateMydeploy2AfterRedeploy:
-			mydeploy2AfterRedeploy, err := kube.Client.AppsV1().Deployments(namespace).Get(ctx, "mydeploy2", metav1.GetOptions{})
+			mydeploy2AfterRedeploy, err := kube.Client.AppsV1().Deployments(namespace).Get(context.Background(), "mydeploy2", metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(mydeploy2AfterRedeploy.UID).To(Equal(mydeploy2Original.UID))
 			mydeploy2AfterRedeploy.Annotations["werf.io/allow-adoption-by-release"] = "NO_SUCH_RELEASE"
-			mydeploy2AfterRedeploy, err = kube.Client.AppsV1().Deployments(namespace).Update(ctx, mydeploy2AfterRedeploy, metav1.UpdateOptions{})
+			mydeploy2AfterRedeploy, err = kube.Client.AppsV1().Deployments(namespace).Update(context.Background(), mydeploy2AfterRedeploy, metav1.UpdateOptions{})
 			if errors.IsConflict(err) {
 				goto GetAndUpdateMydeploy2AfterRedeploy
 			}
 			Expect(err).NotTo(HaveOccurred())
 
 		GetAndUpdateMydeploy4AfterRedeploy:
-			mydeploy4AfterRedeploy, err := kube.Client.AppsV1().Deployments(namespace).Get(ctx, "mydeploy4", metav1.GetOptions{})
+			mydeploy4AfterRedeploy, err := kube.Client.AppsV1().Deployments(namespace).Get(context.Background(), "mydeploy4", metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(mydeploy4AfterRedeploy.UID).To(Equal(mydeploy4Original.UID))
 			mydeploy4AfterRedeploy.Annotations["werf.io/allow-adoption-by-release"] = "NO_SUCH_RELEASE"
-			mydeploy4AfterRedeploy, err = kube.Client.AppsV1().Deployments(namespace).Update(ctx, mydeploy4AfterRedeploy, metav1.UpdateOptions{})
+			mydeploy4AfterRedeploy, err = kube.Client.AppsV1().Deployments(namespace).Update(context.Background(), mydeploy4AfterRedeploy, metav1.UpdateOptions{})
 			if errors.IsConflict(err) {
 				goto GetAndUpdateMydeploy4AfterRedeploy
 			}
@@ -159,7 +160,7 @@ spec:
 
 			gotMydeploy2AlreadyExists = false
 			gotMydeploy4AlreadyExists = false
-			Expect(werfConverge(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
+			Expect(werfConverge(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
 				OutputLineHandler: func(line string) {
 					if strings.Contains(line, fmt.Sprintf(`Deployment "mydeploy2" in namespace "%s" exists and cannot be imported into the current release`, namespace)) {
 						gotMydeploy2AlreadyExists = true
@@ -175,26 +176,26 @@ spec:
 			By("redeploying release with adoption annotations set to the right release name")
 
 		GetAndUpdateMydeploy2AfterRedeploy2:
-			mydeploy2AfterRedeploy, err = kube.Client.AppsV1().Deployments(namespace).Get(ctx, "mydeploy2", metav1.GetOptions{})
+			mydeploy2AfterRedeploy, err = kube.Client.AppsV1().Deployments(namespace).Get(context.Background(), "mydeploy2", metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(mydeploy2AfterRedeploy.UID).To(Equal(mydeploy2Original.UID))
 			mydeploy2AfterRedeploy.Labels["app.kubernetes.io/managed-by"] = "Helm"
 			mydeploy2AfterRedeploy.Annotations["meta.helm.sh/release-name"] = releaseName
 			mydeploy2AfterRedeploy.Annotations["meta.helm.sh/release-namespace"] = namespace
-			mydeploy2AfterRedeploy, err = kube.Client.AppsV1().Deployments(namespace).Update(ctx, mydeploy2AfterRedeploy, metav1.UpdateOptions{})
+			mydeploy2AfterRedeploy, err = kube.Client.AppsV1().Deployments(namespace).Update(context.Background(), mydeploy2AfterRedeploy, metav1.UpdateOptions{})
 			if errors.IsConflict(err) {
 				goto GetAndUpdateMydeploy2AfterRedeploy2
 			}
 			Expect(err).NotTo(HaveOccurred())
 
 		GetAndUpdateMydeploy4AfterRedeploy2:
-			mydeploy4AfterRedeploy, err = kube.Client.AppsV1().Deployments(namespace).Get(ctx, "mydeploy4", metav1.GetOptions{})
+			mydeploy4AfterRedeploy, err = kube.Client.AppsV1().Deployments(namespace).Get(context.Background(), "mydeploy4", metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(mydeploy4AfterRedeploy.UID).To(Equal(mydeploy4Original.UID))
 			mydeploy4AfterRedeploy.Labels["app.kubernetes.io/managed-by"] = "Helm"
 			mydeploy4AfterRedeploy.Annotations["meta.helm.sh/release-name"] = releaseName
 			mydeploy4AfterRedeploy.Annotations["meta.helm.sh/release-namespace"] = namespace
-			mydeploy4AfterRedeploy, err = kube.Client.AppsV1().Deployments(namespace).Update(ctx, mydeploy4AfterRedeploy, metav1.UpdateOptions{})
+			mydeploy4AfterRedeploy, err = kube.Client.AppsV1().Deployments(namespace).Update(context.Background(), mydeploy4AfterRedeploy, metav1.UpdateOptions{})
 			if errors.IsConflict(err) {
 				goto GetAndUpdateMydeploy4AfterRedeploy2
 			}
@@ -202,18 +203,18 @@ spec:
 
 			gotMydeploy2AlreadyExists = false
 			gotMydeploy4AlreadyExists = false
-			Expect(werfConverge(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
+			Expect(werfConverge(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
 				OutputLineHandler: func(line string) {
 					Expect(strings.Contains(line, fmt.Sprintf(`Deployment "mydeploy2" in namespace "%s" exists and cannot be imported into the current release`, namespace))).To(BeFalse(), fmt.Sprintf("Got unexpected output line: %v", line))
 					Expect(strings.Contains(line, fmt.Sprintf(`Deployment "mydeploy4" in namespace "%s" exists and cannot be imported into the current release`, namespace))).To(BeFalse(), fmt.Sprintf("Got unexpected output line: %v", line))
 				},
 			})).To(Succeed())
 
-			mydeploy2AfterAdoption, err := kube.Client.AppsV1().Deployments(namespace).Get(ctx, "mydeploy2", metav1.GetOptions{})
+			mydeploy2AfterAdoption, err := kube.Client.AppsV1().Deployments(namespace).Get(context.Background(), "mydeploy2", metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(mydeploy2AfterAdoption.UID).To(Equal(mydeploy2Original.UID))
 
-			mydeploy4AfterAdoption, err := kube.Client.AppsV1().Deployments(namespace).Get(ctx, "mydeploy4", metav1.GetOptions{})
+			mydeploy4AfterAdoption, err := kube.Client.AppsV1().Deployments(namespace).Get(context.Background(), "mydeploy4", metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(mydeploy4AfterAdoption.UID).To(Equal(mydeploy4Original.UID))
 
@@ -248,7 +249,7 @@ spec:
 
 			By("creating mydeploy5 in the cluster using API")
 
-			mydeploy5Initial, err := kube.Client.AppsV1().Deployments(namespace).Create(ctx, resourcesfactory.NewDeployment(`
+			mydeploy5Initial, err := kube.Client.AppsV1().Deployments(namespace).Create(context.Background(), resourcesfactory.NewDeployment(`
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -274,10 +275,10 @@ spec:
 
 			By("updating release with a new resource added to the chart that already exists in the cluster")
 
-			SuiteData.CommitProjectWorktree(ctx, SuiteData.ProjectName, "resources_adopter_app1-003", "add mydeploy5")
+			SuiteData.CommitProjectWorktree(SuiteData.ProjectName, "resources_adopter_app1-003", "add mydeploy5")
 
 			gotMydeploy5AlreadyExists := false
-			Expect(werfConverge(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
+			Expect(werfConverge(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
 				OutputLineHandler: func(line string) {
 					if strings.Contains(line, fmt.Sprintf(`Deployment "mydeploy5" in namespace "%s" exists and cannot be imported into the current release`, namespace)) {
 						gotMydeploy5AlreadyExists = true
@@ -287,7 +288,7 @@ spec:
 			Expect(gotMydeploy5AlreadyExists).To(BeTrue())
 
 		GetAndUpdateMydeploy5AfterUpdate:
-			mydeploy5AfterUpdate, err := kube.Client.AppsV1().Deployments(namespace).Get(ctx, "mydeploy5", metav1.GetOptions{})
+			mydeploy5AfterUpdate, err := kube.Client.AppsV1().Deployments(namespace).Get(context.Background(), "mydeploy5", metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(mydeploy5AfterUpdate.UID).To(Equal(mydeploy5Initial.UID))
 
@@ -295,13 +296,13 @@ spec:
 			mydeploy5AfterUpdate.Annotations["meta.helm.sh/release-name"] = releaseName
 			mydeploy5AfterUpdate.Annotations["meta.helm.sh/release-namespace"] = namespace
 
-			mydeploy5AfterUpdate, err = kube.Client.AppsV1().Deployments(namespace).Update(ctx, mydeploy5AfterUpdate, metav1.UpdateOptions{})
+			mydeploy5AfterUpdate, err = kube.Client.AppsV1().Deployments(namespace).Update(context.Background(), mydeploy5AfterUpdate, metav1.UpdateOptions{})
 			if errors.IsConflict(err) {
 				goto GetAndUpdateMydeploy5AfterUpdate
 			}
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(werfConverge(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
+			Expect(werfConverge(SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
 				OutputLineHandler: func(line string) {
 					Expect(strings.Contains(line, fmt.Sprintf(`Deployment "mydeploy5" in namespace "%s" exists and cannot be imported into the current release`, namespace))).To(BeFalse(), fmt.Sprintf("Got unexpected output line: %v", line))
 				},
@@ -309,24 +310,24 @@ spec:
 
 			By("deleting release from cluster with all adopted resources")
 
-			Expect(liveexec.ExecCommand(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, liveexec.ExecCommandOptions{}, "dismiss")).To(Succeed())
+			Expect(liveexec.ExecCommand(SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, liveexec.ExecCommandOptions{}, "dismiss")).To(Succeed())
 
-			_, err = kube.Client.AppsV1().Deployments(namespace).Get(ctx, "mydeploy1", metav1.GetOptions{})
+			_, err = kube.Client.AppsV1().Deployments(namespace).Get(context.Background(), "mydeploy1", metav1.GetOptions{})
 			Expect(errors.IsNotFound(err)).To(BeTrue(), fmt.Sprintf("get deploy/mydeploy1 should return not found error, got %v", err))
 
-			_, err = kube.Client.AppsV1().Deployments(namespace).Get(ctx, "mydeploy2", metav1.GetOptions{})
+			_, err = kube.Client.AppsV1().Deployments(namespace).Get(context.Background(), "mydeploy2", metav1.GetOptions{})
 			Expect(errors.IsNotFound(err)).To(BeTrue(), fmt.Sprintf("get deploy/mydeploy2 should return not found error, got %v", err))
 
-			_, err = kube.Client.AppsV1().Deployments(namespace).Get(ctx, "mydeploy3", metav1.GetOptions{})
+			_, err = kube.Client.AppsV1().Deployments(namespace).Get(context.Background(), "mydeploy3", metav1.GetOptions{})
 			Expect(errors.IsNotFound(err)).To(BeTrue(), fmt.Sprintf("get deploy/mydeploy3 should return not found error, got %v", err))
 
-			_, err = kube.Client.AppsV1().Deployments(namespace).Get(ctx, "mydeploy4", metav1.GetOptions{})
+			_, err = kube.Client.AppsV1().Deployments(namespace).Get(context.Background(), "mydeploy4", metav1.GetOptions{})
 			Expect(errors.IsNotFound(err)).To(BeTrue(), fmt.Sprintf("get deploy/mydeploy4 should return not found error, got %v", err))
 
-			_, err = kube.Client.AppsV1().Deployments(namespace).Get(ctx, "mydeploy5", metav1.GetOptions{})
+			_, err = kube.Client.AppsV1().Deployments(namespace).Get(context.Background(), "mydeploy5", metav1.GetOptions{})
 			Expect(errors.IsNotFound(err)).To(BeTrue(), fmt.Sprintf("get deploy/mydeploy5 should return not found error, got %v", err))
 
-			kube.Client.CoreV1().Namespaces().Delete(ctx, namespace, metav1.DeleteOptions{})
+			kube.Client.CoreV1().Namespaces().Delete(context.Background(), namespace, metav1.DeleteOptions{})
 		})
 	})
 })

@@ -48,10 +48,14 @@ var _ = XDescribe("from and fromLatest", func() {
 		expectedErr             bool
 	}
 
-	entryItBody := func(ctx SpecContext, e entry) {
+	entryItBody := func(e entry) {
 		SuiteData.Stubs.SetEnv("FROM_LATEST", strconv.FormatBool(e.fromLatest))
 
-		res, err := utils.RunCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
+		res, err := utils.RunCommand(
+			SuiteData.TestDirPath,
+			SuiteData.WerfBinPath,
+			"build",
+		)
 
 		if e.expectedErr {
 			Expect(err).Should(HaveOccurred())
@@ -65,7 +69,6 @@ var _ = XDescribe("from and fromLatest", func() {
 
 		if err == nil {
 			resultImageName := utils.SucceedCommandOutputString(
-				ctx,
 				SuiteData.TestDirPath,
 				SuiteData.WerfBinPath,
 				"stage", "image",
@@ -78,8 +81,8 @@ var _ = XDescribe("from and fromLatest", func() {
 	Context("when from stage is not built", func() {
 		Context("when registry from image does not exist", func() {
 			Context("when local from image does not exist", func() {
-				It("should fail during pulling (fromLatest: false)", func(ctx SpecContext) {
-					entryItBody(ctx, entry{
+				It("should fail during pulling (fromLatest: false)", func() {
+					entryItBody(entry{
 						fromLatest: false,
 						expectedOutputMatchers: []types.GomegaMatcher{
 							Not(ContainSubstring("Trying to get from base image id from registry")),
@@ -91,8 +94,8 @@ var _ = XDescribe("from and fromLatest", func() {
 					})
 				})
 
-				It("should fail during getting actual id (fromLatest: true)", func(ctx SpecContext) {
-					entryItBody(ctx, entry{
+				It("should fail during getting actual id (fromLatest: true)", func() {
+					entryItBody(entry{
 						fromLatest: true,
 						expectedOutputMatchers: []types.GomegaMatcher{
 							ContainSubstring("Trying to get from base image id from registry"),
@@ -114,8 +117,8 @@ var _ = XDescribe("from and fromLatest", func() {
 					utilsDocker.ImageRemoveIfExists(fromImage)
 				})
 
-				It("should be built with local image and warnings (fromLatest: false)", func(ctx SpecContext) {
-					entryItBody(ctx, entry{
+				It("should be built with local image and warnings (fromLatest: false)", func() {
+					entryItBody(entry{
 						fromLatest: false,
 						expectedOutputMatchers: []types.GomegaMatcher{
 							ContainSubstring("Trying to get from base image id from registry"),
@@ -129,8 +132,8 @@ var _ = XDescribe("from and fromLatest", func() {
 					})
 				})
 
-				It("should fail during getting actual id (fromLatest: true)", func(ctx SpecContext) {
-					entryItBody(ctx, entry{
+				It("should fail during getting actual id (fromLatest: true)", func() {
+					entryItBody(entry{
 						fromLatest: true,
 						expectedOutputMatchers: []types.GomegaMatcher{
 							ContainSubstring("Trying to get from base image id from registry"),
@@ -251,16 +254,20 @@ var _ = XDescribe("from and fromLatest", func() {
 			afterFirstBuildHook func()
 		}
 
-		entryWithPreBuildItBody := func(ctx SpecContext, e entryWithPreBuild) {
+		entryWithPreBuildItBody := func(e entryWithPreBuild) {
 			SuiteData.Stubs.SetEnv("FROM_LATEST", strconv.FormatBool(e.fromLatest))
 
-			utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
+			utils.RunSucceedCommand(
+				SuiteData.TestDirPath,
+				SuiteData.WerfBinPath,
+				"build",
+			)
 
 			if e.afterFirstBuildHook != nil {
 				e.afterFirstBuildHook()
 			}
 
-			entryItBody(ctx, e.entry)
+			entryItBody(e.entry)
 		}
 
 		Context("when from stage image is actual", func() {
@@ -340,12 +347,16 @@ var _ = XDescribe("fromCacheVersion", func() {
 		SuiteData.TestDirPath = utils.FixturePath("from_cache_version")
 	})
 
-	It("should be rebuilt", func(ctx SpecContext) {
+	It("should be rebuilt", func() {
 		specStep := func(fromCacheVersion string) {
 			By(fmt.Sprintf("fromCacheVersion: %s", fromCacheVersion))
 			SuiteData.Stubs.SetEnv("FROM_CACHE_VERSION", fromCacheVersion)
 
-			output := utils.SucceedCommandOutputString(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
+			output := utils.SucceedCommandOutputString(
+				SuiteData.TestDirPath,
+				SuiteData.WerfBinPath,
+				"build",
+			)
 
 			Expect(output).Should(ContainSubstring("Building stage ~/from"))
 		}

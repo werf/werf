@@ -2,7 +2,6 @@ package git_test
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"os"
 	"path"
@@ -36,7 +35,7 @@ var _ = Describe("file lifecycle", func() {
 		devMode bool
 	}
 
-	createFileFunc := func(ctx context.Context, fileName string, fileData []byte, filePerm os.FileMode) {
+	createFileFunc := func(fileName string, fileData []byte, filePerm os.FileMode) {
 		filePath := filepath.Join(SuiteData.TestDirPath, fileName)
 		utils.WriteFile(filePath, fileData)
 
@@ -49,31 +48,39 @@ var _ = Describe("file lifecycle", func() {
 			}
 			gitArgs = append(gitArgs, fileName)
 
-			utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", gitArgs...)
+			utils.RunSucceedCommand(
+				SuiteData.TestDirPath,
+				"git",
+				gitArgs...,
+			)
 		} else {
 			Expect(os.Chmod(filePath, filePerm)).Should(Succeed())
 		}
 	}
 
-	fileLifecycleEntryItBody := func(ctx SpecContext, entry fileLifecycleEntry) {
+	fileLifecycleEntryItBody := func(entry fileLifecycleEntry) {
 		var commitMsg string
 		filePath := filepath.Join(SuiteData.TestDirPath, entry.relPath)
 		if entry.delete {
 			Expect(os.Remove(filePath)).Should(Succeed())
 			commitMsg = "Delete file " + entry.relPath
 		} else {
-			createFileFunc(ctx, entry.relPath, entry.data, entry.perm)
+			createFileFunc(entry.relPath, entry.data, entry.perm)
 			commitMsg = "Add/Modify file " + entry.relPath
 		}
 
 		if entry.devMode {
 			SuiteData.Stubs.SetEnv("WERF_DEV", "1")
-			addFile(ctx, SuiteData.TestDirPath, entry.relPath)
+			addFile(SuiteData.TestDirPath, entry.relPath)
 		} else {
-			addAndCommitFile(ctx, SuiteData.TestDirPath, entry.relPath, commitMsg)
+			addAndCommitFile(SuiteData.TestDirPath, entry.relPath, commitMsg)
 		}
 
-		utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
+		utils.RunSucceedCommand(
+			SuiteData.TestDirPath,
+			SuiteData.WerfBinPath,
+			"build",
+		)
 
 		var cmd []string
 		var extraDockerOptions []string
@@ -87,12 +94,17 @@ var _ = Describe("file lifecycle", func() {
 			extraDockerOptions = append(extraDockerOptions, fmt.Sprintf("-v %s:%s", SuiteData.TestDirPath, "/host"))
 		}
 
-		docker.RunSucceedContainerCommandWithStapel(ctx, SuiteData.WerfBinPath, SuiteData.TestDirPath, extraDockerOptions, cmd)
+		docker.RunSucceedContainerCommandWithStapel(
+			SuiteData.WerfBinPath,
+			SuiteData.TestDirPath,
+			extraDockerOptions,
+			cmd,
+		)
 	}
 
-	BeforeEach(func(ctx SpecContext) {
+	BeforeEach(func() {
 		fixturesPathParts = []string{"file_lifecycle"}
-		commonBeforeEach(ctx, utils.FixturePath(fixturesPathParts...))
+		commonBeforeEach(utils.FixturePath(fixturesPathParts...))
 	})
 
 	type test struct {
@@ -161,11 +173,15 @@ var _ = Describe("file lifecycle", func() {
 			)
 
 			When("gitArchive stage with file is built"+extraDescription+pathLogFunc(relPathToAdd), func() {
-				BeforeEach(func(ctx SpecContext) {
-					createFileFunc(ctx, relPathToAddAndModify, fileDataToAdd, gitExecutableFilePerm)
-					addAndCommitFile(ctx, SuiteData.TestDirPath, relPathToAddAndModify, "Add file "+relPathToAddAndModify)
+				BeforeEach(func() {
+					createFileFunc(relPathToAddAndModify, fileDataToAdd, gitExecutableFilePerm)
+					addAndCommitFile(SuiteData.TestDirPath, relPathToAddAndModify, "Add file "+relPathToAddAndModify)
 
-					utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
+					utils.RunSucceedCommand(
+						SuiteData.TestDirPath,
+						SuiteData.WerfBinPath,
+						"build",
+					)
 				})
 
 				DescribeTable("processing file with patch apply"+extraDescription,
@@ -208,7 +224,7 @@ var _ = Describe("file lifecycle", func() {
 				)
 			})
 
-			When("file is symlink"+extraDescription+pathLogFunc(relPathToAdd), func(ctx SpecContext) {
+			When("file is symlink"+extraDescription+pathLogFunc(relPathToAdd), func() {
 				linkToAdd := "werf.yaml"
 				linkToModify := "none"
 
@@ -226,15 +242,23 @@ var _ = Describe("file lifecycle", func() {
 						Expect(os.Remove(filePath)).Should(Succeed())
 						commitMsg = "Delete file " + entry.relPath
 					} else {
-						hashBytes, _ := utils.RunCommandWithOptions(ctx, SuiteData.TestDirPath, "git", []string{"hash-object", "-w", "--stdin"}, utils.RunCommandOptions{
-							ToStdin:       entry.link,
-							ShouldSucceed: true,
-						})
-
-						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "update-index", "--add", "--cacheinfo", "120000", string(bytes.TrimSpace(hashBytes)), entry.relPath)
+						hashBytes, _ := utils.RunCommandWithOptions(
+							SuiteData.TestDirPath,
+							"git",
+							[]string{"hash-object", "-w", "--stdin"},
+							utils.RunCommandOptions{
+								ToStdin:       entry.link,
+								ShouldSucceed: true,
+							},
+						)
 
 						utils.RunSucceedCommand(
-							ctx,
+							SuiteData.TestDirPath,
+							"git",
+							"update-index", "--add", "--cacheinfo", "120000", string(bytes.TrimSpace(hashBytes)), entry.relPath,
+						)
+
+						utils.RunSucceedCommand(
 							SuiteData.TestDirPath,
 							"git",
 							"checkout", entry.relPath,
@@ -245,12 +269,16 @@ var _ = Describe("file lifecycle", func() {
 
 					if entry.devMode {
 						SuiteData.Stubs.SetEnv("WERF_DEV", "1")
-						addFile(ctx, SuiteData.TestDirPath, entry.relPath)
+						addFile(SuiteData.TestDirPath, entry.relPath)
 					} else {
-						addAndCommitFile(ctx, SuiteData.TestDirPath, entry.relPath, commitMsg)
+						addAndCommitFile(SuiteData.TestDirPath, entry.relPath, commitMsg)
 					}
 
-					utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
+					utils.RunSucceedCommand(
+						SuiteData.TestDirPath,
+						SuiteData.WerfBinPath,
+						"build",
+					)
 
 					var cmd []string
 					if entry.delete {
@@ -261,7 +289,12 @@ var _ = Describe("file lifecycle", func() {
 						cmd = append(cmd, fmt.Sprintf("diff <(%s) <(echo %s)", readlinkCmd, shellescape.Quote(entry.link)))
 					}
 
-					docker.RunSucceedContainerCommandWithStapel(ctx, SuiteData.WerfBinPath, SuiteData.TestDirPath, []string{}, cmd)
+					docker.RunSucceedContainerCommandWithStapel(
+						SuiteData.WerfBinPath,
+						SuiteData.TestDirPath,
+						[]string{},
+						cmd,
+					)
 				}
 
 				DescribeTable("processing symlink file with archive apply"+extraDescription,

@@ -1,7 +1,6 @@
 package git_test
 
 import (
-	"context"
 	"fmt"
 	"path"
 	"path/filepath"
@@ -25,49 +24,60 @@ var _ = Describe("cleanup empty directories with git patch apply", func() {
 		skipOnWindows   bool
 	}
 
-	removingEmptyDirectoriesItBody := func(fixturePathFolder string) func(context.Context, removingEmptyDirectoriesEntry) {
-		return func(ctx context.Context, entry removingEmptyDirectoriesEntry) {
+	removingEmptyDirectoriesItBody := func(fixturePathFolder string) func(removingEmptyDirectoriesEntry) {
+		return func(entry removingEmptyDirectoriesEntry) {
 			if entry.skipOnWindows && runtime.GOOS == "windows" {
 				Skip("skip on windows")
 			}
 
-			commonBeforeEach(ctx, utils.FixturePath(append(fixturesPathParts, fixturePathFolder)...))
+			commonBeforeEach(utils.FixturePath(append(fixturesPathParts, fixturePathFolder)...))
 
 			projectAddedFilePath := filepath.Join(entry.dirToAdd, "file")
 			containerAddedDirPath := path.Join(gitToPath, entry.dirToAdd)
 
 			By(fmt.Sprintf("Add file %s", shellescape.Quote(projectAddedFilePath)))
-			createAndCommitFile(ctx, filepath.Join(SuiteData.TestDirPath, entry.dirToAdd), "file", 12)
+			createAndCommitFile(filepath.Join(SuiteData.TestDirPath, entry.dirToAdd), "file", 12)
 
 			By("Build and cache source code in gitArchive stage")
-			utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
+			utils.RunSucceedCommand(
+				SuiteData.TestDirPath,
+				SuiteData.WerfBinPath,
+				"build",
+			)
 
 			By(fmt.Sprintf("Check container directory %s exists", shellescape.Quote(containerAddedDirPath)))
-			utilsDocker.CheckContainerDirectoryExists(ctx, SuiteData.WerfBinPath, SuiteData.TestDirPath, containerAddedDirPath)
+			utilsDocker.CheckContainerDirectoryExists(SuiteData.WerfBinPath, SuiteData.TestDirPath, containerAddedDirPath)
 
 			By(fmt.Sprintf("Remove file %s", shellescape.Quote(projectAddedFilePath)))
 
 			utils.RunSucceedCommand(
-				ctx,
 				SuiteData.TestDirPath,
 				"git",
 				"rm", projectAddedFilePath,
 			)
 
-			utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "commit", "-m", "Remove file "+projectAddedFilePath)
+			utils.RunSucceedCommand(
+				SuiteData.TestDirPath,
+				"git",
+				"commit", "-m", "Remove file "+projectAddedFilePath,
+			)
 
-			utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
+			utils.RunSucceedCommand(
+				SuiteData.TestDirPath,
+				SuiteData.WerfBinPath,
+				"build",
+			)
 
 			for _, relDirPath := range entry.shouldBeDeleted {
 				containerDirPath := path.Join(gitToPath, relDirPath)
 				By(fmt.Sprintf("Check container directory %s does not exist", shellescape.Quote(containerDirPath)))
-				utilsDocker.CheckContainerDirectoryDoesNotExist(ctx, SuiteData.WerfBinPath, SuiteData.TestDirPath, containerDirPath)
+				utilsDocker.CheckContainerDirectoryDoesNotExist(SuiteData.WerfBinPath, SuiteData.TestDirPath, containerDirPath)
 			}
 
 			for _, relDirPath := range entry.shouldBeSkipped {
 				containerDirPath := path.Join(gitToPath, relDirPath)
 				By(fmt.Sprintf("Check container directory %s exists", shellescape.Quote(containerDirPath)))
-				utilsDocker.CheckContainerDirectoryExists(ctx, SuiteData.WerfBinPath, SuiteData.TestDirPath, containerDirPath)
+				utilsDocker.CheckContainerDirectoryExists(SuiteData.WerfBinPath, SuiteData.TestDirPath, containerDirPath)
 			}
 		}
 	}

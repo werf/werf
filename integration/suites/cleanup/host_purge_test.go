@@ -9,34 +9,48 @@ import (
 )
 
 var _ = Describe("host purge command", func() {
-	BeforeEach(func(ctx SpecContext) {
+	BeforeEach(func() {
 		SuiteData.StagesStorage = utils.NewStagesStorage(":local", "default", docker_registry.DockerRegistryOptions{})
 
 		utils.CopyIn(utils.FixturePath("host_purge"), SuiteData.TestDirPath)
 
-		utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "init")
+		utils.RunSucceedCommand(
+			SuiteData.TestDirPath,
+			"git",
+			"init",
+		)
 
 		utils.RunSucceedCommand(
-			ctx,
 			SuiteData.TestDirPath,
 			"git",
 			"add", "werf.yaml",
 		)
 
-		utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "commit", "-m", "Initial commit")
+		utils.RunSucceedCommand(
+			SuiteData.TestDirPath,
+			"git",
+			"commit", "-m", "Initial commit",
+		)
 	})
 
 	When("project name specified", func() {
 		Context("when there is running container based on werf image", func() {
-			BeforeEach(func(ctx SpecContext) {
-				utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
+			BeforeEach(func() {
+				utils.RunSucceedCommand(
+					SuiteData.TestDirPath,
+					SuiteData.WerfBinPath,
+					"build",
+				)
 
-				utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "run", "--docker-options", "-d", "--", "/bin/sleep", "30")
+				utils.RunSucceedCommand(
+					SuiteData.TestDirPath,
+					SuiteData.WerfBinPath,
+					"run", "--docker-options", "-d", "--", "/bin/sleep", "30",
+				)
 			})
 
-			It("should fail with specific error", func(ctx SpecContext) {
+			It("should fail with specific error", func() {
 				out, err := utils.RunCommand(
-					ctx,
 					SuiteData.TestDirPath,
 					SuiteData.WerfBinPath,
 					"host", "purge",
@@ -46,10 +60,14 @@ var _ = Describe("host purge command", func() {
 				Expect(string(out)).Should(ContainSubstring("Use --force option to remove all containers that are based on deleting werf docker images"))
 			})
 
-			It("should remove project images and related container", func(ctx SpecContext) {
-				utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "host", "purge", "--force")
+			It("should remove project images and related container", func() {
+				utils.RunSucceedCommand(
+					SuiteData.TestDirPath,
+					SuiteData.WerfBinPath,
+					"host", "purge", "--force",
+				)
 
-				Expect(StagesCount(ctx)).Should(Equal(0))
+				Expect(StagesCount()).Should(Equal(0))
 			})
 		})
 	})

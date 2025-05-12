@@ -1,7 +1,6 @@
 package cleanup_with_k8s_test
 
 import (
-	"context"
 	"fmt"
 	"os"
 
@@ -24,41 +23,41 @@ var _ = Describe("cleanup command", func() {
 		SuiteData.Stubs.SetEnv("WERF_SET_IMAGE_CREDENTIALS_REGISTRY", fmt.Sprintf("imageCredentials.registry=%s", os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY")))
 	}
 
-	setupProject := func(ctx context.Context) {
-		SuiteData.CommitProjectWorktree(ctx, SuiteData.ProjectName, utils.FixturePath("default"), "initial commit")
+	setupProject := func() {
+		SuiteData.CommitProjectWorktree(SuiteData.ProjectName, utils.FixturePath("default"), "initial commit")
 		setImageCredentialsEnv()
 	}
 
-	runCommand := func(ctx context.Context, args ...string) {
-		utils.RunSucceedCommand(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, args...)
+	runCommand := func(args ...string) {
+		utils.RunSucceedCommand(SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, args...)
 	}
 
-	BeforeEach(func(ctx SpecContext) {
-		setupProject(ctx)
+	BeforeEach(func() {
+		setupProject()
 	})
 
-	AfterEach(func(ctx SpecContext) {
-		runCommand(ctx, "dismiss", "--with-namespace")
-		runCommand(ctx, "purge")
+	AfterEach(func() {
+		runCommand("dismiss", "--with-namespace")
+		runCommand("purge")
 	})
 
 	Context("kubernetes based policy", func() {
-		BeforeEach(func(ctx SpecContext) {
+		BeforeEach(func() {
 			SuiteData.Stubs.SetEnv("ARTIFACT_CACHE_VERSION", artifactCacheVersion1)
 			SuiteData.Stubs.SetEnv("ARTIFACT_DATA", artifactData1)
-			runCommand(ctx, "build")
+			runCommand("build")
 		})
 
-		It("should remove all stages", func(ctx SpecContext) {
+		It("should remove all stages", func() {
 			Expect(StagesCount()).Should(Equal(expectedStageCountAfterFirstBuild))
-			runCommand(ctx, "cleanup")
+			runCommand("cleanup")
 			Expect(StagesCount()).Should(Equal(0))
 		})
 
-		It("should keep all stages", func(ctx SpecContext) {
-			runCommand(ctx, "converge", "--require-built-images")
+		It("should keep all stages", func() {
+			runCommand("converge", "--require-built-images")
 			Expect(StagesCount()).Should(Equal(expectedStageCountAfterFirstBuild))
-			runCommand(ctx, "cleanup")
+			runCommand("cleanup")
 			Expect(StagesCount()).Should(Equal(expectedStageCountAfterFirstBuild))
 		})
 
@@ -67,27 +66,27 @@ var _ = Describe("cleanup command", func() {
 				SuiteData.Stubs.SetEnv("ARTIFACT_CACHE_VERSION", artifactCacheVersion2)
 			})
 
-			It("should keep both by import checksum", func(ctx SpecContext) {
+			It("should keep both by import checksum", func() {
 				SuiteData.Stubs.SetEnv("ARTIFACT_DATA", artifactData1)
-				runCommand(ctx, "converge")
+				runCommand("converge")
 
 				Expect(StagesCount()).Should(Equal(expectedStageCountAfterFirstBuild + 2))
 				Expect(len(ImportMetadataIDs())).Should(Equal(2))
 
-				runCommand(ctx, "cleanup")
+				runCommand("cleanup")
 
 				Expect(StagesCount()).Should(Equal(expectedStageCountAfterFirstBuild + 2))
 				Expect(len(ImportMetadataIDs())).Should(Equal(2))
 			})
 
-			It("should keep one", func(ctx SpecContext) {
+			It("should keep one", func() {
 				SuiteData.Stubs.SetEnv("ARTIFACT_DATA", artifactData2)
-				runCommand(ctx, "converge")
+				runCommand("converge")
 
 				Expect(StagesCount()).Should(Equal(expectedStageCountAfterFirstBuild + 3))
 				Expect(len(ImportMetadataIDs())).Should(Equal(2))
 
-				runCommand(ctx, "cleanup")
+				runCommand("cleanup")
 
 				Expect(StagesCount()).Should(Equal(expectedStageCountAfterFirstBuild))
 				Expect(len(ImportMetadataIDs())).Should(Equal(1))

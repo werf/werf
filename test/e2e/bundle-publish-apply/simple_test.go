@@ -1,6 +1,8 @@
 package e2e_bundle_publish_apply_test
 
 import (
+	"context"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,23 +17,32 @@ var _ = Describe("Simple bundle publish/apply", Label("e2e", "bundle-publish-app
 	var repoDirname string
 	var werfProject *werf.Project
 
-	AfterEach(func(ctx SpecContext) {
-		utils.RunSucceedCommand(ctx, SuiteData.GetTestRepoPath(repoDirname), SuiteData.WerfBinPath, "dismiss", "--release", werfProject.Release(ctx), "--namespace", werfProject.Namespace(ctx), "--with-namespace")
+	AfterEach(func() {
+		utils.RunSucceedCommand(
+			SuiteData.GetTestRepoPath(repoDirname),
+			SuiteData.WerfBinPath,
+			"dismiss",
+			"--release",
+			werfProject.Release(),
+			"--namespace",
+			werfProject.Namespace(),
+			"--with-namespace",
+		)
 
-		werfProject.KubeCtl(ctx, &werf.KubeCtlOptions{
+		werfProject.KubeCtl(&werf.KubeCtlOptions{
 			werf.CommonOptions{
 				ExtraArgs: []string{
 					"delete",
 					"namespace",
 					"--ignore-not-found",
-					werfProject.Namespace(ctx),
+					werfProject.Namespace(),
 				},
 			},
 		})
 	})
 
 	It("should succeed and deploy expected resources",
-		func(ctx SpecContext) {
+		func() {
 			By("initializing")
 			repoDirname = "repo0"
 			setupEnv()
@@ -42,23 +53,23 @@ var _ = Describe("Simple bundle publish/apply", Label("e2e", "bundle-publish-app
 				deployReportName := ".werf-deploy-report.json"
 
 				By("state0: preparing test repo")
-				SuiteData.InitTestRepo(ctx, repoDirname, fixtureRelPath)
+				SuiteData.InitTestRepo(repoDirname, fixtureRelPath)
 				werfProject = werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
 
 				By("state0: execute bundle publish")
-				_ = werfProject.BundlePublish(ctx, nil)
+				_ = werfProject.BundlePublish(nil)
 
 				By("state0: execute bundle apply")
-				_, deployReport := werfProject.BundleApplyWithReport(ctx, werfProject.Release(ctx), werfProject.Namespace(ctx), SuiteData.GetDeployReportPath(deployReportName), nil)
+				_, deployReport := werfProject.BundleApplyWithReport(werfProject.Release(), werfProject.Namespace(), SuiteData.GetDeployReportPath(deployReportName), nil)
 
 				By("state0: check deploy report")
-				Expect(deployReport.Release).To(Equal(werfProject.Release(ctx)))
-				Expect(deployReport.Namespace).To(Equal(werfProject.Namespace(ctx)))
+				Expect(deployReport.Release).To(Equal(werfProject.Release()))
+				Expect(deployReport.Namespace).To(Equal(werfProject.Namespace()))
 				Expect(deployReport.Revision).To(Equal(1))
 				Expect(deployReport.Status).To(Equal(release.StatusDeployed))
 
 				By("state0: check deployed resources in cluster")
-				cm, err := kube.Client.CoreV1().ConfigMaps(werfProject.Namespace(ctx)).Get(ctx, "test1", metav1.GetOptions{})
+				cm, err := kube.Client.CoreV1().ConfigMaps(werfProject.Namespace()).Get(context.Background(), "test1", metav1.GetOptions{})
 				Expect(err).NotTo(HaveOccurred())
 				Expect(cm.Data).To(Equal(map[string]string{"key1": "value1"}))
 			}

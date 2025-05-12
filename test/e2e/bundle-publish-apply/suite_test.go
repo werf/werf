@@ -35,7 +35,7 @@ var (
 		Expect(kube.Init(kube.InitOptions{})).To(Succeed())
 	})
 
-	_ = AfterEach(func(ctx SpecContext) {
-		utils.RunSucceedCommand(ctx, "", SuiteData.WerfBinPath, "host", "purge", "--force", "--project-name", SuiteData.ProjectName)
+	_ = AfterEach(func() {
+		utils.RunSucceedCommand("", SuiteData.WerfBinPath, "host", "purge", "--force", "--project-name", SuiteData.ProjectName)
 	})
 )

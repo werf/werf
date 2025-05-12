@@ -14,13 +14,17 @@ type renderEntry struct {
 	expectedOutput string
 }
 
-var renderItBody = func(ctx SpecContext, entry renderEntry) {
-	SuiteData.CommitProjectWorktree(ctx, SuiteData.ProjectName, utils.FixturePath("render"), "initial commit")
+var renderItBody = func(entry renderEntry) {
+	SuiteData.CommitProjectWorktree(SuiteData.ProjectName, utils.FixturePath("render"), "initial commit")
 
 	werfArgs := []string{"config", "render"}
 	werfArgs = append(werfArgs, entry.extraArgs...)
 
-	output := utils.SucceedCommandOutputString(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, werfArgs...)
+	output := utils.SucceedCommandOutputString(
+		SuiteData.GetProjectWorktree(SuiteData.ProjectName),
+		SuiteData.WerfBinPath,
+		werfArgs...,
+	)
 
 	Expect(output).Should(Equal(strings.ReplaceAll(entry.expectedOutput, "\n", utils.LineBreak)))
 }

@@ -58,10 +58,14 @@ var _ = Describe("Git add file renames", func() {
 		return commands
 	}
 
-	doByTestFunc := func(ctx SpecContext, fixtureRelPath string) {
+	doByTestFunc := func(fixtureRelPath string) {
 		filePatternsToCommit := []string{"werf.yaml"}
 
-		utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "rm", "--ignore-unmatch", "-rf", ".")
+		utils.RunSucceedCommand(
+			SuiteData.TestDirPath,
+			"git",
+			"rm", "--ignore-unmatch", "-rf", ".",
+		)
 
 		utils.CopyIn(utils.FixturePath(rootOfHostFixtures, fixtureRelPath), SuiteData.TestDirPath)
 
@@ -70,15 +74,22 @@ var _ = Describe("Git add file renames", func() {
 			filePatternsToCommit = append(filePatternsToCommit, filepath.Clean(filepath.Join(SuiteData.TestDirPath, simpleGitMapping.Add)))
 		}
 
-		utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", append(
-			[]string{"add"},
-			filePatternsToCommit...,
-		)...)
-
-		utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "commit", "--allow-empty", "-m", "+")
+		utils.RunSucceedCommand(
+			SuiteData.TestDirPath,
+			"git",
+			append(
+				[]string{"add"},
+				filePatternsToCommit...,
+			)...,
+		)
 
 		utils.RunSucceedCommand(
-			ctx,
+			SuiteData.TestDirPath,
+			"git",
+			"commit", "--allow-empty", "-m", "+",
+		)
+
+		utils.RunSucceedCommand(
 			SuiteData.TestDirPath,
 			SuiteData.WerfBinPath,
 			"build", "--debug",
@@ -88,32 +99,41 @@ var _ = Describe("Git add file renames", func() {
 			fmt.Sprintf("-v %s:%s", SuiteData.TestDirPath, rootOfMountedInContainerGitRepo),
 		}
 
-		docker.RunSucceedContainerCommandWithStapel(ctx, SuiteData.WerfBinPath, SuiteData.TestDirPath, extraDockerOptions, createCommandsFunc())
+		docker.RunSucceedContainerCommandWithStapel(
+			SuiteData.WerfBinPath,
+			SuiteData.TestDirPath,
+			extraDockerOptions,
+			createCommandsFunc(),
+		)
 	}
 
-	BeforeEach(func(ctx SpecContext) {
-		utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "init")
+	BeforeEach(func() {
+		utils.RunSucceedCommand(
+			SuiteData.TestDirPath,
+			"git",
+			"init",
+		)
 	})
 
-	It("should be handled correctly", func(ctx SpecContext) {
+	It("should be handled correctly", func() {
 		By(
 			"Building with renamed files, dirs and symlinks when they are added with git[].add's different from corresponding git[].to's",
-			func() { doByTestFunc(ctx, "commit001-initial") },
+			func() { doByTestFunc("commit001-initial") },
 		)
 
 		By(
 			"Rebuilding with some files, dirs and symlinks removed from git repository and werf.yaml",
-			func() { doByTestFunc(ctx, "commit002-remove-some-files") },
+			func() { doByTestFunc("commit002-remove-some-files") },
 		)
 
 		By(
 			"Rebuilding with contents of files, dirs and symlinks changed",
-			func() { doByTestFunc(ctx, "commit003-change-files-content") },
+			func() { doByTestFunc("commit003-change-files-content") },
 		)
 
 		By(
 			"Rebuilding with renamed for the second time files, dirs, and symlinks",
-			func() { doByTestFunc(ctx, "commit004-change-filenames-again") },
+			func() { doByTestFunc("commit004-change-filenames-again") },
 		)
 	})
 })
