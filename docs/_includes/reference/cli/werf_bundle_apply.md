@@ -118,6 +118,9 @@ werf bundle apply [options]
             Use specified Kubernetes namespace (default $WERF_NAMESPACE)
       --network-parallelism=30
             Parallelize some network operations (default $WERF_NETWORK_PARALLELISM or 30)
+      --no-install-crds=false
+            Do not install CRDs from "crds/" directories of installed charts (default               
+            $WERF_NO_INSTALL_CRDS)
       --release=""
             Use specified Helm release name (default $WERF_RELEASE)
       --releases-history-max=5
