@@ -1117,7 +1117,7 @@ func (backend *BuildahBackend) PruneVolumes(_ context.Context, _ prune.Options) 
 	return prune.Report{}, ErrUnsupportedFeature
 }
 
-func (backend *BuildahBackend) GenerateSBOM(ctx context.Context, sourceImg string) (string, error) {
+func (backend *BuildahBackend) GenerateSBOM(ctx context.Context, srcImgRef string, dstImgLabels []string) (string, error) {
 	workingTree := sbom.NewWorkingTree()
 
 	if err := workingTree.Create(ctx, os.TempDir(), []string{"spdx.json"}); err != nil {
@@ -1126,7 +1126,7 @@ func (backend *BuildahBackend) GenerateSBOM(ctx context.Context, sourceImg strin
 	defer workingTree.Cleanup(ctx)
 
 	scannerContainerName := fmt.Sprintf("%s%s", image.SBOMScannerContainerNamePrefix, uuid.New().String())
-	scannerContainerRef, err := backend.buildah.FromCommand(ctx, scannerContainerName, sourceImg, buildah.FromCommandOpts{})
+	scannerContainerRef, err := backend.buildah.FromCommand(ctx, scannerContainerName, srcImgRef, buildah.FromCommandOpts{})
 	if err != nil {
 		return "", fmt.Errorf("unable to from scanner container: %w", err)
 	}
@@ -1154,6 +1154,7 @@ func (backend *BuildahBackend) GenerateSBOM(ctx context.Context, sourceImg strin
 
 	imageId, err := backend.buildah.BuildFromDockerfile(ctx, workingTree.Containerfile(), buildah.BuildFromDockerfileOpts{
 		ContextDir: workingTree.RootDir(),
+		Labels:     dstImgLabels,
 	})
 	if err != nil {
 		return "", fmt.Errorf("unable to build sbom result image: %w", err)
