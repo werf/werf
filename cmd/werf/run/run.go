@@ -163,6 +163,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	commonCmdData.SetupSkipImageSpecStage(cmd)
 
+	commonCmdData.SetupUseIncludesLatestVersions(cmd)
+
 	return cmd
 }
 

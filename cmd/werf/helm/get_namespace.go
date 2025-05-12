@@ -49,6 +49,8 @@ func NewGetNamespaceCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupLogOptions(&getNamespaceCmdData, cmd)
 
+	commonCmdData.SetupUseIncludesLatestVersions(cmd)
+
 	return cmd
 }
 

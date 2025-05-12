@@ -8,10 +8,11 @@ import (
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/object"
+	"gopkg.in/yaml.v3"
+
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/git_repo"
-	"gopkg.in/yaml.v3"
 )
 
 type Config struct {
@@ -74,6 +75,12 @@ func parseConfig(ctx context.Context, fileReader GiterminismManagerFileReader, c
 		return config, fmt.Errorf("the includes config validation failed: %w", err)
 	}
 
+	for _, include := range config.Includes {
+		if !oneOrNone([]bool{include.Branch != "", include.Commit != "", include.Tag != ""}) {
+			return config, fmt.Errorf("specify only `branch: BRANCH` or `tag: TAG` or `commit: COMMIT` for include %s", include.Git)
+		}
+	}
+
 	return config, nil
 }
 
@@ -112,7 +119,7 @@ func readLockInfo(ctx context.Context, fileReader GiterminismManagerFileReader, 
 		var err error
 		config, err = parseLockConfig(ctx, fileReader, configRelPath)
 		if err != nil {
-			return nil, fmt.Errorf("unable to parse werf-includes.lock: %w", err)
+			return nil, err
 		}
 	}
 
@@ -244,19 +251,6 @@ func (l *LockInfo) GetCommit(git, ref string) (string, error) {
 	return commit, nil
 }
 
-func (l *LockInfo) CheckVersion(git, ref, commit string) error {
-	lockCommit, ok := l.includeToCommitMapper[fmt.Sprintf("%s@%s", git, ref)]
-	if !ok {
-		return fmt.Errorf("lock config not found for %s", git)
-	}
-
-	if lockCommit != commit {
-		return fmt.Errorf("commit mismatch for %s: expected %s, got %s", git, lockCommit, commit)
-	}
-
-	return nil
-}
-
 func (i *includeLockConf) Ref() (string, error) {
 	return ref(i.Git, i.Tag, i.Branch, i.Commit)
 }
@@ -326,4 +320,22 @@ func (c *includeLockConf) updateCommit(remoteRepos map[string]*git_repo.Remote) 
 		Tag:    c.Tag,
 		Commit: commit.Hash.String(),
 	}, nil
+}
+
+func oneOrNone(conditions []bool) bool {
+	if len(conditions) == 0 {
+		return true
+	}
+
+	exist := false
+	for _, condition := range conditions {
+		if condition {
+			if exist {
+				return false
+			} else {
+				exist = true
+			}
+		}
+	}
+	return true
 }

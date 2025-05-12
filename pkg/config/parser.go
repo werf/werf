@@ -283,7 +283,6 @@ func parseWerfConfigTemplatesDir(ctx context.Context, opts parseWerfConfigTempla
 	err := opts.giterminismManager.FileManager.ReadConfigTemplateFiles(ctx, opts.customWerfConfigTemplatesDirRelPath, func(name, content string) error {
 		return addTemplate(opts.tmpl, name, content)
 	})
-
 	if err != nil {
 		return fmt.Errorf("unable to read werf config templates: %w", err)
 	}

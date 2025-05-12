@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/true_git"
 )
@@ -140,6 +141,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupRenderSubchartNotes(&commonCmdData, cmd)
 
 	commonCmdData.SetupCreateIncludesLockFile(true)
+
+	commonCmdData.SetupUseIncludesLatestVersions(cmd)
 
 	return cmd
 }

@@ -12,6 +12,7 @@ import (
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/giterminism_manager/file_reader"
+	"github.com/werf/werf/v2/pkg/giterminism_manager/inspector"
 	"github.com/werf/werf/v2/pkg/includes"
 )
 
@@ -40,16 +41,27 @@ type FileManager struct {
 	werfTemplatesCache map[string]bool
 }
 
-func NewFileManager(ctx context.Context, fr FileReader, createIncludesLockFile bool) (*FileManager, error) {
+type NewFileManagerOptions struct {
+	FileReader               FileReader
+	Inspector                inspector.Inspector
+	CreateIncludesLockFile   bool
+	UseInludesLatestVersions bool
+}
+
+func NewFileManager(ctx context.Context, opts NewFileManagerOptions) (*FileManager, error) {
+	if err := opts.Inspector.InspectIncludes(opts.UseInludesLatestVersions); err != nil {
+		return nil, fmt.Errorf("includes inspection failed: %w", err)
+	}
 	inlcudes, err := includes.Init(ctx, includes.InitIncludesOptions{
-		FileReader:             fr,
-		CreateOrUpdateLockFile: createIncludesLockFile,
+		FileReader:             opts.FileReader,
+		CreateOrUpdateLockFile: opts.CreateIncludesLockFile,
+		UseLatestVersion:       opts.UseInludesLatestVersions,
 	})
 	if err != nil {
 		return nil, err
 	}
 	return &FileManager{
-		fileReader:         fr,
+		fileReader:         opts.FileReader,
 		includes:           inlcudes,
 		werfTemplatesCache: make(map[string]bool),
 	}, nil
@@ -70,7 +82,7 @@ func (f *FileManager) ReadConfig(ctx context.Context, relPath string) (string, [
 	return f.fileReader.ReadConfig(ctx, relPath)
 }
 
-func (f *FileManager) ReadConfigTemplateFiles(ctx context.Context, customRelDirPath string, tmplFunc func(templateName string, content string) error) error {
+func (f *FileManager) ReadConfigTemplateFiles(ctx context.Context, customRelDirPath string, tmplFunc func(templateName, content string) error) error {
 	err := f.fileReader.ReadConfigTemplateFiles(ctx, customRelDirPath, func(templatePathInsideDir string, data []byte, err error) error {
 		if err != nil {
 			return err
@@ -119,6 +131,7 @@ func (f *FileManager) ReadConfigTemplateFiles(ctx context.Context, customRelDirP
 func (f *FileManager) shouldReadWerfTemplateFromIncludes(relPath string) bool {
 	return f.werfTemplatesCache[relPath]
 }
+
 func (f *FileManager) tryReadFromInludes(ctx context.Context, relPath string) ([]byte, error) {
 	for _, include := range f.includes {
 		data, err := include.GetFile(ctx, relPath)
@@ -222,6 +235,7 @@ func (f *FileManager) IsDockerignoreExistAnywhere(ctx context.Context, relPath s
 	}
 	return exists, nil
 }
+
 func (f *FileManager) ReadDockerignore(ctx context.Context, relPath string) ([]byte, error) {
 	exists, err := f.fileReader.IsDockerignoreExistAnywhere(ctx, relPath)
 	if err != nil {

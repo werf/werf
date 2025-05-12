@@ -10,13 +10,15 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
+
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/path_matcher"
 )
 
 const (
-	defaultIncludesConfigFileName = "werf-includes.yaml"
+	defaultIncludesConfigFileName     = "werf-includes.yaml"
+	defaultIncludesLockConfigFileName = "werf-includes.lock"
 )
 
 type GiterminismManagerFileReader interface {
@@ -39,9 +41,17 @@ func GetWerfIncludesConfigRelPath(path string) string {
 	return filepath.ToSlash(path)
 }
 
+func GetWerfIncludesLockConfigRelPath(path string) string {
+	if path == "" {
+		return defaultIncludesLockConfigFileName
+	}
+	return filepath.ToSlash(path)
+}
+
 type InitIncludesOptions struct {
 	FileReader             GiterminismManagerFileReader
 	ConfigRelPath          string
+	LockFileRelPath        string
 	CreateOrUpdateLockFile bool
 	UseLatestVersion       bool
 }
@@ -59,11 +69,13 @@ func Init(ctx context.Context, opts InitIncludesOptions) ([]*Include, error) {
 			return nil, fmt.Errorf("unable to initialize remote repositories: %w", err)
 		}
 
+		lockFilePath := GetWerfIncludesLockConfigRelPath(opts.LockFileRelPath)
+
 		if opts.CreateOrUpdateLockFile {
 			if err := CreateOrUpdateLockConfig(ctx, createLockConfigOptions{
 				fileReader:       opts.FileReader,
 				includesConfig:   config,
-				includesLockPath: "werf-includes.lock",
+				includesLockPath: lockFilePath,
 				remoteRepos:      remoteRepos,
 			}); err != nil {
 				return nil, fmt.Errorf("create or update werf-includes.lock: %w", err)
@@ -73,9 +85,9 @@ func Init(ctx context.Context, opts InitIncludesOptions) ([]*Include, error) {
 
 		lockInfo, err := getLockInfo(ctx, config, remoteRepos, InitIncludesOptions{
 			FileReader:             opts.FileReader,
-			ConfigRelPath:          "werf-includes.lock",
+			ConfigRelPath:          lockFilePath,
 			CreateOrUpdateLockFile: opts.CreateOrUpdateLockFile,
-			//UseLatestVersion:       true, // to opts
+			UseLatestVersion:       opts.UseLatestVersion,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("unable to parse werf-includes.lock: %w", err)
@@ -174,7 +186,7 @@ func GetIncludes(ctx context.Context, cfg Config, lockInfo *LockInfo, remoteRepo
 	return includes, nil
 }
 
-func (i *Include) WalkObjects(fn func(toPath string, origPath string) error) error {
+func (i *Include) WalkObjects(fn func(toPath, origPath string) error) error {
 	for toPath, origPath := range i.objects {
 		if err := fn(toPath, origPath); err != nil {
 			return err
@@ -296,6 +308,7 @@ func tagRef(r *git.Repository, tag string) (*object.Commit, error) {
 	}
 	return commitRef(r, tagRef.Hash().String())
 }
+
 func branchRef(r *git.Repository, branch string) (*object.Commit, error) {
 	branchRef, err := r.Reference(plumbing.NewBranchReferenceName(branch), true)
 	if err != nil {

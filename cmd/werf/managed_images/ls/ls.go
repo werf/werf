@@ -67,6 +67,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	commonCmdData.SetupPlatform(cmd)
 
+	commonCmdData.SetupUseIncludesLatestVersions(cmd)
+
 	return cmd
 }
 

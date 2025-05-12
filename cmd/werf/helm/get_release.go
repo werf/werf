@@ -50,6 +50,8 @@ func NewGetReleaseCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupLogOptions(&getReleaseCmdData, cmd)
 
+	commonCmdData.SetupUseIncludesLatestVersions(cmd)
+
 	return cmd
 }
 

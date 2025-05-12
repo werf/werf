@@ -152,6 +152,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	commonCmdData.SetupSkipImageSpecStage(cmd)
 
+	commonCmdData.SetupUseIncludesLatestVersions(cmd)
+
 	defaultTag := os.Getenv("WERF_TAG")
 	if defaultTag == "" {
 		defaultTag = "latest"
