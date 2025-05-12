@@ -298,6 +298,12 @@ func SetupKubeBurstLimit(cmdData *CmdData, cmd *cobra.Command) {
 	)
 }
 
+func SetupNoInstallCRDs(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.NoInstallCRDs = new(bool)
+
+	cmd.Flags().BoolVarP(cmdData.NoInstallCRDs, "no-install-crds", "", util.GetBoolEnvironmentDefaultFalse("WERF_NO_INSTALL_CRDS"), `Do not install CRDs from "crds/" directories of installed charts (default $WERF_NO_INSTALL_CRDS)`)
+}
+
 func GetNetworkParallelism(cmdData *CmdData) int {
 	if *cmdData.NetworkParallelism < 1 {
 		panic(fmt.Sprintf("bad network parallelism value: %d (should be >= 1)", *cmdData.NetworkParallelism))

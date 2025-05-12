@@ -119,6 +119,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupRollbackGraphPath(&commonCmdData, cmd)
 
 	common.SetupRenderSubchartNotes(&commonCmdData, cmd)
+	common.SetupNoInstallCRDs(&commonCmdData, cmd)
 
 	defaultTag := os.Getenv("WERF_TAG")
 	if defaultTag == "" {
@@ -238,6 +239,7 @@ func runApply(ctx context.Context) error {
 		KubeToken:                    *commonCmdData.KubeToken,
 		LogRegistryStreamOut:         os.Stdout,
 		NetworkParallelism:           common.GetNetworkParallelism(&commonCmdData),
+		NoInstallCRDs:                *commonCmdData.NoInstallCRDs,
 		NoProgressTablePrint:         *commonCmdData.StatusProgressPeriodSeconds == -1,
 		ProgressTablePrintInterval:   time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
 		RegistryCredentialsPath:      registryCredentialsPath,

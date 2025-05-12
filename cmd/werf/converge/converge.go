@@ -184,6 +184,7 @@ werf converge --repo registry.mydomain.com/web --env production`,
 	common.SetupRollbackGraphPath(&commonCmdData, cmd)
 
 	common.SetupRenderSubchartNotes(&commonCmdData, cmd)
+	common.SetupNoInstallCRDs(&commonCmdData, cmd)
 
 	defaultTimeout, err := util.GetIntEnvVar("WERF_TIMEOUT")
 	if err != nil || defaultTimeout == nil {
@@ -465,6 +466,7 @@ func run(
 		KubeToken:                    *commonCmdData.KubeToken,
 		LogRegistryStreamOut:         os.Stdout,
 		NetworkParallelism:           common.GetNetworkParallelism(&commonCmdData),
+		NoInstallCRDs:                *commonCmdData.NoInstallCRDs,
 		NoProgressTablePrint:         *commonCmdData.StatusProgressPeriodSeconds == -1,
 		ProgressTablePrintInterval:   time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
 		RegistryCredentialsPath:      registryCredentialsPath,
