@@ -84,14 +84,23 @@ func parseConfig(ctx context.Context, fileReader GiterminismManagerFileReader, c
 	return config, nil
 }
 
-func getLockInfo(ctx context.Context, cfg Config, reomteRepos map[string]*git_repo.Remote, opts InitIncludesOptions) (*LockInfo, error) {
+type getLockInfoOptions struct {
+	includesConfig         Config
+	fileReader             GiterminismManagerFileReader
+	lockFileRelPath        string
+	createOrUpdateLockFile bool
+	useLatestVersion       bool
+	reomteRepos            map[string]*git_repo.Remote
+}
+
+func getLockInfo(ctx context.Context, opts getLockInfoOptions) (*LockInfo, error) {
 	var lockConf *lockConfig
 
-	if opts.UseLatestVersion {
+	if opts.useLatestVersion {
 		cfg, err := createLockConfig(createLockConfigOptions{
-			fileReader:     opts.FileReader,
-			includesConfig: cfg,
-			remoteRepos:    reomteRepos,
+			fileReader:     opts.fileReader,
+			includesConfig: opts.includesConfig,
+			remoteRepos:    opts.reomteRepos,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("create lock config: %w", err)
@@ -99,7 +108,7 @@ func getLockInfo(ctx context.Context, cfg Config, reomteRepos map[string]*git_re
 		lockConf = &cfg
 	}
 
-	lockInfo, err := readLockInfo(ctx, opts.FileReader, opts.ConfigRelPath, lockConf)
+	lockInfo, err := readLockInfo(ctx, opts.fileReader, opts.lockFileRelPath, lockConf)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read include lock info: %w", err)
 	}
@@ -132,8 +141,7 @@ func readLockInfo(ctx context.Context, fileReader GiterminismManagerFileReader, 
 		if err != nil {
 			return nil, fmt.Errorf("unable to get ref for include %s: %w", l.Git, err)
 		}
-		key := fmt.Sprintf("%s@%s", l.Git, ref)
-		lockInfo.includeToCommitMapper[key] = l.Commit
+		lockInfo.includeToCommitMapper[lockId(l.Git, ref)] = l.Commit
 	}
 
 	return lockInfo, nil
@@ -178,25 +186,12 @@ func CreateOrUpdateLockConfig(ctx context.Context, opts createLockConfigOptions)
 }
 
 func CreateLockConfig(ctx context.Context, opts createLockConfigOptions) error {
-	includesMap := make(map[string]bool)
-	var lockConfs []includeLockConf
-	for _, c := range opts.includesConfig.Includes {
-		ref, err := c.Ref()
-		if err != nil {
-			return fmt.Errorf("get ref for include %s: %w", c.Git, err)
-		}
-		key := fmt.Sprintf("%s@%s", c.Git, ref)
-		if !includesMap[key] {
-			lockConfs = append(lockConfs, includeLockConf{
-				Git:    c.Git,
-				Branch: c.Branch,
-				Tag:    c.Tag,
-			})
-			includesMap[key] = true
-		}
+	locksConf, err := createLockConfig(opts)
+	if err != nil {
+		return fmt.Errorf("create lock config: %w", err)
 	}
 
-	return writeLockConfig(lockConfs, opts.includesLockPath, opts.remoteRepos)
+	return writeLockConfig(locksConf, opts.includesLockPath)
 }
 
 func createLockConfig(opts createLockConfigOptions) (lockConfig, error) {
@@ -207,25 +202,57 @@ func createLockConfig(opts createLockConfigOptions) (lockConfig, error) {
 		if err != nil {
 			return lockConfig{}, fmt.Errorf("get ref for include %s: %w", c.Git, err)
 		}
-		key := fmt.Sprintf("%s@%s", c.Git, ref)
-		if !includesMap[key] {
+		lockId := lockId(c.Git, ref)
+		if !includesMap[lockId] {
 			lockConfs = append(lockConfs, includeLockConf{
 				Git:    c.Git,
 				Branch: c.Branch,
 				Tag:    c.Tag,
 			})
-			includesMap[key] = true
+			includesMap[lockId] = true
 		}
 	}
 
-	newLockConfig := lockConfig{
-		IncludeLock: make([]includeLockConf, 0, len(lockConfs)),
+	newLockConfig, err := newLockConfig(lockConfs, opts.remoteRepos)
+	if err != nil {
+		return lockConfig{}, fmt.Errorf("update to create new lock config: %w", err)
 	}
 
-	for _, c := range lockConfs {
-		updated, err := c.updateCommit(opts.remoteRepos)
+	return newLockConfig, nil
+}
+
+func UpdateLockConfig(ctx context.Context, opts createLockConfigOptions) error {
+	newLockConfig, err := updateLockConfig(ctx, opts)
+	if err != nil {
+		return fmt.Errorf("update to create new lock config: %w", err)
+	}
+
+	return writeLockConfig(newLockConfig, opts.includesLockPath)
+}
+
+func updateLockConfig(ctx context.Context, opts createLockConfigOptions) (lockConfig, error) {
+	lockConfs, err := parseLockConfig(ctx, opts.fileReader, opts.includesLockPath)
+	if err != nil {
+		return lockConfig{}, fmt.Errorf("parse includes lock config: %w", err)
+	}
+
+	newLockConfig, err := newLockConfig(lockConfs.IncludeLock, opts.remoteRepos)
+	if err != nil {
+		return lockConfig{}, fmt.Errorf("update to create new lock config: %w", err)
+	}
+
+	return newLockConfig, nil
+}
+
+func newLockConfig(cfg []includeLockConf, remoteRepos map[string]*git_repo.Remote) (lockConfig, error) {
+	newLockConfig := lockConfig{
+		IncludeLock: make([]includeLockConf, 0, len(cfg)),
+	}
+
+	for _, c := range cfg {
+		updated, err := c.updateCommit(remoteRepos)
 		if err != nil {
-			return lockConfig{}, err
+			return newLockConfig, err
 		}
 		newLockConfig.IncludeLock = append(newLockConfig.IncludeLock, *updated)
 	}
@@ -233,18 +260,8 @@ func createLockConfig(opts createLockConfigOptions) (lockConfig, error) {
 	return newLockConfig, nil
 }
 
-func UpdateLockConfig(ctx context.Context, opts createLockConfigOptions) error {
-	cfg, err := parseLockConfig(ctx, opts.fileReader, opts.includesLockPath)
-	if err != nil {
-		return fmt.Errorf("parse includes lock config: %w", err)
-	}
-
-	return writeLockConfig(cfg.IncludeLock, opts.includesLockPath, opts.remoteRepos)
-}
-
 func (l *LockInfo) GetCommit(git, ref string) (string, error) {
-	key := fmt.Sprintf("%s@%s", git, ref)
-	commit, ok := l.includeToCommitMapper[key]
+	commit, ok := l.includeToCommitMapper[lockId(git, ref)]
 	if !ok {
 		return "", fmt.Errorf("lock config not found for %s", git)
 	}
@@ -272,20 +289,8 @@ func (i *includeLockConf) getCommit(r *git.Repository) (*object.Commit, error) {
 	return getCommit(r, i.Git, i.Tag, i.Branch, i.Commit)
 }
 
-func writeLockConfig(inputConfs []includeLockConf, configRelPath string, remoteRepos map[string]*git_repo.Remote) error {
-	newLockConfig := lockConfig{
-		IncludeLock: make([]includeLockConf, 0, len(inputConfs)),
-	}
-
-	for _, c := range inputConfs {
-		updated, err := c.updateCommit(remoteRepos)
-		if err != nil {
-			return err
-		}
-		newLockConfig.IncludeLock = append(newLockConfig.IncludeLock, *updated)
-	}
-
-	outData, err := yaml.Marshal(newLockConfig)
+func writeLockConfig(inputConfs lockConfig, configRelPath string) error {
+	outData, err := yaml.Marshal(inputConfs)
 	if err != nil {
 		return fmt.Errorf("marshal new lock config: %w", err)
 	}
@@ -338,4 +343,8 @@ func oneOrNone(conditions []bool) bool {
 		}
 	}
 	return true
+}
+
+func lockId(git, ref string) string {
+	return fmt.Sprintf("%s@%s", git, ref)
 }

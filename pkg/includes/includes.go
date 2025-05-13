@@ -27,11 +27,17 @@ type GiterminismManagerFileReader interface {
 	ReadIncludesLockFile(ctx context.Context, relPath string) ([]byte, error)
 }
 
+type GitRepository interface {
+	GetName() string
+	ReadCommitFile(ctx context.Context, commit string, path string) (data []byte, err error)
+	IsCommitDirectoryExist(ctx context.Context, commit string, path string) (exist bool, err error)
+	IsCommitFileExist(ctx context.Context, commit string, path string) (exist bool, err error)
+}
+
 type Include struct {
-	Name    string
-	repo    *git_repo.Remote
-	commit  *object.Commit
-	objects map[string]string
+	repo       GitRepository
+	commitHash string
+	objects    map[string]string
 }
 
 func GetWerfIncludesConfigRelPath(path string) string {
@@ -83,11 +89,13 @@ func Init(ctx context.Context, opts InitIncludesOptions) ([]*Include, error) {
 			return nil, nil
 		}
 
-		lockInfo, err := getLockInfo(ctx, config, remoteRepos, InitIncludesOptions{
-			FileReader:             opts.FileReader,
-			ConfigRelPath:          lockFilePath,
-			CreateOrUpdateLockFile: opts.CreateOrUpdateLockFile,
-			UseLatestVersion:       opts.UseLatestVersion,
+		lockInfo, err := getLockInfo(ctx, getLockInfoOptions{
+			includesConfig:         config,
+			fileReader:             opts.FileReader,
+			lockFileRelPath:        lockFilePath,
+			createOrUpdateLockFile: opts.CreateOrUpdateLockFile,
+			useLatestVersion:       opts.UseLatestVersion,
+			reomteRepos:            remoteRepos,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("unable to parse werf-includes.lock: %w", err)
@@ -127,10 +135,6 @@ func GetIncludes(ctx context.Context, cfg Config, lockInfo *LockInfo, remoteRepo
 		if !ok || remoteRepo == nil {
 			return nil, fmt.Errorf("unable to find remote repository %s", i.Git)
 		}
-		r, err := remoteRepo.PlainOpen()
-		if err != nil {
-			return nil, fmt.Errorf("failed to open repository: %w", err)
-		}
 
 		ref, err := i.Ref()
 		if err != nil {
@@ -140,6 +144,11 @@ func GetIncludes(ctx context.Context, cfg Config, lockInfo *LockInfo, remoteRepo
 		commitFromLockInfo, err := lockInfo.GetCommit(i.Git, ref)
 		if err != nil {
 			return nil, fmt.Errorf("unable to get commit from lock info: %w", err)
+		}
+
+		r, err := remoteRepo.PlainOpen()
+		if err != nil {
+			return nil, fmt.Errorf("failed to open repository: %w", err)
 		}
 
 		commit, err := r.CommitObject(plumbing.NewHash(commitFromLockInfo))
@@ -175,15 +184,21 @@ func GetIncludes(ctx context.Context, cfg Config, lockInfo *LockInfo, remoteRepo
 		}
 
 		include := &Include{
-			Name:    i.Name,
-			repo:    remoteRepo,
-			commit:  commit,
-			objects: matchedMap,
+			repo:       remoteRepo,
+			commitHash: commit.Hash.String(),
+			objects:    matchedMap,
 		}
 
 		includes = append(includes, include)
 	}
 	return includes, nil
+}
+
+func (i *Include) GetName() string {
+	if i.repo == nil {
+		return ""
+	}
+	return i.repo.GetName()
 }
 
 func (i *Include) WalkObjects(fn func(toPath, origPath string) error) error {
@@ -201,7 +216,7 @@ func (i *Include) GetFile(ctx context.Context, relPath string) ([]byte, error) {
 		return nil, fmt.Errorf("file not found in include: %s", relPath)
 	}
 
-	data, err := i.repo.ReadCommitFile(ctx, i.commit.Hash.String(), filePath)
+	data, err := i.repo.ReadCommitFile(ctx, i.commitHash, filePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read commit file: %w", err)
 	}
@@ -233,7 +248,7 @@ func IsDirExists(ctx context.Context, includes []*Include, relPath string) bool 
 		if i == nil {
 			continue
 		}
-		exists, _ := i.repo.IsCommitDirectoryExist(ctx, i.commit.Hash.String(), relPath)
+		exists, _ := i.repo.IsCommitDirectoryExist(ctx, i.commitHash, relPath)
 		if exists {
 			return true
 		}
@@ -246,7 +261,7 @@ func IsFileExists(ctx context.Context, includes []*Include, relPath string) bool
 		if i == nil {
 			continue
 		}
-		exists, _ := i.repo.IsCommitFileExist(ctx, i.commit.Hash.String(), relPath)
+		exists, _ := i.repo.IsCommitFileExist(ctx, i.commitHash, relPath)
 		if exists {
 			return true
 		}
@@ -267,7 +282,7 @@ func FindWerfConfig(ctx context.Context, includes []*Include, cfgPaths []string)
 				if err != nil {
 					return "", nil, fmt.Errorf("unable to read config file %q: %w", cfgPath, err)
 				}
-				logboek.Context(ctx).Debug().LogF("Found config file %q in %q\n", cfgPath, include.repo.Url)
+				logboek.Context(ctx).Debug().LogF("Found config file %q in %q\n", cfgPath, include.repo.GetName())
 				return cfgPath, data, nil
 			}
 		}

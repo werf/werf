@@ -108,7 +108,7 @@ func (f *FileManager) ReadConfigTemplateFiles(ctx context.Context, customRelDirP
 
 				data, err := include.GetFile(ctx, normToPath)
 				if err != nil {
-					return fmt.Errorf("unable to read included template %q from %s: %w", normToPath, include.Name, err)
+					return fmt.Errorf("unable to read included template %q from %s: %w", normToPath, include.GetName(), err)
 				}
 
 				if err := tmplFunc(normToPath, string(data)); err != nil {
@@ -325,7 +325,7 @@ func (f *FileManager) LoadChartDir(ctx context.Context, dir string) ([]*file.Cha
 
 			data, err := include.GetFile(ctx, normToPath)
 			if err != nil {
-				return fmt.Errorf("unable to read included chart file %q from %s: %w", normToPath, include.Name, err)
+				return fmt.Errorf("unable to read included chart file %q from %s: %w", normToPath, include.GetName(), err)
 			}
 
 			logboek.Context(ctx).Debug().LogF("--- %s read from includes \n", normToPath)
@@ -380,7 +380,7 @@ func (f *FileManager) ChartIsDir(relPath string) (bool, error) {
 			if err.Error() == "foundDir" {
 				return true, nil
 			}
-			return false, fmt.Errorf("walkObjects failed for include %q: %w", include.Name, err)
+			return false, fmt.Errorf("walkObjects failed for include %q: %w", include.GetName(), err)
 		}
 	}
 
