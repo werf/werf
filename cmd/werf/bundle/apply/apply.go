@@ -120,6 +120,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupRenderSubchartNotes(&commonCmdData, cmd)
 	common.SetupNoInstallCRDs(&commonCmdData, cmd)
+	common.SetupReleaseLabel(&commonCmdData, cmd)
 
 	defaultTag := os.Getenv("WERF_TAG")
 	if defaultTag == "" {
@@ -208,6 +209,11 @@ func runApply(ctx context.Context) error {
 		return fmt.Errorf("get annotations and labels: %w", err)
 	}
 
+	releaseLabels, err := common.GetReleaseLabels(&commonCmdData)
+	if err != nil {
+		return fmt.Errorf("get release labels: %w", err)
+	}
+
 	chart.CurrentChartType = chart.ChartTypeBundle
 
 	ctx = action.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultReleaseInstallLogLevel), action.SetupLoggingOptions{
@@ -245,6 +251,7 @@ func runApply(ctx context.Context) error {
 		RegistryCredentialsPath:      registryCredentialsPath,
 		ReleaseHistoryLimit:          *commonCmdData.ReleasesHistoryMax,
 		ReleaseInfoAnnotations:       serviceAnnotations,
+		ReleaseLabels:                releaseLabels,
 		ReleaseStorageDriver:         os.Getenv("HELM_DRIVER"),
 		RollbackGraphPath:            common.GetRollbackGraphPath(&commonCmdData),
 		SecretKeyIgnore:              *commonCmdData.IgnoreSecretKey,

@@ -117,6 +117,7 @@ type CmdData struct {
 
 	RenderSubchartNotes *bool
 	NoInstallCRDs       *bool
+	ReleaseLabels       *[]string
 
 	VirtualMerge *bool
 
