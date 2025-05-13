@@ -185,6 +185,7 @@ werf converge --repo registry.mydomain.com/web --env production`,
 
 	common.SetupRenderSubchartNotes(&commonCmdData, cmd)
 	common.SetupNoInstallCRDs(&commonCmdData, cmd)
+	common.SetupReleaseLabel(&commonCmdData, cmd)
 
 	defaultTimeout, err := util.GetIntEnvVar("WERF_TIMEOUT")
 	if err != nil || defaultTimeout == nil {
@@ -431,6 +432,11 @@ func run(
 		return fmt.Errorf("get service values: %w", err)
 	}
 
+	releaseLabels, err := common.GetReleaseLabels(&commonCmdData)
+	if err != nil {
+		return fmt.Errorf("get release labels: %w", err)
+	}
+
 	loader.ChartFileReader = giterminismManager.FileReader()
 
 	ctx = action.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultReleaseInstallLogLevel), action.SetupLoggingOptions{
@@ -472,6 +478,7 @@ func run(
 		RegistryCredentialsPath:      registryCredentialsPath,
 		ReleaseHistoryLimit:          *commonCmdData.ReleasesHistoryMax,
 		ReleaseInfoAnnotations:       serviceAnnotations,
+		ReleaseLabels:                releaseLabels,
 		ReleaseStorageDriver:         os.Getenv("HELM_DRIVER"),
 		RollbackGraphPath:            common.GetRollbackGraphPath(&commonCmdData),
 		SecretKeyIgnore:              *commonCmdData.IgnoreSecretKey,

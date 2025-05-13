@@ -30,6 +30,15 @@ func GetUserExtraLabels(cmdData *CmdData) (map[string]string, error) {
 	return result, nil
 }
 
+func GetReleaseLabels(cmdData *CmdData) (map[string]string, error) {
+	result, err := keyValueArrayToMap(GetReleaseLabel(cmdData), DefaultKeyValueSeparator)
+	if err != nil {
+		return nil, fmt.Errorf("invalid --release-label value: %w", err)
+	}
+
+	return result, nil
+}
+
 // InputArrayToKeyValueMap converts an array of strings in the form of key1=value1[,key2=value2] to a map.
 func InputArrayToKeyValueMap(input []string, pairSep, keyValueSep string) (map[string]string, error) {
 	result := map[string]string{}

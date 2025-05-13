@@ -304,6 +304,13 @@ func SetupNoInstallCRDs(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(cmdData.NoInstallCRDs, "no-install-crds", "", util.GetBoolEnvironmentDefaultFalse("WERF_NO_INSTALL_CRDS"), `Do not install CRDs from "crds/" directories of installed charts (default $WERF_NO_INSTALL_CRDS)`)
 }
 
+func SetupReleaseLabel(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.ReleaseLabels = new([]string)
+	cmd.Flags().StringArrayVarP(cmdData.ReleaseLabels, "release-label", "", []string{}, `Add Helm release labels (can specify multiple). Kind of labels depends or release storage driver.
+Format: labelName=labelValue.
+Also, can be specified with $WERF_RELEASE_LABEL_* (e.g. $WERF_RELEASE_LABEL_1=labelName1=labelValue1, $WERF_RELEASE_LABEL_2=labelName2=labelValue2)`)
+}
+
 func GetNetworkParallelism(cmdData *CmdData) int {
 	if *cmdData.NetworkParallelism < 1 {
 		panic(fmt.Sprintf("bad network parallelism value: %d (should be >= 1)", *cmdData.NetworkParallelism))
@@ -1331,6 +1338,10 @@ func GetAddLabels(cmdData *CmdData) []string {
 
 func GetAddAnnotations(cmdData *CmdData) []string {
 	return append(util.PredefinedValuesByEnvNamePrefix("WERF_ADD_ANNOTATION_"), *cmdData.AddAnnotations...)
+}
+
+func GetReleaseLabel(cmdData *CmdData) []string {
+	return append(util.PredefinedValuesByEnvNamePrefix("WERF_RELEASE_LABEL_"), *cmdData.ReleaseLabels...)
 }
 
 func GetCacheStagesStorage(cmdData *CmdData) []string {
