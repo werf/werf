@@ -232,8 +232,7 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 				}
 			}
 
-			// sbom
-			if img.IsFinal {
+			if img.UseSbom() {
 				if err := phase.convergeSbom(ctx, img.GetLastNonEmptyStage().GetStageImage().Image.GetStageDesc()); err != nil {
 					return fmt.Errorf("unable to converge sbom: %w", err)
 				}
@@ -266,8 +265,7 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 				}
 			}
 
-			// sbom
-			if img.IsFinal {
+			if img.UseSbom() {
 				if err := phase.convergeSbom(ctx, img.GetStageDesc()); err != nil {
 					return fmt.Errorf("unable to converge sbom: %w", err)
 				}
