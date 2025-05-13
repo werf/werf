@@ -79,6 +79,10 @@ func (c *ImageFromDockerfile) Platform() []string {
 	return c.platform
 }
 
+func (c *ImageFromDockerfile) UseSbom() bool {
+	return c.final && c.sbom
+}
+
 func (c *ImageFromDockerfile) dependsOn() DependsOn {
 	var dependsOn DependsOn
 

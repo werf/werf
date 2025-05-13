@@ -204,6 +204,14 @@ func (i *Image) UsesBuildContext() bool {
 	return false
 }
 
+func (i *Image) UseSbom() bool {
+	if i.IsDockerfileImage {
+		return i.DockerfileImageConfig.UseSbom()
+	}
+	// TODO (zaytsev): handle stapel case
+	return false
+}
+
 func (i *Image) GetName() string {
 	return i.Name
 }
