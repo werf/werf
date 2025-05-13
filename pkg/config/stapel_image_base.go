@@ -64,6 +64,10 @@ func (c *StapelImageBase) Platform() []string {
 	return c.platform
 }
 
+func (c *StapelImageBase) UseSbom() bool {
+	return c.final && c.sbom
+}
+
 func (c *StapelImageBase) dependsOn() DependsOn {
 	var dependsOn DependsOn
 

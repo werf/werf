@@ -72,3 +72,8 @@ func (img *MultiplatformImage) GetStageDesc() *image.StageDesc {
 func (img *MultiplatformImage) SetStageDesc(stageDesc *common_image.StageDesc) {
 	img.stageDesc = stageDesc
 }
+
+func (img *MultiplatformImage) UseSbom() bool {
+	primaryImg := img.Images[0]
+	return primaryImg.UseSbom()
+}
