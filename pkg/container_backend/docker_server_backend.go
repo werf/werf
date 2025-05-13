@@ -23,6 +23,7 @@ import (
 	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/sbom"
+	"github.com/werf/werf/v2/pkg/sbom/scanner"
 	"github.com/werf/werf/v2/pkg/ssh_agent"
 )
 
@@ -420,32 +421,26 @@ func (backend *DockerServerBackend) PruneVolumes(ctx context.Context, options pr
 	return prune.Report(report), err
 }
 
-func (backend *DockerServerBackend) GenerateSBOM(ctx context.Context, srcImgRef string, dstImgLabels []string) (string, error) {
+func (backend *DockerServerBackend) GenerateSBOM(ctx context.Context, scanOpts *scanner.ScanOptions, dstImgLabels []string) (string, error) {
 	workingTree := sbom.NewWorkingTree()
 
-	if err := workingTree.Create(ctx, os.TempDir(), []string{"spdx.json"}); err != nil {
+	if err := workingTree.Create(ctx, os.TempDir(), []string{"result.json"}); err != nil {
 		return "", err
 	}
 	defer workingTree.Cleanup(ctx)
 
-	for _, bill := range workingTree.BillFiles() {
-		args := []string{
-			"--rm",
-			"--name", fmt.Sprintf("%s%s", image.SBOMScannerContainerNamePrefix, uuid.New().String()),
-			"--volume", "/var/run/docker.sock:/var/run/docker.sock", // TODO: how to handle non-Unix systems?
-			"--pull", fmt.Sprintf("%s", sbom.PullIfMissing),
-			sbom.ScannerImage,
-			// syft command with options
-			"scan", fmt.Sprintf("docker:%s", srcImgRef), "--output=spdx-json",
-		}
+	runArgs := mapSbomScanOptionsToDockerRunCommand(scanOpts)
 
-		output, err := docker.CliRun_RecordedOutput(ctx, args...)
-		if err != nil {
-			return "", fmt.Errorf("unable to run scanner inside of container: %w", err)
-		}
-		if _, err = bill.WriteString(output); err != nil {
-			return "", fmt.Errorf("unable to write bill %q: %w", bill.Name(), err)
-		}
+	output, err := docker.CliRun_RecordedOutput(ctx, runArgs...)
+	if err != nil {
+		return "", fmt.Errorf("unable to run scanner inside of container: %w", err)
+	}
+
+	// TODO (zaytsev): handle multiple scan options and outputs
+	bill := workingTree.BillFiles()[0]
+
+	if _, err = bill.WriteString(output); err != nil {
+		return "", fmt.Errorf("unable to write bill %q: %w", bill.Name(), err)
 	}
 
 	contextAddFiles := lo.Map(workingTree.BillNames(), func(billName string, _ int) string {
@@ -472,4 +467,22 @@ func (backend *DockerServerBackend) GenerateSBOM(ctx context.Context, srcImgRef 
 	}
 
 	return imageId, nil
+}
+
+func mapSbomScanOptionsToDockerRunCommand(scanOpts *scanner.ScanOptions) []string {
+	args := []string{
+		"--rm",
+		"--name", fmt.Sprintf("%s%s", image.SBOMScannerContainerNamePrefix, uuid.New().String()),
+		"--volume", "/var/run/docker.sock:/var/run/docker.sock", // TODO: return error on non Unix systems
+		"--pull", scanOpts.PullPolicy.String(),
+		"--entrypoint", "", // clear default image entrypoint
+		scanOpts.Image,
+	}
+
+	scanCmd := scanOpts.Commands[0] // TODO (zaytsev): support multiple commands
+	scanCmd.SourceType = scanner.SourceTypeDocker
+
+	args = append(args, strings.Split(scanCmd.String(), " ")...)
+
+	return args
 }
