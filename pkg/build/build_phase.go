@@ -29,6 +29,7 @@ import (
 	"github.com/werf/werf/v2/pkg/git_repo"
 	imagePkg "github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/logging"
+	"github.com/werf/werf/v2/pkg/sbom/scanner"
 	"github.com/werf/werf/v2/pkg/stapel"
 	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/storage/manager"
@@ -1393,6 +1394,10 @@ func (phase *BuildPhase) Clone() Phase {
 // If the relevant image is found, it does nothing.
 // Otherwise, it generates new sbom image and puts the image into local and remote storages.
 func (phase *BuildPhase) convergeSbom(ctx context.Context, stageDesc *imagePkg.StageDesc) error {
+	// TODO (zaytsev): replace hardcoded scanner config with passing dynamic
+	scanOpts := scanner.DefaultSyftScanOptions()
+	scanOpts.Commands[0].SourcePath = stageDesc.Info.Name
+
 	// TODO (zaytsev): 1) search relevant sbom image locally
 	// TODO (zaytsev): 2) search relevant sbom image remotely
 
@@ -1403,7 +1408,7 @@ func (phase *BuildPhase) convergeSbom(ctx context.Context, stageDesc *imagePkg.S
 
 	// 3) Generate and label new sbom image
 	// TODO (zaytsev): how to guard temporal image from werf host cleanup?
-	tmpImgId, err := phase.Conveyor.ContainerBackend.GenerateSBOM(ctx, stageDesc.Info.ID, dstImgLabels)
+	tmpImgId, err := phase.Conveyor.ContainerBackend.GenerateSBOM(ctx, scanOpts, dstImgLabels)
 	if err != nil {
 		return fmt.Errorf("unable to generate sbom image: %w", err)
 	}
@@ -1413,9 +1418,9 @@ func (phase *BuildPhase) convergeSbom(ctx context.Context, stageDesc *imagePkg.S
 		return fmt.Errorf("unable to tag sbom image: %w", err)
 	}
 
-	if err = phase.Conveyor.ContainerBackend.Rmi(ctx, tmpImgId, container_backend.RmiOpts{}); err != nil {
-		return fmt.Errorf("unable to rmi sbom temporal tag: %w", err)
-	}
+	// if err = phase.Conveyor.ContainerBackend.Rmi(ctx, tmpImgId, container_backend.RmiOpts{}); err != nil {
+	//   return fmt.Errorf("unable to rmi sbom temporal tag: %w", err)
+	// }
 
 	// TODO (zaytsev): 4) store generated SBOM image locally
 	// TODO (zaytsev): 5) store generated SBOM image remotely

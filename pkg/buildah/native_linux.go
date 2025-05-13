@@ -49,7 +49,6 @@ import (
 	"github.com/werf/werf/v2/pkg/container_backend/filter"
 	"github.com/werf/werf/v2/pkg/container_backend/info"
 	"github.com/werf/werf/v2/pkg/image"
-	"github.com/werf/werf/v2/pkg/sbom"
 	"github.com/werf/werf/v2/pkg/ssh_agent"
 )
 
@@ -659,7 +658,7 @@ func (b *NativeBuildah) Commit(ctx context.Context, container string, opts Commi
 		SystemContext:         sysCtx,
 		MaxRetries:            MaxPullPushRetries,
 		RetryDelay:            PullPushRetryDelay,
-		SBOMScanOptions:       mapWerfSbomScanOptsToBuildahSbomScanOpts(opts.SBOMScanOptions),
+		SBOMScanOptions:       mapBuildahBackendSbomScanOptsToBuildahNativeSbomScanOpts(opts.SBOMScanOptions),
 	})
 	if err != nil {
 		return "", fmt.Errorf("error doing commit: %w", err)
@@ -668,8 +667,8 @@ func (b *NativeBuildah) Commit(ctx context.Context, container string, opts Commi
 	return imgID, nil
 }
 
-func mapWerfSbomScanOptsToBuildahSbomScanOpts(options []sbom.ScanOptions) []buildah.SBOMScanOptions {
-	return lo.Map(options, func(opt sbom.ScanOptions, _ int) buildah.SBOMScanOptions {
+func mapBuildahBackendSbomScanOptsToBuildahNativeSbomScanOpts(options []SBOMScanOptions) []buildah.SBOMScanOptions {
+	return lo.Map(options, func(opt SBOMScanOptions, _ int) buildah.SBOMScanOptions {
 		return buildah.SBOMScanOptions{
 			Image:      opt.Image,
 			PullPolicy: buildah.PullPolicy(opt.PullPolicy),
