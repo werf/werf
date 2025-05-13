@@ -278,6 +278,13 @@ werf converge --repo registry.mydomain.com/web --env production
       --release=""
             Use specified Helm release name (default [[ project ]]-[[ env ]] template or            
             deploy.helmRelease custom template from werf.yaml or $WERF_RELEASE)
+      --release-label=[]
+            Add Helm release labels (can specify multiple). Kind of labels depends or release       
+            storage driver.
+            Format: labelName=labelValue.
+            Also, can be specified with $WERF_RELEASE_LABEL_* (e.g.                                 
+            $WERF_RELEASE_LABEL_1=labelName1=labelValue1,                                           
+            $WERF_RELEASE_LABEL_2=labelName2=labelValue2)
       --releases-history-max=5
             Max releases to keep in release storage ($WERF_RELEASES_HISTORY_MAX or 5 by default)
       --render-subchart-notes=false
