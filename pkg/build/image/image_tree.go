@@ -126,6 +126,11 @@ func (tree *ImagesTree) Calculate(ctx context.Context) error {
 	tree.imagesSets = builder.GetImagesSets()
 	tree.images = builder.GetImages()
 
+	for ind, img := range tree.images {
+		img.logImageIndex = ind
+		img.logTotalImages = len(tree.images)
+	}
+
 	return nil
 }
 

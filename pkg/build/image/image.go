@@ -115,6 +115,9 @@ type Image struct {
 
 	baseStageImage   *stage.StageImage
 	stageAsBaseImage stage.Interface
+
+	logImageIndex  int
+	logTotalImages int
 }
 
 func (i *Image) LogName() string {
@@ -130,7 +133,7 @@ func (i *Image) LogDetailedName() string {
 	if i.ShouldLogPlatform() {
 		targetPlatformForLog = i.TargetPlatform
 	}
-	return logging.ImageLogProcessName(i.Name, i.IsFinal, targetPlatformForLog)
+	return logging.ImageLogProcessName(i.Name, i.IsFinal, targetPlatformForLog, logging.WithProgress(i.logImageIndex+1, i.logTotalImages))
 }
 
 func (i *Image) LogProcessStyle() color.Style {
