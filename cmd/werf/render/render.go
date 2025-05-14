@@ -399,7 +399,7 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 		LogIsParseable: true,
 	})
 
-	if err := action.ChartRender(ctx, action.ChartRenderOptions{
+	if _, err := action.ChartRender(ctx, action.ChartRenderOptions{
 		ChartAppVersion:              common.GetHelmChartConfigAppVersion(werfConfig),
 		ChartDirPath:                 chartPath,
 		ChartRepositoryInsecure:      *commonCmdData.InsecureHelmDependencies,
