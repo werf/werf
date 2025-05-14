@@ -35,6 +35,7 @@ import (
 	"github.com/werf/werf/v2/cmd/werf/helm"
 	host_cleanup "github.com/werf/werf/v2/cmd/werf/host/cleanup"
 	host_purge "github.com/werf/werf/v2/cmd/werf/host/purge"
+	includes_lsfiles "github.com/werf/werf/v2/cmd/werf/includes/ls-files"
 	includes_update "github.com/werf/werf/v2/cmd/werf/includes/update"
 	"github.com/werf/werf/v2/cmd/werf/kube_run"
 	"github.com/werf/werf/v2/cmd/werf/kubectl"
@@ -235,6 +236,7 @@ func includesCmd(ctx context.Context) *cobra.Command {
 	})
 	cmd.AddCommand(
 		includes_update.NewCmd(ctx),
+		includes_lsfiles.NewCmd(ctx),
 	)
 
 	return cmd

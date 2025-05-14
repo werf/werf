@@ -37,7 +37,11 @@ type GitRepository interface {
 type Include struct {
 	repo       GitRepository
 	commitHash string
-	objects    map[string]string
+	// `objects` is a map of destination path to original path
+	// where the file was found in the remote repository
+	// e.g. /path/to/file.txt (desired mount path) -> /path/to/remote/file.txt (original path in remote repo)
+	// This is used to read the file from the remote repository
+	objects map[string]string
 }
 
 func GetWerfIncludesConfigRelPath(path string) string {
@@ -240,6 +244,53 @@ func (i *Include) GetFilesByGlob(ctx context.Context, pattern string) (map[strin
 		}
 	}
 
+	return result, nil
+}
+
+func ListFilesByGlob(ctx context.Context, includes []*Include, glob string, sources []string) (map[string]*Include, error) {
+	var filterSources bool = len(sources) > 0
+	result := make(map[string]*Include)
+
+	for _, i := range includes {
+		if filterSources && !sliceContainsSubstring(i.GetName(), sources) {
+			continue
+		}
+		list, err := i.ListFilesByGlob(ctx, glob)
+		if err != nil {
+			return nil, fmt.Errorf("failed to list files by glob %q: %w", glob, err)
+		}
+		for _, l := range list {
+			if _, ok := result[l]; !ok {
+				result[l] = i
+			}
+		}
+	}
+
+	return result, nil
+}
+
+func sliceContainsSubstring(s string, substrings []string) bool {
+	for _, sub := range substrings {
+		if strings.Contains(s, sub) {
+			return true
+		}
+	}
+	return false
+}
+
+func (i *Include) ListFilesByGlob(ctx context.Context, pattern string) ([]string, error) {
+	result := make([]string, 0, len(i.objects))
+
+	pm := path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{
+		IncludeGlobs: []string{pattern},
+		//IncludeGlobs: []string{"resources/", "pkg/", "trdl.yaml"},
+	})
+
+	for relPath := range i.objects {
+		if pm.IsPathMatched(relPath) {
+			result = append(result, relPath)
+		}
+	}
 	return result, nil
 }
 

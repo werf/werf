@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/werf/3p-helm/pkg/werf/file"
@@ -31,6 +32,8 @@ type FileReader interface {
 	IsIncludesConfigExistAnywhere(ctx context.Context, relPath string) (bool, error)
 	ReadIncludesConfig(ctx context.Context, relPath string) ([]byte, error)
 	ReadIncludesLockFile(ctx context.Context, relPath string) (data []byte, err error)
+
+	ListFilesByGlob(ctx context.Context, dir, glob string) ([]string, error)
 
 	file.ChartFileReader
 }
@@ -389,4 +392,38 @@ func (f *FileManager) ChartIsDir(relPath string) (bool, error) {
 	}
 
 	return false, fmt.Errorf("path %q not found in local filesystem or includes", relPath)
+}
+
+const (
+	fromFsSource = "local"
+)
+
+func (f *FileManager) ListFilesByGlob(ctx context.Context, glob string, sources []string) (map[string]string, error) {
+	var filterSources bool = len(sources) > 0
+	var fromFs []string
+	if filterSources && slices.Contains(sources, fromFsSource) {
+		var err error
+		fromFs, err = f.fileReader.ListFilesByGlob(ctx, "", glob)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	fromIncludes, err := includes.ListFilesByGlob(ctx, f.includes, glob, sources)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make(map[string]string)
+
+	for path, inc := range fromIncludes {
+		result[path] = inc.GetName()
+	}
+
+	for _, path := range fromFs {
+		result[path] = fromFsSource
+	}
+
+	return result, nil
+
 }
