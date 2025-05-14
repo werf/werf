@@ -7,8 +7,8 @@ import (
 )
 
 var (
-	finalImageNameFormat        = "🛳️  image %s"
-	intermediateImageNameFormat = "🏗️️  image %s"
+	finalImagePrettyPrefix        = "🛳️  "
+	intermediateImagePrettyPrefix = "🏗️️  "
 )
 
 func ImageLogName(name string) string {
@@ -18,26 +18,51 @@ func ImageLogName(name string) string {
 	return name
 }
 
-func ImageLogProcessName(name string, isFinal bool, targetPlatform string) string {
-	appendPlatformFunc := func(name string) string {
-		if targetPlatform == "" {
-			return name
-		}
-		return fmt.Sprintf("%s [%s]", name, targetPlatform)
-	}
-
-	logName := ImageLogName(name)
-
-	if isFinal {
-		return appendPlatformFunc(fmt.Sprintf(finalImageNameFormat, logName))
-	} else {
-		return appendPlatformFunc(fmt.Sprintf(intermediateImageNameFormat, logName))
+func WithProgress(index, total int) Option {
+	return func(o *Options) {
+		o.withProgress = true
+		o.index = index
+		o.total = total
 	}
 }
 
+type Options struct {
+	withProgress bool
+	index        int
+	total        int
+}
+
+type Option func(*Options)
+
+func ImageLogProcessName(name string, isFinal bool, targetPlatform string, opts ...Option) string {
+	options := &Options{}
+	for _, opt := range opts {
+		opt(options)
+	}
+
+	var res string
+	res += "image" + " " + ImageLogName(name)
+
+	if targetPlatform != "" {
+		res += " [" + targetPlatform + "]"
+	}
+
+	if options.withProgress {
+		res = fmt.Sprintf("(%d/%d)", options.index, options.total) + " " + res
+	}
+
+	if isFinal {
+		res = finalImagePrettyPrefix + res
+	} else {
+		res = intermediateImagePrettyPrefix + res
+	}
+
+	return res
+}
+
 func DisablePrettyLog() {
-	finalImageNameFormat = "image %s"
-	intermediateImageNameFormat = "image %s"
+	finalImagePrettyPrefix = ""
+	intermediateImagePrettyPrefix = ""
 }
 
 func ImageDefaultStyle(isFinal bool) color.Style {

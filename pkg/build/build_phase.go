@@ -265,12 +265,12 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 				}
 			}
 		} else {
-			img := image.NewMultiplatformImage(name, images)
+			img := image.NewMultiplatformImage(name, images, taskId, len(images))
 			phase.Conveyor.imagesTree.SetMultiplatformImage(img)
 
 			// TODO: Separate LocalStagesStorage and RepoStagesStorage interfaces, local should not include metadata publishing methods at all
 			if _, isLocal := phase.Conveyor.StorageManager.GetStagesStorage().(*storage.LocalStagesStorage); !isLocal {
-				if err := logboek.Context(ctx).LogProcess(logging.ImageLogProcessName(name, img.IsFinal, "")).
+				if err := logboek.Context(ctx).LogProcess(img.LogDetailedName()).
 					Options(func(options types.LogProcessOptionsInterface) {
 						options.Style(logging.ImageMetadataStyle())
 					}).
