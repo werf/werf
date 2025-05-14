@@ -139,7 +139,7 @@ func (mr *MockContainerBackendMockRecorder) Containers(ctx, opts any) *gomock.Ca
 }
 
 // GenerateSBOM mocks base method.
-func (m *MockContainerBackend) GenerateSBOM(ctx context.Context, scanOpts *scanner.ScanOptions, dstImgLabels []string) (string, error) {
+func (m *MockContainerBackend) GenerateSBOM(ctx context.Context, scanOpts scanner.ScanOptions, dstImgLabels []string) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GenerateSBOM", ctx, scanOpts, dstImgLabels)
 	ret0, _ := ret[0].(string)

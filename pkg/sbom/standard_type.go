@@ -1,6 +1,6 @@
 package sbom
 
-//go:generate enumer -type=StandardType -trimprefix=StandardType -linecomment -output=./standard_type_enumer.go
+//go:generate enumer -type=StandardType -trimprefix=StandardType -linecomment -transform=lower -output=./standard_type_enumer.go
 type StandardType uint
 
 const (

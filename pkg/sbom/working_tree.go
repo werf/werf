@@ -18,8 +18,8 @@ type workingTree struct {
 	billDir string
 	// billFiles is list of files.
 	billFiles []*os.File
-	// billNames is list of relative file names.
-	billNames []string
+	// billPaths is list of relative file names.
+	billPaths []string
 
 	// containerfile is relative path to Containerfile.
 	containerfile string
@@ -41,7 +41,7 @@ COPY ./sbom /sbom
 	}
 }
 
-func (wt *workingTree) Create(_ context.Context, baseDir string, names []string) error {
+func (wt *workingTree) Create(_ context.Context, baseDir string, paths []string) error {
 	var err error
 
 	if wt.rootDir, err = os.MkdirTemp(baseDir, fmt.Sprintf("sbom-")); err != nil {
@@ -52,14 +52,21 @@ func (wt *workingTree) Create(_ context.Context, baseDir string, names []string)
 		return fmt.Errorf("unable to create artifacts directory in sbom working tree: %w", err)
 	}
 
-	l1 := len(names)
+	l1 := len(paths)
 
 	wt.billFiles = make([]*os.File, l1)
-	wt.billNames = make([]string, l1)
+	wt.billPaths = make([]string, l1)
 
-	for i, name := range names {
-		wt.billNames[i] = name
-		billAbsPath := filepath.Join(wt.rootDir, wt.billDir, wt.billNames[i])
+	for i, name := range paths {
+		billFileDir := filepath.Join(wt.rootDir, wt.billDir, filepath.Dir(name))
+
+		if err = os.Mkdir(billFileDir, 0o700); err != nil {
+			return fmt.Errorf("unable to create %q: %w", billFileDir, err)
+		}
+
+		wt.billPaths[i] = name
+		billAbsPath := filepath.Join(wt.rootDir, wt.billDir, wt.billPaths[i])
+
 		if wt.billFiles[i], err = os.OpenFile(billAbsPath, os.O_CREATE|os.O_WRONLY, 0o666); err != nil {
 			return fmt.Errorf("unable to create %q: %w", billAbsPath, err)
 		}
@@ -109,6 +116,6 @@ func (wt *workingTree) BillFiles() []*os.File {
 	return slices.Clone(wt.billFiles)
 }
 
-func (wt *workingTree) BillNames() []string {
-	return slices.Clone(wt.billNames)
+func (wt *workingTree) BillPaths() []string {
+	return slices.Clone(wt.billPaths)
 }

@@ -421,10 +421,12 @@ func (backend *DockerServerBackend) PruneVolumes(ctx context.Context, options pr
 	return prune.Report(report), err
 }
 
-func (backend *DockerServerBackend) GenerateSBOM(ctx context.Context, scanOpts *scanner.ScanOptions, dstImgLabels []string) (string, error) {
+func (backend *DockerServerBackend) GenerateSBOM(ctx context.Context, scanOpts scanner.ScanOptions, dstImgLabels []string) (string, error) {
 	workingTree := sbom.NewWorkingTree()
 
-	if err := workingTree.Create(ctx, os.TempDir(), []string{"result.json"}); err != nil {
+	billNames := mapSbomScanCommandsToSbomBillNames(scanOpts.Commands)
+
+	if err := workingTree.Create(ctx, os.TempDir(), billNames); err != nil {
 		return "", err
 	}
 	defer workingTree.Cleanup(ctx)
@@ -443,7 +445,7 @@ func (backend *DockerServerBackend) GenerateSBOM(ctx context.Context, scanOpts *
 		return "", fmt.Errorf("unable to write bill %q: %w", bill.Name(), err)
 	}
 
-	contextAddFiles := lo.Map(workingTree.BillNames(), func(billName string, _ int) string {
+	contextAddFiles := lo.Map(billNames, func(billName string, _ int) string {
 		return filepath.Join(workingTree.BillsDir(), billName)
 	})
 	contextAddFiles = append(contextAddFiles, workingTree.Containerfile())
@@ -469,7 +471,13 @@ func (backend *DockerServerBackend) GenerateSBOM(ctx context.Context, scanOpts *
 	return imageId, nil
 }
 
-func mapSbomScanOptionsToDockerRunCommand(scanOpts *scanner.ScanOptions) []string {
+func mapSbomScanCommandsToSbomBillNames(commands []scanner.ScanCommand) []string {
+	return lo.Map(commands, func(scanCmd scanner.ScanCommand, _ int) string {
+		return filepath.Join(scanCmd.OutputStandard.String(), fmt.Sprintf("%s.json", scanCmd.Checksum()))
+	})
+}
+
+func mapSbomScanOptionsToDockerRunCommand(scanOpts scanner.ScanOptions) []string {
 	args := []string{
 		"--rm",
 		"--name", fmt.Sprintf("%s%s", image.SBOMScannerContainerNamePrefix, uuid.New().String()),
