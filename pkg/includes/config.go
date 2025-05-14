@@ -10,7 +10,6 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"gopkg.in/yaml.v3"
 
-	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/git_repo"
 )
@@ -168,15 +167,6 @@ type createLockConfigOptions struct {
 }
 
 func CreateOrUpdateLockConfig(ctx context.Context, opts createLockConfigOptions) error {
-	exists, _ := util.FileExists(opts.includesLockPath)
-	if exists {
-		err := UpdateLockConfig(ctx, opts)
-		if err != nil {
-			return fmt.Errorf("error update includes lock file: %w", err)
-		}
-		logboek.Context(ctx).Info().LogF("Successfully updated %q file\n", opts.includesLockPath)
-		return nil
-	}
 	err := CreateLockConfig(ctx, opts)
 	if err != nil {
 		return fmt.Errorf("error create includes lock file: %w", err)
@@ -214,29 +204,6 @@ func createLockConfig(opts createLockConfigOptions) (lockConfig, error) {
 	}
 
 	newLockConfig, err := newLockConfig(lockConfs, opts.remoteRepos)
-	if err != nil {
-		return lockConfig{}, fmt.Errorf("update to create new lock config: %w", err)
-	}
-
-	return newLockConfig, nil
-}
-
-func UpdateLockConfig(ctx context.Context, opts createLockConfigOptions) error {
-	newLockConfig, err := updateLockConfig(ctx, opts)
-	if err != nil {
-		return fmt.Errorf("update to create new lock config: %w", err)
-	}
-
-	return writeLockConfig(newLockConfig, opts.includesLockPath)
-}
-
-func updateLockConfig(ctx context.Context, opts createLockConfigOptions) (lockConfig, error) {
-	lockConfs, err := parseLockConfig(ctx, opts.fileReader, opts.includesLockPath)
-	if err != nil {
-		return lockConfig{}, fmt.Errorf("parse includes lock config: %w", err)
-	}
-
-	newLockConfig, err := newLockConfig(lockConfs.IncludeLock, opts.remoteRepos)
 	if err != nil {
 		return lockConfig{}, fmt.Errorf("update to create new lock config: %w", err)
 	}

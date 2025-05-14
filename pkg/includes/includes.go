@@ -98,7 +98,7 @@ func Init(ctx context.Context, opts InitIncludesOptions) ([]*Include, error) {
 			reomteRepos:            remoteRepos,
 		})
 		if err != nil {
-			return nil, fmt.Errorf("unable to parse werf-includes.lock: %w", err)
+			return nil, err
 		}
 
 		includes, err := GetIncludes(ctx, config, lockInfo, remoteRepos)
