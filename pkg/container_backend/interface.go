@@ -107,7 +107,7 @@ type ContainerBackend interface {
 	PruneVolumes(ctx context.Context, options prune.Options) (prune.Report, error)
 
 	// GenerateSBOM scans and generates SBOM from source image into another destination image
-	GenerateSBOM(ctx context.Context, scanOpts *scanner.ScanOptions, dstImgLabels []string) (string, error)
+	GenerateSBOM(ctx context.Context, scanOpts scanner.ScanOptions, dstImgLabels []string) (string, error)
 
 	String() string
 
