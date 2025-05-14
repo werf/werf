@@ -14,6 +14,7 @@ import (
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
 	"github.com/google/uuid"
+	"github.com/samber/lo"
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
@@ -21,6 +22,8 @@ import (
 	"github.com/werf/werf/v2/pkg/container_backend/prune"
 	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/sbom"
+	"github.com/werf/werf/v2/pkg/sbom/scanner"
 	"github.com/werf/werf/v2/pkg/ssh_agent"
 )
 
@@ -416,4 +419,78 @@ func (backend *DockerServerBackend) PruneVolumes(ctx context.Context, options pr
 	}
 
 	return prune.Report(report), err
+}
+
+func (backend *DockerServerBackend) GenerateSBOM(ctx context.Context, scanOpts scanner.ScanOptions, dstImgLabels []string) (string, error) {
+	workingTree := sbom.NewWorkingTree()
+
+	billNames := mapSbomScanCommandsToSbomBillNames(scanOpts.Commands)
+
+	if err := workingTree.Create(ctx, os.TempDir(), billNames); err != nil {
+		return "", err
+	}
+	defer workingTree.Cleanup(ctx)
+
+	runArgs := mapSbomScanOptionsToDockerRunCommand(scanOpts)
+
+	output, err := docker.CliRun_RecordedOutput(ctx, runArgs...)
+	if err != nil {
+		return "", fmt.Errorf("unable to run scanner inside of container: %w", err)
+	}
+
+	// TODO (zaytsev): handle multiple scan options and outputs
+	bill := workingTree.BillFiles()[0]
+
+	if _, err = bill.WriteString(output); err != nil {
+		return "", fmt.Errorf("unable to write bill %q: %w", bill.Name(), err)
+	}
+
+	contextAddFiles := lo.Map(billNames, func(billName string, _ int) string {
+		return filepath.Join(workingTree.BillsDir(), billName)
+	})
+	contextAddFiles = append(contextAddFiles, workingTree.Containerfile())
+
+	archive := newSbomContextArchiver(workingTree.RootDir())
+
+	if err := archive.Create(ctx, BuildContextArchiveCreateOptions{
+		DockerfileRelToContextPath: workingTree.Containerfile(),
+		ContextAddFiles:            contextAddFiles,
+	}); err != nil {
+		return "", fmt.Errorf("unable to create sbom scanning results archive: %w", err)
+	}
+
+	imageId, err := backend.BuildDockerfile(ctx, workingTree.ContainerfileContent(), BuildDockerfileOpts{
+		DockerfileCtxRelPath: workingTree.Containerfile(),
+		BuildContextArchive:  archive,
+		Labels:               dstImgLabels,
+	})
+	if err != nil {
+		return "", fmt.Errorf("unable to build sbom result image: %w", err)
+	}
+
+	return imageId, nil
+}
+
+func mapSbomScanCommandsToSbomBillNames(commands []scanner.ScanCommand) []string {
+	return lo.Map(commands, func(scanCmd scanner.ScanCommand, _ int) string {
+		return filepath.Join(scanCmd.OutputStandard.String(), fmt.Sprintf("%s.json", scanCmd.Checksum()))
+	})
+}
+
+func mapSbomScanOptionsToDockerRunCommand(scanOpts scanner.ScanOptions) []string {
+	args := []string{
+		"--rm",
+		"--name", fmt.Sprintf("%s%s", image.SBOMScannerContainerNamePrefix, uuid.New().String()),
+		"--volume", "/var/run/docker.sock:/var/run/docker.sock", // TODO: return error on non Unix systems
+		"--pull", scanOpts.PullPolicy.String(),
+		"--entrypoint", "", // clear default image entrypoint
+		scanOpts.Image,
+	}
+
+	scanCmd := scanOpts.Commands[0] // TODO (zaytsev): support multiple commands
+	scanCmd.SourceType = scanner.SourceTypeDocker
+
+	args = append(args, strings.Split(scanCmd.String(), " ")...)
+
+	return args
 }

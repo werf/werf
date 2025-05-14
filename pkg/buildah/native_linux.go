@@ -658,12 +658,25 @@ func (b *NativeBuildah) Commit(ctx context.Context, container string, opts Commi
 		SystemContext:         sysCtx,
 		MaxRetries:            MaxPullPushRetries,
 		RetryDelay:            PullPushRetryDelay,
+		SBOMScanOptions:       mapBuildahBackendSbomScanOptsToBuildahNativeSbomScanOpts(opts.SBOMScanOptions),
 	})
 	if err != nil {
 		return "", fmt.Errorf("error doing commit: %w", err)
 	}
 
 	return imgID, nil
+}
+
+func mapBuildahBackendSbomScanOptsToBuildahNativeSbomScanOpts(options []SBOMScanOptions) []buildah.SBOMScanOptions {
+	return lo.Map(options, func(opt SBOMScanOptions, _ int) buildah.SBOMScanOptions {
+		return buildah.SBOMScanOptions{
+			Image:         opt.Image,
+			PullPolicy:    buildah.PullPolicy(opt.PullPolicy),
+			SBOMOutput:    opt.SBOMOutput,
+			Commands:      opt.Commands,
+			MergeStrategy: define.SBOMMergeStrategyCat,
+		}
+	})
 }
 
 func (b *NativeBuildah) Config(ctx context.Context, container string, opts ConfigOpts) error {

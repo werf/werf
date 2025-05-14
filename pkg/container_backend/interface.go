@@ -7,6 +7,7 @@ import (
 	"github.com/werf/werf/v2/pkg/container_backend/info"
 	"github.com/werf/werf/v2/pkg/container_backend/prune"
 	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/sbom/scanner"
 )
 
 type CommonOpts struct {
@@ -104,6 +105,9 @@ type ContainerBackend interface {
 	PruneImages(ctx context.Context, options prune.Options) (prune.Report, error)
 	// PruneVolumes removes all anonymous volumes not used by at least one container
 	PruneVolumes(ctx context.Context, options prune.Options) (prune.Report, error)
+
+	// GenerateSBOM scans and generates SBOM from source image into another destination image
+	GenerateSBOM(ctx context.Context, scanOpts scanner.ScanOptions, dstImgLabels []string) (string, error)
 
 	String() string
 

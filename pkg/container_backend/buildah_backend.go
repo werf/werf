@@ -30,6 +30,8 @@ import (
 	"github.com/werf/werf/v2/pkg/container_backend/prune"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/path_matcher"
+	"github.com/werf/werf/v2/pkg/sbom"
+	"github.com/werf/werf/v2/pkg/sbom/scanner"
 )
 
 type BuildahBackend struct {
@@ -1113,4 +1115,60 @@ func (backend *BuildahBackend) PruneImages(ctx context.Context, options prune.Op
 
 func (backend *BuildahBackend) PruneVolumes(_ context.Context, _ prune.Options) (prune.Report, error) {
 	return prune.Report{}, ErrUnsupportedFeature
+}
+
+func (backend *BuildahBackend) GenerateSBOM(ctx context.Context, scanOpts scanner.ScanOptions, dstImgLabels []string) (string, error) {
+	workingTree := sbom.NewWorkingTree()
+
+	billNames := mapSbomScanCommandsToSbomBillNames(scanOpts.Commands)
+
+	if err := workingTree.Create(ctx, os.TempDir(), billNames); err != nil {
+		return "", err
+	}
+	defer workingTree.Cleanup(ctx)
+
+	scannerContainerName := fmt.Sprintf("%s%s", image.SBOMScannerContainerNamePrefix, uuid.New().String())
+	// TODO (zaytsev): support multiple commands
+	scannerContainerRef, err := backend.buildah.FromCommand(ctx, scannerContainerName, scanOpts.Commands[0].SourcePath, buildah.FromCommandOpts{})
+	if err != nil {
+		return "", fmt.Errorf("unable to from scanner container: %w", err)
+	}
+
+	scanOptions := mapSbomScanOptionsToBuidahBackendScanOptions(scanOpts)
+	// TODO (zaytsev): support multiple commands
+	scanOptions.SBOMOutput = filepath.Join(workingTree.RootDir(), workingTree.BillsDir(), workingTree.BillPaths()[0])
+
+	imageRef, err := backend.buildah.Commit(ctx, scannerContainerRef, buildah.CommitOpts{
+		SBOMScanOptions: []buildah.SBOMScanOptions{scanOptions},
+	})
+	if err != nil {
+		return "", fmt.Errorf("unable to commit scanner container %q: %w", scannerContainerName, err)
+	}
+	defer func() {
+		if err = backend.buildah.Rmi(ctx, imageRef, buildah.RmiOpts{Force: true}); err != nil {
+			logboek.Context(ctx).Warn().LogF("removing image %q and container %q\n", imageRef, scannerContainerName)
+		}
+	}()
+
+	imageId, err := backend.buildah.BuildFromDockerfile(ctx, workingTree.Containerfile(), buildah.BuildFromDockerfileOpts{
+		ContextDir: workingTree.RootDir(),
+		Labels:     dstImgLabels,
+	})
+	if err != nil {
+		return "", fmt.Errorf("unable to build sbom result image: %w", err)
+	}
+
+	return imageId, nil
+}
+
+func mapSbomScanOptionsToBuidahBackendScanOptions(scanOpts scanner.ScanOptions) buildah.SBOMScanOptions {
+	scanCmd := scanOpts.Commands[0] // TODO (zaytsev): support multiple commands
+	scanCmd.SourceType = scanner.SourceTypeDir
+	scanCmd.SourcePath = "{ROOTFS}"
+	scanCmd.OutputPath = "{OUTPUT}"
+	return buildah.SBOMScanOptions{
+		Image:      scanOpts.Image,
+		PullPolicy: scanOpts.PullPolicy,
+		Commands:   []string{scanCmd.String()},
+	}
 }

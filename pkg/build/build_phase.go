@@ -14,6 +14,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
+	"github.com/samber/lo"
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
@@ -28,6 +29,7 @@ import (
 	"github.com/werf/werf/v2/pkg/git_repo"
 	imagePkg "github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/logging"
+	"github.com/werf/werf/v2/pkg/sbom/scanner"
 	"github.com/werf/werf/v2/pkg/stapel"
 	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/storage/manager"
@@ -206,43 +208,10 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 		pair := imagesPairs[taskId]
 
 		name, images := pair.Unpair()
-		platforms := util.MapFuncToSlice(images, func(img *image.Image) string { return img.TargetPlatform })
 
-		// TODO: this target platforms assertion could be removed in future versions and now exists only as a additional self-testing code
-		var targetPlatforms []string
-		if len(forcedTargetPlatforms) > 0 {
-			targetPlatforms = forcedTargetPlatforms
-		} else {
-			targetName := name
-			nameParts := strings.SplitN(name, "/", 3)
-			if len(nameParts) == 3 && nameParts[1] == "stage" {
-				targetName = nameParts[0]
-			}
-
-			imageTargetPlatforms, err := phase.Conveyor.GetImageTargetPlatforms(targetName)
-			if err != nil {
-				return fmt.Errorf("invalid image %q target platforms: %w", name, err)
-			}
-			if len(imageTargetPlatforms) > 0 {
-				targetPlatforms = imageTargetPlatforms
-			} else {
-				targetPlatforms = commonTargetPlatforms
-			}
-		}
-
-	AssertAllTargetPlatformsPresent:
-		for _, targetPlatform := range targetPlatforms {
-			for _, platform := range platforms {
-				if targetPlatform == platform {
-					logboek.Context(ctx).Debug().LogF("Found image %q built for target platform %q\n", name, targetPlatform)
-					continue AssertAllTargetPlatformsPresent
-				}
-			}
-			panic(fmt.Sprintf("There is no image %q built for target platform %q. Please report a bug.", name, targetPlatform))
-		}
-
-		if len(targetPlatforms) != len(platforms) {
-			panic(fmt.Sprintf("We have built image %q for platforms %v, expected exactly these platforms: %v. Please report a bug.", name, platforms, targetPlatforms))
+		targetPlatforms, err := phase.targetPlatforms(ctx, forcedTargetPlatforms, commonTargetPlatforms, name, images)
+		if err != nil {
+			return err
 		}
 
 		if len(targetPlatforms) == 1 {
@@ -262,6 +231,12 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 			if _, isLocal := phase.Conveyor.StorageManager.GetStagesStorage().(*storage.LocalStagesStorage); !isLocal {
 				if err := phase.publishImageMetadata(ctx, name, img); err != nil {
 					return fmt.Errorf("unable to publish image %q metadata: %w", name, err)
+				}
+			}
+
+			if img.UseSbom() {
+				if err := phase.convergeSbom(ctx, img.GetLastNonEmptyStage().GetStageImage().Image.GetStageDesc()); err != nil {
+					return fmt.Errorf("unable to converge sbom: %w", err)
 				}
 			}
 		} else {
@@ -291,6 +266,12 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 					}
 				}
 			}
+
+			if img.UseSbom() {
+				if err := phase.convergeSbom(ctx, img.GetStageDesc()); err != nil {
+					return fmt.Errorf("unable to converge sbom: %w", err)
+				}
+			}
 		}
 
 		return nil
@@ -299,6 +280,49 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 	}
 
 	return phase.createReport(ctx)
+}
+
+func (phase *BuildPhase) targetPlatforms(ctx context.Context, forcedTargetPlatforms, commonTargetPlatforms []string, name string, images []*image.Image) ([]string, error) {
+	// TODO: this target platforms assertion could be removed in future versions and now exists only as a additional self-testing code
+	var targetPlatforms []string
+	if len(forcedTargetPlatforms) > 0 {
+		targetPlatforms = forcedTargetPlatforms
+	} else {
+		targetName := name
+		nameParts := strings.SplitN(name, "/", 3)
+		if len(nameParts) == 3 && nameParts[1] == "stage" {
+			targetName = nameParts[0]
+		}
+
+		imageTargetPlatforms, err := phase.Conveyor.GetImageTargetPlatforms(targetName)
+		if err != nil {
+			return []string{}, fmt.Errorf("invalid image %q target platforms: %w", name, err)
+		}
+		if len(imageTargetPlatforms) > 0 {
+			targetPlatforms = imageTargetPlatforms
+		} else {
+			targetPlatforms = commonTargetPlatforms
+		}
+	}
+
+	platforms := util.MapFuncToSlice(images, func(img *image.Image) string { return img.TargetPlatform })
+
+AssertAllTargetPlatformsPresent:
+	for _, targetPlatform := range targetPlatforms {
+		for _, platform := range platforms {
+			if targetPlatform == platform {
+				logboek.Context(ctx).Debug().LogF("Found image %q built for target platform %q\n", name, targetPlatform)
+				continue AssertAllTargetPlatformsPresent
+			}
+		}
+		panic(fmt.Sprintf("There is no image %q built for target platform %q. Please report a bug.", name, targetPlatform))
+	}
+
+	if len(targetPlatforms) != len(platforms) {
+		panic(fmt.Sprintf("We have built image %q for platforms %v, expected exactly these platforms: %v. Please report a bug.", name, platforms, targetPlatforms))
+	}
+
+	return targetPlatforms, nil
 }
 
 func (phase *BuildPhase) publishFinalImage(ctx context.Context, name string, img *image.Image, finalStagesStorage storage.StagesStorage) error {
@@ -1369,4 +1393,42 @@ E.g.:
 func (phase *BuildPhase) Clone() Phase {
 	u := *phase
 	return &u
+}
+
+// convergeSbom searches relevant SBOM image in local and remote storages.
+// If the relevant image is found, it does nothing.
+// Otherwise, it generates new sbom image and puts the image into local and remote storages.
+func (phase *BuildPhase) convergeSbom(ctx context.Context, stageDesc *imagePkg.StageDesc) error {
+	// TODO (zaytsev): replace hardcoded scanner config with passing dynamic
+	scanOpts := scanner.DefaultSyftScanOptions()
+	scanOpts.Commands[0].SourcePath = stageDesc.Info.Name
+
+	// TODO (zaytsev): 1) search relevant sbom image locally
+	// TODO (zaytsev): 2) search relevant sbom image remotely
+
+	dstImgLabels := lo.MapToSlice(stageDesc.Info.Labels, func(key, value string) string {
+		return fmt.Sprintf("%s=%s", key, value)
+	})
+	dstImgLabels = append(dstImgLabels, fmt.Sprintf("%s=%s", imagePkg.WerfSbomLabel, scanOpts.Checksum()))
+
+	// 3) Generate and label new sbom image
+	// TODO (zaytsev): how to guard temporal image from werf host cleanup?
+	tmpImgId, err := phase.Conveyor.ContainerBackend.GenerateSBOM(ctx, scanOpts, dstImgLabels)
+	if err != nil {
+		return fmt.Errorf("unable to generate sbom image: %w", err)
+	}
+
+	sbomTag := fmt.Sprintf("%s-sbom", stageDesc.Info.Name)
+	if err = phase.Conveyor.ContainerBackend.Tag(ctx, tmpImgId, sbomTag, container_backend.TagOpts{}); err != nil {
+		return fmt.Errorf("unable to tag sbom image: %w", err)
+	}
+
+	// if err = phase.Conveyor.ContainerBackend.Rmi(ctx, tmpImgId, container_backend.RmiOpts{}); err != nil {
+	//   return fmt.Errorf("unable to rmi sbom temporal tag: %w", err)
+	// }
+
+	// TODO (zaytsev): 4) store generated SBOM image locally
+	// TODO (zaytsev): 5) store generated SBOM image remotely
+
+	return nil
 }
