@@ -165,4 +165,20 @@ var _ = Describe("ScanCommand", func() {
 			Equal("scan docker:alpine:3.18 --output=cyclonedx-json@1.6"),
 		),
 	)
+
+	DescribeTable("Checksum()",
+		func(scanCmd ScanCommand, expected types.GomegaMatcher) {
+			Expect(scanCmd.Checksum()).To(expected)
+		},
+		Entry(
+			"should work for scanner_type=syft, source_type=docker, source_path=some, output_standard=CycloneDX@1.6",
+			ScanCommand{
+				scannerType:    TypeSyft,
+				SourceType:     SourceTypeDir,
+				SourcePath:     "/some/dir",
+				OutputStandard: sbom.StandardTypeCycloneDX16,
+			},
+			Equal("06458c9e0b64d6901272ef94e8e92176a275b37e3cc6d8ef85306bb1fb821849"),
+		),
+	)
 })
