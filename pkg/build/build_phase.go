@@ -1404,7 +1404,7 @@ func (phase *BuildPhase) convergeSbom(ctx context.Context, stageDesc *imagePkg.S
 	dstImgLabels := lo.MapToSlice(stageDesc.Info.Labels, func(key, value string) string {
 		return fmt.Sprintf("%s=%s", key, value)
 	})
-	dstImgLabels = append(dstImgLabels, imagePkg.WerfSbomLabel)
+	dstImgLabels = append(dstImgLabels, fmt.Sprintf("%s=%s", imagePkg.WerfSbomLabel, scanOpts.Checksum()))
 
 	// 3) Generate and label new sbom image
 	// TODO (zaytsev): how to guard temporal image from werf host cleanup?

@@ -1117,22 +1117,26 @@ func (backend *BuildahBackend) PruneVolumes(_ context.Context, _ prune.Options) 
 	return prune.Report{}, ErrUnsupportedFeature
 }
 
-func (backend *BuildahBackend) GenerateSBOM(ctx context.Context, scanOpts *scanner.ScanOptions, dstImgLabels []string) (string, error) {
+func (backend *BuildahBackend) GenerateSBOM(ctx context.Context, scanOpts scanner.ScanOptions, dstImgLabels []string) (string, error) {
 	workingTree := sbom.NewWorkingTree()
 
-	if err := workingTree.Create(ctx, os.TempDir(), []string{"result.json"}); err != nil {
+	billNames := mapSbomScanCommandsToSbomBillNames(scanOpts.Commands)
+
+	if err := workingTree.Create(ctx, os.TempDir(), billNames); err != nil {
 		return "", err
 	}
 	defer workingTree.Cleanup(ctx)
 
 	scannerContainerName := fmt.Sprintf("%s%s", image.SBOMScannerContainerNamePrefix, uuid.New().String())
+	// TODO (zaytsev): support multiple commands
 	scannerContainerRef, err := backend.buildah.FromCommand(ctx, scannerContainerName, scanOpts.Commands[0].SourcePath, buildah.FromCommandOpts{})
 	if err != nil {
 		return "", fmt.Errorf("unable to from scanner container: %w", err)
 	}
 
 	scanOptions := mapSbomScanOptionsToBuidahBackendScanOptions(scanOpts)
-	scanOptions.SBOMOutput = filepath.Join(workingTree.RootDir(), workingTree.BillsDir(), workingTree.BillNames()[0])
+	// TODO (zaytsev): support multiple commands
+	scanOptions.SBOMOutput = filepath.Join(workingTree.RootDir(), workingTree.BillsDir(), workingTree.BillPaths()[0])
 
 	imageRef, err := backend.buildah.Commit(ctx, scannerContainerRef, buildah.CommitOpts{
 		SBOMScanOptions: []buildah.SBOMScanOptions{scanOptions},
@@ -1157,7 +1161,7 @@ func (backend *BuildahBackend) GenerateSBOM(ctx context.Context, scanOpts *scann
 	return imageId, nil
 }
 
-func mapSbomScanOptionsToBuidahBackendScanOptions(scanOpts *scanner.ScanOptions) buildah.SBOMScanOptions {
+func mapSbomScanOptionsToBuidahBackendScanOptions(scanOpts scanner.ScanOptions) buildah.SBOMScanOptions {
 	scanCmd := scanOpts.Commands[0] // TODO (zaytsev): support multiple commands
 	scanCmd.SourceType = scanner.SourceTypeDir
 	scanCmd.SourcePath = "{ROOTFS}"
