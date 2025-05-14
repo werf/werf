@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 
+	"github.com/gookit/color"
 	"github.com/sirupsen/logrus"
 
 	"github.com/werf/logboek"
@@ -19,6 +20,7 @@ func WithLogger(ctx context.Context) context.Context {
 // NewLogger returns new logger for any (foreground or background) mode.
 func NewLogger() types.LoggerInterface {
 	logger := logboek.DefaultLogger()
+	logger.Warn().SetStyle(color.New(color.Yellow))
 
 	captureOutputFromAnotherLoggers(logger.OutStream())
 
