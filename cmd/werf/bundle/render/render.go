@@ -220,7 +220,7 @@ func runRender(ctx context.Context) error {
 		LogIsParseable: true,
 	})
 
-	if err := action.ChartRender(ctx, action.ChartRenderOptions{
+	if _, err := action.ChartRender(ctx, action.ChartRenderOptions{
 		ChartDirPath:                 bundlePath,
 		ChartRepositoryInsecure:      *commonCmdData.InsecureHelmDependencies,
 		ChartRepositorySkipTLSVerify: *commonCmdData.SkipTlsVerifyHelmDependencies,
