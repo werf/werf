@@ -670,10 +670,11 @@ func (b *NativeBuildah) Commit(ctx context.Context, container string, opts Commi
 func mapBuildahBackendSbomScanOptsToBuildahNativeSbomScanOpts(options []SBOMScanOptions) []buildah.SBOMScanOptions {
 	return lo.Map(options, func(opt SBOMScanOptions, _ int) buildah.SBOMScanOptions {
 		return buildah.SBOMScanOptions{
-			Image:      opt.Image,
-			PullPolicy: buildah.PullPolicy(opt.PullPolicy),
-			SBOMOutput: opt.SBOMOutput,
-			Commands:   opt.Commands,
+			Image:         opt.Image,
+			PullPolicy:    buildah.PullPolicy(opt.PullPolicy),
+			SBOMOutput:    opt.SBOMOutput,
+			Commands:      opt.Commands,
+			MergeStrategy: define.SBOMMergeStrategyCat,
 		}
 	})
 }
