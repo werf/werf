@@ -1,12 +1,8 @@
-package lsfiles
+package getfile
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"sort"
-	"strings"
-	"text/tabwriter"
 
 	"github.com/spf13/cobra"
 
@@ -15,18 +11,14 @@ import (
 	"github.com/werf/werf/v2/pkg/true_git"
 )
 
-const (
-	tableHeader = "PATH\tSOURCE"
-)
-
 var commonCmdData common.CmdData
 
 func NewCmd(ctx context.Context) *cobra.Command {
 	ctx = common.NewContextWithCmdData(ctx, &commonCmdData)
 	cmd := common.SetCommandContext(ctx, common.SetCommandContext(ctx, &cobra.Command{
-		Use:   "ls-files",
-		Short: "List files in the project with includes",
-		Long:  "List files in the project with includes",
+		Use:   "get-file",
+		Short: "Read configuration file",
+		Long:  "Read configuration file",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 
@@ -47,22 +39,12 @@ func NewCmd(ctx context.Context) *cobra.Command {
 				return err
 			}
 
-			sourceFilters, err := parseSourceFilter(commonCmdData.IncludesLsFilter)
+			content, err := gm.FileManager.ConfigGoTemplateFilesGet(ctx, args[0])
 			if err != nil {
-				return fmt.Errorf("unable to parse filter: %w", err)
+				return fmt.Errorf("unable to get file: %w", err)
 			}
 
-			list, err := gm.FileManager.ListFilesByGlob(ctx, sourceFilters, parseGlobs(args))
-			if err != nil {
-				return fmt.Errorf("unable to get files: %w", err)
-			}
-
-			tb, err := writeTable(list)
-			if err != nil {
-				return fmt.Errorf("unable to write table: %w", err)
-			}
-
-			logboek.Context(ctx).Log(tb)
+			logboek.Context(ctx).Log(string(content))
 
 			return nil
 		},
@@ -91,55 +73,4 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	commonCmdData.SetupIncludesLsFilter(cmd)
 
 	return cmd
-}
-
-func parseSourceFilter(input *string) ([]string, error) {
-	if input == nil {
-		return []string{}, nil
-	}
-
-	parts := strings.SplitN(*input, "=", 2)
-	if len(parts) != 2 || parts[0] != "source" {
-		return nil, fmt.Errorf("invalid filter format: must be 'source=...'")
-	}
-
-	sources := strings.Split(parts[1], ",")
-	for i := range sources {
-		sources[i] = strings.TrimSpace(sources[i])
-	}
-	return sources, nil
-}
-
-func parseGlobs(args []string) []string {
-	if len(args) == 0 {
-		return []string{"*"}
-	}
-
-	globs := make([]string, len(args))
-	for i, arg := range args {
-		globs[i] = strings.TrimSpace(arg)
-	}
-	return globs
-
-}
-
-func writeTable(data map[string]string) (string, error) {
-	paths := make([]string, 0, len(data))
-	for path := range data {
-		paths = append(paths, path)
-	}
-	sort.Strings(paths)
-	var buf bytes.Buffer
-
-	w := tabwriter.NewWriter(&buf, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, tableHeader)
-	for _, path := range paths {
-		fmt.Fprintf(w, "%s\t%s\n", path, data[path])
-	}
-
-	if err := w.Flush(); err != nil {
-		return "", err
-	}
-
-	return buf.String(), nil
 }

@@ -146,14 +146,12 @@ func (f *FileManager) tryReadFromInludes(ctx context.Context, relPath string) ([
 }
 
 func (f *FileManager) ConfigGoTemplateFilesGet(ctx context.Context, relPath string) ([]byte, error) {
-	if f.shouldReadWerfTemplateFromIncludes(relPath) {
+	res, err := f.fileReader.ConfigGoTemplateFilesGet(ctx, relPath)
+	if err != nil {
 		data, inclErr := f.tryReadFromInludes(ctx, relPath)
 		if inclErr == nil {
 			return data, nil
 		}
-	}
-	res, err := f.fileReader.ConfigGoTemplateFilesGet(ctx, relPath)
-	if err != nil {
 		return nil, err
 	}
 	return res, nil
@@ -398,22 +396,22 @@ const (
 	fromFsSource = "local"
 )
 
-func (f *FileManager) ListFilesByGlob(ctx context.Context, glob string, sources []string) (map[string]string, error) {
+func (f *FileManager) ListFilesByGlob(ctx context.Context, sources []string, globs []string) (map[string]string, error) {
 	var filterSources bool = len(sources) > 0
 	var fromFs []string
 	if filterSources && slices.Contains(sources, fromFsSource) {
-		var err error
-		fromFs, err = f.fileReader.ListFilesByGlob(ctx, "", glob)
-		if err != nil {
-			return nil, err
+		for _, glob := range globs {
+			// TODO: this is workaround due to the fact that fileReader.ListFilesByGlob
+			// does not support multiple glob patterns
+			f, err := f.fileReader.ListFilesByGlob(ctx, "", glob)
+			if err != nil {
+				return nil, err
+			}
+			fromFs = append(fromFs, f...)
 		}
 	}
 
-	fromIncludes, err := includes.ListFilesByGlob(ctx, f.includes, glob, sources)
-	if err != nil {
-		return nil, err
-	}
-
+	fromIncludes := includes.ListFilesByGlobs(ctx, f.includes, globs, sources)
 	result := make(map[string]string)
 
 	for path, inc := range fromIncludes {

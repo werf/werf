@@ -247,7 +247,7 @@ func (i *Include) GetFilesByGlob(ctx context.Context, pattern string) (map[strin
 	return result, nil
 }
 
-func ListFilesByGlob(ctx context.Context, includes []*Include, glob string, sources []string) (map[string]*Include, error) {
+func ListFilesByGlobs(ctx context.Context, includes []*Include, globs []string, sources []string) map[string]*Include {
 	var filterSources bool = len(sources) > 0
 	result := make(map[string]*Include)
 
@@ -255,10 +255,7 @@ func ListFilesByGlob(ctx context.Context, includes []*Include, glob string, sour
 		if filterSources && !sliceContainsSubstring(i.GetName(), sources) {
 			continue
 		}
-		list, err := i.ListFilesByGlob(ctx, glob)
-		if err != nil {
-			return nil, fmt.Errorf("failed to list files by glob %q: %w", glob, err)
-		}
+		list := i.ListFilesByGlobs(ctx, globs)
 		for _, l := range list {
 			if _, ok := result[l]; !ok {
 				result[l] = i
@@ -266,7 +263,7 @@ func ListFilesByGlob(ctx context.Context, includes []*Include, glob string, sour
 		}
 	}
 
-	return result, nil
+	return result
 }
 
 func sliceContainsSubstring(s string, substrings []string) bool {
@@ -278,12 +275,11 @@ func sliceContainsSubstring(s string, substrings []string) bool {
 	return false
 }
 
-func (i *Include) ListFilesByGlob(ctx context.Context, pattern string) ([]string, error) {
+func (i *Include) ListFilesByGlobs(ctx context.Context, patterns []string) []string {
 	result := make([]string, 0, len(i.objects))
 
 	pm := path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{
-		IncludeGlobs: []string{pattern},
-		//IncludeGlobs: []string{"resources/", "pkg/", "trdl.yaml"},
+		IncludeGlobs: patterns,
 	})
 
 	for relPath := range i.objects {
@@ -291,7 +287,7 @@ func (i *Include) ListFilesByGlob(ctx context.Context, pattern string) ([]string
 			result = append(result, relPath)
 		}
 	}
-	return result, nil
+	return result
 }
 
 func IsDirExists(ctx context.Context, includes []*Include, relPath string) bool {
