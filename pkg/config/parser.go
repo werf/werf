@@ -384,6 +384,7 @@ type files struct {
 
 func (f files) Get(relPath string) string {
 	if res, err := f.giterminismManager.FileManager.ConfigGoTemplateFilesGet(f.ctx, relPath); err != nil {
+		err := fmt.Errorf("{{ .Files.Get %q }}: %w", relPath, err)
 		panic(err.Error())
 	} else {
 		return string(res)

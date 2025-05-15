@@ -16,8 +16,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	ctx = common.NewContextWithCmdData(ctx, &commonCmdData)
 	cmd := common.SetCommandContext(ctx, common.SetCommandContext(ctx, &cobra.Command{
 		Use:   "update",
-		Short: "Update werf-includes.lock file",
-		Long:  "Update werf-includes.lock file",
+		Short: "Create or update includes lock file (default: werf-includes.lock).",
+		Long:  "Create or update includes lock file by resolving git references in the includes config to their latest commits (default: werf-includes.lock).",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 

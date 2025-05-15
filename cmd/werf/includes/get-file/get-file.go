@@ -16,9 +16,13 @@ var commonCmdData common.CmdData
 func NewCmd(ctx context.Context) *cobra.Command {
 	ctx = common.NewContextWithCmdData(ctx, &commonCmdData)
 	cmd := common.SetCommandContext(ctx, common.SetCommandContext(ctx, &cobra.Command{
-		Use:   "get-file",
-		Short: "Read configuration file",
-		Long:  "Read configuration file",
+		Use:   "get-file [FILE_NAME]",
+		Short: "Display file content that will be used by werf according to the includes overlay rules.",
+		Long:  "Display file content that will be used by werf according to the includes overlay rules.",
+		Example: `
+  # Display file content
+  $ werf includes get-file werf.yaml
+`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 
@@ -70,7 +74,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	commonCmdData.SetupCreateIncludesLockFile(false)
 	commonCmdData.SetupUseIncludesLatestVersions(cmd)
-	commonCmdData.SetupIncludesLsFilter(cmd)
 
 	return cmd
 }

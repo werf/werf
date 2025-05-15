@@ -24,9 +24,22 @@ var commonCmdData common.CmdData
 func NewCmd(ctx context.Context) *cobra.Command {
 	ctx = common.NewContextWithCmdData(ctx, &commonCmdData)
 	cmd := common.SetCommandContext(ctx, common.SetCommandContext(ctx, &cobra.Command{
-		Use:   "ls-files",
-		Short: "List files in the project with includes",
-		Long:  "List files in the project with includes",
+		Use:   "ls-files [GLOB...]",
+		Short: "List files in the project according to the includes overlay rules.",
+		Long:  "List files in the project according to the includes overlay rules.",
+		Example: `
+  # List all files
+  $ werf includes ls-files
+
+  # List files matching a specific file name
+  $ werf includes ls-files werf.yaml
+
+  # List files matching a specific pattern in a specific source
+  $ werf includes ls-files --filter=source=source1 *.yaml
+
+  # List files matching defined patterns in specified sources
+  $ werf includes ls-files --filter=source=local,source1 *.yaml *.json
+  `,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 
