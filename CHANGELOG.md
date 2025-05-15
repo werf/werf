@@ -1,5 +1,20 @@
 # Changelog
 
+## [2.36.0](https://www.github.com/werf/werf/compare/v2.35.10...v2.36.0) (2025-05-15)
+
+
+### Features
+
+* **deploy:** `--no-install-crds` option for `converge`, `plan`, `bundle apply` ([8fd1a04](https://www.github.com/werf/werf/commit/8fd1a041c15e29fc4b738ec05226a0ddd94f9f58))
+* **deploy:** `--release-label` option for `converge`/`bundle apply` ([222d031](https://www.github.com/werf/werf/commit/222d031da30e7169b4e502c998352673d4cc98a2))
+* **logging:** show image index and total to indicate build progress ([b7652b3](https://www.github.com/werf/werf/commit/b7652b3eec15d56292f0f91034b3bcbf69d5c22b))
+
+
+### Bug Fixes
+
+* avoid checksum errors in service worktree when core.untrackedCache is enabled ([0952e34](https://www.github.com/werf/werf/commit/0952e34c0a1434e9269e798f595ff5724af1bab2))
+* **logging:** use yellow color for warnings to distinguish them from errors ([c52f375](https://www.github.com/werf/werf/commit/c52f375882658254025e7da3016164f2bdcfb074))
+
 ### [2.35.10](https://www.github.com/werf/werf/compare/v2.35.9...v2.35.10) (2025-05-07)
 
 
