@@ -41,9 +41,8 @@ type FileReader interface {
 }
 
 type FileManager struct {
-	fileReader         FileReader
-	includes           []*includes.Include
-	werfTemplatesCache map[string]bool
+	fileReader FileReader
+	includes   []*includes.Include
 }
 
 type NewFileManagerOptions struct {
@@ -66,9 +65,8 @@ func NewFileManager(ctx context.Context, opts NewFileManagerOptions) (*FileManag
 		return nil, err
 	}
 	return &FileManager{
-		fileReader:         opts.FileReader,
-		includes:           inlcudes,
-		werfTemplatesCache: make(map[string]bool),
+		fileReader: opts.FileReader,
+		includes:   inlcudes,
 	}, nil
 }
 
@@ -88,12 +86,13 @@ func (f *FileManager) ReadConfig(ctx context.Context, relPath string) (string, [
 }
 
 func (f *FileManager) ReadConfigTemplateFiles(ctx context.Context, customRelDirPath string, tmplFunc func(templateName, content string) error) error {
+	werfTemplatesCache := make(map[string]struct{})
 	err := f.fileReader.ReadConfigTemplateFiles(ctx, customRelDirPath, func(templatePathInsideDir string, data []byte, err error) error {
 		if err != nil {
 			return err
 		}
 		templateName := filepath.ToSlash(templatePathInsideDir)
-		f.werfTemplatesCache[templateName] = false
+		werfTemplatesCache[templateName] = struct{}{}
 
 		return tmplFunc(templateName, string(data))
 	})
@@ -107,7 +106,7 @@ func (f *FileManager) ReadConfigTemplateFiles(ctx context.Context, customRelDirP
 
 			if strings.HasPrefix(normToPath, filepath.ToSlash(file_reader.ConfigTemplatesPathList(customRelDirPath))) {
 
-				if _, ok := f.werfTemplatesCache[normToPath]; ok {
+				if _, ok := werfTemplatesCache[normToPath]; ok {
 					return nil
 				}
 
@@ -120,7 +119,7 @@ func (f *FileManager) ReadConfigTemplateFiles(ctx context.Context, customRelDirP
 					return fmt.Errorf("unable to process included template %q: %w", normToPath, err)
 				}
 
-				f.werfTemplatesCache[normToPath] = true
+				werfTemplatesCache[normToPath] = struct{}{}
 			}
 
 			return nil
