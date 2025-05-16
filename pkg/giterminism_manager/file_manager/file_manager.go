@@ -52,14 +52,10 @@ type NewFileManagerOptions struct {
 }
 
 func NewFileManager(ctx context.Context, opts NewFileManagerOptions) (*FileManager, error) {
-	updateIncludes, err := opts.Inspector.InspectIncludesAllowUpdate()
-	if err != nil {
-		return nil, fmt.Errorf("includes inspection failed: %w", err)
-	}
 	inlcudes, err := includes.Init(ctx, includes.InitIncludesOptions{
 		FileReader:             opts.FileReader,
 		CreateOrUpdateLockFile: opts.CreateIncludesLockFile,
-		UseLatestVersion:       updateIncludes,
+		UseLatestVersion:       opts.Inspector.InspectIncludesAllowUpdate(),
 	})
 	if err != nil {
 		return nil, err
