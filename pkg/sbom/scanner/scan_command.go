@@ -67,7 +67,6 @@ func (c ScanCommand) Checksum() string {
 	args := []string{
 		"scanner_type", c.scannerType.String(),
 		"source_type", c.SourceType.String(),
-		"source_path", c.SourcePath,
 		"output_standard", c.OutputStandard.String(),
 	}
 	return util.Sha256Hash(args...)
