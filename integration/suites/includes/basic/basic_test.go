@@ -86,7 +86,6 @@ var _ = Describe("build and mutate image spec", Label("integration", "build", "m
 				By(fmt.Sprintf("writing includes config to %s", werfIncludesPath))
 				{
 					utils.WriteFile(werfIncludesPath, out)
-
 				}
 				By("generate includes lock file")
 				{
@@ -127,7 +126,6 @@ var _ = Describe("build and mutate image spec", Label("integration", "build", "m
 					Expect(output).Should(ContainSubstring(fmt.Sprintf(substrFormat, utils.ProjectName())))
 				}
 			}
-
 		},
 		Entry("without local repo using BuildKit Docker", simpleTestOptions{setupEnvOptions{
 			ContainerBackendMode: "buildkit-docker",

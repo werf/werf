@@ -29,9 +29,9 @@ type GiterminismManagerFileReader interface {
 
 type GitRepository interface {
 	GetName() string
-	ReadCommitFile(ctx context.Context, commit string, path string) (data []byte, err error)
-	IsCommitDirectoryExist(ctx context.Context, commit string, path string) (exist bool, err error)
-	IsCommitFileExist(ctx context.Context, commit string, path string) (exist bool, err error)
+	ReadCommitFile(ctx context.Context, commit, path string) (data []byte, err error)
+	IsCommitDirectoryExist(ctx context.Context, commit, path string) (exist bool, err error)
+	IsCommitFileExist(ctx context.Context, commit, path string) (exist bool, err error)
 }
 
 type Include struct {
@@ -133,7 +133,6 @@ func initRemoteRepos(ctx context.Context, cfg Config) (map[string]*git_repo.Remo
 		}
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -258,7 +257,7 @@ func (i *Include) GetFilesByGlob(ctx context.Context, pattern string) (map[strin
 	return result, nil
 }
 
-func ListFilesByGlobs(ctx context.Context, includes []*Include, globs []string, sources []string) map[string]*Include {
+func ListFilesByGlobs(ctx context.Context, includes []*Include, globs, sources []string) map[string]*Include {
 	var filterSources bool = len(sources) > 0
 	result := make(map[string]*Include)
 

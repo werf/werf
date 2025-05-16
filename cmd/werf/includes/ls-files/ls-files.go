@@ -134,7 +134,6 @@ func parseGlobs(args []string) []string {
 		globs[i] = strings.TrimSpace(arg)
 	}
 	return globs
-
 }
 
 func writeTable(data map[string]string) (string, error) {

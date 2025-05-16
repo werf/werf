@@ -398,7 +398,7 @@ const (
 	fromFsSource = "local"
 )
 
-func (f *FileManager) ListFilesByGlob(ctx context.Context, sources []string, globs []string) (map[string]string, error) {
+func (f *FileManager) ListFilesByGlob(ctx context.Context, sources, globs []string) (map[string]string, error) {
 	var fromFs []string
 	if includesFromFs(sources) {
 		for _, glob := range globs {
