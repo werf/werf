@@ -178,7 +178,7 @@ var _ = Describe("ScanCommand", func() {
 				SourcePath:     "/some/dir",
 				OutputStandard: sbom.StandardTypeCycloneDX16,
 			},
-			Equal("06458c9e0b64d6901272ef94e8e92176a275b37e3cc6d8ef85306bb1fb821849"),
+			Equal("71b089eff92427ff29ba2986ef6d5c025865ce37d186f6bde2d1737708d7539b"),
 		),
 	)
 })

@@ -1,6 +1,8 @@
 package contback
 
 import (
+	"archive/tar"
+	"bytes"
 	"encoding/json"
 
 	. "github.com/onsi/gomega"
@@ -22,7 +24,7 @@ func (r *DockerBackend) ExpectCmdsToSucceed(image string, cmds ...string) {
 
 func (r *DockerBackend) RunSleepingContainer(containerName, image string) {
 	args := r.CommonCliArgs
-	args = append(args, "run", "--rm", "-d", "--entrypoint=", "--name", containerName, image, "tail", "-f", "/dev/null")
+	args = append(args, "run", "--rm", "-d", "--entrypoint=", "--name", containerName, image, "sleep", "infinity")
 	utils.RunSucceedCommand("/", "docker", args...)
 }
 
@@ -44,6 +46,24 @@ func (r *DockerBackend) Pull(image string) {
 	args := r.CommonCliArgs
 	args = append(args, "pull", image)
 	utils.RunSucceedCommand("/", "docker", args...)
+}
+
+func (r *DockerBackend) GetImageFileSystemReader(image string) *FileSystemReader {
+	args := r.CommonCliArgs
+	args = append(args, "image", "save", image)
+
+	b, err := utils.RunCommandWithOptions("/", "docker", args, utils.RunCommandOptions{
+		NoStderr:      true,
+		ShouldSucceed: true,
+	})
+
+	Expect(err).NotTo(HaveOccurred())
+
+	imgTarReader := tar.NewReader(bytes.NewReader(b))
+	fsReader, err := newFileSystemReader(imgTarReader)
+	Expect(err).NotTo(HaveOccurred())
+
+	return fsReader
 }
 
 func (r *DockerBackend) GetImageInspect(image string) DockerImageInspect {

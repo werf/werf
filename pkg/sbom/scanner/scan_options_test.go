@@ -26,7 +26,7 @@ var _ = Describe("ScanOptions", func() {
 		Entry(
 			"should work for DefaultSyftScanOptions",
 			DefaultSyftScanOptions(),
-			Equal("4d3f85d435a14d6152e3542736941e5b46cffaf25c4d1e71fe07474f5b11f790"),
+			Equal("f2b172aa9b952cfba7ae9914e7e5a9760ff0d2c7d5da69d09195c63a2577da79"),
 		),
 	)
 })
