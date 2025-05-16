@@ -52,7 +52,7 @@ type NewFileManagerOptions struct {
 }
 
 func NewFileManager(ctx context.Context, opts NewFileManagerOptions) (*FileManager, error) {
-	inlcudes, err := includes.Init(ctx, includes.InitIncludesOptions{
+	includes, err := includes.Init(ctx, includes.InitIncludesOptions{
 		FileReader:             opts.FileReader,
 		CreateOrUpdateLockFile: opts.CreateIncludesLockFile,
 		UseLatestVersion:       opts.Inspector.InspectIncludesAllowUpdate(),
@@ -62,7 +62,7 @@ func NewFileManager(ctx context.Context, opts NewFileManagerOptions) (*FileManag
 	}
 	return &FileManager{
 		fileReader: opts.FileReader,
-		includes:   inlcudes,
+		includes:   includes,
 	}, nil
 }
 
@@ -128,7 +128,7 @@ func (f *FileManager) ReadConfigTemplateFiles(ctx context.Context, customRelDirP
 	return nil
 }
 
-func (f *FileManager) tryReadFromInludes(ctx context.Context, relPath string) ([]byte, error) {
+func (f *FileManager) tryReadFromIncludes(ctx context.Context, relPath string) ([]byte, error) {
 	for _, include := range f.includes {
 		data, err := include.GetFile(ctx, relPath)
 		if err == nil {
@@ -145,7 +145,7 @@ func (f *FileManager) ConfigGoTemplateFilesGet(ctx context.Context, relPath stri
 	}
 
 	if !exists {
-		data, err := f.tryReadFromInludes(ctx, relPath)
+		data, err := f.tryReadFromIncludes(ctx, relPath)
 		if err != nil {
 			return nil, fmt.Errorf("unable to read file %q from includes: %w", relPath, err)
 		}
@@ -231,7 +231,7 @@ func (f *FileManager) IsDockerignoreExistAnywhere(ctx context.Context, relPath s
 		return false, fmt.Errorf("unable to check dockerignore existence: %w", err)
 	}
 	if !exists {
-		_, err := f.tryReadFromInludes(ctx, relPath)
+		_, err := f.tryReadFromIncludes(ctx, relPath)
 		if err == nil {
 			return true, nil
 		}
@@ -253,7 +253,7 @@ func (f *FileManager) ReadDockerignore(ctx context.Context, relPath string) ([]b
 		return data, nil
 	}
 
-	data, err := f.tryReadFromInludes(ctx, relPath)
+	data, err := f.tryReadFromIncludes(ctx, relPath)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read dockerignore file %q: %w", filepath.ToSlash(relPath), err)
 	}
@@ -285,7 +285,7 @@ func (f *FileManager) ReadChartFile(ctx context.Context, filePath string) ([]byt
 	}
 
 	logboek.Context(ctx).Debug().LogF("Chart file %q not found in the local filesystem. Try find in includes\n", filePath)
-	data, err := f.tryReadFromInludes(ctx, filePath)
+	data, err := f.tryReadFromIncludes(ctx, filePath)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read chart file %q: %w", filepath.ToSlash(filePath), err)
 	}

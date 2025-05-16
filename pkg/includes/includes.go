@@ -99,7 +99,7 @@ func Init(ctx context.Context, opts InitIncludesOptions) ([]*Include, error) {
 			lockFileRelPath:        lockFilePath,
 			createOrUpdateLockFile: opts.CreateOrUpdateLockFile,
 			useLatestVersion:       opts.UseLatestVersion,
-			reomteRepos:            remoteRepos,
+			remoteRepos:            remoteRepos,
 		})
 		if err != nil {
 			return nil, err

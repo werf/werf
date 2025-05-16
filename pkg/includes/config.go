@@ -89,7 +89,7 @@ type getLockInfoOptions struct {
 	lockFileRelPath        string
 	createOrUpdateLockFile bool
 	useLatestVersion       bool
-	reomteRepos            map[string]*git_repo.Remote
+	remoteRepos            map[string]*git_repo.Remote
 }
 
 func getLockInfo(ctx context.Context, opts getLockInfoOptions) (*LockInfo, error) {
@@ -99,7 +99,7 @@ func getLockInfo(ctx context.Context, opts getLockInfoOptions) (*LockInfo, error
 		cfg, err := createLockConfig(createLockConfigOptions{
 			fileReader:     opts.fileReader,
 			includesConfig: opts.includesConfig,
-			remoteRepos:    opts.reomteRepos,
+			remoteRepos:    opts.remoteRepos,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("create lock config: %w", err)
