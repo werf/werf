@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/true_git"
 )
@@ -37,6 +38,10 @@ func NewCmd(ctx context.Context) *cobra.Command {
 			if err != nil {
 				return err
 			}
+
+			logboek.Context(ctx).Default().LogOptionalLn()
+
+			logboek.Context(ctx).Default().LogLn("Includes updated successfully")
 
 			return nil
 		},

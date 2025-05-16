@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/level"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/true_git"
 )
@@ -38,6 +39,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 				return fmt.Errorf("component init error: %w", err)
 			}
 
+			setupLogLevel(ctx, *commonCmdData.LogDebug)
+
 			gm, err := common.GetGiterminismManager(ctx, &commonCmdData)
 			if err != nil {
 				return err
@@ -48,7 +51,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 				return fmt.Errorf("unable to get file: %w", err)
 			}
 
-			logboek.Context(ctx).Log(string(content))
+			fmt.Print(string(content))
 
 			return nil
 		},
@@ -73,4 +76,10 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupFollow(&commonCmdData, cmd)
 
 	return cmd
+}
+
+func setupLogLevel(ctx context.Context, debug bool) {
+	if !debug {
+		logboek.Context(ctx).SetAcceptedLevel(level.Error)
+	}
 }

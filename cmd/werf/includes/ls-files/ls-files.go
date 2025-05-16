@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/level"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/true_git"
 )
@@ -55,6 +56,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 				return fmt.Errorf("component init error: %w", err)
 			}
 
+			setupLogLevel(ctx, *commonCmdData.LogDebug)
+
 			gm, err := common.GetGiterminismManager(ctx, &commonCmdData)
 			if err != nil {
 				return err
@@ -75,7 +78,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 				return fmt.Errorf("unable to write table: %w", err)
 			}
 
-			logboek.Context(ctx).Log(tb)
+			fmt.Print(tb)
 
 			return nil
 		},
@@ -105,7 +108,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 }
 
 func parseSourceFilter(input *string) ([]string, error) {
-	if input == nil {
+	if input == nil || *input == "" {
 		return []string{}, nil
 	}
 
@@ -153,4 +156,10 @@ func writeTable(data map[string]string) (string, error) {
 	}
 
 	return buf.String(), nil
+}
+
+func setupLogLevel(ctx context.Context, debug bool) {
+	if !debug {
+		logboek.Context(ctx).SetAcceptedLevel(level.Error)
+	}
 }

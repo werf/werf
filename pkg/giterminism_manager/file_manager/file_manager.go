@@ -35,6 +35,8 @@ type FileReader interface {
 
 	ListFilesByGlob(ctx context.Context, dir, glob string) ([]string, error)
 
+	IsRegularFileExist(ctx context.Context, relPath string) (exist bool, err error)
+
 	file.ChartFileReader
 }
 
@@ -91,7 +93,7 @@ func (f *FileManager) ReadConfigTemplateFiles(ctx context.Context, customRelDirP
 			return err
 		}
 		templateName := filepath.ToSlash(templatePathInsideDir)
-		f.werfTemplatesCache[templateName] = true
+		f.werfTemplatesCache[templateName] = false
 
 		return tmplFunc(templateName, string(data))
 	})
@@ -131,10 +133,6 @@ func (f *FileManager) ReadConfigTemplateFiles(ctx context.Context, customRelDirP
 	return nil
 }
 
-func (f *FileManager) shouldReadWerfTemplateFromIncludes(relPath string) bool {
-	return f.werfTemplatesCache[relPath]
-}
-
 func (f *FileManager) tryReadFromInludes(ctx context.Context, relPath string) ([]byte, error) {
 	for _, include := range f.includes {
 		data, err := include.GetFile(ctx, relPath)
@@ -146,12 +144,21 @@ func (f *FileManager) tryReadFromInludes(ctx context.Context, relPath string) ([
 }
 
 func (f *FileManager) ConfigGoTemplateFilesGet(ctx context.Context, relPath string) ([]byte, error) {
+	exists, err := f.fileReader.IsRegularFileExist(ctx, relPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if !exists {
+		data, err := f.tryReadFromInludes(ctx, relPath)
+		if err != nil {
+			return nil, fmt.Errorf("unable to read file %q from includes: %w", relPath, err)
+		}
+		return data, nil
+	}
+
 	res, err := f.fileReader.ConfigGoTemplateFilesGet(ctx, relPath)
 	if err != nil {
-		data, inclErr := f.tryReadFromInludes(ctx, relPath)
-		if inclErr == nil {
-			return data, nil
-		}
 		return nil, err
 	}
 	return res, nil
@@ -397,9 +404,8 @@ const (
 )
 
 func (f *FileManager) ListFilesByGlob(ctx context.Context, sources []string, globs []string) (map[string]string, error) {
-	var filterSources bool = len(sources) > 0
 	var fromFs []string
-	if filterSources && slices.Contains(sources, fromFsSource) {
+	if includesFromFs(sources) {
 		for _, glob := range globs {
 			// TODO: this is workaround due to the fact that fileReader.ListFilesByGlob
 			// does not support multiple glob patterns
@@ -423,5 +429,8 @@ func (f *FileManager) ListFilesByGlob(ctx context.Context, sources []string, glo
 	}
 
 	return result, nil
+}
 
+func includesFromFs(sources []string) bool {
+	return len(sources) == 0 || slices.Contains(sources, fromFsSource)
 }

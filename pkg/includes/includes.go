@@ -117,18 +117,27 @@ func Init(ctx context.Context, opts InitIncludesOptions) ([]*Include, error) {
 
 func initRemoteRepos(ctx context.Context, cfg Config) (map[string]*git_repo.Remote, error) {
 	repoCache := make(map[string]*git_repo.Remote)
-	for _, i := range cfg.Includes {
-		if _, ok := repoCache[i.Git]; !ok {
-			repo, err := git_repo.OpenRemoteRepo(i.Git, i.Git)
-			if err != nil {
-				return nil, fmt.Errorf("unable to open remote repository %s: %w", i.Git, err)
+
+	err := logboek.Context(ctx).Default().LogBlock("Initializing remote repositories").DoError(func() error {
+		for _, i := range cfg.Includes {
+			if _, ok := repoCache[i.Git]; !ok {
+				repo, err := git_repo.OpenRemoteRepo(i.Git, i.Git)
+				if err != nil {
+					return fmt.Errorf("unable to open remote repository %s: %w", i.Git, err)
+				}
+				if err := repo.CloneAndFetch(ctx); err != nil {
+					return fmt.Errorf("unable to clone %s repository: %w", i.Git, err)
+				}
+				repoCache[i.Git] = repo
 			}
-			if err := repo.CloneAndFetch(ctx); err != nil {
-				return nil, fmt.Errorf("unable to clone %s repository: %w", i.Git, err)
-			}
-			repoCache[i.Git] = repo
 		}
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
 	}
+
 	return repoCache, nil
 }
 
@@ -194,6 +203,8 @@ func GetIncludes(ctx context.Context, cfg Config, lockInfo *LockInfo, remoteRepo
 		}
 
 		includes = append(includes, include)
+
+		logboek.Context(ctx).Debug().LogF("Include initialized: repo: %s commit: %s\n", include.repo, include.commitHash)
 	}
 	return includes, nil
 }
