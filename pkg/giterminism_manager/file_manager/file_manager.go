@@ -45,20 +45,20 @@ type FileManager struct {
 }
 
 type NewFileManagerOptions struct {
-	FileReader               FileReader
-	Inspector                inspector.Inspector
-	CreateIncludesLockFile   bool
-	UseInludesLatestVersions bool
+	FileReader             FileReader
+	Inspector              inspector.Inspector
+	CreateIncludesLockFile bool
 }
 
 func NewFileManager(ctx context.Context, opts NewFileManagerOptions) (*FileManager, error) {
-	if err := opts.Inspector.InspectIncludes(opts.UseInludesLatestVersions); err != nil {
+	updateIncludes, err := opts.Inspector.InspectIncludesAllowUpdate()
+	if err != nil {
 		return nil, fmt.Errorf("includes inspection failed: %w", err)
 	}
 	inlcudes, err := includes.Init(ctx, includes.InitIncludesOptions{
 		FileReader:             opts.FileReader,
 		CreateOrUpdateLockFile: opts.CreateIncludesLockFile,
-		UseLatestVersion:       opts.UseInludesLatestVersions,
+		UseLatestVersion:       updateIncludes,
 	})
 	if err != nil {
 		return nil, err

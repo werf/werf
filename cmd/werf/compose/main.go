@@ -341,8 +341,6 @@ func newCmd(ctx context.Context, composeCmdName string, options *newCmdOptions) 
 
 	commonCmdData.SetupSkipImageSpecStage(cmd)
 
-	commonCmdData.SetupUseIncludesLatestVersions(cmd)
-
 	return cmd
 }
 

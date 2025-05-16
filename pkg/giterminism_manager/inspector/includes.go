@@ -6,16 +6,10 @@ var errIncludesUpdate = errors.NewError(`using latest versions of includes is no
 
 The use of --includes-update option might make builds and deployments unreproducible.`)
 
-func (i Inspector) InspectIncludes(updateEnabled bool) error {
-	if i.sharedOptions.LooseGiterminism() {
-		return nil
+func (i Inspector) InspectIncludesAllowUpdate() (bool, error) {
+	if accepted := i.giterminismConfig.IsUpdateIncludesAccepted(); !accepted {
+		return false, errIncludesUpdate
 	}
 
-	if updateEnabled {
-		if accepted := i.giterminismConfig.IsUpdateIncludesAccepted(); !accepted {
-			return errIncludesUpdate
-		}
-	}
-
-	return nil
+	return true, nil
 }

@@ -141,8 +141,6 @@ Also, can be specified with $WERF_EXPORT_ADD_LABEL_* (e.g. $WERF_EXPORT_ADD_LABE
 
 	commonCmdData.SetupSkipImageSpecStage(cmd)
 
-	commonCmdData.SetupUseIncludesLatestVersions(cmd)
-
 	return cmd
 }
 

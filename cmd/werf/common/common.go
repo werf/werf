@@ -1256,10 +1256,9 @@ func GetGiterminismManager(ctx context.Context, cmdData *CmdData) (*giterminism_
 	configRelPath := GetWerfGiterminismConfigRelPath(cmdData)
 
 	return giterminism_manager.NewManager(ctx, configRelPath, workingDir, localGitRepo, headCommit, giterminism_manager.NewManagerOptions{
-		LooseGiterminism:         *cmdData.LooseGiterminism,
-		Dev:                      *cmdData.Dev,
-		CreateIncludesLockFile:   cmdData.CreateIncludesLockFile,
-		UseInludesLatestVersions: *cmdData.UseInludesLatestVersions,
+		LooseGiterminism:       *cmdData.LooseGiterminism,
+		Dev:                    *cmdData.Dev,
+		CreateIncludesLockFile: cmdData.CreateIncludesLockFile,
 	})
 }
 

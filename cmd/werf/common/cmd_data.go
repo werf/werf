@@ -133,10 +133,9 @@ type CmdData struct {
 
 	Platform *[]string
 
-	SkipImageSpecStage       *bool
-	CreateIncludesLockFile   bool
-	UseInludesLatestVersions *bool
-	IncludesLsFilter         *string
+	SkipImageSpecStage     *bool
+	CreateIncludesLockFile bool
+	IncludesLsFilter       *string
 }
 
 func (cmdData *CmdData) SetupWithoutImages(cmd *cobra.Command) {
@@ -203,13 +202,8 @@ func (cmdData *CmdData) SetupSkipImageSpecStage(cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(cmdData.SkipImageSpecStage, "skip-image-spec-stage", "", util.GetBoolEnvironmentDefaultFalse("WERF_SKIP_IMAGE_SPEC_STAGE"), `Force skipping "imageSpec" build stage (default $WERF_SKIP_IMAGE_SPEC_STAGE or false)`)
 }
 
-func (cmdData *CmdData) SetupCreateIncludesLockFile(b bool) {
-	cmdData.CreateIncludesLockFile = b
-}
-
-func (cmdData *CmdData) SetupUseIncludesLatestVersions(cmd *cobra.Command) {
-	cmdData.UseInludesLatestVersions = new(bool)
-	cmd.Flags().BoolVarP(cmdData.UseInludesLatestVersions, "includes-update", "", util.GetBoolEnvironmentDefaultFalse("WERF_INCLUDES_UPDATE"), `Use latest versions of werf includes instead of versions from werf-includes.lock file (default $WERF_INCLUDES_UPDATE or false)`)
+func (cmdData *CmdData) SetupCreateIncludesLockFile() {
+	cmdData.CreateIncludesLockFile = true
 }
 
 func (cmdData *CmdData) SetupIncludesLsFilter(cmd *cobra.Command) {

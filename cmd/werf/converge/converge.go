@@ -195,8 +195,6 @@ werf converge --repo registry.mydomain.com/web --env production`,
 
 	commonCmdData.SetupSkipImageSpecStage(cmd)
 
-	commonCmdData.SetupUseIncludesLatestVersions(cmd)
-
 	return cmd
 }
 
