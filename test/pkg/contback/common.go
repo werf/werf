@@ -38,6 +38,7 @@ type ContainerBackend interface {
 	Rm(ctx context.Context, containerName string)
 
 	RunSleepingContainer(ctx context.Context, containerName, image string)
+	GetImageFileSystemReader(ctx context.Context, image string) *FileSystemReader
 	GetImageInspect(ctx context.Context, image string) DockerImageInspect
 	ExpectCmdsToSucceed(ctx context.Context, image string, cmds ...string)
 }
