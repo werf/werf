@@ -33,12 +33,8 @@ var SuiteData = struct {
 	RegistryProjectRepository string
 }{}
 
-var _ = AfterEach(func() {
-	utils.RunSucceedCommand(
-		SuiteData.TestDirPath,
-		SuiteData.WerfBinPath,
-		"host", "purge", "--force",
-	)
+var _ = AfterEach(func(ctx SpecContext) {
+	utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "host", "purge", "--force")
 })
 
 var (

@@ -51,8 +51,8 @@ var _ = Describe("Build phase", func() {
 			SuiteData.Stubs.SetEnv("WERF_VERBOSE", "1")
 		})
 
-		AfterEach(func() {
-			werfHostPurge("build_phase-001", liveexec.ExecCommandOptions{}, "--force")
+		AfterEach(func(ctx SpecContext) {
+			werfHostPurge(ctx, "build_phase-001", liveexec.ExecCommandOptions{}, "--force")
 
 			os.RemoveAll("build_phase_repo1")
 			os.RemoveAll("build_phase_repo2")
@@ -60,13 +60,13 @@ var _ = Describe("Build phase", func() {
 			os.RemoveAll("build_phase-002/.git")
 		})
 
-		It("should build install stage twice (because of ancestry check) and use the oldest stage by time of saving into stages storage", func() {
-			Expect(utils.SetGitRepoState("build_phase-001", "build_phase_repo1", "one")).To(Succeed())
+		It("should build install stage twice (because of ancestry check) and use the oldest stage by time of saving into stages storage", func(ctx SpecContext) {
+			Expect(utils.SetGitRepoState(ctx, "build_phase-001", "build_phase_repo1", "one")).To(Succeed())
 			Expect(copy.Copy("build_phase_repo1", "build_phase_repo2")).To(Succeed())
-			Expect(utils.SetGitRepoState("build_phase-002", "build_phase_repo2", "two")).To(Succeed())
+			Expect(utils.SetGitRepoState(ctx, "build_phase-002", "build_phase_repo2", "two")).To(Succeed())
 
 			SuiteData.Stubs.SetEnv("WERF_CONFIG", "werf_1.yaml")
-			Expect(werfBuild("build_phase-001", liveexec.ExecCommandOptions{})).To(Succeed())
+			Expect(werfBuild(ctx, "build_phase-001", liveexec.ExecCommandOptions{})).To(Succeed())
 
 			var wg sync.WaitGroup
 			startFirst := make(chan struct{})
@@ -83,7 +83,7 @@ var _ = Describe("Build phase", func() {
 				buildingInstall := false
 				stageParserState := ""
 
-				Expect(werfBuild("build_phase-001", liveexec.ExecCommandOptions{
+				Expect(werfBuild(ctx, "build_phase-001", liveexec.ExecCommandOptions{
 					Env: map[string]string{
 						"WERF_TEST_ATOMIC_STAGE_BUILD__SLEEP_SECONDS_BEFORE_STAGE_SAVE": "9",
 						"WERF_CONFIG": "werf_2.yaml",
@@ -117,7 +117,7 @@ var _ = Describe("Build phase", func() {
 				buildingInstall := false
 				stageParserState := ""
 
-				Expect(werfBuild("build_phase-002", liveexec.ExecCommandOptions{
+				Expect(werfBuild(ctx, "build_phase-002", liveexec.ExecCommandOptions{
 					Env: map[string]string{
 						"WERF_TEST_ATOMIC_STAGE_BUILD__SLEEP_SECONDS_BEFORE_STAGE_BUILD": "1", // make sure this stage docker-image is created after build_phase-001 install stage docker-image, and despite this fact in the end of the test exactly this stage should be used as a cache
 						"WERF_TEST_ATOMIC_STAGE_BUILD__SLEEP_SECONDS_BEFORE_STAGE_SAVE":  "3",
@@ -157,7 +157,7 @@ var _ = Describe("Build phase", func() {
 
 			useCachedInstall := false
 			stageParserState := ""
-			Expect(werfBuild("build_phase-002", liveexec.ExecCommandOptions{
+			Expect(werfBuild(ctx, "build_phase-002", liveexec.ExecCommandOptions{
 				Env: map[string]string{
 					"WERF_CONFIG": "werf_2.yaml",
 				},

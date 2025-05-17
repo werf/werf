@@ -11,15 +11,11 @@ import (
 	utilsDocker "github.com/werf/werf/v2/test/pkg/utils/docker"
 )
 
-var fromImageItFunc = func(appConfigName, fromImageConfigName string, extraAfterBuildChecks func(appConfigName, fromImageConfigName string)) {
+var fromImageItFunc = func(ctx SpecContext, appConfigName, fromImageConfigName string, extraAfterBuildChecks func(appConfigName, fromImageConfigName string)) {
 	By(fmt.Sprintf("fromCacheVersion: %s", "0"))
 	SuiteData.Stubs.SetEnv("FROM_CACHE_VERSION", "0")
 
-	output := utils.SucceedCommandOutputString(
-		SuiteData.TestDirPath,
-		SuiteData.WerfBinPath,
-		"build",
-	)
+	output := utils.SucceedCommandOutputString(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
 
 	Expect(strings.Count(output, fmt.Sprintf("Building stage %s/from", appConfigName))).Should(Equal(2))
 
@@ -28,11 +24,7 @@ var fromImageItFunc = func(appConfigName, fromImageConfigName string, extraAfter
 	By(fmt.Sprintf("fromCacheVersion: %s", "1"))
 	SuiteData.Stubs.SetEnv("FROM_CACHE_VERSION", "1")
 
-	output = utils.SucceedCommandOutputString(
-		SuiteData.TestDirPath,
-		SuiteData.WerfBinPath,
-		"build",
-	)
+	output = utils.SucceedCommandOutputString(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
 
 	Expect(strings.Count(output, fmt.Sprintf("Building stage %s/from", appConfigName))).Should(Equal(2))
 
@@ -44,19 +36,11 @@ var _ = XDescribe("fromImage", func() {
 		SuiteData.TestDirPath = utils.FixturePath("from_image")
 	})
 
-	It("should be rebuilt", func() {
-		fromImageItFunc("app", "fromImage", func(appConfigName, fromImageConfigName string) {
-			appImageName := utils.SucceedCommandOutputString(
-				SuiteData.TestDirPath,
-				SuiteData.WerfBinPath,
-				"stage", "image", appConfigName,
-			)
+	It("should be rebuilt", func(ctx SpecContext) {
+		fromImageItFunc(ctx, "app", "fromImage", func(appConfigName, fromImageConfigName string) {
+			appImageName := utils.SucceedCommandOutputString(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "stage", "image", appConfigName)
 
-			fromImageName := utils.SucceedCommandOutputString(
-				SuiteData.TestDirPath,
-				SuiteData.WerfBinPath,
-				"stage", "image", fromImageConfigName,
-			)
+			fromImageName := utils.SucceedCommandOutputString(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "stage", "image", fromImageConfigName)
 
 			Expect(utilsDocker.ImageParent(strings.TrimSpace(appImageName))).Should(Equal(utilsDocker.ImageID(strings.TrimSpace(fromImageName))))
 		})
