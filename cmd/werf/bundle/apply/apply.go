@@ -16,6 +16,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/werf/3p-helm/pkg/chart"
+	"github.com/werf/3p-helm/pkg/chart/loader"
 	"github.com/werf/3p-helm/pkg/chartutil"
 	"github.com/werf/3p-helm/pkg/werf/secrets"
 	"github.com/werf/common-go/pkg/secrets_manager"
@@ -66,6 +67,12 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupEnvironment(&commonCmdData, cmd)
 	common.SetupTmpDir(&commonCmdData, cmd, common.SetupTmpDirOptions{})
 	common.SetupHomeDir(&commonCmdData, cmd, common.SetupHomeDirOptions{})
+	common.SetupGiterminismOptions(&commonCmdData, cmd)
+	common.SetupDir(&commonCmdData, cmd)
+	common.SetupGitWorkTree(&commonCmdData, cmd)
+	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
+	common.SetupConfigPath(&commonCmdData, cmd)
+	common.SetupGiterminismConfigPath(&commonCmdData, cmd)
 
 	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{})
 
@@ -219,6 +226,13 @@ func runApply(ctx context.Context) error {
 	ctx = action.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultReleaseInstallLogLevel), action.SetupLoggingOptions{
 		ColorMode: *commonCmdData.LogColorMode,
 	})
+
+	gm, err := common.GetGiterminismManager(ctx, &commonCmdData)
+	if err != nil {
+		return fmt.Errorf("unable init giterminism manager: %w", err)
+	}
+
+	loader.ChartFileReader = gm.FileManager
 
 	if err := action.ReleaseInstall(ctx, releaseName, releaseNamespace, action.ReleaseInstallOptions{
 		AutoRollback:                 cmdData.AutoRollback,
