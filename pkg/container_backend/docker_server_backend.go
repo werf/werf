@@ -127,6 +127,10 @@ func (backend *DockerServerBackend) BuildDockerfile(ctx context.Context, _ []byt
 		cliArgs = append(cliArgs, "--tag", tag)
 	}
 
+	if opts.Quiet {
+		cliArgs = append(cliArgs, "--quiet")
+	}
+
 	cliArgs = append(cliArgs, "-")
 
 	if Debug() {
@@ -430,18 +434,17 @@ func (backend *DockerServerBackend) GenerateSBOM(ctx context.Context, scanOpts s
 	}
 	defer workingTree.Cleanup(ctx)
 
-	runArgs := mapSbomScanOptionsToDockerRunCommand(scanOpts)
+	if err := logboek.Context(ctx).Default().LogProcess("Scan an image").DoError(func() error {
+		runArgs := mapSbomScanOptionsToDockerRunCommand(workingTree.RootDir(), workingTree.BillsDir(), billNames, scanOpts)
 
-	output, err := docker.CliRun_RecordedOutput(ctx, runArgs...)
-	if err != nil {
-		return "", fmt.Errorf("unable to run scanner inside of container: %w", err)
-	}
+		// TODO: why output is empty?
+		if _, err := docker.CliRun_RecordedOutput(ctx, runArgs...); err != nil {
+			return fmt.Errorf("unable to run scanner inside of container: %w", err)
+		}
 
-	// TODO (zaytsev): handle multiple scan options and outputs
-	bill := workingTree.BillFiles()[0]
-
-	if _, err = bill.WriteString(output); err != nil {
-		return "", fmt.Errorf("unable to write bill %q: %w", bill.Name(), err)
+		return nil
+	}); err != nil {
+		return "", err
 	}
 
 	contextAddFiles := lo.Map(billNames, func(billName string, _ int) string {
@@ -458,10 +461,12 @@ func (backend *DockerServerBackend) GenerateSBOM(ctx context.Context, scanOpts s
 		return "", fmt.Errorf("unable to create sbom scanning results archive: %w", err)
 	}
 
+	logboek.Context(ctx).Default().LogLn("Store the result")
 	imageId, err := backend.BuildDockerfile(ctx, workingTree.ContainerfileContent(), BuildDockerfileOpts{
 		DockerfileCtxRelPath: workingTree.Containerfile(),
 		BuildContextArchive:  archive,
 		Labels:               dstImgLabels,
+		Quiet:                true,
 	})
 	if err != nil {
 		return "", fmt.Errorf("unable to build sbom result image: %w", err)
@@ -476,18 +481,25 @@ func mapSbomScanCommandsToSbomBillNames(commands []scanner.ScanCommand) []string
 	})
 }
 
-func mapSbomScanOptionsToDockerRunCommand(scanOpts scanner.ScanOptions) []string {
+func mapSbomScanOptionsToDockerRunCommand(workingTreeDir, billsDir string, billNames []string, scanOpts scanner.ScanOptions) []string {
 	args := []string{
 		"--rm",
 		"--name", fmt.Sprintf("%s%s", image.SBOMScannerContainerNamePrefix, uuid.New().String()),
-		"--volume", "/var/run/docker.sock:/var/run/docker.sock", // TODO: return error on non Unix systems
 		"--pull", scanOpts.PullPolicy.String(),
 		"--entrypoint", "", // clear default image entrypoint
-		scanOpts.Image,
+		"--volume", "/var/run/docker.sock:/var/run/docker.sock", // TODO: return error on non Unix systems
 	}
+
+	// TODO (zaytsev): the code support only single command at this moment
+	billHostPath := filepath.Join(workingTreeDir, billsDir, billNames[0])
+	billContainerPath := filepath.Join("/tmp", billsDir, billNames[0])
+	args = append(args, "--volume", fmt.Sprintf("%s:%s", billHostPath, billContainerPath))
+
+	args = append(args, scanOpts.Image)
 
 	scanCmd := scanOpts.Commands[0] // TODO (zaytsev): support multiple commands
 	scanCmd.SourceType = scanner.SourceTypeDocker
+	scanCmd.OutputPath = billContainerPath
 
 	args = append(args, strings.Split(scanCmd.String(), " ")...)
 

@@ -45,6 +45,7 @@ type BuildDockerfileOpts struct {
 	Labels               []string
 	Tags                 []string
 	Secrets              []string
+	Quiet                bool
 }
 
 type BuildDockerfileStageOptions struct {
