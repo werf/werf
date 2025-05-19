@@ -80,6 +80,17 @@ cli: &cli
       - title: werf render
         url: /reference/cli/werf_render.html
 
+      - title: werf includes
+        f:
+          - title: werf includes get-file
+            url: /reference/cli/werf_includes_get_file.html
+
+          - title: werf includes ls-files
+            url: /reference/cli/werf_includes_ls_files.html
+
+          - title: werf includes update
+            url: /reference/cli/werf_includes_update.html
+
   - title: Low-level management commands
     f:
       - title: werf config

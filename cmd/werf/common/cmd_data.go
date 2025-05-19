@@ -133,7 +133,9 @@ type CmdData struct {
 
 	Platform *[]string
 
-	SkipImageSpecStage *bool
+	SkipImageSpecStage     *bool
+	CreateIncludesLockFile bool
+	IncludesLsFilter       *string
 }
 
 func (cmdData *CmdData) SetupWithoutImages(cmd *cobra.Command) {
@@ -198,4 +200,13 @@ func (cmdData *CmdData) SetupRenameChart(cmd *cobra.Command) {
 func (cmdData *CmdData) SetupSkipImageSpecStage(cmd *cobra.Command) {
 	cmdData.SkipImageSpecStage = new(bool)
 	cmd.Flags().BoolVarP(cmdData.SkipImageSpecStage, "skip-image-spec-stage", "", util.GetBoolEnvironmentDefaultFalse("WERF_SKIP_IMAGE_SPEC_STAGE"), `Force skipping "imageSpec" build stage (default $WERF_SKIP_IMAGE_SPEC_STAGE or false)`)
+}
+
+func (cmdData *CmdData) SetupCreateIncludesLockFile() {
+	cmdData.CreateIncludesLockFile = true
+}
+
+func (cmdData *CmdData) SetupIncludesLsFilter(cmd *cobra.Command) {
+	cmdData.IncludesLsFilter = new(string)
+	cmd.Flags().StringVar(cmdData.IncludesLsFilter, "filter", "", "Filter by source, e.g. --filter=source=local,remoteRepo")
 }

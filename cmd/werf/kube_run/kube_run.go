@@ -290,7 +290,7 @@ func runMain(ctx context.Context) error {
 	}()
 
 	if *commonCmdData.Follow {
-		return common.FollowGitHead(ctx, &commonCmdData, func(ctx context.Context, headCommitGiterminismManager giterminism_manager.Interface) error {
+		return common.FollowGitHead(ctx, &commonCmdData, func(ctx context.Context, headCommitGiterminismManager *giterminism_manager.Manager) error {
 			cleanupResources(ctx, pod, secret, namespace)
 
 			if err := run(ctx, pod, secret, namespace, werfConfig, containerBackend, giterminismManager); err != nil {

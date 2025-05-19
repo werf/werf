@@ -11,7 +11,6 @@ import (
 type Interface interface {
 	FileReader() FileReader
 	Inspector() Inspector
-
 	LocalGitRepo() git_repo.GitRepo
 	HeadCommit() string
 	ProjectDir() string
@@ -32,6 +31,10 @@ type FileReader interface {
 	IsDockerignoreExistAnywhere(ctx context.Context, relPath string) (bool, error)
 	ReadDockerignore(ctx context.Context, relPath string) ([]byte, error)
 
+	IsIncludesConfigExistAnywhere(ctx context.Context, relPath string) (bool, error)
+	ReadIncludesConfig(ctx context.Context, relPath string) ([]byte, error)
+	ReadIncludesLockFile(ctx context.Context, relPath string) (data []byte, err error)
+
 	file.ChartFileReader
 }
 
@@ -47,4 +50,5 @@ type Inspector interface {
 	InspectConfigSecretEnvAccepted(secret string) error
 	InspectConfigSecretSrcAccepted(secret string) error
 	InspectConfigSecretValueAccepted(secret string) error
+	InspectIncludesAllowUpdate() bool
 }

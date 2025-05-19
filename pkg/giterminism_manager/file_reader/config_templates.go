@@ -30,11 +30,7 @@ func (r FileReader) ReadConfigTemplateFiles(ctx context.Context, customDirRelPat
 }
 
 func (r FileReader) readConfigTemplateFiles(ctx context.Context, customDirRelPath string, tmplFunc func(templatePathInsideDir string, data []byte, err error) error) error {
-	templatesDirRelPath := DefaultWerfConfigTemplatesDirName
-	if customDirRelPath != "" {
-		templatesDirRelPath = customDirRelPath
-	}
-
+	templatesDirRelPath := ConfigTemplatesPathList(customDirRelPath)
 	return r.WalkConfigurationFilesWithGlob(
 		ctx,
 		templatesDirRelPath,
@@ -44,4 +40,11 @@ func (r FileReader) readConfigTemplateFiles(ctx context.Context, customDirRelPat
 			return tmplFunc(filepath.ToSlash(relativeToDirNotResolvedPath), data, err)
 		},
 	)
+}
+
+func ConfigTemplatesPathList(templatesDirRelPath string) string {
+	if templatesDirRelPath != "" {
+		return templatesDirRelPath
+	}
+	return DefaultWerfConfigTemplatesDirName
 }

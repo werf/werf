@@ -295,7 +295,7 @@ func mapLegacyDockerfileToImage(ctx context.Context, metaConfig *config.Meta, do
 	}
 
 	relDockerfilePath := filepath.Join(dockerfileImageConfig.Context, dockerfileImageConfig.Dockerfile)
-	dockerfileData, err := opts.GiterminismManager.FileReader().ReadDockerfile(ctx, relDockerfilePath)
+	dockerfileData, err := opts.GiterminismManager.(*giterminism_manager.Manager).FileManager.ReadDockerfile(ctx, relDockerfilePath)
 	if err != nil {
 		return nil, err
 	}

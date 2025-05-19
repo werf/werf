@@ -411,4 +411,5 @@ replace (
 	github.com/docker/buildx => github.com/werf/3p-docker-buildx v0.13.0-rc2.0.20241111114615-d77c2e1444ad // upstream not maintained
 	github.com/jaguilar/vt100 => github.com/tonistiigi/vt100 v0.0.0-20190402012908-ad4c4a574305 // upstream not maintained
 	github.com/spf13/cobra => github.com/andremueller/cobra v0.0.0-20241025091859-0d550c15a8a4 // remove after merge to upstream
+	github.com/werf/3p-helm => github.com/werf/3p-helm v0.0.0-20250506123057-d1e6edc45667
 )

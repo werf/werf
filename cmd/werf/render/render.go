@@ -318,8 +318,6 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 		return fmt.Errorf("get relative helm chart directory: %w", err)
 	}
 
-	chartPath := filepath.Join(giterminismManager.ProjectDir(), relChartPath)
-
 	releaseNamespace, err := deploy_params.GetKubernetesNamespace(
 		*commonCmdData.Namespace,
 		*commonCmdData.Environment,
@@ -390,7 +388,7 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 		return fmt.Errorf("get service values: %w", err)
 	}
 
-	loader.ChartFileReader = giterminismManager.FileReader()
+	loader.ChartFileReader = giterminismManager.FileManager
 
 	// TODO(v3): get rid of forcing color mode via ci-env and use color mode detection logic from
 	// Nelm instead. Until then, color will be always off here.
@@ -401,7 +399,7 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 
 	if _, err := action.ChartRender(ctx, action.ChartRenderOptions{
 		ChartAppVersion:              common.GetHelmChartConfigAppVersion(werfConfig),
-		ChartDirPath:                 chartPath,
+		ChartDirPath:                 relChartPath,
 		ChartRepositoryInsecure:      *commonCmdData.InsecureHelmDependencies,
 		ChartRepositorySkipTLSVerify: *commonCmdData.SkipTlsVerifyHelmDependencies,
 		ChartRepositorySkipUpdate:    *commonCmdData.SkipDependenciesRepoRefresh,

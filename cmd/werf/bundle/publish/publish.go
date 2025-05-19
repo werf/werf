@@ -331,7 +331,7 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 		return err
 	}
 
-	loader.ChartFileReader = giterminismManager.FileReader()
+	loader.ChartFileReader = giterminismManager.FileManager
 
 	headHash, err := giterminismManager.LocalGitRepo().HeadCommitHash(ctx)
 	if err != nil {

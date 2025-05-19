@@ -1,0 +1,134 @@
+package basic_test
+
+import (
+	"fmt"
+	"path/filepath"
+
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+	"gopkg.in/yaml.v3"
+
+	"github.com/werf/werf/v2/pkg/includes"
+	"github.com/werf/werf/v2/test/pkg/contback"
+	"github.com/werf/werf/v2/test/pkg/utils"
+	"github.com/werf/werf/v2/test/pkg/werf"
+)
+
+type simpleTestOptions struct {
+	setupEnvOptions
+}
+
+type Config struct {
+	Includes []includeConf `yaml:"includes"`
+}
+
+type includeConf struct {
+	Name         string   `yaml:"name"`
+	Git          string   `yaml:"git"`
+	Branch       string   `yaml:"branch"`
+	Tag          string   `yaml:"tag"`
+	Commit       string   `yaml:"commit"`
+	Add          string   `yaml:"add,omitempty"`
+	To           string   `yaml:"to,omitempty"`
+	IncludePaths []string `yaml:"includePaths"`
+	ExcludePaths []string `yaml:"excludePaths"`
+}
+
+var _ = Describe("build and mutate image spec", Label("integration", "build", "mutate spec config"), func() {
+	DescribeTable("should succeed and produce expected image",
+		func(testOpts simpleTestOptions) {
+			By("initializing")
+			setupEnv(testOpts.setupEnvOptions)
+			_, err := contback.NewContainerBackend(testOpts.ContainerBackendMode)
+			if err == contback.ErrRuntimeUnavailable {
+				Skip(err.Error())
+			} else if err != nil {
+				Fail(err.Error())
+			}
+
+			By("prepearing repos")
+			{
+				mainRepoDirName := "main_repo"
+				fixtureRelPath := "basic"
+				SuiteData.InitTestRepo(mainRepoDirName, filepath.Join(fixtureRelPath, mainRepoDirName))
+
+				remoteRepoDirName1 := "remote_repo1"
+				SuiteData.InitTestRepo(remoteRepoDirName1, filepath.Join(fixtureRelPath, remoteRepoDirName1))
+
+				remoteRepoDirName2 := "remote_repo2"
+				SuiteData.InitTestRepo(remoteRepoDirName2, filepath.Join(fixtureRelPath, remoteRepoDirName2))
+
+				SuiteData.WerfRepo = SuiteData.GetTestRepoPath(mainRepoDirName)
+				includesConfig := &Config{
+					Includes: []includeConf{
+						{
+							Name:   "remote_repo1",
+							Git:    SuiteData.GetTestRepoPath(remoteRepoDirName1),
+							Branch: "main",
+							Add:    "/",
+							To:     "/",
+						},
+						{
+							Name:   "remote_repo2",
+							Git:    SuiteData.GetTestRepoPath(remoteRepoDirName2),
+							Branch: "main",
+							Add:    "/",
+							To:     "/",
+						},
+					},
+				}
+
+				out, err := yaml.Marshal(includesConfig)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(out).ToNot(BeEmpty())
+
+				werfIncludesPath := filepath.Join(SuiteData.GetTestRepoPath(mainRepoDirName), includes.GetWerfIncludesConfigRelPath(""))
+				By(fmt.Sprintf("writing includes config to %s", werfIncludesPath))
+				{
+					utils.WriteFile(werfIncludesPath, out)
+				}
+				By("generate includes lock file")
+				{
+					utils.RunSucceedCommand(
+						SuiteData.GetTestRepoPath(mainRepoDirName),
+						SuiteData.WerfBinPath,
+						"includes", "update", "--dev",
+					)
+				}
+				By("committing includes config")
+				{
+					utils.RunSucceedCommand(SuiteData.GetTestRepoPath(mainRepoDirName), "git", "add", "-A")
+					utils.RunSucceedCommand(SuiteData.GetTestRepoPath(mainRepoDirName), "git", "commit", "-m", "add includes config")
+				}
+			}
+			By(fmt.Sprintf("starting"))
+			{
+				repoDirname := "main_repo"
+
+				buildReportName := "build_report.json"
+				By(fmt.Sprintf("building images"))
+				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
+				buildOut, _ := werfProject.BuildWithReport(
+					SuiteData.GetBuildReportPath(buildReportName),
+					nil,
+				)
+				Expect(buildOut).To(ContainSubstring("Building stage"))
+
+				By(fmt.Sprintf("render chart"))
+				output := utils.SucceedCommandOutputString(
+					SuiteData.GetTestRepoPath(repoDirname),
+					SuiteData.WerfBinPath,
+					"render", //"--includes-update",
+				)
+				for _, substrFormat := range []string{
+					"# Source: %s/templates/backend.yaml",
+				} {
+					Expect(output).Should(ContainSubstring(fmt.Sprintf(substrFormat, utils.ProjectName())))
+				}
+			}
+		},
+		Entry("without local repo using BuildKit Docker", simpleTestOptions{setupEnvOptions{
+			ContainerBackendMode: "buildkit-docker",
+		}}),
+	)
+})
