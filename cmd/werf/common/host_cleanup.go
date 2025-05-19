@@ -18,14 +18,6 @@ func RunAutoHostCleanup(ctx context.Context, cmdData *CmdData, containerBackend 
 		return nil
 	}
 
-	if *cmdData.AllowedBackendStorageVolumeUsageMargin >= *cmdData.AllowedBackendStorageVolumeUsage {
-		return fmt.Errorf("incompatible params --allowed-backend-storage-volume-usage=%d and --allowed-backend-storage-volume-usage-margin=%d: margin percentage should be less than allowed volume usage level percentage", *cmdData.AllowedBackendStorageVolumeUsage, *cmdData.AllowedBackendStorageVolumeUsageMargin)
-	}
-
-	if *cmdData.AllowedLocalCacheVolumeUsageMargin >= *cmdData.AllowedLocalCacheVolumeUsage {
-		return fmt.Errorf("incompatible params --allowed-local-cache-volume-usage=%d and --allowed-local-cache-volume-usage-margin=%d: margin percentage should be less than allowed volume usage level percentage", *cmdData.AllowedLocalCacheVolumeUsage, *cmdData.AllowedLocalCacheVolumeUsageMargin)
-	}
-
 	return host_cleaning.RunAutoHostCleanup(ctx, containerBackend, host_cleaning.AutoHostCleanupOptions{
 		HostCleanupOptions: host_cleaning.HostCleanupOptions{
 			DryRun: false,
