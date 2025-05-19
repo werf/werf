@@ -146,7 +146,7 @@ func RunHostCleanup(ctx context.Context, backend container_backend.ContainerBack
 
 func shouldRunAutoHostCleanup(ctx context.Context, backend container_backend.ContainerBackend, options AutoHostCleanupOptions) (bool, error) {
 	// host cleanup is not supported for certain project
-	if options.ProjectName != nil {
+	if options.ProjectName != nil && *options.ProjectName != "" {
 		return false, nil
 	}
 
