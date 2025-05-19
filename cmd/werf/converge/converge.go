@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 
@@ -67,6 +68,19 @@ werf converge --repo registry.mydomain.com/web --env production`,
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
+
+			defer func() {
+				if r := recover(); r != nil {
+					// Печать сообщения о панике
+					fmt.Fprintf(os.Stderr, "PANIC: %v\n", r)
+
+					// Печать трассировки стека
+					buf := make([]byte, 1<<16)
+					stackSize := runtime.Stack(buf, true)
+					fmt.Fprintf(os.Stderr, "Stack trace:\n%s\n", buf[:stackSize])
+
+				}
+			}()
 
 			defer global_warnings.PrintGlobalWarnings(ctx)
 

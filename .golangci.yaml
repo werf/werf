@@ -20,8 +20,6 @@ linters-settings:
   errorlint:
     comparison: false
     asserts: false
-  misspell:
-    locale: GB
 
 linters:
   disable-all: true
