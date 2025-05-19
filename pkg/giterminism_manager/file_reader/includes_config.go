@@ -3,6 +3,7 @@ package file_reader
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/werf/logboek"
 )
@@ -66,6 +67,10 @@ func (r FileReader) ReadIncludesLockFile(ctx context.Context, relPath string) (d
 		})
 
 	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			// TODO: errors.As() not working, somewhere error wrapped incorrectly
+			err = fmt.Errorf("%w\n\nConsider generate lock file using `werf includes update` command", err)
+		}
 		return nil, fmt.Errorf("unable to read werf includes lock file: %w", err)
 	}
 	return
