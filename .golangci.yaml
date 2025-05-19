@@ -21,7 +21,7 @@ linters-settings:
     comparison: false
     asserts: false
   misspell:
-    locale: US
+    locale: GB
 
 linters:
   disable-all: true

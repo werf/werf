@@ -118,7 +118,7 @@ var _ = Describe("build and mutate image spec", Label("integration", "build", "m
 				output := utils.SucceedCommandOutputString(
 					SuiteData.GetTestRepoPath(repoDirname),
 					SuiteData.WerfBinPath,
-					"render", //"--includes-update",
+					"render",
 				)
 				for _, substrFormat := range []string{
 					"# Source: %s/templates/backend.yaml",
