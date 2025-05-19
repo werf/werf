@@ -1,5 +1,13 @@
 # Changelog
 
+### [2.36.1](https://www.github.com/werf/werf/compare/v2.36.0...v2.36.1) (2025-05-19)
+
+
+### Bug Fixes
+
+* **host-cleanup:** improve host cleanup consistency ([1d836dc](https://www.github.com/werf/werf/commit/1d836dcbbd029978cc3edc7c8c6eaadeb2556591))
+* **host-cleanup:** start auto host cleanup when no certain project ([3a3c37d](https://www.github.com/werf/werf/commit/3a3c37d80731fb8d3f8ce8c1b7a2aba3b131ca6f))
+
 ## [2.36.0](https://www.github.com/werf/werf/compare/v2.35.10...v2.36.0) (2025-05-15)
 
 
