@@ -74,12 +74,20 @@ func Init(ctx context.Context, opts InitIncludesOptions) ([]*Include, error) {
 
 	if len(config.Includes) > 0 {
 
+		lockFilePath := GetWerfIncludesLockConfigRelPath(opts.LockFileRelPath)
+
+		var lockConfig *lockConfig
+		if !opts.CreateOrUpdateLockFile && !opts.UseLatestVersion {
+			lockConfig, err = parseLockConfig(ctx, opts.FileReader, lockFilePath)
+			if err != nil {
+				return nil, err
+			}
+		}
+
 		remoteRepos, err := initRemoteRepos(ctx, config)
 		if err != nil {
 			return nil, fmt.Errorf("unable to initialize remote repositories: %w", err)
 		}
-
-		lockFilePath := GetWerfIncludesLockConfigRelPath(opts.LockFileRelPath)
 
 		if opts.CreateOrUpdateLockFile {
 			if err := CreateOrUpdateLockConfig(ctx, createLockConfigOptions{
@@ -96,10 +104,10 @@ func Init(ctx context.Context, opts InitIncludesOptions) ([]*Include, error) {
 		lockInfo, err := getLockInfo(ctx, getLockInfoOptions{
 			includesConfig:         config,
 			fileReader:             opts.FileReader,
-			lockFileRelPath:        lockFilePath,
 			createOrUpdateLockFile: opts.CreateOrUpdateLockFile,
 			useLatestVersion:       opts.UseLatestVersion,
 			remoteRepos:            remoteRepos,
+			lockConfig:             lockConfig,
 		})
 		if err != nil {
 			return nil, err

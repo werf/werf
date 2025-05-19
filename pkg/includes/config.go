@@ -86,10 +86,10 @@ func parseConfig(ctx context.Context, fileReader GiterminismManagerFileReader, c
 type getLockInfoOptions struct {
 	includesConfig         Config
 	fileReader             GiterminismManagerFileReader
-	lockFileRelPath        string
 	createOrUpdateLockFile bool
 	useLatestVersion       bool
 	remoteRepos            map[string]*git_repo.Remote
+	lockConfig             *lockConfig
 }
 
 func getLockInfo(ctx context.Context, opts getLockInfoOptions) (*LockInfo, error) {
@@ -105,9 +105,11 @@ func getLockInfo(ctx context.Context, opts getLockInfoOptions) (*LockInfo, error
 			return nil, fmt.Errorf("create lock config: %w", err)
 		}
 		lockConf = &cfg
+	} else {
+		lockConf = opts.lockConfig
 	}
 
-	lockInfo, err := readLockInfo(ctx, opts.fileReader, opts.lockFileRelPath, lockConf)
+	lockInfo, err := readLockInfo(ctx, opts.fileReader, lockConf)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read include lock info: %w", err)
 	}
@@ -119,23 +121,12 @@ func getLockInfo(ctx context.Context, opts getLockInfoOptions) (*LockInfo, error
 	return lockInfo, nil
 }
 
-func readLockInfo(ctx context.Context, fileReader GiterminismManagerFileReader, configRelPath string, lockConf *lockConfig) (*LockInfo, error) {
-	var config *lockConfig
-	if lockConf != nil {
-		config = lockConf
-	} else {
-		var err error
-		config, err = parseLockConfig(ctx, fileReader, configRelPath)
-		if err != nil {
-			return nil, err
-		}
-	}
-
+func readLockInfo(ctx context.Context, fileReader GiterminismManagerFileReader, lockConf *lockConfig) (*LockInfo, error) {
 	lockInfo := &LockInfo{
 		includeToCommitMapper: make(map[string]string),
 	}
 
-	for _, l := range config.IncludeLock {
+	for _, l := range lockConf.IncludeLock {
 		ref, err := l.Ref()
 		if err != nil {
 			return nil, fmt.Errorf("unable to get ref for include %s: %w", l.Git, err)
