@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/werf/3p-helm/pkg/chart"
 	"github.com/werf/3p-helm/pkg/chart/loader"
 	"github.com/werf/3p-helm/pkg/downloader"
+	"github.com/werf/3p-helm/pkg/werf/helmopts"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/deploy/bundles/registry"
 )
@@ -16,6 +16,7 @@ import (
 type PublishOptions struct {
 	HelmCompatibleChart bool
 	RenameChart         string
+	HelmOptions         helmopts.HelmOptions
 }
 
 func Publish(ctx context.Context, bundleDir, bundleRef string, bundlesRegistryClient *registry.Client, opts PublishOptions) error {
@@ -24,15 +25,13 @@ func Publish(ctx context.Context, bundleDir, bundleRef string, bundlesRegistryCl
 		return fmt.Errorf("error parsing bundle ref %q: %w", bundleRef, err)
 	}
 
-	loader.GlobalLoadOptions = &chart.LoadOptions{}
-
 	if err := logboek.Context(ctx).Default().LogProcess("Saving bundle to the local chart helm cache").DoError(func() error {
 		path, err := filepath.Abs(bundleDir)
 		if err != nil {
 			return err
 		}
 
-		ch, err := loader.Load(path)
+		ch, err := loader.Load(path, opts.HelmOptions)
 		if err != nil {
 			var e *downloader.ErrRepoNotFound
 			if errors.As(err, &e) {
@@ -46,7 +45,7 @@ func Publish(ctx context.Context, bundleDir, bundleRef string, bundlesRegistryCl
 			ch.Metadata.Name = *nameOverwrite
 		}
 
-		if err := bundlesRegistryClient.SaveChart(ch, r); err != nil {
+		if err := bundlesRegistryClient.SaveChart(ch, r, opts.HelmOptions); err != nil {
 			return fmt.Errorf("unable to save bundle to the local chart helm cache: %w", err)
 		}
 		return nil
@@ -55,7 +54,7 @@ func Publish(ctx context.Context, bundleDir, bundleRef string, bundlesRegistryCl
 	}
 
 	if err := logboek.Context(ctx).LogProcess("Pushing bundle %q", bundleRef).DoError(func() error {
-		return bundlesRegistryClient.PushChart(r)
+		return bundlesRegistryClient.PushChart(r, opts.HelmOptions)
 	}); err != nil {
 		return err
 	}

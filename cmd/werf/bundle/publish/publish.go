@@ -23,7 +23,8 @@ import (
 	"github.com/werf/3p-helm/pkg/cli/values"
 	"github.com/werf/3p-helm/pkg/downloader"
 	"github.com/werf/3p-helm/pkg/getter"
-	"github.com/werf/3p-helm/pkg/werf/chartextender"
+	"github.com/werf/3p-helm/pkg/werf/file"
+	"github.com/werf/3p-helm/pkg/werf/helmopts"
 	"github.com/werf/3p-helm/pkg/werf/secrets"
 	"github.com/werf/3p-helm/pkg/werf/secrets/runtimedata"
 	"github.com/werf/common-go/pkg/secrets_manager"
@@ -331,7 +332,7 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 		return err
 	}
 
-	loader.ChartFileReader = giterminismManager.FileReader()
+	file.ChartFileReader = giterminismManager.FileReader()
 
 	headHash, err := giterminismManager.LocalGitRepo().HeadCommitHash(ctx)
 	if err != nil {
@@ -343,7 +344,7 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 		return fmt.Errorf("getting HEAD commit time failed: %w", err)
 	}
 
-	chartutil.ServiceValues, err = helpers.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepo, imagesInfoGetters, helpers.ServiceValuesOptions{
+	serviceValues, err := helpers.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepo, imagesInfoGetters, helpers.ServiceValuesOptions{
 		Env:        *commonCmdData.Environment,
 		CommitHash: headHash,
 		CommitDate: headTime,
@@ -353,17 +354,6 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 	}
 
 	helm_v3.Settings.Debug = *commonCmdData.LogDebug
-
-	loader.WithoutDefaultSecretValues = *commonCmdData.DisableDefaultSecretValues
-	loader.WithoutDefaultValues = *commonCmdData.DisableDefaultValues
-	secrets.CoalesceTablesFunc = chartutil.CoalesceTables
-	secrets.SecretsWorkingDir = giterminismManager.ProjectDir()
-	secrets_manager.DisableSecretsDecryption = *commonCmdData.IgnoreSecretKey
-
-	chartextender.DefaultChartAPIVersion = chart.APIVersionV2
-	chartextender.DefaultChartName = werfConfig.Meta.Project
-	chartextender.DefaultChartVersion = "1.0.0"
-	chartextender.ChartAppVersion = common.GetHelmChartConfigAppVersion(werfConfig)
 
 	// FIXME(1.3): compatibility mode with older 1.2 versions, which do not require WERF_SECRET_KEY in the 'werf bundle publish' command
 	if err := secrets_manager.Manager.AllowMissedSecretKeyMode(giterminismManager.ProjectDir()); err != nil {
@@ -379,23 +369,35 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 	bundleTmpDir := filepath.Join(werf.GetServiceDir(), "tmp", "bundles", uuid.NewString())
 	defer os.RemoveAll(bundleTmpDir)
 
-	downloader := &downloader.Manager{
-		Out:               logboek.Context(ctx).OutStream(),
-		ChartPath:         bundleTmpDir,
-		AllowMissingRepos: true,
-		Getters:           getter.All(helm_v3.Settings),
-		RegistryClient:    helmRegistryClient,
-		RepositoryConfig:  helm_v3.Settings.RepositoryConfig,
-		RepositoryCache:   helm_v3.Settings.RepositoryCache,
-		Debug:             helm_v3.Settings.Debug,
+	opts := helmopts.HelmOptions{
+		ChartLoadOpts: helmopts.ChartLoadOptions{
+			ChartAppVersion:        common.GetHelmChartConfigAppVersion(werfConfig),
+			ChartDir:               bundleTmpDir,
+			DefaultChartAPIVersion: chart.APIVersionV2,
+			DefaultChartName:       werfConfig.Meta.Project,
+			DefaultChartVersion:    "1.0.0",
+			DepDownloader: &downloader.Manager{
+				Out:               logboek.Context(ctx).OutStream(),
+				ChartPath:         bundleTmpDir,
+				AllowMissingRepos: true,
+				Getters:           getter.All(helm_v3.Settings),
+				RegistryClient:    helmRegistryClient,
+				RepositoryConfig:  helm_v3.Settings.RepositoryConfig,
+				RepositoryCache:   helm_v3.Settings.RepositoryCache,
+				Debug:             helm_v3.Settings.Debug,
+			},
+			NoDecryptSecrets:      *commonCmdData.IgnoreSecretKey,
+			NoDefaultSecretValues: *commonCmdData.DisableDefaultSecretValues,
+			NoDefaultValues:       *commonCmdData.DisableDefaultValues,
+			SecretValuesFiles:     common.GetSecretValues(&commonCmdData),
+			SecretsWorkingDir:     giterminismManager.ProjectDir(),
+			ExtraValues:           serviceValues,
+		},
 	}
-	loader.SetChartPathFunc = downloader.SetChartPath
-	loader.DepsBuildFunc = downloader.Build
-
-	loader.SetServiceDir(werf.GetServiceDir())
 
 	if err = createNewBundle(
 		ctx,
+		serviceValues,
 		extraAnnotations,
 		serviceAnnotations,
 		extraLabels,
@@ -409,6 +411,7 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 			Values:       common.GetSet(&commonCmdData),
 			FileValues:   common.GetSetFile(&commonCmdData),
 		},
+		opts,
 	); err != nil {
 		return fmt.Errorf("create bundle: %w", err)
 	}
@@ -420,16 +423,18 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 		bundleRepo = stagesStorage.Address()
 	}
 
-	chart.CurrentChartType = chart.ChartTypeBundle
+	opts.ChartLoadOpts.ChartType = helmopts.ChartTypeBundle
 
 	return bundles.Publish(ctx, bundleTmpDir, fmt.Sprintf("%s:%s", bundleRepo, cmdData.Tag), bundlesRegistryClient, bundles.PublishOptions{
 		HelmCompatibleChart: *commonCmdData.HelmCompatibleChart,
 		RenameChart:         *commonCmdData.RenameChart,
+		HelmOptions:         opts,
 	})
 }
 
 func createNewBundle(
 	ctx context.Context,
+	serviceValues map[string]interface{},
 	extraAnnotations map[string]string,
 	serviceAnnotations map[string]string,
 	extraLabels map[string]string,
@@ -438,9 +443,10 @@ func createNewBundle(
 	destDir string,
 	chartVersion string,
 	vals *values.Options,
+	opts helmopts.HelmOptions,
 ) error {
 	chartPath := filepath.Join(projectDir, chartDir)
-	chrt, err := loader.LoadDir(chartPath)
+	chrt, err := loader.LoadDir(chartPath, opts)
 	if err != nil {
 		return fmt.Errorf("error loading chart %q: %w", chartPath, err)
 	}
@@ -448,12 +454,12 @@ func createNewBundle(
 	var valsData []byte
 	{
 		p := getter.All(helm_v3.Settings)
-		vals, err := vals.MergeValues(p)
+		vals, err := vals.MergeValues(p, opts)
 		if err != nil {
 			return fmt.Errorf("unable to merge input values: %w", err)
 		}
 
-		bundleVals, err := makeBundleValues(chrt, vals)
+		bundleVals, err := makeBundleValues(chrt, vals, serviceValues)
 		if err != nil {
 			return fmt.Errorf("unable to construct bundle values: %w", err)
 		}
@@ -466,7 +472,7 @@ func createNewBundle(
 
 	var secretValsData []byte
 	if chrt.SecretsRuntimeData != nil && !secrets_manager.Manager.IsMissedSecretKeyModeEnabled() {
-		vals, err := makeBundleSecretValues(ctx, chrt.SecretsRuntimeData)
+		vals, err := makeBundleSecretValues(ctx, chrt.SecretsRuntimeData, opts)
 		if err != nil {
 			return fmt.Errorf("unable to construct bundle secret values: %w", err)
 		}
@@ -481,7 +487,7 @@ func createNewBundle(
 		destDir = chrt.Metadata.Name
 	}
 
-	secrets.ChartDir = destDir
+	opts.ChartLoadOpts.ChartDir = destDir
 
 	if err := os.RemoveAll(destDir); err != nil {
 		return fmt.Errorf("unable to remove %q: %w", destDir, err)
@@ -642,10 +648,11 @@ func writeBundleJsonMap(dataMap map[string]string, path string) error {
 func makeBundleValues(
 	chrt *chart.Chart,
 	inputVals map[string]interface{},
+	serviceValues map[string]interface{},
 ) (map[string]interface{}, error) {
 	chartutil.DebugPrintValues(context.Background(), "input", inputVals)
 
-	vals, err := chartutil.MergeInternal(context.Background(), inputVals, chartutil.ServiceValues, nil)
+	vals, err := chartutil.MergeInternal(context.Background(), inputVals, serviceValues, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to coalesce werf chart values: %w", err)
 	}
@@ -671,9 +678,10 @@ func makeBundleValues(
 func makeBundleSecretValues(
 	ctx context.Context,
 	secretsRuntimeData runtimedata.RuntimeData,
+	opts helmopts.HelmOptions,
 ) (map[string]interface{}, error) {
 	if chartutil.DebugSecretValues() {
 		chartutil.DebugPrintValues(context.Background(), "secret", secretsRuntimeData.GetDecryptedSecretValues())
 	}
-	return secretsRuntimeData.GetEncodedSecretValues(ctx, secrets_manager.Manager, false)
+	return secretsRuntimeData.GetEncodedSecretValues(ctx, secrets_manager.Manager, opts.ChartLoadOpts.SecretsWorkingDir, opts.ChartLoadOpts.NoDecryptSecrets)
 }
