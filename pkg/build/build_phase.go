@@ -1415,7 +1415,7 @@ func (phase *BuildPhase) convergeSbom(ctx context.Context, stageDesc *imagePkg.S
 	// TODO (zaytsev): how to guard temporal image from werf host cleanup?
 
 	var tmpImgId string
-	if err := logboek.Context(ctx).LogProcess("SBOM").DoError(func() error {
+	if err := logboek.Context(ctx).LogBlock("SBOM").DoError(func() error {
 		var err error
 
 		tmpImgId, err = phase.Conveyor.ContainerBackend.GenerateSBOM(ctx, scanOpts, dstImgLabels)

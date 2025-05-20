@@ -435,18 +435,16 @@ func (backend *DockerServerBackend) GenerateSBOM(ctx context.Context, scanOpts s
 	}
 	defer workingTree.Cleanup(ctx)
 
-	if err := logboek.Context(ctx).Default().LogProcess("Scan an image").DoError(func() error {
-		runArgs := mapSbomScanOptionsToDockerRunCommand(workingTree.RootDir(), workingTree.BillsDir(), billNames, scanOpts)
+	scanLogger := logboek.Context(ctx).Default().LogProcess("Scan source image")
+	scanLogger.Start()
 
-		// TODO: why output is empty?
-		if _, err := docker.CliRun_RecordedOutput(ctx, runArgs...); err != nil {
-			return fmt.Errorf("unable to run scanner inside of container: %w", err)
-		}
-
-		return nil
-	}); err != nil {
-		return "", err
+	runArgs := mapSbomScanOptionsToDockerRunCommand(workingTree.RootDir(), workingTree.BillsDir(), billNames, scanOpts)
+	// TODO: why output is empty?
+	if _, err := docker.CliRun_RecordedOutput(ctx, runArgs...); err != nil {
+		scanLogger.End()
+		return "", fmt.Errorf("unable to run scanner inside of container: %w", err)
 	}
+	scanLogger.End()
 
 	contextAddFiles := lo.Map(billNames, func(billName string, _ int) string {
 		return filepath.Join(workingTree.BillsDir(), billName)
@@ -462,7 +460,9 @@ func (backend *DockerServerBackend) GenerateSBOM(ctx context.Context, scanOpts s
 		return "", fmt.Errorf("unable to create sbom scanning results archive: %w", err)
 	}
 
-	logboek.Context(ctx).Default().LogLn("Store the result")
+	buildLogger := logboek.Context(ctx).Default().LogProcess("Build destination image")
+	buildLogger.Start()
+
 	imageId, err := backend.BuildDockerfile(ctx, workingTree.ContainerfileContent(), BuildDockerfileOpts{
 		DockerfileCtxRelPath: workingTree.Containerfile(),
 		BuildContextArchive:  archive,
@@ -470,8 +470,10 @@ func (backend *DockerServerBackend) GenerateSBOM(ctx context.Context, scanOpts s
 		Quiet:                true,
 	})
 	if err != nil {
+		buildLogger.End()
 		return "", fmt.Errorf("unable to build sbom result image: %w", err)
 	}
+	buildLogger.End()
 
 	return imageId, nil
 }
