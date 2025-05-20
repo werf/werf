@@ -1138,27 +1138,29 @@ func (backend *BuildahBackend) GenerateSBOM(ctx context.Context, scanOpts scanne
 	// TODO (zaytsev): support multiple commands
 	scanOptions.SBOMOutput = filepath.Join(workingTree.RootDir(), workingTree.BillsDir(), workingTree.BillPaths()[0])
 
-	if err = logboek.Context(ctx).Default().LogProcess("Scan an image").DoError(func() error {
-		imageRef, err := backend.buildah.Commit(ctx, scannerContainerRef, buildah.CommitOpts{
-			CommonOpts: buildah.CommonOpts{
-				LogWriter: logboek.Context(ctx).OutStream(),
-			},
-			SBOMScanOptions: []buildah.SBOMScanOptions{scanOptions},
-		})
-		if err != nil {
-			return fmt.Errorf("unable to commit scanner container %q: %w", scannerContainerName, err)
-		}
+	scanLogger := logboek.Context(ctx).Default().LogProcess("Scan source image")
+	scanLogger.Start()
 
+	imageRef, err := backend.buildah.Commit(ctx, scannerContainerRef, buildah.CommitOpts{
+		CommonOpts: buildah.CommonOpts{
+			LogWriter: logboek.Context(ctx).OutStream(),
+		},
+		SBOMScanOptions: []buildah.SBOMScanOptions{scanOptions},
+	})
+	if err != nil {
+		scanLogger.End()
+		return "", fmt.Errorf("unable to commit scanner container %q: %w", scannerContainerName, err)
+	}
+	defer func() {
 		if err = backend.buildah.Rmi(ctx, imageRef, buildah.RmiOpts{Force: true}); err != nil {
 			logboek.Context(ctx).Warn().LogF("removing image %q and container %q\n", imageRef, scannerContainerName)
 		}
+	}()
+	scanLogger.End()
 
-		return nil
-	}); err != nil {
-		return "", err
-	}
+	buildLogger := logboek.Context(ctx).Default().LogProcess("Build destination image")
+	buildLogger.Start()
 
-	logboek.Context(ctx).Default().LogLn("Store the result")
 	imageId, err := backend.buildah.BuildFromDockerfile(ctx, workingTree.Containerfile(), buildah.BuildFromDockerfileOpts{
 		ContextDir: workingTree.RootDir(),
 		Labels:     dstImgLabels,
@@ -1167,8 +1169,10 @@ func (backend *BuildahBackend) GenerateSBOM(ctx context.Context, scanOpts scanne
 		},
 	})
 	if err != nil {
+		buildLogger.End()
 		return "", fmt.Errorf("unable to build sbom result image: %w", err)
 	}
+	buildLogger.End()
 
 	return imageId, nil
 }
