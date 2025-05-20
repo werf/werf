@@ -1138,10 +1138,17 @@ func (backend *BuildahBackend) GenerateSBOM(ctx context.Context, scanOpts scanne
 	// TODO (zaytsev): support multiple commands
 	scanOptions.SBOMOutput = filepath.Join(workingTree.RootDir(), workingTree.BillsDir(), workingTree.BillPaths()[0])
 
+	scanLogger := logboek.Context(ctx).Default().LogProcess("Scan source image")
+	scanLogger.Start()
+
 	imageRef, err := backend.buildah.Commit(ctx, scannerContainerRef, buildah.CommitOpts{
+		CommonOpts: buildah.CommonOpts{
+			LogWriter: logboek.Context(ctx).OutStream(),
+		},
 		SBOMScanOptions: []buildah.SBOMScanOptions{scanOptions},
 	})
 	if err != nil {
+		scanLogger.End()
 		return "", fmt.Errorf("unable to commit scanner container %q: %w", scannerContainerName, err)
 	}
 	defer func() {
@@ -1149,14 +1156,23 @@ func (backend *BuildahBackend) GenerateSBOM(ctx context.Context, scanOpts scanne
 			logboek.Context(ctx).Warn().LogF("removing image %q and container %q\n", imageRef, scannerContainerName)
 		}
 	}()
+	scanLogger.End()
+
+	buildLogger := logboek.Context(ctx).Default().LogProcess("Build destination image")
+	buildLogger.Start()
 
 	imageId, err := backend.buildah.BuildFromDockerfile(ctx, workingTree.Containerfile(), buildah.BuildFromDockerfileOpts{
 		ContextDir: workingTree.RootDir(),
 		Labels:     dstImgLabels,
+		CommonOpts: buildah.CommonOpts{
+			LogWriter: io.Discard, // discard build log
+		},
 	})
 	if err != nil {
+		buildLogger.End()
 		return "", fmt.Errorf("unable to build sbom result image: %w", err)
 	}
+	buildLogger.End()
 
 	return imageId, nil
 }
