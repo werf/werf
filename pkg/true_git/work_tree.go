@@ -88,15 +88,34 @@ func prepareWorkTree(ctx context.Context, repoDir, workTreeCacheDir, commit stri
 		}
 
 		isWorkTreeRegistered := false
-		if workTreeList, err := GetWorkTreeList(ctx, repoDir); err != nil {
+		isWorkTreePrunable := false
+		var dirToPrune, pruneReason string
+
+		workTreeList, err := GetWorkTreeList(ctx, repoDir)
+		if err != nil {
 			return "", fmt.Errorf("unable to get worktree list for repo %s: %w", repoDir, err)
-		} else {
-			for _, workTreeDesc := range workTreeList {
-				if filepath.ToSlash(workTreeDesc.Path) == filepath.ToSlash(resolvedWorkTreeDir) {
-					isWorkTreeRegistered = true
-				}
+		}
+
+		for _, workTreeDesc := range workTreeList {
+			if filepath.ToSlash(workTreeDesc.Path) == filepath.ToSlash(resolvedWorkTreeDir) {
+				isWorkTreeRegistered = true
+			}
+			if workTreeDesc.Prunable {
+				isWorkTreePrunable = true
+				dirToPrune = workTreeDesc.Path
+				pruneReason = workTreeDesc.PruneReason
 			}
 		}
+
+		if isWorkTreePrunable {
+			logboek.Context(ctx).Default().LogFDetails("Detected prunable worktree %s due to %s\n", dirToPrune, pruneReason)
+			logboek.Context(ctx).Default().LogF("Removing invalidated work tree dir %q of repo %s\n", dirToPrune, repoDir)
+			err := RemoveWorkTree(ctx, repoDir, dirToPrune)
+			if err != nil {
+				return "", fmt.Errorf("unable to remove worktree %q: %w", dirToPrune, err)
+			}
+		}
+
 		if !isWorkTreeRegistered {
 			logboek.Context(ctx).Default().LogFDetails("Detected unregistered work tree dir %q of repo %s\n", workTreeDir, repoDir)
 		}
@@ -289,9 +308,11 @@ func ResolveRepoDir(ctx context.Context, repoDir string) (string, error) {
 }
 
 type WorktreeDescriptor struct {
-	Path   string
-	Head   string
-	Branch string
+	Path        string
+	Head        string
+	Branch      string
+	Prunable    bool
+	PruneReason string
 }
 
 func GetWorkTreeList(ctx context.Context, repoDir string) ([]WorktreeDescriptor, error) {
@@ -316,6 +337,9 @@ func GetWorkTreeList(ctx context.Context, repoDir string) ([]WorktreeDescriptor,
 			worktreeDesc.Head = strings.TrimPrefix(line, "HEAD ")
 		case strings.HasPrefix(line, "branch "):
 			worktreeDesc.Branch = strings.TrimPrefix(line, "branch ")
+		case strings.HasPrefix(line, "prunable "):
+			worktreeDesc.Prunable = true
+			worktreeDesc.PruneReason = strings.TrimPrefix(line, "prunable ")
 		case line == "":
 			res = append(res, *worktreeDesc)
 			worktreeDesc = nil
@@ -323,4 +347,9 @@ func GetWorkTreeList(ctx context.Context, repoDir string) ([]WorktreeDescriptor,
 	}
 
 	return res, nil
+}
+
+func RemoveWorkTree(ctx context.Context, repoDir string, workTreeDir string) error {
+	removeCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: repoDir}, "worktree", "remove", workTreeDir)
+	return removeCmd.Run(ctx)
 }
