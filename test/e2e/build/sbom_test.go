@@ -37,8 +37,10 @@ var _ = Describe("Simple build", Label("e2e", "build", "sbom", "simple"), func()
 				buildOut, buildReport := werfProject.BuildWithReport(SuiteData.GetBuildReportPath(buildReportName), nil)
 				Expect(buildOut).To(ContainSubstring("Building stage"))
 
-				// TODO: validate SBOM logging output
-				// By("state0: SBOM logging output")
+				By("state0: SBOM logging output")
+				Expect(buildOut).To(ContainSubstring("SBOM"))
+				Expect(buildOut).To(ContainSubstring("Scan source image"))
+				Expect(buildOut).To(ContainSubstring("Build destination image"))
 
 				for builtImgName, reportRecord := range buildReport.Images {
 					By(fmt.Sprintf("state0: validate result for %q", builtImgName))
