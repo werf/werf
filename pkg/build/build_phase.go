@@ -1414,19 +1414,15 @@ func (phase *BuildPhase) convergeSbom(ctx context.Context, stageDesc *imagePkg.S
 	// 3) Generate and label new sbom image
 	// TODO (zaytsev): how to guard temporal image from werf host cleanup?
 
-	var tmpImgId string
-	if err := logboek.Context(ctx).LogBlock("SBOM").DoError(func() error {
-		var err error
+	generationLogger := logboek.Context(ctx).Default().LogProcess("SBOM")
+	generationLogger.Start()
 
-		tmpImgId, err = phase.Conveyor.ContainerBackend.GenerateSBOM(ctx, scanOpts, dstImgLabels)
-		if err != nil {
-			return fmt.Errorf("unable to generate sbom image: %w", err)
-		}
-
-		return nil
-	}); err != nil {
-		return err
+	tmpImgId, err := phase.Conveyor.ContainerBackend.GenerateSBOM(ctx, scanOpts, dstImgLabels)
+	if err != nil {
+		generationLogger.End()
+		return fmt.Errorf("unable to scan source image and store the result: %w", err)
 	}
+	generationLogger.End()
 
 	sbomTag := fmt.Sprintf("%s-sbom", stageDesc.Info.Name)
 	if err := phase.Conveyor.ContainerBackend.Tag(ctx, tmpImgId, sbomTag, container_backend.TagOpts{}); err != nil {
