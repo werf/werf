@@ -57,4 +57,18 @@ var _ = Describe("FilterList", func() {
 			filter.FilterList{},
 		),
 	)
+
+	DescribeTable("ToStringSlice",
+		func(input filter.FilterList, expected []string) {
+			Expect(input.ToStringSlice()).To(Equal(expected))
+		},
+		Entry(
+			"should work",
+			filter.FilterList{
+				filter.NewFilter("foo", "bar"),
+				filter.NewFilter("baz", "wow"),
+			},
+			[]string{"foo=bar", "baz=wow"},
+		),
+	)
 })

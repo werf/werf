@@ -7,6 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	imagePkg "github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/sbom"
 	"github.com/werf/werf/v2/test/pkg/contback"
 	"github.com/werf/werf/v2/test/pkg/werf"
 )
@@ -45,11 +46,9 @@ var _ = Describe("Simple build", Label("e2e", "build", "sbom", "simple"), func()
 				for builtImgName, reportRecord := range buildReport.Images {
 					By(fmt.Sprintf("state0: validate result for %q", builtImgName))
 					{
-						sbomImgName := fmt.Sprintf("%s-sbom", reportRecord.DockerImageName)
-
 						By("state0: SBOM image metadata")
 						imgInspect := contRuntime.GetImageInspect(reportRecord.DockerImageName)
-						sbomImgInspect := contRuntime.GetImageInspect(sbomImgName)
+						sbomImgInspect := contRuntime.GetImageInspect(sbom.ImageName(reportRecord.DockerImageName))
 
 						// shared labels
 						Expect(sbomImgInspect.Config.Labels[imagePkg.WerfLabel]).To(Equal(imgInspect.Config.Labels[imagePkg.WerfLabel]))
@@ -60,12 +59,12 @@ var _ = Describe("Simple build", Label("e2e", "build", "sbom", "simple"), func()
 						Expect(sbomImgInspect.Config.Labels[imagePkg.WerfSbomLabel]).To(Equal("f2b172aa9b952cfba7ae9914e7e5a9760ff0d2c7d5da69d09195c63a2577da79"))
 
 						By("state0: SBOM image file system layout")
-						fsReader := contback.NewFileSystemReaderWrapper(contRuntime.StreamImage(sbomImgName))
+						fsStreamReader := contback.NewFileSystemReaderWrapper(contRuntime.StreamImage(sbom.ImageName(reportRecord.DockerImageName)))
 
-						Expect(fsReader.Next().Path()).To(Equal("sbom/"))
-						Expect(fsReader.Next().Path()).To(Equal("sbom/cyclonedx@1.6/"))
-						Expect(fsReader.Next().Path()).To(Equal("sbom/cyclonedx@1.6/70ee6b0600f471718988bc123475a625ecd4a5763059c62802ae6280e65f5623.json"))
-						Expect(fsReader.Next()).To(BeNil())
+						Expect(fsStreamReader.Next().Path()).To(Equal("sbom/"))
+						Expect(fsStreamReader.Next().Path()).To(Equal("sbom/cyclonedx@1.6/"))
+						Expect(fsStreamReader.Next().Path()).To(Equal("sbom/cyclonedx@1.6/70ee6b0600f471718988bc123475a625ecd4a5763059c62802ae6280e65f5623.json"))
+						Expect(fsStreamReader.Next()).To(BeNil())
 					}
 				}
 			})
