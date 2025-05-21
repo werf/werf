@@ -355,11 +355,12 @@ func (b *NativeBuildah) StreamImage(ctx context.Context, ref string, opts Stream
 		Store:               b.Store,
 		SystemContext:       sysCtx,
 		ManifestType:        manifest.DockerV2Schema2MediaType,
-		MaxRetries:          MaxPullPushRetries,
-		RetryDelay:          PullPushRetryDelay,
 	}
 
-	destinationRef, err := alltransports.ParseImageName(fmt.Sprintf("oci-archive://%s", tmpFile.Name()))
+	// NOTE: Here we use "docker-archive" transport on buildah@1.35.2 to disable gzip compression.
+	// Is there any way to disable gzip compression with "oci-archive" transport using go code?
+	// In e2e this approach works with Buildah CLI.
+	destinationRef, err := alltransports.ParseImageName(fmt.Sprintf("docker-archive:%s", tmpFile.Name()))
 	if err != nil {
 		return nil, fmt.Errorf("error parsing destination ref from %q: %w", tmpFile.Name(), err)
 	}

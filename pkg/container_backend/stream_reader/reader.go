@@ -5,7 +5,8 @@ import (
 	"bytes"
 	"errors"
 	"io"
-	"strings"
+	"net/http"
+	"slices"
 )
 
 // NewFileSystemStreamReader takes an image tar reader and returns file system stream reader.
@@ -35,22 +36,20 @@ func findRoot(imgTarReader *tar.Reader) (*bytes.Buffer, error) {
 			continue
 		}
 
-		if !strings.HasPrefix(header.Name, "blobs/sha256/") {
-			continue
-		}
-
-		// test "is json file"
-		firstByte := make([]byte, 1)
-		if _, err = imgTarReader.Read(firstByte); err != nil {
+		// Look for the file system tar archive inside of image tar archive
+		firstBytes := make([]byte, min(header.Size, 512))
+		if _, err = imgTarReader.Read(firstBytes); err != nil && !errors.Is(err, io.EOF) {
 			return nil, err
 		}
-		if string(firstByte) == "{" {
+
+		detectedContentType := http.DetectContentType(firstBytes)
+		if !slices.Contains([]string{"application/x-tar", "application/octet-stream"}, detectedContentType) {
 			continue
 		}
 
-		// don't forget to write the first byte
-		bufFs := bytes.NewBuffer(firstByte)
-		// copy from second byte upt to the last byte
+		// don't forget to write the first bytes
+		bufFs := bytes.NewBuffer(firstBytes)
+		// copy from second byte upt to the rest bytes
 		if _, err = io.Copy(bufFs, imgTarReader); err != nil {
 			return nil, err
 		}
@@ -77,4 +76,19 @@ func (r *FileSystemStreamReader) Next() (*File, error) {
 	}
 
 	return newFile(r.reader, header), nil
+}
+
+func (r *FileSystemStreamReader) Find(predicate func(file *File) bool) (*File, bool, error) {
+	for {
+		f, err := r.Next()
+		if err != nil {
+			return nil, false, err
+		}
+		if f == nil {
+			return nil, false, nil
+		}
+		if predicate(f) {
+			return f, true, nil
+		}
+	}
 }
