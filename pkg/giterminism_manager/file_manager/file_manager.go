@@ -68,7 +68,7 @@ func NewFileManager(ctx context.Context, opts NewFileManagerOptions) (*FileManag
 
 func (f *FileManager) ReadConfig(ctx context.Context, relPath string) (string, []byte, error) {
 	exists, _ := f.fileReader.IsConfigExistAnywhere(ctx, relPath)
-	if !exists {
+	if !exists && len(f.includes) > 0 {
 		configPath, configData, includeErr := includes.FindWerfConfig(ctx, f.includes, file_reader.ConfigPathList(relPath))
 		if includeErr != nil {
 			if errors.Is(includeErr, includes.ErrConfigFileNotFound) {
@@ -144,10 +144,10 @@ func (f *FileManager) ConfigGoTemplateFilesGet(ctx context.Context, relPath stri
 		return nil, err
 	}
 
-	if !exists {
+	if !exists && len(f.includes) > 0 {
 		data, err := f.tryReadFromIncludes(ctx, relPath)
 		if err != nil {
-			return nil, fmt.Errorf("unable to read file %q from includes: %w", relPath, err)
+			return nil, fmt.Errorf("unable to read file %q: %w", relPath, err)
 		}
 		return data, nil
 	}
@@ -299,7 +299,12 @@ func (f *FileManager) LoadChartDir(ctx context.Context, dir string) ([]*file.Cha
 
 	var chartDir []*file.ChartExtenderBufferedFile
 
-	if exist, _ := util.DirExists(absDir); exist {
+	readFromLocalFs, err := loadChartDirFromLocalSource(absDir)
+	if err != nil {
+		return nil, err
+	}
+
+	if readFromLocalFs {
 		var err error
 		chartDir, err = f.fileReader.LoadChartDir(ctx, absDir)
 		if err != nil {
@@ -352,6 +357,17 @@ func (f *FileManager) LoadChartDir(ctx context.Context, dir string) ([]*file.Cha
 	return chartDir, nil
 }
 
+func loadChartDirFromLocalSource(dir string) (bool, error) {
+	_, err := os.Stat(dir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
+		return false, fmt.Errorf("os.Stat failed for: %w", err)
+	}
+	return true, nil
+}
+
 func (f *FileManager) ChartIsDir(relPath string) (bool, error) {
 	absPath := util.GetAbsoluteFilepath(relPath)
 
@@ -391,7 +407,7 @@ func (f *FileManager) ChartIsDir(relPath string) (bool, error) {
 		return false, nil
 	}
 
-	return false, fmt.Errorf("path %q not found in local filesystem or includes", relPath)
+	return false, fmt.Errorf("path %q not found on local filesystem or includes", relPath)
 }
 
 const (

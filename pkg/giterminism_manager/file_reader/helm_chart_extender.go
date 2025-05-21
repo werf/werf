@@ -3,9 +3,11 @@ package file_reader
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 
 	"github.com/werf/3p-helm/pkg/werf/file"
+	"github.com/werf/common-go/pkg/util"
 )
 
 func (r FileReader) LocateChart(ctx context.Context, chartDir string) (string, error) {
@@ -85,4 +87,18 @@ func (r FileReader) loadChartDir(ctx context.Context, relDir string) ([]*file.Ch
 	}
 
 	return res, nil
+}
+
+// This method exists only for backward compatibility for Loader interface
+func (r FileReader) ChartIsDir(relPath string) (bool, error) {
+	absPath := util.GetAbsoluteFilepath(relPath)
+
+	fi, err := os.Stat(absPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, fmt.Errorf("path %q not found on local filesystem", relPath)
+		}
+		return false, fmt.Errorf("os.Stat failed for %q: %w", absPath, err)
+	}
+	return fi.IsDir(), nil
 }

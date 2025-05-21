@@ -122,14 +122,14 @@ config:
 					filesGlob: ".werf/file1",
 					entryBase: entryBase{
 						addFiles:             []string{".werf/file1"},
-						expectedErrSubstring: `error calling Glob: {{ .Files.Glob ".werf/file1" }}: the untracked file ".werf/file1" must be committed`,
+						expectedErrSubstring: `the untracked file ".werf/file1" must be committed`,
 					},
 				}),
 				Entry("the files not tracked", entry{
 					filesGlob: ".werf/*",
 					entryBase: entryBase{
 						addFiles: []string{".werf/file1", ".werf/file2", ".werf/file3"},
-						expectedErrSubstring: `error calling Glob: {{ .Files.Glob ".werf/*" }}: the following untracked files must be committed:
+						expectedErrSubstring: `the following untracked files must be committed:
 
  - .werf/file1
  - .werf/file2
@@ -151,7 +151,7 @@ config:
 						addFiles:               []string{".werf/file1"},
 						commitFiles:            []string{".werf/file1"},
 						changeFilesAfterCommit: []string{".werf/file1"},
-						expectedErrSubstring:   `error calling Glob: {{ .Files.Glob ".werf/file1" }}: the file ".werf/file1" must be committed`,
+						expectedErrSubstring:   `the file ".werf/file1" must be committed`,
 					},
 				}),
 				Entry("config.goTemplateRendering.allowUncommittedFiles (.werf/file1) covers the not tracked file", entry{
