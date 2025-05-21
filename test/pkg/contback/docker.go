@@ -1,7 +1,6 @@
 package contback
 
 import (
-	"archive/tar"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -49,7 +48,7 @@ func (r *DockerBackend) Pull(ctx context.Context, image string) {
 	utils.RunSucceedCommand(ctx, "/", "docker", args...)
 }
 
-func (r *DockerBackend) GetImageFileSystemReader(ctx context.Context, image string) *FileSystemReader {
+func (r *DockerBackend) StreamImage(ctx context.Context, image string) *bytes.Reader {
 	args := r.CommonCliArgs
 	args = append(args, "image", "save", image)
 
@@ -60,11 +59,7 @@ func (r *DockerBackend) GetImageFileSystemReader(ctx context.Context, image stri
 
 	Expect(err).NotTo(HaveOccurred())
 
-	imgTarReader := tar.NewReader(bytes.NewReader(b))
-	fsReader, err := newFileSystemReader(imgTarReader)
-	Expect(err).NotTo(HaveOccurred())
-
-	return fsReader
+	return bytes.NewReader(b)
 }
 
 func (r *DockerBackend) GetImageInspect(ctx context.Context, image string) DockerImageInspect {

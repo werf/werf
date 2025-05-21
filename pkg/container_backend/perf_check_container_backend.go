@@ -1,6 +1,7 @@
 package container_backend
 
 import (
+	"bytes"
 	"context"
 
 	"github.com/werf/logboek"
@@ -211,6 +212,14 @@ func (runtime *PerfCheckContainerBackend) PruneVolumes(ctx context.Context, opti
 	logboek.Context(ctx).Default().LogProcess("ContainerBackend.PruneVolumes %v", options).
 		Do(func() {
 			report, err = runtime.ContainerBackend.PruneVolumes(ctx, options)
+		})
+	return
+}
+
+func (runtime *PerfCheckContainerBackend) StreamImage(ctx context.Context, ref string) (reader *bytes.Reader, err error) {
+	logboek.Context(ctx).Default().LogProcess("ContainerBackend.StreamImage %v", ref).
+		Do(func() {
+			reader, err = runtime.ContainerBackend.StreamImage(ctx, ref)
 		})
 	return
 }

@@ -334,6 +334,48 @@ func (b *NativeBuildah) Push(ctx context.Context, ref string, opts PushOpts) err
 	return nil
 }
 
+func (b *NativeBuildah) StreamImage(ctx context.Context, ref string, opts StreamOpts) (*bytes.Reader, error) {
+	// NOTICE: targetPlatform specified for push causes buildah to fail for some unknown reason
+	sysCtx, err := b.getSystemContext("")
+	if err != nil {
+		return nil, err
+	}
+
+	tmpFile, err := os.CreateTemp(b.TmpDir, "buildah-img-******.tar")
+	if err != nil {
+		return nil, err
+	}
+	defer tmpFile.Close()
+	defer os.Remove(tmpFile.Name())
+
+	pushOpts := buildah.PushOptions{
+		Compression:         define.Uncompressed,
+		SignaturePolicyPath: b.SignaturePolicyPath,
+		ReportWriter:        opts.LogWriter,
+		Store:               b.Store,
+		SystemContext:       sysCtx,
+		ManifestType:        manifest.DockerV2Schema2MediaType,
+		MaxRetries:          MaxPullPushRetries,
+		RetryDelay:          PullPushRetryDelay,
+	}
+
+	destinationRef, err := alltransports.ParseImageName(fmt.Sprintf("oci-archive://%s", tmpFile.Name()))
+	if err != nil {
+		return nil, fmt.Errorf("error parsing destination ref from %q: %w", tmpFile.Name(), err)
+	}
+
+	if _, _, err = buildah.Push(ctx, ref, destinationRef, pushOpts); err != nil {
+		return nil, fmt.Errorf("error pushing image %q: %w", ref, err)
+	}
+
+	bSlice, err := os.ReadFile(tmpFile.Name())
+	if err != nil {
+		return nil, fmt.Errorf("unable to bufferize image data: %w", err)
+	}
+
+	return bytes.NewReader(bSlice), nil
+}
+
 func (b *NativeBuildah) BuildFromDockerfile(ctx context.Context, dockerfile string, opts BuildFromDockerfileOpts) (string, error) {
 	var targetPlatform string
 	var targetPlatforms []struct{ OS, Arch, Variant string }

@@ -1,9 +1,11 @@
 package container_backend
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -22,7 +24,6 @@ import (
 	"github.com/werf/werf/v2/pkg/container_backend/prune"
 	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/image"
-	"github.com/werf/werf/v2/pkg/sbom"
 	"github.com/werf/werf/v2/pkg/sbom/scanner"
 	"github.com/werf/werf/v2/pkg/ssh_agent"
 )
@@ -425,7 +426,7 @@ func (backend *DockerServerBackend) PruneVolumes(ctx context.Context, options pr
 }
 
 func (backend *DockerServerBackend) GenerateSBOM(ctx context.Context, scanOpts scanner.ScanOptions, dstImgLabels []string) (string, error) {
-	workingTree := sbom.NewWorkingTree()
+	workingTree := scanner.NewWorkingTree()
 
 	billNames := mapSbomScanCommandsToSbomBillNames(scanOpts.Commands)
 
@@ -475,6 +476,23 @@ func (backend *DockerServerBackend) GenerateSBOM(ctx context.Context, scanOpts s
 	buildLogger.End()
 
 	return imageId, nil
+}
+
+func (backend *DockerServerBackend) StreamImage(ctx context.Context, ref string) (*bytes.Reader, error) {
+	rc, err := docker.ImageSave(ctx, ref)
+	if err != nil {
+		return nil, fmt.Errorf("unable to open image streaming %q: %w", ref, err)
+	}
+	buf := &bytes.Buffer{}
+
+	if _, err = io.Copy(buf, rc); err != nil {
+		return nil, fmt.Errorf("unable to bufferize image data: %w", err)
+	}
+	if err = rc.Close(); err != nil {
+		return nil, fmt.Errorf("unable to close image streaming: %w", err)
+	}
+
+	return bytes.NewReader(buf.Bytes()), nil
 }
 
 func mapSbomScanCommandsToSbomBillNames(commands []scanner.ScanCommand) []string {

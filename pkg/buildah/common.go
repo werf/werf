@@ -1,6 +1,7 @@
 package buildah
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -182,6 +183,7 @@ type (
 	FromCommandOpts       CommonOpts
 	BuildFromCommandsOpts CommonOpts
 	PushOpts              CommonOpts
+	StreamOpts            CommonOpts
 	PullOpts              CommonOpts
 	TagOpts               CommonOpts
 	MountOpts             CommonOpts
@@ -211,6 +213,7 @@ type Buildah interface {
 	Images(ctx context.Context, opts ImagesOptions) (image.ImagesList, error)
 	Containers(ctx context.Context, opts ContainersOptions) (image.ContainerList, error)
 	PruneImages(ctx context.Context, opts PruneImagesOptions) (PruneImagesReport, error)
+	StreamImage(ctx context.Context, ref string, opts StreamOpts) (*bytes.Reader, error)
 }
 
 type Mode string

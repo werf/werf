@@ -30,7 +30,6 @@ import (
 	"github.com/werf/werf/v2/pkg/container_backend/prune"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/path_matcher"
-	"github.com/werf/werf/v2/pkg/sbom"
 	"github.com/werf/werf/v2/pkg/sbom/scanner"
 )
 
@@ -1118,7 +1117,7 @@ func (backend *BuildahBackend) PruneVolumes(_ context.Context, _ prune.Options) 
 }
 
 func (backend *BuildahBackend) GenerateSBOM(ctx context.Context, scanOpts scanner.ScanOptions, dstImgLabels []string) (string, error) {
-	workingTree := sbom.NewWorkingTree()
+	workingTree := scanner.NewWorkingTree()
 
 	billNames := mapSbomScanCommandsToSbomBillNames(scanOpts.Commands)
 
@@ -1187,4 +1186,10 @@ func mapSbomScanOptionsToBuidahBackendScanOptions(scanOpts scanner.ScanOptions) 
 		PullPolicy: scanOpts.PullPolicy,
 		Commands:   []string{scanCmd.String()},
 	}
+}
+
+func (backend *BuildahBackend) StreamImage(ctx context.Context, ref string) (*bytes.Reader, error) {
+	return backend.buildah.StreamImage(ctx, ref, buildah.StreamOpts{
+		LogWriter: io.Discard,
+	})
 }
