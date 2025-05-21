@@ -3,7 +3,6 @@ package stapel
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -226,5 +225,5 @@ func CreateScript(path string, commands []string) error {
 	scriptLines = append(scriptLines, commands...)
 	scriptData := []byte(strings.Join(scriptLines, "\n") + "\n")
 
-	return ioutil.WriteFile(path, scriptData, os.FileMode(0o667))
+	return os.WriteFile(path, scriptData, os.FileMode(0o667))
 }
