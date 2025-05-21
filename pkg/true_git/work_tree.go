@@ -349,7 +349,7 @@ func GetWorkTreeList(ctx context.Context, repoDir string) ([]WorktreeDescriptor,
 	return res, nil
 }
 
-func RemoveWorkTree(ctx context.Context, repoDir string, workTreeDir string) error {
+func RemoveWorkTree(ctx context.Context, repoDir, workTreeDir string) error {
 	removeCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: repoDir}, "worktree", "remove", workTreeDir)
 	return removeCmd.Run(ctx)
 }
