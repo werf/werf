@@ -1,6 +1,7 @@
 package container_backend
 
 import (
+	"bytes"
 	"context"
 
 	"github.com/werf/common-go/pkg/util"
@@ -88,6 +89,7 @@ type ContainerBackend interface {
 	PostManifest(ctx context.Context, ref string, opts PostManifestOpts) error
 
 	GetImageInfo(ctx context.Context, ref string, opts GetImageInfoOpts) (*image.Info, error)
+
 	BuildDockerfile(ctx context.Context, dockerfile []byte, opts BuildDockerfileOpts) (string, error)
 	BuildDockerfileStage(ctx context.Context, baseImage string, opts BuildDockerfileStageOptions, instructions ...InstructionInterface) (string, error)
 	BuildStapelStage(ctx context.Context, baseImage string, opts BuildStapelStageOptions) (string, error)
@@ -106,6 +108,9 @@ type ContainerBackend interface {
 	PruneImages(ctx context.Context, options prune.Options) (prune.Report, error)
 	// PruneVolumes removes all anonymous volumes not used by at least one container
 	PruneVolumes(ctx context.Context, options prune.Options) (prune.Report, error)
+
+	// StreamImage streams image using bytes reader
+	StreamImage(ctx context.Context, ref string) (*bytes.Reader, error)
 
 	// GenerateSBOM scans and generates SBOM from source image into another destination image
 	GenerateSBOM(ctx context.Context, scanOpts scanner.ScanOptions, dstImgLabels []string) (string, error)
