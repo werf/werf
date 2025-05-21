@@ -14,7 +14,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
-	"github.com/samber/lo"
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
@@ -24,11 +23,14 @@ import (
 	"github.com/werf/werf/v2/pkg/build/stage"
 	"github.com/werf/werf/v2/pkg/build/stage/instruction"
 	"github.com/werf/werf/v2/pkg/container_backend"
+	"github.com/werf/werf/v2/pkg/container_backend/filter"
 	backend_instruction "github.com/werf/werf/v2/pkg/container_backend/instruction"
+	"github.com/werf/werf/v2/pkg/container_backend/label"
 	"github.com/werf/werf/v2/pkg/docker_registry"
 	"github.com/werf/werf/v2/pkg/git_repo"
 	imagePkg "github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/logging"
+	"github.com/werf/werf/v2/pkg/sbom"
 	"github.com/werf/werf/v2/pkg/sbom/scanner"
 	"github.com/werf/werf/v2/pkg/stapel"
 	"github.com/werf/werf/v2/pkg/storage"
@@ -1403,13 +1405,23 @@ func (phase *BuildPhase) convergeSbom(ctx context.Context, stageDesc *imagePkg.S
 	scanOpts := scanner.DefaultSyftScanOptions()
 	scanOpts.Commands[0].SourcePath = stageDesc.Info.Name
 
-	// TODO (zaytsev): 1) search relevant sbom image locally
-	// TODO (zaytsev): 2) search relevant sbom image remotely
+	sbomImgLabels := label.LabelList{
+		label.NewLabel(imagePkg.WerfLabel, stageDesc.Info.Labels[imagePkg.WerfLabel]),
+		label.NewLabel(imagePkg.WerfProjectRepoCommitLabel, stageDesc.Info.Labels[imagePkg.WerfProjectRepoCommitLabel]),
+		label.NewLabel(imagePkg.WerfStageContentDigestLabel, stageDesc.Info.Labels[imagePkg.WerfStageContentDigestLabel]),
+		label.NewLabel(imagePkg.WerfSbomLabel, scanOpts.Checksum()),
+	}
 
-	dstImgLabels := lo.MapToSlice(stageDesc.Info.Labels, func(key, value string) string {
-		return fmt.Sprintf("%s=%s", key, value)
-	})
-	dstImgLabels = append(dstImgLabels, fmt.Sprintf("%s=%s", imagePkg.WerfSbomLabel, scanOpts.Checksum()))
+	if list, err := phase.Conveyor.ContainerBackend.Images(ctx, container_backend.ImagesOptions{
+		Filters: filter.NewFilterListFromLabelList(sbomImgLabels).ToPairs(),
+	}); err != nil {
+		return fmt.Errorf("unable to list images: %w", err)
+	} else if len(list) > 0 {
+		// no need to scan source and build sbom image
+		return nil
+	}
+
+	// TODO (zaytsev): 2) search relevant sbom image remotely
 
 	// 3) Generate and label new sbom image
 	// TODO (zaytsev): how to guard temporal image from werf host cleanup?
@@ -1417,15 +1429,16 @@ func (phase *BuildPhase) convergeSbom(ctx context.Context, stageDesc *imagePkg.S
 	generationLogger := logboek.Context(ctx).Default().LogProcess("SBOM")
 	generationLogger.Start()
 
-	tmpImgId, err := phase.Conveyor.ContainerBackend.GenerateSBOM(ctx, scanOpts, dstImgLabels)
+	sbomImgLabels.Add(label.NewLabel(imagePkg.WerfVersionLabel, stageDesc.Info.Labels[imagePkg.WerfVersionLabel]))
+
+	tmpImgId, err := phase.Conveyor.ContainerBackend.GenerateSBOM(ctx, scanOpts, sbomImgLabels.ToStringSlice())
 	if err != nil {
 		generationLogger.End()
 		return fmt.Errorf("unable to scan source image and store the result: %w", err)
 	}
 	generationLogger.End()
 
-	sbomTag := fmt.Sprintf("%s-sbom", stageDesc.Info.Name)
-	if err := phase.Conveyor.ContainerBackend.Tag(ctx, tmpImgId, sbomTag, container_backend.TagOpts{}); err != nil {
+	if err = phase.Conveyor.ContainerBackend.Tag(ctx, tmpImgId, sbom.ImageName(stageDesc.Info.Name), container_backend.TagOpts{}); err != nil {
 		return fmt.Errorf("unable to tag sbom image: %w", err)
 	}
 
@@ -1433,7 +1446,6 @@ func (phase *BuildPhase) convergeSbom(ctx context.Context, stageDesc *imagePkg.S
 	//   return fmt.Errorf("unable to rmi sbom temporal tag: %w", err)
 	// }
 
-	// TODO (zaytsev): 4) store generated SBOM image locally
 	// TODO (zaytsev): 5) store generated SBOM image remotely
 
 	return nil

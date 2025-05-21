@@ -2,7 +2,6 @@ package stream_reader
 
 import (
 	"archive/tar"
-	"io"
 	"io/fs"
 )
 
@@ -24,5 +23,5 @@ func (f *File) Info() fs.FileInfo {
 }
 
 func (f *File) Read(b []byte) (n int, err error) {
-	return io.ReadFull(f.reader, b)
+	return f.reader.Read(b)
 }
