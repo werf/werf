@@ -1,7 +1,6 @@
 package contback
 
 import (
-	"archive/tar"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -65,11 +64,11 @@ func (r *NativeBuildahBackend) Pull(image string) {
 	utils.RunSucceedCommand("/", "buildah", args...)
 }
 
-func (r *NativeBuildahBackend) GetImageFileSystemReader(image string) *FileSystemReader {
+func (r *NativeBuildahBackend) StreamImage(image string) *bytes.Reader {
 	// Buildah doesn't support redirecting to stdout
 	// https://github.com/containers/buildah/issues/936
 	// So we should use tmp file
-	tmpFile, err := os.CreateTemp(os.TempDir(), "buildah-image-******.tar")
+	tmpFile, err := os.CreateTemp(os.TempDir(), "buildah-img-******.tar")
 	Expect(err).NotTo(HaveOccurred())
 	defer tmpFile.Close()
 
@@ -82,11 +81,7 @@ func (r *NativeBuildahBackend) GetImageFileSystemReader(image string) *FileSyste
 	Expect(err).NotTo(HaveOccurred())
 	Expect(os.Remove(tmpFile.Name())).NotTo(HaveOccurred())
 
-	imgTarReader := tar.NewReader(bytes.NewReader(b))
-	fsReader, err := newFileSystemReader(imgTarReader)
-	Expect(err).NotTo(HaveOccurred())
-
-	return fsReader
+	return bytes.NewReader(b)
 }
 
 func (r *NativeBuildahBackend) GetImageInspect(image string) DockerImageInspect {

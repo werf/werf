@@ -9,8 +9,10 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 
+	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/cmd/werf/build"
 	bundle_apply "github.com/werf/werf/v2/cmd/werf/bundle/apply"
 	bundle_copy "github.com/werf/werf/v2/cmd/werf/bundle/copy"
@@ -44,6 +46,7 @@ import (
 	"github.com/werf/werf/v2/cmd/werf/purge"
 	"github.com/werf/werf/v2/cmd/werf/render"
 	"github.com/werf/werf/v2/cmd/werf/run"
+	sbom_get "github.com/werf/werf/v2/cmd/werf/sbom/get"
 	"github.com/werf/werf/v2/cmd/werf/slugify"
 	stage_image "github.com/werf/werf/v2/cmd/werf/stage/image"
 	"github.com/werf/werf/v2/cmd/werf/synchronization"
@@ -89,7 +92,7 @@ func ConstructRootCmd(ctx context.Context) (*cobra.Command, error) {
 		},
 		{
 			Message: "Helper commands",
-			Commands: []*cobra.Command{
+			Commands: hideExperimental([]*cobra.Command{
 				ci_env.NewCmd(ctx),
 				build.NewCmd(ctx),
 				export.NewExportCmd(ctx),
@@ -98,7 +101,8 @@ func ConstructRootCmd(ctx context.Context) (*cobra.Command, error) {
 				dockerComposeCmd(ctx),
 				slugify.NewCmd(ctx),
 				render.NewCmd(ctx),
-			},
+				sbomCmd(ctx),
+			}),
 		},
 		{
 			Message: "Low-level management commands",
@@ -167,6 +171,18 @@ func bundleCmd(ctx context.Context) *cobra.Command {
 		bundle_apply.NewCmd(ctx),
 		bundle_render.NewCmd(ctx),
 		bundle_copy.NewCmd(ctx),
+	)
+
+	return cmd
+}
+
+func sbomCmd(ctx context.Context) *cobra.Command {
+	cmd := common.SetCommandContext(ctx, &cobra.Command{
+		Use:   "sbom",
+		Short: "Work with werf SBOM images",
+	})
+	cmd.AddCommand(
+		sbom_get.NewCmd(ctx),
 	)
 
 	return cmd
@@ -282,4 +298,15 @@ func PrintStackTraces() {
 			time.Sleep(time.Second * time.Duration(period))
 		}
 	}()
+}
+
+func hideExperimental(cmdList []*cobra.Command) []*cobra.Command {
+	return lo.Filter(cmdList, func(cmd *cobra.Command, _ int) bool {
+		switch cmd.Use {
+		case "sbom":
+			return util.GetBoolEnvironmentDefaultFalse("WERF_EXPERIMENTAL_SBOM")
+		default:
+			return true
+		}
+	})
 }
