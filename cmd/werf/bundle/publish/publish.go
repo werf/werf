@@ -23,6 +23,7 @@ import (
 	"github.com/werf/3p-helm/pkg/cli/values"
 	"github.com/werf/3p-helm/pkg/downloader"
 	"github.com/werf/3p-helm/pkg/getter"
+	"github.com/werf/3p-helm/pkg/werf/file"
 	"github.com/werf/3p-helm/pkg/werf/helmopts"
 	"github.com/werf/3p-helm/pkg/werf/secrets"
 	"github.com/werf/3p-helm/pkg/werf/secrets/runtimedata"
@@ -331,7 +332,7 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 		return err
 	}
 
-	loader.ChartFileReader = giterminismManager.FileManager
+	file.ChartFileReader = giterminismManager.FileManager
 
 	headHash, err := giterminismManager.LocalGitRepo().HeadCommitHash(ctx)
 	if err != nil {

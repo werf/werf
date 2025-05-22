@@ -15,7 +15,7 @@ import (
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 
-	"github.com/werf/3p-helm/pkg/chart/loader"
+	"github.com/werf/3p-helm/pkg/werf/file"
 	"github.com/werf/3p-helm/pkg/werf/helmopts"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/nelm/pkg/action"
@@ -234,7 +234,7 @@ func runApply(ctx context.Context) error {
 		return fmt.Errorf("unable init giterminism manager: %w", err)
 	}
 
-	loader.ChartFileReader = gm.FileManager
+	file.ChartFileReader = gm.FileManager
 
 	if err := action.ReleaseInstall(ctx, releaseName, releaseNamespace, action.ReleaseInstallOptions{
 		AutoRollback:                 cmdData.AutoRollback,

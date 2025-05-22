@@ -35,7 +35,7 @@ type FileReader interface {
 	ReadIncludesConfig(ctx context.Context, relPath string) ([]byte, error)
 	ReadIncludesLockFile(ctx context.Context, relPath string) (data []byte, err error)
 
-	file.ChartFileReader
+	file.ChartFileReaderInterface
 }
 
 type Inspector interface {

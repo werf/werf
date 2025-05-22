@@ -37,7 +37,7 @@ type FileReader interface {
 
 	IsRegularFileExist(ctx context.Context, relPath string) (exist bool, err error)
 
-	file.ChartFileReader
+	file.ChartFileReaderInterface
 }
 
 type FileManager struct {
