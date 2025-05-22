@@ -10,6 +10,7 @@ import (
 	"sync"
 
 	. "github.com/onsi/gomega"
+	"github.com/samber/lo"
 
 	"github.com/werf/3p-helm/pkg/release"
 	"github.com/werf/werf/v2/pkg/build"
@@ -73,6 +74,12 @@ type ExportOptions struct {
 	CommonOptions
 }
 
+type SbomGetOptions struct {
+	EnableExperimental bool
+
+	CommonOptions
+}
+
 type KubeRunOptions struct {
 	CommonOptions
 	Command []string
@@ -86,6 +93,7 @@ type KubeCtlOptions struct {
 type runCommandOptions struct {
 	ShouldFail bool
 	Args       []string
+	Envs       []string
 }
 
 func (p *Project) Build(opts *BuildOptions) (combinedOut string) {
@@ -286,7 +294,11 @@ func (p *Project) CreateRegistryPullSecretFromDockerConfig() {
 }
 
 func (p *Project) runCommand(opts runCommandOptions) string {
-	outb, err := iutils.RunCommand(p.GitRepoPath, p.WerfBinPath, opts.Args...)
+	outb, err := iutils.RunCommandWithOptions(p.GitRepoPath, p.WerfBinPath, opts.Args, iutils.RunCommandOptions{
+		ShouldSucceed: !opts.ShouldFail,
+		ExtraEnv:      opts.Envs,
+	})
+
 	if opts.ShouldFail {
 		Expect(err).To(HaveOccurred())
 	} else {
@@ -313,6 +325,21 @@ func (p *Project) Export(opts *ExportOptions) (combinedOut string) {
 	}
 	args := append([]string{"export"}, opts.ExtraArgs...)
 	outb := p.runCommand(runCommandOptions{Args: args, ShouldFail: opts.ShouldFail})
+
+	return string(outb)
+}
+
+func (p *Project) SbomGet(opts *SbomGetOptions) (combinedOut string) {
+	if opts == nil {
+		opts = &SbomGetOptions{}
+	}
+	args := append([]string{"sbom", "get"}, opts.ExtraArgs...)
+
+	outb := p.runCommand(runCommandOptions{
+		Args:       args,
+		Envs:       lo.If(opts.EnableExperimental, []string{"WERF_EXPERIMENTAL_SBOM=true"}).Else([]string{}),
+		ShouldFail: opts.ShouldFail,
+	})
 
 	return string(outb)
 }
