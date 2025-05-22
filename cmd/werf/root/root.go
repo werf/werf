@@ -9,8 +9,10 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 
+	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/cmd/werf/build"
 	bundle_apply "github.com/werf/werf/v2/cmd/werf/bundle/apply"
 	bundle_copy "github.com/werf/werf/v2/cmd/werf/bundle/copy"
@@ -90,7 +92,7 @@ func ConstructRootCmd(ctx context.Context) (*cobra.Command, error) {
 		},
 		{
 			Message: "Helper commands",
-			Commands: []*cobra.Command{
+			Commands: hideExperimental([]*cobra.Command{
 				ci_env.NewCmd(ctx),
 				build.NewCmd(ctx),
 				export.NewExportCmd(ctx),
@@ -100,7 +102,7 @@ func ConstructRootCmd(ctx context.Context) (*cobra.Command, error) {
 				slugify.NewCmd(ctx),
 				render.NewCmd(ctx),
 				sbomCmd(ctx),
-			},
+			}),
 		},
 		{
 			Message: "Low-level management commands",
@@ -296,4 +298,15 @@ func PrintStackTraces() {
 			time.Sleep(time.Second * time.Duration(period))
 		}
 	}()
+}
+
+func hideExperimental(cmdList []*cobra.Command) []*cobra.Command {
+	return lo.Filter(cmdList, func(cmd *cobra.Command, _ int) bool {
+		switch cmd.Use {
+		case "sbom":
+			return util.GetBoolEnvironmentDefaultFalse("WERF_EXPERIMENTAL_SBOM")
+		default:
+			return true
+		}
+	})
 }
