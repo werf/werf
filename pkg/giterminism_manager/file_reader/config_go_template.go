@@ -25,7 +25,7 @@ func (r FileReader) ConfigGoTemplateFilesGlob(ctx context.Context, glob string) 
 			return nil
 		},
 	); err != nil {
-		return nil, fmt.Errorf("{{ .Files.Glob %q }}: %w", glob, err)
+		return nil, err
 	}
 
 	return result, nil
@@ -38,7 +38,7 @@ func (r FileReader) ConfigGoTemplateFilesGet(ctx context.Context, relPath string
 			return r.IsRegularFileExist(ctx, path)
 		})
 	if err != nil {
-		return nil, fmt.Errorf("{{ .Files.Get %q }}: %w", relPath, err)
+		return nil, err
 	}
 
 	return data, nil

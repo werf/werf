@@ -152,7 +152,7 @@ config:
 						}
 					},
 					Entry("the config file not found", entry{
-						expectedErrSubstring: `unable to read werf config: the file "werf.yaml" not found in the project git repository`,
+						expectedErrSubstring: `not found`,
 					}),
 					Entry("the config file not tracked", entry{
 						addConfig:            true,

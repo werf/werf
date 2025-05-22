@@ -560,3 +560,20 @@ func (r FileReader) resolveFilePath(ctx context.Context, relPath string, depth i
 
 	return resolvedPath, nil
 }
+
+func (r FileReader) ListFilesByGlob(ctx context.Context, dir, glob string) ([]string, error) {
+	acceptedFilePathMatcher := r.giterminismConfig.UncommittedConfigGoTemplateRenderingFilePathMatcher()
+	relToDirFilePathListFromFS, err := r.ListFilesWithGlob(ctx, dir, glob, r.SkipFileFunc(acceptedFilePathMatcher))
+	if err != nil {
+		return nil, err
+	}
+
+	relToDirFilePathListFromCommit, err := r.ListCommitFilesWithGlob(ctx, dir, glob)
+	if err != nil {
+		return nil, err
+	}
+
+	relToDirPathList := util.AddNewStringsToStringArray(relToDirFilePathListFromFS, relToDirFilePathListFromCommit...)
+
+	return relToDirPathList, nil
+}
