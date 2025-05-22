@@ -15,13 +15,15 @@ var (
 	ErrPruneIsAlreadyRunning        = errors.New("a prune operation is already running")
 )
 
-var ErrPatchApply = errors.New(`werf cannot apply the patch to the current source code because the files being added were modified by user commands in earlier stages.
+var ErrPatchApply = errors.New(`cannot update source code added by git directive because the files being patched were modified by user commands in earlier stages (install, beforeSetup or setup)
 
-- If these files should NOT be changed, update the instructions for the preceding stages with user commands.
+Possible solutions:
 
-- If these files SHOULD be changed, declare this dependency using the stageDependencies directive, and these files will be updated before running user commands.
+  - If these files should not be changed, update the commands that modify them.
 
-- If these files are NOT required, exclude them using the git.[*].includePaths / excludePaths directives.`)
+  - If these files should be changed, declare them explicitly using the stageDependencies.<install|beforeSetup|setup> directive. This ensures the files are updated before running user commands.
+
+  - If these files are not needed, exclude them using the includePaths or excludePaths options under the git directive.`)
 
 const (
 	ErrPatchApplyCode = 42
