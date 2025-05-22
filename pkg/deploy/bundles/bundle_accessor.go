@@ -5,17 +5,19 @@ import (
 	"fmt"
 
 	"github.com/werf/3p-helm/pkg/chart"
+	"github.com/werf/3p-helm/pkg/werf/helmopts"
 	"github.com/werf/werf/v2/pkg/docker_registry"
 )
 
 type copyToOptions struct {
 	HelmCompatibleChart bool
 	RenameChart         string
+	HelmOptions         helmopts.HelmOptions
 }
 
 type BundleAccessor interface {
-	ReadChart(ctx context.Context) (*chart.Chart, error)
-	WriteChart(ctx context.Context, ch *chart.Chart) error
+	ReadChart(ctx context.Context, opts helmopts.HelmOptions) (*chart.Chart, error)
+	WriteChart(ctx context.Context, ch *chart.Chart, opts helmopts.HelmOptions) error
 
 	CopyTo(ctx context.Context, to BundleAccessor, opts copyToOptions) error
 	CopyFromArchive(ctx context.Context, fromArchive *BundleArchive, opts copyToOptions) error

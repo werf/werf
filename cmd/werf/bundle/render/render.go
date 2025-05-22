@@ -14,11 +14,8 @@ import (
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 
-	"github.com/werf/3p-helm/pkg/chart"
 	"github.com/werf/3p-helm/pkg/chart/loader"
-	"github.com/werf/3p-helm/pkg/chartutil"
-	"github.com/werf/3p-helm/pkg/werf/secrets"
-	"github.com/werf/common-go/pkg/secrets_manager"
+	"github.com/werf/3p-helm/pkg/werf/helmopts"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/nelm/pkg/action"
 	"github.com/werf/werf/v2/cmd/werf/common"
@@ -173,9 +170,7 @@ func runRender(ctx context.Context) error {
 	releaseName := common.GetOptionalRelease(&commonCmdData)
 	registryCredentialsPath := docker.GetDockerConfigCredentialsFile(*commonCmdData.DockerConfig)
 
-	secrets.CoalesceTablesFunc = chartutil.CoalesceTables
-	secrets_manager.DisableSecretsDecryption = *commonCmdData.IgnoreSecretKey
-	chartutil.ServiceValues, err = helpers.GetBundleServiceValues(ctx, helpers.ServiceValuesOptions{
+	serviceValues, err := helpers.GetBundleServiceValues(ctx, helpers.ServiceValuesOptions{
 		Env:                      *commonCmdData.Environment,
 		Namespace:                releaseNamespace,
 		SetDockerConfigJsonValue: *commonCmdData.SetDockerConfigJsonValue,
@@ -189,7 +184,6 @@ func runRender(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("get current working directory: %w", err)
 	}
-	secrets.SecretsWorkingDir = secretWorkDir
 
 	var bundlePath string
 	if isLocalBundle {
@@ -208,7 +202,17 @@ func runRender(ctx context.Context) error {
 		bundlePath = filepath.Join(werf.GetServiceDir(), "tmp", "bundles", uuid.NewString())
 		defer os.RemoveAll(bundlePath)
 
-		if err := bundles.Pull(ctx, fmt.Sprintf("%s:%s", repoAddress, cmdData.Tag), bundlePath, bundlesRegistryClient); err != nil {
+		if err := bundles.Pull(ctx, fmt.Sprintf("%s:%s", repoAddress, cmdData.Tag), bundlePath, bundlesRegistryClient, helmopts.HelmOptions{
+			ChartLoadOpts: helmopts.ChartLoadOptions{
+				ChartDir:              bundlePath,
+				NoDecryptSecrets:      *commonCmdData.IgnoreSecretKey,
+				NoDefaultSecretValues: *commonCmdData.DisableDefaultSecretValues,
+				NoDefaultValues:       *commonCmdData.DisableDefaultValues,
+				SecretValuesFiles:     common.GetSecretValues(&commonCmdData),
+				SecretsWorkingDir:     secretWorkDir,
+				ExtraValues:           serviceValues,
+			},
+		}); err != nil {
 			return fmt.Errorf("pull bundle: %w", err)
 		}
 	}
@@ -217,8 +221,6 @@ func runRender(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("get annotations and labels: %w", err)
 	}
-
-	chart.CurrentChartType = chart.ChartTypeBundle
 
 	// TODO(v3): get rid of forcing color mode via ci-env and use color mode detection logic from
 	// Nelm instead. Until then, color will be always off here.
@@ -254,7 +256,8 @@ func runRender(ctx context.Context) error {
 		KubeSkipTLSVerify:            *commonCmdData.SkipTlsVerifyKube,
 		KubeTLSServerName:            *commonCmdData.KubeTlsServer,
 		KubeToken:                    *commonCmdData.KubeToken,
-		Remote:                       cmdData.Validate,
+		LegacyChartType:              helmopts.ChartTypeBundle,
+		LegacyExtraValues:            serviceValues,
 		LocalKubeVersion:             *commonCmdData.KubeVersion,
 		LogRegistryStreamOut:         os.Stdout,
 		NetworkParallelism:           *commonCmdData.NetworkParallelism,
@@ -263,6 +266,7 @@ func runRender(ctx context.Context) error {
 		ReleaseName:                  releaseName,
 		ReleaseNamespace:             releaseNamespace,
 		ReleaseStorageDriver:         os.Getenv("HELM_DRIVER"),
+		Remote:                       cmdData.Validate,
 		SecretKeyIgnore:              *commonCmdData.IgnoreSecretKey,
 		SecretValuesPaths:            common.GetSecretValues(&commonCmdData),
 		SecretWorkDir:                secretWorkDir,

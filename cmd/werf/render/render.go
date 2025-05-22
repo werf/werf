@@ -12,7 +12,6 @@ import (
 
 	"github.com/werf/3p-helm/pkg/chart"
 	"github.com/werf/3p-helm/pkg/chart/loader"
-	"github.com/werf/3p-helm/pkg/chartutil"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/level"
@@ -373,7 +372,7 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 	}
 	registryCredentialsPath := docker.GetDockerConfigCredentialsFile(*commonCmdData.DockerConfig)
 
-	chartutil.ServiceValues, err = helpers.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, imagesInfoGetters, helpers.ServiceValuesOptions{
+	serviceValues, err := helpers.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, imagesInfoGetters, helpers.ServiceValuesOptions{
 		Namespace:                releaseNamespace,
 		Env:                      *commonCmdData.Environment,
 		IsStub:                   isStub,
@@ -421,7 +420,7 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 		KubeSkipTLSVerify:            *commonCmdData.SkipTlsVerifyKube,
 		KubeTLSServerName:            *commonCmdData.KubeTlsServer,
 		KubeToken:                    *commonCmdData.KubeToken,
-		Remote:                       cmdData.Validate,
+		LegacyExtraValues:            serviceValues,
 		LocalKubeVersion:             *commonCmdData.KubeVersion,
 		LogRegistryStreamOut:         os.Stdout,
 		NetworkParallelism:           *commonCmdData.NetworkParallelism,
@@ -430,6 +429,7 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 		ReleaseName:                  releaseName,
 		ReleaseNamespace:             releaseNamespace,
 		ReleaseStorageDriver:         os.Getenv("HELM_DRIVER"),
+		Remote:                       cmdData.Validate,
 		SecretKeyIgnore:              *commonCmdData.IgnoreSecretKey,
 		SecretValuesPaths:            common.GetSecretValues(&commonCmdData),
 		SecretWorkDir:                giterminismManager.ProjectDir(),

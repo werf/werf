@@ -15,11 +15,8 @@ import (
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 
-	"github.com/werf/3p-helm/pkg/chart"
 	"github.com/werf/3p-helm/pkg/chart/loader"
-	"github.com/werf/3p-helm/pkg/chartutil"
-	"github.com/werf/3p-helm/pkg/werf/secrets"
-	"github.com/werf/common-go/pkg/secrets_manager"
+	"github.com/werf/3p-helm/pkg/werf/helmopts"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/nelm/pkg/action"
 	"github.com/werf/werf/v2/cmd/werf/common"
@@ -189,9 +186,7 @@ func runApply(ctx context.Context) error {
 
 	registryCredentialsPath := docker.GetDockerConfigCredentialsFile(*commonCmdData.DockerConfig)
 
-	secrets.CoalesceTablesFunc = chartutil.CoalesceTables
-	secrets_manager.DisableSecretsDecryption = *commonCmdData.IgnoreSecretKey
-	chartutil.ServiceValues, err = helpers.GetBundleServiceValues(ctx, helpers.ServiceValuesOptions{
+	serviceValues, err := helpers.GetBundleServiceValues(ctx, helpers.ServiceValuesOptions{
 		Env:                      *commonCmdData.Environment,
 		Namespace:                releaseNamespace,
 		SetDockerConfigJsonValue: *commonCmdData.SetDockerConfigJsonValue,
@@ -205,9 +200,18 @@ func runApply(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("get current working directory: %w", err)
 	}
-	secrets.SecretsWorkingDir = secretWorkDir
 
-	if err := bundles.Pull(ctx, fmt.Sprintf("%s:%s", repoAddress, cmdData.Tag), bundlePath, bundlesRegistryClient); err != nil {
+	if err := bundles.Pull(ctx, fmt.Sprintf("%s:%s", repoAddress, cmdData.Tag), bundlePath, bundlesRegistryClient, helmopts.HelmOptions{
+		ChartLoadOpts: helmopts.ChartLoadOptions{
+			ChartDir:              bundlePath,
+			NoDecryptSecrets:      *commonCmdData.IgnoreSecretKey,
+			NoDefaultSecretValues: *commonCmdData.DisableDefaultSecretValues,
+			NoDefaultValues:       *commonCmdData.DisableDefaultValues,
+			SecretValuesFiles:     common.GetSecretValues(&commonCmdData),
+			SecretsWorkingDir:     secretWorkDir,
+			ExtraValues:           serviceValues,
+		},
+	}); err != nil {
 		return fmt.Errorf("pull bundle: %w", err)
 	}
 
@@ -220,8 +224,6 @@ func runApply(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("get release labels: %w", err)
 	}
-
-	chart.CurrentChartType = chart.ChartTypeBundle
 
 	ctx = action.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultReleaseInstallLogLevel), action.SetupLoggingOptions{
 		ColorMode: *commonCmdData.LogColorMode,
@@ -257,6 +259,8 @@ func runApply(ctx context.Context) error {
 		KubeSkipTLSVerify:            *commonCmdData.SkipTlsVerifyKube,
 		KubeTLSServerName:            *commonCmdData.KubeTlsServer,
 		KubeToken:                    *commonCmdData.KubeToken,
+		LegacyChartType:              helmopts.ChartTypeBundle,
+		LegacyExtraValues:            serviceValues,
 		LogRegistryStreamOut:         os.Stdout,
 		NetworkParallelism:           common.GetNetworkParallelism(&commonCmdData),
 		NoInstallCRDs:                *commonCmdData.NoInstallCRDs,
