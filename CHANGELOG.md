@@ -1,5 +1,15 @@
 # Changelog
 
+### [2.36.2](https://www.github.com/werf/werf/compare/v2.36.1...v2.36.2) (2025-05-22)
+
+
+### Bug Fixes
+
+* **build, stapel:** fix service git apply patch failed ([#6871](https://www.github.com/werf/werf/issues/6871)) ([31d3b88](https://www.github.com/werf/werf/commit/31d3b88f45b6b1e770396d167d7033e47143e95d))
+* **deploy:** wrong values rendered (many reverts) ([1fc5833](https://www.github.com/werf/werf/commit/1fc583348d7a90769531fc2fece00919b6b85314))
+* **giterminism:** fix error in case of using invalid git worktree ([#6867](https://www.github.com/werf/werf/issues/6867)) ([48596ae](https://www.github.com/werf/werf/commit/48596ae69112a564edd4b84086c3e5ce2cd82ea8))
+* **stapel:** fix git apply patch error handling ([81314a8](https://www.github.com/werf/werf/commit/81314a8189cb07a622f7ef3c030a1ff1b3c75b77))
+
 ### [2.36.1](https://www.github.com/werf/werf/compare/v2.36.0...v2.36.1) (2025-05-19)
 
 
