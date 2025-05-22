@@ -15,15 +15,13 @@ var (
 	ErrPruneIsAlreadyRunning        = errors.New("a prune operation is already running")
 )
 
-var (
-	ErrPatchApply = errors.New(`werf cannot apply the patch to the current source code because the files being added were modified by user commands in earlier stages.
+var ErrPatchApply = errors.New(`werf cannot apply the patch to the current source code because the files being added were modified by user commands in earlier stages.
 
 - If these files should NOT be changed, update the instructions for the preceding stages with user commands.
 
 - If these files SHOULD be changed, declare this dependency using the stageDependencies directive, and these files will be updated before running user commands.
 
 - If these files are NOT required, exclude them using the git.[*].includePaths / excludePaths directives.`)
-)
 
 const (
 	ErrPatchApplyCode = 42
