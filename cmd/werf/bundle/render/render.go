@@ -14,7 +14,10 @@ import (
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 
-	"github.com/werf/3p-helm/pkg/werf/helmopts"
+	"github.com/werf/3p-helm/pkg/chart"
+	"github.com/werf/3p-helm/pkg/chartutil"
+	"github.com/werf/3p-helm/pkg/werf/secrets"
+	"github.com/werf/common-go/pkg/secrets_manager"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/nelm/pkg/action"
 	"github.com/werf/werf/v2/cmd/werf/common"
@@ -163,7 +166,9 @@ func runRender(ctx context.Context) error {
 	releaseName := common.GetOptionalRelease(&commonCmdData)
 	registryCredentialsPath := docker.GetDockerConfigCredentialsFile(*commonCmdData.DockerConfig)
 
-	serviceValues, err := helpers.GetBundleServiceValues(ctx, helpers.ServiceValuesOptions{
+	secrets.CoalesceTablesFunc = chartutil.CoalesceTables
+	secrets_manager.DisableSecretsDecryption = *commonCmdData.IgnoreSecretKey
+	chartutil.ServiceValues, err = helpers.GetBundleServiceValues(ctx, helpers.ServiceValuesOptions{
 		Env:                      *commonCmdData.Environment,
 		Namespace:                releaseNamespace,
 		SetDockerConfigJsonValue: *commonCmdData.SetDockerConfigJsonValue,
@@ -177,6 +182,7 @@ func runRender(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("get current working directory: %w", err)
 	}
+	secrets.SecretsWorkingDir = secretWorkDir
 
 	var bundlePath string
 	if isLocalBundle {
@@ -195,17 +201,7 @@ func runRender(ctx context.Context) error {
 		bundlePath = filepath.Join(werf.GetServiceDir(), "tmp", "bundles", uuid.NewString())
 		defer os.RemoveAll(bundlePath)
 
-		if err := bundles.Pull(ctx, fmt.Sprintf("%s:%s", repoAddress, cmdData.Tag), bundlePath, bundlesRegistryClient, helmopts.HelmOptions{
-			ChartLoadOpts: helmopts.ChartLoadOptions{
-				ChartDir:              bundlePath,
-				NoDecryptSecrets:      *commonCmdData.IgnoreSecretKey,
-				NoDefaultSecretValues: *commonCmdData.DisableDefaultSecretValues,
-				NoDefaultValues:       *commonCmdData.DisableDefaultValues,
-				SecretValuesFiles:     common.GetSecretValues(&commonCmdData),
-				SecretsWorkingDir:     secretWorkDir,
-				ExtraValues:           serviceValues,
-			},
-		}); err != nil {
+		if err := bundles.Pull(ctx, fmt.Sprintf("%s:%s", repoAddress, cmdData.Tag), bundlePath, bundlesRegistryClient); err != nil {
 			return fmt.Errorf("pull bundle: %w", err)
 		}
 	}
@@ -215,6 +211,8 @@ func runRender(ctx context.Context) error {
 		return fmt.Errorf("get annotations and labels: %w", err)
 	}
 
+	chart.CurrentChartType = chart.ChartTypeBundle
+
 	// TODO(v3): get rid of forcing color mode via ci-env and use color mode detection logic from
 	// Nelm instead. Until then, color will be always off here.
 	ctx = action.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultChartRenderLogLevel), action.SetupLoggingOptions{
@@ -222,7 +220,7 @@ func runRender(ctx context.Context) error {
 		LogIsParseable: true,
 	})
 
-	if _, err := action.ChartRender(ctx, action.ChartRenderOptions{
+	if err := action.ChartRender(ctx, action.ChartRenderOptions{
 		ChartDirPath:                 bundlePath,
 		ChartRepositoryInsecure:      *commonCmdData.InsecureHelmDependencies,
 		ChartRepositorySkipTLSVerify: *commonCmdData.SkipTlsVerifyHelmDependencies,
@@ -242,8 +240,7 @@ func runRender(ctx context.Context) error {
 		KubeSkipTLSVerify:            *commonCmdData.SkipTlsVerifyKube,
 		KubeTLSServerName:            *commonCmdData.KubeTlsServer,
 		KubeToken:                    *commonCmdData.KubeToken,
-		LegacyChartType:              helmopts.ChartTypeBundle,
-		LegacyExtraValues:            serviceValues,
+		Remote:                       cmdData.Validate,
 		LocalKubeVersion:             *commonCmdData.KubeVersion,
 		LogRegistryStreamOut:         os.Stdout,
 		NetworkParallelism:           *commonCmdData.NetworkParallelism,
@@ -252,7 +249,6 @@ func runRender(ctx context.Context) error {
 		ReleaseName:                  releaseName,
 		ReleaseNamespace:             releaseNamespace,
 		ReleaseStorageDriver:         os.Getenv("HELM_DRIVER"),
-		Remote:                       cmdData.Validate,
 		SecretKeyIgnore:              *commonCmdData.IgnoreSecretKey,
 		SecretValuesPaths:            common.GetSecretValues(&commonCmdData),
 		SecretWorkDir:                secretWorkDir,

@@ -10,13 +10,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-
-	"github.com/werf/3p-helm/pkg/werf/helmopts"
 )
 
 type BundleArchiveWriter interface {
 	Open() error
-	WriteChartArchive(data []byte, opts helmopts.HelmOptions) error
+	WriteChartArchive(data []byte) error
 	WriteImageArchive(imageTag string, data []byte) error
 	Save() error
 }
@@ -96,7 +94,7 @@ func (writer *BundleArchiveFileWriter) Save() error {
 	return nil
 }
 
-func (writer *BundleArchiveFileWriter) WriteChartArchive(data []byte, opts helmopts.HelmOptions) error {
+func (writer *BundleArchiveFileWriter) WriteChartArchive(data []byte) error {
 	now := time.Now()
 	header := &tar.Header{
 		Name:       chartArchiveFileName,

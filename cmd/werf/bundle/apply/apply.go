@@ -15,7 +15,10 @@ import (
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 
-	"github.com/werf/3p-helm/pkg/werf/helmopts"
+	"github.com/werf/3p-helm/pkg/chart"
+	"github.com/werf/3p-helm/pkg/chartutil"
+	"github.com/werf/3p-helm/pkg/werf/secrets"
+	"github.com/werf/common-go/pkg/secrets_manager"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/nelm/pkg/action"
 	"github.com/werf/werf/v2/cmd/werf/common"
@@ -116,8 +119,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupRollbackGraphPath(&commonCmdData, cmd)
 
 	common.SetupRenderSubchartNotes(&commonCmdData, cmd)
-	common.SetupNoInstallCRDs(&commonCmdData, cmd)
-	common.SetupReleaseLabel(&commonCmdData, cmd)
 
 	defaultTag := os.Getenv("WERF_TAG")
 	if defaultTag == "" {
@@ -179,7 +180,9 @@ func runApply(ctx context.Context) error {
 
 	registryCredentialsPath := docker.GetDockerConfigCredentialsFile(*commonCmdData.DockerConfig)
 
-	serviceValues, err := helpers.GetBundleServiceValues(ctx, helpers.ServiceValuesOptions{
+	secrets.CoalesceTablesFunc = chartutil.CoalesceTables
+	secrets_manager.DisableSecretsDecryption = *commonCmdData.IgnoreSecretKey
+	chartutil.ServiceValues, err = helpers.GetBundleServiceValues(ctx, helpers.ServiceValuesOptions{
 		Env:                      *commonCmdData.Environment,
 		Namespace:                releaseNamespace,
 		SetDockerConfigJsonValue: *commonCmdData.SetDockerConfigJsonValue,
@@ -193,18 +196,9 @@ func runApply(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("get current working directory: %w", err)
 	}
+	secrets.SecretsWorkingDir = secretWorkDir
 
-	if err := bundles.Pull(ctx, fmt.Sprintf("%s:%s", repoAddress, cmdData.Tag), bundlePath, bundlesRegistryClient, helmopts.HelmOptions{
-		ChartLoadOpts: helmopts.ChartLoadOptions{
-			ChartDir:              bundlePath,
-			NoDecryptSecrets:      *commonCmdData.IgnoreSecretKey,
-			NoDefaultSecretValues: *commonCmdData.DisableDefaultSecretValues,
-			NoDefaultValues:       *commonCmdData.DisableDefaultValues,
-			SecretValuesFiles:     common.GetSecretValues(&commonCmdData),
-			SecretsWorkingDir:     secretWorkDir,
-			ExtraValues:           serviceValues,
-		},
-	}); err != nil {
+	if err := bundles.Pull(ctx, fmt.Sprintf("%s:%s", repoAddress, cmdData.Tag), bundlePath, bundlesRegistryClient); err != nil {
 		return fmt.Errorf("pull bundle: %w", err)
 	}
 
@@ -213,10 +207,7 @@ func runApply(ctx context.Context) error {
 		return fmt.Errorf("get annotations and labels: %w", err)
 	}
 
-	releaseLabels, err := common.GetReleaseLabels(&commonCmdData)
-	if err != nil {
-		return fmt.Errorf("get release labels: %w", err)
-	}
+	chart.CurrentChartType = chart.ChartTypeBundle
 
 	ctx = action.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultReleaseInstallLogLevel), action.SetupLoggingOptions{
 		ColorMode: *commonCmdData.LogColorMode,
@@ -245,17 +236,13 @@ func runApply(ctx context.Context) error {
 		KubeSkipTLSVerify:            *commonCmdData.SkipTlsVerifyKube,
 		KubeTLSServerName:            *commonCmdData.KubeTlsServer,
 		KubeToken:                    *commonCmdData.KubeToken,
-		LegacyChartType:              helmopts.ChartTypeBundle,
-		LegacyExtraValues:            serviceValues,
 		LogRegistryStreamOut:         os.Stdout,
 		NetworkParallelism:           common.GetNetworkParallelism(&commonCmdData),
-		NoInstallCRDs:                *commonCmdData.NoInstallCRDs,
 		NoProgressTablePrint:         *commonCmdData.StatusProgressPeriodSeconds == -1,
 		ProgressTablePrintInterval:   time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
 		RegistryCredentialsPath:      registryCredentialsPath,
 		ReleaseHistoryLimit:          *commonCmdData.ReleasesHistoryMax,
 		ReleaseInfoAnnotations:       serviceAnnotations,
-		ReleaseLabels:                releaseLabels,
 		ReleaseStorageDriver:         os.Getenv("HELM_DRIVER"),
 		RollbackGraphPath:            common.GetRollbackGraphPath(&commonCmdData),
 		SecretKeyIgnore:              *commonCmdData.IgnoreSecretKey,

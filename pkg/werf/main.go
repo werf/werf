@@ -124,7 +124,6 @@ func Init(tmpDirOption, homeDirOption string) error {
 	// TODO: options + update purgeHomeWerfFiles
 
 	loader.SetLocalCacheDir(GetLocalCacheDir())
-	loader.SetServiceDir(GetServiceDir())
 	secrets_manager.SetWerfHomeDir(GetHomeDir())
 	secrets_manager_legacy.WerfHomeDir = GetHomeDir()
 

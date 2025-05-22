@@ -32,7 +32,7 @@ type FileReader interface {
 	IsDockerignoreExistAnywhere(ctx context.Context, relPath string) (bool, error)
 	ReadDockerignore(ctx context.Context, relPath string) ([]byte, error)
 
-	file.ChartFileReaderInterface
+	file.ChartFileReader
 }
 
 type Inspector interface {

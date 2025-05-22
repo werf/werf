@@ -12,7 +12,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/werf/3p-helm/pkg/chart"
-	"github.com/werf/3p-helm/pkg/werf/file"
+	"github.com/werf/3p-helm/pkg/chart/loader"
+	"github.com/werf/3p-helm/pkg/chartutil"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/nelm/pkg/action"
@@ -183,8 +184,6 @@ werf converge --repo registry.mydomain.com/web --env production`,
 	common.SetupRollbackGraphPath(&commonCmdData, cmd)
 
 	common.SetupRenderSubchartNotes(&commonCmdData, cmd)
-	common.SetupNoInstallCRDs(&commonCmdData, cmd)
-	common.SetupReleaseLabel(&commonCmdData, cmd)
 
 	defaultTimeout, err := util.GetIntEnvVar("WERF_TIMEOUT")
 	if err != nil || defaultTimeout == nil {
@@ -419,7 +418,7 @@ func run(
 
 	registryCredentialsPath := docker.GetDockerConfigCredentialsFile(*commonCmdData.DockerConfig)
 
-	serviceValues, err := helpers.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepo, imagesInfoGetters, helpers.ServiceValuesOptions{
+	chartutil.ServiceValues, err = helpers.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepo, imagesInfoGetters, helpers.ServiceValuesOptions{
 		Namespace:                releaseNamespace,
 		Env:                      *commonCmdData.Environment,
 		SetDockerConfigJsonValue: *commonCmdData.SetDockerConfigJsonValue,
@@ -431,12 +430,7 @@ func run(
 		return fmt.Errorf("get service values: %w", err)
 	}
 
-	releaseLabels, err := common.GetReleaseLabels(&commonCmdData)
-	if err != nil {
-		return fmt.Errorf("get release labels: %w", err)
-	}
-
-	file.ChartFileReader = giterminismManager.FileReader()
+	loader.ChartFileReader = giterminismManager.FileReader()
 
 	ctx = action.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultReleaseInstallLogLevel), action.SetupLoggingOptions{
 		ColorMode: *commonCmdData.LogColorMode,
@@ -469,16 +463,13 @@ func run(
 		KubeSkipTLSVerify:            *commonCmdData.SkipTlsVerifyKube,
 		KubeTLSServerName:            *commonCmdData.KubeTlsServer,
 		KubeToken:                    *commonCmdData.KubeToken,
-		LegacyExtraValues:            serviceValues,
 		LogRegistryStreamOut:         os.Stdout,
 		NetworkParallelism:           common.GetNetworkParallelism(&commonCmdData),
-		NoInstallCRDs:                *commonCmdData.NoInstallCRDs,
 		NoProgressTablePrint:         *commonCmdData.StatusProgressPeriodSeconds == -1,
 		ProgressTablePrintInterval:   time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
 		RegistryCredentialsPath:      registryCredentialsPath,
 		ReleaseHistoryLimit:          *commonCmdData.ReleasesHistoryMax,
 		ReleaseInfoAnnotations:       serviceAnnotations,
-		ReleaseLabels:                releaseLabels,
 		ReleaseStorageDriver:         os.Getenv("HELM_DRIVER"),
 		RollbackGraphPath:            common.GetRollbackGraphPath(&commonCmdData),
 		SecretKeyIgnore:              *commonCmdData.IgnoreSecretKey,
