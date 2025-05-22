@@ -35,7 +35,6 @@ import (
 
 	"github.com/werf/3p-helm/pkg/chart"
 	"github.com/werf/3p-helm/pkg/helmpath"
-	"github.com/werf/3p-helm/pkg/werf/helmopts"
 )
 
 const (
@@ -132,8 +131,8 @@ func (c *Client) Logout(hostname string) error {
 }
 
 // PushChart uploads a chart to a registry
-func (c *Client) PushChart(ref *Reference, opts helmopts.HelmOptions) error {
-	r, err := c.cache.FetchReference(ref, opts)
+func (c *Client) PushChart(ref *Reference) error {
+	r, err := c.cache.FetchReference(ref)
 	if err != nil {
 		return err
 	}
@@ -210,11 +209,11 @@ func (c *Client) PullChart(ref *Reference) (*bytes.Buffer, error) {
 // PullChartToCache pulls a chart from an OCI Registry to the Registry Cache.
 // This function is needed for `helm chart pull`, which is experimental and will be deprecated soon.
 // Likewise, the Registry cache will soon be deprecated as will this function.
-func (c *Client) PullChartToCache(ref *Reference, opts helmopts.HelmOptions) error {
+func (c *Client) PullChartToCache(ref *Reference) error {
 	if ref.Tag == "" {
 		return errors.New("tag explicitly required")
 	}
-	existing, err := c.cache.FetchReference(ref, opts)
+	existing, err := c.cache.FetchReference(ref)
 	if err != nil {
 		return err
 	}
@@ -230,7 +229,7 @@ func (c *Client) PullChartToCache(ref *Reference, opts helmopts.HelmOptions) err
 	if err != nil {
 		return err
 	}
-	r, err := c.cache.FetchReference(ref, opts)
+	r, err := c.cache.FetchReference(ref)
 	if err != nil {
 		return err
 	}
@@ -247,8 +246,8 @@ func (c *Client) PullChartToCache(ref *Reference, opts helmopts.HelmOptions) err
 }
 
 // SaveChart stores a copy of chart in local cache
-func (c *Client) SaveChart(ch *chart.Chart, ref *Reference, opts helmopts.HelmOptions) error {
-	r, err := c.cache.StoreReference(ref, ch, opts)
+func (c *Client) SaveChart(ch *chart.Chart, ref *Reference) error {
+	r, err := c.cache.StoreReference(ref, ch)
 	if err != nil {
 		return err
 	}
@@ -262,8 +261,8 @@ func (c *Client) SaveChart(ch *chart.Chart, ref *Reference, opts helmopts.HelmOp
 }
 
 // LoadChart retrieves a chart object by reference
-func (c *Client) LoadChart(ref *Reference, opts helmopts.HelmOptions) (*chart.Chart, error) {
-	r, err := c.cache.FetchReference(ref, opts)
+func (c *Client) LoadChart(ref *Reference) (*chart.Chart, error) {
+	r, err := c.cache.FetchReference(ref)
 	if err != nil {
 		return nil, err
 	}
@@ -275,8 +274,8 @@ func (c *Client) LoadChart(ref *Reference, opts helmopts.HelmOptions) (*chart.Ch
 }
 
 // RemoveChart deletes a locally saved chart
-func (c *Client) RemoveChart(ref *Reference, opts helmopts.HelmOptions) error {
-	r, err := c.cache.DeleteReference(ref, opts)
+func (c *Client) RemoveChart(ref *Reference) error {
+	r, err := c.cache.DeleteReference(ref)
 	if err != nil {
 		return err
 	}
@@ -288,11 +287,11 @@ func (c *Client) RemoveChart(ref *Reference, opts helmopts.HelmOptions) error {
 }
 
 // PrintChartTable prints a list of locally stored charts
-func (c *Client) PrintChartTable(opts helmopts.HelmOptions) error {
+func (c *Client) PrintChartTable() error {
 	table := uitable.New()
 	table.MaxColWidth = 60
 	table.AddRow("REF", "NAME", "VERSION", "DIGEST", "SIZE", "CREATED")
-	rows, err := c.getChartTableRows(opts)
+	rows, err := c.getChartTableRows()
 	if err != nil {
 		return err
 	}
@@ -313,8 +312,8 @@ func (c *Client) printCacheRefSummary(r *CacheRefSummary) {
 }
 
 // getChartTableRows returns rows in uitable-friendly format
-func (c *Client) getChartTableRows(opts helmopts.HelmOptions) ([][]interface{}, error) {
-	rr, err := c.cache.ListReferences(opts)
+func (c *Client) getChartTableRows() ([][]interface{}, error) {
+	rr, err := c.cache.ListReferences()
 	if err != nil {
 		return nil, err
 	}

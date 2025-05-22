@@ -7,7 +7,6 @@ import (
 	"io"
 
 	"github.com/werf/3p-helm/pkg/chart"
-	"github.com/werf/3p-helm/pkg/werf/helmopts"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/image"
 )
@@ -15,8 +14,6 @@ import (
 const (
 	chartArchiveFileName = "chart.tar.gz"
 )
-
-var _ BundleAccessor = (*BundleArchive)(nil)
 
 type BundleArchive struct {
 	Reader BundleArchiveReader
@@ -31,13 +28,13 @@ func (bundle *BundleArchive) GetImageArchiveOpener(imageTag string) *ImageArchiv
 	return NewImageArchiveOpener(bundle, imageTag)
 }
 
-func (bundle *BundleArchive) ReadChart(ctx context.Context, opts helmopts.HelmOptions) (*chart.Chart, error) {
+func (bundle *BundleArchive) ReadChart(ctx context.Context) (*chart.Chart, error) {
 	chartBytes, err := bundle.Reader.ReadChartArchive()
 	if err != nil {
 		return nil, fmt.Errorf("unable to read chart archive: %w", err)
 	}
 
-	ch, err := BytesToChart(chartBytes, opts)
+	ch, err := BytesToChart(chartBytes)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse chart archive from bundle archive: %w", err)
 	}
@@ -45,13 +42,13 @@ func (bundle *BundleArchive) ReadChart(ctx context.Context, opts helmopts.HelmOp
 	return ch, nil
 }
 
-func (bundle *BundleArchive) WriteChart(ctx context.Context, ch *chart.Chart, opts helmopts.HelmOptions) error {
+func (bundle *BundleArchive) WriteChart(ctx context.Context, ch *chart.Chart) error {
 	chartBytes, err := ChartToBytes(ch)
 	if err != nil {
 		return fmt.Errorf("unable to dump chart to archive: %w", err)
 	}
 
-	if err := bundle.Writer.WriteChartArchive(chartBytes, opts); err != nil {
+	if err := bundle.Writer.WriteChartArchive(chartBytes); err != nil {
 		return fmt.Errorf("unable to write chart archive into bundle archive: %w", err)
 	}
 
@@ -63,7 +60,7 @@ func (bundle *BundleArchive) CopyTo(ctx context.Context, to BundleAccessor, opts
 }
 
 func (bundle *BundleArchive) CopyFromArchive(ctx context.Context, fromArchive *BundleArchive, opts copyToOptions) error {
-	ch, err := fromArchive.ReadChart(ctx, opts.HelmOptions)
+	ch, err := fromArchive.ReadChart(ctx)
 	if err != nil {
 		return fmt.Errorf("unable to read chart from the bundle archive %q: %w", fromArchive.Reader.String(), err)
 	}
@@ -73,7 +70,7 @@ func (bundle *BundleArchive) CopyFromArchive(ctx context.Context, fromArchive *B
 	}
 
 	if err := logboek.Context(ctx).LogProcess("Saving bundle %s into archive", fromArchive.Reader.String()).DoError(func() error {
-		return bundle.WriteChart(ctx, ch, opts.HelmOptions)
+		return bundle.WriteChart(ctx, ch)
 	}); err != nil {
 		return err
 	}
@@ -125,7 +122,7 @@ func (bundle *BundleArchive) CopyFromArchive(ctx context.Context, fromArchive *B
 }
 
 func (bundle *BundleArchive) CopyFromRemote(ctx context.Context, fromRemote *RemoteBundle, opts copyToOptions) error {
-	ch, err := fromRemote.ReadChart(ctx, opts.HelmOptions)
+	ch, err := fromRemote.ReadChart(ctx)
 	if err != nil {
 		return fmt.Errorf("unable to read chart from remote bundle: %w", err)
 	}
@@ -135,7 +132,7 @@ func (bundle *BundleArchive) CopyFromRemote(ctx context.Context, fromRemote *Rem
 	}
 
 	if err := logboek.Context(ctx).LogProcess("Saving bundle %s into archive", fromRemote.RegistryAddress.FullName()).DoError(func() error {
-		return bundle.WriteChart(ctx, ch, opts.HelmOptions)
+		return bundle.WriteChart(ctx, ch)
 	}); err != nil {
 		return err
 	}
