@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.36.3](https://www.github.com/werf/werf/compare/v2.36.2...v2.36.3) (2025-05-23)
+
+
+### Bug Fixes
+
+* **deploy:** improve values handling and add more trace logging; undo many reverts ([6bdca4a](https://www.github.com/werf/werf/commit/6bdca4a4b15cbc9590865d982d6ef03ff0ec6cd2))
+
 ### [2.36.2](https://www.github.com/werf/werf/compare/v2.36.1...v2.36.2) (2025-05-22)
 
 
