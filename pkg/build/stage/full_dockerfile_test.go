@@ -13,6 +13,7 @@ import (
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/pkg/container_backend/stage_builder"
 	"github.com/werf/werf/v2/pkg/dockerfile/frontend"
+	"github.com/werf/werf/v2/pkg/logging"
 )
 
 func testDockerfileToDockerStages(dockerfileData []byte) ([]instructions.Stage, []instructions.ArgCommand) {
@@ -57,9 +58,7 @@ func newTestFullDockerfileStage(dockerfileData []byte, target string, buildArgs 
 
 var _ = Describe("FullDockerfileStage", func() {
 	DescribeTable("configuring images dependencies for dockerfile stage",
-		func(data TestDockerfileDependencies) {
-			ctx := context.Background()
-
+		func(ctx SpecContext, data TestDockerfileDependencies) {
 			conveyor := NewConveyorStubForDependencies(NewGiterminismManagerStub(NewLocalGitRepoStub("9d8059842b6fde712c58315ca0ab4713d90761c0"), NewGiterminismInspectorStub()), data.TestDependencies.Dependencies)
 			containerBackend := NewContainerBackendStub()
 
@@ -293,15 +292,13 @@ RUN echo hello
 	)
 
 	When("Dockerfile uses undefined build argument", func() {
-		It("should report descriptive error when fetching dockerfile stage dependencies", func() {
+		It("should report descriptive error when fetching dockerfile stage dependencies", func(ctx SpecContext) {
 			dockerfile := []byte(`
 ARG BASE_NAME=alpine:latest
 
 FROM ${BASE_NAME1}
 RUN echo hello
 `)
-
-			ctx := context.Background()
 
 			conveyor := NewConveyorStubForDependencies(NewGiterminismManagerStub(NewLocalGitRepoStub("9d8059842b6fde712c58315ca0ab4713d90761c0"), NewGiterminismInspectorStub()), nil)
 
@@ -317,7 +314,7 @@ RUN echo hello
 	})
 
 	When("Dockerfile uses run with mount from another stage", func() {
-		It("should change dockerfile stage digest when base stage context has changed", func() {
+		It("should change dockerfile stage digest when base stage context has changed", func(ctx context.Context) {
 			dockerfile := []byte(`
 FROM alpnie:latest AS build
 WORKDIR /usr/local/test_project
@@ -330,7 +327,7 @@ RUN --mount=type=bind,from=build,source=/usr/local/test_project/dist,target=/usr
     cp -v /usr/test_project/dist/prog.py /usr/local/bin/prog
 `)
 
-			ctx := context.Background()
+			ctx = logging.WithLogger(ctx)
 
 			gitRepoStub := NewLocalGitRepoStub("9d8059842b6fde712c58315ca0ab4713d90761c0")
 
