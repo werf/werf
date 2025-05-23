@@ -34,21 +34,21 @@ func init() {
 	}
 }
 
-func CheckContainerDirectoryExists(werfBinPath, projectPath, containerDirPath string) {
-	CheckContainerDirectory(werfBinPath, projectPath, containerDirPath, true)
+func CheckContainerDirectoryExists(ctx context.Context, werfBinPath, projectPath, containerDirPath string) {
+	CheckContainerDirectory(ctx, werfBinPath, projectPath, containerDirPath, true)
 }
 
-func CheckContainerDirectoryDoesNotExist(werfBinPath, projectPath, containerDirPath string) {
-	CheckContainerDirectory(werfBinPath, projectPath, containerDirPath, false)
+func CheckContainerDirectoryDoesNotExist(ctx context.Context, werfBinPath, projectPath, containerDirPath string) {
+	CheckContainerDirectory(ctx, werfBinPath, projectPath, containerDirPath, false)
 }
 
-func CheckContainerDirectory(werfBinPath, projectPath, containerDirPath string, exist bool) {
+func CheckContainerDirectory(ctx context.Context, werfBinPath, projectPath, containerDirPath string, exist bool) {
 	cmd := CheckContainerFileCommand(containerDirPath, true, exist)
-	RunSucceedContainerCommandWithStapel(werfBinPath, projectPath, []string{}, []string{cmd})
+	RunSucceedContainerCommandWithStapel(ctx, werfBinPath, projectPath, []string{}, []string{cmd})
 }
 
-func RunSucceedContainerCommandWithStapel(werfBinPath, projectPath string, extraDockerOptions, cmds []string) {
-	container, err := stapel.GetOrCreateContainer(context.Background())
+func RunSucceedContainerCommandWithStapel(ctx context.Context, werfBinPath, projectPath string, extraDockerOptions, cmds []string) {
+	container, err := stapel.GetOrCreateContainer(ctx)
 	Expect(err).ShouldNot(HaveOccurred())
 
 	dockerOptions := []string{
@@ -68,12 +68,7 @@ func RunSucceedContainerCommandWithStapel(werfBinPath, projectPath string, extra
 	werfArgs := baseWerfArgs
 	werfArgs = append(werfArgs, utils.ShelloutPack(containerCommand))
 
-	_, err = utils.RunCommandWithOptions(
-		projectPath,
-		werfBinPath,
-		werfArgs,
-		utils.RunCommandOptions{},
-	)
+	_, err = utils.RunCommandWithOptions(ctx, projectPath, werfBinPath, werfArgs, utils.RunCommandOptions{})
 
 	errorDesc := fmt.Sprintf("%[2]s (dir: %[1]s)", projectPath, strings.Join(append(baseWerfArgs, containerCommand), " "))
 	Expect(err).ShouldNot(HaveOccurred(), errorDesc)

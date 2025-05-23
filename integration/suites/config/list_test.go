@@ -13,17 +13,13 @@ type listEntry struct {
 	notExpectedImagesNames []string
 }
 
-var listItBody = func(entry listEntry) {
-	SuiteData.CommitProjectWorktree(SuiteData.ProjectName, utils.FixturePath("list"), "initial commit")
+var listItBody = func(ctx SpecContext, entry listEntry) {
+	SuiteData.CommitProjectWorktree(ctx, SuiteData.ProjectName, utils.FixturePath("list"), "initial commit")
 
 	werfArgs := []string{"config", "list"}
 	werfArgs = append(werfArgs, entry.extraArgs...)
 
-	output := utils.SucceedCommandOutputString(
-		SuiteData.GetProjectWorktree(SuiteData.ProjectName),
-		SuiteData.WerfBinPath,
-		werfArgs...,
-	)
+	output := utils.SucceedCommandOutputString(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, werfArgs...)
 
 	lines := utils.StringToLines(output)
 	for _, name := range entry.expectedImagesNames {
