@@ -54,7 +54,7 @@ func main() {
 
 	root.SetupTelemetryInit(rootCmd)
 
-	// WARNING this behaviour could be changed
+	// WARNING this behavior could be changed
 	// https://github.com/spf13/cobra/pull/2167 is not accepted yet
 	cobra.EnableErrorOnUnknownSubcommand = true
 
