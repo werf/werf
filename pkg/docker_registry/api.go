@@ -677,7 +677,7 @@ func (api *api) PushManifestList(ctx context.Context, reference string, opts Man
 	// FIXME(multiarch): Check manifest list already exists and do not republish in this case.
 	// FIXME(multiarch): If custom tag, then we should check by digest => we need to get each manifest from registry.
 	// FIXME(multiarch): If checksum tag, then we could simply check existing.
-	// FIXME(multiarch): ^^ This behaviour should be controlled by an option.
+	// FIXME(multiarch): ^^ This behavior should be controlled by an option.
 
 	var ii v1.ImageIndex
 	ii = empty.Index

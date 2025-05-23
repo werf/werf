@@ -13,7 +13,7 @@ func (m *ChartExtenderValuesMerger) MergeValues(ctx context.Context, inputVals, 
 	vals := make(map[string]interface{})
 
 	DebugPrintValues(ctx, "service", serviceVals)
-	chartutil.CoalesceTables(vals, serviceVals) // NOTE: service values will not be saved into the marshalled release
+	chartutil.CoalesceTables(vals, serviceVals) // NOTE: service values will not be saved into the marshaled release
 
 	if secretsRuntimeData != nil {
 		if DebugSecretValues() {
