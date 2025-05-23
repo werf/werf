@@ -3,6 +3,7 @@ package bundles
 import (
 	"context"
 
+	"github.com/werf/3p-helm/pkg/werf/helmopts"
 	"github.com/werf/werf/v2/pkg/docker_registry"
 )
 
@@ -11,6 +12,7 @@ type CopyOptions struct {
 	FromRegistryClient, ToRegistryClient docker_registry.Interface
 	HelmCompatibleChart                  bool
 	RenameChart                          string
+	HelmOptions                          helmopts.HelmOptions
 }
 
 func Copy(ctx context.Context, fromAddr, toAddr *Addr, opts CopyOptions) error {
@@ -23,5 +25,5 @@ func Copy(ctx context.Context, fromAddr, toAddr *Addr, opts CopyOptions) error {
 		RegistryClient:        opts.ToRegistryClient,
 	})
 
-	return fromBundle.CopyTo(ctx, toBundle, copyToOptions{HelmCompatibleChart: opts.HelmCompatibleChart, RenameChart: opts.RenameChart})
+	return fromBundle.CopyTo(ctx, toBundle, copyToOptions{HelmCompatibleChart: opts.HelmCompatibleChart, RenameChart: opts.RenameChart, HelmOptions: opts.HelmOptions})
 }

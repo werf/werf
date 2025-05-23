@@ -252,6 +252,9 @@ werf plan --repo registry.mydomain.com/web --env production
             deploy.namespace custom template from werf.yaml or $WERF_NAMESPACE)
       --network-parallelism=30
             Parallelize some network operations (default $WERF_NETWORK_PARALLELISM or 30)
+      --no-install-crds=false
+            Do not install CRDs from "crds/" directories of installed charts (default               
+            $WERF_NO_INSTALL_CRDS)
   -p, --parallel=true
             Run in parallel (default $WERF_PARALLEL or true)
       --parallel-tasks-limit=5
