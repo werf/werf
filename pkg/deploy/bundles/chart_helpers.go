@@ -12,6 +12,7 @@ import (
 	"github.com/werf/3p-helm/pkg/chart"
 	"github.com/werf/3p-helm/pkg/chart/loader"
 	"github.com/werf/3p-helm/pkg/chartutil"
+	"github.com/werf/3p-helm/pkg/werf/helmopts"
 	"github.com/werf/logboek"
 )
 
@@ -36,9 +37,9 @@ func ChartToBytes(ch *chart.Chart) ([]byte, error) {
 	return chartBytes.Bytes(), nil
 }
 
-func BytesToChart(data []byte) (*chart.Chart, error) {
+func BytesToChart(data []byte, opts helmopts.HelmOptions) (*chart.Chart, error) {
 	dataReader := bytes.NewBuffer(data)
-	return loader.LoadArchiveWithOptions(dataReader, chart.LoadOptions{})
+	return loader.LoadArchive(dataReader, opts)
 }
 
 func SaveChartValues(ctx context.Context, ch *chart.Chart) error {

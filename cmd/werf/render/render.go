@@ -11,8 +11,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/werf/3p-helm/pkg/chart"
-	"github.com/werf/3p-helm/pkg/chart/loader"
-	"github.com/werf/3p-helm/pkg/chartutil"
+	"github.com/werf/3p-helm/pkg/werf/file"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/level"
@@ -375,7 +374,7 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 	}
 	registryCredentialsPath := docker.GetDockerConfigCredentialsFile(*commonCmdData.DockerConfig)
 
-	chartutil.ServiceValues, err = helpers.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, imagesInfoGetters, helpers.ServiceValuesOptions{
+	serviceValues, err := helpers.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, imagesInfoGetters, helpers.ServiceValuesOptions{
 		Namespace:                releaseNamespace,
 		Env:                      *commonCmdData.Environment,
 		IsStub:                   isStub,
@@ -390,7 +389,7 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 		return fmt.Errorf("get service values: %w", err)
 	}
 
-	loader.ChartFileReader = giterminismManager.FileReader()
+	file.ChartFileReader = giterminismManager.FileReader()
 
 	// TODO(v3): get rid of forcing color mode via ci-env and use color mode detection logic from
 	// Nelm instead. Until then, color will be always off here.
@@ -399,7 +398,7 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 		LogIsParseable: true,
 	})
 
-	if err := action.ChartRender(ctx, action.ChartRenderOptions{
+	if _, err := action.ChartRender(ctx, action.ChartRenderOptions{
 		ChartAppVersion:              common.GetHelmChartConfigAppVersion(werfConfig),
 		ChartDirPath:                 chartPath,
 		ChartRepositoryInsecure:      *commonCmdData.InsecureHelmDependencies,
@@ -423,7 +422,7 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 		KubeSkipTLSVerify:            *commonCmdData.SkipTlsVerifyKube,
 		KubeTLSServerName:            *commonCmdData.KubeTlsServer,
 		KubeToken:                    *commonCmdData.KubeToken,
-		Remote:                       cmdData.Validate,
+		LegacyExtraValues:            serviceValues,
 		LocalKubeVersion:             *commonCmdData.KubeVersion,
 		LogRegistryStreamOut:         os.Stdout,
 		NetworkParallelism:           *commonCmdData.NetworkParallelism,
@@ -432,6 +431,7 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 		ReleaseName:                  releaseName,
 		ReleaseNamespace:             releaseNamespace,
 		ReleaseStorageDriver:         os.Getenv("HELM_DRIVER"),
+		Remote:                       cmdData.Validate,
 		SecretKeyIgnore:              *commonCmdData.IgnoreSecretKey,
 		SecretValuesPaths:            common.GetSecretValues(&commonCmdData),
 		SecretWorkDir:                giterminismManager.ProjectDir(),

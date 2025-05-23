@@ -37,6 +37,7 @@ import (
 	"github.com/werf/3p-helm/pkg/chart"
 	"github.com/werf/3p-helm/pkg/chart/loader"
 	"github.com/werf/3p-helm/pkg/chartutil"
+	"github.com/werf/3p-helm/pkg/werf/helmopts"
 )
 
 const (
@@ -87,7 +88,7 @@ func NewCache(opts ...CacheOption) (*Cache, error) {
 }
 
 // FetchReference retrieves a chart ref from cache
-func (cache *Cache) FetchReference(ref *Reference) (*CacheRefSummary, error) {
+func (cache *Cache) FetchReference(ref *Reference, opts helmopts.HelmOptions) (*CacheRefSummary, error) {
 	if err := cache.init(); err != nil {
 		return nil, err
 	}
@@ -144,7 +145,7 @@ func (cache *Cache) FetchReference(ref *Reference) (*CacheRefSummary, error) {
 			if err != nil {
 				return &r, err
 			}
-			ch, err := loader.LoadArchive(bytes.NewBuffer(contentBytes))
+			ch, err := loader.LoadArchive(bytes.NewBuffer(contentBytes), opts)
 			if err != nil {
 				return &r, err
 			}
@@ -155,7 +156,7 @@ func (cache *Cache) FetchReference(ref *Reference) (*CacheRefSummary, error) {
 }
 
 // StoreReference stores a chart ref in cache
-func (cache *Cache) StoreReference(ref *Reference, ch *chart.Chart) (*CacheRefSummary, error) {
+func (cache *Cache) StoreReference(ref *Reference, ch *chart.Chart, opts helmopts.HelmOptions) (*CacheRefSummary, error) {
 	if err := cache.init(); err != nil {
 		return nil, err
 	}
@@ -165,7 +166,7 @@ func (cache *Cache) StoreReference(ref *Reference, ch *chart.Chart) (*CacheRefSu
 		Tag:   ref.Tag,
 		Chart: ch,
 	}
-	existing, _ := cache.FetchReference(ref)
+	existing, _ := cache.FetchReference(ref, opts)
 	r.Exists = existing.Exists
 	config, _, err := cache.saveChartConfig(ch)
 	if err != nil {
@@ -194,11 +195,11 @@ func (cache *Cache) StoreReference(ref *Reference, ch *chart.Chart) (*CacheRefSu
 
 // DeleteReference deletes a chart ref from cache
 // TODO: garbage collection, only manifest removed
-func (cache *Cache) DeleteReference(ref *Reference) (*CacheRefSummary, error) {
+func (cache *Cache) DeleteReference(ref *Reference, opts helmopts.HelmOptions) (*CacheRefSummary, error) {
 	if err := cache.init(); err != nil {
 		return nil, err
 	}
-	r, err := cache.FetchReference(ref)
+	r, err := cache.FetchReference(ref, opts)
 	if err != nil || !r.Exists {
 		return r, err
 	}
@@ -208,7 +209,7 @@ func (cache *Cache) DeleteReference(ref *Reference) (*CacheRefSummary, error) {
 }
 
 // ListReferences lists all chart refs in a cache
-func (cache *Cache) ListReferences() ([]*CacheRefSummary, error) {
+func (cache *Cache) ListReferences(opts helmopts.HelmOptions) ([]*CacheRefSummary, error) {
 	if err := cache.init(); err != nil {
 		return nil, err
 	}
@@ -225,7 +226,7 @@ func (cache *Cache) ListReferences() ([]*CacheRefSummary, error) {
 		if err != nil {
 			return rr, err
 		}
-		r, err := cache.FetchReference(ref)
+		r, err := cache.FetchReference(ref, opts)
 		if err != nil {
 			return rr, err
 		}

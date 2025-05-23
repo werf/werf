@@ -116,6 +116,8 @@ type CmdData struct {
 	RollbackGraphPath *string
 
 	RenderSubchartNotes *bool
+	NoInstallCRDs       *bool
+	ReleaseLabels       *[]string
 
 	VirtualMerge *bool
 

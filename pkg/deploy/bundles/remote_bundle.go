@@ -10,11 +10,14 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/werf/3p-helm/pkg/chart"
+	"github.com/werf/3p-helm/pkg/werf/helmopts"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	bundles_registry "github.com/werf/werf/v2/pkg/deploy/bundles/registry"
 	"github.com/werf/werf/v2/pkg/docker_registry"
 )
+
+var _ BundleAccessor = (*RemoteBundle)(nil)
 
 type RemoteBundle struct {
 	RegistryAddress       *RegistryAddress
@@ -30,9 +33,9 @@ func NewRemoteBundle(registryAddress *RegistryAddress, bundlesRegistryClient Bun
 	}
 }
 
-func (bundle *RemoteBundle) ReadChart(ctx context.Context) (*chart.Chart, error) {
+func (bundle *RemoteBundle) ReadChart(ctx context.Context, opts helmopts.HelmOptions) (*chart.Chart, error) {
 	if err := logboek.Context(ctx).LogProcess("Pulling bundle %s", bundle.RegistryAddress.FullName()).DoError(func() error {
-		if err := bundle.BundlesRegistryClient.PullChartToCache(bundle.RegistryAddress.Reference); err != nil {
+		if err := bundle.BundlesRegistryClient.PullChartToCache(bundle.RegistryAddress.Reference, opts); err != nil {
 			return fmt.Errorf("unable to pull bundle %s: %w", bundle.RegistryAddress.FullName(), err)
 		}
 		return nil
@@ -43,7 +46,7 @@ func (bundle *RemoteBundle) ReadChart(ctx context.Context) (*chart.Chart, error)
 	var ch *chart.Chart
 	if err := logboek.Context(ctx).LogProcess("Loading bundle %s", bundle.RegistryAddress.FullName()).DoError(func() error {
 		var err error
-		ch, err = bundle.BundlesRegistryClient.LoadChart(bundle.RegistryAddress.Reference)
+		ch, err = bundle.BundlesRegistryClient.LoadChart(bundle.RegistryAddress.Reference, opts)
 		if err != nil {
 			return fmt.Errorf("unable to load pulled bundle %s: %w", bundle.RegistryAddress.FullName(), err)
 		}
@@ -55,9 +58,9 @@ func (bundle *RemoteBundle) ReadChart(ctx context.Context) (*chart.Chart, error)
 	return ch, nil
 }
 
-func (bundle *RemoteBundle) WriteChart(ctx context.Context, ch *chart.Chart) error {
+func (bundle *RemoteBundle) WriteChart(ctx context.Context, ch *chart.Chart, opts helmopts.HelmOptions) error {
 	if err := logboek.Context(ctx).LogProcess("Saving bundle %s", bundle.RegistryAddress.FullName()).DoError(func() error {
-		if err := bundle.BundlesRegistryClient.SaveChart(ch, bundle.RegistryAddress.Reference); err != nil {
+		if err := bundle.BundlesRegistryClient.SaveChart(ch, bundle.RegistryAddress.Reference, opts); err != nil {
 			return fmt.Errorf("unable to save bundle %s to the local chart helm cache: %w", bundle.RegistryAddress.FullName(), err)
 		}
 		return nil
@@ -66,7 +69,7 @@ func (bundle *RemoteBundle) WriteChart(ctx context.Context, ch *chart.Chart) err
 	}
 
 	if err := logboek.Context(ctx).LogProcess("Pushing bundle %s", bundle.RegistryAddress.FullName()).DoError(func() error {
-		if err := bundle.BundlesRegistryClient.PushChart(bundle.RegistryAddress.Reference); err != nil {
+		if err := bundle.BundlesRegistryClient.PushChart(bundle.RegistryAddress.Reference, opts); err != nil {
 			return fmt.Errorf("unable to push bundle %s: %w", bundle.RegistryAddress.FullName(), err)
 		}
 		return nil
@@ -82,7 +85,7 @@ func (bundle *RemoteBundle) CopyTo(ctx context.Context, to BundleAccessor, opts 
 }
 
 func (bundle *RemoteBundle) CopyFromArchive(ctx context.Context, fromArchive *BundleArchive, opts copyToOptions) error {
-	ch, err := fromArchive.ReadChart(ctx)
+	ch, err := fromArchive.ReadChart(ctx, opts.HelmOptions)
 	if err != nil {
 		return fmt.Errorf("unable to read chart from the bundle archive %q: %w", fromArchive.Reader.String(), err)
 	}
@@ -141,7 +144,7 @@ func (bundle *RemoteBundle) CopyFromArchive(ctx context.Context, fromArchive *Bu
 	}
 	ch.Metadata.Version = sv.String()
 
-	if err := bundle.WriteChart(ctx, ch); err != nil {
+	if err := bundle.WriteChart(ctx, ch, opts.HelmOptions); err != nil {
 		return fmt.Errorf("unable to write chart to remote bundle: %w", err)
 	}
 
@@ -149,7 +152,7 @@ func (bundle *RemoteBundle) CopyFromArchive(ctx context.Context, fromArchive *Bu
 }
 
 func (bundle *RemoteBundle) CopyFromRemote(ctx context.Context, fromRemote *RemoteBundle, opts copyToOptions) error {
-	ch, err := fromRemote.ReadChart(ctx)
+	ch, err := fromRemote.ReadChart(ctx, opts.HelmOptions)
 	if err != nil {
 		return fmt.Errorf("unable to read chart from source remote bundle: %w", err)
 	}
@@ -211,7 +214,7 @@ func (bundle *RemoteBundle) CopyFromRemote(ctx context.Context, fromRemote *Remo
 	}
 	ch.Metadata.Version = sv.String()
 
-	if err := bundle.WriteChart(ctx, ch); err != nil {
+	if err := bundle.WriteChart(ctx, ch, opts.HelmOptions); err != nil {
 		return fmt.Errorf("unable to write chart to destination remote bundle: %w", err)
 	}
 
