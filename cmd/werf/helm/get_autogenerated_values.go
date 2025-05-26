@@ -217,7 +217,7 @@ func runGetServiceValues(ctx context.Context, imageNameListFromArgs []string) er
 			return err
 		}
 
-		// Override default behaviour:
+		// Override default behavior:
 		// Print build logs on error by default.
 		// Always print logs if --log-verbose is specified (level.Info).
 		isVerbose := logboek.Context(ctx).IsAcceptedLevel(level.Default)

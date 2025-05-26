@@ -14,7 +14,7 @@ import (
 )
 
 // NOTE: maybe in the future we will need a support for the werf project to be used as a chart.
-// NOTE: This extender allows to define this behaviour.
+// NOTE: This extender allows to define this behavior.
 
 type WerfSubchartOptions struct {
 	DisableDefaultSecretValues bool

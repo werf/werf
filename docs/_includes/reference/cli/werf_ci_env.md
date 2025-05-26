@@ -105,7 +105,7 @@ werf ci-env CI_SYSTEM [options]
             Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT]     
             ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)
       --shell=""
-            Set to cmdexe, powershell or use the default behaviour that is compatible with any unix 
+            Set to cmdexe, powershell or use the default behavior that is compatible with any unix  
             shell (default $WERF_SHELL).
       --tmp-dir=""
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
