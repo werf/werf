@@ -1137,7 +1137,7 @@ func (backend *BuildahBackend) GenerateSBOM(ctx context.Context, scanOpts scanne
 	// TODO (zaytsev): support multiple commands
 	scanOptions.SBOMOutput = filepath.Join(workingTree.RootDir(), workingTree.BillsDir(), workingTree.BillPaths()[0])
 
-	scanLogger := logboek.Context(ctx).Default().LogProcess("Scan source image")
+	scanLogger := logboek.Context(ctx).Default().LogProcess("Scan image %q", scanOpts.Commands[0].SourcePath)
 	scanLogger.Start()
 
 	imageRef, err := backend.buildah.Commit(ctx, scannerContainerRef, buildah.CommitOpts{

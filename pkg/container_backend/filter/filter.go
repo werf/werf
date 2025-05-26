@@ -16,11 +16,11 @@ func NewFilter(key, value string) Filter {
 	}
 }
 
-func (l *Filter) String() string {
+func (l Filter) String() string {
 	return fmt.Sprintf("%s=%s", l.First, l.Second)
 }
 
-func (f *Filter) ToPair() util.Pair[string, string] {
+func (f Filter) ToPair() util.Pair[string, string] {
 	return util.NewPair(f.First, f.Second)
 }
 
