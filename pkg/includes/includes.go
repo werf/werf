@@ -67,7 +67,7 @@ type InitIncludesOptions struct {
 }
 
 func Init(ctx context.Context, opts InitIncludesOptions) ([]*Include, error) {
-	config, err := NewConfig(ctx, opts.FileReader, GetWerfIncludesConfigRelPath(opts.ConfigRelPath))
+	config, err := NewConfig(ctx, opts.FileReader, GetWerfIncludesConfigRelPath(opts.ConfigRelPath), opts.CreateOrUpdateLockFile)
 	if err != nil {
 		return nil, fmt.Errorf("unable to initialize includes: %w", err)
 	}
@@ -101,7 +101,7 @@ func Init(ctx context.Context, opts InitIncludesOptions) ([]*Include, error) {
 			return nil, nil
 		}
 
-		lockInfo, err := getLockInfo(ctx, getLockInfoOptions{
+		lockInfo, err := getLockInfo(getLockInfoOptions{
 			includesConfig:         config,
 			fileReader:             opts.FileReader,
 			createOrUpdateLockFile: opts.CreateOrUpdateLockFile,
@@ -161,6 +161,8 @@ func GetIncludes(ctx context.Context, cfg Config, lockInfo *LockInfo, remoteRepo
 			return nil, err
 		}
 
+		logboek.Context(ctx).Debug().LogF("Processing include %s with ref %s\n", i.Git, ref)
+
 		commitFromLockInfo, err := lockInfo.GetCommit(i.Git, ref)
 		if err != nil {
 			return nil, fmt.Errorf("unable to get commit from lock info: %w", err)
@@ -187,6 +189,8 @@ func GetIncludes(ctx context.Context, cfg Config, lockInfo *LockInfo, remoteRepo
 			ExcludeGlobs: i.ExcludePaths,
 		})
 
+		logboek.Context(ctx).Debug().LogF("Using path matcher: basePath=%s, includeGlobs=%v, excludeGlobs=%v\n", i.Add, i.IncludePaths, i.ExcludePaths)
+
 		matchedMap := map[string]string{}
 		err = tree.Files().ForEach(func(f *object.File) error {
 			if pm.IsPathMatched(f.Name) {
@@ -201,6 +205,10 @@ func GetIncludes(ctx context.Context, cfg Config, lockInfo *LockInfo, remoteRepo
 		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to iterate over files: %w", err)
+		}
+
+		if len(matchedMap) == 0 {
+			return nil, fmt.Errorf("no files matched for include %s with ref %s", i.Git, ref)
 		}
 
 		include := &Include{

@@ -45,7 +45,7 @@ type includeLockConf struct {
 	Commit string `yaml:"commit"`
 }
 
-func NewConfig(ctx context.Context, fileReader GiterminismManagerFileReader, configRelPath string) (Config, error) {
+func NewConfig(ctx context.Context, fileReader GiterminismManagerFileReader, configRelPath string, createLockConfig bool) (Config, error) {
 	logboek.Context(ctx).Debug().LogF("Reading includes config from %q\n", configRelPath)
 	exist, err := fileReader.IsIncludesConfigExistAnywhere(ctx, configRelPath)
 	if err != nil {
@@ -53,6 +53,9 @@ func NewConfig(ctx context.Context, fileReader GiterminismManagerFileReader, con
 	}
 
 	if !exist {
+		if createLockConfig {
+			return Config{}, fmt.Errorf("includes config file %q not found", configRelPath)
+		}
 		return Config{}, nil
 	}
 
@@ -75,8 +78,9 @@ func parseConfig(ctx context.Context, fileReader GiterminismManagerFileReader, c
 	}
 
 	for _, include := range config.Includes {
-		if !oneOrNone([]bool{include.Branch != "", include.Commit != "", include.Tag != ""}) {
-			return config, fmt.Errorf("specify only `branch: BRANCH` or `tag: TAG` or `commit: COMMIT` for include %s", include.Git)
+		if !exactlyOne([]bool{include.Branch != "", include.Commit != "", include.Tag != ""}) {
+			err := fmt.Errorf("include %s: specify only `branch` or `tag` or `commit`\n\n %s", include.Git, string(data))
+			return config, err
 		}
 	}
 
@@ -92,7 +96,7 @@ type getLockInfoOptions struct {
 	lockConfig             *lockConfig
 }
 
-func getLockInfo(ctx context.Context, opts getLockInfoOptions) (*LockInfo, error) {
+func getLockInfo(opts getLockInfoOptions) (*LockInfo, error) {
 	var lockConf *lockConfig
 
 	if opts.useLatestVersion {
@@ -109,7 +113,7 @@ func getLockInfo(ctx context.Context, opts getLockInfoOptions) (*LockInfo, error
 		lockConf = opts.lockConfig
 	}
 
-	lockInfo, err := readLockInfo(ctx, opts.fileReader, lockConf)
+	lockInfo, err := readLockInfo(lockConf)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read include lock info: %w", err)
 	}
@@ -121,7 +125,7 @@ func getLockInfo(ctx context.Context, opts getLockInfoOptions) (*LockInfo, error
 	return lockInfo, nil
 }
 
-func readLockInfo(ctx context.Context, fileReader GiterminismManagerFileReader, lockConf *lockConfig) (*LockInfo, error) {
+func readLockInfo(lockConf *lockConfig) (*LockInfo, error) {
 	lockInfo := &LockInfo{
 		includeToCommitMapper: make(map[string]string),
 	}
@@ -189,6 +193,7 @@ func createLockConfig(opts createLockConfigOptions) (lockConfig, error) {
 				Git:    c.Git,
 				Branch: c.Branch,
 				Tag:    c.Tag,
+				Commit: c.Commit,
 			})
 			includesMap[lockId] = true
 		}
@@ -196,7 +201,7 @@ func createLockConfig(opts createLockConfigOptions) (lockConfig, error) {
 
 	newLockConfig, err := newLockConfig(lockConfs, opts.remoteRepos)
 	if err != nil {
-		return lockConfig{}, fmt.Errorf("update to create new lock config: %w", err)
+		return lockConfig{}, fmt.Errorf("unable to update lock config: %w", err)
 	}
 
 	return newLockConfig, nil
@@ -221,7 +226,7 @@ func newLockConfig(cfg []includeLockConf, remoteRepos map[string]*git_repo.Remot
 func (l *LockInfo) GetCommit(git, ref string) (string, error) {
 	commit, ok := l.includeToCommitMapper[lockId(git, ref)]
 	if !ok {
-		return "", fmt.Errorf("lock config not found for %s", git)
+		return "", fmt.Errorf("lock config not found for %s.\n\nUpdate lock file using `werf includes update` command", git)
 	}
 	return commit, nil
 }
@@ -285,22 +290,14 @@ func (c *includeLockConf) updateCommit(remoteRepos map[string]*git_repo.Remote) 
 	}, nil
 }
 
-func oneOrNone(conditions []bool) bool {
-	if len(conditions) == 0 {
-		return true
-	}
-
-	exist := false
-	for _, condition := range conditions {
-		if condition {
-			if exist {
-				return false
-			} else {
-				exist = true
-			}
+func exactlyOne(conditions []bool) bool {
+	count := 0
+	for _, c := range conditions {
+		if c {
+			count++
 		}
 	}
-	return true
+	return count == 1
 }
 
 func lockId(git, ref string) string {
