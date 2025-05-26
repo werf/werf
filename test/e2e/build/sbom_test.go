@@ -40,7 +40,7 @@ var _ = Describe("Simple build", Label("e2e", "build", "sbom", "simple"), func()
 
 				By("state0: SBOM logging output")
 				Expect(buildOut).To(ContainSubstring("SBOM"))
-				Expect(buildOut).To(ContainSubstring("Scan source image"))
+				Expect(buildOut).To(ContainSubstring("Scan image"))
 				Expect(buildOut).To(ContainSubstring("Build destination image"))
 
 				for builtImgName, reportRecord := range buildReport.Images {
