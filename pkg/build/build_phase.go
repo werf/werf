@@ -23,14 +23,11 @@ import (
 	"github.com/werf/werf/v2/pkg/build/stage"
 	"github.com/werf/werf/v2/pkg/build/stage/instruction"
 	"github.com/werf/werf/v2/pkg/container_backend"
-	"github.com/werf/werf/v2/pkg/container_backend/filter"
 	backend_instruction "github.com/werf/werf/v2/pkg/container_backend/instruction"
-	"github.com/werf/werf/v2/pkg/container_backend/label"
 	"github.com/werf/werf/v2/pkg/docker_registry"
 	"github.com/werf/werf/v2/pkg/git_repo"
 	imagePkg "github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/logging"
-	"github.com/werf/werf/v2/pkg/sbom"
 	"github.com/werf/werf/v2/pkg/sbom/scanner"
 	"github.com/werf/werf/v2/pkg/stapel"
 	"github.com/werf/werf/v2/pkg/storage"
@@ -79,6 +76,7 @@ func NewBuildPhase(c *Conveyor, opts BuildPhaseOptions) *BuildPhase {
 	return &BuildPhase{
 		BasePhase:         BasePhase{c},
 		BuildPhaseOptions: opts,
+		sbomPhase:         newSbomPhase(c.ContainerBackend, c.StorageManager.GetStagesStorage()),
 		ImagesReport:      NewImagesReport(),
 	}
 }
@@ -86,6 +84,7 @@ func NewBuildPhase(c *Conveyor, opts BuildPhaseOptions) *BuildPhase {
 type BuildPhase struct {
 	BasePhase
 	BuildPhaseOptions
+	sbomPhase *sbomPhase
 
 	StagesIterator *StagesIterator
 	ImagesReport   *ImagesReport
@@ -236,7 +235,7 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 			}
 
 			if img.UseSbom() {
-				if err := phase.convergeSbom(ctx, img.GetLastNonEmptyStage().GetStageImage().Image.GetStageDesc()); err != nil {
+				if err = phase.sbomPhase.Converge(ctx, img.GetLastNonEmptyStage().GetStageImage().Image.GetStageDesc(), scanner.DefaultSyftScanOptions()); err != nil {
 					return fmt.Errorf("unable to converge sbom: %w", err)
 				}
 			}
@@ -269,7 +268,7 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 			}
 
 			if img.UseSbom() {
-				if err := phase.convergeSbom(ctx, img.GetStageDesc()); err != nil {
+				if err = phase.sbomPhase.Converge(ctx, img.GetStageDesc(), scanner.DefaultSyftScanOptions()); err != nil {
 					return fmt.Errorf("unable to converge sbom: %w", err)
 				}
 			}
@@ -1390,58 +1389,4 @@ E.g.:
 func (phase *BuildPhase) Clone() Phase {
 	u := *phase
 	return &u
-}
-
-// convergeSbom searches relevant SBOM image in local and remote storages.
-// If the relevant image is found, it does nothing.
-// Otherwise, it generates new sbom image and puts the image into local and remote storages.
-func (phase *BuildPhase) convergeSbom(ctx context.Context, stageDesc *imagePkg.StageDesc) error {
-	// TODO (zaytsev): replace hardcoded scanner config with passing dynamic
-	scanOpts := scanner.DefaultSyftScanOptions()
-	scanOpts.Commands[0].SourcePath = stageDesc.Info.Name
-
-	sbomImgLabels := label.LabelList{
-		label.NewLabel(imagePkg.WerfLabel, stageDesc.Info.Labels[imagePkg.WerfLabel]),
-		label.NewLabel(imagePkg.WerfProjectRepoCommitLabel, stageDesc.Info.Labels[imagePkg.WerfProjectRepoCommitLabel]),
-		label.NewLabel(imagePkg.WerfStageContentDigestLabel, stageDesc.Info.Labels[imagePkg.WerfStageContentDigestLabel]),
-		label.NewLabel(imagePkg.WerfSbomLabel, scanOpts.Checksum()),
-	}
-
-	if list, err := phase.Conveyor.ContainerBackend.Images(ctx, container_backend.ImagesOptions{
-		Filters: filter.NewFilterListFromLabelList(sbomImgLabels).ToPairs(),
-	}); err != nil {
-		return fmt.Errorf("unable to list images: %w", err)
-	} else if len(list) > 0 {
-		// no need to scan source and build sbom image
-		return nil
-	}
-
-	// TODO (zaytsev): 2) search relevant sbom image remotely
-
-	// 3) Generate and label new sbom image
-	// TODO (zaytsev): how to guard temporal image from werf host cleanup?
-
-	generationLogger := logboek.Context(ctx).Default().LogProcess("SBOM")
-	generationLogger.Start()
-
-	sbomImgLabels.Add(label.NewLabel(imagePkg.WerfVersionLabel, stageDesc.Info.Labels[imagePkg.WerfVersionLabel]))
-
-	tmpImgId, err := phase.Conveyor.ContainerBackend.GenerateSBOM(ctx, scanOpts, sbomImgLabels.ToStringSlice())
-	if err != nil {
-		generationLogger.End()
-		return fmt.Errorf("unable to scan source image and store the result: %w", err)
-	}
-	generationLogger.End()
-
-	if err = phase.Conveyor.ContainerBackend.Tag(ctx, tmpImgId, sbom.ImageName(stageDesc.Info.Name), container_backend.TagOpts{}); err != nil {
-		return fmt.Errorf("unable to tag sbom image: %w", err)
-	}
-
-	// if err = phase.Conveyor.ContainerBackend.Rmi(ctx, tmpImgId, container_backend.RmiOpts{}); err != nil {
-	//   return fmt.Errorf("unable to rmi sbom temporal tag: %w", err)
-	// }
-
-	// TODO (zaytsev): 5) store generated SBOM image remotely
-
-	return nil
 }

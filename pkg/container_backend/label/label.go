@@ -15,6 +15,6 @@ func NewLabel(key, value string) Label {
 	}
 }
 
-func (l *Label) String() string {
+func (l Label) String() string {
 	return fmt.Sprintf("%s=%s", l.First, l.Second)
 }
