@@ -39,11 +39,8 @@ Deploy to Production:
     name: production
 ```
 
-> The complete `.gitlab-ci.yml` file for ready-to-use workflows, as well as the details of using werf with Shell, Docker, and Kubernetes executors, can be found in the corresponding guides:
->
-> - [Ready-to-use workflows](/guides/nodejs/400_ci_cd_workflow/030_gitlab_ci_cd/010_workflows.html);
-> - [Docker executor](/guides/nodejs/400_ci_cd_workflow/030_gitlab_ci_cd/020_docker_executor.html);
-> - [Kubernetes executor](/guides/nodejs/400_ci_cd_workflow/030_gitlab_ci_cd/030_kubernetes_executor.html).
+> You can find the complete `.gitlab-ci.yml` file for ready-to-use workflows, as well as the details of using werf with Shell, Docker, and Kubernetes executors, 
+> in the [Getting started](https://werf.io/getting_started/?usage=ci&ci=gitlabCiCd) configurator by selecting _CI/CD_ as your usage scenario and _GitLab CI/CD_ as your CI/CD system, and choosing the CI runner type you need.
 
 ## GitHub Actions
 
@@ -84,4 +81,5 @@ converge:
 ```
 {% endraw %}
 
-> The complete set of configurations (`.github/workflows/*.yml`) for the ready-to-use workflows can be found [in the corresponding section](/guides/nodejs/400_ci_cd_workflow/040_github_actions.html) of the manual.
+> You can find the complete set of configurations (`.github/workflows/*.yml`) for the ready-to-use workflows in the [Getting started](https://werf.io/getting_started/?usage=ci&ci=githubActions) configurator
+> by selecting _CI/CD_ as your usage scenario and _GitHub Actions_ as your CI/CD system.

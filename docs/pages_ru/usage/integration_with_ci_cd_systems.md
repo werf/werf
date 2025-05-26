@@ -39,11 +39,8 @@ Deploy to Production:
     name: production
 ```
 
-> Полный `.gitlab-ci.yml` для готовых рабочих процессов, а также особенности использования werf c Shell, Docker и Kubernetes executors можно найти в соответствующих статьях руководства:
->
-> - [Готовые рабочие процессы](/guides/nodejs/400_ci_cd_workflow/030_gitlab_ci_cd/010_workflows.html);
-> - [Docker executor](/guides/nodejs/400_ci_cd_workflow/030_gitlab_ci_cd/020_docker_executor.html);
-> - [Kubernetes executor](/guides/nodejs/400_ci_cd_workflow/030_gitlab_ci_cd/030_kubernetes_executor.html).
+> Полный `.gitlab-ci.yml` для готовых рабочих процессов, а также особенности использования werf c Shell, Docker и Kubernetes executors можно найти в конфигураторе «[Быстрый старт](https://werf.io/getting_started/?usage=ci&ci=gitlabCiCd)»,
+> указав в нём _CI/CD_ как сценарий использования и _GitLab CI/CD_ как CI/CD-систему, а затем выбрав интересующий вас тип CI-раннера.
 
 ## GitHub Actions
 
@@ -83,4 +80,5 @@ converge:
 ```
 {% endraw %}
 
-> Полный набор конфигураций (`.github/workflows/*.yml`) для готовых рабочих процессов можно найти [в соответствующей статье руководства](/guides/nodejs/400_ci_cd_workflow/040_github_actions.html).
+> Полный набор конфигураций (`.github/workflows/*.yml`) для готовых рабочих процессов можно найти в конфигураторе «[Быстрый старт](https://werf.io/getting_started/?usage=ci&ci=githubActions)»,
+> выбрав в нём _CI/CD_ как сценарий использования и _GitHub Actions_ — как CI/CD-систему.
