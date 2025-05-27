@@ -142,7 +142,7 @@ func (repo *Local) SyncWithOrigin(ctx context.Context) error {
 			Prune:     true,
 			PruneTags: true,
 			Unshallow: isShallow,
-			RefSpecs:  map[string]string{"origin": "+refs/heads/*:refs/remotes/origin/*"},
+			RefSpecs:  map[string][]string{"origin": {"+refs/heads/*:refs/remotes/origin/*"}},
 		}
 
 		if err := true_git.Fetch(ctx, repo.WorkTreeDir, fetchOptions); err != nil {
@@ -213,7 +213,7 @@ func (repo *Local) doFetchOrigin(ctx context.Context, unshallow bool) error {
 
 		fetchOptions := true_git.FetchOptions{
 			Unshallow: unshallow,
-			RefSpecs:  map[string]string{"origin": "+refs/heads/*:refs/remotes/origin/*"},
+			RefSpecs:  map[string][]string{"origin": {"+refs/heads/*:refs/remotes/origin/*"}},
 		}
 
 		if err := true_git.Fetch(ctx, repo.WorkTreeDir, fetchOptions); err != nil {

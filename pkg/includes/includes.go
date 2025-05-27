@@ -14,6 +14,7 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/path_matcher"
+	"github.com/werf/werf/v2/pkg/true_git"
 )
 
 const (
@@ -133,10 +134,37 @@ func initRemoteRepos(ctx context.Context, cfg Config) (map[string]*git_repo.Remo
 				if err != nil {
 					return fmt.Errorf("unable to open remote repository %s: %w", i.Git, err)
 				}
-				if err := repo.CloneAndFetch(ctx); err != nil {
+
+				isCloned, err := repo.Clone(ctx)
+				if err != nil {
 					return fmt.Errorf("unable to clone %s repository: %w", i.Git, err)
 				}
+
 				repoCache[i.Git] = repo
+
+				if isCloned {
+					continue
+				}
+
+				logboek.Context(ctx).Default().LogProcess(fmt.Sprintf("Syncing origin branches and tags for: %s", i.Git)).DoError(func() error {
+					fetchOptions := true_git.FetchOptions{
+						Prune:     true,
+						PruneTags: true,
+						RefSpecs: map[string][]string{
+							"origin": {
+								"+refs/heads/*:refs/heads/*",
+								"+refs/tags/*:refs/tags/*",
+							},
+						},
+						UpdateHeadOk: true,
+					}
+
+					if err := true_git.Fetch(ctx, repo.GetClonePath(), fetchOptions); err != nil {
+						return fmt.Errorf("fetch failed: %w", err)
+					}
+
+					return nil
+				})
 			}
 		}
 		return nil
