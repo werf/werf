@@ -416,32 +416,37 @@ const (
 
 func (f *FileManager) ListFilesByGlob(ctx context.Context, sources, globs []string) (map[string]string, error) {
 	var fromFs []string
-	if includesFromFs(sources) {
-		for _, glob := range globs {
-			// TODO: this is workaround due to the fact that fileReader.ListFilesByGlob
-			// does not support multiple glob patterns
-			f, err := f.fileReader.ListFilesByGlob(ctx, "", glob)
-			if err != nil {
-				return nil, err
-			}
-			fromFs = append(fromFs, f...)
+	for _, glob := range globs {
+		files, err := f.fileReader.ListFilesByGlob(ctx, "", glob)
+		if err != nil {
+			return nil, err
 		}
+		fromFs = append(fromFs, files...)
+	}
+
+	fsFilesSet := make(map[string]struct{})
+	for _, path := range fromFs {
+		fsFilesSet[path] = struct{}{}
 	}
 
 	fromIncludes := includes.ListFilesByGlobs(ctx, f.includes, globs, sources)
+
 	result := make(map[string]string)
 
-	for path, inc := range fromIncludes {
-		result[path] = inc.GetName()
+	if includesFromFs(sources) {
+		for _, path := range fromFs {
+			result[path] = fromFsSource
+		}
 	}
 
-	for _, path := range fromFs {
-		result[path] = fromFsSource
+	for path, inc := range fromIncludes {
+		if _, exists := fsFilesSet[path]; !exists {
+			result[path] = inc.GetName()
+		}
 	}
 
 	return result, nil
 }
-
 func includesFromFs(sources []string) bool {
 	return len(sources) == 0 || slices.Contains(sources, fromFsSource)
 }

@@ -19,7 +19,6 @@ type Config struct {
 }
 
 type includeConf struct {
-	Name         string   `yaml:"name"`
 	Git          string   `yaml:"git"`
 	Branch       string   `yaml:"branch"`
 	Tag          string   `yaml:"tag"`
@@ -77,14 +76,33 @@ func parseConfig(ctx context.Context, fileReader GiterminismManagerFileReader, c
 		return config, fmt.Errorf("the includes config validation failed: %w", err)
 	}
 
-	for _, include := range config.Includes {
-		if !exactlyOne([]bool{include.Branch != "", include.Commit != "", include.Tag != ""}) {
-			err := fmt.Errorf("include %s: specify only `branch` or `tag` or `commit`\n\n %s", include.Git, string(data))
-			return config, err
-		}
+	if err := validate(config); err != nil {
+		return config, fmt.Errorf("includes config validation failed: %w\n\n%s", err, string(data))
 	}
 
 	return config, nil
+}
+
+func validate(config Config) error {
+	for _, include := range config.Includes {
+		if include.Git == "" {
+			return fmt.Errorf("`git` field is required")
+		}
+
+		if include.Add == "" {
+			return fmt.Errorf("include %s: `add` field is required", include.Git)
+		}
+		if include.To == "" {
+			return fmt.Errorf("include %s: `to` field is required", include.Git)
+		}
+
+		if !exactlyOne([]bool{include.Branch != "", include.Commit != "", include.Tag != ""}) {
+			err := fmt.Errorf("include %s: specify only `branch` or `tag` or `commit`", include.Git)
+			return err
+		}
+	}
+
+	return nil
 }
 
 type getLockInfoOptions struct {
