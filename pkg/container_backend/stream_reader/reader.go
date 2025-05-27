@@ -3,25 +3,27 @@ package stream_reader
 import (
 	"archive/tar"
 	"bytes"
+	"compress/gzip"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
-	"slices"
 )
 
 // NewFileSystemStreamReader takes an image tar reader and returns file system stream reader.
 func NewFileSystemStreamReader(imgTarReader *tar.Reader) (*FileSystemStreamReader, error) {
-	fsRoot, err := findRoot(imgTarReader)
+	fsReader, err := findRoot(imgTarReader)
 	if err != nil {
 		return nil, err
 	}
-	if fsRoot == nil {
+	if fsReader == nil {
 		return &FileSystemStreamReader{nil}, nil
 	}
-	return &FileSystemStreamReader{tar.NewReader(fsRoot)}, nil
+	return &FileSystemStreamReader{fsReader}, nil
 }
 
-func findRoot(imgTarReader *tar.Reader) (*bytes.Buffer, error) {
+// findRoot finds the root of file system inside of image tarball
+func findRoot(imgTarReader *tar.Reader) (*tar.Reader, error) {
 	for {
 		header, err := imgTarReader.Next()
 
@@ -42,20 +44,42 @@ func findRoot(imgTarReader *tar.Reader) (*bytes.Buffer, error) {
 			return nil, err
 		}
 
-		detectedContentType := http.DetectContentType(firstBytes)
-		if !slices.Contains([]string{"application/x-tar", "application/octet-stream"}, detectedContentType) {
-			continue
-		}
+		switch http.DetectContentType(firstBytes) {
+		case "application/x-tar", "application/octet-stream":
+			bufLayers, err := bufferLayers(firstBytes, imgTarReader)
+			if err != nil {
+				return nil, err
+			}
+			return tar.NewReader(bufLayers), nil
 
-		// don't forget to write the first bytes
-		bufFs := bytes.NewBuffer(firstBytes)
-		// copy from second byte upt to the rest bytes
-		if _, err = io.Copy(bufFs, imgTarReader); err != nil {
-			return nil, err
-		}
+		case "application/x-gzip":
+			bufLayers, err := bufferLayers(firstBytes, imgTarReader)
+			if err != nil {
+				return nil, err
+			}
+			gzipReader, err := gzip.NewReader(bufLayers)
+			if err != nil {
+				return nil, fmt.Errorf("unable to create gzip reader: %w", err)
+			}
 
-		return bufFs, nil
+			return tar.NewReader(gzipReader), nil
+		default:
+			continue // unsupported content type
+		}
 	}
+}
+
+// bufferLayers creates new buffer from image layers
+func bufferLayers(firstBytes []byte, imgTarReader *tar.Reader) (*bytes.Buffer, error) {
+	// don't forget to write the first bytes
+	bufLayers := bytes.NewBuffer(firstBytes)
+
+	// copy from second byte upt to the rest bytes
+	if _, err := io.Copy(bufLayers, imgTarReader); err != nil {
+		return nil, err
+	}
+
+	return bufLayers, nil
 }
 
 type FileSystemStreamReader struct {

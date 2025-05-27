@@ -10,20 +10,25 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-// Generation command: "docker save -o /tmp/docker-native-archive.tar <image>"
+// Generation command: "docker save -o /tmp/docker-native-uncompressed-layers.tar <image>"
 //
-//go:embed testdata/docker-native-archive.tar
-var dockerNativeTarball []byte
+//go:embed testdata/docker-native-uncompressed-layers.tar
+var dockerNativeUncompressedLayersTarball []byte
 
-// Generation command: "buildah push -D <image> oci-archive:/tmp/buildah-oci-archive.tar"
+// Generation command: "buildah push -D <image> oci-archive:/tmp/buildah-oci-uncompressed-layers.tar"
 //
-//go:embed testdata/buildah-oci-archive.tar
-var buildahOciTarball []byte
+//go:embed testdata/buildah-oci-uncompressed-layers.tar
+var buildahOciUncompressedLayersTarball []byte
 
-// Generation command: "buildah push -D <image> docker-archive:/tmp/buildah-docker-archive.tar"
+// Generation command: "buildah push -D <image> docker-archive:/tmp/buildah-docker-uncompressed-layers.tar"
 //
-//go:embed testdata/buildah-docker-archive.tar
-var buildahDockerTarball []byte
+//go:embed testdata/buildah-docker-uncompressed-layers.tar
+var buildahDockerUncompressedLayersTarball []byte
+
+// Generation command: "buildah push <image> oci-archive:/tmp/buildah-oci-compressed-layers.tar"
+//
+//go:embed testdata/buildah-oci-compressed-layers.tar
+var buildahOciCompressedLayersTarball []byte
 
 var _ = Describe("file system stream reader", func() {
 	DescribeTable("read tarball via reader.Nex()",
@@ -50,16 +55,20 @@ var _ = Describe("file system stream reader", func() {
 			Expect(f4).To(BeNil())
 		},
 		Entry(
-			"should work for Docker native",
-			dockerNativeTarball,
+			"should work for Docker native which produces uncompressed layers",
+			dockerNativeUncompressedLayersTarball,
 		),
 		Entry(
-			"should work for Buildah oci-archive transport",
-			buildahOciTarball,
+			"should work for Buildah oci-archive transport which produces uncompressed layers",
+			buildahOciUncompressedLayersTarball,
 		),
 		Entry(
-			"should work for Buildah docker-archive transport",
-			buildahDockerTarball,
+			"should work for Buildah docker-archive transport which produces uncompressed layers",
+			buildahDockerUncompressedLayersTarball,
+		),
+		Entry(
+			"should work for Buildah docker-archive transport which produces compressed layers",
+			buildahOciCompressedLayersTarball,
 		),
 	)
 
@@ -81,19 +90,24 @@ var _ = Describe("file system stream reader", func() {
 			Expect(b).To(HaveLen(expectedLen))
 		},
 		Entry(
-			"should work for Docker native",
-			dockerNativeTarball,
+			"should work for Docker native which produces uncompressed layers",
+			dockerNativeUncompressedLayersTarball,
 			53704,
 		),
 		Entry(
-			"should work for Buildah oci-archive transport",
-			buildahOciTarball,
+			"should work for Buildah oci-archive transport which produces uncompressed layers",
+			buildahOciUncompressedLayersTarball,
 			57364,
 		),
 		Entry(
-			"should work for Buildah docker-archive transport",
-			buildahDockerTarball,
+			"should work for Buildah docker-archive transport which produces uncompressed layers",
+			buildahDockerUncompressedLayersTarball,
 			57364,
+		),
+		Entry(
+			"should work for Buildah docker-archive transport which produces compressed layers",
+			buildahOciCompressedLayersTarball,
+			52082,
 		),
 	)
 })
