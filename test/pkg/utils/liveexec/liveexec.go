@@ -1,6 +1,7 @@
 package liveexec
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -24,12 +25,12 @@ type ExecCommandOptions struct {
 // ExecCommand allows handling output of executed command in realtime by CommandOptions.OutputLineHandler.
 // User could set expectations on the output lines in the CommandOptions.OutputLineHandler to fail fast
 // and give immediate feedback of failed assertion during command execution.
-func ExecCommand(dir, binPath string, opts ExecCommandOptions, arg ...string) error {
-	return doExecCommand(dir, binPath, opts, arg...)
+func ExecCommand(ctx context.Context, dir, binPath string, opts ExecCommandOptions, arg ...string) error {
+	return doExecCommand(ctx, dir, binPath, opts, arg...)
 }
 
-func doExecCommand(dir, binPath string, opts ExecCommandOptions, arg ...string) error {
-	cmd := exec.Command(binPath, arg...)
+func doExecCommand(ctx context.Context, dir, binPath string, opts ExecCommandOptions, arg ...string) error {
+	cmd := exec.CommandContext(ctx, binPath, arg...)
 	cmd.Dir = dir
 
 	cmd.Env = os.Environ()

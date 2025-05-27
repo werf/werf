@@ -7,6 +7,7 @@ import (
 
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/docker_registry"
+	"github.com/werf/werf/v2/pkg/logging"
 	"github.com/werf/werf/v2/pkg/storage"
 )
 
@@ -21,18 +22,20 @@ func NewStagesStorage(stagesStorageAddress, implementationName string, dockerReg
 }
 
 func StagesCount(ctx context.Context, stagesStorage storage.StagesStorage) int {
-	repoImages, err := stagesStorage.GetStagesIDs(ctx, ProjectName())
+	repoImages, err := stagesStorage.GetStagesIDs(logging.WithLogger(ctx), ProjectName())
 	Expect(err).ShouldNot(HaveOccurred())
 	return len(repoImages)
 }
 
 func ManagedImagesCount(ctx context.Context, stagesStorage storage.StagesStorage) int {
-	managedImages, err := stagesStorage.GetManagedImages(ctx, ProjectName())
+	managedImages, err := stagesStorage.GetManagedImages(logging.WithLogger(ctx), ProjectName())
 	Expect(err).ShouldNot(HaveOccurred())
 	return len(managedImages)
 }
 
 func CustomTagsMetadataList(ctx context.Context, stagesStorage storage.PrimaryStagesStorage) []*storage.CustomTagMetadata {
+	ctx = logging.WithLogger(ctx)
+
 	customTagMetadataIDs, err := stagesStorage.GetStageCustomTagMetadataIDs(ctx)
 	Expect(err).ShouldNot(HaveOccurred())
 
@@ -47,18 +50,18 @@ func CustomTagsMetadataList(ctx context.Context, stagesStorage storage.PrimarySt
 }
 
 func ImageMetadata(ctx context.Context, stagesStorage storage.StagesStorage, imageName string) map[string][]string {
-	imageMetadataByImageName, _, err := stagesStorage.GetAllAndGroupImageMetadataByImageName(ctx, ProjectName(), []string{imageName})
+	imageMetadataByImageName, _, err := stagesStorage.GetAllAndGroupImageMetadataByImageName(logging.WithLogger(ctx), ProjectName(), []string{imageName})
 	Expect(err).ShouldNot(HaveOccurred())
 	return imageMetadataByImageName[imageName]
 }
 
 func ImportMetadataIDs(ctx context.Context, stagesStorage storage.StagesStorage) []string {
-	ids, err := stagesStorage.GetImportMetadataIDs(ctx, ProjectName())
+	ids, err := stagesStorage.GetImportMetadataIDs(logging.WithLogger(ctx), ProjectName())
 	Expect(err).ShouldNot(HaveOccurred())
 	return ids
 }
 
 func RmImportMetadata(ctx context.Context, stagesStorage storage.StagesStorage, importSourceID string) {
-	err := stagesStorage.RmImportMetadata(ctx, ProjectName(), importSourceID)
+	err := stagesStorage.RmImportMetadata(logging.WithLogger(ctx), ProjectName(), importSourceID)
 	Expect(err).ShouldNot(HaveOccurred())
 }

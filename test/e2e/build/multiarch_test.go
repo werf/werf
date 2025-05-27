@@ -34,7 +34,7 @@ type expectedImageInfo struct {
 
 var _ = Describe("Multiarch build", Pending, Label("e2e", "build", "multiarch", "simple"), func() {
 	DescribeTable("should build images for multiple architectures and publish multiarch manifests",
-		func(testOpts multiarchTestOptions) {
+		func(ctx SpecContext, testOpts multiarchTestOptions) {
 			setupEnv(testOpts.setupEnvOptions)
 			Expect(SuiteData.WerfRepo).NotTo(BeEmpty())
 
@@ -49,7 +49,7 @@ var _ = Describe("Multiarch build", Pending, Label("e2e", "build", "multiarch", 
 			fixtureRelPath := "multiarch/state0"
 			buildReportName := "report0.json"
 
-			SuiteData.InitTestRepo(repoDirname, fixtureRelPath)
+			SuiteData.InitTestRepo(ctx, repoDirname, fixtureRelPath)
 
 			var expects []*expectedImageInfo
 
@@ -84,7 +84,7 @@ var _ = Describe("Multiarch build", Pending, Label("e2e", "build", "multiarch", 
 
 			By("building images")
 			werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
-			_, buildReport := werfProject.BuildWithReport(SuiteData.GetBuildReportPath(buildReportName), nil)
+			_, buildReport := werfProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), nil)
 
 			By("check digests by platform and multiarch digest")
 			for _, expect := range expects {
@@ -98,7 +98,7 @@ var _ = Describe("Multiarch build", Pending, Label("e2e", "build", "multiarch", 
 					Expect(err).To(Succeed())
 
 					ref := fmt.Sprintf("%s:%s", SuiteData.WerfRepo, byPlatform[platform].DockerTag)
-					inspect := contBack.GetImageInspect(ref)
+					inspect := contBack.GetImageInspect(ctx, ref)
 
 					fmt.Printf("Check image %q inspect:\n%#v\n---\n", ref, inspect)
 

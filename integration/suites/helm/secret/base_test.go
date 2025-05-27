@@ -15,16 +15,12 @@ import (
 	"github.com/werf/werf/v2/test/pkg/utils"
 )
 
-var _ = It("should generate secret key", func() {
-	utils.RunSucceedCommand(
-		"",
-		SuiteData.WerfBinPath,
-		"helm", "secret", "generate-secret-key",
-	)
+var _ = It("should generate secret key", func(ctx SpecContext) {
+	utils.RunSucceedCommand(ctx, "", SuiteData.WerfBinPath, "helm", "secret", "generate-secret-key")
 })
 
-var _ = It("should rotate secret key", func() {
-	SuiteData.CommitProjectWorktree(SuiteData.ProjectName, utils.FixturePath("rotate_secret_key"), "initial commit")
+var _ = It("should rotate secret key", func(ctx SpecContext) {
+	SuiteData.CommitProjectWorktree(ctx, SuiteData.ProjectName, utils.FixturePath("rotate_secret_key"), "initial commit")
 
 	res, err := ioutil.ReadFile(filepath.Join(SuiteData.GetProjectWorktree(SuiteData.ProjectName), ".werf_secret_key"))
 	Expect(err).ShouldNot(HaveOccurred())
@@ -32,15 +28,11 @@ var _ = It("should rotate secret key", func() {
 	oldSecretKey := strings.TrimSpace(string(res))
 	Expect(os.Remove(filepath.Join(SuiteData.GetProjectWorktree(SuiteData.ProjectName), ".werf_secret_key"))).Should(Succeed())
 
-	output := utils.SucceedCommandOutputString(
-		SuiteData.GetProjectWorktree(SuiteData.ProjectName),
-		SuiteData.WerfBinPath,
-		"helm", "secret", "generate-secret-key",
-	)
+	output := utils.SucceedCommandOutputString(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "helm", "secret", "generate-secret-key")
 
 	newSecretKey := strings.TrimSpace(output)
 
-	cmd := exec.Command(SuiteData.WerfBinPath, "helm", "secret", "rotate-secret-key")
+	cmd := exec.CommandContext(ctx, SuiteData.WerfBinPath, "helm", "secret", "rotate-secret-key")
 	cmd.Dir = SuiteData.GetProjectWorktree(SuiteData.ProjectName)
 	cmd.Env = append([]string{
 		fmt.Sprintf("WERF_SECRET_KEY=%s", newSecretKey),
@@ -61,48 +53,33 @@ var _ = Describe("helm secret encrypt/decrypt", func() {
 	secret := "test"
 	encryptedSecret := "1000ceeb30457f57eb67a2dfecd65c563417f4ae06167fb21be60549d247bf388165"
 
-	BeforeEach(func() {
-		SuiteData.CommitProjectWorktree(SuiteData.ProjectName, utils.FixturePath("default"), "initial commit")
+	BeforeEach(func(ctx SpecContext) {
+		SuiteData.CommitProjectWorktree(ctx, SuiteData.ProjectName, utils.FixturePath("default"), "initial commit")
 	})
 
-	It("should be encrypted", func() {
-		resultData, _ := utils.RunCommandWithOptions(
-			SuiteData.GetProjectWorktree(SuiteData.ProjectName),
-			SuiteData.WerfBinPath,
-			[]string{"helm", "secret", "encrypt"},
-			utils.RunCommandOptions{
-				ToStdin:       secret,
-				ShouldSucceed: true,
-			},
-		)
+	It("should be encrypted", func(ctx SpecContext) {
+		resultData, _ := utils.RunCommandWithOptions(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, []string{"helm", "secret", "encrypt"}, utils.RunCommandOptions{
+			ToStdin:       secret,
+			ShouldSucceed: true,
+		})
 
 		result := string(bytes.TrimSpace(resultData))
 
-		resultData, _ = utils.RunCommandWithOptions(
-			SuiteData.GetProjectWorktree(SuiteData.ProjectName),
-			SuiteData.WerfBinPath,
-			[]string{"helm", "secret", "decrypt"},
-			utils.RunCommandOptions{
-				ToStdin:       result,
-				ShouldSucceed: true,
-			},
-		)
+		resultData, _ = utils.RunCommandWithOptions(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, []string{"helm", "secret", "decrypt"}, utils.RunCommandOptions{
+			ToStdin:       result,
+			ShouldSucceed: true,
+		})
 
 		result = string(bytes.TrimSpace(resultData))
 
 		Expect(result).Should(BeEquivalentTo(secret))
 	})
 
-	It("should be decrypted", func() {
-		resultData, _ := utils.RunCommandWithOptions(
-			SuiteData.GetProjectWorktree(SuiteData.ProjectName),
-			SuiteData.WerfBinPath,
-			[]string{"helm", "secret", "decrypt"},
-			utils.RunCommandOptions{
-				ToStdin:       encryptedSecret,
-				ShouldSucceed: true,
-			},
-		)
+	It("should be decrypted", func(ctx SpecContext) {
+		resultData, _ := utils.RunCommandWithOptions(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, []string{"helm", "secret", "decrypt"}, utils.RunCommandOptions{
+			ToStdin:       encryptedSecret,
+			ShouldSucceed: true,
+		})
 
 		result := string(bytes.TrimSpace(resultData))
 

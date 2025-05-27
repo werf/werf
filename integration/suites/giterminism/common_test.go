@@ -2,6 +2,7 @@ package giterminism_test
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -11,39 +12,28 @@ import (
 	"github.com/werf/werf/v2/test/pkg/utils"
 )
 
-func CommonBeforeEach() {
-	gitInit()
+func CommonBeforeEach(ctx context.Context) {
+	gitInit(ctx)
 	utils.CopyIn(utils.FixturePath("default"), SuiteData.TestDirPath)
-	gitAddAndCommit("werf-giterminism.yaml")
-	gitAddAndCommit("werf.yaml")
+	gitAddAndCommit(ctx, "werf-giterminism.yaml")
+	gitAddAndCommit(ctx, "werf.yaml")
 }
 
-func gitInit() {
-	utils.RunSucceedCommand(
-		SuiteData.TestDirPath,
-		"git",
-		"init",
-	)
+func gitInit(ctx context.Context) {
+	utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "init")
 
-	utils.RunSucceedCommand(
-		SuiteData.TestDirPath,
-		"git",
-		"commit", "--allow-empty", "-m", "Initial commit",
-	)
+	utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "commit", "--allow-empty", "-m", "Initial commit")
 }
 
-func gitAddAndCommit(relPath string) {
+func gitAddAndCommit(ctx context.Context, relPath string) {
 	utils.RunSucceedCommand(
+		ctx,
 		SuiteData.TestDirPath,
 		"git",
 		"add", relPath,
 	)
 
-	utils.RunSucceedCommand(
-		SuiteData.TestDirPath,
-		"git",
-		"commit", "-m", fmt.Sprint("Update ", relPath),
-	)
+	utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "commit", "-m", fmt.Sprint("Update ", relPath))
 }
 
 func fileCreateOrAppend(relPath, content string) {
@@ -60,40 +50,28 @@ func fileCreateOrAppend(relPath, content string) {
 	Expect(f.Close()).ShouldNot(HaveOccurred())
 }
 
-func symlinkFileCreateOrModify(relPath, link string) {
+func symlinkFileCreateOrModify(ctx context.Context, relPath, link string) {
 	relPath = filepath.ToSlash(relPath)
 	link = filepath.ToSlash(link)
 
-	symlinkFileCreateOrModifyAndAdd(relPath, link)
+	symlinkFileCreateOrModifyAndAdd(ctx, relPath, link)
 
-	utils.RunSucceedCommand(
-		SuiteData.TestDirPath,
-		"git",
-		"rm", "--cached", relPath,
-	)
+	utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "rm", "--cached", relPath)
 }
 
-func symlinkFileCreateOrModifyAndAdd(relPath, link string) {
+func symlinkFileCreateOrModifyAndAdd(ctx context.Context, relPath, link string) {
 	relPath = filepath.ToSlash(relPath)
 	link = filepath.ToSlash(link)
 
-	hashBytes, _ := utils.RunCommandWithOptions(
-		SuiteData.TestDirPath,
-		"git",
-		[]string{"hash-object", "-w", "--stdin"},
-		utils.RunCommandOptions{
-			ToStdin:       link,
-			ShouldSucceed: true,
-		},
-	)
+	hashBytes, _ := utils.RunCommandWithOptions(ctx, SuiteData.TestDirPath, "git", []string{"hash-object", "-w", "--stdin"}, utils.RunCommandOptions{
+		ToStdin:       link,
+		ShouldSucceed: true,
+	})
+
+	utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "update-index", "--add", "--cacheinfo", "120000", string(bytes.TrimSpace(hashBytes)), relPath)
 
 	utils.RunSucceedCommand(
-		SuiteData.TestDirPath,
-		"git",
-		"update-index", "--add", "--cacheinfo", "120000", string(bytes.TrimSpace(hashBytes)), relPath,
-	)
-
-	utils.RunSucceedCommand(
+		ctx,
 		SuiteData.TestDirPath,
 		"git",
 		"checkout", relPath,
