@@ -208,5 +208,5 @@ func (cmdData *CmdData) SetupCreateIncludesLockFile() {
 
 func (cmdData *CmdData) SetupIncludesLsFilter(cmd *cobra.Command) {
 	cmdData.IncludesLsFilter = new(string)
-	cmd.Flags().StringVar(cmdData.IncludesLsFilter, "filter", "", "Filter by source, e.g. --filter=source=local,remoteRepo")
+	cmd.Flags().StringVar(cmdData.IncludesLsFilter, "filter", os.Getenv("WERF_INCLUDES_LIST_FILTER"), "Filter by source, e.g. --filter=source=local,remoteRepo (default $WERF_INCLUDES_LIST_FILTER or all sources).")
 }
