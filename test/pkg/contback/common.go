@@ -1,6 +1,7 @@
 package contback
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"runtime"
@@ -35,6 +36,7 @@ type ContainerBackend interface {
 	Pull(image string)
 	Exec(containerName string, cmds ...string)
 	Rm(containerName string)
+	StreamImage(image string) *bytes.Reader
 
 	RunSleepingContainer(containerName, image string)
 	GetImageInspect(image string) DockerImageInspect

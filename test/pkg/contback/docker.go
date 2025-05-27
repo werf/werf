@@ -1,6 +1,7 @@
 package contback
 
 import (
+	"bytes"
 	"encoding/json"
 
 	. "github.com/onsi/gomega"
@@ -22,7 +23,7 @@ func (r *DockerBackend) ExpectCmdsToSucceed(image string, cmds ...string) {
 
 func (r *DockerBackend) RunSleepingContainer(containerName, image string) {
 	args := r.CommonCliArgs
-	args = append(args, "run", "--rm", "-d", "--entrypoint=", "--name", containerName, image, "tail", "-f", "/dev/null")
+	args = append(args, "run", "--rm", "-d", "--entrypoint=", "--name", containerName, image, "sleep", "infinity")
 	utils.RunSucceedCommand("/", "docker", args...)
 }
 
@@ -44,6 +45,20 @@ func (r *DockerBackend) Pull(image string) {
 	args := r.CommonCliArgs
 	args = append(args, "pull", image)
 	utils.RunSucceedCommand("/", "docker", args...)
+}
+
+func (r *DockerBackend) StreamImage(image string) *bytes.Reader {
+	args := r.CommonCliArgs
+	args = append(args, "image", "save", image)
+
+	b, err := utils.RunCommandWithOptions("/", "docker", args, utils.RunCommandOptions{
+		NoStderr:      true,
+		ShouldSucceed: true,
+	})
+
+	Expect(err).NotTo(HaveOccurred())
+
+	return bytes.NewReader(b)
 }
 
 func (r *DockerBackend) GetImageInspect(image string) DockerImageInspect {
