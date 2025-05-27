@@ -48,7 +48,7 @@ func CheckContainerDirectory(ctx context.Context, werfBinPath, projectPath, cont
 }
 
 func RunSucceedContainerCommandWithStapel(ctx context.Context, werfBinPath, projectPath string, extraDockerOptions, cmds []string) {
-	container, err := stapel.GetOrCreateContainer(ctx)
+	container, err := stapel.GetOrCreateContainer(utils.WithDependencies(ctx))
 	Expect(err).ShouldNot(HaveOccurred())
 
 	dockerOptions := []string{
