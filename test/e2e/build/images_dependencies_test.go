@@ -51,7 +51,7 @@ func werfRunOutput(ctx context.Context, dir, imageName, shellCommand string) str
 }
 
 func getImageID(ctx context.Context, ref string, containerBackend container_backend.ContainerBackend) string {
-	info, err := containerBackend.GetImageInfo(ctx, ref, container_backend.GetImageInfoOpts{})
+	info, err := containerBackend.GetImageInfo(utils.WithDependencies(ctx), ref, container_backend.GetImageInfoOpts{})
 	Expect(err).To(Succeed())
 	return info.ID
 }
