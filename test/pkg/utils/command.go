@@ -2,6 +2,7 @@ package utils
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"fmt"
 	"os"
@@ -10,18 +11,20 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"github.com/werf/werf/v2/pkg/logging"
 )
 
-func RunCommand(dir, command string, args ...string) ([]byte, error) {
-	return RunCommandWithOptions(dir, command, args, RunCommandOptions{ShouldSucceed: false})
+func RunCommand(ctx context.Context, dir, command string, args ...string) ([]byte, error) {
+	return RunCommandWithOptions(ctx, dir, command, args, RunCommandOptions{ShouldSucceed: false})
 }
 
-func RunSucceedCommand(dir, command string, args ...string) {
-	_, _ = RunCommandWithOptions(dir, command, args, RunCommandOptions{ShouldSucceed: true})
+func RunSucceedCommand(ctx context.Context, dir, command string, args ...string) {
+	_, _ = RunCommandWithOptions(ctx, dir, command, args, RunCommandOptions{ShouldSucceed: true})
 }
 
-func SucceedCommandOutputString(dir, command string, args ...string) string {
-	res, _ := RunCommandWithOptions(dir, command, args, RunCommandOptions{ShouldSucceed: true})
+func SucceedCommandOutputString(ctx context.Context, dir, command string, args ...string) string {
+	res, _ := RunCommandWithOptions(ctx, dir, command, args, RunCommandOptions{ShouldSucceed: true})
 	return string(res)
 }
 
@@ -32,8 +35,8 @@ type RunCommandOptions struct {
 	NoStderr      bool
 }
 
-func RunCommandWithOptions(dir, command string, args []string, options RunCommandOptions) ([]byte, error) {
-	cmd := exec.Command(command, args...)
+func RunCommandWithOptions(ctx context.Context, dir, command string, args []string, options RunCommandOptions) ([]byte, error) {
+	cmd := exec.CommandContext(logging.WithLogger(ctx), command, args...)
 
 	if dir != "" {
 		cmd.Dir = dir
