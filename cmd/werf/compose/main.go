@@ -111,7 +111,7 @@ func extractImageNamesFromComposeConfig(ctx context.Context, customConfigPathLis
 
 	err := cmd.Run()
 	if err != nil {
-		graceful.Terminate(err, werfExec.ExitCode(err))
+		graceful.Terminate(ctx, err, werfExec.ExitCode(err))
 		var ee *exec.ExitError
 		if errors.As(err, &ee) {
 			return nil, fmt.Errorf("error running command %q: %w\n\nStdout:\n%s\nStderr:\n%s", cmd, err, stdout.String(), stderr.String())
@@ -532,7 +532,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		cmd.Env = append(os.Environ(), envArray...)
 
 		if err := cmd.Run(); err != nil {
-			graceful.Terminate(err, werfExec.ExitCode(err))
+			graceful.Terminate(ctx, err, werfExec.ExitCode(err))
 			return fmt.Errorf("error running command %q: %s", cmd, err)
 		}
 	}

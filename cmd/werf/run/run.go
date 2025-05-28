@@ -301,7 +301,7 @@ func runMain(ctx context.Context) error {
 	} else {
 		if err := run(ctx, containerBackend, giterminismManager); err != nil {
 			if statusErr, ok := err.(cli.StatusError); ok {
-				graceful.Terminate(err, statusErr.StatusCode)
+				graceful.Terminate(ctx, err, statusErr.StatusCode)
 				return err
 			}
 

@@ -130,7 +130,7 @@ func (r *azureCr) azRun(ctx context.Context, args ...string) error {
 
 	if err != nil {
 		if errors.Is(ctx.Err(), context.Canceled) {
-			graceful.Terminate(err, werfExec.ExitCode(err))
+			graceful.Terminate(ctx, err, werfExec.ExitCode(err))
 		}
 
 		return fmt.Errorf(

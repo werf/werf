@@ -35,20 +35,20 @@ func main() {
 
 	shouldTerminate, err := common.ContainerBackendProcessStartupHook()
 	if err != nil {
-		graceful.Terminate(err, 1)
+		graceful.Terminate(ctx, err, 1)
 		return
 	} else if shouldTerminate {
 		return
 	}
 
 	if err := process_exterminator.Init(); err != nil {
-		graceful.Terminate(fmt.Errorf("process exterminator initialization failed: %w", err), 1)
+		graceful.Terminate(ctx, fmt.Errorf("process exterminator initialization failed: %w", err), 1)
 		return
 	}
 
 	rootCmd, err := root.ConstructRootCmd(ctx)
 	if err != nil {
-		graceful.Terminate(err, 1)
+		graceful.Terminate(ctx, err, 1)
 		return
 	}
 
@@ -66,15 +66,15 @@ func main() {
 	if err := rootCmd.Execute(); err != nil {
 		if helm_v3.IsPluginError(err) {
 			common.ShutdownTelemetry(ctx, helm_v3.PluginErrorCode(err))
-			graceful.Terminate(err, helm_v3.PluginErrorCode(err))
+			graceful.Terminate(ctx, err, helm_v3.PluginErrorCode(err))
 			return
 		} else if errors.Is(err, action.ErrChangesPlanned) {
 			common.ShutdownTelemetry(ctx, 2)
-			graceful.Terminate(action.ErrChangesPlanned, 2)
+			graceful.Terminate(ctx, action.ErrChangesPlanned, 2)
 			return
 		} else {
 			common.ShutdownTelemetry(ctx, 1)
-			graceful.Terminate(err, 1)
+			graceful.Terminate(ctx, err, 1)
 			return
 		}
 	}
