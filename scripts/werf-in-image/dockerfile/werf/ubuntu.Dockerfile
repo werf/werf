@@ -1,6 +1,7 @@
 FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND="noninteractive"
 ARG TARGETARCH
+ARG USERS="build build1001"
 
 RUN apt-get -y update && \
     apt-get -y install fuse-overlayfs git uidmap libcap2-bin git-lfs curl gnupg nano jq bash make ca-certificates openssh-client iproute2 telnet iputils-ping dnsutils tzdata && \
@@ -21,13 +22,14 @@ RUN setcap cap_setuid+ep /usr/bin/newuidmap && \
     setcap cap_setgid+ep /usr/bin/newgidmap && \
     chmod u-s,g-s /usr/bin/newuidmap /usr/bin/newgidmap
 
-RUN useradd -m build
-USER build:build
-RUN mkdir -p /home/build/.local/share/containers && mkdir /home/build/.werf
-VOLUME /home/build/.local/share/containers
+RUN for u in $USERS; do \
+    useradd -m $u && \
+    mkdir -p /home/$u/.local/share/containers /home/$u/.werf && \
+    chown -R $u:$u /home/$u && \
+    runuser -u $u -- git config --global --add safe.directory '*' ; \
+    done
 
-# Fix fatal: detected dubious ownership in repository.
-RUN git config --global --add safe.directory '*'
+USER build:build
 
 WORKDIR /home/build
 
