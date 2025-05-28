@@ -18,10 +18,21 @@ RUN setcap cap_setuid+ep /usr/bin/newuidmap && \
     setcap cap_setgid+ep /usr/bin/newgidmap && \
     chmod u-s,g-s /usr/bin/newuidmap /usr/bin/newgidmap
 
-RUN adduser -D build && echo 'build:100000:65536' | tee /etc/subuid >/etc/subgid
+RUN addgroup -g 1001 github-runner && \
+    adduser -D build && \
+    adduser -u 1001 -G github-runner -D -h /home/github-runner github-runner && \
+    echo 'build:100000:65536' >> /etc/subuid && \
+    echo 'build:100000:65536' >> /etc/subgid && \
+    echo 'github-runner:165536:65536' >> /etc/subuid && \
+    echo 'github-runner:165536:65536' >> /etc/subgid && \
+    mkdir -p /home/build/.local/share/containers /home/build/.werf && \
+    mkdir -p /home/github-runner/.local/share/containers /home/github-runner/.werf && \
+    chown -R build:build /home/build && \
+    chown -R github-runner:github-runner /home/github-runner
+
+VOLUME ["/home/github-runner/.local/share/containers", "/home/build/.local/share/containers"]
+
 USER build:build
-RUN mkdir -p /home/build/.local/share/containers && mkdir /home/build/.werf
-VOLUME /home/build/.local/share/containers
 
 # Fix fatal: detected dubious ownership in repository.
 RUN git config --global --add safe.directory '*'
