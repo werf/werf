@@ -1523,10 +1523,14 @@ func ProcessLogOptions(cmdData *CmdData) error {
 }
 
 func GetNelmLogLevel(cmdData *CmdData) string {
+	if util.GetBoolEnvironmentDefaultFalse("WERF_NELM_TRACE") {
+		return action.TraceLogLevel
+	}
+
 	var logLevel string
 	switch {
 	case *cmdData.LogDebug:
-		logLevel = action.TraceLogLevel
+		logLevel = action.DebugLogLevel
 	case *cmdData.LogQuiet:
 		logLevel = action.ErrorLogLevel
 	default:
