@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/werf/common-go/pkg/graceful"
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
@@ -55,6 +56,10 @@ func FollowGitHead(ctx context.Context, cmdData *CmdData, taskFunc func(ctx cont
 
 	for {
 		if err := iterFunc(); err != nil {
+			if graceful.IsTerminating(ctx) {
+				return ctx.Err()
+			}
+
 			logboek.Context(ctx).Warn().LogLn(err)
 			logboek.Context(ctx).LogLn(waitMessage)
 			logboek.Context(ctx).LogOptionalLn()
