@@ -1199,6 +1199,7 @@ func GetWerfConfigOptions(cmdData *CmdData, logRenderedFilePath bool) config.Wer
 	return config.WerfConfigOptions{
 		LogRenderedFilePath: logRenderedFilePath,
 		Env:                 *cmdData.Environment,
+		DebugTemplates:      *cmdData.DebugTemplates,
 	}
 }
 

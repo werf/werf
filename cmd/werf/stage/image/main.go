@@ -88,6 +88,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupVirtualMerge(&commonCmdData, cmd)
 
 	commonCmdData.SetupPlatform(cmd)
+	commonCmdData.SetupDebugTemplates(cmd)
 
 	return cmd
 }

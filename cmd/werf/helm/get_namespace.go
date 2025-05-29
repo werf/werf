@@ -48,6 +48,7 @@ func NewGetNamespaceCmd(ctx context.Context) *cobra.Command {
 	common.SetupDockerConfig(&getNamespaceCmdData, cmd, "")
 
 	common.SetupLogOptions(&getNamespaceCmdData, cmd)
+	commonCmdData.SetupDebugTemplates(cmd)
 
 	return cmd
 }

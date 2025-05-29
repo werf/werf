@@ -49,6 +49,7 @@ func NewGetReleaseCmd(ctx context.Context) *cobra.Command {
 	common.SetupDockerConfig(&getReleaseCmdData, cmd, "")
 
 	common.SetupLogOptions(&getReleaseCmdData, cmd)
+	commonCmdData.SetupDebugTemplates(cmd)
 
 	return cmd
 }
