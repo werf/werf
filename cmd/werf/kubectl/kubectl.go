@@ -33,6 +33,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 		ConfigFlags:   configFlags,
 		IOStreams:     genericclioptions.IOStreams{In: os.Stdin, Out: os.Stdout, ErrOut: os.Stderr},
 	})
+	kubectlCmd.SetContext(ctx)
 
 	logs.AddFlags(kubectlCmd.PersistentFlags())
 
@@ -59,18 +60,16 @@ func NewCmd(ctx context.Context) *cobra.Command {
 		}
 	}
 
-	wrapPreRun(kubectlCmd)
+	wrapPreRun(ctx, kubectlCmd)
 
 	return kubectlCmd
 }
 
-func wrapPreRun(kubectlCmd *cobra.Command) {
+func wrapPreRun(ctx context.Context, kubectlCmd *cobra.Command) {
 	switch {
 	case kubectlCmd.PersistentPreRunE != nil:
 		oldFunc := kubectlCmd.PersistentPreRunE
 		kubectlCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
-			ctx := cmd.Context()
-
 			if err := prePreRun(ctx); err != nil {
 				return err
 			}
@@ -79,8 +78,6 @@ func wrapPreRun(kubectlCmd *cobra.Command) {
 	case kubectlCmd.PersistentPreRun != nil:
 		oldFunc := kubectlCmd.PersistentPreRun
 		kubectlCmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
-			ctx := cmd.Context()
-
 			if err := prePreRun(ctx); err != nil {
 				util.CheckErr(err)
 			}
@@ -88,8 +85,6 @@ func wrapPreRun(kubectlCmd *cobra.Command) {
 		}
 	default:
 		kubectlCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
-			ctx := cmd.Context()
-
 			if err := prePreRun(ctx); err != nil {
 				return err
 			}
