@@ -101,7 +101,7 @@ werf bundle publish --repo example.org/bundles/bundle2
 
 Пример использования:
 ```shell
-werf bundle publish --repo example.org/bundles/mybundle --tag "%image%-my-custom-tag"
+werf bundle publish --repo example.org/bundles/mybundle --use-custom-tag "%image%-my-custom-tag"
 ```
 
 Подробнее про кастомные теги можно прочитать в [документации]({{ "/usage/build/process.html#добавление-произвольных-тегов" | true_relative_url }}).

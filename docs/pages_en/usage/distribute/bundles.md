@@ -102,7 +102,7 @@ To use custom image tags for bundles, you need to set the naming template using 
 Example usage:
 
 ```shell
-werf bundle publish --repo example.org/bundles/mybundle --tag "%image%-my-custom-tag"
+werf bundle publish --repo example.org/bundles/mybundle --use-custom-tag "%image%-my-custom-tag"
 ```
 
 You can read more about custom tags in the [documentation]({{ "/usage/build/process.html#adding-custom-tags" | true_relative_url }}).
