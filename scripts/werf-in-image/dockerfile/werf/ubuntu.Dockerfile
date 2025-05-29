@@ -1,6 +1,7 @@
 FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND="noninteractive"
 ARG TARGETARCH
+ARG USERS="build build1001"
 
 RUN apt-get -y update && \
     apt-get -y install fuse-overlayfs git uidmap libcap2-bin git-lfs curl gnupg nano jq bash make ca-certificates openssh-client iproute2 telnet iputils-ping dnsutils tzdata && \
@@ -21,20 +22,14 @@ RUN setcap cap_setuid+ep /usr/bin/newuidmap && \
     setcap cap_setgid+ep /usr/bin/newgidmap && \
     chmod u-s,g-s /usr/bin/newuidmap /usr/bin/newgidmap
 
-RUN useradd -m build && \
-    groupadd --gid 1001 github-runner && \
-    useradd --uid 1001 --gid 1001 -m github-runner && \
-    mkdir -p /home/build/.local/share/containers /home/build/.werf && \
-    mkdir -p /home/github-runner/.local/share/containers /home/github-runner/.werf && \
-    chown -R build:build /home/build && \
-    chown -R github-runner:github-runner /home/github-runner
-
-VOLUME ["/home/github-runner/.local/share/containers", "/home/build/.local/share/containers"]
+RUN for u in $USERS; do \
+    useradd -m $u && \
+    mkdir -p /home/$u/.local/share/containers /home/$u/.werf && \
+    chown -R $u:$u /home/$u && \
+    runuser -u $u -- git config --global --add safe.directory '*' ; \
+    done
 
 USER build:build
-
-# Fix fatal: detected dubious ownership in repository.
-RUN git config --global --add safe.directory '*'
 
 WORKDIR /home/build
 
