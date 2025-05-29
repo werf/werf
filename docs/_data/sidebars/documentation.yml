@@ -691,6 +691,9 @@ entries:
               - title: Overview
                 url: /usage/deploy/overview.html
 
+              - title: Authentication and authorization
+                url: /usage/deploy/authentication.html
+
               - title: Charts and dependencies
                 url: /usage/deploy/charts.html
 
@@ -714,9 +717,6 @@ entries:
 
               - title: Resource tracking
                 url: /usage/deploy/tracking.html
-
-              - title: Authentication and authorization
-                url: /usage/deploy/authentication.html
 
               - title: Release management
                 url: /usage/deploy/releases.html
@@ -834,6 +834,9 @@ entries:
               - title: Обзор
                 url: /usage/deploy/overview.html
 
+              - title: Аутентификация и авторизация
+                url: /usage/deploy/authentication.html
+
               - title: Чарты и зависимости
                 url: /usage/deploy/charts.html
 
@@ -857,9 +860,6 @@ entries:
 
               - title: Отслеживание ресурсов
                 url: /usage/deploy/tracking.html
-
-              - title: Аутентификация и авторизация
-                url: /usage/deploy/authentication.html
 
               - title: Управление релизами
                 url: /usage/deploy/releases.html
