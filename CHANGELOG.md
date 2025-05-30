@@ -1,5 +1,16 @@
 # Changelog
 
+### [2.36.4](https://www.github.com/werf/werf/compare/v2.36.3...v2.36.4) (2025-05-30)
+
+
+### Bug Fixes
+
+* **build, compose, run, kube-run, plan:** respect graceful shutdown in follow mode ([42a82af](https://www.github.com/werf/werf/commit/42a82af8fc92ab11609b56adbb6c52bd79e5ea54))
+* **deploy:** hide traces from `--log-debug` output by default ([0d03bcf](https://www.github.com/werf/werf/commit/0d03bcf12d54f231529403098ce2ef1cd094b037))
+* handle interruptions during git clone and auto host cleanup gracefully ([#6887](https://www.github.com/werf/werf/issues/6887)) ([0d94e79](https://www.github.com/werf/werf/commit/0d94e798a813b81ea434bc4e5d84fb7766fb405e))
+* **kube-run:** handle SIGINT/SIGTERM properly ([#6888](https://www.github.com/werf/werf/issues/6888)) ([1aa8d54](https://www.github.com/werf/werf/commit/1aa8d54fbbb0c7fff4b6cecc532813bd5fa7139c))
+* make termination context-bounded ([#6885](https://www.github.com/werf/werf/issues/6885)) ([600b7a5](https://www.github.com/werf/werf/commit/600b7a554e8ee388e2ced85e7fdf8344e99a2234))
+
 ### [2.36.3](https://www.github.com/werf/werf/compare/v2.36.2...v2.36.3) (2025-05-23)
 
 
