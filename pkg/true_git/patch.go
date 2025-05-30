@@ -239,7 +239,7 @@ WaitForData:
 
 	if err := cmd.Wait(); err != nil {
 		if errors.Is(ctx.Err(), context.Canceled) {
-			graceful.Terminate(err, werfExec.ExitCode(err))
+			graceful.Terminate(ctx, err, werfExec.ExitCode(err))
 		}
 		return nil, fmt.Errorf("git diff error: %w\nunrecognized output:\n%s", err, p.UnrecognizedCapture.String())
 	}
