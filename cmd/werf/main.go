@@ -63,7 +63,7 @@ func main() {
 		return
 	}
 
-	if err := rootCmd.Execute(); err != nil {
+	if err := rootCmd.ExecuteContext(ctx); err != nil {
 		if helm_v3.IsPluginError(err) {
 			common.ShutdownTelemetry(ctx, helm_v3.PluginErrorCode(err))
 			graceful.Terminate(ctx, err, helm_v3.PluginErrorCode(err))

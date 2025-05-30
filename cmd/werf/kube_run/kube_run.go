@@ -297,8 +297,6 @@ func runMain(ctx context.Context) error {
 				return err
 			}
 
-			cleanupResources(ctx, pod, secret, namespace)
-
 			return nil
 		})
 	} else {
@@ -680,6 +678,8 @@ func isPodReady(ctx context.Context, namespace, pod string, extraArgs []string) 
 }
 
 func copyFromPod(ctx context.Context, namespace, pod, container string, copyFrom copyFromTo, extraArgs []string) {
+	ctx = context.WithoutCancel(ctx)
+
 	logboek.Context(ctx).LogF("Copying %q from pod to %q ...\n", copyFrom.Src, copyFrom.Dst)
 
 	args := []string{
@@ -730,6 +730,8 @@ func copyToPod(ctx context.Context, namespace, pod, container string, copyFrom c
 }
 
 func stopContainer(ctx context.Context, namespace, pod, container string, extraArgs []string) {
+	ctx = context.WithoutCancel(ctx)
+
 	logboek.Context(ctx).LogF("Stopping container %q in pod ...\n", container)
 
 	args := []string{
@@ -775,6 +777,7 @@ func execCommandInPod(ctx context.Context, namespace, pod, container string, com
 	args = append(args, command...)
 
 	cmd := werfExec.PrepareGracefulCancellation(util.ExecKubectlCmdContext(ctx, args...))
+	cmd.Stdin = os.Stdin
 
 	if *commonCmdData.DryRun {
 		fmt.Println(cmd.String())
@@ -792,6 +795,8 @@ func execCommandInPod(ctx context.Context, namespace, pod, container string, com
 }
 
 func cleanupResources(ctx context.Context, pod, secret, namespace string) {
+	ctx = context.WithoutCancel(ctx)
+
 	if !cmdData.Rm || *commonCmdData.DryRun {
 		return
 	}
