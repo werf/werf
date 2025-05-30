@@ -66,6 +66,9 @@ werf kube-run [options] [IMAGE_NAME] [-- COMMAND ARG...]
             Copy file/dir from local machine to container before user command execution. Example:   
             "from:/to/file". Can be specified multiple times. Can also be defined with              
             "$WERF_COPY_TO_*", e.g. "WERF_COPY_TO_1=from:to".
+      --debug-templates=false
+            Enable debug templates mode, which allows to see the rendered templates in the          
+            werf.yaml file (default $WERF_DEBUG_TEMPLATES or false)
       --dev=false
             Enable development mode (default $WERF_DEV).
             The mode allows working with project files without doing redundant commits during       

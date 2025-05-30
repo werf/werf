@@ -95,6 +95,9 @@ werf compose run [IMAGE_NAME...] [options] [--docker-compose-options="OPTIONS"] 
             in working directory)
       --container-registry-mirror=[]
             (Buildah-only) Use specified mirrors for docker.io
+      --debug-templates=false
+            Enable debug templates mode, which allows to see the rendered templates in the          
+            werf.yaml file (default $WERF_DEBUG_TEMPLATES or false)
       --dev=false
             Enable development mode (default $WERF_DEV).
             The mode allows working with project files without doing redundant commits during       

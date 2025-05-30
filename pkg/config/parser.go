@@ -363,7 +363,7 @@ func funcMap(tmpl *template.Template, giterminismManager giterminism_manager.Int
 		return val, nil
 	}
 
-	//debug functions
+	// debug functions
 	funcMap["tpl_debug"] = func(templateContent string, data interface{}) (string, error) {
 		templateName := util.GenerateConsistentRandomString(10)
 		if debug {

@@ -76,6 +76,9 @@ werf dismiss [options]
             in working directory)
       --container-registry-mirror=[]
             (Buildah-only) Use specified mirrors for docker.io
+      --debug-templates=false
+            Enable debug templates mode, which allows to see the rendered templates in the          
+            werf.yaml file (default $WERF_DEBUG_TEMPLATES or false)
       --deploy-report-path=""
             Change deploy report path and format (by default $WERF_DEPLOY_REPORT_PATH or            
             ".werf-deploy-report.json" if not set). Extension must be .json for JSON format. If     
