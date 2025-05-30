@@ -78,10 +78,6 @@ rewrite ^/publications_ru\.html$                                                
 rewrite ^/how_it_works\.html                                                                      /#how-it-works                                         redirect;
 rewrite ^/introduction\.html$                                                                     /#how-it-works                                         redirect;
 
-rewrite ^/guides/(?<lang>[^/]+)/400_ci_cd_workflow/030_gitlab_ci_cd/010_workflows\.html           /guides/$lang/400_ci_cd_workflow/030_gitlab_ci_cd.html redirect;
-rewrite ^/guides/(?<lang>[^/]+)/400_ci_cd_workflow/030_gitlab_ci_cd/020_docker_executor\.html     /guides/$lang/400_ci_cd_workflow/030_gitlab_ci_cd.html redirect;
-rewrite ^/guides/(?<lang>[^/]+)/400_ci_cd_workflow/030_gitlab_ci_cd/030_kubernetes_executor\.html /guides/$lang/400_ci_cd_workflow/030_gitlab_ci_cd.html redirect;
-
 ############################################
 # v1.1/v1.2 redirects for moved or deleted urls
 ############################################
