@@ -52,6 +52,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupGiterminismOptions(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
+	commonCmdData.SetupDebugTemplates(cmd)
 
 	return cmd
 }

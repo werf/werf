@@ -17,6 +17,9 @@ werf bundle copy [options]
 ```shell
       --container-registry-mirror=[]
             (Buildah-only) Use specified mirrors for docker.io
+      --debug-templates=false
+            Enable debug templates mode, which allows to see the rendered templates in the          
+            werf.yaml file (default $WERF_DEBUG_TEMPLATES or false)
       --docker-config=""
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)

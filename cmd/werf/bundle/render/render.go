@@ -111,6 +111,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupKubeQpsLimit(&commonCmdData, cmd)
 	common.SetupKubeBurstLimit(&commonCmdData, cmd)
 
+	commonCmdData.SetupDebugTemplates(cmd)
+
 	defaultTag := os.Getenv("WERF_TAG")
 	if defaultTag == "" {
 		defaultTag = "latest"
