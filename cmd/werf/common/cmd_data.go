@@ -203,6 +203,14 @@ func (cmdData *CmdData) SetupSkipImageSpecStage(cmd *cobra.Command) {
 }
 
 func (cmdData *CmdData) SetupDebugTemplates(cmd *cobra.Command) {
-	cmdData.DebugTemplates = new(bool)
-	cmd.Flags().BoolVarP(cmdData.DebugTemplates, "debug-templates", "", util.GetBoolEnvironmentDefaultFalse("WERF_DEBUG_TEMPLATES"), `Enable debug templates mode, which allows to see the rendered templates in the werf.yaml file (default $WERF_DEBUG_TEMPLATES or false)`)
+	if cmdData.DebugTemplates == nil {
+		cmdData.DebugTemplates = new(bool)
+	}
+	cmd.Flags().BoolVarP(
+		cmdData.DebugTemplates,
+		"debug-templates",
+		"",
+		util.GetBoolEnvironmentDefaultFalse("WERF_DEBUG_TEMPLATES"),
+		`Enable debug templates mode, which allows to see the rendered templates in the werf.yaml file (default $WERF_DEBUG_TEMPLATES or false)`,
+	)
 }

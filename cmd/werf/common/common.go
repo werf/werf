@@ -1196,10 +1196,14 @@ func GetCustomWerfConfigTemplatesDirRelPath(giterminismManager giterminism_manag
 }
 
 func GetWerfConfigOptions(cmdData *CmdData, logRenderedFilePath bool) config.WerfConfigOptions {
+	var debugTemplates bool
+	if cmdData.DebugTemplates != nil {
+		debugTemplates = *cmdData.DebugTemplates
+	}
 	return config.WerfConfigOptions{
 		LogRenderedFilePath: logRenderedFilePath,
 		Env:                 *cmdData.Environment,
-		DebugTemplates:      *cmdData.DebugTemplates,
+		DebugTemplates:      debugTemplates,
 	}
 }
 
