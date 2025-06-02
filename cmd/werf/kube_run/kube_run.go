@@ -696,9 +696,6 @@ func copyFromPod(ctx context.Context, namespace, pod, container string, copyFrom
 	}
 
 	if err := cmd.Run(); err != nil {
-		if errors.Is(ctx.Err(), context.Canceled) {
-			graceful.Terminate(ctx, err, werfExec.ExitCode(err))
-		}
 		logboek.Context(ctx).Warn().LogF("Error copying %q from pod %s/s: %s\n", copyFrom.Src, namespace, pod, err)
 	}
 }
@@ -749,15 +746,33 @@ func stopContainer(ctx context.Context, namespace, pod, container string, extraA
 	}
 
 	if err := cmd.Run(); err != nil {
-		if errors.Is(ctx.Err(), context.Canceled) {
-			graceful.Terminate(ctx, err, werfExec.ExitCode(err))
-		}
 		logboek.Context(ctx).Warn().LogF("Error stopping service container %s/%s/%s for copying files: %s\n", namespace, pod, container, err)
 	}
 }
 
+func signalContainer(ctx context.Context, namespace, pod, container string, extraArgs []string) error {
+	ctx = context.WithoutCancel(ctx)
+
+	logboek.Context(ctx).LogF("Signal container %q in pod ...\n", container)
+
+	args := []string{
+		"exec", pod, "-q", "--pod-running-timeout", "5s", "-c", container,
+	}
+
+	args = append(args, extraArgs...)
+	args = append(args, "--", "pkill", "-P", "0")
+
+	cmd := werfExec.PrepareGracefulCancellation(util.ExecKubectlCmdContext(ctx, args...))
+
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("signal container error: %w", err)
+	}
+
+	return nil
+}
+
 func execCommandInPod(ctx context.Context, namespace, pod, container string, command, extraArgs []string) error {
-	logboek.Context(ctx).LogF("Execing into pod ...\n")
+	logboek.Context(ctx).LogF("Executing into pod ...\n")
 
 	args := []string{
 		"exec", pod, "-q", "--pod-running-timeout", "5h", "-c", container,
@@ -777,7 +792,9 @@ func execCommandInPod(ctx context.Context, namespace, pod, container string, com
 	args = append(args, command...)
 
 	cmd := werfExec.PrepareGracefulCancellation(util.ExecKubectlCmdContext(ctx, args...))
-	cmd.Stdin = os.Stdin
+	cmd.Cancel = func() error {
+		return signalContainer(ctx, namespace, pod, container, extraArgs)
+	}
 
 	if *commonCmdData.DryRun {
 		fmt.Println(cmd.String())

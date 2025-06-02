@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	. "github.com/onsi/gomega"
 
@@ -36,6 +37,9 @@ type Project struct {
 type CommonOptions struct {
 	ShouldFail bool
 	ExtraArgs  []string
+
+	CancelOnOutput        string
+	CancelOnOutputTimeout time.Duration
 }
 
 type BuildOptions struct {
@@ -87,6 +91,9 @@ type KubeCtlOptions struct {
 type runCommandOptions struct {
 	ShouldFail bool
 	Args       []string
+
+	CancelOnOutput        string
+	CancelOnOutputTimeout time.Duration
 }
 
 func (p *Project) Build(ctx context.Context, opts *BuildOptions) (combinedOut string) {
@@ -217,7 +224,12 @@ func (p *Project) KubeRun(ctx context.Context, opts *KubeRunOptions) string {
 		args = append(args, opts.Command...)
 	}
 
-	return p.runCommand(ctx, runCommandOptions{Args: args, ShouldFail: opts.ShouldFail})
+	return p.runCommand(ctx, runCommandOptions{
+		Args:                  args,
+		ShouldFail:            opts.ShouldFail,
+		CancelOnOutput:        opts.CancelOnOutput,
+		CancelOnOutputTimeout: opts.CancelOnOutputTimeout,
+	})
 }
 
 func (p *Project) KubeCtl(ctx context.Context, opts *KubeCtlOptions) string {
@@ -287,13 +299,11 @@ func (p *Project) CreateRegistryPullSecretFromDockerConfig(ctx context.Context) 
 }
 
 func (p *Project) runCommand(ctx context.Context, opts runCommandOptions) string {
-	outb, err := iutils.RunCommand(ctx, p.GitRepoPath, p.WerfBinPath, opts.Args...)
-	if opts.ShouldFail {
-		Expect(err).To(HaveOccurred())
-	} else {
-		Expect(err).NotTo(HaveOccurred())
-	}
-
+	outb, _ := iutils.RunCommandWithOptions(ctx, p.GitRepoPath, p.WerfBinPath, opts.Args, iutils.RunCommandOptions{
+		ShouldSucceed:         !opts.ShouldFail,
+		CancelOnOutput:        opts.CancelOnOutput,
+		CancelOnOutputTimeout: opts.CancelOnOutputTimeout,
+	})
 	return string(outb)
 }
 
