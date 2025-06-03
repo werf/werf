@@ -27,7 +27,7 @@ In current versions, development mode (activated by the `--dev` option) allows y
 
 ##### env
 
-Using [env]({{"reference/werf_yaml_template_engine.html#env-1" | true_relative_url }}) makes it difficult to share and reproduce the configuration in CI jobs and among developers, because the value of the environment variable affects the final digest of the images being built, so the value must be the same at all stages of the CI pipeline and in local development during reproduction.
+Using [env]({{"usage/werf_yaml_template_engine.html#env-1" | true_relative_url }}) makes it difficult to share and reproduce the configuration in CI jobs and among developers, because the value of the environment variable affects the final digest of the images being built, so the value must be the same at all stages of the CI pipeline and in local development during reproduction.
 
 The `env` function can be activated using [werf-giterminism.yaml]({{"reference/werf_giterminism_yaml.html" | true_relative_url }}), but we strongly recommend that you carefully consider the possible implications of this.
 
