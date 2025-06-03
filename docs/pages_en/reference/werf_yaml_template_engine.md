@@ -1,6 +1,6 @@
 ---
 title: werf.yaml template engine
-permalink: usage/werf_yaml_template_engine.html
+permalink: usage/project_configuration/werf_yaml_template_engine.html
 ---
 
 ## Overview
