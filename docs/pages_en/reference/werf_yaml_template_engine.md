@@ -3,6 +3,8 @@ title: werf.yaml template engine
 permalink: usage/werf_yaml_template_engine.html
 ---
 
+## Overview
+
 Reading _the werf configuration_, werf uses a built-in Go template engine ([text/template](https://golang.org/pkg/text/template)) and expands the function set with [Sprig](#sprig-functions) and [werf functions](#werf-functions).
 
 When organizing the configuration, it can be split into separate files in [template directory](#template-directory).
