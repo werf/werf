@@ -355,43 +355,30 @@ tasks:
   test:setup:environment:
     desc: "Setup environment on which the tests will be run."
     cmds:
-      - task: deps:install:kind
       - task: test:setup:registry
       - task: test:setup:kubernetes
-      - task: test:env:generate
 
   test:setup:registry:
     desc: "Setup dev registry."
     cmds:
       - docker network create kind || true
-      - docker run -d -p 0.0.0.0::5000 --network kind -e REGISTRY_STORAGE_DELETE_ENABLED=true --restart=always --name kind-registry registry:2
+      - docker run -d -p 0.0.0.0::5000 --network kind -e REGISTRY_STORAGE_DELETE_ENABLED=true --restart=always --name kind-registry-${CI_JOB_ID} registry:2
 
   test:setup:kubernetes:
     desc: "Setup dev kubernetes cluster."
     vars:
       registryPort:
-        sh: docker inspect kind-registry --format '{{"{{"}}(index (index .NetworkSettings.Ports "5000/tcp") 0).HostPort{{"}}"}}'
+        sh: docker inspect kind-registry-${CI_JOB_ID} --format '{{"{{"}}(index (index .NetworkSettings.Ports "5000/tcp") 0).HostPort{{"}}"}}'
     cmd: |
-      kind create cluster --image kindest/node:v{{.kubeVersion}} --config=<(echo "
+      kind create cluster --image kindest/node:v{{.kubeVersion}} --kubeconfig werf.kubeconfig-${CI_JOB_ID} --name ${CI_JOB_ID} --config=<(echo "
         kind: Cluster
         apiVersion: kind.x-k8s.io/v1alpha4
         containerdConfigPatches:
           - |
             [plugins.\"io.containerd.grpc.v1.cri\".registry.mirrors.\"localhost:{{.registryPort}}\"]
-              endpoint = [\"http://kind-registry:5000\"]
+              endpoint = [\"http://kind-registry-${CI_JOB_ID}:5000\"]
       ")
-      docker network connect kind kind-registry 2>/dev/null || true
-
-  test:env:generate:
-    desc: "Generate .env file for test environment"
-    vars:
-      registryPort:
-        sh: docker inspect kind-registry --format '{{"{{"}}(index (index .NetworkSettings.Ports "5000/tcp") 0).HostPort{{"}}"}}'
-    cmds:
-      - echo "KUBECONFIG=${HOME}/.kube/config" > .env
-      - echo "WERF_TEST_K8S_DOCKER_REGISTRY=localhost:{{.registryPort}}" >> .env
-      - echo "Environment file '.env' generated."
-      - echo "Run 'export $(xargs < .env)' to start working with tests or the environment."
+      docker network connect kind kind-registry-${CI_JOB_ID} 2>/dev/null || true
 
   verify:binaries:dist:all:
     desc: 'Verify that the distributable binaries are built and have correct platform/arch. Important vars: "version".'
@@ -521,6 +508,24 @@ tasks:
     cmds:
       - go install github.com/dmarkham/enumer@v1.5.11
 
+  deps:install:c:
+    desc: "Install C dependencies"
+    cmds:
+      - |
+        set -eux
+
+        commit="$(go list -m -f '{{ printf "{{.Version}}" }}' github.com/deckhouse/delivery-kit-sdk | cut -d- -f3)"
+
+        git_dir="$(mktemp -d)"
+        cd "$git_dir"
+
+        git clone https://github.com/deckhouse/delivery-kit-sdk .
+        git checkout "$commit"
+        task --yes install:c
+
+        cd -
+        rm -rf "$git_dir"
+
   sign:
     desc: 'Sign last version tag + origin/main and push signatures. Important vars: "refs".'
     cmds:
@@ -598,5 +603,5 @@ tasks:
   test:cleanup:environment:
     desc: "Cleanup environment"
     cmds:
-      - kind delete cluster || true
-      - docker rm -f kind-registry || true
+      - kind delete cluster --name ${CI_JOB_ID} || true
+      - docker rm -f kind-registry-${CI_JOB_ID} || true
