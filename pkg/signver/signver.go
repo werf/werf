@@ -16,14 +16,22 @@ import (
 
 const (
 	SigstorePrivateKeyPemType = "ENCRYPTED SIGSTORE PRIVATE KEY"
+	// PEM-encoded PKCS #8 RSA, ECDSA or ED25519 private key
+	PrivateKeyPemType = "PRIVATE KEY"
 )
 
+// SignerVerifier
+// Copied from https://github.com/sigstore/cosign/blob/c948138c19691142c1e506e712b7c1646e8ceb21/cmd/cosign/cli/sign/sign.go#L585
+// and modified after.
 type SignerVerifier struct {
 	Cert  []byte
 	Chain []byte
 	signature.SignerVerifier
 }
 
+// NewSignerVerifier
+// Copied from https://github.com/sigstore/cosign/blob/c948138c19691142c1e506e712b7c1646e8ceb21/cmd/cosign/cli/sign/sign.go#L392
+// and modified after.
 func NewSignerVerifier(ctx context.Context, certPath, certChainPath string, ko KeyOpts) (*SignerVerifier, error) {
 	if ko.KeyRef == "" {
 		return nil, errors.New("ko.KeyRef must not be empty string")
@@ -121,6 +129,9 @@ func NewSignerVerifier(ctx context.Context, certPath, certChainPath string, ko K
 	return certSigner, nil
 }
 
+// trustedCert
+// Copied from https://github.com/sigstore/cosign/blob/c948138c19691142c1e506e712b7c1646e8ceb21/pkg/cosign/verify.go#L1436
+// as is.
 func trustedCert(cert *x509.Certificate, roots, intermediates *x509.CertPool) ([][]*x509.Certificate, error) {
 	chains, err := cert.Verify(x509.VerifyOptions{
 		// THIS IS IMPORTANT: WE DO NOT CHECK TIMES HERE
@@ -141,6 +152,8 @@ func trustedCert(cert *x509.Certificate, roots, intermediates *x509.CertPool) ([
 
 // ContainsSCT checks if the certificate contains embedded SCTs. cert can either be
 // DER or PEM encoded.
+// Copied from https://github.com/sigstore/cosign/blob/c948138c19691142c1e506e712b7c1646e8ceb21/pkg/cosign/verify_sct.go#L37
+// as is.
 func containsSCT(cert []byte) (bool, error) {
 	embeddedSCTs, err := x509util.ParseSCTsFromCertificate(cert)
 	if err != nil {

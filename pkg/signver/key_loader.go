@@ -12,12 +12,12 @@ import (
 	"strings"
 
 	"github.com/secure-systems-lab/go-securesystemslib/encrypted"
+	"github.com/sigstore/sigstore/pkg/cryptoutils"
 	"github.com/sigstore/sigstore/pkg/signature"
 	"github.com/sigstore/sigstore/pkg/signature/kms"
 	"golang.org/x/crypto/ed25519"
 
 	"github.com/werf/werf/v2/pkg/signver/blob"
-	"github.com/werf/werf/v2/pkg/signver/pass"
 )
 
 const (
@@ -27,8 +27,9 @@ const (
 )
 
 // signerVerifierFromKeyRef
-// https://github.com/sigstore/cosign/blob/c948138c19691142c1e506e712b7c1646e8ceb21/pkg/signature/keys.go#L103
-func signerVerifierFromKeyRef(ctx context.Context, keyRef string, passFunc pass.PassFunc) (signature.SignerVerifier, error) {
+// Copied from https://github.com/sigstore/cosign/blob/c948138c19691142c1e506e712b7c1646e8ceb21/pkg/signature/keys.go#L103
+// and modified after.
+func signerVerifierFromKeyRef(ctx context.Context, keyRef string, passFunc cryptoutils.PassFunc) (signature.SignerVerifier, error) {
 	if keyRef == "" {
 		return nil, errors.New("keyRef must not be empty string")
 	}
@@ -63,7 +64,9 @@ func signerVerifierFromKeyRef(ctx context.Context, keyRef string, passFunc pass.
 	return sv, err
 }
 
-func loadKey(keyPath string, pf pass.PassFunc) (signature.SignerVerifier, error) {
+// loadKey
+// Copied from https://github.com/sigstore/cosign/blob/c948138c19691142c1e506e712b7c1646e8ceb21/pkg/signature/keys.go#L75
+func loadKey(keyPath string, pf cryptoutils.PassFunc) (signature.SignerVerifier, error) {
 	kb, err := blob.LoadFileOrURL(keyPath)
 	if err != nil {
 		return nil, err
@@ -80,13 +83,16 @@ func loadKey(keyPath string, pf pass.PassFunc) (signature.SignerVerifier, error)
 
 // loadPrivateKey loads a PEM private key encrypted with the given passphrase,
 // and returns a SignerVerifier instance. The private key must be in the PKCS #8 format.
+// Copied from https://github.com/sigstore/cosign/blob/c948138c19691142c1e506e712b7c1646e8ceb21/pkg/cosign/keys.go#L212
+// and modified after.
 func loadPrivateKey(key, pass []byte) (signature.SignerVerifier, error) {
 	// Decrypt first
 	p, _ := pem.Decode(key)
 	if p == nil {
 		return nil, errors.New("invalid pem block")
 	}
-	if p.Type != SigstorePrivateKeyPemType {
+
+	if p.Type != SigstorePrivateKeyPemType && p.Type != PrivateKeyPemType {
 		return nil, fmt.Errorf("unsupported pem type: %s", p.Type)
 	}
 
