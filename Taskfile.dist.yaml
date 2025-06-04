@@ -356,7 +356,6 @@ tasks:
   test:setup:environment:
     desc: "Setup environment on which the tests will be run."
     cmds:
-      - task: deps:install:kind
       - task: test:setup:registry
       - task: test:setup:kubernetes
       - task: test:env:generate
@@ -373,7 +372,7 @@ tasks:
       registryPort:
         sh: docker inspect kind-registry --format '{{"{{"}}(index (index .NetworkSettings.Ports "5000/tcp") 0).HostPort{{"}}"}}'
     cmd: |
-      kind create cluster --image kindest/node:v{{.kubeVersion}} --config=<(echo "
+      kind create cluster --image kindest/node:v{{.kubeVersion}} --kubeconfig /tmp/werf.kubeconfig --config=<(echo "
         kind: Cluster
         apiVersion: kind.x-k8s.io/v1alpha4
         containerdConfigPatches:
@@ -599,5 +598,5 @@ tasks:
   test:cleanup:environment:
     desc: "Cleanup environment"
     cmds:
-      - kind delete cluster || true
+      - kind delete cluster --kubeconfig /tmp/werf.kubeconfig || true
       - docker rm -f kind-registry || true

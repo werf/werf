@@ -1,0 +1,6 @@
+.lint:
+  stage: lint
+  script:
+    - export PATH="/usr/local/go1.23/go/bin:/usr/local/golangci-lint-1.57.1:$PATH"
+    - export GOROOT=/usr/local/go1.23/go
+    - task -p lint
