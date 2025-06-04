@@ -1,0 +1,210 @@
+include:
+  - local: templates/*.yml
+
+stages:
+  - setup
+  - test_mr
+  - test_main
+  - build
+  - publish
+  - release
+
+default:
+  before_script:
+    - git config --global user.name "borya"
+    - git config --global user.email "borya@flant.com"
+    - export PATH="/usr/local/go1.23/go/bin:/usr/local/golangci-lint-1.57.1:$HOME/go/bin:$PATH"
+    - export GOROOT=/usr/local/go1.23/go
+    - export WERF_TEST_BINARY_PATH=$CI_PROJECT_DIR/bin/werf
+    - export TASK_X_REMOTE_TASKFILES=1
+    - export LD_LIBRARY_PATH=/usr/local/lib/libgost
+    - task --yes deps:install:ginkgo
+  tags:
+    - deckhouse
+
+.changes_source: &changes_source
+  changes:
+    - go.mod
+    - Taskfile.dist.yaml
+    - .github/**/*
+    - cmd/werf/**/*
+    - pkg/**/*
+    - integration/**/*
+    - scripts/**/*
+    - test/**/*
+
+.rules:
+  if:
+    main: $CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE == "push"
+    main_schedule: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "schedule"
+    main_no_schedule: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE != "schedule"
+    mr: $CI_PIPELINE_SOURCE == "merge_request_event"
+    main_or_mr: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH || $CI_PIPELINE_SOURCE == "merge_request_event"
+    tag: $CI_COMMIT_TAG
+    schedule: $CI_PIPELINE_SOURCE == "schedule"
+    no_schedule: $CI_PIPELINE_SOURCE != "schedule"
+    web: $CI_PIPELINE_SOURCE == "web"
+
+.default_mr_test_rules: &default_mr_test_rules
+  rules:
+    - if: !reference [.rules, if, mr]
+      <<: *changes_source
+    - if: !reference [.rules, if, web]
+      <<: *changes_source
+    - when: never
+
+.default_main_test_rules: &default_main_test_rules
+  rules:
+    - if: !reference [.rules, if, main]
+      <<: *changes_source
+    - when: never
+
+.default_tag_rule: &default_tag_rule
+  rules:
+    - if: !reference [.rules, if, tag]
+
+prepare_environment:
+  stage: setup
+  extends: .prepare_environment
+  rules:
+    - if: !reference [.rules, if, main]
+      <<: *changes_source
+    - if: !reference [.rules, if, mr]
+      <<: *changes_source
+    - if: !reference [.rules, if, web]
+      <<: *changes_source
+    - when: never
+
+# test pr block
+lint:
+  needs:
+    - job: prepare_environment
+      artifacts: true
+  stage: test_mr
+  extends: .lint
+  <<: *default_mr_test_rules
+
+test_unit:
+  needs:
+    - job: prepare_environment
+      artifacts: true
+  stage: test_mr
+  extends: .test_unit
+  variables:
+    EXCLUDE_PACKAGES: "cmd/werf/docs"
+  <<: *default_mr_test_rules
+
+test_e2e_simple:
+  needs:
+    - job: prepare_environment
+      artifacts: true
+  stage: test_mr
+  extends: .test_regular
+  variables:
+    SCOPE: simple
+  <<: *default_mr_test_rules
+
+# end of test pr block
+
+# test main block
+# test_integration_main:
+#   needs:
+#     - job: prepare_environment
+#       artifacts: true
+#   stage: test_main
+#   extends: .test_integration_regular
+#   variables:
+#     PACKAGES: integration/suites
+#     EXCLUDE_PACKAGES: integration/suites/deploy,integration/suites/cleanup_after_converge,integration/suites/helm/deploy_rollback,integration/suites/bundles,integration/suites/ansible,integration/suites/build/stapel_image/git,integration/suites/docs
+#   <<: *default_main_test_rules
+
+test_integration_git:
+  needs:
+    - job: prepare_environment
+      artifacts: true
+  stage: test_main
+  extends: .test_integration_regular
+  variables:
+    PACKAGES: integration/suites/build/stapel_image/git
+  <<: *default_main_test_rules
+
+test_integration_ansible:
+  needs:
+    - job: prepare_environment
+      artifacts: true
+  stage: test_main
+  extends: .test_integration_regular
+  variables:
+    PACKAGES: integration/suites/ansible
+  <<: *default_main_test_rules
+
+test_integration_per-k8s:
+  needs:
+    - job: prepare_environment
+      artifacts: true
+  stage: test_main
+  extends: .test_integration_per_k8s_version
+  <<: *default_main_test_rules
+
+e2e_simple_per-k8s:
+  needs:
+    - job: prepare_environment
+      artifacts: true
+  stage: test_main
+  extends: .test_e2e_per_k8s_version
+  variables:
+    SCOPE: simple
+  <<: *default_main_test_rules
+
+e2e_complex_per-k8s:
+  needs:
+    - job: prepare_environment
+      artifacts: true
+  stage: test_main
+  extends: .test_e2e_per_k8s_version
+  variables:
+    SCOPE: complex
+  <<: *default_main_test_rules
+
+# end of test main block
+
+# release block
+build_release:
+  stage: build
+  extends: .build
+  <<: *default_tag_rule
+
+publish_release:
+  stage: publish
+  extends: .publish
+  <<: *default_tag_rule
+
+create_release:
+  stage: release
+  script:
+    - |
+      cat <<EOF > release_message.json
+      {
+        "name": "${CI_COMMIT_TAG}",
+        "tag_name": "${CI_COMMIT_TAG}",
+        "description": "",
+        "assets": {
+          "links": [
+            {
+              "name": "werf",
+              "url": "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/werf/${CI_COMMIT_TAG}/werf",
+              "link_type": "package"
+            }
+          ]
+        }
+      }
+      EOF
+
+      curl --fail-with-body \
+        --header "Content-Type: application/json" \
+        --header "JOB-TOKEN: $CI_JOB_TOKEN" \
+        --data @release_message.json \
+        --request POST \
+        "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases"
+  <<: *default_tag_rule
+# end of release block

@@ -1,0 +1,7 @@
+.prepare_environment:
+  script:
+    - task --yes build
+  artifacts:
+    paths:
+      - bin/werf
+    expire_in: 1h

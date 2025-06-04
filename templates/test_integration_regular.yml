@@ -1,0 +1,6 @@
+.test_integration_regular:
+  variables:
+    PACKAGES: ""
+    EXCLUDE_PACKAGES: ""
+  script:
+    - task --yes -p test:integration paths="$(echo "$PACKAGES" | tr , ' ')" -- --keep-going --skip-package "$EXCLUDE_PACKAGES"
