@@ -193,6 +193,8 @@ werf dismiss [options]
       --namespace=""
             Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or         
             deploy.namespace custom template from werf.yaml or $WERF_NAMESPACE)
+      --network-parallelism=30
+            Parallelize some network operations (default $WERF_NETWORK_PARALLELISM or 30)
       --platform=[]
             Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT]     
             ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)

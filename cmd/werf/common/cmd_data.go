@@ -112,8 +112,12 @@ type CmdData struct {
 	UseDeployReport  *bool
 	DeployReportPath *string
 
-	DeployGraphPath   *string
-	RollbackGraphPath *string
+	SaveUninstallReport *bool
+	UninstallReportPath *string
+
+	DeployGraphPath    *string
+	RollbackGraphPath  *string
+	UninstallGraphPath *string
 
 	RenderSubchartNotes *bool
 	NoInstallCRDs       *bool
