@@ -3,6 +3,7 @@ package e2e_kube_run_test
 import (
 	"os"
 	"strings"
+	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -25,6 +26,12 @@ var _ = Describe("Simple kube-run", Label("e2e", "kube-run", "simple"), func() {
 
 			By("state0: execute kube-run")
 			combinedOut := werfProject.KubeRun(ctx, kubeRunOpts)
+			Expect(combinedOut).To(ContainSubstring("Creating namespace"))
+			Expect(combinedOut).To(ContainSubstring("Running pod"))
+			Expect(combinedOut).To(ContainSubstring("Executing into pod"))
+			Expect(combinedOut).To(ContainSubstring("Stopping container"))
+			Expect(combinedOut).To(ContainSubstring("Cleaning up pod"))
+
 			expectOutFn(combinedOut)
 		},
 		Entry(
@@ -76,6 +83,25 @@ var _ = Describe("Simple kube-run", Label("e2e", "kube-run", "simple"), func() {
 			func(out string) {
 				Expect(out).To(ContainSubstring("ID=ubuntu"))
 			},
+		),
+		Entry(
+			"should cancel long running process",
+			&werf.KubeRunOptions{
+				Command: []string{"/opt/app.sh"},
+				Image:   "main",
+				CommonOptions: werf.CommonOptions{
+					ShouldFail:            true,
+					ExtraArgs:             []string{}, // be able to work without "-it" options
+					CancelOnOutput:        "Looping ...",
+					CancelOnOutputTimeout: time.Minute,
+				},
+			},
+			func(out string) {
+				Expect(out).To(ContainSubstring("Signal container"))
+				Expect(out).To(ContainSubstring("Signal handled"))   // from script
+				Expect(out).To(ContainSubstring("Script completed")) // from script
+			},
+			SpecTimeout(time.Minute*3),
 		),
 	)
 })
