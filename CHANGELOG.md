@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.37.1](https://www.github.com/werf/werf/compare/v2.37.0...v2.37.1) (2025-06-05)
+
+
+### Bug Fixes
+
+* **release, werf-in-image:** fix overlayfs errors ([5d77bbd](https://www.github.com/werf/werf/commit/5d77bbd4aeef74d6e7ac6a99b6a0c4e4027aaf78))
+
 ## [2.37.0](https://www.github.com/werf/werf/compare/v2.36.4...v2.37.0) (2025-06-05)
 
 
