@@ -31,11 +31,13 @@ RUN set -eux; \
     done
 
 USER build1001:build1001
+VOLUME /home/build1001/.local/share/containers
 
 # Fix fatal: detected dubious ownership in repository.
 RUN git config --global --add safe.directory '*'
 
 USER build:build
+VOLUME /home/build/.local/share/containers
 
 # Fix fatal: detected dubious ownership in repository.
 RUN git config --global --add safe.directory '*'
