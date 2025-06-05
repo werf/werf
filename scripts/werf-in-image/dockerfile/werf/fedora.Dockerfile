@@ -27,7 +27,11 @@ RUN for u in $USERS; do \
     runuser -u $u -- git config --global --add safe.directory '*' ; \
     done
 
+USER build1001:build1001
+VOLUME /home/build1001/.local/share/containers
+
 USER build:build
+VOLUME /home/build/.local/share/containers
 
 WORKDIR /home/build
 
