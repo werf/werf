@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.37.0](https://www.github.com/werf/werf/compare/v2.36.4...v2.37.0) (2025-06-05)
+
+
+### Features
+
+* **release, werf-in-image:** add user for GitHub Actions compatibility ([da3489e](https://www.github.com/werf/werf/commit/da3489e8b7864fa4ff495483219ad7ea08ae7008))
+* **deploy:** new experimental `werf dismiss` ([274ff85](https://www.github.com/werf/werf/commit/274ff851e1dae4e44bed352dba7e185eee6bc602))
+
+
+### Bug Fixes
+
+* **kube-run:** handle SIGINT/SIGTERM properly (v2) ([#6893](https://www.github.com/werf/werf/issues/6893)) ([315be8b](https://www.github.com/werf/werf/commit/315be8ba21c2b75aa6aa226d79a31af3d4b87120))
+
 ### [2.36.4](https://www.github.com/werf/werf/compare/v2.36.3...v2.36.4) (2025-05-30)
 
 
