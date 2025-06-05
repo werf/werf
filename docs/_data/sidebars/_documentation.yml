@@ -14,6 +14,9 @@ entries:
 
               - title: werf.yaml template engine
                 url: /usage/project_configuration/werf_yaml_template_engine.html
+                
+              - title: Debug werf.yaml
+                url: /usage/project_configuration/debug_werf_yaml.html
 
               - title: Giterminism
                 url: /usage/project_configuration/giterminism.html
@@ -157,6 +160,9 @@ entries:
 
               - title: Шаблонизатор werf.yaml
                 url: /usage/project_configuration/werf_yaml_template_engine.html
+                
+              - title: Отладка werf.yaml
+                url: /usage/project_configuration/debug_werf_yaml.html
 
               - title: Гитерминизм
                 url: /usage/project_configuration/giterminism.html
