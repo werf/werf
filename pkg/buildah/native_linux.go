@@ -334,7 +334,7 @@ func (b *NativeBuildah) Push(ctx context.Context, ref string, opts PushOpts) err
 	return nil
 }
 
-func (b *NativeBuildah) StreamImage(ctx context.Context, ref string, opts StreamOpts) (*bytes.Reader, error) {
+func (b *NativeBuildah) DumpImage(ctx context.Context, ref string, opts StreamOpts) (*bytes.Reader, error) {
 	// NOTICE: targetPlatform specified for push causes buildah to fail for some unknown reason
 	sysCtx, err := b.getSystemContext("")
 	if err != nil {

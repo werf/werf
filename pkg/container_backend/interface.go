@@ -109,8 +109,8 @@ type ContainerBackend interface {
 	// PruneVolumes removes all anonymous volumes not used by at least one container
 	PruneVolumes(ctx context.Context, options prune.Options) (prune.Report, error)
 
-	// StreamImage streams image using bytes reader
-	StreamImage(ctx context.Context, ref string) (*bytes.Reader, error)
+	// DumpImage streams image using bytes reader
+	DumpImage(ctx context.Context, ref string) (*bytes.Reader, error)
 
 	// GenerateSBOM scans and generates SBOM from source image into another destination image
 	GenerateSBOM(ctx context.Context, scanOpts scanner.ScanOptions, dstImgLabels []string) (string, error)

@@ -139,6 +139,21 @@ func (mr *MockContainerBackendMockRecorder) Containers(ctx, opts any) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Containers", reflect.TypeOf((*MockContainerBackend)(nil).Containers), ctx, opts)
 }
 
+// DumpImage mocks base method.
+func (m *MockContainerBackend) DumpImage(ctx context.Context, ref string) (*bytes.Reader, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DumpImage", ctx, ref)
+	ret0, _ := ret[0].(*bytes.Reader)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DumpImage indicates an expected call of DumpImage.
+func (mr *MockContainerBackendMockRecorder) DumpImage(ctx, ref any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DumpImage", reflect.TypeOf((*MockContainerBackend)(nil).DumpImage), ctx, ref)
+}
+
 // GenerateSBOM mocks base method.
 func (m *MockContainerBackend) GenerateSBOM(ctx context.Context, scanOpts scanner.ScanOptions, dstImgLabels []string) (string, error) {
 	m.ctrl.T.Helper()
@@ -423,21 +438,6 @@ func (m *MockContainerBackend) ShouldCleanupDockerfileImage() bool {
 func (mr *MockContainerBackendMockRecorder) ShouldCleanupDockerfileImage() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ShouldCleanupDockerfileImage", reflect.TypeOf((*MockContainerBackend)(nil).ShouldCleanupDockerfileImage))
-}
-
-// StreamImage mocks base method.
-func (m *MockContainerBackend) StreamImage(ctx context.Context, ref string) (*bytes.Reader, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "StreamImage", ctx, ref)
-	ret0, _ := ret[0].(*bytes.Reader)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// StreamImage indicates an expected call of StreamImage.
-func (mr *MockContainerBackendMockRecorder) StreamImage(ctx, ref any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StreamImage", reflect.TypeOf((*MockContainerBackend)(nil).StreamImage), ctx, ref)
 }
 
 // String mocks base method.

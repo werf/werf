@@ -216,10 +216,10 @@ func (runtime *PerfCheckContainerBackend) PruneVolumes(ctx context.Context, opti
 	return
 }
 
-func (runtime *PerfCheckContainerBackend) StreamImage(ctx context.Context, ref string) (reader *bytes.Reader, err error) {
-	logboek.Context(ctx).Default().LogProcess("ContainerBackend.StreamImage %v", ref).
+func (runtime *PerfCheckContainerBackend) DumpImage(ctx context.Context, ref string) (reader *bytes.Reader, err error) {
+	logboek.Context(ctx).Default().LogProcess("ContainerBackend.DumpImage %v", ref).
 		Do(func() {
-			reader, err = runtime.ContainerBackend.StreamImage(ctx, ref)
+			reader, err = runtime.ContainerBackend.DumpImage(ctx, ref)
 		})
 	return
 }
