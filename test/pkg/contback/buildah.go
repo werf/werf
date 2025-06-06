@@ -65,7 +65,7 @@ func (r *NativeBuildahBackend) Pull(ctx context.Context, image string) {
 	utils.RunSucceedCommand(ctx, "/", "buildah", args...)
 }
 
-func (r *NativeBuildahBackend) StreamImage(ctx context.Context, image string) *bytes.Reader {
+func (r *NativeBuildahBackend) DumpImage(ctx context.Context, image string) *bytes.Reader {
 	// Buildah doesn't support redirecting to stdout
 	// https://github.com/containers/buildah/issues/936
 	// So we should use tmp file
