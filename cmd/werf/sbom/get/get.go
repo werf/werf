@@ -96,7 +96,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupVirtualMerge(&commonCmdData, cmd)
 
 	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultBuildParallelTasksLimit)
-	common.SetupFollow(&commonCmdData, cmd)
 
 	common.SetupDisableAutoHostCleanup(&commonCmdData, cmd)
 	common.SetupAllowedBackendStorageVolumeUsage(&commonCmdData, cmd)
@@ -153,14 +152,7 @@ func runGet(ctx context.Context, requestedImageName string) error {
 
 	common.ProcessLogProjectDir(&commonCmdData, giterminismManager.ProjectDir())
 
-	if *commonCmdData.Follow {
-		logboek.LogOptionalLn()
-		return common.FollowGitHead(ctx, &commonCmdData, func(ctx context.Context, headCommitGiterminismManager giterminism_manager.Interface) error {
-			return run(ctx, containerBackend, headCommitGiterminismManager, requestedImageName)
-		})
-	} else {
-		return run(ctx, containerBackend, giterminismManager, requestedImageName)
-	}
+	return run(ctx, containerBackend, giterminismManager, requestedImageName)
 }
 
 func run(ctx context.Context, containerBackend container_backend.ContainerBackend, giterminismManager giterminism_manager.Interface, requestedImageName string) error {
