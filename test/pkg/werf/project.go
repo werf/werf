@@ -337,13 +337,13 @@ func (p *Project) Export(ctx context.Context, opts *ExportOptions) (combinedOut 
 	return string(outb)
 }
 
-func (p *Project) SbomGet(opts *SbomGetOptions) (combinedOut string) {
+func (p *Project) SbomGet(ctx context.Context, opts *SbomGetOptions) (combinedOut string) {
 	if opts == nil {
 		opts = &SbomGetOptions{}
 	}
 	args := append([]string{"sbom", "get"}, opts.ExtraArgs...)
 
-	outb := p.runCommand(runCommandOptions{
+	outb := p.runCommand(ctx, runCommandOptions{
 		Args:       args,
 		Envs:       lo.If(opts.EnableExperimental, []string{"WERF_EXPERIMENTAL_SBOM=true"}).Else([]string{}),
 		ShouldFail: opts.ShouldFail,
