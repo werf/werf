@@ -54,12 +54,6 @@ var _ = Describe("Sbom get", Label("e2e", "sbom", "get", "simple"), func() {
 					// `sha256:bee01feb22b978b11472e8bc86065fd88ee370c9782288536ddb58e9904aa584`
 					// in the first line of output. So, we need to omit this noize.
 					output = output[(71 + 1):]
-				case "native-rootless", "native-chroot":
-					// TODO: remove workaround for Buildah backend after fixing
-					// Note: Generation of SBOM returns warnings at two first lines:
-					// `<string>: [0000]  WARN unable to get filesystem cache at /.cache/syft: unable to create directory at '/.cache/syft': mkdir /.cache: permission denied`
-					// `[0000]  WARN no explicit name and version provided for directory source, deriving artifact ID from the given path (which is not ideal)`
-					output = output[(149 + 134 - 8):]
 				}
 
 				Expect(output).To(HavePrefix(`{"$schema":"http://cyclonedx.org/schema/bom-1.6.schema.json"`))
