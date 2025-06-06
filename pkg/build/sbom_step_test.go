@@ -53,9 +53,10 @@ var _ = Describe("SbomStep", func() {
 			}
 			scanOpts := scanner.DefaultSyftScanOptions()
 
-			sbomImgLabels := step.prepareSbomLabels(ctx, stageDesc.Info.Labels, scanOpts)
-			imgFilters := filter.NewFilterListFromLabelList(sbomImgLabels[:len(sbomImgLabels)-1]).ToPairs()
+			sbomBaseImgLabels := step.prepareSbomBaseLabels(ctx, stageDesc.Info.Labels, scanOpts)
+			imgFilters := filter.NewFilterListFromLabelList(sbomBaseImgLabels).ToPairs()
 
+			sbomImgLabels := step.prepareSbomLabels(ctx, stageDesc.Info.Labels, scanOpts)
 			setupMocks(ctx, backend, stagesStorage, stageDesc, scanOpts, sbomImgLabels, imgFilters)
 
 			Expect(step.Converge(ctx, stageDesc, scanOpts)).To(Succeed())
