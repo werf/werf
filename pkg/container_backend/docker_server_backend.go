@@ -478,7 +478,7 @@ func (backend *DockerServerBackend) GenerateSBOM(ctx context.Context, scanOpts s
 	return imageId, nil
 }
 
-func (backend *DockerServerBackend) StreamImage(ctx context.Context, ref string) (*bytes.Reader, error) {
+func (backend *DockerServerBackend) DumpImage(ctx context.Context, ref string) (*bytes.Reader, error) {
 	rc, err := docker.ImageSave(ctx, ref)
 	if err != nil {
 		return nil, fmt.Errorf("unable to open image streaming %q: %w", ref, err)

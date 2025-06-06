@@ -59,7 +59,7 @@ var _ = Describe("Simple build", Label("e2e", "build", "sbom", "simple"), func()
 						Expect(sbomImgInspect.Config.Labels[imagePkg.WerfSbomLabel]).To(Equal("f2b172aa9b952cfba7ae9914e7e5a9760ff0d2c7d5da69d09195c63a2577da79"))
 
 						By("state0: SBOM image file system layout")
-						fsStreamReader := contback.NewFileSystemReaderWrapper(contRuntime.StreamImage(ctx, sbom.ImageName(reportRecord.DockerImageName)))
+						fsStreamReader := contback.NewFileSystemReaderWrapper(contRuntime.DumpImage(ctx, sbom.ImageName(reportRecord.DockerImageName)))
 
 						Expect(fsStreamReader.Next().Path()).To(Equal("sbom/"))
 						Expect(fsStreamReader.Next().Path()).To(Equal("sbom/cyclonedx@1.6/"))

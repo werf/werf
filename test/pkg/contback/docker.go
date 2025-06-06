@@ -48,7 +48,7 @@ func (r *DockerBackend) Pull(ctx context.Context, image string) {
 	utils.RunSucceedCommand(ctx, "/", "docker", args...)
 }
 
-func (r *DockerBackend) StreamImage(ctx context.Context, image string) *bytes.Reader {
+func (r *DockerBackend) DumpImage(ctx context.Context, image string) *bytes.Reader {
 	args := r.CommonCliArgs
 	args = append(args, "image", "save", image)
 

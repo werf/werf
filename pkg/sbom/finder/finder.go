@@ -34,7 +34,7 @@ func (f *finder) FindArtifactFile(ctx context.Context, images []*image.Image, im
 
 	sbomImageName := sbom.ImageName(foundImage.GetLastNonEmptyStage().GetStageImage().Image.GetStageDesc().Info.Name)
 
-	bReader, err := f.backend.StreamImage(ctx, sbomImageName)
+	bReader, err := f.backend.DumpImage(ctx, sbomImageName)
 	if err != nil {
 		return nil, fmt.Errorf("unable to stream image %q: %w", sbomImageName, err)
 	}
