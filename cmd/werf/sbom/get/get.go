@@ -1,13 +1,11 @@
 package get
 
 import (
-	"archive/tar"
 	"context"
 	"fmt"
 	"io"
 	"os"
 
-	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 
 	"github.com/werf/logboek"
@@ -16,9 +14,9 @@ import (
 	"github.com/werf/werf/v2/pkg/build/image"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
-	"github.com/werf/werf/v2/pkg/container_backend/stream_reader"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
 	"github.com/werf/werf/v2/pkg/sbom"
+	"github.com/werf/werf/v2/pkg/sbom/finder"
 	"github.com/werf/werf/v2/pkg/tmp_manager"
 	"github.com/werf/werf/v2/pkg/true_git"
 	"github.com/werf/werf/v2/pkg/werf/global_warnings"
@@ -217,33 +215,14 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		return err
 	}
 
-	requestedImage, ok := lo.Find(exportedImages, func(item *image.Image) bool {
-		return item.Name == requestedImageName
-	})
-	if !ok {
-		return fmt.Errorf("unable to find requested image %q", requestedImageName)
-	}
+	sbomArtifactFinder := finder.NewFinder(containerBackend)
 
-	sbomImageName := sbom.ImageName(requestedImage.GetLastNonEmptyStage().GetStageImage().Image.GetStageDesc().Info.Name)
-
-	bReader, err := containerBackend.StreamImage(ctx, sbomImageName)
+	artifactFile, err := sbomArtifactFinder.FindArtifactFile(ctx, exportedImages, requestedImageName)
 	if err != nil {
-		return fmt.Errorf("unable to stream image %q: %w", sbomImageName, err)
+		return fmt.Errorf("find artifact file error: %w", err)
 	}
-	fsStreamReader, err := stream_reader.NewFileSystemStreamReader(tar.NewReader(bReader))
-	if err != nil {
-		return fmt.Errorf("unable to create file system stream reader: %w", err)
-	}
-
-	artifactFile, ok, err := fsStreamReader.Find(func(file *stream_reader.File) bool {
-		// TODO: assume we have only one artifact file
-		return !file.Info().IsDir()
-	})
-	if err != nil {
-		return fmt.Errorf("unable to search artifact file in SBOM image %q: %w", sbomImageName, err)
-	}
-	if !ok {
-		return fmt.Errorf("artifact file is not found in SBOM image %q", sbomImageName)
+	if artifactFile == nil {
+		return fmt.Errorf("artifact file is not found in SBOM image %q", sbom.ImageName(requestedImageName))
 	}
 
 	return logboek.Streams().DoErrorWithoutProxyStreamDataFormatting(func() error {
