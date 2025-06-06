@@ -119,6 +119,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupNoInstallCRDs(&commonCmdData, cmd)
 	common.SetupReleaseLabel(&commonCmdData, cmd)
 
+	commonCmdData.SetupDebugTemplates(cmd)
+
 	defaultTag := os.Getenv("WERF_TAG")
 	if defaultTag == "" {
 		defaultTag = "latest"

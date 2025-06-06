@@ -105,6 +105,8 @@ type CmdData struct {
 	LogProjectDir    *bool
 	LogTerminalWidth *int64
 
+	DebugTemplates *bool
+
 	SaveBuildReport *bool
 	BuildReportPath *string
 
@@ -202,4 +204,17 @@ func (cmdData *CmdData) SetupRenameChart(cmd *cobra.Command) {
 func (cmdData *CmdData) SetupSkipImageSpecStage(cmd *cobra.Command) {
 	cmdData.SkipImageSpecStage = new(bool)
 	cmd.Flags().BoolVarP(cmdData.SkipImageSpecStage, "skip-image-spec-stage", "", util.GetBoolEnvironmentDefaultFalse("WERF_SKIP_IMAGE_SPEC_STAGE"), `Force skipping "imageSpec" build stage (default $WERF_SKIP_IMAGE_SPEC_STAGE or false)`)
+}
+
+func (cmdData *CmdData) SetupDebugTemplates(cmd *cobra.Command) {
+	if cmdData.DebugTemplates == nil {
+		cmdData.DebugTemplates = new(bool)
+	}
+	cmd.Flags().BoolVarP(
+		cmdData.DebugTemplates,
+		"debug-templates",
+		"",
+		util.GetBoolEnvironmentDefaultFalse("WERF_DEBUG_TEMPLATES"),
+		`Enable debug mode for Go templates (default $WERF_DEBUG_TEMPLATES or false)`,
+	)
 }
