@@ -65,8 +65,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	commonCmdData.SetupHelmCompatibleChart(cmd, true)
 	commonCmdData.SetupRenameChart(cmd)
 
-	commonCmdData.SetupDebugTemplates(cmd)
-
 	cmd.Flags().StringVarP(&cmdData.From, "from", "", os.Getenv("WERF_FROM"), "Source address of the bundle to copy, specify bundle archive using schema `archive:PATH_TO_ARCHIVE.tar.gz`, specify remote bundle with schema `[docker://]REPO:TAG` or without schema.")
 	cmd.Flags().StringVarP(&cmdData.To, "to", "", os.Getenv("WERF_TO"), "Destination address of the bundle to copy, specify bundle archive using schema `archive:PATH_TO_ARCHIVE.tar.gz`, specify remote bundle with schema `[docker://]REPO:TAG` or without schema.")
 

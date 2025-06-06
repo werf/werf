@@ -215,6 +215,6 @@ func (cmdData *CmdData) SetupDebugTemplates(cmd *cobra.Command) {
 		"debug-templates",
 		"",
 		util.GetBoolEnvironmentDefaultFalse("WERF_DEBUG_TEMPLATES"),
-		`Enable debug templates mode, which allows to see the rendered templates in the werf.yaml file (default $WERF_DEBUG_TEMPLATES or false)`,
+		`Enable debug mode for Go templates (default $WERF_DEBUG_TEMPLATES or false)`,
 	)
 }

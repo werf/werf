@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/spf13/cobra"
 
 	helm_v3 "github.com/werf/3p-helm/cmd/helm"
@@ -30,6 +31,9 @@ func main() {
 	defer graceful.Shutdown(terminationCtx, onShutdown)
 
 	ctx := logging.WithLogger(terminationCtx)
+
+	spew.Config.DisablePointerAddresses = true
+	spew.Config.DisableCapacities = true
 
 	root.PrintStackTraces()
 
