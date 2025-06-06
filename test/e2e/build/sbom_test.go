@@ -14,7 +14,7 @@ import (
 
 var _ = Describe("Simple build", Label("e2e", "build", "sbom", "simple"), func() {
 	DescribeTable("should generate and store SBOM as an image",
-		func(testOpts simpleTestOptions) {
+		func(ctx SpecContext, testOpts simpleTestOptions) {
 			By("initializing")
 			setupEnv(testOpts.setupEnvOptions)
 
@@ -31,11 +31,11 @@ var _ = Describe("Simple build", Label("e2e", "build", "sbom", "simple"), func()
 				buildReportName := "report0.json"
 
 				By("state0: preparing test repo")
-				SuiteData.InitTestRepo(repoDirname, fixtureRelPath)
+				SuiteData.InitTestRepo(ctx, repoDirname, fixtureRelPath)
 
 				By("state0: building images")
 				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
-				buildOut, buildReport := werfProject.BuildWithReport(SuiteData.GetBuildReportPath(buildReportName), nil)
+				buildOut, buildReport := werfProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), nil)
 				Expect(buildOut).To(ContainSubstring("Building stage"))
 
 				By("state0: SBOM logging output")
@@ -47,8 +47,8 @@ var _ = Describe("Simple build", Label("e2e", "build", "sbom", "simple"), func()
 					By(fmt.Sprintf("state0: validate result for %q", builtImgName))
 					{
 						By("state0: SBOM image metadata")
-						imgInspect := contRuntime.GetImageInspect(reportRecord.DockerImageName)
-						sbomImgInspect := contRuntime.GetImageInspect(sbom.ImageName(reportRecord.DockerImageName))
+						imgInspect := contRuntime.GetImageInspect(ctx, reportRecord.DockerImageName)
+						sbomImgInspect := contRuntime.GetImageInspect(ctx, sbom.ImageName(reportRecord.DockerImageName))
 
 						// shared labels
 						Expect(sbomImgInspect.Config.Labels[imagePkg.WerfLabel]).To(Equal(imgInspect.Config.Labels[imagePkg.WerfLabel]))
@@ -59,7 +59,7 @@ var _ = Describe("Simple build", Label("e2e", "build", "sbom", "simple"), func()
 						Expect(sbomImgInspect.Config.Labels[imagePkg.WerfSbomLabel]).To(Equal("f2b172aa9b952cfba7ae9914e7e5a9760ff0d2c7d5da69d09195c63a2577da79"))
 
 						By("state0: SBOM image file system layout")
-						fsStreamReader := contback.NewFileSystemReaderWrapper(contRuntime.StreamImage(sbom.ImageName(reportRecord.DockerImageName)))
+						fsStreamReader := contback.NewFileSystemReaderWrapper(contRuntime.StreamImage(ctx, sbom.ImageName(reportRecord.DockerImageName)))
 
 						Expect(fsStreamReader.Next().Path()).To(Equal("sbom/"))
 						Expect(fsStreamReader.Next().Path()).To(Equal("sbom/cyclonedx@1.6/"))
