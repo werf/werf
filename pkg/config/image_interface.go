@@ -6,6 +6,7 @@ type ImageInterface interface {
 	IsStapel() bool
 	IsFinal() bool
 	Platform() []string
+	Sbom() *Sbom
 
 	dependsOn() DependsOn
 	rawDoc() *doc
