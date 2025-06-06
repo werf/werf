@@ -151,6 +151,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	commonCmdData.SetupRenameChart(cmd)
 
 	commonCmdData.SetupSkipImageSpecStage(cmd)
+	commonCmdData.SetupDebugTemplates(cmd)
 
 	defaultTag := os.Getenv("WERF_TAG")
 	if defaultTag == "" {

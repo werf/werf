@@ -66,6 +66,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupKubeContext(&commonCmdData, cmd)
 
 	commonCmdData.SetupPlatform(cmd)
+	commonCmdData.SetupDebugTemplates(cmd)
 
 	return cmd
 }

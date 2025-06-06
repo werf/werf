@@ -186,6 +186,8 @@ werf converge --repo registry.mydomain.com/web --env production`,
 	common.SetupNoInstallCRDs(&commonCmdData, cmd)
 	common.SetupReleaseLabel(&commonCmdData, cmd)
 
+	commonCmdData.SetupDebugTemplates(cmd)
+
 	defaultTimeout, err := util.GetIntEnvVar("WERF_TIMEOUT")
 	if err != nil || defaultTimeout == nil {
 		defaultTimeout = new(int64)

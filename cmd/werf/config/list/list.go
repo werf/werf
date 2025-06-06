@@ -73,6 +73,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupHomeDir(&commonCmdData, cmd, common.SetupHomeDirOptions{})
 
 	common.SetupLogOptions(&commonCmdData, cmd)
+	commonCmdData.SetupDebugTemplates(cmd)
 
 	return cmd
 }
