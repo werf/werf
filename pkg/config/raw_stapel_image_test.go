@@ -80,7 +80,7 @@ var _ = Describe("rawStapelImage", func() {
 
 					platform: []string{},
 					final:    true,
-					sbom:     true,
+					sbom:     new(rawSbom).toDirective(),
 				},
 				Docker: nil,
 			},

@@ -71,10 +71,10 @@ var _ = Describe("rawImageFromDockerfile", func() {
 				ContextAddFiles: []string{},
 				AddHost:         []string{},
 				Secrets:         []Secret{},
+				sbom:            new(rawSbom).toDirective(),
 
 				platform: []string{},
 				final:    true,
-				sbom:     true,
 			},
 		),
 	)

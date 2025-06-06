@@ -18,7 +18,6 @@ type rawStapelImage struct {
 	FromImage            string           `yaml:"fromImage,omitempty"`
 	FromArtifact         string           `yaml:"fromArtifact,omitempty"`
 	DisableGitAfterPatch bool             `yaml:"disableGitAfterPatch,omitempty"`
-	Sbom                 *bool            `yaml:"sbom,omitempty"`
 	RawGit               []*rawGit        `yaml:"git,omitempty"`
 	RawShell             *rawShell        `yaml:"shell,omitempty"`
 	RawAnsible           *rawAnsible      `yaml:"ansible,omitempty"`
@@ -27,6 +26,7 @@ type rawStapelImage struct {
 	RawImport            []*rawImport     `yaml:"import,omitempty"`
 	RawDependencies      []*rawDependency `yaml:"dependencies,omitempty"`
 	Platform             []string         `yaml:"platform,omitempty"`
+	RawSbom              *rawSbom         `yaml:"sbom,omitempty"`
 	RawSecrets           []*rawSecret     `yaml:"secrets,omitempty"`
 	RawImageSpec         *rawImageSpec    `yaml:"imageSpec,omitempty"`
 
@@ -148,7 +148,6 @@ func (c *rawStapelImage) toStapelImageDirective(giterminismManager giterminism_m
 	}
 
 	image.StapelImageBase.final = option.PtrValueOrDefault(c.Final, true)
-	image.StapelImageBase.sbom = option.PtrValueOrDefault(c.Sbom, false)
 
 	if c.RawDocker != nil {
 		if docker, err := c.RawDocker.toDirective(); err != nil {
@@ -305,6 +304,10 @@ func (c *rawStapelImage) toStapelImageBaseDirective(giterminismManager gitermini
 
 	if c.RawImageSpec != nil {
 		imageBase.ImageSpec = c.RawImageSpec.toDirective()
+	}
+
+	if c.RawSbom != nil {
+		imageBase.sbom = c.RawSbom.toDirective()
 	}
 
 	if err := c.validateStapelImageBaseDirective(giterminismManager, imageBase); err != nil {

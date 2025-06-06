@@ -27,7 +27,7 @@ type StapelImageBase struct {
 
 	cacheVersion string
 	final        bool
-	sbom         bool
+	sbom         *Sbom
 	platform     []string
 	raw          *rawStapelImage
 }
@@ -64,8 +64,8 @@ func (c *StapelImageBase) Platform() []string {
 	return c.platform
 }
 
-func (c *StapelImageBase) UseSbom() bool {
-	return c.final && c.sbom
+func (c *StapelImageBase) Sbom() *Sbom {
+	return c.sbom
 }
 
 func (c *StapelImageBase) dependsOn() DependsOn {
