@@ -45,10 +45,11 @@ func (step *sbomStep) Converge(ctx context.Context, stageDesc *image.StageDesc, 
 
 	scanOpts.Commands[0].SourcePath = sourceImageName
 
+	sbomBaseImgLabels := step.prepareSbomBaseLabels(ctx, stageDesc.Info.Labels, scanOpts)
 	sbomImgLabels := step.prepareSbomLabels(ctx, stageDesc.Info.Labels, scanOpts)
 
 	return logboek.Context(ctx).Default().LogProcess("SBOM processing").DoError(func() error {
-		_, ok, err := step.findSbomImageLocally(ctx, sbomImgLabels, sbomImageName)
+		_, ok, err := step.findSbomImageLocally(ctx, sbomBaseImgLabels, sbomImageName)
 		if err != nil {
 			return err
 		}
@@ -99,19 +100,24 @@ func (step *sbomStep) Converge(ctx context.Context, stageDesc *image.StageDesc, 
 	})
 }
 
-func (step *sbomStep) prepareSbomLabels(_ context.Context, srcImgLabels map[string]string, scanOpts scanner.ScanOptions) label.LabelList {
+func (step *sbomStep) prepareSbomBaseLabels(_ context.Context, srcImgLabels map[string]string, scanOpts scanner.ScanOptions) label.LabelList {
 	return label.LabelList{
 		label.NewLabel(image.WerfLabel, srcImgLabels[image.WerfLabel]),
 		label.NewLabel(image.WerfProjectRepoCommitLabel, srcImgLabels[image.WerfProjectRepoCommitLabel]),
 		label.NewLabel(image.WerfStageContentDigestLabel, srcImgLabels[image.WerfStageContentDigestLabel]),
 		label.NewLabel(image.WerfSbomLabel, scanOpts.Checksum()),
-		label.NewLabel(image.WerfVersionLabel, srcImgLabels[image.WerfVersionLabel]),
 	}
 }
 
-func (step *sbomStep) findSbomImageLocally(ctx context.Context, sbomImgLabels label.LabelList, sbomImgName string) (image.Summary, bool, error) {
+func (step *sbomStep) prepareSbomLabels(ctx context.Context, srcImgLabels map[string]string, scanOpts scanner.ScanOptions) label.LabelList {
+	list := step.prepareSbomBaseLabels(ctx, srcImgLabels, scanOpts)
+	list.Add(label.NewLabel(image.WerfVersionLabel, srcImgLabels[image.WerfVersionLabel]))
+	return list
+}
+
+func (step *sbomStep) findSbomImageLocally(ctx context.Context, sbomBaseImgLabels label.LabelList, sbomImgName string) (image.Summary, bool, error) {
 	sbomImgList, err := step.containerBackend.Images(ctx, container_backend.ImagesOptions{
-		Filters: filter.NewFilterListFromLabelList(sbomImgLabels[:len(sbomImgLabels)-1]).ToPairs(),
+		Filters: filter.NewFilterListFromLabelList(sbomBaseImgLabels).ToPairs(),
 	})
 	if err != nil {
 		return image.Summary{}, false, fmt.Errorf("unable to list sbom images: %w", err)
