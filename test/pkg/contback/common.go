@@ -37,10 +37,9 @@ type ContainerBackend interface {
 	Pull(ctx context.Context, image string)
 	Exec(ctx context.Context, containerName string, cmds ...string)
 	Rm(ctx context.Context, containerName string)
-	StreamImage(image string) *bytes.Reader
+	StreamImage(ctx context.Context, image string) *bytes.Reader
 
 	RunSleepingContainer(ctx context.Context, containerName, image string)
-	GetImageFileSystemReader(ctx context.Context, image string) *FileSystemReader
 	GetImageInspect(ctx context.Context, image string) DockerImageInspect
 	ExpectCmdsToSucceed(ctx context.Context, image string, cmds ...string)
 }
