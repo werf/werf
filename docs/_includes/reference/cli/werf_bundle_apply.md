@@ -34,6 +34,8 @@ werf bundle apply [options]
             when current deploy process have failed ($WERF_AUTO_ROLLBACK by default)
       --container-registry-mirror=[]
             (Buildah-only) Use specified mirrors for docker.io
+      --debug-templates=false
+            Enable debug mode for Go templates (default $WERF_DEBUG_TEMPLATES or false)
       --deploy-graph-path=""
             Save deploy graph path to the specified file (by default $WERF_DEPLOY_GRAPH_PATH).      
             Extension must be .dot or not specified. If extension not specified, then .dot is used
