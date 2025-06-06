@@ -17,19 +17,19 @@ import (
 	"github.com/werf/werf/v2/pkg/storage"
 )
 
-type sbomPhase struct {
+type sbomStep struct {
 	containerBackend container_backend.ContainerBackend
 	stagesStorage    storage.StagesStorage
 	isLocalStorage   bool
 }
 
-func newSbomPhase(
+func newSbomStep(
 	backend container_backend.ContainerBackend,
 	stagesStorage storage.StagesStorage,
-) *sbomPhase {
+) *sbomStep {
 	_, isLocalStorage := stagesStorage.(*storage.LocalStagesStorage)
 
-	return &sbomPhase{
+	return &sbomStep{
 		containerBackend: backend,
 		stagesStorage:    stagesStorage,
 		isLocalStorage:   isLocalStorage,
@@ -39,33 +39,33 @@ func newSbomPhase(
 // Converge searches relevant SBOM image in local and remote storages.
 // If the relevant image is found, it does nothing.
 // Otherwise, it generates new sbom image and pushes that image into remote storage.
-func (phase *sbomPhase) Converge(ctx context.Context, stageDesc *image.StageDesc, scanOpts scanner.ScanOptions) error {
+func (step *sbomStep) Converge(ctx context.Context, stageDesc *image.StageDesc, scanOpts scanner.ScanOptions) error {
 	sourceImageName := stageDesc.Info.Name
 	sbomImageName := sbom.ImageName(sourceImageName)
 
 	scanOpts.Commands[0].SourcePath = sourceImageName
 
-	sbomImgLabels := phase.prepareSbomLabels(ctx, stageDesc.Info.Labels, scanOpts)
+	sbomImgLabels := step.prepareSbomLabels(ctx, stageDesc.Info.Labels, scanOpts)
 
 	return logboek.Context(ctx).Default().LogProcess("SBOM processing").DoError(func() error {
-		_, ok, err := phase.findSbomImageLocally(ctx, sbomImgLabels, sbomImageName)
+		_, ok, err := step.findSbomImageLocally(ctx, sbomImgLabels, sbomImageName)
 		if err != nil {
 			return err
 		}
 		logboek.Context(ctx).Debug().LogF("-- sbom_phase.Converge: sbom image is found locally=%t\n", ok)
 
-		if phase.isLocalStorage {
+		if step.isLocalStorage {
 			if ok {
 				return nil
 			}
 		} else {
 			if ok {
-				if _, err = phase.stagesStorage.PushIfNotExistSbomImage(ctx, sbomImageName); err != nil {
+				if _, err = step.stagesStorage.PushIfNotExistSbomImage(ctx, sbomImageName); err != nil {
 					return fmt.Errorf("unable to push sbom image: %q: %w", sbomImageName, err)
 				}
 				return nil
 			} else {
-				if pulled, err := phase.stagesStorage.PullIfExistSbomImage(ctx, sbomImageName); err != nil {
+				if pulled, err := step.stagesStorage.PullIfExistSbomImage(ctx, sbomImageName); err != nil {
 					return fmt.Errorf("unable to pull sbom image: %q: %w", sbomImageName, err)
 				} else if pulled {
 					return nil
@@ -74,23 +74,23 @@ func (phase *sbomPhase) Converge(ctx context.Context, stageDesc *image.StageDesc
 		}
 
 		// SBOM scanning is local operation. Ensure source image exist locally.
-		if !phase.isLocalStorage {
-			if err := phase.containerBackend.Pull(ctx, sourceImageName, container_backend.PullOpts{}); err != nil {
+		if !step.isLocalStorage {
+			if err := step.containerBackend.Pull(ctx, sourceImageName, container_backend.PullOpts{}); err != nil {
 				return fmt.Errorf("unable to pull %q: %w", sourceImageName, err)
 			}
 		}
 
-		tmpImgId, err := phase.containerBackend.GenerateSBOM(ctx, scanOpts, sbomImgLabels.ToStringSlice())
+		tmpImgId, err := step.containerBackend.GenerateSBOM(ctx, scanOpts, sbomImgLabels.ToStringSlice())
 		if err != nil {
 			return fmt.Errorf("unable to scan source image and store the result: %w", err)
 		}
 
-		if err = phase.containerBackend.Tag(ctx, tmpImgId, sbomImageName, container_backend.TagOpts{}); err != nil {
+		if err = step.containerBackend.Tag(ctx, tmpImgId, sbomImageName, container_backend.TagOpts{}); err != nil {
 			return fmt.Errorf("unable to tag sbom image: %w", err)
 		}
 
-		if !phase.isLocalStorage {
-			if _, err := phase.stagesStorage.PushIfNotExistSbomImage(ctx, sbomImageName); err != nil {
+		if !step.isLocalStorage {
+			if _, err := step.stagesStorage.PushIfNotExistSbomImage(ctx, sbomImageName); err != nil {
 				return fmt.Errorf("unable to push sbom image: %q: %w", sbomImageName, err)
 			}
 		}
@@ -99,7 +99,7 @@ func (phase *sbomPhase) Converge(ctx context.Context, stageDesc *image.StageDesc
 	})
 }
 
-func (phase *sbomPhase) prepareSbomLabels(_ context.Context, srcImgLabels map[string]string, scanOpts scanner.ScanOptions) label.LabelList {
+func (step *sbomStep) prepareSbomLabels(_ context.Context, srcImgLabels map[string]string, scanOpts scanner.ScanOptions) label.LabelList {
 	return label.LabelList{
 		label.NewLabel(image.WerfLabel, srcImgLabels[image.WerfLabel]),
 		label.NewLabel(image.WerfProjectRepoCommitLabel, srcImgLabels[image.WerfProjectRepoCommitLabel]),
@@ -109,8 +109,8 @@ func (phase *sbomPhase) prepareSbomLabels(_ context.Context, srcImgLabels map[st
 	}
 }
 
-func (phase *sbomPhase) findSbomImageLocally(ctx context.Context, sbomImgLabels label.LabelList, sbomImgName string) (image.Summary, bool, error) {
-	sbomImgList, err := phase.containerBackend.Images(ctx, container_backend.ImagesOptions{
+func (step *sbomStep) findSbomImageLocally(ctx context.Context, sbomImgLabels label.LabelList, sbomImgName string) (image.Summary, bool, error) {
+	sbomImgList, err := step.containerBackend.Images(ctx, container_backend.ImagesOptions{
 		Filters: filter.NewFilterListFromLabelList(sbomImgLabels[:len(sbomImgLabels)-1]).ToPairs(),
 	})
 	if err != nil {
