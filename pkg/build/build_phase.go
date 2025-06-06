@@ -76,7 +76,7 @@ func NewBuildPhase(c *Conveyor, opts BuildPhaseOptions) *BuildPhase {
 	return &BuildPhase{
 		BasePhase:         BasePhase{c},
 		BuildPhaseOptions: opts,
-		sbomPhase:         newSbomPhase(c.ContainerBackend, c.StorageManager.GetStagesStorage()),
+		sbomStep:          newSbomStep(c.ContainerBackend, c.StorageManager.GetStagesStorage()),
 		ImagesReport:      NewImagesReport(),
 	}
 }
@@ -84,7 +84,7 @@ func NewBuildPhase(c *Conveyor, opts BuildPhaseOptions) *BuildPhase {
 type BuildPhase struct {
 	BasePhase
 	BuildPhaseOptions
-	sbomPhase *sbomPhase
+	sbomStep *sbomStep
 
 	StagesIterator *StagesIterator
 	ImagesReport   *ImagesReport
@@ -235,7 +235,7 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 			}
 
 			if img.UseSbom() {
-				if err = phase.sbomPhase.Converge(ctx, img.GetLastNonEmptyStage().GetStageImage().Image.GetStageDesc(), scanner.DefaultSyftScanOptions()); err != nil {
+				if err = phase.sbomStep.Converge(ctx, img.GetLastNonEmptyStage().GetStageImage().Image.GetStageDesc(), scanner.DefaultSyftScanOptions()); err != nil {
 					return fmt.Errorf("unable to converge sbom: %w", err)
 				}
 			}
@@ -268,7 +268,7 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 			}
 
 			if img.UseSbom() {
-				if err = phase.sbomPhase.Converge(ctx, img.GetStageDesc(), scanner.DefaultSyftScanOptions()); err != nil {
+				if err = phase.sbomStep.Converge(ctx, img.GetStageDesc(), scanner.DefaultSyftScanOptions()); err != nil {
 					return fmt.Errorf("unable to converge sbom: %w", err)
 				}
 			}

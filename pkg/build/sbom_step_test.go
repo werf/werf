@@ -18,7 +18,7 @@ import (
 	"github.com/werf/werf/v2/test/mock"
 )
 
-var _ = Describe("SbomPhase", func() {
+var _ = Describe("SbomStep", func() {
 	DescribeTable("Converge()",
 		func(
 			ctx context.Context,
@@ -36,8 +36,8 @@ var _ = Describe("SbomPhase", func() {
 			backend := mock.NewMockContainerBackend(gomock.NewController(GinkgoT()))
 			stagesStorage := mock.NewMockStagesStorage(gomock.NewController(GinkgoT()))
 
-			phase := newSbomPhase(backend, stagesStorage)
-			phase.isLocalStorage = isLocalStorage
+			step := newSbomStep(backend, stagesStorage)
+			step.isLocalStorage = isLocalStorage
 
 			ctx = logging.WithLogger(ctx)
 			stageDesc := &image.StageDesc{
@@ -53,12 +53,12 @@ var _ = Describe("SbomPhase", func() {
 			}
 			scanOpts := scanner.DefaultSyftScanOptions()
 
-			sbomImgLabels := phase.prepareSbomLabels(ctx, stageDesc.Info.Labels, scanOpts)
+			sbomImgLabels := step.prepareSbomLabels(ctx, stageDesc.Info.Labels, scanOpts)
 			imgFilters := filter.NewFilterListFromLabelList(sbomImgLabels[:len(sbomImgLabels)-1]).ToPairs()
 
 			setupMocks(ctx, backend, stagesStorage, stageDesc, scanOpts, sbomImgLabels, imgFilters)
 
-			Expect(phase.Converge(ctx, stageDesc, scanOpts)).To(Succeed())
+			Expect(step.Converge(ctx, stageDesc, scanOpts)).To(Succeed())
 		},
 		Entry(
 			"[local storage]: should not scan source image if sbom image is already exist",
