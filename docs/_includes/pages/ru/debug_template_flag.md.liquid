@@ -21,10 +21,11 @@ werf config list
 
 #### `include_debug`
 
-```yaml
+{% raw %}
+```gotemplate
 {{ include_debug "template_name" . }}
 ```
-
+{% endraw %}
 Поведение:
 
 * С `--debug-templates`: логирует логирует путь, содержимое и результат вызова шаблона;
@@ -32,9 +33,11 @@ werf config list
 
 #### `printf_debug`
 
-```yaml
+{% raw %}
+```gotemplate
 {{ printf_debug "debug message: %s" .Value }}
 ```
+{% endraw %}
 
 Поведение:
 
@@ -43,9 +46,11 @@ werf config list
 
 #### `tpl_debug`
 
-```yaml
+{% raw %}
+```gotemplate
 {{ tpl_debug "key: {{ .Values.key }}" . }}
 ```
+{% endraw %}
 
 Поведение:
 
