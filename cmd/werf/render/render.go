@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/werf/3p-helm/pkg/chart"
+	"github.com/werf/3p-helm/pkg/engine"
 	"github.com/werf/3p-helm/pkg/werf/file"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
@@ -398,6 +399,7 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 		ColorMode:      action.LogColorModeOff,
 		LogIsParseable: true,
 	})
+	engine.Debug = *commonCmdData.DebugTemplates
 
 	if _, err := action.ChartRender(ctx, action.ChartRenderOptions{
 		ChartAppVersion:              common.GetHelmChartConfigAppVersion(werfConfig),
