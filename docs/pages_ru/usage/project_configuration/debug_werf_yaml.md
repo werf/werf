@@ -83,13 +83,6 @@ werf config graph
 * Проверка, что зависимости подключены корректно;
 * Отладка сложных схем сборки с `dependencies`.
 
-<!-- ## debug-templates flag
+## Режим отладки шаблонов `--debug-templates`
 
-Включает режим отладки шаблонов, который позволяет просматривать отрендеренные шаблоны в файле werf.yaml (по умолчанию — значение переменной окружения $WERF_DEBUG_TEMPLATES или false).
-
-### Пример команды
-
-```bash
-werf config render
-```
--->
+{% include pages/ru/debug_template_flag.md.liquid %}
