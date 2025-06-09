@@ -21,7 +21,7 @@ werf config list
 
 #### `include_debug`
 
-```gotemplate
+```yaml
 {{ include_debug "template_name" . }}
 ```
 
@@ -32,7 +32,7 @@ werf config list
 
 #### `printf_debug`
 
-```gotemplate
+```yaml
 {{ printf_debug "debug message: %s" .Value }}
 ```
 
@@ -43,7 +43,7 @@ werf config list
 
 #### `tpl_debug`
 
-```gotemplate
+```yaml
 {{ tpl_debug "key: {{ .Values.key }}" . }}
 ```
 
