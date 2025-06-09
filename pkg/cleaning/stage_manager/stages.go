@@ -43,6 +43,7 @@ var (
 	ProtectionReasonAncestor                    = newProtectionReason("ancestor")
 	ProtectionReasonImageIndexPlatform          = newProtectionReason("image index platform")
 	ProtectionReasonNotFoundInRepo              = newProtectionReason("not found in repo")
+	ProtectionReasonKeepList                    = newProtectionReason("keep list")
 )
 
 func newManagedStageDescSet(set image.StageDescSet) *managedStageDescSet {
