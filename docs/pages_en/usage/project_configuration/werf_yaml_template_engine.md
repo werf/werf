@@ -499,9 +499,11 @@ shell:
 ```yaml
 {{ $_ := set . "RubyVersion" "2.3.4" }}
 {{ $_ := set . "BaseImage" "alpine" }}
+
 project: my-project
 configVersion: 1
 ---
+
 image: rails
 from: {{ .BaseImage }}
 ansible:
@@ -545,6 +547,7 @@ ansible:
     args:
       executable: /bin/bash
 {{- end }}
+
 {{- define "(component) mysql client" }}
   - name: "Install mysql client"
     apt:

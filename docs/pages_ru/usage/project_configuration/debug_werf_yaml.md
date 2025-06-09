@@ -7,7 +7,7 @@ permalink: /usage/project_configuration/debug_werf_yaml.html
 
 Файл `werf.yaml` может быть параметризован с помощью Go templates, что делает его мощным, но сложным в отладке. Werf предоставляет несколько команд для просмотра конечной конфигурации проекта и построения зависимостей: `render`, `list`, `graph`. Подробнее про шаблонизатор можно ознакомится [тут]({{"usage/project_configuration/werf_yaml_template_engine.html" | true_relative_url }})
 
-[Пример](https://werf.test.flant.com/getting_started/), который будет использоваться
+[Пример](https://werf.io/getting_started/#build-and-deploy-with-werf), который будет использоваться
 
 ## `werf config render`
 

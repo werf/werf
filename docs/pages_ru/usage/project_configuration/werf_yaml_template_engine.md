@@ -497,94 +497,13 @@ shell:
 
 {% raw %}
 ```yaml
-project: my-project
-configVersion: 1
----
-image: app
-from: java:8-jdk-alpine
-shell:
-  beforeInstall:
-  - mkdir /app
-  - adduser -Dh /home/gordon gordon
-import:
-- artifact: appserver
-  add: '/usr/src/atsea/target/AtSea-0.0.1-SNAPSHOT.jar'
-  to: '/app/AtSea-0.0.1-SNAPSHOT.jar'
-  after: install
-- artifact: storefront
-  add: /usr/src/atsea/app/react-app/build
-  to: /static
-  after: install
-docker:
-  ENTRYPOINT: ["java", "-jar", "/app/AtSea-0.0.1-SNAPSHOT.jar"]
-  CMD: ["--spring.profiles.active=postgres"]
----
-{{ include "artifact/appserver.tmpl" . }}
----
-{{ include "artifact/storefront.tmpl" . }}
-```
-{% endraw %}
-
-</div>
-</div>
-
-<div class="details">
-<a href="javascript:void(0)" class="details__summary">.werf/artifact/appserver.tmpl</a>
-<div class="details__content" markdown="1">
-
-{% raw %}
-```yaml
-artifact: appserver
-from: maven:latest
-git:
-- add: '/app'
-  to: '/usr/src/atsea'
-shell:
-  install:
-  - cd /usr/src/atsea
-  - mvn -B -f pom.xml -s /usr/share/maven/ref/settings-docker.xml dependency:resolve
-  - mvn -B -s /usr/share/maven/ref/settings-docker.xml package -DskipTests
-```
-{% endraw %}
-
-</div>
-</div>
-
-<div class="details">
-<a href="javascript:void(0)" class="details__summary">.werf/artifact/storefront.tmpl</a>
-<div class="details__content" markdown="1">
-
-{% raw %}
-```yaml
-artifact: storefront
-from: node:latest
-git:
-- add: /app/react-app
-  to: /usr/src/atsea/app/react-app
-shell:
-  install:
-  - cd /usr/src/atsea/app/react-app
-  - npm install
-  - npm run build
-```
-{% endraw %}
-
-</div>
-</div>
-
-### Example: how to use templates defined in a _template file_
-
-<div class="details active">
-<a href="javascript:void(0)" class="details__summary">werf.yaml</a>
-<div class="details__content" markdown="1">
-
-{% raw %}
-```yaml
 {{ $_ := set . "RubyVersion" "2.3.4" }}
 {{ $_ := set . "BaseImage" "alpine" }}
+
 project: my-project
 configVersion: 1
 ---
+
 image: rails
 from: {{ .BaseImage }}
 ansible:
@@ -628,6 +547,7 @@ ansible:
     args:
       executable: /bin/bash
 {{- end }}
+
 {{- define "(component) mysql client" }}
   - name: "Install mysql client"
     apt:
