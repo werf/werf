@@ -19,6 +19,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	"gopkg.in/yaml.v2"
 
+	"github.com/werf/3p-helm/pkg/engine"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
@@ -395,26 +396,23 @@ func funcMap(ctx context.Context, tmpl *template.Template, giterminismManager gi
 	}
 
 	funcMap["include_debug"] = func(name string, data interface{}) (string, error) {
-		result, err := executeTemplate(tmpl, name, data)
+		result, execErr := executeTemplate(tmpl, name, data)
 
 		var templateContent string
-		if err != nil || debug {
-			templateContent, err = templateContentFromTree(tmpl, name)
-			if err != nil {
-				return "", fmt.Errorf("error getting template content for %q: %w", name, err)
-			}
+		if execErr != nil || debug {
+			templateContent, _ = templateContentFromTree(tmpl, name)
 		}
 
 		if debug {
 			logboek.Context(ctx).Default().LogF("-- include_debug template %q content:\n%s\n\n", name, templateContent)
 		}
 
-		if err != nil {
+		if execErr != nil {
 			return "", detailedTemplateError(tmpl, detailedTemplateErrorData{
 				funcName:        "include_debug",
 				templateName:    name,
 				templateContent: templateContent,
-			}, debug, err)
+			}, debug, execErr)
 		}
 
 		if debug {
@@ -464,10 +462,6 @@ func templateContentFromTree(tmpl *template.Template, name string) (string, erro
 	return strings.TrimSpace(t.Tree.Root.String()), nil
 }
 
-const (
-	templateErrHint = "Use --debug-templates or $WERF_DEBUG_TEMPLATES to get more details about this error."
-)
-
 type detailedTemplateErrorData struct {
 	funcName        string
 	templateName    string
@@ -477,11 +471,7 @@ type detailedTemplateErrorData struct {
 func detailedTemplateError(tmpl *template.Template, d detailedTemplateErrorData, debug bool, err error) error {
 	if debug {
 		if d.templateContent == "" {
-			templateContent, treeErr := templateContentFromTree(tmpl, d.templateName)
-			if treeErr != nil {
-				return fmt.Errorf("%w: error getting template content for %q: %w", err, d.templateName, treeErr)
-			}
-			d.templateContent = templateContent
+			d.templateContent, _ = templateContentFromTree(tmpl, d.templateName)
 		}
 
 		return fmt.Errorf(
@@ -492,8 +482,11 @@ func detailedTemplateError(tmpl *template.Template, d detailedTemplateErrorData,
 			strings.TrimRightFunc(util.NumerateLines(d.templateContent, 1), unicode.IsSpace),
 		)
 	}
+	if strings.Contains(err.Error(), engine.TemplateErrHint) {
+		return err
+	}
 
-	return fmt.Errorf("%w\n%s", err, templateErrHint)
+	return fmt.Errorf("%w\n%s", err, engine.TemplateErrHint)
 }
 
 type files struct {

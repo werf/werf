@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/pflag"
 
 	"github.com/werf/3p-helm/pkg/chart/loader"
+	"github.com/werf/3p-helm/pkg/engine"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/level"
@@ -47,10 +48,12 @@ const (
 	DefaultDeployReportPathJSON    = ".werf-deploy-report.json"
 	DefaultUninstallReportPathJSON = ".werf-uninstall-report.json"
 	DefaultSaveUninstallReport     = false
+	TemplateErrHint                = "Use --debug-templates or $WERF_DEBUG_TEMPLATES to get more details about this error."
 )
 
 func init() {
 	loader.NoChartLockWarning = `Cannot automatically download chart dependencies without .helm/Chart.lock or .helm/requirements.lock. Run "werf helm dependency update .helm" and commit resulting .helm/Chart.lock or .helm/requirements.lock. Committing .tgz files in .helm/charts is not required, better add "/.helm/charts/*.tgz" to the .gitignore.`
+	engine.TemplateErrHint = TemplateErrHint
 }
 
 type GitWorktreeNotFoundError struct{}
