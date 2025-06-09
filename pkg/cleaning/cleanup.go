@@ -558,7 +558,7 @@ func (m *cleanupManager) deleteStages(ctx context.Context, stageDescSet image.St
 func deleteStageDescSet(ctx context.Context, storageManager manager.StorageManagerInterface, dryRun bool, deleteStageOptions manager.ForEachDeleteStageOptions, stageDescSet image.StageDescSet, isFinal bool) error {
 	if dryRun {
 		for stageDesc := range stageDescSet.Iter() {
-			logboek.Context(ctx).Default().LogFDetails("  tag: %s\n", stageDesc.StageID.String())
+			logboek.Context(ctx).Default().LogFWithCustomStyle(deletedStyle, "  tag: %s\n", stageDesc.StageID.String())
 			logboek.Context(ctx).LogOptionalLn()
 		}
 		return nil
@@ -575,7 +575,7 @@ func deleteStageDescSet(ctx context.Context, storageManager manager.StorageManag
 			return nil
 		}
 
-		logboek.Context(ctx).Default().LogFDetails("  tag: %s\n", stageDesc.Info.Tag)
+		logboek.Context(ctx).Default().LogFWithCustomStyle(deletedStyle, "  tag: %s\n", stageDesc.Info.Tag)
 
 		return nil
 	}
@@ -832,7 +832,7 @@ func (m *cleanupManager) cleanupUnusedStages(ctx context.Context) error {
 			for reason, stageDescSetToKeep := range m.stageManager.GetProtectedStageDescSetByReason() {
 				logboek.Context(ctx).Default().LogProcess("%s (%d)", reason, stageDescSetToKeep.Cardinality()).Do(func() {
 					for stageDescToKeep := range stageDescSetToKeep.Iter() {
-						logboek.Context(ctx).Default().LogFDetails("%s\n", stageDescToKeep.Info.Tag)
+						logboek.Context(ctx).Default().LogFWithCustomStyle(keptStyle, "%s\n", stageDescToKeep.Info.Tag)
 					}
 				})
 			}
@@ -1092,7 +1092,7 @@ func (m *cleanupManager) deleteUnusedCustomTags(ctx context.Context) error {
 		header := fmt.Sprintf("Saved custom tags (%d/%d)", len(customTagListToKeep), numberOfCustomTags)
 		logboek.Context(ctx).Default().LogBlock(header).Do(func() {
 			for _, customTag := range customTagListToKeep {
-				logboek.Context(ctx).Default().LogFDetails("  tag: %s\n", customTag)
+				logboek.Context(ctx).Default().LogFWithCustomStyle(keptStyle, "  tag: %s\n", customTag)
 				logboek.Context(ctx).LogOptionalLn()
 			}
 		})
