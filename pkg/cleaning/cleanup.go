@@ -37,6 +37,7 @@ type CleanupOptions struct {
 	DryRun                                  bool
 	Parallel                                bool
 	ParallelTasksLimit                      int64
+	Whitelist                               Whitelist
 }
 
 func Cleanup(ctx context.Context, projectName string, storageManager *manager.StorageManager, options CleanupOptions) error {
@@ -48,6 +49,7 @@ func newCleanupManager(projectName string, storageManager *manager.StorageManage
 		stageManager:                            stage_manager.NewManager(),
 		parallel:                                options.Parallel,
 		parallelTasksLimit:                      options.ParallelTasksLimit,
+		whitelist:                               options.Whitelist,
 		ProjectName:                             projectName,
 		StorageManager:                          storageManager,
 		ImageNameList:                           options.ImageNameList,
@@ -80,6 +82,8 @@ type cleanupManager struct {
 
 	parallel           bool
 	parallelTasksLimit int64
+
+	whitelist Whitelist
 }
 
 type GitRepo interface {
@@ -192,6 +196,8 @@ func (m *cleanupManager) run(ctx context.Context) error {
 		}
 	}
 
+	m.markWhitelistStagesAsProtected()
+
 	if err := logboek.Context(ctx).LogProcess("Cleanup unused stages").DoError(func() error {
 		return m.cleanupUnusedStages(ctx)
 	}); err != nil {
@@ -207,6 +213,14 @@ func (m *cleanupManager) run(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (m *cleanupManager) markWhitelistStagesAsProtected() {
+	for stageDesc := range m.stageManager.GetStageDescSet().Iter() {
+		if m.whitelist.ContainsOne(stageDesc.Info.Tag) {
+			m.stageManager.MarkStageDescAsProtected(stageDesc, stage_manager.ProtectionReasonWhitelist, false)
+		}
+	}
 }
 
 func (m *cleanupManager) purgeManagedImages(ctx context.Context) error {
@@ -248,6 +262,7 @@ func (m *cleanupManager) skipStageIDsThatAreUsedInKubernetes(ctx context.Context
 		tag := stageDesc.StageID.String()
 		stageID := stageDesc.StageID.String()
 
+		// TODO: use this specific
 		handleTagFunc(tag, stageID, func() {
 			m.stageManager.MarkStageDescAsProtected(stageDesc, stage_manager.ProtectionReasonKubernetesBasedPolicy, false)
 		})
