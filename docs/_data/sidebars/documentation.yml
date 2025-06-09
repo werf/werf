@@ -709,6 +709,9 @@ entries:
               - title: Parametrize templates
                 url: /usage/deploy/values.html
 
+              - title: Debug templates
+                url: /usage/deploy/debug_templates.html
+
               - title: Multiple environments
                 url: /usage/deploy/environments.html
 
@@ -854,6 +857,9 @@ entries:
 
               - title: Параметризация шаблонов
                 url: /usage/deploy/values.html
+
+              - title: Отладка шаблонов
+                url: /usage/deploy/debug_templates.html
 
               - title: Разные окружения
                 url: /usage/deploy/environments.html
