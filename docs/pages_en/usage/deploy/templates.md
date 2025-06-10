@@ -1071,4 +1071,44 @@ The template actions encountered in them are carried out:
 
 ## Debugging
 
-{% include pages/en/debugging_templates.md.liquid %}
+Use `werf render` to render and display ready-to-use Kubernetes manifests. The `--debug` option displays manifests even if they are not valid YAML.
+
+Here's how you can display the variable contents:
+
+{% raw %}
+
+```
+output: {{ $appName | toYaml }}
+```
+
+{% endraw %}
+
+Display the contents of a list or dictionary variable:
+
+{% raw %}
+
+```
+output: {{ $dictOrList | toYaml | nindent 2 }}
+```
+
+{% endraw %}
+
+Display the variable's data type:
+
+{% raw %}
+
+```
+output: {{ kindOf $myvar }}
+```
+
+{% endraw %}
+
+Display some string and stop template rendering:
+
+{% raw %}
+
+```
+{{ fail (printf "Data type: %s" (kindOf $myvar)) }}
+```
+
+{% endraw %}
