@@ -36,7 +36,9 @@ The `werf cleanup --dry-run` command helps you to create a _white list_. It outp
 + <span style="color: green;">Green color</span> - stage tag to keep.
 + <span style="color: red;">Red color</span> - stage tag to delete.
 
-## Keeping image versions used in Kubernetes
+## Policies
+
+### Keeping image versions used in Kubernetes
 
 werf connects to **all Kubernetes clusters** described in **all configuration contexts** of kubectl. It then collects image names for the following object types: `pod`, `deployment`, `replicaset`, `statefulset`, `daemonset`, `job`, `cronjob`, `replicationcontroller`.
 
@@ -54,7 +56,7 @@ cleanup:
 
 As long as some object in the Kubernetes cluster uses an image version, werf will never delete this image version from the container registry. In other words, if you run some object in a Kubernetes cluster, werf will not delete its related images under any circumstances during the cleanup.
 
-## Keeping freshly built image versions
+### Keeping freshly built image versions
 
 When cleaning up, werf keeps image versions that were built during a specified time period (the default is 2 hours). If necessary, the period can be adjusted or the policy can be disabled altogether using the following directives in `werf.yaml`:
 
@@ -64,7 +66,7 @@ cleanup:
   keepImagesBuiltWithinLastNHours: 2
 ```
 
-## Keeping image versions with Git history-based policies
+### Keeping image versions with Git history-based policies
 
 The cleanup configuration consists of a set of policies called `keepPolicies`. They are used to select relevant image versions using the git history. Thus, during a cleanup, __image versions that do not meet the criteria of any policy will be deleted__.
 
@@ -111,7 +113,7 @@ imagesPerReference:
 
 > In the case of git tags, werf checks the HEAD commit only; the value of `last`>1 does not make any sense and is invalid
 
-### Policy priority for a specific reference
+#### Policy priority for a specific reference
 
 When describing a group of policies, you have to move from the general to the particular. In other words, `imagesPerReference` for a specific reference will match the latest policy it falls under:
 
@@ -128,7 +130,7 @@ When describing a group of policies, you have to move from the general to the pa
 
 In the above example, the _master_ reference matches both policies. Thus, when scanning the branch, the `last` parameter will equal to 5.
 
-### Default policies
+#### Default policies
 
 If there are no custom cleanup policies defined in `werf.yaml`, werf uses default policies configured as follows:
 
@@ -161,7 +163,7 @@ Let’s break down each policy separately. For each image in werf.yaml:
 2.	Keep by **up to two versions** from **the past week** for **the 10 most active Git branches** within that period (based on the HEAD commit creation date).
 3.	Keep by **two versions** for **the Git branches main, master, staging, and production**.
 
-### Disabling policies
+#### Disabling policies
 
 If Git history-based cleanup is not needed, you can disable it in `werf.yaml` as follows:
 
