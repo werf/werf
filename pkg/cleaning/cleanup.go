@@ -216,6 +216,10 @@ func (m *cleanupManager) run(ctx context.Context) error {
 }
 
 func (m *cleanupManager) markWhitelistStagesAsProtected() {
+	if m.whitelist.IsEmpty() {
+		return
+	}
+
 	for stageDesc := range m.stageManager.GetStageDescSet().Iter() {
 		if m.whitelist.ContainsOne(stageDesc.Info.Tag) {
 			m.stageManager.MarkStageDescAsProtected(stageDesc, stage_manager.ProtectionReasonWhitelist, false)
@@ -262,7 +266,6 @@ func (m *cleanupManager) skipStageIDsThatAreUsedInKubernetes(ctx context.Context
 		tag := stageDesc.StageID.String()
 		stageID := stageDesc.StageID.String()
 
-		// TODO: use this specific
 		handleTagFunc(tag, stageID, func() {
 			m.stageManager.MarkStageDescAsProtected(stageDesc, stage_manager.ProtectionReasonKubernetesBasedPolicy, false)
 		})
@@ -573,9 +576,9 @@ func (m *cleanupManager) deleteStages(ctx context.Context, stageDescSet image.St
 func deleteStageDescSet(ctx context.Context, storageManager manager.StorageManagerInterface, dryRun bool, deleteStageOptions manager.ForEachDeleteStageOptions, stageDescSet image.StageDescSet, isFinal bool) error {
 	if dryRun {
 		for stageDesc := range stageDescSet.Iter() {
-			logboek.Context(ctx).Default().LogFWithCustomStyle(deletedStyle, "  tag: %s\n", stageDesc.StageID.String())
-			logboek.Context(ctx).LogOptionalLn()
+			logboek.Context(ctx).Default().LogFWithCustomStyle(deletedStyle, "%s\n", stageDesc.StageID.String())
 		}
+		logboek.Context(ctx).LogOptionalLn()
 		return nil
 	}
 
@@ -843,7 +846,7 @@ func (m *cleanupManager) cleanupUnusedStages(ctx context.Context) error {
 			}
 		})
 
-		logboek.Context(ctx).Default().LogBlock("Saved stages (%d/%d)", m.stageManager.GetProtectedStageDescSet().Cardinality(), m.stageManager.GetStageDescSet().Cardinality()).Do(func() {
+		logboek.Context(ctx).Default().LogBlock("Saved stages tags (%d/%d)", m.stageManager.GetProtectedStageDescSet().Cardinality(), m.stageManager.GetStageDescSet().Cardinality()).Do(func() {
 			for reason, stageDescSetToKeep := range m.stageManager.GetProtectedStageDescSetByReason() {
 				logboek.Context(ctx).Default().LogProcess("%s (%d)", reason, stageDescSetToKeep.Cardinality()).Do(func() {
 					for stageDescToKeep := range stageDescSetToKeep.Iter() {
