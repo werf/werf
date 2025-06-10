@@ -29,12 +29,12 @@ When you have multiple isolated environments and:
 + It is not possible to clean the shared container registry, taking into account the images used **in all** environments.
 + It is not possible to clean each container registry (there is a common one and a separate one for each environment), taking into account the specifics of each environment.
 
-`werf cleanup` provides the `--whitelist` options. This option allows you to pass a _white list_ of tags (stages/images) to protect them from deletion.
+`werf cleanup` provides the `--whitelist` options. This option allows you to pass a _white list_ of stage tags to protect them from deletion.
 
 The `werf cleanup --dry-run` command helps you to create a _white list_. It outputs a log based on the colors:
 
-+ <span style="color: green;">Green color</span> - images that will be saved.
-+ <span style="color: red;">Red color</span> - images to be deleted.
++ <span style="color: green;">Green color</span> - stage tag to keep.
++ <span style="color: red;">Red color</span> - stage tag to delete.
 
 ## Keeping image versions used in Kubernetes
 
