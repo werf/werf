@@ -215,7 +215,8 @@ func runCleanup(ctx context.Context, cmd *cobra.Command) error {
 		kubernetesNamespaceRestrictionByContext = common.GetKubernetesNamespaceRestrictionByContext(&commonCmdData, kubernetesContextClients)
 	}
 
-	var whitelist cleaning.Whitelist
+	whitelist := cleaning.NewWhitelistWithSize(0)
+
 	if cmdData.Whitelist != "" {
 		if whitelist, err = parseWhitelist(cmdData.Whitelist); err != nil {
 			return fmt.Errorf("unable to parse whitelist: %w", err)
