@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.38.0](https://www.github.com/werf/werf/compare/v2.37.1...v2.38.0) (2025-06-10)
+
+
+### Features
+
+* **build,deploy:** add debug templates feature ([001fca6](https://www.github.com/werf/werf/commit/001fca66ac77b6a056f21a1e43dac490aa8ca220))
+* **build,deploy:** add debug templates feature /2 ([9cb5013](https://www.github.com/werf/werf/commit/9cb5013432b90e7293630760536b31acaa1bb295))
+* **deploy:** new functions to debug Helm templates + detailed template errors ([10281eb](https://www.github.com/werf/werf/commit/10281eb5579f5ba8427e8f2c19c8d429df1e3701))
+
 ### [2.37.1](https://www.github.com/werf/werf/compare/v2.37.0...v2.37.1) (2025-06-05)
 
 
