@@ -85,4 +85,19 @@ werf config graph
 
 ## Режим отладки шаблонов `--debug-templates`
 
-{% include pages/ru/debug_template_flag.md.liquid %}
+Флаг `--debug-templates` включает расширенный режим отладки Go-шаблонов в werf. Это позволяет писать отладочную информацию в лог без влияния на результат выполнения шаблонов.
+
+### Как включить
+
+Флаг можно активировать через CLI или переменной окружения:
+
+```bash
+werf config list --debug-templates
+```
+
+или
+
+```bash
+export WERF_DEBUG_TEMPLATES=true
+werf config list
+```
