@@ -1069,6 +1069,22 @@ app: myApp
 
 {% endraw %}
 
-## Отладка
+## Отладка шаблонов манифестов
 
-{% include pages/ru/debugging_templates.md.liquid %}
+### -s, --show-only=[]
+
+Показывать только манифесты, отрендеренные из указанных шаблонов.
+
+Флаг позволяет ограничить вывод командой werf render (или другими командами, использующими рендеринг Helm-шаблонов), чтобы отображались только манифесты, сгенерированные из определённых файлов шаблонов.
+
+```bash
+$ werf render -s .helm/charts/frontend/templates/deployment.yaml
+---
+# Source: demo-app/charts/frontend/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+...
+```
+
+{% include pages/ru/debug_template_flag.md.liquid %}
