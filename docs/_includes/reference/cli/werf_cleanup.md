@@ -222,6 +222,8 @@ werf cleanup [options]
             repo. :local address allows execution of werf processes from a single host only
       --tmp-dir=""
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
+      --whitelist=""
+            Set path to whitelist file (default $WERF_WHITELIST)
       --without-kube=false
             Do not skip deployed Kubernetes images (default $WERF_WITHOUT_KUBE)
 ```

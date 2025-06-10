@@ -14,7 +14,7 @@ import (
 func setupWhitelist(cmdData *cmdDataType, cmd *cobra.Command) {
 	const name = "whitelist"
 
-	cmd.Flags().StringVarP(&cmdData.Whitelist, name, "", os.Getenv("WERF_WHITELIST"), "Set file path to whitelist (default $WERF_WHITELIST)")
+	cmd.Flags().StringVarP(&cmdData.Whitelist, name, "", os.Getenv("WERF_WHITELIST"), "Set path to whitelist file (default $WERF_WHITELIST)")
 }
 
 func parseWhitelist(filename string) (cleaning.Whitelist, error) {

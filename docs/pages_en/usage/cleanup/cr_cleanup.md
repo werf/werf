@@ -22,6 +22,20 @@ Perform the following steps to automate the removal of irrelevant image versions
 - Set [**werf cleanup**]({{ "reference/cli/werf_cleanup.html" | true_relative_url }}) to run periodically to remove the no-longer-relevant tags from the container registry. 
 - Set [garbage collector](#container-registrys-garbage-collector) to run on intervals to free up space in the container registry.
 
+## Isolated environments
+
+When you have multiple isolated environments and:
+
++ It is not possible to clean the shared container registry, taking into account the images used **in all** environments.
++ It is not possible to clean each container registry (there is a common one and a separate one for each environment), taking into account the specifics of each environment.
+
+`werf cleanup` provides the `--whitelist` options. This option allows you to pass a _white list_ of tags (stages/images) to protect them from deletion.
+
+The `werf cleanup --dry-run` command helps you to create a _white list_. It outputs a log based on the colors:
+
++ <span style="color: green;">Green color</span> - images that will be saved.
++ <span style="color: red;">Red color</span> - images to be deleted.
+
 ## Keeping image versions used in Kubernetes
 
 werf connects to **all Kubernetes clusters** described in **all configuration contexts** of kubectl. It then collects image names for the following object types: `pod`, `deployment`, `replicaset`, `statefulset`, `daemonset`, `job`, `cronjob`, `replicationcontroller`.
