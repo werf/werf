@@ -124,6 +124,8 @@ func (c *ExportBase) validate() error {
 		return newDetailedConfigError("`includePaths: [PATH, ...]|PATH` should be relative paths!", c.raw.rawOrigin.configSection(), c.raw.rawOrigin.doc())
 	case !allRelativePaths(c.ExcludePaths):
 		return newDetailedConfigError("`excludePaths: [PATH, ...]|PATH` should be relative paths!", c.raw.rawOrigin.configSection(), c.raw.rawOrigin.doc())
+	case c.Add == "/" && len(c.IncludePaths) == 0:
+		return newDetailedConfigError("`add: '/'` requires not empty includePaths to interpret copy sources unambiguously", c.raw.rawOrigin.configSection(), c.raw.rawOrigin.doc())
 	default:
 		return nil
 	}
