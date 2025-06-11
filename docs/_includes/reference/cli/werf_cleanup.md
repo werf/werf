@@ -124,6 +124,8 @@ werf cleanup [options]
             configuration (default $WERF_INSECURE_HELM_DEPENDENCIES)
       --insecure-registry=false
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
+      --keep-list=""
+            Set path to keep list file (default $WERF_KEEP_LIST)
       --keep-stages-built-within-last-n-hours=2
             Keep stages that were built within last hours (default                                  
             $WERF_KEEP_STAGES_BUILT_WITHIN_LAST_N_HOURS or 2)

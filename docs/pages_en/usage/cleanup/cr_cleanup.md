@@ -22,7 +22,9 @@ Perform the following steps to automate the removal of irrelevant image versions
 - Set [**werf cleanup**]({{ "reference/cli/werf_cleanup.html" | true_relative_url }}) to run periodically to remove the no-longer-relevant tags from the container registry. 
 - Set [garbage collector](#container-registrys-garbage-collector) to run on intervals to free up space in the container registry.
 
-## Keeping image versions used in Kubernetes
+## Keeping policies
+
+### Image versions used in Kubernetes
 
 werf connects to **all Kubernetes clusters** described in **all configuration contexts** of kubectl. It then collects image names for the following object types: `pod`, `deployment`, `replicaset`, `statefulset`, `daemonset`, `job`, `cronjob`, `replicationcontroller`.
 
@@ -40,7 +42,7 @@ cleanup:
 
 As long as some object in the Kubernetes cluster uses an image version, werf will never delete this image version from the container registry. In other words, if you run some object in a Kubernetes cluster, werf will not delete its related images under any circumstances during the cleanup.
 
-## Keeping freshly built image versions
+### Freshly built image versions
 
 When cleaning up, werf keeps image versions that were built during a specified time period (the default is 2 hours). If necessary, the period can be adjusted or the policy can be disabled altogether using the following directives in `werf.yaml`:
 
@@ -50,7 +52,7 @@ cleanup:
   keepImagesBuiltWithinLastNHours: 2
 ```
 
-## Keeping image versions with Git history-based policies
+### Image versions based on Git history
 
 The cleanup configuration consists of a set of policies called `keepPolicies`. They are used to select relevant image versions using the git history. Thus, during a cleanup, __image versions that do not meet the criteria of any policy will be deleted__.
 
@@ -97,7 +99,7 @@ imagesPerReference:
 
 > In the case of git tags, werf checks the HEAD commit only; the value of `last`>1 does not make any sense and is invalid
 
-### Policy priority for a specific reference
+#### Priority for a specific reference
 
 When describing a group of policies, you have to move from the general to the particular. In other words, `imagesPerReference` for a specific reference will match the latest policy it falls under:
 
@@ -114,7 +116,7 @@ When describing a group of policies, you have to move from the general to the pa
 
 In the above example, the _master_ reference matches both policies. Thus, when scanning the branch, the `last` parameter will equal to 5.
 
-### Default policies
+#### Defaults
 
 If there are no custom cleanup policies defined in `werf.yaml`, werf uses default policies configured as follows:
 
@@ -147,7 +149,7 @@ Let’s break down each policy separately. For each image in werf.yaml:
 2.	Keep by **up to two versions** from **the past week** for **the 10 most active Git branches** within that period (based on the HEAD commit creation date).
 3.	Keep by **two versions** for **the Git branches main, master, staging, and production**.
 
-### Disabling policies
+#### Disabling
 
 If Git history-based cleanup is not needed, you can disable it in `werf.yaml` as follows:
 
@@ -155,6 +157,18 @@ If Git history-based cleanup is not needed, you can disable it in `werf.yaml` as
 cleanup:
   disableGitHistoryBasedPolicy: true
 ```
+
+## Image versions based on a pre-prepared list
+
+The option `--keep-list=/path/to/list.txt ` allows you to pass a list of stage tags as a file. `list.txt ` is a file
+in which each tag is specified on a separate line. For example:
+
+```
+1e09fb543b4ef442ce5ed36bfeee6b27866bf1e68541db5995962b24-1749456960043
+my-custom-tag
+```
+
+The documentation section about ["Saving the result of work"](#saving-the-result-of-work) can help you to create this list.
 
 ## Specifics of working with different container registries
 
@@ -226,6 +240,20 @@ You can use the `--repo-github-token` option or the corresponding environment va
 werf uses the _GitLab container registry API_ or _Docker Registry API_ (depending on the GitLab version) to delete tags.
 
 > The privileges of the temporary CI job token ($CI_JOB_TOKEN) are not sufficient to delete tags. Therefore, the user must create a dedicated token in the Access Token section, select api in the Scope section, and ensure the role of Maintainer or Owner is assigned before using it for authorization
+
+## Saving the result of work
+
+During operation, `werf cleanup` outputs stage tags based on colors.:
+
++ <span style="color: green;">Green color</span> - stage tag to keep.
++ <span style="color: red;">Red color</span> - stage tag to delete.
+
+**Example**. Using the `--dry-run` option and knowledge of color, 
+we will display a list of tags that are marked _for deletion_ (<span style="color: red;">in red</span>):
+
+```shell
+werf cleanup --dry-run | grep -a -o -P '\x1b\[31m\K[^\x1b]+'
+```
 
 ## Container registry’s garbage collector
 

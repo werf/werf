@@ -140,7 +140,7 @@ func (m *purgeManager) deleteCustomTags(ctx context.Context) error {
 func deleteCustomTags(ctx context.Context, storageManager manager.StorageManagerInterface, customTagList []string, dryRun bool) error {
 	if dryRun {
 		for _, customTag := range customTagList {
-			logboek.Context(ctx).Default().LogFDetails("  tag: %s\n", customTag)
+			logboek.Context(ctx).Default().LogFWithCustomStyle(deletedStyle, "  tag: %s\n", customTag)
 			logboek.Context(ctx).Default().LogOptionalLn()
 		}
 
@@ -154,7 +154,7 @@ func deleteCustomTags(ctx context.Context, storageManager manager.StorageManager
 			}
 		}
 
-		logboek.Context(ctx).Default().LogFDetails("  tag: %s\n", tag)
+		logboek.Context(ctx).Default().LogFWithCustomStyle(deletedStyle, "  tag: %s\n", tag)
 
 		return nil
 	}); err != nil {
