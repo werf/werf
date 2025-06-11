@@ -852,7 +852,7 @@ entries:
               - title: Параметризация шаблонов
                 url: /usage/deploy/values.html
 
-              - title: Отладка щаблонов
+              - title: Отладка шаблонов
                 url: /usage/deploy/debug_templates.md
 
               - title: Разные окружения
