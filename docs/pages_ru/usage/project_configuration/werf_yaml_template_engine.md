@@ -579,38 +579,3 @@ ansible:
 
 </div>
 </div>
-
-## Отладка шаблонов
-
-### `werf config render`
-Показывает итоговую конфигурацию `werf.yaml` после рендеринга шаблонов, например:
-```bash
-$ werf config render
-project: demo-app
-configVersion: 1
----
-image: backend
-dockerfile: backend.Dockerfile
-...
-```
-### `werf config list`
-
-Выводит список всех образов, определённых в итоговом `werf.yaml`.
-
-```bash
-$ werf config list
-backend
-frontend
-```
-
-### `werf config graph`
-
-Строит граф зависимостей между образами.
-
-```bash
-$ werf config graph
-- image: backend
-- image: frontend
-```
-
-{% include pages/ru/debug_template_flag.md.liquid %}
