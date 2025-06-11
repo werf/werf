@@ -124,6 +124,8 @@ werf cleanup [options]
             configuration (default $WERF_INSECURE_HELM_DEPENDENCIES)
       --insecure-registry=false
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
+      --keep-list=""
+            Set path to keep list file (default $WERF_KEEP_LIST)
       --keep-stages-built-within-last-n-hours=2
             Keep stages that were built within last hours (default                                  
             $WERF_KEEP_STAGES_BUILT_WITHIN_LAST_N_HOURS or 2)
@@ -222,8 +224,6 @@ werf cleanup [options]
             repo. :local address allows execution of werf processes from a single host only
       --tmp-dir=""
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
-      --whitelist=""
-            Set path to whitelist file (default $WERF_WHITELIST)
       --without-kube=false
             Do not skip deployed Kubernetes images (default $WERF_WITHOUT_KUBE)
 ```

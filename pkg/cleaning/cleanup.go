@@ -37,7 +37,7 @@ type CleanupOptions struct {
 	DryRun                                  bool
 	Parallel                                bool
 	ParallelTasksLimit                      int64
-	Whitelist                               Whitelist
+	KeepList                                KeepList
 }
 
 func Cleanup(ctx context.Context, projectName string, storageManager *manager.StorageManager, options CleanupOptions) error {
@@ -49,7 +49,7 @@ func newCleanupManager(projectName string, storageManager *manager.StorageManage
 		stageManager:                            stage_manager.NewManager(),
 		parallel:                                options.Parallel,
 		parallelTasksLimit:                      options.ParallelTasksLimit,
-		whitelist:                               options.Whitelist,
+		keepList:                                options.KeepList,
 		ProjectName:                             projectName,
 		StorageManager:                          storageManager,
 		ImageNameList:                           options.ImageNameList,
@@ -83,7 +83,7 @@ type cleanupManager struct {
 	parallel           bool
 	parallelTasksLimit int64
 
-	whitelist Whitelist
+	keepList KeepList
 }
 
 type GitRepo interface {
@@ -216,12 +216,12 @@ func (m *cleanupManager) run(ctx context.Context) error {
 }
 
 func (m *cleanupManager) markWhitelistStagesAsProtected() {
-	if m.whitelist.IsEmpty() {
+	if m.keepList.IsEmpty() {
 		return
 	}
 
 	for stageDesc := range m.stageManager.GetStageDescSet().Iter() {
-		if m.whitelist.ContainsOne(stageDesc.Info.Tag) {
+		if m.keepList.ContainsOne(stageDesc.Info.Tag) {
 			m.stageManager.MarkStageDescAsProtected(stageDesc, stage_manager.ProtectionReasonWhitelist, false)
 		}
 	}

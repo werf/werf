@@ -10,43 +10,43 @@ import (
 	"github.com/werf/werf/v2/pkg/cleaning"
 )
 
-var _ = Describe("whitelist", func() {
+var _ = Describe("keep list", func() {
 	DescribeTable(
-		"parseWhitelist",
+		"parseKeepList",
 		func(fileContent string, expectedValue, expectedErr types.GomegaMatcher) {
-			file, err := os.CreateTemp(GinkgoT().TempDir(), "whitelist-")
+			file, err := os.CreateTemp(GinkgoT().TempDir(), "keep-list-")
 			Expect(err).To(Succeed())
 
 			_, err = file.WriteString(fileContent)
 			Expect(err).To(Succeed())
 
-			whitelist, err := parseWhitelist(file.Name())
+			keepList, err := parseKeepList(file.Name())
 			Expect(err).To(expectedErr)
-			Expect(whitelist).To(expectedValue)
+			Expect(keepList).To(expectedValue)
 		},
 		Entry(
-			"should return err if whitelist contains invalid data",
+			"should return err if keep list contains invalid data",
 			"some invalid data",
 			BeNil(),
 			HaveOccurred(),
 		),
 		Entry(
-			"should return empty whitelist if no content",
+			"should return empty keep list if no content",
 			"",
-			Equal(cleaning.NewWhitelistWithSize(0)),
+			Equal(cleaning.NewKeepListWithSize(0)),
 			Succeed(),
 		),
 		Entry(
-			"should return empty whitelist if file contains only empty lines",
+			"should return empty keep list if file contains only empty lines",
 			"\n\n",
-			Equal(cleaning.NewWhitelistWithSize(0)),
+			Equal(cleaning.NewKeepListWithSize(0)),
 			Succeed(),
 		),
 		Entry(
-			"should return filled whitelist with data",
+			"should return filled keep list with data",
 			"1e09fb543b4ef442ce5ed36bfeee6b27866bf1e68541db5995962b24-1749456960043\n18c3b56662bedc24f4b8fd9e13845b01cc25c49295f479ac33397e27-1749456950030\n",
 			Equal(
-				cleaning.NewWhitelist(
+				cleaning.NewKeepList(
 					"1e09fb543b4ef442ce5ed36bfeee6b27866bf1e68541db5995962b24-1749456960043",
 					"18c3b56662bedc24f4b8fd9e13845b01cc25c49295f479ac33397e27-1749456950030",
 				),

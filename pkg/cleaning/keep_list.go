@@ -2,12 +2,12 @@ package cleaning
 
 import mapset "github.com/deckarep/golang-set/v2"
 
-type Whitelist mapset.Set[string]
+type KeepList mapset.Set[string]
 
-func NewWhitelist(val ...string) Whitelist {
+func NewKeepList(val ...string) KeepList {
 	return mapset.NewSet[string](val...)
 }
 
-func NewWhitelistWithSize(n int) Whitelist {
+func NewKeepListWithSize(n int) KeepList {
 	return mapset.NewSetWithSize[string](n)
 }

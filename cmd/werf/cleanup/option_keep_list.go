@@ -11,22 +11,22 @@ import (
 	"github.com/werf/werf/v2/pkg/cleaning"
 )
 
-func setupWhitelist(cmdData *cmdDataType, cmd *cobra.Command) {
-	const name = "whitelist"
+func setupKeeplist(cmdData *cmdDataType, cmd *cobra.Command) {
+	const name = "keep-list"
 
-	cmd.Flags().StringVarP(&cmdData.Whitelist, name, "", os.Getenv("WERF_WHITELIST"), "Set path to whitelist file (default $WERF_WHITELIST)")
+	cmd.Flags().StringVarP(&cmdData.KeepList, name, "", os.Getenv("WERF_KEEP_LIST"), "Set path to keep list file (default $WERF_KEEP_LIST)")
 }
 
-func parseWhitelist(filename string) (cleaning.Whitelist, error) {
+func parseKeepList(filename string) (cleaning.KeepList, error) {
 	file, err := os.Open(filename)
 	if err != nil {
-		return nil, fmt.Errorf("unable to open whitelist file: %w", err)
+		return nil, fmt.Errorf("unable to open keep list file: %w", err)
 	}
 	defer file.Close()
 
 	stat, err := file.Stat()
 	if err != nil {
-		return nil, fmt.Errorf("unable to stat whitelist file: %w", err)
+		return nil, fmt.Errorf("unable to stat keep list file: %w", err)
 	}
 
 	lineRegexp, err := regexp.Compile("^[a-z0-9]{56}-[0-9]{13}$") //nolint
@@ -36,7 +36,7 @@ func parseWhitelist(filename string) (cleaning.Whitelist, error) {
 
 	const lineWidthSize = 71
 
-	whitelist := cleaning.NewWhitelistWithSize(int(stat.Size() / lineWidthSize))
+	keepList := cleaning.NewKeepListWithSize(int(stat.Size() / lineWidthSize))
 
 	scanner := bufio.NewScanner(file)
 
@@ -45,7 +45,7 @@ func parseWhitelist(filename string) (cleaning.Whitelist, error) {
 
 		switch {
 		case lineRegexp.MatchString(tag):
-			whitelist.Add(tag)
+			keepList.Add(tag)
 		case tag == "":
 			continue
 		default:
@@ -57,5 +57,5 @@ func parseWhitelist(filename string) (cleaning.Whitelist, error) {
 		return nil, fmt.Errorf("scanner error: %w", scanner.Err())
 	}
 
-	return whitelist, nil
+	return keepList, nil
 }

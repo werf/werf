@@ -21,7 +21,7 @@ var commonCmdData common.CmdData
 
 type cmdDataType struct {
 	ScanContextOnly string
-	Whitelist       string
+	KeepList        string
 }
 
 var cmdData cmdDataType
@@ -105,7 +105,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	cmd.PersistentFlags().StringVarP(&cmdData.ScanContextOnly, "scan-context-only", "", os.Getenv("WERF_SCAN_CONTEXT_ONLY"), "Scan for used images only in the specified kube context, scan all contexts from kube config otherwise (default false or $WERF_SCAN_CONTEXT_ONLY)")
 	cmd.PersistentFlags().StringVarP(&cmdData.ScanContextOnly, "kube-context", "", os.Getenv("WERF_SCAN_CONTEXT_ONLY"), "Scan for used images only in the specified kube context, scan all contexts from kube config otherwise (default false or $WERF_SCAN_CONTEXT_ONLY)")
 
-	setupWhitelist(&cmdData, cmd)
+	setupKeeplist(&cmdData, cmd)
 
 	return cmd
 }
@@ -215,11 +215,11 @@ func runCleanup(ctx context.Context, cmd *cobra.Command) error {
 		kubernetesNamespaceRestrictionByContext = common.GetKubernetesNamespaceRestrictionByContext(&commonCmdData, kubernetesContextClients)
 	}
 
-	whitelist := cleaning.NewWhitelistWithSize(0)
+	keepList := cleaning.NewKeepListWithSize(0)
 
-	if cmdData.Whitelist != "" {
-		if whitelist, err = parseWhitelist(cmdData.Whitelist); err != nil {
-			return fmt.Errorf("unable to parse whitelist: %w", err)
+	if cmdData.KeepList != "" {
+		if keepList, err = parseKeepList(cmdData.KeepList); err != nil {
+			return fmt.Errorf("unable to parse keepList: %w", err)
 		}
 	}
 
@@ -234,7 +234,7 @@ func runCleanup(ctx context.Context, cmd *cobra.Command) error {
 		DryRun:                                  *commonCmdData.DryRun,
 		Parallel:                                *commonCmdData.Parallel,
 		ParallelTasksLimit:                      *commonCmdData.ParallelTasksLimit,
-		Whitelist:                               whitelist,
+		KeepList:                                keepList,
 	}
 
 	logboek.LogOptionalLn()
