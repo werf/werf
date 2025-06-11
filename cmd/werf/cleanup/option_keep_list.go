@@ -4,8 +4,8 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"regexp"
 
+	"github.com/containers/image/v5/docker/reference"
 	"github.com/spf13/cobra"
 
 	"github.com/werf/werf/v2/pkg/cleaning"
@@ -29,11 +29,6 @@ func parseKeepList(filename string) (cleaning.KeepList, error) {
 		return nil, fmt.Errorf("unable to stat keep list file: %w", err)
 	}
 
-	lineRegexp, err := regexp.Compile("^[a-z0-9]{56}-[0-9]{13}$") //nolint
-	if err != nil {
-		return nil, fmt.Errorf("unable to compile regexp: %w", err)
-	}
-
 	const lineWidthSize = 71
 
 	keepList := cleaning.NewKeepListWithSize(int(stat.Size() / lineWidthSize))
@@ -44,10 +39,10 @@ func parseKeepList(filename string) (cleaning.KeepList, error) {
 		tag := scanner.Text()
 
 		switch {
-		case lineRegexp.MatchString(tag):
-			keepList.Add(tag)
 		case tag == "":
 			continue
+		case reference.TagRegexp.MatchString(tag):
+			keepList.Add(tag)
 		default:
 			return nil, fmt.Errorf("unable to parse tag %q", tag)
 		}

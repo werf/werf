@@ -26,7 +26,7 @@ var _ = Describe("keep list", func() {
 		},
 		Entry(
 			"should return err if keep list contains invalid data",
-			"some invalid data",
+			"!",
 			BeNil(),
 			HaveOccurred(),
 		),
@@ -44,11 +44,15 @@ var _ = Describe("keep list", func() {
 		),
 		Entry(
 			"should return filled keep list with data",
-			"1e09fb543b4ef442ce5ed36bfeee6b27866bf1e68541db5995962b24-1749456960043\n18c3b56662bedc24f4b8fd9e13845b01cc25c49295f479ac33397e27-1749456950030\n",
+			`1e09fb543b4ef442ce5ed36bfeee6b27866bf1e68541db5995962b24-1749456960043
+18c3b56662bedc24f4b8fd9e13845b01cc25c49295f479ac33397e27-1749456950030
+custom-tag
+`,
 			Equal(
 				cleaning.NewKeepList(
 					"1e09fb543b4ef442ce5ed36bfeee6b27866bf1e68541db5995962b24-1749456960043",
 					"18c3b56662bedc24f4b8fd9e13845b01cc25c49295f479ac33397e27-1749456950030",
+					"custom-tag",
 				),
 			),
 			Succeed(),
