@@ -219,7 +219,7 @@ entries:
                 url: /usage/deploy/values.html
 
               - title: Отладка шаблонов
-                url: /usage/deploy/debug_templates.md
+                url: /usage/deploy/debug_templates.html
 
               - title: Разные окружения
                 url: /usage/deploy/environments.html
