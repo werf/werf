@@ -146,7 +146,7 @@ func initRemoteRepos(ctx context.Context, cfg Config) (map[string]*git_repo.Remo
 					continue
 				}
 
-				logboek.Context(ctx).Default().LogProcess(fmt.Sprintf("Syncing origin branches and tags for: %s", i.Git)).DoError(func() error {
+				err = logboek.Context(ctx).Default().LogProcess(fmt.Sprintf("Syncing origin branches and tags for: %s", i.Git)).DoError(func() error {
 					fetchOptions := true_git.FetchOptions{
 						Prune:     true,
 						PruneTags: true,
@@ -165,6 +165,9 @@ func initRemoteRepos(ctx context.Context, cfg Config) (map[string]*git_repo.Remo
 
 					return nil
 				})
+				if err != nil {
+					return fmt.Errorf("unable to sync origin branches and tags for %s: %w", i.Git, err)
+				}
 			}
 		}
 		return nil
