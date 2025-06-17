@@ -21,7 +21,7 @@ import (
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/slug"
 	"github.com/werf/werf/v2/pkg/storage"
-	cmd2 "github.com/werf/werf/v2/pkg/util/cmd"
+	"github.com/werf/werf/v2/pkg/werf/exec"
 )
 
 func GetConveyorOptions(ctx context.Context, commonCmdData *CmdData, imagesToProcess config.ImagesToProcess) (build.ConveyorOptions, error) {
@@ -166,7 +166,7 @@ func getELFSigningOptions(commonCmdData *CmdData) (build.ELFSigningOptions, erro
 		// Import PGP key.
 		{
 			ctx := context.Background()
-			cmd := cmd2.NewCmd(ctx, "gpg", "--import")
+			cmd := exec.CommandContextCancellation(ctx, "gpg", "--import")
 			cmd.Stdin = bytes.NewBufferString(pgpKeyString)
 
 			if options.PGPPrivateKeyPassphrase != "" {
@@ -175,7 +175,7 @@ func getELFSigningOptions(commonCmdData *CmdData) (build.ELFSigningOptions, erro
 				cmd.Env = append(cmd.Env, fmt.Sprintf("WERF_SERVICE_ELF_PGP_PRIVATE_KEY_PASSPHRASE=%s", options.PGPPrivateKeyPassphrase))
 			}
 
-			err := cmd.Run(ctx)
+			err := cmd.Run()
 			if err != nil {
 				return options, fmt.Errorf("unable to import PGP key: %w", err)
 			}
