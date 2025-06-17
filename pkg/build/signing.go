@@ -20,7 +20,7 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
-	cmd2 "github.com/werf/werf/v2/pkg/util/cmd"
+	"github.com/werf/werf/v2/pkg/werf/exec"
 )
 
 type ELFState int
@@ -93,9 +93,9 @@ func signELFFile(ctx context.Context, path string, elfSigningOptions ELFSigningO
 		cmdExtraEnv = append(cmdExtraEnv, fmt.Sprintf("WERF_SERVICE_ELF_PGP_PRIVATE_KEY_PASSPHRASE=%s", elfSigningOptions.PGPPrivateKeyPassphrase))
 	}
 
-	cmd := cmd2.NewCmd(ctx, "bsign", "-N", "-s", "--pgoptions="+pgOptionsString, path)
+	cmd := exec.CommandContextCancellation(ctx, "bsign", "-N", "-s", "--pgoptions="+pgOptionsString, path)
 	cmd.Env = append(os.Environ(), cmdExtraEnv...)
-	if err := cmd.Run(ctx); err != nil {
+	if err := cmd.Run(); err != nil {
 		return err
 	}
 
