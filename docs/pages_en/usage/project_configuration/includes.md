@@ -4,7 +4,7 @@
 
 ## Configuration
 
-The includes configuration is defined in the `werf-includes.yaml` file located at the root of the project. This file cannot be imported and is processed according to the rules of Giterminism.
+The includes configuration is defined in the `werf-includes.yaml` file located at the root of the project. This file cannot be imported and is processed according to the giterminism rules.
 
 Example `werf-includes.yaml`:
 
