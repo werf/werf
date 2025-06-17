@@ -129,11 +129,11 @@ func (storage *RepoStagesStorage) GetStagesIDs(ctx context.Context, _ string, op
 }
 
 func (storage *RepoStagesStorage) ExportStage(ctx context.Context, stageDesc *image.StageDesc, destinationReference string, mutateConfigFunc func(config v1.Config) (v1.Config, error)) error {
-	return storage.DockerRegistry.MutateAndPushImage(ctx, stageDesc.Info.Name, destinationReference, mutateExportStageConfig(mutateConfigFunc))
+	return storage.DockerRegistry.MutateAndPushImageConfig(ctx, stageDesc.Info.Name, destinationReference, mutateExportStageConfig(mutateConfigFunc))
 }
 
-func mutateExportStageConfig(mutateConfigFunc func(config v1.Config) (v1.Config, error)) func(config v1.Config) (v1.Config, error) {
-	return func(config v1.Config) (v1.Config, error) {
+func mutateExportStageConfig(mutateConfigFunc func(config v1.Config) (v1.Config, error)) func(ctx context.Context, config v1.Config) (v1.Config, error) {
+	return func(ctx context.Context, config v1.Config) (v1.Config, error) {
 		for name := range config.Labels {
 			if strings.HasPrefix(name, image.WerfLabelPrefix) {
 				delete(config.Labels, name)

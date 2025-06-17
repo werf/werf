@@ -150,8 +150,8 @@ func (s *ImageSpecStage) MutateImage(ctx context.Context, registry docker_regist
 	src := prevBuiltImage.Image.Name()
 	dest := stageImage.Image.Name()
 
-	return registry.MutateAndPushImageConfigFile(ctx, src, dest, func(config v1.ConfigFile) (v1.ConfigFile, error) {
-		updateConfigFile(s.newConfig, &config)
+	return registry.MutateAndPushImageConfigFile(ctx, src, dest, func(ctx context.Context, config *v1.ConfigFile) (*v1.ConfigFile, error) {
+		updateConfigFile(s.newConfig, config)
 		return config, nil
 	})
 }
