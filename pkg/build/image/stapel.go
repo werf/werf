@@ -125,6 +125,10 @@ func initStages(ctx context.Context, image *Image, metaConfig *config.Meta, stap
 		stages = appendIfExist(ctx, stages, stage.GenerateImageSpecStage(imageBaseConfig.ImageSpec, baseStageOptions))
 	}
 
+	if imageBaseConfig.IsFinal() {
+		stages = append(stages, stage.GenerateManifestStage(baseStageOptions))
+	}
+
 	if len(gitMappings) != 0 {
 		logboek.Context(ctx).Info().LogLnDetails("Using git stages")
 
