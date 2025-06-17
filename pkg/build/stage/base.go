@@ -38,6 +38,7 @@ const (
 
 	Dockerfile StageName = "dockerfile"
 	ImageSpec  StageName = "imageSpec"
+	Manifest   StageName = "manifest"
 )
 
 // TODO(compatibility): remove in v3
