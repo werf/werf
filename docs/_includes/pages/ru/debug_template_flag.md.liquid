@@ -10,7 +10,7 @@
 * **Без `--debug-templates`**: функция ничего не делает.
 
 {% raw %}
-```gotpl
+```bash
 {{ printf_debug (printf "Current value: %v" .Values.someVar) }}
 ```
 {% endraw %}
@@ -23,7 +23,7 @@
 * **Без `--debug-templates`**: функция ничего не делает.
 
 {% raw %}
-```gotpl
+```bash
 {{ dump_debug $.Values.werf }}
 ```
 {% endraw %}
@@ -36,7 +36,7 @@
 * **Без `--debug-templates`**: работает как обычный `include`.
 
 {% raw %}
-```gotpl
+```bash
 {{ include_debug "my-template" . }}
 ```
 {% endraw %}
@@ -49,7 +49,7 @@
 * **Без `--debug-templates`**: работает как обычный `tpl`.
 
 {% raw %}
-```gotpl
+```bash
 {{ tpl_debug "{{ .Values.env }}" . }}
 ```
 {% endraw %}

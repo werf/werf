@@ -1,5 +1,5 @@
 ---
-title: Отладка `werf.yaml`
+title: Отладка werf.yaml
 permalink: usage/project_configuration/debug_werf_yaml.html
 ---
 
