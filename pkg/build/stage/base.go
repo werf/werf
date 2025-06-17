@@ -310,6 +310,10 @@ func (s *BaseStage) PrepareImage(ctx context.Context, c Conveyor, cb container_b
 	return nil
 }
 
+func (s *BaseStage) MutateImage(_ context.Context, _ docker_registry.Interface, _, _ *StageImage) error {
+	panic("not implemented")
+}
+
 func (s *BaseStage) PreRun(_ context.Context, _ Conveyor) error {
 	return nil
 }
