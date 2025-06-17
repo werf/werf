@@ -68,6 +68,11 @@ func mutateImage(ctx context.Context, image v1.Image, dest name.Reference, isDes
 		return nil, nil, fmt.Errorf("error reading config file: %w", err)
 	}
 
+	manifest, err := image.Manifest()
+	if err != nil {
+		return nil, nil, fmt.Errorf("error reading image manifest: %w", err)
+	}
+
 	if options.mutateImageLayersFunc != nil {
 		layers, err := image.Layers()
 		if err != nil {
@@ -85,6 +90,9 @@ func mutateImage(ctx context.Context, image v1.Image, dest name.Reference, isDes
 		if err != nil {
 			return nil, nil, err
 		}
+
+		// preserve manifest annotations
+		image = mutate.Annotations(image, manifest.Annotations).(v1.Image)
 	}
 
 	if options.mutateConfigFileFunc != nil || options.mutateConfigFunc != nil {
