@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 
-	v1 "github.com/google/go-containerregistry/pkg/v1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"sigs.k8s.io/yaml"
@@ -574,7 +573,7 @@ func (registry *DockerRegistryStub) PullImageArchive(ctx context.Context, archiv
 	return nil
 }
 
-func (registry *DockerRegistryStub) MutateAndPushImage(ctx context.Context, sourceReference, destinationReference string, mutateConfigFunc func(v1.Config) (v1.Config, error)) error {
+func (registry *DockerRegistryStub) CopyImage(_ context.Context, sourceReference, destinationReference string, _ docker_registry.CopyImageOptions) error {
 	data, hasImage := registry.ImagesByReference[sourceReference]
 	if !hasImage {
 		return fmt.Errorf("source image not found")

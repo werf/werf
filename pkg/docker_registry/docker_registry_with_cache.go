@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
+	"github.com/google/go-containerregistry/pkg/v1/mutate"
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/pkg/image"
@@ -73,9 +74,19 @@ func (r *DockerRegistryWithCache) PushImage(ctx context.Context, reference strin
 	return r.Interface.PushImage(ctx, reference, opts)
 }
 
-func (r *DockerRegistryWithCache) MutateAndPushImage(ctx context.Context, sourceReference, destinationReference string, mutateConfigFunc func(v1.Config) (v1.Config, error)) error {
+func (r *DockerRegistryWithCache) MutateAndPushImageLayers(ctx context.Context, sourceReference, destinationReference string, f func(context.Context, []v1.Layer) ([]mutate.Addendum, error)) error {
 	defer r.mustAddTagToCachedTags(destinationReference)
-	return r.Interface.MutateAndPushImage(ctx, sourceReference, destinationReference, mutateConfigFunc)
+	return r.Interface.MutateAndPushImageLayers(ctx, sourceReference, destinationReference, f)
+}
+
+func (r *DockerRegistryWithCache) MutateAndPushImageConfigFile(ctx context.Context, sourceReference, destinationReference string, f func(context.Context, *v1.ConfigFile) (*v1.ConfigFile, error)) error {
+	defer r.mustAddTagToCachedTags(destinationReference)
+	return r.Interface.MutateAndPushImageConfigFile(ctx, sourceReference, destinationReference, f)
+}
+
+func (r *DockerRegistryWithCache) MutateAndPushImageConfig(ctx context.Context, sourceReference, destinationReference string, f func(context.Context, v1.Config) (v1.Config, error)) error {
+	defer r.mustAddTagToCachedTags(destinationReference)
+	return r.Interface.MutateAndPushImageConfig(ctx, sourceReference, destinationReference, f)
 }
 
 func (r *DockerRegistryWithCache) DeleteRepoImage(ctx context.Context, repoImage *image.Info) error {

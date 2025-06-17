@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"sigs.k8s.io/yaml"
 
 	"github.com/werf/3p-helm/pkg/chart"
@@ -181,7 +180,7 @@ func (bundle *RemoteBundle) CopyFromRemote(ctx context.Context, fromRemote *Remo
 							logboek.Context(ctx).Default().LogFDetails("Source: %s\n", image)
 							logboek.Context(ctx).Default().LogFDetails("Destination: %s\n", ref.FullName())
 
-							if err := fromRemote.RegistryClient.MutateAndPushImage(ctx, image, ref.FullName(), func(cfg v1.Config) (v1.Config, error) { return cfg, nil }); err != nil {
+							if err := fromRemote.RegistryClient.CopyImage(ctx, image, ref.FullName(), docker_registry.CopyImageOptions{}); err != nil {
 								return fmt.Errorf("error copying image %s into %s: %w", image, ref.FullName(), err)
 							}
 						}

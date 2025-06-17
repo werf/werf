@@ -5,14 +5,16 @@ import (
 	"io"
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
+	"github.com/google/go-containerregistry/pkg/v1/mutate"
 
 	"github.com/werf/werf/v2/pkg/image"
 )
 
 type commonInterface interface {
 	GetRepoImage(ctx context.Context, reference string) (*image.Info, error)
-	MutateAndPushImage(ctx context.Context, sourceReference, destinationReference string, mutateConfigFunc func(v1.Config) (v1.Config, error)) error
-	MutateAndPushImageConfigFile(ctx context.Context, sourceReference, destinationReference string, mutateManifestConfigFunc func(cfg v1.ConfigFile) (v1.ConfigFile, error)) error
+	MutateAndPushImageLayers(ctx context.Context, sourceReference, destinationReference string, f func(context.Context, []v1.Layer) ([]mutate.Addendum, error)) error
+	MutateAndPushImageConfigFile(ctx context.Context, sourceReference, destinationReference string, f func(context.Context, *v1.ConfigFile) (*v1.ConfigFile, error)) error
+	MutateAndPushImageConfig(ctx context.Context, sourceReference, destinationReference string, f func(context.Context, v1.Config) (v1.Config, error)) error
 }
 
 type Interface interface {
