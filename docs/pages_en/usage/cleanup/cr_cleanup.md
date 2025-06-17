@@ -158,17 +158,16 @@ cleanup:
   disableGitHistoryBasedPolicy: true
 ```
 
-## Image versions based on a pre-prepared list
+### Image versions based on a pre-prepared list
 
-The option `--keep-list=/path/to/list.txt ` allows you to pass a list of stage tags as a file. `list.txt ` is a file
-in which each tag is specified on a separate line. For example:
+The `--keep-list` option allows you to provide a file that contains a list of tags to keep. Each tag should be written on a separate line and be valid. For example:
 
 ```
 1e09fb543b4ef442ce5ed36bfeee6b27866bf1e68541db5995962b24-1749456960043
 my-custom-tag
 ```
 
-The documentation section about ["Saving the result of work"](#saving-the-result-of-work) can help you to create this list.
+The documentation section about ["Saving the result of work"](#generate-keep-list-from-tags-marked-to-be-kept--deleted) can help you to create this list.
 
 ## Specifics of working with different container registries
 
@@ -243,17 +242,41 @@ werf uses the _GitLab container registry API_ or _Docker Registry API_ (dependin
 
 ## Saving the result of work
 
-During operation, `werf cleanup` outputs stage tags based on colors.:
+During operation, `werf cleanup` highlights tags using colors to indicate their status:
 
-+ <span style="color: green;">Green color</span> - stage tag to keep.
-+ <span style="color: red;">Red color</span> - stage tag to delete.
++ <span style="color: green;">Green color</span> — tag is kept.
++ <span style="color: red;">Red color</span> — tag is deleted.
 
-**Example**. Using the `--dry-run` option and knowledge of color, 
-we will display a list of tags that are marked _for deletion_ (<span style="color: red;">in red</span>):
+This color coding can be useful for post-processing — for example, to analyze what would be deleted or to generate a keep-list in isolated environments.
 
-```shell
-werf cleanup --dry-run | grep -a -o -P '\x1b\[31m\K[^\x1b]+'
+> The `--dry-run` option allows you to simulate the cleanup process without actually deleting anything. It’s useful for previewing which tags would be deleted or kept.
+
+### Generate keep-list from tags marked to be kept / deleted
+
+You can extract tags from the output of the `werf cleanup` command as follows:
+
+- list of tags marked to be kept (green color):
+
+  ```bash
+  werf cleanup --repo registry.mydomain.com/app --dry-run | grep -a -o -P '\x1b\[32m\K[^\x1b]+' > keep-list.txt
+  ```
+
+- list of tags marked to be deleted (red color):
+
+  ```bash
+  werf cleanup --repo registry.mydomain.com/app --dry-run | grep -a -o -P '\x1b\[31m\K[^\x1b]+' > keep-list.txt
+  ```
+
+Then, use this list with the --keep-list option to ensure only the specified tags are preserved during cleanup:
+
+```bash
+werf cleanup --repo registry.mydomain.com/app --keep-list=keep-list.txt
 ```
+
+This approach is especially useful in situations where:
+- 
+- It is not possible to clean a shared container registry while accounting for images used across all environments.
+- It is not feasible to clean all container registries (e.g., a shared registry and separate ones per environment), taking into account the specifics and constraints of each environment.
 
 ## Container registry’s garbage collector
 
