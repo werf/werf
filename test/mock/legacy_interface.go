@@ -141,20 +141,6 @@ func (mr *MockLegacyImageInterfaceMockRecorder) GetFinalStageDesc() *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFinalStageDesc", reflect.TypeOf((*MockLegacyImageInterface)(nil).GetFinalStageDesc))
 }
 
-// GetImageSpecConfig mocks base method.
-func (m *MockLegacyImageInterface) GetImageSpecConfig() *image.Config {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetImageSpecConfig")
-	ret0, _ := ret[0].(*image.Config)
-	return ret0
-}
-
-// GetImageSpecConfig indicates an expected call of GetImageSpecConfig.
-func (mr *MockLegacyImageInterfaceMockRecorder) GetImageSpecConfig() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetImageSpecConfig", reflect.TypeOf((*MockLegacyImageInterface)(nil).GetImageSpecConfig))
-}
-
 // GetStageDesc mocks base method.
 func (m *MockLegacyImageInterface) GetStageDesc() *image.StageDesc {
 	m.ctrl.T.Helper()
@@ -299,18 +285,6 @@ func (m *MockLegacyImageInterface) SetFinalStageDesc(arg0 *image.StageDesc) {
 func (mr *MockLegacyImageInterfaceMockRecorder) SetFinalStageDesc(arg0 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetFinalStageDesc", reflect.TypeOf((*MockLegacyImageInterface)(nil).SetFinalStageDesc), arg0)
-}
-
-// SetImageSpecConfig mocks base method.
-func (m *MockLegacyImageInterface) SetImageSpecConfig(config *image.Config) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "SetImageSpecConfig", config)
-}
-
-// SetImageSpecConfig indicates an expected call of SetImageSpecConfig.
-func (mr *MockLegacyImageInterfaceMockRecorder) SetImageSpecConfig(config any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetImageSpecConfig", reflect.TypeOf((*MockLegacyImageInterface)(nil).SetImageSpecConfig), config)
 }
 
 // SetInfo mocks base method.

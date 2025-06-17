@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -1208,22 +1209,24 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 
 		if err := logboek.Context(ctx).Default().LogProcess("Store stage into %s", phase.Conveyor.StorageManager.GetStagesStorage().String()).DoError(func() error {
 			if stg.IsMutable() {
-				prevImage := phase.StagesIterator.GetPrevBuiltImage(img, stg).Image.Name()
-				newImage := stageImage.Image.Name()
-				var registry docker_registry.Interface
 				switch phase.Conveyor.StorageManager.GetStagesStorage().(type) {
 				case *storage.RepoStagesStorage:
-					registry = phase.Conveyor.StorageManager.GetStagesStorage().(*storage.RepoStagesStorage).DockerRegistry
 				default:
-					return fmt.Errorf(`unable to build stage %q: local storage is not supported. Please specify a repo using the --repo flag or the WERF_REPO environment variable.
+					errMsg := `unable to build stage %q: local storage is not supported. Please specify a repo using the --repo flag or the WERF_REPO environment variable.
 
-Building a stage without a repo is not supported due to the excessive overhead caused by build backend limitations.
-To debug the build locally, consider running a local registry or skipping the imageSpec stage using the option --skip-image-spec-stage (WERF_SKIP_IMAGE_SPEC_STAGE).`, stg.Name())
+Building a stage without a repo is not supported due to the excessive overhead caused by build backend limitations.`
+
+					if stg.Name() == stage.ImageSpec {
+						errMsg += `
+
+To debug the build locally, consider running a local registry or skipping the imageSpec stage using the option --skip-image-spec-stage.`
+					}
+
+					return errors.New(errMsg)
 				}
 
-				err := imagePkg.MutateImageSpecConfigRepo(ctx, prevImage, newImage, *stageImage.Image.GetImageSpecConfig(), registry)
-				if err != nil {
-					return fmt.Errorf("error mutating image spec %s: %w", stg.Name(), err)
+				if err := stg.MutateImage(ctx, phase.Conveyor.StorageManager.GetStagesStorage().(*storage.RepoStagesStorage).DockerRegistry, phase.StagesIterator.PrevBuiltStage.GetStageImage(), stageImage); err != nil {
+					return fmt.Errorf("unable to mutate %s: %w", stg.Name(), err)
 				}
 			} else {
 				if err := phase.Conveyor.StorageManager.GetStagesStorage().StoreImage(ctx, stageImage.Image); err != nil {
