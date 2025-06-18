@@ -231,7 +231,7 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 				}
 			}
 		} else {
-			img := image.NewMultiplatformImage(name, images, taskId, len(images))
+			img := image.NewMultiplatformImage(name, images, taskId, len(imagesPairs))
 			phase.Conveyor.imagesTree.SetMultiplatformImage(img)
 
 			// TODO: Separate LocalStagesStorage and RepoStagesStorage interfaces, local should not include metadata publishing methods at all
