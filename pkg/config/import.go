@@ -43,6 +43,8 @@ func (c *Import) validate() error {
 		return newDetailedConfigError(fmt.Sprintf("invalid artifact stage `after: %s` for import: expected install or setup!", c.After), c.raw, c.raw.rawStapelImage.doc)
 	case c.Stage != "" && checkInvalidStage(c.Stage):
 		return newDetailedConfigError(fmt.Sprintf("invalid stage `stage: %s` for import: expected beforeInstall, install, beforeSetup or setup", c.Stage), c.raw, c.raw.rawStapelImage.doc)
+	case c.Add == "/" && len(c.IncludePaths) == 0:
+		return newDetailedConfigError("`add: '/'` requires not empty includePaths to interpret copy sources unambiguously", c.raw.rawOrigin.configSection(), c.raw.rawOrigin.doc())
 	default:
 		return nil
 	}
