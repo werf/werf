@@ -3,9 +3,9 @@ title: Отладка werf.yaml
 permalink: usage/project_configuration/debug_werf_yaml.html
 ---
 
-## Проверка итоговой конфигурации `werf.yaml`
+## Отображение результата шаблонизации `werf.yaml`
 
-Команда `werf config render` отображает итоговое содержимое `werf.yaml` после рендеринга всех шаблонов и подстановки переменных окружения. 
+Команда `werf config render` отображает результат шаблонизации `werf.yaml`. 
 
 ```bash
 $ werf config render
@@ -17,7 +17,7 @@ dockerfile: backend.Dockerfile
 ...
 ```
 
-## Получение списка образов, описанных в `werf.yaml`
+## Получить имена всех собираемых образов
 
 Команда `werf config list` выводит список всех образов, определённых в итоговом `werf.yaml`. 
 
