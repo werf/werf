@@ -56,6 +56,9 @@ werf bundle render [options]
             repo, to pull base images
       --env=""
             Use specified environment (default $WERF_ENV)
+      --force-adoption=false
+            Always adopt resources, even if they belong to a different Helm release (default        
+            $WERF_FORCE_ADOPTION or false)
       --home-dir=""
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --ignore-secret-key=false
