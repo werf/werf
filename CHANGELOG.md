@@ -1,5 +1,23 @@
 # Changelog
 
+## [2.38.0](https://www.github.com/werf/werf/compare/v2.37.1...v2.38.0) (2025-06-18)
+
+
+### Features
+
+* add --final-images-only option to most commands ([2bbb69e](https://www.github.com/werf/werf/commit/2bbb69e0433f60740d9ea9ec58ff0cf9d5d7a2d4))
+* **build,deploy:** add debug templates feature ([001fca6](https://www.github.com/werf/werf/commit/001fca66ac77b6a056f21a1e43dac490aa8ca220))
+* **build,deploy:** add debug templates feature /2 ([9cb5013](https://www.github.com/werf/werf/commit/9cb5013432b90e7293630760536b31acaa1bb295))
+* **cleanup:** implement keep list policy ([3de2168](https://www.github.com/werf/werf/commit/3de2168efc9e64e3a006618d48833da01c049c8b))
+* **deploy:** `--force-adoption` to disable Helm release annotations checks ([ee290c1](https://www.github.com/werf/werf/commit/ee290c16d4f321a27d321cf0f62dbd713ab8c6d3))
+* **deploy:** new functions to debug Helm templates + detailed template errors ([10281eb](https://www.github.com/werf/werf/commit/10281eb5579f5ba8427e8f2c19c8d429df1e3701))
+
+
+### Bug Fixes
+
+* **build, stapel, git:** fix `add: '/'` requires not empty includePaths to interpret copy sources unambiguously ([492d31f](https://www.github.com/werf/werf/commit/492d31fb27b215cf4dc35359cfbf51e18f7aef54))
+* **build, stapel, import:** import from root causes runner to hang (add: /) ([#6906](https://www.github.com/werf/werf/issues/6906)) ([f874a32](https://www.github.com/werf/werf/commit/f874a3225bece7fb2834f67db96accee2e7a425e))
+
 ### [2.37.1](https://www.github.com/werf/werf/compare/v2.37.0...v2.37.1) (2025-06-05)
 
 
