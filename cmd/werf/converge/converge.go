@@ -186,6 +186,7 @@ werf converge --repo registry.mydomain.com/web --env production`,
 	common.SetupRenderSubchartNotes(&commonCmdData, cmd)
 	common.SetupNoInstallCRDs(&commonCmdData, cmd)
 	common.SetupReleaseLabel(&commonCmdData, cmd)
+	common.SetupForceAdoption(&commonCmdData, cmd)
 
 	commonCmdData.SetupDebugTemplates(cmd)
 
@@ -461,6 +462,7 @@ func run(
 		ExtraAnnotations:             extraAnnotations,
 		ExtraLabels:                  extraLabels,
 		ExtraRuntimeAnnotations:      serviceAnnotations,
+		ForceAdoption:                *commonCmdData.ForceAdoption,
 		InstallGraphPath:             common.GetDeployGraphPath(&commonCmdData),
 		InstallReportPath:            deployReportPath,
 		KubeAPIServerName:            *commonCmdData.KubeApiServer,
