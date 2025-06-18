@@ -98,6 +98,8 @@ werf plan --repo registry.mydomain.com/web --env production
             in working directory)
       --container-registry-mirror=[]
             (Buildah-only) Use specified mirrors for docker.io
+      --debug-templates=false
+            Enable debug mode for Go templates (default $WERF_DEBUG_TEMPLATES or false)
       --dev=false
             Enable development mode (default $WERF_DEV).
             The mode allows working with project files without doing redundant commits during       
@@ -131,6 +133,8 @@ werf plan --repo registry.mydomain.com/web --env production
       --exit-code=false
             If true, returns exit code 0 if no changes, exit code 2 if any changes planned or exit  
             code 1 in case of an error (default $WERF_EXIT_CODE or false)
+      --final-images-only=true
+            Process final images only ($WERF_FINAL_IMAGES_ONLY or true by default)
       --final-repo=""
             Container registry storage address (default $WERF_FINAL_REPO)
       --final-repo-container-registry=""
@@ -158,6 +162,9 @@ werf plan --repo registry.mydomain.com/web --env production
             The mode allows restarting the command on a new commit.
             In development mode (--dev), werf restarts the command on any changes (including        
             untracked files) in the git repository worktree
+      --force-adoption=false
+            Always adopt resources, even if they belong to a different Helm release (default        
+            $WERF_FORCE_ADOPTION or false)
       --git-work-tree=""
             Use specified git work tree dir (default $WERF_WORK_TREE or lookup for directory that   
             contains .git in the current or parent directories)

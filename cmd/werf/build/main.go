@@ -115,6 +115,9 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	commonCmdData.SetupPlatform(cmd)
 
 	commonCmdData.SetupSkipImageSpecStage(cmd)
+	commonCmdData.SetupDebugTemplates(cmd)
+
+	commonCmdData.SetupFinalImagesOnly(cmd, false)
 
 	return cmd
 }
@@ -161,20 +164,20 @@ func runMain(ctx context.Context, imageNameListFromArgs []string) error {
 	if *commonCmdData.Follow {
 		logboek.LogOptionalLn()
 		return common.FollowGitHead(ctx, &commonCmdData, func(ctx context.Context, headCommitGiterminismManager *giterminism_manager.Manager) error {
-			return run(ctx, containerBackend, headCommitGiterminismManager, imageNameListFromArgs)
+			return run(ctx, containerBackend, headCommitGiterminismManager, imageNameListFromArgs, *commonCmdData.FinalImagesOnly)
 		})
 	} else {
-		return run(ctx, containerBackend, giterminismManager, imageNameListFromArgs)
+		return run(ctx, containerBackend, giterminismManager, imageNameListFromArgs, *commonCmdData.FinalImagesOnly)
 	}
 }
 
-func run(ctx context.Context, containerBackend container_backend.ContainerBackend, giterminismManager giterminism_manager.Interface, imageNameListFromArgs []string) error {
+func run(ctx context.Context, containerBackend container_backend.ContainerBackend, giterminismManager giterminism_manager.Interface, imageNameListFromArgs []string, finalImagesOnly bool) error {
 	_, werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %w", err)
 	}
 
-	imagesToProcess, err := config.NewImagesToProcess(werfConfig, imageNameListFromArgs, false, false)
+	imagesToProcess, err := config.NewImagesToProcess(werfConfig, imageNameListFromArgs, finalImagesOnly, false)
 	if err != nil {
 		return err
 	}

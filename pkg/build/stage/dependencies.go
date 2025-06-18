@@ -382,6 +382,8 @@ func generateChecksumCommand(from string, includePaths, excludePaths []string, r
 		findCommandParts = append(findCommandParts, fmt.Sprintf("\\( %s \\)", strings.Join(nameIncludeArgs, " -or ")))
 	}
 
+	excludePaths = append(excludePaths, stapel.CONTAINER_MOUNT_ROOT)
+
 	var nameExcludeArgs []string
 	for _, excludePath := range excludePaths {
 		formattedPath := util.SafeTrimGlobsAndSlashesFromPath(excludePath)

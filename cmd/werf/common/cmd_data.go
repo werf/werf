@@ -48,9 +48,10 @@ type CmdData struct {
 	HelmCompatibleChart        *bool
 	RenameChart                *string
 
-	WithoutImages *bool
-	Repo          *RepoData
-	FinalRepo     *RepoData
+	FinalImagesOnly *bool
+	WithoutImages   *bool
+	Repo            *RepoData
+	FinalRepo       *RepoData
 
 	SecondaryStagesStorage *[]string
 	CacheStagesStorage     *[]string
@@ -83,6 +84,7 @@ type CmdData struct {
 	WithoutKube                     *bool
 	KubeVersion                     *string
 	ContainerRegistryMirror         *[]string
+	ForceAdoption                   *bool
 
 	LooseGiterminism *bool
 	Dev              *bool
@@ -105,6 +107,8 @@ type CmdData struct {
 	LogProjectDir    *bool
 	LogTerminalWidth *int64
 
+	DebugTemplates *bool
+
 	SaveBuildReport *bool
 	BuildReportPath *string
 
@@ -112,8 +116,12 @@ type CmdData struct {
 	UseDeployReport  *bool
 	DeployReportPath *string
 
-	DeployGraphPath   *string
-	RollbackGraphPath *string
+	SaveUninstallReport *bool
+	UninstallReportPath *string
+
+	DeployGraphPath    *string
+	RollbackGraphPath  *string
+	UninstallGraphPath *string
 
 	RenderSubchartNotes *bool
 	NoInstallCRDs       *bool
@@ -136,6 +144,19 @@ type CmdData struct {
 	SkipImageSpecStage     *bool
 	CreateIncludesLockFile bool
 	IncludesLsFilter       *string
+}
+
+func (cmdData *CmdData) SetupFinalImagesOnly(cmd *cobra.Command, defaultEnabled bool) {
+	cmdData.FinalImagesOnly = new(bool)
+
+	var defaultVal bool
+	if defaultEnabled {
+		defaultVal = util.GetBoolEnvironmentDefaultTrue("WERF_FINAL_IMAGES_ONLY")
+	} else {
+		defaultVal = util.GetBoolEnvironmentDefaultFalse("WERF_FINAL_IMAGES_ONLY")
+	}
+
+	cmd.Flags().BoolVarP(cmdData.FinalImagesOnly, "final-images-only", "", defaultVal, fmt.Sprintf("Process final images only ($WERF_FINAL_IMAGES_ONLY or %v by default)", defaultEnabled))
 }
 
 func (cmdData *CmdData) SetupWithoutImages(cmd *cobra.Command) {
@@ -209,4 +230,17 @@ func (cmdData *CmdData) SetupCreateIncludesLockFile() {
 func (cmdData *CmdData) SetupIncludesLsFilter(cmd *cobra.Command) {
 	cmdData.IncludesLsFilter = new(string)
 	cmd.Flags().StringVar(cmdData.IncludesLsFilter, "filter", os.Getenv("WERF_INCLUDES_LIST_FILTER"), "Filter by source, e.g. --filter=source=local,remoteRepo (default $WERF_INCLUDES_LIST_FILTER or all sources).")
+}
+
+func (cmdData *CmdData) SetupDebugTemplates(cmd *cobra.Command) {
+	if cmdData.DebugTemplates == nil {
+		cmdData.DebugTemplates = new(bool)
+	}
+	cmd.Flags().BoolVarP(
+		cmdData.DebugTemplates,
+		"debug-templates",
+		"",
+		util.GetBoolEnvironmentDefaultFalse("WERF_DEBUG_TEMPLATES"),
+		`Enable debug mode for Go templates (default $WERF_DEBUG_TEMPLATES or false)`,
+	)
 }

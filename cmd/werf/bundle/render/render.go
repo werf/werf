@@ -14,6 +14,7 @@ import (
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 
+	"github.com/werf/3p-helm/pkg/engine"
 	"github.com/werf/3p-helm/pkg/werf/file"
 	"github.com/werf/3p-helm/pkg/werf/helmopts"
 	"github.com/werf/common-go/pkg/util"
@@ -117,6 +118,9 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupNetworkParallelism(&commonCmdData, cmd)
 	common.SetupKubeQpsLimit(&commonCmdData, cmd)
 	common.SetupKubeBurstLimit(&commonCmdData, cmd)
+	common.SetupForceAdoption(&commonCmdData, cmd)
+
+	commonCmdData.SetupDebugTemplates(cmd)
 
 	defaultTag := os.Getenv("WERF_TAG")
 	if defaultTag == "" {
@@ -228,6 +232,7 @@ func runRender(ctx context.Context) error {
 		ColorMode:      action.LogColorModeOff,
 		LogIsParseable: true,
 	})
+	engine.Debug = *commonCmdData.DebugTemplates
 
 	gm, err := common.GetGiterminismManager(ctx, &commonCmdData)
 	if err != nil {
@@ -246,6 +251,7 @@ func runRender(ctx context.Context) error {
 		ExtraAnnotations:             extraAnnotations,
 		ExtraLabels:                  extraLabels,
 		ExtraRuntimeAnnotations:      serviceAnnotations,
+		ForceAdoption:                *commonCmdData.ForceAdoption,
 		KubeAPIServerName:            *commonCmdData.KubeApiServer,
 		KubeBurstLimit:               *commonCmdData.KubeBurstLimit,
 		KubeCAPath:                   *commonCmdData.KubeCaPath,

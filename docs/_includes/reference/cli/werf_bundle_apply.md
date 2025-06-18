@@ -34,6 +34,8 @@ werf bundle apply [options]
             when current deploy process have failed ($WERF_AUTO_ROLLBACK by default)
       --container-registry-mirror=[]
             (Buildah-only) Use specified mirrors for docker.io
+      --debug-templates=false
+            Enable debug mode for Go templates (default $WERF_DEBUG_TEMPLATES or false)
       --deploy-graph-path=""
             Save deploy graph path to the specified file (by default $WERF_DEPLOY_GRAPH_PATH).      
             Extension must be .dot or not specified. If extension not specified, then .dot is used
@@ -54,6 +56,9 @@ werf bundle apply [options]
             repo, to pull base images
       --env=""
             Use specified environment (default $WERF_ENV)
+      --force-adoption=false
+            Always adopt resources, even if they belong to a different Helm release (default        
+            $WERF_FORCE_ADOPTION or false)
       --home-dir=""
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --hooks-status-progress-period=5

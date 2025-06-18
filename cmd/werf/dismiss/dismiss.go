@@ -24,6 +24,7 @@ import (
 )
 
 var cmdData struct {
+	Timeout       int
 	WithNamespace bool
 	WithHooks     bool
 }
@@ -125,13 +126,28 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
 
+	common.SetupNetworkParallelism(&commonCmdData, cmd)
 	common.SetupKubeQpsLimit(&commonCmdData, cmd)
 	common.SetupKubeBurstLimit(&commonCmdData, cmd)
 
 	commonCmdData.SetupPlatform(cmd)
+	commonCmdData.SetupDebugTemplates(cmd)
 
 	cmd.Flags().BoolVarP(&cmdData.WithNamespace, "with-namespace", "", util.GetBoolEnvironmentDefaultFalse("WERF_WITH_NAMESPACE"), "Delete Kubernetes Namespace after purging Helm Release (default $WERF_WITH_NAMESPACE)")
-	cmd.Flags().BoolVarP(&cmdData.WithHooks, "with-hooks", "", util.GetBoolEnvironmentDefaultTrue("WERF_WITH_HOOKS"), "Delete Helm Release hooks getting from existing revisions (default $WERF_WITH_HOOKS or true)")
+
+	if util.GetBoolEnvironmentDefaultFalse("WERF_EXPERIMENT_NEW_DISMISS") {
+		defaultTimeout, err := util.GetIntEnvVar("WERF_TIMEOUT")
+		if err != nil || defaultTimeout == nil {
+			defaultTimeout = new(int64)
+		}
+
+		cmd.Flags().IntVarP(&cmdData.Timeout, "timeout", "t", int(*defaultTimeout), "Resources tracking timeout in seconds ($WERF_TIMEOUT by default)")
+		common.SetupSaveUninstallReport(&commonCmdData, cmd)
+		common.SetupUninstallReportPath(&commonCmdData, cmd)
+		common.SetupUninstallGraphPath(&commonCmdData, cmd)
+	} else {
+		cmd.Flags().BoolVarP(&cmdData.WithHooks, "with-hooks", "", util.GetBoolEnvironmentDefaultTrue("WERF_WITH_HOOKS"), "Delete Helm Release hooks getting from existing revisions (default $WERF_WITH_HOOKS or true)")
+	}
 
 	return cmd
 }
@@ -171,28 +187,65 @@ func runDismiss(ctx context.Context) error {
 		return fmt.Errorf("get release name and namespace: %w", err)
 	}
 
-	ctx = action.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultReleaseUninstallLogLevel), action.SetupLoggingOptions{
+	ctx = action.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultLegacyReleaseUninstallLogLevel), action.SetupLoggingOptions{
 		ColorMode: *commonCmdData.LogColorMode,
 	})
 
-	if err := action.ReleaseUninstall(ctx, releaseName, releaseNamespace, action.ReleaseUninstallOptions{
-		NoDeleteHooks:              !cmdData.WithHooks,
-		DeleteReleaseNamespace:     cmdData.WithNamespace,
-		KubeAPIServerName:          *commonCmdData.KubeApiServer,
-		KubeBurstLimit:             *commonCmdData.KubeBurstLimit,
-		KubeCAPath:                 *commonCmdData.KubeCaPath,
-		KubeConfigBase64:           *commonCmdData.KubeConfigBase64,
-		KubeConfigPaths:            append([]string{*commonCmdData.KubeConfig}, *commonCmdData.KubeConfigPathMergeList...),
-		KubeContext:                *commonCmdData.KubeContext,
-		KubeQPSLimit:               *commonCmdData.KubeQpsLimit,
-		KubeSkipTLSVerify:          *commonCmdData.SkipTlsVerifyKube,
-		KubeTLSServerName:          *commonCmdData.KubeTlsServer,
-		KubeToken:                  *commonCmdData.KubeToken,
-		ProgressTablePrintInterval: time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
-		ReleaseHistoryLimit:        *commonCmdData.ReleasesHistoryMax,
-		ReleaseStorageDriver:       os.Getenv("HELM_DRIVER"),
-	}); err != nil {
-		return fmt.Errorf("release uninstall: %w", err)
+	if util.GetBoolEnvironmentDefaultFalse("WERF_EXPERIMENT_NEW_DISMISS") {
+		var uninstallReportPath string
+		if common.GetSaveUninstallReport(&commonCmdData) {
+			uninstallReportPath, err = common.GetUninstallReportPath(&commonCmdData)
+			if err != nil {
+				return fmt.Errorf("get uninstall report path: %w", err)
+			}
+		}
+
+		if err := action.ReleaseUninstall(ctx, releaseName, releaseNamespace, action.ReleaseUninstallOptions{
+			DeleteReleaseNamespace:     cmdData.WithNamespace,
+			KubeAPIServerName:          *commonCmdData.KubeApiServer,
+			KubeBurstLimit:             *commonCmdData.KubeBurstLimit,
+			KubeCAPath:                 *commonCmdData.KubeCaPath,
+			KubeConfigBase64:           *commonCmdData.KubeConfigBase64,
+			KubeConfigPaths:            append([]string{*commonCmdData.KubeConfig}, *commonCmdData.KubeConfigPathMergeList...),
+			KubeContext:                *commonCmdData.KubeContext,
+			KubeQPSLimit:               *commonCmdData.KubeQpsLimit,
+			KubeSkipTLSVerify:          *commonCmdData.SkipTlsVerifyKube,
+			KubeTLSServerName:          *commonCmdData.KubeTlsServer,
+			KubeToken:                  *commonCmdData.KubeToken,
+			NetworkParallelism:         common.GetNetworkParallelism(&commonCmdData),
+			NoProgressTablePrint:       *commonCmdData.StatusProgressPeriodSeconds == -1,
+			ProgressTablePrintInterval: time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
+			ReleaseHistoryLimit:        *commonCmdData.ReleasesHistoryMax,
+			ReleaseStorageDriver:       os.Getenv("HELM_DRIVER"),
+			TrackCreationTimeout:       time.Duration(cmdData.Timeout) * time.Second,
+			TrackDeletionTimeout:       time.Duration(cmdData.Timeout) * time.Second,
+			TrackReadinessTimeout:      time.Duration(cmdData.Timeout) * time.Second,
+			UninstallGraphPath:         common.GetUninstallGraphPath(&commonCmdData),
+			UninstallReportPath:        uninstallReportPath,
+		}); err != nil {
+			return fmt.Errorf("release uninstall: %w", err)
+		}
+	} else {
+		if err := action.LegacyReleaseUninstall(ctx, releaseName, releaseNamespace, action.LegacyReleaseUninstallOptions{
+			NoDeleteHooks:              !cmdData.WithHooks,
+			DeleteReleaseNamespace:     cmdData.WithNamespace,
+			KubeAPIServerName:          *commonCmdData.KubeApiServer,
+			KubeBurstLimit:             *commonCmdData.KubeBurstLimit,
+			KubeCAPath:                 *commonCmdData.KubeCaPath,
+			KubeConfigBase64:           *commonCmdData.KubeConfigBase64,
+			KubeConfigPaths:            append([]string{*commonCmdData.KubeConfig}, *commonCmdData.KubeConfigPathMergeList...),
+			KubeContext:                *commonCmdData.KubeContext,
+			KubeQPSLimit:               *commonCmdData.KubeQpsLimit,
+			KubeSkipTLSVerify:          *commonCmdData.SkipTlsVerifyKube,
+			KubeTLSServerName:          *commonCmdData.KubeTlsServer,
+			KubeToken:                  *commonCmdData.KubeToken,
+			NetworkParallelism:         common.GetNetworkParallelism(&commonCmdData),
+			ProgressTablePrintInterval: time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
+			ReleaseHistoryLimit:        *commonCmdData.ReleasesHistoryMax,
+			ReleaseStorageDriver:       os.Getenv("HELM_DRIVER"),
+		}); err != nil {
+			return fmt.Errorf("release uninstall: %w", err)
+		}
 	}
 
 	return nil

@@ -5,6 +5,7 @@ import (
 	"io"
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
+	"github.com/google/go-containerregistry/pkg/v1/mutate"
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/image"
@@ -89,23 +90,34 @@ func (r *DockerRegistryTracer) PushImage(ctx context.Context, reference string, 
 	return
 }
 
-func (r *DockerRegistryTracer) MutateAndPushImage(ctx context.Context, sourceReference, destinationReference string, mutateConfigFunc func(v1.Config) (v1.Config, error)) (err error) {
-	logboek.Context(ctx).Default().LogProcess("DockerRegistryTracer.MutateAndPushImage %q -> %q", sourceReference, destinationReference).Do(func() {
+func (r *DockerRegistryTracer) MutateAndPushImageLayers(ctx context.Context, sourceReference, destinationReference string, f func(context.Context, []v1.Layer) ([]mutate.Addendum, error)) (err error) {
+	logboek.Context(ctx).Default().LogProcess("DockerRegistryTracer.MutateAndPushImageLayers %q -> %q", sourceReference, destinationReference).Do(func() {
 		if r.DockerRegistry != nil {
-			err = r.DockerRegistry.MutateAndPushImage(ctx, sourceReference, destinationReference, mutateConfigFunc)
+			err = r.DockerRegistry.MutateAndPushImageLayers(ctx, sourceReference, destinationReference, f)
 		} else {
-			err = r.DockerRegistryApi.MutateAndPushImage(ctx, sourceReference, destinationReference, mutateConfigFunc)
+			err = r.DockerRegistryApi.MutateAndPushImageLayers(ctx, sourceReference, destinationReference, f)
 		}
 	})
 	return
 }
 
-func (r *DockerRegistryTracer) MutateAndPushImageConfigFile(ctx context.Context, sourceReference, destinationReference string, mutateManifestConfigFunc func(cfg v1.ConfigFile) (v1.ConfigFile, error)) (err error) {
-	logboek.Context(ctx).Default().LogProcess("DockerRegistryTracer.MutateAndPushImage %q -> %q", sourceReference, destinationReference).Do(func() {
+func (r *DockerRegistryTracer) MutateAndPushImageConfig(ctx context.Context, sourceReference, destinationReference string, f func(ctx context.Context, cfg v1.Config) (v1.Config, error)) (err error) {
+	logboek.Context(ctx).Default().LogProcess("DockerRegistryTracer.MutateAndPushImageConfig %q -> %q", sourceReference, destinationReference).Do(func() {
 		if r.DockerRegistry != nil {
-			err = r.DockerRegistry.MutateAndPushImageConfigFile(ctx, sourceReference, destinationReference, mutateManifestConfigFunc)
+			err = r.DockerRegistry.MutateAndPushImageConfig(ctx, sourceReference, destinationReference, f)
 		} else {
-			err = r.DockerRegistryApi.MutateAndPushImageConfigFile(ctx, sourceReference, destinationReference, mutateManifestConfigFunc)
+			err = r.DockerRegistryApi.MutateAndPushImageConfig(ctx, sourceReference, destinationReference, f)
+		}
+	})
+	return
+}
+
+func (r *DockerRegistryTracer) MutateAndPushImageConfigFile(ctx context.Context, sourceReference, destinationReference string, f func(ctx context.Context, cfg *v1.ConfigFile) (*v1.ConfigFile, error)) (err error) {
+	logboek.Context(ctx).Default().LogProcess("DockerRegistryTracer.MutateAndPushImageConfigFile %q -> %q", sourceReference, destinationReference).Do(func() {
+		if r.DockerRegistry != nil {
+			err = r.DockerRegistry.MutateAndPushImageConfigFile(ctx, sourceReference, destinationReference, f)
+		} else {
+			err = r.DockerRegistryApi.MutateAndPushImageConfigFile(ctx, sourceReference, destinationReference, f)
 		}
 	})
 	return

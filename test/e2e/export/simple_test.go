@@ -21,7 +21,7 @@ type simpleTestOptions struct {
 
 var _ = Describe("Simple export", Label("e2e", "export", "simple"), func() {
 	DescribeTable("should succeed and export images",
-		func(opts simpleTestOptions) {
+		func(ctx SpecContext, opts simpleTestOptions) {
 			By("initializating")
 			{
 				setupEnv()
@@ -29,7 +29,7 @@ var _ = Describe("Simple export", Label("e2e", "export", "simple"), func() {
 				fixtureRelPath := "simple"
 
 				By("preparing test repo")
-				SuiteData.InitTestRepo(repoDirname, fixtureRelPath)
+				SuiteData.InitTestRepo(ctx, repoDirname, fixtureRelPath)
 
 				By("running export")
 				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
@@ -40,7 +40,7 @@ var _ = Describe("Simple export", Label("e2e", "export", "simple"), func() {
 					CustomLabels: opts.CustomLabels,
 				})
 
-				exportOut := werfProject.Export(&werf.ExportOptions{
+				exportOut := werfProject.Export(ctx, &werf.ExportOptions{
 					CommonOptions: werf.CommonOptions{
 						ExtraArgs: exportArgs,
 					},

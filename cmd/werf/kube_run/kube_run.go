@@ -203,6 +203,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	cmd.Flags().StringArrayVarP(&cmdData.CopyTo, "copy-to", "", []string{}, "Copy file/dir from local machine to container before user command execution. Example: \"from:/to/file\". Can be specified multiple times. Can also be defined with \"$WERF_COPY_TO_*\", e.g. \"WERF_COPY_TO_1=from:to\".")
 
 	commonCmdData.SetupSkipImageSpecStage(cmd)
+	commonCmdData.SetupDebugTemplates(cmd)
 
 	return cmd
 }
@@ -296,8 +297,6 @@ func runMain(ctx context.Context) error {
 			if err := run(ctx, pod, secret, namespace, werfConfig, containerBackend, giterminismManager); err != nil {
 				return err
 			}
-
-			cleanupResources(ctx, pod, secret, namespace)
 
 			return nil
 		})
@@ -490,7 +489,7 @@ func createPod(ctx context.Context, namespace, pod, image, secret string, extraA
 
 	if err := cmd.Run(); err != nil {
 		if errors.Is(ctx.Err(), context.Canceled) {
-			graceful.Terminate(err, werfExec.ExitCode(err))
+			graceful.Terminate(ctx, err, werfExec.ExitCode(err))
 		}
 		return fmt.Errorf("error running pod: %w", err)
 	}
@@ -644,7 +643,7 @@ func getPodPhase(ctx context.Context, namespace, pod string, extraArgs []string)
 
 	if err := cmd.Run(); err != nil {
 		if errors.Is(ctx.Err(), context.Canceled) {
-			graceful.Terminate(err, werfExec.ExitCode(err))
+			graceful.Terminate(ctx, err, werfExec.ExitCode(err))
 		}
 		return "", fmt.Errorf("error getting pod %s/%s spec: %w", namespace, pod, err)
 	}
@@ -666,7 +665,7 @@ func isPodReady(ctx context.Context, namespace, pod string, extraArgs []string) 
 
 	if err := cmd.Run(); err != nil {
 		if errors.Is(ctx.Err(), context.Canceled) {
-			graceful.Terminate(err, werfExec.ExitCode(err))
+			graceful.Terminate(ctx, err, werfExec.ExitCode(err))
 		}
 		return false, fmt.Errorf("error getting pod %s/%s spec: %w", namespace, pod, err)
 	}
@@ -680,6 +679,8 @@ func isPodReady(ctx context.Context, namespace, pod string, extraArgs []string) 
 }
 
 func copyFromPod(ctx context.Context, namespace, pod, container string, copyFrom copyFromTo, extraArgs []string) {
+	ctx = context.WithoutCancel(ctx)
+
 	logboek.Context(ctx).LogF("Copying %q from pod to %q ...\n", copyFrom.Src, copyFrom.Dst)
 
 	args := []string{
@@ -696,9 +697,6 @@ func copyFromPod(ctx context.Context, namespace, pod, container string, copyFrom
 	}
 
 	if err := cmd.Run(); err != nil {
-		if errors.Is(ctx.Err(), context.Canceled) {
-			graceful.Terminate(err, werfExec.ExitCode(err))
-		}
 		logboek.Context(ctx).Warn().LogF("Error copying %q from pod %s/s: %s\n", copyFrom.Src, namespace, pod, err)
 	}
 }
@@ -721,7 +719,7 @@ func copyToPod(ctx context.Context, namespace, pod, container string, copyFrom c
 
 	if err := cmd.Run(); err != nil {
 		if errors.Is(ctx.Err(), context.Canceled) {
-			graceful.Terminate(err, werfExec.ExitCode(err))
+			graceful.Terminate(ctx, err, werfExec.ExitCode(err))
 		}
 		return fmt.Errorf("error copying %q to pod %s/%s: %w", copyFrom.Src, namespace, pod, err)
 	}
@@ -730,6 +728,8 @@ func copyToPod(ctx context.Context, namespace, pod, container string, copyFrom c
 }
 
 func stopContainer(ctx context.Context, namespace, pod, container string, extraArgs []string) {
+	ctx = context.WithoutCancel(ctx)
+
 	logboek.Context(ctx).LogF("Stopping container %q in pod ...\n", container)
 
 	args := []string{
@@ -747,15 +747,33 @@ func stopContainer(ctx context.Context, namespace, pod, container string, extraA
 	}
 
 	if err := cmd.Run(); err != nil {
-		if errors.Is(ctx.Err(), context.Canceled) {
-			graceful.Terminate(err, werfExec.ExitCode(err))
-		}
 		logboek.Context(ctx).Warn().LogF("Error stopping service container %s/%s/%s for copying files: %s\n", namespace, pod, container, err)
 	}
 }
 
+func signalContainer(ctx context.Context, namespace, pod, container string, extraArgs []string) error {
+	ctx = context.WithoutCancel(ctx)
+
+	logboek.Context(ctx).LogF("Signal container %q in pod ...\n", container)
+
+	args := []string{
+		"exec", pod, "-q", "--pod-running-timeout", "5s", "-c", container,
+	}
+
+	args = append(args, extraArgs...)
+	args = append(args, "--", "pkill", "-P", "0")
+
+	cmd := werfExec.PrepareGracefulCancellation(util.ExecKubectlCmdContext(ctx, args...))
+
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("signal container error: %w", err)
+	}
+
+	return nil
+}
+
 func execCommandInPod(ctx context.Context, namespace, pod, container string, command, extraArgs []string) error {
-	logboek.Context(ctx).LogF("Execing into pod ...\n")
+	logboek.Context(ctx).LogF("Executing into pod ...\n")
 
 	args := []string{
 		"exec", pod, "-q", "--pod-running-timeout", "5h", "-c", container,
@@ -775,6 +793,9 @@ func execCommandInPod(ctx context.Context, namespace, pod, container string, com
 	args = append(args, command...)
 
 	cmd := werfExec.PrepareGracefulCancellation(util.ExecKubectlCmdContext(ctx, args...))
+	cmd.Cancel = func() error {
+		return signalContainer(ctx, namespace, pod, container, extraArgs)
+	}
 
 	if *commonCmdData.DryRun {
 		fmt.Println(cmd.String())
@@ -783,7 +804,7 @@ func execCommandInPod(ctx context.Context, namespace, pod, container string, com
 
 	if err := cmd.Run(); err != nil {
 		if errors.Is(ctx.Err(), context.Canceled) {
-			graceful.Terminate(err, werfExec.ExitCode(err))
+			graceful.Terminate(ctx, err, werfExec.ExitCode(err))
 		}
 		return fmt.Errorf("error running command %q in pod %s/%s: %w", cmd, namespace, pod, err)
 	}
@@ -792,6 +813,8 @@ func execCommandInPod(ctx context.Context, namespace, pod, container string, com
 }
 
 func cleanupResources(ctx context.Context, pod, secret, namespace string) {
+	ctx = context.WithoutCancel(ctx)
+
 	if !cmdData.Rm || *commonCmdData.DryRun {
 		return
 	}

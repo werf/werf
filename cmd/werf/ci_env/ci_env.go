@@ -75,12 +75,13 @@ Currently supported only GitLab (gitlab) and GitHub (github) CI systems`,
 	commonCmdData.SetupPlatform(cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
+	commonCmdData.SetupDebugTemplates(cmd)
 
 	cmd.Flags().BoolVarP(&cmdData.AllowRegistryLogin, "login-to-registry", "", util.GetBoolEnvironmentDefaultTrue("WERF_LOGIN_TO_REGISTRY"), "Log in to CI-specific registry automatically if possible (default $WERF_LOGIN_TO_REGISTRY).")
 	cmd.Flags().BoolVarP(&cmdData.AsFile, "as-file", "", util.GetBoolEnvironmentDefaultFalse("WERF_AS_FILE"), "Create the script and print the path for sourcing (default $WERF_AS_FILE).")
 	cmd.Flags().BoolVarP(&cmdData.AsEnvFile, "as-env-file", "", util.GetBoolEnvironmentDefaultFalse("WERF_AS_ENV_FILE"), "Create the .env file and print the path for sourcing (default $WERF_AS_ENV_FILE).")
 	cmd.Flags().StringVarP(&cmdData.OutputFilePath, "output-file-path", "o", os.Getenv("WERF_OUTPUT_FILE_PATH"), "Write to custom file (default $WERF_OUTPUT_FILE_PATH).")
-	cmd.Flags().StringVarP(&cmdData.Shell, "shell", "", os.Getenv("WERF_SHELL"), "Set to cmdexe, powershell or use the default behaviour that is compatible with any unix shell (default $WERF_SHELL).")
+	cmd.Flags().StringVarP(&cmdData.Shell, "shell", "", os.Getenv("WERF_SHELL"), "Set to cmdexe, powershell or use the default behavior that is compatible with any unix shell (default $WERF_SHELL).")
 	cmd.Flags().StringVarP(&cmdData.TaggingStrategyStub, "tagging-strategy", "", "", `stub`)
 	cmd.Flag("tagging-strategy").Hidden = true
 

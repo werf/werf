@@ -21,18 +21,10 @@ func init() {
 }
 
 var _ = XDescribe("persistent stage digests", func() {
-	BeforeEach(func() {
-		utils.RunSucceedCommand(
-			SuiteData.TestDirPath,
-			"git",
-			"clone", werfRepositoryDir, SuiteData.TestDirPath,
-		)
+	BeforeEach(func(ctx SpecContext) {
+		utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "clone", werfRepositoryDir, SuiteData.TestDirPath)
 
-		utils.RunSucceedCommand(
-			SuiteData.TestDirPath,
-			"git",
-			"checkout", "-b", "integration-digest-test", "v1.0.10",
-		)
+		utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "checkout", "-b", "integration-digest-test", "v1.0.10")
 
 		utils.CopyIn(utils.FixturePath("digest"), SuiteData.TestDirPath)
 	})
@@ -44,8 +36,9 @@ var _ = XDescribe("persistent stage digests", func() {
 		skipOnWindows          bool
 	}
 
-	DescribeTable("should not be changed", func(e entry) {
+	DescribeTable("should not be changed", func(ctx SpecContext, e entry) {
 		output, err := utils.RunCommand(
+			ctx,
 			SuiteData.TestDirPath,
 			SuiteData.WerfBinPath,
 			"build", e.imageName,

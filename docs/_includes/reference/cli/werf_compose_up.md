@@ -101,6 +101,8 @@ werf compose up [IMAGE_NAME...] [options] [--docker-compose-options="OPTIONS"] [
             in working directory)
       --container-registry-mirror=[]
             (Buildah-only) Use specified mirrors for docker.io
+      --debug-templates=false
+            Enable debug mode for Go templates (default $WERF_DEBUG_TEMPLATES or false)
       --dev=false
             Enable development mode (default $WERF_DEV).
             The mode allows working with project files without doing redundant commits during       
@@ -133,6 +135,8 @@ werf compose up [IMAGE_NAME...] [options] [--docker-compose-options="OPTIONS"] [
             Indicate what the command would do without actually doing that (default $WERF_DRY_RUN)
       --env=""
             Use specified environment (default $WERF_ENV)
+      --final-images-only=false
+            Process final images only ($WERF_FINAL_IMAGES_ONLY or false by default)
       --final-repo=""
             Container registry storage address (default $WERF_FINAL_REPO)
       --final-repo-container-registry=""

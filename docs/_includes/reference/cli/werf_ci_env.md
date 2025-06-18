@@ -41,6 +41,8 @@ werf ci-env CI_SYSTEM [options]
       --config-templates-dir=""
             Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf   
             in working directory)
+      --debug-templates=false
+            Enable debug mode for Go templates (default $WERF_DEBUG_TEMPLATES or false)
       --dev=false
             Enable development mode (default $WERF_DEV).
             The mode allows working with project files without doing redundant commits during       
@@ -105,7 +107,7 @@ werf ci-env CI_SYSTEM [options]
             Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT]     
             ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)
       --shell=""
-            Set to cmdexe, powershell or use the default behaviour that is compatible with any unix 
+            Set to cmdexe, powershell or use the default behavior that is compatible with any unix  
             shell (default $WERF_SHELL).
       --tmp-dir=""
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)

@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/werf/3p-helm/pkg/chart"
+	"github.com/werf/3p-helm/pkg/engine"
 	"github.com/werf/3p-helm/pkg/werf/file"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
@@ -71,6 +72,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	})
 
 	commonCmdData.SetupWithoutImages(cmd)
+	commonCmdData.SetupFinalImagesOnly(cmd, true)
 
 	common.SetupDir(&commonCmdData, cmd)
 	common.SetupGitWorkTree(&commonCmdData, cmd)
@@ -156,6 +158,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupNetworkParallelism(&commonCmdData, cmd)
 	common.SetupKubeQpsLimit(&commonCmdData, cmd)
 	common.SetupKubeBurstLimit(&commonCmdData, cmd)
+	common.SetupForceAdoption(&commonCmdData, cmd)
 
 	cmd.Flags().BoolVarP(&cmdData.Validate, "validate", "", util.GetBoolEnvironmentDefaultFalse("WERF_VALIDATE"), "Validate your manifests against the Kubernetes cluster you are currently pointing at (default $WERF_VALIDATE)")
 	cmd.Flags().BoolVarP(&cmdData.IncludeCRDs, "include-crds", "", util.GetBoolEnvironmentDefaultTrue("WERF_INCLUDE_CRDS"), "Include CRDs in the templated output (default $WERF_INCLUDE_CRDS)")
@@ -164,6 +167,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	cmd.Flags().StringArrayVarP(&cmdData.ShowOnly, "show-only", "s", []string{}, "only show manifests rendered from the given templates")
 
 	commonCmdData.SetupSkipImageSpecStage(cmd)
+	commonCmdData.SetupDebugTemplates(cmd)
 
 	return cmd
 }
@@ -203,7 +207,7 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 		return fmt.Errorf("unable to load werf config: %w", err)
 	}
 
-	imagesToProcess, err := config.NewImagesToProcess(werfConfig, imageNameListFromArgs, true, *commonCmdData.WithoutImages)
+	imagesToProcess, err := config.NewImagesToProcess(werfConfig, imageNameListFromArgs, *commonCmdData.FinalImagesOnly, *commonCmdData.WithoutImages)
 	if err != nil {
 		return err
 	}
@@ -270,7 +274,7 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 			return err
 		}
 
-		// Override default behaviour:
+		// Override default behavior:
 		// Print build logs on error by default.
 		// Always print logs if --log-verbose is specified (level.Info).
 		isVerbose := logboek.Context(ctx).IsAcceptedLevel(level.Default)
@@ -395,6 +399,7 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 		ColorMode:      action.LogColorModeOff,
 		LogIsParseable: true,
 	})
+	engine.Debug = *commonCmdData.DebugTemplates
 
 	if _, err := action.ChartRender(ctx, action.ChartRenderOptions{
 		ChartAppVersion:              common.GetHelmChartConfigAppVersion(werfConfig),
@@ -410,6 +415,7 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 		ExtraAnnotations:             extraAnnotations,
 		ExtraLabels:                  extraLabels,
 		ExtraRuntimeAnnotations:      serviceAnnotations,
+		ForceAdoption:                *commonCmdData.ForceAdoption,
 		KubeAPIServerName:            *commonCmdData.KubeApiServer,
 		KubeBurstLimit:               *commonCmdData.KubeBurstLimit,
 		KubeCAPath:                   *commonCmdData.KubeCaPath,

@@ -12,6 +12,9 @@ entries:
               - title: Overview
                 url: /usage/project_configuration/overview.html
 
+              - title: werf.yaml template engine
+                url: /usage/project_configuration/werf_yaml_template_engine.html
+
               - title: Giterminism
                 url: /usage/project_configuration/giterminism.html
 
@@ -57,6 +60,9 @@ entries:
               - title: Overview
                 url: /usage/deploy/overview.html
 
+              - title: Authentication and authorization
+                url: /usage/deploy/authentication.html
+
               - title: Charts and dependencies
                 url: /usage/deploy/charts.html
 
@@ -80,9 +86,6 @@ entries:
 
               - title: Resource tracking
                 url: /usage/deploy/tracking.html
-
-              - title: Authentication and authorization
-                url: /usage/deploy/authentication.html
 
               - title: Release management
                 url: /usage/deploy/releases.html
@@ -113,9 +116,6 @@ entries:
         f:
           - title: werf.yaml
             url: /reference/werf_yaml.html
-
-          - title: werf.yaml template engine
-            url: /reference/werf_yaml_template_engine.html
 
           - title: werf-giterminism.yaml
             url: /reference/werf_giterminism_yaml.html
@@ -157,6 +157,9 @@ entries:
             f:
               - title: Обзор
                 url: /usage/project_configuration/overview.html
+
+              - title: Шаблонизатор werf.yaml
+                url: /usage/project_configuration/werf_yaml_template_engine.html
 
               - title: Гитерминизм
                 url: /usage/project_configuration/giterminism.html
@@ -203,6 +206,9 @@ entries:
               - title: Обзор
                 url: /usage/deploy/overview.html
 
+              - title: Аутентификация и авторизация
+                url: /usage/deploy/authentication.html
+
               - title: Чарты и зависимости
                 url: /usage/deploy/charts.html
 
@@ -226,9 +232,6 @@ entries:
 
               - title: Отслеживание ресурсов
                 url: /usage/deploy/tracking.html
-
-              - title: Аутентификация и авторизация
-                url: /usage/deploy/authentication.html
 
               - title: Управление релизами
                 url: /usage/deploy/releases.html
@@ -259,9 +262,6 @@ entries:
         f:
           - title: werf.yaml
             url: /reference/werf_yaml.html
-
-          - title: Шаблонизатор werf.yaml
-            url: /reference/werf_yaml_template_engine.html
 
           - title: werf-giterminism.yaml
             url: /reference/werf_giterminism_yaml.html

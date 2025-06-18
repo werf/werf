@@ -106,6 +106,8 @@ werf converge --repo registry.mydomain.com/web --env production
             in working directory)
       --container-registry-mirror=[]
             (Buildah-only) Use specified mirrors for docker.io
+      --debug-templates=false
+            Enable debug mode for Go templates (default $WERF_DEBUG_TEMPLATES or false)
       --deploy-graph-path=""
             Save deploy graph path to the specified file (by default $WERF_DEPLOY_GRAPH_PATH).      
             Extension must be .dot or not specified. If extension not specified, then .dot is used
@@ -143,6 +145,8 @@ werf converge --repo registry.mydomain.com/web --env production
             repo, to pull base images
       --env=""
             Use specified environment (default $WERF_ENV)
+      --final-images-only=true
+            Process final images only ($WERF_FINAL_IMAGES_ONLY or true by default)
       --final-repo=""
             Container registry storage address (default $WERF_FINAL_REPO)
       --final-repo-container-registry=""
@@ -170,6 +174,9 @@ werf converge --repo registry.mydomain.com/web --env production
             The mode allows restarting the command on a new commit.
             In development mode (--dev), werf restarts the command on any changes (including        
             untracked files) in the git repository worktree
+      --force-adoption=false
+            Always adopt resources, even if they belong to a different Helm release (default        
+            $WERF_FORCE_ADOPTION or false)
       --git-work-tree=""
             Use specified git work tree dir (default $WERF_WORK_TREE or lookup for directory that   
             contains .git in the current or parent directories)

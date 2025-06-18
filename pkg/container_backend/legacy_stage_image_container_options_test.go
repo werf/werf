@@ -2,7 +2,6 @@ package container_backend
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"strings"
 
@@ -21,9 +20,7 @@ type commitChangesAndRunArgsTest struct {
 }
 
 var _ = Describe("LegacyStageImageContainerOptions", func() {
-	DescribeTable("Docker server commit changes and run args generator", func(tst commitChangesAndRunArgsTest) {
-		ctx := context.Background()
-
+	DescribeTable("Docker server commit changes and run args generator", func(ctx SpecContext, tst commitChangesAndRunArgsTest) {
 		commitChanges := tst.Options.toCommitChanges(tst.CommitChangeOptions)
 
 		prepareCommitChanges, err := tst.Options.prepareCommitChanges(ctx, tst.CommitChangeOptions)

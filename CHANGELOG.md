@@ -1,5 +1,53 @@
 # Changelog
 
+### [2.37.1](https://www.github.com/werf/werf/compare/v2.37.0...v2.37.1) (2025-06-05)
+
+
+### Bug Fixes
+
+* **release, werf-in-image:** fix overlayfs errors ([5d77bbd](https://www.github.com/werf/werf/commit/5d77bbd4aeef74d6e7ac6a99b6a0c4e4027aaf78))
+
+## [2.37.0](https://www.github.com/werf/werf/compare/v2.36.4...v2.37.0) (2025-06-05)
+
+
+### Features
+
+* **release, werf-in-image:** add user for GitHub Actions compatibility ([da3489e](https://www.github.com/werf/werf/commit/da3489e8b7864fa4ff495483219ad7ea08ae7008))
+* **deploy:** new experimental `werf dismiss` ([274ff85](https://www.github.com/werf/werf/commit/274ff851e1dae4e44bed352dba7e185eee6bc602))
+
+
+### Bug Fixes
+
+* **kube-run:** handle SIGINT/SIGTERM properly (v2) ([#6893](https://www.github.com/werf/werf/issues/6893)) ([315be8b](https://www.github.com/werf/werf/commit/315be8ba21c2b75aa6aa226d79a31af3d4b87120))
+
+### [2.36.4](https://www.github.com/werf/werf/compare/v2.36.3...v2.36.4) (2025-05-30)
+
+
+### Bug Fixes
+
+* **build, compose, run, kube-run, plan:** respect graceful shutdown in follow mode ([42a82af](https://www.github.com/werf/werf/commit/42a82af8fc92ab11609b56adbb6c52bd79e5ea54))
+* **deploy:** hide traces from `--log-debug` output by default ([0d03bcf](https://www.github.com/werf/werf/commit/0d03bcf12d54f231529403098ce2ef1cd094b037))
+* handle interruptions during git clone and auto host cleanup gracefully ([#6887](https://www.github.com/werf/werf/issues/6887)) ([0d94e79](https://www.github.com/werf/werf/commit/0d94e798a813b81ea434bc4e5d84fb7766fb405e))
+* **kube-run:** handle SIGINT/SIGTERM properly ([#6888](https://www.github.com/werf/werf/issues/6888)) ([1aa8d54](https://www.github.com/werf/werf/commit/1aa8d54fbbb0c7fff4b6cecc532813bd5fa7139c))
+* make termination context-bounded ([#6885](https://www.github.com/werf/werf/issues/6885)) ([600b7a5](https://www.github.com/werf/werf/commit/600b7a554e8ee388e2ced85e7fdf8344e99a2234))
+
+### [2.36.3](https://www.github.com/werf/werf/compare/v2.36.2...v2.36.3) (2025-05-23)
+
+
+### Bug Fixes
+
+* **deploy:** improve values handling and add more trace logging; undo many reverts ([6bdca4a](https://www.github.com/werf/werf/commit/6bdca4a4b15cbc9590865d982d6ef03ff0ec6cd2))
+
+### [2.36.2](https://www.github.com/werf/werf/compare/v2.36.1...v2.36.2) (2025-05-22)
+
+
+### Bug Fixes
+
+* **build, stapel:** fix service git apply patch failed ([#6871](https://www.github.com/werf/werf/issues/6871)) ([31d3b88](https://www.github.com/werf/werf/commit/31d3b88f45b6b1e770396d167d7033e47143e95d))
+* **deploy:** wrong values rendered (many reverts) ([1fc5833](https://www.github.com/werf/werf/commit/1fc583348d7a90769531fc2fece00919b6b85314))
+* **giterminism:** fix error in case of using invalid git worktree ([#6867](https://www.github.com/werf/werf/issues/6867)) ([48596ae](https://www.github.com/werf/werf/commit/48596ae69112a564edd4b84086c3e5ce2cd82ea8))
+* **stapel:** fix git apply patch error handling ([81314a8](https://www.github.com/werf/werf/commit/81314a8189cb07a622f7ef3c030a1ff1b3c75b77))
+
 ### [2.36.1](https://www.github.com/werf/werf/compare/v2.36.0...v2.36.1) (2025-05-19)
 
 

@@ -1,13 +1,12 @@
 package utils
 
-import "strings"
+import (
+	"context"
+	"strings"
+)
 
-func GetBuiltImageLastStageImageName(testDirPath, werfBinPath, imageName string) string {
-	stageImageName := SucceedCommandOutputString(
-		testDirPath,
-		werfBinPath,
-		"stage", "image", imageName,
-	)
+func GetBuiltImageLastStageImageName(ctx context.Context, testDirPath, werfBinPath, imageName string) string {
+	stageImageName := SucceedCommandOutputString(ctx, testDirPath, werfBinPath, "stage", "image", imageName)
 
 	return strings.TrimSpace(stageImageName)
 }

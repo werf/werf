@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/werf/common-go/pkg/graceful"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
@@ -145,6 +146,9 @@ func RunHostCleanup(ctx context.Context, backend container_backend.ContainerBack
 }
 
 func shouldRunAutoHostCleanup(ctx context.Context, backend container_backend.ContainerBackend, options AutoHostCleanupOptions) (bool, error) {
+	if graceful.IsTerminating(ctx) {
+		return false, nil
+	}
 	// host cleanup is not supported for certain project
 	if options.ProjectName != nil && *options.ProjectName != "" {
 		return false, nil

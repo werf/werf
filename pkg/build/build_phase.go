@@ -206,43 +206,9 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 		pair := imagesPairs[taskId]
 
 		name, images := pair.Unpair()
-		platforms := util.MapFuncToSlice(images, func(img *image.Image) string { return img.TargetPlatform })
-
-		// TODO: this target platforms assertion could be removed in future versions and now exists only as a additional self-testing code
-		var targetPlatforms []string
-		if len(forcedTargetPlatforms) > 0 {
-			targetPlatforms = forcedTargetPlatforms
-		} else {
-			targetName := name
-			nameParts := strings.SplitN(name, "/", 3)
-			if len(nameParts) == 3 && nameParts[1] == "stage" {
-				targetName = nameParts[0]
-			}
-
-			imageTargetPlatforms, err := phase.Conveyor.GetImageTargetPlatforms(targetName)
-			if err != nil {
-				return fmt.Errorf("invalid image %q target platforms: %w", name, err)
-			}
-			if len(imageTargetPlatforms) > 0 {
-				targetPlatforms = imageTargetPlatforms
-			} else {
-				targetPlatforms = commonTargetPlatforms
-			}
-		}
-
-	AssertAllTargetPlatformsPresent:
-		for _, targetPlatform := range targetPlatforms {
-			for _, platform := range platforms {
-				if targetPlatform == platform {
-					logboek.Context(ctx).Debug().LogF("Found image %q built for target platform %q\n", name, targetPlatform)
-					continue AssertAllTargetPlatformsPresent
-				}
-			}
-			panic(fmt.Sprintf("There is no image %q built for target platform %q. Please report a bug.", name, targetPlatform))
-		}
-
-		if len(targetPlatforms) != len(platforms) {
-			panic(fmt.Sprintf("We have built image %q for platforms %v, expected exactly these platforms: %v. Please report a bug.", name, platforms, targetPlatforms))
+		targetPlatforms, err := phase.targetPlatforms(ctx, forcedTargetPlatforms, commonTargetPlatforms, name, images)
+		if err != nil {
+			return err
 		}
 
 		if len(targetPlatforms) == 1 {
@@ -265,7 +231,7 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 				}
 			}
 		} else {
-			img := image.NewMultiplatformImage(name, images, taskId, len(images))
+			img := image.NewMultiplatformImage(name, images, taskId, len(imagesPairs))
 			phase.Conveyor.imagesTree.SetMultiplatformImage(img)
 
 			// TODO: Separate LocalStagesStorage and RepoStagesStorage interfaces, local should not include metadata publishing methods at all
@@ -299,6 +265,49 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 	}
 
 	return phase.createReport(ctx)
+}
+
+func (phase *BuildPhase) targetPlatforms(ctx context.Context, forcedTargetPlatforms, commonTargetPlatforms []string, name string, images []*image.Image) ([]string, error) {
+	// TODO: this target platforms assertion could be removed in future versions and now exists only as a additional self-testing code
+	var targetPlatforms []string
+	if len(forcedTargetPlatforms) > 0 {
+		targetPlatforms = forcedTargetPlatforms
+	} else {
+		targetName := name
+		nameParts := strings.SplitN(name, "/", 3)
+		if len(nameParts) == 3 && nameParts[1] == "stage" {
+			targetName = nameParts[0]
+		}
+
+		imageTargetPlatforms, err := phase.Conveyor.GetImageTargetPlatforms(targetName)
+		if err != nil {
+			return []string{}, fmt.Errorf("invalid image %q target platforms: %w", name, err)
+		}
+		if len(imageTargetPlatforms) > 0 {
+			targetPlatforms = imageTargetPlatforms
+		} else {
+			targetPlatforms = commonTargetPlatforms
+		}
+	}
+
+	platforms := util.MapFuncToSlice(images, func(img *image.Image) string { return img.TargetPlatform })
+
+AssertAllTargetPlatformsPresent:
+	for _, targetPlatform := range targetPlatforms {
+		for _, platform := range platforms {
+			if targetPlatform == platform {
+				logboek.Context(ctx).Debug().LogF("Found image %q built for target platform %q\n", name, targetPlatform)
+				continue AssertAllTargetPlatformsPresent
+			}
+		}
+		panic(fmt.Sprintf("There is no image %q built for target platform %q. Please report a bug.", name, targetPlatform))
+	}
+
+	if len(targetPlatforms) != len(platforms) {
+		panic(fmt.Sprintf("We have built image %q for platforms %v, expected exactly these platforms: %v. Please report a bug.", name, platforms, targetPlatforms))
+	}
+
+	return targetPlatforms, nil
 }
 
 func (phase *BuildPhase) publishFinalImage(ctx context.Context, name string, img *image.Image, finalStagesStorage storage.StagesStorage) error {
@@ -1199,22 +1208,18 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 
 		if err := logboek.Context(ctx).Default().LogProcess("Store stage into %s", phase.Conveyor.StorageManager.GetStagesStorage().String()).DoError(func() error {
 			if stg.IsMutable() {
-				prevImage := phase.StagesIterator.GetPrevBuiltImage(img, stg).Image.Name()
-				newImage := stageImage.Image.Name()
-				var registry docker_registry.Interface
 				switch phase.Conveyor.StorageManager.GetStagesStorage().(type) {
 				case *storage.RepoStagesStorage:
-					registry = phase.Conveyor.StorageManager.GetStagesStorage().(*storage.RepoStagesStorage).DockerRegistry
 				default:
-					return fmt.Errorf(`unable to build stage %q: local storage is not supported. Please specify a repo using the --repo flag or the WERF_REPO environment variable.
-
-Building a stage without a repo is not supported due to the excessive overhead caused by build backend limitations.
-To debug the build locally, consider running a local registry or skipping the imageSpec stage using the option --skip-image-spec-stage (WERF_SKIP_IMAGE_SPEC_STAGE).`, stg.Name())
+					err := ErrMutableStageLocalStorage
+					if stg.Name() == stage.ImageSpec {
+						err = ErrMutableStageLocalStorageImageSpec
+					}
+					return fmt.Errorf("unable to build stage %q: %w", stg.Name(), err)
 				}
 
-				err := imagePkg.MutateImageSpecConfigRepo(ctx, prevImage, newImage, *stageImage.Image.GetImageSpecConfig(), registry)
-				if err != nil {
-					return fmt.Errorf("error mutating image spec %s: %w", stg.Name(), err)
+				if err := stg.MutateImage(ctx, phase.Conveyor.StorageManager.GetStagesStorage().(*storage.RepoStagesStorage).DockerRegistry, phase.StagesIterator.PrevBuiltStage.GetStageImage(), stageImage); err != nil {
+					return fmt.Errorf("unable to mutate %s: %w", stg.Name(), err)
 				}
 			} else {
 				if err := phase.Conveyor.StorageManager.GetStagesStorage().StoreImage(ctx, stageImage.Image); err != nil {

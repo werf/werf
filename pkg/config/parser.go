@@ -5,17 +5,21 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"hash/adler32"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
 	"text/template"
+	"unicode"
 
 	"github.com/Masterminds/sprig/v3"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	"gopkg.in/yaml.v2"
 
+	"github.com/werf/3p-helm/pkg/engine"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
@@ -26,6 +30,7 @@ import (
 type WerfConfigOptions struct {
 	LogRenderedFilePath bool
 	Env                 string
+	DebugTemplates      bool
 }
 
 func RenderWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath string, imageNameList []string, giterminismManager giterminism_manager.Interface, opts WerfConfigOptions) error {
@@ -41,6 +46,7 @@ func RenderWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfCo
 			giterminismManager:                  giterminismManager,
 			env:                                 opts.Env,
 			includesConfigRelPath:               "", // default
+			debugTemplates:                      opts.DebugTemplates,
 		})
 	}
 	return renderSpecificImages(werfConfig, imageNameList)
@@ -48,6 +54,7 @@ func RenderWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfCo
 
 func renderWerfConfig(ctx context.Context, opts renderWerfConfigYamlOpts) error {
 	_, werfConfigRenderContent, err := renderWerfConfigYaml(ctx, opts)
+
 	if err != nil {
 		return err
 	}
@@ -77,9 +84,11 @@ func GetWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfConfi
 		customWerfConfigTemplatesDirRelPath: customWerfConfigTemplatesDirRelPath,
 		giterminismManager:                  giterminismManager,
 		env:                                 opts.Env,
+		debugTemplates:                      opts.DebugTemplates,
 	})
+
 	if err != nil {
-		return "", nil, err
+		return "", nil, fmt.Errorf("unable to render werf config: %w", err)
 	}
 
 	werfConfigRenderPath, err := tmp_manager.CreateWerfConfigRender(ctx)
@@ -200,11 +209,12 @@ type renderWerfConfigYamlOpts struct {
 	giterminismManager                  giterminism_manager.Interface
 	env                                 string
 	includesConfigRelPath               string
+	debugTemplates                      bool
 }
 
 func renderWerfConfigYaml(ctx context.Context, opts renderWerfConfigYamlOpts) (string, string, error) {
 	tmpl := template.New("werfConfig")
-	tmpl.Funcs(funcMap(tmpl, opts.giterminismManager))
+	tmpl.Funcs(funcMap(tmpl, opts.giterminismManager, opts.debugTemplates))
 
 	err := parseWerfConfigTemplatesDir(ctx, parseWerfConfigTemplatesDirOpts{
 		tmpl:                                tmpl,
@@ -250,8 +260,13 @@ func renderWerfConfigYaml(ctx context.Context, opts renderWerfConfigYamlOpts) (s
 	}
 
 	config, err := executeTemplate(tmpl, "werfConfig", templateData)
+	if err != nil {
+		return "", "", detailedTemplateError(tmpl, detailedTemplateErrorData{
+			templateName: "werfConfig",
+		}, debugTemplates, err)
+	}
 
-	return configPath, config, err
+	return configPath, config, nil
 }
 
 type parseWerfConfigOpts struct {
@@ -296,7 +311,7 @@ func addTemplate(tmpl *template.Template, templateName, templateContent string) 
 	return err
 }
 
-func funcMap(tmpl *template.Template, giterminismManager giterminism_manager.Interface) template.FuncMap {
+func funcMap(ctx context.Context, tmpl *template.Template, giterminismManager giterminism_manager.Interface, debug bool) template.FuncMap {
 	funcMap := sprig.TxtFuncMap()
 	delete(funcMap, "expandenv")
 
@@ -310,15 +325,37 @@ func funcMap(tmpl *template.Template, giterminismManager giterminism_manager.Int
 		return m, nil
 	}
 	funcMap["include"] = func(name string, data interface{}) (string, error) {
-		return executeTemplate(tmpl, name, data)
-	}
-	funcMap["tpl"] = func(templateContent string, data interface{}) (string, error) {
-		templateName := util.GenerateConsistentRandomString(10)
-		if err := addTemplate(tmpl, templateName, templateContent); err != nil {
-			return "", err
+		result, err := executeTemplate(tmpl, name, data)
+		if err != nil {
+			return "", detailedTemplateError(tmpl, detailedTemplateErrorData{
+				funcName:     "include",
+				templateName: name,
+			}, debug, err)
 		}
 
-		return executeTemplate(tmpl, templateName, data)
+		return result, nil
+	}
+	funcMap["tpl"] = func(templateContent string, data interface{}) (string, error) {
+		templateName := buildTplTemplateName(templateContent)
+
+		if err := addTemplate(tmpl, templateName, templateContent); err != nil {
+			return "", detailedTemplateError(tmpl, detailedTemplateErrorData{
+				funcName:        "tpl",
+				templateName:    templateName,
+				templateContent: templateContent,
+			}, debug, err)
+		}
+
+		result, err := executeTemplate(tmpl, templateName, data)
+		if err != nil {
+			return "", detailedTemplateError(tmpl, detailedTemplateErrorData{
+				funcName:        "tpl",
+				templateName:    templateName,
+				templateContent: templateContent,
+			}, debug, err)
+		}
+
+		return result, nil
 	}
 
 	funcMap["env"] = func(value interface{}, args ...string) (string, error) {
@@ -366,7 +403,86 @@ func funcMap(tmpl *template.Template, giterminismManager giterminism_manager.Int
 		return val, nil
 	}
 
+	// debug functions
+	funcMap["tpl_debug"] = func(templateContent string, data interface{}) (string, error) {
+		templateName := buildTplTemplateName(templateContent)
+
+		if err := addTemplate(tmpl, templateName, templateContent); err != nil {
+			return "", detailedTemplateError(tmpl, detailedTemplateErrorData{
+				funcName:        "tpl_debug",
+				templateName:    templateName,
+				templateContent: templateContent,
+			}, debug, err)
+		}
+
+		if debug {
+			logboek.Context(ctx).Default().LogF("-- tpl_debug %q content:\n%s\n\n", templateName, templateContent)
+		}
+
+		result, err := executeTemplate(tmpl, templateName, data)
+		if err != nil {
+			return "", detailedTemplateError(tmpl, detailedTemplateErrorData{
+				funcName:        "tpl_debug",
+				templateName:    templateName,
+				templateContent: templateContent,
+			}, debug, err)
+		}
+
+		if debug {
+			logboek.Context(ctx).Default().LogF("-- tpl_debug %q result:\n%s\n\n", templateName, result)
+		}
+
+		return result, nil
+	}
+
+	funcMap["include_debug"] = func(name string, data interface{}) (string, error) {
+		result, execErr := executeTemplate(tmpl, name, data)
+
+		var templateContent string
+		if execErr != nil || debug {
+			templateContent, _ = templateContentFromTree(tmpl, name)
+		}
+
+		if debug {
+			logboek.Context(ctx).Default().LogF("-- include_debug template %q content:\n%s\n\n", name, templateContent)
+		}
+
+		if execErr != nil {
+			return "", detailedTemplateError(tmpl, detailedTemplateErrorData{
+				funcName:        "include_debug",
+				templateName:    name,
+				templateContent: templateContent,
+			}, debug, execErr)
+		}
+
+		if debug {
+			logboek.Context(ctx).Default().LogF("-- include_debug template %q result:\n%s\n\n", name, result)
+		}
+
+		return result, nil
+	}
+
+	funcMap["printf_debug"] = func(format string, args ...interface{}) string {
+		if debug {
+			logboek.Context(ctx).Default().LogF("-- printf_debug format %q result:\n%s\n\n", format, fmt.Sprintf(format, args...))
+		}
+
+		return ""
+	}
+
+	funcMap["dump_debug"] = func(obj interface{}) string {
+		if debug {
+			logboek.Context(ctx).Default().LogF("-- dump_debug result:\n%s\n\n", spew.Sdump(obj))
+		}
+
+		return ""
+	}
+
 	return funcMap
+}
+
+func buildTplTemplateName(templateContent string) string {
+	return fmt.Sprintf("tpl-%d", adler32.Checksum([]byte(templateContent)))
 }
 
 func executeTemplate(tmpl *template.Template, name string, data interface{}) (string, error) {
@@ -375,6 +491,42 @@ func executeTemplate(tmpl *template.Template, name string, data interface{}) (st
 		return "", err
 	}
 	return buf.String(), nil
+}
+
+func templateContentFromTree(tmpl *template.Template, name string) (string, error) {
+	t := tmpl.Lookup(name)
+	if t == nil || t.Tree == nil || t.Tree.Root == nil {
+		return "", fmt.Errorf("template %q not found", name)
+	}
+
+	return strings.TrimSpace(t.Tree.Root.String()), nil
+}
+
+type detailedTemplateErrorData struct {
+	funcName        string
+	templateName    string
+	templateContent string
+}
+
+func detailedTemplateError(tmpl *template.Template, d detailedTemplateErrorData, debug bool, err error) error {
+	if debug {
+		if d.templateContent == "" {
+			d.templateContent, _ = templateContentFromTree(tmpl, d.templateName)
+		}
+
+		return fmt.Errorf(
+			"%w\n\nDetails:\n  Function name: %q\n  Template name: %q\n  Template content:\n%s",
+			err,
+			d.funcName,
+			d.templateName,
+			strings.TrimRightFunc(util.NumerateLines(d.templateContent, 1), unicode.IsSpace),
+		)
+	}
+	if strings.Contains(err.Error(), engine.TemplateErrHint) {
+		return err
+	}
+
+	return fmt.Errorf("%w\n%s", err, engine.TemplateErrHint)
 }
 
 type files struct {

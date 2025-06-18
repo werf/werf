@@ -15,6 +15,7 @@ import (
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 
+	"github.com/werf/3p-helm/pkg/engine"
 	"github.com/werf/3p-helm/pkg/werf/file"
 	"github.com/werf/3p-helm/pkg/werf/helmopts"
 	"github.com/werf/common-go/pkg/util"
@@ -125,6 +126,9 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupRenderSubchartNotes(&commonCmdData, cmd)
 	common.SetupNoInstallCRDs(&commonCmdData, cmd)
 	common.SetupReleaseLabel(&commonCmdData, cmd)
+	common.SetupForceAdoption(&commonCmdData, cmd)
+
+	commonCmdData.SetupDebugTemplates(cmd)
 
 	defaultTag := os.Getenv("WERF_TAG")
 	if defaultTag == "" {
@@ -228,6 +232,7 @@ func runApply(ctx context.Context) error {
 	ctx = action.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultReleaseInstallLogLevel), action.SetupLoggingOptions{
 		ColorMode: *commonCmdData.LogColorMode,
 	})
+	engine.Debug = *commonCmdData.DebugTemplates
 
 	gm, err := common.GetGiterminismManager(ctx, &commonCmdData)
 	if err != nil {
@@ -247,6 +252,7 @@ func runApply(ctx context.Context) error {
 		ExtraAnnotations:             extraAnnotations,
 		ExtraLabels:                  extraLabels,
 		ExtraRuntimeAnnotations:      serviceAnnotations,
+		ForceAdoption:                *commonCmdData.ForceAdoption,
 		InstallGraphPath:             common.GetDeployGraphPath(&commonCmdData),
 		InstallReportPath:            deployReportPath,
 		KubeAPIServerName:            *commonCmdData.KubeApiServer,

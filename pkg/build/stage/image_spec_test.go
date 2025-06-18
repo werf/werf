@@ -8,7 +8,6 @@ import (
 
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
-	"github.com/werf/werf/v2/pkg/image"
 )
 
 func TestEnvExpander(t *testing.T) {
@@ -121,7 +120,7 @@ func TestEnvExpander(t *testing.T) {
 }
 
 func TestModifyLabels(t *testing.T) {
-	ctx := context.Background()
+	ctx := context.TODO()
 
 	tests := []struct {
 		name             string
@@ -306,7 +305,7 @@ func TestModifyVolumes(t *testing.T) {
 }
 
 func TestGetDependencies_StableHash(t *testing.T) {
-	ctx := context.Background()
+	ctx := context.TODO()
 
 	imageSpec1 := &config.ImageSpec{
 		Author:          "test-author",
@@ -363,7 +362,7 @@ func TestBaseConfig(t *testing.T) {
 	tests := []struct {
 		name     string
 		spec     config.ImageSpec
-		expected image.Config
+		expected ImageSpecConfig
 	}{
 		{
 			name: "Entrypoint and Cmd are set",
@@ -371,7 +370,7 @@ func TestBaseConfig(t *testing.T) {
 				Entrypoint: []string{"/bin/sh", "-c"},
 				Cmd:        []string{"echo", "hello"},
 			},
-			expected: image.Config{
+			expected: ImageSpecConfig{
 				Entrypoint: []string{"/bin/sh", "-c"},
 				Cmd:        []string{"echo", "hello"},
 			},
@@ -382,7 +381,7 @@ func TestBaseConfig(t *testing.T) {
 				Entrypoint: []string{"/bin/sh", "-c"},
 				Cmd:        nil,
 			},
-			expected: image.Config{
+			expected: ImageSpecConfig{
 				Entrypoint: []string{"/bin/sh", "-c"},
 				ClearCmd:   true,
 			},
@@ -393,7 +392,7 @@ func TestBaseConfig(t *testing.T) {
 				ClearCmd:        true,
 				ClearEntrypoint: true,
 			},
-			expected: image.Config{
+			expected: ImageSpecConfig{
 				ClearCmd:        true,
 				ClearEntrypoint: true,
 			},
@@ -404,7 +403,7 @@ func TestBaseConfig(t *testing.T) {
 				ClearCmd:        false,
 				ClearEntrypoint: false,
 			},
-			expected: image.Config{
+			expected: ImageSpecConfig{
 				ClearCmd:        false,
 				ClearEntrypoint: false,
 			},

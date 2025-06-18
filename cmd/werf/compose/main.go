@@ -111,7 +111,7 @@ func extractImageNamesFromComposeConfig(ctx context.Context, customConfigPathLis
 
 	err := cmd.Run()
 	if err != nil {
-		graceful.Terminate(err, werfExec.ExitCode(err))
+		graceful.Terminate(ctx, err, werfExec.ExitCode(err))
 		var ee *exec.ExitError
 		if errors.As(err, &ee) {
 			return nil, fmt.Errorf("error running command %q: %w\n\nStdout:\n%s\nStderr:\n%s", cmd, err, stdout.String(), stderr.String())
@@ -280,6 +280,7 @@ func newCmd(ctx context.Context, composeCmdName string, options *newCmdOptions) 
 	})
 
 	commonCmdData.SetupWithoutImages(cmd)
+	commonCmdData.SetupFinalImagesOnly(cmd, false)
 	common.SetupStubTags(&commonCmdData, cmd)
 
 	common.SetupDir(&commonCmdData, cmd)
@@ -333,6 +334,7 @@ func newCmd(ctx context.Context, composeCmdName string, options *newCmdOptions) 
 	common.SetupProjectName(&commonCmdData, cmd, false)
 
 	commonCmdData.SetupPlatform(cmd)
+	commonCmdData.SetupDebugTemplates(cmd)
 
 	cmd.Flags().StringVarP(&cmdData.RawComposeOptions, "docker-compose-options", "", os.Getenv("WERF_DOCKER_COMPOSE_OPTIONS"), "Define docker-compose options (default $WERF_DOCKER_COMPOSE_OPTIONS)")
 	cmd.Flags().StringVarP(&cmdData.RawComposeCommandOptions, "docker-compose-command-options", "", os.Getenv("WERF_DOCKER_COMPOSE_COMMAND_OPTIONS"), "Define docker-compose command options (default $WERF_DOCKER_COMPOSE_COMMAND_OPTIONS)")
@@ -434,7 +436,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		imageNameList = imageNameListFromComposeConfig
 	}
 
-	imagesToProcess, err := config.NewImagesToProcess(werfConfig, imageNameList, false, *commonCmdData.WithoutImages)
+	imagesToProcess, err := config.NewImagesToProcess(werfConfig, imageNameList, *commonCmdData.FinalImagesOnly, *commonCmdData.WithoutImages)
 	if err != nil {
 		return err
 	}
@@ -532,7 +534,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		cmd.Env = append(os.Environ(), envArray...)
 
 		if err := cmd.Run(); err != nil {
-			graceful.Terminate(err, werfExec.ExitCode(err))
+			graceful.Terminate(ctx, err, werfExec.ExitCode(err))
 			return fmt.Errorf("error running command %q: %s", cmd, err)
 		}
 	}

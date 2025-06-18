@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/pflag"
 
 	"github.com/werf/3p-helm/pkg/chart/loader"
+	"github.com/werf/3p-helm/pkg/engine"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/level"
@@ -42,13 +43,17 @@ const (
 	DefaultSaveBuildReport     = false
 	DefaultBuildReportPathJSON = ".werf-build-report.json"
 
-	DefaultSaveDeployReport     = false
-	DefaultUseDeployReport      = false
-	DefaultDeployReportPathJSON = ".werf-deploy-report.json"
+	DefaultSaveDeployReport        = false
+	DefaultUseDeployReport         = false
+	DefaultDeployReportPathJSON    = ".werf-deploy-report.json"
+	DefaultUninstallReportPathJSON = ".werf-uninstall-report.json"
+	DefaultSaveUninstallReport     = false
+	TemplateErrHint                = "Use --debug-templates or $WERF_DEBUG_TEMPLATES to get more details about this error."
 )
 
 func init() {
 	loader.NoChartLockWarning = `Cannot automatically download chart dependencies without .helm/Chart.lock or .helm/requirements.lock. Run "werf helm dependency update .helm" and commit resulting .helm/Chart.lock or .helm/requirements.lock. Committing .tgz files in .helm/charts is not required, better add "/.helm/charts/*.tgz" to the .gitignore.`
+	engine.TemplateErrHint = TemplateErrHint
 }
 
 type GitWorktreeNotFoundError struct{}
@@ -193,9 +198,19 @@ func SetupSaveDeployReport(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(cmdData.SaveDeployReport, "save-deploy-report", "", util.GetBoolEnvironmentDefaultFalse("WERF_SAVE_DEPLOY_REPORT"), fmt.Sprintf("Save deploy report (by default $WERF_SAVE_DEPLOY_REPORT or %t). Its path and format configured with --deploy-report-path", DefaultSaveDeployReport))
 }
 
+func SetupSaveUninstallReport(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.SaveUninstallReport = new(bool)
+	cmd.Flags().BoolVarP(cmdData.SaveUninstallReport, "save-uninstall-report", "", util.GetBoolEnvironmentDefaultFalse("WERF_SAVE_UNINSTALL_REPORT"), fmt.Sprintf("Save uninstall report (by default $WERF_SAVE_UNINSTALL_REPORT or %t). Its path and format configured with --uninstall-report-path", DefaultSaveUninstallReport))
+}
+
 func SetupDeployReportPath(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.DeployReportPath = new(string)
 	cmd.Flags().StringVarP(cmdData.DeployReportPath, "deploy-report-path", "", os.Getenv("WERF_DEPLOY_REPORT_PATH"), fmt.Sprintf("Change deploy report path and format (by default $WERF_DEPLOY_REPORT_PATH or %q if not set). Extension must be .json for JSON format. If extension not specified, then .json is used", DefaultDeployReportPathJSON))
+}
+
+func SetupUninstallReportPath(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.UninstallReportPath = new(string)
+	cmd.Flags().StringVarP(cmdData.UninstallReportPath, "uninstall-report-path", "", os.Getenv("WERF_UNINSTALL_REPORT_PATH"), fmt.Sprintf("Change uninstall report path and format (by default $WERF_UNINSTALL_REPORT_PATH or %q if not set). Extension must be .json for JSON format. If extension not specified, then .json is used", DefaultUninstallReportPathJSON))
 }
 
 func GetSaveDeployReport(cmdData *CmdData) bool {
@@ -204,6 +219,14 @@ func GetSaveDeployReport(cmdData *CmdData) bool {
 	}
 
 	return *cmdData.SaveDeployReport
+}
+
+func GetSaveUninstallReport(cmdData *CmdData) bool {
+	if cmdData.SaveUninstallReport == nil {
+		return false
+	}
+
+	return *cmdData.SaveUninstallReport
 }
 
 func GetDeployReportPath(cmdData *CmdData) (string, error) {
@@ -219,6 +242,22 @@ func GetDeployReportPath(cmdData *CmdData) (string, error) {
 		return *cmdData.DeployReportPath + ".json", nil
 	default:
 		return "", fmt.Errorf("invalid --deploy-report-path %q: extension must be either .json or unspecified", *cmdData.DeployReportPath)
+	}
+}
+
+func GetUninstallReportPath(cmdData *CmdData) (string, error) {
+	unspecifiedPath := cmdData.UninstallReportPath == nil || *cmdData.UninstallReportPath == ""
+	if unspecifiedPath {
+		return DefaultUninstallReportPathJSON, nil
+	}
+
+	switch ext := filepath.Ext(*cmdData.UninstallReportPath); ext {
+	case ".json":
+		return *cmdData.UninstallReportPath, nil
+	case "":
+		return *cmdData.UninstallReportPath + ".json", nil
+	default:
+		return "", fmt.Errorf("invalid --uninstall-report-path %q: extension must be either .json or unspecified", *cmdData.UninstallReportPath)
 	}
 }
 
@@ -311,6 +350,11 @@ Format: labelName=labelValue.
 Also, can be specified with $WERF_RELEASE_LABEL_* (e.g. $WERF_RELEASE_LABEL_1=labelName1=labelValue1, $WERF_RELEASE_LABEL_2=labelName2=labelValue2)`)
 }
 
+func SetupForceAdoption(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.ForceAdoption = new(bool)
+	cmd.Flags().BoolVarP(cmdData.ForceAdoption, "force-adoption", "", util.GetBoolEnvironmentDefaultFalse("WERF_FORCE_ADOPTION"), "Always adopt resources, even if they belong to a different Helm release (default $WERF_FORCE_ADOPTION or false)")
+}
+
 func GetNetworkParallelism(cmdData *CmdData) int {
 	if *cmdData.NetworkParallelism < 1 {
 		panic(fmt.Sprintf("bad network parallelism value: %d (should be >= 1)", *cmdData.NetworkParallelism))
@@ -323,6 +367,12 @@ func SetupDeployGraphPath(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.DeployGraphPath = new(string)
 
 	cmd.Flags().StringVarP(cmdData.DeployGraphPath, "deploy-graph-path", "", os.Getenv("WERF_DEPLOY_GRAPH_PATH"), "Save deploy graph path to the specified file (by default $WERF_DEPLOY_GRAPH_PATH). Extension must be .dot or not specified. If extension not specified, then .dot is used")
+}
+
+func SetupUninstallGraphPath(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.UninstallGraphPath = new(string)
+
+	cmd.Flags().StringVarP(cmdData.UninstallGraphPath, "uninstall-graph-path", "", os.Getenv("WERF_UNINSTALL_GRAPH_PATH"), "Save uninstall graph path to the specified file (by default $WERF_UNINSTALL_GRAPH_PATH). Extension must be .dot or not specified. If extension not specified, then .dot is used")
 }
 
 func SetupRollbackGraphPath(cmdData *CmdData, cmd *cobra.Command) {
@@ -364,6 +414,21 @@ func GetRollbackGraphPath(cmdData *CmdData) string {
 		return *cmdData.RollbackGraphPath + ".dot"
 	default:
 		panic(fmt.Sprintf("invalid --rollback-graph-path %q: extension must be either .dot or unspecified", *cmdData.RollbackGraphPath))
+	}
+}
+
+func GetUninstallGraphPath(cmdData *CmdData) string {
+	if strings.TrimSpace(*cmdData.UninstallGraphPath) == "" {
+		return ""
+	}
+
+	switch ext := filepath.Ext(*cmdData.UninstallGraphPath); ext {
+	case ".dot":
+		return *cmdData.UninstallGraphPath
+	case "":
+		return *cmdData.UninstallGraphPath + ".dot"
+	default:
+		panic(fmt.Sprintf("invalid --uninstall-graph-path %q: extension must be either .dot or unspecified", *cmdData.UninstallGraphPath))
 	}
 }
 
@@ -1196,9 +1261,14 @@ func GetCustomWerfConfigTemplatesDirRelPath(giterminismManager giterminism_manag
 }
 
 func GetWerfConfigOptions(cmdData *CmdData, logRenderedFilePath bool) config.WerfConfigOptions {
+	var debugTemplates bool
+	if cmdData.DebugTemplates != nil {
+		debugTemplates = *cmdData.DebugTemplates
+	}
 	return config.WerfConfigOptions{
 		LogRenderedFilePath: logRenderedFilePath,
 		Env:                 *cmdData.Environment,
+		DebugTemplates:      debugTemplates,
 	}
 }
 
@@ -1524,10 +1594,14 @@ func ProcessLogOptions(cmdData *CmdData) error {
 }
 
 func GetNelmLogLevel(cmdData *CmdData) string {
+	if util.GetBoolEnvironmentDefaultFalse("WERF_NELM_TRACE") {
+		return action.TraceLogLevel
+	}
+
 	var logLevel string
 	switch {
 	case *cmdData.LogDebug:
-		logLevel = action.TraceLogLevel
+		logLevel = action.DebugLogLevel
 	case *cmdData.LogQuiet:
 		logLevel = action.ErrorLogLevel
 	default:

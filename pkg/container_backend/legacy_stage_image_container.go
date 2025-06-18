@@ -288,7 +288,7 @@ func (c *LegacyStageImageContainer) run(ctx context.Context) error {
 	err = docker.CliRun_LiveOutput(ctx, runArgs...)
 	UnregisterRunningContainer(c.name)
 	if err != nil {
-		return fmt.Errorf("container run failed: %w", err)
+		return fmt.Errorf("container run failed: %w", CliErrorByCode(err))
 	}
 	return nil
 }

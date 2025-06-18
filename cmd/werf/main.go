@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/spf13/cobra"
 
 	helm_v3 "github.com/werf/3p-helm/cmd/helm"
@@ -31,30 +32,33 @@ func main() {
 
 	ctx := logging.WithLogger(terminationCtx)
 
+	spew.Config.DisablePointerAddresses = true
+	spew.Config.DisableCapacities = true
+
 	root.PrintStackTraces()
 
 	shouldTerminate, err := common.ContainerBackendProcessStartupHook()
 	if err != nil {
-		graceful.Terminate(err, 1)
+		graceful.Terminate(ctx, err, 1)
 		return
 	} else if shouldTerminate {
 		return
 	}
 
 	if err := process_exterminator.Init(); err != nil {
-		graceful.Terminate(fmt.Errorf("process exterminator initialization failed: %w", err), 1)
+		graceful.Terminate(ctx, fmt.Errorf("process exterminator initialization failed: %w", err), 1)
 		return
 	}
 
 	rootCmd, err := root.ConstructRootCmd(ctx)
 	if err != nil {
-		graceful.Terminate(err, 1)
+		graceful.Terminate(ctx, err, 1)
 		return
 	}
 
 	root.SetupTelemetryInit(rootCmd)
 
-	// WARNING this behaviour could be changed
+	// WARNING this behavior could be changed
 	// https://github.com/spf13/cobra/pull/2167 is not accepted yet
 	cobra.EnableErrorOnUnknownSubcommand = true
 
@@ -63,18 +67,18 @@ func main() {
 		return
 	}
 
-	if err := rootCmd.Execute(); err != nil {
+	if err := rootCmd.ExecuteContext(ctx); err != nil {
 		if helm_v3.IsPluginError(err) {
 			common.ShutdownTelemetry(ctx, helm_v3.PluginErrorCode(err))
-			graceful.Terminate(err, helm_v3.PluginErrorCode(err))
+			graceful.Terminate(ctx, err, helm_v3.PluginErrorCode(err))
 			return
 		} else if errors.Is(err, action.ErrChangesPlanned) {
 			common.ShutdownTelemetry(ctx, 2)
-			graceful.Terminate(action.ErrChangesPlanned, 2)
+			graceful.Terminate(ctx, action.ErrChangesPlanned, 2)
 			return
 		} else {
 			common.ShutdownTelemetry(ctx, 1)
-			graceful.Terminate(err, 1)
+			graceful.Terminate(ctx, err, 1)
 			return
 		}
 	}

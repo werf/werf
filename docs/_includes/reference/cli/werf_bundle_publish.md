@@ -77,6 +77,8 @@ werf bundle publish [IMAGE_NAME...] [options]
             in working directory)
       --container-registry-mirror=[]
             (Buildah-only) Use specified mirrors for docker.io
+      --debug-templates=false
+            Enable debug mode for Go templates (default $WERF_DEBUG_TEMPLATES or false)
       --dev=false
             Enable development mode (default $WERF_DEV).
             The mode allows working with project files without doing redundant commits during       
@@ -107,6 +109,8 @@ werf bundle publish [IMAGE_NAME...] [options]
             and to pull base images
       --env=""
             Use specified environment (default $WERF_ENV)
+      --final-images-only=true
+            Process final images only ($WERF_FINAL_IMAGES_ONLY or true by default)
       --final-repo=""
             Container registry storage address (default $WERF_FINAL_REPO)
       --final-repo-container-registry=""

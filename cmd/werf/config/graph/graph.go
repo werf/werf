@@ -89,7 +89,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 				return err
 			}
 
-			imagesToProcess, err := config.NewImagesToProcess(werfConfig, args, false, false)
+			imagesToProcess, err := config.NewImagesToProcess(werfConfig, args, *commonCmdData.FinalImagesOnly, false)
 			if err != nil {
 				return err
 			}
@@ -122,6 +122,9 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupHomeDir(&commonCmdData, cmd, common.SetupHomeDirOptions{})
 
 	common.SetupLogOptions(&commonCmdData, cmd)
+
+	commonCmdData.SetupDebugTemplates(cmd)
+	commonCmdData.SetupFinalImagesOnly(cmd, false)
 
 	return cmd
 }

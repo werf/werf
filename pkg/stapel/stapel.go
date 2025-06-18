@@ -3,7 +3,6 @@ package stapel
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -14,8 +13,9 @@ import (
 )
 
 const (
-	VERSION = "0.6.2"
-	IMAGE   = "registry.werf.io/werf/stapel"
+	VERSION              = "0.6.2"
+	IMAGE                = "registry.werf.io/werf/stapel"
+	CONTAINER_MOUNT_ROOT = "/.werf"
 )
 
 func getVersion() string {
@@ -42,7 +42,7 @@ func getContainer() container {
 	return container{
 		Name:      fmt.Sprintf("%s%s", image.AssemblingContainerNamePrefix, getVersion()),
 		ImageName: ImageName(),
-		Volume:    "/.werf/stapel",
+		Volume:    filepath.Join(CONTAINER_MOUNT_ROOT, "stapel"),
 	}
 }
 
@@ -167,15 +167,20 @@ func AnsiblePlaybookBinPath() string {
  */
 
 func AnsibleToolsOverlayPATH() string {
-	return "/.werf/stapel/ansible_tools_overlay/bin"
+	return filepath.Join(CONTAINER_MOUNT_ROOT, "stapel/ansible_tools_overlay/bin")
 }
 
 func AnsibleLibsOverlayLDPATH() string {
-	return "/.werf/stapel/ansible_tools_overlay/lib"
+	return filepath.Join(CONTAINER_MOUNT_ROOT, "stapel/ansible_tools_overlay/lib")
 }
 
 func SystemPATH() string {
-	return "/.werf/stapel/sbin:/.werf/stapel/embedded/sbin:/.werf/stapel/bin:/.werf/stapel/embedded/bin"
+	return strings.Join([]string{
+		filepath.Join(CONTAINER_MOUNT_ROOT, "stapel/sbin"),
+		filepath.Join(CONTAINER_MOUNT_ROOT, "stapel/embedded/sbin"),
+		filepath.Join(CONTAINER_MOUNT_ROOT, "stapel/bin"),
+		filepath.Join(CONTAINER_MOUNT_ROOT, "stapel/embedded/bin"),
+	}, ":")
 }
 
 func OptionalSudoCommand(user, group string) string {
@@ -211,7 +216,7 @@ func sudoFormatUser(user string) string {
 }
 
 func embeddedBinPath(bin string) string {
-	return fmt.Sprintf("/.werf/stapel/embedded/bin/%s", bin)
+	return filepath.Join(CONTAINER_MOUNT_ROOT, "stapel/embedded/bin", bin)
 }
 
 func CreateScript(path string, commands []string) error {
@@ -226,5 +231,5 @@ func CreateScript(path string, commands []string) error {
 	scriptLines = append(scriptLines, commands...)
 	scriptData := []byte(strings.Join(scriptLines, "\n") + "\n")
 
-	return ioutil.WriteFile(path, scriptData, os.FileMode(0o667))
+	return os.WriteFile(path, scriptData, os.FileMode(0o667))
 }

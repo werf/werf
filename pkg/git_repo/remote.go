@@ -186,7 +186,7 @@ func (repo *Remote) Clone(ctx context.Context) (bool, error) {
 		// Ensure cleanup on failure
 		defer os.RemoveAll(tmpPath)
 
-		_, err = git.PlainClone(tmpPath, true, &git.CloneOptions{
+		_, err = git.PlainCloneContext(ctx, tmpPath, true, &git.CloneOptions{
 			URL:               repo.Url,
 			RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
 		})

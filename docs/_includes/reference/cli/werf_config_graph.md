@@ -45,6 +45,8 @@ werf config graph [IMAGE_NAME...] [options]
       --config-templates-dir=""
             Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf   
             in working directory)
+      --debug-templates=false
+            Enable debug mode for Go templates (default $WERF_DEBUG_TEMPLATES or false)
       --dev=false
             Enable development mode (default $WERF_DEV).
             The mode allows working with project files without doing redundant commits during       
@@ -61,6 +63,8 @@ werf config graph [IMAGE_NAME...] [options]
             should reside (default $WERF_DIR or current working directory)
       --env=""
             Use specified environment (default $WERF_ENV)
+      --final-images-only=false
+            Process final images only ($WERF_FINAL_IMAGES_ONLY or false by default)
       --git-work-tree=""
             Use specified git work tree dir (default $WERF_WORK_TREE or lookup for directory that   
             contains .git in the current or parent directories)

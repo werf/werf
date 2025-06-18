@@ -21,7 +21,6 @@ type LegacyStageImage struct {
 	builtID             string
 	commitChangeOptions LegacyCommitChangeOptions
 	targetPlatform      string
-	imageSpecConfig     *image.Config
 
 	// TODO: remove after refactoring
 	buildServiceLabels map[string]string
@@ -258,12 +257,4 @@ func (i *LegacyStageImage) SetBuildServiceLabels(labels map[string]string) {
 
 func (i *LegacyStageImage) GetBuildServiceLabels() map[string]string {
 	return i.buildServiceLabels
-}
-
-func (i *LegacyStageImage) SetImageSpecConfig(config *image.Config) {
-	i.imageSpecConfig = config
-}
-
-func (i *LegacyStageImage) GetImageSpecConfig() *image.Config {
-	return i.imageSpecConfig
 }

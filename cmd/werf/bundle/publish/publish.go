@@ -76,6 +76,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	})
 
 	commonCmdData.SetupWithoutImages(cmd)
+	commonCmdData.SetupFinalImagesOnly(cmd, true)
 
 	common.SetupDir(&commonCmdData, cmd)
 	common.SetupGitWorkTree(&commonCmdData, cmd)
@@ -151,6 +152,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	commonCmdData.SetupRenameChart(cmd)
 
 	commonCmdData.SetupSkipImageSpecStage(cmd)
+	commonCmdData.SetupDebugTemplates(cmd)
 
 	defaultTag := os.Getenv("WERF_TAG")
 	if defaultTag == "" {
@@ -206,7 +208,7 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 		return fmt.Errorf("unable to load werf config: %w", err)
 	}
 
-	imagesToProcess, err := config.NewImagesToProcess(werfConfig, imageNameListFromArgs, true, *commonCmdData.WithoutImages)
+	imagesToProcess, err := config.NewImagesToProcess(werfConfig, imageNameListFromArgs, *commonCmdData.FinalImagesOnly, *commonCmdData.WithoutImages)
 	if err != nil {
 		return err
 	}
@@ -650,8 +652,6 @@ func makeBundleValues(
 	inputVals map[string]interface{},
 	serviceValues map[string]interface{},
 ) (map[string]interface{}, error) {
-	chartutil.DebugPrintValues(context.Background(), "input", inputVals)
-
 	vals, err := chartutil.MergeInternal(context.Background(), inputVals, serviceValues, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to coalesce werf chart values: %w", err)
@@ -670,8 +670,6 @@ func makeBundleValues(
 
 	chartutil.CoalesceChartValues(chrt, valsCopy, true)
 
-	chartutil.DebugPrintValues(context.Background(), "all", valsCopy)
-
 	return valsCopy, nil
 }
 
@@ -680,8 +678,5 @@ func makeBundleSecretValues(
 	secretsRuntimeData runtimedata.RuntimeData,
 	opts helmopts.HelmOptions,
 ) (map[string]interface{}, error) {
-	if chartutil.DebugSecretValues() {
-		chartutil.DebugPrintValues(context.Background(), "secret", secretsRuntimeData.GetDecryptedSecretValues())
-	}
 	return secretsRuntimeData.GetEncodedSecretValues(ctx, secrets_manager.Manager, opts.ChartLoadOpts.SecretsWorkingDir, opts.ChartLoadOpts.NoDecryptSecrets)
 }

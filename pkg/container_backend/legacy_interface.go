@@ -43,9 +43,6 @@ type LegacyImageInterface interface {
 	SetFinalStageDesc(*image.StageDesc)
 
 	GetCopy() LegacyImageInterface
-
-	SetImageSpecConfig(config *image.Config)
-	GetImageSpecConfig() *image.Config
 }
 
 type LegacyContainer interface {
