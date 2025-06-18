@@ -154,6 +154,7 @@ werf plan --repo registry.mydomain.com/web --env production`,
 	commonCmdData.SetupSkipDependenciesRepoRefresh(cmd)
 
 	commonCmdData.SetupWithoutImages(cmd)
+	commonCmdData.SetupFinalImagesOnly(cmd, true)
 	common.SetupStubTags(&commonCmdData, cmd)
 
 	common.SetupSaveBuildReport(&commonCmdData, cmd)
@@ -258,7 +259,7 @@ func run(
 		return fmt.Errorf("unable to load werf config: %w", err)
 	}
 
-	imagesToProcess, err := config.NewImagesToProcess(werfConfig, imageNameListFromArgs, true, *commonCmdData.WithoutImages)
+	imagesToProcess, err := config.NewImagesToProcess(werfConfig, imageNameListFromArgs, *commonCmdData.FinalImagesOnly, *commonCmdData.WithoutImages)
 	if err != nil {
 		return err
 	}

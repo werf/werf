@@ -126,6 +126,7 @@ func NewExportCmd(ctx context.Context) *cobra.Command {
 
 	commonCmdData.SetupPlatform(cmd)
 	commonCmdData.SetupDebugTemplates(cmd)
+	commonCmdData.SetupFinalImagesOnly(cmd, true)
 
 	cmd.Flags().StringArrayVarP(&tagTemplateList, "tag", "", []string{}, `Set a tag template (can specify multiple).
 It is necessary to use image name shortcut %image% or %image_slug% if multiple images are exported (e.g. REPO:TAG-%image% or REPO-%image%:TAG)`)
@@ -185,7 +186,7 @@ func run(ctx context.Context, imageNameListFromArgs, tagTemplateList []string, e
 		return fmt.Errorf("unable to load werf config: %w", err)
 	}
 
-	imagesToProcess, err := config.NewImagesToProcess(werfConfig, imageNameListFromArgs, true, false)
+	imagesToProcess, err := config.NewImagesToProcess(werfConfig, imageNameListFromArgs, *commonCmdData.FinalImagesOnly, false)
 	if err != nil {
 		return err
 	}

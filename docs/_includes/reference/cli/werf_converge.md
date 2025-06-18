@@ -145,6 +145,8 @@ werf converge --repo registry.mydomain.com/web --env production
             repo, to pull base images
       --env=""
             Use specified environment (default $WERF_ENV)
+      --final-images-only=true
+            Process final images only ($WERF_FINAL_IMAGES_ONLY or true by default)
       --final-repo=""
             Container registry storage address (default $WERF_FINAL_REPO)
       --final-repo-container-registry=""

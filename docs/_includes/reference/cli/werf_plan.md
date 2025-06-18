@@ -133,6 +133,8 @@ werf plan --repo registry.mydomain.com/web --env production
       --exit-code=false
             If true, returns exit code 0 if no changes, exit code 2 if any changes planned or exit  
             code 1 in case of an error (default $WERF_EXIT_CODE or false)
+      --final-images-only=true
+            Process final images only ($WERF_FINAL_IMAGES_ONLY or true by default)
       --final-repo=""
             Container registry storage address (default $WERF_FINAL_REPO)
       --final-repo-container-registry=""

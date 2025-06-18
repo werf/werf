@@ -48,9 +48,10 @@ type CmdData struct {
 	HelmCompatibleChart        *bool
 	RenameChart                *string
 
-	WithoutImages *bool
-	Repo          *RepoData
-	FinalRepo     *RepoData
+	FinalImagesOnly *bool
+	WithoutImages   *bool
+	Repo            *RepoData
+	FinalRepo       *RepoData
 
 	SecondaryStagesStorage *[]string
 	CacheStagesStorage     *[]string
@@ -141,6 +142,19 @@ type CmdData struct {
 	Platform *[]string
 
 	SkipImageSpecStage *bool
+}
+
+func (cmdData *CmdData) SetupFinalImagesOnly(cmd *cobra.Command, defaultEnabled bool) {
+	cmdData.FinalImagesOnly = new(bool)
+
+	var defaultVal bool
+	if defaultEnabled {
+		defaultVal = util.GetBoolEnvironmentDefaultTrue("WERF_FINAL_IMAGES_ONLY")
+	} else {
+		defaultVal = util.GetBoolEnvironmentDefaultFalse("WERF_FINAL_IMAGES_ONLY")
+	}
+
+	cmd.Flags().BoolVarP(cmdData.FinalImagesOnly, "final-images-only", "", defaultVal, fmt.Sprintf("Process final images only ($WERF_FINAL_IMAGES_ONLY or %v by default)", defaultEnabled))
 }
 
 func (cmdData *CmdData) SetupWithoutImages(cmd *cobra.Command) {

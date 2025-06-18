@@ -72,6 +72,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	})
 
 	commonCmdData.SetupWithoutImages(cmd)
+	commonCmdData.SetupFinalImagesOnly(cmd, true)
 
 	common.SetupDir(&commonCmdData, cmd)
 	common.SetupGitWorkTree(&commonCmdData, cmd)
@@ -206,7 +207,7 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 		return fmt.Errorf("unable to load werf config: %w", err)
 	}
 
-	imagesToProcess, err := config.NewImagesToProcess(werfConfig, imageNameListFromArgs, true, *commonCmdData.WithoutImages)
+	imagesToProcess, err := config.NewImagesToProcess(werfConfig, imageNameListFromArgs, *commonCmdData.FinalImagesOnly, *commonCmdData.WithoutImages)
 	if err != nil {
 		return err
 	}
