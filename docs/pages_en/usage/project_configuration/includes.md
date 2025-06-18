@@ -1,12 +1,82 @@
-# Importing Configurations from Remote Repositories
+---
+title: Includes
+permalink: usage/project_configuration/includes.html
+---
 
-**`werf`** allows you to import configuration files and templates from remote Git repositories (includes). This helps avoid code duplication when managing similar applications. Imported files are handled via a virtual file system that follows specific overlay rules and restrictions.
+## Overview
 
-## Configuration
+`werf` supports importing configuration files from external Git repositories using the **includes** mechanism. This allows you to reuse templates and shared settings across projects and simplify infrastructure maintenance.  
+This is useful when:
+* You have many similar applications and want to reuse Helm charts, `.werf` templates, `Dockerfile`, or `.dockerignore`.
+* You want to centrally update configurations and templates without duplication.
 
-The includes configuration is defined in the `werf-includes.yaml` file located at the root of the project. This file cannot be imported and is processed according to the giterminism rules.
+### What can be imported
 
-Example `werf-includes.yaml`:
+The following types of files are supported for import:
+
+* **Configuration files** such as `werf.yaml` and `.werf` templates  
+* **Template files** from the `.werf` directory (by default) and individual files inside it (e.g., `.tmpl`, `.yaml`)
+* **Helm charts** from the `.helm` directory and individual files inside it
+* **Dockerfile** and `.dockerignore`
+
+### Excluded files
+
+The following files cannot be imported:
+
+* `werf-includes.yaml`
+* `werf-includes.lock`
+* `werf-giterminism.yaml`
+
+### How the includes works
+
+1. You define external sources and the paths to the required files in `werf-includes.yaml`.
+2. You lock the versions of the external sources using the `werf includes update` command, which creates the `werf-includes.lock` file. The lock file is necessary for reproducible builds and deployments.
+3. All `werf` commands (e.g., `werf build`, `werf converge`) will use the lock file and apply the overlay rules accordingly.
+
+### Overlay rules
+
+If the same file exists in multiple places, the following rules apply:
+
+1. Local project files always take precedence over imported files.
+2. If a file exists in multiple includes, the version from the source listed lower in the `includes` list in `werf-includes.yaml` (from general to specific) is used.
+
+Below is an example configuration for importing similar configurations:
+
+```yaml
+# werf-includes.yaml
+includes:
+  - git: https://github.com/werf/examples
+    branch: main
+    add: local-dev
+    to: /
+    includePaths:
+      - /.helm
+
+  - git: https://example.com/helm_examples
+    branch: main
+    to: /
+    includePaths:
+      - /.helm
+```
+
+Directory structure:
+
+* In `examples`: `.helm/Chart.yaml`, `.helm/values.yaml`
+* In `helm_examples`: `.helm/Chart.yaml`
+
+Output of `werf includes ls-files`:
+
+```
+.helm/Chart.yaml        https://example.com/werf/helm_examples
+.helm/values.yaml       https://github.com/werf/examples
+```
+
+The `Chart.yaml` file is taken from the latest source (`helm_examples`) according to the overlay rules.
+
+## Using configurations from external sources
+
+Below is an example `werf-includes.yaml` configuration.
+For the full list of available directives, see the corresponding \[werf-includes.yaml]\({{"reference/werf\_includes\_yaml.html" | true\_relative\_url }}) reference page.
 
 ```yaml
 includes:
@@ -16,141 +86,44 @@ includes:
     to: /
     includePaths:
       - /.helm
-
-  - git: https://github.com/werf/helm_examples
-    tag: v0.0.1
-    add: /
-    to: examples/helm
-
-  - git: https://github.com/werf/werf_examples
-    commit: 831fb9ff936ed6f1db5175c3e65891cfd25580dd
-    add: /
-    to: /
-    includePaths:
-      - /.werf
-    excludePaths:
-      - /.helm
 ```
 
-## Version Locking
-
-To ensure predictable and reproducible builds and deployments, you need to lock the specific commits of branches or tags used in your includes. This is done using the `werf-includes.lock` file, which can be generated or updated with the following command:
-
-```bash
-werf includes update
-```
-
-This command records the current `HEAD` commit of each declared source.
-
-Example `werf-includes.lock`:
+After locking the includes with the `werf includes update` command, a `werf-includes.lock` file will be created in the project root, which looks like this:
 
 ```yaml
 includes:
   - git: https://github.com/werf/examples
     branch: main
     commit: 21640b8e619ba4dd480fedf144f7424aa217a2eb
-
-  - git: https://github.com/werf/helm_examples
-    tag: v0.0.1
-    commit: e9eff747f82d6959d1c0b4da284e23fd650f4be3
-
-  - git: https://github.com/werf/werf_examples
-    commit: 831fb9ff936ed6f1db5175c3e65891cfd25580dd
 ```
 
-> **Important.** The lock file cannot be imported into other projects and is subject to giterminism policies.
+> **IMPORTANT.** According to giterminism policies, both `werf-includes.yaml` and `werf-includes.lock` must be committed to the repository. For initial configuration and debugging, you can use the `--dev` flag. Once configuration is finalized, the files must be committed.
 
-### Using Latest Versions of Sources (Not Recommended)
+## Updating
 
-If you need to work with the latest version of a remote include source (without locking commits), you can enable this behavior in the `werf-giterminism.yaml` file:
+### Deterministic version updates
+
+There are two ways to update include versions:
+
+* Edit the `werf-includes.lock` file manually or use dependency management tools like Dependabot, Renovate, etc.
+* Use the `werf includes update` command. This will update all includes to the `HEAD` of the specified reference (`branch` or `tag`).
+
+### Automatic version updates (not recommended)
+
+If you need to use the latest `HEAD` versions without a lock file—for example, to quickly test recent changes—you can enable this behavior in `werf-giterminism.yaml`:
 
 ```yaml
 includes:
   allowIncludesUpdate: true
 ```
 
-However, this approach doesn't provide reproducibility of builds and deployments and is not recommended for production use.
-
-
-## Limitations
-
-### What could be imported:
-
-* `.werf` template files
-* Helm chart files in the `.helm` directory
-* The main configuration file `werf.yaml`
-* `Dockerfile` and `.dockerignore`
-
-### What **could not be** imported:
-
-* `werf-includes.yaml` and `werf-includes.lock`
-* `werf-giterminism.yaml` configuration file
-
-> **Note:** Includes only work at the configuration level — files from remote repositories **are not** added to the Docker build context.
-
-## Overlay Rules
-
-If multiple sources provide the same file paths, the following rules are applied:
-
-1. If a file exists in the local project directory — **it takes precedence**, even if a file with the same name exists in includes.
-2. If multiple includes define the same file — the file from the **first defined repository** in the list will be used.
-
-Example:
-
-```yaml
-includes:
-  - git: https://github.com/werf/examples
-    branch: main
-    add: local-dev
-    to: /
-    includePaths:
-      - /.helm
-
-  - git: https://github.com/werf/helm_examples
-    branch: main
-    to: /
-    includePaths:
-      - /.helm
-```
+> **IMPORTANT.** We do not recommend using this approach, as it may break reproducibility of builds and deployments.
 
 ## Debugging
 
-Let’s look at an example involving overlay behavior between two includes.
+The includes mechanism has built-in commands for debugging:
 
-```yaml
-includes:
-  - git: https://github.com/werf/examples
-    branch: main
-    add: local-dev
-    to: /
-    includePaths:
-      - /.helm
-
-  - git: https://github.com/werf/helm_examples
-    branch: main
-    to: /
-    includePaths:
-      - /.helm
-```
-
-Directory structures in the source repositories:
-
-**`https://github.com/werf/examples`**
-
-```bash
-.helm/
-└── Chart.yaml
-```
-
-**`https://github.com/werf/helm_examples`**
-
-```bash
-.helm/
-├── Chart.yaml
-└── values.yaml
-```
-
-To see a full list of imported files, use the command:
+### Listing project files
 
 ```bash
 werf includes ls-files .helm
@@ -159,14 +132,12 @@ werf includes ls-files .helm
 Example output:
 
 ```
-PATH                                                SOURCE
-.helm/Chart.yaml                                    https://github.com/werf/examples
-.helm/values.yaml                                   https://github.com/werf/helm_examples
+PATH                      SOURCE
+.helm/Chart.yaml          local
+.helm/values.yaml         https://github.com/werf/examples
 ```
 
-As you can see, `.helm/Chart.yaml` was imported from `examples` because it was listed earlier in the includes list.
-
-You can also view the content of any imported file:
+### Retrieving file content
 
 ```bash
 werf includes get-file .helm/values.yaml
@@ -179,4 +150,20 @@ backend:
   limits:
     cpu: 100m
     memory: 256Mi
+```
+
+### Using local repositories
+
+You can also use local repositories as include sources.
+The workflow is the same as with remote repositories.
+
+```yaml
+# werf-includes.yaml
+includes:
+  - git: /path/to/repo
+    branch: main
+    add: local-dev
+    to: /
+    includePaths:
+      - /.helm
 ```

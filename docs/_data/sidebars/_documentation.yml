@@ -120,6 +120,9 @@ entries:
           - title: werf-giterminism.yaml
             url: /reference/werf_giterminism_yaml.html
 
+          - title: werf-includes.yaml
+            url: /reference/werf_includes_yaml.html
+
           - title: Deploy annotations
             url: /reference/deploy_annotations.html
 
@@ -262,6 +265,9 @@ entries:
 
           - title: werf-giterminism.yaml
             url: /reference/werf_giterminism_yaml.html
+          
+          - title: werf-includes.yaml
+            url: /reference/werf_includes_yaml.html
 
           - title: Аннотации для деплоя
             url: /reference/deploy_annotations.html

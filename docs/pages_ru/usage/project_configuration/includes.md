@@ -1,12 +1,82 @@
-# Импортирование конфигураций из удаленных репозиториев
+---
+title: Подключение конфигурации
+permalink: usage/project_configuration/includes.html
+---
 
-**`werf`** поддерживает импорт конфигурационных файлов и шаблонов проекта из удалённых Git-репозиториев (includes). Это помогает избежать дублирования кода при сопровождении однотипных приложений. Импорт осуществляется с помощью виртуальной файловой системы, которая работает по определённым правилам наложения и ограничениям.
+## Обзор
 
-## Конфигурация
+`werf` поддерживает импорт конфигурационных файлов из внешних Git-репозиториев с помощью механизма **includes**. Это позволяет переиспользовать шаблоны и общие настройки между проектами и упростить сопровождение инфраструктуры.  
+Это удобно, когда:
+* У вас много похожих приложений, и вы хотите переиспользовать Helm-чарты, шаблоны `.werf`, `Dockerfile`, `.dockerignore`.
+* Вы хотите централизованно обновлять конфигурацию и шаблоны без дублирования.
 
-Конфигурация includes описывается в файле `werf-includes.yaml`, который должен находиться в корне проекта. Этот файл не подлежит импорту и обрабатывается в соответствии с политиками гитерминизма.
+### Что можно импортировать
 
-Пример `werf-includes.yaml`:
+Поддерживается импорт следующих типов файлов:
+
+* **Конфигурационные файлы** `werf.yaml` и шаблоны `.werf`
+* **Файлы шаблонов** из директории `.werf`(по умолчанию) и отдельные файлы внутри неё (например, `.tmpl`, `.yaml`)
+* **Helm-чарты** из директории `.helm` и отдельные файлы внутри неё
+* **Dockerfile** и `.dockerignore`
+
+### Файлы-исключения
+
+Некоторые файлы импортировать нельзя:
+
+* `werf-includes.yaml`
+* `werf-includes.lock`
+* `werf-giterminism.yaml`
+
+### Как работает механизм includes
+
+1. Вы описываете внешние источники и пути к нужным файлам в `werf-includes.yaml`.
+2. Фиксируете версии внешних источников с помощью команды `werf includes update`, которая создаёт `werf-includes.lock`. Lock-файл необходим для воспроизводимости сборок и развертываний.
+3. Все команды `werf` (например, `werf build`, `werf converge`) будут учитывать этот lock-файл и применять правила наложения файлов.
+
+### Правила наложения
+
+Если один и тот же файл существует в нескольких местах, применяются следующие правила:
+
+1. Локальные файлы проекта всегда имеют приоритет над импортированными.
+2. Если файл присутствует в нескольких includes, будет использоваться версия из источника, который расположен ниже в списке `includes` в `werf-includes.yaml` (от общего к частному).
+
+Ниже приведён пример конфигурации импортирования схожих конфигураций:
+
+```yaml
+# werf-includes.yaml
+includes:
+  - git: https://github.com/werf/examples
+    branch: main
+    add: local-dev
+    to: /
+    includePaths:
+      - /.helm
+
+  - git: https://example.com/helm_examples
+    branch: main
+    to: /
+    includePaths:
+      - /.helm
+````
+
+Структура директорий:
+
+* В `examples`: `.helm/Chart.yaml`, `.helm/values.yaml`
+* В `helm_examples`: `.helm/Chart.yaml`
+
+Результат `werf includes ls-files`:
+
+```
+.helm/Chart.yaml        https://example.com/werf/helm_examples
+.helm/values.yaml       https://github.com/werf/examples
+```
+
+Файл `Chart.yaml` взят из последнего источника (`helm_examples`) согласно правилам наложения.
+
+## Использование конфигурации из внешних источников
+
+Ниже приведён пример конфигурации `werf-includes.yaml`.
+Полное описание директив вы можете найти на соответствующей странице \[werf-includes.yaml]\({{"reference/werf\_includes\_yaml.html" | true\_relative\_url }})
 
 ```yaml
 includes:
@@ -16,139 +86,44 @@ includes:
     to: /
     includePaths:
       - /.helm
-
-  - git: https://github.com/werf/helm_examples
-    tag: v0.0.1
-    add: /
-    to: examples/helm
-
-  - git: https://github.com/werf/werf_examples
-    commit: 831fb9ff936ed6f1db5175c3e65891cfd25580dd
-    add: /
-    to: /
-    includePaths:
-      - /.werf
-    excludePaths:
-      - /.helm
 ```
 
-## Фиксация версий
-
-Для обеспечения предсказуемости и воспроизводимости сборок и развёртываний необходимо зафиксировать используемые коммиты веток или тегов в lock-файле `werf-includes.lock`. Его можно сгенерировать или обновить с помощью команды:
-
-```bash
-werf includes update
-```
-
-В lock-файл будут записаны текущие значения `HEAD` для каждого указанного источника.
-
-Пример `werf-includes.lock`:
+После того как вы зафиксируете версии includes командой `werf includes update`, в корне проекта будет создан файл `werf-includes.lock`, который выглядит следующим образом:
 
 ```yaml
 includes:
   - git: https://github.com/werf/examples
     branch: main
     commit: 21640b8e619ba4dd480fedf144f7424aa217a2eb
-
-  - git: https://github.com/werf/helm_examples
-    tag: v0.0.1
-    commit: e9eff747f82d6959d1c0b4da284e23fd650f4be3
-
-  - git: https://github.com/werf/werf_examples
-    commit: 831fb9ff936ed6f1db5175c3e65891cfd25580dd
 ```
 
-> **Важно.** Lock-файл также не может быть импортирован в другие проекты и подчиняется политике гитерминизма.
+> **ВАЖНО.** Согласно политикам гитерминизма, файлы `werf-includes.yaml` и `werf-includes.lock` должны быть закомичены. Для первичной конфигурации и отладки мы предлагаем использовать флаг `--dev`. После завершения конфигурации файлы необходимо закоммитить.
 
-Если необходимо использовать последние версии включаемых источников без фиксированных коммитов, можно разрешить обновление includes в файле `werf-giterminism.yaml`:
+## Обновление
+
+### Детерминированное обновление версий
+
+Существует два способа обновления версий includes:
+
+* Редактирование файла `werf-includes.lock` вручную или с помощью средств поддержания зависимостей, таких как dependabot, renovate и прочие.
+* Командой `werf includes update`. Данная команда обновит все includes на `HEAD` соответствующего референса (`branch` или `tag`).
+
+### Автообновление версий (не рекомендовано)
+
+Если необходимо использовать последние `HEAD`-версии без lock-файла, например, для быстрой проверки изменений, необходимо добавить соответствующую директиву в `werf-giterminism.yaml`:
 
 ```yaml
 includes:
   allowIncludesUpdate: true
 ```
 
-Однако такой подход не обеспечивает воспроизводимость сборок и развёртываний и не рекомендуется для использования.
-
-
-## Ограничения
-
-### Что можно импортировать:
-
-* файлы шаблонов `.werf`
-* чарты Helm из директории `.helm`
-* основной конфигурационный файл `werf.yaml`
-* `Dockerfile` и `.dockerignore`
-
-### Что **нельзя** импортировать:
-
-* `werf-includes.yaml` и `werf-includes.lock`
-* файл гитерминизма `werf-giterminism.yaml`
-
-> **Важно.** Импорт работает **только** на уровне конфигурации и **не добавляет** файлы из внешних репозиториев в сборочный контекст Docker.
-
-## Правила наложения
-
-Если в нескольких источниках имеются файлы с одинаковыми путями, применяются следующие правила:
-
-1. Если файл существует в локальном проекте — **он имеет приоритет** и используется вместо импортированного.
-2. Если файл присутствует в нескольких includes — будет использован файл из того источника, который **расположен выше** в списке `includes` в `werf-includes.yaml`.
-
-Пример:
-
-```yaml
-includes:
-  - git: https://github.com/werf/examples
-    branch: main
-    add: local-dev
-    to: /
-    includePaths:
-      - /.helm
-
-  - git: https://github.com/werf/helm_examples
-    branch: main
-    to: /
-    includePaths:
-      - /.helm
-```
+> **ВАЖНО.** Мы не рекомендуем использование данного подхода, так как он может нарушить воспроизводимость сборок и развертываний.
 
 ## Отладка
 
-Рассмотрим пример наложения содержимого директорий `.helm` из двух разных репозиториев:
+Для отладки includes есть встроенные команды:
 
-```yaml
-includes:
-  - git: https://github.com/werf/examples
-    branch: main
-    add: local-dev
-    to: /
-    includePaths:
-      - /.helm
-
-  - git: https://github.com/werf/helm_examples
-    branch: main
-    to: /
-    includePaths:
-      - /.helm
-```
-
-Структуры директорий в исходных репозиториях:
-
-**`https://github.com/werf/examples`**
-
-```bash
-.helm/
-└── Chart.yaml
-```
-
-**`https://github.com/werf/helm_examples`**
-
-```bash
-.helm/
-├── Chart.yaml
-└── values.yaml
-```
-
-Команда для просмотра всех импортированных файлов:
+### Получение списка файлов проекта
 
 ```bash
 werf includes ls-files .helm
@@ -157,14 +132,12 @@ werf includes ls-files .helm
 Пример вывода:
 
 ```
-PATH                                                SOURCE
-.helm/Chart.yaml                                    https://github.com/werf/examples
-.helm/values.yaml                                   https://github.com/werf/helm_examples
+PATH                      SOURCE
+.helm/Chart.yaml          local
+.helm/values.yaml         https://github.com/werf/examples
 ```
 
-Как видно, файл `.helm/Chart.yaml` был взят из `examples`, так как этот источник указан первым в списке `includes`.
-
-Команда для просмотра содержимого импортированного файла:
+### Получение содержимого файла проекта
 
 ```bash
 werf includes get-file .helm/values.yaml
@@ -177,4 +150,20 @@ backend:
   limits:
     cpu: 100m
     memory: 256Mi
+```
+
+### Использование локальных репозиториев
+
+Допускается использование локальных репозиториев в качестве источника для include.
+Порядок работы с такими репозиториями ничем не отличается от работы с удалёнными.
+
+```yaml
+# werf-includes.yaml
+includes:
+  - git: /path/to/repo
+    branch: main
+    add: local-dev
+    to: /
+    includePaths:
+      - /.helm
 ```
