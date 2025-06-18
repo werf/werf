@@ -36,7 +36,7 @@ type includeConf struct {
 
 var _ = Describe("build and mutate image spec", Label("integration", "build", "mutate spec config"), func() {
 	DescribeTable("should succeed and produce expected image",
-		func(testOpts simpleTestOptions) {
+		func(ctx SpecContext, testOpts simpleTestOptions) {
 			By("initializing")
 			setupEnv(testOpts.setupEnvOptions)
 			_, err := contback.NewContainerBackend(testOpts.ContainerBackendMode)
@@ -50,13 +50,13 @@ var _ = Describe("build and mutate image spec", Label("integration", "build", "m
 			{
 				mainRepoDirName := "main_repo"
 				fixtureRelPath := "basic"
-				SuiteData.InitTestRepo(mainRepoDirName, filepath.Join(fixtureRelPath, mainRepoDirName))
+				SuiteData.InitTestRepo(ctx, mainRepoDirName, filepath.Join(fixtureRelPath, mainRepoDirName))
 
 				remoteRepoDirName1 := "remote_repo1"
-				SuiteData.InitTestRepo(remoteRepoDirName1, filepath.Join(fixtureRelPath, remoteRepoDirName1))
+				SuiteData.InitTestRepo(ctx, remoteRepoDirName1, filepath.Join(fixtureRelPath, remoteRepoDirName1))
 
 				remoteRepoDirName2 := "remote_repo2"
-				SuiteData.InitTestRepo(remoteRepoDirName2, filepath.Join(fixtureRelPath, remoteRepoDirName2))
+				SuiteData.InitTestRepo(ctx, remoteRepoDirName2, filepath.Join(fixtureRelPath, remoteRepoDirName2))
 
 				SuiteData.WerfRepo = SuiteData.GetTestRepoPath(mainRepoDirName)
 				includesConfig := &Config{
@@ -89,7 +89,7 @@ var _ = Describe("build and mutate image spec", Label("integration", "build", "m
 				}
 				By("generate includes lock file")
 				{
-					utils.RunSucceedCommand(
+					utils.RunSucceedCommand(ctx,
 						SuiteData.GetTestRepoPath(mainRepoDirName),
 						SuiteData.WerfBinPath,
 						"includes", "update", "--dev",
@@ -97,8 +97,8 @@ var _ = Describe("build and mutate image spec", Label("integration", "build", "m
 				}
 				By("committing includes config")
 				{
-					utils.RunSucceedCommand(SuiteData.GetTestRepoPath(mainRepoDirName), "git", "add", "-A")
-					utils.RunSucceedCommand(SuiteData.GetTestRepoPath(mainRepoDirName), "git", "commit", "-m", "add includes config")
+					utils.RunSucceedCommand(ctx, SuiteData.GetTestRepoPath(mainRepoDirName), "git", "add", "-A")
+					utils.RunSucceedCommand(ctx, SuiteData.GetTestRepoPath(mainRepoDirName), "git", "commit", "-m", "add includes config")
 				}
 			}
 			By(fmt.Sprintf("starting"))
@@ -108,7 +108,7 @@ var _ = Describe("build and mutate image spec", Label("integration", "build", "m
 				buildReportName := "build_report.json"
 				By(fmt.Sprintf("building images"))
 				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
-				buildOut, _ := werfProject.BuildWithReport(
+				buildOut, _ := werfProject.BuildWithReport(ctx,
 					SuiteData.GetBuildReportPath(buildReportName),
 					nil,
 				)
@@ -116,6 +116,7 @@ var _ = Describe("build and mutate image spec", Label("integration", "build", "m
 
 				By(fmt.Sprintf("render chart"))
 				output := utils.SucceedCommandOutputString(
+					ctx,
 					SuiteData.GetTestRepoPath(repoDirname),
 					SuiteData.WerfBinPath,
 					"render",

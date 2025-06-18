@@ -214,7 +214,7 @@ type renderWerfConfigYamlOpts struct {
 
 func renderWerfConfigYaml(ctx context.Context, opts renderWerfConfigYamlOpts) (string, string, error) {
 	tmpl := template.New("werfConfig")
-	tmpl.Funcs(funcMap(tmpl, opts.giterminismManager, opts.debugTemplates))
+	tmpl.Funcs(funcMap(ctx, tmpl, opts.giterminismManager, opts.debugTemplates))
 
 	err := parseWerfConfigTemplatesDir(ctx, parseWerfConfigTemplatesDirOpts{
 		tmpl:                                tmpl,
@@ -263,7 +263,7 @@ func renderWerfConfigYaml(ctx context.Context, opts renderWerfConfigYamlOpts) (s
 	if err != nil {
 		return "", "", detailedTemplateError(tmpl, detailedTemplateErrorData{
 			templateName: "werfConfig",
-		}, debugTemplates, err)
+		}, opts.debugTemplates, err)
 	}
 
 	return configPath, config, nil
