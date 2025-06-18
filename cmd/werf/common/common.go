@@ -350,6 +350,11 @@ Format: labelName=labelValue.
 Also, can be specified with $WERF_RELEASE_LABEL_* (e.g. $WERF_RELEASE_LABEL_1=labelName1=labelValue1, $WERF_RELEASE_LABEL_2=labelName2=labelValue2)`)
 }
 
+func SetupForceAdoption(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.ForceAdoption = new(bool)
+	cmd.Flags().BoolVarP(cmdData.ForceAdoption, "force-adoption", "", util.GetBoolEnvironmentDefaultFalse("WERF_FORCE_ADOPTION"), "Always adopt resources, even if they belong to a different Helm release (default $WERF_FORCE_ADOPTION or false)")
+}
+
 func GetNetworkParallelism(cmdData *CmdData) int {
 	if *cmdData.NetworkParallelism < 1 {
 		panic(fmt.Sprintf("bad network parallelism value: %d (should be >= 1)", *cmdData.NetworkParallelism))

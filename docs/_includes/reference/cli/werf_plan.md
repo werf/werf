@@ -160,6 +160,9 @@ werf plan --repo registry.mydomain.com/web --env production
             The mode allows restarting the command on a new commit.
             In development mode (--dev), werf restarts the command on any changes (including        
             untracked files) in the git repository worktree
+      --force-adoption=false
+            Always adopt resources, even if they belong to a different Helm release (default        
+            $WERF_FORCE_ADOPTION or false)
       --git-work-tree=""
             Use specified git work tree dir (default $WERF_WORK_TREE or lookup for directory that   
             contains .git in the current or parent directories)

@@ -119,6 +119,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupRenderSubchartNotes(&commonCmdData, cmd)
 	common.SetupNoInstallCRDs(&commonCmdData, cmd)
 	common.SetupReleaseLabel(&commonCmdData, cmd)
+	common.SetupForceAdoption(&commonCmdData, cmd)
 
 	commonCmdData.SetupDebugTemplates(cmd)
 
@@ -237,6 +238,7 @@ func runApply(ctx context.Context) error {
 		ExtraAnnotations:             extraAnnotations,
 		ExtraLabels:                  extraLabels,
 		ExtraRuntimeAnnotations:      serviceAnnotations,
+		ForceAdoption:                *commonCmdData.ForceAdoption,
 		InstallGraphPath:             common.GetDeployGraphPath(&commonCmdData),
 		InstallReportPath:            deployReportPath,
 		KubeAPIServerName:            *commonCmdData.KubeApiServer,

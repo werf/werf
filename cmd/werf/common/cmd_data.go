@@ -83,6 +83,7 @@ type CmdData struct {
 	WithoutKube                     *bool
 	KubeVersion                     *string
 	ContainerRegistryMirror         *[]string
+	ForceAdoption                   *bool
 
 	LooseGiterminism *bool
 	Dev              *bool
