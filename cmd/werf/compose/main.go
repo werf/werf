@@ -280,6 +280,7 @@ func newCmd(ctx context.Context, composeCmdName string, options *newCmdOptions) 
 	})
 
 	commonCmdData.SetupWithoutImages(cmd)
+	commonCmdData.SetupFinalImagesOnly(cmd, false)
 	common.SetupStubTags(&commonCmdData, cmd)
 
 	common.SetupDir(&commonCmdData, cmd)
@@ -435,7 +436,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		imageNameList = imageNameListFromComposeConfig
 	}
 
-	imagesToProcess, err := config.NewImagesToProcess(werfConfig, imageNameList, false, *commonCmdData.WithoutImages)
+	imagesToProcess, err := config.NewImagesToProcess(werfConfig, imageNameList, *commonCmdData.FinalImagesOnly, *commonCmdData.WithoutImages)
 	if err != nil {
 		return err
 	}

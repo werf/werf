@@ -139,6 +139,8 @@ werf compose config [IMAGE_NAME...] [options] [--docker-compose-options="OPTIONS
             Indicate what the command would do without actually doing that (default $WERF_DRY_RUN)
       --env=""
             Use specified environment (default $WERF_ENV)
+      --final-images-only=false
+            Process final images only ($WERF_FINAL_IMAGES_ONLY or false by default)
       --final-repo=""
             Container registry storage address (default $WERF_FINAL_REPO)
       --final-repo-container-registry=""

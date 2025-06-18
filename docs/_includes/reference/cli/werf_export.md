@@ -82,6 +82,8 @@ werf export [IMAGE_NAME...] [options]
             Command needs granted permissions to read and pull images from the specified repo
       --env=""
             Use specified environment (default $WERF_ENV)
+      --final-images-only=true
+            Process final images only ($WERF_FINAL_IMAGES_ONLY or true by default)
       --final-repo=""
             Container registry storage address (default $WERF_FINAL_REPO)
       --final-repo-container-registry=""

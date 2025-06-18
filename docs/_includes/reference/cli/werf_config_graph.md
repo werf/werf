@@ -63,6 +63,8 @@ werf config graph [IMAGE_NAME...] [options]
             should reside (default $WERF_DIR or current working directory)
       --env=""
             Use specified environment (default $WERF_ENV)
+      --final-images-only=false
+            Process final images only ($WERF_FINAL_IMAGES_ONLY or false by default)
       --git-work-tree=""
             Use specified git work tree dir (default $WERF_WORK_TREE or lookup for directory that   
             contains .git in the current or parent directories)
