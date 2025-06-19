@@ -1,5 +1,13 @@
 # Changelog
 
+### [2.38.1](https://www.github.com/werf/werf/compare/v2.38.0...v2.38.1) (2025-06-19)
+
+
+### Bug Fixes
+
+* **cleanup:** properly handle multi-platform images by BuiltWithinLastNHours policy ([#6913](https://www.github.com/werf/werf/issues/6913)) ([9436cca](https://www.github.com/werf/werf/commit/9436ccaf8141b03bd2ca4e415172a4fe06e6f74f))
+* **host-cleanup:** fix fdopendir /Users/user/.werf/local_cache/git_repos/.DS_Store: not a directory ([8b34341](https://www.github.com/werf/werf/commit/8b343419b0b57286f167fd03ff478ef98fbf011b))
+
 ## [2.38.0](https://www.github.com/werf/werf/compare/v2.37.1...v2.38.0) (2025-06-18)
 
 
