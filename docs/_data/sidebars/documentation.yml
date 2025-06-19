@@ -652,6 +652,9 @@ entries:
               - title: Giterminism
                 url: /usage/project_configuration/giterminism.html
 
+              - title: Debug werf.yaml
+                url: /usage/project_configuration/debug_werf_yaml.html
+
           - title: Build
             f:
               - title: Overview
@@ -705,6 +708,9 @@ entries:
 
               - title: Parametrize templates
                 url: /usage/deploy/values.html
+
+              - title: Debug templates
+                url: /usage/deploy/debug_templates.html
 
               - title: Multiple environments
                 url: /usage/deploy/environments.html

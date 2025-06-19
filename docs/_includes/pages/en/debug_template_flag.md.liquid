@@ -1,0 +1,59 @@
+## Special Debug Functions
+
+The `--debug-templates` flag enables advanced debugging mode for Go templates in werf. It allows writing debug information to the log without affecting the result of the templating. Below are scenarios where these functions can be useful, along with their behavior depending on the debug mode.
+
+### Log an Arbitrary Message
+
+You can insert custom log messages at any point during templating using `printf_debug`. This is useful for tracking variable values, condition execution, and the order of template rendering.
+
+* **With `--debug-templates`**: the message is printed to the log and does not affect the rendering result;
+* **Without `--debug-templates`**: the function does nothing.
+
+Example:
+{% raw %}
+```bash
+{{ printf_debug (printf "Current value: %v" .Values.someVar) }}
+```
+{% endraw %}
+
+### Log a Dump of Any Structure
+
+If you need to inspect a variable's value — especially a complex one like `.Values` or `$` — use `dump_debug`.
+
+* **With `--debug-templates`**: the structure is logged in a human-readable format and does not affect the rendering result;
+* **Without `--debug-templates`**: the function does nothing.
+
+Example:
+{% raw %}
+```bash
+{{ dump_debug $.Values.werf }}
+```
+{% endraw %}
+
+### Debug the `include` Function
+
+To debug `include` calls, replace them with `include_debug` and enable template debug mode using `--debug-templates`. This will log debug information about each `include` invocation during templating.
+
+* **With `--debug-templates`**: works like `include`, but also logs the template name, its content, and the rendered result;
+* **Without `--debug-templates`**: behaves like the standard `include`.
+
+Example:
+{% raw %}
+```bash
+{{ include_debug "my-template" . }}
+```
+{% endraw %}
+
+### Debug the `tpl` Function
+
+To debug `tpl` calls, replace them with `tpl_debug` and enable template debug mode using `--debug-templates`. This will log debug information about each `tpl` invocation during templating.
+
+* **With `--debug-templates`**: works like `tpl`, but also logs the template string and the rendered result;
+* **Without `--debug-templates`**: behaves like the standard `tpl`.
+
+Example:
+{% raw %}
+```bash
+{{ tpl_debug "{{ .Values.env }}" . }}
+```
+{% endraw %}
