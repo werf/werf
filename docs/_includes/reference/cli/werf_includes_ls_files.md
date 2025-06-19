@@ -55,7 +55,8 @@ werf includes ls-files [GLOB...] [flags] [options]
       --env=""
             Use specified environment (default $WERF_ENV)
       --filter=""
-            Filter by source, e.g. --filter=source=local,remoteRepo
+            Filter by source, e.g. --filter=source=local,remoteRepo (default                        
+            $WERF_INCLUDES_LIST_FILTER or all sources).
       --follow=false
             Enable follow mode (default $WERF_FOLLOW).
             The mode allows restarting the command on a new commit.
@@ -81,7 +82,7 @@ werf includes ls-files [GLOB...] [flags] [options]
             true).
       --log-project-dir=false
             Print current project directory path (default $WERF_LOG_PROJECT_DIR)
-      --log-quiet=false
+      --log-quiet=true
             Disable explanatory output (default $WERF_LOG_QUIET).
       --log-terminal-width=-1
             Set log terminal width.

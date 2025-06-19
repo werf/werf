@@ -447,6 +447,7 @@ func (f *FileManager) ListFilesByGlob(ctx context.Context, sources, globs []stri
 
 	return result, nil
 }
+
 func includesFromFs(sources []string) bool {
 	return len(sources) == 0 || slices.Contains(sources, fromFsSource)
 }

@@ -56,7 +56,7 @@ werf config render [IMAGE_NAME...] [options]
       --log-pretty=true
             Enable emojis, auto line wrapping and log process border (default $WERF_LOG_PRETTY or   
             true).
-      --log-quiet=false
+      --log-quiet=true
             Disable explanatory output (default $WERF_LOG_QUIET).
       --log-terminal-width=-1
             Set log terminal width.

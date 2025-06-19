@@ -54,7 +54,6 @@ func RenderWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfCo
 
 func renderWerfConfig(ctx context.Context, opts renderWerfConfigYamlOpts) error {
 	_, werfConfigRenderContent, err := renderWerfConfigYaml(ctx, opts)
-
 	if err != nil {
 		return err
 	}
@@ -86,7 +85,6 @@ func GetWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfConfi
 		env:                                 opts.Env,
 		debugTemplates:                      opts.DebugTemplates,
 	})
-
 	if err != nil {
 		return "", nil, fmt.Errorf("unable to render werf config: %w", err)
 	}

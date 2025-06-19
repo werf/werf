@@ -70,7 +70,7 @@ werf includes get-file [FILE_NAME] [flags] [options]
             true).
       --log-project-dir=false
             Print current project directory path (default $WERF_LOG_PROJECT_DIR)
-      --log-quiet=false
+      --log-quiet=true
             Disable explanatory output (default $WERF_LOG_QUIET).
       --log-terminal-width=-1
             Set log terminal width.
