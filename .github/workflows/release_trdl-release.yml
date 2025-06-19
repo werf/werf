@@ -1,8 +1,10 @@
 name: release:trdl-release
 on:
   push:
-    tags:
-      - "v[0-9]+.[0-9]+.[0-9]+*"
+    branches:
+      - "main"
+    paths:
+      - 'CHANGELOG.md'
   repository_dispatch:
     types: ["release:trdl-release"]
   workflow_dispatch:
@@ -30,6 +32,51 @@ jobs:
           vault-role-id: ${{ secrets.TRDL_VAULT_ROLE_ID }}
           vault-secret-id: ${{ secrets.TRDL_VAULT_SECRET_ID }}
 
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # важно: получаем всю историю
+          fetch-tags: true
+
+      - name: Create Release 
+        uses: googleapis/release-please-action@v4
+        with:
+          release-type: go
+          skip-github-pull-request: true
+  
+      - name: Update GitHub Release Notes with Installation Instructions
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          TAG=$(gh release list --limit 1 --json tagName --jq '.[0].tagName')
+          VERSION=$(echo "$TAG" | sed 's/^v//')
+          RELEASE_NOTES=$(gh release view "$TAG" --json body -q '.body')
+      
+          cat <<EOF > new_notes.md
+          ## Changelog
+          $RELEASE_NOTES
+          ## Installation
+          
+          To install \`werf\` we strongly recommend following [these instructions](https://werf.io/getting_started/).
+          
+          Alternatively, you can download \`werf\` binaries from here:
+          * [Linux amd64](https://tuf.werf.io/targets/releases/$VERSION/linux-amd64/bin/werf) ([PGP signature](https://tuf.werf.io/targets/signatures/$VERSION/linux-amd64/bin/werf.sig))
+          * [Linux arm64](https://tuf.werf.io/targets/releases/$VERSION/linux-arm64/bin/werf) ([PGP signature](https://tuf.werf.io/targets/signatures/$VERSION/linux-arm64/bin/werf.sig))
+          * [macOS amd64](https://tuf.werf.io/targets/releases/$VERSION/darwin-amd64/bin/werf) ([PGP signature](https://tuf.werf.io/targets/signatures/$VERSION/darwin-amd64/bin/werf.sig))
+          * [macOS arm64](https://tuf.werf.io/targets/releases/$VERSION/darwin-arm64/bin/werf) ([PGP signature](https://tuf.werf.io/targets/signatures/$VERSION/darwin-arm64/bin/werf.sig))
+          * [Windows amd64](https://tuf.werf.io/targets/releases/$VERSION/windows-amd64/bin/werf.exe) ([PGP signature](https://tuf.werf.io/targets/signatures/$VERSION/windows-amd64/bin/werf.exe.sig))
+          
+          Verification commands:
+          \`\`\`shell
+          curl -sSL https://werf.io/werf.asc | gpg --import
+          curl -sSLO "https://tuf.werf.io/targets/releases/$VERSION/linux-amd64/bin/werf"
+          gpg --verify werf.sig werf
+          \`\`\`
+          EOF
+          
+          gh release edit "$TAG" --notes-file new_notes.md
+          
   notify:
     if: always()
     needs: release
