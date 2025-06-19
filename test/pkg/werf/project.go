@@ -12,7 +12,6 @@ import (
 	"time"
 
 	. "github.com/onsi/gomega"
-	"github.com/samber/lo"
 
 	"github.com/werf/3p-helm/pkg/release"
 	"github.com/werf/werf/v2/pkg/build"
@@ -80,8 +79,6 @@ type ExportOptions struct {
 }
 
 type SbomGetOptions struct {
-	EnableExperimental bool
-
 	CommonOptions
 }
 
@@ -345,7 +342,6 @@ func (p *Project) SbomGet(ctx context.Context, opts *SbomGetOptions) (combinedOu
 
 	outb := p.runCommand(ctx, runCommandOptions{
 		Args:       args,
-		Envs:       lo.If(opts.EnableExperimental, []string{"WERF_EXPERIMENTAL_SBOM=true"}).Else([]string{}),
 		ShouldFail: opts.ShouldFail,
 	})
 

@@ -8,23 +8,6 @@ import (
 )
 
 var _ = Describe("Sbom get", Label("e2e", "sbom", "get", "simple"), func() {
-	Describe("should return error without feature environment variable", func() {
-		It("should fail", func(ctx SpecContext) {
-			repoDirname := "repo0"
-			fixtureRelPath := "state0"
-
-			By("state0: preparing test repo")
-			SuiteData.InitTestRepo(ctx, repoDirname, fixtureRelPath)
-
-			werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
-
-			werfProject.SbomGet(ctx, &werf.SbomGetOptions{
-				EnableExperimental: false,
-				CommonOptions:      werf.CommonOptions{ShouldFail: true},
-			})
-		})
-	})
-
 	DescribeTable("should generate and store SBOM as an image",
 		func(ctx SpecContext, testOpts simpleTestOptions) {
 			By("initializing")
@@ -41,7 +24,6 @@ var _ = Describe("Sbom get", Label("e2e", "sbom", "get", "simple"), func() {
 				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
 
 				output := werfProject.SbomGet(ctx, &werf.SbomGetOptions{
-					EnableExperimental: true,
 					CommonOptions: werf.CommonOptions{
 						ExtraArgs: []string{"dockerfile"},
 					},
