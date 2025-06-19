@@ -164,8 +164,11 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		return err
 	}
 
-	projectName := werfConfig.Meta.Project
+	if werfConfig.GetImage(requestedImageName).Sbom() == nil || !werfConfig.GetImage(requestedImageName).Sbom().Use {
+		return fmt.Errorf("SBOM should be enabled for image %q in the werf config", requestedImageName)
+	}
 
+	projectName := werfConfig.Meta.Project
 	projectTmpDir, err := tmp_manager.CreateProjectDir(ctx)
 	if err != nil {
 		return fmt.Errorf("getting project tmp dir failed: %w", err)
@@ -197,7 +200,6 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 	defer conveyorWithRetry.Terminate()
 
 	var exportedImages []*image.Image
-
 	if err = conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
 		if common.GetRequireBuiltImages(ctx, &commonCmdData) {
 			if err := c.ShouldBeBuilt(ctx, build.ShouldBeBuiltOptions{}); err != nil {
