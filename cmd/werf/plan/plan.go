@@ -193,6 +193,7 @@ werf plan --repo registry.mydomain.com/web --env production`,
 
 	commonCmdData.SetupSkipImageSpecStage(cmd)
 	commonCmdData.SetupDebugTemplates(cmd)
+	commonCmdData.SetupAllowIncludesUpdate(cmd)
 
 	return cmd
 }

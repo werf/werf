@@ -181,79 +181,92 @@ func initRemoteRepos(ctx context.Context, cfg Config) (map[string]*git_repo.Remo
 
 func GetIncludes(ctx context.Context, cfg Config, lockInfo *LockInfo, remoteRepos map[string]*git_repo.Remote) ([]*Include, error) {
 	includes := []*Include{}
-	for i := len(cfg.Includes) - 1; i >= 0; i-- {
-		// Reverse order to prioritize the last include in the list
-		inc := cfg.Includes[i]
-		remoteRepo, ok := remoteRepos[inc.Git]
-		if !ok || remoteRepo == nil {
-			return nil, fmt.Errorf("unable to find remote repository %s", inc.Git)
-		}
-
-		ref, err := inc.Ref()
-		if err != nil {
-			return nil, err
-		}
-
-		logboek.Context(ctx).Debug().LogF("Processing include %s with ref %s\n", inc.Git, ref)
-
-		commitFromLockInfo, err := lockInfo.GetCommit(inc.Git, ref)
-		if err != nil {
-			return nil, fmt.Errorf("unable to get commit from lock info: %w", err)
-		}
-
-		r, err := remoteRepo.PlainOpen()
-		if err != nil {
-			return nil, fmt.Errorf("failed to open repository: %w", err)
-		}
-
-		commit, err := r.CommitObject(plumbing.NewHash(commitFromLockInfo))
-		if err != nil {
-			return nil, fmt.Errorf("failed to get commit object: %w", err)
-		}
-
-		tree, err := commit.Tree()
-		if err != nil {
-			return nil, fmt.Errorf("failed to get tree: %w", err)
-		}
-
-		pm := path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{
-			BasePath:     inc.Add,
-			IncludeGlobs: inc.IncludePaths,
-			ExcludeGlobs: inc.ExcludePaths,
-		})
-
-		logboek.Context(ctx).Debug().LogF("Using path matcher: basePath=%s, includeGlobs=%v, excludeGlobs=%v\n", inc.Add, inc.IncludePaths, inc.ExcludePaths)
-
-		matchedMap := map[string]string{}
-		err = tree.Files().ForEach(func(f *object.File) error {
-			if pm.IsPathMatched(f.Name) {
-				relPath := strings.TrimPrefix(f.Name, filepath.Clean(inc.Add))
-				relPath = strings.TrimPrefix(relPath, string(filepath.Separator))
-				newPath := path.Join(inc.To, relPath)
-				newPath = strings.TrimPrefix(newPath, string(filepath.Separator))
-
-				matchedMap[newPath] = f.Name
+	err := logboek.Context(ctx).Default().LogBlock("Initializing includes").DoError(func() error {
+		for i := len(cfg.Includes) - 1; i >= 0; i-- {
+			// Reverse order to prioritize the last include in the list
+			inc := cfg.Includes[i]
+			remoteRepo, ok := remoteRepos[inc.Git]
+			if !ok || remoteRepo == nil {
+				return fmt.Errorf("unable to find remote repository %s", inc.Git)
 			}
-			return nil
-		})
-		if err != nil {
-			return nil, fmt.Errorf("failed to iterate over files: %w", err)
+
+			ref, err := inc.Ref()
+			if err != nil {
+				return err
+			}
+
+			err = logboek.Context(ctx).Default().LogProcess(fmt.Sprintf("Processing include %s with ref %s", inc.Git, ref)).DoError(func() error {
+				commitFromLockInfo, err := lockInfo.GetCommit(inc.Git, ref)
+				if err != nil {
+					return fmt.Errorf("unable to get commit from lock info: %w", err)
+				}
+
+				r, err := remoteRepo.PlainOpen()
+				if err != nil {
+					return fmt.Errorf("failed to open repository: %w", err)
+				}
+
+				commit, err := r.CommitObject(plumbing.NewHash(commitFromLockInfo))
+				if err != nil {
+					return fmt.Errorf("failed to get commit object: %w", err)
+				}
+
+				tree, err := commit.Tree()
+				if err != nil {
+					return fmt.Errorf("failed to get tree: %w", err)
+				}
+
+				pm := path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{
+					BasePath:     inc.Add,
+					IncludeGlobs: inc.IncludePaths,
+					ExcludeGlobs: inc.ExcludePaths,
+				})
+
+				logboek.Context(ctx).Debug().LogF("Using path matcher: basePath=%s, includeGlobs=%v, excludeGlobs=%v\n", inc.Add, inc.IncludePaths, inc.ExcludePaths)
+
+				matchedMap := map[string]string{}
+				err = tree.Files().ForEach(func(f *object.File) error {
+					if pm.IsPathMatched(f.Name) {
+						relPath := strings.TrimPrefix(f.Name, filepath.Clean(inc.Add))
+						relPath = strings.TrimPrefix(relPath, string(filepath.Separator))
+						newPath := path.Join(inc.To, relPath)
+						newPath = strings.TrimPrefix(newPath, string(filepath.Separator))
+
+						matchedMap[newPath] = f.Name
+					}
+					return nil
+				})
+				if err != nil {
+					return fmt.Errorf("failed to iterate over files: %w", err)
+				}
+
+				if len(matchedMap) == 0 {
+					return fmt.Errorf("no files matched for include %s with ref %s", inc.Git, ref)
+				}
+
+				include := &Include{
+					repo:       remoteRepo,
+					commitHash: commit.Hash.String(),
+					objects:    matchedMap,
+				}
+
+				includes = append(includes, include)
+
+				logboek.Context(ctx).Debug().LogF("Include initialized: repo: %s commit: %s\n", include.repo, include.commitHash)
+				return nil
+			})
+
+			if err != nil {
+				return err
+			}
 		}
+		return nil
+	})
 
-		if len(matchedMap) == 0 {
-			return nil, fmt.Errorf("no files matched for include %s with ref %s", inc.Git, ref)
-		}
-
-		include := &Include{
-			repo:       remoteRepo,
-			commitHash: commit.Hash.String(),
-			objects:    matchedMap,
-		}
-
-		includes = append(includes, include)
-
-		logboek.Context(ctx).Debug().LogF("Include initialized: repo: %s commit: %s\n", include.repo, include.commitHash)
+	if err != nil {
+		return nil, err
 	}
+
 	return includes, nil
 }
 

@@ -141,9 +141,11 @@ type CmdData struct {
 
 	Platform *[]string
 
-	SkipImageSpecStage     *bool
+	SkipImageSpecStage *bool
+	IncludesLsFilter   *string
+
 	CreateIncludesLockFile bool
-	IncludesLsFilter       *string
+	AllowIncludesUpdate    bool
 }
 
 func (cmdData *CmdData) SetupFinalImagesOnly(cmd *cobra.Command, defaultEnabled bool) {
@@ -225,6 +227,10 @@ func (cmdData *CmdData) SetupSkipImageSpecStage(cmd *cobra.Command) {
 
 func (cmdData *CmdData) SetupCreateIncludesLockFile() {
 	cmdData.CreateIncludesLockFile = true
+}
+
+func (cmdData *CmdData) SetupAllowIncludesUpdate(cmd *cobra.Command) {
+	cmd.Flags().BoolVarP(&cmdData.AllowIncludesUpdate, "allow-includes-update", "", util.GetBoolEnvironmentDefaultFalse("WERF_ALLOW_INCLUDES_UPDATE"), `Allow use includes latest versions (default $WERF_ALLOW_INCLUDES_UPDATE or false)`)
 }
 
 func (cmdData *CmdData) SetupIncludesLsFilter(cmd *cobra.Command) {

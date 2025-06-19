@@ -84,6 +84,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupLogOptionsDefaultQuiet(&commonCmdData, cmd)
 	commonCmdData.SetupDebugTemplates(cmd)
+	commonCmdData.SetupAllowIncludesUpdate(cmd)
 
 	return cmd
 }

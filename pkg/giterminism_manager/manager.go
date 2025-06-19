@@ -17,6 +17,7 @@ type NewManagerOptions struct {
 	LooseGiterminism       bool
 	Dev                    bool
 	CreateIncludesLockFile bool
+	AllowIncludesUpdate    bool
 }
 
 func NewManager(ctx context.Context, configRelPath, projectDir string, localGitRepo *git_repo.Local, headCommit string, options NewManagerOptions) (*Manager, error) {
@@ -55,6 +56,7 @@ func NewManager(ctx context.Context, configRelPath, projectDir string, localGitR
 		FileReader:             fr,
 		Inspector:              i,
 		CreateIncludesLockFile: options.CreateIncludesLockFile,
+		AllowIncludesUpdate:    options.AllowIncludesUpdate,
 	})
 	if err != nil {
 		return nil, err

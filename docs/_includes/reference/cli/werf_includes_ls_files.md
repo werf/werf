@@ -32,6 +32,8 @@ werf includes ls-files [GLOB...] [flags] [options]
 {{ header }} Options
 
 ```shell
+      --allow-includes-update=false
+            Allow use includes latest versions (default $WERF_ALLOW_INCLUDES_UPDATE or false)
       --config=""
             Use custom configuration file (default $WERF_CONFIG or werf.yaml in the project         
             directory)

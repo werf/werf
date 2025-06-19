@@ -118,6 +118,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	commonCmdData.SetupDebugTemplates(cmd)
 
 	commonCmdData.SetupFinalImagesOnly(cmd, false)
+	commonCmdData.SetupAllowIncludesUpdate(cmd)
 
 	return cmd
 }

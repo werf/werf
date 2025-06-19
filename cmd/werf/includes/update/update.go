@@ -66,5 +66,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupFollow(&commonCmdData, cmd)
 
 	commonCmdData.SetupCreateIncludesLockFile()
+
 	return cmd
 }

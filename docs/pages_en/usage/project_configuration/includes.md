@@ -110,7 +110,7 @@ There are two ways to update include versions:
 
 ### Automatic version updates (not recommended)
 
-If you need to use the latest `HEAD` versions without a lock file—for example, to quickly test recent changes—you can enable this behavior in `werf-giterminism.yaml`:
+If you need to use the latest `HEAD` versions without a lock file—for example, to quickly test recent changes—you can use `--allow-includes-update` option. The usage of this option must be enabled in `werf-giterminism.yaml`:
 
 ```yaml
 includes:

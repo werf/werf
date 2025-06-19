@@ -1313,6 +1313,7 @@ func GetGiterminismManager(ctx context.Context, cmdData *CmdData) (*giterminism_
 		LooseGiterminism:       *cmdData.LooseGiterminism,
 		Dev:                    *cmdData.Dev,
 		CreateIncludesLockFile: cmdData.CreateIncludesLockFile,
+		AllowIncludesUpdate:    cmdData.AllowIncludesUpdate,
 	})
 }
 

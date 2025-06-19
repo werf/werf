@@ -26,6 +26,8 @@ werf bundle apply [options]
             Format: labelName=labelValue.
             Also, can be specified with $WERF_ADD_LABEL_* (e.g.                                     
             $WERF_ADD_LABEL_1=labelName1=labelValue1, $WERF_ADD_LABEL_2=labelName2=labelValue2)
+      --allow-includes-update=false
+            Allow use includes latest versions (default $WERF_ALLOW_INCLUDES_UPDATE or false)
       --atomic=false
             Enable auto rollback of the failed release to the previous deployed release version     
             when current deploy process have failed ($WERF_ATOMIC by default)

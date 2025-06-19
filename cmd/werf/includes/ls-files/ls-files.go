@@ -104,6 +104,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupFollow(&commonCmdData, cmd)
 
 	commonCmdData.SetupIncludesLsFilter(cmd)
+	commonCmdData.SetupAllowIncludesUpdate(cmd)
 
 	return cmd
 }

@@ -49,13 +49,19 @@ type NewFileManagerOptions struct {
 	FileReader             FileReader
 	Inspector              inspector.Inspector
 	CreateIncludesLockFile bool
+	AllowIncludesUpdate    bool
 }
 
 func NewFileManager(ctx context.Context, opts NewFileManagerOptions) (*FileManager, error) {
+	if opts.AllowIncludesUpdate {
+		if err := opts.Inspector.InspectIncludesAllowUpdate(); err != nil {
+			return nil, err
+		}
+	}
 	includes, err := includes.Init(ctx, includes.InitIncludesOptions{
 		FileReader:             opts.FileReader,
 		CreateOrUpdateLockFile: opts.CreateIncludesLockFile,
-		UseLatestVersion:       opts.Inspector.InspectIncludesAllowUpdate(),
+		UseLatestVersion:       opts.AllowIncludesUpdate,
 	})
 	if err != nil {
 		return nil, err
