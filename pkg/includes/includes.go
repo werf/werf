@@ -255,14 +255,12 @@ func GetIncludes(ctx context.Context, cfg Config, lockInfo *LockInfo, remoteRepo
 				logboek.Context(ctx).Debug().LogF("Include initialized: repo: %s commit: %s\n", include.repo, include.commitHash)
 				return nil
 			})
-
 			if err != nil {
 				return err
 			}
 		}
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
