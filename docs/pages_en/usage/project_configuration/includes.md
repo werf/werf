@@ -54,6 +54,7 @@ includes:
 
   - git: https://example.com/helm_examples
     branch: main
+    add: /
     to: /
     includePaths:
       - /.helm
@@ -76,7 +77,7 @@ The `Chart.yaml` file is taken from the latest source (`helm_examples`) accordin
 ## Using configurations from external sources
 
 Below is an example `werf-includes.yaml` configuration.
-For the full list of available directives, see the corresponding \[werf-includes.yaml]\({{"reference/werf\_includes\_yaml.html" | true\_relative\_url }}) reference page.
+For the full list of available directives, see the corresponding [werf-includes.yaml]({{"reference/werf_includes_yaml.html" | true_relative_url }}) reference page.
 
 ```yaml
 includes:

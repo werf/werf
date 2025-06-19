@@ -54,6 +54,7 @@ includes:
 
   - git: https://example.com/helm_examples
     branch: main
+    add: /
     to: /
     includePaths:
       - /.helm
@@ -76,7 +77,7 @@ includes:
 ## Использование конфигурации из внешних источников
 
 Ниже приведён пример конфигурации `werf-includes.yaml`.
-Полное описание директив вы можете найти на соответствующей странице \[werf-includes.yaml]\({{"reference/werf\_includes\_yaml.html" | true\_relative\_url }})
+Полное описание директив вы можете найти на соответствующей странице [werf-includes.yaml]({{"reference/werf_includes_yaml.html" | true_relative_url }})
 
 ```yaml
 includes:
