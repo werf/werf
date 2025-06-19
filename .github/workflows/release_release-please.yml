@@ -2,9 +2,9 @@ name: release:release-please
 on:
   push:
     branches:
-      - main
+      - "main"
     paths-ignore:
-      - CHANGELOG.md
+      - "CHANGELOG.md"
   repository_dispatch:
     types: ["release:release-please"]
   workflow_dispatch:
