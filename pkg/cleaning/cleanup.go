@@ -192,8 +192,8 @@ func (m *cleanupManager) run(ctx context.Context) error {
 			for stageDescToDelete := range m.stageManager.GetStageDescSet().Iter() {
 				var hoursSinceCreationList []float64
 				if stageDescToDelete.Info.IsIndex {
-					for _, indexInfo := range stageDescToDelete.Info.Index {
-						hoursSinceCreationList = append(hoursSinceCreationList, time.Since(indexInfo.GetCreatedAt()).Hours())
+					for _, platformInfo := range stageDescToDelete.Info.Index {
+						hoursSinceCreationList = append(hoursSinceCreationList, time.Since(platformInfo.GetCreatedAt()).Hours())
 					}
 				} else {
 					hoursSinceCreationList = append(hoursSinceCreationList, time.Since(stageDescToDelete.Info.GetCreatedAt()).Hours())
