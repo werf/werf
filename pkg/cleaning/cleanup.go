@@ -188,9 +188,22 @@ func (m *cleanupManager) run(ctx context.Context) error {
 		stage_manager.ProtectionReasonBuiltWithinLastNHoursPolicy.SetDescription(fmt.Sprintf("built within last %d hours", keepImagesBuiltWithinLastNHours))
 
 		if !(m.ConfigMetaCleanup.DisableBuiltWithinLastNHoursPolicy || keepImagesBuiltWithinLastNHours == 0) {
+		loop:
 			for stageDescToDelete := range m.stageManager.GetStageDescSet().Iter() {
-				if (time.Since(stageDescToDelete.Info.GetCreatedAt()).Hours()) <= float64(keepImagesBuiltWithinLastNHours) {
-					m.stageManager.MarkStageDescAsProtected(stageDescToDelete, stage_manager.ProtectionReasonBuiltWithinLastNHoursPolicy, false)
+				var hoursSinceCreationList []float64
+				if stageDescToDelete.Info.IsIndex {
+					for _, platformInfo := range stageDescToDelete.Info.Index {
+						hoursSinceCreationList = append(hoursSinceCreationList, time.Since(platformInfo.GetCreatedAt()).Hours())
+					}
+				} else {
+					hoursSinceCreationList = append(hoursSinceCreationList, time.Since(stageDescToDelete.Info.GetCreatedAt()).Hours())
+				}
+
+				for _, hoursSinceCreation := range hoursSinceCreationList {
+					if hoursSinceCreation <= float64(keepImagesBuiltWithinLastNHours) {
+						m.stageManager.MarkStageDescAsProtected(stageDescToDelete, stage_manager.ProtectionReasonBuiltWithinLastNHoursPolicy, false)
+						continue loop
+					}
 				}
 			}
 		}
