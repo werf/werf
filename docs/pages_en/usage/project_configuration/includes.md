@@ -5,23 +5,21 @@ permalink: usage/project_configuration/includes.html
 
 ## Overview
 
-`werf` supports importing configuration files from external Git repositories using the **includes** mechanism. This allows you to reuse templates and shared settings across projects and simplify infrastructure maintenance.  
-This is useful when:
-* You have many similar applications and want to reuse Helm charts, `.werf` templates, `Dockerfile`, or `.dockerignore`.
-* You want to centrally update configurations and templates without duplication.
+`werf` supports importing configuration files from external sources using the **includes** mechanism.
+
+This is especially useful when you have many similar applications and want to manage and reuse configuration in a centralized way.
 
 ### What can be imported
 
 The following types of files are supported for import:
 
-* **Configuration files** such as `werf.yaml` and `.werf` templates  
-* **Template files** from the `.werf` directory (by default) and individual files inside it (e.g., `.tmpl`, `.yaml`)
-* **Helm charts** from the `.helm` directory and individual files inside it
-* **Dockerfile** and `.dockerignore`
+* `werf.yaml` configuration files and templates in `.werf/**/*.tmpl`, as well as any custom files used during templating.
+* **Helm charts** and individual files.
+* **Dockerfile** and `.dockerignore`.
 
-### Excluded files
+### What cannot be imported
 
-The following files cannot be imported:
+The mechanism does not allow importing files for the build context, as well as the following configuration files:
 
 * `werf-includes.yaml`
 * `werf-includes.lock`
@@ -29,9 +27,9 @@ The following files cannot be imported:
 
 ### How the includes works
 
-1. You define external sources and the paths to the required files in `werf-includes.yaml`.
-2. You lock the versions of the external sources using the `werf includes update` command, which creates the `werf-includes.lock` file. The lock file is necessary for reproducible builds and deployments.
-3. All `werf` commands (e.g., `werf build`, `werf converge`) will use the lock file and apply the overlay rules accordingly.
+1. You define external sources and the files to import in `werf-includes.yaml`.
+2. You lock the versions of the external sources using the `werf includes update` command, which creates the `werf-includes.lock` file. The lock file is required for reproducible builds and deployments.
+3. All `werf` commands (e.g., `werf build`, `werf converge`) will respect the lock file and apply the configuration according to the overlay rules.
 
 ### Overlay rules
 

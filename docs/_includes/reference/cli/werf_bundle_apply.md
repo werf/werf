@@ -34,7 +34,7 @@ werf bundle apply [options]
   -R, --auto-rollback=false
             Enable auto rollback of the failed release to the previous deployed release version     
             when current deploy process have failed ($WERF_AUTO_ROLLBACK by default)
-      --config=""
+       --config=""
             Use custom configuration file (default $WERF_CONFIG or werf.yaml in the project         
             directory)
       --config-templates-dir=""
