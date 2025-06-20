@@ -143,7 +143,7 @@ config:
 					}
 				},
 				Entry("the dockerfile not found", entry{
-					expectedErrSubstring: `unable to read dockerfile "Dockerfile": the file "Dockerfile" not found in the project git repository`,
+					expectedErrSubstring: `unable to read dockerfile "Dockerfile"`,
 				}),
 				Entry("the dockerfile not tracked", entry{
 					addDockerfile:        true,

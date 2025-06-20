@@ -49,6 +49,8 @@ werf build [IMAGE_NAME...] [options]
             For cleaning custom tags and associated content-based tag are treated as one.
             Also can be defined with $WERF_ADD_CUSTOM_TAG_* (e.g.                                   
             $WERF_ADD_CUSTOM_TAG_1="%image%-tag1", $WERF_ADD_CUSTOM_TAG_2="%image%-tag2")
+      --allow-includes-update=false
+            Allow use includes latest versions (default $WERF_ALLOW_INCLUDES_UPDATE or false)
       --allowed-backend-storage-volume-usage=70
             Set allowed percentage of backend (Docker or Buildah) storage volume usage which will   
             cause cleanup of least recently used local backend images (default 70% or               

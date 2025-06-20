@@ -142,6 +142,10 @@ type CmdData struct {
 	Platform *[]string
 
 	SkipImageSpecStage *bool
+	IncludesLsFilter   *string
+
+	CreateIncludesLockFile bool
+	AllowIncludesUpdate    bool
 }
 
 func (cmdData *CmdData) SetupFinalImagesOnly(cmd *cobra.Command, defaultEnabled bool) {
@@ -219,6 +223,19 @@ func (cmdData *CmdData) SetupRenameChart(cmd *cobra.Command) {
 func (cmdData *CmdData) SetupSkipImageSpecStage(cmd *cobra.Command) {
 	cmdData.SkipImageSpecStage = new(bool)
 	cmd.Flags().BoolVarP(cmdData.SkipImageSpecStage, "skip-image-spec-stage", "", util.GetBoolEnvironmentDefaultFalse("WERF_SKIP_IMAGE_SPEC_STAGE"), `Force skipping "imageSpec" build stage (default $WERF_SKIP_IMAGE_SPEC_STAGE or false)`)
+}
+
+func (cmdData *CmdData) SetupCreateIncludesLockFile() {
+	cmdData.CreateIncludesLockFile = true
+}
+
+func (cmdData *CmdData) SetupAllowIncludesUpdate(cmd *cobra.Command) {
+	cmd.Flags().BoolVarP(&cmdData.AllowIncludesUpdate, "allow-includes-update", "", util.GetBoolEnvironmentDefaultFalse("WERF_ALLOW_INCLUDES_UPDATE"), `Allow use includes latest versions (default $WERF_ALLOW_INCLUDES_UPDATE or false)`)
+}
+
+func (cmdData *CmdData) SetupIncludesLsFilter(cmd *cobra.Command) {
+	cmdData.IncludesLsFilter = new(string)
+	cmd.Flags().StringVar(cmdData.IncludesLsFilter, "filter", os.Getenv("WERF_INCLUDES_LIST_FILTER"), "Filter by source, e.g. --filter=source=local,remoteRepo (default $WERF_INCLUDES_LIST_FILTER or all sources).")
 }
 
 func (cmdData *CmdData) SetupDebugTemplates(cmd *cobra.Command) {

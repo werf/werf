@@ -25,12 +25,13 @@ func GitOpenWithCustomWorktreeDir(gitDir, worktreeDir string) (*git.Repository, 
 }
 
 type FetchOptions struct {
-	All       bool
-	TagsOnly  bool
-	Prune     bool
-	PruneTags bool
-	Unshallow bool
-	RefSpecs  map[string]string
+	All          bool
+	TagsOnly     bool
+	Prune        bool
+	PruneTags    bool
+	Unshallow    bool
+	UpdateHeadOk bool
+	RefSpecs     map[string][]string
 }
 
 func IsShallowFileChangedSinceWeReadIt(err error) bool {
@@ -52,6 +53,10 @@ func Fetch(ctx context.Context, path string, options FetchOptions) error {
 		commandArgs = append(commandArgs, "--tags")
 	}
 
+	if options.UpdateHeadOk {
+		commandArgs = append(commandArgs, "--update-head-ok")
+	}
+
 	if options.Prune || options.PruneTags {
 		commandArgs = append(commandArgs, "--prune")
 
@@ -61,7 +66,8 @@ func Fetch(ctx context.Context, path string, options FetchOptions) error {
 	}
 
 	for remote, refSpec := range options.RefSpecs {
-		commandArgs = append(commandArgs, remote, refSpec)
+		remoteRefSpecs := append([]string{remote}, refSpec...)
+		commandArgs = append(commandArgs, remoteRefSpecs...)
 	}
 
 	gitCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: path}, commandArgs...)

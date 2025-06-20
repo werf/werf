@@ -1,0 +1,49 @@
+sections:
+  - id: includes
+    description:
+      en: Configuration of remote git repositories for import
+      ru: Конфигурация удаленных git-репозиториев для импорта
+    directives:
+      - git: url
+        value: "string"
+        description:
+          en: "The address of the remote repository"
+          ru: "Адрес git-репозитория"
+        detailsArticle:
+          en: "/usage/build/stapel/git.html#working-with-remote-repositories"
+          ru: "/usage/build/stapel/git.html#работа-с-удаленными-репозиториями"
+      - name: branch
+        value: "string"
+        description:
+          en: "The name of the branch to import files from. Incompatible with the tag and commit directives"
+          ru: "Имя ветки, с которой будут имопртированы файлы. Несовместимо с директивой tag и commit"
+      - name: tag
+        value: "string"
+        description:
+          en: "The name of the tag to import files from. Incompatible with the branch and commit directives"
+          ru: "Имя тега, с которого будут имопртированы файлы. Несовместимо с директивой branch и commit"
+      - name: commit
+        value: "string"
+        description:
+          en: "The commit hash to import files from. Incompatible with the branch and tag directives"
+          ru: "Хэш коммита, с которого будут имопртированы файлы. Несовместимо с директивами branch и tag"
+      - name: add
+        value: "string"
+        description:
+          en: "The path to the directory in the remote repository to import files from"
+          ru: "Путь к директории в удаленном репозитории, из которой будут импортированы файлы"
+      - name: to
+        value: "string"
+        description:
+          en: "The path to the directory in the local repository to import files to"
+          ru: "Путь к директории в локальном репозитории, в которую будут импортированы файлы"
+      - name: includePaths
+        value: "[ glob, ... ]"
+        description:
+          en: "The paths to the files in the remote repository to import. If not specified, all files will be imported"
+          ru: "Пути к файлам в удаленном репозитории, которые будут импортированы. Если не указаны, будут импортированы все файлы"
+      - name: excludePaths
+        value: "[ glob, ... ]"
+        description:
+          en: "The paths to the files in the remote repository to exclude from import. If not specified, no files will be excluded"
+          ru: "Пути к файлам в удаленном репозитории, которые будут исключены из импорта. Если не указаны, файлы не будут исключены"

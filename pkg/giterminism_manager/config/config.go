@@ -45,9 +45,10 @@ type fileReader interface {
 }
 
 type Config struct {
-	Cli    cli    `json:"cli"`
-	Config config `json:"config"`
-	Helm   helm   `json:"helm"`
+	Cli      cli      `json:"cli"`
+	Config   config   `json:"config"`
+	Helm     helm     `json:"helm"`
+	Includes includes `json:"includes"`
 }
 
 func (c Config) IsCustomTagsAccepted() bool {
@@ -112,6 +113,10 @@ func (c Config) IsConfigSecretSrcAccepted(path string) bool {
 
 func (c Config) IsConfigSecretValueAccepted(path string) bool {
 	return c.Config.Secrets.IsValueIdAccepted(path)
+}
+
+func (c Config) IsUpdateIncludesAccepted() bool {
+	return c.Includes.IsAllowIncludesUpdate()
 }
 
 type cli struct {
@@ -256,4 +261,12 @@ func isAbsPathMatched(patterns []string, p string) bool {
 		absPath = append(absPath, path)
 	}
 	return isPathMatched(absPath, p)
+}
+
+type includes struct {
+	AllowIncludesUpdate bool `json:"allowIncludesUpdate"`
+}
+
+func (i *includes) IsAllowIncludesUpdate() bool {
+	return i.AllowIncludesUpdate
 }

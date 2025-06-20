@@ -1,7 +1,6 @@
 package file_reader
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -15,7 +14,7 @@ func newFileSystemOperator() fileSystemLayer {
 }
 
 func (fso fileSystemLayer) ReadFile(filename string) ([]byte, error) {
-	return ioutil.ReadFile(filename)
+	return os.ReadFile(filename)
 }
 
 func (fso fileSystemLayer) Readlink(name string) (string, error) {

@@ -12,7 +12,7 @@ import (
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
 )
 
-func FollowGitHead(ctx context.Context, cmdData *CmdData, taskFunc func(ctx context.Context, iterGiterminismManager giterminism_manager.Interface) error) error {
+func FollowGitHead(ctx context.Context, cmdData *CmdData, taskFunc func(ctx context.Context, iterGiterminismManager *giterminism_manager.Manager) error) error {
 	var waitMessage string
 	if *cmdData.Dev {
 		waitMessage = "Waiting for new changes ..."

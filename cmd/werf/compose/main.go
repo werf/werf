@@ -343,6 +343,7 @@ func newCmd(ctx context.Context, composeCmdName string, options *newCmdOptions) 
 	cmd.Flags().StringVarP(&cmdData.ComposeBinPath, "docker-compose-bin-path", "", os.Getenv("WERF_DOCKER_COMPOSE_BIN_PATH"), "DEPRECATED: \"docker compose\" command always used now, this option is ignored. Define docker-compose bin path (default $WERF_DOCKER_COMPOSE_BIN_PATH)")
 
 	commonCmdData.SetupSkipImageSpecStage(cmd)
+	commonCmdData.SetupAllowIncludesUpdate(cmd)
 
 	return cmd
 }
@@ -411,7 +412,7 @@ func runMain(ctx context.Context, dockerComposeCmdName string, cmdData composeCm
 			return err
 		}
 
-		return common.FollowGitHead(ctx, &commonCmdData, func(ctx context.Context, headCommitGiterminismManager giterminism_manager.Interface) error {
+		return common.FollowGitHead(ctx, &commonCmdData, func(ctx context.Context, headCommitGiterminismManager *giterminism_manager.Manager) error {
 			return run(ctx, containerBackend, headCommitGiterminismManager, commonCmdData, cmdData, dockerComposeCmdName)
 		})
 	} else {

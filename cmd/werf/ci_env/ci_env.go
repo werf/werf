@@ -76,6 +76,7 @@ Currently supported only GitLab (gitlab) and GitHub (github) CI systems`,
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 	commonCmdData.SetupDebugTemplates(cmd)
+	commonCmdData.SetupAllowIncludesUpdate(cmd)
 
 	cmd.Flags().BoolVarP(&cmdData.AllowRegistryLogin, "login-to-registry", "", util.GetBoolEnvironmentDefaultTrue("WERF_LOGIN_TO_REGISTRY"), "Log in to CI-specific registry automatically if possible (default $WERF_LOGIN_TO_REGISTRY).")
 	cmd.Flags().BoolVarP(&cmdData.AsFile, "as-file", "", util.GetBoolEnvironmentDefaultFalse("WERF_AS_FILE"), "Create the script and print the path for sourcing (default $WERF_AS_FILE).")

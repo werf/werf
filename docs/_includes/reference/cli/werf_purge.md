@@ -16,6 +16,8 @@ werf purge [options]
 {{ header }} Options
 
 ```shell
+      --allow-includes-update=false
+            Allow use includes latest versions (default $WERF_ALLOW_INCLUDES_UPDATE or false)
       --allowed-backend-storage-volume-usage=70
             Set allowed percentage of backend (Docker or Buildah) storage volume usage which will   
             cause cleanup of least recently used local backend images (default 70% or               

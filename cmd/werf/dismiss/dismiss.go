@@ -132,6 +132,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	commonCmdData.SetupPlatform(cmd)
 	commonCmdData.SetupDebugTemplates(cmd)
+	commonCmdData.SetupAllowIncludesUpdate(cmd)
 
 	cmd.Flags().BoolVarP(&cmdData.WithNamespace, "with-namespace", "", util.GetBoolEnvironmentDefaultFalse("WERF_WITH_NAMESPACE"), "Delete Kubernetes Namespace after purging Helm Release (default $WERF_WITH_NAMESPACE)")
 

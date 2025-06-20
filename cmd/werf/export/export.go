@@ -127,6 +127,7 @@ func NewExportCmd(ctx context.Context) *cobra.Command {
 	commonCmdData.SetupPlatform(cmd)
 	commonCmdData.SetupDebugTemplates(cmd)
 	commonCmdData.SetupFinalImagesOnly(cmd, true)
+	commonCmdData.SetupAllowIncludesUpdate(cmd)
 
 	cmd.Flags().StringArrayVarP(&tagTemplateList, "tag", "", []string{}, `Set a tag template (can specify multiple).
 It is necessary to use image name shortcut %image% or %image_slug% if multiple images are exported (e.g. REPO:TAG-%image% or REPO-%image%:TAG)`)

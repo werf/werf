@@ -29,6 +29,7 @@ type giterminismConfig interface {
 	IsConfigSecretEnvAccepted(name string) bool
 	IsConfigSecretSrcAccepted(path string) bool
 	IsConfigSecretValueAccepted(name string) bool
+	IsUpdateIncludesAccepted() bool
 }
 
 type fileReader interface {
