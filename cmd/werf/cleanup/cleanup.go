@@ -19,9 +19,12 @@ import (
 
 var commonCmdData common.CmdData
 
-var cmdData struct {
+type cmdDataType struct {
 	ScanContextOnly string
+	KeepList        string
 }
+
+var cmdData cmdDataType
 
 func NewCmd(ctx context.Context) *cobra.Command {
 	ctx = common.NewContextWithCmdData(ctx, &commonCmdData)
@@ -102,6 +105,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	// aliases, but only WERF_SCAN_ONLY_CONTEXT env var is supported
 	cmd.PersistentFlags().StringVarP(&cmdData.ScanContextOnly, "scan-context-only", "", os.Getenv("WERF_SCAN_CONTEXT_ONLY"), "Scan for used images only in the specified kube context, scan all contexts from kube config otherwise (default false or $WERF_SCAN_CONTEXT_ONLY)")
 	cmd.PersistentFlags().StringVarP(&cmdData.ScanContextOnly, "kube-context", "", os.Getenv("WERF_SCAN_CONTEXT_ONLY"), "Scan for used images only in the specified kube context, scan all contexts from kube config otherwise (default false or $WERF_SCAN_CONTEXT_ONLY)")
+
+	setupKeeplist(&cmdData, cmd)
 
 	return cmd
 }
@@ -211,6 +216,14 @@ func runCleanup(ctx context.Context, cmd *cobra.Command) error {
 		kubernetesNamespaceRestrictionByContext = common.GetKubernetesNamespaceRestrictionByContext(&commonCmdData, kubernetesContextClients)
 	}
 
+	keepList := cleaning.NewKeepListWithSize(0)
+
+	if cmdData.KeepList != "" {
+		if keepList, err = parseKeepList(cmdData.KeepList); err != nil {
+			return fmt.Errorf("unable to parse keepList: %w", err)
+		}
+	}
+
 	cleanupOptions := cleaning.CleanupOptions{
 		ImageNameList:                           imagesNames,
 		LocalGit:                                giterminismManager.LocalGitRepo().(*git_repo.Local),
@@ -222,6 +235,7 @@ func runCleanup(ctx context.Context, cmd *cobra.Command) error {
 		DryRun:                                  *commonCmdData.DryRun,
 		Parallel:                                *commonCmdData.Parallel,
 		ParallelTasksLimit:                      *commonCmdData.ParallelTasksLimit,
+		KeepList:                                keepList,
 	}
 
 	logboek.LogOptionalLn()

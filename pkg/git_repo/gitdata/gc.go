@@ -282,6 +282,16 @@ WipeCacheDirs:
 		}
 
 		versionedCacheDir := filepath.Join(cacheRootDir, finfo.Name())
+
+		if !finfo.IsDir() {
+			logboek.Context(ctx).Warn().LogF("Removing invalid entry %q: not a directory\n", versionedCacheDir)
+			if err := os.RemoveAll(versionedCacheDir); err != nil {
+				return fmt.Errorf("unable to remove %q: %w", versionedCacheDir, err)
+			}
+
+			continue
+		}
+
 		subdirs, err := ioutil.ReadDir(versionedCacheDir)
 		if err != nil {
 			return fmt.Errorf("error reading dir %q: %w", versionedCacheDir, err)

@@ -659,12 +659,15 @@ entries:
 
               - title: werf.yaml template engine
                 url: /usage/project_configuration/werf_yaml_template_engine.html
-
+                
               - title: Giterminism
                 url: /usage/project_configuration/giterminism.html
 
               - title: Includes
                 url: /usage/project_configuration/includes.html
+                
+              - title: Debug werf.yaml
+                url: /usage/project_configuration/debug_werf_yaml.html
 
           - title: Build
             f:
@@ -719,6 +722,9 @@ entries:
 
               - title: Parametrize templates
                 url: /usage/deploy/values.html
+
+              - title: Debug templates
+                url: /usage/deploy/debug_templates.html
 
               - title: Multiple environments
                 url: /usage/deploy/environments.html
@@ -808,6 +814,9 @@ entries:
 
               - title: Шаблонизатор werf.yaml
                 url: /usage/project_configuration/werf_yaml_template_engine.html
+                
+              - title: Отладка werf.yaml
+                url: /usage/project_configuration/debug_werf_yaml.html
 
               - title: Гитерминизм
                 url: /usage/project_configuration/giterminism.html
@@ -868,6 +877,9 @@ entries:
 
               - title: Параметризация шаблонов
                 url: /usage/deploy/values.html
+
+              - title: Отладка шаблонов
+                url: /usage/deploy/debug_templates.html
 
               - title: Разные окружения
                 url: /usage/deploy/environments.html

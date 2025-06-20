@@ -167,16 +167,16 @@ hello
 
 Available data types:
 
-| Data type                                                           | Example                                              |
-| -------------------------------------------------------------------- | --------------------------------------------------- |
-| Boolean                                                              | {% raw %}`{{ true }}`{% endraw %}                   |
-| String                                                               | {% raw %}`{{ "hello" }}`{% endraw %}                |
-| Integer                                                              | {% raw %}`{{ 1 }}`{% endraw %}                      |
-| Floating-point number                                                | {% raw %}`{{ 1.1 }}`{% endraw %}                    |
-| List with elements of any type (ordered)                             | {% raw %}`{{ list 1 2 3 }}`{% endraw %}             |
-| Dictionary with string keys and values of any type (unordered)       | {% raw %}`{{ dict "key1" 1 "key2" 2 }}`{% endraw %} |
-| Special objects                                                      | {% raw %}`{{ $.Files }}`{% endraw %}                |
-| Null                                                                 | {% raw %}`{{ nil }}`{% endraw %}                    |
+| Data type                                                      | Example                                             |
+| -------------------------------------------------------------- | --------------------------------------------------- |
+| Boolean                                                        | {% raw %}`{{ true }}`{% endraw %}                   |
+| String                                                         | {% raw %}`{{ "hello" }}`{% endraw %}                |
+| Integer                                                        | {% raw %}`{{ 1 }}`{% endraw %}                      |
+| Floating-point number                                          | {% raw %}`{{ 1.1 }}`{% endraw %}                    |
+| List with elements of any type (ordered)                       | {% raw %}`{{ list 1 2 3 }}`{% endraw %}             |
+| Dictionary with string keys and values of any type (unordered) | {% raw %}`{{ dict "key1" 1 "key2" 2 }}`{% endraw %} |
+| Special objects                                                | {% raw %}`{{ $.Files }}`{% endraw %}                |
+| Null                                                           | {% raw %}`{{ nil }}`{% endraw %}                    |
 
 ## Functions
 
@@ -274,14 +274,14 @@ The following logic gates are available:
 
 The following comparison operators are available:
 
-| comparison              | Function                       | Example                                          |
-| ----------------------- | ------------------------------ | ------------------------------------------------ |
-| Equal                   | `eq <arg> <arg> [<arg>, ...]`  | {% raw %}`{{ eq "hello" "hello" }}`{% endraw %}  |
-| Not equal               | `neq <arg> <arg> [<arg>, ...]` | {% raw %}`{{ neq "hello" "world" }}`{% endraw %} |
-| Less than               | `lt <arg> <arg>`               | {% raw %}`{{ lt 1 2 }}`{% endraw %}              |
-| Greater than            | `gt <arg> <arg>`               | {% raw %}`{{ gt 2 1 }}`{% endraw %}              |
-| Less than or equal      | `le <arg> <arg>`               | {% raw %}`{{ le 1 2 }}`{% endraw %}              |
-| Greater than or equal   | `ge <arg> <arg>`               | {% raw %}`{{ ge 2 1 }}`{% endraw %}              |
+| comparison            | Function                       | Example                                          |
+| --------------------- | ------------------------------ | ------------------------------------------------ |
+| Equal                 | `eq <arg> <arg> [<arg>, ...]`  | {% raw %}`{{ eq "hello" "hello" }}`{% endraw %}  |
+| Not equal             | `neq <arg> <arg> [<arg>, ...]` | {% raw %}`{{ neq "hello" "world" }}`{% endraw %} |
+| Less than             | `lt <arg> <arg>`               | {% raw %}`{{ lt 1 2 }}`{% endraw %}              |
+| Greater than          | `gt <arg> <arg>`               | {% raw %}`{{ gt 2 1 }}`{% endraw %}              |
+| Less than or equal    | `le <arg> <arg>`               | {% raw %}`{{ le 1 2 }}`{% endraw %}              |
+| Greater than or equal | `ge <arg> <arg>`               | {% raw %}`{{ ge 2 1 }}`{% endraw %}              |
 
 Example of combining various operators
 
@@ -1065,50 +1065,6 @@ The template actions encountered in them are carried out:
 
 ```
 # {{ print "This template action will be carried out" }}
-```
-
-{% endraw %}
-
-## Debugging
-
-Use `werf render` to render and display ready-to-use Kubernetes manifests. The `--debug` option displays manifests even if they are not valid YAML.
-
-Here's how you can display the variable contents:
-
-{% raw %}
-
-```
-output: {{ $appName | toYaml }}
-```
-
-{% endraw %}
-
-Display the contents of a list or dictionary variable:
-
-{% raw %}
-
-```
-output: {{ $dictOrList | toYaml | nindent 2 }}
-```
-
-{% endraw %}
-
-Display the variable's data type:
-
-{% raw %}
-
-```
-output: {{ kindOf $myvar }}
-```
-
-{% endraw %}
-
-Display some string and stop template rendering:
-
-{% raw %}
-
-```
-{{ fail (printf "Data type: %s" (kindOf $myvar)) }}
 ```
 
 {% endraw %}

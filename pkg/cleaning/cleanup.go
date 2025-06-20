@@ -37,6 +37,7 @@ type CleanupOptions struct {
 	DryRun                                  bool
 	Parallel                                bool
 	ParallelTasksLimit                      int64
+	KeepList                                KeepList
 }
 
 func Cleanup(ctx context.Context, projectName string, storageManager *manager.StorageManager, options CleanupOptions) error {
@@ -48,6 +49,7 @@ func newCleanupManager(projectName string, storageManager *manager.StorageManage
 		stageManager:                            stage_manager.NewManager(),
 		parallel:                                options.Parallel,
 		parallelTasksLimit:                      options.ParallelTasksLimit,
+		keepList:                                options.KeepList,
 		ProjectName:                             projectName,
 		StorageManager:                          storageManager,
 		ImageNameList:                           options.ImageNameList,
@@ -80,6 +82,8 @@ type cleanupManager struct {
 
 	parallel           bool
 	parallelTasksLimit int64
+
+	keepList KeepList
 }
 
 type GitRepo interface {
@@ -184,13 +188,28 @@ func (m *cleanupManager) run(ctx context.Context) error {
 		stage_manager.ProtectionReasonBuiltWithinLastNHoursPolicy.SetDescription(fmt.Sprintf("built within last %d hours", keepImagesBuiltWithinLastNHours))
 
 		if !(m.ConfigMetaCleanup.DisableBuiltWithinLastNHoursPolicy || keepImagesBuiltWithinLastNHours == 0) {
+		loop:
 			for stageDescToDelete := range m.stageManager.GetStageDescSet().Iter() {
-				if (time.Since(stageDescToDelete.Info.GetCreatedAt()).Hours()) <= float64(keepImagesBuiltWithinLastNHours) {
-					m.stageManager.MarkStageDescAsProtected(stageDescToDelete, stage_manager.ProtectionReasonBuiltWithinLastNHoursPolicy, false)
+				var hoursSinceCreationList []float64
+				if stageDescToDelete.Info.IsIndex {
+					for _, platformInfo := range stageDescToDelete.Info.Index {
+						hoursSinceCreationList = append(hoursSinceCreationList, time.Since(platformInfo.GetCreatedAt()).Hours())
+					}
+				} else {
+					hoursSinceCreationList = append(hoursSinceCreationList, time.Since(stageDescToDelete.Info.GetCreatedAt()).Hours())
+				}
+
+				for _, hoursSinceCreation := range hoursSinceCreationList {
+					if hoursSinceCreation <= float64(keepImagesBuiltWithinLastNHours) {
+						m.stageManager.MarkStageDescAsProtected(stageDescToDelete, stage_manager.ProtectionReasonBuiltWithinLastNHoursPolicy, false)
+						continue loop
+					}
 				}
 			}
 		}
 	}
+
+	m.markWhitelistStagesAsProtected()
 
 	if err := logboek.Context(ctx).LogProcess("Cleanup unused stages").DoError(func() error {
 		return m.cleanupUnusedStages(ctx)
@@ -207,6 +226,18 @@ func (m *cleanupManager) run(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (m *cleanupManager) markWhitelistStagesAsProtected() {
+	if m.keepList.IsEmpty() {
+		return
+	}
+
+	for stageDesc := range m.stageManager.GetStageDescSet().Iter() {
+		if m.keepList.ContainsOne(stageDesc.Info.Tag) {
+			m.stageManager.MarkStageDescAsProtected(stageDesc, stage_manager.ProtectionReasonKeepList, false)
+		}
+	}
 }
 
 func (m *cleanupManager) purgeManagedImages(ctx context.Context) error {
@@ -558,9 +589,9 @@ func (m *cleanupManager) deleteStages(ctx context.Context, stageDescSet image.St
 func deleteStageDescSet(ctx context.Context, storageManager manager.StorageManagerInterface, dryRun bool, deleteStageOptions manager.ForEachDeleteStageOptions, stageDescSet image.StageDescSet, isFinal bool) error {
 	if dryRun {
 		for stageDesc := range stageDescSet.Iter() {
-			logboek.Context(ctx).Default().LogFDetails("  tag: %s\n", stageDesc.StageID.String())
-			logboek.Context(ctx).LogOptionalLn()
+			logboek.Context(ctx).Default().LogFWithCustomStyle(deletedStyle, "%s\n", stageDesc.StageID.String())
 		}
+		logboek.Context(ctx).LogOptionalLn()
 		return nil
 	}
 
@@ -575,7 +606,7 @@ func deleteStageDescSet(ctx context.Context, storageManager manager.StorageManag
 			return nil
 		}
 
-		logboek.Context(ctx).Default().LogFDetails("  tag: %s\n", stageDesc.Info.Tag)
+		logboek.Context(ctx).Default().LogFWithCustomStyle(deletedStyle, "  tag: %s\n", stageDesc.Info.Tag)
 
 		return nil
 	}
@@ -828,11 +859,11 @@ func (m *cleanupManager) cleanupUnusedStages(ctx context.Context) error {
 			}
 		})
 
-		logboek.Context(ctx).Default().LogBlock("Saved stages (%d/%d)", m.stageManager.GetProtectedStageDescSet().Cardinality(), m.stageManager.GetStageDescSet().Cardinality()).Do(func() {
+		logboek.Context(ctx).Default().LogBlock("Saved stages tags (%d/%d)", m.stageManager.GetProtectedStageDescSet().Cardinality(), m.stageManager.GetStageDescSet().Cardinality()).Do(func() {
 			for reason, stageDescSetToKeep := range m.stageManager.GetProtectedStageDescSetByReason() {
 				logboek.Context(ctx).Default().LogProcess("%s (%d)", reason, stageDescSetToKeep.Cardinality()).Do(func() {
 					for stageDescToKeep := range stageDescSetToKeep.Iter() {
-						logboek.Context(ctx).Default().LogFDetails("%s\n", stageDescToKeep.Info.Tag)
+						logboek.Context(ctx).Default().LogFWithCustomStyle(keptStyle, "%s\n", stageDescToKeep.Info.Tag)
 					}
 				})
 			}
@@ -1092,7 +1123,7 @@ func (m *cleanupManager) deleteUnusedCustomTags(ctx context.Context) error {
 		header := fmt.Sprintf("Saved custom tags (%d/%d)", len(customTagListToKeep), numberOfCustomTags)
 		logboek.Context(ctx).Default().LogBlock(header).Do(func() {
 			for _, customTag := range customTagListToKeep {
-				logboek.Context(ctx).Default().LogFDetails("  tag: %s\n", customTag)
+				logboek.Context(ctx).Default().LogFWithCustomStyle(keptStyle, "  tag: %s\n", customTag)
 				logboek.Context(ctx).LogOptionalLn()
 			}
 		})
