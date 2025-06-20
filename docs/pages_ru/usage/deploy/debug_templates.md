@@ -50,6 +50,4 @@ werf:
   version: v2.36.4
 ```
 
-Ознакомится с `service values` можно [здесь]({{ "usage/deploy/values.html#информация-о-собранных-образах-только-в-werf" | true_relative_url }})
-
 {% include pages/ru/debug_template_flag.md.liquid %}

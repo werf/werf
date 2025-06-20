@@ -1,8 +1,17 @@
-## Special Debug Functions
+## Special debug functions
 
-The `--debug-templates` flag enables advanced debugging mode for Go templates in werf. It allows writing debug information to the log without affecting the result of the templating. Below are scenarios where these functions can be useful, along with their behavior depending on the debug mode.
+The `--debug-templates` flag enables advanced debugging mode for Go templates in werf.
 
-### Log an Arbitrary Message
+In this mode:
+-	Some errors become more detailed, including additional context that is hidden in normal mode.
+-	Special functions for template debugging become available.
+-	It is possible to output debug information to the log without affecting the result of the templating.
+
+>️ Note: This verbose error behavior is enabled by default when `--debug-templates` is used, but it is not active in normal mode to avoid accidentally disclosing potentially sensitive data (such as secrets or internal values).
+
+Below are scenarios where these functions can be useful and their behavior depending on the debug mode.
+
+### Log an arbitrary message
 
 You can insert custom log messages at any point during templating using `printf_debug`. This is useful for tracking variable values, condition execution, and the order of template rendering.
 
@@ -16,7 +25,7 @@ Example:
 ```
 {% endraw %}
 
-### Log a Dump of Any Structure
+### Log a dump of any structure
 
 If you need to inspect a variable's value — especially a complex one like `.Values` or `$` — use `dump_debug`.
 
@@ -30,7 +39,7 @@ Example:
 ```
 {% endraw %}
 
-### Debug the `include` Function
+### Debug the `include` function
 
 To debug `include` calls, replace them with `include_debug` and enable template debug mode using `--debug-templates`. This will log debug information about each `include` invocation during templating.
 
@@ -44,7 +53,7 @@ Example:
 ```
 {% endraw %}
 
-### Debug the `tpl` Function
+### Debug the `tpl` function
 
 To debug `tpl` calls, replace them with `tpl_debug` and enable template debug mode using `--debug-templates`. This will log debug information about each `tpl` invocation during templating.
 

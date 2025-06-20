@@ -3,7 +3,7 @@ title: Debug werf.yaml
 permalink: usage/project_configuration/debug_werf_yaml.html
 ---
 
-## Viewing Template Rendering Results
+## Viewing template rendering results
 
 The `werf config render` command displays the rendered result of `werf.yaml` or a specific image/images.
 
@@ -22,7 +22,7 @@ image: backend
 dockerfile: backend.Dockerfile
 ```
 
-## Listing All Built Images
+## Listing all built images
 
 The `werf config list` command outputs a list of all images defined in the final `werf.yaml`.
 
@@ -34,7 +34,7 @@ frontend
 
 The `--final-images-only` flag will display only the final images. You can learn more about final and intermediate images [here]({{ "usage/build/images.html#using-intermediate-and-final-images" | true_relative_url }}).
 
-## Analyzing Image Dependencies
+## Analyzing image dependencies
 
 The `werf config graph` command builds a dependency graph between images (or a specific image).
 
