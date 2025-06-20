@@ -3,8 +3,9 @@ on:
   push:
     branches:
       - "main"
-    paths-ignore:
-      - "CHANGELOG.md"
+      - "[0-9]+.[0-9]+.[0-9]+*"
+      - "[0-9]+.[0-9]+"
+      - "[0-9]+"
   repository_dispatch:
     types: ["release:release-please"]
   workflow_dispatch:
@@ -17,18 +18,14 @@ jobs:
   release-please:
     runs-on: ubuntu-22.04
     steps:
-      - name: Extract branch name
-        id: extract_branch
-        run: echo "branch=${GITHUB_REF#refs/heads/}" >> $GITHUB_OUTPUT
-
       - name: Release
         id: release
         uses: googleapis/release-please-action@v4
         with:
-          target-branch: ${{ steps.extract_branch.outputs.branch }}
+          target-branch: ${{github.ref_name}}
           release-type: go
           skip-github-release: true
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
   notify:
     if: failure()
     needs: release-please

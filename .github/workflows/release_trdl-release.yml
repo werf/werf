@@ -1,10 +1,8 @@
 name: release:trdl-release
 on:
   push:
-    branches:
-      - "main"
-    paths:
-      - "CHANGELOG.md"
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+*"
   repository_dispatch:
     types: ["release:trdl-release"]
   workflow_dispatch:
@@ -37,25 +35,23 @@ jobs:
         with:
           fetch-depth: 0
           fetch-tags: true
-
-      - name: Create Release
-        uses: googleapis/release-please-action@v4
-        with:
-          release-type: go
-          skip-github-pull-request: true
-
-      - name: Update GitHub Release Notes with Installation Instructions
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ github.ref_name }}
+      - name: Get version from CHANGELOG.md
+        id: get_version
         run: |
-          TAG=$(gh release list --limit 1 --json tagName --jq '.[0].tagName')
-          VERSION=$(echo "$TAG" | sed 's/^v//')
-          RELEASE_NOTES=$(gh release view "$TAG" --json body -q '.body')
+          VERSION=$(grep -m1 '^## \[' CHANGELOG.md | sed -E 's/^## \[([0-9.]+)\].*/\1/')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+      - name: Generate notes.md
+        id: notes
+        run: |
+          VERSION="${{ steps.get_version.outputs.version }}"
+          echo "## Changelog" > notes.md
+          awk -v version="$VERSION" '
+          $0 ~ "^## \\["version"\\]" {capture=1; next}
+          $0 ~ "^## \\[" && capture==1 {exit}
+          capture==1 {print}
+          ' CHANGELOG.md >> notes.md
 
-          cat <<EOF > new_notes.md
-          ## Changelog
-          $RELEASE_NOTES
+          cat <<EOF >> notes.md
           ## Installation
 
           To install \`werf\` we strongly recommend following [these instructions](https://werf.io/getting_started/).
@@ -67,15 +63,20 @@ jobs:
           * [macOS arm64](https://tuf.werf.io/targets/releases/$VERSION/darwin-arm64/bin/werf) ([PGP signature](https://tuf.werf.io/targets/signatures/$VERSION/darwin-arm64/bin/werf.sig))
           * [Windows amd64](https://tuf.werf.io/targets/releases/$VERSION/windows-amd64/bin/werf.exe) ([PGP signature](https://tuf.werf.io/targets/signatures/$VERSION/windows-amd64/bin/werf.exe.sig))
 
-          Verification commands:
+          These binaries were signed with PGP and could be verified with the [werf PGP public key](https://werf.io/werf.asc). For example, \`werf\` binary can be downloaded and verified with \`gpg\` on Linux with these commands:
           \`\`\`shell
           curl -sSL https://werf.io/werf.asc | gpg --import
           curl -sSLO "https://tuf.werf.io/targets/releases/$VERSION/linux-amd64/bin/werf"
           gpg --verify werf.sig werf
           \`\`\`
           EOF
-
-          gh release edit "$TAG" --notes-file new_notes.md
+      - name: Create Release
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+        run: |
+          gh release create "v${{ steps.get_version.outputs.version }}" \
+            --title "v${{ steps.get_version.outputs.version }}" \
+            --notes-file notes.md
 
   notify:
     if: always()
