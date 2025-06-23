@@ -13,9 +13,9 @@ This is especially useful when you have many similar applications and want to ma
 
 The following types of files are supported for import:
 
-* `werf.yaml` configuration files and templates in `.werf/**/*.tmpl`, as well as any custom files used during templating.
-* **Helm charts** and individual files.
-* **Dockerfile** and `.dockerignore`.
+* The main configuration file (`werf.yaml`), templates (`.werf/**/*.tmpl`), as well as arbitrary files used during templating.
+* Helm charts and individual files.
+* `Dockerfile` and `.dockerignore`.
 
 ### What cannot be imported
 
@@ -74,8 +74,7 @@ The `Chart.yaml` file is taken from the latest source (`helm_examples`) accordin
 
 ## Using configurations from external sources
 
-Below is an example `werf-includes.yaml` configuration.
-For the full list of available directives, see the corresponding [werf-includes.yaml]({{"reference/werf_includes_yaml.html" | true_relative_url }}) reference page.
+Below is an example `werf-includes.yaml` configuration (more details in the [werf-includes.yaml]({{"reference/werf_includes_yaml.html" | true_relative_url }}) reference page):
 
 ```yaml
 includes:
@@ -104,12 +103,12 @@ includes:
 
 There are two ways to update include versions:
 
-* Edit the `werf-includes.lock` file manually or use dependency management tools like Dependabot, Renovate, etc.
 * Use the `werf includes update` command. This will update all includes to the `HEAD` of the specified reference (`branch` or `tag`).
+* Edit the `werf-includes.lock` file manually or use dependency management tools like Dependabot, Renovate, etc.
 
 ### Automatic version updates (not recommended)
 
-If you need to use the latest `HEAD` versions without a lock file—for example, to quickly test recent changes—you can use `--allow-includes-update` option. The usage of this option must be enabled in `werf-giterminism.yaml`:
+If you need to use the latest `HEAD` versions without a lock file you can use `--allow-includes-update` option. The usage of this option must be enabled in `werf-giterminism.yaml`:
 
 ```yaml
 includes:
