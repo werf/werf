@@ -40,13 +40,20 @@ func RenderWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfCo
 	}
 
 	if len(imageNameList) == 0 {
-		return renderWerfConfig(ctx, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, giterminismManager, opts)
+		return renderWerfConfig(ctx, renderWerfConfigYamlOpts{
+			customWerfConfigRelPath:             customWerfConfigRelPath,
+			customWerfConfigTemplatesDirRelPath: customWerfConfigTemplatesDirRelPath,
+			giterminismManager:                  giterminismManager,
+			env:                                 opts.Env,
+			includesConfigRelPath:               "", // default
+			debugTemplates:                      opts.DebugTemplates,
+		})
 	}
 	return renderSpecificImages(werfConfig, imageNameList)
 }
 
-func renderWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath string, giterminismManager giterminism_manager.Interface, opts WerfConfigOptions) error {
-	_, werfConfigRenderContent, err := renderWerfConfigYaml(ctx, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, giterminismManager, opts.Env, opts.DebugTemplates)
+func renderWerfConfig(ctx context.Context, opts renderWerfConfigYamlOpts) error {
+	_, werfConfigRenderContent, err := renderWerfConfigYaml(ctx, opts)
 	if err != nil {
 		return err
 	}
@@ -71,7 +78,13 @@ func renderSpecificImages(werfConfig *WerfConfig, imageNameList []string) error 
 }
 
 func GetWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath string, giterminismManager giterminism_manager.Interface, opts WerfConfigOptions) (string, *WerfConfig, error) {
-	werfConfigPath, werfConfigRenderContent, err := renderWerfConfigYaml(ctx, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, giterminismManager, opts.Env, opts.DebugTemplates)
+	werfConfigPath, werfConfigRenderContent, err := renderWerfConfigYaml(ctx, renderWerfConfigYamlOpts{
+		customWerfConfigRelPath:             customWerfConfigRelPath,
+		customWerfConfigTemplatesDirRelPath: customWerfConfigTemplatesDirRelPath,
+		giterminismManager:                  giterminismManager,
+		env:                                 opts.Env,
+		debugTemplates:                      opts.DebugTemplates,
+	})
 	if err != nil {
 		return "", nil, fmt.Errorf("unable to render werf config: %w", err)
 	}
@@ -188,16 +201,33 @@ func splitByDocs(werfConfigRenderContent, werfConfigRenderPath string) ([]*doc, 
 	return docs, nil
 }
 
-func renderWerfConfigYaml(ctx context.Context, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath string, giterminismManager giterminism_manager.Interface, env string, debugTemplates bool) (string, string, error) {
-	// TODO(iapershin): move all template logic to separate package
-	tmpl := template.New("werfConfig")
-	tmpl.Funcs(funcMap(ctx, tmpl, giterminismManager, debugTemplates))
+type renderWerfConfigYamlOpts struct {
+	customWerfConfigRelPath             string
+	customWerfConfigTemplatesDirRelPath string
+	giterminismManager                  giterminism_manager.Interface
+	env                                 string
+	includesConfigRelPath               string
+	debugTemplates                      bool
+}
 
-	if err := parseWerfConfigTemplatesDir(ctx, tmpl, giterminismManager, customWerfConfigTemplatesDirRelPath); err != nil {
+func renderWerfConfigYaml(ctx context.Context, opts renderWerfConfigYamlOpts) (string, string, error) {
+	tmpl := template.New("werfConfig")
+	tmpl.Funcs(funcMap(ctx, tmpl, opts.giterminismManager, opts.debugTemplates))
+
+	err := parseWerfConfigTemplatesDir(ctx, parseWerfConfigTemplatesDirOpts{
+		tmpl:                                tmpl,
+		customWerfConfigTemplatesDirRelPath: opts.customWerfConfigTemplatesDirRelPath,
+		giterminismManager:                  opts.giterminismManager.(*giterminism_manager.Manager),
+	})
+	if err != nil {
 		return "", "", err
 	}
 
-	configPath, err := parseWerfConfig(ctx, tmpl, giterminismManager, customWerfConfigRelPath)
+	configPath, err := parseWerfConfig(ctx, parseWerfConfigOpts{
+		tmpl:               tmpl,
+		giterminismManager: opts.giterminismManager.(*giterminism_manager.Manager),
+		relWerfConfigPath:  opts.customWerfConfigRelPath,
+	})
 	if err != nil {
 		return "", "", err
 	}
@@ -205,16 +235,16 @@ func renderWerfConfigYaml(ctx context.Context, customWerfConfigRelPath, customWe
 	templateData := make(map[string]interface{})
 	templateData["Files"] = files{
 		ctx:                ctx,
-		giterminismManager: giterminismManager,
+		giterminismManager: opts.giterminismManager.(*giterminism_manager.Manager),
 	}
-	templateData["Env"] = env
+	templateData["Env"] = opts.env
 
-	headHash, err := giterminismManager.LocalGitRepo().HeadCommitHash(ctx)
+	headHash, err := opts.giterminismManager.LocalGitRepo().HeadCommitHash(ctx)
 	if err != nil {
 		return "", "", fmt.Errorf("unable to get HEAD commit hash: %w", err)
 	}
 
-	headTime, err := giterminismManager.LocalGitRepo().HeadCommitTime(ctx)
+	headTime, err := opts.giterminismManager.LocalGitRepo().HeadCommitTime(ctx)
 	if err != nil {
 		return "", "", fmt.Errorf("unable to get HEAD commit time: %w", err)
 	}
@@ -231,38 +261,46 @@ func renderWerfConfigYaml(ctx context.Context, customWerfConfigRelPath, customWe
 	if err != nil {
 		return "", "", detailedTemplateError(tmpl, detailedTemplateErrorData{
 			templateName: "werfConfig",
-		}, debugTemplates, err)
+		}, opts.debugTemplates, err)
 	}
 
 	return configPath, config, nil
 }
 
-func parseWerfConfig(ctx context.Context, tmpl *template.Template, giterminismManager giterminism_manager.Interface, relWerfConfigPath string) (string, error) {
-	configPath, configData, err := giterminismManager.FileReader().ReadConfig(ctx, relWerfConfigPath)
+type parseWerfConfigOpts struct {
+	tmpl               *template.Template
+	giterminismManager *giterminism_manager.Manager
+	relWerfConfigPath  string
+}
+
+func parseWerfConfig(ctx context.Context, opts parseWerfConfigOpts) (string, error) {
+	configPath, configData, err := opts.giterminismManager.FileManager.ReadConfig(ctx, opts.relWerfConfigPath)
 	if err != nil {
 		return "", err
 	}
 
-	if _, err := tmpl.Parse(string(configData)); err != nil {
+	if _, err := opts.tmpl.Parse(string(configData)); err != nil {
 		return "", err
 	}
 
 	return configPath, nil
 }
 
-func parseWerfConfigTemplatesDir(ctx context.Context, tmpl *template.Template, giterminismManager giterminism_manager.Interface, customWerfConfigTemplatesDirRelPath string) error {
-	return giterminismManager.FileReader().ReadConfigTemplateFiles(ctx, customWerfConfigTemplatesDirRelPath, func(templatePathInsideDir string, data []byte, err error) error {
-		if err != nil {
-			return err
-		}
+type parseWerfConfigTemplatesDirOpts struct {
+	tmpl                                *template.Template
+	customWerfConfigTemplatesDirRelPath string
+	giterminismManager                  *giterminism_manager.Manager
+}
 
-		templateName := filepath.ToSlash(templatePathInsideDir)
-		if err := addTemplate(tmpl, templateName, string(data)); err != nil {
-			return err
-		}
-
-		return nil
+func parseWerfConfigTemplatesDir(ctx context.Context, opts parseWerfConfigTemplatesDirOpts) error {
+	err := opts.giterminismManager.FileManager.ReadConfigTemplateFiles(ctx, opts.customWerfConfigTemplatesDirRelPath, func(name, content string) error {
+		return addTemplate(opts.tmpl, name, content)
 	})
+	if err != nil {
+		return fmt.Errorf("unable to read werf config templates: %w", err)
+	}
+
+	return nil
 }
 
 func addTemplate(tmpl *template.Template, templateName, templateContent string) error {
@@ -491,11 +529,12 @@ func detailedTemplateError(tmpl *template.Template, d detailedTemplateErrorData,
 
 type files struct {
 	ctx                context.Context
-	giterminismManager giterminism_manager.Interface
+	giterminismManager *giterminism_manager.Manager
 }
 
 func (f files) Get(relPath string) string {
-	if res, err := f.giterminismManager.FileReader().ConfigGoTemplateFilesGet(f.ctx, relPath); err != nil {
+	if res, err := f.giterminismManager.FileManager.ConfigGoTemplateFilesGet(f.ctx, relPath); err != nil {
+		err := fmt.Errorf("{{ .Files.Get %q }}: %w", relPath, err)
 		panic(err.Error())
 	} else {
 		return string(res)
@@ -503,7 +542,7 @@ func (f files) Get(relPath string) string {
 }
 
 func (f files) doGlob(ctx context.Context, pattern string) (map[string]interface{}, error) {
-	res, err := f.giterminismManager.FileReader().ConfigGoTemplateFilesGlob(ctx, pattern)
+	res, err := f.giterminismManager.FileManager.ConfigGoTemplateFilesGlob(ctx, pattern)
 	if err != nil {
 		return nil, err
 	}
@@ -524,7 +563,7 @@ func (f files) Glob(pattern string) map[string]interface{} {
 }
 
 func (f files) Exists(relPath string) bool {
-	exist, err := f.giterminismManager.FileReader().ConfigGoTemplateFilesExists(f.ctx, relPath)
+	exist, err := f.giterminismManager.FileManager.ConfigGoTemplateFilesExists(f.ctx, relPath)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -532,7 +571,7 @@ func (f files) Exists(relPath string) bool {
 }
 
 func (f files) IsDir(relPath string) bool {
-	exist, err := f.giterminismManager.FileReader().ConfigGoTemplateFilesIsDir(f.ctx, relPath)
+	exist, err := f.giterminismManager.FileManager.ConfigGoTemplateFilesIsDir(f.ctx, relPath)
 	if err != nil {
 		panic(err.Error())
 	}

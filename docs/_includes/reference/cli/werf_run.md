@@ -31,6 +31,8 @@ werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
 {{ header }} Options
 
 ```shell
+      --allow-includes-update=false
+            Allow use includes latest versions (default $WERF_ALLOW_INCLUDES_UPDATE or false)
       --bash=false
             Use predefined docker options and command for debug
       --cache-repo=[]

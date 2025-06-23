@@ -31,6 +31,8 @@ werf ci-env CI_SYSTEM [options]
 {{ header }} Options
 
 ```shell
+      --allow-includes-update=false
+            Allow use includes latest versions (default $WERF_ALLOW_INCLUDES_UPDATE or false)
       --as-env-file=false
             Create the .env file and print the path for sourcing (default $WERF_AS_ENV_FILE).
       --as-file=false

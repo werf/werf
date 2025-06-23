@@ -14,6 +14,8 @@ werf config render [IMAGE_NAME...] [options]
 {{ header }} Options
 
 ```shell
+      --allow-includes-update=false
+            Allow use includes latest versions (default $WERF_ALLOW_INCLUDES_UPDATE or false)
       --config=""
             Use custom configuration file (default $WERF_CONFIG or werf.yaml in the project         
             directory)
@@ -56,7 +58,7 @@ werf config render [IMAGE_NAME...] [options]
       --log-pretty=true
             Enable emojis, auto line wrapping and log process border (default $WERF_LOG_PRETTY or   
             true).
-      --log-quiet=false
+      --log-quiet=true
             Disable explanatory output (default $WERF_LOG_QUIET).
       --log-terminal-width=-1
             Set log terminal width.

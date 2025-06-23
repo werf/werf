@@ -1289,7 +1289,7 @@ func OpenGitRepo(ctx context.Context, cmdData *CmdData, workingDir, gitWorkTree 
 	return git_repo.OpenLocalRepo(ctx, "own", gitWorkTree, openLocalRepoOptions)
 }
 
-func GetGiterminismManager(ctx context.Context, cmdData *CmdData) (giterminism_manager.Interface, error) {
+func GetGiterminismManager(ctx context.Context, cmdData *CmdData) (*giterminism_manager.Manager, error) {
 	workingDir := GetWorkingDir(cmdData)
 
 	gitWorkTree, err := GetGitWorkTree(ctx, cmdData, workingDir)
@@ -1310,8 +1310,10 @@ func GetGiterminismManager(ctx context.Context, cmdData *CmdData) (giterminism_m
 	configRelPath := GetWerfGiterminismConfigRelPath(cmdData)
 
 	return giterminism_manager.NewManager(ctx, configRelPath, workingDir, localGitRepo, headCommit, giterminism_manager.NewManagerOptions{
-		LooseGiterminism: *cmdData.LooseGiterminism,
-		Dev:              *cmdData.Dev,
+		LooseGiterminism:       *cmdData.LooseGiterminism,
+		Dev:                    *cmdData.Dev,
+		CreateIncludesLockFile: cmdData.CreateIncludesLockFile,
+		AllowIncludesUpdate:    cmdData.AllowIncludesUpdate,
 	})
 }
 

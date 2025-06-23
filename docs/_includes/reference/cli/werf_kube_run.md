@@ -39,6 +39,8 @@ werf kube-run [options] [IMAGE_NAME] [-- COMMAND ARG...]
             Format: labelName=labelValue.
             Also, can be specified with $WERF_ADD_LABEL_* (e.g.                                     
             $WERF_ADD_LABEL_1=labelName1=labelValue1, $WERF_ADD_LABEL_2=labelName2=labelValue2)
+      --allow-includes-update=false
+            Allow use includes latest versions (default $WERF_ALLOW_INCLUDES_UPDATE or false)
       --auto-pull-secret=true
             Automatically create docker config secret in the namespace and plug it via pod`s        
             imagePullSecrets for private registry access (default $WERF_AUTO_PULL_SECRET or true if 

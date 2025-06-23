@@ -190,6 +190,7 @@ werf converge --repo registry.mydomain.com/web --env production`,
 	common.SetupForceAdoption(&commonCmdData, cmd)
 
 	commonCmdData.SetupDebugTemplates(cmd)
+	commonCmdData.SetupAllowIncludesUpdate(cmd)
 
 	defaultTimeout, err := util.GetIntEnvVar("WERF_TIMEOUT")
 	if err != nil || defaultTimeout == nil {
@@ -247,7 +248,7 @@ func runMain(ctx context.Context, imageNameListFromArgs []string) error {
 		logboek.LogOptionalLn()
 		return common.FollowGitHead(ctx, &commonCmdData, func(
 			ctx context.Context,
-			headCommitGiterminismManager giterminism_manager.Interface,
+			headCommitGiterminismManager *giterminism_manager.Manager,
 		) error {
 			return run(ctx, containerBackend, headCommitGiterminismManager, imageNameListFromArgs)
 		})
@@ -259,7 +260,7 @@ func runMain(ctx context.Context, imageNameListFromArgs []string) error {
 func run(
 	ctx context.Context,
 	containerBackend container_backend.ContainerBackend,
-	giterminismManager giterminism_manager.Interface,
+	giterminismManager *giterminism_manager.Manager,
 	imageNameListFromArgs []string,
 ) error {
 	werfConfigPath, werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
@@ -357,8 +358,6 @@ func run(
 		return fmt.Errorf("get relative helm chart directory: %w", err)
 	}
 
-	chartPath := filepath.Join(giterminismManager.ProjectDir(), relChartPath)
-
 	releaseNamespace, err := deploy_params.GetKubernetesNamespace(
 		*commonCmdData.Namespace,
 		*commonCmdData.Environment,
@@ -441,7 +440,7 @@ func run(
 		return fmt.Errorf("get release labels: %w", err)
 	}
 
-	file.ChartFileReader = giterminismManager.FileReader()
+	file.ChartFileReader = giterminismManager.FileManager
 
 	ctx = action.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultReleaseInstallLogLevel), action.SetupLoggingOptions{
 		ColorMode: *commonCmdData.LogColorMode,
@@ -451,7 +450,7 @@ func run(
 	if err := action.ReleaseInstall(ctx, releaseName, releaseNamespace, action.ReleaseInstallOptions{
 		AutoRollback:                 cmdData.AutoRollback,
 		ChartAppVersion:              common.GetHelmChartConfigAppVersion(werfConfig),
-		ChartDirPath:                 chartPath,
+		ChartDirPath:                 relChartPath,
 		ChartRepositoryInsecure:      *commonCmdData.InsecureHelmDependencies,
 		ChartRepositorySkipTLSVerify: *commonCmdData.SkipTlsVerifyHelmDependencies,
 		ChartRepositorySkipUpdate:    *commonCmdData.SkipDependenciesRepoRefresh,

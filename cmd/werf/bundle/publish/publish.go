@@ -153,6 +153,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	commonCmdData.SetupSkipImageSpecStage(cmd)
 	commonCmdData.SetupDebugTemplates(cmd)
+	commonCmdData.SetupAllowIncludesUpdate(cmd)
 
 	defaultTag := os.Getenv("WERF_TAG")
 	if defaultTag == "" {
@@ -334,7 +335,7 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 		return err
 	}
 
-	file.ChartFileReader = giterminismManager.FileReader()
+	file.ChartFileReader = giterminismManager.FileManager
 
 	headHash, err := giterminismManager.LocalGitRepo().HeadCommitHash(ctx)
 	if err != nil {

@@ -50,6 +50,7 @@ func NewGetReleaseCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupLogOptions(&getReleaseCmdData, cmd)
 	commonCmdData.SetupDebugTemplates(cmd)
+	commonCmdData.SetupAllowIncludesUpdate(cmd)
 
 	return cmd
 }

@@ -1,0 +1,17 @@
+{{ $_ := set . "BaseImage" "alpine" }}
+
+project: app
+configVersion: 1
+build:
+  platform:
+    - 'linux/amd64'
+---
+
+{{ range $path, $content := .Files.Glob "**/werf-partial.yaml" }}
+{{ tpl $content $ }}
+---
+{{ end }}
+
+{{- define "common install commands" }}
+- ls -la
+{{- end }}

@@ -1,0 +1,6 @@
+image: frontend
+from: {{ .BaseImage }}
+shell:
+  install:
+  - echo "install frontend"
+{{- include "common install commands" . | indent 2 }}

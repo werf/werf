@@ -160,7 +160,7 @@ metadata:
 						}
 					},
 					Entry("the chart directory not found", entry{
-						expectedErrSubstring: `.helm: no such file or directory`,
+						expectedErrSubstring: `not found`,
 					}),
 					Entry(`the template file ".helm/templates/template1.yaml" not tracked`, entry{
 						addFiles:             []string{relativeToProjectDir(".helm/templates/template1.yaml")},

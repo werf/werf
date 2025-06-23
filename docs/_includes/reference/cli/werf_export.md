@@ -45,6 +45,8 @@ werf export [IMAGE_NAME...] [options]
             $WERF_EXPORT_ADD_LABEL_2=labelName2=labelValue2)
       --add-label-separator="\n"
             Separator for --add-label values (default $WERF_EXPORT_ADD_LABEL_SEPARATOR or "\n")
+      --allow-includes-update=false
+            Allow use includes latest versions (default $WERF_ALLOW_INCLUDES_UPDATE or false)
       --cache-repo=[]
             Specify one or multiple cache repos with images that will be used as a cache. Cache     
             will be populated when pushing newly built images into the primary repo and when        

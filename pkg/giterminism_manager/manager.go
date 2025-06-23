@@ -8,16 +8,19 @@ import (
 	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/giterminism_manager/config"
 	"github.com/werf/werf/v2/pkg/giterminism_manager/errors"
+	filemanager "github.com/werf/werf/v2/pkg/giterminism_manager/file_manager"
 	"github.com/werf/werf/v2/pkg/giterminism_manager/file_reader"
 	"github.com/werf/werf/v2/pkg/giterminism_manager/inspector"
 )
 
 type NewManagerOptions struct {
-	LooseGiterminism bool
-	Dev              bool
+	LooseGiterminism       bool
+	Dev                    bool
+	CreateIncludesLockFile bool
+	AllowIncludesUpdate    bool
 }
 
-func NewManager(ctx context.Context, configRelPath, projectDir string, localGitRepo *git_repo.Local, headCommit string, options NewManagerOptions) (Interface, error) {
+func NewManager(ctx context.Context, configRelPath, projectDir string, localGitRepo *git_repo.Local, headCommit string, options NewManagerOptions) (*Manager, error) {
 	sharedOptions := &sharedOptions{
 		projectDir:       projectDir,
 		localGitRepo:     localGitRepo,
@@ -49,6 +52,16 @@ func NewManager(ctx context.Context, configRelPath, projectDir string, localGitR
 		inspector:     i,
 	}
 
+	m.FileManager, err = filemanager.NewFileManager(ctx, filemanager.NewFileManagerOptions{
+		FileReader:             fr,
+		Inspector:              i,
+		CreateIncludesLockFile: options.CreateIncludesLockFile,
+		AllowIncludesUpdate:    options.AllowIncludesUpdate,
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	logboek.Context(ctx).Debug().LogF("-- giterminism_manager.NewManager: projectDir=%q localGitRepo.WorkTreeDir=%q\n", projectDir, localGitRepo.WorkTreeDir)
 
 	return m, nil
@@ -57,6 +70,8 @@ func NewManager(ctx context.Context, configRelPath, projectDir string, localGitR
 type Manager struct {
 	fileReader FileReader
 	inspector  Inspector
+
+	FileManager *filemanager.FileManager
 
 	*sharedOptions
 }
