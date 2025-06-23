@@ -97,16 +97,16 @@ includes:
 
 > **IMPORTANT.** According to giterminism policies, both `werf-includes.yaml` and `werf-includes.lock` must be committed to the repository. For initial configuration and debugging, you can use the `--dev` flag. Once configuration is finalized, the files must be committed.
 
-## Updating
+## Updating includes
 
-### Deterministic version updates
+### Deterministic
 
 There are two ways to update include versions:
 
 * Use the `werf includes update` command. This will update all includes to the `HEAD` of the specified reference (`branch` or `tag`).
 * Edit the `werf-includes.lock` file manually or use dependency management tools like Dependabot, Renovate, etc.
 
-### Automatic version updates (not recommended)
+### Automatic (not recommended)
 
 If you need to use the latest `HEAD` versions without a lock file you can use `--allow-includes-update` option. The usage of this option must be enabled in `werf-giterminism.yaml`:
 
