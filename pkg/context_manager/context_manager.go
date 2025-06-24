@@ -112,20 +112,28 @@ func ContextAddFilesChecksum(ctx context.Context, projectDir, contextDir string,
 	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }
 
-func AddContextAddFilesToContextArchive(ctx context.Context, originalArchivePath, projectDir, contextDir string, contextAddFiles []string) (string, error) {
+type AddContextAddFilesToContextArchiveOpts struct {
+	OriginalArchivePath    string
+	ProjectDir             string
+	ContextDir             string
+	ContextAddFiles        []string
+	ContextAddFilesFromMem map[string][]byte // map[tarEntryName]data
+}
+
+func AddContextAddFilesToContextArchive(ctx context.Context, opts *AddContextAddFilesToContextArchiveOpts) (string, error) {
 	destinationArchivePath := GetTmpArchivePath()
 
-	pathsToExcludeFromSourceArchive := contextAddFiles
-	if err := util.CreateArchiveBasedOnAnotherOne(ctx, originalArchivePath, destinationArchivePath, util.CreateArchiveOptions{
+	pathsToExcludeFromSourceArchive := opts.ContextAddFiles
+	if err := util.CreateArchiveBasedOnAnotherOne(ctx, opts.OriginalArchivePath, destinationArchivePath, util.CreateArchiveOptions{
 		CopyTarOptions: util.CopyTarOptions{ExcludePaths: pathsToExcludeFromSourceArchive},
 		AfterCopyFunc: func(tw *tar.Writer) error {
-			addFilePathsToCopy, err := GetContextAddFilesPaths(projectDir, contextDir, contextAddFiles)
+			addFilePathsToCopy, err := GetContextAddFilesPaths(opts.ProjectDir, opts.ContextDir, opts.ContextAddFiles)
 			if err != nil {
 				return err
 			}
 
 			for _, addFilePathToCopy := range addFilePathsToCopy {
-				tarEntryName, err := filepath.Rel(filepath.Join(projectDir, contextDir), addFilePathToCopy)
+				tarEntryName, err := filepath.Rel(filepath.Join(opts.ProjectDir, opts.ContextDir), addFilePathToCopy)
 				if err != nil {
 					return fmt.Errorf("unable to get context relative path for %q: %w", addFilePathToCopy, err)
 				}
@@ -135,6 +143,13 @@ func AddContextAddFilesToContextArchive(ctx context.Context, originalArchivePath
 				}
 				logboek.Context(ctx).Debug().LogF("Extra file was added to the current context: %q\n", tarEntryName)
 			}
+
+			for tarEntryName, data := range opts.ContextAddFilesFromMem {
+				if err := addFileToTarFromMem(tw, tarEntryName, data); err != nil {
+					return fmt.Errorf("unable to add contextAddFile from memory %q to archive %q: %w", tarEntryName, destinationArchivePath, err)
+				}
+				logboek.Context(ctx).Debug().LogF("Extra file from memory was added to the current context: %q\n", tarEntryName)
+			}
 			return nil
 		},
 	}); err != nil {
@@ -142,4 +157,21 @@ func AddContextAddFilesToContextArchive(ctx context.Context, originalArchivePath
 	}
 
 	return destinationArchivePath, nil
+}
+
+func addFileToTarFromMem(tw *tar.Writer, tarEntryName string, data []byte) error {
+	header := &tar.Header{
+		Name: tarEntryName,
+		Mode: 0600,
+		Size: int64(len(data)),
+	}
+
+	if err := tw.WriteHeader(header); err != nil {
+		return fmt.Errorf("unable to write tar header for file %s: %w", tarEntryName, err)
+	}
+
+	if _, err := tw.Write(data); err != nil {
+		return fmt.Errorf("unable to write data to tar archive from file %q: %w", tarEntryName, err)
+	}
+	return nil
 }

@@ -55,9 +55,26 @@ func (a *BuildContextArchive) Create(ctx context.Context, opts container_backend
 
 	a.path = archive.GetFilePath()
 
-	if len(opts.ContextAddFiles) > 0 {
+	addFilesFromMem := make(map[string][]byte)
+
+	if opts.DockerfileRelToContextPath != "" {
+		gm := a.giterminismMgr.(*giterminism_manager.Manager)
+		dockerFileContent, err := gm.FileManager.ReadDockerfile(ctx, opts.DockerfileRelToContextPath)
+		if err != nil {
+			return fmt.Errorf("unable to read dockerfile %q: %w", opts.DockerfileRelToContextPath, err)
+		}
+		addFilesFromMem[opts.DockerfileRelToContextPath] = dockerFileContent
+	}
+
+	if len(opts.ContextAddFiles) > 0 || len(addFilesFromMem) > 0 {
 		if err := logboek.Context(ctx).Debug().LogProcess("Add contextAddFiles to build context archive %s", a.path).DoError(func() error {
-			a.path, err = context_manager.AddContextAddFilesToContextArchive(ctx, a.path, a.giterminismMgr.ProjectDir(), opts.ContextGitSubDir, opts.ContextAddFiles)
+			a.path, err = context_manager.AddContextAddFilesToContextArchive(ctx, &context_manager.AddContextAddFilesToContextArchiveOpts{
+				OriginalArchivePath:    a.path,
+				ProjectDir:             a.giterminismMgr.ProjectDir(),
+				ContextDir:             opts.ContextGitSubDir,
+				ContextAddFiles:        opts.ContextAddFiles,
+				ContextAddFilesFromMem: addFilesFromMem,
+			})
 			return err
 		}); err != nil {
 			return fmt.Errorf("unable to add contextAddFiles to build context archive %s: %w", a.path, err)

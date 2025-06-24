@@ -43,6 +43,11 @@ type FileReader interface {
 type FileManager struct {
 	fileReader FileReader
 	includes   []*includes.Include
+	caches     *caches
+}
+
+type caches struct {
+	dockerFiles map[string][]byte
 }
 
 type NewFileManagerOptions struct {
@@ -69,6 +74,9 @@ func NewFileManager(ctx context.Context, opts NewFileManagerOptions) (*FileManag
 	return &FileManager{
 		fileReader: opts.FileReader,
 		includes:   includes,
+		caches: &caches{
+			dockerFiles: make(map[string][]byte),
+		},
 	}, nil
 }
 
@@ -208,11 +216,15 @@ func (f *FileManager) ConfigGoTemplateFilesIsDir(ctx context.Context, relPath st
 }
 
 func (f *FileManager) ReadDockerfile(ctx context.Context, relPath string) ([]byte, error) {
+	if data, ok := f.caches.dockerFiles[relPath]; ok {
+		return data, nil
+	}
 	if exist, _ := util.FileExists(util.GetAbsoluteFilepath(relPath)); exist {
 		dockerfileData, err := f.fileReader.ReadDockerfile(ctx, relPath)
 		if err != nil {
 			return nil, err
 		}
+		f.caches.dockerFiles[relPath] = dockerfileData
 		return dockerfileData, nil
 	}
 
@@ -225,6 +237,7 @@ func (f *FileManager) ReadDockerfile(ctx context.Context, relPath string) ([]byt
 		dockerfileData, err := i.GetFile(ctx, relPath)
 		if err == nil {
 			logboek.Context(ctx).Debug().LogF("Found dockerfile %q in includes\n", relPath)
+			f.caches.dockerFiles[relPath] = dockerfileData
 			return dockerfileData, nil
 		}
 	}
