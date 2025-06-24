@@ -135,7 +135,6 @@ func (backend *DockerServerBackend) BuildDockerfile(ctx context.Context, _ []byt
 		return "", fmt.Errorf("unable to open context archive %q: %w", opts.BuildContextArchive.Path(), err)
 	}
 	defer contextReader.Close()
-
 	return tempID, docker.CliBuild_LiveOutputWithCustomIn(ctx, contextReader, cliArgs...)
 }
 

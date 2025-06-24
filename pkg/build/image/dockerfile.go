@@ -392,8 +392,6 @@ func createDockerIgnorePathMatcher(ctx context.Context, giterminismMgr gitermini
 		break
 	}
 
-	fmt.Println("dockerIgnorePatterns:", dockerIgnorePatterns)
-
 	dockerIgnorePathMatcher := path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{
 		BasePath:             filepath.Join(giterminismMgr.RelativeToGitProjectDir(), contextGitSubDir),
 		DockerignorePatterns: dockerIgnorePatterns,

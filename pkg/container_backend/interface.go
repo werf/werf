@@ -35,7 +35,7 @@ type BuildDockerfileOpts struct {
 	CommonOpts
 
 	BuildContextArchive  BuildContextArchiver
-	DockerfileCtxRelPath string // TODO: remove this and instead write the []byte dockerfile to /Dockerfile in the ContextTar inDockerServerBackend.BuildDockerfile().
+	DockerfileCtxRelPath string
 	Target               string
 	BuildArgs            []string // {"key1=value1", "key2=value2", ... }
 	AddHost              []string
