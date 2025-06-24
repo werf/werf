@@ -36,7 +36,7 @@ type BuildContextArchive struct {
 func (a *BuildContextArchive) Create(ctx context.Context, opts container_backend.BuildContextArchiveCreateOptions) error {
 	contextPathRelativeToGitWorkTree := filepath.Join(a.giterminismMgr.RelativeToGitProjectDir(), opts.ContextGitSubDir)
 
-	dockerIgnorePathMatcher, err := createDockerIgnorePathMatcher(ctx, a.giterminismMgr, opts.ContextGitSubDir, opts.DockerfileRelToContextPath)
+	dockerIgnorePathMatcher, err := createDockerIgnorePathMatcher(ctx, *a.giterminismMgr.(*giterminism_manager.Manager), opts.ContextGitSubDir, opts.DockerfileRelToContextPath)
 	if err != nil {
 		return fmt.Errorf("unable to create dockerignore path matcher: %w", err)
 	}

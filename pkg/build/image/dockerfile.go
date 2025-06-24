@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/moby/buildkit/frontend/dockerfile/dockerignore"
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
+	"github.com/moby/patternmatcher/ignorefile"
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
@@ -28,7 +28,7 @@ import (
 func MapDockerfileConfigToImagesSets(ctx context.Context, metaConfig *config.Meta, dockerfileImageConfig *config.ImageFromDockerfile, targetPlatform string, opts CommonImageOptions) (ImagesSets, error) {
 	if dockerfileImageConfig.Staged {
 		relDockerfilePath := filepath.Join(dockerfileImageConfig.Context, dockerfileImageConfig.Dockerfile)
-		dockerfileData, err := opts.GiterminismManager.FileReader().ReadDockerfile(ctx, relDockerfilePath)
+		dockerfileData, err := opts.GiterminismManager.FileManager.ReadDockerfile(ctx, relDockerfilePath)
 		if err != nil {
 			return nil, fmt.Errorf("unable to read dockerfile %s: %w", relDockerfilePath, err)
 		}
@@ -289,25 +289,25 @@ func mapLegacyDockerfileToImage(ctx context.Context, metaConfig *config.Meta, do
 		}
 	}
 
-	dockerIgnorePathMatcher, err := createDockerIgnorePathMatcher(ctx, opts.GiterminismManager, dockerfileImageConfig.Context, dockerfileImageConfig.Dockerfile)
+	dockerIgnorePathMatcher, err := createDockerIgnorePathMatcher(ctx, *opts.GiterminismManager, dockerfileImageConfig.Context, dockerfileImageConfig.Dockerfile)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create dockerignore path matcher: %w", err)
 	}
 
 	relDockerfilePath := filepath.Join(dockerfileImageConfig.Context, dockerfileImageConfig.Dockerfile)
-	dockerfileData, err := opts.GiterminismManager.(*giterminism_manager.Manager).FileManager.ReadDockerfile(ctx, relDockerfilePath)
+	dockerfileData, err := opts.GiterminismManager.FileManager.ReadDockerfile(ctx, relDockerfilePath)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to read dockerfile %s: %w", relDockerfilePath, err)
 	}
 
 	p, err := parser.Parse(bytes.NewReader(dockerfileData))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to parse dockerfile %s: %w", relDockerfilePath, err)
 	}
 
 	dockerStages, dockerMetaArgs, err := instructions.Parse(p.AST)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to parse dockerfile %s: %w", relDockerfilePath, err)
 	}
 
 	frontend.ResolveDockerStagesFromValue(dockerStages)
@@ -365,32 +365,34 @@ func mapLegacyDockerfileToImage(ctx context.Context, metaConfig *config.Meta, do
 	return img, nil
 }
 
-func createDockerIgnorePathMatcher(ctx context.Context, giterminismMgr giterminism_manager.Interface, contextGitSubDir, dockerfileRelToContextPath string) (path_matcher.PathMatcher, error) {
+func createDockerIgnorePathMatcher(ctx context.Context, giterminismMgr giterminism_manager.Manager, contextGitSubDir, dockerfileRelToContextPath string) (path_matcher.PathMatcher, error) {
 	var dockerIgnorePatterns []string
 	for _, dockerIgnoreRelToContextPath := range []string{
 		dockerfileRelToContextPath + ".dockerignore",
 		".dockerignore",
 	} {
 		relDockerIgnorePath := filepath.Join(contextGitSubDir, dockerIgnoreRelToContextPath)
-		if exist, err := giterminismMgr.FileReader().IsDockerignoreExistAnywhere(ctx, relDockerIgnorePath); err != nil {
+		if exist, err := giterminismMgr.FileManager.IsDockerignoreExistAnywhere(ctx, relDockerIgnorePath); err != nil {
 			return nil, err
 		} else if !exist {
 			continue
 		}
 
-		dockerIgnore, err := giterminismMgr.FileReader().ReadDockerignore(ctx, relDockerIgnorePath)
+		dockerIgnore, err := giterminismMgr.FileManager.ReadDockerignore(ctx, relDockerIgnorePath)
 		if err != nil {
 			return nil, err
 		}
 
 		r := bytes.NewReader(dockerIgnore)
-		dockerIgnorePatterns, err = dockerignore.ReadAll(r)
+		dockerIgnorePatterns, err = ignorefile.ReadAll(r)
 		if err != nil {
 			return nil, fmt.Errorf("unable to read %q file: %w", dockerIgnoreRelToContextPath, err)
 		}
 
 		break
 	}
+
+	fmt.Println("dockerIgnorePatterns:", dockerIgnorePatterns)
 
 	dockerIgnorePathMatcher := path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{
 		BasePath:             filepath.Join(giterminismMgr.RelativeToGitProjectDir(), contextGitSubDir),

@@ -105,7 +105,7 @@ func NewConveyor(werfConfig *config.WerfConfig, giterminismManager giterminism_m
 	c.imagesTree = image.NewImagesTree(werfConfig, image.ImagesTreeOptions{
 		CommonImageOptions: image.CommonImageOptions{
 			Conveyor:           c,
-			GiterminismManager: c.GiterminismManager(),
+			GiterminismManager: c.GiterminismManager().(*giterminism_manager.Manager),
 			ContainerBackend:   c.ContainerBackend,
 			StorageManager:     c.StorageManager,
 			ProjectDir:         c.projectDir,

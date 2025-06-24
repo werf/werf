@@ -32,7 +32,7 @@ const (
 
 type CommonImageOptions struct {
 	Conveyor           Conveyor
-	GiterminismManager giterminism_manager.Interface
+	GiterminismManager *giterminism_manager.Manager
 	ContainerBackend   container_backend.ContainerBackend
 	StorageManager     manager.StorageManagerInterface
 	ProjectDir         string
