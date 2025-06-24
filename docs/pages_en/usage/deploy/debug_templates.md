@@ -50,4 +50,4 @@ werf:
   version: v2.36.4
 ```
 
-{% include pages/ru/debug_template_flag.md.liquid %}
+{% include pages/en/debug_template_flag.md.liquid %}
