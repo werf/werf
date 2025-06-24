@@ -22,7 +22,8 @@ const (
 	annoNameBuildTimestamp   = "io.deckhouse.deliverykit.build-timestamp"
 	annoNameDMVerityRootHash = "io.deckhouse.deliverykit.dm-verity-root-hash"
 
-	mkfsBuildDate = "1993-02-09T00:00:00Z"
+	mkfsBuildDate   = "2025-06-24T18:50:50Z"
+	magicVeritySalt = "dc0f616e4bf75776061d5ffb7a6f45e1313b7cc86f3aa49b68de4f6d187bad2b" // sha256("Я ненавижу тупые приказы ФСТЭК")
 )
 
 type ManifestStage struct {
@@ -110,7 +111,15 @@ func processLayers(ctx context.Context, layers []v1.Layer) ([]mutate.Addendum, e
 		}
 
 		// Run veritysetup format
-		veritysetup := exec.CommandContextCancellation(ctx, "veritysetup", "format", "--data-block-size=4096", "--hash-block-size=4096", erofsPath, hashPath)
+		veritysetup := exec.CommandContextCancellation(
+			ctx,
+			"veritysetup", "format",
+			"--data-block-size=4096",
+			"--hash-block-size=4096",
+			"--salt="+magicVeritySalt,
+			erofsPath,
+			hashPath,
+		)
 		out, err := veritysetup.CombinedOutput()
 		if err != nil {
 			return nil, fmt.Errorf("veritysetup: %v\n%s", err, string(out))
