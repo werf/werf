@@ -267,7 +267,7 @@ You can extract tags from the output of the `werf cleanup` command as follows:
   werf cleanup --repo registry.mydomain.com/app --dry-run | grep -a -o -P '\x1b\[31m\K[^\x1b]+' > keep-list.txt
   ```
 
-Then, use this list with the --keep-list option to ensure only the specified tags are preserved during cleanup:
+Then, use this list with the `--keep-list` option to ensure only the specified tags are preserved during cleanup:
 
 ```bash
 werf cleanup --repo registry.mydomain.com/app --keep-list=keep-list.txt
