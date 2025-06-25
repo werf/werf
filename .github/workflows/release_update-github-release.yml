@@ -8,7 +8,7 @@ on:
       - "[0-9]+.[0-9]+"
       - "[0-9]+"
     paths:
-      - 'trdl_channels.yaml'
+      - "trdl_channels.yaml"
 
 jobs:
   update-release:
@@ -69,4 +69,3 @@ jobs:
               gh release edit "$tag" --title "$tag" --prerelease=false || true
             fi
           done
-
