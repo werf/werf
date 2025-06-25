@@ -586,5 +586,5 @@ tasks:
   test:cleanup:environment:
     desc: "Cleanup environment"
     cmds:
-      - kind delete cluster --kubeconfig /tmp/werf.kubeconfig-${CI_PIPELINE_ID} || true
+      - kind delete cluster --name ${CI_PIPELINE_ID} || true
       - docker rm -f kind-registry-${CI_PIPELINE_ID} || true
