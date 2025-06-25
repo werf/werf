@@ -16,7 +16,7 @@ default:
     - git config --global user.email "borya@flant.com"
     - export PATH="/usr/local/go1.23/go/bin:/usr/local/golangci-lint-1.57.1:$PATH"
     - export GOROOT=/usr/local/go1.23/go
-    - export KUBECONFIG=/tmp/werf.kubeconfig
+    - export KUBECONFIG=/tmp/werf.kubeconfig-${CI_PIPELINE_ID}
     - export WERF_TEST_BINARY_PATH=$CI_PROJECT_DIR/bin/werf
   tags:
     - deckhouse
