@@ -6,6 +6,6 @@
     EXCLUDE_PACKAGES: ""
   script:
     - |
-      export WERF_TEST_K8S_DOCKER_REGISTRY="localhost:$(docker inspect kind-registry --format '{{(index (index .NetworkSettings.Ports "5000/tcp") 0).HostPort}}')"
+      export WERF_TEST_K8S_DOCKER_REGISTRY="localhost:$(docker inspect kind-registry-${CI_PIPELINE_ID} --format '{{(index (index .NetworkSettings.Ports "5000/tcp") 0).HostPort}}')"
       test -n "$PACKAGES" && PATHS="paths=$(echo $PACKAGES | tr , ' ')"
       task -p test:e2e:$SCOPE $PATHS -- --keep-going --skip-package "$EXCLUDE_PACKAGES"
