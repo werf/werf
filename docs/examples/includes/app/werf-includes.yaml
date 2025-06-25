@@ -1,0 +1,9 @@
+includes:
+  - git: https://github.com/werf/werf
+    branch: main
+    add: /docs/examples/includes/werf-common
+    to: /
+  - git: https://github.com/werf/werf
+    branch: main
+    add: /docs/examples/includes/common_js
+    to: /

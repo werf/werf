@@ -58,7 +58,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.5
-	github.com/werf/3p-helm v0.0.0-20250618151130-87bd6b38481c
+	github.com/werf/3p-helm v0.0.0-20250625091810-cd62d6e10455
 	github.com/werf/3p-helm-for-werf-helm v0.0.0-20241217155820-089f92cd5c9d
 	github.com/werf/common-go v0.0.0-20250528135810-c90e95ac760d
 	github.com/werf/copy-recurse v0.2.7
@@ -411,5 +411,5 @@ replace (
 	github.com/docker/buildx => github.com/werf/3p-docker-buildx v0.13.0-rc2.0.20241111114615-d77c2e1444ad // upstream not maintained
 	github.com/jaguilar/vt100 => github.com/tonistiigi/vt100 v0.0.0-20190402012908-ad4c4a574305 // upstream not maintained
 	github.com/spf13/cobra => github.com/andremueller/cobra v0.0.0-20241025091859-0d550c15a8a4 // remove after merge to upstream
-	github.com/werf/3p-helm => github.com/werf/3p-helm v0.0.0-20250618151130-87bd6b38481c
+
 )

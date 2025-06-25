@@ -41,6 +41,11 @@ exclude:
   - vendor
   - werf.yaml
 
+include:
+# The only way I found to disable filtering of all hidden files.
+  - .
+  - examples
+
 highlighter: rouge
 
 plugins:

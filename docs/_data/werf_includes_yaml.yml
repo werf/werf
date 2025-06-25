@@ -1,10 +1,10 @@
-sections:
-  - id: includes
+directives:
+  - name: includes
     description:
       en: Configuration of remote git repositories for import
       ru: Конфигурация удаленных git-репозиториев для импорта
-    directives:
-      - git: url
+    directiveList:
+      - name: git
         value: "string"
         description:
           en: "The address of the remote repository"

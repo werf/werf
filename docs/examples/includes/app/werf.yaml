@@ -1,0 +1,11 @@
+project: myapp
+configVersion: 1
+build:
+  platform:
+    - linux/amd64
+  imageSpec: {{ include "imagespec" (dict "appName" "myapp") | nindent 4 }}
+cleanup: {{ include "cleanup" (dict "mainBranchName" "main") | nindent 2 }}
+---
+{{ include "image-backend" }}
+---
+{{ include "image-frontend" (dict "backendUrl" "http://backend:3000") }}

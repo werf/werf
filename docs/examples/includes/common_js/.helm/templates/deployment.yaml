@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+spec:
+  selector:
+    matchLabels:
+      app: myapp
+  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+        - name: backend
+          image: {{ $.Values.werf.image.backend }}
+          ports:
+            - containerPort: 3000
+          resources:
+            requests:
+              cpu: {{ $.Values.backend.limits.cpu }}
+              memory: {{ $.Values.backend.limits.memory}}
+            limits:
+              cpu: {{ $.Values.backend.limits.cpu }}
+              memory: {{ $.Values.backend.limits.memory }}
+        - name: frontend
+          image: {{ $.Values.werf.image.frontend }}
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: {{ $.Values.frontend.limits.cpu }}
+              memory: {{ $.Values.frontend.limits.memory}}
+            limits:
+              cpu: {{ $.Values.frontend.limits.cpu }}
+              memory: {{ $.Values.frontend.limits.memory }}

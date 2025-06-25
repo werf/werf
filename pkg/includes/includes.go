@@ -227,11 +227,7 @@ func GetIncludes(ctx context.Context, cfg Config, lockInfo *LockInfo, remoteRepo
 				matchedMap := map[string]string{}
 				err = tree.Files().ForEach(func(f *object.File) error {
 					if pm.IsPathMatched(f.Name) {
-						relPath := strings.TrimPrefix(f.Name, filepath.Clean(inc.Add))
-						relPath = strings.TrimPrefix(relPath, string(filepath.Separator))
-						newPath := path.Join(inc.To, relPath)
-						newPath = strings.TrimPrefix(newPath, string(filepath.Separator))
-
+						newPath := prepareRelPath(f.Name, inc.Add, inc.To)
 						matchedMap[newPath] = f.Name
 					}
 					return nil
@@ -447,4 +443,13 @@ func branchRef(r *git.Repository, branch string) (*object.Commit, error) {
 		return nil, fmt.Errorf("failed to get branch %s: %w", branch, err)
 	}
 	return commitRef(r, branchRef.Hash().String())
+}
+
+func prepareRelPath(fileName, add, to string) string {
+	addClean := strings.TrimPrefix(filepath.Clean(add), string(filepath.Separator))
+	relPath := strings.TrimPrefix(fileName, addClean)
+	relPath = strings.TrimPrefix(relPath, string(filepath.Separator))
+	newPath := path.Join(to, relPath)
+	newPath = strings.TrimPrefix(newPath, string(filepath.Separator))
+	return newPath
 }

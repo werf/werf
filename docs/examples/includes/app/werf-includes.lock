@@ -1,0 +1,3 @@
+includes:
+  - git: https://github.com/werf/werf
+    commit: 22a65805e26f01728df8921efa209e0343539453

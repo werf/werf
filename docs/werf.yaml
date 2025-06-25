@@ -65,6 +65,7 @@ git:
     - _layouts
     - _plugins
     - css
+    - examples
     - images
     - pages_ru
     - pages_en

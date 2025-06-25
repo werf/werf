@@ -17,6 +17,9 @@ exclude:
   - werf.yaml
 
 include:
+# The only way I found to disable filtering of all hidden files.
+  - .
+  - examples
   - pages_ru/
 
 breadcrumbs:
