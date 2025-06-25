@@ -24,7 +24,7 @@ jobs:
       - name: Get version from CHANGELOG.md
         id: get_version
         run: |
-          VERSION=$(grep -m1 '^## \[' CHANGELOG.md | sed -E 's/^## \[([0-9.]+)\].*/\1/')
+          VERSION=$(grep -m1 '^#\+ \[[0-9]\+\.[0-9]\+\.[0-9]\+\]' CHANGELOG.md | sed -E 's/^#+ \[([0-9]+\.[0-9]+\.[0-9]+)\].*/\1/')
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Create tag
