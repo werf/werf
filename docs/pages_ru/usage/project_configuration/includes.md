@@ -38,64 +38,72 @@ permalink: usage/project_configuration/includes.html
 1. Локальные файлы проекта всегда имеют приоритет над импортируемыми.
 2. Если файл присутствует в нескольких `includes`, будет использоваться версия из источника, который расположен ниже по списку `includes` в `werf-includes.yaml` (от общего к частному).
 
-Ниже приведён пример конфигурации импортирования схожих конфигураций:
+#### Пример применения правил наложения
+
+Допустим в локальном репозитории есть файл `c`, а также следующая конфигурация:
 
 ```yaml
 # werf-includes.yaml
 includes:
-  - git: https://github.com/werf/examples
-    branch: main
-    add: local-dev
-    to: /
-    includePaths:
-      - /.helm
-
-  - git: https://example.com/helm_examples
+  - git: repo1 # импортирует a, b, c
     branch: main
     add: /
     to: /
-    includePaths:
-      - /.helm
-````
-
-Структура директорий:
-
-* В `examples`: `.helm/Chart.yaml`, `.helm/values.yaml`
-* В `helm_examples`: `.helm/Chart.yaml`
-
-Результат `werf includes ls-files`:
-
-```
-.helm/Chart.yaml        https://example.com/werf/helm_examples
-.helm/values.yaml       https://github.com/werf/examples
+  - git: repo2 # импортирует b, c
+    branch: main
+    add: /
+    to: /
 ```
 
-Файл `Chart.yaml` взят из последнего источника (`helm_examples`) согласно правилам наложения.
+Тогда результат наложения будет выглядеть так:
 
-## Использование конфигурации из внешних источников
+```bash
+.
+├── a      # из repo1
+├── b      # из repo2
+├── c      # из локального репо
+```
 
-Ниже приведён пример конфигурации `werf-includes.yaml` (полное описание директив вы можете найти на соответствующей странице [werf-includes.yaml]({{"reference/werf_includes_yaml.html" | true_relative_url }})):
+## Подключение конфигурации из внешних источников
+
+Ниже приведён пример конфигурации внешних источников (полное описание директив вы можете найти на соответствующей странице [werf-includes.yaml]({{"reference/werf_includes_yaml.html" | true_relative_url }})):
 
 ```yaml
+# werf-includes.yaml
 includes:
-  - git: https://github.com/werf/examples
+  - git: https://github.com/werf/werf
     branch: main
-    add: local-dev
+    add: /docs/examples/includes/common
     to: /
     includePaths:
-      - /.helm
+      - .werf
 ```
 
-После того как вы зафиксируете версии includes командой `werf includes update`, в корне проекта будет создан файл `werf-includes.lock`, который выглядит следующим образом:
+После конфигурации необходимо зафиксировать версии внешних зависимостей. Для этого можно использовать команду `werf includes update`, после вызова которой, в корне проекта будет создан файл `werf-includes.lock`:
 
 ```yaml
 includes:
-  - git: https://github.com/werf/examples
+  - git: https://github.com/werf/werf
     branch: main
     commit: 21640b8e619ba4dd480fedf144f7424aa217a2eb
 ```
 
-> **ВАЖНО.** Согласно политикам гитерминизма, файлы `werf-includes.yaml` и `werf-includes.lock` должны быть закомичены. Для первичной конфигурации и отладки мы предлагаем использовать флаг `--dev`. После завершения конфигурации файлы необходимо закоммитить.
+> **ВАЖНО.** Согласно политикам гитерминизма, файлы `werf-includes.yaml` и `werf-includes.lock` должны быть закомичены. При конфигурации и отладке для удобства предлагается использовать флаг `--dev`.
+
+### Пример использования внешних источников при конфигурации однотипных приложений
+
+Предположим вы решили централизованно обслуживать конфигурацию приложений в вашей организации, сохраняя общую конфигурацию в одном источнике и конфигурацию под каждый тип проекта в других (в одном или нескольких Git-репозиториях — на ваше усмотрение). 
+
+Конфигурация типового проекта в таком случае могла бы выглядеть так:
+
+* Проект:
+{% tree_file_viewer 'examples/includes/app' default_file='werf-includes.yaml' %}
+
+* Источник с общей конфигурацией:
+{% tree_file_viewer 'examples/includes/werf-common' default_file='.werf/cleanup.tpl' %}
+
+* Источник со специфичной для вашего типа проекта конфигурацией:
+{% tree_file_viewer 'examples/includes/common_js' default_file='backend.Dockerfile' %}
 
 ## Обновление `includes`
 
@@ -128,24 +136,54 @@ werf includes ls-files .helm
 Пример вывода:
 
 ```
-PATH                      SOURCE
-.helm/Chart.yaml          local
-.helm/values.yaml         https://github.com/werf/examples
+PATH                                             SOURCE
+.helm/Chart.yaml                                 https://github.com/werf/werf
+.helm/charts/backend/Chart.yaml                  https://github.com/werf/werf
+.helm/charts/backend/templates/deployment.yaml   https://github.com/werf/werf
+.helm/charts/backend/templates/service.yaml      https://github.com/werf/werf
+.helm/charts/frontend/Chart.yaml                 https://github.com/werf/werf
+.helm/charts/frontend/templates/deployment.yaml  https://github.com/werf/werf
+.helm/charts/frontend/templates/service.yaml     https://github.com/werf/werf
+.helm/requirements.lock                          https://github.com/werf/werf
+.helm/values.yaml                                local
 ```
 
 ### Получение содержимого файла проекта с учётом источников
 
 ```bash
-werf includes get-file .helm/values.yaml
+werf includes get-file .helm/charts/backend/templates/deployment.yaml
 ```
 
 Пример вывода:
 
 ```yaml
-backend:
-  limits:
-    cpu: 100m
-    memory: 256Mi
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $.Chart.Name }}
+  annotations:
+    werf.io/weight: "30"
+spec:
+  selector:
+    matchLabels:
+      app: {{ $.Chart.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ $.Chart.Name }}
+    spec:
+      containers:
+        - name: backend
+          image: {{ $.Values.werf.image.backend }}
+          ports:
+            - containerPort: 3000
+          resources:
+            requests:
+              cpu: {{ $.Values.limits.cpu }}
+              memory: {{ $.Values.limits.memory}}
+            limits:
+              cpu: {{ $.Values.limits.cpu }}
+              memory: {{ $.Values.limits.memory }}
 ```
 
 ### Использование локальных репозиториев
@@ -156,7 +194,7 @@ backend:
 ```yaml
 # werf-includes.yaml
 includes:
-  - git: /path/to/repo
+  - git: /local/repo
     branch: main
     add: local-dev
     to: /

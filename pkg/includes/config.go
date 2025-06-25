@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/object"
@@ -92,8 +93,26 @@ func validate(config Config) error {
 		if include.Add == "" {
 			return fmt.Errorf("include %s: `add` field is required", include.Git)
 		}
+		if !strings.HasPrefix(include.Add, "/") {
+			return fmt.Errorf("include %s: `add` must be an absolute path relative to the repository root", include.Git)
+		}
 		if include.To == "" {
 			return fmt.Errorf("include %s: `to` field is required", include.Git)
+		}
+		if !strings.HasPrefix(include.To, "/") {
+			return fmt.Errorf("include %s: `to` must be an absolute path relative to the repository root", include.Git)
+		}
+
+		for _, path := range include.IncludePaths {
+			if strings.HasPrefix(path, "/") {
+				return fmt.Errorf("include %s: `includePaths` must be relative paths to the repository root", include.Git)
+			}
+		}
+
+		for _, path := range include.ExcludePaths {
+			if strings.HasPrefix(path, "/") {
+				return fmt.Errorf("include %s: `excludePaths` must be relative paths to the repository root", include.Git)
+			}
 		}
 
 		if !exactlyOne([]bool{include.Branch != "", include.Commit != "", include.Tag != ""}) {

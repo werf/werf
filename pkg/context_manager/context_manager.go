@@ -162,7 +162,7 @@ func AddContextAddFilesToContextArchive(ctx context.Context, opts *AddContextAdd
 func addFileToTarFromMem(tw *tar.Writer, tarEntryName string, data []byte) error {
 	header := &tar.Header{
 		Name: tarEntryName,
-		Mode: 0600,
+		Mode: 0o600,
 		Size: int64(len(data)),
 	}
 

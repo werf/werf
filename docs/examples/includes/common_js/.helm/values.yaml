@@ -1,0 +1,9 @@
+backend:
+  limits:
+    cpu: 100m
+    memory: 256Mi
+
+frontend:
+  limits:
+    cpu: 50m
+    memory: 48Mi
