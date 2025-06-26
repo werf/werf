@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.39.0](https://www.github.com/werf/werf/compare/v2.38.1...v2.39.0) (2025-06-26)
+
+
+### Features
+
+* implement external configuration includes ([#6863](https://www.github.com/werf/werf/issues/6863)) ([d315d3e](https://www.github.com/werf/werf/commit/d315d3e5b04e07b1472b4d52a00fcf272343e269))
+
+
+### Bug Fixes
+
+* **includes:** add dockerfile to build context ([fe30cf7](https://www.github.com/werf/werf/commit/fe30cf74921f865963ae4a9005e01daf4b0a3807))
+* **includes:** fix dockerignore handler ([51be3b4](https://www.github.com/werf/werf/commit/51be3b48a5065254e349546c22e4e25238f82769))
+
 ### [2.38.1](https://www.github.com/werf/werf/compare/v2.38.0...v2.38.1) (2025-06-19)
 
 
