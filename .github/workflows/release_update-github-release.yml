@@ -22,7 +22,7 @@ jobs:
 
       - name: Update GitHub releases based on trdl_channels.yaml
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
         run: |
           declare -A VERSION_CHANNELS
 
