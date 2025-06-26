@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.39.0](https://www.github.com/werf/werf/compare/v2.38.1...v2.39.0) (2025-06-26)
+
+
+### Features
+
+* implement external configuration includes ([#6863](https://www.github.com/werf/werf/issues/6863)) ([d315d3e](https://www.github.com/werf/werf/commit/d315d3e5b04e07b1472b4d52a00fcf272343e269))
+
 ### [2.38.1](https://www.github.com/werf/werf/compare/v2.38.0...v2.38.1) (2025-06-19)
 
 
