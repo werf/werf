@@ -1,5 +1,5 @@
 {{- define "cleanup" }}
-{{- $mainBranchName := .mainBranchName | "main" }}
+{{- $mainBranchName := default "main" .mainBranchName}}
 keepImagesBuiltWithinLastNHours: 1
 keepPolicies:
   - references:
