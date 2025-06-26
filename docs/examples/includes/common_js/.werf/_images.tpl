@@ -4,7 +4,7 @@ dockerfile: backend.Dockerfile
 {{- end }}
 
 {{- define "image-frontend" }}
-{{- $backendUrl := .backendUrl | "http://example.org" }}
+{{- $backendUrl := default "http://example.org" .backendUrl }}
 image: frontend
 from: nginx:alpine
 dockerfile: frontend.Dockerfile
