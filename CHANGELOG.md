@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.39.1](https://www.github.com/werf/werf/compare/v2.39.0...v2.39.1) (2025-06-26)
+
+
+### Bug Fixes
+
+* **build:** fix dockerfile context rel path ([04298cf](https://www.github.com/werf/werf/commit/04298cf9226ebcb61abac9e4c9b92df60cd17f26))
+
 ## [2.39.0](https://www.github.com/werf/werf/compare/v2.38.1...v2.39.0) (2025-06-26)
 
 
