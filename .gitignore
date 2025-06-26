@@ -6,6 +6,7 @@
 /.run
 /.help
 .env
+cmd/werf/werf
 
 /docs/vendor
 /docs/.ruby-version
