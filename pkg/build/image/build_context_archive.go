@@ -58,8 +58,9 @@ func (a *BuildContextArchive) Create(ctx context.Context, opts container_backend
 	addFilesFromMem := make(map[string][]byte)
 
 	if opts.DockerfileRelToContextPath != "" {
+		dockerFilePath := filepath.Join(opts.ContextGitSubDir, opts.DockerfileRelToContextPath)
 		gm := a.giterminismMgr.(*giterminism_manager.Manager)
-		dockerFileContent, err := gm.FileManager.ReadDockerfile(ctx, opts.DockerfileRelToContextPath)
+		dockerFileContent, err := gm.FileManager.ReadDockerfile(ctx, dockerFilePath)
 		if err != nil {
 			return fmt.Errorf("unable to read dockerfile %q: %w", opts.DockerfileRelToContextPath, err)
 		}
