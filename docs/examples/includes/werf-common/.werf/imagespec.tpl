@@ -1,5 +1,5 @@
 {{- define "imagespec" }}
-{{- $appName := .appName | "defaultapp" }}
+{{- $appName := default "defaultapp" .appName}}
 clearHistory: true
 config:
   labels:
