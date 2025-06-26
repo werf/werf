@@ -85,7 +85,7 @@ func (cleaner *LocalBackendCleaner) backendStoragePath(ctx context.Context, stor
 	if backendStoragePath == "" {
 		info, err := cleaner.backend.Info(ctx)
 		if err != nil {
-			return "", fmt.Errorf("errot getting local %s backend info: %w", cleaner.BackendName(), err)
+			return "", fmt.Errorf("error getting local %s backend info: %w", cleaner.BackendName(), err)
 		}
 		backendStoragePath = info.StoreGraphRoot
 	}
