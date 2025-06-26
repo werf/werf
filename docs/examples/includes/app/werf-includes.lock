@@ -1,4 +1,4 @@
 includes:
-  - git: https://github.com/werf/werf
-    branch: main
-    commit: 9cea22738c9bd632498a3efc6f81ebd9654a5566
+    - git: https://github.com/werf/werf
+      branch: main
+      commit: 792c7631d2abbae8dc0acb252905f740d98c7585
