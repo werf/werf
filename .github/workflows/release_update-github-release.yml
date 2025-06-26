@@ -1,0 +1,71 @@
+name: release:update-github-release
+
+on:
+  push:
+    branches:
+      - "main"
+      - "[0-9]+.[0-9]+.[0-9]+*"
+      - "[0-9]+.[0-9]+"
+      - "[0-9]+"
+    paths:
+      - "trdl_channels.yaml"
+
+jobs:
+  update-release:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Update GitHub releases based on trdl_channels.yaml
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+        run: |
+          declare -A VERSION_CHANNELS
+
+          current_group=""
+          while IFS= read -r line; do
+            if [[ $line =~ name:\ \"([^\"]+)\" ]]; then
+              current_group="${BASH_REMATCH[1]}"
+            elif [[ $line =~ name:\ ([a-z-]+) ]]; then
+              current_channel="${BASH_REMATCH[1]}"
+            elif [[ $line =~ version:\ ([0-9a-zA-Z.+-]+) ]]; then
+              version="${BASH_REMATCH[1]}"
+              if [[ -z "${VERSION_CHANNELS[$version]}" ]]; then
+                VERSION_CHANNELS["$version"]="$current_channel"
+              else
+                VERSION_CHANNELS["$version"]="${VERSION_CHANNELS[$version]},$current_channel"
+              fi
+            fi
+          done < trdl_channels.yaml
+
+          RELEASES=$(gh release list --limit 100 --json tagName | jq -r '.[].tagName')
+
+          for tag in $RELEASES; do
+            version=${tag#v}
+            channels="${VERSION_CHANNELS[$version]}"
+
+            if [[ -n $channels ]]; then
+              TITLE="$tag [$channels]"
+
+              if [[ $channels == *stable* ]]; then
+                echo "Updating $tag: stable, latest"
+                gh release edit "$tag" --title "$TITLE" --latest --prerelease=false || true
+
+              elif [[ $channels == *rock-solid* ]]; then
+                echo "Updating $tag: rock-solid, just title"
+                gh release edit "$tag" --title "$TITLE" --prerelease=false || true
+
+              else
+                echo "Updating $tag: prerelease, channels=$channels"
+                gh release edit "$tag" --title "$TITLE" --prerelease || true
+              fi
+
+            else
+              echo "Resetting $tag to plain version title"
+              gh release edit "$tag" --title "$tag" --prerelease=false || true
+            fi
+          done
