@@ -76,6 +76,7 @@ jobs:
         run: |
           gh release create "v${{ steps.get_version.outputs.version }}" \
             --title "v${{ steps.get_version.outputs.version }}" \
+            --prerelease \
             --notes-file notes.md
 
   notify:
