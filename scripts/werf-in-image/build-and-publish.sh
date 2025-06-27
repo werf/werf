@@ -14,7 +14,13 @@ if [[ -z "$2" ]]; then
   exit 1
 fi
 
+if ! command -v crane &>/dev/null; then
+  echo "crane not found!" >&2
+  exit 1
+fi
+
 DEST_SUBREPO=$1/werf
+FORCE_PUBLISH=${3:-false}
 
 unset WERF_PLATFORM
 
@@ -31,4 +37,32 @@ export WERF_EXPORT_ADD_LABEL_AH1=io.artifacthub.package.readme-url=https://raw.g
        WERF_EXPORT_ADD_LABEL_OC3=org.opencontainers.image.created=$(date -u +"%Y-%m-%dT%H:%M:%SZ") \
        WERF_EXPORT_ADD_LABEL_OC4=org.opencontainers.image.description="Official image to run werf in containers"
 
-werf export --config "$2.yaml" --tag "$DEST_SUBREPO/$2:%image%"
+configs=$(werf config list --final-images-only=true)
+export_tags=()
+
+if [[ "$FORCE_PUBLISH" == "true" ]]; then
+  echo "FORCE_PUBLISH enabled — publishing all images"
+  werf export --config "$2.yaml" --tag "$DEST_SUBREPO/$2:%image%"
+else
+  for config in $configs; do
+    tag="$config"
+
+    if crane manifest "$DEST_SUBREPO/$2:$tag" &>/dev/null; then
+      echo "Image $tag already exists, skipping..."
+      continue
+    else
+      echo "crane failed to access $tag"
+    fi
+
+    echo "Will publish $tag"
+    export_tags+=("$tag")
+  done
+
+  if [[ ${#export_tags[@]} -eq 0 ]]; then
+    echo "Nothing to publish"
+  else
+    echo "Publishing images: ${export_tags[*]}"
+    werf export --config "$2.yaml" "${export_tags[@]}" --tag "$DEST_SUBREPO/$2:%image%"
+  fi
+fi
+
