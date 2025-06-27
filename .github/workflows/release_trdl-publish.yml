@@ -8,7 +8,11 @@ on:
   repository_dispatch:
     types: ["release:trdl-publish"]
   workflow_dispatch:
-
+    inputs:
+      force:
+        description: 'Force publish all images'
+        required: false
+        default: 'false'
 defaults:
   run:
     shell: bash
@@ -84,6 +88,12 @@ jobs:
         with:
           channel: alpha
 
+      - name: install crane
+        run: |
+          VERSION=$(curl -s "https://api.github.com/repos/google/go-containerregistry/releases/latest" | jq -r '.tag_name')
+          curl -sL "https://github.com/google/go-containerregistry/releases/download/${VERSION}/go-containerregistry_Linux_x86_64.tar.gz" > go-containerregistry.tar.gz
+          tar -zxvf go-containerregistry.tar.gz -C /usr/local/bin/ crane
+
       - if: matrix.dest-registry == 'registry-write.werf.io'
         name: Login to werf registry
         uses: docker/login-action@v2
@@ -107,7 +117,7 @@ jobs:
 
       - name: Build and publish werf images
         working-directory: ./scripts/werf-in-image
-        run: ./build-and-publish.sh ${{ matrix.dest-registry }} ${{ matrix.app }}
+        run: ./build-and-publish.sh ${{ matrix.dest-registry }} ${{ matrix.app }} ${{ github.event.inputs.force }}
         env:
           DOCKER_BUILDKIT: 1
 
