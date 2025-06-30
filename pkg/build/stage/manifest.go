@@ -2,11 +2,16 @@ package stage
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/base64"
 	"fmt"
+	"github.com/werf/werf/v2/pkg/docker_registry/api"
+	"github.com/werf/werf/v2/pkg/signver"
 	"io"
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -17,12 +22,14 @@ import (
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/docker_registry"
-	"github.com/werf/werf/v2/pkg/docker_registry/api"
 	"github.com/werf/werf/v2/pkg/werf/exec"
 )
 
 const (
-	annoNameBuildTimestamp   = "io.deckhouse.deliverykit.build-timestamp"
+	annoNameSignature       = "io.deckhouse.deliverykit.signature"
+	annoNameCert            = "io.deckhouse.deliverykit.cert"
+	annoNameChain           = "io.deckhouse.deliverykit.chain"
+	annoNameBuildTimestamp  = "io.deckhouse.deliverykit.build-timestamp"
 	annoNameDMVerityRootHash = "io.deckhouse.deliverykit.dm-verity-root-hash"
 
 	mkfsBuildDate   = "2025-06-24T18:50:50Z"
@@ -69,6 +76,7 @@ func (s *ManifestStage) MutateImage(ctx context.Context, registry docker_registr
 		srcRef,
 		destRef,
 		api.WithLayersMutation(annotateLayers),
+		api.WithManifestAnnotationsFunc(signManifest),
 	)
 }
 
@@ -210,4 +218,74 @@ func extractRootHash(output string) string {
 		}
 	}
 	return ""
+}
+
+func signManifest(ctx context.Context, manifest *v1.Manifest) (map[string]string, error) {
+	sv, err := loadSignerVerifier(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("unable to load signer verifier: %w", err)
+	}
+
+	digest := calculateManifestDigest(manifest)
+	signedDigest, err := sv.SignMessage(strings.NewReader(digest))
+	if err != nil {
+		return nil, err
+	}
+
+	annotations := manifest.Annotations
+	if annotations == nil {
+		annotations = make(map[string]string, 3)
+	}
+
+	annotations[annoNameSignature] = base64.StdEncoding.EncodeToString(signedDigest)
+	annotations[annoNameCert] = base64.StdEncoding.EncodeToString(sv.Cert)
+	annotations[annoNameChain] = base64.StdEncoding.EncodeToString(sv.Chain)
+
+	return annotations, nil
+}
+
+func loadSignerVerifier(ctx context.Context) (*signver.SignerVerifier, error) {
+	return signver.NewSignerVerifier(
+		ctx,
+		"cosign.crt",
+		"cosign-chain.pem",
+		signver.KeyOpts{
+			KeyRef: "cosign2.key.key",
+		},
+	)
+}
+
+func calculateManifestDigest(manifest *v1.Manifest) string {
+	annotations := manifest.Annotations
+	if annotations == nil {
+		annotations = make(map[string]string, 3)
+	}
+
+	var hashes []string
+	hashes = append(hashes, strconv.FormatInt(manifest.SchemaVersion, 10), string(manifest.MediaType))
+	hashes = append(hashes, manifest.Config.Digest.String(), string(manifest.Config.MediaType), strconv.FormatInt(manifest.Config.Size, 10))
+
+	for _, layer := range manifest.Layers {
+		hashes = append(hashes, string(layer.MediaType), layer.Digest.String(), strconv.FormatInt(layer.Size, 10))
+	}
+
+	keys := sortedKeys(annotations)
+	for _, k := range keys {
+		if k == annoNameSignature || k == annoNameCert || k == annoNameChain {
+			continue
+		}
+		hashes = append(hashes, k, annotations[k])
+	}
+
+	sum := sha256.Sum256([]byte(strings.Join(hashes, "")))
+	return fmt.Sprintf("%x", sum)
+}
+
+func sortedKeys(m map[string]string) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
 }
