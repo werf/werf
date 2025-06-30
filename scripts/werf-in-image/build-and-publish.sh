@@ -37,32 +37,54 @@ export WERF_EXPORT_ADD_LABEL_AH1=io.artifacthub.package.readme-url=https://raw.g
        WERF_EXPORT_ADD_LABEL_OC3=org.opencontainers.image.created=$(date -u +"%Y-%m-%dT%H:%M:%SZ") \
        WERF_EXPORT_ADD_LABEL_OC4=org.opencontainers.image.description="Official image to run werf in containers"
 
-configs=$(werf config list --final-images-only=true)
-export_tags=()
-
 if [[ "$FORCE_PUBLISH" == "true" ]]; then
-  echo "FORCE_PUBLISH enabled — publishing all images"
-  werf export --config "$2.yaml" --tag "$DEST_SUBREPO/$2:%image%"
-else
-  for config in $configs; do
-    tag="$config"
-
-    if crane manifest "$DEST_SUBREPO/$2:$tag" &>/dev/null; then
-      echo "Image $tag already exists, skipping..."
-      continue
-    else
-      echo "crane failed to access $tag"
-    fi
-
-    echo "Will publish $tag"
-    export_tags+=("$tag")
-  done
-
-  if [[ ${#export_tags[@]} -eq 0 ]]; then
-    echo "Nothing to publish"
-  else
-    echo "Publishing images: ${export_tags[*]}"
-    werf export --config "$2.yaml" "${export_tags[@]}" --tag "$DEST_SUBREPO/$2:%image%"
-  fi
+  echo "FORCE_PUBLISH is true — exporting all images"
+  export --config "$2.yaml" --tag "$DEST_SUBREPO/$2:%image%"
+  exit 0
 fi
 
+NEW="../../trdl_channels.yaml"
+OLD="../../trdl_channels_old.yaml"
+
+changed_channels=()
+new_versions=()
+glob_patterns=()
+
+group_count=$(yq e '.groups | length' "$NEW")
+
+for i in $(seq 0 $((group_count - 1))); do
+  group=$(yq e ".groups[$i].name" "$NEW")
+  channel_count=$(yq e ".groups[$i].channels | length" "$NEW")
+
+  for j in $(seq 0 $((channel_count - 1))); do
+    channel=$(yq e ".groups[$i].channels[$j].name" "$NEW")
+    new_version=$(yq e ".groups[$i].channels[$j].version" "$NEW")
+    old_version=$(yq e ".groups[] | select(.name == \"$group\") | .channels[] | select(.name == \"$channel\") | .version" "$OLD")
+
+    if [ "$new_version" != "$old_version" ]; then
+      echo "Channel changed: $group:$channel: $old_version → $new_version"
+      changed_channels+=("$group:$channel:$new_version")
+      new_versions+=("$new_version")
+    fi
+  done
+done
+
+for v in "${new_versions[@]}"; do
+  glob_patterns+=("$v*")
+done
+
+for ch in "${changed_channels[@]}"; do
+  group=$(echo "$ch" | cut -d: -f1)
+  channel=$(echo "$ch" | cut -d: -f2)
+
+  glob_patterns+=("$group-$channel*")
+
+  if [[ "$channel" == "stable" ]]; then
+    glob_patterns+=("$group")
+    glob_patterns+=("latest")
+  fi
+done
+
+glob_patterns=($(printf "%s\n" "${glob_patterns[@]}" | sort -u))
+export_globs=$(IFS=" "; echo "${glob_patterns[*]}")
+werf export $export_globs --config "$2.yaml" --tag "$DEST_SUBREPO/$2:%image%" 
