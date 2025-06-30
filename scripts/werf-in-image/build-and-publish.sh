@@ -14,11 +14,6 @@ if [[ -z "$2" ]]; then
   exit 1
 fi
 
-if ! command -v crane &>/dev/null; then
-  echo "crane not found!" >&2
-  exit 1
-fi
-
 DEST_SUBREPO=$1/werf
 FORCE_PUBLISH=${3:-false}
 
