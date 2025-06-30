@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.39.2](https://www.github.com/werf/werf/compare/v2.39.1...v2.39.2) (2025-06-30)
+
+
+### Bug Fixes
+
+* docs/Gemfile to reduce vulnerabilities ([b806dc4](https://www.github.com/werf/werf/commit/b806dc43e36140d650f320c16b820b1b5f4c02f2))
+
 ### [2.39.1](https://www.github.com/werf/werf/compare/v2.39.0...v2.39.1) (2025-06-26)
 
 
