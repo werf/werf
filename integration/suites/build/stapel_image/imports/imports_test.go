@@ -158,7 +158,7 @@ var _ = Describe("Stapel imports", func() {
 			Expect(lastStageImageNameAfterFirstBuild).Should(Equal(lastStageImageNameAfterSecondBuild))
 		})
 
-		It("should rebuild image when import source checksum was changed", func(ctx SpecContext) {
+		It("should rebuild image when import source checksum was changed under experimental flag", func(ctx SpecContext) {
 			SuiteData.CommitProjectWorktree(ctx, SuiteData.ProjectName, utils.FixturePath("import_metadata", "001"), "initial commit")
 
 			utils.RunSucceedCommand(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "build")
@@ -170,6 +170,25 @@ var _ = Describe("Stapel imports", func() {
 			utils.RunSucceedCommand(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "build")
 
 			lastStageImageNameAfterSecondBuild := utils.GetBuiltImageLastStageImageName(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "image")
+
+			Expect(lastStageImageNameAfterFirstBuild).ShouldNot(Equal(lastStageImageNameAfterSecondBuild))
+		})
+
+		It("should rebuild image when import source checksum and permissions were changed", func(ctx SpecContext) {
+			SuiteData.CommitProjectWorktree(ctx, SuiteData.ProjectName, utils.FixturePath("imports_app_5", "001"), "initial commit")
+
+			utils.RunSucceedCommand(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "build")
+
+			lastStageImageNameAfterFirstBuild := utils.GetBuiltImageLastStageImageName(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "final")
+
+			SuiteData.CommitProjectWorktree(ctx, SuiteData.ProjectName, utils.FixturePath("imports_app_5", "002"), "change permissions")
+
+			_, _ = utils.RunCommandWithOptions(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, []string{"build"}, utils.RunCommandOptions{
+				ShouldSucceed: true,
+				ExtraEnv:      []string{"WERF_EXPERIMENTAL_STAPEL_IMPORT_PERMISSIONS=true"},
+			})
+
+			lastStageImageNameAfterSecondBuild := utils.GetBuiltImageLastStageImageName(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "final")
 
 			Expect(lastStageImageNameAfterFirstBuild).ShouldNot(Equal(lastStageImageNameAfterSecondBuild))
 		})

@@ -1,0 +1,20 @@
+configVersion: 1
+project: test
+---
+image: artifact
+from: alpine
+final: false
+import:
+shell:
+  install:
+    - echo "hello" > /xx
+    - chmod 0555 /xx
+---
+image: final
+from: alpine
+import:
+  - image: artifact
+    add: /xx
+    to: /xx
+    before: install
+    stage: install
