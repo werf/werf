@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -392,6 +393,9 @@ func loadChartDirFromLocalSource(dir string) (bool, error) {
 }
 
 func getChartDirAbsPath(relPath, customProjectDir string) string {
+	if path.IsAbs(relPath) {
+		return relPath
+	}
 	if customProjectDir != "" {
 		relPath = filepath.Join(customProjectDir, relPath)
 	}
