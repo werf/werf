@@ -36,7 +36,7 @@ jobs:
             echo "Tag ${TAG} already exists. Skipping..."
             exit 0
           fi
-          git config user.name "github-actions"
+          git config user.name "flant-team-sysdev"
           git config user.email "github-actions@github.com"
           git tag "$TAG"
           git push origin "$TAG"
