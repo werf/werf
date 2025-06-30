@@ -391,7 +391,7 @@ func loadChartDirFromLocalSource(dir string) (bool, error) {
 	return true, nil
 }
 
-func getChartDirAbsPath(relPath string, customProjectDir string) string {
+func getChartDirAbsPath(relPath, customProjectDir string) string {
 	if customProjectDir != "" {
 		relPath = filepath.Join(customProjectDir, relPath)
 	}
