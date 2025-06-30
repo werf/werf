@@ -37,6 +37,6 @@ jobs:
             exit 0
           fi
           git config user.name "flant-team-sysdev"
-          git config user.email "github-actions@github.com"
+          git config user.email "team-sysdev+github@notice.flant.com"
           git tag "$TAG"
           git push origin "$TAG"
