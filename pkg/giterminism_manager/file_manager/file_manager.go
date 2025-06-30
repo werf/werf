@@ -44,6 +44,8 @@ type FileManager struct {
 	fileReader FileReader
 	includes   []*includes.Include
 	caches     *caches
+
+	customProjectDir string
 }
 
 type caches struct {
@@ -51,6 +53,7 @@ type caches struct {
 }
 
 type NewFileManagerOptions struct {
+	ProjectDir             string
 	FileReader             FileReader
 	Inspector              inspector.Inspector
 	CreateIncludesLockFile bool
@@ -77,6 +80,7 @@ func NewFileManager(ctx context.Context, opts NewFileManagerOptions) (*FileManag
 		caches: &caches{
 			dockerFiles: make(map[string][]byte),
 		},
+		customProjectDir: opts.ProjectDir,
 	}, nil
 }
 
@@ -313,19 +317,19 @@ func (f *FileManager) ReadChartFile(ctx context.Context, filePath string) ([]byt
 }
 
 func (f *FileManager) LoadChartDir(ctx context.Context, dir string) ([]*file.ChartExtenderBufferedFile, error) {
-	absDir := util.GetAbsoluteFilepath(dir)
+	chartLocalAbsPath := getChartDirAbsPath(dir, f.customProjectDir)
 	processed := make(map[string]bool)
 
 	var chartDir []*file.ChartExtenderBufferedFile
 
-	readFromLocalFs, err := loadChartDirFromLocalSource(absDir)
+	readFromLocalFs, err := loadChartDirFromLocalSource(chartLocalAbsPath)
 	if err != nil {
 		return nil, err
 	}
 
 	if readFromLocalFs {
 		var err error
-		chartDir, err = f.fileReader.LoadChartDir(ctx, absDir)
+		chartDir, err = f.fileReader.LoadChartDir(ctx, chartLocalAbsPath)
 		if err != nil {
 			return nil, fmt.Errorf("unable to load chart directory: %w", err)
 		}
@@ -370,7 +374,7 @@ func (f *FileManager) LoadChartDir(ctx context.Context, dir string) ([]*file.Cha
 	}
 
 	if len(chartDir) == 0 {
-		return nil, fmt.Errorf("the directory %q not found in the project git repository or includes", dir)
+		return nil, fmt.Errorf("load chart dir error: the directory %q not found in the project git repository or includes", dir)
 	}
 
 	return chartDir, nil
@@ -387,16 +391,22 @@ func loadChartDirFromLocalSource(dir string) (bool, error) {
 	return true, nil
 }
 
-func (f *FileManager) ChartIsDir(relPath string) (bool, error) {
-	absPath := util.GetAbsoluteFilepath(relPath)
+func getChartDirAbsPath(relPath string, customProjectDir string) string {
+	if customProjectDir != "" {
+		relPath = filepath.Join(customProjectDir, relPath)
+	}
+	return util.GetAbsoluteFilepath(relPath)
+}
 
-	if fi, err := os.Stat(absPath); err == nil {
+func (f *FileManager) ChartIsDir(relPath string) (bool, error) {
+	chartLocalAbsPath := getChartDirAbsPath(relPath, f.customProjectDir)
+	if fi, err := os.Stat(chartLocalAbsPath); err == nil {
 		if fi.IsDir() {
 			return true, nil
 		}
 		return false, nil
 	} else if !os.IsNotExist(err) {
-		return false, fmt.Errorf("os.Stat failed for %q: %w", absPath, err)
+		return false, fmt.Errorf("os.Stat failed for %q: %w", chartLocalAbsPath, err)
 	}
 
 	normRelPath := filepath.ToSlash(relPath)
@@ -426,7 +436,7 @@ func (f *FileManager) ChartIsDir(relPath string) (bool, error) {
 		return false, nil
 	}
 
-	return false, fmt.Errorf("path %q not found on local filesystem or includes", relPath)
+	return false, fmt.Errorf("check chart is dir error: path %q not found on local filesystem or includes", relPath)
 }
 
 const (

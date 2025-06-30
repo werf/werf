@@ -53,6 +53,7 @@ func NewManager(ctx context.Context, configRelPath, projectDir string, localGitR
 	}
 
 	m.FileManager, err = filemanager.NewFileManager(ctx, filemanager.NewFileManagerOptions{
+		ProjectDir:             m.ProjectDir(),
 		FileReader:             fr,
 		Inspector:              i,
 		CreateIncludesLockFile: options.CreateIncludesLockFile,
