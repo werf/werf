@@ -285,7 +285,7 @@ func (f *FileManager) ReadDockerignore(ctx context.Context, relPath string) ([]b
 }
 
 func (f *FileManager) LocateChart(ctx context.Context, name string) (string, error) {
-	path := util.GetAbsoluteFilepath(name)
+	path := getChartDirAbsPath(name, f.customProjectDir)
 	chartDir, err := f.fileReader.LocateChart(ctx, path)
 	if err != nil {
 		logboek.Context(ctx).Debug().LogF("Chart directory %q not found in the local filesystem. Try find in includes\n", name)
@@ -298,7 +298,7 @@ func (f *FileManager) LocateChart(ctx context.Context, name string) (string, err
 }
 
 func (f *FileManager) ReadChartFile(ctx context.Context, filePath string) ([]byte, error) {
-	path := util.GetAbsoluteFilepath(filePath)
+	path := getChartDirAbsPath(filePath, f.customProjectDir)
 	if exist, _ := util.FileExists(path); exist {
 		data, err := f.fileReader.ReadChartFile(ctx, path)
 		if err != nil {

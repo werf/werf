@@ -3,6 +3,7 @@ package basic_test
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -54,9 +55,11 @@ var _ = Describe("build and mutate image spec", Label("integration", "build", "m
 
 				remoteRepoDirName1 := "remote_repo1"
 				SuiteData.InitTestRepo(ctx, remoteRepoDirName1, filepath.Join(fixtureRelPath, remoteRepoDirName1))
+				branch1 := getBranchName(ctx, SuiteData.GetTestRepoPath(remoteRepoDirName1))
 
 				remoteRepoDirName2 := "remote_repo2"
 				SuiteData.InitTestRepo(ctx, remoteRepoDirName2, filepath.Join(fixtureRelPath, remoteRepoDirName2))
+				branch2 := getBranchName(ctx, SuiteData.GetTestRepoPath(remoteRepoDirName2))
 
 				SuiteData.WerfRepo = SuiteData.GetTestRepoPath(mainRepoDirName)
 				includesConfig := &Config{
@@ -64,14 +67,14 @@ var _ = Describe("build and mutate image spec", Label("integration", "build", "m
 						{
 							Name:   "remote_repo1",
 							Git:    SuiteData.GetTestRepoPath(remoteRepoDirName1),
-							Branch: "main",
+							Branch: branch1,
 							Add:    "/",
 							To:     "/",
 						},
 						{
 							Name:   "remote_repo2",
 							Git:    SuiteData.GetTestRepoPath(remoteRepoDirName2),
-							Branch: "main",
+							Branch: branch2,
 							Add:    "/",
 							To:     "/",
 						},
@@ -133,3 +136,9 @@ var _ = Describe("build and mutate image spec", Label("integration", "build", "m
 		}}),
 	)
 })
+
+func getBranchName(ctx SpecContext, repoDir string) string {
+	out, err := utils.RunCommand(ctx, repoDir, "git", "rev-parse", "--abbrev-ref", "HEAD")
+	Expect(err).ToNot(HaveOccurred())
+	return strings.TrimSpace(string(out))
+}
