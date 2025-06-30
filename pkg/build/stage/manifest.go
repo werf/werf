@@ -3,6 +3,7 @@ package stage
 import (
 	"context"
 	"fmt"
+	"github.com/werf/werf/v2/pkg/docker_registry/api"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -61,11 +62,11 @@ func (s *ManifestStage) MutateImage(ctx context.Context, registry docker_registr
 	srcRef := prevBuiltImage.Image.Name()
 	destRef := stageImage.Image.Name()
 
-	return registry.MutateAndPushImageLayers(
+	return registry.MutateAndPushImage(
 		ctx,
 		srcRef,
 		destRef,
-		processLayers,
+		api.WithLayersMutation(processLayers),
 	)
 }
 
