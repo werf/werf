@@ -73,6 +73,27 @@ func mutateImage(ctx context.Context, image v1.Image, dest name.Reference, isDes
 		return nil, nil, fmt.Errorf("error reading image manifest: %w", err)
 	}
 
+	if options.mutateConfigFileFunc != nil || options.mutateConfigFunc != nil {
+		newCF := cf
+		if options.mutateConfigFileFunc != nil {
+			newCF, err = options.mutateConfigFileFunc(ctx, cf)
+			if err != nil {
+				return nil, nil, err
+			}
+		}
+		if options.mutateConfigFunc != nil {
+			newConfig, err := options.mutateConfigFunc(ctx, cf.Config)
+			if err != nil {
+				return nil, nil, err
+			}
+			newCF.Config = newConfig
+		}
+		image, err = mutate.ConfigFile(image, newCF)
+		if err != nil {
+			return nil, nil, fmt.Errorf("unable to mutate image config: %w", err)
+		}
+	}
+
 	if options.mutateImageLayersFunc != nil {
 		layers, err := image.Layers()
 		if err != nil {
@@ -93,27 +114,6 @@ func mutateImage(ctx context.Context, image v1.Image, dest name.Reference, isDes
 
 		// preserve manifest annotations
 		image = mutate.Annotations(image, manifest.Annotations).(v1.Image)
-	}
-
-	if options.mutateConfigFileFunc != nil || options.mutateConfigFunc != nil {
-		newCF := cf
-		if options.mutateConfigFileFunc != nil {
-			newCF, err = options.mutateConfigFileFunc(ctx, cf)
-			if err != nil {
-				return nil, nil, err
-			}
-		}
-		if options.mutateConfigFunc != nil {
-			newConfig, err := options.mutateConfigFunc(ctx, cf.Config)
-			if err != nil {
-				return nil, nil, err
-			}
-			newCF.Config = newConfig
-		}
-		image, err = mutate.ConfigFile(image, newCF)
-		if err != nil {
-			return nil, nil, fmt.Errorf("unable to mutate image config: %w", err)
-		}
 	}
 
 	digest, err := image.Digest()

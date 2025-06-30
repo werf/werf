@@ -12,6 +12,7 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/docker_registry"
+	"github.com/werf/werf/v2/pkg/docker_registry/api"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/slug"
 )
@@ -129,7 +130,7 @@ func (storage *RepoStagesStorage) GetStagesIDs(ctx context.Context, _ string, op
 }
 
 func (storage *RepoStagesStorage) ExportStage(ctx context.Context, stageDesc *image.StageDesc, destinationReference string, mutateConfigFunc func(config v1.Config) (v1.Config, error)) error {
-	return storage.DockerRegistry.MutateAndPushImageConfig(ctx, stageDesc.Info.Name, destinationReference, mutateExportStageConfig(mutateConfigFunc))
+	return storage.DockerRegistry.MutateAndPushImage(ctx, stageDesc.Info.Name, destinationReference, api.WithConfigMutation(mutateExportStageConfig(mutateConfigFunc)))
 }
 
 func mutateExportStageConfig(mutateConfigFunc func(config v1.Config) (v1.Config, error)) func(ctx context.Context, config v1.Config) (v1.Config, error) {
