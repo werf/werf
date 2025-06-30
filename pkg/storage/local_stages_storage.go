@@ -11,6 +11,7 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/docker_registry"
+	"github.com/werf/werf/v2/pkg/docker_registry/api"
 	"github.com/werf/werf/v2/pkg/image"
 )
 
@@ -150,7 +151,7 @@ func (storage *LocalStagesStorage) ExportStage(ctx context.Context, stageDesc *i
 	if err := storage.ContainerBackend.Push(ctx, destinationReference, container_backend.PushOpts{}); err != nil {
 		return fmt.Errorf("unable to push %q: %w", destinationReference, err)
 	}
-	return docker_registry.API().MutateAndPushImageConfig(ctx, destinationReference, destinationReference, mutateExportStageConfig(mutateConfigFunc))
+	return docker_registry.API().MutateAndPushImage(ctx, destinationReference, destinationReference, api.WithConfigMutation(mutateExportStageConfig(mutateConfigFunc)))
 }
 
 func (storage *LocalStagesStorage) DeleteStage(ctx context.Context, stageDesc *image.StageDesc, options DeleteImageOptions) error {

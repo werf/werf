@@ -16,6 +16,7 @@ import (
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/docker_registry"
+	"github.com/werf/werf/v2/pkg/docker_registry/api"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/ssh_agent"
 	"github.com/werf/werf/v2/pkg/werf/global_warnings"
@@ -151,10 +152,10 @@ func (s *ImageSpecStage) MutateImage(ctx context.Context, registry docker_regist
 	src := prevBuiltImage.Image.Name()
 	dest := stageImage.Image.Name()
 
-	return registry.MutateAndPushImageConfigFile(ctx, src, dest, func(ctx context.Context, config *v1.ConfigFile) (*v1.ConfigFile, error) {
+	return registry.MutateAndPushImage(ctx, src, dest, api.WithConfigFileMutation(func(ctx context.Context, config *v1.ConfigFile) (*v1.ConfigFile, error) {
 		updateConfigFile(s.newConfig, config)
 		return config, nil
-	})
+	}))
 }
 
 func updateConfigFile(updates ImageSpecConfig, target *v1.ConfigFile) {

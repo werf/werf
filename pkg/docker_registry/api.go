@@ -264,16 +264,8 @@ func (api *api) deleteImageByReference(ctx context.Context, reference string) er
 	return nil
 }
 
-func (api *api) MutateAndPushImageConfig(ctx context.Context, sourceReference, destinationReference string, f func(context.Context, v1.Config) (v1.Config, error)) error {
-	return api.mutateAndPushImage(ctx, sourceReference, destinationReference, registry_api.WithConfigMutation(f))
-}
-
-func (api *api) MutateAndPushImageConfigFile(ctx context.Context, sourceReference, destinationReference string, f func(context.Context, *v1.ConfigFile) (*v1.ConfigFile, error)) error {
-	return api.mutateAndPushImage(ctx, sourceReference, destinationReference, registry_api.WithConfigFileMutation(f))
-}
-
-func (api *api) MutateAndPushImageLayers(ctx context.Context, sourceReference, destinationReference string, f func(context.Context, []v1.Layer) ([]mutate.Addendum, error)) error {
-	return api.mutateAndPushImage(ctx, sourceReference, destinationReference, registry_api.WithLayersMutation(f))
+func (api *api) MutateAndPushImage(ctx context.Context, sourceReference, destinationReference string, opts ...registry_api.MutateOption) error {
+	return api.mutateAndPushImage(ctx, sourceReference, destinationReference, opts...)
 }
 
 func (api *api) mutateAndPushImage(ctx context.Context, sourceReference, destinationReference string, opts ...registry_api.MutateOption) error {

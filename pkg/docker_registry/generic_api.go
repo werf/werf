@@ -7,8 +7,8 @@ import (
 
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
-	"github.com/google/go-containerregistry/pkg/v1/mutate"
 
+	registry_api "github.com/werf/werf/v2/pkg/docker_registry/api"
 	"github.com/werf/werf/v2/pkg/image"
 )
 
@@ -24,16 +24,8 @@ func newGenericApi(_ context.Context, options apiOptions) (*genericApi, error) {
 	return d, nil
 }
 
-func (api *genericApi) MutateAndPushImageConfig(ctx context.Context, sourceReference, destinationReference string, f func(context.Context, v1.Config) (v1.Config, error)) error {
-	return api.commonApi.MutateAndPushImageConfig(ctx, sourceReference, destinationReference, f)
-}
-
-func (api *genericApi) MutateAndPushImageConfigFile(ctx context.Context, sourceReference, destinationReference string, f func(context.Context, *v1.ConfigFile) (*v1.ConfigFile, error)) error {
-	return api.commonApi.MutateAndPushImageConfigFile(ctx, sourceReference, destinationReference, f)
-}
-
-func (api *genericApi) MutateAndPushImageLayers(ctx context.Context, sourceReference, destinationReference string, f func(context.Context, []v1.Layer) ([]mutate.Addendum, error)) error {
-	return api.commonApi.MutateAndPushImageLayers(ctx, sourceReference, destinationReference, f)
+func (api *genericApi) MutateAndPushImage(ctx context.Context, sourceReference, destinationReference string, opts ...registry_api.MutateOption) error {
+	return api.commonApi.MutateAndPushImage(ctx, sourceReference, destinationReference, opts...)
 }
 
 func (api *genericApi) GetRepoImageConfigFile(ctx context.Context, reference string) (*v1.ConfigFile, error) {
