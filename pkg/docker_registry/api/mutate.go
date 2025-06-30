@@ -15,9 +15,10 @@ import (
 type MutateOption func(*mutateOptions)
 
 type mutateOptions struct {
-	mutateConfigFunc      func(context.Context, v1.Config) (v1.Config, error)
-	mutateConfigFileFunc  func(context.Context, *v1.ConfigFile) (*v1.ConfigFile, error)
-	mutateImageLayersFunc func(context.Context, []v1.Layer) ([]mutate.Addendum, error)
+	mutateConfigFunc              func(context.Context, v1.Config) (v1.Config, error)
+	mutateConfigFileFunc          func(context.Context, *v1.ConfigFile) (*v1.ConfigFile, error)
+	mutateImageLayersFunc         func(context.Context, []v1.Layer) ([]mutate.Addendum, error)
+	mutateManifestAnnotationsFunc func(context.Context, *v1.Manifest) (map[string]string, error)
 }
 
 func WithConfigMutation(f func(context.Context, v1.Config) (v1.Config, error)) MutateOption {
@@ -35,6 +36,12 @@ func WithConfigFileMutation(f func(context.Context, *v1.ConfigFile) (*v1.ConfigF
 func WithLayersMutation(f func(context.Context, []v1.Layer) ([]mutate.Addendum, error)) MutateOption {
 	return func(opts *mutateOptions) {
 		opts.mutateImageLayersFunc = f
+	}
+}
+
+func WithManifestAnnotationsFunc(f func(context.Context, *v1.Manifest) (map[string]string, error)) MutateOption {
+	return func(opts *mutateOptions) {
+		opts.mutateManifestAnnotationsFunc = f
 	}
 }
 
@@ -114,6 +121,15 @@ func mutateImage(ctx context.Context, image v1.Image, dest name.Reference, isDes
 
 		// preserve manifest annotations
 		image = mutate.Annotations(image, manifest.Annotations).(v1.Image)
+	}
+
+	if options.mutateManifestAnnotationsFunc != nil {
+		manifestAnnotations, err := options.mutateManifestAnnotationsFunc(ctx, manifest)
+		if err != nil {
+			return nil, nil, fmt.Errorf("error mutating manifest annotations: %w", err)
+		}
+
+		image = mutate.Annotations(image, manifestAnnotations).(v1.Image)
 	}
 
 	digest, err := image.Digest()
