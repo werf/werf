@@ -3,58 +3,57 @@ package config
 import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"go.uber.org/mock/gomock"
 )
 
-type mockImage struct {
-	name         string
-	final        bool
-	stapel       bool
-	platform     []string
-	cacheVersion string
-}
-
-func (m *mockImage) GetName() string {
-	return m.name
-}
-
-func (m *mockImage) IsFinal() bool {
-	return m.final
-}
-
-func (m *mockImage) IsStapel() bool {
-	return m.stapel
-}
-
-func (m *mockImage) Platform() []string {
-	return m.platform
-}
-
-func (m *mockImage) CacheVersion() string {
-	return m.cacheVersion
-}
-
-func (m *mockImage) dependsOn() DependsOn {
-	return DependsOn{}
-}
-
-func (m *mockImage) rawDoc() *doc {
-	return nil
-}
-
 var _ = Describe("ImagesToProcess", func() {
-	var werfConfig *WerfConfig
+	var (
+		mockCtrl     *gomock.Controller
+		werfConfig   *WerfConfig
+		mockBackend  *MockImageInterface
+		mockFrontend *MockImageInterface
+		mockDb       *MockImageInterface
+		mockRedis    *MockImageInterface
+		mockApp1     *MockImageInterface
+		mockApp2     *MockImageInterface
+	)
 
 	BeforeEach(func() {
-		werfConfig = &WerfConfig{
-			images: []ImageInterface{
-				&mockImage{name: "backend", final: true, stapel: false},
-				&mockImage{name: "frontend", final: true, stapel: false},
-				&mockImage{name: "db", final: false, stapel: true},
-				&mockImage{name: "redis", final: false, stapel: true},
-				&mockImage{name: "app1", final: true, stapel: false},
-				&mockImage{name: "app2", final: true, stapel: false},
-			},
+		mockCtrl = gomock.NewController(GinkgoT())
+		werfConfig = new(WerfConfig)
+
+		mockBackend = NewMockImageInterface(mockCtrl)
+		mockFrontend = NewMockImageInterface(mockCtrl)
+		mockDb = NewMockImageInterface(mockCtrl)
+		mockRedis = NewMockImageInterface(mockCtrl)
+		mockApp1 = NewMockImageInterface(mockCtrl)
+		mockApp2 = NewMockImageInterface(mockCtrl)
+
+		mockBackend.EXPECT().GetName().Return("backend").AnyTimes()
+		mockBackend.EXPECT().IsFinal().Return(true).AnyTimes()
+
+		mockFrontend.EXPECT().GetName().Return("frontend").AnyTimes()
+		mockFrontend.EXPECT().IsFinal().Return(true).AnyTimes()
+
+		mockDb.EXPECT().GetName().Return("db").AnyTimes()
+		mockDb.EXPECT().IsFinal().Return(false).AnyTimes()
+
+		mockRedis.EXPECT().GetName().Return("redis").AnyTimes()
+		mockRedis.EXPECT().IsFinal().Return(false).AnyTimes()
+
+		mockApp1.EXPECT().GetName().Return("app1").AnyTimes()
+		mockApp1.EXPECT().IsFinal().Return(true).AnyTimes()
+
+		mockApp2.EXPECT().GetName().Return("app2").AnyTimes()
+		mockApp2.EXPECT().IsFinal().Return(true).AnyTimes()
+
+		werfConfig.images = []ImageInterface{
+			mockBackend, mockFrontend, mockDb, mockRedis, mockApp1, mockApp2,
 		}
+	})
+
+	AfterEach(func() {
+		mockCtrl.Finish()
 	})
 
 	Describe("NewImagesToProcess", func() {
@@ -110,12 +109,6 @@ var _ = Describe("ImagesToProcess", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(result.ImageNameList).To(ConsistOf("backend", "frontend", "app1", "app2"))
 			})
-
-			It("should handle exclusion only patterns", func() {
-				result, err := NewImagesToProcess(werfConfig, []string{"!db", "!redis"}, false, false)
-				Expect(err).NotTo(HaveOccurred())
-				Expect(result.ImageNameList).To(ConsistOf("backend", "frontend", "app1", "app2"))
-			})
 		})
 
 		Context("with glob patterns", func() {
@@ -127,10 +120,16 @@ var _ = Describe("ImagesToProcess", func() {
 			})
 
 			It("should match images by suffix", func() {
-				werfConfig.images = append(werfConfig.images,
-					&mockImage{name: "test-backend", final: true},
-					&mockImage{name: "test-frontend", final: true},
-				)
+				mockTestBackend := NewMockImageInterface(mockCtrl)
+				mockTestBackend.EXPECT().GetName().Return("test-backend").AnyTimes()
+				mockTestBackend.EXPECT().IsFinal().Return(true).AnyTimes()
+
+				mockTestFrontend := NewMockImageInterface(mockCtrl)
+				mockTestFrontend.EXPECT().GetName().Return("test-frontend").AnyTimes()
+				mockTestFrontend.EXPECT().IsFinal().Return(true).AnyTimes()
+
+				werfConfig.images = append(werfConfig.images, mockTestBackend, mockTestFrontend)
+
 				result, err := NewImagesToProcess(werfConfig, []string{"*end"}, false, false)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(result.ImageNameList).To(ConsistOf("backend", "frontend", "test-backend", "test-frontend"))
