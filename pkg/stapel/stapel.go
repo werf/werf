@@ -138,6 +138,10 @@ func HeadBinPath() string {
 	return embeddedBinPath("head")
 }
 
+func StatBinPath() string {
+	return embeddedBinPath("stat")
+}
+
 func SudoBinPath() string {
 	return embeddedBinPath("sudo")
 }
@@ -219,7 +223,7 @@ func embeddedBinPath(bin string) string {
 	return filepath.Join(CONTAINER_MOUNT_ROOT, "stapel/embedded/bin", bin)
 }
 
-func CreateScript(path string, commands []string) error {
+func CreateScript(path string, lines []string) error {
 	dirPath := filepath.Dir(path)
 	if err := os.MkdirAll(dirPath, os.ModePerm); err != nil {
 		return fmt.Errorf("unable to create dir %s: %w", dirPath, err)
@@ -228,7 +232,7 @@ func CreateScript(path string, commands []string) error {
 	var scriptLines []string
 	scriptLines = append(scriptLines, fmt.Sprintf("#!%s -e", BashBinPath()))
 	scriptLines = append(scriptLines, "")
-	scriptLines = append(scriptLines, commands...)
+	scriptLines = append(scriptLines, lines...)
 	scriptData := []byte(strings.Join(scriptLines, "\n") + "\n")
 
 	return os.WriteFile(path, scriptData, os.FileMode(0o667))

@@ -309,8 +309,8 @@ func (s *DependenciesStage) generateImportChecksum(ctx context.Context, c Convey
 		importScriptContainerPath := path.Join(importContainerDir, "script.sh")
 		resultChecksumContainerPath := path.Join(importContainerDir, "checksum")
 
-		command := generateChecksumCommand(importElm.Add, importElm.IncludePaths, importElm.ExcludePaths, resultChecksumContainerPath)
-		if err := stapel.CreateScript(importScriptHostTmpPath, []string{command}); err != nil {
+		checksumScript := generateChecksumScript(importElm.Add, importElm.IncludePaths, importElm.ExcludePaths, resultChecksumContainerPath)
+		if err := stapel.CreateScript(importScriptHostTmpPath, checksumScript); err != nil {
 			return "", fmt.Errorf("unable to create script: %w", err)
 		}
 
@@ -365,7 +365,7 @@ func (s *DependenciesStage) generateImportChecksum(ctx context.Context, c Convey
 	}
 }
 
-func generateChecksumCommand(from string, includePaths, excludePaths []string, resultChecksumPath string) string {
+func generateChecksumScript(from string, includePaths, excludePaths []string, resultChecksumPath string) []string {
 	findCommandParts := append([]string{}, stapel.FindBinPath(), "-H", from, "-type", "f")
 
 	var nameIncludeArgs []string
@@ -407,18 +407,40 @@ func generateChecksumCommand(from string, includePaths, excludePaths []string, r
 	sortCommandParts := append([]string{}, stapel.SortBinPath(), "-n")
 	sortCommand := strings.Join(sortCommandParts, " ")
 
-	xargsCommandParts := append([]string{}, stapel.XargsBinPath(), "-d'\n'", stapel.Md5sumBinPath())
-	xargsCommand := strings.Join(xargsCommandParts, " ")
-
 	md5SumCommand := stapel.Md5sumBinPath()
 
-	cutCommandParts := append([]string{}, stapel.CutBinPath(), "-d", "' '", "-f", "1")
+	cutCommandParts := append([]string{}, stapel.CutBinPath(), "-c", "1-32")
 	cutCommand := strings.Join(cutCommandParts, " ")
 
-	commands := append([]string{}, findCommand, sortCommand, xargsCommand, md5SumCommand, cutCommand)
-	command := fmt.Sprintf("%s > %s", strings.Join(commands, " | "), resultChecksumPath)
+	commands := append([]string{}, findCommand, sortCommand, "checksum", md5SumCommand, cutCommand)
 
-	return command
+	script := generateChecksumBashFunction()
+	script = append(script, fmt.Sprintf("%s > %s", strings.Join(commands, " | "), resultChecksumPath))
+
+	return script
+}
+
+func generateChecksumBashFunction() []string {
+	var calculateChecksum string
+
+	// TODO: remove in v3 (WERF_EXPERIMENTAL_STAPEL_IMPORT_PERMISSIONS=1 as default)
+	switch util.GetBoolEnvironmentDefaultFalse("WERF_EXPERIMENTAL_STAPEL_IMPORT_PERMISSIONS") {
+	case true:
+		calculateChecksum = fmt.Sprintf(`printf '%%s\t%%s\t%%s\n' "$(%[1]s "${line}" | %[2]s -c 1-32)" "$(%[3]s --format=%%A "${line}")" "${line}"`,
+			stapel.Md5sumBinPath(), stapel.CutBinPath(), stapel.StatBinPath())
+	default:
+		calculateChecksum = fmt.Sprintf(`%[1]s "${line}"`,
+			stapel.Md5sumBinPath())
+	}
+
+	return []string{
+		`checksum() {`,
+		`  while read -r line; do`,
+		`    ` + calculateChecksum,
+		`  done`,
+		`}`,
+		``,
+	}
 }
 
 func getDependencyImportID(dependencyImport *config.DependencyImport) string {
@@ -445,12 +467,21 @@ func getImportID(importElm *config.Import) string {
 }
 
 func getImportSourceID(c Conveyor, targetPlatform string, importElm *config.Import) string {
-	return util.Sha256Hash(
+	args := []string{
 		"SourceImageContentDigest", getSourceImageContentDigest(c, targetPlatform, importElm),
 		"Add", importElm.Add,
 		"IncludePaths", strings.Join(importElm.IncludePaths, "///"),
 		"ExcludePaths", strings.Join(importElm.ExcludePaths, "///"),
-	)
+	}
+
+	// TODO: remove in v3 (WERF_EXPERIMENTAL_STAPEL_IMPORT_PERMISSIONS=1 as default)
+	if util.GetBoolEnvironmentDefaultFalse("WERF_EXPERIMENTAL_STAPEL_IMPORT_PERMISSIONS") {
+		args = append(args,
+			"CacheVersion", "true",
+		)
+	}
+
+	return util.Sha256Hash(args...)
 }
 
 func fetchSourceImageDockerImage(ctx context.Context, c Conveyor, targetPlatform string, importElm *config.Import) error {
