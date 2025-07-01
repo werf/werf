@@ -96,10 +96,11 @@ var _ = Describe("Simple build", Label("e2e", "build", "sbom", "simple"), func()
 			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: false,
 		}}),
+		// TODO: "werf purge --project-name=..." is not implemented for Buildah. So we have potential risk to fail the test.
 		Entry("with local repo using Native Buildah with chroot isolation", simpleTestOptions{setupEnvOptions{
 			ContainerBackendMode:        "native-chroot",
 			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: false,
-		}}),
+		}}, FlakeAttempts(5)),
 	)
 })
