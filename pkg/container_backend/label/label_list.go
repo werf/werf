@@ -26,8 +26,8 @@ func (list *LabelList) ToStringSlice() []string {
 	return s1
 }
 
-func NewLabelListFromMap(m map[string]string) LabelList {
-	list := LabelList{}
+func NewLabelListFromMap(m map[string]string) *LabelList {
+	list := new(LabelList)
 	for k, v := range m {
 		list.Add(NewLabel(k, v))
 	}

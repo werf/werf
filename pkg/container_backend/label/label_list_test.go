@@ -74,7 +74,7 @@ var _ = Describe("LabelList", func() {
 
 	DescribeTable("NewLabelListFromMap",
 		func(input map[string]string, expected label.LabelList) {
-			Expect(label.NewLabelListFromMap(input)).To(Equal(expected))
+			Expect(label.NewLabelListFromMap(input).ToStringSlice()).Should(ConsistOf(expected.ToStringSlice()))
 		},
 		Entry(
 			"should work",
