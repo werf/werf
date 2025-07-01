@@ -7,6 +7,9 @@ on:
     types: ["release:trdl-release"]
   workflow_dispatch:
 
+env:
+  GITHUB_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+
 jobs:
   release:
     name: Perform werf release using trdl server
