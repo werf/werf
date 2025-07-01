@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.39.2](https://github.com/werf/werf/compare/v2.39.1...v2.39.2) (2025-07-01)
+
+
+### Bug Fixes
+
+* **build, stapel, import:** consider file permissions while importing (WERF_EXPERIMENTAL_STAPEL_IMPORT_PERMISSIONS=1) ([#6941](https://github.com/werf/werf/issues/6941)) ([ab53713](https://github.com/werf/werf/commit/ab53713213c2afb776f2fd3f648c7bfb652091ef))
+* **includes:** fix chart abs path ([#6940](https://github.com/werf/werf/issues/6940)) ([37c898b](https://github.com/werf/werf/commit/37c898b92e69e449bd83118244493795cbb0d680))
+
 ### [2.39.1](https://www.github.com/werf/werf/compare/v2.39.0...v2.39.1) (2025-06-26)
 
 
