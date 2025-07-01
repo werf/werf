@@ -10,6 +10,7 @@
 package mock
 
 import (
+	bytes "bytes"
 	context "context"
 	reflect "reflect"
 
@@ -19,6 +20,7 @@ import (
 	info "github.com/werf/werf/v2/pkg/container_backend/info"
 	prune "github.com/werf/werf/v2/pkg/container_backend/prune"
 	image "github.com/werf/werf/v2/pkg/image"
+	scanner "github.com/werf/werf/v2/pkg/sbom/scanner"
 )
 
 // MockContainerBackend is a mock of ContainerBackend interface.
@@ -135,6 +137,36 @@ func (m *MockContainerBackend) Containers(ctx context.Context, opts container_ba
 func (mr *MockContainerBackendMockRecorder) Containers(ctx, opts any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Containers", reflect.TypeOf((*MockContainerBackend)(nil).Containers), ctx, opts)
+}
+
+// DumpImage mocks base method.
+func (m *MockContainerBackend) DumpImage(ctx context.Context, ref string) (*bytes.Reader, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DumpImage", ctx, ref)
+	ret0, _ := ret[0].(*bytes.Reader)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DumpImage indicates an expected call of DumpImage.
+func (mr *MockContainerBackendMockRecorder) DumpImage(ctx, ref any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DumpImage", reflect.TypeOf((*MockContainerBackend)(nil).DumpImage), ctx, ref)
+}
+
+// GenerateSBOM mocks base method.
+func (m *MockContainerBackend) GenerateSBOM(ctx context.Context, scanOpts scanner.ScanOptions, dstImgLabels []string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GenerateSBOM", ctx, scanOpts, dstImgLabels)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GenerateSBOM indicates an expected call of GenerateSBOM.
+func (mr *MockContainerBackendMockRecorder) GenerateSBOM(ctx, scanOpts, dstImgLabels any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateSBOM", reflect.TypeOf((*MockContainerBackend)(nil).GenerateSBOM), ctx, scanOpts, dstImgLabels)
 }
 
 // GetDefaultPlatform mocks base method.

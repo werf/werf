@@ -26,6 +26,7 @@ type ImageFromDockerfile struct {
 	cacheVersion string
 	platform     []string
 	final        bool
+	sbom         *Sbom
 	raw          *rawImageFromDockerfile
 }
 
@@ -76,6 +77,10 @@ func (c *ImageFromDockerfile) IsFinal() bool {
 
 func (c *ImageFromDockerfile) Platform() []string {
 	return c.platform
+}
+
+func (c *ImageFromDockerfile) Sbom() *Sbom {
+	return c.sbom
 }
 
 func (c *ImageFromDockerfile) dependsOn() DependsOn {
