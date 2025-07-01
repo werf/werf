@@ -7,6 +7,7 @@ env:
   HELM_PLUGINS: ""
   KUBECONFIG:
     sh: echo "$HOME/.kube/config"
+  PRETTIER_VERSION: "3.5.3"
 
 vars:
   version: "dev"
@@ -415,7 +416,7 @@ tasks:
   format:prettier:yaml:
     desc: "Format yaml files with prettier."
     cmds:
-      - docker run --rm -v $(pwd):/work tmknom/prettier -w "**/*.yaml" "**/*.yml"
+      - docker run --rm -v $(pwd):/work tmknom/prettier:${PRETTIER_VERSION} -w "**/*.yaml" "**/*.yml"
 
   lint:
     desc: 'Run all linters in parallel. Important vars: "paths".'
@@ -467,7 +468,7 @@ tasks:
   lint:prettier:yaml:
     desc: "Check if yaml files are prettier-formatted."
     cmds:
-      - docker run --rm -v $(pwd):/work tmknom/prettier -c "**/*.yaml" "**/*.yml"
+      - docker run --rm -v $(pwd):/work tmknom/prettier:${PRETTIER_VERSION} -c "**/*.yaml" "**/*.yml"
 
   mock:generate:
     desc: "Generate mocks."
