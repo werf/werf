@@ -423,6 +423,7 @@ func generateChecksumScript(from string, includePaths, excludePaths []string, re
 func generateChecksumBashFunction() []string {
 	var calculateChecksum string
 
+	// TODO: remove in v3 (WERF_EXPERIMENTAL_STAPEL_IMPORT_PERMISSIONS=1 as default)
 	switch util.GetBoolEnvironmentDefaultFalse("WERF_EXPERIMENTAL_STAPEL_IMPORT_PERMISSIONS") {
 	case true:
 		calculateChecksum = fmt.Sprintf(`printf '%%s\t%%s\t%%s\n' "$(%[1]s "${line}" | %[2]s -c 1-32)" "$(%[3]s --format=%%A "${line}")" "${line}"`,
@@ -466,12 +467,21 @@ func getImportID(importElm *config.Import) string {
 }
 
 func getImportSourceID(c Conveyor, targetPlatform string, importElm *config.Import) string {
-	return util.Sha256Hash(
+	args := []string{
 		"SourceImageContentDigest", getSourceImageContentDigest(c, targetPlatform, importElm),
 		"Add", importElm.Add,
 		"IncludePaths", strings.Join(importElm.IncludePaths, "///"),
 		"ExcludePaths", strings.Join(importElm.ExcludePaths, "///"),
-	)
+	}
+
+	// TODO: remove in v3 (WERF_EXPERIMENTAL_STAPEL_IMPORT_PERMISSIONS=1 as default)
+	if util.GetBoolEnvironmentDefaultFalse("WERF_EXPERIMENTAL_STAPEL_IMPORT_PERMISSIONS") {
+		args = append(args,
+			"CacheVersion", "true",
+		)
+	}
+
+	return util.Sha256Hash(args...)
 }
 
 func fetchSourceImageDockerImage(ctx context.Context, c Conveyor, targetPlatform string, importElm *config.Import) error {
