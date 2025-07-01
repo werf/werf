@@ -21,6 +21,14 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
+      - name: Relabel closed release PR
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+        run: |
+          PR_NUMBER=$(gh pr list --state closed --label "autorelease: pending" --limit 1 --json number -q '.[0].number')
+          gh pr edit $PR_NUMBER --remove-label "autorelease: pending"
+          gh pr edit $PR_NUMBER --add-label "autorelease: tagged"
+
       - name: Get version from CHANGELOG.md
         id: get_version
         run: |
