@@ -183,9 +183,9 @@ var _ = Describe("Stapel imports", func() {
 
 			SuiteData.CommitProjectWorktree(ctx, SuiteData.ProjectName, utils.FixturePath("imports_app_5", "002"), "change permissions")
 
+			SuiteData.Stubs.SetEnv("WERF_EXPERIMENTAL_STAPEL_IMPORT_PERMISSIONS", "true")
 			_, _ = utils.RunCommandWithOptions(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, []string{"build"}, utils.RunCommandOptions{
 				ShouldSucceed: true,
-				ExtraEnv:      []string{"WERF_EXPERIMENTAL_STAPEL_IMPORT_PERMISSIONS=true"},
 			})
 
 			lastStageImageNameAfterSecondBuild := utils.GetBuiltImageLastStageImageName(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "final")
