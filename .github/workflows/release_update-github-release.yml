@@ -25,14 +25,21 @@ jobs:
           GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
         run: |
           declare -A VERSION_CHANNELS
+          TARGET_GROUP="2"
+          in_target_group=false
 
           current_group=""
           while IFS= read -r line; do
             if [[ $line =~ name:\ \"([^\"]+)\" ]]; then
               current_group="${BASH_REMATCH[1]}"
-            elif [[ $line =~ name:\ ([a-z-]+) ]]; then
+              if [[ "$current_group" == "$TARGET_GROUP" ]]; then
+                in_target_group=true
+              else
+                in_target_group=false
+              fi
+            elif $in_target_group && [[ $line =~ name:\ ([a-z-]+) ]]; then
               current_channel="${BASH_REMATCH[1]}"
-            elif [[ $line =~ version:\ ([0-9a-zA-Z.+-]+) ]]; then
+            elif $in_target_group && [[ $line =~ version:\ ([0-9a-zA-Z.+-]+) ]]; then
               version="${BASH_REMATCH[1]}"
               if [[ -z "${VERSION_CHANNELS[$version]}" ]]; then
                 VERSION_CHANNELS["$version"]="$current_channel"
@@ -42,7 +49,7 @@ jobs:
             fi
           done < trdl_channels.yaml
 
-          RELEASES=$(gh release list --limit 100 --json tagName | jq -r '.[].tagName')
+          RELEASES=$(gh release list --limit 30 --json tagName | jq -r '.[].tagName')
 
           for tag in $RELEASES; do
             version=${tag#v}
