@@ -53,11 +53,9 @@ func (s *ManifestStage) MutateImage(ctx context.Context, registry docker_registr
 	srcRef := prevBuiltImage.Image.Name()
 	destRef := stageImage.Image.Name()
 
-	return registry.MutateAndPushImage(
-		ctx,
-		srcRef,
-		destRef,
-		api.WithLayersMutation(func(ctx context.Context, layers []v1.Layer) ([]mutate.Addendum, error) {
+	var opts []api.MutateOption
+	if os.Getenv("WERF_DISABLE_DM_VERITY") != "1" {
+		opts = append(opts, api.WithLayersMutation(func(ctx context.Context, layers []v1.Layer) ([]mutate.Addendum, error) {
 			var result []mutate.Addendum
 			for _, layer := range layers {
 				addendum, err := dmverity.AnnotateLayerWithDMVerityRootHash(ctx, layer)
@@ -68,8 +66,11 @@ func (s *ManifestStage) MutateImage(ctx context.Context, registry docker_registr
 			}
 
 			return result, nil
-		}),
-		api.WithManifestAnnotationsFunc(func(ctx context.Context, manifest *v1.Manifest) (map[string]string, error) {
+		}))
+	}
+
+	if os.Getenv("WERF_DISABLE_SIGN") != "1" {
+		opts = append(opts, api.WithManifestAnnotationsFunc(func(ctx context.Context, manifest *v1.Manifest) (map[string]string, error) {
 			sv, err := signver.NewSignerVerifier(
 				ctx,
 				os.Getenv("WERF_SING_CERT_PATH"),
@@ -88,6 +89,8 @@ func (s *ManifestStage) MutateImage(ctx context.Context, registry docker_registr
 			}
 
 			return util.MergeMaps(manifest.Annotations, annotations), nil
-		}),
-	)
+		}))
+	}
+
+	return registry.MutateAndPushImage(ctx, srcRef, destRef, opts...)
 }

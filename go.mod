@@ -409,6 +409,7 @@ require (
 )
 
 replace (
+	github.com/deckhouse/delivery-kit-sdk => ../delivery-kit-sdk
 	github.com/containers/buildah => github.com/werf/3p-buildah v1.35.2-0.20241120093816-5b80b7b735de // needs version upgrade with refactoring
 	github.com/deislabs/oras => github.com/werf/3p-oras v0.9.1-0.20240115121544-03962ecbd40a // upstream not maintained
 	github.com/docker/buildx => github.com/werf/3p-docker-buildx v0.13.0-rc2.0.20241111114615-d77c2e1444ad // upstream not maintained
