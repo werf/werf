@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/pkg/docker_registry/api"
+	"os"
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/mutate"
@@ -71,10 +72,10 @@ func (s *ManifestStage) MutateImage(ctx context.Context, registry docker_registr
 		api.WithManifestAnnotationsFunc(func(ctx context.Context, manifest *v1.Manifest) (map[string]string, error) {
 			sv, err := signver.NewSignerVerifier(
 				ctx,
-				"cosign.crt",
-				"cosign-chain.pem",
+				os.Getenv("WERF_SING_CERT_PATH"),
+				os.Getenv("WERF_SING_CHAIN_PATH"),
 				signver.KeyOpts{
-					KeyRef: "cosign2.key.key",
+					KeyRef: os.Getenv("WERF_SIGN_KEY_PATH"),
 				},
 			)
 			if err != nil {
