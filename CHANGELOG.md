@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.40.0](https://github.com/werf/werf/compare/v2.39.2...v2.40.0) (2025-07-02)
+
+
+### Features
+
+* **sbom:** add support of SBOM ([#6878](https://github.com/werf/werf/issues/6878)) ([ceacd6b](https://github.com/werf/werf/commit/ceacd6be5d6ae9e9603e72e6d3b96f70e8a34533))
+
 ## [2.39.2](https://github.com/werf/werf/compare/v2.39.1...v2.39.2) (2025-07-01)
 
 
