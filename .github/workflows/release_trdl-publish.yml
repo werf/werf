@@ -87,13 +87,6 @@ jobs:
         uses: werf/actions/install@v2
         with:
           channel: alpha
-
-      - name: install crane
-        run: |
-          VERSION=$(curl -s "https://api.github.com/repos/google/go-containerregistry/releases/latest" | jq -r '.tag_name')
-          curl -sL "https://github.com/google/go-containerregistry/releases/download/${VERSION}/go-containerregistry_Linux_x86_64.tar.gz" > go-containerregistry.tar.gz
-          tar -zxvf go-containerregistry.tar.gz -C /usr/local/bin/ crane
-
       - if: matrix.dest-registry == 'registry-write.werf.io'
         name: Login to werf registry
         uses: docker/login-action@v2
