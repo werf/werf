@@ -137,7 +137,7 @@ func newDockerRegistry(repositoryAddress, implementation string, options DockerR
 			return nil, err
 		}
 
-		return NewDockerRegistry(repositoryAddress, resolvedImplementation, options)
+		return newDockerRegistry(repositoryAddress, resolvedImplementation, options)
 	}
 }
 
