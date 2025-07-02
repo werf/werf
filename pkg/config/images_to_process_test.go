@@ -1,6 +1,8 @@
 package config
 
 import (
+	"strings"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"go.uber.org/mock/gomock"
@@ -82,7 +84,7 @@ var _ = Describe("ImagesToProcess", func() {
 			})
 		})
 
-		Context("standard behavior without glob patterns", func() {
+		Context("with exact image names", func() {
 			It("should process exact image names", func() {
 				result, err := NewImagesToProcess(werfConfig, []string{"backend", "db"}, false, false)
 				Expect(err).NotTo(HaveOccurred())
@@ -120,6 +122,7 @@ var _ = Describe("ImagesToProcess", func() {
 			})
 
 			It("should match images by suffix", func() {
+				// Добавляем тестовые образы
 				mockTestBackend := NewMockImageInterface(mockCtrl)
 				mockTestBackend.EXPECT().GetName().Return("test-backend").AnyTimes()
 				mockTestBackend.EXPECT().IsFinal().Return(true).AnyTimes()
@@ -153,27 +156,67 @@ var _ = Describe("ImagesToProcess", func() {
 		})
 
 		Context("with invalid patterns", func() {
-			It("should return error for invalid pattern", func() {
+			It("should return error for invalid glob syntax", func() {
 				_, err := NewImagesToProcess(werfConfig, []string{"[invalid"}, false, false)
 				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).To(ContainSubstring("invalid pattern"))
+			})
+
+			It("should reject recursive glob (**)", func() {
+				_, err := NewImagesToProcess(werfConfig, []string{"**"}, false, false)
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("recursive glob (**) not supported"))
+			})
+
+			It("should reject too long patterns", func() {
+				longPattern := strings.Repeat("a", 101)
+				_, err := NewImagesToProcess(werfConfig, []string{longPattern}, false, false)
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("pattern too long"))
+			})
+
+			It("should reject special characters", func() {
+				_, err := NewImagesToProcess(werfConfig, []string{"pattern&"}, false, false)
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("special characters not allowed"))
 			})
 		})
 	})
 
 	Describe("parsePattern", func() {
 		It("should parse inclusion pattern", func() {
-			include, exclude, isExclusion := parsePattern("pattern")
+			include, exclude, isExclusion, err := parsePattern("pattern")
+			Expect(err).NotTo(HaveOccurred())
 			Expect(include).To(Equal("pattern"))
 			Expect(exclude).To(BeEmpty())
 			Expect(isExclusion).To(BeFalse())
 		})
 
 		It("should parse exclusion pattern", func() {
-			include, exclude, isExclusion := parsePattern("!pattern")
+			include, exclude, isExclusion, err := parsePattern("!pattern")
+			Expect(err).NotTo(HaveOccurred())
 			Expect(include).To(BeEmpty())
 			Expect(exclude).To(Equal("pattern"))
 			Expect(isExclusion).To(BeTrue())
+		})
+
+		It("should reject recursive glob (**)", func() {
+			_, _, _, err := parsePattern("**")
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("recursive glob (**) not supported"))
+		})
+
+		It("should reject too long patterns", func() {
+			longPattern := strings.Repeat("a", 101)
+			_, _, _, err := parsePattern(longPattern)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("pattern too long"))
+		})
+
+		It("should reject special characters", func() {
+			_, _, _, err := parsePattern("pat|tern")
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("special characters not allowed"))
 		})
 	})
 })
