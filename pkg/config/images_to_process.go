@@ -12,11 +12,22 @@ type ImagesToProcess struct {
 	WithoutImages      bool
 }
 
-func parsePattern(pattern string) (include, exclude string, isExclusion bool) {
-	if strings.HasPrefix(pattern, "!") {
-		return "", strings.TrimPrefix(pattern, "!"), true
+func parsePattern(pattern string) (include, exclude string, isExclusion bool, err error) {
+	if strings.Contains(pattern, "**") {
+		return "", "", false, fmt.Errorf("recursive glob (**) not supported")
 	}
-	return pattern, "", false
+	if len(pattern) > 100 {
+		return "", "", false, fmt.Errorf("pattern too long")
+	}
+
+	if strings.ContainsAny(pattern, "&|$") {
+		return "", "", false, fmt.Errorf("special characters not allowed")
+	}
+
+	if strings.HasPrefix(pattern, "!") {
+		return "", strings.TrimPrefix(pattern, "!"), true, nil
+	}
+	return pattern, "", false, nil
 }
 
 func NewImagesToProcess(werfConfig *WerfConfig, imageNameList []string, onlyFinal, withoutImages bool) (ImagesToProcess, error) {
@@ -34,7 +45,10 @@ func NewImagesToProcess(werfConfig *WerfConfig, imageNameList []string, onlyFina
 		}
 	} else {
 		for _, pattern := range imageNameList {
-			include, exclude, isExclusion := parsePattern(pattern)
+			include, exclude, isExclusion, err := parsePattern(pattern)
+			if err != nil {
+				return ImagesToProcess{}, err
+			}
 			if isExclusion {
 				excludePatterns = append(excludePatterns, exclude)
 			} else {
