@@ -261,7 +261,7 @@ func (c *Conveyor) GetImportServer(ctx context.Context, targetPlatform, imageNam
 		stg = c.GetImage(targetPlatform, imageName).GetLastNonEmptyStage()
 	}
 
-	if err := c.StorageManager.FetchStage(ctx, c.ContainerBackend, stg); err != nil {
+	if _, err := c.StorageManager.FetchStage(ctx, c.ContainerBackend, stg); err != nil {
 		return nil, fmt.Errorf("unable to fetch stage %s: %w", stg.GetStageImage().Image.Name(), err)
 	}
 
@@ -405,7 +405,8 @@ func (c *Conveyor) ShouldBeBuilt(ctx context.Context, opts ShouldBeBuiltOptions)
 
 func (c *Conveyor) FetchLastImageStage(ctx context.Context, targetPlatform, imageName string) error {
 	lastImageStage := c.GetImage(targetPlatform, imageName).GetLastNonEmptyStage()
-	return c.StorageManager.FetchStage(ctx, c.ContainerBackend, lastImageStage)
+	_, err := c.StorageManager.FetchStage(ctx, c.ContainerBackend, lastImageStage)
+	return err
 }
 
 func (c *Conveyor) GetFullImageName(ctx context.Context, imageName string) (string, error) {
@@ -842,11 +843,13 @@ func (c *Conveyor) getLastNonEmptyImageStage(targetPlatform, imageName string) s
 }
 
 func (c *Conveyor) FetchImageStage(ctx context.Context, targetPlatform, imageName, stageName string) error {
-	return c.StorageManager.FetchStage(ctx, c.ContainerBackend, c.getImageStage(targetPlatform, imageName, stageName))
+	_, err := c.StorageManager.FetchStage(ctx, c.ContainerBackend, c.getImageStage(targetPlatform, imageName, stageName))
+	return err
 }
 
 func (c *Conveyor) FetchLastNonEmptyImageStage(ctx context.Context, targetPlatform, imageName string) error {
-	return c.StorageManager.FetchStage(ctx, c.ContainerBackend, c.getLastNonEmptyImageStage(targetPlatform, imageName))
+	_, err := c.StorageManager.FetchStage(ctx, c.ContainerBackend, c.getLastNonEmptyImageStage(targetPlatform, imageName))
+	return err
 }
 
 func (c *Conveyor) GetImageNameForLastImageStage(targetPlatform, imageName string) string {

@@ -38,7 +38,7 @@ func (m *StorageManager) copyStageFromLocalStorage(ctx context.Context, src *sto
 	}
 
 	if opts.FetchStage != nil {
-		if err := m.FetchStage(ctx, opts.ContainerBackend, opts.FetchStage); err != nil {
+		if _, err := m.FetchStage(ctx, opts.ContainerBackend, opts.FetchStage); err != nil {
 			return nil, fmt.Errorf("unable to fetch stage %s: %w", opts.FetchStage.LogDetailedName(), err)
 		}
 	}
