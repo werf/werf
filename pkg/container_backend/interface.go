@@ -5,6 +5,7 @@ import (
 	"context"
 
 	"github.com/werf/common-go/pkg/util"
+	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/container_backend/info"
 	"github.com/werf/werf/v2/pkg/container_backend/prune"
 	"github.com/werf/werf/v2/pkg/image"
@@ -127,4 +128,10 @@ type ContainerBackend interface {
 	RenameImage(ctx context.Context, img LegacyImageInterface, newImageName string, removeOldName bool) error
 	RemoveImage(ctx context.Context, img LegacyImageInterface) error
 	TagImageByName(ctx context.Context, img LegacyImageInterface) error
+}
+
+func PullImageFromRegistry(ctx context.Context, containerBackend ContainerBackend, img LegacyImageInterface) error {
+	return logboek.Context(ctx).Info().LogProcess("Pulling image %s", img.Name()).DoError(func() error {
+		return containerBackend.PullImageFromRegistry(ctx, img)
+	})
 }
