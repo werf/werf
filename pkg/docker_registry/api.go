@@ -30,6 +30,10 @@ import (
 	"github.com/werf/werf/v2/pkg/werf"
 )
 
+const (
+	warningDuration = 5 * time.Minute
+)
+
 type api struct {
 	InsecureRegistry      bool
 	SkipTlsVerifyRegistry bool
@@ -243,9 +247,26 @@ func (api *api) list(ctx context.Context, reference string, extraListOptions ...
 		api.defaultRemoteOptions(ctx),
 		extraListOptions...,
 	)
-	tags, err := remote.List(repo, listOptions...)
-	if err != nil {
-		return nil, fmt.Errorf("reading tags for %q: %w", repo, err)
+
+	var tags []string
+	if err := logboek.Context(ctx).Info().LogProcess("List tags for repo %s", repo).DoError(func() error {
+		start := time.Now()
+		var err error
+		tags, err = remote.List(repo, listOptions...)
+		if err != nil {
+			return fmt.Errorf("reading tags for %q: %w", repo, err)
+		}
+
+		duration := time.Since(start)
+		if duration > warningDuration {
+			logboek.Context(ctx).Warn().LogF("Listing tags took more than %s minutes\n", warningDuration.Minutes())
+		}
+
+		logboek.Context(ctx).Info().LogF("Total tags listed: %d\n", len(tags))
+
+		return nil
+	}); err != nil {
+		return nil, err
 	}
 
 	return tags, nil
@@ -520,31 +541,32 @@ attemptLoop:
 }
 
 func (api *api) writeToRemote(ctx context.Context, ref name.Reference, imageOrIndex interface{}) error {
-	c := make(chan v1.Update, 200)
+	return logboek.Context(ctx).Info().LogProcess("Pushing reference %s to remote repo", ref).DoError(func() error {
+		c := make(chan v1.Update, 200)
 
-	remoteOpts := append(api.defaultRemoteOptions(ctx), remote.WithProgress(c))
-	switch i := imageOrIndex.(type) {
-	case v1.Image:
-		go remote.Write(ref, i, remoteOpts...)
-	case v1.ImageIndex:
-		go remote.WriteIndex(ref, i, remoteOpts...)
-	default:
-		panic(fmt.Sprintf("unexpected object type %#v", i))
-	}
-
-	for upd := range c {
-		switch {
-		case upd.Error != nil && errors.Is(upd.Error, io.EOF):
-			logboek.Context(ctx).Debug().LogF("(%d/%d) done pushing image %q\n", upd.Complete, upd.Total, ref.String())
-			return nil
-		case upd.Error != nil:
-			return fmt.Errorf("error pushing image: %w", upd.Error)
+		remoteOpts := append(api.defaultRemoteOptions(ctx), remote.WithProgress(c))
+		switch i := imageOrIndex.(type) {
+		case v1.Image:
+			go remote.Write(ref, i, remoteOpts...)
+		case v1.ImageIndex:
+			go remote.WriteIndex(ref, i, remoteOpts...)
 		default:
-			logboek.Context(ctx).Debug().LogF("(%d/%d) pushing image %s is in progress\n", upd.Complete, upd.Total, ref.String())
+			panic(fmt.Sprintf("unexpected object type %#v", i))
 		}
-	}
 
-	return nil
+		for upd := range c {
+			switch {
+			case upd.Error != nil && errors.Is(upd.Error, io.EOF):
+				logboek.Context(ctx).Debug().LogF("(%d/%d) done pushing image %q\n", upd.Complete, upd.Total, ref.String())
+				return nil
+			case upd.Error != nil:
+				return fmt.Errorf("error pushing image: %w", upd.Error)
+			default:
+				logboek.Context(ctx).Debug().LogF("(%d/%d) pushing image %s is in progress\n", upd.Complete, upd.Total, ref.String())
+			}
+		}
+		return nil
+	})
 }
 
 func (api *api) PullImageArchive(ctx context.Context, archiveWriter io.Writer, reference string) error {
