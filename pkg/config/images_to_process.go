@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"path/filepath"
+	"slices"
 	"strings"
 )
 
@@ -36,69 +37,72 @@ func NewImagesToProcess(werfConfig *WerfConfig, imageNameList []string, onlyFina
 	}
 
 	allImageNames := werfConfig.GetImageNameList(false)
-	includedImages := make(map[string]bool)
-	excludePatterns := make([]string, 0)
+	includePatterns := make([]string, 0, len(imageNameList))
+	excludePatterns := make([]string, 0, len(imageNameList))
 
-	if len(imageNameList) == 0 {
-		for _, name := range allImageNames {
-			includedImages[name] = true
+	for _, pattern := range imageNameList {
+		include, exclude, isExclusion, err := parsePattern(pattern)
+		if err != nil {
+			return ImagesToProcess{}, err
 		}
-	} else {
-		for _, pattern := range imageNameList {
-			include, exclude, isExclusion, err := parsePattern(pattern)
-			if err != nil {
-				return ImagesToProcess{}, err
-			}
-			if isExclusion {
-				excludePatterns = append(excludePatterns, exclude)
-			} else {
-				found := false
-				for _, name := range allImageNames {
-					match, err := filepath.Match(include, name)
-					if err != nil {
-						return ImagesToProcess{}, fmt.Errorf("invalid pattern %q: %v", include, err)
-					}
-					if match {
-						includedImages[name] = true
-						found = true
-					}
-				}
-				if !found {
-					return ImagesToProcess{}, fmt.Errorf("no image matches pattern %q", include)
-				}
-			}
+		if isExclusion {
+			excludePatterns = append(excludePatterns, exclude)
+		} else {
+			includePatterns = append(includePatterns, include)
 		}
+	}
+
+	matchPattern := func(name, pattern string) (bool, error) {
+		match, err := filepath.Match(pattern, name)
+		if err != nil {
+			return false, fmt.Errorf("invalid pattern %q: %v", pattern, err)
+		}
+		return match, nil
 	}
 
 	finalImages := make(map[string]bool)
-	for name := range includedImages {
-		excluded := false
-		for _, exclPattern := range excludePatterns {
-			match, _ := filepath.Match(exclPattern, name)
-			if match {
-				excluded = true
-				break
-			}
-		}
-		if !excluded {
+	if len(includePatterns) == 0 {
+		for _, name := range allImageNames {
 			finalImages[name] = true
+		}
+	} else {
+		for _, pattern := range includePatterns {
+			found := false
+			for _, name := range allImageNames {
+				match, err := matchPattern(name, pattern)
+				if err != nil {
+					return ImagesToProcess{}, err
+				}
+				if match {
+					finalImages[name] = true
+					found = true
+				}
+			}
+			if !found {
+				return ImagesToProcess{}, fmt.Errorf("no image matches pattern %q", pattern)
+			}
 		}
 	}
 
-	if len(includedImages) == 0 && len(excludePatterns) > 0 {
-		for _, name := range allImageNames {
-			excluded := false
-			for _, exclPattern := range excludePatterns {
-				match, _ := filepath.Match(exclPattern, name)
-				if match {
-					excluded = true
+	if len(excludePatterns) > 0 {
+		temp := make(map[string]bool)
+		for name := range finalImages {
+			shouldExclude := false
+			for _, excludePattern := range excludePatterns {
+				match, err := matchPattern(name, excludePattern)
+				if err != nil {
+					return ImagesToProcess{}, err
+				}
+				if match && !slices.Contains(includePatterns, name) {
+					shouldExclude = true
 					break
 				}
 			}
-			if !excluded {
-				finalImages[name] = true
+			if !shouldExclude {
+				temp[name] = true
 			}
 		}
+		finalImages = temp
 	}
 
 	resolvedImageNames := make([]string, 0, len(finalImages))
