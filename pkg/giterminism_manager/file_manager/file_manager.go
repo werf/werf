@@ -224,7 +224,9 @@ func (f *FileManager) ReadDockerfile(ctx context.Context, relPath string) ([]byt
 	if data, ok := f.caches.dockerFiles[relPath]; ok {
 		return data, nil
 	}
-	if exist, _ := util.FileExists(util.GetAbsoluteFilepath(relPath)); exist {
+
+	localPath := getDirAbsPath(relPath, f.customProjectDir)
+	if exist, _ := util.FileExists(localPath); exist {
 		dockerfileData, err := f.fileReader.ReadDockerfile(ctx, relPath)
 		if err != nil {
 			return nil, err
@@ -250,7 +252,8 @@ func (f *FileManager) ReadDockerfile(ctx context.Context, relPath string) ([]byt
 }
 
 func (f *FileManager) IsDockerignoreExistAnywhere(ctx context.Context, relPath string) (bool, error) {
-	exists, err := f.fileReader.IsDockerignoreExistAnywhere(ctx, relPath)
+	localPath := getDirAbsPath(relPath, f.customProjectDir)
+	exists, err := f.fileReader.IsDockerignoreExistAnywhere(ctx, localPath)
 	if err != nil {
 		return false, fmt.Errorf("unable to check dockerignore existence: %w", err)
 	}
@@ -264,13 +267,14 @@ func (f *FileManager) IsDockerignoreExistAnywhere(ctx context.Context, relPath s
 }
 
 func (f *FileManager) ReadDockerignore(ctx context.Context, relPath string) ([]byte, error) {
-	exists, err := f.fileReader.IsDockerignoreExistAnywhere(ctx, relPath)
+	localPath := getDirAbsPath(relPath, f.customProjectDir)
+	exists, err := f.fileReader.IsDockerignoreExistAnywhere(ctx, localPath)
 	if err != nil {
 		return nil, fmt.Errorf("unable to check dockerignore existence: %w", err)
 	}
 
 	if exists {
-		data, err := f.fileReader.ReadDockerignore(ctx, relPath)
+		data, err := f.fileReader.ReadDockerignore(ctx, localPath)
 		if err != nil {
 			return nil, fmt.Errorf("unable to read dockerignore file %q: %w", filepath.ToSlash(relPath), err)
 		}
@@ -286,7 +290,7 @@ func (f *FileManager) ReadDockerignore(ctx context.Context, relPath string) ([]b
 }
 
 func (f *FileManager) LocateChart(ctx context.Context, name string) (string, error) {
-	path := getChartDirAbsPath(name, f.customProjectDir)
+	path := getDirAbsPath(name, f.customProjectDir)
 	chartDir, err := f.fileReader.LocateChart(ctx, path)
 	if err != nil {
 		logboek.Context(ctx).Debug().LogF("Chart directory %q not found in the local filesystem. Try find in includes\n", name)
@@ -299,7 +303,7 @@ func (f *FileManager) LocateChart(ctx context.Context, name string) (string, err
 }
 
 func (f *FileManager) ReadChartFile(ctx context.Context, filePath string) ([]byte, error) {
-	path := getChartDirAbsPath(filePath, f.customProjectDir)
+	path := getDirAbsPath(filePath, f.customProjectDir)
 	if exist, _ := util.FileExists(path); exist {
 		data, err := f.fileReader.ReadChartFile(ctx, path)
 		if err != nil {
@@ -318,7 +322,7 @@ func (f *FileManager) ReadChartFile(ctx context.Context, filePath string) ([]byt
 }
 
 func (f *FileManager) LoadChartDir(ctx context.Context, dir string) ([]*file.ChartExtenderBufferedFile, error) {
-	chartLocalAbsPath := getChartDirAbsPath(dir, f.customProjectDir)
+	chartLocalAbsPath := getDirAbsPath(dir, f.customProjectDir)
 	processed := make(map[string]bool)
 
 	var chartDir []*file.ChartExtenderBufferedFile
@@ -392,7 +396,7 @@ func loadChartDirFromLocalSource(dir string) (bool, error) {
 	return true, nil
 }
 
-func getChartDirAbsPath(relPath, customProjectDir string) string {
+func getDirAbsPath(relPath, customProjectDir string) string {
 	if path.IsAbs(relPath) {
 		return relPath
 	}
@@ -403,7 +407,7 @@ func getChartDirAbsPath(relPath, customProjectDir string) string {
 }
 
 func (f *FileManager) ChartIsDir(relPath string) (bool, error) {
-	chartLocalAbsPath := getChartDirAbsPath(relPath, f.customProjectDir)
+	chartLocalAbsPath := getDirAbsPath(relPath, f.customProjectDir)
 	if fi, err := os.Stat(chartLocalAbsPath); err == nil {
 		if fi.IsDir() {
 			return true, nil
