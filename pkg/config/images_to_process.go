@@ -31,19 +31,14 @@ func parsePattern(pattern string) (include, exclude string, isExclusion bool, er
 	return pattern, "", false, nil
 }
 
-func NewImagesToProcess(werfConfig *WerfConfig, imageNameList []string, onlyFinal, withoutImages bool) (ImagesToProcess, error) {
-	if withoutImages {
-		return ImagesToProcess{WithoutImages: true}, nil
-	}
-
-	allImageNames := werfConfig.GetImageNameList(false)
-	includePatterns := make([]string, 0, len(imageNameList))
-	excludePatterns := make([]string, 0, len(imageNameList))
+func parsePatterns(imageNameList []string) (includePatterns, excludePatterns []string, err error) {
+	includePatterns = make([]string, 0, len(imageNameList))
+	excludePatterns = make([]string, 0, len(imageNameList))
 
 	for _, pattern := range imageNameList {
 		include, exclude, isExclusion, err := parsePattern(pattern)
 		if err != nil {
-			return ImagesToProcess{}, err
+			return nil, nil, err
 		}
 		if isExclusion {
 			excludePatterns = append(excludePatterns, exclude)
@@ -51,68 +46,107 @@ func NewImagesToProcess(werfConfig *WerfConfig, imageNameList []string, onlyFina
 			includePatterns = append(includePatterns, include)
 		}
 	}
+	return includePatterns, excludePatterns, nil
+}
 
-	matchPattern := func(name, pattern string) (bool, error) {
-		match, err := filepath.Match(pattern, name)
-		if err != nil {
-			return false, fmt.Errorf("invalid pattern %q: %v", pattern, err)
-		}
-		return match, nil
+func matchPattern(name, pattern string) (bool, error) {
+	match, err := filepath.Match(pattern, name)
+	if err != nil {
+		return false, fmt.Errorf("invalid pattern %q: %v", pattern, err)
 	}
+	return match, nil
+}
 
+func filterUsingIncludePatterns(allImageNames, includePatterns []string) (map[string]bool, error) {
 	finalImages := make(map[string]bool)
 	if len(includePatterns) == 0 {
 		for _, name := range allImageNames {
 			finalImages[name] = true
 		}
-	} else {
-		for _, pattern := range includePatterns {
-			found := false
-			for _, name := range allImageNames {
-				match, err := matchPattern(name, pattern)
-				if err != nil {
-					return ImagesToProcess{}, err
-				}
-				if match {
-					finalImages[name] = true
-					found = true
-				}
-			}
-			if !found {
-				return ImagesToProcess{}, fmt.Errorf("no image matches pattern %q", pattern)
-			}
-		}
+		return finalImages, nil
 	}
 
-	if len(excludePatterns) > 0 {
-		temp := make(map[string]bool)
-		for name := range finalImages {
-			shouldExclude := false
-			for _, excludePattern := range excludePatterns {
-				match, err := matchPattern(name, excludePattern)
-				if err != nil {
-					return ImagesToProcess{}, err
-				}
-				if match && !slices.Contains(includePatterns, name) {
-					shouldExclude = true
-					break
-				}
+	for _, pattern := range includePatterns {
+		found := false
+		for _, name := range allImageNames {
+			match, err := matchPattern(name, pattern)
+			if err != nil {
+				return nil, err
 			}
-			if !shouldExclude {
-				temp[name] = true
+			if match {
+				finalImages[name] = true
+				found = true
 			}
 		}
-		finalImages = temp
+		if !found {
+			return nil, fmt.Errorf("no image matches pattern %q", pattern)
+		}
+	}
+	return finalImages, nil
+}
+
+func filterUsingExcludePatterns(finalImages map[string]bool, excludePatterns, includePatterns []string) (map[string]bool, error) {
+	if len(excludePatterns) == 0 {
+		return finalImages, nil
 	}
 
-	resolvedImageNames := make([]string, 0, len(finalImages))
-	finalImageNameList := make([]string, 0, len(finalImages))
+	temp := make(map[string]bool)
 	for name := range finalImages {
-		resolvedImageNames = append(resolvedImageNames, name)
+		shouldExclude := false
+		for _, excludePattern := range excludePatterns {
+			match, err := matchPattern(name, excludePattern)
+			if err != nil {
+				return nil, err
+			}
+			if match && !slices.Contains(includePatterns, name) {
+				shouldExclude = true
+				break
+			}
+		}
+		if !shouldExclude {
+			temp[name] = true
+		}
+	}
+	return temp, nil
+}
+
+func filterUsingFinalAttribute(werfConfig *WerfConfig, imageNames []string) []string {
+	finalImageNameList := make([]string, 0, len(imageNames))
+	for _, name := range imageNames {
 		if image := werfConfig.GetImage(name); image != nil && image.IsFinal() {
 			finalImageNameList = append(finalImageNameList, name)
 		}
 	}
+	return finalImageNameList
+}
+
+func NewImagesToProcess(werfConfig *WerfConfig, imageNameList []string, onlyFinal, withoutImages bool) (ImagesToProcess, error) {
+	if withoutImages {
+		return ImagesToProcess{WithoutImages: true}, nil
+	}
+
+	allImageNames := werfConfig.GetImageNameList(false)
+	includePatterns, excludePatterns, err := parsePatterns(imageNameList)
+	if err != nil {
+		return ImagesToProcess{}, err
+	}
+
+	finalImages, err := filterUsingIncludePatterns(allImageNames, includePatterns)
+	if err != nil {
+		return ImagesToProcess{}, err
+	}
+
+	finalImages, err = filterUsingExcludePatterns(finalImages, excludePatterns, includePatterns)
+	if err != nil {
+		return ImagesToProcess{}, err
+	}
+
+	resolvedImageNames := make([]string, 0, len(finalImages))
+	for name := range finalImages {
+		resolvedImageNames = append(resolvedImageNames, name)
+	}
+
+	finalImageNameList := filterUsingFinalAttribute(werfConfig, resolvedImageNames)
 
 	if onlyFinal {
 		resolvedImageNames = finalImageNameList
