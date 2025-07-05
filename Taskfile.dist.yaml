@@ -30,9 +30,8 @@ vars:
   goTags: "dfrunsecurity dfrunnetwork dfrunmount dfssh containers_image_openpgp"
   goLDFlags: "-s -w -X github.com/werf/werf/v2/pkg/werf.Version={{.version}}"
 
-  cgoTags: "dfrunsecurity dfrunnetwork dfrunmount dfssh containers_image_openpgp osusergo exclude_graphdriver_devicemapper netgo no_devmapper static_build cni"
-  cgoDevLDFlags: "-linkmode external -extldflags=-static -s -w -X github.com/werf/werf/v2/pkg/werf.Version={{.version}}"
-  cgoReleaseLDFlags: "-linkmode external -extldflags=-static -s -w -X github.com/werf/werf/v2/pkg/werf.Version={{.version}}"
+  cgoTags: "{{.goTags}} osusergo exclude_graphdriver_devicemapper netgo no_devmapper static_build cni"
+  cgoLDFlags: "{{.goLDFlags}} -linkmode external -extldflags=-static"
 
 tasks:
   _build-and-lint:
