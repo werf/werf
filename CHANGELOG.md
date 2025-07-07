@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.41.0](https://github.com/werf/werf/compare/v2.40.0...v2.41.0) (2025-07-07)
+
+
+### Features
+
+* add glob patterns support for image names ([#6935](https://github.com/werf/werf/issues/6935)) ([75b7261](https://github.com/werf/werf/commit/75b7261e35e797cd7ab529c3bfeabaf80cddfcc1))
+
+
+### Bug Fixes
+
+* **build:** fix dockerfile custom project path ([48a2dc7](https://github.com/werf/werf/commit/48a2dc72e464cad619754b3852bca0e5a604e740))
+* **build:** fix dockerignore rel path ([f962559](https://github.com/werf/werf/commit/f962559bb10e6047b4b5a61bdb86597720e2942a))
+
 ## [2.40.0](https://github.com/werf/werf/compare/v2.39.2...v2.40.0) (2025-07-02)
 
 
