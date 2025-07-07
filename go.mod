@@ -18,7 +18,7 @@ require (
 	github.com/containers/image/v5 v5.30.0
 	github.com/containers/storage v1.53.0
 	github.com/deckarep/golang-set/v2 v2.6.0
-	github.com/deckhouse/delivery-kit-sdk v0.0.0-20250701151625-43eacc030ba1
+	github.com/deckhouse/delivery-kit-sdk v0.0.0-20250707232455-c61dfc8c8bfe
 	github.com/deislabs/oras v1.1.0
 	github.com/djherbis/buffer v1.2.0
 	github.com/djherbis/nio/v3 v3.0.1
@@ -56,7 +56,7 @@ require (
 	github.com/prashantv/gostub v1.1.0
 	github.com/prometheus/procfs v0.13.0
 	github.com/rodaine/table v1.1.1
-	github.com/samber/lo v1.49.1
+	github.com/samber/lo v1.51.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.5

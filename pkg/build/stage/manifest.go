@@ -3,19 +3,20 @@ package stage
 import (
 	"context"
 	"fmt"
-	"github.com/werf/common-go/pkg/util"
-	"github.com/werf/werf/v2/pkg/docker_registry/api"
 	"os"
-
-	v1 "github.com/google/go-containerregistry/pkg/v1"
-	"github.com/google/go-containerregistry/pkg/v1/mutate"
 
 	"github.com/deckhouse/delivery-kit-sdk/pkg/integrity"
 	"github.com/deckhouse/delivery-kit-sdk/pkg/signature/image"
 	"github.com/deckhouse/delivery-kit-sdk/pkg/signver"
+	"github.com/deckhouse/delivery-kit-sdk/test/pkg/cert_utils"
+	v1 "github.com/google/go-containerregistry/pkg/v1"
+	"github.com/google/go-containerregistry/pkg/v1/mutate"
+
+	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/docker_registry"
+	"github.com/werf/werf/v2/pkg/docker_registry/api"
 )
 
 type ManifestStage struct {
@@ -73,10 +74,10 @@ func (s *ManifestStage) MutateImage(ctx context.Context, registry docker_registr
 		opts = append(opts, api.WithManifestAnnotationsFunc(func(ctx context.Context, manifest *v1.Manifest) (map[string]string, error) {
 			sv, err := signver.NewSignerVerifier(
 				ctx,
-				os.Getenv("WERF_SING_CERT_PATH"),
-				os.Getenv("WERF_SING_CHAIN_PATH"),
+				cert_utils.SignerCertBase64,
+				cert_utils.SignerChainBase64,
 				signver.KeyOpts{
-					KeyRef: os.Getenv("WERF_SIGN_KEY_PATH"),
+					KeyRef: cert_utils.SignerKeyBase64,
 				},
 			)
 			if err != nil {
