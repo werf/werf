@@ -252,8 +252,7 @@ func (f *FileManager) ReadDockerfile(ctx context.Context, relPath string) ([]byt
 }
 
 func (f *FileManager) IsDockerignoreExistAnywhere(ctx context.Context, relPath string) (bool, error) {
-	localPath := getDirAbsPath(relPath, f.customProjectDir)
-	exists, err := f.fileReader.IsDockerignoreExistAnywhere(ctx, localPath)
+	exists, err := f.fileReader.IsDockerignoreExistAnywhere(ctx, relPath)
 	if err != nil {
 		return false, fmt.Errorf("unable to check dockerignore existence: %w", err)
 	}
@@ -267,14 +266,13 @@ func (f *FileManager) IsDockerignoreExistAnywhere(ctx context.Context, relPath s
 }
 
 func (f *FileManager) ReadDockerignore(ctx context.Context, relPath string) ([]byte, error) {
-	localPath := getDirAbsPath(relPath, f.customProjectDir)
-	exists, err := f.fileReader.IsDockerignoreExistAnywhere(ctx, localPath)
+	exists, err := f.fileReader.IsDockerignoreExistAnywhere(ctx, relPath)
 	if err != nil {
 		return nil, fmt.Errorf("unable to check dockerignore existence: %w", err)
 	}
 
 	if exists {
-		data, err := f.fileReader.ReadDockerignore(ctx, localPath)
+		data, err := f.fileReader.ReadDockerignore(ctx, relPath)
 		if err != nil {
 			return nil, fmt.Errorf("unable to read dockerignore file %q: %w", filepath.ToSlash(relPath), err)
 		}
