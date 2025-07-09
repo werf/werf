@@ -30,10 +30,6 @@ import (
 	"github.com/werf/werf/v2/pkg/werf"
 )
 
-const (
-	warningDuration = 5 * time.Minute
-)
-
 type api struct {
 	InsecureRegistry      bool
 	SkipTlsVerifyRegistry bool
@@ -250,17 +246,13 @@ func (api *api) list(ctx context.Context, reference string, extraListOptions ...
 
 	var tags []string
 	if err := logboek.Context(ctx).Info().LogProcess("List tags for repo %s", repo).DoError(func() error {
-		start := time.Now()
 		var err error
 		tags, err = remote.List(repo, listOptions...)
 		if err != nil {
 			return fmt.Errorf("reading tags for %q: %w", repo, err)
 		}
 
-		duration := time.Since(start)
-		if duration > warningDuration {
-			logboek.Context(ctx).Warn().LogF("Listing tags took more than %s minutes\n", warningDuration.Minutes())
-		}
+		// TODO(iapershin): add additional logic for warnings about tags/meta ratio and warnings
 
 		logboek.Context(ctx).Info().LogF("Total tags listed: %d\n", len(tags))
 
