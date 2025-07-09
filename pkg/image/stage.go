@@ -51,7 +51,7 @@ type StageDescMeta struct {
 type StageDesc struct {
 	StageID *StageID `json:"stageID"`
 	Info    *Info    `json:"info"`
-	Meta    StageDescMeta
+	Meta    StageDescMeta `json:"-"`
 }
 
 func ParseCreationTs(creationTs string) (int64, error) {
