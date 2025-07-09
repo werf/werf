@@ -114,7 +114,7 @@ jobs:
           COMMIT_SHA=$(gh run list --workflow="release:trdl-publish" --status success --limit 1 --json headSha --jq '.[0].headSha')
           echo "sha=$COMMIT_SHA" >> "$GITHUB_OUTPUT"
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
 
       - name: Get previous trdl_channels.yaml
         run: |
