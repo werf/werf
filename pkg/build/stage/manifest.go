@@ -76,6 +76,7 @@ func (s *ManifestStage) MutateImage(ctx context.Context, registry docker_registr
 				ctx,
 				cert_utils.SignerCertBase64,
 				cert_utils.SignerChainBase64,
+				"",
 				signver.KeyOpts{
 					KeyRef: cert_utils.SignerKeyBase64,
 				},
