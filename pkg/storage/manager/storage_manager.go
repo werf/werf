@@ -434,7 +434,7 @@ func (m *StorageManager) FetchStage(ctx context.Context, containerBackend contai
 
 	var fetchedImg container_backend.LegacyImageInterface
 	var cacheStagesStorageListToRefill []storage.StagesStorage
-	var pooled bool
+	var pulled bool
 	var source string
 
 	fetchStageFromCache := func(stagesStorage storage.StagesStorage) (container_backend.LegacyImageInterface, error) {
@@ -454,7 +454,7 @@ func (m *StorageManager) FetchStage(ctx context.Context, containerBackend contai
 			proc.Start()
 
 			err := doFetchStage(ctx, m.ProjectName, stagesStorage, *stageID, stageImage)
-			pooled = true
+			pulled = true
 
 			if IsErrStageNotFound(err) {
 				logboek.Context(ctx).Default().LogF("Stage not found\n")
@@ -482,7 +482,7 @@ func (m *StorageManager) FetchStage(ctx context.Context, containerBackend contai
 			if stageDesc == nil {
 				return nil, ErrStageNotFound
 			}
-			pooled = false
+			pulled = false
 			stageImage.SetStageDesc(stageDesc)
 		}
 
@@ -593,7 +593,7 @@ func (m *StorageManager) FetchStage(ctx context.Context, containerBackend contai
 		}
 	}
 
-	return FetchStageInfo{BaseImagePulled: pooled, BaseImageSource: source}, nil
+	return FetchStageInfo{BaseImagePulled: pulled, BaseImageSource: source}, nil
 }
 
 func (m *StorageManager) CopyStageIntoCacheStorages(ctx context.Context, stageID image.StageID, cacheStagesStorageList []storage.StagesStorage, opts CopyStageIntoStorageOptions) error {
