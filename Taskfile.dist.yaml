@@ -17,7 +17,7 @@ vars:
   devBinary: './bin/werf{{if (eq .targetOS "windows")}}.exe{{end}}'
   withCoverageBinary: './bin/werf-with-coverage{{if (eq .targetOS "windows")}}.exe{{end}}'
   package: "github.com/werf/werf/v2/cmd/werf"
-  kubeVersion: '{{.kubeVersion | default "1.29.14"}}'
+  kubeVersion: '{{.kubeVersion | default "1.33.1"}}'
 
   goTags: "dfrunsecurity dfrunnetwork dfrunmount dfssh containers_image_openpgp"
   goLDFlags: "-s -w -X github.com/werf/werf/v2/pkg/werf.Version={{.version}}"
@@ -589,7 +589,7 @@ tasks:
 
   deps:install:kind:
     desc: "Install kind binary."
-    cmd: go install sigs.k8s.io/kind@v0.27.0
+    cmd: go install sigs.k8s.io/kind@v0.29.0
 
   deps:install:ginkgo:
     desc: "Install ginkgo binary."
