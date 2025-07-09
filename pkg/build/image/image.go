@@ -420,7 +420,7 @@ func (i *Image) FetchBaseImage(ctx context.Context) (FetchBaseImageInfo, error) 
 		}
 
 		if info == nil {
-			return FetchBaseImageInfo{}, fmt.Errorf("unable to inspect local image %s after successful pull: image is not exists", i.baseStageImage.Image.Name())
+			return FetchBaseImageInfo{}, fmt.Errorf("unable to inspect local image %s after successful pull: image is not exist", i.baseStageImage.Image.Name())
 		}
 
 		// TODO: It might be a stage as base image (passed as dependency), and the absence of StageID in the description will lead to breaking the logic.
