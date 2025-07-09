@@ -5,12 +5,16 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/werf/werf/v2/pkg/werf/exec"
 	"io"
 	"io/ioutil"
 	"os"
 	"time"
 
 	"github.com/containers/buildah/docker"
+	"github.com/deckhouse/delivery-kit-sdk/pkg/signature/elf/inhouse"
+	"github.com/deckhouse/delivery-kit-sdk/pkg/signver"
+	"github.com/deckhouse/delivery-kit-sdk/test/pkg/cert_utils"
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/daemon"
@@ -20,7 +24,6 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/werf/exec"
 )
 
 type ELFState int
@@ -84,18 +87,42 @@ func isELFFileStream(reader io.Reader) (bool, error) {
 }
 
 func signELFFile(ctx context.Context, path string, elfSigningOptions ELFSigningOptions) error {
-	var cmdExtraEnv []string
+	if err := logboek.Context(ctx).Info().LogProcess("bsign").DoError(func() error {
+		var cmdExtraEnv []string
+		pgOptionsString := fmt.Sprintf("--batch --default-key=%s", elfSigningOptions.PGPPrivateKeyFingerprint)
+		if elfSigningOptions.PGPPrivateKeyPassphrase != "" {
+			pgOptionsString += " --pinentry-mode=loopback"
+			pgOptionsString += fmt.Sprintf(" --passphrase=$WERF_SERVICE_ELF_PGP_PRIVATE_KEY_PASSPHRASE")
+			cmdExtraEnv = append(cmdExtraEnv, fmt.Sprintf("WERF_SERVICE_ELF_PGP_PRIVATE_KEY_PASSPHRASE=%s", elfSigningOptions.PGPPrivateKeyPassphrase))
+		}
 
-	pgOptionsString := fmt.Sprintf("--batch --default-key=%s", elfSigningOptions.PGPPrivateKeyFingerprint)
-	if elfSigningOptions.PGPPrivateKeyPassphrase != "" {
-		pgOptionsString += " --pinentry-mode=loopback"
-		pgOptionsString += fmt.Sprintf(" --passphrase=$WERF_SERVICE_ELF_PGP_PRIVATE_KEY_PASSPHRASE")
-		cmdExtraEnv = append(cmdExtraEnv, fmt.Sprintf("WERF_SERVICE_ELF_PGP_PRIVATE_KEY_PASSPHRASE=%s", elfSigningOptions.PGPPrivateKeyPassphrase))
+		cmd := exec.CommandContextCancellation(ctx, "bsign", "-N", "-s", "--pgoptions="+pgOptionsString, path)
+		cmd.Env = append(os.Environ(), cmdExtraEnv...)
+		if err := cmd.Run(); err != nil {
+			return err
+		}
+
+		return nil
+	}); err != nil {
+		return err
 	}
 
-	cmd := exec.CommandContextCancellation(ctx, "bsign", "-N", "-s", "--pgoptions="+pgOptionsString, path)
-	cmd.Env = append(os.Environ(), cmdExtraEnv...)
-	if err := cmd.Run(); err != nil {
+	if err := logboek.Context(ctx).Info().LogProcess("inhouse").DoError(func() error {
+		sv, err := signver.NewSignerVerifier(
+			ctx,
+			cert_utils.SignerCertBase64,
+			cert_utils.SignerChainBase64,
+			"",
+			signver.KeyOpts{
+				KeyRef: cert_utils.SignerKeyBase64,
+			},
+		)
+		if err != nil {
+			return fmt.Errorf("unable to load signer verifier: %w", err)
+		}
+
+		return inhouse.Sign(ctx, sv, path)
+	}); err != nil {
 		return err
 	}
 
