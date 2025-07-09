@@ -1325,7 +1325,6 @@ func GetGiterminismManager(ctx context.Context, cmdData *CmdData) (*giterminism_
 			manager = gm
 
 			return nil
-
 		}); err != nil {
 		return nil, err
 	}

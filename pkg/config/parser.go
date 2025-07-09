@@ -147,7 +147,6 @@ func GetWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfConfi
 
 		return nil
 	})
-
 	if err != nil {
 		return "", nil, err
 	}
