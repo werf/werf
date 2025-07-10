@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.41.2](https://github.com/werf/werf/compare/v2.41.1...v2.41.2) (2025-07-10)
+
+
+### Bug Fixes
+
+* **deploy:** improve context cancellation and clean up INFO logs ([8cca042](https://github.com/werf/werf/commit/8cca04279fbce60c6b1e2945117586dc0c527514))
+* **deploy:** improve context cancellation and clean up INFO logs ([8135be2](https://github.com/werf/werf/commit/8135be2c36227b8793593a5ccfbdbec739132c9d))
+
 ## [2.41.1](https://github.com/werf/werf/compare/v2.41.0...v2.41.1) (2025-07-10)
 
 
