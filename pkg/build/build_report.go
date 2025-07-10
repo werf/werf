@@ -20,8 +20,9 @@ const (
 )
 
 const (
-	BaseImageSourceTypeRegistry = "registry"
-	BaseImageSourceTypeRepo     = "repo"
+	BaseImageSourceTypeRegistry  = "registry"
+	BaseImageSourceTypeRepo      = "repo"
+	BaseImageSourceTypeSecondary = "secondary"
 )
 
 type ReportFormat string
@@ -35,16 +36,18 @@ type ReportImageRecord struct {
 	DockerImageName   string
 	Rebuilt           bool
 	Final             bool
-	Stages            map[string]ReportStageRecord
+	Stages            []ReportStageRecord
 }
 
 type ReportStageRecord struct {
-	CreatedAt       int64  `json:"createdAtUnixNano"`
-	Size            int64  `json:"size"`
-	SourceType      string `json:"sourceRepoType,omitempty"`
-	BaseImagePulled bool   `json:"baseImagePulled"`
-	Rebuilt         bool   `json:"rebuilt"`
-	BuildTime       string `json:"buildTime"`
+	Name            string
+	DockerImageName string
+	CreatedAt       int64
+	Size            int64
+	SourceType      string
+	BaseImagePulled bool
+	Rebuilt         bool
+	BuildTime       string
 }
 
 type ImagesReport struct {
@@ -114,7 +117,7 @@ func createBuildReport(ctx context.Context, phase *BuildPhase) error {
 				stageDesc = stageImage.GetStageDesc()
 			}
 
-			stages := getStagesReport(img)
+			stages := getStagesReport(img, false)
 
 			record := ReportImageRecord{
 				WerfImageName:     img.GetName(),
@@ -150,11 +153,10 @@ func createBuildReport(ctx context.Context, phase *BuildPhase) error {
 					stageDesc = img.GetStageDesc()
 				}
 
-				stages := make(map[string]ReportStageRecord)
+				stages := []ReportStageRecord{}
 				for _, pImg := range img.Images {
-					platform := pImg.TargetPlatform
-					for stageName, stage := range getStagesReport(pImg) {
-						stages[fmt.Sprintf("%s@%s", stageName, platform)] = stage
+					for _, stage := range getStagesReport(pImg, true) {
+						stages = append(stages, stage)
 					}
 				}
 
@@ -208,22 +210,30 @@ func setBuildTime(b bool, t string) string {
 	return t
 }
 
-func getStagesReport(img *image.Image) map[string]ReportStageRecord {
-	stages := make(map[string]ReportStageRecord)
+func getStagesReport(img *image.Image, multiplatform bool) []ReportStageRecord {
+	stagesRecords := []ReportStageRecord{}
 	for _, stg := range img.GetStages() {
 		stgImg := stg.GetStageImage()
 		if stgImg == nil || stgImg.Image == nil || stgImg.Image.GetStageDesc() == nil {
 			continue
 		}
+		stgMeta := stg.GetMeta()
 		stgDesc := stgImg.Image.GetStageDesc()
-		stages[string(stg.Name())] = ReportStageRecord{
+		name := string(stg.Name())
+		if multiplatform {
+			name = fmt.Sprintf("%s (%s)", name, img.TargetPlatform)
+		}
+		record := ReportStageRecord{
+			Name:            name,
+			DockerImageName: stgDesc.Info.Name,
 			CreatedAt:       stgDesc.Info.CreatedAtUnixNano,
 			Size:            stgDesc.Info.Size,
-			SourceType:      stgDesc.Meta.BaseImageSourceType,
-			BaseImagePulled: stgDesc.Meta.BaseImagePulled,
-			Rebuilt:         stgDesc.Meta.Rebuilt,
-			BuildTime:       setBuildTime(stgDesc.Meta.Rebuilt, stgDesc.Meta.BuildTime),
+			SourceType:      stgMeta.BaseImageSourceType,
+			BaseImagePulled: stgMeta.BaseImagePulled,
+			Rebuilt:         stgMeta.Rebuilt,
+			BuildTime:       setBuildTime(stgMeta.Rebuilt, stgMeta.BuildTime),
 		}
+		stagesRecords = append(stagesRecords, record)
 	}
-	return stages
+	return stagesRecords
 }

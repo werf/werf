@@ -45,4 +45,7 @@ type Interface interface {
 	IsStapelStage() bool
 
 	UsesBuildContext() bool
+
+	SetMeta(meta *StageMeta)
+	GetMeta() *StageMeta
 }

@@ -39,19 +39,9 @@ func (id StageID) IsEqual(another StageID) bool {
 	return (id.Digest == another.Digest) && (id.CreationTs == another.CreationTs)
 }
 
-type StageDescMeta struct {
-	Rebuilt                bool
-	FromSecondary          bool
-	BaseImagePulled        bool
-	BaseImageSourceType    string
-	BaseImageSourceAddress string
-	BuildTime              string
-}
-
 type StageDesc struct {
 	StageID *StageID `json:"stageID"`
 	Info    *Info    `json:"info"`
-	Meta    StageDescMeta `json:"-"`
 }
 
 func ParseCreationTs(creationTs string) (int64, error) {

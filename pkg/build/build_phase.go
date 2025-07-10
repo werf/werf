@@ -626,9 +626,9 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *image.Image, stg
 			}
 		}
 
-		stgDesc := stg.GetStageImage().Image.GetStageDesc()
-		stgDesc.Meta.FromSecondary = false
-		stgDesc.Meta.Rebuilt = false
+		stg.SetMeta(&stage.StageMeta{
+			Rebuilt: false,
+		})
 
 		return nil
 	}
@@ -673,11 +673,12 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *image.Image, stg
 		}
 		duration := time.Since(start).Seconds()
 
-		stgDesc := stg.GetStageImage().Image.GetStageDesc()
-		stgDesc.Meta.Rebuilt = true
-		stgDesc.Meta.BaseImagePulled = fetchInfo.BaseImagePulled
-		stgDesc.Meta.BaseImageSourceType = fetchInfo.BaseImageSource
-		stgDesc.Meta.BuildTime = fmt.Sprintf("%.2f", duration)
+		stg.SetMeta(&stage.StageMeta{
+			Rebuilt:             true,
+			BaseImagePulled:     fetchInfo.BaseImagePulled,
+			BaseImageSourceType: fetchInfo.BaseImageSource,
+			BuildTime:           fmt.Sprintf("%.2f", duration),
+		})
 	}
 
 	// debug assertion
@@ -686,9 +687,10 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *image.Image, stg
 	}
 
 	if foundSuitableSecondaryStage {
-		stgDesc := stg.GetStageImage().Image.GetStageDesc()
-		stgDesc.Meta.FromSecondary = true
-		stgDesc.Meta.BaseImageSourceType = "secondary"
+		stg.SetMeta(&stage.StageMeta{
+			FromSecondary:       true,
+			BaseImageSourceType: BaseImageSourceTypeSecondary,
+		})
 	}
 
 	// Add managed image record only if there was at least one newly built stage
