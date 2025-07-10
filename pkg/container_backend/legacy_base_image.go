@@ -3,6 +3,7 @@ package container_backend
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/werf/werf/v2/pkg/image"
 )
@@ -12,6 +13,8 @@ type legacyBaseImage struct {
 	info           *image.Info
 	stageDesc      *image.StageDesc
 	finalStageDesc *image.StageDesc
+
+	mu sync.RWMutex
 
 	ContainerBackend ContainerBackend
 }
@@ -57,11 +60,15 @@ func (i *legacyBaseImage) UnsetInfo() {
 }
 
 func (i *legacyBaseImage) SetStageDesc(stageDesc *image.StageDesc) {
+	i.mu.Lock()
+	defer i.mu.Unlock()
 	i.stageDesc = stageDesc
 	i.SetInfo(stageDesc.Info)
 }
 
 func (i *legacyBaseImage) GetStageDesc() *image.StageDesc {
+	i.mu.RLock()
+	defer i.mu.RUnlock()
 	return i.stageDesc
 }
 
