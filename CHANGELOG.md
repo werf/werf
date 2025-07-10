@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.41.1](https://github.com/werf/werf/compare/v2.41.0...v2.41.1) (2025-07-10)
+
+
+### Bug Fixes
+
+* **build:** avoid inefficient tag listing and cache usage ([#6960](https://github.com/werf/werf/issues/6960)) ([a134b59](https://github.com/werf/werf/commit/a134b595886b53a84d0ec042121582ec1e5550b5))
+
 ## [2.41.0](https://github.com/werf/werf/compare/v2.40.0...v2.41.0) (2025-07-07)
 
 
