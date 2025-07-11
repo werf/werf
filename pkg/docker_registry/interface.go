@@ -6,13 +6,14 @@ import (
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 
-	api2 "github.com/werf/werf/v2/pkg/docker_registry/api"
+	"github.com/werf/logboek"
+	docker_registry_api "github.com/werf/werf/v2/pkg/docker_registry/api"
 	"github.com/werf/werf/v2/pkg/image"
 )
 
 type commonInterface interface {
 	GetRepoImage(ctx context.Context, reference string) (*image.Info, error)
-	MutateAndPushImage(ctx context.Context, sourceReference, destinationReference string, opts ...api2.MutateOption) error
+	MutateAndPushImage(ctx context.Context, sourceReference, destinationReference string, opts ...docker_registry_api.MutateOption) error
 }
 
 type Interface interface {
@@ -57,3 +58,19 @@ type GetRepoImageOptions struct {
 }
 
 type CopyImageOptions struct{}
+
+func Tags(ctx context.Context, registry Interface, reference string, opts ...Option) ([]string, error) {
+	var tags []string
+	if err := logboek.Context(ctx).Info().LogProcess("List tags for repo %s", reference).DoError(func() error {
+		var err error
+		tags, err = registry.Tags(ctx, reference, opts...)
+		if err != nil {
+			return err
+		}
+		logboek.Context(ctx).Info().LogF("Total tags listed: %d\n", len(tags))
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	return tags, nil
+}

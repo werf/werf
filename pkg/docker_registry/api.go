@@ -244,21 +244,9 @@ func (api *api) list(ctx context.Context, reference string, extraListOptions ...
 		extraListOptions...,
 	)
 
-	var tags []string
-	if err := logboek.Context(ctx).Info().LogProcess("List tags for repo %s", repo).DoError(func() error {
-		var err error
-		tags, err = remote.List(repo, listOptions...)
-		if err != nil {
-			return fmt.Errorf("reading tags for %q: %w", repo, err)
-		}
-
-		// TODO(iapershin): add additional logic for warnings about tags/meta ratio and warnings
-
-		logboek.Context(ctx).Info().LogF("Total tags listed: %d\n", len(tags))
-
-		return nil
-	}); err != nil {
-		return nil, err
+	tags, err := remote.List(repo, listOptions...)
+	if err != nil {
+		return nil, fmt.Errorf("reading tags for %q: %w", repo, err)
 	}
 
 	return tags, nil

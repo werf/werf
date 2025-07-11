@@ -39,7 +39,7 @@ func (r *DockerRegistryTracer) DeleteRepo(ctx context.Context, reference string)
 
 func (r *DockerRegistryTracer) Tags(ctx context.Context, reference string, opts ...Option) (res []string, err error) {
 	logboek.Context(ctx).Default().LogProcess("DockerRegistryTracer.Tags %q", reference).Do(func() {
-		res, err = r.DockerRegistry.Tags(ctx, reference, opts...)
+		res, err = Tags(ctx, r.DockerRegistry, reference, opts...)
 	})
 	return
 }

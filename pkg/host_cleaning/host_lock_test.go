@@ -17,7 +17,9 @@ var _ = Describe("host lock", func() {
 		Expect(werf.Init(t.TempDir(), "")).To(Succeed())
 	})
 	Describe("withHostLockOrNothing", func() {
-		It("should call callback function if lock is acquired", func(ctx SpecContext) {
+		It("should call callback function if lock is acquired", func(ctx context.Context) {
+			ctx = logging.WithLogger(ctx)
+
 			spy := &spyHostLock{}
 			lockName := "test"
 			err := withHostLockOrNothing(ctx, lockName, spy.Handle1)
