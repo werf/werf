@@ -59,7 +59,7 @@ var _ = Describe("SbomStep", func() {
 			sbomImgLabels := step.prepareSbomLabels(ctx, stageDesc.Info.Labels, scanOpts)
 			setupMocks(ctx, backend, stagesStorage, stageDesc, scanOpts, sbomImgLabels, imgFilters)
 
-			Expect(step.Converge(ctx, stageDesc, scanOpts)).To(Succeed())
+			Expect(step.Converge(ctx, "some-name", stageDesc, scanOpts)).To(Succeed())
 		},
 		Entry(
 			"[local storage]: should not scan source image if sbom image is already exist",
