@@ -57,7 +57,7 @@ func (r *DockerRegistryWithCache) getTagsListFromRegistry(ctx context.Context, r
 	// This is useful when multiple goroutines try to fetch tags for the same reference at the same time.
 	// Will perform only one call to the registry and share the result among all goroutines.
 	newTagsResp, err, shared := r.listTagsQueryGroup.Do(cachedTagsID, func() (interface{}, error) {
-		tags, err := Tags(ctx, r.Interface, reference, opts...)
+		tags, err := r.Interface.Tags(ctx, reference, opts...)
 		return tags, err
 	})
 
