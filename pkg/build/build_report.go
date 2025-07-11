@@ -40,14 +40,17 @@ type ReportImageRecord struct {
 }
 
 type ReportStageRecord struct {
-	Name            string
-	DockerImageName string
-	CreatedAt       int64
-	Size            int64
-	SourceType      string
-	BaseImagePulled bool
-	Rebuilt         bool
-	BuildTime       string
+	Name              string
+	DockerImageName   string
+	DockerTag         string
+	DockerImageID     string
+	DockerImageDigest string
+	CreatedAt         int64
+	Size              int64
+	SourceType        string
+	BaseImagePulled   bool
+	Rebuilt           bool
+	BuildTime         string
 }
 
 type ImagesReport struct {
@@ -211,7 +214,7 @@ func setBuildTime(b bool, t string) string {
 }
 
 func getStagesReport(img *image.Image, multiplatform bool) []ReportStageRecord {
-	stagesRecords := []ReportStageRecord{}
+	var stagesRecords []ReportStageRecord
 	for _, stg := range img.GetStages() {
 		stgImg := stg.GetStageImage()
 		if stgImg == nil || stgImg.Image == nil || stgImg.Image.GetStageDesc() == nil {
@@ -224,14 +227,17 @@ func getStagesReport(img *image.Image, multiplatform bool) []ReportStageRecord {
 			name = fmt.Sprintf("%s (%s)", name, img.TargetPlatform)
 		}
 		record := ReportStageRecord{
-			Name:            name,
-			DockerImageName: stgDesc.Info.Name,
-			CreatedAt:       stgDesc.Info.CreatedAtUnixNano,
-			Size:            stgDesc.Info.Size,
-			SourceType:      stgMeta.BaseImageSourceType,
-			BaseImagePulled: stgMeta.BaseImagePulled,
-			Rebuilt:         stgMeta.Rebuilt,
-			BuildTime:       setBuildTime(stgMeta.Rebuilt, stgMeta.BuildTime),
+			Name:              name,
+			DockerImageName:   stgDesc.Info.Name,
+			DockerTag:         stgDesc.Info.Tag,
+			DockerImageID:     stgDesc.Info.ID,
+			DockerImageDigest: stgDesc.Info.GetDigest(),
+			CreatedAt:         stgDesc.Info.CreatedAtUnixNano,
+			Size:              stgDesc.Info.Size,
+			SourceType:        stgMeta.BaseImageSourceType,
+			BaseImagePulled:   stgMeta.BaseImagePulled,
+			Rebuilt:           stgMeta.Rebuilt,
+			BuildTime:         setBuildTime(stgMeta.Rebuilt, stgMeta.BuildTime),
 		}
 		stagesRecords = append(stagesRecords, record)
 	}
