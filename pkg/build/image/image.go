@@ -292,7 +292,7 @@ func (i *Image) SetupBaseImage(ctx context.Context, storageManager manager.Stora
 								options.Style(style.Highlight())
 							}).
 							DoError(func() error {
-								return i.ContainerBackend.PullImageFromRegistry(ctx, i.baseStageImage.Image)
+								return container_backend.PullImageFromRegistry(ctx, i.ContainerBackend, i.baseStageImage.Image)
 							}); err != nil {
 							return err
 						}
@@ -409,7 +409,7 @@ func (i *Image) FetchBaseImage(ctx context.Context) (FetchBaseImageInfo, error) 
 				options.Style(style.Highlight())
 			}).
 			DoError(func() error {
-				return i.ContainerBackend.PullImageFromRegistry(ctx, i.baseStageImage.Image)
+				return container_backend.PullImageFromRegistry(ctx, i.ContainerBackend, i.baseStageImage.Image)
 			}); err != nil {
 			return FetchBaseImageInfo{}, err
 		}

@@ -6,34 +6,85 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/werf/common-go/pkg/util"
+	"golang.org/x/sync/singleflight"
+
+	"github.com/werf/logboek"
 	registry_api "github.com/werf/werf/v2/pkg/docker_registry/api"
 	"github.com/werf/werf/v2/pkg/image"
 )
 
 type DockerRegistryWithCache struct {
 	Interface
-	cachedTagsMap      *sync.Map
-	cachedTagsMutexMap *sync.Map
+	cachedTagsMap *sync.Map
+
+	listTagsQueryGroup *singleflight.Group
 }
 
 func newDockerRegistryWithCache(dockerRegistry Interface) *DockerRegistryWithCache {
 	return &DockerRegistryWithCache{
 		Interface:          dockerRegistry,
 		cachedTagsMap:      &sync.Map{},
-		cachedTagsMutexMap: &sync.Map{},
+		listTagsQueryGroup: &singleflight.Group{},
 	}
 }
 
 func (r *DockerRegistryWithCache) Tags(ctx context.Context, reference string, opts ...Option) ([]string, error) {
-	o := makeOptions(opts...)
-	return r.withCachedTags(reference, func(cachedTags []string, isExist bool) ([]string, error) {
-		if isExist && o.cachedTags {
-			return cachedTags, nil
-		}
+	return r.getTagsListFromRegistry(ctx, reference, opts...)
+}
 
-		return r.Interface.Tags(ctx, reference, opts...)
+func (r *DockerRegistryWithCache) tryLoadTagsFromCache(cachedTagsID string, opts ...Option) ([]string, bool) {
+	o := makeOptions(opts...)
+	value, ok := r.cachedTagsMap.Load(cachedTagsID)
+	if !ok || !o.cachedTags {
+		return nil, false
+	}
+
+	tagsList, err := castTagsList(value)
+	if err != nil {
+		return nil, false
+	}
+
+	return tagsList, true
+}
+
+func (r *DockerRegistryWithCache) getTagsListFromRegistry(ctx context.Context, reference string, opts ...Option) ([]string, error) {
+	cachedTagsID := r.mustGetCachedTagsID(reference)
+	if tags, ok := r.tryLoadTagsFromCache(cachedTagsID, opts...); ok {
+		return tags, nil
+	}
+
+	// Use singleflight to avoid multiple concurrent calls to the registry for the same reference
+	// This is useful when multiple goroutines try to fetch tags for the same reference at the same time.
+	// Will perform only one call to the registry and share the result among all goroutines.
+	newTagsResp, err, shared := r.listTagsQueryGroup.Do(cachedTagsID, func() (interface{}, error) {
+		tags, err := r.Interface.Tags(ctx, reference, opts...)
+		return tags, err
 	})
+
+	if shared {
+		logboek.Context(ctx).Debug().LogF("Query list tags for %q was reused\n", cachedTagsID)
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("unable to fetch tags for repo %q: %w", reference, err)
+	}
+
+	newTagsList, err := castTagsList(newTagsResp)
+	if err != nil {
+		return nil, err
+	}
+
+	r.cachedTagsMap.Store(cachedTagsID, newTagsList)
+	return newTagsList, nil
+}
+
+func castTagsList(tagsList interface{}) ([]string, error) {
+	switch v := tagsList.(type) {
+	case []string:
+		return v, nil
+	default:
+		return nil, fmt.Errorf("unexpected type %T for tags", v)
+	}
 }
 
 func (r *DockerRegistryWithCache) IsTagExist(ctx context.Context, reference string, opts ...Option) (bool, error) {
@@ -63,83 +114,19 @@ func (r *DockerRegistryWithCache) IsTagExist(ctx context.Context, reference stri
 }
 
 func (r *DockerRegistryWithCache) TagRepoImage(ctx context.Context, repoImage *image.Info, tag string) error {
-	defer r.mustAddTagToCachedTags(repoImage.Name)
 	return r.Interface.TagRepoImage(ctx, repoImage, tag)
 }
 
 func (r *DockerRegistryWithCache) PushImage(ctx context.Context, reference string, opts *PushImageOptions) error {
-	defer r.mustAddTagToCachedTags(reference)
 	return r.Interface.PushImage(ctx, reference, opts)
 }
 
 func (r *DockerRegistryWithCache) MutateAndPushImage(ctx context.Context, sourceReference, destinationReference string, opts ...registry_api.MutateOption) error {
-	defer r.mustAddTagToCachedTags(destinationReference)
 	return r.Interface.MutateAndPushImage(ctx, sourceReference, destinationReference, opts...)
 }
 
 func (r *DockerRegistryWithCache) DeleteRepoImage(ctx context.Context, repoImage *image.Info) error {
-	defer r.mustDeleteTagFromCachedTags(repoImage.Name)
 	return r.Interface.DeleteRepoImage(ctx, repoImage)
-}
-
-func (r *DockerRegistryWithCache) mustAddTagToCachedTags(reference string) {
-	_, err := r.withCachedTags(reference, func(tags []string, isExist bool) ([]string, error) {
-		referenceParts, err := r.parseReferenceParts(reference)
-		if err != nil {
-			return nil, fmt.Errorf("unable to parse reference parts %q: %w", reference, err)
-		}
-
-		if !isExist {
-			return nil, nil
-		}
-
-		tags = append(tags, referenceParts.tag)
-		return tags, nil
-	})
-	if err != nil {
-		panic(fmt.Sprintf("unexpected err: %s", err))
-	}
-}
-
-func (r *DockerRegistryWithCache) mustDeleteTagFromCachedTags(reference string) {
-	_, err := r.withCachedTags(reference, func(tags []string, isExist bool) ([]string, error) {
-		referenceParts, err := r.parseReferenceParts(reference)
-		if err != nil {
-			return nil, fmt.Errorf("unable to parse reference parts %q: %w", reference, err)
-		}
-
-		if !isExist {
-			return nil, nil
-		}
-
-		tags = util.ExcludeFromStringArray(tags, referenceParts.tag)
-		return tags, nil
-	})
-	if err != nil {
-		panic(fmt.Sprintf("unexpected err: %s", err))
-	}
-}
-
-func (r *DockerRegistryWithCache) withCachedTags(reference string, f func([]string, bool) ([]string, error)) ([]string, error) {
-	cachedTagsID := r.mustGetCachedTagsID(reference)
-
-	mutex := util.MapLoadOrCreateMutex(r.cachedTagsMutexMap, cachedTagsID)
-	mutex.Lock()
-	defer mutex.Unlock()
-
-	value, isExist := r.cachedTagsMap.Load(cachedTagsID)
-	var tags []string
-	if isExist {
-		tags = value.([]string)
-	}
-
-	newTags, err := f(tags, isExist) // TODO(iapershin) fix data race here
-	if err != nil {
-		return nil, err
-	}
-
-	r.cachedTagsMap.Store(cachedTagsID, newTags)
-	return newTags, nil
 }
 
 func (r *DockerRegistryWithCache) mustGetCachedTagsID(reference string) string {

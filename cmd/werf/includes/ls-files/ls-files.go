@@ -91,6 +91,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupConfigPath(&commonCmdData, cmd)
 	common.SetupGiterminismConfigPath(&commonCmdData, cmd)
 	common.SetupEnvironment(&commonCmdData, cmd)
+	common.SetupSSHKey(&commonCmdData, cmd)
 
 	common.SetupGiterminismOptions(&commonCmdData, cmd)
 

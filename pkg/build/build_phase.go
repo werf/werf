@@ -606,12 +606,25 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *image.Image, stg
 		}
 	}
 
-	foundSuitableStage, cleanupFunc, err := phase.calculateStage(ctx, img, stg)
+	var foundSuitableStage bool
+	var cleanupFunc func()
+
+	if err := logboek.Context(ctx).Info().LogProcess("Try to find suitable stage for %s", stg.LogDetailedName()).
+		DoError(func() error {
+			var err error
+			var found bool
+			found, cleanupFunc, err = phase.calculateStage(ctx, img, stg)
+			if err != nil {
+				return err
+			}
+			foundSuitableStage = found
+			return nil
+		}); err != nil {
+		return err
+	}
+
 	if cleanupFunc != nil {
 		defer cleanupFunc()
-	}
-	if err != nil {
-		return err
 	}
 
 	if foundSuitableStage {

@@ -98,37 +98,38 @@ func (storage *RepoStagesStorage) GetStagesIDs(ctx context.Context, _ string, op
 	var res []image.StageID
 
 	o := makeOptions(opts...)
-	if tags, err := storage.DockerRegistry.Tags(ctx, storage.RepoAddress, o.dockerRegistryOptions...); err != nil {
+	tags, err := storage.DockerRegistry.Tags(ctx, storage.RepoAddress, o.dockerRegistryOptions...)
+	if err != nil {
 		return nil, fmt.Errorf("unable to fetch tags for repo %q: %w", storage.RepoAddress, err)
-	} else {
-		logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetStagesIDs fetched tags for %q: %#v\n", storage.RepoAddress, tags)
+	}
 
-		for _, tag := range tags {
-			isRegularStage := (len(tag) == 70 && len(strings.Split(tag, "-")) == 2) // 2604b86b2c7a1c6d19c62601aadb19e7d5c6bb8f17bc2bf26a390ea7-1611836746968
-			isMultiplatformStage := (len(tag) == 56)                                // 2604b86b2c7a1c6d19c62601aadb19e7d5c6bb8f17bc2bf26a390ea7
-			if !isRegularStage && !isMultiplatformStage {
-				continue
-			}
+	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetStagesIDs fetched tags for %q: %#v\n", storage.RepoAddress, tags)
 
-			if strings.HasPrefix(tag, RepoManagedImageRecord_ImageTagPrefix) || strings.HasPrefix(tag, RepoImageMetadataByCommitRecord_ImageTagPrefix) || strings.HasSuffix(tag, RepoRejectedStageImageRecord_ImageTagSuffix) {
-				continue
-			}
-
-			if digest, creationTs, err := getDigestAndCreationTsFromRepoStageImageTag(tag); err != nil {
-				if isUnexpectedTagFormatError(err) {
-					logboek.Context(ctx).Debug().LogLn(err.Error())
-					continue
-				}
-				return nil, err
-			} else {
-				res = append(res, *image.NewStageID(digest, creationTs))
-
-				logboek.Context(ctx).Debug().LogF("Selected stage by digest %q creation timestamp %d\n", digest, creationTs)
-			}
+	for _, tag := range tags {
+		isRegularStage := (len(tag) == 70 && len(strings.Split(tag, "-")) == 2) // 2604b86b2c7a1c6d19c62601aadb19e7d5c6bb8f17bc2bf26a390ea7-1611836746968
+		isMultiplatformStage := (len(tag) == 56)                                // 2604b86b2c7a1c6d19c62601aadb19e7d5c6bb8f17bc2bf26a390ea7
+		if !isRegularStage && !isMultiplatformStage {
+			continue
 		}
 
-		return res, nil
+		if strings.HasPrefix(tag, RepoManagedImageRecord_ImageTagPrefix) || strings.HasPrefix(tag, RepoImageMetadataByCommitRecord_ImageTagPrefix) || strings.HasSuffix(tag, RepoRejectedStageImageRecord_ImageTagSuffix) {
+			continue
+		}
+
+		if digest, creationTs, err := getDigestAndCreationTsFromRepoStageImageTag(tag); err != nil {
+			if isUnexpectedTagFormatError(err) {
+				logboek.Context(ctx).Debug().LogLn(err.Error())
+				continue
+			}
+			return nil, err
+		} else {
+			res = append(res, *image.NewStageID(digest, creationTs))
+
+			logboek.Context(ctx).Debug().LogF("Selected stage by digest %q creation timestamp %d\n", digest, creationTs)
+		}
 	}
+
+	return res, nil
 }
 
 func (storage *RepoStagesStorage) ExportStage(ctx context.Context, stageDesc *image.StageDesc, destinationReference string, mutateConfigFunc func(config v1.Config) (v1.Config, error)) error {
@@ -201,63 +202,64 @@ func (storage *RepoStagesStorage) GetStagesIDsByDigest(ctx context.Context, _, d
 	var res []image.StageID
 
 	o := makeOptions(opts...)
-	if tags, err := storage.DockerRegistry.Tags(ctx, storage.RepoAddress, o.dockerRegistryOptions...); err != nil {
+	tags, err := storage.DockerRegistry.Tags(ctx, storage.RepoAddress, o.dockerRegistryOptions...)
+	if err != nil {
 		return nil, fmt.Errorf("unable to fetch tags for repo %q: %w", storage.RepoAddress, err)
-	} else {
-		var rejectedStages []image.StageID
+	}
 
-		for _, tag := range tags {
-			if !strings.HasSuffix(tag, RepoRejectedStageImageRecord_ImageTagSuffix) {
-				continue
-			}
+	var rejectedStages []image.StageID
 
-			realTag := strings.TrimSuffix(tag, RepoRejectedStageImageRecord_ImageTagSuffix)
-
-			if _, creationTs, err := getDigestAndCreationTsFromRepoStageImageTag(realTag); err != nil {
-				if isUnexpectedTagFormatError(err) {
-					logboek.Context(ctx).Info().LogF("Unexpected tag %q format: %s\n", realTag, err)
-					continue
-				}
-				return nil, fmt.Errorf("unable to get digest and creation timestamp from rejected stage tag %q: %w", tag, err)
-			} else {
-				logboek.Context(ctx).Info().LogF("Found rejected stage %q\n", tag)
-				rejectedStages = append(rejectedStages, *image.NewStageID(digest, creationTs))
-			}
+	for _, tag := range tags {
+		if !strings.HasSuffix(tag, RepoRejectedStageImageRecord_ImageTagSuffix) {
+			continue
 		}
 
-	FindSuitableStages:
-		for _, tag := range tags {
-			if !strings.HasPrefix(tag, digest) {
+		realTag := strings.TrimSuffix(tag, RepoRejectedStageImageRecord_ImageTagSuffix)
+
+		if _, creationTs, err := getDigestAndCreationTsFromRepoStageImageTag(realTag); err != nil {
+			if isUnexpectedTagFormatError(err) {
+				logboek.Context(ctx).Info().LogF("Unexpected tag %q format: %s\n", realTag, err)
 				continue
 			}
+			return nil, fmt.Errorf("unable to get digest and creation timestamp from rejected stage tag %q: %w", tag, err)
+		} else {
+			logboek.Context(ctx).Info().LogF("Found rejected stage %q\n", tag)
+			rejectedStages = append(rejectedStages, *image.NewStageID(digest, creationTs))
+		}
+	}
 
-			if strings.HasSuffix(tag, RepoRejectedStageImageRecord_ImageTagSuffix) {
+FindSuitableStages:
+	for _, tag := range tags {
+		if !strings.HasPrefix(tag, digest) {
+			continue
+		}
+
+		if strings.HasSuffix(tag, RepoRejectedStageImageRecord_ImageTagSuffix) {
+			continue
+		}
+
+		if _, creationTs, err := getDigestAndCreationTsFromRepoStageImageTag(tag); err != nil {
+			if isUnexpectedTagFormatError(err) {
+				logboek.Context(ctx).Debug().LogLn(err.Error())
+				logboek.Context(ctx).Info().LogF("Unexpected tag %q format: %s\n", tag, err)
 				continue
 			}
+			return nil, fmt.Errorf("unable to get digest and creation timestamp from tag %q: %w", tag, err)
+		} else if parentStageCreationTs > creationTs {
+			logboek.Context(ctx).Debug().LogF("Skip stage %s (parent stage creation timestamp %d is greater than the stage creation timestamp %d)\n", tag, parentStageCreationTs, creationTs)
+			continue
+		} else {
+			stageID := image.NewStageID(digest, creationTs)
 
-			if _, creationTs, err := getDigestAndCreationTsFromRepoStageImageTag(tag); err != nil {
-				if isUnexpectedTagFormatError(err) {
-					logboek.Context(ctx).Debug().LogLn(err.Error())
-					logboek.Context(ctx).Info().LogF("Unexpected tag %q format: %s\n", tag, err)
-					continue
+			for _, rejectedStage := range rejectedStages {
+				if rejectedStage.Digest == stageID.Digest && rejectedStage.CreationTs == stageID.CreationTs {
+					logboek.Context(ctx).Info().LogF("Discarding rejected stage %q\n", tag)
+					continue FindSuitableStages
 				}
-				return nil, fmt.Errorf("unable to get digest and creation timestamp from tag %q: %w", tag, err)
-			} else if parentStageCreationTs > creationTs {
-				logboek.Context(ctx).Debug().LogF("Skip stage %s (parent stage creation timestamp %d is greater than the stage creation timestamp %d)\n", tag, parentStageCreationTs, creationTs)
-				continue
-			} else {
-				stageID := image.NewStageID(digest, creationTs)
-
-				for _, rejectedStage := range rejectedStages {
-					if rejectedStage.Digest == stageID.Digest && rejectedStage.CreationTs == stageID.CreationTs {
-						logboek.Context(ctx).Info().LogF("Discarding rejected stage %q\n", tag)
-						continue FindSuitableStages
-					}
-				}
-
-				logboek.Context(ctx).Debug().LogF("Stage %q is suitable for digest %q\n", tag, digest)
-				res = append(res, *stageID)
 			}
+
+			logboek.Context(ctx).Debug().LogF("Stage %q is suitable for digest %q\n", tag, digest)
+			res = append(res, *stageID)
 		}
 	}
 
@@ -533,7 +535,7 @@ func (storage *RepoStagesStorage) PullIfExistSbomImage(ctx context.Context, imag
 }
 
 func (storage *RepoStagesStorage) FetchImage(ctx context.Context, img container_backend.LegacyImageInterface) error {
-	if err := storage.ContainerBackend.PullImageFromRegistry(ctx, img); err != nil {
+	if err := container_backend.PullImageFromRegistry(ctx, storage.ContainerBackend, img); err != nil {
 		if strings.HasSuffix(err.Error(), "unknown blob") {
 			return ErrBrokenImage
 		}

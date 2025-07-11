@@ -1,5 +1,28 @@
 # Changelog
 
+## [2.41.3](https://github.com/werf/werf/compare/v2.41.2...v2.41.3) (2025-07-10)
+
+
+### Bug Fixes
+
+* **deploy:** no logs displayed ([4521772](https://github.com/werf/werf/commit/4521772c33168c4ec9832b17a15afc047fef6997))
+* **deploy:** no logs displayed ([0ae745d](https://github.com/werf/werf/commit/0ae745daef8743c08521a9cc134c6f1becb467a9))
+
+## [2.41.2](https://github.com/werf/werf/compare/v2.41.1...v2.41.2) (2025-07-10)
+
+
+### Bug Fixes
+
+* **deploy:** improve context cancellation and clean up INFO logs ([8cca042](https://github.com/werf/werf/commit/8cca04279fbce60c6b1e2945117586dc0c527514))
+* **deploy:** improve context cancellation and clean up INFO logs ([8135be2](https://github.com/werf/werf/commit/8135be2c36227b8793593a5ccfbdbec739132c9d))
+
+## [2.41.1](https://github.com/werf/werf/compare/v2.41.0...v2.41.1) (2025-07-10)
+
+
+### Bug Fixes
+
+* **build:** avoid inefficient tag listing and cache usage ([#6960](https://github.com/werf/werf/issues/6960)) ([a134b59](https://github.com/werf/werf/commit/a134b595886b53a84d0ec042121582ec1e5550b5))
+
 ## [2.41.0](https://github.com/werf/werf/compare/v2.40.0...v2.41.0) (2025-07-07)
 
 
