@@ -1290,31 +1290,46 @@ func OpenGitRepo(ctx context.Context, cmdData *CmdData, workingDir, gitWorkTree 
 }
 
 func GetGiterminismManager(ctx context.Context, cmdData *CmdData) (*giterminism_manager.Manager, error) {
-	workingDir := GetWorkingDir(cmdData)
+	manager := new(giterminism_manager.Manager)
+	if err := logboek.Context(ctx).Info().LogProcess("Initialize giterminism manager").
+		DoError(func() error {
+			workingDir := GetWorkingDir(cmdData)
 
-	gitWorkTree, err := GetGitWorkTree(ctx, cmdData, workingDir)
-	if err != nil {
-		return nil, fmt.Errorf("unable to get git work tree: %w", err)
-	}
+			gitWorkTree, err := GetGitWorkTree(ctx, cmdData, workingDir)
+			if err != nil {
+				return fmt.Errorf("unable to get git work tree: %w", err)
+			}
 
-	localGitRepo, err := OpenGitRepo(ctx, cmdData, workingDir, gitWorkTree)
-	if err != nil {
+			localGitRepo, err := OpenGitRepo(ctx, cmdData, workingDir, gitWorkTree)
+			if err != nil {
+				return err
+			}
+
+			headCommit, err := localGitRepo.HeadCommitHash(ctx)
+			if err != nil {
+				return err
+			}
+
+			configRelPath := GetWerfGiterminismConfigRelPath(cmdData)
+
+			gm, err := giterminism_manager.NewManager(ctx, configRelPath, workingDir, localGitRepo, headCommit, giterminism_manager.NewManagerOptions{
+				LooseGiterminism:       *cmdData.LooseGiterminism,
+				Dev:                    *cmdData.Dev,
+				CreateIncludesLockFile: cmdData.CreateIncludesLockFile,
+				AllowIncludesUpdate:    cmdData.AllowIncludesUpdate,
+			})
+			if err != nil {
+				return err
+			}
+
+			manager = gm
+
+			return nil
+		}); err != nil {
 		return nil, err
 	}
 
-	headCommit, err := localGitRepo.HeadCommitHash(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	configRelPath := GetWerfGiterminismConfigRelPath(cmdData)
-
-	return giterminism_manager.NewManager(ctx, configRelPath, workingDir, localGitRepo, headCommit, giterminism_manager.NewManagerOptions{
-		LooseGiterminism:       *cmdData.LooseGiterminism,
-		Dev:                    *cmdData.Dev,
-		CreateIncludesLockFile: cmdData.CreateIncludesLockFile,
-		AllowIncludesUpdate:    cmdData.AllowIncludesUpdate,
-	})
+	return manager, nil
 }
 
 func GetGitWorkTree(ctx context.Context, cmdData *CmdData, workingDir string) (string, error) {

@@ -535,7 +535,7 @@ func (storage *RepoStagesStorage) PullIfExistSbomImage(ctx context.Context, imag
 }
 
 func (storage *RepoStagesStorage) FetchImage(ctx context.Context, img container_backend.LegacyImageInterface) error {
-	if err := storage.ContainerBackend.PullImageFromRegistry(ctx, img); err != nil {
+	if err := container_backend.PullImageFromRegistry(ctx, storage.ContainerBackend, img); err != nil {
 		if strings.HasSuffix(err.Error(), "unknown blob") {
 			return ErrBrokenImage
 		}

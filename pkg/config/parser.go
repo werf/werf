@@ -78,68 +78,80 @@ func renderSpecificImages(werfConfig *WerfConfig, imageNameList []string) error 
 }
 
 func GetWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath string, giterminismManager giterminism_manager.Interface, opts WerfConfigOptions) (string, *WerfConfig, error) {
-	werfConfigPath, werfConfigRenderContent, err := renderWerfConfigYaml(ctx, renderWerfConfigYamlOpts{
-		customWerfConfigRelPath:             customWerfConfigRelPath,
-		customWerfConfigTemplatesDirRelPath: customWerfConfigTemplatesDirRelPath,
-		giterminismManager:                  giterminismManager,
-		env:                                 opts.Env,
-		debugTemplates:                      opts.DebugTemplates,
-	})
-	if err != nil {
-		return "", nil, fmt.Errorf("unable to render werf config: %w", err)
-	}
-
-	werfConfigRenderPath, err := tmp_manager.CreateWerfConfigRender(ctx)
-	if err != nil {
-		return "", nil, err
-	}
-
-	if opts.LogRenderedFilePath {
-		logboek.Context(ctx).LogF("Using werf config render file: %s\n", werfConfigRenderPath)
-	}
-
-	err = writeWerfConfigRender(werfConfigRenderContent, werfConfigRenderPath)
-	if err != nil {
-		return "", nil, fmt.Errorf("unable to write rendered config to %s: %w", werfConfigRenderPath, err)
-	}
-
-	docs, err := splitByDocs(werfConfigRenderContent, werfConfigRenderPath)
-	if err != nil {
-		return "", nil, err
-	}
-
-	meta, rawStapelImages, rawImagesFromDockerfile, err := splitByMetaAndRawImages(docs)
-	if err != nil {
-		return "", nil, err
-	}
-
-	if meta == nil {
-		defaultProjectName, err := GetDefaultProjectName(ctx, giterminismManager)
+	var path string
+	var config *WerfConfig
+	err := logboek.Context(ctx).Info().LogProcess("Render werf config").DoError(func() error {
+		werfConfigPath, werfConfigRenderContent, err := renderWerfConfigYaml(ctx, renderWerfConfigYamlOpts{
+			customWerfConfigRelPath:             customWerfConfigRelPath,
+			customWerfConfigTemplatesDirRelPath: customWerfConfigTemplatesDirRelPath,
+			giterminismManager:                  giterminismManager,
+			env:                                 opts.Env,
+			debugTemplates:                      opts.DebugTemplates,
+		})
 		if err != nil {
-			return "", nil, fmt.Errorf("failed to get default project name: %w", err)
+			return fmt.Errorf("unable to render werf config: %w", err)
 		}
 
-		format := "meta config section (part of YAML stream separated by three hyphens, https://yaml.org/spec/1.2/spec.html#id2800132) is not defined: add following example config section with required fields, e.g:\n\n" +
-			"```\n" +
-			"configVersion: 1\n" +
-			"project: %s\n" +
-			"---\n" +
-			"```\n\n" +
-			"##############################################################################################################################\n" +
-			"###           WARNING! Project name cannot be changed later without rebuilding and redeploying your application!           ###\n" +
-			"###       Project name should be unique within group of projects that shares build hosts and deployed into the same        ###\n" +
-			"###                    Kubernetes clusters (i.e. unique across all groups within the same gitlab).                         ###\n" +
-			"##############################################################################################################################"
+		werfConfigRenderPath, err := tmp_manager.CreateWerfConfigRender(ctx)
+		if err != nil {
+			return err
+		}
 
-		return "", nil, fmt.Errorf(format, defaultProjectName)
-	}
+		if opts.LogRenderedFilePath {
+			logboek.Context(ctx).LogF("Using werf config render file: %s\n", werfConfigRenderPath)
+		}
 
-	werfConfig, err := prepareWerfConfig(giterminismManager, rawStapelImages, rawImagesFromDockerfile, meta)
+		err = writeWerfConfigRender(werfConfigRenderContent, werfConfigRenderPath)
+		if err != nil {
+			return fmt.Errorf("unable to write rendered config to %s: %w", werfConfigRenderPath, err)
+		}
+
+		docs, err := splitByDocs(werfConfigRenderContent, werfConfigRenderPath)
+		if err != nil {
+			return err
+		}
+
+		meta, rawStapelImages, rawImagesFromDockerfile, err := splitByMetaAndRawImages(docs)
+		if err != nil {
+			return err
+		}
+
+		if meta == nil {
+			defaultProjectName, err := GetDefaultProjectName(ctx, giterminismManager)
+			if err != nil {
+				return fmt.Errorf("failed to get default project name: %w", err)
+			}
+
+			format := "meta config section (part of YAML stream separated by three hyphens, https://yaml.org/spec/1.2/spec.html#id2800132) is not defined: add following example config section with required fields, e.g:\n\n" +
+				"```\n" +
+				"configVersion: 1\n" +
+				"project: %s\n" +
+				"---\n" +
+				"```\n\n" +
+				"##############################################################################################################################\n" +
+				"###           WARNING! Project name cannot be changed later without rebuilding and redeploying your application!           ###\n" +
+				"###       Project name should be unique within group of projects that shares build hosts and deployed into the same        ###\n" +
+				"###                    Kubernetes clusters (i.e. unique across all groups within the same gitlab).                         ###\n" +
+				"##############################################################################################################################"
+
+			return fmt.Errorf(format, defaultProjectName)
+		}
+
+		werfConfig, err := prepareWerfConfig(giterminismManager, rawStapelImages, rawImagesFromDockerfile, meta)
+		if err != nil {
+			return err
+		}
+
+		path = werfConfigPath
+		config = werfConfig
+
+		return nil
+	})
 	if err != nil {
 		return "", nil, err
 	}
 
-	return werfConfigPath, werfConfig, nil
+	return path, config, nil
 }
 
 func GetDefaultProjectName(ctx context.Context, giterminismManager giterminism_manager.Interface) (string, error) {
