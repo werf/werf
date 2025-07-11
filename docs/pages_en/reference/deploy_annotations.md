@@ -24,6 +24,7 @@ This article contains description of annotations which control werf resource ope
  - [`werf.io/show-logs-only-for-containers`](#show-logs-only-for-containers) — enable logging only for specified containers of the resource.
  - [`werf.io/show-service-messages`](#show-service-messages) — enable additional logging of Kubernetes related service messages for resource.
  - [`werf.io/sensitive`](#mark-resource-as-sensitive) — mark the resource as sensitive, so werf will not show diffs for this resource in `werf plan`.
+ - [`werf.io/sensitive-paths`](#mark-fields-of-a-resource-as-sensitive) — mark the fields of a resource as sensitive, so werf will not show diffs for this resource in `werf plan`.
 
 More info about chart templates and other stuff is available in the [helm chapter]({{ "usage/deploy/overview.html" | true_relative_url }}).
 
@@ -192,6 +193,15 @@ The comma-separated list of containers in all Pods owned by a resource with this
 Set to `"true"` to enable additional real-time debugging info (including Kubernetes events) for a resource during tracking. By default, werf would show these service messages only if the resource has failed the entire deploy process.
 
 <img src="https://raw.githubusercontent.com/werf/demos/master/deploy/werf-new-track-modes-1.gif" />
+
+## Mark fields of a resource as sensitive
+
+`"werf.io/sensitive-paths": "JSONPath,JSONPath,..."`
+
+Example: \
+`"werf.io/sensitive-paths": "$.spec.template.spec.containers[*].env[*].value,$.data.*"`
+
+Don't show diffs for resource fields that match specified JSONPath expressions. Overrides the behavior of `werf.io/sensitive`.
 
 ## Mark resource as sensitive
 
