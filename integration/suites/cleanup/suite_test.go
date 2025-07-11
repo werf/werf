@@ -83,7 +83,7 @@ func ImportMetadataIDs(ctx context.Context) []string {
 }
 
 func CustomTags(ctx context.Context) []string {
-	tags, err := SuiteData.ContainerRegistry.Tags(ctx, SuiteData.StagesStorage.String())
+	tags, err := docker_registry.Tags(ctx, SuiteData.ContainerRegistry, SuiteData.StagesStorage.String())
 	Expect(err).ShouldNot(HaveOccurred())
 
 	var result []string
