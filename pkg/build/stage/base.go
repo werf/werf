@@ -96,6 +96,7 @@ func NewBaseStage(name StageName, options *BaseStageOptions) *BaseStage {
 	s.imageTmpDir = options.ImageTmpDir
 	s.containerWerfDir = options.ContainerWerfDir
 	s.projectName = options.ProjectName
+	s.meta = &StageMeta{}
 	return s
 }
 
@@ -112,6 +113,14 @@ type BaseStage struct {
 	containerWerfDir string
 	configMounts     []*config.Mount
 	projectName      string
+	meta             *StageMeta
+}
+
+type StageMeta struct {
+	Rebuilt             bool
+	BaseImagePulled     bool
+	BaseImageSourceType string
+	BuildTime           string
 }
 
 func (s *BaseStage) IsBuildable() bool {
@@ -560,4 +569,15 @@ func mergeMounts(a, b map[string][]string) map[string][]string {
 	}
 
 	return res
+}
+
+func (s *BaseStage) SetMeta(meta *StageMeta) {
+	s.meta = meta
+}
+
+func (s *BaseStage) GetMeta() *StageMeta {
+	if s.meta == nil {
+		s.meta = &StageMeta{}
+	}
+	return s.meta
 }

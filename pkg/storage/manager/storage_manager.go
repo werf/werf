@@ -77,7 +77,7 @@ type StorageManagerInterface interface {
 	GetStageDescSetWithCache(ctx context.Context) (image.StageDescSet, error)
 	GetFinalStageDescSet(ctx context.Context) (image.StageDescSet, error)
 
-	FetchStage(ctx context.Context, containerBackend container_backend.ContainerBackend, stg stage.Interface) error
+	FetchStage(ctx context.Context, containerBackend container_backend.ContainerBackend, stg stage.Interface) (FetchStageInfo, error)
 	SelectSuitableStageDesc(ctx context.Context, c stage.Conveyor, stg stage.Interface, stageDescSet image.StageDescSet) (*image.StageDesc, error)
 	CopySuitableStageDescByDigest(ctx context.Context, stageDesc *image.StageDesc, sourceStagesStorage, destinationStagesStorage storage.StagesStorage, containerBackend container_backend.ContainerBackend, targetPlatform string) (*image.StageDesc, error)
 	CopyStageIntoCacheStorages(ctx context.Context, stageID image.StageID, cacheStagesStorages []storage.StagesStorage, opts CopyStageIntoStorageOptions) error
@@ -398,16 +398,27 @@ func doFetchStage(ctx context.Context, projectName string, stagesStorage storage
 	})
 }
 
-func (m *StorageManager) FetchStage(ctx context.Context, containerBackend container_backend.ContainerBackend, stg stage.Interface) error {
+const (
+	// could not be imported form build
+	BaseImageSourceTypeCacheRepo = "cache-repo"
+	BaseImageSourceTypeRepo      = "repo"
+)
+
+type FetchStageInfo struct {
+	BaseImagePulled bool
+	BaseImageSource string
+}
+
+func (m *StorageManager) FetchStage(ctx context.Context, containerBackend container_backend.ContainerBackend, stg stage.Interface) (FetchStageInfo, error) {
 	logboek.Context(ctx).Debug().LogF("-- StagesManager.FetchStage %s\n", stg.LogDetailedName())
 
 	if err := m.LockStageImage(ctx, stg.GetStageImage().Image.Name()); err != nil {
-		return fmt.Errorf("error locking stage image %q: %w", stg.GetStageImage().Image.Name(), err)
+		return FetchStageInfo{}, fmt.Errorf("error locking stage image %q: %w", stg.GetStageImage().Image.Name(), err)
 	}
 
 	shouldFetch, err := m.StagesStorage.ShouldFetchImage(ctx, stg.GetStageImage().Image)
 	if err != nil {
-		return fmt.Errorf("error checking should fetch image: %w", err)
+		return FetchStageInfo{}, fmt.Errorf("error checking should fetch image: %w", err)
 	}
 	if !shouldFetch {
 		imageName := m.StagesStorage.ConstructStageImageName(m.ProjectName, stg.GetStageImage().Image.GetStageDesc().StageID.Digest, stg.GetStageImage().Image.GetStageDesc().StageID.CreationTs)
@@ -415,14 +426,16 @@ func (m *StorageManager) FetchStage(ctx context.Context, containerBackend contai
 		logboek.Context(ctx).Info().LogF("Image %s exists, will not perform fetch\n", imageName)
 
 		if err := lrumeta.CommonLRUImagesCache.AccessImage(ctx, imageName); err != nil {
-			return fmt.Errorf("error accessing last recently used images cache for %s: %w", imageName, err)
+			return FetchStageInfo{}, fmt.Errorf("error accessing last recently used images cache for %s: %w", imageName, err)
 		}
 
-		return nil
+		return FetchStageInfo{BaseImagePulled: false}, nil
 	}
 
 	var fetchedImg container_backend.LegacyImageInterface
 	var cacheStagesStorageListToRefill []storage.StagesStorage
+	var pulled bool
+	var source string
 
 	fetchStageFromCache := func(stagesStorage storage.StagesStorage) (container_backend.LegacyImageInterface, error) {
 		stageID := stg.GetStageImage().Image.GetStageDesc().StageID
@@ -441,6 +454,7 @@ func (m *StorageManager) FetchStage(ctx context.Context, containerBackend contai
 			proc.Start()
 
 			err := doFetchStage(ctx, m.ProjectName, stagesStorage, *stageID, stageImage)
+			pulled = true
 
 			if IsErrStageNotFound(err) {
 				logboek.Context(ctx).Default().LogF("Stage not found\n")
@@ -468,6 +482,7 @@ func (m *StorageManager) FetchStage(ctx context.Context, containerBackend contai
 			if stageDesc == nil {
 				return nil, ErrStageNotFound
 			}
+			pulled = false
 			stageImage.SetStageDesc(stageDesc)
 		}
 
@@ -523,6 +538,7 @@ func (m *StorageManager) FetchStage(ctx context.Context, containerBackend contai
 		}
 
 		fetchedImg = cacheImg
+		source = BaseImageSourceTypeCacheRepo
 		break
 	}
 
@@ -537,7 +553,7 @@ func (m *StorageManager) FetchStage(ctx context.Context, containerBackend contai
 
 		if IsErrStageNotFound(err) {
 			logboek.Context(ctx).Error().LogF("Stage %s image %s is no longer available!\n", stg.LogDetailedName(), stg.GetStageImage().Image.Name())
-			return ErrUnexpectedStagesStorageState
+			return FetchStageInfo{}, ErrUnexpectedStagesStorageState
 		}
 
 		if storage.IsErrBrokenImage(err) {
@@ -545,16 +561,17 @@ func (m *StorageManager) FetchStage(ctx context.Context, containerBackend contai
 
 			logboek.Context(ctx).Error().LogF("Will mark image %s as rejected in the stages storage %s\n", stg.GetStageImage().Image.Name(), m.StagesStorage.String())
 			if err := m.StagesStorage.RejectStage(ctx, m.ProjectName, stageID.Digest, stageID.CreationTs); err != nil {
-				return fmt.Errorf("unable to reject stage %s image %s in the stages storage %s: %w", stg.LogDetailedName(), stg.GetStageImage().Image.Name(), m.StagesStorage.String(), err)
+				return FetchStageInfo{}, fmt.Errorf("unable to reject stage %s image %s in the stages storage %s: %w", stg.LogDetailedName(), stg.GetStageImage().Image.Name(), m.StagesStorage.String(), err)
 			}
 
-			return ErrUnexpectedStagesStorageState
+			return FetchStageInfo{}, ErrUnexpectedStagesStorageState
 		}
 
 		if err != nil {
-			return fmt.Errorf("unable to fetch stage %s from stages storage %s: %w", stageID.String(), m.StagesStorage.String(), err)
+			return FetchStageInfo{}, fmt.Errorf("unable to fetch stage %s from stages storage %s: %w", stageID.String(), m.StagesStorage.String(), err)
 		}
 
+		source = BaseImageSourceTypeRepo
 		fetchedImg = img.Image
 	}
 
@@ -576,7 +593,7 @@ func (m *StorageManager) FetchStage(ctx context.Context, containerBackend contai
 		}
 	}
 
-	return nil
+	return FetchStageInfo{BaseImagePulled: pulled, BaseImageSource: source}, nil
 }
 
 func (m *StorageManager) CopyStageIntoCacheStorages(ctx context.Context, stageID image.StageID, cacheStagesStorageList []storage.StagesStorage, opts CopyStageIntoStorageOptions) error {

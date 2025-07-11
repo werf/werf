@@ -1,15 +1,11 @@
 package build
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -92,68 +88,6 @@ type BuildPhase struct {
 	buildContextArchive container_backend.BuildContextArchiver
 }
 
-const (
-	ReportJSON    ReportFormat = "json"
-	ReportEnvFile ReportFormat = "envfile"
-)
-
-type ReportFormat string
-
-type ImagesReport struct {
-	mux              sync.Mutex
-	Images           map[string]ReportImageRecord
-	ImagesByPlatform map[string]map[string]ReportImageRecord
-}
-
-func NewImagesReport() *ImagesReport {
-	return &ImagesReport{
-		Images:           make(map[string]ReportImageRecord),
-		ImagesByPlatform: make(map[string]map[string]ReportImageRecord),
-	}
-}
-
-func (report *ImagesReport) SetImageRecord(name string, imageRecord ReportImageRecord) {
-	report.mux.Lock()
-	defer report.mux.Unlock()
-	report.Images[name] = imageRecord
-}
-
-func (report *ImagesReport) SetImageByPlatformRecord(targetPlatform, name string, imageRecord ReportImageRecord) {
-	report.mux.Lock()
-	defer report.mux.Unlock()
-
-	if _, hasKey := report.ImagesByPlatform[name]; !hasKey {
-		report.ImagesByPlatform[name] = make(map[string]ReportImageRecord)
-	}
-	report.ImagesByPlatform[name][targetPlatform] = imageRecord
-}
-
-func (report *ImagesReport) ToJsonData() ([]byte, error) {
-	report.mux.Lock()
-	defer report.mux.Unlock()
-
-	data, err := json.MarshalIndent(report, "", "\t")
-	if err != nil {
-		return nil, err
-	}
-	data = append(data, []byte("\n")...)
-
-	return data, nil
-}
-
-func (report *ImagesReport) ToEnvFileData() []byte {
-	report.mux.Lock()
-	defer report.mux.Unlock()
-
-	buf := bytes.NewBuffer([]byte{})
-	for img, record := range report.Images {
-		buf.WriteString(GenerateImageEnv(img, record.DockerImageName))
-		buf.WriteString("\n")
-	}
-
-	return buf.Bytes()
-}
-
 func GenerateImageEnv(werfImageName, imageName string) string {
 	var imageEnvName string
 	if werfImageName == "" {
@@ -168,17 +102,6 @@ func GenerateImageEnv(werfImageName, imageName string) string {
 	}
 
 	return fmt.Sprintf("%s=%s", imageEnvName, imageName)
-}
-
-type ReportImageRecord struct {
-	WerfImageName     string
-	DockerRepo        string
-	DockerTag         string
-	DockerImageID     string
-	DockerImageDigest string
-	DockerImageName   string
-	Rebuilt           bool
-	Final             bool
 }
 
 func (phase *BuildPhase) Name() string {
@@ -481,90 +404,7 @@ func (phase *BuildPhase) publishMultiplatformImageMetadata(ctx context.Context, 
 }
 
 func (phase *BuildPhase) createReport(ctx context.Context) error {
-	for _, desc := range phase.Conveyor.imagesTree.GetImagesByName(false) {
-		name, images := desc.Unpair()
-		targetPlatforms := util.MapFuncToSlice(images, func(img *image.Image) string { return img.TargetPlatform })
-
-		for _, img := range images {
-			stageImage := img.GetLastNonEmptyStage().GetStageImage().Image
-			stageDesc := stageImage.GetFinalStageDesc()
-			if stageDesc == nil {
-				stageDesc = stageImage.GetStageDesc()
-			}
-
-			record := ReportImageRecord{
-				WerfImageName:     img.GetName(),
-				DockerRepo:        stageDesc.Info.Repository,
-				DockerTag:         stageDesc.Info.Tag,
-				DockerImageID:     stageDesc.Info.ID,
-				DockerImageDigest: stageDesc.Info.GetDigest(),
-				DockerImageName:   stageDesc.Info.Name,
-				Rebuilt:           img.GetRebuilt(),
-				Final:             img.IsFinal,
-			}
-
-			if os.Getenv("WERF_ENABLE_REPORT_BY_PLATFORM") == "1" {
-				phase.ImagesReport.SetImageByPlatformRecord(img.TargetPlatform, img.GetName(), record)
-			}
-			if len(targetPlatforms) == 1 {
-				phase.ImagesReport.SetImageRecord(img.Name, record)
-			}
-		}
-
-		if _, isLocal := phase.Conveyor.StorageManager.GetStagesStorage().(*storage.LocalStagesStorage); !isLocal {
-			if len(targetPlatforms) > 1 {
-				img := phase.Conveyor.imagesTree.GetMultiplatformImage(name)
-
-				isRebuilt := false
-				for _, pImg := range img.Images {
-					isRebuilt = (isRebuilt || pImg.GetRebuilt())
-				}
-
-				stageDesc := img.GetFinalStageDesc()
-				if stageDesc == nil {
-					stageDesc = img.GetStageDesc()
-				}
-
-				record := ReportImageRecord{
-					WerfImageName:     img.Name,
-					DockerRepo:        stageDesc.Info.Repository,
-					DockerTag:         stageDesc.Info.Tag,
-					DockerImageID:     stageDesc.Info.ID,
-					DockerImageDigest: stageDesc.Info.GetDigest(),
-					DockerImageName:   stageDesc.Info.Name,
-					Rebuilt:           isRebuilt,
-					Final:             img.IsFinal,
-				}
-				phase.ImagesReport.SetImageRecord(img.Name, record)
-			}
-		}
-	}
-
-	debugJsonData, err := phase.ImagesReport.ToJsonData()
-	logboek.Context(ctx).Debug().LogF("ImagesReport: (err: %v)\n%s", err, debugJsonData)
-
-	if phase.ReportPath != "" {
-		var data []byte
-		var err error
-		switch phase.ReportFormat {
-		case ReportJSON:
-			if data, err = phase.ImagesReport.ToJsonData(); err != nil {
-				return fmt.Errorf("unable to prepare report json: %w", err)
-			}
-			logboek.Context(ctx).Debug().LogF("Writing json report to the %q:\n%s", phase.ReportPath, data)
-		case ReportEnvFile:
-			data = phase.ImagesReport.ToEnvFileData()
-			logboek.Context(ctx).Debug().LogF("Writing envfile report to the %q:\n%s", phase.ReportPath, data)
-		default:
-			panic(fmt.Sprintf("unknown report format %q", phase.ReportFormat))
-		}
-
-		if err := ioutil.WriteFile(phase.ReportPath, data, 0o644); err != nil {
-			return fmt.Errorf("unable to write report to %s: %w", phase.ReportPath, err)
-		}
-	}
-
-	return nil
+	return createBuildReport(ctx, phase)
 }
 
 func (phase *BuildPhase) ImageProcessingShouldBeStopped(_ context.Context, _ *image.Image) bool {
@@ -799,6 +639,10 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *image.Image, stg
 			}
 		}
 
+		stg.SetMeta(&stage.StageMeta{
+			Rebuilt: false,
+		})
+
 		return nil
 	}
 
@@ -813,13 +657,23 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *image.Image, stg
 			return fmt.Errorf("stages required")
 		}
 
+		start := time.Now()
+
 		// Will build a new stage
 		i := phase.Conveyor.GetOrCreateStageImage(uuid.New().String(), phase.StagesIterator.GetPrevImage(img, stg), stg, img)
 		stg.SetStageImage(i)
 
+		var fetchInfo fetchBaseImageForStageInfo
 		if stg.IsBuildable() {
-			if err := phase.fetchBaseImageForStage(ctx, img, stg); err != nil {
+			info, err := phase.fetchBaseImageForStage(ctx, img, stg)
+			if err != nil {
 				return err
+			}
+			fetchInfo = info
+		} else {
+			fetchInfo = fetchBaseImageForStageInfo{
+				BaseImagePulled: false,
+				BaseImageSource: BaseImageSourceTypeRepo,
 			}
 		}
 
@@ -830,11 +684,25 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *image.Image, stg
 		if err := phase.buildStage(ctx, img, stg); err != nil {
 			return err
 		}
+		duration := time.Since(start).Seconds()
+
+		stg.SetMeta(&stage.StageMeta{
+			Rebuilt:             true,
+			BaseImagePulled:     fetchInfo.BaseImagePulled,
+			BaseImageSourceType: fetchInfo.BaseImageSource,
+			BuildTime:           fmt.Sprintf("%.2f", duration),
+		})
 	}
 
 	// debug assertion
 	if stg.GetStageImage().Image.GetStageDesc() == nil {
 		panic(fmt.Sprintf("expected stage %s image %q built image info (image name = %s) to be set!", stg.Name(), img.GetName(), stg.GetStageImage().Image.Name()))
+	}
+
+	if foundSuitableSecondaryStage {
+		stg.SetMeta(&stage.StageMeta{
+			BaseImageSourceType: BaseImageSourceTypeSecondary,
+		})
 	}
 
 	// Add managed image record only if there was at least one newly built stage
@@ -918,8 +786,8 @@ func (phase *BuildPhase) findAndFetchStageFromSecondaryStagesStorage(ctx context
 			storageManager.GetCacheStagesStorageList(),
 			manager.CopyStageIntoStorageOptions{
 				FetchStage:       stg,
-				LogDetailedName:  stg.LogDetailedName(),
 				ContainerBackend: phase.Conveyor.ContainerBackend,
+				LogDetailedName:  stg.LogDetailedName(),
 			},
 		); err != nil {
 			return fmt.Errorf("unable to copy stage %s into cache storages: %w", stg.GetStageImage().Image.GetStageDesc().StageID.String(), err)
@@ -949,15 +817,28 @@ ScanSecondaryStagesStorageList:
 	return foundSuitableStage, nil
 }
 
-func (phase *BuildPhase) fetchBaseImageForStage(ctx context.Context, img *image.Image, stg stage.Interface) error {
+type fetchBaseImageForStageInfo struct {
+	BaseImagePulled bool
+	BaseImageSource string
+}
+
+func (phase *BuildPhase) fetchBaseImageForStage(ctx context.Context, img *image.Image, stg stage.Interface) (fetchBaseImageForStageInfo, error) {
 	if stg.HasPrevStage() {
-		return phase.Conveyor.StorageManager.FetchStage(ctx, phase.Conveyor.ContainerBackend, phase.StagesIterator.PrevBuiltStage)
+		info, err := phase.Conveyor.StorageManager.FetchStage(ctx, phase.Conveyor.ContainerBackend, phase.StagesIterator.PrevBuiltStage)
+		return fetchBaseImageForStageInfo{
+			BaseImagePulled: info.BaseImagePulled,
+			BaseImageSource: info.BaseImageSource,
+		}, err
 	} else {
-		if err := img.FetchBaseImage(ctx); err != nil {
-			return fmt.Errorf("unable to fetch base image %q for stage %s: %w", img.GetBaseStageImage().Image.Name(), stg.LogDetailedName(), err)
+		info, err := img.FetchBaseImage(ctx)
+		if err != nil {
+			return fetchBaseImageForStageInfo{}, fmt.Errorf("unable to fetch base image %q for stage %s: %w", img.GetBaseStageImage().Image.Name(), stg.LogDetailedName(), err)
 		}
+		return fetchBaseImageForStageInfo{
+			BaseImagePulled: info.BaseImagePulled,
+			BaseImageSource: info.BaseImageSource,
+		}, nil
 	}
-	return nil
 }
 
 func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, stg stage.Interface) (bool, func(), error) {

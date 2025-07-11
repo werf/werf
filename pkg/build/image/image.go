@@ -348,24 +348,34 @@ func (i *Image) GetBaseImageRepoDigest() string {
 	return i.baseImageRepoDigest
 }
 
-func (i *Image) FetchBaseImage(ctx context.Context) error {
+const (
+	BaseImageSourceTypeRepo     = "repo"
+	BaseImageSourceTypeRegistry = "registry"
+)
+
+type FetchBaseImageInfo struct {
+	BaseImagePulled bool
+	BaseImageSource string
+}
+
+func (i *Image) FetchBaseImage(ctx context.Context) (FetchBaseImageInfo, error) {
 	logboek.Context(ctx).Debug().LogF(" -- FetchBaseImage for %q\n", i.Name)
 
 	switch i.baseImageType {
 	case ImageFromRegistryAsBaseImage:
 		if i.baseStageImage.Image.Name() == "scratch" {
 			if !i.IsDockerfileImage {
-				return fmt.Errorf(`invalid base image: "scratch" is not allowed for stapel images. Please use a Dockerfile image or an alternative scratch image, such as "registry.werf.io/werf/scratch"`)
+				return FetchBaseImageInfo{}, fmt.Errorf(`invalid base image: "scratch" is not allowed for stapel images. Please use a Dockerfile image or an alternative scratch image, such as "registry.werf.io/werf/scratch"`)
 			}
 
-			return nil
+			return FetchBaseImageInfo{}, nil
 		}
 
 		// TODO: Refactor, move manifest fetching into SetupBaseImage, only pull image in FetchBaseImage method
 
 		// Check if image exists locally and is up-to-date.
 		if info, err := i.ContainerBackend.GetImageInfo(ctx, i.baseStageImage.Image.Name(), container_backend.GetImageInfoOpts{}); err != nil {
-			return fmt.Errorf("unable to inspect local image %s: %w", i.baseStageImage.Image.Name(), err)
+			return FetchBaseImageInfo{}, fmt.Errorf("unable to inspect local image %s: %w", i.baseStageImage.Image.Name(), err)
 		} else if info != nil {
 			logboek.Context(ctx).Debug().LogF("GetImageInfo of %q -> %#v\n", i.baseStageImage.Image.Name(), info)
 
@@ -390,7 +400,7 @@ func (i *Image) FetchBaseImage(ctx context.Context) error {
 					logboek.Context(ctx).Info().LogF("No pull needed for base image %s of image %q: image by digest %s is up to date\n", i.baseImageReference, i.Name, i.baseImageRepoDigest)
 				}
 				// No image pull
-				return nil
+				return FetchBaseImageInfo{BaseImagePulled: false}, nil
 			}
 		}
 
@@ -401,16 +411,16 @@ func (i *Image) FetchBaseImage(ctx context.Context) error {
 			DoError(func() error {
 				return container_backend.PullImageFromRegistry(ctx, i.ContainerBackend, i.baseStageImage.Image)
 			}); err != nil {
-			return err
+			return FetchBaseImageInfo{}, err
 		}
 
 		info, err := i.ContainerBackend.GetImageInfo(ctx, i.baseStageImage.Image.Name(), container_backend.GetImageInfoOpts{})
 		if err != nil {
-			return fmt.Errorf("unable to inspect local image %s: %w", i.baseStageImage.Image.Name(), err)
+			return FetchBaseImageInfo{}, fmt.Errorf("unable to inspect local image %s: %w", i.baseStageImage.Image.Name(), err)
 		}
 
 		if info == nil {
-			return fmt.Errorf("unable to inspect local image %s after successful pull: image is not exists", i.baseStageImage.Image.Name())
+			return FetchBaseImageInfo{}, fmt.Errorf("unable to inspect local image %s after successful pull: image is not exist", i.baseStageImage.Image.Name())
 		}
 
 		// TODO: It might be a stage as base image (passed as dependency), and the absence of StageID in the description will lead to breaking the logic.
@@ -423,12 +433,13 @@ func (i *Image) FetchBaseImage(ctx context.Context) error {
 			})
 		}
 
-		return nil
+		return FetchBaseImageInfo{BaseImagePulled: true, BaseImageSource: BaseImageSourceTypeRegistry}, nil
 	case StageAsBaseImage:
-		return i.StorageManager.FetchStage(ctx, i.ContainerBackend, i.stageAsBaseImage)
+		info, err := i.StorageManager.FetchStage(ctx, i.ContainerBackend, i.stageAsBaseImage)
+		return FetchBaseImageInfo{BaseImagePulled: info.BaseImagePulled, BaseImageSource: info.BaseImageSource}, err
 
 	case NoBaseImage:
-		return nil
+		return FetchBaseImageInfo{BaseImagePulled: true, BaseImageSource: BaseImageSourceTypeRepo}, nil
 
 	default:
 		panic(fmt.Sprintf("unknown base image type %q", i.baseImageType))
