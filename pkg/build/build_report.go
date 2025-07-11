@@ -20,7 +20,6 @@ const (
 )
 
 const (
-	BaseImageSourceTypeRegistry  = "registry"
 	BaseImageSourceTypeRepo      = "repo"
 	BaseImageSourceTypeSecondary = "secondary"
 )

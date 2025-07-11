@@ -118,7 +118,6 @@ type BaseStage struct {
 
 type StageMeta struct {
 	Rebuilt             bool
-	FromSecondary       bool
 	BaseImagePulled     bool
 	BaseImageSourceType string
 	BuildTime           string

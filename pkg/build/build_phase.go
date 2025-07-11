@@ -688,7 +688,6 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *image.Image, stg
 
 	if foundSuitableSecondaryStage {
 		stg.SetMeta(&stage.StageMeta{
-			FromSecondary:       true,
 			BaseImageSourceType: BaseImageSourceTypeSecondary,
 		})
 	}
