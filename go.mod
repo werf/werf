@@ -66,7 +66,7 @@ require (
 	github.com/werf/kubedog-for-werf-helm v0.0.0-20241217155728-9d45c48b82b6
 	github.com/werf/lockgate v0.1.1
 	github.com/werf/logboek v0.6.1
-	github.com/werf/nelm v1.7.3-0.20250710170344-e34e4227b01b
+	github.com/werf/nelm v1.8.1-0.20250711141902-0dcd48049a64
 	github.com/werf/nelm-for-werf-helm v0.0.0-20241217155925-b0e6734d1dbf
 	go.opentelemetry.io/otel v1.24.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.24.0
@@ -113,6 +113,7 @@ require (
 	github.com/mitchellh/hashstructure/v2 v2.0.2 // indirect
 	github.com/moby/term v0.5.0 // indirect
 	github.com/muesli/cancelreader v0.2.2 // indirect
+	github.com/ohler55/ojg v1.26.7 // indirect
 	github.com/radovskyb/watcher v1.0.7 // indirect
 	github.com/sajari/fuzzy v1.0.0 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
