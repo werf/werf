@@ -9,10 +9,16 @@ on:
       - "[0-9]+"
     paths:
       - "trdl_channels.yaml"
+  workflow_run:
+    workflows: ["release:trdl-release"]
+    types: [completed]
 
 jobs:
   update-release:
     runs-on: ubuntu-22.04
+    if: |
+      github.event_name == 'push' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -32,27 +38,6 @@ jobs:
             local version=$1
             gh release view "v$version" >/dev/null 2>&1
             return $?
-          }
-
-          wait_for_release() {
-            local version=$1
-            local max_attempts=30
-            local delay=60
-            local attempt=1
-
-            while [ $attempt -le $max_attempts ]; do
-              if check_release_exists "$version"; then
-                echo "Release v$version found after $attempt attempts"
-                return 0
-              fi
-              
-              echo "Release v$version not found yet (attempt $attempt/$max_attempts), waiting $delay seconds..."
-              sleep $delay
-              ((attempt++))
-            done
-
-            echo "Timeout waiting for release v$version"
-            return 1
           }
 
           current_group=""
@@ -79,13 +64,8 @@ jobs:
           RELEASES=$(gh release list --limit 30 --json tagName | jq -r '.[].tagName')
           for version in "${!VERSION_CHANNELS[@]}"; do
             if ! check_release_exists "$version"; then
-              echo "Release v$version not found immediately, waiting for it to appear..."
-              if wait_for_release "$version"; then
-                RELEASES="$RELEASES v$version"
-              else
-                echo "Skipping v$version as it didn't appear within the timeout period"
-                unset VERSION_CHANNELS["$version"]
-              fi
+              echo "Release v$version not found, skipping..."
+              unset VERSION_CHANNELS["$version"]
             fi
           done
 
