@@ -381,3 +381,11 @@ func (storage *LocalStagesStorage) GetSyncServerRecords(ctx context.Context, pro
 func (storage *LocalStagesStorage) PostSyncServerRecord(ctx context.Context, projectName string, rec *SyncServerRecord) error {
 	panic("not implemented")
 }
+
+func (storage *LocalStagesStorage) GetLastCleanupRecord(ctx context.Context, projectName string, opts ...Option) (*CleanUpRecord, error) {
+	panic("not implemented")
+}
+
+func (storage *LocalStagesStorage) PostLastCleanupRecord(ctx context.Context, projectName string) error {
+	panic("not implemented")
+}
