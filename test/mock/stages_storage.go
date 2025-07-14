@@ -305,6 +305,26 @@ func (mr *MockStagesStorageMockRecorder) GetImportMetadataIDs(ctx, projectName a
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetImportMetadataIDs", reflect.TypeOf((*MockStagesStorage)(nil).GetImportMetadataIDs), varargs...)
 }
 
+// GetLastCleanupRecord mocks base method.
+func (m *MockStagesStorage) GetLastCleanupRecord(ctx context.Context, projectName string, opts ...storage.Option) (*storage.CleanUpRecord, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, projectName}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetLastCleanupRecord", varargs...)
+	ret0, _ := ret[0].(*storage.CleanUpRecord)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetLastCleanupRecord indicates an expected call of GetLastCleanupRecord.
+func (mr *MockStagesStorageMockRecorder) GetLastCleanupRecord(ctx, projectName any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, projectName}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLastCleanupRecord", reflect.TypeOf((*MockStagesStorage)(nil).GetLastCleanupRecord), varargs...)
+}
+
 // GetManagedImages mocks base method.
 func (m *MockStagesStorage) GetManagedImages(ctx context.Context, projectName string, opts ...storage.Option) ([]string, error) {
 	m.ctrl.T.Helper()
@@ -452,6 +472,20 @@ func (m *MockStagesStorage) PostClientIDRecord(ctx context.Context, projectName 
 func (mr *MockStagesStorageMockRecorder) PostClientIDRecord(ctx, projectName, rec any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostClientIDRecord", reflect.TypeOf((*MockStagesStorage)(nil).PostClientIDRecord), ctx, projectName, rec)
+}
+
+// PostLastCleanupRecord mocks base method.
+func (m *MockStagesStorage) PostLastCleanupRecord(ctx context.Context, projectName string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PostLastCleanupRecord", ctx, projectName)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PostLastCleanupRecord indicates an expected call of PostLastCleanupRecord.
+func (mr *MockStagesStorageMockRecorder) PostLastCleanupRecord(ctx, projectName any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostLastCleanupRecord", reflect.TypeOf((*MockStagesStorage)(nil).PostLastCleanupRecord), ctx, projectName)
 }
 
 // PostMultiplatformImage mocks base method.
