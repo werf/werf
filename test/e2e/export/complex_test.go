@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/go-containerregistry/pkg/name"
+	"github.com/google/go-containerregistry/pkg/v1/remote"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
@@ -50,13 +52,17 @@ var _ = Describe("Complex converge", Label("e2e", "converge", "complex"), func()
 				}
 
 				By("state0: checking result")
-				ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+				_, cancel := context.WithTimeout(ctx, 10*time.Second)
 				defer cancel()
 
 				for _, imageName := range opts.ImageNames {
-					b, err := SuiteData.ContainerRegistry.IsTagExist(ctx, fmt.Sprintf("%s/werf-export-%s:%s", SuiteData.RegistryLocalAddress, imageName, tag))
-					Expect(err).NotTo(HaveOccurred())
-					Expect(b).To(BeTrue())
+					i := fmt.Sprintf("%s/werf-export-%s:%s", SuiteData.RegistryLocalAddress, imageName, tag)
+					ref, err := name.ParseReference(i)
+					Expect(err).ShouldNot(HaveOccurred())
+
+					_, err = remote.Head(ref)
+					Expect(err).ShouldNot(HaveOccurred(), fmt.Sprintf("image %s should be exported", imageName))
+
 				}
 			}
 		},

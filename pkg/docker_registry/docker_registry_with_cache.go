@@ -99,7 +99,7 @@ func (r *DockerRegistryWithCache) IsTagExist(ctx context.Context, reference stri
 	}
 
 	repositoryAddress := strings.Join([]string{referenceParts.registry, referenceParts.repository}, "/")
-	tags, err := r.Tags(ctx, repositoryAddress, opts...)
+	tags, err := Tags(ctx, r, repositoryAddress, opts...)
 	if err != nil {
 		return false, err
 	}
