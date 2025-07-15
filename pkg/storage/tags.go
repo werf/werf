@@ -24,6 +24,9 @@ To completely disable cleanup and prevent meta images from being published to th
 )
 
 func (storage *RepoStagesStorage) analyzeMetaTags(ctx context.Context, tags []string, opts ...docker_registry.Option) error {
+	if storage.gitHistoryBasedCleanupDisabled || storage.cleanupDisabled {
+		return nil
+	}
 	onceIface, _ := storage.warnMetaTagsOverflowOnce.LoadOrStore(storage.RepoAddress, new(sync.Once))
 	once := onceIface.(*sync.Once)
 

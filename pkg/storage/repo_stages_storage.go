@@ -83,13 +83,26 @@ type RepoStagesStorage struct {
 	ContainerBackend container_backend.ContainerBackend
 
 	warnMetaTagsOverflowOnce sync.Map // map[storage.RepoAddress]*sync.Once
+
+	cleanupDisabled                bool
+	gitHistoryBasedCleanupDisabled bool
 }
 
-func NewRepoStagesStorage(repoAddress string, containerBackend container_backend.ContainerBackend, dockerRegistry docker_registry.Interface) *RepoStagesStorage {
+type NewRepoStagesStorageOptions struct {
+	RepoAddress                    string
+	ContainerBackend               container_backend.ContainerBackend
+	DockerRegistry                 docker_registry.Interface
+	CleanupDisabled                bool
+	GitHistoryBasedCleanupDisabled bool
+}
+
+func NewRepoStagesStorage(opts *NewRepoStagesStorageOptions) *RepoStagesStorage {
 	return &RepoStagesStorage{
-		RepoAddress:      repoAddress,
-		DockerRegistry:   dockerRegistry,
-		ContainerBackend: containerBackend,
+		RepoAddress:                    opts.RepoAddress,
+		DockerRegistry:                 opts.DockerRegistry,
+		ContainerBackend:               opts.ContainerBackend,
+		cleanupDisabled:                opts.CleanupDisabled,
+		gitHistoryBasedCleanupDisabled: opts.GitHistoryBasedCleanupDisabled,
 	}
 }
 
@@ -1072,6 +1085,11 @@ func getLastCleanupRecord(ctx context.Context, registry docker_registry.Interfac
 }
 
 func (storage *RepoStagesStorage) PostLastCleanupRecord(ctx context.Context, projectName string) error {
+	if storage.cleanupDisabled {
+		logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PostLastCleanupRecord cleanup is disabled for project %s\n", projectName)
+		return nil
+	}
+
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PostLastCleanupRecord for project %s\n", projectName)
 
 	fullImageName := fmt.Sprintf(RepoCleanUpRecord_ImageNameFormat, storage.RepoAddress)
