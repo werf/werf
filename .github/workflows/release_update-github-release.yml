@@ -30,67 +30,80 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
         run: |
-          declare -A VERSION_CHANNELS
-          TARGET_GROUP="2"
-          in_target_group=false
-
           check_release_exists() {
             local version=$1
             gh release view "v$version" >/dev/null 2>&1
             return $?
           }
 
-          current_group=""
-          while IFS= read -r line; do
-            if [[ $line =~ name:\ \"([^\"]+)\" ]]; then
-              current_group="${BASH_REMATCH[1]}"
-              if [[ "$current_group" == "$TARGET_GROUP" ]]; then
-                in_target_group=true
-              else
-                in_target_group=false
+          get_release_name() {
+            local tag=$1
+            gh release view "$tag" --json name | jq -r '.name'
+          }
+
+          process_releases() {
+            echo "Processing releases based on trdl_channels.yaml..."
+            
+            declare -A VERSION_CHANNELS
+            declare -A GROUP_VERSIONS
+
+            current_group=""
+            while IFS= read -r line; do
+              if [[ $line =~ name:\ \"([^\"]+)\" ]]; then
+                current_group="${BASH_REMATCH[1]}"
+              elif [[ $line =~ name:\ ([a-z-]+) ]]; then
+                current_channel="${BASH_REMATCH[1]}"
+              elif [[ $line =~ version:\ ([0-9a-zA-Z.+-]+) ]]; then
+                version="${BASH_REMATCH[1]}"
+                key="${current_group}:${version}"
+                if [[ -z "${VERSION_CHANNELS[$key]}" ]]; then
+                  VERSION_CHANNELS["$key"]="$current_channel"
+                  GROUP_VERSIONS["$version"]="$current_group"
+                else
+                  VERSION_CHANNELS["$key"]="${VERSION_CHANNELS[$key]},$current_channel"
+                fi
               fi
-            elif $in_target_group && [[ $line =~ name:\ ([a-z-]+) ]]; then
-              current_channel="${BASH_REMATCH[1]}"
-            elif $in_target_group && [[ $line =~ version:\ ([0-9a-zA-Z.+-]+) ]]; then
-              version="${BASH_REMATCH[1]}"
-              if [[ -z "${VERSION_CHANNELS[$version]}" ]]; then
-                VERSION_CHANNELS["$version"]="$current_channel"
+            done < trdl_channels.yaml
+
+            for key in "${!VERSION_CHANNELS[@]}"; do
+              version="${key#*:}"
+              group="${key%:*}"
+              tag="v$version"
+              
+              if check_release_exists "$version"; then
+                channels="${VERSION_CHANNELS[$key]}"
+                expected_title="$tag [$channels]"
+                current_title=$(get_release_name "$tag")
+
+                if [[ "$current_title" != "$expected_title" ]]; then
+                  if [[ $group == "2" && $channels == *stable* ]]; then
+                    echo "Updating $tag (group $group): stable, latest"
+                    gh release edit "$tag" --title "$expected_title" --latest --prerelease=false || true
+                  elif [[ $channels == *rock-solid* ]]; then
+                    echo "Updating $tag (group $group): rock-solid, just title"
+                    gh release edit "$tag" --title "$expected_title" --prerelease=false || true
+                  else
+                    echo "Updating $tag (group $group): prerelease, channels=$channels"
+                    gh release edit "$tag" --title "$expected_title" --prerelease || true
+                  fi
+                else
+                  echo "$tag (group $group) already has correct title: $current_title"
+                fi
               else
-                VERSION_CHANNELS["$version"]="${VERSION_CHANNELS[$version]},$current_channel"
+                echo "Release $tag (group $group) not found, skipping..."
               fi
-            fi
-          done < trdl_channels.yaml
+            done
 
-          RELEASES=$(gh release list --limit 30 --json tagName | jq -r '.[].tagName')
-          for version in "${!VERSION_CHANNELS[@]}"; do
-            if ! check_release_exists "$version"; then
-              echo "Release v$version not found, skipping..."
-              unset VERSION_CHANNELS["$version"]
-            fi
-          done
-
-          for tag in $RELEASES; do
-            version=${tag#v}
-            channels="${VERSION_CHANNELS[$version]}"
-
-            if [[ -n $channels ]]; then
-              TITLE="$tag [$channels]"
-
-              if [[ $channels == *stable* ]]; then
-                echo "Updating $tag: stable, latest"
-                gh release edit "$tag" --title "$TITLE" --latest --prerelease=false || true
-
-              elif [[ $channels == *rock-solid* ]]; then
-                echo "Updating $tag: rock-solid, just title"
-                gh release edit "$tag" --title "$TITLE" --prerelease=false || true
-
-              else
-                echo "Updating $tag: prerelease, channels=$channels"
-                gh release edit "$tag" --title "$TITLE" --prerelease || true
-              fi
-
-            else
-              echo "Resetting $tag to plain version title"
+            echo "Checking for releases with outdated channel markers..."
+            gh release list --json name | jq -r '.[] | select(.name | test("\\[[a-zA-Z,-]+\\]")) | .name' | while read -r full_name; do
+              tag="${full_name%% *}"
+              version="${tag#v}"
+              
+              [[ -n "${GROUP_VERSIONS[$version]}" ]] && continue
+              
+              echo "Resetting $tag to plain version title (no channels in config)"
               gh release edit "$tag" --title "$tag" --prerelease=false || true
-            fi
-          done
+            done
+          }
+
+          process_releases
