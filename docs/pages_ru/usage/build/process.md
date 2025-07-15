@@ -46,23 +46,6 @@ registry.example.org/group/project  e6073b8f03231e122fa3b7d3294ff69a5060c332c439
 </div>
 </div>
 
-### Получение тегов
-
-Для получения тегов образов может использоваться опция `--save-build-report` для команд `werf build`, `werf converge` и пр.:
-
-```shell
-# По умолчанию формат JSON.
-werf build --save-build-report --repo REPO
-
-# Поддерживается формат envfile.
-werf converge --save-build-report --build-report-path .werf-build-report.env --repo REPO
-
-# В команде рендера финальные теги будут доступны только с параметром --repo.
-werf render --save-build-report --repo REPO
-```
-
-> **ЗАМЕЧАНИЕ:** Получить теги заранее, не вызывая сборочный процесс, на данный момент невозможно, можно получить лишь теги уже собранных ранее образов.
-
 ### Добавление произвольных тегов
 
 Пользователь может добавить произвольное количество дополнительных тегов с опцией `--add-custom-tag`:
@@ -505,3 +488,112 @@ werf converge --repo registry.mydomain.org/repo --synchronization :local
 ```
 
 > **ЗАМЕЧАНИЕ:** Данный способ подходит лишь в том случае, если в вашей CI/CD системе все запуски werf происходят с одного и того же раннера.
+
+
+## Отчёт по сборке
+
+Для получения отчёта по сборке можно использовать флаг `--save-build-report` с командами `werf build`, `werf converge` и другими:
+
+```shell
+werf build --save-build-report --repo REPO
+```
+
+По умолчанию отчёт формируется в формате JSON и содержит следующую информацию:
+
+* **Images** — список собранных образов:
+
+  * Теги образа (`DockerImageName`, `DockerRepo`, `DockerTag`)
+  * Был ли образ пересобран (`Rebuilt`)
+  * Является ли образ финальным (`Final`)
+  * Стадии сборки (`Stages`) с деталями:
+
+    * Теги (`DockerImageName`, `DockerTag`, `DockerImageID`, `DockerImageDigest`)
+    * Размер (`Size`) в байтах
+    * Время сборки стадии (`BuildTime`) в секундах
+    * Источник базового образа (`SourceType`: `local`, `secondary`, `cache-repo`, `registry`)
+    * Был ли загружен базовый образ (`BaseImagePulled`)
+    * Была ли стадия пересобрана (`Rebuilt`)
+* **ImagesByPlatform** — информация по архитектурам (при multiarch-сборке) анлогично Images
+
+Пример отчёта в формате JSON:
+
+```json
+{
+  "Images": {
+    "frontend": {
+      "WerfImageName": "frontend",
+      "DockerRepo": "localhost:5000/demo-app",
+      "DockerTag": "079dfdd3f51a800c269cdfdd5e4febfcc1676b2c0d533f520255961c-1752501317353",
+      "DockerImageID": "sha256:9b3a32dfe5a4aa46d96547e3f8e678626f96741776d78656ea72cab7117612bf",
+      "DockerImageDigest": "sha256:54f564edebb6e0699dc0e43de4165488f86fbc76b0c89d88311d7cc06ae397f5",
+      "DockerImageName": "localhost:5000/demo-app:079dfdd3f51a800c269cdfdd5e4febfcc1676b2c0d533f520255961c-1752501317353",
+      "Rebuilt": false,
+      "Final": true,
+      "Stages": [
+        {
+          "Name": "from",
+          "DockerImageName": "localhost:5000/demo-app:6f40fd07cdb62e03d7238e1fccb3341379bcd677ff6d7575317f3783-1752501287209",
+          "DockerTag": "6f40fd07cdb62e03d7238e1fccb3341379bcd677ff6d7575317f3783-1752501287209",
+          "DockerImageID": "sha256:2ae3fbc31d2b5f0d7d105a74693ed14bec6b106ad43c660b9162dfa00d24d4d0",
+          "DockerImageDigest": "sha256:c4449ccfaee03e5b601290909e4d69178c40e39c9d2daf57d1fd74093beb4e10",
+          "CreatedAt": 1752501286000000000,
+          "Size": 20960798,
+          "SourceType": "",
+          "BaseImagePulled": false,
+          "Rebuilt": false,
+          "BuildTime": "0.00"
+        },
+        {
+          "Name": "install",
+          "DockerImageName": "localhost:5000/demo-app:079dfdd3f51a800c269cdfdd5e4febfcc1676b2c0d533f520255961c-1752501317353",
+          "DockerTag": "079dfdd3f51a800c269cdfdd5e4febfcc1676b2c0d533f520255961c-1752501317353",
+          "DockerImageID": "sha256:9b3a32dfe5a4aa46d96547e3f8e678626f96741776d78656ea72cab7117612bf",
+          "DockerImageDigest": "sha256:54f564edebb6e0699dc0e43de4165488f86fbc76b0c89d88311d7cc06ae397f5",
+          "CreatedAt": 1752501316000000000,
+          "Size": 20960980,
+          "SourceType": "",
+          "BaseImagePulled": false,
+          "Rebuilt": false,
+          "BuildTime": "0.00"
+        }
+      ]
+    }
+  },
+  "ImagesByPlatform": {}
+}
+```
+
+### Получение тегов образов
+
+По умолчанию отчёт сохраняется в файл `.werf-build-report.json`. Чтобы извлечь список итоговых тегов образов, можно использовать `jq`:
+
+```shell
+jq -r '.Images | to_entries | map({key: .key, value: .value.DockerImageName}) | from_entries' .werf-build-report.json
+```
+
+Результат будет выглядеть так:
+
+```json
+{
+  "backend": "localhost:5000/demo-app:caeb9005a06e34f0a20ba51b98d6b99b30f5cf3b8f5af63c8f3ab6c3-1752510176215",
+  "frontend": "localhost:5000/demo-app:079dfdd3f51a800c269cdfdd5e4febfcc1676b2c0d533f520255961c-1752501317353"
+}
+```
+
+Также поддерживается сохранение отчёта в формате `.env`:
+
+```shell
+werf converge --save-build-report --build-report-path .werf-build-report.env --repo REPO
+```
+
+Пример вывода:
+
+```shell
+WERF_BACKEND_DOCKER_IMAGE_NAME=localhost:5000/demo-app:b94607bcb6e03a6ee07c8dc912739d6ab8ef2efc985227fa82d3de6f-1752510311968
+WERF_FRONTEND_DOCKER_IMAGE_NAME=localhost:5000/demo-app:079dfdd3f51a800c269cdfdd5e4febfcc1676b2c0d533f520255961c-1752501317353
+```
+
+---
+
+> **Важно:** Получить теги до сборки невозможно — они формируются в процессе. Чтобы использовать теги, сохраните их после выполнения сборки с помощью `--save-build-report`.
+
