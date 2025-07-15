@@ -498,7 +498,7 @@ werf converge --repo registry.mydomain.org/repo --synchronization :local
 werf build --save-build-report --repo REPO
 ```
 
-По умолчанию отчёт формируется в формате JSON и содержит следующую информацию:
+По умолчанию отчёт формируется в файл `.werf-build-report.json` формата `json`, который содержит расширенную информацию о сборке:
 
 * **Images** — список собранных образов:
 
@@ -515,7 +515,7 @@ werf build --save-build-report --repo REPO
     * Была ли стадия пересобрана (`Rebuilt`)
 * **ImagesByPlatform** — информация по архитектурам (при multiarch-сборке) анлогично Images
 
-Пример отчёта в формате JSON:
+Пример отчёта в формате `json`:
 
 ```json
 {
@@ -563,9 +563,27 @@ werf build --save-build-report --repo REPO
 }
 ```
 
-### Получение тегов образов
+### Получение тегов
 
-По умолчанию отчёт сохраняется в файл `.werf-build-report.json`. Чтобы извлечь список итоговых тегов образов, можно использовать `jq`:
+С помощью опции `--build-report-path` вы можете указать произвольный путь до отчета, а так же формат, в котором он будет создан: `json` либо `envfile`. Формат `envfile` не содержит подробной инофрмации о сборке и служит для получения тегов собранных образов.
+
+Пример создания отчета в формате `envfile`:
+
+```shell
+werf converge --save-build-report --build-report-path .werf-build-report.env --repo REPO
+```
+
+Пример вывода:
+
+```shell
+WERF_BACKEND_DOCKER_IMAGE_NAME=localhost:5000/demo-app:b94607bcb6e03a6ee07c8dc912739d6ab8ef2efc985227fa82d3de6f-1752510311968
+WERF_FRONTEND_DOCKER_IMAGE_NAME=localhost:5000/demo-app:079dfdd3f51a800c269cdfdd5e4febfcc1676b2c0d533f520255961c-1752501317353
+```
+
+> **Важно:** Получить теги до сборки невозможно — они формируются в процессе. Чтобы использовать теги, сохраните их после выполнения сборки с помощью `--save-build-report`.
+
+
+Чтобы извлечь список итоговых тегов образов из отчета в формате `json`, можно использовать утилиту `jq`:
 
 ```shell
 jq -r '.Images | to_entries | map({key: .key, value: .value.DockerImageName}) | from_entries' .werf-build-report.json
@@ -579,21 +597,4 @@ jq -r '.Images | to_entries | map({key: .key, value: .value.DockerImageName}) | 
   "frontend": "localhost:5000/demo-app:079dfdd3f51a800c269cdfdd5e4febfcc1676b2c0d533f520255961c-1752501317353"
 }
 ```
-
-Также поддерживается сохранение отчёта в формате `.env`:
-
-```shell
-werf converge --save-build-report --build-report-path .werf-build-report.env --repo REPO
-```
-
-Пример вывода:
-
-```shell
-WERF_BACKEND_DOCKER_IMAGE_NAME=localhost:5000/demo-app:b94607bcb6e03a6ee07c8dc912739d6ab8ef2efc985227fa82d3de6f-1752510311968
-WERF_FRONTEND_DOCKER_IMAGE_NAME=localhost:5000/demo-app:079dfdd3f51a800c269cdfdd5e4febfcc1676b2c0d533f520255961c-1752501317353
-```
-
----
-
-> **Важно:** Получить теги до сборки невозможно — они формируются в процессе. Чтобы использовать теги, сохраните их после выполнения сборки с помощью `--save-build-report`.
 

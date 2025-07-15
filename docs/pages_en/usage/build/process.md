@@ -492,31 +492,30 @@ werf converge --repo registry.mydomain.org/repo --synchronization :local
 
 ## Build report
 
-To generate a build report, use the `--save-build-report` flag with commands like `werf build`, `werf converge`, and others:
+You can generate a build report using the `--save-build-report` flag with commands like `werf build`, `werf converge`, and others:
 
 ```shell
 werf build --save-build-report --repo REPO
 ```
 
-By default, the report is generated in JSON format and includes the following information:
+By default, the report is saved to a `.werf-build-report.json` file in `json` format, which contains detailed information about the build:
 
-* **Images** — a list of built images:
+* **Images** — list of built images:
 
   * Image tags (`DockerImageName`, `DockerRepo`, `DockerTag`)
   * Whether the image was rebuilt (`Rebuilt`)
-  * Whether the image is the final one (`Final`)
+  * Whether the image is final (`Final`)
   * Build stages (`Stages`) with details:
-
     * Tags (`DockerImageName`, `DockerTag`, `DockerImageID`, `DockerImageDigest`)
     * Size (`Size`) in bytes
     * Stage build time (`BuildTime`) in seconds
-    * Base image source (`SourceType`: `local`, `secondary`, `cache-repo`, `registry`)
+    * Source of the base image (`SourceType`: `local`, `secondary`, `cache-repo`, `registry`)
     * Whether the base image was pulled (`BaseImagePulled`)
     * Whether the stage was rebuilt (`Rebuilt`)
 
-* **ImagesByPlatform** — architecture-specific information (for multiarch builds), similar to `Images`
+* **ImagesByPlatform** — architecture-specific image info (for multiarch builds), same structure as `Images`
 
-Example report in JSON format:
+Example report in `json` format:
 
 ```json
 {
@@ -566,22 +565,9 @@ Example report in JSON format:
 
 ### Retrieving Tags
 
-By default, the report is saved to the `.werf-build-report.json` file. To extract the list of final image tags, you can use `jq`:
+You can use the `--build-report-path` option to specify a custom path for the report, as well as the format: `json` or `envfile`. The `envfile` format does not contain detailed build info and is mainly used for retrieving image tags.
 
-```shell
-jq -r '.Images | to_entries | map({key: .key, value: .value.DockerImageName}) | from_entries' .werf-build-report.json
-```
-
-The result will look like this:
-
-```json
-{
-  "backend": "localhost:5000/demo-app:caeb9005a06e34f0a20ba51b98d6b99b30f5cf3b8f5af63c8f3ab6c3-1752510176215",
-  "frontend": "localhost:5000/demo-app:079dfdd3f51a800c269cdfdd5e4febfcc1676b2c0d533f520255961c-1752501317353"
-}
-```
-
-You can also save the report in `.env` format:
+Example of generating a report in `envfile` format:
 
 ```shell
 werf converge --save-build-report --build-report-path .werf-build-report.env --repo REPO
@@ -592,6 +578,21 @@ Example output:
 ```shell
 WERF_BACKEND_DOCKER_IMAGE_NAME=localhost:5000/demo-app:b94607bcb6e03a6ee07c8dc912739d6ab8ef2efc985227fa82d3de6f-1752510311968
 WERF_FRONTEND_DOCKER_IMAGE_NAME=localhost:5000/demo-app:079dfdd3f51a800c269cdfdd5e4febfcc1676b2c0d533f520255961c-1752501317353
+```
+
+To extract final image tags from a JSON report, you can use the `jq` utility:
+
+```shell
+jq -r '.Images | to_entries | map({key: .key, value: .value.DockerImageName}) | from_entries' .werf-build-report.json
+```
+
+Result:
+
+```json
+{
+  "backend": "localhost:5000/demo-app:caeb9005a06e34f0a20ba51b98d6b99b30f5cf3b8f5af63c8f3ab6c3-1752510176215",
+  "frontend": "localhost:5000/demo-app:079dfdd3f51a800c269cdfdd5e4febfcc1676b2c0d533f520255961c-1752501317353"
+}
 ```
 
 > **NOTE:** Retrieving tags beforehand without first invoking the build process is currently impossible. You can only retrieve tags from the images you've already built.
