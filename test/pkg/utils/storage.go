@@ -16,7 +16,11 @@ func NewStagesStorage(stagesStorageAddress, implementationName string, dockerReg
 	} else {
 		dockerRegistry, err := docker_registry.NewDockerRegistry(stagesStorageAddress, implementationName, dockerRegistryOptions)
 		Expect(err).ShouldNot(HaveOccurred())
-		return storage.NewRepoStagesStorage(stagesStorageAddress, &container_backend.DockerServerBackend{}, dockerRegistry)
+		return storage.NewRepoStagesStorage(&storage.NewRepoStagesStorageOptions{
+			RepoAddress:      stagesStorageAddress,
+			ContainerBackend: container_backend.NewDockerServerBackend(),
+			DockerRegistry:   dockerRegistry,
+		})
 	}
 }
 

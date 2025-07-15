@@ -12,9 +12,24 @@ import (
 type NewStorageManagerOption func(*NewStorageManagerConfig)
 
 type NewStorageManagerConfig struct {
+	ProjectName string
+
+	ContainerBackend container_backend.ContainerBackend
+	CmdData          *CmdData
+
+	hostPurge bool
+
+	CleanupDisabled                bool
+	GitHistoryBasedCleanupDisabled bool
+}
+
+type storageManagerConfig struct {
 	ProjectName      string
 	ContainerBackend container_backend.ContainerBackend
 	CmdData          *CmdData
+
+	CleanupDisabled                bool
+	GitHistoryBasedCleanupDisabled bool
 
 	hostPurge bool
 }
@@ -39,7 +54,7 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
 		stagesStorage = GetLocalStagesStorage(c.ContainerBackend)
 	} else {
 		var stgErr error
-		stagesStorage, stgErr = GetStagesStorage(ctx, c.ContainerBackend, c.CmdData)
+		stagesStorage, stgErr = GetStagesStorage(ctx, c.ContainerBackend, c.CmdData, c.CleanupDisabled, c.GitHistoryBasedCleanupDisabled)
 		if stgErr != nil {
 			return nil, stgErr
 		}
