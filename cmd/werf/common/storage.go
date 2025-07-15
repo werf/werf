@@ -23,17 +23,6 @@ type NewStorageManagerConfig struct {
 	GitHistoryBasedCleanupDisabled bool
 }
 
-type storageManagerConfig struct {
-	ProjectName      string
-	ContainerBackend container_backend.ContainerBackend
-	CmdData          *CmdData
-
-	CleanupDisabled                bool
-	GitHistoryBasedCleanupDisabled bool
-
-	hostPurge bool
-}
-
 func WithHostPurge() NewStorageManagerOption {
 	return func(config *NewStorageManagerConfig) {
 		config.hostPurge = true
