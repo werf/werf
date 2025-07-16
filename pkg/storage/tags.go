@@ -24,6 +24,9 @@ To completely disable cleanup and prevent meta images from being published to th
 )
 
 func (storage *RepoStagesStorage) analyzeMetaTags(ctx context.Context, tags []string, opts ...docker_registry.Option) error {
+	if len(tags) == 0 {
+		return nil
+	}
 	if storage.gitHistoryBasedCleanupDisabled || storage.cleanupDisabled {
 		return nil
 	}
@@ -37,6 +40,10 @@ func (storage *RepoStagesStorage) analyzeMetaTags(ctx context.Context, tags []st
 			if strings.HasPrefix(t, RepoImageMetadataByCommitRecord_ImageTagPrefix) {
 				metaCount++
 			}
+		}
+
+		if metaCount == 0 {
+			return
 		}
 
 		total := len(tags)
