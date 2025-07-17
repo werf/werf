@@ -12,9 +12,7 @@
 ### Bug Fixes
 
 * **deploy:** goroutines leak during tracking ([ccdd65e](https://github.com/werf/werf/commit/ccdd65ea1e02219c80f7f91f0697a55805254040))
-* **deploy:** goroutines leak during tracking ([85772cb](https://github.com/werf/werf/commit/85772cbd2dda5422305b9bd9dff3e909a3b6e428))
 * **deploy:** logs from libraries still showed by default ([a48b1b2](https://github.com/werf/werf/commit/a48b1b23cbd490fa7015820d8aee6dfe572c1baa))
-* **deploy:** logs from libraries still showed by default ([83eade4](https://github.com/werf/werf/commit/83eade48689e0a83f8bac0e9a925551364d57f54))
 * **includes:** add ssh flag to includes commands ([#6969](https://github.com/werf/werf/issues/6969)) ([788f186](https://github.com/werf/werf/commit/788f18623bcd817c990aebfa1286c2575ba0e5fa))
 
 ## [2.41.3](https://github.com/werf/werf/compare/v2.41.2...v2.41.3) (2025-07-10)
