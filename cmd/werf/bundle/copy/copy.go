@@ -113,14 +113,14 @@ func runCopy(ctx context.Context) error {
 	var fromRegistry, toRegistry docker_registry.Interface
 
 	if fromAddr.RegistryAddress != nil {
-		fromRegistry, err = common.CreateDockerRegistry(fromAddr.RegistryAddress.Repo, *commonCmdData.InsecureRegistry, *commonCmdData.SkipTlsVerifyRegistry)
+		fromRegistry, err = common.CreateDockerRegistry(ctx, fromAddr.RegistryAddress.Repo, *commonCmdData.InsecureRegistry, *commonCmdData.SkipTlsVerifyRegistry)
 		if err != nil {
 			return err
 		}
 	}
 
 	if toAddr.RegistryAddress != nil {
-		toRegistry, err = common.CreateDockerRegistry(toAddr.RegistryAddress.Repo, *commonCmdData.InsecureRegistry, *commonCmdData.SkipTlsVerifyRegistry)
+		toRegistry, err = common.CreateDockerRegistry(ctx, toAddr.RegistryAddress.Repo, *commonCmdData.InsecureRegistry, *commonCmdData.SkipTlsVerifyRegistry)
 		if err != nil {
 			return err
 		}

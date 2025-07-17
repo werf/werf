@@ -10,11 +10,11 @@ import (
 	"github.com/werf/werf/v2/pkg/storage"
 )
 
-func NewStagesStorage(stagesStorageAddress, implementationName string, dockerRegistryOptions docker_registry.DockerRegistryOptions) storage.PrimaryStagesStorage {
+func NewStagesStorage(ctx context.Context, stagesStorageAddress, implementationName string, dockerRegistryOptions docker_registry.DockerRegistryOptions) storage.PrimaryStagesStorage {
 	if stagesStorageAddress == storage.LocalStorageAddress {
 		return storage.NewLocalStagesStorage(container_backend.NewDockerServerBackend())
 	} else {
-		dockerRegistry, err := docker_registry.NewDockerRegistry(stagesStorageAddress, implementationName, dockerRegistryOptions)
+		dockerRegistry, err := docker_registry.NewDockerRegistry(ctx, stagesStorageAddress, implementationName, dockerRegistryOptions)
 		Expect(err).ShouldNot(HaveOccurred())
 		return storage.NewRepoStagesStorage(stagesStorageAddress, &container_backend.DockerServerBackend{}, dockerRegistry)
 	}
