@@ -17,6 +17,10 @@ import (
 	"github.com/werf/werf/v2/pkg/werf"
 )
 
+const (
+	minFileAge = 2 * time.Hour
+)
+
 var timeSince = time.Since // for stubbing in tests
 
 func ShouldRunAutoGC() (bool, error) {
@@ -130,7 +134,7 @@ func listAndFilterPaths(dir string) ([]PathDesc, error) {
 		}
 
 		// filter out recent files
-		if timeSince(info.ModTime()) < 2*time.Hour {
+		if timeSince(info.ModTime()) < minFileAge {
 			continue
 		}
 
