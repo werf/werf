@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/gookit/color"
 
@@ -98,6 +99,7 @@ type Image struct {
 	Name                    string
 	DockerfileImageConfig   *config.ImageFromDockerfile
 	TargetPlatform          string
+	BuildDuration           time.Duration
 
 	stages            []stage.Interface
 	lastNonEmptyStage stage.Interface

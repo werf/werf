@@ -35,6 +35,8 @@ type ReportImageRecord struct {
 	DockerImageName   string
 	Rebuilt           bool
 	Final             bool
+	Size              int64
+	BuildTime         string
 	Stages            []ReportStageRecord
 }
 
@@ -130,6 +132,8 @@ func createBuildReport(ctx context.Context, phase *BuildPhase) error {
 				DockerImageName:   stageDesc.Info.Name,
 				Rebuilt:           img.GetRebuilt(),
 				Final:             img.IsFinal,
+				Size:              stageDesc.Info.Size,
+				BuildTime:         fmt.Sprintf("%.2f", img.BuildDuration.Seconds()),
 				Stages:            stages,
 			}
 
@@ -155,11 +159,13 @@ func createBuildReport(ctx context.Context, phase *BuildPhase) error {
 					stageDesc = img.GetStageDesc()
 				}
 
+				buildDuration := 0.0
 				stages := []ReportStageRecord{}
 				for _, pImg := range img.Images {
 					for _, stage := range getStagesReport(pImg, true) {
 						stages = append(stages, stage)
 					}
+					buildDuration += pImg.BuildDuration.Seconds()
 				}
 
 				record := ReportImageRecord{
@@ -171,6 +177,8 @@ func createBuildReport(ctx context.Context, phase *BuildPhase) error {
 					DockerImageName:   stageDesc.Info.Name,
 					Rebuilt:           isRebuilt,
 					Final:             img.IsFinal,
+					Size:              stageDesc.Info.Size,
+					BuildTime:         fmt.Sprintf("%.2f", buildDuration),
 					Stages:            stages,
 				}
 				phase.ImagesReport.SetImageRecord(img.Name, record)
