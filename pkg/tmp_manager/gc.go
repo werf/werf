@@ -17,6 +17,8 @@ import (
 	"github.com/werf/werf/v2/pkg/werf"
 )
 
+var timeSince = time.Since // for stubbing in tests
+
 func ShouldRunAutoGC() (bool, error) {
 	projectDirsToRemove, pathsToRemove, err := collectPaths()
 	if err != nil {
@@ -128,7 +130,7 @@ func listAndFilterPaths(dir string) ([]PathDesc, error) {
 		}
 
 		// filter out recent files
-		if time.Since(info.ModTime()) < 2*time.Hour {
+		if timeSince(info.ModTime()) < 2*time.Hour {
 			continue
 		}
 
@@ -147,7 +149,9 @@ func listAndFilterPaths(dir string) ([]PathDesc, error) {
 		if fileDesc.FullPath, err = os.Readlink(linkOrFileDesc.FullPath); err != nil {
 			return nil, fmt.Errorf("read link %s: %w", linkOrFileDesc.FullPath, err)
 		}
-		if stat, err := os.Stat(fileDesc.FullPath); err != nil {
+		if stat, err := os.Stat(fileDesc.FullPath); errors.Is(err, fs.ErrNotExist) {
+			continue
+		} else if err != nil {
 			return nil, fmt.Errorf("stat %q path: %w", fileDesc.FullPath, err)
 		} else {
 			fileDesc.IsDir = stat.IsDir()
