@@ -57,7 +57,6 @@ func (step *sbomStep) Converge(ctx context.Context, stageDesc *image.StageDesc, 
 
 		if step.isLocalStorage {
 			if ok {
-				logboek.Context(ctx).Default().LogLn("Use previously generated image from local backend storage")
 				return nil
 			}
 		} else {
@@ -70,7 +69,6 @@ func (step *sbomStep) Converge(ctx context.Context, stageDesc *image.StageDesc, 
 				if pulled, err := step.stagesStorage.PullIfExistSbomImage(ctx, sbomImageName); err != nil {
 					return fmt.Errorf("unable to pull sbom image: %q: %w", sbomImageName, err)
 				} else if pulled {
-					logboek.Context(ctx).Default().LogLn("Use previously generated image from container registry")
 					return nil
 				}
 			}
