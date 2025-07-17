@@ -143,7 +143,6 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 				CommonImageOptions:        opts,
 				BaseImageName:             baseStg.GetWerfImageName(),
 				DockerfileExpanderFactory: stg.ExpanderFactory,
-				Sbom:                      dockerfileImageConfig.Sbom(),
 			})
 			if err != nil {
 				return nil, fmt.Errorf("unable to map stage %s to werf image %q: %w", stg.LogName(), dockerfileImageConfig.Name, err)
@@ -158,7 +157,6 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 				CommonImageOptions:        opts,
 				BaseImageReference:        stg.BaseName,
 				DockerfileExpanderFactory: stg.ExpanderFactory,
-				Sbom:                      dockerfileImageConfig.Sbom(),
 			})
 			if err != nil {
 				return nil, fmt.Errorf("unable to map stage %s to werf image %q: %w", stg.LogName(), dockerfileImageConfig.Name, err)
@@ -273,7 +271,6 @@ func mapLegacyDockerfileToImage(ctx context.Context, metaConfig *config.Meta, do
 		IsFinal:               dockerfileImageConfig.IsFinal(),
 		IsDockerfileImage:     true,
 		DockerfileImageConfig: dockerfileImageConfig,
-		Sbom:                  dockerfileImageConfig.Sbom(),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("unable to create image %q: %w", dockerfileImageConfig.Name, err)
