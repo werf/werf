@@ -695,6 +695,10 @@ func (b *NativeBuildah) Commit(ctx context.Context, container string, opts Commi
 	}
 
 	imgID, _, _, err := builder.Commit(ctx, imageRef, buildah.CommitOptions{
+		// Switching "build with registry" from Docker to Buildah causes Buildah's history error:
+		// "internal error: history lists 1 non-empty layers, but we have 7 layers on disk".
+		// To prevent the error we disable the history.
+		OmitHistory:           true,
 		PreferredManifestType: buildah.Dockerv2ImageManifest,
 		SignaturePolicyPath:   b.SignaturePolicyPath,
 		ReportWriter:          opts.LogWriter,
