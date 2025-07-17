@@ -1,5 +1,20 @@
 # Changelog
 
+## [2.43.0](https://github.com/werf/werf/compare/v2.42.0...v2.43.0) (2025-07-17)
+
+
+### Features
+
+* **build:** add disable publish tag cache sync option and background cache updater ([#6986](https://github.com/werf/werf/issues/6986)) ([9d7bd6e](https://github.com/werf/werf/commit/9d7bd6e11ca5bff55bc4435170d27cbc17e2decc))
+* **build:** add image size and build time to report ([58b489b](https://github.com/werf/werf/commit/58b489bdb84475c2ef69cb4a31683986e176aca4))
+* **deploy, tracking:** add rules for new custom resources ([#6982](https://github.com/werf/werf/issues/6982)) ([fbd2960](https://github.com/werf/werf/commit/fbd29601ade3e9f99619363c9c77c75cc73c5b87))
+
+
+### Bug Fixes
+
+* **build, buildah:** prevent history error if user switched from docker to buildah ([#6980](https://github.com/werf/werf/issues/6980)) ([18eea62](https://github.com/werf/werf/commit/18eea62ce5ba4f8aa492f6f77b19f9ec45e491c7))
+* **bundles:** fix load chart dir error ([#6981](https://github.com/werf/werf/issues/6981)) ([bac1cd5](https://github.com/werf/werf/commit/bac1cd58f9ca8eafefa0c333ee8bcc5da100c601))
+
 ## [2.42.0](https://github.com/werf/werf/compare/v2.41.3...v2.42.0) (2025-07-11)
 
 
