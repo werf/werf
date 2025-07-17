@@ -24,8 +24,6 @@ const (
 	RepoManagedImageRecord_ImageTagPrefix  = "managed-image-"
 	RepoManagedImageRecord_ImageNameFormat = "%s:managed-image-%s"
 
-	RepoSbomImageRecord_ImageNameFormat = "%s:%s"
-
 	RepoRejectedStageImageRecord_ImageTagSuffix  = "-rejected"
 	RepoRejectedStageImageRecord_ImageNameFormat = "%s:%s-%d-rejected"
 
@@ -490,50 +488,6 @@ func (storage *RepoStagesStorage) GetManagedImages(ctx context.Context, projectN
 	return res, nil
 }
 
-// PushIfNotExistSbomImage returns "true" if image is pushed, so it does not exist in the registry
-func (storage *RepoStagesStorage) PushIfNotExistSbomImage(ctx context.Context, imageName string) (bool, error) {
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PushIfNotExistSbomImage %s\n", imageName)
-
-	fullImageName := makeRepoSbomImageRecord(storage.RepoAddress, imageName)
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PushIfNotExistSbomImage full image name: %s\n", fullImageName)
-
-	o := makeOptions(WithCache())
-
-	if ok, err := storage.DockerRegistry.IsTagExist(ctx, fullImageName, o.dockerRegistryOptions...); err != nil {
-		return false, fmt.Errorf("unable check tag existence: %q :%w", fullImageName, err)
-	} else if ok {
-		return false, nil
-	}
-
-	// if ok == false
-	if err := storage.ContainerBackend.Push(ctx, fullImageName, container_backend.PushOpts{}); err != nil {
-		return false, fmt.Errorf("unable to push image %s: %w", fullImageName, err)
-	}
-
-	return true, nil
-}
-
-// PullIfExistSbomImage returns "true" if image is pulled, so it exists in the registry
-func (storage *RepoStagesStorage) PullIfExistSbomImage(ctx context.Context, imageName string) (bool, error) {
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PullIfExistSbomImage %s\n", imageName)
-
-	fullImageName := makeRepoSbomImageRecord(storage.RepoAddress, imageName)
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PullIfExistSbomImage full image name: %s\n", fullImageName)
-
-	o := makeOptions(WithCache())
-	if ok, err := storage.DockerRegistry.IsTagExist(ctx, fullImageName, o.dockerRegistryOptions...); err != nil {
-		return false, fmt.Errorf("unable check tag existence: %q :%w", fullImageName, err)
-	} else if !ok {
-		return false, nil
-	}
-
-	// if ok == true
-	if err := storage.ContainerBackend.Pull(ctx, fullImageName, container_backend.PullOpts{}); err != nil {
-		return false, fmt.Errorf("unable to pull image %s: %w", fullImageName, err)
-	}
-	return true, nil
-}
-
 func (storage *RepoStagesStorage) FetchImage(ctx context.Context, img container_backend.LegacyImageInterface) error {
 	if err := container_backend.PullImageFromRegistry(ctx, storage.ContainerBackend, img); err != nil {
 		if strings.HasSuffix(err.Error(), "unknown blob") {
@@ -819,11 +773,6 @@ func (storage *RepoStagesStorage) String() string {
 
 func (storage *RepoStagesStorage) Address() string {
 	return storage.RepoAddress
-}
-
-func makeRepoSbomImageRecord(repoAddress, imageName string) string {
-	_, imgTag := image.ParseRepositoryAndTag(imageName)
-	return fmt.Sprintf(RepoSbomImageRecord_ImageNameFormat, repoAddress, imgTag)
 }
 
 func makeRepoCustomTagMetadataRecord(repoAddress, tag string) string {
