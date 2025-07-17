@@ -448,10 +448,9 @@ func createNewBundle(
 	vals *values.Options,
 	opts helmopts.HelmOptions,
 ) error {
-	chartPath := filepath.Join(projectDir, chartDir)
-	chrt, err := loader.LoadDir(chartPath, opts)
+	chrt, err := loader.LoadDir(chartDir, opts)
 	if err != nil {
-		return fmt.Errorf("error loading chart %q: %w", chartPath, err)
+		return fmt.Errorf("error loading chart %q: %w", chartDir, err)
 	}
 
 	var valsData []byte
