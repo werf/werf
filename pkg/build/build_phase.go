@@ -158,7 +158,7 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 			}
 
 			if img.UseSbom() {
-				if err = phase.sbomStep.Converge(ctx, name, img.GetLastNonEmptyStage().GetStageImage().Image.GetStageDesc(), scanner.DefaultSyftScanOptions()); err != nil {
+				if err = phase.sbomStep.Converge(ctx, img.GetLastNonEmptyStage().GetStageImage().Image.GetStageDesc(), scanner.DefaultSyftScanOptions()); err != nil {
 					return fmt.Errorf("unable to converge sbom: %w", err)
 				}
 			}
@@ -191,7 +191,7 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 			}
 
 			if img.UseSbom() {
-				if err = phase.sbomStep.Converge(ctx, img.Name, img.GetStageDesc(), scanner.DefaultSyftScanOptions()); err != nil {
+				if err = phase.sbomStep.Converge(ctx, img.GetStageDesc(), scanner.DefaultSyftScanOptions()); err != nil {
 					return fmt.Errorf("unable to converge sbom: %w", err)
 				}
 			}

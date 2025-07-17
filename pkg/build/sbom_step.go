@@ -39,7 +39,7 @@ func newSbomStep(
 // Converge searches relevant SBOM image in local and remote storages.
 // If the relevant image is found, it does nothing.
 // Otherwise, it generates new sbom image and pushes that image into remote storage.
-func (step *sbomStep) Converge(ctx context.Context, werfImgName string, stageDesc *image.StageDesc, scanOpts scanner.ScanOptions) error {
+func (step *sbomStep) Converge(ctx context.Context, stageDesc *image.StageDesc, scanOpts scanner.ScanOptions) error {
 	sourceImageName := stageDesc.Info.Name
 	sbomImageName := sbom.ImageName(sourceImageName)
 
@@ -48,7 +48,7 @@ func (step *sbomStep) Converge(ctx context.Context, werfImgName string, stageDes
 	sbomBaseImgLabels := step.prepareSbomBaseLabels(ctx, stageDesc.Info.Labels, scanOpts)
 	sbomImgLabels := step.prepareSbomLabels(ctx, stageDesc.Info.Labels, scanOpts)
 
-	return logboek.Context(ctx).Default().LogProcess("image %s: SBOM processing", werfImgName).DoError(func() error {
+	return logboek.Context(ctx).Default().LogProcess("SBOM processing").DoError(func() error {
 		_, ok, err := step.findSbomImageLocally(ctx, sbomBaseImgLabels, sbomImageName)
 		if err != nil {
 			return err
