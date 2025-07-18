@@ -28,6 +28,7 @@ type StapelImageBase struct {
 	FromExternal bool
 	cacheVersion string
 	final        bool
+	sbom         *Sbom
 	platform     []string
 	raw          *rawStapelImage
 }
@@ -73,6 +74,10 @@ func (c *StapelImageBase) GetFrom() string {
 
 func (c *StapelImageBase) SetFromExternal() {
 	c.FromExternal = true
+}
+
+func (c *StapelImageBase) Sbom() *Sbom {
+	return c.sbom
 }
 
 func (c *StapelImageBase) dependsOn() DependsOn {

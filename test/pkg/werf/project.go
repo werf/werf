@@ -170,6 +170,7 @@ func (p *Project) RunCommand(
 		args,
 		iutils.RunCommandOptions{
 			ShouldSucceed:         !opts.ShouldFail,
+			ExtraEnv:              opts.Envs,
 			CancelOnOutput:        opts.CancelOnOutput,
 			CancelOnOutputTimeout: opts.CancelOnOutputTimeout,
 		})
@@ -224,6 +225,19 @@ func (p *Project) StagesCopy(ctx context.Context, opts *StagesCopyOptions) (comb
 
 	args := append([]string{"stages", "copy"}, opts.ExtraArgs...)
 	outb := p.RunCommand(ctx, args, opts.CommonOptions)
+
+	return string(outb)
+}
+
+func (p *Project) SbomGet(ctx context.Context, opts *SbomGetOptions) (combinedOut string) {
+	if opts == nil {
+		opts = &SbomGetOptions{}
+	}
+	args := append([]string{"sbom", "get"}, opts.ExtraArgs...)
+
+	outb := p.RunCommand(ctx, args, CommonOptions{
+		ShouldFail: opts.ShouldFail,
+	})
 
 	return string(outb)
 }

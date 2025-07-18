@@ -44,7 +44,7 @@ var _ = Describe("rawImageFromDockerfile", func() {
 			Expect(&dockerfileImage).To(Equal(&expectedImage))
 		},
 		Entry(
-			"simple case",
+			"should handle cacheVersion",
 			map[string]interface{}{
 				"image":        "image1",
 				"cacheVersion": "docker-cache-version",
@@ -58,6 +58,23 @@ var _ = Describe("rawImageFromDockerfile", func() {
 				cacheVersion: "docker-cache-version",
 				platform:     []string{},
 				final:        true,
+			},
+		),
+		Entry(
+			"should handle sbom",
+			map[string]interface{}{
+				"image": "image1",
+				"sbom":  true,
+			},
+			&ImageFromDockerfile{
+				Name:            "image1",
+				ContextAddFiles: []string{},
+				AddHost:         []string{},
+				Secrets:         []Secret{},
+				sbom:            new(rawSbom).toDirective(),
+
+				platform: []string{},
+				final:    true,
 			},
 		),
 	)

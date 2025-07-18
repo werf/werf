@@ -39,6 +39,15 @@ sections:
             description:
               en: "Enable layer-by-layer caching of Dockerfile instructions in container registry globally for all images"
               ru: "Включить послойное кеширование инструкций Dockerfile в container registry глобально для всех образов"
+          - &meta-section-sbom
+            value: bool
+            default: false
+            description:
+              en: "Enable SBOM scanning and generation (EXPERIMENTAL)"
+              ru: "Включить сканирование и генерацию SBOM (ЭКСПЕРИМЕНТАЛЬНО)"
+            detailsArticle:
+              en: "/usage/build/process.html#scanning-and-generation-of-sbom-artifacts-experimental"
+              ru: "/usage/build/process.html#сканирование-и-генерация-sbom-артефактов-experimental"
           - name: imageSpec
             description:
               en: Global image configuration options according to the OCI specification, which will be applied to all images
@@ -268,6 +277,7 @@ sections:
         detailsArticle:
           en: "/usage/build/images.html#using-intermediate-and-final-images"
           ru: "/usage/build/images.html#использование-промежуточных-и-конечных-образов"
+      - - << : *meta-section-sbom
       - name: dockerfile
         value: "string"
         description:
@@ -521,6 +531,7 @@ sections:
         detailsArticle:
           all: "/usage/build/stapel/imports.html"
       - << : *dockerfile-image-section-final
+      - << : *meta-section-sbom
       - << : *meta-section-build-cache-version
       - name: platform
         description:
