@@ -10,6 +10,7 @@ type ImageInterface interface {
 	Platform() []string
 	GetFrom() string
 	SetFromExternal()
+	Sbom() *Sbom
 
 	dependsOn() DependsOn
 	rawDoc() *doc

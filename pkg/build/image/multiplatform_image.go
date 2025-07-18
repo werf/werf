@@ -89,3 +89,8 @@ func (img *MultiplatformImage) LogDetailedName() string {
 func (img *MultiplatformImage) UseCustomTag() bool {
 	return img.useCustomTag
 }
+
+func (img *MultiplatformImage) UseSbom() bool {
+	primaryImg := img.Images[0]
+	return primaryImg.UseSbom()
+}

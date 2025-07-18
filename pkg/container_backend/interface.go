@@ -1,6 +1,7 @@
 package container_backend
 
 import (
+	"bytes"
 	"context"
 	"io"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/werf/werf/v2/pkg/container_backend/info"
 	"github.com/werf/werf/v2/pkg/container_backend/prune"
 	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/sbom/scanner"
 )
 
 type CommonOpts struct {
@@ -46,6 +48,7 @@ type BuildDockerfileOpts struct {
 	Labels               []string
 	Tags                 []string
 	Secrets              []string
+	Quiet                bool
 }
 
 type BuildDockerfileStageOptions struct {
@@ -88,6 +91,7 @@ type ContainerBackend interface {
 	PostManifest(ctx context.Context, ref string, opts PostManifestOpts) error
 
 	GetImageInfo(ctx context.Context, ref string, opts GetImageInfoOpts) (*image.Info, error)
+
 	BuildDockerfile(ctx context.Context, dockerfile []byte, opts BuildDockerfileOpts) (string, error)
 	BuildDockerfileStage(ctx context.Context, baseImage string, opts BuildDockerfileStageOptions, instructions ...InstructionInterface) (string, error)
 	BuildStapelStage(ctx context.Context, baseImage string, opts BuildStapelStageOptions) (string, error)
@@ -106,6 +110,12 @@ type ContainerBackend interface {
 	PruneImages(ctx context.Context, options prune.Options) (prune.Report, error)
 	// PruneVolumes removes all anonymous volumes not used by at least one container
 	PruneVolumes(ctx context.Context, options prune.Options) (prune.Report, error)
+
+	// DumpImage streams image using bytes reader
+	DumpImage(ctx context.Context, ref string) (*bytes.Reader, error)
+
+	// GenerateSBOM scans and generates SBOM from source image into another destination image
+	GenerateSBOM(ctx context.Context, scanOpts scanner.ScanOptions, dstImgLabels []string) (string, error)
 
 	String() string
 

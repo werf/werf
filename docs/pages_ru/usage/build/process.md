@@ -495,7 +495,6 @@ werf converge --repo registry.mydomain.org/repo --synchronization :local
 
 > **ЗАМЕЧАНИЕ:** Данный способ подходит лишь в том случае, если в вашей CI/CD системе все запуски werf происходят с одного и того же раннера.
 
-
 ## Отчёт по сборке
 
 Для получения отчёта по сборке можно использовать флаг `--save-build-report` с командами `werf build`, `werf converge` и другими:
@@ -607,3 +606,33 @@ jq -r '.Images | to_entries | map({key: .key, value: .value.DockerImageName}) | 
 }
 ```
 
+
+
+## Сканирование и генерация SBOM артефактов (EXPERIMENTAL)
+
+Для сканирования и генерации SBOM артефактов в процессе сборки активируйте опцию `sbom` в werf.yml:
+
+```
+project: werf-sbom-experimental
+configVersion: 1
+---
+image: dockerfile
+dockerfile: Dockerfile
+sbom: true # <-- (!) вот здесь
+```
+
+Результат сканирования будет сохранен как отдельный образ с постфиксом `-sbom` в локальном хранилище бекенда 
+(Docker или Buildah), а также отправлен в container registry, если указан флаг `--repo`.
+
+Сейчас данная опция использует следующие _умолчания_:
+
+| Свойство                                  | Значение                                                                                 |
+|-------------------------------------------|------------------------------------------------------------------------------------------|
+| **Сканер**                                | syft                                                                                     |
+| **Образ сканера**                         | ghcr.io/anchore/syft:v1.23.1                                                             |
+| **Политика получения образа**             | `PullIfMissing`                                                                          |
+| **Способ подключения к источнику данных** | daemon + socket via volume (для Docker) или image (для Buildah)                          |
+| **Путь в образе источнике**               | корень OS                                                                                |
+| **Настройки сканирования**                | [ссылка](https://github.com/anchore/syft/wiki/Configuration#list-of-configurable-values) |
+| **Исходящий стандарт**                    | `CycloneDX@1.6`                                                                          |
+| **Исходящий формат**                      | `JSON`                                                                                   |

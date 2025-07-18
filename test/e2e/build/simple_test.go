@@ -9,10 +9,6 @@ import (
 	"github.com/werf/werf/v2/test/pkg/werf"
 )
 
-type simpleTestOptions struct {
-	setupEnvOptions
-}
-
 var _ = Describe("Simple build", Label("e2e", "build", "simple"), func() {
 	DescribeTable("should succeed and produce expected image",
 		func(ctx SpecContext, testOpts simpleTestOptions) {

@@ -27,6 +27,7 @@ import (
 	"github.com/werf/werf/v2/pkg/git_repo"
 	imagePkg "github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/logging"
+	"github.com/werf/werf/v2/pkg/sbom/scanner"
 	"github.com/werf/werf/v2/pkg/stapel"
 	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/storage/manager"
@@ -78,6 +79,7 @@ func NewBuildPhase(c *Conveyor, opts BuildPhaseOptions) *BuildPhase {
 	return &BuildPhase{
 		BasePhase:         BasePhase{c},
 		BuildPhaseOptions: opts,
+		sbomStep:          newSbomStep(c.ContainerBackend, c.StorageManager.GetStagesStorage()),
 		ImagesReport:      NewImagesReport(),
 	}
 }
@@ -85,6 +87,7 @@ func NewBuildPhase(c *Conveyor, opts BuildPhaseOptions) *BuildPhase {
 type BuildPhase struct {
 	BasePhase
 	BuildPhaseOptions
+	sbomStep *sbomStep
 
 	StagesIterator *StagesIterator
 	ImagesReport   *ImagesReport
@@ -161,6 +164,12 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 					return fmt.Errorf("unable to publish image %q metadata: %w", name, err)
 				}
 			}
+
+			if img.UseSbom() {
+				if err = phase.sbomStep.Converge(ctx, name, img.GetLastNonEmptyStage().GetStageImage().Image.GetStageDesc(), scanner.DefaultSyftScanOptions()); err != nil {
+					return fmt.Errorf("unable to converge sbom: %w", err)
+				}
+			}
 		} else {
 			img := image.NewMultiplatformImage(name, images, taskId, len(imagesPairs))
 			phase.Conveyor.imagesTree.SetMultiplatformImage(img)
@@ -186,6 +195,12 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 					if err := phase.publishMultiplatformFinalImage(ctx, name, img, phase.Conveyor.StorageManager.GetFinalStagesStorage()); err != nil {
 						return err
 					}
+				}
+			}
+
+			if img.UseSbom() {
+				if err = phase.sbomStep.Converge(ctx, img.Name, img.GetStageDesc(), scanner.DefaultSyftScanOptions()); err != nil {
+					return fmt.Errorf("unable to converge sbom: %w", err)
 				}
 			}
 		}

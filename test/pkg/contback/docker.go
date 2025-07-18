@@ -1,6 +1,7 @@
 package contback
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 
@@ -23,7 +24,7 @@ func (r *DockerBackend) ExpectCmdsToSucceed(ctx context.Context, image string, c
 
 func (r *DockerBackend) RunSleepingContainer(ctx context.Context, containerName, image string) {
 	args := r.CommonCliArgs
-	args = append(args, "run", "--rm", "-d", "--entrypoint=", "--name", containerName, image, "tail", "-f", "/dev/null")
+	args = append(args, "run", "--rm", "-d", "--entrypoint=", "--name", containerName, image, "sleep", "infinity")
 	utils.RunSucceedCommand(ctx, "/", "docker", args...)
 }
 
@@ -45,6 +46,20 @@ func (r *DockerBackend) Pull(ctx context.Context, image string) {
 	args := r.CommonCliArgs
 	args = append(args, "pull", image)
 	utils.RunSucceedCommand(ctx, "/", "docker", args...)
+}
+
+func (r *DockerBackend) DumpImage(ctx context.Context, image string) *bytes.Reader {
+	args := r.CommonCliArgs
+	args = append(args, "image", "save", image)
+
+	b, err := utils.RunCommandWithOptions(ctx, "/", "docker", args, utils.RunCommandOptions{
+		NoStderr:      true,
+		ShouldSucceed: true,
+	})
+
+	Expect(err).NotTo(HaveOccurred())
+
+	return bytes.NewReader(b)
 }
 
 func (r *DockerBackend) GetImageInspect(ctx context.Context, image string) DockerImageInspect {
