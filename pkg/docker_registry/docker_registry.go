@@ -1,6 +1,7 @@
 package docker_registry
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"strings"
@@ -91,7 +92,7 @@ func (o *DockerRegistryOptions) defaultOptions() defaultImplementationOptions {
 	}}
 }
 
-func NewDockerRegistry(repositoryAddress, implementation string, options DockerRegistryOptions) (Interface, error) {
+func NewDockerRegistry(ctx context.Context, repositoryAddress, implementation string, options DockerRegistryOptions) (Interface, error) {
 	var res Interface
 	var err error
 
@@ -103,7 +104,7 @@ func NewDockerRegistry(repositoryAddress, implementation string, options DockerR
 		res = NewDockerRegistryTracer(res, nil)
 	}
 
-	res = newDockerRegistryWithCache(res)
+	res = newDockerRegistryWithCache(ctx, res)
 	return res, nil
 }
 

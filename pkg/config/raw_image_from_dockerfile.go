@@ -23,7 +23,6 @@ type rawImageFromDockerfile struct {
 	RawDependencies []*rawDependency       `yaml:"dependencies,omitempty"`
 	Staged          bool                   `yaml:"staged,omitempty"`
 	Platform        []string               `yaml:"platform,omitempty"`
-	RawSbom         *rawSbom               `yaml:"sbom,omitempty"`
 	RawSecrets      []*rawSecret           `yaml:"secrets,omitempty"`
 	RawImageSpec    *rawImageSpec          `yaml:"imageSpec,omitempty"`
 
@@ -150,10 +149,6 @@ func (c *rawImageFromDockerfile) toImageFromDockerfileDirective(giterminismManag
 
 	if c.RawImageSpec != nil {
 		image.ImageSpec = c.RawImageSpec.toDirective()
-	}
-
-	if c.RawSbom != nil {
-		image.sbom = c.RawSbom.toDirective()
 	}
 
 	if err := image.validate(giterminismManager); err != nil {

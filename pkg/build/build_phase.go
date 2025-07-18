@@ -24,7 +24,6 @@ import (
 	"github.com/werf/werf/v2/pkg/git_repo"
 	imagePkg "github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/logging"
-	"github.com/werf/werf/v2/pkg/sbom/scanner"
 	"github.com/werf/werf/v2/pkg/stapel"
 	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/storage/manager"
@@ -72,7 +71,6 @@ func NewBuildPhase(c *Conveyor, opts BuildPhaseOptions) *BuildPhase {
 	return &BuildPhase{
 		BasePhase:         BasePhase{c},
 		BuildPhaseOptions: opts,
-		sbomStep:          newSbomStep(c.ContainerBackend, c.StorageManager.GetStagesStorage()),
 		ImagesReport:      NewImagesReport(),
 	}
 }
@@ -80,7 +78,6 @@ func NewBuildPhase(c *Conveyor, opts BuildPhaseOptions) *BuildPhase {
 type BuildPhase struct {
 	BasePhase
 	BuildPhaseOptions
-	sbomStep *sbomStep
 
 	StagesIterator *StagesIterator
 	ImagesReport   *ImagesReport
@@ -156,12 +153,6 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 					return fmt.Errorf("unable to publish image %q metadata: %w", name, err)
 				}
 			}
-
-			if img.UseSbom() {
-				if err = phase.sbomStep.Converge(ctx, name, img.GetLastNonEmptyStage().GetStageImage().Image.GetStageDesc(), scanner.DefaultSyftScanOptions()); err != nil {
-					return fmt.Errorf("unable to converge sbom: %w", err)
-				}
-			}
 		} else {
 			img := image.NewMultiplatformImage(name, images, taskId, len(imagesPairs))
 			phase.Conveyor.imagesTree.SetMultiplatformImage(img)
@@ -187,12 +178,6 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 					if err := phase.publishMultiplatformFinalImage(ctx, name, img, phase.Conveyor.StorageManager.GetFinalStagesStorage()); err != nil {
 						return err
 					}
-				}
-			}
-
-			if img.UseSbom() {
-				if err = phase.sbomStep.Converge(ctx, img.Name, img.GetStageDesc(), scanner.DefaultSyftScanOptions()); err != nil {
-					return fmt.Errorf("unable to converge sbom: %w", err)
 				}
 			}
 		}
@@ -1080,9 +1065,15 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 		defer unlockStage()
 	}
 
-	if stageDescSet, err := phase.Conveyor.StorageManager.GetStageDescSetByDigest(ctx, stg.LogDetailedName(), stg.GetDigest(), phase.getPrevNonEmptyStageCreationTs()); err != nil {
-		return err
+	var stageDescSet imagePkg.StageDescSet
+	if os.Getenv("WERF_DISABLE_PUBLISH_TAG_CACHE_SYNC") == "1" {
+		stageDescSet = imagePkg.NewStageDescSet()
 	} else {
+		var err error
+		stageDescSet, err = phase.Conveyor.StorageManager.GetStageDescSetByDigest(ctx, stg.LogDetailedName(), stg.GetDigest(), phase.getPrevNonEmptyStageCreationTs())
+		if err != nil {
+			return err
+		}
 		stageDesc, err := phase.Conveyor.StorageManager.SelectSuitableStageDesc(ctx, phase.Conveyor, stg, stageDescSet)
 		if err != nil {
 			return err
@@ -1105,65 +1096,64 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 			} else {
 				panic(fmt.Sprintf("expected stage %q content digest label to be set!", stg.Name()))
 			}
-
 			return nil
 		}
-
-		// use newly built image
-		newStageImageName, stageCreationTs := phase.Conveyor.StorageManager.GenerateStageDescCreationTs(stg.GetDigest(), stageDescSet)
-		phase.Conveyor.UnsetStageImage(stageImage.Image.Name())
-		stageImage.Image.SetName(newStageImageName)
-		phase.Conveyor.SetStageImage(stageImage)
-
-		if err := logboek.Context(ctx).Default().LogProcess("Store stage into %s", phase.Conveyor.StorageManager.GetStagesStorage().String()).DoError(func() error {
-			if stg.IsMutable() {
-				switch phase.Conveyor.StorageManager.GetStagesStorage().(type) {
-				case *storage.RepoStagesStorage:
-				default:
-					err := ErrMutableStageLocalStorage
-					if stg.Name() == stage.ImageSpec {
-						err = ErrMutableStageLocalStorageImageSpec
-					}
-					return fmt.Errorf("unable to build stage %q: %w", stg.Name(), err)
-				}
-
-				if err := stg.MutateImage(ctx, phase.Conveyor.StorageManager.GetStagesStorage().(*storage.RepoStagesStorage).DockerRegistry, phase.StagesIterator.PrevBuiltStage.GetStageImage(), stageImage); err != nil {
-					return fmt.Errorf("unable to mutate %s: %w", stg.Name(), err)
-				}
-			} else {
-				if err := phase.Conveyor.StorageManager.GetStagesStorage().StoreImage(ctx, stageImage.Image); err != nil {
-					return fmt.Errorf("unable to store stage %s digest %s image %s into repo %s: %w", stg.LogDetailedName(), stg.GetDigest(), stageImage.Image.Name(), phase.Conveyor.StorageManager.GetStagesStorage().String(), err)
-				}
-			}
-
-			if desc, err := phase.Conveyor.StorageManager.GetStagesStorage().GetStageDesc(ctx, phase.Conveyor.ProjectName(), *imagePkg.NewStageID(stg.GetDigest(), stageCreationTs)); err != nil {
-				return fmt.Errorf("unable to get stage %s digest %s image %s description from repo %s after stages has been stored into repo: %w", stg.LogDetailedName(), stg.GetDigest(), stageImage.Image.Name(), phase.Conveyor.StorageManager.GetStagesStorage().String(), err)
-			} else {
-				stageImage.Image.SetStageDesc(desc)
-			}
-
-			img.SetRebuilt(true)
-
-			return nil
-		}); err != nil {
-			return err
-		}
-
-		unlockStage()
-
-		if err := phase.Conveyor.StorageManager.CopyStageIntoCacheStorages(
-			ctx, *stg.GetStageImage().Image.GetStageDesc().StageID,
-			phase.Conveyor.StorageManager.GetCacheStagesStorageList(),
-			manager.CopyStageIntoStorageOptions{
-				FetchStage:       stg,
-				ContainerBackend: phase.Conveyor.ContainerBackend,
-				LogDetailedName:  stg.LogDetailedName(),
-			},
-		); err != nil {
-			return fmt.Errorf("unable to copy stage %s into cache storages: %w", stageImage.Image.GetStageDesc().StageID.String(), err)
-		}
-		return nil
 	}
+
+	// use newly built image
+	newStageImageName, stageCreationTs := phase.Conveyor.StorageManager.GenerateStageDescCreationTs(stg.GetDigest(), stageDescSet)
+	phase.Conveyor.UnsetStageImage(stageImage.Image.Name())
+	stageImage.Image.SetName(newStageImageName)
+	phase.Conveyor.SetStageImage(stageImage)
+
+	if err := logboek.Context(ctx).Default().LogProcess("Store stage into %s", phase.Conveyor.StorageManager.GetStagesStorage().String()).DoError(func() error {
+		if stg.IsMutable() {
+			switch phase.Conveyor.StorageManager.GetStagesStorage().(type) {
+			case *storage.RepoStagesStorage:
+			default:
+				err := ErrMutableStageLocalStorage
+				if stg.Name() == stage.ImageSpec {
+					err = ErrMutableStageLocalStorageImageSpec
+				}
+				return fmt.Errorf("unable to build stage %q: %w", stg.Name(), err)
+			}
+
+			if err := stg.MutateImage(ctx, phase.Conveyor.StorageManager.GetStagesStorage().(*storage.RepoStagesStorage).DockerRegistry, phase.StagesIterator.PrevBuiltStage.GetStageImage(), stageImage); err != nil {
+				return fmt.Errorf("unable to mutate %s: %w", stg.Name(), err)
+			}
+		} else {
+			if err := phase.Conveyor.StorageManager.GetStagesStorage().StoreImage(ctx, stageImage.Image); err != nil {
+				return fmt.Errorf("unable to store stage %s digest %s image %s into repo %s: %w", stg.LogDetailedName(), stg.GetDigest(), stageImage.Image.Name(), phase.Conveyor.StorageManager.GetStagesStorage().String(), err)
+			}
+		}
+
+		if desc, err := phase.Conveyor.StorageManager.GetStagesStorage().GetStageDesc(ctx, phase.Conveyor.ProjectName(), *imagePkg.NewStageID(stg.GetDigest(), stageCreationTs)); err != nil {
+			return fmt.Errorf("unable to get stage %s digest %s image %s description from repo %s after stages has been stored into repo: %w", stg.LogDetailedName(), stg.GetDigest(), stageImage.Image.Name(), phase.Conveyor.StorageManager.GetStagesStorage().String(), err)
+		} else {
+			stageImage.Image.SetStageDesc(desc)
+		}
+
+		img.SetRebuilt(true)
+
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	unlockStage()
+
+	if err := phase.Conveyor.StorageManager.CopyStageIntoCacheStorages(
+		ctx, *stg.GetStageImage().Image.GetStageDesc().StageID,
+		phase.Conveyor.StorageManager.GetCacheStagesStorageList(),
+		manager.CopyStageIntoStorageOptions{
+			FetchStage:       stg,
+			ContainerBackend: phase.Conveyor.ContainerBackend,
+			LogDetailedName:  stg.LogDetailedName(),
+		},
+	); err != nil {
+		return fmt.Errorf("unable to copy stage %s into cache storages: %w", stageImage.Image.GetStageDesc().StageID.String(), err)
+	}
+	return nil
 }
 
 func introspectStage(ctx context.Context, s stage.Interface) error {

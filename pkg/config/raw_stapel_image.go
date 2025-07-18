@@ -26,7 +26,6 @@ type rawStapelImage struct {
 	RawImport            []*rawImport     `yaml:"import,omitempty"`
 	RawDependencies      []*rawDependency `yaml:"dependencies,omitempty"`
 	Platform             []string         `yaml:"platform,omitempty"`
-	RawSbom              *rawSbom         `yaml:"sbom,omitempty"`
 	RawSecrets           []*rawSecret     `yaml:"secrets,omitempty"`
 	RawImageSpec         *rawImageSpec    `yaml:"imageSpec,omitempty"`
 
@@ -304,10 +303,6 @@ func (c *rawStapelImage) toStapelImageBaseDirective(giterminismManager gitermini
 
 	if c.RawImageSpec != nil {
 		imageBase.ImageSpec = c.RawImageSpec.toDirective()
-	}
-
-	if c.RawSbom != nil {
-		imageBase.sbom = c.RawSbom.toDirective()
 	}
 
 	if err := c.validateStapelImageBaseDirective(giterminismManager, imageBase); err != nil {

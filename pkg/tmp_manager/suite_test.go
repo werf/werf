@@ -1,4 +1,4 @@
-package stream_reader
+package tmp_manager
 
 import (
 	"testing"
@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func TestImageReader(t *testing.T) {
+func TestSuite(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Image Reader Suite")
+	RunSpecs(t, "Tmp Manager Suite")
 }

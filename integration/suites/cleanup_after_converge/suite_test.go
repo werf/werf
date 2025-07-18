@@ -39,10 +39,10 @@ var (
 	_ = SuiteData.SetupTmp(suite_init.NewTmpDirData())
 )
 
-var _ = BeforeEach(func() {
-	SuiteData.StagesStorage = utils.NewStagesStorage(SuiteData.K8sDockerRegistryRepo, "default", docker_registry.DockerRegistryOptions{})
+var _ = BeforeEach(func(ctx SpecContext) {
+	SuiteData.StagesStorage = utils.NewStagesStorage(ctx, SuiteData.K8sDockerRegistryRepo, "default", docker_registry.DockerRegistryOptions{})
 
-	containerRegistry, err := docker_registry.NewDockerRegistry(SuiteData.K8sDockerRegistryRepo, "", docker_registry.DockerRegistryOptions{})
+	containerRegistry, err := docker_registry.NewDockerRegistry(ctx, SuiteData.K8sDockerRegistryRepo, "", docker_registry.DockerRegistryOptions{})
 	Expect(err).ShouldNot(HaveOccurred())
 
 	SuiteData.ContainerRegistry = containerRegistry
