@@ -1127,15 +1127,25 @@ func GetLocalStagesStorage(containerBackend container_backend.ContainerBackend) 
 	return storage.NewLocalStagesStorage(containerBackend)
 }
 
-func GetStagesStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) (storage.PrimaryStagesStorage, error) {
-	return cmdData.Repo.CreateStagesStorage(ctx, containerBackend, *cmdData.InsecureRegistry, *cmdData.SkipTlsVerifyRegistry)
+func GetStagesStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData, cleanupDisabled, ghCleanupDisabled bool) (storage.PrimaryStagesStorage, error) {
+	return cmdData.Repo.CreateStagesStorage(ctx, &CreateStagesStorageOptions{
+		ContainerBackend:               containerBackend,
+		InsecureRegistry:               *cmdData.InsecureRegistry,
+		SkipTlsVerifyRegistry:          *cmdData.SkipTlsVerifyRegistry,
+		CleanupDisabled:                cleanupDisabled,
+		GitHistoryBasedCleanupDisabled: ghCleanupDisabled,
+	})
 }
 
 func GetOptionalFinalStagesStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) (storage.StagesStorage, error) {
 	if *cmdData.FinalRepo.Address == "" {
 		return nil, nil
 	}
-	return cmdData.FinalRepo.CreateStagesStorage(ctx, containerBackend, *cmdData.InsecureRegistry, *cmdData.SkipTlsVerifyRegistry)
+	return cmdData.FinalRepo.CreateStagesStorage(ctx, &CreateStagesStorageOptions{
+		ContainerBackend:      containerBackend,
+		InsecureRegistry:      *cmdData.InsecureRegistry,
+		SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
+	})
 }
 
 func GetCacheStagesStorageList(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) ([]storage.StagesStorage, error) {
@@ -1145,7 +1155,11 @@ func GetCacheStagesStorageList(ctx context.Context, containerBackend container_b
 		repoData := NewRepoData("cache-repo", RepoDataOptions{OnlyAddress: true})
 		repoData.Address = &address
 
-		storage, err := repoData.CreateStagesStorage(ctx, containerBackend, *cmdData.InsecureRegistry, *cmdData.SkipTlsVerifyRegistry)
+		storage, err := repoData.CreateStagesStorage(ctx, &CreateStagesStorageOptions{
+			ContainerBackend:      containerBackend,
+			InsecureRegistry:      *cmdData.InsecureRegistry,
+			SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
+		})
 		if err != nil {
 			return nil, fmt.Errorf("unable to create cache stages storage in %s: %w", address, err)
 		}
@@ -1166,7 +1180,11 @@ func GetSecondaryStagesStorageList(ctx context.Context, stagesStorage storage.St
 		repoData := NewRepoData("secondary-repo", RepoDataOptions{OnlyAddress: true})
 		repoData.Address = &address
 
-		storage, err := repoData.CreateStagesStorage(ctx, containerBackend, *cmdData.InsecureRegistry, *cmdData.SkipTlsVerifyRegistry)
+		storage, err := repoData.CreateStagesStorage(ctx, &CreateStagesStorageOptions{
+			ContainerBackend:      containerBackend,
+			InsecureRegistry:      *cmdData.InsecureRegistry,
+			SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
+		})
 		if err != nil {
 			return nil, fmt.Errorf("unable to create secondary stages storage in %s: %w", address, err)
 		}

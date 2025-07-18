@@ -340,9 +340,11 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 	}
 
 	storageManager, err := common.NewStorageManager(ctx, &common.NewStorageManagerConfig{
-		ProjectName:      projectName,
-		ContainerBackend: containerBackend,
-		CmdData:          &commonCmdData,
+		ProjectName:                    projectName,
+		ContainerBackend:               containerBackend,
+		CmdData:                        &commonCmdData,
+		CleanupDisabled:                werfConfig.Meta.Cleanup.DisableCleanup,
+		GitHistoryBasedCleanupDisabled: werfConfig.Meta.Cleanup.DisableGitHistoryBasedPolicy,
 	})
 	if err != nil {
 		return fmt.Errorf("unable to init storage manager: %w", err)
