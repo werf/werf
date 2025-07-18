@@ -505,14 +505,15 @@ werf build --save-build-report --repo REPO
   * Теги образа (`DockerImageName`, `DockerRepo`, `DockerTag`)
   * Был ли образ пересобран (`Rebuilt`)
   * Является ли образ финальным (`Final`)
+  * Размер и образа в байтах (`Size`) и время сборки (`BuildTime`)
   * Стадии сборки (`Stages`) с деталями:
-
     * Теги (`DockerImageName`, `DockerTag`, `DockerImageID`, `DockerImageDigest`)
     * Размер (`Size`) в байтах
     * Время сборки стадии (`BuildTime`) в секундах
     * Источник базового образа (`SourceType`: `local`, `secondary`, `cache-repo`, `registry`)
     * Был ли загружен базовый образ (`BaseImagePulled`)
     * Была ли стадия пересобрана (`Rebuilt`)
+
 * **ImagesByPlatform** — информация по архитектурам (при multiarch-сборке) анлогично Images
 
 Пример отчёта в формате `json`:
@@ -529,6 +530,8 @@ werf build --save-build-report --repo REPO
       "DockerImageName": "localhost:5000/demo-app:079dfdd3f51a800c269cdfdd5e4febfcc1676b2c0d533f520255961c-1752501317353",
       "Rebuilt": false,
       "Final": true,
+      "Size": 20960980,
+      "BuildTime": "0.00",
       "Stages": [
         {
           "Name": "from",

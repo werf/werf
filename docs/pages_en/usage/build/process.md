@@ -505,6 +505,7 @@ By default, the report is saved to a `.werf-build-report.json` file in `json` fo
   * Image tags (`DockerImageName`, `DockerRepo`, `DockerTag`)
   * Whether the image was rebuilt (`Rebuilt`)
   * Whether the image is final (`Final`)
+  * Image size in bytes (`Size`) and build time (`BuildTime`)
   * Build stages (`Stages`) with details:
     * Tags (`DockerImageName`, `DockerTag`, `DockerImageID`, `DockerImageDigest`)
     * Size (`Size`) in bytes
