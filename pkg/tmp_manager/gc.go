@@ -71,66 +71,49 @@ func RunGC(ctx context.Context, dryRun bool, containerBackend container_backend.
 }
 
 func collectPaths() ([]string, []string, error) {
-	releasedProjects, err := listAndFilterPaths(filepath.Join(GetReleasedTmpDirs(), projectsServiceDir))
-	if err != nil {
-		return nil, nil, fmt.Errorf("unable to get released tmp projects dirs: %w", err)
-	}
-	createdProjects, err := listAndFilterPaths(filepath.Join(GetCreatedTmpDirs(), projectsServiceDir))
-	if err != nil {
-		return nil, nil, fmt.Errorf("unable to get created tmp projects dirs: %w", err)
-	}
-	createdDockerConfigs, err := listAndFilterPaths(filepath.Join(GetCreatedTmpDirs(), dockerConfigsServiceDir))
-	if err != nil {
-		return nil, nil, fmt.Errorf("unable to get created tmp docker configs: %w", err)
-	}
-	kubeConfigs, err := listAndFilterPaths(filepath.Join(GetCreatedTmpDirs(), kubeConfigsServiceDir))
-	if err != nil {
-		return nil, nil, fmt.Errorf("unable to get created tmp kubeconfigs: %w", err)
-	}
-	createdWerfConfigRenders, err := listAndFilterPaths(filepath.Join(GetCreatedTmpDirs(), werfConfigRendersServiceDir))
-	if err != nil {
-		return nil, nil, fmt.Errorf("unable to get created tmp werf config render files: %w", err)
+	pathsToList := []string{
+		filepath.Join(GetReleasedTmpDirs(), projectsServiceDir),
+		filepath.Join(GetCreatedTmpDirs(), projectsServiceDir),
+		filepath.Join(GetCreatedTmpDirs(), dockerConfigsServiceDir),
+		filepath.Join(GetCreatedTmpDirs(), kubeConfigsServiceDir),
+		filepath.Join(GetCreatedTmpDirs(), werfConfigRendersServiceDir),
 	}
 
-	pathDescs := slices.Concat(releasedProjects, createdProjects, createdDockerConfigs, kubeConfigs, createdWerfConfigRenders)
+	dirSlices := make([][]string, 0, len(pathsToList))
+	symlinkSlices := make([][]string, 0, len(pathsToList))
 
-	dirs := make([]string, 0, len(pathDescs))
-	files := make([]string, 0, len(pathDescs))
-
-	for _, pd := range pathDescs {
-		if pd.IsDir {
-			dirs = append(dirs, pd.FullPath)
-		} else {
-			files = append(files, pd.FullPath)
+	for _, path := range pathsToList {
+		dirs, symlinks, err := listDirAndFollowSymlinks(path)
+		if err != nil {
+			return nil, nil, fmt.Errorf("list and filter path %v: %w", path, err)
 		}
+		dirSlices = append(dirSlices, dirs)
+		symlinkSlices = append(symlinkSlices, symlinks)
 	}
 
-	return slices.Clip(dirs), slices.Clip(files), nil
+	return slices.Concat(dirSlices...), slices.Concat(symlinkSlices...), nil
 }
 
-type PathDesc struct {
-	IsDir    bool
-	FullPath string
-}
-
-func listAndFilterPaths(dir string) ([]PathDesc, error) {
+// listDirAndFollowSymlinks returns list of dirs and symlinks
+func listDirAndFollowSymlinks(dir string) ([]string, []string, error) {
 	if _, err := os.Stat(dir); errors.Is(err, fs.ErrNotExist) {
-		return nil, nil
+		return nil, nil, nil
 	} else if err != nil {
-		return nil, fmt.Errorf("stat %v dir: %w", dir, err)
+		return nil, nil, fmt.Errorf("stat %v dir: %w", dir, err)
 	}
 
 	dirEntries, err := os.ReadDir(dir)
 	if err != nil {
-		return nil, fmt.Errorf("unable to read dir in %s: %w", dir, err)
+		return nil, nil, fmt.Errorf("unable to read dir in %s: %w", dir, err)
 	}
 
-	list := make([]PathDesc, 0, len(dirEntries)*2)
+	listOfDirs := make([]string, 0, len(dirEntries))
+	listOfSymlinks := make([]string, 0, len(dirEntries))
 
 	for _, dirEntry := range dirEntries {
 		info, err := dirEntry.Info()
 		if err != nil {
-			return nil, fmt.Errorf("file info for %s: %w", dirEntry.Name(), err)
+			return nil, nil, fmt.Errorf("file info for %s: %w", dirEntry.Name(), err)
 		}
 
 		// filter out recent files
@@ -138,31 +121,29 @@ func listAndFilterPaths(dir string) ([]PathDesc, error) {
 			continue
 		}
 
-		linkOrFileDesc := PathDesc{
-			IsDir:    info.IsDir(),
-			FullPath: filepath.Join(dir, info.Name()),
-		}
-		list = append(list, linkOrFileDesc)
+		linkOrFilePath := filepath.Join(dir, dirEntry.Name())
 
-		// resolve only symlinks
-		if info.Mode().Type() != os.ModeSymlink {
+		switch info.Mode().Type() {
+		case os.ModeSymlink:
+			listOfSymlinks = append(listOfSymlinks, linkOrFilePath)
+		default:
+			listOfDirs = append(listOfDirs, linkOrFilePath)
+			// resolve only symlinks
 			continue
 		}
 
-		fileDesc := PathDesc{}
-		if fileDesc.FullPath, err = os.Readlink(linkOrFileDesc.FullPath); err != nil {
-			return nil, fmt.Errorf("read link %s: %w", linkOrFileDesc.FullPath, err)
+		filePath, err := os.Readlink(linkOrFilePath)
+		if err != nil {
+			return nil, nil, fmt.Errorf("read link %s: %w", linkOrFilePath, err)
 		}
-		if stat, err := os.Stat(fileDesc.FullPath); errors.Is(err, fs.ErrNotExist) {
+		if _, err = os.Stat(filePath); errors.Is(err, fs.ErrNotExist) {
 			continue
 		} else if err != nil {
-			return nil, fmt.Errorf("stat %q path: %w", fileDesc.FullPath, err)
-		} else {
-			fileDesc.IsDir = stat.IsDir()
+			return nil, nil, fmt.Errorf("stat %v dir: %w", filePath, err)
 		}
 
-		list = append(list, fileDesc)
+		listOfDirs = append(listOfDirs, filePath)
 	}
 
-	return slices.Clip(list), nil
+	return slices.Clip(listOfDirs), slices.Clip(listOfSymlinks), nil
 }
