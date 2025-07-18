@@ -19,8 +19,8 @@ const (
 var (
 	overThresholdWarningTemplate  = "WARNING: The number of meta tags exceeds %.0f%% in %s repository! (%d of %d)\n"
 	lastCleanupRecordTemplate     = "Last cleanup was: %s\nRun `werf cleanup` to remove old meta tags and free up space in the repository.\n"
-	disableCleanupWarningTemplate = `If you don't need Git history-based cleanup, disable it by setting 'disableGitHistoryBasedPolicy: true' in the werf configuration file.
-To completely disable cleanup and prevent meta images from being published to the container registry, set 'disableCleanup: true'.`
+	disableCleanupWarningTemplate = `If you don't need Git history-based cleanup, disable it by setting 'cleanup.disableGitHistoryBasedPolicy: true' in the werf configuration file.
+To completely disable cleanup and prevent meta images from being published to the container registry, set 'cleanup.disable: true'.`
 )
 
 func (storage *RepoStagesStorage) analyzeMetaTags(ctx context.Context, tags []string, opts ...docker_registry.Option) error {
