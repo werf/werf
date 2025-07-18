@@ -17,7 +17,11 @@ const (
 	minFileAge = 2 * time.Hour
 )
 
-var timeSince = time.Since // for stubbing in tests
+var (
+	ErrPathRemoval = errors.New("path removal")
+
+	timeSince = time.Since // for stubbing in tests
+)
 
 func ShouldRunAutoGC() (bool, error) {
 	projectDirsToRemove, pathsToRemove, err := collectPaths()
@@ -47,7 +51,7 @@ func runGCForPaths(ctx context.Context, dryRun bool, paths []string) error {
 		}
 
 		if err := os.RemoveAll(path); err != nil {
-			removeErrors = append(removeErrors, fmt.Errorf("unable to remove path %s: %w", path, err))
+			removeErrors = append(removeErrors, errors.Join(ErrPathRemoval, err))
 		}
 	}
 
