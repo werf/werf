@@ -51,19 +51,19 @@ func perImplementationBeforeEach(implementationName string) func(ctx SpecContext
 		werfImplementationName := SuiteData.ContainerRegistryPerImplementation[implementationName].WerfImplementationName
 
 		repo := fmt.Sprintf("%s/%s", SuiteData.ContainerRegistryPerImplementation[implementationName].RegistryAddress, SuiteData.ProjectName)
-		InitStagesStorage(repo, werfImplementationName, SuiteData.ContainerRegistryPerImplementation[implementationName].RegistryOptions)
+		InitStagesStorage(ctx, repo, werfImplementationName, SuiteData.ContainerRegistryPerImplementation[implementationName].RegistryOptions)
 		SuiteData.SetupRepo(ctx, repo, implementationName, SuiteData.StubsData)
 		SuiteData.TestImplementation = implementationName
 
-		containerRegistry, err := docker_registry.NewDockerRegistry(repo, werfImplementationName, docker_registry.DockerRegistryOptions{})
+		containerRegistry, err := docker_registry.NewDockerRegistry(ctx, repo, werfImplementationName, docker_registry.DockerRegistryOptions{})
 		Expect(err).ShouldNot(HaveOccurred())
 
 		SuiteData.ContainerRegistry = containerRegistry
 	}
 }
 
-func InitStagesStorage(stagesStorageAddress, implementationName string, dockerRegistryOptions docker_registry.DockerRegistryOptions) {
-	SuiteData.StagesStorage = utils.NewStagesStorage(stagesStorageAddress, implementationName, dockerRegistryOptions)
+func InitStagesStorage(ctx context.Context, stagesStorageAddress, implementationName string, dockerRegistryOptions docker_registry.DockerRegistryOptions) {
+	SuiteData.StagesStorage = utils.NewStagesStorage(ctx, stagesStorageAddress, implementationName, dockerRegistryOptions)
 }
 
 func StagesCount(ctx context.Context) int {

@@ -22,7 +22,7 @@ type ContainerRegistryPerImplementationData struct {
 func (data *ContainerRegistryPerImplementationData) SetupRepo(ctx context.Context, repo, implementationName string, stubsData *StubsData) bool {
 	implData := data.ContainerRegistryPerImplementation[implementationName]
 
-	registry, err := docker_registry.NewDockerRegistry(repo, implData.WerfImplementationName, implData.RegistryOptions)
+	registry, err := docker_registry.NewDockerRegistry(ctx, repo, implData.WerfImplementationName, implData.RegistryOptions)
 	Expect(err).Should(Succeed())
 
 	if implementationName == docker_registry.AwsEcrImplementationName {
@@ -51,7 +51,7 @@ func (data *ContainerRegistryPerImplementationData) TeardownRepo(ctx context.Con
 		return true
 	}
 
-	registry, err := docker_registry.NewDockerRegistry(repo, implementationName, data.ContainerRegistryPerImplementation[implementationName].RegistryOptions)
+	registry, err := docker_registry.NewDockerRegistry(ctx, repo, implementationName, data.ContainerRegistryPerImplementation[implementationName].RegistryOptions)
 	Expect(err).Should(Succeed())
 
 	switch implementationName {

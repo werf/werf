@@ -10,8 +10,6 @@ import (
 	"github.com/werf/common-go/pkg/util"
 )
 
-//go:generate mockgen -source common.go -package config -destination common_mock.go
-
 type rawOrigin interface {
 	configSection() interface{}
 	doc() *doc

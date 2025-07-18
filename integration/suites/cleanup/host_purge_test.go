@@ -10,7 +10,7 @@ import (
 
 var _ = Describe("host purge command", func() {
 	BeforeEach(func(ctx SpecContext) {
-		SuiteData.StagesStorage = utils.NewStagesStorage(":local", "default", docker_registry.DockerRegistryOptions{})
+		SuiteData.StagesStorage = utils.NewStagesStorage(ctx, ":local", "default", docker_registry.DockerRegistryOptions{})
 
 		utils.CopyIn(utils.FixturePath("host_purge"), SuiteData.TestDirPath)
 

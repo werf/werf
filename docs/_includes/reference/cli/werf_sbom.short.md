@@ -1,1 +1,0 @@
-work with werf SBOM images

@@ -656,22 +656,16 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 				taskPhases = append(taskPhases, phase.Clone())
 			}
 
-			// execution time calculation
-			taskStartTime := time.Now()
-			{
-				if err := c.doImage(ctx, taskImage, taskPhases); err != nil {
-					return err
-				}
-
-				taskEndTime := time.Now()
-				taskDuration := taskEndTime.Sub(taskStartTime)
-				setImageExecutionTimesMutex.Lock()
-				setImageExecutionTimes = append(
-					setImageExecutionTimes,
-					fmt.Sprintf("%s (%.2f seconds)", taskImage.LogDetailedName(), taskDuration.Seconds()),
-				)
-				setImageExecutionTimesMutex.Unlock()
+			if err := c.doImage(ctx, taskImage, taskPhases); err != nil {
+				return err
 			}
+
+			setImageExecutionTimesMutex.Lock()
+			setImageExecutionTimes = append(
+				setImageExecutionTimes,
+				fmt.Sprintf("%s (%.2f seconds)", taskImage.LogDetailedName(), taskImage.BuildDuration.Seconds()),
+			)
+			setImageExecutionTimesMutex.Unlock()
 
 			return nil
 		}); err != nil {
@@ -688,9 +682,9 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 				options.Style(stylePkg.Highlight())
 			}).
 			Do(func() {
-				for setId, setImageExecutionTImes := range setImageExecutionTimesArray {
+				for setId, setImageExecutionTimes := range setImageExecutionTimesArray {
 					logboek.Context(ctx).LogFHighlight("Set #%d:\n", setId)
-					for _, msg := range setImageExecutionTImes {
+					for _, msg := range setImageExecutionTimes {
 						logboek.Context(ctx).LogLnHighlight("-", msg)
 					}
 					logboek.Context(ctx).LogOptionalLn()
@@ -702,7 +696,9 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 }
 
 func (c *Conveyor) doImage(ctx context.Context, img *image.Image, phases []Phase) error {
-	return logboek.Context(ctx).LogProcess(img.LogDetailedName()).
+	start := time.Now()
+
+	err := logboek.Context(ctx).LogProcess(img.LogDetailedName()).
 		Options(func(options types.LogProcessOptionsInterface) {
 			options.Style(img.LogProcessStyle())
 		}).
@@ -750,6 +746,9 @@ func (c *Conveyor) doImage(ctx context.Context, img *image.Image, phases []Phase
 
 			return nil
 		})
+
+	img.BuildDuration = time.Since(start)
+	return err
 }
 
 func (c *Conveyor) ProjectName() string {

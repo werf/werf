@@ -1,11 +1,8 @@
 package contback
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
-	"os"
 
 	. "github.com/onsi/gomega"
 
@@ -63,26 +60,6 @@ func (r *NativeBuildahBackend) Pull(ctx context.Context, image string) {
 	args := r.CommonCliArgs
 	args = append(args, "pull", "--tls-verify=false", image)
 	utils.RunSucceedCommand(ctx, "/", "buildah", args...)
-}
-
-func (r *NativeBuildahBackend) DumpImage(ctx context.Context, image string) *bytes.Reader {
-	// Buildah doesn't support redirecting to stdout
-	// https://github.com/containers/buildah/issues/936
-	// So we should use tmp file
-	tmpFile, err := os.CreateTemp(os.TempDir(), "buildah-img-******.tar")
-	Expect(err).NotTo(HaveOccurred())
-	defer tmpFile.Close()
-
-	args := r.CommonCliArgs
-	args = append(args, "push", "--disable-compression", image, fmt.Sprintf("oci-archive:%s", tmpFile.Name()))
-
-	utils.RunSucceedCommand(ctx, "/", "buildah", args...)
-
-	b, err := os.ReadFile(tmpFile.Name())
-	Expect(err).NotTo(HaveOccurred())
-	Expect(os.Remove(tmpFile.Name())).NotTo(HaveOccurred())
-
-	return bytes.NewReader(b)
 }
 
 func (r *NativeBuildahBackend) GetImageInspect(ctx context.Context, image string) DockerImageInspect {

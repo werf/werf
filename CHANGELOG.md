@@ -1,5 +1,20 @@
 # Changelog
 
+## [2.43.0](https://github.com/werf/werf/compare/v2.42.0...v2.43.0) (2025-07-17)
+
+
+### Features
+
+* **build:** add disable publish tag cache sync option and background cache updater ([#6986](https://github.com/werf/werf/issues/6986)) ([9d7bd6e](https://github.com/werf/werf/commit/9d7bd6e11ca5bff55bc4435170d27cbc17e2decc))
+* **build:** add image size and build time to report ([58b489b](https://github.com/werf/werf/commit/58b489bdb84475c2ef69cb4a31683986e176aca4))
+* **deploy, tracking:** add rules for new custom resources ([#6982](https://github.com/werf/werf/issues/6982)) ([fbd2960](https://github.com/werf/werf/commit/fbd29601ade3e9f99619363c9c77c75cc73c5b87))
+
+
+### Bug Fixes
+
+* **build, buildah:** prevent history error if user switched from docker to buildah ([#6980](https://github.com/werf/werf/issues/6980)) ([18eea62](https://github.com/werf/werf/commit/18eea62ce5ba4f8aa492f6f77b19f9ec45e491c7))
+* **bundles:** fix load chart dir error ([#6981](https://github.com/werf/werf/issues/6981)) ([bac1cd5](https://github.com/werf/werf/commit/bac1cd58f9ca8eafefa0c333ee8bcc5da100c601))
+
 ## [2.42.0](https://github.com/werf/werf/compare/v2.41.3...v2.42.0) (2025-07-11)
 
 
@@ -12,9 +27,7 @@
 ### Bug Fixes
 
 * **deploy:** goroutines leak during tracking ([ccdd65e](https://github.com/werf/werf/commit/ccdd65ea1e02219c80f7f91f0697a55805254040))
-* **deploy:** goroutines leak during tracking ([85772cb](https://github.com/werf/werf/commit/85772cbd2dda5422305b9bd9dff3e909a3b6e428))
 * **deploy:** logs from libraries still showed by default ([a48b1b2](https://github.com/werf/werf/commit/a48b1b23cbd490fa7015820d8aee6dfe572c1baa))
-* **deploy:** logs from libraries still showed by default ([83eade4](https://github.com/werf/werf/commit/83eade48689e0a83f8bac0e9a925551364d57f54))
 * **includes:** add ssh flag to includes commands ([#6969](https://github.com/werf/werf/issues/6969)) ([788f186](https://github.com/werf/werf/commit/788f18623bcd817c990aebfa1286c2575ba0e5fa))
 
 ## [2.41.3](https://github.com/werf/werf/compare/v2.41.2...v2.41.3) (2025-07-10)
@@ -22,7 +35,6 @@
 
 ### Bug Fixes
 
-* **deploy:** no logs displayed ([4521772](https://github.com/werf/werf/commit/4521772c33168c4ec9832b17a15afc047fef6997))
 * **deploy:** no logs displayed ([0ae745d](https://github.com/werf/werf/commit/0ae745daef8743c08521a9cc134c6f1becb467a9))
 
 ## [2.41.2](https://github.com/werf/werf/compare/v2.41.1...v2.41.2) (2025-07-10)
@@ -30,7 +42,6 @@
 
 ### Bug Fixes
 
-* **deploy:** improve context cancellation and clean up INFO logs ([8cca042](https://github.com/werf/werf/commit/8cca04279fbce60c6b1e2945117586dc0c527514))
 * **deploy:** improve context cancellation and clean up INFO logs ([8135be2](https://github.com/werf/werf/commit/8135be2c36227b8793593a5ccfbdbec739132c9d))
 
 ## [2.41.1](https://github.com/werf/werf/compare/v2.41.0...v2.41.1) (2025-07-10)

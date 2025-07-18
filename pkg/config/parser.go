@@ -743,11 +743,6 @@ func prepareWerfConfig(giterminismManager giterminism_manager.Interface, rawImag
 					merged := mergeImageSpec(meta.Build.ImageSpec, image.ImageSpec)
 					image.ImageSpec = &merged
 				}
-
-				if image.Sbom() == nil && image.final {
-					image.sbom = meta.Build.Sbom
-				}
-
 				images = append(images, image)
 			}
 		} else {
@@ -758,11 +753,6 @@ func prepareWerfConfig(giterminismManager giterminism_manager.Interface, rawImag
 					merged := mergeImageSpec(meta.Build.ImageSpec, image.ImageSpec)
 					image.ImageSpec = &merged
 				}
-
-				if image.Sbom() == nil && image.final {
-					image.sbom = meta.Build.Sbom
-				}
-
 				images = append(images, image)
 			}
 		}

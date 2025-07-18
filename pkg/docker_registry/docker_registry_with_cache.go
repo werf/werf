@@ -3,14 +3,21 @@ package docker_registry
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 	"sync"
+	"time"
 
 	"golang.org/x/sync/singleflight"
 
 	"github.com/werf/logboek"
 	registry_api "github.com/werf/werf/v2/pkg/docker_registry/api"
 	"github.com/werf/werf/v2/pkg/image"
+)
+
+const (
+	defaultUpdaterPollInterval = 5 * time.Minute
+	defaultUpdaterTaskTimeout  = 1 * time.Minute
 )
 
 type DockerRegistryWithCache struct {
@@ -20,12 +27,18 @@ type DockerRegistryWithCache struct {
 	listTagsQueryGroup *singleflight.Group
 }
 
-func newDockerRegistryWithCache(dockerRegistry Interface) *DockerRegistryWithCache {
-	return &DockerRegistryWithCache{
+func newDockerRegistryWithCache(ctx context.Context, dockerRegistry Interface) *DockerRegistryWithCache {
+	r := &DockerRegistryWithCache{
 		Interface:          dockerRegistry,
 		cachedTagsMap:      &sync.Map{},
 		listTagsQueryGroup: &singleflight.Group{},
 	}
+
+	if os.Getenv("WERF_DISABLE_PUBLISH_TAG_CACHE_SYNC") == "1" {
+		r.startBackgroundCacheUpdater(ctx, defaultUpdaterPollInterval, defaultUpdaterTaskTimeout)
+	}
+
+	return r
 }
 
 func (r *DockerRegistryWithCache) Tags(ctx context.Context, reference string, opts ...Option) ([]string, error) {
@@ -137,4 +150,45 @@ func (r *DockerRegistryWithCache) mustGetCachedTagsID(reference string) string {
 
 	repositoryAddress := strings.Join([]string{referenceParts.registry, referenceParts.repository}, "/")
 	return repositoryAddress
+}
+
+func (r *DockerRegistryWithCache) startBackgroundCacheUpdater(ctx context.Context, pollInterval, timeout time.Duration) {
+	logboek.Context(ctx).Info().LogLn("Background docker registry cache updater started")
+	go func() {
+		ticker := time.NewTicker(pollInterval)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				r.cachedTagsMap.Range(func(key, _ any) bool {
+					cachedTagsID, ok := key.(string)
+					if !ok {
+						return true
+					}
+					go func(repo string) {
+						if err := logboek.Context(ctx).Info().LogProcess("Update repo %s cache in background", repo).DoError(func() error {
+							ctxWithTimeout, cancel := context.WithTimeout(ctx, timeout)
+							defer cancel()
+
+							tags, err := r.Tags(ctxWithTimeout, repo)
+							if err != nil {
+								logboek.Context(ctx).Debug().LogF("Failed to update tag cache for %q: %s\n", repo, err)
+								return err
+							}
+
+							r.cachedTagsMap.Store(repo, tags)
+							logboek.Context(ctx).Debug().LogF("Updated tag cache for %q\n", repo)
+							return nil
+						}); err != nil {
+							return
+						}
+					}(cachedTagsID)
+					return true
+				})
+			}
+		}
+	}()
 }

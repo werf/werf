@@ -12,7 +12,7 @@ import (
 	"github.com/werf/logboek/pkg/types"
 )
 
-// WithLogger creates new logger and bounds it to given context.
+// WithLogger returns new logger and bounds it to given context.
 func WithLogger(ctx context.Context) context.Context {
 	return logboek.NewContext(ctx, NewLogger())
 }
