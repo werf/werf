@@ -47,6 +47,7 @@ import (
 	"github.com/werf/werf/v2/cmd/werf/purge"
 	"github.com/werf/werf/v2/cmd/werf/render"
 	"github.com/werf/werf/v2/cmd/werf/run"
+	sbom_get "github.com/werf/werf/v2/cmd/werf/sbom/get"
 	"github.com/werf/werf/v2/cmd/werf/slugify"
 	stage_image "github.com/werf/werf/v2/cmd/werf/stage/image"
 	"github.com/werf/werf/v2/cmd/werf/synchronization"
@@ -102,6 +103,7 @@ func ConstructRootCmd(ctx context.Context) (*cobra.Command, error) {
 				slugify.NewCmd(ctx),
 				render.NewCmd(ctx),
 				includesCmd(ctx),
+				sbomCmd(ctx),
 			},
 		},
 		{
@@ -171,6 +173,18 @@ func bundleCmd(ctx context.Context) *cobra.Command {
 		bundle_apply.NewCmd(ctx),
 		bundle_render.NewCmd(ctx),
 		bundle_copy.NewCmd(ctx),
+	)
+
+	return cmd
+}
+
+func sbomCmd(ctx context.Context) *cobra.Command {
+	cmd := common.SetCommandContext(ctx, &cobra.Command{
+		Use:   "sbom",
+		Short: "Work with werf SBOM images",
+	})
+	cmd.AddCommand(
+		sbom_get.NewCmd(ctx),
 	)
 
 	return cmd

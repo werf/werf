@@ -1,6 +1,7 @@
 package buildah
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -18,6 +19,7 @@ import (
 	"github.com/werf/werf/v2/pkg/container_backend/filter"
 	"github.com/werf/werf/v2/pkg/container_backend/info"
 	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/sbom/scanner"
 	"github.com/werf/werf/v2/pkg/werf"
 )
 
@@ -95,10 +97,23 @@ type RmiOpts struct {
 	Force bool
 }
 
+type SBOMScanOptions struct {
+	Image      string
+	PullPolicy scanner.PullPolicy
+
+	Commands []string // one or more commands to invoke for the image rootfs or ContextDir locations
+	// ContextDir      []string      // one or more "source" directory locations
+	// MergeStrategy   MergeStrategy // how to merge the outputs of multiple scans
+
+	SBOMOutput string // where to save SBOM scanner output outside of the image (i.e., the local filesystem)
+	// ImageSBOMOutput string // where to save SBOM scanner output in the image
+}
+
 type CommitOpts struct {
 	CommonOpts
 
-	Image string
+	Image           string
+	SBOMScanOptions []SBOMScanOptions
 }
 
 type PruneImagesOptions struct {
@@ -168,6 +183,7 @@ type (
 	FromCommandOpts       CommonOpts
 	BuildFromCommandsOpts CommonOpts
 	PushOpts              CommonOpts
+	StreamOpts            CommonOpts
 	PullOpts              CommonOpts
 	TagOpts               CommonOpts
 	MountOpts             CommonOpts
@@ -197,6 +213,7 @@ type Buildah interface {
 	Images(ctx context.Context, opts ImagesOptions) (image.ImagesList, error)
 	Containers(ctx context.Context, opts ContainersOptions) (image.ContainerList, error)
 	PruneImages(ctx context.Context, opts PruneImagesOptions) (PruneImagesReport, error)
+	DumpImage(ctx context.Context, ref string, opts StreamOpts) (*bytes.Reader, error)
 }
 
 type Mode string

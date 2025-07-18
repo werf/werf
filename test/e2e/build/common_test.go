@@ -15,6 +15,10 @@ type setupEnvOptions struct {
 	State                       string
 }
 
+type simpleTestOptions struct {
+	setupEnvOptions
+}
+
 func setupEnv(opts setupEnvOptions) {
 	if opts.ContainerBackendMode == "docker" || strings.HasSuffix(opts.ContainerBackendMode, "-docker") {
 		SuiteData.Stubs.SetEnv("WERF_BUILDAH_MODE", "docker")

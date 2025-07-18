@@ -165,7 +165,7 @@ func getVerityAnnotationOptions(commonCmdData *CmdData) (verify_annotation.Optio
 }
 
 func getSignerOptions(commonCmdData *CmdData) (signing.SignerOptions, error) {
-	if !lo.FromPtr(commonCmdData.SignManifest) && !lo.FromPtr(commonCmdData.SignELFFiles) {
+	if !GetSignManifest(commonCmdData) && !GetSignELFFiles(commonCmdData) {
 		return signing.SignerOptions{}, nil
 	}
 	if commonCmdData.SignKey == nil || *commonCmdData.SignKey == "" {
@@ -183,24 +183,24 @@ func getSignerOptions(commonCmdData *CmdData) (signing.SignerOptions, error) {
 
 func getManifestSigningOptions(commonCmdData *CmdData, signer *signing.Signer) (signing.ManifestSigningOptions, error) {
 	options := signing.NewManifestSigningOptions(signer)
-	options.Enabled = lo.FromPtr(commonCmdData.SignManifest)
+	options.Enabled = GetSignManifest(commonCmdData)
 	return options, nil
 }
 
 func getELFSigningOptions(commonCmdData *CmdData, signer *signing.Signer) (signing.ELFSigningOptions, error) {
 	options := signing.NewELFSigningOptions(signer)
 
-	if !*commonCmdData.SignELFFiles && !*commonCmdData.BSignELFFiles {
+	if !GetSignELFFiles(commonCmdData) && !GetBSignELFFiles(commonCmdData) {
 		return options, nil
 	}
 
-	if *commonCmdData.SignELFFiles {
+	if GetSignELFFiles(commonCmdData) {
 		options.InHouseEnabled = true
 	}
 
 	// bsign
 	{
-		if !*commonCmdData.BSignELFFiles {
+		if !GetBSignELFFiles(commonCmdData) {
 			return options, nil
 		} else {
 			options.BsignEnabled = true

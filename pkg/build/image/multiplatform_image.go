@@ -82,3 +82,8 @@ func (img *MultiplatformImage) SetStageDesc(stageDesc *common_image.StageDesc) {
 func (img *MultiplatformImage) LogDetailedName() string {
 	return logging.ImageLogProcessName(img.Name, img.IsFinal, "", logging.WithProgress(img.logImageIndex+1, img.logImageTotal))
 }
+
+func (img *MultiplatformImage) UseSbom() bool {
+	primaryImg := img.Images[0]
+	return primaryImg.UseSbom()
+}

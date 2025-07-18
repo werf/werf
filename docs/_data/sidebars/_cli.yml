@@ -86,6 +86,11 @@ cli: &cli
           - title: werf includes update
             url: /reference/cli/werf_includes_update.html
 
+      - title: werf sbom
+        f:
+          - title: werf sbom get
+            url: /reference/cli/werf_sbom_get.html
+
   - title: Low-level management commands
     f:
       - title: werf config

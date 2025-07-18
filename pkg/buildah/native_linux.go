@@ -334,6 +334,49 @@ func (b *NativeBuildah) Push(ctx context.Context, ref string, opts PushOpts) err
 	return nil
 }
 
+func (b *NativeBuildah) DumpImage(ctx context.Context, ref string, opts StreamOpts) (*bytes.Reader, error) {
+	// NOTICE: targetPlatform specified for push causes buildah to fail for some unknown reason
+	sysCtx, err := b.getSystemContext("")
+	if err != nil {
+		return nil, err
+	}
+
+	tmpFile, err := os.CreateTemp(b.TmpDir, "buildah-img-******.tar")
+	if err != nil {
+		return nil, err
+	}
+	defer tmpFile.Close()
+	defer os.Remove(tmpFile.Name())
+
+	pushOpts := buildah.PushOptions{
+		Compression:         define.Uncompressed,
+		SignaturePolicyPath: b.SignaturePolicyPath,
+		ReportWriter:        opts.LogWriter,
+		Store:               b.Store,
+		SystemContext:       sysCtx,
+		ManifestType:        manifest.DockerV2Schema2MediaType,
+	}
+
+	// NOTE: Here we use "docker-archive" transport on buildah@1.35.2 to disable gzip compression.
+	// Is there any way to disable gzip compression with "oci-archive" transport using go code?
+	// In e2e this approach works with Buildah CLI.
+	destinationRef, err := alltransports.ParseImageName(fmt.Sprintf("docker-archive:%s", tmpFile.Name()))
+	if err != nil {
+		return nil, fmt.Errorf("error parsing destination ref from %q: %w", tmpFile.Name(), err)
+	}
+
+	if _, _, err = buildah.Push(ctx, ref, destinationRef, pushOpts); err != nil {
+		return nil, fmt.Errorf("error pushing image %q: %w", ref, err)
+	}
+
+	bSlice, err := os.ReadFile(tmpFile.Name())
+	if err != nil {
+		return nil, fmt.Errorf("unable to bufferize image data: %w", err)
+	}
+
+	return bytes.NewReader(bSlice), nil
+}
+
 func (b *NativeBuildah) BuildFromDockerfile(ctx context.Context, dockerfile string, opts BuildFromDockerfileOpts) (string, error) {
 	var targetPlatform string
 	var targetPlatforms []struct{ OS, Arch, Variant string }
@@ -662,12 +705,25 @@ func (b *NativeBuildah) Commit(ctx context.Context, container string, opts Commi
 		SystemContext:         sysCtx,
 		MaxRetries:            MaxPullPushRetries,
 		RetryDelay:            PullPushRetryDelay,
+		SBOMScanOptions:       mapBuildahBackendSbomScanOptsToBuildahNativeSbomScanOpts(opts.SBOMScanOptions),
 	})
 	if err != nil {
 		return "", fmt.Errorf("error doing commit: %w", err)
 	}
 
 	return imgID, nil
+}
+
+func mapBuildahBackendSbomScanOptsToBuildahNativeSbomScanOpts(options []SBOMScanOptions) []buildah.SBOMScanOptions {
+	return lo.Map(options, func(opt SBOMScanOptions, _ int) buildah.SBOMScanOptions {
+		return buildah.SBOMScanOptions{
+			Image:         opt.Image,
+			PullPolicy:    buildah.PullPolicy(opt.PullPolicy),
+			SBOMOutput:    opt.SBOMOutput,
+			Commands:      opt.Commands,
+			MergeStrategy: define.SBOMMergeStrategyCat,
+		}
+	})
 }
 
 func (b *NativeBuildah) Config(ctx context.Context, container string, opts ConfigOpts) error {

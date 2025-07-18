@@ -242,6 +242,14 @@ func (storage *LocalStagesStorage) RmImageMetadata(ctx context.Context, projectN
 	return nil
 }
 
+func (storage *LocalStagesStorage) PushIfNotExistSbomImage(ctx context.Context, imageName string) (bool, error) {
+	return false, ErrNotSupported
+}
+
+func (storage *LocalStagesStorage) PullIfExistSbomImage(ctx context.Context, imageName string) (bool, error) {
+	return false, ErrNotSupported
+}
+
 func (storage *LocalStagesStorage) IsImageMetadataExist(ctx context.Context, projectName, imageNameOrManagedImageName, commit, stageID string, opts ...Option) (bool, error) {
 	return false, nil
 }

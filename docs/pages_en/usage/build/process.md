@@ -605,3 +605,32 @@ Result:
 ```
 
 > **NOTE:** Retrieving tags beforehand without first invoking the build process is currently impossible. You can only retrieve tags from the images you've already built.
+
+## Scanning and Generation of SBOM Artifacts (EXPERIMENTAL)
+
+To enable scanning and generation of SBOM artifacts during the build process, activate the `sbom` option in werf.yml:
+
+```
+project: werf-sbom-experimental
+configVersion: 1
+---
+image: dockerfile
+dockerfile: Dockerfile
+sbom: true # <-- (!) here
+```
+
+The scanning result will be saved as a separate image with the `-sbom` postfix in the local backend storage
+(Docker or Buildah), and will also be sent to the container registry if the `--repo` flag is specified.
+
+Currently, this option uses the following _defaults_:
+
+| Property                          | Value                                                                                  |
+|-----------------------------------|----------------------------------------------------------------------------------------|
+| **Scanner**                       | syft                                                                                   |
+| **Scanner Image**                 | ghcr.io/anchore/syft:v1.23.1                                                           |
+| **Image Pull Policy**             | `PullIfMissing`                                                                        |
+| **Data Source Connection Method** | daemon + socket via volume (for Docker) or image (for Buildah)                         |
+| **Path in Source Image**          | OS root                                                                                |
+| **Scan Settings**                 | [link](https://github.com/anchore/syft/wiki/Configuration#list-of-configurable-values) |
+| **Output Standard**               | `CycloneDX@1.6`                                                                        |
+| **Output Format**                 | `JSON`                                                                                 |

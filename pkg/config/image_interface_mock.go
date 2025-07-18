@@ -123,6 +123,20 @@ func (mr *MockImageInterfaceMockRecorder) Platform() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Platform", reflect.TypeOf((*MockImageInterface)(nil).Platform))
 }
 
+// Sbom mocks base method.
+func (m *MockImageInterface) Sbom() *Sbom {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Sbom")
+	ret0, _ := ret[0].(*Sbom)
+	return ret0
+}
+
+// Sbom indicates an expected call of Sbom.
+func (mr *MockImageInterfaceMockRecorder) Sbom() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Sbom", reflect.TypeOf((*MockImageInterface)(nil).Sbom))
+}
+
 // SetFromExternal mocks base method.
 func (m *MockImageInterface) SetFromExternal() {
 	m.ctrl.T.Helper()
