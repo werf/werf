@@ -123,14 +123,20 @@ func Init(ctx context.Context, opts InitIncludesOptions) ([]*Include, error) {
 
 	return []*Include{}, nil
 }
-
 func initRemoteRepos(ctx context.Context, cfg Config) (map[string]*git_repo.Remote, error) {
 	repoCache := make(map[string]*git_repo.Remote)
 
 	err := logboek.Context(ctx).Default().LogBlock("Initializing remote repositories").DoError(func() error {
 		for _, i := range cfg.Includes {
 			if _, ok := repoCache[i.Git]; !ok {
-				repo, err := git_repo.OpenRemoteRepo(i.Git, i.Git)
+				basicAuth, err := git_repo.BasicAuthCredentialsHelper(&git_repo.BasicAuthCredentials{
+					Username: i.BasicAuth.Username,
+					Password: i.BasicAuth.Password,
+				})
+				if err != nil {
+					return fmt.Errorf("unable to get basic auth for repository %s: %w", i.Git, err)
+				}
+				repo, err := git_repo.OpenRemoteRepo(i.Git, i.Git, basicAuth)
 				if err != nil {
 					return fmt.Errorf("unable to open remote repository %s: %w", i.Git, err)
 				}

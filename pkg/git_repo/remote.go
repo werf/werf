@@ -11,6 +11,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/storer"
 	"github.com/go-git/go-git/v5/plumbing/transport"
+	"github.com/go-git/go-git/v5/plumbing/transport/http"
 	"gopkg.in/ini.v1"
 
 	"github.com/werf/common-go/pkg/util"
@@ -29,11 +30,16 @@ type Remote struct {
 	IsDryRun bool
 
 	Endpoint *transport.Endpoint
+
+	BasicAuth *BasicAuth
 }
 
-func OpenRemoteRepo(name, url string) (*Remote, error) {
+func OpenRemoteRepo(name, url string, auth *BasicAuth) (*Remote, error) {
 	repo := &Remote{Url: url}
 	repo.Base = NewBase(name, repo.initRepoHandleBackedByWorkTree)
+	if auth != nil {
+		repo.BasicAuth = auth
+	}
 	return repo, repo.ValidateEndpoint()
 }
 
@@ -186,10 +192,16 @@ func (repo *Remote) Clone(ctx context.Context) (bool, error) {
 		// Ensure cleanup on failure
 		defer os.RemoveAll(tmpPath)
 
-		_, err = git.PlainCloneContext(ctx, tmpPath, true, &git.CloneOptions{
+		cloneOpts := &git.CloneOptions{
 			URL:               repo.Url,
 			RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
-		})
+		}
+
+		if repo.BasicAuth != nil {
+			cloneOpts.Auth = newBasicAuth(repo.BasicAuth.Username, repo.BasicAuth.Password).AuthMethod
+		}
+
+		_, err = git.PlainCloneContext(ctx, tmpPath, true, cloneOpts)
 		if err != nil {
 			return fmt.Errorf("unable to clone repo: %w", err)
 		}
@@ -204,6 +216,24 @@ func (repo *Remote) Clone(ctx context.Context) (bool, error) {
 
 		return nil
 	})
+}
+
+type Auth struct {
+	AuthMethod transport.AuthMethod
+}
+
+type BasicAuth struct {
+	Username string
+	Password string
+}
+
+func newBasicAuth(username, password string) *Auth {
+	return &Auth{
+		AuthMethod: &http.BasicAuth{
+			Username: username,
+			Password: password,
+		},
+	}
 }
 
 func (repo *Remote) SyncWithOrigin(ctx context.Context) error {

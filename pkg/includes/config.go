@@ -20,14 +20,20 @@ type Config struct {
 }
 
 type includeConf struct {
-	Git          string   `yaml:"git"`
-	Branch       string   `yaml:"branch"`
-	Tag          string   `yaml:"tag"`
-	Commit       string   `yaml:"commit"`
-	Add          string   `yaml:"add,omitempty"`
-	To           string   `yaml:"to,omitempty"`
-	IncludePaths []string `yaml:"includePaths"`
-	ExcludePaths []string `yaml:"excludePaths"`
+	Git          string     `yaml:"git"`
+	BasicAuth    *basicAuth `yaml:"basicAuth,omitempty"`
+	Branch       string     `yaml:"branch"`
+	Tag          string     `yaml:"tag"`
+	Commit       string     `yaml:"commit"`
+	Add          string     `yaml:"add,omitempty"`
+	To           string     `yaml:"to,omitempty"`
+	IncludePaths []string   `yaml:"includePaths"`
+	ExcludePaths []string   `yaml:"excludePaths"`
+}
+
+type basicAuth struct {
+	Username string                  `yaml:"username"`
+	Password git_repo.PasswordSource `yaml:"password"`
 }
 
 type LockInfo struct {
@@ -88,6 +94,17 @@ func validate(config Config) error {
 	for _, include := range config.Includes {
 		if include.Git == "" {
 			return fmt.Errorf("`git` field is required")
+		}
+
+		if include.BasicAuth != nil {
+			if include.BasicAuth.Username == "" {
+				return fmt.Errorf("username should be specified when using git basic auth")
+			}
+
+			if !exactlyOne([]bool{include.BasicAuth.Password.Env != "", include.BasicAuth.Password.Src != "", include.BasicAuth.Password.PlainValue != ""}) {
+				err := fmt.Errorf("include %s: specify only env or src or plain as basic auth password source", include.BasicAuth)
+				return err
+			}
 		}
 
 		if include.Add == "" {
