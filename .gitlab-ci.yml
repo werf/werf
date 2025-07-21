@@ -175,16 +175,31 @@ publish_release:
 
 create_release:
   stage: release
-  script: echo "Creating release"
-  release:
-    tag_name: $CI_COMMIT_TAG
-    name: "Release $CI_COMMIT_TAG"
-    description: "werf"
-    assets:
-      links:
-        - name: "werf"
-          url: "https://fox.flant.com/api/v4/projects/$CI_PROJECT_ID/packages/generic/werf/$CI_COMMIT_TAG/werf"
-          link_type: package
+  script:
+      - |
+        cat <<EOF > release_message.json
+        {
+          "name": "${CI_COMMIT_TAG}",
+          "tag_name": "${CI_COMMIT_TAG}",
+          "description": "",
+          "assets": {
+            "links": [
+              {
+                "name": "werf",
+                "url": "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/werf/${CI_COMMIT_TAG}/werf",
+                "link_type": "package"
+              }
+            ]
+          }
+        }
+        EOF
+
+        curl --fail-with-body \
+          --header "Content-Type: application/json" \
+          --header "JOB-TOKEN: $CI_JOB_TOKEN" \
+          --data @release_message.json \
+          --request POST \
+          "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases"
   <<: *default_tag_rule
 
 # end of release block
