@@ -163,6 +163,10 @@ func initRemoteRepos(ctx context.Context, cfg Config) (map[string]*git_repo.Remo
 							},
 						},
 						UpdateHeadOk: true,
+						BasicAuthCredentials: &true_git.BasicAuth{
+							Username: basicAuth.Username,
+							Password: basicAuth.Password,
+						},
 					}
 
 					if err := true_git.Fetch(ctx, repo.GetClonePath(), fetchOptions); err != nil {

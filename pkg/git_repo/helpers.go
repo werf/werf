@@ -4,9 +4,9 @@ import (
 	"encoding/hex"
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/werf/common-go/pkg/util"
 )
 
 func newHash(s string) (plumbing.Hash, error) {
@@ -45,15 +45,24 @@ func BasicAuthCredentialsHelper(cfg *BasicAuthCredentials) (*BasicAuth, error) {
 
 	if cfg.Password.Env != "" {
 		password = os.Getenv(cfg.Password.Env)
+		if len(password) == 0 {
+			return nil, fmt.Errorf("environment variable %q is not set", cfg.Password.Env)
+		}
 	} else if cfg.Password.Src != "" {
-		f, err := filepath.Abs(cfg.Password.Src)
+		absPath, err := util.ExpandPath(cfg.Password.Src)
 		if err != nil {
-			return nil, fmt.Errorf("unable to get secret file absolute path: %w", err)
+			return nil, fmt.Errorf("error load secret from src: %w", err)
 		}
-		b, err := os.ReadFile(f)
+
+		if exists, _ := util.FileExists(absPath); !exists {
+			return nil, fmt.Errorf("error load secret from src: path %s doesn't exist", absPath)
+		}
+
+		b, err := os.ReadFile(absPath)
 		if err != nil {
-			return nil, fmt.Errorf("unable to read secret file: %w", err)
+			return nil, fmt.Errorf("error reading secret from file %s: %w", absPath, err)
 		}
+
 		password = string(b)
 	} else if cfg.Password.PlainValue != "" {
 		password = cfg.Password.PlainValue
