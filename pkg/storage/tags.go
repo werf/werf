@@ -3,19 +3,19 @@ package storage
 import (
 	"context"
 	"fmt"
-	"github.com/werf/werf/v2/pkg/docker_registry"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/werf/werf/v2/pkg/docker_registry"
 	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
 
 const (
-	cleanupTriggerTagCount = 50
+	cleanupTriggerTagCount                = 50
 	repoMetaImagesWarningThresholdPercent = 80
 	repoCleanupLastTimeNever              = "never"
-	repoCleanupOverdueThreshold           = 14*24 * time.Hour
+	repoCleanupOverdueThreshold           = 14 * 24 * time.Hour
 	warnTemplateLastCleanupOverdue        = "The `werf cleanup` command has not been run for a long time: %s. This may lead to an accumulation of outdated images and metadata in the container registry.\n"
 	warnTemplateMetaTagsExceed            = "The number of meta tags in the %s repository exceeds the normal threshold of %.0f%%! (%d of %d tags are meta tags). This may impact tag listing performance and increase command execution time.\n"
 	warnTemplateAdvice                    = `— To clean up the container registry from outdated images and meta tags, it is recommended to periodically run the 'werf cleanup' command.
