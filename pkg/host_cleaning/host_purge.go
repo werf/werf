@@ -36,7 +36,7 @@ func HostPurge(ctx context.Context, backend container_backend.ContainerBackend, 
 		return err
 	}
 
-	if err := tmp_manager.Purge(ctx, commonOptions.DryRun, backend); err != nil {
+	if err := tmp_manager.Purge(ctx, commonOptions.DryRun); err != nil {
 		return fmt.Errorf("tmp files purge failed: %w", err)
 	}
 
