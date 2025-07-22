@@ -46,23 +46,6 @@ The automatically generated tag described above is used for both the final image
 </div>
 </div>
 
-### Retrieving tags
-
-You can retrieve image tags using the `--save-build-report` option for `werf build`, `werf converge`, and other commands:
-
-```shell
-# By default, the JSON format is used.
-werf build --save-build-report --repo REPO
-
-# The envfile format is also supported.
-werf converge --save-build-report --build-report-path .werf-build-report.env --repo REPO
-
-# For the render command, the final tags are only available with the --repo parameter.
-werf render --save-build-report --repo REPO
-```
-
-> **NOTE:** Retrieving tags beforehand without first invoking the build process is currently impossible. You can only retrieve tags from the images you've already built.
-
 ### Adding custom tags
 
 The user can add any number of custom tags using the `--add-custom-tag` option:
@@ -506,3 +489,113 @@ werf converge --repo registry.mydomain.org/repo --synchronization :local
 ```
 
 > **NOTE:** This method is only suitable if all werf runs are triggered by the same runner in your CI/CD system.
+
+## Build report
+
+You can generate a build report using the `--save-build-report` flag with commands like `werf build`, `werf converge`, and others:
+
+```shell
+werf build --save-build-report --repo REPO
+```
+
+By default, the report is saved to a `.werf-build-report.json` file in `json` format, which contains detailed information about the build:
+
+* **Images** — list of built images:
+
+  * Image tags (`DockerImageName`, `DockerRepo`, `DockerTag`)
+  * Whether the image was rebuilt (`Rebuilt`)
+  * Whether the image is final (`Final`)
+  * Image size in bytes (`Size`) and build time (`BuildTime`)
+  * Build stages (`Stages`) with details:
+    * Tags (`DockerImageName`, `DockerTag`, `DockerImageID`, `DockerImageDigest`)
+    * Size (`Size`) in bytes
+    * Stage build time (`BuildTime`) in seconds
+    * Source of the base image (`SourceType`: `local`, `secondary`, `cache-repo`, `registry`)
+    * Whether the base image was pulled (`BaseImagePulled`)
+    * Whether the stage was rebuilt (`Rebuilt`)
+
+* **ImagesByPlatform** — architecture-specific image info (for multiarch builds), same structure as `Images`
+
+Example report in `json` format:
+
+```json
+{
+  "Images": {
+    "frontend": {
+      "WerfImageName": "frontend",
+      "DockerRepo": "localhost:5000/demo-app",
+      "DockerTag": "079dfdd3f51a800c269cdfdd5e4febfcc1676b2c0d533f520255961c-1752501317353",
+      "DockerImageID": "sha256:9b3a32dfe5a4aa46d96547e3f8e678626f96741776d78656ea72cab7117612bf",
+      "DockerImageDigest": "sha256:54f564edebb6e0699dc0e43de4165488f86fbc76b0c89d88311d7cc06ae397f5",
+      "DockerImageName": "localhost:5000/demo-app:079dfdd3f51a800c269cdfdd5e4febfcc1676b2c0d533f520255961c-1752501317353",
+      "Rebuilt": false,
+      "Final": true,
+      "Size": 20960980,
+      "BuildTime": "0.00",
+      "Stages": [
+        {
+          "Name": "from",
+          "DockerImageName": "localhost:5000/demo-app:6f40fd07cdb62e03d7238e1fccb3341379bcd677ff6d7575317f3783-1752501287209",
+          "DockerTag": "6f40fd07cdb62e03d7238e1fccb3341379bcd677ff6d7575317f3783-1752501287209",
+          "DockerImageID": "sha256:2ae3fbc31d2b5f0d7d105a74693ed14bec6b106ad43c660b9162dfa00d24d4d0",
+          "DockerImageDigest": "sha256:c4449ccfaee03e5b601290909e4d69178c40e39c9d2daf57d1fd74093beb4e10",
+          "CreatedAt": 1752501286000000000,
+          "Size": 20960798,
+          "SourceType": "",
+          "BaseImagePulled": false,
+          "Rebuilt": false,
+          "BuildTime": "0.00"
+        },
+        {
+          "Name": "install",
+          "DockerImageName": "localhost:5000/demo-app:079dfdd3f51a800c269cdfdd5e4febfcc1676b2c0d533f520255961c-1752501317353",
+          "DockerTag": "079dfdd3f51a800c269cdfdd5e4febfcc1676b2c0d533f520255961c-1752501317353",
+          "DockerImageID": "sha256:9b3a32dfe5a4aa46d96547e3f8e678626f96741776d78656ea72cab7117612bf",
+          "DockerImageDigest": "sha256:54f564edebb6e0699dc0e43de4165488f86fbc76b0c89d88311d7cc06ae397f5",
+          "CreatedAt": 1752501316000000000,
+          "Size": 20960980,
+          "SourceType": "",
+          "BaseImagePulled": false,
+          "Rebuilt": false,
+          "BuildTime": "0.00"
+        }
+      ]
+    }
+  },
+  "ImagesByPlatform": {}
+}
+```
+
+### Retrieving Tags
+
+You can use the `--build-report-path` option to specify a custom path for the report, as well as the format: `json` or `envfile`. The `envfile` format does not contain detailed build info and is mainly used for retrieving image tags.
+
+Example of generating a report in `envfile` format:
+
+```shell
+werf converge --save-build-report --build-report-path .werf-build-report.env --repo REPO
+```
+
+Example output:
+
+```shell
+WERF_BACKEND_DOCKER_IMAGE_NAME=localhost:5000/demo-app:b94607bcb6e03a6ee07c8dc912739d6ab8ef2efc985227fa82d3de6f-1752510311968
+WERF_FRONTEND_DOCKER_IMAGE_NAME=localhost:5000/demo-app:079dfdd3f51a800c269cdfdd5e4febfcc1676b2c0d533f520255961c-1752501317353
+```
+
+To extract final image tags from a JSON report, you can use the `jq` utility:
+
+```shell
+jq -r '.Images | to_entries | map({key: .key, value: .value.DockerImageName}) | from_entries' .werf-build-report.json
+```
+
+Result:
+
+```json
+{
+  "backend": "localhost:5000/demo-app:caeb9005a06e34f0a20ba51b98d6b99b30f5cf3b8f5af63c8f3ab6c3-1752510176215",
+  "frontend": "localhost:5000/demo-app:079dfdd3f51a800c269cdfdd5e4febfcc1676b2c0d533f520255961c-1752501317353"
+}
+```
+
+> **NOTE:** Retrieving tags beforehand without first invoking the build process is currently impossible. You can only retrieve tags from the images you've already built.
