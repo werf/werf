@@ -1034,7 +1034,7 @@ func (storage *RepoStagesStorage) Tags(ctx context.Context, registry docker_regi
 	return tags, nil
 }
 
-func (storage *RepoStagesStorage) GetLastCleanupRecord(ctx context.Context, projectName string, opts ...Option) (*CleanUpRecord, error) {
+func (storage *RepoStagesStorage) GetLastCleanupRecord(ctx context.Context, projectName string, opts ...Option) (*CleanupRecord, error) {
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetLastCleanupRecord for project %s\n", projectName)
 
 	o := makeOptions(opts...)
@@ -1051,7 +1051,7 @@ func (storage *RepoStagesStorage) GetLastCleanupRecord(ctx context.Context, proj
 	return res, nil
 }
 
-func getLastCleanupRecord(ctx context.Context, registry docker_registry.Interface, repoAddress string, tags []string) (*CleanUpRecord, error) {
+func getLastCleanupRecord(ctx context.Context, registry docker_registry.Interface, repoAddress string, tags []string) (*CleanupRecord, error) {
 	for _, tag := range tags {
 		if strings.HasPrefix(tag, RepoCleanUpRecord_ImageTagPrefix) {
 			img, err := registry.GetRepoImage(ctx, fmt.Sprintf("%s:%s", repoAddress, tag))
@@ -1069,7 +1069,7 @@ func getLastCleanupRecord(ctx context.Context, registry docker_registry.Interfac
 				continue
 			}
 
-			rec := &CleanUpRecord{
+			rec := &CleanupRecord{
 				TimestampMillisec: timestampMillisec,
 			}
 
