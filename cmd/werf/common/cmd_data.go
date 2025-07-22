@@ -32,6 +32,7 @@ type CmdData struct {
 	KubeConfig                       *string
 	KubeConfigBase64                 *string
 	KubeConfigPathMergeList          *[]string
+	KubeIgnorePodsLogs               *bool
 	StatusProgressPeriodSeconds      *int64
 	HooksStatusProgressPeriodSeconds *int64
 	ReleasesHistoryMax               *int

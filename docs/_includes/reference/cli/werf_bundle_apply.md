@@ -111,6 +111,8 @@ werf bundle apply [options]
             $WERF_KUBECONFIG_BASE64 or $KUBECONFIG_BASE64)
       --kube-context=""
             Kubernetes config context (default $WERF_KUBE_CONTEXT)
+      --kube-ignore-pods-logs=false
+            Don`t collect logs from PODs in Kubernetes (default $WERF_KUBE_IGNORE_PODS_LOGS)
       --kube-qps-limit=30
             Kubernetes client QPS limit (default $WERF_KUBE_QPS_LIMIT or 30)
       --kube-tls-server=""
