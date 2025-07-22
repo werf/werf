@@ -99,7 +99,7 @@ func RunAutoHostCleanup(ctx context.Context, backend container_backend.Container
 
 func RunHostCleanup(ctx context.Context, backend container_backend.ContainerBackend, options HostCleanupOptions) error {
 	if err := logboek.Context(ctx).LogProcess("Running GC for tmp data").DoError(func() error {
-		if err := tmp_manager.RunGC(ctx, options.DryRun, backend); err != nil {
+		if err := tmp_manager.RunGC(ctx, options.DryRun); err != nil {
 			return fmt.Errorf("tmp files GC failed: %w", err)
 		}
 		return nil

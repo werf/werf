@@ -7,14 +7,10 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"runtime"
 	"slices"
-	"strings"
 	"time"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/container_backend"
-	"github.com/werf/werf/v2/pkg/werf"
 )
 
 const (
@@ -31,38 +27,26 @@ func ShouldRunAutoGC() (bool, error) {
 	return len(projectDirsToRemove) > 0 || len(pathsToRemove) > 0, nil
 }
 
-func RunGC(ctx context.Context, dryRun bool, containerBackend container_backend.ContainerBackend) error {
+func RunGC(ctx context.Context, dryRun bool) error {
 	projectDirsToRemove, pathsToRemove, err := collectPaths()
 	if err != nil {
 		return fmt.Errorf("collect paths: %w", err)
 	}
 
-	for _, itemToRemove := range slices.Concat(projectDirsToRemove, pathsToRemove) {
-		logboek.Context(ctx).Default().LogLn(itemToRemove)
-	}
+	return runGCForPaths(ctx, dryRun, slices.Concat(projectDirsToRemove, pathsToRemove))
+}
 
-	if dryRun {
-		return nil
-	}
+func runGCForPaths(ctx context.Context, dryRun bool, paths []string) error {
+	removeErrors := make([]error, 0, len(paths))
 
-	removeErrors := make([]error, 0, len(projectDirsToRemove)+len(pathsToRemove))
+	for _, path := range paths {
+		logboek.Context(ctx).Default().LogLn(path)
 
-	if len(projectDirsToRemove) > 0 {
-		if runtime.GOOS == "windows" {
-			for _, path := range projectDirsToRemove {
-				if err = os.RemoveAll(path); err != nil {
-					removeErrors = append(removeErrors, fmt.Errorf("unable to remove tmp project dir %s: %w", path, err))
-				}
-			}
-		} else {
-			if err := containerBackend.RemoveHostDirs(ctx, werf.GetTmpDir(), projectDirsToRemove); err != nil {
-				removeErrors = append(removeErrors, fmt.Errorf("unable to remove tmp projects dirs %s: %w", strings.Join(projectDirsToRemove, ", "), err))
-			}
+		if dryRun {
+			continue
 		}
-	}
 
-	for _, path := range pathsToRemove {
-		if err = os.RemoveAll(path); err != nil {
+		if err := os.RemoveAll(path); err != nil {
 			removeErrors = append(removeErrors, fmt.Errorf("unable to remove path %s: %w", path, err))
 		}
 	}
