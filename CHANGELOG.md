@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.43.1](https://github.com/werf/werf/compare/v2.43.0...v2.43.1) (2025-07-22)
+
+
+### Bug Fixes
+
+* **host-cleanup:** use signal err for tmp cleaning ([afaa1f4](https://github.com/werf/werf/commit/afaa1f4431d4ef18a210b41d71ea58ca7ef6fb7e))
+
 ## [2.43.0](https://github.com/werf/werf/compare/v2.42.0...v2.43.0) (2025-07-17)
 
 
