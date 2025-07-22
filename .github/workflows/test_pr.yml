@@ -39,9 +39,7 @@ jobs:
 
   lint:
     needs: detect-changes
-    uses: ./.github/workflows/_lint.yml
-    with:
-      forceSkip: ${{ github.event_name == 'pull_request' && needs.detect-changes.outputs.workflow_proceed == 'false' }}
+    uses: werf/common-ci/.github/workflows/lint.yml@chore/ci/update-lint-workflow
 
   unit:
     needs: detect-changes
