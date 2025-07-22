@@ -3,14 +3,14 @@ name: test:pr
 on:
   pull_request:
     paths:
-      - 'go.mod'
-      - 'Taskfile.dist.yaml'
-      - '.github/**'
-      - 'cmd/werf/**'
-      - 'pkg/**'
-      - 'integration/**'
-      - 'scripts/**'
-      - 'test/**'
+      - "go.mod"
+      - "Taskfile.dist.yaml"
+      - ".github/**"
+      - "cmd/werf/**"
+      - "pkg/**"
+      - "integration/**"
+      - "scripts/**"
+      - "test/**"
   repository_dispatch:
     types: ["test:pr"]
   workflow_dispatch:
@@ -20,7 +20,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-
   lint:
     uses: werf/common-ci/.github/workflows/lint.yml@chore/ci/update-lint-workflow
     with:
