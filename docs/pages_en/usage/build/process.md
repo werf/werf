@@ -530,6 +530,8 @@ Example report in `json` format:
       "DockerImageName": "localhost:5000/demo-app:079dfdd3f51a800c269cdfdd5e4febfcc1676b2c0d533f520255961c-1752501317353",
       "Rebuilt": false,
       "Final": true,
+      "Size": 20960980,
+      "BuildTime": "0.00",
       "Stages": [
         {
           "Name": "from",
