@@ -1065,6 +1065,17 @@ IMAGE_NAME is the name of an image or artifact described in werf.yaml, the namel
 STAGE_NAME should be one of the following: `+strings.Join(allStagesNames(), ", "))
 }
 
+func SetupSigningOptions(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.SignKey = new(string)
+	cmd.Flags().StringVarP(cmdData.SignKey, "sign-key", "", os.Getenv("WERF_SIGN_KEY"), "Sign image with the private key (default $WERF_SIGN_KEY)")
+
+	cmdData.SignCert = new(string)
+	cmd.Flags().StringVarP(cmdData.SignCert, "sign-cert", "", os.Getenv("WERF_SIGN_CERT"), "Sign image with the certificate (default $WERF_SIGN_CERT). Required if --sign-key is spcified")
+
+	cmdData.SignChain = new(string)
+	cmd.Flags().StringVarP(cmdData.SignChain, "sign-chain", "", os.Getenv("WERF_SIGN_CHAIN"), "Sign image with the certificate chain (default $WERF_SIGN_CHAIN)")
+}
+
 func SetupELFSigningOptions(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.SignELFFiles = new(bool)
 	cmd.Flags().BoolVarP(cmdData.SignELFFiles, "sign-elf-files", "", util.GetBoolEnvironmentDefaultFalse("WERF_SIGN_ELF_FILES"), "Sign ELF files with the private key (default $WERF_SIGN_ELF_FILES). The private key should be specified with --elf-pgp-private-key-base64 or --elf-pgp-private-key-fingerprint options")

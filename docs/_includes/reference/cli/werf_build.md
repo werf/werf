@@ -261,6 +261,12 @@ werf build [IMAGE_NAME...] [options]
             cache.
             Also, can be specified with $WERF_SECONDARY_REPO_* (e.g. $WERF_SECONDARY_REPO_1=...,    
             $WERF_SECONDARY_REPO_2=...)
+      --sign-key=""
+            Sign image with the private key (default $WERF_SIGN_KEY)
+      --sign-cert=""
+            Sign image with the certificate (default $WERF_SIGN_CERT). Required if --sign-key is spcified
+      --sign-chain=""
+            Sign image with the certificate chain (default $WERF_SIGN_CHAIN)
       --sign-elf-files=false
             Sign ELF files with the private key (default $WERF_SIGN_ELF_FILES). The private key     
             should be specified with --elf-pgp-private-key-base64 or                                

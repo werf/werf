@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/deckhouse/delivery-kit-sdk/pkg/signver/blob"
 	"github.com/google/uuid"
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 
@@ -16,6 +17,7 @@ import (
 	"github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
 	"github.com/werf/werf/v2/pkg/build/image"
+	"github.com/werf/werf/v2/pkg/build/signing"
 	"github.com/werf/werf/v2/pkg/build/stage"
 	"github.com/werf/werf/v2/pkg/build/stage/instruction"
 	"github.com/werf/werf/v2/pkg/container_backend"
@@ -39,7 +41,8 @@ type BuildPhaseOptions struct {
 type BuildOptions struct {
 	ImageBuildOptions container_backend.BuildOptions
 	IntrospectOptions
-	ELFSigningOptions
+	SigningOptions    signing.SigningOptions
+	ELFSigningOptions signing.ELFSigningOptions
 
 	ReportPath   string
 	ReportFormat ReportFormat
@@ -51,12 +54,6 @@ type BuildOptions struct {
 
 type IntrospectOptions struct {
 	Targets []IntrospectTarget
-}
-
-type ELFSigningOptions struct {
-	Enabled                  bool
-	PGPPrivateKeyFingerprint string
-	PGPPrivateKeyPassphrase  string
 }
 
 type IntrospectTarget struct {
@@ -842,6 +839,7 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, s
 
 	var opts calculateDigestOptions
 	opts.TargetPlatform = img.TargetPlatform
+	opts.SigningOptions = phase.SigningOptions
 	opts.ELFSigningOptions = phase.ELFSigningOptions
 
 	if img.IsDockerfileImage && img.DockerfileImageConfig.Staged {
@@ -1118,7 +1116,7 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 		if err := logboek.Context(ctx).Default().LogProcess("Signing ELF files").DoError(func() error {
 			return stageImage.Image.Mutate(ctx, func(builtID string) (string, error) {
 				newID := "werf.signing." + uuid.NewString()
-				finalID, err := signing(ctx, builtID, newID, phase.ELFSigningOptions)
+				finalID, err := signing.Sign(ctx, builtID, newID, phase.SigningOptions, phase.ELFSigningOptions)
 				if err != nil {
 					return "", err
 				}
@@ -1142,7 +1140,7 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 				return fmt.Errorf("unable to build stage %q: %w", stg.Name(), err)
 			}
 
-			if err := stg.MutateImage(ctx, phase.Conveyor.StorageManager.GetStagesStorage().(*storage.RepoStagesStorage).DockerRegistry, phase.StagesIterator.PrevBuiltStage.GetStageImage(), stageImage); err != nil {
+			if err := stg.MutateImage(ctx, phase.Conveyor.StorageManager.GetStagesStorage().(*storage.RepoStagesStorage).DockerRegistry, phase.StagesIterator.PrevBuiltStage.GetStageImage(), stageImage, phase.SigningOptions); err != nil {
 				return fmt.Errorf("unable to mutate %s: %w", stg.Name(), err)
 			}
 		} else {
@@ -1198,7 +1196,8 @@ func introspectStage(ctx context.Context, s stage.Interface) error {
 
 type calculateDigestOptions struct {
 	TargetPlatform    string
-	ELFSigningOptions ELFSigningOptions
+	SigningOptions    signing.SigningOptions
+	ELFSigningOptions signing.ELFSigningOptions
 	BaseImage         string // TODO(staged-dockerfile): legacy compatibility field
 }
 
@@ -1218,6 +1217,23 @@ func calculateDigest(ctx context.Context, stageName, stageDependencies string, p
 		"StageName",
 		"StageDependencies",
 	)
+
+	if opts.SigningOptions.CertRef != "" {
+		certBytes, err := blob.LoadBase64OrFile(opts.SigningOptions.CertRef)
+		if err != nil {
+			return "", fmt.Errorf("unable to load signing certificate: %w", err)
+		}
+		checksumArgs = append(checksumArgs, string(certBytes))
+		checksumArgsNames = append(checksumArgsNames, "SIGNING_CERTIFICATE")
+	}
+	if opts.SigningOptions.ChainRef != "" {
+		chainBytes, err := blob.LoadBase64OrFile(opts.SigningOptions.ChainRef)
+		if err != nil {
+			return "", fmt.Errorf("unable to load signing certificate chain: %w", err)
+		}
+		checksumArgs = append(checksumArgs, string(chainBytes))
+		checksumArgsNames = append(checksumArgsNames, "SIGNING_CERTIFICATE_CHAIN")
+	}
 
 	if opts.ELFSigningOptions.Enabled {
 		checksumArgs = append(checksumArgs, opts.ELFSigningOptions.PGPPrivateKeyFingerprint)

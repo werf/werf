@@ -8,11 +8,11 @@ import (
 	"github.com/deckhouse/delivery-kit-sdk/pkg/integrity"
 	"github.com/deckhouse/delivery-kit-sdk/pkg/signature/image"
 	"github.com/deckhouse/delivery-kit-sdk/pkg/signver"
-	"github.com/deckhouse/delivery-kit-sdk/test/pkg/cert_utils"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/mutate"
 
 	"github.com/werf/common-go/pkg/util"
+	"github.com/werf/werf/v2/pkg/build"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/docker_registry"
@@ -50,7 +50,7 @@ func (s *ManifestStage) GetDependencies(_ context.Context, _ Conveyor, _ contain
 	return "", nil
 }
 
-func (s *ManifestStage) MutateImage(ctx context.Context, registry docker_registry.Interface, prevBuiltImage, stageImage *StageImage) error {
+func (s *ManifestStage) MutateImage(ctx context.Context, registry docker_registry.Interface, prevBuiltImage, stageImage *StageImage, signingOptions build.SigningOptions) error {
 	srcRef := prevBuiltImage.Image.Name()
 	destRef := stageImage.Image.Name()
 
@@ -74,10 +74,10 @@ func (s *ManifestStage) MutateImage(ctx context.Context, registry docker_registr
 		opts = append(opts, api.WithManifestAnnotationsFunc(func(ctx context.Context, manifest *v1.Manifest) (map[string]string, error) {
 			sv, err := signver.NewSignerVerifier(
 				ctx,
-				cert_utils.SignerCertBase64,
-				cert_utils.SignerChainBase64,
+				signingOptions.CertRef,
+				signingOptions.ChainRef,
 				signver.KeyOpts{
-					KeyRef: cert_utils.SignerKeyBase64,
+					KeyRef: signingOptions.KeyRef,
 				},
 			)
 			if err != nil {

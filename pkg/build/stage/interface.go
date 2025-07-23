@@ -3,6 +3,7 @@ package stage
 import (
 	"context"
 
+	"github.com/werf/werf/v2/pkg/build"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/docker_registry"
 	"github.com/werf/werf/v2/pkg/image"
@@ -37,7 +38,7 @@ type Interface interface {
 	SetGitMappings([]*GitMapping)
 	GetGitMappings() []*GitMapping
 
-	MutateImage(ctx context.Context, registry docker_registry.Interface, prevBuiltImage, stageImage *StageImage) error
+	MutateImage(ctx context.Context, registry docker_registry.Interface, prevBuiltImage, stageImage *StageImage, signingOptions build.SigningOptions) error
 
 	SelectSuitableStageDesc(context.Context, Conveyor, image.StageDescSet) (*image.StageDesc, error)
 

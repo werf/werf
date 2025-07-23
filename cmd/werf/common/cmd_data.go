@@ -109,6 +109,10 @@ type CmdData struct {
 	LogTerminalWidth *int64
 	NoPodLogs        *bool
 
+	SignKey   *string
+	SignCert  *string
+	SignChain *string
+
 	DebugTemplates *bool
 
 	SaveBuildReport *bool
