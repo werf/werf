@@ -18,35 +18,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: go.mod
-
-      - name: Download Code Climate test-reporter
-        run: |
-          curl -sSL https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 --output reporter
-          chmod +x ./reporter
-
       - name: Download coverage artifact
         uses: actions/download-artifact@v4
         with:
           path: coverage
 
-      - name: Install gocovmerge
-        run: go install github.com/wadey/gocovmerge@latest
-
-      - name: Merge coverage files into one
-        run: |
-          coverage_files=$(find coverage -name '*.out')
-          gocovmerge ${coverage_files[@]} > coverage.out
-
       - name: Format and upload coverage report
-        run: |
-          export GIT_BRANCH="${GITHUB_REF:11}"
-          export GIT_COMMIT_SHA="$GITHUB_SHA"
-
-          ./reporter format-coverage -t=gocov -p=github.com/werf/werf/v2/ coverage.out
-          ./reporter upload-coverage
-        env:
-          CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
+        uses: qltysh/qlty-action/coverage@v1
+        with:
+          token: ${{secrets.QLTY_COVERAGE_TOKEN}}
+          files: coverage/*
