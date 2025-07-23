@@ -87,6 +87,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupIntrospectBeforeError(&commonCmdData, cmd)
 	common.SetupIntrospectStage(&commonCmdData, cmd)
 
+	common.SetupSigningOptions(&commonCmdData, cmd)
 	common.SetupELFSigningOptions(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)

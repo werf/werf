@@ -13,6 +13,7 @@ import (
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 
 	"github.com/werf/common-go/pkg/util"
+	"github.com/werf/werf/v2/pkg/build"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/docker_registry"
@@ -148,7 +149,7 @@ func (s *ImageSpecStage) GetDependencies(_ context.Context, _ Conveyor, _ contai
 	return util.Sha256Hash(args...), nil
 }
 
-func (s *ImageSpecStage) MutateImage(ctx context.Context, registry docker_registry.Interface, prevBuiltImage, stageImage *StageImage) error {
+func (s *ImageSpecStage) MutateImage(ctx context.Context, registry docker_registry.Interface, prevBuiltImage, stageImage *StageImage, _ build.SigningOptions) error {
 	src := prevBuiltImage.Image.Name()
 	dest := stageImage.Image.Name()
 

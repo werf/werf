@@ -168,6 +168,8 @@ werf plan --repo registry.mydomain.com/web --env production`,
 	common.SetupRequireBuiltImages(&commonCmdData, cmd)
 	commonCmdData.SetupPlatform(cmd)
 	common.SetupFollow(&commonCmdData, cmd)
+
+	common.SetupSigningOptions(&commonCmdData, cmd)
 	common.SetupELFSigningOptions(&commonCmdData, cmd)
 
 	common.SetupDisableAutoHostCleanup(&commonCmdData, cmd)

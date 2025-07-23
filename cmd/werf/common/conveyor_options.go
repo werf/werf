@@ -8,6 +8,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/samber/lo"
 	"golang.org/x/crypto/openpgp"
 
 	"github.com/werf/logboek"
@@ -104,6 +105,11 @@ func GetBuildOptions(ctx context.Context, commonCmdData *CmdData, werfConfig *co
 		return buildOptions, err
 	}
 
+	signingOptions, err := getSigningOptions(commonCmdData)
+	if err != nil {
+		return buildOptions, fmt.Errorf("getting signing options: %w", err)
+	}
+
 	elfSigningOptions, err := getELFSigningOptions(commonCmdData)
 	if err != nil {
 		return buildOptions, err
@@ -118,6 +124,7 @@ func GetBuildOptions(ctx context.Context, commonCmdData *CmdData, werfConfig *co
 			IntrospectBeforeError: *commonCmdData.IntrospectBeforeError,
 		},
 		IntrospectOptions: introspectOptions,
+		SigningOptions:    signingOptions,
 		ELFSigningOptions: elfSigningOptions,
 	}
 
@@ -129,6 +136,24 @@ func GetBuildOptions(ctx context.Context, commonCmdData *CmdData, werfConfig *co
 	}
 
 	return buildOptions, nil
+}
+
+func getSigningOptions(commonCmdData *CmdData) (build.SigningOptions, error) {
+	// usage without signing
+	if commonCmdData.SignKey == nil && commonCmdData.SignCert == nil {
+		return build.SigningOptions{}, nil
+	}
+	if *commonCmdData.SignKey == "" {
+		return build.SigningOptions{}, fmt.Errorf("signing key is required")
+	}
+	if *commonCmdData.SignCert == "" {
+		return build.SigningOptions{}, fmt.Errorf("signing certificate is required")
+	}
+	return build.SigningOptions{
+		KeyRef:   lo.FromPtr(commonCmdData.SignKey),
+		CertRef:  lo.FromPtr(commonCmdData.SignCert),
+		ChainRef: lo.FromPtr(commonCmdData.SignChain),
+	}, nil
 }
 
 func getELFSigningOptions(commonCmdData *CmdData) (build.ELFSigningOptions, error) {
