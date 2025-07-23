@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	cleanupTriggerTagCount                = 50
+	cleanupTriggerTagCount                = 100
 	repoMetaImagesWarningThresholdPercent = 80
 	repoCleanupLastTimeNever              = "never"
 	repoCleanupOverdueThreshold           = 14 * 24 * time.Hour
