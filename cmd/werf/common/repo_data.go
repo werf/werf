@@ -47,20 +47,34 @@ func (repoData *RepoData) CreateDockerRegistry(ctx context.Context, insecureRegi
 	return dockerRegistry, nil
 }
 
-func (repoData *RepoData) CreateStagesStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, insecureRegistry, skipTlsVerifyRegistry bool) (storage.PrimaryStagesStorage, error) {
+type CreateStagesStorageOptions struct {
+	ContainerBackend               container_backend.ContainerBackend
+	InsecureRegistry               bool
+	SkipTlsVerifyRegistry          bool
+	CleanupDisabled                bool
+	GitHistoryBasedCleanupDisabled bool
+}
+
+func (repoData *RepoData) CreateStagesStorage(ctx context.Context, opts *CreateStagesStorageOptions) (storage.PrimaryStagesStorage, error) {
 	addr, err := repoData.GetAddress()
 	if err != nil {
 		return nil, err
 	}
 
 	if addr == storage.LocalStorageAddress {
-		return storage.NewLocalStagesStorage(containerBackend), nil
+		return storage.NewLocalStagesStorage(opts.ContainerBackend), nil
 	} else {
-		dockerRegistry, err := repoData.CreateDockerRegistry(ctx, insecureRegistry, skipTlsVerifyRegistry)
+		dockerRegistry, err := repoData.CreateDockerRegistry(ctx, opts.InsecureRegistry, opts.SkipTlsVerifyRegistry)
 		if err != nil {
 			return nil, err
 		}
-		return storage.NewRepoStagesStorage(addr, containerBackend, dockerRegistry), nil
+		return storage.NewRepoStagesStorage(&storage.NewRepoStagesStorageOptions{
+			RepoAddress:                    addr,
+			ContainerBackend:               opts.ContainerBackend,
+			DockerRegistry:                 dockerRegistry,
+			CleanupDisabled:                opts.CleanupDisabled,
+			GitHistoryBasedCleanupDisabled: opts.GitHistoryBasedCleanupDisabled,
+		}), nil
 	}
 }
 

@@ -82,6 +82,8 @@ type StagesStorage interface {
 	PostSyncServerRecord(ctx context.Context, projectName string, rec *SyncServerRecord) error
 	PostMultiplatformImage(ctx context.Context, projectName, tag string, allPlatformsImages []*image.Info, platforms []string) error
 	FilterStageDescSetAndProcessRelatedData(ctx context.Context, stageDescSet image.StageDescSet, options FilterStagesAndProcessRelatedDataOptions) (image.StageDescSet, error)
+	GetLastCleanupRecord(ctx context.Context, projectName string, opts ...Option) (*CleanupRecord, error)
+	PostLastCleanupRecord(ctx context.Context, projectName string) error
 
 	String() string
 	Address() string
@@ -106,5 +108,9 @@ type CopyFromStorageOptions struct {
 
 type SyncServerRecord struct {
 	Server            string
+	TimestampMillisec int64
+}
+
+type CleanupRecord struct {
 	TimestampMillisec int64
 }
