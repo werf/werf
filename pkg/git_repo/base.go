@@ -42,7 +42,6 @@ func NewBase(name string, initRepoHandleBackedByWorkTreeFunc func(context.Contex
 		Name: name,
 		Cache: Cache{
 			Archives: make(map[string]Archive),
-			Patches:  make(map[string]Patch),
 		},
 	}
 	base.initRepoHandleBackedByWorkTreeFunc = initRepoHandleBackedByWorkTreeFunc
@@ -50,11 +49,10 @@ func NewBase(name string, initRepoHandleBackedByWorkTreeFunc func(context.Contex
 }
 
 type Cache struct {
-	Patches   map[string]Patch
+	Patches   sync.Map
 	Archives  map[string]Archive
 	Checksums sync.Map
 
-	patchesMutex   sync.Mutex
 	archivesMutex  sync.Mutex
 	checksumsMutex sync.Map
 }
@@ -158,18 +156,18 @@ func (repo *Base) GetName() string {
 }
 
 func (repo *Base) getOrCreatePatch(ctx context.Context, repoPath, gitDir, repoID, workTreeCacheDir string, opts PatchOptions) (Patch, error) {
-	repo.Cache.patchesMutex.Lock()
-	defer repo.Cache.patchesMutex.Unlock()
-
 	patchID := true_git.PatchOptions(opts).ID()
-	if _, hasKey := repo.Cache.Patches[patchID]; !hasKey {
-		patch, err := repo.CreatePatch(ctx, repoPath, gitDir, repoID, workTreeCacheDir, opts)
-		if err != nil {
-			return nil, err
-		}
-		repo.Cache.Patches[patchID] = patch
+	if patch, hasKey := repo.Cache.Patches.Load(patchID); hasKey {
+		return patch.(Patch), nil
 	}
-	return repo.Cache.Patches[patchID], nil
+
+	patch, err := repo.CreatePatch(ctx, repoPath, gitDir, repoID, workTreeCacheDir, opts)
+	if err != nil {
+		return nil, err
+	}
+	repo.Cache.Patches.Store(patchID, patch)
+
+	return patch, nil
 }
 
 func (repo *Base) CreatePatch(ctx context.Context, repoPath, gitDir, repoID, workTreeCacheDir string, opts PatchOptions) (patch Patch, err error) {
@@ -236,36 +234,7 @@ func (repo *Base) createPatch(ctx context.Context, repoPath, gitDir, repoID, wor
 	}
 
 	var desc *true_git.PatchDescriptor
-	if hasSubmodules {
-		var retryCount int
-
-	TryCreatePatch:
-		desc, err = true_git.PatchWithSubmodules(ctx, fileHandler, gitDir, workTreeCacheDir, true_git.PatchOptions(opts))
-
-		if true_git.IsCommitsNotPresentError(err) && retryCount == 0 {
-			logboek.Context(ctx).Default().LogF("Detected not present commits when creating patch: %s\n", err)
-			logboek.Context(ctx).Default().LogF("Will switch worktree to original commit %q and retry\n", opts.FromCommit)
-
-			if err := fileHandler.Truncate(0); err != nil {
-				return nil, fmt.Errorf("unable to truncate file %s: %w", tmpFile, err)
-			}
-			if _, err := fileHandler.Seek(0, 0); err != nil {
-				return nil, fmt.Errorf("unable to reset file %s: %w", tmpFile, err)
-			}
-
-			if err := true_git.WithWorkTree(ctx, gitDir, workTreeCacheDir, opts.FromCommit, true_git.WithWorkTreeOptions{HasSubmodules: true}, func(workTreeDir string) error {
-				return nil
-			}); err != nil {
-				return nil, fmt.Errorf("unable to switch worktree to commit %q: %w", opts.FromCommit, err)
-			}
-
-			retryCount++
-			goto TryCreatePatch
-		}
-	} else {
-		desc, err = true_git.Patch(ctx, fileHandler, gitDir, workTreeCacheDir, true_git.PatchOptions(opts))
-	}
-
+	desc, err = true_git.Patch(ctx, fileHandler, workTreeCacheDir, true_git.PatchOptions(opts), hasSubmodules)
 	if err != nil {
 		return nil, fmt.Errorf("error creating patch between %q and %q commits: %w", opts.FromCommit, opts.ToCommit, err)
 	}
