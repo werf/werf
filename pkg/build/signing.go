@@ -112,7 +112,6 @@ func signELFFile(ctx context.Context, path string, elfSigningOptions ELFSigningO
 			ctx,
 			cert_utils.SignerCertBase64,
 			cert_utils.SignerChainBase64,
-			"",
 			signver.KeyOpts{
 				KeyRef: cert_utils.SignerKeyBase64,
 			},
