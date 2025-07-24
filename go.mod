@@ -18,7 +18,7 @@ require (
 	github.com/containers/image/v5 v5.30.0
 	github.com/containers/storage v1.53.0
 	github.com/deckarep/golang-set/v2 v2.6.0
-	github.com/deckhouse/delivery-kit-sdk v0.0.0-20250709140747-a7fd5281efb3
+	github.com/deckhouse/delivery-kit-sdk v0.0.0-20250722194916-ede4c1be61f1
 	github.com/deislabs/oras v1.1.0
 	github.com/djherbis/buffer v1.2.0
 	github.com/djherbis/nio/v3 v3.0.1
@@ -101,6 +101,7 @@ require (
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
 	github.com/alecthomas/chroma/v2 v2.15.0 // indirect
+	github.com/cenkalti/backoff/v3 v3.2.2 // indirect
 	github.com/cenkalti/backoff/v4 v4.2.1 // indirect
 	github.com/chainguard-dev/git-urls v1.0.2 // indirect
 	github.com/dlclark/regexp2 v1.11.5 // indirect
@@ -109,6 +110,13 @@ require (
 	github.com/goccy/go-yaml v1.15.23 // indirect
 	github.com/google/certificate-transparency-go v1.1.7 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
+	github.com/hashicorp/go-retryablehttp v0.7.5 // indirect
+	github.com/hashicorp/go-rootcerts v1.0.2 // indirect
+	github.com/hashicorp/go-secure-stdlib/parseutil v0.1.7 // indirect
+	github.com/hashicorp/go-secure-stdlib/strutil v0.1.2 // indirect
+	github.com/hashicorp/go-sockaddr v1.0.2 // indirect
+	github.com/hashicorp/vault/api v1.12.0 // indirect
+	github.com/hofstadter-io/cinful v1.0.0 // indirect
 	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.7 // indirect
 	github.com/mattn/go-zglob v0.0.6 // indirect
@@ -117,7 +125,9 @@ require (
 	github.com/muesli/cancelreader v0.2.2 // indirect
 	github.com/ohler55/ojg v1.26.7 // indirect
 	github.com/radovskyb/watcher v1.0.7 // indirect
+	github.com/ryanuber/go-glob v1.0.0 // indirect
 	github.com/sajari/fuzzy v1.0.0 // indirect
+	github.com/sigstore/sigstore/pkg/signature/kms/hashivault v1.8.2 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	github.com/zeebo/xxh3 v1.0.2 // indirect
 	golang.org/x/mod v0.22.0 // indirect
@@ -252,7 +262,7 @@ require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/jedib0t/go-pretty/v6 v6.5.5 // indirect
-	github.com/jellydator/ttlcache/v3 v3.1.1 // indirect
+	github.com/jellydator/ttlcache/v3 v3.2.0 // indirect
 	github.com/jinzhu/copier v0.4.0 // indirect
 	github.com/jinzhu/gorm v1.9.16 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
