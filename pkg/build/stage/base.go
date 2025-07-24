@@ -11,7 +11,7 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/build"
+	"github.com/werf/werf/v2/pkg/build/signing"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/docker_registry"
@@ -321,7 +321,7 @@ func (s *BaseStage) PrepareImage(ctx context.Context, c Conveyor, cb container_b
 	return nil
 }
 
-func (s *BaseStage) MutateImage(_ context.Context, _ docker_registry.Interface, _, _ *StageImage, _ build.SigningOptions) error {
+func (s *BaseStage) MutateImage(_ context.Context, _ docker_registry.Interface, _, _ *StageImage, _ signing.SigningOptions) error {
 	panic("not implemented")
 }
 
