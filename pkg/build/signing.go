@@ -87,7 +87,7 @@ func isELFFileStream(reader io.Reader) (bool, error) {
 }
 
 func signELFFile(ctx context.Context, path string, elfSigningOptions ELFSigningOptions) error {
-	if err := logboek.Context(ctx).Info().LogProcess("bsign").DoError(func() error {
+	if err := logboek.Context(ctx).Info().LogProcessInline("bsign").DoError(func() error {
 		var cmdExtraEnv []string
 		pgOptionsString := fmt.Sprintf("--batch --default-key=%s", elfSigningOptions.PGPPrivateKeyFingerprint)
 		if elfSigningOptions.PGPPrivateKeyPassphrase != "" {
@@ -107,7 +107,7 @@ func signELFFile(ctx context.Context, path string, elfSigningOptions ELFSigningO
 		return err
 	}
 
-	if err := logboek.Context(ctx).Info().LogProcess("inhouse").DoError(func() error {
+	if err := logboek.Context(ctx).Info().LogProcessInline("inhouse").DoError(func() error {
 		sv, err := signver.NewSignerVerifier(
 			ctx,
 			cert_utils.SignerCertBase64,
@@ -163,13 +163,13 @@ func mutateELFFiles(ctx context.Context, reader io.Reader, elfSigningOptions ELF
 
 				isELF, err := isELFFileStream(tmpFile)
 				if err != nil {
-					return fmt.Errorf("failed to check ELF file: %w", err)
+					return fmt.Errorf("failed to check ELF file %q: %w", header.Name, err)
 				}
 
 				if isELF {
 					if err := logboek.Context(ctx).Default().LogProcessInline(header.Name).DoError(func() error {
 						if err := signELFFile(ctx, tmpFile.Name(), elfSigningOptions); err != nil {
-							return fmt.Errorf("failed to sign ELF file: %w", err)
+							return fmt.Errorf("failed to sign ELF file %q: %w", header.Name, err)
 						}
 
 						return nil
