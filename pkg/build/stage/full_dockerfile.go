@@ -16,7 +16,7 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/build"
+	"github.com/werf/werf/v2/pkg/build/signing"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/container_backend/stage_builder"
@@ -397,7 +397,7 @@ func (s *FullDockerfileStage) GetDependencies(ctx context.Context, c Conveyor, _
 	return util.Sha256Hash(dependencies...), nil
 }
 
-func (s *FullDockerfileStage) MutateImage(_ context.Context, _ docker_registry.Interface, _, _ *StageImage, _ build.SigningOptions) error {
+func (s *FullDockerfileStage) MutateImage(_ context.Context, _ docker_registry.Interface, _, _ *StageImage, _ signing.SigningOptions) error {
 	panic("not implemented")
 }
 
