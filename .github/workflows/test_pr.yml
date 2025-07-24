@@ -2,6 +2,15 @@ name: test:pr
 
 on:
   pull_request:
+    paths:
+      - "go.mod"
+      - "Taskfile.dist.yaml"
+      - ".github/**"
+      - "cmd/werf/**"
+      - "pkg/**"
+      - "integration/**"
+      - "scripts/**"
+      - "test/**"
   repository_dispatch:
     types: ["test:pr"]
   workflow_dispatch:
@@ -11,50 +20,16 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  detect-changes:
-    runs-on: ubuntu-22.04
-    timeout-minutes: 10
-    permissions:
-      pull-requests: read
-    outputs:
-      workflow_proceed: ${{ steps.changes.outputs.workflow_proceed }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Detect changes
-        uses: dorny/paths-filter@v3
-        id: changes
-        with:
-          filters: |
-            workflow_proceed:
-              - 'go.mod'
-              - 'Taskfile.dist.yaml'
-              - '.github/**'
-              - 'cmd/werf/**'
-              - 'pkg/**'
-              - 'integration/**'
-              - 'scripts/**'
-              - 'test/**'
-
   lint:
-    needs: detect-changes
-    uses: ./.github/workflows/_lint.yml
+    uses: werf/common-ci/.github/workflows/lint.yml@chore/ci/update-lint-workflow
     with:
-      forceSkip: ${{ github.event_name == 'pull_request' && needs.detect-changes.outputs.workflow_proceed == 'false' }}
-
+      skipBtrfs: "false"
   unit:
-    needs: detect-changes
     uses: ./.github/workflows/_test_unit.yml
     with:
       excludePackages: cmd/werf/docs
-      forceSkip: ${{ github.event_name == 'pull_request' && needs.detect-changes.outputs.workflow_proceed == 'false' }}
 
   build:
-    if: ${{ !(github.event_name == 'pull_request' && needs.detect-changes.outputs.workflow_proceed == 'false') }}
-    needs: detect-changes
-    strategy:
-      fail-fast: false
     runs-on: ubuntu-22.04
     timeout-minutes: 60
     steps:
@@ -81,11 +56,9 @@ jobs:
         run: task -p build:dev:all
 
   e2e_simple:
-    needs: detect-changes
     uses: ./.github/workflows/_test_e2e_regular.yml
     with:
       scope: simple
-      forceSkip: ${{ github.event_name == 'pull_request' && needs.detect-changes.outputs.workflow_proceed == 'false' }}
     secrets: inherit
 
   notify:
