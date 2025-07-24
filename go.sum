@@ -362,8 +362,7 @@ github.com/daviddengcn/go-colortext v1.0.0 h1:ANqDyC0ys6qCSvuEK7l3g5RaehL/Xck9EX
 github.com/daviddengcn/go-colortext v1.0.0/go.mod h1:zDqEI5NVUop5QPpVJUxE9UO10hRnmkD5G4Pmri9+m4c=
 github.com/deckarep/golang-set/v2 v2.6.0 h1:XfcQbWM1LlMB8BsJ8N9vW5ehnnPVIw0je80NsVHagjM=
 github.com/deckarep/golang-set/v2 v2.6.0/go.mod h1:VAky9rY/yGXJOLEDv3OMci+7wtDpOF4IN+y82NBOac4=
-github.com/deckhouse/delivery-kit-sdk v0.0.0-20250707232455-c61dfc8c8bfe h1:0TLvr0+lWHag3BvYNlYraxMBW7eC+vuf1gXVlN01VTo=
-github.com/deckhouse/delivery-kit-sdk v0.0.0-20250707232455-c61dfc8c8bfe/go.mod h1:rA+FuyRJdMr2I3KF6PCkYVvIgvvTv+IxnF0MHraNPIM=
+github.com/deckhouse/delivery-kit-sdk v0.0.0-20250709140747-a7fd5281efb3 h1:nyeTjYqvHlTxWlUl433/Ci0kFGw25kpEUEtlWW440kM=
 github.com/deckhouse/delivery-kit-sdk v0.0.0-20250709140747-a7fd5281efb3/go.mod h1:rA+FuyRJdMr2I3KF6PCkYVvIgvvTv+IxnF0MHraNPIM=
 github.com/denisenkom/go-mssqldb v0.0.0-20191124224453-732737034ffd/go.mod h1:xbL0rPBG9cCiLr28tMa8zpbdarY27NDyej4t/EjAShU=
 github.com/denisenkom/go-mssqldb v0.0.0-20191128021309-1d7a30a10f73/go.mod h1:xbL0rPBG9cCiLr28tMa8zpbdarY27NDyej4t/EjAShU=
