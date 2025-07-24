@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/werf/werf/v2/pkg/werf/exec"
 	"io"
 	"io/ioutil"
 	"os"
@@ -24,6 +23,7 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
+	"github.com/werf/werf/v2/pkg/werf/exec"
 )
 
 type ELFState int
