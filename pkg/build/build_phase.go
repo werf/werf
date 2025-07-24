@@ -1150,12 +1150,12 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 		}
 
 		desc, err := phase.Conveyor.StorageManager.GetStagesStorage().GetStageDesc(ctx, phase.Conveyor.ProjectName(), *imagePkg.NewStageID(stg.GetDigest(), stageCreationTs))
-			if err != nil || desc == nil {
-				return fmt.Errorf("unable to get stage %s digest %s image %s description from repo %s after stages has been stored into repo: %w", stg.LogDetailedName(), stg.GetDigest(), stageImage.Image.Name(), phase.Conveyor.StorageManager.GetStagesStorage().String(), err)
-			}
+		if err != nil || desc == nil {
+			return fmt.Errorf("unable to get stage %s digest %s image %s description from repo %s after stages has been stored into repo: %w", stg.LogDetailedName(), stg.GetDigest(), stageImage.Image.Name(), phase.Conveyor.StorageManager.GetStagesStorage().String(), err)
+		}
 
-			stageImage.Image.SetStageDesc(desc)
-			img.SetRebuilt(true)
+		stageImage.Image.SetStageDesc(desc)
+		img.SetRebuilt(true)
 
 		return nil
 	}); err != nil {
