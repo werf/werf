@@ -520,6 +520,11 @@ func SetupKubeConfig(cmdData *CmdData, cmd *cobra.Command) {
 	}
 }
 
+func SetupNoPodLogs(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.NoPodLogs = new(bool)
+	cmd.PersistentFlags().BoolVarP(cmdData.NoPodLogs, "no-pod-logs", "", false, "Disable Pod logs collection and printing (default $WERF_NO_POD_LOGS or false)")
+}
+
 func GetFirstExistingKubeConfigEnvVar() string {
 	return util.GetFirstExistingEnvVarAsString("WERF_KUBE_CONFIG", "WERF_KUBECONFIG", "KUBECONFIG")
 }

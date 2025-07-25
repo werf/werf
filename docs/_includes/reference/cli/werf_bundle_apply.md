@@ -154,6 +154,8 @@ werf bundle apply [options]
       --no-install-crds=false
             Do not install CRDs from "crds/" directories of installed charts (default               
             $WERF_NO_INSTALL_CRDS)
+      --no-pod-logs=false
+            Disable Pod logs collection and printing (default $WERF_NO_POD_LOGS or false)
       --release=""
             Use specified Helm release name (default $WERF_RELEASE)
       --release-label=[]
