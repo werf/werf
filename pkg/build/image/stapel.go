@@ -125,7 +125,7 @@ func initStages(ctx context.Context, image *Image, metaConfig *config.Meta, stap
 		stages = appendIfExist(ctx, stages, stage.GenerateImageSpecStage(imageBaseConfig.ImageSpec, baseStageOptions))
 	}
 
-	if imageBaseConfig.IsFinal() {
+	if opts.ManifestSigningEnabled && imageBaseConfig.IsFinal() {
 		stages = append(stages, stage.GenerateManifestStage(baseStageOptions))
 	}
 

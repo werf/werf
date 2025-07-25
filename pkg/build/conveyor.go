@@ -73,6 +73,7 @@ type ConveyorOptions struct {
 	DeferBuildLog                   bool
 	ImagesToProcess                 config.ImagesToProcess
 	SkipImageSpecStage              bool
+	ManifestSigningEnabled          bool
 }
 
 func NewConveyor(werfConfig *config.WerfConfig, giterminismManager giterminism_manager.Interface, projectDir, baseTmpDir string, containerBackend container_backend.ContainerBackend, storageManager manager.StorageManagerInterface, storageLockManager lock_manager.Interface, opts ConveyorOptions) *Conveyor {
@@ -104,14 +105,15 @@ func NewConveyor(werfConfig *config.WerfConfig, giterminismManager giterminism_m
 
 	c.imagesTree = image.NewImagesTree(werfConfig, image.ImagesTreeOptions{
 		CommonImageOptions: image.CommonImageOptions{
-			Conveyor:           c,
-			GiterminismManager: c.GiterminismManager().(*giterminism_manager.Manager),
-			ContainerBackend:   c.ContainerBackend,
-			StorageManager:     c.StorageManager,
-			ProjectDir:         c.projectDir,
-			ProjectName:        c.ProjectName(),
-			ContainerWerfDir:   c.containerWerfDir,
-			TmpDir:             c.tmpDir,
+			Conveyor:               c,
+			GiterminismManager:     c.GiterminismManager().(*giterminism_manager.Manager),
+			ContainerBackend:       c.ContainerBackend,
+			StorageManager:         c.StorageManager,
+			ProjectDir:             c.projectDir,
+			ProjectName:            c.ProjectName(),
+			ContainerWerfDir:       c.containerWerfDir,
+			TmpDir:                 c.tmpDir,
+			ManifestSigningEnabled: opts.ManifestSigningEnabled,
 		},
 		ImagesToProcess: opts.ImagesToProcess,
 	})
