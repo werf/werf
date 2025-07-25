@@ -520,9 +520,9 @@ func SetupKubeConfig(cmdData *CmdData, cmd *cobra.Command) {
 	}
 }
 
-func SetupKubeIgnorePodsLogs(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.KubeIgnorePodsLogs = new(bool)
-	cmd.PersistentFlags().BoolVarP(cmdData.KubeIgnorePodsLogs, "kube-ignore-pods-logs", "", false, "Don't collect logs from PODs in Kubernetes (default $WERF_KUBE_IGNORE_PODS_LOGS)")
+func SetupNoPodLogs(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.NoPodLogs = new(bool)
+	cmd.PersistentFlags().BoolVarP(cmdData.NoPodLogs, "no-pod-logs", "", false, "Disable Pod logs collection and printing (default $WERF_NO_POD_LOGS or false)")
 }
 
 func GetFirstExistingKubeConfigEnvVar() string {

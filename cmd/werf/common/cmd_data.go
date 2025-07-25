@@ -32,7 +32,6 @@ type CmdData struct {
 	KubeConfig                       *string
 	KubeConfigBase64                 *string
 	KubeConfigPathMergeList          *[]string
-	KubeIgnorePodsLogs               *bool
 	StatusProgressPeriodSeconds      *int64
 	HooksStatusProgressPeriodSeconds *int64
 	ReleasesHistoryMax               *int
@@ -98,6 +97,7 @@ type CmdData struct {
 
 	Follow *bool
 
+	// Logging options
 	LogDebug         *bool
 	LogPretty        *bool
 	LogTime          *bool
@@ -107,6 +107,7 @@ type CmdData struct {
 	LogColorMode     *string
 	LogProjectDir    *bool
 	LogTerminalWidth *int64
+	NoPodLogs        *bool
 
 	DebugTemplates *bool
 

@@ -123,6 +123,7 @@ werf converge --repo registry.mydomain.com/web --env production`,
 	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
+	common.SetupNoPodLogs(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
 	common.SetupSynchronization(&commonCmdData, cmd)
@@ -130,7 +131,6 @@ werf converge --repo registry.mydomain.com/web --env production`,
 	common.SetupKubeConfig(&commonCmdData, cmd)
 	common.SetupKubeConfigBase64(&commonCmdData, cmd)
 	common.SetupKubeContext(&commonCmdData, cmd)
-	common.SetupKubeIgnorePodsLogs(&commonCmdData, cmd)
 
 	common.SetupStatusProgressPeriod(&commonCmdData, cmd)
 	common.SetupHooksStatusProgressPeriod(&commonCmdData, cmd)
@@ -479,7 +479,7 @@ func run(
 		LegacyExtraValues:            serviceValues,
 		LogRegistryStreamOut:         os.Stdout,
 		NetworkParallelism:           common.GetNetworkParallelism(&commonCmdData),
-		NoLogs:                       *commonCmdData.KubeIgnorePodsLogs,
+		NoPodLogs:                    *commonCmdData.NoPodLogs,
 		NoInstallCRDs:                *commonCmdData.NoInstallCRDs,
 		NoProgressTablePrint:         *commonCmdData.StatusProgressPeriodSeconds == -1,
 		ProgressTablePrintInterval:   time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,

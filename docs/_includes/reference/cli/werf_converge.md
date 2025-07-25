@@ -232,8 +232,6 @@ werf converge --repo registry.mydomain.com/web --env production
             $WERF_KUBECONFIG_BASE64 or $KUBECONFIG_BASE64)
       --kube-context=""
             Kubernetes config context (default $WERF_KUBE_CONTEXT)
-      --kube-ignore-pods-logs=false
-            Don`t collect logs from PODs in Kubernetes (default $WERF_KUBE_IGNORE_PODS_LOGS)
       --kube-qps-limit=30
             Kubernetes client QPS limit (default $WERF_KUBE_QPS_LIMIT or 30)
       --kube-tls-server=""
@@ -278,6 +276,8 @@ werf converge --repo registry.mydomain.com/web --env production
       --no-install-crds=false
             Do not install CRDs from "crds/" directories of installed charts (default               
             $WERF_NO_INSTALL_CRDS)
+      --no-pod-logs=false
+            Disable Pod logs collection and printing (default $WERF_NO_POD_LOGS or false)
   -p, --parallel=true
             Run in parallel (default $WERF_PARALLEL or true)
       --parallel-tasks-limit=5

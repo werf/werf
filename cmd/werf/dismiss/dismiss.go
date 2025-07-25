@@ -99,7 +99,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupKubeConfig(&commonCmdData, cmd)
 	common.SetupKubeConfigBase64(&commonCmdData, cmd)
 	common.SetupKubeContext(&commonCmdData, cmd)
-	common.SetupKubeIgnorePodsLogs(&commonCmdData, cmd)
 	common.SetupSkipTLSVerifyKube(&commonCmdData, cmd)
 	common.SetupKubeApiServer(&commonCmdData, cmd)
 	common.SetupKubeCaPath(&commonCmdData, cmd)
@@ -113,6 +112,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupDockerConfig(&commonCmdData, cmd, "")
 
 	common.SetupLogOptions(&commonCmdData, cmd)
+	common.SetupNoPodLogs(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
 	common.SetupDisableAutoHostCleanup(&commonCmdData, cmd)
@@ -215,7 +215,7 @@ func runDismiss(ctx context.Context) error {
 			KubeTLSServerName:          *commonCmdData.KubeTlsServer,
 			KubeToken:                  *commonCmdData.KubeToken,
 			NetworkParallelism:         common.GetNetworkParallelism(&commonCmdData),
-			NoLogs:                     *commonCmdData.KubeIgnorePodsLogs,
+			NoPodLogs:                  *commonCmdData.NoPodLogs,
 			NoProgressTablePrint:       *commonCmdData.StatusProgressPeriodSeconds == -1,
 			ProgressTablePrintInterval: time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
 			ReleaseHistoryLimit:        *commonCmdData.ReleasesHistoryMax,

@@ -87,6 +87,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
+	common.SetupNoPodLogs(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
 	common.SetupAddAnnotations(&commonCmdData, cmd)
@@ -110,7 +111,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupKubeConfig(&commonCmdData, cmd)
 	common.SetupKubeConfigBase64(&commonCmdData, cmd)
 	common.SetupKubeContext(&commonCmdData, cmd)
-	common.SetupKubeIgnorePodsLogs(&commonCmdData, cmd)
 
 	common.SetupRelease(&commonCmdData, cmd, false)
 	common.SetupNamespace(&commonCmdData, cmd, false)
@@ -270,7 +270,7 @@ func runApply(ctx context.Context) error {
 		LegacyExtraValues:            serviceValues,
 		LogRegistryStreamOut:         os.Stdout,
 		NetworkParallelism:           common.GetNetworkParallelism(&commonCmdData),
-		NoLogs:                       *commonCmdData.KubeIgnorePodsLogs,
+		NoPodLogs:                    *commonCmdData.NoPodLogs,
 		NoInstallCRDs:                *commonCmdData.NoInstallCRDs,
 		NoProgressTablePrint:         *commonCmdData.StatusProgressPeriodSeconds == -1,
 		ProgressTablePrintInterval:   time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,

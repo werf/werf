@@ -158,8 +158,6 @@ werf dismiss [options]
             $WERF_KUBECONFIG_BASE64 or $KUBECONFIG_BASE64)
       --kube-context=""
             Kubernetes config context (default $WERF_KUBE_CONTEXT)
-      --kube-ignore-pods-logs=false
-            Don`t collect logs from PODs in Kubernetes (default $WERF_KUBE_IGNORE_PODS_LOGS)
       --kube-qps-limit=30
             Kubernetes client QPS limit (default $WERF_KUBE_QPS_LIMIT or 30)
       --kube-tls-server=""
@@ -201,6 +199,8 @@ werf dismiss [options]
             deploy.namespace custom template from werf.yaml or $WERF_NAMESPACE)
       --network-parallelism=30
             Parallelize some network operations (default $WERF_NETWORK_PARALLELISM or 30)
+      --no-pod-logs=false
+            Disable Pod logs collection and printing (default $WERF_NO_POD_LOGS or false)
       --platform=[]
             Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT]     
             ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)
