@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.43.2](https://github.com/werf/werf/compare/v2.43.1...v2.43.2) (2025-07-25)
+
+
+### Bug Fixes
+
+* **deploy:** non-successful release revisions since last successful never cleaned up ([81faa1f](https://github.com/werf/werf/commit/81faa1fbd37a183fa1e5ec9deb8b837262b6c6ce))
+
 ## [2.43.1](https://github.com/werf/werf/compare/v2.43.0...v2.43.1) (2025-07-22)
 
 
