@@ -55,49 +55,27 @@ type PatchDescriptor struct {
 	PathsToRemove []string
 }
 
-func PatchWithSubmodules(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir string, opts PatchOptions) (*PatchDescriptor, error) {
-	var res *PatchDescriptor
-
-	err := withWorkTreeCacheLock(ctx, workTreeCacheDir, func() error {
-		writePatchRes, err := writePatch(ctx, out, gitDir, workTreeCacheDir, true, opts)
-		res = writePatchRes
-		return err
-	})
-
-	return res, err
-}
-
-func Patch(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir string, opts PatchOptions) (*PatchDescriptor, error) {
-	var res *PatchDescriptor
-
-	err := withWorkTreeCacheLock(ctx, workTreeCacheDir, func() error {
-		writePatchRes, err := writePatch(ctx, out, gitDir, workTreeCacheDir, false, opts)
-		res = writePatchRes
-		return err
-	})
-
-	return res, err
+func Patch(ctx context.Context, out io.Writer, workTreeCacheDir string, opts PatchOptions, withSubmodules bool) (*PatchDescriptor, error) {
+	workTreeCacheDir = workTreeCacheDir + "/worktree"
+	if withSubmodules {
+		path := workTreeCacheDir
+		if err := UpdateSubmodulesOnce(ctx, path); err != nil {
+			return nil, fmt.Errorf("failed to init submodules: %w", err)
+		}
+	}
+	return writePatch(ctx, out, workTreeCacheDir, withSubmodules, opts)
 }
 
 func debugPatch() bool {
 	return os.Getenv("WERF_TRUE_GIT_DEBUG_PATCH") == "1"
 }
 
-func writePatch(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir string, withSubmodules bool, opts PatchOptions) (*PatchDescriptor, error) {
+func writePatch(ctx context.Context, out io.Writer, gitDir string, withSubmodules bool, opts PatchOptions) (*PatchDescriptor, error) {
 	var err error
 
 	gitDir, err = filepath.Abs(gitDir)
 	if err != nil {
 		return nil, fmt.Errorf("bad git dir %s: %w", gitDir, err)
-	}
-
-	workTreeCacheDir, err = filepath.Abs(workTreeCacheDir)
-	if err != nil {
-		return nil, fmt.Errorf("bad work tree cache dir %s: %w", workTreeCacheDir, err)
-	}
-
-	if withSubmodules && workTreeCacheDir == "" {
-		return nil, fmt.Errorf("provide work tree cache directory to enable submodules!")
 	}
 
 	commonGitOpts := append(getCommonGitOptions(),
@@ -121,13 +99,9 @@ func writePatch(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir str
 	var cmd *exec.Cmd
 
 	if withSubmodules {
-		workTreeDir, err := prepareWorkTree(ctx, gitDir, workTreeCacheDir, opts.ToCommit, withSubmodules)
-		if err != nil {
-			return nil, fmt.Errorf("cannot prepare work tree in cache %s for commit %s: %w", workTreeCacheDir, opts.ToCommit, err)
-		}
 
 		gitArgs := commonGitOpts
-		gitArgs = append(gitArgs, "-C", workTreeDir)
+		gitArgs = append(gitArgs, "-C", gitDir)
 		gitArgs = append(gitArgs, "diff")
 		gitArgs = append(gitArgs, diffOpts...)
 		gitArgs = append(gitArgs, opts.FromCommit, opts.ToCommit)
@@ -138,7 +112,7 @@ func writePatch(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir str
 
 		cmd = werfExec.CommandContextCancellation(ctx, "git", gitArgs...)
 
-		cmd.Dir = workTreeDir // required for `git diff` with submodules
+		cmd.Dir = gitDir // required for `git diff` with submodules
 	} else {
 		gitArgs := commonGitOpts
 		gitArgs = append(gitArgs, "-C", gitDir)
@@ -157,11 +131,13 @@ func writePatch(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir str
 	if err != nil {
 		return nil, fmt.Errorf("error creating git diff stdout pipe: %w", err)
 	}
+	defer stdoutPipe.Close()
 
 	stderrPipe, err := cmd.StderrPipe()
 	if err != nil {
 		return nil, fmt.Errorf("error creating git diff stderr pipe: %w", err)
 	}
+	defer stderrPipe.Close()
 
 	if err := cmd.Start(); err != nil {
 		return nil, fmt.Errorf("error starting git diff: %w", err)
