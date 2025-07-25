@@ -42,7 +42,7 @@ func (s *Signer) Chain() string {
 
 func NewSigner(ctx context.Context, opts SignerOptions) (*Signer, error) {
 	if opts.IsZero() {
-		return nil, nil
+		return &Signer{nil}, nil
 	}
 	sv, err := signver.NewSignerVerifier(ctx, opts.CertRef, opts.ChainRef, signver.KeyOpts{
 		KeyRef:   opts.KeyRef,

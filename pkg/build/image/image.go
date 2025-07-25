@@ -42,6 +42,7 @@ type CommonImageOptions struct {
 	TmpDir             string
 
 	ForceTargetPlatformLogging bool
+	ManifestSigningEnabled     bool
 }
 
 type ImageOptions struct {

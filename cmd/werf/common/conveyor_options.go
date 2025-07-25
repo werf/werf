@@ -73,6 +73,7 @@ func GetConveyorOptionsWithParallel(ctx context.Context, commonCmdData *CmdData,
 		return conveyorOptions, fmt.Errorf("getting parallel tasks limit failed: %w", err)
 	}
 	conveyorOptions.ParallelTasksLimit = parallelTasksLimit
+	conveyorOptions.ManifestSigningEnabled = buildStagesOptions.ManifestSigningOptions.Enabled
 
 	return conveyorOptions, nil
 }
