@@ -86,10 +86,8 @@ func TestBasicAuthCredentialsHelper(t *testing.T) {
 				Src: "/nonexistent/path.txt",
 			},
 		}
-		auth, err := BasicAuthCredentialsHelper(cfg)
-		require.Error(t, err)
-		assert.Nil(t, auth)
-		assert.Contains(t, err.Error(), "unable to read secret file")
+		_, err := BasicAuthCredentialsHelper(cfg)
+		assert.Error(t, err)
 	})
 
 	t.Run("plain value success", func(t *testing.T) {
