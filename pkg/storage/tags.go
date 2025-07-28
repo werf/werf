@@ -25,7 +25,7 @@ const (
 )
 
 func (storage *RepoStagesStorage) checkMeta(ctx context.Context, tags []string, _ ...docker_registry.Option) error {
-	if len(tags) > cleanupTriggerTagCount || storage.gitHistoryBasedCleanupDisabled || storage.cleanupDisabled {
+	if len(tags) > cleanupTriggerTagCount || storage.cleanupDisabled {
 		return nil
 	}
 
@@ -51,19 +51,20 @@ func (storage *RepoStagesStorage) checkMeta(ctx context.Context, tags []string, 
 }
 
 func runCleanupNeededChecks(ctx context.Context, storage *RepoStagesStorage, tags []string, b *strings.Builder) error {
-	checks := []func(ctx context.Context, storage *RepoStagesStorage, tags []string, b *strings.Builder) error{
-		checkLastCleanup,
+	if err := checkLastCleanup(ctx, storage, tags, b); errors.Is(err, ErrCleanupNotOverdue) {
+		return nil
+	}
+
+	extraChecks := []func(ctx context.Context, storage *RepoStagesStorage, tags []string, b *strings.Builder) error{
 		checkMetaTags,
 	}
 
-	for _, checkFunc := range checks {
+	for _, checkFunc := range extraChecks {
 		if err := checkFunc(ctx, storage, tags, b); err != nil {
-			if errors.Is(err, ErrCleanupNotOverdue) {
-				return nil
-			}
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -96,9 +97,7 @@ func countMetaTags(tags []string) int {
 	return metaCount
 }
 
-var (
-	ErrCleanupNotOverdue = fmt.Errorf("cleanup is not overdue, no need to warning")
-)
+var ErrCleanupNotOverdue = fmt.Errorf("cleanup is not overdue, no need to warning")
 
 func checkLastCleanup(ctx context.Context, storage *RepoStagesStorage, tags []string, b *strings.Builder) error {
 	if len(tags) == 0 {
@@ -109,16 +108,13 @@ func checkLastCleanup(ctx context.Context, storage *RepoStagesStorage, tags []st
 		return fmt.Errorf("getting last cleanup record: %w", err)
 	}
 
-	if !isCleanupOverdue(lastCleanup) {
-		return ErrCleanupNotOverdue
-	}
-
 	lastCleanupTime := formatLastCleanupTime(lastCleanup)
 	if lastCleanupTime == repoCleanupLastTimeNever || isCleanupOverdue(lastCleanup) {
 		b.WriteString(fmt.Sprintf(warnTemplateLastCleanupOverdue, lastCleanupTime))
+		return nil
+	} else {
+		return ErrCleanupNotOverdue
 	}
-
-	return nil
 }
 
 func formatLastCleanupTime(lastCleanup *CleanupRecord) string {
