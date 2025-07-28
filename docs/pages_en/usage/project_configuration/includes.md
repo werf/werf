@@ -79,6 +79,8 @@ includes:
       - .werf
 ```
 
+The procedure for working with private repositories is the same as described [here]({{ "/usage/build/stapel/git.html#working-with-remote-repositories" | true_relative_url }}).
+
 After the configuration, it is necessary to lock the versions of external dependencies. You can do this using the command `werf includes update`, which will create the file `werf-includes.lock` in the project root:
 
 ```yaml

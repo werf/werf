@@ -62,7 +62,7 @@ func TestBasicAuthCredentialsHelper(t *testing.T) {
 	t.Run("file source success", func(t *testing.T) {
 		tmpFile := filepath.Join(t.TempDir(), "secret.txt")
 		secret := "filepass"
-		err := os.WriteFile(tmpFile, []byte(secret), 0600)
+		err := os.WriteFile(tmpFile, []byte(secret), 0o600)
 		require.NoError(t, err)
 		defer os.Remove(tmpFile)
 

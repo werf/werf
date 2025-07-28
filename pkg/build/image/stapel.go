@@ -174,7 +174,7 @@ func generateGitMappings(ctx context.Context, metaConfig *config.Meta, imageBase
 		remoteGitRepo := opts.Conveyor.GetRemoteGitRepo(remoteGitMappingConfig.Name)
 		if remoteGitRepo == nil {
 			var err error
-			remoteGitRepo, err = git_repo.OpenRemoteRepo(remoteGitMappingConfig.Name, remoteGitMappingConfig.Url, nil)
+			remoteGitRepo, err = git_repo.OpenRemoteRepo(remoteGitMappingConfig.Name, remoteGitMappingConfig.Url, remoteGitMappingConfig.BasicAuth)
 			if err != nil {
 				return nil, fmt.Errorf("unable to open remote git repo %s by url %s: %w", remoteGitMappingConfig.Name, remoteGitMappingConfig.Url, err)
 			}

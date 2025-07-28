@@ -34,10 +34,14 @@ type Remote struct {
 	BasicAuth *BasicAuth
 }
 
-func OpenRemoteRepo(name, url string, auth *BasicAuth) (*Remote, error) {
+func OpenRemoteRepo(name, url string, auth *BasicAuthCredentials) (*Remote, error) {
 	repo := &Remote{Url: url}
 	repo.Base = NewBase(name, repo.initRepoHandleBackedByWorkTree)
 	if auth != nil {
+		auth, err := BasicAuthCredentialsHelper(auth)
+		if err != nil {
+			return nil, fmt.Errorf("unable to get basic auth for repository %s: %w", name, err)
+		}
 		repo.BasicAuth = auth
 	}
 	return repo, repo.ValidateEndpoint()
@@ -275,7 +279,17 @@ func (repo *Remote) FetchOrigin(ctx context.Context, opts FetchOptions) error {
 
 		logboek.Context(ctx).Default().LogFDetails("Fetch remote %s of %s\n", remoteName, repo.Url)
 
-		err = rawRepo.Fetch(&git.FetchOptions{RemoteName: remoteName, Force: true, Tags: git.AllTags})
+		fetchOpts := &git.FetchOptions{
+			RemoteName: remoteName,
+			Force:      true,
+			Tags:       git.AllTags,
+		}
+
+		if repo.BasicAuth != nil {
+			fetchOpts.Auth = newBasicAuth(repo.BasicAuth.Username, repo.BasicAuth.Password).AuthMethod
+		}
+
+		err = rawRepo.Fetch(fetchOpts)
 		if err != nil && err != git.NoErrAlreadyUpToDate {
 			return fmt.Errorf("cannot fetch remote %q of repo %q: %w", remoteName, repo.String(), err)
 		}

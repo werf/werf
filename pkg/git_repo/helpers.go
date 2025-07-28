@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/go-git/go-git/v5/plumbing"
+
 	"github.com/werf/common-go/pkg/util"
 )
 
@@ -29,7 +30,7 @@ type BasicAuthCredentials struct {
 type PasswordSource struct {
 	Env        string `yaml:"env"`
 	Src        string `yaml:"src"`
-	PlainValue string `yaml:"plainValue"`
+	PlainValue string `yaml:"value"`
 }
 
 func BasicAuthCredentialsHelper(cfg *BasicAuthCredentials) (*BasicAuth, error) {
