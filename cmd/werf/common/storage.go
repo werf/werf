@@ -21,6 +21,7 @@ type NewStorageManagerConfig struct {
 
 	CleanupDisabled                bool
 	GitHistoryBasedCleanupDisabled bool
+	SkipMetaCheck                  bool
 }
 
 func WithHostPurge() NewStorageManagerOption {
@@ -43,7 +44,11 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
 		stagesStorage = GetLocalStagesStorage(c.ContainerBackend)
 	} else {
 		var stgErr error
-		stagesStorage, stgErr = GetStagesStorage(ctx, c.ContainerBackend, c.CmdData, c.CleanupDisabled, c.GitHistoryBasedCleanupDisabled)
+		stagesStorage, stgErr = GetStagesStorage(ctx, c.ContainerBackend, c.CmdData, GetStagesStorageOpts{
+			CleanupDisabled:                c.CleanupDisabled,
+			GitHistoryBasedCleanupDisabled: c.GitHistoryBasedCleanupDisabled,
+			SkipMetaCheck:                  c.SkipMetaCheck,
+		})
 		if stgErr != nil {
 			return nil, stgErr
 		}

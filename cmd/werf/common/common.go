@@ -1127,13 +1127,20 @@ func GetLocalStagesStorage(containerBackend container_backend.ContainerBackend) 
 	return storage.NewLocalStagesStorage(containerBackend)
 }
 
-func GetStagesStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData, cleanupDisabled, ghCleanupDisabled bool) (storage.PrimaryStagesStorage, error) {
+type GetStagesStorageOpts struct {
+	CleanupDisabled                bool
+	GitHistoryBasedCleanupDisabled bool
+	SkipMetaCheck                  bool
+}
+
+func GetStagesStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData, opts GetStagesStorageOpts) (storage.PrimaryStagesStorage, error) {
 	return cmdData.Repo.CreateStagesStorage(ctx, &CreateStagesStorageOptions{
 		ContainerBackend:               containerBackend,
 		InsecureRegistry:               *cmdData.InsecureRegistry,
 		SkipTlsVerifyRegistry:          *cmdData.SkipTlsVerifyRegistry,
-		CleanupDisabled:                cleanupDisabled,
-		GitHistoryBasedCleanupDisabled: ghCleanupDisabled,
+		CleanupDisabled:                opts.CleanupDisabled,
+		GitHistoryBasedCleanupDisabled: opts.GitHistoryBasedCleanupDisabled,
+		SkipMetaCheck:                  opts.SkipMetaCheck,
 	})
 }
 

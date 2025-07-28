@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"sync"
@@ -23,7 +24,7 @@ const (
 — To disable all cleanup policies and suppress this warning, set 'cleanup.disable: true'.`
 )
 
-func (storage *RepoStagesStorage) analyzeMetaTags(ctx context.Context, tags []string, _ ...docker_registry.Option) error {
+func (storage *RepoStagesStorage) checkMeta(ctx context.Context, tags []string, _ ...docker_registry.Option) error {
 	if len(tags) > cleanupTriggerTagCount || storage.gitHistoryBasedCleanupDisabled || storage.cleanupDisabled {
 		return nil
 	}
@@ -57,10 +58,12 @@ func runCleanupNeededChecks(ctx context.Context, storage *RepoStagesStorage, tag
 
 	for _, checkFunc := range checks {
 		if err := checkFunc(ctx, storage, tags, b); err != nil {
+			if errors.Is(err, ErrCleanupNotOverdue) {
+				return nil
+			}
 			return err
 		}
 	}
-
 	return nil
 }
 
@@ -93,10 +96,21 @@ func countMetaTags(tags []string) int {
 	return metaCount
 }
 
+var (
+	ErrCleanupNotOverdue = fmt.Errorf("cleanup is not overdue, no need to warning")
+)
+
 func checkLastCleanup(ctx context.Context, storage *RepoStagesStorage, tags []string, b *strings.Builder) error {
+	if len(tags) == 0 {
+		return nil
+	}
 	lastCleanup, err := getLastCleanupRecord(ctx, storage.DockerRegistry, storage.RepoAddress, tags)
 	if err != nil {
 		return fmt.Errorf("getting last cleanup record: %w", err)
+	}
+
+	if !isCleanupOverdue(lastCleanup) {
+		return ErrCleanupNotOverdue
 	}
 
 	lastCleanupTime := formatLastCleanupTime(lastCleanup)

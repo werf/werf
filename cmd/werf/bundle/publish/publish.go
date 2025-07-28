@@ -229,7 +229,10 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 
 	logboek.LogOptionalLn()
 
-	stagesStorage, err := common.GetStagesStorage(ctx, containerBackend, &commonCmdData, werfConfig.Meta.Cleanup.DisableCleanup, werfConfig.Meta.Cleanup.DisableGitHistoryBasedPolicy)
+	stagesStorage, err := common.GetStagesStorage(ctx, containerBackend, &commonCmdData, common.GetStagesStorageOpts{
+		CleanupDisabled:                werfConfig.Meta.Cleanup.DisableCleanup,
+		GitHistoryBasedCleanupDisabled: werfConfig.Meta.Cleanup.DisableGitHistoryBasedPolicy,
+	})
 	if err != nil {
 		return err
 	}

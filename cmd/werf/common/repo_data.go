@@ -53,6 +53,7 @@ type CreateStagesStorageOptions struct {
 	SkipTlsVerifyRegistry          bool
 	CleanupDisabled                bool
 	GitHistoryBasedCleanupDisabled bool
+	SkipMetaCheck                  bool
 }
 
 func (repoData *RepoData) CreateStagesStorage(ctx context.Context, opts *CreateStagesStorageOptions) (storage.PrimaryStagesStorage, error) {
@@ -74,6 +75,7 @@ func (repoData *RepoData) CreateStagesStorage(ctx context.Context, opts *CreateS
 			DockerRegistry:                 dockerRegistry,
 			CleanupDisabled:                opts.CleanupDisabled,
 			GitHistoryBasedCleanupDisabled: opts.GitHistoryBasedCleanupDisabled,
+			SkipMetaCheck:                  opts.SkipMetaCheck,
 		}), nil
 	}
 }

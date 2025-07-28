@@ -86,6 +86,7 @@ type RepoStagesStorage struct {
 
 	cleanupDisabled                bool
 	gitHistoryBasedCleanupDisabled bool
+	skipMetaCheck                  bool
 }
 
 type NewRepoStagesStorageOptions struct {
@@ -94,6 +95,7 @@ type NewRepoStagesStorageOptions struct {
 	DockerRegistry                 docker_registry.Interface
 	CleanupDisabled                bool
 	GitHistoryBasedCleanupDisabled bool
+	SkipMetaCheck                  bool
 }
 
 func NewRepoStagesStorage(opts *NewRepoStagesStorageOptions) *RepoStagesStorage {
@@ -103,6 +105,7 @@ func NewRepoStagesStorage(opts *NewRepoStagesStorageOptions) *RepoStagesStorage 
 		ContainerBackend:               opts.ContainerBackend,
 		cleanupDisabled:                opts.CleanupDisabled,
 		gitHistoryBasedCleanupDisabled: opts.GitHistoryBasedCleanupDisabled,
+		skipMetaCheck:                  opts.SkipMetaCheck,
 	}
 }
 
@@ -1023,8 +1026,10 @@ func (storage *RepoStagesStorage) Tags(ctx context.Context, registry docker_regi
 		}
 		logboek.Context(ctx).Info().LogF("Total tags listed: %d\n", len(tags))
 
-		if err := storage.analyzeMetaTags(ctx, tags, opts...); err != nil {
-			logboek.Context(ctx).Warn().LogF("unable to analyze tags: %s\n", err)
+		if !storage.skipMetaCheck {
+			if err := storage.checkMeta(ctx, tags, opts...); err != nil {
+				logboek.Context(ctx).Warn().LogF("unable to check meta tags: %s\n", err)
+			}
 		}
 
 		return nil
