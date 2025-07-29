@@ -7,7 +7,7 @@
 
 * **build:** warn if registry overflows due to missed cleanup ([#6975](https://github.com/werf/werf/issues/6975)) ([6aa302a](https://github.com/werf/werf/commit/6aa302ad5a1c8c53d7ebec8f6ffd774daebb84dd))
 * **deploy, tracking:** update kubedog to track prometheus resources ([#7005](https://github.com/werf/werf/issues/7005)) ([7ef8f0d](https://github.com/werf/werf/commit/7ef8f0dde323c751404ff5721a05a7f04863cd7a))
-* **deploy:** add option "--no-pods-logs" ([#6993](https://github.com/werf/werf/issues/6993)) ([e5a1c57](https://github.com/werf/werf/commit/e5a1c57843a56a2f55abc82a6ab1f99855488ec9))
+* **deploy:** add option "--no-pod-logs" ([#6993](https://github.com/werf/werf/issues/6993)) ([e5a1c57](https://github.com/werf/werf/commit/e5a1c57843a56a2f55abc82a6ab1f99855488ec9))
 
 
 ### Bug Fixes
