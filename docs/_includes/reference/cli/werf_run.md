@@ -33,6 +33,9 @@ werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
 ```shell
       --allow-includes-update=false
             Allow use includes latest versions (default $WERF_ALLOW_INCLUDES_UPDATE or false)
+      --annotate-layers-with-dm-verity-root-hash=false
+            Enable annotation of image layers with dm-verity root hash (default                     
+            $WERF_ANNOTATE_LAYERS_WITH_DM_VERITY_ROOT_HASH)
       --bash=false
             Use predefined docker options and command for debug
       --cache-repo=[]

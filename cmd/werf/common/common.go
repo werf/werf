@@ -1105,6 +1105,17 @@ the certificate must be specified with --sign-cert option`)
 	cmd.Flags().StringVarP(cmdData.ELFPGPPrivateKeyPassphrase, "elf-pgp-private-key-passphrase", "", os.Getenv("WERF_ELF_PGP_PRIVATE_KEY_PASSPHRASE"), "Passphrase for the PGP private key (default $WERF_ELF_PGP_PRIVATE_KEY_PASSPHRASE)")
 }
 
+func SetupAnnotateLayersWithDmVerityRootHash(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.AnnotateLayersWithDmvVerityRootHash = new(bool)
+	cmd.Flags().BoolVarP(
+		cmdData.AnnotateLayersWithDmvVerityRootHash,
+		"annotate-layers-with-dm-verity-root-hash",
+		"",
+		util.GetBoolEnvironmentDefaultFalse("WERF_ANNOTATE_LAYERS_WITH_DM_VERITY_ROOT_HASH"),
+		"Enable annotation of image layers with dm-verity root hash (default $WERF_ANNOTATE_LAYERS_WITH_DM_VERITY_ROOT_HASH)",
+	)
+}
+
 // SetupRequireBuiltImages adds --require-built-images flag.
 // See also [quireBuiltImages].
 func SetupRequireBuiltImages(cmdData *CmdData, cmd *cobra.Command) {

@@ -19,6 +19,7 @@ import (
 	"github.com/werf/werf/v2/pkg/build/signing"
 	"github.com/werf/werf/v2/pkg/build/stage"
 	"github.com/werf/werf/v2/pkg/build/stage/instruction"
+	"github.com/werf/werf/v2/pkg/build/verify_annotation"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	backend_instruction "github.com/werf/werf/v2/pkg/container_backend/instruction"
 	"github.com/werf/werf/v2/pkg/docker_registry"
@@ -41,8 +42,9 @@ type BuildOptions struct {
 	ImageBuildOptions container_backend.BuildOptions
 	IntrospectOptions
 
-	ManifestSigningOptions signing.ManifestSigningOptions
-	ELFSigningOptions      signing.ELFSigningOptions
+	ManifestSigningOptions  signing.ManifestSigningOptions
+	ELFSigningOptions       signing.ELFSigningOptions
+	VerityAnnotationOptions verify_annotation.Options
 
 	ReportPath   string
 	ReportFormat ReportFormat

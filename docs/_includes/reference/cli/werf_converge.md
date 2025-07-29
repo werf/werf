@@ -79,6 +79,9 @@ werf converge --repo registry.mydomain.com/web --env production
             becomes below "allowed-local-cache-volume-usage -                                       
             allowed-local-cache-volume-usage-margin" level (default 5% or                           
             $WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE_MARGIN)
+      --annotate-layers-with-dm-verity-root-hash=false
+            Enable annotation of image layers with dm-verity root hash (default                     
+            $WERF_ANNOTATE_LAYERS_WITH_DM_VERITY_ROOT_HASH)
       --atomic=false
             Enable auto rollback of the failed release to the previous deployed release version     
             when current deploy process have failed ($WERF_ATOMIC by default)

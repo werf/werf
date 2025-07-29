@@ -16,6 +16,7 @@ import (
 	"github.com/werf/werf/v2/pkg/build"
 	"github.com/werf/werf/v2/pkg/build/signing"
 	"github.com/werf/werf/v2/pkg/build/stage"
+	"github.com/werf/werf/v2/pkg/build/verify_annotation"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/container_backend/thirdparty/platformutil"
@@ -73,7 +74,8 @@ func GetConveyorOptionsWithParallel(ctx context.Context, commonCmdData *CmdData,
 		return conveyorOptions, fmt.Errorf("getting parallel tasks limit failed: %w", err)
 	}
 	conveyorOptions.ParallelTasksLimit = parallelTasksLimit
-	conveyorOptions.ManifestSigningEnabled = buildStagesOptions.ManifestSigningOptions.Enabled
+	conveyorOptions.ManifestSigningOptions = buildStagesOptions.ManifestSigningOptions
+	conveyorOptions.VerityAnnotationOptions = buildStagesOptions.VerityAnnotationOptions
 
 	return conveyorOptions, nil
 }
@@ -127,6 +129,11 @@ func GetBuildOptions(ctx context.Context, commonCmdData *CmdData, werfConfig *co
 		return buildOptions, err
 	}
 
+	verityAnnotationOptions, err := getVerityAnnotationOptions(commonCmdData)
+	if err != nil {
+		return build.BuildOptions{}, fmt.Errorf("getting verity annotation options: %w", err)
+	}
+
 	buildOptions = build.BuildOptions{
 		SkipAddManagedImagesRecords:  werfConfig.Meta.Cleanup.DisableCleanup,
 		SkipImageMetadataPublication: *commonCmdData.Dev || werfConfig.Meta.Cleanup.DisableGitHistoryBasedPolicy || werfConfig.Meta.Cleanup.DisableCleanup,
@@ -135,9 +142,10 @@ func GetBuildOptions(ctx context.Context, commonCmdData *CmdData, werfConfig *co
 			IntrospectAfterError:  *commonCmdData.IntrospectAfterError,
 			IntrospectBeforeError: *commonCmdData.IntrospectBeforeError,
 		},
-		IntrospectOptions:      introspectOptions,
-		ManifestSigningOptions: manifestSigningOptions,
-		ELFSigningOptions:      elfSigningOptions,
+		IntrospectOptions:       introspectOptions,
+		ManifestSigningOptions:  manifestSigningOptions,
+		ELFSigningOptions:       elfSigningOptions,
+		VerityAnnotationOptions: verityAnnotationOptions,
 	}
 
 	if GetSaveBuildReport(commonCmdData) {
@@ -148,6 +156,12 @@ func GetBuildOptions(ctx context.Context, commonCmdData *CmdData, werfConfig *co
 	}
 
 	return buildOptions, nil
+}
+
+func getVerityAnnotationOptions(commonCmdData *CmdData) (verify_annotation.Options, error) {
+	return verify_annotation.Options{
+		Enabled: lo.FromPtr(commonCmdData.AnnotateLayersWithDmvVerityRootHash),
+	}, nil
 }
 
 func getSignerOptions(commonCmdData *CmdData) (signing.SignerOptions, error) {

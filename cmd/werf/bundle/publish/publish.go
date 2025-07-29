@@ -145,6 +145,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupBackendStoragePath(&commonCmdData, cmd)
 	common.SetupProjectName(&commonCmdData, cmd, false)
 
+	common.SetupAnnotateLayersWithDmVerityRootHash(&commonCmdData, cmd)
 	common.SetupSigningOptions(&commonCmdData, cmd)
 	common.SetupELFSigningOptions(&commonCmdData, cmd)
 
