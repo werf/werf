@@ -458,9 +458,9 @@ func (cleaner *LocalBackendCleaner) pruneImages(ctx context.Context, options Run
 		filter.DanglingTrue,
 		// 2. From all dangling images select only werf's dangling images.
 		filter.NewFilter("label", image.WerfLabel),
-		// 3. From werf's dangling images select only images which were created more than 1 hour ago.
+		// 3. From werf's dangling images select only images which were created more than 15 minutes ago.
 		// Explanation: in Stapel mode werf relies on a "dangling" image for some time before tagging its image.
-		filter.NewFilter("until", "1h"),
+		filter.NewFilter("until", "15m"),
 
 		// Both backends support filters listed above:
 		// Docker: https://github.com/moby/moby/blob/25.0/daemon/containerd/image_prune.go#L22

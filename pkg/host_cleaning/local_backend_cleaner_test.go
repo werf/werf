@@ -105,7 +105,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 			filters = filter.FilterList{
 				filter.DanglingTrue,
 				filter.NewFilter("label", image.WerfLabel),
-				filter.NewFilter("until", "1h"),
+				filter.NewFilter("until", "15m"),
 			}
 		})
 		It("should return err=nil and full report if opts.DryRun=true calling backend.Images() to find dandling images", func(ctx SpecContext) {
@@ -427,7 +427,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 			imagesFilters := filter.FilterList{
 				filter.DanglingTrue,
 				filter.NewFilter("label", image.WerfLabel),
-				filter.NewFilter("until", "1h"),
+				filter.NewFilter("until", "15m"),
 			}
 
 			// keep orders of backend calls
