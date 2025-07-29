@@ -38,11 +38,11 @@ groups:
   - name: "2"
     channels:
       - name: alpha
-        version: 2.43.1
+        version: 2.44.0
       - name: beta
-        version: 2.43.0
+        version: 2.43.1
       - name: ea
-        version: 2.38.1
+        version: 2.43.1
       - name: stable
         version: 2.38.1
       - name: rock-solid
