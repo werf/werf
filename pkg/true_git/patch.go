@@ -88,7 +88,6 @@ func Patch(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir string, 
 	})
 
 	return res, err
-
 }
 
 func debugPatch() bool {

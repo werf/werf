@@ -7,9 +7,7 @@ import (
 	"sync"
 )
 
-var (
-	workTreePoolLimit = os.Getenv("WERF_GIT_WORK_TREE_POOL_LIMIT")
-)
+var workTreePoolLimit = os.Getenv("WERF_GIT_WORK_TREE_POOL_LIMIT")
 
 type WorkTreePool struct {
 	slots    chan int
@@ -22,11 +20,9 @@ type poolCache struct {
 	cache map[string]*WorkTreePool
 }
 
-var (
-	globalPoolCache = poolCache{
-		cache: make(map[string]*WorkTreePool),
-	}
-)
+var globalPoolCache = poolCache{
+	cache: make(map[string]*WorkTreePool),
+}
 
 func GetWorkTreePool(baseDir string, poolSize int) (*WorkTreePool, error) {
 	globalPoolCache.mu.RLock()
