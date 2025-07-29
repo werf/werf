@@ -169,6 +169,7 @@ werf plan --repo registry.mydomain.com/web --env production`,
 	commonCmdData.SetupPlatform(cmd)
 	common.SetupFollow(&commonCmdData, cmd)
 
+	common.SetupAnnotateLayersWithDmVerityRootHash(&commonCmdData, cmd)
 	common.SetupSigningOptions(&commonCmdData, cmd)
 	common.SetupELFSigningOptions(&commonCmdData, cmd)
 

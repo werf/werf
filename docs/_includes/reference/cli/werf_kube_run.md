@@ -41,6 +41,9 @@ werf kube-run [options] [IMAGE_NAME] [-- COMMAND ARG...]
             $WERF_ADD_LABEL_1=labelName1=labelValue1, $WERF_ADD_LABEL_2=labelName2=labelValue2)
       --allow-includes-update=false
             Allow use includes latest versions (default $WERF_ALLOW_INCLUDES_UPDATE or false)
+      --annotate-layers-with-dm-verity-root-hash=false
+            Enable annotation of image layers with dm-verity root hash (default                     
+            $WERF_ANNOTATE_LAYERS_WITH_DM_VERITY_ROOT_HASH)
       --auto-pull-secret=true
             Automatically create docker config secret in the namespace and plug it via pod`s        
             imagePullSecrets for private registry access (default $WERF_AUTO_PULL_SECRET or true if 

@@ -125,8 +125,12 @@ func initStages(ctx context.Context, image *Image, metaConfig *config.Meta, stap
 		stages = appendIfExist(ctx, stages, stage.GenerateImageSpecStage(imageBaseConfig.ImageSpec, baseStageOptions))
 	}
 
-	if opts.ManifestSigningEnabled && imageBaseConfig.IsFinal() {
-		stages = append(stages, stage.GenerateManifestStage(baseStageOptions))
+	if opts.ManifestSigningOptions.Enabled && imageBaseConfig.IsFinal() {
+		stages = append(stages, stage.GenerateSignStage(baseStageOptions, opts.ManifestSigningOptions))
+	}
+
+	if opts.VerityAnnotationOptions.Enabled && imageBaseConfig.IsFinal() {
+		stages = append(stages, stage.GenerateVerityAnnotationStage(baseStageOptions))
 	}
 
 	if len(gitMappings) != 0 {

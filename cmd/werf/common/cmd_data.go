@@ -143,6 +143,8 @@ type CmdData struct {
 
 	Platform *[]string
 
+	AnnotateLayersWithDmvVerityRootHash *bool
+
 	SignManifest *bool
 	SignKey      *string
 	SignCert     *string
