@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -55,28 +56,39 @@ type PatchDescriptor struct {
 	PathsToRemove []string
 }
 
-func PatchWithSubmodules(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir string, opts PatchOptions) (*PatchDescriptor, error) {
+func Patch(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir string, withSubmodules bool, opts PatchOptions) (*PatchDescriptor, error) {
 	var res *PatchDescriptor
 
-	err := withWorkTreeCacheLock(ctx, workTreeCacheDir, func() error {
-		writePatchRes, err := writePatch(ctx, out, gitDir, workTreeCacheDir, true, opts)
+	workTreeDir := workTreeCacheDir
+
+	if workTreePoolLimit != "" {
+		poolSize, err := strconv.Atoi(workTreePoolLimit)
+		if err != nil {
+			return nil, fmt.Errorf("invalid WERF_GIT_WORK_TREE_POOL_LIMIT value %s: %w", workTreePoolLimit, err)
+		}
+
+		workTreePool, err := GetWorkTreePool(workTreeCacheDir, poolSize)
+		if err != nil {
+			return nil, fmt.Errorf("unable to create worktree pool: %w", err)
+		}
+
+		slot, wt, err := workTreePool.Acquire(ctx)
+		if err != nil {
+			return nil, err
+		}
+		defer workTreePool.Release(slot)
+
+		workTreeDir = wt
+
+	}
+	err := withWorkTreeCacheLock(ctx, workTreeDir, func() error {
+		writePatchRes, err := writePatch(ctx, out, gitDir, workTreeDir, withSubmodules, opts)
 		res = writePatchRes
 		return err
 	})
 
 	return res, err
-}
 
-func Patch(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir string, opts PatchOptions) (*PatchDescriptor, error) {
-	var res *PatchDescriptor
-
-	err := withWorkTreeCacheLock(ctx, workTreeCacheDir, func() error {
-		writePatchRes, err := writePatch(ctx, out, gitDir, workTreeCacheDir, false, opts)
-		res = writePatchRes
-		return err
-	})
-
-	return res, err
 }
 
 func debugPatch() bool {

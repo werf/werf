@@ -240,7 +240,7 @@ func (repo *Base) createPatch(ctx context.Context, repoPath, gitDir, repoID, wor
 		var retryCount int
 
 	TryCreatePatch:
-		desc, err = true_git.PatchWithSubmodules(ctx, fileHandler, gitDir, workTreeCacheDir, true_git.PatchOptions(opts))
+		desc, err = true_git.Patch(ctx, fileHandler, gitDir, workTreeCacheDir, true, true_git.PatchOptions(opts))
 
 		if true_git.IsCommitsNotPresentError(err) && retryCount == 0 {
 			logboek.Context(ctx).Default().LogF("Detected not present commits when creating patch: %s\n", err)
@@ -263,7 +263,7 @@ func (repo *Base) createPatch(ctx context.Context, repoPath, gitDir, repoID, wor
 			goto TryCreatePatch
 		}
 	} else {
-		desc, err = true_git.Patch(ctx, fileHandler, gitDir, workTreeCacheDir, true_git.PatchOptions(opts))
+		desc, err = true_git.Patch(ctx, fileHandler, gitDir, workTreeCacheDir, false, true_git.PatchOptions(opts))
 	}
 
 	if err != nil {
