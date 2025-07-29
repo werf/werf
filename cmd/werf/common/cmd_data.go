@@ -97,6 +97,7 @@ type CmdData struct {
 
 	Follow *bool
 
+	// Logging options
 	LogDebug         *bool
 	LogPretty        *bool
 	LogTime          *bool
@@ -106,6 +107,7 @@ type CmdData struct {
 	LogColorMode     *string
 	LogProjectDir    *bool
 	LogTerminalWidth *int64
+	NoPodLogs        *bool
 
 	DebugTemplates *bool
 

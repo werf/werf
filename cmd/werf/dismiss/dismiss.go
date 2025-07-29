@@ -112,6 +112,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupDockerConfig(&commonCmdData, cmd, "")
 
 	common.SetupLogOptions(&commonCmdData, cmd)
+	common.SetupNoPodLogs(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
 	common.SetupDisableAutoHostCleanup(&commonCmdData, cmd)
@@ -214,6 +215,7 @@ func runDismiss(ctx context.Context) error {
 			KubeTLSServerName:          *commonCmdData.KubeTlsServer,
 			KubeToken:                  *commonCmdData.KubeToken,
 			NetworkParallelism:         common.GetNetworkParallelism(&commonCmdData),
+			NoPodLogs:                  *commonCmdData.NoPodLogs,
 			NoProgressTablePrint:       *commonCmdData.StatusProgressPeriodSeconds == -1,
 			ProgressTablePrintInterval: time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
 			ReleaseHistoryLimit:        *commonCmdData.ReleasesHistoryMax,

@@ -123,6 +123,7 @@ werf converge --repo registry.mydomain.com/web --env production`,
 	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
+	common.SetupNoPodLogs(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
 	common.SetupSynchronization(&commonCmdData, cmd)
@@ -480,6 +481,7 @@ func run(
 		LegacyExtraValues:            serviceValues,
 		LogRegistryStreamOut:         os.Stdout,
 		NetworkParallelism:           common.GetNetworkParallelism(&commonCmdData),
+		NoPodLogs:                    *commonCmdData.NoPodLogs,
 		NoInstallCRDs:                *commonCmdData.NoInstallCRDs,
 		NoProgressTablePrint:         *commonCmdData.StatusProgressPeriodSeconds == -1,
 		ProgressTablePrintInterval:   time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
