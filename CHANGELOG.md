@@ -1,5 +1,20 @@
 # Changelog
 
+## [2.44.0](https://github.com/werf/werf/compare/v2.43.1...v2.44.0) (2025-07-29)
+
+
+### Features
+
+* **build:** warn if registry overflows due to missed cleanup ([#6975](https://github.com/werf/werf/issues/6975)) ([6aa302a](https://github.com/werf/werf/commit/6aa302ad5a1c8c53d7ebec8f6ffd774daebb84dd))
+* **deploy, tracking:** update kubedog to track prometheus resources ([#7005](https://github.com/werf/werf/issues/7005)) ([7ef8f0d](https://github.com/werf/werf/commit/7ef8f0dde323c751404ff5721a05a7f04863cd7a))
+* **deploy:** add option "--no-pods-logs" ([#6993](https://github.com/werf/werf/issues/6993)) ([e5a1c57](https://github.com/werf/werf/commit/e5a1c57843a56a2f55abc82a6ab1f99855488ec9))
+
+
+### Bug Fixes
+
+* **deploy:** non-successful release revisions since last successful never cleaned up ([81faa1f](https://github.com/werf/werf/commit/81faa1fbd37a183fa1e5ec9deb8b837262b6c6ce))
+* **host-cleanup:** decrease retention period of dangling images ([b0aedf9](https://github.com/werf/werf/commit/b0aedf9d58bcfcbd2335809aa9c2e5d4c5074cf7))
+
 ## [2.43.1](https://github.com/werf/werf/compare/v2.43.0...v2.43.1) (2025-07-22)
 
 
