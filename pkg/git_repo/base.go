@@ -42,7 +42,6 @@ func NewBase(name string, initRepoHandleBackedByWorkTreeFunc func(context.Contex
 		Name: name,
 		Cache: Cache{
 			Archives: make(map[string]Archive),
-			Patches:  make(map[string]Patch),
 		},
 	}
 	base.initRepoHandleBackedByWorkTreeFunc = initRepoHandleBackedByWorkTreeFunc
