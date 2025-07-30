@@ -9,6 +9,14 @@ env:
     sh: echo "$HOME/.kube/config"
   PRETTIER_VERSION: "3.5.3"
 
+includes:
+  lint:
+    taskfile: https://raw.githubusercontent.com/werf/common-ci/refs/heads/main/Taskfile.format_lint.yml
+    flatten: true
+  deps:
+    taskfile: https://raw.githubusercontent.com/werf/common-ci/refs/heads/main/Taskfile.deps.yml
+    flatten: true
+
 vars:
   version: "dev"
   os: "{{OS}}"
@@ -390,86 +398,6 @@ tasks:
     cmds:
       - ./scripts/verify-dist-binaries.sh {{.version}}
 
-  format:
-    desc: 'Run all code formatters. Important vars: "paths".'
-    run: once
-    cmds:
-      - task: format:gci
-      - task: format:gofumpt
-      - task: format:prettier
-
-  format:gci:
-    desc: 'Format code with gci. Important vars: "paths".'
-    cmds:
-      - gci write -s Standard -s Default -s 'Prefix({{slice (splitList "/" .package) 0 2 | join "/"}})' {{.CLI_ARGS}} {{.paths | default "pkg/ cmd/ test/ integration/"}}
-
-  format:gofumpt:
-    desc: 'Format code with gofumpt. Important vars: "paths".'
-    cmds:
-      - gofumpt -extra -w {{.CLI_ARGS}} {{.paths | default "cmd/ pkg/ test/ integration/"}}
-
-  format:prettier:
-    desc: "Format with prettier."
-    deps:
-      - format:prettier:yaml
-
-  format:prettier:yaml:
-    desc: "Format yaml files with prettier."
-    cmds:
-      - docker run --rm -v $(pwd):/work tmknom/prettier:${PRETTIER_VERSION} -w "**/*.yaml" "**/*.yml"
-
-  lint:
-    desc: 'Run all linters in parallel. Important vars: "paths".'
-    deps:
-      - lint:golangci-lint
-      - lint:prettier
-
-  lint:golangci-lint:cgo:
-    desc: 'Lint with golangci-lint for cgo. Important vars: "paths".'
-    cmds:
-      - golangci-lint run --build-tags="{{.cgoTags}}" {{.CLI_ARGS}} {{.paths | default "./..."}}
-    env:
-      CGO_ENABLED: "1"
-
-  lint:golangci-lint:go:
-    desc: 'Lint with golangci-lint without cgo. Important vars: "paths".'
-    cmds:
-      - golangci-lint run --build-tags="{{.goTags}}" {{.CLI_ARGS}} {{.paths | default "./..."}}
-    env:
-      CGO_ENABLED: "0"
-
-  _lint:golangci-lint:cgo-and-go:
-    cmds:
-      - task: lint:golangci-lint:cgo
-        vars:
-          paths: "{{.paths}}"
-      - task: lint:golangci-lint:go
-        vars:
-          paths: "{{.paths}}"
-
-  _lint:golangci-lint:go:
-    deps:
-      - task: lint:golangci-lint:go
-        vars:
-          paths: "{{.paths}}"
-
-  lint:golangci-lint:
-    desc: 'Lint with golangci-lint (with and without cgo). Important vars: "paths".'
-    deps:
-      - task: _lint:golangci-lint:{{ternary "cgo-and-go" "go" (eq .mode "cgo")}}
-        vars:
-          paths: "{{.paths}}"
-
-  lint:prettier:
-    desc: "Check if prettier-formatted."
-    deps:
-      - lint:prettier:yaml
-
-  lint:prettier:yaml:
-    desc: "Check if yaml files are prettier-formatted."
-    cmds:
-      - docker run --rm -v $(pwd):/work tmknom/prettier:${PRETTIER_VERSION} -c "**/*.yaml" "**/*.yml"
-
   mock:generate:
     desc: "Generate mocks."
     cmds:
@@ -571,42 +499,17 @@ tasks:
     desc: "Clean built release binaries."
     cmds:
       - rm -rf ./dist
-
-  deps:install:
-    desc: "Install all dependencies"
+  deps:install:all:
+    desc: "Install common and specific deps"
     deps:
-      - deps:install:gci
-      - deps:install:ginkgo
-      - deps:install:golangci-lint
-      - deps:install:gofumpt
+      - deps:install
+      - deps:install:kind
       - deps:install:mockgen
       - deps:install:enumer
-
-  deps:install:gci:
-    desc: "Install gci binary."
-    cmds:
-      - go install github.com/daixiang0/gci@v0.13.5
 
   deps:install:kind:
     desc: "Install kind binary."
     cmd: go install sigs.k8s.io/kind@v0.29.0
-
-  deps:install:ginkgo:
-    desc: "Install ginkgo binary."
-    cmds:
-      - |
-        version="$(go list -m -f '{{ printf `{{ .Version }}` }}' github.com/onsi/ginkgo/v2)"
-        go install {{.CLI_ARGS}} github.com/onsi/ginkgo/v2/ginkgo@${version}
-
-  deps:install:golangci-lint:
-    desc: "Install golangci-lint binary."
-    cmds:
-      - curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin {{.golangcilintVersion | default "v1.57.1"}}
-
-  deps:install:gofumpt:
-    desc: "Install gofumpt binary."
-    cmds:
-      - go install mvdan.cc/gofumpt@v0.7.0
 
   deps:install:mockgen:
     desc: "Install mockgen library."
