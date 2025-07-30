@@ -26,7 +26,7 @@ defaults:
 env:
   DEBIAN_FRONTEND: "noninteractive"
   WERF_TEST_K8S_DOCKER_REGISTRY_INSECURE: "false"
-
+  TASK_X_REMOTE_TASKFILES: 1
 jobs:
   _:
     strategy:
@@ -65,11 +65,11 @@ jobs:
         uses: ./.github/actions/set-up-git-config
 
       - name: Install ginkgo
-        run: task -p deps:install:ginkgo
+        run: task --yes -p deps:install:ginkgo
 
       - name: Test
         run: |
-          task -p test:integration paths="$(echo ${{ inputs.packages }} | tr , ' ')" -- --flake-attempts=3 --keep-going --skip-package '${{ inputs.excludePackages }}'
+          task --yes -p test:integration paths="$(echo ${{ inputs.packages }} | tr , ' ')" -- --flake-attempts=3 --keep-going --skip-package '${{ inputs.excludePackages }}'
           echo loadavg: $(cat /proc/loadavg)
         env:
           GOCOVERDIR: ${{ env.WERF_TEST_COVER_DIR }}

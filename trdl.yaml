@@ -1,5 +1,5 @@
 docker_image: registry.werf.io/werf/builder:35ad2cadf1f03810f4382c74104fc92a43b25ed0@sha256:9db600d31a876ccabce99ee933c489b8cd321b66b418e16e9f9cf8904cbbec02
 commands:
-  - task -o group -p build:dist:all version={{ .Tag }}
-  - task -p verify:binaries:dist:all version={{ .Tag }}
+  - TASK_X_REMOTE_TASKFILES=1 task --yes -o group -p build:dist:all version={{ .Tag }}
+  - TASK_X_REMOTE_TASKFILES=1 task --yes -p verify:binaries:dist:all version={{ .Tag }}
   - cp -a ./dist/{{ .Tag }}/* /result

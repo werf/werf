@@ -17,6 +17,7 @@ defaults:
 env:
   DEBIAN_FRONTEND: "noninteractive"
   WERF_TEST_K8S_DOCKER_REGISTRY_INSECURE: "false"
+  TASK_X_REMOTE_TASKFILES: 1
 
 jobs:
   _:
@@ -113,14 +114,14 @@ jobs:
         uses: ./.github/actions/set-up-git-config
 
       - name: Install ginkgo
-        run: task -p deps:install:ginkgo
+        run: task --yes -p deps:install:ginkgo
 
       - name: Check container registry creds
         run: ./scripts/ci/integration_tests_registries_login.sh ${{ matrix.cr }}
 
       - name: Test
         run: |
-          task -p test:integration paths="integration/suites/cleanup integration/suites/managed_images" -- --focus="\[${{ matrix.cr }}\]" --flake-attempts=3 --keep-going
+          task --yes -p test:integration paths="integration/suites/cleanup integration/suites/managed_images" -- --focus="\[${{ matrix.cr }}\]" --flake-attempts=3 --keep-going
           echo loadavg: $(cat /proc/loadavg)
         env:
           GOCOVERDIR: ${{ env.WERF_TEST_COVER_DIR }}
