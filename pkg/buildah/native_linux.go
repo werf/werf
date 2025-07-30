@@ -53,8 +53,8 @@ import (
 )
 
 const (
-	MaxPullPushRetries = 3
-	PullPushRetryDelay = 2 * time.Second
+	MaxPullPushRetries = 10
+	PullPushRetryDelay = 5 * time.Second
 )
 
 var DefaultShell = []string{"/bin/sh", "-c"}
