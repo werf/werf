@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.44.1](https://github.com/werf/werf/compare/v2.44.0...v2.44.1) (2025-07-30)
+
+
+### Code Refactoring
+
+* **build, buildah:** up MaxPullPushRetries (3-&gt;10) and PullPushRetryDelay (2-&gt;5) ([5c49239](https://github.com/werf/werf/commit/5c492395fb3197e6575ac013eec12182116eb053))
+
 ## [2.44.0](https://github.com/werf/werf/compare/v2.43.1...v2.44.0) (2025-07-29)
 
 
