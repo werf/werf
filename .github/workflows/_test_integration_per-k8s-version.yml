@@ -58,7 +58,7 @@ jobs:
         run: task --yes -p deps:install:ginkgo
 
       - name: Setup environment
-        run: tas --yes test:setup:environment
+        run: task --yes test:setup:environment
 
       - name: Test
         run: |
