@@ -31,8 +31,10 @@ runs:
     - name: Build werf test binary
       run: |
         if ${{ inputs.coverage }}; then
-          task -p build-with-coverage
+          task --yes -p build-with-coverage
         else
-          task -p build
+          task --yes -p build
         fi
       shell: bash
+      env:
+        TASK_X_REMOTE_TASKFILES: 1

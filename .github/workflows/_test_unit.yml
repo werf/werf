@@ -22,6 +22,7 @@ defaults:
 
 env:
   DEBIAN_FRONTEND: "noninteractive"
+  TASK_X_REMOTE_TASKFILES: 1
 
 jobs:
   _:
@@ -56,15 +57,15 @@ jobs:
 
       # TODO: don't build ginkgo everytime? We need distributable binaries
       - name: Install ginkgo
-        run: task -p deps:install:ginkgo
+        run: task --yes -p deps:install:ginkgo
 
       - name: Test
         run: |
           if ${{ inputs.coverage }}; then
-            task -p test:unit paths="$(echo ${{ inputs.packages }} | tr , ' ')" -- --coverprofile="$(openssl rand -hex 6)-coverage.out" --keep-going --skip-package '${{ inputs.excludePackages }}'
+            task --yes -p test:unit paths="$(echo ${{ inputs.packages }} | tr , ' ')" -- --coverprofile="$(openssl rand -hex 6)-coverage.out" --keep-going --skip-package '${{ inputs.excludePackages }}'
             mv *-coverage.out "$WERF_TEST_COVERAGE_DIR/"
           else
-            task -p test:unit paths="$(echo ${{ inputs.packages }} | tr , ' ')" -- --keep-going --skip-package '${{ inputs.excludePackages }}'
+            task --yes -p test:unit paths="$(echo ${{ inputs.packages }} | tr , ' ')" -- --keep-going --skip-package '${{ inputs.excludePackages }}'
           fi
           echo loadavg: $(cat /proc/loadavg)
 

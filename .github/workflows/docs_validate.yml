@@ -26,6 +26,7 @@ concurrency:
 env:
   DEBIAN_FRONTEND: "noninteractive"
   GOPATH: ${{ github.workspace }}/go
+  TASK_X_REMOTE_TASKFILES: 1
 
 jobs:
   doc_unit:
@@ -67,7 +68,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Check links
-        run: task -o group -p doc:check-broken-links
+        run: task --yes -o group -p doc:check-broken-links
         env:
           WERF_REPO: "ghcr.io/${{ github.repository_owner }}/werfio"
 
