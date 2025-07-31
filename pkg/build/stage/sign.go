@@ -52,12 +52,12 @@ func (s *SignStage) GetDependencies(_ context.Context, _ Conveyor, _ container_b
 	return util.Sha256Hash(args...), nil
 }
 
-func (s *SignStage) MutateImage(ctx context.Context, registry docker_registry.Interface, prevBuiltImage, stageImage *StageImage, manifestSigningOptions signing.ManifestSigningOptions) error {
+func (s *SignStage) MutateImage(ctx context.Context, registry docker_registry.Interface, prevBuiltImage, stageImage *StageImage) error {
 	srcRef := prevBuiltImage.Image.Name()
 	destRef := stageImage.Image.Name()
 
 	opt := api.WithManifestAnnotationsFunc(func(ctx context.Context, manifest *v1.Manifest) (map[string]string, error) {
-		annotations, err := image.GetSignatureAnnotationsForImageManifest(ctx, manifestSigningOptions.Signer().SignerVerifier(), manifest)
+		annotations, err := image.GetSignatureAnnotationsForImageManifest(ctx, s.manifestSigningOptions.Signer().SignerVerifier(), manifest)
 		if err != nil {
 			return nil, fmt.Errorf("unable to sign manifest: %w", err)
 		}

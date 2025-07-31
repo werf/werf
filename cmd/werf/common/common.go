@@ -1075,15 +1075,15 @@ the certificate must be specified with --sign-cert option`)
 
 	cmdData.SignKey = new(string)
 	cmd.Flags().StringVarP(cmdData.SignKey, "sign-key", "", os.Getenv("WERF_SIGN_KEY"),
-		"The private signing key as hashivault://url, path to PEM file or base64-encoded PEM (default $WERF_SIGN_KEY)")
+		"The private signing key as path to PEM file, base64-encoded PEM or hashivault://[KEY] (default $WERF_SIGN_KEY)")
 
 	cmdData.SignCert = new(string)
 	cmd.Flags().StringVarP(cmdData.SignCert, "sign-cert", "", os.Getenv("WERF_SIGN_CERT"),
-		"The certificate as hashivault://url, path to PEM file or base64-encoded PEM (default $WERF_SIGN_CERT)")
+		"The certificate as path to PEM file or base64-encoded PEM (default $WERF_SIGN_CERT)")
 
 	cmdData.SignChain = new(string)
 	cmd.Flags().StringVarP(cmdData.SignChain, "sign-chain", "", os.Getenv("WERF_SIGN_CHAIN"),
-		"The certificate chain as hashivault://url, path to PEM file or base64-encoded PEM (default $WERF_SIGN_CHAIN)")
+		"The certificate chain as path to PEM file or base64-encoded PEM (default $WERF_SIGN_CHAIN)")
 }
 
 func SetupELFSigningOptions(cmdData *CmdData, cmd *cobra.Command) {
