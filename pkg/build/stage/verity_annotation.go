@@ -7,7 +7,6 @@ import (
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/mutate"
 
-	"github.com/werf/werf/v2/pkg/build/signing"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/docker_registry"
 	"github.com/werf/werf/v2/pkg/docker_registry/api"
@@ -43,7 +42,7 @@ func (s *VerityAnnotationStage) GetDependencies(_ context.Context, _ Conveyor, _
 	return "", nil
 }
 
-func (s *VerityAnnotationStage) MutateImage(ctx context.Context, registry docker_registry.Interface, prevBuiltImage, stageImage *StageImage, manifestSigningOptions signing.ManifestSigningOptions) error {
+func (s *VerityAnnotationStage) MutateImage(ctx context.Context, registry docker_registry.Interface, prevBuiltImage, stageImage *StageImage) error {
 	srcRef := prevBuiltImage.Image.Name()
 	destRef := stageImage.Image.Name()
 

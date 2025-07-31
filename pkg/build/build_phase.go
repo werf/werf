@@ -1142,7 +1142,7 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 				return fmt.Errorf("unable to build stage %q: %w", stg.Name(), err)
 			}
 
-			if err := stg.MutateImage(ctx, phase.Conveyor.StorageManager.GetStagesStorage().(*storage.RepoStagesStorage).DockerRegistry, phase.StagesIterator.PrevBuiltStage.GetStageImage(), stageImage, phase.ManifestSigningOptions); err != nil {
+			if err := stg.MutateImage(ctx, phase.Conveyor.StorageManager.GetStagesStorage().(*storage.RepoStagesStorage).DockerRegistry, phase.StagesIterator.PrevBuiltStage.GetStageImage(), stageImage); err != nil {
 				return fmt.Errorf("unable to mutate %s: %w", stg.Name(), err)
 			}
 		} else {
@@ -1220,24 +1220,13 @@ func calculateDigest(ctx context.Context, stageName, stageDependencies string, p
 		"StageDependencies",
 	)
 
-	if opts.ManifestSigningOptions.Enabled {
-		checksumArgs = append(checksumArgs, opts.ManifestSigningOptions.Signer().Cert())
-		checksumArgsNames = append(checksumArgsNames, "MANIFEST_SIGNING_CERTIFICATE")
-		checksumArgs = append(checksumArgs, opts.ManifestSigningOptions.Signer().Chain())
-		checksumArgsNames = append(checksumArgsNames, "MANIFEST_SIGNING_CERTIFICATE_CHAIN")
-	}
-
 	if opts.ELFSigningOptions.Enabled {
 		checksumArgs = append(checksumArgs, opts.ELFSigningOptions.PGPPrivateKeyFingerprint)
 		checksumArgsNames = append(checksumArgsNames, "ELF_SIGNING_PGP_KEY_FINGERPRINT")
-
-		// Prevent duplication if we added the same options above
-		if !opts.ManifestSigningOptions.Enabled {
-			checksumArgs = append(checksumArgs, opts.ManifestSigningOptions.Signer().Cert())
-			checksumArgsNames = append(checksumArgsNames, "MANIFEST_SIGNING_CERTIFICATE")
-			checksumArgs = append(checksumArgs, opts.ManifestSigningOptions.Signer().Chain())
-			checksumArgsNames = append(checksumArgsNames, "SIGNING_CERTIFICATE_CHAIN")
-		}
+		checksumArgs = append(checksumArgs, opts.ManifestSigningOptions.Signer().Cert())
+		checksumArgsNames = append(checksumArgsNames, "MANIFEST_SIGNING_CERTIFICATE")
+		checksumArgs = append(checksumArgs, opts.ManifestSigningOptions.Signer().Chain())
+		checksumArgsNames = append(checksumArgsNames, "SIGNING_CERTIFICATE_CHAIN")
 	}
 
 	if prevNonEmptyStage != nil {
