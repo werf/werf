@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.45.1](https://github.com/werf/werf/compare/v2.45.0...v2.45.1) (2025-07-31)
+
+
+### Bug Fixes
+
+* **build:** add proper error message if path matcher has special chars ([59e1740](https://github.com/werf/werf/commit/59e1740e8f109a923c005ed95f129c2d066ea044))
+* **deploy:** service and some secret values wrongly propagated to subcharts ([5e75e9c](https://github.com/werf/werf/commit/5e75e9cfa5242459fafc52847dcc71f7ab602f3f))
+
 ## [2.45.0](https://github.com/werf/werf/compare/v2.44.1...v2.45.0) (2025-07-31)
 
 
