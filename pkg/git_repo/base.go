@@ -54,6 +54,7 @@ type Cache struct {
 	Checksums sync.Map
 
 	archivesMutex  sync.Mutex
+	patchesMutex   sync.Map
 	checksumsMutex sync.Map
 }
 
@@ -157,6 +158,10 @@ func (repo *Base) GetName() string {
 
 func (repo *Base) getOrCreatePatch(ctx context.Context, repoPath, gitDir, repoID, workTreeCacheDir string, opts PatchOptions) (Patch, error) {
 	patchID := true_git.PatchOptions(opts).ID()
+
+	checksumMutex := util.MapLoadOrCreateMutex(&repo.Cache.patchesMutex, patchID)
+	checksumMutex.Lock()
+	defer checksumMutex.Unlock()
 
 	if val, ok := repo.Cache.Patches.Load(patchID); ok {
 		return val.(Patch), nil
