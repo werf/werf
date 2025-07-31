@@ -1,13 +1,18 @@
 package path_matcher
 
 import (
-	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/bmatcuk/doublestar/v4"
 
 	"github.com/werf/common-go/pkg/util"
+	"github.com/werf/logboek"
+)
+
+const (
+	specialCharError = "The specified glob pattern contains special characters '?[{' that need to be properly used or escaped with '\\\\'."
 )
 
 func matchGlobs(pathPart string, globs []string) (inProgressGlobs, matchedGlobs []string) {
@@ -74,29 +79,20 @@ func isPathMatched(filePath, glob string) bool {
 		util.SafeTrimGlobsAndSlashesFromFilepath(glob),
 		filepath.Join(util.SafeTrimGlobsAndSlashesFromFilepath(glob), "**", "*"),
 	} {
-		matched, err := doublestar.PathMatch(escapeGlobSpecials(g), filePath)
+		matched, err := doublestar.PathMatch(g, filePath)
 		if err != nil {
-			panic(fmt.Sprintf("failed to match path %q with glob %q: %v", filePath, g, err))
+			logboek.Error().LogF("Failed to match path %q with glob %q: %v\n", filePath, g, err)
+			if strings.ContainsAny(g, "?[{") {
+				logboek.Error().LogF("%s\n", specialCharError)
+			}
+			os.Exit(1)
 		}
-
 		if matched {
 			return true
 		}
 	}
 
 	return false
-}
-
-func escapeGlobSpecials(path string) string {
-	specials := `?[]{}!\\`
-	var b strings.Builder
-	for _, r := range path {
-		if strings.ContainsRune(specials, r) {
-			b.WriteRune('\\')
-		}
-		b.WriteRune(r)
-	}
-	return b.String()
 }
 
 func formatPaths(paths []string) []string {
