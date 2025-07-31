@@ -208,7 +208,6 @@ func runRender(ctx context.Context) error {
 
 		if err := bundles.Pull(ctx, fmt.Sprintf("%s:%s", repoAddress, cmdData.Tag), bundlePath, bundlesRegistryClient, helmopts.HelmOptions{
 			ChartLoadOpts: helmopts.ChartLoadOptions{
-				ChartDir:              bundlePath,
 				NoDecryptSecrets:      *commonCmdData.IgnoreSecretKey,
 				NoDefaultSecretValues: *commonCmdData.DisableDefaultSecretValues,
 				NoDefaultValues:       *commonCmdData.DisableDefaultValues,
