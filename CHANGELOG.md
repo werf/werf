@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.45.0](https://github.com/werf/werf/compare/v2.44.1...v2.45.0) (2025-07-31)
+
+
+### Features
+
+* **build:** add worktree pool for git patch ([#7008](https://github.com/werf/werf/issues/7008)) ([2875a42](https://github.com/werf/werf/commit/2875a42321645fe42fd7ac504e500290a85ef416))
+* support basic auth for remote git in includes and stapel git directive ([#7006](https://github.com/werf/werf/issues/7006)) ([4782d32](https://github.com/werf/werf/commit/4782d32e2f32c31e6cb14c6b729bbb14143a131b))
+
+
+### Bug Fixes
+
+* **build:** fix path matcher special char error ([ad42553](https://github.com/werf/werf/commit/ad42553e8161bf93a67e7dab5a43a17a6d1a7158))
+
 ## [2.44.1](https://github.com/werf/werf/compare/v2.44.0...v2.44.1) (2025-07-30)
 
 
