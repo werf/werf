@@ -1,10 +1,11 @@
 package path_matcher
 
 import (
+	"fmt"
 	"path/filepath"
 	"strings"
 
-	"github.com/bmatcuk/doublestar"
+	"github.com/bmatcuk/doublestar/v4"
 
 	"github.com/werf/common-go/pkg/util"
 )
@@ -73,9 +74,9 @@ func isPathMatched(filePath, glob string) bool {
 		util.SafeTrimGlobsAndSlashesFromFilepath(glob),
 		filepath.Join(util.SafeTrimGlobsAndSlashesFromFilepath(glob), "**", "*"),
 	} {
-		matched, err := doublestar.PathMatch(g, filePath)
+		matched, err := doublestar.PathMatch(escapeGlobSpecials(g), filePath)
 		if err != nil {
-			panic(err)
+			panic(fmt.Sprintf("failed to match path %q with glob %q: %v", filePath, g, err))
 		}
 
 		if matched {
@@ -84,6 +85,18 @@ func isPathMatched(filePath, glob string) bool {
 	}
 
 	return false
+}
+
+func escapeGlobSpecials(path string) string {
+	specials := `?[]{}!\\`
+	var b strings.Builder
+	for _, r := range path {
+		if strings.ContainsRune(specials, r) {
+			b.WriteRune('\\')
+		}
+		b.WriteRune(r)
+	}
+	return b.String()
 }
 
 func formatPaths(paths []string) []string {
