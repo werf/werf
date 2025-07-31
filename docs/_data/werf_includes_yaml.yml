@@ -21,7 +21,7 @@ directives:
           - name: username
             value: "string"
             description:
-              en: "Username "
+              en: "Username"
               ru: "Имя пользователя"
           - name: password
             value: "string"
@@ -32,13 +32,13 @@ directives:
               - name: env
                 value: "string"
                 description:
-                  en: "Environment variable with password"
-                  ru: "Переменная окружения с паролем"
+                  en: "Environment variable"
+                  ru: "Переменная окружения"
               - name: file
                 value: "string"
                 description:
-                  en: "File with password"
-                  ru: "Файл с паролем"
+                  en: "File path"
+                  ru: "Путь к файлу"
               - name: value
                 value: "string"
                 description:

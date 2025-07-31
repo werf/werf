@@ -38,11 +38,11 @@ func OpenRemoteRepo(name, url string, auth *BasicAuthCredentials) (*Remote, erro
 	repo := &Remote{Url: url}
 	repo.Base = NewBase(name, repo.initRepoHandleBackedByWorkTree)
 	if auth != nil {
-		auth, err := BasicAuthCredentialsHelper(auth)
+		basicAuth, err := BasicAuthCredentialsHelper(auth)
 		if err != nil {
 			return nil, fmt.Errorf("unable to get basic auth for repository %s: %w", name, err)
 		}
-		repo.BasicAuth = auth
+		repo.BasicAuth = basicAuth
 	}
 	return repo, repo.ValidateEndpoint()
 }

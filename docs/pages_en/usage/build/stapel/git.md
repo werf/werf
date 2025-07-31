@@ -235,12 +235,11 @@ git:
 - url: https://gitlab.company.name/common/helper-utils.git
 ```
 
-The `basicAuth` parameter can optionally be used for token-based authentication with private repositories.
-The token (provided via the `password` parameter) can be sourced from:
+The `basicAuth` parameter can optionally be used for token-based authentication with private repositories. The token (provided via the `password` parameter) can be sourced from:
 
-* An environment variable (`env`)
-* The contents of a file (`src`)
-* A plain value (`plainValue`)
+* An environment variable (`env`).
+* The contents of a file (`src`).
+* A plain value (`value`).
 
 Example configuration with `basicAuth`:
 
