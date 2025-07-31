@@ -14,7 +14,7 @@ func TestIsPathMatched(t *testing.T) {
 		{
 			name:     "exact match with special character",
 			filePath: "usr/bin/[",
-			glob:     "usr/bin/[",
+			glob:     "usr/bin/\\[",
 			want:     true,
 		},
 		{
@@ -45,6 +45,12 @@ func TestIsPathMatched(t *testing.T) {
 			name:     "deep path with fallback form",
 			filePath: "usr/bin/falco",
 			glob:     "usr/bin",
+			want:     true,
+		},
+		{
+			name:     "glob with multiple patterns",
+			filePath: "images/img/Dockerfile",
+			glob:     "images/*/{Dockerfile,werf.inc.yaml}",
 			want:     true,
 		},
 	}
