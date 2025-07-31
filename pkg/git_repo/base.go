@@ -42,7 +42,6 @@ func NewBase(name string, initRepoHandleBackedByWorkTreeFunc func(context.Contex
 		Name: name,
 		Cache: Cache{
 			Archives: make(map[string]Archive),
-			Patches:  make(map[string]Patch),
 		},
 	}
 	base.initRepoHandleBackedByWorkTreeFunc = initRepoHandleBackedByWorkTreeFunc
@@ -50,12 +49,12 @@ func NewBase(name string, initRepoHandleBackedByWorkTreeFunc func(context.Contex
 }
 
 type Cache struct {
-	Patches   map[string]Patch
+	Patches   sync.Map // map[patchID]Patch
 	Archives  map[string]Archive
 	Checksums sync.Map
 
-	patchesMutex   sync.Mutex
 	archivesMutex  sync.Mutex
+	patchesMutex   sync.Map
 	checksumsMutex sync.Map
 }
 
@@ -158,18 +157,23 @@ func (repo *Base) GetName() string {
 }
 
 func (repo *Base) getOrCreatePatch(ctx context.Context, repoPath, gitDir, repoID, workTreeCacheDir string, opts PatchOptions) (Patch, error) {
-	repo.Cache.patchesMutex.Lock()
-	defer repo.Cache.patchesMutex.Unlock()
-
 	patchID := true_git.PatchOptions(opts).ID()
-	if _, hasKey := repo.Cache.Patches[patchID]; !hasKey {
-		patch, err := repo.CreatePatch(ctx, repoPath, gitDir, repoID, workTreeCacheDir, opts)
-		if err != nil {
-			return nil, err
-		}
-		repo.Cache.Patches[patchID] = patch
+
+	checksumMutex := util.MapLoadOrCreateMutex(&repo.Cache.patchesMutex, patchID)
+	checksumMutex.Lock()
+	defer checksumMutex.Unlock()
+
+	if val, ok := repo.Cache.Patches.Load(patchID); ok {
+		return val.(Patch), nil
 	}
-	return repo.Cache.Patches[patchID], nil
+
+	patch, err := repo.CreatePatch(ctx, repoPath, gitDir, repoID, workTreeCacheDir, opts)
+	if err != nil {
+		return nil, err
+	}
+	repo.Cache.Patches.Store(patchID, patch)
+
+	return patch, nil
 }
 
 func (repo *Base) CreatePatch(ctx context.Context, repoPath, gitDir, repoID, workTreeCacheDir string, opts PatchOptions) (patch Patch, err error) {
@@ -240,7 +244,7 @@ func (repo *Base) createPatch(ctx context.Context, repoPath, gitDir, repoID, wor
 		var retryCount int
 
 	TryCreatePatch:
-		desc, err = true_git.PatchWithSubmodules(ctx, fileHandler, gitDir, workTreeCacheDir, true_git.PatchOptions(opts))
+		desc, err = true_git.Patch(ctx, fileHandler, gitDir, workTreeCacheDir, true, true_git.PatchOptions(opts))
 
 		if true_git.IsCommitsNotPresentError(err) && retryCount == 0 {
 			logboek.Context(ctx).Default().LogF("Detected not present commits when creating patch: %s\n", err)
@@ -263,7 +267,7 @@ func (repo *Base) createPatch(ctx context.Context, repoPath, gitDir, repoID, wor
 			goto TryCreatePatch
 		}
 	} else {
-		desc, err = true_git.Patch(ctx, fileHandler, gitDir, workTreeCacheDir, true_git.PatchOptions(opts))
+		desc, err = true_git.Patch(ctx, fileHandler, gitDir, workTreeCacheDir, false, true_git.PatchOptions(opts))
 	}
 
 	if err != nil {
