@@ -1,14 +1,16 @@
 package config
 
 import (
+	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
 )
 
 type GitRemoteExport struct {
 	*GitLocalExport
-	Branch string
-	Tag    string
-	Commit string
+	BasicAuth *git_repo.BasicAuthCredentials
+	Branch    string
+	Tag       string
+	Commit    string
 
 	raw *rawGit
 }

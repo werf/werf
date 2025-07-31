@@ -77,7 +77,17 @@ includes:
     to: /
     includePaths:
       - .werf
+  - git: https://gitlab.company.name/common/helper-utils.git
+    basicAuth:
+      username: token
+      password:
+        env: GITLAB_TOKEN
+    commit: fedf144f7424aa217a2eb21640b8e619ba4dd480
+    add: /.helm
+    to: /
 ```
+
+The procedure for working with private repositories is the same as described [here]({{ "/usage/build/stapel/git.html#working-with-remote-repositories" | true_relative_url }}).
 
 After the configuration, it is necessary to lock the versions of external dependencies. You can do this using the command `werf includes update`, which will create the file `werf-includes.lock` in the project root:
 
@@ -86,6 +96,8 @@ includes:
   - git: https://github.com/werf/werf
     branch: main
     commit: 21640b8e619ba4dd480fedf144f7424aa217a2eb
+  - git: https://gitlab.company.name/common/helper-utils.git
+    commit: fedf144f7424aa217a2eb21640b8e619ba4dd480
 ```
 
 > **IMPORTANT.** According to giterminism policies, the files `werf-includes.yaml` and `werf-includes.lock` must be committed. During configuration and debugging, for convenience, it is recommended to use the `--dev` flag.

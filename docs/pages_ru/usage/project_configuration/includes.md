@@ -77,7 +77,17 @@ includes:
     to: /
     includePaths:
       - .werf
+  - git: https://gitlab.company.name/common/helper-utils.git
+    basicAuth:
+      username: token
+      password:
+        env: GITLAB_TOKEN
+    commit: fedf144f7424aa217a2eb21640b8e619ba4dd480
+    add: /.helm
+    to: /
 ```
+
+Порядок работы с приватными репозитриями аналогичен описанному [здесь]({{ "/usage/build/stapel/git.html#работа-с-удаленными-репозиториями" | true_relative_url }}).
 
 После конфигурации необходимо зафиксировать версии внешних зависимостей. Для этого можно использовать команду `werf includes update`, после вызова которой, в корне проекта будет создан файл `werf-includes.lock`:
 
@@ -86,6 +96,8 @@ includes:
   - git: https://github.com/werf/werf
     branch: main
     commit: 21640b8e619ba4dd480fedf144f7424aa217a2eb
+  - git: https://gitlab.company.name/common/helper-utils.git
+    commit: fedf144f7424aa217a2eb21640b8e619ba4dd480
 ```
 
 > **ВАЖНО.** Согласно политикам гитерминизма, файлы `werf-includes.yaml` и `werf-includes.lock` должны быть закомичены. При конфигурации и отладке для удобства предлагается использовать флаг `--dev`.

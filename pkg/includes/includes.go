@@ -3,18 +3,13 @@ package includes
 import (
 	"context"
 	"fmt"
-	"path"
 	"path/filepath"
-	"strings"
 
-	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/path_matcher"
-	"github.com/werf/werf/v2/pkg/true_git"
 )
 
 const (
@@ -26,13 +21,6 @@ type GiterminismManagerFileReader interface {
 	IsIncludesConfigExistAnywhere(ctx context.Context, relPath string) (bool, error)
 	ReadIncludesConfig(ctx context.Context, relPath string) ([]byte, error)
 	ReadIncludesLockFile(ctx context.Context, relPath string) ([]byte, error)
-}
-
-type GitRepository interface {
-	GetName() string
-	ReadCommitFile(ctx context.Context, commit, path string) (data []byte, err error)
-	IsCommitDirectoryExist(ctx context.Context, commit, path string) (exist bool, err error)
-	IsCommitFileExist(ctx context.Context, commit, path string) (exist bool, err error)
 }
 
 type Include struct {
@@ -124,70 +112,15 @@ func Init(ctx context.Context, opts InitIncludesOptions) ([]*Include, error) {
 	return []*Include{}, nil
 }
 
-func initRemoteRepos(ctx context.Context, cfg Config) (map[string]*git_repo.Remote, error) {
-	repoCache := make(map[string]*git_repo.Remote)
-
-	err := logboek.Context(ctx).Default().LogBlock("Initializing remote repositories").DoError(func() error {
-		for _, i := range cfg.Includes {
-			if _, ok := repoCache[i.Git]; !ok {
-				repo, err := git_repo.OpenRemoteRepo(i.Git, i.Git)
-				if err != nil {
-					return fmt.Errorf("unable to open remote repository %s: %w", i.Git, err)
-				}
-
-				isCloned, err := repo.Clone(ctx)
-				if err != nil {
-					return fmt.Errorf("unable to clone %s repository: %w", i.Git, err)
-				}
-
-				repoCache[i.Git] = repo
-
-				if isCloned {
-					continue
-				}
-
-				err = logboek.Context(ctx).Default().LogProcess(fmt.Sprintf("Syncing origin branches and tags for: %s", i.Git)).DoError(func() error {
-					fetchOptions := true_git.FetchOptions{
-						Prune:     true,
-						PruneTags: true,
-						RefSpecs: map[string][]string{
-							"origin": {
-								"+refs/heads/*:refs/heads/*",
-								"+refs/tags/*:refs/tags/*",
-							},
-						},
-						UpdateHeadOk: true,
-					}
-
-					if err := true_git.Fetch(ctx, repo.GetClonePath(), fetchOptions); err != nil {
-						return fmt.Errorf("fetch failed: %w", err)
-					}
-
-					return nil
-				})
-				if err != nil {
-					return fmt.Errorf("unable to sync origin branches and tags for %s: %w", i.Git, err)
-				}
-			}
-		}
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return repoCache, nil
-}
-
-func GetIncludes(ctx context.Context, cfg Config, lockInfo *LockInfo, remoteRepos map[string]*git_repo.Remote) ([]*Include, error) {
+func GetIncludes(ctx context.Context, cfg Config, lockInfo *LockInfo, remoteRepos *gitRepositoriesWithCache) ([]*Include, error) {
 	includes := []*Include{}
 	err := logboek.Context(ctx).Default().LogBlock("Initializing includes").DoError(func() error {
 		for i := len(cfg.Includes) - 1; i >= 0; i-- {
 			// Reverse order to prioritize the last include in the list
 			inc := cfg.Includes[i]
-			remoteRepo, ok := remoteRepos[inc.Git]
-			if !ok || remoteRepo == nil {
-				return fmt.Errorf("unable to find remote repository %s", inc.Git)
+			r, err := remoteRepos.getRepository(inc.Git)
+			if err != nil {
+				return fmt.Errorf("unable to find remote repository %s: %w", inc.Git, err)
 			}
 
 			ref, err := inc.Ref()
@@ -201,12 +134,12 @@ func GetIncludes(ctx context.Context, cfg Config, lockInfo *LockInfo, remoteRepo
 					return fmt.Errorf("unable to get commit from lock info: %w", err)
 				}
 
-				r, err := remoteRepo.PlainOpen()
+				repo, err := r.repo.PlainOpen()
 				if err != nil {
 					return fmt.Errorf("failed to open repository: %w", err)
 				}
 
-				commit, err := r.CommitObject(plumbing.NewHash(commitFromLockInfo))
+				commit, err := repo.CommitObject(plumbing.NewHash(commitFromLockInfo))
 				if err != nil {
 					return fmt.Errorf("failed to get commit object: %w", err)
 				}
@@ -241,7 +174,7 @@ func GetIncludes(ctx context.Context, cfg Config, lockInfo *LockInfo, remoteRepo
 				}
 
 				include := &Include{
-					repo:       remoteRepo,
+					repo:       r.repo,
 					commitHash: commit.Hash.String(),
 					objects:    matchedMap,
 				}
@@ -332,15 +265,6 @@ func ListFilesByGlobs(ctx context.Context, includes []*Include, globs, sources [
 	return result
 }
 
-func sliceContainsSubstring(s string, substrings []string) bool {
-	for _, sub := range substrings {
-		if strings.Contains(s, sub) {
-			return true
-		}
-	}
-	return false
-}
-
 func (i *Include) ListFilesByGlobs(ctx context.Context, patterns []string) []string {
 	result := make([]string, 0, len(i.objects))
 
@@ -401,55 +325,4 @@ func FindWerfConfig(ctx context.Context, includes []*Include, cfgPaths []string)
 		}
 	}
 	return "", nil, ErrConfigFileNotFound
-}
-
-func (i *includeConf) Ref() (string, error) {
-	return ref(i.Git, i.Commit, i.Tag, i.Branch)
-}
-
-func getCommit(r *git.Repository, git, tag, branch, commit string) (*object.Commit, error) {
-	switch {
-	case commit != "":
-		return commitRef(r, commit)
-	case tag != "":
-		return tagRef(r, tag)
-	case branch != "":
-		return branchRef(r, branch)
-	default:
-		return nil, fmt.Errorf("no commit, tag or branch specified for include %s", git)
-	}
-}
-
-func commitRef(r *git.Repository, commit string) (*object.Commit, error) {
-	rev := plumbing.Revision(commit)
-	h, err := r.ResolveRevision(rev)
-	if err != nil {
-		return nil, fmt.Errorf("cannot resolve commit %s: %w", commit, err)
-	}
-	return r.CommitObject(*h)
-}
-
-func tagRef(r *git.Repository, tag string) (*object.Commit, error) {
-	tagRef, err := r.Reference(plumbing.NewTagReferenceName(tag), true)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get tag %s: %w", tag, err)
-	}
-	return commitRef(r, tagRef.Hash().String())
-}
-
-func branchRef(r *git.Repository, branch string) (*object.Commit, error) {
-	branchRef, err := r.Reference(plumbing.NewBranchReferenceName(branch), true)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get branch %s: %w", branch, err)
-	}
-	return commitRef(r, branchRef.Hash().String())
-}
-
-func prepareRelPath(fileName, add, to string) string {
-	addClean := strings.TrimPrefix(filepath.Clean(add), string(filepath.Separator))
-	relPath := strings.TrimPrefix(fileName, addClean)
-	relPath = strings.TrimPrefix(relPath, string(filepath.Separator))
-	newPath := path.Join(to, relPath)
-	newPath = strings.TrimPrefix(newPath, string(filepath.Separator))
-	return newPath
 }

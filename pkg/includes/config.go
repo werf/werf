@@ -20,14 +20,19 @@ type Config struct {
 }
 
 type includeConf struct {
-	Git          string   `yaml:"git"`
-	Branch       string   `yaml:"branch"`
-	Tag          string   `yaml:"tag"`
-	Commit       string   `yaml:"commit"`
-	Add          string   `yaml:"add,omitempty"`
-	To           string   `yaml:"to,omitempty"`
-	IncludePaths []string `yaml:"includePaths"`
-	ExcludePaths []string `yaml:"excludePaths"`
+	Git          string                         `yaml:"git"`
+	BasicAuth    *git_repo.BasicAuthCredentials `yaml:"basicAuth,omitempty"`
+	Branch       string                         `yaml:"branch"`
+	Tag          string                         `yaml:"tag"`
+	Commit       string                         `yaml:"commit"`
+	Add          string                         `yaml:"add,omitempty"`
+	To           string                         `yaml:"to,omitempty"`
+	IncludePaths []string                       `yaml:"includePaths"`
+	ExcludePaths []string                       `yaml:"excludePaths"`
+}
+
+func (i *includeConf) Ref() (string, error) {
+	return ref(i.Git, i.Commit, i.Tag, i.Branch)
 }
 
 type LockInfo struct {
@@ -90,6 +95,17 @@ func validate(config Config) error {
 			return fmt.Errorf("`git` field is required")
 		}
 
+		if include.BasicAuth != nil {
+			if include.BasicAuth.Username == "" {
+				return fmt.Errorf("username should be specified when using git basic auth")
+			}
+
+			if !exactlyOne([]bool{include.BasicAuth.Password.Env != "", include.BasicAuth.Password.Src != "", include.BasicAuth.Password.PlainValue != ""}) {
+				err := fmt.Errorf("include %s: specify only env or src or plain as basic auth password source", include.BasicAuth)
+				return err
+			}
+		}
+
 		if include.Add == "" {
 			return fmt.Errorf("include %s: `add` field is required", include.Git)
 		}
@@ -129,7 +145,7 @@ type getLockInfoOptions struct {
 	fileReader             GiterminismManagerFileReader
 	createOrUpdateLockFile bool
 	useLatestVersion       bool
-	remoteRepos            map[string]*git_repo.Remote
+	remoteRepos            *gitRepositoriesWithCache
 	lockConfig             *lockConfig
 }
 
@@ -195,7 +211,7 @@ type createLockConfigOptions struct {
 	fileReader       GiterminismManagerFileReader
 	includesConfig   Config
 	includesLockPath string
-	remoteRepos      map[string]*git_repo.Remote
+	remoteRepos      *gitRepositoriesWithCache
 }
 
 func CreateOrUpdateLockConfig(ctx context.Context, opts createLockConfigOptions) error {
@@ -244,7 +260,7 @@ func createLockConfig(opts createLockConfigOptions) (lockConfig, error) {
 	return newLockConfig, nil
 }
 
-func newLockConfig(cfg []includeLockConf, remoteRepos map[string]*git_repo.Remote) (lockConfig, error) {
+func newLockConfig(cfg []includeLockConf, remoteRepos *gitRepositoriesWithCache) (lockConfig, error) {
 	newLockConfig := lockConfig{
 		IncludeLock: make([]includeLockConf, 0, len(cfg)),
 	}
@@ -272,19 +288,6 @@ func (i *includeLockConf) Ref() (string, error) {
 	return ref(i.Git, i.Tag, i.Branch, i.Commit)
 }
 
-func ref(git, tag, branch, commit string) (string, error) {
-	switch {
-	case tag != "":
-		return tag, nil
-	case branch != "":
-		return branch, nil
-	case commit != "":
-		return commit, nil
-	default:
-		return "", fmt.Errorf("no ref specified for include %s", git)
-	}
-}
-
 func (i *includeLockConf) getCommit(r *git.Repository) (*object.Commit, error) {
 	return getCommit(r, i.Git, i.Tag, i.Branch, i.Commit)
 }
@@ -303,18 +306,18 @@ func writeLockConfig(inputConfs lockConfig, configRelPath string) error {
 	return nil
 }
 
-func (c *includeLockConf) updateCommit(remoteRepos map[string]*git_repo.Remote) (*includeLockConf, error) {
-	repo, ok := remoteRepos[c.Git]
-	if !ok || repo == nil {
-		return nil, fmt.Errorf("remote repo %s not found", c.Git)
+func (c *includeLockConf) updateCommit(remoteRepos *gitRepositoriesWithCache) (*includeLockConf, error) {
+	r, err := remoteRepos.getRepository(c.Git)
+	if err != nil {
+		return nil, err
 	}
 
-	r, err := repo.PlainOpen()
+	repo, err := r.repo.PlainOpen()
 	if err != nil {
 		return nil, fmt.Errorf("plain open: %w", err)
 	}
 
-	commit, err := c.getCommit(r)
+	commit, err := c.getCommit(repo)
 	if err != nil {
 		return nil, fmt.Errorf("get commit: %w", err)
 	}

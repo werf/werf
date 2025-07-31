@@ -3,16 +3,18 @@ package config
 import (
 	"regexp"
 
+	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
 )
 
 type rawGit struct {
 	rawGitExport         `yaml:",inline"`
-	Url                  string                `yaml:"url,omitempty"`
-	Branch               string                `yaml:"branch,omitempty"`
-	Tag                  string                `yaml:"tag,omitempty"`
-	Commit               string                `yaml:"commit,omitempty"`
-	RawStageDependencies *rawStageDependencies `yaml:"stageDependencies,omitempty"`
+	Url                  string                         `yaml:"url,omitempty"`
+	BasicAuth            *git_repo.BasicAuthCredentials `yaml:"basicAuth,omitempty"`
+	Branch               string                         `yaml:"branch,omitempty"`
+	Tag                  string                         `yaml:"tag,omitempty"`
+	Commit               string                         `yaml:"commit,omitempty"`
+	RawStageDependencies *rawStageDependencies          `yaml:"stageDependencies,omitempty"`
 
 	rawStapelImage *rawStapelImage `yaml:"-"` // parent
 
@@ -164,6 +166,7 @@ func (c *rawGit) toGitRemoteExportDirective(giterminismManager giterminism_manag
 	gitRemoteExport.Commit = c.Commit
 
 	gitRemoteExport.raw = c
+	gitRemoteExport.BasicAuth = c.BasicAuth
 
 	if err := c.validateGitRemoteExportDirective(gitRemoteExport, giterminismManager); err != nil {
 		return nil, err

@@ -230,25 +230,27 @@ werf can use remote repositories as file sources. For this, you have to specify 
 
 The syntax for the `https` protocol is as follows:
 
-{% raw %}
 ```yaml
 git:
-- url: https://[USERNAME[:PASSWORD]@]repo_host/repo_path[.git/]
+- url: https://gitlab.company.name/common/helper-utils.git
 ```
-{% endraw %}
 
-You may have to enter your credentials to access the repository over `https`.
+The `basicAuth` parameter can optionally be used for token-based authentication with private repositories. The token (provided via the `password` parameter) can be sourced from:
 
-Here is an example of using GitLab CI variables for retrieving a login and password:
+* An environment variable (`env`).
+* The contents of a file (`src`).
+* A plain value (`value`).
 
-{% raw %}
+Example configuration with `basicAuth`:
+
 ```yaml
 git:
-- url: https://{{ env "CI_REGISTRY_USER" }}:{{ env "CI_JOB_TOKEN" }}@registry.gitlab.company.name/common/helper-utils.git
+- url: https://gitlab.company.name/common/helper-utils.git
+  basicAuth:
+    username: username
+    password:
+      env: GITLAB_TOKEN
 ```
-{% endraw %}
-
-In the above example, we use the [env](http://masterminds.github.io/sprig/os.html) method from the sprig library for accessing the environment variables.
 
 ### git, ssh
 

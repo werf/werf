@@ -11,6 +11,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/storer"
 	"github.com/go-git/go-git/v5/plumbing/transport"
+	"github.com/go-git/go-git/v5/plumbing/transport/http"
 	"gopkg.in/ini.v1"
 
 	"github.com/werf/common-go/pkg/util"
@@ -29,11 +30,20 @@ type Remote struct {
 	IsDryRun bool
 
 	Endpoint *transport.Endpoint
+
+	BasicAuth *BasicAuth
 }
 
-func OpenRemoteRepo(name, url string) (*Remote, error) {
+func OpenRemoteRepo(name, url string, auth *BasicAuthCredentials) (*Remote, error) {
 	repo := &Remote{Url: url}
 	repo.Base = NewBase(name, repo.initRepoHandleBackedByWorkTree)
+	if auth != nil {
+		basicAuth, err := BasicAuthCredentialsHelper(auth)
+		if err != nil {
+			return nil, fmt.Errorf("unable to get basic auth for repository %s: %w", name, err)
+		}
+		repo.BasicAuth = basicAuth
+	}
 	return repo, repo.ValidateEndpoint()
 }
 
@@ -186,10 +196,16 @@ func (repo *Remote) Clone(ctx context.Context) (bool, error) {
 		// Ensure cleanup on failure
 		defer os.RemoveAll(tmpPath)
 
-		_, err = git.PlainCloneContext(ctx, tmpPath, true, &git.CloneOptions{
+		cloneOpts := &git.CloneOptions{
 			URL:               repo.Url,
 			RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
-		})
+		}
+
+		if repo.BasicAuth != nil {
+			cloneOpts.Auth = newBasicAuth(repo.BasicAuth.Username, repo.BasicAuth.Password).AuthMethod
+		}
+
+		_, err = git.PlainCloneContext(ctx, tmpPath, true, cloneOpts)
 		if err != nil {
 			return fmt.Errorf("unable to clone repo: %w", err)
 		}
@@ -204,6 +220,24 @@ func (repo *Remote) Clone(ctx context.Context) (bool, error) {
 
 		return nil
 	})
+}
+
+type Auth struct {
+	AuthMethod transport.AuthMethod
+}
+
+type BasicAuth struct {
+	Username string
+	Password string
+}
+
+func newBasicAuth(username, password string) *Auth {
+	return &Auth{
+		AuthMethod: &http.BasicAuth{
+			Username: username,
+			Password: password,
+		},
+	}
 }
 
 func (repo *Remote) SyncWithOrigin(ctx context.Context) error {
@@ -245,7 +279,17 @@ func (repo *Remote) FetchOrigin(ctx context.Context, opts FetchOptions) error {
 
 		logboek.Context(ctx).Default().LogFDetails("Fetch remote %s of %s\n", remoteName, repo.Url)
 
-		err = rawRepo.Fetch(&git.FetchOptions{RemoteName: remoteName, Force: true, Tags: git.AllTags})
+		fetchOpts := &git.FetchOptions{
+			RemoteName: remoteName,
+			Force:      true,
+			Tags:       git.AllTags,
+		}
+
+		if repo.BasicAuth != nil {
+			fetchOpts.Auth = newBasicAuth(repo.BasicAuth.Username, repo.BasicAuth.Password).AuthMethod
+		}
+
+		err = rawRepo.Fetch(fetchOpts)
 		if err != nil && err != git.NoErrAlreadyUpToDate {
 			return fmt.Errorf("cannot fetch remote %q of repo %q: %w", remoteName, repo.String(), err)
 		}

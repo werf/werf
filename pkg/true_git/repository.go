@@ -24,14 +24,20 @@ func GitOpenWithCustomWorktreeDir(gitDir, worktreeDir string) (*git.Repository, 
 	return PlainOpenWithOptions(worktreeDir, &PlainOpenOptions{EnableDotGitCommonDir: true})
 }
 
+type BasicAuth struct {
+	Username string
+	Password string
+}
+
 type FetchOptions struct {
-	All          bool
-	TagsOnly     bool
-	Prune        bool
-	PruneTags    bool
-	Unshallow    bool
-	UpdateHeadOk bool
-	RefSpecs     map[string][]string
+	All                  bool
+	TagsOnly             bool
+	Prune                bool
+	PruneTags            bool
+	Unshallow            bool
+	UpdateHeadOk         bool
+	RefSpecs             map[string][]string
+	BasicAuthCredentials *BasicAuth
 }
 
 func IsShallowFileChangedSinceWeReadIt(err error) bool {

@@ -586,6 +586,38 @@ sections:
             detailsArticle:
               en: "/usage/build/stapel/git.html#working-with-remote-repositories"
               ru: "/usage/build/stapel/git.html#работа-с-удаленными-репозиториями"
+          - name: basicAuth
+            value: "string"
+            description:
+              en: "Basic authentication for the remote repository"
+              ru: "Basic аутентификация для удаленного репозитория"
+            directiveList:
+              - name: username
+                value: "string"
+                description:
+                  en: "Username"
+                  ru: "Имя пользователя"
+              - name: password
+                value: "string"
+                description:
+                  en: "Password source"
+                  ru: "Источник пароля"
+                directiveList:
+                  - name: env
+                    value: "string"
+                    description:
+                      en: "Environment variable"
+                      ru: "Переменная окружения"
+                  - name: file
+                    value: "string"
+                    description:
+                      en: "File path"
+                      ru: "Путь к файлу"
+                  - name: value
+                    value: "string"
+                    description:
+                      en: Custom string value
+                      ru: Произвольное строковое значение
           - name: branch
             value: "string"
             description:
