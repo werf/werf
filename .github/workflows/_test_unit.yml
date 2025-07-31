@@ -12,9 +12,6 @@ on:
       coverage:
         default: false
         type: string
-      forceSkip:
-        default: false
-        type: string
 
 defaults:
   run:
@@ -25,7 +22,6 @@ env:
 
 jobs:
   _:
-    if: inputs.forceSkip == 'false'
     runs-on: ubuntu-22.04
     timeout-minutes: 60
     steps:

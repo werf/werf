@@ -15,9 +15,6 @@ on:
       coverage:
         default: false
         type: string
-      forceSkip:
-        default: false
-        type: string
       timeout:
         default: 60
         type: number
@@ -32,7 +29,6 @@ env:
 
 jobs:
   _:
-    if: inputs.forceSkip == 'false'
     strategy:
       fail-fast: false
       matrix:
