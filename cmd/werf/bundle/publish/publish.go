@@ -380,7 +380,6 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 	opts := helmopts.HelmOptions{
 		ChartLoadOpts: helmopts.ChartLoadOptions{
 			ChartAppVersion:        common.GetHelmChartConfigAppVersion(werfConfig),
-			ChartDir:               bundleTmpDir,
 			DefaultChartAPIVersion: chart.APIVersionV2,
 			DefaultChartName:       werfConfig.Meta.Project,
 			DefaultChartVersion:    "1.0.0",
@@ -493,8 +492,6 @@ func createNewBundle(
 	if destDir == "" {
 		destDir = chrt.Metadata.Name
 	}
-
-	opts.ChartLoadOpts.ChartDir = destDir
 
 	if err := os.RemoveAll(destDir); err != nil {
 		return fmt.Errorf("unable to remove %q: %w", destDir, err)
