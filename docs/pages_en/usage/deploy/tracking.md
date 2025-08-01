@@ -122,6 +122,17 @@ metadata:
     werf.io/log-regex-for-backend: ".*ERROR.*"
 ```
 
+The `werf.io/log-regex-skip` annotation allows you to hide log lines that match a regular expression, for example:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+  annotations:
+    werf.io/log-regex-skip: ".*DEBUG.*"
+```
+
 ## Displaying Events resources (werf only)
 
 Thanks to the [kubedog](https://github.com/werf/kubedog) library, werf can display Events of tracked resources if the resource has the `werf.io/show-service-messages: "true"` annotation, for example:
