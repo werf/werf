@@ -32,6 +32,7 @@ defaults:
 env:
   DEBIAN_FRONTEND: "noninteractive"
   WERF_TEST_K8S_DOCKER_REGISTRY_INSECURE: "false"
+  TASK_X_REMOTE_TASKFILES: 1
 
 jobs:
   _:
@@ -70,16 +71,16 @@ jobs:
         uses: ./.github/actions/set-up-git-config
 
       - name: Install ginkgo
-        run: task -p deps:install:ginkgo
+        run: task --yes -p deps:install:ginkgo
 
       - name: Setup environment
-        run: task test:setup:environment
+        run: task --yes test:setup:environment
 
       - name: Test
         run: |
           export WERF_TEST_K8S_DOCKER_REGISTRY="localhost:$(docker inspect kind-registry --format '{{(index (index .NetworkSettings.Ports "5000/tcp") 0).HostPort}}')"
           test -n "${{ inputs.packages }}" && paths=paths="$(echo ${{ inputs.packages }} | tr , ' ')"
-          task -p test:e2e:${{ inputs.scope }} $paths -- --keep-going --skip-package '${{ inputs.excludePackages }}'
+          task --yes -p test:e2e:${{ inputs.scope }} $paths -- --keep-going --skip-package '${{ inputs.excludePackages }}'
           echo loadavg: $(cat /proc/loadavg)
         env:
           GOCOVERDIR: ${{ env.WERF_TEST_COVER_DIR }}
@@ -91,4 +92,4 @@ jobs:
 
       - name: Cleanup environment
         if: always()
-        run: task test:cleanup:environment
+        run: task --yes test:cleanup:environment

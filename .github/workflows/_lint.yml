@@ -13,6 +13,7 @@ defaults:
 
 env:
   DEBIAN_FRONTEND: "noninteractive"
+  TASK_X_REMOTE_TASKFILES: 1
 
 jobs:
   _:
@@ -37,7 +38,7 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install golangci-lint
-        run: task -p deps:install:golangci-lint
+        run: task --yes -p deps:install:golangci-lint
 
       - name: Lint
-        run: task -p lint
+        run: task --yes -p lint

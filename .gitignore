@@ -46,3 +46,4 @@ buildah-test
 /dist
 /node_modules/
 /.github/actions/get-commit-message/node_modules/
+.task
