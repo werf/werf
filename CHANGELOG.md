@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.46.0](https://github.com/werf/werf/compare/v2.45.1...v2.46.0) (2025-08-01)
+
+
+### Features
+
+* **deploy:** add `werf.io/log-regex-skip` annotation ([aa327f3](https://github.com/werf/werf/commit/aa327f3099367f8e98870c5ee6b8a1cbfc396251))
+
 ## [2.45.1](https://github.com/werf/werf/compare/v2.45.0...v2.45.1) (2025-07-31)
 
 
