@@ -1090,10 +1090,12 @@ func SetupELFSigningOptions(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.SignELFFiles = new(bool)
 	cmd.Flags().BoolVarP(cmdData.SignELFFiles, "sign-elf-files", "", util.GetBoolEnvironmentDefaultFalse("WERF_SIGN_ELF_FILES"),
 		`Enable ELF files signing (default $WERF_SIGN_ELF_FILES).
-When enabled,
-the private elf key must be specified with --elf-pgp-private-key-base64 or --elf-pgp-private-key-fingerprint options and
-the private signing key must be specified with --sign-key option and
-the certificate must be specified with --sign-cert option`)
+When enabled, the private signing key must be specified with --sign-key option and the certificate must be specified with --sign-cert option`)
+
+	cmdData.BSignELFFiles = new(bool)
+	cmd.Flags().BoolVarP(cmdData.BSignELFFiles, "bsign-elf-files", "", util.GetBoolEnvironmentDefaultFalse("WERF_BSIGN_ELF_FILES"),
+		`Enable ELF files signing with bsign (default $WERF_BSIGN_ELF_FILES).
+When enabled, the private elf key must be specified with --elf-pgp-private-key-base64 or --elf-pgp-private-key-fingerprint option`)
 
 	cmdData.ELFPGPPrivateKeyBase64 = new(string)
 	cmd.Flags().StringVarP(cmdData.ELFPGPPrivateKeyBase64, "elf-pgp-private-key-base64", "", os.Getenv("WERF_ELF_PGP_PRIVATE_KEY_BASE64"), "Base64-encoded PGP private key (default $WERF_ELF_PGP_PRIVATE_KEY_BASE64)")

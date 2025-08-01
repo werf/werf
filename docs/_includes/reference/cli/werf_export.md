@@ -50,6 +50,10 @@ werf export [IMAGE_NAME...] [options]
       --annotate-layers-with-dm-verity-root-hash=false
             Enable annotation of image layers with dm-verity root hash (default                     
             $WERF_ANNOTATE_LAYERS_WITH_DM_VERITY_ROOT_HASH)
+      --bsign-elf-files=false
+            Enable ELF files signing with bsign (default $WERF_BSIGN_ELF_FILES).
+            When enabled, the private elf key must be specified with --elf-pgp-private-key-base64   
+            or --elf-pgp-private-key-fingerprint option
       --cache-repo=[]
             Specify one or multiple cache repos with images that will be used as a cache. Cache     
             will be populated when pushing newly built images into the primary repo and when        
@@ -233,11 +237,8 @@ werf export [IMAGE_NAME...] [options]
             $WERF_SIGN_CHAIN)
       --sign-elf-files=false
             Enable ELF files signing (default $WERF_SIGN_ELF_FILES).
-            When enabled,
-            the private elf key must be specified with --elf-pgp-private-key-base64 or              
-            --elf-pgp-private-key-fingerprint options and
-            the private signing key must be specified with --sign-key option and
-            the certificate must be specified with --sign-cert option
+            When enabled, the private signing key must be specified with --sign-key option and the  
+            certificate must be specified with --sign-cert option
       --sign-key=""
             The private signing key as path to PEM file, base64-encoded PEM or hashivault://[KEY]   
             (default $WERF_SIGN_KEY)

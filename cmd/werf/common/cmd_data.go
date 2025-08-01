@@ -150,6 +150,7 @@ type CmdData struct {
 	SignCert     *string
 	SignChain    *string
 
+	BSignELFFiles               *bool
 	SignELFFiles                *bool
 	ELFPGPPrivateKeyBase64      *string
 	ELFPGPPrivateKeyFingerprint *string

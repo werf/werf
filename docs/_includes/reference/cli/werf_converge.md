@@ -28,8 +28,8 @@ werf converge --repo registry.mydomain.com/web --env production
 
 ```shell
   $WERF_DEBUG_ANSIBLE_ARGS  Pass specified cli args to ansible ($ANSIBLE_ARGS)
-  $WERF_SECRET_KEY          Use specified secret key to extract secrets for the deploy. Recommended 
-                            way to set secret key in CI-system.
+  $WERF_SECRET_KEY          Use specified secret key to extract secrets for the deploy.           
+                            Recommended way to set secret key in CI-system.
                             
                             Secret key also can be defined in files:
                             * ~/.werf/global_secret_key (globally),
@@ -92,6 +92,10 @@ werf converge --repo registry.mydomain.com/web --env production
             Use specified path to the local backend (Docker or Buildah) storage to check backend    
             storage volume usage while performing garbage collection of local backend images        
             (detect local backend storage path by default or use $WERF_BACKEND_STORAGE_PATH)
+      --bsign-elf-files=false
+            Enable ELF files signing with bsign (default $WERF_BSIGN_ELF_FILES).
+            When enabled, the private elf key must be specified with --elf-pgp-private-key-base64   
+            or --elf-pgp-private-key-fingerprint option
       --build-report-path=""
             Change build report path and format (by default $WERF_BUILD_REPORT_PATH or              
             ".werf-build-report.json" if not set). Extension must be either .json for JSON format   
@@ -378,11 +382,8 @@ werf converge --repo registry.mydomain.com/web --env production
             $WERF_SIGN_CHAIN)
       --sign-elf-files=false
             Enable ELF files signing (default $WERF_SIGN_ELF_FILES).
-            When enabled,
-            the private elf key must be specified with --elf-pgp-private-key-base64 or              
-            --elf-pgp-private-key-fingerprint options and
-            the private signing key must be specified with --sign-key option and
-            the certificate must be specified with --sign-cert option
+            When enabled, the private signing key must be specified with --sign-key option and the  
+            certificate must be specified with --sign-cert option
       --sign-key=""
             The private signing key as path to PEM file, base64-encoded PEM or hashivault://[KEY]   
             (default $WERF_SIGN_KEY)
