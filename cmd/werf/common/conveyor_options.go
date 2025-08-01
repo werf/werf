@@ -169,10 +169,10 @@ func getSignerOptions(commonCmdData *CmdData) (signing.SignerOptions, error) {
 		return signing.SignerOptions{}, nil
 	}
 	if commonCmdData.SignKey == nil || *commonCmdData.SignKey == "" {
-		return signing.SignerOptions{}, fmt.Errorf("signing key is required")
+		return signing.SignerOptions{}, fmt.Errorf("signing key is required (the private signing key must be specified with --sign-key option)")
 	}
 	if commonCmdData.SignCert == nil || *commonCmdData.SignCert == "" {
-		return signing.SignerOptions{}, fmt.Errorf("signing certificate is required")
+		return signing.SignerOptions{}, fmt.Errorf("signing certificate is required (the public signing certificate must be specified with --sign-cert option)")
 	}
 	return signing.SignerOptions{
 		KeyRef:   lo.FromPtr(commonCmdData.SignKey),
