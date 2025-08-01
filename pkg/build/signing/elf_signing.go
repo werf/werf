@@ -36,11 +36,17 @@ const (
 )
 
 type ELFSigningOptions struct {
-	Enabled                  bool
+	InHouseEnabled bool
+	BsignEnabled   bool
+
 	PGPPrivateKeyFingerprint string
 	PGPPrivateKeyPassphrase  string
 
 	signer *Signer
+}
+
+func (o ELFSigningOptions) Enabled() bool {
+	return o.InHouseEnabled || o.BsignEnabled
 }
 
 func (o ELFSigningOptions) Signer() *Signer {
@@ -103,7 +109,13 @@ func isELFFileStream(reader io.Reader) (bool, error) {
 }
 
 func signELFFile(ctx context.Context, path string, elfSigningOptions ELFSigningOptions) error {
-	if err := logboek.Context(ctx).Info().LogProcessInline("bsign").DoError(func() error {
+	if elfSigningOptions.InHouseEnabled {
+		if err := inhouse.Sign(ctx, elfSigningOptions.Signer().SignerVerifier(), path); err != nil {
+			return fmt.Errorf("inhouse sign %q: %w", path, err)
+		}
+	}
+
+	if elfSigningOptions.BsignEnabled {
 		var cmdExtraEnv []string
 		pgOptionsString := fmt.Sprintf("--batch --default-key=%s", elfSigningOptions.PGPPrivateKeyFingerprint)
 		if elfSigningOptions.PGPPrivateKeyPassphrase != "" {
@@ -115,18 +127,8 @@ func signELFFile(ctx context.Context, path string, elfSigningOptions ELFSigningO
 		cmd := exec.CommandContextCancellation(ctx, "bsign", "-N", "-s", "--pgoptions="+pgOptionsString, path)
 		cmd.Env = append(os.Environ(), cmdExtraEnv...)
 		if err := cmd.Run(); err != nil {
-			return err
+			return fmt.Errorf("bsign sign %q: %w", path, err)
 		}
-
-		return nil
-	}); err != nil {
-		return err
-	}
-
-	if err := logboek.Context(ctx).Info().LogProcessInline("inhouse").DoError(func() error {
-		return inhouse.Sign(ctx, elfSigningOptions.Signer().SignerVerifier(), path)
-	}); err != nil {
-		return err
 	}
 
 	return nil

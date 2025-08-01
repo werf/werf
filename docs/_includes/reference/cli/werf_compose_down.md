@@ -88,6 +88,10 @@ werf compose down [IMAGE_NAME...] [options] [--docker-compose-options="OPTIONS"]
             Use specified path to the local backend (Docker or Buildah) storage to check backend    
             storage volume usage while performing garbage collection of local backend images        
             (detect local backend storage path by default or use $WERF_BACKEND_STORAGE_PATH)
+      --bsign-elf-files=false
+            Enable ELF files signing with bsign (default $WERF_BSIGN_ELF_FILES).
+            When enabled, the private elf key must be specified with --elf-pgp-private-key-base64   
+            or --elf-pgp-private-key-fingerprint option
       --cache-repo=[]
             Specify one or multiple cache repos with images that will be used as a cache. Cache     
             will be populated when pushing newly built images into the primary repo and when        
@@ -257,11 +261,8 @@ werf compose down [IMAGE_NAME...] [options] [--docker-compose-options="OPTIONS"]
             $WERF_SIGN_CHAIN)
       --sign-elf-files=false
             Enable ELF files signing (default $WERF_SIGN_ELF_FILES).
-            When enabled,
-            the private elf key must be specified with --elf-pgp-private-key-base64 or              
-            --elf-pgp-private-key-fingerprint options and
-            the private signing key must be specified with --sign-key option and
-            the certificate must be specified with --sign-cert option
+            When enabled, the private signing key must be specified with --sign-key option and the  
+            certificate must be specified with --sign-cert option
       --sign-key=""
             The private signing key as path to PEM file, base64-encoded PEM or hashivault://[KEY]   
             (default $WERF_SIGN_KEY)

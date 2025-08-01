@@ -1114,7 +1114,7 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 	stageImage.Image.SetName(newStageImageName)
 	phase.Conveyor.SetStageImage(stageImage)
 
-	if phase.ELFSigningOptions.Enabled {
+	if phase.ELFSigningOptions.Enabled() {
 		if err := logboek.Context(ctx).Default().LogProcess("Signing ELF files").DoError(func() error {
 			return stageImage.Image.Mutate(ctx, func(builtID string) (string, error) {
 				newID := "werf.signing." + uuid.NewString()
@@ -1220,13 +1220,18 @@ func calculateDigest(ctx context.Context, stageName, stageDependencies string, p
 		"StageDependencies",
 	)
 
-	if opts.ELFSigningOptions.Enabled {
-		checksumArgs = append(checksumArgs, opts.ELFSigningOptions.PGPPrivateKeyFingerprint)
-		checksumArgsNames = append(checksumArgsNames, "ELF_SIGNING_PGP_KEY_FINGERPRINT")
-		checksumArgs = append(checksumArgs, opts.ManifestSigningOptions.Signer().Cert())
-		checksumArgsNames = append(checksumArgsNames, "MANIFEST_SIGNING_CERTIFICATE")
-		checksumArgs = append(checksumArgs, opts.ManifestSigningOptions.Signer().Chain())
-		checksumArgsNames = append(checksumArgsNames, "SIGNING_CERTIFICATE_CHAIN")
+	if opts.ELFSigningOptions.Enabled() {
+		if opts.ELFSigningOptions.BsignEnabled {
+			checksumArgs = append(checksumArgs, opts.ELFSigningOptions.PGPPrivateKeyFingerprint)
+			checksumArgsNames = append(checksumArgsNames, "ELF_SIGNING_PGP_KEY_FINGERPRINT")
+		}
+
+		if opts.ELFSigningOptions.InHouseEnabled {
+			checksumArgs = append(checksumArgs, opts.ManifestSigningOptions.Signer().Cert())
+			checksumArgsNames = append(checksumArgsNames, "MANIFEST_SIGNING_CERTIFICATE")
+			checksumArgs = append(checksumArgs, opts.ManifestSigningOptions.Signer().Chain())
+			checksumArgsNames = append(checksumArgsNames, "SIGNING_CERTIFICATE_CHAIN")
+		}
 	}
 
 	if prevNonEmptyStage != nil {

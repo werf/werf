@@ -190,58 +190,70 @@ func getManifestSigningOptions(commonCmdData *CmdData, signer *signing.Signer) (
 func getELFSigningOptions(commonCmdData *CmdData, signer *signing.Signer) (signing.ELFSigningOptions, error) {
 	options := signing.NewELFSigningOptions(signer)
 
-	if !*commonCmdData.SignELFFiles {
-		return options, nil
-	}
-	options.Enabled = true
-
-	if *commonCmdData.ELFPGPPrivateKeyPassphrase != "" {
-		options.PGPPrivateKeyPassphrase = *commonCmdData.ELFPGPPrivateKeyPassphrase
-	}
-
-	if *commonCmdData.ELFPGPPrivateKeyBase64 != "" && *commonCmdData.ELFPGPPrivateKeyFingerprint != "" {
-		return options, fmt.Errorf("both --elf-pgp-private-key-base64 and --elf-pgp-private-key-fingerprint params are specified, only one of them should be specified")
-	} else if *commonCmdData.ELFPGPPrivateKeyBase64 == "" && *commonCmdData.ELFPGPPrivateKeyFingerprint == "" {
-		return options, fmt.Errorf("either --elf-pgp-private-key-base64 or --elf-pgp-private-key-fingerprint param is required")
-	}
-
-	if *commonCmdData.ELFPGPPrivateKeyFingerprint != "" {
-		options.PGPPrivateKeyFingerprint = *commonCmdData.ELFPGPPrivateKeyFingerprint
+	if !*commonCmdData.SignELFFiles && !*commonCmdData.BSignELFFiles {
 		return options, nil
 	}
 
-	// Get fingerprint and import key.
+	if *commonCmdData.SignELFFiles {
+		options.InHouseEnabled = true
+	}
+
+	// bsign
 	{
-		keyBytes, err := base64.StdEncoding.DecodeString(strings.TrimSpace(*commonCmdData.ELFPGPPrivateKeyBase64))
-		if err != nil {
-			return options, fmt.Errorf("unable to decode PGP key from base64: %w", err)
+		if !*commonCmdData.BSignELFFiles {
+			return options, nil
+		} else {
+			options.BsignEnabled = true
 		}
 
-		pgpKeyString := string(keyBytes)
-		entityList, err := openpgp.ReadArmoredKeyRing(bytes.NewReader(keyBytes))
-		if err != nil {
-			return options, fmt.Errorf("unable to read PGP key: %w", err)
+		if *commonCmdData.ELFPGPPrivateKeyPassphrase != "" {
+			options.PGPPrivateKeyPassphrase = *commonCmdData.ELFPGPPrivateKeyPassphrase
 		}
 
-		firstKey := entityList[0].PrimaryKey
-		fingerprint := firstKey.Fingerprint
-		options.PGPPrivateKeyFingerprint = fmt.Sprintf("%X", fingerprint)
+		if *commonCmdData.ELFPGPPrivateKeyBase64 != "" && *commonCmdData.ELFPGPPrivateKeyFingerprint != "" {
+			return options, fmt.Errorf("both --elf-pgp-private-key-base64 and --elf-pgp-private-key-fingerprint params are specified, only one of them should be specified")
+		} else if *commonCmdData.ELFPGPPrivateKeyBase64 == "" && *commonCmdData.ELFPGPPrivateKeyFingerprint == "" {
+			return options, fmt.Errorf("either --elf-pgp-private-key-base64 or --elf-pgp-private-key-fingerprint param is required")
+		}
 
-		// Import PGP key.
+		if *commonCmdData.ELFPGPPrivateKeyFingerprint != "" {
+			options.PGPPrivateKeyFingerprint = *commonCmdData.ELFPGPPrivateKeyFingerprint
+			return options, nil
+		}
+
+		// Get fingerprint and import key.
 		{
-			ctx := context.Background()
-			cmd := exec.CommandContextCancellation(ctx, "gpg", "--import")
-			cmd.Stdin = bytes.NewBufferString(pgpKeyString)
-
-			if options.PGPPrivateKeyPassphrase != "" {
-				cmd.Args = append(cmd.Args, "--batch")
-				cmd.Args = append(cmd.Args, "--passphrase=$WERF_SERVICE_ELF_PGP_PRIVATE_KEY_PASSPHRASE")
-				cmd.Env = append(cmd.Env, fmt.Sprintf("WERF_SERVICE_ELF_PGP_PRIVATE_KEY_PASSPHRASE=%s", options.PGPPrivateKeyPassphrase))
+			keyBytes, err := base64.StdEncoding.DecodeString(strings.TrimSpace(*commonCmdData.ELFPGPPrivateKeyBase64))
+			if err != nil {
+				return options, fmt.Errorf("unable to decode PGP key from base64: %w", err)
 			}
 
-			err := cmd.Run()
+			pgpKeyString := string(keyBytes)
+			entityList, err := openpgp.ReadArmoredKeyRing(bytes.NewReader(keyBytes))
 			if err != nil {
-				return options, fmt.Errorf("unable to import PGP key: %w", err)
+				return options, fmt.Errorf("unable to read PGP key: %w", err)
+			}
+
+			firstKey := entityList[0].PrimaryKey
+			fingerprint := firstKey.Fingerprint
+			options.PGPPrivateKeyFingerprint = fmt.Sprintf("%X", fingerprint)
+
+			// Import PGP key.
+			{
+				ctx := context.Background()
+				cmd := exec.CommandContextCancellation(ctx, "gpg", "--import")
+				cmd.Stdin = bytes.NewBufferString(pgpKeyString)
+
+				if options.PGPPrivateKeyPassphrase != "" {
+					cmd.Args = append(cmd.Args, "--batch")
+					cmd.Args = append(cmd.Args, "--passphrase=$WERF_SERVICE_ELF_PGP_PRIVATE_KEY_PASSPHRASE")
+					cmd.Env = append(cmd.Env, fmt.Sprintf("WERF_SERVICE_ELF_PGP_PRIVATE_KEY_PASSPHRASE=%s", options.PGPPrivateKeyPassphrase))
+				}
+
+				err := cmd.Run()
+				if err != nil {
+					return options, fmt.Errorf("unable to import PGP key: %w", err)
+				}
 			}
 		}
 	}
