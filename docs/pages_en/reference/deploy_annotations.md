@@ -19,6 +19,7 @@ This article contains description of annotations which control werf resource ope
  - [`werf.io/no-activity-timeout`](#no-activity-timeout) — change inactivity period after which the resource will be marked as failed.
  - [`werf.io/log-regex`](#log-regex) — specifies a template for werf to show only those log lines of the resource that fit the specified regex template.
  - [`werf.io/log-regex-for-CONTAINER_NAME`](#log-regex-for-container) — specifies a template for werf to show only those log lines of the resource container that fit the specified regex template.
+ - [`werf.io/log-regex-skip`](#log-regex-skip) — specifies a template for werf to skip log lines of the resource that match the specified regex template.
  - [`werf.io/skip-logs`](#skip-logs) — completely disable logs printing for the resource.
  - [`werf.io/skip-logs-for-containers`](#skip-logs-for-containers) — disable logs of specified containers of the resource.
  - [`werf.io/show-logs-only-for-containers`](#show-logs-only-for-containers) — enable logging only for specified containers of the resource.
@@ -165,6 +166,12 @@ Defines a [Re2 regex](https://github.com/google/re2/wiki/Syntax) template that a
 `"werf.io/log-regex-for-CONTAINER_NAME": RE2_REGEX`
 
 Defines a [Re2 regex](https://github.com/google/re2/wiki/Syntax) template that applies to logs of `CONTAINER_NAME` containers in all Pods owned by a resource with this annotation. werf would show only those log lines that fit the specified regex template. By default, werf shows all log lines.
+
+## Log regex skip
+
+`"werf.io/log-regex-skip": RE2_REGEX`
+
+Defines a [Re2 regex](https://github.com/google/re2/wiki/Syntax) template that applies to all logs of all containers of all Pods owned by a resource with this annotation. werf would skip log lines that match the specified regex template. By default, werf shows all log lines.
 
 ## Skip logs
 

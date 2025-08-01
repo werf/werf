@@ -18,6 +18,7 @@ toc: false
  - [`werf.io/no-activity-timeout`](#no-activity-timeout) — переопределить период неактивности, по истечении которого ресурс перейдет в состояние ошибки.
  - [`werf.io/log-regex`](#log-regex) — показывать в логах только те строки вывода ресурса, которые подходят под указанный шаблон.
  - [`werf.io/log-regex-for-CONTAINER_NAME`](#log-regex-for-container) — показывать в логах только те строки вывода для указанного контейнера, которые подходят под указанный шаблон.
+ - [`werf.io/log-regex-skip`](#log-regex-skip) — не показывать строки логов, которые подходят под указанный шаблон.
  - [`werf.io/skip-logs`](#skip-logs) — выключить логирование вывода для ресурса.
  - [`werf.io/skip-logs-for-containers`](#skip-logs-for-containers) — выключить логирование вывода для указанного контейнера.
  - [`werf.io/show-logs-only-for-containers`](#show-logs-only-for-containers) — включить логирование вывода только для указанных контейнеров ресурса.
@@ -158,6 +159,12 @@ readiness-пробы указано `failureThreshold: 1`, тогда перва
 `"werf.io/log-regex-for-CONTAINER_NAME": RE2_REGEX`
 
 Определяет [Re2 regex](https://github.com/google/re2/wiki/Syntax) шаблон, применяемый к логам контейнера с именем `CONTAINER_NAME` всех подов с данной аннотацией. werf будет выводить только те строки лога, которые удовлетворяют regex-шаблону. По умолчанию werf выводит все строки лога.
+
+## Log regex skip
+
+`"werf.io/log-regex-skip": RE2_REGEX`
+
+Определяет [Re2 regex](https://github.com/google/re2/wiki/Syntax) шаблон, применяемый ко всем логам всех контейнеров всех подов ресурса с этой аннотацией. werf не будет выводить те строки лога, которые удовлетворяют regex-шаблону. По умолчанию werf выводит все строки лога.
 
 ## Skip logs
 

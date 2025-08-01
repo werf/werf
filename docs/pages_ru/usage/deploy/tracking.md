@@ -122,6 +122,17 @@ metadata:
     werf.io/log-regex-for-backend: ".*ERROR.*"
 ```
 
+Аннотация `werf.io/log-regex-skip` позволяет скрыть строки логов, которые соответствуют регулярному выражению, например:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+  annotations:
+    werf.io/log-regex-skip: ".*DEBUG.*"
+```
+
 ## Отображение Events ресурсов (только в werf)
 
 Благодаря библиотеке [kubedog](https://github.com/werf/kubedog) werf может отображать Events отслеживаемых ресурсов, если ресурс имеет аннотацию `werf.io/show-service-messages: "true"`, например:
