@@ -1114,7 +1114,7 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 	stageImage.Image.SetName(newStageImageName)
 	phase.Conveyor.SetStageImage(stageImage)
 
-	if phase.ELFSigningOptions.Enabled() {
+	if phase.ELFSigningOptions.Enabled() && img.IsFinal && !stg.IsMutable() {
 		if err := logboek.Context(ctx).Default().LogProcess("Signing ELF files").DoError(func() error {
 			return stageImage.Image.Mutate(ctx, func(builtID string) (string, error) {
 				newID := "werf.signing." + uuid.NewString()
