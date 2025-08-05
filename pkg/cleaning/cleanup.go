@@ -1074,6 +1074,10 @@ func (m *cleanupManager) protectRelativeStageDescSetByStageDesc(targetStageDesc 
 						}
 
 						for _, sourceStageID := range sourceStageIDs {
+							if strings.HasPrefix(sourceStageID, image.WerfImportSourceExternalImagePrefix) {
+								// Skip external image import sources.
+								continue
+							}
 							sourceStageDesc := m.stageManager.GetStageDescByStageID(sourceStageID)
 							if sourceStageDesc != nil {
 								currentStageDescSet.Add(sourceStageDesc)

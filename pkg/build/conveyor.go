@@ -233,7 +233,7 @@ func (c *Conveyor) GetLocalGitRepoVirtualMergeOptions() stage.VirtualMergeOption
 	return c.ConveyorOptions.LocalGitRepoVirtualMergeOptions
 }
 
-func (c *Conveyor) GetImportServer(ctx context.Context, targetPlatform, imageName, stageName string) (import_server.ImportServer, error) {
+func (c *Conveyor) GetImportServer(ctx context.Context, targetPlatform, imageName, stageName string, fromExternalImage bool) (import_server.ImportServer, error) {
 	c.GetServiceRWMutex("ImportServer").Lock()
 	defer c.GetServiceRWMutex("ImportServer").Unlock()
 
@@ -255,23 +255,32 @@ func (c *Conveyor) GetImportServer(ctx context.Context, targetPlatform, imageNam
 
 	var stg stage.Interface
 
-	if stageName != "" {
-		stg = c.getImageStage(targetPlatform, imageName, stageName)
-	} else {
-		stg = c.GetImage(targetPlatform, imageName).GetLastNonEmptyStage()
-	}
+	if !fromExternalImage {
+		if stageName != "" {
+			stg = c.getImageStage(targetPlatform, imageName, stageName)
+		} else {
+			stg = c.GetImage(targetPlatform, imageName).GetLastNonEmptyStage()
+		}
 
-	if _, err := c.StorageManager.FetchStage(ctx, c.ContainerBackend, stg); err != nil {
-		return nil, fmt.Errorf("unable to fetch stage %s: %w", stg.GetStageImage().Image.Name(), err)
+		if _, err := c.StorageManager.FetchStage(ctx, c.ContainerBackend, stg); err != nil {
+			return nil, fmt.Errorf("unable to fetch stage %s: %w", stg.GetStageImage().Image.Name(), err)
+		}
 	}
 
 	if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Firing up import rsync server for image %s", imageName)).
 		DoError(func() error {
-			var tmpDir string
-			if stageName == "" {
-				tmpDir = filepath.Join(c.tmpDir, "import-server", imageName, targetPlatform)
+			var tmpDir, imageSubDir string
+
+			if fromExternalImage {
+				imageSubDir = strings.NewReplacer(":", "_", "/", "_").Replace(imageName)
 			} else {
-				tmpDir = filepath.Join(c.tmpDir, "import-server", fmt.Sprintf("%s-%s", imageName, stageName), targetPlatform)
+				imageSubDir = imageName
+			}
+
+			if stageName == "" {
+				tmpDir = filepath.Join(c.tmpDir, "import-server", imageSubDir, targetPlatform)
+			} else {
+				tmpDir = filepath.Join(c.tmpDir, "import-server", fmt.Sprintf("%s-%s", imageSubDir, stageName), targetPlatform)
 			}
 
 			if err := os.MkdirAll(tmpDir, os.ModePerm); err != nil {
@@ -279,10 +288,14 @@ func (c *Conveyor) GetImportServer(ctx context.Context, targetPlatform, imageNam
 			}
 
 			var dockerImageName string
-			if stageName == "" {
-				dockerImageName = c.GetImageNameForLastImageStage(targetPlatform, imageName)
+			if fromExternalImage {
+				dockerImageName = imageName
 			} else {
-				dockerImageName = c.GetImageNameForImageStage(targetPlatform, imageName, stageName)
+				if stageName == "" {
+					dockerImageName = c.GetImageNameForLastImageStage(targetPlatform, imageName)
+				} else {
+					dockerImageName = c.GetImageNameForImageStage(targetPlatform, imageName, stageName)
+				}
 			}
 
 			var err error

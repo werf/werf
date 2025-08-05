@@ -1,0 +1,13 @@
+project: none
+configVersion: 1
+---
+image: test-import
+from: alpine
+shell:
+  install:
+    - mkdir -p /etc/test
+import:
+  - image: alpine:3.18
+    add: /etc/os-release
+    to: /etc/test
+    after: install
