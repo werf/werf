@@ -84,7 +84,7 @@ func (p *WorkTreePool) Acquire(ctx context.Context) (int, string, error) {
 		}
 		return slot, dir, nil
 	case <-ctx.Done():
-		return 0, "", ctx.Err()
+		return 0, "", context.Cause(ctx)
 	}
 }
 

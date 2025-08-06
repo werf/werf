@@ -2,14 +2,12 @@ package docker_registry
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os/exec"
 	"strings"
 
 	"github.com/google/go-containerregistry/pkg/name"
 
-	"github.com/werf/common-go/pkg/graceful"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/image"
 	werfExec "github.com/werf/werf/v2/pkg/werf/exec"
@@ -129,9 +127,7 @@ func (r *azureCr) azRun(ctx context.Context, args ...string) error {
 	logboek.Context(ctx).Debug().LogLn("output:", string(output))
 
 	if err != nil {
-		if errors.Is(ctx.Err(), context.Canceled) {
-			graceful.Terminate(ctx, err, werfExec.ExitCode(err))
-		}
+		werfExec.TerminateIfCanceled(ctx, context.Cause(ctx), werfExec.ExitCode(err))
 
 		return fmt.Errorf(
 			"command: %s\n%s\nerror: %w", command,
