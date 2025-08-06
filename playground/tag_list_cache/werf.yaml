@@ -1,0 +1,26 @@
+project: tag-list-cache
+configVersion: 1
+---
+image: distroless-artifact
+from: alpine:3.20.3
+final: false
+shell:
+  beforeInstall:
+  - apk add --no-cache ca-certificates tzdata
+  install:
+  - mkdir -p /relocate/bin /relocate/sbin /relocate/etc /relocate/etc/ssl /relocate/usr/bin /relocate/usr/sbin /relocate/usr/share
+  - cp -pr /tmp /relocate
+  - cp -pr /etc/passwd /etc/group /etc/hostname /etc/hosts /etc/shadow /etc/protocols /etc/services /etc/nsswitch.conf /relocate/etc
+  - cp -pr /usr/share/ca-certificates /relocate/usr/share
+  - cp -pr /usr/share/zoneinfo /relocate/usr/share
+  - cp -pr etc/ssl/cert.pem /relocate/etc/ssl
+  - cp -pr /etc/ssl/certs /relocate/etc/ssl
+---
+image: distroless
+from: registry.werf.io/werf/scratch
+import:
+  - image: distroless-artifact
+    add: /relocate
+    to: /
+    before: setup
+---

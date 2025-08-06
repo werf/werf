@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"gopkg.in/yaml.v2"
@@ -56,6 +57,7 @@ type StorageOptions struct {
 
 type StorageManagerInterface interface {
 	InitCache(ctx context.Context) error
+	DisableLocalManifestCache()
 
 	GetStagesStorage() storage.PrimaryStagesStorage
 	GetFinalStagesStorage() storage.StagesStorage
@@ -104,11 +106,12 @@ type CopyStageIntoStorageOptions struct {
 	LogDetailedName      string
 }
 
-func RetryOnUnexpectedStagesStorageState(_ context.Context, _ StorageManagerInterface, f func() error) error {
+func RetryOnUnexpectedStagesStorageState(_ context.Context, sm StorageManagerInterface, f func() error) error {
 Retry:
 	err := f()
 
 	if IsErrUnexpectedStagesStorageState(err) {
+		sm.DisableLocalManifestCache()
 		goto Retry
 	}
 
@@ -165,10 +168,10 @@ func (stages *StagesList) AddStageID(stageID image.StageID) {
 }
 
 type StorageManager struct {
-	parallel           bool
-	parallelTasksLimit int
-
-	ProjectName string
+	parallel                  bool
+	parallelTasksLimit        int
+	disableLocalManifestCache atomic.Bool
+	ProjectName               string
 
 	StorageLockManager lock_manager.Interface
 
@@ -182,6 +185,10 @@ type StorageManager struct {
 
 	FinalStagesListCacheMux sync.Mutex
 	FinalStagesListCache    *StagesList
+}
+
+func (m *StorageManager) DisableLocalManifestCache() {
+	m.disableLocalManifestCache.Store(true)
 }
 
 func (m *StorageManager) GetStagesStorage() storage.PrimaryStagesStorage {
@@ -798,6 +805,10 @@ func (m *StorageManager) CopySuitableStageDescByDigest(ctx context.Context, stag
 }
 
 func (m *StorageManager) getWithLocalManifestCacheOption() bool {
+	if m.disableLocalManifestCache.Load() {
+		return false
+	}
+
 	return m.StagesStorage.Address() != storage.LocalStorageAddress
 }
 
