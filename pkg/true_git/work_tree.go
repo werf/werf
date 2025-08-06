@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -19,6 +20,11 @@ import (
 )
 
 var ErrInvalidDotGit = errors.New("invalid file format: expected gitdir record")
+
+const (
+	workTreeCacheLockDefaultTimeout = 600 * time.Second
+	workTreeCacheLockTimeoutEnvVar  = "WERF_WITH_WORK_TREE_CACHE_LOCK_TIMEOUT"
+)
 
 type WithWorkTreeOptions struct {
 	HasSubmodules bool
@@ -49,7 +55,18 @@ func WithWorkTree(ctx context.Context, gitDir, workTreeCacheDir, commit string, 
 
 func withWorkTreeCacheLock(ctx context.Context, workTreeCacheDir string, f func() error) error {
 	lockName := fmt.Sprintf("git_work_tree_cache %s", workTreeCacheDir)
-	return werf.HostLocker().WithLock(ctx, lockName, lockgate.AcquireOptions{Timeout: 600 * time.Second}, f)
+	return werf.HostLocker().WithLock(ctx, lockName, lockgate.AcquireOptions{Timeout: getWorkTreeCacheLockTimeout()}, f)
+}
+
+func getWorkTreeCacheLockTimeout() time.Duration {
+	custom := os.Getenv(workTreeCacheLockTimeoutEnvVar)
+	if custom != "" {
+		return workTreeCacheLockDefaultTimeout
+	}
+	if customInt, err := strconv.Atoi(custom); err == nil {
+		return time.Duration(customInt) * time.Second
+	}
+	return workTreeCacheLockDefaultTimeout
 }
 
 func prepareWorkTree(ctx context.Context, repoDir, workTreeCacheDir, commit string, withSubmodules bool) (string, error) {
@@ -266,12 +283,17 @@ func switchWorkTree(ctx context.Context, repoDir, workTreeDir, commit string, wi
 	}
 
 	if withSubmodules {
-		if err = syncSubmodules(ctx, repoDir, workTreeDir); err != nil {
-			return fmt.Errorf("cannot sync submodules: %w", err)
-		}
-
-		if err = updateSubmodules(ctx, repoDir, workTreeDir); err != nil {
-			return fmt.Errorf("cannot update submodules: %w", err)
+		err := withWorkTreeCacheLock(ctx, repoDir, func() error {
+			if err := syncSubmodules(ctx, repoDir, workTreeDir); err != nil {
+				return fmt.Errorf("cannot sync submodules: %w", err)
+			}
+			if err = updateSubmodules(ctx, repoDir, workTreeDir); err != nil {
+				return fmt.Errorf("cannot update submodules: %w", err)
+			}
+			return nil
+		})
+		if err != nil {
+			return err
 		}
 
 		submResetArgs := []string{
