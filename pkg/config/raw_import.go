@@ -6,6 +6,7 @@ import (
 
 type rawImport struct {
 	ImageName    string `yaml:"image,omitempty"`
+	From         string `yaml:"from,omitempty"`
 	ArtifactName string `yaml:"artifact,omitempty"`
 	Before       string `yaml:"before,omitempty"`
 	After        string `yaml:"after,omitempty"`
@@ -60,9 +61,17 @@ func (c *rawImport) toDirective() (imp *Import, err error) {
 		imp.ArtifactExport = artifactExport
 	}
 
-	imp.ImageName = c.ImageName
+	if !oneOrNone([]bool{c.ImageName != "", c.From != ""}) {
+		return nil, newDetailedConfigError("specify only `image: NAME` or `from: NAME` for import!", c, c.doc())
+	}
 
-	if hasTag(c.ImageName) {
+	if c.From != "" {
+		imp.ImageName = c.From
+	} else {
+		imp.ImageName = c.ImageName // to deprecate
+	}
+
+	if hasTagOrDigest(imp.ImageName) {
 		imp.ExternalImage = true
 	}
 
@@ -88,12 +97,14 @@ func (c *rawImport) validateDirective(imp *Import) (err error) {
 	return nil
 }
 
-func hasTag(image string) bool {
+func hasTagOrDigest(image string) bool {
 	ref, err := reference.ParseNormalizedNamed(image)
 	if err != nil {
 		return false
 	}
 
 	_, isTagged := ref.(reference.Tagged)
-	return isTagged
+	_, isDigested := ref.(reference.Digested)
+
+	return isTagged || isDigested
 }

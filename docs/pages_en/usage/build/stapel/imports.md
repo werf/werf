@@ -56,6 +56,7 @@ werf offers the same approach.
 Importing _resources_ from the _images_ must be described in the `import` directive in the _destination image_ in the _image_ config section. `import` is an array of records, where each record must contain the following:
 
 - `image: <image name>`: _source image_; the name of the image copy files from.
+- `from: <image name>`: _source image_; the name of the image copy files from. Both imports from images of the current project and from external images in the format `image_name:tag` or `image_name@digest` are supported.
 - `stage: <stage name>`: _source image stage_; the stage of the _source_image_ to copy files from.
 - `add: <absolute path>`: _source path_; the absolute path to the file or directory in the _source image_ to copy from.
 - `to: <absolute path>`: _destination path_; the absolute path in the _destination image_. If absent, the _destination path_ defaults to the  _source path_ (as specified by the `add` directive).
@@ -65,13 +66,14 @@ An example of the `import` directive:
 
 ```yaml
 import:
-- image: application-assets
-  add: /app/public/assets
-  to: /var/www/site/assets
-  after: install
-- image: frontend
-  add: /app/assets
-  after: setup
+  - from: application-assets
+    add: /app/public/assets
+    to: /var/www/site/assets
+    after: install
+  - from: node:20-alpine
+    add: /usr/share/nginx/html
+    to: /var/www/site/prebuilt
+    after: setup
 ```
 
 As with the _git mappings_ configuration, include and exclude file and directory masks are supported (`includePaths: []` and `excludePaths: []`, respectively). Masks must be specified relative to the source path (as in the `add` parameter).
