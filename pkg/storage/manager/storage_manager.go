@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"gopkg.in/yaml.v2"
@@ -168,9 +167,10 @@ func (stages *StagesList) AddStageID(stageID image.StageID) {
 }
 
 type StorageManager struct {
+	Mux                       sync.Mutex
 	parallel                  bool
 	parallelTasksLimit        int
-	disableLocalManifestCache atomic.Bool
+	disableLocalManifestCache bool
 	ProjectName               string
 
 	StorageLockManager lock_manager.Interface
@@ -188,7 +188,9 @@ type StorageManager struct {
 }
 
 func (m *StorageManager) DisableLocalManifestCache() {
-	m.disableLocalManifestCache.Store(true)
+	m.Mux.Lock()
+	defer m.Mux.Unlock()
+	m.disableLocalManifestCache = true
 }
 
 func (m *StorageManager) GetStagesStorage() storage.PrimaryStagesStorage {
@@ -805,7 +807,9 @@ func (m *StorageManager) CopySuitableStageDescByDigest(ctx context.Context, stag
 }
 
 func (m *StorageManager) getWithLocalManifestCacheOption() bool {
-	if m.disableLocalManifestCache.Load() {
+	m.Mux.Lock()
+	defer m.Mux.Unlock()
+	if m.disableLocalManifestCache {
 		return false
 	}
 
