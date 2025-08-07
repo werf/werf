@@ -20,12 +20,22 @@ The first thing we recommend is to check the existing [issues](https://github.co
    - [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) 2.18.0+
    - [Go](https://golang.org/doc/install) 1.11.4+
    - [Docker](https://docs.docker.com/get-docker/)
-   - [go-task](https://taskfile.dev/installation/) (build tool to run common workflows)
    - [ginkgo](https://onsi.github.io/ginkgo/#installing-ginkgo) (testing framework required to run tests)
+   - [go-task](https://taskfile.dev/installation/) (build tool to run common workflows)
+     - Before using Taskfile, set the environment variable:  
+         ```shell
+         export TASK_X_REMOTE_TASKFILES=1
+         ```
+         (Add this to your shell configuration file, e.g., `.bashrc` or `.zshrc`, for persistence.)
+     - To skip confirmation prompts when running tasks, use the `--yes` flag:  
+         ```shell
+         task --yes taskname
+         ```
+         Useful for automation or when you're sure the task should run without manual confirmation.
+         
+      To install dependencies, use the following task:
 
-   To install dependencies, use the following task:
-
-   - `task deps:install`
+   - `task deps:install:all`
 
    Additionally, to build the `werf` binary, you need to install the `libbtrfs-dev` package.
 
