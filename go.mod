@@ -18,7 +18,7 @@ require (
 	github.com/containers/image/v5 v5.30.0
 	github.com/containers/storage v1.53.0
 	github.com/deckarep/golang-set/v2 v2.6.0
-	github.com/deckhouse/delivery-kit-sdk v0.0.0-20250731153813-1001a117d1e2
+	github.com/deckhouse/delivery-kit-sdk v0.0.0-20250807231146-13018bb9b6bc
 	github.com/deislabs/oras v1.1.0
 	github.com/djherbis/buffer v1.2.0
 	github.com/djherbis/nio/v3 v3.0.1
@@ -127,7 +127,6 @@ require (
 	github.com/radovskyb/watcher v1.0.7 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
 	github.com/sajari/fuzzy v1.0.0 // indirect
-	github.com/sigstore/sigstore/pkg/signature/kms/hashivault v1.8.2 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	github.com/zeebo/xxh3 v1.0.2 // indirect
 	golang.org/x/mod v0.22.0 // indirect
