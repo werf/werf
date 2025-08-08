@@ -167,7 +167,7 @@ func (stages *StagesList) AddStageID(stageID image.StageID) {
 }
 
 type StorageManager struct {
-	Mux                       sync.Mutex
+	mux                       sync.Mutex
 	parallel                  bool
 	parallelTasksLimit        int
 	disableLocalManifestCache bool
@@ -188,8 +188,8 @@ type StorageManager struct {
 }
 
 func (m *StorageManager) DisableLocalManifestCache() {
-	m.Mux.Lock()
-	defer m.Mux.Unlock()
+	m.mux.Lock()
+	defer m.mux.Unlock()
 	m.disableLocalManifestCache = true
 }
 
@@ -807,8 +807,8 @@ func (m *StorageManager) CopySuitableStageDescByDigest(ctx context.Context, stag
 }
 
 func (m *StorageManager) getWithLocalManifestCacheOption() bool {
-	m.Mux.Lock()
-	defer m.Mux.Unlock()
+	m.mux.Lock()
+	defer m.mux.Unlock()
 	if m.disableLocalManifestCache {
 		return false
 	}
