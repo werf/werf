@@ -56,6 +56,7 @@ type StorageOptions struct {
 
 type StorageManagerInterface interface {
 	InitCache(ctx context.Context) error
+	DisableLocalManifestCache()
 
 	GetStagesStorage() storage.PrimaryStagesStorage
 	GetFinalStagesStorage() storage.StagesStorage
@@ -104,11 +105,12 @@ type CopyStageIntoStorageOptions struct {
 	LogDetailedName      string
 }
 
-func RetryOnUnexpectedStagesStorageState(_ context.Context, _ StorageManagerInterface, f func() error) error {
+func RetryOnUnexpectedStagesStorageState(_ context.Context, sm StorageManagerInterface, f func() error) error {
 Retry:
 	err := f()
 
 	if IsErrUnexpectedStagesStorageState(err) {
+		sm.DisableLocalManifestCache()
 		goto Retry
 	}
 
@@ -165,10 +167,11 @@ func (stages *StagesList) AddStageID(stageID image.StageID) {
 }
 
 type StorageManager struct {
-	parallel           bool
-	parallelTasksLimit int
-
-	ProjectName string
+	mux                       sync.Mutex
+	parallel                  bool
+	parallelTasksLimit        int
+	disableLocalManifestCache bool
+	ProjectName               string
 
 	StorageLockManager lock_manager.Interface
 
@@ -182,6 +185,12 @@ type StorageManager struct {
 
 	FinalStagesListCacheMux sync.Mutex
 	FinalStagesListCache    *StagesList
+}
+
+func (m *StorageManager) DisableLocalManifestCache() {
+	m.mux.Lock()
+	defer m.mux.Unlock()
+	m.disableLocalManifestCache = true
 }
 
 func (m *StorageManager) GetStagesStorage() storage.PrimaryStagesStorage {
@@ -798,6 +807,12 @@ func (m *StorageManager) CopySuitableStageDescByDigest(ctx context.Context, stag
 }
 
 func (m *StorageManager) getWithLocalManifestCacheOption() bool {
+	m.mux.Lock()
+	defer m.mux.Unlock()
+	if m.disableLocalManifestCache {
+		return false
+	}
+
 	return m.StagesStorage.Address() != storage.LocalStorageAddress
 }
 
