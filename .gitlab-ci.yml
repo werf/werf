@@ -18,6 +18,7 @@ default:
     - export GOROOT=/usr/local/go1.23/go
     - export KUBECONFIG=/tmp/werf.kubeconfig-${CI_PIPELINE_ID}
     - export WERF_TEST_BINARY_PATH=$CI_PROJECT_DIR/bin/werf
+    - export TASK_X_REMOTE_TASKFILES=1
   tags:
     - deckhouse
 
