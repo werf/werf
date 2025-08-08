@@ -4,4 +4,4 @@
   script:
     - |
       export WERF_TEST_K8S_DOCKER_REGISTRY="localhost:$(docker inspect kind-registry-${CI_PIPELINE_ID} --format '{{(index (index .NetworkSettings.Ports "5000/tcp") 0).HostPort}}')"
-      task -p test:integration $paths kubeVersion=${KUBE_VERSION} paths="integration/suites/cleanup_after_converge integration/suites/deploy integration/suites/helm/deploy_rollback" -- --keep-going
+      task --yes -p test:integration $paths kubeVersion=${KUBE_VERSION} paths="integration/suites/cleanup_after_converge integration/suites/deploy integration/suites/helm/deploy_rollback" -- --keep-going

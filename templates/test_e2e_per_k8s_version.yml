@@ -8,4 +8,4 @@
     - |
       export WERF_TEST_K8S_DOCKER_REGISTRY="localhost:$(docker inspect kind-registry-${CI_PIPELINE_ID} --format '{{(index (index .NetworkSettings.Ports "5000/tcp") 0).HostPort}}')"
       test -n ${PACKAGES} && paths=paths="$(echo ${PACKAGES} | tr , ' ')"
-      task -p test:e2e:${SCOPE} $paths kubeVersion=${KUBE_VERSION} -- --keep-going --skip-package "$EXCLUDE_PACKAGES"
+      task --yes -p test:e2e:${SCOPE} $paths kubeVersion=${KUBE_VERSION} -- --keep-going --skip-package "$EXCLUDE_PACKAGES"

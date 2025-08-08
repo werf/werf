@@ -3,4 +3,4 @@
     PACKAGES: ""
     EXCLUDE_PACKAGES: ""
   script:
-    - task -p test:integration paths="$(echo "$PACKAGES" | tr , ' ')" -- --keep-going --skip-package "$EXCLUDE_PACKAGES"
+    - task --yes -p test:integration paths="$(echo "$PACKAGES" | tr , ' ')" -- --keep-going --skip-package "$EXCLUDE_PACKAGES"
