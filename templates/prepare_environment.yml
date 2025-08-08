@@ -1,7 +1,7 @@
 .prepare_environment:
   script:
-    - task test:setup:environment
-    - task build
+    - task --yes test:setup:environment
+    - task --yes build
   artifacts:
     paths:
       - bin/werf

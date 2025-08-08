@@ -1,6 +1,6 @@
 .build:
   script:
-    - task build:dist:linux:amd64 version='$CI_COMMIT_TAG'
+    - task --yes build:dist:linux:amd64 version='$CI_COMMIT_TAG'
     - file dist/$CI_COMMIT_TAG/linux-amd64/bin/werf | grep -Eq "x86-64.*statically linked.*Linux"
   artifacts:
     paths:

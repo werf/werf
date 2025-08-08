@@ -4,4 +4,4 @@
     EXCLUDE_PACKAGES: ""
     WERF_TEST_K8S_DOCKER_REGISTRY_INSECURE: "false"
   script:
-    - task -p test:unit paths="$(echo "$PACKAGES" | tr , ' ')" -- --keep-going --skip-package "$EXCLUDE_PACKAGES"
+    - task --yes -p test:unit paths="$(echo "$PACKAGES" | tr , ' ')" -- --keep-going --skip-package "$EXCLUDE_PACKAGES"
