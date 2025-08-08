@@ -14,6 +14,7 @@ import (
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/docker"
+	"github.com/werf/werf/v2/pkg/image"
 	imagePkg "github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/stapel"
 	"github.com/werf/werf/v2/pkg/storage"
@@ -116,7 +117,7 @@ func (s *DependenciesStage) prepareImageWithLegacyStapelBuilder(ctx context.Cont
 	imageServiceCommitChangeOptions := stageImage.Builder.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions()
 	for _, elm := range s.imports {
 		sourceImageName := getSourceImageName(elm)
-		srv, err := c.GetImportServer(ctx, s.targetPlatform, sourceImageName, elm.Stage)
+		srv, err := c.GetImportServer(ctx, s.targetPlatform, sourceImageName, elm.Stage, elm.ExternalImage)
 		if err != nil {
 			return fmt.Errorf("unable to get import server for image %q: %w", sourceImageName, err)
 		}
@@ -185,12 +186,18 @@ func (s *DependenciesStage) prepareImageWithLegacyStapelBuilder(ctx context.Cont
 
 func (s *DependenciesStage) prepareImage(ctx context.Context, c Conveyor, cr container_backend.ContainerBackend, _, stageImage *StageImage) error {
 	for _, elm := range s.imports {
-		sourceImageConfigName := getSourceImageName(elm)
+
 		var sourceImageName string
-		if elm.Stage == "" {
-			sourceImageName = c.GetImageNameForLastImageStage(s.targetPlatform, sourceImageConfigName)
+
+		if elm.ExternalImage {
+			sourceImageName = elm.ImageName
 		} else {
-			sourceImageName = c.GetImageNameForImageStage(s.targetPlatform, sourceImageConfigName, elm.Stage)
+			sourceImageConfigName := getSourceImageName(elm)
+			if elm.Stage == "" {
+				sourceImageName = c.GetImageNameForLastImageStage(s.targetPlatform, sourceImageConfigName)
+			} else {
+				sourceImageName = c.GetImageNameForImageStage(s.targetPlatform, sourceImageConfigName, elm.Stage)
+			}
 		}
 
 		checksumLabelKey := imagePkg.WerfImportChecksumLabelPrefix + getImportID(elm)
@@ -485,6 +492,10 @@ func getImportSourceID(c Conveyor, targetPlatform string, importElm *config.Impo
 }
 
 func fetchSourceImageDockerImage(ctx context.Context, c Conveyor, targetPlatform string, importElm *config.Import) error {
+	if importElm.ExternalImage {
+		return nil
+	}
+
 	sourceImageName := getSourceImageName(importElm)
 	if importElm.Stage == "" {
 		return c.FetchLastNonEmptyImageStage(ctx, targetPlatform, sourceImageName)
@@ -494,6 +505,9 @@ func fetchSourceImageDockerImage(ctx context.Context, c Conveyor, targetPlatform
 }
 
 func getSourceImageDockerImageName(c Conveyor, targetPlatform string, importElm *config.Import) string {
+	if importElm.ExternalImage {
+		return importElm.ImageName
+	}
 	sourceImageName := getSourceImageName(importElm)
 
 	var sourceImageDockerImageName string
@@ -507,6 +521,10 @@ func getSourceImageDockerImageName(c Conveyor, targetPlatform string, importElm 
 }
 
 func getSourceStageID(c Conveyor, targetPlatform string, importElm *config.Import) string {
+	if importElm.ExternalImage {
+		return fmt.Sprintf("%s:%s", image.WerfImportSourceExternalImagePrefix, importElm.ImageName)
+	}
+
 	sourceImageName := getSourceImageName(importElm)
 
 	var sourceStageID string
@@ -520,6 +538,10 @@ func getSourceStageID(c Conveyor, targetPlatform string, importElm *config.Impor
 }
 
 func getSourceImageContentDigest(c Conveyor, targetPlatform string, importElm *config.Import) string {
+	if importElm.ExternalImage {
+		return fmt.Sprintf("%s:%s", image.WerfImportSourceExternalImagePrefix, importElm.ImageName)
+	}
+
 	sourceImageName := getSourceImageName(importElm)
 
 	var sourceImageContentDigest string

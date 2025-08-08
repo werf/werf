@@ -989,8 +989,13 @@ sections:
           - name: image
             value: "string"
             description:
-              en: "The image name from which you want to copy files"
-              ru: "Имя образа, из которого выполнять копирование файлов"
+              en: "The image name from which you want to copy files (DEPRECATED)"
+              ru: "Имя образа, из которого выполнять копирование файлов (DEPRECATED)"
+          - name: from
+            value: "string"
+            description:
+              en: "The image name, tag or digest from which you want to copy files"
+              ru: "Имя, тег или дайджест образа, из которого выполнять копирование файлов"
           - name: stage
             value: "string"
             description:
