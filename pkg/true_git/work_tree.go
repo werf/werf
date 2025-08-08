@@ -58,6 +58,11 @@ func withWorkTreeCacheLock(ctx context.Context, workTreeCacheDir string, f func(
 	return werf.HostLocker().WithLock(ctx, lockName, lockgate.AcquireOptions{Timeout: getWorkTreeCacheLockTimeout()}, f)
 }
 
+func withRepoDirLock(ctx context.Context, repoDir string, f func() error) error {
+	lockName := fmt.Sprintf("git_repo_dir %s", repoDir)
+	return werf.HostLocker().WithLock(ctx, lockName, lockgate.AcquireOptions{Timeout: 600 * time.Second}, f)
+}
+
 func getWorkTreeCacheLockTimeout() time.Duration {
 	custom := os.Getenv(workTreeCacheLockTimeoutEnvVar)
 	if custom != "" {
@@ -283,7 +288,7 @@ func switchWorkTree(ctx context.Context, repoDir, workTreeDir, commit string, wi
 	}
 
 	if withSubmodules {
-		err := withWorkTreeCacheLock(ctx, repoDir, func() error {
+		err := withRepoDirLock(ctx, repoDir, func() error {
 			if err := syncSubmodules(ctx, repoDir, workTreeDir); err != nil {
 				return fmt.Errorf("cannot sync submodules: %w", err)
 			}
