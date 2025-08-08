@@ -35,3 +35,13 @@ jobs:
           WERF_WITHOUT_KUBE: true
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           WERF_REPO_GITHUB_TOKEN: ${{ secrets.WERF_IN_IMAGE_CLEANUP_GHCR }}
+
+  notify:
+    if: always()
+    needs:
+      - cleanup
+    uses: werf/common-ci/.github/workflows/notification.yml@main
+    secrets:
+      loopNotificationGroup: ${{ secrets.LOOP_NOTIFICATION_GROUP }}
+      webhook: ${{ secrets.LOOP_NOTIFICATION_WEBHOOK }}
+      notificationChannel: ${{ secrets.LOOP_NOTIFICATION_CHANNEL }}
