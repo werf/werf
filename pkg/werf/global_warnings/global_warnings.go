@@ -10,7 +10,6 @@ import (
 
 	"github.com/Masterminds/semver"
 
-	"github.com/werf/common-go/pkg/graceful"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	werfExec "github.com/werf/werf/v2/pkg/werf/exec"
@@ -74,7 +73,7 @@ func IsMultiwerfUpToDate(ctx context.Context) (bool, error) {
 	var stdout bytes.Buffer
 	cmd.Stdout = &stdout
 	if err := cmd.Run(); err != nil {
-		graceful.Terminate(ctx, err, werfExec.ExitCode(err))
+		werfExec.TerminateIfCanceled(ctx, context.Cause(ctx), werfExec.ExitCode(err))
 		return false, fmt.Errorf("unable to get installed version of multiwerf: %w", err)
 	}
 

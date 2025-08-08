@@ -57,7 +57,7 @@ func FollowGitHead(ctx context.Context, cmdData *CmdData, taskFunc func(ctx cont
 	for {
 		if err := iterFunc(); err != nil {
 			if graceful.IsTerminating(ctx) {
-				return ctx.Err()
+				return context.Cause(ctx)
 			}
 
 			logboek.Context(ctx).Warn().LogLn(err)

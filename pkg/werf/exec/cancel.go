@@ -6,6 +6,8 @@ import (
 	"os/exec"
 	"syscall"
 	"time"
+
+	"github.com/werf/common-go/pkg/graceful"
 )
 
 // PrepareGracefulCancellation returns cmd which is ready for graceful cancellation.
@@ -25,6 +27,12 @@ func PrepareGracefulCancellation(cmd *exec.Cmd) *exec.Cmd {
 // CommandContextCancellation does exec.CommandContext() and PrepareGracefulCancellation.
 func CommandContextCancellation(ctx context.Context, name string, arg ...string) *exec.Cmd {
 	return PrepareGracefulCancellation(exec.CommandContext(ctx, name, arg...))
+}
+
+func TerminateIfCanceled(ctx context.Context, err error, exitCode int) {
+	if errors.Is(ctx.Err(), context.Canceled) || errors.Is(ctx.Err(), context.DeadlineExceeded) {
+		graceful.Terminate(ctx, err, exitCode)
+	}
 }
 
 // ExitCode derives exit code from cmd error.

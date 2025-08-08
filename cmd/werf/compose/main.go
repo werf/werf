@@ -537,7 +537,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		cmd.Env = append(os.Environ(), envArray...)
 
 		if err := cmd.Run(); err != nil {
-			graceful.Terminate(ctx, err, werfExec.ExitCode(err))
+			werfExec.TerminateIfCanceled(ctx, context.Cause(ctx), werfExec.ExitCode(err))
 			return fmt.Errorf("error running command %q: %s", cmd, err)
 		}
 	}
