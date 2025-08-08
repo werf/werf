@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.46.0](https://github.com/werf/werf/compare/v2.45.1...v2.46.0) (2025-08-08)
+
+
+### Features
+
+* **deploy:** add `werf.io/log-regex-skip` annotation ([aa327f3](https://github.com/werf/werf/commit/aa327f3099367f8e98870c5ee6b8a1cbfc396251))
+
+
+### Bug Fixes
+
+* **build:** fix error when syncing submodules in worktree pool ([#7023](https://github.com/werf/werf/issues/7023)) ([062e0e5](https://github.com/werf/werf/commit/062e0e59e87d55e64f8609bf8d974d2d7da3d414))
+
 ## [2.45.1](https://github.com/werf/werf/compare/v2.45.0...v2.45.1) (2025-07-31)
 
 
