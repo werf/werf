@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.47.0](https://github.com/werf/werf/compare/v2.46.0...v2.47.0) (2025-08-08)
+
+
+### Features
+
+* **deploy:** greatly decrease Kubernetes apiserver load ([e56ceed](https://github.com/werf/werf/commit/e56ceedc5d475b32d2efdca8f27b21672f217bb2))
+
 ## [2.46.0](https://github.com/werf/werf/compare/v2.45.1...v2.46.0) (2025-08-08)
 
 
