@@ -7,8 +7,17 @@ import (
 )
 
 type WerfConfig struct {
-	Meta   *Meta
-	images []ImageInterface
+	Meta        *Meta
+	images      []ImageInterface
+	imagesCache map[string]ImageInterface
+}
+
+func NewWerfConfig(meta *Meta, images []ImageInterface) *WerfConfig {
+	return &WerfConfig{
+		Meta:        meta,
+		images:      images,
+		imagesCache: make(map[string]ImageInterface),
+	}
 }
 
 func (c *WerfConfig) getSpecificImages(imagesToProcess ImagesToProcess) []ImageInterface {
@@ -47,8 +56,15 @@ func (c *WerfConfig) GetImageNameList(onlyFinal bool) []string {
 }
 
 func (c *WerfConfig) GetImage(imageName string) ImageInterface {
+	if c.imagesCache == nil {
+		c.imagesCache = make(map[string]ImageInterface)
+	}
+	if v, ok := c.imagesCache[imageName]; ok {
+		return v
+	}
 	for _, image := range c.Images(false) {
 		if image.GetName() == imageName {
+			c.imagesCache[imageName] = image
 			return image
 		}
 	}
@@ -163,7 +179,8 @@ func (c *WerfConfig) getImageRelativesInOrder(images []ImageInterface) map[Image
 		stack = stack[1:]
 
 		var relatives []ImageInterface
-		for _, imageName := range current.dependsOn().relatedImageNameList() {
+		depends := c.updateDependencies(current)
+		for _, imageName := range depends.relatedImageNameList() {
 			relatives = append(relatives, c.GetImage(imageName))
 		}
 		imageRelatives[current] = relatives
@@ -212,9 +229,29 @@ func (c *WerfConfig) GetImageGraphList(imagesToProcess ImagesToProcess) ([]image
 	for _, image := range images {
 		graph := imageGraph{}
 		graph.ImageName = image.GetName()
-		graph.DependsOn = image.dependsOn()
+		graph.DependsOn = c.updateDependencies(image)
 		graphList = append(graphList, graph)
 	}
 
 	return graphList, nil
+}
+
+func (c *WerfConfig) updateDependencies(image ImageInterface) DependsOn {
+	var d DependsOn
+	if !image.IsStapel() {
+		return image.dependsOn()
+	}
+	curDeps := image.dependsOn()
+
+	from := image.GetFrom()
+	if c.GetImage(from) != nil {
+		d.From = from
+	} else {
+		image.SetFromExternal()
+	}
+
+	d.Dependencies = curDeps.Dependencies
+	d.Imports = curDeps.Imports
+
+	return d
 }

@@ -758,10 +758,7 @@ func prepareWerfConfig(giterminismManager giterminism_manager.Interface, rawImag
 		}
 	}
 
-	werfConfig := &WerfConfig{
-		Meta:   meta,
-		images: images,
-	}
+	werfConfig := NewWerfConfig(meta, images)
 
 	if err := werfConfig.validateConflictBetweenImagesNames(); err != nil {
 		return nil, err

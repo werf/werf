@@ -27,7 +27,6 @@ func MapStapelConfigToImagesSets(ctx context.Context, metaConfig *config.Meta, s
 func mapStapelConfigToImage(ctx context.Context, metaConfig *config.Meta, stapelImageConfig config.StapelImageInterface, targetPlatform string, opts CommonImageOptions) (*Image, error) {
 	imageBaseConfig := stapelImageConfig.ImageBaseConfig()
 	imageName := imageBaseConfig.Name
-	from, fromImageName, fromLatest := getFromFields(imageBaseConfig)
 
 	imageOpts := ImageOptions{
 		CommonImageOptions: opts,
@@ -35,13 +34,18 @@ func mapStapelConfigToImage(ctx context.Context, metaConfig *config.Meta, stapel
 	}
 
 	var baseImageType BaseImageType
-	if from != "" {
+
+	if imageBaseConfig.FromExternal {
 		baseImageType = ImageFromRegistryAsBaseImage
-		imageOpts.BaseImageReference = from
-		imageOpts.FetchLatestBaseImage = fromLatest
+		imageOpts.BaseImageReference = imageBaseConfig.From
+		imageOpts.FetchLatestBaseImage = imageBaseConfig.FromLatest
 	} else {
+		fromImage := imageBaseConfig.From
 		baseImageType = StageAsBaseImage
-		imageOpts.BaseImageName = fromImageName
+		if imageBaseConfig.FromArtifactName != "" {
+			fromImage = imageBaseConfig.FromArtifactName
+		}
+		imageOpts.BaseImageName = fromImage
 	}
 
 	image, err := NewImage(ctx, targetPlatform, imageName, baseImageType, imageOpts)

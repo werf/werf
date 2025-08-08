@@ -249,22 +249,6 @@ func (tree *ImagesTree) GetMultiplatformImages() []*MultiplatformImage {
 	return tree.multiplatformImages
 }
 
-func getFromFields(imageBaseConfig *config.StapelImageBase) (string, string, bool) {
-	var from string
-	var fromImageName string
-
-	switch {
-	case imageBaseConfig.From != "":
-		from = imageBaseConfig.From
-	case imageBaseConfig.FromImageName != "":
-		fromImageName = imageBaseConfig.FromImageName
-	case imageBaseConfig.FromArtifactName != "":
-		fromImageName = imageBaseConfig.FromArtifactName
-	}
-
-	return from, fromImageName, imageBaseConfig.FromLatest
-}
-
 func filterAndLogGitMappings(ctx context.Context, gitMappings []*stage.GitMapping, conveyor Conveyor) ([]*stage.GitMapping, error) {
 	var res []*stage.GitMapping
 

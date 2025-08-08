@@ -103,6 +103,18 @@ func (m *MockImageInterface) Platform() []string {
 	return ret0
 }
 
+func (m *MockImageInterface) GetFrom() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetFrom")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+func (m *MockImageInterface) SetFromExternal() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "SetFromExternal")
+}
+
 // Platform indicates an expected call of Platform.
 func (mr *MockImageInterfaceMockRecorder) Platform() *gomock.Call {
 	mr.mock.ctrl.T.Helper()

@@ -46,3 +46,23 @@ var _ = XDescribe("fromImage", func() {
 		})
 	})
 })
+
+var _ = XDescribe("from anywhere", func() {
+	BeforeEach(func() {
+		SuiteData.TestDirPath = utils.FixturePath("from_anywhere")
+	})
+
+	It("should resolve and chain correctly", func(ctx SpecContext) {
+		trimID := func(imageName string) string {
+			return strings.TrimSpace(utils.SucceedCommandOutputString(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "stage", "image", imageName))
+		}
+
+		externalImageID := trimID("FromExternalImage")
+		fromImageID := trimID("FromImage")
+		fromImageAliasID := trimID("FromImageAlias")
+
+		Expect(utilsDocker.ImageParent(fromImageID)).Should(Equal(utilsDocker.ImageID(externalImageID)))
+
+		Expect(utilsDocker.ImageParent(fromImageAliasID)).Should(Equal(utilsDocker.ImageID(fromImageID)))
+	})
+})

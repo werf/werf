@@ -78,6 +78,14 @@ func (c *ImageFromDockerfile) Platform() []string {
 	return c.platform
 }
 
+func (c *ImageFromDockerfile) GetFrom() string {
+	panic("not implemented")
+}
+
+func (c *ImageFromDockerfile) SetFromExternal() {
+	panic("not implemented")
+}
+
 func (c *ImageFromDockerfile) dependsOn() DependsOn {
 	var dependsOn DependsOn
 
