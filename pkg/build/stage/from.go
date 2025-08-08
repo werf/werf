@@ -21,18 +21,15 @@ func GenerateFromStage(imageBaseConfig *config.StapelImageBase, baseImageRepoId,
 		baseImageRepoIdOrNone = baseImageRepoId
 	}
 
-	fromImageOrArtifactImageName := option.ValueOrDefault(imageBaseConfig.FromImageName, imageBaseConfig.FromArtifactName)
+	fromImageOrArtifactImageName := option.ValueOrDefault(imageBaseConfig.From, imageBaseConfig.FromArtifactName)
 
-	return newFromStage(fromImageOrArtifactImageName, baseImageRepoIdOrNone, imageBaseConfig.FromCacheVersion, imageCacheVersion, baseStageOptions)
-}
-
-func newFromStage(fromImageOrArtifactImageName, baseImageRepoIdOrNone, fromCacheVersion, imageCacheVersion string, baseStageOptions *BaseStageOptions) *FromStage {
 	s := &FromStage{}
-	s.fromCacheVersion = fromCacheVersion
+	s.fromCacheVersion = imageBaseConfig.FromCacheVersion
 	s.fromImageOrArtifactImageName = fromImageOrArtifactImageName
 	s.baseImageRepoIdOrNone = baseImageRepoIdOrNone
 	s.BaseStage = NewBaseStage(From, baseStageOptions)
 	s.imageCacheVersion = imageCacheVersion
+	s.fromExternal = imageBaseConfig.FromExternal
 	return s
 }
 
@@ -42,6 +39,7 @@ type FromStage struct {
 	baseImageRepoIdOrNone        string
 	fromCacheVersion             string
 	fromImageOrArtifactImageName string
+	fromExternal                 bool
 
 	imageCacheVersion string
 }
@@ -69,7 +67,7 @@ func (s *FromStage) GetDependencies(ctx context.Context, c Conveyor, cb containe
 		args = append(args, filepath.ToSlash(filepath.Clean(mount.From)), path.Clean(mount.To), mount.Type)
 	}
 
-	if s.fromImageOrArtifactImageName != "" {
+	if s.fromImageOrArtifactImageName != "" && !s.fromExternal {
 		args = append(args, c.GetImageContentDigest(s.targetPlatform, s.fromImageOrArtifactImageName))
 	} else {
 		args = append(args, prevImage.Image.Name())

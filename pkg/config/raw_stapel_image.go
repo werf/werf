@@ -229,7 +229,10 @@ func (c *rawStapelImage) toStapelImageBaseDirective(giterminismManager gitermini
 	}
 
 	imageBase.From = c.From
-	imageBase.FromImageName = c.FromImage
+	if c.FromImage != "" {
+		imageBase.From = c.FromImage
+	}
+
 	imageBase.FromArtifactName = c.FromArtifact
 	imageBase.FromLatest = c.FromLatest
 	imageBase.FromCacheVersion = c.FromCacheVersion

@@ -1,0 +1,12 @@
+project: none
+configVersion: 1
+
+---
+image: FromExternalImage
+from: alpine
+---
+image: FromImage
+from: FromExternalImage
+---
+image: FromImageAlias
+fromImage: FromImage
