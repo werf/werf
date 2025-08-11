@@ -247,7 +247,7 @@ WaitForData:
 	}
 
 	if err := cmd.Wait(); err != nil {
-		werfExec.TerminateIfCanceled(ctx, context.Cause(ctx), werfExec.ExitCode(err))
+		werfExec.TerminateIfCanceled(ctx)
 		return nil, fmt.Errorf("git diff error: %w\nunrecognized output:\n%s", err, p.UnrecognizedCapture.String())
 	}
 

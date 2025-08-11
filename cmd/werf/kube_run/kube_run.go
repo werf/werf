@@ -489,7 +489,7 @@ func createPod(ctx context.Context, namespace, pod, image, secret string, extraA
 	}
 
 	if err := cmd.Run(); err != nil {
-		werfExec.TerminateIfCanceled(ctx, context.Cause(ctx), werfExec.ExitCode(err))
+		werfExec.TerminateIfCanceled(ctx)
 		return fmt.Errorf("error running pod: %w", err)
 	}
 
@@ -641,7 +641,7 @@ func getPodPhase(ctx context.Context, namespace, pod string, extraArgs []string)
 	cmd.Stdout = &stdout
 
 	if err := cmd.Run(); err != nil {
-		werfExec.TerminateIfCanceled(ctx, context.Cause(ctx), werfExec.ExitCode(err))
+		werfExec.TerminateIfCanceled(ctx)
 		return "", fmt.Errorf("error getting pod %s/%s spec: %w", namespace, pod, err)
 	}
 
@@ -661,7 +661,7 @@ func isPodReady(ctx context.Context, namespace, pod string, extraArgs []string) 
 	cmd.Stdout = &stdout
 
 	if err := cmd.Run(); err != nil {
-		werfExec.TerminateIfCanceled(ctx, context.Cause(ctx), werfExec.ExitCode(err))
+		werfExec.TerminateIfCanceled(ctx)
 		return false, fmt.Errorf("error getting pod %s/%s spec: %w", namespace, pod, err)
 	}
 
@@ -713,7 +713,7 @@ func copyToPod(ctx context.Context, namespace, pod, container string, copyFrom c
 	}
 
 	if err := cmd.Run(); err != nil {
-		werfExec.TerminateIfCanceled(ctx, context.Cause(ctx), werfExec.ExitCode(err))
+		werfExec.TerminateIfCanceled(ctx)
 		return fmt.Errorf("error copying %q to pod %s/%s: %w", copyFrom.Src, namespace, pod, err)
 	}
 
@@ -796,7 +796,7 @@ func execCommandInPod(ctx context.Context, namespace, pod, container string, com
 	}
 
 	if err := cmd.Run(); err != nil {
-		werfExec.TerminateIfCanceled(ctx, context.Cause(ctx), werfExec.ExitCode(err))
+		werfExec.TerminateIfCanceled(ctx)
 		return fmt.Errorf("error running command %q in pod %s/%s: %w", cmd, namespace, pod, err)
 	}
 

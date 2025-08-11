@@ -73,7 +73,7 @@ func IsMultiwerfUpToDate(ctx context.Context) (bool, error) {
 	var stdout bytes.Buffer
 	cmd.Stdout = &stdout
 	if err := cmd.Run(); err != nil {
-		werfExec.TerminateIfCanceled(ctx, context.Cause(ctx), werfExec.ExitCode(err))
+		werfExec.TerminateIfCanceled(ctx)
 		return false, fmt.Errorf("unable to get installed version of multiwerf: %w", err)
 	}
 

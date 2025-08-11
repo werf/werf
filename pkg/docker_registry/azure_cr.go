@@ -127,7 +127,7 @@ func (r *azureCr) azRun(ctx context.Context, args ...string) error {
 	logboek.Context(ctx).Debug().LogLn("output:", string(output))
 
 	if err != nil {
-		werfExec.TerminateIfCanceled(ctx, context.Cause(ctx), werfExec.ExitCode(err))
+		werfExec.TerminateIfCanceled(ctx)
 
 		return fmt.Errorf(
 			"command: %s\n%s\nerror: %w", command,

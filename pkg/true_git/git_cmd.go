@@ -64,7 +64,7 @@ func (c *GitCmd) Run(ctx context.Context) error {
 	}
 
 	if err := c.Cmd.Run(); err != nil {
-		werfExec.TerminateIfCanceled(ctx, context.Cause(ctx), werfExec.ExitCode(err))
+		werfExec.TerminateIfCanceled(ctx)
 
 		var errExit *exec.ExitError
 		if errors.As(err, &errExit) {

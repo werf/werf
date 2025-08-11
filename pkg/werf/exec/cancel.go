@@ -29,9 +29,10 @@ func CommandContextCancellation(ctx context.Context, name string, arg ...string)
 	return PrepareGracefulCancellation(exec.CommandContext(ctx, name, arg...))
 }
 
-func TerminateIfCanceled(ctx context.Context, err error, exitCode int) {
+func TerminateIfCanceled(ctx context.Context) {
 	if errors.Is(ctx.Err(), context.Canceled) || errors.Is(ctx.Err(), context.DeadlineExceeded) {
-		graceful.Terminate(ctx, err, exitCode)
+		err := context.Cause(ctx)
+		graceful.Terminate(ctx, err, ExitCode(err))
 	}
 }
 
