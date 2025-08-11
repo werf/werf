@@ -7,7 +7,6 @@ import (
 	"io"
 	"os/exec"
 
-	"github.com/werf/common-go/pkg/graceful"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	werfExec "github.com/werf/werf/v2/pkg/werf/exec"
@@ -65,9 +64,7 @@ func (c *GitCmd) Run(ctx context.Context) error {
 	}
 
 	if err := c.Cmd.Run(); err != nil {
-		if errors.Is(ctx.Err(), context.Canceled) {
-			graceful.Terminate(ctx, err, werfExec.ExitCode(err))
-		}
+		werfExec.TerminateIfCanceled(ctx)
 
 		var errExit *exec.ExitError
 		if errors.As(err, &errExit) {

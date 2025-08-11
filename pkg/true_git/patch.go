@@ -2,7 +2,6 @@ package true_git
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -12,7 +11,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/werf/common-go/pkg/graceful"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/pkg/path_matcher"
 	werfExec "github.com/werf/werf/v2/pkg/werf/exec"
@@ -249,9 +247,7 @@ WaitForData:
 	}
 
 	if err := cmd.Wait(); err != nil {
-		if errors.Is(ctx.Err(), context.Canceled) {
-			graceful.Terminate(ctx, err, werfExec.ExitCode(err))
-		}
+		werfExec.TerminateIfCanceled(ctx)
 		return nil, fmt.Errorf("git diff error: %w\nunrecognized output:\n%s", err, p.UnrecognizedCapture.String())
 	}
 
