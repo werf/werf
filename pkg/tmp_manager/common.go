@@ -34,6 +34,10 @@ func GetReleasedTmpDirs() string {
 	return filepath.Join(GetServiceTmpDir(), "released")
 }
 
+func GetContextTmpDir() string {
+	return filepath.Join(werf.GetServiceDir(), "tmp", "context")
+}
+
 func registerCreatedPath(newPath, createdPathsDir string) error {
 	if err := os.MkdirAll(createdPathsDir, os.ModePerm); err != nil {
 		return fmt.Errorf("unable to create dir %s: %w", createdPathsDir, err)

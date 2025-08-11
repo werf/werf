@@ -65,6 +65,7 @@ func collectPaths() ([]string, []string, error) {
 		filepath.Join(GetCreatedTmpDirs(), dockerConfigsServiceDir),
 		filepath.Join(GetCreatedTmpDirs(), kubeConfigsServiceDir),
 		filepath.Join(GetCreatedTmpDirs(), werfConfigRendersServiceDir),
+		GetContextTmpDir(),
 	}
 
 	dirSlices := make([][]string, 0, len(pathsToList))

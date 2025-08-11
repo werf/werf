@@ -14,15 +14,11 @@ import (
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/path_matcher"
-	"github.com/werf/werf/v2/pkg/werf"
+	"github.com/werf/werf/v2/pkg/tmp_manager"
 )
 
-func GetTmpDir() string {
-	return filepath.Join(werf.GetServiceDir(), "tmp", "context")
-}
-
-func GetTmpArchivePath() string {
-	return filepath.Join(GetTmpDir(), uuid.NewString())
+func getTmpArchivePath() string {
+	return filepath.Join(tmp_manager.GetContextTmpDir(), uuid.NewString())
 }
 
 func GetContextAddFilesPaths(projectDir, contextDir string, contextAddFiles []string) ([]string, error) {
@@ -121,7 +117,7 @@ type AddContextAddFilesToContextArchiveOpts struct {
 }
 
 func AddContextAddFilesToContextArchive(ctx context.Context, opts *AddContextAddFilesToContextArchiveOpts) (string, error) {
-	destinationArchivePath := GetTmpArchivePath()
+	destinationArchivePath := getTmpArchivePath()
 
 	pathsToExcludeFromSourceArchive := opts.ContextAddFiles
 	if err := util.CreateArchiveBasedOnAnotherOne(ctx, opts.OriginalArchivePath, destinationArchivePath, util.CreateArchiveOptions{
