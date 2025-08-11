@@ -34,7 +34,7 @@ import:
     to: /etc/test
     after: install
 ---
-image: test-import3
+image: test-import4
 from: alpine
 shell:
   install:
