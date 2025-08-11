@@ -9,7 +9,7 @@ shell:
 import:
   - from: alpine:3.18
     add: /etc/os-release
-    to: /etc/test
+    to: /etc/test/
     after: install
 ---
 image: test-import-1
@@ -20,7 +20,7 @@ shell:
 import:
   - image: test-import-0
     add: /etc/os-release
-    to: /etc/test
+    to: /etc/test/
     after: install
 ---
 image: test-import-2
@@ -31,7 +31,7 @@ shell:
 import:
   - from: test-import-0
     add: /etc/os-release
-    to: /etc/test
+    to: /etc/test/
     after: install
 ---
 image: test-import-3
@@ -42,5 +42,5 @@ shell:
 import:
   - from: nginx@sha256:47ef54778f1ce7de2bf4e008413b330a7d4c44762cdee533c259a3343d34189c
     add: /etc/os-release
-    to: /etc/test
+    to: /etc/test/
     after: install
