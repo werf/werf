@@ -23,7 +23,7 @@ The `from` directive specifies the base image: another image defined in werf.yam
 
 ### Using external images
 
-When using external images if no tag is specified, the tag defaults to `latest`
+When using an external image, if no tag is specified, the tag defaults to `latest`:
 
 ```yaml
 from: <image>[:<tag>]
