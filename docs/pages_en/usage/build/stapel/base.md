@@ -19,7 +19,7 @@ A _base image_ can be declared with `from` or `fromImage` directive.
 
 ## from
 
-The `from` directive defines the name and tag of a _base image_. The base image can be either an image from the current project or any other external image
+The `from` directive specifies the base image: another image defined in werf.yaml (e.g. `backend`) or an external image with a tag or digest (e.g. `nginx:1.25`, `nginx@sha256:4c08b11ec901041edf324726b611fe88ed78a10a24710400980167d549597ffc`).
 
 ### Using external images
 
