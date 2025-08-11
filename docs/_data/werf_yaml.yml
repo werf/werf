@@ -544,8 +544,8 @@ sections:
       - name: fromImage
         value: "string"
         description:
-          en: "To use image as base image by image name"
-          ru: "Использование образа из werf.yaml в качестве базового"
+          en: "To use image as base image by image name (DEPRECATED)"
+          ru: "Использование образа из werf.yaml в качестве базового (DEPRECATED)"
         detailsArticle:
           en: "/usage/build/stapel/base.html#fromimage"
           ru: "/usage/build/stapel/base.html#fromimage"
