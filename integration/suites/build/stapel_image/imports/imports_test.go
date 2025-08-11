@@ -144,8 +144,8 @@ var _ = Describe("Stapel imports", func() {
 			SuiteData.CommitProjectWorktree(ctx, SuiteData.ProjectName, utils.FixturePath("import_from_external", "001"), "initial commit")
 			Expect(werfBuild(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{})).To(Succeed())
 			for i := 0; i <= 3; i++ {
-				output := werfRunOutputWithSpecificImage(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), fmt.Sprintf("test-import-%d", i), "cat", "/etc/test/os-release")
-				Expect(output).To(ContainSubstring(`PRETTY_NAME=`))
+				output := werfRunOutputWithSpecificImage(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), fmt.Sprintf("test-import-%d", i), "ls", "/etc/test/busybox")
+				Expect(output).To(ContainSubstring(`/etc/test/busybox`))
 			}
 
 		})
