@@ -23,6 +23,11 @@ func werfRunOutput(ctx context.Context, dir string, extraArgs ...string) string 
 	return string(output)
 }
 
+func werfRunOutputWithSpecificImage(ctx context.Context, dir string, image string, extraArgs ...string) string {
+	output, _ := utils.RunCommandWithOptions(ctx, dir, SuiteData.WerfBinPath, append([]string{"run", image, "--"}, extraArgs...), utils.RunCommandOptions{ShouldSucceed: true})
+	return string(output)
+}
+
 func werfHostPurge(ctx context.Context, dir string, opts liveexec.ExecCommandOptions, extraArgs ...string) error {
 	return liveexec.ExecCommand(ctx, dir, SuiteData.WerfBinPath, opts, append([]string{"host", "purge"}, extraArgs...)...)
 }
@@ -138,8 +143,11 @@ var _ = Describe("Stapel imports", func() {
 		It("should import file from external image", func(ctx SpecContext) {
 			SuiteData.CommitProjectWorktree(ctx, SuiteData.ProjectName, utils.FixturePath("import_from_external", "001"), "initial commit")
 			Expect(werfBuild(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{})).To(Succeed())
-			output := werfRunOutput(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), "cat", "/etc/test/os-release")
-			Expect(output).To(ContainSubstring(`PRETTY_NAME=`))
+			for i := 0; i <= 3; i++ {
+				output := werfRunOutputWithSpecificImage(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), fmt.Sprintf("test-import-%d", i), "cat", "/etc/test/os-release")
+				Expect(output).To(ContainSubstring(`PRETTY_NAME=`))
+			}
+
 		})
 	})
 

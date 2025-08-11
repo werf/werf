@@ -1,7 +1,7 @@
 project: none
 configVersion: 1
 ---
-image: test-import
+image: test-import-0
 from: alpine
 shell:
   install:
@@ -12,29 +12,29 @@ import:
     to: /etc/test
     after: install
 ---
-image: test-import2
+image: test-import-1
 from: alpine
 shell:
   install:
     - mkdir -p /etc/test
 import:
-  - image: test-import
+  - image: test-import-0
     add: /etc/os-release
     to: /etc/test
     after: install
 ---
-image: test-import3
+image: test-import-2
 from: alpine
 shell:
   install:
     - mkdir -p /etc/test
 import:
-  - from: test-import
+  - from: test-import-0
     add: /etc/os-release
     to: /etc/test
     after: install
 ---
-image: test-import4
+image: test-import-3
 from: alpine
 shell:
   install:
