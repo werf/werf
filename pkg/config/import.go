@@ -6,11 +6,12 @@ import (
 
 type Import struct {
 	*ArtifactExport
-	ImageName    string
-	ArtifactName string
-	Before       string
-	After        string
-	Stage        string
+	ImageName     string
+	ArtifactName  string
+	Before        string
+	After         string
+	Stage         string
+	ExternalImage bool
 
 	raw *rawImport
 }

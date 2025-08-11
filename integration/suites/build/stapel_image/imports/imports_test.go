@@ -135,6 +135,12 @@ var _ = Describe("Stapel imports", func() {
 				Expect(lastStageImageNameAfterFirstBuild).To(BeEquivalentTo(lastStageImageNameAfterSecondBuild))
 			}
 		})
+		It("should import file from external image", func(ctx SpecContext) {
+			SuiteData.CommitProjectWorktree(ctx, SuiteData.ProjectName, utils.FixturePath("import_from_external", "001"), "initial commit")
+			Expect(werfBuild(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{})).To(Succeed())
+			output := werfRunOutput(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), "cat", "/etc/test/os-release")
+			Expect(output).To(ContainSubstring(`PRETTY_NAME=`))
+		})
 	})
 
 	Context("caching by import source checksum", func() {

@@ -1,0 +1,46 @@
+project: none
+configVersion: 1
+---
+image: test-import
+from: alpine
+shell:
+  install:
+    - mkdir -p /etc/test
+import:
+  - from: alpine:3.18
+    add: /etc/os-release
+    to: /etc/test
+    after: install
+---
+image: test-import2
+from: alpine
+shell:
+  install:
+    - mkdir -p /etc/test
+import:
+  - image: test-import
+    add: /etc/os-release
+    to: /etc/test
+    after: install
+---
+image: test-import3
+from: alpine
+shell:
+  install:
+    - mkdir -p /etc/test
+import:
+  - from: test-import
+    add: /etc/os-release
+    to: /etc/test
+    after: install
+---
+image: test-import3
+from: alpine
+shell:
+  install:
+    - mkdir -p /etc/test
+import:
+  - from: nginx@sha256:47ef54778f1ce7de2bf4e008413b330a7d4c44762cdee533c259a3343d34189c
+    add: /etc/os-release
+    to: /etc/test
+    after: install

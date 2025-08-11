@@ -1,7 +1,12 @@
 package config
 
+import (
+	"github.com/docker/distribution/reference"
+)
+
 type rawImport struct {
 	ImageName    string `yaml:"image,omitempty"`
+	From         string `yaml:"from,omitempty"`
 	ArtifactName string `yaml:"artifact,omitempty"`
 	Before       string `yaml:"before,omitempty"`
 	After        string `yaml:"after,omitempty"`
@@ -56,7 +61,20 @@ func (c *rawImport) toDirective() (imp *Import, err error) {
 		imp.ArtifactExport = artifactExport
 	}
 
-	imp.ImageName = c.ImageName
+	if !oneOrNone([]bool{c.ImageName != "", c.From != ""}) {
+		return nil, newDetailedConfigError("specify only `image: NAME` or `from: NAME` for import!", c, c.doc())
+	}
+
+	if c.From != "" {
+		imp.ImageName = c.From
+	} else {
+		imp.ImageName = c.ImageName // to deprecate
+	}
+
+	if hasTagOrDigest(imp.ImageName) {
+		imp.ExternalImage = true
+	}
+
 	imp.ArtifactName = c.ArtifactName
 	imp.Before = c.Before
 	imp.After = c.After
@@ -77,4 +95,16 @@ func (c *rawImport) validateDirective(imp *Import) (err error) {
 	}
 
 	return nil
+}
+
+func hasTagOrDigest(image string) bool {
+	ref, err := reference.ParseNormalizedNamed(image)
+	if err != nil {
+		return false
+	}
+
+	_, isTagged := ref.(reference.Tagged)
+	_, isDigested := ref.(reference.Digested)
+
+	return isTagged || isDigested
 }

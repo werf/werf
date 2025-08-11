@@ -989,8 +989,13 @@ sections:
           - name: image
             value: "string"
             description:
-              en: "The image name from which you want to copy files"
-              ru: "Имя образа, из которого выполнять копирование файлов"
+              en: "The image name from which you want to copy files (DEPRECATED)"
+              ru: "Имя образа, из которого выполнять копирование файлов (DEPRECATED)"
+          - name: from
+            value: "string"
+            description:
+              en: "The source image for copying files: another image from `werf.yaml` (e.g. `backend`) or an external image with a tag/digest (e.g. `nginx:1.25`, `nginx@sha256:...`)."
+              ru: "Исходный образ для копирования файлов: другой образ из `werf.yaml` (например, `backend`) или внешний образ с тегом/дайджестом (например, `nginx:1.25`, `nginx@sha256:...`)."
           - name: stage
             value: "string"
             description:

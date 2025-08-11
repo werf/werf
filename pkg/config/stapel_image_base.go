@@ -73,7 +73,7 @@ func (c *StapelImageBase) dependsOn() DependsOn {
 	}
 
 	for _, imp := range c.Import {
-		if imp.ImageName != "" {
+		if imp.ImageName != "" && !imp.ExternalImage {
 			dependsOn.Imports = append(dependsOn.Imports, imp.ImageName)
 		}
 
