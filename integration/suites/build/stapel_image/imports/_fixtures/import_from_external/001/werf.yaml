@@ -1,46 +1,46 @@
 project: none
 configVersion: 1
 ---
-image: test-import
+image: test-import-0
 from: alpine
 shell:
   install:
     - mkdir -p /etc/test
 import:
   - from: alpine:3.18
-    add: /etc/os-release
+    add: /bin/busybox
     to: /etc/test
     after: install
 ---
-image: test-import2
+image: test-import-1
 from: alpine
 shell:
   install:
     - mkdir -p /etc/test
 import:
-  - image: test-import
-    add: /etc/os-release
+  - image: test-import-0
+    add: /bin/busybox
     to: /etc/test
     after: install
 ---
-image: test-import3
+image: test-import-2
 from: alpine
 shell:
   install:
     - mkdir -p /etc/test
 import:
-  - from: test-import
-    add: /etc/os-release
+  - from: test-import-0
+    add: /bin/busybox
     to: /etc/test
     after: install
 ---
-image: test-import3
+image: test-import-3
 from: alpine
 shell:
   install:
     - mkdir -p /etc/test
 import:
-  - from: nginx@sha256:47ef54778f1ce7de2bf4e008413b330a7d4c44762cdee533c259a3343d34189c
-    add: /etc/os-release
+  - from: alpine@sha256:de0eb0b3f2a47ba1eb89389859a9bd88b28e82f5826b6969ad604979713c2d4f
+    add: /bin/busybox
     to: /etc/test
     after: install
