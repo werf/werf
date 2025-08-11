@@ -31,7 +31,7 @@ What is the best strategy for carrying them out? You might think the best way is
 <a href="javascript:void(0)" class="details__summary">How the Stapel stage assembly works</a>
 <div class="details__content" markdown="1">
 
-When building a stage, the stage instructions are supposed to run in a container based on the previous built stage or [base image]({{"usage/build/stapel/base.html#from-fromlatest" | true_relative_url }}). We will further refer to such a container as a **build container**.
+When building a stage, the stage instructions are supposed to run in a container based on the previous built stage or [base image]({{"usage/build/stapel/base.html#from" | true_relative_url }}). We will further refer to such a container as a **build container**.
 
 Before running the _build container_, werf prepares a set of instructions. This set depends on the stage type and contains both werf service commands and user commands specified in the `werf.yaml` config file. The service commands may include, for example, adding files, applying patches, running Ansible jobs, etc.
 

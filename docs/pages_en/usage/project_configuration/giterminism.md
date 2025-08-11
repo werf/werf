@@ -45,7 +45,7 @@ The `contextAddFiles` directive can be activated using [werf-giterminism.yaml]({
 
 ##### fromLatest
 
-When using [fromLatest]({{"usage/build/stapel/base.html#from-fromlatest" | true_relative_url }}), werf factors in the real _base image_ digest when calculating the build image digest. Thus, using this directive can break the reproducibility of earlier builds. Changing the base image in the container registry would render all previously built images unusable.
+When using [fromLatest]({{"usage/build/stapel/base.html#from" | true_relative_url }}), werf factors in the real _base image_ digest when calculating the build image digest. Thus, using this directive can break the reproducibility of earlier builds. Changing the base image in the container registry would render all previously built images unusable.
 
 * Any preceding jobs of the CI pipeline (e.g., converge) will not run without first rebuilding the image, once the base image in the container registry has been changed.
 * Changing the base image in the container registry will result in unexpected CI pipeline failures. Suppose the change occurs after a successful build. In this case, subsequent jobs will fail because the final image digest has been changed along with the base image digest.
