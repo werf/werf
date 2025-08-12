@@ -33,8 +33,7 @@ jobs:
         env:
           WERF_REPO: ghcr.io/werf/werf-storage
           WERF_WITHOUT_KUBE: true
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          WERF_REPO_GITHUB_TOKEN: ${{ secrets.WERF_IN_IMAGE_CLEANUP_GHCR }}
+          GITHUB_TOKEN: ${{ secrets.WERF_IN_IMAGE_CLEANUP_GHCR }}
 
   notify:
     if: always()
