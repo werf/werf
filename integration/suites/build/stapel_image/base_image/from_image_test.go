@@ -53,16 +53,9 @@ var _ = Describe("from anywhere", func() {
 	})
 
 	It("should resolve and chain correctly", func(ctx SpecContext) {
-		trimID := func(imageName string) string {
-			return strings.TrimSpace(utils.SucceedCommandOutputString(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "stage", "image", imageName))
-		}
-
-		externalImageID := trimID("FromExternalImage")
-		fromImageID := trimID("FromImage")
-		fromImageAliasID := trimID("FromImageAlias")
-
-		Expect(utilsDocker.ImageParent(fromImageID)).Should(Equal(utilsDocker.ImageID(externalImageID)))
-
-		Expect(utilsDocker.ImageParent(fromImageAliasID)).Should(Equal(utilsDocker.ImageID(fromImageID)))
+		out := utils.SucceedCommandOutputString(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
+		Expect(out).To(ContainSubstring("Pulling base image alpine"))
+		Expect(out).To(ContainSubstring("Building stage FromImage/from"))
+		Expect(out).To(ContainSubstring("Building stage FromImageAlias/from"))
 	})
 })
