@@ -67,6 +67,17 @@ metadata:
 
 Thanks to the [kubedog](https://github.com/werf/kubedog) library, werf can automatically display logs of the containers created as part of Deployment, StatefulSet, DaemonSet, and Job objects.
 
+By default we show logs only for a single replica of the resource, but this can be changed using the `werf.io/show-logs-only-for-number-of-replicas` annotation, for example:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+  annotations:
+    werf.io/show-logs-only-for-number-of-replicas: "999"
+```
+
 You can disable the log display for the resource via the `werf.io/skip-logs: "true"` annotation, for example:
 
 ```yaml

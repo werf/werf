@@ -22,6 +22,7 @@ This article contains description of annotations which control werf resource ope
  - [`werf.io/log-regex-skip`](#log-regex-skip) — specifies a template for werf to skip log lines of the resource that match the specified regex template.
  - [`werf.io/skip-logs`](#skip-logs) — completely disable logs printing for the resource.
  - [`werf.io/skip-logs-for-containers`](#skip-logs-for-containers) — disable logs of specified containers of the resource.
+ - [`werf.io/show-logs-only-for-number-of-replicas`](#show-logs-only-for-number-of-replicas) — enable logging only for the specified number of replicas of the resource.
  - [`werf.io/show-logs-only-for-containers`](#show-logs-only-for-containers) — enable logging only for specified containers of the resource.
  - [`werf.io/show-service-messages`](#show-service-messages) — enable additional logging of Kubernetes related service messages for resource.
  - [`werf.io/sensitive`](#mark-resource-as-sensitive) — mark the resource as sensitive, so werf will not show diffs for this resource in `werf plan`.
@@ -186,6 +187,12 @@ Set to `"true"` to turn off printing logs of all containers of all Pods owned by
 `"werf.io/skip-logs-for-containers": CONTAINER_NAME1,CONTAINER_NAME2,CONTAINER_NAME3...`
 
 The comma-separated list of containers in all Pods owned by a resource with this annotation. werf would turn off log output for those containers.
+
+## Show logs only for number of replicas
+
+`"werf.io/show-logs-only-for-number-of-replicas": "NUMBER"`
+
+Print logs only for the specified number of replicas during resource tracking. We print logs only for a single replica by default to avoid excessive log output and to optimize resource usage.
 
 ## Show logs only for containers
 

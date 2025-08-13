@@ -21,6 +21,7 @@ toc: false
  - [`werf.io/log-regex-skip`](#log-regex-skip) — не показывать строки логов, которые подходят под указанный шаблон.
  - [`werf.io/skip-logs`](#skip-logs) — выключить логирование вывода для ресурса.
  - [`werf.io/skip-logs-for-containers`](#skip-logs-for-containers) — выключить логирование вывода для указанного контейнера.
+ - [`werf.io/show-logs-only-for-number-of-replicas`](#show-logs-only-for-number-of-replicas) — включить логирование вывода только для указанного числа реплик ресурса.
  - [`werf.io/show-logs-only-for-containers`](#show-logs-only-for-containers) — включить логирование вывода только для указанных контейнеров ресурса.
  - [`werf.io/show-service-messages`](#show-service-messages) — включить вывод сервисных сообщений и событий Kubernetes для данного ресурса.
  - [`werf.io/sensitive`](#mark-resource-as-sensitive) — пометить ресурс как содержащий чувствительные данные, чтобы werf не показывал диффы для этого ресурса в `werf plan`.
@@ -179,6 +180,12 @@ readiness-пробы указано `failureThreshold: 1`, тогда перва
 `"werf.io/skip-logs-for-containers": CONTAINER_NAME1,CONTAINER_NAME2,CONTAINER_NAME3...`
 
 Список (через запятую) контейнеров пода с данной аннотацией, для которых логи не выводятся при отслеживании.
+
+## Show logs only for number of replicas
+
+`"werf.io/show-logs-only-for-number-of-replicas": "NUMBER"`
+
+Отобразить логи только для указанного числа реплик ресурса в процессе трекинга. Мы отображаем логи только для одной реплики по умолчанию, чтобы избежать избыточного вывода логов и оптимизировать утилизацию ресурсов.
 
 ## Show logs only for containers
 
