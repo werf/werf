@@ -67,6 +67,17 @@ metadata:
 
 Благодаря библиотеке [kubedog](https://github.com/werf/kubedog) werf автоматически отображает логи контейнеров, создаваемых при развертывании Deployment, StatefulSet, DaemonSet и Job.
 
+По умолчанию мы показываем логи только для одной реплики ресурса, но это можно изменить с помощью аннотации `werf.io/show-logs-only-for-number-of-replicas`, например:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+  annotations:
+    werf.io/show-logs-only-for-number-of-replicas: "999"
+```
+
 Выключить отображение логов для ресурса можно аннотацией `werf.io/skip-logs: "true"`, например:
 
 ```yaml
