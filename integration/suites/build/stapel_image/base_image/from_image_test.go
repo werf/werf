@@ -47,7 +47,7 @@ var _ = XDescribe("fromImage", func() {
 	})
 })
 
-var _ = XDescribe("from anywhere", func() {
+var _ = Describe("from anywhere", func() {
 	BeforeEach(func() {
 		SuiteData.TestDirPath = utils.FixturePath("from_anywhere")
 	})
