@@ -63,11 +63,11 @@ require (
 	github.com/werf/3p-helm-for-werf-helm v0.0.0-20241217155820-089f92cd5c9d
 	github.com/werf/common-go v0.0.0-20250528135810-c90e95ac760d
 	github.com/werf/copy-recurse v0.2.7
-	github.com/werf/kubedog v0.13.1-0.20250808140826-acff6dace2cc
+	github.com/werf/kubedog v0.13.1-0.20250813095923-12d70b6780b0
 	github.com/werf/kubedog-for-werf-helm v0.0.0-20241217155728-9d45c48b82b6
 	github.com/werf/lockgate v0.1.1
 	github.com/werf/logboek v0.6.1
-	github.com/werf/nelm v1.10.1-0.20250808140902-6bb4e3b43b85
+	github.com/werf/nelm v1.12.1-0.20250813101140-25d137554143
 	github.com/werf/nelm-for-werf-helm v0.0.0-20241217155925-b0e6734d1dbf
 	go.opentelemetry.io/otel v1.24.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.24.0
