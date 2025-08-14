@@ -202,14 +202,14 @@ werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
       --shell=false
             Use predefined docker options and command for debug
       --sign-cert=""
-            The certificate as path to PEM file or base64-encoded PEM (default $WERF_SIGN_CERT)
-      --sign-chain=""
-            The certificate chain as path to PEM file or base64-encoded PEM (default                
-            $WERF_SIGN_CHAIN)
+            The leaf certificate as path to PEM file or base64-encoded PEM (default $WERF_SIGN_CERT)
       --sign-elf-files=false
             Enable ELF files signing (default $WERF_SIGN_ELF_FILES).
             When enabled, the private signing key must be specified with --sign-key option and the  
             certificate must be specified with --sign-cert option
+      --sign-intermediates=""
+            The intermediate certificates as path to PEM file or base64-encoded PEM (default        
+            $WERF_SIGN_INTERMEDIATES)
       --sign-key=""
             The private signing key as path to PEM file, base64-encoded PEM or hashivault://[KEY]   
             (default $WERF_SIGN_KEY)

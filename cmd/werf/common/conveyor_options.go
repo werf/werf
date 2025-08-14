@@ -175,9 +175,9 @@ func getSignerOptions(commonCmdData *CmdData) (signing.SignerOptions, error) {
 		return signing.SignerOptions{}, fmt.Errorf("signing certificate is required (the public signing certificate must be specified with --sign-cert option)")
 	}
 	return signing.SignerOptions{
-		KeyRef:   lo.FromPtr(commonCmdData.SignKey),
-		CertRef:  lo.FromPtr(commonCmdData.SignCert),
-		ChainRef: lo.FromPtr(commonCmdData.SignChain),
+		KeyRef:           lo.FromPtr(commonCmdData.SignKey),
+		CertRef:          lo.FromPtr(commonCmdData.SignCert),
+		IntermediatesRef: lo.FromPtr(commonCmdData.SignIntermediates),
 	}, nil
 }
 
