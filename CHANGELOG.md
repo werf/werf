@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.47.1](https://github.com/werf/werf/compare/v2.47.0...v2.47.1) (2025-08-14)
+
+
+### Bug Fixes
+
+* **deploy:** error `"werf.io/show-logs-only-for-containers", expected integer value` ([1132a12](https://github.com/werf/werf/commit/1132a12458ec750ce2e7559b7f8c2272a458a988))
+
 ## [2.47.0](https://github.com/werf/werf/compare/v2.46.0...v2.47.0) (2025-08-14)
 
 
