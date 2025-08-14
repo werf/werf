@@ -15,7 +15,6 @@
 
 * **host-cleanup:** clean up context archives ([b65a557](https://github.com/werf/werf/commit/b65a5570daf5d2ae73645c6d2b621912ee575e3c))
 * include context.Cause in error handling ([#7022](https://github.com/werf/werf/issues/7022)) ([1ba2129](https://github.com/werf/werf/commit/1ba21291edb7a8d8239230ab36780a753faae827))
-* **test:** fix stapel import test  ([4cf84ea](https://github.com/werf/werf/commit/4cf84ea76043ccb39fb53167701727283204cddb))
 
 ## [2.46.0](https://github.com/werf/werf/compare/v2.45.1...v2.46.0) (2025-08-08)
 
