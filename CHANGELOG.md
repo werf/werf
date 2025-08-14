@@ -1,5 +1,21 @@
 # Changelog
 
+## [2.47.0](https://github.com/werf/werf/compare/v2.46.0...v2.47.0) (2025-08-14)
+
+
+### Features
+
+* **build, stapel:** add a possibility to import from external images (import.from) ([#7020](https://github.com/werf/werf/issues/7020)) ([b109e98](https://github.com/werf/werf/commit/b109e98efa22d04332ab2b2d62d7f82b4f727fc8))
+* **build, stapel:** unify from and fromImage directives ([#7028](https://github.com/werf/werf/issues/7028)) ([9aa5ca0](https://github.com/werf/werf/commit/9aa5ca07922f6cbfdb9881c31bce7430327c782e))
+* **deploy:** display logs only from 1 replica by default (configured with annotation `werf.io/show-logs-only-for-number-of-replicas`) ([36a29fa](https://github.com/werf/werf/commit/36a29fa5850abdfce05c41caedbb2d85261f1b6c))
+* **deploy:** greatly decrease Kubernetes apiserver load ([e56ceed](https://github.com/werf/werf/commit/e56ceedc5d475b32d2efdca8f27b21672f217bb2))
+
+
+### Bug Fixes
+
+* **host-cleanup:** clean up context archives ([b65a557](https://github.com/werf/werf/commit/b65a5570daf5d2ae73645c6d2b621912ee575e3c))
+* include context.Cause in error handling ([#7022](https://github.com/werf/werf/issues/7022)) ([1ba2129](https://github.com/werf/werf/commit/1ba21291edb7a8d8239230ab36780a753faae827))
+
 ## [2.46.0](https://github.com/werf/werf/compare/v2.45.1...v2.46.0) (2025-08-08)
 
 
