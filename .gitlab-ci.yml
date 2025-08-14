@@ -208,7 +208,7 @@ create_release:
 cleanup_environment:
   stage: cleanup
   script:
-    - task test:cleanup:environment
+    - task --yes test:cleanup:environment
   rules:
     - if: !reference [.rules, if, main]
       <<: *changes_source
