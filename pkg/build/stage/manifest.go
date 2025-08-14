@@ -10,7 +10,7 @@ import (
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/mutate"
 
-	"github.com/deckhouse/delivery-kit-sdk/pkg/dmverity"
+	"github.com/deckhouse/delivery-kit-sdk/pkg/integrity"
 	"github.com/deckhouse/delivery-kit-sdk/pkg/signature/image"
 	"github.com/deckhouse/delivery-kit-sdk/pkg/signver"
 	"github.com/werf/werf/v2/pkg/config"
@@ -58,7 +58,7 @@ func (s *ManifestStage) MutateImage(ctx context.Context, registry docker_registr
 		opts = append(opts, api.WithLayersMutation(func(ctx context.Context, layers []v1.Layer) ([]mutate.Addendum, error) {
 			var result []mutate.Addendum
 			for _, layer := range layers {
-				addendum, err := dmverity.AnnotateLayerWithDMVerityRootHash(ctx, layer)
+				addendum, err := integrity.AnnotateLayerWithDMVerityRootHash(ctx, layer)
 				if err != nil {
 					return nil, err
 				}
