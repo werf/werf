@@ -18,7 +18,7 @@ require (
 	github.com/containers/image/v5 v5.30.0
 	github.com/containers/storage v1.53.0
 	github.com/deckarep/golang-set/v2 v2.6.0
-	github.com/deckhouse/delivery-kit-sdk v0.0.0-20250814125545-1347c1d2226f
+	github.com/deckhouse/delivery-kit-sdk v0.0.0-20250814150409-20191835a10f
 	github.com/deislabs/oras v1.1.0
 	github.com/djherbis/buffer v1.2.0
 	github.com/djherbis/nio/v3 v3.0.1

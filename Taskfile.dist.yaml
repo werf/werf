@@ -521,7 +521,7 @@ tasks:
 
         git clone https://github.com/deckhouse/delivery-kit-sdk .
         git checkout "$commit"
-        task --yes deps:install:c
+        task --yes install:c
 
         cd -
         rm -rf "$git_dir"
