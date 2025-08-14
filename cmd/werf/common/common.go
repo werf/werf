@@ -1079,11 +1079,11 @@ the certificate must be specified with --sign-cert option`)
 
 	cmdData.SignCert = new(string)
 	cmd.Flags().StringVarP(cmdData.SignCert, "sign-cert", "", os.Getenv("WERF_SIGN_CERT"),
-		"The certificate as path to PEM file or base64-encoded PEM (default $WERF_SIGN_CERT)")
+		"The leaf certificate as path to PEM file or base64-encoded PEM (default $WERF_SIGN_CERT)")
 
-	cmdData.SignChain = new(string)
-	cmd.Flags().StringVarP(cmdData.SignChain, "sign-chain", "", os.Getenv("WERF_SIGN_CHAIN"),
-		"The certificate chain as path to PEM file or base64-encoded PEM (default $WERF_SIGN_CHAIN)")
+	cmdData.SignIntermediates = new(string)
+	cmd.Flags().StringVarP(cmdData.SignIntermediates, "sign-intermediates", "", os.Getenv("WERF_SIGN_INTERMEDIATES"),
+		"The intermediate certificates as path to PEM file or base64-encoded PEM (default $WERF_SIGN_INTERMEDIATES)")
 }
 
 func SetupELFSigningOptions(cmdData *CmdData, cmd *cobra.Command) {

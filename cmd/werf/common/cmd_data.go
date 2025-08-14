@@ -145,10 +145,10 @@ type CmdData struct {
 
 	AnnotateLayersWithDmvVerityRootHash *bool
 
-	SignManifest *bool
-	SignKey      *string
-	SignCert     *string
-	SignChain    *string
+	SignManifest      *bool
+	SignKey           *string
+	SignCert          *string
+	SignIntermediates *string
 
 	BSignELFFiles               *bool
 	SignELFFiles                *bool

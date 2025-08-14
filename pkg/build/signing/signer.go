@@ -9,9 +9,9 @@ import (
 )
 
 type SignerOptions struct {
-	KeyRef   string
-	CertRef  string
-	ChainRef string
+	KeyRef           string
+	CertRef          string
+	IntermediatesRef string
 }
 
 func (o SignerOptions) IsZero() bool {
@@ -44,7 +44,7 @@ func NewSigner(ctx context.Context, opts SignerOptions) (*Signer, error) {
 	if opts.IsZero() {
 		return &Signer{nil}, nil
 	}
-	sv, err := signver.NewSignerVerifier(ctx, opts.CertRef, opts.ChainRef, signver.KeyOpts{
+	sv, err := signver.NewSignerVerifier(ctx, opts.CertRef, opts.IntermediatesRef, signver.KeyOpts{
 		KeyRef:   opts.KeyRef,
 		PassFunc: cryptoutils.SkipPassword,
 	})

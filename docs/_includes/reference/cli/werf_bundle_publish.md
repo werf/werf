@@ -292,14 +292,14 @@ werf bundle publish [IMAGE_NAME...] [options]
             Also, can be defined with $WERF_SET_STRING_* (e.g. $WERF_SET_STRING_1=key1=val1,        
             $WERF_SET_STRING_2=key2=val2)
       --sign-cert=""
-            The certificate as path to PEM file or base64-encoded PEM (default $WERF_SIGN_CERT)
-      --sign-chain=""
-            The certificate chain as path to PEM file or base64-encoded PEM (default                
-            $WERF_SIGN_CHAIN)
+            The leaf certificate as path to PEM file or base64-encoded PEM (default $WERF_SIGN_CERT)
       --sign-elf-files=false
             Enable ELF files signing (default $WERF_SIGN_ELF_FILES).
             When enabled, the private signing key must be specified with --sign-key option and the  
             certificate must be specified with --sign-cert option
+      --sign-intermediates=""
+            The intermediate certificates as path to PEM file or base64-encoded PEM (default        
+            $WERF_SIGN_INTERMEDIATES)
       --sign-key=""
             The private signing key as path to PEM file, base64-encoded PEM or hashivault://[KEY]   
             (default $WERF_SIGN_KEY)
