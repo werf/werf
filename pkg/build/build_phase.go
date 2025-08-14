@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/deckhouse/delivery-kit-sdk/pkg/signver/blob"
 	"github.com/google/uuid"
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 
@@ -41,8 +40,9 @@ type BuildPhaseOptions struct {
 type BuildOptions struct {
 	ImageBuildOptions container_backend.BuildOptions
 	IntrospectOptions
-	SigningOptions    signing.SigningOptions
-	ELFSigningOptions signing.ELFSigningOptions
+
+	ManifestSigningOptions signing.ManifestSigningOptions
+	ELFSigningOptions      signing.ELFSigningOptions
 
 	ReportPath   string
 	ReportFormat ReportFormat
@@ -839,7 +839,7 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, s
 
 	var opts calculateDigestOptions
 	opts.TargetPlatform = img.TargetPlatform
-	opts.SigningOptions = phase.SigningOptions
+	opts.ManifestSigningOptions = phase.ManifestSigningOptions
 	opts.ELFSigningOptions = phase.ELFSigningOptions
 
 	if img.IsDockerfileImage && img.DockerfileImageConfig.Staged {
@@ -1116,7 +1116,7 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 		if err := logboek.Context(ctx).Default().LogProcess("Signing ELF files").DoError(func() error {
 			return stageImage.Image.Mutate(ctx, func(builtID string) (string, error) {
 				newID := "werf.signing." + uuid.NewString()
-				finalID, err := signing.Sign(ctx, builtID, newID, phase.SigningOptions, phase.ELFSigningOptions)
+				finalID, err := signing.Sign(ctx, builtID, newID, phase.ELFSigningOptions)
 				if err != nil {
 					return "", err
 				}
@@ -1140,7 +1140,7 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 				return fmt.Errorf("unable to build stage %q: %w", stg.Name(), err)
 			}
 
-			if err := stg.MutateImage(ctx, phase.Conveyor.StorageManager.GetStagesStorage().(*storage.RepoStagesStorage).DockerRegistry, phase.StagesIterator.PrevBuiltStage.GetStageImage(), stageImage, phase.SigningOptions); err != nil {
+			if err := stg.MutateImage(ctx, phase.Conveyor.StorageManager.GetStagesStorage().(*storage.RepoStagesStorage).DockerRegistry, phase.StagesIterator.PrevBuiltStage.GetStageImage(), stageImage, phase.ManifestSigningOptions); err != nil {
 				return fmt.Errorf("unable to mutate %s: %w", stg.Name(), err)
 			}
 		} else {
@@ -1195,10 +1195,10 @@ func introspectStage(ctx context.Context, s stage.Interface) error {
 }
 
 type calculateDigestOptions struct {
-	TargetPlatform    string
-	SigningOptions    signing.SigningOptions
-	ELFSigningOptions signing.ELFSigningOptions
-	BaseImage         string // TODO(staged-dockerfile): legacy compatibility field
+	TargetPlatform         string
+	ManifestSigningOptions signing.ManifestSigningOptions
+	ELFSigningOptions      signing.ELFSigningOptions
+	BaseImage              string // TODO(staged-dockerfile): legacy compatibility field
 }
 
 func calculateDigest(ctx context.Context, stageName, stageDependencies string, prevNonEmptyStage stage.Interface, conveyor *Conveyor, opts calculateDigestOptions) (string, error) {
@@ -1218,26 +1218,24 @@ func calculateDigest(ctx context.Context, stageName, stageDependencies string, p
 		"StageDependencies",
 	)
 
-	if opts.SigningOptions.CertRef != "" {
-		certBytes, err := blob.LoadBase64OrFile(opts.SigningOptions.CertRef)
-		if err != nil {
-			return "", fmt.Errorf("unable to load signing certificate: %w", err)
-		}
-		checksumArgs = append(checksumArgs, string(certBytes))
-		checksumArgsNames = append(checksumArgsNames, "SIGNING_CERTIFICATE")
-	}
-	if opts.SigningOptions.ChainRef != "" {
-		chainBytes, err := blob.LoadBase64OrFile(opts.SigningOptions.ChainRef)
-		if err != nil {
-			return "", fmt.Errorf("unable to load signing certificate chain: %w", err)
-		}
-		checksumArgs = append(checksumArgs, string(chainBytes))
-		checksumArgsNames = append(checksumArgsNames, "SIGNING_CERTIFICATE_CHAIN")
+	if opts.ManifestSigningOptions.Enabled {
+		checksumArgs = append(checksumArgs, opts.ManifestSigningOptions.Signer().Cert())
+		checksumArgsNames = append(checksumArgsNames, "MANIFEST_SIGNING_CERTIFICATE")
+		checksumArgs = append(checksumArgs, opts.ManifestSigningOptions.Signer().Chain())
+		checksumArgsNames = append(checksumArgsNames, "MANIFEST_SIGNING_CERTIFICATE_CHAIN")
 	}
 
 	if opts.ELFSigningOptions.Enabled {
 		checksumArgs = append(checksumArgs, opts.ELFSigningOptions.PGPPrivateKeyFingerprint)
 		checksumArgsNames = append(checksumArgsNames, "ELF_SIGNING_PGP_KEY_FINGERPRINT")
+
+		// Prevent duplication if we added the same options above
+		if !opts.ManifestSigningOptions.Enabled {
+			checksumArgs = append(checksumArgs, opts.ManifestSigningOptions.Signer().Cert())
+			checksumArgsNames = append(checksumArgsNames, "MANIFEST_SIGNING_CERTIFICATE")
+			checksumArgs = append(checksumArgs, opts.ManifestSigningOptions.Signer().Chain())
+			checksumArgsNames = append(checksumArgsNames, "SIGNING_CERTIFICATE_CHAIN")
+		}
 	}
 
 	if prevNonEmptyStage != nil {

@@ -109,10 +109,6 @@ type CmdData struct {
 	LogTerminalWidth *int64
 	NoPodLogs        *bool
 
-	SignKey   *string
-	SignCert  *string
-	SignChain *string
-
 	DebugTemplates *bool
 
 	SaveBuildReport *bool
@@ -146,6 +142,11 @@ type CmdData struct {
 	AllowedLocalCacheVolumeUsageMargin     *uint
 
 	Platform *[]string
+
+	SignManifest *bool
+	SignKey      *string
+	SignCert     *string
+	SignChain    *string
 
 	SignELFFiles                *bool
 	ELFPGPPrivateKeyBase64      *string

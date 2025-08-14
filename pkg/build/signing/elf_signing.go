@@ -12,7 +12,6 @@ import (
 
 	"github.com/containers/buildah/docker"
 	"github.com/deckhouse/delivery-kit-sdk/pkg/signature/elf/inhouse"
-	"github.com/deckhouse/delivery-kit-sdk/pkg/signver"
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/daemon"
@@ -35,6 +34,24 @@ const (
 	ELF
 	NotELF
 )
+
+type ELFSigningOptions struct {
+	Enabled                  bool
+	PGPPrivateKeyFingerprint string
+	PGPPrivateKeyPassphrase  string
+
+	signer *Signer
+}
+
+func (o ELFSigningOptions) Signer() *Signer {
+	return o.signer
+}
+
+func NewELFSigningOptions(signer *Signer) ELFSigningOptions {
+	return ELFSigningOptions{
+		signer: signer,
+	}
+}
 
 func isELFFileStream(reader io.Reader) (bool, error) {
 	state := Initial
@@ -85,7 +102,7 @@ func isELFFileStream(reader io.Reader) (bool, error) {
 	return state == ELF, nil
 }
 
-func signELFFile(ctx context.Context, path string, signingOptions SigningOptions, elfSigningOptions ELFSigningOptions) error {
+func signELFFile(ctx context.Context, path string, elfSigningOptions ELFSigningOptions) error {
 	if err := logboek.Context(ctx).Info().LogProcessInline("bsign").DoError(func() error {
 		var cmdExtraEnv []string
 		pgOptionsString := fmt.Sprintf("--batch --default-key=%s", elfSigningOptions.PGPPrivateKeyFingerprint)
@@ -107,19 +124,7 @@ func signELFFile(ctx context.Context, path string, signingOptions SigningOptions
 	}
 
 	if err := logboek.Context(ctx).Info().LogProcessInline("inhouse").DoError(func() error {
-		sv, err := signver.NewSignerVerifier(
-			ctx,
-			signingOptions.CertRef,
-			signingOptions.ChainRef,
-			signver.KeyOpts{
-				KeyRef: signingOptions.KeyRef,
-			},
-		)
-		if err != nil {
-			return fmt.Errorf("unable to load signer verifier: %w", err)
-		}
-
-		return inhouse.Sign(ctx, sv, path)
+		return inhouse.Sign(ctx, elfSigningOptions.Signer().SignerVerifier(), path)
 	}); err != nil {
 		return err
 	}
@@ -127,7 +132,7 @@ func signELFFile(ctx context.Context, path string, signingOptions SigningOptions
 	return nil
 }
 
-func mutateELFFiles(ctx context.Context, reader io.Reader, signingOptions SigningOptions, elfSigningOptions ELFSigningOptions) (*bytes.Buffer, error) {
+func mutateELFFiles(ctx context.Context, reader io.Reader, elfSigningOptions ELFSigningOptions) (*bytes.Buffer, error) {
 	tarReader := tar.NewReader(reader)
 	var buffer bytes.Buffer
 	tarWriter := tar.NewWriter(&buffer)
@@ -167,7 +172,7 @@ func mutateELFFiles(ctx context.Context, reader io.Reader, signingOptions Signin
 
 				if isELF {
 					if err := logboek.Context(ctx).Default().LogProcessInline(header.Name).DoError(func() error {
-						if err := signELFFile(ctx, tmpFile.Name(), signingOptions, elfSigningOptions); err != nil {
+						if err := signELFFile(ctx, tmpFile.Name(), elfSigningOptions); err != nil {
 							return fmt.Errorf("failed to sign ELF file %q: %w", header.Name, err)
 						}
 
@@ -236,7 +241,7 @@ func mutateELFFiles(ctx context.Context, reader io.Reader, signingOptions Signin
 	return &buffer, nil
 }
 
-func Sign(ctx context.Context, refBase, refFinal string, signingOptions SigningOptions, elfSigningOptions ELFSigningOptions) (string, error) {
+func Sign(ctx context.Context, refBase, refFinal string, elfSigningOptions ELFSigningOptions) (string, error) {
 	img, err := daemon.Image(IDReference{ID: refBase})
 	if err != nil {
 		return "", err
@@ -279,7 +284,7 @@ func Sign(ctx context.Context, refBase, refFinal string, signingOptions SigningO
 			return "", fmt.Errorf("failed to get uncompressed layer: %w", err)
 		}
 
-		modifiedLayerBuffer, err := mutateELFFiles(ctx, rc, signingOptions, elfSigningOptions)
+		modifiedLayerBuffer, err := mutateELFFiles(ctx, rc, elfSigningOptions)
 		if err != nil {
 			return "", fmt.Errorf("failed to mutate ELF files: %w", err)
 		}
