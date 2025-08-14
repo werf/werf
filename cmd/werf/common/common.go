@@ -1066,19 +1066,34 @@ STAGE_NAME should be one of the following: `+strings.Join(allStagesNames(), ", "
 }
 
 func SetupSigningOptions(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.SignManifest = new(bool)
+	cmd.Flags().BoolVarP(cmdData.SignManifest, "sign-manifest", "", util.GetBoolEnvironmentDefaultFalse("WERF_SIGN_MANIFEST"),
+		`Enable image manifest signing (default $WERF_SIGN_MANIFEST).
+When enabled,
+the private signing key must be specified with --sign-key option and
+the certificate must be specified with --sign-cert option`)
+
 	cmdData.SignKey = new(string)
-	cmd.Flags().StringVarP(cmdData.SignKey, "sign-key", "", os.Getenv("WERF_SIGN_KEY"), "Sign image with the private key (default $WERF_SIGN_KEY)")
+	cmd.Flags().StringVarP(cmdData.SignKey, "sign-key", "", os.Getenv("WERF_SIGN_KEY"),
+		"The private signing key as hashivault://url, path to PEM file or base64-encoded PEM (default $WERF_SIGN_KEY)")
 
 	cmdData.SignCert = new(string)
-	cmd.Flags().StringVarP(cmdData.SignCert, "sign-cert", "", os.Getenv("WERF_SIGN_CERT"), "Sign image with the certificate (default $WERF_SIGN_CERT). Required if --sign-key is spcified")
+	cmd.Flags().StringVarP(cmdData.SignCert, "sign-cert", "", os.Getenv("WERF_SIGN_CERT"),
+		"The certificate as hashivault://url, path to PEM file or base64-encoded PEM (default $WERF_SIGN_CERT)")
 
 	cmdData.SignChain = new(string)
-	cmd.Flags().StringVarP(cmdData.SignChain, "sign-chain", "", os.Getenv("WERF_SIGN_CHAIN"), "Sign image with the certificate chain (default $WERF_SIGN_CHAIN)")
+	cmd.Flags().StringVarP(cmdData.SignChain, "sign-chain", "", os.Getenv("WERF_SIGN_CHAIN"),
+		"The certificate chain as hashivault://url, path to PEM file or base64-encoded PEM (default $WERF_SIGN_CHAIN)")
 }
 
 func SetupELFSigningOptions(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.SignELFFiles = new(bool)
-	cmd.Flags().BoolVarP(cmdData.SignELFFiles, "sign-elf-files", "", util.GetBoolEnvironmentDefaultFalse("WERF_SIGN_ELF_FILES"), "Sign ELF files with the private key (default $WERF_SIGN_ELF_FILES). The private key should be specified with --elf-pgp-private-key-base64 or --elf-pgp-private-key-fingerprint options")
+	cmd.Flags().BoolVarP(cmdData.SignELFFiles, "sign-elf-files", "", util.GetBoolEnvironmentDefaultFalse("WERF_SIGN_ELF_FILES"),
+		`Enable ELF files signing (default $WERF_SIGN_ELF_FILES).
+When enabled,
+the private elf key must be specified with --elf-pgp-private-key-base64 or --elf-pgp-private-key-fingerprint options and
+the private signing key must be specified with --sign-key option and
+the certificate must be specified with --sign-cert option`)
 
 	cmdData.ELFPGPPrivateKeyBase64 = new(string)
 	cmd.Flags().StringVarP(cmdData.ELFPGPPrivateKeyBase64, "elf-pgp-private-key-base64", "", os.Getenv("WERF_ELF_PGP_PRIVATE_KEY_BASE64"), "Base64-encoded PGP private key (default $WERF_ELF_PGP_PRIVATE_KEY_BASE64)")

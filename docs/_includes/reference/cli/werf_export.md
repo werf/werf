@@ -223,10 +223,23 @@ werf export [IMAGE_NAME...] [options]
             cache.
             Also, can be specified with $WERF_SECONDARY_REPO_* (e.g. $WERF_SECONDARY_REPO_1=...,    
             $WERF_SECONDARY_REPO_2=...)
+      --sign-manifest=false
+            Enable image manifest signing (default $WERF_SIGN_MANIFEST).
+            When enabled,
+            the private signing key must be specified with --sign-key option and
+            the certificate must be specified with --sign-cert option
+      --sign-key=""
+            The private signing key as hashivault://url, path to PEM file or base64-encoded PEM (default $WERF_SIGN_KEY)
+      --sign-cert=""
+            The certificate as hashivault://url, path to PEM file or base64-encoded PEM (default $WERF_SIGN_CERT)
+      --sign-chain=""
+            The certificate chain as hashivault://url, path to PEM file or base64-encoded PEM (default $WERF_SIGN_CHAIN)
       --sign-elf-files=false
-            Sign ELF files with the private key (default $WERF_SIGN_ELF_FILES). The private key     
-            should be specified with --elf-pgp-private-key-base64 or                                
-            --elf-pgp-private-key-fingerprint options
+            Enable ELF files signing (default $WERF_SIGN_ELF_FILES).
+            When enabled,
+            the private elf key must be specified with --elf-pgp-private-key-base64 or --elf-pgp-private-key-fingerprint options and
+            the private signing key must be specified with --sign-key option and
+            the certificate must be specified with --sign-cert option
       --skip-image-spec-stage=false
             Force skipping "imageSpec" build stage (default $WERF_SKIP_IMAGE_SPEC_STAGE or false)
       --skip-tls-verify-registry=false

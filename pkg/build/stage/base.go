@@ -321,7 +321,7 @@ func (s *BaseStage) PrepareImage(ctx context.Context, c Conveyor, cb container_b
 	return nil
 }
 
-func (s *BaseStage) MutateImage(_ context.Context, _ docker_registry.Interface, _, _ *StageImage, _ signing.SigningOptions) error {
+func (s *BaseStage) MutateImage(_ context.Context, _ docker_registry.Interface, _, _ *StageImage, _ signing.ManifestSigningOptions) error {
 	panic("not implemented")
 }
 

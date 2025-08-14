@@ -7,7 +7,6 @@ import (
 
 	"github.com/deckhouse/delivery-kit-sdk/pkg/integrity"
 	"github.com/deckhouse/delivery-kit-sdk/pkg/signature/image"
-	"github.com/deckhouse/delivery-kit-sdk/pkg/signver"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/mutate"
 
@@ -50,7 +49,7 @@ func (s *ManifestStage) GetDependencies(_ context.Context, _ Conveyor, _ contain
 	return "", nil
 }
 
-func (s *ManifestStage) MutateImage(ctx context.Context, registry docker_registry.Interface, prevBuiltImage, stageImage *StageImage, signingOptions signing.SigningOptions) error {
+func (s *ManifestStage) MutateImage(ctx context.Context, registry docker_registry.Interface, prevBuiltImage, stageImage *StageImage, manifestSigningOptions signing.ManifestSigningOptions) error {
 	srcRef := prevBuiltImage.Image.Name()
 	destRef := stageImage.Image.Name()
 
@@ -72,19 +71,7 @@ func (s *ManifestStage) MutateImage(ctx context.Context, registry docker_registr
 
 	if os.Getenv("WERF_DISABLE_SIGN") != "1" {
 		opts = append(opts, api.WithManifestAnnotationsFunc(func(ctx context.Context, manifest *v1.Manifest) (map[string]string, error) {
-			sv, err := signver.NewSignerVerifier(
-				ctx,
-				signingOptions.CertRef,
-				signingOptions.ChainRef,
-				signver.KeyOpts{
-					KeyRef: signingOptions.KeyRef,
-				},
-			)
-			if err != nil {
-				return nil, fmt.Errorf("unable to load signer verifier: %w", err)
-			}
-
-			annotations, err := image.GetSignatureAnnotationsForImageManifest(ctx, sv, manifest)
+			annotations, err := image.GetSignatureAnnotationsForImageManifest(ctx, manifestSigningOptions.Signer().SignerVerifier(), manifest)
 			if err != nil {
 				return nil, fmt.Errorf("unable to sign manifest: %w", err)
 			}

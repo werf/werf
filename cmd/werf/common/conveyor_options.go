@@ -14,6 +14,7 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/level"
 	"github.com/werf/werf/v2/pkg/build"
+	"github.com/werf/werf/v2/pkg/build/signing"
 	"github.com/werf/werf/v2/pkg/build/stage"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
@@ -105,12 +106,22 @@ func GetBuildOptions(ctx context.Context, commonCmdData *CmdData, werfConfig *co
 		return buildOptions, err
 	}
 
-	signingOptions, err := getSigningOptions(commonCmdData)
+	signerOptions, err := getSignerOptions(commonCmdData)
 	if err != nil {
-		return buildOptions, fmt.Errorf("getting signing options: %w", err)
+		return buildOptions, fmt.Errorf("getting signer options: %w", err)
 	}
 
-	elfSigningOptions, err := getELFSigningOptions(commonCmdData)
+	signer, err := signing.NewSigner(ctx, signerOptions)
+	if err != nil {
+		return buildOptions, fmt.Errorf("creating signer: %w", err)
+	}
+
+	manifestSigningOptions, err := getManifestSigningOptions(commonCmdData, signer)
+	if err != nil {
+		return buildOptions, fmt.Errorf("getting manifest signing options: %w", err)
+	}
+
+	elfSigningOptions, err := getELFSigningOptions(commonCmdData, signer)
 	if err != nil {
 		return buildOptions, err
 	}
@@ -123,9 +134,9 @@ func GetBuildOptions(ctx context.Context, commonCmdData *CmdData, werfConfig *co
 			IntrospectAfterError:  *commonCmdData.IntrospectAfterError,
 			IntrospectBeforeError: *commonCmdData.IntrospectBeforeError,
 		},
-		IntrospectOptions: introspectOptions,
-		SigningOptions:    signingOptions,
-		ELFSigningOptions: elfSigningOptions,
+		IntrospectOptions:      introspectOptions,
+		ManifestSigningOptions: manifestSigningOptions,
+		ELFSigningOptions:      elfSigningOptions,
 	}
 
 	if GetSaveBuildReport(commonCmdData) {
@@ -138,26 +149,31 @@ func GetBuildOptions(ctx context.Context, commonCmdData *CmdData, werfConfig *co
 	return buildOptions, nil
 }
 
-func getSigningOptions(commonCmdData *CmdData) (build.SigningOptions, error) {
-	// usage without signing
-	if commonCmdData.SignKey == nil && commonCmdData.SignCert == nil {
-		return build.SigningOptions{}, nil
+func getSignerOptions(commonCmdData *CmdData) (signing.SignerOptions, error) {
+	if !lo.FromPtr(commonCmdData.SignManifest) && !lo.FromPtr(commonCmdData.SignELFFiles) {
+		return signing.SignerOptions{}, nil
 	}
-	if *commonCmdData.SignKey == "" {
-		return build.SigningOptions{}, fmt.Errorf("signing key is required")
+	if commonCmdData.SignKey == nil || *commonCmdData.SignKey == "" {
+		return signing.SignerOptions{}, fmt.Errorf("signing key is required")
 	}
-	if *commonCmdData.SignCert == "" {
-		return build.SigningOptions{}, fmt.Errorf("signing certificate is required")
+	if commonCmdData.SignCert == nil || *commonCmdData.SignCert == "" {
+		return signing.SignerOptions{}, fmt.Errorf("signing certificate is required")
 	}
-	return build.SigningOptions{
+	return signing.SignerOptions{
 		KeyRef:   lo.FromPtr(commonCmdData.SignKey),
 		CertRef:  lo.FromPtr(commonCmdData.SignCert),
 		ChainRef: lo.FromPtr(commonCmdData.SignChain),
 	}, nil
 }
 
-func getELFSigningOptions(commonCmdData *CmdData) (build.ELFSigningOptions, error) {
-	var options build.ELFSigningOptions
+func getManifestSigningOptions(commonCmdData *CmdData, signer *signing.Signer) (signing.ManifestSigningOptions, error) {
+	options := signing.NewManifestSigningOptions(signer)
+	options.Enabled = lo.FromPtr(commonCmdData.SignManifest)
+	return options, nil
+}
+
+func getELFSigningOptions(commonCmdData *CmdData, signer *signing.Signer) (signing.ELFSigningOptions, error) {
+	options := signing.NewELFSigningOptions(signer)
 
 	if !*commonCmdData.SignELFFiles {
 		return options, nil

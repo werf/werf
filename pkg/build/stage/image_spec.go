@@ -149,7 +149,7 @@ func (s *ImageSpecStage) GetDependencies(_ context.Context, _ Conveyor, _ contai
 	return util.Sha256Hash(args...), nil
 }
 
-func (s *ImageSpecStage) MutateImage(ctx context.Context, registry docker_registry.Interface, prevBuiltImage, stageImage *StageImage, _ signing.SigningOptions) error {
+func (s *ImageSpecStage) MutateImage(ctx context.Context, registry docker_registry.Interface, prevBuiltImage, stageImage *StageImage, _ signing.ManifestSigningOptions) error {
 	src := prevBuiltImage.Image.Name()
 	dest := stageImage.Image.Name()
 
