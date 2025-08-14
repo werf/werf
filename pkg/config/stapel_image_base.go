@@ -13,7 +13,6 @@ type StapelImageBase struct {
 	Name             string
 	From             string
 	FromLatest       bool
-	FromImageName    string
 	FromArtifactName string
 	FromCacheVersion string
 	Git              *GitManager
@@ -25,6 +24,7 @@ type StapelImageBase struct {
 	Secrets          []Secret
 	ImageSpec        *ImageSpec
 
+	FromExternal bool
 	cacheVersion string
 	final        bool
 	platform     []string
@@ -63,12 +63,18 @@ func (c *StapelImageBase) Platform() []string {
 	return c.platform
 }
 
+func (c *StapelImageBase) GetFrom() string {
+	return c.From
+}
+
+func (c *StapelImageBase) SetFromExternal() {
+	c.FromExternal = true
+}
+
 func (c *StapelImageBase) dependsOn() DependsOn {
 	var dependsOn DependsOn
 
-	if c.FromImageName != "" {
-		dependsOn.From = c.FromImageName
-	} else if c.FromArtifactName != "" {
+	if c.FromArtifactName != "" {
 		dependsOn.From = c.FromArtifactName
 	}
 
@@ -137,7 +143,7 @@ func (c *StapelImageBase) validate(giterminismManager giterminism_manager.Interf
 		}
 	}
 
-	if c.From == "" && c.raw.FromImage == "" && c.raw.FromArtifact == "" && c.FromImageName == "" && c.FromArtifactName == "" {
+	if c.From == "" && c.raw.FromImage == "" && c.raw.FromArtifact == "" && c.FromArtifactName == "" {
 		return newDetailedConfigError("`from: DOCKER_IMAGE`, `fromImage: IMAGE_NAME`, `fromArtifact: IMAGE_ARTIFACT_NAME` required!", nil, c.raw.doc)
 	}
 
@@ -151,7 +157,7 @@ func (c *StapelImageBase) validate(giterminismManager giterminism_manager.Interf
 		mountByTo[mount.To] = true
 	}
 
-	if !oneOrNone([]bool{c.From != "", c.raw.FromImage != "", c.raw.FromArtifact != ""}) {
+	if !oneOrNone([]bool{c.From != "", c.raw.FromArtifact != ""}) {
 		return newDetailedConfigError("conflict between `from`, `fromImage` and `fromArtifact` directives!", nil, c.raw.doc)
 	}
 

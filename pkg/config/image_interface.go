@@ -8,6 +8,8 @@ type ImageInterface interface {
 	IsStapel() bool
 	IsFinal() bool
 	Platform() []string
+	GetFrom() string
+	SetFromExternal()
 
 	dependsOn() DependsOn
 	rawDoc() *doc

@@ -17,9 +17,13 @@ from: alpine
 
 A _base image_ can be declared with `from` or `fromImage` directive.
 
-## from, fromLatest
+## from
 
-The `from` directive defines the name and tag of a _base image_. If no tag is specified, the tag defaults to `latest`.
+The `from` directive specifies the base image: another image defined in werf.yaml (e.g. `backend`) or an external image with a tag or digest (e.g. `nginx:1.25`, `nginx@sha256:4c08b11ec901041edf324726b611fe88ed78a10a24710400980167d549597ffc`).
+
+### Using external images
+
+When using an external image, if no tag is specified, the tag defaults to `latest`:
 
 ```yaml
 from: <image>[:<tag>]
@@ -38,12 +42,12 @@ fromLatest: true
 
 > By default, giterminism does not allow the use of the `fromLatest` directive (you can read more about it [here]({{"usage/project_configuration/giterminism.html" | true_relative_url }}))
 
-## fromImage
+### Using images from current project
 
 In addition to the image from the repository, the _base image_ can also refer to an _image_ defined in the same `werf.yaml`.
 
 ```yaml
-fromImage: <image name>
+from: <image name>
 ```
 
 If the _base image_ is specific to a particular application,

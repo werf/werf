@@ -22,13 +22,13 @@ var _ = Describe("FromStage", func() {
 
 			prevImage := NewStageImage(containerBackend, "base-image", legacyImage)
 
-			fromStage := newFromStage(
-				data.FromImageOrArtifactImageName,
-				data.BaseImageRepoIdOrNone,
-				data.FromCacheVersion,
-				data.ImageCacheVersion,
-				&BaseStageOptions{},
-			)
+			fromStage := &FromStage{
+				fromImageOrArtifactImageName: data.FromImageOrArtifactImageName,
+				baseImageRepoIdOrNone:        data.BaseImageRepoIdOrNone,
+				fromCacheVersion:             data.FromCacheVersion,
+				imageCacheVersion:            data.ImageCacheVersion,
+				BaseStage:                    NewBaseStage(From, &BaseStageOptions{}),
+			}
 
 			if fromStage.fromImageOrArtifactImageName != "" {
 				// do nothing

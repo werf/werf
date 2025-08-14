@@ -533,22 +533,22 @@ sections:
           en: "The name of a base image"
           ru: Имя и тег базового образа
         detailsArticle:
-          all: "/usage/build/stapel/base.html#from-fromlatest"
+          all: "/usage/build/stapel/base.html#from"
       - name: fromLatest
         value: "bool"
         description:
           en: "To use actual base image without caching"
           ru: Использование актуального базового образа (без кеширования)
         detailsArticle:
-          all: "/usage/build/stapel/base.html#from-fromlatest"
+          all: "/usage/build/stapel/base.html#from"
       - name: fromImage
         value: "string"
         description:
-          en: "To use image as base image by image name"
-          ru: "Использование образа из werf.yaml в качестве базового"
+          en: "To use image as base image by image name (DEPRECATED)"
+          ru: "Использование образа из werf.yaml в качестве базового (DEPRECATED)"
         detailsArticle:
-          en: "/usage/build/stapel/base.html#fromimage"
-          ru: "/usage/build/stapel/base.html#fromimage"
+          en: "/usage/build/stapel/base.html#from"
+          ru: "/usage/build/stapel/base.html#from"
       - name: fromArtifact
         value: "string"
         description:
