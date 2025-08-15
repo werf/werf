@@ -1,6 +1,7 @@
 .prepare_environment:
   script:
     - task --yes test:setup:environment
+    - task --yes deps:install:c
     - task --yes build
   artifacts:
     paths:
