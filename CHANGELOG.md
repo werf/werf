@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.47.2](https://github.com/werf/werf/compare/v2.47.1...v2.47.2) (2025-08-15)
+
+
+### Bug Fixes
+
+* **deploy:** release namespace deletes after stopping being part of a release ([9374700](https://github.com/werf/werf/commit/9374700a01803618097c24ec5abfcb8842b5a21d))
+
 ## [2.47.1](https://github.com/werf/werf/compare/v2.47.0...v2.47.1) (2025-08-14)
 
 
