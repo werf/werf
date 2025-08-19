@@ -334,6 +334,10 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		imageName = werfConfig.Images(true)[0].GetName()
 	}
 
+	if imageName == "" {
+		return fmt.Errorf("unable to determine image name. Please provide IMAGE_NAME as a command argument")
+	}
+
 	imagesToProcess, err := config.NewImagesToProcess(werfConfig, []string{imageName}, false, false)
 	if err != nil {
 		return err
