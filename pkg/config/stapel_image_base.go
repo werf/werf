@@ -160,9 +160,9 @@ func (c *StapelImageBase) validate(giterminismManager giterminism_manager.Interf
 		mountByTo[mount.To] = true
 	}
 
-	/*if !oneOrNone([]bool{c.From != "", c.raw.FromArtifact != ""}) {
+	if !oneOrNone([]bool{c.From != "", c.raw.FromArtifact != ""}) {
 		return newDetailedConfigError("conflict between `from`, `fromImage` and `fromArtifact` directives!", nil, c.raw.doc)
-	}*/
+	}
 
 	if c.raw.FromArtifact != "" {
 		printArtifactDepricationWarning()
