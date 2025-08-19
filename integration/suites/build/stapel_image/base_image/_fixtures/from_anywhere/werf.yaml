@@ -10,3 +10,6 @@ from: FromExternalImage
 ---
 image: FromImageAlias
 fromImage: FromImage
+---
+image: FromArtifact
+fromArtifact: FromImage
