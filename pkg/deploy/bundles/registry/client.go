@@ -226,6 +226,11 @@ func (c *Client) PullChartToCache(ref *Reference, opts helmopts.HelmOptions) err
 	if err != nil {
 		return err
 	}
+
+	if !isValidBundleMediaType(manifest.MediaType) {
+		return fmt.Errorf("invalid bundle media type %q. check if provided reference is correct and bundle exists", manifest.MediaType)
+	}
+
 	err = c.cache.AddManifest(ref, &manifest)
 	if err != nil {
 		return err
