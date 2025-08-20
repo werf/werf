@@ -16,6 +16,7 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/kubedog/pkg/utils"
+	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/container_backend/filter"
@@ -43,18 +44,22 @@ type RunAutoGCOptions struct {
 	StoragePath                         string
 }
 
+//go:generate mockgen -package mock -destination ../../test/mock/locker.go github.com/werf/lockgate Locker
+
 type LocalBackendCleaner struct {
 	backend     container_backend.ContainerBackend
 	backendType containerBackendType
+	locker      lockgate.Locker
 	// refs for stubbing in testing
 	volumeutilsGetVolumeUsageByPath func(ctx context.Context, path string) (volumeutils.VolumeUsage, error)
 	werfGetWerfLastRunAtV1_1        func(ctx context.Context) (time.Time, error)
 	lrumetaGetImageLastAccessTime   func(ctx context.Context, imageRef string) (time.Time, error)
 }
 
-func NewLocalBackendCleaner(backend container_backend.ContainerBackend) (*LocalBackendCleaner, error) {
+func NewLocalBackendCleaner(backend container_backend.ContainerBackend, locker lockgate.Locker) (*LocalBackendCleaner, error) {
 	cleaner := &LocalBackendCleaner{
 		backend: backend,
+		locker:  locker,
 		// refs for stubbing in testing
 		volumeutilsGetVolumeUsageByPath: volumeutils.GetVolumeUsageByPath,
 		werfGetWerfLastRunAtV1_1:        werf.GetWerfLastRunAtV1_1,
@@ -540,24 +545,24 @@ func (cleaner *LocalBackendCleaner) doSafeCleanupWerfContainers(ctx context.Cont
 			continue
 		}
 
-		err := withHostLockOrNothing(ctx, container_backend.ContainerLockName(containerName), func() error {
-			err := cleaner.backend.Rm(ctx, container.ID, container_backend.RmOpts{
-				Force: options.Force,
-			})
+		if ok, err := cleaner.isLocked(container_backend.ContainerLockName(containerName)); err != nil {
+			return newCleanupReport(), fmt.Errorf("checking lock %q: %w", container_backend.ContainerLockName(containerName), err)
+		} else if ok {
+			continue
+		}
+
+		if err := cleaner.backend.Rm(ctx, container.ID, container_backend.RmOpts{Force: options.Force}); err != nil {
 			switch {
 			case errors.Is(err, container_backend.ErrCannotRemovePausedContainer):
 				logboek.Context(ctx).Info().LogF("Ignore paused container %s\n", logContainerName(container))
-				return nil
+				continue
 			case errors.Is(err, container_backend.ErrCannotRemoveRunningContainer):
 				logboek.Context(ctx).Info().LogF("Ignore running container %s\n", logContainerName(container))
-				return nil
+				continue
 			case err != nil:
-				return fmt.Errorf("failed to remove container %s: %w", logContainerName(container), err)
+				logboek.Context(ctx).Info().LogF("Cannot remove container by id %q: %s\n", container.ID, err)
+				continue
 			}
-			return nil
-		})
-		if err != nil {
-			return newCleanupReport(), err
 		}
 
 		report.ItemsDeleted = append(report.ItemsDeleted, container.ID)
@@ -664,19 +669,16 @@ func (cleaner *LocalBackendCleaner) removeImageByRepoTags(ctx context.Context, o
 				unRemovedCount++
 			}
 		} else {
-			err := withHostLockOrNothing(ctx, container_backend.ImageLockName(ref), func() error {
-				err := cleaner.backend.Rmi(ctx, ref, container_backend.RmiOpts{
-					Force: options.Force,
-				})
-				if err != nil {
-					logboek.Context(ctx).Info().LogF("Cannot remove local image by repo tag %q: %s\n", ref, err)
-					unRemovedCount++
-				}
-				return nil
-			})
-			// here err is host lock deferred err
-			if err != nil {
-				return false, err
+			if ok, err := cleaner.isLocked(container_backend.ImageLockName(ref)); err != nil {
+				return false, fmt.Errorf("checking lock %q: %w", container_backend.ImageLockName(ref), err)
+			} else if ok {
+				unRemovedCount++
+				continue
+			}
+
+			if err := cleaner.backend.Rmi(ctx, ref, container_backend.RmiOpts{Force: options.Force}); err != nil {
+				logboek.Context(ctx).Info().LogF("Cannot remove local image by repo tag %q: %s\n", ref, err)
+				unRemovedCount++
 			}
 		}
 	}
@@ -699,6 +701,17 @@ func (cleaner *LocalBackendCleaner) removeImageByRepoDigests(ctx context.Context
 	}
 
 	return unRemovedCount == 0 && digestCount > 0, nil
+}
+
+func (cleaner *LocalBackendCleaner) isLocked(lockName string) (bool, error) {
+	ok, lock, err := cleaner.locker.Acquire(lockName, lockgate.AcquireOptions{NonBlocking: true})
+	if err != nil {
+		return false, err
+	}
+	if !ok {
+		return true, nil
+	}
+	return false, cleaner.locker.Release(lock)
 }
 
 func calcBytesToFree(vu volumeutils.VolumeUsage, targetVolumeUsagePercentage float64) uint64 {
