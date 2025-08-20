@@ -69,7 +69,7 @@ func ctx(out io.Writer, debug bool) context.Context {
 
 // isValidBundleMediaType checks if Content-Type belongs to a valid OCI/Docker manifest or index.
 func isValidBundleMediaType(contentType string) bool {
-	var validBundleMediaTypes = []string{
+	validBundleMediaTypes := []string{
 		ocispec.MediaTypeImageManifest,
 		ocispec.MediaTypeImageIndex,
 		// should include other media types for bundle?
