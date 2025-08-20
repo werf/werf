@@ -555,13 +555,12 @@ func (cleaner *LocalBackendCleaner) doSafeCleanupWerfContainers(ctx context.Cont
 			switch {
 			case errors.Is(err, container_backend.ErrCannotRemovePausedContainer):
 				logboek.Context(ctx).Info().LogF("Ignore paused container %s\n", logContainerName(container))
-				continue
+				return newCleanupReport(), nil
 			case errors.Is(err, container_backend.ErrCannotRemoveRunningContainer):
 				logboek.Context(ctx).Info().LogF("Ignore running container %s\n", logContainerName(container))
-				continue
+				return newCleanupReport(), nil
 			case err != nil:
-				logboek.Context(ctx).Info().LogF("Cannot remove container by id %q: %s\n", container.ID, err)
-				continue
+				return newCleanupReport(), fmt.Errorf("failed to remove container %s: %w", logContainerName(container), err)
 			}
 		}
 
