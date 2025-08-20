@@ -9,9 +9,11 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/prashantv/gostub"
+	"github.com/samber/lo"
 	"go.uber.org/mock/gomock"
 
 	"github.com/werf/common-go/pkg/util"
+	"github.com/werf/lockgate"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/container_backend/filter"
 	"github.com/werf/werf/v2/pkg/container_backend/info"
@@ -19,7 +21,6 @@ import (
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/logging"
 	"github.com/werf/werf/v2/pkg/volumeutils"
-	"github.com/werf/werf/v2/pkg/werf"
 	"github.com/werf/werf/v2/test/mock"
 )
 
@@ -28,18 +29,18 @@ var _ = Describe("LocalBackendCleaner", func() {
 
 	var cleaner *LocalBackendCleaner
 	var backend *mock.MockContainerBackend
+	var locker *mock.MockLocker
 
 	var stubs *gostub.Stubs
 
 	BeforeEach(func() {
 		backend = mock.NewMockContainerBackend(gomock.NewController(t))
+		locker = mock.NewMockLocker(gomock.NewController(t))
 		var err error
-		cleaner, err = NewLocalBackendCleaner(backend)
+		cleaner, err = NewLocalBackendCleaner(backend, locker)
 		Expect(errors.Is(err, ErrUnsupportedContainerBackend)).To(BeTrue())
 		Expect(cleaner).NotTo(BeNil())
 		stubs = gostub.New()
-
-		Expect(werf.Init(t.TempDir(), "")).To(Succeed())
 	})
 	AfterEach(func() {
 		stubs.Reset()
@@ -195,61 +196,73 @@ var _ = Describe("LocalBackendCleaner", func() {
 		})
 	})
 
-	Describe("safeCleanupWerfContainers", func() {
-		var ctx context.Context
-		BeforeEach(func(ctx0 SpecContext) {
-			ctx = ctx0
-
+	DescribeTable("safeCleanupWerfContainers",
+		func(ctx SpecContext, runOpts RunGCOptions) {
 			backend.EXPECT().Containers(ctx, buildContainersOptions(
 				image.ContainerFilter{Name: image.StageContainerNamePrefix},
 				image.ContainerFilter{Name: image.ImportServerContainerNamePrefix},
 			)).Return(image.ContainerList{}, nil)
-		})
-		It("should call backend.Containers() and return result if opts.DryRun=true", func() {
-			report, err := cleaner.safeCleanupWerfContainers(ctx, RunGCOptions{
+
+			report, err := cleaner.safeCleanupWerfContainers(ctx, runOpts, volumeutils.VolumeUsage{})
+			Expect(err).To(Succeed())
+			Expect(report).To(Equal(newCleanupReport()))
+		},
+		Entry(
+			"should do nothing",
+			RunGCOptions{
 				DryRun: true,
-			}, volumeutils.VolumeUsage{})
+			},
+		),
+		Entry(
+			"should run cleanup",
+			RunGCOptions{},
+		),
+	)
 
-			Expect(err).To(Succeed())
-			Expect(report).To(Equal(newCleanupReport()))
-		})
-		It("should call backend.Containers() and call cleanup.doSafeCleanupWerfContainers() if opts.DryRun=false", func() {
-			report, err := cleaner.safeCleanupWerfContainers(ctx, RunGCOptions{}, volumeutils.VolumeUsage{})
-			Expect(err).To(Succeed())
-			Expect(report).To(Equal(newCleanupReport()))
-		})
-	})
+	DescribeTable("doSafeCleanupWerfContainers",
+		func(ctx context.Context, container image.Container, isAcquired bool, rmErr error) {
+			ctx = logging.WithLogger(ctx)
 
-	Describe("doSafeCleanupWerfContainers", func() {
-		var ctx context.Context
-		BeforeEach(func(ctx0 context.Context) {
-			ctx = logging.WithLogger(ctx0)
-		})
-		It("should not return err if backend.Rm() returns 'container is paused' error", func() {
-			container := image.Container{
+			locker.EXPECT().Acquire(container_backend.ContainerLockName(container.Names[0][1:]), lockgate.AcquireOptions{NonBlocking: true}).Return(isAcquired, lockgate.LockHandle{}, nil)
+
+			if isAcquired {
+				locker.EXPECT().Release(lockgate.LockHandle{}).Return(nil)
+				backend.EXPECT().Rm(ctx, container.ID, container_backend.RmOpts{Force: false}).Return(rmErr)
+			}
+
+			stubs.StubFunc(&cleaner.volumeutilsGetVolumeUsageByPath, volumeutils.VolumeUsage{}, nil)
+
+			_, err := cleaner.doSafeCleanupWerfContainers(ctx, RunGCOptions{}, volumeutils.VolumeUsage{}, image.ContainerList{container})
+			Expect(err).To(Succeed())
+		},
+		Entry(
+			"should not return err if backend.Rm() returns 'container is paused' error",
+			image.Container{
 				ID:    "id-stage",
 				Names: []string{fmt.Sprintf("/%s", image.StageContainerNamePrefix)},
-			}
-
-			backend.EXPECT().Rm(ctx, container.ID, container_backend.RmOpts{Force: false}).Return(container_backend.ErrCannotRemovePausedContainer)
-			stubs.StubFunc(&cleaner.volumeutilsGetVolumeUsageByPath, volumeutils.VolumeUsage{}, nil)
-
-			_, err := cleaner.doSafeCleanupWerfContainers(ctx, RunGCOptions{}, volumeutils.VolumeUsage{}, image.ContainerList{container})
-			Expect(err).To(Succeed())
-		})
-		It("should not return err if backend.Rm() returns 'container is running' error", func() {
-			container := image.Container{
-				ID:    "id-import-server",
-				Names: []string{fmt.Sprintf("/%s", image.ImportServerContainerNamePrefix)},
-			}
-
-			backend.EXPECT().Rm(ctx, container.ID, container_backend.RmOpts{Force: false}).Return(container_backend.ErrCannotRemoveRunningContainer)
-			stubs.StubFunc(&cleaner.volumeutilsGetVolumeUsageByPath, volumeutils.VolumeUsage{}, nil)
-
-			_, err := cleaner.doSafeCleanupWerfContainers(ctx, RunGCOptions{}, volumeutils.VolumeUsage{}, image.ContainerList{container})
-			Expect(err).To(Succeed())
-		})
-	})
+			},
+			true,
+			container_backend.ErrCannotRemovePausedContainer,
+		),
+		Entry(
+			"should not return err if backend.Rm() returns 'container is running' error",
+			image.Container{
+				ID:    "id-stage",
+				Names: []string{fmt.Sprintf("/%s", image.StageContainerNamePrefix)},
+			},
+			true,
+			container_backend.ErrCannotRemoveRunningContainer,
+		),
+		Entry(
+			"should not call backend.Rm() if lock was not acquired",
+			image.Container{
+				ID:    "id-stage",
+				Names: []string{fmt.Sprintf("/%s", image.StageContainerNamePrefix)},
+			},
+			false,
+			nil,
+		),
+	)
 
 	Describe("werfImages", func() {
 		It("should return images as merged and sorted result of several backend calls", func(ctx context.Context) {
@@ -299,11 +312,8 @@ var _ = Describe("LocalBackendCleaner", func() {
 		})
 	})
 
-	Describe("safeCleanupWerfImages", func() {
-		var ctx context.Context
-		BeforeEach(func(ctx0 context.Context) {
-			ctx = ctx0
-
+	DescribeTable("safeCleanupWerfImages",
+		func(ctx SpecContext, runOpts RunGCOptions) {
 			backend.EXPECT().Images(ctx, buildImagesOptions(
 				filter.DanglingFalse.ToPair(),
 				util.NewPair("label", image.WerfLabel),
@@ -316,86 +326,178 @@ var _ = Describe("LocalBackendCleaner", func() {
 			)).Return(image.ImagesList{}, nil)
 
 			stubs.StubFunc(&cleaner.werfGetWerfLastRunAtV1_1, time.Unix(1, 0), nil)
-		})
-		It("should call backend.Images() multiple times and return result if opts.DryRun=true", func() {
-			report, err := cleaner.safeCleanupWerfImages(ctx, RunGCOptions{
+
+			report, err := cleaner.safeCleanupWerfImages(ctx, runOpts, volumeutils.VolumeUsage{}, 0)
+
+			Expect(err).To(Succeed())
+			Expect(report).To(Equal(newCleanupReport()))
+		},
+		Entry(
+			"should call backend.Images() multiple times and return result if opts.DryRun=true",
+			RunGCOptions{
 				DryRun: true,
-			}, volumeutils.VolumeUsage{}, 0)
+			},
+		),
+		Entry(
+			"should call backend.Images() multiple times and call cleanup.doSafeCleanupWerfImages() if opts.DryRun=false",
+			RunGCOptions{},
+		),
+	)
 
-			Expect(err).To(Succeed())
-			Expect(report).To(Equal(newCleanupReport()))
-		})
-		It("should call backend.Images() multiple times and call cleanup.doSafeCleanupWerfImages() if opts.DryRun=false", func() {
-			report, err := cleaner.safeCleanupWerfImages(ctx, RunGCOptions{}, volumeutils.VolumeUsage{}, 0)
-			Expect(err).To(Succeed())
-			Expect(report).To(Equal(newCleanupReport()))
-		})
-	})
+	DescribeTable("doSafeCleanupWerfImages",
+		func(ctx SpecContext, vu volumeutils.VolumeUsage, imgList image.ImagesList, vuStub volumeutils.VolumeUsage, rmiRefs []string, expectedReport cleanupReport) {
+			if len(rmiRefs) > 0 {
+				backend.EXPECT().Rmi(ctx, gomock.AnyOf(toAnySlice(rmiRefs)...), container_backend.RmiOpts{}).Return(nil).Times(3)
+			}
 
-	Describe("doSafeCleanupWerfImages", func() {
-		It("should call cleaner.volumeutilsGetVolumeUsageByPath() two times if after first cleanup iteration reclaimed space not enough", func(ctx SpecContext) {
-			vu := volumeutils.VolumeUsage{
+			stubs.StubFunc(&cleaner.volumeutilsGetVolumeUsageByPath, vuStub, nil)
+
+			report, err := cleaner.doSafeCleanupWerfImages(ctx, RunGCOptions{}, vu, 40.00, imgList)
+			Expect(err).To(Succeed())
+			Expect(report).To(Equal(expectedReport))
+		},
+		Entry(
+			"should call cleaner.volumeutilsGetVolumeUsageByPath() two times if after first cleanup iteration reclaimed space not enough",
+			volumeutils.VolumeUsage{
 				UsedBytes:  800,
 				TotalBytes: 1000,
-			}
-			targetVolumeUsagePercentage := 40.00
-
-			imgDigest := "digest"
-			list := image.ImagesList{
-				{ID: "one", Size: 300, RepoDigests: []string{imgDigest}},
-				{ID: "two", Size: 500, RepoDigests: []string{imgDigest}},
-				{ID: "three", Size: 200, RepoDigests: []string{imgDigest}},
-			}
-
-			vuAfterFirstCleanupIteration := volumeutils.VolumeUsage{
+			},
+			image.ImagesList{
+				{ID: "one", Size: 300, RepoDigests: []string{"one-digest"}},
+				{ID: "two", Size: 500, RepoDigests: []string{"two-digest"}},
+				{ID: "three", Size: 200, RepoDigests: []string{"three-digest"}},
+			},
+			volumeutils.VolumeUsage{
 				UsedBytes:  600,
 				TotalBytes: 1000,
-			}
-			stubs.StubFunc(&cleaner.volumeutilsGetVolumeUsageByPath, vuAfterFirstCleanupIteration, nil)
-
-			backend.EXPECT().Rmi(ctx, imgDigest, container_backend.RmiOpts{}).Return(nil).Times(3)
-
-			report, err := cleaner.doSafeCleanupWerfImages(ctx, RunGCOptions{}, vu, targetVolumeUsagePercentage, list)
-			Expect(err).To(Succeed())
-
-			expectedReport := newCleanupReport()
-			expectedReport.SpaceReclaimed = 200
-			expectedReport.ItemsDeleted = append(expectedReport.ItemsDeleted, list[0].ID, list[1].ID, list[2].ID)
-			Expect(report).To(Equal(expectedReport))
-		})
-		It("should not remove a dangling image and return empty report", func(ctx SpecContext) {
-			vu := volumeutils.VolumeUsage{
+			},
+			[]string{"one-digest", "two-digest", "three-digest"},
+			cleanupReport{
+				ItemsDeleted:   []string{"one", "two", "three"},
+				SpaceReclaimed: 200,
+			},
+		),
+		Entry(
+			"should not remove a dangling image and return empty report",
+			volumeutils.VolumeUsage{
 				UsedBytes:  800,
 				TotalBytes: 1000,
-			}
-
-			stubs.StubFunc(&cleaner.volumeutilsGetVolumeUsageByPath, vu, nil)
-
-			list := image.ImagesList{
+			},
+			image.ImagesList{
 				{ID: "one-dangling", Size: 300}, // img without RepoTags and RegoDigests is always dangling image
-			}
+			},
+			volumeutils.VolumeUsage{
+				UsedBytes:  800,
+				TotalBytes: 1000,
+			},
+			[]string{},
+			newCleanupReport(),
+		),
+	)
 
-			report, err := cleaner.doSafeCleanupWerfImages(ctx, RunGCOptions{}, vu, 40.00, list)
+	DescribeTable("removeImageByRepoTags",
+		func(ctx context.Context, runOpts RunGCOptions, img image.Summary, lockNames, acquiredLocks []string, rmiErr error, expectedOk bool) {
+			ctx = logging.WithLogger(ctx)
+
+			locker.EXPECT().
+				Acquire(gomock.AnyOf(toAnySlice(lockNames)...), lockgate.AcquireOptions{NonBlocking: true}).
+				Return(len(acquiredLocks) > 0, lockgate.LockHandle{}, nil).
+				Times(len(lockNames))
+
+			locker.EXPECT().
+				Release(lockgate.LockHandle{}).
+				Return(nil).
+				Times(len(acquiredLocks))
+
+			rmiRefs := lo.Filter(img.RepoTags, func(ref string, _ int) bool {
+				if len(lockNames) == 0 {
+					return true
+				}
+				return lo.SomeBy(acquiredLocks, func(lockName string) bool {
+					return container_backend.ImageLockName(ref) == lockName
+				})
+			})
+
+			backend.EXPECT().Rmi(ctx, gomock.AnyOf(toAnySlice(rmiRefs)...), container_backend.RmiOpts{
+				Force: runOpts.Force,
+			}).Return(rmiErr).Times(len(rmiRefs))
+
+			ok, err := cleaner.removeImageByRepoTags(ctx, runOpts, img)
 			Expect(err).To(Succeed())
-			Expect(report).To(Equal(newCleanupReport()))
-		})
-	})
+			Expect(ok).To(Equal(expectedOk))
+		},
+		Entry(
+			"should return (false,nil) if no repo tags",
+			RunGCOptions{},
+			image.Summary{},
+			[]string{},
+			[]string{},
+			nil,
+			false,
+		),
+		Entry(
+			"should return (true,nil) if repo has one tag '<none>:<none>'",
+			RunGCOptions{},
+			image.Summary{
+				RepoTags: []string{"<none>:<none>"},
+			},
+			[]string{},
+			[]string{},
+			nil,
+			true,
+		),
+		Entry(
+			"should return (false,nil) if repo has one tag '<none>:<none>' and rmiErr!=nil",
+			RunGCOptions{},
+			image.Summary{
+				RepoTags: []string{"<none>:<none>"},
+			},
+			[]string{},
+			[]string{},
+			errors.New("some rmi err"),
+			false,
+		),
+		Entry(
+			"should return (false,nil) if repo has one tag but the tag is locked",
+			RunGCOptions{},
+			image.Summary{
+				RepoTags: []string{"locked-tag"},
+			},
+			[]string{
+				container_backend.ImageLockName("locked-tag"),
+			},
+			[]string{},
+			nil,
+			false,
+		),
+		Entry(
+			"should return (false,nil) if repo has one tag and the tag is not locked",
+			RunGCOptions{},
+			image.Summary{
+				RepoTags: []string{"free-tag"},
+			},
+			[]string{
+				container_backend.ImageLockName("free-tag"),
+			},
+			[]string{
+				container_backend.ImageLockName("free-tag"),
+			},
+			nil,
+			true,
+		),
+	)
 
-	Describe("removeImageByRepoTags", func() {
-		It("should return (false,nil) if no repo tags", func(ctx SpecContext) {
-			ok, err := cleaner.removeImageByRepoTags(ctx, RunGCOptions{}, image.Summary{})
-			Expect(err).To(Succeed())
-			Expect(ok).To(BeFalse())
-		})
-	})
-
-	Describe("removeImageByRepoDigests", func() {
-		It("should return (false,nil) if no repo digests", func(ctx SpecContext) {
+	DescribeTable("removeImageByRepoDigests",
+		func(ctx SpecContext, expectedOk bool) {
 			ok, err := cleaner.removeImageByRepoDigests(ctx, RunGCOptions{}, image.Summary{})
 			Expect(err).To(Succeed())
-			Expect(ok).To(BeFalse())
-		})
-	})
+			Expect(ok).To(Equal(expectedOk))
+		},
+		Entry(
+			"should return (false,nil) if no repo digests",
+			false,
+		),
+	)
 
 	Describe("RunGC", func() {
 		It("should keep order of backend calls", func(ctx context.Context) {
@@ -441,9 +543,11 @@ var _ = Describe("LocalBackendCleaner", func() {
 					image.ContainerFilter{Name: image.StageContainerNamePrefix},
 					image.ContainerFilter{Name: image.ImportServerContainerNamePrefix},
 				)).Return(containers, nil),
-				backend.EXPECT().Rm(ctx, containers[0].ID, container_backend.RmOpts{
-					Force: options.Force,
-				}),
+
+				locker.EXPECT().Acquire(container_backend.ContainerLockName(containers[0].Names[0][1:]), lockgate.AcquireOptions{NonBlocking: true}).Return(true, lockgate.LockHandle{}, nil),
+				locker.EXPECT().Release(lockgate.LockHandle{}).Return(nil),
+
+				backend.EXPECT().Rm(ctx, containers[0].ID, container_backend.RmOpts{Force: options.Force}).Return(nil),
 
 				// list and remove werf images
 				backend.EXPECT().Images(ctx, buildImagesOptions(
@@ -457,7 +561,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 				)).Return(image.ImagesList{}, nil),
 				backend.EXPECT().Rmi(ctx, images[0].RepoDigests[0], container_backend.RmiOpts{
 					Force: options.Force,
-				}),
+				}).Return(nil),
 			)
 
 			err := cleaner.RunGC(ctx, options)
@@ -465,3 +569,9 @@ var _ = Describe("LocalBackendCleaner", func() {
 		})
 	})
 })
+
+func toAnySlice[T any](s []T) []any {
+	return lo.Map(s, func(item T, _ int) any {
+		return any(item)
+	})
+}
