@@ -20,10 +20,12 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"strings"
 	"time"
 
 	orascontext "github.com/deislabs/oras/pkg/context"
 	units "github.com/docker/go-units"
+	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/sirupsen/logrus"
 )
 
@@ -63,4 +65,20 @@ func ctx(out io.Writer, debug bool) context.Context {
 	ctx := orascontext.WithLoggerFromWriter(context.Background(), out)
 	orascontext.GetLogger(ctx).Logger.SetLevel(logrus.DebugLevel)
 	return ctx
+}
+
+// isValidBundleMediaType checks if Content-Type belongs to a valid OCI/Docker manifest or index.
+func isValidBundleMediaType(contentType string) bool {
+	var validBundleMediaTypes = []string{
+		ocispec.MediaTypeImageManifest,
+		ocispec.MediaTypeImageIndex,
+		// should include other media types for bundle?
+	}
+	ct := strings.TrimSpace(strings.ToLower(contentType))
+	for _, valid := range validBundleMediaTypes {
+		if ct == strings.ToLower(valid) {
+			return true
+		}
+	}
+	return false
 }
