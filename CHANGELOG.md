@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.47.3](https://github.com/werf/werf/compare/v2.47.2...v2.47.3) (2025-08-21)
+
+
+### Bug Fixes
+
+* **build,stapel:** fix fromArtifact error ([a0a4745](https://github.com/werf/werf/commit/a0a4745eccafcdf7d84e2c6865d8e3fdd4297278))
+
 ## [2.47.2](https://github.com/werf/werf/compare/v2.47.1...v2.47.2) (2025-08-15)
 
 
