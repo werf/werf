@@ -31,6 +31,7 @@ import (
 	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/true_git"
 	"github.com/werf/werf/v2/pkg/werf"
+	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
 
 const (
@@ -1320,6 +1321,7 @@ func OpenGitRepo(ctx context.Context, cmdData *CmdData, workingDir, gitWorkTree 
 }
 
 func GetGiterminismManager(ctx context.Context, cmdData *CmdData) (*giterminism_manager.Manager, error) {
+	printGlobalWarningIfDevInCI(ctx, cmdData)
 	manager := new(giterminism_manager.Manager)
 	if err := logboek.Context(ctx).Info().LogProcess("Initialize giterminism manager").
 		DoError(func() error {
@@ -1388,6 +1390,19 @@ func GetGitWorkTree(ctx context.Context, cmdData *CmdData, workingDir string) (s
 	}
 
 	return "", &GitWorktreeNotFoundError{}
+}
+
+func printGlobalWarningIfDevInCI(ctx context.Context, cmdData *CmdData) {
+	const (
+		devModeInCIWarning = `The development mode is enabled in CI environment by providing --dev flag or WERF_DEV env variable. 
+This mode is intended for local development only and relies on the Git worktree state, including tracked and untracked files, while ignoring changes based on .gitignore and --dev-ignore rules. 
+Using development in CI may lead to non-reproducible builds and unexpected results.`
+	)
+	if cmdData.Dev != nil && *cmdData.Dev {
+		if werf.IsRunningInCI() {
+			global_warnings.GlobalWarningLn(ctx, devModeInCIWarning)
+		}
+	}
 }
 
 func LookupGitWorkTree(ctx context.Context, workingDir string) (string, error) {

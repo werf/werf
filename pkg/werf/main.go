@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"runtime"
 
+	"github.com/hofstadter-io/cinful"
 	"github.com/werf/3p-helm/pkg/chart/loader"
 	"github.com/werf/common-go/pkg/locker"
 	"github.com/werf/common-go/pkg/secrets_manager"
@@ -153,4 +154,11 @@ func Init(tmpDirOption, homeDirOption string) error {
 	}
 
 	return nil
+}
+
+func IsRunningInCI() bool {
+	if ciInfo := cinful.Info(); ciInfo != nil {
+		return true
+	}
+	return false
 }
