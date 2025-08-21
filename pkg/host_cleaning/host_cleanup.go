@@ -10,6 +10,7 @@ import (
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
 	"github.com/werf/werf/v2/pkg/tmp_manager"
+	"github.com/werf/werf/v2/pkg/werf"
 	"github.com/werf/werf/v2/pkg/werf/exec"
 )
 
@@ -124,7 +125,7 @@ func RunHostCleanup(ctx context.Context, backend container_backend.ContainerBack
 	allowedBackendStorageVolumeUsagePercentage := getOptionValueOrDefault(options.AllowedBackendStorageVolumeUsagePercentage, DefaultAllowedBackendStorageVolumeUsagePercentage)
 	allowedBackendStorageVolumeUsageMarginPercentage := getOptionValueOrDefault(options.AllowedBackendStorageVolumeUsageMarginPercentage, DefaultAllowedBackendStorageVolumeUsageMarginPercentage)
 
-	cleaner, err := NewLocalBackendCleaner(backend)
+	cleaner, err := NewLocalBackendCleaner(backend, werf.HostLocker().Locker())
 	if errors.Is(err, ErrUnsupportedContainerBackend) {
 		// if cleaner not implemented, skip cleaning
 		return nil
@@ -176,7 +177,7 @@ func shouldRunAutoHostCleanup(ctx context.Context, backend container_backend.Con
 
 	allowedBackendStorageVolumeUsagePercentage := getOptionValueOrDefault(options.AllowedBackendStorageVolumeUsagePercentage, DefaultAllowedBackendStorageVolumeUsagePercentage)
 
-	cleaner, err := NewLocalBackendCleaner(backend)
+	cleaner, err := NewLocalBackendCleaner(backend, werf.HostLocker().Locker())
 	if errors.Is(err, ErrUnsupportedContainerBackend) {
 		// if cleaner not implemented, skip cleaning
 		return false, nil
