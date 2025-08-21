@@ -419,7 +419,7 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 
 	// Step 4. Remove werf images
 	err = logboek.Context(ctx).LogBlock("Cleanup werf images").DoError(func() error {
-		reportWerfImages, err := cleaner.safeCleanupWerfImages(ctx, options, vu, targetVolumeUsagePercentage)
+		reportWerfImages, err := cleaner.cleanupWerfImages(ctx, options, vu, targetVolumeUsagePercentage)
 		if err != nil {
 			return err
 		}
@@ -536,19 +536,17 @@ func (cleaner *LocalBackendCleaner) cleanupWerfContainers(ctx context.Context, o
 			continue
 		}
 
-		if !options.DryRun {
-			if err := cleaner.backend.Rm(ctx, container.ID, container_backend.RmOpts{Force: options.Force}); err != nil {
-				switch {
-				case errors.Is(err, container_backend.ErrCannotRemovePausedContainer):
-					logboek.Context(ctx).Info().LogF("Ignore paused container %s\n", logContainerName(container))
-					continue
-				case errors.Is(err, container_backend.ErrCannotRemoveRunningContainer):
-					logboek.Context(ctx).Info().LogF("Ignore running container %s\n", logContainerName(container))
-					continue
-				case err != nil:
-					logboek.Context(ctx).Info().LogF("Cannot remove container by id %q: %s\n", container.ID, err)
-					continue
-				}
+		if err = cleaner.removeContainerRef(ctx, container.ID, options); err != nil {
+			switch {
+			case errors.Is(err, container_backend.ErrCannotRemovePausedContainer):
+				logboek.Context(ctx).Info().LogF("Ignore paused container %s\n", logContainerName(container))
+				continue
+			case errors.Is(err, container_backend.ErrCannotRemoveRunningContainer):
+				logboek.Context(ctx).Info().LogF("Ignore running container %s\n", logContainerName(container))
+				continue
+			case err != nil:
+				logboek.Context(ctx).Info().LogF("Cannot remove container by id %q: %s\n", container.ID, err)
+				continue
 			}
 		}
 
@@ -568,32 +566,13 @@ func (cleaner *LocalBackendCleaner) cleanupWerfContainers(ctx context.Context, o
 	return report, nil
 }
 
-// safeCleanupWerfImages cleanups werf images safely using host locks
-func (cleaner *LocalBackendCleaner) safeCleanupWerfImages(ctx context.Context, options RunGCOptions, vu volumeutils.VolumeUsage, targetVolumeUsagePercentage float64) (cleanupReport, error) {
+func (cleaner *LocalBackendCleaner) cleanupWerfImages(ctx context.Context, options RunGCOptions, vu volumeutils.VolumeUsage, targetVolumeUsagePercentage float64) (cleanupReport, error) {
 	images, err := cleaner.werfImages(ctx)
 	if err != nil {
 		return newCleanupReport(0), err
 	}
 
-	if options.DryRun {
-		n := countImagesToFree(images, 0, vu.BytesToFree(targetVolumeUsagePercentage))
-		if n == -1 {
-			return newCleanupReport(0), nil
-		}
-		return mapImageListToCleanupReport(images[:n+1]), nil
-	}
-
-	report, err := cleaner.doSafeCleanupWerfImages(ctx, options, vu, targetVolumeUsagePercentage, images)
-	if err != nil {
-		return newCleanupReport(0), err
-	}
-
-	return report, nil
-}
-
-func (cleaner *LocalBackendCleaner) doSafeCleanupWerfImages(ctx context.Context, options RunGCOptions, vu volumeutils.VolumeUsage, targetVolumeUsagePercentage float64, images image.ImagesList) (cleanupReport, error) {
 	report := newCleanupReport(0)
-	report.ItemsDeleted = make([]string, 0, len(images))
 
 	tVu := targetVolumeUsagePercentage
 
@@ -648,10 +627,7 @@ func (cleaner *LocalBackendCleaner) removeImageByRepoTags(ctx context.Context, o
 		// Here <none:none> image is the intermediate image.
 		// We can assert this because we had remove all dandling images before via pruning.
 		if ref == "<none>:<none>" {
-			err := cleaner.backend.Rmi(ctx, ref, container_backend.RmiOpts{
-				Force: options.Force,
-			})
-			if err != nil {
+			if err := cleaner.removeImageRef(ctx, ref, options); err != nil {
 				logboek.Context(ctx).Info().LogF("Cannot remove local image by ID %q: %s\n", imgSummary.ID, err)
 				unRemovedCount++
 			}
@@ -663,7 +639,7 @@ func (cleaner *LocalBackendCleaner) removeImageByRepoTags(ctx context.Context, o
 				continue
 			}
 
-			if err := cleaner.backend.Rmi(ctx, ref, container_backend.RmiOpts{Force: options.Force}); err != nil {
+			if err := cleaner.removeImageRef(ctx, ref, options); err != nil {
 				logboek.Context(ctx).Info().LogF("Cannot remove local image by repo tag %q: %s\n", ref, err)
 				unRemovedCount++
 			}
@@ -678,16 +654,31 @@ func (cleaner *LocalBackendCleaner) removeImageByRepoDigests(ctx context.Context
 	unRemovedCount := 0
 
 	for _, repoDigest := range imgSummary.RepoDigests {
-		err := cleaner.backend.Rmi(ctx, repoDigest, container_backend.RmiOpts{
-			Force: options.Force,
-		})
-		if err != nil {
+		if err := cleaner.removeImageRef(ctx, repoDigest, options); err != nil {
 			logboek.Context(ctx).Info().LogF("Cannot remove local image by repo digest %q: %s\n", repoDigest, err)
 			unRemovedCount++
 		}
 	}
 
 	return unRemovedCount == 0 && digestCount > 0, nil
+}
+
+func (cleaner *LocalBackendCleaner) removeImageRef(ctx context.Context, ref string, options RunGCOptions) error {
+	if options.DryRun {
+		return nil
+	}
+	return cleaner.backend.Rmi(ctx, ref, container_backend.RmiOpts{
+		Force: options.Force,
+	})
+}
+
+func (cleaner *LocalBackendCleaner) removeContainerRef(ctx context.Context, ref string, options RunGCOptions) error {
+	if options.DryRun {
+		return nil
+	}
+	return cleaner.backend.Rm(ctx, ref, container_backend.RmOpts{
+		Force: options.Force,
+	})
 }
 
 func (cleaner *LocalBackendCleaner) isLocked(lockName string) (bool, error) {
