@@ -64,6 +64,9 @@ func (c *StapelImageBase) Platform() []string {
 }
 
 func (c *StapelImageBase) GetFrom() string {
+	if c.FromArtifactName != "" {
+		return c.FromArtifactName
+	}
 	return c.From
 }
 
