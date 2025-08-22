@@ -231,6 +231,10 @@ func (repo *Local) IsShallowClone(ctx context.Context) (bool, error) {
 	return true_git.IsShallowClone(ctx, repo.WorkTreeDir)
 }
 
+func (repo *Local) GetCommitDepth(ctx context.Context) (int, error) {
+	return true_git.GetCommitDepth(ctx)
+}
+
 func (repo *Local) CreateDetachedMergeCommit(ctx context.Context, fromCommit, toCommit string) (string, error) {
 	return repo.createDetachedMergeCommit(ctx, repo.GitDir, repo.WorkTreeDir, repo.getRepoWorkTreeCacheDir(repo.getRepoID()), fromCommit, toCommit)
 }
