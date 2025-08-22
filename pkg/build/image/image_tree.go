@@ -2,6 +2,7 @@ package image
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path"
 	"path/filepath"
@@ -9,6 +10,7 @@ import (
 	"sort"
 	"sync"
 
+	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/types"
@@ -410,14 +412,29 @@ func makeGitMappingTo(ctx context.Context, gitMapping *stage.GitMapping, gitMapp
 		return "", fmt.Errorf("unable to get latest commit info for repo %q: %w", gitRepoName, err)
 	}
 
-	if gitMappingAddIsDir, err := gitMapping.GitRepo().IsCommitTreeEntryDirectory(ctx, commitInfo.Commit, gitMapping.Add); err != nil {
+	gitMappingAddIsDir, err := gitMapping.GitRepo().IsCommitTreeEntryDirectory(ctx, commitInfo.Commit, gitMapping.Add)
+	if err != nil {
+		if errors.Is(err, plumbing.ErrObjectNotFound) {
+			return "", fmt.Errorf("commit %q not found in repository %s. make sure the reference exists and was not overwritten by squash or rebase", commitInfo.Commit, gitRepoName)
+
+		}
 		return "", fmt.Errorf("unable to determine whether git `add: %s` is dir or file for repo %q: %w", gitMapping.Add, gitRepoName, err)
-	} else if !gitMappingAddIsDir {
+	}
+
+	if !gitMappingAddIsDir {
 		return "", fmt.Errorf("for git repo %q specifying `to: /` when adding a single file from git with `add: %s` is not allowed. Fix this by changing `to: /` to `to: /%s`.", gitRepoName, gitMapping.Add, filepath.Base(gitMapping.Add))
 	}
 
 	return gitMappingTo, nil
 }
+
+/*
+errMsg := fmt.Sprintf("unable to make remote git.to mapping for image %q:", imageName)
+		if errors.Is(err, plumbing.ErrObjectNotFound) {
+			err := fmt.Errorf("commit %q not found in repository. make sure the reference exists and was not overwritten by squash or rebase", commit)
+			return nil, fmt.Errorf("%s: %w", errMsg, err)
+		}
+*/
 
 func stageDependenciesToMap(sd *config.StageDependencies) map[stage.StageName][]string {
 	result := map[stage.StageName][]string{
