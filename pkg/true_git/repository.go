@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/Masterminds/semver"
@@ -106,6 +107,19 @@ func IsShallowClone(ctx context.Context, path string) (bool, error) {
 	}
 
 	return strings.TrimSpace(checkShallowCmd.OutBuf.String()) == "true", nil
+}
+
+func GetCommitDepth(ctx context.Context) (int, error) {
+	countDepthCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: "."}, "rev-list", "--count", "HEAD")
+	if err := countDepthCmd.Run(ctx); err != nil {
+		return 0, fmt.Errorf("git rev-list command failed: %w", err)
+	}
+	depthStr := strings.TrimSpace(countDepthCmd.OutBuf.String())
+	depth, err := strconv.Atoi(depthStr)
+	if err != nil {
+		return 0, fmt.Errorf("failed to parse depth %q: %w", depthStr, err)
+	}
+	return depth, nil
 }
 
 type PlainOpenOptions struct {

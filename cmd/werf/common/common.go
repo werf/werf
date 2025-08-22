@@ -31,6 +31,7 @@ import (
 	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/true_git"
 	"github.com/werf/werf/v2/pkg/werf"
+	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
 
 const (
@@ -1335,6 +1336,8 @@ func GetGiterminismManager(ctx context.Context, cmdData *CmdData) (*giterminism_
 				return err
 			}
 
+			printGlobalWarningIfShallowClone(ctx, localGitRepo)
+
 			headCommit, err := localGitRepo.HeadCommitHash(ctx)
 			if err != nil {
 				return err
@@ -1360,6 +1363,17 @@ func GetGiterminismManager(ctx context.Context, cmdData *CmdData) (*giterminism_
 	}
 
 	return manager, nil
+}
+
+func printGlobalWarningIfShallowClone(ctx context.Context, localGitRepo *git_repo.Local) {
+	const warningMessage = `Git repo %s is a shallow clone. Cache is limited to the configured depth window of %d commits and may not include the full history.`
+	if isShallow, err := localGitRepo.IsShallowClone(ctx); isShallow && err == nil {
+		commitDepth, err := localGitRepo.GetCommitDepth(ctx)
+		if err != nil {
+			return
+		}
+		global_warnings.GlobalWarningLn(ctx, fmt.Sprintf(warningMessage, localGitRepo.GetWorkTreeDir(), commitDepth))
+	}
 }
 
 func GetGitWorkTree(ctx context.Context, cmdData *CmdData, workingDir string) (string, error) {
