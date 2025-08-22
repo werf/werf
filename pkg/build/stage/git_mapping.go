@@ -188,8 +188,16 @@ func (gm *GitMapping) IsLocal() bool {
 	return gm.GitRepo().IsLocal()
 }
 
-func (gm *GitMapping) getLatestCommit(ctx context.Context) (string, error) {
+func (gm *GitMapping) getCommit(ctx context.Context) (string, error) {
 	if gm.Commit != "" {
+		exist, err := gm.GitRepo().IsCommitExists(ctx, gm.Commit)
+		if err != nil {
+			return "", fmt.Errorf("unable to check commit %q existence in repository %s: %w", gm.Commit, gm.GitRepo().GetName(), err)
+		}
+		if !exist {
+			return "", fmt.Errorf("commit %q not found in repository %s. Ensure it has not been squashed or rebased", gm.Commit, gm.GitRepo().GetName())
+		}
+
 		return gm.Commit, nil
 	}
 
@@ -247,7 +255,7 @@ func (gm *GitMapping) applyPatchCommand(patchFile *ContainerFileDescriptor, arch
 func (gm *GitMapping) GetLatestCommitInfo(ctx context.Context, c Conveyor) (ImageCommitInfo, error) {
 	res := ImageCommitInfo{}
 
-	if commit, err := gm.getLatestCommit(ctx); err != nil {
+	if commit, err := gm.getCommit(ctx); err != nil {
 		return ImageCommitInfo{}, err
 	} else {
 		res.Commit = commit
@@ -314,7 +322,7 @@ func (gm *GitMapping) GetBaseCommitForPrevBuiltImage(ctx context.Context, c Conv
 
 	var baseCommit string
 	if prevBuiltImageCommitInfo.VirtualMerge {
-		if latestCommit, err := gm.getLatestCommit(ctx); err != nil {
+		if latestCommit, err := gm.getCommit(ctx); err != nil {
 			return "", err
 		} else if gm.GitRepo().IsLocal() && c.GetLocalGitRepoVirtualMergeOptions().VirtualMerge && latestCommit == prevBuiltImageCommitInfo.Commit {
 			baseCommit = prevBuiltImageCommitInfo.Commit
