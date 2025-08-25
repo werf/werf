@@ -135,7 +135,7 @@ func InitProcessContainerBackend(ctx context.Context, cmdData *CmdData, registry
 	}
 	ctx = newCtx
 
-	return wrapContainerBackend(container_backend.NewDockerServerBackend()), ctx, nil
+	return wrapContainerBackend(container_backend.NewDockerServerBackend(werf.HostLocker().Locker())), ctx, nil
 }
 
 func InitProcessDocker(ctx context.Context, cmdData *CmdData) (context.Context, error) {
