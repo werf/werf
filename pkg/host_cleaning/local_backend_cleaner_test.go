@@ -196,71 +196,96 @@ var _ = Describe("LocalBackendCleaner", func() {
 		})
 	})
 
-	DescribeTable("safeCleanupWerfContainers",
-		func(ctx SpecContext, runOpts RunGCOptions) {
+	DescribeTable("cleanupWerfContainers",
+		func(ctx context.Context, runOpts RunGCOptions, container image.Container, isAcquired bool, rmErr error, expectedReport cleanupReport) {
+			ctx = logging.WithLogger(ctx)
+
 			backend.EXPECT().Containers(ctx, buildContainersOptions(
 				image.ContainerFilter{Name: image.StageContainerNamePrefix},
 				image.ContainerFilter{Name: image.ImportServerContainerNamePrefix},
-			)).Return(image.ContainerList{}, nil)
+			)).Return(image.ContainerList{container}, nil)
 
-			report, err := cleaner.safeCleanupWerfContainers(ctx, runOpts, volumeutils.VolumeUsage{})
-			Expect(err).To(Succeed())
-			Expect(report).To(Equal(newCleanupReport()))
-		},
-		Entry(
-			"should do nothing",
-			RunGCOptions{
-				DryRun: true,
-			},
-		),
-		Entry(
-			"should run cleanup",
-			RunGCOptions{},
-		),
-	)
+			locker.EXPECT().
+				Acquire(container_backend.ContainerLockName(werfContainerName(container)), lockgate.AcquireOptions{NonBlocking: true}).
+				Return(isAcquired, lockgate.LockHandle{}, nil)
 
-	DescribeTable("doSafeCleanupWerfContainers",
-		func(ctx context.Context, container image.Container, isAcquired bool, rmErr error) {
-			ctx = logging.WithLogger(ctx)
+			locker.EXPECT().
+				Release(lockgate.LockHandle{}).
+				Return(nil).
+				Times(convBoolToInt(isAcquired))
 
-			locker.EXPECT().Acquire(container_backend.ContainerLockName(container.Names[0][1:]), lockgate.AcquireOptions{NonBlocking: true}).Return(isAcquired, lockgate.LockHandle{}, nil)
-
-			if isAcquired {
-				locker.EXPECT().Release(lockgate.LockHandle{}).Return(nil)
-				backend.EXPECT().Rm(ctx, container.ID, container_backend.RmOpts{Force: false}).Return(rmErr)
-			}
+			backend.EXPECT().
+				Rm(ctx, container.ID, container_backend.RmOpts{Force: false}).
+				Return(rmErr).
+				Times(convBoolToInt(isAcquired) - convBoolToInt(runOpts.DryRun))
 
 			stubs.StubFunc(&cleaner.volumeutilsGetVolumeUsageByPath, volumeutils.VolumeUsage{}, nil)
 
-			_, err := cleaner.doSafeCleanupWerfContainers(ctx, RunGCOptions{}, volumeutils.VolumeUsage{}, image.ContainerList{container})
+			report, err := cleaner.cleanupWerfContainers(ctx, runOpts, volumeutils.VolumeUsage{})
 			Expect(err).To(Succeed())
+			Expect(report).To(Equal(expectedReport))
 		},
 		Entry(
 			"should not return err if backend.Rm() returns 'container is paused' error",
+			RunGCOptions{},
 			image.Container{
-				ID:    "id-stage",
-				Names: []string{fmt.Sprintf("/%s", image.StageContainerNamePrefix)},
+				ID:    "some-id",
+				Names: []string{fmt.Sprintf("/%ssome-name", image.StageContainerNamePrefix)},
 			},
 			true,
 			container_backend.ErrCannotRemovePausedContainer,
+			newCleanupReport(),
 		),
 		Entry(
 			"should not return err if backend.Rm() returns 'container is running' error",
+			RunGCOptions{},
 			image.Container{
-				ID:    "id-stage",
-				Names: []string{fmt.Sprintf("/%s", image.StageContainerNamePrefix)},
+				ID:    "some-id",
+				Names: []string{fmt.Sprintf("/%ssome-name", image.ImportServerContainerNamePrefix)},
 			},
 			true,
 			container_backend.ErrCannotRemoveRunningContainer,
+			newCleanupReport(),
 		),
 		Entry(
 			"should not call backend.Rm() if lock was not acquired",
+			RunGCOptions{},
 			image.Container{
-				ID:    "id-stage",
-				Names: []string{fmt.Sprintf("/%s", image.StageContainerNamePrefix)},
+				ID:    "some-id",
+				Names: []string{fmt.Sprintf("/%ssome-name", image.StageContainerNamePrefix)},
 			},
 			false,
 			nil,
+			newCleanupReport(),
+		),
+		Entry(
+			"should return full report in dry run mode if lock was acquired",
+			RunGCOptions{
+				DryRun: true,
+			},
+			image.Container{
+				ID:    "some-id",
+				Names: []string{fmt.Sprintf("/%ssome-name", image.ImportServerContainerNamePrefix)},
+			},
+			true,
+			nil,
+			cleanupReport{
+				ItemsDeleted:   []string{"some-id"},
+				SpaceReclaimed: 0,
+			},
+		),
+		Entry(
+			"should return empty report in dry run mode if lock was not acquired",
+			RunGCOptions{
+				DryRun: true,
+			},
+			image.Container{
+				ID:    "some-id",
+				Names: []string{fmt.Sprintf("/%ssome-name", image.ImportServerContainerNamePrefix)},
+			},
+			false,
+			nil,
+			newCleanupReport(),
 		),
 	)
 
@@ -312,12 +337,14 @@ var _ = Describe("LocalBackendCleaner", func() {
 		})
 	})
 
-	DescribeTable("safeCleanupWerfImages",
-		func(ctx SpecContext, runOpts RunGCOptions) {
+	DescribeTable("cleanupWerfImages",
+		func(ctx context.Context, vu volumeutils.VolumeUsage, imgList image.ImagesList, vuStub volumeutils.VolumeUsage, rmiRefs []string, expectedReport cleanupReport) {
+			ctx = logging.WithLogger(ctx)
+
 			backend.EXPECT().Images(ctx, buildImagesOptions(
 				filter.DanglingFalse.ToPair(),
 				util.NewPair("label", image.WerfLabel),
-			)).Return(image.ImagesList{}, nil)
+			)).Return(imgList, nil)
 
 			backend.EXPECT().Images(ctx, buildImagesOptions(
 				filter.DanglingFalse.ToPair(),
@@ -327,32 +354,13 @@ var _ = Describe("LocalBackendCleaner", func() {
 
 			stubs.StubFunc(&cleaner.werfGetWerfLastRunAtV1_1, time.Unix(1, 0), nil)
 
-			report, err := cleaner.safeCleanupWerfImages(ctx, runOpts, volumeutils.VolumeUsage{}, 0)
-
-			Expect(err).To(Succeed())
-			Expect(report).To(Equal(newCleanupReport()))
-		},
-		Entry(
-			"should call backend.Images() multiple times and return result if opts.DryRun=true",
-			RunGCOptions{
-				DryRun: true,
-			},
-		),
-		Entry(
-			"should call backend.Images() multiple times and call cleanup.doSafeCleanupWerfImages() if opts.DryRun=false",
-			RunGCOptions{},
-		),
-	)
-
-	DescribeTable("doSafeCleanupWerfImages",
-		func(ctx SpecContext, vu volumeutils.VolumeUsage, imgList image.ImagesList, vuStub volumeutils.VolumeUsage, rmiRefs []string, expectedReport cleanupReport) {
 			if len(rmiRefs) > 0 {
 				backend.EXPECT().Rmi(ctx, gomock.AnyOf(toAnySlice(rmiRefs)...), container_backend.RmiOpts{}).Return(nil).Times(3)
 			}
 
 			stubs.StubFunc(&cleaner.volumeutilsGetVolumeUsageByPath, vuStub, nil)
 
-			report, err := cleaner.doSafeCleanupWerfImages(ctx, RunGCOptions{}, vu, 40.00, imgList)
+			report, err := cleaner.cleanupWerfImages(ctx, RunGCOptions{}, vu, 40.00)
 			Expect(err).To(Succeed())
 			Expect(report).To(Equal(expectedReport))
 		},
@@ -410,6 +418,9 @@ var _ = Describe("LocalBackendCleaner", func() {
 				Times(len(acquiredLocks))
 
 			rmiRefs := lo.Filter(img.RepoTags, func(ref string, _ int) bool {
+				if runOpts.DryRun {
+					return false
+				}
 				if len(lockNames) == 0 {
 					return true
 				}
@@ -436,7 +447,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 			false,
 		),
 		Entry(
-			"should return (true,nil) if repo has one tag '<none>:<none>'",
+			"should return (true,nil) if img has one tag '<none>:<none>'",
 			RunGCOptions{},
 			image.Summary{
 				RepoTags: []string{"<none>:<none>"},
@@ -447,7 +458,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 			true,
 		),
 		Entry(
-			"should return (false,nil) if repo has one tag '<none>:<none>' and rmiErr!=nil",
+			"should return (false,nil) if img has one tag '<none>:<none>' and rmiErr!=nil",
 			RunGCOptions{},
 			image.Summary{
 				RepoTags: []string{"<none>:<none>"},
@@ -458,7 +469,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 			false,
 		),
 		Entry(
-			"should return (false,nil) if repo has one tag but the tag is locked",
+			"should return (false,nil) if img has one tag but this tag is locked",
 			RunGCOptions{},
 			image.Summary{
 				RepoTags: []string{"locked-tag"},
@@ -471,8 +482,25 @@ var _ = Describe("LocalBackendCleaner", func() {
 			false,
 		),
 		Entry(
-			"should return (false,nil) if repo has one tag and the tag is not locked",
+			"should return (false,nil) if img has one tag and this tag is not locked",
 			RunGCOptions{},
+			image.Summary{
+				RepoTags: []string{"free-tag"},
+			},
+			[]string{
+				container_backend.ImageLockName("free-tag"),
+			},
+			[]string{
+				container_backend.ImageLockName("free-tag"),
+			},
+			nil,
+			true,
+		),
+		Entry(
+			"should return (true,nil) in dryRun mode if img has one tag and this tag is not locked",
+			RunGCOptions{
+				DryRun: true,
+			},
 			image.Summary{
 				RepoTags: []string{"free-tag"},
 			},
@@ -544,10 +572,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 					image.ContainerFilter{Name: image.ImportServerContainerNamePrefix},
 				)).Return(containers, nil),
 
-				locker.EXPECT().Acquire(container_backend.ContainerLockName(containers[0].Names[0][1:]), lockgate.AcquireOptions{NonBlocking: true}).Return(true, lockgate.LockHandle{}, nil),
-				locker.EXPECT().Release(lockgate.LockHandle{}).Return(nil),
-
-				backend.EXPECT().Rm(ctx, containers[0].ID, container_backend.RmOpts{Force: options.Force}).Return(nil),
+				locker.EXPECT().Acquire(container_backend.ContainerLockName(werfContainerName(containers[0])), lockgate.AcquireOptions{NonBlocking: true}).Return(false, lockgate.LockHandle{}, nil),
 
 				// list and remove werf images
 				backend.EXPECT().Images(ctx, buildImagesOptions(
@@ -574,4 +599,11 @@ func toAnySlice[T any](s []T) []any {
 	return lo.Map(s, func(item T, _ int) any {
 		return any(item)
 	})
+}
+
+func convBoolToInt(v bool) int {
+	if v {
+		return 1
+	}
+	return 0
 }

@@ -30,12 +30,3 @@ func mapImageListToCleanupReport(list image.ImagesList) cleanupReport {
 	}
 	return report
 }
-
-func mapContainerListToCleanupReport(list image.ContainerList) cleanupReport {
-	report := newCleanupReport()
-	report.ItemsDeleted = make([]string, 0, len(list))
-	for _, container := range list {
-		report.ItemsDeleted = append(report.ItemsDeleted, container.ID)
-	}
-	return report
-}
