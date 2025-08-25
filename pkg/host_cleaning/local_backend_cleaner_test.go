@@ -127,7 +127,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 
 			report, err := cleaner.pruneImages(ctx, RunGCOptions{})
 			Expect(err).To(Equal(err0))
-			Expect(report).To(Equal(newCleanupReport(0)))
+			Expect(report).To(Equal(newCleanupReport()))
 		})
 		It("should return err=nil and empty report if opts.DryRun=false calling backend.PruneImages() which returns pruneErr=ErrImageUsedByContainer", func(ctx context.Context) {
 			ctx = logging.WithLogger(ctx)
@@ -136,7 +136,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 
 			report, err := cleaner.pruneImages(ctx, RunGCOptions{})
 			Expect(err).To(Succeed())
-			Expect(report).To(Equal(newCleanupReport(0)))
+			Expect(report).To(Equal(newCleanupReport()))
 		})
 		It("should return err=nil and empty report if opts.DryRun=false calling backend.PruneImages() which returns pruneErr=ErrPruneIsAlreadyRunning", func(ctx context.Context) {
 			ctx = logging.WithLogger(ctx)
@@ -145,7 +145,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 
 			report, err := cleaner.pruneImages(ctx, RunGCOptions{})
 			Expect(err).To(Succeed())
-			Expect(report).To(Equal(newCleanupReport(0)))
+			Expect(report).To(Equal(newCleanupReport()))
 		})
 		It("should return err=nil and full report if opts.DryRun=false calling backend.PruneImages() which returns pruneErr=nil", func(ctx SpecContext) {
 			pruneReport := prune.Report{
@@ -165,7 +165,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 				DryRun: true,
 			})
 			Expect(errors.Is(err, errOptionDryRunNotSupported)).To(BeTrue())
-			Expect(report).To(Equal(newCleanupReport(0)))
+			Expect(report).To(Equal(newCleanupReport()))
 		})
 		It("should return err=nil and empty report if opts.DryRun=false calling backend.PruneVolumes() which returns returns pruneErr=ErrPruneIsAlreadyRunning", func(ctx context.Context) {
 			ctx = logging.WithLogger(ctx)
@@ -174,7 +174,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 
 			report, err := cleaner.pruneVolumes(ctx, RunGCOptions{})
 			Expect(err).To(Succeed())
-			Expect(report).To(Equal(newCleanupReport(0)))
+			Expect(report).To(Equal(newCleanupReport()))
 		})
 		It("should return err=some_err and empty report if opts.DryRun=false calling backend.PruneVolumes() which returns returns pruneErr=err", func(ctx SpecContext) {
 			err0 := errors.New("some_err")
@@ -182,7 +182,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 
 			report, err := cleaner.pruneVolumes(ctx, RunGCOptions{})
 			Expect(err).To(Equal(err0))
-			Expect(report).To(Equal(newCleanupReport(0)))
+			Expect(report).To(Equal(newCleanupReport()))
 		})
 		It("should return err=nil and full report if opts.DryRun=false calling backend.PruneVolumes() which returns pruneErr=nil", func(ctx SpecContext) {
 			pruneReport := prune.Report{
@@ -234,7 +234,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 			},
 			true,
 			container_backend.ErrCannotRemovePausedContainer,
-			newCleanupReport(0),
+			newCleanupReport(),
 		),
 		Entry(
 			"should not return err if backend.Rm() returns 'container is running' error",
@@ -245,7 +245,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 			},
 			true,
 			container_backend.ErrCannotRemoveRunningContainer,
-			newCleanupReport(0),
+			newCleanupReport(),
 		),
 		Entry(
 			"should not call backend.Rm() if lock was not acquired",
@@ -256,7 +256,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 			},
 			false,
 			nil,
-			newCleanupReport(0),
+			newCleanupReport(),
 		),
 		Entry(
 			"should return full report in dry run mode if lock was acquired",
@@ -285,7 +285,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 			},
 			false,
 			nil,
-			newCleanupReport(0),
+			newCleanupReport(),
 		),
 	)
 
@@ -399,7 +399,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 				TotalBytes: 1000,
 			},
 			[]string{},
-			newCleanupReport(0),
+			newCleanupReport(),
 		),
 	)
 

@@ -475,7 +475,7 @@ func (cleaner *LocalBackendCleaner) pruneImages(ctx context.Context, options Run
 	if options.DryRun {
 		list, err := cleaner.backend.Images(ctx, buildImagesOptions(filters.ToPairs()...))
 		if err != nil {
-			return newCleanupReport(0), err
+			return newCleanupReport(), err
 		}
 		return mapImageListToCleanupReport(list), nil
 	}
@@ -485,9 +485,9 @@ func (cleaner *LocalBackendCleaner) pruneImages(ctx context.Context, options Run
 	case errors.Is(err, container_backend.ErrImageUsedByContainer),
 		errors.Is(err, container_backend.ErrPruneIsAlreadyRunning):
 		logboek.Context(ctx).Info().LogF("NOTE: Ignore image pruning: %s\n", err.Error())
-		return newCleanupReport(0), nil
+		return newCleanupReport(), nil
 	case err != nil:
-		return newCleanupReport(0), err
+		return newCleanupReport(), err
 	}
 
 	return mapPruneReportToCleanupReport(report), err
@@ -498,7 +498,7 @@ func (cleaner *LocalBackendCleaner) pruneVolumes(ctx context.Context, options Ru
 	if options.DryRun {
 		// NOTE: Buildah does not give us a way to precalculate pruned size.
 		// NOTE: Docker does not give us a way to precalculate pruned size.
-		return newCleanupReport(0), errOptionDryRunNotSupported
+		return newCleanupReport(), errOptionDryRunNotSupported
 	}
 
 	report, err := cleaner.backend.PruneVolumes(ctx, prune.Options{})
@@ -506,9 +506,9 @@ func (cleaner *LocalBackendCleaner) pruneVolumes(ctx context.Context, options Ru
 	switch {
 	case errors.Is(err, container_backend.ErrPruneIsAlreadyRunning):
 		logboek.Context(ctx).Info().LogF("NOTE: Ignore volume pruning: %s\n", err.Error())
-		return newCleanupReport(0), nil
+		return newCleanupReport(), nil
 	case err != nil:
-		return newCleanupReport(0), err
+		return newCleanupReport(), err
 	}
 
 	return mapPruneReportToCleanupReport(report), err
@@ -517,10 +517,11 @@ func (cleaner *LocalBackendCleaner) pruneVolumes(ctx context.Context, options Ru
 func (cleaner *LocalBackendCleaner) cleanupWerfContainers(ctx context.Context, options RunGCOptions, vu volumeutils.VolumeUsage) (cleanupReport, error) {
 	containers, err := werfContainersByContainersOptions(ctx, cleaner.backend, buildContainersOptions())
 	if err != nil {
-		return newCleanupReport(0), fmt.Errorf("cannot get build containers: %w", err)
+		return newCleanupReport(), fmt.Errorf("cannot get build containers: %w", err)
 	}
 
-	report := newCleanupReport(len(containers))
+	report := newCleanupReport()
+	report.ItemsDeleted = make([]string, 0, len(containers))
 
 	for _, container := range containers {
 		containerName := werfContainerName(container)
@@ -531,7 +532,7 @@ func (cleaner *LocalBackendCleaner) cleanupWerfContainers(ctx context.Context, o
 		}
 
 		if ok, err := cleaner.isLocked(container_backend.ContainerLockName(containerName)); err != nil {
-			return newCleanupReport(0), fmt.Errorf("checking lock %q: %w", container_backend.ContainerLockName(containerName), err)
+			return newCleanupReport(), fmt.Errorf("checking lock %q: %w", container_backend.ContainerLockName(containerName), err)
 		} else if ok {
 			continue
 		}
@@ -569,10 +570,10 @@ func (cleaner *LocalBackendCleaner) cleanupWerfContainers(ctx context.Context, o
 func (cleaner *LocalBackendCleaner) cleanupWerfImages(ctx context.Context, options RunGCOptions, vu volumeutils.VolumeUsage, targetVolumeUsagePercentage float64) (cleanupReport, error) {
 	images, err := cleaner.werfImages(ctx)
 	if err != nil {
-		return newCleanupReport(0), err
+		return newCleanupReport(), err
 	}
 
-	report := newCleanupReport(0)
+	report := newCleanupReport()
 
 	tVu := targetVolumeUsagePercentage
 
