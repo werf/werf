@@ -203,6 +203,7 @@ func (cmdData *CmdData) SetupRenameChart(cmd *cobra.Command) {
 }
 
 func (cmdData *CmdData) SetupSkipImageSpecStage(cmd *cobra.Command) {
+	// TODO: deprecate?
 	cmdData.SkipImageSpecStage = new(bool)
 	cmd.Flags().BoolVarP(cmdData.SkipImageSpecStage, "skip-image-spec-stage", "", util.GetBoolEnvironmentDefaultFalse("WERF_SKIP_IMAGE_SPEC_STAGE"), `Force skipping "imageSpec" build stage (default $WERF_SKIP_IMAGE_SPEC_STAGE or false)`)
 }

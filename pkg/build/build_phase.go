@@ -1107,17 +1107,7 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 
 	if err := logboek.Context(ctx).Default().LogProcess("Store stage into %s", phase.Conveyor.StorageManager.GetStagesStorage().String()).DoError(func() error {
 		if stg.IsMutable() {
-			switch phase.Conveyor.StorageManager.GetStagesStorage().(type) {
-			case *storage.RepoStagesStorage:
-			default:
-				err := ErrMutableStageLocalStorage
-				if stg.Name() == stage.ImageSpec {
-					err = ErrMutableStageLocalStorageImageSpec
-				}
-				return fmt.Errorf("unable to build stage %q: %w", stg.Name(), err)
-			}
-
-			if err := stg.MutateImage(ctx, phase.Conveyor.StorageManager.GetStagesStorage().(*storage.RepoStagesStorage).DockerRegistry, phase.StagesIterator.PrevBuiltStage.GetStageImage(), stageImage); err != nil {
+			if err := stg.MutateImage(ctx, phase.Conveyor.StorageManager.GetStagesStorage(), phase.StagesIterator.PrevBuiltStage.GetStageImage(), stageImage); err != nil {
 				return fmt.Errorf("unable to mutate %s: %w", stg.Name(), err)
 			}
 		} else {
@@ -1130,7 +1120,6 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 		if err != nil || desc == nil {
 			return fmt.Errorf("unable to get stage %s digest %s image %s description from repo %s after stages has been stored into repo: %w", stg.LogDetailedName(), stg.GetDigest(), stageImage.Image.Name(), phase.Conveyor.StorageManager.GetStagesStorage().String(), err)
 		}
-
 		stageImage.Image.SetStageDesc(desc)
 		img.SetRebuilt(true)
 
