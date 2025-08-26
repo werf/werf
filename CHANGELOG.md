@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.47.4](https://github.com/werf/werf/compare/v2.47.3...v2.47.4) (2025-08-26)
+
+
+### Bug Fixes
+
+* **buildah,host-cleanup:** protect temp dangling images from parallel "werf host cleanup" process ([#7050](https://github.com/werf/werf/issues/7050)) ([d953ef2](https://github.com/werf/werf/commit/d953ef2949d770b091c2bb067a58413c16dbc25d))
+
 ## [2.47.3](https://github.com/werf/werf/compare/v2.47.2...v2.47.3) (2025-08-21)
 
 
