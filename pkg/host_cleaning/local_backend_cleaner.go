@@ -347,7 +347,7 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 		logboek.Context(ctx).LogF("Volume usage: %s / %s\n", humanize.Bytes(vu.UsedBytes), humanize.Bytes(vu.TotalBytes))
 		logboek.Context(ctx).LogF("Allowed percentage level exceeded: %s > %s — %s\n", utils.RedF("%0.2f%%", vu.Percentage()), utils.YellowF("%0.2f%%", options.AllowedStorageVolumeUsagePercentage), utils.RedF("HIGH VOLUME USAGE"))
 		logboek.Context(ctx).LogF("Target percentage level after cleanup: %0.2f%% - %0.2f%% (margin) = %s\n", options.AllowedStorageVolumeUsagePercentage, options.AllowedStorageVolumeUsageMarginPercentage, utils.BlueF("%0.2f%%", targetVolumeUsagePercentage))
-		logboek.Context(ctx).LogF("Needed to free: %s\n", utils.RedF("%s", humanize.Bytes(calcBytesToFree(vu, targetVolumeUsagePercentage))))
+		logboek.Context(ctx).LogF("Needed to free: %s\n", utils.RedF("%s", humanize.Bytes(vu.BytesToFree(targetVolumeUsagePercentage))))
 	})
 
 	vuBefore := vu
@@ -589,7 +589,7 @@ func (cleaner *LocalBackendCleaner) safeCleanupWerfImages(ctx context.Context, o
 	}
 
 	if options.DryRun {
-		n := countImagesToFree(images, 0, calcBytesToFree(vu, targetVolumeUsagePercentage))
+		n := countImagesToFree(images, 0, vu.BytesToFree(targetVolumeUsagePercentage))
 		if n == -1 {
 			return newCleanupReport(), nil
 		}
@@ -610,7 +610,7 @@ func (cleaner *LocalBackendCleaner) doSafeCleanupWerfImages(ctx context.Context,
 
 	tVu := targetVolumeUsagePercentage
 
-	for i, n := 0, countImagesToFree(images, 0, calcBytesToFree(vu, tVu)); n != -1; i, n = n+1, countImagesToFree(images, n+1, calcBytesToFree(vu, tVu)) {
+	for i, n := 0, countImagesToFree(images, 0, vu.BytesToFree(tVu)); n != -1; i, n = n+1, countImagesToFree(images, n+1, vu.BytesToFree(tVu)) {
 
 		for _, imgSummary := range images[i : n+1] {
 
@@ -712,13 +712,6 @@ func (cleaner *LocalBackendCleaner) isLocked(lockName string) (bool, error) {
 		return true, nil
 	}
 	return false, cleaner.locker.Release(lock)
-}
-
-func calcBytesToFree(vu volumeutils.VolumeUsage, targetVolumeUsagePercentage float64) uint64 {
-	diffPercentage := vu.Percentage() - targetVolumeUsagePercentage
-	allowedVolumeUsageToFree := math.Max(diffPercentage, 0)
-	bytesToFree := uint64((float64(vu.TotalBytes) / 100.0) * allowedVolumeUsageToFree)
-	return bytesToFree
 }
 
 func logDeletedItems(ctx context.Context, deletedItems []string) {

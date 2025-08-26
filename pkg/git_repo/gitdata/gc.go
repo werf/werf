@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"math"
 	"os"
 	"path/filepath"
 	"sort"
@@ -32,11 +33,6 @@ func ShouldRunAutoGC(ctx context.Context, allowedVolumeUsagePercentage float64) 
 	}
 
 	return vu.Percentage() > allowedVolumeUsagePercentage, nil
-}
-
-func getBytesToFree(vu volumeutils.VolumeUsage, targetVolumeUsagePercentage float64) uint64 {
-	allowedVolumeUsageToFree := vu.Percentage() - targetVolumeUsagePercentage
-	return uint64((float64(vu.TotalBytes) / 100.0) * allowedVolumeUsageToFree)
 }
 
 func RunGC(ctx context.Context, allowedVolumeUsagePercentage, allowedVolumeUsageMarginPercentage float64) error {
@@ -98,12 +94,9 @@ func RunGC(ctx context.Context, allowedVolumeUsagePercentage, allowedVolumeUsage
 		return fmt.Errorf("error getting volume usage by path %q: %w", werf.GetLocalCacheDir(), err)
 	}
 
-	targetVolumeUsagePercentage := allowedVolumeUsagePercentage - allowedVolumeUsageMarginPercentage
-	if targetVolumeUsagePercentage < 0 {
-		targetVolumeUsagePercentage = 0
-	}
+	targetVolumeUsagePercentage := math.Max(allowedVolumeUsagePercentage-allowedVolumeUsageMarginPercentage, 0)
 
-	bytesToFree := getBytesToFree(vu, targetVolumeUsagePercentage)
+	bytesToFree := vu.BytesToFree(targetVolumeUsagePercentage)
 
 	if vu.Percentage() <= allowedVolumeUsagePercentage {
 		logboek.Context(ctx).Default().LogBlock("Git data storage check").Do(func() {
