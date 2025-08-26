@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"strings"
 	"time"
 
 	"github.com/dustin/go-humanize"
@@ -65,28 +64,6 @@ func RunGC(ctx context.Context, allowedVolumeUsagePercentage, allowedVolumeUsage
 		cacheRoot := filepath.Join(werf.GetLocalCacheDir(), "git_repos")
 		if err := wipeCacheDirs(ctx, cacheRoot, keepCacheVersions); err != nil {
 			return fmt.Errorf("unable to wipe old git repos cache dirs in %q: %w", cacheRoot, err)
-		}
-
-		for _, dir := range []string{filepath.Join(cacheRoot, git_repo.GitReposCacheVersion), filepath.Join(cacheRoot, KeepGitRepoCacheVersionV1_1)} {
-			if _, err := os.Stat(dir); os.IsNotExist(err) {
-				continue
-			} else if err != nil {
-				return fmt.Errorf("error accessing dir %q: %w", dir, err)
-			}
-
-			files, err := ioutil.ReadDir(dir)
-			if err != nil {
-				return fmt.Errorf("error reading dir %q: %w", dir, err)
-			}
-
-			for _, finfo := range files {
-				if strings.HasSuffix(finfo.Name(), ".tmp") {
-					path := filepath.Join(dir, finfo.Name())
-					if err := os.RemoveAll(path); err != nil {
-						return fmt.Errorf("unable to remove %q: %w", path, err)
-					}
-				}
-			}
 		}
 	}
 
