@@ -1,6 +1,8 @@
 package docker
 
 import (
+	"bufio"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -288,4 +290,43 @@ func checkForUnsupportedOptions(ctx context.Context, args ...string) ([]string, 
 		borderIndex++
 	}
 	return args[:borderIndex], nil
+}
+
+func CliImageSaveToStream(ctx context.Context, imageName string) (io.ReadCloser, error) {
+	return apiCli(ctx).ImageSave(ctx, []string{imageName})
+}
+
+func CliLoadFromStream(ctx context.Context, input io.Reader) (string, error) {
+	loadResponse, err := apiCli(ctx).ImageLoad(ctx, input, true)
+	if err != nil {
+		return "", fmt.Errorf("load failed: %w", err)
+	}
+	defer loadResponse.Body.Close()
+
+	var loadResult struct {
+		Stream string `json:"stream"`
+	}
+	scanner := bufio.NewScanner(loadResponse.Body)
+	var digest string
+	for scanner.Scan() {
+		line := scanner.Text()
+		if err := json.Unmarshal([]byte(line), &loadResult); err != nil {
+			continue
+		}
+		if strings.Contains(loadResult.Stream, "Loaded image ID:") {
+			parts := strings.Split(loadResult.Stream, ": ")
+			if len(parts) == 2 {
+				digest = strings.TrimSpace(parts[1])
+			}
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		return "", fmt.Errorf("error get new digest: %w", err)
+	}
+
+	if digest == "" {
+		return "", fmt.Errorf("failed to get image digest: not found in output")
+	}
+
+	return digest, nil
 }

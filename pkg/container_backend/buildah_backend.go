@@ -1114,3 +1114,11 @@ func (backend *BuildahBackend) PruneImages(ctx context.Context, options prune.Op
 func (backend *BuildahBackend) PruneVolumes(_ context.Context, _ prune.Options) (prune.Report, error) {
 	return prune.Report{}, ErrUnsupportedFeature
 }
+
+func (backend *BuildahBackend) SaveImageToStream(ctx context.Context, imageName string) (io.ReadCloser, error) {
+	panic("not implemented")
+}
+
+func (backend *BuildahBackend) LoadImageFromStream(ctx context.Context, input io.Reader) (string, error) {
+	panic("not implemented")
+}
