@@ -150,6 +150,10 @@ func (c *StapelImageBase) validate(giterminismManager giterminism_manager.Interf
 		return newDetailedConfigError("`from: DOCKER_IMAGE`, `fromImage: IMAGE_NAME`, `fromArtifact: IMAGE_ARTIFACT_NAME` required!", nil, c.raw.doc)
 	}
 
+	if c.From == c.Name || c.raw.FromArtifact == c.Name || c.raw.FromImage == c.Name {
+		return newDetailedConfigError("conflict between `from`, `fromImage` or `fromArtifact` and image name: image cannot reference itself!", nil, c.raw.doc)
+	}
+
 	mountByTo := map[string]bool{}
 	for _, mount := range c.Mount {
 		_, exist := mountByTo[mount.To]
