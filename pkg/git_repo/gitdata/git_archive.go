@@ -49,8 +49,8 @@ func (entry *GitArchiveDesc) GetCacheBasePath() string {
 // │   │   └── ... (other archive files)
 // │   └── ... (other hash prefixes)
 // └── ... (other repository hashes)
-func GetGitArchivesAndRemoveInvalid(ctx context.Context, cacheVersionRoot string) ([]*GitArchiveDesc, error) {
-	var res []*GitArchiveDesc
+func GetGitArchivesAndRemoveInvalid(ctx context.Context, cacheVersionRoot string) ([]GitDataEntry, error) {
+	var res []GitDataEntry
 
 	fileStat, err := os.Stat(cacheVersionRoot)
 	if err != nil {

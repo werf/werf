@@ -50,8 +50,8 @@ func (entry *GitPatchDesc) GetCacheBasePath() string {
 // │   │   └── ... (other patch files)
 // │   └── ... (other hash groups)
 // └── ... (other repositories)
-func GetGitPatchesAndRemoveInvalid(ctx context.Context, cacheVersionRoot string) ([]*GitPatchDesc, error) {
-	var res []*GitPatchDesc
+func GetGitPatchesAndRemoveInvalid(ctx context.Context, cacheVersionRoot string) ([]GitDataEntry, error) {
+	var res []GitDataEntry
 
 	if _, err := os.Stat(cacheVersionRoot); os.IsNotExist(err) {
 		return nil, nil
