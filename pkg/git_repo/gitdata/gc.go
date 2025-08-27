@@ -35,7 +35,13 @@ func ShouldRunAutoGC(ctx context.Context, allowedVolumeUsagePercentage float64) 
 	return vu.Percentage() > allowedVolumeUsagePercentage, nil
 }
 
-func RunGC(ctx context.Context, allowedVolumeUsagePercentage, allowedVolumeUsageMarginPercentage float64) error {
+type RunGCOptions struct {
+	AllowedLocalCacheVolumeUsagePercentage       float64
+	AllowedLocalCacheVolumeUsageMarginPercentage float64
+	DryRun                                       bool
+}
+
+func RunGC(ctx context.Context, options RunGCOptions) error {
 	if lock, err := lockGC(ctx, false); err != nil {
 		return err
 	} else {
@@ -90,15 +96,15 @@ func RunGC(ctx context.Context, allowedVolumeUsagePercentage, allowedVolumeUsage
 		return fmt.Errorf("error getting volume usage by path %q: %w", werf.GetLocalCacheDir(), err)
 	}
 
-	targetVolumeUsagePercentage := math.Max(allowedVolumeUsagePercentage-allowedVolumeUsageMarginPercentage, 0)
+	targetVolumeUsagePercentage := math.Max(options.AllowedLocalCacheVolumeUsagePercentage-options.AllowedLocalCacheVolumeUsageMarginPercentage, 0)
 
 	bytesToFree := vu.BytesToFree(targetVolumeUsagePercentage)
 
-	if vu.Percentage() <= allowedVolumeUsagePercentage {
+	if vu.Percentage() <= options.AllowedLocalCacheVolumeUsagePercentage {
 		logboek.Context(ctx).Default().LogBlock("Git data storage check").Do(func() {
 			logboek.Context(ctx).Default().LogF("Werf local cache dir: %s\n", werf.GetLocalCacheDir())
 			logboek.Context(ctx).Default().LogF("Volume usage: %s / %s\n", humanize.Bytes(vu.UsedBytes), humanize.Bytes(vu.TotalBytes))
-			logboek.Context(ctx).Default().LogF("Allowed volume usage percentage: %s <= %s — %s\n", utils.GreenF("%0.2f%%", vu.Percentage()), utils.BlueF("%0.2f%%", allowedVolumeUsagePercentage), utils.GreenF("OK"))
+			logboek.Context(ctx).Default().LogF("Allowed volume usage percentage: %s <= %s — %s\n", utils.GreenF("%0.2f%%", vu.Percentage()), utils.BlueF("%0.2f%%", options.AllowedLocalCacheVolumeUsagePercentage), utils.GreenF("OK"))
 		})
 
 		return nil
@@ -107,8 +113,8 @@ func RunGC(ctx context.Context, allowedVolumeUsagePercentage, allowedVolumeUsage
 	logboek.Context(ctx).Default().LogBlock("Git data storage check").Do(func() {
 		logboek.Context(ctx).Default().LogF("Werf local cache dir: %s\n", werf.GetLocalCacheDir())
 		logboek.Context(ctx).Default().LogF("Volume usage: %s / %s\n", humanize.Bytes(vu.UsedBytes), humanize.Bytes(vu.TotalBytes))
-		logboek.Context(ctx).Default().LogF("Allowed percentage level exceeded: %s > %s — %s\n", utils.RedF("%0.2f%%", vu.Percentage()), utils.YellowF("%0.2f%%", allowedVolumeUsagePercentage), utils.RedF("HIGH VOLUME USAGE"))
-		logboek.Context(ctx).Default().LogF("Target percentage level after cleanup: %0.2f%% - %0.2f%% (margin) = %s\n", allowedVolumeUsagePercentage, allowedVolumeUsageMarginPercentage, utils.BlueF("%0.2f%%", targetVolumeUsagePercentage))
+		logboek.Context(ctx).Default().LogF("Allowed percentage level exceeded: %s > %s — %s\n", utils.RedF("%0.2f%%", vu.Percentage()), utils.YellowF("%0.2f%%", options.AllowedLocalCacheVolumeUsagePercentage), utils.RedF("HIGH VOLUME USAGE"))
+		logboek.Context(ctx).Default().LogF("Target percentage level after cleanup: %0.2f%% - %0.2f%% (margin) = %s\n", options.AllowedLocalCacheVolumeUsagePercentage, options.AllowedLocalCacheVolumeUsageMarginPercentage, utils.BlueF("%0.2f%%", targetVolumeUsagePercentage))
 		logboek.Context(ctx).Default().LogF("Needed to free: %s\n", utils.RedF("%s", humanize.Bytes(bytesToFree)))
 	})
 
@@ -165,6 +171,11 @@ func RunGC(ctx context.Context, allowedVolumeUsagePercentage, allowedVolumeUsage
 	for _, entry := range gitDataEntries {
 		for _, path := range entry.GetPaths() {
 			logboek.Context(ctx).LogF("Removing %q inside scope %q\n", path, entry.GetCacheBasePath())
+
+			if options.DryRun {
+				continue
+			}
+
 			if err := RemovePathWithEmptyParentDirsInsideScope(entry.GetCacheBasePath(), path); err != nil {
 				return fmt.Errorf("unable to remove %q: %w", path, err)
 			}
