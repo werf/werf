@@ -51,8 +51,8 @@ func (entry *GitWorktreeDesc) GetCacheBasePath() string {
 // │   │   │   └── ... (repository files)
 // │   │   └── ... (other worktrees)
 // └── ... (other cache versions)
-func GetGitWorktreesAndRemoveInvalid(ctx context.Context, cacheVersionRoot string) ([]*GitWorktreeDesc, error) {
-	var res []*GitWorktreeDesc
+func GetGitWorktreesAndRemoveInvalid(ctx context.Context, cacheVersionRoot string) ([]GitDataEntry, error) {
+	var res []GitDataEntry
 
 	for _, subdir := range []string{"local", "remote"} {
 		dir := filepath.Join(cacheVersionRoot, subdir)

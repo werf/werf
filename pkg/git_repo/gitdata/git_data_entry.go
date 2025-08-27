@@ -1,6 +1,11 @@
 package gitdata
 
-import "time"
+import (
+	"slices"
+	"time"
+
+	"github.com/samber/lo"
+)
 
 type GitDataEntry interface {
 	GetPaths() []string
@@ -9,26 +14,19 @@ type GitDataEntry interface {
 	GetCacheBasePath() string
 }
 
-type GitDataLruSort []GitDataEntry
-
-func (a GitDataLruSort) Len() int { return len(a) }
-func (a GitDataLruSort) Less(i, j int) bool {
-	return a[i].GetLastAccessAt().Before(a[j].GetLastAccessAt())
-}
-func (a GitDataLruSort) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
-
-func PreserveGitDataByLru(entries []GitDataEntry) []GitDataEntry {
-	var res []GitDataEntry
-
-	for _, entry := range entries {
-		if !ShouldPreserveGitDataEntryByLru(entry) {
-			res = append(res, entry)
-		}
-	}
-
-	return res
-}
-
-func ShouldPreserveGitDataEntryByLru(entry GitDataEntry) bool {
+func shouldPreserveGitDataEntryByLru(entry GitDataEntry) bool {
 	return time.Since(entry.GetLastAccessAt()) < 3*time.Hour
+}
+
+// keepGitDataByLru filters and sorts GitDataEntry entries based on the LRU.
+func keepGitDataByLru(entries []GitDataEntry) []GitDataEntry {
+	filteredEntries := lo.Filter(entries, func(entry GitDataEntry, _ int) bool {
+		return !shouldPreserveGitDataEntryByLru(entry)
+	})
+
+	slices.SortFunc(filteredEntries, func(a, b GitDataEntry) int {
+		return a.GetLastAccessAt().Compare(b.GetLastAccessAt())
+	})
+
+	return filteredEntries
 }
