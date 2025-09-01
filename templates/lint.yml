@@ -1,4 +1,9 @@
 .lint:
   stage: lint
   script:
+    - |
+      if grep -q '^[[:space:]]*toolchain' go.mod; then
+        echo "Error: go.mod must not contain a 'toolchain' directive"
+        exit 1
+      fi
     - task --yes -p lint
