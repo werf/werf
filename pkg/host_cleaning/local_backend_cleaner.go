@@ -475,7 +475,7 @@ func (cleaner *LocalBackendCleaner) pruneImages(ctx context.Context, options Run
 	if options.DryRun {
 		list, err := cleaner.backend.Images(ctx, buildImagesOptions(filters.ToPairs()...))
 		if err != nil {
-			return newCleanupReport(), err
+			return cleanupReport{}, err
 		}
 		return mapImageListToCleanupReport(list), nil
 	}
@@ -485,9 +485,9 @@ func (cleaner *LocalBackendCleaner) pruneImages(ctx context.Context, options Run
 	case errors.Is(err, container_backend.ErrImageUsedByContainer),
 		errors.Is(err, container_backend.ErrPruneIsAlreadyRunning):
 		logboek.Context(ctx).Info().LogF("NOTE: Ignore image pruning: %s\n", err.Error())
-		return newCleanupReport(), nil
+		return cleanupReport{}, nil
 	case err != nil:
-		return newCleanupReport(), err
+		return cleanupReport{}, err
 	}
 
 	return mapPruneReportToCleanupReport(report), err
@@ -498,7 +498,7 @@ func (cleaner *LocalBackendCleaner) pruneVolumes(ctx context.Context, options Ru
 	if options.DryRun {
 		// NOTE: Buildah does not give us a way to precalculate pruned size.
 		// NOTE: Docker does not give us a way to precalculate pruned size.
-		return newCleanupReport(), errOptionDryRunNotSupported
+		return cleanupReport{}, errOptionDryRunNotSupported
 	}
 
 	report, err := cleaner.backend.PruneVolumes(ctx, prune.Options{})
@@ -506,9 +506,9 @@ func (cleaner *LocalBackendCleaner) pruneVolumes(ctx context.Context, options Ru
 	switch {
 	case errors.Is(err, container_backend.ErrPruneIsAlreadyRunning):
 		logboek.Context(ctx).Info().LogF("NOTE: Ignore volume pruning: %s\n", err.Error())
-		return newCleanupReport(), nil
+		return cleanupReport{}, nil
 	case err != nil:
-		return newCleanupReport(), err
+		return cleanupReport{}, err
 	}
 
 	return mapPruneReportToCleanupReport(report), err
@@ -517,11 +517,13 @@ func (cleaner *LocalBackendCleaner) pruneVolumes(ctx context.Context, options Ru
 func (cleaner *LocalBackendCleaner) cleanupWerfContainers(ctx context.Context, options RunGCOptions, vu volumeutils.VolumeUsage) (cleanupReport, error) {
 	containers, err := werfContainersByContainersOptions(ctx, cleaner.backend, buildContainersOptions())
 	if err != nil {
-		return newCleanupReport(), fmt.Errorf("cannot get build containers: %w", err)
+		return cleanupReport{}, fmt.Errorf("cannot get build containers: %w", err)
 	}
 
-	report := newCleanupReport()
-	report.ItemsDeleted = make([]string, 0, len(containers))
+	report := cleanupReport{
+		ItemsDeleted:   make([]string, 0, len(containers)),
+		SpaceReclaimed: 0,
+	}
 
 	for _, container := range containers {
 		containerName := werfContainerName(container)
@@ -532,7 +534,7 @@ func (cleaner *LocalBackendCleaner) cleanupWerfContainers(ctx context.Context, o
 		}
 
 		if ok, err := cleaner.isLocked(container_backend.ContainerLockName(containerName)); err != nil {
-			return newCleanupReport(), fmt.Errorf("checking lock %q: %w", container_backend.ContainerLockName(containerName), err)
+			return cleanupReport{}, fmt.Errorf("checking lock %q: %w", container_backend.ContainerLockName(containerName), err)
 		} else if ok {
 			continue
 		}
@@ -564,16 +566,19 @@ func (cleaner *LocalBackendCleaner) cleanupWerfContainers(ctx context.Context, o
 		report.SpaceReclaimed = vu.UsedBytes - vuAfter.UsedBytes
 	}
 
-	return report, nil
+	return report.Normalize(), nil
 }
 
 func (cleaner *LocalBackendCleaner) cleanupWerfImages(ctx context.Context, options RunGCOptions, vu volumeutils.VolumeUsage, targetVolumeUsagePercentage float64) (cleanupReport, error) {
 	images, err := cleaner.werfImages(ctx)
 	if err != nil {
-		return newCleanupReport(), err
+		return cleanupReport{}, err
 	}
 
-	report := newCleanupReport()
+	report := cleanupReport{
+		ItemsDeleted:   make([]string, 0, len(images)),
+		SpaceReclaimed: 0,
+	}
 
 	tVu := targetVolumeUsagePercentage
 
@@ -616,7 +621,7 @@ func (cleaner *LocalBackendCleaner) cleanupWerfImages(ctx context.Context, optio
 		vu = vuAfter
 	}
 
-	return report, nil
+	return report.Normalize(), nil
 }
 
 func (cleaner *LocalBackendCleaner) removeImageByRepoTags(ctx context.Context, options RunGCOptions, imgSummary image.Summary) (bool, error) {
