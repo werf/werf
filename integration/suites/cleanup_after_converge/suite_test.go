@@ -9,6 +9,7 @@ import (
 
 	"github.com/werf/werf/v2/pkg/docker_registry"
 	"github.com/werf/werf/v2/pkg/storage"
+	"github.com/werf/werf/v2/pkg/werf"
 	"github.com/werf/werf/v2/test/pkg/suite_init"
 	"github.com/werf/werf/v2/test/pkg/utils"
 )
@@ -40,6 +41,8 @@ var (
 )
 
 var _ = BeforeEach(func(ctx SpecContext) {
+	Expect(werf.Init(SuiteData.TmpDir, "")).To(Succeed())
+
 	SuiteData.StagesStorage = utils.NewStagesStorage(ctx, SuiteData.K8sDockerRegistryRepo, "default", docker_registry.DockerRegistryOptions{})
 
 	containerRegistry, err := docker_registry.NewDockerRegistry(ctx, SuiteData.K8sDockerRegistryRepo, "", docker_registry.DockerRegistryOptions{})

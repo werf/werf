@@ -11,6 +11,7 @@ import (
 
 	"github.com/werf/werf/v2/pkg/docker_registry"
 	"github.com/werf/werf/v2/pkg/storage"
+	"github.com/werf/werf/v2/pkg/werf"
 	"github.com/werf/werf/v2/test/pkg/suite_init"
 	"github.com/werf/werf/v2/test/pkg/utils"
 )
@@ -48,6 +49,8 @@ var (
 
 func perImplementationBeforeEach(implementationName string) func(ctx SpecContext) {
 	return func(ctx SpecContext) {
+		Expect(werf.Init(SuiteData.TmpDir, "")).To(Succeed())
+
 		werfImplementationName := SuiteData.ContainerRegistryPerImplementation[implementationName].WerfImplementationName
 
 		repo := fmt.Sprintf("%s/%s", SuiteData.ContainerRegistryPerImplementation[implementationName].RegistryAddress, SuiteData.ProjectName)
