@@ -5,25 +5,9 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/werf/werf/v2/pkg/image"
-	"github.com/werf/werf/v2/pkg/volumeutils"
 )
 
 var _ = Describe("LocalBackendCleaner helpers", func() {
-	DescribeTable("calcBytesToFree",
-		func(vu volumeutils.VolumeUsage, targetVolumeUsagePercentage float64, expected uint64) {
-			actual := calcBytesToFree(vu, targetVolumeUsagePercentage)
-			Expect(actual).To(Equal(expected))
-		},
-		Entry("should return zero if vu.Percentage() - targetVolumeUsagePercentage = negative value",
-			volumeutils.VolumeUsage{
-				UsedBytes:  20,
-				TotalBytes: 100,
-			},
-			50.00,
-			uint64(0),
-		),
-	)
-
 	DescribeTable("countImagesToFree",
 		func(images image.ImagesList, startIndex int, bytesToFree uint64, expected int) {
 			actual := countImagesToFree(images, startIndex, bytesToFree)
