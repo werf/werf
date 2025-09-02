@@ -11,6 +11,7 @@ package mock
 
 import (
 	context "context"
+	"io"
 	reflect "reflect"
 
 	gomock "go.uber.org/mock/gomock"
@@ -448,4 +449,12 @@ func (m *MockContainerBackend) TagImageByName(ctx context.Context, img container
 func (mr *MockContainerBackendMockRecorder) TagImageByName(ctx, img any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TagImageByName", reflect.TypeOf((*MockContainerBackend)(nil).TagImageByName), ctx, img)
+}
+
+func (mr *MockContainerBackend) SaveImageToStream(ctx context.Context, imageName string) (io.ReadCloser, error) {
+	panic("not implemented")
+}
+
+func (mr *MockContainerBackend) LoadImageFromStream(ctx context.Context, input io.Reader) (string, error) {
+	panic("not implemented")
 }

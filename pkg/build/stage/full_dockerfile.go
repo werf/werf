@@ -396,7 +396,7 @@ func (s *FullDockerfileStage) GetDependencies(ctx context.Context, c Conveyor, _
 	return util.Sha256Hash(dependencies...), nil
 }
 
-func (s *FullDockerfileStage) MutateImage(_ context.Context, _ docker_registry.Interface, _, _ *StageImage) error {
+func (s *FullDockerfileStage) MutateImage(_ context.Context, _ ImageMutatorPusher, _, _ *StageImage) error {
 	panic("not implemented")
 }
 
