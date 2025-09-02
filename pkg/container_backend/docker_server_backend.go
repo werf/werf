@@ -16,6 +16,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/werf/common-go/pkg/util"
+	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/container_backend/info"
 	"github.com/werf/werf/v2/pkg/container_backend/prune"
@@ -24,10 +25,14 @@ import (
 	"github.com/werf/werf/v2/pkg/ssh_agent"
 )
 
-type DockerServerBackend struct{}
+type DockerServerBackend struct {
+	locker lockgate.Locker
+}
 
-func NewDockerServerBackend() *DockerServerBackend {
-	return &DockerServerBackend{}
+func NewDockerServerBackend(locker lockgate.Locker) *DockerServerBackend {
+	return &DockerServerBackend{
+		locker: locker,
+	}
 }
 
 func (backend *DockerServerBackend) Info(ctx context.Context) (info.Info, error) {
@@ -135,6 +140,15 @@ func (backend *DockerServerBackend) BuildDockerfile(ctx context.Context, _ []byt
 		return "", fmt.Errorf("unable to open context archive %q: %w", opts.BuildContextArchive.Path(), err)
 	}
 	defer contextReader.Close()
+
+	// We must protect 'tempID:latest' tag until "werf build" will assign the final tag to the image.
+	// Otherwise, parallel "werf host cleanup" can remove 'tempID:latest' tag and "werf build" will fail with the error.
+	// NOTE. The acquired lock will be released implicitly when "werf build" process exits.
+	tmpTag := fmt.Sprintf("%s:latest", tempID)
+	if _, _, err := backend.locker.Acquire(tmpTag, lockgate.AcquireOptions{}); err != nil {
+		return "", fmt.Errorf("unable to acquire lock for %q: %w", tmpTag, err)
+	}
+
 	return tempID, docker.CliBuild_LiveOutputWithCustomIn(ctx, contextReader, cliArgs...)
 }
 
