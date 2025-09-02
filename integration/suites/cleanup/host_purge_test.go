@@ -5,11 +5,14 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/werf/werf/v2/pkg/docker_registry"
+	"github.com/werf/werf/v2/pkg/werf"
 	"github.com/werf/werf/v2/test/pkg/utils"
 )
 
 var _ = Describe("host purge command", func() {
 	BeforeEach(func(ctx SpecContext) {
+		Expect(werf.Init(SuiteData.TmpDir, "")).To(Succeed())
+
 		SuiteData.StagesStorage = utils.NewStagesStorage(ctx, ":local", "default", docker_registry.DockerRegistryOptions{})
 
 		utils.CopyIn(utils.FixturePath("host_purge"), SuiteData.TestDirPath)
