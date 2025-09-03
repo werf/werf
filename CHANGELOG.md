@@ -1,5 +1,31 @@
 # Changelog
 
+## [2.47.5](https://github.com/werf/werf/compare/v2.47.4...v2.47.5) (2025-09-03)
+
+
+### Features
+
+* add warning for dev mode in ci ([#7046](https://github.com/werf/werf/issues/7046)) ([bd3ebd9](https://github.com/werf/werf/commit/bd3ebd9047d1ff338474786ac98119c29c3df35b))
+
+
+### Bug Fixes
+
+* **build, stapel:** restrict from to reference itself ([#7057](https://github.com/werf/werf/issues/7057)) ([6c09dcf](https://github.com/werf/werf/commit/6c09dcf06656331b09f21ae1d9bc6fdd98db3c27))
+* **build:** add from backward compatibility fix ([9610260](https://github.com/werf/werf/commit/9610260e01e7265fe4f38ec4cf2265d74fc50c0f))
+* **build:** add nameless image backward compatibility fix ([6c7e6d8](https://github.com/werf/werf/commit/6c7e6d88967855c9925f23ed09285704d8a69493))
+* **buildah,host-cleanup:** do requested changes ([fa0830a](https://github.com/werf/werf/commit/fa0830a30b941e8e9eaf0683890df3a6567a1f09))
+* **build:** reject stage that is no longer available ([dc0c5f4](https://github.com/werf/werf/commit/dc0c5f4ca1050493538f43d8d05565bc19058144))
+* **host-cleanup, docker:** protect "tempID:latest" docker tag from parallel "werf host cleanup" process ([#7049](https://github.com/werf/werf/issues/7049)) ([f465863](https://github.com/werf/werf/commit/f4658639b04178349742ae26da5c17048329063a))
+* **host-cleanup:** clarify cleanupReport using ([5e161d0](https://github.com/werf/werf/commit/5e161d036714111b299a11ec040710f3aef7163a))
+* **host-cleanup:** respect --dry-run option for gitdata gc ([8e3ae09](https://github.com/werf/werf/commit/8e3ae09a6f146f9266d61d0058c4e04b486fd7ef))
+* **host-cleanup:** respect host locks for containers cleanup ([18ae7f9](https://github.com/werf/werf/commit/18ae7f92bc52874ef453e7c4bc9abc8d8bb3d370))
+* **host-cleanup:** respect host locks for images cleanup ([a64d4ff](https://github.com/werf/werf/commit/a64d4ff6d8998412c5154f8d747581c66fa65b44))
+
+
+### Miscellaneous Chores
+
+* **release:** force release 2.47.5 ([8399ed0](https://github.com/werf/werf/commit/8399ed08802401fb29de86ef8a3d8bd71ac5eece))
+
 ## [2.47.4](https://github.com/werf/werf/compare/v2.47.3...v2.47.4) (2025-08-26)
 
 
