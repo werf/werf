@@ -7,13 +7,11 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"go.uber.org/mock/gomock"
 
 	"github.com/werf/kubedog/pkg/kube"
-	"github.com/werf/lockgate"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/image"
-	"github.com/werf/werf/v2/test/mock"
+	"github.com/werf/werf/v2/pkg/werf"
 	"github.com/werf/werf/v2/test/pkg/utils"
 	"github.com/werf/werf/v2/test/pkg/utils/liveexec"
 )
@@ -60,18 +58,14 @@ func getImageID(ctx context.Context, ref string, containerBackend container_back
 }
 
 var _ = Describe("Images dependencies", Label("e2e", "build", "extra"), func() {
-	var locker *mock.MockLocker
-
 	BeforeEach(func() {
 		Expect(kube.Init(kube.InitOptions{})).To(Succeed())
-
-		locker = mock.NewMockLocker(gomock.NewController(GinkgoT()))
-		locker.EXPECT().Acquire(gomock.Any(), lockgate.AcquireOptions{}).Return(true, lockgate.LockHandle{}, nil).AnyTimes()
+		Expect(werf.Init(SuiteData.TmpDir, "")).To(Succeed())
 	})
 
 	When("werf.yaml contains stapel and dockerfile images which used as dependencies in another stapel and dockerfile images", func() {
 		It("should successfully build images using specified dependencies", func(ctx SpecContext) {
-			containerBackend := container_backend.NewDockerServerBackend(locker)
+			containerBackend := container_backend.NewDockerServerBackend(werf.HostLocker().Locker())
 
 			SuiteData.CommitProjectWorktree(ctx, SuiteData.ProjectName, "_fixtures/images_dependencies/state0", "initial commit")
 			Expect(werfBuild(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{})).To(Succeed())
