@@ -89,8 +89,9 @@ func main() {
 func onShutdown(_ context.Context, desc graceful.TerminationDescriptor) {
 	if desc.Signal() != nil {
 		logging.Default(fmt.Sprintf("Signal: %s", desc.Signal()))
+		os.Exit(desc.ExitCode())
 	} else if desc.Err() != nil {
 		logging.Error(desc.Err().Error())
+		os.Exit(desc.ExitCode())
 	}
-	os.Exit(desc.ExitCode())
 }
