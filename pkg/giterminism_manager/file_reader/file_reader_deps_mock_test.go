@@ -10,6 +10,7 @@
 package file_reader_test
 
 import (
+	context "context"
 	os "os"
 	filepath "path/filepath"
 	reflect "reflect"
@@ -167,17 +168,17 @@ func (mr *MocksharedOptionsMockRecorder) Dev() *gomock.Call {
 }
 
 // HeadCommit mocks base method.
-func (m *MocksharedOptions) HeadCommit() string {
+func (m *MocksharedOptions) HeadCommit(ctx context.Context) string {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "HeadCommit")
+	ret := m.ctrl.Call(m, "HeadCommit", ctx)
 	ret0, _ := ret[0].(string)
 	return ret0
 }
 
 // HeadCommit indicates an expected call of HeadCommit.
-func (mr *MocksharedOptionsMockRecorder) HeadCommit() *gomock.Call {
+func (mr *MocksharedOptionsMockRecorder) HeadCommit(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HeadCommit", reflect.TypeOf((*MocksharedOptions)(nil).HeadCommit))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HeadCommit", reflect.TypeOf((*MocksharedOptions)(nil).HeadCommit), ctx)
 }
 
 // LocalGitRepo mocks base method.

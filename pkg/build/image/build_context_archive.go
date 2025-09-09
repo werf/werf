@@ -47,7 +47,7 @@ func (a *BuildContextArchive) Create(ctx context.Context, opts container_backend
 			path_matcher.PathMatcherOptions{BasePath: contextPathRelativeToGitWorkTree}),
 			dockerIgnorePathMatcher,
 		),
-		Commit: a.giterminismMgr.HeadCommit(),
+		Commit: a.giterminismMgr.HeadCommit(ctx),
 	})
 	if err != nil {
 		return fmt.Errorf("unable to get or create archive: %w", err)

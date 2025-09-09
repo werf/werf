@@ -50,16 +50,16 @@ var _ = Describe("cleanup command", func() {
 		})
 
 		It("should remove all stages", func(ctx SpecContext) {
-			Expect(StagesCount()).Should(Equal(expectedStageCountAfterFirstBuild))
+			Expect(StagesCount(ctx)).Should(Equal(expectedStageCountAfterFirstBuild))
 			runCommand(ctx, "cleanup")
-			Expect(StagesCount()).Should(Equal(0))
+			Expect(StagesCount(ctx)).Should(Equal(0))
 		})
 
 		It("should keep all stages", func(ctx SpecContext) {
 			runCommand(ctx, "converge", "--require-built-images")
-			Expect(StagesCount()).Should(Equal(expectedStageCountAfterFirstBuild))
+			Expect(StagesCount(ctx)).Should(Equal(expectedStageCountAfterFirstBuild))
 			runCommand(ctx, "cleanup")
-			Expect(StagesCount()).Should(Equal(expectedStageCountAfterFirstBuild))
+			Expect(StagesCount(ctx)).Should(Equal(expectedStageCountAfterFirstBuild))
 		})
 
 		Context("artifact", func() {
@@ -71,26 +71,26 @@ var _ = Describe("cleanup command", func() {
 				SuiteData.Stubs.SetEnv("ARTIFACT_DATA", artifactData1)
 				runCommand(ctx, "converge")
 
-				Expect(StagesCount()).Should(Equal(expectedStageCountAfterFirstBuild + 2))
-				Expect(len(ImportMetadataIDs())).Should(Equal(2))
+				Expect(StagesCount(ctx)).Should(Equal(expectedStageCountAfterFirstBuild + 2))
+				Expect(len(ImportMetadataIDs(ctx))).Should(Equal(2))
 
 				runCommand(ctx, "cleanup")
 
-				Expect(StagesCount()).Should(Equal(expectedStageCountAfterFirstBuild + 2))
-				Expect(len(ImportMetadataIDs())).Should(Equal(2))
+				Expect(StagesCount(ctx)).Should(Equal(expectedStageCountAfterFirstBuild + 2))
+				Expect(len(ImportMetadataIDs(ctx))).Should(Equal(2))
 			})
 
 			It("should keep one", func(ctx SpecContext) {
 				SuiteData.Stubs.SetEnv("ARTIFACT_DATA", artifactData2)
 				runCommand(ctx, "converge")
 
-				Expect(StagesCount()).Should(Equal(expectedStageCountAfterFirstBuild + 3))
-				Expect(len(ImportMetadataIDs())).Should(Equal(2))
+				Expect(StagesCount(ctx)).Should(Equal(expectedStageCountAfterFirstBuild + 3))
+				Expect(len(ImportMetadataIDs(ctx))).Should(Equal(2))
 
 				runCommand(ctx, "cleanup")
 
-				Expect(StagesCount()).Should(Equal(expectedStageCountAfterFirstBuild))
-				Expect(len(ImportMetadataIDs())).Should(Equal(1))
+				Expect(StagesCount(ctx)).Should(Equal(expectedStageCountAfterFirstBuild))
+				Expect(len(ImportMetadataIDs(ctx))).Should(Equal(1))
 			})
 		})
 	})

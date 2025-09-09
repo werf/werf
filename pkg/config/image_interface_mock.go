@@ -53,6 +53,20 @@ func (mr *MockImageInterfaceMockRecorder) CacheVersion() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CacheVersion", reflect.TypeOf((*MockImageInterface)(nil).CacheVersion))
 }
 
+// GetFrom mocks base method.
+func (m *MockImageInterface) GetFrom() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetFrom")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// GetFrom indicates an expected call of GetFrom.
+func (mr *MockImageInterfaceMockRecorder) GetFrom() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFrom", reflect.TypeOf((*MockImageInterface)(nil).GetFrom))
+}
+
 // GetName mocks base method.
 func (m *MockImageInterface) GetName() string {
 	m.ctrl.T.Helper()
@@ -103,22 +117,22 @@ func (m *MockImageInterface) Platform() []string {
 	return ret0
 }
 
-func (m *MockImageInterface) GetFrom() string {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetFrom")
-	ret0, _ := ret[0].(string)
-	return ret0
+// Platform indicates an expected call of Platform.
+func (mr *MockImageInterfaceMockRecorder) Platform() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Platform", reflect.TypeOf((*MockImageInterface)(nil).Platform))
 }
 
+// SetFromExternal mocks base method.
 func (m *MockImageInterface) SetFromExternal() {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "SetFromExternal")
 }
 
-// Platform indicates an expected call of Platform.
-func (mr *MockImageInterfaceMockRecorder) Platform() *gomock.Call {
+// SetFromExternal indicates an expected call of SetFromExternal.
+func (mr *MockImageInterfaceMockRecorder) SetFromExternal() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Platform", reflect.TypeOf((*MockImageInterface)(nil).Platform))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetFromExternal", reflect.TypeOf((*MockImageInterface)(nil).SetFromExternal))
 }
 
 // dependsOn mocks base method.

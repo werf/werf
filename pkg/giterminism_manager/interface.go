@@ -12,7 +12,7 @@ type Interface interface {
 	FileReader() FileReader
 	Inspector() Inspector
 	LocalGitRepo() git_repo.GitRepo
-	HeadCommit() string
+	HeadCommit(ctx context.Context) string
 	ProjectDir() string
 	RelativeToGitProjectDir() string
 	LooseGiterminism() bool

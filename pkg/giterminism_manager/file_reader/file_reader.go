@@ -1,6 +1,7 @@
 package file_reader
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 
@@ -47,7 +48,7 @@ type sharedOptions interface {
 	ProjectDir() string
 	RelativeToGitProjectDir() string
 	LocalGitRepo() git_repo.GitRepo
-	HeadCommit() string
+	HeadCommit(ctx context.Context) string
 	LooseGiterminism() bool
 	Dev() bool
 }

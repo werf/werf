@@ -374,7 +374,7 @@ func funcMap(ctx context.Context, tmpl *template.Template, giterminismManager gi
 		}
 
 		envVarName := fmt.Sprint(value)
-		if err := giterminismManager.Inspector().InspectConfigGoTemplateRenderingEnv(context.Background(), envVarName); err != nil {
+		if err := giterminismManager.Inspector().InspectConfigGoTemplateRenderingEnv(ctx, envVarName); err != nil {
 			return "", err
 		}
 

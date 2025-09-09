@@ -116,7 +116,7 @@ func runSynchronization(ctx context.Context) error {
 			namespace := "werf-synchronization"
 			configMapName := fmt.Sprintf("werf-%s", clientID)
 
-			if _, err := kubeutils.GetOrCreateConfigMapWithNamespaceIfNotExists(kube.Client, namespace, configMapName, true); err != nil {
+			if _, err := kubeutils.GetOrCreateConfigMapWithNamespaceIfNotExists(ctx, kube.Client, namespace, configMapName, true); err != nil {
 				return nil, fmt.Errorf("unable to create cm/%s in ns/%s: %w", configMapName, namespace, err)
 			}
 

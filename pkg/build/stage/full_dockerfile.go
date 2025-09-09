@@ -608,7 +608,7 @@ func (s *FullDockerfileStage) PrepareImage(ctx context.Context, c Conveyor, cb c
 
 	stageImage.Builder.DockerfileBuilder().SetBuildContextArchive(buildContextArchive)
 
-	stageImage.Builder.DockerfileBuilder().AppendLabels(fmt.Sprintf("%s=%s", image.WerfProjectRepoCommitLabel, c.GiterminismManager().HeadCommit()))
+	stageImage.Builder.DockerfileBuilder().AppendLabels(fmt.Sprintf("%s=%s", image.WerfProjectRepoCommitLabel, c.GiterminismManager().HeadCommit(ctx)))
 
 	for _, dep := range s.dependencies {
 		depStageID := c.GetStageIDForLastImageStage(s.targetPlatform, dep.ImageName)
@@ -720,7 +720,7 @@ func (s *FullDockerfileStage) calculateFilesChecksumWithGit(ctx context.Context,
 			),
 			AllFiles: false,
 		},
-		Commit: giterminismManager.HeadCommit(),
+		Commit: giterminismManager.HeadCommit(ctx),
 	})
 	if err != nil {
 		return "", err

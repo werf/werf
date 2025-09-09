@@ -11,6 +11,7 @@ import (
 	helm_v3 "github.com/werf/3p-helm-for-werf-helm/cmd/helm"
 	chart "github.com/werf/3p-helm-for-werf-helm/pkg/chart"
 	secrets_manager "github.com/werf/nelm-for-werf-helm/pkg/secrets_manager"
+	"github.com/werf/werf/v2/pkg/logging"
 )
 
 var _ = Describe("Bundle", func() {
@@ -18,8 +19,9 @@ var _ = Describe("Bundle", func() {
 		os.Setenv("WERF_SECRET_KEY", "bfd966688bbe64c1986a356be2d6ba0a")
 	})
 
-	It("should decode secret values file from the chart", func() {
-		ctx := context.Background()
+	It("should decode secret values file from the chart", func(ctx context.Context) {
+		ctx = logging.WithLogger(ctx)
+
 		bundleDir := ""
 		secretsManager := secrets_manager.NewSecretsManager(secrets_manager.SecretsManagerOptions{})
 
@@ -54,8 +56,9 @@ testsecrets:
 		}))
 	})
 
-	It("should load from local FS secret values file specified with explicit option and merge with secrets included into the bundle", func() {
-		ctx := context.Background()
+	It("should load from local FS secret values file specified with explicit option and merge with secrets included into the bundle", func(ctx context.Context) {
+		ctx = logging.WithLogger(ctx)
+
 		bundleDir := ""
 
 		secretsManager := secrets_manager.NewSecretsManager(secrets_manager.SecretsManagerOptions{})

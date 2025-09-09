@@ -47,37 +47,37 @@ AppendNewImages:
 func DeployedDockerImages(ctx context.Context, kubernetesClient kubernetes.Interface, kubernetesNamespace string) ([]*DeployedImage, error) {
 	var deployedDockerImages []*DeployedImage
 
-	images, err := getPodsImages(kubernetesClient, kubernetesNamespace)
+	images, err := getPodsImages(ctx, kubernetesClient, kubernetesNamespace)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get Pods images: %w", err)
 	}
 	deployedDockerImages = AppendDeployedImages(deployedDockerImages, images...)
 
-	images, err = getReplicationControllersImages(kubernetesClient, kubernetesNamespace)
+	images, err = getReplicationControllersImages(ctx, kubernetesClient, kubernetesNamespace)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get ReplicationControllers images: %w", err)
 	}
 	deployedDockerImages = AppendDeployedImages(deployedDockerImages, images...)
 
-	images, err = getDeploymentsImages(kubernetesClient, kubernetesNamespace)
+	images, err = getDeploymentsImages(ctx, kubernetesClient, kubernetesNamespace)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get Deployments images: %w", err)
 	}
 	deployedDockerImages = AppendDeployedImages(deployedDockerImages, images...)
 
-	images, err = getStatefulSetsImages(kubernetesClient, kubernetesNamespace)
+	images, err = getStatefulSetsImages(ctx, kubernetesClient, kubernetesNamespace)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get StatefulSets images: %w", err)
 	}
 	deployedDockerImages = AppendDeployedImages(deployedDockerImages, images...)
 
-	images, err = getDaemonSetsImages(kubernetesClient, kubernetesNamespace)
+	images, err = getDaemonSetsImages(ctx, kubernetesClient, kubernetesNamespace)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get DaemonSets images: %w", err)
 	}
 	deployedDockerImages = AppendDeployedImages(deployedDockerImages, images...)
 
-	images, err = getReplicaSetsImages(kubernetesClient, kubernetesNamespace)
+	images, err = getReplicaSetsImages(ctx, kubernetesClient, kubernetesNamespace)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get ReplicaSets images: %w", err)
 	}
@@ -98,9 +98,9 @@ func DeployedDockerImages(ctx context.Context, kubernetesClient kubernetes.Inter
 	return deployedDockerImages, nil
 }
 
-func getPodsImages(kubernetesClient kubernetes.Interface, kubernetesNamespace string) ([]*DeployedImage, error) {
+func getPodsImages(ctx context.Context, kubernetesClient kubernetes.Interface, kubernetesNamespace string) ([]*DeployedImage, error) {
 	var images []*DeployedImage
-	list, err := kubernetesClient.CoreV1().Pods(kubernetesNamespace).List(context.Background(), metav1.ListOptions{})
+	list, err := kubernetesClient.CoreV1().Pods(kubernetesNamespace).List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -120,9 +120,9 @@ func getPodsImages(kubernetesClient kubernetes.Interface, kubernetesNamespace st
 	return images, nil
 }
 
-func getReplicationControllersImages(kubernetesClient kubernetes.Interface, kubernetesNamespace string) ([]*DeployedImage, error) {
+func getReplicationControllersImages(ctx context.Context, kubernetesClient kubernetes.Interface, kubernetesNamespace string) ([]*DeployedImage, error) {
 	var images []*DeployedImage
-	list, err := kubernetesClient.CoreV1().ReplicationControllers(kubernetesNamespace).List(context.Background(), metav1.ListOptions{})
+	list, err := kubernetesClient.CoreV1().ReplicationControllers(kubernetesNamespace).List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -142,9 +142,9 @@ func getReplicationControllersImages(kubernetesClient kubernetes.Interface, kube
 	return images, nil
 }
 
-func getDeploymentsImages(kubernetesClient kubernetes.Interface, kubernetesNamespace string) ([]*DeployedImage, error) {
+func getDeploymentsImages(ctx context.Context, kubernetesClient kubernetes.Interface, kubernetesNamespace string) ([]*DeployedImage, error) {
 	var images []*DeployedImage
-	list, err := kubernetesClient.AppsV1().Deployments(kubernetesNamespace).List(context.Background(), metav1.ListOptions{})
+	list, err := kubernetesClient.AppsV1().Deployments(kubernetesNamespace).List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -164,9 +164,9 @@ func getDeploymentsImages(kubernetesClient kubernetes.Interface, kubernetesNames
 	return images, nil
 }
 
-func getStatefulSetsImages(kubernetesClient kubernetes.Interface, kubernetesNamespace string) ([]*DeployedImage, error) {
+func getStatefulSetsImages(ctx context.Context, kubernetesClient kubernetes.Interface, kubernetesNamespace string) ([]*DeployedImage, error) {
 	var images []*DeployedImage
-	list, err := kubernetesClient.AppsV1().StatefulSets(kubernetesNamespace).List(context.Background(), metav1.ListOptions{})
+	list, err := kubernetesClient.AppsV1().StatefulSets(kubernetesNamespace).List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -186,9 +186,9 @@ func getStatefulSetsImages(kubernetesClient kubernetes.Interface, kubernetesName
 	return images, nil
 }
 
-func getDaemonSetsImages(kubernetesClient kubernetes.Interface, kubernetesNamespace string) ([]*DeployedImage, error) {
+func getDaemonSetsImages(ctx context.Context, kubernetesClient kubernetes.Interface, kubernetesNamespace string) ([]*DeployedImage, error) {
 	var images []*DeployedImage
-	list, err := kubernetesClient.AppsV1().DaemonSets(kubernetesNamespace).List(context.Background(), metav1.ListOptions{})
+	list, err := kubernetesClient.AppsV1().DaemonSets(kubernetesNamespace).List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -208,9 +208,9 @@ func getDaemonSetsImages(kubernetesClient kubernetes.Interface, kubernetesNamesp
 	return images, nil
 }
 
-func getReplicaSetsImages(kubernetesClient kubernetes.Interface, kubernetesNamespace string) ([]*DeployedImage, error) {
+func getReplicaSetsImages(ctx context.Context, kubernetesClient kubernetes.Interface, kubernetesNamespace string) ([]*DeployedImage, error) {
 	var images []*DeployedImage
-	list, err := kubernetesClient.AppsV1().ReplicaSets(kubernetesNamespace).List(context.Background(), metav1.ListOptions{})
+	list, err := kubernetesClient.AppsV1().ReplicaSets(kubernetesNamespace).List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -231,23 +231,23 @@ func getReplicaSetsImages(kubernetesClient kubernetes.Interface, kubernetesNames
 }
 
 func getCronJobsImages(ctx context.Context, kubernetesClient kubernetes.Interface, kubernetesNamespace string) ([]*DeployedImage, error) {
-	images, err := getCronJobsImagesBatchV1(kubernetesClient, kubernetesNamespace)
+	images, err := getCronJobsImagesBatchV1(ctx, kubernetesClient, kubernetesNamespace)
 	if apierrors.IsNotFound(err) {
 		logboek.Context(ctx).Warn().LogF("\n")
 		logboek.Context(ctx).Warn().LogF("WARNING: Unable to query CronJobs in batch/v1: %s\n", err)
 		logboek.Context(ctx).Warn().LogF("WARNING: Will fallback to CronJobs in batch/v1beta1, which is not officially supported anymore\n")
 
-		if images, fallbackErr := getCronJobsImagesBatchV1beta1(kubernetesClient, kubernetesNamespace); fallbackErr == nil {
+		if images, fallbackErr := getCronJobsImagesBatchV1beta1(ctx, kubernetesClient, kubernetesNamespace); fallbackErr == nil {
 			return images, nil
 		}
 	}
 	return images, err
 }
 
-func getCronJobsImagesBatchV1(kubernetesClient kubernetes.Interface, kubernetesNamespace string) ([]*DeployedImage, error) {
+func getCronJobsImagesBatchV1(ctx context.Context, kubernetesClient kubernetes.Interface, kubernetesNamespace string) ([]*DeployedImage, error) {
 	var images []*DeployedImage
 
-	list, err := kubernetesClient.BatchV1().CronJobs(kubernetesNamespace).List(context.Background(), metav1.ListOptions{})
+	list, err := kubernetesClient.BatchV1().CronJobs(kubernetesNamespace).List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -267,10 +267,10 @@ func getCronJobsImagesBatchV1(kubernetesClient kubernetes.Interface, kubernetesN
 	return images, nil
 }
 
-func getCronJobsImagesBatchV1beta1(kubernetesClient kubernetes.Interface, kubernetesNamespace string) ([]*DeployedImage, error) {
+func getCronJobsImagesBatchV1beta1(ctx context.Context, kubernetesClient kubernetes.Interface, kubernetesNamespace string) ([]*DeployedImage, error) {
 	var images []*DeployedImage
 
-	list, err := kubernetesClient.BatchV1beta1().CronJobs(kubernetesNamespace).List(context.Background(), metav1.ListOptions{})
+	list, err := kubernetesClient.BatchV1beta1().CronJobs(kubernetesNamespace).List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}

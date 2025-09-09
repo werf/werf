@@ -11,6 +11,7 @@ import (
 
 	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/giterminism_manager/file_reader"
+	"github.com/werf/werf/v2/pkg/logging"
 	"github.com/werf/werf/v2/test/mock"
 )
 
@@ -43,8 +44,8 @@ var _ = Describe("Template file functions", func() {
 	})
 
 	DescribeTable("ConfigGoTemplateFilesExists",
-		func(setupMock MockFunc, expectation TestExpectationTemplateFileFunc) {
-			ctx := context.Background()
+		func(ctx context.Context, setupMock MockFunc, expectation TestExpectationTemplateFileFunc) {
+			ctx = logging.WithLogger(ctx)
 
 			commit := "git head commit"
 			relPath := "some.txt"
@@ -54,7 +55,7 @@ var _ = Describe("Template file functions", func() {
 			sharedOptions.EXPECT().ProjectDir().Return(t.TempDir()).AnyTimes()
 			sharedOptions.EXPECT().RelativeToGitProjectDir().Return(t.TempDir()).AnyTimes()
 			sharedOptions.EXPECT().Dev().Return(false).AnyTimes()
-			sharedOptions.EXPECT().HeadCommit().Return(commit).AnyTimes()
+			sharedOptions.EXPECT().HeadCommit(ctx).Return(commit).AnyTimes()
 			sharedOptions.EXPECT().LooseGiterminism().Return(false).AnyTimes()
 
 			giterminismConfig.EXPECT().UncommittedConfigGoTemplateRenderingFilePathMatcher().Return(pathMatcher)
@@ -177,8 +178,8 @@ var _ = Describe("Template file functions", func() {
 	)
 
 	DescribeTable("ConfigGoTemplateFilesIsDir",
-		func(setupMock MockFunc, expectation TestExpectationTemplateFileFunc) {
-			ctx := context.Background()
+		func(ctx context.Context, setupMock MockFunc, expectation TestExpectationTemplateFileFunc) {
+			ctx = logging.WithLogger(ctx)
 
 			commit := "git head commit"
 			relPath := "some-dir"
@@ -188,7 +189,7 @@ var _ = Describe("Template file functions", func() {
 			sharedOptions.EXPECT().ProjectDir().Return(t.TempDir()).AnyTimes()
 			sharedOptions.EXPECT().RelativeToGitProjectDir().Return(t.TempDir()).AnyTimes()
 			sharedOptions.EXPECT().Dev().Return(false).AnyTimes()
-			sharedOptions.EXPECT().HeadCommit().Return(commit).AnyTimes()
+			sharedOptions.EXPECT().HeadCommit(ctx).Return(commit).AnyTimes()
 			sharedOptions.EXPECT().LooseGiterminism().Return(false).AnyTimes()
 
 			giterminismConfig.EXPECT().UncommittedConfigGoTemplateRenderingFilePathMatcher().Return(pathMatcher)
