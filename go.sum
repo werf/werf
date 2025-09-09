@@ -1396,8 +1396,8 @@ github.com/werf/3p-helm-for-werf-helm v0.0.0-20241217155820-089f92cd5c9d h1:HN9j
 github.com/werf/3p-helm-for-werf-helm v0.0.0-20241217155820-089f92cd5c9d/go.mod h1:fozJ+C/Llp1e+jHxrJOZUu+D4QEw+laQK6W6RFqvTsg=
 github.com/werf/3p-oras v0.9.1-0.20240115121544-03962ecbd40a h1:PsU9szHZlIH+CjcuIuPXRLc5dsdoaFldvYjS6YHI7YQ=
 github.com/werf/3p-oras v0.9.1-0.20240115121544-03962ecbd40a/go.mod h1:XTePf8biMMCkqbuuWBZ24xOwo3hZej+BBM0uvd8aGqk=
-github.com/werf/common-go v0.0.0-20250908151140-f3694acb6664 h1:sBriUMWL5YPNl0XsaSSW11oI/7MKIYNU9tGOgQgqpe4=
-github.com/werf/common-go v0.0.0-20250908151140-f3694acb6664/go.mod h1:taKDUxKmGfqNOlVx1O0ad5vdV4duKexTLO7Rch9HfeA=
+github.com/werf/common-go v0.0.0-20250909174319-170f0d218ad4 h1:S4O2d2JbHGtWbl7yxQJd0ZZAGPzVPB/WyGjYgQZoQ0c=
+github.com/werf/common-go v0.0.0-20250909174319-170f0d218ad4/go.mod h1:taKDUxKmGfqNOlVx1O0ad5vdV4duKexTLO7Rch9HfeA=
 github.com/werf/copy-recurse v0.2.7 h1:3FTOarbJ9uhFLi75oeUCioK9zxZwuV7o28kuUBPDZPM=
 github.com/werf/copy-recurse v0.2.7/go.mod h1:6Ypb+qN+hRBJgoCgEkX1vpbqcQ+8q69BQ3hi8s8Y6Qc=
 github.com/werf/kubedog v0.13.1-0.20250813095923-12d70b6780b0 h1:E7odWm4YBrYee/g9UyDVJ++C6xrKq2orNrkLiNrrN9k=
