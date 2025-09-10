@@ -10,13 +10,9 @@ import (
 	"strings"
 	"time"
 
-	v1 "github.com/google/go-containerregistry/pkg/v1"
-
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
-	"github.com/werf/werf/v2/pkg/docker_registry"
-	"github.com/werf/werf/v2/pkg/docker_registry/api"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/ssh_agent"
 	"github.com/werf/werf/v2/pkg/werf/global_warnings"
@@ -36,7 +32,7 @@ To disable this warning, explicitly set the "keepEssentialWerfLabels" directive.
 type ImageSpecStage struct {
 	*BaseStage
 	imageSpec *config.ImageSpec
-	newConfig ImageSpecConfig
+	newConfig image.SpecConfig
 }
 
 func GenerateImageSpecStage(imageSpec *config.ImageSpec, baseStageOptions *BaseStageOptions) *ImageSpecStage {
@@ -99,7 +95,7 @@ func (s *ImageSpecStage) PrepareImage(ctx context.Context, _ Conveyor, _ contain
 		{
 			// healthcheck
 			if s.imageSpec.Healthcheck != nil {
-				newConfig.HealthConfig = &HealthConfig{
+				newConfig.HealthConfig = &image.HealthConfig{
 					Test:        s.imageSpec.Healthcheck.Test,
 					Interval:    toDuration(s.imageSpec.Healthcheck.Interval),
 					Timeout:     toDuration(s.imageSpec.Healthcheck.Timeout),
@@ -148,75 +144,18 @@ func (s *ImageSpecStage) GetDependencies(_ context.Context, _ Conveyor, _ contai
 	return util.Sha256Hash(args...), nil
 }
 
-func (s *ImageSpecStage) MutateImage(ctx context.Context, registry docker_registry.Interface, prevBuiltImage, stageImage *StageImage) error {
+type ImageMutatorPusher interface {
+	MutateAndPushImage(ctx context.Context, src, dest string, newConfig image.SpecConfig, stageImage container_backend.LegacyImageInterface) error
+}
+
+func (s *ImageSpecStage) MutateImage(ctx context.Context, storage ImageMutatorPusher, prevBuiltImage, stageImage *StageImage) error {
 	src := prevBuiltImage.Image.Name()
 	dest := stageImage.Image.Name()
-
-	return registry.MutateAndPushImage(ctx, src, dest, api.WithConfigFileMutation(func(ctx context.Context, config *v1.ConfigFile) (*v1.ConfigFile, error) {
-		updateConfigFile(s.newConfig, config)
-		return config, nil
-	}))
+	return storage.MutateAndPushImage(ctx, src, dest, s.newConfig, stageImage.Image)
 }
 
-func updateConfigFile(updates ImageSpecConfig, target *v1.ConfigFile) {
-	if updates.Author != "" {
-		target.Author = updates.Author
-	}
-	if updates.ClearHistory {
-		target.History = []v1.History{}
-	}
-	if updates.Volumes != nil {
-		target.Config.Volumes = updates.Volumes
-	}
-	if updates.Labels != nil {
-		target.Config.Labels = updates.Labels
-	}
-
-	target.Config.Env = updates.Env
-
-	if updates.ExposedPorts != nil {
-		target.Config.ExposedPorts = updates.ExposedPorts
-	}
-	if updates.ClearUser {
-		target.Config.User = ""
-	}
-	if updates.User != "" {
-		target.Config.User = updates.User
-	}
-	if updates.ClearCmd {
-		target.Config.Cmd = []string{}
-	}
-	if len(updates.Cmd) > 0 {
-		target.Config.Cmd = updates.Cmd
-	}
-	if updates.ClearEntrypoint {
-		target.Config.Entrypoint = []string{}
-	}
-	if len(updates.Entrypoint) > 0 {
-		target.Config.Entrypoint = updates.Entrypoint
-	}
-	if updates.ClearWorkingDir {
-		target.Config.WorkingDir = ""
-	}
-	if updates.WorkingDir != "" {
-		target.Config.WorkingDir = updates.WorkingDir
-	}
-	if updates.StopSignal != "" {
-		target.Config.StopSignal = updates.StopSignal
-	}
-	if updates.HealthConfig != nil {
-		target.Config.Healthcheck = &v1.HealthConfig{
-			Test:        updates.HealthConfig.Test,
-			Interval:    updates.HealthConfig.Interval,
-			Timeout:     updates.HealthConfig.Timeout,
-			StartPeriod: updates.HealthConfig.StartPeriod,
-			Retries:     updates.HealthConfig.Retries,
-		}
-	}
-}
-
-func (s *ImageSpecStage) baseConfig() ImageSpecConfig {
-	newConfig := ImageSpecConfig{
+func (s *ImageSpecStage) baseConfig() image.SpecConfig {
+	newConfig := image.SpecConfig{
 		Author:          s.imageSpec.Author,
 		User:            s.imageSpec.User,
 		Entrypoint:      s.imageSpec.Entrypoint,
@@ -440,34 +379,4 @@ func matchKey(key string, exactMatches map[string]struct{}, regexPatterns []*reg
 		}
 	}
 	return false
-}
-
-// ImageSpecConfig represents OCI image configuration
-// https://github.com/opencontainers/image-spec/blob/main/config.md
-type ImageSpecConfig struct {
-	Created         string              `json:"created"`
-	Author          string              `json:"author"`
-	User            string              `json:"User"`
-	ExposedPorts    map[string]struct{} `json:"ExposedPorts"`
-	Env             []string            `json:"Env"`
-	Entrypoint      []string            `json:"Entrypoint"`
-	Cmd             []string            `json:"Cmd"`
-	Volumes         map[string]struct{} `json:"Volumes"`
-	WorkingDir      string              `json:"WorkingDir"`
-	Labels          map[string]string   `json:"Labels"`
-	StopSignal      string              `json:"StopSignal"`
-	HealthConfig    *HealthConfig       `json:"Healthcheck,omitempty"`
-	ClearHistory    bool
-	ClearCmd        bool
-	ClearEntrypoint bool
-	ClearUser       bool
-	ClearWorkingDir bool
-}
-
-type HealthConfig struct {
-	Test        []string      `json:",omitempty"`
-	Interval    time.Duration `json:",omitempty"`
-	Timeout     time.Duration `json:",omitempty"`
-	StartPeriod time.Duration `json:",omitempty"`
-	Retries     int           `json:",omitempty"`
 }
