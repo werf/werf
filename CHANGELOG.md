@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.47.6](https://github.com/werf/werf/compare/v2.47.5...v2.47.6) (2025-09-10)
+
+
+### Bug Fixes
+
+* **cleanup:** fix cleanup meta check condition ([89b05d2](https://github.com/werf/werf/commit/89b05d23261d709c3cadf42f910d68d75e31e6d7))
+* handle panic properly ([fddd12f](https://github.com/werf/werf/commit/fddd12fc2344acc514b9a5268f04723273cf2ea2))
+* pass ctx down ([#7073](https://github.com/werf/werf/issues/7073)) ([76efdce](https://github.com/werf/werf/commit/76efdce29d024033f019e2904389e13b0aa02f34))
+
 ## [2.47.5](https://github.com/werf/werf/compare/v2.47.4...v2.47.5) (2025-09-03)
 
 
