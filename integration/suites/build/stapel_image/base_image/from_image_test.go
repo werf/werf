@@ -56,6 +56,6 @@ var _ = Describe("from anywhere", func() {
 		out := utils.SucceedCommandOutputString(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
 		Expect(out).To(ContainSubstring("Building stage FromImage/from"))
 		Expect(out).To(ContainSubstring("Building stage FromImageAlias/from"))
-		Expect(out).To(ContainSubstring("Use previously built image for FromArtifact/from"))
+		Expect(out).To(ContainSubstring("Building stage FromArtifact/from"))
 	})
 })
