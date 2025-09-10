@@ -1,7 +1,6 @@
 package true_git
 
 import (
-	"context"
 	"os"
 	"path/filepath"
 
@@ -24,13 +23,11 @@ var _ = Describe("Git command", func() {
 
 		utils.RunSucceedCommand(ctx, gitRepoPath, "git", "commit", "--allow-empty", "-m", "Initial commit")
 
-		Expect(Init(context.Background(), Options{})).Should(Succeed())
+		Expect(Init(ctx, Options{})).Should(Succeed())
 	})
 
 	When("looking for existent ref", func() {
-		It("succeeds, populates stdout/err/outerr buffers correctly", func() {
-			ctx := context.Background()
-
+		It("succeeds, populates stdout/err/outerr buffers correctly", func(ctx SpecContext) {
 			brokenHeadPath := filepath.Join(gitRepoPath, ".git", "refs", "heads", "broken")
 			Expect(os.WriteFile(brokenHeadPath, []byte("invalid"), os.ModePerm)).To(Succeed())
 

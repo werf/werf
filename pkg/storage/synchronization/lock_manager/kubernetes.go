@@ -54,7 +54,7 @@ func (manager *Kubernetes) getLockerForProject(
 	}
 
 	name := manager.GetConfigMapNameFunc(projectName)
-	if _, err := kubeutils.GetOrCreateConfigMapWithNamespaceIfNotExists(manager.KubeClient, manager.Namespace, name, true); err != nil {
+	if _, err := kubeutils.GetOrCreateConfigMapWithNamespaceIfNotExists(ctx, manager.KubeClient, manager.Namespace, name, true); err != nil {
 		return nil, err
 	}
 

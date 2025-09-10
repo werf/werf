@@ -101,7 +101,7 @@ func (s *sharedOptions) RelativeToGitProjectDir() string {
 	return util.GetRelativeToBaseFilepath(s.localGitRepo.WorkTreeDir, s.projectDir)
 }
 
-func (s *sharedOptions) HeadCommit() string {
+func (s *sharedOptions) HeadCommit(_ context.Context) string {
 	return s.headCommit
 }
 

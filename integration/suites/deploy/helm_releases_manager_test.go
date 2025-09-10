@@ -39,9 +39,9 @@ var _ = Describe("Helm releases manager", Pending, func() {
 				Expect(werfConverge(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
 					Env: map[string]string{"WERF_RELEASES_HISTORY_MAX": "5"},
 				})).Should(Succeed())
-				Expect(len(getReleasesHistory(releaseName, releaseName)) <= 5).To(BeTrue())
+				Expect(len(getReleasesHistory(ctx, releaseName, releaseName)) <= 5).To(BeTrue())
 			}
-			Expect(len(getReleasesHistory(releaseName, releaseName))).To(Equal(5))
+			Expect(len(getReleasesHistory(ctx, releaseName, releaseName))).To(Equal(5))
 		})
 	})
 
@@ -56,18 +56,18 @@ var _ = Describe("Helm releases manager", Pending, func() {
 			for i := 0; i < 4; i++ {
 				Expect(werfConverge(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{})).Should(Succeed())
 			}
-			Expect(len(getReleasesHistory(releaseName, releaseName))).To(Equal(4))
+			Expect(len(getReleasesHistory(ctx, releaseName, releaseName))).To(Equal(4))
 
 			for i := 0; i < 2; i++ {
 				Expect(werfConverge(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{}, "--releases-history-max=2")).Should(Succeed())
-				Expect(len(getReleasesHistory(releaseName, releaseName))).To(Equal(2))
+				Expect(len(getReleasesHistory(ctx, releaseName, releaseName))).To(Equal(2))
 			}
 		})
 	})
 })
 
-func getReleasesHistory(namespace, releaseName string) []*corev1.Secret {
-	resourceList, err := kube.Kubernetes.CoreV1().Secrets(namespace).List(context.Background(), metav1.ListOptions{})
+func getReleasesHistory(ctx context.Context, namespace, releaseName string) []*corev1.Secret {
+	resourceList, err := kube.Kubernetes.CoreV1().Secrets(namespace).List(ctx, metav1.ListOptions{})
 	Expect(err).NotTo(HaveOccurred())
 
 	var releases []*corev1.Secret

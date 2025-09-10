@@ -27,7 +27,7 @@ func FollowGitHead(ctx context.Context, cmdData *CmdData, taskFunc func(ctx cont
 			return fmt.Errorf("unable to get giterminism manager: %w", err)
 		}
 
-		currentHeadCommit := giterminismManager.HeadCommit()
+		currentHeadCommit := giterminismManager.HeadCommit(ctx)
 		if savedHeadCommit != currentHeadCommit {
 			savedHeadCommit = currentHeadCommit
 

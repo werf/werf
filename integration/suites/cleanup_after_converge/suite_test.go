@@ -51,10 +51,10 @@ var _ = BeforeEach(func(ctx SpecContext) {
 	SuiteData.ContainerRegistry = containerRegistry
 })
 
-func StagesCount() int {
-	return utils.StagesCount(context.Background(), SuiteData.StagesStorage)
+func StagesCount(ctx context.Context) int {
+	return utils.StagesCount(ctx, SuiteData.StagesStorage)
 }
 
-func ImportMetadataIDs() []string {
-	return utils.ImportMetadataIDs(context.Background(), SuiteData.StagesStorage)
+func ImportMetadataIDs(ctx context.Context) []string {
+	return utils.ImportMetadataIDs(ctx, SuiteData.StagesStorage)
 }

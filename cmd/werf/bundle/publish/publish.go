@@ -465,7 +465,7 @@ func createNewBundle(
 			return fmt.Errorf("unable to merge input values: %w", err)
 		}
 
-		bundleVals, err := makeBundleValues(chrt, vals, serviceValues)
+		bundleVals, err := makeBundleValues(ctx, chrt, vals, serviceValues)
 		if err != nil {
 			return fmt.Errorf("unable to construct bundle values: %w", err)
 		}
@@ -649,12 +649,8 @@ func writeBundleJsonMap(dataMap map[string]string, path string) error {
 	}
 }
 
-func makeBundleValues(
-	chrt *chart.Chart,
-	inputVals map[string]interface{},
-	serviceValues map[string]interface{},
-) (map[string]interface{}, error) {
-	vals, err := chartutil.MergeInternal(context.Background(), inputVals, serviceValues, nil)
+func makeBundleValues(ctx context.Context, chrt *chart.Chart, inputVals, serviceValues map[string]interface{}) (map[string]interface{}, error) {
+	vals, err := chartutil.MergeInternal(ctx, inputVals, serviceValues, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to coalesce werf chart values: %w", err)
 	}

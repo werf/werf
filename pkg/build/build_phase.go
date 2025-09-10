@@ -453,7 +453,7 @@ func (phase *BuildPhase) addManagedImage(ctx context.Context, name string) error
 func (phase *BuildPhase) publishImageGitMetadata(ctx context.Context, imageName string, stageID imagePkg.StageID) error {
 	var commits []string
 
-	headCommit := phase.Conveyor.giterminismManager.HeadCommit()
+	headCommit := phase.Conveyor.giterminismManager.HeadCommit(ctx)
 	commits = append(commits, headCommit)
 
 	if phase.Conveyor.GetLocalGitRepoVirtualMergeOptions().VirtualMerge {

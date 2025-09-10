@@ -59,7 +59,7 @@ type (
 )
 
 // NewClient returns a new registry client with config
-func NewClient(opts ...ClientOption) (*Client, error) {
+func NewClient(ctx context.Context, opts ...ClientOption) (*Client, error) {
 	client := &Client{
 		out: ioutil.Discard,
 	}
@@ -89,7 +89,7 @@ func NewClient(opts ...ClientOption) (*Client, error) {
 			}
 		}
 
-		resolver, err := client.authorizer.Resolver(context.Background(), httpClient, client.insecure)
+		resolver, err := client.authorizer.Resolver(ctx, httpClient, client.insecure)
 		if err != nil {
 			return nil, err
 		}

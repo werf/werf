@@ -14,8 +14,7 @@ import (
 
 var _ = Describe("Work tree helpers", func() {
 	Describe("resolveDotGitFile", func() {
-		It("parses correctly formatted dot git link file", func() {
-			ctx := context.Background()
+		It("parses correctly formatted dot git link file", func(ctx SpecContext) {
 			linkFile := filepath.Join(SuiteData.TestDirPath, ".git")
 
 			targetPath := "/path/to/target/git"
@@ -28,8 +27,7 @@ var _ = Describe("Work tree helpers", func() {
 			Expect(resPath).To(Equal(targetPath))
 		})
 
-		It("fails to parse invalid dot git link file", func() {
-			ctx := context.Background()
+		It("fails to parse invalid dot git link file", func(ctx SpecContext) {
 			linkFile := filepath.Join(SuiteData.TestDirPath, ".git")
 
 			Expect(os.WriteFile(linkFile, []byte("invalid"), 0o644)).To(Succeed())
@@ -63,9 +61,7 @@ var _ = Describe("Work tree helpers", func() {
 				Expect(err).To(Succeed())
 			})
 
-			It("should replace worktree without errors", func() {
-				ctx := context.Background()
-
+			It("should replace worktree without errors", func(ctx SpecContext) {
 				commit := getHeadCommit(ctx, mainWtDir)
 
 				Expect(switchWorkTree(ctx, mainWtDir, sideWtDir, commit, false)).To(Succeed())
@@ -90,8 +86,7 @@ var _ = Describe("Work tree helpers", func() {
 			utils.RunSucceedCommand(ctx, mainWtDir, "git", "worktree", "add", sideWtDir)
 		})
 
-		It("passes correct work tree", func() {
-			ctx := context.Background()
+		It("passes correct work tree", func(ctx SpecContext) {
 			valid, err := verifyWorkTreeConsistency(ctx, mainWtDir, sideWtDir)
 			Expect(err).To(Succeed())
 			Expect(valid).To(BeTrue())
@@ -105,9 +100,7 @@ var _ = Describe("Work tree helpers", func() {
 			Expect(valid).To(BeFalse())
 		})
 
-		It("detects side work tree with incorrect back dot git link", func() {
-			ctx := context.Background()
-
+		It("detects side work tree with incorrect back dot git link", func(ctx SpecContext) {
 			Expect(os.WriteFile(filepath.Join(sideWtDir, ".git"), []byte(fmt.Sprintf("gitdir: %s\n", filepath.Join(mainWtDir, ".git", "worktrees", "no-such-worktree"))), os.ModePerm)).To(Succeed())
 
 			valid, err := verifyWorkTreeConsistency(ctx, mainWtDir, sideWtDir)

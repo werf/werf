@@ -412,7 +412,7 @@ var _ = Describe("Complex converge", Label("e2e", "converge", "complex"), func()
 				checkServiceLabelsAndAnnos(ctx, job.Labels, job.Annotations, werfProject)
 
 				By("state3: ensure configmap \"config-rootchart\" is absent in cluster")
-				resourceShouldNotExist(kube.Client.CoreV1().ConfigMaps(werfProject.Namespace(ctx)).Get(context.Background(), "config-rootchart", metav1.GetOptions{}))
+				resourceShouldNotExist(kube.Client.CoreV1().ConfigMaps(werfProject.Namespace(ctx)).Get(ctx, "config-rootchart", metav1.GetOptions{}))
 			}
 		},
 	)
