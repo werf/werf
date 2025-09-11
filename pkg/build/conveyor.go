@@ -624,7 +624,7 @@ func (c *Conveyor) doImages(ctx context.Context, phases []Phase, logImages bool)
 	} else {
 		for _, img := range c.imagesTree.GetImages() {
 			if err := c.doImage(ctx, img, phases); err != nil {
-				return fmt.Errorf("unable to process image %s: %w", img.LogDetailedName(), err)
+				return fmt.Errorf("unable to process image %q: %w", img.LogName(), err)
 			}
 		}
 	}
@@ -673,7 +673,7 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 			}
 
 			if err := c.doImage(ctx, taskImage, taskPhases); err != nil {
-				return fmt.Errorf("unable to process image %s with parallel task %d: %w", taskImage.LogDetailedName(), taskId, err)
+				return fmt.Errorf("unable to process image %q with parallel task %d: %w", taskImage.LogName(), taskId, err)
 			}
 
 			setImageExecutionTimesMutex.Lock()
@@ -712,6 +712,8 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 }
 
 func (c *Conveyor) doImage(ctx context.Context, img *image.Image, phases []Phase) error {
+	return errors.New("test error")
+
 	start := time.Now()
 
 	err := logboek.Context(ctx).LogProcess(img.LogDetailedName()).
