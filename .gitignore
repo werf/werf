@@ -47,3 +47,4 @@ buildah-test
 /node_modules/
 /.github/actions/get-commit-message/node_modules/
 .task
+/playground/s3_registry/data
