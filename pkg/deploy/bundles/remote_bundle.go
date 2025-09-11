@@ -34,7 +34,7 @@ func NewRemoteBundle(registryAddress *RegistryAddress, bundlesRegistryClient Bun
 
 func (bundle *RemoteBundle) ReadChart(ctx context.Context, opts helmopts.HelmOptions) (*chart.Chart, error) {
 	if err := logboek.Context(ctx).LogProcess("Pulling bundle %s", bundle.RegistryAddress.FullName()).DoError(func() error {
-		if err := bundle.BundlesRegistryClient.PullChartToCache(bundle.RegistryAddress.Reference, opts); err != nil {
+		if err := bundle.BundlesRegistryClient.PullChartToCache(ctx, bundle.RegistryAddress.Reference, opts); err != nil {
 			return fmt.Errorf("unable to pull bundle %s: %w", bundle.RegistryAddress.FullName(), err)
 		}
 		return nil
@@ -45,7 +45,7 @@ func (bundle *RemoteBundle) ReadChart(ctx context.Context, opts helmopts.HelmOpt
 	var ch *chart.Chart
 	if err := logboek.Context(ctx).LogProcess("Loading bundle %s", bundle.RegistryAddress.FullName()).DoError(func() error {
 		var err error
-		ch, err = bundle.BundlesRegistryClient.LoadChart(bundle.RegistryAddress.Reference, opts)
+		ch, err = bundle.BundlesRegistryClient.LoadChart(ctx, bundle.RegistryAddress.Reference, opts)
 		if err != nil {
 			return fmt.Errorf("unable to load pulled bundle %s: %w", bundle.RegistryAddress.FullName(), err)
 		}
@@ -59,7 +59,7 @@ func (bundle *RemoteBundle) ReadChart(ctx context.Context, opts helmopts.HelmOpt
 
 func (bundle *RemoteBundle) WriteChart(ctx context.Context, ch *chart.Chart, opts helmopts.HelmOptions) error {
 	if err := logboek.Context(ctx).LogProcess("Saving bundle %s", bundle.RegistryAddress.FullName()).DoError(func() error {
-		if err := bundle.BundlesRegistryClient.SaveChart(ch, bundle.RegistryAddress.Reference, opts); err != nil {
+		if err := bundle.BundlesRegistryClient.SaveChart(ctx, ch, bundle.RegistryAddress.Reference, opts); err != nil {
 			return fmt.Errorf("unable to save bundle %s to the local chart helm cache: %w", bundle.RegistryAddress.FullName(), err)
 		}
 		return nil
@@ -68,7 +68,7 @@ func (bundle *RemoteBundle) WriteChart(ctx context.Context, ch *chart.Chart, opt
 	}
 
 	if err := logboek.Context(ctx).LogProcess("Pushing bundle %s", bundle.RegistryAddress.FullName()).DoError(func() error {
-		if err := bundle.BundlesRegistryClient.PushChart(bundle.RegistryAddress.Reference, opts); err != nil {
+		if err := bundle.BundlesRegistryClient.PushChart(ctx, bundle.RegistryAddress.Reference, opts); err != nil {
 			return fmt.Errorf("unable to push bundle %s: %w", bundle.RegistryAddress.FullName(), err)
 		}
 		return nil
