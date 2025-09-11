@@ -17,13 +17,13 @@ func Pull(ctx context.Context, bundleRef, destDir string, bundlesRegistryClient 
 	}
 
 	if err := logboek.Context(ctx).LogProcess("Pulling bundle %q", bundleRef).DoError(func() error {
-		return bundlesRegistryClient.PullChartToCache(r, opts)
+		return bundlesRegistryClient.PullChartToCache(ctx, r, opts)
 	}); err != nil {
 		return err
 	}
 
 	if err := logboek.Context(ctx).LogProcess("Exporting bundle %q", bundleRef).DoError(func() error {
-		ch, err := bundlesRegistryClient.LoadChart(r, opts)
+		ch, err := bundlesRegistryClient.LoadChart(ctx, r, opts)
 		if err != nil {
 			return fmt.Errorf("unable to load pulled chart: %w", err)
 		}

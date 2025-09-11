@@ -18,6 +18,7 @@ package registry // import "helm.sh/helm/v3/internal/experimental/registry"
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -88,7 +89,7 @@ func NewCache(opts ...CacheOption) (*Cache, error) {
 }
 
 // FetchReference retrieves a chart ref from cache
-func (cache *Cache) FetchReference(ref *Reference, opts helmopts.HelmOptions) (*CacheRefSummary, error) {
+func (cache *Cache) FetchReference(ctx context.Context, ref *Reference, opts helmopts.HelmOptions) (*CacheRefSummary, error) {
 	if err := cache.init(); err != nil {
 		return nil, err
 	}
@@ -102,7 +103,7 @@ func (cache *Cache) FetchReference(ref *Reference, opts helmopts.HelmOptions) (*
 
 		if desc.Annotations[ocispec.AnnotationRefName] == r.Name {
 			r.Exists = true
-			manifestBytes, err := cache.fetchBlob(&desc)
+			manifestBytes, err := cache.fetchBlob(ctx, &desc)
 			if err != nil {
 				return &r, err
 			}
@@ -134,14 +135,14 @@ func (cache *Cache) FetchReference(ref *Reference, opts helmopts.HelmOptions) (*
 					fmt.Sprintf("manifest layer with mediatype %s is of size 0", HelmChartContentLayerMediaType))
 			}
 			r.ContentLayer = contentLayer
-			info, err := cache.ociStore.Info(ctx(cache.out, cache.debug), contentLayer.Digest)
+			info, err := cache.ociStore.Info(withOrasLogger(ctx, cache.out, cache.debug), contentLayer.Digest)
 			if err != nil {
 				return &r, err
 			}
 			r.Size = info.Size
 			r.Digest = info.Digest
 			r.CreatedAt = info.CreatedAt
-			contentBytes, err := cache.fetchBlob(contentLayer)
+			contentBytes, err := cache.fetchBlob(ctx, contentLayer)
 			if err != nil {
 				return &r, err
 			}
@@ -156,7 +157,7 @@ func (cache *Cache) FetchReference(ref *Reference, opts helmopts.HelmOptions) (*
 }
 
 // StoreReference stores a chart ref in cache
-func (cache *Cache) StoreReference(ref *Reference, ch *chart.Chart, opts helmopts.HelmOptions) (*CacheRefSummary, error) {
+func (cache *Cache) StoreReference(ctx context.Context, ref *Reference, ch *chart.Chart, opts helmopts.HelmOptions) (*CacheRefSummary, error) {
 	if err := cache.init(); err != nil {
 		return nil, err
 	}
@@ -166,26 +167,26 @@ func (cache *Cache) StoreReference(ref *Reference, ch *chart.Chart, opts helmopt
 		Tag:   ref.Tag,
 		Chart: ch,
 	}
-	existing, _ := cache.FetchReference(ref, opts)
+	existing, _ := cache.FetchReference(ctx, ref, opts)
 	r.Exists = existing.Exists
-	config, _, err := cache.saveChartConfig(ch)
+	config, _, err := cache.saveChartConfig(ctx, ch)
 	if err != nil {
 		return &r, err
 	}
 	r.Config = config
-	contentLayer, _, err := cache.saveChartContentLayer(ch)
+	contentLayer, _, err := cache.saveChartContentLayer(ctx, ch)
 	if err != nil {
 		return &r, err
 	}
 	r.ContentLayer = contentLayer
-	info, err := cache.ociStore.Info(ctx(cache.out, cache.debug), contentLayer.Digest)
+	info, err := cache.ociStore.Info(withOrasLogger(ctx, cache.out, cache.debug), contentLayer.Digest)
 	if err != nil {
 		return &r, err
 	}
 	r.Size = info.Size
 	r.Digest = info.Digest
 	r.CreatedAt = info.CreatedAt
-	manifest, _, err := cache.saveChartManifest(config, contentLayer)
+	manifest, _, err := cache.saveChartManifest(ctx, config, contentLayer)
 	if err != nil {
 		return &r, err
 	}
@@ -195,11 +196,11 @@ func (cache *Cache) StoreReference(ref *Reference, ch *chart.Chart, opts helmopt
 
 // DeleteReference deletes a chart ref from cache
 // TODO: garbage collection, only manifest removed
-func (cache *Cache) DeleteReference(ref *Reference, opts helmopts.HelmOptions) (*CacheRefSummary, error) {
+func (cache *Cache) DeleteReference(ctx context.Context, ref *Reference, opts helmopts.HelmOptions) (*CacheRefSummary, error) {
 	if err := cache.init(); err != nil {
 		return nil, err
 	}
-	r, err := cache.FetchReference(ref, opts)
+	r, err := cache.FetchReference(ctx, ref, opts)
 	if err != nil || !r.Exists {
 		return r, err
 	}
@@ -209,7 +210,7 @@ func (cache *Cache) DeleteReference(ref *Reference, opts helmopts.HelmOptions) (
 }
 
 // ListReferences lists all chart refs in a cache
-func (cache *Cache) ListReferences(opts helmopts.HelmOptions) ([]*CacheRefSummary, error) {
+func (cache *Cache) ListReferences(ctx context.Context, opts helmopts.HelmOptions) ([]*CacheRefSummary, error) {
 	if err := cache.init(); err != nil {
 		return nil, err
 	}
@@ -226,7 +227,7 @@ func (cache *Cache) ListReferences(opts helmopts.HelmOptions) ([]*CacheRefSummar
 		if err != nil {
 			return rr, err
 		}
-		r, err := cache.FetchReference(ref, opts)
+		r, err := cache.FetchReference(ctx, ref, opts)
 		if err != nil {
 			return rr, err
 		}
@@ -236,7 +237,7 @@ func (cache *Cache) ListReferences(opts helmopts.HelmOptions) ([]*CacheRefSummar
 }
 
 // AddManifest provides a manifest to the cache index.json
-func (cache *Cache) AddManifest(ref *Reference, manifest *ocispec.Descriptor) error {
+func (cache *Cache) AddManifest(ctx context.Context, ref *Reference, manifest *ocispec.Descriptor) error {
 	if err := cache.init(); err != nil {
 		return err
 	}
@@ -274,12 +275,12 @@ func (cache *Cache) init() error {
 }
 
 // saveChartConfig stores the Chart.yaml as json blob and returns a descriptor
-func (cache *Cache) saveChartConfig(ch *chart.Chart) (*ocispec.Descriptor, bool, error) {
+func (cache *Cache) saveChartConfig(ctx context.Context, ch *chart.Chart) (*ocispec.Descriptor, bool, error) {
 	configBytes, err := json.Marshal(ch.Metadata)
 	if err != nil {
 		return nil, false, err
 	}
-	configExists, err := cache.storeBlob(configBytes)
+	configExists, err := cache.storeBlob(ctx, configBytes)
 	if err != nil {
 		return nil, configExists, err
 	}
@@ -288,7 +289,7 @@ func (cache *Cache) saveChartConfig(ch *chart.Chart) (*ocispec.Descriptor, bool,
 }
 
 // saveChartContentLayer stores the chart as tarball blob and returns a descriptor
-func (cache *Cache) saveChartContentLayer(ch *chart.Chart) (*ocispec.Descriptor, bool, error) {
+func (cache *Cache) saveChartContentLayer(ctx context.Context, ch *chart.Chart) (*ocispec.Descriptor, bool, error) {
 	destDir := filepath.Join(cache.rootDir, ".build")
 	os.MkdirAll(destDir, 0o755)
 	tmpFile, err := chartutil.Save(ch, destDir)
@@ -300,7 +301,7 @@ func (cache *Cache) saveChartContentLayer(ch *chart.Chart) (*ocispec.Descriptor,
 	if err != nil {
 		return nil, false, err
 	}
-	contentExists, err := cache.storeBlob(contentBytes)
+	contentExists, err := cache.storeBlob(ctx, contentBytes)
 	if err != nil {
 		return nil, contentExists, err
 	}
@@ -309,7 +310,7 @@ func (cache *Cache) saveChartContentLayer(ch *chart.Chart) (*ocispec.Descriptor,
 }
 
 // saveChartManifest stores the chart manifest as json blob and returns a descriptor
-func (cache *Cache) saveChartManifest(config, contentLayer *ocispec.Descriptor) (*ocispec.Descriptor, bool, error) {
+func (cache *Cache) saveChartManifest(ctx context.Context, config, contentLayer *ocispec.Descriptor) (*ocispec.Descriptor, bool, error) {
 	manifest := ocispec.Manifest{
 		Versioned: specs.Versioned{SchemaVersion: 2},
 		Config:    *config,
@@ -319,7 +320,7 @@ func (cache *Cache) saveChartManifest(config, contentLayer *ocispec.Descriptor) 
 	if err != nil {
 		return nil, false, err
 	}
-	manifestExists, err := cache.storeBlob(manifestBytes)
+	manifestExists, err := cache.storeBlob(ctx, manifestBytes)
 	if err != nil {
 		return nil, manifestExists, err
 	}
@@ -332,9 +333,9 @@ func (cache *Cache) saveChartManifest(config, contentLayer *ocispec.Descriptor) 
 }
 
 // storeBlob stores a blob on filesystem
-func (cache *Cache) storeBlob(blobBytes []byte) (bool, error) {
+func (cache *Cache) storeBlob(ctx context.Context, blobBytes []byte) (bool, error) {
 	var exists bool
-	writer, err := cache.ociStore.Store.Writer(ctx(cache.out, cache.debug),
+	writer, err := cache.ociStore.Store.Writer(withOrasLogger(ctx, cache.out, cache.debug),
 		content.WithRef(digest.FromBytes(blobBytes).Hex()))
 	if err != nil {
 		return exists, err
@@ -343,7 +344,7 @@ func (cache *Cache) storeBlob(blobBytes []byte) (bool, error) {
 	if err != nil {
 		return exists, err
 	}
-	err = writer.Commit(ctx(cache.out, cache.debug), 0, writer.Digest())
+	err = writer.Commit(withOrasLogger(ctx, cache.out, cache.debug), 0, writer.Digest())
 	if err != nil {
 		if !errdefs.IsAlreadyExists(err) {
 			return exists, err
@@ -355,8 +356,8 @@ func (cache *Cache) storeBlob(blobBytes []byte) (bool, error) {
 }
 
 // fetchBlob retrieves a blob from filesystem
-func (cache *Cache) fetchBlob(desc *ocispec.Descriptor) ([]byte, error) {
-	reader, err := cache.ociStore.ReaderAt(ctx(cache.out, cache.debug), *desc)
+func (cache *Cache) fetchBlob(ctx context.Context, desc *ocispec.Descriptor) ([]byte, error) {
+	reader, err := cache.ociStore.ReaderAt(withOrasLogger(ctx, cache.out, cache.debug), *desc)
 	if err != nil {
 		return nil, err
 	}

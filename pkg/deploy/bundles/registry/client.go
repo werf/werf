@@ -112,8 +112,8 @@ func NewClient(ctx context.Context, opts ...ClientOption) (*Client, error) {
 }
 
 // Login logs into a registry
-func (c *Client) Login(hostname, username, password string, insecure bool) error {
-	err := c.authorizer.Login(ctx(c.out, c.debug), hostname, username, password, insecure)
+func (c *Client) Login(ctx context.Context, hostname, username, password string, insecure bool) error {
+	err := c.authorizer.Login(withOrasLogger(ctx, c.out, c.debug), hostname, username, password, insecure)
 	if err != nil {
 		return err
 	}
@@ -122,8 +122,8 @@ func (c *Client) Login(hostname, username, password string, insecure bool) error
 }
 
 // Logout logs out of a registry
-func (c *Client) Logout(hostname string) error {
-	err := c.authorizer.Logout(ctx(c.out, c.debug), hostname)
+func (c *Client) Logout(ctx context.Context, hostname string) error {
+	err := c.authorizer.Logout(withOrasLogger(ctx, c.out, c.debug), hostname)
 	if err != nil {
 		return err
 	}
@@ -132,8 +132,8 @@ func (c *Client) Logout(hostname string) error {
 }
 
 // PushChart uploads a chart to a registry
-func (c *Client) PushChart(ref *Reference, opts helmopts.HelmOptions) error {
-	r, err := c.cache.FetchReference(ref, opts)
+func (c *Client) PushChart(ctx context.Context, ref *Reference, opts helmopts.HelmOptions) error {
+	r, err := c.cache.FetchReference(ctx, ref, opts)
 	if err != nil {
 		return err
 	}
@@ -143,7 +143,7 @@ func (c *Client) PushChart(ref *Reference, opts helmopts.HelmOptions) error {
 	fmt.Fprintf(c.out, "The push refers to repository [%s]\n", r.Repo)
 	c.printCacheRefSummary(r)
 	layers := []ocispec.Descriptor{*r.ContentLayer}
-	_, err = oras.Push(ctx(c.out, c.debug), c.resolver, r.Name, c.cache.Provider(), layers,
+	_, err = oras.Push(withOrasLogger(ctx, c.out, c.debug), c.resolver, r.Name, c.cache.Provider(), layers,
 		oras.WithConfig(*r.Config), oras.WithNameValidation(nil))
 	if err != nil {
 		return err
@@ -159,7 +159,7 @@ func (c *Client) PushChart(ref *Reference, opts helmopts.HelmOptions) error {
 }
 
 // PullChart downloads a chart from a registry
-func (c *Client) PullChart(ref *Reference) (*bytes.Buffer, error) {
+func (c *Client) PullChart(ctx context.Context, ref *Reference) (*bytes.Buffer, error) {
 	buf := bytes.NewBuffer(nil)
 
 	if ref.Tag == "" {
@@ -171,7 +171,7 @@ func (c *Client) PullChart(ref *Reference) (*bytes.Buffer, error) {
 	store := content.NewMemoryStore()
 	fullname := ref.FullName()
 	_ = fullname
-	_, layerDescriptors, err := oras.Pull(ctx(c.out, c.debug), c.resolver, ref.FullName(), store,
+	_, layerDescriptors, err := oras.Pull(withOrasLogger(ctx, c.out, c.debug), c.resolver, ref.FullName(), store,
 		oras.WithPullEmptyNameAllowed(),
 		oras.WithAllowedMediaTypes(KnownMediaTypes()))
 	if err != nil {
@@ -210,27 +210,27 @@ func (c *Client) PullChart(ref *Reference) (*bytes.Buffer, error) {
 // PullChartToCache pulls a chart from an OCI Registry to the Registry Cache.
 // This function is needed for `helm chart pull`, which is experimental and will be deprecated soon.
 // Likewise, the Registry cache will soon be deprecated as will this function.
-func (c *Client) PullChartToCache(ref *Reference, opts helmopts.HelmOptions) error {
+func (c *Client) PullChartToCache(ctx context.Context, ref *Reference, opts helmopts.HelmOptions) error {
 	if ref.Tag == "" {
 		return errors.New("tag explicitly required")
 	}
-	existing, err := c.cache.FetchReference(ref, opts)
+	existing, err := c.cache.FetchReference(ctx, ref, opts)
 	if err != nil {
 		return err
 	}
 	fmt.Fprintf(c.out, "%s: Pulling from %s\n", ref.Tag, ref.Repo)
-	manifest, _, err := oras.Pull(ctx(c.out, c.debug), c.resolver, ref.FullName(), c.cache.Ingester(),
+	manifest, _, err := oras.Pull(withOrasLogger(ctx, c.out, c.debug), c.resolver, ref.FullName(), c.cache.Ingester(),
 		oras.WithPullEmptyNameAllowed(),
 		oras.WithAllowedMediaTypes(KnownMediaTypes()),
 		oras.WithContentProvideIngester(c.cache.ProvideIngester()))
 	if err != nil {
 		return err
 	}
-	err = c.cache.AddManifest(ref, &manifest)
+	err = c.cache.AddManifest(ctx, ref, &manifest)
 	if err != nil {
 		return err
 	}
-	r, err := c.cache.FetchReference(ref, opts)
+	r, err := c.cache.FetchReference(ctx, ref, opts)
 	if err != nil {
 		return err
 	}
@@ -247,13 +247,13 @@ func (c *Client) PullChartToCache(ref *Reference, opts helmopts.HelmOptions) err
 }
 
 // SaveChart stores a copy of chart in local cache
-func (c *Client) SaveChart(ch *chart.Chart, ref *Reference, opts helmopts.HelmOptions) error {
-	r, err := c.cache.StoreReference(ref, ch, opts)
+func (c *Client) SaveChart(ctx context.Context, ch *chart.Chart, ref *Reference, opts helmopts.HelmOptions) error {
+	r, err := c.cache.StoreReference(ctx, ref, ch, opts)
 	if err != nil {
 		return err
 	}
 	c.printCacheRefSummary(r)
-	err = c.cache.AddManifest(ref, r.Manifest)
+	err = c.cache.AddManifest(ctx, ref, r.Manifest)
 	if err != nil {
 		return err
 	}
@@ -262,8 +262,8 @@ func (c *Client) SaveChart(ch *chart.Chart, ref *Reference, opts helmopts.HelmOp
 }
 
 // LoadChart retrieves a chart object by reference
-func (c *Client) LoadChart(ref *Reference, opts helmopts.HelmOptions) (*chart.Chart, error) {
-	r, err := c.cache.FetchReference(ref, opts)
+func (c *Client) LoadChart(ctx context.Context, ref *Reference, opts helmopts.HelmOptions) (*chart.Chart, error) {
+	r, err := c.cache.FetchReference(ctx, ref, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -275,8 +275,8 @@ func (c *Client) LoadChart(ref *Reference, opts helmopts.HelmOptions) (*chart.Ch
 }
 
 // RemoveChart deletes a locally saved chart
-func (c *Client) RemoveChart(ref *Reference, opts helmopts.HelmOptions) error {
-	r, err := c.cache.DeleteReference(ref, opts)
+func (c *Client) RemoveChart(ctx context.Context, ref *Reference, opts helmopts.HelmOptions) error {
+	r, err := c.cache.DeleteReference(ctx, ref, opts)
 	if err != nil {
 		return err
 	}
@@ -288,7 +288,7 @@ func (c *Client) RemoveChart(ref *Reference, opts helmopts.HelmOptions) error {
 }
 
 // PrintChartTable prints a list of locally stored charts
-func (c *Client) PrintChartTable(opts helmopts.HelmOptions) error {
+func (c *Client) PrintChartTable(_ context.Context, opts helmopts.HelmOptions) error {
 	table := uitable.New()
 	table.MaxColWidth = 60
 	table.AddRow("REF", "NAME", "VERSION", "DIGEST", "SIZE", "CREATED")
@@ -314,7 +314,7 @@ func (c *Client) printCacheRefSummary(r *CacheRefSummary) {
 
 // getChartTableRows returns rows in uitable-friendly format
 func (c *Client) getChartTableRows(opts helmopts.HelmOptions) ([][]interface{}, error) {
-	rr, err := c.cache.ListReferences(opts)
+	rr, err := c.cache.ListReferences(nil, opts)
 	if err != nil {
 		return nil, err
 	}

@@ -45,7 +45,7 @@ func Publish(ctx context.Context, bundleDir, bundleRef string, bundlesRegistryCl
 			ch.Metadata.Name = *nameOverwrite
 		}
 
-		if err := bundlesRegistryClient.SaveChart(ch, r, opts.HelmOptions); err != nil {
+		if err := bundlesRegistryClient.SaveChart(ctx, ch, r, opts.HelmOptions); err != nil {
 			return fmt.Errorf("unable to save bundle to the local chart helm cache: %w", err)
 		}
 		return nil
@@ -54,7 +54,7 @@ func Publish(ctx context.Context, bundleDir, bundleRef string, bundlesRegistryCl
 	}
 
 	if err := logboek.Context(ctx).LogProcess("Pushing bundle %q", bundleRef).DoError(func() error {
-		return bundlesRegistryClient.PushChart(r, opts.HelmOptions)
+		return bundlesRegistryClient.PushChart(ctx, r, opts.HelmOptions)
 	}); err != nil {
 		return err
 	}
