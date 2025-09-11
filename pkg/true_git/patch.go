@@ -1,6 +1,7 @@
 package true_git
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -9,7 +10,8 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"sync"
+
+	"github.com/samber/lo"
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/pkg/path_matcher"
@@ -172,55 +174,9 @@ func writePatch(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir str
 		return nil, fmt.Errorf("error creating git diff stderr pipe: %w", err)
 	}
 
-	if err := cmd.Start(); err != nil {
+	if err = cmd.Start(); err != nil {
 		return nil, fmt.Errorf("error starting git diff: %w", err)
 	}
-
-	outputErrChan := make(chan error)
-	stdoutChan := make(chan []byte)
-	stderrChan := make(chan []byte)
-	doneChan := make(chan bool)
-
-	var wg sync.WaitGroup
-
-	wg.Add(1)
-	go func() {
-		err := consumePipeOutput(stdoutPipe, func(data []byte) error {
-			dataCopy := make([]byte, len(data))
-			copy(dataCopy, data)
-
-			stdoutChan <- dataCopy
-
-			return nil
-		})
-		if err != nil {
-			outputErrChan <- err
-		}
-
-		wg.Done()
-	}()
-
-	wg.Add(1)
-	go func() {
-		err := consumePipeOutput(stderrPipe, func(data []byte) error {
-			dataCopy := make([]byte, len(data))
-			copy(dataCopy, data)
-
-			stderrChan <- dataCopy
-
-			return nil
-		})
-		if err != nil {
-			outputErrChan <- err
-		}
-
-		wg.Done()
-	}()
-
-	go func() {
-		wg.Wait()
-		doneChan <- true
-	}()
 
 	if debugPatch() {
 		out = io.MultiWriter(out, os.Stdout)
@@ -228,25 +184,32 @@ func writePatch(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir str
 
 	p := makeDiffParser(out, opts.PathScope, opts.PathMatcher, opts.FileRenames)
 
-WaitForData:
-	for {
-		select {
-		case err := <-outputErrChan:
+	const stdoutPipeType = "stdout"
+	const stderrPipeType = "stderr"
+
+	stdoutCh := newGeneratorFromStdPipe(1, stdoutPipe, stdoutPipeType)
+	stderrCh := newGeneratorFromStdPipe(1, stderrPipe, stderrPipeType)
+
+	combinedOutputCh := lo.FanIn(1, stdoutCh, stderrCh)
+
+	for stdItem := range combinedOutputCh {
+		if stdItem.Err != nil {
 			return nil, fmt.Errorf("error getting git diff output: %w\nunrecognized output:\n%s", err, p.UnrecognizedCapture.String())
-		case stdoutData := <-stdoutChan:
-			if err := p.HandleStdout(stdoutData); err != nil {
+		}
+
+		switch stdItem.Type {
+		case stdoutPipeType:
+			if err = p.HandleStdout(stdItem.Data); err != nil {
 				return nil, err
 			}
-		case stderrData := <-stderrChan:
-			if err := p.HandleStderr(stderrData); err != nil {
+		case stderrPipeType:
+			if err = p.HandleStderr(stdItem.Data); err != nil {
 				return nil, err
 			}
-		case <-doneChan:
-			break WaitForData
 		}
 	}
 
-	if err := cmd.Wait(); err != nil {
+	if err = cmd.Wait(); err != nil {
 		werfExec.TerminateIfCanceled(ctx)
 		return nil, fmt.Errorf("git diff error: %w\nunrecognized output:\n%s", err, p.UnrecognizedCapture.String())
 	}
@@ -295,4 +258,22 @@ func consumePipeOutput(pipe io.ReadCloser, handleChunk func(data []byte) error) 
 			return fmt.Errorf("error reading pipe: %w", err)
 		}
 	}
+}
+
+type stdPipeItem struct {
+	Type string
+	Err  error
+	Data []byte
+}
+
+func newGeneratorFromStdPipe(bufferSize int, rc io.ReadCloser, stdType string) <-chan stdPipeItem {
+	return lo.Generator(bufferSize, func(yield func(stdPipeItem)) {
+		err := consumePipeOutput(rc, func(data []byte) error {
+			yield(stdPipeItem{Type: stdType, Err: nil, Data: bytes.Clone(data)})
+			return nil
+		})
+		if err != nil {
+			yield(stdPipeItem{Type: stdType, Err: err, Data: nil})
+		}
+	})
 }
