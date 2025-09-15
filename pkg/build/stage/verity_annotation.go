@@ -5,6 +5,7 @@ import (
 
 	"github.com/deckhouse/delivery-kit-sdk/pkg/integrity"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
+	"github.com/google/go-containerregistry/pkg/v1/empty"
 	"github.com/google/go-containerregistry/pkg/v1/mutate"
 
 	"github.com/werf/werf/v2/pkg/container_backend"
@@ -46,18 +47,50 @@ func (s *VerityAnnotationStage) MutateImage(ctx context.Context, registry docker
 	srcRef := prevBuiltImage.Image.Name()
 	destRef := stageImage.Image.Name()
 
-	opt := api.WithLayersMutation(func(ctx context.Context, layers []v1.Layer) ([]mutate.Addendum, error) {
+	var imageDmVerityAnnotations map[string]string
+	optWithLayersMutation := api.WithLayersMutation(func(ctx context.Context, layers []v1.Layer) ([]mutate.Addendum, error) {
+		// annotate layers
 		var result []mutate.Addendum
 		for _, layer := range layers {
-			addendum, err := integrity.AnnotateLayerWithDMVerityRootHash(ctx, layer)
+			annotations, err := integrity.CalculateLayerDMVerityAnnotations(ctx, layer)
 			if err != nil {
 				return nil, err
 			}
-			result = append(result, addendum)
+
+			result = append(result, mutate.Addendum{
+				Layer:       layer,
+				Annotations: annotations,
+			})
+		}
+
+		// save dm verity annotations for image
+		{
+			image, err := mutate.Append(empty.Image, result...)
+			if err != nil {
+				return nil, err
+			}
+
+			imageDmVerityAnnotations, err = integrity.CalculateImageDMVerityAnnotations(ctx, image)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		return result, nil
 	})
 
-	return registry.MutateAndPushImage(ctx, srcRef, destRef, opt)
+	optWithManifestAnnotationsFunc := api.WithManifestAnnotationsFunc(func(ctx context.Context, manifest *v1.Manifest) (map[string]string, error) {
+		result := manifest.Annotations
+		if result == nil {
+			result = map[string]string{}
+		}
+
+		for key, value := range imageDmVerityAnnotations {
+			result[key] = value
+		}
+
+		return result, nil
+	})
+
+	return registry.MutateAndPushImage(ctx, srcRef, destRef, optWithLayersMutation, optWithManifestAnnotationsFunc)
 }
