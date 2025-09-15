@@ -5,6 +5,7 @@ import (
 
 	"github.com/deckhouse/delivery-kit-sdk/pkg/integrity"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
+	"github.com/google/go-containerregistry/pkg/v1/empty"
 	"github.com/google/go-containerregistry/pkg/v1/mutate"
 
 	"github.com/werf/werf/v2/pkg/container_backend"
@@ -46,7 +47,8 @@ func (s *VerityAnnotationStage) MutateImage(ctx context.Context, registry docker
 	srcRef := prevBuiltImage.Image.Name()
 	destRef := stageImage.Image.Name()
 
-	opt := api.WithLayersMutation(func(ctx context.Context, layers []v1.Layer) ([]mutate.Addendum, error) {
+	var annos map[string]string
+	optWithLayersMutation := api.WithLayersMutation(func(ctx context.Context, layers []v1.Layer) ([]mutate.Addendum, error) {
 		var result []mutate.Addendum
 		for _, layer := range layers {
 			addendum, err := integrity.AnnotateLayerWithDMVerityRootHash(ctx, layer)
@@ -56,8 +58,27 @@ func (s *VerityAnnotationStage) MutateImage(ctx context.Context, registry docker
 			result = append(result, addendum)
 		}
 
+		image, err := mutate.Append(empty.Image, result...)
+		if err != nil {
+			return nil, err
+		}
+
+		annos, err = integrity.GetRootHashAnnotationsForImage(ctx, image)
+		if err != nil {
+			return nil, err
+		}
+
 		return result, nil
 	})
 
-	return registry.MutateAndPushImage(ctx, srcRef, destRef, opt)
+	optWithManifestAnnotationsFunc := api.WithManifestAnnotationsFunc(func(ctx context.Context, manifest *v1.Manifest) (map[string]string, error) {
+		result := manifest.Annotations
+		for key, value := range annos {
+			result[key] = value
+		}
+
+		return result, nil
+	})
+
+	return registry.MutateAndPushImage(ctx, srcRef, destRef, optWithLayersMutation, optWithManifestAnnotationsFunc)
 }

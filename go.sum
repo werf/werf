@@ -365,8 +365,8 @@ github.com/deckarep/golang-set/v2 v2.6.0 h1:XfcQbWM1LlMB8BsJ8N9vW5ehnnPVIw0je80N
 github.com/deckarep/golang-set/v2 v2.6.0/go.mod h1:VAky9rY/yGXJOLEDv3OMci+7wtDpOF4IN+y82NBOac4=
 github.com/deckhouse/3p-sigstore/pkg/signature/kms/hashivault v0.0.0-20250812142226-bbe767bcb790 h1:oDbHARDMlfiRSvYi2tPWKE5m8y/ccvNC4DgqVpC3Ab0=
 github.com/deckhouse/3p-sigstore/pkg/signature/kms/hashivault v0.0.0-20250812142226-bbe767bcb790/go.mod h1:j00crVw6ki4/WViXflw0zWgNALrAzZT+GbIK8v7Xlz4=
-github.com/deckhouse/delivery-kit-sdk v0.0.0-20250910121337-e44fd272f901 h1:cc8cASLYuKZ6hF4asklRjooCKeTWTRy52mcF2vg5Owg=
-github.com/deckhouse/delivery-kit-sdk v0.0.0-20250910121337-e44fd272f901/go.mod h1:6idedofcaW43YLVGOAv7Uz9X4xOek/YyOPhiBEr36iM=
+github.com/deckhouse/delivery-kit-sdk v0.0.0-20250915152317-f52c5f4e69a2 h1:CvAcikHIv+lpCjaMEQyMvEaTCi/JaKOY3f32XCNE6y8=
+github.com/deckhouse/delivery-kit-sdk v0.0.0-20250915152317-f52c5f4e69a2/go.mod h1:6idedofcaW43YLVGOAv7Uz9X4xOek/YyOPhiBEr36iM=
 github.com/denisenkom/go-mssqldb v0.0.0-20191124224453-732737034ffd/go.mod h1:xbL0rPBG9cCiLr28tMa8zpbdarY27NDyej4t/EjAShU=
 github.com/denisenkom/go-mssqldb v0.0.0-20191128021309-1d7a30a10f73/go.mod h1:xbL0rPBG9cCiLr28tMa8zpbdarY27NDyej4t/EjAShU=
 github.com/devigned/tab v0.1.1/go.mod h1:XG9mPq0dFghrYvoBF3xdRrJzSTX1b7IQrvaL9mzjeJY=
