@@ -73,6 +73,10 @@ func (s *VerityAnnotationStage) MutateImage(ctx context.Context, registry docker
 
 	optWithManifestAnnotationsFunc := api.WithManifestAnnotationsFunc(func(ctx context.Context, manifest *v1.Manifest) (map[string]string, error) {
 		result := manifest.Annotations
+		if result == nil {
+			result = map[string]string{}
+		}
+
 		for key, value := range annos {
 			result[key] = value
 		}
