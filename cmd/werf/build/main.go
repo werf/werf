@@ -102,6 +102,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupVirtualMerge(&commonCmdData, cmd)
 
 	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultBuildParallelTasksLimit)
+	common.SetupRequireBuiltImages(&commonCmdData, cmd)
 	common.SetupFollow(&commonCmdData, cmd)
 
 	common.SetupDisableAutoHostCleanup(&commonCmdData, cmd)
@@ -221,7 +222,22 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 	defer conveyorWithRetry.Terminate()
 
 	if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
-		return c.Build(ctx, buildOptions)
+		if common.GetRequireBuiltImages(ctx, &commonCmdData) {
+			shouldBeBuiltOptions, err := common.GetShouldBeBuiltOptions(&commonCmdData, imagesToProcess)
+			if err != nil {
+				return err
+			}
+
+			if err := c.ShouldBeBuilt(ctx, shouldBeBuiltOptions); err != nil {
+				return err
+			}
+		} else {
+			if err := c.Build(ctx, buildOptions); err != nil {
+				return err
+			}
+		}
+
+		return nil
 	}); err != nil {
 		return err
 	}
