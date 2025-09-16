@@ -127,6 +127,7 @@ func mutateELFFiles(ctx context.Context, reader io.Reader, elfSigningOptions ELF
 					return fmt.Errorf("failed to create temp file: %w", err)
 				}
 				defer os.Remove(tmpFile.Name())
+				defer tmpFile.Close()
 
 				// Stream the file content to the temp file
 				if _, err := io.Copy(tmpFile, tarReader); err != nil {
@@ -154,14 +155,8 @@ func mutateELFFiles(ctx context.Context, reader io.Reader, elfSigningOptions ELF
 						return err
 					}
 
-					signedFile, err := os.Open(tmpFile.Name())
-					if err != nil {
-						return err
-					}
-					defer signedFile.Close()
-
 					// Update the header size to the signed file size
-					info, err := signedFile.Stat()
+					info, err := tmpFile.Stat()
 					if err != nil {
 						return err
 					}
@@ -175,7 +170,7 @@ func mutateELFFiles(ctx context.Context, reader io.Reader, elfSigningOptions ELF
 					if err := tarWriter.WriteHeader(header); err != nil {
 						return fmt.Errorf("failed to write tar header: %w", err)
 					}
-					if _, err := io.Copy(tarWriter, signedFile); err != nil {
+					if _, err := io.Copy(tarWriter, tmpFile); err != nil {
 						return fmt.Errorf("failed to write signed file content: %w", err)
 					}
 				} else {
