@@ -1,6 +1,7 @@
 package docker
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"os"
@@ -288,4 +289,40 @@ func checkForUnsupportedOptions(ctx context.Context, args ...string) ([]string, 
 		borderIndex++
 	}
 	return args[:borderIndex], nil
+}
+
+func CliImageSaveToStream(ctx context.Context, imageName string) (io.ReadCloser, error) {
+	return apiCli(ctx).ImageSave(ctx, []string{imageName})
+}
+
+func CliLoadFromStream(ctx context.Context, input io.Reader) (string, error) {
+	loadResponse, err := apiCli(ctx).ImageLoad(ctx, input, true)
+	if err != nil {
+		return "", fmt.Errorf("load failed: %w", err)
+	}
+	defer loadResponse.Body.Close()
+
+	body, err := io.ReadAll(loadResponse.Body)
+	if err != nil {
+		return "", fmt.Errorf("error reading response body: %w", err)
+	}
+
+	return parseIDDigestFromImageLoadResponseBody(body), nil
+}
+
+func parseIDDigestFromImageLoadResponseBody(body []byte) string {
+	// We always have a string of fixed length like bellow when use cli directly:
+	// `Loaded image ID: sha256:26b2eb03618e749084668eaff68cff8f81dda12d06ac641be7a6398b82a6f25b`
+	// Here we have json-wrapped representation of this string:
+	// `{"stream":"Loaded image ID: sha256:26b2eb03618e749084668eaff68cff8f81dda12d06ac641be7a6398b82a6f25b\n"}\n`
+	// So we can just slice it using these knowledges.
+
+	// trim trailing \n
+	bodySanitized := bytes.TrimSpace(body)
+
+	n := len(bodySanitized) - len(`\n"}`) // json ending offset
+	digestSize := 64
+	digest := bodySanitized[n-digestSize : n]
+
+	return string(digest)
 }

@@ -389,3 +389,22 @@ func (storage *LocalStagesStorage) GetLastCleanupRecord(ctx context.Context, pro
 func (storage *LocalStagesStorage) PostLastCleanupRecord(ctx context.Context, projectName string) error {
 	panic("not implemented")
 }
+
+func (storage *LocalStagesStorage) MutateAndPushImage(ctx context.Context, src, _ string, newConfig image.SpecConfig, stageImage container_backend.LegacyImageInterface) error {
+	newId, err := container_backend.MutateAndPushImage(ctx, src, newConfig, storage.ContainerBackend)
+	if err != nil {
+		return err
+	}
+	stageImage.SetBuiltID(buildIdFromDigest(newId))
+	if err := storage.ContainerBackend.TagImageByName(ctx, stageImage); err != nil {
+		return fmt.Errorf("unable to tag image %q: %w", stageImage.Name(), err)
+	}
+	return nil
+}
+
+func buildIdFromDigest(digest string) string {
+	if strings.HasPrefix(digest, "sha256:") {
+		return digest[7:]
+	}
+	return digest
+}
