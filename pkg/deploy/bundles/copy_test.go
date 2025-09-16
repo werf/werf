@@ -508,23 +508,23 @@ func NewBundlesRegistryClientStub() *BundlesRegistryClientStub {
 	}
 }
 
-func (client *BundlesRegistryClientStub) PullChartToCache(ref *bundles_registry.Reference, opts helmopts.HelmOptions) error {
+func (client *BundlesRegistryClientStub) PullChartToCache(ctx context.Context, ref *bundles_registry.Reference, opts helmopts.HelmOptions) error {
 	return nil
 }
 
-func (client *BundlesRegistryClientStub) LoadChart(ref *bundles_registry.Reference, opts helmopts.HelmOptions) (*chart.Chart, error) {
+func (client *BundlesRegistryClientStub) LoadChart(ctx context.Context, ref *bundles_registry.Reference, opts helmopts.HelmOptions) (*chart.Chart, error) {
 	if ch, hasChart := client.StubCharts[ref.FullName()]; hasChart {
 		return ch, nil
 	}
 	return nil, fmt.Errorf("no chart found by address %s", ref.FullName())
 }
 
-func (client *BundlesRegistryClientStub) SaveChart(ch *chart.Chart, ref *bundles_registry.Reference, opts helmopts.HelmOptions) error {
+func (client *BundlesRegistryClientStub) SaveChart(ctx context.Context, ch *chart.Chart, ref *bundles_registry.Reference, opts helmopts.HelmOptions) error {
 	client.StubCharts[ref.FullName()] = ch
 	return nil
 }
 
-func (client *BundlesRegistryClientStub) PushChart(ref *bundles_registry.Reference, opts helmopts.HelmOptions) error {
+func (client *BundlesRegistryClientStub) PushChart(ctx context.Context, ref *bundles_registry.Reference, opts helmopts.HelmOptions) error {
 	return nil
 }
 

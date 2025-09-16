@@ -56,11 +56,11 @@ func timeAgo(t time.Time) string {
 
 // ctx retrieves a fresh context.
 // disable verbose logging coming from ORAS (unless debug is enabled)
-func ctx(out io.Writer, debug bool) context.Context {
+func withOrasLogger(ctx context.Context, out io.Writer, debug bool) context.Context {
 	if !debug {
-		return orascontext.Background()
+		return orascontext.WithLoggerDiscarded(ctx)
 	}
-	ctx := orascontext.WithLoggerFromWriter(context.Background(), out)
+	ctx = orascontext.WithLoggerFromWriter(ctx, out)
 	orascontext.GetLogger(ctx).Logger.SetLevel(logrus.DebugLevel)
 	return ctx
 }
