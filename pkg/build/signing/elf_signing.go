@@ -4,6 +4,8 @@ import (
 	"archive/tar"
 	"bytes"
 	"context"
+	"debug/elf"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -24,16 +26,7 @@ import (
 	"github.com/werf/werf/v2/pkg/werf/exec"
 )
 
-type ELFState int
-
-const (
-	Initial ELFState = iota
-	Seen7F
-	Seen45
-	Seen4C
-	ELF
-	NotELF
-)
+// ELF state machine removed in favor of debug/elf
 
 type ELFSigningOptions struct {
 	InHouseEnabled bool
@@ -60,52 +53,30 @@ func NewELFSigningOptions(signer *Signer) ELFSigningOptions {
 }
 
 func isELFFileStream(reader io.Reader) (bool, error) {
-	state := Initial
-	buffer := make([]byte, 1)
+	ra := reader.(io.ReaderAt)
+	ef, err := elf.NewFile(ra)
+	if err != nil {
 
-	for {
-		_, err := reader.Read(buffer)
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return false, err
-		}
-
-		b := buffer[0]
-		switch state {
-		case Initial:
-			if b == 0x7f {
-				state = Seen7F
-			} else {
-				state = NotELF
-			}
-		case Seen7F:
-			if b == 0x45 {
-				state = Seen45
-			} else {
-				state = NotELF
-			}
-		case Seen45:
-			if b == 0x4c {
-				state = Seen4C
-			} else {
-				state = NotELF
-			}
-		case Seen4C:
-			if b == 0x46 {
-				state = ELF
-			} else {
-				state = NotELF
-			}
-		case ELF:
-			return true, nil
-		case NotELF:
+		if errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) {
 			return false, nil
 		}
-	}
 
-	return state == ELF, nil
+		if _, isFormatError := err.(*elf.FormatError); isFormatError {
+			// not ELF
+			return false, nil
+		}
+		return false, err
+	}
+	defer ef.Close()
+
+	switch ef.Machine {
+	case elf.EM_386, elf.EM_X86_64:
+		// Good ELF
+		return true, nil
+	default:
+		// Bad ELF
+		return false, nil
+	}
 }
 
 func signELFFile(ctx context.Context, path string, elfSigningOptions ELFSigningOptions) error {
