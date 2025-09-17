@@ -1,0 +1,47 @@
+services:
+  minio:
+    image: minio/minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - ./data/minio:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/ready"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  minio_init:
+    image: minio/mc
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      sh -c "
+        mc alias set local http://minio:9000 minioadmin minioadmin &&
+        mc mb --ignore-existing local/registry
+        mc anonymous set public local/registry
+      "
+
+  registry:
+    image: registry:2
+    depends_on:
+      - minio
+      - minio_init
+    ports:
+      - "5000:5000"
+    environment:
+      REGISTRY_STORAGE: s3
+      REGISTRY_STORAGE_S3_ACCESSKEY: minioadmin
+      REGISTRY_STORAGE_S3_SECRETKEY: minioadmin
+      REGISTRY_STORAGE_S3_REGION: us-east-1
+      REGISTRY_STORAGE_S3_BUCKET: registry
+      REGISTRY_STORAGE_S3_REGIONENDPOINT: http://172.19.0.2:9000 # docker inspect s3_registry-minio-1 -f {{.NetworkSettings.Networks.s3_registry_default.IPAddress}}
+      REGISTRY_HTTP_HEADERS_Access_Control-Allow-Origin: '[http://localhost:5000]'
+      REGISTRY_HTTP_HEADERS_Access_Control-Allow-Methods: '[HEAD,GET,OPTIONS,DELETE]'
+    restart: unless-stopped
