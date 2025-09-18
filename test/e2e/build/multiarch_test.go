@@ -10,7 +10,6 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/pkg/container_backend/thirdparty/platformutil"
-	"github.com/werf/werf/v2/test/pkg/contback"
 	"github.com/werf/werf/v2/test/pkg/werf"
 )
 
@@ -38,12 +37,7 @@ var _ = Describe("Multiarch build", Pending, Label("e2e", "build", "multiarch", 
 			setupEnv(testOpts.setupEnvOptions)
 			Expect(SuiteData.WerfRepo).NotTo(BeEmpty())
 
-			contBack, err := contback.NewContainerBackend(testOpts.ContainerBackendMode)
-			if err == contback.ErrRuntimeUnavailable {
-				Skip(err.Error())
-			} else if err != nil {
-				Fail(err.Error())
-			}
+			contBack := newContainerBackend(testOpts.ContainerBackendMode)
 
 			repoDirname := "repo0"
 			fixtureRelPath := "multiarch/state0"

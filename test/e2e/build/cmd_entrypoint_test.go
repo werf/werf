@@ -6,7 +6,6 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/v2/test/pkg/contback"
 	"github.com/werf/werf/v2/test/pkg/thirdparty/contruntime/strslice"
 	"github.com/werf/werf/v2/test/pkg/werf"
 )
@@ -25,12 +24,7 @@ var _ = Describe("CMD and ENTRYPOINT combinations", Label("e2e", "build", "extra
 
 		By("initializing")
 		setupEnv(testOpts.setupEnvOptions)
-		contRuntime, err := contback.NewContainerBackend(testOpts.ContainerBackendMode)
-		if err == contback.ErrRuntimeUnavailable {
-			Skip(err.Error())
-		} else if err != nil {
-			Fail(err.Error())
-		}
+		contRuntime := newContainerBackend(testOpts.ContainerBackendMode)
 
 		By("preparing test repo")
 		SuiteData.InitTestRepo(ctx, repoDirname, fixtureRelPath)

@@ -97,8 +97,8 @@ func signELFFile(ctx context.Context, path string, elfSigningOptions ELFSigningO
 
 		cmd := exec.CommandContextCancellation(ctx, "bsign", "-N", "-s", "--pgoptions="+pgOptionsString, path)
 		cmd.Env = append(os.Environ(), cmdExtraEnv...)
-		if err := cmd.Run(); err != nil {
-			return fmt.Errorf("bsign sign %q: %w", path, err)
+		if output, err := cmd.CombinedOutput(); err != nil {
+			return fmt.Errorf("bsign sign %q: %s: %w", path, output, err)
 		}
 	}
 
