@@ -253,6 +253,21 @@ The `--ssh-key PRIVATE_KEY_FILE_PATH` flag allows restricting the SSH agent to s
 werf build --ssh-key ~/.ssh/private_key_1 --ssh-key ~/.ssh/private_key_2
 ```
 
+### Features of Using SSH Agent on macOS
+
+When working on macOS, it’s important to keep in mind that werf runs builds inside a container, which itself runs in the Linux VM of Docker Desktop. This introduces some limitations when using the SSH agent:
+
+1. `launchd` sockets are not directly accessible inside containers. The `SSH_AUTH_SOCK` variable that points to a `launchd` socket (e.g., `/private/tmp/com.apple.launchd.*`) will not work inside the container.
+
+2. Docker Desktop provides its own proxy socket. To access the SSH agent, a special path is used: `/run/host-services/ssh-auth.sock`. On macOS, this socket is automatically mounted into containers.
+
+3. Multiple agents on the host. If multiple SSH agents are running on macOS, Docker Desktop selects only one of them (usually the one started by `launchd` for the current user). It is not possible to switch to a different agent from inside the container.
+
+Therefore:
+
+- On macOS, the werf service SSH agent and the `--ssh-key` option **do not work**.
+- To use SSH keys, you must add them in advance to the **system SSH agent on macOS**.
+
 ## Multi-platform and cross-platform building
 
 werf can build images for either the native host platform in which it is running, or for arbitrary platform in cross-platform mode using emulation. It is also possible to build images for multiple target platforms at once (i.e. manifest-list images).
@@ -261,11 +276,11 @@ Multi-platform builds use the cross-platform instruction execution mechanics pro
 
 The table below summarizes support of multi-platform building for different configuration syntaxes, building modes, and build backends:
 
-|                         | buildah        | docker-server      |
-|---                      |---             |---                 |
-| **Dockerfile**          | full support   | full support       |
-| **staged Dockerfile**   | full support   | no support         |
-| **stapel**              | full support   | linux/amd64 only   |
+|                       | buildah      | docker-server    |
+| --------------------- | ------------ | ---------------- |
+| **Dockerfile**        | full support | full support     |
+| **staged Dockerfile** | full support | no support       |
+| **stapel**            | full support | linux/amd64 only |
 
 ### Building for single target platform
 
