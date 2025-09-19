@@ -169,7 +169,7 @@ func NewNativeBuildah(commonOpts CommonBuildahOpts, opts NativeModeOpts) (*Nativ
 	}
 
 	b.runtimePlatform = platforms.Format(platforms.DefaultSpec())
-
+	b.defaultSystemContext.DockerRegistryPushPrecomputeDigests = true
 	if opts.DefaultPlatform != "" {
 		b.defaultPlatform = opts.DefaultPlatform
 
