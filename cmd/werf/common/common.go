@@ -19,6 +19,7 @@ import (
 	"github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
 	"github.com/werf/nelm/pkg/action"
+	"github.com/werf/nelm/pkg/log"
 	"github.com/werf/werf/v2/pkg/build"
 	"github.com/werf/werf/v2/pkg/build/stage"
 	"github.com/werf/werf/v2/pkg/config"
@@ -1403,8 +1404,8 @@ func GetGitWorkTree(ctx context.Context, cmdData *CmdData, workingDir string) (s
 
 func printGlobalWarningIfDevInCI(ctx context.Context, cmdData *CmdData) {
 	const (
-		devModeInCIWarning = `The development mode is enabled in CI environment by providing --dev flag or WERF_DEV env variable. 
-This mode is intended for local development only and relies on the Git worktree state, including tracked and untracked files, while ignoring changes based on .gitignore and --dev-ignore rules. 
+		devModeInCIWarning = `The development mode is enabled in CI environment by providing --dev flag or WERF_DEV env variable.
+This mode is intended for local development only and relies on the Git worktree state, including tracked and untracked files, while ignoring changes based on .gitignore and --dev-ignore rules.
 Using development in CI may lead to non-reproducible builds and unexpected results.`
 	)
 	if cmdData.Dev != nil && *cmdData.Dev {
@@ -1663,19 +1664,19 @@ func ProcessLogOptions(cmdData *CmdData) error {
 	return nil
 }
 
-func GetNelmLogLevel(cmdData *CmdData) string {
+func GetNelmLogLevel(cmdData *CmdData) log.Level {
 	if util.GetBoolEnvironmentDefaultFalse("WERF_NELM_TRACE") {
-		return action.TraceLogLevel
+		return log.TraceLevel
 	}
 
-	var logLevel string
+	var logLevel log.Level
 	switch {
 	case *cmdData.LogDebug:
-		logLevel = action.DebugLogLevel
+		logLevel = log.DebugLevel
 	case *cmdData.LogQuiet:
-		logLevel = action.ErrorLogLevel
+		logLevel = log.ErrorLevel
 	default:
-		logLevel = action.InfoLogLevel
+		logLevel = log.InfoLevel
 	}
 
 	return logLevel

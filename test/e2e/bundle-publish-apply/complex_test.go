@@ -281,10 +281,9 @@ var _ = Describe("Complex bundle publish/apply", Label("e2e", "bundle-publish-ap
 				cm, err := kube.Client.CoreV1().ConfigMaps(werfProject.Namespace(ctx)).Get(ctx, "config-rootchart", metav1.GetOptions{})
 				Expect(err).NotTo(HaveOccurred())
 				Expect(cm.Data).To(Equal(map[string]string{
-					"release_is_install": "false",
-					"release_is_upgrade": "true",
-					"release_revision":   "2",
-
+					"release_is_install":                    "false",
+					"release_is_upgrade":                    "true",
+					"release_revision":                      "2",
 					"reset_after_manual_changes_in_cluster": "reset_after_manual_changes_in_cluster",
 				}))
 				checkServiceLabelsAndAnnos(ctx, cm.Labels, cm.Annotations, werfProject)

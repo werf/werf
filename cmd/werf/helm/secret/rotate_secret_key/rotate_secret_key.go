@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/werf/nelm/pkg/action"
+	"github.com/werf/nelm/pkg/log"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/cmd/werf/docs/replacers/helm"
 	"github.com/werf/werf/v2/pkg/true_git"
@@ -92,7 +93,7 @@ func runRotateSecretKey(
 
 	chartPath := filepath.Join(giterminismManager.ProjectDir(), relChartPath)
 
-	ctx = action.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultSecretKeyRotateLogLevel), action.SetupLoggingOptions{
+	ctx = log.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultSecretKeyRotateLogLevel), log.SetupLoggingOptions{
 		ColorMode: *commonCmdData.LogColorMode,
 	})
 
