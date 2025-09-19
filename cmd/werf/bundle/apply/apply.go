@@ -19,6 +19,7 @@ import (
 	"github.com/werf/3p-helm/pkg/werf/helmopts"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/nelm/pkg/action"
+	"github.com/werf/nelm/pkg/log"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/deploy/bundles"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
@@ -223,7 +224,7 @@ func runApply(ctx context.Context) error {
 		return fmt.Errorf("get release labels: %w", err)
 	}
 
-	ctx = action.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultReleaseInstallLogLevel), action.SetupLoggingOptions{
+	ctx = log.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultReleaseInstallLogLevel), log.SetupLoggingOptions{
 		ColorMode: *commonCmdData.LogColorMode,
 	})
 	engine.Debug = *commonCmdData.DebugTemplates

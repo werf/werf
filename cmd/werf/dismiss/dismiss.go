@@ -16,6 +16,7 @@ import (
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
 	"github.com/werf/nelm/pkg/action"
+	"github.com/werf/nelm/pkg/log"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/config/deploy_params"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
@@ -190,7 +191,7 @@ func runDismiss(ctx context.Context) error {
 		return fmt.Errorf("get release name and namespace: %w", err)
 	}
 
-	ctx = action.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultLegacyReleaseUninstallLogLevel), action.SetupLoggingOptions{
+	ctx = log.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultLegacyReleaseUninstallLogLevel), log.SetupLoggingOptions{
 		ColorMode: *commonCmdData.LogColorMode,
 	})
 

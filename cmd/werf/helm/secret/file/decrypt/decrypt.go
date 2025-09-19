@@ -9,7 +9,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/werf/nelm/pkg/action"
-	secret_common "github.com/werf/nelm/pkg/secret"
+	secret_common "github.com/werf/nelm/pkg/legacy/secret"
+	"github.com/werf/nelm/pkg/log"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/cmd/werf/docs/replacers/helm"
 	"github.com/werf/werf/v2/pkg/git_repo"
@@ -95,7 +96,7 @@ func runSecretDecrypt(ctx context.Context, filePath string) error {
 
 	workingDir := common.GetWorkingDir(&commonCmdData)
 
-	ctx = action.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultSecretFileDecryptLogLevel), action.SetupLoggingOptions{
+	ctx = log.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultSecretFileDecryptLogLevel), log.SetupLoggingOptions{
 		ColorMode:      *commonCmdData.LogColorMode,
 		LogIsParseable: true,
 	})
