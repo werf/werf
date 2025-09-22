@@ -5,7 +5,7 @@
 
 ### Bug Fixes
 
-* **buildah:** enable precomputed digests to avoid S3 blob upload conflicts ([a458a3d](https://github.com/werf/werf/commit/a458a3d34735b322f9755dc4adacfa7a80af9e3b))
+* **build, buildah:** enable precomputed digests to avoid S3 blob upload conflicts ([a458a3d](https://github.com/werf/werf/commit/a458a3d34735b322f9755dc4adacfa7a80af9e3b))
 
 ## [2.47.6](https://github.com/werf/werf/compare/v2.47.5...v2.47.6) (2025-09-10)
 
