@@ -253,20 +253,11 @@ The `--ssh-key PRIVATE_KEY_FILE_PATH` flag allows restricting the SSH agent to s
 werf build --ssh-key ~/.ssh/private_key_1 --ssh-key ~/.ssh/private_key_2
 ```
 
-### Features of Using SSH Agent on macOS
+### Limitations on macOS
 
-When working on macOS, it’s important to keep in mind that werf runs builds inside a container, which itself runs in the Linux VM of Docker Desktop. This introduces some limitations when using the SSH agent:
+When working on macOS, keep in mind that containers are always launched inside the Linux VM of Docker Desktop. Docker Desktop provides its own proxy socket, which forwards the system SSH socket (typically the one started by launchd for the current user). It is not possible to use an arbitrary agent.
 
-1. `launchd` sockets are not directly accessible inside containers. The `SSH_AUTH_SOCK` variable that points to a `launchd` socket (e.g., `/private/tmp/com.apple.launchd.*`) will not work inside the container.
-
-2. Docker Desktop provides its own proxy socket. To access the SSH agent, a special path is used: `/run/host-services/ssh-auth.sock`. On macOS, this socket is automatically mounted into containers.
-
-3. Multiple agents on the host. If multiple SSH agents are running on macOS, Docker Desktop selects only one of them (usually the one started by `launchd` for the current user). It is not possible to switch to a different agent from inside the container.
-
-Therefore:
-
-- On macOS, the werf service SSH agent and the `--ssh-key` option **do not work**.
-- To use SSH keys, you must add them in advance to the **system SSH agent on macOS**.
+As a result, the temporary SSH agent and the `--ssh-key` option are not supported on macOS. To use SSH keys, you must add them in advance to the system SSH agent.
 
 ## Multi-platform and cross-platform building
 
