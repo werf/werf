@@ -1,18 +1,16 @@
 package parallel
 
 import (
-	"bytes"
 	"context"
 	"io"
-	"os"
 	"time"
 
+	"github.com/samber/lo"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
-	"github.com/werf/logboek/pkg/style"
 	"github.com/werf/werf/v2/pkg/docker"
+	"github.com/werf/werf/v2/pkg/logging"
 )
 
 type DoTasksOptions struct {
@@ -20,32 +18,35 @@ type DoTasksOptions struct {
 	MaxNumberOfWorkers         int
 }
 
-func DoTasks(ctx context.Context, numberOfTasks int, options DoTasksOptions, taskFunc func(ctx context.Context, taskId int) error) error {
-	if numberOfTasks == 0 {
-		return nil
-	}
+type TaskFunc func(ctx context.Context, taskId int) error
 
-	// Use errgroup to sync workerBuffers and propagate errors
+// DoTasks executes a specified number of tasks in parallel using a configurable number of workers.
+// Each worker runs a subset of the total tasks, and progress is logged for each task.
+//
+// Parameters:
+//   - ctx: The context used to control the operation and provide cancellation support.
+//   - numberOfTasks: The total number of tasks to be executed.
+//   - options: A DoTasksOptions struct containing configuration parameters for task execution.
+//   - taskFunc: A function that performs a single task. It takes a context and a task ID as input and returns an error if one occurs.
+func DoTasks(ctx context.Context, numberOfTasks int, options DoTasksOptions, taskFunc TaskFunc) error {
 	g, groupCtx := errgroup.WithContext(ctx)
 
 	// Determine number of workers and tasks per worker
 	numberOfWorkers, numberOfTasksPerWorker := calculateTasksDistribution(numberOfTasks, options.MaxNumberOfWorkers)
 
-	// Create buffers for each worker to log output
-	workerBuffers := make([]*util.GoroutineSafeBuffer, numberOfWorkers)
+	// Create slice of buffered workers
+	workers := make([]*bufferedWorker, numberOfWorkers)
+	// Create channel to signal failed worker
+	failedWorkerCh := make(chan int, 1)
+	defer close(failedWorkerCh)
 
 	for i := 0; i < numberOfWorkers; i++ {
-		workerID := i
-		workerBuffers[workerID] = &util.GoroutineSafeBuffer{Buffer: bytes.NewBuffer([]byte{})}
+		worker := newBufferedWorker(i)
+		workers[worker.ID] = worker
 
 		// Create a new context with a background task ID for each worker
-		ctxWithBackgroundTaskID := context.WithValue(groupCtx, CtxBackgroundTaskIDKey, workerID)
-		workerContext := logboek.NewContext(ctxWithBackgroundTaskID, logboek.Context(ctxWithBackgroundTaskID).NewSubLogger(workerBuffers[workerID], workerBuffers[workerID]))
-
-		logboek.Context(workerContext).Streams().SetPrefixStyle(style.Highlight())
-		if logboek.Context(workerContext).Streams().IsPrefixTimeEnabled() {
-			logboek.Context(workerContext).Streams().SetPrefixTimeFormat("15:04:05")
-		}
+		ctxWithBackgroundTaskID := context.WithValue(groupCtx, CtxBackgroundTaskIDKey, worker.ID)
+		workerContext := logboek.NewContext(ctxWithBackgroundTaskID, logging.NewSubLogger(ctxWithBackgroundTaskID, worker.Buffer(), worker.Buffer()))
 
 		if options.InitDockerCLIForEachWorker {
 			var err error
@@ -56,48 +57,92 @@ func DoTasks(ctx context.Context, numberOfTasks int, options DoTasksOptions, tas
 		}
 
 		g.Go(func() error {
-			for workerTaskId := 0; workerTaskId < numberOfTasksPerWorker[workerID]; workerTaskId++ {
-				taskId := calculateTaskId(numberOfTasks, numberOfWorkers, workerID, workerTaskId)
-				if debug() {
-					logboek.Context(workerContext).LogF("Running worker %d task %d/%d (%d)\n", workerID, workerTaskId+1, numberOfTasksPerWorker[workerID], numberOfTasks)
-				}
-				if err := taskFunc(workerContext, taskId); err != nil {
-					return err
+			defer worker.MarkDone()
+
+			for workerTaskId := 0; workerTaskId < numberOfTasksPerWorker[worker.ID]; workerTaskId++ {
+				taskId := calculateTaskId(numberOfTasks, numberOfWorkers, worker.ID, workerTaskId)
+
+				logboek.Context(workerContext).Debug().LogF("Running worker %d task %d/%d (%d)\n", worker.ID, workerTaskId+1, numberOfTasksPerWorker[worker.ID], numberOfTasks)
+
+				// Use channel to be able to cancel task immediately
+				errCh := lo.Async(func() error {
+					return taskFunc(workerContext, taskId)
+				})
+
+				// Block until one of next things is happened
+				select {
+				// When another worker returns an error, groupCtx is canceled.
+				// The error is already captured from another worker, so we just return "nil".
+				case <-groupCtx.Done():
+					return nil
+				// The task returns err or nil. When task returns err,
+				// we mark worker as failed using failedWorkerCh and stop execution returning err.
+				// The returned error is captured (via errgroup).
+				case err := <-errCh:
+					if err != nil {
+						failedWorkerCh <- worker.ID
+						return err
+					}
 				}
 			}
+
 			return nil
 		})
 	}
+
+	g.Go(func() error {
+		return printEachWorkerOutput(ctx, workers, failedWorkerCh)
+	})
 
 	if err := g.Wait(); err != nil {
 		return err
 	}
 
-	return handleWorkerOutput(ctx, workerBuffers)
+	return nil
 }
 
-func handleWorkerOutput(ctx context.Context, workerBuffers []*util.GoroutineSafeBuffer) error {
-	for _, buffer := range workerBuffers {
-		for {
-			var n int64
-			var err error
-			if err = logboek.Context(ctx).Streams().DoErrorWithoutIndent(func() error {
-				n, err = io.Copy(logboek.Context(ctx).OutStream(), buffer)
-				return err
-			}); err != nil {
+// printEachWorkerOutput prints the output of each buffered worker in the provided slice,
+// while monitoring for context cancellation and failed workers.
+func printEachWorkerOutput(ctx context.Context, bufferedWorkers []*bufferedWorker, failedWorkerCh <-chan int) error {
+	for i := 0; i < len(bufferedWorkers); i++ {
+		select {
+		case <-ctx.Done():
+			return nil
+		case failedWorkerIdx := <-failedWorkerCh:
+			return printWorkerOutput(ctx, bufferedWorkers[failedWorkerIdx])
+		default:
+			if err := printWorkerOutput(ctx, bufferedWorkers[i]); err != nil {
 				return err
 			}
-			if n == 0 {
-				break
-			}
-			time.Sleep(time.Millisecond * 100)
 		}
-
-		// Finished with worker output
-		logboek.Context(ctx).LogOptionalLn()
 	}
 
 	return nil
+}
+
+// printWorkerOutput prints the output of a buffered worker to the provided context's output stream.
+// It continuously reads from the worker's buffer and writes it to the output stream until the worker is done.
+// If an error occurs during the copy process, it is returned immediately.
+func printWorkerOutput(ctx context.Context, worker *bufferedWorker) error {
+	for {
+		var n int64
+		var err error
+		if err = logboek.Context(ctx).Streams().DoErrorWithoutIndent(func() error {
+			n, err = io.Copy(logboek.Context(ctx).OutStream(), worker.Buffer())
+			return err
+		}); err != nil {
+			return err
+		}
+
+		if worker.IsDone() {
+			logboek.Context(ctx).LogOptionalLn()
+			return nil
+		}
+
+		if n == 0 {
+			time.Sleep(time.Millisecond * 100)
+		}
+	}
 }
 
 func calculateTaskId(tasksNumber, workersNumber, workerInd, workerTaskId int) int {
@@ -132,8 +177,4 @@ func calculateTasksDistribution(numberOfTasks, maxNumberOfWorkers int) (int, []i
 	}
 
 	return numberOfWorkers, numberOfTasksPerWorker
-}
-
-func debug() bool {
-	return os.Getenv("WERF_DEBUG_PARALLEL") == "1"
 }
