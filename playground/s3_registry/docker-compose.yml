@@ -42,6 +42,6 @@ services:
       REGISTRY_STORAGE_S3_REGION: us-east-1
       REGISTRY_STORAGE_S3_BUCKET: registry
       REGISTRY_STORAGE_S3_REGIONENDPOINT: http://172.19.0.2:9000 # docker inspect s3_registry-minio-1 -f {{.NetworkSettings.Networks.s3_registry_default.IPAddress}}
-      REGISTRY_HTTP_HEADERS_Access_Control-Allow-Origin: '[http://localhost:5000]'
-      REGISTRY_HTTP_HEADERS_Access_Control-Allow-Methods: '[HEAD,GET,OPTIONS,DELETE]'
+      REGISTRY_HTTP_HEADERS_Access_Control-Allow-Origin: "[http://localhost:5000]"
+      REGISTRY_HTTP_HEADERS_Access_Control-Allow-Methods: "[HEAD,GET,OPTIONS,DELETE]"
     restart: unless-stopped
