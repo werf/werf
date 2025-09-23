@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.47.8](https://github.com/werf/werf/compare/v2.47.7...v2.47.8) (2025-09-23)
+
+
+### Bug Fixes
+
+* **build:** fix --save-build-report does not work with ([9bbdfb7](https://github.com/werf/werf/commit/9bbdfb759ba3e4b8d8987f412ca84fd840d5cbdf))
+* **build:** fix deferred build log on error in quiet mode ([3e546cc](https://github.com/werf/werf/commit/3e546cc6e12a7747b5bf64c3c6a691bb73514ddf))
+* **includes:** fix --allow-includes-update does not use actual HEAD (also related to stapel git.branch) ([9a58246](https://github.com/werf/werf/commit/9a5824654fef5f502fffed0f318c3ff032a938e6))
+
 ## [2.47.7](https://github.com/werf/werf/compare/v2.47.6...v2.47.7) (2025-09-22)
 
 
