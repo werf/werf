@@ -6,6 +6,10 @@
     EXCLUDE_PACKAGES: ""
   script:
     - |
-      export WERF_TEST_K8S_DOCKER_REGISTRY="localhost:$(docker inspect kind-registry-${CI_PIPELINE_ID} --format '{{(index (index .NetworkSettings.Ports "5000/tcp") 0).HostPort}}')"
+      task --yes test:setup:environment
+      export KUBECONFIG="$CI_PROJECT_DIR/werf.kubeconfig-${CI_JOB_ID}"
+      export WERF_TEST_K8S_DOCKER_REGISTRY="localhost:$(docker inspect kind-registry-${CI_JOB_ID} --format '{{(index (index .NetworkSettings.Ports "5000/tcp") 0).HostPort}}')"
       test -n "$PACKAGES" && PATHS="paths=$(echo $PACKAGES | tr , ' ')"
       task --yes -p test:e2e:$SCOPE $PATHS -- --keep-going --skip-package "$EXCLUDE_PACKAGES"
+  after_script:
+    - TASK_X_REMOTE_TASKFILES=1 task --yes test:cleanup:environment

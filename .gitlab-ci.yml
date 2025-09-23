@@ -8,18 +8,17 @@ stages:
   - build
   - publish
   - release
-  - cleanup
 
 default:
   before_script:
     - git config --global user.name "borya"
     - git config --global user.email "borya@flant.com"
-    - export PATH="/usr/local/go1.23/go/bin:/usr/local/golangci-lint-1.57.1:$PATH"
+    - export PATH="/usr/local/go1.23/go/bin:/usr/local/golangci-lint-1.57.1:$HOME/go/bin:$PATH"
     - export GOROOT=/usr/local/go1.23/go
-    - export KUBECONFIG=/tmp/werf.kubeconfig-${CI_PIPELINE_ID}
     - export WERF_TEST_BINARY_PATH=$CI_PROJECT_DIR/bin/werf
     - export TASK_X_REMOTE_TASKFILES=1
     - export LD_LIBRARY_PATH=/usr/local/lib/libgost
+    - task --yes deps:install:ginkgo
   tags:
     - deckhouse
 
@@ -44,10 +43,13 @@ default:
     tag: $CI_COMMIT_TAG
     schedule: $CI_PIPELINE_SOURCE == "schedule"
     no_schedule: $CI_PIPELINE_SOURCE != "schedule"
+    web: $CI_PIPELINE_SOURCE == "web"
 
 .default_mr_test_rules: &default_mr_test_rules
   rules:
     - if: !reference [.rules, if, mr]
+      <<: *changes_source
+    - if: !reference [.rules, if, web]
       <<: *changes_source
     - when: never
 
@@ -68,6 +70,8 @@ prepare_environment:
     - if: !reference [.rules, if, main]
       <<: *changes_source
     - if: !reference [.rules, if, mr]
+      <<: *changes_source
+    - if: !reference [.rules, if, web]
       <<: *changes_source
     - when: never
 
@@ -203,18 +207,4 @@ create_release:
         --request POST \
         "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases"
   <<: *default_tag_rule
-
 # end of release block
-
-cleanup_environment:
-  stage: cleanup
-  script:
-    - task --yes test:cleanup:environment
-  rules:
-    - if: !reference [.rules, if, main]
-      <<: *changes_source
-      when: always
-    - if: !reference [.rules, if, mr]
-      <<: *changes_source
-      when: always
-    - when: never

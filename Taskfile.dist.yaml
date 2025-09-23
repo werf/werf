@@ -362,23 +362,23 @@ tasks:
     desc: "Setup dev registry."
     cmds:
       - docker network create kind || true
-      - docker run -d -p 0.0.0.0::5000 --network kind -e REGISTRY_STORAGE_DELETE_ENABLED=true --restart=always --name kind-registry-${CI_PIPELINE_ID} registry:2
+      - docker run -d -p 0.0.0.0::5000 --network kind -e REGISTRY_STORAGE_DELETE_ENABLED=true --restart=always --name kind-registry-${CI_JOB_ID} registry:2
 
   test:setup:kubernetes:
     desc: "Setup dev kubernetes cluster."
     vars:
       registryPort:
-        sh: docker inspect kind-registry-${CI_PIPELINE_ID} --format '{{"{{"}}(index (index .NetworkSettings.Ports "5000/tcp") 0).HostPort{{"}}"}}'
+        sh: docker inspect kind-registry-${CI_JOB_ID} --format '{{"{{"}}(index (index .NetworkSettings.Ports "5000/tcp") 0).HostPort{{"}}"}}'
     cmd: |
-      kind create cluster --image kindest/node:v{{.kubeVersion}} --kubeconfig /tmp/werf.kubeconfig-${CI_PIPELINE_ID} --name ${CI_PIPELINE_ID} --config=<(echo "
+      kind create cluster --image kindest/node:v{{.kubeVersion}} --kubeconfig werf.kubeconfig-${CI_JOB_ID} --name ${CI_JOB_ID} --config=<(echo "
         kind: Cluster
         apiVersion: kind.x-k8s.io/v1alpha4
         containerdConfigPatches:
           - |
             [plugins.\"io.containerd.grpc.v1.cri\".registry.mirrors.\"localhost:{{.registryPort}}\"]
-              endpoint = [\"http://kind-registry-${CI_PIPELINE_ID}:5000\"]
+              endpoint = [\"http://kind-registry-${CI_JOB_ID}:5000\"]
       ")
-      docker network connect kind kind-registry-${CI_PIPELINE_ID} 2>/dev/null || true
+      docker network connect kind kind-registry-${CI_JOB_ID} 2>/dev/null || true
 
   verify:binaries:dist:all:
     desc: 'Verify that the distributable binaries are built and have correct platform/arch. Important vars: "version".'
@@ -603,5 +603,5 @@ tasks:
   test:cleanup:environment:
     desc: "Cleanup environment"
     cmds:
-      - kind delete cluster --name ${CI_PIPELINE_ID} || true
-      - docker rm -f kind-registry-${CI_PIPELINE_ID} || true
+      - kind delete cluster --name ${CI_JOB_ID} || true
+      - docker rm -f kind-registry-${CI_JOB_ID} || true
