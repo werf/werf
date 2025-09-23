@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/go-git/go-git/v5"
@@ -292,6 +293,30 @@ func (repo *Remote) FetchOrigin(ctx context.Context, opts FetchOptions) error {
 		err = rawRepo.Fetch(fetchOpts)
 		if err != nil && err != git.NoErrAlreadyUpToDate {
 			return fmt.Errorf("cannot fetch remote %q of repo %q: %w", remoteName, repo.String(), err)
+		}
+
+		if err := logboek.Context(ctx).Debug().LogProcess("Updating local branches").DoError(func() error {
+			refs, err := rawRepo.References()
+			if err != nil {
+				return fmt.Errorf("cannot get references of repo %q: %w", repo.String(), err)
+			}
+
+			return refs.ForEach(func(ref *plumbing.Reference) error {
+				name := ref.Name().String()
+				if strings.HasPrefix(name, "refs/remotes/origin/") {
+					branch := strings.TrimPrefix(name, "refs/remotes/origin/")
+					localRefName := plumbing.ReferenceName("refs/heads/" + branch)
+
+					if err := rawRepo.Storer.SetReference(plumbing.NewHashReference(localRefName, ref.Hash())); err != nil {
+						return err
+					}
+
+					logboek.Context(ctx).Debug().LogLnDetails(branch, "->", ref.Hash())
+				}
+				return nil
+			})
+		}); err != nil {
+			return fmt.Errorf("cannot update local branches of repo %q: %w", repo.String(), err)
 		}
 
 		return nil
