@@ -2,6 +2,7 @@ package git_repo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -290,8 +291,8 @@ func (repo *Remote) FetchOrigin(ctx context.Context, opts FetchOptions) error {
 			fetchOpts.Auth = newBasicAuth(repo.BasicAuth.Username, repo.BasicAuth.Password).AuthMethod
 		}
 
-		err = rawRepo.Fetch(fetchOpts)
-		if err != nil && err != git.NoErrAlreadyUpToDate {
+		err = rawRepo.FetchContext(ctx, fetchOpts)
+		if err != nil && !errors.Is(err, git.NoErrAlreadyUpToDate) {
 			return fmt.Errorf("cannot fetch remote %q of repo %q: %w", remoteName, repo.String(), err)
 		}
 
