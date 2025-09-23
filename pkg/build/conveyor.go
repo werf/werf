@@ -391,6 +391,8 @@ func (c *Conveyor) ShouldAddManagedImagesRecords() bool {
 
 type ShouldBeBuiltOptions struct {
 	CustomTagFuncList []imagePkg.CustomTagFunc
+	ReportPath        string
+	ReportFormat      ReportFormat
 }
 
 func (c *Conveyor) ShouldBeBuilt(ctx context.Context, opts ShouldBeBuiltOptions) error {
@@ -405,6 +407,8 @@ func (c *Conveyor) ShouldBeBuilt(ctx context.Context, opts ShouldBeBuiltOptions)
 			ShouldBeBuiltMode: true,
 			BuildOptions: BuildOptions{
 				CustomTagFuncList: opts.CustomTagFuncList,
+				ReportPath:        opts.ReportPath,
+				ReportFormat:      opts.ReportFormat,
 			},
 		}),
 	}
