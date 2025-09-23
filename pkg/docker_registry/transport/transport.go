@@ -7,7 +7,7 @@ import (
 	"github.com/cenkalti/backoff/v5"
 
 	"github.com/werf/logboek"
-	parallelConstant "github.com/werf/werf/v2/pkg/util/parallel/constant"
+	"github.com/werf/werf/v2/pkg/util/parallel"
 )
 
 type transport struct {
@@ -30,7 +30,7 @@ func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
 
 	notify := func(err error, duration time.Duration) {
 		ctx := req.Context()
-		workerId := ctx.Value(parallelConstant.CtxBackgroundTaskIDKey)
+		workerId := ctx.Value(parallel.CtxBackgroundTaskIDKey)
 		if workerId != nil {
 			logboek.Context(ctx).Warn().LogF(
 				"WARNING: %s. Retrying in %v... (worker %d)\nThe --parallel ($WERF_PARALLEL) and --parallel-tasks-limit ($WERF_PARALLEL_TASKS_LIMIT) options can be used to regulate parallel tasks.\n",
