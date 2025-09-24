@@ -7,6 +7,7 @@ import (
 	"debug/elf"
 	"errors"
 	"fmt"
+	"github.com/google/go-containerregistry/pkg/v1/stream"
 	"io"
 	"io/ioutil"
 	"os"
@@ -19,8 +20,6 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/daemon"
 	"github.com/google/go-containerregistry/pkg/v1/empty"
 	"github.com/google/go-containerregistry/pkg/v1/mutate"
-	"github.com/google/go-containerregistry/pkg/v1/tarball"
-
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/werf/exec"
@@ -251,21 +250,17 @@ func Sign(ctx context.Context, refBase, refFinal string, elfSigningOptions ELFSi
 		if err != nil {
 			return "", fmt.Errorf("failed to get uncompressed layer: %w", err)
 		}
+		rc.Close()
 
 		modifiedLayerBuffer, err := mutateELFFiles(ctx, rc, elfSigningOptions)
 		if err != nil {
 			return "", fmt.Errorf("failed to mutate ELF files: %w", err)
 		}
 
-		newLayer, err := tarball.LayerFromReader(io.NopCloser(modifiedLayerBuffer))
-		if err != nil {
-			return "", fmt.Errorf("failed to create layer from reader: %w", err)
-		}
-
+		newLayer := stream.NewLayer(io.NopCloser(modifiedLayerBuffer))
 		newLayers = append(newLayers, mutate.Addendum{
 			Layer: newLayer,
 		})
-		rc.Close()
 
 		h, err = newLayer.DiffID()
 		if err != nil {
