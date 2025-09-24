@@ -2,7 +2,6 @@ package tmp_manager
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -38,6 +37,10 @@ func GetContextTmpDir() string {
 	return filepath.Join(werf.GetServiceDir(), "tmp", "context")
 }
 
+func TempFile(pattern string) (f *os.File, err error) {
+	return os.CreateTemp(werf.GetTmpDir(), pattern)
+}
+
 func registerCreatedPath(newPath, createdPathsDir string) error {
 	if err := os.MkdirAll(createdPathsDir, os.ModePerm); err != nil {
 		return fmt.Errorf("unable to create dir %s: %w", createdPathsDir, err)
@@ -70,7 +73,7 @@ func releasePath(path, createdPathsDir, releasedPathsDir string) error {
 }
 
 func newTmpDir(prefix string) (string, error) {
-	newDir, err := ioutil.TempDir(werf.GetTmpDir(), prefix)
+	newDir, err := os.MkdirTemp(werf.GetTmpDir(), prefix)
 	if err != nil {
 		return "", err
 	}
@@ -79,7 +82,7 @@ func newTmpDir(prefix string) (string, error) {
 }
 
 func newTmpFile(prefix string) (string, error) {
-	newFile, err := ioutil.TempFile(werf.GetTmpDir(), prefix)
+	newFile, err := TempFile(prefix)
 	if err != nil {
 		return "", err
 	}
