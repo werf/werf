@@ -7,7 +7,6 @@ import (
 	"debug/elf"
 	"errors"
 	"fmt"
-	"github.com/google/go-containerregistry/pkg/v1/stream"
 	"io"
 	"io/ioutil"
 	"os"
@@ -20,6 +19,8 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/daemon"
 	"github.com/google/go-containerregistry/pkg/v1/empty"
 	"github.com/google/go-containerregistry/pkg/v1/mutate"
+	"github.com/google/go-containerregistry/pkg/v1/stream"
+
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/werf/exec"
