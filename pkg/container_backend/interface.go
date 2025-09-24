@@ -2,6 +2,7 @@ package container_backend
 
 import (
 	"context"
+	"io"
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
@@ -118,6 +119,9 @@ type ContainerBackend interface {
 	RenameImage(ctx context.Context, img LegacyImageInterface, newImageName string, removeOldName bool) error
 	RemoveImage(ctx context.Context, img LegacyImageInterface) error
 	TagImageByName(ctx context.Context, img LegacyImageInterface) error
+	// Mutation
+	SaveImageToStream(ctx context.Context, imageName string) (io.ReadCloser, error)
+	LoadImageFromStream(ctx context.Context, input io.Reader) (string, error)
 }
 
 func PullImageFromRegistry(ctx context.Context, containerBackend ContainerBackend, img LegacyImageInterface) error {
