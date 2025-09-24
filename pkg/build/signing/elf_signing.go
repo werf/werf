@@ -263,6 +263,11 @@ func Sign(ctx context.Context, refBase, refFinal string, elfSigningOptions ELFSi
 			Layer: newLayer,
 		})
 
+		// Consume the stream to compute the digest
+		if _, err := io.Copy(io.Discard, modifiedLayerBuffer); err != nil {
+			return "", fmt.Errorf("failed to consume layer stream: %w", err)
+		}
+
 		h, err = newLayer.DiffID()
 		if err != nil {
 			return "", fmt.Errorf("failed to get new layer digest: %w", err)
