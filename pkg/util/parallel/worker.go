@@ -1,32 +1,42 @@
 package parallel
 
 import (
-	"github.com/werf/common-go/pkg/util"
+	"fmt"
+	"os"
+	"time"
 )
 
-type bufferedWorker struct {
-	ID  int
-	buf *util.GoroutineSafeBuffer
+type parallelWorker struct {
+	ID int
 
-	doneCh chan struct{}
+	file *os.File
+
+	Writer *parallelWorkerWriter
+	Reader *parallelWorkerReader
 }
 
-func (w *bufferedWorker) MarkDone() {
-	w.doneCh <- struct{}{}
-}
-
-func (w *bufferedWorker) Buffer() *util.GoroutineSafeBuffer {
-	return w.buf
-}
-
-func (w *bufferedWorker) IsDone() bool {
-	return len(w.doneCh) > 0
-}
-
-func newBufferedWorker(id int) *bufferedWorker {
-	return &bufferedWorker{
-		ID:     id,
-		buf:    util.NewGoroutineSafeBuffer(),
-		doneCh: make(chan struct{}, 1),
+func (w *parallelWorker) Close() error {
+	if err := w.file.Close(); err != nil {
+		return fmt.Errorf("failed to close temp file for worker %d: %w", w.ID, err)
 	}
+	if err := os.Remove(w.file.Name()); err != nil {
+		return fmt.Errorf("failed to remove temp file for worker %d: %w", w.ID, err)
+	}
+	return nil
+}
+
+func newParallelWorker(id int) (*parallelWorker, error) {
+	pid := os.Getpid()
+
+	file, err := os.CreateTemp("", fmt.Sprintf("parallel-worker-%d-%d-%d", pid, id, time.Now().UnixMilli()))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create temp file for worker %d: %w", id, err)
+	}
+
+	return &parallelWorker{
+		ID:     id,
+		file:   file,
+		Writer: newParallelWorkerWriter(file),
+		Reader: newParallelWorkerReader(file),
+	}, nil
 }
