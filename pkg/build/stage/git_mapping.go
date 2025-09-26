@@ -116,6 +116,8 @@ func (gm *GitMapping) makeArchiveOptions(ctx context.Context, commit string) (*g
 		PathMatcher: gm.getPathMatcher(),
 		Commit:      commit,
 		FileRenames: fileRenames,
+		Owner:       gm.Owner,
+		Group:       gm.Group,
 	}, nil
 }
 
@@ -239,8 +241,7 @@ func (gm *GitMapping) applyPatchCommand(patchFile *ContainerFileDescriptor, arch
 	))
 
 	gitCommand := fmt.Sprintf(
-		"%s %s apply --ignore-whitespace --whitespace=nowarn --directory=\"%s\" --unsafe-paths %s %s",
-		stapel.OptionalSudoCommand(gm.Owner, gm.Group),
+		"%s apply --ignore-whitespace --whitespace=nowarn --directory=\"%s\" --unsafe-paths %s %s",
 		stapel.GitBinPath(),
 		applyPatchDirectory,
 		patchFile.ContainerFilePath,
@@ -548,8 +549,7 @@ func (gm *GitMapping) applyArchiveCommand(archiveFile *ContainerFileDescriptor, 
 	))
 
 	tarCommand := fmt.Sprintf(
-		"%s %s -xf %s -C \"%s\"",
-		stapel.OptionalSudoCommand(gm.Owner, gm.Group),
+		"%s -xf %s -C \"%s\"",
 		stapel.TarBinPath(),
 		archiveFile.ContainerFilePath,
 		unpackArchiveDirectory,

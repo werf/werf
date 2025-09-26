@@ -148,6 +148,16 @@ var _ = Describe("Stapel imports", func() {
 				Expect(output).To(ContainSubstring(`/etc/test/busybox`))
 			}
 		})
+		It("should import file with correct owner and group", func(ctx SpecContext) {
+			SuiteData.CommitProjectWorktree(ctx, SuiteData.ProjectName, utils.FixturePath("import_app_owner_group", "001"), "initial commit")
+
+			Expect(werfBuild(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{})).To(Succeed())
+
+			output := werfRunOutput(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName),
+				"sh", "-c", "stat -c %u:%g /etc/test/busybox")
+
+			Expect(output).To(ContainSubstring("11111:11111"))
+		})
 	})
 
 	Context("caching by import source checksum", func() {
