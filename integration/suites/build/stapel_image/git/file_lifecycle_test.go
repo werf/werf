@@ -28,6 +28,9 @@ var _ = Describe("file lifecycle", func() {
 	gitExecutableFilePerm := os.FileMode(0o755)
 	gitOrdinaryFilePerm := os.FileMode(0o644)
 
+	expectedOwner := "55555"
+	expectedGroup := "55555"
+
 	type fileLifecycleEntry struct {
 		relPath string
 		data    []byte
@@ -81,8 +84,16 @@ var _ = Describe("file lifecycle", func() {
 			cmd = append(cmd, docker.CheckContainerFileCommand(path.Join(gitToPath, entry.relPath), false, false))
 		} else {
 			cmd = append(cmd, docker.CheckContainerFileCommand(path.Join(gitToPath, entry.relPath), false, true))
-			cmd = append(cmd, fmt.Sprintf("diff <(stat -c %%a %s) <(echo %s)", shellescape.Quote(path.Join(gitToPath, entry.relPath)), strconv.FormatUint(uint64(entry.perm), 8)))
-			cmd = append(cmd, fmt.Sprintf("diff %s %s", shellescape.Quote(path.Join(gitToPath, entry.relPath)), shellescape.Quote(path.Join("/host", entry.relPath))))
+			cmd = append(cmd, fmt.Sprintf("diff <(stat -c %%a %s) <(echo %s)",
+				shellescape.Quote(path.Join(gitToPath, entry.relPath)),
+				strconv.FormatUint(uint64(entry.perm), 8)))
+			cmd = append(cmd, fmt.Sprintf("diff <(stat -c %%u:%%g %s) <(echo %s:%s)",
+				shellescape.Quote(gitToPath),
+				expectedOwner,
+				expectedGroup))
+			cmd = append(cmd, fmt.Sprintf("diff %s %s",
+				shellescape.Quote(path.Join(gitToPath, entry.relPath)),
+				shellescape.Quote(path.Join("/host", entry.relPath))))
 
 			extraDockerOptions = append(extraDockerOptions, fmt.Sprintf("-v %s:%s", SuiteData.TestDirPath, "/host"))
 		}
@@ -93,6 +104,24 @@ var _ = Describe("file lifecycle", func() {
 	BeforeEach(func(ctx SpecContext) {
 		fixturesPathParts = []string{"file_lifecycle"}
 		commonBeforeEach(ctx, utils.FixturePath(fixturesPathParts...))
+	})
+
+	It("should set correct owner and group for /app", func(ctx SpecContext) {
+		utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
+
+		cmd := []string{
+			fmt.Sprintf("diff <(stat -c %%u:%%g %s) <(echo %s:%s)",
+				shellescape.Quote(gitToPath),
+				expectedOwner,
+				expectedGroup),
+		}
+
+		docker.RunSucceedContainerCommandWithStapel(ctx,
+			SuiteData.WerfBinPath,
+			SuiteData.TestDirPath,
+			[]string{},
+			cmd,
+		)
 	})
 
 	type test struct {
@@ -259,6 +288,10 @@ var _ = Describe("file lifecycle", func() {
 						cmd = append(cmd, checkContainerSymlinkFileCommand(path.Join(gitToPath, entry.relPath), true))
 						readlinkCmd := fmt.Sprintf("readlink %s", shellescape.Quote(path.Join(gitToPath, entry.relPath)))
 						cmd = append(cmd, fmt.Sprintf("diff <(%s) <(echo %s)", readlinkCmd, shellescape.Quote(entry.link)))
+						cmd = append(cmd, fmt.Sprintf("diff <(stat -c %%u:%%g %s) <(echo %s:%s)",
+							shellescape.Quote(gitToPath),
+							expectedOwner,
+							expectedGroup))
 					}
 
 					docker.RunSucceedContainerCommandWithStapel(ctx, SuiteData.WerfBinPath, SuiteData.TestDirPath, []string{}, cmd)
