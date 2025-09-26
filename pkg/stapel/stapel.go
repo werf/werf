@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	"github.com/werf/werf/v2/pkg/docker"
@@ -185,38 +184,6 @@ func SystemPATH() string {
 		filepath.Join(CONTAINER_MOUNT_ROOT, "stapel/bin"),
 		filepath.Join(CONTAINER_MOUNT_ROOT, "stapel/embedded/bin"),
 	}, ":")
-}
-
-func OptionalSudoCommand(user, group string) string {
-	cmd := ""
-
-	if user != "" || group != "" {
-		cmd += fmt.Sprintf("%s -E", embeddedBinPath("sudo"))
-
-		if user != "" {
-			cmd += fmt.Sprintf(" -u %s -H", sudoFormatUser(user))
-		}
-
-		if group != "" {
-			cmd += fmt.Sprintf(" -g %s", sudoFormatUser(group))
-		}
-	}
-
-	return cmd
-}
-
-func sudoFormatUser(user string) string {
-	var userStr string
-	userInt, err := strconv.Atoi(user)
-	if err == nil {
-		userStr = strconv.Itoa(userInt)
-	}
-
-	if user == userStr {
-		return fmt.Sprintf("\\#%s", user)
-	} else {
-		return user
-	}
 }
 
 func embeddedBinPath(bin string) string {
