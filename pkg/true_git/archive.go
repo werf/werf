@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/go-git/go-git/v5/plumbing/filemode"
 
@@ -150,6 +151,7 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 				}
 
 				header := &tar.Header{
+					Format:     tar.FormatGNU,
 					Name:       p,
 					Typeflag:   tar.TypeDir,
 					Mode:       0o775,
@@ -267,9 +269,20 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 
 func applyOwnership(header *tar.Header, opts ArchiveOptions) {
 	if opts.Owner != "" {
-		header.Uname = opts.Owner
+		if uid, err := strconv.Atoi(opts.Owner); err == nil {
+			header.Uid = uid
+			header.Uname = ""
+		} else {
+			header.Uname = opts.Owner
+		}
 	}
+
 	if opts.Group != "" {
-		header.Gname = opts.Group
+		if gid, err := strconv.Atoi(opts.Group); err == nil {
+			header.Gid = gid
+			header.Gname = ""
+		} else {
+			header.Gname = opts.Group
+		}
 	}
 }

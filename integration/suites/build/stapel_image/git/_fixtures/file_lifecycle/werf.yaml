@@ -5,5 +5,5 @@ image: ~
 from: ubuntu
 git:
 - to: /app
-  owner: test
-  group: test
+  owner: 55555
+  group: 55555

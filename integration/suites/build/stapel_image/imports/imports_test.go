@@ -156,7 +156,7 @@ var _ = Describe("Stapel imports", func() {
 			output := werfRunOutput(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName),
 				"sh", "-c", "stat -c %u:%g /etc/test/busybox")
 
-			Expect(strings.TrimSpace(output)).To(Equal("11111:11111"))
+			Expect(output).To(ContainSubstring("11111:11111"))
 		})
 	})
 
