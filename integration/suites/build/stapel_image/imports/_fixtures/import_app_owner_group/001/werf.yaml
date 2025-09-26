@@ -1,0 +1,15 @@
+project: none
+configVersion: 1
+---
+image: test-import-0
+from: alpine
+shell:
+  install:
+    - mkdir -p /etc/test
+import:
+  - from: alpine:3.18
+    add: /bin/busybox
+    to: /etc/test
+    owner: 11111
+    group: 11111
+    after: install
