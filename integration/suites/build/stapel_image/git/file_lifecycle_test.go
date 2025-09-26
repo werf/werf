@@ -28,8 +28,8 @@ var _ = Describe("file lifecycle", func() {
 	gitExecutableFilePerm := os.FileMode(0o755)
 	gitOrdinaryFilePerm := os.FileMode(0o644)
 
-	expectedOwner := "55555"
-	expectedGroup := "55555"
+	expectedOwner := "test"
+	expectedGroup := "test"
 
 	type fileLifecycleEntry struct {
 		relPath string
