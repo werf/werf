@@ -13,6 +13,7 @@ import (
 
 	"github.com/werf/3p-helm/pkg/chart/loader"
 	"github.com/werf/3p-helm/pkg/engine"
+	"github.com/werf/3p-helm/pkg/werf/file"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/level"
@@ -21,6 +22,7 @@ import (
 	"github.com/werf/nelm/pkg/action"
 	"github.com/werf/werf/v2/pkg/build"
 	"github.com/werf/werf/v2/pkg/build/stage"
+	"github.com/werf/werf/v2/pkg/bundle_file_reader"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/docker"
@@ -1768,4 +1770,10 @@ func getFlags(cmd *cobra.Command, persistent bool) *pflag.FlagSet {
 	}
 
 	return cmd.Flags()
+}
+
+// NewBundleFileReader создает простой файловый ридер для bundle команд
+// Не требует Git репозиторий, работает только с локальной файловой системой
+func NewBundleFileReader(bundleDir string) file.ChartFileReaderInterface {
+	return bundle_file_reader.NewBundleFileReader(bundleDir)
 }

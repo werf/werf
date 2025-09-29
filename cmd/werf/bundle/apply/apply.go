@@ -234,12 +234,9 @@ func runApply(ctx context.Context) error {
 	})
 	engine.Debug = *commonCmdData.DebugTemplates
 
-	gm, err := common.GetGiterminismManager(ctx, &commonCmdData)
-	if err != nil {
-		return fmt.Errorf("unable init giterminism manager: %w", err)
-	}
-
-	file.ChartFileReader = gm.FileManager
+	// Для bundle команд не нужен giterminism manager, используем простой file reader
+	bundleFileReader := common.NewBundleFileReader(bundlePath)
+	file.ChartFileReader = bundleFileReader
 
 	if err := action.ReleaseInstall(ctx, releaseName, releaseNamespace, action.ReleaseInstallOptions{
 		AutoRollback:                 cmdData.AutoRollback,
