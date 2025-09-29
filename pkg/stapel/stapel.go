@@ -161,6 +161,10 @@ func AnsiblePlaybookBinPath() string {
 	return embeddedBinPath("ansible-playbook")
 }
 
+func ChownBinPath() string {
+	return embeddedBinPath("chown")
+}
+
 /*
  * Ansible tools and libs overlay path is like /usr/local which has more priority than /usr.
  * Ansible tools and libs overlay path used to force ansible to use tools directly from stapel rather than find it in the base system.

@@ -248,7 +248,14 @@ func (gm *GitMapping) applyPatchCommand(patchFile *ContainerFileDescriptor, arch
 		fmt.Sprintf("|| exit %d", container_backend.ErrPatchApplyCode),
 	)
 
-	commands = append(commands, strings.TrimLeft(gitCommand, " "))
+	chownCommand := fmt.Sprintf(
+		"%s -R %s:%s %s",
+		stapel.ChownBinPath(),
+		gm.Owner,
+		gm.Group,
+		applyPatchDirectory,
+	)
+	commands = append(commands, strings.TrimLeft(gitCommand, " "), strings.TrimLeft(chownCommand, " "))
 
 	return commands, nil
 }
