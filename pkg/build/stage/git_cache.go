@@ -6,7 +6,6 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/pkg/container_backend"
-	"github.com/werf/werf/v2/pkg/image"
 )
 
 const patchSizeStep = 1024 * 1024
@@ -19,10 +18,6 @@ func NewGitCacheStage(gitPatchStageOptions *NewGitPatchStageOptions, baseStageOp
 
 type GitCacheStage struct {
 	*GitPatchStage
-}
-
-func (s *GitCacheStage) SelectSuitableStageDesc(ctx context.Context, c Conveyor, stageDescSet image.StageDescSet) (*image.StageDesc, error) {
-	return selectSuitableStageDesc(ctx, c, stageDescSet, s)
 }
 
 func (s *GitCacheStage) IsEmpty(ctx context.Context, c Conveyor, prevBuiltImage *StageImage) (bool, error) {

@@ -5,7 +5,6 @@ import (
 
 	"github.com/werf/werf/v2/pkg/build/builder"
 	"github.com/werf/werf/v2/pkg/container_backend"
-	"github.com/werf/werf/v2/pkg/image"
 )
 
 func newUserWithGitPatchStage(builder builder.Builder, name StageName, gitPatchStageOptions *NewGitPatchStageOptions, baseStageOptions *BaseStageOptions) *UserWithGitPatchStage {
@@ -20,10 +19,6 @@ func newUserWithGitPatchStage(builder builder.Builder, name StageName, gitPatchS
 type UserWithGitPatchStage struct {
 	*UserStage
 	GitPatchStage *GitPatchStage
-}
-
-func (s *UserWithGitPatchStage) SelectSuitableStageDesc(ctx context.Context, c Conveyor, stageDescSet image.StageDescSet) (*image.StageDesc, error) {
-	return selectSuitableStageDesc(ctx, c, stageDescSet, s)
 }
 
 func (s *UserWithGitPatchStage) GetNextStageDependencies(ctx context.Context, c Conveyor) (string, error) {
