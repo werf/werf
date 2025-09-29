@@ -258,7 +258,7 @@ ScanImages:
 
 			imageCommitInfo, err := gitMapping.GetBuiltImageCommitInfo(stageDesc.Info.Labels)
 			if err != nil {
-				logboek.Context(ctx).Warn().LogF("Ignore stage %s: unable to get image commit info for git repo %s: %s\n", stageDesc.Info.Name, gitMapping.GitRepo().String(), err)
+				logboek.Context(ctx).Warn().LogF("Ignoring stage %s: unable to get image commit info for git repo %s: %s\n", stageDesc.Info.Name, gitMapping.GitRepo().String(), err)
 				continue ScanImages
 			}
 
@@ -275,7 +275,7 @@ ScanImages:
 			}
 
 			if !exist {
-				logboek.Context(ctx).Debug().LogF("Commit %s does not exist for git repo %s: ignore image %s\n", commitToCheckAncestry, gitMapping.GitRepo().String(), stageDesc.Info.Name)
+				logboek.Context(ctx).Debug().LogF("Skipping stage %s: commit %s does not exist in repo %s\n", stageDesc.Info.Name, commitToCheckAncestry, gitMapping.GitRepo().String())
 				continue ScanImages
 			}
 
@@ -285,7 +285,7 @@ ScanImages:
 			}
 
 			if !isOurAncestor {
-				logboek.Context(ctx).Debug().LogF("%s is not ancestor of %s for git repo %s: ignore image %s\n", commitToCheckAncestry, currentCommit, gitMapping.GitRepo().String(), stageDesc.Info.Name)
+				logboek.Context(ctx).Debug().LogF("Skipping stage %s: commit %s is not an ancestor of %s in repo %s\n", stageDesc.Info.Name, commitToCheckAncestry, currentCommit, gitMapping.GitRepo().String())
 				continue ScanImages
 			}
 
@@ -295,14 +295,11 @@ ScanImages:
 			}
 
 			if !areSubmodulesValid {
-				logboek.Context(ctx).Debug().LogF("Submodule commits are not valid (failed to fetch one or more submodule commits) for repo %s: skipping image %s\n", commitToCheckAncestry, gitMapping.GitRepo().String(), stageDesc.Info.Name)
+				logboek.Context(ctx).Debug().LogF("Skipping stage %s: submodule commits are not valid (failed to fetch one or more submodule commits) for commit %s in repo %s\n", stageDesc.Info.Name, commitToCheckAncestry, gitMapping.GitRepo().String())
 				continue ScanImages
 			}
 
-			logboek.Context(ctx).Debug().LogF(
-				"%s is ancestor of %s for git repo %s: image %s is suitable for git archive stage\n",
-				commitToCheckAncestry, currentCommit, gitMapping.GitRepo().String(), stageDesc.Info.Name,
-			)
+			logboek.Context(ctx).Debug().LogF("Using stage %s: commit %s in repo %s\n", stageDesc.Info.Name, commitToCheckAncestry, gitMapping.GitRepo().String())
 
 			return stageDesc, nil
 		}
