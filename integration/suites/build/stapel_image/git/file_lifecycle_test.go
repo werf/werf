@@ -88,7 +88,7 @@ var _ = Describe("file lifecycle", func() {
 				shellescape.Quote(path.Join(gitToPath, entry.relPath)),
 				strconv.FormatUint(uint64(entry.perm), 8)))
 			cmd = append(cmd, fmt.Sprintf("diff <(stat -c %%u:%%g %s) <(echo %s:%s)",
-				shellescape.Quote(gitToPath),
+				shellescape.Quote(path.Join(gitToPath, entry.relPath)),
 				expectedOwner,
 				expectedGroup))
 			cmd = append(cmd, fmt.Sprintf("diff %s %s",
@@ -289,7 +289,7 @@ var _ = Describe("file lifecycle", func() {
 						readlinkCmd := fmt.Sprintf("readlink %s", shellescape.Quote(path.Join(gitToPath, entry.relPath)))
 						cmd = append(cmd, fmt.Sprintf("diff <(%s) <(echo %s)", readlinkCmd, shellescape.Quote(entry.link)))
 						cmd = append(cmd, fmt.Sprintf("diff <(stat -c %%u:%%g %s) <(echo %s:%s)",
-							shellescape.Quote(gitToPath),
+							shellescape.Quote(path.Join(gitToPath, entry.relPath)),
 							expectedOwner,
 							expectedGroup))
 					}
