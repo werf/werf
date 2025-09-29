@@ -289,6 +289,16 @@ ScanImages:
 				continue ScanImages
 			}
 
+			areSubmodulesValid, err := gitMapping.GitRepo().AreSubmoduleCommitsValid(ctx, commitToCheckAncestry)
+			if err != nil {
+				return nil, fmt.Errorf("error checking submodule commits validity for commit %s: %w", commitToCheckAncestry, err)
+			}
+
+			if !areSubmodulesValid {
+				logboek.Context(ctx).Debug().LogF("Submodule commits are not valid (failed to fetch one or more submodule commits) for repo %s: skipping image %s\n", commitToCheckAncestry, gitMapping.GitRepo().String(), stageDesc.Info.Name)
+				continue ScanImages
+			}
+
 			logboek.Context(ctx).Debug().LogF(
 				"%s is ancestor of %s for git repo %s: image %s is suitable for git archive stage\n",
 				commitToCheckAncestry, currentCommit, gitMapping.GitRepo().String(), stageDesc.Info.Name,
