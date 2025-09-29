@@ -437,6 +437,18 @@ func (repo *Base) createArchive(ctx context.Context, repoPath, gitDir, repoID, w
 	}
 }
 
+func (repo *Base) AreSubmoduleCommitsValid(ctx context.Context, commit string) (bool, error) {
+	if _, err := repo.initRepoHandleBackedByWorkTree(ctx, commit); err != nil {
+		if strings.Contains(err.Error(), "Direct fetching of that commit failed") {
+			return false, nil
+		}
+
+		return false, err
+	}
+
+	return true, nil
+}
+
 func (repo *Base) isCommitExists(ctx context.Context, repoPath, gitDir, commit string) (bool, error) {
 	repository, err := repo.PlainOpen(repoPath)
 	if err != nil {
