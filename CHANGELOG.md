@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.47.9](https://github.com/werf/werf/compare/v2.47.8...v2.47.9) (2025-09-29)
+
+
+### Bug Fixes
+
+* **build, stapel, git:** prevent patch creation error when a submodule commit no longer exists in the remote ([3ad251e](https://github.com/werf/werf/commit/3ad251e65a0ad3ffa48ec187669e8454ac9bec9d))
+* use a consistent werf tmp dir ([#7095](https://github.com/werf/werf/issues/7095)) ([fd88fa5](https://github.com/werf/werf/commit/fd88fa5d6ad6924c6e17c328069db5795ef23a5e))
+
 ## [2.47.8](https://github.com/werf/werf/compare/v2.47.7...v2.47.8) (2025-09-23)
 
 
