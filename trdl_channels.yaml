@@ -40,7 +40,7 @@ groups:
       - name: alpha
         version: 2.47.9
       - name: beta
-        version: 2.47.8
+        version: 2.47.9
       - name: ea
         version: 2.47.5
       - name: stable
