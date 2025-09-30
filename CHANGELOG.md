@@ -7,6 +7,13 @@
 
 * **deploy:** bundle render/apply requires git ([6828274](https://github.com/werf/werf/commit/682827485e2302a9b6cf3a466f9c6497fc393429))
 
+## [2.47.10](https://github.com/werf/werf/compare/v2.47.9...v2.47.10) (2025-09-30)
+
+
+### Bug Fixes
+
+* **deploy:** bundle render/apply requires git ([6828274](https://github.com/werf/werf/commit/682827485e2302a9b6cf3a466f9c6497fc393429))
+
 ## [2.47.9](https://github.com/werf/werf/compare/v2.47.8...v2.47.9) (2025-09-29)
 
 
