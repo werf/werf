@@ -95,10 +95,8 @@ func (cleaner *LocalBackendCleaner) backendStoragePath(ctx context.Context, stor
 		backendStoragePath = info.StoreGraphRoot
 	}
 
-	// assert permissions
-	if _, err := os.Stat(backendStoragePath); os.IsNotExist(err) {
-		return "", nil
-	} else if err != nil {
+	// assert path existence and permissions
+	if _, err := os.Stat(backendStoragePath); err != nil {
 		return "", fmt.Errorf("error accessing %q: %w", backendStoragePath, err)
 	}
 
