@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.47.11](https://github.com/werf/werf/compare/v2.47.10...v2.47.11) (2025-09-30)
+
+
+### Bug Fixes
+
+* **deploy:** dismiss reads release name and namespace from git even if they specified via flags ([660908e](https://github.com/werf/werf/commit/660908e47ecb30d9e4182a3ad2d2fd5b0bcccd80))
+
 ## [2.47.10](https://github.com/werf/werf/compare/v2.47.9...v2.47.10) (2025-09-30)
 
 
