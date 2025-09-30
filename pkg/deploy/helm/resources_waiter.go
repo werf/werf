@@ -166,7 +166,7 @@ mainLoop:
 			return nil, fmt.Errorf("%w: choose one of %v", invalidAnnoValueError, values)
 		case FailModeAnnoName:
 			failModeValue := multitrack.FailMode(annoValue)
-			values := []multitrack.FailMode{multitrack.IgnoreAndContinueDeployProcess, multitrack.FailWholeDeployProcessImmediately, multitrack.HopeUntilEndOfDeployProcess}
+			values := []multitrack.FailMode{multitrack.IgnoreAndContinueDeployProcess, multitrack.FailWholeDeployProcessImmediately, multitrack.LegacyHopeUntilEndOfDeployProcess}
 			for _, value := range values {
 				if value == failModeValue {
 					multitrackSpec.FailMode = failModeValue
