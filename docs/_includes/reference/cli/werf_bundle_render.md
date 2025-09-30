@@ -39,30 +39,10 @@ werf bundle render [options]
             $WERF_ADD_LABEL_1=labelName1=labelValue1, $WERF_ADD_LABEL_2=labelName2=labelValue2)
   -b, --bundle-dir=""
             Get extracted bundle from directory instead of registry (default $WERF_BUNDLE_DIR)
-      --config=""
-            Use custom configuration file (default $WERF_CONFIG or werf.yaml in the project         
-            directory)
-      --config-templates-dir=""
-            Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf   
-            in working directory)
       --container-registry-mirror=[]
             (Buildah-only) Use specified mirrors for docker.io
       --debug-templates=false
             Enable debug mode for Go templates (default $WERF_DEBUG_TEMPLATES or false)
-      --dev=false
-            Enable development mode (default $WERF_DEV).
-            The mode allows working with project files without doing redundant commits during       
-            debugging and development
-      --dev-branch="_werf-dev"
-            Set dev git branch name (default $WERF_DEV_BRANCH or "_werf-dev")
-      --dev-ignore=[]
-            Add rules to ignore tracked and untracked changes in development mode (can specify      
-            multiple).
-            Also, can be specified with $WERF_DEV_IGNORE_* (e.g. $WERF_DEV_IGNORE_TESTS=*_test.go,  
-            $WERF_DEV_IGNORE_DOCS=path/to/docs)
-      --dir=""
-            Use specified project directory where project’s werf.yaml and other configuration files 
-            should reside (default $WERF_DIR or current working directory)
       --disable-default-secret-values=false
             Do not use secret values from the default .helm/secret-values.yaml file (default        
             $WERF_DISABLE_DEFAULT_SECRET_VALUES or false)
@@ -79,12 +59,6 @@ werf bundle render [options]
       --force-adoption=false
             Always adopt resources, even if they belong to a different Helm release (default        
             $WERF_FORCE_ADOPTION or false)
-      --git-work-tree=""
-            Use specified git work tree dir (default $WERF_WORK_TREE or lookup for directory that   
-            contains .git in the current or parent directories)
-      --giterminism-config=""
-            Custom path to the giterminism configuration file relative to working directory         
-            (default $WERF_GITERMINISM_CONFIG or werf-giterminism.yaml in working directory)
       --home-dir=""
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --ignore-secret-key=false
@@ -146,8 +120,6 @@ werf bundle render [options]
             Specify custom log time format (default $WERF_LOG_TIME_FORMAT or RFC3339 format).
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
-      --loose-giterminism=false
-            Loose werf giterminism mode restrictions
       --namespace=""
             Use specified Kubernetes namespace (default $WERF_NAMESPACE)
       --network-parallelism=30
