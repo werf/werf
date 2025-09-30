@@ -294,6 +294,15 @@ func getNamespaceAndRelease(
 
 		namespace = deployReport.Namespace
 		release = deployReport.Release
+	} else if namespaceSpecified || releaseSpecified {
+		if namespaceSpecified && !releaseSpecified {
+			return "", "", fmt.Errorf("--namespace specified, but not --release, while should be specified both or none")
+		} else if !namespaceSpecified && releaseSpecified {
+			return "", "", fmt.Errorf("--release specified, but not --namespace, while should be specified both or none")
+		}
+
+		namespace = *commonCmdData.Namespace
+		release = *commonCmdData.Release
 	} else if gitFound {
 		common.ProcessLogProjectDir(&commonCmdData, giterminismMgr.ProjectDir())
 
@@ -312,17 +321,8 @@ func getNamespaceAndRelease(
 		if err != nil {
 			return "", "", err
 		}
-	} else if !gitFound {
-		if !namespaceSpecified && !releaseSpecified {
-			return "", "", fmt.Errorf("no git with werf project found: dismiss should either be executed in a git repository, or with --namespace and --release specified, or with --use-deploy-report")
-		} else if namespaceSpecified && !releaseSpecified {
-			return "", "", fmt.Errorf("--namespace specified, but not --release, while should be specified both or none")
-		} else if !namespaceSpecified && releaseSpecified {
-			return "", "", fmt.Errorf("--release specified, but not --namespace, while should be specified both or none")
-		}
-
-		namespace = *commonCmdData.Namespace
-		release = *commonCmdData.Release
+	} else {
+		return "", "", fmt.Errorf("no git with werf project found: dismiss should either be executed in a git repository, or with --namespace and --release specified, or with --use-deploy-report")
 	}
 
 	return namespace, release, nil
