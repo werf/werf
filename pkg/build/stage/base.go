@@ -299,11 +299,11 @@ ScanImages:
 				logboek.Context(ctx).Info().LogF("Skipping stage %s: submodule commits are not valid (failed to fetch one or more submodule commits) for commit %s in repo %s\n", stageDesc.Info.Name, commitToCheckAncestry, gitMapping.GitRepo().String())
 				continue ScanImages
 			}
-
-			logboek.Context(ctx).Info().LogF("Using stage %s: commit %s in repo %s\n", stageDesc.Info.Name, commitToCheckAncestry, gitMapping.GitRepo().String())
-
-			return stageDesc, nil
 		}
+
+		logboek.Context(ctx).Info().LogF("Using stage %s (ancestor)\n", stageDesc.Info.Name)
+
+		return stageDesc, nil
 	}
 
 	return nil, nil
