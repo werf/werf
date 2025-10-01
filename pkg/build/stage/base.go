@@ -224,9 +224,10 @@ func sortStageDescSetByOldestCreationTs(stageDescSet image.StageDescSet) []*imag
 	return stageDescSetSlice
 }
 
-func selectStageDescByOldestCreationTs(stageDescSet image.StageDescSet) (*image.StageDesc, error) {
+func selectStageDescByOldestCreationTs(ctx context.Context, stageDescSet image.StageDescSet) (*image.StageDesc, error) {
 	stageDescSlice := sortStageDescSetByOldestCreationTs(stageDescSet)
 	if len(stageDescSlice) > 0 {
+		logboek.Context(ctx).Info().LogF("Using stage %s\n", stageDescSlice[0].Info.Name)
 		return stageDescSlice[0], nil
 	}
 
@@ -275,7 +276,7 @@ ScanImages:
 			}
 
 			if !exist {
-				logboek.Context(ctx).Debug().LogF("Skipping stage %s: commit %s does not exist in repo %s\n", stageDesc.Info.Name, commitToCheckAncestry, gitMapping.GitRepo().String())
+				logboek.Context(ctx).Info().LogF("Skipping stage %s: commit %s does not exist in repo %s\n", stageDesc.Info.Name, commitToCheckAncestry, gitMapping.GitRepo().String())
 				continue ScanImages
 			}
 
@@ -285,7 +286,7 @@ ScanImages:
 			}
 
 			if !isOurAncestor {
-				logboek.Context(ctx).Debug().LogF("Skipping stage %s: commit %s is not an ancestor of %s in repo %s\n", stageDesc.Info.Name, commitToCheckAncestry, currentCommit, gitMapping.GitRepo().String())
+				logboek.Context(ctx).Info().LogF("Skipping stage %s: commit %s is not an ancestor of %s in repo %s\n", stageDesc.Info.Name, commitToCheckAncestry, currentCommit, gitMapping.GitRepo().String())
 				continue ScanImages
 			}
 
@@ -295,11 +296,11 @@ ScanImages:
 			}
 
 			if !areSubmodulesValid {
-				logboek.Context(ctx).Debug().LogF("Skipping stage %s: submodule commits are not valid (failed to fetch one or more submodule commits) for commit %s in repo %s\n", stageDesc.Info.Name, commitToCheckAncestry, gitMapping.GitRepo().String())
+				logboek.Context(ctx).Info().LogF("Skipping stage %s: submodule commits are not valid (failed to fetch one or more submodule commits) for commit %s in repo %s\n", stageDesc.Info.Name, commitToCheckAncestry, gitMapping.GitRepo().String())
 				continue ScanImages
 			}
 
-			logboek.Context(ctx).Debug().LogF("Using stage %s: commit %s in repo %s\n", stageDesc.Info.Name, commitToCheckAncestry, gitMapping.GitRepo().String())
+			logboek.Context(ctx).Info().LogF("Using stage %s: commit %s in repo %s\n", stageDesc.Info.Name, commitToCheckAncestry, gitMapping.GitRepo().String())
 
 			return stageDesc, nil
 		}
@@ -308,8 +309,8 @@ ScanImages:
 	return nil, nil
 }
 
-func (s *BaseStage) SelectSuitableStageDesc(_ context.Context, c Conveyor, stageDescSet image.StageDescSet) (*image.StageDesc, error) {
-	return selectStageDescByOldestCreationTs(stageDescSet)
+func (s *BaseStage) SelectSuitableStageDesc(ctx context.Context, c Conveyor, stageDescSet image.StageDescSet) (*image.StageDesc, error) {
+	return selectStageDescByOldestCreationTs(ctx, stageDescSet)
 }
 
 func (s *BaseStage) PrepareImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) error {
