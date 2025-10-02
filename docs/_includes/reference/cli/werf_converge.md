@@ -28,8 +28,8 @@ werf converge --repo registry.mydomain.com/web --env production
 
 ```shell
   $WERF_DEBUG_ANSIBLE_ARGS  Pass specified cli args to ansible ($ANSIBLE_ARGS)
-  $WERF_SECRET_KEY          Use specified secret key to extract secrets for the deploy. Recommended 
-                            way to set secret key in CI-system.
+  $WERF_SECRET_KEY          Use specified secret key to extract secrets for the        
+                            deploy. Recommended way to set secret key in CI-system.
                             
                             Secret key also can be defined in files:
                             * ~/.werf/global_secret_key (globally),
@@ -296,6 +296,9 @@ werf converge --repo registry.mydomain.com/web --env production
             Also, can be specified with $WERF_RELEASE_LABEL_* (e.g.                                 
             $WERF_RELEASE_LABEL_1=labelName1=labelValue1,                                           
             $WERF_RELEASE_LABEL_2=labelName2=labelValue2)
+      --release-storage-sql-connection=""
+            SQL Connection String for Helm SQL Storage (default                                     
+            $WERF_RELEASE_STORAGE_SQL_CONNECTION)
       --releases-history-max=5
             Max releases to keep in release storage ($WERF_RELEASES_HISTORY_MAX or 5 by default)
       --render-subchart-notes=false

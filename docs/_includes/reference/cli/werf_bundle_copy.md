@@ -3,8 +3,9 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Take latest bundle from the specified container registry using specified version tag and copy it    
-either into a different tag within the same container registry or into another container registry.
+Take latest bundle from the specified container registry using specified version tag   
+and copy it either into a different tag within the same container registry or into     
+another container registry.
 
 {{ header }} Syntax
 

@@ -72,6 +72,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupInsecureHelmDependencies(&commonCmdData, cmd, false)
 	common.SetupSkipTLSVerifyKube(&commonCmdData, cmd)
 	common.SetupKubeApiServer(&commonCmdData, cmd)
+	common.SetupSQLConnectionString(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyHelmDependencies(&commonCmdData, cmd)
 	common.SetupKubeCaPath(&commonCmdData, cmd)
 	common.SetupKubeTlsServer(&commonCmdData, cmd)
@@ -264,6 +265,7 @@ func runApply(ctx context.Context) error {
 		ReleaseInfoAnnotations:       serviceAnnotations,
 		ReleaseLabels:                releaseLabels,
 		ReleaseStorageDriver:         os.Getenv("HELM_DRIVER"),
+		SQLConnectionString:  *commonCmdData.SQLConnectionString,
 		RollbackGraphPath:            common.GetRollbackGraphPath(&commonCmdData),
 		SecretKeyIgnore:              *commonCmdData.IgnoreSecretKey,
 		SecretValuesPaths:            common.GetSecretValues(&commonCmdData),
