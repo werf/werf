@@ -148,6 +148,8 @@ type CmdData struct {
 
 	CreateIncludesLockFile bool
 	AllowIncludesUpdate    bool
+
+	ReleaseStorageSQLConnection	*string
 }
 
 func (cmdData *CmdData) SetupFinalImagesOnly(cmd *cobra.Command, defaultEnabled bool) {
