@@ -52,6 +52,15 @@ func InitActionConfig(ctx context.Context, kubeInitializer KubeInitializer, name
 	}
 
 	helmDriver := os.Getenv("HELM_DRIVER")
+
+	if helmDriver == "sql" {
+		if os.Getenv("HELM_DRIVER_SQL_CONNECTION_STRING") == "" {
+			if v := os.Getenv("WERF_RELEASE_STORAGE_SQL_CONNECTION"); v != "" {
+				_ = os.Setenv("HELM_DRIVER_SQL_CONNECTION_STRING", v)
+			}
+		}
+	}
+	
 	if err := actionConfig.Init(envSettings.RESTClientGetter(), envSettings.Namespace(), helmDriver, logboek.Context(ctx).Debug().LogF); err != nil {
 		return fmt.Errorf("action config init failed: %w", err)
 	}
