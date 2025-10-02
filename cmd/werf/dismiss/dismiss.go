@@ -101,7 +101,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupKubeContext(&commonCmdData, cmd)
 	common.SetupSkipTLSVerifyKube(&commonCmdData, cmd)
 	common.SetupKubeApiServer(&commonCmdData, cmd)
-	common.SetupReleaseStorageSQLConnection(&commonCmdData, cmd)
+	common.SetupSQLConnectionString(&commonCmdData, cmd)
 	common.SetupKubeCaPath(&commonCmdData, cmd)
 	common.SetupKubeTlsServer(&commonCmdData, cmd)
 	common.SetupKubeToken(&commonCmdData, cmd)
@@ -221,7 +221,7 @@ func runDismiss(ctx context.Context) error {
 			ProgressTablePrintInterval: time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
 			ReleaseHistoryLimit:        *commonCmdData.ReleasesHistoryMax,
 			ReleaseStorageDriver:       os.Getenv("HELM_DRIVER"),
-			ReleaseStorageSQLConnection:  *commonCmdData.ReleaseStorageSQLConnection,
+			SQLConnectionString:  *commonCmdData.SQLConnectionString,
 			TrackCreationTimeout:       time.Duration(cmdData.Timeout) * time.Second,
 			TrackDeletionTimeout:       time.Duration(cmdData.Timeout) * time.Second,
 			TrackReadinessTimeout:      time.Duration(cmdData.Timeout) * time.Second,
@@ -248,7 +248,6 @@ func runDismiss(ctx context.Context) error {
 			ProgressTablePrintInterval: time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
 			ReleaseHistoryLimit:        *commonCmdData.ReleasesHistoryMax,
 			ReleaseStorageDriver:       os.Getenv("HELM_DRIVER"),
-			ReleaseStorageSQLConnection:  *commonCmdData.ReleaseStorageSQLConnection,
 		}); err != nil {
 			return fmt.Errorf("release uninstall: %w", err)
 		}

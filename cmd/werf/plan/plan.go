@@ -115,7 +115,7 @@ werf plan --repo registry.mydomain.com/web --env production`,
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 	common.SetupSkipTLSVerifyKube(&commonCmdData, cmd)
 	common.SetupKubeApiServer(&commonCmdData, cmd)
-	common.SetupReleaseStorageSQLConnection(&commonCmdData, cmd)
+	common.SetupSQLConnectionString(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyHelmDependencies(&commonCmdData, cmd)
 	common.SetupKubeCaPath(&commonCmdData, cmd)
 	common.SetupKubeTlsServer(&commonCmdData, cmd)
@@ -476,7 +476,7 @@ func run(
 		NoInstallCRDs:                *commonCmdData.NoInstallCRDs,
 		RegistryCredentialsPath:      registryCredentialsPath,
 		ReleaseStorageDriver:         os.Getenv("HELM_DRIVER"),
-		ReleaseStorageSQLConnection:  *commonCmdData.ReleaseStorageSQLConnection,
+		SQLConnectionString:  *commonCmdData.SQLConnectionString,
 		SecretKeyIgnore:              *commonCmdData.IgnoreSecretKey,
 		SecretValuesPaths:            common.GetSecretValues(&commonCmdData),
 		SecretWorkDir:                giterminismManager.ProjectDir(),
