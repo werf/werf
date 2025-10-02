@@ -3,8 +3,8 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Take latest bundle from the specified container registry using specified version tag or version     
-mask and apply it as a helm chart into Kubernetes cluster.
+Take latest bundle from the specified container registry using specified version tag   
+or version mask and apply it as a helm chart into Kubernetes cluster.
 
 {{ header }} Syntax
 
@@ -137,6 +137,9 @@ werf bundle apply [options]
             Also, can be specified with $WERF_RELEASE_LABEL_* (e.g.                                 
             $WERF_RELEASE_LABEL_1=labelName1=labelValue1,                                           
             $WERF_RELEASE_LABEL_2=labelName2=labelValue2)
+      --release-storage-sql-connection=""
+            SQL Connection String for Helm SQL Storage (default                                     
+            $WERF_RELEASE_STORAGE_SQL_CONNECTION)
       --releases-history-max=5
             Max releases to keep in release storage ($WERF_RELEASES_HISTORY_MAX or 5 by default)
       --render-subchart-notes=false

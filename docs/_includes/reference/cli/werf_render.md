@@ -15,8 +15,8 @@ werf render [IMAGE_NAME...] [options]
 
 ```shell
   $WERF_DEBUG_ANSIBLE_ARGS  Pass specified cli args to ansible ($ANSIBLE_ARGS)
-  $WERF_SECRET_KEY          Use specified secret key to extract secrets for the deploy. Recommended 
-                            way to set secret key in CI-system.
+  $WERF_SECRET_KEY          Use specified secret key to extract secrets for the        
+                            deploy. Recommended way to set secret key in CI-system.
                             
                             Secret key also can be defined in files:
                             * ~/.werf/global_secret_key (globally),
@@ -226,6 +226,9 @@ werf render [IMAGE_NAME...] [options]
       --release=""
             Use specified Helm release name (default [[ project ]]-[[ env ]] template or            
             deploy.helmRelease custom template from werf.yaml or $WERF_RELEASE)
+      --release-storage-sql-connection=""
+            SQL Connection String for Helm SQL Storage (default                                     
+            $WERF_RELEASE_STORAGE_SQL_CONNECTION)
       --releases-history-max=5
             Max releases to keep in release storage ($WERF_RELEASES_HISTORY_MAX or 5 by default)
       --repo=""
