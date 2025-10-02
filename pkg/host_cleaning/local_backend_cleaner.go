@@ -8,10 +8,8 @@ import (
 	"math"
 	"os"
 	"slices"
-	"strings"
 	"time"
 
-	"github.com/containers/image/v5/docker/reference"
 	"github.com/dustin/go-humanize"
 
 	"github.com/werf/common-go/pkg/util"
@@ -163,29 +161,7 @@ func (cleaner *LocalBackendCleaner) werfImagesByLabels(ctx context.Context) (ima
 		return nil, fmt.Errorf("unable to get werf %s images: %w", cleaner.BackendName(), err)
 	}
 
-	images := make(image.ImagesList, 0, len(list))
-
-skipImage:
-	for _, img := range list {
-		projectName := img.Labels[image.WerfLabel]
-
-		for _, ref := range img.RepoTags {
-			normalizedTag, err := cleaner.normalizeReference(ref)
-			if err != nil {
-				return nil, err
-			}
-
-			// Do not remove stages-storage=:local images, because this is primary stages storage data,
-			// and it can only be cleaned by the werf-cleanup command
-			if strings.HasPrefix(normalizedTag, fmt.Sprintf("%s:", projectName)) {
-				continue skipImage
-			}
-		}
-
-		images = append(images, img)
-	}
-
-	return images, nil
+	return list, nil
 }
 
 func (cleaner *LocalBackendCleaner) werfImagesByLegacyLabels(ctx context.Context) (image.ImagesList, error) {
@@ -199,26 +175,7 @@ func (cleaner *LocalBackendCleaner) werfImagesByLegacyLabels(ctx context.Context
 		return nil, fmt.Errorf("unable to get werf v1.1 legacy %s images: %w", cleaner.BackendName(), err)
 	}
 
-	images := make(image.ImagesList, 0, len(list))
-
-	// Do not remove stages-storage=:local images, because this is primary stages storage data,
-	// and it can only be cleaned by the werf-cleanup command
-skipImage:
-	for _, img := range list {
-		for _, ref := range img.RepoTags {
-			normalizedTag, err := cleaner.normalizeReference(ref)
-			if err != nil {
-				return nil, err
-			}
-			if strings.HasPrefix(normalizedTag, "werf-stages-storage/") {
-				continue skipImage
-			}
-		}
-
-		images = append(images, img)
-	}
-
-	return images, nil
+	return list, nil
 }
 
 func (cleaner *LocalBackendCleaner) werfImagesByLastRun(ctx context.Context) (image.ImagesList, error) {
@@ -283,34 +240,6 @@ func (cleaner *LocalBackendCleaner) maxLastUsedAtForImage(ctx context.Context, i
 	}
 
 	return lastUsedAt, nil
-}
-
-// normalizeReference Normalizes image reference (repository tag) to docker backend repository tag format.
-func (cleaner *LocalBackendCleaner) normalizeReference(ref string) (string, error) {
-	switch cleaner.backendType {
-	case containerBackendDocker, containerBackendTest:
-		return ref, nil
-	case containerBackendBuildah:
-		// ------------
-		// WORKAROUND for Buildah
-		// ------------
-		// Buildah repository tag contains hostname (domain) prefix currently.
-		// Example (buildah repo tag): localhost/werf-guide-app:e5c6ebcd2718ccfe74d01069a0d758e03d5a2554155ccdc01be0daff-1739265965865
-		// We need normalize the tag to docker image repository tag format because our host cleanup algorithm based on docker backend.
-		// Example: (docker repo tag): werf-guide-app:e5c6ebcd2718ccfe74d01069a0d758e03d5a2554155ccdc01be0daff-1739265936011
-		// https://flant.kaiten.ru/space/193531/boards/card/26364854?focus=comment&focusId=56944076
-		// TODO: unify repository tags in v3 on build stage
-
-		named, err := reference.ParseNamed(ref)
-		if err != nil {
-			return "", err
-		}
-		hostnamePrefix := fmt.Sprintf("%s/", reference.Domain(named))
-
-		return strings.TrimPrefix(ref, hostnamePrefix), nil
-	default:
-		return "", ErrUnsupportedContainerBackend
-	}
 }
 
 func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOptions) error {
