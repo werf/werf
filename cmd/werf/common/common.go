@@ -743,6 +743,15 @@ func SetupKubeApiServer(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringVarP(cmdData.KubeApiServer, "kube-api-server", "", os.Getenv("WERF_KUBE_API_SERVER"), "Kubernetes API server address (default $WERF_KUBE_API_SERVER)")
 }
 
+func SetupReleaseStorageSQLConnection(cmdData *CmdData, cmd *cobra.Command) {
+	if cmdData.ReleaseStorageSQLConnection != nil {
+		return
+	}
+
+	cmdData.ReleaseStorageSQLConnection = new(string)
+	cmd.Flags().StringVarP(cmdData.ReleaseStorageSQLConnection, "release-storage-sql-connection", "", os.Getenv("WERF_RELEASE_STORAGE_SQL_CONNECTION"), "SQL Connection String for Helm SQL Storage (default $WERF_RELEASE_STORAGE_SQL_CONNECTION)")
+}
+
 func SetupKubeCaPath(cmdData *CmdData, cmd *cobra.Command) {
 	if cmdData.KubeCaPath != nil {
 		return
