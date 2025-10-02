@@ -8,7 +8,9 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 
+	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
+	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/path_matcher"
 )
 
@@ -33,38 +35,40 @@ type Include struct {
 	objects map[string]string
 }
 
-func GetWerfIncludesConfigRelPath(path string) string {
-	if path == "" {
+func GetWerfIncludesConfigRelPath(workTreeDir, projectDir string) string {
+	relPath := util.GetRelativeToBaseFilepath(workTreeDir, projectDir)
+	if relPath == "." {
 		return defaultIncludesConfigFileName
 	}
-	return filepath.ToSlash(path)
+
+	return filepath.Join(relPath, defaultIncludesConfigFileName)
 }
 
-func GetWerfIncludesLockConfigRelPath(path string) string {
-	if path == "" {
+func GetWerfIncludesLockConfigPath(workTreeDir, projectDir string) string {
+	relPath := util.GetRelativeToBaseFilepath(workTreeDir, projectDir)
+	if relPath == "." {
 		return defaultIncludesLockConfigFileName
 	}
-	return filepath.ToSlash(path)
+
+	return filepath.Join(relPath, defaultIncludesLockConfigFileName)
 }
 
 type InitIncludesOptions struct {
 	FileReader             GiterminismManagerFileReader
-	ConfigRelPath          string
-	LockFileRelPath        string
+	ProjectDir             string
+	LocalGitRepo           *git_repo.Local
 	CreateOrUpdateLockFile bool
 	UseLatestVersion       bool
 }
 
 func Init(ctx context.Context, opts InitIncludesOptions) ([]*Include, error) {
-	config, err := NewConfig(ctx, opts.FileReader, GetWerfIncludesConfigRelPath(opts.ConfigRelPath), opts.CreateOrUpdateLockFile)
+	config, err := NewConfig(ctx, opts.FileReader, GetWerfIncludesConfigRelPath(opts.LocalGitRepo.WorkTreeDir, opts.ProjectDir), opts.CreateOrUpdateLockFile)
 	if err != nil {
 		return nil, fmt.Errorf("unable to initialize includes: %w", err)
 	}
 
 	if len(config.Includes) > 0 {
-
-		lockFilePath := GetWerfIncludesLockConfigRelPath(opts.LockFileRelPath)
-
+		lockFilePath := GetWerfIncludesLockConfigPath(opts.LocalGitRepo.WorkTreeDir, opts.ProjectDir)
 		var lockConfig *lockConfig
 		if !opts.CreateOrUpdateLockFile && !opts.UseLatestVersion {
 			lockConfig, err = parseLockConfig(ctx, opts.FileReader, lockFilePath)

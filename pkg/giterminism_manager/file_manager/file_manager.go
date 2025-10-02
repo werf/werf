@@ -13,6 +13,7 @@ import (
 	"github.com/werf/3p-helm/pkg/werf/file"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
+	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/giterminism_manager/file_reader"
 	"github.com/werf/werf/v2/pkg/giterminism_manager/inspector"
 	"github.com/werf/werf/v2/pkg/includes"
@@ -57,6 +58,7 @@ type NewFileManagerOptions struct {
 	ProjectDir             string
 	FileReader             FileReader
 	Inspector              inspector.Inspector
+	LocalGitRepo           *git_repo.Local
 	CreateIncludesLockFile bool
 	AllowIncludesUpdate    bool
 }
@@ -71,6 +73,8 @@ func NewFileManager(ctx context.Context, opts NewFileManagerOptions) (*FileManag
 		FileReader:             opts.FileReader,
 		CreateOrUpdateLockFile: opts.CreateIncludesLockFile,
 		UseLatestVersion:       opts.AllowIncludesUpdate,
+		ProjectDir:             opts.ProjectDir,
+		LocalGitRepo:           opts.LocalGitRepo,
 	})
 	if err != nil {
 		return nil, err
