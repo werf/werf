@@ -85,7 +85,7 @@ var _ = Describe("build and mutate image spec", Label("integration", "build", "m
 				Expect(err).ToNot(HaveOccurred())
 				Expect(out).ToNot(BeEmpty())
 
-				werfIncludesPath := includes.GetWerfIncludesConfigRelPath("", SuiteData.WerfRepo)
+				werfIncludesPath := filepath.Join(SuiteData.WerfRepo, includes.GetWerfIncludesConfigRelPath("", ""))
 				By(fmt.Sprintf("writing includes config to %s", werfIncludesPath))
 				{
 					utils.WriteFile(werfIncludesPath, out)
