@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/go-git/go-git/v5"
@@ -292,14 +291,13 @@ func (i *includeLockConf) getCommit(r *git.Repository) (*object.Commit, error) {
 	return getCommit(r, i.Git, i.Tag, i.Branch, i.Commit)
 }
 
-func writeLockConfig(inputConfs lockConfig, configRelPath string) error {
+func writeLockConfig(inputConfs lockConfig, configAbsPath string) error {
 	outData, err := yaml.Marshal(inputConfs)
 	if err != nil {
 		return fmt.Errorf("marshal new lock config: %w", err)
 	}
 
-	fp, _ := filepath.Abs(configRelPath)
-	if err := os.WriteFile(fp, outData, os.ModePerm); err != nil {
+	if err := os.WriteFile(configAbsPath, outData, os.ModePerm); err != nil {
 		return fmt.Errorf("write new lock config: %w", err)
 	}
 
