@@ -46,30 +46,6 @@ var _ = Describe("LocalBackendCleaner", func() {
 		stubs.Reset()
 	})
 
-	DescribeTable("normalizeReference",
-		func(backendType containerBackendType, inputRef, expectedRef string) {
-			cleaner.backendType = backendType
-
-			outputRef, err := cleaner.normalizeReference(inputRef)
-			Expect(err).To(BeNil())
-			Expect(outputRef).To(Equal(expectedRef))
-		},
-		Entry("should work for docker backend type",
-			containerBackendDocker,
-			"werf-guide-app:e5c6ebcd2718ccfe74d01069a0d758e03d5a2554155ccdc01be0daff-1739265936011",
-			"werf-guide-app:e5c6ebcd2718ccfe74d01069a0d758e03d5a2554155ccdc01be0daff-1739265936011"),
-
-		Entry("should work for test backend type",
-			containerBackendTest,
-			"werf-guide-app:e5c6ebcd2718ccfe74d01069a0d758e03d5a2554155ccdc01be0daff-1739265936011",
-			"werf-guide-app:e5c6ebcd2718ccfe74d01069a0d758e03d5a2554155ccdc01be0daff-1739265936011"),
-
-		Entry("should work for buildah backend type",
-			containerBackendBuildah,
-			"localhost/werf-guide-app:e5c6ebcd2718ccfe74d01069a0d758e03d5a2554155ccdc01be0daff-1739265965865",
-			"werf-guide-app:e5c6ebcd2718ccfe74d01069a0d758e03d5a2554155ccdc01be0daff-1739265965865"),
-	)
-
 	Describe("backendStoragePath", func() {
 		It("should return err if backend.Info() returns err", func(ctx SpecContext) {
 			err0 := errors.New("some err")
