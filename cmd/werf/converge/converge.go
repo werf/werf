@@ -116,6 +116,7 @@ werf converge --repo registry.mydomain.com/web --env production`,
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 	common.SetupSkipTLSVerifyKube(&commonCmdData, cmd)
 	common.SetupKubeApiServer(&commonCmdData, cmd)
+	common.SetupReleaseStorageSQLConnection(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyHelmDependencies(&commonCmdData, cmd)
 	common.SetupKubeCaPath(&commonCmdData, cmd)
 	common.SetupKubeTlsServer(&commonCmdData, cmd)
@@ -490,6 +491,7 @@ func run(
 		ReleaseInfoAnnotations:       serviceAnnotations,
 		ReleaseLabels:                releaseLabels,
 		ReleaseStorageDriver:         os.Getenv("HELM_DRIVER"),
+		ReleaseStorageSQLConnection:  *commonCmdData.ReleaseStorageSQLConnection,
 		RollbackGraphPath:            common.GetRollbackGraphPath(&commonCmdData),
 		SecretKeyIgnore:              *commonCmdData.IgnoreSecretKey,
 		SecretValuesPaths:            common.GetSecretValues(&commonCmdData),
