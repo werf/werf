@@ -113,7 +113,7 @@ func prepareCommand(stringOrArray, configSection interface{}, doc *doc) (cmd str
 		}
 	}
 
-	return
+	return cmd, err
 }
 
 func (c *rawDocker) validateDirective(docker *Docker) (err error) {

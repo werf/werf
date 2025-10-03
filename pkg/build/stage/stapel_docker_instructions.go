@@ -63,7 +63,7 @@ func mapToSortedArgs(h map[string]string) (result []string) {
 		result = append(result, key, h[key])
 	}
 
-	return
+	return result
 }
 
 func (s *StapelDockerInstructionsStage) PrepareImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) error {

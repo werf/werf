@@ -385,7 +385,7 @@ AppendNewImages:
 		})
 	}
 
-	return
+	return res
 }
 
 func (m *cleanupManager) deployedDockerImages(ctx context.Context) ([]*DeployedDockerImage, error) {

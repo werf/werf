@@ -666,7 +666,7 @@ func filterTarArchive(ctx context.Context, in io.Reader, out io.Writer, includeP
 
 	resErr = util.CopyTar(ctx, in, tw, util.CopyTarOptions{IncludePaths: includePaths})
 
-	return
+	return resErr
 }
 
 func (gm *GitMapping) PrepareArchiveForImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, stageImage *StageImage) error {

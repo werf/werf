@@ -14,7 +14,7 @@ func GetDependenciesArgsKeys(dependencies []*config.Dependency) (res []string) {
 			res = append(res, imp.TargetBuildArg)
 		}
 	}
-	return
+	return res
 }
 
 func ResolveDependenciesArgs(targetPlatform string, dependencies []*config.Dependency, c Conveyor) map[string]string {

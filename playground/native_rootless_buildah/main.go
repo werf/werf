@@ -3,11 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/containers/storage/pkg/reexec"
 	"log"
 	"os"
 	"path/filepath"
 
+	"github.com/containers/storage/pkg/reexec"
 	"github.com/containers/storage/pkg/unshare"
 	"github.com/sirupsen/logrus"
 

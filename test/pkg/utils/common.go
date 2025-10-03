@@ -14,5 +14,5 @@ func StringToLines(s string) (lines []string) {
 	}
 	Expect(scanner.Err()).Should(Succeed())
 
-	return
+	return lines
 }

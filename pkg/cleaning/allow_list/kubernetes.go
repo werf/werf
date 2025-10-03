@@ -41,7 +41,7 @@ AppendNewImages:
 		})
 	}
 
-	return
+	return res
 }
 
 func DeployedDockerImages(ctx context.Context, kubernetesClient kubernetes.Interface, kubernetesNamespace string) ([]*DeployedImage, error) {

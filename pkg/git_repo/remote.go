@@ -426,7 +426,7 @@ func (repo *Remote) GetOrCreateChecksum(ctx context.Context, opts ChecksumOption
 		return err
 	})
 
-	return
+	return checksum, err
 }
 
 func (repo *Remote) IsCommitExists(ctx context.Context, commit string) (bool, error) {

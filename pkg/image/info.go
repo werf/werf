@@ -114,7 +114,7 @@ func NormalizeRepository(repository string) (res string) {
 	res = repository
 	res = strings.TrimPrefix(res, IndexDockerHubRepositoryPrefix)
 	res = strings.TrimPrefix(res, DockerHubRepositoryPrefix)
-	return
+	return res
 }
 
 // ExtractRepoDigest return repo@digest from the list.

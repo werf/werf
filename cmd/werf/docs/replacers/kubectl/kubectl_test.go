@@ -48,12 +48,11 @@ func checkCmd(cmd *cobra.Command, previuosCmd string) {
 	if ann, ok := cmd.Annotations[common.DocsLongMD]; !ok {
 		result = false
 		msgAnnotations += previuosCmd + " " + cmd.Use + "\n\n"
-	} else {
-		if !checkText(ann) {
-			textsResult = false
-			msgTexts += previuosCmd + " " + cmd.Use + "\n\n"
-		}
+	} else if !checkText(ann) {
+		textsResult = false
+		msgTexts += previuosCmd + " " + cmd.Use + "\n\n"
 	}
+
 	if len(cmd.Commands()) > 0 {
 		for _, c := range cmd.Commands() {
 			checkCmd(c, previuosCmd+" "+cmd.Use)

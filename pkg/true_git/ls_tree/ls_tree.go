@@ -203,7 +203,7 @@ func lsTreeWalk(ctx context.Context, repoHandle repo_handle.Handle, tree repo_ha
 		submodulesResults = append(submodulesResults, entrySubmodulesTreeEntries...)
 	}
 
-	return
+	return lsTreeEntries, submodulesResults, err
 }
 
 func lsTreeEntryMatch(ctx context.Context, repoHandle repo_handle.Handle, tree repo_handle.TreeHandle, repositoryFullFilepath, treeFullFilepath string, lsTreeEntry *LsTreeEntry, opts LsTreeOptions) (lsTreeEntries []*LsTreeEntry, submodulesResults []*SubmoduleResult, err error) {
@@ -260,7 +260,7 @@ func lsTreeDirEntryMatch(ctx context.Context, repoHandle repo_handle.Handle, tre
 		return nil, nil, err
 	}
 
-	return
+	return lsTreeEntries, submodulesResults, err
 }
 
 func lsTreeSubmoduleEntryMatch(ctx context.Context, repoHandle repo_handle.Handle, repositoryFullFilepath string, lsTreeEntry *LsTreeEntry, opts LsTreeOptions) (lsTreeEntries []*LsTreeEntry, submodulesResults []*SubmoduleResult, err error) {
@@ -328,7 +328,7 @@ func lsTreeSubmoduleEntryMatch(ctx context.Context, repoHandle repo_handle.Handl
 		return nil, nil, err
 	}
 
-	return
+	return lsTreeEntries, submodulesResults, err
 }
 
 func lsTreeDirOrSubmoduleEntryMatchBase(path string, opts LsTreeOptions, addTreeFunc, checkTreeFunc, skipTreeFunc func() error) error {
@@ -355,7 +355,7 @@ func lsTreeFileEntryMatch(ctx context.Context, lsTreeEntry *LsTreeEntry, opts Ls
 		lsTreeEntries = append(lsTreeEntries, lsTreeEntry)
 	}
 
-	return
+	return lsTreeEntries, submodulesResults, err
 }
 
 func treeFindEntry(_ context.Context, tree repo_handle.TreeHandle, treeFullFilepath, treeEntryFilepath string) (*LsTreeEntry, error) {

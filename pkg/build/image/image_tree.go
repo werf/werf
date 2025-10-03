@@ -210,7 +210,7 @@ func (tree *ImagesTree) GetImagesNames() (res []string) {
 	for _, img := range tree.images {
 		res = util.UniqAppendString(res, img.Name)
 	}
-	return
+	return res
 }
 
 func (tree *ImagesTree) GetImages() []*Image {

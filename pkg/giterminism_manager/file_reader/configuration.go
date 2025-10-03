@@ -24,7 +24,7 @@ func (r FileReader) WalkConfigurationFilesWithGlob(ctx context.Context, dir, glo
 			}
 		})
 
-	return
+	return err
 }
 
 func (r FileReader) walkConfigurationFilesWithGlob(ctx context.Context, dir, glob string, acceptedFilePathMatcher path_matcher.PathMatcher, handleFileFunc func(relativeToDirNotResolvedPath string, data []byte, err error) error) (err error) {
@@ -100,7 +100,7 @@ func (r FileReader) ReadAndCheckConfigurationFile(ctx context.Context, relPath s
 			}
 		})
 
-	return
+	return data, err
 }
 
 func (r FileReader) readAndCheckConfigurationFile(ctx context.Context, relPath string, isPathMatched matchPathFunc, isFileExist testFileFunc) ([]byte, error) {
@@ -124,7 +124,7 @@ func (r FileReader) ReadConfigurationFile(ctx context.Context, relPath string, i
 			}
 		})
 
-	return
+	return data, err
 }
 
 func (r FileReader) readConfigurationFile(ctx context.Context, relPath string, isPathMatched matchPathFunc, isFileExist testFileFunc) ([]byte, error) {
@@ -153,7 +153,7 @@ func (r FileReader) CheckConfigurationFileExistenceAndAcceptance(ctx context.Con
 			}
 		})
 
-	return
+	return ok, err
 }
 
 func (r FileReader) checkConfigurationFileExistenceAndAcceptance(ctx context.Context, relPath string, isPathMatched matchPathFunc, isFileExist testFileFunc) (bool, error) {
@@ -192,7 +192,7 @@ func (r FileReader) IsConfigurationFileExistAnywhere(ctx context.Context, relPat
 			}
 		})
 
-	return
+	return exist, err
 }
 
 func (r FileReader) isConfigurationFileExistAnywhere(ctx context.Context, relPath string) (bool, error) {

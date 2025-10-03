@@ -49,7 +49,7 @@ func (r FileReader) ValidateStatusResult(ctx context.Context, pathMatcher path_m
 			}
 		})
 
-	return
+	return err
 }
 
 func (r FileReader) validateStatusResult(ctx context.Context, pathMatcher path_matcher.PathMatcher) error {
@@ -97,7 +97,7 @@ func (r FileReader) StatusPathList(ctx context.Context, pathMatcher path_matcher
 			}
 		})
 
-	return
+	return list, err
 }
 
 func (r FileReader) statusPathList(ctx context.Context, pathMatcher path_matcher.PathMatcher) ([]string, error) {
@@ -154,7 +154,7 @@ func (r FileReader) ListCommitFilesWithGlob(ctx context.Context, dir, pattern st
 			}
 		})
 
-	return
+	return files, err
 }
 
 func (r FileReader) listCommitFilesWithGlob(ctx context.Context, dir, pattern string) ([]string, error) {
@@ -190,7 +190,7 @@ func (r FileReader) CheckCommitFileExistenceAndLocalChanges(ctx context.Context,
 			}
 		})
 
-	return
+	return err
 }
 
 func (r FileReader) checkCommitFileExistenceAndLocalChanges(ctx context.Context, relPath string) error {
@@ -251,7 +251,7 @@ func (r FileReader) IsFileModifiedLocally(ctx context.Context, relPath string) (
 			}
 		})
 
-	return
+	return modified, err
 }
 
 func (r FileReader) isFileModifiedLocally(ctx context.Context, relPath string) (bool, error) {
