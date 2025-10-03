@@ -173,7 +173,7 @@ func validateKeyAndValue(keyNode, valueNode *yaml_v3.Node) (errors []error) {
 		errors = append(errors, valueErr)
 	}
 
-	return
+	return errors
 }
 
 func validateMapStringStringNode(node *yaml_v3.Node) ([]*yaml_v3.Node, []error) {

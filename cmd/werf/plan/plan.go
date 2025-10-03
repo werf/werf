@@ -476,7 +476,7 @@ func run(
 		NoInstallCRDs:                *commonCmdData.NoInstallCRDs,
 		RegistryCredentialsPath:      registryCredentialsPath,
 		ReleaseStorageDriver:         os.Getenv("HELM_DRIVER"),
-		SQLConnectionString:  *commonCmdData.SQLConnectionString,
+		SQLConnectionString:          *commonCmdData.SQLConnectionString,
 		SecretKeyIgnore:              *commonCmdData.IgnoreSecretKey,
 		SecretValuesPaths:            common.GetSecretValues(&commonCmdData),
 		SecretWorkDir:                giterminismManager.ProjectDir(),

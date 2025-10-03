@@ -265,7 +265,7 @@ func runApply(ctx context.Context) error {
 		ReleaseInfoAnnotations:       serviceAnnotations,
 		ReleaseLabels:                releaseLabels,
 		ReleaseStorageDriver:         os.Getenv("HELM_DRIVER"),
-		SQLConnectionString:  *commonCmdData.SQLConnectionString,
+		SQLConnectionString:          *commonCmdData.SQLConnectionString,
 		RollbackGraphPath:            common.GetRollbackGraphPath(&commonCmdData),
 		SecretKeyIgnore:              *commonCmdData.IgnoreSecretKey,
 		SecretValuesPaths:            common.GetSecretValues(&commonCmdData),

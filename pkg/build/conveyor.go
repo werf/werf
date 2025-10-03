@@ -469,7 +469,7 @@ func (c *Conveyor) GetExportedImages() (res []*image.Image) {
 		}
 		res = append(res, img)
 	}
-	return
+	return res
 }
 
 func (c *Conveyor) GetImagesEnvArray() []string {

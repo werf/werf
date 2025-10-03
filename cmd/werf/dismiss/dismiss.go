@@ -221,7 +221,7 @@ func runDismiss(ctx context.Context) error {
 			ProgressTablePrintInterval: time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
 			ReleaseHistoryLimit:        *commonCmdData.ReleasesHistoryMax,
 			ReleaseStorageDriver:       os.Getenv("HELM_DRIVER"),
-			SQLConnectionString:  *commonCmdData.SQLConnectionString,
+			SQLConnectionString:        *commonCmdData.SQLConnectionString,
 			TrackCreationTimeout:       time.Duration(cmdData.Timeout) * time.Second,
 			TrackDeletionTimeout:       time.Duration(cmdData.Timeout) * time.Second,
 			TrackReadinessTimeout:      time.Duration(cmdData.Timeout) * time.Second,

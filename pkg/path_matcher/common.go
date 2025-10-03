@@ -25,7 +25,7 @@ func matchGlobs(pathPart string, globs []string) (inProgressGlobs, matchedGlobs 
 		}
 	}
 
-	return
+	return inProgressGlobs, matchedGlobs
 }
 
 func matchGlob(pathPart, glob string) (inProgressGlob, matchedGlob string) {

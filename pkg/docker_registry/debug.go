@@ -27,35 +27,35 @@ func (r *DockerRegistryTracer) CreateRepo(ctx context.Context, reference string)
 	logboek.Context(ctx).Default().LogProcess("DockerRegistryTracer.CreateRepo %q", reference).Do(func() {
 		err = r.DockerRegistry.CreateRepo(ctx, reference)
 	})
-	return
+	return err
 }
 
 func (r *DockerRegistryTracer) DeleteRepo(ctx context.Context, reference string) (err error) {
 	logboek.Context(ctx).Default().LogProcess("DockerRegistryTracer.DeleteRepo %q", reference).Do(func() {
 		err = r.DockerRegistry.DeleteRepo(ctx, reference)
 	})
-	return
+	return err
 }
 
 func (r *DockerRegistryTracer) Tags(ctx context.Context, reference string, opts ...Option) (res []string, err error) {
 	logboek.Context(ctx).Default().LogProcess("DockerRegistryTracer.Tags %q", reference).Do(func() {
 		res, err = r.DockerRegistry.Tags(ctx, reference, opts...)
 	})
-	return
+	return res, err
 }
 
 func (r *DockerRegistryTracer) IsTagExist(ctx context.Context, reference string, opts ...Option) (res bool, err error) {
 	logboek.Context(ctx).Default().LogProcess("DockerRegistryTracer.IsTagExist %q", reference).Do(func() {
 		res, err = r.DockerRegistry.IsTagExist(ctx, reference, opts...)
 	})
-	return
+	return res, err
 }
 
 func (r *DockerRegistryTracer) TagRepoImage(ctx context.Context, repoImage *image.Info, tag string) (err error) {
 	logboek.Context(ctx).Default().LogProcess("DockerRegistryTracer.TagRepoImage %q", tag).Do(func() {
 		err = r.DockerRegistry.TagRepoImage(ctx, repoImage, tag)
 	})
-	return
+	return err
 }
 
 func (r *DockerRegistryTracer) GetRepoImage(ctx context.Context, reference string) (res *image.Info, err error) {
@@ -66,28 +66,28 @@ func (r *DockerRegistryTracer) GetRepoImage(ctx context.Context, reference strin
 			res, err = r.DockerRegistryApi.GetRepoImage(ctx, reference)
 		}
 	})
-	return
+	return res, err
 }
 
 func (r *DockerRegistryTracer) TryGetRepoImage(ctx context.Context, reference string) (res *image.Info, err error) {
 	logboek.Context(ctx).Default().LogProcess("DockerRegistryTracer.TryGetRepoImage %q", reference).Do(func() {
 		res, err = r.DockerRegistry.TryGetRepoImage(ctx, reference)
 	})
-	return
+	return res, err
 }
 
 func (r *DockerRegistryTracer) DeleteRepoImage(ctx context.Context, repoImage *image.Info) (err error) {
 	logboek.Context(ctx).Default().LogProcess("DockerRegistryTracer.DeleteRepoImage %v", repoImage).Do(func() {
 		err = r.DockerRegistry.DeleteRepoImage(ctx, repoImage)
 	})
-	return
+	return err
 }
 
 func (r *DockerRegistryTracer) PushImage(ctx context.Context, reference string, opts *PushImageOptions) (err error) {
 	logboek.Context(ctx).Default().LogProcess("DockerRegistryTracer.PushImage %q", reference).Do(func() {
 		err = r.DockerRegistry.PushImage(ctx, reference, opts)
 	})
-	return
+	return err
 }
 
 func (r *DockerRegistryTracer) MutateAndPushImage(ctx context.Context, sourceReference, destinationReference string, opts ...registry_api.MutateOption) (err error) {
@@ -98,35 +98,35 @@ func (r *DockerRegistryTracer) MutateAndPushImage(ctx context.Context, sourceRef
 			err = r.DockerRegistryApi.MutateAndPushImage(ctx, sourceReference, destinationReference, opts...)
 		}
 	})
-	return
+	return err
 }
 
 func (r *DockerRegistryTracer) CopyImage(ctx context.Context, sourceReference, destinationReference string, opts CopyImageOptions) (err error) {
 	logboek.Context(ctx).Default().LogProcess("DockerRegistryTracer.CopyImage %q -> %q", sourceReference, destinationReference).Do(func() {
 		err = r.DockerRegistry.CopyImage(ctx, sourceReference, destinationReference, opts)
 	})
-	return
+	return err
 }
 
 func (r *DockerRegistryTracer) PushImageArchive(ctx context.Context, archiveOpener ArchiveOpener, reference string) (err error) {
 	logboek.Context(ctx).Default().LogProcess("DockerRegistryTracer.PushImageArchive %q", reference).Do(func() {
 		err = r.DockerRegistry.PushImageArchive(ctx, archiveOpener, reference)
 	})
-	return
+	return err
 }
 
 func (r *DockerRegistryTracer) PullImageArchive(ctx context.Context, archiveWriter io.Writer, reference string) (err error) {
 	logboek.Context(ctx).Default().LogProcess("DockerRegistryTracer.PullImageArchive %q", reference).Do(func() {
 		err = r.DockerRegistry.PullImageArchive(ctx, archiveWriter, reference)
 	})
-	return
+	return err
 }
 
 func (r *DockerRegistryTracer) PushManifestList(ctx context.Context, reference string, opts ManifestListOptions) (err error) {
 	logboek.Context(ctx).Default().LogProcess("DockerRegistryTracer.PushManifestList %q", reference).Do(func() {
 		err = r.DockerRegistry.PushManifestList(ctx, reference, opts)
 	})
-	return
+	return err
 }
 
 func (r *DockerRegistryTracer) String() (res string) {
@@ -141,5 +141,5 @@ func (r *DockerRegistryTracer) GetRepoImageConfigFile(ctx context.Context, refer
 	logboek.Context(ctx).Default().LogProcess("DockerRegistryTracer.GetRepoImageConfigFile %q", reference).Do(func() {
 		res, err = r.DockerRegistryApi.GetRepoImageConfigFile(ctx, reference)
 	})
-	return
+	return res, err
 }

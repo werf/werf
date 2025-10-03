@@ -98,5 +98,5 @@ func EnvToSortedArr(env map[string]string) (r []string) {
 		r = append(r, fmt.Sprintf("%s=%s", k, v))
 	}
 	sort.Strings(r)
-	return
+	return r
 }

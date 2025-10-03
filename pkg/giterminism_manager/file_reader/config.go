@@ -22,7 +22,7 @@ func (r FileReader) IsConfigExistAnywhere(ctx context.Context, customRelPath str
 			}
 		})
 
-	return
+	return exist, err
 }
 
 func (r FileReader) isConfigExistAnywhere(ctx context.Context, customRelPath string) (bool, error) {
@@ -93,7 +93,7 @@ func (r FileReader) PrepareConfigNotFoundError(ctx context.Context, configPathsT
 			}
 		})
 
-	return
+	return err
 }
 
 func (r FileReader) prepareConfigNotFoundError(configPathsToCheck []string) error {

@@ -439,7 +439,7 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 		ReleaseName:                  releaseName,
 		ReleaseNamespace:             releaseNamespace,
 		ReleaseStorageDriver:         os.Getenv("HELM_DRIVER"),
-		SQLConnectionString:  *commonCmdData.SQLConnectionString,
+		SQLConnectionString:          *commonCmdData.SQLConnectionString,
 		Remote:                       cmdData.Validate,
 		SecretKeyIgnore:              *commonCmdData.IgnoreSecretKey,
 		SecretValuesPaths:            common.GetSecretValues(&commonCmdData),
