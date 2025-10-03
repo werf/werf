@@ -219,7 +219,7 @@ func (gm *GitMapping) getCommit(ctx context.Context) (string, error) {
 	return commit, nil
 }
 
-func (gm *GitMapping) applyPatchCommand(patchFile *ContainerFileDescriptor, archiveType git_repo.ArchiveType) ([]string, error) {
+func (gm *GitMapping) applyPatchCommand(patchFile *ContainerFileDescriptor, archiveType git_repo.ArchiveType, patch git_repo.Patch) ([]string, error) {
 	commands := make([]string, 0)
 
 	var applyPatchDirectory string
@@ -251,15 +251,22 @@ func (gm *GitMapping) applyPatchCommand(patchFile *ContainerFileDescriptor, arch
 	commands = append(commands, strings.TrimLeft(gitCommand, " "))
 
 	if gm.Owner != "" || gm.Group != "" {
+		pathsListFile, err := gm.preparePatchPathsListFile(patch)
+		if err != nil {
+			return nil, fmt.Errorf("cannot create patch paths list file: %w", err)
+		}
 		chownCommand := fmt.Sprintf(
-			"%s -R %s:%s %s",
+			"%s --arg-file=%s --null %s %s:%s",
+			stapel.XargsBinPath(),
+			pathsListFile.ContainerFilePath,
 			stapel.ChownBinPath(),
 			gm.Owner,
 			gm.Group,
-			applyPatchDirectory,
 		)
+
 		commands = append(commands, strings.TrimLeft(chownCommand, " "))
 	}
+
 	return commands, nil
 }
 
@@ -522,7 +529,7 @@ func (gm *GitMapping) baseApplyPatchCommand(ctx context.Context, fromCommit, toC
 		return nil, fmt.Errorf("cannot prepare patch file: %w", err)
 	}
 
-	return gm.applyPatchCommand(patchFile, archiveType)
+	return gm.applyPatchCommand(patchFile, archiveType, patch)
 }
 
 func quoteShellArg(arg string) string {
