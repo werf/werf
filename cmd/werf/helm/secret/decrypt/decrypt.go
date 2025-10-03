@@ -11,7 +11,7 @@ import (
 
 	"github.com/werf/common-go/pkg/secret"
 	"github.com/werf/common-go/pkg/secrets_manager"
-	secret_common "github.com/werf/nelm/pkg/secret"
+	secret_common "github.com/werf/nelm/pkg/legacy/secret"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/cmd/werf/docs/replacers/helm"
 	"github.com/werf/werf/v2/pkg/git_repo"
