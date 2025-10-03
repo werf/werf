@@ -37,7 +37,7 @@ type Interface interface {
 	SetGitMappings([]*GitMapping)
 	GetGitMappings() []*GitMapping
 
-	MutateImage(ctx context.Context, registry docker_registry.Interface, prevBuiltImage, stageImage *StageImage) error
+	MutateImage(ctx context.Context, registry ImageMutatorPusher, prevBuiltImage, stageImage *StageImage) error
 
 	SelectSuitableStageDesc(context.Context, Conveyor, image.StageDescSet) (*image.StageDesc, error)
 
