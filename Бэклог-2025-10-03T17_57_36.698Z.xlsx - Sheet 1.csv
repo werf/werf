@@ -4,7 +4,7 @@ ID,Card,Created,Updated,Type,Owner,Responsible,Members,Parent IDs,Size,Size unit
 #20351195,Скрывать секреты в werf plan,9/21/2023,2/26/2025,Epic,Ilya Lesikov,Ilya Lesikov,Ilya Lesikov,,,,FALSE,,,werf,FALSE,0,0,2/26/2025
 #20599802,"Управление порядком удаления ресурсов (werf.io/delete-dependency, auto-delete-dependency)",9/25/2023,10/30/2024,Feature,Ilya Lesikov,,Ilya Lesikov,,1,L,FALSE,,,werf,FALSE,0,0,10/30/2024
 #21008709,Неэффективная/Контринтуитивная обработка Dockerfile в .dockerignore,9/28/2023,3/18/2025,Bug,Aleksei Igrychev,,,,1,L,FALSE,,,werf,FALSE,122,0,10/30/2024
-#21061132,werf kompose,9/29/2023,1/19/2025,Feature,Aleksei Igrychev,,,,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#21061132,werf kompose фывфывфывфыв,9/29/2023,1/19/2025,Feature,Aleksei Igrychev,,,,,,FALSE,,,werf,FALSE,0,0,10/30/2024
 #22211009,Отображение логов только для упавших подов,10/11/2023,1/19/2025,Feature,Aleksei Igrychev,,Ilya Lesikov,22095345,,,FALSE,,,werf,FALSE,0,0,10/30/2024
 #22239176,Статья на Habr про werf plan,10/11/2023,5/19/2025,Task,Aleksei Igrychev,,Ilya Lesikov,,1,L,FALSE,,,Статьи,FALSE,44,0,10/30/2024
 #22258255,Поддержка пользовательских envfile (обычных и секретных),10/12/2023,1/19/2025,Feature,Aleksei Igrychev,,,40755667,1,L,FALSE,,,werf,FALSE,0,0,10/30/2024
