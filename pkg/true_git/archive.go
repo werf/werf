@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/go-git/go-git/v5/plumbing/filemode"
 
@@ -24,6 +25,8 @@ type ArchiveOptions struct {
 	PathScope   string // Determines the directory that will get into the result (similar to <pathspec> in the git commands).
 	PathMatcher path_matcher.PathMatcher
 	FileRenames map[string]string // Files to rename during archiving. Git repo relative paths of original files as keys, new filenames (without base path) as values.
+	Owner       string
+	Group       string
 }
 
 // TODO: 1.3 add git mapping type (dir, file, ...) to gitArchive stage digest
@@ -148,6 +151,7 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 				}
 
 				header := &tar.Header{
+					Format:     tar.FormatGNU,
 					Name:       p,
 					Typeflag:   tar.TypeDir,
 					Mode:       0o775,
@@ -155,6 +159,7 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 					AccessTime: info.ModTime(),
 					ChangeTime: info.ModTime(),
 				}
+				applyOwnership(header, opts)
 
 				if err := tw.WriteHeader(header); err != nil {
 					return fmt.Errorf("unable to write tar header for dir %q: %w", p, err)
@@ -166,7 +171,7 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 
 		switch gitFileMode {
 		case filemode.Regular, filemode.Executable, filemode.Deprecated:
-			err = tw.WriteHeader(&tar.Header{
+			header := &tar.Header{
 				Format:     tar.FormatGNU,
 				Name:       tarEntryName,
 				Mode:       int64(gitFileMode),
@@ -174,7 +179,11 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 				ModTime:    info.ModTime(),
 				AccessTime: info.ModTime(),
 				ChangeTime: info.ModTime(),
-			})
+			}
+
+			applyOwnership(header, opts)
+
+			err = tw.WriteHeader(header)
 			if err != nil {
 				return fmt.Errorf("unable to write tar header for file %q: %w", tarEntryName, err)
 			}
@@ -215,7 +224,7 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 				linkname = string(bytes.TrimSpace(data))
 			}
 
-			err = tw.WriteHeader(&tar.Header{
+			header := &tar.Header{
 				Format:     tar.FormatGNU,
 				Typeflag:   tar.TypeSymlink,
 				Name:       tarEntryName,
@@ -225,7 +234,11 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 				ModTime:    info.ModTime(),
 				AccessTime: info.ModTime(),
 				ChangeTime: info.ModTime(),
-			})
+			}
+
+			applyOwnership(header, opts)
+
+			err = tw.WriteHeader(header)
 			if err != nil {
 				return fmt.Errorf("unable to write tar symlink header for file %s: %w", tarEntryName, err)
 			}
@@ -252,4 +265,24 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 	}
 
 	return nil
+}
+
+func applyOwnership(header *tar.Header, opts ArchiveOptions) {
+	if opts.Owner != "" {
+		if uid, err := strconv.Atoi(opts.Owner); err == nil {
+			header.Uid = uid
+			header.Uname = ""
+		} else {
+			header.Uname = opts.Owner
+		}
+	}
+
+	if opts.Group != "" {
+		if gid, err := strconv.Atoi(opts.Group); err == nil {
+			header.Gid = gid
+			header.Gname = ""
+		} else {
+			header.Gname = opts.Group
+		}
+	}
 }
