@@ -1,0 +1,298 @@
+ID,Card,Created,Updated,Type,Owner,Responsible,Members,Parent IDs,Size,Size unit,ASAP,Deadline,Tags,Lane,Archived,Time logged,Workload(h),
+#19518760,werf пулит не тот образ для docker-compose run (cache вместо repo/final),9/15/2023,3/18/2025,Bug,Aleksei Igrychev,,,,1,M,FALSE,,,werf,FALSE,0,0,10/30/2024
+#20308008,Сборка залокана отсутствием изменения network для buildah,9/21/2023,3/18/2025,Bug,Aleksei Igrychev,,,,1,S,FALSE,,,werf,FALSE,0,0,10/30/2024
+#20351195,Скрывать секреты в werf plan,9/21/2023,2/26/2025,Epic,Ilya Lesikov,Ilya Lesikov,Ilya Lesikov,,,,FALSE,,,werf,FALSE,0,0,2/26/2025
+#20599802,"Управление порядком удаления ресурсов (werf.io/delete-dependency, auto-delete-dependency)",9/25/2023,10/30/2024,Feature,Ilya Lesikov,,Ilya Lesikov,,1,L,FALSE,,,werf,FALSE,0,0,10/30/2024
+#21008709,Неэффективная/Контринтуитивная обработка Dockerfile в .dockerignore,9/28/2023,3/18/2025,Bug,Aleksei Igrychev,,,,1,L,FALSE,,,werf,FALSE,122,0,10/30/2024
+#21061132,werf kompose,9/29/2023,1/19/2025,Feature,Aleksei Igrychev,,,,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#22211009,Отображение логов только для упавших подов,10/11/2023,1/19/2025,Feature,Aleksei Igrychev,,Ilya Lesikov,22095345,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#22239176,Статья на Habr про werf plan,10/11/2023,5/19/2025,Task,Aleksei Igrychev,,Ilya Lesikov,,1,L,FALSE,,,Статьи,FALSE,44,0,10/30/2024
+#22258255,Поддержка пользовательских envfile (обычных и секретных),10/12/2023,1/19/2025,Feature,Aleksei Igrychev,,,40755667,1,L,FALSE,,,werf,FALSE,0,0,10/30/2024
+#22667623,buildah + stapel + scratch = panic,10/17/2023,3/18/2025,Bug,Aleksei Igrychev,,,,1,S,FALSE,,,werf,FALSE,0,0,10/30/2024
+#22783785,Использование OCI mediaType при сборке Buildah и при возможности для Docker тоже,10/18/2023,1/19/2025,Feature,Aleksei Igrychev,,,,1,L,FALSE,,,werf,FALSE,0,0,10/30/2024
+#22929783,Ошибка при проверке доступности kubernetes не показывается в логе gitlab job,10/19/2023,3/18/2025,Bug,Ilya Lesikov,,Ilya Lesikov,,1,S,FALSE,,,werf,FALSE,0,0,10/30/2024
+#23953173,Поддержка произвольного количества --final-repo,11/2/2023,1/19/2025,Feature,Aleksei Igrychev,,,,1,S,FALSE,,,werf,FALSE,0,0,10/30/2024
+#24556487,"Проблема обработки больших строк logboek (CPU в топ, timeout у джобы)",11/11/2023,6/18/2025,Bug,Aleksei Igrychev,,Aleksei Igrychev,,,,FALSE,,,werf,FALSE,0,0,4/28/2025
+#24838506,import/export-values должно работать для --set и --values,11/15/2023,10/30/2024,Feature,Ilya Lesikov,,,,1,L,FALSE,,,werf,FALSE,0,0,10/30/2024
+#26150198,"При сборке пользовательские конфиги (.profile, ...) не сорсятся, а при интроспекции сорсятся",12/4/2023,3/18/2025,Bug,Aleksei Igrychev,,,,1,S,FALSE,,,werf,FALSE,0,0,10/30/2024
+#26364860,Стоит ли использовать docker-distribution-pruner вместо registry garbage-collect,12/7/2023,1/19/2025,R&D,Aleksei Igrychev,,,,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#26364869,Добавить рекомендуемую конфигурацию для запуска GC,12/7/2023,1/19/2025,Documentation,Aleksei Igrychev,,,,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#26813682,Статья. Динамический трекер в kubedog + добавление своих ресурсов + пример написания принтера,12/19/2023,5/19/2025,Documentation,Aleksei Igrychev,,Ilya Lesikov,,,,FALSE,,,Статьи,FALSE,0,0,10/30/2024
+#26813886,Добавить в авто аннотации информацию о языке проекта (https://github.com/go-enry/go-enry) ,12/19/2023,1/19/2025,Feature,Aleksei Igrychev,,,,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#27079983,Добавить *helmfile на страницу со сравнениями ,12/25/2023,1/19/2025,Documentation,Aleksei Igrychev,,,,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#27546398,Флаг --auto-dependency-update,1/10/2024,1/19/2025,Feature,Aleksei Igrychev,,,,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#28249369,Лишний перенос строки в logboek: найти воспроизводимый кейс в Loop,1/26/2024,6/18/2025,Bug,Aleksei Igrychev,,Aleksei Igrychev,,,,FALSE,,,werf,FALSE,65,0,4/28/2025
+#29895801,"[nelm] Показывать ошибку, ставшую причиной для Blindly apply в werf plan",2/29/2024,10/30/2024,Feature,Ilya Lesikov,,Ilya Lesikov,,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#29895855,werf plan возвращает странный результат для HPA,2/29/2024,10/30/2024,Feature,Ilya Lesikov,,Ilya Lesikov,,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#29895922,staged и не-staged по-разному наследуют CMD от родительского образа,2/29/2024,5/13/2025,Feature,Ilya Lesikov,,,29993253,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#29993253,werf 3.0,3/3/2024,9/2/2025,Epic,Aleksei Igrychev,,,,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#30037758,Path-matcher не полностью поддерживает глобы вида **/*.ext (!= foo.ext),3/4/2024,5/13/2025,Bug,Aleksei Igrychev,,,29993253,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#30038142,Не работает excludePath dir для сабмодуля dir/submodule,3/4/2024,5/13/2025,Bug,Aleksei Igrychev,,,29993253,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#31842079,Префиксы для образов werf и возможно дополнительные теги для конечных образов ,4/4/2024,5/13/2025,R&D,Aleksei Igrychev,,,29993253,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#32797230,"В chart.lock высчитывается digest, отличный от старого",4/24/2024,3/18/2025,Bug,Ilya Lesikov,,Ilya Lesikov,,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#32881330,werf_secret_file отсутствует в документации,4/25/2024,5/13/2025,Documentation,Aleksei Igrychev,,,29993253,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#33234898,Обновление сайта/документации,5/6/2024,5/30/2025,Epic,Aleksei Igrychev,,,,,,FALSE,,,werf,FALSE,0,0,5/30/2025
+#33594031,Не работает с fish (Unsupported use of '='),5/15/2024,10/30/2024,Feature,Ilya Lesikov,,,,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#33896423,"COLUMNS зашивается в образ при сборке, но должно зависеть от текущего окна терминала",5/21/2024,5/13/2025,Feature,Ilya Lesikov,,,29993253,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#34009063,В .Values.werf давать отдельного домен и путь к репо,5/23/2024,10/30/2024,Feature,Ilya Lesikov,,Ilya Lesikov,,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#34009158,.Values.werf.repo не подставляет домен при коротком указании репо (docker hub?),5/23/2024,5/13/2025,Bug,Ilya Lesikov,,Ilya Lesikov,29993253,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#34055811,stageDependencies.beforeInstall по умолчанию (**/*),5/24/2024,5/13/2025,Feature,Aleksei Igrychev,,,29993253,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#34201348,Nelm actions,5/28/2024,2/22/2025,Epic,Aleksei Igrychev,Ilya Lesikov,Ilya Lesikov,,1,M,FALSE,,,Nelm,FALSE,3700,0,10/30/2024
+#34251772,Очистка bundles по истории Git,5/29/2024,1/19/2025,Feature,Aleksei Igrychev,,,,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#34256165,Нет информации на сайте про безопасную доставку werf,5/29/2024,1/19/2025,Documentation,Aleksei Igrychev,,,,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#34298912,Поддержка insecure mirror,5/30/2024,1/19/2025,Feature,Aleksei Igrychev,,,,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#34314203,Изменение типа файла с симлинка на директорию (обратная история тоже) в Git приводит к странным наложениям патча,5/31/2024,3/18/2025,Bug,Aleksei Igrychev,,,35412153,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#34336622,[UX] Валидация пользовательских переменных окружений с префиксом WERF_,5/31/2024,1/19/2025,Feature,Aleksei Igrychev,,,40755667,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#34445217,Ревизия issues на GitHub,6/3/2024,1/19/2025,Task,Aleksei Igrychev,,,,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#34722412,Надо обнулять служебные ENV от Stapel после сборки,6/10/2024,5/13/2025,Feature,Aleksei Igrychev,,,29993253,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#34970313,build-report на вход,6/17/2024,1/19/2025,Feature,Aleksei Igrychev,,,,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#35118434,поддержка scratch,6/20/2024,1/19/2025,Feature,Aleksei Igrychev,,,,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#35412144,Отказ от import-server за счёт мутации слоёв образа,6/28/2024,5/13/2025,Optimization,Aleksei Igrychev,,,29993253,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#35412153,Отказ от git-стадий за счёт мутации слоёв образа,6/28/2024,5/13/2025,Optimization,Aleksei Igrychev,,,29993253,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#35413088,Обновить overview по Stapel,6/28/2024,1/19/2025,Documentation,Aleksei Igrychev,,Aleksei Igrychev,,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#35413159,Написать пост про Dockerfile и Stapel,6/28/2024,1/19/2025,Task,Aleksei Igrychev,,Aleksei Igrychev,,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#35612320,Публикация мета-образов не синхронизируется между параллельными процессами,7/3/2024,3/18/2025,Bug,Aleksei Igrychev,,Aleksei Igrychev,,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#35929419,Перенести из werf helm все werf-команды в соответствующие и задеприкейтить там,7/11/2024,1/19/2025,Feature,Aleksei Igrychev,,,,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#35931176,Обновить opentelementry,7/11/2024,1/19/2025,Task,Aleksei Igrychev,,,,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#36028671,Большая детализация при отладке werf config (запрос на такое же поведение как с helm-чартом),7/15/2024,1/19/2025,Feature,Aleksei Igrychev,,,,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#36076941,Опции для распараллеливания сборки на уровне CI --build-jobs-number / --build-jobs-index,7/16/2024,1/19/2025,Feature,Aleksei Igrychev,,,,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#36123166,Поддержка —network для Docker и Buildah,7/17/2024,1/19/2025,Feature,Aleksei Igrychev,,,,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#36273348,werf plan для бандлов,7/22/2024,1/19/2025,Feature,Aleksei Igrychev,,Ilya Lesikov,,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#36572919,Поддержка переменных необходимых для кроссплатформенной сборки в stapel (подобно Dockerfile https://werf.io/docs/v2/usage/build/images.html#cross-compilation),7/30/2024,1/19/2025,Feature,Aleksei Igrychev,,,,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#36575217,"--log-terminal-width позволяет устанавливать значение ""-1"", а переменная WERF_LOG_TERMINAL_WIDTH - не позволяет",7/30/2024,3/18/2025,Bug,Aleksei Igrychev,,,40755667,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#36596023,Ошибочная обработка CMD и ENTRYPOINT при сборке Stapel,7/30/2024,5/13/2025,Bug,Aleksei Igrychev,,,29993253,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#36716858,"В основном репо и в финальном одинаковые теги, но отличаются digest-ы образов",8/2/2024,1/19/2025,R&D,Aleksei Igrychev,,Aleksei Igrychev,,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#36733044,buildah-chroot в каких-то случаях не может перезаписывать уже существующий файл,8/2/2024,1/19/2025,R&D,Aleksei Igrychev,,,,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#37355690,Предложение по улучшению логов клинапа,8/19/2024,1/19/2025,Task,Aleksei Igrychev,,,,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#37449508,Пофиксить рейсы (-race),8/21/2024,7/14/2025,Epic,Aleksei Igrychev,,Aleksei Igrychev,,,,FALSE,,,werf,FALSE,0,0,7/14/2025
+#37791086,Поддержка всех опций docker build для Docker и Buildah,8/28/2024,1/19/2025,Epic,Aleksei Igrychev,,,,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#37905105,Buildkit наследует ARG между multi-stage,8/30/2024,1/19/2025,Feature,Aleksei Igrychev,,,,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#39442536,Dry-run для сборки,9/30/2024,1/19/2025,Feature,Aleksei Igrychev,,,,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#39755457,Не хватает .Files.Exists,10/7/2024,1/19/2025,Feature,Aleksei Igrychev,,,,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#39854382,Неинформативные warning для werf.yaml по образам,10/9/2024,3/18/2025,Bug,Aleksei Igrychev,,,,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#39910704,Название директивы docker лучше поменять и сделать акцент на изменении финального манифеста,10/10/2024,5/13/2025,Feature,Aleksei Igrychev,,,29993253,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#39910737,"Не хватает директивы, которая влияет исключительно на сборку (workdir, user, ...)",10/10/2024,5/13/2025,Feature,Aleksei Igrychev,,,29993253,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#40095982,Починить WERF_VIRTUAL_MERGE (перенести в werf ci-env),10/15/2024,3/18/2025,Bug,Aleksei Igrychev,,,,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#40219445,Поддержка ONBUILD из базового образа,10/17/2024,1/19/2025,Feature,Aleksei Igrychev,,,,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#40462108,Использование шаблонов из сети Интернет (include_remote),10/23/2024,1/19/2025,Feature,Aleksei Igrychev,,,42558734,,,FALSE,,,werf,FALSE,0,0,11/27/2024
+#40569749,Валидация conventional commits,10/26/2024,1/19/2025,Feature,Aleksei Igrychev,,,,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#40653319,Расчёт сontent-based тега Dockerfile-образа чувствителен к container-registry (—repo) при использовании werf-образов в Dockerfile (dependencies),10/28/2024,5/13/2025,Feature,Aleksei Igrychev,,,29993253,,,FALSE,,,werf,FALSE,0,0,10/30/2024
+#40714112,Построение доставки на базе downstream pipeline и общей ci репы,10/29/2024,1/19/2025,Enablement,Aleksei Igrychev,,Aleksei Igrychev,42558734,,,FALSE,,,werf,FALSE,0,0,11/29/2024
+#40715069,Cканирование уязвимостей на этапе сборки (trivy),10/30/2024,1/19/2025,Feature,Aleksei Igrychev,,,,,,FALSE,,,Deckhouse,FALSE,0,0,10/30/2024
+#40715136,Использование в закрытом окружении,10/30/2024,1/19/2025,Feature,Aleksei Igrychev,,,43215152,,,FALSE,,,Deckhouse,FALSE,0,0,10/30/2024
+#40715173,Использование dev registry при разработке,10/30/2024,1/19/2025,Task,Aleksei Igrychev,,,,,,FALSE,,,Deckhouse,FALSE,0,0,10/30/2024
+#40715201,Добавить поддержку imagePullSecrets для компонентов инсталяции ArgoCD,10/30/2024,1/19/2025,Feature,Aleksei Igrychev,,,,,,FALSE,,,Deckhouse,FALSE,0,0,10/30/2024
+#40755667,Рефакторинг werf CLI,10/30/2024,1/19/2025,Epic,Aleksei Igrychev,,Aleksei Igrychev,,,,FALSE,,,werf,FALSE,0,0,12/11/2024
+#40810798,Рефакторинг кода сборки / реорганизация pkg,10/31/2024,1/19/2025,Task,Aleksei Igrychev,,Aleksei Igrychev,,,,FALSE,,,werf,FALSE,0,0,11/14/2024
+#40817236,Ревью двух кейсов использования werf,10/31/2024,1/19/2025,Task,Aleksei Igrychev,,Aleksei Igrychev,,,,FALSE,,,werf,FALSE,0,0,11/29/2024
+#40817278,Накидать первую пачку вопросов по werf для stackoverflow,10/31/2024,1/19/2025,Task,Aleksei Igrychev,,Aleksei Igrychev,,,,FALSE,,,werf,FALSE,0,0,12/11/2024
+#40848998,Решение проблем и ускорение сборки Deckhouse,11/1/2024,1/19/2025,Enablement,Aleksei Igrychev,,Aleksei Igrychev,,,,FALSE,,,werf,FALSE,0,0,11/14/2024
+#40946252,При наличии бинарного изменения в патче werf накладывает все изменения по новой,11/2/2024,5/13/2025,Bug,Aleksei Igrychev,,,"29993253,35412153",,,FALSE,,,werf,FALSE,0,0,11/2/2024
+#41037306,Инструкция для поднятия виртуального окружения на Mac для работы с Buildah,11/5/2024,1/19/2025,Documentation,Aleksei Igrychev,,,,,,FALSE,,,werf,FALSE,0,0,11/5/2024
+#41167982,Монтировать .git при сборке,11/7/2024,1/19/2025,Feature,Aleksei Igrychev,,,,,,FALSE,,,werf,FALSE,0,0,11/7/2024
+#41215255,Отказаться от rejected stage логики,11/8/2024,5/13/2025,Task,Aleksei Igrychev,,,29993253,,,FALSE,,,werf,FALSE,0,0,11/8/2024
+#41858188,Необходима страница индекс в документацию,11/18/2024,1/19/2025,Documentation,Aleksei Igrychev,,,,,,FALSE,,,werf,FALSE,0,0,11/18/2024
+#42299833,Дистрибуция install.sh вместе с бинарником werf,11/21/2024,1/19/2025,Feature,Aleksei Igrychev,,,,,,FALSE,,,werf,FALSE,0,0,11/21/2024
+#42301861,Сделать единообразный CI во всех проектах werf,11/21/2024,1/21/2025,Task,Aleksei Igrychev,,Evgeniy Frolov,,8,,FALSE,,,werf,FALSE,0,0,1/21/2025
+#42308927,Отказаться от artifact и ansible везде-везде-везде,11/21/2024,5/13/2025,Task,Aleksei Igrychev,,,29993253,,,FALSE,,,werf,FALSE,0,0,11/21/2024
+#42336648,Заполнить календарь отпусков,11/22/2024,1/19/2025,Task,Aleksei Igrychev,,,,,,FALSE,,,werf,FALSE,0,0,11/22/2024
+#42353032,Тесты cleanup,11/22/2024,1/20/2025,Task,Aleksei Igrychev,,,,8,,FALSE,,,werf,FALSE,0,0,1/20/2025
+#42431060,"Надо пыкнуть JetBrains, чтобы они обновили плагин",11/25/2024,1/19/2025,Task,Aleksei Igrychev,,,,,,FALSE,,,werf,FALSE,0,0,11/25/2024
+#42550908,Helm v4 и Nelm,11/27/2024,1/19/2025,Product,Aleksei Igrychev,,Ilya Lesikov,,,,FALSE,,,werf,FALSE,0,0,12/11/2024
+#42558734,Обслуживание конфигурации однотипных приложений,11/27/2024,4/21/2025,Epic,Aleksei Igrychev,,Aleksei Igrychev,,,,FALSE,,,Deckhouse,FALSE,0,0,4/21/2025
+#42762431,"Хуки удаляются сразу после запуска, а должны в конце выката всех хуков",12/2/2024,3/18/2025,Bug,Ilya Lesikov,,Ilya Lesikov,,,,FALSE,,,werf,FALSE,0,0,12/11/2024
+#42877744,"Поддержка параметров и секретов сразу для всей конфигурации (werf-values.yaml, werf-secret-values.yaml)",12/4/2024,8/14/2025,Feature,Aleksei Igrychev,,Aleksei Igrychev,,,,FALSE,,,Следующий спринт,FALSE,0,0,8/14/2025
+#42940932,Познакомиться с метриками сайта werf.io (Yandex/Google),12/5/2024,1/23/2025,Product,Aleksei Igrychev,,Сергей Кузора,,,,FALSE,,,werf,FALSE,0,0,1/23/2025
+#42941393,Познакомиться с телеметрией werf,12/5/2024,1/23/2025,Product,Aleksei Igrychev,,Сергей Кузора,,,,FALSE,,,werf,FALSE,0,0,1/23/2025
+#43000271,Нужны доступы в openstack и какой-то коммит на ресурсы,12/6/2024,1/19/2025,Task,Aleksei Igrychev,,Aleksei Igrychev,,,,FALSE,,,werf,FALSE,0,0,12/13/2024
+#43203003,Обозначить границы тестов / зафиксировать договорённости в РЕАДМИ,12/11/2024,1/19/2025,Epic,Aleksei Igrychev,,Aleksei Igrychev,,,,FALSE,,,werf,FALSE,0,0,12/13/2024
+#43215152,Готовый к использованию продукт,12/11/2024,8/14/2025,Epic,Aleksei Igrychev,,Aleksei Igrychev,,,,FALSE,,,Deckhouse,FALSE,0,0,4/2/2025
+#43215894,Добавить образы с d8,12/11/2024,1/19/2025,Feature,Aleksei Igrychev,,,43215152,,,FALSE,,,Deckhouse,FALSE,0,0,12/11/2024
+#43216578,Полноценная документация на сайте,12/11/2024,8/14/2025,Documentation,Aleksei Igrychev,,Aleksei Igrychev,43215152,,,FALSE,,,Следующий спринт,FALSE,0,0,8/14/2025
+#43255707,Продумать автоматизацию тестирования различных OC (install.sh),12/12/2024,1/19/2025,Task,Aleksei Igrychev,,,,,,FALSE,,,werf,FALSE,0,0,12/12/2024
+#43304670,Поддержка секретов в rootless режиме (Buildah),12/13/2024,1/27/2025,Feature,Aleksei Igrychev,,Aleksei Igrychev,44900341,,,FALSE,,,werf,FALSE,0,0,1/27/2025
+#43404525,Почему werf постоянно пулит/обращается к  remote cr базового образа,12/16/2024,3/18/2025,Bug,Aleksei Igrychev,,Aleksei Igrychev,,,,FALSE,,,werf,FALSE,0,0,1/15/2025
+#43464968,Сделать инициализацию Buildah опциональной,12/17/2024,1/19/2025,Task,Aleksei Igrychev,,,40755667,,,FALSE,,,werf,FALSE,0,0,12/27/2024
+#43509046,Отказ от опции --loose-giterminism,12/18/2024,5/13/2025,Bug,Aleksei Igrychev,,,29993253,,,FALSE,,,werf,FALSE,0,0,12/18/2024
+#43605310,А что с Buildah,12/20/2024,3/18/2025,Bug,Aleksei Igrychev,,,43215152,,,FALSE,,,Deckhouse,FALSE,0,0,12/20/2024
+#43728724,Работа с сервером синхронизации,12/24/2024,2/17/2025,Epic,Aleksei Igrychev,,Aleksei Igrychev,43215152,,,FALSE,,,Deckhouse,FALSE,0,0,2/17/2025
+#43735555,Отсутствует валидация для giterminism.yaml,12/24/2024,5/13/2025,Bug,Aleksei Igrychev,,,29993253,,,FALSE,,,werf,FALSE,0,0,12/24/2024
+#43779785,Единообразие lint для всех проектов,12/25/2024,1/21/2025,Task,Evgeniy Frolov,,Evgeniy Frolov,42301861,,,FALSE,,,werf,FALSE,0,0,1/21/2025
+#43821969,Собирать coverage для всех зависимостей проекта werf,12/26/2024,1/19/2025,Task,Aleksei Igrychev,,,,,,FALSE,,,werf,FALSE,0,0,12/26/2024
+#43851721,Использование werf для сборки релизных артефактов,12/27/2024,1/19/2025,Feature,Aleksei Igrychev,,,,,,FALSE,,,trdl,FALSE,0,0,12/27/2024
+#44089365,Проверить поддержку values.schema.json,1/9/2025,2/10/2025,R&D,Aleksei Igrychev,,Ilya Lesikov,43204717,,,FALSE,,,werf,FALSE,0,0,1/9/2025
+#44104783,"Обобщить и привести Taskfile'ы в порядок, общее вынести в common-ci",1/9/2025,10/1/2025,Task,Evgeniy Frolov,,Evgeniy Frolov,43779785,,,FALSE,,,Следующий спринт,FALSE,0,0,10/1/2025
+#44104845,"Обобщить и привести в порядок настройку линторов, форматтеров, общее вынести в common-ci",1/9/2025,8/15/2025,Task,Evgeniy Frolov,,Evgeniy Frolov,43779785,,,FALSE,,,Следующий спринт,FALSE,0,0,8/15/2025
+#44205032,ППК (перечень программных компонент) aka SBOM приложения (собираемых образов),1/13/2025,4/21/2025,Epic,Aleksei Igrychev,,Alexandr Zaytsev,44205080,,,FALSE,,,werf,FALSE,0,0,4/21/2025
+#44205080,Сканирование уязвимостей,1/13/2025,10/3/2025,Epic,Aleksei Igrychev,,Aleksei Igrychev,,,,FALSE,,,Deckhouse,FALSE,0,0,1/27/2025
+#44240605,Презентация для ЦБ,1/13/2025,2/17/2025,Product,Aleksei Igrychev,,Сергей Кузора,,,,FALSE,,,Deckhouse,FALSE,0,0,2/17/2025
+#44328783,Применение пользовательских патчей в рамках директивы git,1/14/2025,10/3/2025,Feature,Aleksei Igrychev,,,,,,FALSE,,,Deckhouse,FALSE,0,0,1/14/2025
+#44336059,Импортирование и добавление исходников по одному пути работает неинтуитивно,1/14/2025,5/13/2025,Bug,Aleksei Igrychev,,,29993253,,,FALSE,,,werf,FALSE,0,0,2/4/2025
+#44376039,Подход к разработке в кластере,1/15/2025,1/27/2025,R&D,Aleksei Igrychev,,,,,,FALSE,,,werf,FALSE,0,0,1/27/2025
+#44385141,Ошибка btrfs/ioctl.h при локальной сборке werf,1/15/2025,1/21/2025,Task,Alexandr Zaytsev,,Evgeniy Frolov,44486896,,,FALSE,,,werf,FALSE,0,0,1/21/2025
+#44390191,"Для всех ресурсов, кроме создающих поды, выставлять max errors по дефолту в 1 (может в v3?)",1/15/2025,5/13/2025,Bug,Ilya Lesikov,Ilya Lesikov,Ilya Lesikov,29993253,,,FALSE,,,werf,FALSE,0,0,1/16/2025
+#44425648,Странное поведение директивы git при кастомном user / group,1/16/2025,3/14/2025,Support,Aleksei Igrychev,,,,,,FALSE,,,werf,FALSE,0,0,3/14/2025
+#44492478,Фикс уязвимостей в werf,1/17/2025,3/4/2025,Task,Aleksei Igrychev,,Evgeniy Frolov,,,,FALSE,,,werf,FALSE,0,0,3/4/2025
+#44493487,Ретрай для релиза,1/17/2025,1/21/2025,Task,Aleksei Igrychev,,,42301861,,,FALSE,,,werf,FALSE,0,0,1/21/2025
+#44496098,Странная ошибка при публикации,1/17/2025,1/21/2025,Task,Aleksei Igrychev,,,44335328,,,FALSE,,,werf,FALSE,0,0,1/21/2025
+#44546959,Локально не проходят тесты на ветке main,1/20/2025,1/21/2025,Task,Alexandr Zaytsev,,,44486896,,,FALSE,,,werf,FALSE,0,0,1/21/2025
+#44565831,Подключение модулей в deckhouse репозиторий в качестве сабмодулей,1/20/2025,2/3/2025,R&D,Aleksei Igrychev,,Aleksei Igrychev,,,,FALSE,,,werf,FALSE,0,0,1/29/2025
+#44617194,Нужна ли документация на сайте по каналам обновлений (?!),1/21/2025,1/27/2025,Task,Aleksei Igrychev,,Aleksei Igrychev,,,,FALSE,,,werf,FALSE,0,0,1/21/2025
+#44643424,Поддержка squash,1/21/2025,2/4/2025,Feature,Aleksei Igrychev,,,,,,FALSE,,,werf,FALSE,0,0,2/4/2025
+#44647279,Неоптимальная работа с сабмодулями,1/21/2025,5/13/2025,Bug,Aleksei Igrychev,,,29993253,,,FALSE,,,werf,FALSE,0,0,2/4/2025
+#44816073,Оценить по телеметрии улучшение развёртывания,1/24/2025,2/28/2025,Task,Aleksei Igrychev,,,,,,FALSE,,,werf,FALSE,0,0,2/28/2025
+#44900341,Использование SDK вместо cobra-команд при работе с Docker,1/27/2025,1/27/2025,Task,Aleksei Igrychev,,Aleksei Igrychev,,,,FALSE,,,werf,FALSE,0,0,1/27/2025
+#44920878,Перепроверить логику удаления из final-repo,1/27/2025,1/27/2025,Task,Aleksei Igrychev,,Aleksei Igrychev,,,,FALSE,,,werf,FALSE,0,0,1/27/2025
+#45040746,Относительный путь до context в рамках Git-репозитория проекта (werf.yaml не в корне),1/29/2025,5/13/2025,Bug,Aleksei Igrychev,,,29993253,,,FALSE,,,werf,FALSE,0,0,2/4/2025
+#45097136,Отказаться от использования image.ID по коду,1/31/2025,5/13/2025,Task,Aleksei Igrychev,,,29993253,,,FALSE,,,werf,FALSE,0,0,2/17/2025
+#45228811,Патчинг ресурсов,2/3/2025,4/2/2025,Feature,Aleksei Igrychev,,,,,,FALSE,,,Следующий спринт,FALSE,0,0,4/2/2025
+#45343252,Расширение образов werf пользователем,2/5/2025,6/30/2025,R&D,Aleksei Igrychev,,,,,,FALSE,,,werf,FALSE,0,0,2/17/2025
+#45474603,"Падает сборка с buildah при пуле базового образа, когда закончились лимиты на пул",2/7/2025,9/18/2025,Optimization,Aleksei Igrychev,,Aleksei Igrychev,43404525,,,FALSE,,,werf,FALSE,0,0,3/21/2025
+#45480889,Фикс уязвимостей в ruby,2/7/2025,3/4/2025,Task,Evgeniy Frolov,,Evgeniy Frolov,44492478,,,FALSE,,,werf,FALSE,0,0,3/4/2025
+#45480937,Фикс уязвимостей в go,2/7/2025,3/4/2025,Task,Evgeniy Frolov,,Evgeniy Frolov,44492478,,,FALSE,,,werf,FALSE,0,0,3/4/2025
+#45542834,Доставка бинарников Observability,2/10/2025,6/18/2025,Epic,Aleksei Igrychev,,Aleksei Igrychev,,,,FALSE,,,Deckhouse,FALSE,0,0,4/28/2025
+#46077777,Написать инструкцию trdl update + cron и trdl exec,2/17/2025,3/14/2025,Task,Aleksei Igrychev,,Aleksei Igrychev,,,,FALSE,,,werf,FALSE,0,0,3/14/2025
+#46134742,werf render без образов и сокет docker,2/18/2025,3/18/2025,Bug,Aleksei Igrychev,,Aleksei Igrychev,,,,FALSE,,,werf,FALSE,0,0,3/17/2025
+#46162056,panic import с параллельным cleanup,2/18/2025,3/18/2025,Bug,Aleksei Igrychev,,Aleksei Igrychev,,,,FALSE,,,werf,FALSE,0,0,3/14/2025
+#46259311,Выводить по умолчанию pull/push образов,2/20/2025,3/18/2025,Task,Aleksei Igrychev,,Aleksei Igrychev,,,,FALSE,,,werf,FALSE,0,0,3/18/2025
+#46298513,Как правильно запускать сборку с Buildah в Deckhouse,2/21/2025,2/21/2025,R&D,Aleksei Igrychev,,,,,,FALSE,,,Deckhouse,FALSE,0,0,2/21/2025
+#46323552,Интеграция с Flux,2/22/2025,2/22/2025,Feature,Aleksei Igrychev,,,,,,FALSE,,,Nelm,FALSE,0,0,2/22/2025
+#46323600,Удаление ресурсов релиза стадиями по аналогии с выкатом,2/22/2025,2/22/2025,Feature,Aleksei Igrychev,,,,,,FALSE,,,Nelm,FALSE,0,0,2/22/2025
+#46323609,Интеграция с Argo CD (v2),2/22/2025,2/22/2025,Feature,Aleksei Igrychev,,,,,,FALSE,,,Nelm,FALSE,0,0,2/22/2025
+#46323613,Альтернатива Helm-шаблонам,2/22/2025,2/22/2025,Feature,Aleksei Igrychev,,,,,,FALSE,,,Nelm,FALSE,0,0,2/22/2025
+#46323618,Изменение менеджмента сабчартов v2,2/22/2025,2/22/2025,Feature,Aleksei Igrychev,,,,,,FALSE,,,Nelm,FALSE,0,0,2/22/2025
+#46544311,Добавить в доку/discussions про кастомный образ Stapel,2/27/2025,3/14/2025,Documentation,Aleksei Igrychev,,Aleksei Igrychev,,,,FALSE,,,werf,FALSE,0,0,3/14/2025
+#46552043,Добавить доку про cache,2/27/2025,3/14/2025,Documentation,Aleksei Igrychev,,Aleksei Igrychev,,,,FALSE,,,werf,FALSE,0,0,3/14/2025
+#46687584,Добавить документацию про обновление плагина,3/3/2025,6/18/2025,Documentation,Aleksei Igrychev,,Aleksei Igrychev,,,,FALSE,,,trdl,FALSE,0,0,6/4/2025
+#46699864,Автодетектор зависимостей не находит зависимость между VMRule и webhook-Service,3/3/2025,3/24/2025,Bug,Ilya Lesikov,Ilya Lesikov,Ilya Lesikov,,,,FALSE,,,werf,FALSE,0,0,3/24/2025
+#46758729,Анонс werf (v2.23.0+),3/4/2025,8/14/2025,Product,Aleksei Igrychev,,Aleksei Igrychev,,,,FALSE,,,Следующий спринт,FALSE,0,0,8/14/2025
+#46776402,addHost,3/4/2025,5/13/2025,Support,Aleksei Igrychev,,Aleksei Igrychev,29993253,,,FALSE,,,werf,FALSE,0,0,3/11/2025
+#46786507,Добавить раздел в доку из discussion https://github.com/werf/werf/discussions/6167,3/4/2025,3/14/2025,Documentation,Aleksei Igrychev,,Aleksei Igrychev,,,,FALSE,,,werf,FALSE,0,0,3/14/2025
+#47016866,cleanup whitelist,3/10/2025,5/13/2025,Feature,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,29993253,,,FALSE,,,werf,FALSE,0,0,3/14/2025
+#47067979,Снизить нагрузку на CR  с помощью remote.Reuse,3/11/2025,9/18/2025,Task,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,werf,FALSE,0,0,3/17/2025
+#47072370,Запуск автоочистки (?) в контейнере (werf-in-image).,3/11/2025,3/14/2025,R&D,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,werf,FALSE,0,0,3/14/2025
+#47090074,"failed to find driver ""docker-container""",3/11/2025,3/17/2025,Task,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,werf,FALSE,0,0,3/17/2025
+#47113194,--set-json опция для werf converge,3/11/2025,3/17/2025,Feature,Ilya Lesikov,Ilya Lesikov,Ilya Lesikov,,,,FALSE,,,werf,FALSE,0,0,3/17/2025
+#47159017,secret-values.yaml нельзя оверрайдить через --set,3/12/2025,5/13/2025,Bug,Ilya Lesikov,,,29993253,,,FALSE,,,werf,FALSE,0,0,3/17/2025
+#47204900,Инфраструктура команды Delivery: ревизия и планы по улучшению процессов,3/13/2025,3/25/2025,Task,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,Следующий спринт,FALSE,0,0,3/13/2025
+#47225840,trdl самоуничтожился при самообновлении (возможно),3/13/2025,3/17/2025,Support,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,trdl,FALSE,0,0,3/17/2025
+#47260839,Авторизация для поддерживаемых container registry,3/14/2025,3/14/2025,Task,Aleksei Igrychev,,Evgeniy Frolov,,,,FALSE,,,werf,FALSE,0,0,3/14/2025
+#47273353,Поле created не изменяется при изменении манифеста образа (соответствует базовому образу),3/14/2025,5/13/2025,Task,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,29993253,,,FALSE,,,werf,FALSE,0,0,3/17/2025
+#47279596,werf run,3/14/2025,3/14/2025,Feature,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,werf,FALSE,0,0,3/14/2025
+#47366620,Валидация Nelm cli флагов и Nelm actions опций,3/17/2025,3/24/2025,Feature,Ilya Lesikov,Ilya Lesikov,Ilya Lesikov,,,,FALSE,,,Nelm,FALSE,0,0,3/24/2025
+#47369605,Вытащить usage из nelm в common-go,3/17/2025,3/24/2025,Task,Ilya Lesikov,Ilya Lesikov,Ilya Lesikov,,,,FALSE,,,Nelm,FALSE,0,0,3/24/2025
+#47526120,Добавить своего пользователя для CI/CD вместо team-sysdev,3/20/2025,4/1/2025,Task,Aleksei Igrychev,,Evgeniy Frolov,,,,FALSE,,,werf,FALSE,0,0,3/20/2025
+#47678426,Актуализировать инструкцию сетапа хоста с vault,3/24/2025,6/18/2025,Task,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,trdl,FALSE,0,0,5/28/2025
+#47868167,Сложный кейс удаления + обновления ингрессов,3/26/2025,4/2/2025,Task,Ilya Lesikov,Ilya Lesikov,Ilya Lesikov,,,,FALSE,,,werf,FALSE,0,0,4/2/2025
+#48070508,При копировании теряются капабилитиз,3/31/2025,9/18/2025,Task,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,Следующий спринт,FALSE,0,0,4/28/2025
+#48126280,trx запуск тасок,4/1/2025,9/18/2025,Feature,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,Следующий спринт,FALSE,0,0,8/14/2025
+#48230091,"Vault-плагин должен падать, если s3-репозиторий проинициализирован другим инстансом",4/3/2025,6/18/2025,Task,Aleksei Igrychev,,Aleksei Igrychev,,,,FALSE,,,trdl,FALSE,0,0,5/28/2025
+#48230982,Отразить в документации сценарии при параллельном использовании одного бакета (==error) и потерю волта (==конец),4/3/2025,6/18/2025,Task,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,trdl,FALSE,0,0,5/28/2025
+#48231946,Проработать миграцию и переименование проекта в Vault,4/3/2025,4/8/2025,Task,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,trdl,FALSE,0,0,4/8/2025
+#48234920,Доделки в README,4/3/2025,8/14/2025,Task,Ilya Lesikov,Ilya Lesikov,Ilya Lesikov,,,,FALSE,,,Следующий спринт,FALSE,0,0,8/14/2025
+#48281715,Экосистема trdl,4/4/2025,6/18/2025,Epic,Aleksei Igrychev,,Aleksei Igrychev,,,,FALSE,,,trdl,FALSE,0,0,5/28/2025
+#48298007,"В tech-werf и тг werf написать о том, что вместо werf helm теперь лучше пересесть на nelm?",4/4/2025,8/14/2025,Task,Ilya Lesikov,Ilya Lesikov,Ilya Lesikov,,,,FALSE,,,Следующий спринт,FALSE,0,0,8/14/2025
+#48370424,Добавить прямую поддержку наиболее популярных Custom Resources в kubedog,4/7/2025,9/30/2025,Epic,Ilya Lesikov,Evgeniy Frolov,Evgeniy Frolov,,,,FALSE,,,Следующий спринт,FALSE,0,0,9/30/2025
+#48460466,Статья-сравнение: werf cache vs Kaniko vs Buildah --cache-from/--cache-to,4/9/2025,4/18/2025,Task,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,Статьи,FALSE,0,0,4/18/2025
+#48517241,Поддержка OCI артефактов,4/10/2025,4/10/2025,Card,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,werf,FALSE,0,0,4/10/2025
+#48518696,Nelm в addon-operator (MVP),4/10/2025,9/30/2025,Epic,Aleksei Igrychev,,Ilya Lesikov,,,,FALSE,,,Следующий спринт,FALSE,0,0,9/30/2025
+#48570717,Улучшить UX в случае отката HEAD в мастере,4/11/2025,6/18/2025,Task,Aleksei Igrychev,,Aleksei Igrychev,,,,FALSE,,,trdl,FALSE,0,0,5/28/2025
+#48574763,"Проверить, что SSA и 3WM одинаково реагируют на null в string-поле ресурса",4/11/2025,8/14/2025,Support,Ilya Lesikov,Ilya Lesikov,Ilya Lesikov,,,,FALSE,,,Следующий спринт,FALSE,0,0,8/14/2025
+#48697380,Задокументировать кейс с ребейзом published коммита,4/14/2025,6/18/2025,Task,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,trdl,FALSE,0,0,5/28/2025
+#48711337,В прогресс-репорте отображаются сразу все ресурсы релиза,4/15/2025,6/18/2025,Feature,Ilya Lesikov,Ilya Lesikov,Ilya Lesikov,,,,FALSE,,,werf,FALSE,0,0,4/21/2025
+#48731197,Использование trdl с фиксированной версией,4/15/2025,6/18/2025,Support,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,trdl,FALSE,0,0,5/15/2025
+#48746423,Документация: скачивание из trdl напрямую,4/15/2025,6/18/2025,Task,Aleksei Igrychev,,Aleksei Igrychev,,,,FALSE,,,trdl,FALSE,0,0,6/4/2025
+#48752967,Инструкция по trdl в deckhouse,4/15/2025,6/18/2025,Task,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,trdl,FALSE,0,0,5/12/2025
+#48911096,"Разрешать в директиве from только те образы, которые прописаны в конфиге werf.yaml (или env-переменной типа WERF_ALLOWED_IMAGES)",4/18/2025,4/28/2025,R&D,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,Deckhouse,FALSE,0,0,4/28/2025
+#49028832,Унифицированный логгер для trdl-приложений,4/22/2025,9/18/2025,Task,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,trdl,FALSE,0,0,5/27/2025
+#49087909,Оптимизация работы с инициализацией remote репозиториев и служебными worktree,4/23/2025,5/19/2025,Task,Aleksei Igrychev,,Aleksei Igrychev,48994631,,,FALSE,,,werf,FALSE,0,0,4/23/2025
+#49207547,"Пользователь не может использовать "":"" в image",4/24/2025,4/28/2025,Bug,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,werf,FALSE,0,0,4/28/2025
+#49312857,Объединить страницы конфигуратора и индексируемые,4/28/2025,5/19/2025,Task,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,werf,FALSE,0,0,4/28/2025
+#49314846,Добавить обработку packfile not found,4/28/2025,8/14/2025,Bug,Aleksei Igrychev,,Aleksei Igrychev,,,,FALSE,,,Следующий спринт,FALSE,0,0,8/14/2025
+#49581366,trdl-релиз периодически повисает,5/6/2025,7/14/2025,Support,Aleksei Igrychev,,Aleksei Igrychev,,,,FALSE,,,Следующий спринт,FALSE,0,0,7/14/2025
+#49657619,Обработка MANIFEST_UNKNOWN для мета образов в cleanup,5/7/2025,6/26/2025,Bug,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,Следующий спринт,FALSE,0,0,6/26/2025
+#49765343,commonCmdData в CLI нуждается в рефакторинге и смене подхода,5/12/2025,9/18/2025,Optimization,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,29993253,,,FALSE,,v3,werf,FALSE,0,0,5/13/2025
+#49765672,рефакторинг giterminism manager,5/12/2025,9/18/2025,Optimization,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,29993253,,,FALSE,,,werf,FALSE,0,0,5/13/2025
+#49765940,openApiSchema в giterminism не делает ничего,5/12/2025,9/18/2025,Optimization,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,29993253,,,FALSE,,,werf,FALSE,0,0,5/13/2025
+#49771003,Оптимизация генерации sbom + образа с артефактом,5/12/2025,5/19/2025,Task,Alexandr Zaytsev,Alexandr Zaytsev,Alexandr Zaytsev,,,,FALSE,,,werf,FALSE,0,0,5/19/2025
+#49807933,Бинарник trdl в карантине под macOS,5/13/2025,6/18/2025,Support,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,trdl,FALSE,0,0,5/15/2025
+#49885908,Добавить возможность настройки каталогизаторов (сканера),5/14/2025,5/19/2025,Task,Alexandr Zaytsev,Alexandr Zaytsev,Alexandr Zaytsev,49608426,,,FALSE,,,werf,FALSE,0,0,5/19/2025
+#49968782,Оркестация выката множественных релизов / ресурсов конкурентов (helmfile/helmwave/argo/... vs nelm),5/15/2025,9/29/2025,Product,Aleksei Igrychev,,Ilya Lesikov,,,,FALSE,,,Статьи,FALSE,0,0,9/29/2025
+#49999295,trdl в росреестр,5/15/2025,5/28/2025,Task,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,trdl,FALSE,0,0,5/28/2025
+#49999303,trdl в ФСТЭК,5/15/2025,5/28/2025,Task,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,trdl,FALSE,0,0,5/28/2025
+#50047483,Автообновление includes и chart dependencies,5/16/2025,7/14/2025,Epic,Aleksei Igrychev,,Ilya Lesikov,48994631,,,FALSE,,,Следующий спринт,FALSE,0,0,7/14/2025
+#50156803,Не работает генерация SBOM для Buildah в режиме naitive-rootless,5/19/2025,5/28/2025,R&D,Alexandr Zaytsev,Alexandr Zaytsev,Alexandr Zaytsev,,,,FALSE,,,werf,FALSE,0,0,5/28/2025
+#50364951,common-go/pkg/util/file.go не шарит за симлинки,5/21/2025,9/18/2025,Bug,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,werf,FALSE,0,0,6/2/2025
+#50365071,"расчленить utils в common-go. создать нормальные модули типа files, sync, slice, etc.",5/21/2025,9/18/2025,Task,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,werf,FALSE,0,0,6/2/2025
+#50527562,Проработать сценарии обновления зависимостей в CI (возможно сделать интеграцию с renovatebot),5/26/2025,5/28/2025,Task,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,48994631,,,FALSE,,,werf,FALSE,0,0,5/28/2025
+#50602291,trdl-сервер захламляется,5/27/2025,7/14/2025,Support,Aleksei Igrychev,,Aleksei Igrychev,,,,FALSE,,,Следующий спринт,FALSE,0,0,7/14/2025
+#50632572,/gitLatestPatch не может применится к файлам которые были преобразованы в submodules,5/27/2025,5/27/2025,Bug,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,29993253,,,FALSE,,,werf,FALSE,0,0,5/27/2025
+#50655710,Статья: DAG,5/28/2025,5/28/2025,Card,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,Статьи,FALSE,0,0,5/28/2025
+#50660733,Автообновление chart dependencies,5/28/2025,7/14/2025,Feature,Aleksei Igrychev,,Ilya Lesikov,50047483,,,FALSE,,,Следующий спринт,FALSE,0,0,7/14/2025
+#50743829,Сломаный лог при сборке с Buildah синтакс Stapel,5/29/2025,7/14/2025,Bug,Alexandr Zaytsev,Alexandr Zaytsev,Alexandr Zaytsev,,,,FALSE,,,Следующий спринт,FALSE,0,0,7/14/2025
+#50779698,Отсутствует кнопка далее https://ru.werf.io/guides/nodejs/300_deployment_practices.html,5/30/2025,6/18/2025,Task,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,werf,FALSE,0,0,6/18/2025
+#50888305,На CI не прогоняются тесты для e2e build simple,6/2/2025,8/14/2025,Task,Alexandr Zaytsev,Alexandr Zaytsev,Alexandr Zaytsev,,,,FALSE,,,Следующий спринт,FALSE,0,0,8/14/2025
+#50890992,Постоянный пул базового образа при сборке Dockerfile,6/2/2025,8/14/2025,Support,Aleksei Igrychev,,Aleksei Igrychev,,,,FALSE,,,werf,FALSE,0,0,8/14/2025
+#50925388,Добавить базовую валидацию для CRD,6/3/2025,6/3/2025,Feature,Aleksei Igrychev,,Ilya Lesikov,,,,FALSE,,,werf,FALSE,0,0,6/3/2025
+#50939777,[windows-wsl] WARNING: unable to check if auto host cleanup should be run: failed to check local docker server host cleaner GC: unable to get disk info: no such file or directory,6/3/2025,6/18/2025,Task,Aleksei Igrychev,,Alexandr Zaytsev,,,,FALSE,,,werf,FALSE,0,0,6/18/2025
+#51098939,Трекинг flagger canary висит в waiting,6/6/2025,7/14/2025,Bug,Ilya Lesikov,Ilya Lesikov,Ilya Lesikov,,,,FALSE,,,Следующий спринт,FALSE,0,0,7/14/2025
+#51239040,Переосмыслить ошибки гитерминизма,6/10/2025,7/14/2025,Task,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,Следующий спринт,FALSE,0,0,7/14/2025
+#51422367,Buildah в trdl,6/16/2025,9/24/2025,Task,Aleksei Igrychev,,Aleksei Igrychev,,,,FALSE,,,trdl,FALSE,0,0,9/24/2025
+#51550639,"Убрать поддержку 0 версии root (она соответствует latest, который ротируется раз в квартал) из trdl add",6/18/2025,6/18/2025,Bug,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,trdl,FALSE,0,0,6/18/2025
+#51656923,Удаление .werf из конечных артефактов,6/20/2025,8/14/2025,Task,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,Следующий спринт,FALSE,0,0,8/14/2025
+#51732084,Статья отладка сборки,6/23/2025,8/14/2025,Documentation,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,werf,FALSE,0,0,7/14/2025
+#51742260,Дать возможность указывать зависимости между образами без импортирования / прокидывания информации,6/23/2025,6/23/2025,Feature,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,werf,FALSE,0,0,6/23/2025
+#51928027,nelm plan | nelm deploy,6/27/2025,6/27/2025,Feature,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,Nelm,FALSE,0,0,6/27/2025
+#52064689,Моросит тест SBOM для Buildah c chroot isolation,7/1/2025,8/12/2025,Task,Alexandr Zaytsev,Alexandr Zaytsev,Alexandr Zaytsev,,,,FALSE,,,Следующий спринт,FALSE,0,0,8/12/2025
+#52077733,Написать документацию по SBOM,7/1/2025,10/3/2025,Documentation,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,Deckhouse,FALSE,0,0,7/14/2025
+#52088197,Opensource delivery kit,7/1/2025,8/15/2025,Task,Aleksei Igrychev,,Aleksei Igrychev,50602042,,,FALSE,,,Следующий спринт,FALSE,0,0,8/15/2025
+#52088495,Добавить кнопку Установить на лендинг https://deckhouse.ru/products/delivery-kit/,7/1/2025,8/14/2025,Task,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,Следующий спринт,FALSE,0,0,8/14/2025
+#52157562,Почему-то serviceAccount не отображается в диффе плана,7/2/2025,8/14/2025,Support,Aleksei Igrychev,,Ilya Lesikov,,,,FALSE,,,Следующий спринт,FALSE,0,0,8/14/2025
+#52157572,"gitCache: sudo: fatal error, unable to load plugins",7/2/2025,8/14/2025,Support,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,Следующий спринт,FALSE,0,0,8/14/2025
+#52321020,dev-режим и незакомиченные файлы в сабмодулях,7/7/2025,7/14/2025,Feature,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,werf,FALSE,0,0,7/14/2025
+#52321745,Плавающая проблема при сборке SBOM,7/7/2025,8/14/2025,Bug,Aleksei Igrychev,,Alexandr Zaytsev,,,,FALSE,,,Следующий спринт,FALSE,0,0,8/14/2025
+#52402142,Bundle version support,7/9/2025,10/3/2025,Task,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,50678684,,,FALSE,,,Deckhouse,FALSE,0,0,7/10/2025
+#52455508,Рассмотреть возможность замены sbom file system reader на mutate.Extract(),7/10/2025,8/12/2025,Task,Alexandr Zaytsev,Alexandr Zaytsev,Alexandr Zaytsev,,,,FALSE,,,Следующий спринт,FALSE,0,0,8/12/2025
+#52585693,Добавить global notes и опцию для их скипа,7/14/2025,8/14/2025,Feature,Aleksei Igrychev,,Aleksei Igrychev,,,,FALSE,,,werf,FALSE,0,0,7/14/2025
+#52592123,Набор команд для генерации приватного ключа и CSR,7/14/2025,7/21/2025,Feature,Aleksei Igrychev,,Aleksei Igrychev,50602042,,,FALSE,,,Deckhouse,FALSE,0,0,7/21/2025
+#52642571,Обобщить логику релизного процесса по всем проектам,7/15/2025,7/31/2025,Task,Aleksei Igrychev,,Evgeniy Frolov,,,,FALSE,,,Следующий спринт,FALSE,0,0,7/31/2025
+#52896470,Статья: werf для агенств (однотипные приложения),7/17/2025,7/17/2025,Card,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,Статьи,FALSE,0,0,7/17/2025
+#52919197,Донести SBOM в werf-deckhouse,7/17/2025,8/12/2025,Task,Aleksei Igrychev,,Alexandr Zaytsev,,,,FALSE,,,werf,FALSE,0,0,8/12/2025
+#53116627,Поддержка passphrase для --sign-key,7/23/2025,10/3/2025,Task,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,50602042,,,FALSE,,,Deckhouse,FALSE,0,0,8/4/2025
+#53445200,Построение графа зависимостей для изменяемого образа -- что пересобирётся при изменении образа X?,7/28/2025,7/28/2025,Feature,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,Deckhouse,FALSE,0,0,7/28/2025
+#53448542,Плохой UX при работе с бандлами,7/28/2025,9/24/2025,Task,Aleksei Igrychev,,Aleksei Igrychev,,,,FALSE,,,werf,FALSE,0,0,9/24/2025
+#53453965,service value template,7/28/2025,8/14/2025,Task,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,werf,FALSE,0,0,8/14/2025
+#53499962,Провайдер для terraform (?),7/29/2025,8/14/2025,Task,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,Nelm,FALSE,0,0,8/14/2025
+#53588987,Миграция на Mozilla Sops,7/31/2025,8/15/2025,Epic,Aleksei Igrychev,,Evgeniy Frolov,,,,FALSE,,,werf,FALSE,0,0,8/15/2025
+#53630608,Поддержка подписи ELF-файлов с Buildah,8/1/2025,10/3/2025,Task,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,50602042,,,FALSE,,,Deckhouse,FALSE,0,0,8/4/2025
+#53640055,"Дать пользователю команду/опцию для того, чтобы у нас была полная картинка пользовательского окружения",8/1/2025,8/14/2025,Task,Aleksei Igrychev,,Alexandr Zaytsev,,,,FALSE,,,werf,FALSE,0,0,8/14/2025
+#53755895,Переименовать includes.git в includes.url (alias + в следующем major удаление),8/5/2025,8/6/2025,Task,Aleksei Igrychev,,Aleksei Igrychev,,,,FALSE,,,werf,FALSE,0,0,8/6/2025
+#53821320,Поддержка ключей ed25519 для Vault Transit,8/6/2025,10/3/2025,Feature,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,50602042,,,FALSE,,,Deckhouse,FALSE,0,0,8/6/2025
+#53873128,Не понятно к чему относится IMAGE_NAME в CLI,8/7/2025,8/14/2025,Task,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,werf,FALSE,0,0,8/14/2025
+#53933634,Использование коммита при сборке,8/8/2025,8/14/2025,Documentation,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,werf,FALSE,0,0,8/14/2025
+#54001128,Ошибка `not a valid cluster name` при попытке поднятия локального registry для werf-deckhouse,8/11/2025,8/14/2025,Task,Alexandr Zaytsev,Alexandr Zaytsev,Alexandr Zaytsev,,,,FALSE,,,Следующий спринт,FALSE,0,0,8/14/2025
+#54001380,Обновить werf.yaml в website,8/11/2025,8/15/2025,Task,Evgeniy Frolov,Evgeniy Frolov,Evgeniy Frolov,,,,FALSE,,,Следующий спринт,FALSE,0,0,8/15/2025
+#54004021,Изменение поведения/дефолта WERF_IGNORE_SECRET_KEY для различных команд,8/11/2025,8/11/2025,Task,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,werf,FALSE,0,0,8/11/2025
+#54004325,"Поддержка шаблонизации чарта в werf kube-run (использование .Values, секретов)",8/11/2025,8/14/2025,Feature,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,werf,FALSE,0,0,8/14/2025
+#54006043,Мета образ для импортирование из внешних образов никогда не удаляется при werf cleanup,8/11/2025,8/11/2025,Task,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,werf,FALSE,0,0,8/11/2025
+#54008099,Сделать однообразную логику для fromImage/from и import.from/fromImage (отказаться от latest по умолчанию),8/11/2025,8/11/2025,Task,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,werf,FALSE,0,0,8/11/2025
+#54015525,"Обрезать слишком длинные строки логов, иначе werf виснет. Настраивать cli-флагом",8/11/2025,8/14/2025,Bug,Ilya Lesikov,Ilya Lesikov,Ilya Lesikov,,,,FALSE,,,Следующий спринт,FALSE,0,0,8/14/2025
+#54105436,Отказаться от релиза trdl vault плагина для windows и darwin,8/13/2025,8/15/2025,Task,Aleksei Igrychev,,Evgeniy Frolov,,,,FALSE,,,Следующий спринт,FALSE,0,0,8/15/2025
+#54114309,Ускорить Helm-релиз для addon-operator (инвертирование дефолтной настройки трекинга),8/13/2025,9/30/2025,Enablement,Ilya Lesikov,Ilya Lesikov,Ilya Lesikov,48518696,,,FALSE,,,Следующий спринт,FALSE,0,0,9/30/2025
+#54133921,Дашборда для deckhouse,8/14/2025,9/10/2025,Task,Aleksei Igrychev,,Aleksei Igrychev,,,,FALSE,,,Следующий спринт,FALSE,0,0,9/10/2025
+#54152770,Падать если в stageDependencies используется несуществующая стадия,8/14/2025,9/1/2025,Task,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,werf,FALSE,0,0,9/1/2025
+#54158577,Выкат релизов > 1MB,8/14/2025,8/14/2025,Feature,Aleksei Igrychev,,Ilya Lesikov,,,,FALSE,,,Nelm,FALSE,0,0,8/14/2025
+#54159252,Донести werf-deckhouse до GitHub,8/14/2025,9/10/2025,Task,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,Следующий спринт,FALSE,0,0,9/10/2025
+#54335332,Запрос на указание абсолютных значений для WERF_ALLOWED_DOCKER_STORAGE_VOLUME_USAGE и WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE,8/19/2025,9/4/2025,Feature,Alexandr Zaytsev,Alexandr Zaytsev,Alexandr Zaytsev,,,,FALSE,,,Следующий спринт,FALSE,0,0,9/4/2025
+#54762777,Слишком много импортов приводит к argument list too long,8/29/2025,9/1/2025,Support,Alexandr Zaytsev,,Aleksei Igrychev,,,,FALSE,,,werf,FALSE,0,0,9/1/2025
+#54811156,https://releases.werf.io/,9/1/2025,9/1/2025,Task,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,werf,FALSE,0,0,9/1/2025
+#54864445,"Проработать UX, когда пользователь использует colima, который мы не поддерживаем",9/1/2025,9/1/2025,Task,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,Следующий спринт,FALSE,0,0,9/1/2025
+#54867506,"werf не инвалидирует сборку imageSpec (?), если предыдущая стадия битая",9/1/2025,9/10/2025,Support,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,Следующий спринт,FALSE,0,0,9/10/2025
+#54867513,Разное поведение werf (v2.47.3) при билде из Dockerfile при staged: false и stage: true,9/1/2025,9/10/2025,Support,Aleksei Igrychev,,Evgeniy Frolov,,,,FALSE,,,Следующий спринт,FALSE,0,0,9/10/2025
+#54948664,Почему параметр в /configure называется s3_secret_access_key?,9/3/2025,9/10/2025,Task,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,trdl,FALSE,0,0,9/10/2025
+#54969019,Служебный gpg инстанс на время работы для подписи с bsign,9/3/2025,10/3/2025,Task,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,Deckhouse,FALSE,0,0,9/10/2025
+#55001322,Написать новые trdl-vault actions на базе trdl vault cli,9/4/2025,9/10/2025,Task,Aleksei Igrychev,,Evgeniy Frolov,,,,FALSE,,,trdl,FALSE,0,0,9/10/2025
+#55204985,Подчищать elf-файлы,9/9/2025,9/10/2025,Task,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,Следующий спринт,FALSE,0,0,9/10/2025
+#55990278,Возможность пробросить .Module.FeatureFlags,9/29/2025,9/30/2025,Feature,Ilya Lesikov,Ilya Lesikov,Ilya Lesikov,,,,FALSE,,,Следующий спринт,FALSE,0,0,9/30/2025
+#56106805,Матрица запросов команд друг к другу,10/1/2025,10/1/2025,Task,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,10/15/2025,,Следующий спринт,FALSE,0,0,10/1/2025
+#56111677,Нативная поддержка декхаусовского Project,10/1/2025,10/3/2025,Task,Aleksei Igrychev,Aleksei Igrychev,Aleksei Igrychev,,,,FALSE,,,Deckhouse,FALSE,0,0,10/1/2025
