@@ -71,7 +71,6 @@ func NewFileManager(ctx context.Context, opts NewFileManagerOptions) (*FileManag
 		FileReader:             opts.FileReader,
 		CreateOrUpdateLockFile: opts.CreateIncludesLockFile,
 		UseLatestVersion:       opts.AllowIncludesUpdate,
-		ProjectDir:             opts.ProjectDir,
 	})
 	if err != nil {
 		return nil, err

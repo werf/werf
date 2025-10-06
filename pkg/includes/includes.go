@@ -40,23 +40,17 @@ func GetWerfIncludesConfigRelPath(path string) string {
 	return filepath.ToSlash(path)
 }
 
-func GetWerfIncludesLockConfigRelPath(path, projectDir string) string {
-	if path != "" {
-		return filepath.ToSlash(path)
+func GetWerfIncludesLockConfigRelPath(path string) string {
+	if path == "" {
+		return defaultIncludesLockConfigFileName
 	}
-
-	if projectDir != "" {
-		return filepath.ToSlash(filepath.Join(projectDir, defaultIncludesLockConfigFileName))
-	}
-
-	return defaultIncludesLockConfigFileName
+	return filepath.ToSlash(path)
 }
 
 type InitIncludesOptions struct {
 	FileReader             GiterminismManagerFileReader
 	ConfigRelPath          string
 	LockFileRelPath        string
-	ProjectDir             string
 	CreateOrUpdateLockFile bool
 	UseLatestVersion       bool
 }
@@ -69,7 +63,7 @@ func Init(ctx context.Context, opts InitIncludesOptions) ([]*Include, error) {
 
 	if len(config.Includes) > 0 {
 
-		lockFilePath := GetWerfIncludesLockConfigRelPath(opts.LockFileRelPath, opts.ProjectDir)
+		lockFilePath := GetWerfIncludesLockConfigRelPath(opts.LockFileRelPath)
 
 		var lockConfig *lockConfig
 		if !opts.CreateOrUpdateLockFile && !opts.UseLatestVersion {
