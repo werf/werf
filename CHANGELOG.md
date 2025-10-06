@@ -1,5 +1,20 @@
 # Changelog
 
+## [2.48.0](https://github.com/werf/werf/compare/v2.47.11...v2.48.0) (2025-10-06)
+
+
+### Features
+
+* implement SQL connection handling ([430415c](https://github.com/werf/werf/commit/430415cb8e8a03c2d2630f838430b50b0af2c9bc))
+
+
+### Bug Fixes
+
+* **build:** fix stage selection handling for git stages ([2de807e](https://github.com/werf/werf/commit/2de807e641c691fe2c7f92f0495aec7c6449f01d))
+* **host-cleanup:** don't keep images which contain in their tags projectName or "werf-stages-storage/" ([aa0db91](https://github.com/werf/werf/commit/aa0db91c0a75d7ee27ef794f187f91ab93538680))
+* **host-cleanup:** require backend storage path ([ab9a8f7](https://github.com/werf/werf/commit/ab9a8f707e0cab7fe8cf6edf31faf453efb627f9))
+* **includes:** respect flag and env for werf includes update ([839ee1b](https://github.com/werf/werf/commit/839ee1b1d05b016c5dce21eb9a8b604644839c85))
+
 ## [2.47.11](https://github.com/werf/werf/compare/v2.47.10...v2.47.11) (2025-09-30)
 
 
