@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.48.2](https://github.com/werf/werf/compare/v2.48.1...v2.48.2) (2025-10-07)
+
+
+### Bug Fixes
+
+* **stapel,git:** handle broken symlinks in chown xargs command ([3936931](https://github.com/werf/werf/commit/393693147fdf25184f182b76a3d97cedc934cc7b))
+
 ## [2.48.1](https://github.com/werf/werf/compare/v2.48.0...v2.48.1) (2025-10-07)
 
 
