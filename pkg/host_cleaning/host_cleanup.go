@@ -194,7 +194,7 @@ func shouldRunAutoHostCleanup(ctx context.Context, backend container_backend.Con
 		StoragePath:                         *options.BackendStoragePath,
 	})
 	if err != nil {
-		return false, fmt.Errorf("failed to check local docker server host cleaner GC: %w", err)
+		return false, fmt.Errorf("failed to check local %s backend GC: %w", cleaner.BackendName(), err)
 	}
 	if shouldRun {
 		return true, nil
