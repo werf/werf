@@ -15,8 +15,8 @@ werf render [IMAGE_NAME...] [options]
 
 ```shell
   $WERF_DEBUG_ANSIBLE_ARGS  Pass specified cli args to ansible ($ANSIBLE_ARGS)
-  $WERF_SECRET_KEY          Use specified secret key to extract secrets for the        
-                            deploy. Recommended way to set secret key in CI-system.
+  $WERF_SECRET_KEY          Use specified secret key to extract secrets for the deploy. Recommended 
+                            way to set secret key in CI-system.
                             
                             Secret key also can be defined in files:
                             * ~/.werf/global_secret_key (globally),
