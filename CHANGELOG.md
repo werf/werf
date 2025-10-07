@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.48.1](https://github.com/werf/werf/compare/v2.48.0...v2.48.1) (2025-10-07)
+
+
+### Bug Fixes
+
+* **includes:** fix includes and lock configs path resolution for custom project dir ([#7117](https://github.com/werf/werf/issues/7117)) ([6dee249](https://github.com/werf/werf/commit/6dee249ad64f039b6a9abcb43c40ed30fb7e5f2d))
+* **stapel, git:** fix file ownership setup for scratch (rel sudo: unknown uid 0) ([#7094](https://github.com/werf/werf/issues/7094)) ([23f8cf7](https://github.com/werf/werf/commit/23f8cf7c59238f221d39c46f4925785e889eb4cd))
+
 ## [2.48.0](https://github.com/werf/werf/compare/v2.47.11...v2.48.0) (2025-10-06)
 
 
