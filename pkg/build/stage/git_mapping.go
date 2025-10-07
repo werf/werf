@@ -219,7 +219,7 @@ func (gm *GitMapping) getCommit(ctx context.Context) (string, error) {
 	return commit, nil
 }
 
-func (gm *GitMapping) applyPatchCommand(patchFile *ContainerFileDescriptor, archiveType git_repo.ArchiveType, patch git_repo.Patch) ([]string, error) {
+func (gm *GitMapping) applyPatchCommand(patchFile *ContainerFileDescriptor, patch git_repo.Patch, archiveType git_repo.ArchiveType) ([]string, error) {
 	commands := make([]string, 0)
 
 	var applyPatchDirectory string
@@ -530,7 +530,7 @@ func (gm *GitMapping) baseApplyPatchCommand(ctx context.Context, fromCommit, toC
 		return nil, fmt.Errorf("cannot prepare patch file: %w", err)
 	}
 
-	return gm.applyPatchCommand(patchFile, archiveType, patch)
+	return gm.applyPatchCommand(patchFile, patch, archiveType)
 }
 
 func quoteShellArg(arg string) string {
