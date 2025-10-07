@@ -256,7 +256,7 @@ func (gm *GitMapping) applyPatchCommand(patchFile *ContainerFileDescriptor, patc
 			return nil, fmt.Errorf("cannot create patch paths list file: %w", err)
 		}
 		chownCommand := fmt.Sprintf(
-			`%s --arg-file=%s --null -I {} %s -c 'if [ -e "$1" ]; then %s -h %s:%s "$1"; fi' _ {}`,
+			`%s --arg-file=%s --null -I {} %s -c 'if [ -e "$1" ] || [ -h "$1" ]; then %s -h %s:%s "$1"; fi' _ {}`,
 			stapel.XargsBinPath(),
 			pathsListFile.ContainerFilePath,
 			stapel.BashBinPath(),
