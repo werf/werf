@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 
 	"github.com/werf/3p-helm/pkg/chart"
@@ -34,8 +35,13 @@ import (
 )
 
 var cmdData struct {
-	Timeout          int
-	DetailedExitCode bool
+	Timeout                int
+	DetailedExitCode       bool
+	DiffContextLines       int
+	ShowInsignificantDiffs bool
+	ShowSensitiveDiffs     bool
+	ShowVerboseCRDDiffs    bool
+	ShowVerboseDiffs       bool
 }
 
 var commonCmdData common.CmdData
@@ -192,6 +198,18 @@ werf plan --repo registry.mydomain.com/web --env production`,
 	// TODO(3.0): remove this, useless
 	cmd.Flags().IntVarP(&cmdData.Timeout, "timeout", "t", int(*defaultTimeout), "Resources tracking timeout in seconds ($WERF_TIMEOUT by default)")
 	cmd.Flags().BoolVarP(&cmdData.DetailedExitCode, "exit-code", "", util.GetBoolEnvironmentDefaultFalse("WERF_EXIT_CODE"), "If true, returns exit code 0 if no changes, exit code 2 if any changes planned or exit code 1 in case of an error (default $WERF_EXIT_CODE or false)")
+	cmd.Flags().BoolVarP(&cmdData.ShowInsignificantDiffs, "show-insignificant-diffs", "", util.GetBoolEnvironmentDefaultFalse("WERF_SHOW_INSIGNIFICANT_DIFFS"), "Show insignificant diff lines ($WERF_SHOW_INSIGNIFICANT_DIFFS by default)")
+	cmd.Flags().BoolVarP(&cmdData.ShowSensitiveDiffs, "show-sensitive-diffs", "", util.GetBoolEnvironmentDefaultFalse("WERF_SHOW_SENSITIVE_DIFFS"), "Show sensitive diff lines ($WERF_SHOW_SENSITIVE_DIFFS by default)")
+	cmd.Flags().BoolVarP(&cmdData.ShowVerboseCRDDiffs, "show-verbose-crd-diffs", "", util.GetBoolEnvironmentDefaultFalse("WERF_SHOW_VERBOSE_CRD_DIFFS"), "Show verbose CRD diff lines ($WERF_SHOW_VERBOSE_CRD_DIFFS by default)")
+	cmd.Flags().BoolVarP(&cmdData.ShowVerboseDiffs, "show-verbose-diffs", "", util.GetBoolEnvironmentDefaultFalse("WERF_SHOW_VERBOSE_DIFFS"), "Show verbose diff lines ($WERF_SHOW_VERBOSE_DIFFS by default)")
+
+	var defaultDiffLines int
+	if lines := lo.Must(util.GetIntEnvVar("WERF_DIFF_CONTEXT_LINES")); lines != nil {
+		defaultDiffLines = int(*lines)
+	} else {
+		defaultDiffLines = action.DefaultDiffContextLines
+	}
+	cmd.Flags().IntVarP(&cmdData.DiffContextLines, "diff-context-lines", "", defaultDiffLines, "Show N lines of context around diffs ($WERF_DIFF_CONTEXT_LINES by default)")
 
 	commonCmdData.SetupSkipImageSpecStage(cmd)
 	commonCmdData.SetupDebugTemplates(cmd)
@@ -456,6 +474,7 @@ func run(
 		DefaultChartVersion:          "1.0.0",
 		DefaultSecretValuesDisable:   *commonCmdData.DisableDefaultSecretValues,
 		DefaultValuesDisable:         *commonCmdData.DisableDefaultValues,
+		DiffContextLines:             cmdData.DiffContextLines,
 		ErrorIfChangesPlanned:        cmdData.DetailedExitCode,
 		ExtraAnnotations:             extraAnnotations,
 		ExtraLabels:                  extraLabels,
@@ -481,6 +500,10 @@ func run(
 		SecretKeyIgnore:              *commonCmdData.IgnoreSecretKey,
 		SecretValuesPaths:            common.GetSecretValues(&commonCmdData),
 		SecretWorkDir:                giterminismManager.ProjectDir(),
+		ShowInsignificantDiffs:       cmdData.ShowInsignificantDiffs,
+		ShowSensitiveDiffs:           cmdData.ShowSensitiveDiffs,
+		ShowVerboseCRDDiffs:          cmdData.ShowVerboseCRDDiffs,
+		ShowVerboseDiffs:             cmdData.ShowVerboseDiffs,
 		ValuesFileSets:               common.GetSetFile(&commonCmdData),
 		ValuesFilesPaths:             common.GetValues(&commonCmdData),
 		ValuesSets:                   common.GetSet(&commonCmdData),
