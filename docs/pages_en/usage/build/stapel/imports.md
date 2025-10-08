@@ -55,7 +55,6 @@ werf offers the same approach.
 
 Importing _resources_ from the _images_ must be described in the `import` directive in the _destination image_ in the _image_ config section. `import` is an array of records, where each record must contain the following:
 
-- `image: <image name>`: _source image_; the name of the image copy files from.
 - `from: <image name>`: _source image_; the name of the image copy files from. Both imports from images of the current project and from external images in the format `image_name:tag` or `image_name@digest` are supported.
 - `stage: <stage name>`: _source image stage_; the stage of the _source_image_ to copy files from.
 - `add: <absolute path>`: _source path_; the absolute path to the file or directory in the _source image_ to copy from.
