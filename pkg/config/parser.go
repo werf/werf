@@ -116,8 +116,8 @@ func GetWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfConfi
 			return err
 		}
 
-		imagePlatformValidator := newImagePlatformValidator()
-		if err = imagePlatformValidator.Validate(rawStapelImages, rawImagesFromDockerfile); err != nil {
+		imgPlatformValidator := newImagePlatformValidator()
+		if err = imgPlatformValidator.Validate(rawStapelImages, rawImagesFromDockerfile); err != nil {
 			return fmt.Errorf("invalid image platform cross-references: %w", err)
 		}
 
