@@ -64,7 +64,13 @@ func (v *imagePlatformValidator) Validate(rawStapelImages []*rawStapelImage, raw
 		}
 
 		for _, dep := range img.RawImport {
-			_, rightDiff := lo.Difference(allImagesPlatforms, v.crossJoinImagesPlatforms([]string{option.ValueOrDefault(dep.From, dep.ImageName)}, img.Platform))
+			depImgName := option.ValueOrDefault(dep.From, dep.ImageName)
+
+			if v.isExternalImage(allImagesPlatforms, depImgName) {
+				continue
+			}
+
+			_, rightDiff := lo.Difference(allImagesPlatforms, v.crossJoinImagesPlatforms([]string{depImgName}, img.Platform))
 
 			if len(rightDiff) > 0 {
 				return v.newImportError(img.Images[0], rightDiff[0].A, rightDiff[0].B)
@@ -90,6 +96,12 @@ func (v *imagePlatformValidator) crossJoinImagesPlatforms(names, platforms []str
 		platforms = []string{fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH)} // default platform
 	}
 	return lo.CrossJoin2(names, platforms)
+}
+
+func (v *imagePlatformValidator) isExternalImage(images []lo.Tuple2[string, string], imageName string) bool {
+	return !lo.ContainsBy(images, func(img lo.Tuple2[string, string]) bool {
+		return img.A == imageName
+	})
 }
 
 func (v *imagePlatformValidator) newDependencyError(imageName, requiredImageName, requiredImagePlatform string) error {
