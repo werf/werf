@@ -113,6 +113,8 @@ werf plan --repo registry.mydomain.com/web --env production
             multiple).
             Also, can be specified with $WERF_DEV_IGNORE_* (e.g. $WERF_DEV_IGNORE_TESTS=*_test.go,  
             $WERF_DEV_IGNORE_DOCS=path/to/docs)
+      --diff-context-lines=3
+            Show N lines of context around diffs ($WERF_DIFF_CONTEXT_LINES by default)
       --dir=""
             Use specified project directory where project’s werf.yaml and other configuration files 
             should reside (default $WERF_DIR or current working directory)
@@ -335,6 +337,14 @@ werf plan --repo registry.mydomain.com/web --env production
             with commas: key1=val1,key2=val2).
             Also, can be defined with $WERF_SET_STRING_* (e.g. $WERF_SET_STRING_1=key1=val1,        
             $WERF_SET_STRING_2=key2=val2)
+      --show-insignificant-diffs=false
+            Show insignificant diff lines ($WERF_SHOW_INSIGNIFICANT_DIFFS by default)
+      --show-sensitive-diffs=false
+            Show sensitive diff lines ($WERF_SHOW_SENSITIVE_DIFFS by default)
+      --show-verbose-crd-diffs=false
+            Show verbose CRD diff lines ($WERF_SHOW_VERBOSE_CRD_DIFFS by default)
+      --show-verbose-diffs=false
+            Show verbose diff lines ($WERF_SHOW_VERBOSE_DIFFS by default)
   -L, --skip-dependencies-repo-refresh=false
             Do not refresh helm chart repositories locally cached index
       --skip-image-spec-stage=false
