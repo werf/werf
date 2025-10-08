@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.49.0](https://github.com/werf/werf/compare/v2.48.2...v2.49.0) (2025-10-08)
+
+
+### Features
+
+* **deploy:** `plan` options `--diff-context-lines`, `--show-insignificant-diffs`, `--show-sensitive-diffs`, `--show-verbose-crd-diffs`, `--show-verbose-diffs` ([29fad9e](https://github.com/werf/werf/commit/29fad9ec5f197fcf49dd4ab9be1d5397dda5d805))
+* **deploy:** `werf.io/delete-policy`, `werf.io/ownership`, `werf.io/deploy-on` and more ([2348b90](https://github.com/werf/werf/commit/2348b90822cba8da5a75316aa749ad6346798a03))
+
 ## [2.48.2](https://github.com/werf/werf/compare/v2.48.1...v2.48.2) (2025-10-07)
 
 
