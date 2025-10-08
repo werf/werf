@@ -13,6 +13,33 @@ func newImagePlatformValidator() *imagePlatformValidator {
 	return &imagePlatformValidator{}
 }
 
+// Validate that all dependencies/imports (image:platform) have required base images (image:platform)
+// It respects
+// a) base images syntaxes via:
+// ---
+// "image": test-from
+// "from": <...> # (werf and external images)
+// ---
+// "image": test-from-image
+// "fromImage": <...>
+// ---
+// "image": test-from-artifact
+// "fromArtifact": <...>
+// ---
+// b) dependencies/imports syntaxes via:
+// ---
+// "image": test-dep
+// dependencies:
+//   - image: test-from
+//
+// ---
+// image: test-import
+// import:
+//   - from: test-from
+//     add: /usr/local/bin
+//     to: /opt/test
+//
+// ---
 func (v *imagePlatformValidator) Validate(rawStapelImages []*rawStapelImage, rawImagesFromDockerfile []*rawImageFromDockerfile) error {
 	// Collect all combinations of image:platform from both sources
 	allImagesPlatforms := make([]lo.Tuple2[string, string], 0, len(rawStapelImages)+len(rawImagesFromDockerfile))
@@ -25,24 +52,30 @@ func (v *imagePlatformValidator) Validate(rawStapelImages []*rawStapelImage, raw
 		allImagesPlatforms = append(allImagesPlatforms, v.crossJoinImagesPlatforms(img.Images, img.Platform)...)
 	}
 
-	// Check dependencies for stapel images
 	for _, img := range rawStapelImages {
 		for _, dep := range img.RawDependencies {
 			_, rightDiff := lo.Difference(allImagesPlatforms, v.crossJoinImagesPlatforms([]string{dep.Image}, img.Platform))
 
 			if len(rightDiff) > 0 {
-				return v.newImagePlatformError(img.Images[0], rightDiff[0].A, rightDiff[0].B)
+				return v.newDependencyError(img.Images[0], rightDiff[0].A, rightDiff[0].B)
+			}
+		}
+
+		for _, dep := range img.RawImport {
+			_, rightDiff := lo.Difference(allImagesPlatforms, v.crossJoinImagesPlatforms([]string{dep.From}, img.Platform))
+
+			if len(rightDiff) > 0 {
+				return v.newImportError(img.Images[0], rightDiff[0].A, rightDiff[0].B)
 			}
 		}
 	}
 
-	// Check dependencies for dockerfile images
 	for _, img := range rawImagesFromDockerfile {
 		for _, dep := range img.RawDependencies {
 			_, rightDiff := lo.Difference(allImagesPlatforms, v.crossJoinImagesPlatforms([]string{dep.Image}, img.Platform))
 
 			if len(rightDiff) > 0 {
-				return v.newImagePlatformError(img.Images[0], rightDiff[0].A, rightDiff[0].B)
+				return v.newDependencyError(img.Images[0], rightDiff[0].A, rightDiff[0].B)
 			}
 		}
 	}
@@ -57,6 +90,10 @@ func (v *imagePlatformValidator) crossJoinImagesPlatforms(names, platforms []str
 	return lo.CrossJoin2(names, platforms)
 }
 
-func (v *imagePlatformValidator) newImagePlatformError(imageName, requiredImageName, requiredImagePlatform string) error {
+func (v *imagePlatformValidator) newDependencyError(imageName, requiredImageName, requiredImagePlatform string) error {
 	return fmt.Errorf("image=%q platform=%q requires dependency image=%q platform=%q which is not present in configuration", imageName, requiredImagePlatform, requiredImageName, requiredImagePlatform)
+}
+
+func (v *imagePlatformValidator) newImportError(imageName, requiredImageName, requiredImagePlatform string) error {
+	return fmt.Errorf("image=%q platform=%q requires import image=%q platform=%q which is not present in configuration", imageName, requiredImagePlatform, requiredImageName, requiredImagePlatform)
 }

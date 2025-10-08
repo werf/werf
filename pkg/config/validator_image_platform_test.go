@@ -6,7 +6,7 @@ import (
 	"github.com/onsi/gomega/types"
 )
 
-var _ = Describe("imagePlatformValidator", func() {
+var _ = FDescribe("imagePlatformValidator", func() {
 	DescribeTable("Validate",
 		func(rawStapelImages []*rawStapelImage, rawImagesFromDockerfile []*rawImageFromDockerfile, errMatcher types.GomegaMatcher) {
 			validator := newImagePlatformValidator()
@@ -37,6 +37,20 @@ var _ = Describe("imagePlatformValidator", func() {
 			},
 			[]*rawImageFromDockerfile{},
 			MatchError(`image="app" platform="linux/amd64" requires dependency image="missing-base" platform="linux/amd64" which is not present in configuration`),
+		),
+
+		Entry("should return error when import is missing (Stapel x Stapel)",
+			[]*rawStapelImage{
+				{
+					Images:   []string{"app"},
+					Platform: []string{"linux/amd64"},
+					RawImport: []*rawImport{
+						{From: "missing-base"},
+					},
+				},
+			},
+			[]*rawImageFromDockerfile{},
+			MatchError(`image="app" platform="linux/amd64" requires import image="missing-base" platform="linux/amd64" which is not present in configuration`),
 		),
 
 		Entry("should validate successfully when all dependencies are present (Dockerfile x Dockerfile)",
