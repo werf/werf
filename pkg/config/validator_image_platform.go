@@ -5,6 +5,8 @@ import (
 	"runtime"
 
 	"github.com/samber/lo"
+
+	"github.com/werf/werf/v2/pkg/util/option"
 )
 
 type imagePlatformValidator struct{}
@@ -62,7 +64,7 @@ func (v *imagePlatformValidator) Validate(rawStapelImages []*rawStapelImage, raw
 		}
 
 		for _, dep := range img.RawImport {
-			_, rightDiff := lo.Difference(allImagesPlatforms, v.crossJoinImagesPlatforms([]string{dep.From}, img.Platform))
+			_, rightDiff := lo.Difference(allImagesPlatforms, v.crossJoinImagesPlatforms([]string{option.ValueOrDefault(dep.From, dep.ImageName)}, img.Platform))
 
 			if len(rightDiff) > 0 {
 				return v.newImportError(img.Images[0], rightDiff[0].A, rightDiff[0].B)

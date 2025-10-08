@@ -39,13 +39,27 @@ var _ = Describe("imagePlatformValidator", func() {
 			MatchError(`image="app" platform="linux/amd64" requires dependency image="missing-base" platform="linux/amd64" which is not present in configuration`),
 		),
 
-		Entry("should return error when import is missing (Stapel x Stapel)",
+		Entry("should return error when import is missing and specified with import.from field (Stapel x Stapel)",
 			[]*rawStapelImage{
 				{
 					Images:   []string{"app"},
 					Platform: []string{"linux/amd64"},
 					RawImport: []*rawImport{
 						{From: "missing-base"},
+					},
+				},
+			},
+			[]*rawImageFromDockerfile{},
+			MatchError(`image="app" platform="linux/amd64" requires import image="missing-base" platform="linux/amd64" which is not present in configuration`),
+		),
+
+		Entry("should return error when import is missing and specified with import.image field (Stapel x Stapel)",
+			[]*rawStapelImage{
+				{
+					Images:   []string{"app"},
+					Platform: []string{"linux/amd64"},
+					RawImport: []*rawImport{
+						{ImageName: "missing-base"},
 					},
 				},
 			},
