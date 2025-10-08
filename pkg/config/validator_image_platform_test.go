@@ -6,7 +6,7 @@ import (
 	"github.com/onsi/gomega/types"
 )
 
-var _ = FDescribe("imagePlatformValidator", func() {
+var _ = Describe("imagePlatformValidator", func() {
 	DescribeTable("Validate",
 		func(rawStapelImages []*rawStapelImage, rawImagesFromDockerfile []*rawImageFromDockerfile, errMatcher types.GomegaMatcher) {
 			validator := newImagePlatformValidator()
