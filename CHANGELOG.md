@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.49.2](https://github.com/werf/werf/compare/v2.49.1...v2.49.2) (2025-10-09)
+
+
+### Miscellaneous Chores
+
+* **release:** test mac signing ([281b0d8](https://github.com/werf/werf/commit/281b0d897df4c7ef66c28338aa19a92391f4eb5a))
+
 ## [2.49.1](https://github.com/werf/werf/compare/v2.49.0...v2.49.1) (2025-10-09)
 
 
