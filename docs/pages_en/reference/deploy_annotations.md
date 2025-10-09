@@ -11,6 +11,9 @@ This article contains description of annotations which control werf resource ope
  - [`werf.io/deploy-dependency-ANY_NAME`](#resource-dependencies) — define a dependency for the resource, which will affect the order in which the resources are deployed.
  - [`<any-name>.external-dependency.werf.io/resource`](#external-dependency-resource) — wait for specified external dependency to be up and running, and only then proceed to deploy the annotated resource.
  - [`<any-name>.external-dependency.werf.io/namespace`](#external-dependency-namespace) — specify the namespace for the external dependency.
+ - [`werf.io/ownership`](#resource-ownership) — defines how resource deletions are handled and how release annotations are managed.
+ - [`werf.io/deploy-on`](#conditional-resource-deployment) — defines when to render the resource for the deployment and on which stages should it be deployed.
+ - [`werf.io/delete-policy`](#resource-delete-policy) — defines how resource deletions should be handled during resource deployment.
  - [`werf.io/replicas-on-creation`](#replicas-on-creation) — defines number of replicas that should be set only when creating resource initially (useful for HPA).
  - [`werf.io/track-termination-mode`](#track-termination-mode) — defines a condition when werf should stop tracking of the resource.
  - [`werf.io/fail-mode`](#fail-mode) — defines how werf will handle a resource failure condition which occurred after failures threshold has been reached for the resource during deploy process.
@@ -85,6 +88,39 @@ More info: [deployment order]({{ "/usage/deploy/deployment_order.html" | true_re
 Sets the namespace for the external dependency specified by the [external dependency resource](#external-dependency-resource) annotation. The `<any-name>` prefix must be the same as in the annotation of the external dependency resource.
 
 More info: [deployment order]({{ "/usage/deploy/deployment_order.html" | true_relative_url }})
+
+## Resource ownership
+
+`werf.io/ownership: release|anyone`
+
+Defines how resource deletions are handled and how release annotations are managed. Allowed values are:
+ * `release`: the resource is deleted if removed from the chart or when the release is uninstalled, and release annotations of the resource are applied/validated during deploy.
+ * `anyone`: the opposite of `release`, the resource is never deleted on uninstall or when removed from the chart, and release annotations are not applied/validated during deploy.
+
+General resources have `release` ownership by default, while hooks and CRDs from the `crds` directory have `anyone` ownership.
+
+## Conditional resource deployment
+
+`werf.io/deploy-on: pre-install|install|post-install|pre-upgrade|upgrade|post-upgrade|pre-rollback|rollback|post-rollback|pre-delete|delete|post-delete`
+
+Define when to render the resource for the deployment and on which stages should it be deployed. Available values are:
+ * `pre-install`, `install`, `post-install` — render only on release installation
+ * `pre-upgrade`, `upgrade`, `post-upgrade` — render only on release upgrade
+ * `pre-rollback`, `rollback`, `post-rollback` — render only on release rollback
+ * `pre-delete`, `delete`, `post-delete` — render only on release deletion
+
+The default value for general resources is `install,upgrade,rollback`, while for hooks it is populated from `helm.sh/hook`.
+
+## Resource delete policy
+
+`werf.io/delete-policy: before-creation|succeeded|failed`
+
+The `werf.io/delete-policy` annotation controls resource deletions during its deployment and is inspired by `helm.sh/hook-delete-policy`. Allowed values:
+* `before-creation`: the resource is always recreated
+* `succeeded`: the resource is deleted after its readiness check succeeds
+* `failed`: the resource is deleted if its readiness check fails
+
+By default, general resources have no delete policy, while hooks have values from `helm.sh/hook-delete-policy` mapped to `werf.io/delete-policy`.
 
 ## Replicas on creation
 

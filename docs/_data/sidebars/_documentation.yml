@@ -87,6 +87,9 @@ entries:
               - title: Deployment order
                 url: /usage/deploy/deployment_order.html
 
+              - title: Resource policies
+                url: /usage/deploy/resource_policies.html
+
               - title: Deployment scenarios
                 url: /usage/deploy/deployment_scenarios.html
 
@@ -241,6 +244,9 @@ entries:
 
               - title: Порядок развертывания
                 url: /usage/deploy/deployment_order.html
+
+              - title: Ресурсные политики
+                url: /usage/deploy/resource_policies.html
 
               - title: Планирование
                 url: /usage/deploy/planning.html
