@@ -13,7 +13,7 @@ defaults:
 
 jobs:
   cleanup:
-    runs-on: ubuntu-22.04
+    runs-on: prod-github-runner-0
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
