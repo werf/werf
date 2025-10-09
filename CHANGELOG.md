@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.49.1](https://github.com/werf/werf/compare/v2.49.0...v2.49.1) (2025-10-09)
+
+
+### Bug Fixes
+
+* **deploy:** `plan` panic and json diffs instead of yaml ([c8d8187](https://github.com/werf/werf/commit/c8d818742e67ae0708f37a438de3d165b35375ab))
+
 ## [2.49.0](https://github.com/werf/werf/compare/v2.48.2...v2.49.0) (2025-10-08)
 
 
