@@ -8,7 +8,6 @@ import (
 
 	"github.com/samber/lo"
 
-	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/logging"
 	utilExec "github.com/werf/werf/v2/pkg/util/exec"
 	"github.com/werf/werf/v2/pkg/util/option"
@@ -39,13 +38,12 @@ func Detach(ctx context.Context, args, envs []string) error {
 
 	cmd = utilExec.MakeDetachable(cmd)
 
-	if err := cmd.Start(); err != nil {
-		logboek.Context(ctx).Warn().LogF("WARNING: unable to start background process: %s\n", err)
-		return nil
+	if err = cmd.Start(); err != nil {
+		return err
 	}
 
-	if err := cmd.Process.Release(); err != nil {
-		logboek.Context(ctx).Warn().LogF("WARNING: unable to detach background process: %s\n", err)
+	if err = cmd.Process.Release(); err != nil {
+		return err
 	}
 
 	return nil
