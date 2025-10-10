@@ -39,7 +39,9 @@ kind: CronTab
 
 In this case, the CRD for the CronTab resource will be deployed first, followed by the CronTab resource.
 
-## Resource ordering via weights (werf only)
+## Resource ordering
+
+### Ordering via weights (werf-only)
 
 The annotation `werf.io/weight` can be used to set resource ordering during deployment. Resources have weight 0 by default. Resources with a lower weight are deployed before resources with a higher weight. If resources have the same weight, they are deployed in parallel.
 
@@ -80,7 +82,7 @@ metadata:
 
 In this case, the `database` resource is deployed first, followed by `database-migrations`, and then `app1` and `app2` are deployed in parallel.
 
-## Resource ordering via dependencies (werf only)
+### Ordering via dependencies (werf only)
 
 The annotation `werf.io/deploy-dependency-<name>` can be used to set resource ordering during deployment. The resource with such an annotation will be deployed as soon as all its dependencies are satisfied, but within its stage (pre, main or post). The resource weight is ignored when this annotation is used.
 
