@@ -1,6 +1,6 @@
 ---
-title: Resource policies
-permalink: usage/deploy/resource_policies.html
+title: Resource lifecycle
+permalink: usage/deploy/resource_lifecycle.html
 ---
 
 ## Conditional resource deployment
@@ -62,6 +62,8 @@ Here, ownership `anyone` makes this Job behave a lot like a Helm hook, meaning t
 
 ## Resource delete policies
 
+### werf.io/delete-policy
+
 The `werf.io/delete-policy` annotation controls resource deletions during its deployment and is inspired by `helm.sh/hook-delete-policy`. Allowed values:
 * `before-creation`: the resource is always recreated
 * `succeeded`: the resource is deleted after its readiness check succeeds
@@ -84,7 +86,7 @@ metadata:
 
 Here, the `database-migrations` Job is always recreated and then deleted after it becomes ready.
 
-## Resource policies
+### helm.sh/resource-policy
 
 The annotation `helm.sh/resource-policy: keep` forbids any resource deletion from happening. The resource can never be deleted for any reason when this annotation is present. This annotation is also respected on the resource in the cluster, even if it is not present in the chart.
 
