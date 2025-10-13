@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.49.4](https://github.com/werf/werf/compare/v2.49.3...v2.49.4) (2025-10-13)
+
+
+### Bug Fixes
+
+* **deploy:** panic in `plan` ([6c98d43](https://github.com/werf/werf/commit/6c98d43bba717dd58f299723c6aa1bfabe4f1a28))
+
 ## [2.49.3](https://github.com/werf/werf/compare/v2.49.2...v2.49.3) (2025-10-09)
 
 
