@@ -278,6 +278,9 @@ werf converge --repo registry.mydomain.com/web --env production
             $WERF_NO_INSTALL_CRDS)
       --no-pod-logs=false
             Disable Pod logs collection and printing (default $WERF_NO_POD_LOGS or false)
+      --no-remove-manual-changes=false
+            Don`t remove fields added manually to the resource in the cluster if fields aren`t      
+            present in the manifest (default $WERF_NO_REMOVE_MANUAL_CHANGES)
   -p, --parallel=true
             Run in parallel (default $WERF_PARALLEL or true)
       --parallel-tasks-limit=5
