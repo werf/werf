@@ -190,6 +190,7 @@ werf plan --repo registry.mydomain.com/web --env production`,
 	common.SetupKubeBurstLimit(&commonCmdData, cmd)
 	common.SetupNoInstallCRDs(&commonCmdData, cmd)
 	common.SetupForceAdoption(&commonCmdData, cmd)
+	common.SetupNoRemoveManualChanges(&commonCmdData, cmd)
 
 	defaultTimeout, err := util.GetIntEnvVar("WERF_TIMEOUT")
 	if err != nil || defaultTimeout == nil {
@@ -494,6 +495,7 @@ func run(
 		LogRegistryStreamOut:         os.Stdout,
 		NetworkParallelism:           common.GetNetworkParallelism(&commonCmdData),
 		NoInstallCRDs:                *commonCmdData.NoInstallCRDs,
+		NoRemoveManualChanges:        *commonCmdData.NoRemoveManualChanges,
 		RegistryCredentialsPath:      registryCredentialsPath,
 		ReleaseStorageDriver:         os.Getenv("HELM_DRIVER"),
 		SQLConnectionString:          *commonCmdData.SQLConnectionString,
