@@ -201,6 +201,9 @@ werf dismiss [options]
             Parallelize some network operations (default $WERF_NETWORK_PARALLELISM or 30)
       --no-pod-logs=false
             Disable Pod logs collection and printing (default $WERF_NO_POD_LOGS or false)
+      --no-remove-manual-changes=false
+            Don`t remove fields added manually to the resource in the cluster if fields aren`t      
+            present in the manifest (default $WERF_NO_REMOVE_MANUAL_CHANGES)
       --platform=[]
             Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT]     
             ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)
