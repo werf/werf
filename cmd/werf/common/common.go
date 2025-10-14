@@ -345,6 +345,11 @@ func SetupNoInstallCRDs(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(cmdData.NoInstallCRDs, "no-install-crds", "", util.GetBoolEnvironmentDefaultFalse("WERF_NO_INSTALL_CRDS"), `Do not install CRDs from "crds/" directories of installed charts (default $WERF_NO_INSTALL_CRDS)`)
 }
 
+func SetupNoRemoveManualChanges(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.NoRemoveManualChanges = new(bool)
+	cmd.Flags().BoolVarP(cmdData.NoRemoveManualChanges, "no-remove-manual-changes", "", util.GetBoolEnvironmentDefaultFalse("WERF_NO_REMOVE_MANUAL_CHANGES"), `Don't remove fields added manually to the resource in the cluster if fields aren't present in the manifest (default $WERF_NO_REMOVE_MANUAL_CHANGES)`)
+}
+
 func SetupReleaseLabel(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.ReleaseLabels = new([]string)
 	cmd.Flags().StringArrayVarP(cmdData.ReleaseLabels, "release-label", "", []string{}, `Add Helm release labels (can specify multiple). Kind of labels depends or release storage driver.

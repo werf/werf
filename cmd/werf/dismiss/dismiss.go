@@ -132,6 +132,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupNetworkParallelism(&commonCmdData, cmd)
 	common.SetupKubeQpsLimit(&commonCmdData, cmd)
 	common.SetupKubeBurstLimit(&commonCmdData, cmd)
+	common.SetupNoRemoveManualChanges(&commonCmdData, cmd)
 
 	commonCmdData.SetupPlatform(cmd)
 	commonCmdData.SetupDebugTemplates(cmd)
@@ -219,6 +220,7 @@ func runDismiss(ctx context.Context) error {
 			NetworkParallelism:         common.GetNetworkParallelism(&commonCmdData),
 			NoPodLogs:                  *commonCmdData.NoPodLogs,
 			NoProgressTablePrint:       *commonCmdData.StatusProgressPeriodSeconds == -1,
+			NoRemoveManualChanges:      *commonCmdData.NoRemoveManualChanges,
 			ProgressTablePrintInterval: time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
 			ReleaseHistoryLimit:        *commonCmdData.ReleasesHistoryMax,
 			ReleaseStorageDriver:       os.Getenv("HELM_DRIVER"),

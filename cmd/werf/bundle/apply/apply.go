@@ -123,6 +123,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupNoInstallCRDs(&commonCmdData, cmd)
 	common.SetupReleaseLabel(&commonCmdData, cmd)
 	common.SetupForceAdoption(&commonCmdData, cmd)
+	common.SetupNoRemoveManualChanges(&commonCmdData, cmd)
 
 	commonCmdData.SetupDebugTemplates(cmd)
 
@@ -257,17 +258,18 @@ func runApply(ctx context.Context) error {
 		LegacyExtraValues:            serviceValues,
 		LogRegistryStreamOut:         os.Stdout,
 		NetworkParallelism:           common.GetNetworkParallelism(&commonCmdData),
-		NoPodLogs:                    *commonCmdData.NoPodLogs,
 		NoInstallCRDs:                *commonCmdData.NoInstallCRDs,
+		NoPodLogs:                    *commonCmdData.NoPodLogs,
 		NoProgressTablePrint:         *commonCmdData.StatusProgressPeriodSeconds == -1,
+		NoRemoveManualChanges:        *commonCmdData.NoRemoveManualChanges,
 		ProgressTablePrintInterval:   time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
 		RegistryCredentialsPath:      registryCredentialsPath,
 		ReleaseHistoryLimit:          *commonCmdData.ReleasesHistoryMax,
 		ReleaseInfoAnnotations:       serviceAnnotations,
 		ReleaseLabels:                releaseLabels,
 		ReleaseStorageDriver:         os.Getenv("HELM_DRIVER"),
-		SQLConnectionString:          *commonCmdData.SQLConnectionString,
 		RollbackGraphPath:            common.GetRollbackGraphPath(&commonCmdData),
+		SQLConnectionString:          *commonCmdData.SQLConnectionString,
 		SecretKeyIgnore:              *commonCmdData.IgnoreSecretKey,
 		SecretValuesPaths:            common.GetSecretValues(&commonCmdData),
 		SecretWorkDir:                secretWorkDir,
