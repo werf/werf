@@ -42,3 +42,13 @@ func IsErrPruneRunning(err error) bool {
 	cause := errors.Cause(err)
 	return strings.HasSuffix(cause.Error(), "a prune operation is already running")
 }
+
+func IsContainerNameConflict(err error) bool {
+	if err == nil {
+		return false
+	}
+	cause := errors.Cause(err)
+	return strings.Contains(cause.Error(), "Conflict") &&
+		strings.Contains(cause.Error(), "container name") &&
+		strings.Contains(cause.Error(), "is already in use")
+}
