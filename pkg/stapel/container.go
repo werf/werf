@@ -48,6 +48,9 @@ func (c *container) CreateIfNotExist(ctx context.Context) error {
 
 				if !exist {
 					if err := c.Create(ctx); err != nil {
+						if docker.IsContainerNameConflict(err) {
+							return nil
+						}
 						return err
 					}
 				}
