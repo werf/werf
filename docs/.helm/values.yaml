@@ -6,6 +6,10 @@ host:
   dev: werf.dev.flant.com
   _default: werf.test.flant.com
 
+ingressClassName:
+  _default: "nginx"
+  production: "standalone-geo"
+
 resources:
   requests:
     memory:
