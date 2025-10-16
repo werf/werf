@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.50.2](https://github.com/werf/werf/compare/v2.50.1...v2.50.2) (2025-10-16)
+
+
+### Bug Fixes
+
+* **deploy:** improve diffs in `plan` output ([471a4d1](https://github.com/werf/werf/commit/471a4d1bae20eadcb547f74972e20385c16dfe1c))
+
 ## [2.50.1](https://github.com/werf/werf/compare/v2.50.0...v2.50.1) (2025-10-16)
 
 
