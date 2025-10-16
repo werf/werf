@@ -192,6 +192,7 @@ werf converge --repo registry.mydomain.com/web --env production`,
 	common.SetupReleaseLabel(&commonCmdData, cmd)
 	common.SetupForceAdoption(&commonCmdData, cmd)
 	common.SetupNoRemoveManualChanges(&commonCmdData, cmd)
+	common.SetupNoFinalTracking(&commonCmdData, cmd)
 
 	commonCmdData.SetupDebugTemplates(cmd)
 	commonCmdData.SetupAllowIncludesUpdate(cmd)
@@ -484,6 +485,7 @@ func run(
 		LegacyExtraValues:            serviceValues,
 		LogRegistryStreamOut:         os.Stdout,
 		NetworkParallelism:           common.GetNetworkParallelism(&commonCmdData),
+		NoFinalTracking:              *commonCmdData.NoFinalTracking,
 		NoInstallCRDs:                *commonCmdData.NoInstallCRDs,
 		NoPodLogs:                    *commonCmdData.NoPodLogs,
 		NoProgressTablePrint:         *commonCmdData.StatusProgressPeriodSeconds == -1,

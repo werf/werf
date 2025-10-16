@@ -124,6 +124,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupReleaseLabel(&commonCmdData, cmd)
 	common.SetupForceAdoption(&commonCmdData, cmd)
 	common.SetupNoRemoveManualChanges(&commonCmdData, cmd)
+	common.SetupNoFinalTracking(&commonCmdData, cmd)
 
 	commonCmdData.SetupDebugTemplates(cmd)
 
@@ -258,6 +259,7 @@ func runApply(ctx context.Context) error {
 		LegacyExtraValues:            serviceValues,
 		LogRegistryStreamOut:         os.Stdout,
 		NetworkParallelism:           common.GetNetworkParallelism(&commonCmdData),
+		NoFinalTracking:              *commonCmdData.NoFinalTracking,
 		NoInstallCRDs:                *commonCmdData.NoInstallCRDs,
 		NoPodLogs:                    *commonCmdData.NoPodLogs,
 		NoProgressTablePrint:         *commonCmdData.StatusProgressPeriodSeconds == -1,

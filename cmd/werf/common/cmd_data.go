@@ -129,6 +129,7 @@ type CmdData struct {
 	NoInstallCRDs         *bool
 	ReleaseLabels         *[]string
 	NoRemoveManualChanges *bool
+	NoFinalTracking       *bool
 
 	VirtualMerge *bool
 

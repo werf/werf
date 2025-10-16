@@ -350,6 +350,11 @@ func SetupNoRemoveManualChanges(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(cmdData.NoRemoveManualChanges, "no-remove-manual-changes", "", util.GetBoolEnvironmentDefaultFalse("WERF_NO_REMOVE_MANUAL_CHANGES"), `Don't remove fields added manually to the resource in the cluster if fields aren't present in the manifest (default $WERF_NO_REMOVE_MANUAL_CHANGES)`)
 }
 
+func SetupNoFinalTracking(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.NoFinalTracking = new(bool)
+	cmd.Flags().BoolVarP(cmdData.NoFinalTracking, "no-final-tracking", "", util.GetBoolEnvironmentDefaultFalse("WERF_NO_FINAL_TRACKING"), `By default disable tracking operations that have no create/update/delete resource operations after them, which are most tracking operations, to speed up the release (default $WERF_NO_FINAL_TRACKING)`)
+}
+
 func SetupReleaseLabel(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.ReleaseLabels = new([]string)
 	cmd.Flags().StringArrayVarP(cmdData.ReleaseLabels, "release-label", "", []string{}, `Add Helm release labels (can specify multiple). Kind of labels depends or release storage driver.

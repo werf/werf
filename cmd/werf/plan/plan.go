@@ -191,6 +191,7 @@ werf plan --repo registry.mydomain.com/web --env production`,
 	common.SetupNoInstallCRDs(&commonCmdData, cmd)
 	common.SetupForceAdoption(&commonCmdData, cmd)
 	common.SetupNoRemoveManualChanges(&commonCmdData, cmd)
+	common.SetupNoFinalTracking(&commonCmdData, cmd)
 
 	defaultTimeout, err := util.GetIntEnvVar("WERF_TIMEOUT")
 	if err != nil || defaultTimeout == nil {
@@ -494,6 +495,7 @@ func run(
 		LegacyExtraValues:            serviceValues,
 		LogRegistryStreamOut:         os.Stdout,
 		NetworkParallelism:           common.GetNetworkParallelism(&commonCmdData),
+		NoFinalTracking:              *commonCmdData.NoFinalTracking,
 		NoInstallCRDs:                *commonCmdData.NoInstallCRDs,
 		NoRemoveManualChanges:        *commonCmdData.NoRemoveManualChanges,
 		RegistryCredentialsPath:      registryCredentialsPath,
