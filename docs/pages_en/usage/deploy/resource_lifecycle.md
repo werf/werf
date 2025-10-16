@@ -66,6 +66,7 @@ Here, ownership `anyone` makes this Job behave a lot like a Helm hook, meaning t
 
 The `werf.io/delete-policy` annotation controls resource deletions during its deployment and is inspired by `helm.sh/hook-delete-policy`. Allowed values:
 * `before-creation`: the resource is always recreated
+* `before-creation-if-immutable`: the resource is recreated only if we got the `field is immutable` error trying to update the resource
 * `succeeded`: the resource is deleted after its readiness check succeeds
 * `failed`: the resource is deleted if its readiness check fails
 

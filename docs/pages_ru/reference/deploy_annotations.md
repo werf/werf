@@ -106,10 +106,11 @@ toc: false
 
 ## Resource delete policy
 
-`werf.io/delete-policy: before-creation|succeeded|failed`
+`werf.io/delete-policy: before-creation|before-creation-if-immutable|succeeded|failed`
 
 Аннотация `werf.io/delete-policy` управляет удалением ресурса во время его выката и вдохновлена аннотацией `helm.sh/hook-delete-policy`. Допустимые значения:
 * `before-creation`: ресурс всегда пересоздаётся
+* `before-creation-if-immutable`: ресурс пересоздаётся только если при обновлении ресурса мы получили ошибку `field is immutable`
 * `succeeded`: ресурс удаляется после успешной проверки готовности
 * `failed`: ресурс удаляется, если проверка готовности завершилась неудачно
 

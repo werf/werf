@@ -273,6 +273,10 @@ werf converge --repo registry.mydomain.com/web --env production
             deploy.namespace custom template from werf.yaml or $WERF_NAMESPACE)
       --network-parallelism=30
             Parallelize some network operations (default $WERF_NETWORK_PARALLELISM or 30)
+      --no-final-tracking=false
+            By default disable tracking operations that have no create/update/delete resource       
+            operations after them, which are most tracking operations, to speed up the release      
+            (default $WERF_NO_FINAL_TRACKING)
       --no-install-crds=false
             Do not install CRDs from "crds/" directories of installed charts (default               
             $WERF_NO_INSTALL_CRDS)
