@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.50.1](https://github.com/werf/werf/compare/v2.50.0...v2.50.1) (2025-10-16)
+
+
+### Bug Fixes
+
+* **deploy:** broken diffs with `object:` in `plan` ([8a5c7ec](https://github.com/werf/werf/commit/8a5c7ecdc24b85d07d8dc77e19f4c752ca9b61bd))
+* **deploy:** error if only one of `--release`/`--namespace` set for `dismiss` and git found ([016b07f](https://github.com/werf/werf/commit/016b07f56f84f2ded8753400046bc503c99d0b90))
+
 ## [2.50.0](https://github.com/werf/werf/compare/v2.49.4...v2.50.0) (2025-10-16)
 
 
