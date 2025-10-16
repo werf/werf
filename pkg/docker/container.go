@@ -2,11 +2,13 @@ package docker
 
 import (
 	"io"
+	"strings"
 
 	"github.com/docker/cli/cli/command"
 	"github.com/docker/cli/cli/command/container"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
+	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 )
 
@@ -95,4 +97,14 @@ func CliRm_RecordedOutput(ctx context.Context, args ...string) (string, error) {
 	return callCliWithRecordedOutput(ctx, func(c command.Cli) error {
 		return doCliRm(c, args...)
 	})
+}
+
+func IsContainerNameConflict(err error) bool {
+	if err == nil {
+		return false
+	}
+	cause := errors.Cause(err)
+	return strings.Contains(cause.Error(), "Conflict") &&
+		strings.Contains(cause.Error(), "container name") &&
+		strings.Contains(cause.Error(), "is already in use")
 }
