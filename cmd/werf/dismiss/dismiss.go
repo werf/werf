@@ -133,6 +133,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupKubeQpsLimit(&commonCmdData, cmd)
 	common.SetupKubeBurstLimit(&commonCmdData, cmd)
 	common.SetupNoRemoveManualChanges(&commonCmdData, cmd)
+	common.SetupNoFinalTracking(&commonCmdData, cmd)
 
 	commonCmdData.SetupPlatform(cmd)
 	commonCmdData.SetupDebugTemplates(cmd)
@@ -218,6 +219,7 @@ func runDismiss(ctx context.Context) error {
 			KubeTLSServerName:          *commonCmdData.KubeTlsServer,
 			KubeToken:                  *commonCmdData.KubeToken,
 			NetworkParallelism:         common.GetNetworkParallelism(&commonCmdData),
+			NoFinalTracking:            *commonCmdData.NoFinalTracking,
 			NoPodLogs:                  *commonCmdData.NoPodLogs,
 			NoProgressTablePrint:       *commonCmdData.StatusProgressPeriodSeconds == -1,
 			NoRemoveManualChanges:      *commonCmdData.NoRemoveManualChanges,
