@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.335](https://www.github.com/werf/werf/compare/v1.2.334...v1.2.335) (2025-10-16)
+
+
+### Bug Fixes
+
+* **build:** fix "the container name "/stapel_0.6.2" is already in use by container" error (1.2) ([#7143](https://www.github.com/werf/werf/issues/7143)) ([51f0c80](https://www.github.com/werf/werf/commit/51f0c80f5dc524f5cef18f7e4faeef5b6048402e))
+
 ### [1.2.334](https://www.github.com/werf/werf/compare/v1.2.333...v1.2.334) (2025-02-27)
 
 
