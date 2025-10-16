@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.50.0](https://github.com/werf/werf/compare/v2.49.4...v2.50.0) (2025-10-16)
+
+
+### Features
+
+* **deploy:** annotation `werf.io/delete-policy: before-creation-if-immutable`, options `--no-final-tracking`, `--no-remove-manual-changes` ([dd34dcd](https://github.com/werf/werf/commit/dd34dcd7972278d8a22e617846bed7888e343eed))
+* **deploy:** option `--no-remove-manual-changes` from the cluster resources ([0143305](https://github.com/werf/werf/commit/01433054bf650a87eed40ffa22aad2131e4dda9c))
+
+
+### Bug Fixes
+
+* **build:** cross validate images' platforms ([#7110](https://github.com/werf/werf/issues/7110)) ([10f0d93](https://github.com/werf/werf/commit/10f0d93b5bef8aea6204217f29837182b8ca4073))
+* **host-cleanup:** doesn't print warnings while detaching process ([0ec9e0f](https://github.com/werf/werf/commit/0ec9e0f5f7c41ec55d291282a6eecc09d07716fa))
+
 ## [2.49.4](https://github.com/werf/werf/compare/v2.49.3...v2.49.4) (2025-10-13)
 
 
