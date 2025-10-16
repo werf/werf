@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.48.3](https://github.com/werf/werf/compare/v2.48.2...v2.48.3) (2025-10-16)
+
+
+### Bug Fixes
+
+* **deploy:** error if only one of `--release`/`--namespace` set for `dismiss` and git found ([1a1e95e](https://github.com/werf/werf/commit/1a1e95ee55babeb51985b8073a49e810dc28184c))
+
 ## [2.48.2](https://github.com/werf/werf/compare/v2.48.1...v2.48.2) (2025-10-07)
 
 
