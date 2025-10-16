@@ -301,13 +301,7 @@ func getNamespaceAndRelease(
 
 		namespace = deployReport.Namespace
 		release = deployReport.Release
-	} else if namespaceSpecified || releaseSpecified {
-		if namespaceSpecified && !releaseSpecified {
-			return "", "", fmt.Errorf("--namespace specified, but not --release, while should be specified both or none")
-		} else if !namespaceSpecified && releaseSpecified {
-			return "", "", fmt.Errorf("--release specified, but not --namespace, while should be specified both or none")
-		}
-
+	} else if namespaceSpecified && releaseSpecified {
 		namespace = *commonCmdData.Namespace
 		release = *commonCmdData.Release
 	} else if gitFound {
@@ -319,14 +313,22 @@ func getNamespaceAndRelease(
 		}
 		logboek.LogOptionalLn()
 
-		namespace, err = deploy_params.GetKubernetesNamespace(*commonCmdData.Namespace, *commonCmdData.Environment, werfConfig)
-		if err != nil {
-			return "", "", err
+		if namespaceSpecified {
+			namespace = *commonCmdData.Namespace
+		} else {
+			namespace, err = deploy_params.GetKubernetesNamespace(*commonCmdData.Namespace, *commonCmdData.Environment, werfConfig)
+			if err != nil {
+				return "", "", err
+			}
 		}
 
-		release, err = deploy_params.GetHelmRelease(*commonCmdData.Release, *commonCmdData.Environment, namespace, werfConfig)
-		if err != nil {
-			return "", "", err
+		if releaseSpecified {
+			release = *commonCmdData.Release
+		} else {
+			release, err = deploy_params.GetHelmRelease(*commonCmdData.Release, *commonCmdData.Environment, namespace, werfConfig)
+			if err != nil {
+				return "", "", err
+			}
 		}
 	} else {
 		return "", "", fmt.Errorf("no git with werf project found: dismiss should either be executed in a git repository, or with --namespace and --release specified, or with --use-deploy-report")
