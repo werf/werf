@@ -149,6 +149,7 @@ werf converge --repo registry.mydomain.com/web --env production`,
 	common.SetupSetString(&commonCmdData, cmd)
 	common.SetupSetFile(&commonCmdData, cmd)
 	common.SetupValues(&commonCmdData, cmd, true)
+	common.SetupRuntimeJSONSets(&commonCmdData, cmd)
 	common.SetupSecretValues(&commonCmdData, cmd, true)
 	common.SetupIgnoreSecretKey(&commonCmdData, cmd)
 
@@ -497,6 +498,7 @@ func run(
 		ReleaseLabels:                releaseLabels,
 		ReleaseStorageDriver:         os.Getenv("HELM_DRIVER"),
 		RollbackGraphPath:            common.GetRollbackGraphPath(&commonCmdData),
+		RuntimeJSONSets:              common.GetRuntimeJSONSets(&commonCmdData),
 		SQLConnectionString:          *commonCmdData.SQLConnectionString,
 		SecretKeyIgnore:              *commonCmdData.IgnoreSecretKey,
 		SecretValuesPaths:            common.GetSecretValues(&commonCmdData),

@@ -1025,6 +1025,12 @@ func SetupSetFile(cmdData *CmdData, cmd *cobra.Command) {
 Also, can be defined with $WERF_SET_FILE_* (e.g. $WERF_SET_FILE_1=key1=path1, $WERF_SET_FILE_2=key2=val2)`)
 }
 
+func SetupRuntimeJSONSets(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.RuntimeJSONSets = new([]string)
+	cmd.Flags().StringArrayVarP(cmdData.RuntimeJSONSets, "set-runtime-json", "", []string{}, `Set new keys in $.Runtime, where the key is the value path and the value is JSON. This is meant to be generated inside the program, so use --set-json instead, unless you know what you are doing. Can specify multiple or separate values with commas: key1=val1,key2=val2.
+Also, can be defined with $WERF_SET_RUNTIME_JSON_* (e.g. $WERF_SET_RUNTIME_JSON_1=key1=val1, $WERF_SET_RUNTIME_JSON_2=key2=val2)`)
+}
+
 func SetupSecretValues(cmdData *CmdData, cmd *cobra.Command, projectConfigParsed bool) {
 	cmdData.SecretValues = new([]string)
 
@@ -1551,6 +1557,10 @@ func GetSetString(cmdData *CmdData) []string {
 
 func GetSetFile(cmdData *CmdData) []string {
 	return append(util.PredefinedValuesByEnvNamePrefix("WERF_SET_FILE_"), *cmdData.SetFile...)
+}
+
+func GetRuntimeJSONSets(cmdData *CmdData) []string {
+	return append(util.PredefinedValuesByEnvNamePrefix("WERF_SET_RUNTIME_JSON_"), *cmdData.RuntimeJSONSets...)
 }
 
 func GetValues(cmdData *CmdData) []string {

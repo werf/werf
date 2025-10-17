@@ -93,6 +93,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupSetString(&commonCmdData, cmd)
 	common.SetupSetFile(&commonCmdData, cmd)
 	common.SetupValues(&commonCmdData, cmd, false)
+	common.SetupRuntimeJSONSets(&commonCmdData, cmd)
 	common.SetupSecretValues(&commonCmdData, cmd, false)
 	common.SetupIgnoreSecretKey(&commonCmdData, cmd)
 
@@ -271,6 +272,7 @@ func runApply(ctx context.Context) error {
 		ReleaseLabels:                releaseLabels,
 		ReleaseStorageDriver:         os.Getenv("HELM_DRIVER"),
 		RollbackGraphPath:            common.GetRollbackGraphPath(&commonCmdData),
+		RuntimeJSONSets:              common.GetRuntimeJSONSets(&commonCmdData),
 		SQLConnectionString:          *commonCmdData.SQLConnectionString,
 		SecretKeyIgnore:              *commonCmdData.IgnoreSecretKey,
 		SecretValuesPaths:            common.GetSecretValues(&commonCmdData),

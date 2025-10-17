@@ -154,6 +154,7 @@ werf plan --repo registry.mydomain.com/web --env production`,
 	common.SetupSetString(&commonCmdData, cmd)
 	common.SetupSetFile(&commonCmdData, cmd)
 	common.SetupValues(&commonCmdData, cmd, true)
+	common.SetupRuntimeJSONSets(&commonCmdData, cmd)
 	common.SetupSecretValues(&commonCmdData, cmd, true)
 	common.SetupIgnoreSecretKey(&commonCmdData, cmd)
 
@@ -500,6 +501,7 @@ func run(
 		NoRemoveManualChanges:        *commonCmdData.NoRemoveManualChanges,
 		RegistryCredentialsPath:      registryCredentialsPath,
 		ReleaseStorageDriver:         os.Getenv("HELM_DRIVER"),
+		RuntimeJSONSets:              common.GetRuntimeJSONSets(&commonCmdData),
 		SQLConnectionString:          *commonCmdData.SQLConnectionString,
 		SecretKeyIgnore:              *commonCmdData.IgnoreSecretKey,
 		SecretValuesPaths:            common.GetSecretValues(&commonCmdData),

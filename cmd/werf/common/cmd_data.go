@@ -42,6 +42,7 @@ type CmdData struct {
 	Values                     *[]string
 	SetFile                    *[]string
 	SecretValues               *[]string
+	RuntimeJSONSets            *[]string
 	IgnoreSecretKey            *bool
 	DisableDefaultValues       *bool
 	DisableDefaultSecretValues *bool
