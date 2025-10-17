@@ -289,16 +289,6 @@ ScanImages:
 				logboek.Context(ctx).Info().LogF("Skipping stage %s: commit %s is not an ancestor of %s in repo %s\n", stageDesc.Info.Name, commitToCheckAncestry, currentCommit, gitMapping.GitRepo().String())
 				continue ScanImages
 			}
-
-			areSubmodulesValid, err := gitMapping.GitRepo().AreSubmoduleCommitsValid(ctx, commitToCheckAncestry)
-			if err != nil {
-				return nil, fmt.Errorf("error checking submodule commits validity for commit %s: %w", commitToCheckAncestry, err)
-			}
-
-			if !areSubmodulesValid {
-				logboek.Context(ctx).Info().LogF("Skipping stage %s: submodule commits are not valid (failed to fetch one or more submodule commits) for commit %s in repo %s\n", stageDesc.Info.Name, commitToCheckAncestry, gitMapping.GitRepo().String())
-				continue ScanImages
-			}
 		}
 
 		logboek.Context(ctx).Info().LogF("Using stage %s (ancestor)\n", stageDesc.Info.Name)

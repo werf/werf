@@ -65,7 +65,6 @@ type GitRepo interface {
 	IsCommitTreeEntryDirectory(ctx context.Context, commit, relPath string) (bool, error)
 	IsCommitTreeEntryExist(ctx context.Context, commit, relPath string) (bool, error)
 	IsEmpty(ctx context.Context) (bool, error)
-	AreSubmoduleCommitsValid(ctx context.Context, commit string) (bool, error)
 	LatestBranchCommit(ctx context.Context, branch string) (string, error)
 	ListCommitFilesWithGlob(ctx context.Context, commit, dir, glob string) ([]string, error)
 	ReadCommitFile(ctx context.Context, commit, path string) ([]byte, error)
