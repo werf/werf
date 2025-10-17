@@ -196,6 +196,13 @@ werf bundle apply [options]
             or separate values with commas: key1=path1,key2=path2).
             Also, can be defined with $WERF_SET_FILE_* (e.g. $WERF_SET_FILE_1=key1=path1,           
             $WERF_SET_FILE_2=key2=val2)
+      --set-runtime-json=[]
+            Set new keys in $.Runtime, where the key is the value path and the value is JSON. This  
+            is meant to be generated inside the program, so use --set-json instead, unless you know 
+            what you are doing. Can specify multiple or separate values with commas:                
+            key1=val1,key2=val2.
+            Also, can be defined with $WERF_SET_RUNTIME_JSON_* (e.g.                                
+            $WERF_SET_RUNTIME_JSON_1=key1=val1, $WERF_SET_RUNTIME_JSON_2=key2=val2)
       --set-string=[]
             Set STRING helm values on the command line (can specify multiple or separate values     
             with commas: key1=val1,key2=val2).
