@@ -137,6 +137,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupSetString(&commonCmdData, cmd)
 	common.SetupSetFile(&commonCmdData, cmd)
 	common.SetupValues(&commonCmdData, cmd, true)
+	common.SetupRuntimeJSONSets(&commonCmdData, cmd)
 	common.SetupSecretValues(&commonCmdData, cmd, true)
 	common.SetupIgnoreSecretKey(&commonCmdData, cmd)
 
@@ -440,8 +441,9 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 		ReleaseName:                  releaseName,
 		ReleaseNamespace:             releaseNamespace,
 		ReleaseStorageDriver:         os.Getenv("HELM_DRIVER"),
-		SQLConnectionString:          *commonCmdData.SQLConnectionString,
 		Remote:                       cmdData.Validate,
+		RuntimeJSONSets:              common.GetRuntimeJSONSets(&commonCmdData),
+		SQLConnectionString:          *commonCmdData.SQLConnectionString,
 		SecretKeyIgnore:              *commonCmdData.IgnoreSecretKey,
 		SecretValuesPaths:            common.GetSecretValues(&commonCmdData),
 		SecretWorkDir:                giterminismManager.ProjectDir(),
