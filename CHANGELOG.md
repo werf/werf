@@ -14,6 +14,20 @@
 * **deploy:** unnecessary resource/release updates ([493659f](https://github.com/werf/werf/commit/493659f0f4af6c4eb671d2d202ea791aeecba8f8))
 * error `too many arguments in call to chartutil.ToRenderValues` ([f63e7c8](https://github.com/werf/werf/commit/f63e7c84d92eb9aff257cf7ed45e0294645128bc))
 
+## [2.51.0](https://github.com/werf/werf/compare/v2.50.2...v2.51.0) (2025-10-20)
+
+
+### Features
+
+* **deploy:** option `--set-runtime-json` ([a9181f6](https://github.com/werf/werf/commit/a9181f66de9729be39d4d46b4a94ebd97a182138))
+
+
+### Bug Fixes
+
+* **deploy:** invalid `helm.sh/hook` causes panic in `render` ([a65bd52](https://github.com/werf/werf/commit/a65bd524cd26d1ea1a8ed9ca657a1151c9927096))
+* **deploy:** unnecessary resource/release updates ([493659f](https://github.com/werf/werf/commit/493659f0f4af6c4eb671d2d202ea791aeecba8f8))
+* error `too many arguments in call to chartutil.ToRenderValues` ([f63e7c8](https://github.com/werf/werf/commit/f63e7c84d92eb9aff257cf7ed45e0294645128bc))
+
 ## [2.50.2](https://github.com/werf/werf/compare/v2.50.1...v2.50.2) (2025-10-16)
 
 
