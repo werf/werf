@@ -193,6 +193,7 @@ werf plan --repo registry.mydomain.com/web --env production`,
 	common.SetupForceAdoption(&commonCmdData, cmd)
 	common.SetupNoRemoveManualChanges(&commonCmdData, cmd)
 	common.SetupNoFinalTracking(&commonCmdData, cmd)
+	common.SetupReleaseLabel(&commonCmdData, cmd)
 
 	defaultTimeout, err := util.GetIntEnvVar("WERF_TIMEOUT")
 	if err != nil || defaultTimeout == nil {
@@ -459,6 +460,11 @@ func run(
 		return fmt.Errorf("get service values: %w", err)
 	}
 
+	releaseLabels, err := common.GetReleaseLabels(&commonCmdData)
+	if err != nil {
+		return fmt.Errorf("get release labels: %w", err)
+	}
+
 	file.ChartFileReader = giterminismManager.FileManager
 
 	ctx = log.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultReleasePlanInstallLogLevel), log.SetupLoggingOptions{
@@ -500,6 +506,8 @@ func run(
 		NoInstallCRDs:                *commonCmdData.NoInstallCRDs,
 		NoRemoveManualChanges:        *commonCmdData.NoRemoveManualChanges,
 		RegistryCredentialsPath:      registryCredentialsPath,
+		ReleaseInfoAnnotations:       serviceAnnotations,
+		ReleaseLabels:                releaseLabels,
 		ReleaseStorageDriver:         os.Getenv("HELM_DRIVER"),
 		RuntimeJSONSets:              common.GetRuntimeJSONSets(&commonCmdData),
 		SQLConnectionString:          *commonCmdData.SQLConnectionString,
