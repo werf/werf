@@ -2,12 +2,10 @@ package bundles
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"path/filepath"
 
 	"github.com/werf/3p-helm/pkg/chart/loader"
-	"github.com/werf/3p-helm/pkg/downloader"
 	"github.com/werf/3p-helm/pkg/werf/helmopts"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/deploy/bundles/registry"
@@ -33,11 +31,6 @@ func Publish(ctx context.Context, bundleDir, bundleRef string, bundlesRegistryCl
 
 		ch, err := loader.Load(path, opts.HelmOptions)
 		if err != nil {
-			var e *downloader.ErrRepoNotFound
-			if errors.As(err, &e) {
-				return fmt.Errorf("%w. Please add the missing repos via 'helm repo add'", e)
-			}
-
 			return fmt.Errorf("error loading chart %q: %w", path, err)
 		}
 

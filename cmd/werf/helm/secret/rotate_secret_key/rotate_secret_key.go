@@ -99,7 +99,7 @@ func runRotateSecretKey(
 
 	if err := action.SecretKeyRotate(ctx, action.SecretKeyRotateOptions{
 		ChartDirPath:      chartPath,
-		SecretValuesPaths: secretValuesPaths,
+		SecretValuesFiles: secretValuesPaths,
 		SecretWorkDir:     giterminismManager.ProjectDir(),
 	}); err != nil {
 		return fmt.Errorf("rotate secret key: %w", err)
