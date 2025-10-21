@@ -102,7 +102,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupKubeContext(&commonCmdData, cmd)
 	common.SetupSkipTLSVerifyKube(&commonCmdData, cmd)
 	common.SetupKubeApiServer(&commonCmdData, cmd)
-	common.SetupSQLConnectionString(&commonCmdData, cmd)
+	common.SetupReleaseStorageSQLConnection(&commonCmdData, cmd)
 	common.SetupKubeCaPath(&commonCmdData, cmd)
 	common.SetupKubeTlsServer(&commonCmdData, cmd)
 	common.SetupKubeToken(&commonCmdData, cmd)
@@ -207,31 +207,31 @@ func runDismiss(ctx context.Context) error {
 		}
 
 		if err := action.ReleaseUninstall(ctx, releaseName, releaseNamespace, action.ReleaseUninstallOptions{
-			DeleteReleaseNamespace:     cmdData.WithNamespace,
-			KubeAPIServerName:          *commonCmdData.KubeApiServer,
-			KubeBurstLimit:             *commonCmdData.KubeBurstLimit,
-			KubeCAPath:                 *commonCmdData.KubeCaPath,
-			KubeConfigBase64:           *commonCmdData.KubeConfigBase64,
-			KubeConfigPaths:            append([]string{*commonCmdData.KubeConfig}, *commonCmdData.KubeConfigPathMergeList...),
-			KubeContext:                *commonCmdData.KubeContext,
-			KubeQPSLimit:               *commonCmdData.KubeQpsLimit,
-			KubeSkipTLSVerify:          *commonCmdData.SkipTlsVerifyKube,
-			KubeTLSServerName:          *commonCmdData.KubeTlsServer,
-			KubeToken:                  *commonCmdData.KubeToken,
-			NetworkParallelism:         common.GetNetworkParallelism(&commonCmdData),
-			NoFinalTracking:            *commonCmdData.NoFinalTracking,
-			NoPodLogs:                  *commonCmdData.NoPodLogs,
-			NoProgressTablePrint:       *commonCmdData.StatusProgressPeriodSeconds == -1,
-			NoRemoveManualChanges:      *commonCmdData.NoRemoveManualChanges,
-			ProgressTablePrintInterval: time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
-			ReleaseHistoryLimit:        *commonCmdData.ReleasesHistoryMax,
-			ReleaseStorageDriver:       os.Getenv("HELM_DRIVER"),
-			SQLConnectionString:        *commonCmdData.SQLConnectionString,
-			TrackCreationTimeout:       time.Duration(cmdData.Timeout) * time.Second,
-			TrackDeletionTimeout:       time.Duration(cmdData.Timeout) * time.Second,
-			TrackReadinessTimeout:      time.Duration(cmdData.Timeout) * time.Second,
-			UninstallGraphPath:         common.GetUninstallGraphPath(&commonCmdData),
-			UninstallReportPath:        uninstallReportPath,
+			DeleteReleaseNamespace:      cmdData.WithNamespace,
+			KubeAPIServerAddress:        *commonCmdData.KubeApiServer,
+			KubeBearerTokenData:         *commonCmdData.KubeToken,
+			KubeBurstLimit:              *commonCmdData.KubeBurstLimit,
+			KubeConfigBase64:            *commonCmdData.KubeConfigBase64,
+			KubeConfigPaths:             append([]string{*commonCmdData.KubeConfig}, *commonCmdData.KubeConfigPathMergeList...),
+			KubeContextCurrent:          *commonCmdData.KubeContext,
+			KubeQPSLimit:                *commonCmdData.KubeQpsLimit,
+			KubeSkipTLSVerify:           *commonCmdData.SkipTlsVerifyKube,
+			KubeTLSCAPath:               *commonCmdData.KubeCaPath,
+			KubeTLSServerName:           *commonCmdData.KubeTlsServer,
+			NetworkParallelism:          common.GetNetworkParallelism(&commonCmdData),
+			NoFinalTracking:             *commonCmdData.NoFinalTracking,
+			NoPodLogs:                   *commonCmdData.NoPodLogs,
+			NoProgressTablePrint:        *commonCmdData.StatusProgressPeriodSeconds == -1,
+			NoRemoveManualChanges:       *commonCmdData.NoRemoveManualChanges,
+			ProgressTablePrintInterval:  time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
+			ReleaseHistoryLimit:         *commonCmdData.ReleasesHistoryMax,
+			ReleaseStorageDriver:        os.Getenv("HELM_DRIVER"),
+			ReleaseStorageSQLConnection: *commonCmdData.ReleaseStorageSQLConnection,
+			TrackCreationTimeout:        time.Duration(cmdData.Timeout) * time.Second,
+			TrackDeletionTimeout:        time.Duration(cmdData.Timeout) * time.Second,
+			TrackReadinessTimeout:       time.Duration(cmdData.Timeout) * time.Second,
+			UninstallGraphPath:          common.GetUninstallGraphPath(&commonCmdData),
+			UninstallReportPath:         uninstallReportPath,
 		}); err != nil {
 			return fmt.Errorf("release uninstall: %w", err)
 		}

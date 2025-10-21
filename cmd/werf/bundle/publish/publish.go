@@ -379,10 +379,12 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 
 	opts := helmopts.HelmOptions{
 		ChartLoadOpts: helmopts.ChartLoadOptions{
-			ChartAppVersion:        common.GetHelmChartConfigAppVersion(werfConfig),
-			DefaultChartAPIVersion: chart.APIVersionV2,
-			DefaultChartName:       werfConfig.Meta.Project,
-			DefaultChartVersion:    "1.0.0",
+			ChartAppVersion:            common.GetHelmChartConfigAppVersion(werfConfig),
+			DefaultChartAPIVersion:     chart.APIVersionV2,
+			DefaultChartName:           werfConfig.Meta.Project,
+			DefaultChartVersion:        "1.0.0",
+			DefaultSecretValuesDisable: *commonCmdData.DisableDefaultSecretValues,
+			DefaultValuesDisable:       *commonCmdData.DisableDefaultValues,
 			DepDownloader: &downloader.Manager{
 				Out:               logboek.Context(ctx).OutStream(),
 				ChartPath:         bundleTmpDir,
@@ -393,12 +395,10 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 				RepositoryCache:   helm_v3.Settings.RepositoryCache,
 				Debug:             helm_v3.Settings.Debug,
 			},
-			NoDecryptSecrets:      *commonCmdData.IgnoreSecretKey,
-			NoDefaultSecretValues: *commonCmdData.DisableDefaultSecretValues,
-			NoDefaultValues:       *commonCmdData.DisableDefaultValues,
-			SecretValuesFiles:     common.GetSecretValues(&commonCmdData),
-			SecretsWorkingDir:     giterminismManager.ProjectDir(),
-			ExtraValues:           serviceValues,
+			ExtraValues:       serviceValues,
+			NoDecryptSecrets:  *commonCmdData.IgnoreSecretKey,
+			SecretValuesFiles: common.GetSecretValues(&commonCmdData),
+			SecretsWorkingDir: giterminismManager.ProjectDir(),
 		},
 	}
 
