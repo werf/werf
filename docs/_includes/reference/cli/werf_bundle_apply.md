@@ -61,9 +61,8 @@ werf bundle apply [options]
             $WERF_FORCE_ADOPTION or false)
       --home-dir=""
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
-      --hooks-status-progress-period=5
-            Hooks status progress period in seconds. Set 0 to stop showing hooks status progress.   
-            Defaults to $WERF_HOOKS_STATUS_PROGRESS_PERIOD_SECONDS or status progress period value
+      --hooks-status-progress-period=0
+            No-op
       --ignore-secret-key=false
             Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)
       --insecure-helm-dependencies=false
@@ -180,10 +179,12 @@ werf bundle apply [options]
       --save-deploy-report=false
             Save deploy report (by default $WERF_SAVE_DEPLOY_REPORT or false). Its path and format  
             configured with --deploy-report-path
+      --secret-key=""
+            Secret key (default $WERF_SECRET_KEY)
       --secret-values=[]
             Specify helm secret values in a YAML file (can specify multiple). Also, can be defined  
-            with $WERF_SECRET_VALUES_* (e.g. $WERF_SECRET_VALUES_ENV=secret_values_test.yaml,       
-            $WERF_SECRET_VALUES_DB=secret_values_db.yaml)
+            with $WERF_SECRET_VALUES_* (e.g. $WERF_SECRET_VALUES_ENV=.helm/secret_values_test.yaml, 
+            $WERF_SECRET_VALUES_DB=.helm/secret_values_db.yaml)
       --set=[]
             Set helm values on the command line (can specify multiple or separate values with       
             commas: key1=val1,key2=val2).
@@ -231,7 +232,7 @@ werf bundle apply [options]
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --values=[]
             Specify helm values in a YAML file or a URL (can specify multiple). Also, can be        
-            defined with $WERF_VALUES_* (e.g. $WERF_VALUES_1=values_1.yaml,                         
-            $WERF_VALUES_2=values_2.yaml)
+            defined with $WERF_VALUES_* (e.g. $WERF_VALUES_1=.helm/values_1.yaml,                   
+            $WERF_VALUES_2=.helm/values_2.yaml)
 ```
 

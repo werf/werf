@@ -154,10 +154,12 @@ werf bundle render [options]
             repo Harbor username (default $WERF_REPO_HARBOR_USERNAME)
       --repo-quay-token=""
             repo quay.io token (default $WERF_REPO_QUAY_TOKEN)
+      --secret-key=""
+            Secret key (default $WERF_SECRET_KEY)
       --secret-values=[]
             Specify helm secret values in a YAML file (can specify multiple). Also, can be defined  
-            with $WERF_SECRET_VALUES_* (e.g. $WERF_SECRET_VALUES_ENV=secret_values_test.yaml,       
-            $WERF_SECRET_VALUES_DB=secret_values_db.yaml)
+            with $WERF_SECRET_VALUES_* (e.g. $WERF_SECRET_VALUES_ENV=.helm/secret_values_test.yaml, 
+            $WERF_SECRET_VALUES_DB=.helm/secret_values_db.yaml)
       --set=[]
             Set helm values on the command line (can specify multiple or separate values with       
             commas: key1=val1,key2=val2).
@@ -205,7 +207,7 @@ werf bundle render [options]
             (default $WERF_VALIDATE)
       --values=[]
             Specify helm values in a YAML file or a URL (can specify multiple). Also, can be        
-            defined with $WERF_VALUES_* (e.g. $WERF_VALUES_1=values_1.yaml,                         
-            $WERF_VALUES_2=values_2.yaml)
+            defined with $WERF_VALUES_* (e.g. $WERF_VALUES_1=.helm/values_1.yaml,                   
+            $WERF_VALUES_2=.helm/values_2.yaml)
 ```
 

@@ -13,9 +13,8 @@ Manage application deployment with helm
             ~/.docker (in the order of priority)
       --home-dir=""
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
-      --hooks-status-progress-period=5
-            Hooks status progress period in seconds. Set 0 to stop showing hooks status progress.   
-            Defaults to $WERF_HOOKS_STATUS_PROGRESS_PERIOD_SECONDS or status progress period value
+      --hooks-status-progress-period=0
+            No-op
       --insecure-helm-dependencies=false
             Allow insecure oci registries to be used in the Chart.yaml dependencies configuration   
             (default $WERF_INSECURE_HELM_DEPENDENCIES)

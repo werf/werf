@@ -187,14 +187,13 @@ werf converge --repo registry.mydomain.com/web --env production
             (default $WERF_GITERMINISM_CONFIG or werf-giterminism.yaml in working directory)
       --home-dir=""
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
-      --hooks-status-progress-period=5
-            Hooks status progress period in seconds. Set 0 to stop showing hooks status progress.   
-            Defaults to $WERF_HOOKS_STATUS_PROGRESS_PERIOD_SECONDS or status progress period value
+      --hooks-status-progress-period=0
+            No-op
       --ignore-secret-key=false
             Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)
       --insecure-helm-dependencies=false
-            Allow insecure oci registries to be used in the .helm/Chart.yaml dependencies           
-            configuration (default $WERF_INSECURE_HELM_DEPENDENCIES)
+            Allow insecure oci registries to be used in the Chart.yaml dependencies configuration   
+            (default $WERF_INSECURE_HELM_DEPENDENCIES)
       --insecure-registry=false
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
       --introspect-before-error=false
@@ -351,6 +350,8 @@ werf converge --repo registry.mydomain.com/web --env production
             cache.
             Also, can be specified with $WERF_SECONDARY_REPO_* (e.g. $WERF_SECONDARY_REPO_1=...,    
             $WERF_SECONDARY_REPO_2=...)
+      --secret-key=""
+            Secret key (default $WERF_SECRET_KEY)
       --secret-values=[]
             Specify helm secret values in a YAML file (can specify multiple). Also, can be defined  
             with $WERF_SECRET_VALUES_* (e.g. $WERF_SECRET_VALUES_ENV=.helm/secret_values_test.yaml, 
