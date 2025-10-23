@@ -78,12 +78,12 @@ func runGetRelease(ctx context.Context) error {
 		return fmt.Errorf("unable to load werf config: %w", err)
 	}
 
-	namespace, err := deploy_params.GetKubernetesNamespace(*getReleaseCmdData.Namespace, *getReleaseCmdData.Environment, werfConfig)
+	namespace, err := deploy_params.GetKubernetesNamespace(getReleaseCmdData.Namespace, getReleaseCmdData.Environment, werfConfig)
 	if err != nil {
 		return err
 	}
 
-	release, err := deploy_params.GetHelmRelease("", *getReleaseCmdData.Environment, namespace, werfConfig)
+	release, err := deploy_params.GetHelmRelease("", getReleaseCmdData.Environment, namespace, werfConfig)
 	if err != nil {
 		return err
 	}

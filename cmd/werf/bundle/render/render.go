@@ -73,14 +73,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified repo, to pull base images")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
-	common.SetupInsecureHelmDependencies(&commonCmdData, cmd, false)
-	common.SetupSkipTLSVerifyKube(&commonCmdData, cmd)
-	common.SetupKubeApiServer(&commonCmdData, cmd)
 	common.SetupReleaseStorageSQLConnection(&commonCmdData, cmd)
-	common.SetupSkipTlsVerifyHelmDependencies(&commonCmdData, cmd)
-	common.SetupKubeCaPath(&commonCmdData, cmd)
-	common.SetupKubeTlsServer(&commonCmdData, cmd)
-	common.SetupKubeToken(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
 
@@ -91,20 +84,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupAddLabels(&commonCmdData, cmd)
 
 	common.SetupSetDockerConfigJsonValue(&commonCmdData, cmd)
-	common.SetupSet(&commonCmdData, cmd)
-	common.SetupSetString(&commonCmdData, cmd)
-	common.SetupSetFile(&commonCmdData, cmd)
-	common.SetupValues(&commonCmdData, cmd, false)
-	common.SetupRuntimeJSONSets(&commonCmdData, cmd)
-	common.SetupSecretValues(&commonCmdData, cmd, false)
-	common.SetupIgnoreSecretKey(&commonCmdData, cmd)
-	commonCmdData.SetupDisableDefaultValues(cmd)
-	commonCmdData.SetupDisableDefaultSecretValues(cmd)
 	commonCmdData.SetupSkipDependenciesRepoRefresh(cmd)
-
-	common.SetupKubeConfig(&commonCmdData, cmd)
-	common.SetupKubeConfigBase64(&commonCmdData, cmd)
-	common.SetupKubeContext(&commonCmdData, cmd)
 
 	common.SetupRelease(&commonCmdData, cmd, false)
 	common.SetupNamespace(&commonCmdData, cmd, false)
@@ -112,8 +92,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupKubeVersion(&commonCmdData, cmd)
 
 	common.SetupNetworkParallelism(&commonCmdData, cmd)
-	common.SetupKubeQpsLimit(&commonCmdData, cmd)
-	common.SetupKubeBurstLimit(&commonCmdData, cmd)
 	common.SetupForceAdoption(&commonCmdData, cmd)
 
 	commonCmdData.SetupDebugTemplates(cmd)
@@ -134,6 +112,11 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	cmd.Flags().BoolVarP(&cmdData.Validate, "validate", "", util.GetBoolEnvironmentDefaultFalse("WERF_VALIDATE"), "Validate your manifests against the Kubernetes cluster you are currently pointing at (default $WERF_VALIDATE)")
 	cmd.Flags().StringArrayVarP(&cmdData.ShowOnly, "show-only", "s", []string{}, "only show manifests rendered from the given templates")
+
+	lo.Must0(common.SetupKubeConnectionFlags(&commonCmdData, cmd))
+	lo.Must0(common.SetupChartRepoConnectionFlags(&commonCmdData, cmd))
+	lo.Must0(common.SetupValuesFlags(&commonCmdData, cmd))
+	lo.Must0(common.SetupSecretValuesFlags(&commonCmdData, cmd))
 
 	return cmd
 }
@@ -171,7 +154,7 @@ func runRender(ctx context.Context) error {
 	registryCredentialsPath := docker.GetDockerConfigCredentialsFile(*commonCmdData.DockerConfig)
 
 	serviceValues, err := helpers.GetBundleServiceValues(ctx, helpers.ServiceValuesOptions{
-		Env:                      *commonCmdData.Environment,
+		Env:                      commonCmdData.Environment,
 		Namespace:                releaseNamespace,
 		SetDockerConfigJsonValue: *commonCmdData.SetDockerConfigJsonValue,
 		DockerConfigPath:         filepath.Dir(registryCredentialsPath),
@@ -204,12 +187,12 @@ func runRender(ctx context.Context) error {
 
 		if err := bundles.Pull(ctx, fmt.Sprintf("%s:%s", repoAddress, cmdData.Tag), bundlePath, bundlesRegistryClient, helmopts.HelmOptions{
 			ChartLoadOpts: helmopts.ChartLoadOptions{
-				DefaultSecretValuesDisable: *commonCmdData.DisableDefaultSecretValues,
-				DefaultValuesDisable:       *commonCmdData.DisableDefaultValues,
+				DefaultSecretValuesDisable: commonCmdData.DefaultSecretValuesDisable,
+				DefaultValuesDisable:       commonCmdData.DefaultValuesDisable,
 				ExtraValues:                serviceValues,
-				NoDecryptSecrets:           *commonCmdData.IgnoreSecretKey,
-				SecretValuesFiles:          common.GetSecretValues(&commonCmdData),
-				SecretsWorkingDir:          secretWorkDir,
+				SecretKeyIgnore:            commonCmdData.SecretKeyIgnore,
+				SecretValuesFiles:          commonCmdData.SecretValuesFiles,
+				SecretWorkDir:              secretWorkDir,
 			},
 		}); err != nil {
 			return fmt.Errorf("pull bundle: %w", err)
@@ -227,51 +210,33 @@ func runRender(ctx context.Context) error {
 		ColorMode:      log.LogColorModeOff,
 		LogIsParseable: true,
 	})
-	engine.Debug = *commonCmdData.DebugTemplates
+	engine.Debug = commonCmdData.DebugTemplates
 
 	if _, err := action.ChartRender(ctx, action.ChartRenderOptions{
+		KubeConnectionOptions:       commonCmdData.KubeConnectionOptions,
+		ChartRepoConnectionOptions:  commonCmdData.ChartRepoConnectionOptions,
+		ValuesOptions:               commonCmdData.ValuesOptions,
+		SecretValuesOptions:         commonCmdData.SecretValuesOptions,
 		ChartDirPath:                bundlePath,
-		ChartRepoInsecure:           *commonCmdData.InsecureHelmDependencies,
-		ChartRepoSkipTLSVerify:      *commonCmdData.SkipTlsVerifyHelmDependencies,
-		ChartRepoSkipUpdate:         *commonCmdData.SkipDependenciesRepoRefresh,
-		DefaultSecretValuesDisable:  *commonCmdData.DisableDefaultSecretValues,
-		DefaultValuesDisable:        *commonCmdData.DisableDefaultValues,
+		ChartRepoSkipUpdate:         commonCmdData.ChartRepoSkipUpdate,
 		ExtraAnnotations:            extraAnnotations,
 		ExtraLabels:                 extraLabels,
 		ExtraRuntimeAnnotations:     serviceAnnotations,
-		ForceAdoption:               *commonCmdData.ForceAdoption,
-		KubeAPIServerAddress:        *commonCmdData.KubeApiServer,
-		KubeBearerTokenData:         *commonCmdData.KubeToken,
-		KubeBurstLimit:              *commonCmdData.KubeBurstLimit,
-		KubeConfigBase64:            *commonCmdData.KubeConfigBase64,
-		KubeConfigPaths:             append([]string{*commonCmdData.KubeConfig}, *commonCmdData.KubeConfigPathMergeList...),
-		KubeContextCurrent:          *commonCmdData.KubeContext,
-		KubeQPSLimit:                *commonCmdData.KubeQpsLimit,
-		KubeSkipTLSVerify:           *commonCmdData.SkipTlsVerifyKube,
-		KubeTLSCAPath:               *commonCmdData.KubeCaPath,
-		KubeTLSServerName:           *commonCmdData.KubeTlsServer,
+		ForceAdoption:               commonCmdData.ForceAdoption,
 		LegacyChartType:             helmopts.ChartTypeBundle,
 		LegacyExtraValues:           serviceValues,
 		LegacyLogRegistryStreamOut:  os.Stdout,
-		LocalKubeVersion:            *commonCmdData.KubeVersion,
-		NetworkParallelism:          *commonCmdData.NetworkParallelism,
+		LocalKubeVersion:            commonCmdData.KubeVersion,
+		NetworkParallelism:          commonCmdData.NetworkParallelism,
 		OutputFilePath:              cmdData.RenderOutput,
 		RegistryCredentialsPath:     registryCredentialsPath,
 		ReleaseName:                 releaseName,
 		ReleaseNamespace:            releaseNamespace,
 		ReleaseStorageDriver:        os.Getenv("HELM_DRIVER"),
-		ReleaseStorageSQLConnection: *commonCmdData.ReleaseStorageSQLConnection,
+		ReleaseStorageSQLConnection: commonCmdData.ReleaseStorageSQLConnection,
 		Remote:                      cmdData.Validate,
-		RuntimeSetJSON:              common.GetRuntimeJSONSets(&commonCmdData),
-		SecretKeyIgnore:             *commonCmdData.IgnoreSecretKey,
-		SecretValuesFiles:           common.GetSecretValues(&commonCmdData),
-		SecretWorkDir:               secretWorkDir,
 		ShowOnlyFiles:               append(util.PredefinedValuesByEnvNamePrefix("WERF_SHOW_ONLY"), cmdData.ShowOnly...),
 		ShowStandaloneCRDs:          cmdData.IncludeCRDs,
-		ValuesFiles:                 common.GetValues(&commonCmdData),
-		ValuesSet:                   common.GetSet(&commonCmdData),
-		ValuesSetFile:               common.GetSetFile(&commonCmdData),
-		ValuesSetString:             common.GetSetString(&commonCmdData),
 	}); err != nil {
 		return fmt.Errorf("chart render: %w", err)
 	}
@@ -303,8 +268,8 @@ func getAnnotationsAndLabels(bundleDir string) (map[string]string, map[string]st
 	}
 
 	serviceAnnotations["werf.io/version"] = werf.Version
-	if *commonCmdData.Environment != "" {
-		serviceAnnotations["project.werf.io/env"] = *commonCmdData.Environment
+	if commonCmdData.Environment != "" {
+		serviceAnnotations["project.werf.io/env"] = commonCmdData.Environment
 	}
 
 	bundleExtraLabels, err := readBundleJsonMap(filepath.Join(bundleDir, "extra_labels.json"))

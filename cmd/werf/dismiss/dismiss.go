@@ -7,8 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"time"
 
+	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 
 	helmrelease "github.com/werf/3p-helm/pkg/release"
@@ -25,7 +25,6 @@ import (
 )
 
 var cmdData struct {
-	Timeout       int
 	WithNamespace bool
 	WithHooks     bool
 }
@@ -97,24 +96,13 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupUseDeployReport(&commonCmdData, cmd)
 	common.SetupDeployReportPath(&commonCmdData, cmd)
 
-	common.SetupKubeConfig(&commonCmdData, cmd)
-	common.SetupKubeConfigBase64(&commonCmdData, cmd)
-	common.SetupKubeContext(&commonCmdData, cmd)
-	common.SetupSkipTLSVerifyKube(&commonCmdData, cmd)
-	common.SetupKubeApiServer(&commonCmdData, cmd)
 	common.SetupReleaseStorageSQLConnection(&commonCmdData, cmd)
-	common.SetupKubeCaPath(&commonCmdData, cmd)
-	common.SetupKubeTlsServer(&commonCmdData, cmd)
-	common.SetupKubeToken(&commonCmdData, cmd)
 
-	common.SetupStatusProgressPeriod(&commonCmdData, cmd)
-	common.SetupHooksStatusProgressPeriod(&commonCmdData, cmd)
 	common.SetupReleasesHistoryMax(&commonCmdData, cmd)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "")
 
 	common.SetupLogOptions(&commonCmdData, cmd)
-	common.SetupNoPodLogs(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
 	common.SetupDisableAutoHostCleanup(&commonCmdData, cmd)
@@ -125,15 +113,12 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupBackendStoragePath(&commonCmdData, cmd)
 
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
-	common.SetupInsecureHelmDependencies(&commonCmdData, cmd, true)
+	common.StubSetupInsecureHelmDependencies(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
 
 	common.SetupNetworkParallelism(&commonCmdData, cmd)
-	common.SetupKubeQpsLimit(&commonCmdData, cmd)
-	common.SetupKubeBurstLimit(&commonCmdData, cmd)
 	common.SetupNoRemoveManualChanges(&commonCmdData, cmd)
-	common.SetupNoFinalTracking(&commonCmdData, cmd)
 
 	commonCmdData.SetupPlatform(cmd)
 	commonCmdData.SetupDebugTemplates(cmd)
@@ -142,18 +127,15 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	cmd.Flags().BoolVarP(&cmdData.WithNamespace, "with-namespace", "", util.GetBoolEnvironmentDefaultFalse("WERF_WITH_NAMESPACE"), "Delete Kubernetes Namespace after purging Helm Release (default $WERF_WITH_NAMESPACE)")
 
 	if util.GetBoolEnvironmentDefaultFalse("WERF_EXPERIMENT_NEW_DISMISS") {
-		defaultTimeout, err := util.GetIntEnvVar("WERF_TIMEOUT")
-		if err != nil || defaultTimeout == nil {
-			defaultTimeout = new(int64)
-		}
-
-		cmd.Flags().IntVarP(&cmdData.Timeout, "timeout", "t", int(*defaultTimeout), "Resources tracking timeout in seconds ($WERF_TIMEOUT by default)")
 		common.SetupSaveUninstallReport(&commonCmdData, cmd)
 		common.SetupUninstallReportPath(&commonCmdData, cmd)
 		common.SetupUninstallGraphPath(&commonCmdData, cmd)
 	} else {
 		cmd.Flags().BoolVarP(&cmdData.WithHooks, "with-hooks", "", util.GetBoolEnvironmentDefaultTrue("WERF_WITH_HOOKS"), "Delete Helm Release hooks getting from existing revisions (default $WERF_WITH_HOOKS or true)")
 	}
+
+	lo.Must0(common.SetupKubeConnectionFlags(&commonCmdData, cmd))
+	lo.Must0(common.SetupTrackingFlags(&commonCmdData, cmd))
 
 	return cmd
 }
@@ -199,60 +181,36 @@ func runDismiss(ctx context.Context) error {
 
 	if util.GetBoolEnvironmentDefaultFalse("WERF_EXPERIMENT_NEW_DISMISS") {
 		var uninstallReportPath string
-		if common.GetSaveUninstallReport(&commonCmdData) {
-			uninstallReportPath, err = common.GetUninstallReportPath(&commonCmdData)
+		if commonCmdData.SaveUninstallReport {
+			uninstallReportPath = commonCmdData.UninstallReportPath
 			if err != nil {
 				return fmt.Errorf("get uninstall report path: %w", err)
 			}
 		}
 
 		if err := action.ReleaseUninstall(ctx, releaseName, releaseNamespace, action.ReleaseUninstallOptions{
+			KubeConnectionOptions:       commonCmdData.KubeConnectionOptions,
+			TrackingOptions:             commonCmdData.TrackingOptions,
 			DeleteReleaseNamespace:      cmdData.WithNamespace,
-			KubeAPIServerAddress:        *commonCmdData.KubeApiServer,
-			KubeBearerTokenData:         *commonCmdData.KubeToken,
-			KubeBurstLimit:              *commonCmdData.KubeBurstLimit,
-			KubeConfigBase64:            *commonCmdData.KubeConfigBase64,
-			KubeConfigPaths:             append([]string{*commonCmdData.KubeConfig}, *commonCmdData.KubeConfigPathMergeList...),
-			KubeContextCurrent:          *commonCmdData.KubeContext,
-			KubeQPSLimit:                *commonCmdData.KubeQpsLimit,
-			KubeSkipTLSVerify:           *commonCmdData.SkipTlsVerifyKube,
-			KubeTLSCAPath:               *commonCmdData.KubeCaPath,
-			KubeTLSServerName:           *commonCmdData.KubeTlsServer,
-			NetworkParallelism:          common.GetNetworkParallelism(&commonCmdData),
-			NoFinalTracking:             *commonCmdData.NoFinalTracking,
-			NoPodLogs:                   *commonCmdData.NoPodLogs,
-			NoProgressTablePrint:        *commonCmdData.StatusProgressPeriodSeconds == -1,
-			NoRemoveManualChanges:       *commonCmdData.NoRemoveManualChanges,
-			ProgressTablePrintInterval:  time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
-			ReleaseHistoryLimit:         *commonCmdData.ReleasesHistoryMax,
+			NetworkParallelism:          commonCmdData.NetworkParallelism,
+			NoRemoveManualChanges:       commonCmdData.NoRemoveManualChanges,
+			ReleaseHistoryLimit:         commonCmdData.ReleaseHistoryLimit,
 			ReleaseStorageDriver:        os.Getenv("HELM_DRIVER"),
-			ReleaseStorageSQLConnection: *commonCmdData.ReleaseStorageSQLConnection,
-			TrackCreationTimeout:        time.Duration(cmdData.Timeout) * time.Second,
-			TrackDeletionTimeout:        time.Duration(cmdData.Timeout) * time.Second,
-			TrackReadinessTimeout:       time.Duration(cmdData.Timeout) * time.Second,
-			UninstallGraphPath:          common.GetUninstallGraphPath(&commonCmdData),
+			ReleaseStorageSQLConnection: commonCmdData.ReleaseStorageSQLConnection,
+			UninstallGraphPath:          commonCmdData.UninstallGraphPath,
 			UninstallReportPath:         uninstallReportPath,
 		}); err != nil {
 			return fmt.Errorf("release uninstall: %w", err)
 		}
 	} else {
 		if err := action.LegacyReleaseUninstall(ctx, releaseName, releaseNamespace, action.LegacyReleaseUninstallOptions{
-			NoDeleteHooks:              !cmdData.WithHooks,
-			DeleteReleaseNamespace:     cmdData.WithNamespace,
-			KubeAPIServerName:          *commonCmdData.KubeApiServer,
-			KubeBurstLimit:             *commonCmdData.KubeBurstLimit,
-			KubeCAPath:                 *commonCmdData.KubeCaPath,
-			KubeConfigBase64:           *commonCmdData.KubeConfigBase64,
-			KubeConfigPaths:            append([]string{*commonCmdData.KubeConfig}, *commonCmdData.KubeConfigPathMergeList...),
-			KubeContext:                *commonCmdData.KubeContext,
-			KubeQPSLimit:               *commonCmdData.KubeQpsLimit,
-			KubeSkipTLSVerify:          *commonCmdData.SkipTlsVerifyKube,
-			KubeTLSServerName:          *commonCmdData.KubeTlsServer,
-			KubeToken:                  *commonCmdData.KubeToken,
-			NetworkParallelism:         common.GetNetworkParallelism(&commonCmdData),
-			ProgressTablePrintInterval: time.Duration(*commonCmdData.StatusProgressPeriodSeconds) * time.Second,
-			ReleaseHistoryLimit:        *commonCmdData.ReleasesHistoryMax,
-			ReleaseStorageDriver:       os.Getenv("HELM_DRIVER"),
+			KubeConnectionOptions:  commonCmdData.KubeConnectionOptions,
+			TrackingOptions:        commonCmdData.TrackingOptions,
+			NoDeleteHooks:          !cmdData.WithHooks,
+			DeleteReleaseNamespace: cmdData.WithNamespace,
+			NetworkParallelism:     commonCmdData.NetworkParallelism,
+			ReleaseHistoryLimit:    commonCmdData.ReleaseHistoryLimit,
+			ReleaseStorageDriver:   os.Getenv("HELM_DRIVER"),
 		}); err != nil {
 			return fmt.Errorf("release uninstall: %w", err)
 		}
@@ -266,20 +224,17 @@ func getNamespaceAndRelease(
 	gitFound bool,
 	giterminismMgr giterminism_manager.Interface,
 ) (string, string, error) {
-	namespaceSpecified := *commonCmdData.Namespace != ""
-	releaseSpecified := *commonCmdData.Release != ""
+	namespaceSpecified := commonCmdData.Namespace != ""
+	releaseSpecified := commonCmdData.Release != ""
 
 	var namespace string
 	var release string
-	if common.GetUseDeployReport(&commonCmdData) {
+	if commonCmdData.UseDeployReport {
 		if namespaceSpecified || releaseSpecified {
 			return "", "", fmt.Errorf("--namespace or --release can't be used together with --use-deploy-report")
 		}
 
-		deployReportPath, err := common.GetDeployReportPath(&commonCmdData)
-		if err != nil {
-			return "", "", fmt.Errorf("unable to get deploy report path: %w", err)
-		}
+		deployReportPath := commonCmdData.DeployReportPath
 
 		deployReportByte, err := os.ReadFile(deployReportPath)
 		if err != nil {
@@ -302,8 +257,8 @@ func getNamespaceAndRelease(
 		namespace = deployReport.Namespace
 		release = deployReport.Release
 	} else if namespaceSpecified && releaseSpecified {
-		namespace = *commonCmdData.Namespace
-		release = *commonCmdData.Release
+		namespace = commonCmdData.Namespace
+		release = commonCmdData.Release
 	} else if gitFound {
 		common.ProcessLogProjectDir(&commonCmdData, giterminismMgr.ProjectDir())
 
@@ -314,18 +269,18 @@ func getNamespaceAndRelease(
 		logboek.LogOptionalLn()
 
 		if namespaceSpecified {
-			namespace = *commonCmdData.Namespace
+			namespace = commonCmdData.Namespace
 		} else {
-			namespace, err = deploy_params.GetKubernetesNamespace(*commonCmdData.Namespace, *commonCmdData.Environment, werfConfig)
+			namespace, err = deploy_params.GetKubernetesNamespace(commonCmdData.Namespace, commonCmdData.Environment, werfConfig)
 			if err != nil {
 				return "", "", err
 			}
 		}
 
 		if releaseSpecified {
-			release = *commonCmdData.Release
+			release = commonCmdData.Release
 		} else {
-			release, err = deploy_params.GetHelmRelease(*commonCmdData.Release, *commonCmdData.Environment, namespace, werfConfig)
+			release, err = deploy_params.GetHelmRelease(commonCmdData.Release, commonCmdData.Environment, namespace, werfConfig)
 			if err != nil {
 				return "", "", err
 			}

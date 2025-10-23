@@ -53,6 +53,10 @@ type InitTrueGitOptions struct {
 }
 
 func InitCommonComponents(ctx context.Context, opts InitCommonComponentsOptions) (*ComponentsManager, context.Context, error) {
+	if err := opts.Cmd.ProcessFlags(); err != nil {
+		return nil, ctx, fmt.Errorf("process flags: %w", err)
+	}
+
 	cmanager := &ComponentsManager{}
 	if opts.InitWerf {
 		if err := werf.Init(*opts.Cmd.TmpDir, *opts.Cmd.HomeDir); err != nil {
@@ -125,7 +129,7 @@ func InitCommonComponents(ctx context.Context, opts InitCommonComponentsOptions)
 	}
 
 	if opts.SetupOndemandKubeInitializer {
-		SetupOndemandKubeInitializer(*opts.Cmd.KubeContext, *opts.Cmd.KubeConfig, *opts.Cmd.KubeConfigBase64, *opts.Cmd.KubeConfigPathMergeList)
+		SetupOndemandKubeInitializer(opts.Cmd.KubeContextCurrent, opts.Cmd.LegacyKubeConfigPath, opts.Cmd.KubeConfigBase64, opts.Cmd.LegacyKubeConfigPathsMergeList)
 		if err := GetOndemandKubeInitializer().Init(ctx); err != nil {
 			return nil, ctx, err
 		}

@@ -3,13 +3,22 @@ package common
 import (
 	"fmt"
 	"os"
+	"path/filepath"
+	"time"
 
 	"github.com/spf13/cobra"
 
 	"github.com/werf/common-go/pkg/util"
+	"github.com/werf/nelm/pkg/common"
 )
 
 type CmdData struct {
+	common.KubeConnectionOptions
+	common.ChartRepoConnectionOptions
+	common.ValuesOptions
+	common.SecretValuesOptions
+	common.TrackingOptions
+
 	GitWorkTree              *string
 	ProjectName              *string
 	Dir                      *string
@@ -20,34 +29,9 @@ type CmdData struct {
 	HomeDir                  *string
 	SSHKeys                  *[]string
 
-	SkipDependenciesRepoRefresh *bool
+	Environment string
 
-	HelmChartDir                     *string
-	Environment                      *string
-	Release                          *string
-	Namespace                        *string
-	AddAnnotations                   *[]string
-	AddLabels                        *[]string
-	KubeContext                      *string
-	KubeConfig                       *string
-	KubeConfigBase64                 *string
-	KubeConfigPathMergeList          *[]string
-	StatusProgressPeriodSeconds      *int64
-	HooksStatusProgressPeriodSeconds *int64
-	ReleasesHistoryMax               *int
-
-	SetDockerConfigJsonValue   *bool
-	Set                        *[]string
-	SetString                  *[]string
-	Values                     *[]string
-	SetFile                    *[]string
-	SecretValues               *[]string
-	RuntimeJSONSets            *[]string
-	IgnoreSecretKey            *bool
-	DisableDefaultValues       *bool
-	DisableDefaultSecretValues *bool
-	HelmCompatibleChart        *bool
-	RenameChart                *string
+	SetDockerConfigJsonValue *bool
 
 	FinalImagesOnly *bool
 	WithoutImages   *bool
@@ -66,26 +50,14 @@ type CmdData struct {
 	Synchronization    *string
 	Parallel           *bool
 	ParallelTasksLimit *int64
-	NetworkParallelism *int
-	KubeQpsLimit       *int
-	KubeBurstLimit     *int
 
 	DockerConfig                    *string
 	InsecureRegistry                *bool
 	SkipTlsVerifyRegistry           *bool
-	SkipTlsVerifyKube               *bool
-	SkipTlsVerifyHelmDependencies   *bool
-	KubeApiServer                   *string
-	KubeCaPath                      *string
-	KubeTlsServer                   *string
-	KubeToken                       *string
-	InsecureHelmDependencies        *bool
 	DryRun                          *bool
 	keepStagesBuiltWithinLastNHours *uint64
 	WithoutKube                     *bool
-	KubeVersion                     *string
 	ContainerRegistryMirror         *[]string
-	ForceAdoption                   *bool
 
 	LooseGiterminism *bool
 	Dev              *bool
@@ -108,29 +80,9 @@ type CmdData struct {
 	LogColorMode     *string
 	LogProjectDir    *bool
 	LogTerminalWidth *int64
-	NoPodLogs        *bool
-
-	DebugTemplates *bool
 
 	SaveBuildReport *bool
 	BuildReportPath *string
-
-	SaveDeployReport *bool
-	UseDeployReport  *bool
-	DeployReportPath *string
-
-	SaveUninstallReport *bool
-	UninstallReportPath *string
-
-	DeployGraphPath    *string
-	RollbackGraphPath  *string
-	UninstallGraphPath *string
-
-	RenderSubchartNotes   *bool
-	NoInstallCRDs         *bool
-	ReleaseLabels         *[]string
-	NoRemoveManualChanges *bool
-	NoFinalTracking       *bool
 
 	VirtualMerge *bool
 
@@ -152,7 +104,35 @@ type CmdData struct {
 	CreateIncludesLockFile bool
 	AllowIncludesUpdate    bool
 
-	ReleaseStorageSQLConnection *string
+	ChartRepoSkipUpdate              bool
+	DebugTemplates                   bool
+	DeployReportPath                 string
+	ExtraAnnotations                 []string
+	ExtraLabels                      []string
+	ForceAdoption                    bool
+	HelmCompatibleChart              bool
+	InstallGraphPath                 string
+	KubeVersion                      string
+	LegacyKubeConfigPath             string
+	LegacyKubeConfigPathsMergeList   []string
+	LegacyProgressTablePrintInterval int
+	LegacyTrackTimeout               int
+	Namespace                        string
+	NetworkParallelism               int
+	NoInstallStandaloneCRDs          bool
+	NoRemoveManualChanges            bool
+	Release                          string
+	ReleaseHistoryLimit              int
+	ReleaseLabels                    []string
+	ReleaseStorageSQLConnection      string
+	RenameChart                      string
+	RollbackGraphPath                string
+	SaveDeployReport                 bool
+	SaveUninstallReport              bool
+	ShowSubchartNotes                bool
+	UninstallGraphPath               string
+	UninstallReportPath              string
+	UseDeployReport                  bool
 }
 
 func (cmdData *CmdData) SetupFinalImagesOnly(cmd *cobra.Command, defaultEnabled bool) {
@@ -171,11 +151,6 @@ func (cmdData *CmdData) SetupFinalImagesOnly(cmd *cobra.Command, defaultEnabled 
 func (cmdData *CmdData) SetupWithoutImages(cmd *cobra.Command) {
 	cmdData.WithoutImages = new(bool)
 	cmd.Flags().BoolVarP(cmdData.WithoutImages, "without-images", "", util.GetBoolEnvironmentDefaultFalse("WERF_WITHOUT_IMAGES"), "Disable building of images defined in the werf.yaml (if any) and usage of such images in the .helm/templates ($WERF_WITHOUT_IMAGES or false by default — e.g. enable all images defined in the werf.yaml by default)")
-}
-
-func (cmdData *CmdData) SetupDisableDefaultValues(cmd *cobra.Command) {
-	cmdData.DisableDefaultValues = new(bool)
-	cmd.Flags().BoolVarP(cmdData.DisableDefaultValues, "disable-default-values", "", util.GetBoolEnvironmentDefaultFalse("WERF_DISABLE_DEFAULT_VALUES"), `Do not use values from the default .helm/values.yaml file (default $WERF_DISABLE_DEFAULT_VALUES or false)`)
 }
 
 func (cmdData *CmdData) SetupPlatform(cmd *cobra.Command) {
@@ -199,19 +174,11 @@ func (cmdData *CmdData) GetPlatform() []string {
 	return *cmdData.Platform
 }
 
-func (cmdData *CmdData) SetupDisableDefaultSecretValues(cmd *cobra.Command) {
-	cmdData.DisableDefaultSecretValues = new(bool)
-	cmd.Flags().BoolVarP(cmdData.DisableDefaultSecretValues, "disable-default-secret-values", "", util.GetBoolEnvironmentDefaultFalse("WERF_DISABLE_DEFAULT_SECRET_VALUES"), `Do not use secret values from the default .helm/secret-values.yaml file (default $WERF_DISABLE_DEFAULT_SECRET_VALUES or false)`)
-}
-
 func (cmdData *CmdData) SetupSkipDependenciesRepoRefresh(cmd *cobra.Command) {
-	cmdData.SkipDependenciesRepoRefresh = new(bool)
-	cmd.Flags().BoolVarP(cmdData.SkipDependenciesRepoRefresh, "skip-dependencies-repo-refresh", "L", util.GetBoolEnvironmentDefaultFalse("WERF_SKIP_DEPENDENCIES_REPO_REFRESH"), `Do not refresh helm chart repositories locally cached index`)
+	cmd.Flags().BoolVarP(&cmdData.ChartRepoSkipUpdate, "skip-dependencies-repo-refresh", "L", util.GetBoolEnvironmentDefaultFalse("WERF_SKIP_DEPENDENCIES_REPO_REFRESH"), `Do not refresh helm chart repositories locally cached index`)
 }
 
 func (cmdData *CmdData) SetupHelmCompatibleChart(cmd *cobra.Command, defaultEnabled bool) {
-	cmdData.HelmCompatibleChart = new(bool)
-
 	var defaultVal bool
 	if defaultEnabled {
 		defaultVal = util.GetBoolEnvironmentDefaultTrue("WERF_HELM_COMPATIBLE_CHART")
@@ -219,12 +186,11 @@ func (cmdData *CmdData) SetupHelmCompatibleChart(cmd *cobra.Command, defaultEnab
 		defaultVal = util.GetBoolEnvironmentDefaultFalse("WERF_HELM_COMPATIBLE_CHART")
 	}
 
-	cmd.Flags().BoolVarP(cmdData.HelmCompatibleChart, "helm-compatible-chart", "C", defaultVal, fmt.Sprintf(`Set chart name in the Chart.yaml of the published chart to the last path component of container registry repo (for REGISTRY/PATH/TO/REPO address chart name will be REPO, more info https://helm.sh/docs/topics/registries/#oci-feature-deprecation-and-behavior-changes-with-v370). In helm compatibility mode chart is fully conforming with the helm OCI registry requirements. Default %v or $WERF_HELM_COMPATIBLE_CHART.`, defaultEnabled))
+	cmd.Flags().BoolVarP(&cmdData.HelmCompatibleChart, "helm-compatible-chart", "C", defaultVal, fmt.Sprintf(`Set chart name in the Chart.yaml of the published chart to the last path component of container registry repo (for REGISTRY/PATH/TO/REPO address chart name will be REPO, more info https://helm.sh/docs/topics/registries/#oci-feature-deprecation-and-behavior-changes-with-v370). In helm compatibility mode chart is fully conforming with the helm OCI registry requirements. Default %v or $WERF_HELM_COMPATIBLE_CHART.`, defaultEnabled))
 }
 
 func (cmdData *CmdData) SetupRenameChart(cmd *cobra.Command) {
-	cmdData.RenameChart = new(string)
-	cmd.Flags().StringVarP(cmdData.RenameChart, "rename-chart", "", os.Getenv("WERF_RENAME_CHART"), `Force setting of chart name in the Chart.yaml of the published chart to the specified value (can be set by the $WERF_RENAME_CHART, no rename by default, could not be used together with the '--helm-compatible-chart' option).`)
+	cmd.Flags().StringVarP(&cmdData.RenameChart, "rename-chart", "", os.Getenv("WERF_RENAME_CHART"), `Force setting of chart name in the Chart.yaml of the published chart to the specified value (can be set by the $WERF_RENAME_CHART, no rename by default, could not be used together with the '--helm-compatible-chart' option).`)
 }
 
 func (cmdData *CmdData) SetupSkipImageSpecStage(cmd *cobra.Command) {
@@ -246,14 +212,101 @@ func (cmdData *CmdData) SetupIncludesLsFilter(cmd *cobra.Command) {
 }
 
 func (cmdData *CmdData) SetupDebugTemplates(cmd *cobra.Command) {
-	if cmdData.DebugTemplates == nil {
-		cmdData.DebugTemplates = new(bool)
-	}
 	cmd.Flags().BoolVarP(
-		cmdData.DebugTemplates,
+		&cmdData.DebugTemplates,
 		"debug-templates",
 		"",
 		util.GetBoolEnvironmentDefaultFalse("WERF_DEBUG_TEMPLATES"),
 		`Enable debug mode for Go templates (default $WERF_DEBUG_TEMPLATES or false)`,
 	)
+}
+
+func (cmdData *CmdData) ProcessFlags() error {
+	if err := cmdData.validateFlags(); err != nil {
+		return fmt.Errorf("validate flags: %w", err)
+	}
+
+	if err := cmdData.mapLegacyFlags(); err != nil {
+		return fmt.Errorf("map legacy flags: %w", err)
+	}
+
+	if err := cmdData.processFlags(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (cmdData *CmdData) validateFlags() error {
+	return nil
+}
+
+func (cmdData *CmdData) mapLegacyFlags() error {
+	cmdData.KubeConnectionOptions.KubeConfigPaths = append([]string{cmdData.LegacyKubeConfigPath}, cmdData.LegacyKubeConfigPathsMergeList...)
+	cmdData.TrackingOptions.NoProgressTablePrint = cmdData.LegacyProgressTablePrintInterval == -1
+	cmdData.TrackingOptions.ProgressTablePrintInterval = time.Duration(cmdData.LegacyProgressTablePrintInterval) * time.Second
+	cmdData.TrackingOptions.TrackCreationTimeout = time.Duration(cmdData.LegacyTrackTimeout) * time.Second
+	cmdData.TrackDeletionTimeout = time.Duration(cmdData.LegacyTrackTimeout) * time.Second
+	cmdData.TrackReadinessTimeout = time.Duration(cmdData.LegacyTrackTimeout) * time.Second
+
+	return nil
+}
+
+func (cmdData *CmdData) processFlags() error {
+	if cmdData.DeployReportPath == "" {
+		cmdData.DeployReportPath = DefaultDeployReportPathJSON
+	}
+
+	switch ext := filepath.Ext(cmdData.DeployReportPath); ext {
+	case ".json":
+	case "":
+		cmdData.DeployReportPath += ".json"
+	default:
+		return fmt.Errorf("invalid --deploy-report-path %q: extension must be either .json or unspecified", cmdData.DeployReportPath)
+	}
+
+	if cmdData.UninstallReportPath == "" {
+		cmdData.UninstallReportPath = DefaultUninstallReportPathJSON
+	}
+
+	switch ext := filepath.Ext(cmdData.UninstallReportPath); ext {
+	case ".json":
+	case "":
+		cmdData.UninstallReportPath += ".json"
+	default:
+		return fmt.Errorf("invalid --uninstall-report-path %q: extension must be either .json or unspecified", cmdData.UninstallReportPath)
+	}
+
+	switch ext := filepath.Ext(cmdData.InstallGraphPath); ext {
+	case ".dot":
+	case "":
+		cmdData.InstallGraphPath += ".dot"
+	default:
+		return fmt.Errorf("invalid --deploy-graph-path %q: extension must be either .dot or unspecified", cmdData.InstallGraphPath)
+	}
+
+	switch ext := filepath.Ext(cmdData.RollbackGraphPath); ext {
+	case ".dot":
+	case "":
+		cmdData.RollbackGraphPath += ".dot"
+	default:
+		return fmt.Errorf("invalid --rollback-graph-path %q: extension must be either .dot or unspecified", cmdData.RollbackGraphPath)
+	}
+
+	switch ext := filepath.Ext(cmdData.UninstallGraphPath); ext {
+	case ".dot":
+	case "":
+		cmdData.UninstallGraphPath += ".dot"
+	default:
+		return fmt.Errorf("invalid --uninstall-graph-path %q: extension must be either .dot or unspecified", cmdData.UninstallGraphPath)
+	}
+
+	cmdData.ValuesSet = append(util.PredefinedValuesByEnvNamePrefix("WERF_SET_", "WERF_SET_STRING_", "WERF_SET_FILE_", "WERF_SET_DOCKER_CONFIG_JSON_VALUE"), cmdData.ValuesSet...)
+	cmdData.ValuesSetString = append(util.PredefinedValuesByEnvNamePrefix("WERF_SET_STRING_"), cmdData.ValuesSetString...)
+	cmdData.ValuesSetFile = append(util.PredefinedValuesByEnvNamePrefix("WERF_SET_FILE_"), cmdData.ValuesSetFile...)
+	cmdData.RuntimeSetJSON = append(util.PredefinedValuesByEnvNamePrefix("WERF_SET_RUNTIME_JSON_"), cmdData.RuntimeSetJSON...)
+	cmdData.ValuesFiles = append(util.PredefinedValuesByEnvNamePrefix("WERF_VALUES_"), cmdData.ValuesFiles...)
+	cmdData.SecretValuesFiles = append(util.PredefinedValuesByEnvNamePrefix("WERF_SECRET_VALUES_"), cmdData.SecretValuesFiles...)
+
+	return nil
 }

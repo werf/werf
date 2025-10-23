@@ -48,9 +48,9 @@ func SetupAllowedBackendStorageVolumeUsage(cmdData *CmdData, cmd *cobra.Command)
 		{"allowed-docker-storage-volume-usage", "WERF_ALLOWED_DOCKER_STORAGE_VOLUME_USAGE"},
 	}
 
-	defaultValUint64 := option.PtrValueOrDefault(GetUint64EnvVarStrict(aliases[0].EnvName),
+	defaultValUint64 := option.PtrValueOrDefault(util.GetUint64EnvVarStrict(aliases[0].EnvName),
 		// keep backward compatibility
-		option.PtrValueOrDefault(GetUint64EnvVarStrict(aliases[1].EnvName),
+		option.PtrValueOrDefault(util.GetUint64EnvVarStrict(aliases[1].EnvName),
 			uint64(host_cleaning.DefaultAllowedBackendStorageVolumeUsagePercentage)))
 
 	defaultVal := uint(defaultValUint64)
@@ -85,9 +85,9 @@ func SetupAllowedBackendStorageVolumeUsageMargin(cmdData *CmdData, cmd *cobra.Co
 		{"allowed-docker-storage-volume-usage-margin", "WERF_ALLOWED_DOCKER_STORAGE_VOLUME_USAGE_MARGIN"},
 	}
 
-	defaultValUint64 := option.PtrValueOrDefault(GetUint64EnvVarStrict(aliases[0].EnvName),
+	defaultValUint64 := option.PtrValueOrDefault(util.GetUint64EnvVarStrict(aliases[0].EnvName),
 		// keep backward compatibility
-		option.PtrValueOrDefault(GetUint64EnvVarStrict(aliases[1].EnvName),
+		option.PtrValueOrDefault(util.GetUint64EnvVarStrict(aliases[1].EnvName),
 			uint64(host_cleaning.DefaultAllowedBackendStorageVolumeUsageMarginPercentage)))
 
 	defaultVal := uint(defaultValUint64)
@@ -147,7 +147,7 @@ func SetupAllowedLocalCacheVolumeUsage(cmdData *CmdData, cmd *cobra.Command) {
 	envVarName := "WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE"
 
 	var defaultVal uint
-	if v := GetUint64EnvVarStrict(envVarName); v != nil {
+	if v := util.GetUint64EnvVarStrict(envVarName); v != nil {
 		defaultVal = uint(*v)
 	} else {
 		defaultVal = uint(host_cleaning.DefaultAllowedLocalCacheVolumeUsagePercentage)
@@ -164,7 +164,7 @@ func SetupAllowedLocalCacheVolumeUsageMargin(cmdData *CmdData, cmd *cobra.Comman
 	envVarName := "WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE_MARGIN"
 
 	var defaultVal uint
-	if v := GetUint64EnvVarStrict(envVarName); v != nil {
+	if v := util.GetUint64EnvVarStrict(envVarName); v != nil {
 		defaultVal = uint(*v)
 	} else {
 		defaultVal = uint(host_cleaning.DefaultAllowedLocalCacheVolumeUsageMarginPercentage)
