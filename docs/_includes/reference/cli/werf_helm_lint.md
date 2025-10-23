@@ -27,6 +27,9 @@ werf helm lint PATH [flags] [options]
             Format: labelName=labelValue.
             Also, can be specified with $WERF_ADD_LABEL_* (e.g.                                     
             $WERF_ADD_LABEL_1=labelName1=labelValue1, $WERF_ADD_LABEL_2=labelName2=labelValue2)
+      --disable-default-secret-values=false
+            Do not use secret values from the default .helm/secret-values.yaml file (default        
+            $WERF_DISABLE_DEFAULT_SECRET_VALUES or false)
       --env=""
             Use specified environment (default $WERF_ENV)
       --ignore-secret-key=false
@@ -35,6 +38,8 @@ werf helm lint PATH [flags] [options]
             Kubernetes version used for capabilities and deprecation checks
       --quiet=false
             print only warnings and errors
+      --secret-key=""
+            Secret key (default $WERF_SECRET_KEY)
       --secret-values=[]
             Specify helm secret values in a YAML file (can specify multiple). Also, can be defined  
             with $WERF_SECRET_VALUES_* (e.g. $WERF_SECRET_VALUES_ENV=.helm/secret_values_test.yaml, 
@@ -64,9 +69,8 @@ werf helm lint PATH [flags] [options]
 {{ header }} Options inherited from parent commands
 
 ```shell
-      --hooks-status-progress-period=5
-            Hooks status progress period in seconds. Set 0 to stop showing hooks status progress.   
-            Defaults to $WERF_HOOKS_STATUS_PROGRESS_PERIOD_SECONDS or status progress period value
+      --hooks-status-progress-period=0
+            No-op
       --kube-config=""
             Kubernetes config file path (default $WERF_KUBE_CONFIG, or $WERF_KUBECONFIG, or         
             $KUBECONFIG)

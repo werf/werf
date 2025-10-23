@@ -136,12 +136,10 @@ werf dismiss [options]
             (default $WERF_GITERMINISM_CONFIG or werf-giterminism.yaml in working directory)
       --home-dir=""
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
-      --hooks-status-progress-period=5
-            Hooks status progress period in seconds. Set 0 to stop showing hooks status progress.   
-            Defaults to $WERF_HOOKS_STATUS_PROGRESS_PERIOD_SECONDS or status progress period value
+      --hooks-status-progress-period=0
+            No-op
       --insecure-helm-dependencies=false
-            Allow insecure oci registries to be used in the .helm/Chart.yaml dependencies           
-            configuration (default $WERF_INSECURE_HELM_DEPENDENCIES)
+            No-op
       --insecure-registry=false
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
       --kube-api-server=""
@@ -265,6 +263,8 @@ werf dismiss [options]
             
             The same address should be specified for all werf processes that work with a single     
             repo. :local address allows execution of werf processes from a single host only
+  -t, --timeout=0
+            Resources tracking timeout in seconds ($WERF_TIMEOUT by default)
       --tmp-dir=""
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --use-deploy-report=false

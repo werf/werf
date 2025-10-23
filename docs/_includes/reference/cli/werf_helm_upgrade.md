@@ -59,6 +59,9 @@ werf helm upgrade [RELEASE] [CHART] [flags] [options]
       --devel=false
             use development versions, too. Equivalent to version `>0.0.0-0`. If --version is set,   
             this is ignored
+      --disable-default-secret-values=false
+            Do not use secret values from the default .helm/secret-values.yaml file (default        
+            $WERF_DISABLE_DEFAULT_SECRET_VALUES or false)
       --disable-openapi-validation=false
             if set, the upgrade process will not validate rendered templates against the Kubernetes 
             OpenAPI Schema
@@ -113,6 +116,8 @@ werf helm upgrade [RELEASE] [CHART] [flags] [options]
       --reuse-values=false
             when upgrading, reuse the last release`s values and merge in any overrides from the     
             command line via --set and -f. If `--reset-values` is specified, this is ignored
+      --secret-key=""
+            Secret key (default $WERF_SECRET_KEY)
       --secret-values=[]
             Specify helm secret values in a YAML file (can specify multiple). Also, can be defined  
             with $WERF_SECRET_VALUES_* (e.g. $WERF_SECRET_VALUES_ENV=.helm/secret_values_test.yaml, 
@@ -159,9 +164,8 @@ werf helm upgrade [RELEASE] [CHART] [flags] [options]
 {{ header }} Options inherited from parent commands
 
 ```shell
-      --hooks-status-progress-period=5
-            Hooks status progress period in seconds. Set 0 to stop showing hooks status progress.   
-            Defaults to $WERF_HOOKS_STATUS_PROGRESS_PERIOD_SECONDS or status progress period value
+      --hooks-status-progress-period=0
+            No-op
       --kube-config=""
             Kubernetes config file path (default $WERF_KUBE_CONFIG, or $WERF_KUBECONFIG, or         
             $KUBECONFIG)

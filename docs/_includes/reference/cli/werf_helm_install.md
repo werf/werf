@@ -89,6 +89,9 @@ werf helm install [NAME] [CHART] [flags] [options]
       --devel=false
             use development versions, too. Equivalent to version `>0.0.0-0`. If --version is set,   
             this is ignored
+      --disable-default-secret-values=false
+            Do not use secret values from the default .helm/secret-values.yaml file (default        
+            $WERF_DISABLE_DEFAULT_SECRET_VALUES or false)
       --disable-openapi-validation=false
             if set, the installation process will not validate rendered templates against the       
             Kubernetes OpenAPI Schema
@@ -136,6 +139,8 @@ werf helm install [NAME] [CHART] [flags] [options]
             history. This is unsafe in production
       --repo=""
             chart repository url where to locate the requested chart
+      --secret-key=""
+            Secret key (default $WERF_SECRET_KEY)
       --secret-values=[]
             Specify helm secret values in a YAML file (can specify multiple). Also, can be defined  
             with $WERF_SECRET_VALUES_* (e.g. $WERF_SECRET_VALUES_ENV=.helm/secret_values_test.yaml, 
@@ -180,9 +185,8 @@ werf helm install [NAME] [CHART] [flags] [options]
 {{ header }} Options inherited from parent commands
 
 ```shell
-      --hooks-status-progress-period=5
-            Hooks status progress period in seconds. Set 0 to stop showing hooks status progress.   
-            Defaults to $WERF_HOOKS_STATUS_PROGRESS_PERIOD_SECONDS or status progress period value
+      --hooks-status-progress-period=0
+            No-op
       --kube-config=""
             Kubernetes config file path (default $WERF_KUBE_CONFIG, or $WERF_KUBECONFIG, or         
             $KUBECONFIG)
