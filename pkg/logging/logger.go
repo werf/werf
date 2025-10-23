@@ -23,7 +23,7 @@ func NewLogger() types.LoggerInterface {
 	logger := logboek.DefaultLogger()
 	logger.Warn().SetStyle(color.New(color.Yellow))
 
-	captureOutputFromAnotherLoggers(logger.OutStream())
+	setOutputForThirdPartyLoggers(logger.OutStream())
 
 	return logger
 }
@@ -39,7 +39,7 @@ func NewSubLogger(ctx context.Context, outStream, errStream io.Writer) types.Log
 	return subLogger
 }
 
-func captureOutputFromAnotherLoggers(writer io.Writer) {
+func setOutputForThirdPartyLoggers(writer io.Writer) {
 	log.SetOutput(writer)
 	logrus.StandardLogger().SetOutput(writer)
 }
