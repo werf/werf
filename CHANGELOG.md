@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.51.1](https://github.com/werf/werf/compare/v2.51.0...v2.51.1) (2025-10-23)
+
+
+### Bug Fixes
+
+* **deploy:** error `no Auth Provider found for name ""` ([ff71d70](https://github.com/werf/werf/commit/ff71d70a73d8b1f0057d802a7d263aab7204f207))
+* **deploy:** Helm release annotation updates trigger new release ([ff71d70](https://github.com/werf/werf/commit/ff71d70a73d8b1f0057d802a7d263aab7204f207))
+* **deploy:** panic `unknown VerificationStrategyString value` ([ff71d70](https://github.com/werf/werf/commit/ff71d70a73d8b1f0057d802a7d263aab7204f207))
+* **deploy:** panic if failure/autorollback plan fails, refactor ([bd2c90a](https://github.com/werf/werf/commit/bd2c90ae8dea3296a199a22a8cbea6c8163dbd8e))
+* **deploy:** resources updated for no reason ([ff71d70](https://github.com/werf/werf/commit/ff71d70a73d8b1f0057d802a7d263aab7204f207))
+
 ## [2.51.0](https://github.com/werf/werf/compare/v2.50.2...v2.51.0) (2025-10-20)
 
 
