@@ -54,7 +54,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified repos")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
-	common.SetupInsecureHelmDependencies(&commonCmdData, cmd, false)
+	common.StubSetupInsecureHelmDependencies(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
 
@@ -126,8 +126,8 @@ func runCopy(ctx context.Context) error {
 		}
 	}
 
-	if *commonCmdData.HelmCompatibleChart && *commonCmdData.RenameChart != "" {
-		return fmt.Errorf("incompatible options specified, could not use --helm-compatible-chart and --rename-chart=%q at the same time", *commonCmdData.RenameChart)
+	if commonCmdData.HelmCompatibleChart && commonCmdData.RenameChart != "" {
+		return fmt.Errorf("incompatible options specified, could not use --helm-compatible-chart and --rename-chart=%q at the same time", commonCmdData.RenameChart)
 	}
 
 	return logboek.Context(ctx).LogProcess("Copy bundle").DoError(func() error {
@@ -138,8 +138,8 @@ func runCopy(ctx context.Context) error {
 			BundlesRegistryClient: bundlesRegistryClient,
 			FromRegistryClient:    fromRegistry,
 			ToRegistryClient:      toRegistry,
-			HelmCompatibleChart:   *commonCmdData.HelmCompatibleChart,
-			RenameChart:           *commonCmdData.RenameChart,
+			HelmCompatibleChart:   commonCmdData.HelmCompatibleChart,
+			RenameChart:           commonCmdData.RenameChart,
 			HelmOptions: helmopts.HelmOptions{
 				ChartLoadOpts: helmopts.ChartLoadOptions{
 					ChartType: helmopts.ChartTypeBundle,

@@ -3,6 +3,7 @@ package helm
 import (
 	"context"
 
+	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 
 	"github.com/werf/nelm-for-werf-helm/pkg/secrets_manager"
@@ -14,8 +15,7 @@ func SetupRenderRelatedWerfChartParams(cmd *cobra.Command, commonCmdData *common
 	common.SetupAddAnnotations(commonCmdData, cmd)
 	common.SetupAddLabels(commonCmdData, cmd)
 
-	common.SetupSecretValues(commonCmdData, cmd, true)
-	common.SetupIgnoreSecretKey(commonCmdData, cmd)
+	lo.Must0(common.SetupSecretValuesFlags(commonCmdData, cmd))
 }
 
 func InitRenderRelatedWerfChartParams(
@@ -35,12 +35,12 @@ func InitRenderRelatedWerfChartParams(
 		wc.AddExtraAnnotationsAndLabels(nil, extraLabels)
 	}
 
-	wc.SetupSecretValueFiles(common.GetSecretValues(commonCmdData))
+	wc.SetupSecretValueFiles(commonCmdData.SecretValuesFiles)
 	// NOTE: project-dir is the same as chart-dir for werf helm install/upgrade commands
 	// NOTE: project-dir is werf-project dir only for werf converge/dismiss commands
 
 	wc.SetupSecretsManager(secrets_manager.NewSecretsManager(secrets_manager.SecretsManagerOptions{
-		DisableSecretsDecryption: *commonCmdData.IgnoreSecretKey,
+		DisableSecretsDecryption: commonCmdData.SecretKeyIgnore,
 	}))
 
 	return nil

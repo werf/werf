@@ -103,9 +103,9 @@ func prePreRun(ctx context.Context) error {
 
 func setupKubeconfig(ctx context.Context) error {
 	var kubeConfigPath string
-	if *commonCmdData.KubeConfigBase64 != "" {
+	if commonCmdData.KubeConfigBase64 != "" {
 		var err error
-		kubeConfigPath, err = tmp_manager.CreateKubeConfigFromBase64(ctx, strings.NewReader(*commonCmdData.KubeConfigBase64))
+		kubeConfigPath, err = tmp_manager.CreateKubeConfigFromBase64(ctx, strings.NewReader(commonCmdData.KubeConfigBase64))
 		if err != nil {
 			return fmt.Errorf("unable to create kubeconfig from base64: %w", err)
 		}

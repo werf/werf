@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
+	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 
 	"github.com/werf/common-go/pkg/util"
@@ -110,7 +111,7 @@ func NewExportCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified repo")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
-	common.SetupInsecureHelmDependencies(&commonCmdData, cmd, true)
+	common.StubSetupInsecureHelmDependencies(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
 
@@ -118,9 +119,6 @@ func NewExportCmd(ctx context.Context) *cobra.Command {
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
 	common.SetupSynchronization(&commonCmdData, cmd)
-	common.SetupKubeConfig(&commonCmdData, cmd)
-	common.SetupKubeConfigBase64(&commonCmdData, cmd)
-	common.SetupKubeContext(&commonCmdData, cmd)
 
 	common.SetupVirtualMerge(&commonCmdData, cmd)
 
@@ -146,6 +144,8 @@ Also, can be specified with $WERF_EXPORT_ADD_LABEL_* (e.g. $WERF_EXPORT_ADD_LABE
 	}
 
 	commonCmdData.SetupSkipImageSpecStage(cmd)
+
+	lo.Must0(common.SetupMinimalKubeConnectionFlags(&commonCmdData, cmd))
 
 	return cmd
 }
