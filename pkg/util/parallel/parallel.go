@@ -29,6 +29,8 @@ type TaskFunc func(ctx context.Context, taskId int) error
 //   - options: A DoTasksOptions struct containing configuration parameters for task execution.
 //   - taskFunc: A function that performs a single task. It takes a context and a task ID as input and returns an error if one occurs.
 func DoTasks(ctx context.Context, numberOfTasks int, options DoTasksOptions, taskFunc TaskFunc) error {
+	logboek.Context(ctx).Debug().LogF("Parallel options: %d (workers) X %d (tasks)\n", options.MaxNumberOfWorkers, numberOfTasks)
+
 	g, groupCtx := errgroup.WithContext(ctx)
 
 	// Determine number of workers and tasks per worker
@@ -38,7 +40,6 @@ func DoTasks(ctx context.Context, numberOfTasks int, options DoTasksOptions, tas
 	workers := make([]*bufferedWorker, numberOfWorkers)
 	// Create channel to signal failed worker
 	failedWorkerCh := make(chan int, 1)
-	defer close(failedWorkerCh)
 
 	for i := 0; i < numberOfWorkers; i++ {
 		worker := newBufferedWorker(i)
@@ -62,7 +63,7 @@ func DoTasks(ctx context.Context, numberOfTasks int, options DoTasksOptions, tas
 			for workerTaskId := 0; workerTaskId < numberOfTasksPerWorker[worker.ID]; workerTaskId++ {
 				taskId := calculateTaskId(numberOfTasks, numberOfWorkers, worker.ID, workerTaskId)
 
-				logboek.Context(workerContext).Debug().LogF("Running worker %d task %d/%d (%d)\n", worker.ID, workerTaskId+1, numberOfTasksPerWorker[worker.ID], numberOfTasks)
+				logboek.Context(workerContext).Debug().LogF("Running worker %d with context %p for task %d/%d (%d)\n", worker.ID, workerContext, workerTaskId+1, numberOfTasksPerWorker[worker.ID], numberOfTasks)
 
 				// Use channel to be able to cancel task immediately
 				errCh := lo.Async(func() error {
@@ -71,10 +72,8 @@ func DoTasks(ctx context.Context, numberOfTasks int, options DoTasksOptions, tas
 
 				// Block until one of next things is happened
 				select {
-				// When another worker returns an error, groupCtx is canceled.
-				// The error is already captured from another worker, so we just return "nil".
 				case <-groupCtx.Done():
-					return nil
+					return context.Cause(groupCtx)
 				// The task returns err or nil. When task returns err,
 				// we mark worker as failed using failedWorkerCh and stop execution returning err.
 				// The returned error is captured (via errgroup).
@@ -94,11 +93,7 @@ func DoTasks(ctx context.Context, numberOfTasks int, options DoTasksOptions, tas
 		return printEachWorkerOutput(ctx, workers, failedWorkerCh)
 	})
 
-	if err := g.Wait(); err != nil {
-		return err
-	}
-
-	return nil
+	return g.Wait()
 }
 
 // printEachWorkerOutput prints the output of each buffered worker in the provided slice,
@@ -107,7 +102,7 @@ func printEachWorkerOutput(ctx context.Context, bufferedWorkers []*bufferedWorke
 	for i := 0; i < len(bufferedWorkers); i++ {
 		select {
 		case <-ctx.Done():
-			return nil
+			return context.Cause(ctx)
 		case failedWorkerIdx := <-failedWorkerCh:
 			return printWorkerOutput(ctx, bufferedWorkers[failedWorkerIdx])
 		default:
