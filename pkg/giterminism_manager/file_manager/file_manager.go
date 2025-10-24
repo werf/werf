@@ -305,7 +305,9 @@ func (f *FileManager) LocateChart(ctx context.Context, name string) (string, err
 }
 
 func (f *FileManager) ReadChartFile(ctx context.Context, filePath string) ([]byte, error) {
-	path := getDirAbsPath(filePath, f.customProjectDir)
+	relToProjFilePath := util.GetRelativeToBaseFilepath(f.customProjectDir, filePath)
+
+	path := getDirAbsPath(relToProjFilePath, f.customProjectDir)
 	if exist, _ := util.FileExists(path); exist {
 		data, err := f.fileReader.ReadChartFile(ctx, path)
 		if err != nil {
@@ -314,10 +316,10 @@ func (f *FileManager) ReadChartFile(ctx context.Context, filePath string) ([]byt
 		return data, nil
 	}
 
-	logboek.Context(ctx).Debug().LogF("Chart file %q not found in the local filesystem. Try find in includes\n", filePath)
-	data, err := f.tryReadFromIncludes(ctx, filePath)
+	logboek.Context(ctx).Debug().LogF("Chart file %q not found in the local filesystem. Try find in includes\n", relToProjFilePath)
+	data, err := f.tryReadFromIncludes(ctx, relToProjFilePath)
 	if err != nil {
-		return nil, fmt.Errorf("unable to read chart file %q: %w", filepath.ToSlash(filePath), err)
+		return nil, fmt.Errorf("unable to read chart file %q: %w", filepath.ToSlash(relToProjFilePath), err)
 	}
 
 	return data, nil
