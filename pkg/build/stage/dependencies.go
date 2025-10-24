@@ -20,6 +20,10 @@ import (
 	"github.com/werf/werf/v2/pkg/storage"
 )
 
+var ErrNothingToImport = fmt.Errorf("nothing to import")
+
+const nothingChecksum = "d41d8cd98f00b204e9800998ecf8427e"
+
 type getImportsOptions struct {
 	Before StageName
 	After  StageName
@@ -77,6 +81,8 @@ func (s *DependenciesStage) GetDependencies(ctx context.Context, c Conveyor, cb 
 				sourceChecksum, err := s.getImportSourceChecksum(ctx, c, cb, elm)
 				if err != nil {
 					return fmt.Errorf("unable to get import %d source checksum: %w", ind, err)
+				} else if sourceChecksum == nothingChecksum {
+					return ErrNothingToImport
 				}
 
 				var importTitle string
