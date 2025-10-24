@@ -36,8 +36,10 @@ const (
 	GitLatestPatch            StageName = "gitLatestPatch"
 	DockerInstructions        StageName = "dockerInstructions"
 
-	Dockerfile StageName = "dockerfile"
-	ImageSpec  StageName = "imageSpec"
+	Dockerfile       StageName = "dockerfile"
+	ImageSpec        StageName = "imageSpec"
+	Sign             StageName = "sign"
+	VerityAnnotation StageName = "verityAnnotation"
 )
 
 // TODO(compatibility): remove in v3

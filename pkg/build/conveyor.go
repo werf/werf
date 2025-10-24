@@ -19,7 +19,9 @@ import (
 	"github.com/werf/logboek/pkg/types"
 	"github.com/werf/werf/v2/pkg/build/image"
 	"github.com/werf/werf/v2/pkg/build/import_server"
+	"github.com/werf/werf/v2/pkg/build/signing"
 	"github.com/werf/werf/v2/pkg/build/stage"
+	"github.com/werf/werf/v2/pkg/build/verify_annotation"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/container_backend/thirdparty/platformutil"
@@ -77,6 +79,8 @@ type ConveyorOptions struct {
 	DeferBuildLog                   bool
 	ImagesToProcess                 config.ImagesToProcess
 	SkipImageSpecStage              bool
+	ManifestSigningOptions          signing.ManifestSigningOptions
+	VerityAnnotationOptions         verify_annotation.Options
 }
 
 func NewConveyor(werfConfig *config.WerfConfig, giterminismManager giterminism_manager.Interface, projectDir, baseTmpDir string, containerBackend container_backend.ContainerBackend, storageManager manager.StorageManagerInterface, storageLockManager lock_manager.Interface, opts ConveyorOptions) *Conveyor {
@@ -108,14 +112,16 @@ func NewConveyor(werfConfig *config.WerfConfig, giterminismManager giterminism_m
 
 	c.imagesTree = image.NewImagesTree(werfConfig, image.ImagesTreeOptions{
 		CommonImageOptions: image.CommonImageOptions{
-			Conveyor:           c,
-			GiterminismManager: c.GiterminismManager().(*giterminism_manager.Manager),
-			ContainerBackend:   c.ContainerBackend,
-			StorageManager:     c.StorageManager,
-			ProjectDir:         c.projectDir,
-			ProjectName:        c.ProjectName(),
-			ContainerWerfDir:   c.containerWerfDir,
-			TmpDir:             c.tmpDir,
+			Conveyor:                c,
+			GiterminismManager:      c.GiterminismManager().(*giterminism_manager.Manager),
+			ContainerBackend:        c.ContainerBackend,
+			StorageManager:          c.StorageManager,
+			ProjectDir:              c.projectDir,
+			ProjectName:             c.ProjectName(),
+			ContainerWerfDir:        c.containerWerfDir,
+			TmpDir:                  c.tmpDir,
+			ManifestSigningOptions:  opts.ManifestSigningOptions,
+			VerityAnnotationOptions: opts.VerityAnnotationOptions,
 		},
 		ImagesToProcess: opts.ImagesToProcess,
 	})

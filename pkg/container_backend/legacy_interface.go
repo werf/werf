@@ -29,6 +29,7 @@ type LegacyImageInterface interface {
 	Build(context.Context, BuildOptions) error
 	SetBuiltID(builtID string)
 	BuiltID() string
+	Mutate(ctx context.Context, mutationFunc func(builtID string) (string, error)) error
 
 	Introspect(ctx context.Context) error
 

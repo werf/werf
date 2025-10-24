@@ -197,6 +197,20 @@ func (mr *MockLegacyImageInterfaceMockRecorder) IsExistsLocally() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsExistsLocally", reflect.TypeOf((*MockLegacyImageInterface)(nil).IsExistsLocally))
 }
 
+// Mutate mocks base method.
+func (m *MockLegacyImageInterface) Mutate(ctx context.Context, mutationFunc func(string) (string, error)) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Mutate", ctx, mutationFunc)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Mutate indicates an expected call of Mutate.
+func (mr *MockLegacyImageInterfaceMockRecorder) Mutate(ctx, mutationFunc any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Mutate", reflect.TypeOf((*MockLegacyImageInterface)(nil).Mutate), ctx, mutationFunc)
+}
+
 // Name mocks base method.
 func (m *MockLegacyImageInterface) Name() string {
 	m.ctrl.T.Helper()

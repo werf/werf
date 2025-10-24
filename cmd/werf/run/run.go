@@ -135,6 +135,9 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{OptionalRepo: true})
 	common.SetupFinalRepo(&commonCmdData, cmd)
 
+	common.SetupAnnotateLayersWithDmVerityRootHash(&commonCmdData, cmd)
+	common.SetupSigningOptions(&commonCmdData, cmd)
+	common.SetupELFSigningOptions(&commonCmdData, cmd)
 	common.SetupRequireBuiltImages(&commonCmdData, cmd)
 
 	common.SetupFollow(&commonCmdData, cmd)

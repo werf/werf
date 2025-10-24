@@ -3,14 +3,20 @@ package common
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"fmt"
 	"strings"
 	"text/template"
 
+	"github.com/samber/lo"
+	"golang.org/x/crypto/openpgp"
+
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/level"
 	"github.com/werf/werf/v2/pkg/build"
+	"github.com/werf/werf/v2/pkg/build/signing"
 	"github.com/werf/werf/v2/pkg/build/stage"
+	"github.com/werf/werf/v2/pkg/build/verify_annotation"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/container_backend/thirdparty/platformutil"
@@ -18,6 +24,7 @@ import (
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/slug"
 	"github.com/werf/werf/v2/pkg/storage"
+	"github.com/werf/werf/v2/pkg/werf/exec"
 )
 
 func GetConveyorOptions(ctx context.Context, commonCmdData *CmdData, imagesToProcess config.ImagesToProcess) (build.ConveyorOptions, error) {
@@ -62,6 +69,8 @@ func GetConveyorOptionsWithParallel(ctx context.Context, commonCmdData *CmdData,
 
 	conveyorOptions.Parallel = !(buildStagesOptions.ImageBuildOptions.IntrospectAfterError || buildStagesOptions.ImageBuildOptions.IntrospectBeforeError || len(buildStagesOptions.Targets) != 0) && GetParallel(commonCmdData)
 	conveyorOptions.ParallelTasksLimit = GetParallelTasksLimit(commonCmdData)
+	conveyorOptions.ManifestSigningOptions = buildStagesOptions.ManifestSigningOptions
+	conveyorOptions.VerityAnnotationOptions = buildStagesOptions.VerityAnnotationOptions
 
 	return conveyorOptions, nil
 }
@@ -95,6 +104,31 @@ func GetBuildOptions(ctx context.Context, commonCmdData *CmdData, werfConfig *co
 		return buildOptions, err
 	}
 
+	signerOptions, err := getSignerOptions(commonCmdData)
+	if err != nil {
+		return buildOptions, fmt.Errorf("getting signer options: %w", err)
+	}
+
+	signer, err := signing.NewSigner(ctx, signerOptions)
+	if err != nil {
+		return buildOptions, fmt.Errorf("creating signer: %w", err)
+	}
+
+	manifestSigningOptions, err := getManifestSigningOptions(commonCmdData, signer)
+	if err != nil {
+		return buildOptions, fmt.Errorf("getting manifest signing options: %w", err)
+	}
+
+	elfSigningOptions, err := getELFSigningOptions(commonCmdData, signer)
+	if err != nil {
+		return buildOptions, err
+	}
+
+	verityAnnotationOptions, err := getVerityAnnotationOptions(commonCmdData)
+	if err != nil {
+		return build.BuildOptions{}, fmt.Errorf("getting verity annotation options: %w", err)
+	}
+
 	buildOptions = build.BuildOptions{
 		SkipAddManagedImagesRecords:  werfConfig.Meta.Cleanup.DisableCleanup,
 		SkipImageMetadataPublication: *commonCmdData.Dev || werfConfig.Meta.Cleanup.DisableGitHistoryBasedPolicy || werfConfig.Meta.Cleanup.DisableCleanup,
@@ -103,7 +137,10 @@ func GetBuildOptions(ctx context.Context, commonCmdData *CmdData, werfConfig *co
 			IntrospectAfterError:  GetIntrospectAfterError(commonCmdData),
 			IntrospectBeforeError: GetIntrospectBeforeError(commonCmdData),
 		},
-		IntrospectOptions: introspectOptions,
+		IntrospectOptions:       introspectOptions,
+		ManifestSigningOptions:  manifestSigningOptions,
+		ELFSigningOptions:       elfSigningOptions,
+		VerityAnnotationOptions: verityAnnotationOptions,
 	}
 
 	if GetSaveBuildReport(commonCmdData) {
@@ -114,6 +151,109 @@ func GetBuildOptions(ctx context.Context, commonCmdData *CmdData, werfConfig *co
 	}
 
 	return buildOptions, nil
+}
+
+func getVerityAnnotationOptions(commonCmdData *CmdData) (verify_annotation.Options, error) {
+	return verify_annotation.Options{
+		Enabled: lo.FromPtr(commonCmdData.AnnotateLayersWithDmvVerityRootHash),
+	}, nil
+}
+
+func getSignerOptions(commonCmdData *CmdData) (signing.SignerOptions, error) {
+	if !lo.FromPtr(commonCmdData.SignManifest) && !lo.FromPtr(commonCmdData.SignELFFiles) {
+		return signing.SignerOptions{}, nil
+	}
+	if commonCmdData.SignKey == nil || *commonCmdData.SignKey == "" {
+		return signing.SignerOptions{}, fmt.Errorf("signing key is required (the private signing key must be specified with --sign-key option)")
+	}
+	if commonCmdData.SignCert == nil || *commonCmdData.SignCert == "" {
+		return signing.SignerOptions{}, fmt.Errorf("signing certificate is required (the public signing certificate must be specified with --sign-cert option)")
+	}
+	return signing.SignerOptions{
+		KeyRef:           lo.FromPtr(commonCmdData.SignKey),
+		CertRef:          lo.FromPtr(commonCmdData.SignCert),
+		IntermediatesRef: lo.FromPtr(commonCmdData.SignIntermediates),
+	}, nil
+}
+
+func getManifestSigningOptions(commonCmdData *CmdData, signer *signing.Signer) (signing.ManifestSigningOptions, error) {
+	options := signing.NewManifestSigningOptions(signer)
+	options.Enabled = lo.FromPtr(commonCmdData.SignManifest)
+	return options, nil
+}
+
+func getELFSigningOptions(commonCmdData *CmdData, signer *signing.Signer) (signing.ELFSigningOptions, error) {
+	options := signing.NewELFSigningOptions(signer)
+
+	if !*commonCmdData.SignELFFiles && !*commonCmdData.BSignELFFiles {
+		return options, nil
+	}
+
+	if *commonCmdData.SignELFFiles {
+		options.InHouseEnabled = true
+	}
+
+	// bsign
+	{
+		if !*commonCmdData.BSignELFFiles {
+			return options, nil
+		} else {
+			options.BsignEnabled = true
+		}
+
+		if *commonCmdData.ELFPGPPrivateKeyPassphrase != "" {
+			options.PGPPrivateKeyPassphrase = *commonCmdData.ELFPGPPrivateKeyPassphrase
+		}
+
+		if *commonCmdData.ELFPGPPrivateKeyBase64 != "" && *commonCmdData.ELFPGPPrivateKeyFingerprint != "" {
+			return options, fmt.Errorf("both --elf-pgp-private-key-base64 and --elf-pgp-private-key-fingerprint params are specified, only one of them should be specified")
+		} else if *commonCmdData.ELFPGPPrivateKeyBase64 == "" && *commonCmdData.ELFPGPPrivateKeyFingerprint == "" {
+			return options, fmt.Errorf("either --elf-pgp-private-key-base64 or --elf-pgp-private-key-fingerprint param is required")
+		}
+
+		if *commonCmdData.ELFPGPPrivateKeyFingerprint != "" {
+			options.PGPPrivateKeyFingerprint = *commonCmdData.ELFPGPPrivateKeyFingerprint
+			return options, nil
+		}
+
+		// Get fingerprint and import key.
+		{
+			keyBytes, err := base64.StdEncoding.DecodeString(strings.TrimSpace(*commonCmdData.ELFPGPPrivateKeyBase64))
+			if err != nil {
+				return options, fmt.Errorf("unable to decode PGP key from base64: %w", err)
+			}
+
+			pgpKeyString := string(keyBytes)
+			entityList, err := openpgp.ReadArmoredKeyRing(bytes.NewReader(keyBytes))
+			if err != nil {
+				return options, fmt.Errorf("unable to read PGP key: %w", err)
+			}
+
+			firstKey := entityList[0].PrimaryKey
+			fingerprint := firstKey.Fingerprint
+			options.PGPPrivateKeyFingerprint = fmt.Sprintf("%X", fingerprint)
+
+			// Import PGP key.
+			{
+				ctx := context.Background()
+				cmd := exec.CommandContextCancellation(ctx, "gpg", "--import")
+				cmd.Stdin = bytes.NewBufferString(pgpKeyString)
+
+				if options.PGPPrivateKeyPassphrase != "" {
+					cmd.Args = append(cmd.Args, "--batch")
+					cmd.Args = append(cmd.Args, "--passphrase=$WERF_SERVICE_ELF_PGP_PRIVATE_KEY_PASSPHRASE")
+					cmd.Env = append(cmd.Env, fmt.Sprintf("WERF_SERVICE_ELF_PGP_PRIVATE_KEY_PASSPHRASE=%s", options.PGPPrivateKeyPassphrase))
+				}
+
+				err := cmd.Run()
+				if err != nil {
+					return options, fmt.Errorf("unable to import PGP key: %w", err)
+				}
+			}
+		}
+	}
+
+	return options, nil
 }
 
 func getCustomTagFuncList(tagOptionValues []string, commonCmdData *CmdData, imagesToProcess config.ImagesToProcess) ([]image.CustomTagFunc, error) {

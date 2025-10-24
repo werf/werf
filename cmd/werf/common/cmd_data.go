@@ -102,6 +102,19 @@ type CmdData struct {
 
 	Platform *[]string
 
+	AnnotateLayersWithDmvVerityRootHash *bool
+
+	SignManifest      *bool
+	SignKey           *string
+	SignCert          *string
+	SignIntermediates *string
+
+	BSignELFFiles               *bool
+	SignELFFiles                *bool
+	ELFPGPPrivateKeyBase64      *string
+	ELFPGPPrivateKeyFingerprint *string
+	ELFPGPPrivateKeyPassphrase  *string
+
 	SkipImageSpecStage *bool
 	IncludesLsFilter   *string
 

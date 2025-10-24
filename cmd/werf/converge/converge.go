@@ -106,6 +106,10 @@ werf converge --repo registry.mydomain.com/web --env production`,
 	common.SetupIntrospectBeforeError(&commonCmdData, cmd)
 	common.SetupIntrospectStage(&commonCmdData, cmd)
 
+	common.SetupAnnotateLayersWithDmVerityRootHash(&commonCmdData, cmd)
+	common.SetupSigningOptions(&commonCmdData, cmd)
+	common.SetupELFSigningOptions(&commonCmdData, cmd)
+
 	common.SetupSecondaryStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{})
