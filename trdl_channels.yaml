@@ -38,7 +38,7 @@ groups:
   - name: "2"
     channels:
       - name: alpha
-        version: 2.51.1
+        version: 2.51.2
       - name: beta
         version: 2.51.0
       - name: ea
