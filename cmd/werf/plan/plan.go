@@ -148,6 +148,10 @@ werf plan --repo registry.mydomain.com/web --env production`,
 	commonCmdData.SetupBackendNetwork(cmd)
 	common.SetupFollow(&commonCmdData, cmd)
 
+	common.SetupAnnotateLayersWithDmVerityRootHash(&commonCmdData, cmd)
+	common.SetupSigningOptions(&commonCmdData, cmd)
+	common.SetupELFSigningOptions(&commonCmdData, cmd)
+
 	common.SetupDisableAutoHostCleanup(&commonCmdData, cmd)
 	common.SetupAllowedBackendStorageVolumeUsage(&commonCmdData, cmd)
 	common.SetupAllowedBackendStorageVolumeUsageMargin(&commonCmdData, cmd)

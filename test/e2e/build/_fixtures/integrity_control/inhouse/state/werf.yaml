@@ -1,0 +1,6 @@
+project: werf-test-e2e-integrity-simple
+configVersion: 1
+
+---
+image: dockerfile
+dockerfile: Dockerfile
