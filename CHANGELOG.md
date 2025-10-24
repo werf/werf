@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.51.2](https://github.com/werf/werf/compare/v2.51.1...v2.51.2) (2025-10-24)
+
+
+### Bug Fixes
+
+* **deploy:** `--dir` breaks `--values` ([fa3a865](https://github.com/werf/werf/commit/fa3a865a03d342119c698987a3eb8a3399a3bf21))
+
 ## [2.51.1](https://github.com/werf/werf/compare/v2.51.0...v2.51.1) (2025-10-23)
 
 
