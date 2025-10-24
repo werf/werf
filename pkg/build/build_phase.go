@@ -911,8 +911,12 @@ func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *imag
 		imagePkg.WerfStageContentDigestLabel: stg.GetContentDigest(),
 	}
 
+	prevBuiltImage := phase.StagesIterator.GetPrevBuiltImage(img, stg)
 	if stg.HasPrevStage() {
-		prevBuiltImage := phase.StagesIterator.GetPrevBuiltImage(img, stg)
+		if prevBuiltImage == nil {
+			panic(fmt.Sprintf("expected prevBuiltImage to be set for stage %s", stg.Name()))
+		}
+
 		serviceLabels[imagePkg.WerfParentStageID] = prevBuiltImage.Image.GetStageDesc().StageID.String()
 
 		// TODO: remove this legacy logic in v3.
@@ -957,10 +961,6 @@ func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *imag
 			labels = append(labels, fmt.Sprintf("%s=%v", key, value))
 		}
 		stageImage.Builder.DockerfileBuilder().AppendLabels(labels...)
-
-		phase.Conveyor.AppendOnTerminateFunc(func() error {
-			return stageImage.Builder.DockerfileBuilder().Cleanup(ctx)
-		})
 	} else {
 		stageImage.Builder.DockerfileStageBuilder().SetBuildContextArchive(phase.buildContextArchive)
 
@@ -971,7 +971,11 @@ func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *imag
 		}
 	}
 
-	err := stg.PrepareImage(ctx, phase.Conveyor, phase.Conveyor.ContainerBackend, phase.StagesIterator.GetPrevBuiltImage(img, stg), stageImage, phase.buildContextArchive)
+	phase.Conveyor.AppendOnTerminateFunc(func() error {
+		return stageImage.Builder.Cleanup(ctx)
+	})
+
+	err := stg.PrepareImage(ctx, phase.Conveyor, phase.Conveyor.ContainerBackend, prevBuiltImage, stageImage, phase.buildContextArchive)
 	if err != nil {
 		return fmt.Errorf("error preparing stage %s: %w", stg.Name(), err)
 	}
@@ -1127,12 +1131,12 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 			}
 		}
 
-		if desc, err := phase.Conveyor.StorageManager.GetStagesStorage().GetStageDesc(ctx, phase.Conveyor.ProjectName(), *imagePkg.NewStageID(stg.GetDigest(), stageCreationTs)); err != nil {
+		desc, err := phase.Conveyor.StorageManager.GetStagesStorage().GetStageDesc(ctx, phase.Conveyor.ProjectName(), *imagePkg.NewStageID(stg.GetDigest(), stageCreationTs))
+		if err != nil || desc == nil {
 			return fmt.Errorf("unable to get stage %s digest %s image %s description from repo %s after stages has been stored into repo: %w", stg.LogDetailedName(), stg.GetDigest(), stageImage.Image.Name(), phase.Conveyor.StorageManager.GetStagesStorage().String(), err)
-		} else {
-			stageImage.Image.SetStageDesc(desc)
 		}
 
+		stageImage.Image.SetStageDesc(desc)
 		img.SetRebuilt(true)
 
 		return nil

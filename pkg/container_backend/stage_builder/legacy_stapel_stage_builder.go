@@ -35,3 +35,8 @@ func (builder *LegacyStapelStageBuilder) BuilderContainer() container_backend.Le
 func (builder *LegacyStapelStageBuilder) Build(ctx context.Context, opts container_backend.BuildOptions) error {
 	return builder.Image.Build(ctx, opts)
 }
+
+func (builder *LegacyStapelStageBuilder) Cleanup(_ context.Context) error {
+	return nil
+}
+
