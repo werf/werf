@@ -3,7 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Take latest bundle from the specified container registry using specified version tag or version     
+Take latest bundle from the specified container registry using specified version tag or version   
 mask and apply it as a helm chart into Kubernetes cluster.
 
 {{ header }} Syntax

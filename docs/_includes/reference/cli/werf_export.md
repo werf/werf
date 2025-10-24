@@ -47,6 +47,13 @@ werf export [IMAGE_NAME...] [options]
             Separator for --add-label values (default $WERF_EXPORT_ADD_LABEL_SEPARATOR or "\n")
       --allow-includes-update=false
             Allow use includes latest versions (default $WERF_ALLOW_INCLUDES_UPDATE or false)
+      --annotate-layers-with-dm-verity-root-hash=false
+            Enable annotation of image layers with dm-verity root hash (default                     
+            $WERF_ANNOTATE_LAYERS_WITH_DM_VERITY_ROOT_HASH)
+      --bsign-elf-files=false
+            Enable ELF files signing with bsign (default $WERF_BSIGN_ELF_FILES).
+            When enabled, the private elf key must be specified with --elf-pgp-private-key-base64   
+            or --elf-pgp-private-key-fingerprint option
       --cache-repo=[]
             Specify one or multiple cache repos with images that will be used as a cache. Cache     
             will be populated when pushing newly built images into the primary repo and when        
@@ -82,6 +89,12 @@ werf export [IMAGE_NAME...] [options]
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)
             Command needs granted permissions to read and pull images from the specified repo
+      --elf-pgp-private-key-base64=""
+            Base64-encoded PGP private key (default $WERF_ELF_PGP_PRIVATE_KEY_BASE64)
+      --elf-pgp-private-key-fingerprint=""
+            PGP private key fingerprint (default $WERF_ELF_PGP_PRIVATE_KEY_FINGERPRINT)
+      --elf-pgp-private-key-passphrase=""
+            Passphrase for the PGP private key (default $WERF_ELF_PGP_PRIVATE_KEY_PASSPHRASE)
       --env=""
             Use specified environment (default $WERF_ENV)
       --final-images-only=true
@@ -216,6 +229,23 @@ werf export [IMAGE_NAME...] [options]
             cache.
             Also, can be specified with $WERF_SECONDARY_REPO_* (e.g. $WERF_SECONDARY_REPO_1=...,    
             $WERF_SECONDARY_REPO_2=...)
+      --sign-cert=""
+            The leaf certificate as path to PEM file or base64-encoded PEM (default $WERF_SIGN_CERT)
+      --sign-elf-files=false
+            Enable ELF files signing (default $WERF_SIGN_ELF_FILES).
+            When enabled, the private signing key must be specified with --sign-key option and the  
+            certificate must be specified with --sign-cert option
+      --sign-intermediates=""
+            The intermediate certificates as path to PEM file or base64-encoded PEM (default        
+            $WERF_SIGN_INTERMEDIATES)
+      --sign-key=""
+            The private signing key as path to PEM file, base64-encoded PEM or hashivault://[KEY]   
+            (default $WERF_SIGN_KEY)
+      --sign-manifest=false
+            Enable image manifest signing (default $WERF_SIGN_MANIFEST).
+            When enabled,
+            the private signing key must be specified with --sign-key option and
+            the certificate must be specified with --sign-cert option
       --skip-image-spec-stage=false
             Force skipping "imageSpec" build stage (default $WERF_SKIP_IMAGE_SPEC_STAGE or false)
       --skip-tls-verify-registry=false

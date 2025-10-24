@@ -15,8 +15,8 @@ werf render [IMAGE_NAME...] [options]
 
 ```shell
   $WERF_DEBUG_ANSIBLE_ARGS  Pass specified cli args to ansible ($ANSIBLE_ARGS)
-  $WERF_SECRET_KEY          Use specified secret key to extract secrets for the deploy. Recommended 
-                            way to set secret key in CI-system.
+  $WERF_SECRET_KEY          Use specified secret key to extract secrets for the deploy.           
+                            Recommended way to set secret key in CI-system.
                             
                             Secret key also can be defined in files:
                             * ~/.werf/global_secret_key (globally),
@@ -39,6 +39,13 @@ werf render [IMAGE_NAME...] [options]
             $WERF_ADD_LABEL_1=labelName1=labelValue1, $WERF_ADD_LABEL_2=labelName2=labelValue2)
       --allow-includes-update=false
             Allow use includes latest versions (default $WERF_ALLOW_INCLUDES_UPDATE or false)
+      --annotate-layers-with-dm-verity-root-hash=false
+            Enable annotation of image layers with dm-verity root hash (default                     
+            $WERF_ANNOTATE_LAYERS_WITH_DM_VERITY_ROOT_HASH)
+      --bsign-elf-files=false
+            Enable ELF files signing with bsign (default $WERF_BSIGN_ELF_FILES).
+            When enabled, the private elf key must be specified with --elf-pgp-private-key-base64   
+            or --elf-pgp-private-key-fingerprint option
       --build-report-path=""
             Change build report path and format (by default $WERF_BUILD_REPORT_PATH or              
             ".werf-build-report.json" if not set). Extension must be either .json for JSON format   
@@ -85,6 +92,12 @@ werf render [IMAGE_NAME...] [options]
             ~/.docker (in the order of priority)
             Command needs granted permissions to read, pull and push images into the specified repo 
             and to pull base images
+      --elf-pgp-private-key-base64=""
+            Base64-encoded PGP private key (default $WERF_ELF_PGP_PRIVATE_KEY_BASE64)
+      --elf-pgp-private-key-fingerprint=""
+            PGP private key fingerprint (default $WERF_ELF_PGP_PRIVATE_KEY_FINGERPRINT)
+      --elf-pgp-private-key-passphrase=""
+            Passphrase for the PGP private key (default $WERF_ELF_PGP_PRIVATE_KEY_PASSPHRASE)
       --env=""
             Use specified environment (default $WERF_ENV)
       --extra-apiversions=[]
@@ -362,6 +375,23 @@ werf render [IMAGE_NAME...] [options]
             $WERF_SET_STRING_2=key2=val2)
   -s, --show-only=[]
             only show manifests rendered from the given templates
+      --sign-cert=""
+            The leaf certificate as path to PEM file or base64-encoded PEM (default $WERF_SIGN_CERT)
+      --sign-elf-files=false
+            Enable ELF files signing (default $WERF_SIGN_ELF_FILES).
+            When enabled, the private signing key must be specified with --sign-key option and the  
+            certificate must be specified with --sign-cert option
+      --sign-intermediates=""
+            The intermediate certificates as path to PEM file or base64-encoded PEM (default        
+            $WERF_SIGN_INTERMEDIATES)
+      --sign-key=""
+            The private signing key as path to PEM file, base64-encoded PEM or hashivault://[KEY]   
+            (default $WERF_SIGN_KEY)
+      --sign-manifest=false
+            Enable image manifest signing (default $WERF_SIGN_MANIFEST).
+            When enabled,
+            the private signing key must be specified with --sign-key option and
+            the certificate must be specified with --sign-cert option
   -L, --skip-dependencies-repo-refresh=false
             Do not refresh helm chart repositories locally cached index
       --skip-image-spec-stage=false

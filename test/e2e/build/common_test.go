@@ -2,6 +2,10 @@ package e2e_build_test
 
 import (
 	"strings"
+
+	. "github.com/onsi/ginkgo/v2"
+
+	"github.com/werf/werf/v2/test/pkg/contback"
 )
 
 type setupEnvOptions struct {
@@ -49,4 +53,14 @@ func setupEnv(opts setupEnvOptions) {
 	}
 
 	SuiteData.Stubs.SetEnv("ENV_SECRET", "WERF_BUILD_SECRET")
+}
+
+func newContainerBackend(backendType string) contback.ContainerBackend {
+	contRuntime, err := contback.NewContainerBackend(backendType)
+	if err == contback.ErrRuntimeUnavailable {
+		Skip(err.Error())
+	} else if err != nil {
+		Fail(err.Error())
+	}
+	return contRuntime
 }

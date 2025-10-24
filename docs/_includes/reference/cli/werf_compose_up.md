@@ -84,10 +84,17 @@ werf compose up [IMAGE_NAME...] [options] [--docker-compose-options="OPTIONS"] [
             becomes below "allowed-local-cache-volume-usage -                                       
             allowed-local-cache-volume-usage-margin" level (default 5% or                           
             $WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE_MARGIN)
+      --annotate-layers-with-dm-verity-root-hash=false
+            Enable annotation of image layers with dm-verity root hash (default                     
+            $WERF_ANNOTATE_LAYERS_WITH_DM_VERITY_ROOT_HASH)
       --backend-storage-path=""
             Use specified path to the local backend (Docker or Buildah) storage to check backend    
             storage volume usage while performing garbage collection of local backend images        
             (detect local backend storage path by default or use $WERF_BACKEND_STORAGE_PATH)
+      --bsign-elf-files=false
+            Enable ELF files signing with bsign (default $WERF_BSIGN_ELF_FILES).
+            When enabled, the private elf key must be specified with --elf-pgp-private-key-base64   
+            or --elf-pgp-private-key-fingerprint option
       --cache-repo=[]
             Specify one or multiple cache repos with images that will be used as a cache. Cache     
             will be populated when pushing newly built images into the primary repo and when        
@@ -135,6 +142,12 @@ werf compose up [IMAGE_NAME...] [options] [--docker-compose-options="OPTIONS"] [
             Command needs granted permissions to read and pull images from the specified repo
       --dry-run=false
             Indicate what the command would do without actually doing that (default $WERF_DRY_RUN)
+      --elf-pgp-private-key-base64=""
+            Base64-encoded PGP private key (default $WERF_ELF_PGP_PRIVATE_KEY_BASE64)
+      --elf-pgp-private-key-fingerprint=""
+            PGP private key fingerprint (default $WERF_ELF_PGP_PRIVATE_KEY_FINGERPRINT)
+      --elf-pgp-private-key-passphrase=""
+            Passphrase for the PGP private key (default $WERF_ELF_PGP_PRIVATE_KEY_PASSPHRASE)
       --env=""
             Use specified environment (default $WERF_ENV)
       --final-images-only=false
@@ -248,6 +261,23 @@ werf compose up [IMAGE_NAME...] [options] [--docker-compose-options="OPTIONS"] [
             cache.
             Also, can be specified with $WERF_SECONDARY_REPO_* (e.g. $WERF_SECONDARY_REPO_1=...,    
             $WERF_SECONDARY_REPO_2=...)
+      --sign-cert=""
+            The leaf certificate as path to PEM file or base64-encoded PEM (default $WERF_SIGN_CERT)
+      --sign-elf-files=false
+            Enable ELF files signing (default $WERF_SIGN_ELF_FILES).
+            When enabled, the private signing key must be specified with --sign-key option and the  
+            certificate must be specified with --sign-cert option
+      --sign-intermediates=""
+            The intermediate certificates as path to PEM file or base64-encoded PEM (default        
+            $WERF_SIGN_INTERMEDIATES)
+      --sign-key=""
+            The private signing key as path to PEM file, base64-encoded PEM or hashivault://[KEY]   
+            (default $WERF_SIGN_KEY)
+      --sign-manifest=false
+            Enable image manifest signing (default $WERF_SIGN_MANIFEST).
+            When enabled,
+            the private signing key must be specified with --sign-key option and
+            the certificate must be specified with --sign-cert option
       --skip-image-spec-stage=false
             Force skipping "imageSpec" build stage (default $WERF_SKIP_IMAGE_SPEC_STAGE or false)
       --skip-tls-verify-registry=false

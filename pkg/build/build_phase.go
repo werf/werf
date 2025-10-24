@@ -16,8 +16,10 @@ import (
 	"github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
 	"github.com/werf/werf/v2/pkg/build/image"
+	"github.com/werf/werf/v2/pkg/build/signing"
 	"github.com/werf/werf/v2/pkg/build/stage"
 	"github.com/werf/werf/v2/pkg/build/stage/instruction"
+	"github.com/werf/werf/v2/pkg/build/verify_annotation"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	backend_instruction "github.com/werf/werf/v2/pkg/container_backend/instruction"
 	"github.com/werf/werf/v2/pkg/docker_registry"
@@ -39,6 +41,10 @@ type BuildPhaseOptions struct {
 type BuildOptions struct {
 	ImageBuildOptions container_backend.BuildOptions
 	IntrospectOptions
+
+	ManifestSigningOptions  signing.ManifestSigningOptions
+	ELFSigningOptions       signing.ELFSigningOptions
+	VerityAnnotationOptions verify_annotation.Options
 
 	ReportPath   string
 	ReportFormat ReportFormat
@@ -835,6 +841,8 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, s
 
 	var opts calculateDigestOptions
 	opts.TargetPlatform = img.TargetPlatform
+	opts.ManifestSigningOptions = phase.ManifestSigningOptions
+	opts.ELFSigningOptions = phase.ELFSigningOptions
 
 	if img.IsDockerfileImage && img.DockerfileImageConfig.Staged {
 		if !stg.HasPrevStage() {
@@ -1110,6 +1118,22 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 	stageImage.Image.SetName(newStageImageName)
 	phase.Conveyor.SetStageImage(stageImage)
 
+	if phase.ELFSigningOptions.Enabled() && img.IsFinal && !stg.IsMutable() {
+		if err := logboek.Context(ctx).Default().LogProcess("Signing ELF files").DoError(func() error {
+			return stageImage.Image.Mutate(ctx, func(builtID string) (string, error) {
+				newID := "werf.signing." + uuid.NewString()
+				finalID, err := signing.Sign(ctx, builtID, newID, phase.ELFSigningOptions)
+				if err != nil {
+					return "", err
+				}
+
+				return finalID, nil
+			})
+		}); err != nil {
+			return err
+		}
+	}
+
 	if err := logboek.Context(ctx).Default().LogProcess("Store stage into %s", phase.Conveyor.StorageManager.GetStagesStorage().String()).DoError(func() error {
 		if stg.IsMutable() {
 			switch phase.Conveyor.StorageManager.GetStagesStorage().(type) {
@@ -1177,8 +1201,10 @@ func introspectStage(ctx context.Context, s stage.Interface) error {
 }
 
 type calculateDigestOptions struct {
-	TargetPlatform string
-	BaseImage      string // TODO(staged-dockerfile): legacy compatibility field
+	TargetPlatform         string
+	ManifestSigningOptions signing.ManifestSigningOptions
+	ELFSigningOptions      signing.ELFSigningOptions
+	BaseImage              string // TODO(staged-dockerfile): legacy compatibility field
 }
 
 func calculateDigest(ctx context.Context, stageName, stageDependencies string, prevNonEmptyStage stage.Interface, conveyor *Conveyor, opts calculateDigestOptions) (string, error) {
@@ -1197,6 +1223,20 @@ func calculateDigest(ctx context.Context, stageName, stageDependencies string, p
 		"StageName",
 		"StageDependencies",
 	)
+
+	if opts.ELFSigningOptions.Enabled() {
+		if opts.ELFSigningOptions.BsignEnabled {
+			checksumArgs = append(checksumArgs, opts.ELFSigningOptions.PGPPrivateKeyFingerprint)
+			checksumArgsNames = append(checksumArgsNames, "ELF_SIGNING_PGP_KEY_FINGERPRINT")
+		}
+
+		if opts.ELFSigningOptions.InHouseEnabled {
+			checksumArgs = append(checksumArgs, opts.ManifestSigningOptions.Signer().Cert())
+			checksumArgsNames = append(checksumArgsNames, "MANIFEST_SIGNING_CERTIFICATE")
+			checksumArgs = append(checksumArgs, opts.ManifestSigningOptions.Signer().Chain())
+			checksumArgsNames = append(checksumArgsNames, "SIGNING_CERTIFICATE_CHAIN")
+		}
+	}
 
 	if prevNonEmptyStage != nil {
 		prevStageDependencies, err := prevNonEmptyStage.GetNextStageDependencies(ctx, conveyor)

@@ -117,6 +117,9 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultBuildParallelTasksLimit)
 
+	common.SetupAnnotateLayersWithDmVerityRootHash(&commonCmdData, cmd)
+	common.SetupSigningOptions(&commonCmdData, cmd)
+	common.SetupELFSigningOptions(&commonCmdData, cmd)
 	common.SetupRequireBuiltImages(&commonCmdData, cmd)
 	commonCmdData.SetupPlatform(cmd)
 

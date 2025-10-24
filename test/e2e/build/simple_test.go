@@ -4,7 +4,6 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/v2/test/pkg/contback"
 	"github.com/werf/werf/v2/test/pkg/werf"
 )
 
@@ -17,12 +16,7 @@ var _ = Describe("Simple build", Label("e2e", "build", "simple"), func() {
 		func(ctx SpecContext, testOpts simpleTestOptions) {
 			By("initializing")
 			setupEnv(testOpts.setupEnvOptions)
-			contRuntime, err := contback.NewContainerBackend(testOpts.ContainerBackendMode)
-			if err == contback.ErrRuntimeUnavailable {
-				Skip(err.Error())
-			} else if err != nil {
-				Fail(err.Error())
-			}
+			contRuntime := newContainerBackend(testOpts.ContainerBackendMode)
 
 			By("state0: starting")
 			{

@@ -56,10 +56,17 @@ werf bundle publish [IMAGE_NAME...] [options]
             becomes below "allowed-local-cache-volume-usage -                                       
             allowed-local-cache-volume-usage-margin" level (default 5% or                           
             $WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE_MARGIN)
+      --annotate-layers-with-dm-verity-root-hash=false
+            Enable annotation of image layers with dm-verity root hash (default                     
+            $WERF_ANNOTATE_LAYERS_WITH_DM_VERITY_ROOT_HASH)
       --backend-storage-path=""
             Use specified path to the local backend (Docker or Buildah) storage to check backend    
             storage volume usage while performing garbage collection of local backend images        
             (detect local backend storage path by default or use $WERF_BACKEND_STORAGE_PATH)
+      --bsign-elf-files=false
+            Enable ELF files signing with bsign (default $WERF_BSIGN_ELF_FILES).
+            When enabled, the private elf key must be specified with --elf-pgp-private-key-base64   
+            or --elf-pgp-private-key-fingerprint option
       --build-report-path=""
             Change build report path and format (by default $WERF_BUILD_REPORT_PATH or              
             ".werf-build-report.json" if not set). Extension must be either .json for JSON format   
@@ -109,6 +116,12 @@ werf bundle publish [IMAGE_NAME...] [options]
             ~/.docker (in the order of priority)
             Command needs granted permissions to read, pull and push images into the specified repo 
             and to pull base images
+      --elf-pgp-private-key-base64=""
+            Base64-encoded PGP private key (default $WERF_ELF_PGP_PRIVATE_KEY_BASE64)
+      --elf-pgp-private-key-fingerprint=""
+            PGP private key fingerprint (default $WERF_ELF_PGP_PRIVATE_KEY_FINGERPRINT)
+      --elf-pgp-private-key-passphrase=""
+            Passphrase for the PGP private key (default $WERF_ELF_PGP_PRIVATE_KEY_PASSPHRASE)
       --env=""
             Use specified environment (default $WERF_ENV)
       --final-images-only=true
@@ -298,6 +311,23 @@ werf bundle publish [IMAGE_NAME...] [options]
             with commas: key1=val1,key2=val2).
             Also, can be defined with $WERF_SET_STRING_* (e.g. $WERF_SET_STRING_1=key1=val1,        
             $WERF_SET_STRING_2=key2=val2)
+      --sign-cert=""
+            The leaf certificate as path to PEM file or base64-encoded PEM (default $WERF_SIGN_CERT)
+      --sign-elf-files=false
+            Enable ELF files signing (default $WERF_SIGN_ELF_FILES).
+            When enabled, the private signing key must be specified with --sign-key option and the  
+            certificate must be specified with --sign-cert option
+      --sign-intermediates=""
+            The intermediate certificates as path to PEM file or base64-encoded PEM (default        
+            $WERF_SIGN_INTERMEDIATES)
+      --sign-key=""
+            The private signing key as path to PEM file, base64-encoded PEM or hashivault://[KEY]   
+            (default $WERF_SIGN_KEY)
+      --sign-manifest=false
+            Enable image manifest signing (default $WERF_SIGN_MANIFEST).
+            When enabled,
+            the private signing key must be specified with --sign-key option and
+            the certificate must be specified with --sign-cert option
   -L, --skip-dependencies-repo-refresh=false
             Do not refresh helm chart repositories locally cached index
       --skip-image-spec-stage=false
