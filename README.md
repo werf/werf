@@ -18,10 +18,6 @@ Deckhouse Delivery Kit is a CLI tool (part of [Deckhouse CLI](https://github.com
 
 It is built on top of the Open Source werf project, adding native Deckhouse ecosystem integration and extended supply chain security features.
 
-## Contributing
-
-This [contributing guide](https://github.com/deckhouse/delivery-kit/blob/main/CONTRIBUTING.md) outlines the process to help get your contribution accepted.
-
 ## License
 
 Apache License 2.0, see [LICENSE](LICENSE).
