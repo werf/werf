@@ -39,4 +39,3 @@ func (builder *LegacyStapelStageBuilder) Build(ctx context.Context, opts contain
 func (builder *LegacyStapelStageBuilder) Cleanup(_ context.Context) error {
 	return nil
 }
-
