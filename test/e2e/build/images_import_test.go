@@ -34,6 +34,7 @@ var _ = DescribeTable(
 			CommonOptions: werf.CommonOptions{ShouldFail: testOpts.shouldFail},
 		})
 		Expect(buildOut).To(ContainSubstring("Building stage"))
+		Expect(buildOut).To(ContainSubstring("import[image=stapel-hello add=/test to=/ includePaths=[**/*]]"))
 		Expect(buildOut).To(ContainSubstring("nothing to import"))
 	},
 	Entry(

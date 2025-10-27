@@ -82,22 +82,10 @@ func (s *DependenciesStage) GetDependencies(ctx context.Context, c Conveyor, cb 
 				if err != nil {
 					return fmt.Errorf("unable to get import %d source checksum: %w", ind, err)
 				} else if sourceChecksum == nothingChecksum {
-					return ErrNothingToImport
+					return fmt.Errorf("%s: %w", formatImportTitle(elm), ErrNothingToImport)
 				}
 
-				var importTitle string
-				{
-					importTitle = fmt.Sprintf("image=%s add=%s to=%s", elm.ImageName, elm.Add, elm.To)
-					if len(elm.IncludePaths) != 0 {
-						importTitle += fmt.Sprintf(" includePaths=%v", elm.IncludePaths)
-					}
-					if len(elm.ExcludePaths) != 0 {
-						importTitle += fmt.Sprintf(" excludePaths=%v", elm.ExcludePaths)
-					}
-					importTitle = fmt.Sprintf("import[%s]", importTitle)
-				}
-
-				logboek.Context(ctx).Default().LogF("%s: %s\n", sourceChecksum, importTitle)
+				logboek.Context(ctx).Default().LogF("%s: %s\n", sourceChecksum, formatImportTitle(elm))
 
 				args = append(args, sourceChecksum)
 				args = append(args, elm.To)
@@ -117,6 +105,17 @@ func (s *DependenciesStage) GetDependencies(ctx context.Context, c Conveyor, cb 
 	}
 
 	return util.Sha256Hash(args...), nil
+}
+
+func formatImportTitle(elm *config.Import) string {
+	title := fmt.Sprintf("image=%s add=%s to=%s", elm.ImageName, elm.Add, elm.To)
+	if len(elm.IncludePaths) != 0 {
+		title += fmt.Sprintf(" includePaths=%v", elm.IncludePaths)
+	}
+	if len(elm.ExcludePaths) != 0 {
+		title += fmt.Sprintf(" excludePaths=%v", elm.ExcludePaths)
+	}
+	return fmt.Sprintf("import[%s]", title)
 }
 
 func (s *DependenciesStage) prepareImageWithLegacyStapelBuilder(ctx context.Context, c Conveyor, cr container_backend.ContainerBackend, _, stageImage *StageImage) error {
