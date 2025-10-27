@@ -1271,6 +1271,10 @@ E.g.:
 - automatically with werf cleanup command
 - manually with werf purge or werf host purge commands`)
 			logboek.Context(ctx).Warn().LogLn()
+			logboek.Context(ctx).Warn().LogLn(reasonNumberFunc() + `You are using --require-built-images flag (or WERF_REQUIRE_BUILT_IMAGES env) which requires images to be already built:
+- If you expect images to be built and available in the registry, check the reasons above
+- If you want to build images instead of requiring them to be already built, remove --require-built-images flag / WERF_REQUIRE_BUILT_IMAGES env`)
+			logboek.Context(ctx).Warn().LogLn()
 		})
 }
 
