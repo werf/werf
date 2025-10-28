@@ -29,8 +29,8 @@ func LocalDockerRegistryRun() (string, string, string) {
 
 	inspect := ContainerInspect(containerName)
 	Expect(inspect.NetworkSettings).ShouldNot(BeNil())
-	Expect(inspect.NetworkSettings.IPAddress).ShouldNot(BeEmpty())
-	registryInternalAddress := fmt.Sprintf("%s:%d", inspect.NetworkSettings.IPAddress, 5000)
+	Expect(inspect.NetworkSettings.Networks["bridge"].IPAddress).ShouldNot(BeEmpty())
+	registryInternalAddress := fmt.Sprintf("%s:%d", inspect.NetworkSettings.Networks["bridge"].IPAddress, 5000)
 
 	registryLocalAddress := fmt.Sprintf("localhost:%d", port)
 	registryWithScheme := fmt.Sprintf("http://%s", registryLocalAddress)
