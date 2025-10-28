@@ -3,7 +3,10 @@ package config
 import (
 	"path"
 	"path/filepath"
+	"slices"
 	"strings"
+
+	"github.com/samber/lo"
 )
 
 type autoExcludeExport interface {
@@ -28,7 +31,7 @@ type ExportBase struct {
 }
 
 func (c *ExportBase) AutoExcludeExportAndCheck(exp autoExcludeExport) bool {
-	if !isSubPath(c.To, exp.GetTo()) {
+	if !isSubPath(c.GetTo(), exp.GetTo()) {
 		return true
 	}
 
@@ -36,22 +39,21 @@ func (c *ExportBase) AutoExcludeExportAndCheck(exp autoExcludeExport) bool {
 		return false
 	}
 
-loop:
+	isIncludedSubPath := func(path string) bool {
+		return lo.SomeBy(c.GetIncludePathsForAutoExclude(), func(includePath string) bool {
+			return isSubPath(includePath, path)
+		})
+	}
+
+	isExcludedSubPath := func(path string) bool {
+		return lo.SomeBy(c.GetExcludePathsForAutoExclude(), func(excludePath string) bool {
+			return isSubPath(excludePath, path)
+		})
+	}
+
 	for _, expIncludePath := range exp.GetIncludePathsForAutoExclude() {
-		for _, includePath := range c.GetIncludePathsForAutoExclude() {
-			if expIncludePath == includePath {
-				return false
-			}
-
-			if isSubPath(expIncludePath, includePath) {
-				continue loop
-			}
-		}
-
-		for _, excludePath := range c.GetExcludePathsForAutoExclude() {
-			if isSubPath(excludePath, expIncludePath) {
-				continue loop
-			}
+		if isIncludedSubPath(expIncludePath) || isExcludedSubPath(expIncludePath) {
+			continue
 		}
 
 		extraExcludePath, err := filepath.Rel(path.Join(c.GetTo()), path.Join("/", expIncludePath)) // TODO rel
@@ -79,12 +81,16 @@ func (c *ExportBase) GetIncludePathsForAutoExclude() []string {
 	if len(c.IncludePaths) == 0 && pathPrefix != "" {
 		return []string{pathPrefix}
 	} else {
-		var validateIncludePaths []string
+		validateIncludePaths := make([]string, 0, len(c.IncludePaths))
+
 		for _, p := range c.IncludePaths {
+			if isEverythingGlob(p) {
+				continue
+			}
 			validateIncludePaths = append(validateIncludePaths, path.Join(pathPrefix, p))
 		}
 
-		return validateIncludePaths
+		return slices.Clip(validateIncludePaths)
 	}
 }
 
@@ -94,12 +100,16 @@ func (c *ExportBase) GetExcludePathsForAutoExclude() []string {
 		pathPrefix = c.To[1:len(c.To)]
 	}
 
-	var validateExcludePaths []string
+	validateExcludePaths := make([]string, 0, len(c.ExcludePaths))
+
 	for _, p := range c.ExcludePaths {
+		if isEverythingGlob(p) {
+			continue
+		}
 		validateExcludePaths = append(validateExcludePaths, path.Join(pathPrefix, p))
 	}
 
-	return validateExcludePaths
+	return slices.Clip(validateExcludePaths)
 }
 
 func (c *ExportBase) GetTo() string {
@@ -127,4 +137,8 @@ func (c *ExportBase) validate() error {
 	default:
 		return nil
 	}
+}
+
+func isEverythingGlob(path string) bool {
+	return strings.HasSuffix(path, "**/*") || strings.HasSuffix(path, "*")
 }
