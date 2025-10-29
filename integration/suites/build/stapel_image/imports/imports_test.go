@@ -23,7 +23,7 @@ func werfRunOutput(ctx context.Context, dir string, extraArgs ...string) string 
 	return string(output)
 }
 
-func werfRunOutputWithSpecificImage(ctx context.Context, dir string, image string, extraArgs ...string) string {
+func werfRunOutputWithSpecificImage(ctx context.Context, dir, image string, extraArgs ...string) string {
 	output, _ := utils.RunCommandWithOptions(ctx, dir, SuiteData.WerfBinPath, append([]string{"run", image, "--"}, extraArgs...), utils.RunCommandOptions{ShouldSucceed: true})
 	return string(output)
 }
@@ -147,7 +147,16 @@ var _ = Describe("Stapel imports", func() {
 				output := werfRunOutputWithSpecificImage(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), fmt.Sprintf("test-import-%d", i), "ls", "/etc/test/busybox")
 				Expect(output).To(ContainSubstring(`/etc/test/busybox`))
 			}
+		})
+		It("should import file with correct owner and group", func(ctx SpecContext) {
+			SuiteData.CommitProjectWorktree(ctx, SuiteData.ProjectName, utils.FixturePath("import_app_owner_group", "001"), "initial commit")
 
+			Expect(werfBuild(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{})).To(Succeed())
+
+			output := werfRunOutput(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName),
+				"sh", "-c", "stat -c %u:%g /etc/test/busybox")
+
+			Expect(output).To(ContainSubstring("11111:11111"))
 		})
 	})
 

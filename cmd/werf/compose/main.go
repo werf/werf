@@ -11,6 +11,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 
 	"github.com/werf/common-go/pkg/graceful"
@@ -309,7 +310,7 @@ func newCmd(ctx context.Context, composeCmdName string, options *newCmdOptions) 
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified repo")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
-	common.SetupInsecureHelmDependencies(&commonCmdData, cmd, true)
+	common.StubSetupInsecureHelmDependencies(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
 
@@ -317,9 +318,6 @@ func newCmd(ctx context.Context, composeCmdName string, options *newCmdOptions) 
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
 	common.SetupSynchronization(&commonCmdData, cmd)
-	common.SetupKubeConfig(&commonCmdData, cmd)
-	common.SetupKubeConfigBase64(&commonCmdData, cmd)
-	common.SetupKubeContext(&commonCmdData, cmd)
 
 	common.SetupDryRun(&commonCmdData, cmd)
 
@@ -344,6 +342,8 @@ func newCmd(ctx context.Context, composeCmdName string, options *newCmdOptions) 
 
 	commonCmdData.SetupSkipImageSpecStage(cmd)
 	commonCmdData.SetupAllowIncludesUpdate(cmd)
+
+	lo.Must0(common.SetupMinimalKubeConnectionFlags(&commonCmdData, cmd))
 
 	return cmd
 }
@@ -446,7 +446,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 
 	var envArray []string
 	if !imagesToProcess.WithoutImages && shouldBeBuilt {
-		common.SetupOndemandKubeInitializer(*commonCmdData.KubeContext, *commonCmdData.KubeConfig, *commonCmdData.KubeConfigBase64, *commonCmdData.KubeConfigPathMergeList)
+		common.SetupOndemandKubeInitializer(commonCmdData.KubeContextCurrent, commonCmdData.LegacyKubeConfigPath, commonCmdData.KubeConfigBase64, commonCmdData.LegacyKubeConfigPathsMergeList)
 		if err := common.GetOndemandKubeInitializer().Init(ctx); err != nil {
 			return err
 		}

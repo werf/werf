@@ -4,10 +4,6 @@ import (
 	"context"
 	"fmt"
 	"sort"
-
-	"github.com/hashicorp/go-version"
-
-	"github.com/werf/werf/v2/pkg/docker"
 )
 
 type LegacyCommitChangeOptions struct {
@@ -256,14 +252,10 @@ func (co *LegacyStageImageContainerOptions) prepareCommitChanges(ctx context.Con
 	}
 
 	var entrypoint string
-	var err error
 	if co.Entrypoint != "" {
 		entrypoint = co.Entrypoint
 	} else {
-		entrypoint, err = getEmptyEntrypointInstructionValue(ctx, co.dockerServerVersion)
-		if err != nil {
-			return nil, fmt.Errorf("container options preparing failed: %w", err)
-		}
+		entrypoint = "[\"\"]"
 	}
 
 	args = append(args, fmt.Sprintf("ENTRYPOINT %s", entrypoint))
@@ -279,36 +271,6 @@ func (co *LegacyStageImageContainerOptions) prepareCommitChanges(ctx context.Con
 	}
 
 	return args, nil
-}
-
-func getEmptyEntrypointInstructionValue(ctx context.Context, dockerServerVersion string) (string, error) {
-	var rawServerVersion string
-
-	if dockerServerVersion == "" {
-		v, err := docker.ServerVersion(ctx)
-		if err != nil {
-			return "", fmt.Errorf("unable to query docker server version: %w", err)
-		}
-		rawServerVersion = v.Version
-	} else {
-		rawServerVersion = dockerServerVersion
-	}
-
-	serverVersion, err := version.NewVersion(rawServerVersion)
-	if err != nil {
-		return "", err
-	}
-
-	serverVersionMajor := serverVersion.Segments()[0]
-	if serverVersionMajor >= 17 {
-		serverVersionMinor := serverVersion.Segments()[1]
-		isOldValueFormat := serverVersionMajor == 17 && serverVersionMinor < 10
-		if isOldValueFormat {
-			return "[]", nil
-		}
-	}
-
-	return "[\"\"]", nil
 }
 
 // FIXME: remove escaping in 2.0 or 1.3

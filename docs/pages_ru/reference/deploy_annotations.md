@@ -10,6 +10,9 @@ toc: false
  - [`werf.io/deploy-dependency-ANY_NAME`](#resource-dependencies) — задать зависимость от другого ресурса, что повлияет на порядок развертывания ресурсов.
  - [`<any-name>.external-dependency.werf.io/resource`](#external-dependency-resource) — дождаться, пока указанная внешняя зависимость будет запущена, и только после этого приступить к развертыванию аннотированного ресурса.
  - [`<any-name>.external-dependency.werf.io/namespace`](#external-dependency-namespace) — задать пространство имен для внешней зависимости.
+ - [`werf.io/ownership`](#resource-ownership) — определяет, как обрабатывается удаление ресурса и управление аннотациями релиза.
+ - [`werf.io/deploy-on`](#conditional-resource-deployment) — определяет, когда рендерить ресурс для выката и на каких стадиях он должен быть задеплоен.
+ - [`werf.io/delete-policy`](#resource-delete-policy) — управляет удалением ресурса во время его выката.
  - [`werf.io/replicas-on-creation`](#replicas-on-creation) — задаёт количество реплик, которое должно быть установлено при первичном создании ресурса (полезно при использовании HPA).
  - [`werf.io/track-termination-mode`](#track-termination-mode) — определяет условие при котором werf остановит отслеживание ресурса.
  - [`werf.io/fail-mode`](#fail-mode) — определяет как werf обработает ресурс в состоянии ошибки. Ресурс в свою очередь перейдет в состояние ошибки после превышения порога допустимых ошибок, обнаруженных при отслеживании этого ресурса в процессе выката.
@@ -78,6 +81,40 @@ toc: false
 `<any-name>.external-dependency.werf.io/namespace: name`
 
 Указывает пространство имен для внешней зависимости, заданной [соответствующей аннотацией](#external-dependency-resource). Префикс `<any-name>` должен быть таким же, как у аннотации, определяющей внешнюю зависимость.
+
+## Resource ownership
+
+`werf.io/ownership: release|anyone`
+
+Определяет, как обрабатывается удаление ресурса и управление аннотациями релиза. Допустимые значения:
+ * `release`: ресурс удаляется, если он удалён из чарта или при удалении релиза, а аннотации релиза применяются/проверяются во время выката.
+ * `anyone`: поведение, обратное от `release` — ресурс никогда не удаляется при удалении релиза или удалении из чарта, а аннотации релиза не применяются/не проверяются во время выката.
+
+Обычные ресурсы по умолчанию имеют владельцем `release`, а хуки и CRD из директории `crds` — `anyone`.
+
+## Conditional resource deployment
+
+`werf.io/deploy-on: pre-install|install|post-install|pre-upgrade|upgrade|post-upgrade|pre-rollback|rollback|post-rollback|pre-delete|delete|post-delete`
+
+Определяет, когда рендерить ресурс для выката и на каких стадиях он должен быть задеплоен. Возможные значения:
+ * `pre-install`, `install`, `post-install` — рендерить только при установке релиза
+ * `pre-upgrade`, `upgrade`, `post-upgrade` — рендерить только при обновлении релиза
+ * `pre-rollback`, `rollback`, `post-rollback` — рендерить только при откате релиза
+ * `pre-delete`, `delete`, `post-delete` — рендерить только при удалении релиза
+
+По умолчанию для обычных ресурсов используется значение `install,upgrade,rollback`, для хуков — значения из `helm.sh/hook`.
+
+## Resource delete policy
+
+`werf.io/delete-policy: before-creation|before-creation-if-immutable|succeeded|failed`
+
+Аннотация `werf.io/delete-policy` управляет удалением ресурса во время его выката и вдохновлена аннотацией `helm.sh/hook-delete-policy`. Допустимые значения:
+* `before-creation`: ресурс всегда пересоздаётся
+* `before-creation-if-immutable`: ресурс пересоздаётся только если при обновлении ресурса мы получили ошибку `field is immutable`
+* `succeeded`: ресурс удаляется после успешной проверки готовности
+* `failed`: ресурс удаляется, если проверка готовности завершилась неудачно
+
+По умолчанию для обычных ресурсов политика удаления не задана, а для хуков значения берутся из `helm.sh/hook-delete-policy` и преобразуются в значения в `werf.io/delete-policy`.
 
 ## Replicas on creation
 

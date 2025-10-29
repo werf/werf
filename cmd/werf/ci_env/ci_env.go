@@ -568,7 +568,7 @@ func createSourceFile(data []byte) (string, error) {
 			tempFilePattern = fmt.Sprintf(".env_%d_*", time.Now().Unix())
 		}
 
-		f, err = ioutil.TempFile(sourceDir, tempFilePattern)
+		f, err = os.CreateTemp(sourceDir, tempFilePattern)
 		if err != nil {
 			return "", err
 		}

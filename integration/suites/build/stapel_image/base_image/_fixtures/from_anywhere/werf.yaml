@@ -8,5 +8,8 @@ from: alpine
 image: FromImage
 from: FromExternalImage
 ---
-image: FromImageAlias
+artifact: FromImageAlias
 fromImage: FromImage
+---
+image: FromArtifact
+fromArtifact: FromImageAlias

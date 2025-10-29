@@ -10,6 +10,7 @@ import (
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
 	"github.com/werf/werf/v2/pkg/tmp_manager"
+	"github.com/werf/werf/v2/pkg/werf"
 	"github.com/werf/werf/v2/pkg/werf/exec"
 )
 
@@ -113,7 +114,11 @@ func RunHostCleanup(ctx context.Context, backend container_backend.ContainerBack
 	allowedLocalCacheVolumeUsageMarginPercentage := getOptionValueOrDefault(options.AllowedLocalCacheVolumeUsageMarginPercentage, DefaultAllowedLocalCacheVolumeUsageMarginPercentage)
 
 	if err := logboek.Context(ctx).Default().LogProcess("Running GC for git data").DoError(func() error {
-		if err := gitdata.RunGC(ctx, allowedLocalCacheVolumeUsagePercentage, allowedLocalCacheVolumeUsageMarginPercentage); err != nil {
+		if err := gitdata.RunGC(ctx, gitdata.RunGCOptions{
+			AllowedLocalCacheVolumeUsagePercentage:       allowedLocalCacheVolumeUsagePercentage,
+			AllowedLocalCacheVolumeUsageMarginPercentage: allowedLocalCacheVolumeUsageMarginPercentage,
+			DryRun: options.DryRun,
+		}); err != nil {
 			return fmt.Errorf("git repo GC failed: %w", err)
 		}
 		return nil
@@ -124,7 +129,7 @@ func RunHostCleanup(ctx context.Context, backend container_backend.ContainerBack
 	allowedBackendStorageVolumeUsagePercentage := getOptionValueOrDefault(options.AllowedBackendStorageVolumeUsagePercentage, DefaultAllowedBackendStorageVolumeUsagePercentage)
 	allowedBackendStorageVolumeUsageMarginPercentage := getOptionValueOrDefault(options.AllowedBackendStorageVolumeUsageMarginPercentage, DefaultAllowedBackendStorageVolumeUsageMarginPercentage)
 
-	cleaner, err := NewLocalBackendCleaner(backend)
+	cleaner, err := NewLocalBackendCleaner(backend, werf.HostLocker().Locker())
 	if errors.Is(err, ErrUnsupportedContainerBackend) {
 		// if cleaner not implemented, skip cleaning
 		return nil
@@ -176,7 +181,7 @@ func shouldRunAutoHostCleanup(ctx context.Context, backend container_backend.Con
 
 	allowedBackendStorageVolumeUsagePercentage := getOptionValueOrDefault(options.AllowedBackendStorageVolumeUsagePercentage, DefaultAllowedBackendStorageVolumeUsagePercentage)
 
-	cleaner, err := NewLocalBackendCleaner(backend)
+	cleaner, err := NewLocalBackendCleaner(backend, werf.HostLocker().Locker())
 	if errors.Is(err, ErrUnsupportedContainerBackend) {
 		// if cleaner not implemented, skip cleaning
 		return false, nil
@@ -189,7 +194,7 @@ func shouldRunAutoHostCleanup(ctx context.Context, backend container_backend.Con
 		StoragePath:                         *options.BackendStoragePath,
 	})
 	if err != nil {
-		return false, fmt.Errorf("failed to check local docker server host cleaner GC: %w", err)
+		return false, fmt.Errorf("failed to check local %s backend GC: %w", cleaner.BackendName(), err)
 	}
 	if shouldRun {
 		return true, nil

@@ -58,6 +58,7 @@ func NewManager(ctx context.Context, configRelPath, projectDir string, localGitR
 		Inspector:              i,
 		CreateIncludesLockFile: options.CreateIncludesLockFile,
 		AllowIncludesUpdate:    options.AllowIncludesUpdate,
+		LocalGitRepo:           sharedOptions.localGitRepo,
 	})
 	if err != nil {
 		return nil, err
@@ -101,7 +102,7 @@ func (s *sharedOptions) RelativeToGitProjectDir() string {
 	return util.GetRelativeToBaseFilepath(s.localGitRepo.WorkTreeDir, s.projectDir)
 }
 
-func (s *sharedOptions) HeadCommit() string {
+func (s *sharedOptions) HeadCommit(_ context.Context) string {
 	return s.headCommit
 }
 

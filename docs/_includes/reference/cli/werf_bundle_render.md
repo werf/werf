@@ -39,30 +39,10 @@ werf bundle render [options]
             $WERF_ADD_LABEL_1=labelName1=labelValue1, $WERF_ADD_LABEL_2=labelName2=labelValue2)
   -b, --bundle-dir=""
             Get extracted bundle from directory instead of registry (default $WERF_BUNDLE_DIR)
-      --config=""
-            Use custom configuration file (default $WERF_CONFIG or werf.yaml in the project         
-            directory)
-      --config-templates-dir=""
-            Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf   
-            in working directory)
       --container-registry-mirror=[]
             (Buildah-only) Use specified mirrors for docker.io
       --debug-templates=false
             Enable debug mode for Go templates (default $WERF_DEBUG_TEMPLATES or false)
-      --dev=false
-            Enable development mode (default $WERF_DEV).
-            The mode allows working with project files without doing redundant commits during       
-            debugging and development
-      --dev-branch="_werf-dev"
-            Set dev git branch name (default $WERF_DEV_BRANCH or "_werf-dev")
-      --dev-ignore=[]
-            Add rules to ignore tracked and untracked changes in development mode (can specify      
-            multiple).
-            Also, can be specified with $WERF_DEV_IGNORE_* (e.g. $WERF_DEV_IGNORE_TESTS=*_test.go,  
-            $WERF_DEV_IGNORE_DOCS=path/to/docs)
-      --dir=""
-            Use specified project directory where project’s werf.yaml and other configuration files 
-            should reside (default $WERF_DIR or current working directory)
       --disable-default-secret-values=false
             Do not use secret values from the default .helm/secret-values.yaml file (default        
             $WERF_DISABLE_DEFAULT_SECRET_VALUES or false)
@@ -79,12 +59,6 @@ werf bundle render [options]
       --force-adoption=false
             Always adopt resources, even if they belong to a different Helm release (default        
             $WERF_FORCE_ADOPTION or false)
-      --git-work-tree=""
-            Use specified git work tree dir (default $WERF_WORK_TREE or lookup for directory that   
-            contains .git in the current or parent directories)
-      --giterminism-config=""
-            Custom path to the giterminism configuration file relative to working directory         
-            (default $WERF_GITERMINISM_CONFIG or werf-giterminism.yaml in working directory)
       --home-dir=""
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --ignore-secret-key=false
@@ -146,8 +120,6 @@ werf bundle render [options]
             Specify custom log time format (default $WERF_LOG_TIME_FORMAT or RFC3339 format).
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
-      --loose-giterminism=false
-            Loose werf giterminism mode restrictions
       --namespace=""
             Use specified Kubernetes namespace (default $WERF_NAMESPACE)
       --network-parallelism=30
@@ -157,6 +129,9 @@ werf bundle render [options]
             default)
       --release=""
             Use specified Helm release name (default $WERF_RELEASE)
+      --release-storage-sql-connection=""
+            SQL Connection String for Helm SQL Storage (default                                     
+            $WERF_RELEASE_STORAGE_SQL_CONNECTION)
       --repo=""
             Container registry storage address (default $WERF_REPO)
       --repo-container-registry=""
@@ -179,10 +154,12 @@ werf bundle render [options]
             repo Harbor username (default $WERF_REPO_HARBOR_USERNAME)
       --repo-quay-token=""
             repo quay.io token (default $WERF_REPO_QUAY_TOKEN)
+      --secret-key=""
+            Secret key (default $WERF_SECRET_KEY)
       --secret-values=[]
             Specify helm secret values in a YAML file (can specify multiple). Also, can be defined  
-            with $WERF_SECRET_VALUES_* (e.g. $WERF_SECRET_VALUES_ENV=secret_values_test.yaml,       
-            $WERF_SECRET_VALUES_DB=secret_values_db.yaml)
+            with $WERF_SECRET_VALUES_* (e.g. $WERF_SECRET_VALUES_ENV=.helm/secret_values_test.yaml, 
+            $WERF_SECRET_VALUES_DB=.helm/secret_values_db.yaml)
       --set=[]
             Set helm values on the command line (can specify multiple or separate values with       
             commas: key1=val1,key2=val2).
@@ -195,6 +172,13 @@ werf bundle render [options]
             or separate values with commas: key1=path1,key2=path2).
             Also, can be defined with $WERF_SET_FILE_* (e.g. $WERF_SET_FILE_1=key1=path1,           
             $WERF_SET_FILE_2=key2=val2)
+      --set-runtime-json=[]
+            Set new keys in $.Runtime, where the key is the value path and the value is JSON. This  
+            is meant to be generated inside the program, so use --set-json instead, unless you know 
+            what you are doing. Can specify multiple or separate values with commas:                
+            key1=val1,key2=val2.
+            Also, can be defined with $WERF_SET_RUNTIME_JSON_* (e.g.                                
+            $WERF_SET_RUNTIME_JSON_1=key1=val1, $WERF_SET_RUNTIME_JSON_2=key2=val2)
       --set-string=[]
             Set STRING helm values on the command line (can specify multiple or separate values     
             with commas: key1=val1,key2=val2).
@@ -223,7 +207,7 @@ werf bundle render [options]
             (default $WERF_VALIDATE)
       --values=[]
             Specify helm values in a YAML file or a URL (can specify multiple). Also, can be        
-            defined with $WERF_VALUES_* (e.g. $WERF_VALUES_1=values_1.yaml,                         
-            $WERF_VALUES_2=values_2.yaml)
+            defined with $WERF_VALUES_* (e.g. $WERF_VALUES_1=.helm/values_1.yaml,                   
+            $WERF_VALUES_2=.helm/values_2.yaml)
 ```
 

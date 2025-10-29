@@ -74,7 +74,7 @@ func OpenLocalRepo(ctx context.Context, name, workTreeDir string, opts OpenLocal
 		}
 
 		devHeadCommit, err := true_git.SyncSourceWorktreeWithServiceBranch(
-			context.Background(),
+			ctx,
 			l.GitDir,
 			l.WorkTreeDir,
 			l.getRepoWorkTreeCacheDir(l.getRepoID()),

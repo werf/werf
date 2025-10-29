@@ -187,14 +187,13 @@ werf converge --repo registry.mydomain.com/web --env production
             (default $WERF_GITERMINISM_CONFIG or werf-giterminism.yaml in working directory)
       --home-dir=""
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
-      --hooks-status-progress-period=5
-            Hooks status progress period in seconds. Set 0 to stop showing hooks status progress.   
-            Defaults to $WERF_HOOKS_STATUS_PROGRESS_PERIOD_SECONDS or status progress period value
+      --hooks-status-progress-period=0
+            No-op
       --ignore-secret-key=false
             Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)
       --insecure-helm-dependencies=false
-            Allow insecure oci registries to be used in the .helm/Chart.yaml dependencies           
-            configuration (default $WERF_INSECURE_HELM_DEPENDENCIES)
+            Allow insecure oci registries to be used in the Chart.yaml dependencies configuration   
+            (default $WERF_INSECURE_HELM_DEPENDENCIES)
       --insecure-registry=false
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
       --introspect-before-error=false
@@ -273,11 +272,18 @@ werf converge --repo registry.mydomain.com/web --env production
             deploy.namespace custom template from werf.yaml or $WERF_NAMESPACE)
       --network-parallelism=30
             Parallelize some network operations (default $WERF_NETWORK_PARALLELISM or 30)
+      --no-final-tracking=false
+            By default disable tracking operations that have no create/update/delete resource       
+            operations after them, which are most tracking operations, to speed up the release      
+            (default $WERF_NO_FINAL_TRACKING)
       --no-install-crds=false
             Do not install CRDs from "crds/" directories of installed charts (default               
             $WERF_NO_INSTALL_CRDS)
       --no-pod-logs=false
             Disable Pod logs collection and printing (default $WERF_NO_POD_LOGS or false)
+      --no-remove-manual-changes=false
+            Don`t remove fields added manually to the resource in the cluster if fields aren`t      
+            present in the manifest (default $WERF_NO_REMOVE_MANUAL_CHANGES)
   -p, --parallel=true
             Run in parallel (default $WERF_PARALLEL or true)
       --parallel-tasks-limit=5
@@ -296,6 +302,9 @@ werf converge --repo registry.mydomain.com/web --env production
             Also, can be specified with $WERF_RELEASE_LABEL_* (e.g.                                 
             $WERF_RELEASE_LABEL_1=labelName1=labelValue1,                                           
             $WERF_RELEASE_LABEL_2=labelName2=labelValue2)
+      --release-storage-sql-connection=""
+            SQL Connection String for Helm SQL Storage (default                                     
+            $WERF_RELEASE_STORAGE_SQL_CONNECTION)
       --releases-history-max=5
             Max releases to keep in release storage ($WERF_RELEASES_HISTORY_MAX or 5 by default)
       --render-subchart-notes=false
@@ -341,6 +350,8 @@ werf converge --repo registry.mydomain.com/web --env production
             cache.
             Also, can be specified with $WERF_SECONDARY_REPO_* (e.g. $WERF_SECONDARY_REPO_1=...,    
             $WERF_SECONDARY_REPO_2=...)
+      --secret-key=""
+            Secret key (default $WERF_SECRET_KEY)
       --secret-values=[]
             Specify helm secret values in a YAML file (can specify multiple). Also, can be defined  
             with $WERF_SECRET_VALUES_* (e.g. $WERF_SECRET_VALUES_ENV=.helm/secret_values_test.yaml, 
@@ -357,6 +368,13 @@ werf converge --repo registry.mydomain.com/web --env production
             or separate values with commas: key1=path1,key2=path2).
             Also, can be defined with $WERF_SET_FILE_* (e.g. $WERF_SET_FILE_1=key1=path1,           
             $WERF_SET_FILE_2=key2=val2)
+      --set-runtime-json=[]
+            Set new keys in $.Runtime, where the key is the value path and the value is JSON. This  
+            is meant to be generated inside the program, so use --set-json instead, unless you know 
+            what you are doing. Can specify multiple or separate values with commas:                
+            key1=val1,key2=val2.
+            Also, can be defined with $WERF_SET_RUNTIME_JSON_* (e.g.                                
+            $WERF_SET_RUNTIME_JSON_1=key1=val1, $WERF_SET_RUNTIME_JSON_2=key2=val2)
       --set-string=[]
             Set STRING helm values on the command line (can specify multiple or separate values     
             with commas: key1=val1,key2=val2).

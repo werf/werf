@@ -551,13 +551,8 @@ func (m *StorageManager) FetchStage(ctx context.Context, containerBackend contai
 				return doFetchStage(ctx, m.ProjectName, m.StagesStorage, *stageID, img.Image)
 			})
 
-		if IsErrStageNotFound(err) {
-			logboek.Context(ctx).Error().LogF("Stage %s image %s is no longer available!\n", stg.LogDetailedName(), stg.GetStageImage().Image.Name())
-			return FetchStageInfo{}, ErrUnexpectedStagesStorageState
-		}
-
-		if storage.IsErrBrokenImage(err) {
-			logboek.Context(ctx).Error().LogF("Broken stage %s image %s!\n", stg.LogDetailedName(), stg.GetStageImage().Image.Name())
+		if IsErrStageNotFound(err) || storage.IsErrBrokenImage(err) {
+			logboek.Context(ctx).Error().LogF("Stage %s image %s is no longer available: %s!\n", stg.LogDetailedName(), stg.GetStageImage().Image.Name(), err)
 
 			logboek.Context(ctx).Error().LogF("Will mark image %s as rejected in the stages storage %s\n", stg.GetStageImage().Image.Name(), m.StagesStorage.String())
 			if err := m.StagesStorage.RejectStage(ctx, m.ProjectName, stageID.Digest, stageID.CreationTs); err != nil {

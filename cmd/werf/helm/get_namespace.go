@@ -77,7 +77,7 @@ func runGetNamespace(ctx context.Context) error {
 		return fmt.Errorf("unable to load werf config: %w", err)
 	}
 
-	namespace, err := deploy_params.GetKubernetesNamespace("", *getNamespaceCmdData.Environment, werfConfig)
+	namespace, err := deploy_params.GetKubernetesNamespace("", getNamespaceCmdData.Environment, werfConfig)
 	if err != nil {
 		return err
 	}

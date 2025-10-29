@@ -3,6 +3,7 @@ package volumeutils
 import (
 	"context"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 
@@ -16,6 +17,13 @@ type VolumeUsage struct {
 
 func (vu VolumeUsage) Percentage() float64 {
 	return (float64(vu.UsedBytes) / float64(vu.TotalBytes)) * 100
+}
+
+func (vu VolumeUsage) BytesToFree(targetVolumeUsagePercentage float64) uint64 {
+	diffPercentage := vu.Percentage() - targetVolumeUsagePercentage
+	allowedVolumeUsageToFree := math.Max(diffPercentage, 0)
+	bytesToFree := uint64((float64(vu.TotalBytes) / 100.0) * allowedVolumeUsageToFree)
+	return bytesToFree
 }
 
 func GetVolumeUsageByPath(ctx context.Context, path string) (VolumeUsage, error) {

@@ -26,9 +26,8 @@ werf helm dependency list CHART [flags] [options]
 {{ header }} Options inherited from parent commands
 
 ```shell
-      --hooks-status-progress-period=5
-            Hooks status progress period in seconds. Set 0 to stop showing hooks status progress.   
-            Defaults to $WERF_HOOKS_STATUS_PROGRESS_PERIOD_SECONDS or status progress period value
+      --hooks-status-progress-period=0
+            No-op
       --kube-config=""
             Kubernetes config file path (default $WERF_KUBE_CONFIG, or $WERF_KUBECONFIG, or         
             $KUBECONFIG)

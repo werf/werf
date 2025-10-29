@@ -101,7 +101,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified repo and to pull base images")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
-	common.SetupInsecureHelmDependencies(&commonCmdData, cmd, true)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
 
@@ -110,22 +109,9 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupSynchronization(&commonCmdData, cmd)
 
-	common.SetupKubeConfig(&commonCmdData, cmd)
-	common.SetupKubeConfigBase64(&commonCmdData, cmd)
-	common.SetupKubeContext(&commonCmdData, cmd)
-
 	common.SetupAddAnnotations(&commonCmdData, cmd)
 	common.SetupAddLabels(&commonCmdData, cmd)
 
-	common.SetupSet(&commonCmdData, cmd)
-	common.SetupSetString(&commonCmdData, cmd)
-	common.SetupSetFile(&commonCmdData, cmd)
-	common.SetupValues(&commonCmdData, cmd, true)
-	common.SetupSecretValues(&commonCmdData, cmd, true)
-	common.SetupIgnoreSecretKey(&commonCmdData, cmd)
-
-	commonCmdData.SetupDisableDefaultValues(cmd)
-	commonCmdData.SetupDisableDefaultSecretValues(cmd)
 	commonCmdData.SetupSkipDependenciesRepoRefresh(cmd)
 
 	common.SetupSaveBuildReport(&commonCmdData, cmd)
@@ -161,6 +147,11 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	}
 	cmd.Flags().StringVarP(&cmdData.Tag, "tag", "", defaultTag, "Publish bundle into container registry repo by the provided tag ($WERF_TAG or latest by default)")
 
+	lo.Must0(common.SetupMinimalKubeConnectionFlags(&commonCmdData, cmd))
+	lo.Must0(common.SetupChartRepoConnectionFlags(&commonCmdData, cmd))
+	lo.Must0(common.SetupValuesFlags(&commonCmdData, cmd))
+	lo.Must0(common.SetupSecretValuesFlags(&commonCmdData, cmd))
+
 	return cmd
 }
 
@@ -171,14 +162,13 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 		InitTrueGitWithOptions: &common.InitTrueGitOptions{
 			Options: true_git.Options{LiveGitOutput: *commonCmdData.LogDebug},
 		},
-		InitDockerRegistry:          true,
-		InitProcessContainerBackend: true,
-		InitWerf:                    true,
-		InitGitDataManager:          true,
-		InitManifestCache:           true,
-		InitLRUImagesCache:          true,
-		InitSSHAgent:                true,
-
+		InitDockerRegistry:           true,
+		InitProcessContainerBackend:  true,
+		InitWerf:                     true,
+		InitGitDataManager:           true,
+		InitManifestCache:            true,
+		InitLRUImagesCache:           true,
+		InitSSHAgent:                 true,
 		SetupOndemandKubeInitializer: true,
 	})
 	if err != nil {
@@ -204,7 +194,7 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 
 	common.ProcessLogProjectDir(&commonCmdData, giterminismManager.ProjectDir())
 
-	werfConfigPath, werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, config.WerfConfigOptions{LogRenderedFilePath: true, Env: *commonCmdData.Environment})
+	werfConfigPath, werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, config.WerfConfigOptions{LogRenderedFilePath: true, Env: commonCmdData.Environment})
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %w", err)
 	}
@@ -323,14 +313,14 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 	}
 
 	serviceAnnotations["project.werf.io/name"] = werfConfig.Meta.Project
-	serviceAnnotations["project.werf.io/env"] = *commonCmdData.Environment
+	serviceAnnotations["project.werf.io/env"] = commonCmdData.Environment
 
 	extraLabels, err := common.GetUserExtraLabels(&commonCmdData)
 	if err != nil {
 		return fmt.Errorf("get user extra labels: %w", err)
 	}
 
-	helmRegistryClient, err := common.NewHelmRegistryClient(ctx, *commonCmdData.DockerConfig, *commonCmdData.InsecureHelmDependencies)
+	helmRegistryClient, err := common.NewHelmRegistryClient(ctx, *commonCmdData.DockerConfig, commonCmdData.ChartRepoInsecure)
 	if err != nil {
 		return err
 	}
@@ -353,7 +343,7 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 	}
 
 	serviceValues, err := helpers.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepo, imagesInfoGetters, helpers.ServiceValuesOptions{
-		Env:        *commonCmdData.Environment,
+		Env:        commonCmdData.Environment,
 		CommitHash: headHash,
 		CommitDate: headTime,
 	})
@@ -379,10 +369,12 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 
 	opts := helmopts.HelmOptions{
 		ChartLoadOpts: helmopts.ChartLoadOptions{
-			ChartAppVersion:        common.GetHelmChartConfigAppVersion(werfConfig),
-			DefaultChartAPIVersion: chart.APIVersionV2,
-			DefaultChartName:       werfConfig.Meta.Project,
-			DefaultChartVersion:    "1.0.0",
+			ChartAppVersion:            common.GetHelmChartConfigAppVersion(werfConfig),
+			DefaultChartAPIVersion:     chart.APIVersionV2,
+			DefaultChartName:           werfConfig.Meta.Project,
+			DefaultChartVersion:        "1.0.0",
+			DefaultSecretValuesDisable: commonCmdData.DefaultSecretValuesDisable,
+			DefaultValuesDisable:       commonCmdData.DefaultValuesDisable,
 			DepDownloader: &downloader.Manager{
 				Out:               logboek.Context(ctx).OutStream(),
 				ChartPath:         bundleTmpDir,
@@ -393,12 +385,10 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 				RepositoryCache:   helm_v3.Settings.RepositoryCache,
 				Debug:             helm_v3.Settings.Debug,
 			},
-			NoDecryptSecrets:      *commonCmdData.IgnoreSecretKey,
-			NoDefaultSecretValues: *commonCmdData.DisableDefaultSecretValues,
-			NoDefaultValues:       *commonCmdData.DisableDefaultValues,
-			SecretValuesFiles:     common.GetSecretValues(&commonCmdData),
-			SecretsWorkingDir:     giterminismManager.ProjectDir(),
-			ExtraValues:           serviceValues,
+			ExtraValues:       serviceValues,
+			SecretKeyIgnore:   commonCmdData.SecretKeyIgnore,
+			SecretValuesFiles: commonCmdData.SecretValuesFiles,
+			SecretWorkDir:     giterminismManager.ProjectDir(),
 		},
 	}
 
@@ -413,10 +403,12 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 		bundleTmpDir,
 		chartVersion,
 		&values.Options{
-			ValueFiles:   common.GetValues(&commonCmdData),
-			StringValues: common.GetSetString(&commonCmdData),
-			Values:       common.GetSet(&commonCmdData),
-			FileValues:   common.GetSetFile(&commonCmdData),
+			ValueFiles:    commonCmdData.ValuesFiles,
+			StringValues:  commonCmdData.ValuesSetString,
+			Values:        commonCmdData.ValuesSet,
+			FileValues:    commonCmdData.ValuesSetFile,
+			JSONValues:    commonCmdData.ValuesSetJSON,
+			LiteralValues: commonCmdData.ValuesSetLiteral,
 		},
 		opts,
 	); err != nil {
@@ -433,8 +425,8 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 	opts.ChartLoadOpts.ChartType = helmopts.ChartTypeBundle
 
 	return bundles.Publish(ctx, bundleTmpDir, fmt.Sprintf("%s:%s", bundleRepo, cmdData.Tag), bundlesRegistryClient, bundles.PublishOptions{
-		HelmCompatibleChart: *commonCmdData.HelmCompatibleChart,
-		RenameChart:         *commonCmdData.RenameChart,
+		HelmCompatibleChart: commonCmdData.HelmCompatibleChart,
+		RenameChart:         commonCmdData.RenameChart,
 		HelmOptions:         opts,
 	})
 }
@@ -465,7 +457,7 @@ func createNewBundle(
 			return fmt.Errorf("unable to merge input values: %w", err)
 		}
 
-		bundleVals, err := makeBundleValues(chrt, vals, serviceValues)
+		bundleVals, err := makeBundleValues(ctx, chrt, vals, serviceValues)
 		if err != nil {
 			return fmt.Errorf("unable to construct bundle values: %w", err)
 		}
@@ -557,7 +549,7 @@ func createNewBundle(
 	// Do not publish into the bundle no custom values nor custom secret values.
 	// Final bundle values and secret values will be preconstructed, merged and
 	//  embedded into the bundle using only 2 files: values.yaml and secret-values.yaml.
-	for _, customValuesPath := range append(common.GetSecretValues(&commonCmdData), vals.ValueFiles...) {
+	for _, customValuesPath := range append(commonCmdData.SecretValuesFiles, vals.ValueFiles...) {
 		path := util.GetAbsoluteFilepath(customValuesPath)
 		if util.IsSubpathOfBasePath(chartDirAbs, path) {
 			ignoreChartValuesFiles = append(ignoreChartValuesFiles, util.GetRelativeToBaseFilepath(chartDirAbs, path))
@@ -649,12 +641,8 @@ func writeBundleJsonMap(dataMap map[string]string, path string) error {
 	}
 }
 
-func makeBundleValues(
-	chrt *chart.Chart,
-	inputVals map[string]interface{},
-	serviceValues map[string]interface{},
-) (map[string]interface{}, error) {
-	vals, err := chartutil.MergeInternal(context.Background(), inputVals, serviceValues, nil)
+func makeBundleValues(ctx context.Context, chrt *chart.Chart, inputVals, serviceValues map[string]interface{}) (map[string]interface{}, error) {
+	vals, err := chartutil.MergeInternal(ctx, inputVals, serviceValues, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to coalesce werf chart values: %w", err)
 	}
@@ -680,5 +668,5 @@ func makeBundleSecretValues(
 	secretsRuntimeData runtimedata.RuntimeData,
 	opts helmopts.HelmOptions,
 ) (map[string]interface{}, error) {
-	return secretsRuntimeData.GetEncodedSecretValues(ctx, secrets_manager.Manager, opts.ChartLoadOpts.SecretsWorkingDir, opts.ChartLoadOpts.NoDecryptSecrets)
+	return secretsRuntimeData.GetEncodedSecretValues(ctx, secrets_manager.Manager, opts.ChartLoadOpts.SecretWorkDir, opts.ChartLoadOpts.SecretKeyIgnore)
 }

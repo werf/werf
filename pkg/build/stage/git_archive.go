@@ -8,7 +8,6 @@ import (
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/git_repo"
-	"github.com/werf/werf/v2/pkg/image"
 )
 
 type NewGitArchiveStageOptions struct {
@@ -36,10 +35,6 @@ type GitArchiveStage struct {
 	ScriptsDir           string
 	ContainerArchivesDir string
 	ContainerScriptsDir  string
-}
-
-func (s *GitArchiveStage) SelectSuitableStageDesc(ctx context.Context, c Conveyor, stageDescSet image.StageDescSet) (*image.StageDesc, error) {
-	return selectSuitableStageDesc(ctx, c, stageDescSet, s)
 }
 
 // TODO: 1.3 add git mapping type (dir, file, ...) to gitArchive stage digest

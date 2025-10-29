@@ -78,6 +78,14 @@ func GetShouldBeBuiltOptions(commonCmdData *CmdData, imagesToProcess config.Imag
 	}
 
 	options = build.ShouldBeBuiltOptions{CustomTagFuncList: customTagFuncList}
+
+	if GetSaveBuildReport(commonCmdData) {
+		options.ReportPath, options.ReportFormat, err = GetBuildReportPathAndFormat(commonCmdData)
+		if err != nil {
+			return options, fmt.Errorf("getting build report path failed: %w", err)
+		}
+	}
+
 	return options, nil
 }
 

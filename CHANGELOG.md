@@ -1,5 +1,227 @@
 # Changelog
 
+## [2.51.2](https://github.com/werf/werf/compare/v2.51.1...v2.51.2) (2025-10-24)
+
+
+### Bug Fixes
+
+* **deploy:** `--dir` breaks `--values` ([fa3a865](https://github.com/werf/werf/commit/fa3a865a03d342119c698987a3eb8a3399a3bf21))
+
+## [2.51.1](https://github.com/werf/werf/compare/v2.51.0...v2.51.1) (2025-10-23)
+
+
+### Bug Fixes
+
+* **deploy:** error `no Auth Provider found for name ""` ([ff71d70](https://github.com/werf/werf/commit/ff71d70a73d8b1f0057d802a7d263aab7204f207))
+* **deploy:** Helm release annotation updates trigger new release ([ff71d70](https://github.com/werf/werf/commit/ff71d70a73d8b1f0057d802a7d263aab7204f207))
+* **deploy:** panic `unknown VerificationStrategyString value` ([ff71d70](https://github.com/werf/werf/commit/ff71d70a73d8b1f0057d802a7d263aab7204f207))
+* **deploy:** panic if failure/autorollback plan fails, refactor ([bd2c90a](https://github.com/werf/werf/commit/bd2c90ae8dea3296a199a22a8cbea6c8163dbd8e))
+* **deploy:** resources updated for no reason ([ff71d70](https://github.com/werf/werf/commit/ff71d70a73d8b1f0057d802a7d263aab7204f207))
+
+## [2.51.0](https://github.com/werf/werf/compare/v2.50.2...v2.51.0) (2025-10-20)
+
+
+### Features
+
+* **deploy:** option `--set-runtime-json` ([a9181f6](https://github.com/werf/werf/commit/a9181f66de9729be39d4d46b4a94ebd97a182138))
+
+
+### Bug Fixes
+
+* **deploy:** invalid `helm.sh/hook` causes panic in `render` ([a65bd52](https://github.com/werf/werf/commit/a65bd524cd26d1ea1a8ed9ca657a1151c9927096))
+* **deploy:** unnecessary resource/release updates ([493659f](https://github.com/werf/werf/commit/493659f0f4af6c4eb671d2d202ea791aeecba8f8))
+* error `too many arguments in call to chartutil.ToRenderValues` ([f63e7c8](https://github.com/werf/werf/commit/f63e7c84d92eb9aff257cf7ed45e0294645128bc))
+
+## [2.50.2](https://github.com/werf/werf/compare/v2.50.1...v2.50.2) (2025-10-16)
+
+
+### Bug Fixes
+
+* **deploy:** improve diffs in `plan` output ([471a4d1](https://github.com/werf/werf/commit/471a4d1bae20eadcb547f74972e20385c16dfe1c))
+
+## [2.50.1](https://github.com/werf/werf/compare/v2.50.0...v2.50.1) (2025-10-16)
+
+
+### Bug Fixes
+
+* **deploy:** broken diffs with `object:` in `plan` ([8a5c7ec](https://github.com/werf/werf/commit/8a5c7ecdc24b85d07d8dc77e19f4c752ca9b61bd))
+* **deploy:** error if only one of `--release`/`--namespace` set for `dismiss` and git found ([016b07f](https://github.com/werf/werf/commit/016b07f56f84f2ded8753400046bc503c99d0b90))
+
+## [2.50.0](https://github.com/werf/werf/compare/v2.49.4...v2.50.0) (2025-10-16)
+
+
+### Features
+
+* **deploy:** annotation `werf.io/delete-policy: before-creation-if-immutable`, options `--no-final-tracking`, `--no-remove-manual-changes` ([dd34dcd](https://github.com/werf/werf/commit/dd34dcd7972278d8a22e617846bed7888e343eed))
+* **deploy:** option `--no-remove-manual-changes` from the cluster resources ([0143305](https://github.com/werf/werf/commit/01433054bf650a87eed40ffa22aad2131e4dda9c))
+
+
+### Bug Fixes
+
+* **build:** cross validate images' platforms ([#7110](https://github.com/werf/werf/issues/7110)) ([10f0d93](https://github.com/werf/werf/commit/10f0d93b5bef8aea6204217f29837182b8ca4073))
+* **host-cleanup:** doesn't print warnings while detaching process ([0ec9e0f](https://github.com/werf/werf/commit/0ec9e0f5f7c41ec55d291282a6eecc09d07716fa))
+
+## [2.49.4](https://github.com/werf/werf/compare/v2.49.3...v2.49.4) (2025-10-13)
+
+
+### Bug Fixes
+
+* **deploy:** panic in `plan` ([6c98d43](https://github.com/werf/werf/commit/6c98d43bba717dd58f299723c6aa1bfabe4f1a28))
+
+## [2.49.3](https://github.com/werf/werf/compare/v2.49.2...v2.49.3) (2025-10-09)
+
+
+### Miscellaneous Chores
+
+* **release:** test mac signing ([e970b7e](https://github.com/werf/werf/commit/e970b7ee98793d0f0ddcd5b834ab3588927b92d1))
+
+## [2.49.2](https://github.com/werf/werf/compare/v2.49.1...v2.49.2) (2025-10-09)
+
+
+### Miscellaneous Chores
+
+* **release:** test mac signing ([281b0d8](https://github.com/werf/werf/commit/281b0d897df4c7ef66c28338aa19a92391f4eb5a))
+
+## [2.49.1](https://github.com/werf/werf/compare/v2.49.0...v2.49.1) (2025-10-09)
+
+
+### Bug Fixes
+
+* **deploy:** `plan` panic and json diffs instead of yaml ([c8d8187](https://github.com/werf/werf/commit/c8d818742e67ae0708f37a438de3d165b35375ab))
+
+## [2.49.0](https://github.com/werf/werf/compare/v2.48.2...v2.49.0) (2025-10-08)
+
+
+### Features
+
+* **deploy:** `plan` options `--diff-context-lines`, `--show-insignificant-diffs`, `--show-sensitive-diffs`, `--show-verbose-crd-diffs`, `--show-verbose-diffs` ([29fad9e](https://github.com/werf/werf/commit/29fad9ec5f197fcf49dd4ab9be1d5397dda5d805))
+* **deploy:** `werf.io/delete-policy`, `werf.io/ownership`, `werf.io/deploy-on` and more ([2348b90](https://github.com/werf/werf/commit/2348b90822cba8da5a75316aa749ad6346798a03))
+
+## [2.48.2](https://github.com/werf/werf/compare/v2.48.1...v2.48.2) (2025-10-07)
+
+
+### Bug Fixes
+
+* **stapel,git:** handle broken symlinks in chown xargs command ([3936931](https://github.com/werf/werf/commit/393693147fdf25184f182b76a3d97cedc934cc7b))
+
+## [2.48.1](https://github.com/werf/werf/compare/v2.48.0...v2.48.1) (2025-10-07)
+
+
+### Bug Fixes
+
+* **includes:** fix includes and lock configs path resolution for custom project dir ([#7117](https://github.com/werf/werf/issues/7117)) ([6dee249](https://github.com/werf/werf/commit/6dee249ad64f039b6a9abcb43c40ed30fb7e5f2d))
+* **stapel, git:** fix file ownership setup for scratch (rel sudo: unknown uid 0) ([#7094](https://github.com/werf/werf/issues/7094)) ([23f8cf7](https://github.com/werf/werf/commit/23f8cf7c59238f221d39c46f4925785e889eb4cd))
+
+## [2.48.0](https://github.com/werf/werf/compare/v2.47.11...v2.48.0) (2025-10-06)
+
+
+### Features
+
+* implement SQL connection handling ([430415c](https://github.com/werf/werf/commit/430415cb8e8a03c2d2630f838430b50b0af2c9bc))
+
+
+### Bug Fixes
+
+* **build:** fix stage selection handling for git stages ([2de807e](https://github.com/werf/werf/commit/2de807e641c691fe2c7f92f0495aec7c6449f01d))
+* **host-cleanup:** don't keep images which contain in their tags projectName or "werf-stages-storage/" ([aa0db91](https://github.com/werf/werf/commit/aa0db91c0a75d7ee27ef794f187f91ab93538680))
+* **host-cleanup:** require backend storage path ([ab9a8f7](https://github.com/werf/werf/commit/ab9a8f707e0cab7fe8cf6edf31faf453efb627f9))
+* **includes:** respect flag and env for werf includes update ([839ee1b](https://github.com/werf/werf/commit/839ee1b1d05b016c5dce21eb9a8b604644839c85))
+
+## [2.47.11](https://github.com/werf/werf/compare/v2.47.10...v2.47.11) (2025-09-30)
+
+
+### Bug Fixes
+
+* **deploy:** dismiss reads release name and namespace from git even if they specified via flags ([660908e](https://github.com/werf/werf/commit/660908e47ecb30d9e4182a3ad2d2fd5b0bcccd80))
+
+## [2.47.10](https://github.com/werf/werf/compare/v2.47.9...v2.47.10) (2025-09-30)
+
+
+### Bug Fixes
+
+* **deploy:** bundle render/apply requires git ([6828274](https://github.com/werf/werf/commit/682827485e2302a9b6cf3a466f9c6497fc393429))
+
+## [2.47.10](https://github.com/werf/werf/compare/v2.47.9...v2.47.10) (2025-09-30)
+
+
+### Bug Fixes
+
+* **deploy:** bundle render/apply requires git ([6828274](https://github.com/werf/werf/commit/682827485e2302a9b6cf3a466f9c6497fc393429))
+
+## [2.47.9](https://github.com/werf/werf/compare/v2.47.8...v2.47.9) (2025-09-29)
+
+
+### Bug Fixes
+
+* **build, stapel, git:** prevent patch creation error when a submodule commit no longer exists in the remote ([3ad251e](https://github.com/werf/werf/commit/3ad251e65a0ad3ffa48ec187669e8454ac9bec9d))
+* use a consistent werf tmp dir ([#7095](https://github.com/werf/werf/issues/7095)) ([fd88fa5](https://github.com/werf/werf/commit/fd88fa5d6ad6924c6e17c328069db5795ef23a5e))
+
+## [2.47.8](https://github.com/werf/werf/compare/v2.47.7...v2.47.8) (2025-09-23)
+
+
+### Bug Fixes
+
+* **build:** fix --save-build-report does not work with ([9bbdfb7](https://github.com/werf/werf/commit/9bbdfb759ba3e4b8d8987f412ca84fd840d5cbdf))
+* **build:** fix deferred build log on error in quiet mode ([3e546cc](https://github.com/werf/werf/commit/3e546cc6e12a7747b5bf64c3c6a691bb73514ddf))
+* **includes:** fix --allow-includes-update does not use actual HEAD (also related to stapel git.branch) ([9a58246](https://github.com/werf/werf/commit/9a5824654fef5f502fffed0f318c3ff032a938e6))
+
+## [2.47.7](https://github.com/werf/werf/compare/v2.47.6...v2.47.7) (2025-09-22)
+
+
+### Bug Fixes
+
+* **build, buildah:** enable precomputed digests to avoid S3 blob upload conflicts ([a458a3d](https://github.com/werf/werf/commit/a458a3d34735b322f9755dc4adacfa7a80af9e3b))
+
+## [2.47.6](https://github.com/werf/werf/compare/v2.47.5...v2.47.6) (2025-09-10)
+
+
+### Bug Fixes
+
+* **cleanup:** fix cleanup meta check condition ([89b05d2](https://github.com/werf/werf/commit/89b05d23261d709c3cadf42f910d68d75e31e6d7))
+* handle panic properly ([fddd12f](https://github.com/werf/werf/commit/fddd12fc2344acc514b9a5268f04723273cf2ea2))
+* pass ctx down ([#7073](https://github.com/werf/werf/issues/7073)) ([76efdce](https://github.com/werf/werf/commit/76efdce29d024033f019e2904389e13b0aa02f34))
+
+## [2.47.5](https://github.com/werf/werf/compare/v2.47.4...v2.47.5) (2025-09-03)
+
+
+### Features
+
+* add warning for dev mode in ci ([#7046](https://github.com/werf/werf/issues/7046)) ([bd3ebd9](https://github.com/werf/werf/commit/bd3ebd9047d1ff338474786ac98119c29c3df35b))
+
+
+### Bug Fixes
+
+* **build, stapel:** restrict from to reference itself ([#7057](https://github.com/werf/werf/issues/7057)) ([6c09dcf](https://github.com/werf/werf/commit/6c09dcf06656331b09f21ae1d9bc6fdd98db3c27))
+* **build:** add from backward compatibility fix ([9610260](https://github.com/werf/werf/commit/9610260e01e7265fe4f38ec4cf2265d74fc50c0f))
+* **build:** add nameless image backward compatibility fix ([6c7e6d8](https://github.com/werf/werf/commit/6c7e6d88967855c9925f23ed09285704d8a69493))
+* **build:** reject stage that is no longer available ([dc0c5f4](https://github.com/werf/werf/commit/dc0c5f4ca1050493538f43d8d05565bc19058144))
+* **host-cleanup, docker:** protect "tempID:latest" docker tag from parallel "werf host cleanup" process ([#7049](https://github.com/werf/werf/issues/7049)) ([f465863](https://github.com/werf/werf/commit/f4658639b04178349742ae26da5c17048329063a))
+* **host-cleanup:** clarify cleanupReport using ([5e161d0](https://github.com/werf/werf/commit/5e161d036714111b299a11ec040710f3aef7163a))
+* **host-cleanup:** respect --dry-run option for gitdata gc ([8e3ae09](https://github.com/werf/werf/commit/8e3ae09a6f146f9266d61d0058c4e04b486fd7ef))
+* **host-cleanup:** respect host locks for containers cleanup ([18ae7f9](https://github.com/werf/werf/commit/18ae7f92bc52874ef453e7c4bc9abc8d8bb3d370))
+* **host-cleanup:** respect host locks for images cleanup ([a64d4ff](https://github.com/werf/werf/commit/a64d4ff6d8998412c5154f8d747581c66fa65b44))
+
+## [2.47.4](https://github.com/werf/werf/compare/v2.47.3...v2.47.4) (2025-08-26)
+
+
+### Bug Fixes
+
+* **host-cleanup, buildah:** protect temp dangling images from parallel "werf host cleanup" process ([#7050](https://github.com/werf/werf/issues/7050)) ([d953ef2](https://github.com/werf/werf/commit/d953ef2949d770b091c2bb067a58413c16dbc25d))
+
+## [2.47.3](https://github.com/werf/werf/compare/v2.47.2...v2.47.3) (2025-08-21)
+
+
+### Bug Fixes
+
+* **build, stapel:** fix fromArtifact error ([a0a4745](https://github.com/werf/werf/commit/a0a4745eccafcdf7d84e2c6865d8e3fdd4297278))
+
+## [2.47.2](https://github.com/werf/werf/compare/v2.47.1...v2.47.2) (2025-08-15)
+
+
+### Bug Fixes
+
+* **deploy:** release namespace deletes after stopping being part of a release ([9374700](https://github.com/werf/werf/commit/9374700a01803618097c24ec5abfcb8842b5a21d))
+
 ## [2.47.1](https://github.com/werf/werf/compare/v2.47.0...v2.47.1) (2025-08-14)
 
 

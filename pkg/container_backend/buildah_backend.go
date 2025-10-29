@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
@@ -30,6 +29,7 @@ import (
 	"github.com/werf/werf/v2/pkg/container_backend/prune"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/path_matcher"
+	"github.com/werf/werf/v2/pkg/tmp_manager"
 )
 
 type BuildahBackend struct {
@@ -734,7 +734,7 @@ func (backend *BuildahBackend) BuildDockerfile(ctx context.Context, dockerfileCo
 		return "", fmt.Errorf("unable to extract build context: %w", err)
 	}
 
-	dockerfile, err := ioutil.TempFile(backend.TmpDir, "*.Dockerfile")
+	dockerfile, err := tmp_manager.TempFile("*.Dockerfile")
 	if err != nil {
 		return "", fmt.Errorf("error creating temporary dockerfile: %w", err)
 	}
@@ -1104,7 +1104,9 @@ func (backend *BuildahBackend) PostManifest(ctx context.Context, ref string, opt
 func (backend *BuildahBackend) ClaimTargetPlatforms(ctx context.Context, targetPlatforms []string) {}
 
 func (backend *BuildahBackend) PruneImages(ctx context.Context, options prune.Options) (prune.Report, error) {
-	report, err := backend.buildah.PruneImages(ctx, buildah.PruneImagesOptions{})
+	report, err := backend.buildah.PruneImages(ctx, buildah.PruneImagesOptions{
+		Filters: options.Filters,
+	})
 	if err != nil {
 		return prune.Report{}, fmt.Errorf("unable to prune images: %w", err)
 	}

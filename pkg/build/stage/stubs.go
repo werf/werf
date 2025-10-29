@@ -162,8 +162,8 @@ func (manager *GiterminismManagerStub) Dev() bool {
 	return false
 }
 
-func (manager *GiterminismManagerStub) HeadCommit() string {
-	commit, err := manager.localGitRepo.HeadCommitHash(context.Background())
+func (manager *GiterminismManagerStub) HeadCommit(ctx context.Context) string {
+	commit, err := manager.localGitRepo.HeadCommitHash(ctx)
 	Expect(err).To(Succeed())
 	return commit
 }

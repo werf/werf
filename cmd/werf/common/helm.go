@@ -37,11 +37,5 @@ func InitHelmRegistryClient(registryClient *registry.Client, dockerConfig string
 func NewBundlesRegistryClient(ctx context.Context, commonCmdData *CmdData) (*bundles_registry.Client, error) {
 	out := logboek.Context(ctx).OutStream()
 
-	return bundles_registry.NewClient(
-		bundles_registry.ClientOptCredentialsFile(docker.GetDockerConfigCredentialsFile(*commonCmdData.DockerConfig)),
-		bundles_registry.ClientOptDebug(*commonCmdData.LogDebug),
-		bundles_registry.ClientOptInsecure(*commonCmdData.InsecureRegistry),
-		bundles_registry.ClientOptSkipTlsVerify(*commonCmdData.SkipTlsVerifyRegistry),
-		bundles_registry.ClientOptWriter(out),
-	)
+	return bundles_registry.NewClient(ctx, bundles_registry.ClientOptCredentialsFile(docker.GetDockerConfigCredentialsFile(*commonCmdData.DockerConfig)), bundles_registry.ClientOptDebug(*commonCmdData.LogDebug), bundles_registry.ClientOptInsecure(*commonCmdData.InsecureRegistry), bundles_registry.ClientOptSkipTlsVerify(*commonCmdData.SkipTlsVerifyRegistry), bundles_registry.ClientOptWriter(out))
 }

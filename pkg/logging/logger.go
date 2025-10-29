@@ -9,6 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
 )
 
@@ -22,12 +23,23 @@ func NewLogger() types.LoggerInterface {
 	logger := logboek.DefaultLogger()
 	logger.Warn().SetStyle(color.New(color.Yellow))
 
-	captureOutputFromAnotherLoggers(logger.OutStream())
+	setOutputForThirdPartyLoggers(logger.OutStream())
 
 	return logger
 }
 
-func captureOutputFromAnotherLoggers(writer io.Writer) {
+func NewSubLogger(ctx context.Context, outStream, errStream io.Writer) types.LoggerInterface {
+	subLogger := logboek.Context(ctx).NewSubLogger(outStream, errStream)
+	subLogger.Streams().SetPrefixStyle(style.Highlight())
+
+	if subLogger.Streams().IsPrefixTimeEnabled() {
+		subLogger.Streams().SetPrefixTimeFormat("15:04:05")
+	}
+
+	return subLogger
+}
+
+func setOutputForThirdPartyLoggers(writer io.Writer) {
 	log.SetOutput(writer)
 	logrus.StandardLogger().SetOutput(writer)
 }

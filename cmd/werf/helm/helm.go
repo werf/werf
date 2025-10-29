@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 
 	helm_v3 "github.com/werf/3p-helm-for-werf-helm/cmd/helm"
@@ -73,15 +74,14 @@ func NewCmd(ctx context.Context) (*cobra.Command, error) {
 	cmd.PersistentFlags().StringVarP(&namespace, "namespace", "n", *helm_v3.Settings.GetNamespaceP(), "namespace scope for this request")
 	common.SetupTmpDir(&_commonCmdData, cmd, common.SetupTmpDirOptions{})
 	common.SetupHomeDir(&_commonCmdData, cmd, common.SetupHomeDirOptions{})
-	common.SetupKubeConfig(&_commonCmdData, cmd)
-	common.SetupKubeConfigBase64(&_commonCmdData, cmd)
-	common.SetupKubeContext(&_commonCmdData, cmd)
-	common.SetupStatusProgressPeriod(&_commonCmdData, cmd)
-	common.SetupHooksStatusProgressPeriod(&_commonCmdData, cmd)
 	common.SetupReleasesHistoryMax(&_commonCmdData, cmd)
 	common.SetupLogOptions(&_commonCmdData, cmd)
-	common.SetupInsecureHelmDependencies(&_commonCmdData, cmd, false)
+	common.SetupChartRepoInsecure(&_commonCmdData, cmd)
 	common.SetupDockerConfig(&_commonCmdData, cmd, "")
+
+	lo.Must0(common.SetupMinimalKubeConnectionFlags(&_commonCmdData, cmd))
+	lo.Must0(common.SetupLegacyProgressTablePrintInterval(&_commonCmdData, cmd))
+	common.StubSetupHooksStatusProgressPeriod(&_commonCmdData, cmd)
 
 	dependencyCmd := helm_v3.NewDependencyCmd(actionConfig, os.Stdout)
 	for _, depCmd := range dependencyCmd.Commands() {
@@ -206,22 +206,22 @@ func NewCmd(ctx context.Context) (*cobra.Command, error) {
 				}
 
 				registry_legacy.ClientOptCredentialsFile(docker.GetDockerConfigCredentialsFile(*_commonCmdData.DockerConfig))(registryClient)
-				if *_commonCmdData.InsecureHelmDependencies {
+				if _commonCmdData.ChartRepoInsecure {
 					registry_legacy.ClientOptPlainHTTP()
 				}
 
-				common.SetupOndemandKubeInitializer(*_commonCmdData.KubeContext, *_commonCmdData.KubeConfig, *_commonCmdData.KubeConfigBase64, *_commonCmdData.KubeConfigPathMergeList)
+				common.SetupOndemandKubeInitializer(_commonCmdData.KubeContextCurrent, _commonCmdData.LegacyKubeConfigPath, _commonCmdData.KubeConfigBase64, _commonCmdData.LegacyKubeConfigPathsMergeList)
 
 				helm.InitActionConfig(ctx, common.GetOndemandKubeInitializer(), namespace, helm_v3.Settings, actionConfig, helm.InitActionConfigOptions{
-					StatusProgressPeriod:      time.Duration(*_commonCmdData.StatusProgressPeriodSeconds) * time.Second,
-					HooksStatusProgressPeriod: time.Duration(*_commonCmdData.HooksStatusProgressPeriodSeconds) * time.Second,
+					StatusProgressPeriod:      time.Duration(_commonCmdData.LegacyProgressTablePrintInterval) * time.Second,
+					HooksStatusProgressPeriod: time.Duration(_commonCmdData.LegacyProgressTablePrintInterval) * time.Second,
 					KubeConfigOptions: kube.KubeConfigOptions{
-						Context:             *_commonCmdData.KubeContext,
-						ConfigPath:          *_commonCmdData.KubeConfig,
-						ConfigPathMergeList: *_commonCmdData.KubeConfigPathMergeList,
-						ConfigDataBase64:    *_commonCmdData.KubeConfigBase64,
+						Context:             _commonCmdData.KubeContextCurrent,
+						ConfigPath:          _commonCmdData.LegacyKubeConfigPath,
+						ConfigPathMergeList: _commonCmdData.LegacyKubeConfigPathsMergeList,
+						ConfigDataBase64:    _commonCmdData.KubeConfigBase64,
 					},
-					ReleasesHistoryMax: *_commonCmdData.ReleasesHistoryMax,
+					ReleasesHistoryMax: _commonCmdData.ReleaseHistoryLimit,
 				})
 
 				if oldRunE != nil {

@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"math"
 	"os"
 	"path/filepath"
-	"sort"
-	"strings"
+	"slices"
 	"time"
 
 	"github.com/dustin/go-humanize"
@@ -35,25 +35,22 @@ func ShouldRunAutoGC(ctx context.Context, allowedVolumeUsagePercentage float64) 
 	return vu.Percentage() > allowedVolumeUsagePercentage, nil
 }
 
-func getBytesToFree(vu volumeutils.VolumeUsage, targetVolumeUsagePercentage float64) uint64 {
-	allowedVolumeUsageToFree := vu.Percentage() - targetVolumeUsagePercentage
-	return uint64((float64(vu.TotalBytes) / 100.0) * allowedVolumeUsageToFree)
+type RunGCOptions struct {
+	AllowedLocalCacheVolumeUsagePercentage       float64
+	AllowedLocalCacheVolumeUsageMarginPercentage float64
+	DryRun                                       bool
 }
 
-func RunGC(ctx context.Context, allowedVolumeUsagePercentage, allowedVolumeUsageMarginPercentage float64) error {
+func RunGC(ctx context.Context, options RunGCOptions) error {
 	if lock, err := lockGC(ctx, false); err != nil {
 		return err
 	} else {
 		defer werf.HostLocker().ReleaseLock(lock)
 	}
 
-	var keepGitDataV1_1 bool
-	v1_1LastRunAt, err := werf.GetWerfLastRunAtV1_1(ctx)
+	keepGitDataV1_1, err := shouldKeepGitDataV1_1(ctx)
 	if err != nil {
-		return fmt.Errorf("error getting last run timestamp for werf v1.1: %w", err)
-	}
-	if time.Since(v1_1LastRunAt) <= time.Hour*24*3 {
-		keepGitDataV1_1 = true
+		return fmt.Errorf("unable to check if git data v1.1 should be kept: %w", err)
 	}
 
 	{
@@ -65,28 +62,6 @@ func RunGC(ctx context.Context, allowedVolumeUsagePercentage, allowedVolumeUsage
 		cacheRoot := filepath.Join(werf.GetLocalCacheDir(), "git_repos")
 		if err := wipeCacheDirs(ctx, cacheRoot, keepCacheVersions); err != nil {
 			return fmt.Errorf("unable to wipe old git repos cache dirs in %q: %w", cacheRoot, err)
-		}
-
-		for _, dir := range []string{filepath.Join(cacheRoot, git_repo.GitReposCacheVersion), filepath.Join(cacheRoot, KeepGitRepoCacheVersionV1_1)} {
-			if _, err := os.Stat(dir); os.IsNotExist(err) {
-				continue
-			} else if err != nil {
-				return fmt.Errorf("error accessing dir %q: %w", dir, err)
-			}
-
-			files, err := ioutil.ReadDir(dir)
-			if err != nil {
-				return fmt.Errorf("error reading dir %q: %w", dir, err)
-			}
-
-			for _, finfo := range files {
-				if strings.HasSuffix(finfo.Name(), ".tmp") {
-					path := filepath.Join(dir, finfo.Name())
-					if err := os.RemoveAll(path); err != nil {
-						return fmt.Errorf("unable to remove %q: %w", path, err)
-					}
-				}
-			}
 		}
 	}
 
@@ -121,18 +96,15 @@ func RunGC(ctx context.Context, allowedVolumeUsagePercentage, allowedVolumeUsage
 		return fmt.Errorf("error getting volume usage by path %q: %w", werf.GetLocalCacheDir(), err)
 	}
 
-	targetVolumeUsagePercentage := allowedVolumeUsagePercentage - allowedVolumeUsageMarginPercentage
-	if targetVolumeUsagePercentage < 0 {
-		targetVolumeUsagePercentage = 0
-	}
+	targetVolumeUsagePercentage := math.Max(options.AllowedLocalCacheVolumeUsagePercentage-options.AllowedLocalCacheVolumeUsageMarginPercentage, 0)
 
-	bytesToFree := getBytesToFree(vu, targetVolumeUsagePercentage)
+	bytesToFree := vu.BytesToFree(targetVolumeUsagePercentage)
 
-	if vu.Percentage() <= allowedVolumeUsagePercentage {
+	if vu.Percentage() <= options.AllowedLocalCacheVolumeUsagePercentage {
 		logboek.Context(ctx).Default().LogBlock("Git data storage check").Do(func() {
 			logboek.Context(ctx).Default().LogF("Werf local cache dir: %s\n", werf.GetLocalCacheDir())
 			logboek.Context(ctx).Default().LogF("Volume usage: %s / %s\n", humanize.Bytes(vu.UsedBytes), humanize.Bytes(vu.TotalBytes))
-			logboek.Context(ctx).Default().LogF("Allowed volume usage percentage: %s <= %s — %s\n", utils.GreenF("%0.2f%%", vu.Percentage()), utils.BlueF("%0.2f%%", allowedVolumeUsagePercentage), utils.GreenF("OK"))
+			logboek.Context(ctx).Default().LogF("Allowed volume usage percentage: %s <= %s — %s\n", utils.GreenF("%0.2f%%", vu.Percentage()), utils.BlueF("%0.2f%%", options.AllowedLocalCacheVolumeUsagePercentage), utils.GreenF("OK"))
 		})
 
 		return nil
@@ -141,8 +113,8 @@ func RunGC(ctx context.Context, allowedVolumeUsagePercentage, allowedVolumeUsage
 	logboek.Context(ctx).Default().LogBlock("Git data storage check").Do(func() {
 		logboek.Context(ctx).Default().LogF("Werf local cache dir: %s\n", werf.GetLocalCacheDir())
 		logboek.Context(ctx).Default().LogF("Volume usage: %s / %s\n", humanize.Bytes(vu.UsedBytes), humanize.Bytes(vu.TotalBytes))
-		logboek.Context(ctx).Default().LogF("Allowed percentage level exceeded: %s > %s — %s\n", utils.RedF("%0.2f%%", vu.Percentage()), utils.YellowF("%0.2f%%", allowedVolumeUsagePercentage), utils.RedF("HIGH VOLUME USAGE"))
-		logboek.Context(ctx).Default().LogF("Target percentage level after cleanup: %0.2f%% - %0.2f%% (margin) = %s\n", allowedVolumeUsagePercentage, allowedVolumeUsageMarginPercentage, utils.BlueF("%0.2f%%", targetVolumeUsagePercentage))
+		logboek.Context(ctx).Default().LogF("Allowed percentage level exceeded: %s > %s — %s\n", utils.RedF("%0.2f%%", vu.Percentage()), utils.YellowF("%0.2f%%", options.AllowedLocalCacheVolumeUsagePercentage), utils.RedF("HIGH VOLUME USAGE"))
+		logboek.Context(ctx).Default().LogF("Target percentage level after cleanup: %0.2f%% - %0.2f%% (margin) = %s\n", options.AllowedLocalCacheVolumeUsagePercentage, options.AllowedLocalCacheVolumeUsageMarginPercentage, utils.BlueF("%0.2f%%", targetVolumeUsagePercentage))
 		logboek.Context(ctx).Default().LogF("Needed to free: %s\n", utils.RedF("%s", humanize.Bytes(bytesToFree)))
 	})
 
@@ -156,9 +128,7 @@ func RunGC(ctx context.Context, allowedVolumeUsagePercentage, allowedVolumeUsage
 			return fmt.Errorf("unable to process git repos from %q: %w", cacheVersionRoot, err)
 		}
 
-		for _, entry := range entries {
-			gitDataEntries = append(gitDataEntries, entry)
-		}
+		gitDataEntries = append(gitDataEntries, entries...)
 	}
 
 	{
@@ -169,9 +139,7 @@ func RunGC(ctx context.Context, allowedVolumeUsagePercentage, allowedVolumeUsage
 			return fmt.Errorf("unable to process git worktrees from %q: %w", cacheVersionRoot, err)
 		}
 
-		for _, entry := range entries {
-			gitDataEntries = append(gitDataEntries, entry)
-		}
+		gitDataEntries = append(gitDataEntries, entries...)
 	}
 
 	{
@@ -182,9 +150,7 @@ func RunGC(ctx context.Context, allowedVolumeUsagePercentage, allowedVolumeUsage
 			return fmt.Errorf("unable to process git archives from %q: %w", cacheVersionRoot, err)
 		}
 
-		for _, entry := range entries {
-			gitDataEntries = append(gitDataEntries, entry)
-		}
+		gitDataEntries = append(gitDataEntries, entries...)
 	}
 
 	{
@@ -195,19 +161,21 @@ func RunGC(ctx context.Context, allowedVolumeUsagePercentage, allowedVolumeUsage
 			return fmt.Errorf("unable to process git patches from %q: %w", cacheVersionRoot, err)
 		}
 
-		for _, entry := range entries {
-			gitDataEntries = append(gitDataEntries, entry)
-		}
+		gitDataEntries = append(gitDataEntries, entries...)
 	}
 
-	sort.Sort(GitDataLruSort(gitDataEntries))
-
-	gitDataEntries = PreserveGitDataByLru(gitDataEntries)
+	gitDataEntries = keepGitDataByLru(gitDataEntries)
 
 	var freedBytes uint64
+
 	for _, entry := range gitDataEntries {
 		for _, path := range entry.GetPaths() {
 			logboek.Context(ctx).LogF("Removing %q inside scope %q\n", path, entry.GetCacheBasePath())
+
+			if options.DryRun {
+				continue
+			}
+
 			if err := RemovePathWithEmptyParentDirsInsideScope(entry.GetCacheBasePath(), path); err != nil {
 				return fmt.Errorf("unable to remove %q: %w", path, err)
 			}
@@ -258,6 +226,8 @@ func RemovePathWithEmptyParentDirsInsideScope(scopeDir, path string) error {
 	return nil
 }
 
+// wipeCacheDirs removes all subdirectories from the specified cache root directory,
+// except for those listed in keepCacheVersions.
 func wipeCacheDirs(ctx context.Context, cacheRootDir string, keepCacheVersions []string) error {
 	logboek.Context(ctx).Debug().LogF("wipeCacheDirs %q\n", cacheRootDir)
 
@@ -272,38 +242,16 @@ func wipeCacheDirs(ctx context.Context, cacheRootDir string, keepCacheVersions [
 		return fmt.Errorf("error reading dir %q: %w", cacheRootDir, err)
 	}
 
-WipeCacheDirs:
 	for _, finfo := range dirs {
-		for _, keepCacheVersion := range keepCacheVersions {
-			if finfo.Name() == keepCacheVersion {
-				logboek.Context(ctx).Debug().LogF("wipeCacheDirs in %q: keep cache version %q\n", cacheRootDir, keepCacheVersion)
-				continue WipeCacheDirs
-			}
+		if slices.Contains(keepCacheVersions, finfo.Name()) {
+			logboek.Context(ctx).Debug().LogF("wipeCacheDirs in %q: keep cache version %q\n", cacheRootDir, finfo.Name())
+			continue
 		}
 
 		versionedCacheDir := filepath.Join(cacheRootDir, finfo.Name())
 
-		if !finfo.IsDir() {
-			logboek.Context(ctx).Warn().LogF("Removing invalid entry %q: not a directory\n", versionedCacheDir)
-			if err := os.RemoveAll(versionedCacheDir); err != nil {
-				return fmt.Errorf("unable to remove %q: %w", versionedCacheDir, err)
-			}
-
-			continue
-		}
-
-		subdirs, err := ioutil.ReadDir(versionedCacheDir)
-		if err != nil {
-			return fmt.Errorf("error reading dir %q: %w", versionedCacheDir, err)
-		}
-
-		for _, cacheFile := range subdirs {
-			path := filepath.Join(versionedCacheDir, cacheFile.Name())
-
-			logboek.Context(ctx).Debug().LogF("wipeCacheDirs in %q: removing %q\n", cacheRootDir, path)
-			if err := os.RemoveAll(path); err != nil {
-				return fmt.Errorf("unable to remove %q: %w", path, err)
-			}
+		if err = os.RemoveAll(versionedCacheDir); err != nil {
+			return fmt.Errorf("unable to remove %q: %w", versionedCacheDir, err)
 		}
 	}
 
@@ -313,4 +261,14 @@ WipeCacheDirs:
 func lockGC(ctx context.Context, shared bool) (lockgate.LockHandle, error) {
 	_, handle, err := werf.HostLocker().AcquireLock(ctx, "git_data_manager", lockgate.AcquireOptions{Shared: shared})
 	return handle, err
+}
+
+// shouldKeepGitDataV1_1 returns true if the last run of werf v1.1 was within the last 3 days.
+func shouldKeepGitDataV1_1(ctx context.Context) (bool, error) {
+	v1_1LastRunAt, err := werf.GetWerfLastRunAtV1_1(ctx)
+	if err != nil {
+		return false, fmt.Errorf("error getting last run timestamp for werf v1.1: %w", err)
+	}
+
+	return time.Since(v1_1LastRunAt) <= time.Hour*24*3, nil
 }

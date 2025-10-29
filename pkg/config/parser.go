@@ -116,6 +116,11 @@ func GetWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfConfi
 			return err
 		}
 
+		imgPlatformValidator := newImagePlatformValidator()
+		if err = imgPlatformValidator.Validate(rawStapelImages, rawImagesFromDockerfile); err != nil {
+			return fmt.Errorf("invalid image platform cross-references: %w", err)
+		}
+
 		if meta == nil {
 			defaultProjectName, err := GetDefaultProjectName(ctx, giterminismManager)
 			if err != nil {
@@ -374,7 +379,7 @@ func funcMap(ctx context.Context, tmpl *template.Template, giterminismManager gi
 		}
 
 		envVarName := fmt.Sprint(value)
-		if err := giterminismManager.Inspector().InspectConfigGoTemplateRenderingEnv(context.Background(), envVarName); err != nil {
+		if err := giterminismManager.Inspector().InspectConfigGoTemplateRenderingEnv(ctx, envVarName); err != nil {
 			return "", err
 		}
 

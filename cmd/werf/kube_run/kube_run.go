@@ -15,6 +15,7 @@ import (
 	"github.com/containers/image/v5/docker/reference"
 	config2 "github.com/containers/image/v5/pkg/docker/config"
 	imgtypes "github.com/containers/image/v5/types"
+	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
 	errorsK8s "k8s.io/apimachinery/pkg/api/errors"
@@ -179,9 +180,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
 	common.SetupSynchronization(&commonCmdData, cmd)
-	common.SetupKubeConfig(&commonCmdData, cmd)
-	common.SetupKubeConfigBase64(&commonCmdData, cmd)
-	common.SetupKubeContext(&commonCmdData, cmd)
 
 	common.SetupDryRun(&commonCmdData, cmd)
 
@@ -203,6 +201,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	commonCmdData.SetupSkipImageSpecStage(cmd)
 	commonCmdData.SetupDebugTemplates(cmd)
 	commonCmdData.SetupAllowIncludesUpdate(cmd)
+
+	lo.Must0(common.SetupMinimalKubeConnectionFlags(&commonCmdData, cmd))
 
 	return cmd
 }
@@ -280,7 +280,7 @@ func runMain(ctx context.Context) error {
 		return fmt.Errorf("unable to load werf config: %w", err)
 	}
 
-	namespace, err := deploy_params.GetKubernetesNamespace(*commonCmdData.Namespace, *commonCmdData.Environment, werfConfig)
+	namespace, err := deploy_params.GetKubernetesNamespace(commonCmdData.Namespace, commonCmdData.Environment, werfConfig)
 	if err != nil {
 		return err
 	}
@@ -454,17 +454,17 @@ func createCommonKubectlArgs(namespace string) ([]string, error) {
 		"--namespace", namespace,
 	}
 
-	if *commonCmdData.KubeContext != "" {
-		commonArgs = append(commonArgs, "--context", *commonCmdData.KubeContext)
+	if commonCmdData.KubeContextCurrent != "" {
+		commonArgs = append(commonArgs, "--context", commonCmdData.KubeContextCurrent)
 	}
 
-	if *commonCmdData.KubeConfigBase64 != "" {
-		commonArgs = append(commonArgs, "--kube-config-base64", *commonCmdData.KubeConfigBase64)
-	} else if *commonCmdData.KubeConfig != "" {
-		if err := os.Setenv("KUBECONFIG", *commonCmdData.KubeConfig); err != nil {
+	if commonCmdData.KubeConfigBase64 != "" {
+		commonArgs = append(commonArgs, "--kube-config-base64", commonCmdData.KubeConfigBase64)
+	} else if commonCmdData.LegacyKubeConfigPath != "" {
+		if err := os.Setenv("KUBECONFIG", commonCmdData.LegacyKubeConfigPath); err != nil {
 			return nil, fmt.Errorf("unable to set $KUBECONFIG env var: %w", err)
 		}
-	} else if len(*commonCmdData.KubeConfigPathMergeList) > 0 {
+	} else if len(commonCmdData.LegacyKubeConfigPathsMergeList) > 0 {
 		if err := os.Setenv("KUBECONFIG", common.GetFirstExistingKubeConfigEnvVar()); err != nil {
 			return nil, fmt.Errorf("unable to set $KUBECONFIG env var: %w", err)
 		}

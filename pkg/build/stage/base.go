@@ -215,21 +215,26 @@ func (s *BaseStage) IsEmpty(_ context.Context, _ Conveyor, _ *StageImage) (bool,
 	return false, nil
 }
 
-func (s *BaseStage) selectStageDescByOldestCreationTs(stageDescSet image.StageDescSet) (*image.StageDesc, error) {
-	var oldestStageDesc *image.StageDesc
-	for stageDesc := range stageDescSet.Iter() {
-		if oldestStageDesc == nil {
-			oldestStageDesc = stageDesc
-		} else if stageDesc.StageID.CreationTsToTime().Before(oldestStageDesc.StageID.CreationTsToTime()) {
-			oldestStageDesc = stageDesc
-		}
-	}
-	return oldestStageDesc, nil
+func sortStageDescSetByOldestCreationTs(stageDescSet image.StageDescSet) []*image.StageDesc {
+	stageDescSetSlice := stageDescSet.ToSlice()
+	sort.Slice(stageDescSetSlice, func(i, j int) bool {
+		return stageDescSetSlice[i].StageID.CreationTsToTime().Before(stageDescSetSlice[j].StageID.CreationTsToTime())
+	})
+
+	return stageDescSetSlice
 }
 
-func (s *BaseStage) selectAncestorStageDescSetByGitMappings(ctx context.Context, c Conveyor, stageDescSet image.StageDescSet) (image.StageDescSet, error) {
-	resultStageDescSet := image.NewStageDescSet()
+func selectStageDescByOldestCreationTs(ctx context.Context, stageDescSet image.StageDescSet) (*image.StageDesc, error) {
+	stageDescSlice := sortStageDescSetByOldestCreationTs(stageDescSet)
+	if len(stageDescSlice) > 0 {
+		logboek.Context(ctx).Info().LogF("Using stage %s\n", stageDescSlice[0].Info.Name)
+		return stageDescSlice[0], nil
+	}
 
+	return nil, nil
+}
+
+func (s *BaseStage) selectAncestorStageDescByGitMappings(ctx context.Context, c Conveyor, stageDescSet image.StageDescSet) (*image.StageDesc, error) {
 	var currentCommitsByIndex []string
 	for _, gitMapping := range s.gitMappings {
 		currentCommitInfo, err := gitMapping.GetLatestCommitInfo(ctx, c)
@@ -248,13 +253,13 @@ func (s *BaseStage) selectAncestorStageDescSetByGitMappings(ctx context.Context,
 	}
 
 ScanImages:
-	for stageDesc := range stageDescSet.Iter() {
+	for _, stageDesc := range sortStageDescSetByOldestCreationTs(stageDescSet) {
 		for i, gitMapping := range s.gitMappings {
 			currentCommit := currentCommitsByIndex[i]
 
 			imageCommitInfo, err := gitMapping.GetBuiltImageCommitInfo(stageDesc.Info.Labels)
 			if err != nil {
-				logboek.Context(ctx).Warn().LogF("Ignore stage %s: unable to get image commit info for git repo %s: %s", stageDesc.Info.Name, gitMapping.GitRepo().String(), err)
+				logboek.Context(ctx).Warn().LogF("Ignoring stage %s: unable to get image commit info for git repo %s: %s\n", stageDesc.Info.Name, gitMapping.GitRepo().String(), err)
 				continue ScanImages
 			}
 
@@ -265,30 +270,37 @@ ScanImages:
 				commitToCheckAncestry = imageCommitInfo.Commit
 			}
 
+			exist, err := gitMapping.GitRepo().IsCommitExists(ctx, commitToCheckAncestry)
+			if err != nil {
+				return nil, fmt.Errorf("error checking if commit %s exists: %w", commitToCheckAncestry, err)
+			}
+
+			if !exist {
+				logboek.Context(ctx).Info().LogF("Skipping stage %s: commit %s does not exist in repo %s\n", stageDesc.Info.Name, commitToCheckAncestry, gitMapping.GitRepo().String())
+				continue ScanImages
+			}
+
 			isOurAncestor, err := gitMapping.GitRepo().IsAncestor(ctx, commitToCheckAncestry, currentCommit)
 			if err != nil {
 				return nil, fmt.Errorf("error checking commits ancestry %s<-%s: %w", commitToCheckAncestry, currentCommit, err)
 			}
 
 			if !isOurAncestor {
-				logboek.Context(ctx).Debug().LogF("%s is not ancestor of %s for git repo %s: ignore image %s\n", commitToCheckAncestry, currentCommit, gitMapping.GitRepo().String(), stageDesc.Info.Name)
+				logboek.Context(ctx).Info().LogF("Skipping stage %s: commit %s is not an ancestor of %s in repo %s\n", stageDesc.Info.Name, commitToCheckAncestry, currentCommit, gitMapping.GitRepo().String())
 				continue ScanImages
 			}
-
-			logboek.Context(ctx).Debug().LogF(
-				"%s is ancestor of %s for git repo %s: image %s is suitable for git archive stage\n",
-				commitToCheckAncestry, currentCommit, gitMapping.GitRepo().String(), stageDesc.Info.Name,
-			)
 		}
 
-		resultStageDescSet.Add(stageDesc)
+		logboek.Context(ctx).Info().LogF("Using stage %s (ancestor)\n", stageDesc.Info.Name)
+
+		return stageDesc, nil
 	}
 
-	return resultStageDescSet, nil
+	return nil, nil
 }
 
-func (s *BaseStage) SelectSuitableStageDesc(_ context.Context, c Conveyor, stageDescSet image.StageDescSet) (*image.StageDesc, error) {
-	return s.selectStageDescByOldestCreationTs(stageDescSet)
+func (s *BaseStage) SelectSuitableStageDesc(ctx context.Context, c Conveyor, stageDescSet image.StageDescSet) (*image.StageDesc, error) {
+	return selectStageDescByOldestCreationTs(ctx, stageDescSet)
 }
 
 func (s *BaseStage) PrepareImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) error {
@@ -297,7 +309,7 @@ func (s *BaseStage) PrepareImage(ctx context.Context, c Conveyor, cb container_b
 	 * NOTE: Take into account when adding new base PrepareImage steps.
 	 */
 
-	addLabels := map[string]string{image.WerfProjectRepoCommitLabel: c.GiterminismManager().HeadCommit()}
+	addLabels := map[string]string{image.WerfProjectRepoCommitLabel: c.GiterminismManager().HeadCommit(ctx)}
 	if c.UseLegacyStapelBuilder(cb) {
 		stageImage.Builder.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions().AddLabel(addLabels)
 	} else {

@@ -34,6 +34,8 @@ func init() {
 }
 
 func main() {
+	ctx := context.TODO()
+
 	if err := werf.Init("", ""); err != nil {
 		log.Fatal(err)
 	}
@@ -43,41 +45,41 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if err = runCommand(b); err != nil {
+	if err = runCommand(ctx, b); err != nil {
 		log.Fatal(err)
 	}
 
-	imageId, err := buildFromDockerfile(b)
+	imageId, err := buildFromDockerfile(ctx, b)
 	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Fprintf(os.Stdout, "INFO: imageId is %s\n", imageId)
 
-	if err := b.Pull(context.Background(), "ubuntu:20.04", buildah.PullOpts{LogWriter: os.Stdout}); err != nil {
+	if err := b.Pull(ctx, "ubuntu:20.04", buildah.PullOpts{LogWriter: os.Stdout}); err != nil {
 		log.Fatal(err)
 	}
 
-	if err := b.Tag(context.Background(), "ubuntu:20.04", newImage, buildah.TagOpts{LogWriter: os.Stdout}); err != nil {
+	if err := b.Tag(ctx, "ubuntu:20.04", newImage, buildah.TagOpts{LogWriter: os.Stdout}); err != nil {
 		log.Fatal(err)
 	}
 
-	builderInfo, err := b.Inspect(context.Background(), "ubuntu:20.04")
+	builderInfo, err := b.Inspect(ctx, "ubuntu:20.04")
 	if err != nil {
 		log.Fatal(err)
 	}
 	log.Print(builderInfo)
 
-	builderInfo, err = b.Inspect(context.Background(), newImage)
+	builderInfo, err = b.Inspect(ctx, newImage)
 	if err != nil {
 		log.Fatal(err)
 	}
 	log.Print(builderInfo)
 
-	if err := b.Push(context.Background(), newImage, buildah.PushOpts{LogWriter: os.Stdout}); err != nil {
+	if err := b.Push(ctx, newImage, buildah.PushOpts{LogWriter: os.Stdout}); err != nil {
 		log.Fatal(err)
 	}
 
-	if err := b.Rmi(context.Background(), "ubuntu:20.04", buildah.RmiOpts{
+	if err := b.Rmi(ctx, "ubuntu:20.04", buildah.RmiOpts{
 		CommonOpts: buildah.CommonOpts{
 			LogWriter: os.Stdout,
 		},
@@ -86,18 +88,18 @@ func main() {
 	}
 }
 
-func runCommand(b buildah.Buildah) error {
-	return b.RunCommand(context.Background(), "build-container", []string{"ls"}, buildah.RunCommandOpts{})
+func runCommand(ctx context.Context, b buildah.Buildah) error {
+	return b.RunCommand(ctx, "build-container", []string{"ls"}, buildah.RunCommandOpts{})
 }
 
-func buildFromDockerfile(b buildah.Buildah) (string, error) {
+func buildFromDockerfile(ctx context.Context, b buildah.Buildah) (string, error) {
 	dockerfileContent := `
 FROM ubuntu:20.04
 RUN apt update
 COPY . /app
 `
 
-	imageId, err := b.BuildFromDockerfile(context.Background(), dockerfileContent, buildah.BuildFromDockerfileOpts{
+	imageId, err := b.BuildFromDockerfile(ctx, dockerfileContent, buildah.BuildFromDockerfileOpts{
 		ContextDir: filepath.Join(os.Getenv("PWD"), "playground/native_rootless_buildah"),
 		CommonOpts: buildah.CommonOpts{
 			LogWriter: os.Stdout,

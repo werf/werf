@@ -39,7 +39,7 @@ type fileReader interface {
 type sharedOptions interface {
 	RelativeToGitProjectDir() string
 	LocalGitRepo() git_repo.GitRepo
-	HeadCommit() string
+	HeadCommit(ctx context.Context) string
 	LooseGiterminism() bool
 	Dev() bool
 }

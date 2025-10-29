@@ -166,7 +166,7 @@ func do(ctx context.Context) error {
 }
 
 func main() {
-	if err := do(context.Background()); err != nil {
+	if err := do(context.TODO()); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %s\n", err)
 		os.Exit(1)
 	}

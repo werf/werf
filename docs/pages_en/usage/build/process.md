@@ -253,6 +253,12 @@ The `--ssh-key PRIVATE_KEY_FILE_PATH` flag allows restricting the SSH agent to s
 werf build --ssh-key ~/.ssh/private_key_1 --ssh-key ~/.ssh/private_key_2
 ```
 
+### Limitations on macOS
+
+When working on macOS, keep in mind that containers are always launched inside the Linux VM of Docker Desktop. Docker Desktop provides its own proxy socket, which forwards the system SSH socket (typically the one started by launchd for the current user). It is not possible to use an arbitrary agent.
+
+As a result, the temporary SSH agent and the `--ssh-key` option are not supported on macOS. To use SSH keys, you must add them in advance to the system SSH agent.
+
 ## Multi-platform and cross-platform building
 
 werf can build images for either the native host platform in which it is running, or for arbitrary platform in cross-platform mode using emulation. It is also possible to build images for multiple target platforms at once (i.e. manifest-list images).
@@ -261,11 +267,11 @@ Multi-platform builds use the cross-platform instruction execution mechanics pro
 
 The table below summarizes support of multi-platform building for different configuration syntaxes, building modes, and build backends:
 
-|                         | buildah        | docker-server      |
-|---                      |---             |---                 |
-| **Dockerfile**          | full support   | full support       |
-| **staged Dockerfile**   | full support   | no support         |
-| **stapel**              | full support   | linux/amd64 only   |
+|                       | buildah      | docker-server    |
+| --------------------- | ------------ | ---------------- |
+| **Dockerfile**        | full support | full support     |
+| **staged Dockerfile** | full support | no support       |
+| **stapel**            | full support | linux/amd64 only |
 
 ### Building for single target platform
 

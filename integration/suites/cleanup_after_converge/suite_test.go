@@ -9,6 +9,7 @@ import (
 
 	"github.com/werf/werf/v2/pkg/docker_registry"
 	"github.com/werf/werf/v2/pkg/storage"
+	"github.com/werf/werf/v2/pkg/werf"
 	"github.com/werf/werf/v2/test/pkg/suite_init"
 	"github.com/werf/werf/v2/test/pkg/utils"
 )
@@ -40,6 +41,8 @@ var (
 )
 
 var _ = BeforeEach(func(ctx SpecContext) {
+	Expect(werf.Init(SuiteData.TmpDir, "")).To(Succeed())
+
 	SuiteData.StagesStorage = utils.NewStagesStorage(ctx, SuiteData.K8sDockerRegistryRepo, "default", docker_registry.DockerRegistryOptions{})
 
 	containerRegistry, err := docker_registry.NewDockerRegistry(ctx, SuiteData.K8sDockerRegistryRepo, "", docker_registry.DockerRegistryOptions{})
@@ -48,10 +51,10 @@ var _ = BeforeEach(func(ctx SpecContext) {
 	SuiteData.ContainerRegistry = containerRegistry
 })
 
-func StagesCount() int {
-	return utils.StagesCount(context.Background(), SuiteData.StagesStorage)
+func StagesCount(ctx context.Context) int {
+	return utils.StagesCount(ctx, SuiteData.StagesStorage)
 }
 
-func ImportMetadataIDs() []string {
-	return utils.ImportMetadataIDs(context.Background(), SuiteData.StagesStorage)
+func ImportMetadataIDs(ctx context.Context) []string {
+	return utils.ImportMetadataIDs(ctx, SuiteData.StagesStorage)
 }

@@ -54,8 +54,8 @@ var _ = Describe("from anywhere", func() {
 
 	It("should resolve and chain correctly", func(ctx SpecContext) {
 		out := utils.SucceedCommandOutputString(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
-		Expect(out).To(ContainSubstring("Pulling base image alpine"))
 		Expect(out).To(ContainSubstring("Building stage FromImage/from"))
 		Expect(out).To(ContainSubstring("Building stage FromImageAlias/from"))
+		Expect(out).To(ContainSubstring("Building stage FromArtifact/from"))
 	})
 })

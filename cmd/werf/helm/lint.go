@@ -28,8 +28,8 @@ func NewLintCmd(actionConfig *action.Configuration, wc *chart_extender.WerfChart
 
 		// NOTICE: This is temporary approach to use `werf helm lint` in pipelines correctly — respect --env / WERF_ENV param,
 		// NOTICE: which is typically set by the `werf ci-env` command.
-		if *lintCmdData.Environment != "" {
-			wc.SetStubServiceValuesOverrides(helpers.GetEnvServiceValues(*lintCmdData.Environment))
+		if lintCmdData.Environment != "" {
+			wc.SetStubServiceValuesOverrides(helpers.GetEnvServiceValues(lintCmdData.Environment))
 		}
 
 		if err := InitRenderRelatedWerfChartParams(ctx, &lintCmdData, wc); err != nil {

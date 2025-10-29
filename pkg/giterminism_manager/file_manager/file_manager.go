@@ -13,6 +13,7 @@ import (
 	"github.com/werf/3p-helm/pkg/werf/file"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
+	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/giterminism_manager/file_reader"
 	"github.com/werf/werf/v2/pkg/giterminism_manager/inspector"
 	"github.com/werf/werf/v2/pkg/includes"
@@ -57,6 +58,7 @@ type NewFileManagerOptions struct {
 	ProjectDir             string
 	FileReader             FileReader
 	Inspector              inspector.Inspector
+	LocalGitRepo           *git_repo.Local
 	CreateIncludesLockFile bool
 	AllowIncludesUpdate    bool
 }
@@ -71,6 +73,8 @@ func NewFileManager(ctx context.Context, opts NewFileManagerOptions) (*FileManag
 		FileReader:             opts.FileReader,
 		CreateOrUpdateLockFile: opts.CreateIncludesLockFile,
 		UseLatestVersion:       opts.AllowIncludesUpdate,
+		ProjectDir:             opts.ProjectDir,
+		LocalGitRepo:           opts.LocalGitRepo,
 	})
 	if err != nil {
 		return nil, err
@@ -301,7 +305,9 @@ func (f *FileManager) LocateChart(ctx context.Context, name string) (string, err
 }
 
 func (f *FileManager) ReadChartFile(ctx context.Context, filePath string) ([]byte, error) {
-	path := getDirAbsPath(filePath, f.customProjectDir)
+	relToProjFilePath := util.GetRelativeToBaseFilepath(f.customProjectDir, filePath)
+
+	path := getDirAbsPath(relToProjFilePath, f.customProjectDir)
 	if exist, _ := util.FileExists(path); exist {
 		data, err := f.fileReader.ReadChartFile(ctx, path)
 		if err != nil {
@@ -310,10 +316,10 @@ func (f *FileManager) ReadChartFile(ctx context.Context, filePath string) ([]byt
 		return data, nil
 	}
 
-	logboek.Context(ctx).Debug().LogF("Chart file %q not found in the local filesystem. Try find in includes\n", filePath)
-	data, err := f.tryReadFromIncludes(ctx, filePath)
+	logboek.Context(ctx).Debug().LogF("Chart file %q not found in the local filesystem. Try find in includes\n", relToProjFilePath)
+	data, err := f.tryReadFromIncludes(ctx, relToProjFilePath)
 	if err != nil {
-		return nil, fmt.Errorf("unable to read chart file %q: %w", filepath.ToSlash(filePath), err)
+		return nil, fmt.Errorf("unable to read chart file %q: %w", filepath.ToSlash(relToProjFilePath), err)
 	}
 
 	return data, nil

@@ -6,7 +6,6 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/pkg/container_backend"
-	"github.com/werf/werf/v2/pkg/image"
 )
 
 func NewGitLatestPatchStage(gitPatchStageOptions *NewGitPatchStageOptions, baseStageOptions *BaseStageOptions) *GitLatestPatchStage {
@@ -63,10 +62,6 @@ func (s *GitLatestPatchStage) GetDependencies(ctx context.Context, c Conveyor, c
 	}
 
 	return util.Sha256Hash(args...), nil
-}
-
-func (s *GitLatestPatchStage) SelectSuitableStageDesc(ctx context.Context, c Conveyor, stageDescSet image.StageDescSet) (*image.StageDesc, error) {
-	return selectSuitableStageDesc(ctx, c, stageDescSet, s)
 }
 
 func (s *GitLatestPatchStage) GetNextStageDependencies(ctx context.Context, c Conveyor) (string, error) {

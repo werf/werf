@@ -86,11 +86,12 @@ func main() {
 	common.ShutdownTelemetry(ctx, 0)
 }
 
-func onShutdown(err error, exitCode int) {
-	if exitCode != 0 { // exitCode could be -1, 0, or >0; see pkg/werf/exec/cancel_test.go
-		logging.Error(err.Error())
-	} else {
-		logging.Default(err.Error())
+func onShutdown(_ context.Context, desc graceful.TerminationDescriptor) {
+	if desc.Signal() != nil {
+		logging.Default(fmt.Sprintf("Signal: %s", desc.Signal()))
+		os.Exit(desc.ExitCode())
+	} else if desc.Err() != nil {
+		logging.Error(desc.Err().Error())
+		os.Exit(desc.ExitCode())
 	}
-	os.Exit(exitCode)
 }

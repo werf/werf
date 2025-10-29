@@ -116,6 +116,8 @@ func (gm *GitMapping) makeArchiveOptions(ctx context.Context, commit string) (*g
 		PathMatcher: gm.getPathMatcher(),
 		Commit:      commit,
 		FileRenames: fileRenames,
+		Owner:       gm.Owner,
+		Group:       gm.Group,
 	}, nil
 }
 
@@ -188,8 +190,16 @@ func (gm *GitMapping) IsLocal() bool {
 	return gm.GitRepo().IsLocal()
 }
 
-func (gm *GitMapping) getLatestCommit(ctx context.Context) (string, error) {
+func (gm *GitMapping) getCommit(ctx context.Context) (string, error) {
 	if gm.Commit != "" {
+		exist, err := gm.GitRepo().IsCommitExists(ctx, gm.Commit)
+		if err != nil {
+			return "", fmt.Errorf("unable to check commit %q existence in repository %s: %w", gm.Commit, gm.GitRepo().GetName(), err)
+		}
+		if !exist {
+			return "", fmt.Errorf("commit %q not found in repository %s. Ensure it has not been squashed or rebased", gm.Commit, gm.GitRepo().GetName())
+		}
+
 		return gm.Commit, nil
 	}
 
@@ -209,7 +219,7 @@ func (gm *GitMapping) getLatestCommit(ctx context.Context) (string, error) {
 	return commit, nil
 }
 
-func (gm *GitMapping) applyPatchCommand(patchFile *ContainerFileDescriptor, archiveType git_repo.ArchiveType) ([]string, error) {
+func (gm *GitMapping) applyPatchCommand(patchFile *ContainerFileDescriptor, patch git_repo.Patch, archiveType git_repo.ArchiveType) ([]string, error) {
 	commands := make([]string, 0)
 
 	var applyPatchDirectory string
@@ -231,8 +241,7 @@ func (gm *GitMapping) applyPatchCommand(patchFile *ContainerFileDescriptor, arch
 	))
 
 	gitCommand := fmt.Sprintf(
-		"%s %s apply --ignore-whitespace --whitespace=nowarn --directory=\"%s\" --unsafe-paths %s %s",
-		stapel.OptionalSudoCommand(gm.Owner, gm.Group),
+		"%s apply --ignore-whitespace --whitespace=nowarn --directory=\"%s\" --unsafe-paths %s %s",
 		stapel.GitBinPath(),
 		applyPatchDirectory,
 		patchFile.ContainerFilePath,
@@ -241,13 +250,31 @@ func (gm *GitMapping) applyPatchCommand(patchFile *ContainerFileDescriptor, arch
 
 	commands = append(commands, strings.TrimLeft(gitCommand, " "))
 
+	if gm.Owner != "" || gm.Group != "" {
+		pathsListFile, err := gm.preparePatchPathsListFile(patch)
+		if err != nil {
+			return nil, fmt.Errorf("cannot create patch paths list file: %w", err)
+		}
+		chownCommand := fmt.Sprintf(
+			`%s --arg-file=%s --null -I {} %s -c 'if [ -e "$1" ] || [ -h "$1" ]; then %s -h %s:%s "$1"; fi' _ {}`,
+			stapel.XargsBinPath(),
+			pathsListFile.ContainerFilePath,
+			stapel.BashBinPath(),
+			stapel.ChownBinPath(),
+			gm.Owner,
+			gm.Group,
+		)
+
+		commands = append(commands, strings.TrimLeft(chownCommand, " "))
+	}
+
 	return commands, nil
 }
 
 func (gm *GitMapping) GetLatestCommitInfo(ctx context.Context, c Conveyor) (ImageCommitInfo, error) {
 	res := ImageCommitInfo{}
 
-	if commit, err := gm.getLatestCommit(ctx); err != nil {
+	if commit, err := gm.getCommit(ctx); err != nil {
 		return ImageCommitInfo{}, err
 	} else {
 		res.Commit = commit
@@ -314,7 +341,7 @@ func (gm *GitMapping) GetBaseCommitForPrevBuiltImage(ctx context.Context, c Conv
 
 	var baseCommit string
 	if prevBuiltImageCommitInfo.VirtualMerge {
-		if latestCommit, err := gm.getLatestCommit(ctx); err != nil {
+		if latestCommit, err := gm.getCommit(ctx); err != nil {
 			return "", err
 		} else if gm.GitRepo().IsLocal() && c.GetLocalGitRepoVirtualMergeOptions().VirtualMerge && latestCommit == prevBuiltImageCommitInfo.Commit {
 			baseCommit = prevBuiltImageCommitInfo.Commit
@@ -503,7 +530,7 @@ func (gm *GitMapping) baseApplyPatchCommand(ctx context.Context, fromCommit, toC
 		return nil, fmt.Errorf("cannot prepare patch file: %w", err)
 	}
 
-	return gm.applyPatchCommand(patchFile, archiveType)
+	return gm.applyPatchCommand(patchFile, patch, archiveType)
 }
 
 func quoteShellArg(arg string) string {
@@ -540,8 +567,7 @@ func (gm *GitMapping) applyArchiveCommand(archiveFile *ContainerFileDescriptor, 
 	))
 
 	tarCommand := fmt.Sprintf(
-		"%s %s -xf %s -C \"%s\"",
-		stapel.OptionalSudoCommand(gm.Owner, gm.Group),
+		"%s -xf %s -C \"%s\"",
 		stapel.TarBinPath(),
 		archiveFile.ContainerFilePath,
 		unpackArchiveDirectory,

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -61,10 +62,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 
-	common.SetupKubeConfig(&commonCmdData, cmd)
-	common.SetupKubeConfigBase64(&commonCmdData, cmd)
-	common.SetupKubeContext(&commonCmdData, cmd)
-
 	cmd.Flags().BoolVarP(&cmdData.Local, "local", "", util.GetBoolEnvironmentDefaultTrue("WERF_LOCAL"), "Use file lock-manager and file stages-storage-cache (true by default or $WERF_LOCAL)")
 	cmd.Flags().StringVarP(&cmdData.LocalLockManagerBaseDir, "local-lock-manager-base-dir", "", os.Getenv("WERF_LOCAL_LOCK_MANAGER_BASE_DIR"), "Use specified directory as base for file lock-manager (~/.werf/synchronization_server/lock_manager by default or $WERF_LOCAL_LOCK_MANAGER_BASE_DIR)")
 	cmd.Flags().StringVarP(&cmdData.LocalStagesStorageCacheBaseDir, "local-stages-storage-cache-base-dir", "", os.Getenv("WERF_LOCAL_STAGES_STORAGE_CACHE_BASE_DIR"), "Use specified directory as base for file stages-storage-cache (~/.werf/synchronization_server/stages_storage_cache by default or $WERF_LOCAL_STAGES_STORAGE_CACHE_BASE_DIR)")
@@ -75,6 +72,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	cmd.Flags().StringVarP(&cmdData.TTL, "ttl", "", os.Getenv("WERF_TTL"), "Time to live for lock-manager locks and stages-storage-cache records (default $WERF_TTL)")
 	cmd.Flags().StringVarP(&cmdData.Host, "host", "", os.Getenv("WERF_HOST"), "Bind synchronization server to the specified host (default localhost or $WERF_HOST)")
 	cmd.Flags().StringVarP(&cmdData.Port, "port", "", os.Getenv("WERF_PORT"), "Bind synchronization server to the specified port (default 55581 or $WERF_PORT)")
+
+	lo.Must0(common.SetupMinimalKubeConnectionFlags(&commonCmdData, cmd))
 
 	return cmd
 }
@@ -101,9 +100,10 @@ func runSynchronization(ctx context.Context) error {
 
 	if cmdData.Kubernetes {
 		if err := kube.Init(kube.InitOptions{kube.KubeConfigOptions{
-			Context:          *commonCmdData.KubeContext,
-			ConfigPath:       *commonCmdData.KubeConfig,
-			ConfigDataBase64: *commonCmdData.KubeConfigBase64,
+			Context:             commonCmdData.KubeContextCurrent,
+			ConfigPath:          commonCmdData.LegacyKubeConfigPath,
+			ConfigDataBase64:    commonCmdData.KubeConfigBase64,
+			ConfigPathMergeList: commonCmdData.LegacyKubeConfigPathsMergeList,
 		}}); err != nil {
 			return fmt.Errorf("cannot initialize kube: %w", err)
 		}
@@ -116,7 +116,7 @@ func runSynchronization(ctx context.Context) error {
 			namespace := "werf-synchronization"
 			configMapName := fmt.Sprintf("werf-%s", clientID)
 
-			if _, err := kubeutils.GetOrCreateConfigMapWithNamespaceIfNotExists(kube.Client, namespace, configMapName, true); err != nil {
+			if _, err := kubeutils.GetOrCreateConfigMapWithNamespaceIfNotExists(ctx, kube.Client, namespace, configMapName, true); err != nil {
 				return nil, fmt.Errorf("unable to create cm/%s in ns/%s: %w", configMapName, namespace, err)
 			}
 

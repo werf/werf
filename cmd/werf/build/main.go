@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 
 	"github.com/werf/logboek"
@@ -79,7 +80,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified repo, to pull base images")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
-	common.SetupInsecureHelmDependencies(&commonCmdData, cmd, true)
+	common.StubSetupInsecureHelmDependencies(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
 
@@ -91,9 +92,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
 	common.SetupSynchronization(&commonCmdData, cmd)
-	common.SetupKubeConfig(&commonCmdData, cmd)
-	common.SetupKubeConfigBase64(&commonCmdData, cmd)
-	common.SetupKubeContext(&commonCmdData, cmd)
 
 	common.SetupSaveBuildReport(&commonCmdData, cmd)
 	common.SetupBuildReportPath(&commonCmdData, cmd)
@@ -102,6 +100,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupVirtualMerge(&commonCmdData, cmd)
 
 	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultBuildParallelTasksLimit)
+	common.SetupRequireBuiltImages(&commonCmdData, cmd)
 	common.SetupFollow(&commonCmdData, cmd)
 
 	common.SetupDisableAutoHostCleanup(&commonCmdData, cmd)
@@ -119,6 +118,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	commonCmdData.SetupFinalImagesOnly(cmd, false)
 	commonCmdData.SetupAllowIncludesUpdate(cmd)
+
+	lo.Must0(common.SetupMinimalKubeConnectionFlags(&commonCmdData, cmd))
 
 	return cmd
 }
@@ -221,7 +222,22 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 	defer conveyorWithRetry.Terminate()
 
 	if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
-		return c.Build(ctx, buildOptions)
+		if common.GetRequireBuiltImages(ctx, &commonCmdData) {
+			shouldBeBuiltOptions, err := common.GetShouldBeBuiltOptions(&commonCmdData, imagesToProcess)
+			if err != nil {
+				return err
+			}
+
+			if err := c.ShouldBeBuilt(ctx, shouldBeBuiltOptions); err != nil {
+				return err
+			}
+		} else {
+			if err := c.Build(ctx, buildOptions); err != nil {
+				return err
+			}
+		}
+
+		return nil
 	}); err != nil {
 		return err
 	}

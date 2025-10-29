@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"time"
 
 	"github.com/go-task/task/v3"
 	"github.com/go-task/task/v3/args"
@@ -107,6 +108,7 @@ func (t *Task) newExecutor() *task.Executor {
 		Stdin:      os.Stdin,
 		Stdout:     os.Stdout,
 		Stderr:     os.Stderr,
+		Timeout:    time.Second * 5,
 	}
 }
 

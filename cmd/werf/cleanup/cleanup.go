@@ -74,7 +74,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and delete images from the specified repo")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
-	common.SetupInsecureHelmDependencies(&commonCmdData, cmd, true)
+	common.StubSetupInsecureHelmDependencies(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
 
@@ -85,8 +85,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
 	common.SetupSynchronization(&commonCmdData, cmd)
-	common.SetupKubeConfig(&commonCmdData, cmd)
-	common.SetupKubeConfigBase64(&commonCmdData, cmd)
 	common.SetupWithoutKube(&commonCmdData, cmd)
 	common.SetupKeepStagesBuiltWithinLastNHours(&commonCmdData, cmd)
 
@@ -107,6 +105,9 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	cmd.PersistentFlags().StringVarP(&cmdData.ScanContextOnly, "kube-context", "", os.Getenv("WERF_SCAN_CONTEXT_ONLY"), "Scan for used images only in the specified kube context, scan all contexts from kube config otherwise (default false or $WERF_SCAN_CONTEXT_ONLY)")
 
 	setupKeeplist(&cmdData, cmd)
+
+	common.SetupLegacyKubeConfigPath(&commonCmdData, cmd)
+	common.SetupKubeConfigBase64(&commonCmdData, cmd)
 
 	return cmd
 }
@@ -136,7 +137,7 @@ func runCleanup(ctx context.Context, cmd *cobra.Command) error {
 		}
 	}()
 
-	common.SetupOndemandKubeInitializer(cmdData.ScanContextOnly, *commonCmdData.KubeConfig, *commonCmdData.KubeConfigBase64, *commonCmdData.KubeConfigPathMergeList)
+	common.SetupOndemandKubeInitializer(cmdData.ScanContextOnly, commonCmdData.LegacyKubeConfigPath, commonCmdData.KubeConfigBase64, commonCmdData.LegacyKubeConfigPathsMergeList)
 	if err := common.GetOndemandKubeInitializer().Init(ctx); err != nil {
 		return err
 	}
@@ -211,7 +212,7 @@ func runCleanup(ctx context.Context, cmd *cobra.Command) error {
 	var kubernetesContextClients []*kube.ContextClient
 	var kubernetesNamespaceRestrictionByContext map[string]string
 	if !(*commonCmdData.WithoutKube || werfConfig.Meta.Cleanup.DisableKubernetesBasedPolicy) {
-		kubernetesContextClients, err = common.GetKubernetesContextClients(*commonCmdData.KubeConfig, *commonCmdData.KubeConfigBase64, *commonCmdData.KubeConfigPathMergeList, cmdData.ScanContextOnly)
+		kubernetesContextClients, err = common.GetKubernetesContextClients(commonCmdData.LegacyKubeConfigPath, commonCmdData.KubeConfigBase64, commonCmdData.LegacyKubeConfigPathsMergeList, cmdData.ScanContextOnly)
 		if err != nil {
 			return fmt.Errorf("unable to get Kubernetes clusters connections: %w", err)
 		}

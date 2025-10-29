@@ -4,95 +4,103 @@ import (
 	"context"
 	"os"
 	"runtime"
-	"testing"
 
-	"github.com/stretchr/testify/assert"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega/types"
 
+	"github.com/werf/werf/v2/pkg/logging"
 	"github.com/werf/werf/v2/pkg/werf"
 )
 
-const (
-	longPath = "/tmp/werf-test-agent-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-)
-
-func TestLinuxFallback_with_SSHenv(t *testing.T) {
-	if os.Getenv(SSHAuthSockEnv) == "" {
-		t.Skip("Skipping test because SSH_AUTH_SOCK is not set")
-	}
-	ctx := context.Background()
-	err := runTest(ctx, t, false, false, func() {
-		valid, err := validateAgentSock(SSHAuthSock)
-		assert.NoError(t, err)
-		assert.True(t, valid)
-	})
-	assert.NoError(t, err)
-}
-
-func TestLinuxFallback_without_SSHenv_wildTmpPath(t *testing.T) {
-	ctx := context.Background()
-	err := runTest(ctx, t, false, false, func() {
-		if SSHAuthSock == "" {
-			return
-		}
-		valid, err := validateAgentSock(SSHAuthSock)
-		assert.NoError(t, err)
-		assert.True(t, valid)
-	})
-	assert.NoError(t, err)
-}
-
-func TestLinuxFallback_with_SSHenv_wildTmpPath(t *testing.T) {
-	if os.Getenv(SSHAuthSockEnv) == "" {
-		t.Skip("Skipping test because SSH_AUTH_SOCK is not set")
-	}
-	ctx := context.Background()
-	err := runTest(ctx, t, false, false, func() {
-		valid, err := validateAgentSock(SSHAuthSock)
-		assert.NoError(t, err)
-		assert.True(t, valid)
-	})
-	assert.NoError(t, err)
-}
-
-func TestLinuxFallback_withLongSSHenv(t *testing.T) {
-	ctx := context.Background()
-	os.Setenv(SSHAuthSockEnv, longPath)
-	err := runTest(ctx, t, false, false, func() {})
-	assert.Error(t, err)
-}
-
-func runTest(ctx context.Context, t *testing.T, unsetSSHenv, wildTmpPath bool, validationfunc func()) error {
-	if unsetSSHenv {
-		os.Unsetenv("SSH_AUTH_SOCK")
-	}
-	if runtime.GOOS != "linux" && runtime.GOOS != "darwin" {
-		t.Skip("Skipping test on non-linux OS")
+var _ = Describe("Linux Fallback with SSH Environment", func() {
+	type testCase struct {
+		name                   string
+		skipIfSSHSockEnvNotSet bool
+		sshEnv                 string
+		testPath               string
+		errMatcher             types.GomegaMatcher
+		validationFunc         func()
 	}
 
-	home, _ := os.UserHomeDir()
+	const (
+		longPath = "/tmp/werf-test-agent-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+	)
 
-	testPath := "/tmp/werf-test-agent"
-	if wildTmpPath {
-		testPath = longPath
-	}
+	DescribeTable("should handle different SSH agent fallback scenarios",
+		func(ctx context.Context, tc testCase) {
+			if runtime.GOOS != "linux" && runtime.GOOS != "darwin" {
+				Skip("Skipping test on non-linux OS")
+			}
+			if tc.skipIfSSHSockEnvNotSet && os.Getenv(SSHAuthSockEnv) == "" {
+				Skip("Skipping test because SSH_AUTH_SOCK is not set")
+			}
 
-	err := os.MkdirAll(testPath, os.ModePerm)
-	if err != nil {
-		return err
-	}
-	defer os.RemoveAll(testPath)
+			ctx = logging.WithLogger(ctx)
 
-	err = werf.Init(testPath, home)
-	if err != nil {
-		return err
-	}
+			if tc.sshEnv != "" {
+				GinkgoT().Setenv(SSHAuthSockEnv, tc.sshEnv)
+			}
 
-	err = Init(ctx, []string{})
-	if err != nil {
-		return err
-	}
+			home, _ := os.UserHomeDir()
 
-	validationfunc()
+			err := os.MkdirAll(tc.testPath, os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+			defer os.RemoveAll(tc.testPath)
 
-	return nil
-}
+			err = werf.Init(tc.testPath, home)
+			Expect(err).NotTo(HaveOccurred())
+
+			err = Init(ctx, []string{})
+			Expect(err).To(tc.errMatcher)
+
+			tc.validationFunc()
+		},
+		Entry("with SSH_ENV set", testCase{
+			name:                   "with SSH_ENV set",
+			skipIfSSHSockEnvNotSet: true,
+			sshEnv:                 "",
+			testPath:               "/tmp/werf-test-agent",
+			errMatcher:             BeNil(),
+			validationFunc: func() {
+				valid, err := validateAgentSock(SSHAuthSock)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(valid).To(BeTrue())
+			},
+		}),
+		Entry("without SSH_ENV", testCase{
+			name:                   "without SSH_ENV",
+			skipIfSSHSockEnvNotSet: false,
+			sshEnv:                 "",
+			testPath:               "/tmp/werf-test-agent",
+			errMatcher:             BeNil(),
+			validationFunc: func() {
+				if SSHAuthSock != "" {
+					valid, err := validateAgentSock(SSHAuthSock)
+					Expect(err).NotTo(HaveOccurred())
+					Expect(valid).To(BeTrue())
+				}
+			},
+		}),
+		Entry("with SSH_ENV and wild tmp path", testCase{
+			name:                   "with SSH_ENV and wild tmp path",
+			skipIfSSHSockEnvNotSet: true,
+			sshEnv:                 "",
+			testPath:               longPath,
+			errMatcher:             BeNil(),
+			validationFunc: func() {
+				valid, err := validateAgentSock(SSHAuthSock)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(valid).To(BeTrue())
+			},
+		}),
+		Entry("with SSH_ENV and long path", testCase{
+			name:                   "with SSH_ENV and long path",
+			skipIfSSHSockEnvNotSet: false,
+			sshEnv:                 longPath,
+			testPath:               "/tmp/werf-test-agent",
+			errMatcher:             Not(BeNil()),
+			validationFunc:         func() {},
+		}),
+	)
+})

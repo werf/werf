@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
@@ -18,7 +19,8 @@ import (
 	"github.com/werf/logboek/pkg/level"
 	"github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
-	"github.com/werf/nelm/pkg/action"
+	"github.com/werf/nelm/pkg/common"
+	"github.com/werf/nelm/pkg/log"
 	"github.com/werf/werf/v2/pkg/build"
 	"github.com/werf/werf/v2/pkg/build/stage"
 	"github.com/werf/werf/v2/pkg/config"
@@ -31,6 +33,7 @@ import (
 	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/true_git"
 	"github.com/werf/werf/v2/pkg/werf"
+	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
 
 const (
@@ -194,242 +197,76 @@ func GetBuildReportPathAndFormat(cmdData *CmdData) (string, build.ReportFormat, 
 }
 
 func SetupSaveDeployReport(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.SaveDeployReport = new(bool)
-	cmd.Flags().BoolVarP(cmdData.SaveDeployReport, "save-deploy-report", "", util.GetBoolEnvironmentDefaultFalse("WERF_SAVE_DEPLOY_REPORT"), fmt.Sprintf("Save deploy report (by default $WERF_SAVE_DEPLOY_REPORT or %t). Its path and format configured with --deploy-report-path", DefaultSaveDeployReport))
+	cmd.Flags().BoolVarP(&cmdData.SaveDeployReport, "save-deploy-report", "", util.GetBoolEnvironmentDefaultFalse("WERF_SAVE_DEPLOY_REPORT"), fmt.Sprintf("Save deploy report (by default $WERF_SAVE_DEPLOY_REPORT or %t). Its path and format configured with --deploy-report-path", DefaultSaveDeployReport))
 }
 
 func SetupSaveUninstallReport(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.SaveUninstallReport = new(bool)
-	cmd.Flags().BoolVarP(cmdData.SaveUninstallReport, "save-uninstall-report", "", util.GetBoolEnvironmentDefaultFalse("WERF_SAVE_UNINSTALL_REPORT"), fmt.Sprintf("Save uninstall report (by default $WERF_SAVE_UNINSTALL_REPORT or %t). Its path and format configured with --uninstall-report-path", DefaultSaveUninstallReport))
+	cmd.Flags().BoolVarP(&cmdData.SaveUninstallReport, "save-uninstall-report", "", util.GetBoolEnvironmentDefaultFalse("WERF_SAVE_UNINSTALL_REPORT"), fmt.Sprintf("Save uninstall report (by default $WERF_SAVE_UNINSTALL_REPORT or %t). Its path and format configured with --uninstall-report-path", DefaultSaveUninstallReport))
 }
 
 func SetupDeployReportPath(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.DeployReportPath = new(string)
-	cmd.Flags().StringVarP(cmdData.DeployReportPath, "deploy-report-path", "", os.Getenv("WERF_DEPLOY_REPORT_PATH"), fmt.Sprintf("Change deploy report path and format (by default $WERF_DEPLOY_REPORT_PATH or %q if not set). Extension must be .json for JSON format. If extension not specified, then .json is used", DefaultDeployReportPathJSON))
+	cmd.Flags().StringVarP(&cmdData.DeployReportPath, "deploy-report-path", "", os.Getenv("WERF_DEPLOY_REPORT_PATH"), fmt.Sprintf("Change deploy report path and format (by default $WERF_DEPLOY_REPORT_PATH or %q if not set). Extension must be .json for JSON format. If extension not specified, then .json is used", DefaultDeployReportPathJSON))
 }
 
 func SetupUninstallReportPath(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.UninstallReportPath = new(string)
-	cmd.Flags().StringVarP(cmdData.UninstallReportPath, "uninstall-report-path", "", os.Getenv("WERF_UNINSTALL_REPORT_PATH"), fmt.Sprintf("Change uninstall report path and format (by default $WERF_UNINSTALL_REPORT_PATH or %q if not set). Extension must be .json for JSON format. If extension not specified, then .json is used", DefaultUninstallReportPathJSON))
-}
-
-func GetSaveDeployReport(cmdData *CmdData) bool {
-	if cmdData.SaveDeployReport == nil {
-		return false
-	}
-
-	return *cmdData.SaveDeployReport
-}
-
-func GetSaveUninstallReport(cmdData *CmdData) bool {
-	if cmdData.SaveUninstallReport == nil {
-		return false
-	}
-
-	return *cmdData.SaveUninstallReport
-}
-
-func GetDeployReportPath(cmdData *CmdData) (string, error) {
-	unspecifiedPath := cmdData.DeployReportPath == nil || *cmdData.DeployReportPath == ""
-	if unspecifiedPath {
-		return DefaultDeployReportPathJSON, nil
-	}
-
-	switch ext := filepath.Ext(*cmdData.DeployReportPath); ext {
-	case ".json":
-		return *cmdData.DeployReportPath, nil
-	case "":
-		return *cmdData.DeployReportPath + ".json", nil
-	default:
-		return "", fmt.Errorf("invalid --deploy-report-path %q: extension must be either .json or unspecified", *cmdData.DeployReportPath)
-	}
-}
-
-func GetUninstallReportPath(cmdData *CmdData) (string, error) {
-	unspecifiedPath := cmdData.UninstallReportPath == nil || *cmdData.UninstallReportPath == ""
-	if unspecifiedPath {
-		return DefaultUninstallReportPathJSON, nil
-	}
-
-	switch ext := filepath.Ext(*cmdData.UninstallReportPath); ext {
-	case ".json":
-		return *cmdData.UninstallReportPath, nil
-	case "":
-		return *cmdData.UninstallReportPath + ".json", nil
-	default:
-		return "", fmt.Errorf("invalid --uninstall-report-path %q: extension must be either .json or unspecified", *cmdData.UninstallReportPath)
-	}
+	cmd.Flags().StringVarP(&cmdData.UninstallReportPath, "uninstall-report-path", "", os.Getenv("WERF_UNINSTALL_REPORT_PATH"), fmt.Sprintf("Change uninstall report path and format (by default $WERF_UNINSTALL_REPORT_PATH or %q if not set). Extension must be .json for JSON format. If extension not specified, then .json is used", DefaultUninstallReportPathJSON))
 }
 
 func SetupUseDeployReport(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.UseDeployReport = new(bool)
-	cmd.Flags().BoolVarP(cmdData.UseDeployReport, "use-deploy-report", "", util.GetBoolEnvironmentDefaultFalse("WERF_USE_DEPLOY_REPORT"), fmt.Sprintf("Use deploy report, previously saved with --save-deploy-report (by default $WERF_USE_DEPLOY_REPORT or %t). Its path and format configured with --deploy-report-path", DefaultUseDeployReport))
-}
-
-func GetUseDeployReport(cmdData *CmdData) bool {
-	if cmdData.UseDeployReport == nil {
-		return false
-	}
-
-	return *cmdData.UseDeployReport
+	cmd.Flags().BoolVarP(&cmdData.UseDeployReport, "use-deploy-report", "", util.GetBoolEnvironmentDefaultFalse("WERF_USE_DEPLOY_REPORT"), fmt.Sprintf("Use deploy report, previously saved with --save-deploy-report (by default $WERF_USE_DEPLOY_REPORT or %t). Its path and format configured with --deploy-report-path", DefaultUseDeployReport))
 }
 
 func SetupNetworkParallelism(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.NetworkParallelism = new(int)
-
 	var defVal int
 	if val, err := util.GetIntEnvVar("WERF_NETWORK_PARALLELISM"); err != nil {
 		panic(fmt.Sprintf("bad WERF_NETWORK_PARALLELISM value: %s", err))
 	} else if val != nil {
 		defVal = int(*val)
 	} else {
-		defVal = action.DefaultNetworkParallelism
+		defVal = common.DefaultNetworkParallelism
 	}
 
 	cmd.Flags().IntVarP(
-		cmdData.NetworkParallelism,
+		&cmdData.NetworkParallelism,
 		"network-parallelism",
 		"",
 		defVal,
-		fmt.Sprintf("Parallelize some network operations (default $WERF_NETWORK_PARALLELISM or %d)", action.DefaultNetworkParallelism),
-	)
-}
-
-func SetupKubeQpsLimit(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.KubeQpsLimit = new(int)
-
-	var defVal int
-	if val, err := util.GetIntEnvVar("WERF_KUBE_QPS_LIMIT"); err != nil {
-		panic(fmt.Sprintf("bad WERF_KUBE_QPS_LIMIT value: %s", err))
-	} else if val != nil {
-		defVal = int(*val)
-	} else {
-		defVal = action.DefaultQPSLimit
-	}
-
-	cmd.Flags().IntVarP(
-		cmdData.KubeQpsLimit,
-		"kube-qps-limit",
-		"",
-		defVal,
-		fmt.Sprintf("Kubernetes client QPS limit (default $WERF_KUBE_QPS_LIMIT or %d)", action.DefaultQPSLimit),
-	)
-}
-
-func SetupKubeBurstLimit(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.KubeBurstLimit = new(int)
-
-	var defVal int
-	if val, err := util.GetIntEnvVar("WERF_KUBE_BURST_LIMIT"); err != nil {
-		panic(fmt.Sprintf("bad WERF_KUBE_BURST_LIMIT value: %s", err))
-	} else if val != nil {
-		defVal = int(*val)
-	} else {
-		defVal = action.DefaultBurstLimit
-	}
-
-	cmd.Flags().IntVarP(
-		cmdData.KubeBurstLimit,
-		"kube-burst-limit",
-		"",
-		defVal,
-		fmt.Sprintf("Kubernetes client burst limit (default $WERF_KUBE_BURST_LIMIT or %d)", action.DefaultBurstLimit),
+		fmt.Sprintf("Parallelize some network operations (default $WERF_NETWORK_PARALLELISM or %d)", common.DefaultNetworkParallelism),
 	)
 }
 
 func SetupNoInstallCRDs(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.NoInstallCRDs = new(bool)
+	cmd.Flags().BoolVarP(&cmdData.NoInstallStandaloneCRDs, "no-install-crds", "", util.GetBoolEnvironmentDefaultFalse("WERF_NO_INSTALL_CRDS"), `Do not install CRDs from "crds/" directories of installed charts (default $WERF_NO_INSTALL_CRDS)`)
+}
 
-	cmd.Flags().BoolVarP(cmdData.NoInstallCRDs, "no-install-crds", "", util.GetBoolEnvironmentDefaultFalse("WERF_NO_INSTALL_CRDS"), `Do not install CRDs from "crds/" directories of installed charts (default $WERF_NO_INSTALL_CRDS)`)
+func SetupNoRemoveManualChanges(cmdData *CmdData, cmd *cobra.Command) {
+	cmd.Flags().BoolVarP(&cmdData.NoRemoveManualChanges, "no-remove-manual-changes", "", util.GetBoolEnvironmentDefaultFalse("WERF_NO_REMOVE_MANUAL_CHANGES"), `Don't remove fields added manually to the resource in the cluster if fields aren't present in the manifest (default $WERF_NO_REMOVE_MANUAL_CHANGES)`)
 }
 
 func SetupReleaseLabel(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.ReleaseLabels = new([]string)
-	cmd.Flags().StringArrayVarP(cmdData.ReleaseLabels, "release-label", "", []string{}, `Add Helm release labels (can specify multiple). Kind of labels depends or release storage driver.
+	cmd.Flags().StringArrayVarP(&cmdData.ReleaseLabels, "release-label", "", []string{}, `Add Helm release labels (can specify multiple). Kind of labels depends or release storage driver.
 Format: labelName=labelValue.
 Also, can be specified with $WERF_RELEASE_LABEL_* (e.g. $WERF_RELEASE_LABEL_1=labelName1=labelValue1, $WERF_RELEASE_LABEL_2=labelName2=labelValue2)`)
 }
 
 func SetupForceAdoption(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.ForceAdoption = new(bool)
-	cmd.Flags().BoolVarP(cmdData.ForceAdoption, "force-adoption", "", util.GetBoolEnvironmentDefaultFalse("WERF_FORCE_ADOPTION"), "Always adopt resources, even if they belong to a different Helm release (default $WERF_FORCE_ADOPTION or false)")
-}
-
-func GetNetworkParallelism(cmdData *CmdData) int {
-	if *cmdData.NetworkParallelism < 1 {
-		panic(fmt.Sprintf("bad network parallelism value: %d (should be >= 1)", *cmdData.NetworkParallelism))
-	}
-
-	return *cmdData.NetworkParallelism
+	cmd.Flags().BoolVarP(&cmdData.ForceAdoption, "force-adoption", "", util.GetBoolEnvironmentDefaultFalse("WERF_FORCE_ADOPTION"), "Always adopt resources, even if they belong to a different Helm release (default $WERF_FORCE_ADOPTION or false)")
 }
 
 func SetupDeployGraphPath(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.DeployGraphPath = new(string)
-
-	cmd.Flags().StringVarP(cmdData.DeployGraphPath, "deploy-graph-path", "", os.Getenv("WERF_DEPLOY_GRAPH_PATH"), "Save deploy graph path to the specified file (by default $WERF_DEPLOY_GRAPH_PATH). Extension must be .dot or not specified. If extension not specified, then .dot is used")
+	cmd.Flags().StringVarP(&cmdData.InstallGraphPath, "deploy-graph-path", "", os.Getenv("WERF_DEPLOY_GRAPH_PATH"), "Save deploy graph path to the specified file (by default $WERF_DEPLOY_GRAPH_PATH). Extension must be .dot or not specified. If extension not specified, then .dot is used")
 }
 
 func SetupUninstallGraphPath(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.UninstallGraphPath = new(string)
-
-	cmd.Flags().StringVarP(cmdData.UninstallGraphPath, "uninstall-graph-path", "", os.Getenv("WERF_UNINSTALL_GRAPH_PATH"), "Save uninstall graph path to the specified file (by default $WERF_UNINSTALL_GRAPH_PATH). Extension must be .dot or not specified. If extension not specified, then .dot is used")
+	cmd.Flags().StringVarP(&cmdData.UninstallGraphPath, "uninstall-graph-path", "", os.Getenv("WERF_UNINSTALL_GRAPH_PATH"), "Save uninstall graph path to the specified file (by default $WERF_UNINSTALL_GRAPH_PATH). Extension must be .dot or not specified. If extension not specified, then .dot is used")
 }
 
 func SetupRollbackGraphPath(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.RollbackGraphPath = new(string)
-
-	cmd.Flags().StringVarP(cmdData.RollbackGraphPath, "rollback-graph-path", "", os.Getenv("WERF_ROLLBACK_GRAPH_PATH"), "Save rollback graph path to the specified file (by default $WERF_ROLLBACK_GRAPH_PATH). Extension must be .dot or not specified. If extension not specified, then .dot is used")
+	cmd.Flags().StringVarP(&cmdData.RollbackGraphPath, "rollback-graph-path", "", os.Getenv("WERF_ROLLBACK_GRAPH_PATH"), "Save rollback graph path to the specified file (by default $WERF_ROLLBACK_GRAPH_PATH). Extension must be .dot or not specified. If extension not specified, then .dot is used")
 }
 
 func SetupRenderSubchartNotes(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.RenderSubchartNotes = new(bool)
-
-	cmd.Flags().BoolVarP(cmdData.RenderSubchartNotes, "render-subchart-notes", "", util.GetBoolEnvironmentDefaultFalse("WERF_RENDER_SUBCHART_NOTES"), "If set, render subchart notes along with the parent (by default $WERF_RENDER_SUBCHART_NOTES or false)")
-}
-
-func GetDeployGraphPath(cmdData *CmdData) string {
-	if strings.TrimSpace(*cmdData.DeployGraphPath) == "" {
-		return ""
-	}
-
-	switch ext := filepath.Ext(*cmdData.DeployGraphPath); ext {
-	case ".dot":
-		return *cmdData.DeployGraphPath
-	case "":
-		return *cmdData.DeployGraphPath + ".dot"
-	default:
-		panic(fmt.Sprintf("invalid --deploy-graph-path %q: extension must be either .dot or unspecified", *cmdData.DeployGraphPath))
-	}
-}
-
-func GetRollbackGraphPath(cmdData *CmdData) string {
-	if strings.TrimSpace(*cmdData.RollbackGraphPath) == "" {
-		return ""
-	}
-
-	switch ext := filepath.Ext(*cmdData.RollbackGraphPath); ext {
-	case ".dot":
-		return *cmdData.RollbackGraphPath
-	case "":
-		return *cmdData.RollbackGraphPath + ".dot"
-	default:
-		panic(fmt.Sprintf("invalid --rollback-graph-path %q: extension must be either .dot or unspecified", *cmdData.RollbackGraphPath))
-	}
-}
-
-func GetUninstallGraphPath(cmdData *CmdData) string {
-	if strings.TrimSpace(*cmdData.UninstallGraphPath) == "" {
-		return ""
-	}
-
-	switch ext := filepath.Ext(*cmdData.UninstallGraphPath); ext {
-	case ".dot":
-		return *cmdData.UninstallGraphPath
-	case "":
-		return *cmdData.UninstallGraphPath + ".dot"
-	default:
-		panic(fmt.Sprintf("invalid --uninstall-graph-path %q: extension must be either .dot or unspecified", *cmdData.UninstallGraphPath))
-	}
+	cmd.Flags().BoolVarP(&cmdData.ShowSubchartNotes, "render-subchart-notes", "", util.GetBoolEnvironmentDefaultFalse("WERF_RENDER_SUBCHART_NOTES"), "If set, render subchart notes along with the parent (by default $WERF_RENDER_SUBCHART_NOTES or false)")
 }
 
 func SetupWithoutKube(cmdData *CmdData, cmd *cobra.Command) {
@@ -460,13 +297,10 @@ func GetKeepStagesBuiltWithinLastNHours(cmdData *CmdData, cmd *cobra.Command) *u
 }
 
 func SetupEnvironment(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.Environment = new(string)
-	cmd.Flags().StringVarP(cmdData.Environment, "env", "", os.Getenv("WERF_ENV"), "Use specified environment (default $WERF_ENV)")
+	cmd.Flags().StringVarP(&cmdData.Environment, "env", "", os.Getenv("WERF_ENV"), "Use specified environment (default $WERF_ENV)")
 }
 
 func SetupRelease(cmdData *CmdData, cmd *cobra.Command, projectConfigParsed bool) {
-	cmdData.Release = new(string)
-
 	var usage string
 	if projectConfigParsed {
 		usage = "Use specified Helm release name (default [[ project ]]-[[ env ]] template or deploy.helmRelease custom template from werf.yaml or $WERF_RELEASE)"
@@ -474,12 +308,10 @@ func SetupRelease(cmdData *CmdData, cmd *cobra.Command, projectConfigParsed bool
 		usage = "Use specified Helm release name (default $WERF_RELEASE)"
 	}
 
-	cmd.Flags().StringVarP(cmdData.Release, "release", "", os.Getenv("WERF_RELEASE"), usage)
+	cmd.Flags().StringVarP(&cmdData.Release, "release", "", os.Getenv("WERF_RELEASE"), usage)
 }
 
 func SetupNamespace(cmdData *CmdData, cmd *cobra.Command, projectConfigParsed bool) {
-	cmdData.Namespace = new(string)
-
 	var usage string
 	if projectConfigParsed {
 		usage = "Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or deploy.namespace custom template from werf.yaml or $WERF_NAMESPACE)"
@@ -487,51 +319,23 @@ func SetupNamespace(cmdData *CmdData, cmd *cobra.Command, projectConfigParsed bo
 		usage = "Use specified Kubernetes namespace (default $WERF_NAMESPACE)"
 	}
 
-	cmd.Flags().StringVarP(cmdData.Namespace, "namespace", "", os.Getenv("WERF_NAMESPACE"), usage)
+	cmd.Flags().StringVarP(&cmdData.Namespace, "namespace", "", os.Getenv("WERF_NAMESPACE"), usage)
 }
 
 func SetupAddAnnotations(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.AddAnnotations = new([]string)
-	cmd.Flags().StringArrayVarP(cmdData.AddAnnotations, "add-annotation", "", []string{}, `Add annotation to deploying resources (can specify multiple).
+	cmd.Flags().StringArrayVarP(&cmdData.ExtraAnnotations, "add-annotation", "", []string{}, `Add annotation to deploying resources (can specify multiple).
 Format: annoName=annoValue.
 Also, can be specified with $WERF_ADD_ANNOTATION_* (e.g. $WERF_ADD_ANNOTATION_1=annoName1=annoValue1, $WERF_ADD_ANNOTATION_2=annoName2=annoValue2)`)
 }
 
 func SetupAddLabels(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.AddLabels = new([]string)
-	cmd.Flags().StringArrayVarP(cmdData.AddLabels, "add-label", "", []string{}, `Add label to deploying resources (can specify multiple).
+	cmd.Flags().StringArrayVarP(&cmdData.ExtraLabels, "add-label", "", []string{}, `Add label to deploying resources (can specify multiple).
 Format: labelName=labelValue.
 Also, can be specified with $WERF_ADD_LABEL_* (e.g. $WERF_ADD_LABEL_1=labelName1=labelValue1, $WERF_ADD_LABEL_2=labelName2=labelValue2)`)
 }
 
-func SetupKubeContext(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.KubeContext = new(string)
-	cmd.PersistentFlags().StringVarP(cmdData.KubeContext, "kube-context", "", os.Getenv("WERF_KUBE_CONTEXT"), "Kubernetes config context (default $WERF_KUBE_CONTEXT)")
-}
-
-func SetupKubeConfig(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.KubeConfig = new(string)
-	cmd.PersistentFlags().StringVarP(cmdData.KubeConfig, "kube-config", "", "", "Kubernetes config file path (default $WERF_KUBE_CONFIG, or $WERF_KUBECONFIG, or $KUBECONFIG)")
-
-	cmdData.KubeConfigPathMergeList = new([]string)
-	kubeConfigPathMergeListStr := GetFirstExistingKubeConfigEnvVar()
-	for _, path := range filepath.SplitList(kubeConfigPathMergeListStr) {
-		*cmdData.KubeConfigPathMergeList = append(*cmdData.KubeConfigPathMergeList, path)
-	}
-}
-
-func SetupNoPodLogs(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.NoPodLogs = new(bool)
-	cmd.PersistentFlags().BoolVarP(cmdData.NoPodLogs, "no-pod-logs", "", false, "Disable Pod logs collection and printing (default $WERF_NO_POD_LOGS or false)")
-}
-
 func GetFirstExistingKubeConfigEnvVar() string {
 	return util.GetFirstExistingEnvVarAsString("WERF_KUBE_CONFIG", "WERF_KUBECONFIG", "KUBECONFIG")
-}
-
-func SetupKubeConfigBase64(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.KubeConfigBase64 = new(string)
-	cmd.PersistentFlags().StringVarP(cmdData.KubeConfigBase64, "kube-config-base64", "", GetFirstExistingKubeConfigBase64EnvVar(), "Kubernetes config data as base64 string (default $WERF_KUBE_CONFIG_BASE64 or $WERF_KUBECONFIG_BASE64 or $KUBECONFIG_BASE64)")
 }
 
 func GetFirstExistingKubeConfigBase64EnvVar() string {
@@ -586,24 +390,7 @@ func SetupFinalRepo(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.FinalRepo.SetupCmd(cmd)
 }
 
-func SetupStatusProgressPeriod(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.StatusProgressPeriodSeconds = new(int64)
-	SetupStatusProgressPeriodP(cmdData.StatusProgressPeriodSeconds, cmd)
-}
-
-func SetupStatusProgressPeriodP(destination *int64, cmd *cobra.Command) {
-	cmd.PersistentFlags().Int64VarP(
-		destination,
-		"status-progress-period",
-		"",
-		*statusProgressPeriodDefaultValue(),
-		"Status progress period in seconds. Set -1 to stop showing status progress. Defaults to $WERF_STATUS_PROGRESS_PERIOD_SECONDS or 5 seconds",
-	)
-}
-
 func SetupReleasesHistoryMax(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.ReleasesHistoryMax = new(int)
-
 	defaultValueP, err := util.GetIntEnvVar("WERF_RELEASES_HISTORY_MAX")
 	if err != nil {
 		panic(fmt.Sprintf("bad WERF_RELEASES_HISTORY_MAX value: %s", err))
@@ -617,88 +404,12 @@ func SetupReleasesHistoryMax(cmdData *CmdData, cmd *cobra.Command) {
 	}
 
 	cmd.Flags().IntVarP(
-		cmdData.ReleasesHistoryMax,
+		&cmdData.ReleaseHistoryLimit,
 		"releases-history-max",
 		"",
 		defaultValue,
 		"Max releases to keep in release storage ($WERF_RELEASES_HISTORY_MAX or 5 by default)",
 	)
-}
-
-func statusProgressPeriodDefaultValue() *int64 {
-	defaultValue := int64(5)
-
-	v, err := util.GetIntEnvVar("WERF_STATUS_PROGRESS_PERIOD_SECONDS")
-	if err != nil {
-		panic(err)
-	}
-
-	if v == nil {
-		v, err = util.GetIntEnvVar("WERF_STATUS_PROGRESS_PERIOD")
-		if err != nil {
-			panic(err)
-		}
-
-		if v == nil {
-			return &defaultValue
-		} else {
-			return v
-		}
-	} else {
-		return v
-	}
-}
-
-func SetupHooksStatusProgressPeriod(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.HooksStatusProgressPeriodSeconds = new(int64)
-	SetupHooksStatusProgressPeriodP(cmdData.HooksStatusProgressPeriodSeconds, cmd)
-}
-
-func SetupHooksStatusProgressPeriodP(destination *int64, cmd *cobra.Command) {
-	cmd.PersistentFlags().Int64VarP(
-		destination,
-		"hooks-status-progress-period",
-		"",
-		*hooksStatusProgressPeriodDefaultValue(),
-		"Hooks status progress period in seconds. Set 0 to stop showing hooks status progress. Defaults to $WERF_HOOKS_STATUS_PROGRESS_PERIOD_SECONDS or status progress period value",
-	)
-}
-
-func hooksStatusProgressPeriodDefaultValue() *int64 {
-	defaultValue := statusProgressPeriodDefaultValue()
-
-	v, err := util.GetIntEnvVar("WERF_HOOKS_STATUS_PROGRESS_PERIOD_SECONDS")
-	if err != nil {
-		panic(err)
-	}
-
-	if v == nil {
-		v, err = util.GetIntEnvVar("WERF_HOOKS_STATUS_PROGRESS_PERIOD")
-		if err != nil {
-			panic(err)
-		}
-
-		if v == nil {
-			return defaultValue
-		} else {
-			return v
-		}
-	} else {
-		return v
-	}
-}
-
-func SetupInsecureHelmDependencies(cmdData *CmdData, cmd *cobra.Command, projectConfigParsed bool) {
-	cmdData.InsecureHelmDependencies = new(bool)
-
-	var usage string
-	if projectConfigParsed {
-		usage = "Allow insecure oci registries to be used in the .helm/Chart.yaml dependencies configuration (default $WERF_INSECURE_HELM_DEPENDENCIES)"
-	} else {
-		usage = "Allow insecure oci registries to be used in the Chart.yaml dependencies configuration (default $WERF_INSECURE_HELM_DEPENDENCIES)"
-	}
-
-	cmd.Flags().BoolVarP(cmdData.InsecureHelmDependencies, "insecure-helm-dependencies", "", util.GetBoolEnvironmentDefaultFalse("WERF_INSECURE_HELM_DEPENDENCIES"), usage)
 }
 
 func SetupInsecureRegistry(cmdData *CmdData, cmd *cobra.Command) {
@@ -724,58 +435,8 @@ func SetupSkipTlsVerifyRegistry(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(cmdData.SkipTlsVerifyRegistry, "skip-tls-verify-registry", "", util.GetBoolEnvironmentDefaultFalse("WERF_SKIP_TLS_VERIFY_REGISTRY"), "Skip TLS certificate validation when accessing a registry (default $WERF_SKIP_TLS_VERIFY_REGISTRY)")
 }
 
-func SetupSkipTLSVerifyKube(cmdData *CmdData, cmd *cobra.Command) {
-	if cmdData.SkipTlsVerifyKube != nil {
-		return
-	}
-
-	cmdData.SkipTlsVerifyKube = new(bool)
-	cmd.Flags().BoolVarP(cmdData.SkipTlsVerifyKube, "skip-tls-verify-kube", "", util.GetBoolEnvironmentDefaultFalse("WERF_SKIP_TLS_VERIFY_KUBE"), "Skip TLS certificate validation when accessing a Kubernetes cluster (default $WERF_SKIP_TLS_VERIFY_KUBE)")
-}
-
-func SetupKubeApiServer(cmdData *CmdData, cmd *cobra.Command) {
-	if cmdData.KubeApiServer != nil {
-		return
-	}
-
-	cmdData.KubeApiServer = new(string)
-	cmd.Flags().StringVarP(cmdData.KubeApiServer, "kube-api-server", "", os.Getenv("WERF_KUBE_API_SERVER"), "Kubernetes API server address (default $WERF_KUBE_API_SERVER)")
-}
-
-func SetupKubeCaPath(cmdData *CmdData, cmd *cobra.Command) {
-	if cmdData.KubeCaPath != nil {
-		return
-	}
-
-	cmdData.KubeCaPath = new(string)
-	cmd.Flags().StringVarP(cmdData.KubeCaPath, "kube-ca-path", "", os.Getenv("WERF_KUBE_CA_PATH"), "Kubernetes API server CA path (default $WERF_KUBE_CA_PATH)")
-}
-
-func SetupKubeTlsServer(cmdData *CmdData, cmd *cobra.Command) {
-	if cmdData.KubeTlsServer != nil {
-		return
-	}
-
-	cmdData.KubeTlsServer = new(string)
-	cmd.Flags().StringVarP(cmdData.KubeTlsServer, "kube-tls-server", "", os.Getenv("WERF_KUBE_TLS_SERVER"), "Server name to use for Kubernetes API server certificate validation. If it is not provided, the hostname used to contact the server is used (default $WERF_KUBE_TLS_SERVER)")
-}
-
-func SetupKubeToken(cmdData *CmdData, cmd *cobra.Command) {
-	if cmdData.KubeToken != nil {
-		return
-	}
-
-	cmdData.KubeToken = new(string)
-	cmd.Flags().StringVarP(cmdData.KubeToken, "kube-token", "", os.Getenv("WERF_KUBE_TOKEN"), "Kubernetes bearer token used for authentication (default $WERF_KUBE_TOKEN)")
-}
-
-func SetupSkipTlsVerifyHelmDependencies(cmdData *CmdData, cmd *cobra.Command) {
-	if cmdData.SkipTlsVerifyHelmDependencies != nil {
-		return
-	}
-
-	cmdData.SkipTlsVerifyHelmDependencies = new(bool)
-	cmd.Flags().BoolVarP(cmdData.SkipTlsVerifyHelmDependencies, "skip-tls-verify-helm-dependencies", "", util.GetBoolEnvironmentDefaultFalse("WERF_SKIP_TLS_VERIFY_HELM_DEPENDENCIES"), "Skip TLS certificate validation when accessing a Helm charts repository (default $WERF_SKIP_TLS_VERIFY_HELM_DEPENDENCIES)")
+func SetupReleaseStorageSQLConnection(cmdData *CmdData, cmd *cobra.Command) {
+	cmd.Flags().StringVarP(&cmdData.ReleaseStorageSQLConnection, "release-storage-sql-connection", "", os.Getenv("WERF_RELEASE_STORAGE_SQL_CONNECTION"), "SQL Connection String for Helm SQL Storage (default $WERF_RELEASE_STORAGE_SQL_CONNECTION)")
 }
 
 func SetupDryRun(cmdData *CmdData, cmd *cobra.Command) {
@@ -973,55 +634,6 @@ Defaults to:
 * interactive terminal width or %d`, 140))
 }
 
-func SetupSet(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.Set = new([]string)
-	cmd.Flags().StringArrayVarP(cmdData.Set, "set", "", []string{}, `Set helm values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2).
-Also, can be defined with $WERF_SET_* (e.g. $WERF_SET_1=key1=val1, $WERF_SET_2=key2=val2)`)
-}
-
-func SetupSetString(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.SetString = new([]string)
-	cmd.Flags().StringArrayVarP(cmdData.SetString, "set-string", "", []string{}, `Set STRING helm values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2).
-Also, can be defined with $WERF_SET_STRING_* (e.g. $WERF_SET_STRING_1=key1=val1, $WERF_SET_STRING_2=key2=val2)`)
-}
-
-func SetupValues(cmdData *CmdData, cmd *cobra.Command, projectConfigParsed bool) {
-	cmdData.Values = new([]string)
-
-	var usage string
-	if projectConfigParsed {
-		usage = `Specify helm values in a YAML file or a URL (can specify multiple). Also, can be defined with $WERF_VALUES_* (e.g. $WERF_VALUES_1=.helm/values_1.yaml, $WERF_VALUES_2=.helm/values_2.yaml)`
-	} else {
-		usage = `Specify helm values in a YAML file or a URL (can specify multiple). Also, can be defined with $WERF_VALUES_* (e.g. $WERF_VALUES_1=values_1.yaml, $WERF_VALUES_2=values_2.yaml)`
-	}
-
-	cmd.Flags().StringArrayVarP(cmdData.Values, "values", "", []string{}, usage)
-}
-
-func SetupSetFile(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.SetFile = new([]string)
-	cmd.Flags().StringArrayVarP(cmdData.SetFile, "set-file", "", []string{}, `Set values from respective files specified via the command line (can specify multiple or separate values with commas: key1=path1,key2=path2).
-Also, can be defined with $WERF_SET_FILE_* (e.g. $WERF_SET_FILE_1=key1=path1, $WERF_SET_FILE_2=key2=val2)`)
-}
-
-func SetupSecretValues(cmdData *CmdData, cmd *cobra.Command, projectConfigParsed bool) {
-	cmdData.SecretValues = new([]string)
-
-	var usage string
-	if projectConfigParsed {
-		usage = `Specify helm secret values in a YAML file (can specify multiple). Also, can be defined with $WERF_SECRET_VALUES_* (e.g. $WERF_SECRET_VALUES_ENV=.helm/secret_values_test.yaml, $WERF_SECRET_VALUES_DB=.helm/secret_values_db.yaml)`
-	} else {
-		usage = `Specify helm secret values in a YAML file (can specify multiple). Also, can be defined with $WERF_SECRET_VALUES_* (e.g. $WERF_SECRET_VALUES_ENV=secret_values_test.yaml, $WERF_SECRET_VALUES_DB=secret_values_db.yaml)`
-	}
-
-	cmd.Flags().StringArrayVarP(cmdData.SecretValues, "secret-values", "", []string{}, usage)
-}
-
-func SetupIgnoreSecretKey(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.IgnoreSecretKey = new(bool)
-	cmd.Flags().BoolVarP(cmdData.IgnoreSecretKey, "ignore-secret-key", "", util.GetBoolEnvironmentDefaultFalse("WERF_IGNORE_SECRET_KEY"), "Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)")
-}
-
 func SetupParallelOptions(cmdData *CmdData, cmd *cobra.Command, defaultValue int64) {
 	SetupParallel(cmdData, cmd)
 	SetupParallelTasksLimit(cmdData, cmd, defaultValue)
@@ -1084,8 +696,7 @@ In development mode (--dev), werf restarts the command on any changes (including
 }
 
 func SetupKubeVersion(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.KubeVersion = new(string)
-	cmd.Flags().StringVarP(cmdData.KubeVersion, "kube-version", "", os.Getenv("WERF_KUBE_VERSION"), "Set specific Capabilities.KubeVersion (default $WERF_KUBE_VERSION)")
+	cmd.Flags().StringVarP(&cmdData.KubeVersion, "kube-version", "", os.Getenv("WERF_KUBE_VERSION"), "Set specific Capabilities.KubeVersion (default $WERF_KUBE_VERSION)")
 }
 
 func allStagesNames() []string {
@@ -1095,22 +706,6 @@ func allStagesNames() []string {
 	}
 
 	return stageNames
-}
-
-func GetIntEnvVarStrict(varName string) *int64 {
-	valP, err := util.GetIntEnvVar(varName)
-	if err != nil {
-		panic(fmt.Sprintf("bad %s value: %s", varName, err))
-	}
-	return valP
-}
-
-func GetUint64EnvVarStrict(varName string) *uint64 {
-	valP, err := util.GetUint64EnvVar(varName)
-	if err != nil {
-		panic(fmt.Sprintf("bad %s value: %s", varName, err))
-	}
-	return valP
 }
 
 func GetParallelTasksLimit(cmdData *CmdData) (int64, error) {
@@ -1291,14 +886,10 @@ func GetCustomWerfConfigTemplatesDirRelPath(giterminismManager giterminism_manag
 }
 
 func GetWerfConfigOptions(cmdData *CmdData, logRenderedFilePath bool) config.WerfConfigOptions {
-	var debugTemplates bool
-	if cmdData.DebugTemplates != nil {
-		debugTemplates = *cmdData.DebugTemplates
-	}
 	return config.WerfConfigOptions{
 		LogRenderedFilePath: logRenderedFilePath,
-		Env:                 *cmdData.Environment,
-		DebugTemplates:      debugTemplates,
+		Env:                 cmdData.Environment,
+		DebugTemplates:      cmdData.DebugTemplates,
 	}
 }
 
@@ -1320,6 +911,7 @@ func OpenGitRepo(ctx context.Context, cmdData *CmdData, workingDir, gitWorkTree 
 }
 
 func GetGiterminismManager(ctx context.Context, cmdData *CmdData) (*giterminism_manager.Manager, error) {
+	printGlobalWarningIfDevInCI(ctx, cmdData)
 	manager := new(giterminism_manager.Manager)
 	if err := logboek.Context(ctx).Info().LogProcess("Initialize giterminism manager").
 		DoError(func() error {
@@ -1390,6 +982,19 @@ func GetGitWorkTree(ctx context.Context, cmdData *CmdData, workingDir string) (s
 	return "", &GitWorktreeNotFoundError{}
 }
 
+func printGlobalWarningIfDevInCI(ctx context.Context, cmdData *CmdData) {
+	const (
+		devModeInCIWarning = `The development mode is enabled in CI environment by providing --dev flag or WERF_DEV env variable.
+This mode is intended for local development only and relies on the Git worktree state, including tracked and untracked files, while ignoring changes based on .gitignore and --dev-ignore rules.
+Using development in CI may lead to non-reproducible builds and unexpected results.`
+	)
+	if cmdData.Dev != nil && *cmdData.Dev {
+		if werf.IsRunningInCI() {
+			global_warnings.GlobalWarningLn(ctx, devModeInCIWarning)
+		}
+	}
+}
+
 func LookupGitWorkTree(ctx context.Context, workingDir string) (string, error) {
 	if found, workTree, err := true_git.UpwardLookupAndVerifyWorkTree(ctx, workingDir); err != nil {
 		return "", err
@@ -1435,10 +1040,10 @@ func GetHelmChartConfigAppVersion(werfConfig *config.WerfConfig) string {
 }
 
 func GetNamespace(cmdData *CmdData) string {
-	if *cmdData.Namespace == "" {
+	if cmdData.Namespace == "" {
 		return "default"
 	}
-	return *cmdData.Namespace
+	return cmdData.Namespace
 }
 
 func GetDevIgnore(cmdData *CmdData) []string {
@@ -1450,15 +1055,15 @@ func GetSSHKey(cmdData *CmdData) []string {
 }
 
 func GetAddLabels(cmdData *CmdData) []string {
-	return append(util.PredefinedValuesByEnvNamePrefix("WERF_ADD_LABEL_"), *cmdData.AddLabels...)
+	return append(util.PredefinedValuesByEnvNamePrefix("WERF_ADD_LABEL_"), cmdData.ExtraLabels...)
 }
 
 func GetAddAnnotations(cmdData *CmdData) []string {
-	return append(util.PredefinedValuesByEnvNamePrefix("WERF_ADD_ANNOTATION_"), *cmdData.AddAnnotations...)
+	return append(util.PredefinedValuesByEnvNamePrefix("WERF_ADD_ANNOTATION_"), cmdData.ExtraAnnotations...)
 }
 
 func GetReleaseLabel(cmdData *CmdData) []string {
-	return append(util.PredefinedValuesByEnvNamePrefix("WERF_RELEASE_LABEL_"), *cmdData.ReleaseLabels...)
+	return append(util.PredefinedValuesByEnvNamePrefix("WERF_RELEASE_LABEL_"), cmdData.ReleaseLabels...)
 }
 
 func GetCacheStagesStorage(cmdData *CmdData) []string {
@@ -1506,38 +1111,18 @@ func getAddCustomTag(cmdData *CmdData) []string {
 	return append(util.PredefinedValuesByEnvNamePrefix("WERF_ADD_CUSTOM_TAG_"), *cmdData.AddCustomTag...)
 }
 
-func GetSet(cmdData *CmdData) []string {
-	return append(util.PredefinedValuesByEnvNamePrefix("WERF_SET_", "WERF_SET_STRING_", "WERF_SET_FILE_", "WERF_SET_DOCKER_CONFIG_JSON_VALUE"), *cmdData.Set...)
-}
-
-func GetSetString(cmdData *CmdData) []string {
-	return append(util.PredefinedValuesByEnvNamePrefix("WERF_SET_STRING_"), *cmdData.SetString...)
-}
-
-func GetSetFile(cmdData *CmdData) []string {
-	return append(util.PredefinedValuesByEnvNamePrefix("WERF_SET_FILE_"), *cmdData.SetFile...)
-}
-
-func GetValues(cmdData *CmdData) []string {
-	return append(util.PredefinedValuesByEnvNamePrefix("WERF_VALUES_"), *cmdData.Values...)
-}
-
-func GetSecretValues(cmdData *CmdData) []string {
-	return append(util.PredefinedValuesByEnvNamePrefix("WERF_SECRET_VALUES_"), *cmdData.SecretValues...)
-}
-
 func GetRequiredRelease(cmdData *CmdData) (string, error) {
-	if *cmdData.Release == "" {
+	if cmdData.Release == "" {
 		return "", fmt.Errorf("--release=RELEASE param required")
 	}
-	return *cmdData.Release, nil
+	return cmdData.Release, nil
 }
 
 func GetOptionalRelease(cmdData *CmdData) string {
-	if *cmdData.Release == "" {
+	if cmdData.Release == "" {
 		return "werf-stub"
 	}
-	return *cmdData.Release
+	return cmdData.Release
 }
 
 // GetRequireBuiltImages returns true if --require-built-images is set or --skip-build is set.
@@ -1639,19 +1224,19 @@ func ProcessLogOptions(cmdData *CmdData) error {
 	return nil
 }
 
-func GetNelmLogLevel(cmdData *CmdData) string {
+func GetNelmLogLevel(cmdData *CmdData) log.Level {
 	if util.GetBoolEnvironmentDefaultFalse("WERF_NELM_TRACE") {
-		return action.TraceLogLevel
+		return log.TraceLevel
 	}
 
-	var logLevel string
+	var logLevel log.Level
 	switch {
 	case *cmdData.LogDebug:
-		logLevel = action.DebugLogLevel
+		logLevel = log.DebugLevel
 	case *cmdData.LogQuiet:
-		logLevel = action.ErrorLogLevel
+		logLevel = log.ErrorLevel
 	default:
-		logLevel = action.InfoLogLevel
+		logLevel = log.InfoLevel
 	}
 
 	return logLevel
@@ -1753,4 +1338,149 @@ func getFlags(cmd *cobra.Command, persistent bool) *pflag.FlagSet {
 	}
 
 	return cmd.Flags()
+}
+
+// TODO(v3): get rid of this, don't require Kubernetes for non-deployment related tasks
+func SetupMinimalKubeConnectionFlags(cmdData *CmdData, cmd *cobra.Command) error {
+	SetupLegacyKubeConfigPath(cmdData, cmd)
+	SetupKubeContextCurrent(cmdData, cmd)
+	SetupKubeConfigBase64(cmdData, cmd)
+
+	return nil
+}
+
+func SetupKubeConnectionFlags(cmdData *CmdData, cmd *cobra.Command) error {
+	SetupLegacyKubeConfigPath(cmdData, cmd)
+	SetupKubeContextCurrent(cmdData, cmd)
+	SetupKubeConfigBase64(cmdData, cmd)
+
+	cmd.Flags().StringVarP(&cmdData.KubeAPIServerAddress, "kube-api-server", "", os.Getenv("WERF_KUBE_API_SERVER"), "Kubernetes API server address (default $WERF_KUBE_API_SERVER)")
+	cmd.Flags().StringVarP(&cmdData.KubeTLSCAPath, "kube-ca-path", "", os.Getenv("WERF_KUBE_CA_PATH"), "Kubernetes API server CA path (default $WERF_KUBE_CA_PATH)")
+	cmd.Flags().StringVarP(&cmdData.KubeTLSServerName, "kube-tls-server", "", os.Getenv("WERF_KUBE_TLS_SERVER"), "Server name to use for Kubernetes API server certificate validation. If it is not provided, the hostname used to contact the server is used (default $WERF_KUBE_TLS_SERVER)")
+	cmd.Flags().StringVarP(&cmdData.KubeBearerTokenData, "kube-token", "", os.Getenv("WERF_KUBE_TOKEN"), "Kubernetes bearer token used for authentication (default $WERF_KUBE_TOKEN)")
+	cmd.Flags().BoolVarP(&cmdData.KubeSkipTLSVerify, "skip-tls-verify-kube", "", util.GetBoolEnvironmentDefaultFalse("WERF_SKIP_TLS_VERIFY_KUBE"), "Skip TLS certificate validation when accessing a Kubernetes cluster (default $WERF_SKIP_TLS_VERIFY_KUBE)")
+
+	if defVal, err := util.GetIntEnvVarDefault("WERF_KUBE_QPS_LIMIT", common.DefaultQPSLimit); err != nil {
+		return fmt.Errorf("bad WERF_KUBE_QPS_LIMIT value: %w", err)
+	} else {
+		cmd.Flags().IntVarP(&cmdData.KubeQPSLimit, "kube-qps-limit", "", defVal, fmt.Sprintf("Kubernetes client QPS limit (default $WERF_KUBE_QPS_LIMIT or %d)", common.DefaultQPSLimit))
+	}
+
+	if defVal, err := util.GetIntEnvVarDefault("WERF_KUBE_BURST_LIMIT", common.DefaultBurstLimit); err != nil {
+		return fmt.Errorf("bad WERF_KUBE_BURST_LIMIT value: %w", err)
+	} else {
+		cmd.Flags().IntVarP(&cmdData.KubeBurstLimit, "kube-burst-limit", "", defVal, fmt.Sprintf("Kubernetes client burst limit (default $WERF_KUBE_BURST_LIMIT or %d)", common.DefaultBurstLimit))
+	}
+
+	return nil
+}
+
+func SetupChartRepoConnectionFlags(cmdData *CmdData, cmd *cobra.Command) error {
+	SetupChartRepoInsecure(cmdData, cmd)
+
+	cmd.Flags().BoolVarP(&cmdData.ChartRepoSkipTLSVerify, "skip-tls-verify-helm-dependencies", "", util.GetBoolEnvironmentDefaultFalse("WERF_SKIP_TLS_VERIFY_HELM_DEPENDENCIES"), "Skip TLS certificate validation when accessing a Helm charts repository (default $WERF_SKIP_TLS_VERIFY_HELM_DEPENDENCIES)")
+
+	return nil
+}
+
+func SetupValuesFlags(cmdData *CmdData, cmd *cobra.Command) error {
+	cmd.Flags().BoolVarP(&cmdData.DefaultValuesDisable, "disable-default-values", "", util.GetBoolEnvironmentDefaultFalse("WERF_DISABLE_DEFAULT_VALUES"), `Do not use values from the default .helm/values.yaml file (default $WERF_DISABLE_DEFAULT_VALUES or false)`)
+	cmd.Flags().StringArrayVarP(&cmdData.ValuesFiles, "values", "", []string{}, `Specify helm values in a YAML file or a URL (can specify multiple). Also, can be defined with $WERF_VALUES_* (e.g. $WERF_VALUES_1=.helm/values_1.yaml, $WERF_VALUES_2=.helm/values_2.yaml)`)
+	cmd.Flags().StringArrayVarP(&cmdData.ValuesSet, "set", "", []string{}, `Set helm values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2).
+Also, can be defined with $WERF_SET_* (e.g. $WERF_SET_1=key1=val1, $WERF_SET_2=key2=val2)`)
+	cmd.Flags().StringArrayVarP(&cmdData.ValuesSetFile, "set-file", "", []string{}, `Set values from respective files specified via the command line (can specify multiple or separate values with commas: key1=path1,key2=path2).
+Also, can be defined with $WERF_SET_FILE_* (e.g. $WERF_SET_FILE_1=key1=path1, $WERF_SET_FILE_2=key2=val2)`)
+	cmd.Flags().StringArrayVarP(&cmdData.ValuesSetString, "set-string", "", []string{}, `Set STRING helm values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2).
+Also, can be defined with $WERF_SET_STRING_* (e.g. $WERF_SET_STRING_1=key1=val1, $WERF_SET_STRING_2=key2=val2)`)
+	cmd.Flags().StringArrayVarP(&cmdData.RuntimeSetJSON, "set-runtime-json", "", []string{}, `Set new keys in $.Runtime, where the key is the value path and the value is JSON. This is meant to be generated inside the program, so use --set-json instead, unless you know what you are doing. Can specify multiple or separate values with commas: key1=val1,key2=val2.
+Also, can be defined with $WERF_SET_RUNTIME_JSON_* (e.g. $WERF_SET_RUNTIME_JSON_1=key1=val1, $WERF_SET_RUNTIME_JSON_2=key2=val2)`)
+
+	return nil
+}
+
+func SetupSecretValuesFlags(cmdData *CmdData, cmd *cobra.Command) error {
+	cmd.Flags().BoolVarP(&cmdData.DefaultSecretValuesDisable, "disable-default-secret-values", "", util.GetBoolEnvironmentDefaultFalse("WERF_DISABLE_DEFAULT_SECRET_VALUES"), `Do not use secret values from the default .helm/secret-values.yaml file (default $WERF_DISABLE_DEFAULT_SECRET_VALUES or false)`)
+	cmd.Flags().StringVarP(&cmdData.SecretKey, "secret-key", "", os.Getenv("WERF_SECRET_KEY"), "Secret key (default $WERF_SECRET_KEY)")
+	cmd.Flags().BoolVarP(&cmdData.SecretKeyIgnore, "ignore-secret-key", "", util.GetBoolEnvironmentDefaultFalse("WERF_IGNORE_SECRET_KEY"), "Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)")
+	cmd.Flags().StringArrayVarP(&cmdData.SecretValuesFiles, "secret-values", "", []string{}, `Specify helm secret values in a YAML file (can specify multiple). Also, can be defined with $WERF_SECRET_VALUES_* (e.g. $WERF_SECRET_VALUES_ENV=.helm/secret_values_test.yaml, $WERF_SECRET_VALUES_DB=.helm/secret_values_db.yaml)`)
+
+	return nil
+}
+
+func SetupTrackingFlags(cmdData *CmdData, cmd *cobra.Command) error {
+	SetupNoFinalTrackingFlag(cmdData, cmd)
+	StubSetupHooksStatusProgressPeriod(cmdData, cmd)
+	if err := SetupLegacyProgressTablePrintInterval(cmdData, cmd); err != nil {
+		return err
+	}
+
+	cmd.PersistentFlags().BoolVarP(&cmdData.NoPodLogs, "no-pod-logs", "", false, "Disable Pod logs collection and printing (default $WERF_NO_POD_LOGS or false)")
+
+	if defVal, err := util.GetIntEnvVar("WERF_TIMEOUT"); err != nil {
+		return fmt.Errorf("bad WERF_TIMEOUT value: %w", err)
+	} else {
+		var def int
+		if defVal != nil {
+			def = int(*defVal)
+		}
+
+		cmd.Flags().IntVarP(&cmdData.LegacyTrackTimeout, "timeout", "t", def, "Resources tracking timeout in seconds ($WERF_TIMEOUT by default)")
+	}
+
+	return nil
+}
+
+func SetupKubeConfigBase64(cmdData *CmdData, cmd *cobra.Command) {
+	cmd.PersistentFlags().StringVarP(&cmdData.KubeConfigBase64, "kube-config-base64", "", GetFirstExistingKubeConfigBase64EnvVar(), "Kubernetes config data as base64 string (default $WERF_KUBE_CONFIG_BASE64 or $WERF_KUBECONFIG_BASE64 or $KUBECONFIG_BASE64)")
+}
+
+func SetupNoFinalTrackingFlag(cmdData *CmdData, cmd *cobra.Command) {
+	cmd.Flags().BoolVarP(&cmdData.NoFinalTracking, "no-final-tracking", "", util.GetBoolEnvironmentDefaultFalse("WERF_NO_FINAL_TRACKING"), `By default disable tracking operations that have no create/update/delete resource operations after them, which are most tracking operations, to speed up the release (default $WERF_NO_FINAL_TRACKING)`)
+}
+
+func SetupLegacyKubeConfigPath(cmdData *CmdData, cmd *cobra.Command) {
+	cmd.PersistentFlags().StringVarP(&cmdData.LegacyKubeConfigPath, "kube-config", "", "", "Kubernetes config file path (default $WERF_KUBE_CONFIG, or $WERF_KUBECONFIG, or $KUBECONFIG)")
+	cmdData.LegacyKubeConfigPathsMergeList = filepath.SplitList(GetFirstExistingKubeConfigEnvVar())
+}
+
+func SetupKubeContextCurrent(cmdData *CmdData, cmd *cobra.Command) {
+	cmd.PersistentFlags().StringVarP(&cmdData.KubeContextCurrent, "kube-context", "", os.Getenv("WERF_KUBE_CONTEXT"), "Kubernetes config context (default $WERF_KUBE_CONTEXT)")
+}
+
+func SetupLegacyProgressTablePrintInterval(cmdData *CmdData, cmd *cobra.Command) error {
+	if defVal, err := util.GetFirstExistingEnvVarAsInt("WERF_STATUS_PROGRESS_PERIOD_SECONDS", "WERF_STATUS_PROGRESS_PERIOD"); err != nil {
+		return fmt.Errorf("bad WERF_STATUS_PROGRESS_PERIOD_SECONDS or WERF_STATUS_PROGRESS_PERIOD value: %w", err)
+	} else {
+		if defVal == nil {
+			defVal = lo.ToPtr(int(common.DefaultProgressPrintInterval.Seconds()))
+		}
+
+		cmd.PersistentFlags().IntVarP(&cmdData.LegacyProgressTablePrintInterval, "status-progress-period", "", *defVal, "Status progress period in seconds. Set -1 to stop showing status progress. Defaults to $WERF_STATUS_PROGRESS_PERIOD_SECONDS or 5 seconds")
+	}
+
+	return nil
+}
+
+func SetupChartRepoInsecure(cmdData *CmdData, cmd *cobra.Command) {
+	cmd.Flags().BoolVarP(&cmdData.ChartRepoInsecure, "insecure-helm-dependencies", "", util.GetBoolEnvironmentDefaultFalse("WERF_INSECURE_HELM_DEPENDENCIES"), "Allow insecure oci registries to be used in the Chart.yaml dependencies configuration (default $WERF_INSECURE_HELM_DEPENDENCIES)")
+}
+
+// TODO(v3): remove
+func StubSetupInsecureHelmDependencies(cmdData *CmdData, cmd *cobra.Command) {
+	cmd.Flags().BoolVar(lo.ToPtr(false), "insecure-helm-dependencies", false, "No-op")
+}
+
+// TODO(v3): remove
+func StubSetupStatusProgressPeriod(cmdData *CmdData, cmd *cobra.Command) {
+	cmd.PersistentFlags().IntVarP(lo.ToPtr(0), "status-progress-period", "", 0, "No-op")
+}
+
+// TODO(v3): remove
+func StubSetupHooksStatusProgressPeriod(cmdData *CmdData, cmd *cobra.Command) {
+	cmd.PersistentFlags().Int64VarP(lo.ToPtr(int64(0)), "hooks-status-progress-period", "", 0, "No-op")
+}
+
+// TODO(v3): remove
+func StubSetupTrackTimeout(cmdData *CmdData, cmd *cobra.Command) {
+	cmd.Flags().IntVarP(lo.ToPtr(0), "timeout", "t", 0, "No-op")
 }

@@ -23,7 +23,11 @@ type UserWithGitPatchStage struct {
 }
 
 func (s *UserWithGitPatchStage) SelectSuitableStageDesc(ctx context.Context, c Conveyor, stageDescSet image.StageDescSet) (*image.StageDesc, error) {
-	return selectSuitableStageDesc(ctx, c, stageDescSet, s)
+	if s.GitPatchStage.isDefined() {
+		return s.GitPatchStage.SelectSuitableStageDesc(ctx, c, stageDescSet)
+	}
+
+	return s.BaseStage.SelectSuitableStageDesc(ctx, c, stageDescSet)
 }
 
 func (s *UserWithGitPatchStage) GetNextStageDependencies(ctx context.Context, c Conveyor) (string, error) {

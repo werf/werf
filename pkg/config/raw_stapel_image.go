@@ -237,6 +237,11 @@ func (c *rawStapelImage) toStapelImageBaseDirective(giterminismManager gitermini
 	imageBase.FromLatest = c.FromLatest
 	imageBase.FromCacheVersion = c.FromCacheVersion
 
+	// FIXME: This is a dirty temporary backward compatibility fix. Remove it in v3.
+	if imageBase.Name == imageBase.From {
+		imageBase.From += ":latest"
+	}
+
 	imageBase.cacheVersion = c.CacheVersion
 	imageBase.platform = append([]string{}, c.Platform...)
 

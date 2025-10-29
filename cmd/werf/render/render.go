@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 
 	"github.com/werf/3p-helm/pkg/chart"
@@ -17,6 +18,7 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/level"
 	"github.com/werf/nelm/pkg/action"
+	"github.com/werf/nelm/pkg/log"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/build"
 	"github.com/werf/werf/v2/pkg/config"
@@ -98,27 +100,16 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupStubTags(&commonCmdData, cmd)
 
 	common.SetupSynchronization(&commonCmdData, cmd)
-	common.SetupKubeConfig(&commonCmdData, cmd)
-	common.SetupKubeConfigBase64(&commonCmdData, cmd)
-	common.SetupKubeContext(&commonCmdData, cmd)
 
-	// TODO(v3): remove, useless
-	common.SetupStatusProgressPeriod(&commonCmdData, cmd)
-	// TODO(v3): remove or hide this in all commands, already ignored in v2
-	common.SetupHooksStatusProgressPeriod(&commonCmdData, cmd)
+	common.StubSetupStatusProgressPeriod(&commonCmdData, cmd)
+	common.StubSetupHooksStatusProgressPeriod(&commonCmdData, cmd)
 	// TODO(v3): remove, useless for render
 	common.SetupReleasesHistoryMax(&commonCmdData, cmd)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified repo and to pull base images")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
-	common.SetupInsecureHelmDependencies(&commonCmdData, cmd, true)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
-	common.SetupSkipTLSVerifyKube(&commonCmdData, cmd)
-	common.SetupKubeApiServer(&commonCmdData, cmd)
-	common.SetupSkipTlsVerifyHelmDependencies(&commonCmdData, cmd)
-	common.SetupKubeCaPath(&commonCmdData, cmd)
-	common.SetupKubeTlsServer(&commonCmdData, cmd)
-	common.SetupKubeToken(&commonCmdData, cmd)
+	common.SetupReleaseStorageSQLConnection(&commonCmdData, cmd)
 	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
 
 	common.SetupLogOptionsDefaultQuiet(&commonCmdData, cmd)
@@ -131,15 +122,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupAddLabels(&commonCmdData, cmd)
 
 	common.SetupSetDockerConfigJsonValue(&commonCmdData, cmd)
-	common.SetupSet(&commonCmdData, cmd)
-	common.SetupSetString(&commonCmdData, cmd)
-	common.SetupSetFile(&commonCmdData, cmd)
-	common.SetupValues(&commonCmdData, cmd, true)
-	common.SetupSecretValues(&commonCmdData, cmd, true)
-	common.SetupIgnoreSecretKey(&commonCmdData, cmd)
 
-	commonCmdData.SetupDisableDefaultValues(cmd)
-	commonCmdData.SetupDisableDefaultSecretValues(cmd)
 	commonCmdData.SetupSkipDependenciesRepoRefresh(cmd)
 
 	common.SetupSaveBuildReport(&commonCmdData, cmd)
@@ -156,8 +139,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupKubeVersion(&commonCmdData, cmd)
 
 	common.SetupNetworkParallelism(&commonCmdData, cmd)
-	common.SetupKubeQpsLimit(&commonCmdData, cmd)
-	common.SetupKubeBurstLimit(&commonCmdData, cmd)
 	common.SetupForceAdoption(&commonCmdData, cmd)
 
 	cmd.Flags().BoolVarP(&cmdData.Validate, "validate", "", util.GetBoolEnvironmentDefaultFalse("WERF_VALIDATE"), "Validate your manifests against the Kubernetes cluster you are currently pointing at (default $WERF_VALIDATE)")
@@ -169,6 +150,11 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	commonCmdData.SetupSkipImageSpecStage(cmd)
 	commonCmdData.SetupDebugTemplates(cmd)
 	commonCmdData.SetupAllowIncludesUpdate(cmd)
+
+	lo.Must0(common.SetupKubeConnectionFlags(&commonCmdData, cmd))
+	lo.Must0(common.SetupChartRepoConnectionFlags(&commonCmdData, cmd))
+	lo.Must0(common.SetupValuesFlags(&commonCmdData, cmd))
+	lo.Must0(common.SetupSecretValuesFlags(&commonCmdData, cmd))
 
 	return cmd
 }
@@ -249,7 +235,7 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 			return err
 		}
 
-		common.SetupOndemandKubeInitializer(*commonCmdData.KubeContext, *commonCmdData.KubeConfig, *commonCmdData.KubeConfigBase64, *commonCmdData.KubeConfigPathMergeList)
+		common.SetupOndemandKubeInitializer(commonCmdData.KubeContextCurrent, commonCmdData.LegacyKubeConfigPath, commonCmdData.KubeConfigBase64, commonCmdData.LegacyKubeConfigPathsMergeList)
 		if err := common.GetOndemandKubeInitializer().Init(ctx); err != nil {
 			return err
 		}
@@ -325,8 +311,8 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 	}
 
 	releaseNamespace, err := deploy_params.GetKubernetesNamespace(
-		*commonCmdData.Namespace,
-		*commonCmdData.Environment,
+		commonCmdData.Namespace,
+		commonCmdData.Environment,
 		werfConfig,
 	)
 	if err != nil {
@@ -334,8 +320,8 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 	}
 
 	releaseName, err := deploy_params.GetHelmRelease(
-		*commonCmdData.Release,
-		*commonCmdData.Environment,
+		commonCmdData.Release,
+		commonCmdData.Environment,
 		releaseNamespace,
 		werfConfig,
 	)
@@ -361,7 +347,7 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 
 	serviceAnnotations["werf.io/version"] = werf.Version
 	serviceAnnotations["project.werf.io/name"] = projectName
-	serviceAnnotations["project.werf.io/env"] = *commonCmdData.Environment
+	serviceAnnotations["project.werf.io/env"] = commonCmdData.Environment
 
 	extraLabels, err := common.GetUserExtraLabels(&commonCmdData)
 	if err != nil {
@@ -381,7 +367,7 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 
 	serviceValues, err := helpers.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, imagesInfoGetters, helpers.ServiceValuesOptions{
 		Namespace:                releaseNamespace,
-		Env:                      *commonCmdData.Environment,
+		Env:                      commonCmdData.Environment,
 		IsStub:                   isStub,
 		DisableEnvStub:           true,
 		StubImageNameList:        stubImageNameList,
@@ -398,56 +384,40 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 
 	// TODO(v3): get rid of forcing color mode via ci-env and use color mode detection logic from
 	// Nelm instead. Until then, color will be always off here.
-	ctx = action.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultChartRenderLogLevel), action.SetupLoggingOptions{
-		ColorMode:      action.LogColorModeOff,
+	ctx = log.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultChartRenderLogLevel), log.SetupLoggingOptions{
+		ColorMode:      log.LogColorModeOff,
 		LogIsParseable: true,
 	})
-	engine.Debug = *commonCmdData.DebugTemplates
+	engine.Debug = commonCmdData.DebugTemplates
 
 	if _, err := action.ChartRender(ctx, action.ChartRenderOptions{
-		ChartAppVersion:              common.GetHelmChartConfigAppVersion(werfConfig),
-		ChartDirPath:                 relChartPath,
-		ChartRepositoryInsecure:      *commonCmdData.InsecureHelmDependencies,
-		ChartRepositorySkipTLSVerify: *commonCmdData.SkipTlsVerifyHelmDependencies,
-		ChartRepositorySkipUpdate:    *commonCmdData.SkipDependenciesRepoRefresh,
-		DefaultChartAPIVersion:       chart.APIVersionV2,
-		DefaultChartName:             werfConfig.Meta.Project,
-		DefaultChartVersion:          "1.0.0",
-		DefaultSecretValuesDisable:   *commonCmdData.DisableDefaultSecretValues,
-		DefaultValuesDisable:         *commonCmdData.DisableDefaultValues,
-		ExtraAnnotations:             extraAnnotations,
-		ExtraLabels:                  extraLabels,
-		ExtraRuntimeAnnotations:      serviceAnnotations,
-		ForceAdoption:                *commonCmdData.ForceAdoption,
-		KubeAPIServerName:            *commonCmdData.KubeApiServer,
-		KubeBurstLimit:               *commonCmdData.KubeBurstLimit,
-		KubeCAPath:                   *commonCmdData.KubeCaPath,
-		KubeConfigBase64:             *commonCmdData.KubeConfigBase64,
-		KubeConfigPaths:              append([]string{*commonCmdData.KubeConfig}, *commonCmdData.KubeConfigPathMergeList...),
-		KubeContext:                  *commonCmdData.KubeContext,
-		KubeQPSLimit:                 *commonCmdData.KubeQpsLimit,
-		KubeSkipTLSVerify:            *commonCmdData.SkipTlsVerifyKube,
-		KubeTLSServerName:            *commonCmdData.KubeTlsServer,
-		KubeToken:                    *commonCmdData.KubeToken,
-		LegacyExtraValues:            serviceValues,
-		LocalKubeVersion:             *commonCmdData.KubeVersion,
-		LogRegistryStreamOut:         os.Stdout,
-		NetworkParallelism:           *commonCmdData.NetworkParallelism,
-		OutputFilePath:               cmdData.RenderOutput,
-		RegistryCredentialsPath:      registryCredentialsPath,
-		ReleaseName:                  releaseName,
-		ReleaseNamespace:             releaseNamespace,
-		ReleaseStorageDriver:         os.Getenv("HELM_DRIVER"),
-		Remote:                       cmdData.Validate,
-		SecretKeyIgnore:              *commonCmdData.IgnoreSecretKey,
-		SecretValuesPaths:            common.GetSecretValues(&commonCmdData),
-		SecretWorkDir:                giterminismManager.ProjectDir(),
-		ShowCRDs:                     cmdData.IncludeCRDs,
-		ShowOnlyFiles:                append(util.PredefinedValuesByEnvNamePrefix("WERF_SHOW_ONLY"), cmdData.ShowOnly...),
-		ValuesFileSets:               common.GetSetFile(&commonCmdData),
-		ValuesFilesPaths:             common.GetValues(&commonCmdData),
-		ValuesSets:                   common.GetSet(&commonCmdData),
-		ValuesStringSets:             common.GetSetString(&commonCmdData),
+		KubeConnectionOptions:       commonCmdData.KubeConnectionOptions,
+		ChartRepoConnectionOptions:  commonCmdData.ChartRepoConnectionOptions,
+		ValuesOptions:               commonCmdData.ValuesOptions,
+		SecretValuesOptions:         commonCmdData.SecretValuesOptions,
+		ChartAppVersion:             common.GetHelmChartConfigAppVersion(werfConfig),
+		ChartDirPath:                relChartPath,
+		ChartRepoSkipUpdate:         commonCmdData.ChartRepoSkipUpdate,
+		DefaultChartAPIVersion:      chart.APIVersionV2,
+		DefaultChartName:            werfConfig.Meta.Project,
+		DefaultChartVersion:         "1.0.0",
+		ExtraAnnotations:            extraAnnotations,
+		ExtraLabels:                 extraLabels,
+		ExtraRuntimeAnnotations:     serviceAnnotations,
+		ForceAdoption:               commonCmdData.ForceAdoption,
+		LegacyExtraValues:           serviceValues,
+		LegacyLogRegistryStreamOut:  os.Stdout,
+		LocalKubeVersion:            commonCmdData.KubeVersion,
+		NetworkParallelism:          commonCmdData.NetworkParallelism,
+		OutputFilePath:              cmdData.RenderOutput,
+		RegistryCredentialsPath:     registryCredentialsPath,
+		ReleaseName:                 releaseName,
+		ReleaseNamespace:            releaseNamespace,
+		ReleaseStorageDriver:        os.Getenv("HELM_DRIVER"),
+		ReleaseStorageSQLConnection: commonCmdData.ReleaseStorageSQLConnection,
+		Remote:                      cmdData.Validate,
+		ShowOnlyFiles:               append(util.PredefinedValuesByEnvNamePrefix("WERF_SHOW_ONLY"), cmdData.ShowOnly...),
+		ShowStandaloneCRDs:          cmdData.IncludeCRDs,
 	}); err != nil {
 		return fmt.Errorf("chart render: %w", err)
 	}

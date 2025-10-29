@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 
 	"github.com/werf/3p-helm/pkg/chart"
@@ -16,6 +17,8 @@ import (
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/nelm/pkg/action"
+	nelmcommon "github.com/werf/nelm/pkg/common"
+	"github.com/werf/nelm/pkg/log"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/build"
 	"github.com/werf/werf/v2/pkg/config"
@@ -33,8 +36,12 @@ import (
 )
 
 var cmdData struct {
-	Timeout          int
-	DetailedExitCode bool
+	DetailedExitCode       bool
+	DiffContextLines       int
+	ShowInsignificantDiffs bool
+	ShowSensitiveDiffs     bool
+	ShowVerboseCRDDiffs    bool
+	ShowVerboseDiffs       bool
 }
 
 var commonCmdData common.CmdData
@@ -111,14 +118,8 @@ werf plan --repo registry.mydomain.com/web --env production`,
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified repo, to pull base images")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
-	common.SetupInsecureHelmDependencies(&commonCmdData, cmd, true)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
-	common.SetupSkipTLSVerifyKube(&commonCmdData, cmd)
-	common.SetupKubeApiServer(&commonCmdData, cmd)
-	common.SetupSkipTlsVerifyHelmDependencies(&commonCmdData, cmd)
-	common.SetupKubeCaPath(&commonCmdData, cmd)
-	common.SetupKubeTlsServer(&commonCmdData, cmd)
-	common.SetupKubeToken(&commonCmdData, cmd)
+	common.SetupReleaseStorageSQLConnection(&commonCmdData, cmd)
 	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
@@ -126,12 +127,8 @@ werf plan --repo registry.mydomain.com/web --env production`,
 
 	common.SetupSynchronization(&commonCmdData, cmd)
 
-	common.SetupKubeConfig(&commonCmdData, cmd)
-	common.SetupKubeConfigBase64(&commonCmdData, cmd)
-	common.SetupKubeContext(&commonCmdData, cmd)
-
-	common.SetupStatusProgressPeriod(&commonCmdData, cmd)
-	common.SetupHooksStatusProgressPeriod(&commonCmdData, cmd)
+	common.StubSetupStatusProgressPeriod(&commonCmdData, cmd)
+	common.StubSetupHooksStatusProgressPeriod(&commonCmdData, cmd)
 	// TODO(3.0): remove this, useless
 	common.SetupReleasesHistoryMax(&commonCmdData, cmd)
 
@@ -142,15 +139,7 @@ werf plan --repo registry.mydomain.com/web --env production`,
 	common.SetupAddLabels(&commonCmdData, cmd)
 
 	common.SetupSetDockerConfigJsonValue(&commonCmdData, cmd)
-	common.SetupSet(&commonCmdData, cmd)
-	common.SetupSetString(&commonCmdData, cmd)
-	common.SetupSetFile(&commonCmdData, cmd)
-	common.SetupValues(&commonCmdData, cmd, true)
-	common.SetupSecretValues(&commonCmdData, cmd, true)
-	common.SetupIgnoreSecretKey(&commonCmdData, cmd)
 
-	commonCmdData.SetupDisableDefaultValues(cmd)
-	commonCmdData.SetupDisableDefaultSecretValues(cmd)
 	commonCmdData.SetupSkipDependenciesRepoRefresh(cmd)
 
 	commonCmdData.SetupWithoutImages(cmd)
@@ -178,22 +167,35 @@ werf plan --repo registry.mydomain.com/web --env production`,
 	common.SetupProjectName(&commonCmdData, cmd, false)
 
 	common.SetupNetworkParallelism(&commonCmdData, cmd)
-	common.SetupKubeQpsLimit(&commonCmdData, cmd)
-	common.SetupKubeBurstLimit(&commonCmdData, cmd)
 	common.SetupNoInstallCRDs(&commonCmdData, cmd)
 	common.SetupForceAdoption(&commonCmdData, cmd)
+	common.SetupNoRemoveManualChanges(&commonCmdData, cmd)
+	common.SetupNoFinalTrackingFlag(&commonCmdData, cmd)
+	common.SetupReleaseLabel(&commonCmdData, cmd)
+	common.StubSetupTrackTimeout(&commonCmdData, cmd)
 
-	defaultTimeout, err := util.GetIntEnvVar("WERF_TIMEOUT")
-	if err != nil || defaultTimeout == nil {
-		defaultTimeout = new(int64)
-	}
-	// TODO(3.0): remove this, useless
-	cmd.Flags().IntVarP(&cmdData.Timeout, "timeout", "t", int(*defaultTimeout), "Resources tracking timeout in seconds ($WERF_TIMEOUT by default)")
 	cmd.Flags().BoolVarP(&cmdData.DetailedExitCode, "exit-code", "", util.GetBoolEnvironmentDefaultFalse("WERF_EXIT_CODE"), "If true, returns exit code 0 if no changes, exit code 2 if any changes planned or exit code 1 in case of an error (default $WERF_EXIT_CODE or false)")
+	cmd.Flags().BoolVarP(&cmdData.ShowInsignificantDiffs, "show-insignificant-diffs", "", util.GetBoolEnvironmentDefaultFalse("WERF_SHOW_INSIGNIFICANT_DIFFS"), "Show insignificant diff lines ($WERF_SHOW_INSIGNIFICANT_DIFFS by default)")
+	cmd.Flags().BoolVarP(&cmdData.ShowSensitiveDiffs, "show-sensitive-diffs", "", util.GetBoolEnvironmentDefaultFalse("WERF_SHOW_SENSITIVE_DIFFS"), "Show sensitive diff lines ($WERF_SHOW_SENSITIVE_DIFFS by default)")
+	cmd.Flags().BoolVarP(&cmdData.ShowVerboseCRDDiffs, "show-verbose-crd-diffs", "", util.GetBoolEnvironmentDefaultFalse("WERF_SHOW_VERBOSE_CRD_DIFFS"), "Show verbose CRD diff lines ($WERF_SHOW_VERBOSE_CRD_DIFFS by default)")
+	cmd.Flags().BoolVarP(&cmdData.ShowVerboseDiffs, "show-verbose-diffs", "", util.GetBoolEnvironmentDefaultFalse("WERF_SHOW_VERBOSE_DIFFS"), "Show verbose diff lines ($WERF_SHOW_VERBOSE_DIFFS by default)")
+
+	var defaultDiffLines int
+	if lines := lo.Must(util.GetIntEnvVar("WERF_DIFF_CONTEXT_LINES")); lines != nil {
+		defaultDiffLines = int(*lines)
+	} else {
+		defaultDiffLines = nelmcommon.DefaultDiffContextLines
+	}
+	cmd.Flags().IntVarP(&cmdData.DiffContextLines, "diff-context-lines", "", defaultDiffLines, "Show N lines of context around diffs ($WERF_DIFF_CONTEXT_LINES by default)")
 
 	commonCmdData.SetupSkipImageSpecStage(cmd)
 	commonCmdData.SetupDebugTemplates(cmd)
 	commonCmdData.SetupAllowIncludesUpdate(cmd)
+
+	lo.Must0(common.SetupKubeConnectionFlags(&commonCmdData, cmd))
+	lo.Must0(common.SetupChartRepoConnectionFlags(&commonCmdData, cmd))
+	lo.Must0(common.SetupValuesFlags(&commonCmdData, cmd))
+	lo.Must0(common.SetupSecretValuesFlags(&commonCmdData, cmd))
 
 	return cmd
 }
@@ -296,7 +298,7 @@ func run(
 		stubImageNameList = append(stubImageNameList, imagesToProcess.FinalImageNameList...)
 	default:
 		logboek.LogOptionalLn()
-		common.SetupOndemandKubeInitializer(*commonCmdData.KubeContext, *commonCmdData.KubeConfig, *commonCmdData.KubeConfigBase64, *commonCmdData.KubeConfigPathMergeList)
+		common.SetupOndemandKubeInitializer(commonCmdData.KubeContextCurrent, commonCmdData.LegacyKubeConfigPath, commonCmdData.KubeConfigBase64, commonCmdData.LegacyKubeConfigPathsMergeList)
 		if err := common.GetOndemandKubeInitializer().Init(ctx); err != nil {
 			return err
 		}
@@ -366,8 +368,8 @@ func run(
 	}
 
 	releaseNamespace, err := deploy_params.GetKubernetesNamespace(
-		*commonCmdData.Namespace,
-		*commonCmdData.Environment,
+		commonCmdData.Namespace,
+		commonCmdData.Environment,
 		werfConfig,
 	)
 	if err != nil {
@@ -375,8 +377,8 @@ func run(
 	}
 
 	releaseName, err := deploy_params.GetHelmRelease(
-		*commonCmdData.Release,
-		*commonCmdData.Environment,
+		commonCmdData.Release,
+		commonCmdData.Environment,
 		releaseNamespace,
 		werfConfig,
 	)
@@ -402,7 +404,7 @@ func run(
 
 	serviceAnnotations["werf.io/version"] = werf.Version
 	serviceAnnotations["project.werf.io/name"] = projectName
-	serviceAnnotations["project.werf.io/env"] = *commonCmdData.Environment
+	serviceAnnotations["project.werf.io/env"] = commonCmdData.Environment
 
 	extraLabels, err := common.GetUserExtraLabels(&commonCmdData)
 	if err != nil {
@@ -423,7 +425,7 @@ func run(
 
 	serviceValues, err := helpers.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, imagesInfoGetters, helpers.ServiceValuesOptions{
 		Namespace:                releaseNamespace,
-		Env:                      *commonCmdData.Environment,
+		Env:                      commonCmdData.Environment,
 		IsStub:                   isStub,
 		DisableEnvStub:           true,
 		StubImageNameList:        stubImageNameList,
@@ -436,52 +438,50 @@ func run(
 		return fmt.Errorf("get service values: %w", err)
 	}
 
+	releaseLabels, err := common.GetReleaseLabels(&commonCmdData)
+	if err != nil {
+		return fmt.Errorf("get release labels: %w", err)
+	}
+
 	file.ChartFileReader = giterminismManager.FileManager
 
-	ctx = action.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultReleasePlanInstallLogLevel), action.SetupLoggingOptions{
+	ctx = log.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultReleasePlanInstallLogLevel), log.SetupLoggingOptions{
 		ColorMode: *commonCmdData.LogColorMode,
 	})
-	engine.Debug = *commonCmdData.DebugTemplates
+	engine.Debug = commonCmdData.DebugTemplates
 
 	if err := action.ReleasePlanInstall(ctx, releaseName, releaseNamespace, action.ReleasePlanInstallOptions{
-		ChartAppVersion:              common.GetHelmChartConfigAppVersion(werfConfig),
-		ChartDirPath:                 relChartPath,
-		ChartRepositoryInsecure:      *commonCmdData.InsecureHelmDependencies,
-		ChartRepositorySkipTLSVerify: *commonCmdData.SkipTlsVerifyHelmDependencies,
-		ChartRepositorySkipUpdate:    *commonCmdData.SkipDependenciesRepoRefresh,
-		DefaultChartAPIVersion:       chart.APIVersionV2,
-		DefaultChartName:             werfConfig.Meta.Project,
-		DefaultChartVersion:          "1.0.0",
-		DefaultSecretValuesDisable:   *commonCmdData.DisableDefaultSecretValues,
-		DefaultValuesDisable:         *commonCmdData.DisableDefaultValues,
-		ErrorIfChangesPlanned:        cmdData.DetailedExitCode,
-		ExtraAnnotations:             extraAnnotations,
-		ExtraLabels:                  extraLabels,
-		ExtraRuntimeAnnotations:      serviceAnnotations,
-		ForceAdoption:                *commonCmdData.ForceAdoption,
-		KubeAPIServerName:            *commonCmdData.KubeApiServer,
-		KubeBurstLimit:               *commonCmdData.KubeBurstLimit,
-		KubeCAPath:                   *commonCmdData.KubeCaPath,
-		KubeConfigBase64:             *commonCmdData.KubeConfigBase64,
-		KubeConfigPaths:              append([]string{*commonCmdData.KubeConfig}, *commonCmdData.KubeConfigPathMergeList...),
-		KubeContext:                  *commonCmdData.KubeContext,
-		KubeQPSLimit:                 *commonCmdData.KubeQpsLimit,
-		KubeSkipTLSVerify:            *commonCmdData.SkipTlsVerifyKube,
-		KubeTLSServerName:            *commonCmdData.KubeTlsServer,
-		KubeToken:                    *commonCmdData.KubeToken,
-		LegacyExtraValues:            serviceValues,
-		LogRegistryStreamOut:         os.Stdout,
-		NetworkParallelism:           common.GetNetworkParallelism(&commonCmdData),
-		NoInstallCRDs:                *commonCmdData.NoInstallCRDs,
-		RegistryCredentialsPath:      registryCredentialsPath,
-		ReleaseStorageDriver:         os.Getenv("HELM_DRIVER"),
-		SecretKeyIgnore:              *commonCmdData.IgnoreSecretKey,
-		SecretValuesPaths:            common.GetSecretValues(&commonCmdData),
-		SecretWorkDir:                giterminismManager.ProjectDir(),
-		ValuesFileSets:               common.GetSetFile(&commonCmdData),
-		ValuesFilesPaths:             common.GetValues(&commonCmdData),
-		ValuesSets:                   common.GetSet(&commonCmdData),
-		ValuesStringSets:             common.GetSetString(&commonCmdData),
+		KubeConnectionOptions:       commonCmdData.KubeConnectionOptions,
+		ChartRepoConnectionOptions:  commonCmdData.ChartRepoConnectionOptions,
+		ValuesOptions:               commonCmdData.ValuesOptions,
+		SecretValuesOptions:         commonCmdData.SecretValuesOptions,
+		ChartAppVersion:             common.GetHelmChartConfigAppVersion(werfConfig),
+		ChartDirPath:                relChartPath,
+		ChartRepoSkipUpdate:         commonCmdData.ChartRepoSkipUpdate,
+		DefaultChartAPIVersion:      chart.APIVersionV2,
+		DefaultChartName:            werfConfig.Meta.Project,
+		DefaultChartVersion:         "1.0.0",
+		DiffContextLines:            cmdData.DiffContextLines,
+		ErrorIfChangesPlanned:       cmdData.DetailedExitCode,
+		ExtraAnnotations:            extraAnnotations,
+		ExtraLabels:                 extraLabels,
+		ExtraRuntimeAnnotations:     serviceAnnotations,
+		ForceAdoption:               commonCmdData.ForceAdoption,
+		LegacyExtraValues:           serviceValues,
+		LegacyLogRegistryStreamOut:  os.Stdout,
+		NetworkParallelism:          commonCmdData.NetworkParallelism,
+		NoFinalTracking:             commonCmdData.NoFinalTracking,
+		NoInstallStandaloneCRDs:     commonCmdData.NoInstallStandaloneCRDs,
+		NoRemoveManualChanges:       commonCmdData.NoRemoveManualChanges,
+		RegistryCredentialsPath:     registryCredentialsPath,
+		ReleaseInfoAnnotations:      serviceAnnotations,
+		ReleaseLabels:               releaseLabels,
+		ReleaseStorageDriver:        os.Getenv("HELM_DRIVER"),
+		ReleaseStorageSQLConnection: commonCmdData.ReleaseStorageSQLConnection,
+		ShowInsignificantDiffs:      cmdData.ShowInsignificantDiffs,
+		ShowSensitiveDiffs:          cmdData.ShowSensitiveDiffs,
+		ShowVerboseCRDDiffs:         cmdData.ShowVerboseCRDDiffs,
+		ShowVerboseDiffs:            cmdData.ShowVerboseDiffs,
 	}); err != nil {
 		return fmt.Errorf("release plan install: %w", err)
 	}

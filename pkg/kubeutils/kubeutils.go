@@ -32,7 +32,7 @@ func RemoveResourceAndWaitUntilRemoved(ctx context.Context, name, kind, namespac
 	}
 
 	isExist := func() (bool, error) {
-		_, err := res.Get(context.Background(), name, metav1.GetOptions{})
+		_, err := res.Get(ctx, name, metav1.GetOptions{})
 		if err != nil {
 			if apierrors.IsNotFound(err) {
 				return false, nil
@@ -67,7 +67,7 @@ func RemoveResourceAndWaitUntilRemoved(ctx context.Context, name, kind, namespac
 			deleteOptions := metav1.DeleteOptions{
 				PropagationPolicy: &deletePropagation,
 			}
-			err = res.Delete(context.Background(), name, deleteOptions)
+			err = res.Delete(ctx, name, deleteOptions)
 			if err != nil {
 				return err
 			}

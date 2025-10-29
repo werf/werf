@@ -51,26 +51,26 @@ func checkSynchronizationKubernetesParamsForWarnings(ctx context.Context, cmdDat
 	doPrintWarning := false
 	kubeConfigEnv := os.Getenv("KUBECONFIG")
 	switch {
-	case *cmdData.KubeConfigBase64 != "":
+	case cmdData.KubeConfigBase64 != "":
 		doPrintWarning = true
 		global_warnings.GlobalWarningLn(ctx, fmt.Sprintf(`###
 ##  Required --synchronization param (or WERF_SYNCHRONIZATION env var) to be specified explicitly,
-##  because --kube-config-base64=%s (or WERF_KUBE_CONFIG_BASE64, or WERF_KUBECONFIG_BASE64, or $KUBECONFIG_BASE64 env var) has been specified explicitly.`, *cmdData.KubeConfigBase64))
+##  because --kube-config-base64=%s (or WERF_KUBE_CONFIG_BASE64, or WERF_KUBECONFIG_BASE64, or $KUBECONFIG_BASE64 env var) has been specified explicitly.`, cmdData.KubeConfigBase64))
 	case kubeConfigEnv != "":
 		doPrintWarning = true
 		global_warnings.GlobalWarningLn(ctx, fmt.Sprintf(`###
 ##  Required --synchronization param (or WERF_SYNCHRONIZATION env var) to be specified explicitly,
 ##  because KUBECONFIG=%s env var has been specified explicitly.`, kubeConfigEnv))
-	case *cmdData.KubeConfig != "":
+	case cmdData.LegacyKubeConfigPath != "":
 		doPrintWarning = true
 		global_warnings.GlobalWarningLn(ctx, fmt.Sprintf(`###
 ##  Required --synchronization param (or WERF_SYNCHRONIZATION env var) to be specified explicitly,
-##  because --kube-config=%s (or WERF_KUBE_CONFIG, or WERF_KUBECONFIG, or KUBECONFIG env var) has been specified explicitly.`, *cmdData.KubeConfig))
-	case *cmdData.KubeContext != "":
+##  because --kube-config=%s (or WERF_KUBE_CONFIG, or WERF_KUBECONFIG, or KUBECONFIG env var) has been specified explicitly.`, cmdData.LegacyKubeConfigPath))
+	case cmdData.KubeContextCurrent != "":
 		doPrintWarning = true
 		global_warnings.GlobalWarningLn(ctx, fmt.Sprintf(`###
 ##  Required --synchronization param (or WERF_SYNCHRONIZATION env var) to be specified explicitly,
-##  because --kube-context=%s (or WERF_KUBE_CONTEXT env var) has been specified explicitly.`, *cmdData.KubeContext))
+##  because --kube-context=%s (or WERF_KUBE_CONTEXT env var) has been specified explicitly.`, cmdData.KubeContextCurrent))
 	}
 
 	if doPrintWarning {

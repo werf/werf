@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/werf/nelm/pkg/action"
+	"github.com/werf/nelm/pkg/log"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/cmd/werf/docs/replacers/helm"
 	"github.com/werf/werf/v2/pkg/true_git"
@@ -80,7 +81,7 @@ func runRotateSecretKey(
 		return err
 	}
 
-	werfConfigPath, werfConfig, err := common.GetRequiredWerfConfig(context.Background(), &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
+	werfConfigPath, werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %w", err)
 	}
@@ -92,13 +93,13 @@ func runRotateSecretKey(
 
 	chartPath := filepath.Join(giterminismManager.ProjectDir(), relChartPath)
 
-	ctx = action.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultSecretKeyRotateLogLevel), action.SetupLoggingOptions{
+	ctx = log.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultSecretKeyRotateLogLevel), log.SetupLoggingOptions{
 		ColorMode: *commonCmdData.LogColorMode,
 	})
 
 	if err := action.SecretKeyRotate(ctx, action.SecretKeyRotateOptions{
 		ChartDirPath:      chartPath,
-		SecretValuesPaths: secretValuesPaths,
+		SecretValuesFiles: secretValuesPaths,
 		SecretWorkDir:     giterminismManager.ProjectDir(),
 	}); err != nil {
 		return fmt.Errorf("rotate secret key: %w", err)

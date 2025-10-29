@@ -25,6 +25,7 @@ cmd/werf/werf
 /bin
 /coverage
 /test/**/*.test
+/integration/**/*.test
 
 /docs/\.jekyll-cache/
 /docs/site/backend/root/
@@ -47,3 +48,4 @@ buildah-test
 /node_modules/
 /.github/actions/get-commit-message/node_modules/
 .task
+/playground/s3_registry/data

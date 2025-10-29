@@ -8,14 +8,13 @@ import (
 	"math"
 	"os"
 	"slices"
-	"strings"
 	"time"
 
-	"github.com/containers/image/v5/docker/reference"
 	"github.com/dustin/go-humanize"
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/kubedog/pkg/utils"
+	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/container_backend/filter"
@@ -43,18 +42,22 @@ type RunAutoGCOptions struct {
 	StoragePath                         string
 }
 
+//go:generate mockgen -package mock -destination ../../test/mock/locker.go github.com/werf/lockgate Locker
+
 type LocalBackendCleaner struct {
 	backend     container_backend.ContainerBackend
 	backendType containerBackendType
+	locker      lockgate.Locker
 	// refs for stubbing in testing
 	volumeutilsGetVolumeUsageByPath func(ctx context.Context, path string) (volumeutils.VolumeUsage, error)
 	werfGetWerfLastRunAtV1_1        func(ctx context.Context) (time.Time, error)
 	lrumetaGetImageLastAccessTime   func(ctx context.Context, imageRef string) (time.Time, error)
 }
 
-func NewLocalBackendCleaner(backend container_backend.ContainerBackend) (*LocalBackendCleaner, error) {
+func NewLocalBackendCleaner(backend container_backend.ContainerBackend, locker lockgate.Locker) (*LocalBackendCleaner, error) {
 	cleaner := &LocalBackendCleaner{
 		backend: backend,
+		locker:  locker,
 		// refs for stubbing in testing
 		volumeutilsGetVolumeUsageByPath: volumeutils.GetVolumeUsageByPath,
 		werfGetWerfLastRunAtV1_1:        werf.GetWerfLastRunAtV1_1,
@@ -90,10 +93,8 @@ func (cleaner *LocalBackendCleaner) backendStoragePath(ctx context.Context, stor
 		backendStoragePath = info.StoreGraphRoot
 	}
 
-	// assert permissions
-	if _, err := os.Stat(backendStoragePath); os.IsNotExist(err) {
-		return "", nil
-	} else if err != nil {
+	// assert path existence and permissions
+	if _, err := os.Stat(backendStoragePath); err != nil {
 		return "", fmt.Errorf("error accessing %q: %w", backendStoragePath, err)
 	}
 
@@ -160,29 +161,7 @@ func (cleaner *LocalBackendCleaner) werfImagesByLabels(ctx context.Context) (ima
 		return nil, fmt.Errorf("unable to get werf %s images: %w", cleaner.BackendName(), err)
 	}
 
-	images := make(image.ImagesList, 0, len(list))
-
-skipImage:
-	for _, img := range list {
-		projectName := img.Labels[image.WerfLabel]
-
-		for _, ref := range img.RepoTags {
-			normalizedTag, err := cleaner.normalizeReference(ref)
-			if err != nil {
-				return nil, err
-			}
-
-			// Do not remove stages-storage=:local images, because this is primary stages storage data,
-			// and it can only be cleaned by the werf-cleanup command
-			if strings.HasPrefix(normalizedTag, fmt.Sprintf("%s:", projectName)) {
-				continue skipImage
-			}
-		}
-
-		images = append(images, img)
-	}
-
-	return images, nil
+	return list, nil
 }
 
 func (cleaner *LocalBackendCleaner) werfImagesByLegacyLabels(ctx context.Context) (image.ImagesList, error) {
@@ -196,26 +175,7 @@ func (cleaner *LocalBackendCleaner) werfImagesByLegacyLabels(ctx context.Context
 		return nil, fmt.Errorf("unable to get werf v1.1 legacy %s images: %w", cleaner.BackendName(), err)
 	}
 
-	images := make(image.ImagesList, 0, len(list))
-
-	// Do not remove stages-storage=:local images, because this is primary stages storage data,
-	// and it can only be cleaned by the werf-cleanup command
-skipImage:
-	for _, img := range list {
-		for _, ref := range img.RepoTags {
-			normalizedTag, err := cleaner.normalizeReference(ref)
-			if err != nil {
-				return nil, err
-			}
-			if strings.HasPrefix(normalizedTag, "werf-stages-storage/") {
-				continue skipImage
-			}
-		}
-
-		images = append(images, img)
-	}
-
-	return images, nil
+	return list, nil
 }
 
 func (cleaner *LocalBackendCleaner) werfImagesByLastRun(ctx context.Context) (image.ImagesList, error) {
@@ -282,34 +242,6 @@ func (cleaner *LocalBackendCleaner) maxLastUsedAtForImage(ctx context.Context, i
 	return lastUsedAt, nil
 }
 
-// normalizeReference Normalizes image reference (repository tag) to docker backend repository tag format.
-func (cleaner *LocalBackendCleaner) normalizeReference(ref string) (string, error) {
-	switch cleaner.backendType {
-	case containerBackendDocker, containerBackendTest:
-		return ref, nil
-	case containerBackendBuildah:
-		// ------------
-		// WORKAROUND for Buildah
-		// ------------
-		// Buildah repository tag contains hostname (domain) prefix currently.
-		// Example (buildah repo tag): localhost/werf-guide-app:e5c6ebcd2718ccfe74d01069a0d758e03d5a2554155ccdc01be0daff-1739265965865
-		// We need normalize the tag to docker image repository tag format because our host cleanup algorithm based on docker backend.
-		// Example: (docker repo tag): werf-guide-app:e5c6ebcd2718ccfe74d01069a0d758e03d5a2554155ccdc01be0daff-1739265936011
-		// https://flant.kaiten.ru/space/193531/boards/card/26364854?focus=comment&focusId=56944076
-		// TODO: unify repository tags in v3 on build stage
-
-		named, err := reference.ParseNamed(ref)
-		if err != nil {
-			return "", err
-		}
-		hostnamePrefix := fmt.Sprintf("%s/", reference.Domain(named))
-
-		return strings.TrimPrefix(ref, hostnamePrefix), nil
-	default:
-		return "", ErrUnsupportedContainerBackend
-	}
-}
-
 func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOptions) error {
 	backendStoragePath, err := cleaner.backendStoragePath(ctx, options.StoragePath)
 	if err != nil {
@@ -342,7 +274,7 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 		logboek.Context(ctx).LogF("Volume usage: %s / %s\n", humanize.Bytes(vu.UsedBytes), humanize.Bytes(vu.TotalBytes))
 		logboek.Context(ctx).LogF("Allowed percentage level exceeded: %s > %s — %s\n", utils.RedF("%0.2f%%", vu.Percentage()), utils.YellowF("%0.2f%%", options.AllowedStorageVolumeUsagePercentage), utils.RedF("HIGH VOLUME USAGE"))
 		logboek.Context(ctx).LogF("Target percentage level after cleanup: %0.2f%% - %0.2f%% (margin) = %s\n", options.AllowedStorageVolumeUsagePercentage, options.AllowedStorageVolumeUsageMarginPercentage, utils.BlueF("%0.2f%%", targetVolumeUsagePercentage))
-		logboek.Context(ctx).LogF("Needed to free: %s\n", utils.RedF("%s", humanize.Bytes(calcBytesToFree(vu, targetVolumeUsagePercentage))))
+		logboek.Context(ctx).LogF("Needed to free: %s\n", utils.RedF("%s", humanize.Bytes(vu.BytesToFree(targetVolumeUsagePercentage))))
 	})
 
 	vuBefore := vu
@@ -396,7 +328,7 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 
 	// Step 3. Remove werf containers
 	err = logboek.Context(ctx).LogBlock("Cleanup werf containers").DoError(func() error {
-		reportWerfContainers, err := cleaner.safeCleanupWerfContainers(ctx, options, vu)
+		reportWerfContainers, err := cleaner.cleanupWerfContainers(ctx, options, vu)
 		if err != nil {
 			return err
 		}
@@ -414,7 +346,7 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 
 	// Step 4. Remove werf images
 	err = logboek.Context(ctx).LogBlock("Cleanup werf images").DoError(func() error {
-		reportWerfImages, err := cleaner.safeCleanupWerfImages(ctx, options, vu, targetVolumeUsagePercentage)
+		reportWerfImages, err := cleaner.cleanupWerfImages(ctx, options, vu, targetVolumeUsagePercentage)
 		if err != nil {
 			return err
 		}
@@ -470,7 +402,7 @@ func (cleaner *LocalBackendCleaner) pruneImages(ctx context.Context, options Run
 	if options.DryRun {
 		list, err := cleaner.backend.Images(ctx, buildImagesOptions(filters.ToPairs()...))
 		if err != nil {
-			return newCleanupReport(), err
+			return cleanupReport{}, err
 		}
 		return mapImageListToCleanupReport(list), nil
 	}
@@ -480,9 +412,9 @@ func (cleaner *LocalBackendCleaner) pruneImages(ctx context.Context, options Run
 	case errors.Is(err, container_backend.ErrImageUsedByContainer),
 		errors.Is(err, container_backend.ErrPruneIsAlreadyRunning):
 		logboek.Context(ctx).Info().LogF("NOTE: Ignore image pruning: %s\n", err.Error())
-		return newCleanupReport(), nil
+		return cleanupReport{}, nil
 	case err != nil:
-		return newCleanupReport(), err
+		return cleanupReport{}, err
 	}
 
 	return mapPruneReportToCleanupReport(report), err
@@ -493,7 +425,7 @@ func (cleaner *LocalBackendCleaner) pruneVolumes(ctx context.Context, options Ru
 	if options.DryRun {
 		// NOTE: Buildah does not give us a way to precalculate pruned size.
 		// NOTE: Docker does not give us a way to precalculate pruned size.
-		return newCleanupReport(), errOptionDryRunNotSupported
+		return cleanupReport{}, errOptionDryRunNotSupported
 	}
 
 	report, err := cleaner.backend.PruneVolumes(ctx, prune.Options{})
@@ -501,36 +433,24 @@ func (cleaner *LocalBackendCleaner) pruneVolumes(ctx context.Context, options Ru
 	switch {
 	case errors.Is(err, container_backend.ErrPruneIsAlreadyRunning):
 		logboek.Context(ctx).Info().LogF("NOTE: Ignore volume pruning: %s\n", err.Error())
-		return newCleanupReport(), nil
+		return cleanupReport{}, nil
 	case err != nil:
-		return newCleanupReport(), err
+		return cleanupReport{}, err
 	}
 
 	return mapPruneReportToCleanupReport(report), err
 }
 
-// safeCleanupWerfContainers cleanups werf containers safely using host locks
-func (cleaner *LocalBackendCleaner) safeCleanupWerfContainers(ctx context.Context, options RunGCOptions, vu volumeutils.VolumeUsage) (cleanupReport, error) {
+func (cleaner *LocalBackendCleaner) cleanupWerfContainers(ctx context.Context, options RunGCOptions, vu volumeutils.VolumeUsage) (cleanupReport, error) {
 	containers, err := werfContainersByContainersOptions(ctx, cleaner.backend, buildContainersOptions())
 	if err != nil {
-		return newCleanupReport(), fmt.Errorf("cannot get build containers: %w", err)
+		return cleanupReport{}, fmt.Errorf("cannot get build containers: %w", err)
 	}
 
-	if options.DryRun {
-		return mapContainerListToCleanupReport(containers), nil
+	report := cleanupReport{
+		ItemsDeleted:   make([]string, 0, len(containers)),
+		SpaceReclaimed: 0,
 	}
-
-	report, err := cleaner.doSafeCleanupWerfContainers(ctx, options, vu, containers)
-	if err != nil {
-		return newCleanupReport(), err
-	}
-
-	return report, nil
-}
-
-func (cleaner *LocalBackendCleaner) doSafeCleanupWerfContainers(ctx context.Context, options RunGCOptions, vu volumeutils.VolumeUsage, containers image.ContainerList) (cleanupReport, error) {
-	report := newCleanupReport()
-	report.ItemsDeleted = make([]string, 0, len(containers))
 
 	for _, container := range containers {
 		containerName := werfContainerName(container)
@@ -540,24 +460,24 @@ func (cleaner *LocalBackendCleaner) doSafeCleanupWerfContainers(ctx context.Cont
 			continue
 		}
 
-		err := withHostLockOrNothing(ctx, container_backend.ContainerLockName(containerName), func() error {
-			err := cleaner.backend.Rm(ctx, container.ID, container_backend.RmOpts{
-				Force: options.Force,
-			})
+		if ok, err := cleaner.isLocked(container_backend.ContainerLockName(containerName)); err != nil {
+			return cleanupReport{}, fmt.Errorf("checking lock %q: %w", container_backend.ContainerLockName(containerName), err)
+		} else if ok {
+			continue
+		}
+
+		if err = cleaner.removeContainerRef(ctx, container.ID, options); err != nil {
 			switch {
 			case errors.Is(err, container_backend.ErrCannotRemovePausedContainer):
 				logboek.Context(ctx).Info().LogF("Ignore paused container %s\n", logContainerName(container))
-				return nil
+				continue
 			case errors.Is(err, container_backend.ErrCannotRemoveRunningContainer):
 				logboek.Context(ctx).Info().LogF("Ignore running container %s\n", logContainerName(container))
-				return nil
+				continue
 			case err != nil:
-				return fmt.Errorf("failed to remove container %s: %w", logContainerName(container), err)
+				logboek.Context(ctx).Info().LogF("Cannot remove container by id %q: %s\n", container.ID, err)
+				continue
 			}
-			return nil
-		})
-		if err != nil {
-			return newCleanupReport(), err
 		}
 
 		report.ItemsDeleted = append(report.ItemsDeleted, container.ID)
@@ -573,39 +493,23 @@ func (cleaner *LocalBackendCleaner) doSafeCleanupWerfContainers(ctx context.Cont
 		report.SpaceReclaimed = vu.UsedBytes - vuAfter.UsedBytes
 	}
 
-	return report, nil
+	return report.Normalize(), nil
 }
 
-// safeCleanupWerfImages cleanups werf images safely using host locks
-func (cleaner *LocalBackendCleaner) safeCleanupWerfImages(ctx context.Context, options RunGCOptions, vu volumeutils.VolumeUsage, targetVolumeUsagePercentage float64) (cleanupReport, error) {
+func (cleaner *LocalBackendCleaner) cleanupWerfImages(ctx context.Context, options RunGCOptions, vu volumeutils.VolumeUsage, targetVolumeUsagePercentage float64) (cleanupReport, error) {
 	images, err := cleaner.werfImages(ctx)
 	if err != nil {
-		return newCleanupReport(), err
+		return cleanupReport{}, err
 	}
 
-	if options.DryRun {
-		n := countImagesToFree(images, 0, calcBytesToFree(vu, targetVolumeUsagePercentage))
-		if n == -1 {
-			return newCleanupReport(), nil
-		}
-		return mapImageListToCleanupReport(images[:n+1]), nil
+	report := cleanupReport{
+		ItemsDeleted:   make([]string, 0, len(images)),
+		SpaceReclaimed: 0,
 	}
-
-	report, err := cleaner.doSafeCleanupWerfImages(ctx, options, vu, targetVolumeUsagePercentage, images)
-	if err != nil {
-		return newCleanupReport(), err
-	}
-
-	return report, nil
-}
-
-func (cleaner *LocalBackendCleaner) doSafeCleanupWerfImages(ctx context.Context, options RunGCOptions, vu volumeutils.VolumeUsage, targetVolumeUsagePercentage float64, images image.ImagesList) (cleanupReport, error) {
-	report := newCleanupReport()
-	report.ItemsDeleted = make([]string, 0, len(images))
 
 	tVu := targetVolumeUsagePercentage
 
-	for i, n := 0, countImagesToFree(images, 0, calcBytesToFree(vu, tVu)); n != -1; i, n = n+1, countImagesToFree(images, n+1, calcBytesToFree(vu, tVu)) {
+	for i, n := 0, countImagesToFree(images, 0, vu.BytesToFree(tVu)); n != -1; i, n = n+1, countImagesToFree(images, n+1, vu.BytesToFree(tVu)) {
 
 		for _, imgSummary := range images[i : n+1] {
 
@@ -644,7 +548,7 @@ func (cleaner *LocalBackendCleaner) doSafeCleanupWerfImages(ctx context.Context,
 		vu = vuAfter
 	}
 
-	return report, nil
+	return report.Normalize(), nil
 }
 
 func (cleaner *LocalBackendCleaner) removeImageByRepoTags(ctx context.Context, options RunGCOptions, imgSummary image.Summary) (bool, error) {
@@ -656,27 +560,21 @@ func (cleaner *LocalBackendCleaner) removeImageByRepoTags(ctx context.Context, o
 		// Here <none:none> image is the intermediate image.
 		// We can assert this because we had remove all dandling images before via pruning.
 		if ref == "<none>:<none>" {
-			err := cleaner.backend.Rmi(ctx, ref, container_backend.RmiOpts{
-				Force: options.Force,
-			})
-			if err != nil {
+			if err := cleaner.removeImageRef(ctx, ref, options); err != nil {
 				logboek.Context(ctx).Info().LogF("Cannot remove local image by ID %q: %s\n", imgSummary.ID, err)
 				unRemovedCount++
 			}
 		} else {
-			err := withHostLockOrNothing(ctx, container_backend.ImageLockName(ref), func() error {
-				err := cleaner.backend.Rmi(ctx, ref, container_backend.RmiOpts{
-					Force: options.Force,
-				})
-				if err != nil {
-					logboek.Context(ctx).Info().LogF("Cannot remove local image by repo tag %q: %s\n", ref, err)
-					unRemovedCount++
-				}
-				return nil
-			})
-			// here err is host lock deferred err
-			if err != nil {
-				return false, err
+			if ok, err := cleaner.isLocked(container_backend.ImageLockName(ref)); err != nil {
+				return false, fmt.Errorf("checking lock %q: %w", container_backend.ImageLockName(ref), err)
+			} else if ok {
+				unRemovedCount++
+				continue
+			}
+
+			if err := cleaner.removeImageRef(ctx, ref, options); err != nil {
+				logboek.Context(ctx).Info().LogF("Cannot remove local image by repo tag %q: %s\n", ref, err)
+				unRemovedCount++
 			}
 		}
 	}
@@ -689,10 +587,7 @@ func (cleaner *LocalBackendCleaner) removeImageByRepoDigests(ctx context.Context
 	unRemovedCount := 0
 
 	for _, repoDigest := range imgSummary.RepoDigests {
-		err := cleaner.backend.Rmi(ctx, repoDigest, container_backend.RmiOpts{
-			Force: options.Force,
-		})
-		if err != nil {
+		if err := cleaner.removeImageRef(ctx, repoDigest, options); err != nil {
 			logboek.Context(ctx).Info().LogF("Cannot remove local image by repo digest %q: %s\n", repoDigest, err)
 			unRemovedCount++
 		}
@@ -701,11 +596,33 @@ func (cleaner *LocalBackendCleaner) removeImageByRepoDigests(ctx context.Context
 	return unRemovedCount == 0 && digestCount > 0, nil
 }
 
-func calcBytesToFree(vu volumeutils.VolumeUsage, targetVolumeUsagePercentage float64) uint64 {
-	diffPercentage := vu.Percentage() - targetVolumeUsagePercentage
-	allowedVolumeUsageToFree := math.Max(diffPercentage, 0)
-	bytesToFree := uint64((float64(vu.TotalBytes) / 100.0) * allowedVolumeUsageToFree)
-	return bytesToFree
+func (cleaner *LocalBackendCleaner) removeImageRef(ctx context.Context, ref string, options RunGCOptions) error {
+	if options.DryRun {
+		return nil
+	}
+	return cleaner.backend.Rmi(ctx, ref, container_backend.RmiOpts{
+		Force: options.Force,
+	})
+}
+
+func (cleaner *LocalBackendCleaner) removeContainerRef(ctx context.Context, ref string, options RunGCOptions) error {
+	if options.DryRun {
+		return nil
+	}
+	return cleaner.backend.Rm(ctx, ref, container_backend.RmOpts{
+		Force: options.Force,
+	})
+}
+
+func (cleaner *LocalBackendCleaner) isLocked(lockName string) (bool, error) {
+	ok, lock, err := cleaner.locker.Acquire(lockName, lockgate.AcquireOptions{NonBlocking: true})
+	if err != nil {
+		return false, err
+	}
+	if !ok {
+		return true, nil
+	}
+	return false, cleaner.locker.Release(lock)
 }
 
 func logDeletedItems(ctx context.Context, deletedItems []string) {

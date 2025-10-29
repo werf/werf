@@ -44,8 +44,8 @@ func (entry *GitRepoDesc) GetCacheBasePath() string {
 // ├── c447df0d5918decb5d832cb4324e3e2cbe0670eb3fe9301f795be831a9175f47
 // │   └── ... (repository files)
 // └── ... (other repositories)
-func GetGitReposAndRemoveInvalid(ctx context.Context, cacheVersionRoot string) ([]*GitRepoDesc, error) {
-	var res []*GitRepoDesc
+func GetGitReposAndRemoveInvalid(ctx context.Context, cacheVersionRoot string) ([]GitDataEntry, error) {
+	var res []GitDataEntry
 
 	// Check if cacheVersionRoot exists and is a directory
 	fileStat, err := os.Stat(cacheVersionRoot)

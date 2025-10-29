@@ -391,6 +391,8 @@ func (c *Conveyor) ShouldAddManagedImagesRecords() bool {
 
 type ShouldBeBuiltOptions struct {
 	CustomTagFuncList []imagePkg.CustomTagFunc
+	ReportPath        string
+	ReportFormat      ReportFormat
 }
 
 func (c *Conveyor) ShouldBeBuilt(ctx context.Context, opts ShouldBeBuiltOptions) error {
@@ -405,6 +407,8 @@ func (c *Conveyor) ShouldBeBuilt(ctx context.Context, opts ShouldBeBuiltOptions)
 			ShouldBeBuiltMode: true,
 			BuildOptions: BuildOptions{
 				CustomTagFuncList: opts.CustomTagFuncList,
+				ReportPath:        opts.ReportPath,
+				ReportFormat:      opts.ReportFormat,
 			},
 		}),
 	}
@@ -530,12 +534,12 @@ func (c *Conveyor) prepareBuildCtx(ctx context.Context) (context.Context, *bytes
 	return logboek.NewContext(ctx, bufLogger), buf
 }
 
-func (c *Conveyor) printDeferredBuildLog(ctx context.Context, buf *bytes.Buffer) {
+func (c *Conveyor) printDeferredBuildLog(_ context.Context, buf *bytes.Buffer) {
 	if !c.DeferBuildLog || buf == nil {
 		return
 	}
 
-	_, _ = logboek.Context(ctx).OutStream().Write(buf.Bytes())
+	_, _ = os.Stdout.Write(buf.Bytes())
 }
 
 func (c *Conveyor) Build(ctx context.Context, opts BuildOptions) error {
@@ -596,7 +600,7 @@ func (c *Conveyor) runPhases(ctx context.Context, phases []Phase, logImages bool
 	}
 
 	if err := c.doImages(ctx, phases, logImages); err != nil {
-		return err
+		return fmt.Errorf("unable to process images: %w", err)
 	}
 
 	for _, phase := range phases {
@@ -617,11 +621,14 @@ func (c *Conveyor) runPhases(ctx context.Context, phases []Phase, logImages bool
 
 func (c *Conveyor) doImages(ctx context.Context, phases []Phase, logImages bool) error {
 	if c.Parallel && len(c.imagesTree.GetImages()) > 1 {
-		return c.doImagesInParallel(ctx, phases, logImages)
+		err := c.doImagesInParallel(ctx, phases, logImages)
+		if err != nil {
+			return fmt.Errorf("unable to process images in parallel: %w", err)
+		}
 	} else {
 		for _, img := range c.imagesTree.GetImages() {
 			if err := c.doImage(ctx, img, phases); err != nil {
-				return err
+				return fmt.Errorf("unable to process image %q: %w", img.LogName(), err)
 			}
 		}
 	}
@@ -670,7 +677,7 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 			}
 
 			if err := c.doImage(ctx, taskImage, taskPhases); err != nil {
-				return err
+				return fmt.Errorf("unable to process image %q with parallel task %d: %w", taskImage.LogName(), taskId, err)
 			}
 
 			setImageExecutionTimesMutex.Lock()

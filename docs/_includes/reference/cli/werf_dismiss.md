@@ -136,12 +136,10 @@ werf dismiss [options]
             (default $WERF_GITERMINISM_CONFIG or werf-giterminism.yaml in working directory)
       --home-dir=""
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
-      --hooks-status-progress-period=5
-            Hooks status progress period in seconds. Set 0 to stop showing hooks status progress.   
-            Defaults to $WERF_HOOKS_STATUS_PROGRESS_PERIOD_SECONDS or status progress period value
+      --hooks-status-progress-period=0
+            No-op
       --insecure-helm-dependencies=false
-            Allow insecure oci registries to be used in the .helm/Chart.yaml dependencies           
-            configuration (default $WERF_INSECURE_HELM_DEPENDENCIES)
+            No-op
       --insecure-registry=false
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
       --kube-api-server=""
@@ -199,14 +197,24 @@ werf dismiss [options]
             deploy.namespace custom template from werf.yaml or $WERF_NAMESPACE)
       --network-parallelism=30
             Parallelize some network operations (default $WERF_NETWORK_PARALLELISM or 30)
+      --no-final-tracking=false
+            By default disable tracking operations that have no create/update/delete resource       
+            operations after them, which are most tracking operations, to speed up the release      
+            (default $WERF_NO_FINAL_TRACKING)
       --no-pod-logs=false
             Disable Pod logs collection and printing (default $WERF_NO_POD_LOGS or false)
+      --no-remove-manual-changes=false
+            Don`t remove fields added manually to the resource in the cluster if fields aren`t      
+            present in the manifest (default $WERF_NO_REMOVE_MANUAL_CHANGES)
       --platform=[]
             Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT]     
             ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)
       --release=""
             Use specified Helm release name (default [[ project ]]-[[ env ]] template or            
             deploy.helmRelease custom template from werf.yaml or $WERF_RELEASE)
+      --release-storage-sql-connection=""
+            SQL Connection String for Helm SQL Storage (default                                     
+            $WERF_RELEASE_STORAGE_SQL_CONNECTION)
       --releases-history-max=5
             Max releases to keep in release storage ($WERF_RELEASES_HISTORY_MAX or 5 by default)
       --repo=""
@@ -255,6 +263,8 @@ werf dismiss [options]
             
             The same address should be specified for all werf processes that work with a single     
             repo. :local address allows execution of werf processes from a single host only
+  -t, --timeout=0
+            Resources tracking timeout in seconds ($WERF_TIMEOUT by default)
       --tmp-dir=""
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --use-deploy-report=false

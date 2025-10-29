@@ -23,7 +23,7 @@ func main() {
 
 // startDetachedProcess starts detached process and exits currently running process.
 func startDetachedProcess() {
-	ctx := context.Background()
+	ctx := context.TODO()
 	args := os.Args[1:]
 
 	workingDir, err := os.Getwd()
@@ -42,7 +42,7 @@ func startDetachedProcess() {
 }
 
 func handleDetachedProcess() {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	ctx, cancel := context.WithTimeout(context.TODO(), time.Second*10)
 	defer cancel()
 
 	signalsChan := make(chan os.Signal, 1)

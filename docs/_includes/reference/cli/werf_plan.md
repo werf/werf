@@ -113,6 +113,8 @@ werf plan --repo registry.mydomain.com/web --env production
             multiple).
             Also, can be specified with $WERF_DEV_IGNORE_* (e.g. $WERF_DEV_IGNORE_TESTS=*_test.go,  
             $WERF_DEV_IGNORE_DOCS=path/to/docs)
+      --diff-context-lines=3
+            Show N lines of context around diffs ($WERF_DIFF_CONTEXT_LINES by default)
       --dir=""
             Use specified project directory where project’s werf.yaml and other configuration files 
             should reside (default $WERF_DIR or current working directory)
@@ -175,14 +177,13 @@ werf plan --repo registry.mydomain.com/web --env production
             (default $WERF_GITERMINISM_CONFIG or werf-giterminism.yaml in working directory)
       --home-dir=""
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
-      --hooks-status-progress-period=5
-            Hooks status progress period in seconds. Set 0 to stop showing hooks status progress.   
-            Defaults to $WERF_HOOKS_STATUS_PROGRESS_PERIOD_SECONDS or status progress period value
+      --hooks-status-progress-period=0
+            No-op
       --ignore-secret-key=false
             Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)
       --insecure-helm-dependencies=false
-            Allow insecure oci registries to be used in the .helm/Chart.yaml dependencies           
-            configuration (default $WERF_INSECURE_HELM_DEPENDENCIES)
+            Allow insecure oci registries to be used in the Chart.yaml dependencies configuration   
+            (default $WERF_INSECURE_HELM_DEPENDENCIES)
       --insecure-registry=false
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
       --introspect-before-error=false
@@ -261,9 +262,16 @@ werf plan --repo registry.mydomain.com/web --env production
             deploy.namespace custom template from werf.yaml or $WERF_NAMESPACE)
       --network-parallelism=30
             Parallelize some network operations (default $WERF_NETWORK_PARALLELISM or 30)
+      --no-final-tracking=false
+            By default disable tracking operations that have no create/update/delete resource       
+            operations after them, which are most tracking operations, to speed up the release      
+            (default $WERF_NO_FINAL_TRACKING)
       --no-install-crds=false
             Do not install CRDs from "crds/" directories of installed charts (default               
             $WERF_NO_INSTALL_CRDS)
+      --no-remove-manual-changes=false
+            Don`t remove fields added manually to the resource in the cluster if fields aren`t      
+            present in the manifest (default $WERF_NO_REMOVE_MANUAL_CHANGES)
   -p, --parallel=true
             Run in parallel (default $WERF_PARALLEL or true)
       --parallel-tasks-limit=5
@@ -275,6 +283,16 @@ werf plan --repo registry.mydomain.com/web --env production
       --release=""
             Use specified Helm release name (default [[ project ]]-[[ env ]] template or            
             deploy.helmRelease custom template from werf.yaml or $WERF_RELEASE)
+      --release-label=[]
+            Add Helm release labels (can specify multiple). Kind of labels depends or release       
+            storage driver.
+            Format: labelName=labelValue.
+            Also, can be specified with $WERF_RELEASE_LABEL_* (e.g.                                 
+            $WERF_RELEASE_LABEL_1=labelName1=labelValue1,                                           
+            $WERF_RELEASE_LABEL_2=labelName2=labelValue2)
+      --release-storage-sql-connection=""
+            SQL Connection String for Helm SQL Storage (default                                     
+            $WERF_RELEASE_STORAGE_SQL_CONNECTION)
       --releases-history-max=5
             Max releases to keep in release storage ($WERF_RELEASES_HISTORY_MAX or 5 by default)
       --repo=""
@@ -311,6 +329,8 @@ werf plan --repo registry.mydomain.com/web --env production
             cache.
             Also, can be specified with $WERF_SECONDARY_REPO_* (e.g. $WERF_SECONDARY_REPO_1=...,    
             $WERF_SECONDARY_REPO_2=...)
+      --secret-key=""
+            Secret key (default $WERF_SECRET_KEY)
       --secret-values=[]
             Specify helm secret values in a YAML file (can specify multiple). Also, can be defined  
             with $WERF_SECRET_VALUES_* (e.g. $WERF_SECRET_VALUES_ENV=.helm/secret_values_test.yaml, 
@@ -327,11 +347,26 @@ werf plan --repo registry.mydomain.com/web --env production
             or separate values with commas: key1=path1,key2=path2).
             Also, can be defined with $WERF_SET_FILE_* (e.g. $WERF_SET_FILE_1=key1=path1,           
             $WERF_SET_FILE_2=key2=val2)
+      --set-runtime-json=[]
+            Set new keys in $.Runtime, where the key is the value path and the value is JSON. This  
+            is meant to be generated inside the program, so use --set-json instead, unless you know 
+            what you are doing. Can specify multiple or separate values with commas:                
+            key1=val1,key2=val2.
+            Also, can be defined with $WERF_SET_RUNTIME_JSON_* (e.g.                                
+            $WERF_SET_RUNTIME_JSON_1=key1=val1, $WERF_SET_RUNTIME_JSON_2=key2=val2)
       --set-string=[]
             Set STRING helm values on the command line (can specify multiple or separate values     
             with commas: key1=val1,key2=val2).
             Also, can be defined with $WERF_SET_STRING_* (e.g. $WERF_SET_STRING_1=key1=val1,        
             $WERF_SET_STRING_2=key2=val2)
+      --show-insignificant-diffs=false
+            Show insignificant diff lines ($WERF_SHOW_INSIGNIFICANT_DIFFS by default)
+      --show-sensitive-diffs=false
+            Show sensitive diff lines ($WERF_SHOW_SENSITIVE_DIFFS by default)
+      --show-verbose-crd-diffs=false
+            Show verbose CRD diff lines ($WERF_SHOW_VERBOSE_CRD_DIFFS by default)
+      --show-verbose-diffs=false
+            Show verbose diff lines ($WERF_SHOW_VERBOSE_DIFFS by default)
   -L, --skip-dependencies-repo-refresh=false
             Do not refresh helm chart repositories locally cached index
       --skip-image-spec-stage=false
@@ -350,9 +385,8 @@ werf plan --repo registry.mydomain.com/web --env production
             Can be specified with $WERF_SSH_KEY_* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa,         
             $WERF_SSH_KEY_NODEJS=~/.ssh/nodejs_rsa).
             Defaults to $WERF_SSH_KEY_*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}
-      --status-progress-period=5
-            Status progress period in seconds. Set -1 to stop showing status progress. Defaults to  
-            $WERF_STATUS_PROGRESS_PERIOD_SECONDS or 5 seconds
+      --status-progress-period=0
+            No-op
       --stub-tags=false
             Use stubs instead of real tags (default $WERF_STUB_TAGS)
   -S, --synchronization=""
@@ -366,7 +400,7 @@ werf plan --repo registry.mydomain.com/web --env production
             The same address should be specified for all werf processes that work with a single     
             repo. :local address allows execution of werf processes from a single host only
   -t, --timeout=0
-            Resources tracking timeout in seconds ($WERF_TIMEOUT by default)
+            No-op
       --tmp-dir=""
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --use-custom-tag=""

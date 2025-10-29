@@ -25,7 +25,7 @@ const (
 )
 
 func (storage *RepoStagesStorage) checkMeta(ctx context.Context, tags []string, _ ...docker_registry.Option) error {
-	if len(tags) > cleanupTriggerTagCount || storage.cleanupDisabled {
+	if len(tags) < cleanupTriggerTagCount || storage.cleanupDisabled {
 		return nil
 	}
 

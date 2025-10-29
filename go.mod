@@ -2,8 +2,6 @@ module github.com/werf/werf/v2
 
 go 1.23.0
 
-toolchain go1.23.8
-
 require (
 	github.com/Masterminds/goutils v1.1.1
 	github.com/Masterminds/semver v1.5.0
@@ -42,6 +40,7 @@ require (
 	github.com/gosuri/uitable v0.0.4
 	github.com/goware/urlx v0.3.2
 	github.com/hashicorp/go-version v1.6.0
+	github.com/hofstadter-io/cinful v1.0.0
 	github.com/mitchellh/copystructure v1.2.0
 	github.com/moby/buildkit v0.13.1
 	github.com/moby/patternmatcher v0.6.0
@@ -59,15 +58,15 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.5
-	github.com/werf/3p-helm v0.0.0-20250731134240-58a9eff8ec5b
+	github.com/werf/3p-helm v0.0.0-20251021224308-a90f195bd29a
 	github.com/werf/3p-helm-for-werf-helm v0.0.0-20241217155820-089f92cd5c9d
-	github.com/werf/common-go v0.0.0-20250528135810-c90e95ac760d
+	github.com/werf/common-go v0.0.0-20251023101023-1aa12556cc61
 	github.com/werf/copy-recurse v0.2.7
-	github.com/werf/kubedog v0.13.1-0.20250813095923-12d70b6780b0
+	github.com/werf/kubedog v0.13.1-0.20251008125513-7b4fcf23698a
 	github.com/werf/kubedog-for-werf-helm v0.0.0-20241217155728-9d45c48b82b6
 	github.com/werf/lockgate v0.1.1
 	github.com/werf/logboek v0.6.1
-	github.com/werf/nelm v1.12.1-0.20250814110920-8722ec7e1627
+	github.com/werf/nelm v1.15.1-0.20251022120311-f4ca24c70ec6
 	github.com/werf/nelm-for-werf-helm v0.0.0-20241217155925-b0e6734d1dbf
 	go.opentelemetry.io/otel v1.24.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.24.0
@@ -107,7 +106,6 @@ require (
 	github.com/go-task/template v0.1.0 // indirect
 	github.com/goccy/go-yaml v1.15.23 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
-	github.com/hofstadter-io/cinful v1.0.0 // indirect
 	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.7 // indirect
 	github.com/mattn/go-zglob v0.0.6 // indirect
