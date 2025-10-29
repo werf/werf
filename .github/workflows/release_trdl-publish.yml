@@ -39,54 +39,33 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Get previous trdl_channels.yaml
+      - name: Install yq & task
         run: |
-          COMMIT_SHA=$(gh run list --workflow="release:trdl-publish" --status success --limit 1 --json headSha --jq '.[0].headSha')
-          if [ -n "$COMMIT_SHA" ]; then
-            git show "$COMMIT_SHA:trdl_channels.yaml" > trdl_channels_old.yaml
-          else
-            echo "No previous successful run, creating empty baseline"
-            touch trdl_channels_old.yaml
-          fi
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Find changed versions
-        id: changed
-        run: |
-          versions=$(diff <(yq e '.groups[].channels[].version' trdl_channels_old.yaml 2>/dev/null | sort -u) \
-                          <(yq e '.groups[].channels[].version' trdl_channels.yaml | sort -u) \
-                          || true | grep '>' | awk '{print $2}')
-          echo "versions=$versions"
-          echo "versions=$versions" >> $GITHUB_OUTPUT
+          sudo apt-get update
+          sudo apt-get install -y jq
+          curl -sSL https://github.com/mikefarah/yq/releases/download/v4.44.3/yq_linux_amd64 -o /usr/local/bin/yq
+          chmod +x /usr/local/bin/yq
+          curl -sSL https://taskfile.dev/install.sh | sh
 
       - name: Install Task
         uses: arduino/setup-task@v1
 
-      - name: Build and upload binaries
-        if: steps.changed.outputs.versions != ''
+      - name: Get previous trdl_channels.yaml
+        run: |
+          COMMIT_SHA=$(gh run list --workflow="release:trdl-publish" --status success --limit 1 --json headSha --jq '.[0].headSha')
+          if [ -n "$COMMIT_SHA" ]; then
+            git show "$COMMIT_SHA:trdl_channels.yaml" > trdl_channels_old.yaml || true
+          else
+            echo "No old file found"
+            : > trdl_channels_old.yaml
+          fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          for v in ${{ steps.changed.outputs.versions }}; do
-            echo "Building binary for version $v"
-            mkdir -p dist/$v/linux-amd64/bin
-            task --yes build:dev:linux:amd64 \
-              outputDir="dist/$v/linux-amd64/bin" \
-              extraGoBuildArgs="-ldflags='-s -w'" \
-              pkg=./cmd/delivery-kit
 
-            cp dist/$v/linux-amd64/bin/delivery-kit dist/delivery-kit-linux-amd64
-
-            if gh release view "v$v" >/dev/null 2>&1; then
-              echo "Uploading to existing release v$v"
-              gh release upload "v$v" dist/delivery-kit-linux-amd64 --clobber --name "delivery-kit-linux-amd64"
-            else
-              echo "Creating new prerelease v$v"
-              gh release create "v$v" --title "v$v [pre]" --prerelease
-              gh release upload "v$v" dist/delivery-kit-linux-amd64 --clobber --name "delivery-kit-linux-amd64"
-            fi
-          done
+      - name: Publish binaries
+        run: ./scripts/publish-binaries.sh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   update_release:
     name: Update release metadata
@@ -104,10 +83,6 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          changed="${{ needs.publish.outputs.versions }}"
-
-          echo "Updating releases only for changed versions: $changed"
-
           check_release_exists() {
             local version=$1
             gh release view "v$version" >/dev/null 2>&1
@@ -119,33 +94,72 @@ jobs:
             gh release view "$tag" --json name | jq -r '.name'
           }
 
-          for version in $changed; do
-            tag="v$version"
-            group=$(yq e ".groups[] | select(.channels[].version == \"$version\") | .name" trdl_channels.yaml)
-            channels=$(yq e -o=j -I=0 ".groups[] | select(.channels[].version == \"$version\") | .channels[] | select(.version == \"$version\") | .name" trdl_channels.yaml | jq -r '.name' | tr '\n' ',' | sed 's/,$//')
+          process_releases() {
+            echo "Processing releases based on trdl_channels.yaml..."
 
-            if check_release_exists "$version"; then
-              expected_title="$tag [$channels]"
-              current_title=$(get_release_name "$tag")
+            declare -A VERSION_CHANNELS
+            declare -A GROUP_VERSIONS
 
-              if [[ "$current_title" != "$expected_title" ]]; then
-                if [[ $group == "2" && $channels == *stable* ]]; then
-                  echo "Updating $tag (group $group): stable, latest"
-                  gh release edit "$tag" --title "$expected_title" --latest --prerelease=false || true
-                elif [[ $channels == *rock-solid* ]]; then
-                  echo "Updating $tag (group $group): rock-solid"
-                  gh release edit "$tag" --title "$expected_title" --prerelease=false --latest=false || true
+            current_group=""
+            while IFS= read -r line; do
+              if [[ $line =~ name:\ \"([^\"]+)\" ]]; then
+                current_group="${BASH_REMATCH[1]}"
+              elif [[ $line =~ name:\ ([a-z-]+) ]]; then
+                current_channel="${BASH_REMATCH[1]}"
+              elif [[ $line =~ version:\ ([0-9a-zA-Z.+-]+) ]]; then
+                version="${BASH_REMATCH[1]}"
+                key="${current_group}:${version}"
+                if [[ -z "${VERSION_CHANNELS[$key]}" ]]; then
+                  VERSION_CHANNELS["$key"]="$current_channel"
+                  GROUP_VERSIONS["$version"]="$current_group"
                 else
-                  echo "Updating $tag (group $group): prerelease, channels=$channels"
-                  gh release edit "$tag" --title "$expected_title" --prerelease --latest=false || true
+                  VERSION_CHANNELS["$key"]="${VERSION_CHANNELS[$key]},$current_channel"
+                fi
+              fi
+            done < trdl_channels.yaml
+
+            for key in "${!VERSION_CHANNELS[@]}"; do
+              version="${key#*:}"
+              group="${key%:*}"
+              tag="v$version"
+
+              if check_release_exists "$version"; then
+                channels="${VERSION_CHANNELS[$key]}"
+                expected_title="$tag [$channels]"
+                current_title=$(get_release_name "$tag")
+
+                if [[ "$current_title" != "$expected_title" ]]; then
+                  if [[ $group == "2" && $channels == *stable* ]]; then
+                    echo "Updating $tag (group $group): stable, latest"
+                    gh release edit "$tag" --title "$expected_title" --latest --prerelease=false || true
+                  elif [[ $channels == *rock-solid* ]]; then
+                    echo "Updating $tag (group $group): rock-solid, just title"
+                    gh release edit "$tag" --title "$expected_title" --prerelease=false || true
+                  else
+                    echo "Updating $tag (group $group): prerelease, channels=$channels"
+                    gh release edit "$tag" --title "$expected_title" --prerelease || true
+                  fi
+                else
+                  echo "$tag (group $group) already has correct title: $current_title"
                 fi
               else
-                echo "$tag already has correct title: $current_title"
+                echo "Release $tag (group $group) not found, skipping..."
               fi
-            else
-              echo "Release $tag not found, skipping..."
-            fi
-          done
+            done
+
+            echo "Checking for releases with outdated channel markers..."
+            gh release list --json name | jq -r '.[] | select(.name | test("\\[[a-zA-Z,-]+\\]")) | .name' | while read -r full_name; do
+              tag="${full_name%% *}"
+              version="${tag#v}"
+
+              [[ -n "${GROUP_VERSIONS[$version]}" ]] && continue
+
+              echo "Resetting $tag to plain version title (no channels in config)"
+              gh release edit "$tag" --title "$tag" --prerelease=false || true
+            done
+          }
+
+          process_releases
 
 
 #  notify:
