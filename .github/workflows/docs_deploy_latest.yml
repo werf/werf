@@ -15,7 +15,7 @@ jobs:
       persistent: true
       env: production
     secrets:
-      kubeConfig: ${{ secrets.KUBECONFIG_BASE64_PROD }}
+      kubeConfig: ${{ secrets.KUBECONFIG_BASE64_PRODUCTION }}
 
   notify:
     if: always()
