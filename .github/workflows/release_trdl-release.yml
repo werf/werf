@@ -1,17 +1,25 @@
-name: release:github-release
-
+name: release:trdl-release
 on:
   push:
     tags:
       - "v[0-9]+.[0-9]+.[0-9]+*"
+  repository_dispatch:
+    types: ["release:trdl-release"]
+  workflow_dispatch:
 
 jobs:
   release:
-    name: Create GitHub release
+    name: Perform delivery-kit release
     runs-on: ubuntu-22.04
-    permissions:
-      contents: write
     steps:
+#      - name: Notify
+#        uses: mattermost/action-mattermost-notify@master
+#        with:
+#          MATTERMOST_WEBHOOK_URL: ${{ secrets.LOOP_NOTIFICATION_WEBHOOK }}
+#          MATTERMOST_CHANNEL: ${{ secrets.LOOP_NOTIFICATION_CHANNEL }}
+#          TEXT: |
+#            ${{ secrets.LOOP_NOTIFICATION_GROUP }} [${{ github.workflow }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) task sign pls
+
       - name: Checkout code
         uses: actions/checkout@v4
         with:
@@ -23,8 +31,8 @@ jobs:
         run: |
           VERSION=$(grep -m1 '^#\+ \[[0-9]\+\.[0-9]\+\.[0-9]\+\]' CHANGELOG.md | sed -E 's/^#+ \[([0-9]+\.[0-9]+\.[0-9]+)\].*/\1/')
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-
       - name: Generate notes.md
+        id: notes
         run: |
           VERSION="${{ steps.get_version.outputs.version }}"
           echo "## Changelog" > notes.md
@@ -35,44 +43,30 @@ jobs:
           ' CHANGELOG.md >> notes.md
 
           cat <<EOF >> notes.md
-
           ## Installation
 
-          You can download \`delivery-kit\` binaries from GitHub Releases:
-          * [Linux amd64](https://github.com/${{ github.repository }}/releases/download/v$VERSION/delivery-kit-linux-amd64)
+          You can download \`delivery-kit\` binaries from here:
+           * [Linux amd64](https://github.com/${{ github.repository }}/releases/download/v$VERSION/delivery-kit-linux-amd64)
 
           Example download on Linux:
-          \`\`\`bash
+          \`\`\`shell
           curl -sSLO "https://github.com/${{ github.repository }}/releases/download/v$VERSION/delivery-kit-linux-amd64"
           \`\`\`
           EOF
 
-      - name: Create or update release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          VERSION=${{ steps.get_version.outputs.version }}
-          TAG="v$VERSION"
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release edit "$TAG" --notes-file notes.md
-          else
-            gh release create "$TAG" --title "$TAG" --notes-file notes.md
-          fi
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.23
 
-      - name: Mark release with channel flags
+      - name: Create release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          VERSION=${{ steps.get_version.outputs.version }}
-          TAG="v$VERSION"
-          TITLE="$TAG"
-          if [[ "$TAG" =~ alpha ]] || [[ "$TAG" =~ beta ]] || [[ "$TAG" =~ rc ]]; then
-            gh release edit "$TAG" --title "$TITLE [pre]" --prerelease --latest=false
-          elif [[ "$TAG" =~ rock-solid ]]; then
-            gh release edit "$TAG" --title "$TITLE [rock-solid]" --prerelease=false --latest=false
-          else
-            gh release edit "$TAG" --title "$TITLE [stable]" --prerelease=false --latest
-          fi
+          gh release create "v${{ steps.get_version.outputs.version }}" \
+            --title "v${{ steps.get_version.outputs.version }}" \
+            --prerelease \
+            --notes-file notes.md
 
 #  notify:
 #    if: always()
