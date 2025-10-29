@@ -23,7 +23,7 @@ jobs:
 
       - name: Relabel closed release PR
         env:
-          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           PR_NUMBER=$(gh pr list --state closed --label "autorelease: pending" --limit 1 --json number -q '.[0].number')
           gh pr edit $PR_NUMBER --remove-label "autorelease: pending"
@@ -37,7 +37,7 @@ jobs:
 
       - name: Create tag via GitHub API
         env:
-          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG="v${{ steps.get_version.outputs.version }}"
 
