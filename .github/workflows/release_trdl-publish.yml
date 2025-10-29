@@ -63,7 +63,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Publish binaries
-        run: ./scripts/publish-binaries.sh
+        run: ./scripts/ci/publish-binaries.sh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
