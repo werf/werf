@@ -41,6 +41,7 @@ fi
 for v in "${new_versions[@]}"; do
   echo "=== Building binary for $v ==="
   mkdir -p dist/$v/linux-amd64/bin
+  export TASK_X_REMOTE_TASKFILES=1
   task --yes build:dev:linux:amd64 \
     outputDir="dist/$v/linux-amd64/bin" \
     extraGoBuildArgs="-ldflags='-s -w'" \
