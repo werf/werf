@@ -25,12 +25,12 @@ jobs:
           target-branch: ${{github.ref_name}}
           release-type: go
           skip-github-release: true
-          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
-  notify:
-    if: failure()
-    needs: release-please
-    uses: werf/common-ci/.github/workflows/notification.yml@main
-    secrets:
-      loopNotificationGroup: ${{ secrets.LOOP_NOTIFICATION_GROUP }}
-      webhook: ${{ secrets.LOOP_NOTIFICATION_WEBHOOK }}
-      notificationChannel: ${{ secrets.LOOP_NOTIFICATION_CHANNEL }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+#  notify:
+#    if: failure()
+#    needs: release-please
+#    uses: werf/common-ci/.github/workflows/notification.yml@main
+#    secrets:
+#      loopNotificationGroup: ${{ secrets.LOOP_NOTIFICATION_GROUP }}
+#      webhook: ${{ secrets.LOOP_NOTIFICATION_WEBHOOK }}
+#      notificationChannel: ${{ secrets.LOOP_NOTIFICATION_CHANNEL }}
