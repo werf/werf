@@ -66,7 +66,12 @@ func NewCmd(ctx context.Context) *cobra.Command {
 				return err
 			}
 
-			return config.RenderWerfConfig(ctx, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, args, giterminismManager, configOpts)
+			customWerfConfigRenderPath, err := common.GetCustomWerfConfigRenderDir(&commonCmdData)
+			if err != nil {
+				return err
+			}
+
+			return config.RenderWerfConfig(ctx, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, customWerfConfigRenderPath, args, giterminismManager, configOpts)
 		},
 	})
 
