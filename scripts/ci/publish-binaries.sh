@@ -45,22 +45,22 @@ for v in "${new_versions[@]}"; do
   task --yes build:dev:linux:amd64 \
     outputDir="dist/$v/linux-amd64/bin" \
     extraGoBuildArgs="-ldflags='-s -w'" \
-    pkg=./cmd/delivery-kit
+    pkg=./cmd/werf
 
-  BIN="dist/$v/linux-amd64/bin/delivery-kit"
-  cp "$BIN" "delivery-kit-linux-amd64"
+  BIN="dist/$v/linux-amd64/bin/werf"
+  cp "$BIN" "werf-linux-amd64"
 
   TAG="v$v"
 
   if gh release view "$TAG" >/dev/null 2>&1; then
     echo "Uploading binary to existing release $TAG"
-    gh release upload "$TAG" delivery-kit-linux-amd64 --clobber --name "delivery-kit-linux-amd64"
+    gh release upload "$TAG" werf-linux-amd64 --clobber --name "werf-linux-amd64"
   else
     echo "Creating new prerelease $TAG"
     gh release create "$TAG" \
       --title "$TAG [pre]" \
       --prerelease
-    gh release upload "$TAG" delivery-kit-linux-amd64 --clobber --name "delivery-kit-linux-amd64"
+    gh release upload "$TAG" werf-linux-amd64 --clobber --name "werf-linux-amd64"
   fi
 done
 
