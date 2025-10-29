@@ -54,7 +54,9 @@ jobs:
       - name: Find changed versions
         id: changed
         run: |
-          versions=$(diff <(yq e '.groups[].channels[].version' trdl_channels_old.yaml 2>/dev/null | sort -u) <(yq e '.groups[].channels[].version' trdl_channels.yaml | sort -u) | grep '>' | awk '{print $2}')
+          versions=$(diff <(yq e '.groups[].channels[].version' trdl_channels_old.yaml 2>/dev/null | sort -u) \
+                          <(yq e '.groups[].channels[].version' trdl_channels.yaml | sort -u) \
+                          || true | grep '>' | awk '{print $2}')
           echo "versions=$versions"
           echo "versions=$versions" >> $GITHUB_OUTPUT
 
