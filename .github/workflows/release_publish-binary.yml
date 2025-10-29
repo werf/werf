@@ -1,0 +1,64 @@
+name: release:publish-binary
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+*"
+
+jobs:
+  publish:
+    name: Build and publish binary
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.23
+
+      - name: Get version from tag
+        id: get_version
+        run: |
+          TAG=${GITHUB_REF_NAME}
+          VERSION=${TAG#v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Build binary (linux/amd64)
+        run: |
+          VERSION=${{ steps.get_version.outputs.version }}
+          mkdir -p dist/$VERSION/linux-amd64/bin
+          task --yes build:dev:linux:amd64 \
+            outputDir="dist/$VERSION/linux-amd64/bin" \
+            extraGoBuildArgs="-ldflags='-s -w'" \
+            pkg=./cmd/delivery-kit
+
+          file dist/$VERSION/linux-amd64/bin/delivery-kit | grep -Eq "x86-64.*statically linked.*Linux"
+
+      - name: Upload binary to GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=${{ steps.get_version.outputs.version }}
+          TAG="v$VERSION"
+          cp dist/$VERSION/linux-amd64/bin/delivery-kit dist/delivery-kit-linux-amd64
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" dist/delivery-kit-linux-amd64 --clobber --name "delivery-kit-linux-amd64"
+          else
+            echo "Release $TAG not found, will be created in release workflow"
+          fi
+
+#  notify:
+#    if: always()
+#    needs: publish
+#    uses: werf/common-ci/.github/workflows/notification.yml@main
+#    secrets:
+#      loopNotificationGroup: ${{ secrets.LOOP_NOTIFICATION_GROUP }}
+#      webhook: ${{ secrets.LOOP_NOTIFICATION_WEBHOOK }}
+#      notificationChannel: ${{ secrets.LOOP_NOTIFICATION_CHANNEL }}

@@ -1,0 +1,84 @@
+name: release:github-release
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+*"
+
+jobs:
+  release:
+    name: Create GitHub release
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Get version from CHANGELOG.md
+        id: get_version
+        run: |
+          VERSION=$(grep -m1 '^#\+ \[[0-9]\+\.[0-9]\+\.[0-9]\+\]' CHANGELOG.md | sed -E 's/^#+ \[([0-9]+\.[0-9]+\.[0-9]+)\].*/\1/')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Generate notes.md
+        run: |
+          VERSION="${{ steps.get_version.outputs.version }}"
+          echo "## Changelog" > notes.md
+          awk -v version="$VERSION" '
+            $0 ~ "^#+ \\[" version "\\]" {capture=1; next}
+            capture && $0 ~ "^#+ \\[" && $0 !~ "^#+ \\[" version "\\]" {exit}
+            capture {print}
+          ' CHANGELOG.md >> notes.md
+
+          cat <<EOF >> notes.md
+
+          ## Installation
+
+          You can download \`delivery-kit\` binaries from GitHub Releases:
+          * [Linux amd64](https://github.com/${{ github.repository }}/releases/download/v$VERSION/delivery-kit-linux-amd64)
+
+          Example download on Linux:
+          \`\`\`bash
+          curl -sSLO "https://github.com/${{ github.repository }}/releases/download/v$VERSION/delivery-kit-linux-amd64"
+          \`\`\`
+          EOF
+
+      - name: Create or update release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=${{ steps.get_version.outputs.version }}
+          TAG="v$VERSION"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" --notes-file notes.md
+          else
+            gh release create "$TAG" --title "$TAG" --notes-file notes.md
+          fi
+
+      - name: Mark release with channel flags
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=${{ steps.get_version.outputs.version }}
+          TAG="v$VERSION"
+          TITLE="$TAG"
+          if [[ "$TAG" =~ alpha ]] || [[ "$TAG" =~ beta ]] || [[ "$TAG" =~ rc ]]; then
+            gh release edit "$TAG" --title "$TITLE [pre]" --prerelease --latest=false
+          elif [[ "$TAG" =~ rock-solid ]]; then
+            gh release edit "$TAG" --title "$TITLE [rock-solid]" --prerelease=false --latest=false
+          else
+            gh release edit "$TAG" --title "$TITLE [stable]" --prerelease=false --latest
+          fi
+
+#  notify:
+#    if: always()
+#    needs: release
+#    uses: werf/common-ci/.github/workflows/notification.yml@main
+#    secrets:
+#      loopNotificationGroup: ${{ secrets.LOOP_NOTIFICATION_GROUP }}
+#      webhook: ${{ secrets.LOOP_NOTIFICATION_WEBHOOK }}
+#      notificationChannel: ${{ secrets.LOOP_NOTIFICATION_CHANNEL }}
