@@ -76,7 +76,7 @@ werf bundle publish [IMAGE_NAME...] [options]
             directory)
       --config-render-dir=""
             Custom directory for storing rendered configuration files (default                      
-            $WERF_CONFIG_RENDER_DIR or .werf in working directory)        
+            $WERF_CONFIG_RENDER_DIR or .werf in working directory)
       --config-templates-dir=""
             Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf   
             in working directory)
