@@ -100,7 +100,7 @@ func SetupConfigTemplatesDir(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringVarP(cmdData.ConfigTemplatesDir, "config-templates-dir", "", os.Getenv("WERF_CONFIG_TEMPLATES_DIR"), `Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf in working directory)`)
 }
 
-func SetupConfigRenderPath(cmdData *CmdData, cmd *cobra.Command) {
+func SetupConfigRenderDir(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.ConfigRenderDir = new(string)
 	cmd.Flags().StringVarP(cmdData.ConfigRenderDir, "config-render-dir", "", os.Getenv("WERF_CONFIG_RENDER_DIR"), `Custom directory for storing rendered configuration files (default $WERF_CONFIG_RENDER_DIR or .werf in working directory)`)
 }
