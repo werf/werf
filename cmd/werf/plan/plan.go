@@ -97,7 +97,7 @@ werf plan --repo registry.mydomain.com/web --env production`,
 	common.SetupDir(&commonCmdData, cmd)
 	common.SetupGitWorkTree(&commonCmdData, cmd)
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
-	common.SetupConfigRenderPath(&commonCmdData, cmd)
+	common.SetupConfigRenderDir(&commonCmdData, cmd)
 	common.SetupConfigPath(&commonCmdData, cmd)
 	common.SetupGiterminismConfigPath(&commonCmdData, cmd)
 	common.SetupEnvironment(&commonCmdData, cmd)
