@@ -16,6 +16,7 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
+	"github.com/werf/werf/v2/pkg/build/cleanup"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/container_backend/stage_builder"
@@ -601,9 +602,9 @@ func (s *FullDockerfileStage) dockerfileOnBuildInstructionDependencies(ctx conte
 	return []string{expression}, onBuildDependencies, nil
 }
 
-func (s *FullDockerfileStage) PrepareImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) error {
+func (s *FullDockerfileStage) PrepareImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) (cleanup.Func, error) {
 	if err := s.SetupDockerImageBuilder(stageImage.Builder.DockerfileBuilder(), c); err != nil {
-		return err
+		return nil, err
 	}
 
 	stageImage.Builder.DockerfileBuilder().SetBuildContextArchive(buildContextArchive)
@@ -615,7 +616,7 @@ func (s *FullDockerfileStage) PrepareImage(ctx context.Context, c Conveyor, cb c
 		stageImage.Builder.DockerfileBuilder().AppendLabels(fmt.Sprintf("%s=%s", dependencyLabelKey(depStageID), depStageID))
 	}
 
-	return nil
+	return cleanup.NoOp, nil
 }
 
 func (s *FullDockerfileStage) SetupDockerImageBuilder(b stage_builder.DockerfileBuilderInterface, c Conveyor) error {

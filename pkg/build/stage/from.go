@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/werf/common-go/pkg/util"
+	"github.com/werf/werf/v2/pkg/build/cleanup"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	imagePkg "github.com/werf/werf/v2/pkg/image"
@@ -76,7 +77,7 @@ func (s *FromStage) GetDependencies(ctx context.Context, c Conveyor, cb containe
 	return util.Sha256Hash(args...), nil
 }
 
-func (s *FromStage) PrepareImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) error {
+func (s *FromStage) PrepareImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) (cleanup.Func, error) {
 	addLabels := map[string]string{imagePkg.WerfProjectRepoCommitLabel: c.GiterminismManager().HeadCommit(ctx)}
 	if c.UseLegacyStapelBuilder(cb) {
 		stageImage.Builder.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions().AddLabel(addLabels)
@@ -88,7 +89,7 @@ func (s *FromStage) PrepareImage(ctx context.Context, c Conveyor, cb container_b
 	s.addServiceMountsLabels(serviceMounts, c, cb, stageImage)
 	if !c.UseLegacyStapelBuilder(cb) {
 		if err := s.addServiceMountsVolumes(serviceMounts, c, cb, stageImage, true); err != nil {
-			return fmt.Errorf("error adding mounts volumes: %w", err)
+			return nil, fmt.Errorf("error adding mounts volumes: %w", err)
 		}
 	}
 
@@ -96,7 +97,7 @@ func (s *FromStage) PrepareImage(ctx context.Context, c Conveyor, cb container_b
 	s.addCustomMountLabels(customMounts, c, cb, stageImage)
 	if !c.UseLegacyStapelBuilder(cb) {
 		if err := s.addCustomMountVolumes(customMounts, c, cb, stageImage, true); err != nil {
-			return fmt.Errorf("error adding mounts volumes: %w", err)
+			return nil, fmt.Errorf("error adding mounts volumes: %w", err)
 		}
 	}
 
@@ -111,5 +112,5 @@ func (s *FromStage) PrepareImage(ctx context.Context, c Conveyor, cb container_b
 		}
 	}
 
-	return nil
+	return cleanup.NoOp, nil
 }

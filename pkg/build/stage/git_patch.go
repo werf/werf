@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/werf/werf/v2/pkg/build/cleanup"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/git_repo"
 )
@@ -65,16 +66,21 @@ func (s *GitPatchStage) hasPrevBuiltStageHadActualGitMappings(ctx context.Contex
 	return true, nil
 }
 
-func (s *GitPatchStage) PrepareImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) error {
-	if err := s.GitStage.PrepareImage(ctx, c, cb, prevBuiltImage, stageImage, nil); err != nil {
-		return err
+func (s *GitPatchStage) PrepareImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) (cleanup.Func, error) {
+	promise := cleanup.NewPromise()
+	defer promise.Give()
+
+	if cleanupFunc, err := s.GitStage.PrepareImage(ctx, c, cb, prevBuiltImage, stageImage, nil); err != nil {
+		return nil, err
+	} else {
+		promise.Add(cleanupFunc)
 	}
 
 	if err := s.prepareImage(ctx, c, cb, prevBuiltImage, stageImage); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return promise.Forget(), nil
 }
 
 func (s *GitPatchStage) prepareImage(ctx context.Context, c Conveyor, cr container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage) error {

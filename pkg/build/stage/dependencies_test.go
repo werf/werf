@@ -35,8 +35,9 @@ var _ = Describe("DependenciesStage", func() {
 			fmt.Printf("Expected digest: %q\n", data.ExpectedDigest)
 			Expect(digest).To(Equal(data.ExpectedDigest))
 
-			err = stage.PrepareImage(ctx, conveyor, containerBackend, nil, stageImage, nil)
+			cleanup, err := stage.PrepareImage(ctx, conveyor, containerBackend, nil, stageImage, nil)
 			Expect(err).To(Succeed())
+			defer cleanup()
 			CheckImageDependenciesAfterPrepare(img, stageBuilder, data.Dependencies)
 		},
 

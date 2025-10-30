@@ -8,4 +8,5 @@ import (
 
 type ImportServer interface {
 	GetCopyCommand(ctx context.Context, importConfig *config.Import) string
+	Shutdown(ctx context.Context) error
 }

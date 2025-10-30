@@ -11,6 +11,7 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
+	"github.com/werf/werf/v2/pkg/build/cleanup"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/docker"
@@ -113,14 +114,21 @@ func (s *DependenciesStage) GetDependencies(ctx context.Context, c Conveyor, cb 
 	return util.Sha256Hash(args...), nil
 }
 
-func (s *DependenciesStage) prepareImageWithLegacyStapelBuilder(ctx context.Context, c Conveyor, cr container_backend.ContainerBackend, _, stageImage *StageImage) error {
+func (s *DependenciesStage) prepareImageWithLegacyStapelBuilder(ctx context.Context, c Conveyor, cr container_backend.ContainerBackend, _, stageImage *StageImage) (cleanup.Func, error) {
 	imageServiceCommitChangeOptions := stageImage.Builder.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions()
+
+	promise := cleanup.NewPromise()
+	defer promise.Give()
+
 	for _, elm := range s.imports {
 		sourceImageName := getSourceImageName(elm)
 		srv, err := c.GetImportServer(ctx, s.targetPlatform, sourceImageName, elm.Stage, elm.ExternalImage)
 		if err != nil {
-			return fmt.Errorf("unable to get import server for image %q: %w", sourceImageName, err)
+			return nil, fmt.Errorf("unable to get import server for image %q: %w", sourceImageName, err)
 		}
+		promise.Add(func() {
+			_ = srv.Shutdown(ctx)
+		})
 
 		command := srv.GetCopyCommand(ctx, elm)
 		stageImage.Builder.LegacyStapelStageBuilder().Container().AddServiceRunCommands(command)
@@ -131,7 +139,7 @@ func (s *DependenciesStage) prepareImageWithLegacyStapelBuilder(ctx context.Cont
 		importSourceID := getImportSourceID(c, s.targetPlatform, elm)
 		importMetadata, err := c.GetImportMetadata(ctx, s.projectName, importSourceID)
 		if err != nil {
-			return fmt.Errorf("unable to get import source checksum: %w", err)
+			return nil, fmt.Errorf("unable to get import source checksum: %w", err)
 		} else if importMetadata == nil {
 			panic(fmt.Sprintf("import metadata %s not found", importSourceID))
 		}
@@ -181,7 +189,7 @@ func (s *DependenciesStage) prepareImageWithLegacyStapelBuilder(ctx context.Cont
 		})
 	}
 
-	return nil
+	return promise.Forget(), nil
 }
 
 func (s *DependenciesStage) prepareImage(ctx context.Context, c Conveyor, cr container_backend.ContainerBackend, _, stageImage *StageImage) error {
@@ -257,11 +265,11 @@ func (s *DependenciesStage) prepareImage(ctx context.Context, c Conveyor, cr con
 	return nil
 }
 
-func (s *DependenciesStage) PrepareImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) error {
+func (s *DependenciesStage) PrepareImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) (cleanup.Func, error) {
 	if c.UseLegacyStapelBuilder(cb) {
 		return s.prepareImageWithLegacyStapelBuilder(ctx, c, cb, prevBuiltImage, stageImage)
 	} else {
-		return s.prepareImage(ctx, c, cb, prevBuiltImage, stageImage)
+		return cleanup.NoOp, s.prepareImage(ctx, c, cb, prevBuiltImage, stageImage)
 	}
 }
 

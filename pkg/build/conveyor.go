@@ -3,7 +3,6 @@ package build
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -55,8 +54,7 @@ type Conveyor struct {
 	StorageLockManager lock_manager.Interface
 	StorageManager     manager.StorageManagerInterface
 
-	onTerminateFuncs []func() error
-	importServers    map[string]import_server.ImportServer
+	importServers map[string]import_server.ImportServer
 
 	ConveyorOptions
 
@@ -300,14 +298,6 @@ func (c *Conveyor) GetImportServer(ctx context.Context, targetPlatform, imageNam
 
 			var err error
 			srv, err = import_server.RunRsyncServer(ctx, dockerImageName, tmpDir)
-			if srv != nil {
-				c.AppendOnTerminateFunc(func() error {
-					if err := srv.Shutdown(ctx); err != nil {
-						return fmt.Errorf("unable to shutdown import server %s: %w", srv.DockerContainerName, err)
-					}
-					return nil
-				})
-			}
 			if err != nil {
 				return fmt.Errorf("unable to run rsync import server: %w", err)
 			}
@@ -319,37 +309,6 @@ func (c *Conveyor) GetImportServer(ctx context.Context, targetPlatform, imageNam
 	c.importServers[importServerName] = srv
 
 	return srv, nil
-}
-
-func (c *Conveyor) AppendOnTerminateFunc(f func() error) {
-	c.GetServiceRWMutex("TerminateFunctions").Lock()
-	defer c.GetServiceRWMutex("TerminateFunctions").Unlock()
-	c.onTerminateFuncs = append(c.onTerminateFuncs, f)
-}
-
-func (c *Conveyor) Terminate(ctx context.Context) error {
-	var terminateErrors []error
-
-	for _, onTerminateFunc := range c.onTerminateFuncs {
-		if err := onTerminateFunc(); err != nil {
-			terminateErrors = append(terminateErrors, err)
-		}
-	}
-
-	if len(terminateErrors) > 0 {
-		errMsg := "Errors occurred during conveyor termination:\n"
-		for _, err := range terminateErrors {
-			errMsg += fmt.Sprintf(" - %s\n", err)
-		}
-
-		// NOTE: Errors printed here because conveyor termination should occur in defer,
-		// NOTE: and errors in the defer will be silenced otherwise.
-		logboek.Context(ctx).Warn().LogF("%s", errMsg)
-
-		return errors.New(errMsg)
-	}
-
-	return nil
 }
 
 func (c *Conveyor) GiterminismManager() giterminism_manager.Interface {
