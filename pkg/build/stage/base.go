@@ -11,6 +11,7 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
+	"github.com/werf/werf/v2/pkg/build/cleanup"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/docker_registry"
@@ -303,7 +304,7 @@ func (s *BaseStage) SelectSuitableStageDesc(ctx context.Context, c Conveyor, sta
 	return selectStageDescByOldestCreationTs(ctx, stageDescSet)
 }
 
-func (s *BaseStage) PrepareImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) error {
+func (s *BaseStage) PrepareImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) (cleanup.Func, error) {
 	/*
 	 * NOTE: BaseStage.PrepareImage does not called in From.PrepareImage.
 	 * NOTE: Take into account when adding new base PrepareImage steps.
@@ -319,16 +320,16 @@ func (s *BaseStage) PrepareImage(ctx context.Context, c Conveyor, cb container_b
 	serviceMounts := s.getServiceMounts(prevBuiltImage)
 	s.addServiceMountsLabels(serviceMounts, c, cb, stageImage)
 	if err := s.addServiceMountsVolumes(serviceMounts, c, cb, stageImage, false); err != nil {
-		return fmt.Errorf("error adding mounts volumes: %w", err)
+		return nil, fmt.Errorf("error adding mounts volumes: %w", err)
 	}
 
 	customMounts := s.getCustomMounts(prevBuiltImage)
 	s.addCustomMountLabels(customMounts, c, cb, stageImage)
 	if err := s.addCustomMountVolumes(customMounts, c, cb, stageImage, false); err != nil {
-		return fmt.Errorf("error adding mounts volumes: %w", err)
+		return nil, fmt.Errorf("error adding mounts volumes: %w", err)
 	}
 
-	return nil
+	return cleanup.NoOp, nil
 }
 
 func (s *BaseStage) MutateImage(_ context.Context, _ docker_registry.Interface, _, _ *StageImage) error {

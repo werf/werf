@@ -15,6 +15,7 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
+	"github.com/werf/werf/v2/pkg/build/cleanup"
 	"github.com/werf/werf/v2/pkg/build/image"
 	"github.com/werf/werf/v2/pkg/build/stage"
 	"github.com/werf/werf/v2/pkg/build/stage/instruction"
@@ -591,25 +592,22 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *image.Image, stg
 		}
 	}
 
+	promise := cleanup.NewPromise()
+	defer promise.Give()
+
 	var foundSuitableStage bool
-	var cleanupFunc func()
 
 	if err := logboek.Context(ctx).Info().LogProcess("Try to find suitable stage for %s", stg.LogDetailedName()).
 		DoError(func() error {
-			var err error
-			var found bool
-			found, cleanupFunc, err = phase.calculateStage(ctx, img, stg)
+			found, cleanupFunc, err := phase.calculateStage(ctx, img, stg)
 			if err != nil {
 				return err
 			}
+			promise.Add(cleanupFunc)
 			foundSuitableStage = found
 			return nil
 		}); err != nil {
 		return err
-	}
-
-	if cleanupFunc != nil {
-		defer cleanupFunc()
 	}
 
 	if foundSuitableStage {
@@ -662,8 +660,10 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *image.Image, stg
 			}
 		}
 
-		if err := phase.prepareStageInstructions(ctx, img, stg); err != nil {
+		if cleanupFunc, err := phase.prepareStageInstructions(ctx, img, stg); err != nil {
 			return err
+		} else {
+			promise.Add(cleanupFunc)
 		}
 
 		if err := phase.buildStage(ctx, img, stg); err != nil {
@@ -826,7 +826,7 @@ func (phase *BuildPhase) fetchBaseImageForStage(ctx context.Context, img *image.
 	}
 }
 
-func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, stg stage.Interface) (bool, func(), error) {
+func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, stg stage.Interface) (bool, cleanup.Func, error) {
 	// FIXME(stapel-to-buildah): store StageImage-s everywhere in stage and build pkgs
 	stageDependencies, err := stg.GetDependencies(ctx, phase.Conveyor, phase.Conveyor.ContainerBackend, phase.StagesIterator.GetPrevImage(img, stg), phase.StagesIterator.GetPrevBuiltImage(img, stg), phase.buildContextArchive)
 	if err != nil {
@@ -900,7 +900,7 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, s
 	return foundSuitableStage, phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Unlock, nil
 }
 
-func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *image.Image, stg stage.Interface) error {
+func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *image.Image, stg stage.Interface) (cleanup.Func, error) {
 	logboek.Context(ctx).Debug().LogF("-- BuildPhase.prepareStage %s %s\n", img.LogDetailedName(), stg.LogDetailedName())
 
 	stageImage := stg.GetStageImage()
@@ -938,11 +938,11 @@ func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *imag
 
 		headHash, err := phase.Conveyor.GiterminismManager().LocalGitRepo().HeadCommitHash(ctx)
 		if err != nil {
-			return fmt.Errorf("error getting HEAD commit hash: %w", err)
+			return nil, fmt.Errorf("error getting HEAD commit hash: %w", err)
 		}
 		headTime, err := phase.Conveyor.GiterminismManager().LocalGitRepo().HeadCommitTime(ctx)
 		if err != nil {
-			return fmt.Errorf("error getting HEAD commit time: %w", err)
+			return nil, fmt.Errorf("error getting HEAD commit time: %w", err)
 		}
 		commitEnvs := map[string]string{
 			"WERF_COMMIT_HASH":       headHash,
@@ -971,16 +971,22 @@ func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *imag
 		}
 	}
 
-	phase.Conveyor.AppendOnTerminateFunc(func() error {
-		return stageImage.Builder.Cleanup(ctx)
+	promise := cleanup.NewPromise()
+	defer promise.Give()
+
+	promise.Add(func() {
+		if err := stageImage.Builder.Cleanup(ctx); err != nil {
+			logboek.Context(ctx).Warn().LogF("Error cleaning up stage: %s\n", err)
+		}
 	})
 
-	err := stg.PrepareImage(ctx, phase.Conveyor, phase.Conveyor.ContainerBackend, prevBuiltImage, stageImage, phase.buildContextArchive)
-	if err != nil {
-		return fmt.Errorf("error preparing stage %s: %w", stg.Name(), err)
+	if cleanupPrepareImageFunc, err := stg.PrepareImage(ctx, phase.Conveyor, phase.Conveyor.ContainerBackend, prevBuiltImage, stageImage, phase.buildContextArchive); err != nil {
+		return nil, fmt.Errorf("error preparing stage %s: %w", stg.Name(), err)
+	} else {
+		promise.Add(cleanupPrepareImageFunc)
 	}
 
-	return nil
+	return promise.Forget(), nil
 }
 
 func (phase *BuildPhase) buildStage(ctx context.Context, img *image.Image, stg stage.Interface) error {
