@@ -22,11 +22,13 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	ctx = common.NewContextWithCmdData(ctx, &commonCmdData)
 	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:                   "copy",
-		Short:                 "",
-		Long:                  common.GetLongCommandDescription(``),
+		Short:                 "Copy stages between container registry and archive storage",
+		Example:               "",
+		Long:                  common.GetLongCommandDescription(GetCopyDocs().Long),
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(),
+			common.DocsLongMD: GetCopyDocs().LongMD,
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
