@@ -42,7 +42,7 @@ jobs:
   deploy_channels_cm_prod:
     name: Deploy trdl_channels.yaml to production
     needs: publish
-    runs-on: ubuntu-22.04
+    runs-on: prod-github-runner-0
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
