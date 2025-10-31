@@ -18,7 +18,7 @@ jobs:
       env: production
       runner: prod-github-runner-0
     secrets:
-      kubeConfig: ${{ secrets.KUBECONFIG_BASE64_PROD }}
+      kubeConfig: ${{ secrets.KUBECONFIG_BASE64_PRODUCTION }}
 
   notify:
     if: always()
