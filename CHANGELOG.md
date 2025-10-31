@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.336](https://www.github.com/werf/werf/compare/v1.2.335...v1.2.336) (2025-10-31)
+
+
+### Bug Fixes
+
+* **build:** use map access for bridge network IP address ([#7174](https://www.github.com/werf/werf/issues/7174)) ([9316253](https://www.github.com/werf/werf/commit/931625326475a91c773096fc03a47aae3dc1bcc4))
+
 ### [1.2.335](https://www.github.com/werf/werf/compare/v1.2.334...v1.2.335) (2025-10-16)
 
 
