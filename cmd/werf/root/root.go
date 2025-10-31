@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
+	stages_copy "github.com/werf/werf/v2/cmd/werf/stages/copy"
 
 	"github.com/werf/werf/v2/cmd/werf/build"
 	bundle_apply "github.com/werf/werf/v2/cmd/werf/bundle/apply"
@@ -102,6 +103,7 @@ func ConstructRootCmd(ctx context.Context) (*cobra.Command, error) {
 				slugify.NewCmd(ctx),
 				render.NewCmd(ctx),
 				includesCmd(ctx),
+				stagesCmd(ctx),
 			},
 		},
 		{
@@ -239,6 +241,18 @@ func includesCmd(ctx context.Context) *cobra.Command {
 		includes_update.NewCmd(ctx),
 		includes_lsfiles.NewCmd(ctx),
 		includes_getfile.NewCmd(ctx),
+	)
+
+	return cmd
+}
+
+func stagesCmd(ctx context.Context) *cobra.Command {
+	cmd := common.SetCommandContext(ctx, &cobra.Command{
+		Use:   "stages",
+		Short: "Work with werf stages",
+	})
+	cmd.AddCommand(
+		stages_copy.NewCmd(ctx),
 	)
 
 	return cmd
