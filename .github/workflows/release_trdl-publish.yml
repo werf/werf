@@ -60,7 +60,7 @@ jobs:
           WERF_NAMESPACE: "werfio-production"
           WERF_DIR: "ci"
           WERF_ENV: production
-          WERF_KUBE_CONFIG_BASE64: ${{ secrets.KUBECONFIG_BASE64_PROD }}
+          WERF_KUBE_CONFIG_BASE64: ${{ secrets.KUBECONFIG_BASE64_PRODUCTION }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   publish_werf_images:
