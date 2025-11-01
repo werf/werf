@@ -1,13 +1,12 @@
 package tmp_manager
 
 import (
-	"context"
 	"os"
 	"path/filepath"
 )
 
-func CreateWerfConfigRender(ctx context.Context) (string, error) {
-	newFile, err := newTmpFile(WerfConfigRenderPrefix)
+func CreateWerfConfigRender(dir string) (string, error) {
+	newFile, err := newTmpFile(dir, WerfConfigRenderPrefix)
 	if err != nil {
 		return "", err
 	}

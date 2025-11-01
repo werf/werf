@@ -33,8 +33,8 @@ type WerfConfigOptions struct {
 	DebugTemplates      bool
 }
 
-func RenderWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath string, imageNameList []string, giterminismManager giterminism_manager.Interface, opts WerfConfigOptions) error {
-	_, werfConfig, err := GetWerfConfig(ctx, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, giterminismManager, opts)
+func RenderWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, customWerfConfigRenderDir string, imageNameList []string, giterminismManager giterminism_manager.Interface, opts WerfConfigOptions) error {
+	_, werfConfig, err := GetWerfConfig(ctx, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, customWerfConfigRenderDir, giterminismManager, opts)
 	if err != nil {
 		return err
 	}
@@ -77,7 +77,7 @@ func renderSpecificImages(werfConfig *WerfConfig, imageNameList []string) error 
 	return nil
 }
 
-func GetWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath string, giterminismManager giterminism_manager.Interface, opts WerfConfigOptions) (string, *WerfConfig, error) {
+func GetWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, customWerfConfigRenderDir string, giterminismManager giterminism_manager.Interface, opts WerfConfigOptions) (string, *WerfConfig, error) {
 	var path string
 	var config *WerfConfig
 	err := logboek.Context(ctx).Info().LogProcess("Render werf config").DoError(func() error {
@@ -92,7 +92,7 @@ func GetWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfConfi
 			return fmt.Errorf("unable to render werf config: %w", err)
 		}
 
-		werfConfigRenderPath, err := tmp_manager.CreateWerfConfigRender(ctx)
+		werfConfigRenderPath, err := tmp_manager.CreateWerfConfigRender(customWerfConfigRenderDir)
 		if err != nil {
 			return err
 		}

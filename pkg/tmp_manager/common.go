@@ -41,6 +41,10 @@ func TempFile(pattern string) (f *os.File, err error) {
 	return os.CreateTemp(werf.GetTmpDir(), pattern)
 }
 
+func TempFileWithDir(dir, pattern string) (f *os.File, err error) {
+	return os.CreateTemp(dir, pattern)
+}
+
 func registerCreatedPath(newPath, createdPathsDir string) error {
 	if err := os.MkdirAll(createdPathsDir, os.ModePerm); err != nil {
 		return fmt.Errorf("unable to create dir %s: %w", createdPathsDir, err)
@@ -81,8 +85,16 @@ func newTmpDir(prefix string) (string, error) {
 	return newDir, nil
 }
 
-func newTmpFile(prefix string) (string, error) {
-	newFile, err := TempFile(prefix)
+func newTmpFile(dir, prefix string) (string, error) {
+	var newFile *os.File
+	var err error
+
+	if dir == "" {
+		newFile, err = TempFile(prefix)
+	} else {
+		newFile, err = TempFileWithDir(dir, prefix)
+	}
+
 	if err != nil {
 		return "", err
 	}
