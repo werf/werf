@@ -60,7 +60,7 @@ jobs:
           WERF_NAMESPACE: "werfio-production"
           WERF_DIR: "ci"
           WERF_ENV: production
-          WERF_KUBE_CONFIG_BASE64: ${{ secrets.KUBECONFIG_BASE64_PRODUCTION }}
+          WERF_KUBE_CONFIG_BASE64: ${{ secrets.KUBECONFIG_BASE64_PROD }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   publish_werf_images:
@@ -153,7 +153,7 @@ jobs:
 
           process_releases() {
             echo "Processing releases based on trdl_channels.yaml..."
-            
+
             declare -A VERSION_CHANNELS
             declare -A GROUP_VERSIONS
 
@@ -179,7 +179,7 @@ jobs:
               version="${key#*:}"
               group="${key%:*}"
               tag="v$version"
-              
+
               if check_release_exists "$version"; then
                 channels="${VERSION_CHANNELS[$key]}"
                 expected_title="$tag [$channels]"
@@ -208,9 +208,9 @@ jobs:
             gh release list --json name | jq -r '.[] | select(.name | test("\\[[a-zA-Z,-]+\\]")) | .name' | while read -r full_name; do
               tag="${full_name%% *}"
               version="${tag#v}"
-              
+
               [[ -n "${GROUP_VERSIONS[$version]}" ]] && continue
-              
+
               echo "Resetting $tag to plain version title (no channels in config)"
               gh release edit "$tag" --title "$tag" --prerelease=false || true
             done
