@@ -3,7 +3,6 @@ package stage
 import (
 	"context"
 
-	"github.com/werf/werf/v2/pkg/build/cleanup"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/image"
 )
@@ -30,7 +29,7 @@ func (s *GitStage) isDefined() bool {
 	return len(s.gitMappings) != 0
 }
 
-func (s *GitStage) PrepareImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) (cleanup.Func, error) {
+func (s *GitStage) PrepareImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) error {
 	return s.BaseStage.PrepareImage(ctx, c, cb, prevBuiltImage, stageImage, nil)
 }
 

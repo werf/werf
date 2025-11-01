@@ -3,6 +3,7 @@ package build
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -54,7 +55,8 @@ type Conveyor struct {
 	StorageLockManager lock_manager.Interface
 	StorageManager     manager.StorageManagerInterface
 
-	importServers map[string]import_server.ImportServer
+	onTerminateFuncs []ConveyorCleanupFunc
+	importServers    map[string]import_server.ImportServer
 
 	ConveyorOptions
 
@@ -62,6 +64,8 @@ type Conveyor struct {
 	serviceRWMutex   map[string]*sync.RWMutex
 	stageDigestMutex map[string]*sync.Mutex
 }
+
+type ConveyorCleanupFunc func(context.Context) error
 
 type ConveyorOptions struct {
 	Parallel                        bool
@@ -301,6 +305,9 @@ func (c *Conveyor) GetImportServer(ctx context.Context, targetPlatform, imageNam
 			if err != nil {
 				return fmt.Errorf("unable to run rsync import server: %w", err)
 			}
+
+			c.AppendOnTerminateFunc(srv.Shutdown)
+
 			return nil
 		}); err != nil {
 		return nil, err
@@ -309,6 +316,31 @@ func (c *Conveyor) GetImportServer(ctx context.Context, targetPlatform, imageNam
 	c.importServers[importServerName] = srv
 
 	return srv, nil
+}
+
+func (c *Conveyor) AppendOnTerminateFunc(f ConveyorCleanupFunc) {
+	c.GetServiceRWMutex("TerminateFunctions").Lock()
+	defer c.GetServiceRWMutex("TerminateFunctions").Unlock()
+	c.onTerminateFuncs = append(c.onTerminateFuncs, f)
+}
+
+func (c *Conveyor) Terminate(ctx context.Context) error {
+	terminateErrors := make([]error, 0, len(c.onTerminateFuncs))
+
+	for _, cleanupFunc := range c.onTerminateFuncs {
+		terminateErrors = append(terminateErrors, cleanupFunc(ctx))
+	}
+
+	err := errors.Join(terminateErrors...)
+	if err != nil {
+		// NOTE: Errors printed here because conveyor termination should occur in defer,
+		// NOTE: and errors in the defer will be silenced otherwise.
+		logboek.Context(ctx).Warn().LogF("%s", err)
+
+		return err
+	}
+
+	return nil
 }
 
 func (c *Conveyor) GiterminismManager() giterminism_manager.Interface {

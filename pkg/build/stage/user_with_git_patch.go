@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/werf/werf/v2/pkg/build/builder"
-	"github.com/werf/werf/v2/pkg/build/cleanup"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/image"
 )
@@ -35,23 +34,18 @@ func (s *UserWithGitPatchStage) GetNextStageDependencies(ctx context.Context, c 
 	return s.BaseStage.getNextStageGitDependencies(ctx, c)
 }
 
-func (s *UserWithGitPatchStage) PrepareImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) (cleanup.Func, error) {
-	promise := cleanup.NewPromise()
-	defer promise.Give()
-
-	if cleanupFunc, err := s.BaseStage.PrepareImage(ctx, c, cb, prevBuiltImage, stageImage, nil); err != nil {
-		return nil, err
-	} else {
-		promise.Add(cleanupFunc)
+func (s *UserWithGitPatchStage) PrepareImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) error {
+	if err := s.BaseStage.PrepareImage(ctx, c, cb, prevBuiltImage, stageImage, nil); err != nil {
+		return err
 	}
 
 	if isPatchEmpty, err := s.GitPatchStage.IsEmpty(ctx, c, prevBuiltImage); err != nil {
-		return nil, err
+		return err
 	} else if !isPatchEmpty {
 		if err := s.GitPatchStage.prepareImage(ctx, c, cb, prevBuiltImage, stageImage); err != nil {
-			return nil, err
+			return err
 		}
 	}
 
-	return promise.Forget(), nil
+	return nil
 }

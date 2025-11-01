@@ -7,7 +7,6 @@ import (
 	"sort"
 
 	"github.com/werf/common-go/pkg/util"
-	"github.com/werf/werf/v2/pkg/build/cleanup"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 )
@@ -67,18 +66,13 @@ func mapToSortedArgs(h map[string]string) (result []string) {
 	return
 }
 
-func (s *StapelDockerInstructionsStage) PrepareImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) (cleanup.Func, error) {
+func (s *StapelDockerInstructionsStage) PrepareImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) error {
 	if c.UseLegacyStapelBuilder(cb) {
 		stageImage.Image.SetCommitChangeOptions(container_backend.LegacyCommitChangeOptions{ExactValues: s.instructions.ExactValues})
 	}
 
-	promise := cleanup.NewPromise()
-	defer promise.Give()
-
-	if cleanupFunc, err := s.BaseStage.PrepareImage(ctx, c, cb, prevBuiltImage, stageImage, nil); err != nil {
-		return nil, err
-	} else {
-		promise.Add(cleanupFunc)
+	if err := s.BaseStage.PrepareImage(ctx, c, cb, prevBuiltImage, stageImage, nil); err != nil {
+		return err
 	}
 
 	if c.UseLegacyStapelBuilder(cb) {
@@ -104,19 +98,19 @@ func (s *StapelDockerInstructionsStage) PrepareImage(ctx context.Context, c Conv
 			SetHealthcheck(s.instructions.HealthCheck)
 
 		if ep, err := CmdOrEntrypointStringToSlice(s.instructions.Entrypoint); err != nil {
-			return nil, fmt.Errorf("error converting ENTRYPOINT from string to slice: %w", err)
+			return fmt.Errorf("error converting ENTRYPOINT from string to slice: %w", err)
 		} else {
 			builder.SetEntrypoint(ep)
 		}
 
 		if cmd, err := CmdOrEntrypointStringToSlice(s.instructions.Cmd); err != nil {
-			return nil, fmt.Errorf("error converting CMD from string to slice: %w", err)
+			return fmt.Errorf("error converting CMD from string to slice: %w", err)
 		} else {
 			builder.SetCmd(cmd)
 		}
 	}
 
-	return promise.Forget(), nil
+	return nil
 }
 
 func CmdOrEntrypointStringToSlice(cmdOrEntrypoint string) ([]string, error) {

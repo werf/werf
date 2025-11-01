@@ -13,7 +13,6 @@ import (
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 
 	"github.com/werf/common-go/pkg/util"
-	"github.com/werf/werf/v2/pkg/build/cleanup"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/docker_registry"
@@ -59,7 +58,7 @@ func (s *ImageSpecStage) IsMutable() bool {
 	return true
 }
 
-func (s *ImageSpecStage) PrepareImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) (cleanup.Func, error) {
+func (s *ImageSpecStage) PrepareImage(ctx context.Context, _ Conveyor, _ container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, _ container_backend.BuildContextArchiver) error {
 	if s.imageSpec != nil {
 		imageInfo := prevBuiltImage.Image.GetStageDesc().Info
 		newConfig := s.baseConfig()
@@ -68,7 +67,7 @@ func (s *ImageSpecStage) PrepareImage(ctx context.Context, c Conveyor, cb contai
 			// labels
 			resultLabels, err := s.modifyLabels(ctx, imageInfo.Labels, s.imageSpec.Labels, s.imageSpec.RemoveLabels, s.imageSpec.KeepEssentialWerfLabels)
 			if err != nil {
-				return nil, fmt.Errorf("unable to modify labels: %s", err)
+				return fmt.Errorf("unable to modify labels: %s", err)
 			}
 			newConfig.Labels = resultLabels
 		}
@@ -77,7 +76,7 @@ func (s *ImageSpecStage) PrepareImage(ctx context.Context, c Conveyor, cb contai
 			// envs
 			resultEnvs, err := modifyEnv(imageInfo.Env, s.imageSpec.RemoveEnv, s.imageSpec.Env)
 			if err != nil {
-				return nil, fmt.Errorf("unable to modify env: %w", err)
+				return fmt.Errorf("unable to modify env: %w", err)
 			}
 			newConfig.Env = resultEnvs
 		}
@@ -114,7 +113,7 @@ func (s *ImageSpecStage) PrepareImage(ctx context.Context, c Conveyor, cb contai
 		s.newConfig = newConfig
 	}
 
-	return cleanup.NoOp, nil
+	return nil
 }
 
 func (s *ImageSpecStage) GetDependencies(_ context.Context, _ Conveyor, _ container_backend.ContainerBackend, _, _ *StageImage, _ container_backend.BuildContextArchiver) (string, error) {

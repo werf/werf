@@ -592,22 +592,22 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *image.Image, stg
 		}
 	}
 
-	promise := cleanup.NewPromise()
-	defer promise.Give()
-
 	var foundSuitableStage bool
+	var calculateStageCleanupFunc cleanup.Func
 
 	if err := logboek.Context(ctx).Info().LogProcess("Try to find suitable stage for %s", stg.LogDetailedName()).
 		DoError(func() error {
-			found, cleanupFunc, err := phase.calculateStage(ctx, img, stg)
+			var err error
+			foundSuitableStage, calculateStageCleanupFunc, err = phase.calculateStage(ctx, img, stg)
 			if err != nil {
 				return err
 			}
-			promise.Add(cleanupFunc)
-			foundSuitableStage = found
 			return nil
 		}); err != nil {
 		return err
+	}
+	if calculateStageCleanupFunc != nil {
+		defer calculateStageCleanupFunc()
 	}
 
 	if foundSuitableStage {
@@ -660,10 +660,8 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *image.Image, stg
 			}
 		}
 
-		if cleanupFunc, err := phase.prepareStageInstructions(ctx, img, stg); err != nil {
+		if err = phase.prepareStageInstructions(ctx, img, stg); err != nil {
 			return err
-		} else {
-			promise.Add(cleanupFunc)
 		}
 
 		if err := phase.buildStage(ctx, img, stg); err != nil {
@@ -900,7 +898,7 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, s
 	return foundSuitableStage, phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Unlock, nil
 }
 
-func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *image.Image, stg stage.Interface) (cleanup.Func, error) {
+func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *image.Image, stg stage.Interface) error {
 	logboek.Context(ctx).Debug().LogF("-- BuildPhase.prepareStage %s %s\n", img.LogDetailedName(), stg.LogDetailedName())
 
 	stageImage := stg.GetStageImage()
@@ -938,11 +936,11 @@ func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *imag
 
 		headHash, err := phase.Conveyor.GiterminismManager().LocalGitRepo().HeadCommitHash(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("error getting HEAD commit hash: %w", err)
+			return fmt.Errorf("error getting HEAD commit hash: %w", err)
 		}
 		headTime, err := phase.Conveyor.GiterminismManager().LocalGitRepo().HeadCommitTime(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("error getting HEAD commit time: %w", err)
+			return fmt.Errorf("error getting HEAD commit time: %w", err)
 		}
 		commitEnvs := map[string]string{
 			"WERF_COMMIT_HASH":       headHash,
@@ -971,22 +969,13 @@ func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *imag
 		}
 	}
 
-	promise := cleanup.NewPromise()
-	defer promise.Give()
+	phase.Conveyor.AppendOnTerminateFunc(stageImage.Builder.Cleanup)
 
-	promise.Add(func() {
-		if err := stageImage.Builder.Cleanup(ctx); err != nil {
-			logboek.Context(ctx).Warn().LogF("Error cleaning up stage: %s\n", err)
-		}
-	})
-
-	if cleanupPrepareImageFunc, err := stg.PrepareImage(ctx, phase.Conveyor, phase.Conveyor.ContainerBackend, prevBuiltImage, stageImage, phase.buildContextArchive); err != nil {
-		return nil, fmt.Errorf("error preparing stage %s: %w", stg.Name(), err)
-	} else {
-		promise.Add(cleanupPrepareImageFunc)
+	if err := stg.PrepareImage(ctx, phase.Conveyor, phase.Conveyor.ContainerBackend, prevBuiltImage, stageImage, phase.buildContextArchive); err != nil {
+		return fmt.Errorf("error preparing stage %s: %w", stg.Name(), err)
 	}
 
-	return promise.Forget(), nil
+	return nil
 }
 
 func (phase *BuildPhase) buildStage(ctx context.Context, img *image.Image, stg stage.Interface) error {

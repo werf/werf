@@ -79,9 +79,8 @@ var _ = Describe("FullDockerfileStage", func() {
 			fmt.Printf("expected digest: %s\n", data.TestDependencies.ExpectedDigest)
 			Expect(digest).To(Equal(data.TestDependencies.ExpectedDigest))
 
-			cleanup, err := stage.PrepareImage(ctx, conveyor, containerBackend, nil, stageImage, nil)
+			err = stage.PrepareImage(ctx, conveyor, containerBackend, nil, stageImage, nil)
 			Expect(err).To(Succeed())
-			defer cleanup()
 			CheckImageDependenciesAfterPrepare(img, stageBuilder, data.TestDependencies.Dependencies)
 		},
 
