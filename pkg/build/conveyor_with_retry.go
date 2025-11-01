@@ -52,6 +52,8 @@ func (wrapper *ConveyorWithRetryWrapper) WithRetryBlock(ctx context.Context, f f
 			wrapper.ConveyorOptions,
 		)
 
+		defer newConveyor.Terminate(ctx)
+
 		return f(newConveyor)
 	})
 }

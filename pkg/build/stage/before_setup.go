@@ -5,7 +5,6 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/pkg/build/builder"
-	"github.com/werf/werf/v2/pkg/build/cleanup"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 )
@@ -38,19 +37,14 @@ func (s *BeforeSetupStage) GetDependencies(ctx context.Context, c Conveyor, cb c
 	return util.Sha256Hash(s.builder.BeforeSetupChecksum(ctx), stageDependenciesChecksum), nil
 }
 
-func (s *BeforeSetupStage) PrepareImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) (cleanup.Func, error) {
-	promise := cleanup.NewPromise()
-	defer promise.Give()
-
-	if cleanupFunc, err := s.UserWithGitPatchStage.PrepareImage(ctx, c, cb, prevBuiltImage, stageImage, nil); err != nil {
-		return nil, err
-	} else {
-		promise.Add(cleanupFunc)
+func (s *BeforeSetupStage) PrepareImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) error {
+	if err := s.UserWithGitPatchStage.PrepareImage(ctx, c, cb, prevBuiltImage, stageImage, nil); err != nil {
+		return err
 	}
 
 	if err := s.builder.BeforeSetup(ctx, cb, stageImage.Builder, c.UseLegacyStapelBuilder(cb)); err != nil {
-		return nil, err
+		return err
 	}
 
-	return promise.Forget(), nil
+	return nil
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/werf/werf/v2/pkg/build/cleanup"
 	"github.com/werf/werf/v2/pkg/build/stage"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
@@ -59,9 +58,9 @@ func (stg *Base[T, BT]) doExpandDependencies(ctx context.Context, c stage.Convey
 	return nil
 }
 
-func (stg *Base[T, BT]) PrepareImage(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (cleanup.Func, error) {
+func (stg *Base[T, BT]) PrepareImage(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) error {
 	stageImage.Builder.DockerfileStageBuilder().AppendInstruction(stg.backendInstruction)
-	return cleanup.NoOp, nil
+	return nil
 }
 
 func (stg *Base[T, BT]) expandBaseEnv(baseEnv map[string]string) error {

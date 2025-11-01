@@ -6,7 +6,6 @@ import (
 	"sort"
 
 	"github.com/werf/common-go/pkg/util"
-	"github.com/werf/werf/v2/pkg/build/cleanup"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/git_repo"
 )
@@ -60,19 +59,14 @@ func (s *GitArchiveStage) GetNextStageDependencies(ctx context.Context, c Convey
 	return s.BaseStage.getNextStageGitDependencies(ctx, c)
 }
 
-func (s *GitArchiveStage) PrepareImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) (cleanup.Func, error) {
-	promise := cleanup.NewPromise()
-	defer promise.Give()
-
-	if cleanupFunc, err := s.GitStage.PrepareImage(ctx, c, cb, prevBuiltImage, stageImage, nil); err != nil {
-		return nil, err
-	} else {
-		promise.Add(cleanupFunc)
+func (s *GitArchiveStage) PrepareImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) error {
+	if err := s.GitStage.PrepareImage(ctx, c, cb, prevBuiltImage, stageImage, nil); err != nil {
+		return err
 	}
 
 	for _, gitMapping := range s.gitMappings {
 		if err := gitMapping.PrepareArchiveForImage(ctx, c, cb, stageImage); err != nil {
-			return nil, fmt.Errorf("unable to prepare git mapping %s for image stage: %w", gitMapping.Name, err)
+			return fmt.Errorf("unable to prepare git mapping %s for image stage: %w", gitMapping.Name, err)
 		}
 	}
 
@@ -81,7 +75,7 @@ func (s *GitArchiveStage) PrepareImage(ctx context.Context, c Conveyor, cb conta
 		stageImage.Builder.LegacyStapelStageBuilder().Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", s.ScriptsDir, s.ContainerScriptsDir))
 	}
 
-	return promise.Forget(), nil
+	return nil
 }
 
 func (s *GitArchiveStage) IsEmpty(ctx context.Context, c Conveyor, stageImage *StageImage) (bool, error) {
