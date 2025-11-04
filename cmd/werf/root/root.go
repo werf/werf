@@ -172,7 +172,7 @@ func bundleCmd(ctx context.Context) *cobra.Command {
 		bundle_publish.NewCmd(ctx),
 		bundle_apply.NewCmd(ctx),
 		bundle_render.NewCmd(ctx),
-		bundle_copy.fNewCmd(ctx),
+		bundle_copy.NewCmd(ctx),
 	)
 
 	return cmd

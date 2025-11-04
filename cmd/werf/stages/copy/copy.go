@@ -3,11 +3,14 @@ package copy
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 	helm_v3 "github.com/werf/3p-helm-for-werf-helm/cmd/helm"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/cmd/werf/common"
+	"github.com/werf/werf/v2/pkg/build/stages"
+	"github.com/werf/werf/v2/pkg/deploy/bundles"
 	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
 
@@ -46,6 +49,25 @@ func NewCmd(ctx context.Context) *cobra.Command {
 		},
 	})
 
+	common.SetupTmpDir(&commonCmdData, cmd, common.SetupTmpDirOptions{})
+	common.SetupHomeDir(&commonCmdData, cmd, common.SetupHomeDirOptions{})
+
+	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified repos")
+	common.SetupInsecureRegistry(&commonCmdData, cmd)
+	common.StubSetupInsecureHelmDependencies(&commonCmdData, cmd)
+	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
+	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
+
+	common.SetupLogOptions(&commonCmdData, cmd)
+	common.SetupLogProjectDir(&commonCmdData, cmd)
+	commonCmdData.SetupPlatform(cmd)
+
+	commonCmdData.SetupHelmCompatibleChart(cmd, true)
+	commonCmdData.SetupRenameChart(cmd)
+
+	cmd.Flags().StringVarP(&cmdData.From, "from", "", os.Getenv("WERF_FROM"), "Source address of the bundle to copy, specify bundle archive using schema `archive:PATH_TO_ARCHIVE.tar.gz`, specify remote bundle with schema `[docker://]REPO:TAG` or without schema.")
+	cmd.Flags().StringVarP(&cmdData.To, "to", "", os.Getenv("WERF_TO"), "Destination address of the bundle to copy, specify bundle archive using schema `archive:PATH_TO_ARCHIVE.tar.gz`, specify remote bundle with schema `[docker://]REPO:TAG` or without schema.")
+
 	return cmd
 }
 
@@ -67,21 +89,33 @@ func runCopy(ctx context.Context) error {
 	//TODO: is needed?
 	helm_v3.Settings.Debug = *commonCmdData.LogDebug
 
-	if cmdData.From != "" {
+	if cmdData.From == "" {
 		return fmt.Errorf("--from=ADDRESS param required")
 	}
 
 	if cmdData.To == "" {
-		return fmt.Errorf("--to ADDRESS param required")
+		return fmt.Errorf("--to=ADDRESS param required")
 	}
 
 	fromAddrRaw := cmdData.From
 	toAddrRaw := cmdData.To
 
-	logboek.Context(ctx).Debug().LogF("--- START ---\n")
-	logboek.Context(ctx).Debug().LogF("FROM_ADDR_RAW: %s\n", fromAddrRaw)
-	logboek.Context(ctx).Debug().LogF("TO_ADDR_RAW: %s\n", toAddrRaw)
-	logboek.Context(ctx).Debug().LogF("--- END ---\n")
+	//TODO подумай что с этим можно сделать - не нравится вызов из bundles
+	fromAddr, err := bundles.ParseAddr(fromAddrRaw)
+	if err != nil {
+		return fmt.Errorf("invalid from add %q: %w", fromAddrRaw, err)
+	}
 
-	return nil
+	//TODO подумай что с этим можно сделать - не нравится вызов из bundles
+	toAddr, err := bundles.ParseAddr(toAddrRaw)
+	if err != nil {
+		return fmt.Errorf("invalid to addr %q: %w", toAddrRaw, err)
+	}
+
+	return logboek.Context(ctx).LogProcess("Copy stages").DoError(func() error {
+		logboek.Context(ctx).Info().LogFDetails("From: %s\n", fromAddr.String())
+		logboek.Context(ctx).Info().LogFDetails("To: %s\n", toAddr.String())
+
+		return stages.Copy(ctx, fromAddr, toAddr, stages.CopyOptions{})
+	})
 }
