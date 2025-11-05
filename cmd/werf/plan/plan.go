@@ -225,6 +225,12 @@ func runMain(ctx context.Context, imageNameListFromArgs []string) error {
 		return fmt.Errorf("component init error: %w", err)
 	}
 
+	defer func() {
+		if err := tmp_manager.DelegateCleanup(ctx); err != nil {
+			logboek.Context(ctx).Warn().LogF("Temporary files cleanup preparation failed: %s\n", err)
+		}
+	}()
+
 	containerBackend := commonManager.ContainerBackend()
 
 	defer func() {
@@ -279,7 +285,6 @@ func run(
 	if err != nil {
 		return fmt.Errorf("getting project tmp dir failed: %w", err)
 	}
-	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
 	buildOptions, err := common.GetBuildOptions(ctx, &commonCmdData, werfConfig, imagesToProcess)
 	if err != nil {

@@ -151,6 +151,9 @@ func runMain(ctx context.Context, imageNameListFromArgs []string) error {
 	containerBackend := commonManager.ContainerBackend()
 
 	defer func() {
+		if err := tmp_manager.DelegateCleanup(ctx); err != nil {
+			logboek.Context(ctx).Warn().LogF("Temporary files cleanup preparation failed: %s\n", err)
+		}
 		if err := common.RunAutoHostCleanup(ctx, &commonCmdData, containerBackend); err != nil {
 			logboek.Context(ctx).Error().LogF("Auto host cleanup failed: %s\n", err)
 		}
@@ -194,7 +197,6 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 	if err != nil {
 		return fmt.Errorf("getting project tmp dir failed: %w", err)
 	}
-	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
 	storageManager, err := common.NewStorageManager(ctx, &common.NewStorageManagerConfig{
 		ProjectName:                    projectName,
