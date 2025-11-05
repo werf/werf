@@ -9,6 +9,7 @@ import (
 	"github.com/werf/3p-helm/pkg/werf/helmopts"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/deploy/bundles/registry"
+	"github.com/werf/werf/v2/pkg/ref"
 )
 
 type PublishOptions struct {
@@ -18,7 +19,7 @@ type PublishOptions struct {
 }
 
 func Publish(ctx context.Context, bundleDir, bundleRef string, bundlesRegistryClient *registry.Client, opts PublishOptions) error {
-	r, err := registry.ParseReference(bundleRef)
+	r, err := ref.ParseReference(bundleRef)
 	if err != nil {
 		return fmt.Errorf("error parsing bundle ref %q: %w", bundleRef, err)
 	}

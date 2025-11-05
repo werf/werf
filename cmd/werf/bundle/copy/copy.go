@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"github.com/werf/werf/v2/pkg/ref"
 
 	helm_v3 "github.com/werf/3p-helm/cmd/helm"
 	"github.com/werf/3p-helm/pkg/werf/helmopts"
@@ -100,12 +101,12 @@ func runCopy(ctx context.Context) error {
 		return fmt.Errorf("--to=ADDRESS param required")
 	}
 
-	fromAddr, err := bundles.ParseAddr(fromAddrRaw)
+	fromAddr, err := ref.ParseAddr(fromAddrRaw)
 	if err != nil {
 		return fmt.Errorf("invalid from addr %q: %w", fromAddrRaw, err)
 	}
 
-	toAddr, err := bundles.ParseAddr(toAddrRaw)
+	toAddr, err := ref.ParseAddr(toAddrRaw)
 	if err != nil {
 		return fmt.Errorf("invalid to addr %q: %w", toAddrRaw, err)
 	}

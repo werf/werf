@@ -5,7 +5,7 @@ import (
 
 	"github.com/werf/3p-helm/pkg/chart"
 	"github.com/werf/3p-helm/pkg/werf/helmopts"
-	bundles_registry "github.com/werf/werf/v2/pkg/deploy/bundles/registry"
+	bundles_registry "github.com/werf/werf/v2/pkg/ref"
 )
 
 type BundlesRegistryClient interface {

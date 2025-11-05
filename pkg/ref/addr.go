@@ -1,10 +1,8 @@
-package bundles
+package ref
 
 import (
 	"fmt"
 	"strings"
-
-	"github.com/werf/werf/v2/pkg/deploy/bundles/registry"
 )
 
 const (
@@ -32,7 +30,7 @@ type ArchiveAddress struct {
 }
 
 type RegistryAddress struct {
-	*registry.Reference
+	*Reference
 }
 
 func ParseAddr(addr string) (*Addr, error) {
@@ -57,7 +55,7 @@ func ParseAddr(addr string) (*Addr, error) {
 func parseRegistryAddress(addr string) (*RegistryAddress, error) {
 	cleanAddr := strings.TrimPrefix(addr, RegistrySchema)
 
-	ref, err := registry.ParseReference(cleanAddr)
+	ref, err := ParseReference(cleanAddr)
 	if err != nil {
 		return nil, err
 	}

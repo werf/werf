@@ -9,11 +9,11 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	bundles_registry "github.com/werf/werf/v2/pkg/ref"
 	"sigs.k8s.io/yaml"
 
 	"github.com/werf/3p-helm/pkg/chart"
 	"github.com/werf/3p-helm/pkg/werf/helmopts"
-	bundles_registry "github.com/werf/werf/v2/pkg/deploy/bundles/registry"
 	"github.com/werf/werf/v2/pkg/docker_registry"
 	"github.com/werf/werf/v2/pkg/logging"
 )
@@ -126,7 +126,7 @@ werf:
 		fromArchiveWriterStub := NewBundleArchiveStubWriter()
 		from := NewBundleArchive(fromArchiveReaderStub, fromArchiveWriterStub)
 
-		addr, err := ParseAddr("registry.example.com/group/testproject:1.2.3")
+		addr, err := bundles_registry.ParseAddr("registry.example.com/group/testproject:1.2.3")
 		Expect(err).NotTo(HaveOccurred())
 		bundlesRegistryClient := NewBundlesRegistryClientStub()
 		registryClient := NewDockerRegistryStub()
@@ -198,7 +198,7 @@ werf:
 		fromArchiveWriterStub := NewBundleArchiveStubWriter()
 		from := NewBundleArchive(fromArchiveReaderStub, fromArchiveWriterStub)
 
-		addr, err := ParseAddr("registry.example.com/group/testproject:1.2.3")
+		addr, err := bundles_registry.ParseAddr("registry.example.com/group/testproject:1.2.3")
 		Expect(err).NotTo(HaveOccurred())
 		bundlesRegistryClient := NewBundlesRegistryClientStub()
 		registryClient := NewDockerRegistryStub()
@@ -270,7 +270,7 @@ werf:
 		fromArchiveWriterStub := NewBundleArchiveStubWriter()
 		from := NewBundleArchive(fromArchiveReaderStub, fromArchiveWriterStub)
 
-		addr, err := ParseAddr("registry.example.com/group/testproject:1.2.3")
+		addr, err := bundles_registry.ParseAddr("registry.example.com/group/testproject:1.2.3")
 		Expect(err).NotTo(HaveOccurred())
 		bundlesRegistryClient := NewBundlesRegistryClientStub()
 		registryClient := NewDockerRegistryStub()
@@ -332,7 +332,7 @@ werf:
 			},
 		}
 
-		addr, err := ParseAddr("registry.example.com/group/testproject:1.2.3")
+		addr, err := bundles_registry.ParseAddr("registry.example.com/group/testproject:1.2.3")
 		Expect(err).NotTo(HaveOccurred())
 		bundlesRegistryClient := NewBundlesRegistryClientStub()
 		registryClient := NewDockerRegistryStub()
@@ -408,7 +408,7 @@ werf:
 		bundlesRegistryClient := NewBundlesRegistryClientStub()
 		registryClient := NewDockerRegistryStub()
 
-		fromAddr, err := ParseAddr("registry.example.com/group/testproject:1.2.3")
+		fromAddr, err := bundles_registry.ParseAddr("registry.example.com/group/testproject:1.2.3")
 		Expect(err).NotTo(HaveOccurred())
 		from := NewRemoteBundle(fromAddr.RegistryAddress, bundlesRegistryClient, registryClient)
 		bundlesRegistryClient.StubCharts[fromAddr.RegistryAddress.FullName()] = ch
@@ -416,7 +416,7 @@ werf:
 		registryClient.ImagesByReference["registry.example.com/group/testproject:tag-2"] = []byte(`image-2-bytes`)
 		registryClient.ImagesByReference["registry.example.com/group/testproject:tag-3"] = []byte(`image-3-bytes`)
 
-		toAddr, err := ParseAddr("registry2.example.com/group2/testproject2:4.5.6")
+		toAddr, err := bundles_registry.ParseAddr("registry2.example.com/group2/testproject2:4.5.6")
 		Expect(err).NotTo(HaveOccurred())
 		to := NewRemoteBundle(toAddr.RegistryAddress, bundlesRegistryClient, registryClient)
 

@@ -32,6 +32,7 @@ import (
 	"github.com/gosuri/uitable"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/pkg/errors"
+	"github.com/werf/werf/v2/pkg/ref"
 
 	"github.com/werf/3p-helm/pkg/chart"
 	"github.com/werf/3p-helm/pkg/helmpath"
@@ -132,7 +133,7 @@ func (c *Client) Logout(ctx context.Context, hostname string) error {
 }
 
 // PushChart uploads a chart to a registry
-func (c *Client) PushChart(ctx context.Context, ref *Reference, opts helmopts.HelmOptions) error {
+func (c *Client) PushChart(ctx context.Context, ref *ref.Reference, opts helmopts.HelmOptions) error {
 	r, err := c.cache.FetchReference(ctx, ref, opts)
 	if err != nil {
 		return err
@@ -159,7 +160,7 @@ func (c *Client) PushChart(ctx context.Context, ref *Reference, opts helmopts.He
 }
 
 // PullChart downloads a chart from a registry
-func (c *Client) PullChart(ctx context.Context, ref *Reference) (*bytes.Buffer, error) {
+func (c *Client) PullChart(ctx context.Context, ref *ref.Reference) (*bytes.Buffer, error) {
 	buf := bytes.NewBuffer(nil)
 
 	if ref.Tag == "" {
@@ -210,7 +211,7 @@ func (c *Client) PullChart(ctx context.Context, ref *Reference) (*bytes.Buffer, 
 // PullChartToCache pulls a chart from an OCI Registry to the Registry Cache.
 // This function is needed for `helm chart pull`, which is experimental and will be deprecated soon.
 // Likewise, the Registry cache will soon be deprecated as will this function.
-func (c *Client) PullChartToCache(ctx context.Context, ref *Reference, opts helmopts.HelmOptions) error {
+func (c *Client) PullChartToCache(ctx context.Context, ref *ref.Reference, opts helmopts.HelmOptions) error {
 	if ref.Tag == "" {
 		return errors.New("tag explicitly required")
 	}
@@ -247,7 +248,7 @@ func (c *Client) PullChartToCache(ctx context.Context, ref *Reference, opts helm
 }
 
 // SaveChart stores a copy of chart in local cache
-func (c *Client) SaveChart(ctx context.Context, ch *chart.Chart, ref *Reference, opts helmopts.HelmOptions) error {
+func (c *Client) SaveChart(ctx context.Context, ch *chart.Chart, ref *ref.Reference, opts helmopts.HelmOptions) error {
 	r, err := c.cache.StoreReference(ctx, ref, ch, opts)
 	if err != nil {
 		return err
@@ -262,7 +263,7 @@ func (c *Client) SaveChart(ctx context.Context, ch *chart.Chart, ref *Reference,
 }
 
 // LoadChart retrieves a chart object by reference
-func (c *Client) LoadChart(ctx context.Context, ref *Reference, opts helmopts.HelmOptions) (*chart.Chart, error) {
+func (c *Client) LoadChart(ctx context.Context, ref *ref.Reference, opts helmopts.HelmOptions) (*chart.Chart, error) {
 	r, err := c.cache.FetchReference(ctx, ref, opts)
 	if err != nil {
 		return nil, err
@@ -275,7 +276,7 @@ func (c *Client) LoadChart(ctx context.Context, ref *Reference, opts helmopts.He
 }
 
 // RemoveChart deletes a locally saved chart
-func (c *Client) RemoveChart(ctx context.Context, ref *Reference, opts helmopts.HelmOptions) error {
+func (c *Client) RemoveChart(ctx context.Context, ref *ref.Reference, opts helmopts.HelmOptions) error {
 	r, err := c.cache.DeleteReference(ctx, ref, opts)
 	if err != nil {
 		return err

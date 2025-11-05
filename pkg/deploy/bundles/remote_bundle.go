@@ -6,25 +6,25 @@ import (
 	"strings"
 	"time"
 
+	bundles_registry "github.com/werf/werf/v2/pkg/ref"
 	"sigs.k8s.io/yaml"
 
 	"github.com/werf/3p-helm/pkg/chart"
 	"github.com/werf/3p-helm/pkg/werf/helmopts"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
-	bundles_registry "github.com/werf/werf/v2/pkg/deploy/bundles/registry"
 	"github.com/werf/werf/v2/pkg/docker_registry"
 )
 
 var _ BundleAccessor = (*RemoteBundle)(nil)
 
 type RemoteBundle struct {
-	RegistryAddress       *RegistryAddress
+	RegistryAddress       *bundles_registry.RegistryAddress
 	BundlesRegistryClient BundlesRegistryClient
 	RegistryClient        docker_registry.Interface
 }
 
-func NewRemoteBundle(registryAddress *RegistryAddress, bundlesRegistryClient BundlesRegistryClient, registryClient docker_registry.Interface) *RemoteBundle {
+func NewRemoteBundle(registryAddress *bundles_registry.RegistryAddress, bundlesRegistryClient BundlesRegistryClient, registryClient docker_registry.Interface) *RemoteBundle {
 	return &RemoteBundle{
 		RegistryAddress:       registryAddress,
 		BundlesRegistryClient: bundlesRegistryClient,

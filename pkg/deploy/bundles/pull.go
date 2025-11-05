@@ -8,10 +8,11 @@ import (
 	"github.com/werf/3p-helm/pkg/werf/helmopts"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/deploy/bundles/registry"
+	"github.com/werf/werf/v2/pkg/ref"
 )
 
 func Pull(ctx context.Context, bundleRef, destDir string, bundlesRegistryClient *registry.Client, opts helmopts.HelmOptions) error {
-	r, err := registry.ParseReference(bundleRef)
+	r, err := ref.ParseReference(bundleRef)
 	if err != nil {
 		return err
 	}
