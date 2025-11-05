@@ -13,9 +13,11 @@ import (
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/lockgate/pkg/distributed_locker"
 	"github.com/werf/lockgate/pkg/distributed_locker/optimistic_locking_store"
+	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/kubeutils"
 	"github.com/werf/werf/v2/pkg/storage/synchronization/server"
+	"github.com/werf/werf/v2/pkg/tmp_manager"
 )
 
 var cmdData struct {
@@ -87,6 +89,12 @@ func runSynchronization(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("component init error: %w", err)
 	}
+
+	defer func() {
+		if err := tmp_manager.DelegateCleanup(ctx); err != nil {
+			logboek.Context(ctx).Warn().LogF("Temporary files cleanup preparation failed: %s\n", err)
+		}
+	}()
 
 	host, port := cmdData.Host, cmdData.Port
 	if host == "" {

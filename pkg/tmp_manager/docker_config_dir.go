@@ -10,8 +10,8 @@ import (
 	"github.com/otiai10/copy"
 )
 
-func CreateDockerConfigDir(_ context.Context, fromDockerConfig string) (string, error) {
-	newDir, err := newTmpDir(DockerConfigDirPrefix)
+func CreateDockerConfigDir(ctx context.Context, fromDockerConfig string) (string, error) {
+	newDir, err := newTmpDir(dockerConfigDirPrefix)
 	if err != nil {
 		return "", err
 	}
@@ -44,9 +44,8 @@ func CreateDockerConfigDir(_ context.Context, fromDockerConfig string) (string, 
 		}
 	}
 
-	if err := registerCreatedPath(newDir, filepath.Join(GetCreatedTmpDirs(), dockerConfigsServiceDir)); err != nil {
-		os.RemoveAll(newDir)
-		return "", err
+	if err = registrator.queueRegistration(ctx, newDir, filepath.Join(getCreatedTmpDirs(), dockerConfigsServiceDir)); err != nil {
+		return "", fmt.Errorf("unable to queue GC registration: %w", err)
 	}
 
 	return newDir, nil

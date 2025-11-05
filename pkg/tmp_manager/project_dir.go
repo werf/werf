@@ -2,24 +2,22 @@ package tmp_manager
 
 import (
 	"context"
-	"os"
+	"fmt"
 	"path/filepath"
 )
 
 func CreateProjectDir(ctx context.Context) (string, error) {
-	newDir, err := newTmpDir(ProjectDirPrefix)
+	newDir, err := newTmpDir(projectDirPrefix)
 	if err != nil {
 		return "", err
 	}
 
-	if err := registerCreatedPath(newDir, filepath.Join(GetCreatedTmpDirs(), projectsServiceDir)); err != nil {
-		os.RemoveAll(newDir)
-		return "", err
+	if err := registrator.queueRegistration(ctx, newDir, filepath.Join(getCreatedTmpDirs(), projectsServiceDir)); err != nil {
+		return "", fmt.Errorf("unable to queue GC registration: %w", err)
+	}
+	if err := registrator.queueRegistration(ctx, newDir, filepath.Join(getReleasedTmpDirs(), projectsServiceDir)); err != nil {
+		return "", fmt.Errorf("unable to queue GC registration: %w", err)
 	}
 
 	return newDir, nil
-}
-
-func ReleaseProjectDir(dir string) error {
-	return releasePath(dir, filepath.Join(GetCreatedTmpDirs(), projectsServiceDir), filepath.Join(GetReleasedTmpDirs(), projectsServiceDir))
 }
