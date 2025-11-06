@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.51.4](https://github.com/werf/werf/compare/v2.51.3...v2.51.4) (2025-11-06)
+
+
+### Bug Fixes
+
+* **deploy:** failures in init containers of jobs ignored ([5cbbe69](https://github.com/werf/werf/commit/5cbbe69d12043454a9830f56bf8ca22db913b75c))
+* **deploy:** webhooks not readying ([63dfd5e](https://github.com/werf/werf/commit/63dfd5e0c8a18b448212cbbfa43731b9463079a8))
+
 ## [2.51.3](https://github.com/werf/werf/compare/v2.51.2...v2.51.3) (2025-10-31)
 
 
