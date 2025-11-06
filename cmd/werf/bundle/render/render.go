@@ -73,34 +73,39 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified repo, to pull base images")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
-	common.SetupReleaseStorageSQLConnection(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
 
 	common.SetupLogOptionsDefaultQuiet(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
+	commonCmdData.SetupDebugTemplates(cmd)
+
+	lo.Must0(common.SetupKubeConnectionFlags(&commonCmdData, cmd))
+	lo.Must0(common.SetupChartRepoConnectionFlags(&commonCmdData, cmd))
+	lo.Must0(common.SetupValuesFlags(&commonCmdData, cmd))
+	lo.Must0(common.SetupSecretValuesFlags(&commonCmdData, cmd))
+
 	common.SetupAddAnnotations(&commonCmdData, cmd)
 	common.SetupAddLabels(&commonCmdData, cmd)
-
-	common.SetupSetDockerConfigJsonValue(&commonCmdData, cmd)
-	commonCmdData.SetupSkipDependenciesRepoRefresh(cmd)
-
-	common.SetupRelease(&commonCmdData, cmd, false)
-	common.SetupNamespace(&commonCmdData, cmd, false)
-
-	common.SetupKubeVersion(&commonCmdData, cmd)
-
-	common.SetupNetworkParallelism(&commonCmdData, cmd)
+	common.SetupChartProvenanceKeyring(&commonCmdData, cmd)
+	common.SetupChartProvenanceStrategy(&commonCmdData, cmd)
+	common.SetupExtraAPIVersions(&commonCmdData, cmd)
 	common.SetupForceAdoption(&commonCmdData, cmd)
-
-	commonCmdData.SetupDebugTemplates(cmd)
+	common.SetupKubeVersion(&commonCmdData, cmd)
+	common.SetupNamespace(&commonCmdData, cmd, false)
+	common.SetupNetworkParallelism(&commonCmdData, cmd)
+	common.SetupRelease(&commonCmdData, cmd, false)
+	common.SetupReleaseStorageDriver(&commonCmdData, cmd)
+	common.SetupReleaseStorageSQLConnection(&commonCmdData, cmd)
+	common.SetupSetDockerConfigJsonValue(&commonCmdData, cmd)
+	common.SetupTemplatesAllowDNS(&commonCmdData, cmd)
+	commonCmdData.SetupSkipDependenciesRepoRefresh(cmd)
 
 	defaultTag := os.Getenv("WERF_TAG")
 	if defaultTag == "" {
 		defaultTag = "latest"
 	}
-
 	cmd.Flags().StringVarP(&cmdData.Tag, "tag", "", defaultTag,
 		"Provide exact tag version or semver-based pattern, werf will render the latest version of the specified bundle ($WERF_TAG or latest by default)")
 	cmd.Flags().BoolVarP(&cmdData.IncludeCRDs, "include-crds", "", util.GetBoolEnvironmentDefaultTrue("WERF_INCLUDE_CRDS"),
@@ -109,14 +114,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 		"Write render output to the specified file instead of stdout ($WERF_RENDER_OUTPUT by default)")
 	cmd.Flags().StringVarP(&cmdData.BundleDir, "bundle-dir", "b", os.Getenv(("WERF_BUNDLE_DIR")),
 		"Get extracted bundle from directory instead of registry (default $WERF_BUNDLE_DIR)")
-
 	cmd.Flags().BoolVarP(&cmdData.Validate, "validate", "", util.GetBoolEnvironmentDefaultFalse("WERF_VALIDATE"), "Validate your manifests against the Kubernetes cluster you are currently pointing at (default $WERF_VALIDATE)")
 	cmd.Flags().StringArrayVarP(&cmdData.ShowOnly, "show-only", "s", []string{}, "only show manifests rendered from the given templates")
-
-	lo.Must0(common.SetupKubeConnectionFlags(&commonCmdData, cmd))
-	lo.Must0(common.SetupChartRepoConnectionFlags(&commonCmdData, cmd))
-	lo.Must0(common.SetupValuesFlags(&commonCmdData, cmd))
-	lo.Must0(common.SetupSecretValuesFlags(&commonCmdData, cmd))
 
 	return cmd
 }
@@ -218,7 +217,10 @@ func runRender(ctx context.Context) error {
 		ValuesOptions:               commonCmdData.ValuesOptions,
 		SecretValuesOptions:         commonCmdData.SecretValuesOptions,
 		ChartDirPath:                bundlePath,
+		ChartProvenanceKeyring:      commonCmdData.ChartProvenanceKeyring,
+		ChartProvenanceStrategy:     commonCmdData.ChartProvenanceStrategy,
 		ChartRepoSkipUpdate:         commonCmdData.ChartRepoSkipUpdate,
+		ExtraAPIVersions:            commonCmdData.ExtraAPIVersions,
 		ExtraAnnotations:            extraAnnotations,
 		ExtraLabels:                 extraLabels,
 		ExtraRuntimeAnnotations:     serviceAnnotations,
@@ -232,11 +234,12 @@ func runRender(ctx context.Context) error {
 		RegistryCredentialsPath:     registryCredentialsPath,
 		ReleaseName:                 releaseName,
 		ReleaseNamespace:            releaseNamespace,
-		ReleaseStorageDriver:        os.Getenv("HELM_DRIVER"),
+		ReleaseStorageDriver:        commonCmdData.ReleaseStorageDriver,
 		ReleaseStorageSQLConnection: commonCmdData.ReleaseStorageSQLConnection,
 		Remote:                      cmdData.Validate,
 		ShowOnlyFiles:               append(util.PredefinedValuesByEnvNamePrefix("WERF_SHOW_ONLY"), cmdData.ShowOnly...),
 		ShowStandaloneCRDs:          cmdData.IncludeCRDs,
+		TemplatesAllowDNS:           commonCmdData.TemplatesAllowDNS,
 	}); err != nil {
 		return fmt.Errorf("chart render: %w", err)
 	}
