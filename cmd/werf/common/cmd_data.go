@@ -104,11 +104,16 @@ type CmdData struct {
 	CreateIncludesLockFile bool
 	AllowIncludesUpdate    bool
 
+	ChartProvenanceKeyring           string
+	ChartProvenanceStrategy          string
 	ChartRepoSkipUpdate              bool
 	DebugTemplates                   bool
 	DeployReportPath                 string
+	ExtraAPIVersions                 []string
 	ExtraAnnotations                 []string
 	ExtraLabels                      []string
+	ExtraRuntimeAnnotations          map[string]string
+	ExtraRuntimeLabels               map[string]string
 	ForceAdoption                    bool
 	HelmCompatibleChart              bool
 	InstallGraphPath                 string
@@ -121,15 +126,19 @@ type CmdData struct {
 	NetworkParallelism               int
 	NoInstallStandaloneCRDs          bool
 	NoRemoveManualChanges            bool
+	NoShowNotes                      bool
 	Release                          string
 	ReleaseHistoryLimit              int
+	ReleaseInfoAnnotations           map[string]string
 	ReleaseLabels                    []string
+	ReleaseStorageDriver             string
 	ReleaseStorageSQLConnection      string
 	RenameChart                      string
 	RollbackGraphPath                string
 	SaveDeployReport                 bool
 	SaveUninstallReport              bool
 	ShowSubchartNotes                bool
+	TemplatesAllowDNS                bool
 	UninstallGraphPath               string
 	UninstallReportPath              string
 	UseDeployReport                  bool
@@ -301,12 +310,16 @@ func (cmdData *CmdData) processFlags() error {
 		return fmt.Errorf("invalid --uninstall-graph-path %q: extension must be either .dot or unspecified", cmdData.UninstallGraphPath)
 	}
 
+	cmdData.KubeImpersonateGroups = append(util.PredefinedValuesByEnvNamePrefix("WERF_KUBE_IMPERSONATE_GROUP_"), cmdData.KubeImpersonateGroups...)
 	cmdData.ValuesSet = append(util.PredefinedValuesByEnvNamePrefix("WERF_SET_", "WERF_SET_STRING_", "WERF_SET_FILE_", "WERF_SET_DOCKER_CONFIG_JSON_VALUE"), cmdData.ValuesSet...)
 	cmdData.ValuesSetString = append(util.PredefinedValuesByEnvNamePrefix("WERF_SET_STRING_"), cmdData.ValuesSetString...)
 	cmdData.ValuesSetFile = append(util.PredefinedValuesByEnvNamePrefix("WERF_SET_FILE_"), cmdData.ValuesSetFile...)
 	cmdData.RuntimeSetJSON = append(util.PredefinedValuesByEnvNamePrefix("WERF_SET_RUNTIME_JSON_"), cmdData.RuntimeSetJSON...)
+	cmdData.ValuesSetJSON = append(util.PredefinedValuesByEnvNamePrefix("WERF_SET_JSON_"), cmdData.ValuesSetJSON...)
+	cmdData.ValuesSetLiteral = append(util.PredefinedValuesByEnvNamePrefix("WERF_SET_LITERAL_"), cmdData.ValuesSetLiteral...)
 	cmdData.ValuesFiles = append(util.PredefinedValuesByEnvNamePrefix("WERF_VALUES_"), cmdData.ValuesFiles...)
 	cmdData.SecretValuesFiles = append(util.PredefinedValuesByEnvNamePrefix("WERF_SECRET_VALUES_"), cmdData.SecretValuesFiles...)
+	cmdData.ExtraAPIVersions = append(util.PredefinedValuesByEnvNamePrefix("WERF_EXTRA_APIVERSIONS_"), cmdData.ExtraAPIVersions...)
 
 	return nil
 }
