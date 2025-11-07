@@ -364,8 +364,6 @@ werf render [IMAGE_NAME...] [options]
             only show manifests rendered from the given templates
   -L, --skip-dependencies-repo-refresh=false
             Do not refresh helm chart repositories locally cached index
-      --skip-image-spec-stage=false
-            Force skipping "imageSpec" build stage (default $WERF_SKIP_IMAGE_SPEC_STAGE or false)
       --skip-tls-verify-helm-dependencies=false
             Skip TLS certificate validation when accessing a Helm charts repository (default        
             $WERF_SKIP_TLS_VERIFY_HELM_DEPENDENCIES)

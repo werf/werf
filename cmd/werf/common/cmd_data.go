@@ -202,9 +202,11 @@ func (cmdData *CmdData) SetupRenameChart(cmd *cobra.Command) {
 	cmd.Flags().StringVarP(&cmdData.RenameChart, "rename-chart", "", os.Getenv("WERF_RENAME_CHART"), `Force setting of chart name in the Chart.yaml of the published chart to the specified value (can be set by the $WERF_RENAME_CHART, no rename by default, could not be used together with the '--helm-compatible-chart' option).`)
 }
 
+// TODO: remove this legacy logic in v3.
 func (cmdData *CmdData) SetupSkipImageSpecStage(cmd *cobra.Command) {
 	cmdData.SkipImageSpecStage = new(bool)
 	cmd.Flags().BoolVarP(cmdData.SkipImageSpecStage, "skip-image-spec-stage", "", util.GetBoolEnvironmentDefaultFalse("WERF_SKIP_IMAGE_SPEC_STAGE"), `Force skipping "imageSpec" build stage (default $WERF_SKIP_IMAGE_SPEC_STAGE or false)`)
+	cmd.Flags().MarkHidden("skip-image-spec-stage")
 }
 
 func (cmdData *CmdData) SetupCreateIncludesLockFile() {

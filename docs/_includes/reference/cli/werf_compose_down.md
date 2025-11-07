@@ -240,8 +240,6 @@ werf compose down [IMAGE_NAME...] [options] [--docker-compose-options="OPTIONS"]
             cache.
             Also, can be specified with $WERF_SECONDARY_REPO_* (e.g. $WERF_SECONDARY_REPO_1=...,    
             $WERF_SECONDARY_REPO_2=...)
-      --skip-image-spec-stage=false
-            Force skipping "imageSpec" build stage (default $WERF_SKIP_IMAGE_SPEC_STAGE or false)
       --skip-tls-verify-registry=false
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)
