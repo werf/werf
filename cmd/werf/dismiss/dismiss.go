@@ -187,9 +187,6 @@ func runDismiss(ctx context.Context) error {
 		var uninstallReportPath string
 		if commonCmdData.SaveUninstallReport {
 			uninstallReportPath = commonCmdData.UninstallReportPath
-			if err != nil {
-				return fmt.Errorf("get uninstall report path: %w", err)
-			}
 		}
 
 		if err := action.ReleaseUninstall(ctx, releaseName, releaseNamespace, action.ReleaseUninstallOptions{
