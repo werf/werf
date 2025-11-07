@@ -40,6 +40,7 @@ import (
 	includes_update "github.com/werf/werf/v2/cmd/werf/includes/update"
 	"github.com/werf/werf/v2/cmd/werf/kube_run"
 	"github.com/werf/werf/v2/cmd/werf/kubectl"
+	"github.com/werf/werf/v2/cmd/werf/lint"
 	managed_images_add "github.com/werf/werf/v2/cmd/werf/managed_images/add"
 	managed_images_ls "github.com/werf/werf/v2/cmd/werf/managed_images/ls"
 	managed_images_rm "github.com/werf/werf/v2/cmd/werf/managed_images/rm"
@@ -102,6 +103,7 @@ func ConstructRootCmd(ctx context.Context) (*cobra.Command, error) {
 				dockerComposeCmd(ctx),
 				slugify.NewCmd(ctx),
 				render.NewCmd(ctx),
+				lint.NewCmd(ctx),
 				includesCmd(ctx),
 				sbomCmd(ctx),
 			},
