@@ -15,7 +15,7 @@ var _ = Describe("ExportBase", func() {
 			Expect(left.AutoExcludeExportAndCheck(right)).To(expected)
 		},
 		Entry(
-			"should return false and don't auto exclude",
+			"should return false and auto exclude if to paths are the same and no include paths (0)",
 			&config.ExportBase{
 				Add: "/a",
 				To:  "/",
@@ -23,6 +23,18 @@ var _ = Describe("ExportBase", func() {
 			&config.ExportBase{
 				Add: "/b",
 				To:  "/",
+			},
+			BeFalse(),
+		),
+		Entry(
+			"should return false and auto exclude if to paths are the same and no include paths (1)",
+			&config.ExportBase{
+				Add: "/a",
+				To:  "/app",
+			},
+			&config.ExportBase{
+				Add: "/b",
+				To:  "/app",
 			},
 			BeFalse(),
 		),
