@@ -6,6 +6,7 @@ toc: false
 
 Delivery commands:
  - [werf converge]({{ "/reference/cli/werf_converge.html" | true_relative_url }}) — {% include /reference/cli/werf_converge.short.md %}.
+ - [werf rollback]({{ "/reference/cli/werf_rollback.html" | true_relative_url }}) — {% include /reference/cli/werf_rollback.short.md %}.
  - [werf plan]({{ "/reference/cli/werf_plan.html" | true_relative_url }}) — {% include /reference/cli/werf_plan.short.md %}.
  - [werf dismiss]({{ "/reference/cli/werf_dismiss.html" | true_relative_url }}) — {% include /reference/cli/werf_dismiss.short.md %}.
  - [werf bundle]({{ "/reference/cli/werf_bundle_apply.html" | true_relative_url }}) — {% include /reference/cli/werf_bundle_apply.short.md %}.
