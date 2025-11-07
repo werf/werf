@@ -366,8 +366,6 @@ werf lint [IMAGE_NAME...] [options]
             $WERF_SET_STRING_2=key2=val2)
   -L, --skip-dependencies-repo-refresh=false
             Do not refresh helm chart repositories locally cached index
-      --skip-image-spec-stage=false
-            Force skipping "imageSpec" build stage (default $WERF_SKIP_IMAGE_SPEC_STAGE or false)
       --skip-tls-verify-helm-dependencies=false
             Skip TLS certificate validation when accessing a Helm charts repository (default        
             $WERF_SKIP_TLS_VERIFY_HELM_DEPENDENCIES)

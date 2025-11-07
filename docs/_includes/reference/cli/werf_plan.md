@@ -443,8 +443,6 @@ werf plan --repo registry.mydomain.com/web --env production
             Show verbose diff lines ($WERF_SHOW_VERBOSE_DIFFS by default)
   -L, --skip-dependencies-repo-refresh=false
             Do not refresh helm chart repositories locally cached index
-      --skip-image-spec-stage=false
-            Force skipping "imageSpec" build stage (default $WERF_SKIP_IMAGE_SPEC_STAGE or false)
       --skip-tls-verify-helm-dependencies=false
             Skip TLS certificate validation when accessing a Helm charts repository (default        
             $WERF_SKIP_TLS_VERIFY_HELM_DEPENDENCIES)
