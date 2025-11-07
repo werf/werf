@@ -47,8 +47,10 @@ const (
 	DefaultBuildReportPathJSON = ".werf-build-report.json"
 
 	DefaultSaveDeployReport        = false
+	DefaultSaveRollbackReport      = false
 	DefaultUseDeployReport         = false
 	DefaultDeployReportPathJSON    = ".werf-deploy-report.json"
+	DefaultRollbackReportPathJSON  = ".werf-rollback-report.json"
 	DefaultUninstallReportPathJSON = ".werf-uninstall-report.json"
 	DefaultSaveUninstallReport     = false
 	TemplateErrHint                = "Use --debug-templates or $WERF_DEBUG_TEMPLATES to get more details about this error."
@@ -200,12 +202,20 @@ func SetupSaveDeployReport(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(&cmdData.SaveDeployReport, "save-deploy-report", "", util.GetBoolEnvironmentDefaultFalse("WERF_SAVE_DEPLOY_REPORT"), fmt.Sprintf("Save deploy report (by default $WERF_SAVE_DEPLOY_REPORT or %t). Its path and format configured with --deploy-report-path", DefaultSaveDeployReport))
 }
 
+func SetupSaveRollbackReport(cmdData *CmdData, cmd *cobra.Command) {
+	cmd.Flags().BoolVarP(&cmdData.SaveRollbackReport, "save-rollback-report", "", util.GetBoolEnvironmentDefaultFalse("WERF_SAVE_ROLLBACK_REPORT"), fmt.Sprintf("Save rollback report (by default $WERF_SAVE_ROLLBACK_REPORT or %t). Its path and format configured with --rollback-report-path", DefaultSaveRollbackReport))
+}
+
 func SetupSaveUninstallReport(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(&cmdData.SaveUninstallReport, "save-uninstall-report", "", util.GetBoolEnvironmentDefaultFalse("WERF_SAVE_UNINSTALL_REPORT"), fmt.Sprintf("Save uninstall report (by default $WERF_SAVE_UNINSTALL_REPORT or %t). Its path and format configured with --uninstall-report-path", DefaultSaveUninstallReport))
 }
 
 func SetupDeployReportPath(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringVarP(&cmdData.DeployReportPath, "deploy-report-path", "", os.Getenv("WERF_DEPLOY_REPORT_PATH"), fmt.Sprintf("Change deploy report path and format (by default $WERF_DEPLOY_REPORT_PATH or %q if not set). Extension must be .json for JSON format. If extension not specified, then .json is used", DefaultDeployReportPathJSON))
+}
+
+func SetupRollbackReportPath(cmdData *CmdData, cmd *cobra.Command) {
+	cmd.Flags().StringVarP(&cmdData.RollbackReportPath, "rollback-report-path", "", os.Getenv("WERF_ROLLBACK_REPORT_PATH"), fmt.Sprintf("Change rollback report path and format (by default $WERF_ROLLBACK_REPORT_PATH or %q if not set). Extension must be .json for JSON format. If extension not specified, then .json is used", DefaultRollbackReportPathJSON))
 }
 
 func SetupUninstallReportPath(cmdData *CmdData, cmd *cobra.Command) {

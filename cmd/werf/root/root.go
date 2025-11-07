@@ -47,6 +47,7 @@ import (
 	"github.com/werf/werf/v2/cmd/werf/plan"
 	"github.com/werf/werf/v2/cmd/werf/purge"
 	"github.com/werf/werf/v2/cmd/werf/render"
+	"github.com/werf/werf/v2/cmd/werf/rollback"
 	"github.com/werf/werf/v2/cmd/werf/run"
 	"github.com/werf/werf/v2/cmd/werf/slugify"
 	stage_image "github.com/werf/werf/v2/cmd/werf/stage/image"
@@ -79,6 +80,7 @@ func ConstructRootCmd(ctx context.Context) (*cobra.Command, error) {
 			Message: "Delivery commands",
 			Commands: []*cobra.Command{
 				converge.NewCmd(ctx),
+				rollback.NewCmd(ctx),
 				plan.NewCmd(ctx),
 				dismiss.NewCmd(ctx),
 				bundleCmd(ctx),

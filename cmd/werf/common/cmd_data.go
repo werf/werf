@@ -135,7 +135,9 @@ type CmdData struct {
 	ReleaseStorageSQLConnection      string
 	RenameChart                      string
 	RollbackGraphPath                string
+	RollbackReportPath               string
 	SaveDeployReport                 bool
+	SaveRollbackReport               bool
 	SaveUninstallReport              bool
 	ShowSubchartNotes                bool
 	TemplatesAllowDNS                bool
@@ -274,6 +276,18 @@ func (cmdData *CmdData) processFlags() error {
 		cmdData.DeployReportPath += ".json"
 	default:
 		return fmt.Errorf("invalid --deploy-report-path %q: extension must be either .json or unspecified", cmdData.DeployReportPath)
+	}
+
+	if cmdData.RollbackReportPath == "" {
+		cmdData.RollbackReportPath = DefaultRollbackReportPathJSON
+	}
+
+	switch ext := filepath.Ext(cmdData.RollbackReportPath); ext {
+	case ".json":
+	case "":
+		cmdData.RollbackReportPath += ".json"
+	default:
+		return fmt.Errorf("invalid --rollback-report-path %q: extension must be either .json or unspecified", cmdData.RollbackReportPath)
 	}
 
 	if cmdData.UninstallReportPath == "" {
