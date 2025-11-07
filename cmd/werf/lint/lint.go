@@ -194,7 +194,6 @@ func runLint(ctx context.Context, imageNameListFromArgs []string) error {
 	if err != nil {
 		return fmt.Errorf("getting project tmp dir failed: %w", err)
 	}
-	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
 	buildOptions, err := common.GetBuildOptions(ctx, &commonCmdData, werfConfig, imagesToProcess)
 	if err != nil {
