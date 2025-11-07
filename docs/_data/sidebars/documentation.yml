@@ -80,6 +80,9 @@ cli: &cli
       - title: werf render
         url: /reference/cli/werf_render.html
 
+      - title: werf lint
+        url: /reference/cli/werf_lint.html
+
       - title: werf includes
         f:
           - title: werf includes get-file
