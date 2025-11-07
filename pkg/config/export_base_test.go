@@ -15,6 +15,48 @@ var _ = Describe("ExportBase", func() {
 			Expect(left.AutoExcludeExportAndCheck(right)).To(expected)
 		},
 		Entry(
+			"should return true if to paths are not overlap",
+			&config.ExportBase{
+				Add: "/",
+				To:  "/a",
+			},
+			&config.ExportBase{
+				Add: "/",
+				To:  "/b",
+			},
+			BeTrue(),
+		),
+		Entry(
+			"should return true if to paths are overlap but with exclude paths are not (might be auto excluded)",
+			&config.ExportBase{
+				Add: "/",
+				To:  "/a",
+			},
+			&config.ExportBase{
+				Add: "/",
+				To:  "/",
+				ExcludePaths: []string{
+					"a",
+				},
+			},
+			BeTrue(),
+		),
+		Entry(
+			"should return true if to paths are overlap but with include paths are not (might be auto excluded)",
+			&config.ExportBase{
+				Add: "/",
+				To:  "/a",
+			},
+			&config.ExportBase{
+				Add: "/",
+				To:  "/",
+				IncludePaths: []string{
+					"b",
+				},
+			},
+			BeTrue(),
+		),
+		Entry(
 			"should return false and auto exclude if to paths are the same and no include paths (0)",
 			&config.ExportBase{
 				Add: "/a",
