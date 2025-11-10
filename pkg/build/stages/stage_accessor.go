@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/werf/werf/v2/pkg/docker_registry"
+	"github.com/werf/werf/v2/cmd/werf/common"
+	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/ref"
-	"github.com/werf/werf/v2/pkg/storage/manager"
 )
 
 type copyToOptions struct {
@@ -26,16 +26,35 @@ type StorageAccessorOptions struct {
 }
 
 type RegistryStorageOptions struct {
-	InsecureRegistry      *bool
-	SkipTlsVerifyRegistry *bool
+	ProjectName                  string
+	ContainerBackend             container_backend.ContainerBackend
+	CommonCmdData                *common.CmdData
+	DisableCleanup               bool
+	DisableGitHistoryBasedPolicy bool
 }
 
 type ArchiveStorageOptions struct {
 }
 
-func NewStorageAccessor(ctx context.Context, addr *ref.Addr, storageManager *manager.StorageManager, dockerRegistry docker_registry.Interface, opts StorageAccessorOptions) (StorageAccessor, error) {
+func NewStorageAccessor(ctx context.Context, addr *ref.Addr, opts StorageAccessorOptions) (StorageAccessor, error) {
 	switch {
 	case addr.RegistryAddress != nil:
+		storageManager, err := common.NewStorageManager(ctx, &common.NewStorageManagerConfig{
+			ProjectName:                    opts.RegistryOptions.ProjectName,
+			ContainerBackend:               opts.RegistryOptions.ContainerBackend,
+			CmdData:                        opts.RegistryOptions.CommonCmdData,
+			CleanupDisabled:                opts.RegistryOptions.DisableCleanup,
+			GitHistoryBasedCleanupDisabled: opts.RegistryOptions.DisableGitHistoryBasedPolicy,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		dockerRegistry, err := common.CreateDockerRegistry(ctx, addr.Repo, *opts.RegistryOptions.CommonCmdData.InsecureRegistry, *opts.RegistryOptions.CommonCmdData.SkipTlsVerifyRegistry)
+		if err != nil {
+			return nil, err
+		}
+
 		return NewRemoteStorage(addr.RegistryAddress, storageManager, dockerRegistry), nil
 	case addr.ArchiveAddress != nil:
 		return NewArchiveStorage(NewArchiveStorageFileReader(addr.ArchiveAddress.Path), NewArchiveStorageFileWriter(addr.ArchiveAddress.Path)), nil

@@ -55,7 +55,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupConfigPath(&commonCmdData, cmd)
 
 	common.SetupGiterminismOptions(&commonCmdData, cmd)
-	common.SetupRepoWithNameOptions(&commonCmdData, cmd, "from", common.RepoDataOptions{})
+	common.SetupRepoWithNameOptions(&commonCmdData, cmd, "from", common.RepoDataOptions{}) //TODO унести отсюда
 	common.SetupSynchronization(&commonCmdData, cmd)
 
 	common.SetupEnvironment(&commonCmdData, cmd)
@@ -100,7 +100,7 @@ func runCopy(ctx context.Context) error {
 	//if cmdData.From == "" {
 	//	return fmt.Errorf("--from=ADDRESS param required")
 	//}
-	//
+
 	if cmdData.To == "" {
 		return fmt.Errorf("--to=ADDRESS param required")
 	}
@@ -128,25 +128,16 @@ func runCopy(ctx context.Context) error {
 
 	projectName := werfConfig.Meta.Project
 
-	fromStorageManager, err := common.NewStorageManager(ctx, &common.NewStorageManagerConfig{
-		ProjectName:                    projectName,
-		ContainerBackend:               containerBackend,
-		CmdData:                        &commonCmdData,
-		CleanupDisabled:                werfConfig.Meta.Cleanup.DisableCleanup,
-		GitHistoryBasedCleanupDisabled: werfConfig.Meta.Cleanup.DisableGitHistoryBasedPolicy,
-	})
-
-	toDockerRegistry, err := common.CreateDockerRegistry(ctx, toAddr.Repo, *commonCmdData.InsecureRegistry, *commonCmdData.SkipTlsVerifyRegistry)
-
 	return logboek.Context(ctx).LogProcess("Copy stages").DoError(func() error {
 		logboek.Context(ctx).Info().LogFDetails("From: %s\n", fromAddr)
 		logboek.Context(ctx).Info().LogFDetails("To: %s\n", toAddr.String())
 
-		return stages.Copy(ctx, fromAddr, toAddr, fromStorageManager, toDockerRegistry, stages.CopyOptions{
-			InsecureRegistry:      commonCmdData.InsecureRegistry,
-			SkipTlsVerifyRegistry: commonCmdData.SkipTlsVerifyRegistry,
-			All:                   cmdData.All,
-			ProjectName:           projectName,
+		return stages.Copy(ctx, fromAddr, toAddr, stages.CopyOptions{
+			ProjectName:      projectName,
+			ContainerBackend: containerBackend,
+			CommonCmdData:    &commonCmdData,
+			WerfConfig:       werfConfig,
+			All:              false,
 		})
 	})
 }

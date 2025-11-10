@@ -3,42 +3,48 @@ package stages
 import (
 	"context"
 
-	"github.com/werf/werf/v2/pkg/docker_registry"
+	"github.com/werf/werf/v2/cmd/werf/common"
+	"github.com/werf/werf/v2/pkg/config"
+	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/ref"
-	"github.com/werf/werf/v2/pkg/storage/manager"
 )
 
 type CopyOptions struct {
-	InsecureRegistry      *bool
-	SkipTlsVerifyRegistry *bool
-	All                   bool
-	ProjectName           string
+	ProjectName      string
+	ContainerBackend container_backend.ContainerBackend
+	CommonCmdData    *common.CmdData
+	WerfConfig       *config.WerfConfig
+	All              bool
 }
 
-func Copy(ctx context.Context, fromAddr *ref.Addr, toAddr *ref.Addr, fromStorageManager *manager.StorageManager, toDockerRegistry docker_registry.Interface, opts CopyOptions) error {
-	fromStorage, err := NewStorageAccessor(ctx, fromAddr, fromStorageManager, toDockerRegistry, StorageAccessorOptions{
+func Copy(ctx context.Context, fromAddr, toAddr *ref.Addr, opts CopyOptions) error {
+	from, err := NewStorageAccessor(ctx, fromAddr, StorageAccessorOptions{
 		RegistryOptions: RegistryStorageOptions{
-			InsecureRegistry:      opts.InsecureRegistry,
-			SkipTlsVerifyRegistry: opts.SkipTlsVerifyRegistry,
+			ProjectName:                  opts.ProjectName,
+			ContainerBackend:             opts.ContainerBackend,
+			CommonCmdData:                opts.CommonCmdData,
+			DisableCleanup:               opts.WerfConfig.Meta.Cleanup.DisableCleanup,
+			DisableGitHistoryBasedPolicy: opts.WerfConfig.Meta.Cleanup.DisableGitHistoryBasedPolicy,
 		},
-		ArchiveOptions: ArchiveStorageOptions{},
 	})
 	if err != nil {
 		return err
 	}
 
-	toStorage, err := NewStorageAccessor(ctx, toAddr, fromStorageManager, toDockerRegistry, StorageAccessorOptions{
+	to, err := NewStorageAccessor(ctx, fromAddr, StorageAccessorOptions{
 		RegistryOptions: RegistryStorageOptions{
-			InsecureRegistry:      opts.InsecureRegistry,
-			SkipTlsVerifyRegistry: opts.SkipTlsVerifyRegistry,
+			ProjectName:                  opts.ProjectName,
+			ContainerBackend:             opts.ContainerBackend,
+			CommonCmdData:                opts.CommonCmdData,
+			DisableCleanup:               opts.WerfConfig.Meta.Cleanup.DisableCleanup,
+			DisableGitHistoryBasedPolicy: opts.WerfConfig.Meta.Cleanup.DisableGitHistoryBasedPolicy,
 		},
-		ArchiveOptions: ArchiveStorageOptions{},
 	})
 	if err != nil {
 		return err
 	}
 
-	return fromStorage.CopyTo(ctx, toStorage, copyToOptions{
+	return from.CopyTo(ctx, to, copyToOptions{
 		All:         opts.All,
 		ProjectName: opts.ProjectName,
 	})
