@@ -380,8 +380,19 @@ func SetupRepoOptions(cmdData *CmdData, cmd *cobra.Command, opts RepoDataOptions
 	SetupRepo(cmdData, cmd, opts)
 }
 
+func SetupRepoWithNameOptions(cmdData *CmdData, cmd *cobra.Command, name string, opts RepoDataOptions) {
+	SetupInsecureRegistry(cmdData, cmd)
+	SetupSkipTlsVerifyRegistry(cmdData, cmd)
+	SetupRepoWithName(cmdData, cmd, name, opts)
+}
+
 func SetupRepo(cmdData *CmdData, cmd *cobra.Command, opts RepoDataOptions) {
 	cmdData.Repo = NewRepoData("repo", opts)
+	cmdData.Repo.SetupCmd(cmd)
+}
+
+func SetupRepoWithName(cmdData *CmdData, cmd *cobra.Command, name string, opts RepoDataOptions) {
+	cmdData.Repo = NewRepoData(name, opts)
 	cmdData.Repo.SetupCmd(cmd)
 }
 
