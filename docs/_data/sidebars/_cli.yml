@@ -27,6 +27,9 @@ cli: &cli
           - title: werf bundle copy
             url: /reference/cli/werf_bundle_copy.html
 
+          - title: werf bundle plan
+            url: /reference/cli/werf_bundle_plan.html
+
           - title: werf bundle publish
             url: /reference/cli/werf_bundle_publish.html
 
