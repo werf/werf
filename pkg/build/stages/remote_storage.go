@@ -28,7 +28,7 @@ func (s *RemoteStorage) CopyTo(ctx context.Context, to StorageAccessor, opts cop
 }
 
 func (s *RemoteStorage) CopyFromArchive(ctx context.Context, fromArchive *ArchiveStorage, opts copyToOptions) error {
-	return s.copyAllFromArchive(ctx, fromArchive, opts)
+	return s.copyAllFromArchive(ctx, fromArchive)
 }
 
 func (s *RemoteStorage) CopyFromRemote(ctx context.Context, fromRemote *RemoteStorage, opts copyToOptions) error {
@@ -58,5 +58,10 @@ func (s *RemoteStorage) copyAllFromRemote(ctx context.Context, fromRemote *Remot
 			return err
 		}
 	}
+
+	return nil
+}
+
+func (s *RemoteStorage) copyAllFromArchive(ctx context.Context, fromArchive *ArchiveStorage) error {
 	return nil
 }

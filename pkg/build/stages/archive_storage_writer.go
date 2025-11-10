@@ -2,8 +2,10 @@ package stages
 
 import (
 	"archive/tar"
+	"bytes"
 	"compress/gzip"
 	"fmt"
+	"io"
 	"os"
 	"time"
 
@@ -12,7 +14,7 @@ import (
 
 type ArchiveStorageWriter interface {
 	Open() error
-	WriteStageArchive(data []byte) error
+	WriteStageArchive(tag string, data []byte) error
 	Save() error
 }
 
@@ -73,8 +75,19 @@ func (writer *ArchiveStorageFileWriter) Open() error {
 	return nil
 }
 
-func (writer *ArchiveStorageFileWriter) WriteStageArchive(data []byte) error {
+func (writer *ArchiveStorageFileWriter) WriteStageArchive(tag string, data []byte) error {
 	now := time.Now()
+	buf := bytes.NewBuffer(nil)
+	zipper := gzip.NewWriter(buf)
+
+	if _, err := io.Copy(zipper, bytes.NewReader(data)); err != nil {
+		return fmt.Errorf("unable to gzip image archive data: %w", err)
+	}
+
+	if err := zipper.Close(); err != nil {
+		return fmt.Errorf("unable to close gzip image archive: %w", err)
+	}
+
 	header := &tar.Header{
 		Name:       archiveStageFileName,
 		Typeflag:   tar.TypeReg,
