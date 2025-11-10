@@ -14,6 +14,7 @@ import (
 	"github.com/werf/werf/v2/cmd/werf/build"
 	bundle_apply "github.com/werf/werf/v2/cmd/werf/bundle/apply"
 	bundle_copy "github.com/werf/werf/v2/cmd/werf/bundle/copy"
+	bundle_plan "github.com/werf/werf/v2/cmd/werf/bundle/plan"
 	bundle_publish "github.com/werf/werf/v2/cmd/werf/bundle/publish"
 	bundle_render "github.com/werf/werf/v2/cmd/werf/bundle/render"
 	"github.com/werf/werf/v2/cmd/werf/ci_env"
@@ -173,6 +174,7 @@ func bundleCmd(ctx context.Context) *cobra.Command {
 	cmd.AddCommand(
 		bundle_publish.NewCmd(ctx),
 		bundle_apply.NewCmd(ctx),
+		bundle_plan.NewCmd(ctx),
 		bundle_render.NewCmd(ctx),
 		bundle_copy.NewCmd(ctx),
 	)
