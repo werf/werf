@@ -1,5 +1,25 @@
 # Changelog
 
+## [2.53.0](https://github.com/werf/werf/compare/v2.52.0...v2.53.0) (2025-11-10)
+
+
+### Features
+
+* **build:** support imageSpec stage without registry  ([#7053](https://github.com/werf/werf/issues/7053)) ([cad58f0](https://github.com/werf/werf/commit/cad58f066e2b8a8d2beb1672d9080820261b81a5))
+* **deploy:** add `werf rollback` command ([4effe69](https://github.com/werf/werf/commit/4effe69adc1cf3f45b1c4b2a82733b54d3196056))
+* **deploy:** new `werf bundle plan` command ([cffad6a](https://github.com/werf/werf/commit/cffad6a478e73349cb492f09a597244727ce5d9a))
+* **deploy:** new `werf lint` command ([8284016](https://github.com/werf/werf/commit/8284016a49d37e8075d385ecf7135cac50a0e8c5))
+
+
+### Bug Fixes
+
+* build error "undefined: tmp_manager.ReleaseProjectDir" ([b090ae7](https://github.com/werf/werf/commit/b090ae7e6546e3bbba1d74474608c7957c2f2e5d))
+* **deploy:** `--timeout` and CTRL-C not stopping deployment correctly ([143ce54](https://github.com/werf/werf/commit/143ce54131efad6e05bcbdb324780bb42ef6f9df))
+* **deploy:** canceled operations not displayed in the end of deployment ([551eacb](https://github.com/werf/werf/commit/551eacb3079750594daada99d1e62296e33a366e))
+* **deploy:** empty Release.Info.First(Last)Deployed ([946c269](https://github.com/werf/werf/commit/946c269083999370b773769c5e5937ee3238fb0d))
+* **deploy:** error `unable to acquire lock` if install to new namespace ([92b1106](https://github.com/werf/werf/commit/92b1106c35eb12cd38be05a2a3b2827bafc0353b))
+* **host-cleanup:** don't use "file age" as metric for tmp data cleaning ([d970341](https://github.com/werf/werf/commit/d970341aa32cd0da4ee6e2fc600a7ee1402adff3))
+
 ## [2.52.0](https://github.com/werf/werf/compare/v2.51.4...v2.52.0) (2025-11-06)
 
 
