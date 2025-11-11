@@ -277,28 +277,34 @@ func (cmdData *CmdData) processFlags() error {
 		return fmt.Errorf("invalid --uninstall-report-path %q: extension must be either .json or unspecified", cmdData.UninstallReportPath)
 	}
 
-	switch ext := filepath.Ext(cmdData.InstallGraphPath); ext {
-	case ".dot":
-	case "":
-		cmdData.InstallGraphPath += ".dot"
-	default:
-		return fmt.Errorf("invalid --deploy-graph-path %q: extension must be either .dot or unspecified", cmdData.InstallGraphPath)
+	if cmdData.InstallGraphPath != "" {
+		switch ext := filepath.Ext(cmdData.InstallGraphPath); ext {
+		case ".dot":
+		case "":
+			cmdData.InstallGraphPath += ".dot"
+		default:
+			return fmt.Errorf("invalid --deploy-graph-path %q: extension must be either .dot or unspecified", cmdData.InstallGraphPath)
+		}
 	}
 
-	switch ext := filepath.Ext(cmdData.RollbackGraphPath); ext {
-	case ".dot":
-	case "":
-		cmdData.RollbackGraphPath += ".dot"
-	default:
-		return fmt.Errorf("invalid --rollback-graph-path %q: extension must be either .dot or unspecified", cmdData.RollbackGraphPath)
+	if cmdData.RollbackGraphPath != "" {
+		switch ext := filepath.Ext(cmdData.RollbackGraphPath); ext {
+		case ".dot":
+		case "":
+			cmdData.RollbackGraphPath += ".dot"
+		default:
+			return fmt.Errorf("invalid --rollback-graph-path %q: extension must be either .dot or unspecified", cmdData.RollbackGraphPath)
+		}
 	}
 
-	switch ext := filepath.Ext(cmdData.UninstallGraphPath); ext {
-	case ".dot":
-	case "":
-		cmdData.UninstallGraphPath += ".dot"
-	default:
-		return fmt.Errorf("invalid --uninstall-graph-path %q: extension must be either .dot or unspecified", cmdData.UninstallGraphPath)
+	if cmdData.UninstallGraphPath != "" {
+		switch ext := filepath.Ext(cmdData.UninstallGraphPath); ext {
+		case ".dot":
+		case "":
+			cmdData.UninstallGraphPath += ".dot"
+		default:
+			return fmt.Errorf("invalid --uninstall-graph-path %q: extension must be either .dot or unspecified", cmdData.UninstallGraphPath)
+		}
 	}
 
 	cmdData.ValuesSet = append(util.PredefinedValuesByEnvNamePrefix("WERF_SET_", "WERF_SET_STRING_", "WERF_SET_FILE_", "WERF_SET_DOCKER_CONFIG_JSON_VALUE"), cmdData.ValuesSet...)
