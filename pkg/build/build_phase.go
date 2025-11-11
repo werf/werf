@@ -1266,3 +1266,7 @@ func (phase *BuildPhase) Clone() Phase {
 	u := *phase
 	return &u
 }
+
+func (phase *BuildPhase) Report() *ImagesReport {
+	return phase.ImagesReport
+}

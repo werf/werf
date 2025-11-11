@@ -32,6 +32,7 @@ import (
 	"github.com/werf/werf/v2/pkg/logging"
 	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/true_git"
+	"github.com/werf/werf/v2/pkg/util/option"
 	"github.com/werf/werf/v2/pkg/werf"
 	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
@@ -40,8 +41,6 @@ const (
 	CleaningCommandsForceOptionDescription = "First remove containers that use werf docker images which are going to be deleted"
 	StubRepoAddress                        = "stub/repository"
 	StubTag                                = "TAG"
-	DefaultBuildParallelTasksLimit         = 5
-	DefaultCleanupParallelTasksLimit       = 10
 
 	DefaultSaveBuildReport     = false
 	DefaultBuildReportPathJSON = ".werf-build-report.json"
@@ -173,11 +172,7 @@ func SetupBuildReportPath(cmdData *CmdData, cmd *cobra.Command) {
 }
 
 func GetSaveBuildReport(cmdData *CmdData) bool {
-	if cmdData.SaveBuildReport == nil {
-		return false
-	}
-
-	return *cmdData.SaveBuildReport
+	return option.PtrValueOrDefault(cmdData.SaveBuildReport, false)
 }
 
 func GetBuildReportPathAndFormat(cmdData *CmdData) (string, build.ReportFormat, error) {
@@ -692,21 +687,6 @@ Defaults to:
 * interactive terminal width or %d`, 140))
 }
 
-func SetupParallelOptions(cmdData *CmdData, cmd *cobra.Command, defaultValue int64) {
-	SetupParallel(cmdData, cmd)
-	SetupParallelTasksLimit(cmdData, cmd, defaultValue)
-}
-
-func SetupParallel(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.Parallel = new(bool)
-	cmd.Flags().BoolVarP(cmdData.Parallel, "parallel", "p", util.GetBoolEnvironmentDefaultTrue("WERF_PARALLEL"), "Run in parallel (default $WERF_PARALLEL or true)")
-}
-
-func SetupParallelTasksLimit(cmdData *CmdData, cmd *cobra.Command, defaultValue int64) {
-	cmdData.ParallelTasksLimit = new(int64)
-	cmd.Flags().Int64VarP(cmdData.ParallelTasksLimit, "parallel-tasks-limit", "", defaultValue, "Parallel tasks limit, set -1 to remove the limitation (default $WERF_PARALLEL_TASKS_LIMIT or 5)")
-}
-
 func SetupLogProjectDir(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.LogProjectDir = new(bool)
 	cmd.Flags().BoolVarP(cmdData.LogProjectDir, "log-project-dir", "", util.GetBoolEnvironmentDefaultFalse("WERF_LOG_PROJECT_DIR"), `Print current project directory path (default $WERF_LOG_PROJECT_DIR)`)
@@ -717,9 +697,21 @@ func SetupIntrospectAfterError(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(cmdData.IntrospectAfterError, "introspect-error", "", false, "Introspect failed stage in the state, right after running failed assembly instruction")
 }
 
+func GetIntrospectAfterError(cmdData *CmdData) bool {
+	return option.PtrValueOrDefault(cmdData.IntrospectAfterError, false)
+}
+
 func SetupIntrospectBeforeError(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.IntrospectBeforeError = new(bool)
 	cmd.Flags().BoolVarP(cmdData.IntrospectBeforeError, "introspect-before-error", "", false, "Introspect failed stage in the clean state, before running all assembly instructions of the stage")
+}
+
+func GetIntrospectBeforeError(cmdData *CmdData) bool {
+	return option.PtrValueOrDefault(cmdData.IntrospectBeforeError, false)
+}
+
+func GetIntrospectStage(cmdData *CmdData) []string {
+	return option.PtrValueOrDefault(cmdData.StagesToIntrospect, []string{})
 }
 
 func SetupIntrospectStage(cmdData *CmdData, cmd *cobra.Command) {
@@ -764,21 +756,6 @@ func allStagesNames() []string {
 	}
 
 	return stageNames
-}
-
-func GetParallelTasksLimit(cmdData *CmdData) (int64, error) {
-	v, err := util.GetInt64EnvVar("WERF_PARALLEL_TASKS_LIMIT")
-	if err != nil {
-		return 0, err
-	}
-	if v == nil {
-		v = cmdData.ParallelTasksLimit
-	}
-	if *v <= 0 {
-		return -1, nil
-	} else {
-		return *v, nil
-	}
 }
 
 func GetLocalStagesStorage(containerBackend container_backend.ContainerBackend) *storage.LocalStagesStorage {
@@ -1185,12 +1162,8 @@ func GetOptionalRelease(cmdData *CmdData) string {
 
 // GetRequireBuiltImages returns true if --require-built-images is set or --skip-build is set.
 // There is no way to determine if both options are used, so no warning.
-func GetRequireBuiltImages(ctx context.Context, cmdData *CmdData) bool {
-	if cmdData.RequireBuiltImages != nil && *cmdData.RequireBuiltImages {
-		return true
-	}
-
-	return false
+func GetRequireBuiltImages(cmdData *CmdData) bool {
+	return option.PtrValueOrDefault(cmdData.RequireBuiltImages, false)
 }
 
 func GetIntrospectOptions(cmdData *CmdData, werfConfig *config.WerfConfig) (build.IntrospectOptions, error) {
@@ -1205,7 +1178,8 @@ func GetIntrospectOptions(cmdData *CmdData, werfConfig *config.WerfConfig) (buil
 	}
 
 	introspectOptions := build.IntrospectOptions{}
-	for _, optionValue := range *cmdData.StagesToIntrospect {
+
+	for _, optionValue := range GetIntrospectStage(cmdData) {
 		var imageName, stageName string
 		{
 			parts := strings.SplitN(optionValue, "/", 2)
@@ -1388,6 +1362,10 @@ func LogVersion() {
 func SetupVirtualMerge(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.VirtualMerge = new(bool)
 	cmd.Flags().BoolVarP(cmdData.VirtualMerge, "virtual-merge", "", util.GetBoolEnvironmentDefaultFalse("WERF_VIRTUAL_MERGE"), "Enable virtual/ephemeral merge commit mode when building current application state ($WERF_VIRTUAL_MERGE by default)")
+}
+
+func GetVirtualMerge(cmdData *CmdData) bool {
+	return option.PtrValueOrDefault(cmdData.VirtualMerge, false)
 }
 
 func getFlags(cmd *cobra.Command, persistent bool) *pflag.FlagSet {
