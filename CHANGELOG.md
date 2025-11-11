@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.51.5](https://github.com/werf/werf/compare/v2.51.4...v2.51.5) (2025-11-11)
+
+
+### Bug Fixes
+
+* **deploy:** deploy command always create `.dot` file ([d163686](https://github.com/werf/werf/commit/d163686b723adc11e93d2dae08e054ba9baabe16))
+
 ## [2.51.4](https://github.com/werf/werf/compare/v2.51.3...v2.51.4) (2025-11-06)
 
 
