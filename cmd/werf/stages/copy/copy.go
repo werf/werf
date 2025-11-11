@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	helm_v3 "github.com/werf/3p-helm-for-werf-helm/cmd/helm"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/build/stages"
@@ -55,7 +54,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupConfigPath(&commonCmdData, cmd)
 
 	common.SetupGiterminismOptions(&commonCmdData, cmd)
-	common.SetupRepoWithNameOptions(&commonCmdData, cmd, "from", common.RepoDataOptions{}) //TODO унести отсюда
+	//common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{OptionalRepo: true}) //TODO унести отсюда
 	common.SetupSynchronization(&commonCmdData, cmd)
 
 	common.SetupEnvironment(&commonCmdData, cmd)
@@ -75,7 +74,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	commonCmdData.SetupPlatform(cmd)
 
-	//cmd.Flags().StringVarP(&cmdData.From, "from", "", "", "Source address to copy stages from. Use archive:PATH for bundle archive or [docker://]REPO for container registry.")
+	cmd.Flags().StringVarP(&cmdData.From, "from", "", "", "Source address to copy stages from. Use archive:PATH for bundle archive or [docker://]REPO for container registry.")
 	cmd.Flags().StringVarP(&cmdData.To, "to", "", "", "Destination address to copy stages to. Use archive:PATH for bundle archive or [docker://]REPO for container registry.")
 	cmd.Flags().BoolVarP(&cmdData.All, "all", "", true, "Copy all project stages (default: true). If false, copy only stages for current build.")
 
@@ -87,25 +86,22 @@ func runCopy(ctx context.Context) error {
 		Cmd:                         &commonCmdData,
 		InitWerf:                    true,
 		InitGitDataManager:          true,
-		InitDockerRegistry:          true,
+		InitDockerRegistry:          false,
 		InitProcessContainerBackend: true,
 	})
 	if err != nil {
 		return fmt.Errorf("component init error: %w", err)
 	}
 
-	//TODO: is needed?
-	helm_v3.Settings.Debug = *commonCmdData.LogDebug
-
-	//if cmdData.From == "" {
-	//	return fmt.Errorf("--from=ADDRESS param required")
-	//}
+	if cmdData.From == "" {
+		return fmt.Errorf("--from=ADDRESS param required")
+	}
 
 	if cmdData.To == "" {
 		return fmt.Errorf("--to=ADDRESS param required")
 	}
 
-	fromAddrRaw := *commonCmdData.Repo.Address
+	fromAddrRaw := cmdData.From
 	toAddrRaw := cmdData.To
 
 	fromAddr, err := ref.ParseAddr(fromAddrRaw)
@@ -137,7 +133,7 @@ func runCopy(ctx context.Context) error {
 			ContainerBackend: containerBackend,
 			CommonCmdData:    &commonCmdData,
 			WerfConfig:       werfConfig,
-			All:              false,
+			All:              cmdData.All,
 		})
 	})
 }
