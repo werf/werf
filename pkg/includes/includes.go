@@ -35,13 +35,8 @@ type Include struct {
 	objects map[string]string
 }
 
-func GetWerfIncludesConfigRelPath(workTreeDir, projectDir string) string {
-	relPath := util.GetRelativeToBaseFilepath(workTreeDir, projectDir)
-	if relPath == "." {
-		return defaultIncludesConfigFileName
-	}
-
-	return filepath.Join(relPath, defaultIncludesConfigFileName)
+func GetWerfIncludesConfigRelPath() string {
+	return defaultIncludesConfigFileName
 }
 
 func GetWerfIncludesLockConfigPath(workTreeDir, projectDir string) string {
@@ -62,7 +57,7 @@ type InitIncludesOptions struct {
 }
 
 func Init(ctx context.Context, opts InitIncludesOptions) ([]*Include, error) {
-	config, err := NewConfig(ctx, opts.FileReader, GetWerfIncludesConfigRelPath(opts.LocalGitRepo.WorkTreeDir, opts.ProjectDir), opts.CreateOrUpdateLockFile)
+	config, err := NewConfig(ctx, opts.FileReader, GetWerfIncludesConfigRelPath(), opts.CreateOrUpdateLockFile)
 	if err != nil {
 		return nil, fmt.Errorf("unable to initialize includes: %w", err)
 	}
