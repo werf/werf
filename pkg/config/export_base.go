@@ -39,23 +39,23 @@ func (c *ExportBase) AutoExcludeExportAndCheck(exp autoExcludeExport) bool {
 		return false
 	}
 
-	isIncludedSubPath := func(path string) bool {
-		return lo.SomeBy(c.GetIncludePathsForAutoExclude(), func(includePath string) bool {
-			return isSubPath(includePath, path)
-		})
-	}
-
-	isExcludedSubPath := func(path string) bool {
-		return lo.SomeBy(c.GetExcludePathsForAutoExclude(), func(excludePath string) bool {
-			return isSubPath(excludePath, path)
-		})
-	}
-
 	for _, expIncludePath := range exp.GetIncludePathsForAutoExclude() {
-		if isIncludedSubPath(expIncludePath) || isExcludedSubPath(expIncludePath) {
+		// If exact path is included in current export, do not exclude
+		if slices.Contains(c.GetIncludePathsForAutoExclude(), expIncludePath) {
+			return false
+		}
+
+		// If expIncludePath is a sub-path of any existing include, skip adding exclude
+		if isSubPathOfSomePath(expIncludePath, c.GetIncludePathsForAutoExclude()) {
 			continue
 		}
 
+		// If expIncludePath is covered by any existing exclude, skip
+		if isSubPathOfSomePath(expIncludePath, c.GetExcludePathsForAutoExclude()) {
+			continue
+		}
+
+		// Otherwise, calculate relative path and add to excludes
 		extraExcludePath, err := filepath.Rel(path.Join(c.GetTo()), path.Join("/", expIncludePath)) // TODO rel
 		if err != nil {
 			panic(err)
@@ -67,9 +67,17 @@ func (c *ExportBase) AutoExcludeExportAndCheck(exp autoExcludeExport) bool {
 	return true
 }
 
+// isSubPath checks if the given subPath is a sub-path of the given path
 func isSubPath(subPath, path string) bool {
 	subPathWithSlashEnding := strings.TrimRight(subPath, "/") + "/"
 	return strings.HasPrefix(path, subPathWithSlashEnding) || path == subPath
+}
+
+// isSubPathOfSomePath checks if the given subPath is a sub-path of any path in the provided list
+func isSubPathOfSomePath(subPath string, paths []string) bool {
+	return lo.SomeBy(paths, func(p string) bool {
+		return isSubPath(subPath, p)
+	})
 }
 
 func (c *ExportBase) GetIncludePathsForAutoExclude() []string {

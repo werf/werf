@@ -57,7 +57,7 @@ var _ = Describe("ExportBase", func() {
 			BeTrue(),
 		),
 		Entry(
-			"should return false and auto exclude if to paths are the same and no include paths (0)",
+			"should return false and auto exclude if two paths are the same and no include paths (0)",
 			&config.ExportBase{
 				Add: "/a",
 				To:  "/",
@@ -69,7 +69,7 @@ var _ = Describe("ExportBase", func() {
 			BeFalse(),
 		),
 		Entry(
-			"should return false and auto exclude if to paths are the same and no include paths (1)",
+			"should return false and auto exclude if two paths are the same and no include paths (1)",
 			&config.ExportBase{
 				Add: "/a",
 				To:  "/app",
