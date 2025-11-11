@@ -112,7 +112,7 @@ func printEachWorkerOutput(ctx context.Context, workers []*parallelWorker) error
 			// If failed worker is found, print its output
 			for _, w := range workers {
 				if w.Failed() {
-					return printWorkerOutput(ctx, w)
+					return printWorkerOutput(context.WithoutCancel(ctx), w)
 				}
 			}
 			// Otherwise, return the error from ctx
@@ -131,20 +131,30 @@ func printWorkerOutput(ctx context.Context, worker *parallelWorker) error {
 	var offset int64
 	var err error
 
-	for worker.Readable() {
-		if err = logboek.Context(ctx).Streams().DoErrorWithoutIndent(func() error {
-			offset, err = io.CopyBuffer(logboek.Context(ctx).OutStream(), worker, make([]byte, 1024))
-			return err
-		}); err != nil {
-			return fmt.Errorf("failed to copy output: %w", err)
-		}
+	buf := make([]byte, 1024)
 
-		if offset == 0 {
-			time.Sleep(time.Millisecond * 100)
+	for worker.Readable() {
+		select {
+		case <-ctx.Done():
+			return nil
+		default:
+			if err = logboek.Context(ctx).Streams().DoErrorWithoutIndent(func() error {
+				offset, err = io.CopyBuffer(logboek.Context(ctx).OutStream(), worker, buf)
+				return err
+			}); err != nil {
+				return fmt.Errorf("failed to copy output: %w", err)
+			}
+
+			clear(buf)
+
+			if offset == 0 {
+				time.Sleep(time.Millisecond * 100)
+			}
 		}
 	}
 
 	logboek.Context(ctx).LogOptionalLn()
+
 	return nil
 }
 

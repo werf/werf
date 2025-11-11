@@ -28,9 +28,10 @@ type parallelWorker struct {
 // Write implements io.Writer.
 // It appends to file and accumulates total write offset.
 func (w *parallelWorker) Write(p []byte) (int, error) {
-	if w.halfClosed.Load() {
-		return 0, fmt.Errorf("worker %d is half closed but tries to write: %s", w.ID, p)
-	}
+	// TODO (zaytsev): uncomment after fixing of parallel logic (a task must be executed in blocking mode to correctly handle deferred calls)
+	// if w.halfClosed.Load() {
+	//	 return 0, fmt.Errorf("worker is half closed but tries to write: %s", p)
+	// }
 	offset, err := w.file.Write(p)
 	w.writeOffset.Add(int64(offset))
 	return offset, err
@@ -85,6 +86,10 @@ func (w *parallelWorker) Close() error {
 
 // Cleanup removes tmp file
 func (w *parallelWorker) Cleanup() error {
+	if !w.halfClosed.Load() {
+		return fmt.Errorf("worker %d is not half closed yet", w.ID)
+	}
+
 	if err := os.Remove(w.file.Name()); err != nil {
 		return fmt.Errorf("failed to remove tmp file for worker %d: %w", w.ID, err)
 	}
