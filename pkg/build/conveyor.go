@@ -11,6 +11,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/samber/lo"
+
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	stylePkg "github.com/werf/logboek/pkg/style"
@@ -386,9 +388,9 @@ type ShouldBeBuiltOptions struct {
 	ReportFormat      ReportFormat
 }
 
-func (c *Conveyor) ShouldBeBuilt(ctx context.Context, opts ShouldBeBuiltOptions) error {
+func (c *Conveyor) ShouldBeBuilt(ctx context.Context, opts ShouldBeBuiltOptions) ([]*ImagesReport, error) {
 	if err := c.determineStages(ctx); err != nil {
-		return err
+		return nil, err
 	}
 
 	buildCtx, buf := c.prepareBuildCtx(ctx)
@@ -408,7 +410,12 @@ func (c *Conveyor) ShouldBeBuilt(ctx context.Context, opts ShouldBeBuiltOptions)
 	if err != nil {
 		c.printDeferredBuildLog(ctx, buf)
 	}
-	return err
+
+	reports := lo.Map(phases, func(phase Phase, _ int) *ImagesReport {
+		return phase.Report()
+	})
+
+	return reports, err
 }
 
 func (c *Conveyor) FetchLastImageStage(ctx context.Context, targetPlatform, imageName string) error {
@@ -533,13 +540,13 @@ func (c *Conveyor) printDeferredBuildLog(_ context.Context, buf *bytes.Buffer) {
 	_, _ = os.Stdout.Write(buf.Bytes())
 }
 
-func (c *Conveyor) Build(ctx context.Context, opts BuildOptions) error {
+func (c *Conveyor) Build(ctx context.Context, opts BuildOptions) ([]*ImagesReport, error) {
 	if err := c.checkContainerBackendSupported(ctx); err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := c.determineStages(ctx); err != nil {
-		return err
+		return nil, err
 	}
 
 	buildCtx, buf := c.prepareBuildCtx(ctx)
@@ -554,7 +561,12 @@ func (c *Conveyor) Build(ctx context.Context, opts BuildOptions) error {
 	if err != nil {
 		c.printDeferredBuildLog(ctx, buf)
 	}
-	return err
+
+	reports := lo.Map(phases, func(phase Phase, _ int) *ImagesReport {
+		return phase.Report()
+	})
+
+	return reports, err
 }
 
 func (c *Conveyor) Export(ctx context.Context, opts ExportOptions) error {

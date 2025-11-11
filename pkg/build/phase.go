@@ -16,4 +16,5 @@ type Phase interface {
 	AfterImageStages(ctx context.Context, img *image.Image) error
 	ImageProcessingShouldBeStopped(ctx context.Context, img *image.Image) bool
 	Clone() Phase
+	Report() *ImagesReport
 }

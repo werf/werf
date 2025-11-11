@@ -10,6 +10,7 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/nelm/pkg/common"
+	"github.com/werf/werf/v2/pkg/util/option"
 )
 
 type CmdData struct {
@@ -182,7 +183,7 @@ func (cmdData *CmdData) SetupPlatform(cmd *cobra.Command) {
 }
 
 func (cmdData *CmdData) GetPlatform() []string {
-	return *cmdData.Platform
+	return option.PtrValueOrDefault(cmdData.Platform, []string{})
 }
 
 func (cmdData *CmdData) SetupSkipDependenciesRepoRefresh(cmd *cobra.Command) {
