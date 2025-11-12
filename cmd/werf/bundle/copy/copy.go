@@ -13,7 +13,6 @@ import (
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/deploy/bundles"
 	"github.com/werf/werf/v2/pkg/docker_registry"
-	"github.com/werf/werf/v2/pkg/tmp_manager"
 	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
 
@@ -82,12 +81,6 @@ func runCopy(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("component init error: %w", err)
 	}
-
-	defer func() {
-		if err := tmp_manager.DelegateCleanup(ctx); err != nil {
-			logboek.Context(ctx).Warn().LogF("Temporary files cleanup preparation failed: %s\n", err)
-		}
-	}()
 
 	helm_v3.Settings.Debug = *commonCmdData.LogDebug
 
