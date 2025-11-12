@@ -18,7 +18,7 @@ type CopyOptions struct {
 }
 
 func Copy(ctx context.Context, fromAddr, toAddr *ref.Addr, opts CopyOptions) error {
-	from, err := NewStorageAccessor(ctx, fromAddr, StorageAccessorOptions{
+	from, err := NewStorageSrcAccessor(ctx, fromAddr, StorageAccessorOptions{
 		RegistryOptions: RegistryStorageOptions{
 			ProjectName:                  opts.ProjectName,
 			ContainerBackend:             opts.ContainerBackend,
@@ -31,7 +31,7 @@ func Copy(ctx context.Context, fromAddr, toAddr *ref.Addr, opts CopyOptions) err
 		return err
 	}
 
-	to, err := NewStorageAccessor(ctx, fromAddr, StorageAccessorOptions{
+	to, err := NewStorageDstAccessor(ctx, toAddr, StorageAccessorOptions{
 		RegistryOptions: RegistryStorageOptions{
 			ProjectName:                  opts.ProjectName,
 			ContainerBackend:             opts.ContainerBackend,

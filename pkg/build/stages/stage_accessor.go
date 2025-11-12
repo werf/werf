@@ -36,36 +36,10 @@ type RegistryStorageOptions struct {
 type ArchiveStorageOptions struct {
 }
 
-func NewStorageAccessor(ctx context.Context, addr *ref.Addr, all bool, opts StorageAccessorOptions) (StorageAccessor, error) {
-	switch {
-	case addr.RegistryAddress != nil:
-		storageManager, err := common.NewStorageManager(ctx, &common.NewStorageManagerConfig{
-			ProjectName:                    opts.RegistryOptions.ProjectName,
-			ContainerBackend:               opts.RegistryOptions.ContainerBackend,
-			CmdData:                        opts.RegistryOptions.CommonCmdData,
-			CleanupDisabled:                opts.RegistryOptions.DisableCleanup,
-			GitHistoryBasedCleanupDisabled: opts.RegistryOptions.DisableGitHistoryBasedPolicy,
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		dockerRegistry, err := common.CreateDockerRegistry(ctx, addr.Repo, *opts.RegistryOptions.CommonCmdData.InsecureRegistry, *opts.RegistryOptions.CommonCmdData.SkipTlsVerifyRegistry)
-		if err != nil {
-			return nil, err
-		}
-
-		return NewRemoteStorage(addr.RegistryAddress, storageManager, dockerRegistry), nil
-	case addr.ArchiveAddress != nil:
-		return NewArchiveStorage(NewArchiveStorageFileReader(addr.ArchiveAddress.Path), NewArchiveStorageFileWriter(addr.ArchiveAddress.Path)), nil
-	default:
-		panic(fmt.Sprintf("invalid address given %#v", addr))
-	}
-}
-
 func NewStorageSrcAccessor(ctx context.Context, addr *ref.Addr, opts StorageAccessorOptions) (StorageAccessor, error) {
 	switch {
 	case addr.RegistryAddress != nil:
+		opts.RegistryOptions.CommonCmdData.Repo.Address = &addr.RegistryAddress.Repo
 		storageManager, err := common.NewStorageManager(ctx, &common.NewStorageManagerConfig{
 			ProjectName:                    opts.RegistryOptions.ProjectName,
 			ContainerBackend:               opts.RegistryOptions.ContainerBackend,
