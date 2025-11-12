@@ -28,11 +28,11 @@ func purge(ctx context.Context, dryRun bool) error {
 	projectDirsToRemove := make([]string, 0, len(tmpFiles))
 
 	for _, finfo := range tmpFiles {
-		if strings.HasPrefix(finfo.Name(), projectDirPrefix) {
+		if strings.HasPrefix(finfo.Name(), ProjectDirPrefix) {
 			projectDirsToRemove = append(projectDirsToRemove, filepath.Join(werf.GetTmpDir(), finfo.Name()))
 		}
 
-		if strings.HasPrefix(finfo.Name(), commonPrefix) {
+		if strings.HasPrefix(finfo.Name(), CommonPrefix) {
 			filesToRemove = append(filesToRemove, filepath.Join(werf.GetTmpDir(), finfo.Name()))
 		}
 	}
