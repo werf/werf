@@ -19,11 +19,11 @@ werf config render [IMAGE_NAME...] [options]
       --config=""
             Use custom configuration file (default $WERF_CONFIG or werf.yaml in the project         
             directory)
+      --config-render-path=""
+            Custom path for storing rendered configuration file              
       --config-templates-dir=""
             Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf   
             in working directory)
-      --config-render-path=""
-            Custom path for storing rendered configuration file
       --debug-templates=false
             Enable debug mode for Go templates (default $WERF_DEBUG_TEMPLATES or false)
       --dev=false

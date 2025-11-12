@@ -41,11 +41,11 @@ werf rollback --revision 10
       --config=""
             Use custom configuration file (default $WERF_CONFIG or werf.yaml in the project         
             directory)
+      --config-render-path=""
+            Custom path for storing rendered configuration file
       --config-templates-dir=""
             Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf   
             in working directory)
-      --config-render-path=""
-            Custom path for storing rendered configuration file
       --dev=false
             Enable development mode (default $WERF_DEV).
             The mode allows working with project files without doing redundant commits during       

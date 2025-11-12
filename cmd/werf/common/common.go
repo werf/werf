@@ -936,7 +936,7 @@ func GetCustomWerfConfigTemplatesDirRelPath(giterminismManager giterminism_manag
 }
 
 func GetCustomWerfConfigRenderPath(cmdData *CmdData) (string, error) {
-	if *cmdData.ConfigRenderPath == "" {
+	if cmdData.ConfigRenderPath == nil || *cmdData.ConfigRenderPath == "" {
 		return "", nil
 	}
 
