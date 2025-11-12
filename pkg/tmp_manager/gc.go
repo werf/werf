@@ -8,11 +8,20 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"time"
 
 	"github.com/werf/logboek"
 )
 
-var ErrPathRemoval = errors.New("path removal")
+const (
+	minFileAge = 2 * time.Hour
+)
+
+var (
+	ErrPathRemoval = errors.New("path removal")
+
+	timeSince = time.Since // for stubbing in tests
+)
 
 func ShouldRunAutoGC() (bool, error) {
 	projectDirsToRemove, pathsToRemove, err := collectPaths()
@@ -51,13 +60,12 @@ func runGCForPaths(ctx context.Context, dryRun bool, paths []string) error {
 
 func collectPaths() ([]string, []string, error) {
 	pathsToList := []string{
-		filepath.Join(getReleasedTmpDirs(), projectsServiceDir),
-		filepath.Join(getCreatedTmpDirs(), projectsServiceDir),
-		filepath.Join(getCreatedTmpDirs(), dockerConfigsServiceDir),
-		filepath.Join(getCreatedTmpDirs(), kubeConfigsServiceDir),
-		filepath.Join(getCreatedTmpDirs(), werfConfigRendersServiceDir),
-		filepath.Join(getCreatedTmpDirs(), contextArchivesDir),
-		getContextTmpDir(), // TODO: backward compatible cleaning (will be dropped in v3)
+		filepath.Join(GetReleasedTmpDirs(), projectsServiceDir),
+		filepath.Join(GetCreatedTmpDirs(), projectsServiceDir),
+		filepath.Join(GetCreatedTmpDirs(), dockerConfigsServiceDir),
+		filepath.Join(GetCreatedTmpDirs(), kubeConfigsServiceDir),
+		filepath.Join(GetCreatedTmpDirs(), werfConfigRendersServiceDir),
+		GetContextTmpDir(),
 	}
 
 	dirSlices := make([][]string, 0, len(pathsToList))
@@ -95,6 +103,11 @@ func listDirAndFollowSymlinks(dir string) ([]string, []string, error) {
 		info, err := dirEntry.Info()
 		if err != nil {
 			return nil, nil, fmt.Errorf("file info for %s: %w", dirEntry.Name(), err)
+		}
+
+		// filter out recent files
+		if timeSince(info.ModTime()) < minFileAge {
+			continue
 		}
 
 		linkOrFilePath := filepath.Join(dir, dirEntry.Name())

@@ -11,7 +11,6 @@ import (
 	"github.com/werf/werf/v2/pkg/cleaning"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/host_cleaning"
-	"github.com/werf/werf/v2/pkg/tmp_manager"
 	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
 
@@ -75,12 +74,6 @@ func runReset(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("component init error: %w", err)
 	}
-
-	defer func() {
-		if err := tmp_manager.DelegateCleanup(ctx); err != nil {
-			logboek.Context(ctx).Warn().LogF("Temporary files cleanup preparation failed: %s\n", err)
-		}
-	}()
 
 	containerBackend := commonManager.ContainerBackend()
 
