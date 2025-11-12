@@ -10,6 +10,7 @@ import (
 	"github.com/werf/werf/v2/pkg/build/stages"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/ref"
+	"github.com/werf/werf/v2/pkg/tmp_manager"
 	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
 
@@ -54,7 +55,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupConfigPath(&commonCmdData, cmd)
 
 	common.SetupGiterminismOptions(&commonCmdData, cmd)
-	//common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{OptionalRepo: true}) //TODO унести отсюда
+	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{})
 	common.SetupSynchronization(&commonCmdData, cmd)
 
 	common.SetupEnvironment(&commonCmdData, cmd)
@@ -74,8 +75,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	commonCmdData.SetupPlatform(cmd)
 
-	cmd.Flags().StringVarP(&cmdData.From, "from", "", "", "Source address to copy stages from. Use archive:PATH for bundle archive or [docker://]REPO for container registry.")
-	cmd.Flags().StringVarP(&cmdData.To, "to", "", "", "Destination address to copy stages to. Use archive:PATH for bundle archive or [docker://]REPO for container registry.")
+	cmd.Flags().StringVarP(&cmdData.From, "from", "", "", "Source address to copy stages from. Use archive:PATH for stage archive or [docker://]REPO for container registry.")
+	cmd.Flags().StringVarP(&cmdData.To, "to", "", "", "Destination address to copy stages to. Use archive:PATH for stage archive or [docker://]REPO for container registry.")
 	cmd.Flags().BoolVarP(&cmdData.All, "all", "", true, "Copy all project stages (default: true). If false, copy only stages for current build.")
 
 	return cmd
@@ -86,7 +87,6 @@ func runCopy(ctx context.Context) error {
 		Cmd:                         &commonCmdData,
 		InitWerf:                    true,
 		InitGitDataManager:          true,
-		InitDockerRegistry:          false,
 		InitProcessContainerBackend: true,
 	})
 	if err != nil {
@@ -99,6 +99,10 @@ func runCopy(ctx context.Context) error {
 
 	if cmdData.To == "" {
 		return fmt.Errorf("--to=ADDRESS param required")
+	}
+
+	if cmdData.From == cmdData.To {
+		return fmt.Errorf("--from=ADDRESS and --to=ADDRESS must be different")
 	}
 
 	fromAddrRaw := cmdData.From
@@ -124,16 +128,20 @@ func runCopy(ctx context.Context) error {
 
 	projectName := werfConfig.Meta.Project
 
+	projectTmpDir, err := tmp_manager.CreateProjectDir(ctx)
+
 	return logboek.Context(ctx).LogProcess("Copy stages").DoError(func() error {
 		logboek.Context(ctx).Info().LogFDetails("From: %s\n", fromAddr)
 		logboek.Context(ctx).Info().LogFDetails("To: %s\n", toAddr.String())
 
 		return stages.Copy(ctx, fromAddr, toAddr, stages.CopyOptions{
-			ProjectName:      projectName,
-			ContainerBackend: containerBackend,
-			CommonCmdData:    &commonCmdData,
-			WerfConfig:       werfConfig,
-			All:              cmdData.All,
+			AllStages:          cmdData.All,
+			ProjectName:        projectName,
+			BaseTmpDir:         projectTmpDir,
+			ContainerBackend:   containerBackend,
+			CommonCmdData:      &commonCmdData,
+			WerfConfig:         werfConfig,
+			GiterminismManager: giterminismManager,
 		})
 	})
 }

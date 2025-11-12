@@ -33,7 +33,7 @@ func (reader *ArchiveStorageFileReader) ReadArchiveStage() ([]byte, error) {
 	defer closer()
 
 	if err != nil {
-		return nil, fmt.Errorf("unable to open stages archive: %w", err)
+		return nil, fmt.Errorf("unable to open bundle archive: %w", err)
 	}
 
 	b := bytes.NewBuffer(nil)
@@ -41,22 +41,18 @@ func (reader *ArchiveStorageFileReader) ReadArchiveStage() ([]byte, error) {
 	for {
 		header, err := treader.Next()
 		if err == io.EOF {
-			return nil, fmt.Errorf("no stages archive found in the archive %q", reader.Path)
+			return nil, fmt.Errorf("no chart archive found in the bundle archive %q", reader.Path)
 		}
 		if err != nil {
 			return nil, fmt.Errorf("error reading tar archive: %w", err)
 		}
 
-		if header.Typeflag == tar.TypeReg {
-			continue
-		}
-
-		if header.Name != archiveStageFileName {
+		if header.Typeflag != tar.TypeReg {
 			continue
 		}
 
 		if _, err := io.Copy(b, treader); err != nil {
-			return nil, fmt.Errorf("unable to read stage archive %q from the archive %q: %w", archiveStageFileName, reader.Path, err)
+			return nil, fmt.Errorf("unable to read chart archive %q from the bundle archive %q: %w", archiveStageFileName, reader.Path, err)
 		}
 
 		return b.Bytes(), nil
@@ -85,4 +81,16 @@ func (reader *ArchiveStorageFileReader) openForReading() (*tar.Reader, func() er
 	}
 
 	return tar.NewReader(unzipper), closer, nil
+}
+
+type ImageArchiveReadCloser struct {
+	reader io.Reader
+	closer func() error
+}
+
+func NewImageArchiveReadCloser(reader io.Reader, closer func() error) *ImageArchiveReadCloser {
+	return &ImageArchiveReadCloser{
+		reader: reader,
+		closer: closer,
+	}
 }
