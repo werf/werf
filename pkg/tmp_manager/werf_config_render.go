@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 )
 
-func CreateWerfConfigRender(dir string) (string, error) {
-	newFile, err := newTmpFile(dir, WerfConfigRenderPrefix)
+func CreateWerfConfigRender() (string, error) {
+	newFile, err := newTmpFile(WerfConfigRenderPrefix)
 	if err != nil {
 		return "", err
 	}

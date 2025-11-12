@@ -17,6 +17,7 @@ import (
 	"github.com/Masterminds/sprig/v3"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/go-git/go-git/v5/plumbing/transport"
+	"github.com/werf/werf/v2/pkg/file_manager"
 	"gopkg.in/yaml.v2"
 
 	"github.com/werf/3p-helm/pkg/engine"
@@ -33,8 +34,8 @@ type WerfConfigOptions struct {
 	DebugTemplates      bool
 }
 
-func RenderWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, customWerfConfigRenderDir string, imageNameList []string, giterminismManager giterminism_manager.Interface, opts WerfConfigOptions) error {
-	_, werfConfig, err := GetWerfConfig(ctx, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, customWerfConfigRenderDir, giterminismManager, opts)
+func RenderWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, customWerfConfigRenderPath string, imageNameList []string, giterminismManager giterminism_manager.Interface, opts WerfConfigOptions) error {
+	_, werfConfig, err := GetWerfConfig(ctx, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, customWerfConfigRenderPath, giterminismManager, opts)
 	if err != nil {
 		return err
 	}
@@ -77,7 +78,7 @@ func renderSpecificImages(werfConfig *WerfConfig, imageNameList []string) error 
 	return nil
 }
 
-func GetWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, customWerfConfigRenderDir string, giterminismManager giterminism_manager.Interface, opts WerfConfigOptions) (string, *WerfConfig, error) {
+func GetWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, customWerfConfigRenderPath string, giterminismManager giterminism_manager.Interface, opts WerfConfigOptions) (string, *WerfConfig, error) {
 	var path string
 	var config *WerfConfig
 	err := logboek.Context(ctx).Info().LogProcess("Render werf config").DoError(func() error {
@@ -92,9 +93,18 @@ func GetWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfConfi
 			return fmt.Errorf("unable to render werf config: %w", err)
 		}
 
-		werfConfigRenderPath, err := tmp_manager.CreateWerfConfigRender(customWerfConfigRenderDir)
-		if err != nil {
-			return err
+		var werfConfigRenderPath string
+
+		if customWerfConfigRenderPath == "" {
+			werfConfigRenderPath, err = tmp_manager.CreateWerfConfigRender()
+			if err != nil {
+				return err
+			}
+		} else {
+			werfConfigRenderPath, err = file_manager.CreateWerfConfigRender(customWerfConfigRenderPath)
+			if err != nil {
+				return err
+			}
 		}
 
 		if opts.LogRenderedFilePath {
