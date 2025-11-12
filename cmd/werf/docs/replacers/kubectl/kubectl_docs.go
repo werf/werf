@@ -13,7 +13,7 @@ func GetKubectlDocs() structs.DocsStruct {
 	var docs structs.DocsStruct
 
 	docs.LongMD = "kubectl controls the Kubernetes cluster manager.\n\n" +
-		"Find more information at: https://kubernetes.io/docs/reference/kubectl/overview/"
+		"Find more information at: https://kubernetes.io/docs/reference/kubectl/"
 
 	return docs
 }

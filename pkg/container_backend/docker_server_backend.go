@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -429,4 +430,12 @@ func (backend *DockerServerBackend) PruneVolumes(ctx context.Context, options pr
 	}
 
 	return prune.Report(report), err
+}
+
+func (backend *DockerServerBackend) SaveImageToStream(ctx context.Context, imageName string) (io.ReadCloser, error) {
+	return docker.CliImageSaveToStream(ctx, imageName)
+}
+
+func (backend *DockerServerBackend) LoadImageFromStream(ctx context.Context, input io.Reader) (string, error) {
+	return docker.CliLoadFromStream(ctx, input)
 }

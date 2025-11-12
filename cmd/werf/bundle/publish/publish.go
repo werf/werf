@@ -109,11 +109,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupSynchronization(&commonCmdData, cmd)
 
-	common.SetupAddAnnotations(&commonCmdData, cmd)
-	common.SetupAddLabels(&commonCmdData, cmd)
-
-	commonCmdData.SetupSkipDependenciesRepoRefresh(cmd)
-
 	common.SetupSaveBuildReport(&commonCmdData, cmd)
 	common.SetupBuildReportPath(&commonCmdData, cmd)
 
@@ -134,23 +129,26 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupRequireBuiltImages(&commonCmdData, cmd)
 	commonCmdData.SetupPlatform(cmd)
 
-	commonCmdData.SetupHelmCompatibleChart(cmd, false)
-	commonCmdData.SetupRenameChart(cmd)
-
 	commonCmdData.SetupSkipImageSpecStage(cmd)
 	commonCmdData.SetupDebugTemplates(cmd)
 	commonCmdData.SetupAllowIncludesUpdate(cmd)
+
+	lo.Must0(common.SetupMinimalKubeConnectionFlags(&commonCmdData, cmd))
+	lo.Must0(common.SetupChartRepoConnectionFlags(&commonCmdData, cmd))
+	lo.Must0(common.SetupValuesFlags(&commonCmdData, cmd))
+	lo.Must0(common.SetupSecretValuesFlags(&commonCmdData, cmd))
+
+	common.SetupAddAnnotations(&commonCmdData, cmd)
+	common.SetupAddLabels(&commonCmdData, cmd)
+	commonCmdData.SetupSkipDependenciesRepoRefresh(cmd)
+	commonCmdData.SetupHelmCompatibleChart(cmd, false)
+	commonCmdData.SetupRenameChart(cmd)
 
 	defaultTag := os.Getenv("WERF_TAG")
 	if defaultTag == "" {
 		defaultTag = "latest"
 	}
 	cmd.Flags().StringVarP(&cmdData.Tag, "tag", "", defaultTag, "Publish bundle into container registry repo by the provided tag ($WERF_TAG or latest by default)")
-
-	lo.Must0(common.SetupMinimalKubeConnectionFlags(&commonCmdData, cmd))
-	lo.Must0(common.SetupChartRepoConnectionFlags(&commonCmdData, cmd))
-	lo.Must0(common.SetupValuesFlags(&commonCmdData, cmd))
-	lo.Must0(common.SetupSecretValuesFlags(&commonCmdData, cmd))
 
 	return cmd
 }
@@ -178,6 +176,9 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 	containerBackend := commonManager.ContainerBackend()
 
 	defer func() {
+		if err := tmp_manager.DelegateCleanup(ctx); err != nil {
+			logboek.Context(ctx).Warn().LogF("Temporary files cleanup preparation failed: %s\n", err)
+		}
 		if err := common.RunAutoHostCleanup(ctx, &commonCmdData, containerBackend); err != nil {
 			logboek.Context(ctx).Error().LogF("Auto host cleanup failed: %s\n", err)
 		}
@@ -210,7 +211,6 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 	if err != nil {
 		return fmt.Errorf("getting project tmp dir failed: %w", err)
 	}
-	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
 	buildOptions, err := common.GetBuildOptions(ctx, &commonCmdData, werfConfig, imagesToProcess)
 	if err != nil {

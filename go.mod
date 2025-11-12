@@ -39,7 +39,6 @@ require (
 	github.com/gookit/color v1.5.4
 	github.com/gosuri/uitable v0.0.4
 	github.com/goware/urlx v0.3.2
-	github.com/hashicorp/go-version v1.6.0
 	github.com/hofstadter-io/cinful v1.0.0
 	github.com/mitchellh/copystructure v1.2.0
 	github.com/moby/buildkit v0.13.1
@@ -60,13 +59,13 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/werf/3p-helm v0.0.0-20251021224308-a90f195bd29a
 	github.com/werf/3p-helm-for-werf-helm v0.0.0-20241217155820-089f92cd5c9d
-	github.com/werf/common-go v0.0.0-20251023101023-1aa12556cc61
+	github.com/werf/common-go v0.0.0-20251106163127-f918bc5950db
 	github.com/werf/copy-recurse v0.2.7
-	github.com/werf/kubedog v0.13.1-0.20251008125513-7b4fcf23698a
+	github.com/werf/kubedog v0.13.1-0.20251110132552-6ffc5a117ada
 	github.com/werf/kubedog-for-werf-helm v0.0.0-20241217155728-9d45c48b82b6
 	github.com/werf/lockgate v0.1.1
 	github.com/werf/logboek v0.6.1
-	github.com/werf/nelm v1.15.1-0.20251022120311-f4ca24c70ec6
+	github.com/werf/nelm v1.16.2-0.20251110132847-fbdbc629c70f
 	github.com/werf/nelm-for-werf-helm v0.0.0-20241217155925-b0e6734d1dbf
 	go.opentelemetry.io/otel v1.24.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.24.0

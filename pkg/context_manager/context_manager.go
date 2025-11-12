@@ -9,17 +9,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/google/uuid"
-
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/path_matcher"
 	"github.com/werf/werf/v2/pkg/tmp_manager"
 )
-
-func getTmpArchivePath() string {
-	return filepath.Join(tmp_manager.GetContextTmpDir(), uuid.NewString())
-}
 
 func GetContextAddFilesPaths(projectDir, contextDir string, contextAddFiles []string) ([]string, error) {
 	var addFilePaths []string
@@ -117,7 +111,10 @@ type AddContextAddFilesToContextArchiveOpts struct {
 }
 
 func AddContextAddFilesToContextArchive(ctx context.Context, opts *AddContextAddFilesToContextArchiveOpts) (string, error) {
-	destinationArchivePath := getTmpArchivePath()
+	destinationArchivePath, err := tmp_manager.CreateContextArchivePath(ctx)
+	if err != nil {
+		return "", fmt.Errorf("unable to create context archive path: %w", err)
+	}
 
 	pathsToExcludeFromSourceArchive := opts.ContextAddFiles
 	if err := util.CreateArchiveBasedOnAnotherOne(ctx, opts.OriginalArchivePath, destinationArchivePath, util.CreateArchiveOptions{

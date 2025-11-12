@@ -119,28 +119,12 @@ werf plan --repo registry.mydomain.com/web --env production`,
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified repo, to pull base images")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
-	common.SetupReleaseStorageSQLConnection(&commonCmdData, cmd)
 	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
 	common.SetupSynchronization(&commonCmdData, cmd)
-
-	common.StubSetupStatusProgressPeriod(&commonCmdData, cmd)
-	common.StubSetupHooksStatusProgressPeriod(&commonCmdData, cmd)
-	// TODO(3.0): remove this, useless
-	common.SetupReleasesHistoryMax(&commonCmdData, cmd)
-
-	common.SetupRelease(&commonCmdData, cmd, true)
-	common.SetupNamespace(&commonCmdData, cmd, true)
-
-	common.SetupAddAnnotations(&commonCmdData, cmd)
-	common.SetupAddLabels(&commonCmdData, cmd)
-
-	common.SetupSetDockerConfigJsonValue(&commonCmdData, cmd)
-
-	commonCmdData.SetupSkipDependenciesRepoRefresh(cmd)
 
 	commonCmdData.SetupWithoutImages(cmd)
 	commonCmdData.SetupFinalImagesOnly(cmd, true)
@@ -166,13 +150,40 @@ werf plan --repo registry.mydomain.com/web --env production`,
 	common.SetupBackendStoragePath(&commonCmdData, cmd)
 	common.SetupProjectName(&commonCmdData, cmd, false)
 
-	common.SetupNetworkParallelism(&commonCmdData, cmd)
-	common.SetupNoInstallCRDs(&commonCmdData, cmd)
+	commonCmdData.SetupSkipImageSpecStage(cmd)
+	commonCmdData.SetupDebugTemplates(cmd)
+	commonCmdData.SetupAllowIncludesUpdate(cmd)
+
+	lo.Must0(common.SetupKubeConnectionFlags(&commonCmdData, cmd))
+	lo.Must0(common.SetupChartRepoConnectionFlags(&commonCmdData, cmd))
+	lo.Must0(common.SetupValuesFlags(&commonCmdData, cmd))
+	lo.Must0(common.SetupSecretValuesFlags(&commonCmdData, cmd))
+
+	common.SetupAddAnnotations(&commonCmdData, cmd)
+	common.SetupAddLabels(&commonCmdData, cmd)
+	common.SetupChartProvenanceKeyring(&commonCmdData, cmd)
+	common.SetupChartProvenanceStrategy(&commonCmdData, cmd)
+	common.SetupDeployGraphPath(&commonCmdData, cmd)
+	common.SetupExtraRuntimeAnnotations(&commonCmdData, cmd)
+	common.SetupExtraRuntimeLabels(&commonCmdData, cmd)
 	common.SetupForceAdoption(&commonCmdData, cmd)
-	common.SetupNoRemoveManualChanges(&commonCmdData, cmd)
+	common.SetupNamespace(&commonCmdData, cmd, true)
+	common.SetupNetworkParallelism(&commonCmdData, cmd)
 	common.SetupNoFinalTrackingFlag(&commonCmdData, cmd)
+	common.SetupNoInstallCRDs(&commonCmdData, cmd)
+	common.SetupNoRemoveManualChanges(&commonCmdData, cmd)
+	common.SetupRelease(&commonCmdData, cmd, true)
+	common.SetupReleaseInfoAnnotations(&commonCmdData, cmd)
 	common.SetupReleaseLabel(&commonCmdData, cmd)
+	common.SetupReleaseStorageDriver(&commonCmdData, cmd)
+	common.SetupReleaseStorageSQLConnection(&commonCmdData, cmd)
+	common.SetupReleasesHistoryMax(&commonCmdData, cmd) // TODO(3.0): remove this, useless
+	common.SetupSetDockerConfigJsonValue(&commonCmdData, cmd)
+	common.SetupTemplatesAllowDNS(&commonCmdData, cmd)
+	common.StubSetupHooksStatusProgressPeriod(&commonCmdData, cmd)
+	common.StubSetupStatusProgressPeriod(&commonCmdData, cmd)
 	common.StubSetupTrackTimeout(&commonCmdData, cmd)
+	commonCmdData.SetupSkipDependenciesRepoRefresh(cmd)
 
 	cmd.Flags().BoolVarP(&cmdData.DetailedExitCode, "exit-code", "", util.GetBoolEnvironmentDefaultFalse("WERF_EXIT_CODE"), "If true, returns exit code 0 if no changes, exit code 2 if any changes planned or exit code 1 in case of an error (default $WERF_EXIT_CODE or false)")
 	cmd.Flags().BoolVarP(&cmdData.ShowInsignificantDiffs, "show-insignificant-diffs", "", util.GetBoolEnvironmentDefaultFalse("WERF_SHOW_INSIGNIFICANT_DIFFS"), "Show insignificant diff lines ($WERF_SHOW_INSIGNIFICANT_DIFFS by default)")
@@ -187,15 +198,6 @@ werf plan --repo registry.mydomain.com/web --env production`,
 		defaultDiffLines = nelmcommon.DefaultDiffContextLines
 	}
 	cmd.Flags().IntVarP(&cmdData.DiffContextLines, "diff-context-lines", "", defaultDiffLines, "Show N lines of context around diffs ($WERF_DIFF_CONTEXT_LINES by default)")
-
-	commonCmdData.SetupSkipImageSpecStage(cmd)
-	commonCmdData.SetupDebugTemplates(cmd)
-	commonCmdData.SetupAllowIncludesUpdate(cmd)
-
-	lo.Must0(common.SetupKubeConnectionFlags(&commonCmdData, cmd))
-	lo.Must0(common.SetupChartRepoConnectionFlags(&commonCmdData, cmd))
-	lo.Must0(common.SetupValuesFlags(&commonCmdData, cmd))
-	lo.Must0(common.SetupSecretValuesFlags(&commonCmdData, cmd))
 
 	return cmd
 }
@@ -218,6 +220,12 @@ func runMain(ctx context.Context, imageNameListFromArgs []string) error {
 	if err != nil {
 		return fmt.Errorf("component init error: %w", err)
 	}
+
+	defer func() {
+		if err := tmp_manager.DelegateCleanup(ctx); err != nil {
+			logboek.Context(ctx).Warn().LogF("Temporary files cleanup preparation failed: %s\n", err)
+		}
+	}()
 
 	containerBackend := commonManager.ContainerBackend()
 
@@ -273,7 +281,6 @@ func run(
 	if err != nil {
 		return fmt.Errorf("getting project tmp dir failed: %w", err)
 	}
-	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
 	buildOptions, err := common.GetBuildOptions(ctx, &commonCmdData, werfConfig, imagesToProcess)
 	if err != nil {
@@ -406,6 +413,9 @@ func run(
 	serviceAnnotations["project.werf.io/name"] = projectName
 	serviceAnnotations["project.werf.io/env"] = commonCmdData.Environment
 
+	extraRuntimeAnnotations := lo.Assign(commonCmdData.ExtraRuntimeAnnotations, serviceAnnotations)
+	releaseInfoAnnotations := lo.Assign(commonCmdData.ReleaseInfoAnnotations, serviceAnnotations)
+
 	extraLabels, err := common.GetUserExtraLabels(&commonCmdData)
 	if err != nil {
 		return fmt.Errorf("get user extra labels: %w", err)
@@ -457,6 +467,8 @@ func run(
 		SecretValuesOptions:         commonCmdData.SecretValuesOptions,
 		ChartAppVersion:             common.GetHelmChartConfigAppVersion(werfConfig),
 		ChartDirPath:                relChartPath,
+		ChartProvenanceKeyring:      commonCmdData.ChartProvenanceKeyring,
+		ChartProvenanceStrategy:     commonCmdData.ChartProvenanceStrategy,
 		ChartRepoSkipUpdate:         commonCmdData.ChartRepoSkipUpdate,
 		DefaultChartAPIVersion:      chart.APIVersionV2,
 		DefaultChartName:            werfConfig.Meta.Project,
@@ -465,8 +477,10 @@ func run(
 		ErrorIfChangesPlanned:       cmdData.DetailedExitCode,
 		ExtraAnnotations:            extraAnnotations,
 		ExtraLabels:                 extraLabels,
-		ExtraRuntimeAnnotations:     serviceAnnotations,
+		ExtraRuntimeAnnotations:     extraRuntimeAnnotations,
+		ExtraRuntimeLabels:          commonCmdData.ExtraRuntimeLabels,
 		ForceAdoption:               commonCmdData.ForceAdoption,
+		InstallGraphPath:            commonCmdData.InstallGraphPath,
 		LegacyExtraValues:           serviceValues,
 		LegacyLogRegistryStreamOut:  os.Stdout,
 		NetworkParallelism:          commonCmdData.NetworkParallelism,
@@ -474,14 +488,15 @@ func run(
 		NoInstallStandaloneCRDs:     commonCmdData.NoInstallStandaloneCRDs,
 		NoRemoveManualChanges:       commonCmdData.NoRemoveManualChanges,
 		RegistryCredentialsPath:     registryCredentialsPath,
-		ReleaseInfoAnnotations:      serviceAnnotations,
+		ReleaseInfoAnnotations:      releaseInfoAnnotations,
 		ReleaseLabels:               releaseLabels,
-		ReleaseStorageDriver:        os.Getenv("HELM_DRIVER"),
+		ReleaseStorageDriver:        commonCmdData.ReleaseStorageDriver,
 		ReleaseStorageSQLConnection: commonCmdData.ReleaseStorageSQLConnection,
 		ShowInsignificantDiffs:      cmdData.ShowInsignificantDiffs,
 		ShowSensitiveDiffs:          cmdData.ShowSensitiveDiffs,
 		ShowVerboseCRDDiffs:         cmdData.ShowVerboseCRDDiffs,
 		ShowVerboseDiffs:            cmdData.ShowVerboseDiffs,
+		TemplatesAllowDNS:           commonCmdData.TemplatesAllowDNS,
 	}); err != nil {
 		return fmt.Errorf("release plan install: %w", err)
 	}

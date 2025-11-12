@@ -17,7 +17,7 @@ func CreateKubeConfigFromBase64(ctx context.Context, base64KubeConfig io.Reader)
 		return "", fmt.Errorf("unable to base64 decode kubeconfig: %w", err)
 	}
 
-	tmpDir, err := newTmpDir(KubeConfigDirPrefix)
+	tmpDir, err := newTmpDir(kubeConfigDirPrefix)
 	if err != nil {
 		return "", fmt.Errorf("unable to create kubeconfig tmp dir: %w", err)
 	}
@@ -31,9 +31,8 @@ func CreateKubeConfigFromBase64(ctx context.Context, base64KubeConfig io.Reader)
 		return "", fmt.Errorf("unable to write file kubeconfig: %w", err)
 	}
 
-	if err := registerCreatedPath(tmpDir, filepath.Join(GetCreatedTmpDirs(), kubeConfigsServiceDir)); err != nil {
-		os.RemoveAll(tmpDir)
-		return "", fmt.Errorf("unable to register created kubeconfigs service dir: %w", err)
+	if err := registrator.queueRegistration(ctx, tmpDir, filepath.Join(getCreatedTmpDirs(), kubeConfigsServiceDir)); err != nil {
+		return "", fmt.Errorf("unable to queue GC registration: %w", err)
 	}
 
 	return kubeConfigPath, nil

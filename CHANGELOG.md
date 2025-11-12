@@ -1,5 +1,89 @@
 # Changelog
 
+## [2.53.2](https://github.com/werf/werf/compare/v2.53.1...v2.53.2) (2025-11-11)
+
+
+### Bug Fixes
+
+* **deploy:** deploy command always create `.dot` file ([a0d8512](https://github.com/werf/werf/commit/a0d85129dbb9b342e8177064b72990cab9b07c0c))
+
+## [2.53.1](https://github.com/werf/werf/compare/v2.53.0...v2.53.1) (2025-11-10)
+
+
+### Miscellaneous Chores
+
+* **release:** force v2.53.1 ([067637d](https://github.com/werf/werf/commit/067637d1163bb80cf07967cd2aa8e8b417705375))
+
+## [2.53.0](https://github.com/werf/werf/compare/v2.52.0...v2.53.0) (2025-11-10)
+
+
+### Features
+
+* **build:** support imageSpec stage without registry  ([#7053](https://github.com/werf/werf/issues/7053)) ([cad58f0](https://github.com/werf/werf/commit/cad58f066e2b8a8d2beb1672d9080820261b81a5))
+* **deploy:** add `werf rollback` command ([4effe69](https://github.com/werf/werf/commit/4effe69adc1cf3f45b1c4b2a82733b54d3196056))
+* **deploy:** new `werf bundle plan` command ([cffad6a](https://github.com/werf/werf/commit/cffad6a478e73349cb492f09a597244727ce5d9a))
+* **deploy:** new `werf lint` command ([8284016](https://github.com/werf/werf/commit/8284016a49d37e8075d385ecf7135cac50a0e8c5))
+
+
+### Bug Fixes
+
+* build error "undefined: tmp_manager.ReleaseProjectDir" ([b090ae7](https://github.com/werf/werf/commit/b090ae7e6546e3bbba1d74474608c7957c2f2e5d))
+* **deploy:** `--timeout` and CTRL-C not stopping deployment correctly ([143ce54](https://github.com/werf/werf/commit/143ce54131efad6e05bcbdb324780bb42ef6f9df))
+* **deploy:** canceled operations not displayed in the end of deployment ([551eacb](https://github.com/werf/werf/commit/551eacb3079750594daada99d1e62296e33a366e))
+* **deploy:** empty Release.Info.First(Last)Deployed ([946c269](https://github.com/werf/werf/commit/946c269083999370b773769c5e5937ee3238fb0d))
+* **deploy:** error `unable to acquire lock` if install to new namespace ([92b1106](https://github.com/werf/werf/commit/92b1106c35eb12cd38be05a2a3b2827bafc0353b))
+* **host-cleanup:** don't use "file age" as metric for tmp data cleaning ([d970341](https://github.com/werf/werf/commit/d970341aa32cd0da4ee6e2fc600a7ee1402adff3))
+
+## [2.52.0](https://github.com/werf/werf/compare/v2.51.4...v2.52.0) (2025-11-06)
+
+
+### Features
+
+* **deploy:** flag `--extra-apiversions` ([21b9109](https://github.com/werf/werf/commit/21b9109ecf8b89ea42892712c218648e7ef6c6f4))
+* **deploy:** flag `--kube-auth-password` ([21b9109](https://github.com/werf/werf/commit/21b9109ecf8b89ea42892712c218648e7ef6c6f4))
+* **deploy:** flag `--kube-auth-provider-config` ([21b9109](https://github.com/werf/werf/commit/21b9109ecf8b89ea42892712c218648e7ef6c6f4))
+* **deploy:** flag `--kube-auth-provider` ([21b9109](https://github.com/werf/werf/commit/21b9109ecf8b89ea42892712c218648e7ef6c6f4))
+* **deploy:** flag `--kube-auth-username` ([21b9109](https://github.com/werf/werf/commit/21b9109ecf8b89ea42892712c218648e7ef6c6f4))
+* **deploy:** flag `--kube-ca-data` ([21b9109](https://github.com/werf/werf/commit/21b9109ecf8b89ea42892712c218648e7ef6c6f4))
+* **deploy:** flag `--kube-cert-data` ([21b9109](https://github.com/werf/werf/commit/21b9109ecf8b89ea42892712c218648e7ef6c6f4))
+* **deploy:** flag `--kube-cert` ([21b9109](https://github.com/werf/werf/commit/21b9109ecf8b89ea42892712c218648e7ef6c6f4))
+* **deploy:** flag `--kube-context-cluster` ([21b9109](https://github.com/werf/werf/commit/21b9109ecf8b89ea42892712c218648e7ef6c6f4))
+* **deploy:** flag `--kube-context-user` ([21b9109](https://github.com/werf/werf/commit/21b9109ecf8b89ea42892712c218648e7ef6c6f4))
+* **deploy:** flag `--kube-impersonate-group` ([21b9109](https://github.com/werf/werf/commit/21b9109ecf8b89ea42892712c218648e7ef6c6f4))
+* **deploy:** flag `--kube-impersonate-uid` ([21b9109](https://github.com/werf/werf/commit/21b9109ecf8b89ea42892712c218648e7ef6c6f4))
+* **deploy:** flag `--kube-impersonate-user` ([21b9109](https://github.com/werf/werf/commit/21b9109ecf8b89ea42892712c218648e7ef6c6f4))
+* **deploy:** flag `--kube-key-data` ([21b9109](https://github.com/werf/werf/commit/21b9109ecf8b89ea42892712c218648e7ef6c6f4))
+* **deploy:** flag `--kube-key` ([21b9109](https://github.com/werf/werf/commit/21b9109ecf8b89ea42892712c218648e7ef6c6f4))
+* **deploy:** flag `--kube-proxy-url` ([21b9109](https://github.com/werf/werf/commit/21b9109ecf8b89ea42892712c218648e7ef6c6f4))
+* **deploy:** flag `--kube-request-timeout` ([21b9109](https://github.com/werf/werf/commit/21b9109ecf8b89ea42892712c218648e7ef6c6f4))
+* **deploy:** flag `--kube-token-path` ([21b9109](https://github.com/werf/werf/commit/21b9109ecf8b89ea42892712c218648e7ef6c6f4))
+* **deploy:** flag `--no-notes` ([21b9109](https://github.com/werf/werf/commit/21b9109ecf8b89ea42892712c218648e7ef6c6f4))
+* **deploy:** flag `--provenance-keyring` ([21b9109](https://github.com/werf/werf/commit/21b9109ecf8b89ea42892712c218648e7ef6c6f4))
+* **deploy:** flag `--provenance-strategy` ([21b9109](https://github.com/werf/werf/commit/21b9109ecf8b89ea42892712c218648e7ef6c6f4))
+* **deploy:** flag `--release-info-annotations` ([21b9109](https://github.com/werf/werf/commit/21b9109ecf8b89ea42892712c218648e7ef6c6f4))
+* **deploy:** flag `--release-storage` ([21b9109](https://github.com/werf/werf/commit/21b9109ecf8b89ea42892712c218648e7ef6c6f4))
+* **deploy:** flag `--runtime-annotations` ([21b9109](https://github.com/werf/werf/commit/21b9109ecf8b89ea42892712c218648e7ef6c6f4))
+* **deploy:** flag `--runtime-labels` ([21b9109](https://github.com/werf/werf/commit/21b9109ecf8b89ea42892712c218648e7ef6c6f4))
+* **deploy:** flag `--set-json` ([21b9109](https://github.com/werf/werf/commit/21b9109ecf8b89ea42892712c218648e7ef6c6f4))
+* **deploy:** flag `--set-literal` ([21b9109](https://github.com/werf/werf/commit/21b9109ecf8b89ea42892712c218648e7ef6c6f4))
+* **deploy:** flag `--templates-allow-dns` ([21b9109](https://github.com/werf/werf/commit/21b9109ecf8b89ea42892712c218648e7ef6c6f4))
+* **deploy:** LOTS of new cli flags ([21b9109](https://github.com/werf/werf/commit/21b9109ecf8b89ea42892712c218648e7ef6c6f4))
+
+## [2.51.4](https://github.com/werf/werf/compare/v2.51.3...v2.51.4) (2025-11-06)
+
+
+### Bug Fixes
+
+* **deploy:** failures in init containers of jobs ignored ([5cbbe69](https://github.com/werf/werf/commit/5cbbe69d12043454a9830f56bf8ca22db913b75c))
+* **deploy:** webhooks not readying ([63dfd5e](https://github.com/werf/werf/commit/63dfd5e0c8a18b448212cbbfa43731b9463079a8))
+
+## [2.51.3](https://github.com/werf/werf/compare/v2.51.2...v2.51.3) (2025-10-31)
+
+
+### Bug Fixes
+
+* **build:** use map access for bridge network IP address ([8f0efe9](https://github.com/werf/werf/commit/8f0efe981ba524c80997009395b9df832b61dbcf))
+
 ## [2.51.2](https://github.com/werf/werf/compare/v2.51.1...v2.51.2) (2025-10-24)
 
 

@@ -17,12 +17,14 @@ import (
 	"github.com/werf/3p-helm/pkg/engine"
 	"github.com/werf/3p-helm/pkg/werf/helmopts"
 	"github.com/werf/common-go/pkg/util"
+	"github.com/werf/logboek"
 	"github.com/werf/nelm/pkg/action"
 	"github.com/werf/nelm/pkg/log"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/deploy/bundles"
 	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
 	"github.com/werf/werf/v2/pkg/docker"
+	"github.com/werf/werf/v2/pkg/tmp_manager"
 	"github.com/werf/werf/v2/pkg/werf"
 	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
@@ -68,53 +70,54 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified repo, to pull base images")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
-	common.SetupReleaseStorageSQLConnection(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
-	common.SetupAddAnnotations(&commonCmdData, cmd)
-	common.SetupAddLabels(&commonCmdData, cmd)
-
-	common.SetupSetDockerConfigJsonValue(&commonCmdData, cmd)
-
-	commonCmdData.SetupSkipDependenciesRepoRefresh(cmd)
-
-	common.SetupSaveDeployReport(&commonCmdData, cmd)
-	common.SetupDeployReportPath(&commonCmdData, cmd)
-
-	common.SetupRelease(&commonCmdData, cmd, false)
-	common.SetupNamespace(&commonCmdData, cmd, false)
-	common.SetupReleasesHistoryMax(&commonCmdData, cmd)
-
-	common.SetupNetworkParallelism(&commonCmdData, cmd)
-	common.SetupDeployGraphPath(&commonCmdData, cmd)
-	common.SetupRollbackGraphPath(&commonCmdData, cmd)
-
-	common.SetupRenderSubchartNotes(&commonCmdData, cmd)
-	common.SetupNoInstallCRDs(&commonCmdData, cmd)
-	common.SetupReleaseLabel(&commonCmdData, cmd)
-	common.SetupForceAdoption(&commonCmdData, cmd)
-	common.SetupNoRemoveManualChanges(&commonCmdData, cmd)
-
 	commonCmdData.SetupDebugTemplates(cmd)
-
-	defaultTag := os.Getenv("WERF_TAG")
-	if defaultTag == "" {
-		defaultTag = "latest"
-	}
-	cmd.Flags().StringVarP(&cmdData.Tag, "tag", "", defaultTag, "Provide exact tag version or semver-based pattern, werf will install or upgrade to the latest version of the specified bundle ($WERF_TAG or latest by default)")
-
-	cmd.Flags().BoolVarP(&cmdData.AutoRollback, "auto-rollback", "R", util.GetBoolEnvironmentDefaultFalse("WERF_AUTO_ROLLBACK"), "Enable auto rollback of the failed release to the previous deployed release version when current deploy process have failed ($WERF_AUTO_ROLLBACK by default)")
-	cmd.Flags().BoolVarP(&cmdData.AutoRollback, "atomic", "", util.GetBoolEnvironmentDefaultFalse("WERF_ATOMIC"), "Enable auto rollback of the failed release to the previous deployed release version when current deploy process have failed ($WERF_ATOMIC by default)")
 
 	lo.Must0(common.SetupKubeConnectionFlags(&commonCmdData, cmd))
 	lo.Must0(common.SetupChartRepoConnectionFlags(&commonCmdData, cmd))
 	lo.Must0(common.SetupValuesFlags(&commonCmdData, cmd))
 	lo.Must0(common.SetupSecretValuesFlags(&commonCmdData, cmd))
 	lo.Must0(common.SetupTrackingFlags(&commonCmdData, cmd))
+
+	common.SetupAddAnnotations(&commonCmdData, cmd)
+	common.SetupAddLabels(&commonCmdData, cmd)
+	common.SetupChartProvenanceKeyring(&commonCmdData, cmd)
+	common.SetupChartProvenanceStrategy(&commonCmdData, cmd)
+	common.SetupDeployGraphPath(&commonCmdData, cmd)
+	common.SetupDeployReportPath(&commonCmdData, cmd)
+	common.SetupExtraRuntimeAnnotations(&commonCmdData, cmd)
+	common.SetupExtraRuntimeLabels(&commonCmdData, cmd)
+	common.SetupForceAdoption(&commonCmdData, cmd)
+	common.SetupNamespace(&commonCmdData, cmd, false)
+	common.SetupNetworkParallelism(&commonCmdData, cmd)
+	common.SetupNoInstallCRDs(&commonCmdData, cmd)
+	common.SetupNoRemoveManualChanges(&commonCmdData, cmd)
+	common.SetupNoShowNotes(&commonCmdData, cmd)
+	common.SetupRelease(&commonCmdData, cmd, false)
+	common.SetupReleaseInfoAnnotations(&commonCmdData, cmd)
+	common.SetupReleaseLabel(&commonCmdData, cmd)
+	common.SetupReleaseStorageDriver(&commonCmdData, cmd)
+	common.SetupReleaseStorageSQLConnection(&commonCmdData, cmd)
+	common.SetupReleasesHistoryMax(&commonCmdData, cmd)
+	common.SetupRenderSubchartNotes(&commonCmdData, cmd)
+	common.SetupRollbackGraphPath(&commonCmdData, cmd)
+	common.SetupSaveDeployReport(&commonCmdData, cmd)
+	common.SetupSetDockerConfigJsonValue(&commonCmdData, cmd)
+	common.SetupTemplatesAllowDNS(&commonCmdData, cmd)
+	commonCmdData.SetupSkipDependenciesRepoRefresh(cmd)
+
+	defaultTag := os.Getenv("WERF_TAG")
+	if defaultTag == "" {
+		defaultTag = "latest"
+	}
+	cmd.Flags().StringVarP(&cmdData.Tag, "tag", "", defaultTag, "Provide exact tag version or semver-based pattern, werf will install or upgrade to the latest version of the specified bundle ($WERF_TAG or latest by default)")
+	cmd.Flags().BoolVarP(&cmdData.AutoRollback, "auto-rollback", "R", util.GetBoolEnvironmentDefaultFalse("WERF_AUTO_ROLLBACK"), "Enable auto rollback of the failed release to the previous deployed release version when current deploy process have failed ($WERF_AUTO_ROLLBACK by default)")
+	cmd.Flags().BoolVarP(&cmdData.AutoRollback, "atomic", "", util.GetBoolEnvironmentDefaultFalse("WERF_ATOMIC"), "Enable auto rollback of the failed release to the previous deployed release version when current deploy process have failed ($WERF_ATOMIC by default)")
 
 	return cmd
 }
@@ -131,6 +134,12 @@ func runApply(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("component init error: %w", err)
 	}
+
+	defer func() {
+		if err := tmp_manager.DelegateCleanup(ctx); err != nil {
+			logboek.Context(ctx).Warn().LogF("Temporary files cleanup preparation failed: %s\n", err)
+		}
+	}()
 
 	repoAddress, err := commonCmdData.Repo.GetAddress()
 	if err != nil {
@@ -191,6 +200,9 @@ func runApply(ctx context.Context) error {
 		return fmt.Errorf("get annotations and labels: %w", err)
 	}
 
+	extraRuntimeAnnotations := lo.Assign(commonCmdData.ExtraRuntimeAnnotations, serviceAnnotations)
+	releaseInfoAnnotations := lo.Assign(commonCmdData.ReleaseInfoAnnotations, serviceAnnotations)
+
 	releaseLabels, err := common.GetReleaseLabels(&commonCmdData)
 	if err != nil {
 		return fmt.Errorf("get release labels: %w", err)
@@ -209,10 +221,13 @@ func runApply(ctx context.Context) error {
 		TrackingOptions:             commonCmdData.TrackingOptions,
 		AutoRollback:                cmdData.AutoRollback,
 		ChartDirPath:                bundlePath,
+		ChartProvenanceKeyring:      commonCmdData.ChartProvenanceKeyring,
+		ChartProvenanceStrategy:     commonCmdData.ChartProvenanceStrategy,
 		ChartRepoSkipUpdate:         commonCmdData.ChartRepoSkipUpdate,
 		ExtraAnnotations:            extraAnnotations,
 		ExtraLabels:                 extraLabels,
-		ExtraRuntimeAnnotations:     serviceAnnotations,
+		ExtraRuntimeAnnotations:     extraRuntimeAnnotations,
+		ExtraRuntimeLabels:          commonCmdData.ExtraRuntimeLabels,
 		ForceAdoption:               commonCmdData.ForceAdoption,
 		InstallGraphPath:            commonCmdData.InstallGraphPath,
 		InstallReportPath:           installReportPath,
@@ -222,14 +237,16 @@ func runApply(ctx context.Context) error {
 		NetworkParallelism:          commonCmdData.NetworkParallelism,
 		NoInstallStandaloneCRDs:     commonCmdData.NoInstallStandaloneCRDs,
 		NoRemoveManualChanges:       commonCmdData.NoRemoveManualChanges,
+		NoShowNotes:                 commonCmdData.NoShowNotes,
 		RegistryCredentialsPath:     registryCredentialsPath,
 		ReleaseHistoryLimit:         commonCmdData.ReleaseHistoryLimit,
-		ReleaseInfoAnnotations:      serviceAnnotations,
+		ReleaseInfoAnnotations:      releaseInfoAnnotations,
 		ReleaseLabels:               releaseLabels,
-		ReleaseStorageDriver:        os.Getenv("HELM_DRIVER"),
+		ReleaseStorageDriver:        commonCmdData.ReleaseStorageDriver,
 		ReleaseStorageSQLConnection: commonCmdData.ReleaseStorageSQLConnection,
 		RollbackGraphPath:           commonCmdData.RollbackGraphPath,
 		ShowSubchartNotes:           commonCmdData.ShowSubchartNotes,
+		TemplatesAllowDNS:           commonCmdData.TemplatesAllowDNS,
 	}); err != nil {
 		return fmt.Errorf("release install: %w", err)
 	}
