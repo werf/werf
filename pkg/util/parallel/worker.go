@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"sync/atomic"
+
+	"github.com/werf/werf/v2/pkg/tmp_manager"
 )
 
 // Worker
@@ -103,7 +105,7 @@ func (w *Worker) Cleanup() error {
 }
 
 func NewWorker(id int) (*Worker, error) {
-	file, err := os.CreateTemp("", fmt.Sprintf("parallel-worker-%d-%d-*.log", os.Getpid(), id))
+	file, err := tmp_manager.TempFile(fmt.Sprintf("parallel-worker-%d-%d-*.log", os.Getpid(), id))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create temp file for worker %d: %w", id, err)
 	}

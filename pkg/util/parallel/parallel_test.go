@@ -14,6 +14,7 @@ import (
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/util/parallel"
+	"github.com/werf/werf/v2/pkg/werf"
 )
 
 var _ = DescribeTable("parallel task",
@@ -35,6 +36,9 @@ var _ = DescribeTable("parallel task",
 			ctx, cancel = context.WithTimeout(ctx, parallelExecutionLimit)
 			defer cancel()
 		}
+
+		// tmp_manager requires werf init
+		Expect(werf.Init(GinkgoT().TempDir(), "")).To(Succeed())
 
 		err := parallel.DoTasks(ctx, numberOfTasks, options, spyTask.Callback)
 

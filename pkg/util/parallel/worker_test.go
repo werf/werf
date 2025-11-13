@@ -8,12 +8,16 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/werf/werf/v2/pkg/util/parallel"
+	"github.com/werf/werf/v2/pkg/werf"
 )
 
 var _ = Describe("worker", func() {
 	var worker *parallel.Worker
 
 	BeforeEach(func() {
+		// tmp_manager requires werf init
+		Expect(werf.Init(GinkgoT().TempDir(), "")).To(Succeed())
+
 		var err error
 		worker, err = parallel.NewWorker(1)
 		Expect(err).To(Succeed())
