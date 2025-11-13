@@ -109,7 +109,7 @@ var _ = DescribeTable("parallel task",
 		2,
 		MatchError("task 1 failed"),
 		[]string{
-			"task 1 prints log\n",
+			"\ntask 1 prints log\n",
 		},
 	),
 	Entry(

@@ -37,7 +37,7 @@ func DoTasks(ctx context.Context, numberOfTasks int, options DoTasksOptions, tas
 	// Determine number of workers and tasks per worker
 	numberOfWorkers, numberOfTasksPerWorker := calculateTasksDistribution(numberOfTasks, options.MaxNumberOfWorkers)
 
-	workers := make([]*parallelWorker, 0, numberOfWorkers)
+	workers := make([]*Worker, 0, numberOfWorkers)
 
 	defer func() {
 		for _, worker := range workers {
@@ -51,7 +51,7 @@ func DoTasks(ctx context.Context, numberOfTasks int, options DoTasksOptions, tas
 	}()
 
 	for i := 0; i < numberOfWorkers; i++ {
-		worker, err := newParallelWorker(i)
+		worker, err := NewWorker(i)
 		if err != nil {
 			return fmt.Errorf("failed to create worker %d: %w", i, err)
 		}
@@ -105,7 +105,7 @@ func DoTasks(ctx context.Context, numberOfTasks int, options DoTasksOptions, tas
 	return g.Wait()
 }
 
-func printEachWorkerOutput(ctx context.Context, workers []*parallelWorker) error {
+func printEachWorkerOutput(ctx context.Context, workers []*Worker) error {
 	for _, worker := range workers {
 		select {
 		case <-ctx.Done():
@@ -127,7 +127,7 @@ func printEachWorkerOutput(ctx context.Context, workers []*parallelWorker) error
 	return nil
 }
 
-func printWorkerOutput(ctx context.Context, worker *parallelWorker) error {
+func printWorkerOutput(ctx context.Context, worker *Worker) error {
 	var offset int64
 	var err error
 
