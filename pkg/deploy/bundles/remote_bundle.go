@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	bundles_registry "github.com/werf/werf/v2/pkg/ref"
 	"sigs.k8s.io/yaml"
 
 	"github.com/werf/3p-helm/pkg/chart"
@@ -14,6 +13,7 @@ import (
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/docker_registry"
+	bundles_registry "github.com/werf/werf/v2/pkg/ref"
 )
 
 var _ BundleAccessor = (*RemoteBundle)(nil)

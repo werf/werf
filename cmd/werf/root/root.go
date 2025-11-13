@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	stages_copy "github.com/werf/werf/v2/cmd/werf/stages/copy"
 
 	"github.com/werf/werf/v2/cmd/werf/build"
 	bundle_apply "github.com/werf/werf/v2/cmd/werf/bundle/apply"
@@ -53,6 +52,7 @@ import (
 	"github.com/werf/werf/v2/cmd/werf/run"
 	"github.com/werf/werf/v2/cmd/werf/slugify"
 	stage_image "github.com/werf/werf/v2/cmd/werf/stage/image"
+	stages_copy "github.com/werf/werf/v2/cmd/werf/stages/copy"
 	"github.com/werf/werf/v2/cmd/werf/synchronization"
 	"github.com/werf/werf/v2/cmd/werf/version"
 	"github.com/werf/werf/v2/pkg/telemetry"

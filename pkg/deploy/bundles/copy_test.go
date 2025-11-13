@@ -9,13 +9,13 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	bundles_registry "github.com/werf/werf/v2/pkg/ref"
 	"sigs.k8s.io/yaml"
 
 	"github.com/werf/3p-helm/pkg/chart"
 	"github.com/werf/3p-helm/pkg/werf/helmopts"
 	"github.com/werf/werf/v2/pkg/docker_registry"
 	"github.com/werf/werf/v2/pkg/logging"
+	bundles_registry "github.com/werf/werf/v2/pkg/ref"
 )
 
 var _ = Describe("Bundle copy", func() {
