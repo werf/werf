@@ -439,15 +439,26 @@ func (c *Conveyor) GetFullImageName(ctx context.Context, imageName string) (stri
 
 func (c *Conveyor) GetImageInfoGetters(opts imagePkg.InfoGetterOptions) ([]*imagePkg.InfoGetter, error) {
 	var imagesGetters []*imagePkg.InfoGetter
-	for _, desc := range c.imagesTree.GetImagesByName(true) {
+	for _, desc := range c.imagesTree.GetImagesByName(opts.OnlyFinal) {
 		name, images := desc.Unpair()
 		platforms := util.MapFuncToSlice(images, func(img *image.Image) string { return img.TargetPlatform })
 
 		if len(platforms) == 1 {
 			img := images[0]
-			getter := c.StorageManager.GetImageInfoGetter(img.Name, img.GetLastNonEmptyStage().GetStageImage().Image.GetStageDesc(), opts)
-			imagesGetters = append(imagesGetters, getter)
-		} else {
+			if opts.OnlyFinal {
+				getter := c.StorageManager.GetImageInfoGetter(img.Name, img.GetLastNonEmptyStage().GetStageImage().Image.GetStageDesc(), opts)
+				imagesGetters = append(imagesGetters, getter)
+			} else {
+				for _, st := range img.GetStages() {
+					stageImage := st.GetStageImage()
+					if stageImage != nil { //FIXME (khurum): kludge
+						stDesc := stageImage.Image.GetStageDesc()
+						getter := c.StorageManager.GetImageInfoGetter(img.Name, stDesc, opts)
+						imagesGetters = append(imagesGetters, getter)
+					}
+				}
+			}
+		} else { //TODO (khurum): ask about this case
 			img := c.imagesTree.GetMultiplatformImage(name)
 			stageDesc := img.GetFinalStageDesc()
 			if stageDesc == nil {
@@ -581,6 +592,14 @@ func (c *Conveyor) determineStages(ctx context.Context) error {
 		DoError(func() error {
 			return c.doDetermineStages(ctx)
 		})
+}
+
+func (c *Conveyor) Calculate(ctx context.Context) error {
+	if err := c.imagesTree.Calculate(ctx); err != nil {
+		return fmt.Errorf("unable to calculate images tree: %w", err)
+	}
+
+	return nil
 }
 
 func (c *Conveyor) doDetermineStages(ctx context.Context) error {

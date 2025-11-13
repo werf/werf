@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/werf/werf/v2/cmd/werf/common"
+	"github.com/werf/werf/v2/pkg/build"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
@@ -18,6 +19,7 @@ type CopyOptions struct {
 	CommonCmdData      *common.CmdData
 	WerfConfig         *config.WerfConfig
 	GiterminismManager *giterminism_manager.Manager
+	BuildOptions       build.BuildOptions
 }
 
 func Copy(ctx context.Context, fromAddr, toAddr *ref.Addr, opts CopyOptions) error {
@@ -54,7 +56,8 @@ func Copy(ctx context.Context, fromAddr, toAddr *ref.Addr, opts CopyOptions) err
 	}
 
 	return from.CopyTo(ctx, to, copyToOptions{
-		All:         opts.AllStages,
-		ProjectName: opts.ProjectName,
+		All:          opts.AllStages,
+		ProjectName:  opts.ProjectName,
+		BuildOptions: opts.BuildOptions,
 	})
 }

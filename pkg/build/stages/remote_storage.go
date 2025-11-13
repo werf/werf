@@ -7,6 +7,7 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/build"
 	"github.com/werf/werf/v2/pkg/docker_registry"
+	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/ref"
 	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/storage/manager"
@@ -17,16 +18,18 @@ type RemoteStorage struct {
 	RegistryClient    docker_registry.Interface
 	StorageManager    *manager.StorageManager
 	ConveyorWithRetry *build.ConveyorWithRetryWrapper
+	BuildOptions      build.BuildOptions
 
 	AllStages bool
 }
 
-func NewRemoteStorage(addr *ref.RegistryAddress, dockerRegistry docker_registry.Interface, stagesStorage *manager.StorageManager, conveyorWithRetry *build.ConveyorWithRetryWrapper, allStages bool) *RemoteStorage {
+func NewRemoteStorage(addr *ref.RegistryAddress, dockerRegistry docker_registry.Interface, stagesStorage *manager.StorageManager, conveyorWithRetry *build.ConveyorWithRetryWrapper, buildOptions build.BuildOptions, allStages bool) *RemoteStorage {
 	return &RemoteStorage{
 		RegistryAddress:   addr,
 		RegistryClient:    dockerRegistry,
 		StorageManager:    stagesStorage,
 		ConveyorWithRetry: conveyorWithRetry,
+		BuildOptions:      buildOptions,
 		AllStages:         allStages,
 	}
 }
@@ -43,11 +46,42 @@ func (s *RemoteStorage) CopyFromRemote(ctx context.Context, fromRemote *RemoteSt
 	if s.AllStages {
 		return s.copyAllFromRemote(ctx, fromRemote, opts.ProjectName)
 	}
-	return s.copyCurrentBuildStagesFromRemote(ctx, fromRemote, opts.ProjectName)
+	return s.copyCurrentBuildStagesFromRemote(ctx, fromRemote)
 }
 
-func (s *RemoteStorage) copyCurrentBuildStagesFromRemote(ctx context.Context, fromRemote *RemoteStorage, projectName string, opts ...storage.Option) error {
-	panic("not implemented yet")
+func (s *RemoteStorage) copyCurrentBuildStagesFromRemote(ctx context.Context, fromRemote *RemoteStorage) error {
+	return fromRemote.ConveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
+		if _, err := c.Build(ctx, fromRemote.BuildOptions); err != nil {
+			return err
+		}
+
+		infoGetters, err := c.GetImageInfoGetters(image.InfoGetterOptions{OnlyFinal: false})
+		if err != nil {
+			return err
+		}
+
+		for _, infoGetter := range infoGetters {
+			reference, err := ref.ParseReference(infoGetter.Tag)
+			if err != nil {
+				return err
+			}
+
+			reference.Repo = s.RegistryAddress.Repo
+			reference.Tag = infoGetter.Tag
+
+			infoGetterName := infoGetter.GetName()
+
+			logboek.Context(ctx).Default().LogFDetails("Source: %s\n", infoGetterName)
+			logboek.Context(ctx).Default().LogFDetails("Destination: %s\n", reference.FullName())
+
+			if err = fromRemote.RegistryClient.CopyImage(ctx, infoGetterName, reference.FullName(), docker_registry.CopyImageOptions{}); err != nil {
+				return fmt.Errorf("error copying stage %s into %s: %w", infoGetterName, reference.FullName(), err)
+			}
+		}
+
+		return nil
+	})
+
 }
 
 func (s *RemoteStorage) copyAllFromRemote(ctx context.Context, fromRemote *RemoteStorage, projectName string, opts ...storage.Option) error {
@@ -67,14 +101,17 @@ func (s *RemoteStorage) copyAllFromRemote(ctx context.Context, fromRemote *Remot
 			if err != nil {
 				return err
 			}
+
 			reference.Repo = s.RegistryAddress.Repo
 			reference.Tag = stageDesc.Info.Tag
 
-			logboek.Context(ctx).Default().LogFDetails("Source: %s\n", stageDesc.Info.Name)
+			stageName := stageDesc.Info.Name
+
+			logboek.Context(ctx).Default().LogFDetails("Source: %s\n", stageName)
 			logboek.Context(ctx).Default().LogFDetails("Destination: %s\n", reference.FullName())
 
-			if err = fromRemote.RegistryClient.CopyImage(ctx, stageDesc.Info.Name, reference.FullName(), docker_registry.CopyImageOptions{}); err != nil {
-				return fmt.Errorf("error copying stage %s into %s: %w", stageDesc.Info.Name, reference.FullName(), err)
+			if err = fromRemote.RegistryClient.CopyImage(ctx, stageName, reference.FullName(), docker_registry.CopyImageOptions{}); err != nil {
+				return fmt.Errorf("error copying stage %s into %s: %w", stageName, reference.FullName(), err)
 			}
 		}
 

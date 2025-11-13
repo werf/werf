@@ -13,8 +13,9 @@ import (
 )
 
 type copyToOptions struct {
-	All         bool
-	ProjectName string
+	All          bool
+	ProjectName  string
+	BuildOptions build.BuildOptions
 }
 
 type StorageAccessor interface {
@@ -77,8 +78,14 @@ func createSrcRemoteStorage(ctx context.Context, addr *ref.Addr, opts StorageAcc
 		return nil, err
 	}
 
-	conveyorWithRetry := build.NewConveyorWithRetryWrapper(opts.WerfConfig, opts.GiterminismManager, opts.GiterminismManager.ProjectDir(), opts.BaseTmpDir, opts.ContainerBackend, storageManager, storageManager.StorageLockManager, build.ConveyorOptions{})
-	return NewRemoteStorage(addr.RegistryAddress, dockerRegistry, storageManager, conveyorWithRetry, opts.AllStages), nil
+	imagesToProcess, err := config.NewImagesToProcess(opts.WerfConfig, nil, *opts.CommonCmdData.FinalImagesOnly, false)
+
+	buildOptions, err := common.GetBuildOptions(ctx, opts.CommonCmdData, opts.WerfConfig, imagesToProcess)
+
+	conveyorOptions, err := common.GetConveyorOptionsWithParallel(ctx, opts.CommonCmdData, imagesToProcess, buildOptions)
+
+	conveyorWithRetry := build.NewConveyorWithRetryWrapper(opts.WerfConfig, opts.GiterminismManager, opts.GiterminismManager.ProjectDir(), opts.BaseTmpDir, opts.ContainerBackend, storageManager, storageManager.StorageLockManager, conveyorOptions)
+	return NewRemoteStorage(addr.RegistryAddress, dockerRegistry, storageManager, conveyorWithRetry, buildOptions, opts.AllStages), nil
 }
 
 func createDstRemoteStorage(ctx context.Context, addr *ref.Addr, insecureRegistry, skipTlsVerifyRegistry, allStages bool) (*RemoteStorage, error) {
@@ -87,7 +94,7 @@ func createDstRemoteStorage(ctx context.Context, addr *ref.Addr, insecureRegistr
 		return nil, err
 	}
 
-	return NewRemoteStorage(addr.RegistryAddress, dockerRegistry, nil, nil, allStages), nil
+	return NewRemoteStorage(addr.RegistryAddress, dockerRegistry, nil, nil, build.BuildOptions{}, allStages), nil
 }
 
 func createArchiveStorage(addr *ref.ArchiveAddress) (*ArchiveStorage, error) {

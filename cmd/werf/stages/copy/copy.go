@@ -11,6 +11,7 @@ import (
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/ref"
 	"github.com/werf/werf/v2/pkg/tmp_manager"
+	"github.com/werf/werf/v2/pkg/true_git"
 	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
 
@@ -73,6 +74,9 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
+	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultBuildParallelTasksLimit)
+
+	commonCmdData.SetupFinalImagesOnly(cmd, false)
 	commonCmdData.SetupPlatform(cmd)
 
 	cmd.Flags().StringVarP(&cmdData.From, "from", "", "", "Source address to copy stages from. Use archive:PATH for stage archive or [docker://]REPO for container registry.")
@@ -87,7 +91,12 @@ func runCopy(ctx context.Context) error {
 		Cmd:                         &commonCmdData,
 		InitWerf:                    true,
 		InitGitDataManager:          true,
+		InitDockerRegistry:          true,
 		InitProcessContainerBackend: true,
+		InitManifestCache:           true,
+		InitTrueGitWithOptions: &common.InitTrueGitOptions{
+			Options: true_git.Options{LiveGitOutput: *commonCmdData.LogDebug},
+		},
 	})
 	if err != nil {
 		return fmt.Errorf("component init error: %w", err)
