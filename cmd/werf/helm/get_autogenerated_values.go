@@ -229,17 +229,17 @@ func runGetServiceValues(ctx context.Context, imageNameListFromArgs []string) er
 		defer conveyorWithRetry.Terminate()
 
 		if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
-			if common.GetRequireBuiltImages(ctx, &commonCmdData) {
+			if common.GetRequireBuiltImages(&commonCmdData) {
 				shouldBeBuiltOptions, err := common.GetShouldBeBuiltOptions(&commonCmdData, imagesToProcess)
 				if err != nil {
 					return err
 				}
 
-				if err := c.ShouldBeBuilt(ctx, shouldBeBuiltOptions); err != nil {
+				if _, err := c.ShouldBeBuilt(ctx, shouldBeBuiltOptions); err != nil {
 					return err
 				}
 			} else {
-				if err := c.Build(ctx, buildOptions); err != nil {
+				if _, err := c.Build(ctx, buildOptions); err != nil {
 					return err
 				}
 			}
