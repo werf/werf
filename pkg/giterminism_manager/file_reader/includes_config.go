@@ -10,7 +10,7 @@ import (
 
 func (r FileReader) IsIncludesConfigExistAnywhere(ctx context.Context, relPath string) (exist bool, err error) {
 	logboek.Context(ctx).Debug().
-		LogBlock("IsGiterminismConfigExistAnywhere").
+		LogBlock("IsIncludesConfigExistAnywhere").
 		Options(applyDebugToLogboek).
 		Do(func() {
 			exist, err = r.IsConfigurationFileExistAnywhere(ctx, relPath)
