@@ -6,15 +6,11 @@ import (
 )
 
 func newFileWithPath(path string) (string, error) {
-	var newFile *os.File
-	var err error
-
 	if path == "" {
 		return "", fmt.Errorf("empty path")
-	} else {
-		newFile, err = os.Create(path)
 	}
 
+	newFile, err := os.Create(path)
 	if err != nil {
 		return "", err
 	}
