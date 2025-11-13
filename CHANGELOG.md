@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.53.3](https://github.com/werf/werf/compare/v2.53.2...v2.53.3) (2025-11-13)
+
+
+### Bug Fixes
+
+* **build, stapel:** exit with error when import nothing ([#7166](https://github.com/werf/werf/issues/7166)) ([6e6f6b4](https://github.com/werf/werf/commit/6e6f6b4ce77783a34a1ea03f39a9afd68973d797))
+* **build, stapel:** throw error if two import configurations contain everything and glob everything ([#7171](https://github.com/werf/werf/issues/7171)) ([c6ba868](https://github.com/werf/werf/commit/c6ba868c7c3082e8d932e4eaaa7ac280fb2c925a))
+* **deploy:** `panic: interface conversion: plan.OperationConfig` ([c7ee56b](https://github.com/werf/werf/commit/c7ee56b6936ad971799f6a5caa2ff8af8333117d))
+* **deploy:** new release created even if no changes ([bdfd07d](https://github.com/werf/werf/commit/bdfd07d1e2f3bdf3b10ebcf1e5ba8c318cfc0d3b))
+* **deploy:** null or empty fields might fail resource deploys ([e213f40](https://github.com/werf/werf/commit/e213f40e2cdf44075ef6912713696cbfa333796c))
+
 ## [2.53.2](https://github.com/werf/werf/compare/v2.53.1...v2.53.2) (2025-11-11)
 
 
