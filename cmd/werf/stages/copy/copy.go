@@ -131,6 +131,9 @@ func runCopy(ctx context.Context) error {
 	containerBackend := commonManager.ContainerBackend()
 
 	giterminismManager, err := common.GetGiterminismManager(ctx, &commonCmdData)
+	if err != nil {
+		return err
+	}
 	_, werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, config.WerfConfigOptions{LogRenderedFilePath: true, Env: commonCmdData.Environment})
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %w", err)
@@ -139,6 +142,9 @@ func runCopy(ctx context.Context) error {
 	projectName := werfConfig.Meta.Project
 
 	projectTmpDir, err := tmp_manager.CreateProjectDir(ctx)
+	if err != nil {
+		return fmt.Errorf("getting project tmp dir failed: %w", err)
+	}
 
 	return logboek.Context(ctx).LogProcess("Copy stages").DoError(func() error {
 		logboek.Context(ctx).Info().LogFDetails("From: %s\n", fromAddr)

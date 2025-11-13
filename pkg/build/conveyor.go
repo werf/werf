@@ -451,14 +451,14 @@ func (c *Conveyor) GetImageInfoGetters(opts imagePkg.InfoGetterOptions) ([]*imag
 			} else {
 				for _, st := range img.GetStages() {
 					stageImage := st.GetStageImage()
-					if stageImage != nil { //FIXME (khurum): kludge
+					if stageImage != nil { // FIXME (khurum): kludge
 						stDesc := stageImage.Image.GetStageDesc()
 						getter := c.StorageManager.GetImageInfoGetter(img.Name, stDesc, opts)
 						imagesGetters = append(imagesGetters, getter)
 					}
 				}
 			}
-		} else { //TODO (khurum): ask about this case
+		} else { // TODO (khurum): ask about this case
 			img := c.imagesTree.GetMultiplatformImage(name)
 			stageDesc := img.GetFinalStageDesc()
 			if stageDesc == nil {

@@ -60,7 +60,7 @@ func NewStorageDstAccessor(ctx context.Context, addr *ref.Addr, opts StorageAcce
 }
 
 func createSrcRemoteStorage(ctx context.Context, addr *ref.Addr, opts StorageAccessorOptions) (*RemoteStorage, error) {
-	opts.CommonCmdData.Repo.Address = &addr.RegistryAddress.Repo //FIXME выдумать что-нить симпатичнее
+	opts.CommonCmdData.Repo.Address = &addr.RegistryAddress.Repo // FIXME выдумать что-нить симпатичнее
 
 	storageManager, err := common.NewStorageManager(ctx, &common.NewStorageManagerConfig{
 		ProjectName:                    opts.WerfConfig.Meta.Project,
@@ -79,10 +79,19 @@ func createSrcRemoteStorage(ctx context.Context, addr *ref.Addr, opts StorageAcc
 	}
 
 	imagesToProcess, err := config.NewImagesToProcess(opts.WerfConfig, nil, *opts.CommonCmdData.FinalImagesOnly, false)
+	if err != nil {
+		return nil, err
+	}
 
 	buildOptions, err := common.GetBuildOptions(ctx, opts.CommonCmdData, opts.WerfConfig, imagesToProcess)
+	if err != nil {
+		return nil, err
+	}
 
 	conveyorOptions, err := common.GetConveyorOptionsWithParallel(ctx, opts.CommonCmdData, imagesToProcess, buildOptions)
+	if err != nil {
+		return nil, err
+	}
 
 	conveyorWithRetry := build.NewConveyorWithRetryWrapper(opts.WerfConfig, opts.GiterminismManager, opts.GiterminismManager.ProjectDir(), opts.BaseTmpDir, opts.ContainerBackend, storageManager, storageManager.StorageLockManager, conveyorOptions)
 	return NewRemoteStorage(addr.RegistryAddress, dockerRegistry, storageManager, conveyorWithRetry, buildOptions, opts.AllStages), nil
