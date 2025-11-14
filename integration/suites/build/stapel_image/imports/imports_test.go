@@ -45,27 +45,27 @@ var _ = Describe("Stapel imports", func() {
 		It("should allow importing files and directories, optionally rename files and directories and merge directories", func(ctx SpecContext) {
 			SuiteData.CommitProjectWorktree(ctx, SuiteData.ProjectName, utils.FixturePath("imports_app_1", "001"), "initial commit")
 
-			gotNothingToImportError := false
+			gotNoSuchFileError := false
 			Expect(werfBuild(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
 				OutputLineHandler: func(line string) {
-					if strings.Contains(line, "nothing to import") {
-						gotNothingToImportError = true
+					if strings.Contains(line, "/myartifact/no-such-dir") && strings.Contains(line, "No such file or directory") {
+						gotNoSuchFileError = true
 					}
 				},
 			})).NotTo(Succeed())
-			Expect(gotNothingToImportError).To(BeTrue())
+			Expect(gotNoSuchFileError).To(BeTrue())
 
 			SuiteData.CommitProjectWorktree(ctx, SuiteData.ProjectName, utils.FixturePath("imports_app_1", "002"), "add missing no-such-dir")
 
-			gotNothingToImportError = false
+			gotNoSuchFileError = false
 			Expect(werfBuild(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
 				OutputLineHandler: func(line string) {
-					if strings.Contains(line, "nothing to import") {
-						gotNothingToImportError = true
+					if strings.Contains(line, "/myartifact/file-no-such-file") && strings.Contains(line, "No such file or directory") {
+						gotNoSuchFileError = true
 					}
 				},
 			})).NotTo(Succeed())
-			Expect(gotNothingToImportError).To(BeTrue())
+			Expect(gotNoSuchFileError).To(BeTrue())
 
 			SuiteData.CommitProjectWorktree(ctx, SuiteData.ProjectName, utils.FixturePath("imports_app_1", "003"), "add missing file-no-such-file")
 
