@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.53.4](https://github.com/werf/werf/compare/v2.53.3...v2.53.4) (2025-11-14)
+
+
+### Miscellaneous Chores
+
+* **release:** force v2.53.4 ([1f114ec](https://github.com/werf/werf/commit/1f114ec030cd84810048600c5a7d6b245ac14364))
+
 ## [2.53.3](https://github.com/werf/werf/compare/v2.53.2...v2.53.3) (2025-11-13)
 
 
