@@ -33,6 +33,10 @@ import:
   to: /usr/share
   after: install
 - image: myartifact
+  add: /myartifact/file-no-such-file
+  to: /file2
+  after: install
+- image: myartifact
   add: /myartifact/file
   to: /file
   after: install
