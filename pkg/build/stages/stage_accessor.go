@@ -4,12 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/build"
-	"github.com/werf/werf/v2/pkg/config"
-	"github.com/werf/werf/v2/pkg/container_backend"
-	"github.com/werf/werf/v2/pkg/giterminism_manager"
+	"github.com/werf/werf/v2/pkg/docker_registry"
 	"github.com/werf/werf/v2/pkg/ref"
+	"github.com/werf/werf/v2/pkg/storage/manager"
 )
 
 type copyToOptions struct {
@@ -25,87 +23,18 @@ type StorageAccessor interface {
 }
 
 type StorageAccessorOptions struct {
-	InsecureRegistry             bool
-	SkipTlsVerifyRegistry        bool
-	DisableCleanup               bool
-	DisableGitHistoryBasedPolicy bool
-	AllStages                    bool
-	BaseTmpDir                   string
-	ContainerBackend             container_backend.ContainerBackend
-	CommonCmdData                *common.CmdData
-	WerfConfig                   *config.WerfConfig
-	GiterminismManager           *giterminism_manager.Manager
+	DockerRegistry           docker_registry.Interface
+	StorageManager           *manager.StorageManager
+	ConveyorWithRetryWrapper *build.ConveyorWithRetryWrapper
 }
 
-func NewStorageSrcAccessor(ctx context.Context, addr *ref.Addr, opts StorageAccessorOptions) (StorageAccessor, error) {
+func NewStorageAccessor(addr *ref.Addr, opts StorageAccessorOptions) StorageAccessor {
 	switch {
 	case addr.RegistryAddress != nil:
-		return createSrcRemoteStorage(ctx, addr, opts)
+		return NewRemoteStorage(addr.RegistryAddress, opts.DockerRegistry, opts.StorageManager, opts.ConveyorWithRetryWrapper)
 	case addr.ArchiveAddress != nil:
-		return createArchiveStorage(addr.ArchiveAddress)
+		return NewArchiveStorage(NewArchiveStorageFileReader(addr.Path), NewArchiveStorageFileWriter(addr.Path))
 	default:
 		panic(fmt.Sprintf("invalid address given %#v", addr))
 	}
-}
-
-func NewStorageDstAccessor(ctx context.Context, addr *ref.Addr, opts StorageAccessorOptions) (StorageAccessor, error) {
-	switch {
-	case addr.RegistryAddress != nil:
-		return createDstRemoteStorage(ctx, addr, opts.InsecureRegistry, opts.SkipTlsVerifyRegistry, opts.AllStages)
-	case addr.ArchiveAddress != nil:
-		return createArchiveStorage(addr.ArchiveAddress)
-	default:
-		panic(fmt.Sprintf("invalid address given %#v", addr))
-	}
-}
-
-func createSrcRemoteStorage(ctx context.Context, addr *ref.Addr, opts StorageAccessorOptions) (*RemoteStorage, error) {
-	opts.CommonCmdData.Repo.Address = &addr.RegistryAddress.Repo // FIXME выдумать что-нить симпатичнее
-
-	storageManager, err := common.NewStorageManager(ctx, &common.NewStorageManagerConfig{
-		ProjectName:                    opts.WerfConfig.Meta.Project,
-		ContainerBackend:               opts.ContainerBackend,
-		CmdData:                        opts.CommonCmdData,
-		CleanupDisabled:                opts.DisableCleanup,
-		GitHistoryBasedCleanupDisabled: opts.DisableGitHistoryBasedPolicy,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	dockerRegistry, err := common.CreateDockerRegistry(ctx, addr.Repo, opts.InsecureRegistry, opts.SkipTlsVerifyRegistry)
-	if err != nil {
-		return nil, err
-	}
-
-	imagesToProcess, err := config.NewImagesToProcess(opts.WerfConfig, nil, *opts.CommonCmdData.FinalImagesOnly, false)
-	if err != nil {
-		return nil, err
-	}
-
-	buildOptions, err := common.GetBuildOptions(ctx, opts.CommonCmdData, opts.WerfConfig, imagesToProcess)
-	if err != nil {
-		return nil, err
-	}
-
-	conveyorOptions, err := common.GetConveyorOptionsWithParallel(ctx, opts.CommonCmdData, imagesToProcess, buildOptions)
-	if err != nil {
-		return nil, err
-	}
-
-	conveyorWithRetry := build.NewConveyorWithRetryWrapper(opts.WerfConfig, opts.GiterminismManager, opts.GiterminismManager.ProjectDir(), opts.BaseTmpDir, opts.ContainerBackend, storageManager, storageManager.StorageLockManager, conveyorOptions)
-	return NewRemoteStorage(addr.RegistryAddress, dockerRegistry, storageManager, conveyorWithRetry, buildOptions, opts.AllStages), nil
-}
-
-func createDstRemoteStorage(ctx context.Context, addr *ref.Addr, insecureRegistry, skipTlsVerifyRegistry, allStages bool) (*RemoteStorage, error) {
-	dockerRegistry, err := common.CreateDockerRegistry(ctx, addr.Repo, insecureRegistry, skipTlsVerifyRegistry)
-	if err != nil {
-		return nil, err
-	}
-
-	return NewRemoteStorage(addr.RegistryAddress, dockerRegistry, nil, nil, build.BuildOptions{}, allStages), nil
-}
-
-func createArchiveStorage(addr *ref.ArchiveAddress) (*ArchiveStorage, error) {
-	return NewArchiveStorage(NewArchiveStorageFileReader(addr.Path), NewArchiveStorageFileWriter(addr.Path)), nil
 }

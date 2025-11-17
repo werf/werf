@@ -88,6 +88,10 @@ type KubeCtlOptions struct {
 	CommonOptions
 }
 
+type StagesCopyOptions struct {
+	CommonOptions
+}
+
 type runCommandOptions struct {
 	ShouldFail bool
 	Args       []string
@@ -323,6 +327,17 @@ func (p *Project) Export(ctx context.Context, opts *ExportOptions) (combinedOut 
 		opts = &ExportOptions{}
 	}
 	args := append([]string{"export"}, opts.ExtraArgs...)
+	outb := p.runCommand(ctx, runCommandOptions{Args: args, ShouldFail: opts.ShouldFail})
+
+	return string(outb)
+}
+
+func (p *Project) StagesCopy(ctx context.Context, opts *StagesCopyOptions) (combinedOut string) {
+	if opts == nil {
+		opts = &StagesCopyOptions{}
+	}
+
+	args := append([]string{"stages", "copy"}, opts.ExtraArgs...)
 	outb := p.runCommand(ctx, runCommandOptions{Args: args, ShouldFail: opts.ShouldFail})
 
 	return string(outb)

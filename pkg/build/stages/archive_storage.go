@@ -8,7 +8,6 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/build"
 	"github.com/werf/werf/v2/pkg/image"
-	"github.com/werf/werf/v2/pkg/storage"
 )
 
 const (
@@ -36,14 +35,14 @@ func (s *ArchiveStorage) CopyFromArchive(ctx context.Context, fromArchive *Archi
 }
 
 func (s *ArchiveStorage) CopyFromRemote(ctx context.Context, fromRemote *RemoteStorage, opts copyToOptions) error {
-	if fromRemote.AllStages {
-		return s.copyAllFromRemote(ctx, fromRemote, opts.ProjectName)
+	if opts.All {
+		return s.copyAllFromRemote(ctx, fromRemote, opts)
 	}
-	return s.copyCurrentBuildFromRemote(ctx, fromRemote)
+	return s.copyCurrentBuildFromRemote(ctx, fromRemote, opts)
 }
 
-func (s *ArchiveStorage) copyAllFromRemote(ctx context.Context, fromRemote *RemoteStorage, projectName string, opts ...storage.Option) error {
-	stageIds, err := fromRemote.StorageManager.StagesStorage.GetStagesIDs(ctx, projectName, opts...)
+func (s *ArchiveStorage) copyAllFromRemote(ctx context.Context, fromRemote *RemoteStorage, opts copyToOptions) error {
+	stageIds, err := fromRemote.StorageManager.StagesStorage.GetStagesIDs(ctx, opts.ProjectName)
 	if err != nil {
 		return fmt.Errorf("unable to get stages: %w", err)
 	}
@@ -54,7 +53,7 @@ func (s *ArchiveStorage) copyAllFromRemote(ctx context.Context, fromRemote *Remo
 
 	if err := logboek.Context(ctx).LogProcess("Saving stages into archive").DoError(func() error {
 		for _, stageId := range stageIds {
-			stageDesc, err := fromRemote.StorageManager.StagesStorage.GetStageDesc(ctx, projectName, stageId)
+			stageDesc, err := fromRemote.StorageManager.StagesStorage.GetStageDesc(ctx, opts.ProjectName, stageId)
 			if err != nil {
 				return err
 			}
@@ -87,14 +86,14 @@ func (s *ArchiveStorage) copyAllFromRemote(ctx context.Context, fromRemote *Remo
 	return nil
 }
 
-func (s *ArchiveStorage) copyCurrentBuildFromRemote(ctx context.Context, fromRemote *RemoteStorage) error {
+func (s *ArchiveStorage) copyCurrentBuildFromRemote(ctx context.Context, fromRemote *RemoteStorage, opts copyToOptions) error {
 	if err := s.Writer.Open(); err != nil {
 		return fmt.Errorf("unable to open target stages archive: %w", err)
 	}
 
 	if err := logboek.Context(ctx).LogProcess("Saving stages into archive").DoError(func() error {
 		return fromRemote.ConveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
-			if _, err := c.Build(ctx, fromRemote.BuildOptions); err != nil {
+			if _, err := c.Build(ctx, opts.BuildOptions); err != nil {
 				return err
 			}
 

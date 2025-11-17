@@ -9,7 +9,6 @@ import (
 	"github.com/werf/werf/v2/pkg/docker_registry"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/ref"
-	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/storage/manager"
 )
 
@@ -18,19 +17,14 @@ type RemoteStorage struct {
 	RegistryClient    docker_registry.Interface
 	StorageManager    *manager.StorageManager
 	ConveyorWithRetry *build.ConveyorWithRetryWrapper
-	BuildOptions      build.BuildOptions
-
-	AllStages bool
 }
 
-func NewRemoteStorage(addr *ref.RegistryAddress, dockerRegistry docker_registry.Interface, stagesStorage *manager.StorageManager, conveyorWithRetry *build.ConveyorWithRetryWrapper, buildOptions build.BuildOptions, allStages bool) *RemoteStorage {
+func NewRemoteStorage(addr *ref.RegistryAddress, dockerRegistry docker_registry.Interface, storageManager *manager.StorageManager, conveyorWithRetry *build.ConveyorWithRetryWrapper) *RemoteStorage {
 	return &RemoteStorage{
 		RegistryAddress:   addr,
 		RegistryClient:    dockerRegistry,
-		StorageManager:    stagesStorage,
+		StorageManager:    storageManager,
 		ConveyorWithRetry: conveyorWithRetry,
-		BuildOptions:      buildOptions,
-		AllStages:         allStages,
 	}
 }
 
@@ -39,19 +33,22 @@ func (s *RemoteStorage) CopyTo(ctx context.Context, to StorageAccessor, opts cop
 }
 
 func (s *RemoteStorage) CopyFromArchive(ctx context.Context, fromArchive *ArchiveStorage, opts copyToOptions) error {
-	return s.copyAllFromArchive(ctx, fromArchive)
+	if opts.All {
+		return s.copyAllFromArchive(ctx, fromArchive)
+	}
+	return s.copyCurrentBuildStagesFromArchive()
 }
 
 func (s *RemoteStorage) CopyFromRemote(ctx context.Context, fromRemote *RemoteStorage, opts copyToOptions) error {
-	if s.AllStages {
-		return s.copyAllFromRemote(ctx, fromRemote, opts.ProjectName)
+	if opts.All {
+		return s.copyAllFromRemote(ctx, fromRemote, opts)
 	}
-	return s.copyCurrentBuildStagesFromRemote(ctx, fromRemote)
+	return s.copyCurrentBuildStagesFromRemote(ctx, fromRemote, opts)
 }
 
-func (s *RemoteStorage) copyCurrentBuildStagesFromRemote(ctx context.Context, fromRemote *RemoteStorage) error {
+func (s *RemoteStorage) copyCurrentBuildStagesFromRemote(ctx context.Context, fromRemote *RemoteStorage, opts copyToOptions) error {
 	return fromRemote.ConveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
-		if _, err := c.Build(ctx, fromRemote.BuildOptions); err != nil {
+		if _, err := c.Build(ctx, opts.BuildOptions); err != nil {
 			return err
 		}
 
@@ -84,15 +81,15 @@ func (s *RemoteStorage) copyCurrentBuildStagesFromRemote(ctx context.Context, fr
 
 }
 
-func (s *RemoteStorage) copyAllFromRemote(ctx context.Context, fromRemote *RemoteStorage, projectName string, opts ...storage.Option) error {
-	stageIds, err := fromRemote.StorageManager.StagesStorage.GetStagesIDs(ctx, projectName, opts...)
+func (s *RemoteStorage) copyAllFromRemote(ctx context.Context, fromRemote *RemoteStorage, opts copyToOptions) error {
+	stageIds, err := fromRemote.StorageManager.StagesStorage.GetStagesIDs(ctx, opts.ProjectName)
 	if err != nil {
 		return fmt.Errorf("unable to get stages: %w", err)
 	}
 
 	for _, stageId := range stageIds {
 		logboek.Context(ctx).Default().LogFDetails("Copying stage: %s\n", stageId)
-		stageDesc, err := fromRemote.StorageManager.StagesStorage.GetStageDesc(ctx, projectName, stageId)
+		stageDesc, err := fromRemote.StorageManager.StagesStorage.GetStageDesc(ctx, opts.ProjectName, stageId)
 		if err != nil {
 			return err
 		}
@@ -116,5 +113,9 @@ func (s *RemoteStorage) copyAllFromRemote(ctx context.Context, fromRemote *Remot
 }
 
 func (s *RemoteStorage) copyAllFromArchive(ctx context.Context, fromArchive *ArchiveStorage) error {
+	panic("not implemented yet")
+}
+
+func (s *RemoteStorage) copyCurrentBuildStagesFromArchive() error {
 	panic("not implemented yet")
 }
