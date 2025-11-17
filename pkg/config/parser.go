@@ -349,6 +349,14 @@ func funcMap(ctx context.Context, tmpl *template.Template, giterminismManager gi
 
 		return m, nil
 	}
+	funcMap["toYaml"] = func(v interface{}) string {
+		data, err := yaml.Marshal(v)
+		if err != nil {
+			return ""
+		}
+
+		return strings.TrimSuffix(string(data), "\n")
+	}
 	funcMap["include"] = func(name string, data interface{}) (string, error) {
 		result, err := executeTemplate(tmpl, name, data)
 		if err != nil {
