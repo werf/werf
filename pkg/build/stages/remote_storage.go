@@ -90,34 +90,26 @@ func (s *RemoteStorage) copyAllFromRemote(ctx context.Context, fromRemote *Remot
 		return fmt.Errorf("unable to get stages: %w", err)
 	}
 
-	if err := logboek.Context(ctx).LogProcess("Copy stages from container registry").DoError(func() error {
-		for _, stageId := range stageIds {
-			stageDesc, err := fromRemote.StorageManager.StagesStorage.GetStageDesc(ctx, projectName, stageId)
-			if err != nil {
-				return err
-			}
-
-			reference, err := ref.ParseReference(stageId.Digest)
-			if err != nil {
-				return err
-			}
-
-			reference.Repo = s.RegistryAddress.Repo
-			reference.Tag = stageDesc.Info.Tag
-
-			stageName := stageDesc.Info.Name
-
-			logboek.Context(ctx).Default().LogFDetails("Source: %s\n", stageName)
-			logboek.Context(ctx).Default().LogFDetails("Destination: %s\n", reference.FullName())
-
-			if err = fromRemote.RegistryClient.CopyImage(ctx, stageName, reference.FullName(), docker_registry.CopyImageOptions{}); err != nil {
-				return fmt.Errorf("error copying stage %s into %s: %w", stageName, reference.FullName(), err)
-			}
+	for _, stageId := range stageIds {
+		logboek.Context(ctx).Default().LogFDetails("Copying stage: %s\n", stageId)
+		stageDesc, err := fromRemote.StorageManager.StagesStorage.GetStageDesc(ctx, projectName, stageId)
+		if err != nil {
+			return err
 		}
 
-		return nil
-	}); err != nil {
-		return err
+		reference, err := ref.ParseReference(stageId.Digest)
+		if err != nil {
+			return err
+		}
+
+		reference.Repo = s.RegistryAddress.Repo
+		reference.Tag = stageDesc.Info.Tag
+
+		stageName := stageDesc.Info.Name
+
+		if err = fromRemote.RegistryClient.CopyImage(ctx, stageName, reference.FullName(), docker_registry.CopyImageOptions{}); err != nil {
+			return fmt.Errorf("error copying stage %s into %s: %w", stageName, reference.FullName(), err)
+		}
 	}
 
 	return nil
