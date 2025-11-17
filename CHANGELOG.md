@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.51.6](https://github.com/werf/werf/compare/v2.51.5...v2.51.6) (2025-11-17)
+
+
+### Bug Fixes
+
+* show verbose diffs by default like before ([a470377](https://github.com/werf/werf/commit/a47037723fe8611721a098882865ec37fb5b110e))
+
 ## [2.51.5](https://github.com/werf/werf/compare/v2.51.4...v2.51.5) (2025-11-11)
 
 
