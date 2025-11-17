@@ -3,7 +3,10 @@ package config
 import (
 	"path"
 	"path/filepath"
+	"slices"
 	"strings"
+
+	"github.com/samber/lo"
 )
 
 type autoExcludeExport interface {
@@ -28,7 +31,7 @@ type ExportBase struct {
 }
 
 func (c *ExportBase) AutoExcludeExportAndCheck(exp autoExcludeExport) bool {
-	if !isSubPath(c.To, exp.GetTo()) {
+	if !isSubPath(c.GetTo(), exp.GetTo()) {
 		return true
 	}
 
@@ -36,24 +39,23 @@ func (c *ExportBase) AutoExcludeExportAndCheck(exp autoExcludeExport) bool {
 		return false
 	}
 
-loop:
 	for _, expIncludePath := range exp.GetIncludePathsForAutoExclude() {
-		for _, includePath := range c.GetIncludePathsForAutoExclude() {
-			if expIncludePath == includePath {
-				return false
-			}
-
-			if isSubPath(expIncludePath, includePath) {
-				continue loop
-			}
+		// If exact path is included in current export, do not exclude
+		if slices.Contains(c.GetIncludePathsForAutoExclude(), expIncludePath) {
+			return false
 		}
 
-		for _, excludePath := range c.GetExcludePathsForAutoExclude() {
-			if isSubPath(excludePath, expIncludePath) {
-				continue loop
-			}
+		// If expIncludePath is a sub-path of any existing include, skip adding exclude
+		if isSubPathOfSomePath(expIncludePath, c.GetIncludePathsForAutoExclude()) {
+			continue
 		}
 
+		// If expIncludePath is covered by any existing exclude, skip
+		if isSubPathOfSomePath(expIncludePath, c.GetExcludePathsForAutoExclude()) {
+			continue
+		}
+
+		// Otherwise, calculate relative path and add to excludes
 		extraExcludePath, err := filepath.Rel(path.Join(c.GetTo()), path.Join("/", expIncludePath)) // TODO rel
 		if err != nil {
 			panic(err)
@@ -65,9 +67,17 @@ loop:
 	return true
 }
 
+// isSubPath checks if the given subPath is a sub-path of the given path
 func isSubPath(subPath, path string) bool {
 	subPathWithSlashEnding := strings.TrimRight(subPath, "/") + "/"
 	return strings.HasPrefix(path, subPathWithSlashEnding) || path == subPath
+}
+
+// isSubPathOfSomePath checks if the given subPath is a sub-path of any path in the provided list
+func isSubPathOfSomePath(subPath string, paths []string) bool {
+	return lo.SomeBy(paths, func(p string) bool {
+		return isSubPath(subPath, p)
+	})
 }
 
 func (c *ExportBase) GetIncludePathsForAutoExclude() []string {
@@ -79,7 +89,8 @@ func (c *ExportBase) GetIncludePathsForAutoExclude() []string {
 	if len(c.IncludePaths) == 0 && pathPrefix != "" {
 		return []string{pathPrefix}
 	} else {
-		var validateIncludePaths []string
+		validateIncludePaths := make([]string, 0, len(c.IncludePaths))
+
 		for _, p := range c.IncludePaths {
 			validateIncludePaths = append(validateIncludePaths, path.Join(pathPrefix, p))
 		}
@@ -94,7 +105,8 @@ func (c *ExportBase) GetExcludePathsForAutoExclude() []string {
 		pathPrefix = c.To[1:len(c.To)]
 	}
 
-	var validateExcludePaths []string
+	validateExcludePaths := make([]string, 0, len(c.ExcludePaths))
+
 	for _, p := range c.ExcludePaths {
 		validateExcludePaths = append(validateExcludePaths, path.Join(pathPrefix, p))
 	}
