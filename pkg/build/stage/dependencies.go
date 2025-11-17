@@ -11,7 +11,6 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/build/import_server"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/docker"
@@ -375,20 +374,53 @@ func (s *DependenciesStage) generateImportChecksum(ctx context.Context, c Convey
 }
 
 func generateChecksumScript(from string, includePaths, excludePaths []string, resultChecksumPath string) []string {
-	// Always exclude the stapel container mount root, as in the previous implementation.
+	findCommandParts := append([]string{}, stapel.FindBinPath(), "-H", from, "-type", "f")
+
+	var nameIncludeArgs []string
+	for _, includePath := range includePaths {
+		formattedPath := util.SafeTrimGlobsAndSlashesFromPath(includePath)
+		nameIncludeArgs = append(
+			nameIncludeArgs,
+			fmt.Sprintf("-wholename \"%s\"", path.Join(from, formattedPath)),
+			fmt.Sprintf("-wholename \"%s\"", path.Join(from, formattedPath, "**")),
+		)
+	}
+
+	if len(nameIncludeArgs) != 0 {
+		findCommandParts = append(findCommandParts, fmt.Sprintf("\\( %s \\)", strings.Join(nameIncludeArgs, " -or ")))
+	}
+
 	excludePaths = append(excludePaths, stapel.CONTAINER_MOUNT_ROOT)
 
-	rsyncCommand := stapel.RsyncBinPath() + " -r --dry-run"
-	rsyncCommand += import_server.PrepareRsyncFilters(from, includePaths, excludePaths)
-	rsyncCommand += " " + from
+	var nameExcludeArgs []string
+	for _, excludePath := range excludePaths {
+		formattedPath := util.SafeTrimGlobsAndSlashesFromPath(excludePath)
+		nameExcludeArgs = append(
+			nameExcludeArgs,
+			fmt.Sprintf("! -wholename \"%s\"", path.Join(from, formattedPath)),
+			fmt.Sprintf("! -wholename \"%s\"", path.Join(from, formattedPath, "**")),
+		)
+	}
 
-	// awk: leave only files (lines whose first field starts with '-') and print the path.
-	awkCommand := `awk '$1 ~ /^-/ { print "/"$NF }'`
-	sortCommand := fmt.Sprintf("%s -n", stapel.SortBinPath())
+	if len(nameExcludeArgs) != 0 {
+		if len(nameIncludeArgs) != 0 {
+			findCommandParts = append(findCommandParts, fmt.Sprintf("-and"))
+		}
+
+		findCommandParts = append(findCommandParts, fmt.Sprintf("\\( %s \\)", strings.Join(nameExcludeArgs, " -and ")))
+	}
+
+	findCommand := strings.Join(findCommandParts, " ")
+
+	sortCommandParts := append([]string{}, stapel.SortBinPath(), "-n")
+	sortCommand := strings.Join(sortCommandParts, " ")
+
 	md5SumCommand := stapel.Md5sumBinPath()
-	cutCommand := fmt.Sprintf("%s -c 1-32", stapel.CutBinPath())
 
-	commands := []string{rsyncCommand, awkCommand, sortCommand, "checksum", md5SumCommand, cutCommand}
+	cutCommandParts := append([]string{}, stapel.CutBinPath(), "-c", "1-32")
+	cutCommand := strings.Join(cutCommandParts, " ")
+
+	commands := append([]string{}, findCommand, sortCommand, "checksum", md5SumCommand, cutCommand)
 
 	script := generateChecksumBashFunction()
 	script = append(script, fmt.Sprintf("%s > %s", strings.Join(commands, " | "), resultChecksumPath))

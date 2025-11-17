@@ -141,7 +141,45 @@ func (srv *RsyncServer) GetCopyCommand(ctx context.Context, importConfig *config
 		rsyncChownOption = fmt.Sprintf("--chown=%s:%s", importConfig.Owner, importConfig.Group)
 	}
 	rsyncCommand := fmt.Sprintf("RSYNC_PASSWORD='%s' %s --archive --links --inplace %s", srv.AuthPassword, stapel.RsyncBinPath(), rsyncChownOption)
-	rsyncCommand += PrepareRsyncFilters(importConfig.Add, importConfig.IncludePaths, importConfig.ExcludePaths)
+
+	if len(importConfig.IncludePaths) != 0 {
+		/**
+				Если указали include_paths — это означает, что надо копировать
+				только указанные пути. Поэтому exclude_paths в приоритете, т.к. в данном режиме
+		        exclude_paths может относится только к путям, указанным в include_paths.
+		        При этом случай, когда в include_paths указали более специальный путь, чем в exclude_paths,
+		        будет обрабатываться в пользу exclude, этот путь не скопируется.
+		*/
+		for _, p := range importConfig.ExcludePaths {
+			rsyncCommand += fmt.Sprintf(" --filter='-/ %s'", path.Join(importConfig.Add, p))
+		}
+
+		for _, p := range importConfig.IncludePaths {
+			targetPath := path.Join(importConfig.Add, p)
+
+			// Генерируем разрешающее правило для каждого элемента пути
+			for _, pathPart := range descentPath(targetPath) {
+				rsyncCommand += fmt.Sprintf(" --filter='+/ %s'", pathPart)
+			}
+
+			/**
+					На данный момент не знаем директорию или файл имел в виду пользователь,
+			        поэтому подставляем фильтры для обоих возможных случаев.
+
+					Автоматом подставляем паттерн ** для включения файлов, содержащихся в
+			        директории, которую пользователь указал в include_paths.
+			*/
+			rsyncCommand += fmt.Sprintf(" --filter='+/ %s'", targetPath)
+			rsyncCommand += fmt.Sprintf(" --filter='+/ %s'", path.Join(targetPath, "**"))
+		}
+
+		// Все что не подошло по include — исключается
+		rsyncCommand += fmt.Sprintf(" --filter='-/ %s'", path.Join(importConfig.Add, "**"))
+	} else {
+		for _, p := range importConfig.ExcludePaths {
+			rsyncCommand += fmt.Sprintf(" --filter='-/ %s'", path.Join(importConfig.Add, p))
+		}
+	}
 
 	rsyncCommand += fmt.Sprintf(" %s$IMPORT_PATH_TRAILING_SLASH_OPTIONAL %s", rsyncImportPathSpec, importConfig.To)
 	// run rsync itself
@@ -154,177 +192,22 @@ func (srv *RsyncServer) GetCopyCommand(ctx context.Context, importConfig *config
 	return command
 }
 
-func PrepareRsyncFilters(add string, includePaths, excludePaths []string) string {
-	rsyncCommand := ""
-	if len(includePaths) != 0 {
-		// First, apply exclude filters to the specified paths.
-		rsyncCommand += PrepareRsyncExcludeFiltersForGlobs(add, excludePaths)
-		// Then include only the paths that are listed in include_paths.
-		rsyncCommand += PrepareRsyncIncludeFiltersForGlobs(add, includePaths)
-	} else {
-		// When include_paths is empty, simply apply exclude filters.
-		rsyncCommand += PrepareRsyncExcludeFiltersForGlobs(add, excludePaths)
-	}
-	return rsyncCommand
-}
+func descentPath(filePath string) []string {
+	var parts []string
 
-// PrepareRsyncExcludeFiltersForGlobs builds rsync --filter rules that exclude
-// paths matching given globs under the specified base path (add).
-// It uses globToRsyncFilterPaths with finalOnly=true to generate the
-// minimal set of patterns needed to prevent rsync from descending into
-// excluded directories and files.
-//
-// For each excludeGlob in excludeGlobs, it generates rules like:
-//
-//	--filter='-/ base/excludeGlobPrefix...'
-func PrepareRsyncExcludeFiltersForGlobs(add string, excludeGlobs []string) string {
-	if len(excludeGlobs) == 0 {
-		return ""
-	}
+	part := filePath
+	for {
+		parts = append(parts, part)
+		part = path.Dir(part)
 
-	paths := map[string]struct{}{}
-	for _, p := range excludeGlobs {
-		targetPath := path.Join(add, p)
-		for _, pathPart := range globToRsyncFilterPaths(targetPath, true) {
-			paths[pathPart] = struct{}{}
-		}
-	}
-	keys := make([]string, 0, len(paths))
-	for k := range paths {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	var b string
-	for _, p := range keys {
-		b += fmt.Sprintf(" --filter='-/ %s'", p)
-	}
-	return b
-}
-
-// PrepareRsyncIncludeFiltersForGlobs builds rsync --filter rules that include
-// only the specified includeGlobs under the given base path (add). It uses
-// globToRsyncFilterPaths with finalOnly=false to ensure that all parent
-// directories for included paths are traversable, and then adds final
-// rules for the glob itself and its recursive contents.
-//
-// For each includeGlob in includeGlobs, it generates rules like:
-//
-//	--filter='+/ base/...prefixes.../'
-//	--filter='+/ base/includeGlob'
-//	--filter='+/ base/includeGlob/**'
-//
-// At the end, it adds a catch-all exclude:
-//
-//	--filter='-/ base/**'
-func PrepareRsyncIncludeFiltersForGlobs(add string, includeGlobs []string) string {
-	if len(includeGlobs) == 0 {
-		return ""
-	}
-
-	paths := map[string]struct{}{}
-	for _, p := range includeGlobs {
-		targetPath := path.Join(add, p)
-
-		// Allow all path prefixes for this glob.
-		for _, pathPart := range globToRsyncFilterPaths(targetPath, false) {
-			paths[pathPart] = struct{}{}
-		}
-
-		// We do not know in advance whether it is a file or a directory — add both variants.
-		paths[targetPath] = struct{}{}
-		paths[path.Join(targetPath, "**")] = struct{}{}
-	}
-	keys := make([]string, 0, len(paths))
-	for k := range paths {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	var b string
-	for _, k := range keys {
-		b += fmt.Sprintf(" --filter='+/ %s'", k)
-	}
-	// Everything that did not match any include is excluded.
-	b += fmt.Sprintf(" --filter='-/ %s'", path.Join(add, "**"))
-	return b
-}
-
-// globToRsyncFilterPaths builds rsync filter path components for a glob.
-// Behavior:
-// - Directories (non-final segments) end with "/" unless finalOnly == true.
-// - Final segment (file or pattern) has no trailing "/".
-// - "**" expands into two branches: keep ("**") and skip (matches 0 directories).
-// - When kept and not final && !finalOnly -> adds "**/" as a directory pattern.
-// Empty or all-slash input returns nil.
-func globToRsyncFilterPaths(glob string, finalSegmentOnly bool) []string {
-	glob = strings.Trim(glob, "/")
-	if glob == "" {
-		return nil
-	}
-
-	segments := strings.Split(glob, "/")
-	lastIdx := len(segments) - 1
-
-	type void struct{}
-	set := func(m map[string]void, v string) {
-		if v != "" {
-			m[v] = void{}
+		if part == path.Dir(part) {
+			break
 		}
 	}
 
-	current := map[string]void{"": {}}
-	results := map[string]void{}
+	sort.Sort(sort.Reverse(sort.StringSlice(parts)))
 
-	join := func(prefix, seg string) string {
-		if prefix == "" {
-			return seg
-		}
-		return prefix + "/" + seg
-	}
-
-	for i, seg := range segments {
-		next := map[string]void{}
-		isLast := i == lastIdx
-
-		if seg == "**" {
-			for prefix := range current {
-				// Branch: keep "**"
-				keep := join(prefix, "**")
-				set(next, keep)
-
-				// "**" as a directory (recursive) when not final and we collect dirs
-				if !isLast && !finalSegmentOnly {
-					set(results, keep+"/")
-				}
-
-				// Branch: skip "**" (0 directories matched)
-				set(next, prefix)
-
-				// Nothing added to results for skip branch (prefix stays as-is).
-			}
-		} else {
-			for prefix := range current {
-				full := join(prefix, seg)
-				set(next, full)
-
-				if isLast {
-					// Final pattern/file
-					set(results, full)
-				} else if !finalSegmentOnly {
-					// Intermediate directory
-					set(results, full+"/")
-				}
-			}
-		}
-
-		current = next
-	}
-
-	out := make([]string, 0, len(results))
-	for v := range results {
-		out = append(out, v)
-	}
-	sort.Strings(out)
-	return out
+	return parts
 }
 
 func generateSecureRandomString(length int) string {
