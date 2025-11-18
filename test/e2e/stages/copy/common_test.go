@@ -9,9 +9,6 @@ type commonTestOptions struct {
 	All *bool
 }
 
-type setupEnvOptions struct {
-}
-
 func setupEnv() {
 	SuiteData.Stubs.SetEnv("WERF_SYNCHRONIZATION", ":local")
 	SuiteData.Stubs.SetEnv("WERF_ENV", "test")

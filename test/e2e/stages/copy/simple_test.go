@@ -5,14 +5,13 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
 	"github.com/werf/werf/v2/test/pkg/werf"
 )
 
 type simpleTestOptions struct {
 	Platforms []string
 	All       bool
-
-	setupEnvOptions
 }
 
 var _ = Describe("Simple stages copy", Label("e2e", "stages copy", "simple"), func() {
