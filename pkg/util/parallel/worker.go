@@ -17,27 +17,21 @@ import (
 // - the reader reads already appended data (or nothing).
 // Because of that, no race condition happens while accessing file data.
 type Worker struct {
-	ID int
+	readOffset  atomic.Int64
+	writeOffset atomic.Int64
+
+	halfClosed atomic.Bool
 
 	file *os.File
 
-	failed     atomic.Bool
-	halfClosed atomic.Bool
-
-	writeOffset atomic.Int64
-	readOffset  atomic.Int64
+	ID int
 }
 
 // Write implements io.Writer.
 // It appends to file and accumulates total write offset.
 func (w *Worker) Write(p []byte) (int, error) {
 	if w.halfClosed.Load() {
-		// TODO (zaytsev): a workaround for non-blocking writing to be able to close underlying file safely
-		// fmt.Printf("worker %d is half closed but tries to write: %s\n", w.ID, p)
-		return len(p), nil
-
-		// TODO (zaytsev): uncomment after fixing of parallel logic (a task must be executed in blocking mode to correctly handle deferred calls)
-		// return 0, fmt.Errorf("worker is half closed but tries to write: %s", p)
+		return 0, fmt.Errorf("worker is half closed but tries to write: %s", p)
 	}
 
 	offset, err := w.file.Write(p)
@@ -61,16 +55,6 @@ func (w *Worker) HalfClose() error {
 	}
 	w.halfClosed.Store(true)
 	return nil
-}
-
-// Fail marks worker as failed
-func (w *Worker) Fail() {
-	w.failed.Store(true)
-}
-
-// Failed returns true if worker failed
-func (w *Worker) Failed() bool {
-	return w.failed.Load()
 }
 
 // Readable returns true if worker is readable
