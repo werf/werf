@@ -26,6 +26,7 @@ type CmdData struct {
 	ConfigPath               *string
 	GiterminismConfigRelPath *string
 	ConfigTemplatesDir       *string
+	ConfigRenderPath         *string
 	TmpDir                   *string
 	HomeDir                  *string
 	SSHKeys                  *[]string
