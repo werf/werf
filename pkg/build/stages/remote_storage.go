@@ -78,7 +78,6 @@ func (s *RemoteStorage) copyCurrentBuildStagesFromRemote(ctx context.Context, fr
 
 		return nil
 	})
-
 }
 
 func (s *RemoteStorage) copyAllFromRemote(ctx context.Context, fromRemote *RemoteStorage, opts copyToOptions) error {
