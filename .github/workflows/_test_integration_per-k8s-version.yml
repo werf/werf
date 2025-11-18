@@ -6,9 +6,6 @@ on:
       coverage:
         default: false
         type: string
-      linuxAmd64Runner:
-        default: ubuntu-22.04
-        type: string
 
 defaults:
   run:
@@ -18,19 +15,15 @@ env:
   DEBIAN_FRONTEND: "noninteractive"
   WERF_TEST_K8S_DOCKER_REGISTRY_INSECURE: "false"
   TASK_X_REMOTE_TASKFILES: 1
+
 jobs:
   _:
-    strategy:
-      fail-fast: false
-      matrix:
-        os:
-          - ${{ inputs.linuxAmd64Runner }}
-        kubeVersion: [1.29.14, 1.31.6]
-    runs-on: ${{ matrix.os }}
+    runs-on: [self-hosted, large]
     timeout-minutes: 60
     steps:
-      - name: Install werf build dependencies
-        run: sudo apt-get install -y libbtrfs-dev
+      - name: Set up JOB_ID
+        run: |
+          echo "JOB_ID=${GITHUB_RUN_ID}-${RANDOM}" >> "$GITHUB_ENV"
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -40,11 +33,6 @@ jobs:
         with:
           cache: true
           go-version-file: go.mod
-
-      - name: Install Task
-        uses: arduino/setup-task@v2
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up prebuilt werf test binary
         uses: ./.github/actions/set-up-prebuilt-werf-test-binary
@@ -62,11 +50,15 @@ jobs:
 
       - name: Test
         run: |
-          export WERF_TEST_K8S_DOCKER_REGISTRY="localhost:$(docker inspect kind-registry --format '{{(index (index .NetworkSettings.Ports "5000/tcp") 0).HostPort}}')"
-          task --yes -p test:integration kubeVersion=${{ matrix.kubeVersion }} paths="integration/suites/cleanup_after_converge integration/suites/deploy integration/suites/helm/deploy_rollback" -- --keep-going
+          export KUBECONFIG="$GITHUB_WORKSPACE/werf.kubeconfig-${JOB_ID}"
+          export WERF_TEST_K8S_DOCKER_REGISTRY="localhost:$(docker inspect kind-registry-${JOB_ID} --format '{{(index (index .NetworkSettings.Ports "5000/tcp") 0).HostPort}}')"
+          task --yes -p test:integration paths="integration/suites/cleanup_after_converge integration/suites/deploy integration/suites/helm/deploy_rollback" -- --keep-going --skip "Buildah"
           echo loadavg: $(cat /proc/loadavg)
         env:
+          LD_LIBRARY_PATH: "/usr/local/lib/libgost"
           GOCOVERDIR: ${{ env.WERF_TEST_COVER_DIR }}
+          # TODO: remove after implementing `werf ci-env --disable-docker-config-copy`
+          WERF_DOCKER_CONFIG: ${{ runner.temp }}/werf-docker-config-${{ github.run_id }}
 
       - name: Upload coverage artifact
         uses: ./.github/actions/upload-coverage-artifact

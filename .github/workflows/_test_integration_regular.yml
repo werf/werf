@@ -12,9 +12,6 @@ on:
       coverage:
         default: false
         type: string
-      linuxAmd64Runner:
-        default: ubuntu-22.04
-        type: string
       fetchDepth:
         default: 1
         type: number
@@ -27,19 +24,12 @@ env:
   DEBIAN_FRONTEND: "noninteractive"
   WERF_TEST_K8S_DOCKER_REGISTRY_INSECURE: "false"
   TASK_X_REMOTE_TASKFILES: 1
+
 jobs:
   _:
-    strategy:
-      fail-fast: false
-      matrix:
-        os:
-          - ${{ inputs.linuxAmd64Runner }}
-    runs-on: ${{ matrix.os }}
+    runs-on: [self-hosted, regular]
     timeout-minutes: 60
     steps:
-      - name: Install werf build dependencies
-        run: sudo apt-get install -y libbtrfs-dev
-
       - name: Checkout code
         uses: actions/checkout@v4
         with:
@@ -48,24 +38,19 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          cache: true
+          cache: false
           go-version-file: go.mod
-
-      - name: Install Task
-        uses: arduino/setup-task@v2
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up prebuilt werf test binary
         uses: ./.github/actions/set-up-prebuilt-werf-test-binary
         with:
           coverage: ${{ inputs.coverage }}
 
-      - name: Set up git config
-        uses: ./.github/actions/set-up-git-config
-
       - name: Install ginkgo
         run: task --yes -p deps:install:ginkgo
+
+      - name: Set up git config
+        uses: ./.github/actions/set-up-git-config
 
       - name: Test
         run: |
@@ -73,6 +58,7 @@ jobs:
           echo loadavg: $(cat /proc/loadavg)
         env:
           GOCOVERDIR: ${{ env.WERF_TEST_COVER_DIR }}
+          LD_LIBRARY_PATH: "/usr/local/lib/libgost"
 
       - name: Upload coverage artifact
         uses: ./.github/actions/upload-coverage-artifact

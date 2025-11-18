@@ -13,10 +13,12 @@ runs:
         WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/bin/werf
         WERF_TEST_COVER_DIR=$GITHUB_WORKSPACE/covdata
         WERF_TEST_COVERAGE_DIR=$GITHUB_WORKSPACE/coverage
+        LD_LIBRARY_PATH=/usr/local/lib/libgost
         EOF
         else
           cat >> "$GITHUB_ENV" <<EOF
         WERF_TEST_BINARY_PATH=$GITHUB_WORKSPACE/bin/werf
+        LD_LIBRARY_PATH=/usr/local/lib/libgost
         EOF
         fi
       shell: bash

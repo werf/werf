@@ -24,8 +24,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os:
-          - ${{ inputs.linuxAmd64Runner }}
         cr:
           - acr
           - default
@@ -34,7 +32,7 @@ jobs:
           - github
           - harbor
           - quay
-    runs-on: ${{ matrix.os }}
+    runs-on: [self-hosted, regular]
     timeout-minutes: 60
     env:
       WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_ACR: 1
@@ -74,9 +72,6 @@ jobs:
       WERF_TEST_QUAY_TOKEN: ${{ secrets.WERF_TEST_QUAY_TOKEN }}
       WERF_TEST_QUAY_USERNAME: ${{ secrets.WERF_TEST_QUAY_USERNAME }}
     steps:
-      - name: Install werf build dependencies
-        run: sudo apt-get install -y libbtrfs-dev
-
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -85,11 +80,6 @@ jobs:
         with:
           cache: true
           go-version-file: go.mod
-
-      - name: Install Task
-        uses: arduino/setup-task@v2
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up prebuilt werf test binary
         uses: ./.github/actions/set-up-prebuilt-werf-test-binary
@@ -125,6 +115,7 @@ jobs:
           echo loadavg: $(cat /proc/loadavg)
         env:
           GOCOVERDIR: ${{ env.WERF_TEST_COVER_DIR }}
+          LD_LIBRARY_PATH: "/usr/local/lib/libgost"
 
       - name: Upload coverage artifact
         uses: ./.github/actions/upload-coverage-artifact

@@ -27,6 +27,8 @@ env:
   DEBIAN_FRONTEND: "noninteractive"
   GOPATH: ${{ github.workspace }}/go
   TASK_X_REMOTE_TASKFILES: 1
+  # TODO: remove after implementing `werf ci-env --disable-docker-config-copy`
+  WERF_DOCKER_CONFIG: ${{ runner.temp }}/werf-docker-config-${{ github.run_id }}
 
 jobs:
   doc_unit:
@@ -40,12 +42,9 @@ jobs:
       packages: integration/suites/docs
 
   check_broken_links:
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, regular]
     timeout-minutes: 60
     steps:
-      - name: Install werf build dependencies
-        run: sudo apt-get install -y libbtrfs-dev
-
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -54,11 +53,6 @@ jobs:
         with:
           cache: true
           go-version-file: go.mod
-
-      - name: Install Task
-        uses: arduino/setup-task@v2
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Login to GitHub container registry
         uses: docker/login-action@v2

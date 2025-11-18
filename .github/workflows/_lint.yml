@@ -18,12 +18,9 @@ env:
 jobs:
   _:
     if: inputs.forceSkip == 'false'
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, regular]
     timeout-minutes: 30
     steps:
-      - name: Install build dependencies
-        run: sudo apt-get install -y libbtrfs-dev
-
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -32,10 +29,8 @@ jobs:
         with:
           go-version-file: go.mod
 
-      - name: Install Task
-        uses: arduino/setup-task@v2
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install ginkgo
+        run: task --yes -p deps:install:ginkgo
 
       - name: Install golangci-lint
         run: task --yes -p deps:install:golangci-lint
