@@ -16,7 +16,7 @@ defaults:
 
 jobs:
   release-please:
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, regular]
     steps:
       - name: Release
         id: release
@@ -24,7 +24,6 @@ jobs:
         with:
           target-branch: ${{github.ref_name}}
           release-type: go
-          skip-github-release: true
           token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
   notify:
     if: failure()

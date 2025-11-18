@@ -4,6 +4,6 @@ runs:
   steps:
     - name: Set up git config
       run: |
-        git config --global user.name "borya"
-        git config --global user.email "borya@flant.com"
+        git config user.name "borya"
+        git config user.email "borya@flant.com"
       shell: bash
