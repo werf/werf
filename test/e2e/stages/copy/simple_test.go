@@ -1,0 +1,93 @@
+package e2e_stages_copy_test
+
+import (
+	"fmt"
+
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+	"github.com/werf/werf/v2/test/pkg/werf"
+)
+
+type simpleTestOptions struct {
+	Platforms []string
+	All       bool
+
+	setupEnvOptions
+}
+
+var _ = Describe("Simple stages copy", Label("e2e", "stages copy", "simple"), func() {
+	DescribeTable("should succeed and copy stages",
+		func(ctx SpecContext, opts simpleTestOptions) {
+			By("initializing")
+			{
+				setupEnv()
+				repoDirName := "repo"
+				fixtureRelPath := "simple"
+
+				By("state0: preparing test repo")
+				SuiteData.InitTestRepo(ctx, repoDirName, fixtureRelPath)
+				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirName))
+
+				By("state0: building images")
+				buildOut := werfProject.Build(ctx, &werf.BuildOptions{
+					CommonOptions: werf.CommonOptions{
+						ShouldFail: false,
+						ExtraArgs:  []string{"--repo", SuiteData.WerfFromRepo},
+					},
+				})
+				Expect(buildOut).To(ContainSubstring("Building stage"))
+				Expect(buildOut).NotTo(ContainSubstring("Use previously build image"))
+
+				By("stage0: execute stages copy")
+				stagesCopyArgs := getStagesCopyArgs(SuiteData.WerfFromRepo, SuiteData.WerfToRepo, commonTestOptions{
+					All: &opts.All,
+				})
+				stagesCopyOut := werfProject.StagesCopy(ctx, &werf.StagesCopyOptions{
+					CommonOptions: werf.CommonOptions{
+						ShouldFail: false,
+						ExtraArgs:  stagesCopyArgs,
+					},
+				})
+
+				By("stage0: check stages copy output")
+				Expect(stagesCopyOut).To(ContainSubstring(fmt.Sprintf("Copy stages")))
+				Expect(stagesCopyOut).To(ContainSubstring(fmt.Sprintf("From: %s", SuiteData.WerfFromRepo)))
+				Expect(stagesCopyOut).To(ContainSubstring(fmt.Sprintf("To: %s", SuiteData.WerfToRepo)))
+
+				By("stage0: check")
+				werfProject.Build(ctx, &werf.BuildOptions{
+					CommonOptions: werf.CommonOptions{
+						ShouldFail: false,
+						ExtraArgs:  []string{"--require-built-images", "--repo", SuiteData.WerfToRepo},
+					},
+				})
+			}
+		},
+		Entry("with copy all stages", simpleTestOptions{
+			Platforms: []string{
+				"linux/amd64",
+			},
+			All: true,
+		}),
+		Entry("with copy only current build stages", simpleTestOptions{
+			Platforms: []string{
+				"linux/amd64",
+			},
+			All: false,
+		}),
+		Entry("with copy all stages and multiplatform images ", simpleTestOptions{
+			Platforms: []string{
+				"linux/amd64",
+				"linux/arm64",
+			},
+			All: true,
+		}),
+		Entry("with copy only current build stages and multiplatform images", simpleTestOptions{
+			Platforms: []string{
+				"linux/amd64",
+				"linux/arm64",
+			},
+			All: false,
+		}),
+	)
+})
