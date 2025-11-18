@@ -27,12 +27,9 @@ env:
 jobs:
   _:
     if: inputs.forceSkip == 'false'
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, regular]
     timeout-minutes: 60
     steps:
-      - name: Install werf build dependencies
-        run: sudo apt-get install -y libbtrfs-dev
-
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -42,11 +39,6 @@ jobs:
           cache: true
           go-version-file: go.mod
 
-      - name: Install Task
-        uses: arduino/setup-task@v2
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Set up prebuilt werf test binary
         uses: ./.github/actions/set-up-prebuilt-werf-test-binary
         with:
@@ -55,7 +47,6 @@ jobs:
       - name: Set up git config
         uses: ./.github/actions/set-up-git-config
 
-      # TODO: don't build ginkgo everytime? We need distributable binaries
       - name: Install ginkgo
         run: task --yes -p deps:install:ginkgo
 
@@ -68,6 +59,8 @@ jobs:
             task --yes -p test:unit paths="$(echo ${{ inputs.packages }} | tr , ' ')" -- --keep-going --skip-package '${{ inputs.excludePackages }}'
           fi
           echo loadavg: $(cat /proc/loadavg)
+        env:
+          LD_LIBRARY_PATH: "/usr/local/lib/libgost"
 
       - name: Upload coverage artifact
         uses: ./.github/actions/upload-coverage-artifact

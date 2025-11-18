@@ -5,7 +5,7 @@
 <p align="center">
   <a href="https://github.com/deckhouse/delivery-kit/discussions"><img src="https://img.shields.io/static/v1?label=GitHub&message=discussions&color=brightgreen&logo=github" alt="GH Discussions"/></a>
   <a href="https://godoc.org/github.com/deckhouse/delivery-kit"><img src="https://godoc.org/github.com/deckhouse/delivery-kit?status.svg" alt="GoDoc"></a>
-  <a href="https://qlty.sh/gh/werf/projects/werf"><img src="https://qlty.sh/gh/werf/projects/werf/coverage.svg" alt="Code Coverage" /></a>
+  <a href="https://qlty.sh/gh/deckhouse/projects/delivery-kit"><img src="https://qlty.sh/gh/deckhouse/projects/delivery-kit/coverage.svg" alt="Code Coverage" /></a>
   <a href="CODE_OF_CONDUCT.md"><img src="https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg" alt="Contributor Covenant"></a>
 </p>
 

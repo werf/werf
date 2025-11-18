@@ -18,7 +18,7 @@ on:
 
 jobs:
   manage:
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, regular]
     timeout-minutes: 20
     steps:
       - uses: tiangolo/issue-manager@0.4.0

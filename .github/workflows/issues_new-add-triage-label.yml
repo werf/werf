@@ -7,7 +7,7 @@ on:
 
 jobs:
   label_issues:
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, regular]
     permissions:
       issues: write
     steps:

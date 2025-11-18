@@ -18,15 +18,10 @@ env:
   DEBIAN_FRONTEND: "noninteractive"
   WERF_TEST_K8S_DOCKER_REGISTRY_INSECURE: "false"
   TASK_X_REMOTE_TASKFILES: 1
+
 jobs:
   _:
-    strategy:
-      fail-fast: false
-      matrix:
-        os:
-          - ${{ inputs.linuxAmd64Runner }}
-        kubeVersion: [1.29.14, 1.31.6]
-    runs-on: ${{ matrix.os }}
+    runs-on: [self-hosted, regular]
     timeout-minutes: 60
     env:
       WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_ACR: 1
@@ -66,9 +61,6 @@ jobs:
       WERF_TEST_QUAY_TOKEN: ${{ secrets.WERF_TEST_QUAY_TOKEN }}
       WERF_TEST_QUAY_USERNAME: ${{ secrets.WERF_TEST_QUAY_USERNAME }}
     steps:
-      - name: Install werf build dependencies
-        run: sudo apt-get install -y libbtrfs-dev
-
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -77,11 +69,6 @@ jobs:
         with:
           cache: true
           go-version-file: go.mod
-
-      - name: Install Task
-        uses: arduino/setup-task@v2
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up prebuilt werf test binary
         uses: ./.github/actions/set-up-prebuilt-werf-test-binary
@@ -118,10 +105,11 @@ jobs:
       - name: Test
         run: |
           export WERF_TEST_K8S_DOCKER_REGISTRY="localhost:$(docker inspect kind-registry --format '{{(index (index .NetworkSettings.Ports "5000/tcp") 0).HostPort}}')"
-          task --yes -p test:integration kubeVersion=${{ matrix.kubeVersion }} paths="test/legacy_e2e/suites/cleanup_after_converge test/legacy_e2e/suites/deploy test/legacy_e2e/suites/helm/deploy_rollback" -- --flake-attempts=3 --keep-going
+          task --yes -p test:integration paths="test/legacy_e2e/suites/cleanup_after_converge test/legacy_e2e/suites/deploy test/legacy_e2e/suites/helm/deploy_rollback" -- --flake-attempts=3 --keep-going
           echo loadavg: $(cat /proc/loadavg)
         env:
           GOCOVERDIR: ${{ env.WERF_TEST_COVER_DIR }}
+          LD_LIBRARY_PATH: "/usr/local/lib/libgost"
 
       - name: Upload coverage artifact
         uses: ./.github/actions/upload-coverage-artifact
