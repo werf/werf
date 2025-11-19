@@ -60,3 +60,7 @@ type KubeCtlOptions struct {
 type SbomGetOptions struct {
 	CommonOptions
 }
+
+type VerifyOptions struct {
+	CommonOptions
+}

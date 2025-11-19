@@ -46,21 +46,6 @@ func (m *MockGitRepo) EXPECT() *MockGitRepoMockRecorder {
 	return m.recorder
 }
 
-// AreSubmoduleCommitsValid mocks base method.
-func (m *MockGitRepo) AreSubmoduleCommitsValid(ctx context.Context, commit string) (bool, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AreSubmoduleCommitsValid", ctx, commit)
-	ret0, _ := ret[0].(bool)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// AreSubmoduleCommitsValid indicates an expected call of AreSubmoduleCommitsValid.
-func (mr *MockGitRepoMockRecorder) AreSubmoduleCommitsValid(ctx, commit any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AreSubmoduleCommitsValid", reflect.TypeOf((*MockGitRepo)(nil).AreSubmoduleCommitsValid), ctx, commit)
-}
-
 // CreateDetachedMergeCommit mocks base method.
 func (m *MockGitRepo) CreateDetachedMergeCommit(ctx context.Context, fromCommit, toCommit string) (string, error) {
 	m.ctrl.T.Helper()
@@ -599,21 +584,6 @@ func NewMockgitRepo(ctrl *gomock.Controller) *MockgitRepo {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockgitRepo) EXPECT() *MockgitRepoMockRecorder {
 	return m.recorder
-}
-
-// AreSubmoduleCommitsValid mocks base method.
-func (m *MockgitRepo) AreSubmoduleCommitsValid(ctx context.Context, commit string) (bool, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AreSubmoduleCommitsValid", ctx, commit)
-	ret0, _ := ret[0].(bool)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// AreSubmoduleCommitsValid indicates an expected call of AreSubmoduleCommitsValid.
-func (mr *MockgitRepoMockRecorder) AreSubmoduleCommitsValid(ctx, commit any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AreSubmoduleCommitsValid", reflect.TypeOf((*MockgitRepo)(nil).AreSubmoduleCommitsValid), ctx, commit)
 }
 
 // CreateDetachedMergeCommit mocks base method.

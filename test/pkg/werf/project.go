@@ -241,3 +241,16 @@ func (p *Project) SbomGet(ctx context.Context, opts *SbomGetOptions) (combinedOu
 
 	return string(outb)
 }
+
+func (p *Project) Verify(ctx context.Context, opts *VerifyOptions) (combinedOut string) {
+	if opts == nil {
+		opts = &VerifyOptions{}
+	}
+	args := append([]string{"verify"}, opts.ExtraArgs...)
+
+	outb := p.RunCommand(ctx, args, CommonOptions{
+		ShouldFail: opts.ShouldFail,
+	})
+
+	return string(outb)
+}

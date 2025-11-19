@@ -5,6 +5,7 @@ import (
 	"io"
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
+	"github.com/google/go-containerregistry/pkg/v1/remote"
 
 	docker_registry_api "github.com/werf/werf/v2/pkg/docker_registry/api"
 	"github.com/werf/werf/v2/pkg/image"
@@ -41,6 +42,7 @@ type GenericApiInterface interface {
 	commonInterface
 
 	GetRepoImageConfigFile(ctx context.Context, reference string) (*v1.ConfigFile, error)
+	GetRepoImageDesc(ctx context.Context, reference string) (*remote.Descriptor, error)
 }
 
 type ArchiveOpener interface {

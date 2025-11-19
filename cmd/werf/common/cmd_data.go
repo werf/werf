@@ -109,11 +109,18 @@ type CmdData struct {
 	SignCert          *string
 	SignIntermediates *string
 
+	VerifyManifest *bool
+	VerifyRoots    *[]string
+
 	BSignELFFiles               *bool
 	SignELFFiles                *bool
 	ELFPGPPrivateKeyBase64      *string
 	ELFPGPPrivateKeyFingerprint *string
 	ELFPGPPrivateKeyPassphrase  *string
+
+	VerifyELFFiles      *bool
+	VerifyBSignELFFiles *bool
+	ImageRef            *[]string
 
 	SkipImageSpecStage *bool
 	IncludesLsFilter   *string
