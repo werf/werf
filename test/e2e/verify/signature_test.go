@@ -1,42 +1,35 @@
-package e2e_build_test
+package e2e_verify_test
 
 import (
-	"debug/elf"
 	_ "embed"
 	"encoding/base64"
 	"fmt"
 
-	"github.com/deckhouse/delivery-kit-sdk/pkg/signature/elf/inhouse"
-	"github.com/deckhouse/delivery-kit-sdk/pkg/signature/image"
-	"github.com/google/go-containerregistry/pkg/name"
-	v1 "github.com/google/go-containerregistry/pkg/v1"
-	"github.com/google/go-containerregistry/pkg/v1/remote"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/samber/lo"
 
-	"github.com/werf/werf/v2/test/pkg/utils"
+	"github.com/werf/werf/v2/test/pkg/report"
 	"github.com/werf/werf/v2/test/pkg/utils/gpg"
 	"github.com/werf/werf/v2/test/pkg/werf"
 )
 
 var (
 	// ----- Inhouse -----
-	//go:embed _fixtures/integrity_control/inhouse/keys/delivery-kit_959497322.pem.key
+	//go:embed _fixtures/signature/inhouse/keys/delivery-kit_959497322.pem.key
 	testKeyData []byte
-	//go:embed _fixtures/integrity_control/inhouse/keys/delivery-kit_1666162742.pem.crt
+	//go:embed _fixtures/signature/inhouse/keys/delivery-kit_1666162742.pem.crt
 	testCertData []byte
-	//go:embed _fixtures/integrity_control/inhouse/keys/delivery-kit_chain_3247019714.pem.crt
+	//go:embed _fixtures/signature/inhouse/keys/delivery-kit_chain_3247019714.pem.crt
 	testChainData []byte
-	//go:embed _fixtures/integrity_control/inhouse/keys/delivery-kit_intermediates_1698313569.pem.crt
+	//go:embed _fixtures/signature/inhouse/keys/delivery-kit_intermediates_1698313569.pem.crt
 	testIntermediatesData []byte
-	//go:embed _fixtures/integrity_control/inhouse/keys/delivery-kit_root_1959509881.pem.crt
+	//go:embed _fixtures/signature/inhouse/keys/delivery-kit_root_1959509881.pem.crt
 	testRootCertData []byte
 
 	// ----- BSign -----
-	//go:embed _fixtures/integrity_control/bsign/keys/rsa_4096_private.pgp
+	//go:embed _fixtures/signature/bsign/keys/rsa_4096_private.pgp
 	testBSignPrivateKeyData []byte
-	//go:embed _fixtures/integrity_control/bsign/keys/rsa_4096_public.pgp
+	//go:embed _fixtures/signature/bsign/keys/rsa_4096_public.pgp
 	testBSignPublicKeyData []byte
 )
 
@@ -62,14 +55,14 @@ type integrityTestOptions struct {
 	setupEnvOptions
 }
 
-var _ = Describe("Integrity control", Label("e2e", "integrity", "simple"), func() {
-	DescribeTable("should sign and verify image manifest and binaries (inhouse), and annotate image with verity",
+var _ = Describe("Signature", Label("e2e", "signature", "simple"), func() {
+	DescribeTable("should sign and verify image manifest and binaries (inhouse)",
 		func(ctx SpecContext, testOpts integrityTestOptions) {
 			setupEnv(testOpts.setupEnvOptions)
 
 			By("inhouse: starting")
 			repoDirname := "repo0"
-			fixtureRelPath := "integrity_control/inhouse/state"
+			fixtureRelPath := "signature/inhouse/state"
 			buildReportName := "report0.json"
 
 			By("inhouse: preparing test repo")
@@ -78,60 +71,33 @@ var _ = Describe("Integrity control", Label("e2e", "integrity", "simple"), func(
 			By("inhouse: building image")
 			werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
 
-			extraArgs := []string{
+			extraBuildArgs := []string{
 				"--sign-manifest",
 				"--sign-key", testKeyBase64,
 				"--sign-cert", testCertBase64,
 				"--sign-intermediates", testIntermediatesBase64,
 				"--sign-elf-files",
-				"--annotate-layers-with-dm-verity-root-hash",
 			}
 
-			buildOut, buildReport := werfProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), &werf.BuildWithReportOptions{CommonOptions: werf.CommonOptions{ExtraArgs: extraArgs}})
+			reportProject := report.NewProjectWithReport(werfProject)
+			buildOut, buildReport := reportProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), &werf.WithReportOptions{CommonOptions: werf.CommonOptions{ExtraArgs: extraBuildArgs}})
 			Expect(buildOut).To(ContainSubstring("Building stage dockerfile/sign"))
 			Expect(buildOut).To(ContainSubstring("Signing ELF files"))
 
-			By("inhouse: loading image and manifest from registry")
-			img := loadImageFromRegistry(buildReport.Images["dockerfile"].DockerImageName)
-			manifest, err := img.Manifest()
-			Expect(err).To(Succeed())
-
-			// ----- Verification -----
-			// Debugging using docker:
-			// docker manifest inspect --insecure localhost:38903/werf-test-none-31906--22cc85d6:b0eacfdc7b53f2db71f9e76ff7c08395f0c9d993ecdfd763a9159e7a-1757065424241
-
-			// ----- Manifest verification -----
-
-			By("inhouse: verify image manifest signature")
-			Expect(manifest.Annotations).To(HaveKeyWithValue("io.deckhouse.delivery-kit.signature", Not(BeEmpty())))
-			Expect(manifest.Annotations).To(HaveKeyWithValue("io.deckhouse.delivery-kit.cert", testCertBase64))
-			Expect(manifest.Annotations).To(HaveKeyWithValue("io.deckhouse.delivery-kit.chain", testIntermediatesBase64))
-
-			err = image.VerifyImageManifestSignature(ctx, []string{testRootCertBase64}, manifest)
-			Expect(err).To(Succeed())
-
-			By("inhouse: verify image manifest dm-verity annotation")
-			// Expect(manifest.Annotations).To(HaveKeyWithValue("io.deckhouse.delivery-kit.build-timestamp", Not(BeEmpty())))
-			// Expect(manifest.Annotations).To(HaveKeyWithValue("io.deckhouse.delivery-kit.dm-verity-root-hash", Not(BeEmpty())))
-
-			// ----- ELF files verification -----
-
-			By("inhouse: verify ELF's signatures")
-			containerFilePaths := []string{
-				"/usr/bin/curl",
+			extraVerifyArgs := []string{
+				"--image-ref", buildReport.Images["dockerfile"].DockerImageName,
+				"--verify-roots", testRootCertBase64,
+				"--verify-manifest",
+				"--verify-elf-files",
 			}
 
-			tmpLocalPaths := utils.ExtractFilesFromImage(SuiteData.TmpDir, img, containerFilePaths)
-			Expect(tmpLocalPaths).To(HaveLen(len(containerFilePaths)))
-
-			for _, tmpLocalPath := range tmpLocalPaths {
-				By(fmt.Sprintf("inhouse: verify ELF's section of %s", tmpLocalPath))
-				verifyELFSection(tmpLocalPath, ".note.delivery-kit.signature", elf.SHT_NOTE)
-
-				By(fmt.Sprintf("inhouse: verify ELF's signature of %s", tmpLocalPath))
-				err = inhouse.Verify(ctx, []string{testRootCertBase64}, tmpLocalPath)
-				Expect(err).To(Succeed())
-			}
+			By("inhouse: verifying image")
+			verifyOut := werfProject.Verify(ctx, &werf.VerifyOptions{CommonOptions: werf.CommonOptions{ExtraArgs: extraVerifyArgs}})
+			Expect(verifyOut).To(ContainSubstring("Verifying image (1/1)"))
+			Expect(verifyOut).To(ContainSubstring(fmt.Sprintf("Using reference: %s", buildReport.Images["dockerfile"].DockerImageName)))
+			Expect(verifyOut).To(ContainSubstring("Manifest signature ... ok"))
+			Expect(verifyOut).To(ContainSubstring("ELF files signatures"))
+			Expect(verifyOut).To(ContainSubstring("usr/bin/curl ... ok"))
 		},
 		// TODO: enable when it will be supported
 		// XEntry("without repo using Vanilla Docker", integrityTestOptions{setupEnvOptions: setupEnvOptions{
@@ -178,7 +144,8 @@ var _ = Describe("Integrity control", Label("e2e", "integrity", "simple"), func(
 		// }}),
 	)
 
-	Describe("gpg host configuration", func() {
+	// TODO: enable when test environment will be ready
+	XDescribe("gpg host configuration", func() {
 		BeforeEach(func(ctx SpecContext) {
 			// Expect(gpg.ImportKey(ctx, testBSignPrivateKeyData)).To(Succeed()) // the key will be imported while building
 			Expect(gpg.ImportKey(ctx, testBSignPublicKeyData)).To(Succeed())
@@ -195,7 +162,7 @@ var _ = Describe("Integrity control", Label("e2e", "integrity", "simple"), func(
 
 				By("bsign: starting")
 				repoDirname := "repo0"
-				fixtureRelPath := "integrity_control/bsign/state"
+				fixtureRelPath := "signature/bsign/state"
 				buildReportName := "report0.json"
 
 				By("bsign: preparing test repo")
@@ -204,35 +171,26 @@ var _ = Describe("Integrity control", Label("e2e", "integrity", "simple"), func(
 				By("bsign: building image")
 				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
 
-				extraArgs := []string{
+				extraBuildArgs := []string{
 					"--bsign-elf-files",
 					"--elf-pgp-private-key-base64", testBSignPrivateKeyBase64,
 				}
 
-				buildOut, buildReport := werfProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), &werf.BuildWithReportOptions{CommonOptions: werf.CommonOptions{ExtraArgs: extraArgs}})
+				reportProject := report.NewProjectWithReport(werfProject)
+				buildOut, buildReport := reportProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), &werf.WithReportOptions{CommonOptions: werf.CommonOptions{ExtraArgs: extraBuildArgs}})
 				Expect(buildOut).To(ContainSubstring("Signing ELF files"))
 
-				By("bsign: loading image and manifest from registry")
-				img := loadImageFromRegistry(buildReport.Images["dockerfile"].DockerImageName)
-
-				By("bsign: verify ELF's signatures")
-				containerFilePaths := []string{
-					"/usr/bin/curl",
+				extraVerifyArgs := []string{
+					"--image-ref", buildReport.Images["dockerfile"].DockerImageName,
+					"--verify-roots", testRootCertBase64,
+					"--verify-bsign-elf-files",
 				}
-
-				tmpLocalPaths := utils.ExtractFilesFromImage(SuiteData.TmpDir, img, containerFilePaths)
-				Expect(tmpLocalPaths).To(HaveLen(len(containerFilePaths)))
-
-				for _, tmpLocalPath := range tmpLocalPaths {
-					By(fmt.Sprintf("bsign: verify ELF's section of %s", tmpLocalPath))
-					verifyELFSection(tmpLocalPath, "signature", elf.SHT_LOUSER)
-
-					//	By(fmt.Sprintf("bsign: verify ELF's signature of %s", tmpLocalPath))
-					// https://manpages.debian.org/testing/bsign/bsign.1.en.html
-					// 	cmd := exec.CommandContextCancellation(ctx, "bsign", "--verify", tmpLocalPath)
-					// 	output, err := cmd.CombinedOutput()
-					// 	Expect(err).To(Succeed(), "'bsign --verify %s' output: %s", tmpLocalPath, output)
-				}
+				By("bsign: verifying image")
+				verifyOut := werfProject.Verify(ctx, &werf.VerifyOptions{CommonOptions: werf.CommonOptions{ExtraArgs: extraVerifyArgs}})
+				Expect(verifyOut).To(ContainSubstring("Verifying image (1/1)"))
+				Expect(verifyOut).To(ContainSubstring(fmt.Sprintf("Using reference: %s", buildReport.Images["dockerfile"].DockerImageName)))
+				Expect(verifyOut).To(ContainSubstring("ELF files signatures"))
+				Expect(verifyOut).To(ContainSubstring("usr/bin/curl ... ok"))
 			},
 			// TODO: enable when it will be supported
 			// XEntry("without repo using Vanilla Docker", integrityTestOptions{setupEnvOptions: setupEnvOptions{
@@ -280,30 +238,3 @@ var _ = Describe("Integrity control", Label("e2e", "integrity", "simple"), func(
 		)
 	})
 })
-
-func loadImageFromRegistry(imageName string) v1.Image {
-	ref, err := name.ParseReference(imageName)
-	Expect(err).To(Succeed())
-	desc, err := remote.Get(ref)
-	Expect(err).To(Succeed())
-	img, err := desc.Image()
-	Expect(err).To(Succeed())
-	return img
-}
-
-func verifyELFSection(filename, secName string, secType elf.SectionType) {
-	file, err := elf.Open(filename)
-	Expect(err).To(Succeed(), fmt.Sprintf("failed to open %s", filename))
-	defer func() {
-		Expect(file.Close()).To(Succeed())
-	}()
-	sec := file.Section(secName)
-	Expect(sec).NotTo(BeNil(), fmt.Sprintf("failed to find section %s in %s, available sections: %v", secName, filename, formatELFSectionHeaders(file)))
-	Expect(sec.Type).To(HavePrefix(secType.String()), fmt.Sprintf("failed to find section %s with type %s in %s", secName, secType, filename))
-}
-
-func formatELFSectionHeaders(file *elf.File) []string {
-	return lo.Map(file.Sections, func(s *elf.Section, _ int) string {
-		return fmt.Sprintf("{Name:%q,Type:%s}", s.Name, s.Type)
-	})
-}

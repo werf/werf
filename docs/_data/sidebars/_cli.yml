@@ -105,6 +105,9 @@ cli: &cli
           - title: werf stages copy
             url: /reference/cli/werf_stages_copy.html
 
+      - title: werf verify
+        url: /reference/cli/werf_verify.html
+
   - title: Low-level management commands
     f:
       - title: werf config

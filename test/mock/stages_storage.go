@@ -460,6 +460,20 @@ func (mr *MockStagesStorageMockRecorder) IsManagedImageExist(ctx, projectName, i
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsManagedImageExist", reflect.TypeOf((*MockStagesStorage)(nil).IsManagedImageExist), varargs...)
 }
 
+// MutateAndPushImage mocks base method.
+func (m *MockStagesStorage) MutateAndPushImage(ctx context.Context, src, dest string, newConfig image.SpecConfig, stageImage container_backend.LegacyImageInterface) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MutateAndPushImage", ctx, src, dest, newConfig, stageImage)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// MutateAndPushImage indicates an expected call of MutateAndPushImage.
+func (mr *MockStagesStorageMockRecorder) MutateAndPushImage(ctx, src, dest, newConfig, stageImage any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MutateAndPushImage", reflect.TypeOf((*MockStagesStorage)(nil).MutateAndPushImage), ctx, src, dest, newConfig, stageImage)
+}
+
 // PostClientIDRecord mocks base method.
 func (m *MockStagesStorage) PostClientIDRecord(ctx context.Context, projectName string, rec *storage.ClientIDRecord) error {
 	m.ctrl.T.Helper()

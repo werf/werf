@@ -6,3 +6,4 @@ RUN apt-get update && \
 FROM scratch
 
 COPY --from=builder /usr/bin/curl /usr/bin/curl
+COPY --from=builder /etc/os-release /etc/os-release

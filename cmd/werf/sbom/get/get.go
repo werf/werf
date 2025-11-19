@@ -133,6 +133,10 @@ func runGet(ctx context.Context, requestedImageName string) error {
 	containerBackend := commonManager.ContainerBackend()
 
 	defer func() {
+		if err := tmp_manager.DelegateCleanup(ctx); err != nil {
+			logboek.Context(ctx).Warn().LogF("Temporary files cleanup preparation failed: %s\n", err)
+		}
+		
 		if err := common.RunAutoHostCleanup(ctx, &commonCmdData, containerBackend); err != nil {
 			logboek.Context(ctx).Error().LogF("Auto host cleanup failed: %s\n", err)
 		}

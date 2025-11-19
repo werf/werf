@@ -55,6 +55,7 @@ import (
 	stage_image "github.com/werf/werf/v2/cmd/werf/stage/image"
 	stages_copy "github.com/werf/werf/v2/cmd/werf/stages/copy"
 	"github.com/werf/werf/v2/cmd/werf/synchronization"
+	"github.com/werf/werf/v2/cmd/werf/verify"
 	"github.com/werf/werf/v2/cmd/werf/version"
 	"github.com/werf/werf/v2/pkg/telemetry"
 )
@@ -111,6 +112,7 @@ func ConstructRootCmd(ctx context.Context) (*cobra.Command, error) {
 				includesCmd(ctx),
 				sbomCmd(ctx),
 				stagesCmd(ctx),
+				verify.NewCmd(ctx),
 			},
 		},
 		{

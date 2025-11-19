@@ -456,6 +456,20 @@ func (mr *MockContainerBackendMockRecorder) SaveImageToStream(ctx, imageName any
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveImageToStream", reflect.TypeOf((*MockContainerBackend)(nil).SaveImageToStream), ctx, imageName)
 }
 
+// ShouldCleanupDockerfileImage mocks base method.
+func (m *MockContainerBackend) ShouldCleanupDockerfileImage() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ShouldCleanupDockerfileImage")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// ShouldCleanupDockerfileImage indicates an expected call of ShouldCleanupDockerfileImage.
+func (mr *MockContainerBackendMockRecorder) ShouldCleanupDockerfileImage() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ShouldCleanupDockerfileImage", reflect.TypeOf((*MockContainerBackend)(nil).ShouldCleanupDockerfileImage))
+}
+
 // String mocks base method.
 func (m *MockContainerBackend) String() string {
 	m.ctrl.T.Helper()

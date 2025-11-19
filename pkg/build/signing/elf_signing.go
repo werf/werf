@@ -4,7 +4,6 @@ import (
 	"archive/tar"
 	"bytes"
 	"context"
-	"debug/elf"
 	"errors"
 	"fmt"
 	"io"
@@ -23,6 +22,7 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
+	elfTar "github.com/werf/werf/v2/pkg/signature/elf/tar"
 	"github.com/werf/werf/v2/pkg/tmp_manager"
 	werfExec "github.com/werf/werf/v2/pkg/werf/exec"
 )
@@ -50,32 +50,6 @@ func (o ELFSigningOptions) Signer() *Signer {
 func NewELFSigningOptions(signer *Signer) ELFSigningOptions {
 	return ELFSigningOptions{
 		signer: signer,
-	}
-}
-
-func isELFFileStream(readerAt io.ReaderAt) (bool, error) {
-	ef, err := elf.NewFile(readerAt)
-	if err != nil {
-
-		if errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) {
-			return false, nil
-		}
-
-		if _, isFormatError := err.(*elf.FormatError); isFormatError {
-			// not ELF
-			return false, nil
-		}
-		return false, err
-	}
-	defer ef.Close()
-
-	switch ef.Machine {
-	case elf.EM_386, elf.EM_X86_64:
-		// Good ELF
-		return true, nil
-	default:
-		// Bad ELF
-		return false, nil
 	}
 }
 
@@ -142,96 +116,71 @@ func formatBsignError(path string, output []byte, err error) error {
 }
 
 func mutateELFFiles(ctx context.Context, reader io.Reader, elfSigningOptions ELFSigningOptions) (*bytes.Buffer, error) {
-	tarReader := tar.NewReader(reader)
+	elfTarReader := elfTar.NewReader(tar.NewReader(reader))
 	var buffer bytes.Buffer
 	tarWriter := tar.NewWriter(&buffer)
 
 	for {
-		header, err := tarReader.Next()
-		if err == io.EOF {
-			// We have reached the end of the archive
-			break
-		}
-		if err != nil {
+		header, err := elfTarReader.Next()
+		if errors.Is(err, io.EOF) {
+			break // We have reached the end of the archive
+		} else if err != nil {
 			return nil, fmt.Errorf("failed to read tar archive: %w", err)
 		}
 
-		switch header.Typeflag {
-		case tar.TypeReg:
-			// For regular files, sign the content if it is an ELF file
-			if err := func() error {
-				tmpFile, err := tmp_manager.TempFile("elf-file-*.tmp")
-				if err != nil {
-					return fmt.Errorf("failed to create temp file: %w", err)
-				}
-				defer os.Remove(tmpFile.Name())
-				defer tmpFile.Close()
+		if !header.IsELF {
+			// For NON-ELF files, copy the header and content as-is
+			if err = writeTarFile(tarWriter, header.Header, elfTarReader); err != nil {
+				return nil, fmt.Errorf("failed to write tar file: %w", err)
+			}
+			continue
+		}
 
-				// Stream the file content to the temp file
-				if _, err := io.Copy(tmpFile, tarReader); err != nil {
-					return fmt.Errorf("failed to write to temp file: %w", err)
-				}
+		// For ELF files, copy header and sign the content
+		if err = func() error {
+			tmpFile, err := tmp_manager.TempFile("elf-file-*.tmp")
+			if err != nil {
+				return fmt.Errorf("failed to create temp file: %w", err)
+			}
+			defer os.Remove(tmpFile.Name())
+			defer tmpFile.Close()
 
-				// Reset the file offset to the beginning
-				if _, err := tmpFile.Seek(0, io.SeekStart); err != nil {
-					return fmt.Errorf("failed to seek temp file: %w", err)
-				}
+			// Stream the file content to the temp file
+			if _, err := io.Copy(tmpFile, elfTarReader); err != nil {
+				return fmt.Errorf("failed to write to temp file: %w", err)
+			}
 
-				isELF, err := isELFFileStream(tmpFile)
-				if err != nil {
-					return fmt.Errorf("failed to check ELF file %q: %w", header.Name, err)
-				}
-
-				if !isELF {
-					// Reset the file offset to the beginning
-					if _, err := tmpFile.Seek(0, io.SeekStart); err != nil {
-						return fmt.Errorf("failed to seek temp file: %w", err)
-					}
-
-					if err := writeTarFile(tarWriter, header, tmpFile); err != nil {
-						return fmt.Errorf("failed to write tar file: %w", err)
-					}
-
-					return nil
-				}
-
-				if err := logboek.Context(ctx).Default().LogProcessInline(header.Name).DoError(func() error {
-					if err := signELFFile(ctx, tmpFile.Name(), elfSigningOptions); err != nil {
-						return fmt.Errorf("failed to sign ELF file %q: %w", header.Name, err)
-					}
-
-					return nil
-				}); err != nil {
-					return err
-				}
-
-				// We must create a new file descriptor to read actual file size and content
-				signedFile, err := os.Open(tmpFile.Name())
-				if err != nil {
-					return err
-				}
-				defer signedFile.Close()
-
-				// Update the header size to the signed file size
-				info, err := signedFile.Stat()
-				if err != nil {
-					return err
-				}
-				header.Size = info.Size()
-
-				if err := writeTarFile(tarWriter, header, signedFile); err != nil {
-					return fmt.Errorf("failed to write tar file: %w", err)
+			if err := logboek.Context(ctx).Default().LogProcessInline(header.Name).DoError(func() error {
+				if err := signELFFile(ctx, tmpFile.Name(), elfSigningOptions); err != nil {
+					return fmt.Errorf("failed to sign ELF file %q: %w", header.Name, err)
 				}
 
 				return nil
-			}(); err != nil {
-				return nil, err
+			}); err != nil {
+				return err
 			}
-		default:
-			// For non-regular files, copy the header and content as-is
-			if err := writeTarFile(tarWriter, header, tarReader); err != nil {
-				return nil, fmt.Errorf("failed to write tar file: %w", err)
+
+			// We must create a new file descriptor to read actual file size and content
+			signedFile, err := os.Open(tmpFile.Name())
+			if err != nil {
+				return err
 			}
+			defer signedFile.Close()
+
+			// Update the header size to the signed file size
+			info, err := signedFile.Stat()
+			if err != nil {
+				return err
+			}
+			header.Size = info.Size()
+
+			if err := writeTarFile(tarWriter, header.Header, signedFile); err != nil {
+				return fmt.Errorf("failed to write tar file: %w", err)
+			}
+
+			return nil
+		}(); err != nil {
+			return nil, err
 		}
 	}
 
@@ -270,8 +219,8 @@ func Sign(ctx context.Context, refBase, refFinal string, elfSigningOptions ELFSi
 
 	var deferredActions []func()
 	defer func() {
-		for _, action := range deferredActions {
-			action()
+		for i := len(deferredActions) - 1; i >= 0; i-- {
+			deferredActions[i]()
 		}
 	}()
 
@@ -312,8 +261,8 @@ func Sign(ctx context.Context, refBase, refFinal string, elfSigningOptions ELFSi
 		if err != nil {
 			return "", fmt.Errorf("failed to create temp file: %w", err)
 		}
-		deferredActions = append(deferredActions, func() { _ = tmpFile.Close() })
 		deferredActions = append(deferredActions, func() { _ = os.Remove(tmpFile.Name()) })
+		deferredActions = append(deferredActions, func() { _ = tmpFile.Close() })
 
 		if _, err := io.Copy(tmpFile, modifiedLayerBuffer); err != nil {
 			return "", fmt.Errorf("failed to write to temp file: %w", err)
