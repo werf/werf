@@ -14,6 +14,7 @@ import (
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/util/parallel"
+	"github.com/werf/werf/v2/pkg/werf"
 )
 
 var _ = DescribeTable("parallel task",
@@ -35,6 +36,9 @@ var _ = DescribeTable("parallel task",
 			ctx, cancel = context.WithTimeout(ctx, parallelExecutionLimit)
 			defer cancel()
 		}
+
+		// tmp_manager requires werf init
+		Expect(werf.Init(GinkgoT().TempDir(), "")).To(Succeed())
 
 		err := parallel.DoTasks(ctx, numberOfTasks, options, spyTask.Callback)
 
@@ -86,7 +90,7 @@ var _ = DescribeTable("parallel task",
 		},
 	),
 	Entry(
-		"should stop parallel execution process if one of tasks failed (fail fast)",
+		"should stop parallel execution process if one of tasks failed (fail fast) and print log from failed task",
 		time.Duration(0),
 		2,
 		parallel.DoTasksOptions{
@@ -95,15 +99,12 @@ var _ = DescribeTable("parallel task",
 		newSpyTask(func(ctx context.Context, taskId int) error {
 			switch taskId {
 			case 0:
-				select {
-				case <-ctx.Done():
-					Expect(ctx.Err()).To(MatchError(context.Canceled))
-					return nil
-				case <-time.After(100 * time.Millisecond):
-					return errors.New("task 0 failed")
-				}
+				<-ctx.Done()
+				Expect(ctx.Err()).To(MatchError(context.Canceled))
+				logboek.Context(ctx).LogLn("task 0 must not print log")
+				return nil
 			case 1:
-				time.Sleep(50 * time.Millisecond)
+				logboek.Context(ctx).LogLn("task 1 prints log")
 				return errors.New("task 1 failed")
 			default:
 				panic(fmt.Sprintf("unexpected taskId: %d", taskId))
@@ -111,7 +112,9 @@ var _ = DescribeTable("parallel task",
 		}),
 		2,
 		MatchError("task 1 failed"),
-		[]string{},
+		[]string{
+			"\ntask 1 prints log\n",
+		},
 	),
 	Entry(
 		"should cancel parallel execution if parent context is canceled",
