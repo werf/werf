@@ -82,6 +82,10 @@ type SbomGetOptions struct {
 	CommonOptions
 }
 
+type VerifyOptions struct {
+	CommonOptions
+}
+
 type KubeRunOptions struct {
 	CommonOptions
 	Command []string
@@ -339,6 +343,20 @@ func (p *Project) SbomGet(ctx context.Context, opts *SbomGetOptions) (combinedOu
 		opts = &SbomGetOptions{}
 	}
 	args := append([]string{"sbom", "get"}, opts.ExtraArgs...)
+
+	outb := p.runCommand(ctx, runCommandOptions{
+		Args:       args,
+		ShouldFail: opts.ShouldFail,
+	})
+
+	return string(outb)
+}
+
+func (p *Project) Verify(ctx context.Context, opts *VerifyOptions) (combinedOut string) {
+	if opts == nil {
+		opts = &VerifyOptions{}
+	}
+	args := append([]string{"verify"}, opts.ExtraArgs...)
 
 	outb := p.runCommand(ctx, runCommandOptions{
 		Args:       args,

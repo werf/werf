@@ -99,6 +99,9 @@ cli: &cli
           - title: werf sbom get
             url: /reference/cli/werf_sbom_get.html
 
+      - title: werf verify
+        url: /reference/cli/werf_verify.html
+
   - title: Low-level management commands
     f:
       - title: werf config

@@ -52,6 +52,7 @@ import (
 	"github.com/werf/werf/v2/cmd/werf/slugify"
 	stage_image "github.com/werf/werf/v2/cmd/werf/stage/image"
 	"github.com/werf/werf/v2/cmd/werf/synchronization"
+	"github.com/werf/werf/v2/cmd/werf/verify"
 	"github.com/werf/werf/v2/cmd/werf/version"
 	"github.com/werf/werf/v2/pkg/telemetry"
 )
@@ -106,6 +107,7 @@ func ConstructRootCmd(ctx context.Context) (*cobra.Command, error) {
 				lint.NewCmd(ctx),
 				includesCmd(ctx),
 				sbomCmd(ctx),
+				verify.NewCmd(ctx),
 			},
 		},
 		{

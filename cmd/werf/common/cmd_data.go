@@ -10,6 +10,7 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/nelm/pkg/common"
+	"github.com/werf/werf/v2/pkg/util/option"
 )
 
 type CmdData struct {
@@ -105,11 +106,18 @@ type CmdData struct {
 	SignCert          *string
 	SignIntermediates *string
 
+	VerifyManifest *bool
+	VerifyRoots    *[]string
+
 	BSignELFFiles               *bool
 	SignELFFiles                *bool
 	ELFPGPPrivateKeyBase64      *string
 	ELFPGPPrivateKeyFingerprint *string
 	ELFPGPPrivateKeyPassphrase  *string
+
+	VerifyELFFiles      *bool
+	VerifyBSignELFFiles *bool
+	ImageRef            *[]string
 
 	SkipImageSpecStage *bool
 	IncludesLsFilter   *string
@@ -193,7 +201,7 @@ func (cmdData *CmdData) SetupPlatform(cmd *cobra.Command) {
 }
 
 func (cmdData *CmdData) GetPlatform() []string {
-	return *cmdData.Platform
+	return option.PtrValueOrDefault(cmdData.Platform, []string{})
 }
 
 func (cmdData *CmdData) SetupSkipDependenciesRepoRefresh(cmd *cobra.Command) {

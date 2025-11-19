@@ -1,6 +1,9 @@
 package structs
 
 type DocsStruct struct {
-	Long   string
-	LongMD string
+	Use     string
+	Short   string
+	Long    string
+	LongMD  string
+	Example string
 }
