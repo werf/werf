@@ -5,6 +5,11 @@ import (
 	"strings"
 )
 
+const (
+	artifactCacheVersion = "1"
+	artifactData         = "1"
+)
+
 type commonTestOptions struct {
 	All *bool
 }
@@ -12,6 +17,8 @@ type commonTestOptions struct {
 func setupEnv() {
 	SuiteData.Stubs.SetEnv("WERF_SYNCHRONIZATION", ":local")
 	SuiteData.Stubs.SetEnv("WERF_ENV", "test")
+	SuiteData.Stubs.SetEnv("ARTIFACT_CACHE_VERSION", artifactCacheVersion)
+	SuiteData.Stubs.SetEnv("ARTIFACT_DATA", artifactData)
 
 	SuiteData.WerfFromRepo = strings.Join([]string{SuiteData.FromRegistryLocalAddress, SuiteData.ProjectName}, "/")
 	SuiteData.WerfToRepo = strings.Join([]string{SuiteData.ToRegistryLocalAddress, SuiteData.ProjectName}, "/")
