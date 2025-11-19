@@ -58,7 +58,7 @@ func collectPaths() ([]string, []string, error) {
 	gcPathList := []gcPath{
 		newGCPath(filepath.Join(getReleasedTmpDirs(), projectsServiceDir), 0),
 		newGCPath(filepath.Join(getCreatedTmpDirs(), projectsServiceDir), 0),
-		newGCPath(filepath.Join(getCreatedTmpDirs(), dockerConfigsServiceDir), time.Hour*4),
+		newGCPath(filepath.Join(getCreatedTmpDirs(), dockerConfigsServiceDir), time.Hour*6),
 		newGCPath(filepath.Join(getCreatedTmpDirs(), kubeConfigsServiceDir), 0),
 		newGCPath(filepath.Join(getCreatedTmpDirs(), werfConfigRendersServiceDir), 0),
 		newGCPath(filepath.Join(getCreatedTmpDirs(), contextArchivesDir), 0),
