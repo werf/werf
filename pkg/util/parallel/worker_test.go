@@ -2,6 +2,7 @@ package parallel_test
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -11,28 +12,41 @@ import (
 	"github.com/werf/werf/v2/pkg/werf"
 )
 
-var _ = Describe("worker", func() {
-	var worker *parallel.Worker
-
-	BeforeEach(func() {
-		// tmp_manager requires werf init
+var _ = DescribeTable(
+	"worker should return writing error if it was half-closed",
+	func(doHalfClose, doClose bool) {
 		Expect(werf.Init(GinkgoT().TempDir(), "")).To(Succeed())
 
-		var err error
-		worker, err = parallel.NewWorker(1)
+		worker, err := parallel.NewWorker(1)
 		Expect(err).To(Succeed())
-	})
-	AfterEach(func() {
-		Expect(worker.Cleanup()).To(Succeed())
-	})
 
-	It("should discard writes into underlying file if it was half-closed (or closed)", func() {
-		Expect(worker.HalfClose()).To(Succeed())
-		Expect(worker.Close()).To(Succeed())
+		defer func() {
+			Expect(worker.Cleanup()).To(Succeed())
+		}()
 
-		reader := bytes.NewReader([]byte("hello"))
+		data := []byte("hello")
+		reader := bytes.NewReader(data)
+
+		if doHalfClose {
+			Expect(worker.HalfClose()).To(Succeed())
+		}
+
+		if doClose {
+			Expect(worker.Close()).To(Succeed()) // half-close implicitly
+		}
+
 		offset, err := io.Copy(worker, reader)
-		Expect(err).To(Succeed())
-		Expect(offset).To(Equal(reader.Size()))
-	})
-})
+		Expect(err).To(MatchError(fmt.Errorf("worker is half closed but tries to write: %s", data)))
+		Expect(offset).To(Equal(int64(0)))
+	},
+	Entry(
+		"half-close explicitly",
+		true,
+		false,
+	),
+	Entry(
+		"half-close implicitly via close",
+		false,
+		true,
+	),
+)
