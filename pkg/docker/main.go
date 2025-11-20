@@ -261,10 +261,11 @@ func callCliWithRecordedOutput(ctx context.Context, commandCaller func(c command
 	return output.String(), nil
 }
 
-func prepareCliCmd(cmd *cobra.Command, args ...string) *cobra.Command {
+func prepareCliCmd(ctx context.Context, cmd *cobra.Command, args ...string) *cobra.Command {
 	cmd.SilenceErrors = true
 	cmd.SilenceUsage = true
 	cmd.SetArgs(args)
+	cmd.SetContext(ctx)
 	return cmd
 }
 
