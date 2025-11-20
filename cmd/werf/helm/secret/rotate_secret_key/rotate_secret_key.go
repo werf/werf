@@ -8,10 +8,12 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/werf/logboek"
 	"github.com/werf/nelm/pkg/action"
 	"github.com/werf/nelm/pkg/log"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/cmd/werf/docs/replacers/helm"
+	"github.com/werf/werf/v2/pkg/tmp_manager"
 	"github.com/werf/werf/v2/pkg/true_git"
 )
 
@@ -76,6 +78,12 @@ func runRotateSecretKey(
 	if err != nil {
 		return fmt.Errorf("component init error: %w", err)
 	}
+
+	defer func() {
+		if err := tmp_manager.DelegateCleanup(ctx); err != nil {
+			logboek.Context(ctx).Warn().LogF("Temporary files cleanup preparation failed: %s\n", err)
+		}
+	}()
 
 	giterminismManager, err := common.GetGiterminismManager(ctx, &commonCmdData)
 	if err != nil {

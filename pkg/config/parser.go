@@ -96,7 +96,7 @@ func GetWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfConfi
 		var werfConfigRenderPath string
 
 		if customWerfConfigRenderPath == "" {
-			werfConfigRenderPath, err = tmp_manager.CreateWerfConfigRender()
+			werfConfigRenderPath, err = tmp_manager.CreateWerfConfigRender(ctx)
 			if err != nil {
 				return err
 			}

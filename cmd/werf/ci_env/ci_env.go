@@ -107,6 +107,12 @@ func runCIEnv(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("component init error: %w", err)
 	}
 
+	defer func() {
+		if err := tmp_manager.DelegateCleanup(ctx); err != nil {
+			logboek.Context(ctx).Warn().LogF("Temporary files cleanup preparation failed: %s\n", err)
+		}
+	}()
+
 	if err := common.ValidateArgumentCount(1, args, cmd); err != nil {
 		return err
 	}
