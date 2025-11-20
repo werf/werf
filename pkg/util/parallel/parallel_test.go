@@ -68,16 +68,18 @@ var _ = DescribeTable("parallel task",
 		newSpyTask(func(ctx context.Context, taskId int) error {
 			switch taskId {
 			case 0:
-				logboek.Context(ctx).LogLn("one")
-				time.Sleep(300 * time.Millisecond)
-			case 1:
-				logboek.Context(ctx).LogLn("two")
-				time.Sleep(200 * time.Millisecond)
-			case 2:
-				logboek.Context(ctx).LogLn("three")
 				time.Sleep(100 * time.Millisecond)
-			case 3:
+				logboek.Context(ctx).LogLn("one")
+			case 1:
+				time.Sleep(200 * time.Millisecond)
+				logboek.Context(ctx).LogLn("two")
+			case 2:
+				time.Sleep(300 * time.Millisecond)
+				logboek.Context(ctx).LogLn("three")
 				logboek.Context(ctx).LogLn("four")
+			case 3:
+				time.Sleep(400 * time.Millisecond)
+				logboek.Context(ctx).LogLn("five")
 			}
 			return nil
 		}),
@@ -87,10 +89,11 @@ var _ = DescribeTable("parallel task",
 			"one\n",
 			"two\n",
 			"\nthree\nfour\n",
+			"five\n",
 		},
 	),
 	Entry(
-		"should stop parallel execution process if one of tasks failed (fail fast) and print log from failed task",
+		"should handle error from one of workers (fail fast) and stop execution via context cancellation for another workers",
 		time.Duration(0),
 		2,
 		parallel.DoTasksOptions{
@@ -99,12 +102,14 @@ var _ = DescribeTable("parallel task",
 		newSpyTask(func(ctx context.Context, taskId int) error {
 			switch taskId {
 			case 0:
+				logboek.Context(ctx).LogLn("workers[0], task[0]: workers is active and it prints its log")
 				<-ctx.Done()
 				Expect(ctx.Err()).To(MatchError(context.Canceled))
-				logboek.Context(ctx).LogLn("task 0 must not print log")
+				logboek.Context(ctx).LogLn("workers[0], task[0]: worker is still active and it finishes printing its log")
 				return nil
 			case 1:
-				logboek.Context(ctx).LogLn("task 1 prints log")
+				time.Sleep(150 * time.Millisecond)
+				logboek.Context(ctx).LogLn("workers[1]: task[1]: worker was non-active and it was failed, because of that workers' log will be printed in the end")
 				return errors.New("task 1 failed")
 			default:
 				panic(fmt.Sprintf("unexpected taskId: %d", taskId))
@@ -113,28 +118,46 @@ var _ = DescribeTable("parallel task",
 		2,
 		MatchError("task 1 failed"),
 		[]string{
-			"\ntask 1 prints log\n",
+			"workers[0], task[0]: workers is active and it prints its log\n",
+			"workers[0], task[0]: worker is still active and it finishes printing its log\n",
+			"\nworkers[1]: task[1]: worker was non-active and it was failed, because of that workers' log will be printed in the end\n",
 		},
 	),
 	Entry(
-		"should cancel parallel execution if parent context is canceled",
+		"should cancel execution via context cancellation for all workers",
 		100*time.Millisecond,
-		2,
+		4,
 		parallel.DoTasksOptions{
 			MaxNumberOfWorkers: 2,
 		},
 		newSpyTask(func(ctx context.Context, taskId int) error {
-			select {
-			case <-ctx.Done():
+			switch taskId {
+			// workers[0] takes tasks[0]
+			// workers[1] takes tasks[2]
+			case 0, 2:
+				<-ctx.Done()
 				Expect(ctx.Err()).To(MatchError(context.DeadlineExceeded))
+
+				// order workers with delay based on taskId
+				time.Sleep(time.Duration(taskId*100) * time.Millisecond)
+
+				logboek.Context(ctx).LogF("task[%d]: canceled\n", taskId)
 				return nil
-			case <-time.After(1 * time.Second):
-				return errors.New("task execution timeout")
+				// workers[0] won't take tasks[1]
+				// workers[0] won't take tasks[3]
+			case 1, 3:
+				logboek.Context(ctx).LogLn("not printed because parent context is canceled")
+				return nil
+			default:
+				panic(fmt.Sprintf("unexpected taskId: %d", taskId))
 			}
 		}),
 		2,
 		MatchError(context.DeadlineExceeded),
-		[]string{},
+		[]string{
+			"task[0]: canceled\n",
+			"\ntask[2]: canceled\n",
+		},
 	),
 )
 
