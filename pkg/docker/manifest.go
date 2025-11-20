@@ -6,12 +6,12 @@ import (
 	"golang.org/x/net/context"
 )
 
-func doCliManifest(c command.Cli, args ...string) error {
-	return prepareCliCmd(manifest.NewManifestCommand(c), args...).Execute()
+func doCliManifest(ctx context.Context, c command.Cli, args ...string) error {
+	return prepareCliCmd(ctx, manifest.NewManifestCommand(c), args...).Execute()
 }
 
 func CliManifest(ctx context.Context, args ...string) error {
 	return callCliWithAutoOutput(ctx, func(c command.Cli) error {
-		return doCliManifest(c, args...)
+		return doCliManifest(ctx, c, args...)
 	})
 }
