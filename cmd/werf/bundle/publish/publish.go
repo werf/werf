@@ -82,6 +82,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupGitWorkTree(&commonCmdData, cmd)
 	common.SetupGiterminismOptions(&commonCmdData, cmd)
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
+	common.SetupConfigRenderPath(&commonCmdData, cmd)
 	common.SetupConfigPath(&commonCmdData, cmd)
 	common.SetupGiterminismConfigPath(&commonCmdData, cmd)
 	common.SetupEnvironment(&commonCmdData, cmd)
@@ -109,11 +110,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupSynchronization(&commonCmdData, cmd)
 
-	common.SetupAddAnnotations(&commonCmdData, cmd)
-	common.SetupAddLabels(&commonCmdData, cmd)
-
-	commonCmdData.SetupSkipDependenciesRepoRefresh(cmd)
-
 	common.SetupSaveBuildReport(&commonCmdData, cmd)
 	common.SetupBuildReportPath(&commonCmdData, cmd)
 
@@ -134,23 +130,26 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupRequireBuiltImages(&commonCmdData, cmd)
 	commonCmdData.SetupPlatform(cmd)
 
-	commonCmdData.SetupHelmCompatibleChart(cmd, false)
-	commonCmdData.SetupRenameChart(cmd)
-
 	commonCmdData.SetupSkipImageSpecStage(cmd)
 	commonCmdData.SetupDebugTemplates(cmd)
 	commonCmdData.SetupAllowIncludesUpdate(cmd)
+
+	lo.Must0(common.SetupMinimalKubeConnectionFlags(&commonCmdData, cmd))
+	lo.Must0(common.SetupChartRepoConnectionFlags(&commonCmdData, cmd))
+	lo.Must0(common.SetupValuesFlags(&commonCmdData, cmd))
+	lo.Must0(common.SetupSecretValuesFlags(&commonCmdData, cmd))
+
+	common.SetupAddAnnotations(&commonCmdData, cmd)
+	common.SetupAddLabels(&commonCmdData, cmd)
+	commonCmdData.SetupSkipDependenciesRepoRefresh(cmd)
+	commonCmdData.SetupHelmCompatibleChart(cmd, false)
+	commonCmdData.SetupRenameChart(cmd)
 
 	defaultTag := os.Getenv("WERF_TAG")
 	if defaultTag == "" {
 		defaultTag = "latest"
 	}
 	cmd.Flags().StringVarP(&cmdData.Tag, "tag", "", defaultTag, "Publish bundle into container registry repo by the provided tag ($WERF_TAG or latest by default)")
-
-	lo.Must0(common.SetupMinimalKubeConnectionFlags(&commonCmdData, cmd))
-	lo.Must0(common.SetupChartRepoConnectionFlags(&commonCmdData, cmd))
-	lo.Must0(common.SetupValuesFlags(&commonCmdData, cmd))
-	lo.Must0(common.SetupSecretValuesFlags(&commonCmdData, cmd))
 
 	return cmd
 }
@@ -265,17 +264,17 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 		defer conveyorWithRetry.Terminate()
 
 		if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
-			if common.GetRequireBuiltImages(ctx, &commonCmdData) {
+			if common.GetRequireBuiltImages(&commonCmdData) {
 				shouldBeBuiltOptions, err := common.GetShouldBeBuiltOptions(&commonCmdData, imagesToProcess)
 				if err != nil {
 					return err
 				}
 
-				if err := c.ShouldBeBuilt(ctx, shouldBeBuiltOptions); err != nil {
+				if _, err := c.ShouldBeBuilt(ctx, shouldBeBuiltOptions); err != nil {
 					return err
 				}
 			} else {
-				if err := c.Build(ctx, buildOptions); err != nil {
+				if _, err := c.Build(ctx, buildOptions); err != nil {
 					return err
 				}
 			}

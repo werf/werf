@@ -23,7 +23,7 @@ import (
 func GetConveyorOptions(ctx context.Context, commonCmdData *CmdData, imagesToProcess config.ImagesToProcess) (build.ConveyorOptions, error) {
 	conveyorOptions := build.ConveyorOptions{
 		LocalGitRepoVirtualMergeOptions: stage.VirtualMergeOptions{
-			VirtualMerge: *commonCmdData.VirtualMerge,
+			VirtualMerge: GetVirtualMerge(commonCmdData),
 		},
 		ImagesToProcess: imagesToProcess,
 	}
@@ -49,7 +49,7 @@ func GetConveyorOptions(ctx context.Context, commonCmdData *CmdData, imagesToPro
 // - Hide log messages if --log-quiet is specified.
 // - Print "live" logs by default or if --log-verbose is specified.
 func GetDeferredBuildLog(ctx context.Context, commonCmdData *CmdData) bool {
-	requireBuiltImage := GetRequireBuiltImages(ctx, commonCmdData)
+	requireBuiltImage := GetRequireBuiltImages(commonCmdData)
 	isVerbose := logboek.Context(ctx).IsAcceptedLevel(level.Default)
 	return requireBuiltImage || !isVerbose
 }
@@ -60,13 +60,8 @@ func GetConveyorOptionsWithParallel(ctx context.Context, commonCmdData *CmdData,
 		return conveyorOptions, err
 	}
 
-	conveyorOptions.Parallel = !(buildStagesOptions.ImageBuildOptions.IntrospectAfterError || buildStagesOptions.ImageBuildOptions.IntrospectBeforeError || len(buildStagesOptions.Targets) != 0) && *commonCmdData.Parallel
-
-	parallelTasksLimit, err := GetParallelTasksLimit(commonCmdData)
-	if err != nil {
-		return conveyorOptions, fmt.Errorf("getting parallel tasks limit failed: %w", err)
-	}
-	conveyorOptions.ParallelTasksLimit = parallelTasksLimit
+	conveyorOptions.Parallel = !(buildStagesOptions.ImageBuildOptions.IntrospectAfterError || buildStagesOptions.ImageBuildOptions.IntrospectBeforeError || len(buildStagesOptions.Targets) != 0) && GetParallel(commonCmdData)
+	conveyorOptions.ParallelTasksLimit = GetParallelTasksLimit(commonCmdData)
 
 	return conveyorOptions, nil
 }
@@ -105,8 +100,8 @@ func GetBuildOptions(ctx context.Context, commonCmdData *CmdData, werfConfig *co
 		SkipImageMetadataPublication: *commonCmdData.Dev || werfConfig.Meta.Cleanup.DisableGitHistoryBasedPolicy || werfConfig.Meta.Cleanup.DisableCleanup,
 		CustomTagFuncList:            customTagFuncList,
 		ImageBuildOptions: container_backend.BuildOptions{
-			IntrospectAfterError:  *commonCmdData.IntrospectAfterError,
-			IntrospectBeforeError: *commonCmdData.IntrospectBeforeError,
+			IntrospectAfterError:  GetIntrospectAfterError(commonCmdData),
+			IntrospectBeforeError: GetIntrospectBeforeError(commonCmdData),
 		},
 		IntrospectOptions: introspectOptions,
 	}

@@ -45,6 +45,8 @@ werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
       --config=""
             Use custom configuration file (default $WERF_CONFIG or werf.yaml in the project         
             directory)
+      --config-render-path=""
+            Custom path for storing rendered configuration file
       --config-templates-dir=""
             Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf   
             in working directory)
@@ -187,8 +189,6 @@ werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
             $WERF_SECONDARY_REPO_2=...)
       --shell=false
             Use predefined docker options and command for debug
-      --skip-image-spec-stage=false
-            Force skipping "imageSpec" build stage (default $WERF_SKIP_IMAGE_SPEC_STAGE or false)
       --skip-tls-verify-registry=false
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)

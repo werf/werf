@@ -148,6 +148,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupDir(&commonCmdData, cmd)
 	common.SetupGitWorkTree(&commonCmdData, cmd)
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
+	common.SetupConfigRenderPath(&commonCmdData, cmd)
 	common.SetupConfigPath(&commonCmdData, cmd)
 	common.SetupGiterminismConfigPath(&commonCmdData, cmd)
 	common.SetupEnvironment(&commonCmdData, cmd)
@@ -369,12 +370,12 @@ func run(ctx context.Context, pod, secret, namespace string, werfConfig *config.
 
 	var image string
 	if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
-		if common.GetRequireBuiltImages(ctx, &commonCmdData) {
-			if err := c.ShouldBeBuilt(ctx, build.ShouldBeBuiltOptions{}); err != nil {
+		if common.GetRequireBuiltImages(&commonCmdData) {
+			if _, err := c.ShouldBeBuilt(ctx, build.ShouldBeBuiltOptions{}); err != nil {
 				return err
 			}
 		} else {
-			if err := c.Build(ctx, build.BuildOptions{}); err != nil {
+			if _, err := c.Build(ctx, build.BuildOptions{}); err != nil {
 				return err
 			}
 		}

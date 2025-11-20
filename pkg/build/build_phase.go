@@ -15,6 +15,7 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
+	"github.com/werf/werf/v2/pkg/build/cleanup"
 	"github.com/werf/werf/v2/pkg/build/image"
 	"github.com/werf/werf/v2/pkg/build/stage"
 	"github.com/werf/werf/v2/pkg/build/stage/instruction"
@@ -592,24 +593,21 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *image.Image, stg
 	}
 
 	var foundSuitableStage bool
-	var cleanupFunc func()
+	var calculateStageCleanupFunc cleanup.Func
 
 	if err := logboek.Context(ctx).Info().LogProcess("Try to find suitable stage for %s", stg.LogDetailedName()).
 		DoError(func() error {
 			var err error
-			var found bool
-			found, cleanupFunc, err = phase.calculateStage(ctx, img, stg)
+			foundSuitableStage, calculateStageCleanupFunc, err = phase.calculateStage(ctx, img, stg)
 			if err != nil {
 				return err
 			}
-			foundSuitableStage = found
 			return nil
 		}); err != nil {
 		return err
 	}
-
-	if cleanupFunc != nil {
-		defer cleanupFunc()
+	if calculateStageCleanupFunc != nil {
+		defer calculateStageCleanupFunc()
 	}
 
 	if foundSuitableStage {
@@ -662,7 +660,7 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *image.Image, stg
 			}
 		}
 
-		if err := phase.prepareStageInstructions(ctx, img, stg); err != nil {
+		if err = phase.prepareStageInstructions(ctx, img, stg); err != nil {
 			return err
 		}
 
@@ -826,7 +824,7 @@ func (phase *BuildPhase) fetchBaseImageForStage(ctx context.Context, img *image.
 	}
 }
 
-func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, stg stage.Interface) (bool, func(), error) {
+func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, stg stage.Interface) (bool, cleanup.Func, error) {
 	// FIXME(stapel-to-buildah): store StageImage-s everywhere in stage and build pkgs
 	stageDependencies, err := stg.GetDependencies(ctx, phase.Conveyor, phase.Conveyor.ContainerBackend, phase.StagesIterator.GetPrevImage(img, stg), phase.StagesIterator.GetPrevBuiltImage(img, stg), phase.buildContextArchive)
 	if err != nil {
@@ -971,12 +969,9 @@ func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *imag
 		}
 	}
 
-	phase.Conveyor.AppendOnTerminateFunc(func() error {
-		return stageImage.Builder.Cleanup(ctx)
-	})
+	phase.Conveyor.AppendOnTerminateFunc(stageImage.Builder.Cleanup)
 
-	err := stg.PrepareImage(ctx, phase.Conveyor, phase.Conveyor.ContainerBackend, prevBuiltImage, stageImage, phase.buildContextArchive)
-	if err != nil {
+	if err := stg.PrepareImage(ctx, phase.Conveyor, phase.Conveyor.ContainerBackend, prevBuiltImage, stageImage, phase.buildContextArchive); err != nil {
 		return fmt.Errorf("error preparing stage %s: %w", stg.Name(), err)
 	}
 
@@ -1112,17 +1107,7 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 
 	if err := logboek.Context(ctx).Default().LogProcess("Store stage into %s", phase.Conveyor.StorageManager.GetStagesStorage().String()).DoError(func() error {
 		if stg.IsMutable() {
-			switch phase.Conveyor.StorageManager.GetStagesStorage().(type) {
-			case *storage.RepoStagesStorage:
-			default:
-				err := ErrMutableStageLocalStorage
-				if stg.Name() == stage.ImageSpec {
-					err = ErrMutableStageLocalStorageImageSpec
-				}
-				return fmt.Errorf("unable to build stage %q: %w", stg.Name(), err)
-			}
-
-			if err := stg.MutateImage(ctx, phase.Conveyor.StorageManager.GetStagesStorage().(*storage.RepoStagesStorage).DockerRegistry, phase.StagesIterator.PrevBuiltStage.GetStageImage(), stageImage); err != nil {
+			if err := stg.MutateImage(ctx, phase.Conveyor.StorageManager.GetStagesStorage(), phase.StagesIterator.PrevBuiltStage.GetStageImage(), stageImage); err != nil {
 				return fmt.Errorf("unable to mutate %s: %w", stg.Name(), err)
 			}
 		} else {
@@ -1135,7 +1120,6 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 		if err != nil || desc == nil {
 			return fmt.Errorf("unable to get stage %s digest %s image %s description from repo %s after stages has been stored into repo: %w", stg.LogDetailedName(), stg.GetDigest(), stageImage.Image.Name(), phase.Conveyor.StorageManager.GetStagesStorage().String(), err)
 		}
-
 		stageImage.Image.SetStageDesc(desc)
 		img.SetRebuilt(true)
 
@@ -1281,4 +1265,8 @@ E.g.:
 func (phase *BuildPhase) Clone() Phase {
 	u := *phase
 	return &u
+}
+
+func (phase *BuildPhase) Report() *ImagesReport {
+	return phase.ImagesReport
 }

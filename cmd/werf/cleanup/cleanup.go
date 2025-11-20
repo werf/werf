@@ -57,6 +57,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupDir(&commonCmdData, cmd)
 	common.SetupGitWorkTree(&commonCmdData, cmd)
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
+	common.SetupConfigRenderPath(&commonCmdData, cmd)
 	common.SetupConfigPath(&commonCmdData, cmd)
 	common.SetupGiterminismConfigPath(&commonCmdData, cmd)
 	common.SetupEnvironment(&commonCmdData, cmd)
@@ -202,7 +203,7 @@ func runCleanup(ctx context.Context, cmd *cobra.Command) error {
 	}
 
 	if *commonCmdData.Parallel {
-		storageManager.EnableParallel(int(*commonCmdData.ParallelTasksLimit))
+		storageManager.EnableParallel(int(common.GetParallelTasksLimit(&commonCmdData)))
 	}
 
 	imagesNames, err := common.GetManagedImagesNames(ctx, projectName, storageManager.StagesStorage, werfConfig)
@@ -239,8 +240,8 @@ func runCleanup(ctx context.Context, cmd *cobra.Command) error {
 		ConfigMetaCleanup:                       werfConfig.Meta.Cleanup,
 		KeepStagesBuiltWithinLastNHours:         common.GetKeepStagesBuiltWithinLastNHours(&commonCmdData, cmd),
 		DryRun:                                  *commonCmdData.DryRun,
-		Parallel:                                *commonCmdData.Parallel,
-		ParallelTasksLimit:                      *commonCmdData.ParallelTasksLimit,
+		Parallel:                                common.GetParallel(&commonCmdData),
+		ParallelTasksLimit:                      common.GetParallelTasksLimit(&commonCmdData),
 		KeepList:                                keepList,
 	}
 

@@ -14,6 +14,7 @@ import (
 	"github.com/werf/werf/v2/cmd/werf/build"
 	bundle_apply "github.com/werf/werf/v2/cmd/werf/bundle/apply"
 	bundle_copy "github.com/werf/werf/v2/cmd/werf/bundle/copy"
+	bundle_plan "github.com/werf/werf/v2/cmd/werf/bundle/plan"
 	bundle_publish "github.com/werf/werf/v2/cmd/werf/bundle/publish"
 	bundle_render "github.com/werf/werf/v2/cmd/werf/bundle/render"
 	"github.com/werf/werf/v2/cmd/werf/ci_env"
@@ -40,12 +41,14 @@ import (
 	includes_update "github.com/werf/werf/v2/cmd/werf/includes/update"
 	"github.com/werf/werf/v2/cmd/werf/kube_run"
 	"github.com/werf/werf/v2/cmd/werf/kubectl"
+	"github.com/werf/werf/v2/cmd/werf/lint"
 	managed_images_add "github.com/werf/werf/v2/cmd/werf/managed_images/add"
 	managed_images_ls "github.com/werf/werf/v2/cmd/werf/managed_images/ls"
 	managed_images_rm "github.com/werf/werf/v2/cmd/werf/managed_images/rm"
 	"github.com/werf/werf/v2/cmd/werf/plan"
 	"github.com/werf/werf/v2/cmd/werf/purge"
 	"github.com/werf/werf/v2/cmd/werf/render"
+	"github.com/werf/werf/v2/cmd/werf/rollback"
 	"github.com/werf/werf/v2/cmd/werf/run"
 	"github.com/werf/werf/v2/cmd/werf/slugify"
 	stage_image "github.com/werf/werf/v2/cmd/werf/stage/image"
@@ -78,6 +81,7 @@ func ConstructRootCmd(ctx context.Context) (*cobra.Command, error) {
 			Message: "Delivery commands",
 			Commands: []*cobra.Command{
 				converge.NewCmd(ctx),
+				rollback.NewCmd(ctx),
 				plan.NewCmd(ctx),
 				dismiss.NewCmd(ctx),
 				bundleCmd(ctx),
@@ -101,6 +105,7 @@ func ConstructRootCmd(ctx context.Context) (*cobra.Command, error) {
 				dockerComposeCmd(ctx),
 				slugify.NewCmd(ctx),
 				render.NewCmd(ctx),
+				lint.NewCmd(ctx),
 				includesCmd(ctx),
 			},
 		},
@@ -169,6 +174,7 @@ func bundleCmd(ctx context.Context) *cobra.Command {
 	cmd.AddCommand(
 		bundle_publish.NewCmd(ctx),
 		bundle_apply.NewCmd(ctx),
+		bundle_plan.NewCmd(ctx),
 		bundle_render.NewCmd(ctx),
 		bundle_copy.NewCmd(ctx),
 	)

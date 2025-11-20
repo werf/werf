@@ -58,7 +58,6 @@ func NewManager(ctx context.Context, configRelPath, projectDir string, localGitR
 		Inspector:              i,
 		CreateIncludesLockFile: options.CreateIncludesLockFile,
 		AllowIncludesUpdate:    options.AllowIncludesUpdate,
-		LocalGitRepo:           sharedOptions.localGitRepo,
 	})
 	if err != nil {
 		return nil, err

@@ -45,6 +45,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupDir(&commonCmdData, cmd)
 	common.SetupGitWorkTree(&commonCmdData, cmd)
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
+	common.SetupConfigRenderPath(&commonCmdData, cmd)
 	common.SetupConfigPath(&commonCmdData, cmd)
 	common.SetupGiterminismConfigPath(&commonCmdData, cmd)
 	common.SetupEnvironment(&commonCmdData, cmd)
@@ -149,8 +150,8 @@ It is worth noting that auto-cleaning is enabled by default, and manual use is u
 		return fmt.Errorf("unable to init storage manager: %w", err)
 	}
 
-	if *commonCmdData.Parallel {
-		storageManager.EnableParallel(int(*commonCmdData.ParallelTasksLimit))
+	if common.GetParallel(&commonCmdData) {
+		storageManager.EnableParallel(int(common.GetParallelTasksLimit(&commonCmdData)))
 	}
 
 	purgeOptions := cleaning.PurgeOptions{

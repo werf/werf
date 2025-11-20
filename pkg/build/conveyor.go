@@ -11,6 +11,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/samber/lo"
+
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	stylePkg "github.com/werf/logboek/pkg/style"
@@ -55,7 +57,7 @@ type Conveyor struct {
 	StorageLockManager lock_manager.Interface
 	StorageManager     manager.StorageManagerInterface
 
-	onTerminateFuncs []func() error
+	onTerminateFuncs []ConveyorCleanupFunc
 	importServers    map[string]import_server.ImportServer
 
 	ConveyorOptions
@@ -64,6 +66,8 @@ type Conveyor struct {
 	serviceRWMutex   map[string]*sync.RWMutex
 	stageDigestMutex map[string]*sync.Mutex
 }
+
+type ConveyorCleanupFunc func(context.Context) error
 
 type ConveyorOptions struct {
 	Parallel                        bool
@@ -300,17 +304,12 @@ func (c *Conveyor) GetImportServer(ctx context.Context, targetPlatform, imageNam
 
 			var err error
 			srv, err = import_server.RunRsyncServer(ctx, dockerImageName, tmpDir)
-			if srv != nil {
-				c.AppendOnTerminateFunc(func() error {
-					if err := srv.Shutdown(ctx); err != nil {
-						return fmt.Errorf("unable to shutdown import server %s: %w", srv.DockerContainerName, err)
-					}
-					return nil
-				})
-			}
 			if err != nil {
 				return fmt.Errorf("unable to run rsync import server: %w", err)
 			}
+
+			c.AppendOnTerminateFunc(srv.Shutdown)
+
 			return nil
 		}); err != nil {
 		return nil, err
@@ -321,32 +320,26 @@ func (c *Conveyor) GetImportServer(ctx context.Context, targetPlatform, imageNam
 	return srv, nil
 }
 
-func (c *Conveyor) AppendOnTerminateFunc(f func() error) {
+func (c *Conveyor) AppendOnTerminateFunc(f ConveyorCleanupFunc) {
 	c.GetServiceRWMutex("TerminateFunctions").Lock()
 	defer c.GetServiceRWMutex("TerminateFunctions").Unlock()
 	c.onTerminateFuncs = append(c.onTerminateFuncs, f)
 }
 
 func (c *Conveyor) Terminate(ctx context.Context) error {
-	var terminateErrors []error
+	terminateErrors := make([]error, 0, len(c.onTerminateFuncs))
 
-	for _, onTerminateFunc := range c.onTerminateFuncs {
-		if err := onTerminateFunc(); err != nil {
-			terminateErrors = append(terminateErrors, err)
-		}
+	for _, cleanupFunc := range c.onTerminateFuncs {
+		terminateErrors = append(terminateErrors, cleanupFunc(ctx))
 	}
 
-	if len(terminateErrors) > 0 {
-		errMsg := "Errors occurred during conveyor termination:\n"
-		for _, err := range terminateErrors {
-			errMsg += fmt.Sprintf(" - %s\n", err)
-		}
-
+	err := errors.Join(terminateErrors...)
+	if err != nil {
 		// NOTE: Errors printed here because conveyor termination should occur in defer,
 		// NOTE: and errors in the defer will be silenced otherwise.
-		logboek.Context(ctx).Warn().LogF("%s", errMsg)
+		logboek.Context(ctx).Warn().LogF("%s", err)
 
-		return errors.New(errMsg)
+		return err
 	}
 
 	return nil
@@ -395,9 +388,9 @@ type ShouldBeBuiltOptions struct {
 	ReportFormat      ReportFormat
 }
 
-func (c *Conveyor) ShouldBeBuilt(ctx context.Context, opts ShouldBeBuiltOptions) error {
+func (c *Conveyor) ShouldBeBuilt(ctx context.Context, opts ShouldBeBuiltOptions) ([]*ImagesReport, error) {
 	if err := c.determineStages(ctx); err != nil {
-		return err
+		return nil, err
 	}
 
 	buildCtx, buf := c.prepareBuildCtx(ctx)
@@ -417,7 +410,12 @@ func (c *Conveyor) ShouldBeBuilt(ctx context.Context, opts ShouldBeBuiltOptions)
 	if err != nil {
 		c.printDeferredBuildLog(ctx, buf)
 	}
-	return err
+
+	reports := lo.Map(phases, func(phase Phase, _ int) *ImagesReport {
+		return phase.Report()
+	})
+
+	return reports, err
 }
 
 func (c *Conveyor) FetchLastImageStage(ctx context.Context, targetPlatform, imageName string) error {
@@ -542,13 +540,13 @@ func (c *Conveyor) printDeferredBuildLog(_ context.Context, buf *bytes.Buffer) {
 	_, _ = os.Stdout.Write(buf.Bytes())
 }
 
-func (c *Conveyor) Build(ctx context.Context, opts BuildOptions) error {
+func (c *Conveyor) Build(ctx context.Context, opts BuildOptions) ([]*ImagesReport, error) {
 	if err := c.checkContainerBackendSupported(ctx); err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := c.determineStages(ctx); err != nil {
-		return err
+		return nil, err
 	}
 
 	buildCtx, buf := c.prepareBuildCtx(ctx)
@@ -563,7 +561,12 @@ func (c *Conveyor) Build(ctx context.Context, opts BuildOptions) error {
 	if err != nil {
 		c.printDeferredBuildLog(ctx, buf)
 	}
-	return err
+
+	reports := lo.Map(phases, func(phase Phase, _ int) *ImagesReport {
+		return phase.Report()
+	})
+
+	return reports, err
 }
 
 func (c *Conveyor) Export(ctx context.Context, opts ExportOptions) error {

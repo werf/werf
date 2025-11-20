@@ -6,6 +6,7 @@ toc: false
 
 Delivery commands:
  - [werf converge]({{ "/reference/cli/werf_converge.html" | true_relative_url }}) — {% include /reference/cli/werf_converge.short.md %}.
+ - [werf rollback]({{ "/reference/cli/werf_rollback.html" | true_relative_url }}) — {% include /reference/cli/werf_rollback.short.md %}.
  - [werf plan]({{ "/reference/cli/werf_plan.html" | true_relative_url }}) — {% include /reference/cli/werf_plan.short.md %}.
  - [werf dismiss]({{ "/reference/cli/werf_dismiss.html" | true_relative_url }}) — {% include /reference/cli/werf_dismiss.short.md %}.
  - [werf bundle]({{ "/reference/cli/werf_bundle_apply.html" | true_relative_url }}) — {% include /reference/cli/werf_bundle_apply.short.md %}.
@@ -23,6 +24,7 @@ Helper commands:
  - [werf compose]({{ "/reference/cli/werf_compose_config.html" | true_relative_url }}) — {% include /reference/cli/werf_compose_config.short.md %}.
  - [werf slugify]({{ "/reference/cli/werf_slugify.html" | true_relative_url }}) — {% include /reference/cli/werf_slugify.short.md %}.
  - [werf render]({{ "/reference/cli/werf_render.html" | true_relative_url }}) — {% include /reference/cli/werf_render.short.md %}.
+ - [werf lint]({{ "/reference/cli/werf_lint.html" | true_relative_url }}) — {% include /reference/cli/werf_lint.short.md %}.
  - [werf includes]({{ "/reference/cli/werf_includes_get_file.html" | true_relative_url }}) — {% include /reference/cli/werf_includes_get_file.short.md %}.
 
 Low-level management commands:

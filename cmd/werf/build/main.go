@@ -63,6 +63,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupDir(&commonCmdData, cmd)
 	common.SetupGitWorkTree(&commonCmdData, cmd)
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
+	common.SetupConfigRenderPath(&commonCmdData, cmd)
 	common.SetupConfigPath(&commonCmdData, cmd)
 	common.SetupGiterminismConfigPath(&commonCmdData, cmd)
 	common.SetupEnvironment(&commonCmdData, cmd)
@@ -224,17 +225,17 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 	defer conveyorWithRetry.Terminate()
 
 	if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
-		if common.GetRequireBuiltImages(ctx, &commonCmdData) {
+		if common.GetRequireBuiltImages(&commonCmdData) {
 			shouldBeBuiltOptions, err := common.GetShouldBeBuiltOptions(&commonCmdData, imagesToProcess)
 			if err != nil {
 				return err
 			}
 
-			if err := c.ShouldBeBuilt(ctx, shouldBeBuiltOptions); err != nil {
+			if _, err := c.ShouldBeBuilt(ctx, shouldBeBuiltOptions); err != nil {
 				return err
 			}
 		} else {
-			if err := c.Build(ctx, buildOptions); err != nil {
+			if _, err := c.Build(ctx, buildOptions); err != nil {
 				return err
 			}
 		}

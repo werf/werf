@@ -74,6 +74,8 @@ werf bundle publish [IMAGE_NAME...] [options]
       --config=""
             Use custom configuration file (default $WERF_CONFIG or werf.yaml in the project         
             directory)
+      --config-render-path=""
+            Custom path for storing rendered configuration file
       --config-templates-dir=""
             Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf   
             in working directory)
@@ -275,6 +277,17 @@ werf bundle publish [IMAGE_NAME...] [options]
             or separate values with commas: key1=path1,key2=path2).
             Also, can be defined with $WERF_SET_FILE_* (e.g. $WERF_SET_FILE_1=key1=path1,           
             $WERF_SET_FILE_2=key2=val2)
+      --set-json=[]
+            Set new values, where the key is the value path and the value is JSON (can specify      
+            multiple or separate values with commas: key1=val1,key2=val2).
+            Also, can be defined with $WERF_SET_JSON_* (e.g. $WERF_SET_JSON_1=key1=val1,            
+            $WERF_SET_JSON_2=key2=val2)
+      --set-literal=[]
+            Set new values, where the key is the value path and the value is the value. The value   
+            will always become a literal string (can specify multiple or separate values with       
+            commas: key1=val1,key2=val2).)
+            Also, can be defined with $WERF_SET_LITERAL_* (e.g. $WERF_SET_LITERAL_1=key1=val1,      
+            $WERF_SET_LITERAL_2=key2=val2)
       --set-runtime-json=[]
             Set new keys in $.Runtime, where the key is the value path and the value is JSON. This  
             is meant to be generated inside the program, so use --set-json instead, unless you know 
@@ -289,8 +302,6 @@ werf bundle publish [IMAGE_NAME...] [options]
             $WERF_SET_STRING_2=key2=val2)
   -L, --skip-dependencies-repo-refresh=false
             Do not refresh helm chart repositories locally cached index
-      --skip-image-spec-stage=false
-            Force skipping "imageSpec" build stage (default $WERF_SKIP_IMAGE_SPEC_STAGE or false)
       --skip-tls-verify-helm-dependencies=false
             Skip TLS certificate validation when accessing a Helm charts repository (default        
             $WERF_SKIP_TLS_VERIFY_HELM_DEPENDENCIES)

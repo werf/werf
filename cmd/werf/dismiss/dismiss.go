@@ -75,6 +75,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupTmpDir(&commonCmdData, cmd, common.SetupTmpDirOptions{})
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
+	common.SetupConfigRenderPath(&commonCmdData, cmd)
 	common.SetupConfigPath(&commonCmdData, cmd)
 	common.SetupGiterminismConfigPath(&commonCmdData, cmd)
 	common.SetupEnvironment(&commonCmdData, cmd)
@@ -91,16 +92,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupFinalRepo(&commonCmdData, cmd)
 	common.SetupSynchronization(&commonCmdData, cmd)
 
-	common.SetupRelease(&commonCmdData, cmd, true)
-	common.SetupNamespace(&commonCmdData, cmd, true)
-
-	common.SetupUseDeployReport(&commonCmdData, cmd)
-	common.SetupDeployReportPath(&commonCmdData, cmd)
-
-	common.SetupReleaseStorageSQLConnection(&commonCmdData, cmd)
-
-	common.SetupReleasesHistoryMax(&commonCmdData, cmd)
-
 	common.SetupDockerConfig(&commonCmdData, cmd, "")
 
 	common.SetupLogOptions(&commonCmdData, cmd)
@@ -114,29 +105,36 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupBackendStoragePath(&commonCmdData, cmd)
 
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
-	common.StubSetupInsecureHelmDependencies(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
-
-	common.SetupNetworkParallelism(&commonCmdData, cmd)
-	common.SetupNoRemoveManualChanges(&commonCmdData, cmd)
 
 	commonCmdData.SetupPlatform(cmd)
 	commonCmdData.SetupDebugTemplates(cmd)
 	commonCmdData.SetupAllowIncludesUpdate(cmd)
 
+	lo.Must0(common.SetupKubeConnectionFlags(&commonCmdData, cmd))
+	lo.Must0(common.SetupTrackingFlags(&commonCmdData, cmd))
+
+	common.SetupDeployReportPath(&commonCmdData, cmd)
+	common.SetupNamespace(&commonCmdData, cmd, true)
+	common.SetupNetworkParallelism(&commonCmdData, cmd)
+	common.SetupNoRemoveManualChanges(&commonCmdData, cmd)
+	common.SetupRelease(&commonCmdData, cmd, true)
+	common.SetupReleaseStorageDriver(&commonCmdData, cmd)
+	common.SetupReleaseStorageSQLConnection(&commonCmdData, cmd)
+	common.SetupReleasesHistoryMax(&commonCmdData, cmd)
+	common.SetupUseDeployReport(&commonCmdData, cmd)
+	common.StubSetupInsecureHelmDependencies(&commonCmdData, cmd)
+
 	cmd.Flags().BoolVarP(&cmdData.WithNamespace, "with-namespace", "", util.GetBoolEnvironmentDefaultFalse("WERF_WITH_NAMESPACE"), "Delete Kubernetes Namespace after purging Helm Release (default $WERF_WITH_NAMESPACE)")
 
 	if util.GetBoolEnvironmentDefaultFalse("WERF_EXPERIMENT_NEW_DISMISS") {
 		common.SetupSaveUninstallReport(&commonCmdData, cmd)
-		common.SetupUninstallReportPath(&commonCmdData, cmd)
 		common.SetupUninstallGraphPath(&commonCmdData, cmd)
+		common.SetupUninstallReportPath(&commonCmdData, cmd)
 	} else {
 		cmd.Flags().BoolVarP(&cmdData.WithHooks, "with-hooks", "", util.GetBoolEnvironmentDefaultTrue("WERF_WITH_HOOKS"), "Delete Helm Release hooks getting from existing revisions (default $WERF_WITH_HOOKS or true)")
 	}
-
-	lo.Must0(common.SetupKubeConnectionFlags(&commonCmdData, cmd))
-	lo.Must0(common.SetupTrackingFlags(&commonCmdData, cmd))
 
 	return cmd
 }
@@ -190,9 +188,6 @@ func runDismiss(ctx context.Context) error {
 		var uninstallReportPath string
 		if commonCmdData.SaveUninstallReport {
 			uninstallReportPath = commonCmdData.UninstallReportPath
-			if err != nil {
-				return fmt.Errorf("get uninstall report path: %w", err)
-			}
 		}
 
 		if err := action.ReleaseUninstall(ctx, releaseName, releaseNamespace, action.ReleaseUninstallOptions{
@@ -202,7 +197,7 @@ func runDismiss(ctx context.Context) error {
 			NetworkParallelism:          commonCmdData.NetworkParallelism,
 			NoRemoveManualChanges:       commonCmdData.NoRemoveManualChanges,
 			ReleaseHistoryLimit:         commonCmdData.ReleaseHistoryLimit,
-			ReleaseStorageDriver:        os.Getenv("HELM_DRIVER"),
+			ReleaseStorageDriver:        commonCmdData.ReleaseStorageDriver,
 			ReleaseStorageSQLConnection: commonCmdData.ReleaseStorageSQLConnection,
 			UninstallGraphPath:          commonCmdData.UninstallGraphPath,
 			UninstallReportPath:         uninstallReportPath,
@@ -217,7 +212,7 @@ func runDismiss(ctx context.Context) error {
 			DeleteReleaseNamespace: cmdData.WithNamespace,
 			NetworkParallelism:     commonCmdData.NetworkParallelism,
 			ReleaseHistoryLimit:    commonCmdData.ReleaseHistoryLimit,
-			ReleaseStorageDriver:   os.Getenv("HELM_DRIVER"),
+			ReleaseStorageDriver:   commonCmdData.ReleaseStorageDriver,
 		}); err != nil {
 			return fmt.Errorf("release uninstall: %w", err)
 		}

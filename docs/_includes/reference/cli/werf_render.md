@@ -53,6 +53,8 @@ werf render [IMAGE_NAME...] [options]
       --config=""
             Use custom configuration file (default $WERF_CONFIG or werf.yaml in the project         
             directory)
+      --config-render-path=""
+            Custom path for storing rendered configuration file
       --config-templates-dir=""
             Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf   
             in working directory)
@@ -87,6 +89,9 @@ werf render [IMAGE_NAME...] [options]
             and to pull base images
       --env=""
             Use specified environment (default $WERF_ENV)
+      --extra-apiversions=[]
+            Extra Kubernetes API versions passed to $.Capabilities.APIVersions. Can be also set     
+            with $WERF_EXTRA_APIVERSIONS_* environment variables, values can be comma-separated
       --final-images-only=true
             Process final images only ($WERF_FINAL_IMAGES_ONLY or true by default)
       --final-repo=""
@@ -156,10 +161,28 @@ werf render [IMAGE_NAME...] [options]
             dockerInstructions, dockerfile, imageSpec
       --kube-api-server=""
             Kubernetes API server address (default $WERF_KUBE_API_SERVER)
+      --kube-auth-password=""
+            Basic auth password for Kubernetes API (default $WERF_KUBE_AUTH_PASSWORD)
+      --kube-auth-provider=""
+            Auth provider name for authentication in Kubernetes API (default                        
+            $WERF_KUBE_AUTH_PROVIDER)
+      --kube-auth-provider-config=[]
+            Auth provider config for authentication in Kubernetes API (default                      
+            $WERF_KUBE_AUTH_PROVIDER_CONFIG)
+      --kube-auth-username=""
+            Basic auth username for Kubernetes API (default $WERF_KUBE_AUTH_USERNAME)
       --kube-burst-limit=100
             Kubernetes client burst limit (default $WERF_KUBE_BURST_LIMIT or 100)
+      --kube-ca-data=""
+            Pass Kubernetes API server TLS CA data (default $WERF_KUBE_CA_DATA)
       --kube-ca-path=""
             Kubernetes API server CA path (default $WERF_KUBE_CA_PATH)
+      --kube-cert=""
+            Path to PEM-encoded TLS client cert for connecting to Kubernetes API (default           
+            $WERF_KUBE_CERT
+      --kube-cert-data=""
+            Pass PEM-encoded TLS client cert for connecting to Kubernetes API (default              
+            $WERF_KUBE_CERT_DATA)
       --kube-config=""
             Kubernetes config file path (default $WERF_KUBE_CONFIG, or $WERF_KUBECONFIG, or         
             $KUBECONFIG)
@@ -168,14 +191,41 @@ werf render [IMAGE_NAME...] [options]
             $WERF_KUBECONFIG_BASE64 or $KUBECONFIG_BASE64)
       --kube-context=""
             Kubernetes config context (default $WERF_KUBE_CONTEXT)
+      --kube-context-cluster=""
+            Use cluster from Kubeconfig for current context (default $WERF_KUBE_CONTEXT_CLUSTER)
+      --kube-context-user=""
+            Use user from Kubeconfig for current context (default $WERF_KUBE_CONTEXT_USER)
+      --kube-impersonate-group=[]
+            Sets Impersonate-Group headers when authenticating in Kubernetes. Can be also set with  
+            $WERF_KUBE_IMPERSONATE_GROUP_* environment variables
+      --kube-impersonate-uid=""
+            Sets Impersonate-Uid header when authenticating in Kubernetes (default                  
+            $WERF_KUBE_IMPERSONATE_UID)
+      --kube-impersonate-user=""
+            Sets Impersonate-User header when authenticating in Kubernetes (default                 
+            $WERF_KUBE_IMPERSONATE_USER)
+      --kube-key=""
+            Path to PEM-encoded TLS client key for connecting to Kubernetes API (default            
+            $WERF_KUBE_KEY)
+      --kube-key-data=""
+            Pass PEM-encoded TLS client key for connecting to Kubernetes API (default               
+            $WERF_KUBE_KEY_DATA)
+      --kube-proxy-url=""
+            Proxy URL to use for proxying all requests to Kubernetes API (default                   
+            $WERF_KUBE_PROXY_URL)
       --kube-qps-limit=30
             Kubernetes client QPS limit (default $WERF_KUBE_QPS_LIMIT or 30)
+      --kube-request-timeout=0s
+            Timeout for all requests to Kubernetes API (default $WERF_KUBE_REQUEST_TIMEOUT)
       --kube-tls-server=""
             Server name to use for Kubernetes API server certificate validation. If it is not       
             provided, the hostname used to contact the server is used (default                      
             $WERF_KUBE_TLS_SERVER)
       --kube-token=""
             Kubernetes bearer token used for authentication (default $WERF_KUBE_TOKEN)
+      --kube-token-path=""
+            Path to file with bearer token for authentication in Kubernetes (default                
+            $WERF_KUBE_TOKEN_PATH)
       --kube-version=""
             Set specific Capabilities.KubeVersion (default $WERF_KUBE_VERSION)
       --log-color-mode="auto"
@@ -222,9 +272,16 @@ werf render [IMAGE_NAME...] [options]
       --platform=[]
             Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT]     
             ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)
+      --provenance-keyring=""
+            Path to keyring containing public keys to verify chart provenance (default              
+            $WERF_PROVENANCE_KEYRING)
+      --provenance-strategy=""
+            Strategy for provenance verifying (default $WERF_PROVENANCE_STRATEGY).
       --release=""
             Use specified Helm release name (default [[ project ]]-[[ env ]] template or            
             deploy.helmRelease custom template from werf.yaml or $WERF_RELEASE)
+      --release-storage=""
+            How releases should be stored (default $WERF_RELEASE_STORAGE)
       --release-storage-sql-connection=""
             SQL Connection String for Helm SQL Storage (default                                     
             $WERF_RELEASE_STORAGE_SQL_CONNECTION)
@@ -282,6 +339,17 @@ werf render [IMAGE_NAME...] [options]
             or separate values with commas: key1=path1,key2=path2).
             Also, can be defined with $WERF_SET_FILE_* (e.g. $WERF_SET_FILE_1=key1=path1,           
             $WERF_SET_FILE_2=key2=val2)
+      --set-json=[]
+            Set new values, where the key is the value path and the value is JSON (can specify      
+            multiple or separate values with commas: key1=val1,key2=val2).
+            Also, can be defined with $WERF_SET_JSON_* (e.g. $WERF_SET_JSON_1=key1=val1,            
+            $WERF_SET_JSON_2=key2=val2)
+      --set-literal=[]
+            Set new values, where the key is the value path and the value is the value. The value   
+            will always become a literal string (can specify multiple or separate values with       
+            commas: key1=val1,key2=val2).)
+            Also, can be defined with $WERF_SET_LITERAL_* (e.g. $WERF_SET_LITERAL_1=key1=val1,      
+            $WERF_SET_LITERAL_2=key2=val2)
       --set-runtime-json=[]
             Set new keys in $.Runtime, where the key is the value path and the value is JSON. This  
             is meant to be generated inside the program, so use --set-json instead, unless you know 
@@ -298,8 +366,6 @@ werf render [IMAGE_NAME...] [options]
             only show manifests rendered from the given templates
   -L, --skip-dependencies-repo-refresh=false
             Do not refresh helm chart repositories locally cached index
-      --skip-image-spec-stage=false
-            Force skipping "imageSpec" build stage (default $WERF_SKIP_IMAGE_SPEC_STAGE or false)
       --skip-tls-verify-helm-dependencies=false
             Skip TLS certificate validation when accessing a Helm charts repository (default        
             $WERF_SKIP_TLS_VERIFY_HELM_DEPENDENCIES)
@@ -328,6 +394,8 @@ werf render [IMAGE_NAME...] [options]
             
             The same address should be specified for all werf processes that work with a single     
             repo. :local address allows execution of werf processes from a single host only
+      --templates-allow-dns=false
+            Allow performing DNS requests in templating (default $WERF_TEMPLATES_ALLOW_DNS)
       --tmp-dir=""
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --use-custom-tag=""

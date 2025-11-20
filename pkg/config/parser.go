@@ -22,6 +22,7 @@ import (
 	"github.com/werf/3p-helm/pkg/engine"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
+	"github.com/werf/werf/v2/pkg/file_manager"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
 	"github.com/werf/werf/v2/pkg/slug"
 	"github.com/werf/werf/v2/pkg/tmp_manager"
@@ -33,8 +34,8 @@ type WerfConfigOptions struct {
 	DebugTemplates      bool
 }
 
-func RenderWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath string, imageNameList []string, giterminismManager giterminism_manager.Interface, opts WerfConfigOptions) error {
-	_, werfConfig, err := GetWerfConfig(ctx, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, giterminismManager, opts)
+func RenderWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, customWerfConfigRenderPath string, imageNameList []string, giterminismManager giterminism_manager.Interface, opts WerfConfigOptions) error {
+	_, werfConfig, err := GetWerfConfig(ctx, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, customWerfConfigRenderPath, giterminismManager, opts)
 	if err != nil {
 		return err
 	}
@@ -77,7 +78,7 @@ func renderSpecificImages(werfConfig *WerfConfig, imageNameList []string) error 
 	return nil
 }
 
-func GetWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath string, giterminismManager giterminism_manager.Interface, opts WerfConfigOptions) (string, *WerfConfig, error) {
+func GetWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, customWerfConfigRenderPath string, giterminismManager giterminism_manager.Interface, opts WerfConfigOptions) (string, *WerfConfig, error) {
 	var path string
 	var config *WerfConfig
 	err := logboek.Context(ctx).Info().LogProcess("Render werf config").DoError(func() error {
@@ -92,9 +93,18 @@ func GetWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfConfi
 			return fmt.Errorf("unable to render werf config: %w", err)
 		}
 
-		werfConfigRenderPath, err := tmp_manager.CreateWerfConfigRender(ctx)
-		if err != nil {
-			return err
+		var werfConfigRenderPath string
+
+		if customWerfConfigRenderPath == "" {
+			werfConfigRenderPath, err = tmp_manager.CreateWerfConfigRender()
+			if err != nil {
+				return err
+			}
+		} else {
+			werfConfigRenderPath, err = file_manager.CreateWerfConfigRender(customWerfConfigRenderPath)
+			if err != nil {
+				return err
+			}
 		}
 
 		if opts.LogRenderedFilePath {
@@ -338,6 +348,14 @@ func funcMap(ctx context.Context, tmpl *template.Template, giterminismManager gi
 		}
 
 		return m, nil
+	}
+	funcMap["toYaml"] = func(v interface{}) string {
+		data, err := yaml.Marshal(v)
+		if err != nil {
+			return ""
+		}
+
+		return strings.TrimSuffix(string(data), "\n")
 	}
 	funcMap["include"] = func(name string, data interface{}) (string, error) {
 		result, err := executeTemplate(tmpl, name, data)
