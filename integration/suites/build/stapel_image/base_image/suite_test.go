@@ -1,6 +1,7 @@
 package base_image_test
 
 import (
+	"context"
 	"strings"
 	"testing"
 
@@ -45,20 +46,20 @@ var (
 	_ = SuiteData.SetupTmp(suite_init.NewTmpDirData())
 )
 
-var _ = SuiteData.AppendSynchronizedBeforeSuiteNode1Func(func() {
+var _ = SuiteData.AppendSynchronizedBeforeSuiteNode1Func(func(ctx context.Context) {
 	for _, suiteImage := range []string{suiteImage1, suiteImage2} {
-		if !utilsDocker.IsImageExist(suiteImage) {
-			Expect(utilsDocker.Pull(suiteImage)).Should(Succeed(), "docker pull")
+		if !utilsDocker.IsImageExist(ctx, suiteImage) {
+			Expect(utilsDocker.Pull(ctx, suiteImage)).Should(Succeed(), "docker pull")
 		}
 	}
 })
 
-var _ = SuiteData.AppendSynchronizedBeforeSuiteAllNodesFunc(func(_ []byte) {
-	SuiteData.Registry, _, SuiteData.RegistryContainerName = utilsDocker.LocalDockerRegistryRun()
+var _ = SuiteData.AppendSynchronizedBeforeSuiteAllNodesFunc(func(ctx context.Context, _ []byte) {
+	SuiteData.Registry, _, SuiteData.RegistryContainerName = utilsDocker.LocalDockerRegistryRun(ctx)
 })
 
-var _ = SuiteData.AppendSynchronizedAfterSuiteAllNodesFunc(func() {
-	utilsDocker.ContainerStopAndRemove(SuiteData.RegistryContainerName)
+var _ = SuiteData.AppendSynchronizedAfterSuiteAllNodesFunc(func(ctx context.Context) {
+	utilsDocker.ContainerStopAndRemove(ctx, SuiteData.RegistryContainerName)
 })
 
 var _ = BeforeEach(func() {

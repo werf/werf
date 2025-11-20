@@ -76,19 +76,19 @@ func initApiClient() error {
 	return nil
 }
 
-func ContainerStopAndRemove(containerName string) {
-	Expect(CliStop(containerName)).Should(Succeed(), fmt.Sprintf("docker stop %s", containerName))
-	Expect(CliRm(containerName)).Should(Succeed(), fmt.Sprintf("docker rm %s", containerName))
+func ContainerStopAndRemove(ctx context.Context, containerName string) {
+	Expect(CliStop(ctx, containerName)).Should(Succeed(), fmt.Sprintf("docker stop %s", containerName))
+	Expect(CliRm(ctx, containerName)).Should(Succeed(), fmt.Sprintf("docker rm %s", containerName))
 }
 
-func ImageRemoveIfExists(imageName string) {
-	if IsImageExist(imageName) {
-		Expect(CliRmi(imageName)).Should(Succeed(), "docker rmi")
+func ImageRemoveIfExists(ctx context.Context, imageName string) {
+	if IsImageExist(ctx, imageName) {
+		Expect(CliRmi(ctx, imageName)).Should(Succeed(), "docker rmi")
 	}
 }
 
-func IsImageExist(imageName string) bool {
-	_, err := imageInspect(imageName)
+func IsImageExist(ctx context.Context, imageName string) bool {
+	_, err := imageInspect(ctx, imageName)
 	if err != nil {
 		if client.IsErrNotFound(err) {
 			return false
@@ -100,29 +100,28 @@ func IsImageExist(imageName string) bool {
 	return true
 }
 
-func ImageParent(imageName string) string {
-	return ImageInspect(imageName).Parent
+func ImageParent(ctx context.Context, imageName string) string {
+	return ImageInspect(ctx, imageName).Parent
 }
 
-func ImageID(imageName string) string {
-	return ImageInspect(imageName).ID
+func ImageID(ctx context.Context, imageName string) string {
+	return ImageInspect(ctx, imageName).ID
 }
 
-func ImageInspect(imageName string) *types.ImageInspect {
-	inspect, err := imageInspect(imageName)
+func ImageInspect(ctx context.Context, imageName string) *types.ImageInspect {
+	inspect, err := imageInspect(ctx, imageName)
 	Expect(err).ShouldNot(HaveOccurred())
 	return inspect
 }
 
-func ContainerInspect(ref string) types.ContainerJSON {
-	ctx := context.Background()
+func ContainerInspect(ctx context.Context, ref string) types.ContainerJSON {
 	inspect, err := apiClient.ContainerInspect(ctx, ref)
 	Expect(err).ShouldNot(HaveOccurred())
 	return inspect
 }
 
-func ContainerHostPort(ref, containerPortNumberAndProtocol string) string {
-	inspect := ContainerInspect(ref)
+func ContainerHostPort(ctx context.Context, ref, containerPortNumberAndProtocol string) string {
+	inspect := ContainerInspect(ctx, ref)
 	Expect(inspect.NetworkSettings).ShouldNot(BeNil())
 	portMap := inspect.NetworkSettings.Ports
 	Expect(portMap).ShouldNot(BeEmpty())
@@ -131,51 +130,52 @@ func ContainerHostPort(ref, containerPortNumberAndProtocol string) string {
 	return portBindings[0].HostPort
 }
 
-func CliRun(args ...string) error {
+func CliRun(ctx context.Context, args ...string) error {
 	cmd := container.NewRunCommand(cli)
-	return cmdExecute(cmd, args)
+	return cmdExecute(ctx, cmd, args)
 }
 
-func CliRm(args ...string) error {
+func CliRm(ctx context.Context, args ...string) error {
 	cmd := container.NewRmCommand(cli)
-	return cmdExecute(cmd, args)
+	return cmdExecute(ctx, cmd, args)
 }
 
-func CliStop(args ...string) error {
+func CliStop(ctx context.Context, args ...string) error {
 	cmd := container.NewStopCommand(cli)
-	return cmdExecute(cmd, args)
+	return cmdExecute(ctx, cmd, args)
 }
 
-func CliPull(args ...string) error {
+func CliPull(ctx context.Context, args ...string) error {
 	cmd := image.NewPullCommand(cli)
-	return cmdExecute(cmd, args)
+	return cmdExecute(ctx, cmd, args)
 }
 
-func CliPush(args ...string) error {
+func CliPush(ctx context.Context, args ...string) error {
 	cmd := image.NewPushCommand(cli)
-	return cmdExecute(cmd, args)
+	return cmdExecute(ctx, cmd, args)
 }
 
-func CliTag(args ...string) error {
+func CliTag(ctx context.Context, args ...string) error {
 	cmd := image.NewTagCommand(cli)
-	return cmdExecute(cmd, args)
+	return cmdExecute(ctx, cmd, args)
 }
 
-func CliRmi(args ...string) error {
+func CliRmi(ctx context.Context, args ...string) error {
 	cmd := image.NewRemoveCommand(cli)
-	return cmdExecute(cmd, args)
+	return cmdExecute(ctx, cmd, args)
 }
 
-func cmdExecute(cmd *cobra.Command, args []string) error {
+func cmdExecute(ctx context.Context, cmd *cobra.Command, args []string) error {
 	cmd.SilenceErrors = true
 	cmd.SilenceUsage = true
 	cmd.SetArgs(args)
+	cmd.SetContext(ctx)
 	return cmd.Execute()
 }
 
-func Pull(imageName string) error {
+func Pull(ctx context.Context, imageName string) error {
 tryPull:
-	err := CliPull(imageName)
+	err := CliPull(ctx, imageName)
 	if err != nil {
 		specificErrors := []string{
 			"Client.Timeout exceeded while awaiting headers",
@@ -195,8 +195,7 @@ tryPull:
 	return err
 }
 
-func imageInspect(ref string) (*types.ImageInspect, error) {
-	ctx := context.Background()
+func imageInspect(ctx context.Context, ref string) (*types.ImageInspect, error) {
 	inspect, _, err := apiClient.ImageInspectWithRaw(ctx, ref)
 	if err != nil {
 		return nil, err
