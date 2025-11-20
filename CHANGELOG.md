@@ -1,5 +1,25 @@
 # Changelog
 
+## [2.54.0](https://github.com/werf/werf/compare/v2.53.5...v2.54.0) (2025-11-20)
+
+
+### Features
+
+* **config:** ability to save the render along a custom path ([#7176](https://github.com/werf/werf/issues/7176)) ([7c624ec](https://github.com/werf/werf/commit/7c624ece673dc0a88ff8282ce191aea8cc6921ea))
+* **config:** add toYaml func to config parser ([1ae722e](https://github.com/werf/werf/commit/1ae722efff97139c1d3c8cd98e91ca52a5d6ca26))
+
+### Bug Fixes
+
+* **build, docker:** fix docker commands do not stop on context cancellation ([#7232](https://github.com/werf/werf/issues/7232)) ([3737404](https://github.com/werf/werf/commit/3737404162c73b4ea76eda29b7fccf4a1630ff40))
+* **build, stapel, import:** correct rsync glob handling for imports and checksums ([6007704](https://github.com/werf/werf/commit/60077042b38e6ffbe8b0e97620fef6c9b3fce8e0))
+* **build, stapel, import:** warn if import config does nothing ([#7225](https://github.com/werf/werf/issues/7225)) ([2756b18](https://github.com/werf/werf/commit/2756b181b3810feb1f8ccb05e8fcee68056c621f))
+* **build:** use blocking execution for parallel ([#7231](https://github.com/werf/werf/issues/7231)) ([42def11](https://github.com/werf/werf/commit/42def110ebf8ba563ee4046aff079a6ebffef554))
+* **cleanup:** warn when cleanup metadata push hits immutable repo ([87c2705](https://github.com/werf/werf/commit/87c2705dfc999cf7cc664501a4591e17fb8587e7))
+* **host-cleanup:** use different keeping strategies for different kind of tmp data ([#7219](https://github.com/werf/werf/issues/7219)) ([4ca0b9e](https://github.com/werf/werf/commit/4ca0b9e24c079cccd32347608b8ab533de8f8676))
+* **includes:** clarify usage of relative and absolute includesLockPath ([8535d8e](https://github.com/werf/werf/commit/8535d8e71dd7abc9fa2225784b3eebb544c0be86))
+* **includes:** prevent double projectDir in includes path resolution ([af64a6d](https://github.com/werf/werf/commit/af64a6d411d8bb0d0e5569879b83f748fee13560))
+* **includes:** respect projectDir in lock file creation ([61ae7e7](https://github.com/werf/werf/commit/61ae7e74d290cb17e22faae0662b7dd3efdc822e))
+
 ## [2.53.5](https://github.com/werf/werf/compare/v2.53.4...v2.53.5) (2025-11-17)
 
 
