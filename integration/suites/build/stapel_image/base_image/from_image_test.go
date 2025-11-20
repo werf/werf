@@ -42,7 +42,7 @@ var _ = XDescribe("fromImage", func() {
 
 			fromImageName := utils.SucceedCommandOutputString(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "stage", "image", fromImageConfigName)
 
-			Expect(utilsDocker.ImageParent(strings.TrimSpace(appImageName))).Should(Equal(utilsDocker.ImageID(strings.TrimSpace(fromImageName))))
+			Expect(utilsDocker.ImageParent(ctx, strings.TrimSpace(appImageName))).Should(Equal(utilsDocker.ImageID(ctx, strings.TrimSpace(fromImageName))))
 		})
 	})
 })
