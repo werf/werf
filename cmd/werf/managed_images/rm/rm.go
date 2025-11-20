@@ -95,17 +95,22 @@ func run(ctx context.Context, imageNames []string) error {
 		return fmt.Errorf("component init error: %w", err)
 	}
 
+	defer func() {
+		if err := tmp_manager.DelegateCleanup(ctx); err != nil {
+			logboek.Context(ctx).Warn().LogF("Temporary files cleanup preparation failed: %s\n", err)
+		}
+	}()
+
 	containerBackend := commonManager.ContainerBackend()
 
 	if logboek.Context(ctx).IsAcceptedLevel(level.Default) {
 		logboek.Context(ctx).SetAcceptedLevel(level.Error)
 	}
 
-	projectTmpDir, err := tmp_manager.CreateProjectDir(ctx)
+	_, err = tmp_manager.CreateProjectDir(ctx)
 	if err != nil {
 		return fmt.Errorf("getting project tmp dir failed: %w", err)
 	}
-	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
 	giterminismManager, err := common.GetGiterminismManager(ctx, &commonCmdData)
 	if err != nil {
