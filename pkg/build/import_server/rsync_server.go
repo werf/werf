@@ -140,7 +140,7 @@ func (srv *RsyncServer) GetCopyCommand(ctx context.Context, importConfig *config
 	if importConfig.Owner != "" || importConfig.Group != "" {
 		rsyncChownOption = fmt.Sprintf("--chown=%s:%s", importConfig.Owner, importConfig.Group)
 	}
-	rsyncCommand := fmt.Sprintf("RSYNC_PASSWORD='%s' %s --archive --links --inplace %s", srv.AuthPassword, stapel.RsyncBinPath(), rsyncChownOption)
+	rsyncCommand := fmt.Sprintf("RSYNC_PASSWORD='%s' %s --archive --links --inplace --xattrs %s", srv.AuthPassword, stapel.RsyncBinPath(), rsyncChownOption)
 
 	if len(importConfig.IncludePaths) != 0 {
 		/**
