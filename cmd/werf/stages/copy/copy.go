@@ -100,6 +100,7 @@ func runCopy(ctx context.Context) error {
 		InitDockerRegistry:          true,
 		InitProcessContainerBackend: true,
 		InitManifestCache:           true,
+		InitLRUImagesCache:          true,
 		InitTrueGitWithOptions: &common.InitTrueGitOptions{
 			Options: true_git.Options{LiveGitOutput: *commonCmdData.LogDebug},
 		},
@@ -133,6 +134,14 @@ func runCopy(ctx context.Context) error {
 		return fmt.Errorf("invalid to addr %q: %w", toAddrRaw, err)
 	}
 
+	if fromAddr.RegistryAddress != nil {
+		commonCmdData.Repo.Address = &fromAddr.RegistryAddress.Repo // FIXME выдумать что-нить симпатичнее
+	} else if toAddr.RegistryAddress != nil {
+		commonCmdData.Repo.Address = &toAddr.RegistryAddress.Repo
+	} else {
+		return fmt.Errorf("--from or --to addresses must be container registry addresses")
+	}
+
 	giterminismManager, err := common.GetGiterminismManager(ctx, &commonCmdData)
 	if err != nil {
 		return err
@@ -152,13 +161,6 @@ func runCopy(ctx context.Context) error {
 		return fmt.Errorf("getting project tmp dir failed: %w", err)
 	}
 
-	commonCmdData.Repo.Address = &fromAddr.RegistryAddress.Repo // FIXME выдумать что-нить симпатичнее
-
-	dockerRegistry, err := common.CreateDockerRegistry(ctx, fromAddr.Repo, *commonCmdData.InsecureRegistry, *commonCmdData.SkipTlsVerifyRegistry)
-	if err != nil {
-		return fmt.Errorf("unable to create docker registry: %w", err)
-	}
-
 	storageManager, dockerRegistry, err := initCommonCopyComponents(
 		ctx,
 		&common.NewStorageManagerConfig{
@@ -168,10 +170,9 @@ func runCopy(ctx context.Context) error {
 			CleanupDisabled:                disableCleanup,
 			GitHistoryBasedCleanupDisabled: disableGitHistoryBasedPolicy,
 		},
-		*fromAddr,
 	)
 	if err != nil {
-		return fmt.Errorf("unable to init common copy components: %w", err)
+		return fmt.Errorf("unable to init common components: %w", err)
 	}
 
 	var conveyorWithRetryWrapper *build.ConveyorWithRetryWrapper
@@ -180,7 +181,7 @@ func runCopy(ctx context.Context) error {
 	if !cmdData.All {
 		conveyorWithRetryWrapper, buildOptions, err = initConveyorComponents(ctx, werfConfig, giterminismManager, projectTmpDir, containerBackend, storageManager)
 		if err != nil {
-			return fmt.Errorf("unable to init conveyor components: %w", err)
+			return fmt.Errorf("unable to init components: %w", err)
 		}
 		defer conveyorWithRetryWrapper.Terminate()
 	}
@@ -200,13 +201,13 @@ func runCopy(ctx context.Context) error {
 	})
 }
 
-func initCommonCopyComponents(ctx context.Context, managerConfig *common.NewStorageManagerConfig, fromAddr ref.Addr) (*manager.StorageManager, docker_registry.Interface, error) {
+func initCommonCopyComponents(ctx context.Context, managerConfig *common.NewStorageManagerConfig) (*manager.StorageManager, docker_registry.Interface, error) {
 	storageManager, err := common.NewStorageManager(ctx, managerConfig)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to init storage manager: %w", err)
 	}
 
-	dockerRegistry, err := common.CreateDockerRegistry(ctx, fromAddr.Repo, *commonCmdData.InsecureRegistry, *commonCmdData.SkipTlsVerifyRegistry)
+	dockerRegistry, err := common.CreateDockerRegistry(ctx, *managerConfig.CmdData.Repo.Address, *commonCmdData.InsecureRegistry, *commonCmdData.SkipTlsVerifyRegistry)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to create docker registry: %w", err)
 	}

@@ -10,10 +10,6 @@ import (
 	"github.com/werf/werf/v2/pkg/image"
 )
 
-const (
-	archiveStageFileName = "stage.tar.gz"
-)
-
 type ArchiveStorage struct {
 	Reader ArchiveStorageReader
 	Writer ArchiveStorageWriter
@@ -38,7 +34,21 @@ func (s *ArchiveStorage) CopyFromRemote(ctx context.Context, fromRemote *RemoteS
 	if opts.All {
 		return s.copyAllFromRemote(ctx, fromRemote, opts)
 	}
+
 	return s.copyCurrentBuildFromRemote(ctx, fromRemote, opts)
+}
+
+func (s *ArchiveStorage) ReadStagesTags() ([]string, error) {
+	stages, err := s.Reader.ReadStagesTags()
+	if err != nil {
+		return nil, fmt.Errorf("unable to read stages archive: %w", err)
+	}
+
+	return stages, nil
+}
+
+func (s *ArchiveStorage) GetStageArchiveOpener(stageTag string) *StageArchiveOpener {
+	return NewStageArchiveOpener(s, stageTag)
 }
 
 func (s *ArchiveStorage) copyAllFromRemote(ctx context.Context, fromRemote *RemoteStorage, opts copyToOptions) error {
@@ -51,32 +61,26 @@ func (s *ArchiveStorage) copyAllFromRemote(ctx context.Context, fromRemote *Remo
 		return fmt.Errorf("unable to open target stages archive: %w", err)
 	}
 
-	if err := logboek.Context(ctx).LogProcess("Saving stages into archive").DoError(func() error {
-		for _, stageId := range stageIds {
-			stageDesc, err := fromRemote.StorageManager.StagesStorage.GetStageDesc(ctx, opts.ProjectName, stageId)
-			if err != nil {
-				return err
-			}
+	for _, stageId := range stageIds {
+		logboek.Context(ctx).Default().LogFDetails("Copying stage: %s\n", stageId)
 
-			stageRef := stageDesc.Info.Name
-			tag := stageDesc.Info.Tag
-
-			logboek.Context(ctx).Default().LogFDetails("Saving stage %s\n", stageRef)
-
-			stageBytes := bytes.NewBuffer(nil)
-
-			if err := fromRemote.RegistryClient.PullImageArchive(ctx, stageBytes, stageRef); err != nil {
-				return fmt.Errorf("error pulling stage %q archive: %w", stageRef, err)
-			}
-
-			if err := s.Writer.WriteStageArchive(tag, stageBytes.Bytes()); err != nil {
-				return fmt.Errorf("error writing image %q into bundle archive: %w", stageRef, err)
-			}
+		stageDesc, err := fromRemote.StorageManager.StagesStorage.GetStageDesc(ctx, opts.ProjectName, stageId)
+		if err != nil {
+			return err
 		}
 
-		return nil
-	}); err != nil {
-		return err
+		stageRef := stageDesc.Info.Name
+		tag := stageDesc.Info.Tag
+
+		stageBytes := bytes.NewBuffer(nil)
+
+		if err := fromRemote.RegistryClient.PullImageArchive(ctx, stageBytes, stageRef); err != nil {
+			return fmt.Errorf("error pulling stage %q archive: %w", stageRef, err)
+		}
+
+		if err := s.Writer.WriteStageArchive(tag, stageBytes.Bytes()); err != nil {
+			return fmt.Errorf("error writing image %q into bundle archive: %w", stageRef, err)
+		}
 	}
 
 	if err := s.Writer.Save(); err != nil {
@@ -91,40 +95,34 @@ func (s *ArchiveStorage) copyCurrentBuildFromRemote(ctx context.Context, fromRem
 		return fmt.Errorf("unable to open target stages archive: %w", err)
 	}
 
-	if err := logboek.Context(ctx).LogProcess("Saving stages into archive").DoError(func() error {
-		return fromRemote.ConveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
-			if _, err := c.Build(ctx, opts.BuildOptions); err != nil {
-				return err
+	return fromRemote.ConveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
+		if _, err := c.Build(ctx, opts.BuildOptions); err != nil {
+			return err
+		}
+
+		infoGetters, err := c.GetImageInfoGetters(image.InfoGetterOptions{OnlyFinal: false})
+		if err != nil {
+			return err
+		}
+
+		for _, infoGetter := range infoGetters {
+			logboek.Context(ctx).Default().LogFDetails("Copying stage: %s\n", infoGetter.Tag)
+
+			stageBytes := bytes.NewBuffer(nil)
+
+			if err := fromRemote.RegistryClient.PullImageArchive(ctx, stageBytes, infoGetter.GetName()); err != nil {
+				return fmt.Errorf("error pulling stage %q archive: %w", infoGetter.GetName(), err)
 			}
 
-			infoGetters, err := c.GetImageInfoGetters(image.InfoGetterOptions{OnlyFinal: false})
-			if err != nil {
-				return err
+			if err := s.Writer.WriteStageArchive(infoGetter.Tag, stageBytes.Bytes()); err != nil {
+				return fmt.Errorf("error writing image %q into bundle archive: %w", infoGetter.GetName(), err)
 			}
+		}
 
-			for _, infoGetter := range infoGetters {
-				logboek.Context(ctx).Default().LogFDetails("Saving stage %s\n", infoGetter.GetName())
+		if err := s.Writer.Save(); err != nil {
+			return fmt.Errorf("error saving destination bundle archive: %w", err)
+		}
 
-				stageBytes := bytes.NewBuffer(nil)
-
-				if err := fromRemote.RegistryClient.PullImageArchive(ctx, stageBytes, infoGetter.GetName()); err != nil {
-					return fmt.Errorf("error pulling stage %q archive: %w", infoGetter.GetName(), err)
-				}
-
-				if err := s.Writer.WriteStageArchive(infoGetter.Tag, stageBytes.Bytes()); err != nil {
-					return fmt.Errorf("error writing image %q into bundle archive: %w", infoGetter.GetName(), err)
-				}
-			}
-
-			return nil
-		})
-	}); err != nil {
-		return err
-	}
-
-	if err := s.Writer.Save(); err != nil {
-		return fmt.Errorf("error saving destination bundle archive: %w", err)
-	}
-
-	return nil
+		return nil
+	})
 }

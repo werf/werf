@@ -2,8 +2,10 @@ package stages
 
 import (
 	"archive/tar"
+	"bytes"
 	"compress/gzip"
 	"fmt"
+	"io"
 	"os"
 	"time"
 
@@ -12,8 +14,8 @@ import (
 
 type ArchiveStorageWriter interface {
 	Open() error
-	WriteStageArchive(tag string, data []byte) error
 	Save() error
+	WriteStageArchive(stageTag string, data []byte) error
 }
 
 type ArchiveStorageFileWriter struct {
@@ -73,33 +75,9 @@ func (writer *ArchiveStorageFileWriter) Open() error {
 	return nil
 }
 
-func (writer *ArchiveStorageFileWriter) WriteStageArchive(tag string, data []byte) error {
-	now := time.Now()
-
-	header := &tar.Header{
-		Name:       fmt.Sprintf("images/%s.tar.gz", tag),
-		Typeflag:   tar.TypeReg,
-		Mode:       0o777,
-		Size:       int64(len(data)),
-		ModTime:    now,
-		AccessTime: now,
-		ChangeTime: now,
-	}
-
-	if err := writer.tmpArchiveWriter.WriteHeader(header); err != nil {
-		return fmt.Errorf("unable to write image %q header: %w", tag, err)
-	}
-
-	if _, err := writer.tmpArchiveWriter.Write(data); err != nil {
-		return fmt.Errorf("unable to write chart.tar.gz data: %w", err)
-	}
-
-	return nil
-}
-
 func (writer *ArchiveStorageFileWriter) Save() error {
 	if writer.tmpArchiveWriter == nil {
-		panic(fmt.Sprintf("stage archive %q is not opened", writer.Path))
+		return fmt.Errorf("stage archive %q is not opened", writer.Path)
 	}
 
 	if err := writer.tmpArchiveCloser(); err != nil {
@@ -112,6 +90,42 @@ func (writer *ArchiveStorageFileWriter) Save() error {
 
 	if err := os.Rename(writer.tmpArchivePath, writer.Path); err != nil {
 		return fmt.Errorf("unable to rename tmp stage archive %q to %q: %w", writer.tmpArchivePath, writer.Path, err)
+	}
+
+	return nil
+}
+
+func (writer *ArchiveStorageFileWriter) WriteStageArchive(tag string, data []byte) error {
+	now := time.Now()
+	buf := bytes.NewBuffer(nil)
+	zipper := gzip.NewWriter(buf)
+
+	if _, err := io.Copy(zipper, bytes.NewReader(data)); err != nil {
+		return fmt.Errorf("unable to gzip image archive data: %w", err)
+	}
+
+	if err := zipper.Close(); err != nil {
+		return fmt.Errorf("unable to close gzip image archive: %w", err)
+	}
+
+	compressedData := buf.Bytes()
+
+	header := &tar.Header{
+		Name:       fmt.Sprintf("stages/%s.tar.gz", tag),
+		Typeflag:   tar.TypeReg,
+		Mode:       0o777,
+		Size:       int64(len(buf.Bytes())),
+		ModTime:    now,
+		AccessTime: now,
+		ChangeTime: now,
+	}
+
+	if err := writer.tmpArchiveWriter.WriteHeader(header); err != nil {
+		return fmt.Errorf("unable to write stage %q header: %w", tag, err)
+	}
+
+	if _, err := writer.tmpArchiveWriter.Write(compressedData); err != nil {
+		return fmt.Errorf("unable to write stage.tar.gz data: %w", err)
 	}
 
 	return nil

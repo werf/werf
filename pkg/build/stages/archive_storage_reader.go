@@ -2,16 +2,18 @@ package stages
 
 import (
 	"archive/tar"
-	"bytes"
 	"compress/gzip"
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
+	"strings"
 )
 
 type ArchiveStorageReader interface {
 	String() string
-	ReadArchiveStage() ([]byte, error)
+	ReadStagesTags() ([]string, error)
+	ReadArchiveStage(stageTag string) (*StageArchiveReadCloser, error)
 }
 
 type ArchiveStorageFileReader struct {
@@ -28,20 +30,47 @@ func (reader *ArchiveStorageFileReader) String() string {
 	return reader.Path
 }
 
-func (reader *ArchiveStorageFileReader) ReadArchiveStage() ([]byte, error) {
+func (reader *ArchiveStorageFileReader) ReadStagesTags() ([]string, error) {
 	treader, closer, err := reader.openForReading()
+	if err != nil {
+		return nil, fmt.Errorf("error opening archive: %v", err)
+	}
 	defer closer()
 
-	if err != nil {
-		return nil, fmt.Errorf("unable to open bundle archive: %w", err)
-	}
-
-	b := bytes.NewBuffer(nil)
+	var tags []string
 
 	for {
 		header, err := treader.Next()
 		if err == io.EOF {
-			return nil, fmt.Errorf("no chart archive found in the bundle archive %q", reader.Path)
+			break
+		}
+		if err != nil {
+			return nil, fmt.Errorf("error reading tar archive: %v", err)
+		}
+
+		if header.Typeflag == tar.TypeReg {
+			filename := filepath.Base(header.Name)
+			if strings.HasSuffix(filename, ".tar.gz") {
+				nameWithoutExt := strings.TrimSuffix(filename, ".tar.gz")
+				tags = append(tags, nameWithoutExt)
+			}
+		}
+	}
+
+	return tags, nil
+}
+
+func (reader *ArchiveStorageFileReader) ReadArchiveStage(stageTag string) (*StageArchiveReadCloser, error) {
+	treader, closer, err := reader.openForReading()
+	if err != nil {
+		return nil, fmt.Errorf("unable to open stages archive: %w", err)
+	}
+	defer closer()
+
+	for {
+		header, err := treader.Next()
+		if err == io.EOF {
+			return nil, fmt.Errorf("no stage tag %q found in the stages archive %q", stageTag, reader.Path)
 		}
 		if err != nil {
 			return nil, fmt.Errorf("error reading tar archive: %w", err)
@@ -51,11 +80,20 @@ func (reader *ArchiveStorageFileReader) ReadArchiveStage() ([]byte, error) {
 			continue
 		}
 
-		if _, err := io.Copy(b, treader); err != nil {
-			return nil, fmt.Errorf("unable to read chart archive %q from the bundle archive %q: %w", archiveStageFileName, reader.Path, err)
-		}
+		if header.Name == fmt.Sprintf("stages/%s.tar.gz", stageTag) {
+			unzipper, err := gzip.NewReader(treader)
+			if err != nil {
+				return nil, fmt.Errorf("unable to create gzip reader for stages archive: %w", err)
+			}
 
-		return b.Bytes(), nil
+			return NewStageArchiveReadCloser(unzipper, func() error {
+				if err := unzipper.Close(); err != nil {
+					return fmt.Errorf("unable to close gzip reader for stage archive: %w", err)
+				}
+
+				return closer()
+			}), nil
+		}
 	}
 }
 
@@ -67,7 +105,7 @@ func (reader *ArchiveStorageFileReader) openForReading() (*tar.Reader, func() er
 
 	unzipper, err := gzip.NewReader(f)
 	if err != nil {
-		return nil, f.Close, fmt.Errorf("unable to open bundle archive gzip %q: %w", reader.Path, err)
+		return nil, f.Close, fmt.Errorf("unable to open stages archive gzip %q: %w", reader.Path, err)
 	}
 
 	closer := func() error {
@@ -81,16 +119,4 @@ func (reader *ArchiveStorageFileReader) openForReading() (*tar.Reader, func() er
 	}
 
 	return tar.NewReader(unzipper), closer, nil
-}
-
-type ImageArchiveReadCloser struct {
-	reader io.Reader
-	closer func() error
-}
-
-func NewImageArchiveReadCloser(reader io.Reader, closer func() error) *ImageArchiveReadCloser {
-	return &ImageArchiveReadCloser{
-		reader: reader,
-		closer: closer,
-	}
 }

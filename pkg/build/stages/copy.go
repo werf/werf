@@ -25,7 +25,11 @@ func Copy(ctx context.Context, fromAddr, toAddr *ref.Addr, opts CopyOptions) err
 		ConveyorWithRetryWrapper: opts.ConveyorWithRetry,
 	})
 
-	to := NewStorageAccessor(toAddr, StorageAccessorOptions{})
+	to := NewStorageAccessor(toAddr, StorageAccessorOptions{
+		DockerRegistry:           opts.RegistryClient,
+		StorageManager:           opts.StorageManager,
+		ConveyorWithRetryWrapper: opts.ConveyorWithRetry,
+	})
 
 	return from.CopyTo(ctx, to, copyToOptions{
 		All:          opts.All,

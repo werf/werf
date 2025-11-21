@@ -33,16 +33,14 @@ func (s *RemoteStorage) CopyTo(ctx context.Context, to StorageAccessor, opts cop
 }
 
 func (s *RemoteStorage) CopyFromArchive(ctx context.Context, fromArchive *ArchiveStorage, opts copyToOptions) error {
-	if opts.All {
-		return s.copyAllFromArchive(ctx, fromArchive)
-	}
-	return s.copyCurrentBuildStagesFromArchive()
+	return s.copyFromArchive(ctx, fromArchive)
 }
 
 func (s *RemoteStorage) CopyFromRemote(ctx context.Context, fromRemote *RemoteStorage, opts copyToOptions) error {
 	if opts.All {
 		return s.copyAllFromRemote(ctx, fromRemote, opts)
 	}
+
 	return s.copyCurrentBuildStagesFromRemote(ctx, fromRemote, opts)
 }
 
@@ -58,6 +56,8 @@ func (s *RemoteStorage) copyCurrentBuildStagesFromRemote(ctx context.Context, fr
 		}
 
 		for _, infoGetter := range infoGetters {
+			logboek.Context(ctx).Default().LogFDetails("Copying stage: %s\n", infoGetter.Tag)
+
 			reference, err := ref.ParseReference(infoGetter.Tag)
 			if err != nil {
 				return err
@@ -67,9 +67,6 @@ func (s *RemoteStorage) copyCurrentBuildStagesFromRemote(ctx context.Context, fr
 			reference.Tag = infoGetter.Tag
 
 			infoGetterName := infoGetter.GetName()
-
-			logboek.Context(ctx).Default().LogFDetails("Source: %s\n", infoGetterName)
-			logboek.Context(ctx).Default().LogFDetails("Destination: %s\n", reference.FullName())
 
 			if err = fromRemote.RegistryClient.CopyImage(ctx, infoGetterName, reference.FullName(), docker_registry.CopyImageOptions{}); err != nil {
 				return fmt.Errorf("error copying stage %s into %s: %w", infoGetterName, reference.FullName(), err)
@@ -88,6 +85,7 @@ func (s *RemoteStorage) copyAllFromRemote(ctx context.Context, fromRemote *Remot
 
 	for _, stageId := range stageIds {
 		logboek.Context(ctx).Default().LogFDetails("Copying stage: %s\n", stageId)
+
 		stageDesc, err := fromRemote.StorageManager.StagesStorage.GetStageDesc(ctx, opts.ProjectName, stageId)
 		if err != nil {
 			return err
@@ -111,10 +109,29 @@ func (s *RemoteStorage) copyAllFromRemote(ctx context.Context, fromRemote *Remot
 	return nil
 }
 
-func (s *RemoteStorage) copyAllFromArchive(ctx context.Context, fromArchive *ArchiveStorage) error {
-	panic("not implemented yet")
-}
+func (s *RemoteStorage) copyFromArchive(ctx context.Context, fromArchive *ArchiveStorage) error {
+	stageIds, err := fromArchive.ReadStagesTags()
+	if err != nil {
+		return fmt.Errorf("error reading stages: %w", err)
+	}
 
-func (s *RemoteStorage) copyCurrentBuildStagesFromArchive() error {
-	panic("not implemented yet")
+	for _, stageId := range stageIds {
+		logboek.Context(ctx).Default().LogFDetails("Copying stage: %s\n", stageId)
+
+		reference, err := ref.ParseReference(stageId)
+		if err != nil {
+			return err
+		}
+
+		reference.Repo = s.RegistryAddress.Repo
+		reference.Tag = stageId
+
+		stageArchiveOpener := fromArchive.GetStageArchiveOpener(stageId)
+
+		if err := s.RegistryClient.PushImageArchive(ctx, stageArchiveOpener, reference.FullName()); err != nil {
+			return fmt.Errorf("error copying stage %q archive: %w", stageId, err)
+		}
+	}
+
+	return nil
 }
