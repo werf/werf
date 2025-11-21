@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.54.1](https://github.com/werf/werf/compare/v2.54.0...v2.54.1) (2025-11-21)
+
+
+### Bug Fixes
+
+* **build, stapel, import:** preserve security capabilities during file import ([#7237](https://github.com/werf/werf/issues/7237)) ([522ebf7](https://github.com/werf/werf/commit/522ebf70b5f5759a50c7bcbda20d5d3a206ef5d9))
+* **deploy:** `plan` shows nothing if only tracking ops in plan ([d982297](https://github.com/werf/werf/commit/d9822970b4387a0998250ad7809313a17fd200e6))
+
 ## [2.54.0](https://github.com/werf/werf/compare/v2.53.5...v2.54.0) (2025-11-20)
 
 
