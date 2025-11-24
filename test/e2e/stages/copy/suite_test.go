@@ -1,6 +1,7 @@
 package e2e_stages_copy_test
 
 import (
+	"context"
 	"runtime"
 	"testing"
 
@@ -45,11 +46,11 @@ var (
 	_ = SuiteData.SetupProjectName(suite_init.NewProjectNameData(SuiteData.StubsData))
 	_ = SuiteData.SetupTmp(suite_init.NewTmpDirData())
 
-	_ = SuiteData.AppendSynchronizedBeforeSuiteAllNodesFunc(func(_ []byte) {
-		SuiteData.FromRegistryLocalAddress, SuiteData.FromRegistryInternalAddress, SuiteData.FromRegistryContainerName = docker.LocalDockerRegistryRun()
+	_ = SuiteData.AppendSynchronizedBeforeSuiteAllNodesFunc(func(ctx context.Context, _ []byte) {
+		SuiteData.FromRegistryLocalAddress, SuiteData.FromRegistryInternalAddress, SuiteData.FromRegistryContainerName = docker.LocalDockerRegistryRun(ctx)
 	})
-	_ = SuiteData.AppendSynchronizedBeforeSuiteAllNodesFunc(func(_ []byte) {
-		SuiteData.ToRegistryLocalAddress, SuiteData.ToRegistryInternalAddress, SuiteData.ToRegistryContainerName = docker.LocalDockerRegistryRun()
+	_ = SuiteData.AppendSynchronizedBeforeSuiteAllNodesFunc(func(ctx context.Context, _ []byte) {
+		SuiteData.ToRegistryLocalAddress, SuiteData.ToRegistryInternalAddress, SuiteData.ToRegistryContainerName = docker.LocalDockerRegistryRun(ctx)
 	})
 
 	_ = AfterEach(func(ctx SpecContext) {
