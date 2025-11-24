@@ -87,6 +87,30 @@ metadata:
 
 Here, the `database-migrations` Job is always recreated and then deleted after it becomes ready.
 
+### werf.io/delete-propagation
+
+The `werf.io/delete-propagation` annotation controls the propagation policy used when deleting resources. Allowed values are:
+* `Foreground`: delete the resource after deleting all of its dependents.
+* `Background`: delete the resource immediately, and delete all of its dependents in the background.
+* `Orphan`: delete the resource, but leave all of its dependents untouched.
+
+Example:
+
+```yaml
+# .helm/templates/example.yaml:
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+  annotations:
+    werf.io/delete-propagation: Background
+# ...
+```
+
+Here, when the `myapp` Deployment is deleted, its dependents (ReplicaSets, Pods, etc.) will be deleted in the background.
+
+By default, resources are deleted with the `Foreground` propagation policy.
+
 ### helm.sh/resource-policy
 
 The annotation `helm.sh/resource-policy: keep` forbids any resource deletion from happening. The resource can never be deleted for any reason when this annotation is present. This annotation is also respected on the resource in the cluster, even if it is not present in the chart.
