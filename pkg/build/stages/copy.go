@@ -10,11 +10,11 @@ import (
 )
 
 type CopyOptions struct {
+	All               bool
+	ProjectName       string
 	RegistryClient    docker_registry.Interface
 	StorageManager    *manager.StorageManager
 	ConveyorWithRetry *build.ConveyorWithRetryWrapper
-	All               bool
-	ProjectName       string
 	BuildOptions      build.BuildOptions
 }
 
