@@ -33,8 +33,9 @@ var SuiteData = struct {
 	ToRegistryInternalAddress string
 	ToRegistryContainerName   string
 
-	WerfFromRepo string
-	WerfToRepo   string
+	WerfFromAddr    string
+	WerfToAddr      string
+	WerfArchiveAddr string
 }{}
 
 var (

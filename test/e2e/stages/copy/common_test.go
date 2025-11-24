@@ -8,6 +8,7 @@ import (
 const (
 	artifactCacheVersion = "1"
 	artifactData         = "1"
+	archiveAddr          = "archive:copy-test-archive.tar.gz"
 )
 
 type commonTestOptions struct {
@@ -20,8 +21,10 @@ func setupEnv() {
 	SuiteData.Stubs.SetEnv("ARTIFACT_CACHE_VERSION", artifactCacheVersion)
 	SuiteData.Stubs.SetEnv("ARTIFACT_DATA", artifactData)
 
-	SuiteData.WerfFromRepo = strings.Join([]string{SuiteData.FromRegistryLocalAddress, SuiteData.ProjectName}, "/")
-	SuiteData.WerfToRepo = strings.Join([]string{SuiteData.ToRegistryLocalAddress, SuiteData.ProjectName}, "/")
+	SuiteData.WerfFromAddr = strings.Join([]string{SuiteData.FromRegistryLocalAddress, SuiteData.ProjectName}, "/")
+	SuiteData.WerfToAddr = strings.Join([]string{SuiteData.ToRegistryLocalAddress, SuiteData.ProjectName}, "/")
+
+	SuiteData.WerfArchiveAddr = archiveAddr
 }
 
 func getStagesCopyArgs(fromStorage, toStorage string, opts commonTestOptions) []string {
