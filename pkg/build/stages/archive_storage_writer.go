@@ -18,7 +18,7 @@ type ArchiveStorageWriter interface {
 	WriteStageArchive(stageTag string, data []byte) error
 }
 
-type ArchiveStorageFileWriter struct {
+type ArchiveStorageFileWriteCloser struct {
 	Path string
 
 	tmpArchivePath   string
@@ -26,13 +26,13 @@ type ArchiveStorageFileWriter struct {
 	tmpArchiveCloser func() error
 }
 
-func NewArchiveStorageFileWriter(path string) *ArchiveStorageFileWriter {
-	return &ArchiveStorageFileWriter{
+func NewArchiveStorageFileWriter(path string) *ArchiveStorageFileWriteCloser {
+	return &ArchiveStorageFileWriteCloser{
 		Path: path,
 	}
 }
 
-func (writer *ArchiveStorageFileWriter) Open() error {
+func (writer *ArchiveStorageFileWriteCloser) Open() error {
 	p := fmt.Sprintf("%s.%s.tmp", writer.Path, uuid.New().String())
 
 	f, err := os.Create(p)
@@ -42,12 +42,12 @@ func (writer *ArchiveStorageFileWriter) Open() error {
 
 	zipper := gzip.NewWriter(f)
 	zipper.Header.Comment = "stage-archive"
-	twriter := tar.NewWriter(zipper)
+	tWriter := tar.NewWriter(zipper)
 
 	writer.tmpArchivePath = p
-	writer.tmpArchiveWriter = twriter
+	writer.tmpArchiveWriter = tWriter
 	writer.tmpArchiveCloser = func() error {
-		if err := twriter.Close(); err != nil {
+		if err := tWriter.Close(); err != nil {
 			return fmt.Errorf("unable to close tar writer for %q: %w", writer.tmpArchivePath, err)
 		}
 		if err := zipper.Close(); err != nil {
@@ -68,6 +68,7 @@ func (writer *ArchiveStorageFileWriter) Open() error {
 		AccessTime: now,
 		ChangeTime: now,
 	}
+
 	if err := writer.tmpArchiveWriter.WriteHeader(header); err != nil {
 		return fmt.Errorf("unable to write stages dir header: %w", err)
 	}
@@ -75,7 +76,7 @@ func (writer *ArchiveStorageFileWriter) Open() error {
 	return nil
 }
 
-func (writer *ArchiveStorageFileWriter) Save() error {
+func (writer *ArchiveStorageFileWriteCloser) Save() error {
 	if writer.tmpArchiveWriter == nil {
 		return fmt.Errorf("stage archive %q is not opened", writer.Path)
 	}
@@ -95,7 +96,7 @@ func (writer *ArchiveStorageFileWriter) Save() error {
 	return nil
 }
 
-func (writer *ArchiveStorageFileWriter) WriteStageArchive(tag string, data []byte) error {
+func (writer *ArchiveStorageFileWriteCloser) WriteStageArchive(tag string, data []byte) error {
 	now := time.Now()
 	buf := bytes.NewBuffer(nil)
 	zipper := gzip.NewWriter(buf)
