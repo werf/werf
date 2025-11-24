@@ -88,6 +88,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupAddLabels(&commonCmdData, cmd)
 	common.SetupChartProvenanceKeyring(&commonCmdData, cmd)
 	common.SetupChartProvenanceStrategy(&commonCmdData, cmd)
+	common.SetupDefaultDeletePropagation(&commonCmdData, cmd)
 	common.SetupDeployGraphPath(&commonCmdData, cmd)
 	common.SetupDeployReportPath(&commonCmdData, cmd)
 	common.SetupExtraRuntimeAnnotations(&commonCmdData, cmd)
@@ -224,6 +225,7 @@ func runApply(ctx context.Context) error {
 		ChartProvenanceKeyring:      commonCmdData.ChartProvenanceKeyring,
 		ChartProvenanceStrategy:     commonCmdData.ChartProvenanceStrategy,
 		ChartRepoSkipUpdate:         commonCmdData.ChartRepoSkipUpdate,
+		DefaultDeletePropagation:    commonCmdData.DefaultDeletePropagation,
 		ExtraAnnotations:            extraAnnotations,
 		ExtraLabels:                 extraLabels,
 		ExtraRuntimeAnnotations:     extraRuntimeAnnotations,

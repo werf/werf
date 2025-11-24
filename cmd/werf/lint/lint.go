@@ -126,6 +126,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupAddLabels(&commonCmdData, cmd)
 	common.SetupChartProvenanceKeyring(&commonCmdData, cmd)
 	common.SetupChartProvenanceStrategy(&commonCmdData, cmd)
+	common.SetupDefaultDeletePropagation(&commonCmdData, cmd)
 	common.SetupExtraAPIVersions(&commonCmdData, cmd)
 	common.SetupExtraRuntimeAnnotations(&commonCmdData, cmd)
 	common.SetupExtraRuntimeLabels(&commonCmdData, cmd)
@@ -385,6 +386,7 @@ func runLint(ctx context.Context, imageNameListFromArgs []string) error {
 		DefaultChartAPIVersion:      chart.APIVersionV2,
 		DefaultChartName:            werfConfig.Meta.Project,
 		DefaultChartVersion:         "1.0.0",
+		DefaultDeletePropagation:    commonCmdData.DefaultDeletePropagation,
 		ExtraAPIVersions:            commonCmdData.ExtraAPIVersions,
 		ExtraAnnotations:            extraAnnotations,
 		ExtraLabels:                 extraLabels,
