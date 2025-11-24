@@ -110,6 +110,7 @@ type CmdData struct {
 	ChartProvenanceStrategy          string
 	ChartRepoSkipUpdate              bool
 	DebugTemplates                   bool
+	DefaultDeletePropagation         string
 	DeployReportPath                 string
 	ExtraAPIVersions                 []string
 	ExtraAnnotations                 []string
