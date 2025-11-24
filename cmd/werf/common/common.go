@@ -293,6 +293,10 @@ func SetupReleaseInfoAnnotations(cmdData *CmdData, cmd *cobra.Command) {
 	}
 }
 
+func SetupDefaultDeletePropagation(cmdData *CmdData, cmd *cobra.Command) {
+	cmd.Flags().StringVarP(&cmdData.DefaultDeletePropagation, "delete-propagation", "", os.Getenv("WERF_DELETE_PROPAGATION"), fmt.Sprintf("Set default delete propagation strategy (default $WERF_DELETE_PROPAGATION or %s).", common.DefaultDeletePropagation))
+}
+
 func SetupExtraAPIVersions(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringSliceVarP(&cmdData.ExtraAPIVersions, "extra-apiversions", "", []string{}, "Extra Kubernetes API versions passed to $.Capabilities.APIVersions. Can be also set with $WERF_EXTRA_APIVERSIONS_* environment variables, values can be comma-separated")
 }

@@ -164,6 +164,7 @@ werf plan --repo registry.mydomain.com/web --env production`,
 	common.SetupAddLabels(&commonCmdData, cmd)
 	common.SetupChartProvenanceKeyring(&commonCmdData, cmd)
 	common.SetupChartProvenanceStrategy(&commonCmdData, cmd)
+	common.SetupDefaultDeletePropagation(&commonCmdData, cmd)
 	common.SetupDeployGraphPath(&commonCmdData, cmd)
 	common.SetupExtraRuntimeAnnotations(&commonCmdData, cmd)
 	common.SetupExtraRuntimeLabels(&commonCmdData, cmd)
@@ -475,6 +476,7 @@ func run(
 		DefaultChartAPIVersion:      chart.APIVersionV2,
 		DefaultChartName:            werfConfig.Meta.Project,
 		DefaultChartVersion:         "1.0.0",
+		DefaultDeletePropagation:    commonCmdData.DefaultDeletePropagation,
 		DiffContextLines:            cmdData.DiffContextLines,
 		ErrorIfChangesPlanned:       cmdData.DetailedExitCode,
 		ExtraAnnotations:            extraAnnotations,
