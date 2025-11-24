@@ -445,19 +445,7 @@ func (c *Conveyor) GetImageInfoGetters(opts imagePkg.InfoGetterOptions) ([]*imag
 
 		if len(platforms) == 1 {
 			img := images[0]
-			if opts.OnlyFinal {
-				getter := c.StorageManager.GetImageInfoGetter(img.Name, img.GetLastNonEmptyStage().GetStageImage().Image.GetStageDesc(), opts)
-				imagesGetters = append(imagesGetters, getter)
-			} else {
-				for _, st := range img.GetStages() {
-					stageImage := st.GetStageImage()
-					if stageImage != nil { // FIXME (khurum): kludge
-						stDesc := stageImage.Image.GetStageDesc()
-						getter := c.StorageManager.GetImageInfoGetter(img.Name, stDesc, opts)
-						imagesGetters = append(imagesGetters, getter)
-					}
-				}
-			}
+			imagesGetters = append(imagesGetters, c.getImageInfoGetter(img, opts))
 		} else { // TODO (khurum): ask about this case
 			img := c.imagesTree.GetMultiplatformImage(name)
 			stageDesc := img.GetFinalStageDesc()
@@ -469,6 +457,26 @@ func (c *Conveyor) GetImageInfoGetters(opts imagePkg.InfoGetterOptions) ([]*imag
 		}
 	}
 	return imagesGetters, nil
+}
+
+func (c *Conveyor) getImageInfoGetter(img *image.Image, opts imagePkg.InfoGetterOptions) *imagePkg.InfoGetter {
+	var imageGetters []*imagePkg.InfoGetter
+
+	if opts.OnlyFinal {
+		getter := c.StorageManager.GetImageInfoGetter(img.Name, img.GetLastNonEmptyStage().GetStageImage().Image.GetStageDesc(), opts)
+		imageGetters = append(imageGetters, getter)
+	} else {
+		for _, st := range img.GetStages() {
+			stageImage := st.GetStageImage()
+			if stageImage != nil { // FIXME (khurum): kludge
+				stDesc := stageImage.Image.GetStageDesc()
+				getter := c.StorageManager.GetImageInfoGetter(img.Name, stDesc, opts)
+				imageGetters = append(imageGetters, getter)
+			}
+		}
+	}
+
+	return imageGetters[0]
 }
 
 func (c *Conveyor) GetExportedImages() (res []*image.Image) {
