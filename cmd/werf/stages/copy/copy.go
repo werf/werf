@@ -2,6 +2,7 @@ package copy
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -24,6 +25,12 @@ import (
 var cmdData struct {
 	From string
 	To   string
+	All  bool
+}
+
+type copyOptions struct {
+	From *ref.Addr
+	To   *ref.Addr
 	All  bool
 }
 
@@ -61,21 +68,25 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
 	common.SetupConfigPath(&commonCmdData, cmd)
 
-	common.SetupGiterminismOptions(&commonCmdData, cmd)
-	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{})
-	common.SetupSynchronization(&commonCmdData, cmd)
-
 	common.SetupEnvironment(&commonCmdData, cmd)
+
+	common.SetupGiterminismConfigPath(&commonCmdData, cmd)
+	common.SetupGiterminismOptions(&commonCmdData, cmd)
+
 	common.SetupTmpDir(&commonCmdData, cmd, common.SetupTmpDirOptions{})
 	common.SetupHomeDir(&commonCmdData, cmd, common.SetupHomeDirOptions{})
-	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
+
+	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{})
+	common.SetupSecondaryStagesStorageOptions(&commonCmdData, cmd)
+	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
+	common.SetupFinalRepo(&commonCmdData, cmd)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified repos")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
-	common.SetupFinalRepo(&commonCmdData, cmd)
-	common.SetupSecondaryStagesStorageOptions(&commonCmdData, cmd)
-	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
+	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
+
+	common.SetupSynchronization(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
@@ -85,9 +96,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	commonCmdData.SetupFinalImagesOnly(cmd, false)
 	commonCmdData.SetupPlatform(cmd)
 
-	cmd.Flags().StringVarP(&cmdData.From, "from", "", "", "Source address to copy stages from. Use archive:PATH for stage archive or [docker://]REPO for container registry.")
-	cmd.Flags().StringVarP(&cmdData.To, "to", "", "", "Destination address to copy stages to. Use archive:PATH for stage archive or [docker://]REPO for container registry.")
-	cmd.Flags().BoolVarP(&cmdData.All, "all", "", true, "Copy all project stages (default: true). If false, copy only stages for current build.")
+	setupCopyOptions(cmd)
 
 	return cmd
 }
@@ -109,37 +118,17 @@ func runCopy(ctx context.Context) error {
 		return fmt.Errorf("component init error: %w", err)
 	}
 
-	if cmdData.From == "" {
-		return fmt.Errorf("--from=ADDRESS param required")
-	}
-
-	if cmdData.To == "" {
-		return fmt.Errorf("--to=ADDRESS param required")
-	}
-
-	if cmdData.From == cmdData.To {
-		return fmt.Errorf("--from=ADDRESS and --to=ADDRESS must be different")
-	}
-
-	fromAddrRaw := cmdData.From
-	toAddrRaw := cmdData.To
-
-	fromAddr, err := ref.ParseAddr(fromAddrRaw)
+	opts, err := getCopyOptions()
 	if err != nil {
-		return fmt.Errorf("invalid from add %q: %w", fromAddrRaw, err)
+		return err
 	}
 
-	toAddr, err := ref.ParseAddr(toAddrRaw)
-	if err != nil {
-		return fmt.Errorf("invalid to addr %q: %w", toAddrRaw, err)
-	}
-
-	if fromAddr.RegistryAddress != nil {
-		commonCmdData.Repo.Address = &fromAddr.RegistryAddress.Repo // FIXME выдумать что-нить симпатичнее
-	} else if toAddr.RegistryAddress != nil {
-		commonCmdData.Repo.Address = &toAddr.RegistryAddress.Repo
+	if opts.From.RegistryAddress != nil {
+		commonCmdData.Repo.Address = &opts.From.RegistryAddress.Repo // FIXME выдумать что-нить симпатичнее
+	} else if opts.To.RegistryAddress != nil {
+		commonCmdData.Repo.Address = &opts.To.RegistryAddress.Repo
 	} else {
-		return fmt.Errorf("--from or --to addresses must be container registry addresses")
+		return fmt.Errorf("--from or --to address must be container registry address")
 	}
 
 	giterminismManager, err := common.GetGiterminismManager(ctx, &commonCmdData)
@@ -187,18 +176,24 @@ func runCopy(ctx context.Context) error {
 	}
 
 	return logboek.Context(ctx).LogProcess("Copy stages").DoError(func() error {
-		logboek.Context(ctx).LogFDetails("From: %s\n", fromAddr.String())
-		logboek.Context(ctx).LogFDetails("To: %s\n", toAddr.String())
+		logboek.Context(ctx).LogFDetails("From: %s\n", opts.From.String())
+		logboek.Context(ctx).LogFDetails("To: %s\n", opts.To.String())
 
-		return stages.Copy(ctx, fromAddr, toAddr, stages.CopyOptions{
+		return stages.Copy(ctx, opts.From, opts.To, stages.CopyOptions{
+			All:               cmdData.All,
+			ProjectName:       werfConfig.Meta.Project,
 			RegistryClient:    dockerRegistry,
 			StorageManager:    storageManager,
 			ConveyorWithRetry: conveyorWithRetryWrapper,
-			All:               cmdData.All,
-			ProjectName:       werfConfig.Meta.Project,
 			BuildOptions:      buildOptions,
 		})
 	})
+}
+
+func setupCopyOptions(cmd *cobra.Command) {
+	cmd.Flags().StringVarP(&cmdData.From, "from", "", "", "Source address to copy stages from. Use archive:PATH for stage archive or [docker://]REPO for container registry.")
+	cmd.Flags().StringVarP(&cmdData.To, "to", "", "", "Destination address to copy stages to. Use archive:PATH for stage archive or [docker://]REPO for container registry.")
+	cmd.Flags().BoolVarP(&cmdData.All, "all", "", true, "Copy all project stages (default: true). If false, copy only stages for current build.")
 }
 
 func initCommonCopyComponents(ctx context.Context, managerConfig *common.NewStorageManagerConfig) (*manager.StorageManager, docker_registry.Interface, error) {
@@ -234,4 +229,44 @@ func initConveyorComponents(ctx context.Context, werfConfig *config.WerfConfig, 
 	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, giterminismManager.ProjectDir(), projectTmpDir, containerBackend, storageManager, storageManager.StorageLockManager, conveyorOptions)
 
 	return conveyorWithRetry, buildOptions, nil
+}
+
+func getCopyOptions() (copyOptions, error) {
+	if err := validateRawCopyOptions(); err != nil {
+		return copyOptions{}, err
+	}
+
+	getAddr, err := ref.ParseAddr(cmdData.From)
+	if err != nil {
+		return copyOptions{}, fmt.Errorf("invalid from addr %q: %w", cmdData.From, err)
+	}
+
+	toAddr, err := ref.ParseAddr(cmdData.To)
+	if err != nil {
+		return copyOptions{}, fmt.Errorf("invalid to addr %q: %w", cmdData.To, err)
+	}
+
+	opts := copyOptions{
+		From: getAddr,
+		To:   toAddr,
+		All:  cmdData.All,
+	}
+
+	return opts, nil
+}
+
+func validateRawCopyOptions() error {
+	if cmdData.From == "" {
+		return errors.New("--from=ADDRESS param required")
+	}
+
+	if cmdData.To == "" {
+		return errors.New("--to=ADDRESS param required")
+	}
+
+	if cmdData.From == cmdData.To {
+		return errors.New("--from=ADDRESS and --to=ADDRESS must be different")
+	}
+
+	return nil
 }
