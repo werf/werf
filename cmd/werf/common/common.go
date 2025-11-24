@@ -683,6 +683,17 @@ func SetupRequireBuiltImages(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(cmdData.RequireBuiltImages, "require-built-images", "Z", util.GetBoolEnvironmentDefaultFalse("WERF_REQUIRE_BUILT_IMAGES"), "Requires all used images to be previously built and exist in repo. Exits with error if needed images are not cached and so require to run build instructions (default $WERF_REQUIRE_BUILT_IMAGES)")
 }
 
+func SetupCheckBuiltImages(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.CheckBuiltImages = new(bool)
+	cmd.Flags().BoolVarP(cmdData.CheckBuiltImages, "check-built-images", "", util.GetBoolEnvironmentDefaultFalse("WERF_CHECK_BUILT_IMAGES"), "Check that all used images are previously built and exist in repo. Exits with error if needed images are not cached and so require to run build instructions (default $WERF_CHECK_BUILT_IMAGES)")
+
+	cmdData.LegacyCheckBuiltImages = new(bool)
+	cmd.Flags().BoolVarP(cmdData.LegacyCheckBuiltImages, "require-built-images", "Z", false, "Check that all used images are previously built and exist in repo. Exits with error if needed images are not cached and so require to run build instructions")
+	if err := cmd.Flags().MarkHidden("require-built-images"); err != nil {
+		panic(err)
+	}
+}
+
 func SetupStubTags(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.StubTags = new(bool)
 	cmd.Flags().BoolVarP(cmdData.StubTags, "stub-tags", "", util.GetBoolEnvironmentDefaultFalse("WERF_STUB_TAGS"), "Use stubs instead of real tags (default $WERF_STUB_TAGS)")
