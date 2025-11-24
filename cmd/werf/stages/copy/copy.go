@@ -193,7 +193,7 @@ func runCopy(ctx context.Context) error {
 func setupCopyOptions(cmd *cobra.Command) {
 	cmd.Flags().StringVarP(&cmdData.From, "from", "", "", "Source address to copy stages from. Use archive:PATH for stage archive or [docker://]REPO for container registry.")
 	cmd.Flags().StringVarP(&cmdData.To, "to", "", "", "Destination address to copy stages to. Use archive:PATH for stage archive or [docker://]REPO for container registry.")
-	cmd.Flags().BoolVarP(&cmdData.All, "all", "", true, "Copy all project stages (default: true). If false, copy only stages for current build.")
+	cmd.Flags().BoolVarP(&cmdData.All, "all", "", true, `Copy all project stages (default: true). Use --all=false to copy stages for current build only. Note: this flag is ignored when copying from archive to container registry.`)
 }
 
 func initCommonCopyComponents(ctx context.Context, managerConfig *common.NewStorageManagerConfig) (*manager.StorageManager, docker_registry.Interface, error) {
