@@ -36,7 +36,7 @@ var itBody = func(ctx SpecContext, e entry) {
 		"stage", "image",
 	)
 
-	inspect := utilsDocker.ImageInspect(strings.TrimSpace(resultImageName))
+	inspect := utilsDocker.ImageInspect(ctx, strings.TrimSpace(resultImageName))
 
 	e.inspectCheck(inspect)
 }

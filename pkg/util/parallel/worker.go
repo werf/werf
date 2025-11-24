@@ -1,32 +1,101 @@
 package parallel
 
 import (
-	"github.com/werf/common-go/pkg/util"
+	"fmt"
+	"os"
+	"sync/atomic"
+
+	"github.com/werf/werf/v2/pkg/tmp_manager"
 )
 
-type bufferedWorker struct {
-	ID  int
-	buf *util.GoroutineSafeBuffer
+// Worker
+// This is a worker for concurrent writing and reading logs.
+// It uses *os.File under the hood.
+//
+// To be concurrently safe, writer and reader rely on the same file object:
+// - the writer appends data only;
+// - the reader reads already appended data (or nothing).
+// Because of that, no race condition happens while accessing file data.
+type Worker struct {
+	readOffset  atomic.Int64
+	writeOffset atomic.Int64
 
-	doneCh chan struct{}
+	halfClosed atomic.Bool
+
+	file *os.File
+
+	ID int
 }
 
-func (w *bufferedWorker) MarkDone() {
-	w.doneCh <- struct{}{}
-}
-
-func (w *bufferedWorker) Buffer() *util.GoroutineSafeBuffer {
-	return w.buf
-}
-
-func (w *bufferedWorker) IsDone() bool {
-	return len(w.doneCh) > 0
-}
-
-func newBufferedWorker(id int) *bufferedWorker {
-	return &bufferedWorker{
-		ID:     id,
-		buf:    util.NewGoroutineSafeBuffer(),
-		doneCh: make(chan struct{}, 1),
+// Write implements io.Writer.
+// It appends to file and accumulates total write offset.
+func (w *Worker) Write(p []byte) (int, error) {
+	if w.halfClosed.Load() {
+		return 0, fmt.Errorf("worker is half closed but tries to write: %s", p)
 	}
+
+	offset, err := w.file.Write(p)
+	w.writeOffset.Add(int64(offset))
+	return offset, err
+}
+
+// Read implements io.Reader.
+// It reads a file and accumulates total read offset.
+// It resumes reading from "total read offset" and reads until EOF, where EOF is handled with os.File.
+func (w *Worker) Read(p []byte) (int, error) {
+	offset, err := w.file.ReadAt(p, w.readOffset.Load())
+	w.readOffset.Add(int64(offset))
+	return offset, err
+}
+
+// HalfClose closes writing or returns error if already half-closed
+func (w *Worker) HalfClose() error {
+	if w.halfClosed.Load() {
+		return fmt.Errorf("worker %d is already half closed", w.ID)
+	}
+	w.halfClosed.Store(true)
+	return nil
+}
+
+// Readable returns true if worker is readable
+func (w *Worker) Readable() bool {
+	if !w.halfClosed.Load() {
+		return true
+	}
+	return w.readOffset.Load() < w.writeOffset.Load()
+}
+
+// Close implements io.Closer closing tmp file.
+// It ensures that worker is half closed
+func (w *Worker) Close() error {
+	w.halfClosed.Store(true)
+
+	if err := w.file.Close(); err != nil {
+		return fmt.Errorf("failed to close tmp file for worker %d: %w", w.ID, err)
+	}
+	return nil
+}
+
+// Cleanup removes tmp file
+func (w *Worker) Cleanup() error {
+	if !w.halfClosed.Load() {
+		return fmt.Errorf("worker %d is not half closed yet", w.ID)
+	}
+
+	if err := os.Remove(w.file.Name()); err != nil {
+		return fmt.Errorf("failed to remove tmp file for worker %d: %w", w.ID, err)
+	}
+	return nil
+}
+
+func NewWorker(id int) (*Worker, error) {
+	file, err := tmp_manager.TempFile(fmt.Sprintf("parallel-worker-%d-%d-*.log", os.Getpid(), id))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create temp file for worker %d: %w", id, err)
+	}
+
+	return &Worker{
+		ID:   id,
+		file: file,
+	}, nil
 }

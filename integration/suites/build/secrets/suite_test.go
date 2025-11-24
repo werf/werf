@@ -1,6 +1,7 @@
 package common_test
 
 import (
+	"context"
 	"strings"
 	"testing"
 
@@ -25,7 +26,7 @@ var (
 	_ = SuiteData.SetupProjectName(suite_init.NewProjectNameData(SuiteData.StubsData))
 	_ = SuiteData.SetupTmp(suite_init.NewTmpDirData())
 
-	_ = SuiteData.AppendSynchronizedBeforeSuiteAllNodesFunc(func(_ []byte) {
+	_ = SuiteData.AppendSynchronizedBeforeSuiteAllNodesFunc(func(_ context.Context, _ []byte) {
 		_ = utils.CreateTmpFileInHome("secret_file_in_home", "secret")
 	})
 

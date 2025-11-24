@@ -13,10 +13,6 @@ import (
 	"github.com/werf/logboek"
 )
 
-const (
-	minFileAge = 2 * time.Hour
-)
-
 var (
 	ErrPathRemoval = errors.New("path removal")
 
@@ -59,22 +55,23 @@ func runGCForPaths(ctx context.Context, dryRun bool, paths []string) error {
 }
 
 func collectPaths() ([]string, []string, error) {
-	pathsToList := []string{
-		filepath.Join(GetReleasedTmpDirs(), projectsServiceDir),
-		filepath.Join(GetCreatedTmpDirs(), projectsServiceDir),
-		filepath.Join(GetCreatedTmpDirs(), dockerConfigsServiceDir),
-		filepath.Join(GetCreatedTmpDirs(), kubeConfigsServiceDir),
-		filepath.Join(GetCreatedTmpDirs(), werfConfigRendersServiceDir),
-		GetContextTmpDir(),
+	gcPathList := []gcPath{
+		newGCPath(filepath.Join(getReleasedTmpDirs(), projectsServiceDir), 0),
+		newGCPath(filepath.Join(getCreatedTmpDirs(), projectsServiceDir), 0),
+		newGCPath(filepath.Join(getCreatedTmpDirs(), dockerConfigsServiceDir), time.Hour*6),
+		newGCPath(filepath.Join(getCreatedTmpDirs(), kubeConfigsServiceDir), 0),
+		newGCPath(filepath.Join(getCreatedTmpDirs(), werfConfigRendersServiceDir), 0),
+		newGCPath(filepath.Join(getCreatedTmpDirs(), contextArchivesDir), 0),
+		newGCPath(getContextTmpDir(), 0), // TODO: backward compatible cleaning (will be dropped in v3)
 	}
 
-	dirSlices := make([][]string, 0, len(pathsToList))
-	symlinkSlices := make([][]string, 0, len(pathsToList))
+	dirSlices := make([][]string, 0, len(gcPathList))
+	symlinkSlices := make([][]string, 0, len(gcPathList))
 
-	for _, path := range pathsToList {
-		dirs, symlinks, err := listDirAndFollowSymlinks(path)
+	for _, gcPathItem := range gcPathList {
+		dirs, symlinks, err := listDirAndFollowSymlinks(gcPathItem.path, gcPathItem.keepingTime)
 		if err != nil {
-			return nil, nil, fmt.Errorf("list and filter path %v: %w", path, err)
+			return nil, nil, fmt.Errorf("list and filter path %v: %w", gcPathItem.path, err)
 		}
 		dirSlices = append(dirSlices, dirs)
 		symlinkSlices = append(symlinkSlices, symlinks)
@@ -84,7 +81,7 @@ func collectPaths() ([]string, []string, error) {
 }
 
 // listDirAndFollowSymlinks returns list of dirs and symlinks
-func listDirAndFollowSymlinks(dir string) ([]string, []string, error) {
+func listDirAndFollowSymlinks(dir string, minFileAge time.Duration) ([]string, []string, error) {
 	if _, err := os.Stat(dir); errors.Is(err, fs.ErrNotExist) {
 		return nil, nil, nil
 	} else if err != nil {
@@ -135,4 +132,16 @@ func listDirAndFollowSymlinks(dir string) ([]string, []string, error) {
 	}
 
 	return slices.Clip(listOfDirs), slices.Clip(listOfSymlinks), nil
+}
+
+type gcPath struct {
+	path        string
+	keepingTime time.Duration
+}
+
+func newGCPath(path string, keepingTime time.Duration) gcPath {
+	return gcPath{
+		path:        path,
+		keepingTime: keepingTime,
+	}
 }

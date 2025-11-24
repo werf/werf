@@ -1,5 +1,59 @@
 # Changelog
 
+## [2.54.1](https://github.com/werf/werf/compare/v2.54.0...v2.54.1) (2025-11-21)
+
+
+### Bug Fixes
+
+* **build, stapel, import:** preserve security capabilities during file import ([#7237](https://github.com/werf/werf/issues/7237)) ([522ebf7](https://github.com/werf/werf/commit/522ebf70b5f5759a50c7bcbda20d5d3a206ef5d9))
+* **deploy:** `plan` shows nothing if only tracking ops in plan ([d982297](https://github.com/werf/werf/commit/d9822970b4387a0998250ad7809313a17fd200e6))
+
+## [2.54.0](https://github.com/werf/werf/compare/v2.53.5...v2.54.0) (2025-11-20)
+
+
+### Features
+
+* **config:** ability to save the render along a custom path ([#7176](https://github.com/werf/werf/issues/7176)) ([7c624ec](https://github.com/werf/werf/commit/7c624ece673dc0a88ff8282ce191aea8cc6921ea))
+* **config:** add toYaml func to config parser ([1ae722e](https://github.com/werf/werf/commit/1ae722efff97139c1d3c8cd98e91ca52a5d6ca26))
+
+### Bug Fixes
+
+* **build, docker:** fix docker commands do not stop on context cancellation ([#7232](https://github.com/werf/werf/issues/7232)) ([3737404](https://github.com/werf/werf/commit/3737404162c73b4ea76eda29b7fccf4a1630ff40))
+* **build, stapel, import:** correct rsync glob handling for imports and checksums ([6007704](https://github.com/werf/werf/commit/60077042b38e6ffbe8b0e97620fef6c9b3fce8e0))
+* **build, stapel, import:** warn if import config does nothing ([#7225](https://github.com/werf/werf/issues/7225)) ([2756b18](https://github.com/werf/werf/commit/2756b181b3810feb1f8ccb05e8fcee68056c621f))
+* **build:** use blocking execution for parallel ([#7231](https://github.com/werf/werf/issues/7231)) ([42def11](https://github.com/werf/werf/commit/42def110ebf8ba563ee4046aff079a6ebffef554))
+* **cleanup:** warn when cleanup metadata push hits immutable repo ([87c2705](https://github.com/werf/werf/commit/87c2705dfc999cf7cc664501a4591e17fb8587e7))
+* **host-cleanup:** use different keeping strategies for different kind of tmp data ([#7219](https://github.com/werf/werf/issues/7219)) ([4ca0b9e](https://github.com/werf/werf/commit/4ca0b9e24c079cccd32347608b8ab533de8f8676))
+* **includes:** clarify usage of relative and absolute includesLockPath ([8535d8e](https://github.com/werf/werf/commit/8535d8e71dd7abc9fa2225784b3eebb544c0be86))
+* **includes:** prevent double projectDir in includes path resolution ([af64a6d](https://github.com/werf/werf/commit/af64a6d411d8bb0d0e5569879b83f748fee13560))
+* **includes:** respect projectDir in lock file creation ([61ae7e7](https://github.com/werf/werf/commit/61ae7e74d290cb17e22faae0662b7dd3efdc822e))
+
+## [2.53.5](https://github.com/werf/werf/compare/v2.53.4...v2.53.5) (2025-11-17)
+
+
+### Bug Fixes
+
+* **deploy:** show verbose diffs by default like before ([97d8c28](https://github.com/werf/werf/commit/97d8c28ded9a5926eabc9bf25ed5ce9bd71da412))
+* **deploy:** show verbose diffs by default like before /2 ([29fd2b0](https://github.com/werf/werf/commit/29fd2b0c220d33027c38ed71af71c7b5a3d23cb3))
+
+## [2.53.4](https://github.com/werf/werf/compare/v2.53.3...v2.53.4) (2025-11-14)
+
+
+### Miscellaneous Chores
+
+* **release:** force v2.53.4 ([1f114ec](https://github.com/werf/werf/commit/1f114ec030cd84810048600c5a7d6b245ac14364))
+
+## [2.53.3](https://github.com/werf/werf/compare/v2.53.2...v2.53.3) (2025-11-13)
+
+
+### Bug Fixes
+
+* **build, stapel:** exit with error when import nothing ([#7166](https://github.com/werf/werf/issues/7166)) ([6e6f6b4](https://github.com/werf/werf/commit/6e6f6b4ce77783a34a1ea03f39a9afd68973d797))
+* **build, stapel:** throw error if two import configurations contain everything and glob everything ([#7171](https://github.com/werf/werf/issues/7171)) ([c6ba868](https://github.com/werf/werf/commit/c6ba868c7c3082e8d932e4eaaa7ac280fb2c925a))
+* **deploy:** `panic: interface conversion: plan.OperationConfig` ([c7ee56b](https://github.com/werf/werf/commit/c7ee56b6936ad971799f6a5caa2ff8af8333117d))
+* **deploy:** new release created even if no changes ([bdfd07d](https://github.com/werf/werf/commit/bdfd07d1e2f3bdf3b10ebcf1e5ba8c318cfc0d3b))
+* **deploy:** null or empty fields might fail resource deploys ([e213f40](https://github.com/werf/werf/commit/e213f40e2cdf44075ef6912713696cbfa333796c))
+
 ## [2.53.2](https://github.com/werf/werf/compare/v2.53.1...v2.53.2) (2025-11-11)
 
 

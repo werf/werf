@@ -92,13 +92,10 @@ func (c *ExportBase) GetIncludePathsForAutoExclude() []string {
 		validateIncludePaths := make([]string, 0, len(c.IncludePaths))
 
 		for _, p := range c.IncludePaths {
-			if isEverythingGlob(p) {
-				continue
-			}
 			validateIncludePaths = append(validateIncludePaths, path.Join(pathPrefix, p))
 		}
 
-		return slices.Clip(validateIncludePaths)
+		return validateIncludePaths
 	}
 }
 
@@ -111,13 +108,10 @@ func (c *ExportBase) GetExcludePathsForAutoExclude() []string {
 	validateExcludePaths := make([]string, 0, len(c.ExcludePaths))
 
 	for _, p := range c.ExcludePaths {
-		if isEverythingGlob(p) {
-			continue
-		}
 		validateExcludePaths = append(validateExcludePaths, path.Join(pathPrefix, p))
 	}
 
-	return slices.Clip(validateExcludePaths)
+	return validateExcludePaths
 }
 
 func (c *ExportBase) GetTo() string {
@@ -145,8 +139,4 @@ func (c *ExportBase) validate() error {
 	default:
 		return nil
 	}
-}
-
-func isEverythingGlob(path string) bool {
-	return strings.HasSuffix(path, "**/*") || strings.HasSuffix(path, "*")
 }

@@ -13,7 +13,7 @@ import (
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/deploy/bundles"
 	"github.com/werf/werf/v2/pkg/docker_registry"
-	"github.com/werf/werf/v2/pkg/ref"
+	"github.com/werf/werf/v2/pkg/tmp_manager"
 	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
 
@@ -83,6 +83,12 @@ func runCopy(ctx context.Context) error {
 		return fmt.Errorf("component init error: %w", err)
 	}
 
+	defer func() {
+		if err := tmp_manager.DelegateCleanup(ctx); err != nil {
+			logboek.Context(ctx).Warn().LogF("Temporary files cleanup preparation failed: %s\n", err)
+		}
+	}()
+
 	helm_v3.Settings.Debug = *commonCmdData.LogDebug
 
 	bundlesRegistryClient, err := common.NewBundlesRegistryClient(ctx, &commonCmdData)
@@ -101,12 +107,12 @@ func runCopy(ctx context.Context) error {
 		return fmt.Errorf("--to=ADDRESS param required")
 	}
 
-	fromAddr, err := ref.ParseAddr(fromAddrRaw)
+	fromAddr, err := bundles.ParseAddr(fromAddrRaw)
 	if err != nil {
 		return fmt.Errorf("invalid from addr %q: %w", fromAddrRaw, err)
 	}
 
-	toAddr, err := ref.ParseAddr(toAddrRaw)
+	toAddr, err := bundles.ParseAddr(toAddrRaw)
 	if err != nil {
 		return fmt.Errorf("invalid to addr %q: %w", toAddrRaw, err)
 	}

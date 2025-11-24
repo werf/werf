@@ -100,6 +100,11 @@ func SetupConfigTemplatesDir(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringVarP(cmdData.ConfigTemplatesDir, "config-templates-dir", "", os.Getenv("WERF_CONFIG_TEMPLATES_DIR"), `Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf in working directory)`)
 }
 
+func SetupConfigRenderPath(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.ConfigRenderPath = new(string)
+	cmd.Flags().StringVarP(cmdData.ConfigRenderPath, "config-render-path", "", "", `Custom path for storing rendered configuration file`)
+}
+
 type SetupTmpDirOptions struct {
 	Persistent bool
 }
@@ -858,7 +863,12 @@ func GetOptionalWerfConfig(ctx context.Context, cmdData *CmdData, giterminismMan
 			return "", nil, err
 		}
 
-		configPath, c, err := config.GetWerfConfig(ctx, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, giterminismManager, opts)
+		customWerfConfigRenderPath, err := GetCustomWerfConfigRenderPath(cmdData)
+		if err != nil {
+			return "", nil, err
+		}
+
+		configPath, c, err := config.GetWerfConfig(ctx, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, customWerfConfigRenderPath, giterminismManager, opts)
 		if err != nil {
 			return "", nil, err
 		}
@@ -880,7 +890,12 @@ func GetRequiredWerfConfig(ctx context.Context, cmdData *CmdData, giterminismMan
 		return "", nil, err
 	}
 
-	configPath, c, err := config.GetWerfConfig(ctx, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, giterminismManager, opts)
+	customWerfConfigRenderPath, err := GetCustomWerfConfigRenderPath(cmdData)
+	if err != nil {
+		return "", nil, err
+	}
+
+	configPath, c, err := config.GetWerfConfig(ctx, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, customWerfConfigRenderPath, giterminismManager, opts)
 	if err != nil {
 		return "", nil, err
 	}
@@ -923,6 +938,17 @@ func GetCustomWerfConfigTemplatesDirRelPath(giterminismManager giterminism_manag
 	}
 
 	return util.GetRelativeToBaseFilepath(giterminismManager.ProjectDir(), customConfigTemplatesDirPath), nil
+}
+
+func GetCustomWerfConfigRenderPath(cmdData *CmdData) (string, error) {
+	if cmdData.ConfigRenderPath == nil || *cmdData.ConfigRenderPath == "" {
+		return "", nil
+	}
+
+	customConfigRenderPath := *cmdData.ConfigRenderPath
+	customConfigRenderPath = util.GetAbsoluteFilepath(customConfigRenderPath)
+
+	return customConfigRenderPath, nil
 }
 
 func GetWerfConfigOptions(cmdData *CmdData, logRenderedFilePath bool) config.WerfConfigOptions {

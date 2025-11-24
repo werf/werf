@@ -55,6 +55,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupDir(&commonCmdData, cmd)
 	common.SetupGitWorkTree(&commonCmdData, cmd)
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
+	common.SetupConfigRenderPath(&commonCmdData, cmd)
 	common.SetupConfigPath(&commonCmdData, cmd)
 	common.SetupGiterminismConfigPath(&commonCmdData, cmd)
 	common.SetupEnvironment(&commonCmdData, cmd)
@@ -113,6 +114,12 @@ func run(ctx context.Context, imageName string) error {
 		return fmt.Errorf("component init error: %w", err)
 	}
 
+	defer func() {
+		if err := tmp_manager.DelegateCleanup(ctx); err != nil {
+			logboek.Context(ctx).Warn().LogF("Temporary files cleanup preparation failed: %s\n", err)
+		}
+	}()
+
 	containerBackend := commonManager.ContainerBackend()
 
 	defer func() {
@@ -137,7 +144,6 @@ func run(ctx context.Context, imageName string) error {
 	if err != nil {
 		return fmt.Errorf("getting project tmp dir failed: %w", err)
 	}
-	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
 	if imageName == "" && len(werfConfig.Images(true)) == 1 {
 		imageName = werfConfig.Images(true)[0].GetName()

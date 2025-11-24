@@ -95,6 +95,8 @@ werf plan --repo registry.mydomain.com/web --env production
       --config=""
             Use custom configuration file (default $WERF_CONFIG or werf.yaml in the project         
             directory)
+      --config-render-path=""
+            Custom path for storing rendered configuration file
       --config-templates-dir=""
             Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf   
             in working directory)
@@ -439,7 +441,7 @@ werf plan --repo registry.mydomain.com/web --env production
             Show sensitive diff lines ($WERF_SHOW_SENSITIVE_DIFFS by default)
       --show-verbose-crd-diffs=false
             Show verbose CRD diff lines ($WERF_SHOW_VERBOSE_CRD_DIFFS by default)
-      --show-verbose-diffs=false
+      --show-verbose-diffs=true
             Show verbose diff lines ($WERF_SHOW_VERBOSE_DIFFS by default)
   -L, --skip-dependencies-repo-refresh=false
             Do not refresh helm chart repositories locally cached index

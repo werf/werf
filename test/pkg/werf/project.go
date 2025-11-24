@@ -78,6 +78,14 @@ type ExportOptions struct {
 	CommonOptions
 }
 
+type CiEnvOptions struct {
+	CommonOptions
+}
+
+type HostCleanupOptions struct {
+	CommonOptions
+}
+
 type KubeRunOptions struct {
 	CommonOptions
 	Command []string
@@ -85,10 +93,6 @@ type KubeRunOptions struct {
 }
 
 type KubeCtlOptions struct {
-	CommonOptions
-}
-
-type StagesCopyOptions struct {
 	CommonOptions
 }
 
@@ -332,12 +336,21 @@ func (p *Project) Export(ctx context.Context, opts *ExportOptions) (combinedOut 
 	return string(outb)
 }
 
-func (p *Project) StagesCopy(ctx context.Context, opts *StagesCopyOptions) (combinedOut string) {
+func (p *Project) CiEnv(ctx context.Context, opts *CiEnvOptions) (combinedOut string) {
 	if opts == nil {
-		opts = &StagesCopyOptions{}
+		opts = &CiEnvOptions{}
 	}
+	args := append([]string{"ci-env"}, opts.ExtraArgs...)
+	outb := p.runCommand(ctx, runCommandOptions{Args: args, ShouldFail: opts.ShouldFail})
 
-	args := append([]string{"stages", "copy"}, opts.ExtraArgs...)
+	return string(outb)
+}
+
+func (p *Project) HostCleanup(ctx context.Context, opts *HostCleanupOptions) (combinedOut string) {
+	if opts == nil {
+		opts = &HostCleanupOptions{}
+	}
+	args := append([]string{"host", "cleanup"}, opts.ExtraArgs...)
 	outb := p.runCommand(ctx, runCommandOptions{Args: args, ShouldFail: opts.ShouldFail})
 
 	return string(outb)

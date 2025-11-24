@@ -1,6 +1,7 @@
 package docker
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"strings"
@@ -10,7 +11,7 @@ import (
 	"github.com/werf/werf/v2/test/pkg/utils"
 )
 
-func LocalDockerRegistryRun() (string, string, string) {
+func LocalDockerRegistryRun(ctx context.Context) (string, string, string) {
 	containerName := fmt.Sprintf("werf_test_docker_registry-%s", utils.GetRandomString(10))
 	imageName := "registry:2"
 
@@ -24,10 +25,10 @@ func LocalDockerRegistryRun() (string, string, string) {
 		"--name", containerName,
 		imageName,
 	}
-	err = CliRun(dockerCliRunArgs...)
+	err = CliRun(ctx, dockerCliRunArgs...)
 	Expect(err).ShouldNot(HaveOccurred(), "docker run "+strings.Join(dockerCliRunArgs, " "))
 
-	inspect := ContainerInspect(containerName)
+	inspect := ContainerInspect(ctx, containerName)
 	Expect(inspect.NetworkSettings).ShouldNot(BeNil())
 	Expect(inspect.NetworkSettings.Networks["bridge"].IPAddress).ShouldNot(BeEmpty())
 	registryInternalAddress := fmt.Sprintf("%s:%d", inspect.NetworkSettings.Networks["bridge"].IPAddress, 5000)

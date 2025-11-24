@@ -80,7 +80,8 @@ var _ = Describe("ExportBase", func() {
 			},
 			BeFalse(),
 		),
-		Entry(
+		// TODO: v3 should use this logic
+		XEntry(
 			"should return false and don't auto exclude if include paths contains **/*",
 			&config.ExportBase{
 				Add: "/a",
@@ -95,7 +96,8 @@ var _ = Describe("ExportBase", func() {
 			},
 			BeFalse(),
 		),
-		Entry(
+		// TODO: v3 should use this logic
+		XEntry(
 			"should return false and don't auto exclude if include paths contains **/* (the same as above, symmetric)",
 			&config.ExportBase{
 				Add: "/a",

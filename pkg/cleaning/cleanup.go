@@ -228,7 +228,7 @@ func (m *cleanupManager) run(ctx context.Context) error {
 	if err := logboek.Context(ctx).LogProcess("Push last cleanup info to meta image").DoError(func() error {
 		err := m.StorageManager.GetStagesStorage().PostLastCleanupRecord(ctx, m.ProjectName)
 		if err != nil {
-			return fmt.Errorf("unable to post last cleanup record: %w", err)
+			logboek.Context(ctx).Warn().LogF("WARNING: cleanup metadata update failed: %s\n", err)
 		}
 		return nil
 	}); err != nil {
