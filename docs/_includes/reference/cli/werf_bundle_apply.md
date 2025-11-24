@@ -36,6 +36,9 @@ werf bundle apply [options]
             (Buildah-only) Use specified mirrors for docker.io
       --debug-templates=false
             Enable debug mode for Go templates (default $WERF_DEBUG_TEMPLATES or false)
+      --delete-propagation=""
+            Set default delete propagation strategy (default $WERF_DELETE_PROPAGATION or            
+            Foreground).
       --deploy-graph-path=""
             Save deploy graph path to the specified file (by default $WERF_DEPLOY_GRAPH_PATH).      
             Extension must be .dot or not specified. If extension not specified, then .dot is used
