@@ -51,7 +51,7 @@ func (s *ArchiveStorage) GetStageArchiveOpener(stageTag string) *StageArchiveOpe
 	return NewStageArchiveOpener(s, stageTag)
 }
 
-func (s *ArchiveStorage) copyAllFromRemote(ctx context.Context, fromRemote *RemoteStorage, opts copyToOptions) error {
+func (s *ArchiveStorage) copyAllFromRemoteDeprecated(ctx context.Context, fromRemote *RemoteStorage, opts copyToOptions) error {
 	stageIds, err := fromRemote.StorageManager.StagesStorage.GetStagesIDs(ctx, opts.ProjectName)
 	if err != nil {
 		return fmt.Errorf("unable to get stages: %w", err)
@@ -88,6 +88,38 @@ func (s *ArchiveStorage) copyAllFromRemote(ctx context.Context, fromRemote *Remo
 	}
 
 	return nil
+}
+
+func (s *ArchiveStorage) copyAllFromRemote(ctx context.Context, fromRemote *RemoteStorage, opts copyToOptions) error {
+	stageIds, err := fromRemote.StorageManager.StagesStorage.GetStagesIDs(ctx, opts.ProjectName)
+	if err != nil {
+		return fmt.Errorf("unable to get stages: %w", err)
+	}
+
+	return s.Writer.WithTask(func(writer ArchiveStorageWriter) error {
+		for _, stageId := range stageIds {
+			logboek.Context(ctx).Default().LogFDetails("Copying stage: %s\n", stageId)
+
+			stageDesc, err := fromRemote.StorageManager.StagesStorage.GetStageDesc(ctx, opts.ProjectName, stageId)
+			if err != nil {
+				return err
+			}
+
+			stageRef := stageDesc.Info.Name
+			tag := stageDesc.Info.Tag
+
+			stageBytes := bytes.NewBuffer(nil)
+
+			if err := fromRemote.RegistryClient.PullImageArchive(ctx, stageBytes, stageRef); err != nil {
+				return fmt.Errorf("error pulling stage %q archive: %w", stageRef, err)
+			}
+
+			if err := writer.WriteStageArchive(tag, stageBytes.Bytes()); err != nil {
+				return fmt.Errorf("error writing image %q into bundle archive: %w", stageRef, err)
+			}
+		}
+		return nil
+	})
 }
 
 func (s *ArchiveStorage) copyCurrentBuildFromRemote(ctx context.Context, fromRemote *RemoteStorage, opts copyToOptions) error {

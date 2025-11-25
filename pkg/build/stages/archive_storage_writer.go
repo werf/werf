@@ -16,6 +16,8 @@ type ArchiveStorageWriter interface {
 	Open() error
 	Save() error
 	WriteStageArchive(stageTag string, data []byte) error
+
+	WithTask(task func(ArchiveStorageWriter) error) error
 }
 
 type ArchiveStorageFileWriteCloser struct {
@@ -127,6 +129,42 @@ func (writer *ArchiveStorageFileWriteCloser) WriteStageArchive(tag string, data 
 
 	if _, err := writer.tmpArchiveWriter.Write(compressedData); err != nil {
 		return fmt.Errorf("unable to write stage.tar.gz data: %w", err)
+	}
+
+	return nil
+}
+
+func (writer *ArchiveStorageFileWriteCloser) Close() error {
+	if writer.tmpArchiveCloser != nil {
+		return writer.tmpArchiveCloser()
+	}
+	return nil
+}
+
+func (writer *ArchiveStorageFileWriteCloser) WithTask(task func(ArchiveStorageWriter) error) error {
+	if err := writer.Open(); err != nil {
+		return fmt.Errorf("unable to open target stages archive: %w", err)
+	}
+
+	var err error
+	defer func() {
+		if err != nil {
+			if closeErr := writer.Close(); closeErr != nil {
+				fmt.Printf("Warning: error closing archive after task failure: %v\n", closeErr)
+			}
+			if writer.tmpArchivePath != "" {
+				os.Remove(writer.tmpArchivePath)
+			}
+		}
+	}()
+
+	err = task(writer)
+	if err != nil {
+		return err
+	}
+
+	if err := writer.Save(); err != nil {
+		return fmt.Errorf("error saving destination bundle archive: %w", err)
 	}
 
 	return nil
