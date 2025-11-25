@@ -8,10 +8,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-)
 
-const (
-	tarGzExtension = ".tar.gz"
+	"github.com/werf/logboek"
 )
 
 type ArchiveStorageReader interface {
@@ -84,7 +82,7 @@ func (reader *ArchiveStorageFileReader) ReadArchiveStage(stageTag string) (*Stag
 			continue
 		}
 
-		if header.Name == fmt.Sprintf("stages/%s.tar.gz", stageTag) {
+		if header.Name == fmt.Sprintf(stagePathTemplate, stageTag) {
 			unzipper, err := gzip.NewReader(treader)
 			if err != nil {
 				return nil, fmt.Errorf("unable to create gzip reader for stages archive: %w", err)
@@ -109,7 +107,10 @@ func (reader *ArchiveStorageFileReader) openForReading() (*tar.Reader, func() er
 
 	unzipper, err := gzip.NewReader(f)
 	if err != nil {
-		return nil, f.Close, fmt.Errorf("unable to open stages archive gzip %q: %w", reader.Path, err)
+		if closeErr := f.Close(); closeErr != nil {
+			logboek.Warn().LogF("Warning: error closing file after gzip error: %v\n", closeErr)
+		}
+		return nil, nil, fmt.Errorf("unable to open stages archive gzip %q: %w", reader.Path, err)
 	}
 
 	closer := func() error {

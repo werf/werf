@@ -114,7 +114,7 @@ func (writer *ArchiveStorageFileWriteCloser) WriteStageArchive(tag string, data 
 	compressedData := buf.Bytes()
 
 	header := &tar.Header{
-		Name:       fmt.Sprintf("stages/%s.tar.gz", tag),
+		Name:       fmt.Sprintf(stagePathTemplate, tag),
 		Typeflag:   tar.TypeReg,
 		Mode:       0o777,
 		Size:       int64(len(buf.Bytes())),
@@ -128,7 +128,7 @@ func (writer *ArchiveStorageFileWriteCloser) WriteStageArchive(tag string, data 
 	}
 
 	if _, err := writer.tmpArchiveWriter.Write(compressedData); err != nil {
-		return fmt.Errorf("unable to write stage.tar.gz data: %w", err)
+		return fmt.Errorf("unable to write stage data: %w", err)
 	}
 
 	return nil

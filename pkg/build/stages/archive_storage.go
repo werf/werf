@@ -10,6 +10,11 @@ import (
 	"github.com/werf/werf/v2/pkg/image"
 )
 
+const (
+	tarGzExtension    = ".tar.gz"
+	stagePathTemplate = "stages/%s" + tarGzExtension
+)
+
 type ArchiveStorage struct {
 	Reader ArchiveStorageReader
 	Writer ArchiveStorageWriter
