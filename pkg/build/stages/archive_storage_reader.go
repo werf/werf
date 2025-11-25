@@ -15,7 +15,7 @@ import (
 type ArchiveStorageReader interface {
 	String() string
 	ReadStagesTags() ([]string, error)
-	ReadArchiveStage(stageTag string) (*StageArchiveReadCloser, error)
+	ReadArchiveStage(stageTag string) (*ArchiveStageReadCloser, error)
 }
 
 type ArchiveStorageFileReader struct {
@@ -62,7 +62,7 @@ func (reader *ArchiveStorageFileReader) ReadStagesTags() ([]string, error) {
 	return tags, nil
 }
 
-func (reader *ArchiveStorageFileReader) ReadArchiveStage(stageTag string) (*StageArchiveReadCloser, error) {
+func (reader *ArchiveStorageFileReader) ReadArchiveStage(stageTag string) (*ArchiveStageReadCloser, error) {
 	treader, closer, err := reader.openForReading()
 	if err != nil {
 		return nil, fmt.Errorf("unable to open stages archive: %w", err)
