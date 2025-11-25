@@ -57,14 +57,14 @@ var _ = Describe("Complex stages copy", Label("e2e", "stages copy", "complex"), 
 				Expect(stagesCopyOut).To(ContainSubstring(fmt.Sprintf("To: %s", SuiteData.WerfToAddr)))
 
 				By("state0: check that images were built successfully")
-				werfProject.Build(ctx, &werf.BuildOptions{
+				buildOut = werfProject.Build(ctx, &werf.BuildOptions{
 					CommonOptions: werf.CommonOptions{
 						ShouldFail: false,
 						ExtraArgs:  []string{"--require-built-images", "--repo", SuiteData.WerfToAddr},
 					},
 				})
 				Expect(buildOut).To(ContainSubstring("Building stage"))
-				Expect(buildOut).NotTo(ContainSubstring("Use previously build image"))
+				Expect(buildOut).To(ContainSubstring("Use previously built image"))
 			}
 			By("state1: with changing repo state")
 			{
@@ -115,21 +115,14 @@ var _ = Describe("Complex stages copy", Label("e2e", "stages copy", "complex"), 
 				Expect(stagesCopyOut).To(ContainSubstring(fmt.Sprintf("To: %s", SuiteData.WerfToAddr)))
 
 				By("state1: check that images were built successfully")
-				var shouldFail bool
-				if opts.All {
-					shouldFail = false
-				} else {
-					shouldFail = true
-				}
-
-				werfProject.Build(ctx, &werf.BuildOptions{
+				buildOut = werfProject.Build(ctx, &werf.BuildOptions{
 					CommonOptions: werf.CommonOptions{
-						ShouldFail: shouldFail,
+						ShouldFail: !opts.All,
 						ExtraArgs:  []string{"--require-built-images", "--repo", SuiteData.WerfToAddr},
 					},
 				})
 				Expect(buildOut).To(ContainSubstring("Building stage"))
-				Expect(buildOut).NotTo(ContainSubstring("Use previously build image"))
+				Expect(buildOut).To(ContainSubstring("Use previously built image"))
 			}
 		},
 		Entry("with copy all stages", complexTestOptions{

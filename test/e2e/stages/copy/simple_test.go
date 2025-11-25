@@ -40,7 +40,7 @@ var _ = Describe("Simple stages copy", Label("e2e", "stages copy", "simple"), fu
 					},
 				})
 				Expect(buildOut).To(ContainSubstring("Building stage"))
-				Expect(buildOut).NotTo(ContainSubstring("Use previously build image"))
+				Expect(buildOut).NotTo(ContainSubstring("Use previously built image"))
 
 				By("state0: execute stages copy")
 				stagesCopyArgs := getStagesCopyArgs(SuiteData.WerfFromAddr, SuiteData.WerfToAddr, commonTestOptions{
@@ -58,14 +58,13 @@ var _ = Describe("Simple stages copy", Label("e2e", "stages copy", "simple"), fu
 				Expect(stagesCopyOut).To(ContainSubstring(fmt.Sprintf("To: %s", SuiteData.WerfToAddr)))
 
 				By("state0: check that images were built successfully")
-				werfProject.Build(ctx, &werf.BuildOptions{
+				buildOut = werfProject.Build(ctx, &werf.BuildOptions{
 					CommonOptions: werf.CommonOptions{
 						ShouldFail: false,
 						ExtraArgs:  []string{"--require-built-images", "--repo", SuiteData.WerfToAddr},
 					},
 				})
-				Expect(buildOut).To(ContainSubstring("Building stage"))
-				Expect(buildOut).NotTo(ContainSubstring("Use previously build image"))
+				Expect(buildOut).To(ContainSubstring("Use previously built image"))
 			}
 		},
 		Entry("with copy all stages", simpleTestOptions{
