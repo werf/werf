@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.55.0](https://github.com/werf/werf/compare/v2.54.1...v2.55.0) (2025-11-25)
+
+
+### Features
+
+* **deploy:** `--delete-propagation` and `werf.io/delete-propagation` ([806ee13](https://github.com/werf/werf/commit/806ee131ed7a718aaa18dfcfedc8e422d3132e05))
+
+
+### Bug Fixes
+
+* **build:** collision between `WERF_REQUIRE_BUILT_IMAGES` of `build` with other commands ([201e8d9](https://github.com/werf/werf/commit/201e8d9a7470e05fff52bff47f5eb96c18c03cb7))
+* **deploy:** remove `null` keys from manifests now only on `NELM_FEAT_CLEAN_NULL_FIELDS=true` ([dc41572](https://github.com/werf/werf/commit/dc41572c568712509fd4496fed7fc21a4748bc0c))
+
 ## [2.54.1](https://github.com/werf/werf/compare/v2.54.0...v2.54.1) (2025-11-21)
 
 
