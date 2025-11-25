@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.51.7](https://github.com/werf/werf/compare/v2.51.6...v2.51.7) (2025-11-25)
+
+
+### Bug Fixes
+
+* **build:** collision between `WERF_REQUIRE_BUILT_IMAGES` of `build` with other commands ([18fbe7e](https://github.com/werf/werf/commit/18fbe7ecb9dea9373bc11a8e7c6cb368552e1a36))
+
 ## [2.51.6](https://github.com/werf/werf/compare/v2.51.5...v2.51.6) (2025-11-17)
 
 
