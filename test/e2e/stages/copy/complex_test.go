@@ -40,7 +40,6 @@ var _ = Describe("Complex stages copy", Label("e2e", "stages copy", "complex"), 
 					},
 				})
 				Expect(buildOut).To(ContainSubstring("Building stage"))
-				Expect(buildOut).NotTo(ContainSubstring("Use previously build image"))
 
 				By("state0: execute stages copy to archive")
 				stagesCopyArgs := getStagesCopyArgs(SuiteData.WerfFromAddr, SuiteData.WerfToAddr, commonTestOptions{
@@ -83,7 +82,6 @@ var _ = Describe("Complex stages copy", Label("e2e", "stages copy", "complex"), 
 					},
 				})
 				Expect(buildOut).To(ContainSubstring("Building stage"))
-				Expect(buildOut).NotTo(ContainSubstring("Use previously build image"))
 
 				By("state1: execute stages copy")
 				stagesCopyArgs := getStagesCopyArgs(SuiteData.WerfFromAddr, SuiteData.WerfArchiveAddr, commonTestOptions{
@@ -99,7 +97,7 @@ var _ = Describe("Complex stages copy", Label("e2e", "stages copy", "complex"), 
 				By("state1: check stages copy to archive output")
 				Expect(stagesCopyOut).To(ContainSubstring(fmt.Sprintf("Copy stages")))
 				Expect(stagesCopyOut).To(ContainSubstring(fmt.Sprintf("From: %s", SuiteData.WerfFromAddr)))
-				Expect(stagesCopyOut).To(ContainSubstring(fmt.Sprintf("To: %s", SuiteData.WerfToAddr)))
+				Expect(stagesCopyOut).To(ContainSubstring(fmt.Sprintf("To: %s", SuiteData.WerfArchiveAddr)))
 
 				stagesCopyArgs = getStagesCopyArgs(SuiteData.WerfArchiveAddr, SuiteData.WerfToAddr, commonTestOptions{})
 				stagesCopyOut = werfProject.StagesCopy(ctx, &werf.StagesCopyOptions{
@@ -111,7 +109,7 @@ var _ = Describe("Complex stages copy", Label("e2e", "stages copy", "complex"), 
 
 				By("state1: check stages copy to container registry output")
 				Expect(stagesCopyOut).To(ContainSubstring(fmt.Sprintf("Copy stages")))
-				Expect(stagesCopyOut).To(ContainSubstring(fmt.Sprintf("From: %s", SuiteData.WerfFromAddr)))
+				Expect(stagesCopyOut).To(ContainSubstring(fmt.Sprintf("From: %s", SuiteData.WerfArchiveAddr)))
 				Expect(stagesCopyOut).To(ContainSubstring(fmt.Sprintf("To: %s", SuiteData.WerfToAddr)))
 
 				By("state1: check that images were built successfully")

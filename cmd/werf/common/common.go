@@ -443,11 +443,6 @@ func SetupRepo(cmdData *CmdData, cmd *cobra.Command, opts RepoDataOptions) {
 	cmdData.Repo.SetupCmd(cmd)
 }
 
-func SetupRepoWithName(cmdData *CmdData, cmd *cobra.Command, name string, opts RepoDataOptions) {
-	cmdData.Repo = NewRepoData(name, opts)
-	cmdData.Repo.SetupCmd(cmd)
-}
-
 func SetupFinalRepo(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.FinalRepo = NewRepoData("final-repo", RepoDataOptions{})
 	cmdData.FinalRepo.SetupCmd(cmd)

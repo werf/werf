@@ -176,8 +176,8 @@ func runCopy(ctx context.Context) error {
 	}
 
 	return logboek.Context(ctx).LogProcess("Copy stages").DoError(func() error {
-		logboek.Context(ctx).LogFDetails("From: %s\n", opts.From.String())
-		logboek.Context(ctx).LogFDetails("To: %s\n", opts.To.String())
+		logboek.Context(ctx).LogFDetails("From: %s\n", cmdData.From)
+		logboek.Context(ctx).LogFDetails("To: %s\n", cmdData.To)
 
 		return stages.Copy(ctx, opts.From, opts.To, stages.CopyOptions{
 			All:               cmdData.All,

@@ -602,14 +602,6 @@ func (c *Conveyor) determineStages(ctx context.Context) error {
 		})
 }
 
-func (c *Conveyor) Calculate(ctx context.Context) error {
-	if err := c.imagesTree.Calculate(ctx); err != nil {
-		return fmt.Errorf("unable to calculate images tree: %w", err)
-	}
-
-	return nil
-}
-
 func (c *Conveyor) doDetermineStages(ctx context.Context) error {
 	if err := c.imagesTree.Calculate(ctx); err != nil {
 		return fmt.Errorf("unable to calculate images tree: %w", err)
