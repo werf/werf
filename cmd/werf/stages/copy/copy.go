@@ -22,7 +22,7 @@ import (
 	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
 
-var cmdData struct {
+type copyCmdData struct {
 	From string
 	To   string
 	All  bool
@@ -37,6 +37,8 @@ type copyOptions struct {
 var commonCmdData common.CmdData
 
 func NewCmd(ctx context.Context) *cobra.Command {
+	var cmdData copyCmdData
+
 	ctx = common.NewContextWithCmdData(ctx, &commonCmdData)
 	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:                   "copy",
@@ -59,7 +61,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 			common.LogVersion()
 
-			return common.LogRunningTime(func() error { return runCopy(ctx) })
+			return common.LogRunningTime(func() error { return runCopy(ctx, cmdData) })
 		},
 	})
 
@@ -96,12 +98,12 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	commonCmdData.SetupFinalImagesOnly(cmd, false)
 	commonCmdData.SetupPlatform(cmd)
 
-	setupCopyOptions(cmd)
+	setupCopyOptions(&cmdData, cmd)
 
 	return cmd
 }
 
-func runCopy(ctx context.Context) error {
+func runCopy(ctx context.Context, cmdData copyCmdData) error {
 	commonManager, ctx, err := common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
 		Cmd:                         &commonCmdData,
 		InitWerf:                    true,
@@ -118,17 +120,9 @@ func runCopy(ctx context.Context) error {
 		return fmt.Errorf("component init error: %w", err)
 	}
 
-	opts, err := getCopyOptions()
+	opts, err := getCopyOptions(cmdData)
 	if err != nil {
 		return err
-	}
-
-	if opts.From.RegistryAddress != nil {
-		commonCmdData.Repo.Address = &opts.From.RegistryAddress.Repo // FIXME выдумать что-нить симпатичнее
-	} else if opts.To.RegistryAddress != nil {
-		commonCmdData.Repo.Address = &opts.To.RegistryAddress.Repo
-	} else {
-		return fmt.Errorf("--from or --to address must be container registry address")
 	}
 
 	giterminismManager, err := common.GetGiterminismManager(ctx, &commonCmdData)
@@ -190,7 +184,7 @@ func runCopy(ctx context.Context) error {
 	})
 }
 
-func setupCopyOptions(cmd *cobra.Command) {
+func setupCopyOptions(cmdData *copyCmdData, cmd *cobra.Command) {
 	cmd.Flags().StringVarP(&cmdData.From, "from", "", "", "Source address to copy stages from. Use archive:PATH for stage archive or [docker://]REPO for container registry.")
 	cmd.Flags().StringVarP(&cmdData.To, "to", "", "", "Destination address to copy stages to. Use archive:PATH for stage archive or [docker://]REPO for container registry.")
 	cmd.Flags().BoolVarP(&cmdData.All, "all", "", true, `Copy all project stages (default: true). Use --all=false to copy stages for current build only. Note: this flag is ignored when copying from archive to container registry.`)
@@ -231,12 +225,12 @@ func initConveyorComponents(ctx context.Context, werfConfig *config.WerfConfig, 
 	return conveyorWithRetry, buildOptions, nil
 }
 
-func getCopyOptions() (copyOptions, error) {
-	if err := validateRawCopyOptions(); err != nil {
+func getCopyOptions(cmdData copyCmdData) (copyOptions, error) {
+	if err := validateRawCopyOptions(cmdData); err != nil {
 		return copyOptions{}, err
 	}
 
-	getAddr, err := ref.ParseAddr(cmdData.From)
+	fromAddr, err := ref.ParseAddr(cmdData.From)
 	if err != nil {
 		return copyOptions{}, fmt.Errorf("invalid from addr %q: %w", cmdData.From, err)
 	}
@@ -246,8 +240,16 @@ func getCopyOptions() (copyOptions, error) {
 		return copyOptions{}, fmt.Errorf("invalid to addr %q: %w", cmdData.To, err)
 	}
 
+	if fromAddr.RegistryAddress != nil {
+		commonCmdData.Repo.Address = &fromAddr.RegistryAddress.Repo // FIXME выдумать что-нить симпатичнее
+	} else if toAddr.RegistryAddress != nil {
+		commonCmdData.Repo.Address = &toAddr.RegistryAddress.Repo
+	} else {
+		return copyOptions{}, fmt.Errorf("--from or --to address must be container registry address")
+	}
+
 	opts := copyOptions{
-		From: getAddr,
+		From: fromAddr,
 		To:   toAddr,
 		All:  cmdData.All,
 	}
@@ -255,7 +257,7 @@ func getCopyOptions() (copyOptions, error) {
 	return opts, nil
 }
 
-func validateRawCopyOptions() error {
+func validateRawCopyOptions(cmdData copyCmdData) error {
 	if cmdData.From == "" {
 		return errors.New("--from=ADDRESS param required")
 	}

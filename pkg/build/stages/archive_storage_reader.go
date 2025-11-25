@@ -10,6 +10,10 @@ import (
 	"strings"
 )
 
+const (
+	tarGzExtension = ".tar.gz"
+)
+
 type ArchiveStorageReader interface {
 	String() string
 	ReadStagesTags() ([]string, error)
@@ -50,8 +54,8 @@ func (reader *ArchiveStorageFileReader) ReadStagesTags() ([]string, error) {
 
 		if header.Typeflag == tar.TypeReg {
 			filename := filepath.Base(header.Name)
-			if strings.HasSuffix(filename, ".tar.gz") {
-				nameWithoutExt := strings.TrimSuffix(filename, ".tar.gz")
+			if strings.HasSuffix(filename, tarGzExtension) {
+				nameWithoutExt := strings.TrimSuffix(filename, tarGzExtension)
 				tags = append(tags, nameWithoutExt)
 			}
 		}

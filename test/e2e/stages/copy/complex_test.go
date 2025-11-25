@@ -63,6 +63,8 @@ var _ = Describe("Complex stages copy", Label("e2e", "stages copy", "complex"), 
 						ExtraArgs:  []string{"--require-built-images", "--repo", SuiteData.WerfToAddr},
 					},
 				})
+				Expect(buildOut).To(ContainSubstring("Building stage"))
+				Expect(buildOut).NotTo(ContainSubstring("Use previously build image"))
 			}
 			By("state1: with changing repo state")
 			{
@@ -126,6 +128,8 @@ var _ = Describe("Complex stages copy", Label("e2e", "stages copy", "complex"), 
 						ExtraArgs:  []string{"--require-built-images", "--repo", SuiteData.WerfToAddr},
 					},
 				})
+				Expect(buildOut).To(ContainSubstring("Building stage"))
+				Expect(buildOut).NotTo(ContainSubstring("Use previously build image"))
 			}
 		},
 		Entry("with copy all stages", complexTestOptions{
