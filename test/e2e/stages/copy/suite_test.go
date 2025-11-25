@@ -1,7 +1,6 @@
 package e2e_stages_copy_test
 
 import (
-	"context"
 	"runtime"
 	"testing"
 
@@ -9,7 +8,6 @@ import (
 
 	"github.com/werf/werf/v2/test/pkg/suite_init"
 	"github.com/werf/werf/v2/test/pkg/utils"
-	"github.com/werf/werf/v2/test/pkg/utils/docker"
 )
 
 func TestSuite(t *testing.T) {
@@ -26,14 +24,6 @@ func TestSuite(t *testing.T) {
 var SuiteData = struct {
 	suite_init.SuiteData
 
-	FromRegistryLocalAddress    string
-	FromRegistryInternalAddress string
-	FromRegistryContainerName   string
-
-	ToRegistryLocalAddress    string
-	ToRegistryInternalAddress string
-	ToRegistryContainerName   string
-
 	WerfFromAddr    string
 	WerfToAddr      string
 	WerfArchiveAddr string
@@ -45,13 +35,7 @@ var (
 	_ = SuiteData.SetupWerfBinary(suite_init.NewWerfBinaryData(SuiteData.SynchronizedSuiteCallbacksData))
 	_ = SuiteData.SetupProjectName(suite_init.NewProjectNameData(SuiteData.StubsData))
 	_ = SuiteData.SetupTmp(suite_init.NewTmpDirData())
-
-	_ = SuiteData.AppendSynchronizedBeforeSuiteAllNodesFunc(func(ctx context.Context, _ []byte) {
-		SuiteData.FromRegistryLocalAddress, SuiteData.FromRegistryInternalAddress, SuiteData.FromRegistryContainerName = docker.LocalDockerRegistryRun(ctx)
-	})
-	_ = SuiteData.AppendSynchronizedBeforeSuiteAllNodesFunc(func(ctx context.Context, _ []byte) {
-		SuiteData.ToRegistryLocalAddress, SuiteData.ToRegistryInternalAddress, SuiteData.ToRegistryContainerName = docker.LocalDockerRegistryRun(ctx)
-	})
+	_ = SuiteData.SetupK8sDockerRegistry(suite_init.NewK8sDockerRegistryData(SuiteData.ProjectNameData, SuiteData.StubsData))
 
 	_ = AfterEach(func(ctx SpecContext) {
 		utils.RunSucceedCommand(ctx, "", SuiteData.WerfBinPath, "host", "purge", "--force", "--project-name", SuiteData.ProjectName)

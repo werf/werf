@@ -1,8 +1,11 @@
 package e2e_stages_copy_test
 
 import (
+	"fmt"
+	"os"
 	"strconv"
-	"strings"
+
+	"github.com/werf/werf/v2/test/pkg/utils"
 )
 
 const (
@@ -16,13 +19,14 @@ type commonTestOptions struct {
 }
 
 func setupEnv() {
-	SuiteData.Stubs.SetEnv("WERF_SYNCHRONIZATION", ":local")
 	SuiteData.Stubs.SetEnv("WERF_ENV", "test")
 	SuiteData.Stubs.SetEnv("ARTIFACT_CACHE_VERSION", artifactCacheVersion)
 	SuiteData.Stubs.SetEnv("ARTIFACT_DATA", artifactData)
 
-	SuiteData.WerfFromAddr = strings.Join([]string{SuiteData.FromRegistryLocalAddress, SuiteData.ProjectName}, "/")
-	SuiteData.WerfToAddr = strings.Join([]string{SuiteData.ToRegistryLocalAddress, SuiteData.ProjectName}, "/")
+	SuiteData.Stubs.UnsetEnv("WERF_REPO")
+
+	SuiteData.WerfFromAddr = fmt.Sprintf("%s/%s-%s", os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY"), SuiteData.ProjectName, utils.GetRandomString(6))
+	SuiteData.WerfToAddr = fmt.Sprintf("%s/%s-%s", os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY"), SuiteData.ProjectName, utils.GetRandomString(6))
 
 	SuiteData.WerfArchiveAddr = archiveAddr
 }
