@@ -1,6 +1,6 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/deckhouse/delivery-kit/refs/heads/main/docs/images/dk_light_mode.svg#gh-light-mode-only" style="max-height:100%;" height="75">
-  <img src="https://raw.githubusercontent.com/deckhouse/delivery-kit/refs/heads/main/docs/images/dk_dark_mode.svg#gh-dark-mode-only" style="max-height:100%;" height="75">
+  <img src="https://raw.githubusercontent.com/deckhouse/delivery-kit/refs/heads/main/docs/images/dk_light_mode.svg#gh-light-mode-only" style="max-height:100%;" height="150">
+  <img src="https://raw.githubusercontent.com/deckhouse/delivery-kit/refs/heads/main/docs/images/dk_dark_mode.svg#gh-dark-mode-only" style="max-height:100%;" height="150">
 </p>
 
 <p align="center">
