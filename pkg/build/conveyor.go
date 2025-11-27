@@ -437,16 +437,56 @@ func (c *Conveyor) GetFullImageName(ctx context.Context, imageName string) (stri
 	return "", fmt.Errorf("image not found")
 }
 
+func (c *Conveyor) GetImageInfoGettersWithOpts(opts imagePkg.InfoGetterOptions) ([]*imagePkg.InfoGetter, error) {
+	var infoGetters []*imagePkg.InfoGetter
+
+	for _, desc := range c.imagesTree.GetImagesByName(opts.OnlyFinal) {
+		name, images := desc.Unpair()
+		targetPlatforms := util.MapFuncToSlice(images, func(img *image.Image) string { return img.TargetPlatform })
+
+		for _, img := range images {
+			for _, stg := range img.GetStages() {
+				stageImage := stg.GetStageImage()
+				if stageImage != nil {
+					stDesc := stageImage.Image.GetStageDesc()
+					getter := c.StorageManager.GetImageInfoGetter(stageImage.Image.Name(), stDesc, opts)
+					infoGetters = append(infoGetters, getter)
+				}
+			}
+		}
+
+		if _, isLocal := c.StorageManager.GetStagesStorage().(*storage.LocalStagesStorage); !isLocal {
+			if len(targetPlatforms) > 1 {
+				img := c.imagesTree.GetMultiplatformImage(name)
+
+				for _, pImg := range img.Images {
+					for _, stg := range pImg.GetStages() {
+						stageImage := stg.GetStageImage()
+						if stageImage != nil {
+							stDesc := stageImage.Image.GetStageDesc()
+							getter := c.StorageManager.GetImageInfoGetter(stageImage.Image.Name(), stDesc, opts)
+							infoGetters = append(infoGetters, getter)
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return infoGetters, nil
+}
+
 func (c *Conveyor) GetImageInfoGetters(opts imagePkg.InfoGetterOptions) ([]*imagePkg.InfoGetter, error) {
 	var imagesGetters []*imagePkg.InfoGetter
-	for _, desc := range c.imagesTree.GetImagesByName(opts.OnlyFinal) {
+	for _, desc := range c.imagesTree.GetImagesByName(true) {
 		name, images := desc.Unpair()
 		platforms := util.MapFuncToSlice(images, func(img *image.Image) string { return img.TargetPlatform })
 
 		if len(platforms) == 1 {
 			img := images[0]
-			imagesGetters = append(imagesGetters, c.getImageInfoGetter(img, opts))
-		} else { // TODO (khurum): ask about this case
+			getter := c.StorageManager.GetImageInfoGetter(img.Name, img.GetLastNonEmptyStage().GetStageImage().Image.GetStageDesc(), opts)
+			imagesGetters = append(imagesGetters, getter)
+		} else {
 			img := c.imagesTree.GetMultiplatformImage(name)
 			stageDesc := img.GetFinalStageDesc()
 			if stageDesc == nil {
@@ -457,26 +497,6 @@ func (c *Conveyor) GetImageInfoGetters(opts imagePkg.InfoGetterOptions) ([]*imag
 		}
 	}
 	return imagesGetters, nil
-}
-
-func (c *Conveyor) getImageInfoGetter(img *image.Image, opts imagePkg.InfoGetterOptions) *imagePkg.InfoGetter {
-	var imageGetters []*imagePkg.InfoGetter
-
-	if opts.OnlyFinal {
-		getter := c.StorageManager.GetImageInfoGetter(img.Name, img.GetLastNonEmptyStage().GetStageImage().Image.GetStageDesc(), opts)
-		imageGetters = append(imageGetters, getter)
-	} else {
-		for _, st := range img.GetStages() {
-			stageImage := st.GetStageImage()
-			if stageImage != nil { // FIXME (khurum): kludge
-				stDesc := stageImage.Image.GetStageDesc()
-				getter := c.StorageManager.GetImageInfoGetter(img.Name, stDesc, opts)
-				imageGetters = append(imageGetters, getter)
-			}
-		}
-	}
-
-	return imageGetters[0]
 }
 
 func (c *Conveyor) GetExportedImages() (res []*image.Image) {
