@@ -3,6 +3,7 @@ package stages
 import (
 	"archive/tar"
 	"compress/gzip"
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -14,8 +15,8 @@ import (
 
 type ArchiveStorageReader interface {
 	String() string
-	ReadStagesTags() ([]string, error)
-	ReadArchiveStage(stageTag string) (*ArchiveStageReadCloser, error)
+	ReadStagesTags(ctx context.Context) ([]string, error)
+	ReadArchiveStage(ctx context.Context, stageTag string) (*ArchiveStageReadCloser, error)
 }
 
 type ArchiveStorageFileReader struct {
@@ -32,8 +33,8 @@ func (reader *ArchiveStorageFileReader) String() string {
 	return reader.Path
 }
 
-func (reader *ArchiveStorageFileReader) ReadStagesTags() ([]string, error) {
-	treader, closer, err := reader.openForReading()
+func (reader *ArchiveStorageFileReader) ReadStagesTags(ctx context.Context) ([]string, error) {
+	treader, closer, err := reader.openForReading(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error opening archive: %v", err)
 	}
@@ -62,8 +63,8 @@ func (reader *ArchiveStorageFileReader) ReadStagesTags() ([]string, error) {
 	return tags, nil
 }
 
-func (reader *ArchiveStorageFileReader) ReadArchiveStage(stageTag string) (*ArchiveStageReadCloser, error) {
-	treader, closer, err := reader.openForReading()
+func (reader *ArchiveStorageFileReader) ReadArchiveStage(ctx context.Context, stageTag string) (*ArchiveStageReadCloser, error) {
+	treader, closer, err := reader.openForReading(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("unable to open stages archive: %w", err)
 	}
@@ -98,7 +99,7 @@ func (reader *ArchiveStorageFileReader) ReadArchiveStage(stageTag string) (*Arch
 	}
 }
 
-func (reader *ArchiveStorageFileReader) openForReading() (*tar.Reader, func() error, error) {
+func (reader *ArchiveStorageFileReader) openForReading(ctx context.Context) (*tar.Reader, func() error, error) {
 	f, err := os.Open(reader.Path)
 	if err != nil {
 		return nil, func() error { return nil }, err
@@ -107,7 +108,7 @@ func (reader *ArchiveStorageFileReader) openForReading() (*tar.Reader, func() er
 	unzipper, err := gzip.NewReader(f)
 	if err != nil {
 		if closeErr := f.Close(); closeErr != nil {
-			logboek.Warn().LogF("Warning: error closing file after gzip error: %v\n", closeErr)
+			logboek.Context(ctx).Warn().LogF("Warning: error closing file after gzip error: %v\n", closeErr)
 		}
 		return nil, nil, fmt.Errorf("unable to open stages archive gzip %q: %w", reader.Path, err)
 	}

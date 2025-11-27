@@ -110,7 +110,7 @@ func (s *RemoteStorage) copyAllFromRemote(ctx context.Context, fromRemote *Remot
 }
 
 func (s *RemoteStorage) copyFromArchive(ctx context.Context, fromArchive *ArchiveStorage) error {
-	stageIds, err := fromArchive.ReadStagesTags()
+	stageIds, err := fromArchive.ReadStagesTags(ctx)
 	if err != nil {
 		return fmt.Errorf("error reading stages: %w", err)
 	}
@@ -127,6 +127,7 @@ func (s *RemoteStorage) copyFromArchive(ctx context.Context, fromArchive *Archiv
 		reference.Tag = stageId
 
 		stageArchiveOpener := fromArchive.GetStageArchiveOpener(stageId)
+		stageArchiveOpener.SetContext(ctx)
 
 		if err := s.RegistryClient.PushImageArchive(ctx, stageArchiveOpener, reference.FullName()); err != nil {
 			return fmt.Errorf("error copying stage %q archive: %w", stageId, err)

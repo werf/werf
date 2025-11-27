@@ -43,8 +43,8 @@ func (s *ArchiveStorage) CopyFromRemote(ctx context.Context, fromRemote *RemoteS
 	return s.copyCurrentBuildFromRemote(ctx, fromRemote, opts)
 }
 
-func (s *ArchiveStorage) ReadStagesTags() ([]string, error) {
-	stages, err := s.Reader.ReadStagesTags()
+func (s *ArchiveStorage) ReadStagesTags(ctx context.Context) ([]string, error) {
+	stages, err := s.Reader.ReadStagesTags(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read stages archive: %w", err)
 	}
@@ -62,7 +62,7 @@ func (s *ArchiveStorage) copyAllFromRemote(ctx context.Context, fromRemote *Remo
 		return fmt.Errorf("unable to get stages: %w", err)
 	}
 
-	return s.Writer.WithTask(func(writer ArchiveStorageWriter) error {
+	return s.Writer.WithTask(ctx, func(writer ArchiveStorageWriter) error {
 		for _, stageId := range stageIds {
 			logboek.Context(ctx).Default().LogFDetails("Copying stage: %s\n", stageId)
 
@@ -89,7 +89,7 @@ func (s *ArchiveStorage) copyAllFromRemote(ctx context.Context, fromRemote *Remo
 }
 
 func (s *ArchiveStorage) copyCurrentBuildFromRemote(ctx context.Context, fromRemote *RemoteStorage, opts copyToOptions) error {
-	return s.Writer.WithTask(func(writer ArchiveStorageWriter) error {
+	return s.Writer.WithTask(ctx, func(writer ArchiveStorageWriter) error {
 		return fromRemote.ConveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
 			if _, err := c.Build(ctx, opts.BuildOptions); err != nil {
 				return err

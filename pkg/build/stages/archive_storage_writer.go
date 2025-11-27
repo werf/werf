@@ -4,17 +4,19 @@ import (
 	"archive/tar"
 	"bytes"
 	"compress/gzip"
+	"context"
 	"fmt"
 	"io"
 	"os"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/werf/logboek"
 )
 
 type ArchiveStorageWriter interface {
 	WriteStageArchive(stageTag string, data []byte) error
-	WithTask(task func(ArchiveStorageWriter) error) error
+	WithTask(ctx context.Context, task func(ArchiveStorageWriter) error) error
 }
 
 type ArchiveStorageFileWriter struct {
@@ -138,7 +140,7 @@ func (writer *ArchiveStorageFileWriter) Close() error {
 	return nil
 }
 
-func (writer *ArchiveStorageFileWriter) WithTask(task func(ArchiveStorageWriter) error) error {
+func (writer *ArchiveStorageFileWriter) WithTask(ctx context.Context, task func(ArchiveStorageWriter) error) error {
 	if err := writer.open(); err != nil {
 		return fmt.Errorf("unable to open target stages archive: %w", err)
 	}
@@ -147,7 +149,7 @@ func (writer *ArchiveStorageFileWriter) WithTask(task func(ArchiveStorageWriter)
 	defer func() {
 		if err != nil {
 			if closeErr := writer.Close(); closeErr != nil {
-				fmt.Printf("Warning: error closing archive after task failure: %v\n", closeErr)
+				logboek.Context(ctx).Warn().LogF("Warning: error closing archive after task failure: %v\n", closeErr)
 			}
 			if writer.tmpArchivePath != "" {
 				os.Remove(writer.tmpArchivePath)
