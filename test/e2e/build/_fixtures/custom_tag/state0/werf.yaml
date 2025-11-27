@@ -1,0 +1,88 @@
+project: werf-e2e-build-test
+configVersion: 1
+---
+image: base-dockerfile
+dockerfile: ./Dockerfile.base
+---
+image: base-stapel
+from: alpine:latest
+shell:
+  install:
+    - echo data > /base-stapel-file
+---
+image: stapel
+from: alpine:latest
+dependencies:
+  - image: base-stapel
+    after: install
+    imports:
+      - type: ImageName
+        targetEnv: BASE_STAPEL_IMAGE_NAME
+      - type: ImageID
+        targetEnv: BASE_STAPEL_IMAGE_ID
+      - type: ImageRepo
+        targetEnv: BASE_STAPEL_IMAGE_REPO
+      - type: ImageTag
+        targetEnv: BASE_STAPEL_IMAGE_TAG
+  - image: base-dockerfile
+    after: install
+    imports:
+      - type: ImageName
+        targetEnv: BASE_DOCKERFILE_IMAGE_NAME
+      - type: ImageID
+        targetEnv: BASE_DOCKERFILE_IMAGE_ID
+      - type: ImageRepo
+        targetEnv: BASE_DOCKERFILE_IMAGE_REPO
+      - type: ImageTag
+        targetEnv: BASE_DOCKERFILE_IMAGE_TAG
+shell:
+  install:
+    - mkdir /install
+
+    - echo $BASE_STAPEL_IMAGE_NAME > /install/BASE_STAPEL_IMAGE_NAME
+    - echo $BASE_STAPEL_IMAGE_ID > /install/BASE_STAPEL_IMAGE_ID
+    - echo $BASE_STAPEL_IMAGE_REPO > /install/BASE_STAPEL_IMAGE_REPO
+    - echo $BASE_STAPEL_IMAGE_TAG > /install/BASE_STAPEL_IMAGE_TAG
+
+    - echo $BASE_DOCKERFILE_IMAGE_NAME > /install/BASE_DOCKERFILE_IMAGE_NAME
+    - echo $BASE_DOCKERFILE_IMAGE_ID > /install/BASE_DOCKERFILE_IMAGE_ID
+    - echo $BASE_DOCKERFILE_IMAGE_REPO > /install/BASE_DOCKERFILE_IMAGE_REPO
+    - echo $BASE_DOCKERFILE_IMAGE_TAG > /install/BASE_DOCKERFILE_IMAGE_TAG
+  setup:
+    - mkdir /setup
+
+    - echo $BASE_STAPEL_IMAGE_NAME > /setup/BASE_STAPEL_IMAGE_NAME
+    - echo $BASE_STAPEL_IMAGE_ID > /setup/BASE_STAPEL_IMAGE_ID
+    - echo $BASE_STAPEL_IMAGE_REPO > /setup/BASE_STAPEL_IMAGE_REPO
+    - echo $BASE_STAPEL_IMAGE_TAG > /setup/BASE_STAPEL_IMAGE_TAG
+
+    - echo $BASE_DOCKERFILE_IMAGE_NAME > /setup/BASE_DOCKERFILE_IMAGE_NAME
+    - echo $BASE_DOCKERFILE_IMAGE_ID > /setup/BASE_DOCKERFILE_IMAGE_ID
+    - echo $BASE_DOCKERFILE_IMAGE_REPO > /setup/BASE_DOCKERFILE_IMAGE_REPO
+    - echo $BASE_DOCKERFILE_IMAGE_TAG > /setup/BASE_DOCKERFILE_IMAGE_TAG
+---
+image: dockerfile
+dockerfile: ./Dockerfile
+dependencies:
+  - image: base-stapel
+    imports:
+      - type: ImageName
+        targetBuildArg: BASE_STAPEL_IMAGE_NAME
+      - type: ImageID
+        targetBuildArg: BASE_STAPEL_IMAGE_ID
+      - type: ImageRepo
+        targetBuildArg: BASE_STAPEL_IMAGE_REPO
+      - type: ImageTag
+        targetBuildArg: BASE_STAPEL_IMAGE_TAG
+      - type: ImageName
+        targetBuildArg: BASE_IMAGE
+  - image: base-dockerfile
+    imports:
+      - type: ImageName
+        targetBuildArg: BASE_DOCKERFILE_IMAGE_NAME
+      - type: ImageID
+        targetBuildArg: BASE_DOCKERFILE_IMAGE_ID
+      - type: ImageRepo
+        targetBuildArg: BASE_DOCKERFILE_IMAGE_REPO
+      - type: ImageTag
+        targetBuildArg: BASE_DOCKERFILE_IMAGE_TAG
