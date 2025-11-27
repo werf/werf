@@ -2,8 +2,6 @@ module github.com/werf/werf/v2
 
 go 1.23.1
 
-toolchain go1.24.7
-
 require (
 	github.com/Masterminds/goutils v1.1.1
 	github.com/Masterminds/semver v1.5.0
@@ -67,7 +65,7 @@ require (
 	github.com/werf/kubedog-for-werf-helm v0.0.0-20241217155728-9d45c48b82b6
 	github.com/werf/lockgate v0.1.1
 	github.com/werf/logboek v0.6.1
-	github.com/werf/nelm v1.17.3-0.20251121115259-bd36c0e83492
+	github.com/werf/nelm v1.17.3-0.20251124170054-f1c9a360aa17
 	github.com/werf/nelm-for-werf-helm v0.0.0-20241217155925-b0e6734d1dbf
 	go.opentelemetry.io/otel v1.24.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.24.0
@@ -413,5 +411,4 @@ replace (
 	github.com/docker/buildx => github.com/werf/3p-docker-buildx v0.13.0-rc2.0.20241111114615-d77c2e1444ad // upstream not maintained
 	github.com/jaguilar/vt100 => github.com/tonistiigi/vt100 v0.0.0-20190402012908-ad4c4a574305 // upstream not maintained
 	github.com/spf13/cobra => github.com/andremueller/cobra v0.0.0-20241025091859-0d550c15a8a4 // remove after merge to upstream
-
 )

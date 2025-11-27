@@ -91,12 +91,14 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupAddLabels(&commonCmdData, cmd)
 	common.SetupChartProvenanceKeyring(&commonCmdData, cmd)
 	common.SetupChartProvenanceStrategy(&commonCmdData, cmd)
+	common.SetupDefaultDeletePropagation(&commonCmdData, cmd)
 	common.SetupDeployGraphPath(&commonCmdData, cmd)
 	common.SetupExtraRuntimeAnnotations(&commonCmdData, cmd)
 	common.SetupExtraRuntimeLabels(&commonCmdData, cmd)
 	common.SetupForceAdoption(&commonCmdData, cmd)
 	common.SetupNamespace(&commonCmdData, cmd, false)
 	common.SetupNetworkParallelism(&commonCmdData, cmd)
+	common.SetupNoFinalTrackingFlag(&commonCmdData, cmd)
 	common.SetupNoInstallCRDs(&commonCmdData, cmd)
 	common.SetupNoRemoveManualChanges(&commonCmdData, cmd)
 	common.SetupRelease(&commonCmdData, cmd, false)
@@ -107,7 +109,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupSetDockerConfigJsonValue(&commonCmdData, cmd)
 	common.SetupTemplatesAllowDNS(&commonCmdData, cmd)
 	commonCmdData.SetupSkipDependenciesRepoRefresh(cmd)
-	common.SetupNoFinalTrackingFlag(&commonCmdData, cmd)
 
 	defaultTag := os.Getenv("WERF_TAG")
 	if defaultTag == "" {
@@ -220,6 +221,7 @@ func runPlan(ctx context.Context) error {
 		ChartProvenanceKeyring:      commonCmdData.ChartProvenanceKeyring,
 		ChartProvenanceStrategy:     commonCmdData.ChartProvenanceStrategy,
 		ChartRepoSkipUpdate:         commonCmdData.ChartRepoSkipUpdate,
+		DefaultDeletePropagation:    commonCmdData.DefaultDeletePropagation,
 		DiffContextLines:            cmdData.DiffContextLines,
 		ErrorIfChangesPlanned:       cmdData.DetailedExitCode,
 		ExtraAnnotations:            extraAnnotations,

@@ -293,6 +293,10 @@ func SetupReleaseInfoAnnotations(cmdData *CmdData, cmd *cobra.Command) {
 	}
 }
 
+func SetupDefaultDeletePropagation(cmdData *CmdData, cmd *cobra.Command) {
+	cmd.Flags().StringVarP(&cmdData.DefaultDeletePropagation, "delete-propagation", "", os.Getenv("WERF_DELETE_PROPAGATION"), fmt.Sprintf("Set default delete propagation strategy (default $WERF_DELETE_PROPAGATION or %s).", common.DefaultDeletePropagation))
+}
+
 func SetupExtraAPIVersions(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringSliceVarP(&cmdData.ExtraAPIVersions, "extra-apiversions", "", []string{}, "Extra Kubernetes API versions passed to $.Capabilities.APIVersions. Can be also set with $WERF_EXTRA_APIVERSIONS_* environment variables, values can be comma-separated")
 }
@@ -736,6 +740,17 @@ STAGE_NAME should be one of the following: `+strings.Join(allStagesNames(), ", "
 func SetupRequireBuiltImages(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.RequireBuiltImages = new(bool)
 	cmd.Flags().BoolVarP(cmdData.RequireBuiltImages, "require-built-images", "Z", util.GetBoolEnvironmentDefaultFalse("WERF_REQUIRE_BUILT_IMAGES"), "Requires all used images to be previously built and exist in repo. Exits with error if needed images are not cached and so require to run build instructions (default $WERF_REQUIRE_BUILT_IMAGES)")
+}
+
+func SetupCheckBuiltImages(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.CheckBuiltImages = new(bool)
+	cmd.Flags().BoolVarP(cmdData.CheckBuiltImages, "check-built-images", "", util.GetBoolEnvironmentDefaultFalse("WERF_CHECK_BUILT_IMAGES"), "Check that all used images are previously built and exist in repo. Exits with error if needed images are not cached and so require to run build instructions (default $WERF_CHECK_BUILT_IMAGES)")
+
+	cmdData.LegacyCheckBuiltImages = new(bool)
+	cmd.Flags().BoolVarP(cmdData.LegacyCheckBuiltImages, "require-built-images", "Z", false, "Check that all used images are previously built and exist in repo. Exits with error if needed images are not cached and so require to run build instructions")
+	if err := cmd.Flags().MarkHidden("require-built-images"); err != nil {
+		panic(err)
+	}
 }
 
 func SetupStubTags(cmdData *CmdData, cmd *cobra.Command) {

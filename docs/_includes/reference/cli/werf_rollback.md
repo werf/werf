@@ -46,6 +46,9 @@ werf rollback --revision 10
       --config-templates-dir=""
             Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf   
             in working directory)
+      --delete-propagation=""
+            Set default delete propagation strategy (default $WERF_DELETE_PROPAGATION or            
+            Foreground).
       --dev=false
             Enable development mode (default $WERF_DEV).
             The mode allows working with project files without doing redundant commits during       
