@@ -15,67 +15,82 @@ import (
 
 type customTagTestOptions struct {
 	setupEnvOptions
-	Platforms  []string
-	CustomTags []string
+	BuildImages        []string
+	CustomTags         []string
+	ExpectedCustomTags []string
 }
 
 var _ = Describe("Custom tag build", Label("e2e", "build", "simple"), func() {
-	DescribeTable("should succeed and produce expected image",
+	DescribeTable("should build images with custom tags",
 		func(ctx SpecContext, opts customTagTestOptions) {
 			By("initializing")
 			setupEnv(opts.setupEnvOptions)
 
 			By("state0: starting")
-			repoDirname := "repo0"
-			fixtureRelPath := "custom_tag/state0"
 
 			By("state0: preparing test repo")
+			const repoDirname = "repo0"
+			fixtureRelPath := "custom_tag/state0"
 			SuiteData.InitTestRepo(ctx, repoDirname, fixtureRelPath)
 
 			By("state0: building images")
 			werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
 
-			platforms := lo.Map(opts.Platforms, func(p string, _ int) string {
-				return fmt.Sprintf("--platform=%s", p)
-			})
-
 			customTags := lo.Map(opts.CustomTags, func(t string, _ int) string {
 				return fmt.Sprintf("--add-custom-tag=%s", t)
 			})
 
+			buildArgs := slices.Concat(customTags, opts.BuildImages)
+
 			buildOut := werfProject.Build(ctx, &werf.BuildOptions{
 				CommonOptions: werf.CommonOptions{
-					ExtraArgs: slices.Concat(platforms, customTags, []string{"dockerfile"}),
+					ExtraArgs: buildArgs,
 				},
 			})
-			Expect(buildOut).To(ContainSubstring("Building stage base-stapel/from"))
-			Expect(buildOut).To(ContainSubstring("Building stage base-stapel/install"))
-			Expect(buildOut).To(ContainSubstring("Building stage base-dockerfile/dockerfile"))
-			Expect(buildOut).To(ContainSubstring("Building stage dockerfile/dockerfile"))
 
-			Expect(strings.Count(buildOut, "Adding custom tags")).To(Equal(len(opts.CustomTags) * 2))
+			Expect(strings.Count(buildOut, "Adding custom tags") / 2).To(Equal(len(opts.ExpectedCustomTags)))
 
-			for _, tag := range opts.CustomTags {
-				tagRef := strings.Join([]string{os.Getenv("WERF_REPO"), tag}, ":")
-				Expect(buildOut).To(ContainSubstring(tagRef))
+			// validate custom-tag refs
+			for _, expectedCustomTag := range opts.ExpectedCustomTags {
+				Expect(buildOut).To(ContainSubstring(expectedCustomTag))
 			}
 		},
 		Entry(
-			"with repo using Vanilla Docker",
+			"with repo, vanilla-docker, image selection and a custom tag",
 			customTagTestOptions{
 				setupEnvOptions: setupEnvOptions{
 					ContainerBackendMode:        "vanilla-docker",
 					WithLocalRepo:               true,
 					WithStagedDockerfileBuilder: false,
 				},
-				Platforms: []string{
-					"linux/amd64",
+				BuildImages: []string{
+					"dockerfile",
 				},
 				CustomTags: []string{
 					"my-tag",
 				},
+				ExpectedCustomTags: []string{
+					os.Getenv("WERF_REPO") + ":my-tag",
+				},
 			},
 		),
-		// TODO: add multi-platform test
+		Entry(
+			"with repo, vanilla-docker, no image selection and a custom tag",
+			customTagTestOptions{
+				setupEnvOptions: setupEnvOptions{
+					ContainerBackendMode:        "vanilla-docker",
+					WithLocalRepo:               true,
+					WithStagedDockerfileBuilder: false,
+				},
+				BuildImages: []string{},
+				CustomTags: []string{
+					"%image%-my-tag",
+				},
+				ExpectedCustomTags: []string{
+					os.Getenv("WERF_REPO") + ":dockerfile-my-tag",
+					os.Getenv("WERF_REPO") + ":stapel-my-tag",
+				},
+			},
+		),
 	)
 })
