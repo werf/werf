@@ -31,6 +31,16 @@ werf stages copy [options]
       --all=true
             Copy all project stages (default: true). Use --all=false to copy stages for current     
             build only. Note: this flag is ignored when copying from archive to container registry.
+      --allow-includes-update=false
+            Allow use includes latest versions (default $WERF_ALLOW_INCLUDES_UPDATE or false)
+      --backend-storage-path=""
+            Use specified path to the local backend (Docker or Buildah) storage to check backend    
+            storage volume usage while performing garbage collection of local backend images        
+            (detect local backend storage path by default or use $WERF_BACKEND_STORAGE_PATH)
+      --build-report-path=""
+            Change build report path and format (by default $WERF_BUILD_REPORT_PATH or              
+            ".werf-build-report.json" if not set). Extension must be either .json for JSON format   
+            or .env for env-file format. If extension not specified, then .json is used
       --cache-repo=[]
             Specify one or multiple cache repos with images that will be used as a cache. Cache     
             will be populated when pushing newly built images into the primary repo and when        
@@ -41,11 +51,15 @@ werf stages copy [options]
       --config=""
             Use custom configuration file (default $WERF_CONFIG or werf.yaml in the project         
             directory)
+      --config-render-path=""
+            Custom path for storing rendered configuration file
       --config-templates-dir=""
             Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf   
             in working directory)
       --container-registry-mirror=[]
             (Buildah-only) Use specified mirrors for docker.io
+      --debug-templates=false
+            Enable debug mode for Go templates (default $WERF_DEBUG_TEMPLATES or false)
       --dev=false
             Enable development mode (default $WERF_DEV).
             The mode allows working with project files without doing redundant commits during       
@@ -103,6 +117,27 @@ werf stages copy [options]
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --insecure-registry=false
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
+      --introspect-before-error=false
+            Introspect failed stage in the clean state, before running all assembly instructions of 
+            the stage
+      --introspect-error=false
+            Introspect failed stage in the state, right after running failed assembly instruction
+      --introspect-stage=[]
+            Introspect a specific stage. The option can be used multiple times to introspect        
+            several stages.
+            
+            There are the following formats to use:
+            * specify IMAGE_NAME/STAGE_NAME to introspect stage STAGE_NAME of either image or       
+            artifact IMAGE_NAME
+            * specify STAGE_NAME or */STAGE_NAME for the introspection of all existing stages with  
+            name STAGE_NAME
+            
+            IMAGE_NAME is the name of an image or artifact described in werf.yaml, the nameless     
+            image specified with ~.
+            STAGE_NAME should be one of the following: from, beforeInstall,                         
+            dependenciesBeforeInstall, gitArchive, install, dependenciesAfterInstall, beforeSetup,  
+            dependenciesBeforeSetup, setup, dependenciesAfterSetup, gitCache, gitLatestPatch,       
+            dockerInstructions, dockerfile, imageSpec
       --log-color-mode="auto"
             Set log color mode.
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
@@ -161,6 +196,9 @@ werf stages copy [options]
             repo Harbor username (default $WERF_REPO_HARBOR_USERNAME)
       --repo-quay-token=""
             repo quay.io token (default $WERF_REPO_QUAY_TOKEN)
+      --save-build-report=false
+            Save build report (by default $WERF_SAVE_BUILD_REPORT or false). Its path and format    
+            configured with --build-report-path
       --secondary-repo=[]
             Specify one or multiple secondary read-only repos with images that will be used as a    
             cache.

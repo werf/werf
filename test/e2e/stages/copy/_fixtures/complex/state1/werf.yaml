@@ -8,7 +8,7 @@ import:
   - image: artifact
     add: /artifact
     to: /artifact
-    before: setup
+    after: setup
 
 ---
 image: artifact

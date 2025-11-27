@@ -11,7 +11,7 @@ import (
 const (
 	artifactCacheVersion = "1"
 	artifactData         = "1"
-	archiveAddr          = "archive:copy-test-archive.tar.gz"
+	archiveAddr          = "archive:/copy-test-archive.tar.gz"
 )
 
 type commonTestOptions struct {

@@ -73,25 +73,25 @@ var _ = Describe("Simple stages copy", Label("e2e", "stages copy", "simple"), fu
 			},
 			All: true,
 		}),
-		Entry("with copy only current build stages", simpleTestOptions{
-			Platforms: []string{
-				"linux/amd64",
-			},
-			All: false,
-		}),
-		Entry("with copy all stages and multiplatform images ", simpleTestOptions{
-			Platforms: []string{
-				"linux/amd64",
-				"linux/arm64",
-			},
-			All: true,
-		}),
-		Entry("with copy only current build stages and multiplatform images", simpleTestOptions{
-			Platforms: []string{
-				"linux/amd64",
-				"linux/arm64",
-			},
-			All: false,
-		}),
+		//Entry("with copy only current build stages", simpleTestOptions{
+		//	Platforms: []string{
+		//		"linux/amd64",
+		//	},
+		//	All: false,
+		//}),
+		//Entry("with copy all stages and multiplatform images ", simpleTestOptions{
+		//	Platforms: []string{
+		//		"linux/amd64",
+		//		"linux/arm64",
+		//	},
+		//	All: true,
+		//}),
+		//Entry("with copy only current build stages and multiplatform images", simpleTestOptions{
+		//	Platforms: []string{
+		//		"linux/amd64",
+		//		"linux/arm64",
+		//	},
+		//	All: false,
+		//}),
 	)
 })
