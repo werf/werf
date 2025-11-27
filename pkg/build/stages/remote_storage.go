@@ -50,7 +50,7 @@ func (s *RemoteStorage) copyCurrentBuildStagesFromRemote(ctx context.Context, fr
 			return err
 		}
 
-		infoGetters, err := c.GetImageInfoGetters(image.InfoGetterOptions{OnlyFinal: false})
+		infoGetters, err := c.GetImageInfoGettersWithOpts(image.InfoGetterOptions{OnlyFinal: false})
 		if err != nil {
 			return err
 		}

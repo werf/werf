@@ -68,6 +68,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupDir(&commonCmdData, cmd)
 	common.SetupGitWorkTree(&commonCmdData, cmd)
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
+	common.SetupConfigRenderPath(&commonCmdData, cmd)
 	common.SetupConfigPath(&commonCmdData, cmd)
 
 	common.SetupEnvironment(&commonCmdData, cmd)
@@ -88,14 +89,29 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
 
+	common.SetupIntrospectAfterError(&commonCmdData, cmd)
+	common.SetupIntrospectBeforeError(&commonCmdData, cmd)
+	common.SetupIntrospectStage(&commonCmdData, cmd)
+
+	common.SetupSaveBuildReport(&commonCmdData, cmd)
+	common.SetupBuildReportPath(&commonCmdData, cmd)
+
 	common.SetupSynchronization(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
+	common.SetupProjectName(&commonCmdData, cmd, false)
+	common.SetupBackendStoragePath(&commonCmdData, cmd)
+
 	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultBuildParallelTasksLimit)
 
 	commonCmdData.SetupFinalImagesOnly(cmd, false)
+	commonCmdData.SetupAllowIncludesUpdate(cmd)
+
+	commonCmdData.SetupSkipImageSpecStage(cmd)
+	commonCmdData.SetupDebugTemplates(cmd)
+
 	commonCmdData.SetupPlatform(cmd)
 
 	setupCopyOptions(&cmdData, cmd)
@@ -129,7 +145,7 @@ func runCopy(ctx context.Context, cmdData copyCmdData) error {
 	if err != nil {
 		return err
 	}
-	_, werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, config.WerfConfigOptions{LogRenderedFilePath: true, Env: commonCmdData.Environment})
+	_, werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %w", err)
 	}

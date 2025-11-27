@@ -13,14 +13,11 @@ import (
 )
 
 type ArchiveStorageWriter interface {
-	Open() error
-	Save() error
 	WriteStageArchive(stageTag string, data []byte) error
-
 	WithTask(task func(ArchiveStorageWriter) error) error
 }
 
-type ArchiveStorageFileWriteCloser struct {
+type ArchiveStorageFileWriter struct {
 	Path string
 
 	tmpArchivePath   string
@@ -28,13 +25,13 @@ type ArchiveStorageFileWriteCloser struct {
 	tmpArchiveCloser func() error
 }
 
-func NewArchiveStorageFileWriter(path string) *ArchiveStorageFileWriteCloser {
-	return &ArchiveStorageFileWriteCloser{
+func NewArchiveStorageFileWriter(path string) *ArchiveStorageFileWriter {
+	return &ArchiveStorageFileWriter{
 		Path: path,
 	}
 }
 
-func (writer *ArchiveStorageFileWriteCloser) Open() error {
+func (writer *ArchiveStorageFileWriter) open() error {
 	p := fmt.Sprintf("%s.%s.tmp", writer.Path, uuid.New().String())
 
 	f, err := os.Create(p)
@@ -78,7 +75,7 @@ func (writer *ArchiveStorageFileWriteCloser) Open() error {
 	return nil
 }
 
-func (writer *ArchiveStorageFileWriteCloser) Save() error {
+func (writer *ArchiveStorageFileWriter) save() error {
 	if writer.tmpArchiveWriter == nil {
 		return fmt.Errorf("stage archive %q is not opened", writer.Path)
 	}
@@ -98,7 +95,7 @@ func (writer *ArchiveStorageFileWriteCloser) Save() error {
 	return nil
 }
 
-func (writer *ArchiveStorageFileWriteCloser) WriteStageArchive(tag string, data []byte) error {
+func (writer *ArchiveStorageFileWriter) WriteStageArchive(tag string, data []byte) error {
 	now := time.Now()
 	buf := bytes.NewBuffer(nil)
 	zipper := gzip.NewWriter(buf)
@@ -134,15 +131,15 @@ func (writer *ArchiveStorageFileWriteCloser) WriteStageArchive(tag string, data 
 	return nil
 }
 
-func (writer *ArchiveStorageFileWriteCloser) Close() error {
+func (writer *ArchiveStorageFileWriter) Close() error {
 	if writer.tmpArchiveCloser != nil {
 		return writer.tmpArchiveCloser()
 	}
 	return nil
 }
 
-func (writer *ArchiveStorageFileWriteCloser) WithTask(task func(ArchiveStorageWriter) error) error {
-	if err := writer.Open(); err != nil {
+func (writer *ArchiveStorageFileWriter) WithTask(task func(ArchiveStorageWriter) error) error {
+	if err := writer.open(); err != nil {
 		return fmt.Errorf("unable to open target stages archive: %w", err)
 	}
 
@@ -163,7 +160,7 @@ func (writer *ArchiveStorageFileWriteCloser) WithTask(task func(ArchiveStorageWr
 		return err
 	}
 
-	if err := writer.Save(); err != nil {
+	if err := writer.save(); err != nil {
 		return fmt.Errorf("error saving destination bundle archive: %w", err)
 	}
 

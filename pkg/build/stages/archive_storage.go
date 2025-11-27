@@ -95,7 +95,7 @@ func (s *ArchiveStorage) copyCurrentBuildFromRemote(ctx context.Context, fromRem
 				return err
 			}
 
-			infoGetters, err := c.GetImageInfoGetters(image.InfoGetterOptions{OnlyFinal: false})
+			infoGetters, err := c.GetImageInfoGettersWithOpts(image.InfoGetterOptions{OnlyFinal: false})
 			if err != nil {
 				return err
 			}
@@ -112,10 +112,6 @@ func (s *ArchiveStorage) copyCurrentBuildFromRemote(ctx context.Context, fromRem
 				if err := s.Writer.WriteStageArchive(infoGetter.Tag, stageBytes.Bytes()); err != nil {
 					return fmt.Errorf("error writing image %q into bundle archive: %w", infoGetter.GetName(), err)
 				}
-			}
-
-			if err := s.Writer.Save(); err != nil {
-				return fmt.Errorf("error saving destination bundle archive: %w", err)
 			}
 
 			return nil

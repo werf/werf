@@ -67,7 +67,6 @@ func (reader *ArchiveStorageFileReader) ReadArchiveStage(stageTag string) (*Arch
 	if err != nil {
 		return nil, fmt.Errorf("unable to open stages archive: %w", err)
 	}
-	defer closer()
 
 	for {
 		header, err := treader.Next()
