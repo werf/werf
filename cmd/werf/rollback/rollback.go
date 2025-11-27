@@ -81,6 +81,7 @@ werf rollback --revision 10`,
 
 	common.SetupAddAnnotations(&commonCmdData, cmd)
 	common.SetupAddLabels(&commonCmdData, cmd)
+	common.SetupDefaultDeletePropagation(&commonCmdData, cmd)
 	common.SetupExtraRuntimeAnnotations(&commonCmdData, cmd)
 	common.SetupExtraRuntimeLabels(&commonCmdData, cmd)
 	common.SetupForceAdoption(&commonCmdData, cmd)
@@ -175,6 +176,7 @@ func run(ctx context.Context) error {
 	})
 
 	if err := action.ReleaseRollback(ctx, releaseName, releaseNamespace, action.ReleaseRollbackOptions{
+		DefaultDeletePropagation:    commonCmdData.DefaultDeletePropagation,
 		ExtraRuntimeAnnotations:     extraRuntimeAnnotations,
 		ExtraRuntimeLabels:          extraRuntimeLabels,
 		ForceAdoption:               commonCmdData.ForceAdoption,

@@ -62,6 +62,9 @@ werf lint [IMAGE_NAME...] [options]
             (Buildah-only) Use specified mirrors for docker.io
       --debug-templates=false
             Enable debug mode for Go templates (default $WERF_DEBUG_TEMPLATES or false)
+      --delete-propagation=""
+            Set default delete propagation strategy (default $WERF_DELETE_PROPAGATION or            
+            Foreground).
       --dev=false
             Enable development mode (default $WERF_DEV).
             The mode allows working with project files without doing redundant commits during       
