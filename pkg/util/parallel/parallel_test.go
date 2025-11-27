@@ -26,9 +26,9 @@ var _ = DescribeTable("parallel task",
 		spyTask *spyTaskFunc,
 		expectedCallsCount int,
 		expectedErrMatcher types.GomegaMatcher,
-		expectedOutputLines []string,
+		expectedOutputLinesMatcher types.GomegaMatcher,
 	) {
-		output := newSpyOutput(len(expectedOutputLines))
+		output := newSpyOutput(numberOfTasks)
 		ctx = logboek.NewContext(ctx, logboek.NewLogger(output, output))
 
 		if parallelExecutionLimit > 0 {
@@ -44,7 +44,7 @@ var _ = DescribeTable("parallel task",
 
 		Expect(spyTask.Count()).To(Equal(expectedCallsCount))
 		Expect(err).To(expectedErrMatcher)
-		Expect(output.Lines()).To(HaveExactElements(expectedOutputLines))
+		Expect(output.Lines()).To(expectedOutputLinesMatcher)
 	},
 	Entry(
 		"should do nothing if num_of_tasks=0",
@@ -56,7 +56,7 @@ var _ = DescribeTable("parallel task",
 		}),
 		0,
 		Succeed(),
-		[]string{},
+		HaveExactElements([]string{}),
 	),
 	Entry(
 		"should print log concurrently while long task execution",
@@ -85,43 +85,112 @@ var _ = DescribeTable("parallel task",
 		}),
 		4,
 		Succeed(),
-		[]string{
-			"one\n",
-			"two\n",
-			"\nthree\nfour\n",
-			"five\n",
-		},
+		Or(
+			HaveExactElements([]string{
+				"one\n",
+				"two\n",
+				"\nthree\nfour\n",
+				"five\n",
+			}),
+			HaveExactElements([]string{
+				"one\n",
+				"two\n", "\nthree\n",
+				"four\n",
+				"five\n",
+			}),
+		),
 	),
 	Entry(
-		"should handle error from one of workers (fail fast) and stop execution via context cancellation for another workers",
+		"should handle error from one of workers (fail fast), "+
+			"stop execution via context cancellation for other workers, "+
+			"move failed background worker in the end of the printing queue (highlighted), "+
+			"resume printing logs starting from non-failed foreground worker up to the last worker in the printing queue: "+
+			"[0 {non-failed,foreground,paused,resumed}, 3, 2, 1 {failed,background,highlighted}]",
 		time.Duration(0),
-		2,
+		4,
 		parallel.DoTasksOptions{
-			MaxNumberOfWorkers: 2,
+			MaxNumberOfWorkers: 4,
 		},
 		newSpyTask(func(ctx context.Context, taskId int) error {
 			switch taskId {
 			case 0:
-				logboek.Context(ctx).LogLn("workers[0], task[0]: workers is active and it prints its log")
+				logboek.Context(ctx).LogF("workers[%[1]d], task[%[1]d]: is a foreground non-failed worker (1/2)\n", taskId)
 				<-ctx.Done()
 				Expect(ctx.Err()).To(MatchError(context.Canceled))
-				logboek.Context(ctx).LogLn("workers[0], task[0]: worker is still active and it finishes printing its log")
+				logboek.Context(ctx).LogF("workers[%[1]d], task[%[1]d]: is a foreground non-failed worker (2/2)\n", taskId)
 				return nil
 			case 1:
-				time.Sleep(150 * time.Millisecond)
-				logboek.Context(ctx).LogLn("workers[1]: task[1]: worker was non-active and it was failed, because of that workers' log will be printed in the end")
+				time.Sleep(50 * time.Millisecond)
+				logboek.Context(ctx).LogF("workers[%[1]d], task[%[1]d]: is a background failed worker (1/1)\n", taskId)
 				return errors.New("task 1 failed")
+			case 2:
+				time.Sleep(110 * time.Millisecond)
+				logboek.Context(ctx).LogF("workers[%[1]d], task[%[1]d]: is a background non-failed worker (1/1)\n", taskId)
+				return nil
+			case 3:
+				time.Sleep(210 * time.Millisecond)
+				logboek.Context(ctx).LogF("workers[%[1]d], task[%[1]d]: is a background non-failed worker (1/1)\n", taskId)
+				return nil
 			default:
 				panic(fmt.Sprintf("unexpected taskId: %d", taskId))
 			}
 		}),
-		2,
+		4,
 		MatchError("task 1 failed"),
-		[]string{
-			"workers[0], task[0]: workers is active and it prints its log\n",
-			"workers[0], task[0]: worker is still active and it finishes printing its log\n",
-			"\nworkers[1]: task[1]: worker was non-active and it was failed, because of that workers' log will be printed in the end\n",
+		Or(
+			HaveExactElements([]string{
+				"workers[0], task[0]: is a foreground non-failed worker (1/2)\nworkers[0], task[0]: is a foreground non-failed worker (2/2)\n",
+				"\nworkers[3], task[3]: is a background non-failed worker (1/1)\n",
+				"\nworkers[2], task[2]: is a background non-failed worker (1/1)\n",
+				"\nworkers[1], task[1]: is a background failed worker (1/1)\n",
+			}),
+			HaveExactElements([]string{
+				"workers[0], task[0]: is a foreground non-failed worker (1/2)\n",
+				"workers[0], task[0]: is a foreground non-failed worker (2/2)\n",
+				"\nworkers[3], task[3]: is a background non-failed worker (1/1)\n",
+				"\nworkers[2], task[2]: is a background non-failed worker (1/1)\n",
+				"\nworkers[1], task[1]: is a background failed worker (1/1)\n",
+			}),
+		),
+	),
+	Entry(
+		"should handle error from one of workers (fail fast), "+
+			"stop execution via context cancellation for other workers, "+
+			"resume printing logs of failed foreground worker (highlighted) "+
+			"and discard logs from other workers: "+
+			"[0 {failed,foreground,paused,resumed,highlighted}, 1 {discarded}, 2 {discarded}, 3 {discarded}]",
+		time.Duration(0),
+		4,
+		parallel.DoTasksOptions{
+			MaxNumberOfWorkers: 4,
 		},
+		newSpyTask(func(ctx context.Context, taskId int) error {
+			switch taskId {
+			case 0:
+				logboek.Context(ctx).LogF("workers[%[1]d], task[%[1]d]: is a foreground failed worker (1/1)\n", taskId)
+				time.Sleep(110 * time.Millisecond)
+				return errors.New("task 0 failed")
+			case 1:
+				time.Sleep(50 * time.Millisecond)
+				logboek.Context(ctx).LogF("workers[%[1]d], task[%[1]d]: is a background non-failed worker (1/1)\n", taskId)
+				return nil
+			case 2:
+				time.Sleep(110 * time.Millisecond)
+				logboek.Context(ctx).LogF("workers[%[1]d], task[%[1]d]: is a background non-failed worker (1/1)\n", taskId)
+				return nil
+			case 3:
+				time.Sleep(210 * time.Millisecond)
+				logboek.Context(ctx).LogF("workers[%[1]d], task[%[1]d]: is a background non-failed worker (1/1)\n", taskId)
+				return nil
+			default:
+				panic(fmt.Sprintf("unexpected taskId: %d", taskId))
+			}
+		}),
+		4,
+		MatchError("task 0 failed"),
+		HaveExactElements([]string{
+			"workers[0], task[0]: is a foreground failed worker (1/1)\n",
+		}),
 	),
 	Entry(
 		"should cancel execution via context cancellation for all workers",
@@ -154,10 +223,66 @@ var _ = DescribeTable("parallel task",
 		}),
 		2,
 		MatchError(context.DeadlineExceeded),
-		[]string{
+		HaveExactElements([]string{
 			"task[0]: canceled\n",
 			"\ntask[2]: canceled\n",
+		}),
+	),
+	Entry(
+		"should work with 1 worker per 2 tasks where 1-st task is failed",
+		time.Duration(0),
+		2,
+		parallel.DoTasksOptions{
+			MaxNumberOfWorkers: 1,
 		},
+		newSpyTask(func(ctx context.Context, taskId int) error {
+			switch taskId {
+			case 0:
+				logboek.Context(ctx).LogF("workers[0], task[%[1]d]: is a foreground failed worker (1/2)\n", taskId)
+				time.Sleep(110 * time.Millisecond)
+				return errors.New("task 0 failed")
+			case 1:
+				time.Sleep(210 * time.Millisecond)
+				logboek.Context(ctx).LogF("workers[0], task[%[1]d]: is a foreground failed worker (2/2)\n", taskId)
+				return nil
+			default:
+				panic(fmt.Sprintf("unexpected taskId: %d", taskId))
+			}
+		}),
+		1,
+		MatchError("task 0 failed"),
+		HaveExactElements([]string{
+			"workers[0], task[0]: is a foreground failed worker (1/2)\n",
+		}),
+	),
+	Entry(
+		"should work with 1 worker per 2 tasks where 1-st task is canceled",
+		150*time.Millisecond,
+		2,
+		parallel.DoTasksOptions{
+			MaxNumberOfWorkers: 1,
+		},
+		newSpyTask(func(ctx context.Context, taskId int) error {
+			switch taskId {
+			case 0:
+				logboek.Context(ctx).LogF("workers[0], task[%[1]d]: is a foreground non-failed worker (1/3)\n", taskId)
+				<-ctx.Done()
+				Expect(ctx.Err()).To(MatchError(context.DeadlineExceeded))
+				logboek.Context(ctx).LogF("workers[0], task[%[1]d]: is a foreground non-failed worker (2/3)\n", taskId)
+				return nil
+			case 1:
+				logboek.Context(ctx).LogF("workers[0], task[%[1]d]: is a foreground non-failed worker (3/3)\n", taskId)
+				return nil
+			default:
+				panic(fmt.Sprintf("unexpected taskId: %d", taskId))
+			}
+		}),
+		1,
+		MatchError(context.DeadlineExceeded),
+		HaveExactElements([]string{
+			"workers[0], task[0]: is a foreground non-failed worker (1/3)\n",
+			"workers[0], task[0]: is a foreground non-failed worker (2/3)\n",
+		}),
 	),
 )
 
