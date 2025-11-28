@@ -100,6 +100,11 @@ cli: &cli
           - title: werf includes update
             url: /reference/cli/werf_includes_update.html
 
+      - title: werf stages
+        f:
+          - title: werf stages copy
+            url: /reference/cli/werf_stages_copy.html
+
   - title: Low-level management commands
     f:
       - title: werf config

@@ -7,6 +7,7 @@ import (
 	"github.com/werf/3p-helm/pkg/chart"
 	"github.com/werf/3p-helm/pkg/werf/helmopts"
 	"github.com/werf/werf/v2/pkg/docker_registry"
+	"github.com/werf/werf/v2/pkg/ref"
 )
 
 type copyToOptions struct {
@@ -29,7 +30,7 @@ type BundleAccessorOptions struct {
 	RegistryClient        docker_registry.Interface
 }
 
-func NewBundleAccessor(addr *Addr, opts BundleAccessorOptions) BundleAccessor {
+func NewBundleAccessor(addr *ref.Addr, opts BundleAccessorOptions) BundleAccessor {
 	switch {
 	case addr.RegistryAddress != nil:
 		return NewRemoteBundle(addr.RegistryAddress, opts.BundlesRegistryClient, opts.RegistryClient)
