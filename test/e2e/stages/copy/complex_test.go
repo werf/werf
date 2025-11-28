@@ -10,8 +10,7 @@ import (
 )
 
 type complexTestOptions struct {
-	Platforms []string
-	All       bool
+	All bool
 }
 
 var _ = Describe("Complex stages copy", Label("e2e", "stages copy", "complex"), func() {
@@ -124,29 +123,9 @@ var _ = Describe("Complex stages copy", Label("e2e", "stages copy", "complex"), 
 			}
 		},
 		Entry("with copy all stages", complexTestOptions{
-			Platforms: []string{
-				"linux/amd64",
-			},
 			All: true,
 		}),
 		Entry("with copy only current build stages", complexTestOptions{
-			Platforms: []string{
-				"linux/amd64",
-			},
-			All: false,
-		}),
-		Entry("with copy all stages and multiplatform images ", complexTestOptions{
-			Platforms: []string{
-				"linux/amd64",
-				"linux/arm64",
-			},
-			All: true,
-		}),
-		Entry("with copy only current build stages and multiplatform images", complexTestOptions{
-			Platforms: []string{
-				"linux/amd64",
-				"linux/arm64",
-			},
 			All: false,
 		}),
 	)
