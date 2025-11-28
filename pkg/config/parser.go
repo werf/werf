@@ -582,8 +582,8 @@ func (f files) doGlob(ctx context.Context, pattern string) (map[string]interface
 		return nil, err
 	}
 
-	if len(res) == 0 {
-		return nil, fmt.Errorf("{{ .Files.Glob %q }}: no matches found", pattern)
+	if res == nil {
+		res = map[string]interface{}{}
 	}
 
 	return res, nil
