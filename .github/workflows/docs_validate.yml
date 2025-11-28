@@ -25,10 +25,8 @@ concurrency:
 
 env:
   DEBIAN_FRONTEND: "noninteractive"
-  GOPATH: ${{ github.workspace }}/go
   TASK_X_REMOTE_TASKFILES: 1
   # TODO: remove after implementing `werf ci-env --disable-docker-config-copy`
-  WERF_DOCKER_CONFIG: ${{ runner.temp }}/werf-docker-config-${{ github.run_id }}
 
 jobs:
   doc_unit:
@@ -58,13 +56,13 @@ jobs:
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ secrets.SERVICE_ACCOUNT }}
+          password: ${{ secrets.SERVICE_ACCOUNT_TOKEN }}
 
       - name: Check links
         run: task --yes -o group -p doc:check-broken-links
         env:
-          WERF_REPO: "ghcr.io/${{ github.repository_owner }}/werfio"
+          WERF_REPO: "ghcr.io/werf/werfio"
 
   notify:
     if: |
