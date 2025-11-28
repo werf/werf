@@ -333,6 +333,85 @@ var _ = Describe("file lifecycle", func() {
 						}))
 				})
 			})
+			When("file is renamed (old → new) without modification"+extraDescription, func() {
+				type renameEntry struct {
+					oldPath string
+					newPath string
+					devMode bool
+				}
+
+				renameEntryItBody := func(ctx SpecContext, e renameEntry) {
+					// 1. Создаём и коммитим старый файл
+					createFileFunc(ctx, e.oldPath, []byte("initial"), gitOrdinaryFilePerm)
+					addAndCommitFile(ctx, SuiteData.TestDirPath, e.oldPath, "add old file")
+
+					// 2. Первичная сборка
+					utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
+
+					// 3. OS-level rename old → new
+					Expect(os.MkdirAll(filepath.Dir(filepath.Join(SuiteData.TestDirPath, e.newPath)), 0o755)).
+						To(Succeed())
+
+					Expect(os.Rename(
+						filepath.Join(SuiteData.TestDirPath, e.oldPath),
+						filepath.Join(SuiteData.TestDirPath, e.newPath),
+					)).To(Succeed())
+
+					// 4. Git rename (canonical)
+					if e.devMode {
+						SuiteData.Stubs.SetEnv("WERF_DEV", "1")
+						addFile(ctx, SuiteData.TestDirPath, e.newPath)
+						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "update-index", "--force-remove", e.oldPath)
+					} else {
+						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "add", e.newPath)
+						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "rm", "--cached", e.oldPath)
+						addAndCommitFile(ctx, SuiteData.TestDirPath, ".", "rename test")
+					}
+
+					// 5. Второй build (проверяем rename)
+					utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
+
+					// 6. Проверки (через контейнер)
+					cmd := []string{
+						// Старый файл НЕ должен существовать
+						docker.CheckContainerFileCommand(
+							path.Join(gitToPath, e.oldPath), false, false,
+						),
+
+						// Новый файл ДОЛЖЕН существовать
+						docker.CheckContainerFileCommand(
+							path.Join(gitToPath, e.newPath), false, true,
+						),
+
+						// new.json в образе == new.json на хосте
+						fmt.Sprintf("diff %s %s",
+							shellescape.Quote(path.Join(gitToPath, e.newPath)),
+							shellescape.Quote(path.Join("/host", e.newPath)),
+						),
+					}
+
+					opts := []string{
+						fmt.Sprintf("-v %s:%s", SuiteData.TestDirPath, "/host"),
+					}
+
+					docker.RunSucceedContainerCommandWithStapel(
+						ctx,
+						SuiteData.WerfBinPath,
+						SuiteData.TestDirPath,
+						opts,
+						cmd,
+					)
+				}
+
+				DescribeTable("processing file rename (without modification)"+extraDescription,
+					renameEntryItBody,
+					Entry("rename old → new", renameEntry{
+						oldPath: "dir/old.json",
+						newPath: "dir/new.json",
+						devMode: devMode,
+					}),
+				)
+			})
 		})
 	}
 })
