@@ -13,6 +13,16 @@ type ImagesToProcess struct {
 	WithoutImages      bool
 }
 
+func (i ImagesToProcess) AutoNameList() []string {
+	if i.WithoutImages {
+		return []string{}
+	}
+	if len(i.FinalImageNameList) < len(i.ImageNameList) {
+		return i.FinalImageNameList
+	}
+	return i.ImageNameList
+}
+
 func parsePattern(pattern string) (include, exclude string, isExclusion bool, err error) {
 	if strings.Contains(pattern, "**") {
 		return "", "", false, fmt.Errorf("recursive glob (**) not supported")
