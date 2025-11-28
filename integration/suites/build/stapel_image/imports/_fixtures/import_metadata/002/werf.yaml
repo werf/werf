@@ -2,7 +2,7 @@ project: none
 configVersion: 1
 ---
 image: image
-from: alpine
+from: {{ env "BASE_REGISTRY" | default "registry.ci.werf.io/base" }}/alpine:latest
 shell:
   setup: date
 import:
@@ -13,7 +13,7 @@ import:
 ---
 image: artifact
 final: false
-from: alpine
+from: {{ env "BASE_REGISTRY" | default "registry.ci.werf.io/base" }}/alpine:latest
 fromCacheVersion: 2
 shell:
   install: echo "1" > /artifact

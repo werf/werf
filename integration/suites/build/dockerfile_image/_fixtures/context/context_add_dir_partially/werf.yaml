@@ -9,3 +9,5 @@ contextAddFiles:
   - test/dir/nestedDir/doubleNestedFile
   - test/dir/nestedFile
   - test/dir/nestedSymlink
+args:
+  BASE_REGISTRY: {{ env "BASE_REGISTRY" | default "registry.ci.werf.io/base" }}

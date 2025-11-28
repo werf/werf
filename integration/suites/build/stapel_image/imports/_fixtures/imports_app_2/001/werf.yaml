@@ -3,7 +3,7 @@ configVersion: 1
 ---
 image: artifact
 final: false
-from: ubuntu:18.04
+from: {{ env "BASE_REGISTRY" | default "registry.ci.werf.io/base" }}/ubuntu:18.04
 shell:
   setup:
     - mkdir -p /artifact/a/b/c
@@ -13,7 +13,7 @@ shell:
     - echo VERSION_1 > /artifact/a/b/c/not_added_file4
 ---
 image: app
-from: alpine
+from: {{ env "BASE_REGISTRY" | default "registry.ci.werf.io/base" }}/alpine:latest
 import:
   - image: artifact
     add: /artifact/a/b/c

@@ -1,2 +1,3 @@
-FROM ubuntu:latest
+ARG BASE_REGISTRY=registry.ci.werf.io/base
+FROM ${BASE_REGISTRY}/ubuntu:latest
 RUN echo building first

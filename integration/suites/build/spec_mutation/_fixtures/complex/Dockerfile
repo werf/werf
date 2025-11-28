@@ -1,4 +1,5 @@
-FROM scratch
+ARG BASE_REGISTRY=registry.ci.werf.io/base
+FROM ${BASE_REGISTRY}/scratch
 
 MAINTAINER name
 
@@ -13,7 +14,7 @@ ENV PATH=/usr/bin \
     LANG=en_US.utf8 \
     APP_ENV=test \
     APP_VERSION=0.0.1 \
-    HOME=/home/app \ 
+    HOME=/home/app \
     REMOVE=ME
 
 WORKDIR /home/app/scripts

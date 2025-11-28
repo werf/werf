@@ -3,7 +3,7 @@ configVersion: 1
 ---
 image: artifact
 final: false
-from: ubuntu:18.04
+from: {{ env "BASE_REGISTRY" | default "registry.ci.werf.io/base" }}/ubuntu:18.04
 shell:
   setup:
     - mkdir -p /app
@@ -11,7 +11,7 @@ shell:
     - ln -s /app/file /link_file
 ---
 image: app
-from: alpine
+from: {{ env "BASE_REGISTRY" | default "registry.ci.werf.io/base" }}/alpine:latest
 import:
   - image: artifact
     add: /link_file

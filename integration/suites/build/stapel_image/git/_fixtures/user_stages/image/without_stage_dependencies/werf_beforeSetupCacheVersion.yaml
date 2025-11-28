@@ -2,7 +2,7 @@ project: none
 configVersion: 1
 ---
 image: image
-from: ubuntu
+from: {{ env "BASE_REGISTRY" | default "registry.ci.werf.io/base" }}/ubuntu:latest
 git:
 - to: /app
 shell:

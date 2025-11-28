@@ -1,4 +1,5 @@
-FROM ubuntu:22.04
+ARG BASE_REGISTRY=registry.ci.werf.io/base
+FROM ${BASE_REGISTRY}/ubuntu:22.04
 
 RUN --mount=type=secret,id=ENV_SECRET \
     [ "$(cat /run/secrets/ENV_SECRET)" = "WERF_BUILD_SECRET" ] || (echo "Env does not match the expected value" && exit 1)

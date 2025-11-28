@@ -5,3 +5,5 @@ configVersion: 1
 image: ~
 dockerfile: Dockerfile
 contextAddFiles: test/dir
+args:
+  BASE_REGISTRY: {{ env "BASE_REGISTRY" | default "registry.ci.werf.io/base" }}

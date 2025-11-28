@@ -8,3 +8,5 @@ contextAddFiles:
   - test/file
   - test/symlink
   - test/brokenSymlink
+args:
+  BASE_REGISTRY: {{ env "BASE_REGISTRY" | default "registry.ci.werf.io/base" }}

@@ -6,3 +6,4 @@ image: neovim
 dockerfile: Dockerfile
 args:
   INVALIDATE_CACHES: "{{ uuidv4 }}"
+  BASE_REGISTRY: {{ env "BASE_REGISTRY" | default "registry.ci.werf.io/base" }}

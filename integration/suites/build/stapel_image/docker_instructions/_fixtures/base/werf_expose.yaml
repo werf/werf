@@ -2,7 +2,7 @@ project: none
 configVersion: 1
 ---
 image: ~
-from: alpine
+from: {{ env "BASE_REGISTRY" | default "registry.ci.werf.io/base" }}/alpine:latest
 docker:
   EXPOSE:
   - "80/udp"

@@ -3,3 +3,6 @@ config:
   dockerfile:
     allowContextAddFiles:
       - test/contextAddFile
+  goTemplateRendering:
+    allowEnvVariables:
+      - BASE_REGISTRY

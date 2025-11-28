@@ -78,6 +78,13 @@ jobs:
       - name: Setup environment
         run: task --yes test:setup:environment
 
+      - name: Login to registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY }}
+          username: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME }}
+          password: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD }}
+
       - name: Test
         run: |
           export WERF_TEST_K8S_DOCKER_REGISTRY="localhost:$(docker inspect kind-registry --format '{{(index (index .NetworkSettings.Ports "5000/tcp") 0).HostPort}}')"

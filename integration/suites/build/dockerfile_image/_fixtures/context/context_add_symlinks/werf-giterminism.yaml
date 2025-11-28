@@ -5,3 +5,6 @@ config:
       - test/file
       - test/symlink
       - test/brokenSymlink
+  goTemplateRendering:
+    allowEnvVariables:
+      - BASE_REGISTRY

@@ -6,5 +6,5 @@ fromImage: fromArtifact
 ---
 image: fromArtifact
 final: false
-from: alpine
+from: {{ env "BASE_REGISTRY" | default "registry.ci.werf.io/base" }}/alpine:latest
 fromCacheVersion: {{ env "FROM_CACHE_VERSION" }}

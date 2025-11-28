@@ -7,7 +7,7 @@ build:
     author: globalAuthor
     clearHistory: true
     config:
-      labels: 
+      labels:
         global_label: yes
       removeLabels:
         - remove_global_label
@@ -16,6 +16,8 @@ build:
 ---
 image: base
 dockerfile: Dockerfile
+args:
+  BASE_REGISTRY: {{ env "BASE_REGISTRY" | default "registry.ci.werf.io/base" }}
 ---
 image: basic-test
 fromImage: base
@@ -28,7 +30,7 @@ imageSpec:
     removeVolumes:
       - "/home/remove/me"
     env:
-      ADD: me 
+      ADD: me
       ADD_ANOTHER: me
       PATH: ${PATH}:/add/path
     removeEnv:

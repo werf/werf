@@ -1,0 +1,5 @@
+giterminismConfigVersion: 1
+config:
+  goTemplateRendering:
+    allowEnvVariables:
+      - BASE_REGISTRY

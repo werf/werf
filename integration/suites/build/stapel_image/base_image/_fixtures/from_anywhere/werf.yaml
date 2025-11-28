@@ -3,7 +3,7 @@ configVersion: 1
 
 ---
 image: FromExternalImage
-from: alpine
+from: {{ env "BASE_REGISTRY" | default "registry.ci.werf.io/base" }}/alpine:latest
 ---
 image: FromImage
 from: FromExternalImage

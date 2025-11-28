@@ -1,1 +1,2 @@
-FROM alpine
+ARG BASE_REGISTRY=registry.ci.werf.io/base
+FROM ${BASE_REGISTRY}/alpine:latest

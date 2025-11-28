@@ -4,7 +4,7 @@ cleanup:
   disableKubernetesBasedPolicy: true
 ---
 image: image
-from: alpine
+from: {{ env "BASE_REGISTRY" | default "registry.ci.werf.io/base" }}/alpine:latest
 fromCacheVersion: {{ env "FROM_CACHE_VERSION" }}
 shell:
   setup: date
@@ -16,7 +16,7 @@ import:
 ---
 image: artifact
 final: false
-from: alpine
+from: {{ env "BASE_REGISTRY" | default "registry.ci.werf.io/base" }}/alpine:latest
 fromCacheVersion: {{ env "FROM_CACHE_VERSION" }}
 shell:
   install: echo "123" > /artifact

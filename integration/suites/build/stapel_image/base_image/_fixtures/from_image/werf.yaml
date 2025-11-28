@@ -5,5 +5,5 @@ image: app
 fromImage: fromImage
 ---
 image: fromImage
-from: alpine
+from: {{ env "BASE_REGISTRY" | default "registry.ci.werf.io/base" }}/alpine:latest
 fromCacheVersion: {{ env "FROM_CACHE_VERSION" }}

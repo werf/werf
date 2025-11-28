@@ -4,7 +4,11 @@ configVersion: 1
 ---
 image: app1
 dockerfile: Dockerfile
+args:
+  BASE_REGISTRY: {{ env "BASE_REGISTRY" | default "registry.ci.werf.io/base" }}
 
 ---
 image: app2
 dockerfile: Dockerfile
+args:
+  BASE_REGISTRY: {{ env "BASE_REGISTRY" | default "registry.ci.werf.io/base" }}
