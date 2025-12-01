@@ -1,5 +1,5 @@
 image: frontend
-from: {{ .BaseImage }}
+from: registry.werf.io/base/{{ .BaseImage }}
 shell:
   install:
   - echo "install frontend"

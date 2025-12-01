@@ -2,7 +2,7 @@ project: none
 configVersion: 1
 ---
 image: image
-from: ubuntu
+from: registry.werf.io/base/ubuntu
 import:
 - image: artifact
   add: /app
@@ -11,7 +11,7 @@ import:
 ---
 image: artifact
 final: false
-from: ubuntu
+from: registry.werf.io/base/ubuntu
 disableGitAfterPatch: true
 git:
 - to: /app

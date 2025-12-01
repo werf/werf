@@ -11,7 +11,7 @@ spec:
     spec:
       containers:
         - name: hook-rootchart
-          image: alpine:3.21
+          image: registry.werf.io/base/alpine:3.21
           command:
             - sh
             - -ec
