@@ -582,7 +582,7 @@ func (f files) doGlob(ctx context.Context, pattern string) (map[string]interface
 		return nil, err
 	}
 
-	if res == nil {
+	if len(res) == 0 {
 		res = map[string]interface{}{}
 	}
 
