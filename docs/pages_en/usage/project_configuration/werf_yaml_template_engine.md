@@ -379,7 +379,7 @@ value: {{ required "<ERROR_MSG>" <VALUE> }}
 
 #### fromYaml
 
-The `fromYaml` functions decodes a YAML document into a structure.
+The `fromYaml` function decodes a YAML document into a structure.
 
 __Syntax__:
 {% raw %}
@@ -394,6 +394,28 @@ value: {{ fromYaml "<STRING>" }}
 ```yaml
 {{- $values := .Files.Get "werf_values.yaml" | fromYaml -}} # or fromYaml (.Files.Get "werf_values.yaml")
 from: {{- $values.image.from }}
+```
+{% endraw %}
+
+#### toYaml
+
+The `toYaml` function encodes a structure into YAML document.
+
+__Syntax__:
+{% raw %}
+```yaml
+{{ toYaml <STRUCTURE> }}
+```
+{% endraw %}
+
+##### Example: insert configuration in yaml format
+
+{% raw %}
+```yaml
+{{ $cmdList := list "cmd1" "cmd2" }}
+shell:
+  install:
+    {{- $cmdList | toYaml | nindent 4 }} # returns "- cmd1\n    - cmd2"
 ```
 {% endraw %}
 

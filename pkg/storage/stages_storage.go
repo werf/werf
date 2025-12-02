@@ -45,6 +45,7 @@ type StagesStorage interface {
 	StoreImage(ctx context.Context, img container_backend.LegacyImageInterface) error
 	ShouldFetchImage(ctx context.Context, img container_backend.LegacyImageInterface) (bool, error)
 	CopyFromStorage(ctx context.Context, src StagesStorage, projectName string, stageID image.StageID, opts CopyFromStorageOptions) (*image.StageDesc, error)
+	MutateAndPushImage(ctx context.Context, src, dest string, newConfig image.SpecConfig, stageImage container_backend.LegacyImageInterface) error
 
 	CreateRepo(ctx context.Context) error
 	DeleteRepo(ctx context.Context) error

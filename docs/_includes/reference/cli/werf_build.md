@@ -91,9 +91,15 @@ werf build [IMAGE_NAME...] [options]
             and to get manifests before making requests to the primary repo.
             Also, can be specified with $WERF_CACHE_REPO_* (e.g. $WERF_CACHE_REPO_1=...,            
             $WERF_CACHE_REPO_2=...)
+      --check-built-images=false
+            Check that all used images are previously built and exist in repo. Exits with error if  
+            needed images are not cached and so require to run build instructions (default          
+            $WERF_CHECK_BUILT_IMAGES)
       --config=""
             Use custom configuration file (default $WERF_CONFIG or werf.yaml in the project         
             directory)
+      --config-render-path=""
+            Custom path for storing rendered configuration file
       --config-templates-dir=""
             Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf   
             in working directory)
@@ -259,10 +265,6 @@ werf build [IMAGE_NAME...] [options]
             repo Harbor username (default $WERF_REPO_HARBOR_USERNAME)
       --repo-quay-token=""
             repo quay.io token (default $WERF_REPO_QUAY_TOKEN)
-  -Z, --require-built-images=false
-            Requires all used images to be previously built and exist in repo. Exits with error if  
-            needed images are not cached and so require to run build instructions (default          
-            $WERF_REQUIRE_BUILT_IMAGES)
       --save-build-report=false
             Save build report (by default $WERF_SAVE_BUILD_REPORT or false). Its path and format    
             configured with --build-report-path
@@ -288,8 +290,6 @@ werf build [IMAGE_NAME...] [options]
             When enabled,
             the private signing key must be specified with --sign-key option and
             the certificate must be specified with --sign-cert option
-      --skip-image-spec-stage=false
-            Force skipping "imageSpec" build stage (default $WERF_SKIP_IMAGE_SPEC_STAGE or false)
       --skip-tls-verify-registry=false
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)

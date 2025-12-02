@@ -1,6 +1,7 @@
 package docker
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"os"
@@ -102,13 +103,13 @@ func mapBackendFiltersToImagesPruneFilters(list filter.FilterList) filters.Args 
 	return filters.NewArgs(args...)
 }
 
-func doCliPull(c command.Cli, args ...string) error {
-	return prepareCliCmd(image.NewPullCommand(c), args...).Execute()
+func doCliPull(ctx context.Context, c command.Cli, args ...string) error {
+	return prepareCliCmd(ctx, image.NewPullCommand(c), args...).Execute()
 }
 
 func CliPull(ctx context.Context, args ...string) error {
 	return callCliWithAutoOutput(ctx, func(c command.Cli) error {
-		return doCliPull(c, args...)
+		return doCliPull(ctx, c, args...)
 	})
 }
 
@@ -117,7 +118,7 @@ const cliPullMaxAttempts uint8 = 5
 func doCliPullWithRetries(ctx context.Context, c command.Cli, args ...string) error {
 	var attempt uint8
 	op := func() (bool, error) {
-		return false, doCliPull(c, args...)
+		return false, doCliPull(ctx, c, args...)
 	}
 	notify := func(err error, duration time.Duration) {
 		logboek.Context(ctx).Warn().LogF("Retrying docker pull in %0.2f seconds (%d/%d) ...\n", duration.Seconds(), attempt, cliPullMaxAttempts)
@@ -175,8 +176,8 @@ func CliPullWithRetries(ctx context.Context, args ...string) error {
 	})
 }
 
-func doCliPush(c command.Cli, args ...string) error {
-	return prepareCliCmd(image.NewPushCommand(c), args...).Execute()
+func doCliPush(ctx context.Context, c command.Cli, args ...string) error {
+	return prepareCliCmd(ctx, image.NewPushCommand(c), args...).Execute()
 }
 
 const cliPushMaxAttempts uint8 = 10
@@ -184,7 +185,7 @@ const cliPushMaxAttempts uint8 = 10
 func doCliPushWithRetries(ctx context.Context, c command.Cli, args ...string) error {
 	var attempt uint8
 	op := func() (bool, error) {
-		err := doCliPush(c, args...)
+		err := doCliPush(ctx, c, args...)
 		return false, err
 	}
 	notify := func(err error, duration time.Duration) {
@@ -199,35 +200,35 @@ func CliPushWithRetries(ctx context.Context, args ...string) error {
 	})
 }
 
-func doCliTag(c command.Cli, args ...string) error {
-	return prepareCliCmd(image.NewTagCommand(c), args...).Execute()
+func doCliTag(ctx context.Context, c command.Cli, args ...string) error {
+	return prepareCliCmd(ctx, image.NewTagCommand(c), args...).Execute()
 }
 
 func CliTag(ctx context.Context, args ...string) error {
 	return callCliWithAutoOutput(ctx, func(c command.Cli) error {
-		return doCliTag(c, args...)
+		return doCliTag(ctx, c, args...)
 	})
 }
 
-func doCliRmi(c command.Cli, args ...string) error {
-	return prepareCliCmd(image.NewRemoveCommand(c), args...).Execute()
+func doCliRmi(ctx context.Context, c command.Cli, args ...string) error {
+	return prepareCliCmd(ctx, image.NewRemoveCommand(c), args...).Execute()
 }
 
 func CliRmi(ctx context.Context, args ...string) error {
 	return callCliWithAutoOutput(ctx, func(c command.Cli) error {
-		return doCliRmi(c, args...)
+		return doCliRmi(ctx, c, args...)
 	})
 }
 
 func CliRmi_LiveOutput(ctx context.Context, args ...string) error {
-	return doCliRmi(cli(ctx), args...)
+	return doCliRmi(ctx, cli(ctx), args...)
 }
 
 type BuildOptions struct {
 	EnableBuildx bool
 }
 
-func doCliBuild(c command.Cli, opts BuildOptions, args ...string) error {
+func doCliBuild(ctx context.Context, c command.Cli, opts BuildOptions, args ...string) error {
 	var finalArgs []string
 	var cmd *cobra.Command
 
@@ -239,7 +240,7 @@ func doCliBuild(c command.Cli, opts BuildOptions, args ...string) error {
 		finalArgs = args
 	}
 
-	return prepareCliCmd(cmd, finalArgs...).Execute()
+	return prepareCliCmd(ctx, cmd, finalArgs...).Execute()
 }
 
 func CliBuild_LiveOutputWithCustomIn(ctx context.Context, rc io.ReadCloser, args ...string) error {
@@ -268,7 +269,7 @@ func CliBuild_LiveOutputWithCustomIn(ctx context.Context, rc io.ReadCloser, args
 			return nil
 		},
 	}, func(cli command.Cli) error {
-		return doCliBuild(cli, buildOpts, args...)
+		return doCliBuild(ctx, cli, buildOpts, args...)
 	})
 }
 
@@ -292,4 +293,40 @@ func checkForUnsupportedOptions(ctx context.Context, args ...string) ([]string, 
 		borderIndex++
 	}
 	return args[:borderIndex], nil
+}
+
+func CliImageSaveToStream(ctx context.Context, imageName string) (io.ReadCloser, error) {
+	return apiCli(ctx).ImageSave(ctx, []string{imageName})
+}
+
+func CliLoadFromStream(ctx context.Context, input io.Reader) (string, error) {
+	loadResponse, err := apiCli(ctx).ImageLoad(ctx, input, true)
+	if err != nil {
+		return "", fmt.Errorf("load failed: %w", err)
+	}
+	defer loadResponse.Body.Close()
+
+	body, err := io.ReadAll(loadResponse.Body)
+	if err != nil {
+		return "", fmt.Errorf("error reading response body: %w", err)
+	}
+
+	return parseIDDigestFromImageLoadResponseBody(body), nil
+}
+
+func parseIDDigestFromImageLoadResponseBody(body []byte) string {
+	// We always have a string of fixed length like bellow when use cli directly:
+	// `Loaded image ID: sha256:26b2eb03618e749084668eaff68cff8f81dda12d06ac641be7a6398b82a6f25b`
+	// Here we have json-wrapped representation of this string:
+	// `{"stream":"Loaded image ID: sha256:26b2eb03618e749084668eaff68cff8f81dda12d06ac641be7a6398b82a6f25b\n"}\n`
+	// So we can just slice it using these knowledges.
+
+	// trim trailing \n
+	bodySanitized := bytes.TrimSpace(body)
+
+	n := len(bodySanitized) - len(`\n"}`) // json ending offset
+	digestSize := 64
+	digest := bodySanitized[n-digestSize : n]
+
+	return string(digest)
 }

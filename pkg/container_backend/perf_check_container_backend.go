@@ -3,6 +3,7 @@ package container_backend
 import (
 	"bytes"
 	"context"
+	"io"
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/container_backend/info"
@@ -214,6 +215,14 @@ func (runtime *PerfCheckContainerBackend) PruneVolumes(ctx context.Context, opti
 			report, err = runtime.ContainerBackend.PruneVolumes(ctx, options)
 		})
 	return
+}
+
+func (runtime *PerfCheckContainerBackend) SaveImageToStream(ctx context.Context, imageName string) (io.ReadCloser, error) {
+	return runtime.ContainerBackend.SaveImageToStream(ctx, imageName)
+}
+
+func (runtime *PerfCheckContainerBackend) LoadImageFromStream(ctx context.Context, input io.Reader) (string, error) {
+	return runtime.ContainerBackend.LoadImageFromStream(ctx, input)
 }
 
 func (runtime *PerfCheckContainerBackend) DumpImage(ctx context.Context, ref string) (reader *bytes.Reader, err error) {

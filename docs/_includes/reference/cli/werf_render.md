@@ -60,6 +60,8 @@ werf render [IMAGE_NAME...] [options]
       --config=""
             Use custom configuration file (default $WERF_CONFIG or werf.yaml in the project         
             directory)
+      --config-render-path=""
+            Custom path for storing rendered configuration file
       --config-templates-dir=""
             Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf   
             in working directory)
@@ -394,8 +396,6 @@ werf render [IMAGE_NAME...] [options]
             the certificate must be specified with --sign-cert option
   -L, --skip-dependencies-repo-refresh=false
             Do not refresh helm chart repositories locally cached index
-      --skip-image-spec-stage=false
-            Force skipping "imageSpec" build stage (default $WERF_SKIP_IMAGE_SPEC_STAGE or false)
       --skip-tls-verify-helm-dependencies=false
             Skip TLS certificate validation when accessing a Helm charts repository (default        
             $WERF_SKIP_TLS_VERIFY_HELM_DEPENDENCIES)

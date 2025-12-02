@@ -3,14 +3,11 @@ package includes
 import (
 	"context"
 	"fmt"
-	"path/filepath"
 
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 
-	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/path_matcher"
 )
 
@@ -35,43 +32,31 @@ type Include struct {
 	objects map[string]string
 }
 
-func GetWerfIncludesConfigRelPath(workTreeDir, projectDir string) string {
-	relPath := util.GetRelativeToBaseFilepath(workTreeDir, projectDir)
-	if relPath == "." {
-		return defaultIncludesConfigFileName
-	}
-
-	return filepath.Join(relPath, defaultIncludesConfigFileName)
+func GetWerfIncludesConfigRelPath() string {
+	return defaultIncludesConfigFileName
 }
 
-func GetWerfIncludesLockConfigPath(workTreeDir, projectDir string) string {
-	relPath := util.GetRelativeToBaseFilepath(workTreeDir, projectDir)
-	if relPath == "." {
-		return defaultIncludesLockConfigFileName
-	}
-
-	return filepath.Join(relPath, defaultIncludesLockConfigFileName)
+func GetWerfIncludesLockConfigRelPath() string {
+	return defaultIncludesLockConfigFileName
 }
 
 type InitIncludesOptions struct {
 	FileReader             GiterminismManagerFileReader
 	ProjectDir             string
-	LocalGitRepo           *git_repo.Local
 	CreateOrUpdateLockFile bool
 	UseLatestVersion       bool
 }
 
 func Init(ctx context.Context, opts InitIncludesOptions) ([]*Include, error) {
-	config, err := NewConfig(ctx, opts.FileReader, GetWerfIncludesConfigRelPath(opts.LocalGitRepo.WorkTreeDir, opts.ProjectDir), opts.CreateOrUpdateLockFile)
+	config, err := NewConfig(ctx, opts.FileReader, GetWerfIncludesConfigRelPath(), opts.CreateOrUpdateLockFile)
 	if err != nil {
 		return nil, fmt.Errorf("unable to initialize includes: %w", err)
 	}
 
 	if len(config.Includes) > 0 {
-		lockFilePath := GetWerfIncludesLockConfigPath(opts.LocalGitRepo.WorkTreeDir, opts.ProjectDir)
 		var lockConfig *lockConfig
 		if !opts.CreateOrUpdateLockFile && !opts.UseLatestVersion {
-			lockConfig, err = parseLockConfig(ctx, opts.FileReader, lockFilePath)
+			lockConfig, err = parseLockConfig(ctx, opts.FileReader, GetWerfIncludesLockConfigRelPath())
 			if err != nil {
 				return nil, err
 			}
@@ -84,9 +69,9 @@ func Init(ctx context.Context, opts InitIncludesOptions) ([]*Include, error) {
 
 		if opts.CreateOrUpdateLockFile {
 			if err := CreateOrUpdateLockConfig(ctx, createLockConfigOptions{
-				fileReader:       opts.FileReader,
+				projectDir:       opts.ProjectDir,
 				includesConfig:   config,
-				includesLockPath: lockFilePath,
+				includesLockPath: GetWerfIncludesLockConfigRelPath(),
 				remoteRepos:      remoteRepos,
 			}); err != nil {
 				return nil, fmt.Errorf("create or update werf-includes.lock: %w", err)
@@ -96,7 +81,6 @@ func Init(ctx context.Context, opts InitIncludesOptions) ([]*Include, error) {
 
 		lockInfo, err := getLockInfo(getLockInfoOptions{
 			includesConfig:         config,
-			fileReader:             opts.FileReader,
 			createOrUpdateLockFile: opts.CreateOrUpdateLockFile,
 			useLatestVersion:       opts.UseLatestVersion,
 			remoteRepos:            remoteRepos,

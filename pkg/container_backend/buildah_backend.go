@@ -1118,6 +1118,22 @@ func (backend *BuildahBackend) PruneVolumes(_ context.Context, _ prune.Options) 
 	return prune.Report{}, ErrUnsupportedFeature
 }
 
+func (backend *BuildahBackend) SaveImageToStream(ctx context.Context, imageName string) (io.ReadCloser, error) {
+	rc, err := backend.buildah.SaveImageToStream(ctx, imageName)
+	if err != nil {
+		return nil, fmt.Errorf("unable to save image %q to stream: %w", imageName, err)
+	}
+	return rc, nil
+}
+
+func (backend *BuildahBackend) LoadImageFromStream(ctx context.Context, input io.Reader) (string, error) {
+	imageID, err := backend.buildah.LoadImageFromStream(ctx, input)
+	if err != nil {
+		return "", fmt.Errorf("unable to load image from stream: %w", err)
+	}
+	return imageID, nil
+}
+
 func (backend *BuildahBackend) GenerateSBOM(ctx context.Context, scanOpts scanner.ScanOptions, dstImgLabels []string) (string, error) {
 	workingTree := scanner.NewWorkingTree()
 

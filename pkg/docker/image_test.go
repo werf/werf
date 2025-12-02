@@ -30,4 +30,15 @@ var _ = Describe("docker images", func() {
 			),
 		),
 	)
+	DescribeTable("parseIDDigestFromImageLoadResponseBody() should work",
+		func(body []byte, digest string) {
+			Expect(parseIDDigestFromImageLoadResponseBody(body)).To(Equal(digest))
+		},
+		Entry(
+			"with registry.2 image",
+			[]byte(`{"stream":"Loaded image ID: sha256:dff4d2bea666c3cdf6c24b6da06118a8a4f1658b1def9e50c55a1eb0c77eeaba\n"}
+`),
+			"dff4d2bea666c3cdf6c24b6da06118a8a4f1658b1def9e50c55a1eb0c77eeaba",
+		),
+	)
 })

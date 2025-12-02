@@ -75,6 +75,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupTmpDir(&commonCmdData, cmd, common.SetupTmpDirOptions{})
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
+	common.SetupConfigRenderPath(&commonCmdData, cmd)
 	common.SetupConfigPath(&commonCmdData, cmd)
 	common.SetupGiterminismConfigPath(&commonCmdData, cmd)
 	common.SetupEnvironment(&commonCmdData, cmd)
@@ -128,6 +129,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	cmd.Flags().BoolVarP(&cmdData.WithNamespace, "with-namespace", "", util.GetBoolEnvironmentDefaultFalse("WERF_WITH_NAMESPACE"), "Delete Kubernetes Namespace after purging Helm Release (default $WERF_WITH_NAMESPACE)")
 
 	if util.GetBoolEnvironmentDefaultFalse("WERF_EXPERIMENT_NEW_DISMISS") {
+		common.SetupDefaultDeletePropagation(&commonCmdData, cmd)
 		common.SetupSaveUninstallReport(&commonCmdData, cmd)
 		common.SetupUninstallGraphPath(&commonCmdData, cmd)
 		common.SetupUninstallReportPath(&commonCmdData, cmd)
@@ -187,14 +189,12 @@ func runDismiss(ctx context.Context) error {
 		var uninstallReportPath string
 		if commonCmdData.SaveUninstallReport {
 			uninstallReportPath = commonCmdData.UninstallReportPath
-			if err != nil {
-				return fmt.Errorf("get uninstall report path: %w", err)
-			}
 		}
 
 		if err := action.ReleaseUninstall(ctx, releaseName, releaseNamespace, action.ReleaseUninstallOptions{
 			KubeConnectionOptions:       commonCmdData.KubeConnectionOptions,
 			TrackingOptions:             commonCmdData.TrackingOptions,
+			DefaultDeletePropagation:    commonCmdData.DefaultDeletePropagation,
 			DeleteReleaseNamespace:      cmdData.WithNamespace,
 			NetworkParallelism:          commonCmdData.NetworkParallelism,
 			NoRemoveManualChanges:       commonCmdData.NoRemoveManualChanges,

@@ -213,6 +213,8 @@ type Buildah interface {
 	Images(ctx context.Context, opts ImagesOptions) (image.ImagesList, error)
 	Containers(ctx context.Context, opts ContainersOptions) (image.ContainerList, error)
 	PruneImages(ctx context.Context, opts PruneImagesOptions) (PruneImagesReport, error)
+	SaveImageToStream(ctx context.Context, imageName string) (io.ReadCloser, error)
+	LoadImageFromStream(ctx context.Context, input io.Reader) (string, error)
 	DumpImage(ctx context.Context, ref string, opts StreamOpts) (*bytes.Reader, error)
 }
 

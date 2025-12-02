@@ -26,6 +26,7 @@ type CmdData struct {
 	ConfigPath               *string
 	GiterminismConfigRelPath *string
 	ConfigTemplatesDir       *string
+	ConfigRenderPath         *string
 	TmpDir                   *string
 	HomeDir                  *string
 	SSHKeys                  *[]string
@@ -42,8 +43,10 @@ type CmdData struct {
 	SecondaryStagesStorage *[]string
 	CacheStagesStorage     *[]string
 
-	RequireBuiltImages *bool
-	StubTags           *bool
+	CheckBuiltImages       *bool
+	LegacyCheckBuiltImages *bool // TODO(v3): remove
+	RequireBuiltImages     *bool
+	StubTags               *bool
 
 	AddCustomTag *[]string
 	UseCustomTag *string
@@ -129,6 +132,7 @@ type CmdData struct {
 	ChartProvenanceStrategy          string
 	ChartRepoSkipUpdate              bool
 	DebugTemplates                   bool
+	DefaultDeletePropagation         string
 	DeployReportPath                 string
 	ExtraAPIVersions                 []string
 	ExtraAnnotations                 []string
@@ -156,7 +160,9 @@ type CmdData struct {
 	ReleaseStorageSQLConnection      string
 	RenameChart                      string
 	RollbackGraphPath                string
+	RollbackReportPath               string
 	SaveDeployReport                 bool
+	SaveRollbackReport               bool
 	SaveUninstallReport              bool
 	ShowSubchartNotes                bool
 	TemplatesAllowDNS                bool
@@ -223,9 +229,11 @@ func (cmdData *CmdData) SetupRenameChart(cmd *cobra.Command) {
 	cmd.Flags().StringVarP(&cmdData.RenameChart, "rename-chart", "", os.Getenv("WERF_RENAME_CHART"), `Force setting of chart name in the Chart.yaml of the published chart to the specified value (can be set by the $WERF_RENAME_CHART, no rename by default, could not be used together with the '--helm-compatible-chart' option).`)
 }
 
+// TODO: remove this legacy logic in v3.
 func (cmdData *CmdData) SetupSkipImageSpecStage(cmd *cobra.Command) {
 	cmdData.SkipImageSpecStage = new(bool)
 	cmd.Flags().BoolVarP(cmdData.SkipImageSpecStage, "skip-image-spec-stage", "", util.GetBoolEnvironmentDefaultFalse("WERF_SKIP_IMAGE_SPEC_STAGE"), `Force skipping "imageSpec" build stage (default $WERF_SKIP_IMAGE_SPEC_STAGE or false)`)
+	cmd.Flags().MarkHidden("skip-image-spec-stage")
 }
 
 func (cmdData *CmdData) SetupCreateIncludesLockFile() {
@@ -295,6 +303,18 @@ func (cmdData *CmdData) processFlags() error {
 		return fmt.Errorf("invalid --deploy-report-path %q: extension must be either .json or unspecified", cmdData.DeployReportPath)
 	}
 
+	if cmdData.RollbackReportPath == "" {
+		cmdData.RollbackReportPath = DefaultRollbackReportPathJSON
+	}
+
+	switch ext := filepath.Ext(cmdData.RollbackReportPath); ext {
+	case ".json":
+	case "":
+		cmdData.RollbackReportPath += ".json"
+	default:
+		return fmt.Errorf("invalid --rollback-report-path %q: extension must be either .json or unspecified", cmdData.RollbackReportPath)
+	}
+
 	if cmdData.UninstallReportPath == "" {
 		cmdData.UninstallReportPath = DefaultUninstallReportPathJSON
 	}
@@ -307,28 +327,34 @@ func (cmdData *CmdData) processFlags() error {
 		return fmt.Errorf("invalid --uninstall-report-path %q: extension must be either .json or unspecified", cmdData.UninstallReportPath)
 	}
 
-	switch ext := filepath.Ext(cmdData.InstallGraphPath); ext {
-	case ".dot":
-	case "":
-		cmdData.InstallGraphPath += ".dot"
-	default:
-		return fmt.Errorf("invalid --deploy-graph-path %q: extension must be either .dot or unspecified", cmdData.InstallGraphPath)
+	if cmdData.InstallGraphPath != "" {
+		switch ext := filepath.Ext(cmdData.InstallGraphPath); ext {
+		case ".dot":
+		case "":
+			cmdData.InstallGraphPath += ".dot"
+		default:
+			return fmt.Errorf("invalid --deploy-graph-path %q: extension must be either .dot or unspecified", cmdData.InstallGraphPath)
+		}
 	}
 
-	switch ext := filepath.Ext(cmdData.RollbackGraphPath); ext {
-	case ".dot":
-	case "":
-		cmdData.RollbackGraphPath += ".dot"
-	default:
-		return fmt.Errorf("invalid --rollback-graph-path %q: extension must be either .dot or unspecified", cmdData.RollbackGraphPath)
+	if cmdData.RollbackGraphPath != "" {
+		switch ext := filepath.Ext(cmdData.RollbackGraphPath); ext {
+		case ".dot":
+		case "":
+			cmdData.RollbackGraphPath += ".dot"
+		default:
+			return fmt.Errorf("invalid --rollback-graph-path %q: extension must be either .dot or unspecified", cmdData.RollbackGraphPath)
+		}
 	}
 
-	switch ext := filepath.Ext(cmdData.UninstallGraphPath); ext {
-	case ".dot":
-	case "":
-		cmdData.UninstallGraphPath += ".dot"
-	default:
-		return fmt.Errorf("invalid --uninstall-graph-path %q: extension must be either .dot or unspecified", cmdData.UninstallGraphPath)
+	if cmdData.UninstallGraphPath != "" {
+		switch ext := filepath.Ext(cmdData.UninstallGraphPath); ext {
+		case ".dot":
+		case "":
+			cmdData.UninstallGraphPath += ".dot"
+		default:
+			return fmt.Errorf("invalid --uninstall-graph-path %q: extension must be either .dot or unspecified", cmdData.UninstallGraphPath)
+		}
 	}
 
 	cmdData.KubeImpersonateGroups = append(util.PredefinedValuesByEnvNamePrefix("WERF_KUBE_IMPERSONATE_GROUP_"), cmdData.KubeImpersonateGroups...)

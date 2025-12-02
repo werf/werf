@@ -46,8 +46,10 @@ const (
 	DefaultBuildReportPathJSON = ".werf-build-report.json"
 
 	DefaultSaveDeployReport        = false
+	DefaultSaveRollbackReport      = false
 	DefaultUseDeployReport         = false
 	DefaultDeployReportPathJSON    = ".werf-deploy-report.json"
+	DefaultRollbackReportPathJSON  = ".werf-rollback-report.json"
 	DefaultUninstallReportPathJSON = ".werf-uninstall-report.json"
 	DefaultSaveUninstallReport     = false
 	TemplateErrHint                = "Use --debug-templates or $WERF_DEBUG_TEMPLATES to get more details about this error."
@@ -96,6 +98,11 @@ func SetupGiterminismConfigPath(cmdData *CmdData, cmd *cobra.Command) {
 func SetupConfigTemplatesDir(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.ConfigTemplatesDir = new(string)
 	cmd.Flags().StringVarP(cmdData.ConfigTemplatesDir, "config-templates-dir", "", os.Getenv("WERF_CONFIG_TEMPLATES_DIR"), `Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf in working directory)`)
+}
+
+func SetupConfigRenderPath(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.ConfigRenderPath = new(string)
+	cmd.Flags().StringVarP(cmdData.ConfigRenderPath, "config-render-path", "", "", `Custom path for storing rendered configuration file`)
 }
 
 type SetupTmpDirOptions struct {
@@ -195,12 +202,20 @@ func SetupSaveDeployReport(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(&cmdData.SaveDeployReport, "save-deploy-report", "", util.GetBoolEnvironmentDefaultFalse("WERF_SAVE_DEPLOY_REPORT"), fmt.Sprintf("Save deploy report (by default $WERF_SAVE_DEPLOY_REPORT or %t). Its path and format configured with --deploy-report-path", DefaultSaveDeployReport))
 }
 
+func SetupSaveRollbackReport(cmdData *CmdData, cmd *cobra.Command) {
+	cmd.Flags().BoolVarP(&cmdData.SaveRollbackReport, "save-rollback-report", "", util.GetBoolEnvironmentDefaultFalse("WERF_SAVE_ROLLBACK_REPORT"), fmt.Sprintf("Save rollback report (by default $WERF_SAVE_ROLLBACK_REPORT or %t). Its path and format configured with --rollback-report-path", DefaultSaveRollbackReport))
+}
+
 func SetupSaveUninstallReport(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(&cmdData.SaveUninstallReport, "save-uninstall-report", "", util.GetBoolEnvironmentDefaultFalse("WERF_SAVE_UNINSTALL_REPORT"), fmt.Sprintf("Save uninstall report (by default $WERF_SAVE_UNINSTALL_REPORT or %t). Its path and format configured with --uninstall-report-path", DefaultSaveUninstallReport))
 }
 
 func SetupDeployReportPath(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringVarP(&cmdData.DeployReportPath, "deploy-report-path", "", os.Getenv("WERF_DEPLOY_REPORT_PATH"), fmt.Sprintf("Change deploy report path and format (by default $WERF_DEPLOY_REPORT_PATH or %q if not set). Extension must be .json for JSON format. If extension not specified, then .json is used", DefaultDeployReportPathJSON))
+}
+
+func SetupRollbackReportPath(cmdData *CmdData, cmd *cobra.Command) {
+	cmd.Flags().StringVarP(&cmdData.RollbackReportPath, "rollback-report-path", "", os.Getenv("WERF_ROLLBACK_REPORT_PATH"), fmt.Sprintf("Change rollback report path and format (by default $WERF_ROLLBACK_REPORT_PATH or %q if not set). Extension must be .json for JSON format. If extension not specified, then .json is used", DefaultRollbackReportPathJSON))
 }
 
 func SetupUninstallReportPath(cmdData *CmdData, cmd *cobra.Command) {
@@ -276,6 +291,10 @@ func SetupReleaseInfoAnnotations(cmdData *CmdData, cmd *cobra.Command) {
 	} else {
 		cmd.Flags().StringToStringVarP(&cmdData.ReleaseInfoAnnotations, "release-info-annotations", "", defVal, "Add annotations to release metadata (default $WERF_RELEASE_INFO_ANNOTATIONS)")
 	}
+}
+
+func SetupDefaultDeletePropagation(cmdData *CmdData, cmd *cobra.Command) {
+	cmd.Flags().StringVarP(&cmdData.DefaultDeletePropagation, "delete-propagation", "", os.Getenv("WERF_DELETE_PROPAGATION"), fmt.Sprintf("Set default delete propagation strategy (default $WERF_DELETE_PROPAGATION or %s).", common.DefaultDeletePropagation))
 }
 
 func SetupExtraAPIVersions(cmdData *CmdData, cmd *cobra.Command) {
@@ -734,6 +753,17 @@ func SetupRequireBuiltImages(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(cmdData.RequireBuiltImages, "require-built-images", "Z", util.GetBoolEnvironmentDefaultFalse("WERF_REQUIRE_BUILT_IMAGES"), "Requires all used images to be previously built and exist in repo. Exits with error if needed images are not cached and so require to run build instructions (default $WERF_REQUIRE_BUILT_IMAGES)")
 }
 
+func SetupCheckBuiltImages(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.CheckBuiltImages = new(bool)
+	cmd.Flags().BoolVarP(cmdData.CheckBuiltImages, "check-built-images", "", util.GetBoolEnvironmentDefaultFalse("WERF_CHECK_BUILT_IMAGES"), "Check that all used images are previously built and exist in repo. Exits with error if needed images are not cached and so require to run build instructions (default $WERF_CHECK_BUILT_IMAGES)")
+
+	cmdData.LegacyCheckBuiltImages = new(bool)
+	cmd.Flags().BoolVarP(cmdData.LegacyCheckBuiltImages, "require-built-images", "Z", false, "Check that all used images are previously built and exist in repo. Exits with error if needed images are not cached and so require to run build instructions")
+	if err := cmd.Flags().MarkHidden("require-built-images"); err != nil {
+		panic(err)
+	}
+}
+
 func SetupStubTags(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.StubTags = new(bool)
 	cmd.Flags().BoolVarP(cmdData.StubTags, "stub-tags", "", util.GetBoolEnvironmentDefaultFalse("WERF_STUB_TAGS"), "Use stubs instead of real tags (default $WERF_STUB_TAGS)")
@@ -854,7 +884,12 @@ func GetOptionalWerfConfig(ctx context.Context, cmdData *CmdData, giterminismMan
 			return "", nil, err
 		}
 
-		configPath, c, err := config.GetWerfConfig(ctx, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, giterminismManager, opts)
+		customWerfConfigRenderPath, err := GetCustomWerfConfigRenderPath(cmdData)
+		if err != nil {
+			return "", nil, err
+		}
+
+		configPath, c, err := config.GetWerfConfig(ctx, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, customWerfConfigRenderPath, giterminismManager, opts)
 		if err != nil {
 			return "", nil, err
 		}
@@ -876,7 +911,12 @@ func GetRequiredWerfConfig(ctx context.Context, cmdData *CmdData, giterminismMan
 		return "", nil, err
 	}
 
-	configPath, c, err := config.GetWerfConfig(ctx, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, giterminismManager, opts)
+	customWerfConfigRenderPath, err := GetCustomWerfConfigRenderPath(cmdData)
+	if err != nil {
+		return "", nil, err
+	}
+
+	configPath, c, err := config.GetWerfConfig(ctx, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, customWerfConfigRenderPath, giterminismManager, opts)
 	if err != nil {
 		return "", nil, err
 	}
@@ -919,6 +959,17 @@ func GetCustomWerfConfigTemplatesDirRelPath(giterminismManager giterminism_manag
 	}
 
 	return util.GetRelativeToBaseFilepath(giterminismManager.ProjectDir(), customConfigTemplatesDirPath), nil
+}
+
+func GetCustomWerfConfigRenderPath(cmdData *CmdData) (string, error) {
+	if cmdData.ConfigRenderPath == nil || *cmdData.ConfigRenderPath == "" {
+		return "", nil
+	}
+
+	customConfigRenderPath := *cmdData.ConfigRenderPath
+	customConfigRenderPath = util.GetAbsoluteFilepath(customConfigRenderPath)
+
+	return customConfigRenderPath, nil
 }
 
 func GetWerfConfigOptions(cmdData *CmdData, logRenderedFilePath bool) config.WerfConfigOptions {

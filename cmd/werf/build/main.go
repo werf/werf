@@ -63,6 +63,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupDir(&commonCmdData, cmd)
 	common.SetupGitWorkTree(&commonCmdData, cmd)
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
+	common.SetupConfigRenderPath(&commonCmdData, cmd)
 	common.SetupConfigPath(&commonCmdData, cmd)
 	common.SetupGiterminismConfigPath(&commonCmdData, cmd)
 	common.SetupEnvironment(&commonCmdData, cmd)
@@ -104,7 +105,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupVirtualMerge(&commonCmdData, cmd)
 
 	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultBuildParallelTasksLimit)
-	common.SetupRequireBuiltImages(&commonCmdData, cmd)
+	common.SetupCheckBuiltImages(&commonCmdData, cmd)
 	common.SetupFollow(&commonCmdData, cmd)
 
 	common.SetupDisableAutoHostCleanup(&commonCmdData, cmd)

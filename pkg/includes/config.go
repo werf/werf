@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/go-git/go-git/v5"
@@ -141,7 +142,6 @@ func validate(config Config) error {
 
 type getLockInfoOptions struct {
 	includesConfig         Config
-	fileReader             GiterminismManagerFileReader
 	createOrUpdateLockFile bool
 	useLatestVersion       bool
 	remoteRepos            *gitRepositoriesWithCache
@@ -153,7 +153,6 @@ func getLockInfo(opts getLockInfoOptions) (*LockInfo, error) {
 
 	if opts.useLatestVersion {
 		cfg, err := createLockConfig(createLockConfigOptions{
-			fileReader:     opts.fileReader,
 			includesConfig: opts.includesConfig,
 			remoteRepos:    opts.remoteRepos,
 		})
@@ -207,7 +206,7 @@ func parseLockConfig(ctx context.Context, fileReader GiterminismManagerFileReade
 }
 
 type createLockConfigOptions struct {
-	fileReader       GiterminismManagerFileReader
+	projectDir       string
 	includesConfig   Config
 	includesLockPath string
 	remoteRepos      *gitRepositoriesWithCache
@@ -222,13 +221,14 @@ func CreateOrUpdateLockConfig(ctx context.Context, opts createLockConfigOptions)
 	return nil
 }
 
-func CreateLockConfig(ctx context.Context, opts createLockConfigOptions) error {
+func CreateLockConfig(_ context.Context, opts createLockConfigOptions) error {
 	locksConf, err := createLockConfig(opts)
 	if err != nil {
 		return fmt.Errorf("create lock config: %w", err)
 	}
 
-	return writeLockConfig(locksConf, opts.includesLockPath)
+	includesLockPathAbs := filepath.Join(opts.projectDir, opts.includesLockPath)
+	return writeLockConfig(locksConf, includesLockPathAbs)
 }
 
 func createLockConfig(opts createLockConfigOptions) (lockConfig, error) {

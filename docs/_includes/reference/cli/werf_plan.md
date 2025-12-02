@@ -102,6 +102,8 @@ werf plan --repo registry.mydomain.com/web --env production
       --config=""
             Use custom configuration file (default $WERF_CONFIG or werf.yaml in the project         
             directory)
+      --config-render-path=""
+            Custom path for storing rendered configuration file
       --config-templates-dir=""
             Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf   
             in working directory)
@@ -109,6 +111,9 @@ werf plan --repo registry.mydomain.com/web --env production
             (Buildah-only) Use specified mirrors for docker.io
       --debug-templates=false
             Enable debug mode for Go templates (default $WERF_DEBUG_TEMPLATES or false)
+      --delete-propagation=""
+            Set default delete propagation strategy (default $WERF_DELETE_PROPAGATION or            
+            Foreground).
       --deploy-graph-path=""
             Save deploy graph path to the specified file (by default $WERF_DEPLOY_GRAPH_PATH).      
             Extension must be .dot or not specified. If extension not specified, then .dot is used
@@ -452,7 +457,7 @@ werf plan --repo registry.mydomain.com/web --env production
             Show sensitive diff lines ($WERF_SHOW_SENSITIVE_DIFFS by default)
       --show-verbose-crd-diffs=false
             Show verbose CRD diff lines ($WERF_SHOW_VERBOSE_CRD_DIFFS by default)
-      --show-verbose-diffs=false
+      --show-verbose-diffs=true
             Show verbose diff lines ($WERF_SHOW_VERBOSE_DIFFS by default)
       --sign-cert=""
             The leaf certificate as path to PEM file or base64-encoded PEM (default $WERF_SIGN_CERT)
@@ -473,8 +478,6 @@ werf plan --repo registry.mydomain.com/web --env production
             the certificate must be specified with --sign-cert option
   -L, --skip-dependencies-repo-refresh=false
             Do not refresh helm chart repositories locally cached index
-      --skip-image-spec-stage=false
-            Force skipping "imageSpec" build stage (default $WERF_SKIP_IMAGE_SPEC_STAGE or false)
       --skip-tls-verify-helm-dependencies=false
             Skip TLS certificate validation when accessing a Helm charts repository (default        
             $WERF_SKIP_TLS_VERIFY_HELM_DEPENDENCIES)

@@ -14,6 +14,7 @@ This article contains description of annotations which control werf resource ope
  - [`werf.io/ownership`](#resource-ownership) — defines how resource deletions are handled and how release annotations are managed.
  - [`werf.io/deploy-on`](#conditional-resource-deployment) — defines when to render the resource for the deployment and on which stages should it be deployed.
  - [`werf.io/delete-policy`](#resource-delete-policy) — defines how resource deletions should be handled during resource deployment.
+ - [`werf.io/delete-propagation`](#delete-propagation) — defines the propagation policy for resource deletions.
  - [`werf.io/replicas-on-creation`](#replicas-on-creation) — defines number of replicas that should be set only when creating resource initially (useful for HPA).
  - [`werf.io/track-termination-mode`](#track-termination-mode) — defines a condition when werf should stop tracking of the resource.
  - [`werf.io/fail-mode`](#fail-mode) — defines how werf will handle a resource failure condition which occurred after failures threshold has been reached for the resource during deploy process.
@@ -122,6 +123,14 @@ The `werf.io/delete-policy` annotation controls resource deletions during its de
 * `failed`: the resource is deleted if its readiness check fails
 
 By default, general resources have no delete policy, while hooks have values from `helm.sh/hook-delete-policy` mapped to `werf.io/delete-policy`.
+
+## Delete propagation
+
+`werf.io/delete-propagation: Foreground|Background|Orphan`
+
+The `werf.io/delete-propagation` annotation defines the propagation policy for resource deletions. `Foreground` means delete the resource after deleting all of its dependents, `Background` means delete the resource immediately, and delete all of its dependents in the background, and `Orphan` means delete the resource, but leave all of its dependents untouched.
+
+The default value is `Foreground`.
 
 ## Replicas on creation
 

@@ -1064,6 +1064,83 @@ SelectContainers:
 	return res, nil
 }
 
+func (b *NativeBuildah) SaveImageToStream(ctx context.Context, imageName string) (io.ReadCloser, error) {
+	// NOTICE: targetPlatform specified for push causes buildah to fail for some unknown reason
+	sysCtx, err := b.getSystemContext("")
+	if err != nil {
+		return nil, err
+	}
+
+	tmpFile, err := os.CreateTemp("", "buildah-img-*.tar")
+	if err != nil {
+		return nil, err
+	}
+
+	pushOpts := buildah.PushOptions{
+		Compression:         define.Uncompressed,
+		SignaturePolicyPath: b.SignaturePolicyPath,
+		ReportWriter:        io.Discard,
+		Store:               b.Store,
+		SystemContext:       sysCtx,
+		ManifestType:        manifest.DockerV2Schema2MediaType,
+	}
+
+	destinationRef, err := alltransports.ParseImageName(formatPathWithDockerArchiveTransport(tmpFile.Name()))
+	if err != nil {
+		return nil, fmt.Errorf("error parsing destination ref from %q: %w", tmpFile.Name(), err)
+	}
+
+	if _, _, err = buildah.Push(ctx, imageName, destinationRef, pushOpts); err != nil {
+		return nil, fmt.Errorf("error pushing image %q: %w", imageName, err)
+	}
+
+	return &fileRemoveOnClose{tmpFile}, nil
+}
+
+func (b *NativeBuildah) LoadImageFromStream(ctx context.Context, input io.Reader) (string, error) {
+	tmpFile, err := os.CreateTemp("", "buildah-img-*.tar")
+	if err != nil {
+		return "", err
+	}
+	defer tmpFile.Close()
+	defer os.Remove(tmpFile.Name())
+
+	if _, err = io.Copy(tmpFile, input); err != nil {
+		return "", fmt.Errorf("error copying image to %q: %w", tmpFile.Name(), err)
+	}
+
+	sysCtx, err := b.getSystemContext("")
+	if err != nil {
+		return "", err
+	}
+
+	pullOpts := buildah.PullOptions{
+		SignaturePolicyPath: b.SignaturePolicyPath,
+		ReportWriter:        io.Discard,
+		Store:               b.Store,
+		SystemContext:       sysCtx,
+		MaxRetries:          MaxPullPushRetries,
+		RetryDelay:          PullPushRetryDelay,
+		PullPolicy:          define.PullIfNewer,
+	}
+
+	destinationPath := formatPathWithDockerArchiveTransport(tmpFile.Name())
+
+	imageID, err := buildah.Pull(ctx, destinationPath, pullOpts)
+	if err != nil {
+		return "", fmt.Errorf("error pulling image %q: %w", destinationPath, err)
+	}
+
+	return imageID, nil
+}
+
+func formatPathWithDockerArchiveTransport(fileName string) string {
+	// NOTE: Here we use "docker-archive" transport on buildah@1.35.2 to disable gzip compression.
+	// Is there any way to disable gzip compression with "oci-archive" transport using go code?
+	// In e2e this approach works with Buildah CLI.
+	return fmt.Sprintf("docker-archive:%s", fileName)
+}
+
 func NewNativeStoreOptions(rootlessUID int, driver StorageDriver) (*thirdparty.StoreOptions, error) {
 	var (
 		runRoot string
@@ -1394,4 +1471,19 @@ func mapImageReportsToPruneImagesReport(reports []*libimage.RemoveImageReport) P
 	}
 
 	return report
+}
+
+type fileRemoveOnClose struct {
+	*os.File
+}
+
+// Close closes the file and removes it from the filesystem.
+func (f *fileRemoveOnClose) Close() error {
+	if err := f.File.Close(); err != nil {
+		return fmt.Errorf("unable to close file %q: %w", f.Name(), err)
+	}
+	if os.Remove(f.Name()) != nil {
+		return fmt.Errorf("unable to remove file %q", f.Name())
+	}
+	return nil
 }

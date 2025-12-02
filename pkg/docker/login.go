@@ -21,12 +21,10 @@ func Login(ctx context.Context, username, password, repo string) error {
 			command.WithErrorStream(&errb),
 		},
 		func(cli command.Cli) error {
-			cmd := registry.NewLoginCommand(cli)
-			cmd.SilenceErrors = true
-			cmd.SilenceUsage = true
-			cmd.SetArgs([]string{"--username", username, "--password", password, repo})
-
+			args := []string{"--username", username, "--password", password, repo}
+			cmd := prepareCliCmd(ctx, registry.NewLoginCommand(cli), args...)
 			err := cmd.Execute()
+
 			logboek.Context(ctx).Debug().LogF("Docker login stdout:\n%s\nDocker login stderr:\n%s\n", outb.String(), errb.String())
 
 			return err

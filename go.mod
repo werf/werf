@@ -59,15 +59,15 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.5
-	github.com/werf/3p-helm v0.0.0-20251021224308-a90f195bd29a
+	github.com/werf/3p-helm v0.0.0-20251113141050-17dd24e6c20b
 	github.com/werf/3p-helm-for-werf-helm v0.0.0-20241217155820-089f92cd5c9d
-	github.com/werf/common-go v0.0.0-20251106163127-f918bc5950db
+	github.com/werf/common-go v0.0.0-20251113140850-a1a98e909e9b
 	github.com/werf/copy-recurse v0.2.7
-	github.com/werf/kubedog v0.13.1-0.20251105104917-8615bb20d8c0
+	github.com/werf/kubedog v0.13.1-0.20251110132552-6ffc5a117ada
 	github.com/werf/kubedog-for-werf-helm v0.0.0-20241217155728-9d45c48b82b6
 	github.com/werf/lockgate v0.1.1
 	github.com/werf/logboek v0.6.1
-	github.com/werf/nelm v1.16.1-0.20251106103358-55c46afac355
+	github.com/werf/nelm v1.17.3-0.20251124170054-f1c9a360aa17
 	github.com/werf/nelm-for-werf-helm v0.0.0-20241217155925-b0e6734d1dbf
 	go.opentelemetry.io/otel v1.34.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.33.0

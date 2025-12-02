@@ -439,6 +439,14 @@ func (backend *DockerServerBackend) PruneVolumes(ctx context.Context, options pr
 	return prune.Report(report), err
 }
 
+func (backend *DockerServerBackend) SaveImageToStream(ctx context.Context, imageName string) (io.ReadCloser, error) {
+	return docker.CliImageSaveToStream(ctx, imageName)
+}
+
+func (backend *DockerServerBackend) LoadImageFromStream(ctx context.Context, input io.Reader) (string, error) {
+	return docker.CliLoadFromStream(ctx, input)
+}
+
 func (backend *DockerServerBackend) GenerateSBOM(ctx context.Context, scanOpts scanner.ScanOptions, dstImgLabels []string) (string, error) {
 	workingTree := scanner.NewWorkingTree()
 

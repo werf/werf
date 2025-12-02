@@ -18,10 +18,12 @@ type WerfBinaryData struct {
 func NewWerfBinaryData(synchronizedSuiteCallbacksData *SynchronizedSuiteCallbacksData) *WerfBinaryData {
 	data := &WerfBinaryData{}
 	synchronizedSuiteCallbacksData.SetSynchronizedBeforeSuiteNode1FuncWithReturnValue(ComputeWerfBinPath)
-	synchronizedSuiteCallbacksData.AppendSynchronizedBeforeSuiteAllNodesFunc(func(computedPath []byte) {
+	synchronizedSuiteCallbacksData.AppendSynchronizedBeforeSuiteAllNodesFunc(func(_ context.Context, computedPath []byte) {
 		data.WerfBinPath = string(computedPath)
 	})
-	synchronizedSuiteCallbacksData.AppendSynchronizedAfterSuiteNode1Func(gexec.CleanupBuildArtifacts)
+	synchronizedSuiteCallbacksData.AppendSynchronizedAfterSuiteNode1Func(func(_ context.Context) {
+		gexec.CleanupBuildArtifacts()
+	})
 	return data
 }
 

@@ -91,6 +91,7 @@ werf converge --repo registry.mydomain.com/web --env production`,
 	common.SetupDir(&commonCmdData, cmd)
 	common.SetupGitWorkTree(&commonCmdData, cmd)
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
+	common.SetupConfigRenderPath(&commonCmdData, cmd)
 	common.SetupConfigPath(&commonCmdData, cmd)
 	common.SetupGiterminismConfigPath(&commonCmdData, cmd)
 	common.SetupEnvironment(&commonCmdData, cmd)
@@ -161,6 +162,7 @@ werf converge --repo registry.mydomain.com/web --env production`,
 	common.SetupAddLabels(&commonCmdData, cmd)
 	common.SetupChartProvenanceKeyring(&commonCmdData, cmd)
 	common.SetupChartProvenanceStrategy(&commonCmdData, cmd)
+	common.SetupDefaultDeletePropagation(&commonCmdData, cmd)
 	common.SetupDeployGraphPath(&commonCmdData, cmd)
 	common.SetupDeployReportPath(&commonCmdData, cmd)
 	common.SetupExtraRuntimeAnnotations(&commonCmdData, cmd)
@@ -450,6 +452,7 @@ func run(
 		DefaultChartAPIVersion:      chart.APIVersionV2,
 		DefaultChartName:            werfConfig.Meta.Project,
 		DefaultChartVersion:         "1.0.0",
+		DefaultDeletePropagation:    commonCmdData.DefaultDeletePropagation,
 		ExtraAnnotations:            extraAnnotations,
 		ExtraLabels:                 extraLabels,
 		ExtraRuntimeAnnotations:     extraRuntimeAnnotations,

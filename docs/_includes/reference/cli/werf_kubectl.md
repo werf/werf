@@ -5,7 +5,7 @@
 {% endif %}
 kubectl controls the Kubernetes cluster manager.
 
-Find more information at: [https://kubernetes.io/docs/reference/kubectl/overview/](https://kubernetes.io/docs/reference/kubectl/overview/)
+Find more information at: [https://kubernetes.io/docs/reference/kubectl/](https://kubernetes.io/docs/reference/kubectl/)
 
 {{ header }} Syntax
 

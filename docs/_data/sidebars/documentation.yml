@@ -15,6 +15,9 @@ cli: &cli
       - title: werf converge
         url: /reference/cli/werf_converge.html
 
+      - title: werf rollback
+        url: /reference/cli/werf_rollback.html
+
       - title: werf plan
         url: /reference/cli/werf_plan.html
 
@@ -28,6 +31,9 @@ cli: &cli
 
           - title: werf bundle copy
             url: /reference/cli/werf_bundle_copy.html
+
+          - title: werf bundle plan
+            url: /reference/cli/werf_bundle_plan.html
 
           - title: werf bundle publish
             url: /reference/cli/werf_bundle_publish.html

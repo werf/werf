@@ -71,6 +71,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupDir(&commonCmdData, cmd)
 	common.SetupGitWorkTree(&commonCmdData, cmd)
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
+	common.SetupConfigRenderPath(&commonCmdData, cmd)
 	common.SetupConfigPath(&commonCmdData, cmd)
 	common.SetupGiterminismConfigPath(&commonCmdData, cmd)
 	common.SetupEnvironment(&commonCmdData, cmd)
@@ -125,6 +126,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupAddLabels(&commonCmdData, cmd)
 	common.SetupChartProvenanceKeyring(&commonCmdData, cmd)
 	common.SetupChartProvenanceStrategy(&commonCmdData, cmd)
+	common.SetupDefaultDeletePropagation(&commonCmdData, cmd)
 	common.SetupExtraAPIVersions(&commonCmdData, cmd)
 	common.SetupExtraRuntimeAnnotations(&commonCmdData, cmd)
 	common.SetupExtraRuntimeLabels(&commonCmdData, cmd)
@@ -164,12 +166,6 @@ func runLint(ctx context.Context, imageNameListFromArgs []string) error {
 	if err != nil {
 		return fmt.Errorf("component init error: %w", err)
 	}
-
-	defer func() {
-		if err := tmp_manager.DelegateCleanup(ctx); err != nil {
-			logboek.Context(ctx).Warn().LogF("Temporary files cleanup preparation failed: %s\n", err)
-		}
-	}()
 
 	containerBackend := commonManager.ContainerBackend()
 
@@ -390,6 +386,7 @@ func runLint(ctx context.Context, imageNameListFromArgs []string) error {
 		DefaultChartAPIVersion:      chart.APIVersionV2,
 		DefaultChartName:            werfConfig.Meta.Project,
 		DefaultChartVersion:         "1.0.0",
+		DefaultDeletePropagation:    commonCmdData.DefaultDeletePropagation,
 		ExtraAPIVersions:            commonCmdData.ExtraAPIVersions,
 		ExtraAnnotations:            extraAnnotations,
 		ExtraLabels:                 extraLabels,

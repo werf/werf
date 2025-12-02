@@ -45,54 +45,54 @@ func ContainerRemove(ctx context.Context, ref string, options types.ContainerRem
 	return apiCli(ctx).ContainerRemove(ctx, ref, options)
 }
 
-func doCliCreate(c command.Cli, args ...string) error {
-	return prepareCliCmd(container.NewCreateCommand(c), args...).Execute()
+func doCliCreate(ctx context.Context, c command.Cli, args ...string) error {
+	return prepareCliCmd(ctx, container.NewCreateCommand(c), args...).Execute()
 }
 
 func CliCreate(ctx context.Context, args ...string) error {
 	return callCliWithAutoOutput(ctx, func(c command.Cli) error {
-		return doCliCreate(c, args...)
+		return doCliCreate(ctx, c, args...)
 	})
 }
 
-func doCliRun(c command.Cli, args ...string) error {
-	return prepareCliCmd(container.NewRunCommand(c), args...).Execute()
+func doCliRun(ctx context.Context, c command.Cli, args ...string) error {
+	return prepareCliCmd(ctx, container.NewRunCommand(c), args...).Execute()
 }
 
 func CliRun(ctx context.Context, args ...string) error {
 	return callCliWithAutoOutput(ctx, func(c command.Cli) error {
-		return doCliRun(c, args...)
+		return doCliRun(ctx, c, args...)
 	})
 }
 
 func CliRun_ProvidedOutput(ctx context.Context, stdoutWriter, stderrWriter io.Writer, args ...string) error {
 	return callCliWithProvidedOutput(ctx, stdoutWriter, stderrWriter, func(c command.Cli) error {
-		return doCliRun(c, args...)
+		return doCliRun(ctx, c, args...)
 	})
 }
 
 func CliRun_LiveOutput(ctx context.Context, args ...string) error {
-	return doCliRun(cli(ctx), args...)
+	return doCliRun(ctx, cli(ctx), args...)
 }
 
 func CliRun_RecordedOutput(ctx context.Context, args ...string) (string, error) {
 	return callCliWithRecordedOutput(ctx, func(c command.Cli) error {
-		return doCliRun(c, args...)
+		return doCliRun(ctx, c, args...)
 	})
 }
 
-func doCliRm(c command.Cli, args ...string) error {
-	return prepareCliCmd(container.NewRmCommand(c), args...).Execute()
+func doCliRm(ctx context.Context, c command.Cli, args ...string) error {
+	return prepareCliCmd(ctx, container.NewRmCommand(c), args...).Execute()
 }
 
 func CliRm(ctx context.Context, args ...string) error {
 	return callCliWithAutoOutput(ctx, func(c command.Cli) error {
-		return doCliRm(c, args...)
+		return doCliRm(ctx, c, args...)
 	})
 }
 
 func CliRm_RecordedOutput(ctx context.Context, args ...string) (string, error) {
 	return callCliWithRecordedOutput(ctx, func(c command.Cli) error {
-		return doCliRm(c, args...)
+		return doCliRm(ctx, c, args...)
 	})
 }

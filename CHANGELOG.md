@@ -1,5 +1,106 @@
 # Changelog
 
+## [2.55.0](https://github.com/werf/werf/compare/v2.54.1...v2.55.0) (2025-11-25)
+
+
+### Features
+
+* **deploy:** `--delete-propagation` and `werf.io/delete-propagation` ([806ee13](https://github.com/werf/werf/commit/806ee131ed7a718aaa18dfcfedc8e422d3132e05))
+
+
+### Bug Fixes
+
+* **build:** collision between `WERF_REQUIRE_BUILT_IMAGES` of `build` with other commands ([201e8d9](https://github.com/werf/werf/commit/201e8d9a7470e05fff52bff47f5eb96c18c03cb7))
+* **deploy:** remove `null` keys from manifests now only on `NELM_FEAT_CLEAN_NULL_FIELDS=true` ([dc41572](https://github.com/werf/werf/commit/dc41572c568712509fd4496fed7fc21a4748bc0c))
+
+## [2.54.1](https://github.com/werf/werf/compare/v2.54.0...v2.54.1) (2025-11-21)
+
+
+### Bug Fixes
+
+* **build, stapel, import:** preserve security capabilities during file import ([#7237](https://github.com/werf/werf/issues/7237)) ([522ebf7](https://github.com/werf/werf/commit/522ebf70b5f5759a50c7bcbda20d5d3a206ef5d9))
+* **deploy:** `plan` shows nothing if only tracking ops in plan ([d982297](https://github.com/werf/werf/commit/d9822970b4387a0998250ad7809313a17fd200e6))
+
+## [2.54.0](https://github.com/werf/werf/compare/v2.53.5...v2.54.0) (2025-11-20)
+
+
+### Features
+
+* **config:** ability to save the render along a custom path ([#7176](https://github.com/werf/werf/issues/7176)) ([7c624ec](https://github.com/werf/werf/commit/7c624ece673dc0a88ff8282ce191aea8cc6921ea))
+* **config:** add toYaml func to config parser ([1ae722e](https://github.com/werf/werf/commit/1ae722efff97139c1d3c8cd98e91ca52a5d6ca26))
+
+### Bug Fixes
+
+* **build, docker:** fix docker commands do not stop on context cancellation ([#7232](https://github.com/werf/werf/issues/7232)) ([3737404](https://github.com/werf/werf/commit/3737404162c73b4ea76eda29b7fccf4a1630ff40))
+* **build, stapel, import:** correct rsync glob handling for imports and checksums ([6007704](https://github.com/werf/werf/commit/60077042b38e6ffbe8b0e97620fef6c9b3fce8e0))
+* **build, stapel, import:** warn if import config does nothing ([#7225](https://github.com/werf/werf/issues/7225)) ([2756b18](https://github.com/werf/werf/commit/2756b181b3810feb1f8ccb05e8fcee68056c621f))
+* **build:** use blocking execution for parallel ([#7231](https://github.com/werf/werf/issues/7231)) ([42def11](https://github.com/werf/werf/commit/42def110ebf8ba563ee4046aff079a6ebffef554))
+* **cleanup:** warn when cleanup metadata push hits immutable repo ([87c2705](https://github.com/werf/werf/commit/87c2705dfc999cf7cc664501a4591e17fb8587e7))
+* **host-cleanup:** use different keeping strategies for different kind of tmp data ([#7219](https://github.com/werf/werf/issues/7219)) ([4ca0b9e](https://github.com/werf/werf/commit/4ca0b9e24c079cccd32347608b8ab533de8f8676))
+* **includes:** clarify usage of relative and absolute includesLockPath ([8535d8e](https://github.com/werf/werf/commit/8535d8e71dd7abc9fa2225784b3eebb544c0be86))
+* **includes:** prevent double projectDir in includes path resolution ([af64a6d](https://github.com/werf/werf/commit/af64a6d411d8bb0d0e5569879b83f748fee13560))
+* **includes:** respect projectDir in lock file creation ([61ae7e7](https://github.com/werf/werf/commit/61ae7e74d290cb17e22faae0662b7dd3efdc822e))
+
+## [2.53.5](https://github.com/werf/werf/compare/v2.53.4...v2.53.5) (2025-11-17)
+
+
+### Bug Fixes
+
+* **deploy:** show verbose diffs by default like before ([97d8c28](https://github.com/werf/werf/commit/97d8c28ded9a5926eabc9bf25ed5ce9bd71da412))
+* **deploy:** show verbose diffs by default like before /2 ([29fd2b0](https://github.com/werf/werf/commit/29fd2b0c220d33027c38ed71af71c7b5a3d23cb3))
+
+## [2.53.4](https://github.com/werf/werf/compare/v2.53.3...v2.53.4) (2025-11-14)
+
+
+### Miscellaneous Chores
+
+* **release:** force v2.53.4 ([1f114ec](https://github.com/werf/werf/commit/1f114ec030cd84810048600c5a7d6b245ac14364))
+
+## [2.53.3](https://github.com/werf/werf/compare/v2.53.2...v2.53.3) (2025-11-13)
+
+
+### Bug Fixes
+
+* **build, stapel:** exit with error when import nothing ([#7166](https://github.com/werf/werf/issues/7166)) ([6e6f6b4](https://github.com/werf/werf/commit/6e6f6b4ce77783a34a1ea03f39a9afd68973d797))
+* **build, stapel:** throw error if two import configurations contain everything and glob everything ([#7171](https://github.com/werf/werf/issues/7171)) ([c6ba868](https://github.com/werf/werf/commit/c6ba868c7c3082e8d932e4eaaa7ac280fb2c925a))
+* **deploy:** `panic: interface conversion: plan.OperationConfig` ([c7ee56b](https://github.com/werf/werf/commit/c7ee56b6936ad971799f6a5caa2ff8af8333117d))
+* **deploy:** new release created even if no changes ([bdfd07d](https://github.com/werf/werf/commit/bdfd07d1e2f3bdf3b10ebcf1e5ba8c318cfc0d3b))
+* **deploy:** null or empty fields might fail resource deploys ([e213f40](https://github.com/werf/werf/commit/e213f40e2cdf44075ef6912713696cbfa333796c))
+
+## [2.53.2](https://github.com/werf/werf/compare/v2.53.1...v2.53.2) (2025-11-11)
+
+
+### Bug Fixes
+
+* **deploy:** deploy command always create `.dot` file ([a0d8512](https://github.com/werf/werf/commit/a0d85129dbb9b342e8177064b72990cab9b07c0c))
+
+## [2.53.1](https://github.com/werf/werf/compare/v2.53.0...v2.53.1) (2025-11-10)
+
+
+### Miscellaneous Chores
+
+* **release:** force v2.53.1 ([067637d](https://github.com/werf/werf/commit/067637d1163bb80cf07967cd2aa8e8b417705375))
+
+## [2.53.0](https://github.com/werf/werf/compare/v2.52.0...v2.53.0) (2025-11-10)
+
+
+### Features
+
+* **build:** support imageSpec stage without registry  ([#7053](https://github.com/werf/werf/issues/7053)) ([cad58f0](https://github.com/werf/werf/commit/cad58f066e2b8a8d2beb1672d9080820261b81a5))
+* **deploy:** add `werf rollback` command ([4effe69](https://github.com/werf/werf/commit/4effe69adc1cf3f45b1c4b2a82733b54d3196056))
+* **deploy:** new `werf bundle plan` command ([cffad6a](https://github.com/werf/werf/commit/cffad6a478e73349cb492f09a597244727ce5d9a))
+* **deploy:** new `werf lint` command ([8284016](https://github.com/werf/werf/commit/8284016a49d37e8075d385ecf7135cac50a0e8c5))
+
+
+### Bug Fixes
+
+* build error "undefined: tmp_manager.ReleaseProjectDir" ([b090ae7](https://github.com/werf/werf/commit/b090ae7e6546e3bbba1d74474608c7957c2f2e5d))
+* **deploy:** `--timeout` and CTRL-C not stopping deployment correctly ([143ce54](https://github.com/werf/werf/commit/143ce54131efad6e05bcbdb324780bb42ef6f9df))
+* **deploy:** canceled operations not displayed in the end of deployment ([551eacb](https://github.com/werf/werf/commit/551eacb3079750594daada99d1e62296e33a366e))
+* **deploy:** empty Release.Info.First(Last)Deployed ([946c269](https://github.com/werf/werf/commit/946c269083999370b773769c5e5937ee3238fb0d))
+* **deploy:** error `unable to acquire lock` if install to new namespace ([92b1106](https://github.com/werf/werf/commit/92b1106c35eb12cd38be05a2a3b2827bafc0353b))
+* **host-cleanup:** don't use "file age" as metric for tmp data cleaning ([d970341](https://github.com/werf/werf/commit/d970341aa32cd0da4ee6e2fc600a7ee1402adff3))
+
 ## [2.52.0](https://github.com/werf/werf/compare/v2.51.4...v2.52.0) (2025-11-06)
 
 
