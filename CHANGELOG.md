@@ -7,8 +7,6 @@
 
 * **build:** add custom-tag once ([2e23d3f](https://github.com/werf/werf/commit/2e23d3fa19fb92b41e5ffc353c1f85014a53539a))
 * **build:** highlight an error in parallel mode ([a3f509a](https://github.com/werf/werf/commit/a3f509ae680b13417b59dd128f66fb601f321dd6))
-* **build:** test custom-tag case ([63168e7](https://github.com/werf/werf/commit/63168e76d4a59bfcbb39dc57df88c05c7a2a90b7))
-* **build:** test custom-tag once ([699fd4d](https://github.com/werf/werf/commit/699fd4d70389e028d90ccf080cc1bdda5176f1e8))
 
 ## [2.55.0](https://github.com/werf/werf/compare/v2.54.1...v2.55.0) (2025-11-25)
 
