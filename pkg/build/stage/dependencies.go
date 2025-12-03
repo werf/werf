@@ -11,7 +11,6 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/build/import_server"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/docker"
@@ -383,52 +382,54 @@ func (s *DependenciesStage) generateImportChecksum(ctx context.Context, c Convey
 	}
 }
 
-// generateChecksumScript prepares a shell script that calculates a checksum over the
-// set of files that would be imported from `from` with the given include/exclude rules.
-//
-// IMPORTANT: the embedded rsync binary is an old 3.1.2 build with limited and
-// unreliable support for options like --out-format when combined with --dry-run.
-// We cannot simply ask rsync to print "just file paths" in a machine-friendly format.
-//
-// To keep the checksum aligned with the actual import logic, we reuse rsync and the same
-// filters as the import server does (PrepareRsyncFilters),
 func generateChecksumScript(from string, includePaths, excludePaths []string, resultChecksumPath string) []string {
-	// As we are running rsync from the container root, we need to make sure that the paths
-	// we are passing to rsync are relative to the container root.
-	var includePathsCopy []string
-	var excludePathsCopy []string
-	{
-		if len(includePaths) == 0 {
-			includePathsCopy = append(includePathsCopy, from)
-		} else {
-			for _, includePath := range includePaths {
-				includePathsCopy = append(includePathsCopy, path.Join(from, includePath))
-			}
-		}
+	findCommandParts := append([]string{}, stapel.FindBinPath(), "-H", from, "-type", "f")
 
-		for _, excludePath := range excludePaths {
-			excludePathsCopy = append(excludePathsCopy, path.Join(from, excludePath))
-		}
+	var nameIncludeArgs []string
+	for _, includePath := range includePaths {
+		formattedPath := util.SafeTrimGlobsAndSlashesFromPath(includePath)
+		nameIncludeArgs = append(
+			nameIncludeArgs,
+			fmt.Sprintf("-wholename \"%s\"", path.Join(from, formattedPath)),
+			fmt.Sprintf("-wholename \"%s\"", path.Join(from, formattedPath, "**")),
+		)
 	}
 
-	// Exclude the stapel container mount root, as in the previous implementation.
-	if from == "/" {
-		excludePathsCopy = append(excludePathsCopy, stapel.CONTAINER_MOUNT_ROOT)
+	if len(nameIncludeArgs) != 0 {
+		findCommandParts = append(findCommandParts, fmt.Sprintf("\\( %s \\)", strings.Join(nameIncludeArgs, " -or ")))
 	}
 
-	rsyncCommand := stapel.RsyncBinPath() + " -r -L --dry-run"
-	// Run rsync from the container root to avoid problems with relative paths in the output.
-	rsyncCommand += import_server.PrepareRsyncFilters("", includePathsCopy, excludePathsCopy)
-	rsyncCommand += " " + "/"
+	excludePaths = append(excludePaths, stapel.CONTAINER_MOUNT_ROOT)
 
-	// We have an old rsync version, so we can't use --out-format and other options to parse file paths.'
-	// Example line: "-rw-r--r--    1 root     root             0 Nov 17 22:57 test-file.a".
-	parseFilePathCommand := "while read -r mode rest; do [ \"${mode#-}\" != \"$mode\" ] && echo \"/${rest##* }\"; done"
-	sortCommand := fmt.Sprintf("%s -n", stapel.SortBinPath())
+	var nameExcludeArgs []string
+	for _, excludePath := range excludePaths {
+		formattedPath := util.SafeTrimGlobsAndSlashesFromPath(excludePath)
+		nameExcludeArgs = append(
+			nameExcludeArgs,
+			fmt.Sprintf("! -wholename \"%s\"", path.Join(from, formattedPath)),
+			fmt.Sprintf("! -wholename \"%s\"", path.Join(from, formattedPath, "**")),
+		)
+	}
+
+	if len(nameExcludeArgs) != 0 {
+		if len(nameIncludeArgs) != 0 {
+			findCommandParts = append(findCommandParts, fmt.Sprintf("-and"))
+		}
+
+		findCommandParts = append(findCommandParts, fmt.Sprintf("\\( %s \\)", strings.Join(nameExcludeArgs, " -and ")))
+	}
+
+	findCommand := strings.Join(findCommandParts, " ")
+
+	sortCommandParts := append([]string{}, stapel.SortBinPath(), "-n")
+	sortCommand := strings.Join(sortCommandParts, " ")
+
 	md5SumCommand := stapel.Md5sumBinPath()
-	cutCommand := fmt.Sprintf("%s -c 1-32", stapel.CutBinPath())
 
-	commands := []string{rsyncCommand, parseFilePathCommand, sortCommand, "checksum", md5SumCommand, cutCommand}
+	cutCommandParts := append([]string{}, stapel.CutBinPath(), "-c", "1-32")
+	cutCommand := strings.Join(cutCommandParts, " ")
+
+	commands := append([]string{}, findCommand, sortCommand, "checksum", md5SumCommand, cutCommand)
 
 	script := generateChecksumBashFunction()
 	script = append(script, fmt.Sprintf("%s > %s", strings.Join(commands, " | "), resultChecksumPath))

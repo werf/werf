@@ -145,6 +145,10 @@ func SudoBinPath() string {
 	return embeddedBinPath("sudo")
 }
 
+func FindBinPath() string {
+	return embeddedBinPath("find")
+}
+
 func SortBinPath() string {
 	return embeddedBinPath("sort")
 }
