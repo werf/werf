@@ -2,7 +2,7 @@ configVersion: 1
 project: ansible-python-encoding
 ---
 image: ubuntu-python3
-from: ubuntu:18.04
+from: registry.werf.io/base/ubuntu:22.04
 git:
 {{ include "appGit" . }}
 ansible:
@@ -21,7 +21,7 @@ ansible:
 {{ tuple . "python3" | include "runScript" }}
 ---
 image: alpine-python3
-from: python:3-alpine
+from: registry.werf.io/base/python:3-alpine
 git:
 {{ include "appGit" . }}
 ansible:

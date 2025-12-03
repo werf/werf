@@ -2,6 +2,6 @@ project: none
 configVersion: 1
 ---
 image: ~
-from: alpine
+from: registry.werf.io/base/alpine
 docker:
   CMD: "[\"command\", \"param1\", \"param2\"]"

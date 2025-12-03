@@ -2,6 +2,6 @@ project: none
 configVersion: 1
 ---
 image: image
-from: ubuntu
+from: registry.werf.io/base/ubuntu
 git:
 - to: /app

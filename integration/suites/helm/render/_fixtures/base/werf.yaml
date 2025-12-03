@@ -2,7 +2,7 @@ project: none
 configVersion: 1
 ---
 image: ~
-from: python:alpine
+from: registry.werf.io/base/python:alpine
 ansible:
   install:
   - file:

@@ -31,7 +31,7 @@ dependencies:
 
 ---
 image: base-stapel-shell
-from: ubuntu:22.04
+from: registry.werf.io/base/ubuntu:22.04
 shell:
   setup:
   - "mkdir -p /basedir"

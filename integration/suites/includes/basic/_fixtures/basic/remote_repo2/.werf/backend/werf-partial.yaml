@@ -1,5 +1,5 @@
 image: backend
-from: {{ .BaseImage }}
+from: registry.werf.io/base/{{ .BaseImage }}
 shell:
   install:
   - echo "install backend"

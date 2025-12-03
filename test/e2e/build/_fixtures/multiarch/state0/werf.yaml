@@ -8,7 +8,7 @@ build:
 {{ if ( eq ( env "ENABLE_STAPEL_IMAGE" ) "1" ) }}
 ---
 image: orange
-from: alpine
+from: registry.werf.io/base/alpine
 shell:
   install:
     - echo install

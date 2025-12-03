@@ -7,7 +7,7 @@ ADD src/file* /app/added/
 COPY src/file* /app/copied/
 
 
-FROM ubuntu:22.04 AS result
+FROM registry.werf.io/base/ubuntu:22.04 AS result
 
 ARG CHANGED_ARG="should_be_changed"
 ARG BASE_STAPEL_SHELL_IMAGE_NAME="no_such_image"

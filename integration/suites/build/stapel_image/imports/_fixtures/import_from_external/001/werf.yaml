@@ -2,18 +2,18 @@ project: none
 configVersion: 1
 ---
 image: test-import-0
-from: alpine
+from: registry.werf.io/base/alpine
 shell:
   install:
     - mkdir -p /etc/test
 import:
-  - from: alpine:3.18
+  - from: registry.werf.io/base/alpine:3.21
     add: /bin/busybox
     to: /etc/test
     after: install
 ---
 image: test-import-1
-from: alpine
+from: registry.werf.io/base/alpine
 shell:
   install:
     - mkdir -p /etc/test
@@ -24,7 +24,7 @@ import:
     after: install
 ---
 image: test-import-2
-from: alpine
+from: registry.werf.io/base/alpine
 shell:
   install:
     - mkdir -p /etc/test
@@ -35,12 +35,12 @@ import:
     after: install
 ---
 image: test-import-3
-from: alpine
+from: registry.werf.io/base/alpine
 shell:
   install:
     - mkdir -p /etc/test
 import:
-  - from: alpine@sha256:de0eb0b3f2a47ba1eb89389859a9bd88b28e82f5826b6969ad604979713c2d4f
+  - from: registry.werf.io/base/alpine@sha256:de0eb0b3f2a47ba1eb89389859a9bd88b28e82f5826b6969ad604979713c2d4f
     add: /bin/busybox
     to: /etc/test
     after: install
