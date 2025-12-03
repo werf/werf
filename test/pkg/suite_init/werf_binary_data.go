@@ -40,7 +40,9 @@ func buildWerfDevBinary(ctx context.Context) string {
 	basePath, err := utils.LookupRepoAbsPath(ctx)
 	Expect(err).ShouldNot(HaveOccurred())
 
-	buildOpts := go_task.BuildTaskOpts{}
+	buildOpts := go_task.BuildTaskOpts{
+		AcceptPromptsAutomatically: true,
+	}
 	if e := os.Getenv("WERF_TEST_ENABLE_RACE_DETECTOR"); e != "" {
 		buildOpts.RaceDetectorEnabled = true
 	}
