@@ -2,8 +2,8 @@ project: none
 configVersion: 1.0
 ---
 image: [image_a, image_b, image_c]
-from: alpine
+from: registry.werf.io/base/alpine
 ---
 image: artifact
 final: false
-from: alpine
+from: registry.werf.io/base/alpine

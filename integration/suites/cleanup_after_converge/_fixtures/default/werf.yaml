@@ -7,7 +7,7 @@ gitWorktree:
   allowFetchOriginBranchesAndTags: false
 ---
 image: backend
-from: python:alpine
+from: registry.werf.io/base/python:alpine
 ansible:
   install:
   - file:
@@ -33,7 +33,7 @@ import:
 ---
 image: artifact
 final: false
-from: alpine
+from: registry.werf.io/base/alpine
 fromCacheVersion: {{ env "ARTIFACT_CACHE_VERSION" }}
 shell:
   install:

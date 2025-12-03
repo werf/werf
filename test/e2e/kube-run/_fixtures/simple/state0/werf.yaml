@@ -3,7 +3,7 @@ configVersion: 1
 
 ---
 image: main
-from: ubuntu:22.04
+from: registry.werf.io/base/ubuntu:22.04
 git:
   - add: /app.sh
     to: /opt/app.sh

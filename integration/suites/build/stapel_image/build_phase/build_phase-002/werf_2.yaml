@@ -2,7 +2,7 @@ configVersion: 1
 project: none
 ---
 image: ~
-from: ubuntu:18.04
+from: registry.werf.io/base/ubuntu:22.04
 shell:
   installCacheVersion: 1 # +
   install:

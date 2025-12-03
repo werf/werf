@@ -1,2 +1,2 @@
-FROM ubuntu:latest
+FROM registry.werf.io/base/ubuntu:latest
 RUN echo building first

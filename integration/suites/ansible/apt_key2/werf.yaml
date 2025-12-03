@@ -5,7 +5,7 @@ project: ansible-apt-key2
 configVersion: 1
 ---
 image: ~
-from: ubuntu:18.04
+from: registry.werf.io/base/ubuntu:22.04
 ansible:
   install:
   - name: Add an apt key by id from a keyserver

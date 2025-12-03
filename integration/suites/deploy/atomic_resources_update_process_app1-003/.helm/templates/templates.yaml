@@ -22,9 +22,9 @@ spec:
     spec:
       initContainers:
       - name: init
-        image: alpine
+        image: registry.werf.io/base/alpine
         command: [ "aaa" ]
       containers:
       - name: mydeploy
-        image: alpine
+        image: registry.werf.io/base/alpine
         command: [ "/bin/sh", "-ec", "exit 1"]

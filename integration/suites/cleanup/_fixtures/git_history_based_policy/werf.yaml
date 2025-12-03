@@ -79,7 +79,7 @@ cleanup:
 
 ---
 image: image
-from: alpine
+from: registry.werf.io/base/alpine
 fromCacheVersion: {{ env "FROM_CACHE_VERSION" }}
 shell:
   setup: date
@@ -91,7 +91,7 @@ import:
 ---
 image: artifact
 final: false
-from: alpine
+from: registry.werf.io/base/alpine
 fromCacheVersion: {{ env "FROM_CACHE_VERSION" }}
 shell:
   install: echo "123" > /artifact

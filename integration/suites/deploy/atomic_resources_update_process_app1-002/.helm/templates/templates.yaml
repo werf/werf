@@ -22,5 +22,5 @@ spec:
     spec:
       containers:
       - name: mydeploy
-        image: alpine
+        image: registry.werf.io/base/alpine
         command: [ "/bin/sh", "-ec", "while true ; do date ; sleep 1 ; done"]
