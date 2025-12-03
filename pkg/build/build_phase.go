@@ -123,8 +123,7 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 		commonTargetPlatforms = []string{phase.Conveyor.ContainerBackend.GetDefaultPlatform()}
 	}
 
-	imagesPairs := phase.Conveyor.imagesTree.GetImagesByName(false,
-		image.WithImageNameList(phase.Conveyor.ImagesToProcess.ImageNameList))
+	imagesPairs := phase.Conveyor.imagesTree.GetImagesByName(false, image.WithImageNameList(phase.Conveyor.ImagesToProcess.AutoNameList()))
 
 	if err := parallel.DoTasks(ctx, len(imagesPairs), parallel.DoTasksOptions{
 		MaxNumberOfWorkers: int(phase.Conveyor.ParallelTasksLimit),
