@@ -40,8 +40,7 @@ func (e *Exporter) Run(ctx context.Context) error {
 		return nil
 	}
 
-	images := e.Conveyor.imagesTree.GetImagesByName(true, build_image.WithImageNameList(e.ExportImageNameList))
-
+	images := e.Conveyor.imagesTree.GetImagesByName(true, build_image.WithExportImageNameList(e.ExportImageNameList))
 	if err := parallel.DoTasks(ctx, len(images), parallel.DoTasksOptions{
 		MaxNumberOfWorkers: int(e.Conveyor.ParallelTasksLimit),
 	}, func(ctx context.Context, taskId int) error {
