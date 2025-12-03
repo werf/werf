@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.55.3](https://github.com/werf/werf/compare/v2.55.2...v2.55.3) (2025-12-03)
+
+
+### Miscellaneous Chores
+
+* **release:** force v2.55.3 ([4705747](https://github.com/werf/werf/commit/47057475f3da1997e580946bc0f3535c69ab6173))
+
 ## [2.55.2](https://github.com/werf/werf/compare/v2.55.1...v2.55.2) (2025-12-03)
 
 
