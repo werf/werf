@@ -62,10 +62,10 @@ spec:
       containers:
       - name: mycontainer1
         command: [ "/bin/bash", "-c", "while true; do date; sleep 1; done" ]
-        image: ubuntu:18.04
+        image: registry.werf.io/base/ubuntu:22.04
       - name: mycontainer2
         command: [ "/bin/bash", "-c", "while true; do date; sleep 1; done" ]
-        image: ubuntu:18.04
+        image: registry.werf.io/base/ubuntu:22.04
 `), metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
@@ -93,7 +93,7 @@ spec:
       containers:
       - name: main
         command: [ "/bin/bash", "-c", "while true; do date; sleep 1; done" ]
-        image: ubuntu:18.04
+        image: registry.werf.io/base/ubuntu:22.04
         env:
         - name: MYVAR
           value: anotherValue
@@ -268,7 +268,7 @@ spec:
       containers:
       - name: main
         command: [ "/bin/bash", "-c", "while true; do date; sleep 1; done" ]
-        image: ubuntu:18.04
+        image: registry.werf.io/base/ubuntu:22.04
 `), metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
