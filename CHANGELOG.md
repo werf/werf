@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.55.4](https://github.com/werf/werf/compare/v2.55.3...v2.55.4) (2025-12-04)
+
+
+### Bug Fixes
+
+* **build, import:** avoid following symlinks during checksum calculation to prevent runner stalls ([9ee46f2](https://github.com/werf/werf/commit/9ee46f239c55f983e37beacf0419e979f08bae12))
+* **config:** align .Files.Glob behavior with helm ([7959568](https://github.com/werf/werf/commit/7959568a2d69e6774f6323fef54adee43665c181))
+
 ## [2.55.3](https://github.com/werf/werf/compare/v2.55.2...v2.55.3) (2025-12-03)
 
 
