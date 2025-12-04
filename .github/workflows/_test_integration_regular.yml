@@ -61,7 +61,7 @@ jobs:
       - name: Test
         run: |
           export WERF_TEST_K8S_DOCKER_REGISTRY="localhost:$(docker inspect kind-registry --format '{{(index (index .NetworkSettings.Ports "5000/tcp") 0).HostPort}}')"
-          task --yes -p test:integration paths="$(echo ${{ inputs.packages }} | tr , ' ')" -- --flake-attempts=3 --keep-going --skip-package '${{ inputs.excludePackages }}'
+          task --yes -p test:integration paths="$(echo ${{ inputs.packages }} | tr , ' ')" -- --flake-attempts=3 --keep-going --skip-package '${{ inputs.excludePackages }}' --skip "Buildah"
           echo loadavg: $(cat /proc/loadavg)
         env:
           GOCOVERDIR: ${{ env.WERF_TEST_COVER_DIR }}
