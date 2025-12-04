@@ -416,7 +416,8 @@ func generateChecksumScript(from string, includePaths, excludePaths []string, re
 		excludePathsCopy = append(excludePathsCopy, stapel.CONTAINER_MOUNT_ROOT)
 	}
 
-	rsyncCommand := stapel.RsyncBinPath() + " -r -L --dry-run"
+	// Do not follow symlinks when calculating checksums to avoid runner hang-ups (-L)
+	rsyncCommand := stapel.RsyncBinPath() + " -r --dry-run"
 	// Run rsync from the container root to avoid problems with relative paths in the output.
 	rsyncCommand += import_server.PrepareRsyncFilters("", includePathsCopy, excludePathsCopy)
 	rsyncCommand += " " + "/"
