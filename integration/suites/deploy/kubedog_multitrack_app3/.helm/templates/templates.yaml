@@ -15,7 +15,7 @@ spec:
       initContainers:
       - name: init
         command: [ "true" ]
-        image: ubuntu:18.04
+        image: registry.werf.io/base/ubuntu:22.04
       containers:
       - name: main
         command:
@@ -35,7 +35,7 @@ spec:
           until [ -e /readiness_succeeded ] && [ -e /liveness_succeeded ]; do sleep 1; done
 
           tail -f /dev/null
-        image: ubuntu:18.04
+        image: registry.werf.io/base/ubuntu:22.04
         startupProbe:
           exec:
             command: [ "sh", "-euc", "touch /startup_triggered && test -e /startup && touch /startup_succeeded" ]
@@ -47,7 +47,7 @@ spec:
             command: [ "sh", "-euc", "touch /liveness_triggered && test -e /liveness && touch /liveness_succeeded" ]
       - name: never-fails
         command: [ "tail", "-f", "/dev/null" ]
-        image: ubuntu:18.04
+        image: registry.werf.io/base/ubuntu:22.04
         startupProbe:
           exec:
             command: [ "true" ]

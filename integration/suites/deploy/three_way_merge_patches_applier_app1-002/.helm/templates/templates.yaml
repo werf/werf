@@ -18,4 +18,4 @@ spec:
       containers:
       - name: main
         command: [ "/bin/bash", "-c", "while true; do date ; sleep 1 ; done" ]
-        image: ubuntu:20.04
+        image: registry.werf.io/base/ubuntu:22.04
