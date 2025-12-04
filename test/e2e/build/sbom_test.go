@@ -1,7 +1,9 @@
 package e2e_build_test
 
 import (
+	"archive/tar"
 	"fmt"
+	"io"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -9,6 +11,8 @@ import (
 	imagePkg "github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/sbom"
 	"github.com/werf/werf/v2/test/pkg/contback"
+	"github.com/werf/werf/v2/test/pkg/report"
+	"github.com/werf/werf/v2/test/pkg/utils"
 	"github.com/werf/werf/v2/test/pkg/werf"
 )
 
@@ -35,7 +39,8 @@ var _ = Describe("Simple build", Label("e2e", "build", "sbom", "simple"), func()
 
 				By("state0: building images")
 				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
-				buildOut, buildReport := werfProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), nil)
+				reportProject := report.NewProjectWithReport(werfProject)
+				buildOut, buildReport := reportProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), nil)
 				Expect(buildOut).To(ContainSubstring("Building stage"))
 
 				By("state0: SBOM logging output")
@@ -59,12 +64,27 @@ var _ = Describe("Simple build", Label("e2e", "build", "sbom", "simple"), func()
 						Expect(sbomImgInspect.Config.Labels[imagePkg.WerfSbomLabel]).To(Equal("f2b172aa9b952cfba7ae9914e7e5a9760ff0d2c7d5da69d09195c63a2577da79"))
 
 						By("state0: SBOM image file system layout")
-						fsStreamReader := contback.NewFileSystemReaderWrapper(contRuntime.DumpImage(ctx, sbom.ImageName(reportRecord.DockerImageName)))
+						opener := func() (io.ReadCloser, error) {
+							return contRuntime.SaveImageToStream(ctx, sbom.ImageName(reportRecord.DockerImageName)), nil
+						}
 
-						Expect(fsStreamReader.Next().Path()).To(Equal("sbom/"))
-						Expect(fsStreamReader.Next().Path()).To(Equal("sbom/cyclonedx@1.6/"))
-						Expect(fsStreamReader.Next().Path()).To(Equal("sbom/cyclonedx@1.6/70ee6b0600f471718988bc123475a625ecd4a5763059c62802ae6280e65f5623.json"))
-						Expect(fsStreamReader.Next()).To(BeNil())
+						flattenedFsStreamReaderCloser, err := sbom.ExtractFromImageStream(opener)
+						Expect(err).To(Succeed(), "should extract SBOM image from the stream")
+
+						var actualFilePaths []string
+						err = utils.ForEachInTarball(tar.NewReader(flattenedFsStreamReaderCloser), func(header *tar.Header) error {
+							actualFilePaths = append(actualFilePaths, header.Name)
+							return nil
+						})
+						Expect(err).To(Succeed(), "should iterate over the tarball entries")
+						Expect(flattenedFsStreamReaderCloser.Close()).To(Succeed(), "should close the stream reader")
+
+						expectedFilePaths := []string{
+							"sbom",
+							"sbom/cyclonedx@1.6",
+							"sbom/cyclonedx@1.6/70ee6b0600f471718988bc123475a625ecd4a5763059c62802ae6280e65f5623.json",
+						}
+						Expect(actualFilePaths).To(Equal(expectedFilePaths))
 					}
 				}
 			})

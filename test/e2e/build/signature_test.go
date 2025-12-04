@@ -16,6 +16,7 @@ import (
 	"github.com/samber/lo"
 
 	elfTar "github.com/werf/werf/v2/pkg/signature/elf/tar"
+	"github.com/werf/werf/v2/test/pkg/report"
 	"github.com/werf/werf/v2/test/pkg/utils"
 	"github.com/werf/werf/v2/test/pkg/utils/gpg"
 	"github.com/werf/werf/v2/test/pkg/werf"
@@ -88,7 +89,8 @@ var _ = Describe("Signature", Label("e2e", "signature", "simple"), func() {
 				"--annotate-layers-with-dm-verity-root-hash",
 			}
 
-			buildOut, buildReport := werfProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), &werf.BuildWithReportOptions{CommonOptions: werf.CommonOptions{ExtraArgs: extraArgs}})
+			reportProject := report.NewProjectWithReport(werfProject)
+			buildOut, buildReport := reportProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), &werf.WithReportOptions{CommonOptions: werf.CommonOptions{ExtraArgs: extraArgs}})
 			Expect(buildOut).To(ContainSubstring("Building stage dockerfile/sign"))
 			Expect(buildOut).To(ContainSubstring("Signing ELF files"))
 
@@ -217,7 +219,8 @@ var _ = Describe("Signature", Label("e2e", "signature", "simple"), func() {
 					"--elf-pgp-private-key-base64", testBSignPrivateKeyBase64,
 				}
 
-				buildOut, buildReport := werfProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), &werf.BuildWithReportOptions{CommonOptions: werf.CommonOptions{ExtraArgs: extraArgs}})
+				reportProject := report.NewProjectWithReport(werfProject)
+				buildOut, buildReport := reportProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), &werf.WithReportOptions{CommonOptions: werf.CommonOptions{ExtraArgs: extraArgs}})
 				Expect(buildOut).To(ContainSubstring("Signing ELF files"))
 
 				By("bsign: loading image and manifest from registry")

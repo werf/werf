@@ -1,7 +1,6 @@
 package buildah
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -215,7 +214,6 @@ type Buildah interface {
 	PruneImages(ctx context.Context, opts PruneImagesOptions) (PruneImagesReport, error)
 	SaveImageToStream(ctx context.Context, imageName string) (io.ReadCloser, error)
 	LoadImageFromStream(ctx context.Context, input io.Reader) (string, error)
-	DumpImage(ctx context.Context, ref string, opts StreamOpts) (*bytes.Reader, error)
 }
 
 type Mode string

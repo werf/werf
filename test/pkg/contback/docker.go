@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"io"
 
 	. "github.com/onsi/gomega"
 
@@ -48,7 +49,7 @@ func (r *DockerBackend) Pull(ctx context.Context, image string) {
 	utils.RunSucceedCommand(ctx, "/", "docker", args...)
 }
 
-func (r *DockerBackend) DumpImage(ctx context.Context, image string) *bytes.Reader {
+func (r *DockerBackend) SaveImageToStream(ctx context.Context, image string) io.ReadCloser {
 	args := r.CommonCliArgs
 	args = append(args, "image", "save", image)
 
@@ -56,10 +57,9 @@ func (r *DockerBackend) DumpImage(ctx context.Context, image string) *bytes.Read
 		NoStderr:      true,
 		ShouldSucceed: true,
 	})
-
 	Expect(err).NotTo(HaveOccurred())
 
-	return bytes.NewReader(b)
+	return io.NopCloser(bytes.NewReader(b))
 }
 
 func (r *DockerBackend) GetImageInspect(ctx context.Context, image string) DockerImageInspect {
