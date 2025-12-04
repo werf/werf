@@ -222,9 +222,6 @@ jobs:
     if: success()
     runs-on: ubuntu-22.04
     needs:
-      - publish
-      - deploy_channels_cm_prod
-      - publish_werf_images
       - update_release
     steps:
       - name: Trigger Deploy workflow in werf/website
