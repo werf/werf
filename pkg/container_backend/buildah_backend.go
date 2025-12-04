@@ -1206,9 +1206,3 @@ func mapSbomScanOptionsToBuidahBackendScanOptions(scanOpts scanner.ScanOptions) 
 		Commands:   []string{scanCmd.String()},
 	}
 }
-
-func (backend *BuildahBackend) DumpImage(ctx context.Context, ref string) (*bytes.Reader, error) {
-	return backend.buildah.DumpImage(ctx, ref, buildah.StreamOpts{
-		LogWriter: io.Discard,
-	})
-}

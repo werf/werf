@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 
 	. "github.com/onsi/gomega"
@@ -65,24 +66,32 @@ func (r *NativeBuildahBackend) Pull(ctx context.Context, image string) {
 	utils.RunSucceedCommand(ctx, "/", "buildah", args...)
 }
 
-func (r *NativeBuildahBackend) DumpImage(ctx context.Context, image string) *bytes.Reader {
+func (r *NativeBuildahBackend) SaveImageToStream(ctx context.Context, image string) io.ReadCloser {
 	// Buildah doesn't support redirecting to stdout
 	// https://github.com/containers/buildah/issues/936
 	// So we should use tmp file
-	tmpFile, err := os.CreateTemp(os.TempDir(), "buildah-img-******.tar")
+	tmpDir, err := os.MkdirTemp(os.TempDir(), "buildah-img-*")
 	Expect(err).NotTo(HaveOccurred())
-	defer tmpFile.Close()
 
+	// NOTE: Command "buildah push <image_ref> oci-archive:/path/to/dir" doesn't create manifest.json file.
+	// We must use "dir:/" transport to create manifest.json file.
+	// 1. Push image to tmp dir
 	args := r.CommonCliArgs
-	args = append(args, "push", "--disable-compression", image, fmt.Sprintf("oci-archive:%s", tmpFile.Name()))
-
+	args = append(args, "push", "--format", "v2s2", "--disable-compression", image, fmt.Sprintf("dir:%s", tmpDir))
 	utils.RunSucceedCommand(ctx, "/", "buildah", args...)
 
-	b, err := os.ReadFile(tmpFile.Name())
+	// 2. Create tar archive from tmp dir AND redirect result to stdout.
+	// Option --transform converts ./manifest.json to manifest.json.
+	argsTar := []string{"-c", "-f", "-", "--transform", "s|^\\./||", "."}
+	b, err := utils.RunCommandWithOptions(ctx, tmpDir, "tar", argsTar, utils.RunCommandOptions{
+		NoStderr:      true,
+		ShouldSucceed: true,
+	})
 	Expect(err).NotTo(HaveOccurred())
-	Expect(os.Remove(tmpFile.Name())).NotTo(HaveOccurred())
 
-	return bytes.NewReader(b)
+	Expect(os.RemoveAll(tmpDir)).To(Succeed())
+
+	return io.NopCloser(bytes.NewReader(b))
 }
 
 func (r *NativeBuildahBackend) GetImageInspect(ctx context.Context, image string) DockerImageInspect {

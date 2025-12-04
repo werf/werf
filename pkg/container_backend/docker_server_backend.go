@@ -1,7 +1,6 @@
 package container_backend
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -501,23 +500,6 @@ func (backend *DockerServerBackend) GenerateSBOM(ctx context.Context, scanOpts s
 	buildLogger.End()
 
 	return imageId, nil
-}
-
-func (backend *DockerServerBackend) DumpImage(ctx context.Context, ref string) (*bytes.Reader, error) {
-	rc, err := docker.ImageSave(ctx, ref)
-	if err != nil {
-		return nil, fmt.Errorf("unable to open image streaming %q: %w", ref, err)
-	}
-	buf := &bytes.Buffer{}
-
-	if _, err = io.Copy(buf, rc); err != nil {
-		return nil, fmt.Errorf("unable to bufferize image data: %w", err)
-	}
-	if err = rc.Close(); err != nil {
-		return nil, fmt.Errorf("unable to close image streaming: %w", err)
-	}
-
-	return bytes.NewReader(buf.Bytes()), nil
 }
 
 func mapSbomScanCommandsToSbomBillNames(commands []scanner.ScanCommand) []string {

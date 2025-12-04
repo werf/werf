@@ -1,6 +1,7 @@
 package get
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -17,7 +18,6 @@ import (
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
 	"github.com/werf/werf/v2/pkg/sbom"
-	"github.com/werf/werf/v2/pkg/sbom/finder"
 	"github.com/werf/werf/v2/pkg/tmp_manager"
 	"github.com/werf/werf/v2/pkg/true_git"
 	"github.com/werf/werf/v2/pkg/werf/global_warnings"
@@ -219,20 +219,35 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		return err
 	}
 
-	sbomArtifactFinder := finder.NewFinder(containerBackend)
-
-	artifactFile, err := sbomArtifactFinder.FindArtifactFile(ctx, exportedImages, requestedImageName)
+	sbomImageName, err := getSbomImageName(exportedImages, requestedImageName)
 	if err != nil {
-		return fmt.Errorf("find artifact file error: %w", err)
+		return fmt.Errorf("unable to get SBOM image name: %w", err)
 	}
-	if artifactFile == nil {
-		return fmt.Errorf("artifact file is not found in SBOM image %q", sbom.ImageName(requestedImageName))
+
+	opener := func() (io.ReadCloser, error) {
+		return containerBackend.SaveImageToStream(ctx, sbomImageName)
+	}
+
+	artifactContent, err := sbom.FindSingleSbomArtifact(opener)
+	if err != nil {
+		return fmt.Errorf("unable to find artifact file: %w", err)
 	}
 
 	return logboek.Streams().DoErrorWithoutProxyStreamDataFormatting(func() error {
-		if _, err = io.Copy(os.Stdout, artifactFile); err != nil {
+		if _, err = io.Copy(os.Stdout, bytes.NewReader(artifactContent)); err != nil {
 			return fmt.Errorf("unable to redirect artifact file content into stdout: %w", err)
 		}
 		return nil
 	})
+}
+
+func getSbomImageName(exportedImages []*image.Image, requestedImageName string) (string, error) {
+	foundImage, ok := lo.Find(exportedImages, func(item *image.Image) bool {
+		return item.Name == requestedImageName
+	})
+	if !ok {
+		return "", fmt.Errorf("unable to find requested image %q", requestedImageName)
+	}
+
+	return sbom.ImageName(foundImage.GetLastNonEmptyStage().GetStageImage().Image.GetStageDesc().Info.Name), nil
 }
