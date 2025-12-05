@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.55.5](https://github.com/werf/werf/compare/v2.55.4...v2.55.5) (2025-12-05)
+
+
+### Bug Fixes
+
+* **build, import:** should not resolve symlinks ([c28127a](https://github.com/werf/werf/commit/c28127a095e6153ca8d295cb0165d96441ff3e24))
+
 ## [2.55.4](https://github.com/werf/werf/compare/v2.55.3...v2.55.4) (2025-12-04)
 
 
