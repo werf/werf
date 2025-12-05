@@ -1,0 +1,25 @@
+project: none
+configVersion: 1
+
+---
+image: backend
+from: python:alpine
+import:
+  - image: artifact
+    add: /artifact
+    to: /artifact
+    after: setup
+
+---
+image: artifact
+final: false
+from: alpine
+fromCacheVersion: {{ env "ARTIFACT_CACHE_VERSION" }}
+shell:
+  beforeSetup:
+    - echo "Preparing artifact environment..."
+    - mkdir -p /artifact_storage
+    - chmod 755 /artifact_storage
+    - echo "Artifact preparation completed"
+  install:
+    - echo {{ env "ARTIFACT_DATA" }} > /artifact

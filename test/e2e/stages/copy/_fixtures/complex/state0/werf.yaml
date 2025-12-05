@@ -1,0 +1,20 @@
+project: none
+configVersion: 1
+
+---
+image: backend
+from: python:alpine
+import:
+  - image: artifact
+    add: /artifact
+    to: /artifact
+    before: setup
+
+---
+image: artifact
+final: false
+from: alpine
+fromCacheVersion: {{ env "ARTIFACT_CACHE_VERSION" }}
+shell:
+  install:
+    - echo {{ env "ARTIFACT_DATA" }} > /artifact

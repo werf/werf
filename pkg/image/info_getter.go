@@ -17,6 +17,7 @@ type InfoGetter struct {
 
 type InfoGetterOptions struct {
 	CustomTagFunc CustomTagFunc
+	OnlyFinal     bool
 }
 
 func NewInfoGetter(imageName, ref string, opts InfoGetterOptions) *InfoGetter {
