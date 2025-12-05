@@ -218,6 +218,17 @@ jobs:
 
           process_releases
 
+  run_website_deploy:
+    if: success()
+    runs-on: ubuntu-22.04
+    needs:
+      - update_release
+    steps:
+      - name: Trigger Deploy workflow in werf/website
+        run: gh workflow run Deploy --repo werf/website --ref main
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+
   notify:
     if: always()
     needs:
@@ -225,6 +236,7 @@ jobs:
       - deploy_channels_cm_prod
       - publish_werf_images
       - update_release
+      - run_website_deploy
     uses: werf/common-ci/.github/workflows/notification.yml@main
     secrets:
       loopNotificationGroup: ${{ secrets.LOOP_NOTIFICATION_GROUP }}
