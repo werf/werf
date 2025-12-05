@@ -17,7 +17,7 @@ jobs:
       persistent: true
       env: production
     secrets:
-      kubeConfig: ${{ secrets.KUBECONFIG_BASE64_PROD }}
+      kubeConfig: ${{ secrets.KUBECONFIG_BASE64_PRODUCTION }}
 
   deploy-test:
     uses: ./.github/workflows/_docs_deploy.yml
