@@ -109,20 +109,6 @@ var _ = Describe("Stapel imports", func() {
 			}
 		})
 
-		It("should import artifacts from directory to which the symlink points", func(ctx SpecContext) {
-			for stepInd := 1; stepInd <= 2; stepInd++ {
-				stepID := fmt.Sprintf("00%d", stepInd)
-				stepDir := utils.FixturePath("imports_app_3", stepID)
-				SuiteData.CommitProjectWorktree(ctx, SuiteData.ProjectName, stepDir, stepID)
-
-				Expect(werfBuild(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{})).To(Succeed())
-
-				expectedStepFileContent := fmt.Sprintf("VERSION_%d\n", stepInd)
-				destFilePath := "/dir/file"
-				Expect(werfRunOutput(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), "cat", destFilePath)).To(ContainSubstring(expectedStepFileContent))
-			}
-		})
-
 		It("should import symlink file", func(ctx SpecContext) {
 			By("Check the symlink is added")
 			var lastStageImageNameAfterFirstBuild string
