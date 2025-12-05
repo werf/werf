@@ -1,5 +1,17 @@
 # Changelog
 
+### [1.2.337](https://www.github.com/werf/werf/compare/v1.2.336...v1.2.337) (2025-12-05)
+
+
+### Bug Fixes
+
+* **ci:** update runner ([#7265](https://www.github.com/werf/werf/issues/7265)) ([0edea47](https://www.github.com/werf/werf/commit/0edea47f66b39dd0f25237754fb7c7dcd596331d))
+
+
+### Miscellaneous Chores
+
+* **release:** force 1.2.337 ([53f9236](https://www.github.com/werf/werf/commit/53f9236bda17045f73aef087ab2112ddcf49e5fc))
+
 ### [1.2.336](https://www.github.com/werf/werf/compare/v1.2.335...v1.2.336) (2025-10-31)
 
 
