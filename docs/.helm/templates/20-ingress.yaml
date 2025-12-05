@@ -26,7 +26,6 @@ kind: Ingress
 metadata:
   name: {{ $.Chart.Name }}-{{ $versionDNSNormalized }}
   annotations:
-    kubernetes.io/ingress.class: "nginx"
     nginx.ingress.kubernetes.io/configuration-snippet: |
       proxy_set_header X-Original-URI $request_uri;
       ssi on;
@@ -38,6 +37,7 @@ metadata:
     nginx.ingress.kubernetes.io/auth-url: http://basic-auth.kube-basic-auth.svc.cluster.local/werfio
 {{- end }}
 spec:
+  ingressClassName: {{ pluck $.Values.werf.env $.Values.ingressClassName | first | default $.Values.ingressClassName._default }}
   tls:
   - hosts:
       - {{ $host }}
