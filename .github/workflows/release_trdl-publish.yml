@@ -49,7 +49,7 @@ jobs:
         uses: werf/actions/converge@v2
         with:
           env: production
-          kube-config-base64-data: ${{ secrets.KUBECONFIG_BASE64_PROD }}
+          kube-config-base64-data: ${{ secrets.KUBECONFIG_BASE64_PRODUCTION }}
         env:
           WERF_NAMESPACE: "werfio-production"
           WERF_DIR: "ci"
