@@ -424,7 +424,16 @@ func generateChecksumScript(from string, includePaths, excludePaths []string, re
 
 	// We have an old rsync version, so we can't use --out-format and other options to parse file paths.'
 	// Example line: "-rw-r--r--    1 root     root             0 Nov 17 22:57 test-file.a".
-	parseFilePathCommand := "while read -r mode rest; do [ \"${mode#-}\" != \"$mode\" ] && echo \"/${rest##* }\"; done"
+	parseFilePathCommand := `while read -r mode rest; do
+	 case "$mode" in
+	   -*) echo "/${rest##* }" ;;
+	   l*)
+	     name="${rest%% -> *}"
+	     name="${name##* }"
+	     echo "/$name"
+	     ;;
+	 esac
+	done`
 	sortCommand := fmt.Sprintf("%s -n", stapel.SortBinPath())
 	md5SumCommand := stapel.Md5sumBinPath()
 	cutCommand := fmt.Sprintf("%s -c 1-32", stapel.CutBinPath())
@@ -436,7 +445,6 @@ func generateChecksumScript(from string, includePaths, excludePaths []string, re
 
 	return script
 }
-
 func generateChecksumBashFunction() []string {
 	var calculateChecksum string
 
