@@ -152,9 +152,12 @@ var _ = Describe("Stapel imports", func() {
 
 			Expect(werfBuild(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{})).To(Succeed())
 
-			output := werfRunOutput(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), "sh", "-c", "find /test-tree -type d -empty | wc -l")
+			lastStageImageNameAfterFirstBuild := utils.GetBuiltImageLastStageImageName(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "final")
 
-			Expect(strings.TrimSpace(output)).To(Equal("0"))
+			output := werfRunOutputWithSpecificImage(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName),
+				lastStageImageNameAfterFirstBuild, "sh", "-c", "find /test-tree -type d -empty | wc -l")
+
+			Expect(output).To(ContainSubstring("0"))
 		})
 	})
 
