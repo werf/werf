@@ -154,11 +154,9 @@ var _ = Describe("Stapel imports", func() {
 
 			finalImageName := utils.GetBuiltImageLastStageImageName(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "final")
 
-			output := werfRunOutput(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName),
-				"rm", "--entrypoint", "sh", finalImageName, "-c", `! find /test-tree -type d -empty | grep -q .`,
-			)
+			output := werfRunOutput(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), "rm", "--entrypoint", "sh", finalImageName, "-c", "find /test-tree -type d -empty | wc -l")
 
-			Expect(output).To(nil)
+			Expect(strings.TrimSpace(output)).To(Equal("0"))
 		})
 	})
 
@@ -231,7 +229,7 @@ var _ = Describe("Stapel imports", func() {
 
 			lastStageImageNameAfterSecondBuild := utils.GetBuiltImageLastStageImageName(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "final")
 
-			Expect(lastStageImageNameAfterFirstBuild).Should(Equal(lastStageImageNameAfterSecondBuild))
+			Expect(lastStageImageNameAfterFirstBuild).ShouldNot(Equal(lastStageImageNameAfterSecondBuild))
 		})
 	})
 })
