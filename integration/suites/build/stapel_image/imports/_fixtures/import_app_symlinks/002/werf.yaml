@@ -1,0 +1,21 @@
+project: import-symlinks-and-empty-dirs-test
+configVersion: 1
+---
+image: final
+from: registry.werf.io/base/alpine
+import:
+  - image: container/filer
+    add: /out/links
+    to: /test-links
+    before: install
+---
+image: container/filer
+from: registry.werf.io/base/alpine
+shell:
+  install:
+    - apk add --no-cache bash coreutils
+
+    - mkdir -p /out/links
+    - echo "v1" > /out/links/target1
+    - echo "v2" > /out/links/target2
+    - ln -s target2 /out/links/link

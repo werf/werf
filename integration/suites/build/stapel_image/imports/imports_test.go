@@ -126,6 +126,7 @@ var _ = Describe("Stapel imports", func() {
 				Expect(lastStageImageNameAfterFirstBuild).To(BeEquivalentTo(lastStageImageNameAfterSecondBuild))
 			}
 		})
+
 		It("should import file from external image", func(ctx SpecContext) {
 			SuiteData.CommitProjectWorktree(ctx, SuiteData.ProjectName, utils.FixturePath("import_from_external", "001"), "initial commit")
 			Expect(werfBuild(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{})).To(Succeed())
@@ -134,6 +135,7 @@ var _ = Describe("Stapel imports", func() {
 				Expect(output).To(ContainSubstring(`/etc/test/busybox`))
 			}
 		})
+
 		It("should import file with correct owner and group", func(ctx SpecContext) {
 			SuiteData.CommitProjectWorktree(ctx, SuiteData.ProjectName, utils.FixturePath("import_app_owner_group", "001"), "initial commit")
 
@@ -143,6 +145,20 @@ var _ = Describe("Stapel imports", func() {
 				"sh", "-c", "stat -c %u:%g /etc/test/busybox")
 
 			Expect(output).To(ContainSubstring("11111:11111"))
+		})
+
+		It("should remove empty directories in final image when importing stages", func(ctx SpecContext) {
+			SuiteData.CommitProjectWorktree(ctx, SuiteData.ProjectName, utils.FixturePath("import_app_empty_dirs", "001"), "initial commit")
+
+			Expect(werfBuild(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{})).To(Succeed())
+
+			finalImageName := utils.GetBuiltImageLastStageImageName(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "final")
+
+			output := werfRunOutput(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName),
+				"rm", "--entrypoint", "sh", finalImageName, "-c", `! find /test-tree -type d -empty | grep -q .`,
+			)
+
+			Expect(output).To(nil)
 		})
 	})
 
@@ -200,6 +216,22 @@ var _ = Describe("Stapel imports", func() {
 			lastStageImageNameAfterSecondBuild := utils.GetBuiltImageLastStageImageName(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "final")
 
 			Expect(lastStageImageNameAfterFirstBuild).ShouldNot(Equal(lastStageImageNameAfterSecondBuild))
+		})
+
+		It("should account symlinks when calculating import source checksum", func(ctx SpecContext) {
+			SuiteData.CommitProjectWorktree(ctx, SuiteData.ProjectName, utils.FixturePath("import_app_symlinks", "001"), "initial commit")
+
+			utils.RunSucceedCommand(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "build")
+
+			lastStageImageNameAfterFirstBuild := utils.GetBuiltImageLastStageImageName(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "final")
+
+			SuiteData.CommitProjectWorktree(ctx, SuiteData.ProjectName, utils.FixturePath("import_app_symlinks", "002"), "change symlink target")
+
+			utils.RunSucceedCommand(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "build")
+
+			lastStageImageNameAfterSecondBuild := utils.GetBuiltImageLastStageImageName(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "final")
+
+			Expect(lastStageImageNameAfterFirstBuild).Should(Equal(lastStageImageNameAfterSecondBuild))
 		})
 	})
 })
