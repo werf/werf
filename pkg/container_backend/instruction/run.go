@@ -60,12 +60,26 @@ func (i *Run) Apply(ctx context.Context, containerName string, drv buildah.Build
 		addCapabilities = []string{"all"}
 	}
 
+	cmdLine := i.CmdLine
+	prependShell := i.PrependShell
+	if len(i.Files) > 0 {
+		f := i.Files[0]
+
+		script := f.Data
+		if f.Chomp {
+			script = strings.TrimRight(script, "\r\n")
+		}
+
+		cmdLine = []string{"sh", "-c", script}
+		prependShell = false
+	}
+
 	logboek.Context(ctx).Default().LogF("$ %s\n", strings.Join(i.CmdLine, " "))
 
-	if err := drv.RunCommand(ctx, containerName, i.CmdLine, buildah.RunCommandOpts{
+	if err := drv.RunCommand(ctx, containerName, cmdLine, buildah.RunCommandOpts{
 		CommonOpts:      drvOpts,
 		ContextDir:      contextDir,
-		PrependShell:    i.PrependShell,
+		PrependShell:    prependShell,
 		AddCapabilities: addCapabilities,
 		NetworkType:     i.GetNetwork(),
 		RunMounts:       i.GetMounts(),
