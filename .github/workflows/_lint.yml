@@ -27,6 +27,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
+          cache: false
           go-version-file: go.mod
 
       - name: Install ginkgo
