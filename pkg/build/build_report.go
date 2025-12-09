@@ -109,8 +109,8 @@ func (report *ImagesReport) ToEnvFileData() []byte {
 	return buf.Bytes()
 }
 
-func createBuildReport(ctx context.Context, phase *BuildPhase) error {
-	for _, desc := range phase.Conveyor.imagesTree.GetImagesByName(false) {
+func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util.Pair[string, []*image.Image]) error {
+	for _, desc := range imagePairs {
 		name, images := desc.Unpair()
 		targetPlatforms := util.MapFuncToSlice(images, func(img *image.Image) string { return img.TargetPlatform })
 

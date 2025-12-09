@@ -123,8 +123,7 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 		commonTargetPlatforms = []string{phase.Conveyor.ContainerBackend.GetDefaultPlatform()}
 	}
 
-	imagesPairs := phase.Conveyor.imagesTree.GetImagesByName(false,
-		image.WithImageNameList(phase.Conveyor.ImagesToProcess.ImageNameList))
+	imagesPairs := phase.Conveyor.imagesTree.GetImagesByName(false)
 
 	if err := parallel.DoTasks(ctx, len(imagesPairs), parallel.DoTasksOptions{
 		MaxNumberOfWorkers: int(phase.Conveyor.ParallelTasksLimit),
@@ -190,7 +189,7 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 		return err
 	}
 
-	return phase.createReport(ctx)
+	return phase.createReport(ctx, imagesPairs)
 }
 
 func (phase *BuildPhase) targetPlatforms(ctx context.Context, forcedTargetPlatforms, commonTargetPlatforms []string, name string, images []*image.Image) ([]string, error) {
@@ -391,8 +390,8 @@ func (phase *BuildPhase) publishMultiplatformImageMetadata(ctx context.Context, 
 	return nil
 }
 
-func (phase *BuildPhase) createReport(ctx context.Context) error {
-	return createBuildReport(ctx, phase)
+func (phase *BuildPhase) createReport(ctx context.Context, imagePairs []util.Pair[string, []*image.Image]) error {
+	return createBuildReport(ctx, phase, imagePairs)
 }
 
 func (phase *BuildPhase) ImageProcessingShouldBeStopped(_ context.Context, _ *image.Image) bool {
