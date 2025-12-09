@@ -6,6 +6,7 @@ import (
 	"path"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"sort"
 	"sync"
 
@@ -97,14 +98,16 @@ func (tree *ImagesTree) Calculate(ctx context.Context) error {
 						var err error
 						var newImagesSets ImagesSets
 
+						useCustomTag := slices.Contains(tree.ImagesToProcess.ImageNameList, imageConfigI.GetName())
+
 						switch imageConfig := imageConfigI.(type) {
 						case config.StapelImageInterface:
-							newImagesSets, err = MapStapelConfigToImagesSets(ctx, tree.werfConfig.Meta, imageConfig, targetPlatform, commonImageOpts)
+							newImagesSets, err = MapStapelConfigToImagesSets(ctx, tree.werfConfig.Meta, imageConfig, targetPlatform, useCustomTag, commonImageOpts)
 							if err != nil {
 								return fmt.Errorf("unable to map stapel config to images sets: %w", err)
 							}
 						case *config.ImageFromDockerfile:
-							newImagesSets, err = MapDockerfileConfigToImagesSets(ctx, tree.werfConfig.Meta, imageConfig, targetPlatform, commonImageOpts)
+							newImagesSets, err = MapDockerfileConfigToImagesSets(ctx, tree.werfConfig.Meta, imageConfig, targetPlatform, useCustomTag, commonImageOpts)
 							if err != nil {
 								return fmt.Errorf("unable to map dockerfile to images sets: %w", err)
 							}

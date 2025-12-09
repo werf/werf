@@ -306,6 +306,10 @@ func (phase *BuildPhase) publishImageMetadata(ctx context.Context, name string, 
 		customTagStage = img.GetLastNonEmptyStage().GetStageImage().Image.GetStageDesc()
 	}
 
+	if !img.UseCustomTag() {
+		return nil
+	}
+
 	if phase.ShouldBeBuiltMode {
 		if err := phase.checkCustomImageTagsExistence(ctx, img.GetName(), customTagStage, customTagStorage); err != nil {
 			return err
