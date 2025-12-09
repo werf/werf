@@ -25,6 +25,25 @@ Note: this flag is ignored when copying from archive to container registry.
 werf stages copy [options]
 ```
 
+{{ header }} Examples
+
+```shell
+  # Copy stages between container registries
+  $ werf stages copy \
+      --from index.docker.io/company/first-project \
+      --to index.docker.io/company/second-project
+
+  # Copy stages between container registry and archive
+  $ werf stages copy \
+      --from index.docker.io/company/project \
+      --to archive:/path/to/archive.tar.gz
+
+  # Copy stages between archive and container registry
+  $ werf stages copy \
+      --from archive:/path/to/archive.tar.gz \
+      --to index.docker.io/company/project
+```
+
 {{ header }} Options
 
 ```shell
