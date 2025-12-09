@@ -141,12 +141,12 @@ type GetImagesByNameOption func(*getImagesByNameConfig)
 
 type getImagesByNameConfig struct {
 	compareWithImagesList bool
-	imageNameList         map[string]struct{}
+	exportImageNameList   map[string]struct{}
 }
 
-func WithImageNameList(l []string) GetImagesByNameOption {
+func WithExportImageNameList(l []string) GetImagesByNameOption {
 	return func(config *getImagesByNameConfig) {
-		config.imageNameList = util.SliceToMapWithValue(l, struct{}{})
+		config.exportImageNameList = util.SliceToMapWithValue(l, struct{}{})
 		config.compareWithImagesList = true
 	}
 }
@@ -174,7 +174,7 @@ func (tree *ImagesTree) GetImagesByName(onlyFinal bool, opts ...GetImagesByNameO
 			continue
 		}
 		if config.compareWithImagesList {
-			if _, ok := config.imageNameList[img.Name]; !ok {
+			if _, ok := config.exportImageNameList[img.Name]; !ok {
 				continue
 			}
 		}
