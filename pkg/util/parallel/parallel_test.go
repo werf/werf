@@ -193,8 +193,8 @@ var _ = DescribeTable("parallel task",
 		}),
 	),
 	Entry(
-		"should cancel execution via context cancellation for all workers",
-		100*time.Millisecond,
+		"should cancel execution via context for all workers",
+		time.Second,
 		4,
 		parallel.DoTasksOptions{
 			MaxNumberOfWorkers: 2,
@@ -229,7 +229,7 @@ var _ = DescribeTable("parallel task",
 		}),
 	),
 	Entry(
-		"should work with 1 worker per 2 tasks where 1-st task is failed",
+		"should cancel execution of second task per single worker if 1-st task is failed",
 		time.Duration(0),
 		2,
 		parallel.DoTasksOptions{
@@ -256,7 +256,7 @@ var _ = DescribeTable("parallel task",
 		}),
 	),
 	Entry(
-		"should work with 1 worker per 2 tasks where 1-st task is canceled",
+		"should cancel execution of second task per single worker if 1-st task is canceled",
 		150*time.Millisecond,
 		2,
 		parallel.DoTasksOptions{
@@ -266,8 +266,12 @@ var _ = DescribeTable("parallel task",
 			switch taskId {
 			case 0:
 				logboek.Context(ctx).LogF("workers[0], task[%[1]d]: is a foreground non-failed worker (1/3)\n", taskId)
+
 				<-ctx.Done()
 				Expect(ctx.Err()).To(MatchError(context.DeadlineExceeded))
+
+				time.Sleep(150 * time.Millisecond)
+
 				logboek.Context(ctx).LogF("workers[0], task[%[1]d]: is a foreground non-failed worker (2/3)\n", taskId)
 				return nil
 			case 1:
