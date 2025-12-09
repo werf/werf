@@ -49,7 +49,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          cache: true
+          cache: false
           go-version-file: go.mod
 
       - name: Login to GitHub container registry

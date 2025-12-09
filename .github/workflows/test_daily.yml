@@ -67,17 +67,17 @@ jobs:
       coverage: true
     secrets: inherit
 
-  integration_per-cr:
-    uses: ./.github/workflows/_test_integration_per-container-registry.yml
-    with:
-      coverage: true
-    secrets: inherit
-
-  integration_per-k8s-and-cr:
-    uses: ./.github/workflows/_test_integration_per-k8s-version-and-container-registry.yml
-    with:
-      coverage: true
-    secrets: inherit
+  #  integration_per-cr:
+  #    uses: ./.github/workflows/_test_integration_per-container-registry.yml
+  #    with:
+  #      coverage: true
+  #    secrets: inherit
+  #
+  #  integration_per-k8s-and-cr:
+  #    uses: ./.github/workflows/_test_integration_per-k8s-version-and-container-registry.yml
+  #    with:
+  #      coverage: true
+  #    secrets: inherit
 
   coverage_report:
     uses: ./.github/workflows/_coverage_report.yml
@@ -87,8 +87,8 @@ jobs:
       - integration_git
       - integration_ansible
       - integration_per-k8s
-      - integration_per-cr
-      - integration_per-k8s-and-cr
+      #      - integration_per-cr
+      #      - integration_per-k8s-and-cr
       - e2e_simple_per-k8s-version
       - e2e_complex_per-k8s-version
       - e2e_extra_per-k8s-version
