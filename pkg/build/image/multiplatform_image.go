@@ -19,6 +19,8 @@ type MultiplatformImage struct {
 
 	logImageIndex int
 	logImageTotal int
+
+	useCustomTag bool
 }
 
 func NewMultiplatformImage(name string, images []*Image, logImageIndex, logImageTotal int) *MultiplatformImage {
@@ -29,6 +31,7 @@ func NewMultiplatformImage(name string, images []*Image, logImageIndex, logImage
 	img := &MultiplatformImage{
 		Name:          name,
 		IsFinal:       images[0].IsFinal,
+		useCustomTag:  images[0].useCustomTag,
 		Images:        images,
 		logImageIndex: logImageIndex,
 		logImageTotal: logImageTotal,
@@ -81,4 +84,8 @@ func (img *MultiplatformImage) SetStageDesc(stageDesc *common_image.StageDesc) {
 
 func (img *MultiplatformImage) LogDetailedName() string {
 	return logging.ImageLogProcessName(img.Name, img.IsFinal, "", logging.WithProgress(img.logImageIndex+1, img.logImageTotal))
+}
+
+func (img *MultiplatformImage) UseCustomTag() bool {
+	return img.useCustomTag
 }

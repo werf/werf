@@ -349,6 +349,24 @@ func (phase *BuildPhase) publishMultiplatformImageMetadata(ctx context.Context, 
 	}
 	img.SetStageDesc(desc)
 
+	if !phase.BuildPhaseOptions.SkipImageMetadataPublication {
+		if err := logboek.Context(ctx).Info().
+			LogProcess(fmt.Sprintf("Publish multiarch image %s git metadata", name)).
+			DoError(func() error {
+				return phase.publishImageGitMetadata(ctx, name, img.GetStageID())
+			}); err != nil {
+			return err
+		}
+	}
+
+	if !img.IsFinal {
+		return nil
+	}
+
+	if !img.UseCustomTag() {
+		return nil
+	}
+
 	if len(phase.CustomTagFuncList) > 0 {
 		logboek.Context(ctx).Default().LogLn()
 		logboek.Context(ctx).Default().LogProcess("Adding custom tags").
@@ -382,15 +400,6 @@ func (phase *BuildPhase) publishMultiplatformImageMetadata(ctx context.Context, 
 			})
 	}
 
-	if !phase.BuildPhaseOptions.SkipImageMetadataPublication {
-		if err := logboek.Context(ctx).Info().
-			LogProcess(fmt.Sprintf("Publish multiarch image %s git metadata", name)).
-			DoError(func() error {
-				return phase.publishImageGitMetadata(ctx, name, img.GetStageID())
-			}); err != nil {
-			return err
-		}
-	}
 	return nil
 }
 
