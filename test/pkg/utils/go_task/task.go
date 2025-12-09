@@ -40,6 +40,9 @@ type Task struct {
 }
 
 type BuildTaskOpts struct {
+	// AcceptPromptsAutomatically does '--yes' for remote task files' checksums to workaround with non-interactive terminals
+	// https://taskfile.dev/docs/experiments/remote-taskfiles#automatic-checksums
+	AcceptPromptsAutomatically bool
 	// OutputDir should be an absolute path
 	OutputDir string
 	// Builds binary with race detector enabled
@@ -69,6 +72,9 @@ func (tf *Taskfile) BuildDevTask(ctx context.Context, opts BuildTaskOpts) (strin
 	}
 	if opts.ExtraGoBuildArgs != "" {
 		vars = append(vars, buildVar(varExtraGoBuildArgs, opts.ExtraGoBuildArgs))
+	}
+	if opts.AcceptPromptsAutomatically {
+		vars = append(vars, "--yes")
 	}
 	task := &Task{
 		TaskName:         cmdBuildDev,

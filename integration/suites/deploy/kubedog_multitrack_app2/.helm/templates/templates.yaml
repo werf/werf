@@ -17,4 +17,4 @@ spec:
       containers:
       - name: main
         command: [ "/bin/bash", "-c", "while true; do date ; sleep 1 ; done" ]
-        image: ubuntu:18.03
+        image: registry.werf.io/base/ubuntu:18.03

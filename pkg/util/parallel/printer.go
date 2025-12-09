@@ -12,16 +12,18 @@ import (
 )
 
 type Printer struct {
-	workers []*Worker
-	indexes []int
-	cursor  int
+	workers   []*Worker
+	indexes   []int
+	cursor    int
+	maxCursor int
 }
 
 func NewPrinter(workers []*Worker) *Printer {
 	return &Printer{
-		workers: workers,
-		indexes: lo.Range(len(workers)),
-		cursor:  0,
+		workers:   workers,
+		indexes:   lo.Range(len(workers)),
+		cursor:    0,
+		maxCursor: len(workers) - 1,
 	}
 }
 
@@ -29,8 +31,12 @@ func (p *Printer) Cur() int {
 	return p.cursor
 }
 
-func (p *Printer) Len() int {
-	return len(p.indexes)
+func (p *Printer) Max() int {
+	return p.maxCursor
+}
+
+func (p *Printer) SetMax(idx int) {
+	p.maxCursor = min(idx, len(p.indexes)-1)
 }
 
 func (p *Printer) Swap(idx1, idx2 int) {
@@ -41,14 +47,11 @@ func (p *Printer) Swap(idx1, idx2 int) {
 }
 
 func (p *Printer) Print(ctx context.Context) error {
-	for _, p.cursor = range p.indexes {
-		select {
-		case <-ctx.Done():
-			return nil
-		default:
-			if err := printWorkerOutput(ctx, p.workers[p.cursor]); err != nil {
-				return err
-			}
+	for ; p.cursor <= p.maxCursor; p.cursor++ {
+		idx := p.indexes[p.cursor]
+
+		if err := printWorkerOutput(ctx, p.workers[idx]); err != nil {
+			return err
 		}
 	}
 
@@ -64,7 +67,7 @@ func printWorkerOutput(ctx context.Context, worker *Worker) error {
 	for worker.Readable() {
 		select {
 		case <-ctx.Done():
-			return nil
+			return ctx.Err()
 		default:
 			if err = logboek.Context(ctx).Streams().DoErrorWithoutIndent(func() error {
 				offset, err = io.CopyBuffer(logboek.Context(ctx).OutStream(), worker, buf)
@@ -83,5 +86,5 @@ func printWorkerOutput(ctx context.Context, worker *Worker) error {
 
 	logboek.Context(ctx).LogOptionalLn()
 
-	return nil
+	return ctx.Err()
 }

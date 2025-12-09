@@ -2,7 +2,7 @@ configVersion: 1
 project: ansible-yum
 ---
 image: centos-8
-from: centos:8
+from: registry.werf.io/base/centos:8
 ansible:
   install:
   - name: "Install a package using yum with dnf"

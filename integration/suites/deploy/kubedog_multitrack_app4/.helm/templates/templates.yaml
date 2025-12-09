@@ -17,18 +17,18 @@ spec:
       initContainers:
       - name: init
         command: [ "true" ]
-        image: ubuntu:18.04
+        image: registry.werf.io/base/ubuntu:22.04
       containers:
       - name: main
         command: [ "tail", "-f", "/dev/null" ]
-        image: ubuntu:18.04
+        image: registry.werf.io/base/ubuntu:22.04
         startupProbe:
           exec:
             command: [ "false" ]
           failureThreshold: 1
       - name: never-fails
         command: [ "tail", "-f", "/dev/null" ]
-        image: ubuntu:18.04
+        image: registry.werf.io/base/ubuntu:22.04
         startupProbe:
           exec:
             command: [ "true" ]

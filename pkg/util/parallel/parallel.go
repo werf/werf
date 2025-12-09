@@ -61,7 +61,6 @@ func DoTasks(ctx context.Context, numberOfTasks int, options DoTasksOptions, tas
 		workerCtx := logboek.NewContext(taskIDCtx, logging.NewSubLogger(taskIDCtx, worker, worker))
 
 		if options.InitDockerCLIForEachWorker {
-			// TODO: should we always create new docker context for each worker to prevent "context canceled" error?
 			if workerCtx, err = docker.NewContext(workerCtx); err != nil {
 				return err
 			}
@@ -102,13 +101,13 @@ func DoTasks(ctx context.Context, numberOfTasks int, options DoTasksOptions, tas
 	if err := g.Wait(); err != nil {
 		// There are two cases how to continue printing:
 		// 1. Receiving the system signal (SIGINT / SIGTERM). We detect it by checking "context canceled" error.
-		// 	- We continue to print starting from 'active' worker through the rest workers without any changes.
+		// 	- We continue to print starting from 'foreground' worker through the rest workers without any changes.
 		// 2. Getting an error from a worker. We detect it by checking non "context canceled" error.
-		//	- If active worker IS NOT THE SAME worker which returned the error,
-		//	  we move errored worker to the end of the list (to highlight the error to the user)
-		//    and we continue to print starting from 'active' through the rest workers.
-		//  - If active worker IS THE SAME worker which returned the error,
-		// 	  we continue to print starting from 'active' (errored) worker,
+		//	- If 'foreground' worker IS NOT THE SAME worker which returned the error,
+		//	  we move errored worker to the end of the printing queue (to highlight the error to the user)
+		//    and we continue to print starting from 'foreground' through the rest workers.
+		//  - If 'foreground' worker IS THE SAME worker which returned the error,
+		// 	  we continue to print starting from 'foreground' (errored) worker,
 		//    and we discard logs from the rest workers.
 
 		if !isCanceledErr(err) {
@@ -116,7 +115,9 @@ func DoTasks(ctx context.Context, numberOfTasks int, options DoTasksOptions, tas
 
 			if errors.As(err, &workerErr) {
 				if printer.Cur() != workerErr.ID {
-					printer.Swap(printer.Len()-1, workerErr.ID) // move filed worker to the end of the list
+					printer.Swap(printer.Max(), workerErr.ID) // move filed worker to the end of the printing queue
+				} else {
+					printer.SetMax(printer.Cur()) // discard logs from the rest workers
 				}
 			}
 		}

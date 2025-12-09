@@ -15,7 +15,7 @@ spec:
       initContainers:
       - name: init
         command: [ "true" ]
-        image: ubuntu:18.04
+        image: registry.werf.io/base/ubuntu:22.04
       containers:
       - name: main
         command:
@@ -27,7 +27,7 @@ spec:
           while sleep 1; do
             echo Count of triggered readiness probes: $(ls -1 /readiness_triggered_* 2>/dev/null | wc -l)
           done
-        image: ubuntu:18.04
+        image: registry.werf.io/base/ubuntu:22.04
         startupProbe:
           exec:
             command: [ "touch", "/startup_succeeded" ]
@@ -47,7 +47,7 @@ spec:
             command: [ "true" ]
       - name: never-fails
         command: [ "tail", "-f", "/dev/null" ]
-        image: ubuntu:18.04
+        image: registry.werf.io/base/ubuntu:22.04
         startupProbe:
           exec:
             command: [ "true" ]

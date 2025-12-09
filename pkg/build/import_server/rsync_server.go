@@ -118,7 +118,7 @@ func (srv *RsyncServer) GetCopyCommand(ctx context.Context, importConfig *config
 	var args []string
 
 	rsyncImportPathSpec := fmt.Sprintf("rsync://%s@%s:%s/import/%s", srv.AuthUser, srv.IPAddress, srv.Port, importConfig.Add)
-	rsyncStatImportPathCommand := fmt.Sprintf("RSYNC_PASSWORD='%s' %s -L %s", srv.AuthPassword, stapel.RsyncBinPath(), rsyncImportPathSpec)
+	rsyncStatImportPathCommand := fmt.Sprintf("RSYNC_PASSWORD='%s' %s %s", srv.AuthPassword, stapel.RsyncBinPath(), rsyncImportPathSpec)
 
 	// save stat output to variable
 	args = append(args, fmt.Sprintf("statOutput=$(%s)", rsyncStatImportPathCommand))

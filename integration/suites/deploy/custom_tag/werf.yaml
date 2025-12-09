@@ -4,7 +4,7 @@ gitWorktree:
   allowFetchOriginBranchesAndTags: false
 ---
 image: backend
-from: python:alpine
+from: registry.werf.io/base/python:alpine
 fromCacheVersion: {{ env "FROM_CACHE_VERSION" }}
 ansible:
   install:

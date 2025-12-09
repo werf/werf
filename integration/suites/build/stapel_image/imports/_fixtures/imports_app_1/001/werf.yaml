@@ -3,7 +3,7 @@ configVersion: 1
 ---
 image: myartifact
 final: false
-from: ubuntu:18.04
+from: registry.werf.io/base/ubuntu:22.04
 shell:
   setup:
   - mkdir -p /myartifact/a/b/c
@@ -14,7 +14,7 @@ shell:
   - touch /myartifact/a/b/c/fffilel
 ---
 image: ~
-from: alpine
+from: registry.werf.io/base/alpine
 import:
 - image: myartifact
   add: /myartifact/a/b/FILE

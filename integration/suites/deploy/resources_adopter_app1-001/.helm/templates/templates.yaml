@@ -17,7 +17,7 @@ spec:
       containers:
       - name: main
         command: [ "/bin/bash", "-c", "while true; do date ; sleep 1 ; done" ]
-        image: ubuntu:18.04
+        image: registry.werf.io/base/ubuntu:22.04
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -38,5 +38,5 @@ spec:
       containers:
       - name: main
         command: [ "/bin/bash", "-c", "while true; do date ; sleep 1 ; done" ]
-        image: ubuntu:18.04
+        image: registry.werf.io/base/ubuntu:22.04
 ---

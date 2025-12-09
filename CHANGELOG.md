@@ -1,5 +1,45 @@
 # Changelog
 
+## [2.55.6](https://github.com/werf/werf/compare/v2.55.5...v2.55.6) (2025-12-08)
+
+
+### Bug Fixes
+
+* **build, import:** should not resolve symlinks ([c28127a](https://github.com/werf/werf/commit/c28127a095e6153ca8d295cb0165d96441ff3e24))
+* **deploy:** hooks cleaned up too early ([42c57b4](https://github.com/werf/werf/commit/42c57b4e077d7b0b02f64f0b194155856248a2af))
+
+## [2.55.5](https://github.com/werf/werf/compare/v2.55.4...v2.55.5) (2025-12-08)
+
+## [2.55.4](https://github.com/werf/werf/compare/v2.55.3...v2.55.4) (2025-12-04)
+
+
+### Bug Fixes
+
+* **build, import:** avoid following symlinks during checksum calculation to prevent runner stalls ([9ee46f2](https://github.com/werf/werf/commit/9ee46f239c55f983e37beacf0419e979f08bae12))
+* **config:** align .Files.Glob behavior with helm ([7959568](https://github.com/werf/werf/commit/7959568a2d69e6774f6323fef54adee43665c181))
+
+## [2.55.3](https://github.com/werf/werf/compare/v2.55.2...v2.55.3) (2025-12-03)
+
+
+### Miscellaneous Chores
+
+* **release:** force v2.55.3 ([4705747](https://github.com/werf/werf/commit/47057475f3da1997e580946bc0f3535c69ab6173))
+
+## [2.55.2](https://github.com/werf/werf/compare/v2.55.1...v2.55.2) (2025-12-03)
+
+
+### Miscellaneous Chores
+
+* **release:** force v2.55.2 ([c1f60fc](https://github.com/werf/werf/commit/c1f60fc0e860368b65bcc9a114057da91e966076))
+
+## [2.55.1](https://github.com/werf/werf/compare/v2.55.0...v2.55.1) (2025-12-02)
+
+
+### Bug Fixes
+
+* **build:** add custom-tag once ([2e23d3f](https://github.com/werf/werf/commit/2e23d3fa19fb92b41e5ffc353c1f85014a53539a))
+* **build:** highlight an error in parallel mode ([a3f509a](https://github.com/werf/werf/commit/a3f509ae680b13417b59dd128f66fb601f321dd6))
+
 ## [2.55.0](https://github.com/werf/werf/compare/v2.54.1...v2.55.0) (2025-11-25)
 
 

@@ -1,4 +1,4 @@
-FROM ubuntu:20.04 AS builder
+FROM registry.werf.io/base/ubuntu:22.04 AS builder
 ARG INVALIDATE_CACHES=overridethis
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -24,7 +24,7 @@ RUN make CMAKE_BUILD_TYPE=Release && \
     make CMAKE_INSTALL_PREFIX=/usr/local install
 
 
-FROM ubuntu:20.04
+FROM registry.werf.io/base/ubuntu:22.04
 ARG INVALIDATE_CACHES=overridethis
 COPY --from=builder /neovim /neovim
 ADD neovim-v0.1.0 /neovim

@@ -5,13 +5,13 @@ image: base-dockerfile
 dockerfile: ./Dockerfile.base
 ---
 image: base-stapel
-from: alpine:latest
+from: registry.werf.io/base/alpine:latest
 shell:
   install:
     - echo data > /base-stapel-file
 ---
 image: stapel
-from: alpine:latest
+from: registry.werf.io/base/alpine:latest
 dependencies:
   - image: base-stapel
     after: install
