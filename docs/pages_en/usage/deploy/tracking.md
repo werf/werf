@@ -144,6 +144,17 @@ metadata:
     werf.io/log-regex-skip: ".*DEBUG.*"
 ```
 
+The `werf.io/log-regex-skip-for-<container name>` annotation allows you to hide the log lines based on a regular expression for a specific container, rather than for all containers at once, for example:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+  annotations:
+    werf.io/log-regex-skip-for-backend: ".*DEBUG.*"
+```
+
 ## Displaying Events resources (werf only)
 
 Thanks to the [kubedog](https://github.com/werf/kubedog) library, werf can display Events of tracked resources if the resource has the `werf.io/show-service-messages: "true"` annotation, for example:
