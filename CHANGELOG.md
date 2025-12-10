@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.56.2](https://github.com/werf/werf/compare/v2.56.1...v2.56.2) (2025-12-10)
+
+
+### Bug Fixes
+
+* **deploy:** docker hub creds might leak in pod events ([62adcb4](https://github.com/werf/werf/commit/62adcb482c07749ea83840e41698dd36622da2c8))
+
 ## [2.56.1](https://github.com/werf/werf/compare/v2.56.0...v2.56.1) (2025-12-10)
 
 
