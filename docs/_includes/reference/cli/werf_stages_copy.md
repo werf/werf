@@ -28,10 +28,16 @@ werf stages copy [options]
 {{ header }} Examples
 
 ```shell
-  # Copy stages between container registries
+  # Copy all stages between container registries (default: --all=true)
   $ werf stages copy \
       --from index.docker.io/company/first-project \
       --to index.docker.io/company/second-project
+
+  # Copy only stages for the current build (equivalent to --all=false)
+  $ werf stages copy \
+      --from index.docker.io/company/first-project \
+      --to index.docker.io/company/second-project \
+      --all=false
 
   # Copy stages between container registry and archive
   $ werf stages copy \

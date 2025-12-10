@@ -45,10 +45,16 @@ func NewCmd(ctx context.Context) *cobra.Command {
 		Short:                 "Copy stages between container registry and archive",
 		Long:                  common.GetLongCommandDescription(GetCopyDocs().Long),
 		DisableFlagsInUseLine: true,
-		Example: `  # Copy stages between container registries
+		Example: `  # Copy all stages between container registries (default: --all=true)
   $ werf stages copy \
       --from index.docker.io/company/first-project \
       --to index.docker.io/company/second-project
+
+  # Copy only stages for the current build (equivalent to --all=false)
+  $ werf stages copy \
+      --from index.docker.io/company/first-project \
+      --to index.docker.io/company/second-project \
+      --all=false
 
   # Copy stages between container registry and archive
   $ werf stages copy \
