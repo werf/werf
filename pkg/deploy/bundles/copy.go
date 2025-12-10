@@ -5,6 +5,7 @@ import (
 
 	"github.com/werf/3p-helm/pkg/werf/helmopts"
 	"github.com/werf/werf/v2/pkg/docker_registry"
+	"github.com/werf/werf/v2/pkg/ref"
 )
 
 type CopyOptions struct {
@@ -15,7 +16,7 @@ type CopyOptions struct {
 	HelmOptions                          helmopts.HelmOptions
 }
 
-func Copy(ctx context.Context, fromAddr, toAddr *Addr, opts CopyOptions) error {
+func Copy(ctx context.Context, fromAddr, toAddr *ref.Addr, opts CopyOptions) error {
 	fromBundle := NewBundleAccessor(fromAddr, BundleAccessorOptions{
 		BundlesRegistryClient: opts.BundlesRegistryClient,
 		RegistryClient:        opts.FromRegistryClient,

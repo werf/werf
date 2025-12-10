@@ -52,6 +52,7 @@ import (
 	"github.com/werf/werf/v2/cmd/werf/run"
 	"github.com/werf/werf/v2/cmd/werf/slugify"
 	stage_image "github.com/werf/werf/v2/cmd/werf/stage/image"
+	stages_copy "github.com/werf/werf/v2/cmd/werf/stages/copy"
 	"github.com/werf/werf/v2/cmd/werf/synchronization"
 	"github.com/werf/werf/v2/cmd/werf/version"
 	"github.com/werf/werf/v2/pkg/telemetry"
@@ -107,6 +108,7 @@ func ConstructRootCmd(ctx context.Context) (*cobra.Command, error) {
 				render.NewCmd(ctx),
 				lint.NewCmd(ctx),
 				includesCmd(ctx),
+				stagesCmd(ctx),
 			},
 		},
 		{
@@ -245,6 +247,18 @@ func includesCmd(ctx context.Context) *cobra.Command {
 		includes_update.NewCmd(ctx),
 		includes_lsfiles.NewCmd(ctx),
 		includes_getfile.NewCmd(ctx),
+	)
+
+	return cmd
+}
+
+func stagesCmd(ctx context.Context) *cobra.Command {
+	cmd := common.SetCommandContext(ctx, &cobra.Command{
+		Use:   "stages",
+		Short: "Work with werf stages",
+	})
+	cmd.AddCommand(
+		stages_copy.NewCmd(ctx),
 	)
 
 	return cmd

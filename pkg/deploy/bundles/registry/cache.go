@@ -39,6 +39,7 @@ import (
 	"github.com/werf/3p-helm/pkg/chart/loader"
 	"github.com/werf/3p-helm/pkg/chartutil"
 	"github.com/werf/3p-helm/pkg/werf/helmopts"
+	"github.com/werf/werf/v2/pkg/ref"
 )
 
 const (
@@ -89,7 +90,7 @@ func NewCache(opts ...CacheOption) (*Cache, error) {
 }
 
 // FetchReference retrieves a chart ref from cache
-func (cache *Cache) FetchReference(ctx context.Context, ref *Reference, opts helmopts.HelmOptions) (*CacheRefSummary, error) {
+func (cache *Cache) FetchReference(ctx context.Context, ref *ref.Reference, opts helmopts.HelmOptions) (*CacheRefSummary, error) {
 	if err := cache.init(); err != nil {
 		return nil, err
 	}
@@ -157,7 +158,7 @@ func (cache *Cache) FetchReference(ctx context.Context, ref *Reference, opts hel
 }
 
 // StoreReference stores a chart ref in cache
-func (cache *Cache) StoreReference(ctx context.Context, ref *Reference, ch *chart.Chart, opts helmopts.HelmOptions) (*CacheRefSummary, error) {
+func (cache *Cache) StoreReference(ctx context.Context, ref *ref.Reference, ch *chart.Chart, opts helmopts.HelmOptions) (*CacheRefSummary, error) {
 	if err := cache.init(); err != nil {
 		return nil, err
 	}
@@ -196,7 +197,7 @@ func (cache *Cache) StoreReference(ctx context.Context, ref *Reference, ch *char
 
 // DeleteReference deletes a chart ref from cache
 // TODO: garbage collection, only manifest removed
-func (cache *Cache) DeleteReference(ctx context.Context, ref *Reference, opts helmopts.HelmOptions) (*CacheRefSummary, error) {
+func (cache *Cache) DeleteReference(ctx context.Context, ref *ref.Reference, opts helmopts.HelmOptions) (*CacheRefSummary, error) {
 	if err := cache.init(); err != nil {
 		return nil, err
 	}
@@ -223,7 +224,7 @@ func (cache *Cache) ListReferences(ctx context.Context, opts helmopts.HelmOption
 			}
 			continue
 		}
-		ref, err := ParseReference(name)
+		ref, err := ref.ParseReference(name)
 		if err != nil {
 			return rr, err
 		}
@@ -237,7 +238,7 @@ func (cache *Cache) ListReferences(ctx context.Context, opts helmopts.HelmOption
 }
 
 // AddManifest provides a manifest to the cache index.json
-func (cache *Cache) AddManifest(ctx context.Context, ref *Reference, manifest *ocispec.Descriptor) error {
+func (cache *Cache) AddManifest(ctx context.Context, ref *ref.Reference, manifest *ocispec.Descriptor) error {
 	if err := cache.init(); err != nil {
 		return err
 	}

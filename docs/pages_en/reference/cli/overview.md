@@ -26,6 +26,7 @@ Helper commands:
  - [werf render]({{ "/reference/cli/werf_render.html" | true_relative_url }}) — {% include /reference/cli/werf_render.short.md %}.
  - [werf lint]({{ "/reference/cli/werf_lint.html" | true_relative_url }}) — {% include /reference/cli/werf_lint.short.md %}.
  - [werf includes]({{ "/reference/cli/werf_includes_get_file.html" | true_relative_url }}) — {% include /reference/cli/werf_includes_get_file.short.md %}.
+ - [werf stages]({{ "/reference/cli/werf_stages_copy.html" | true_relative_url }}) — {% include /reference/cli/werf_stages_copy.short.md %}.
 
 Low-level management commands:
  - [werf config]({{ "/reference/cli/werf_config_graph.html" | true_relative_url }}) — {% include /reference/cli/werf_config_graph.short.md %}.

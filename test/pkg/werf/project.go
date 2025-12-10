@@ -92,6 +92,10 @@ type KubeRunOptions struct {
 	Image   string
 }
 
+type StagesCopyOptions struct {
+	CommonOptions
+}
+
 type KubeCtlOptions struct {
 	CommonOptions
 }
@@ -351,6 +355,17 @@ func (p *Project) HostCleanup(ctx context.Context, opts *HostCleanupOptions) (co
 		opts = &HostCleanupOptions{}
 	}
 	args := append([]string{"host", "cleanup"}, opts.ExtraArgs...)
+	outb := p.runCommand(ctx, runCommandOptions{Args: args, ShouldFail: opts.ShouldFail})
+
+	return string(outb)
+}
+
+func (p *Project) StagesCopy(ctx context.Context, opts *StagesCopyOptions) (combinedOut string) {
+	if opts == nil {
+		opts = &StagesCopyOptions{}
+	}
+
+	args := append([]string{"stages", "copy"}, opts.ExtraArgs...)
 	outb := p.runCommand(ctx, runCommandOptions{Args: args, ShouldFail: opts.ShouldFail})
 
 	return string(outb)
