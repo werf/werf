@@ -445,6 +445,7 @@ func generateChecksumScript(from string, includePaths, excludePaths []string, re
 
 	return script
 }
+
 func generateChecksumBashFunction() []string {
 	var calculateChecksum string
 
