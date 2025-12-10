@@ -124,6 +124,7 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 	}
 
 	imagesPairs := phase.Conveyor.imagesTree.GetImagesByName(false)
+
 	if err := parallel.DoTasks(ctx, len(imagesPairs), parallel.DoTasksOptions{
 		MaxNumberOfWorkers: int(phase.Conveyor.ParallelTasksLimit),
 	}, func(ctx context.Context, taskId int) error {
@@ -188,7 +189,7 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 		return err
 	}
 
-	return phase.createReport(ctx)
+	return phase.createReport(ctx, imagesPairs)
 }
 
 func (phase *BuildPhase) targetPlatforms(ctx context.Context, forcedTargetPlatforms, commonTargetPlatforms []string, name string, images []*image.Image) ([]string, error) {
@@ -305,6 +306,10 @@ func (phase *BuildPhase) publishImageMetadata(ctx context.Context, name string, 
 		customTagStage = img.GetLastNonEmptyStage().GetStageImage().Image.GetStageDesc()
 	}
 
+	if !img.UseCustomTag() {
+		return nil
+	}
+
 	if phase.ShouldBeBuiltMode {
 		if err := phase.checkCustomImageTagsExistence(ctx, img.GetName(), customTagStage, customTagStorage); err != nil {
 			return err
@@ -344,6 +349,24 @@ func (phase *BuildPhase) publishMultiplatformImageMetadata(ctx context.Context, 
 	}
 	img.SetStageDesc(desc)
 
+	if !phase.BuildPhaseOptions.SkipImageMetadataPublication {
+		if err := logboek.Context(ctx).Info().
+			LogProcess(fmt.Sprintf("Publish multiarch image %s git metadata", name)).
+			DoError(func() error {
+				return phase.publishImageGitMetadata(ctx, name, img.GetStageID())
+			}); err != nil {
+			return err
+		}
+	}
+
+	if !img.IsFinal {
+		return nil
+	}
+
+	if !img.UseCustomTag() {
+		return nil
+	}
+
 	if len(phase.CustomTagFuncList) > 0 {
 		logboek.Context(ctx).Default().LogLn()
 		logboek.Context(ctx).Default().LogProcess("Adding custom tags").
@@ -377,20 +400,11 @@ func (phase *BuildPhase) publishMultiplatformImageMetadata(ctx context.Context, 
 			})
 	}
 
-	if !phase.BuildPhaseOptions.SkipImageMetadataPublication {
-		if err := logboek.Context(ctx).Info().
-			LogProcess(fmt.Sprintf("Publish multiarch image %s git metadata", name)).
-			DoError(func() error {
-				return phase.publishImageGitMetadata(ctx, name, img.GetStageID())
-			}); err != nil {
-			return err
-		}
-	}
 	return nil
 }
 
-func (phase *BuildPhase) createReport(ctx context.Context) error {
-	return createBuildReport(ctx, phase)
+func (phase *BuildPhase) createReport(ctx context.Context, imagePairs []util.Pair[string, []*image.Image]) error {
+	return createBuildReport(ctx, phase, imagePairs)
 }
 
 func (phase *BuildPhase) ImageProcessingShouldBeStopped(_ context.Context, _ *image.Image) bool {

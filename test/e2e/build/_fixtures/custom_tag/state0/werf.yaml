@@ -1,0 +1,29 @@
+project: werf-e2e-build-test
+configVersion: 1
+---
+image: base-dockerfile
+dockerfile: ./Dockerfile.base
+final: false
+platform:
+  - linux/amd64
+  - linux/arm64
+---
+image: dockerfile
+dockerfile: ./Dockerfile
+platform:
+  - linux/amd64
+  - linux/arm64
+dependencies:
+  - image: base-dockerfile
+    imports:
+      - type: ImageName
+        targetBuildArg: BASE_DOCKERFILE_IMAGE_NAME
+      - type: ImageID
+        targetBuildArg: BASE_DOCKERFILE_IMAGE_ID
+      - type: ImageRepo
+        targetBuildArg: BASE_DOCKERFILE_IMAGE_REPO
+      - type: ImageTag
+        targetBuildArg: BASE_DOCKERFILE_IMAGE_TAG
+---
+image: stapel
+from: alpine:latest

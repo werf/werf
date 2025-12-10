@@ -13,8 +13,8 @@ import (
 	"github.com/werf/werf/v2/pkg/util/option"
 )
 
-func MapStapelConfigToImagesSets(ctx context.Context, metaConfig *config.Meta, stapelImageConfig config.StapelImageInterface, targetPlatform string, opts CommonImageOptions) (ImagesSets, error) {
-	img, err := mapStapelConfigToImage(ctx, metaConfig, stapelImageConfig, targetPlatform, opts)
+func MapStapelConfigToImagesSets(ctx context.Context, metaConfig *config.Meta, stapelImageConfig config.StapelImageInterface, targetPlatform string, useCustomTag bool, opts CommonImageOptions) (ImagesSets, error) {
+	img, err := mapStapelConfigToImage(ctx, metaConfig, stapelImageConfig, targetPlatform, useCustomTag, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -24,13 +24,14 @@ func MapStapelConfigToImagesSets(ctx context.Context, metaConfig *config.Meta, s
 	return ret, nil
 }
 
-func mapStapelConfigToImage(ctx context.Context, metaConfig *config.Meta, stapelImageConfig config.StapelImageInterface, targetPlatform string, opts CommonImageOptions) (*Image, error) {
+func mapStapelConfigToImage(ctx context.Context, metaConfig *config.Meta, stapelImageConfig config.StapelImageInterface, targetPlatform string, useCustomTag bool, opts CommonImageOptions) (*Image, error) {
 	imageBaseConfig := stapelImageConfig.ImageBaseConfig()
 	imageName := imageBaseConfig.Name
 
 	imageOpts := ImageOptions{
 		CommonImageOptions: opts,
 		IsFinal:            stapelImageConfig.IsFinal(),
+		UseCustomTag:       useCustomTag,
 	}
 
 	var baseImageType BaseImageType

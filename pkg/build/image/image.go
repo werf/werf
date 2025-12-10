@@ -53,6 +53,7 @@ type ImageOptions struct {
 	BaseImageReference        string
 	BaseImageName             string
 	FetchLatestBaseImage      bool
+	UseCustomTag              bool
 	DockerfileExpanderFactory dockerfile.ExpanderFactory
 }
 
@@ -79,6 +80,7 @@ func NewImage(ctx context.Context, targetPlatform, name string, baseImageType Ba
 		baseImageReference:        opts.BaseImageReference,
 		baseImageName:             opts.BaseImageName,
 		dockerfileExpanderFactory: opts.DockerfileExpanderFactory,
+		useCustomTag:              opts.UseCustomTag,
 	}
 
 	if opts.FetchLatestBaseImage {
@@ -105,6 +107,7 @@ type Image struct {
 	lastNonEmptyStage stage.Interface
 	contentDigest     string
 	rebuilt           bool
+	useCustomTag      bool
 
 	baseImageType             BaseImageType
 	baseImageReference        string
@@ -204,6 +207,10 @@ func (i *Image) UsesBuildContext() bool {
 	}
 
 	return false
+}
+
+func (i *Image) UseCustomTag() bool {
+	return i.useCustomTag
 }
 
 func (i *Image) GetName() string {
