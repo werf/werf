@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.56.1](https://github.com/werf/werf/compare/v2.56.0...v2.56.1) (2025-12-10)
+
+
+### Bug Fixes
+
+* **deploy:** logs stop showing after 4 hours ([e33523b](https://github.com/werf/werf/commit/e33523bf4a05ab89e92cd66780fe9382f5335e95))
+
 ## [2.56.0](https://github.com/werf/werf/compare/v2.55.6...v2.56.0) (2025-12-10)
 
 
