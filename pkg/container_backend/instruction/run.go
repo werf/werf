@@ -74,7 +74,7 @@ func (i *Run) Apply(ctx context.Context, containerName string, drv buildah.Build
 		prependShell = false
 	}
 
-	logboek.Context(ctx).Default().LogF("$ %s\n", strings.Join(i.CmdLine, " "))
+	logboek.Context(ctx).Default().LogF("$ %s\n", strings.Join(cmdLine, " "))
 
 	if err := drv.RunCommand(ctx, containerName, cmdLine, buildah.RunCommandOpts{
 		CommonOpts:      drvOpts,
@@ -87,7 +87,7 @@ func (i *Run) Apply(ctx context.Context, containerName string, drv buildah.Build
 		Secrets:         i.Secrets,
 		SSH:             i.SSH,
 	}); err != nil {
-		return fmt.Errorf("error running command %v for container %s: %w", i.CmdLine, containerName, err)
+		return fmt.Errorf("error running command %v for container %s: %w", cmdLine, containerName, err)
 	}
 
 	return nil
