@@ -12,8 +12,9 @@
 ### Bug Fixes
 
 * **build:** add custom-tag once ([#7275](https://github.com/werf/werf/issues/7275)) ([e4953e7](https://github.com/werf/werf/commit/e4953e7f4cdc11b4613a59897834ba7bfb132416))
-* **build:** add prune empty dirs to rsync server ([939942b](https://github.com/werf/werf/commit/939942b620e7e0ad26e3f4fa292566d000224f6e))
-* **build:** refactor file path parse command, now symlinks considered without resolving ([3145852](https://github.com/werf/werf/commit/31458529db824a05e42146aa8eac187082c95e1a))
+* **build, import:** prune empty dirs ([939942b](https://github.com/werf/werf/commit/939942b620e7e0ad26e3f4fa292566d000224f6e))
+* **build, import:** take into account symlinks calculating import checksum ([3145852](https://github.com/werf/werf/commit/31458529db824a05e42146aa8eac187082c95e1a))
+* **build, import:** revert symlink resolve to prevent backward compatibility (made in v2.55.6) ([be086d830](https://github.com/werf/werf/commit/be086d830a34eb3c4030b3ae64d2671e56f21ba8))
 * **deploy:** panic if apiserver connection lost ([7358731](https://github.com/werf/werf/commit/7358731ac6f53f2e3532c1cbd9eae2c257ff7a06))
 
 ## [2.55.6](https://github.com/werf/werf/compare/v2.55.5...v2.55.6) (2025-12-08)
