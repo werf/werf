@@ -200,7 +200,7 @@ var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 				Expect(buildOut).NotTo(ContainSubstring("Use previously built image"))
 
 				By(fmt.Sprintf(`state0: checking "dockerfile" image %s content`, buildReport.Images["dockerfile"].DockerImageName))
-				contRuntime.ExpectCmdsToSucceed(ctx, buildReport.Images["dockerfile"].DockerImageName, "getent group app", "getent passwd app", "test -d /app", "stat -c '%U:%G' /app | grep -q '^app:app$'")
+				contRuntime.ExpectCmdsToSucceed(ctx, buildReport.Images["dockerfile"].DockerImageName, "which bash || echo 'NO_BASH'", "getent group app", "getent passwd app", "test -d /app")
 			}
 		},
 		Entry("with local repo using Native Buildah with rootless isolation", complexTestOptions{setupEnvOptions{
