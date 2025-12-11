@@ -200,18 +200,18 @@ var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 				Expect(buildOut).NotTo(ContainSubstring("Use previously built image"))
 
 				By(fmt.Sprintf(`heredoc: checking "dockerfile" image %s content`, buildReport.Images["dockerfile"].DockerImageName))
-				contRuntime.ExpectCmdsToSucceed(ctx, buildReport.Images["dockerfile"].DockerImageName, "getent group app", "getent passwd app", "test -d /app")
+				contRuntime.ExpectCmdsToSucceed(ctx, buildReport.Images["dockerfile"].DockerImageName, "test -d /app", "test -f /app/heredoc.txt", "echo 'hello-from-heredoc' | diff /app/heredoc.txt -")
 			}
 		},
 		Entry("with local repo using Native Buildah with rootless isolation", complexTestOptions{setupEnvOptions{
 			ContainerBackendMode:        "native-rootless",
 			WithLocalRepo:               true,
-			WithStagedDockerfileBuilder: false,
+			WithStagedDockerfileBuilder: true,
 		}}),
 		Entry("with local repo using Native Buildah with chroot isolation", complexTestOptions{setupEnvOptions{
 			ContainerBackendMode:        "native-chroot",
 			WithLocalRepo:               true,
-			WithStagedDockerfileBuilder: false,
+			WithStagedDockerfileBuilder: true,
 		}}),
 	)
 })

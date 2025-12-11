@@ -1,5 +1,6 @@
 FROM registry.werf.io/base/ubuntu:22.04 AS builder
-RUN <<ADDUSER
-addgroup -S app
-adduser -S -h /app -s /bin/sh -D -G app app
-ADDUSER
+RUN <<EOF
+set -e
+mkdir -p /app
+echo 'hello-from-heredoc' > /app/heredoc.txt
+EOF
