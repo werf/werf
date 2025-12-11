@@ -177,7 +177,7 @@ var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 		func(ctx SpecContext, testOpts complexTestOptions) {
 			By("initializing")
 			setupEnv(testOpts.setupEnvOptions)
-			contRuntime, err := contback.NewContainerBackend("vanilla-")
+			contRuntime, err := contback.NewContainerBackend(testOpts.ContainerBackendMode)
 			if errors.Is(err, contback.ErrRuntimeUnavailable) {
 				Skip(err.Error())
 			} else if err != nil {
