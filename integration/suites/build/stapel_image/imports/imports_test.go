@@ -152,10 +152,18 @@ var _ = Describe("Stapel imports", func() {
 
 			Expect(werfBuild(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{})).To(Succeed())
 
-			output := werfRunOutputWithSpecificImage(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName),
-				"final", "sh", "-c", "find /test-tree -type d -empty | wc -l")
+			_ = werfRunOutputWithSpecificImage(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName),
+				"final", "sh", "-c",
+				strings.Join([]string{
+					"test -d /test-tree/a/b/c",
+					"test -d /test-tree/x/y/z",
+					"test -d /test-tree/not_empty_dir",
 
-			Expect(output).To(ContainSubstring("0"))
+					"! test -d /test-tree/empty1",
+					"! test -d /test-tree/empty1/subempty1",
+					"! test -d /test-tree/empty2",
+				}, " && "),
+			)
 		})
 	})
 
