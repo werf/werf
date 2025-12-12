@@ -10,7 +10,10 @@ import (
 	"strings"
 	"time"
 
+	"sigs.k8s.io/yaml"
+
 	"github.com/werf/common-go/pkg/util"
+	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/image"
@@ -57,6 +60,19 @@ func (s *ImageSpecStage) IsMutable() bool {
 func (s *ImageSpecStage) PrepareImage(ctx context.Context, _ Conveyor, _ container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, _ container_backend.BuildContextArchiver) error {
 	if s.imageSpec != nil {
 		imageInfo := prevBuiltImage.Image.GetStageDesc().Info
+
+		if err := logboek.Context(ctx).Debug().LogBlock("-- ImageSpecStage.PrepareImage source image info").DoError(func() error {
+			data, err := yaml.Marshal(imageInfo)
+			if err != nil {
+				return fmt.Errorf("unable to yaml marshal: %w", err)
+			}
+
+			logboek.Context(ctx).Debug().LogF(string(data))
+			return nil
+		}); err != nil {
+			return err
+		}
+
 		newConfig := s.baseConfig()
 
 		{
@@ -107,6 +123,18 @@ func (s *ImageSpecStage) PrepareImage(ctx context.Context, _ Conveyor, _ contain
 
 		// set config
 		s.newConfig = newConfig
+
+		if err := logboek.Context(ctx).Debug().LogBlock("-- ImageSpecStage.PrepareImage prepared image spec config").DoError(func() error {
+			data, err := yaml.Marshal(s.newConfig)
+			if err != nil {
+				return fmt.Errorf("unable to yaml marshal: %w", err)
+			}
+
+			logboek.Context(ctx).Debug().LogF(string(data))
+			return nil
+		}); err != nil {
+			return err
+		}
 	}
 
 	return nil
