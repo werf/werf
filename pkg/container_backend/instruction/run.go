@@ -60,12 +60,26 @@ func (i *Run) Apply(ctx context.Context, containerName string, drv buildah.Build
 		addCapabilities = []string{"all"}
 	}
 
-	logboek.Context(ctx).Default().LogF("$ %s\n", strings.Join(i.CmdLine, " "))
+	cmdLine := i.CmdLine
+	prependShell := i.PrependShell
+	if len(i.Files) > 0 {
+		f := i.Files[0]
 
-	if err := drv.RunCommand(ctx, containerName, i.CmdLine, buildah.RunCommandOpts{
+		script := f.Data
+		if f.Chomp {
+			script = strings.TrimRight(script, "\r\n")
+		}
+
+		cmdLine = []string{"sh", "-c", script}
+		prependShell = false
+	}
+
+	logboek.Context(ctx).Default().LogF("$ %s\n", strings.Join(cmdLine, " "))
+
+	if err := drv.RunCommand(ctx, containerName, cmdLine, buildah.RunCommandOpts{
 		CommonOpts:      drvOpts,
 		ContextDir:      contextDir,
-		PrependShell:    i.PrependShell,
+		PrependShell:    prependShell,
 		AddCapabilities: addCapabilities,
 		NetworkType:     i.GetNetwork(),
 		RunMounts:       i.GetMounts(),
@@ -73,7 +87,7 @@ func (i *Run) Apply(ctx context.Context, containerName string, drv buildah.Build
 		Secrets:         i.Secrets,
 		SSH:             i.SSH,
 	}); err != nil {
-		return fmt.Errorf("error running command %v for container %s: %w", i.CmdLine, containerName, err)
+		return fmt.Errorf("error running command %v for container %s: %w", cmdLine, containerName, err)
 	}
 
 	return nil

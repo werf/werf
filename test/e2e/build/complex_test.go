@@ -1,6 +1,7 @@
 package e2e_build_test
 
 import (
+	"errors"
 	"fmt"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -166,6 +167,48 @@ var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 		}}),
 		// TODO(1.3): after Full Dockerfile Builder removed and Staged Dockerfile Builder enabled by default this test no longer needed
 		Entry("with local repo using Native Buildah and Staged Dockerfile builder with chroot isolation", complexTestOptions{setupEnvOptions{
+			ContainerBackendMode:        "native-chroot",
+			WithLocalRepo:               true,
+			WithStagedDockerfileBuilder: true,
+		}}),
+	)
+
+	DescribeTable("should succeed and produce expected image",
+		func(ctx SpecContext, testOpts complexTestOptions) {
+			By("initializing")
+			setupEnv(testOpts.setupEnvOptions)
+			contRuntime, err := contback.NewContainerBackend(testOpts.ContainerBackendMode)
+			if errors.Is(err, contback.ErrRuntimeUnavailable) {
+				Skip(err.Error())
+			} else if err != nil {
+				Fail(err.Error())
+			}
+
+			By("heredoc: starting")
+			{
+				repoDirName := "repo0"
+				fixtureRelPath := "complex/heredoc"
+				buildReportName := "report0.json"
+
+				By("heredoc: preparing test repo")
+				SuiteData.InitTestRepo(ctx, repoDirName, fixtureRelPath)
+
+				By("heredoc: building image")
+				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirName))
+				buildOut, buildReport := werfProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), nil)
+				Expect(buildOut).To(ContainSubstring("Building stage"))
+				Expect(buildOut).NotTo(ContainSubstring("Use previously built image"))
+
+				By(fmt.Sprintf(`heredoc: checking "dockerfile" image %s content`, buildReport.Images["dockerfile"].DockerImageName))
+				contRuntime.ExpectCmdsToSucceed(ctx, buildReport.Images["dockerfile"].DockerImageName, "test -d /app", "test -f /app/heredoc.txt", "echo 'hello-from-heredoc' | diff /app/heredoc.txt -")
+			}
+		},
+		Entry("with local repo using Native Buildah with rootless isolation", complexTestOptions{setupEnvOptions{
+			ContainerBackendMode:        "native-rootless",
+			WithLocalRepo:               true,
+			WithStagedDockerfileBuilder: true,
+		}}),
+		Entry("with local repo using Native Buildah with chroot isolation", complexTestOptions{setupEnvOptions{
 			ContainerBackendMode:        "native-chroot",
 			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: true,
