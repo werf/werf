@@ -423,7 +423,9 @@ func generateChecksumScript(from string, includePaths, excludePaths []string, re
 	rsyncCommand += " " + "/"
 
 	// We have an old rsync version, so we can't use --out-format and other options to parse file paths.'
-	// Example line: "-rw-r--r--    1 root     root             0 Nov 17 22:57 test-file.a".
+	// Example lines:
+	// "-rw-r--r--    1 root     root             0 Nov 17 22:57 test-file.a"
+	// "lrw-r--r--    1 root     root             0 Dec 10 10:07 path/to/link -> target/path"
 	parseFilePathCommand := `while read -r mode rest; do
 	 case "$mode" in
 	   -*) echo "/${rest##* }" ;;

@@ -1,0 +1,31 @@
+project: none
+configVersion: 1
+---
+image: filer
+final: false
+from: registry.werf.io/base/alpine
+shell:
+  install:
+    - apk add --no-cache bash coreutils
+
+    - mkdir -p /out/tree/a/b/c
+    - mkdir -p /out/tree/x/y/z
+    - mkdir -p /out/tree/empty1/subempty1
+    - mkdir -p /out/tree/empty2
+    - mkdir -p /out/tree/not_empty_dir
+
+    - echo "txt1"    > /out/tree/a/b/c/file1.txt
+    - echo "txt2"    > /out/tree/x/y/z/file2.txt
+    - echo "no-txt1" > /out/tree/a/b/c/file1.log
+    - echo "no-txt2" > /out/tree/x/y/z/file2.log
+    - echo "keep"    > /out/tree/not_empty_dir/keep.txt
+---
+image: final
+from: registry.werf.io/base/alpine
+import:
+  - image: filer
+    add: /out/tree
+    to: /test-tree
+    includePaths:
+      - '**/*.txt'
+    before: install
