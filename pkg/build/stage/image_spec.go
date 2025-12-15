@@ -5,7 +5,9 @@ import (
 	"context"
 	"fmt"
 	"html/template"
+	"maps"
 	"regexp"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -218,7 +220,9 @@ func (s *ImageSpecStage) baseConfig() image.SpecConfig {
 }
 
 func (s *ImageSpecStage) modifyLabels(ctx context.Context, labels, addLabels map[string]string, removeLabels []string, keepEssentialWerfLabels bool) (map[string]string, error) {
-	if labels == nil {
+	if labels != nil {
+		labels = maps.Clone(labels) // Ensure original labels are not modified
+	} else {
 		labels = make(map[string]string)
 	}
 
@@ -306,7 +310,14 @@ func replaceLabelTemplate(k, v string, data labelsTemplateData) (string, string,
 }
 
 func modifyEnv(env, removeKeys []string, addKeysMap map[string]string) ([]string, error) {
+	if env != nil {
+		env = slices.Clone(env) // Ensure original env is not modified
+	} else {
+		env = make([]string, 0)
+	}
+
 	baseEnvMap := make(map[string]string, len(env))
+
 	for _, entry := range env {
 		parts := strings.SplitN(entry, "=", 2)
 		if len(parts) == 2 {
@@ -352,7 +363,9 @@ func modifyEnv(env, removeKeys []string, addKeysMap map[string]string) ([]string
 }
 
 func modifyVolumes(volumes map[string]struct{}, removeVolumes, addVolumes []string) map[string]struct{} {
-	if volumes == nil {
+	if volumes != nil {
+		volumes = maps.Clone(volumes) // Ensure original volumes are not modified
+	} else {
 		volumes = make(map[string]struct{})
 	}
 
