@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"runtime"
 	"sync/atomic"
 	"time"
 
@@ -30,6 +31,9 @@ var _ = DescribeTable("parallel task",
 	) {
 		output := newSpyOutput(numberOfTasks)
 		ctx = logboek.NewContext(ctx, logboek.NewLogger(output, output))
+
+		// Force GC to get timers more predictable for being able to rely on them
+		runtime.GC()
 
 		if parallelExecutionLimit > 0 {
 			var cancel context.CancelFunc
@@ -208,7 +212,7 @@ var _ = DescribeTable("parallel task",
 				Expect(ctx.Err()).To(MatchError(context.DeadlineExceeded))
 
 				// order workers with delay based on taskId
-				time.Sleep(time.Duration(taskId*100) * time.Millisecond)
+				time.Sleep(time.Duration((taskId+1)*200) * time.Millisecond)
 
 				logboek.Context(ctx).LogF("task[%d]: canceled\n", taskId)
 				return nil
@@ -257,7 +261,7 @@ var _ = DescribeTable("parallel task",
 	),
 	Entry(
 		"should cancel execution of second task per single worker if 1-st task is canceled",
-		150*time.Millisecond,
+		time.Second,
 		2,
 		parallel.DoTasksOptions{
 			MaxNumberOfWorkers: 1,
