@@ -61,7 +61,8 @@ func (s *ImageSpecStage) IsMutable() bool {
 
 func (s *ImageSpecStage) PrepareImage(ctx context.Context, _ Conveyor, _ container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, _ container_backend.BuildContextArchiver) error {
 	if s.imageSpec != nil {
-		imageInfo := prevBuiltImage.Image.GetStageDesc().Info
+		// NOTE. We need a copy, because we modify labels, volumes and envs.
+		imageInfo := prevBuiltImage.Image.GetStageDesc().Info.GetCopy()
 
 		if err := logboek.Context(ctx).Debug().LogBlock("-- ImageSpecStage.PrepareImage source image info").DoError(func() error {
 			data, err := yaml.Marshal(imageInfo)
