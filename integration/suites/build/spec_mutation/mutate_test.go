@@ -119,6 +119,18 @@ var _ = Describe("build and mutate image spec", Label("integration", "build", "m
 				}
 			}
 		},
+		// Docker Vanilla
+		Entry("with repo using Vanilla Docker", simpleTestOptions{setupEnvOptions{
+			ContainerBackendMode:        "vanilla-docker",
+			WithLocalRepo:               true,
+			WithStagedDockerfileBuilder: false,
+		}}),
+		Entry("without repo using Vanilla Docker", simpleTestOptions{setupEnvOptions{
+			ContainerBackendMode:        "vanilla-docker",
+			WithLocalRepo:               false,
+			WithStagedDockerfileBuilder: false,
+		}}),
+		// Docker BuildKit
 		Entry("with local repo using BuildKit Docker", simpleTestOptions{setupEnvOptions{
 			ContainerBackendMode:        "buildkit-docker",
 			WithLocalRepo:               true,
@@ -126,6 +138,28 @@ var _ = Describe("build and mutate image spec", Label("integration", "build", "m
 		}}),
 		Entry("without local repo using BuildKit Docker", simpleTestOptions{setupEnvOptions{
 			ContainerBackendMode:        "buildkit-docker",
+			WithLocalRepo:               false,
+			WithStagedDockerfileBuilder: false,
+		}}),
+		// Buildah rootless
+		Entry("with local repo using Native Buildah with rootless isolation", simpleTestOptions{setupEnvOptions{
+			ContainerBackendMode:        "native-rootless",
+			WithLocalRepo:               true,
+			WithStagedDockerfileBuilder: false,
+		}}),
+		Entry("without local repo using Native Buildah with chroot isolation", simpleTestOptions{setupEnvOptions{
+			ContainerBackendMode:        "native-rootless",
+			WithLocalRepo:               false,
+			WithStagedDockerfileBuilder: false,
+		}}),
+		// Buildah chroot
+		Entry("with local repo using Native Buildah with chroot isolation", simpleTestOptions{setupEnvOptions{
+			ContainerBackendMode:        "native-chroot",
+			WithLocalRepo:               true,
+			WithStagedDockerfileBuilder: false,
+		}}),
+		Entry("with local repo using Native Buildah with chroot isolation", simpleTestOptions{setupEnvOptions{
+			ContainerBackendMode:        "native-chroot",
 			WithLocalRepo:               false,
 			WithStagedDockerfileBuilder: false,
 		}}),
