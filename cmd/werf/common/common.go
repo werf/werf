@@ -807,6 +807,7 @@ func GetOptionalFinalStagesStorage(ctx context.Context, containerBackend contain
 		ContainerBackend:      containerBackend,
 		InsecureRegistry:      *cmdData.InsecureRegistry,
 		SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
+		SkipMetaCheck: true,
 	})
 }
 
@@ -821,6 +822,7 @@ func GetCacheStagesStorageList(ctx context.Context, containerBackend container_b
 			ContainerBackend:      containerBackend,
 			InsecureRegistry:      *cmdData.InsecureRegistry,
 			SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
+			SkipMetaCheck: true,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("unable to create cache stages storage in %s: %w", address, err)
@@ -846,6 +848,7 @@ func GetSecondaryStagesStorageList(ctx context.Context, stagesStorage storage.St
 			ContainerBackend:      containerBackend,
 			InsecureRegistry:      *cmdData.InsecureRegistry,
 			SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
+			SkipMetaCheck: true,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("unable to create secondary stages storage in %s: %w", address, err)
