@@ -136,54 +136,62 @@ var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 				ContainerBackendMode:        "vanilla-docker",
 				WithLocalRepo:               false,
 				WithStagedDockerfileBuilder: false,
-			}}),
+			},
+		}),
 		Entry("with local repo using Vanilla Docker", complexTestOptions{
 			setupEnvOptions: setupEnvOptions{
 				ContainerBackendMode:        "vanilla-docker",
 				WithLocalRepo:               true,
 				WithStagedDockerfileBuilder: false,
-			}}),
+			},
+		}),
 		Entry("without repo using BuildKit Docker", complexTestOptions{
 			setupEnvOptions: setupEnvOptions{
 				ContainerBackendMode:        "buildkit-docker",
 				WithLocalRepo:               false,
 				WithStagedDockerfileBuilder: false,
-			}}),
+			},
+		}),
 		Entry("with local repo using BuildKit Docker", complexTestOptions{
 			setupEnvOptions: setupEnvOptions{
 				ContainerBackendMode:        "buildkit-docker",
 				WithLocalRepo:               true,
 				WithStagedDockerfileBuilder: false,
-			}}),
+			},
+		}),
 		Entry("with local repo using Native Buildah with rootless isolation", complexTestOptions{
 			setupEnvOptions: setupEnvOptions{
 				ContainerBackendMode:        "native-rootless",
 				WithLocalRepo:               true,
 				WithStagedDockerfileBuilder: false,
-			}}),
+			},
+		}),
 		Entry("with local repo using Native Buildah with chroot isolation", complexTestOptions{
 			setupEnvOptions: setupEnvOptions{
 				ContainerBackendMode:        "native-chroot",
 				WithLocalRepo:               true,
 				WithStagedDockerfileBuilder: false,
-			}}),
+			},
+		}),
 		// TODO(1.3): after Full Dockerfile Builder removed and Staged Dockerfile Builder enabled by default this test no longer needed
 		Entry("with local repo using Native Buildah and Staged Dockerfile builder with rootless isolation", complexTestOptions{
 			setupEnvOptions: setupEnvOptions{
 				ContainerBackendMode:        "native-rootless",
 				WithLocalRepo:               true,
 				WithStagedDockerfileBuilder: true,
-			}}),
+			},
+		}),
 		// TODO(1.3): after Full Dockerfile Builder removed and Staged Dockerfile Builder enabled by default this test no longer needed
 		Entry("with local repo using Native Buildah and Staged Dockerfile builder with chroot isolation", complexTestOptions{
 			setupEnvOptions: setupEnvOptions{
 				ContainerBackendMode:        "native-chroot",
 				WithLocalRepo:               true,
 				WithStagedDockerfileBuilder: true,
-			}}),
+			},
+		}),
 	)
 
-	DescribeTable("should succeed and produce expected image",
+	DescribeTable("should succeed and produce expected image with heredoc content",
 		func(ctx SpecContext, testOpts complexTestOptions) {
 			By("initializing")
 			setupEnv(testOpts.setupEnvOptions)
@@ -220,7 +228,7 @@ var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 				WithStagedDockerfileBuilder: true,
 			},
 			FixtureRelPath: "complex/heredoc/simple",
-			VerifyCommands: []string{"test -d /app", "test -f /app/heredoc.txt", "echo 'hello-from-heredoc' | diff /app/heredoc.txt -"},
+			VerifyCommands: []string{"test -d /etc/myapp", "test -f /etc/myapp/env", "(echo 'FOO=bar' && echo 'BAR=baz') | diff /etc/myapp/env -"},
 		}),
 		Entry("with local repo using Native Buildah with chroot isolation and simple heredoc content", complexTestOptions{
 			setupEnvOptions: setupEnvOptions{
