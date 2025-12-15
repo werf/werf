@@ -5,9 +5,7 @@ import (
 	"context"
 	"fmt"
 	"html/template"
-	"maps"
 	"regexp"
-	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -61,7 +59,7 @@ func (s *ImageSpecStage) IsMutable() bool {
 
 func (s *ImageSpecStage) PrepareImage(ctx context.Context, _ Conveyor, _ container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, _ container_backend.BuildContextArchiver) error {
 	if s.imageSpec != nil {
-		// NOTE. We need a copy, because we modify labels, volumes and envs.
+		// NOTE. We need a copy, because we mutate labels, volumes and envs.
 		imageInfo := prevBuiltImage.Image.GetStageDesc().Info.GetCopy()
 
 		if err := logboek.Context(ctx).Debug().LogBlock("-- ImageSpecStage.PrepareImage source image info").DoError(func() error {
@@ -221,9 +219,7 @@ func (s *ImageSpecStage) baseConfig() image.SpecConfig {
 }
 
 func (s *ImageSpecStage) modifyLabels(ctx context.Context, labels, addLabels map[string]string, removeLabels []string, keepEssentialWerfLabels bool) (map[string]string, error) {
-	if labels != nil {
-		labels = maps.Clone(labels) // Ensure original labels are not modified
-	} else {
+	if labels == nil {
 		labels = make(map[string]string)
 	}
 
@@ -311,12 +307,6 @@ func replaceLabelTemplate(k, v string, data labelsTemplateData) (string, string,
 }
 
 func modifyEnv(env, removeKeys []string, addKeysMap map[string]string) ([]string, error) {
-	if env != nil {
-		env = slices.Clone(env) // Ensure original env is not modified
-	} else {
-		env = make([]string, 0)
-	}
-
 	baseEnvMap := make(map[string]string, len(env))
 
 	for _, entry := range env {
@@ -364,9 +354,7 @@ func modifyEnv(env, removeKeys []string, addKeysMap map[string]string) ([]string
 }
 
 func modifyVolumes(volumes map[string]struct{}, removeVolumes, addVolumes []string) map[string]struct{} {
-	if volumes != nil {
-		volumes = maps.Clone(volumes) // Ensure original volumes are not modified
-	} else {
+	if volumes == nil {
 		volumes = make(map[string]struct{})
 	}
 
