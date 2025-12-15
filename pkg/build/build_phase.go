@@ -10,7 +10,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
-	"sigs.k8s.io/yaml"
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
@@ -928,18 +927,6 @@ func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *imag
 	if stg.HasPrevStage() {
 		if prevBuiltImage == nil {
 			panic(fmt.Sprintf("expected prevBuiltImage to be set for stage %s", stg.Name()))
-		}
-
-		if err := logboek.Context(ctx).Debug().LogBlock("-- BuildPhase.prepareStage prevBuiltImage stageDesc").DoError(func() error {
-			data, err := yaml.Marshal(prevBuiltImage.Image.GetStageDesc().Info)
-			if err != nil {
-				return fmt.Errorf("unable to yaml marshal: %w", err)
-			}
-
-			logboek.Context(ctx).Debug().LogF(string(data))
-			return nil
-		}); err != nil {
-			return err
 		}
 
 		serviceLabels[imagePkg.WerfParentStageID] = prevBuiltImage.Image.GetStageDesc().StageID.String()

@@ -7,6 +7,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 
 	"github.com/werf/werf/v2/test/pkg/suite_init"
+	"github.com/werf/werf/v2/test/pkg/utils"
 )
 
 type setupEnvOptions struct {
@@ -42,8 +43,7 @@ var (
 	_ = SuiteData.SetupK8sDockerRegistry(suite_init.NewK8sDockerRegistryData(SuiteData.ProjectNameData, SuiteData.StubsData))
 
 	_ = AfterEach(func(ctx SpecContext) {
-		// TODO: uncomment after debug
-		// utils.RunSucceedCommand(ctx, "", SuiteData.WerfBinPath, "host", "purge", "--force", "--project-name", SuiteData.ProjectName)
+		utils.RunSucceedCommand(ctx, "", SuiteData.WerfBinPath, "host", "purge", "--force", "--project-name", SuiteData.ProjectName)
 	})
 )
 

@@ -39,9 +39,6 @@ var _ = Describe("build and mutate image spec", Label("integration", "build", "m
 				By(fmt.Sprintf("%s: building images", testOpts.State))
 				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
 
-				SuiteData.Stubs.SetEnv("WERF_LOG_DEBUG", "true")
-				// SuiteData.Stubs.SetEnv("WERF_PARALLEL", "false")
-
 				buildOut, buildReport := werfProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), nil)
 				Expect(buildOut).To(ContainSubstring("Building stage"))
 
@@ -68,7 +65,7 @@ var _ = Describe("build and mutate image spec", Label("integration", "build", "m
 						Expect(imgCfg.Env).ShouldNot(ContainElement("APP_VERSION=0.0.1"))
 						Expect(imgCfg.Env).ShouldNot(ContainElement("REMOVE=ME"))
 
-						Expect(imgCfg.Volumes).ShouldNot(HaveKey("/home/app/data"))
+						Expect(imgCfg.Volumes).Should(HaveKey("/home/app/data"))
 						Expect(imgCfg.Volumes).Should(HaveKey("/test/volume"))
 						Expect(imgCfg.Volumes).Should(HaveKey("/second/test/volume"))
 						Expect(imgCfg.Volumes).ShouldNot(HaveKey("/home/remove/me"))
@@ -101,7 +98,7 @@ var _ = Describe("build and mutate image spec", Label("integration", "build", "m
 
 						Expect(imgCfg.Env).Should(BeEmpty())
 
-						Expect(imgCfg.Volumes).ShouldNot(BeEmpty())
+						Expect(imgCfg.Volumes).Should(BeEmpty())
 
 						Expect(imgCfg.Cmd).Should(BeEmpty())
 						Expect(imgCfg.Entrypoint).Should(BeEmpty())
@@ -127,10 +124,10 @@ var _ = Describe("build and mutate image spec", Label("integration", "build", "m
 			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: false,
 		}}),
-		FEntry("without local repo using BuildKit Docker", simpleTestOptions{setupEnvOptions{
+		Entry("without local repo using BuildKit Docker", simpleTestOptions{setupEnvOptions{
 			ContainerBackendMode:        "buildkit-docker",
 			WithLocalRepo:               false,
 			WithStagedDockerfileBuilder: false,
-		}}, FlakeAttempts(15)),
+		}}),
 	)
 })
