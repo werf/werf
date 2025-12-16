@@ -280,7 +280,11 @@ var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 
 				By("heredoc: building image")
 				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirName))
-				buildOut := werfProject.Build(ctx, nil)
+				buildOut := werfProject.Build(ctx, &werf.BuildOptions{
+					CommonOptions: werf.CommonOptions{
+						ShouldFail: true,
+					},
+				})
 
 				By(fmt.Sprintf(`heredoc: checking error messages`))
 				Expect(buildOut).To(ContainSubstring(testOpts.Verify[0]))

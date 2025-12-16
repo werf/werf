@@ -61,20 +61,9 @@ func (i *Run) Apply(ctx context.Context, containerName string, drv buildah.Build
 	}
 
 	if len(i.Files) > 0 {
-		full := i.CmdLine[0]
-		for _, file := range i.Files {
-			name := file.Name
-			data := file.Data
-			isChomp := file.Chomp
-			if isChomp {
-				data = strings.TrimRight(data, "\r\n")
-			}
-
-			full += "\n" + data + name
-		}
-
+		full, prependShell := i.mapToCorrectHeredocCmd()
 		i.CmdLine = []string{full}
-		i.PrependShell = true
+		i.PrependShell = prependShell
 	}
 
 	logboek.Context(ctx).Default().LogF("$ %s\n", strings.Join(i.CmdLine, " "))
@@ -94,4 +83,23 @@ func (i *Run) Apply(ctx context.Context, containerName string, drv buildah.Build
 	}
 
 	return nil
+}
+
+// mapToCorrectHeredocCmd processes heredoc files by embedding their content into the command line.
+// For files with Chomp flag, trailing newline characters (\r\n) are removed.
+// Returns the updated full command line with heredoc content and a prepend shell flag
+func (i *Run) mapToCorrectHeredocCmd() (string, bool) {
+	full := i.CmdLine[0]
+	for _, file := range i.Files {
+		name := file.Name
+		data := file.Data
+		isChomp := file.Chomp
+		if isChomp {
+			data = strings.TrimRight(data, "\r\n")
+		}
+
+		full += "\n" + data + name
+	}
+
+	return full, true
 }
