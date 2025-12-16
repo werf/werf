@@ -237,7 +237,7 @@ var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 				WithStagedDockerfileBuilder: true,
 			},
 			FixtureRelPath: "complex/heredoc/simple",
-			VerifyCommands: []string{"test -d /app", "test -f /app/heredoc.txt", "echo 'hello-from-heredoc' | diff /app/heredoc.txt -"},
+			VerifyCommands: []string{"test -d /etc/myapp", "test -f /etc/myapp/env", "(echo 'FOO=bar' && echo 'BAR=baz') | diff /etc/myapp/env -"},
 		}),
 		Entry("with local repo using Native Buildah with rootless isolation and multiple heredoc content", complexTestOptions{
 			setupEnvOptions: setupEnvOptions{
