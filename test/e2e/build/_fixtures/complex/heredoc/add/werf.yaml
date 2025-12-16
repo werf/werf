@@ -1,0 +1,7 @@
+project: staged
+configVersion: 1
+---
+image: dockerfile
+dockerfile: ./Dockerfile
+staged: true
+---
