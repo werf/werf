@@ -58,7 +58,9 @@ func ParseDockerfileWithBuildkit(dockerfileID string, dockerfileBytes []byte, we
 		}
 	}
 
-	dockerfile.SetupDockerfileStagesDependencies(stages)
+	if err := dockerfile.SetupDockerfileStagesDependencies(stages); err != nil {
+		return nil, fmt.Errorf("error setting up dockerfile stages dependencies: %w", err)
+	}
 
 	d := dockerfile.NewDockerfile(dockerfileID, stages, opts)
 	for _, stage := range d.Stages {
