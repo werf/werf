@@ -3,10 +3,9 @@ package dockerfile
 import (
 	"strings"
 
+	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-
-	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 )
 
 var _ = Describe("MapToCorrectHeredocCmd", func() {
