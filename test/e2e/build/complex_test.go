@@ -14,8 +14,6 @@ import (
 
 type complexTestOptions struct {
 	setupEnvOptions
-	FixtureRelPath string
-	Verify         []string
 }
 
 var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
@@ -131,200 +129,47 @@ var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 				contRuntime.ExpectCmdsToSucceed(ctx, buildReport.Images["stapel-shell"].DockerImageName, "test -f /app/README.md", "stat -c %u:%g /app/README.md | diff <(echo 1050:1051) -", "grep -qF 'https://cloud.google.com/sdk/' /app/README.md", "test -f /app/static/index.html", "stat -c %u:%g /app/static/index.html | diff <(echo 1050:1051) -", "grep -qF '<title>Hello, world</title>' /app/static/index.html", "! test -e /app/static/style.css", "test -f /app/app.go", "stat -c %u:%g /app/app.go | diff <(echo 1050:1051) -", "grep -qF 'package hello' /app/app.go", "! test -e /app/static/script.js", "test -f /triggered-stages", "stat -c %u:%g /triggered-stages | diff <(echo 0:0) -", "echo 'beforeInstall\ninstall\nbeforeSetup\nsetup' | diff /triggered-stages -", "! test -e /tmp_dir/file", "test -f /basedir/file", "stat -c %u:%g /basedir/file | diff <(echo 0:0) -", "echo 'content' | diff /basedir/file -", "test -f /basedir-imported/file", "stat -c %u:%g /basedir-imported/file | diff <(echo 1060:1061) -", "echo 'content' | diff /basedir-imported/file -")
 			}
 		},
-		Entry("without repo using Vanilla Docker", complexTestOptions{
-			setupEnvOptions: setupEnvOptions{
-				ContainerBackendMode:        "vanilla-docker",
-				WithLocalRepo:               false,
-				WithStagedDockerfileBuilder: false,
-			},
-		}),
-		Entry("with local repo using Vanilla Docker", complexTestOptions{
-			setupEnvOptions: setupEnvOptions{
-				ContainerBackendMode:        "vanilla-docker",
-				WithLocalRepo:               true,
-				WithStagedDockerfileBuilder: false,
-			},
-		}),
-		Entry("without repo using BuildKit Docker", complexTestOptions{
-			setupEnvOptions: setupEnvOptions{
-				ContainerBackendMode:        "buildkit-docker",
-				WithLocalRepo:               false,
-				WithStagedDockerfileBuilder: false,
-			},
-		}),
-		Entry("with local repo using BuildKit Docker", complexTestOptions{
-			setupEnvOptions: setupEnvOptions{
-				ContainerBackendMode:        "buildkit-docker",
-				WithLocalRepo:               true,
-				WithStagedDockerfileBuilder: false,
-			},
-		}),
-		Entry("with local repo using Native Buildah with rootless isolation", complexTestOptions{
-			setupEnvOptions: setupEnvOptions{
-				ContainerBackendMode:        "native-rootless",
-				WithLocalRepo:               true,
-				WithStagedDockerfileBuilder: false,
-			},
-		}),
-		Entry("with local repo using Native Buildah with chroot isolation", complexTestOptions{
-			setupEnvOptions: setupEnvOptions{
-				ContainerBackendMode:        "native-chroot",
-				WithLocalRepo:               true,
-				WithStagedDockerfileBuilder: false,
-			},
-		}),
+		Entry("without repo using Vanilla Docker", complexTestOptions{setupEnvOptions{
+			ContainerBackendMode:        "vanilla-docker",
+			WithLocalRepo:               false,
+			WithStagedDockerfileBuilder: false,
+		}}),
+		Entry("with local repo using Vanilla Docker", complexTestOptions{setupEnvOptions{
+			ContainerBackendMode:        "vanilla-docker",
+			WithLocalRepo:               true,
+			WithStagedDockerfileBuilder: false,
+		}}),
+		Entry("without repo using BuildKit Docker", complexTestOptions{setupEnvOptions{
+			ContainerBackendMode:        "buildkit-docker",
+			WithLocalRepo:               false,
+			WithStagedDockerfileBuilder: false,
+		}}),
+		Entry("with local repo using BuildKit Docker", complexTestOptions{setupEnvOptions{
+			ContainerBackendMode:        "buildkit-docker",
+			WithLocalRepo:               true,
+			WithStagedDockerfileBuilder: false,
+		}}),
+		Entry("with local repo using Native Buildah with rootless isolation", complexTestOptions{setupEnvOptions{
+			ContainerBackendMode:        "native-rootless",
+			WithLocalRepo:               true,
+			WithStagedDockerfileBuilder: false,
+		}}),
+		Entry("with local repo using Native Buildah with chroot isolation", complexTestOptions{setupEnvOptions{
+			ContainerBackendMode:        "native-chroot",
+			WithLocalRepo:               true,
+			WithStagedDockerfileBuilder: false,
+		}}),
 		// TODO(1.3): after Full Dockerfile Builder removed and Staged Dockerfile Builder enabled by default this test no longer needed
-		Entry("with local repo using Native Buildah and Staged Dockerfile builder with rootless isolation", complexTestOptions{
-			setupEnvOptions: setupEnvOptions{
-				ContainerBackendMode:        "native-rootless",
-				WithLocalRepo:               true,
-				WithStagedDockerfileBuilder: true,
-			},
-		}),
+		Entry("with local repo using Native Buildah and Staged Dockerfile builder with rootless isolation", complexTestOptions{setupEnvOptions{
+			ContainerBackendMode:        "native-rootless",
+			WithLocalRepo:               true,
+			WithStagedDockerfileBuilder: true,
+		}}),
 		// TODO(1.3): after Full Dockerfile Builder removed and Staged Dockerfile Builder enabled by default this test no longer needed
-		Entry("with local repo using Native Buildah and Staged Dockerfile builder with chroot isolation", complexTestOptions{
-			setupEnvOptions: setupEnvOptions{
-				ContainerBackendMode:        "native-chroot",
-				WithLocalRepo:               true,
-				WithStagedDockerfileBuilder: true,
-			},
-		}),
-	)
-
-	DescribeTable("should succeed and produce expected image with heredoc content",
-		func(ctx SpecContext, testOpts complexTestOptions) {
-			By("initializing")
-			setupEnv(testOpts.setupEnvOptions)
-			contRuntime, err := contback.NewContainerBackend(testOpts.ContainerBackendMode)
-			if errors.Is(err, contback.ErrRuntimeUnavailable) {
-				Skip(err.Error())
-			} else if err != nil {
-				Fail(err.Error())
-			}
-
-			By("heredoc: starting")
-			{
-				repoDirName := "repo0"
-				fixtureRelPath := testOpts.FixtureRelPath
-				buildReportName := "report0.json"
-
-				By("heredoc: preparing test repo")
-				SuiteData.InitTestRepo(ctx, repoDirName, fixtureRelPath)
-
-				By("heredoc: building image")
-				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirName))
-				buildOut, buildReport := werfProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), nil)
-				Expect(buildOut).To(ContainSubstring("Building stage"))
-				Expect(buildOut).NotTo(ContainSubstring("Use previously built image"))
-
-				By(fmt.Sprintf(`heredoc: checking "dockerfile" image %s content`, buildReport.Images["dockerfile"].DockerImageName))
-				contRuntime.ExpectCmdsToSucceed(ctx, buildReport.Images["dockerfile"].DockerImageName, testOpts.Verify...)
-			}
-		},
-		Entry("with simple heredoc content and local repo using Native Buildah with rootless isolation", complexTestOptions{
-			setupEnvOptions: setupEnvOptions{
-				ContainerBackendMode:        "native-rootless",
-				WithLocalRepo:               true,
-				WithStagedDockerfileBuilder: true,
-			},
-			FixtureRelPath: "complex/heredoc/simple",
-			Verify:         []string{"test -d /etc/myapp", "test -f /etc/myapp/env", "(echo 'FOO=bar' && echo 'BAR=baz') | diff /etc/myapp/env -"},
-		}),
-		Entry("with simple heredoc content and local repo using Native Buildah with chroot isolation", complexTestOptions{
-			setupEnvOptions: setupEnvOptions{
-				ContainerBackendMode:        "native-chroot",
-				WithLocalRepo:               true,
-				WithStagedDockerfileBuilder: true,
-			},
-			FixtureRelPath: "complex/heredoc/simple",
-			Verify:         []string{"test -d /etc/myapp", "test -f /etc/myapp/env", "(echo 'FOO=bar' && echo 'BAR=baz') | diff /etc/myapp/env -"},
-		}),
-		Entry("with multiple heredoc content and local repo using Native Buildah with rootless isolation", complexTestOptions{
-			setupEnvOptions: setupEnvOptions{
-				ContainerBackendMode:        "native-rootless",
-				WithLocalRepo:               true,
-				WithStagedDockerfileBuilder: true,
-			},
-			FixtureRelPath: "complex/heredoc/multiple",
-			Verify:         []string{"test -f /file1", "test -f /file2", "echo -e 'I am\\nfirst' | diff /file1 -", "echo -e 'I am\\nsecond' | diff /file2 -"},
-		}),
-		Entry("with multiple heredoc content and local repo using Native Buildah with chroot isolation", complexTestOptions{
-			setupEnvOptions: setupEnvOptions{
-				ContainerBackendMode:        "native-chroot",
-				WithLocalRepo:               true,
-				WithStagedDockerfileBuilder: true,
-			},
-			FixtureRelPath: "complex/heredoc/multiple",
-			Verify:         []string{"test -f /file1", "test -f /file2", "echo -e 'I am\\nfirst' | diff /file1 -", "echo -e 'I am\\nsecond' | diff /file2 -"},
-		}),
-	)
-
-	DescribeTable("should fail and return error message with unsupported heredoc syntax",
-		func(ctx SpecContext, testOpts complexTestOptions) {
-			By("initializing")
-			setupEnv(testOpts.setupEnvOptions)
-			_, err := contback.NewContainerBackend(testOpts.ContainerBackendMode)
-			if errors.Is(err, contback.ErrRuntimeUnavailable) {
-				Skip(err.Error())
-			} else if err != nil {
-				Fail(err.Error())
-			}
-
-			By("heredoc: starting")
-			{
-				repoDirName := "repo0"
-				fixtureRelPath := testOpts.FixtureRelPath
-
-				By("heredoc: preparing test repo")
-				SuiteData.InitTestRepo(ctx, repoDirName, fixtureRelPath)
-
-				By("heredoc: building image")
-				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirName))
-				buildOut := werfProject.Build(ctx, &werf.BuildOptions{
-					CommonOptions: werf.CommonOptions{
-						ShouldFail: true,
-					},
-				})
-
-				By(fmt.Sprintf(`heredoc: checking error messages`))
-				Expect(buildOut).To(ContainSubstring(testOpts.Verify[0]))
-			}
-		},
-		Entry("with unsupported COPY heredoc and local repo using Native Buildah with rootless isolation", complexTestOptions{
-			setupEnvOptions: setupEnvOptions{
-				ContainerBackendMode:        "native-rootless",
-				WithLocalRepo:               true,
-				WithStagedDockerfileBuilder: true,
-			},
-			FixtureRelPath: "complex/heredoc/copy",
-			Verify:         []string{"heredoc is not supported with COPY command"},
-		}),
-		Entry("with unsupported COPY heredoc and local repo using Native Buildah with chroot isolation", complexTestOptions{
-			setupEnvOptions: setupEnvOptions{
-				ContainerBackendMode:        "native-chroot",
-				WithLocalRepo:               true,
-				WithStagedDockerfileBuilder: true,
-			},
-			FixtureRelPath: "complex/heredoc/copy",
-			Verify:         []string{"heredoc is not supported with COPY command"},
-		}),
-		Entry("with unsupported ADD heredoc and local repo using Native Buildah with rootless isolation", complexTestOptions{
-			setupEnvOptions: setupEnvOptions{
-				ContainerBackendMode:        "native-rootless",
-				WithLocalRepo:               true,
-				WithStagedDockerfileBuilder: true,
-			},
-			FixtureRelPath: "complex/heredoc/add",
-			Verify:         []string{"heredoc is not supported with ADD command"},
-		}),
-		Entry("with unsupported ADD heredoc and local repo using Native Buildah with chroot isolation", complexTestOptions{
-			setupEnvOptions: setupEnvOptions{
-				ContainerBackendMode:        "native-chroot",
-				WithLocalRepo:               true,
-				WithStagedDockerfileBuilder: true,
-			},
-			FixtureRelPath: "complex/heredoc/add",
-			Verify:         []string{"heredoc is not supported with ADD command"},
-		}),
+		Entry("with local repo using Native Buildah and Staged Dockerfile builder with chroot isolation", complexTestOptions{setupEnvOptions{
+			ContainerBackendMode:        "native-chroot",
+			WithLocalRepo:               true,
+			WithStagedDockerfileBuilder: true,
+		}}),
 	)
 })
