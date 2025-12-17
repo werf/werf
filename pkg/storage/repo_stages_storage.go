@@ -9,7 +9,6 @@ import (
 	"time"
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
-
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/container_backend"
@@ -558,6 +557,12 @@ func (storage *RepoStagesStorage) PutImageMetadata(ctx context.Context, projectN
 	opts := &docker_registry.PushImageOptions{Labels: map[string]string{image.WerfLabel: projectName}}
 
 	if err := storage.DockerRegistry.PushImage(ctx, fullImageName, opts); err != nil {
+		if docker_registry.IsStatusForbiddenErr(err) {
+			logboek.Context(ctx).Warn().LogF("WARNING: Failed to push meta tag image %s\n", fullImageName)
+
+			return nil
+		}
+
 		return fmt.Errorf("unable to push image %s: %w", fullImageName, err)
 	}
 	logboek.Context(ctx).Info().LogF("Put image %s commit %s stage ID %s\n", imageNameOrManagedImageName, commit, stageID)
