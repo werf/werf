@@ -3,7 +3,6 @@ package frontend
 import (
 	"bytes"
 	"fmt"
-	"regexp"
 	"strconv"
 	"strings"
 
@@ -79,7 +78,7 @@ func NewDockerfileStageFromBuildkitStage(index int, werfImageName string, stage 
 
 		switch instrData := cmd.(type) {
 		case *instructions.AddCommand:
-			if addUsesUnsupportedHeredoc(instrData) {
+			if dockerfile.InstructionUsesUnsupportedHeredoc(instrData) {
 				return nil, fmt.Errorf(`unsupported ADD "%s": heredoc is not supported with ADD command`, instrData.String())
 			}
 
@@ -121,7 +120,7 @@ func NewDockerfileStageFromBuildkitStage(index int, werfImageName string, stage 
 				i = instr
 			}
 		case *instructions.CopyCommand:
-			if copyUsesUnsupportedHeredoc(instrData) {
+			if dockerfile.InstructionUsesUnsupportedHeredoc(instrData) {
 				return nil, fmt.Errorf(`unsupported COPY "%s": heredoc is not supported with COPY command`, instrData.String())
 			}
 
@@ -342,24 +341,6 @@ func ResolveDockerStagesFromValue(stages []instructions.Stage) {
 			}
 		}
 	}
-}
-
-func addUsesUnsupportedHeredoc(cmd *instructions.AddCommand) bool {
-	reHeredoc := regexp.MustCompile(`ADD <<(-?)\s*([^<]*)$`)
-
-	if len(reHeredoc.FindStringSubmatch(cmd.String())) > 0 {
-		return true
-	}
-	return false
-}
-
-func copyUsesUnsupportedHeredoc(cmd *instructions.CopyCommand) bool {
-	reHeredoc := regexp.MustCompile(`COPY <<(-?)\s*([^<]*)$`)
-
-	if len(reHeredoc.FindStringSubmatch(cmd.String())) > 0 {
-		return true
-	}
-	return false
 }
 
 func GetDockerTargetStageIndex(dockerStages []instructions.Stage, dockerTargetStage string) (int, error) {
