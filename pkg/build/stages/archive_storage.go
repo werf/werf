@@ -1,13 +1,14 @@
 package stages
 
 import (
-	"bytes"
 	"context"
 	"fmt"
+	"io"
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/build"
 	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/util/stream"
 )
 
 const (
@@ -74,14 +75,24 @@ func (s *ArchiveStorage) copyAllFromRemote(ctx context.Context, fromRemote *Remo
 			stageRef := stageDesc.Info.Name
 			tag := stageDesc.Info.Tag
 
-			stageBytes := bytes.NewBuffer(nil)
+			producer := func(ctx context.Context, w io.Writer) error {
+				if err := fromRemote.RegistryClient.PullImageArchive(ctx, w, stageRef); err != nil {
+					return fmt.Errorf("error pulling stage %q archive: %w", stageRef, err)
+				}
 
-			if err := fromRemote.RegistryClient.PullImageArchive(ctx, stageBytes, stageRef); err != nil {
-				return fmt.Errorf("error pulling stage %q archive: %w", stageRef, err)
+				return nil
 			}
 
-			if err := writer.WriteStageArchive(tag, stageBytes.Bytes()); err != nil {
-				return fmt.Errorf("error writing image %q into bundle archive: %w", stageRef, err)
+			consumer := func(ctx context.Context, r io.Reader) error {
+				if err := writer.WriteStageArchiveStream(tag, r); err != nil {
+					return fmt.Errorf("error writing image %q into archive: %w", stageRef, err)
+				}
+
+				return nil
+			}
+
+			if err := stream.PipeProducerConsumer(ctx, producer, consumer); err != nil {
+				return err
 			}
 		}
 		return nil
@@ -103,14 +114,27 @@ func (s *ArchiveStorage) copyCurrentBuildFromRemote(ctx context.Context, fromRem
 			for _, infoGetter := range infoGetters {
 				logboek.Context(ctx).Default().LogFDetails("Copying stage: %s\n", infoGetter.Tag)
 
-				stageBytes := bytes.NewBuffer(nil)
+				name := infoGetter.GetName()
+				tag := infoGetter.Tag
 
-				if err := fromRemote.RegistryClient.PullImageArchive(ctx, stageBytes, infoGetter.GetName()); err != nil {
-					return fmt.Errorf("error pulling stage %q archive: %w", infoGetter.GetName(), err)
+				producer := func(ctx context.Context, w io.Writer) error {
+					if err := fromRemote.RegistryClient.PullImageArchive(ctx, w, name); err != nil {
+						return fmt.Errorf("error pulling image %q archive: %w", name, err)
+					}
+
+					return nil
 				}
 
-				if err := s.Writer.WriteStageArchive(infoGetter.Tag, stageBytes.Bytes()); err != nil {
-					return fmt.Errorf("error writing image %q into bundle archive: %w", infoGetter.GetName(), err)
+				consumer := func(ctx context.Context, r io.Reader) error {
+					if err := writer.WriteStageArchiveStream(tag, r); err != nil {
+						return fmt.Errorf("error writing image %q into archive: %w", name, err)
+					}
+
+					return nil
+				}
+
+				if err := stream.PipeProducerConsumer(ctx, producer, consumer); err != nil {
+					return err
 				}
 			}
 
