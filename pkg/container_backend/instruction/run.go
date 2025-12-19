@@ -10,6 +10,7 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/buildah"
 	"github.com/werf/werf/v2/pkg/container_backend"
+	"github.com/werf/werf/v2/pkg/dockerfile"
 )
 
 type Run struct {
@@ -58,6 +59,12 @@ func (i *Run) Apply(ctx context.Context, containerName string, drv buildah.Build
 	var addCapabilities []string
 	if i.GetSecurity() == "insecure" {
 		addCapabilities = []string{"all"}
+	}
+
+	if len(i.Files) > 0 {
+		full, prependShell := dockerfile.MapToCorrectHeredocCmd(i.ShellDependantCmdLine)
+		i.CmdLine = []string{full}
+		i.PrependShell = prependShell
 	}
 
 	logboek.Context(ctx).Default().LogF("$ %s\n", strings.Join(i.CmdLine, " "))
