@@ -14,9 +14,9 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
-	"github.com/tidwall/gjson"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
+	"github.com/tidwall/gjson"
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/lockgate"
@@ -512,7 +512,7 @@ func (backend *DockerServerBackend) GenerateSBOM(ctx context.Context, scanOpts s
 	})
 	contextAddFiles = append(contextAddFiles, workingTree.Containerfile())
 
-	archive := newSbomContextArchiver(workingTree.RootDir())
+	archive := NewSbomContextArchiver(workingTree.RootDir())
 
 	if err := archive.Create(ctx, BuildContextArchiveCreateOptions{
 		DockerfileRelToContextPath: workingTree.Containerfile(),
