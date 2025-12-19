@@ -4,22 +4,23 @@ import (
 	"archive/tar"
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 )
 
-type sbomBuildContextArchiver struct {
+type SbomBuildContextArchiver struct {
 	rootDir string
 	tarPath string
 }
 
-func newSbomContextArchiver(rootDir string) *sbomBuildContextArchiver {
-	return &sbomBuildContextArchiver{
+func NewSbomContextArchiver(rootDir string) *SbomBuildContextArchiver {
+	return &SbomBuildContextArchiver{
 		rootDir: rootDir,
 	}
 }
 
-func (a *sbomBuildContextArchiver) Create(_ context.Context, opts BuildContextArchiveCreateOptions) error {
+func (a *SbomBuildContextArchiver) Create(_ context.Context, opts BuildContextArchiveCreateOptions) error {
 	tarFile, err := os.Create(filepath.Join(a.rootDir, "sbom-docker.tar"))
 	if err != nil {
 		return fmt.Errorf("unable to create tar file: %w", err)
@@ -50,14 +51,8 @@ func (a *sbomBuildContextArchiver) Create(_ context.Context, opts BuildContextAr
 			return fmt.Errorf("unable to write tar header %v: %w", hdr, err)
 		}
 
-		fileContent := make([]byte, stat.Size())
-
-		if _, err = file.Read(fileContent); err != nil {
-			return fmt.Errorf("unable to read file %q: %w", file.Name(), err)
-		}
-
-		if _, err = tarWriter.Write(fileContent); err != nil {
-			return fmt.Errorf("unable to write to tar %q: %w", tarFile.Name(), err)
+		if _, err = io.Copy(tarWriter, file); err != nil {
+			return fmt.Errorf("unable to copy file %q: %w", file.Name(), err)
 		}
 
 		if err = file.Close(); err != nil {
@@ -72,21 +67,21 @@ func (a *sbomBuildContextArchiver) Create(_ context.Context, opts BuildContextAr
 	return nil
 }
 
-func (a *sbomBuildContextArchiver) Path() string {
+func (a *SbomBuildContextArchiver) Path() string {
 	return a.tarPath
 }
 
-func (a *sbomBuildContextArchiver) ExtractOrGetExtractedDir(ctx context.Context) (string, error) {
+func (a *SbomBuildContextArchiver) ExtractOrGetExtractedDir(ctx context.Context) (string, error) {
 	return "", nil
 }
 
-func (a *sbomBuildContextArchiver) CalculatePathsChecksum(ctx context.Context, paths []string) (string, error) {
+func (a *SbomBuildContextArchiver) CalculatePathsChecksum(ctx context.Context, paths []string) (string, error) {
 	return "", nil
 }
 
-func (a *sbomBuildContextArchiver) CalculateGlobsChecksum(ctx context.Context, globs []string, checkForArchive bool) (string, error) {
+func (a *SbomBuildContextArchiver) CalculateGlobsChecksum(ctx context.Context, globs []string, checkForArchive bool) (string, error) {
 	return "", nil
 }
 
-func (a *sbomBuildContextArchiver) CleanupExtractedDir(ctx context.Context) {
+func (a *SbomBuildContextArchiver) CleanupExtractedDir(ctx context.Context) {
 }

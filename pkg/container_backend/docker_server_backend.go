@@ -475,7 +475,7 @@ func (backend *DockerServerBackend) GenerateSBOM(ctx context.Context, scanOpts s
 	})
 	contextAddFiles = append(contextAddFiles, workingTree.Containerfile())
 
-	archive := newSbomContextArchiver(workingTree.RootDir())
+	archive := NewSbomContextArchiver(workingTree.RootDir())
 
 	if err := archive.Create(ctx, BuildContextArchiveCreateOptions{
 		DockerfileRelToContextPath: workingTree.Containerfile(),
