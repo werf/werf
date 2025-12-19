@@ -16,8 +16,7 @@ import (
 )
 
 type ArchiveStorageWriter interface {
-	WriteStageArchive(stageTag string, data []byte) error
-	WriteStageArchiveStream(stageTag string, stream io.Reader) error
+	WriteStageArchive(stageTag string, stream io.Reader) error
 	WithTask(ctx context.Context, task func(ArchiveStorageWriter) error) error
 }
 
@@ -99,42 +98,6 @@ func (writer *ArchiveStorageFileWriter) save() error {
 	return nil
 }
 
-func (writer *ArchiveStorageFileWriter) WriteStageArchive(tag string, data []byte) error {
-	now := time.Now()
-	buf := bytes.NewBuffer(nil)
-	zipper := gzip.NewWriter(buf)
-
-	if _, err := io.Copy(zipper, bytes.NewReader(data)); err != nil {
-		return fmt.Errorf("unable to gzip image archive data: %w", err)
-	}
-
-	if err := zipper.Close(); err != nil {
-		return fmt.Errorf("unable to close gzip image archive: %w", err)
-	}
-
-	compressedData := buf.Bytes()
-
-	header := &tar.Header{
-		Name:       fmt.Sprintf(stagePathTemplate, tag),
-		Typeflag:   tar.TypeReg,
-		Mode:       0o777,
-		Size:       int64(len(buf.Bytes())),
-		ModTime:    now,
-		AccessTime: now,
-		ChangeTime: now,
-	}
-
-	if err := writer.tmpArchiveWriter.WriteHeader(header); err != nil {
-		return fmt.Errorf("unable to write stage %q header: %w", tag, err)
-	}
-
-	if _, err := writer.tmpArchiveWriter.Write(compressedData); err != nil {
-		return fmt.Errorf("unable to write stage data: %w", err)
-	}
-
-	return nil
-}
-
 func (writer *ArchiveStorageFileWriter) Close() error {
 	if writer.tmpArchiveCloser != nil {
 		return writer.tmpArchiveCloser()
@@ -142,36 +105,7 @@ func (writer *ArchiveStorageFileWriter) Close() error {
 	return nil
 }
 
-func (writer *ArchiveStorageFileWriter) WithTask(ctx context.Context, task func(ArchiveStorageWriter) error) error {
-	if err := writer.open(); err != nil {
-		return fmt.Errorf("unable to open target stages archive: %w", err)
-	}
-
-	var err error
-	defer func() {
-		if err != nil {
-			if closeErr := writer.Close(); closeErr != nil {
-				logboek.Context(ctx).Warn().LogF("Warning: error closing archive after task failure: %v\n", closeErr)
-			}
-			if writer.tmpArchivePath != "" {
-				os.Remove(writer.tmpArchivePath)
-			}
-		}
-	}()
-
-	err = task(writer)
-	if err != nil {
-		return err
-	}
-
-	if err := writer.save(); err != nil {
-		return fmt.Errorf("error saving destination bundle archive: %w", err)
-	}
-
-	return nil
-}
-
-func (writer *ArchiveStorageFileWriter) WriteStageArchiveStream(tag string, r io.Reader) error {
+func (writer *ArchiveStorageFileWriter) WriteStageArchive(tag string, r io.Reader) error {
 	now := time.Now()
 
 	var buf bytes.Buffer
@@ -201,6 +135,35 @@ func (writer *ArchiveStorageFileWriter) WriteStageArchiveStream(tag string, r io
 	}
 	if _, err := writer.tmpArchiveWriter.Write(compressedData); err != nil {
 		return fmt.Errorf("unable to write stage data: %w", err)
+	}
+
+	return nil
+}
+
+func (writer *ArchiveStorageFileWriter) WithTask(ctx context.Context, task func(ArchiveStorageWriter) error) error {
+	if err := writer.open(); err != nil {
+		return fmt.Errorf("unable to open target stages archive: %w", err)
+	}
+
+	var err error
+	defer func() {
+		if err != nil {
+			if closeErr := writer.Close(); closeErr != nil {
+				logboek.Context(ctx).Warn().LogF("Warning: error closing archive after task failure: %v\n", closeErr)
+			}
+			if writer.tmpArchivePath != "" {
+				os.Remove(writer.tmpArchivePath)
+			}
+		}
+	}()
+
+	err = task(writer)
+	if err != nil {
+		return err
+	}
+
+	if err := writer.save(); err != nil {
+		return fmt.Errorf("error saving destination bundle archive: %w", err)
 	}
 
 	return nil

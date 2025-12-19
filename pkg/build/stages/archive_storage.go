@@ -84,7 +84,7 @@ func (s *ArchiveStorage) copyAllFromRemote(ctx context.Context, fromRemote *Remo
 			}
 
 			consumer := func(ctx context.Context, r io.Reader) error {
-				if err := writer.WriteStageArchiveStream(tag, r); err != nil {
+				if err := writer.WriteStageArchive(tag, r); err != nil {
 					return fmt.Errorf("error writing image %q into archive: %w", stageRef, err)
 				}
 
@@ -126,7 +126,7 @@ func (s *ArchiveStorage) copyCurrentBuildFromRemote(ctx context.Context, fromRem
 				}
 
 				consumer := func(ctx context.Context, r io.Reader) error {
-					if err := writer.WriteStageArchiveStream(tag, r); err != nil {
+					if err := writer.WriteStageArchive(tag, r); err != nil {
 						return fmt.Errorf("error writing image %q into archive: %w", name, err)
 					}
 
