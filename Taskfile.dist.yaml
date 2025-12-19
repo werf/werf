@@ -264,26 +264,11 @@ tasks:
           paths: "{{.paths}}"
           extraTestGoTestArgs: "{{.extraTestGoTestArgs}}"
 
-  _test:ginkgo:cgo:
+  _test:ginkgo:
     cmds:
       - |
-        ginkgo {{if eq .parallel "true" }}-p{{end}} -r -compiler gc -ldflags="{{.cgoLDFlags}}" -tags="{{.cgoTags}}" \
+        ginkgo {{if eq .parallel "true" }}-p{{end}} -r \
           {{if .labelFilter}}--label-filter="{{.labelFilter}}"{{end}} {{.CLI_ARGS}} {{.paths}}
-    env:
-      CGO_ENABLED: "1"
-    vars:
-      parallel: '{{.parallel | default "true"}}'
-    requires:
-      vars:
-        - paths
-
-  _test:ginkgo:go:
-    cmds:
-      - |
-        ginkgo {{if eq .parallel "true" }}-p{{end}} -r -ldflags="{{.goLDFlags}}" -tags="{{.goTags}}" \
-          {{if .labelFilter}}--label-filter="{{.labelFilter}}"{{end}} {{.CLI_ARGS}} {{.paths}}
-    env:
-      CGO_ENABLED: "0"
     vars:
       parallel: '{{.parallel | default "true"}}'
     requires:
@@ -293,7 +278,7 @@ tasks:
   test:ginkgo: &test_ginkgo
     desc: 'Run raw "ginkgo". Important vars: "paths".'
     cmds:
-      - task: _test:ginkgo:{{.mode}}
+      - task: _test:ginkgo
         vars:
           paths: "{{.paths}}"
           labelFilter: "{{.labelFilter}}"
