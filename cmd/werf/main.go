@@ -76,6 +76,14 @@ func main() {
 			common.ShutdownTelemetry(ctx, 2)
 			graceful.Terminate(ctx, action.ErrChangesPlanned, 2)
 			return
+		} else if errors.Is(err, action.ErrResourceChangesPlanned) {
+			common.ShutdownTelemetry(ctx, 2)
+			graceful.Terminate(ctx, action.ErrResourceChangesPlanned, 2)
+			return
+		} else if errors.Is(err, action.ErrReleaseInstallPlanned) {
+			common.ShutdownTelemetry(ctx, 3)
+			graceful.Terminate(ctx, action.ErrReleaseInstallPlanned, 3)
+			return
 		} else {
 			common.ShutdownTelemetry(ctx, 1)
 			graceful.Terminate(ctx, err, 1)
