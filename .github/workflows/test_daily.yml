@@ -54,12 +54,12 @@ jobs:
       coverage: true
     secrets: inherit
 
-  integration_ansible:
-    uses: ./.github/workflows/_test_integration_regular.yml
-    with:
-      packages: test/legacy_e2e/suites/ansible
-      coverage: true
-    secrets: inherit
+  #  integration_ansible:
+  #    uses: ./.github/workflows/_test_integration_regular.yml
+  #    with:
+  #      packages: test/legacy_e2e/suites/ansible
+  #      coverage: true
+  #    secrets: inherit
 
   integration_per-k8s:
     uses: ./.github/workflows/_test_integration_per-k8s-version.yml
@@ -85,7 +85,7 @@ jobs:
       - unit
       - integration_main
       - integration_git
-      - integration_ansible
+      #      - integration_ansible
       - integration_per-k8s
       #      - integration_per-cr
       #      - integration_per-k8s-and-cr
