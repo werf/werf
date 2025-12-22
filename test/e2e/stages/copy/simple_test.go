@@ -73,4 +73,63 @@ var _ = Describe("Simple stages copy", Label("e2e", "stages copy", "simple"), fu
 			All: false,
 		}),
 	)
+
+	It("should succeed and copy image with using build report",
+		func(ctx SpecContext) {
+			By("initializing")
+			{
+				setupEnv()
+			}
+
+			By("state0: starting")
+			{
+				repoDirName := "repo"
+				fixtureRelPath := "simple"
+				buildReportName := "report0.json"
+
+				By("state0: preparing test repo")
+				SuiteData.InitTestRepo(ctx, repoDirName, fixtureRelPath)
+
+				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirName))
+
+				By("state0: building images")
+				buildOut, _ := werfProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), &werf.BuildWithReportOptions{
+					CommonOptions: werf.CommonOptions{
+						ShouldFail: false,
+						ExtraArgs:  []string{"--repo", SuiteData.WerfFromAddr},
+					},
+				})
+				Expect(buildOut).To(ContainSubstring("Building stage"))
+				Expect(buildOut).NotTo(ContainSubstring("Use previously built image"))
+
+				By("state0: execute stages copy")
+				stagesCopyAll := true
+				stagesCopyArgs := getStagesCopyArgs(SuiteData.WerfFromAddr, SuiteData.WerfToAddr, commonTestOptions{
+					All:       &stagesCopyAll,
+					ExtraArgs: []string{"--use-build-report", "--build-report-path", SuiteData.GetBuildReportPath(buildReportName)},
+				})
+				stagesCopyOut := werfProject.StagesCopy(ctx, &werf.StagesCopyOptions{
+					CommonOptions: werf.CommonOptions{
+						ShouldFail: false,
+						ExtraArgs:  stagesCopyArgs,
+					},
+				})
+
+				By("state0: check stages copy output")
+				Expect(stagesCopyOut).To(ContainSubstring(fmt.Sprintf("Copy stages")))
+				Expect(stagesCopyOut).To(ContainSubstring(fmt.Sprintf("From: %s", SuiteData.WerfFromAddr)))
+				Expect(stagesCopyOut).To(ContainSubstring(fmt.Sprintf("To: %s", SuiteData.WerfToAddr)))
+				Expect(stagesCopyOut).To(ContainSubstring(fmt.Sprintf("Avoid buildibg because if using build report: %s", SuiteData.GetBuildReportPath(buildReportName))))
+
+				By("state0: check that images were built successfully")
+				buildOut = werfProject.Build(ctx, &werf.BuildOptions{
+					CommonOptions: werf.CommonOptions{
+						ShouldFail: false,
+						ExtraArgs:  []string{"--require-built-images", "--repo", SuiteData.WerfToAddr},
+					},
+				})
+				Expect(buildOut).To(ContainSubstring("Use previously built image"))
+			}
+		},
+	)
 })
