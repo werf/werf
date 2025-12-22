@@ -30,6 +30,10 @@ jobs:
     runs-on: [self-hosted, regular]
     timeout-minutes: 60
     steps:
+      - name: Set up JOB_ID
+        run: |
+          echo "JOB_ID=${GITHUB_RUN_ID}-${RANDOM}" >> "$GITHUB_ENV"
+
       - name: Checkout code
         uses: actions/checkout@v4
         with:
@@ -60,12 +64,15 @@ jobs:
 
       - name: Test
         run: |
-          export WERF_TEST_K8S_DOCKER_REGISTRY="localhost:$(docker inspect kind-registry --format '{{(index (index .NetworkSettings.Ports "5000/tcp") 0).HostPort}}')"
+          export KUBECONFIG="$GITHUB_WORKSPACE/werf.kubeconfig-${JOB_ID}"
+          export WERF_TEST_K8S_DOCKER_REGISTRY="localhost:$(docker inspect kind-registry-${JOB_ID} --format '{{(index (index .NetworkSettings.Ports "5000/tcp") 0).HostPort}}')"
           task --yes -p test:integration paths="$(echo ${{ inputs.packages }} | tr , ' ')" -- --flake-attempts=3 --keep-going --skip-package '${{ inputs.excludePackages }}' --skip "Buildah"
           echo loadavg: $(cat /proc/loadavg)
         env:
           GOCOVERDIR: ${{ env.WERF_TEST_COVER_DIR }}
           LD_LIBRARY_PATH: "/usr/local/lib/libgost"
+          # TODO: remove after implementing `werf ci-env --disable-docker-config-copy`
+          WERF_DOCKER_CONFIG: ${{ runner.temp }}/werf-docker-config-${{ github.run_id }}
 
       - name: Upload coverage artifact
         uses: ./.github/actions/upload-coverage-artifact
