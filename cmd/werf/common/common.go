@@ -44,6 +44,7 @@ const (
 
 	DefaultSaveBuildReport     = false
 	DefaultBuildReportPathJSON = ".werf-build-report.json"
+	DefaultUseBuildReport      = false
 
 	DefaultSaveDeployReport        = false
 	DefaultSaveRollbackReport      = false
@@ -174,6 +175,11 @@ func SetupSaveBuildReport(cmdData *CmdData, cmd *cobra.Command) {
 func SetupBuildReportPath(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.BuildReportPath = new(string)
 	cmd.Flags().StringVarP(cmdData.BuildReportPath, "build-report-path", "", os.Getenv("WERF_BUILD_REPORT_PATH"), fmt.Sprintf("Change build report path and format (by default $WERF_BUILD_REPORT_PATH or %q if not set). Extension must be either .json for JSON format or .env for env-file format. If extension not specified, then .json is used", DefaultBuildReportPathJSON))
+}
+
+func SetupUseBuildReport(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.UseBuildReport = new(bool)
+	cmd.Flags().BoolVarP(cmdData.UseBuildReport, "use-build-report", "", util.GetBoolEnvironmentDefaultFalse("WERF_USE_BUILD_REPORT"), fmt.Sprintf("Use build report, previously saved with --save-build-report (by default $WERF_USE_BUILD_REPORT or %t). Its path and format configured with --build-report-path", DefaultUseBuildReport))
 }
 
 func GetSaveBuildReport(cmdData *CmdData) bool {

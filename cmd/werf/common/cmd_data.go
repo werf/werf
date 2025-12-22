@@ -87,6 +87,7 @@ type CmdData struct {
 
 	SaveBuildReport *bool
 	BuildReportPath *string
+	UseBuildReport  *bool
 
 	VirtualMerge *bool
 
