@@ -15,7 +15,8 @@ const (
 )
 
 type commonTestOptions struct {
-	All *bool
+	All       *bool
+	ExtraArgs []string
 }
 
 func setupEnv() {
@@ -42,6 +43,8 @@ func getStagesCopyArgs(fromStorage, toStorage string, opts commonTestOptions) []
 	if opts.All != nil {
 		stagesCopyArgs = append(stagesCopyArgs, "--all", strconv.FormatBool(*opts.All))
 	}
+
+	stagesCopyArgs = append(stagesCopyArgs, opts.ExtraArgs...)
 
 	return stagesCopyArgs
 }
