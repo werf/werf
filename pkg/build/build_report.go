@@ -250,3 +250,16 @@ func getStagesReport(img *image.Image, multiplatform bool) []ReportStageRecord {
 	}
 	return stagesRecords
 }
+
+func parseImagesReport(data []byte) (*ImagesReport, error) {
+	decoder := json.NewDecoder(bytes.NewReader(data))
+
+	decoder.DisallowUnknownFields()
+
+	var report ImagesReport
+	if err := decoder.Decode(&report); err != nil {
+		return nil, fmt.Errorf("unable to parse build report: %w", err)
+	}
+
+	return &report, nil
+}
