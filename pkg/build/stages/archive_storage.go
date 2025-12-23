@@ -80,6 +80,7 @@ func (s *ArchiveStorage) copyAllFromRemote(ctx context.Context, fromRemote *Remo
 				return fmt.Errorf("error copying stage %q: %w", stageRef, err)
 			}
 		}
+
 		return nil
 	})
 }
@@ -87,13 +88,23 @@ func (s *ArchiveStorage) copyAllFromRemote(ctx context.Context, fromRemote *Remo
 func (s *ArchiveStorage) copyCurrentBuildFromRemote(ctx context.Context, fromRemote *RemoteStorage, opts copyToOptions) error {
 	return s.Writer.WithTask(ctx, func(writer ArchiveStorageWriter) error {
 		return fromRemote.ConveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
-			if _, err := c.Build(ctx, opts.BuildOptions); err != nil {
-				return err
-			}
+			var infoGetters []*image.InfoGetter
+			var err error
 
-			infoGetters, err := c.GetImageInfoGettersWithOpts(image.InfoGetterOptions{OnlyFinal: false})
-			if err != nil {
-				return err
+			if c.UseBuildReport {
+				infoGetters, err = c.GetImageInfoGettersFromReport(image.InfoGetterOptions{OnlyFinal: false})
+				if err != nil {
+					return fmt.Errorf("unable to get image info getters from build report: %w", err)
+				}
+			} else {
+				if _, err := c.Build(ctx, opts.BuildOptions); err != nil {
+					return fmt.Errorf("error while building: %w", err)
+				}
+
+				infoGetters, err = c.GetImageInfoGettersWithOpts(image.InfoGetterOptions{OnlyFinal: false})
+				if err != nil {
+					return fmt.Errorf("unable to get image info getters: %w", err)
+				}
 			}
 
 			for _, infoGetter := range infoGetters {
