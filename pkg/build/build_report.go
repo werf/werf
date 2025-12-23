@@ -252,19 +252,6 @@ func getStagesReport(img *image.Image, multiplatform bool) []ReportStageRecord {
 	return stagesRecords
 }
 
-func parseBuildReport(data []byte) (*ImagesReport, error) {
-	decoder := json.NewDecoder(bytes.NewReader(data))
-
-	decoder.DisallowUnknownFields()
-
-	var report ImagesReport
-	if err := decoder.Decode(&report); err != nil {
-		return nil, fmt.Errorf("unable to parse build report: %w", err)
-	}
-
-	return &report, nil
-}
-
 func LoadBuildReportFromFile(path string) (*ImagesReport, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -283,12 +270,31 @@ func LoadBuildReportFromFile(path string) (*ImagesReport, error) {
 	return report, nil
 }
 
+func parseBuildReport(data []byte) (*ImagesReport, error) {
+	decoder := json.NewDecoder(bytes.NewReader(data))
+
+	decoder.DisallowUnknownFields()
+
+	var report ImagesReport
+	if err := decoder.Decode(&report); err != nil {
+		return nil, fmt.Errorf("unable to decode build report: %w", err)
+	}
+
+	return &report, nil
+}
+
+// TODO: add a full fledged validation
 func validateBuildReport(report *ImagesReport) error {
-	for _, record := range report.Images {
-		if record.DockerImageID == "" {
-			return fmt.Errorf("image %q has empty DockerImageID", record.WerfImageName)
+	if len(report.Images) == 0 {
+		return fmt.Errorf("build report contains no images")
+	}
+
+	for imageName, record := range report.Images {
+		if record.DockerImageName == "" {
+			return fmt.Errorf("image %q in build report has empty DockerImageName", imageName)
 		}
 	}
+
 	return nil
 }
 
@@ -301,6 +307,7 @@ func (report *ImagesReport) ToImageInfoGetters(opts imagePkg.InfoGetterOptions) 
 		if opts.OnlyFinal && !record.Final {
 			continue
 		}
+
 		for _, stage := range record.Stages {
 			getter := imagePkg.NewInfoGetter(stage.DockerImageName, stage.DockerImageName, opts)
 			infoGetters = append(infoGetters, getter)
