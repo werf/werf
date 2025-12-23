@@ -119,7 +119,7 @@ var _ = Describe("Simple stages copy", Label("e2e", "stages copy", "simple"), fu
 				Expect(stagesCopyOut).To(ContainSubstring(fmt.Sprintf("Copy stages")))
 				Expect(stagesCopyOut).To(ContainSubstring(fmt.Sprintf("From: %s", SuiteData.WerfFromAddr)))
 				Expect(stagesCopyOut).To(ContainSubstring(fmt.Sprintf("To: %s", SuiteData.WerfToAddr)))
-				Expect(stagesCopyOut).To(ContainSubstring(fmt.Sprintf("Avoid buildibg because if using build report: %s", SuiteData.GetBuildReportPath(buildReportName))))
+				Expect(stagesCopyOut).To(ContainSubstring(fmt.Sprintf("Avoid buildibg because of using build report: %s", SuiteData.GetBuildReportPath(buildReportName))))
 
 				By("state0: check that images were built successfully")
 				buildOut = werfProject.Build(ctx, &werf.BuildOptions{
