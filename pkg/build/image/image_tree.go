@@ -216,6 +216,10 @@ func (tree *ImagesTree) GetImagesNames() (res []string) {
 	return
 }
 
+func (tree *ImagesTree) SetImages(images []*Image) {
+	tree.images = images
+}
+
 func (tree *ImagesTree) GetImages() []*Image {
 	return tree.images
 }

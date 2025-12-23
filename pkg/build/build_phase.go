@@ -43,6 +43,7 @@ type BuildOptions struct {
 
 	ReportPath   string
 	ReportFormat ReportFormat
+	UseReport    bool
 
 	SkipImageMetadataPublication bool
 	SkipAddManagedImagesRecords  bool

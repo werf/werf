@@ -499,6 +499,42 @@ func (c *Conveyor) GetImageInfoGetters(opts imagePkg.InfoGetterOptions) ([]*imag
 	return imagesGetters, nil
 }
 
+// GetImageInfoGettersFromReport loads build report from file and returns InfoGetters
+// without running actual build. It validates that all required images exist in the report
+// and optionally checks that images exist in storage.
+func (c *Conveyor) GetImageInfoGettersFromReport(
+	ctx context.Context,
+	reportPath string,
+	opts imagePkg.InfoGetterOptions,
+) ([]*imagePkg.InfoGetter, error) {
+	report, err := LoadImagesReportFromFile(reportPath)
+	if err != nil {
+		return nil, fmt.Errorf("unable to load build report: %w", err)
+	}
+
+	if err := c.validateBuildReport(report); err != nil {
+		return nil, fmt.Errorf("build report validation failed: %w", err)
+	}
+
+	return report.ToImageInfoGetters(opts), nil
+}
+
+// validateBuildReport checks that build report is valid for current context
+func (c *Conveyor) validateBuildReport(report *ImagesReport) error {
+	if len(report.Images) == 0 {
+		return fmt.Errorf("build report contains no images")
+	}
+
+	// Check that all images from report have required fields
+	for imageName, record := range report.Images {
+		if record.DockerImageName == "" {
+			return fmt.Errorf("image %q in build report has empty DockerImageName", imageName)
+		}
+	}
+
+	return nil
+}
+
 func (c *Conveyor) GetExportedImages() (res []*image.Image) {
 	for _, img := range c.imagesTree.GetImages() {
 		if !img.IsFinal {
@@ -580,6 +616,7 @@ func (c *Conveyor) printDeferredBuildLog(_ context.Context, buf *bytes.Buffer) {
 }
 
 func (c *Conveyor) Build(ctx context.Context, opts BuildOptions) ([]*ImagesReport, error) {
+
 	if err := c.checkContainerBackendSupported(ctx); err != nil {
 		return nil, err
 	}
