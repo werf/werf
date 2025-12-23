@@ -252,7 +252,7 @@ func getStagesReport(img *image.Image, multiplatform bool) []ReportStageRecord {
 	return stagesRecords
 }
 
-func parseImagesReport(data []byte) (*ImagesReport, error) {
+func parseBuildReport(data []byte) (*ImagesReport, error) {
 	decoder := json.NewDecoder(bytes.NewReader(data))
 
 	decoder.DisallowUnknownFields()
@@ -265,18 +265,33 @@ func parseImagesReport(data []byte) (*ImagesReport, error) {
 	return &report, nil
 }
 
-// LoadImagesReportFromFile loads ImagesReport from a JSON file
-func LoadImagesReportFromFile(path string) (*ImagesReport, error) {
+func LoadBuildReportFromFile(path string) (*ImagesReport, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read build report file %q: %w", path, err)
 	}
 
-	return parseImagesReport(data)
+	report, err := parseBuildReport(data)
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse build report file %q: %w", path, err)
+	}
+
+	if err := validateBuildReport(report); err != nil {
+		return nil, fmt.Errorf("invalid build report file %q: %w", path, err)
+	}
+
+	return report, nil
 }
 
-// ToImageInfoGetters converts ImagesReport to a slice of InfoGetter
-// that can be used by commands instead of building images
+func validateBuildReport(report *ImagesReport) error {
+	for _, record := range report.Images {
+		if record.DockerImageID == "" {
+			return fmt.Errorf("image %q has empty DockerImageID", record.WerfImageName)
+		}
+	}
+	return nil
+}
+
 func (report *ImagesReport) ToImageInfoGetters(opts imagePkg.InfoGetterOptions) []*imagePkg.InfoGetter {
 	report.mux.Lock()
 	defer report.mux.Unlock()
@@ -286,9 +301,10 @@ func (report *ImagesReport) ToImageInfoGetters(opts imagePkg.InfoGetterOptions) 
 		if opts.OnlyFinal && !record.Final {
 			continue
 		}
-
-		getter := imagePkg.NewInfoGetter(record.WerfImageName, record.DockerImageName, opts)
-		infoGetters = append(infoGetters, getter)
+		for _, stage := range record.Stages {
+			getter := imagePkg.NewInfoGetter(stage.DockerImageName, stage.DockerImageName, opts)
+			infoGetters = append(infoGetters, getter)
+		}
 	}
 
 	return infoGetters
