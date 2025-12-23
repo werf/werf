@@ -186,6 +186,10 @@ func GetSaveBuildReport(cmdData *CmdData) bool {
 	return option.PtrValueOrDefault(cmdData.SaveBuildReport, false)
 }
 
+func GetUseBuildReport(cmdData *CmdData) bool {
+	return option.PtrValueOrDefault(cmdData.UseBuildReport, false)
+}
+
 func GetBuildReportPathAndFormat(cmdData *CmdData) (string, build.ReportFormat, error) {
 	unspecifiedPath := cmdData.BuildReportPath == nil || *cmdData.BuildReportPath == ""
 	if unspecifiedPath {
