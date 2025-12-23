@@ -126,6 +126,7 @@ werf converge --repo registry.mydomain.com/web --env production`,
 
 	common.SetupSaveBuildReport(&commonCmdData, cmd)
 	common.SetupBuildReportPath(&commonCmdData, cmd)
+	common.SetupUseBuildReport(&commonCmdData, cmd)
 
 	common.SetupUseCustomTag(&commonCmdData, cmd)
 	common.SetupAddCustomTag(&commonCmdData, cmd)
@@ -308,18 +309,27 @@ func run(
 		defer conveyorWithRetry.Terminate()
 
 		if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
-			if common.GetRequireBuiltImages(&commonCmdData) {
-				shouldBeBuiltOptions, err := common.GetShouldBeBuiltOptions(&commonCmdData, imagesToProcess)
+			if c.UseBuildReport {
+				logboek.Context(ctx).Default().LogF("Avoid building because of using build report: %s\n", c.BuildReportPath)
+
+				imagesInfoGetters, err = c.GetImageInfoGettersFromReport(image.InfoGetterOptions{CustomTagFunc: useCustomTagFunc})
 				if err != nil {
 					return err
 				}
-
-				if _, err := c.ShouldBeBuilt(ctx, shouldBeBuiltOptions); err != nil {
-					return err
-				}
 			} else {
-				if _, err := c.Build(ctx, buildOptions); err != nil {
-					return err
+				if common.GetRequireBuiltImages(&commonCmdData) {
+					shouldBeBuiltOptions, err := common.GetShouldBeBuiltOptions(&commonCmdData, imagesToProcess)
+					if err != nil {
+						return err
+					}
+
+					if _, err := c.ShouldBeBuilt(ctx, shouldBeBuiltOptions); err != nil {
+						return err
+					}
+				} else {
+					if _, err := c.Build(ctx, buildOptions); err != nil {
+						return err
+					}
 				}
 			}
 

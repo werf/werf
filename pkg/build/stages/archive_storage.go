@@ -92,6 +92,8 @@ func (s *ArchiveStorage) copyCurrentBuildFromRemote(ctx context.Context, fromRem
 			var err error
 
 			if c.UseBuildReport {
+				logboek.Context(ctx).Default().LogF("Avoid building because of using build report: %s\n", c.BuildReportPath)
+
 				infoGetters, err = c.GetImageInfoGettersFromReport(image.InfoGetterOptions{OnlyFinal: false})
 				if err != nil {
 					return fmt.Errorf("unable to get image info getters from build report: %w", err)
