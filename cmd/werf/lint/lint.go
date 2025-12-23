@@ -104,6 +104,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupSaveBuildReport(&commonCmdData, cmd)
 	common.SetupBuildReportPath(&commonCmdData, cmd)
+	common.SetupUseBuildReport(&commonCmdData, cmd)
 
 	common.SetupUseCustomTag(&commonCmdData, cmd)
 	common.SetupVirtualMerge(&commonCmdData, cmd)
@@ -257,24 +258,33 @@ func runLint(ctx context.Context, imageNameListFromArgs []string) error {
 		defer conveyorWithRetry.Terminate()
 
 		if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
-			if common.GetRequireBuiltImages(&commonCmdData) {
-				shouldBeBuiltOptions, err := common.GetShouldBeBuiltOptions(&commonCmdData, imagesToProcess)
+			if c.UseBuildReport {
+				logboek.Context(ctx).Default().LogF("Avoid building because of using build report: %s\n", c.BuildReportPath)
+
+				imagesInfoGetters, err = c.GetImageInfoGettersFromReport(image.InfoGetterOptions{CustomTagFunc: useCustomTagFunc})
 				if err != nil {
 					return err
 				}
-
-				if _, err := c.ShouldBeBuilt(ctx, shouldBeBuiltOptions); err != nil {
-					return err
-				}
 			} else {
-				if _, err := c.Build(ctx, buildOptions); err != nil {
+				if common.GetRequireBuiltImages(&commonCmdData) {
+					shouldBeBuiltOptions, err := common.GetShouldBeBuiltOptions(&commonCmdData, imagesToProcess)
+					if err != nil {
+						return err
+					}
+
+					if _, err := c.ShouldBeBuilt(ctx, shouldBeBuiltOptions); err != nil {
+						return err
+					}
+				} else {
+					if _, err := c.Build(ctx, buildOptions); err != nil {
+						return err
+					}
+				}
+
+				imagesInfoGetters, err = c.GetImageInfoGetters(image.InfoGetterOptions{CustomTagFunc: useCustomTagFunc})
+				if err != nil {
 					return err
 				}
-			}
-
-			imagesInfoGetters, err = c.GetImageInfoGetters(image.InfoGetterOptions{CustomTagFunc: useCustomTagFunc})
-			if err != nil {
-				return err
 			}
 
 			return nil
