@@ -502,12 +502,8 @@ func (c *Conveyor) GetImageInfoGetters(opts imagePkg.InfoGetterOptions) ([]*imag
 // GetImageInfoGettersFromReport loads build report from file and returns InfoGetters
 // without running actual build. It validates that all required images exist in the report
 // and optionally checks that images exist in storage.
-func (c *Conveyor) GetImageInfoGettersFromReport(
-	ctx context.Context,
-	reportPath string,
-	opts imagePkg.InfoGetterOptions,
-) ([]*imagePkg.InfoGetter, error) {
-	report, err := LoadImagesReportFromFile(reportPath)
+func (c *Conveyor) GetImageInfoGettersFromReport(opts imagePkg.InfoGetterOptions) ([]*imagePkg.InfoGetter, error) {
+	report, err := LoadBuildReportFromFile()
 	if err != nil {
 		return nil, fmt.Errorf("unable to load build report: %w", err)
 	}
@@ -616,7 +612,6 @@ func (c *Conveyor) printDeferredBuildLog(_ context.Context, buf *bytes.Buffer) {
 }
 
 func (c *Conveyor) Build(ctx context.Context, opts BuildOptions) ([]*ImagesReport, error) {
-
 	if err := c.checkContainerBackendSupported(ctx); err != nil {
 		return nil, err
 	}
