@@ -11,6 +11,7 @@ import (
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/build/image"
+	imagePkg "github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/storage"
 )
 
@@ -262,4 +263,33 @@ func parseImagesReport(data []byte) (*ImagesReport, error) {
 	}
 
 	return &report, nil
+}
+
+// LoadImagesReportFromFile loads ImagesReport from a JSON file
+func LoadImagesReportFromFile(path string) (*ImagesReport, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read build report file %q: %w", path, err)
+	}
+
+	return parseImagesReport(data)
+}
+
+// ToImageInfoGetters converts ImagesReport to a slice of InfoGetter
+// that can be used by commands instead of building images
+func (report *ImagesReport) ToImageInfoGetters(opts imagePkg.InfoGetterOptions) []*imagePkg.InfoGetter {
+	report.mux.Lock()
+	defer report.mux.Unlock()
+
+	var infoGetters []*imagePkg.InfoGetter
+	for _, record := range report.Images {
+		if opts.OnlyFinal && !record.Final {
+			continue
+		}
+
+		getter := imagePkg.NewInfoGetter(record.WerfImageName, record.DockerImageName, opts)
+		infoGetters = append(infoGetters, getter)
+	}
+
+	return infoGetters
 }
