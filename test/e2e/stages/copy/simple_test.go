@@ -89,7 +89,6 @@ var _ = Describe("Simple stages copy", Label("e2e", "stages copy", "simple"), fu
 
 				By("state0: preparing test repo")
 				SuiteData.InitTestRepo(ctx, repoDirName, fixtureRelPath)
-
 				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirName))
 
 				By("state0: building images")
