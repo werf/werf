@@ -2,6 +2,7 @@ package container_backend
 
 import (
 	"errors"
+	"regexp"
 
 	"github.com/containers/storage/types"
 	"github.com/docker/cli/cli"
@@ -25,6 +26,10 @@ Possible solutions:
 
   - If these files are not needed, exclude them using the includePaths or excludePaths options under the git directive.`)
 
+var dockerRateLimitCredsRe = regexp.MustCompile(
+	`(?i)you have reached your pull rate limit as\s+'[^']+':.*?(?:\.|$)`,
+)
+
 const (
 	ErrPatchApplyCode = 42
 )
@@ -44,4 +49,21 @@ func CliErrorByCode(err error) error {
 		}
 	}
 	return err
+}
+
+func SanitizeError(err error) error {
+	if err == nil {
+		return nil
+	}
+	msg := err.Error()
+	sanitized := dockerRateLimitCredsRe.ReplaceAllString(
+		msg,
+		"You have reached your pull rate limit (credentials hidden).",
+	)
+
+	if sanitized == msg {
+		return err
+	}
+
+	return errors.New(sanitized)
 }
