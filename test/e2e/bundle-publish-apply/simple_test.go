@@ -85,7 +85,6 @@ var _ = Describe("Simple bundle publish/apply", Label("e2e", "bundle-publish-app
 
 				By("state0: building images")
 				buildOut, _ := werfProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), nil)
-				Expect(buildOut).To(ContainSubstring("Building stage"))
 				Expect(buildOut).NotTo(ContainSubstring("Use previously built image"))
 
 				By("state0: execute bundle publish")

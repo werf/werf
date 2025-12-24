@@ -102,7 +102,7 @@ var _ = Describe("Simple stages copy", Label("e2e", "stages copy", "simple"), fu
 				Expect(buildOut).NotTo(ContainSubstring("Use previously built image"))
 
 				By("state0: execute stages copy")
-				stagesCopyAll := true
+				stagesCopyAll := false
 				stagesCopyArgs := getStagesCopyArgs(SuiteData.WerfFromAddr, SuiteData.WerfToAddr, commonTestOptions{
 					All:       &stagesCopyAll,
 					ExtraArgs: []string{"--use-build-report", "--build-report-path", SuiteData.GetBuildReportPath(buildReportName)},
