@@ -283,16 +283,75 @@ func parseBuildReport(data []byte) (*ImagesReport, error) {
 	return &report, nil
 }
 
-// TODO: add a full fledged validation
 func validateBuildReport(report *ImagesReport) error {
 	if len(report.Images) == 0 {
 		return fmt.Errorf("build report contains no images")
 	}
 
 	for imageName, record := range report.Images {
-		if record.DockerImageName == "" {
-			return fmt.Errorf("image %q in build report has empty DockerImageName", imageName)
+		if err := validateImageRecord(imageName, record); err != nil {
+			return err
 		}
+	}
+
+	for imageName, platformRecords := range report.ImagesByPlatform {
+		for platform, record := range platformRecords {
+			if err := validateImageRecord(fmt.Sprintf("%s[%s]", imageName, platform), record); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func validateImageRecord(imageName string, record ReportImageRecord) error {
+	if record.DockerImageName == "" {
+		return fmt.Errorf("image %q has empty DockerImageName", imageName)
+	}
+	if record.DockerRepo == "" {
+		return fmt.Errorf("image %q has empty DockerRepo", imageName)
+	}
+	if record.DockerTag == "" {
+		return fmt.Errorf("image %q has empty DockerTag", imageName)
+	}
+	if record.DockerImageID == "" {
+		return fmt.Errorf("image %q has empty DockerImageID", imageName)
+	}
+	if record.DockerImageDigest == "" {
+		return fmt.Errorf("image %q has empty DockerImageDigest", imageName)
+	}
+
+	if len(record.Stages) == 0 {
+		return fmt.Errorf("image %q has no stages", imageName)
+	}
+
+	for i, stage := range record.Stages {
+		if err := validateStageRecord(imageName, i, stage); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func validateStageRecord(imageName string, stageIndex int, stage ReportStageRecord) error {
+	stageRef := fmt.Sprintf("image %q stage #%d", imageName, stageIndex)
+
+	if stage.Name == "" {
+		return fmt.Errorf("%s has empty Name", stageRef)
+	}
+
+	stageRef = fmt.Sprintf("image %q stage %q", imageName, stage.Name)
+
+	if stage.DockerImageName == "" {
+		return fmt.Errorf("%s has empty DockerImageName", stageRef)
+	}
+	if stage.DockerImageID == "" {
+		return fmt.Errorf("%s has empty DockerImageID", stageRef)
+	}
+	if stage.DockerImageDigest == "" {
+		return fmt.Errorf("%s has empty DockerImageDigest", stageRef)
 	}
 
 	return nil
