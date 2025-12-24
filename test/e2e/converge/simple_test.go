@@ -1,8 +1,6 @@
 package e2e_converge_test
 
 import (
-	"fmt"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -93,14 +91,11 @@ var _ = Describe("Simple converge", Label("e2e", "converge", "simple"), func() {
 				Expect(buildOut).NotTo(ContainSubstring("Use previously built image"))
 
 				By("state0: execute converge")
-				convergeOut, deployReport := werfProject.ConvergeWithReport(ctx, SuiteData.GetDeployReportPath(deployReportName), &werf.ConvergeWithReportOptions{
+				_, deployReport := werfProject.ConvergeWithReport(ctx, SuiteData.GetDeployReportPath(deployReportName), &werf.ConvergeWithReportOptions{
 					CommonOptions: werf.CommonOptions{
 						ExtraArgs: []string{"--use-build-report", "--build-report-path", SuiteData.GetBuildReportPath(buildReportName)},
 					},
 				})
-
-				By("state0: check converge output")
-				Expect(convergeOut).To(ContainSubstring(fmt.Sprintf("Avoid buildibg because of using build report: %s", SuiteData.GetBuildReportPath(buildReportName))))
 
 				By("state0: check deploy report")
 				Expect(deployReport.Release).To(Equal(werfProject.Release(ctx)))

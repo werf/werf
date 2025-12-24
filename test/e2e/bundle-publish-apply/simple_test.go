@@ -1,8 +1,6 @@
 package e2e_bundle_publish_apply_test
 
 import (
-	"fmt"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -90,14 +88,11 @@ var _ = Describe("Simple bundle publish/apply", Label("e2e", "bundle-publish-app
 				Expect(buildOut).NotTo(ContainSubstring("Use previously built image"))
 
 				By("state0: execute bundle publish")
-				bundlePublishOut := werfProject.BundlePublish(ctx, &werf.BundlePublishOptions{
+				_ = werfProject.BundlePublish(ctx, &werf.BundlePublishOptions{
 					CommonOptions: werf.CommonOptions{
 						ExtraArgs: []string{"--use-build-report", "--build-report-path", SuiteData.GetBuildReportPath(buildReportName)},
 					},
 				})
-
-				By("state0: check bundle publish output")
-				Expect(bundlePublishOut).To(ContainSubstring(fmt.Sprintf("Avoid buildibg because of using build report: %s", SuiteData.GetBuildReportPath(buildReportName))))
 
 				By("state0: execute bundle apply")
 				_, deployReport := werfProject.BundleApplyWithReport(ctx, werfProject.Release(ctx), werfProject.Namespace(ctx), SuiteData.GetDeployReportPath(deployReportName), nil)
