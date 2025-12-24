@@ -349,7 +349,7 @@ func run(
 
 		if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
 			if c.UseBuildReport {
-				logboek.Context(ctx).Default().LogF("Avoid building because of using build report: %s\n", c.BuildReportPath)
+				logboek.Context(ctx).Debug().LogFDetails("Avoid building because of using build report: %s\n", c.BuildReportPath)
 
 				imagesInfoGetters, err = c.GetImageInfoGettersFromReport(image.InfoGetterOptions{CustomTagFunc: useCustomTagFunc})
 				if err != nil {
