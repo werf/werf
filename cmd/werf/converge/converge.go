@@ -331,11 +331,11 @@ func run(
 						return err
 					}
 				}
-			}
 
-			imagesInfoGetters, err = c.GetImageInfoGetters(image.InfoGetterOptions{CustomTagFunc: useCustomTagFunc})
-			if err != nil {
-				return err
+				imagesInfoGetters, err = c.GetImageInfoGetters(image.InfoGetterOptions{CustomTagFunc: useCustomTagFunc})
+				if err != nil {
+					return err
+				}
 			}
 
 			return nil
