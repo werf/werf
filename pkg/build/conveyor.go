@@ -423,19 +423,37 @@ func (c *Conveyor) ShouldBeBuilt(ctx context.Context, opts ShouldBeBuiltOptions)
 func (c *Conveyor) FetchLastImageStage(ctx context.Context, targetPlatform, imageName string) error {
 	lastImageStage := c.GetImage(targetPlatform, imageName).GetLastNonEmptyStage()
 	_, err := c.StorageManager.FetchStage(ctx, c.ContainerBackend, lastImageStage)
+
 	return err
 }
 
-func (c *Conveyor) GetFullImageName(ctx context.Context, imageName string) (string, error) {
+func (c *Conveyor) GetFullImageName(imageName string) (string, error) {
 	infoGetters, err := c.GetImageInfoGetters(imagePkg.InfoGetterOptions{})
 	if err != nil {
 		return "", nil
 	}
+
 	for _, getter := range infoGetters {
 		if getter.WerfImageName == imageName {
 			return getter.GetName(), nil
 		}
 	}
+
+	return "", fmt.Errorf("image not found")
+}
+
+func (c *Conveyor) GetFullImageNameFromReport(imageName string) (string, error) {
+	infoGetters, err := c.GetImageInfoGettersFromReport(imagePkg.InfoGetterOptions{})
+	if err != nil {
+		return "", nil
+	}
+
+	for _, getter := range infoGetters {
+		if getter.WerfImageName == imageName {
+			return getter.GetName(), nil
+		}
+	}
+
 	return "", fmt.Errorf("image not found")
 }
 
@@ -498,6 +516,7 @@ func (c *Conveyor) GetImageInfoGetters(opts imagePkg.InfoGetterOptions) ([]*imag
 			imagesGetters = append(imagesGetters, getter)
 		}
 	}
+
 	return imagesGetters, nil
 }
 
