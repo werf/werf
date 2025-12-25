@@ -370,10 +370,7 @@ func (report *ImagesReport) ToImageInfoGetters(opts imagePkg.InfoGetterOptions) 
 			continue
 		}
 
-		for _, stage := range record.Stages {
-			getter := imagePkg.NewInfoGetter(stage.DockerImageName, stage.DockerImageName, opts)
-			infoGetters = append(infoGetters, getter)
-		}
+		infoGetters = append(infoGetters, imagePkg.NewInfoGetter(record.WerfImageName, record.DockerImageName, opts))
 	}
 
 	return infoGetters
