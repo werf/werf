@@ -248,6 +248,15 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 
 			img.stages = append(img.stages, stg)
 
+			if copyInstr, ok := instr.(*dockerfile.DockerfileStageInstruction[*instructions.CopyCommand]); ok {
+				from := copyInstr.Data.From
+				if from != "" {
+					if depStage := cfg.FindStage(from); depStage != nil {
+						appendQueue(depStage.GetWerfImageName(), depStage, item.Level+1)
+					}
+				}
+			}
+
 			for _, dep := range instr.GetDependenciesByStageRef() {
 				appendQueue(dep.GetWerfImageName(), dep, item.Level+1)
 			}
