@@ -5,6 +5,7 @@ import (
 
 	"github.com/containers/storage/types"
 	"github.com/docker/cli/cli"
+
 	"github.com/werf/werf/v2/pkg/log_sanitize"
 )
 
