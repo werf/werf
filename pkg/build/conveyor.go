@@ -539,6 +539,27 @@ func (c *Conveyor) GetExportedImages() (res []*image.Image) {
 	return
 }
 
+func (c *Conveyor) GetExportedImagesFromReport() ([]*image.LightWeightImage, error) {
+	var res []*image.LightWeightImage
+
+	report, err := LoadBuildReportFromFile(c.BuildReportPath)
+	if err != nil {
+		return nil, fmt.Errorf("unable to load build report: %w", err)
+	}
+
+	for imageName, img := range report.Images {
+		if !img.Final {
+			continue
+		}
+
+		lwImage := image.NewLightWeightImageFromReport(imageName, img.TargetPlatform, img.Final)
+
+		res = append(res, lwImage)
+	}
+
+	return res, nil
+}
+
 func (c *Conveyor) GetImagesEnvArray() []string {
 	var envArray []string
 	for _, img := range c.imagesTree.GetImages() {
@@ -550,6 +571,29 @@ func (c *Conveyor) GetImagesEnvArray() []string {
 	}
 
 	return envArray
+}
+
+func (c *Conveyor) GetImagesEnvArrayFromReport() ([]string, error) {
+	var envArray []string
+
+	report, err := LoadBuildReportFromFile(c.BuildReportPath)
+	if err != nil {
+		return nil, fmt.Errorf("unable to load build report: %w", err)
+	}
+
+	for imageName, img := range report.Images {
+		if !img.Final {
+			continue
+		}
+
+		envArray = append(envArray, GenerateImageEnv(imageName, c.GetImageNameForLastImageStageFromReport(img)))
+	}
+
+	return envArray, nil
+}
+
+func (c *Conveyor) GetImageNameForLastImageStageFromReport(image ReportImageRecord) string {
+	return image.Stages[len(image.Stages)-1].DockerImageName
 }
 
 func (c *Conveyor) checkContainerBackendSupported(ctx context.Context) error {
