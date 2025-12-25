@@ -2,10 +2,10 @@ package container_backend
 
 import (
 	"errors"
-	"regexp"
 
 	"github.com/containers/storage/types"
 	"github.com/docker/cli/cli"
+	"github.com/werf/werf/v2/pkg/log_sanitize"
 )
 
 var (
@@ -25,10 +25,6 @@ Possible solutions:
   - If these files should be changed, declare them explicitly using the stageDependencies.<install|beforeSetup|setup> directive. This ensures the files are updated before running user commands.
 
   - If these files are not needed, exclude them using the includePaths or excludePaths options under the git directive.`)
-
-var dockerRateLimitCredsRe = regexp.MustCompile(
-	`(?i)you have reached your pull rate limit as\s+'[^']+':.*?(?:\.|$)`,
-)
 
 const (
 	ErrPatchApplyCode = 42
@@ -55,11 +51,9 @@ func SanitizeError(err error) error {
 	if err == nil {
 		return nil
 	}
+
 	msg := err.Error()
-	sanitized := dockerRateLimitCredsRe.ReplaceAllString(
-		msg,
-		"You have reached your pull rate limit (credentials hidden).",
-	)
+	sanitized := log_sanitize.SanitizeDockerRateLimit(msg)
 
 	if sanitized == msg {
 		return err

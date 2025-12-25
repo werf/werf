@@ -125,7 +125,11 @@ type ContainerBackend interface {
 }
 
 func PullImageFromRegistry(ctx context.Context, containerBackend ContainerBackend, img LegacyImageInterface) error {
-	return logboek.Context(ctx).Info().LogProcess("Pulling image %s", img.Name()).DoError(func() error {
-		return containerBackend.PullImageFromRegistry(ctx, img)
-	})
+	return logboek.Context(ctx).Info().
+		LogProcess("Pulling image %s", img.Name()).
+		DoError(func() error {
+			return SanitizeError(
+				containerBackend.PullImageFromRegistry(ctx, img),
+			)
+		})
 }

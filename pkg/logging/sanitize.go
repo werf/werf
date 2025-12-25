@@ -3,6 +3,8 @@ package logging
 import (
 	"io"
 	"regexp"
+
+	"github.com/werf/werf/v2/pkg/log_sanitize"
 )
 
 type SanitizeWriter struct {
@@ -10,21 +12,14 @@ type SanitizeWriter struct {
 	re *regexp.Regexp
 }
 
-var dockerRateLimitCredsRe = regexp.MustCompile(
-	`(?i)you have reached your pull rate limit as\s+'[^']+':.*?(?:\.|$)`,
-)
-
 func (s *SanitizeWriter) Write(p []byte) (int, error) {
-	out := s.re.ReplaceAllString(
-		string(p),
-		"You have reached your pull rate limit (credentials hidden).",
-	)
+	out := log_sanitize.SanitizeDockerRateLimit(string(p))
 	return s.w.Write([]byte(out))
 }
 
-func WrapIfNeeded(w io.Writer) io.Writer {
+func WrapInSanitizeWriter(w io.Writer) io.Writer {
 	return &SanitizeWriter{
 		w:  w,
-		re: dockerRateLimitCredsRe,
+		re: log_sanitize.DockerRateLimitCredsRegexp,
 	}
 }
