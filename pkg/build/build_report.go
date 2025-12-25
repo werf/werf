@@ -34,6 +34,7 @@ type ReportImageRecord struct {
 	DockerImageID     string
 	DockerImageDigest string
 	DockerImageName   string
+	TargetPlatform    string
 	Rebuilt           bool
 	Final             bool
 	Size              int64
@@ -131,6 +132,7 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 				DockerImageID:     stageDesc.Info.ID,
 				DockerImageDigest: stageDesc.Info.GetDigest(),
 				DockerImageName:   stageDesc.Info.Name,
+				TargetPlatform:    img.TargetPlatform,
 				Rebuilt:           img.GetRebuilt(),
 				Final:             img.IsFinal,
 				Size:              stageDesc.Info.Size,
@@ -176,6 +178,7 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 					DockerImageID:     stageDesc.Info.ID,
 					DockerImageDigest: stageDesc.Info.GetDigest(),
 					DockerImageName:   stageDesc.Info.Name,
+					TargetPlatform:    "", // multiplatform manifest list
 					Rebuilt:           isRebuilt,
 					Final:             img.IsFinal,
 					Size:              stageDesc.Info.Size,
