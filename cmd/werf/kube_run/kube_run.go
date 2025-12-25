@@ -376,7 +376,7 @@ func run(ctx context.Context, pod, secret, namespace string, werfConfig *config.
 		if c.UseBuildReport {
 			logboek.Context(ctx).Debug().LogFDetails("Avoid building because of using build report: %s\n", c.BuildReportPath)
 
-			image, err = c.GetFullImageName(imageName)
+			image, err = c.GetFullImageNameFromReport(imageName)
 			if err != nil {
 				return fmt.Errorf("unable to get full name for image %q: %w", imageName, err)
 			}

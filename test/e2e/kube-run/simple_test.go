@@ -112,6 +112,7 @@ var _ = Describe("Simple kube-run", Label("e2e", "kube-run", "simple"), func() {
 			repoDirname := "repo0"
 			fixtureRelPath := "simple/state0"
 			buildReportName := "report0.json"
+			kubeRunOpts.CommonOptions.ExtraArgs = append(kubeRunOpts.CommonOptions.ExtraArgs, "--use-build-report", "--build-report-path", SuiteData.GetBuildReportPath(buildReportName))
 
 			By("state0: preparing test repo")
 			SuiteData.InitTestRepo(ctx, repoDirname, fixtureRelPath)
@@ -121,7 +122,7 @@ var _ = Describe("Simple kube-run", Label("e2e", "kube-run", "simple"), func() {
 			buildOut, _ := werfProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), &werf.BuildWithReportOptions{
 				CommonOptions: werf.CommonOptions{
 					ShouldFail: false,
-					ExtraArgs:  []string{"--use-build-report", "--build-report-path", SuiteData.GetBuildReportPath(buildReportName)},
+					ExtraArgs:  []string{"--save-build-report", "--build-report-path", SuiteData.GetBuildReportPath(buildReportName)},
 				},
 			})
 			Expect(buildOut).To(ContainSubstring("Building stage"))
