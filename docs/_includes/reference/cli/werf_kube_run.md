@@ -45,6 +45,10 @@ werf kube-run [options] [IMAGE_NAME] [-- COMMAND ARG...]
             Automatically create docker config secret in the namespace and plug it via pod`s        
             imagePullSecrets for private registry access (default $WERF_AUTO_PULL_SECRET or true if 
             not specified)
+      --build-report-path=""
+            Change build report path and format (by default $WERF_BUILD_REPORT_PATH or              
+            ".werf-build-report.json" if not set). Extension must be either .json for JSON format   
+            or .env for env-file format. If extension not specified, then .json is used
       --cache-repo=[]
             Specify one or multiple cache repos with images that will be used as a cache. Cache     
             will be populated when pushing newly built images into the primary repo and when        
@@ -244,6 +248,10 @@ werf kube-run [options] [IMAGE_NAME] [-- COMMAND ARG...]
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
   -t, --tty=false
             Allocate a TTY (default $WERF_TTY or false if not specified)
+      --use-build-report=false
+            Use build report, previously saved with --save-build-report (by default                 
+            $WERF_USE_BUILD_REPORT or false). Its path and format configured with                   
+            --build-report-path
       --virtual-merge=false
             Enable virtual/ephemeral merge commit mode when building current application state      
             ($WERF_VIRTUAL_MERGE by default)
