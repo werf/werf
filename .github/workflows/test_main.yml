@@ -10,7 +10,6 @@ on:
       - ".github/**"
       - "cmd/werf/**"
       - "pkg/**"
-      - "integration/**"
       - "scripts/**"
       - "test/**"
   pull_request:

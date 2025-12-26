@@ -8,7 +8,7 @@ on:
       - "cmd/werf/**"
       - "docs/**"
       - "scripts/**"
-      - "integration/suites/docs/**"
+      - "test/legacy_e2e/suites/docs/**"
       - "README.md"
       - "go.mod"
   repository_dispatch:
