@@ -121,7 +121,11 @@ var _ = Describe("Images dependencies", Label("e2e", "build", "extra"), func() {
 				werfBuild(
 					ctx,
 					SuiteData.GetProjectWorktree(SuiteData.ProjectName),
-					liveexec.ExecCommandOptions{},
+					liveexec.ExecCommandOptions{
+						Env: map[string]string{
+							"WERF_BUILDAH_MODE": "auto",
+						},
+					},
 				),
 			).To(Succeed())
 		})
