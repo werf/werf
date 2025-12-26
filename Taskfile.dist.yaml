@@ -312,7 +312,7 @@ tasks:
     cmds:
       - task: test:ginkgo
         vars:
-          paths: '{{.paths | default "./integration/suites"}}'
+          paths: '{{.paths | default "./test/legacy_e2e"}}'
           labelFilter: "{{.labelFilter}}"
           parallel: "{{.parallel}}"
 

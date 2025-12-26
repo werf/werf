@@ -7,17 +7,17 @@ To create an integration test suite you need:
 
 ## How to write a test suite
 
-1. Create a directory for the new test suite under `integration/suites` directory in the root of the project:
+1. Create a directory for the new test suite under `test/legacy_e2e/suites` directory in the root of the project:
 
     ```
-    mkdir integration/suites/mytest
+    mkdir test/legacy_e2e/suites/mytest
     ```
 
     `mytest` — is the new test suite directory.
 
-    **NOTE**: Suites directories can be grouped and arbitrary nested, for example: `integration/suites/my_suites_group/another_subgroup/mysuite`.
+    **NOTE**: Suites directories can be grouped and arbitrary nested, for example: `test/legacy_e2e/suites/my_suites_group/another_subgroup/mysuite`.
 
-2. Create suite setup file `integration/suites/mytest/suite_test.go` using following content example:
+2. Create suite setup file `test/legacy_e2e/suites/mytest/suite_test.go` using following content example:
 
     ```
     package ansible_test
@@ -46,7 +46,7 @@ To create an integration test suite you need:
 
 3. The actual tests should reside separately from the setup code in `suite_test.go` file. Create a new file with arbitrary name for the new test case.
 
-    For example, let's test a component named "Config loader" (this name usually goes to the `Describe` ginkgo statement, see example below). All tests for this component will reside in the file `integration/suites/mytest/config_loader_test.go` (note that `_test.go` suffix is required for all go test files).
+    For example, let's test a component named "Config loader" (this name usually goes to the `Describe` ginkgo statement, see example below). All tests for this component will reside in the file `test/legacy_e2e/suites/mytest/config_loader_test.go` (note that `_test.go` suffix is required for all go test files).
 
 4. Use `Describe`, `Context`, `It` and other ginkgo statements to organize tests inside your file. For example:
 
@@ -80,13 +80,13 @@ To create an integration test suite you need:
     })
     ```
 
-5. Place more files with `_test.go` to test more cases under the same test suite in the directory `integration/suites/mytest`.
+5. Place more files with `_test.go` to test more cases under the same test suite in the directory `test/legacy_e2e/suites/mytest`.
 
 ## Testing a werf project
 
 ### Suite data initialization
 
-There is `integration/pkg/suite_init` package which provides objects and helpers to initialize some typically needed data for your suite. This package for example provides:
+There is `test/legacy_e2e/pkg/suite_init` package which provides objects and helpers to initialize some typically needed data for your suite. This package for example provides:
  - container registry per implementation data;
  - project name data;
  - tmp dir data;
@@ -121,7 +121,7 @@ So you cannot use the same werf project between different `It` blocks.
 
 Furthermore, different `It` blocks (within the same `Describe` or different `Describe` — does not matter) could run in parallel.
 
-Use `integration/pkg/suite_init/project_name_data.go` suite data initialization to generate project name:
+Use `test/legacy_e2e/pkg/suite_init/project_name_data.go` suite data initialization to generate project name:
 
 ```
 import "github.com/werf/werf/v2/test/pkg/suite_init"
@@ -215,10 +215,10 @@ Werf's CI provides following layouts to run integration tests:
  - **container_registry_per_implementation**. Multiple implementations of container registries are available (github packages, harbor, gcr, aws ecr, azure, etc.), all supported OS (linux, windows, macos), NO k8s available. Use this layout when you need to test against all known container registries implementations.
  - **k8s_per_version_and_container_registry_per_implementation**. Multiple implementations of container registries are available (github packages, harbor, gcr, aws ecr, azure, etc.), all supported OS (linux, windows, macos), k8s cluster (multiple versions of kubernetes itself are tested). This is the most advanced layout which should be used when you need k8s and all container registries implementations available.  
 
-To enable test in some layout you need to create symlink in `integration/ci_suites/LAYOUT/MYSUITE` to your suite which reside in the common suites dir `integration/suites/MYSUITE`:
+To enable test in some layout you need to create symlink in `test/legacy_e2e/ci_suites/LAYOUT/MYSUITE` to your suite which reside in the common suites dir `test/legacy_e2e/suites/MYSUITE`:
 
 ```
-integration/ci_suites/
+test/legacy_e2e/ci_suites/
 ├── container_registry_per_implementation
 │   └── cleanup -> ../../suites/cleanup/
 ├── default
