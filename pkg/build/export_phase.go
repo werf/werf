@@ -94,8 +94,17 @@ func (e *Exporter) RunFromReport(ctx context.Context, reportPath string) error {
 		MaxNumberOfWorkers: int(e.Conveyor.ParallelTasksLimit),
 	}, func(ctx context.Context, taskId int) error {
 		imgRecord := imagesToExport[taskId]
-		if err := e.exportImageFromReport(ctx, imgRecord); err != nil {
-			return fmt.Errorf("unable to export image %q from report: %w", imgRecord.WerfImageName, err)
+
+		isMultiplatform := imgRecord.TargetPlatform == ""
+
+		if isMultiplatform {
+			if err := e.exportMultiplatformImageFromReport(ctx, imgRecord); err != nil {
+				return fmt.Errorf("unable to export multiplatform image %q from report: %w", imgRecord.WerfImageName, err)
+			}
+		} else {
+			if err := e.exportImageFromReport(ctx, imgRecord); err != nil {
+				return fmt.Errorf("unable to export image %q from report: %w", imgRecord.WerfImageName, err)
+			}
 		}
 		return nil
 	}); err != nil {
@@ -131,6 +140,39 @@ func (e *Exporter) exportImageFromReport(ctx context.Context, record ReportImage
 		}).
 		DoError(func() error {
 			stageDesc := stageDescFromReportRecord(record)
+
+			for _, tagFunc := range e.ExportTagFuncList {
+				stageID := extractStageIDFromReport(record)
+				tag := tagFunc(record.WerfImageName, stageID)
+				if err := logboek.Context(ctx).Default().LogProcess("tag %s", tag).
+					DoError(func() error {
+						if err := e.Conveyor.StorageManager.GetStagesStorage().ExportStage(ctx, stageDesc, tag, e.MutateConfigFunc); err != nil {
+							return err
+						}
+						return nil
+					}); err != nil {
+					return err
+				}
+			}
+
+			return nil
+		})
+}
+
+// exportMultiplatformImageFromReport экспортирует multiplatform образ (manifest list) из ReportImageRecord.
+func (e *Exporter) exportMultiplatformImageFromReport(ctx context.Context, record ReportImageRecord) error {
+	if len(e.ExportTagFuncList) == 0 {
+		return nil
+	}
+
+	return logboek.Context(ctx).Default().LogProcess(fmt.Sprintf("Exporting image %s (from report)", record.WerfImageName)).
+		Options(func(options types.LogProcessOptionsInterface) {
+			options.Style(style.Highlight())
+		}).
+		DoError(func() error {
+			// Для multiplatform manifest list создаём StageDesc с IsIndex=true
+			stageDesc := stageDescFromReportRecord(record)
+			stageDesc.Info.IsIndex = true
 
 			for _, tagFunc := range e.ExportTagFuncList {
 				stageID := extractStageIDFromReport(record)
