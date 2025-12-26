@@ -14,7 +14,7 @@ var werfRepositoryDir string
 
 func init() {
 	var err error
-	werfRepositoryDir, err = filepath.Abs("../../../")
+	werfRepositoryDir, err = filepath.Abs("../../../../../")
 	if err != nil {
 		panic(err)
 	}
