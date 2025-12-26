@@ -305,6 +305,9 @@ func newCmd(ctx context.Context, composeCmdName string, options *newCmdOptions) 
 
 	common.SetupRequireBuiltImages(&commonCmdData, cmd)
 
+	common.SetupBuildReportPath(&commonCmdData, cmd)
+	common.SetupUseBuildReport(&commonCmdData, cmd)
+
 	if options.FollowSupport {
 		common.SetupFollow(&commonCmdData, cmd)
 	}
