@@ -1,0 +1,174 @@
+name: tests:all
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 8 * * *"
+  workflow_dispatch:
+  repository_dispatch:
+    types: [tests:all]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    permissions:
+      pull-requests: read
+    outputs:
+      workflow_proceed: ${{ steps.changes.outputs.workflow_proceed || 'true' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Detect changes
+        if: github.event_name == 'pull_request'
+        uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            workflow_proceed:
+              - 'go.mod'
+              - 'Taskfile.dist.yaml'
+              - '.github/**'
+              - 'cmd/werf/**'
+              - 'pkg/**'
+              - 'scripts/**'
+              - 'test/**'
+
+  lint:
+    uses: ./.github/workflows/_lint.yml
+
+  unit:
+    if: github.event_name == 'schedule' || needs.detect-changes.outputs.workflow_proceed != 'false'
+    needs: detect-changes
+    uses: ./.github/workflows/_test_unit.yml
+    with:
+      coverage: ${{ github.event_name == 'schedule' && 'true' || 'false' }}
+
+  integration_main:
+    if: github.ref == 'refs/heads/main' || needs.detect-changes.outputs.workflow_proceed != 'false'
+    needs: detect-changes
+    uses: ./.github/workflows/_test_integration_regular.yml
+    with:
+      packages: test/legacy_e2e/suites
+      excludePackages: test/legacy_e2e/suites/deploy,test/legacy_e2e/suites/cleanup_after_converge,test/legacy_e2e/suites/helm/deploy_rollback,test/legacy_e2e/suites/bundles,test/legacy_e2e/suites/ansible,test/legacy_e2e/suites/build/stapel_image/git,test/legacy_e2e/suites/docs
+      fetchDepth: 0 # Git history as fixtures for tests.
+      coverage: ${{ github.event_name == 'schedule' && 'true' || 'false' }}
+    secrets: inherit
+
+  e2e_simple_per-k8s-version:
+    if: github.ref == 'refs/heads/main' || needs.detect-changes.outputs.workflow_proceed != 'false'
+    needs: detect-changes
+    uses: ./.github/workflows/_test_e2e_per-k8s-version.yml
+    with:
+      scope: simple
+      coverage: ${{ github.event_name == 'schedule' && 'true' || 'false' }}
+    secrets: inherit
+
+  e2e_complex_per-k8s-version:
+    if: github.ref == 'refs/heads/main' || needs.detect-changes.outputs.workflow_proceed != 'false'
+    needs: detect-changes
+    uses: ./.github/workflows/_test_e2e_per-k8s-version.yml
+    with:
+      scope: complex
+      timeout: 120
+      coverage: ${{ github.event_name == 'schedule' && 'true' || 'false' }}
+    secrets: inherit
+
+  e2e_extra_per-k8s-version:
+    if: github.event_name == 'schedule'
+    uses: ./.github/workflows/_test_e2e_per-k8s-version.yml
+    with:
+      scope: extra
+      coverage: ${{ github.event_name == 'schedule' && 'true' || 'false' }}
+    secrets: inherit
+
+  integration_git:
+    if: github.ref == 'refs/heads/main' || needs.detect-changes.outputs.workflow_proceed != 'false'
+    needs: detect-changes
+    uses: ./.github/workflows/_test_integration_regular.yml
+    with:
+      packages: test/legacy_e2e/suites/build/stapel_image/git
+      coverage: ${{ github.event_name == 'schedule' && 'true' || 'false' }}
+    secrets: inherit
+
+  integration_ansible:
+    if: github.ref == 'refs/heads/main' || needs.detect-changes.outputs.workflow_proceed != 'false'
+    needs: detect-changes
+    uses: ./.github/workflows/_test_integration_regular.yml
+    with:
+      packages: test/legacy_e2e/suites/ansible
+      coverage: ${{ github.event_name == 'schedule' && 'true' || 'false' }}
+    secrets: inherit
+
+  integration_per-k8s:
+    if: github.ref == 'refs/heads/main' || needs.detect-changes.outputs.workflow_proceed != 'false'
+    needs: detect-changes
+    uses: ./.github/workflows/_test_integration_per-k8s-version.yml
+    with:
+      coverage: ${{ github.event_name == 'schedule' && 'true' || 'false' }}
+    secrets: inherit
+
+  integration_per-cr:
+    if: github.event_name == 'schedule'
+    uses: ./.github/workflows/_test_integration_per-container-registry.yml
+    with:
+      coverage: ${{ github.event_name == 'schedule' && 'true' || 'false' }}
+    secrets: inherit
+
+  integration_per-k8s-and-cr:
+    if: github.event_name == 'schedule'
+    uses: ./.github/workflows/_test_integration_per-k8s-version-and-container-registry.yml
+    with:
+      coverage: ${{ github.event_name == 'schedule' && 'true' || 'false' }}
+    secrets: inherit
+
+  coverage_report:
+    if: github.event_name == 'schedule'
+    uses: ./.github/workflows/_coverage_report.yml
+    needs:
+      - unit
+      - integration_main
+      - integration_git
+      - integration_ansible
+      - integration_per-k8s
+      - integration_per-cr
+      - integration_per-k8s-and-cr
+      - e2e_simple_per-k8s-version
+      - e2e_complex_per-k8s-version
+      - e2e_extra_per-k8s-version
+    secrets: inherit
+
+  build:
+    if: github.event_name == 'pull_request' && needs.detect-changes.outputs.workflow_proceed != 'false'
+    needs: detect-changes
+    uses: ./.github/workflows/_build.yml
+
+  notify:
+    if: |
+      always() && (
+      (github.event_name == 'pull_request' && github.event.pull_request.draft == false && failure()) ||
+      (github.event_name != 'pull_request' && failure())
+      )
+    needs:
+      - lint
+      - unit
+      - integration_main
+      - integration_git
+      - integration_ansible
+      - integration_per-k8s
+      - integration_per-cr
+      - e2e_simple_per-k8s-version
+      - e2e_complex_per-k8s-version
+      - coverage_report
+    uses: werf/common-ci/.github/workflows/notification.yml@main
+    secrets:
+      loopNotificationGroup: ${{ secrets.LOOP_NOTIFICATION_GROUP }}
+      webhook: ${{ secrets.LOOP_NOTIFICATION_WEBHOOK }}
+      notificationChannel: ${{ secrets.LOOP_NOTIFICATION_CHANNEL }}
