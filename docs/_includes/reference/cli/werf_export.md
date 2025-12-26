@@ -47,6 +47,10 @@ werf export [IMAGE_NAME...] [options]
             Separator for --add-label values (default $WERF_EXPORT_ADD_LABEL_SEPARATOR or "\n")
       --allow-includes-update=false
             Allow use includes latest versions (default $WERF_ALLOW_INCLUDES_UPDATE or false)
+      --build-report-path=""
+            Change build report path and format (by default $WERF_BUILD_REPORT_PATH or              
+            ".werf-build-report.json" if not set). Extension must be either .json for JSON format   
+            or .env for env-file format. If extension not specified, then .json is used
       --cache-repo=[]
             Specify one or multiple cache repos with images that will be used as a cache. Cache     
             will be populated when pushing newly built images into the primary repo and when        
@@ -242,6 +246,10 @@ werf export [IMAGE_NAME...] [options]
             are exported (e.g. REPO:TAG-%image% or REPO-%image%:TAG)
       --tmp-dir=""
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
+      --use-build-report=false
+            Use build report, previously saved with --save-build-report (by default                 
+            $WERF_USE_BUILD_REPORT or false). Its path and format configured with                   
+            --build-report-path
       --virtual-merge=false
             Enable virtual/ephemeral merge commit mode when building current application state      
             ($WERF_VIRTUAL_MERGE by default)

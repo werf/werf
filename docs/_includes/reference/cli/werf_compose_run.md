@@ -82,6 +82,10 @@ werf compose run [IMAGE_NAME...] [options] [--docker-compose-options="OPTIONS"] 
             Use specified path to the local backend (Docker or Buildah) storage to check backend    
             storage volume usage while performing garbage collection of local backend images        
             (detect local backend storage path by default or use $WERF_BACKEND_STORAGE_PATH)
+      --build-report-path=""
+            Change build report path and format (by default $WERF_BUILD_REPORT_PATH or              
+            ".werf-build-report.json" if not set). Extension must be either .json for JSON format   
+            or .env for env-file format. If extension not specified, then .json is used
       --cache-repo=[]
             Specify one or multiple cache repos with images that will be used as a cache. Cache     
             will be populated when pushing newly built images into the primary repo and when        
@@ -261,6 +265,10 @@ werf compose run [IMAGE_NAME...] [options] [--docker-compose-options="OPTIONS"] 
             repo. :local address allows execution of werf processes from a single host only
       --tmp-dir=""
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
+      --use-build-report=false
+            Use build report, previously saved with --save-build-report (by default                 
+            $WERF_USE_BUILD_REPORT or false). Its path and format configured with                   
+            --build-report-path
       --virtual-merge=false
             Enable virtual/ephemeral merge commit mode when building current application state      
             ($WERF_VIRTUAL_MERGE by default)
