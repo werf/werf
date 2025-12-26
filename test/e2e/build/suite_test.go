@@ -9,7 +9,6 @@ import (
 
 	"github.com/werf/werf/v2/test/pkg/suite_init"
 	"github.com/werf/werf/v2/test/pkg/utils"
-	"github.com/werf/werf/v2/test/pkg/utils/docker"
 )
 
 func TestSuite(t *testing.T) {
@@ -19,15 +18,14 @@ func TestSuite(t *testing.T) {
 	}
 	suite_init.MakeTestSuiteEntrypointFunc("E2E Build suite", suite_init.TestSuiteEntrypointFuncOptions{
 		RequiredSuiteTools: requiredTools,
+		RequiredSuiteEnvs: []string{
+			"WERF_TEST_K8S_DOCKER_REGISTRY",
+		},
 	})(t)
 }
 
 var SuiteData = struct {
 	suite_init.SuiteData
-
-	RegistryLocalAddress    string
-	RegistryInternalAddress string
-	RegistryContainerName   string
 
 	WerfRepo string
 
@@ -42,12 +40,7 @@ var (
 	_ = SuiteData.SetupTmp(suite_init.NewTmpDirData())
 
 	_ = SuiteData.AppendSynchronizedBeforeSuiteAllNodesFunc(func(ctx context.Context, _ []byte) {
-		SuiteData.RegistryLocalAddress, SuiteData.RegistryInternalAddress, SuiteData.RegistryContainerName = docker.LocalDockerRegistryRun(ctx)
 		SuiteData.TempFiles = append([]string{}, utils.CreateTmpFileInHome("secret_file_in_home", "secret"))
-	})
-
-	_ = SuiteData.AppendSynchronizedAfterSuiteAllNodesFunc(func(ctx context.Context) {
-		docker.ContainerStopAndRemove(ctx, SuiteData.RegistryContainerName)
 	})
 
 	_ = AfterEach(func(ctx SpecContext) {

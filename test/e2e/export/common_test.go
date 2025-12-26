@@ -1,7 +1,8 @@
 package e2e_export_test
 
 import (
-	"strings"
+	"fmt"
+	"os"
 )
 
 type commonTestOptions struct {
@@ -10,8 +11,10 @@ type commonTestOptions struct {
 }
 
 func setupEnv() {
-	SuiteData.WerfRepo = strings.Join([]string{SuiteData.RegistryLocalAddress, SuiteData.ProjectName}, "/")
-	SuiteData.Stubs.SetEnv("WERF_REPO", SuiteData.WerfRepo)
+	SuiteData.Stubs.SetEnv("WERF_REPO", fmt.Sprintf("%s/%s",
+		os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY"),
+		SuiteData.ProjectName,
+	))
 }
 
 func getExportArgs(imageName string, opts commonTestOptions) []string {
