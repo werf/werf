@@ -124,10 +124,14 @@ var _ = Describe("Simple export", Label("e2e", "export", "simple"), func() {
 				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
 
 				By("building images and saving build report")
+				buildArgs := []string{"--save-build-report", "--build-report-path", SuiteData.GetBuildReportPath(buildReportName)}
+				for _, platform := range opts.Platforms {
+					buildArgs = append(buildArgs, "--platform", platform)
+				}
 				buildOut, _ := werfProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), &werf.BuildWithReportOptions{
 					CommonOptions: werf.CommonOptions{
 						ShouldFail: false,
-						ExtraArgs:  []string{"--save-build-report", "--build-report-path", SuiteData.GetBuildReportPath(buildReportName)},
+						ExtraArgs:  buildArgs,
 					},
 				})
 				Expect(buildOut).To(ContainSubstring("Building stage"))
