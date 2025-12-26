@@ -118,11 +118,16 @@ func (e *Exporter) RunFromReport(ctx context.Context, reportPath string) error {
 
 func (e *Exporter) filterImagesFromReport(report *ImagesReport) []ReportImageRecord {
 	var result []ReportImageRecord
+
+	if len(e.ExportImageNameList) == 0 {
+		return result
+	}
+
 	for imageName, record := range report.Images {
 		if !record.Final {
 			continue
 		}
-		if len(e.ExportImageNameList) > 0 && !slices.Contains(e.ExportImageNameList, imageName) {
+		if !slices.Contains(e.ExportImageNameList, imageName) {
 			continue
 		}
 		result = append(result, record)
