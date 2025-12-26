@@ -57,20 +57,6 @@ type ImageOptions struct {
 	DockerfileExpanderFactory dockerfile.ExpanderFactory
 }
 
-type LightWeightImage struct {
-	Name           string
-	TargetPlatform string
-	IsFinal        bool
-}
-
-func NewLightWeightImageFromReport(name, targetPlatform string, isFinal bool) *LightWeightImage {
-	return &LightWeightImage{
-		Name:           name,
-		TargetPlatform: targetPlatform,
-		IsFinal:        isFinal,
-	}
-}
-
 func NewImage(ctx context.Context, targetPlatform, name string, baseImageType BaseImageType, opts ImageOptions) (*Image, error) {
 	switch baseImageType {
 	case NoBaseImage, ImageFromRegistryAsBaseImage, StageAsBaseImage:
