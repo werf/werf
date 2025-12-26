@@ -115,6 +115,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupSaveBuildReport(&commonCmdData, cmd)
 	common.SetupBuildReportPath(&commonCmdData, cmd)
+	common.SetupUseBuildReport(&commonCmdData, cmd)
 
 	common.SetupSynchronization(&commonCmdData, cmd)
 

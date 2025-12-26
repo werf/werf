@@ -11,6 +11,7 @@ import (
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/build/image"
+	imagePkg "github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/storage"
 )
 
@@ -33,6 +34,7 @@ type ReportImageRecord struct {
 	DockerImageID     string
 	DockerImageDigest string
 	DockerImageName   string
+	TargetPlatform    string
 	Rebuilt           bool
 	Final             bool
 	Size              int64
@@ -130,6 +132,7 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 				DockerImageID:     stageDesc.Info.ID,
 				DockerImageDigest: stageDesc.Info.GetDigest(),
 				DockerImageName:   stageDesc.Info.Name,
+				TargetPlatform:    img.TargetPlatform,
 				Rebuilt:           img.GetRebuilt(),
 				Final:             img.IsFinal,
 				Size:              stageDesc.Info.Size,
@@ -175,6 +178,7 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 					DockerImageID:     stageDesc.Info.ID,
 					DockerImageDigest: stageDesc.Info.GetDigest(),
 					DockerImageName:   stageDesc.Info.Name,
+					TargetPlatform:    "", // multiplatform manifest list
 					Rebuilt:           isRebuilt,
 					Final:             img.IsFinal,
 					Size:              stageDesc.Info.Size,
@@ -249,4 +253,126 @@ func getStagesReport(img *image.Image, multiplatform bool) []ReportStageRecord {
 		stagesRecords = append(stagesRecords, record)
 	}
 	return stagesRecords
+}
+
+func LoadBuildReportFromFile(path string) (*ImagesReport, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read build report file %q: %w", path, err)
+	}
+
+	report, err := parseBuildReport(data)
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse build report file %q: %w", path, err)
+	}
+
+	if err := validateBuildReport(report); err != nil {
+		return nil, fmt.Errorf("invalid build report file %q: %w", path, err)
+	}
+
+	return report, nil
+}
+
+func parseBuildReport(data []byte) (*ImagesReport, error) {
+	decoder := json.NewDecoder(bytes.NewReader(data))
+
+	var report ImagesReport
+	if err := decoder.Decode(&report); err != nil {
+		return nil, fmt.Errorf("unable to decode build report: %w", err)
+	}
+
+	return &report, nil
+}
+
+func validateBuildReport(report *ImagesReport) error {
+	if len(report.Images) == 0 {
+		return fmt.Errorf("build report contains no images")
+	}
+
+	for imageName, record := range report.Images {
+		if err := validateImageRecord(imageName, record); err != nil {
+			return err
+		}
+	}
+
+	for imageName, platformRecords := range report.ImagesByPlatform {
+		for platform, record := range platformRecords {
+			if err := validateImageRecord(fmt.Sprintf("%s[%s]", imageName, platform), record); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func validateImageRecord(imageName string, record ReportImageRecord) error {
+	if record.WerfImageName == "" {
+		return fmt.Errorf("image %q has empty WerfImageName", imageName)
+	}
+	if record.DockerImageName == "" {
+		return fmt.Errorf("image %q has empty DockerImageName", imageName)
+	}
+	if record.DockerRepo == "" {
+		return fmt.Errorf("image %q has empty DockerRepo", imageName)
+	}
+	if record.DockerTag == "" {
+		return fmt.Errorf("image %q has empty DockerTag", imageName)
+	}
+	if record.DockerImageID == "" {
+		return fmt.Errorf("image %q has empty DockerImageID", imageName)
+	}
+	if record.DockerImageDigest == "" {
+		return fmt.Errorf("image %q has empty DockerImageDigest", imageName)
+	}
+
+	if len(record.Stages) == 0 {
+		return fmt.Errorf("image %q has no stages", imageName)
+	}
+
+	for i, stage := range record.Stages {
+		if err := validateStageRecord(imageName, i, stage); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func validateStageRecord(imageName string, stageIndex int, stage ReportStageRecord) error {
+	stageRef := fmt.Sprintf("image %q stage #%d", imageName, stageIndex)
+
+	if stage.Name == "" {
+		return fmt.Errorf("%s has empty Name", stageRef)
+	}
+
+	stageRef = fmt.Sprintf("image %q stage %q", imageName, stage.Name)
+
+	if stage.DockerImageName == "" {
+		return fmt.Errorf("%s has empty DockerImageName", stageRef)
+	}
+	if stage.DockerImageID == "" {
+		return fmt.Errorf("%s has empty DockerImageID", stageRef)
+	}
+	if stage.DockerImageDigest == "" {
+		return fmt.Errorf("%s has empty DockerImageDigest", stageRef)
+	}
+
+	return nil
+}
+
+func (report *ImagesReport) ToImageInfoGetters(opts imagePkg.InfoGetterOptions) []*imagePkg.InfoGetter {
+	report.mux.Lock()
+	defer report.mux.Unlock()
+
+	var infoGetters []*imagePkg.InfoGetter
+	for _, record := range report.Images {
+		if opts.OnlyFinal && !record.Final {
+			continue
+		}
+
+		infoGetters = append(infoGetters, imagePkg.NewInfoGetter(record.WerfImageName, record.DockerImageName, opts))
+	}
+
+	return infoGetters
 }

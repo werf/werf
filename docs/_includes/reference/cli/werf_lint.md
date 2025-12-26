@@ -401,6 +401,10 @@ werf lint [IMAGE_NAME...] [options]
             Allow performing DNS requests in templating (default $WERF_TEMPLATES_ALLOW_DNS)
       --tmp-dir=""
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
+      --use-build-report=false
+            Use build report, previously saved with --save-build-report (by default                 
+            $WERF_USE_BUILD_REPORT or false). Its path and format configured with                   
+            --build-report-path
       --use-custom-tag=""
             Use a tag alias in helm templates instead of an image content-based tag (NOT            
             RECOMMENDED).
