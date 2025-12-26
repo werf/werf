@@ -686,6 +686,10 @@ func (c *Conveyor) Export(ctx context.Context, opts ExportOptions) error {
 	return NewExporter(c, opts).Run(ctx)
 }
 
+func (c *Conveyor) ExportFromReport(ctx context.Context, opts ExportOptions) error {
+	return NewExporter(c, opts).RunFromReport(ctx, c.BuildReportPath)
+}
+
 func (c *Conveyor) determineStages(ctx context.Context) error {
 	return logboek.Context(ctx).Info().LogProcess("Determining of stages").
 		Options(func(options types.LogProcessOptionsInterface) {

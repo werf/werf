@@ -75,6 +75,81 @@ func (e *Exporter) Run(ctx context.Context) error {
 	return nil
 }
 
+func (e *Exporter) RunFromReport(ctx context.Context, reportPath string) error {
+	if len(e.ExportTagFuncList) == 0 {
+		return nil
+	}
+
+	report, err := LoadBuildReportFromFile(reportPath)
+	if err != nil {
+		return fmt.Errorf("unable to load build report: %w", err)
+	}
+
+	imagesToExport := e.filterImagesFromReport(report)
+	if len(imagesToExport) == 0 {
+		return nil
+	}
+
+	if err := parallel.DoTasks(ctx, len(imagesToExport), parallel.DoTasksOptions{
+		MaxNumberOfWorkers: int(e.Conveyor.ParallelTasksLimit),
+	}, func(ctx context.Context, taskId int) error {
+		imgRecord := imagesToExport[taskId]
+		if err := e.exportImageFromReport(ctx, imgRecord); err != nil {
+			return fmt.Errorf("unable to export image %q from report: %w", imgRecord.WerfImageName, err)
+		}
+		return nil
+	}); err != nil {
+		return fmt.Errorf("export from report failed: %w", err)
+	}
+
+	return nil
+}
+
+func (e *Exporter) filterImagesFromReport(report *ImagesReport) []ReportImageRecord {
+	var result []ReportImageRecord
+	for imageName, record := range report.Images {
+		if !record.Final {
+			continue
+		}
+		if len(e.ExportImageNameList) > 0 && !slices.Contains(e.ExportImageNameList, imageName) {
+			continue
+		}
+		result = append(result, record)
+	}
+	return result
+}
+
+// exportImageFromReport экспортирует образ используя данные из ReportImageRecord.
+func (e *Exporter) exportImageFromReport(ctx context.Context, record ReportImageRecord) error {
+	if len(e.ExportTagFuncList) == 0 {
+		return nil
+	}
+
+	return logboek.Context(ctx).Default().LogProcess(fmt.Sprintf("Exporting image %s (from report)", record.WerfImageName)).
+		Options(func(options types.LogProcessOptionsInterface) {
+			options.Style(style.Highlight())
+		}).
+		DoError(func() error {
+			stageDesc := stageDescFromReportRecord(record)
+
+			for _, tagFunc := range e.ExportTagFuncList {
+				stageID := extractStageIDFromReport(record)
+				tag := tagFunc(record.WerfImageName, stageID)
+				if err := logboek.Context(ctx).Default().LogProcess("tag %s", tag).
+					DoError(func() error {
+						if err := e.Conveyor.StorageManager.GetStagesStorage().ExportStage(ctx, stageDesc, tag, e.MutateConfigFunc); err != nil {
+							return err
+						}
+						return nil
+					}); err != nil {
+					return err
+				}
+			}
+
+			return nil
+		})
+}
+
 func (e *Exporter) exportMultiplatformImage(ctx context.Context, img *build_image.MultiplatformImage) error {
 	return logboek.Context(ctx).Default().LogProcess(fmt.Sprintf("Exporting image %s", img.Name)).
 		Options(func(options types.LogProcessOptionsInterface) {
@@ -130,4 +205,39 @@ func (e *Exporter) exportImage(ctx context.Context, img *build_image.Image) erro
 
 			return nil
 		})
+}
+
+// stageDescFromReportRecord создаёт StageDesc из ReportImageRecord.
+func stageDescFromReportRecord(record ReportImageRecord) *image.StageDesc {
+	// Извлекаем информацию из последнего stage (финальный образ)
+	var lastStage ReportStageRecord
+	if len(record.Stages) > 0 {
+		lastStage = record.Stages[len(record.Stages)-1]
+	}
+
+	return &image.StageDesc{
+		StageID: &image.StageID{
+			Digest:     record.DockerTag, // DockerTag обычно содержит digest
+			CreationTs: lastStage.CreatedAt,
+		},
+		Info: &image.Info{
+			Name:              record.DockerImageName,
+			Repository:        record.DockerRepo,
+			Tag:               record.DockerTag,
+			RepoDigest:        fmt.Sprintf("%s@%s", record.DockerRepo, record.DockerImageDigest),
+			ID:                record.DockerImageID,
+			Size:              record.Size,
+			CreatedAtUnixNano: lastStage.CreatedAt,
+		},
+	}
+}
+
+// extractStageIDFromReport извлекает StageID строку из ReportImageRecord.
+func extractStageIDFromReport(record ReportImageRecord) string {
+	var createdAt int64
+	if len(record.Stages) > 0 {
+		createdAt = record.Stages[len(record.Stages)-1].CreatedAt
+	}
+	stageID := image.NewStageID(record.DockerTag, createdAt)
+	return stageID.String()
 }
