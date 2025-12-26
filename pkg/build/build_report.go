@@ -276,8 +276,6 @@ func LoadBuildReportFromFile(path string) (*ImagesReport, error) {
 func parseBuildReport(data []byte) (*ImagesReport, error) {
 	decoder := json.NewDecoder(bytes.NewReader(data))
 
-	decoder.DisallowUnknownFields()
-
 	var report ImagesReport
 	if err := decoder.Decode(&report); err != nil {
 		return nil, fmt.Errorf("unable to decode build report: %w", err)
@@ -309,6 +307,9 @@ func validateBuildReport(report *ImagesReport) error {
 }
 
 func validateImageRecord(imageName string, record ReportImageRecord) error {
+	if record.WerfImageName == "" {
+		return fmt.Errorf("image %q has empty WerfImageName", imageName)
+	}
 	if record.DockerImageName == "" {
 		return fmt.Errorf("image %q has empty DockerImageName", imageName)
 	}
