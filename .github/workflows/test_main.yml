@@ -51,8 +51,8 @@ jobs:
       github.event_name != 'pull_request' || github.event.label.name == 'trigger: test:main'
     uses: ./.github/workflows/_test_integration_regular.yml
     with:
-      packages: integration/suites
-      excludePackages: integration/suites/deploy,integration/suites/cleanup_after_converge,integration/suites/helm/deploy_rollback,integration/suites/bundles,integration/suites/ansible,integration/suites/build/stapel_image/git,integration/suites/docs
+      packages: test/legacy_e2e/suites
+      excludePackages: test/legacy_e2e/suites/deploy,test/legacy_e2e/suites/cleanup_after_converge,test/legacy_e2e/suites/helm/deploy_rollback,test/legacy_e2e/suites/bundles,test/legacy_e2e/suites/ansible,test/legacy_e2e/suites/build/stapel_image/git,test/legacy_e2e/suites/docs
       fetchDepth: 0 # Git history as fixtures for tests.
     secrets: inherit
 
@@ -61,7 +61,7 @@ jobs:
       github.event_name != 'pull_request' || github.event.label.name == 'trigger: test:main'
     uses: ./.github/workflows/_test_integration_regular.yml
     with:
-      packages: integration/suites/build/stapel_image/git
+      packages: test/legacy_e2e/suites/build/stapel_image/git
     secrets: inherit
 
   integration_ansible:
@@ -69,7 +69,7 @@ jobs:
       github.event_name != 'pull_request' || github.event.label.name == 'trigger: test:main'
     uses: ./.github/workflows/_test_integration_regular.yml
     with:
-      packages: integration/suites/ansible
+      packages: test/legacy_e2e/suites/ansible
     secrets: inherit
 
   integration_per-k8s:

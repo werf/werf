@@ -33,7 +33,6 @@ jobs:
               - '.github/**'
               - 'cmd/werf/**'
               - 'pkg/**'
-              - 'integration/**'
               - 'scripts/**'
               - 'test/**'
 

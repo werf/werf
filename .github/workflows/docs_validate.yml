@@ -37,7 +37,7 @@ jobs:
   doc_integration:
     uses: ./.github/workflows/_test_integration_regular.yml
     with:
-      packages: integration/suites/docs
+      packages: test/legacy_e2e/suites/docs
 
   check_broken_links:
     runs-on: ubuntu-22.04
