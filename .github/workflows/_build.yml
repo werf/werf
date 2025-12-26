@@ -1,0 +1,43 @@
+name: xxxxx(internal)
+
+on:
+  workflow_call:
+
+jobs:
+  _:
+    strategy:
+      fail-fast: false
+      matrix:
+        osPlatform:
+          - build:dev:linux:amd64:cgo
+          - build:dev:linux:amd64:go
+          - build:dev:linux:arm64
+          - build:dev:darwin:amd64
+          - build:dev:darwin:arm64
+          - build:dev:windows:amd64
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    steps:
+      - name: Install werf build dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y gcc-aarch64-linux-gnu libbtrfs-dev file
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          cache: true
+          go-version-file: go.mod
+
+      - name: Install Task
+        uses: arduino/setup-task@v2
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build ${{ matrix.osPlatform }}
+        run: task --yes -p ${{ matrix.osPlatform }}
+        env:
+          TASK_X_REMOTE_TASKFILES: 1
