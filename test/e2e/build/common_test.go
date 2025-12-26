@@ -1,6 +1,8 @@
 package e2e_build_test
 
 import (
+	"fmt"
+	"os"
 	"strings"
 )
 
@@ -19,11 +21,15 @@ func setupEnv(opts setupEnvOptions) {
 	}
 
 	if opts.WithLocalRepo && (opts.ContainerBackendMode == "docker" || strings.HasSuffix(opts.ContainerBackendMode, "-docker")) {
-		SuiteData.WerfRepo = strings.Join([]string{SuiteData.RegistryLocalAddress, SuiteData.ProjectName}, "/")
-		SuiteData.Stubs.SetEnv("WERF_REPO", SuiteData.WerfRepo)
+		SuiteData.Stubs.SetEnv("WERF_REPO", fmt.Sprintf("%s/%s-docker",
+			os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY"),
+			SuiteData.ProjectName,
+		))
 	} else if opts.WithLocalRepo {
-		SuiteData.WerfRepo = strings.Join([]string{SuiteData.RegistryInternalAddress, SuiteData.ProjectName}, "/")
-		SuiteData.Stubs.SetEnv("WERF_REPO", SuiteData.WerfRepo)
+		SuiteData.Stubs.SetEnv("WERF_REPO", fmt.Sprintf("%s/%s-buildah",
+			os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY"),
+			SuiteData.ProjectName,
+		))
 	} else {
 		SuiteData.Stubs.UnsetEnv("WERF_REPO")
 	}
