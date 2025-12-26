@@ -3,6 +3,8 @@ package build
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"strings"
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"k8s.io/utils/strings/slices"
@@ -128,7 +130,6 @@ func (e *Exporter) filterImagesFromReport(report *ImagesReport) []ReportImageRec
 	return result
 }
 
-// exportImageFromReport экспортирует образ используя данные из ReportImageRecord.
 func (e *Exporter) exportImageFromReport(ctx context.Context, record ReportImageRecord) error {
 	if len(e.ExportTagFuncList) == 0 {
 		return nil
@@ -159,7 +160,6 @@ func (e *Exporter) exportImageFromReport(ctx context.Context, record ReportImage
 		})
 }
 
-// exportMultiplatformImageFromReport экспортирует multiplatform образ (manifest list) из ReportImageRecord.
 func (e *Exporter) exportMultiplatformImageFromReport(ctx context.Context, record ReportImageRecord) error {
 	if len(e.ExportTagFuncList) == 0 {
 		return nil
@@ -170,7 +170,6 @@ func (e *Exporter) exportMultiplatformImageFromReport(ctx context.Context, recor
 			options.Style(style.Highlight())
 		}).
 		DoError(func() error {
-			// Для multiplatform manifest list создаём StageDesc с IsIndex=true
 			stageDesc := stageDescFromReportRecord(record)
 			stageDesc.Info.IsIndex = true
 
@@ -249,18 +248,18 @@ func (e *Exporter) exportImage(ctx context.Context, img *build_image.Image) erro
 		})
 }
 
-// stageDescFromReportRecord создаёт StageDesc из ReportImageRecord.
 func stageDescFromReportRecord(record ReportImageRecord) *image.StageDesc {
-	// Извлекаем информацию из последнего stage (финальный образ)
 	var lastStage ReportStageRecord
 	if len(record.Stages) > 0 {
 		lastStage = record.Stages[len(record.Stages)-1]
 	}
 
+	digest, creationTs := parseStageTag(record.DockerTag)
+
 	return &image.StageDesc{
 		StageID: &image.StageID{
-			Digest:     record.DockerTag, // DockerTag обычно содержит digest
-			CreationTs: lastStage.CreatedAt,
+			Digest:     digest,
+			CreationTs: creationTs,
 		},
 		Info: &image.Info{
 			Name:              record.DockerImageName,
@@ -274,12 +273,23 @@ func stageDescFromReportRecord(record ReportImageRecord) *image.StageDesc {
 	}
 }
 
-// extractStageIDFromReport извлекает StageID строку из ReportImageRecord.
-func extractStageIDFromReport(record ReportImageRecord) string {
-	var createdAt int64
-	if len(record.Stages) > 0 {
-		createdAt = record.Stages[len(record.Stages)-1].CreatedAt
+func parseStageTag(tag string) (digest string, creationTs int64) {
+	parts := strings.SplitN(tag, "-", 2)
+	if len(parts) == 1 {
+		// Multiplatform tag: just digest (56 chars sha3-224)
+		return parts[0], 0
 	}
-	stageID := image.NewStageID(record.DockerTag, createdAt)
+
+	// Regular tag: digest-creationTs
+	digest = parts[0]
+	if ts, err := strconv.ParseInt(parts[1], 10, 64); err == nil {
+		creationTs = ts
+	}
+	return digest, creationTs
+}
+
+func extractStageIDFromReport(record ReportImageRecord) string {
+	digest, creationTs := parseStageTag(record.DockerTag)
+	stageID := image.NewStageID(digest, creationTs)
 	return stageID.String()
 }
