@@ -430,7 +430,7 @@ func (c *Conveyor) FetchLastImageStage(ctx context.Context, targetPlatform, imag
 func (c *Conveyor) GetFullImageName(imageName string) (string, error) {
 	infoGetters, err := c.GetImageInfoGetters(imagePkg.InfoGetterOptions{})
 	if err != nil {
-		return "", nil
+		return "", err
 	}
 
 	for _, getter := range infoGetters {
@@ -439,13 +439,13 @@ func (c *Conveyor) GetFullImageName(imageName string) (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("image not found")
+	return "", fmt.Errorf("image %q not found", imageName)
 }
 
 func (c *Conveyor) GetFullImageNameFromReport(imageName string) (string, error) {
 	infoGetters, err := c.GetImageInfoGettersFromReport(imagePkg.InfoGetterOptions{})
 	if err != nil {
-		return "", nil
+		return "", err
 	}
 
 	for _, getter := range infoGetters {
@@ -454,7 +454,7 @@ func (c *Conveyor) GetFullImageNameFromReport(imageName string) (string, error) 
 		}
 	}
 
-	return "", fmt.Errorf("image not found")
+	return "", fmt.Errorf("image %q not found in build report", imageName)
 }
 
 func (c *Conveyor) GetImageInfoGettersWithOpts(opts imagePkg.InfoGetterOptions) ([]*imagePkg.InfoGetter, error) {
@@ -539,27 +539,6 @@ func (c *Conveyor) GetExportedImages() (res []*image.Image) {
 	return
 }
 
-func (c *Conveyor) GetExportedImagesFromReport() ([]*image.LightWeightImage, error) {
-	var res []*image.LightWeightImage
-
-	report, err := LoadBuildReportFromFile(c.BuildReportPath)
-	if err != nil {
-		return nil, fmt.Errorf("unable to load build report: %w", err)
-	}
-
-	for imageName, img := range report.Images {
-		if !img.Final {
-			continue
-		}
-
-		lwImage := image.NewLightWeightImageFromReport(imageName, img.TargetPlatform, img.Final)
-
-		res = append(res, lwImage)
-	}
-
-	return res, nil
-}
-
 func (c *Conveyor) GetImagesEnvArray() []string {
 	var envArray []string
 	for _, img := range c.imagesTree.GetImages() {
@@ -593,6 +572,10 @@ func (c *Conveyor) GetImagesEnvArrayFromReport() ([]string, error) {
 }
 
 func (c *Conveyor) GetImageNameForLastImageStageFromReport(image ReportImageRecord) string {
+	if len(image.Stages) == 0 {
+		return image.DockerImageName
+	}
+
 	return image.Stages[len(image.Stages)-1].DockerImageName
 }
 
