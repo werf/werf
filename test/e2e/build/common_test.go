@@ -1,9 +1,9 @@
 package e2e_build_test
 
 import (
-	"fmt"
-	"os"
 	"strings"
+
+	"github.com/werf/werf/v2/test/pkg/suite_init"
 )
 
 type setupEnvOptions struct {
@@ -20,16 +20,17 @@ func setupEnv(opts setupEnvOptions) {
 		SuiteData.Stubs.SetEnv("WERF_BUILDAH_MODE", opts.ContainerBackendMode)
 	}
 
-	if opts.WithLocalRepo && (opts.ContainerBackendMode == "docker" || strings.HasSuffix(opts.ContainerBackendMode, "-docker")) {
-		SuiteData.Stubs.SetEnv("WERF_REPO", fmt.Sprintf("%s/%s-docker",
-			os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY"),
-			SuiteData.ProjectName,
-		))
-	} else if opts.WithLocalRepo {
-		SuiteData.Stubs.SetEnv("WERF_REPO", fmt.Sprintf("%s/%s-buildah",
-			os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY"),
-			SuiteData.ProjectName,
-		))
+	if opts.WithLocalRepo {
+		suffix := "-buildah"
+
+		if opts.ContainerBackendMode == "docker" || strings.HasSuffix(opts.ContainerBackendMode, "-docker") {
+			suffix = "-docker"
+		}
+
+		SuiteData.Stubs.SetEnv(
+			"WERF_REPO",
+			suite_init.TestRepo(SuiteData.ProjectName, suffix),
+		)
 	} else {
 		SuiteData.Stubs.UnsetEnv("WERF_REPO")
 	}

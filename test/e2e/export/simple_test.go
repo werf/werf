@@ -2,7 +2,6 @@ package e2e_export_test
 
 import (
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/google/go-containerregistry/pkg/name"
@@ -11,6 +10,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	"github.com/werf/werf/v2/test/pkg/suite_init"
 	"github.com/werf/werf/v2/test/pkg/utils"
 	"github.com/werf/werf/v2/test/pkg/werf"
 )
@@ -34,8 +34,7 @@ var _ = Describe("Simple export", Label("e2e", "export", "simple"), func() {
 
 				By("running export")
 				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
-				imageName := fmt.Sprintf("%s/werf-export-%s", os.Getenv("WERF_REPO"), utils.GetRandomString(10))
-
+				imageName := suite_init.TestRepo(fmt.Sprintf("werf-export-%s", utils.GetRandomString(10)), "")
 				exportArgs := getExportArgs(imageName, commonTestOptions{
 					Platforms:    opts.Platforms,
 					CustomLabels: opts.CustomLabels,

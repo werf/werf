@@ -2,8 +2,6 @@ package base_image_test
 
 import (
 	"context"
-	"fmt"
-	"os"
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -33,8 +31,6 @@ func TestSuite(t *testing.T) {
 var SuiteData = struct {
 	suite_init.SuiteData
 
-	Registry                  string
-	RegistryContainerName     string
 	RegistryProjectRepository string
 }{}
 
@@ -59,8 +55,5 @@ var _ = SuiteData.AppendSynchronizedBeforeSuiteNode1Func(func(ctx context.Contex
 })
 
 var _ = BeforeEach(func() {
-	SuiteData.Stubs.SetEnv("WERF_REPO", fmt.Sprintf("%s/%s",
-		os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY"),
-		SuiteData.ProjectName,
-	))
+	SuiteData.RegistryProjectRepository = suite_init.TestRepo(SuiteData.ProjectName, "")
 })

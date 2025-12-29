@@ -3,7 +3,6 @@ package base_image_test
 import (
 	"context"
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 
@@ -26,9 +25,9 @@ var _ = XDescribe("from and fromLatest", func() {
 		if !utilsDocker.IsImageExist(ctx, imageName) {
 			Expect(utilsDocker.Pull(ctx, imageName)).Should(Succeed(), "docker pull")
 		}
-		Expect(utilsDocker.CliTag(ctx, imageName, os.Getenv("WERF_REPO"))).Should(Succeed(), "docker tag")
-		Expect(utilsDocker.CliPush(ctx, os.Getenv("WERF_REPO"))).Should(Succeed(), "docker push")
-		Expect(utilsDocker.CliRmi(ctx, os.Getenv("WERF_REPO"))).Should(Succeed(), "docker rmi")
+		Expect(utilsDocker.CliTag(ctx, imageName, SuiteData.RegistryProjectRepository)).Should(Succeed(), "docker tag")
+		Expect(utilsDocker.CliPush(ctx, SuiteData.RegistryProjectRepository)).Should(Succeed(), "docker push")
+		Expect(utilsDocker.CliRmi(ctx, SuiteData.RegistryProjectRepository)).Should(Succeed(), "docker rmi")
 	}
 
 	BeforeEach(func(ctx SpecContext) {
@@ -37,7 +36,7 @@ var _ = XDescribe("from and fromLatest", func() {
 		fromBaseRepoImageState1ID = utilsDocker.ImageID(ctx, suiteImage1)
 		fromBaseRepoImageState2ID = utilsDocker.ImageID(ctx, suiteImage2)
 
-		fromImage = os.Getenv("WERF_REPO")
+		fromImage = SuiteData.RegistryProjectRepository
 
 		SuiteData.Stubs.SetEnv("FROM_IMAGE", fromImage)
 		SuiteData.Stubs.SetEnv("FROM_LATEST", "false")
@@ -152,12 +151,12 @@ var _ = XDescribe("from and fromLatest", func() {
 			})
 
 			AfterEach(func(ctx SpecContext) {
-				utilsDocker.ImageRemoveIfExists(ctx, os.Getenv("WERF_REPO"))
+				utilsDocker.ImageRemoveIfExists(ctx, SuiteData.RegistryProjectRepository)
 			})
 
 			Context("when local from image is actual", func() {
 				BeforeEach(func(ctx SpecContext) {
-					Expect(utilsDocker.Pull(ctx, os.Getenv("WERF_REPO"))).Should(Succeed(), "docker pull")
+					Expect(utilsDocker.Pull(ctx, SuiteData.RegistryProjectRepository)).Should(Succeed(), "docker pull")
 				})
 
 				DescribeTable("checking from stage logic",
@@ -210,7 +209,7 @@ var _ = XDescribe("from and fromLatest", func() {
 
 				Context("when from image exists locally", func() {
 					BeforeEach(func(ctx SpecContext) {
-						Expect(utilsDocker.CliTag(ctx, suiteImage1, os.Getenv("WERF_REPO"))).Should(Succeed(), "docker tag")
+						Expect(utilsDocker.CliTag(ctx, suiteImage1, SuiteData.RegistryProjectRepository)).Should(Succeed(), "docker tag")
 					})
 
 					DescribeTable("checking from stage logic",
@@ -245,7 +244,7 @@ var _ = XDescribe("from and fromLatest", func() {
 		})
 
 		AfterEach(func(ctx SpecContext) {
-			utilsDocker.ImageRemoveIfExists(ctx, os.Getenv("WERF_REPO"))
+			utilsDocker.ImageRemoveIfExists(ctx, SuiteData.RegistryProjectRepository)
 		})
 
 		type entryWithPreBuild struct {
@@ -270,7 +269,7 @@ var _ = XDescribe("from and fromLatest", func() {
 				entryWithPreBuildItBody,
 				Entry("should not be rebuilt (fromLatest: false)", entryWithPreBuild{
 					afterFirstBuildHook: func(ctx context.Context) {
-						Expect(utilsDocker.Pull(ctx, os.Getenv("WERF_REPO"))).Should(Succeed(), "docker pull")
+						Expect(utilsDocker.Pull(ctx, SuiteData.RegistryProjectRepository)).Should(Succeed(), "docker pull")
 					},
 					entry: entry{
 						fromLatest: false,
@@ -284,7 +283,7 @@ var _ = XDescribe("from and fromLatest", func() {
 				}),
 				Entry("should not be rebuilt (fromLatest: true)", entryWithPreBuild{
 					afterFirstBuildHook: func(ctx context.Context) {
-						Expect(utilsDocker.Pull(ctx, os.Getenv("WERF_REPO"))).Should(Succeed(), "docker pull")
+						Expect(utilsDocker.Pull(ctx, SuiteData.RegistryProjectRepository)).Should(Succeed(), "docker pull")
 					},
 					entry: entry{
 						fromLatest: true,
@@ -304,7 +303,7 @@ var _ = XDescribe("from and fromLatest", func() {
 				entryWithPreBuildItBody,
 				Entry("should not be rebuilt (fromLatest: false)", entryWithPreBuild{
 					afterFirstBuildHook: func(ctx context.Context) {
-						Expect(utilsDocker.CliRmi(ctx, os.Getenv("WERF_REPO"))).Should(Succeed(), "docker rmi")
+						Expect(utilsDocker.CliRmi(ctx, SuiteData.RegistryProjectRepository)).Should(Succeed(), "docker rmi")
 						registryProjectRepositoryLatestAs(ctx, suiteImage1)
 					},
 					entry: entry{
@@ -319,7 +318,7 @@ var _ = XDescribe("from and fromLatest", func() {
 				}),
 				Entry("should be rebuilt with actual image (fromLatest: true)", entryWithPreBuild{
 					afterFirstBuildHook: func(ctx context.Context) {
-						Expect(utilsDocker.CliRmi(ctx, os.Getenv("WERF_REPO"))).Should(Succeed(), "docker rmi")
+						Expect(utilsDocker.CliRmi(ctx, SuiteData.RegistryProjectRepository)).Should(Succeed(), "docker rmi")
 						registryProjectRepositoryLatestAs(ctx, suiteImage1)
 					},
 					entry: entry{
