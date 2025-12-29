@@ -424,6 +424,13 @@ func (p *diffParser) handleBinaryBeginHeader(line string) error {
 		p.BinaryPaths = appendUnique(p.BinaryPaths, path)
 	}
 
+	// If this is a deleted file, add paths to PathsToRemove
+	if p.state == deleteFileDiff {
+		for _, path := range p.LastSeenPaths {
+			p.PathsToRemove = appendUnique(p.PathsToRemove, path)
+		}
+	}
+
 	p.state = diffBody
 
 	return p.writeOutLine(line)
@@ -432,6 +439,13 @@ func (p *diffParser) handleBinaryBeginHeader(line string) error {
 func (p *diffParser) handleShortBinaryHeader(line string) error {
 	for _, path := range p.LastSeenPaths {
 		p.BinaryPaths = appendUnique(p.BinaryPaths, path)
+	}
+
+	// If this is a deleted file, add paths to PathsToRemove
+	if p.state == deleteFileDiff {
+		for _, path := range p.LastSeenPaths {
+			p.PathsToRemove = appendUnique(p.PathsToRemove, path)
+		}
 	}
 
 	p.state = unrecognized
