@@ -287,21 +287,22 @@ var _ = Describe("diffParser", func() {
 				Expect(parser.Paths).To(ContainElement("old/logo.png"))
 				Expect(parser.Paths).To(ContainElement("new/logo.png"))
 
-				// similarity index line is not recognized, just written to unrecognized
+				// similarity index line transitions to renameDiff state
 				err = parser.handleDiffLine("similarity index 100%")
 				Expect(err).NotTo(HaveOccurred())
+				Expect(parser.state).To(Equal(renameDiff))
 
-				// rename from/to lines are also not recognized
+				// rename from line adds old path to PathsToRemove
 				err = parser.handleDiffLine("rename from old/logo.png")
 				Expect(err).NotTo(HaveOccurred())
+				Expect(parser.PathsToRemove).To(ContainElement("old/logo.png"))
 
 				err = parser.handleDiffLine("rename to new/logo.png")
 				Expect(err).NotTo(HaveOccurred())
 
-				// For rename without content change, there's no Binary files line,
-				// so old path won't be in PathsToRemove - this is expected behavior
-				// because werf uses diff.renames=false which converts renames to delete+create
-				Expect(parser.PathsToRemove).To(BeEmpty())
+				// Old path should be in PathsToRemove for proper removal during patch
+				Expect(parser.PathsToRemove).To(ContainElement("old/logo.png"))
+				Expect(parser.PathsToRemove).NotTo(ContainElement("new/logo.png"))
 			})
 		})
 
@@ -334,6 +335,121 @@ var _ = Describe("diffParser", func() {
 
 				// In modifyFileDiff state, paths should NOT be added to PathsToRemove
 				Expect(parser.PathsToRemove).To(BeEmpty())
+			})
+		})
+
+		Context("when binary file is renamed with 100% similarity (real user scenario)", func() {
+			It("should add source path to PathsToRemove", func() {
+				parser = makeDiffParser(out, "", pathMatcher, nil)
+
+				// This is the exact scenario from the bug report:
+				// diff --git a/assets/logos/units/deckhouse/color_icon_null_null/logo.png b/assets/logos/units/deckhouse/color_icon_light/logo.png
+				// similarity index 100%
+				// rename from assets/logos/units/deckhouse/color_icon_null_null/logo.png
+				// rename to assets/logos/units/deckhouse/color_icon_light/logo.png
+
+				err := parser.handleDiffLine("diff --git a/assets/logos/units/deckhouse/color_icon_null_null/logo.png b/assets/logos/units/deckhouse/color_icon_light/logo.png")
+				Expect(err).NotTo(HaveOccurred())
+				Expect(parser.state).To(Equal(diffBegin))
+
+				Expect(parser.Paths).To(ContainElement("assets/logos/units/deckhouse/color_icon_null_null/logo.png"))
+				Expect(parser.Paths).To(ContainElement("assets/logos/units/deckhouse/color_icon_light/logo.png"))
+
+				err = parser.handleDiffLine("similarity index 100%")
+				Expect(err).NotTo(HaveOccurred())
+				Expect(parser.state).To(Equal(renameDiff))
+
+				err = parser.handleDiffLine("rename from assets/logos/units/deckhouse/color_icon_null_null/logo.png")
+				Expect(err).NotTo(HaveOccurred())
+
+				err = parser.handleDiffLine("rename to assets/logos/units/deckhouse/color_icon_light/logo.png")
+				Expect(err).NotTo(HaveOccurred())
+
+				// The old path must be in PathsToRemove so that werf removes it from the image
+				Expect(parser.PathsToRemove).To(ContainElement("assets/logos/units/deckhouse/color_icon_null_null/logo.png"))
+				Expect(parser.PathsToRemove).NotTo(ContainElement("assets/logos/units/deckhouse/color_icon_light/logo.png"))
+			})
+		})
+
+		Context("when pathScope is set for rename", func() {
+			It("should correctly trim pathScope from rename paths", func() {
+				parser = makeDiffParser(out, "assets/logos/units/deckhouse", pathMatcher, nil)
+
+				err := parser.handleDiffLine("diff --git a/assets/logos/units/deckhouse/color_icon_null_null/logo.png b/assets/logos/units/deckhouse/color_icon_light/logo.png")
+				Expect(err).NotTo(HaveOccurred())
+
+				err = parser.handleDiffLine("similarity index 100%")
+				Expect(err).NotTo(HaveOccurred())
+
+				err = parser.handleDiffLine("rename from assets/logos/units/deckhouse/color_icon_null_null/logo.png")
+				Expect(err).NotTo(HaveOccurred())
+
+				// Path should be relative to pathScope
+				Expect(parser.PathsToRemove).To(ContainElement("color_icon_null_null/logo.png"))
+			})
+		})
+
+		Context("when multiple files are renamed", func() {
+			It("should add all source paths to PathsToRemove", func() {
+				parser = makeDiffParser(out, "", pathMatcher, nil)
+
+				// First rename
+				err := parser.handleDiffLine("diff --git a/old/logo.png b/new/logo.png")
+				Expect(err).NotTo(HaveOccurred())
+				err = parser.handleDiffLine("similarity index 100%")
+				Expect(err).NotTo(HaveOccurred())
+				err = parser.handleDiffLine("rename from old/logo.png")
+				Expect(err).NotTo(HaveOccurred())
+				err = parser.handleDiffLine("rename to new/logo.png")
+				Expect(err).NotTo(HaveOccurred())
+
+				// Second rename
+				err = parser.handleDiffLine("diff --git a/old/icon.svg b/new/icon.svg")
+				Expect(err).NotTo(HaveOccurred())
+				err = parser.handleDiffLine("similarity index 100%")
+				Expect(err).NotTo(HaveOccurred())
+				err = parser.handleDiffLine("rename from old/icon.svg")
+				Expect(err).NotTo(HaveOccurred())
+				err = parser.handleDiffLine("rename to new/icon.svg")
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(parser.PathsToRemove).To(ContainElement("old/logo.png"))
+				Expect(parser.PathsToRemove).To(ContainElement("old/icon.svg"))
+				Expect(parser.PathsToRemove).NotTo(ContainElement("new/logo.png"))
+				Expect(parser.PathsToRemove).NotTo(ContainElement("new/icon.svg"))
+			})
+		})
+
+		Context("when rename has content modification (similarity < 100%)", func() {
+			It("should handle rename with index and binary patch", func() {
+				parser = makeDiffParser(out, "", pathMatcher, nil)
+
+				err := parser.handleDiffLine("diff --git a/old/logo.png b/new/logo.png")
+				Expect(err).NotTo(HaveOccurred())
+
+				err = parser.handleDiffLine("similarity index 95%")
+				Expect(err).NotTo(HaveOccurred())
+				Expect(parser.state).To(Equal(renameDiff))
+
+				err = parser.handleDiffLine("rename from old/logo.png")
+				Expect(err).NotTo(HaveOccurred())
+				Expect(parser.PathsToRemove).To(ContainElement("old/logo.png"))
+
+				err = parser.handleDiffLine("rename to new/logo.png")
+				Expect(err).NotTo(HaveOccurred())
+
+				// After rename lines, index line transitions to modifyFileDiff
+				err = parser.handleDiffLine("index abc12345..def67890")
+				Expect(err).NotTo(HaveOccurred())
+				Expect(parser.state).To(Equal(modifyFileDiff))
+
+				// Then binary patch
+				err = parser.handleDiffLine("GIT binary patch")
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(parser.BinaryPaths).To(ContainElement("old/logo.png"))
+				Expect(parser.BinaryPaths).To(ContainElement("new/logo.png"))
+				Expect(parser.PathsToRemove).To(ContainElement("old/logo.png"))
 			})
 		})
 	})
