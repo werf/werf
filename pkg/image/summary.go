@@ -34,7 +34,7 @@ func (list ImagesList) ConvertToStages() ([]StageID, error) {
 				continue
 			}
 
-			if digest, creationTs, err := getDigestAndCreationTsFromLocalStageImageTag(tag); err != nil {
+			if digest, creationTs, err := GetDigestAndCreationTsFromLocalStageImageTag(tag); err != nil {
 				return nil, err
 			} else {
 				stagesList = append(stagesList, *NewStageID(digest, creationTs))
@@ -45,7 +45,7 @@ func (list ImagesList) ConvertToStages() ([]StageID, error) {
 	return stagesList, nil
 }
 
-func getDigestAndCreationTsFromLocalStageImageTag(repoStageImageTag string) (string, int64, error) {
+func GetDigestAndCreationTsFromLocalStageImageTag(repoStageImageTag string) (string, int64, error) {
 	parts := strings.SplitN(repoStageImageTag, "-", 2)
 	if creationTs, err := ParseCreationTs(parts[1]); err != nil {
 		return "", 0, fmt.Errorf("unable to parse value %q as creation timestamp: %w", parts[1], err)
