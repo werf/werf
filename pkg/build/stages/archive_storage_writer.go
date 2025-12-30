@@ -16,7 +16,7 @@ import (
 )
 
 type ArchiveStorageWriter interface {
-	WriteStageArchive(stageTag string, data []byte) error
+	WriteStageArchive(stageTag string, stream io.Reader) error
 	WithTask(ctx context.Context, task func(ArchiveStorageWriter) error) error
 }
 
@@ -98,15 +98,22 @@ func (writer *ArchiveStorageFileWriter) save() error {
 	return nil
 }
 
-func (writer *ArchiveStorageFileWriter) WriteStageArchive(tag string, data []byte) error {
-	now := time.Now()
-	buf := bytes.NewBuffer(nil)
-	zipper := gzip.NewWriter(buf)
+func (writer *ArchiveStorageFileWriter) Close() error {
+	if writer.tmpArchiveCloser != nil {
+		return writer.tmpArchiveCloser()
+	}
+	return nil
+}
 
-	if _, err := io.Copy(zipper, bytes.NewReader(data)); err != nil {
+func (writer *ArchiveStorageFileWriter) WriteStageArchive(tag string, r io.Reader) error {
+	now := time.Now()
+
+	var buf bytes.Buffer
+	zipper := gzip.NewWriter(&buf)
+
+	if _, err := io.Copy(zipper, r); err != nil {
 		return fmt.Errorf("unable to gzip image archive data: %w", err)
 	}
-
 	if err := zipper.Close(); err != nil {
 		return fmt.Errorf("unable to close gzip image archive: %w", err)
 	}
@@ -117,7 +124,7 @@ func (writer *ArchiveStorageFileWriter) WriteStageArchive(tag string, data []byt
 		Name:       fmt.Sprintf(stagePathTemplate, tag),
 		Typeflag:   tar.TypeReg,
 		Mode:       0o777,
-		Size:       int64(len(buf.Bytes())),
+		Size:       int64(len(compressedData)),
 		ModTime:    now,
 		AccessTime: now,
 		ChangeTime: now,
@@ -126,18 +133,10 @@ func (writer *ArchiveStorageFileWriter) WriteStageArchive(tag string, data []byt
 	if err := writer.tmpArchiveWriter.WriteHeader(header); err != nil {
 		return fmt.Errorf("unable to write stage %q header: %w", tag, err)
 	}
-
 	if _, err := writer.tmpArchiveWriter.Write(compressedData); err != nil {
 		return fmt.Errorf("unable to write stage data: %w", err)
 	}
 
-	return nil
-}
-
-func (writer *ArchiveStorageFileWriter) Close() error {
-	if writer.tmpArchiveCloser != nil {
-		return writer.tmpArchiveCloser()
-	}
 	return nil
 }
 
