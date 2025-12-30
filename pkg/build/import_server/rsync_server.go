@@ -149,11 +149,11 @@ func (srv *RsyncServer) GetCopyCommand(ctx context.Context, importConfig *config
 
 	// two-phase rsync import to preserve empty directories matching include globs:
 	//
-	// phase 1: Copy directory structure only (without --prune-empty-dirs)
+	// phase 1: copy directory structure only (without --prune-empty-dirs)
 	// this ensures that empty directories explicitly matching include globs are created
 	// we use directory-only filters that include paths ending with "/" and exclude all files
 	//
-	// phase 2: Copy files (with --prune-empty-dirs).
+	// phase 2: copy files (with --prune-empty-dirs).
 	// NOTE: using --prune-empty-dirs here is safe because rsync with this flag only prevents
 	// creation of NEW empty directories during this run — it does NOT delete directories
 	// that already exist on the target
@@ -167,7 +167,7 @@ func (srv *RsyncServer) GetCopyCommand(ctx context.Context, importConfig *config
 	// run rsync for directories
 	args = append(args, rsyncDirsCommand)
 
-	// phase 2: Copy files with --prune-empty-dirs.
+	// phase 2: copy files with --prune-empty-dirs.
 	// this prevents rsync from creating empty directories that don't match include globs,
 	// while preserving the directory structure created in phase 1
 	rsyncFilesCommand := fmt.Sprintf("RSYNC_PASSWORD='%s' %s --prune-empty-dirs --archive --links --inplace --xattrs %s", srv.AuthPassword, stapel.RsyncBinPath(), rsyncChownOption)
@@ -200,10 +200,8 @@ func PrepareRsyncFilters(add string, includePaths, excludePaths []string) string
 // PrepareRsyncDirsOnlyFilters builds rsync --filter rules that copy only directories
 // matching the specified include/exclude globs
 //
-// NOTE: when rsync URL ends with trailing slash (directory import), paths are relative
-// to the import directory content
-// when includePaths is specified, filters use paths
-// relative to the import directory (without the add prefix)
+// NOTE: when rsync URL ends with trailing slash (directory import), paths are relative to the import directory content
+// when includePaths is specified, filters use paths relative to the import directory (without the add prefix)
 // when includePaths is empty, we simply include all directories with '+/ **/' and exclude all files with '-/ **'.
 func PrepareRsyncDirsOnlyFilters(add string, includePaths, excludePaths []string) string {
 	rsyncCommand := ""
@@ -337,7 +335,7 @@ func PrepareRsyncIncludeDirsFiltersForGlobs(add string, includeGlobs []string) s
 			paths[targetPath] = struct{}{}
 		}
 		// add recursive pattern for nested directories.
-		// NOTE: Don't use path.Join here as it removes the trailing slash.
+		// NOTE: DO NOT use path.Join here as it removes the trailing slash.
 		paths[strings.TrimSuffix(targetPath, "/")+"/**/"] = struct{}{}
 	}
 	keys := make([]string, 0, len(paths))
