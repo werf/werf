@@ -544,7 +544,6 @@ func Test_prepareRsyncExcludeFiltersForGlobs(t *testing.T) {
 				if got != "" {
 					t.Errorf("PrepareRsyncExcludeFiltersForGlobs() = %v, want empty string", got)
 				}
-				return
 			}
 			for _, want := range tt.wantContains {
 				if !strings.Contains(got, want) {
