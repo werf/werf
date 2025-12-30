@@ -1,7 +1,7 @@
 package e2e_export_test
 
 import (
-	"strings"
+	"github.com/werf/werf/v2/test/pkg/suite_init"
 )
 
 type commonTestOptions struct {
@@ -10,8 +10,7 @@ type commonTestOptions struct {
 }
 
 func setupEnv() {
-	SuiteData.WerfRepo = strings.Join([]string{SuiteData.RegistryLocalAddress, SuiteData.ProjectName}, "/")
-	SuiteData.Stubs.SetEnv("WERF_REPO", SuiteData.WerfRepo)
+	SuiteData.Stubs.SetEnv("WERF_REPO", suite_init.TestRepo(SuiteData.ProjectName))
 }
 
 func getExportArgs(imageName string, opts commonTestOptions) []string {

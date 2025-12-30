@@ -10,7 +10,6 @@ import (
 
 	"github.com/werf/werf/v2/pkg/docker_registry"
 	"github.com/werf/werf/v2/test/pkg/utils"
-	utilsDocker "github.com/werf/werf/v2/test/pkg/utils/docker"
 )
 
 const LocalRegistryImplementationName = ":local_container_registry"
@@ -121,17 +120,18 @@ func NewContainerRegistryPerImplementationData(synchronizedSuiteCallbacksData *S
 func setupOptionalLocalContainerRegistry(ctx context.Context, synchronizedSuiteCallbacksData *SynchronizedSuiteCallbacksData, data *ContainerRegistryPerImplementationData) {
 	implementationNameForWerf := "default"
 
-	localRegistryAddress, _, localRegistryContainerName := utilsDocker.LocalDockerRegistryRun(ctx)
-	registryAddress := localRegistryAddress
-
-	synchronizedSuiteCallbacksData.AppendSynchronizedAfterSuiteAllNodesFunc(func(ctx context.Context) {
-		utilsDocker.ContainerStopAndRemove(ctx, localRegistryContainerName)
-	})
+	registryAddress := TestRegistry()
+	if registryAddress == "" {
+		Expect(registryAddress).NotTo(BeEmpty(), "WERF_TEST_K8S_DOCKER_REGISTRY must be set")
+	}
 
 	implData := &containerRegistryImplementationData{
 		RegistryAddress:        registryAddress,
 		WerfImplementationName: implementationNameForWerf,
-		RegistryOptions:        makeContainerRegistryImplementationDockerRegistryOptions(implementationNameForWerf),
+		RegistryOptions: docker_registry.DockerRegistryOptions{
+			InsecureRegistry:      true,
+			SkipTlsVerifyRegistry: true,
+		},
 	}
 
 	data.ContainerRegistryPerImplementation[LocalRegistryImplementationName] = implData
