@@ -41,9 +41,10 @@ func CreateDockerConfigDir(ctx context.Context, fromDockerConfig string) (string
 	// - `~/.docker/buildx` — `docker buildx` data: builder instance configuration and metadata, BuildKit-related settings, local state. Deleting it typically requires recreating builders.
 	// - `~/.docker/config.json` — Main Docker CLI config: client settings, proxies, parameters, and registry authentication (`auths`) or credential store/helper configuration (`credsStore`/`credHelpers`). Deleting it logs you out and resets client settings.
 	// - `~/.docker/features.json` — Feature flags/toggles for Docker and/or plugins (uncommon; depends on version/distribution). Typically controls enabling/disabling specific client/tool capabilities.
+	// - `~/.docker/scout` – location for the docker-scout CLI plugin binary when installed manually; referenced via cliPluginsExtraDirs in config.json.
 
 	// Define options to skip specific directories
-	dockerPathsToSkip := []string{"cli-plugins", "buildx", "machine", "desktop", "run", "mutagen"}
+	dockerPathsToSkip := []string{"cli-plugins", "buildx", "machine", "desktop", "run", "mutagen", "scout"}
 
 	options := copy.Options{
 		Skip: func(srcInfo os.FileInfo, src, dst string) (bool, error) {
