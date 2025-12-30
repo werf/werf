@@ -173,7 +173,7 @@ func (srv *RsyncServer) GetCopyCommand(ctx context.Context, importConfig *config
 		args = append(args, rsyncDirsCommand)
 	}
 
-	// Phase 2: Copy files with --prune-empty-dirs
+	// phase 2: Copy files with --prune-empty-dirs
 	rsyncFilesCommand := fmt.Sprintf("RSYNC_PASSWORD='%s' %s --prune-empty-dirs --archive --links --inplace --xattrs %s", srv.AuthPassword, stapel.RsyncBinPath(), rsyncChownOption)
 	rsyncFilesCommand += rsyncFilters
 	rsyncFilesCommand += fmt.Sprintf(" %s$IMPORT_PATH_TRAILING_SLASH_OPTIONAL %s", rsyncImportPathSpec, importConfig.To)

@@ -422,7 +422,7 @@ func generateChecksumScript(from string, includePaths, excludePaths []string, re
 	rsyncCommand += import_server.PrepareRsyncFilters("", includePathsCopy, excludePathsCopy)
 	rsyncCommand += " " + "/"
 
-	// We have an old rsync version, so we can't use --out-format and other options to parse file paths.'
+	// We have an old rsync version, so we can't use --out-format and other options to parse file paths.
 	// Example lines:
 	// "-rw-r--r--    1 root     root             0 Nov 17 22:57 test-file.a"
 	// "drwxr-xr-x    1 root     root             0 Nov 17 22:57 some-directory"
