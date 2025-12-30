@@ -557,3 +557,85 @@ func Test_prepareRsyncExcludeFiltersForGlobs(t *testing.T) {
 		})
 	}
 }
+
+func Test_isDirectoryGlob(t *testing.T) {
+	tests := []struct {
+		glob string
+		want bool
+	}{
+		// Directory globs (should return true)
+		{"cache", true},
+		{"cache/", true},
+		{"app/data", true},
+		{"app/data/", true},
+		{"logs/**", true},
+		{"app/logs/**", true},
+		{"**", true},
+		{"", true},
+
+		// File globs (should return false)
+		{"*.txt", false},
+		{"**/*.txt", false},
+		{"**/*.go", false},
+		{"file?.log", false},
+		{"data[0-9].json", false},
+		{"app/*.txt", false},
+		{"logs/**/*.log", false},
+		{"*", false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.glob, func(t *testing.T) {
+			got := isDirectoryGlob(tt.glob)
+			if got != tt.want {
+				t.Errorf("isDirectoryGlob(%q) = %v, want %v", tt.glob, got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_hasDirectoryGlobs(t *testing.T) {
+	tests := []struct {
+		name  string
+		globs []string
+		want  bool
+	}{
+		{
+			name:  "empty list",
+			globs: nil,
+			want:  false,
+		},
+		{
+			name:  "only file globs",
+			globs: []string{"*.txt", "**/*.go"},
+			want:  false,
+		},
+		{
+			name:  "only directory globs",
+			globs: []string{"cache", "logs/**"},
+			want:  true,
+		},
+		{
+			name:  "mixed globs - has directory",
+			globs: []string{"*.txt", "cache", "**/*.go"},
+			want:  true,
+		},
+		{
+			name:  "single directory glob",
+			globs: []string{"app/data"},
+			want:  true,
+		},
+		{
+			name:  "single file glob",
+			globs: []string{"**/*.txt"},
+			want:  false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := hasDirectoryGlobs(tt.globs)
+			if got != tt.want {
+				t.Errorf("hasDirectoryGlobs(%v) = %v, want %v", tt.globs, got, tt.want)
+			}
+		})
+	}
+}
