@@ -10,7 +10,7 @@ type commonTestOptions struct {
 }
 
 func setupEnv() {
-	SuiteData.Stubs.SetEnv("WERF_REPO", suite_init.TestRepo(SuiteData.ProjectName, ""))
+	SuiteData.Stubs.SetEnv("WERF_REPO", suite_init.TestRepo(SuiteData.ProjectName))
 }
 
 func getExportArgs(imageName string, opts commonTestOptions) []string {

@@ -17,7 +17,7 @@ func NewK8sDockerRegistryData(projectNameData *ProjectNameData, stubsData *Stubs
 
 func SetupK8sDockerRegistryRepo(repo, projectName *string, stubs *gostub.Stubs) bool {
 	return BeforeEach(func() {
-		*repo = TestRepo(*projectName, "")
+		*repo = TestRepo(*projectName)
 		stubs.SetEnv("WERF_REPO", *repo)
 	})
 }

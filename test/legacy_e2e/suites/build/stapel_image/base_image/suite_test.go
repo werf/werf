@@ -55,5 +55,5 @@ var _ = SuiteData.AppendSynchronizedBeforeSuiteNode1Func(func(ctx context.Contex
 })
 
 var _ = BeforeEach(func() {
-	SuiteData.RegistryProjectRepository = suite_init.TestRepo(SuiteData.ProjectName, "")
+	SuiteData.RegistryProjectRepository = suite_init.TestRepo(SuiteData.ProjectName)
 })

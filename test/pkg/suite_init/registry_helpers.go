@@ -15,7 +15,7 @@ func TestRegistry() string {
 	return utils.GetRequiredEnv(TestK8sDockerRegistryEnv)
 }
 
-// TestRepo returns full werf repo: localhost:port/project[-suffix]
-func TestRepo(projectName, suffix string) string {
-	return fmt.Sprintf("%s/%s%s", TestRegistry(), projectName, suffix)
+// TestRepo returns full werf repo: localhost:port/project
+func TestRepo(projectName string) string {
+	return fmt.Sprintf("%s/%s", TestRegistry(), projectName)
 }
