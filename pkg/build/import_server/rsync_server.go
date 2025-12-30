@@ -144,18 +144,101 @@ func (srv *RsyncServer) GetCopyCommand(ctx context.Context, importConfig *config
 	if importConfig.Owner != "" || importConfig.Group != "" {
 		rsyncChownOption = fmt.Sprintf("--chown=%s:%s", importConfig.Owner, importConfig.Group)
 	}
-	rsyncCommand := fmt.Sprintf("RSYNC_PASSWORD='%s' %s --prune-empty-dirs --archive --links --inplace --xattrs %s", srv.AuthPassword, stapel.RsyncBinPath(), rsyncChownOption)
-	rsyncCommand += PrepareRsyncFilters(importConfig.Add, importConfig.IncludePaths, importConfig.ExcludePaths)
 
-	rsyncCommand += fmt.Sprintf(" %s$IMPORT_PATH_TRAILING_SLASH_OPTIONAL %s", rsyncImportPathSpec, importConfig.To)
-	// run rsync itself
-	args = append(args, rsyncCommand)
+	rsyncFilters := PrepareRsyncFilters(importConfig.Add, importConfig.IncludePaths, importConfig.ExcludePaths)
+
+	// Two-phase rsync import to preserve empty directories matching include globs:
+	//
+	// phase 1 (conditional): Copy directory structure only (without --prune-empty-dirs).
+	// this phase is ONLY executed when includePaths contains "directory globs" — globs that
+	// explicitly target directories rather than files. Examples:
+	//   - "cache", "cache/", "logs/**" — directory globs, Phase 1 needed
+	//   - "*.txt", "**/*.go" — file globs, Phase 1 NOT needed
+	//
+	// phase 2: Copy files (with --prune-empty-dirs).
+	// using --prune-empty-dirs here is safe because it only prevents creation of NEW empty
+	// directories — it does NOT delete directories that already exist on the target.
+	//
+	// this approach solves the problem where --prune-empty-dirs alone would skip empty
+	// directories that are intentionally included via include_paths globs, while still
+	// removing empty directories that don't match any glob (like empty1/, empty2/ when
+	// includePaths is ["**/*.txt"]).
+
+	// phase 1: Only execute if there are directory globs in includePaths
+	if hasDirectoryGlobs(importConfig.IncludePaths) {
+		rsyncDirsFilters := PrepareRsyncDirsOnlyFilters(importConfig.Add, importConfig.IncludePaths, importConfig.ExcludePaths)
+		rsyncDirsCommand := fmt.Sprintf("RSYNC_PASSWORD='%s' %s --archive --links --inplace --xattrs %s", srv.AuthPassword, stapel.RsyncBinPath(), rsyncChownOption)
+		rsyncDirsCommand += rsyncDirsFilters
+		rsyncDirsCommand += fmt.Sprintf(" %s$IMPORT_PATH_TRAILING_SLASH_OPTIONAL %s", rsyncImportPathSpec, importConfig.To)
+		args = append(args, rsyncDirsCommand)
+	}
+
+	// Phase 2: Copy files with --prune-empty-dirs
+	rsyncFilesCommand := fmt.Sprintf("RSYNC_PASSWORD='%s' %s --prune-empty-dirs --archive --links --inplace --xattrs %s", srv.AuthPassword, stapel.RsyncBinPath(), rsyncChownOption)
+	rsyncFilesCommand += rsyncFilters
+	rsyncFilesCommand += fmt.Sprintf(" %s$IMPORT_PATH_TRAILING_SLASH_OPTIONAL %s", rsyncImportPathSpec, importConfig.To)
+	args = append(args, rsyncFilesCommand)
 
 	command := strings.Join(args, " && ")
 
 	logboek.Context(ctx).Debug().LogF("Rsync server copy commands for import: artifact=%q image=%q add=%s to=%s includePaths=%v excludePaths=%v: %q\n", importConfig.ArtifactName, importConfig.ImageName, importConfig.Add, importConfig.To, importConfig.IncludePaths, importConfig.ExcludePaths, command)
 
 	return command
+}
+
+// hasDirectoryGlobs returns true if any of the globs explicitly targets a directory
+// directory globs are patterns that should preserve empty directories when matched
+// examples of directory globs: "cache", "cache/", "logs/**", "app/data"
+// examples of file globs: "*.txt", "**/*.go", "file?.log"
+func hasDirectoryGlobs(globs []string) bool {
+	for _, glob := range globs {
+		if isDirectoryGlob(glob) {
+			return true
+		}
+	}
+	return false
+}
+
+// isDirectoryGlob returns true if the glob explicitly targets a directory rather than files
+// a glob is considered a "directory glob" if:
+//   - It ends with "/" (e.g., "cache/")
+//   - It ends with "/**" (e.g., "logs/**")
+//   - Its last path segment doesn't contain wildcards (e.g., "cache", "app/data")
+//
+// a glob is considered a "file glob" if its last segment contains wildcards:
+//   - "*.txt", "**/*.go", "file?.log", "data[0-9].json"
+func isDirectoryGlob(glob string) bool {
+	glob = strings.TrimSuffix(glob, "/")
+	if glob == "" {
+		return true
+	}
+
+	// "logs/**" is a directory glob
+	if strings.HasSuffix(glob, "/**") {
+		return true
+	}
+
+	// Get the last path segment
+	lastSlash := strings.LastIndex(glob, "/")
+	var lastSegment string
+	if lastSlash == -1 {
+		lastSegment = glob
+	} else {
+		lastSegment = glob[lastSlash+1:]
+	}
+
+	// If last segment is "**", it's a directory glob
+	if lastSegment == "**" {
+		return true
+	}
+
+	// Check if last segment contains wildcards
+	if strings.ContainsAny(lastSegment, "*?[") {
+		return false // File glob
+	}
+
+	// No wildcards in last segment — it's a directory glob
+	return true
 }
 
 func PrepareRsyncFilters(add string, includePaths, excludePaths []string) string {
@@ -169,6 +252,33 @@ func PrepareRsyncFilters(add string, includePaths, excludePaths []string) string
 		// When include_paths is empty, simply apply exclude filters.
 		rsyncCommand += PrepareRsyncExcludeFiltersForGlobs(add, excludePaths)
 	}
+	return rsyncCommand
+}
+
+// PrepareRsyncDirsOnlyFilters builds rsync --filter rules that copy only directories
+// matching the specified include/exclude globs
+//
+// NOTE: when rsync URL ends with trailing slash (directory import), paths are relative to the import directory content
+// when includePaths is specified, filters use paths relative to the import directory (without the add prefix)
+// when includePaths is empty, we simply include all directories with '+/ **/' and exclude all files with '-/ **'.
+func PrepareRsyncDirsOnlyFilters(add string, includePaths, excludePaths []string) string {
+	rsyncCommand := ""
+	if len(includePaths) != 0 {
+		// First, apply exclude filters to the specified paths.
+		rsyncCommand += PrepareRsyncExcludeFiltersForGlobs(add, excludePaths)
+		// Then include directories from include_paths (and their parent directories).
+		rsyncCommand += PrepareRsyncIncludeDirsFiltersForGlobs(add, includePaths)
+	} else if len(excludePaths) != 0 {
+		// When include_paths is empty, apply exclude filters and include all remaining directories.
+		rsyncCommand += PrepareRsyncExcludeFiltersForGlobs(add, excludePaths)
+		// Include all directories not excluded (relative path for trailing slash URL)
+		rsyncCommand += " --filter='+/ **/'"
+	} else {
+		// No filters specified - include all directories (relative path for trailing slash URL)
+		rsyncCommand += " --filter='+/ **/'"
+	}
+	// Exclude all files - we only want directories in this pass (relative path)
+	rsyncCommand += " --filter='-/ **'"
 	return rsyncCommand
 }
 
@@ -252,6 +362,52 @@ func PrepareRsyncIncludeFiltersForGlobs(add string, includeGlobs []string) strin
 	return b
 }
 
+// PrepareRsyncIncludeDirsFiltersForGlobs builds rsync --filter rules that include
+// only directories matching the specified includeGlobs under the given base path (add)
+// unlike PrepareRsyncIncludeFiltersForGlobs, this function generates rules specifically
+// for copying directory structure, including:
+//   - parent directories needed for traversal (ending with /)
+//   - target directories that match the globs (ending with /)
+//   - recursive directory patterns (**/) for matching nested directories
+func PrepareRsyncIncludeDirsFiltersForGlobs(add string, includeGlobs []string) string {
+	if len(includeGlobs) == 0 {
+		return ""
+	}
+
+	paths := map[string]struct{}{}
+	for _, p := range includeGlobs {
+		targetPath := path.Join(add, p)
+
+		// allow all path prefixes for this glob (directories for traversal)
+		// only include paths that end with "/" (directories), skip file patterns
+		for _, pathPart := range globToRsyncFilterPaths(targetPath, false) {
+			if strings.HasSuffix(pathPart, "/") {
+				paths[pathPart] = struct{}{}
+			}
+		}
+
+		// add the target path as a directory.
+		if !strings.HasSuffix(targetPath, "/") {
+			paths[targetPath+"/"] = struct{}{}
+		} else {
+			paths[targetPath] = struct{}{}
+		}
+		// add recursive pattern for nested directories.
+		// NOTE: DO NOT use path.Join here as it removes the trailing slash.
+		paths[strings.TrimSuffix(targetPath, "/")+"/**/"] = struct{}{}
+	}
+	keys := make([]string, 0, len(paths))
+	for k := range paths {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	var b string
+	for _, k := range keys {
+		b += fmt.Sprintf(" --filter='+/ %s'", k)
+	}
+	return b
+}
+
 // globToRsyncFilterPaths builds rsync filter path components for a glob.
 // Behavior:
 // - Directories (non-final segments) end with "/" unless finalOnly == true.
@@ -260,6 +416,8 @@ func PrepareRsyncIncludeFiltersForGlobs(add string, includeGlobs []string) strin
 // - When kept and not final && !finalOnly -> adds "**/" as a directory pattern.
 // Empty or all-slash input returns nil.
 func globToRsyncFilterPaths(glob string, finalSegmentOnly bool) []string {
+	// preserve leading slash to maintain absolute paths
+	hasLeadingSlash := strings.HasPrefix(glob, "/")
 	glob = strings.Trim(glob, "/")
 	if glob == "" {
 		return nil
@@ -325,7 +483,12 @@ func globToRsyncFilterPaths(glob string, finalSegmentOnly bool) []string {
 
 	out := make([]string, 0, len(results))
 	for v := range results {
-		out = append(out, v)
+		// restore leading slash if original glob had one
+		if hasLeadingSlash {
+			out = append(out, "/"+v)
+		} else {
+			out = append(out, v)
+		}
 	}
 	sort.Strings(out)
 	return out
