@@ -1,7 +1,7 @@
 package import_server
 
 import (
-	"reflect"
+	"slices"
 	"sort"
 	"strings"
 	"testing"
@@ -183,10 +183,7 @@ func Test_globToRsyncFilterPaths(t *testing.T) {
 			got := globToRsyncFilterPaths(tt.args.glob, tt.args.finalSegmentOnly)
 			sort.Strings(got)
 			sort.Strings(tt.want)
-			if len(got) == 0 && len(tt.want) == 0 {
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
+			if !slices.Equal(got, tt.want) {
 				t.Errorf("globDescentPath(%q, %v) = %v, want %v",
 					tt.args.glob, tt.args.finalSegmentOnly, got, tt.want)
 			}
@@ -543,8 +540,8 @@ func Test_prepareRsyncExcludeFiltersForGlobs(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := PrepareRsyncExcludeFiltersForGlobs(tt.add, tt.excludeGlobs)
-			if len(tt.excludeGlobs) == 0 || len(tt.wantContains) == 0 {
-				if len(tt.wantContains) == 0 && got != "" {
+			if len(tt.wantContains) == 0 {
+				if got != "" {
 					t.Errorf("PrepareRsyncExcludeFiltersForGlobs() = %v, want empty string", got)
 				}
 				return
