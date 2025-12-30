@@ -57,7 +57,7 @@ var _ = Describe("Complex converge", Label("e2e", "converge", "complex"), func()
 				defer cancel()
 
 				for _, imageName := range opts.ImageNames {
-					i := fmt.Sprintf("%s:%s", suite_init.TestRepo(imageTemplate), tag)
+					i := fmt.Sprintf("%s/werf-export-%s:%s", suite_init.TestRegistry(), imageName, tag)
 					ref, err := name.ParseReference(i)
 					Expect(err).ShouldNot(HaveOccurred())
 
