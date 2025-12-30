@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"sync"
 
@@ -256,12 +257,13 @@ func getStagesReport(img *image.Image, multiplatform bool) []ReportStageRecord {
 }
 
 func LoadBuildReportFromFile(path string) (*ImagesReport, error) {
-	data, err := os.ReadFile(path)
+	file, err := os.Open(path) // opens it for reading only
 	if err != nil {
 		return nil, fmt.Errorf("unable to read build report file %q: %w", path, err)
 	}
+	defer file.Close()
 
-	report, err := parseBuildReport(data)
+	report, err := parseBuildReport(file)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse build report file %q: %w", path, err)
 	}
@@ -273,8 +275,8 @@ func LoadBuildReportFromFile(path string) (*ImagesReport, error) {
 	return report, nil
 }
 
-func parseBuildReport(data []byte) (*ImagesReport, error) {
-	decoder := json.NewDecoder(bytes.NewReader(data))
+func parseBuildReport(reader io.Reader) (*ImagesReport, error) {
+	decoder := json.NewDecoder(reader)
 
 	var report ImagesReport
 	if err := decoder.Decode(&report); err != nil {
@@ -324,10 +326,6 @@ func validateImageRecord(imageName string, record ReportImageRecord) error {
 	}
 	if record.DockerImageDigest == "" {
 		return fmt.Errorf("image %q has empty DockerImageDigest", imageName)
-	}
-
-	if len(record.Stages) == 0 {
-		return fmt.Errorf("image %q has no stages", imageName)
 	}
 
 	for i, stage := range record.Stages {
