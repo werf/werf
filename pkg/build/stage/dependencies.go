@@ -425,10 +425,18 @@ func generateChecksumScript(from string, includePaths, excludePaths []string, re
 	// We have an old rsync version, so we can't use --out-format and other options to parse file paths.'
 	// Example lines:
 	// "-rw-r--r--    1 root     root             0 Nov 17 22:57 test-file.a"
+	// "drwxr-xr-x    1 root     root             0 Nov 17 22:57 some-directory"
 	// "lrw-r--r--    1 root     root             0 Dec 10 10:07 path/to/link -> target/path"
+	//
+	// NOTE: We include directories (d*) in the checksum calculation. This does NOT mean all
+	// directories are included — only those that rsync returns based on the filters above
+	// (PrepareRsyncFilters). For file globs like "**/*.txt", only parent directories of
+	// matching files are included. For directory globs like "cache", the directory itself
+	// is included even if empty. This ensures checksum consistency with what gets copied.
 	parseFilePathCommand := `while read -r mode rest; do
 	 case "$mode" in
 	   -*) echo "/${rest##* }" ;;
+	   d*) echo "/${rest##* }/" ;;
 	   l*)
 	     name="${rest%% -> *}"
 	     name="${name##* }"
