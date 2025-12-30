@@ -3,6 +3,7 @@ package build
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"k8s.io/utils/strings/slices"
@@ -262,6 +263,12 @@ func stageDescFromReportRecord(record ReportImageRecord) (*image.StageDesc, erro
 }
 
 func extractStageIDFromReport(record ReportImageRecord) (string, error) {
+	parts := strings.SplitN(record.DockerTag, "-", 2)
+	if len(parts) == 1 {
+		// Multiplatform tag: just digest (56 chars sha3-224)
+		return parts[0], nil
+	}
+
 	digest, creationTs, err := image.GetDigestAndCreationTsFromLocalStageImageTag(record.DockerTag)
 	if err != nil {
 		return "", fmt.Errorf("unable to parse stage tag %q: %w", record.DockerTag, err)
