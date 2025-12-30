@@ -3,8 +3,6 @@ package build
 import (
 	"context"
 	"fmt"
-	"strconv"
-	"strings"
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"k8s.io/utils/strings/slices"
@@ -37,6 +35,13 @@ func NewExporter(c *Conveyor, opts ExportOptions) *Exporter {
 	}
 }
 
+func (e *Exporter) getMaxNumberOfWorkers() int {
+	if !e.Conveyor.Parallel {
+		return 1
+	}
+	return int(e.Conveyor.ParallelTasksLimit)
+}
+
 func (e *Exporter) Run(ctx context.Context) error {
 	if len(e.ExportTagFuncList) == 0 {
 		return nil
@@ -45,7 +50,7 @@ func (e *Exporter) Run(ctx context.Context) error {
 	images := e.Conveyor.imagesTree.GetImagesByName(true, build_image.WithExportImageNameList(e.ExportImageNameList))
 
 	if err := parallel.DoTasks(ctx, len(images), parallel.DoTasksOptions{
-		MaxNumberOfWorkers: int(e.Conveyor.ParallelTasksLimit),
+		MaxNumberOfWorkers: e.getMaxNumberOfWorkers(),
 	}, func(ctx context.Context, taskId int) error {
 		pair := images[taskId]
 		name, imagesToExport := pair.Unpair()
@@ -93,21 +98,15 @@ func (e *Exporter) RunFromReport(ctx context.Context, reportPath string) error {
 	}
 
 	if err := parallel.DoTasks(ctx, len(imagesToExport), parallel.DoTasksOptions{
-		MaxNumberOfWorkers: int(e.Conveyor.ParallelTasksLimit),
+		MaxNumberOfWorkers: e.getMaxNumberOfWorkers(),
 	}, func(ctx context.Context, taskId int) error {
 		imgRecord := imagesToExport[taskId]
-
 		isMultiplatform := imgRecord.TargetPlatform == ""
 
-		if isMultiplatform {
-			if err := e.exportMultiplatformImageFromReport(ctx, imgRecord); err != nil {
-				return fmt.Errorf("unable to export multiplatform image %q from report: %w", imgRecord.WerfImageName, err)
-			}
-		} else {
-			if err := e.exportImageFromReport(ctx, imgRecord); err != nil {
-				return fmt.Errorf("unable to export image %q from report: %w", imgRecord.WerfImageName, err)
-			}
+		if err := e.exportImageFromReportRecord(ctx, imgRecord, isMultiplatform); err != nil {
+			return fmt.Errorf("unable to export image %q from report: %w", imgRecord.WerfImageName, err)
 		}
+
 		return nil
 	}); err != nil {
 		return fmt.Errorf("export from report failed: %w", err)
@@ -135,7 +134,7 @@ func (e *Exporter) filterImagesFromReport(report *ImagesReport) []ReportImageRec
 	return result
 }
 
-func (e *Exporter) exportImageFromReport(ctx context.Context, record ReportImageRecord) error {
+func (e *Exporter) exportImageFromReportRecord(ctx context.Context, record ReportImageRecord, isMultiplatform bool) error {
 	if len(e.ExportTagFuncList) == 0 {
 		return nil
 	}
@@ -145,47 +144,28 @@ func (e *Exporter) exportImageFromReport(ctx context.Context, record ReportImage
 			options.Style(style.Highlight())
 		}).
 		DoError(func() error {
-			stageDesc := stageDescFromReportRecord(record)
-
-			for _, tagFunc := range e.ExportTagFuncList {
-				stageID := extractStageIDFromReport(record)
-				tag := tagFunc(record.WerfImageName, stageID)
-				if err := logboek.Context(ctx).Default().LogProcess("tag %s", tag).
-					DoError(func() error {
-						if err := e.Conveyor.StorageManager.GetStagesStorage().ExportStage(ctx, stageDesc, tag, e.MutateConfigFunc); err != nil {
-							return err
-						}
-						return nil
-					}); err != nil {
-					return err
-				}
+			stageDesc, err := stageDescFromReportRecord(record)
+			if err != nil {
+				return fmt.Errorf("unable to get stage desc from report record: %w", err)
 			}
 
-			return nil
-		})
-}
-
-func (e *Exporter) exportMultiplatformImageFromReport(ctx context.Context, record ReportImageRecord) error {
-	if len(e.ExportTagFuncList) == 0 {
-		return nil
-	}
-
-	return logboek.Context(ctx).Default().LogProcess(fmt.Sprintf("Exporting image %s (from report)", record.WerfImageName)).
-		Options(func(options types.LogProcessOptionsInterface) {
-			options.Style(style.Highlight())
-		}).
-		DoError(func() error {
-			stageDesc := stageDescFromReportRecord(record)
-			stageDesc.Info.IsIndex = true
+			if isMultiplatform {
+				stageDesc.Info.IsIndex = true
+			}
 
 			for _, tagFunc := range e.ExportTagFuncList {
-				stageID := extractStageIDFromReport(record)
+				stageID, err := extractStageIDFromReport(record)
+				if err != nil {
+					return fmt.Errorf("unable to extract stage id from report record: %w", err)
+				}
+
 				tag := tagFunc(record.WerfImageName, stageID)
 				if err := logboek.Context(ctx).Default().LogProcess("tag %s", tag).
 					DoError(func() error {
 						if err := e.Conveyor.StorageManager.GetStagesStorage().ExportStage(ctx, stageDesc, tag, e.MutateConfigFunc); err != nil {
-							return err
+							return fmt.Errorf("unable to export stage %s: %w", stageDesc.StageID.String(), err)
 						}
+
 						return nil
 					}); err != nil {
 					return err
@@ -208,7 +188,7 @@ func (e *Exporter) exportMultiplatformImage(ctx context.Context, img *build_imag
 					DoError(func() error {
 						stageDesc := img.GetStageDesc()
 						if err := e.Conveyor.StorageManager.GetStagesStorage().ExportStage(ctx, stageDesc, tag, e.MutateConfigFunc); err != nil {
-							return err
+							return fmt.Errorf("unable to export stage %s: %w", stageDesc.StageID.String(), err)
 						}
 
 						return nil
@@ -253,13 +233,16 @@ func (e *Exporter) exportImage(ctx context.Context, img *build_image.Image) erro
 		})
 }
 
-func stageDescFromReportRecord(record ReportImageRecord) *image.StageDesc {
-	var lastStage ReportStageRecord
+func stageDescFromReportRecord(record ReportImageRecord) (*image.StageDesc, error) {
+	var createdAtUnixNano int64
 	if len(record.Stages) > 0 {
-		lastStage = record.Stages[len(record.Stages)-1]
+		createdAtUnixNano = record.Stages[len(record.Stages)-1].CreatedAt
 	}
 
-	digest, creationTs := parseStageTag(record.DockerTag)
+	digest, creationTs, err := image.GetDigestAndCreationTsFromLocalStageImageTag(record.DockerTag)
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse stage tag %q: %w", record.DockerTag, err)
+	}
 
 	return &image.StageDesc{
 		StageID: &image.StageID{
@@ -273,28 +256,18 @@ func stageDescFromReportRecord(record ReportImageRecord) *image.StageDesc {
 			RepoDigest:        fmt.Sprintf("%s@%s", record.DockerRepo, record.DockerImageDigest),
 			ID:                record.DockerImageID,
 			Size:              record.Size,
-			CreatedAtUnixNano: lastStage.CreatedAt,
+			CreatedAtUnixNano: createdAtUnixNano,
 		},
-	}
+	}, nil
 }
 
-func parseStageTag(tag string) (digest string, creationTs int64) {
-	parts := strings.SplitN(tag, "-", 2)
-	if len(parts) == 1 {
-		// Multiplatform tag: just digest (56 chars sha3-224)
-		return parts[0], 0
+func extractStageIDFromReport(record ReportImageRecord) (string, error) {
+	digest, creationTs, err := image.GetDigestAndCreationTsFromLocalStageImageTag(record.DockerTag)
+	if err != nil {
+		return "", fmt.Errorf("unable to parse stage tag %q: %w", record.DockerTag, err)
 	}
 
-	// Regular tag: digest-creationTs
-	digest = parts[0]
-	if ts, err := strconv.ParseInt(parts[1], 10, 64); err == nil {
-		creationTs = ts
-	}
-	return digest, creationTs
-}
-
-func extractStageIDFromReport(record ReportImageRecord) string {
-	digest, creationTs := parseStageTag(record.DockerTag)
 	stageID := image.NewStageID(digest, creationTs)
-	return stageID.String()
+
+	return stageID.String(), nil
 }
