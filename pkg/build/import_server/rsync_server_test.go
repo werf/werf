@@ -569,6 +569,8 @@ func Test_isDirectoryGlob(t *testing.T) {
 		{"app/logs/**", true},
 		{"**", true},
 		{"", true},
+		{".hidden", true},
+		{"Makefile", true},
 
 		// File globs (should return false)
 		{"*.txt", false},
@@ -579,6 +581,12 @@ func Test_isDirectoryGlob(t *testing.T) {
 		{"app/*.txt", false},
 		{"logs/**/*.log", false},
 		{"*", false},
+		{"app/**/x.txt", false},
+		{"x.txt", false},
+		{"config.json", false},
+		{"Makefile.bak", false},
+		{"src/main.go", false},
+		{"app/a/b/c.txt", false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.glob, func(t *testing.T) {

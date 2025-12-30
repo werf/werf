@@ -203,11 +203,18 @@ func hasDirectoryGlobs(globs []string) bool {
 // a glob is considered a "directory glob" if:
 //   - It ends with "/" (e.g., "cache/")
 //   - It ends with "/**" (e.g., "logs/**")
-//   - Its last path segment doesn't contain wildcards (e.g., "cache", "app/data")
+//   - Its last path segment doesn't contain wildcards AND doesn't look like a filename
+//     (e.g., "cache", "app/data")
 //
-// a glob is considered a "file glob" if its last segment contains wildcards:
-//   - "*.txt", "**/*.go", "file?.log", "data[0-9].json"
+// a glob is considered a "file glob" if:
+//   - Its last segment contains wildcards (e.g., "*.txt", "**/*.go", "file?.log")
+//   - Its last segment looks like a filename with extension (e.g., "app/**/x.txt", "config.json")
 func isDirectoryGlob(glob string) bool {
+	// Handle trailing slash - explicit directory indicator
+	if strings.HasSuffix(glob, "/") {
+		return true
+	}
+
 	glob = strings.TrimSuffix(glob, "/")
 	if glob == "" {
 		return true
@@ -237,7 +244,15 @@ func isDirectoryGlob(glob string) bool {
 		return false // File glob
 	}
 
-	// No wildcards in last segment — it's a directory glob
+	// Check if last segment looks like a filename (contains a dot followed by extension)
+	// Examples: "x.txt", "config.json", "Makefile.bak"
+	// Non-files: "cache", "app", ".hidden" (hidden dir), "Makefile" (no extension)
+	if dotIdx := strings.LastIndex(lastSegment, "."); dotIdx > 0 && dotIdx < len(lastSegment)-1 {
+		// Has a dot that's not at the start and not at the end — looks like a file with extension
+		return false // File glob
+	}
+
+	// No wildcards in last segment and doesn't look like a file — it's a directory glob
 	return true
 }
 
