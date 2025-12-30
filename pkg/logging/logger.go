@@ -29,6 +29,9 @@ func NewLogger() types.LoggerInterface {
 }
 
 func NewSubLogger(ctx context.Context, outStream, errStream io.Writer) types.LoggerInterface {
+	outStream = WrapInSanitizeWriter(outStream)
+	errStream = WrapInSanitizeWriter(errStream)
+
 	subLogger := logboek.Context(ctx).NewSubLogger(outStream, errStream)
 	subLogger.Streams().SetPrefixStyle(style.Highlight())
 
