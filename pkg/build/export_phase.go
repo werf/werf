@@ -240,7 +240,7 @@ func stageDescFromReportRecord(record ReportImageRecord) (*image.StageDesc, erro
 		createdAtUnixNano = record.Stages[len(record.Stages)-1].CreatedAt
 	}
 
-	digest, creationTs, err := image.GetDigestAndCreationTsFromLocalStageImageTag(record.DockerTag)
+	digest, creationTs, err := parseDigestAndCreationTs(record.DockerTag)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse stage tag %q: %w", record.DockerTag, err)
 	}
@@ -263,13 +263,7 @@ func stageDescFromReportRecord(record ReportImageRecord) (*image.StageDesc, erro
 }
 
 func extractStageIDFromReport(record ReportImageRecord) (string, error) {
-	parts := strings.SplitN(record.DockerTag, "-", 2)
-	if len(parts) == 1 {
-		// Multiplatform tag: just digest (56 chars sha3-224)
-		return parts[0], nil
-	}
-
-	digest, creationTs, err := image.GetDigestAndCreationTsFromLocalStageImageTag(record.DockerTag)
+	digest, creationTs, err := parseDigestAndCreationTs(record.DockerTag)
 	if err != nil {
 		return "", fmt.Errorf("unable to parse stage tag %q: %w", record.DockerTag, err)
 	}
@@ -277,4 +271,14 @@ func extractStageIDFromReport(record ReportImageRecord) (string, error) {
 	stageID := image.NewStageID(digest, creationTs)
 
 	return stageID.String(), nil
+}
+
+// parseDigestAndCreationTs parses docker tag to extract digest and creation timestamp
+// multiplatform tags contain only digest (no dash), e.g. "abc123..."
+// regular tags have format "digest-creationTs"
+func parseDigestAndCreationTs(tag string) (digest string, creationTs int64, err error) {
+	if !strings.Contains(tag, "-") {
+		return tag, 0, nil
+	}
+	return image.GetDigestAndCreationTsFromLocalStageImageTag(tag)
 }
