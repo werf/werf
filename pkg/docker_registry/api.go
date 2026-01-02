@@ -693,3 +693,12 @@ func IsStatusNotFoundErr(err error) bool {
 
 	return false
 }
+
+func IsStatusForbiddenErr(err error) bool {
+	var transportError *transport.Error
+	if errors.As(err, &transportError) && transportError.StatusCode == http.StatusForbidden {
+		return true
+	}
+
+	return false
+}
