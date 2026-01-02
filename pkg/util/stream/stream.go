@@ -17,14 +17,14 @@ func PipeProducerConsumer(ctx context.Context, producer func(ctx context.Context
 		err := producer(ctx, pw)
 		if err != nil {
 			if closeErr := pw.CloseWithError(err); closeErr != nil {
-				logboek.Context(ctx).Warn().LogF("WARNING: PipeProducerConsumer.CloseWithError failed: %v\n", closeErr)
+				logboek.Context(ctx).Warn().LogF("PipeProducerConsumer: CloseWithError failed: %v\n", closeErr)
 			}
 			errCh <- err
 			return
 		}
 
 		if closeErr := pw.Close(); closeErr != nil {
-			logboek.Context(ctx).Warn().LogF("WARNING: PipeProducerConsumer.Close failed: %v\n", closeErr)
+			logboek.Context(ctx).Warn().LogF("PipeProducerConsumer: Close failed: %v\n", closeErr)
 		}
 		errCh <- nil
 	}()
