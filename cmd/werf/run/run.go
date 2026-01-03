@@ -137,6 +137,9 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupRequireBuiltImages(&commonCmdData, cmd)
 
+	common.SetupBuildReportPath(&commonCmdData, cmd)
+	common.SetupUseBuildReport(&commonCmdData, cmd)
+
 	common.SetupFollow(&commonCmdData, cmd)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified repo")
@@ -368,20 +371,30 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 
 	var dockerImageName string
 	if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
-		if common.GetRequireBuiltImages(&commonCmdData) {
-			if _, err := c.ShouldBeBuilt(ctx, build.ShouldBeBuiltOptions{}); err != nil {
-				return err
+		if c.UseBuildReport {
+			logboek.Context(ctx).Debug().LogFDetails("Avoid building because of using build report: %s\n", c.BuildReportPath)
+
+			dockerImageName, err = c.GetFullImageNameFromReport(imageName)
+			if err != nil {
+				return fmt.Errorf("unable to get full name for image %q: %w", imageName, err)
 			}
 		} else {
-			if _, err := c.Build(ctx, build.BuildOptions{SkipImageMetadataPublication: *commonCmdData.Dev}); err != nil {
-				return err
+			if common.GetRequireBuiltImages(&commonCmdData) {
+				if _, err := c.ShouldBeBuilt(ctx, build.ShouldBeBuiltOptions{}); err != nil {
+					return err
+				}
+			} else {
+				if _, err := c.Build(ctx, build.BuildOptions{SkipImageMetadataPublication: *commonCmdData.Dev}); err != nil {
+					return err
+				}
+			}
+
+			dockerImageName, err = c.GetFullImageName(imageName)
+			if err != nil {
+				return fmt.Errorf("unable to get full name for image %q: %w", imageName, err)
 			}
 		}
 
-		dockerImageName, err = c.GetFullImageName(ctx, imageName)
-		if err != nil {
-			return fmt.Errorf("unable to get full name for image %q: %w", imageName, err)
-		}
 		return nil
 	}); err != nil {
 		return err
