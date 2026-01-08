@@ -80,11 +80,10 @@ var _ = Describe("Complex compose", Label("e2e", "compose", "complex"), func() {
 				SuiteData.InitTestRepo(ctx, repoDirname, fixtureRelPath)
 				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
 
-				By("state0: building images")
+				By(fmt.Sprintf("%s: building images", opts.State))
 				buildOut, _ := werfProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), &werf.BuildWithReportOptions{
 					CommonOptions: werf.CommonOptions{
 						ShouldFail: false,
-						ExtraArgs:  []string{"--save-build-report", "--build-report-path", SuiteData.GetBuildReportPath(buildReportName)},
 					},
 				})
 				Expect(buildOut).To(ContainSubstring("Building stage"))

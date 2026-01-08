@@ -122,7 +122,6 @@ var _ = Describe("Simple kube-run", Label("e2e", "kube-run", "simple"), func() {
 			buildOut, _ := werfProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), &werf.BuildWithReportOptions{
 				CommonOptions: werf.CommonOptions{
 					ShouldFail: false,
-					ExtraArgs:  []string{"--save-build-report", "--build-report-path", SuiteData.GetBuildReportPath(buildReportName)},
 				},
 			})
 			Expect(buildOut).To(ContainSubstring("Building stage"))
