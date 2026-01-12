@@ -2,7 +2,6 @@ package stages
 
 import (
 	"archive/tar"
-	"bytes"
 	"compress/gzip"
 	"context"
 	"fmt"
@@ -13,10 +12,11 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/werf/logboek"
+	"github.com/werf/werf/v2/pkg/tmp_manager"
 )
 
 type ArchiveStorageWriter interface {
-	WriteStageArchive(stageTag string, data []byte) error
+	WriteStageArchive(stageTag string, pull func(writer io.Writer) error) error
 	WithTask(ctx context.Context, task func(ArchiveStorageWriter) error) error
 }
 
@@ -98,26 +98,39 @@ func (writer *ArchiveStorageFileWriter) save() error {
 	return nil
 }
 
-func (writer *ArchiveStorageFileWriter) WriteStageArchive(tag string, data []byte) error {
-	now := time.Now()
-	buf := bytes.NewBuffer(nil)
-	zipper := gzip.NewWriter(buf)
-
-	if _, err := io.Copy(zipper, bytes.NewReader(data)); err != nil {
-		return fmt.Errorf("unable to gzip image archive data: %w", err)
+func (writer *ArchiveStorageFileWriter) writeStageArchive(tag string, reader io.Reader) error {
+	tmpFile, err := tmp_manager.TempFile("stage-archive-*.tar.gz")
+	if err != nil {
+		return fmt.Errorf("unable to create temp file for stage archive: %w", err)
 	}
 
+	tmpPath := tmpFile.Name()
+	defer os.Remove(tmpPath)
+
+	zipper := gzip.NewWriter(tmpFile)
+	if _, err := io.Copy(zipper, reader); err != nil {
+		tmpFile.Close()
+		return fmt.Errorf("unable to gzip stage archive data: %w", err)
+	}
 	if err := zipper.Close(); err != nil {
-		return fmt.Errorf("unable to close gzip image archive: %w", err)
+		tmpFile.Close()
+		return fmt.Errorf("unable to close gzip writer: %w", err)
+	}
+	if err := tmpFile.Close(); err != nil {
+		return fmt.Errorf("unable to close temp file: %w", err)
 	}
 
-	compressedData := buf.Bytes()
+	stat, err := os.Stat(tmpPath)
+	if err != nil {
+		return fmt.Errorf("unable to stat temp file: %w", err)
+	}
 
+	now := time.Now()
 	header := &tar.Header{
 		Name:       fmt.Sprintf(stagePathTemplate, tag),
 		Typeflag:   tar.TypeReg,
 		Mode:       0o777,
-		Size:       int64(len(buf.Bytes())),
+		Size:       stat.Size(),
 		ModTime:    now,
 		AccessTime: now,
 		ChangeTime: now,
@@ -127,17 +140,51 @@ func (writer *ArchiveStorageFileWriter) WriteStageArchive(tag string, data []byt
 		return fmt.Errorf("unable to write stage %q header: %w", tag, err)
 	}
 
-	if _, err := writer.tmpArchiveWriter.Write(compressedData); err != nil {
+	compressedFile, err := os.Open(tmpPath)
+	if err != nil {
+		return fmt.Errorf("unable to open temp file for reading: %w", err)
+	}
+	defer compressedFile.Close()
+
+	if _, err := io.Copy(writer.tmpArchiveWriter, compressedFile); err != nil {
 		return fmt.Errorf("unable to write stage data: %w", err)
 	}
 
 	return nil
 }
 
+func (writer *ArchiveStorageFileWriter) WriteStageArchive(tag string, pull func(w io.Writer) error) error {
+	tmpFile, err := tmp_manager.TempFile("stage-pull-*.tar")
+	if err != nil {
+		return fmt.Errorf("unable to create temp file for pulling stage: %w", err)
+	}
+
+	tmpPath := tmpFile.Name()
+	defer os.Remove(tmpPath)
+
+	if err := pull(tmpFile); err != nil {
+		tmpFile.Close()
+		return fmt.Errorf("unable to pull stage data: %w", err)
+	}
+
+	if err := tmpFile.Close(); err != nil {
+		return fmt.Errorf("unable to close temp file: %w", err)
+	}
+
+	f, err := os.Open(tmpPath)
+	if err != nil {
+		return fmt.Errorf("unable to open temp file for reading: %w", err)
+	}
+	defer f.Close()
+
+	return writer.writeStageArchive(tag, f)
+}
+
 func (writer *ArchiveStorageFileWriter) Close() error {
 	if writer.tmpArchiveCloser != nil {
 		return writer.tmpArchiveCloser()
 	}
+
 	return nil
 }
 
