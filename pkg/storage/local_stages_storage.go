@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
+	"sigs.k8s.io/yaml"
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
@@ -391,6 +392,18 @@ func (storage *LocalStagesStorage) PostLastCleanupRecord(ctx context.Context, pr
 }
 
 func (storage *LocalStagesStorage) MutateAndPushImage(ctx context.Context, src, _ string, newConfig image.SpecConfig, stageImage container_backend.LegacyImageInterface) error {
+	if err := logboek.Context(ctx).Debug().LogBlock("-- LocalStagesStorage.MutateAndPushImage imageSpecConfig").DoError(func() error {
+		newConfigData, err := yaml.Marshal(newConfig)
+		if err != nil {
+			return fmt.Errorf("unable to yaml marshal new config: %w", err)
+		}
+
+		logboek.Context(ctx).Debug().LogF(string(newConfigData))
+		return nil
+	}); err != nil {
+		return err
+	}
+
 	newId, err := container_backend.MutateAndPushImage(ctx, src, newConfig, storage.ContainerBackend)
 	if err != nil {
 		return err

@@ -1,7 +1,6 @@
 package common_test
 
 import (
-	"context"
 	"strings"
 	"testing"
 
@@ -9,7 +8,6 @@ import (
 
 	"github.com/werf/werf/v2/test/pkg/suite_init"
 	"github.com/werf/werf/v2/test/pkg/utils"
-	"github.com/werf/werf/v2/test/pkg/utils/docker"
 )
 
 type setupEnvOptions struct {
@@ -42,14 +40,7 @@ var (
 	_ = SuiteData.SetupWerfBinary(suite_init.NewWerfBinaryData(SuiteData.SynchronizedSuiteCallbacksData))
 	_ = SuiteData.SetupProjectName(suite_init.NewProjectNameData(SuiteData.StubsData))
 	_ = SuiteData.SetupTmp(suite_init.NewTmpDirData())
-
-	_ = SuiteData.AppendSynchronizedBeforeSuiteAllNodesFunc(func(ctx context.Context, _ []byte) {
-		SuiteData.RegistryLocalAddress, SuiteData.RegistryInternalAddress, SuiteData.RegistryContainerName = docker.LocalDockerRegistryRun(ctx)
-	})
-
-	_ = SuiteData.AppendSynchronizedAfterSuiteAllNodesFunc(func(ctx context.Context) {
-		docker.ContainerStopAndRemove(ctx, SuiteData.RegistryContainerName)
-	})
+	_ = SuiteData.SetupK8sDockerRegistry(suite_init.NewK8sDockerRegistryData(SuiteData.ProjectNameData, SuiteData.StubsData))
 
 	_ = AfterEach(func(ctx SpecContext) {
 		utils.RunSucceedCommand(ctx, "", SuiteData.WerfBinPath, "host", "purge", "--force", "--project-name", SuiteData.ProjectName)
@@ -61,16 +52,6 @@ func setupEnv(opts setupEnvOptions) {
 		SuiteData.Stubs.SetEnv("WERF_BUILDAH_MODE", "docker")
 	} else {
 		SuiteData.Stubs.SetEnv("WERF_BUILDAH_MODE", opts.ContainerBackendMode)
-	}
-
-	if opts.WithLocalRepo && (opts.ContainerBackendMode == "docker" || strings.HasSuffix(opts.ContainerBackendMode, "-docker")) {
-		SuiteData.WerfRepo = strings.Join([]string{SuiteData.RegistryLocalAddress, SuiteData.ProjectName}, "/")
-		SuiteData.Stubs.SetEnv("WERF_REPO", SuiteData.WerfRepo)
-	} else if opts.WithLocalRepo {
-		SuiteData.WerfRepo = strings.Join([]string{SuiteData.RegistryInternalAddress, SuiteData.ProjectName}, "/")
-		SuiteData.Stubs.SetEnv("WERF_REPO", SuiteData.WerfRepo)
-	} else {
-		SuiteData.Stubs.UnsetEnv("WERF_REPO")
 	}
 
 	if opts.ContainerBackendMode == "buildkit-docker" {
@@ -85,6 +66,8 @@ func setupEnv(opts setupEnvOptions) {
 	} else {
 		SuiteData.Stubs.UnsetEnv("WERF_INSECURE_REGISTRY")
 		SuiteData.Stubs.UnsetEnv("WERF_SKIP_TLS_VERIFY_REGISTRY")
+
+		SuiteData.Stubs.UnsetEnv("WERF_REPO")
 	}
 
 	if opts.WithStagedDockerfileBuilder {

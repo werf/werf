@@ -20,8 +20,6 @@ cmd/werf/werf
 /pkg/build/builder/ansible/pylogger.so
 *.pyc
 
-/tests/integration/ansible/**/app
-/tests/integration/three-way-merge/**/main
 /bin
 /coverage
 /test/**/*.test

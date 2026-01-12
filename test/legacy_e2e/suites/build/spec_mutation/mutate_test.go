@@ -38,12 +38,17 @@ var _ = Describe("build and mutate image spec", Label("integration", "build", "m
 
 				By(fmt.Sprintf("%s: building images", testOpts.State))
 				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
+
 				buildOut, buildReport := werfProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), nil)
 				Expect(buildOut).To(ContainSubstring("Building stage"))
 
 				By("getting built images metadata")
 				for imageName := range buildReport.Images {
-					contRuntime.Pull(ctx, buildReport.Images[imageName].DockerImageName)
+
+					if testOpts.WithLocalRepo {
+						contRuntime.Pull(ctx, buildReport.Images[imageName].DockerImageName)
+					}
+
 					inspectOfImage := contRuntime.GetImageInspect(ctx, buildReport.Images[imageName].DockerImageName)
 					imgCfg := inspectOfImage.Config
 
@@ -114,9 +119,48 @@ var _ = Describe("build and mutate image spec", Label("integration", "build", "m
 				}
 			}
 		},
-		Entry("without local repo using BuildKit Docker", simpleTestOptions{setupEnvOptions{
+		// Docker Vanilla
+		Entry("with repo using Vanilla Docker", simpleTestOptions{setupEnvOptions{
+			ContainerBackendMode:        "vanilla-docker",
+			WithLocalRepo:               true,
+			WithStagedDockerfileBuilder: false,
+		}}),
+		Entry("without repo using Vanilla Docker", simpleTestOptions{setupEnvOptions{
+			ContainerBackendMode:        "vanilla-docker",
+			WithLocalRepo:               false,
+			WithStagedDockerfileBuilder: false,
+		}}),
+		// Docker BuildKit
+		Entry("with local repo using BuildKit Docker", simpleTestOptions{setupEnvOptions{
 			ContainerBackendMode:        "buildkit-docker",
 			WithLocalRepo:               true,
+			WithStagedDockerfileBuilder: false,
+		}}),
+		Entry("without local repo using BuildKit Docker", simpleTestOptions{setupEnvOptions{
+			ContainerBackendMode:        "buildkit-docker",
+			WithLocalRepo:               false,
+			WithStagedDockerfileBuilder: false,
+		}}),
+		// Buildah rootless
+		Entry("with local repo using Native Buildah with rootless isolation", simpleTestOptions{setupEnvOptions{
+			ContainerBackendMode:        "native-rootless",
+			WithLocalRepo:               true,
+			WithStagedDockerfileBuilder: false,
+		}}),
+		Entry("without local repo using Native Buildah with chroot isolation", simpleTestOptions{setupEnvOptions{
+			ContainerBackendMode:        "native-rootless",
+			WithLocalRepo:               false,
+			WithStagedDockerfileBuilder: false,
+		}}),
+		// Buildah chroot
+		Entry("with local repo using Native Buildah with chroot isolation", simpleTestOptions{setupEnvOptions{
+			ContainerBackendMode:        "native-chroot",
+			WithLocalRepo:               true,
+			WithStagedDockerfileBuilder: false,
+		}}),
+		Entry("with local repo using Native Buildah with chroot isolation", simpleTestOptions{setupEnvOptions{
+			ContainerBackendMode:        "native-chroot",
+			WithLocalRepo:               false,
 			WithStagedDockerfileBuilder: false,
 		}}),
 	)

@@ -1,0 +1,124 @@
+name: tests:all
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  repository_dispatch:
+    types: [tests:all]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    permissions:
+      pull-requests: read
+    outputs:
+      workflow_proceed: ${{ steps.changes.outputs.workflow_proceed || 'true' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Detect changes
+        if: github.event_name == 'pull_request'
+        uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            workflow_proceed:
+              - 'go.mod'
+              - 'Taskfile.dist.yaml'
+              - '.github/**'
+              - 'cmd/werf/**'
+              - 'pkg/**'
+              - 'scripts/**'
+              - 'test/**'
+
+  lint:
+    uses: ./.github/workflows/_lint.yml
+
+  unit:
+    if: needs.detect-changes.outputs.workflow_proceed != 'false'
+    needs: detect-changes
+    uses: ./.github/workflows/_test_unit.yml
+
+  integration_main:
+    if: github.ref == 'refs/heads/main' || needs.detect-changes.outputs.workflow_proceed != 'false'
+    needs: detect-changes
+    uses: ./.github/workflows/_test_integration_regular.yml
+    with:
+      packages: test/legacy_e2e/suites
+      excludePackages: test/legacy_e2e/suites/deploy,test/legacy_e2e/suites/cleanup_after_converge,test/legacy_e2e/suites/helm/deploy_rollback,test/legacy_e2e/suites/bundles,test/legacy_e2e/suites/ansible,test/legacy_e2e/suites/build/stapel_image/git,test/legacy_e2e/suites/docs
+      fetchDepth: 0 # Git history as fixtures for tests.
+    secrets: inherit
+
+  e2e_simple:
+    if: github.ref == 'refs/heads/main' || needs.detect-changes.outputs.workflow_proceed != 'false'
+    needs: detect-changes
+    uses: ./.github/workflows/_test_e2e_regular.yml
+    with:
+      scope: simple
+    secrets: inherit
+
+  e2e_complex:
+    if: github.ref == 'refs/heads/main' || needs.detect-changes.outputs.workflow_proceed != 'false'
+    needs: detect-changes
+    uses: ./.github/workflows/_test_e2e_regular.yml
+    with:
+      scope: complex
+    secrets: inherit
+
+  e2e_extra:
+    if: github.ref == 'refs/heads/main' || needs.detect-changes.outputs.workflow_proceed != 'false'
+    needs: detect-changes
+    uses: ./.github/workflows/_test_e2e_regular.yml
+    with:
+      scope: extra
+    secrets: inherit
+
+  integration_git:
+    if: github.ref == 'refs/heads/main' || needs.detect-changes.outputs.workflow_proceed != 'false'
+    needs: detect-changes
+    uses: ./.github/workflows/_test_integration_regular.yml
+    with:
+      packages: test/legacy_e2e/suites/build/stapel_image/git
+    secrets: inherit
+
+  integration_ansible:
+    if: github.ref == 'refs/heads/main' || needs.detect-changes.outputs.workflow_proceed != 'false'
+    needs: detect-changes
+    uses: ./.github/workflows/_test_integration_regular.yml
+    with:
+      packages: test/legacy_e2e/suites/ansible
+    secrets: inherit
+
+  build:
+    if: needs.detect-changes.outputs.workflow_proceed != 'false'
+    needs: detect-changes
+    uses: ./.github/workflows/_build.yml
+
+  notify:
+    if: |
+      always() && (
+      (github.event_name == 'pull_request' && github.event.pull_request.draft == false && failure()) ||
+      (github.event_name != 'pull_request' && failure())
+      )
+    needs:
+      - lint
+      - unit
+      - integration_main
+      - integration_git
+      - integration_ansible
+      - e2e_simple
+      - e2e_complex
+      - e2e_extra
+    uses: werf/common-ci/.github/workflows/notification.yml@main
+    secrets:
+      loopNotificationGroup: ${{ secrets.LOOP_NOTIFICATION_GROUP }}
+      webhook: ${{ secrets.LOOP_NOTIFICATION_WEBHOOK }}
+      notificationChannel: ${{ secrets.LOOP_NOTIFICATION_CHANNEL }}

@@ -67,8 +67,12 @@ jobs:
       - name: Install ginkgo
         run: task --yes -p deps:install:ginkgo
 
+      - name: Setup environment
+        run: task --yes test:setup:environment
+
       - name: Test
         run: |
+          export WERF_TEST_K8S_DOCKER_REGISTRY="localhost:$(docker inspect kind-registry --format '{{(index (index .NetworkSettings.Ports "5000/tcp") 0).HostPort}}')"
           task --yes -p test:integration paths="$(echo ${{ inputs.packages }} | tr , ' ')" -- --flake-attempts=3 --keep-going --skip-package '${{ inputs.excludePackages }}'
           echo loadavg: $(cat /proc/loadavg)
         env:
@@ -78,3 +82,7 @@ jobs:
         uses: ./.github/actions/upload-coverage-artifact
         with:
           coverage: ${{ inputs.coverage }}
+
+      - name: Cleanup environment
+        if: always()
+        run: task --yes test:cleanup:environment

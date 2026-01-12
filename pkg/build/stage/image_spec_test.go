@@ -2,12 +2,12 @@ package stage
 
 import (
 	"context"
+	"maps"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
 	"github.com/werf/werf/v2/pkg/config"
-	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/image"
 )
 
@@ -113,9 +113,9 @@ func TestEnvExpander(t *testing.T) {
 
 		env, err := modifyEnv(existed, toRemove, toAdd)
 		assert.NoError(t, err)
-		expceted := []string{}
+		excepted := []string{}
 		for _, e := range env {
-			assert.Contains(t, expceted, e)
+			assert.Contains(t, excepted, e)
 		}
 	})
 }
@@ -195,11 +195,6 @@ func TestModifyLabels(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			labelsCopy := make(map[string]string)
-			for k, v := range tt.labels {
-				labelsCopy[k] = v
-			}
-
 			s := ImageSpecStage{
 				BaseStage: &BaseStage{
 					projectName: "TEST-PROJECT",
@@ -209,20 +204,14 @@ func TestModifyLabels(t *testing.T) {
 					},
 				},
 			}
+			expectedInitialLabels := maps.Clone(tt.labels)
 
-			modifiedLabels, err := s.modifyLabels(ctx, labelsCopy, tt.addLabels, tt.removeLabels, false)
+			modifiedLabels, err := s.modifyLabels(ctx, tt.labels, tt.addLabels, tt.removeLabels, false)
 			assert.NoError(t, err)
+			assert.Equal(t, expectedInitialLabels, tt.labels) // be immutable
 			assert.Equal(t, tt.expectedLabels, modifiedLabels)
 		})
 	}
-}
-
-type MockImage struct {
-	Labels map[string]string
-}
-
-func (i *MockImage) Build(_ context.Context, _ container_backend.BuildOptions) error {
-	return nil
 }
 
 func TestModifyVolumes(t *testing.T) {
@@ -299,7 +288,11 @@ func TestModifyVolumes(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			expectedInitialVolumes := maps.Clone(tt.initialVolumes)
+
 			modifiedVolumes := modifyVolumes(tt.initialVolumes, tt.removeVolumes, tt.addVolumes)
+
+			assert.Equal(t, expectedInitialVolumes, tt.initialVolumes) // be immutable
 			assert.Equal(t, tt.expected, modifiedVolumes)
 		})
 	}

@@ -116,12 +116,16 @@ jobs:
       - name: Install ginkgo
         run: task --yes -p deps:install:ginkgo
 
+      - name: Setup environment
+        run: task --yes test:setup:environment
+
       - name: Check container registry creds
         run: ./scripts/ci/integration_tests_registries_login.sh ${{ matrix.cr }}
 
       - name: Test
         run: |
-          task --yes -p test:integration paths="integration/suites/cleanup integration/suites/managed_images" -- --focus="\[${{ matrix.cr }}\]" --flake-attempts=3 --keep-going
+          export WERF_TEST_K8S_DOCKER_REGISTRY="localhost:$(docker inspect kind-registry --format '{{(index (index .NetworkSettings.Ports "5000/tcp") 0).HostPort}}')"
+          task --yes -p test:integration paths="test/legacy_e2e/suites/cleanup test/legacy_e2e/suites/managed_images" -- --focus="\[${{ matrix.cr }}\]" --flake-attempts=3 --keep-going
           echo loadavg: $(cat /proc/loadavg)
         env:
           GOCOVERDIR: ${{ env.WERF_TEST_COVER_DIR }}
@@ -130,3 +134,7 @@ jobs:
         uses: ./.github/actions/upload-coverage-artifact
         with:
           coverage: ${{ inputs.coverage }}
+
+      - name: Cleanup environment
+        if: always()
+        run: task --yes test:cleanup:environment

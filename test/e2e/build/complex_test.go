@@ -1,6 +1,7 @@
 package e2e_build_test
 
 import (
+	"errors"
 	"fmt"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -21,7 +22,7 @@ var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 			By("initializing")
 			setupEnv(testOpts.setupEnvOptions)
 			contRuntime, err := contback.NewContainerBackend(testOpts.ContainerBackendMode)
-			if err == contback.ErrRuntimeUnavailable {
+			if errors.Is(err, contback.ErrRuntimeUnavailable) {
 				Skip(err.Error())
 			} else if err != nil {
 				Fail(err.Error())

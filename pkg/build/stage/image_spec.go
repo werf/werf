@@ -5,12 +5,17 @@ import (
 	"context"
 	"fmt"
 	"html/template"
+	"maps"
 	"regexp"
+	"slices"
 	"sort"
 	"strings"
 	"time"
 
+	"sigs.k8s.io/yaml"
+
 	"github.com/werf/common-go/pkg/util"
+	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/image"
@@ -56,7 +61,21 @@ func (s *ImageSpecStage) IsMutable() bool {
 
 func (s *ImageSpecStage) PrepareImage(ctx context.Context, _ Conveyor, _ container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, _ container_backend.BuildContextArchiver) error {
 	if s.imageSpec != nil {
-		imageInfo := prevBuiltImage.Image.GetStageDesc().Info
+		// NOTE. We need a copy, because we mutate labels, volumes and envs.
+		imageInfo := prevBuiltImage.Image.GetStageDesc().Info.GetCopy()
+
+		if err := logboek.Context(ctx).Debug().LogBlock("-- ImageSpecStage.PrepareImage source image info").DoError(func() error {
+			data, err := yaml.Marshal(imageInfo)
+			if err != nil {
+				return fmt.Errorf("unable to yaml marshal: %w", err)
+			}
+
+			logboek.Context(ctx).Debug().LogF(string(data))
+			return nil
+		}); err != nil {
+			return err
+		}
+
 		newConfig := s.baseConfig()
 
 		{
@@ -107,6 +126,18 @@ func (s *ImageSpecStage) PrepareImage(ctx context.Context, _ Conveyor, _ contain
 
 		// set config
 		s.newConfig = newConfig
+
+		if err := logboek.Context(ctx).Debug().LogBlock("-- ImageSpecStage.PrepareImage prepared image spec config").DoError(func() error {
+			data, err := yaml.Marshal(s.newConfig)
+			if err != nil {
+				return fmt.Errorf("unable to yaml marshal: %w", err)
+			}
+
+			logboek.Context(ctx).Debug().LogF(string(data))
+			return nil
+		}); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -190,7 +221,9 @@ func (s *ImageSpecStage) baseConfig() image.SpecConfig {
 }
 
 func (s *ImageSpecStage) modifyLabels(ctx context.Context, labels, addLabels map[string]string, removeLabels []string, keepEssentialWerfLabels bool) (map[string]string, error) {
-	if labels == nil {
+	if labels != nil {
+		labels = maps.Clone(labels) // Ensure original labels are not modified
+	} else {
 		labels = make(map[string]string)
 	}
 
@@ -278,7 +311,14 @@ func replaceLabelTemplate(k, v string, data labelsTemplateData) (string, string,
 }
 
 func modifyEnv(env, removeKeys []string, addKeysMap map[string]string) ([]string, error) {
+	if env != nil {
+		env = slices.Clone(env) // Ensure original env is not modified
+	} else {
+		env = make([]string, 0)
+	}
+
 	baseEnvMap := make(map[string]string, len(env))
+
 	for _, entry := range env {
 		parts := strings.SplitN(entry, "=", 2)
 		if len(parts) == 2 {
@@ -324,7 +364,9 @@ func modifyEnv(env, removeKeys []string, addKeysMap map[string]string) ([]string
 }
 
 func modifyVolumes(volumes map[string]struct{}, removeVolumes, addVolumes []string) map[string]struct{} {
-	if volumes == nil {
+	if volumes != nil {
+		volumes = maps.Clone(volumes) // Ensure original volumes are not modified
+	} else {
 		volumes = make(map[string]struct{})
 	}
 

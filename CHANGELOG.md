@@ -1,5 +1,26 @@
 # Changelog
 
+## [2.57.1](https://github.com/werf/werf/compare/v2.57.0...v2.57.1) (2025-12-30)
+
+
+### Miscellaneous Chores
+
+* **release:** force 2.57.1 ([9400070](https://github.com/werf/werf/commit/9400070341b58e9dce1025ac465cd3e6a6319e7c))
+
+## [2.57.0](https://github.com/werf/werf/compare/v2.56.2...v2.57.0) (2025-12-23)
+
+
+### Features
+
+* **deploy:** `NELM_FEAT_MORE_DETAILED_EXIT_CODE_FOR_PLAN=true` to return exit code 3 on "no resource changes, but must install release" if `--exit-code` ([7dede71](https://github.com/werf/werf/commit/7dede71bd2cca3043f5466de7c707df6b55ae222))
+
+
+### Bug Fixes
+
+* **buildah:** heredoc in the Dockerfile is not taken into account during the build with staged: true ([#7279](https://github.com/werf/werf/issues/7279)) ([3c73afb](https://github.com/werf/werf/commit/3c73afbc55bf83c751e6544c6e605943327e7609))
+* **build:** fix image-spec immutability ([#7288](https://github.com/werf/werf/issues/7288)) ([69e7154](https://github.com/werf/werf/commit/69e7154298b516c8fcca851b6969a5515e384563))
+* **deploy:** panic in pre/post-delete hooks tracking ([839074f](https://github.com/werf/werf/commit/839074fd0b80cf957c24ae3e57ff923b46623d24))
+
 ## [2.56.2](https://github.com/werf/werf/compare/v2.56.1...v2.56.2) (2025-12-10)
 
 

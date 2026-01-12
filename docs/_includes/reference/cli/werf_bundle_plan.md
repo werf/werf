@@ -52,8 +52,8 @@ werf bundle plan [options]
       --env=""
             Use specified environment (default $WERF_ENV)
       --exit-code=false
-            If true, returns exit code 0 if no changes, exit code 2 if any changes planned or exit  
-            code 1 in case of an error (default $WERF_EXIT_CODE or false)
+            Return exit code 0 if no changes, 1 if error, 2 if any changes planned (default         
+            $WERF_EXIT_CODE or false)
       --force-adoption=false
             Always adopt resources, even if they belong to a different Helm release (default        
             $WERF_FORCE_ADOPTION or false)
