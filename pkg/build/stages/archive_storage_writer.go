@@ -99,7 +99,7 @@ func (writer *ArchiveStorageFileWriter) save() error {
 }
 
 func (writer *ArchiveStorageFileWriter) writeStageArchive(tag string, reader io.Reader) error {
-	tmpFile, err := tmp_manager.TempFile("stage-archive-*.tar.gz")
+	tmpFile, err := tmp_manager.TempFile("stage-compressed-*.tar.gz")
 	if err != nil {
 		return fmt.Errorf("unable to create temp file for stage archive: %w", err)
 	}
@@ -154,11 +154,10 @@ func (writer *ArchiveStorageFileWriter) writeStageArchive(tag string, reader io.
 }
 
 func (writer *ArchiveStorageFileWriter) WriteStageArchive(tag string, pull func(w io.Writer) error) error {
-	tmpFile, err := tmp_manager.TempFile("stage-pull-*.tar")
+	tmpFile, err := tmp_manager.TempFile("stage-uncompressed-*.tar")
 	if err != nil {
 		return fmt.Errorf("unable to create temp file for pulling stage: %w", err)
 	}
-
 	tmpPath := tmpFile.Name()
 	defer os.Remove(tmpPath)
 
@@ -171,13 +170,13 @@ func (writer *ArchiveStorageFileWriter) WriteStageArchive(tag string, pull func(
 		return fmt.Errorf("unable to close temp file: %w", err)
 	}
 
-	f, err := os.Open(tmpPath)
+	uncompressedFile, err := os.Open(tmpPath)
 	if err != nil {
 		return fmt.Errorf("unable to open temp file for reading: %w", err)
 	}
-	defer f.Close()
+	defer uncompressedFile.Close()
 
-	return writer.writeStageArchive(tag, f)
+	return writer.writeStageArchive(tag, uncompressedFile)
 }
 
 func (writer *ArchiveStorageFileWriter) Close() error {
