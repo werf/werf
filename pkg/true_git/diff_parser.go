@@ -236,7 +236,6 @@ func (p *diffParser) handleDiffLine(line string) error {
 			return p.handleRenameFrom(line)
 		}
 		if strings.HasPrefix(line, "rename to ") {
-			// Just skip rename to line, the destination path is already in Paths from handleDiffBegin
 			return nil
 		}
 		if strings.HasPrefix(line, "index ") {
@@ -244,7 +243,6 @@ func (p *diffParser) handleDiffLine(line string) error {
 			return p.handleIndexDiffLine(line)
 		}
 		if strings.HasPrefix(line, "diff --git ") {
-			// Pure rename without content change - go to next diff
 			return p.handleDiffBegin(line)
 		}
 		if strings.HasPrefix(line, "Submodule ") {
@@ -449,7 +447,6 @@ func (p *diffParser) handleBinaryBeginHeader(line string) error {
 		p.BinaryPaths = appendUnique(p.BinaryPaths, path)
 	}
 
-	// If this is a deleted file, add paths to PathsToRemove
 	if p.state == deleteFileDiff {
 		for _, path := range p.LastSeenPaths {
 			p.PathsToRemove = appendUnique(p.PathsToRemove, path)
@@ -466,7 +463,6 @@ func (p *diffParser) handleShortBinaryHeader(line string) error {
 		p.BinaryPaths = appendUnique(p.BinaryPaths, path)
 	}
 
-	// If this is a deleted file, add paths to PathsToRemove
 	if p.state == deleteFileDiff {
 		for _, path := range p.LastSeenPaths {
 			p.PathsToRemove = appendUnique(p.PathsToRemove, path)
@@ -486,19 +482,15 @@ func (p *diffParser) applyFileRenames(path string) string {
 }
 
 func (p *diffParser) handleSimilarityIndex(_ string) error {
-	// similarity index indicates a rename operation
-	// Transition to renameDiff state to handle "rename from" and "rename to" lines
 	p.state = renameDiff
 	return nil
 }
 
 func (p *diffParser) handleRenameFrom(line string) error {
-	// Extract the source path from "rename from <path>" line
 	path := strings.TrimPrefix(line, "rename from ")
 	path = p.applyFileRenames(path)
 	newPath := p.trimFileBaseFilepath(path)
 
-	// The source file of a rename should be removed
 	p.PathsToRemove = appendUnique(p.PathsToRemove, newPath)
 
 	return nil

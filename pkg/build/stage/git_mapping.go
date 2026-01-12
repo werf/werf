@@ -1014,11 +1014,9 @@ func (gm *GitMapping) preparePatchPathsListFile(patch git_repo.Patch) (*Containe
 	for _, p := range patch.GetPaths() {
 		fullPaths = append(fullPaths, path.Join(gm.To, p))
 	}
-	// Also include PathsToRemove to ensure deleted files are removed
-	// This is important for binary file deletions
+
 	for _, p := range patch.GetPathsToRemove() {
 		fullPath := path.Join(gm.To, p)
-		// Avoid duplicates
 		found := false
 		for _, existing := range fullPaths {
 			if existing == fullPath {
