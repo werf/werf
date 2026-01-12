@@ -6,9 +6,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"slices"
+	"strings"
 
 	"github.com/otiai10/copy"
+	"github.com/samber/lo"
 )
 
 func CreateDockerConfigDir(ctx context.Context, fromDockerConfig string) (string, error) {
@@ -44,11 +45,26 @@ func CreateDockerConfigDir(ctx context.Context, fromDockerConfig string) (string
 	// - `~/.docker/scout` – location for the docker-scout CLI plugin binary when installed manually; referenced via cliPluginsExtraDirs in config.json.
 
 	// Define options to skip specific directories
-	dockerPathsToSkip := []string{"cli-plugins", "buildx", "machine", "desktop", "run", "mutagen", "scout"}
+	dockerPathsToSkip := lo.Map([]string{
+		"cli-plugins",
+		"buildx",
+		"machine",
+		"desktop",
+		"run",
+		"mutagen",
+		"scout",
+	}, func(pathToSkip string, _ int) string {
+		return filepath.Join(fromDockerConfig, pathToSkip)
+	})
 
 	options := copy.Options{
-		Skip: func(srcInfo os.FileInfo, src, dst string) (bool, error) {
-			return slices.Contains(dockerPathsToSkip, srcInfo.Name()), nil
+		Skip: func(_ os.FileInfo, src, dst string) (bool, error) {
+			for _, pathToSkip := range dockerPathsToSkip {
+				if strings.HasPrefix(src, pathToSkip) {
+					return true, nil
+				}
+			}
+			return false, nil
 		},
 	}
 
