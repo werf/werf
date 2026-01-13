@@ -154,7 +154,7 @@ func (p *diffParser) handleDiffLine(line string) error {
 			return p.handleModifyFileDiff(line)
 		}
 		if strings.HasPrefix(line, "similarity index ") {
-			return p.handleSimilarityIndex(line)
+			return p.handleSimilarityIndex()
 		}
 		if strings.HasPrefix(line, "index ") {
 			p.state = modifyFileDiff
@@ -481,8 +481,9 @@ func (p *diffParser) applyFileRenames(path string) string {
 	return path
 }
 
-func (p *diffParser) handleSimilarityIndex(_ string) error {
+func (p *diffParser) handleSimilarityIndex() error {
 	p.state = renameDiff
+
 	return nil
 }
 
