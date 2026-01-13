@@ -5,6 +5,8 @@ import (
 
 	"github.com/containers/storage/types"
 	"github.com/docker/cli/cli"
+
+	"github.com/werf/werf/v2/pkg/log_sanitize"
 )
 
 var (
@@ -44,4 +46,19 @@ func CliErrorByCode(err error) error {
 		}
 	}
 	return err
+}
+
+func SanitizeError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	msg := err.Error()
+	sanitized := log_sanitize.SanitizeDockerRateLimit(msg)
+
+	if sanitized == msg {
+		return err
+	}
+
+	return errors.New(sanitized)
 }

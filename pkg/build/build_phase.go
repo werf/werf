@@ -1048,6 +1048,7 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 			opts := phase.ImageBuildOptions
 			opts.TargetPlatform = img.TargetPlatform
 			if err := stageImage.Builder.Build(ctx, opts); err != nil {
+				err = container_backend.SanitizeError(err)
 				return fmt.Errorf("error building stage %s: %w", stg.Name(), err)
 			}
 			return nil

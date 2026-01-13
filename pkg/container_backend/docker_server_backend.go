@@ -246,6 +246,7 @@ func (backend *DockerServerBackend) RemoveImage(ctx context.Context, img LegacyI
 
 func (backend *DockerServerBackend) PullImageFromRegistry(ctx context.Context, img LegacyImageInterface) error {
 	if err := img.Pull(ctx); err != nil {
+		err = SanitizeError(err)
 		return fmt.Errorf("unable to pull image %s: %w", img.Name(), err)
 	}
 
