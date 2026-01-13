@@ -84,8 +84,6 @@ func SetupDockerfileStagesDependencies(stages []*DockerfileStage) error {
 					if dep := findStageByRef(typedInstr.From, stages, stageByName); dep != nil {
 						stage.AppendDependencyStage(dep)
 						instr.SetDependencyByStageRef(typedInstr.From, dep)
-					} else {
-						return fmt.Errorf("unable to resolve stage %q instruction %s --from=%q: no such stage", stage.LogName(), instr.GetInstructionData().Name(), typedInstr.From)
 					}
 				}
 
@@ -96,8 +94,6 @@ func SetupDockerfileStagesDependencies(stages []*DockerfileStage) error {
 						if dep := findStageByRef(mount.From, stages, stageByName); dep != nil {
 							stage.AppendDependencyStage(dep)
 							instr.SetDependencyByStageRef(mount.From, dep)
-						} else {
-							return fmt.Errorf("unable to resolve stage %q instruction %s --mount=from=%s: no such stage", stage.LogName(), instr.GetInstructionData().Name(), mount.From)
 						}
 					}
 				}

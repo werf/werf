@@ -109,4 +109,25 @@ var _ = Describe("Images dependencies", Label("e2e", "build", "extra"), func() {
 			Expect(werfRunOutput(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), "dockerfile", "cat /BASE_DOCKERFILE_IMAGE_TAG")).To(Equal(baseDockerfileTag))
 		})
 	})
+	When("dockerfile image uses COPY --from stage and external image", func() {
+		It("should build staged dockerfile with COPY --from correctly", func(ctx SpecContext) {
+			SuiteData.CommitProjectWorktree(
+				ctx,
+				SuiteData.ProjectName,
+				"_fixtures/images_dependencies/state1",
+				"initial commit",
+			)
+			Expect(
+				werfBuild(
+					ctx,
+					SuiteData.GetProjectWorktree(SuiteData.ProjectName),
+					liveexec.ExecCommandOptions{
+						Env: map[string]string{
+							"WERF_BUILDAH_MODE": "auto",
+						},
+					},
+				),
+			).To(Succeed())
+		})
+	})
 })

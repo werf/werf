@@ -1,0 +1,6 @@
+project: werf-contains-awesome-bug
+configVersion: 1
+---
+image: app
+dockerfile: Dockerfile
+staged: true
