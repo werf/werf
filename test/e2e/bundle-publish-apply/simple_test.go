@@ -7,6 +7,7 @@ import (
 
 	"github.com/werf/3p-helm/pkg/release"
 	"github.com/werf/kubedog/pkg/kube"
+	"github.com/werf/werf/v2/test/pkg/report"
 	"github.com/werf/werf/v2/test/pkg/utils"
 	"github.com/werf/werf/v2/test/pkg/werf"
 )
@@ -44,12 +45,13 @@ var _ = Describe("Simple bundle publish/apply", Label("e2e", "bundle-publish-app
 				By("state0: preparing test repo")
 				SuiteData.InitTestRepo(ctx, repoDirname, fixtureRelPath)
 				werfProject = werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
+				reportProject := report.NewProjectWithReport(werfProject)
 
 				By("state0: execute bundle publish")
 				_ = werfProject.BundlePublish(ctx, nil)
 
 				By("state0: execute bundle apply")
-				_, deployReport := werfProject.BundleApplyWithReport(ctx, werfProject.Release(ctx), werfProject.Namespace(ctx), SuiteData.GetDeployReportPath(deployReportName), nil)
+				_, deployReport := reportProject.BundleApplyWithReport(ctx, werfProject.Release(ctx), werfProject.Namespace(ctx), SuiteData.GetDeployReportPath(deployReportName), nil)
 
 				By("state0: check deploy report")
 				Expect(deployReport.Release).To(Equal(werfProject.Release(ctx)))

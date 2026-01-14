@@ -10,6 +10,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/samber/lo"
 
+	"github.com/werf/werf/v2/test/pkg/report"
 	"github.com/werf/werf/v2/test/pkg/werf"
 )
 
@@ -37,6 +38,7 @@ var _ = Describe("Custom tag build", Label("e2e", "build", "simple"), func() {
 
 			By("state0: building images")
 			werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
+			reportProject := report.NewProjectWithReport(werfProject)
 
 			customTags := lo.Map(opts.CustomTags, func(t string, _ int) string {
 				return fmt.Sprintf("--add-custom-tag=%s", t)
@@ -44,7 +46,7 @@ var _ = Describe("Custom tag build", Label("e2e", "build", "simple"), func() {
 
 			buildArgs := slices.Concat(customTags, opts.BuildImages)
 
-			buildOut, _ := werfProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), &werf.BuildWithReportOptions{
+			buildOut, _ := reportProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), &werf.WithReportOptions{
 				CommonOptions: werf.CommonOptions{
 					ExtraArgs: buildArgs,
 				},

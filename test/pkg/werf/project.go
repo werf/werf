@@ -2,19 +2,14 @@ package werf
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"os"
 	"os/user"
 	"path/filepath"
 	"strings"
 	"sync"
-	"time"
 
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/3p-helm/pkg/release"
-	"github.com/werf/werf/v2/pkg/build"
 	iutils "github.com/werf/werf/v2/test/pkg/utils"
 )
 
@@ -34,106 +29,15 @@ type Project struct {
 	mu        sync.Mutex
 }
 
-type CommonOptions struct {
-	ShouldFail bool
-	ExtraArgs  []string
-
-	CancelOnOutput        string
-	CancelOnOutputTimeout time.Duration
-}
-
-type BuildOptions struct {
-	CommonOptions
-}
-
-type BuildWithReportOptions struct {
-	CommonOptions
-}
-
-type ConvergeOptions struct {
-	CommonOptions
-}
-
-type ConvergeWithReportOptions struct {
-	CommonOptions
-}
-
-type BundlePublishOptions struct {
-	CommonOptions
-}
-
-type BundlePublishWithReportOptions struct {
-	CommonOptions
-}
-
-type BundleApplyOptions struct {
-	CommonOptions
-}
-
-type BundleApplyWithReportOptions struct {
-	CommonOptions
-}
-
-type ExportOptions struct {
-	CommonOptions
-}
-
-type CiEnvOptions struct {
-	CommonOptions
-}
-
-type HostCleanupOptions struct {
-	CommonOptions
-}
-
-type KubeRunOptions struct {
-	CommonOptions
-	Command []string
-	Image   string
-}
-
-type StagesCopyOptions struct {
-	CommonOptions
-}
-
-type KubeCtlOptions struct {
-	CommonOptions
-}
-
-type runCommandOptions struct {
-	ShouldFail bool
-	Args       []string
-
-	CancelOnOutput        string
-	CancelOnOutputTimeout time.Duration
-}
-
 func (p *Project) Build(ctx context.Context, opts *BuildOptions) (combinedOut string) {
 	if opts == nil {
 		opts = &BuildOptions{}
 	}
 
 	args := append([]string{"build"}, opts.ExtraArgs...)
-	outb := p.runCommand(ctx, runCommandOptions{Args: args, ShouldFail: opts.ShouldFail})
+	outb := p.RunCommand(ctx, args, opts.CommonOptions)
 
 	return string(outb)
-}
-
-func (p *Project) BuildWithReport(ctx context.Context, buildReportPath string, opts *BuildWithReportOptions) (string, build.ImagesReport) {
-	if opts == nil {
-		opts = &BuildWithReportOptions{}
-	}
-
-	args := append([]string{"build", "--save-build-report", "--build-report-path", buildReportPath}, opts.ExtraArgs...)
-	out := p.runCommand(ctx, runCommandOptions{Args: args, ShouldFail: opts.ShouldFail})
-
-	buildReportRaw, err := os.ReadFile(buildReportPath)
-	Expect(err).NotTo(HaveOccurred())
-
-	var buildReport build.ImagesReport
-	Expect(json.Unmarshal(buildReportRaw, &buildReport)).To(Succeed())
-
-	return out, buildReport
 }
 
 func (p *Project) Converge(ctx context.Context, opts *ConvergeOptions) (combinedOut string) {
@@ -142,26 +46,9 @@ func (p *Project) Converge(ctx context.Context, opts *ConvergeOptions) (combined
 	}
 
 	args := append([]string{"converge"}, opts.ExtraArgs...)
-	outb := p.runCommand(ctx, runCommandOptions{Args: args, ShouldFail: opts.ShouldFail})
+	outb := p.RunCommand(ctx, args, opts.CommonOptions)
 
 	return string(outb)
-}
-
-func (p *Project) ConvergeWithReport(ctx context.Context, deployReportPath string, opts *ConvergeWithReportOptions) (combinedOut string, report release.DeployReport) {
-	if opts == nil {
-		opts = &ConvergeWithReportOptions{}
-	}
-
-	args := append([]string{"converge", "--save-deploy-report", "--deploy-report-path", deployReportPath}, opts.ExtraArgs...)
-	out := p.runCommand(ctx, runCommandOptions{Args: args, ShouldFail: opts.ShouldFail})
-
-	deployReportRaw, err := os.ReadFile(deployReportPath)
-	Expect(err).NotTo(HaveOccurred())
-
-	var deployReport release.DeployReport
-	Expect(json.Unmarshal(deployReportRaw, &deployReport)).To(Succeed())
-
-	return out, deployReport
 }
 
 func (p *Project) BundlePublish(ctx context.Context, opts *BundlePublishOptions) (combinedOut string) {
@@ -170,26 +57,9 @@ func (p *Project) BundlePublish(ctx context.Context, opts *BundlePublishOptions)
 	}
 
 	args := append([]string{"bundle", "publish"}, opts.ExtraArgs...)
-	outb := p.runCommand(ctx, runCommandOptions{Args: args, ShouldFail: opts.ShouldFail})
+	outb := p.RunCommand(ctx, args, opts.CommonOptions)
 
 	return string(outb)
-}
-
-func (p *Project) BundlePublishWithReport(ctx context.Context, buildReportPath string, opts *BundlePublishWithReportOptions) (string, build.ImagesReport) {
-	if opts == nil {
-		opts = &BundlePublishWithReportOptions{}
-	}
-
-	args := append([]string{"bundle", "publish", "--save-build-report", "--build-report-path", buildReportPath}, opts.ExtraArgs...)
-	out := p.runCommand(ctx, runCommandOptions{Args: args, ShouldFail: opts.ShouldFail})
-
-	buildReportRaw, err := os.ReadFile(buildReportPath)
-	Expect(err).NotTo(HaveOccurred())
-
-	var buildReport build.ImagesReport
-	Expect(json.Unmarshal(buildReportRaw, &buildReport)).To(Succeed())
-
-	return out, buildReport
 }
 
 func (p *Project) BundleApply(ctx context.Context, releaseName, namespace string, opts *BundleApplyOptions) (combinedOut string) {
@@ -198,26 +68,9 @@ func (p *Project) BundleApply(ctx context.Context, releaseName, namespace string
 	}
 
 	args := append([]string{"bundle", "apply", "--release", releaseName, "--namespace", namespace}, opts.ExtraArgs...)
-	outb := p.runCommand(ctx, runCommandOptions{Args: args, ShouldFail: opts.ShouldFail})
+	outb := p.RunCommand(ctx, args, opts.CommonOptions)
 
 	return string(outb)
-}
-
-func (p *Project) BundleApplyWithReport(ctx context.Context, releaseName, namespace, deployReportPath string, opts *BundleApplyWithReportOptions) (string, release.DeployReport) {
-	if opts == nil {
-		opts = &BundleApplyWithReportOptions{}
-	}
-
-	args := append([]string{"bundle", "apply", "--release", releaseName, "--namespace", namespace, "--save-deploy-report", "--deploy-report-path", deployReportPath}, opts.ExtraArgs...)
-	out := p.runCommand(ctx, runCommandOptions{Args: args, ShouldFail: opts.ShouldFail})
-
-	deployReportRaw, err := os.ReadFile(deployReportPath)
-	Expect(err).NotTo(HaveOccurred())
-
-	var deployReport release.DeployReport
-	Expect(json.Unmarshal(deployReportRaw, &deployReport)).To(Succeed())
-
-	return out, deployReport
 }
 
 func (p *Project) KubeRun(ctx context.Context, opts *KubeRunOptions) string {
@@ -236,12 +89,7 @@ func (p *Project) KubeRun(ctx context.Context, opts *KubeRunOptions) string {
 		args = append(args, opts.Command...)
 	}
 
-	return p.runCommand(ctx, runCommandOptions{
-		Args:                  args,
-		ShouldFail:            opts.ShouldFail,
-		CancelOnOutput:        opts.CancelOnOutput,
-		CancelOnOutputTimeout: opts.CancelOnOutputTimeout,
-	})
+	return p.RunCommand(ctx, args, opts.CommonOptions)
 }
 
 func (p *Project) KubeCtl(ctx context.Context, opts *KubeCtlOptions) string {
@@ -251,7 +99,7 @@ func (p *Project) KubeCtl(ctx context.Context, opts *KubeCtlOptions) string {
 
 	args := append([]string{"kubectl"}, opts.ExtraArgs...)
 
-	return p.runCommand(ctx, runCommandOptions{Args: args, ShouldFail: opts.ShouldFail})
+	return p.RunCommand(ctx, args, opts.CommonOptions)
 }
 
 func (p *Project) Namespace(ctx context.Context) string {
@@ -259,7 +107,7 @@ func (p *Project) Namespace(ctx context.Context) string {
 	defer p.mu.Unlock()
 
 	if p.namespace == "" {
-		p.namespace = strings.TrimSpace(p.runCommand(ctx, runCommandOptions{Args: []string{"helm", "get-namespace"}}))
+		p.namespace = strings.TrimSpace(p.RunCommand(ctx, []string{"helm", "get-namespace"}, CommonOptions{}))
 	}
 
 	return p.namespace
@@ -270,7 +118,7 @@ func (p *Project) Release(ctx context.Context) string {
 	defer p.mu.Unlock()
 
 	if p.release == "" {
-		p.release = strings.TrimSpace(p.runCommand(ctx, runCommandOptions{Args: []string{"helm", "get-release"}}))
+		p.release = strings.TrimSpace(p.RunCommand(ctx, []string{"helm", "get-release"}, CommonOptions{}))
 	}
 
 	return p.release
@@ -310,12 +158,21 @@ func (p *Project) CreateRegistryPullSecretFromDockerConfig(ctx context.Context) 
 	})
 }
 
-func (p *Project) runCommand(ctx context.Context, opts runCommandOptions) string {
-	outb, _ := iutils.RunCommandWithOptions(ctx, p.GitRepoPath, p.WerfBinPath, opts.Args, iutils.RunCommandOptions{
-		ShouldSucceed:         !opts.ShouldFail,
-		CancelOnOutput:        opts.CancelOnOutput,
-		CancelOnOutputTimeout: opts.CancelOnOutputTimeout,
-	})
+func (p *Project) RunCommand(
+	ctx context.Context,
+	args []string,
+	opts CommonOptions,
+) string {
+	outb, _ := iutils.RunCommandWithOptions(
+		ctx,
+		p.GitRepoPath,
+		p.WerfBinPath,
+		args,
+		iutils.RunCommandOptions{
+			ShouldSucceed:         !opts.ShouldFail,
+			CancelOnOutput:        opts.CancelOnOutput,
+			CancelOnOutputTimeout: opts.CancelOnOutputTimeout,
+		})
 	return string(outb)
 }
 
@@ -325,7 +182,7 @@ func (p *Project) Compose(ctx context.Context, opts *BuildOptions) (combinedOut 
 	}
 
 	args := append([]string{"compose"}, opts.ExtraArgs...)
-	outb := p.runCommand(ctx, runCommandOptions{Args: args, ShouldFail: opts.ShouldFail})
+	outb := p.RunCommand(ctx, args, opts.CommonOptions)
 
 	return string(outb)
 }
@@ -335,7 +192,7 @@ func (p *Project) Export(ctx context.Context, opts *ExportOptions) (combinedOut 
 		opts = &ExportOptions{}
 	}
 	args := append([]string{"export"}, opts.ExtraArgs...)
-	outb := p.runCommand(ctx, runCommandOptions{Args: args, ShouldFail: opts.ShouldFail})
+	outb := p.RunCommand(ctx, args, opts.CommonOptions)
 
 	return string(outb)
 }
@@ -345,7 +202,7 @@ func (p *Project) CiEnv(ctx context.Context, opts *CiEnvOptions) (combinedOut st
 		opts = &CiEnvOptions{}
 	}
 	args := append([]string{"ci-env"}, opts.ExtraArgs...)
-	outb := p.runCommand(ctx, runCommandOptions{Args: args, ShouldFail: opts.ShouldFail})
+	outb := p.RunCommand(ctx, args, opts.CommonOptions)
 
 	return string(outb)
 }
@@ -355,7 +212,7 @@ func (p *Project) HostCleanup(ctx context.Context, opts *HostCleanupOptions) (co
 		opts = &HostCleanupOptions{}
 	}
 	args := append([]string{"host", "cleanup"}, opts.ExtraArgs...)
-	outb := p.runCommand(ctx, runCommandOptions{Args: args, ShouldFail: opts.ShouldFail})
+	outb := p.RunCommand(ctx, args, opts.CommonOptions)
 
 	return string(outb)
 }
@@ -366,7 +223,7 @@ func (p *Project) StagesCopy(ctx context.Context, opts *StagesCopyOptions) (comb
 	}
 
 	args := append([]string{"stages", "copy"}, opts.ExtraArgs...)
-	outb := p.runCommand(ctx, runCommandOptions{Args: args, ShouldFail: opts.ShouldFail})
+	outb := p.RunCommand(ctx, args, opts.CommonOptions)
 
 	return string(outb)
 }

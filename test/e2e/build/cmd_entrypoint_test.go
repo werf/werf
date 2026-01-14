@@ -7,6 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/werf/werf/v2/test/pkg/contback"
+	"github.com/werf/werf/v2/test/pkg/report"
 	"github.com/werf/werf/v2/test/pkg/thirdparty/contruntime/strslice"
 	"github.com/werf/werf/v2/test/pkg/werf"
 )
@@ -37,7 +38,8 @@ var _ = Describe("CMD and ENTRYPOINT combinations", Label("e2e", "build", "extra
 
 		By("building images")
 		werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
-		buildOut, buildReport := werfProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), &werf.BuildWithReportOptions{CommonOptions: werf.CommonOptions{
+		reportProject := report.NewProjectWithReport(werfProject)
+		buildOut, buildReport := reportProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), &werf.WithReportOptions{CommonOptions: werf.CommonOptions{
 			ExtraArgs: []string{imageName},
 		}})
 		Expect(buildOut).To(ContainSubstring("Building stage"))

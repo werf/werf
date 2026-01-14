@@ -5,6 +5,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/werf/werf/v2/test/pkg/contback"
+	"github.com/werf/werf/v2/test/pkg/report"
 	"github.com/werf/werf/v2/test/pkg/werf"
 )
 
@@ -35,7 +36,8 @@ var _ = Describe("Simple build", Label("e2e", "build", "simple"), func() {
 
 				By("state0: building images")
 				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
-				buildOut, buildReport := werfProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), nil)
+				reportProject := report.NewProjectWithReport(werfProject)
+				buildOut, buildReport := reportProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), nil)
 				Expect(buildOut).To(ContainSubstring("Building stage"))
 				Expect(buildOut).NotTo(ContainSubstring("Use previously built image"))
 
@@ -97,19 +99,5 @@ var _ = Describe("Simple build", Label("e2e", "build", "simple"), func() {
 			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: false,
 		}}),
-		// TODO(ilya-lesikov): uncomment after Staged Dockerfile builder finished
-		// // TODO(1.3): after Full Dockerfile Builder removed and Staged Dockerfile Builder enabled by default this test no longer needed
-		// Entry("with local repo using Native Buildah and Staged Dockerfile Builder with rootless isolation", simpleTestOptions{setupEnvOptions{
-		// 	ContainerBackendMode:                 "native-rootless",
-		// 	WithLocalRepo:               true,
-		// 	WithStagedDockerfileBuilder: true,
-		// }),
-		// TODO(ilya-lesikov): uncomment after Staged Dockerfile builder finished
-		// // TODO(1.3): after Full Dockerfile Builder removed and Staged Dockerfile Builder enabled by default this test no longer needed
-		// Entry("with local repo using Native Buildah and Staged Dockerfile Builder with chroot isolation", simpleTestOptions{setupEnvOptions{
-		// 	ContainerBackendMode:                 "native-chroot",
-		// 	WithLocalRepo:               true,
-		// 	WithStagedDockerfileBuilder: true,
-		// }),
 	)
 })

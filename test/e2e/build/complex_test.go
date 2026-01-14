@@ -8,6 +8,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/werf/werf/v2/test/pkg/contback"
+	"github.com/werf/werf/v2/test/pkg/report"
 	"github.com/werf/werf/v2/test/pkg/thirdparty/contruntime/manifest"
 	"github.com/werf/werf/v2/test/pkg/werf"
 )
@@ -39,7 +40,8 @@ var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 
 				By("state0: building images")
 				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
-				buildOut, buildReport := werfProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), nil)
+				reportProject := report.NewProjectWithReport(werfProject)
+				buildOut, buildReport := reportProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), nil)
 				Expect(buildOut).To(ContainSubstring("Building stage"))
 				Expect(buildOut).NotTo(ContainSubstring("Use previously built image"))
 
@@ -99,7 +101,8 @@ var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 
 				By("state1: building images")
 				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
-				buildOut, buildReport := werfProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), nil)
+				reportProject := report.NewProjectWithReport(werfProject)
+				buildOut, buildReport := reportProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), nil)
 				Expect(buildOut).To(ContainSubstring("Building stage"))
 
 				By("state1: rebuilding same images")
