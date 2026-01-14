@@ -34,10 +34,6 @@ func (runtime *PerfCheckContainerBackend) GetRuntimePlatform() string {
 	return runtime.ContainerBackend.GetRuntimePlatform()
 }
 
-func (runtime *PerfCheckContainerBackend) ShouldCleanupDockerfileImage() bool {
-	return runtime.ContainerBackend.ShouldCleanupDockerfileImage()
-}
-
 func (runtime *PerfCheckContainerBackend) GetImageInfo(ctx context.Context, ref string, opts GetImageInfoOpts) (resImg *image.Info, resErr error) {
 	logboek.Context(ctx).Default().LogProcess("ContainerBackend.GetImageInfo %q", ref).
 		Do(func() {

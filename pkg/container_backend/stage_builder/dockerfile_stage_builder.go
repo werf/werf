@@ -73,7 +73,3 @@ func (b *DockerfileStageBuilder) Build(ctx context.Context, opts container_backe
 
 	return nil
 }
-
-func (b *DockerfileStageBuilder) Cleanup(_ context.Context) error {
-	return nil
-}

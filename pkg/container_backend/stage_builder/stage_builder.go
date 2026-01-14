@@ -13,7 +13,6 @@ type StageBuilderInterface interface {
 	LegacyStapelStageBuilder() LegacyStapelStageBuilderInterface
 
 	Build(ctx context.Context, opts container_backend.BuildOptions) error
-	Cleanup(ctx context.Context) error
 }
 
 func NewStageBuilder(containerBackend container_backend.ContainerBackend, baseImage string, image container_backend.LegacyImageInterface) *StageBuilder {
@@ -92,19 +91,4 @@ func (stageBuilder *StageBuilder) Build(ctx context.Context, opts container_back
 	}
 
 	panic("no builder has been activated yet")
-}
-
-func (stageBuilder *StageBuilder) Cleanup(ctx context.Context) error {
-	switch {
-	case stageBuilder.dockerfileBuilder != nil:
-		return stageBuilder.dockerfileBuilder.Cleanup(ctx)
-	case stageBuilder.dockerfileStageBuilder != nil:
-		return stageBuilder.dockerfileStageBuilder.Cleanup(ctx)
-	case stageBuilder.stapelStageBuilder != nil:
-		return stageBuilder.stapelStageBuilder.Cleanup(ctx)
-	case stageBuilder.legacyStapelStageBuilder != nil:
-		return stageBuilder.legacyStapelStageBuilder.Cleanup(ctx)
-	}
-
-	return nil
 }

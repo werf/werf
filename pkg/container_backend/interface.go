@@ -113,7 +113,6 @@ type ContainerBackend interface {
 	RemoveHostDirs(ctx context.Context, mountDir string, dirs []string) error
 
 	// Legacy
-	ShouldCleanupDockerfileImage() bool
 	RefreshImageObject(ctx context.Context, img LegacyImageInterface) error
 	PullImageFromRegistry(ctx context.Context, img LegacyImageInterface) error
 	RenameImage(ctx context.Context, img LegacyImageInterface, newImageName string, removeOldName bool) error

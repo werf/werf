@@ -759,10 +759,6 @@ func (backend *BuildahBackend) BuildDockerfile(ctx context.Context, dockerfileCo
 	})
 }
 
-func (backend *BuildahBackend) ShouldCleanupDockerfileImage() bool {
-	return false
-}
-
 func (backend *BuildahBackend) RefreshImageObject(ctx context.Context, img LegacyImageInterface) error {
 	if info, err := backend.GetImageInfo(ctx, img.Name(), GetImageInfoOpts{TargetPlatform: img.GetTargetPlatform()}); err != nil {
 		return err

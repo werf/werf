@@ -983,8 +983,6 @@ func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *imag
 		}
 	}
 
-	phase.Conveyor.AppendOnTerminateFunc(stageImage.Builder.Cleanup)
-
 	if err := stg.PrepareImage(ctx, phase.Conveyor, phase.Conveyor.ContainerBackend, prevBuiltImage, stageImage, phase.buildContextArchive); err != nil {
 		return fmt.Errorf("error preparing stage %s: %w", stg.Name(), err)
 	}
