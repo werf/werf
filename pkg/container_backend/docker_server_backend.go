@@ -14,7 +14,6 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
-	"github.com/google/uuid"
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/lockgate"
