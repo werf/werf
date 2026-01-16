@@ -1010,9 +1010,20 @@ func (gm *GitMapping) preparePatchPathsListFile(patch git_repo.Patch) (*Containe
 		return nil, fmt.Errorf("unable to open file `%s`: %w", fileDesc.FilePath, err)
 	}
 
+	fullPathsSet := make(map[string]struct{})
 	fullPaths := make([]string, 0)
 	for _, p := range patch.GetPaths() {
-		fullPaths = append(fullPaths, path.Join(gm.To, p))
+		fullPath := path.Join(gm.To, p)
+		fullPathsSet[fullPath] = struct{}{}
+		fullPaths = append(fullPaths, fullPath)
+	}
+
+	for _, p := range patch.GetPathsToRemove() {
+		fullPath := path.Join(gm.To, p)
+		if _, exists := fullPathsSet[fullPath]; !exists {
+			fullPathsSet[fullPath] = struct{}{}
+			fullPaths = append(fullPaths, fullPath)
+		}
 	}
 
 	pathsData := strings.Join(fullPaths, "\000")
