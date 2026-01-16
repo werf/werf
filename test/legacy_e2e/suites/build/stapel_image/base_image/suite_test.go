@@ -2,7 +2,6 @@ package base_image_test
 
 import (
 	"context"
-	"strings"
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -20,6 +19,9 @@ var (
 
 var testSuiteEntrypointFunc = suite_init.MakeTestSuiteEntrypointFunc("Ansible suite", suite_init.TestSuiteEntrypointFuncOptions{
 	RequiredSuiteTools: []string{"docker"},
+	RequiredSuiteEnvs: []string{
+		"WERF_TEST_K8S_DOCKER_REGISTRY",
+	},
 })
 
 func TestSuite(t *testing.T) {
@@ -29,8 +31,6 @@ func TestSuite(t *testing.T) {
 var SuiteData = struct {
 	suite_init.SuiteData
 
-	Registry                  string
-	RegistryContainerName     string
 	RegistryProjectRepository string
 }{}
 
@@ -54,14 +54,6 @@ var _ = SuiteData.AppendSynchronizedBeforeSuiteNode1Func(func(ctx context.Contex
 	}
 })
 
-var _ = SuiteData.AppendSynchronizedBeforeSuiteAllNodesFunc(func(ctx context.Context, _ []byte) {
-	SuiteData.Registry, _, SuiteData.RegistryContainerName = utilsDocker.LocalDockerRegistryRun(ctx)
-})
-
-var _ = SuiteData.AppendSynchronizedAfterSuiteAllNodesFunc(func(ctx context.Context) {
-	utilsDocker.ContainerStopAndRemove(ctx, SuiteData.RegistryContainerName)
-})
-
 var _ = BeforeEach(func() {
-	SuiteData.RegistryProjectRepository = strings.Join([]string{SuiteData.Registry, SuiteData.ProjectName}, "/")
+	SuiteData.RegistryProjectRepository = suite_init.TestRepo(SuiteData.ProjectName)
 })

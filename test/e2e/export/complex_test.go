@@ -10,6 +10,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	"github.com/werf/werf/v2/test/pkg/suite_init"
 	"github.com/werf/werf/v2/test/pkg/utils"
 	"github.com/werf/werf/v2/test/pkg/werf"
 )
@@ -36,7 +37,7 @@ var _ = Describe("Complex converge", Label("e2e", "converge", "complex"), func()
 				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
 				imageTemplate := `werf-export-%image%`
 				tag := utils.GetRandomString(10)
-				imageName := fmt.Sprintf("%s/%s:%s", SuiteData.RegistryLocalAddress, imageTemplate, tag)
+				imageName := fmt.Sprintf("%s:%s", suite_init.TestRepo(imageTemplate), tag)
 
 				exportArgs := getExportArgs(imageName, commonTestOptions{
 					Platforms: opts.Platforms,
@@ -56,7 +57,7 @@ var _ = Describe("Complex converge", Label("e2e", "converge", "complex"), func()
 				defer cancel()
 
 				for _, imageName := range opts.ImageNames {
-					i := fmt.Sprintf("%s/werf-export-%s:%s", SuiteData.RegistryLocalAddress, imageName, tag)
+					i := fmt.Sprintf("%s/werf-export-%s:%s", suite_init.TestRegistry(), imageName, tag)
 					ref, err := name.ParseReference(i)
 					Expect(err).ShouldNot(HaveOccurred())
 

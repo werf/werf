@@ -13,7 +13,6 @@ import (
 	"github.com/docker/cli/cli/flags"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
-	"github.com/docker/go-connections/nat"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/sirupsen/logrus"
@@ -76,11 +75,6 @@ func initApiClient() error {
 	return nil
 }
 
-func ContainerStopAndRemove(ctx context.Context, containerName string) {
-	Expect(CliStop(ctx, containerName)).Should(Succeed(), fmt.Sprintf("docker stop %s", containerName))
-	Expect(CliRm(ctx, containerName)).Should(Succeed(), fmt.Sprintf("docker rm %s", containerName))
-}
-
 func ImageRemoveIfExists(ctx context.Context, imageName string) {
 	if IsImageExist(ctx, imageName) {
 		Expect(CliRmi(ctx, imageName)).Should(Succeed(), "docker rmi")
@@ -114,34 +108,8 @@ func ImageInspect(ctx context.Context, imageName string) *types.ImageInspect {
 	return inspect
 }
 
-func ContainerInspect(ctx context.Context, ref string) types.ContainerJSON {
-	inspect, err := apiClient.ContainerInspect(ctx, ref)
-	Expect(err).ShouldNot(HaveOccurred())
-	return inspect
-}
-
-func ContainerHostPort(ctx context.Context, ref, containerPortNumberAndProtocol string) string {
-	inspect := ContainerInspect(ctx, ref)
-	Expect(inspect.NetworkSettings).ShouldNot(BeNil())
-	portMap := inspect.NetworkSettings.Ports
-	Expect(portMap).ShouldNot(BeEmpty())
-	portBindings := portMap[nat.Port(containerPortNumberAndProtocol)]
-	Expect(portBindings).ShouldNot(HaveLen(0))
-	return portBindings[0].HostPort
-}
-
-func CliRun(ctx context.Context, args ...string) error {
-	cmd := container.NewRunCommand(cli)
-	return cmdExecute(ctx, cmd, args)
-}
-
 func CliRm(ctx context.Context, args ...string) error {
 	cmd := container.NewRmCommand(cli)
-	return cmdExecute(ctx, cmd, args)
-}
-
-func CliStop(ctx context.Context, args ...string) error {
-	cmd := container.NewStopCommand(cli)
 	return cmdExecute(ctx, cmd, args)
 }
 
