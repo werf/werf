@@ -448,7 +448,7 @@ func (c *Conveyor) FetchLastImageStage(ctx context.Context, targetPlatform, imag
 	return err
 }
 
-func (c *Conveyor) GetFullImageName(imageName string) (string, error) {
+func (c *Conveyor) GetFullImageName(ctx context.Context, imageName string) (string, error) {
 	infoGetters, err := c.GetImageInfoGetters(imagePkg.InfoGetterOptions{})
 	if err != nil {
 		return "", nil
