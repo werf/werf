@@ -32,6 +32,35 @@ func werfHostPurge(ctx context.Context, dir string, opts liveexec.ExecCommandOpt
 	return liveexec.ExecCommand(ctx, dir, SuiteData.WerfBinPath, opts, append([]string{"host", "purge"}, extraArgs...)...)
 }
 
+type pathChecks struct {
+	files          []string
+	dirs           []string
+	excludedFiles  []string
+	excludedDirs   []string
+}
+
+func generatePathCheckCommands(checks pathChecks) []string {
+	var commands []string
+
+	for _, p := range checks.files {
+		commands = append(commands, fmt.Sprintf("test -f %s || (echo 'FAIL: %s should exist' && false)", p, p))
+	}
+
+	for _, p := range checks.dirs {
+		commands = append(commands, fmt.Sprintf("test -d %s || (echo 'FAIL: %s should exist' && false)", p, p))
+	}
+
+	for _, p := range checks.excludedFiles {
+		commands = append(commands, fmt.Sprintf("! test -f %s || (echo 'FAIL: %s should NOT exist' && false)", p, p))
+	}
+
+	for _, p := range checks.excludedDirs {
+		commands = append(commands, fmt.Sprintf("! test -d %s || (echo 'FAIL: %s should NOT exist' && false)", p, p))
+	}
+
+	return commands
+}
+
 var _ = Describe("Stapel imports", func() {
 	BeforeEach(func() {
 		Expect(kube.Init(kube.InitOptions{})).To(Succeed())
@@ -147,23 +176,56 @@ var _ = Describe("Stapel imports", func() {
 			Expect(output).To(ContainSubstring("11111:11111"))
 		})
 
-		XIt("should remove empty directories in final image when importing stages", func(ctx SpecContext) {
+		It("should handle empty directories properly", func(ctx SpecContext) {
 			SuiteData.CommitProjectWorktree(ctx, SuiteData.ProjectName, utils.FixturePath("import_app_empty_dirs", "001"), "initial commit")
 
 			Expect(werfBuild(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{})).To(Succeed())
 
-			_ = werfRunOutputWithSpecificImage(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName),
-				"final", "sh", "-c",
-				strings.Join([]string{
-					"test -d /test-tree/a/b/c",
-					"test -d /test-tree/x/y/z",
-					"test -d /test-tree/not_empty_dir",
+			By("Test 1: File glob (**/*.txt) should keep only directories with .txt files")
+			test1Commands := []string{
+				"echo '=== Test 1: File glob **/*.txt ===' && tree /test-tree || true",
+			}
+			test1Checks := pathChecks{
+				files: []string{
+					"/test-tree/add-dir/add-file.txt",
+					"/test-tree/add-dir/sub/add-file.txt",
+				},
+				dirs: []string{
+					"/test-tree/add-dir",
+					"/test-tree/add-dir/sub",
+				},
+				excludedFiles: []string{
+					"/test-tree/add-dir/not-add-file.log",
+				},
+				excludedDirs: []string{
+					"/test-tree/not-add-dir",
+					"/test-tree/app",
+				},
+			}
+			test1Commands = append(test1Commands, generatePathCheckCommands(test1Checks)...)
 
-					"! test -d /test-tree/empty1",
-					"! test -d /test-tree/empty1/subempty1",
-					"! test -d /test-tree/empty2",
-				}, " && "),
-			)
+			werfRunOutputWithSpecificImage(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName),
+				"final-file-glob", "sh", "-c", strings.Join(test1Commands, " && "))
+
+			By("Test 2: Directory glob (app/**/add-dir) should keep matching empty directories")
+			test2Commands := []string{
+				"echo '=== Test 2: Directory glob app/**/add-dir ===' && tree /test-tree || true",
+			}
+			test2Checks := pathChecks{
+				dirs: []string{
+					"/test-tree/app/add-dir",
+					"/test-tree/app/foo/bar/add-dir",
+				},
+				excludedDirs: []string{
+					"/test-tree/app/not-add-dir",
+					"/test-tree/app/foo/not-add-dir",
+					"/test-tree/not-add-dir",
+				},
+			}
+			test2Commands = append(test2Commands, generatePathCheckCommands(test2Checks)...)
+
+			werfRunOutputWithSpecificImage(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName),
+				"final-dir-glob", "sh", "-c", strings.Join(test2Commands, " && "))
 		})
 	})
 

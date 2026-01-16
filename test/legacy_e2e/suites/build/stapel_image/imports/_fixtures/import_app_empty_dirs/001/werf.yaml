@@ -1,31 +1,65 @@
 project: none
 configVersion: 1
 ---
-image: filer
+# Base image with pre-installed utilities
+image: base
 final: false
 from: registry.werf.io/base/alpine
 shell:
   install:
-    - apk add --no-cache bash coreutils
-
-    - mkdir -p /out/tree/a/b/c
-    - mkdir -p /out/tree/x/y/z
-    - mkdir -p /out/tree/empty1/subempty1
-    - mkdir -p /out/tree/empty2
-    - mkdir -p /out/tree/not_empty_dir
-
-    - echo "txt1"    > /out/tree/a/b/c/file1.txt
-    - echo "txt2"    > /out/tree/x/y/z/file2.txt
-    - echo "no-txt1" > /out/tree/a/b/c/file1.log
-    - echo "no-txt2" > /out/tree/x/y/z/file2.log
-    - echo "keep"    > /out/tree/not_empty_dir/keep.txt
+    - apk add --no-cache bash coreutils tree
 ---
-image: final
-from: registry.werf.io/base/alpine
+# Source image with various directory structures for testing empty directory handling
+image: filer
+final: false
+from: base
+shell:
+  install:
+    # === TEST 1: File glob pattern **/*.txt ===
+    # Should be included: directories with .txt files
+    - mkdir -p /out/tree/add-dir
+    - mkdir -p /out/tree/add-dir/sub
+    - echo "content" > /out/tree/add-dir/add-file.txt
+    - echo "content" > /out/tree/add-dir/sub/add-file.txt
+
+    # Should be excluded: empty directories (no .txt files)
+    - mkdir -p /out/tree/not-add-dir
+    - mkdir -p /out/tree/not-add-dir/sub
+    - echo "content" > /out/tree/not-add-dir/sub/not-add-file.log
+
+    # Should be excluded: files not matching pattern
+    - echo "content" > /out/tree/add-dir/not-add-file.log
+
+    # === TEST 2: Directory glob app/**/add-dir ===
+    # Should be included: add-dir directories at any level under app/ (including empty ones)
+    - mkdir -p /out/tree/app/add-dir
+    - mkdir -p /out/tree/app/foo/bar/add-dir
+
+    # Should be excluded: non-matching directories
+    - mkdir -p /out/tree/app/not-add-dir
+    - mkdir -p /out/tree/app/foo/not-add-dir
+
+    # Should be excluded: add-dir outside app/
+    - mkdir -p /out/tree/not-add-dir/add-dir
+---
+# Test 1: File glob pattern - should remove all empty directories
+image: final-file-glob
+from: base
 import:
   - image: filer
     add: /out/tree
     to: /test-tree
     includePaths:
       - '**/*.txt'
+    before: install
+---
+# Test 2: Directory glob with ** - should keep matching directories at any level
+image: final-dir-glob
+from: base
+import:
+  - image: filer
+    add: /out/tree
+    to: /test-tree
+    includePaths:
+      - 'app/**/add-dir'
     before: install
