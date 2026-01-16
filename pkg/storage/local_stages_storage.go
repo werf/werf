@@ -408,16 +408,12 @@ func (storage *LocalStagesStorage) MutateAndPushImage(ctx context.Context, src, 
 	if err != nil {
 		return err
 	}
-	stageImage.SetBuiltID(buildIdFromDigest(newId))
+
+	stageImage.SetBuiltID(newId)
+
 	if err := storage.ContainerBackend.TagImageByName(ctx, stageImage); err != nil {
 		return fmt.Errorf("unable to tag image %q: %w", stageImage.Name(), err)
 	}
-	return nil
-}
 
-func buildIdFromDigest(digest string) string {
-	if strings.HasPrefix(digest, "sha256:") {
-		return digest[7:]
-	}
-	return digest
+	return nil
 }

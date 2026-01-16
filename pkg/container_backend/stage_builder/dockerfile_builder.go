@@ -4,13 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/container_backend"
 )
 
 type DockerfileBuilderInterface interface {
 	Build(ctx context.Context, opts container_backend.BuildOptions) error
-	Cleanup(ctx context.Context) error
 	SetDockerfile(dockerfile []byte)
 	SetDockerfileCtxRelPath(dockerfileCtxRelPath string)
 	SetTarget(target string)
@@ -58,20 +56,6 @@ func (b *DockerfileBuilder) Build(ctx context.Context, opts container_backend.Bu
 	}
 	b.Image.SetBuiltID(builtID)
 
-	return nil
-}
-
-func (b *DockerfileBuilder) Cleanup(ctx context.Context) error {
-	if !b.ContainerBackend.ShouldCleanupDockerfileImage() {
-		return nil
-	}
-
-	if b.Image.BuiltID() != "" {
-		logboek.Context(ctx).Info().LogF("Cleanup built dockerfile image %q\n", b.Image.BuiltID())
-		if err := b.ContainerBackend.Rmi(ctx, b.Image.BuiltID(), container_backend.RmiOpts{}); err != nil {
-			return fmt.Errorf("unable to remove built dockerfile image %q: %w", b.Image.BuiltID(), err)
-		}
-	}
 	return nil
 }
 

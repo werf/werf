@@ -14,7 +14,6 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
-	"github.com/google/uuid"
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/lockgate"
@@ -24,6 +23,7 @@ import (
 	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/ssh_agent"
+	"github.com/werf/werf/v2/pkg/tmp_manager"
 )
 
 type DockerServerBackend struct {
@@ -124,11 +124,17 @@ func (backend *DockerServerBackend) BuildDockerfile(ctx context.Context, _ []byt
 		cliArgs = append(cliArgs, "--secret", secret)
 	}
 
-	tempID := uuid.New().String()
-	opts.Tags = append(opts.Tags, tempID)
 	for _, tag := range opts.Tags {
 		cliArgs = append(cliArgs, "--tag", tag)
 	}
+
+	newIDFile, err := tmp_manager.TempFile("docker-built-id-*.tmp")
+	if err != nil {
+		return "", err
+	}
+	defer os.Remove(newIDFile.Name())
+
+	cliArgs = append(cliArgs, "--iidfile", newIDFile.Name())
 
 	cliArgs = append(cliArgs, "-")
 
@@ -142,15 +148,16 @@ func (backend *DockerServerBackend) BuildDockerfile(ctx context.Context, _ []byt
 	}
 	defer contextReader.Close()
 
-	// We must protect 'tempID:latest' tag until "werf build" will assign the final tag to the image.
-	// Otherwise, parallel "werf host cleanup" can remove 'tempID:latest' tag and "werf build" will fail with the error.
-	// NOTE. The acquired lock will be released implicitly when "werf build" process exits.
-	tmpTag := fmt.Sprintf("%s:latest", tempID)
-	if _, _, err := backend.locker.Acquire(tmpTag, lockgate.AcquireOptions{}); err != nil {
-		return "", fmt.Errorf("unable to acquire lock for %q: %w", tmpTag, err)
+	if err := docker.CliBuild_LiveOutputWithCustomIn(ctx, contextReader, cliArgs...); err != nil {
+		return "", err
 	}
 
-	return tempID, docker.CliBuild_LiveOutputWithCustomIn(ctx, contextReader, cliArgs...)
+	newID, err := os.ReadFile(newIDFile.Name())
+	if err != nil {
+		return "", err
+	}
+
+	return string(newID), nil
 }
 
 func (backend *DockerServerBackend) BuildDockerfileStage(ctx context.Context, baseImage string, opts BuildDockerfileStageOptions, instructions ...InstructionInterface) (string, error) {
@@ -160,12 +167,6 @@ func (backend *DockerServerBackend) BuildDockerfileStage(ctx context.Context, ba
 	logboek.Context(ctx).Error().LogF(" * or disable staged build by setting `staged: false` for the image in the werf.yaml.\n")
 	logboek.Context(ctx).Error().LogLn()
 	return "", fmt.Errorf("staged Dockerfile is not available for Docker Server backend")
-}
-
-// ShouldCleanupDockerfileImage for docker-server backend we should cleanup image built from dockerfrom tagged with tempID
-// which is implementation detail of the BuildDockerfile.
-func (backend *DockerServerBackend) ShouldCleanupDockerfileImage() bool {
-	return true
 }
 
 func (backend *DockerServerBackend) GetImageInfo(ctx context.Context, ref string, opts GetImageInfoOpts) (*image.Info, error) {
