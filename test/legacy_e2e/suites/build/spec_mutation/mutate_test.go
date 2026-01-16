@@ -7,6 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/werf/werf/v2/test/pkg/contback"
+	"github.com/werf/werf/v2/test/pkg/report"
 	"github.com/werf/werf/v2/test/pkg/thirdparty/contruntime/manifest"
 	"github.com/werf/werf/v2/test/pkg/werf"
 )
@@ -38,8 +39,9 @@ var _ = Describe("build and mutate image spec", Label("integration", "build", "m
 
 				By(fmt.Sprintf("%s: building images", testOpts.State))
 				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
+				reportProject := report.NewProjectWithReport(werfProject)
 
-				buildOut, buildReport := werfProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), nil)
+				buildOut, buildReport := reportProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), nil)
 				Expect(buildOut).To(ContainSubstring("Building stage"))
 
 				By("getting built images metadata")

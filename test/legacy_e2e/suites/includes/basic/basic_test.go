@@ -11,6 +11,7 @@ import (
 
 	"github.com/werf/werf/v2/pkg/includes"
 	"github.com/werf/werf/v2/test/pkg/contback"
+	"github.com/werf/werf/v2/test/pkg/report"
 	"github.com/werf/werf/v2/test/pkg/utils"
 	"github.com/werf/werf/v2/test/pkg/werf"
 )
@@ -111,10 +112,8 @@ var _ = Describe("build and mutate image spec", Label("integration", "build", "m
 				buildReportName := "build_report.json"
 				By(fmt.Sprintf("building images"))
 				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
-				buildOut, _ := werfProject.BuildWithReport(ctx,
-					SuiteData.GetBuildReportPath(buildReportName),
-					nil,
-				)
+				reportProject := report.NewProjectWithReport(werfProject)
+				buildOut, _ := reportProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), nil)
 				Expect(buildOut).To(ContainSubstring("Building stage"))
 
 				By(fmt.Sprintf("render chart"))

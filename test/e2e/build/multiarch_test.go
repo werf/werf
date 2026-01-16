@@ -11,6 +11,7 @@ import (
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/pkg/container_backend/thirdparty/platformutil"
 	"github.com/werf/werf/v2/test/pkg/contback"
+	"github.com/werf/werf/v2/test/pkg/report"
 	"github.com/werf/werf/v2/test/pkg/werf"
 )
 
@@ -84,7 +85,8 @@ var _ = Describe("Multiarch build", Pending, Label("e2e", "build", "multiarch", 
 
 			By("building images")
 			werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
-			_, buildReport := werfProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), nil)
+			reportProject := report.NewProjectWithReport(werfProject)
+			_, buildReport := reportProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), nil)
 
 			By("check digests by platform and multiarch digest")
 			for _, expect := range expects {

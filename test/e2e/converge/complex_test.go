@@ -13,6 +13,7 @@ import (
 
 	"github.com/werf/3p-helm/pkg/release"
 	"github.com/werf/kubedog/pkg/kube"
+	"github.com/werf/werf/v2/test/pkg/report"
 	"github.com/werf/werf/v2/test/pkg/utils"
 	"github.com/werf/werf/v2/test/pkg/werf"
 )
@@ -64,13 +65,14 @@ var _ = Describe("Complex converge", Label("e2e", "converge", "complex"), func()
 					SuiteData.WerfBinPath,
 					SuiteData.GetTestRepoPath(repoDirname),
 				)
+				reportProject := report.NewProjectWithReport(werfProject)
 
 				By("state0: prepare namespace")
 				werfProject.CreateNamespace(ctx)
 				werfProject.CreateRegistryPullSecretFromDockerConfig(ctx)
 
 				By("state0: execute converge")
-				convergeOutput, deployReport := werfProject.ConvergeWithReport(ctx, SuiteData.GetDeployReportPath(deployReportName), &werf.ConvergeWithReportOptions{
+				convergeOutput, deployReport := reportProject.ConvergeWithReport(ctx, SuiteData.GetDeployReportPath(deployReportName), &werf.WithReportOptions{
 					CommonOptions: werf.CommonOptions{
 						ExtraArgs: []string{
 							"--set=added_via_set=added_via_set,overridden_via_set=overridden_via_set",
@@ -254,6 +256,7 @@ var _ = Describe("Complex converge", Label("e2e", "converge", "complex"), func()
 				By("state1: preparing test repo")
 				SuiteData.UpdateTestRepo(ctx, repoDirname, fixtureRelPath)
 				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
+				reportProject := report.NewProjectWithReport(werfProject)
 
 				By("state1: simulate manual user changes to the configmap \"config-rootchart\" by `kubectl edit`-like patching it in the cluster")
 				_, err := kube.Client.CoreV1().ConfigMaps(werfProject.Namespace(ctx)).Patch(
@@ -273,7 +276,7 @@ var _ = Describe("Complex converge", Label("e2e", "converge", "complex"), func()
 				Expect(err).NotTo(HaveOccurred())
 
 				By("state1: execute converge")
-				_, deployReport := werfProject.ConvergeWithReport(ctx, SuiteData.GetDeployReportPath(deployReportName), &werf.ConvergeWithReportOptions{})
+				_, deployReport := reportProject.ConvergeWithReport(ctx, SuiteData.GetDeployReportPath(deployReportName), &werf.WithReportOptions{})
 
 				By("state1: check deploy report")
 				Expect(deployReport.Revision).To(Equal(2))
@@ -355,9 +358,10 @@ var _ = Describe("Complex converge", Label("e2e", "converge", "complex"), func()
 				By("state2: preparing test repo")
 				SuiteData.UpdateTestRepo(ctx, repoDirname, fixtureRelPath)
 				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
+				reportProject := report.NewProjectWithReport(werfProject)
 
 				By("state2: execute converge")
-				_, deployReport := werfProject.ConvergeWithReport(ctx, SuiteData.GetDeployReportPath(deployReportName), &werf.ConvergeWithReportOptions{
+				_, deployReport := reportProject.ConvergeWithReport(ctx, SuiteData.GetDeployReportPath(deployReportName), &werf.WithReportOptions{
 					CommonOptions: werf.CommonOptions{
 						ShouldFail: true,
 						ExtraArgs: []string{
@@ -394,9 +398,10 @@ var _ = Describe("Complex converge", Label("e2e", "converge", "complex"), func()
 				By("state3: preparing test repo")
 				SuiteData.UpdateTestRepo(ctx, repoDirname, fixtureRelPath)
 				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
+				reportProject := report.NewProjectWithReport(werfProject)
 
 				By("state3: execute converge")
-				_, deployReport := werfProject.ConvergeWithReport(ctx, SuiteData.GetDeployReportPath(deployReportName), &werf.ConvergeWithReportOptions{
+				_, deployReport := reportProject.ConvergeWithReport(ctx, SuiteData.GetDeployReportPath(deployReportName), &werf.WithReportOptions{
 					CommonOptions: werf.CommonOptions{
 						ShouldFail: true,
 					},

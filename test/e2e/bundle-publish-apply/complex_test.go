@@ -13,6 +13,7 @@ import (
 
 	"github.com/werf/3p-helm/pkg/release"
 	"github.com/werf/kubedog/pkg/kube"
+	"github.com/werf/werf/v2/test/pkg/report"
 	"github.com/werf/werf/v2/test/pkg/utils"
 	"github.com/werf/werf/v2/test/pkg/werf"
 )
@@ -58,6 +59,7 @@ var _ = Describe("Complex bundle publish/apply", Label("e2e", "bundle-publish-ap
 					SuiteData.WerfBinPath,
 					SuiteData.GetTestRepoPath(repoDirname),
 				)
+				reportProject := report.NewProjectWithReport(werfProject)
 
 				By("state0: execute bundle publish")
 				_ = werfProject.BundlePublish(ctx, nil)
@@ -67,7 +69,7 @@ var _ = Describe("Complex bundle publish/apply", Label("e2e", "bundle-publish-ap
 				werfProject.CreateRegistryPullSecretFromDockerConfig(ctx)
 
 				By("state0: execute bundle apply")
-				bundleApplyOutput, deployReport := werfProject.BundleApplyWithReport(ctx, werfProject.Release(ctx), werfProject.Namespace(ctx), SuiteData.GetDeployReportPath(deployReportName), &werf.BundleApplyWithReportOptions{
+				bundleApplyOutput, deployReport := reportProject.BundleApplyWithReport(ctx, werfProject.Release(ctx), werfProject.Namespace(ctx), SuiteData.GetDeployReportPath(deployReportName), &werf.WithReportOptions{
 					CommonOptions: werf.CommonOptions{
 						ExtraArgs: []string{
 							"--set=added_via_set=added_via_set,overridden_via_set=overridden_via_set",
@@ -249,6 +251,7 @@ var _ = Describe("Complex bundle publish/apply", Label("e2e", "bundle-publish-ap
 				By("state1: preparing test repo")
 				SuiteData.UpdateTestRepo(ctx, repoDirname, fixtureRelPath)
 				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
+				reportProject := report.NewProjectWithReport(werfProject)
 
 				By("state1: simulate manual user changes to the configmap \"config-rootchart\" by `kubectl edit`-like patching it in the cluster")
 				_, err := kube.Client.CoreV1().ConfigMaps(werfProject.Namespace(ctx)).Patch(
@@ -271,7 +274,7 @@ var _ = Describe("Complex bundle publish/apply", Label("e2e", "bundle-publish-ap
 				_ = werfProject.BundlePublish(ctx, nil)
 
 				By("state1: execute bundle apply")
-				_, deployReport := werfProject.BundleApplyWithReport(ctx, werfProject.Release(ctx), werfProject.Namespace(ctx), SuiteData.GetDeployReportPath(deployReportName), &werf.BundleApplyWithReportOptions{})
+				_, deployReport := reportProject.BundleApplyWithReport(ctx, werfProject.Release(ctx), werfProject.Namespace(ctx), SuiteData.GetDeployReportPath(deployReportName), &werf.WithReportOptions{})
 
 				By("state1: check deploy report")
 				Expect(deployReport.Revision).To(Equal(2))
@@ -352,12 +355,13 @@ var _ = Describe("Complex bundle publish/apply", Label("e2e", "bundle-publish-ap
 				By("state2: preparing test repo")
 				SuiteData.UpdateTestRepo(ctx, repoDirname, fixtureRelPath)
 				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
+				reportProject := report.NewProjectWithReport(werfProject)
 
 				By("state2: execute bundle publish")
 				_ = werfProject.BundlePublish(ctx, nil)
 
 				By("state2: execute bundle apply")
-				_, deployReport := werfProject.BundleApplyWithReport(ctx, werfProject.Release(ctx), werfProject.Namespace(ctx), SuiteData.GetDeployReportPath(deployReportName), &werf.BundleApplyWithReportOptions{
+				_, deployReport := reportProject.BundleApplyWithReport(ctx, werfProject.Release(ctx), werfProject.Namespace(ctx), SuiteData.GetDeployReportPath(deployReportName), &werf.WithReportOptions{
 					CommonOptions: werf.CommonOptions{
 						ShouldFail: true,
 						ExtraArgs: []string{
@@ -394,12 +398,13 @@ var _ = Describe("Complex bundle publish/apply", Label("e2e", "bundle-publish-ap
 				By("state3: preparing test repo")
 				SuiteData.UpdateTestRepo(ctx, repoDirname, fixtureRelPath)
 				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
+				reportProject := report.NewProjectWithReport(werfProject)
 
 				By("state3: execute bundle publish")
 				_ = werfProject.BundlePublish(ctx, nil)
 
 				By("state3: execute converge")
-				_, deployReport := werfProject.BundleApplyWithReport(ctx, werfProject.Release(ctx), werfProject.Namespace(ctx), SuiteData.GetDeployReportPath(deployReportName), &werf.BundleApplyWithReportOptions{
+				_, deployReport := reportProject.BundleApplyWithReport(ctx, werfProject.Release(ctx), werfProject.Namespace(ctx), SuiteData.GetDeployReportPath(deployReportName), &werf.WithReportOptions{
 					CommonOptions: werf.CommonOptions{
 						ShouldFail: true,
 					},

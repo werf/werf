@@ -7,6 +7,7 @@ import (
 
 	"github.com/werf/3p-helm/pkg/release"
 	"github.com/werf/kubedog/pkg/kube"
+	"github.com/werf/werf/v2/test/pkg/report"
 	"github.com/werf/werf/v2/test/pkg/utils"
 	"github.com/werf/werf/v2/test/pkg/werf"
 )
@@ -50,9 +51,10 @@ var _ = Describe("Simple converge", Label("e2e", "converge", "simple"), func() {
 				By("state0: preparing test repo")
 				SuiteData.InitTestRepo(ctx, repoDirname, fixtureRelPath)
 				werfProject = werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
+				reportProject := report.NewProjectWithReport(werfProject)
 
 				By("state0: execute converge")
-				_, deployReport := werfProject.ConvergeWithReport(ctx, SuiteData.GetDeployReportPath(deployReportName), &werf.ConvergeWithReportOptions{})
+				_, deployReport := reportProject.ConvergeWithReport(ctx, SuiteData.GetDeployReportPath(deployReportName), &werf.WithReportOptions{})
 
 				By("state0: check deploy report")
 				Expect(deployReport.Release).To(Equal(werfProject.Release(ctx)))

@@ -8,6 +8,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/werf/werf/v2/test/pkg/contback"
+	"github.com/werf/werf/v2/test/pkg/report"
 	"github.com/werf/werf/v2/test/pkg/werf"
 )
 
@@ -41,7 +42,9 @@ var _ = Describe("Build with staged dockerfile and heredoc", Label("e2e", "build
 
 				By("heredoc: building image")
 				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirName))
-				buildOut, buildReport := werfProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), nil)
+				reportProject := report.NewProjectWithReport(werfProject)
+
+				buildOut, buildReport := reportProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), nil)
 				Expect(buildOut).To(ContainSubstring("Building stage"))
 				Expect(buildOut).NotTo(ContainSubstring("Use previously built image"))
 
