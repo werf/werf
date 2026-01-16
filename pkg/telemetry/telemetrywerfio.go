@@ -34,6 +34,11 @@ type TelemetryWerfIOInterface interface {
 	CommandStarted(ctx context.Context)
 	CommandExited(ctx context.Context, exitCode int)
 	UnshallowFailed(ctx context.Context, err error)
+
+	BuildStarted(ctx context.Context, imagesCount int)
+	BuildFinished(ctx context.Context, success bool)
+	ImageBuildFinished(ctx context.Context, image string, durationMs int64, rebuilt bool)
+	StageBuildFinished(ctx context.Context, image, stage string, durationMs int64, fromCache bool)
 }
 
 type TelemetryWerfIO struct {
@@ -47,6 +52,9 @@ type TelemetryWerfIO struct {
 	projectID      string
 	command        string
 	commandOptions []CommandOption
+
+	buildStartedAt   time.Time
+	buildImagesCount int
 }
 
 type TelemetryWerfIOOptions struct {
@@ -129,12 +137,31 @@ func (t *TelemetryWerfIO) CommandStarted(ctx context.Context) {
 }
 
 func (t *TelemetryWerfIO) CommandExited(ctx context.Context, exitCode int) {
-	duration := time.Now().Sub(t.startedAt)
-	t.sendEvent(ctx, NewCommandExited(exitCode, int64(duration/time.Millisecond)))
+	duration := time.Since(t.startedAt)
+	t.sendEvent(ctx, NewCommandExited(exitCode, duration.Milliseconds()))
 }
 
 func (t *TelemetryWerfIO) UnshallowFailed(ctx context.Context, err error) {
 	t.sendEvent(ctx, NewUnshallowFailed(err.Error()))
+}
+
+func (t *TelemetryWerfIO) BuildStarted(ctx context.Context, imagesCount int) {
+	t.buildStartedAt = time.Now()
+	t.buildImagesCount = imagesCount
+	t.sendEvent(ctx, NewBuildStarted(imagesCount))
+}
+
+func (t *TelemetryWerfIO) BuildFinished(ctx context.Context, success bool) {
+	duration := time.Since(t.buildStartedAt)
+	t.sendEvent(ctx, NewBuildFinished(duration.Milliseconds(), success, t.buildImagesCount))
+}
+
+func (t *TelemetryWerfIO) ImageBuildFinished(ctx context.Context, image string, durationMs int64, rebuilt bool) {
+	t.sendEvent(ctx, NewImageBuildFinished(image, durationMs, rebuilt))
+}
+
+func (t *TelemetryWerfIO) StageBuildFinished(ctx context.Context, image, stage string, durationMs int64, fromCache bool) {
+	t.sendEvent(ctx, NewStageBuildFinished(image, stage, durationMs, fromCache))
 }
 
 func (t *TelemetryWerfIO) getAttributes() map[string]interface{} {

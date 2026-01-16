@@ -6,12 +6,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strconv"
 	"sync"
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/build/image"
 	"github.com/werf/werf/v2/pkg/storage"
+	"github.com/werf/werf/v2/pkg/telemetry"
 )
 
 const (
@@ -107,6 +109,42 @@ func (report *ImagesReport) ToEnvFileData() []byte {
 	}
 
 	return buf.Bytes()
+}
+
+func (report *ImagesReport) sendTelemetry(ctx context.Context) {
+	report.mux.Lock()
+	defer report.mux.Unlock()
+
+	for _, record := range report.Images {
+		for _, stage := range record.Stages {
+			durationMs := parseBuildTimeMs(stage.BuildTime)
+			fromCache := !stage.Rebuilt
+
+			telemetry.GetTelemetryWerfIO().StageBuildFinished(
+				ctx,
+				record.WerfImageName,
+				stage.Name,
+				durationMs,
+				fromCache,
+			)
+		}
+
+		durationMs := parseBuildTimeMs(record.BuildTime)
+		telemetry.GetTelemetryWerfIO().ImageBuildFinished(
+			ctx,
+			record.WerfImageName,
+			durationMs,
+			record.Rebuilt,
+		)
+	}
+}
+
+func parseBuildTimeMs(buildTime string) int64 {
+	seconds, err := strconv.ParseFloat(buildTime, 64)
+	if err != nil {
+		return 0
+	}
+	return int64(seconds * 1000)
 }
 
 func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util.Pair[string, []*image.Image]) error {
@@ -209,6 +247,8 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 			return fmt.Errorf("unable to write report to %s: %w", phase.ReportPath, err)
 		}
 	}
+
+	phase.ImagesReport.sendTelemetry(ctx)
 
 	return nil
 }

@@ -5,9 +5,13 @@ import "os"
 type EventType string
 
 const (
-	CommandStartedEvent  EventType = "CommandStarted"
-	CommandExitedEvent   EventType = "CommandExited"
-	UnshallowFailedEvent EventType = "UnshallowFailed"
+	CommandStartedEvent     EventType = "CommandStarted"
+	CommandExitedEvent      EventType = "CommandExited"
+	UnshallowFailedEvent    EventType = "UnshallowFailed"
+	BuildStartedEvent       EventType = "BuildStarted"
+	BuildFinishedEvent      EventType = "BuildFinished"
+	ImageBuildFinishedEvent EventType = "ImageBuildFinished"
+	StageBuildFinishedEvent EventType = "StageBuildFinished"
 )
 
 type Event interface {
@@ -57,3 +61,63 @@ type UnshallowFailed struct {
 }
 
 func (*UnshallowFailed) GetType() EventType { return UnshallowFailedEvent }
+
+type BuildStarted struct {
+	ImagesCount int `json:"imagesCount"`
+}
+
+func NewBuildStarted(imagesCount int) *BuildStarted {
+	return &BuildStarted{ImagesCount: imagesCount}
+}
+
+func (*BuildStarted) GetType() EventType { return BuildStartedEvent }
+
+type BuildFinished struct {
+	DurationMs  int64 `json:"durationMs"`
+	Success     bool  `json:"success"`
+	ImagesCount int   `json:"imagesCount"`
+}
+
+func NewBuildFinished(durationMs int64, success bool, imagesCount int) *BuildFinished {
+	return &BuildFinished{
+		DurationMs:  durationMs,
+		Success:     success,
+		ImagesCount: imagesCount,
+	}
+}
+
+func (*BuildFinished) GetType() EventType { return BuildFinishedEvent }
+
+type ImageBuildFinished struct {
+	Image      string `json:"image"`
+	DurationMs int64  `json:"durationMs"`
+	Rebuilt    bool   `json:"rebuilt"`
+}
+
+func NewImageBuildFinished(image string, durationMs int64, rebuilt bool) *ImageBuildFinished {
+	return &ImageBuildFinished{
+		Image:      image,
+		DurationMs: durationMs,
+		Rebuilt:    rebuilt,
+	}
+}
+
+func (*ImageBuildFinished) GetType() EventType { return ImageBuildFinishedEvent }
+
+type StageBuildFinished struct {
+	Image      string `json:"image"`
+	Stage      string `json:"stage"`
+	DurationMs int64  `json:"durationMs"`
+	FromCache  bool   `json:"fromCache"`
+}
+
+func NewStageBuildFinished(image, stage string, durationMs int64, fromCache bool) *StageBuildFinished {
+	return &StageBuildFinished{
+		Image:      image,
+		Stage:      stage,
+		DurationMs: durationMs,
+		FromCache:  fromCache,
+	}
+}
+
+func (*StageBuildFinished) GetType() EventType { return StageBuildFinishedEvent }

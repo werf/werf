@@ -29,6 +29,7 @@ import (
 	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/storage/manager"
 	"github.com/werf/werf/v2/pkg/storage/synchronization/lock_manager"
+	"github.com/werf/werf/v2/pkg/telemetry"
 	"github.com/werf/werf/v2/pkg/util/parallel"
 )
 
@@ -642,6 +643,7 @@ func (c *Conveyor) runPhases(ctx context.Context, phases []Phase, logImages bool
 	}
 
 	if err := c.doImages(ctx, phases, logImages); err != nil {
+		telemetry.GetTelemetryWerfIO().BuildFinished(ctx, false)
 		return fmt.Errorf("unable to process images: %w", err)
 	}
 
