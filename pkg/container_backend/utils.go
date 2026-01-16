@@ -10,6 +10,7 @@ import (
 	"github.com/docker/docker/pkg/stringid"
 
 	"github.com/werf/logboek"
+	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/ssh_agent"
 )
 
@@ -42,6 +43,10 @@ func LogImageInfo(ctx context.Context, img LegacyImageInterface, prevStageImageS
 		logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "size", byteCountBinary(img.GetStageDesc().Info.Size))
 	} else {
 		logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "size", fmt.Sprintf("%s (+%s)", byteCountBinary(img.GetStageDesc().Info.Size), byteCountBinary(img.GetStageDesc().Info.Size-prevStageImageSize)))
+	}
+
+	if commit, ok := img.GetStageDesc().Info.Labels[image.WerfProjectRepoCommitLabel]; ok && commit != "" {
+		logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "commit", commit)
 	}
 
 	if withPlatform {
@@ -81,10 +86,10 @@ func setSSHMountPoint(sshAuthSock string) (string, map[string]string) {
 }
 
 func getHostCleanupServiceImage() string {
-	image := hostCleanupServiceImage
+	imageName := hostCleanupServiceImage
 	if v := os.Getenv("WERF_HOST_CLEANUP_SERVICE_IMAGE"); v != "" {
-		image = v
+		imageName = v
 	}
 
-	return image
+	return imageName
 }
