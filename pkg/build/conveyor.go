@@ -159,6 +159,30 @@ func (c *Conveyor) GetTargetPlatforms() ([]string, error) {
 	return prepareConfigurationPlatforms(c.werfConfig.Meta.Build.Platform)
 }
 
+func (c *Conveyor) ResolveTargetPlatforms(imageName string) ([]string, error) {
+	if forcedPlatforms := c.GetForcedTargetPlatforms(); len(forcedPlatforms) > 0 {
+		return forcedPlatforms, nil
+	}
+
+	imagePlatforms, err := c.GetImageTargetPlatforms(imageName)
+	if err != nil {
+		return nil, fmt.Errorf("get image %q target platforms: %w", imageName, err)
+	}
+	if len(imagePlatforms) > 0 {
+		return imagePlatforms, nil
+	}
+
+	commonPlatforms, err := c.GetTargetPlatforms()
+	if err != nil {
+		return nil, fmt.Errorf("get common target platforms: %w", err)
+	}
+	if len(commonPlatforms) > 0 {
+		return commonPlatforms, nil
+	}
+
+	return []string{c.ContainerBackend.GetDefaultPlatform()}, nil
+}
+
 func (c *Conveyor) GetServiceRWMutex(service string) *sync.RWMutex {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
@@ -424,7 +448,7 @@ func (c *Conveyor) FetchLastImageStage(ctx context.Context, targetPlatform, imag
 	return err
 }
 
-func (c *Conveyor) GetFullImageName(ctx context.Context, imageName string) (string, error) {
+func (c *Conveyor) GetFullImageName(imageName string) (string, error) {
 	infoGetters, err := c.GetImageInfoGetters(imagePkg.InfoGetterOptions{})
 	if err != nil {
 		return "", nil
@@ -879,7 +903,7 @@ func (c *Conveyor) GetImage(targetPlatform, name string) *image.Image {
 		}
 	}
 
-	panic(fmt.Sprintf("Image %q not found!", name))
+	panic(fmt.Sprintf("Image %q with target platform %q not found!", name, targetPlatform))
 }
 
 func (c *Conveyor) GetImageStageContentDigest(targetPlatform, imageName, stageName string) string {
