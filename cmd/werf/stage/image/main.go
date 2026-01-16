@@ -178,16 +178,14 @@ func run(ctx context.Context, imageName string) error {
 			return err
 		}
 
-		targetPlatforms, err := c.GetTargetPlatforms()
+		targetPlatforms, err := c.ResolveTargetPlatforms(imageName)
 		if err != nil {
-			return fmt.Errorf("invalid target platforms: %w", err)
-		}
-		if len(targetPlatforms) == 0 {
-			targetPlatforms = []string{containerBackend.GetDefaultPlatform()}
+			return err
 		}
 
-		// FIXME(multiarch): specify multiarch manifest here
-		fmt.Println(c.GetImageNameForLastImageStage(targetPlatforms[0], imageName))
+		for _, platform := range targetPlatforms {
+			fmt.Println(c.GetImageNameForLastImageStage(platform, imageName))
+		}
 
 		return nil
 	}); err != nil {
