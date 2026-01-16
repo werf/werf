@@ -180,7 +180,7 @@ func run(ctx context.Context, imageName string) error {
 
 		targetPlatforms, err := c.ResolveTargetPlatforms(imageName)
 		if err != nil {
-			return err
+			return fmt.Errorf("resolve target platforms for image %q: %w", imageName, err)
 		}
 
 		for _, platform := range targetPlatforms {
