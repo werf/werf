@@ -9,7 +9,7 @@ import (
 
 	"github.com/werf/3p-helm/pkg/release"
 	"github.com/werf/werf/v2/pkg/build"
-	"github.com/werf/werf/v2/test/pkg/werf"
+
 	werftest "github.com/werf/werf/v2/test/pkg/werf"
 )
 
@@ -17,7 +17,7 @@ type Project struct {
 	*werftest.Project
 }
 
-func NewProjectWithReport(p *werf.Project) *Project {
+func NewProjectWithReport(p *werftest.Project) *Project {
 	return &Project{Project: p}
 }
 
