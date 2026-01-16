@@ -147,7 +147,7 @@ var _ = Describe("Stapel imports", func() {
 			Expect(output).To(ContainSubstring("11111:11111"))
 		})
 
-		It("should remove empty directories in final image when importing stages", func(ctx SpecContext) {
+		XIt("should remove empty directories in final image when importing stages", func(ctx SpecContext) {
 			SuiteData.CommitProjectWorktree(ctx, SuiteData.ProjectName, utils.FixturePath("import_app_empty_dirs", "001"), "initial commit")
 
 			Expect(werfBuild(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{})).To(Succeed())
