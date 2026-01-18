@@ -290,25 +290,30 @@ func (backend *BuildahBackend) CalculateDependencyImportChecksum(ctx context.Con
 			return "", fmt.Errorf("unable to get file info %q: %w", path, err)
 		}
 
-		var reader io.Reader
+		fileHash := md5.New()
 		if fileInfo.Mode()&os.ModeSymlink != 0 {
 			link, err := os.Readlink(path)
 			if err != nil {
-				return "", fmt.Errorf("unable to read symlink %q: %w", link, err)
+				return "", fmt.Errorf("unable to read symlink %q: %w", path, err)
 			}
-			reader = strings.NewReader(link)
+			if _, err := io.Copy(fileHash, strings.NewReader(link)); err != nil {
+				return "", fmt.Errorf("error calculating hash for symlink %q: %w", path, err)
+			}
 		} else {
-			f, err := os.Open(path)
-			if err != nil {
-				return "", fmt.Errorf("unable to open file %q: %w", path, err)
-			}
-			defer f.Close()
-			reader = f
-		}
+			if err := func() error {
+				f, err := os.Open(path)
+				if err != nil {
+					return fmt.Errorf("unable to open file %q: %w", path, err)
+				}
+				defer f.Close()
 
-		fileHash := md5.New()
-		if _, err := io.Copy(fileHash, reader); err != nil {
-			return "", fmt.Errorf("error calculatting hash for %q: %w", path, err)
+				if _, err := io.Copy(fileHash, f); err != nil {
+					return fmt.Errorf("error calculating hash for file %q: %w", path, err)
+				}
+				return nil
+			}(); err != nil {
+				return "", err
+			}
 		}
 
 		if _, err := fmt.Fprintf(hash, "%x  %s\n", fileHash.Sum(nil), filepath.Join("/", util.GetRelativeToBaseFilepath(container.RootMount, path))); err != nil {
