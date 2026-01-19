@@ -5,6 +5,7 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/werf/werf/v2/test/pkg/report"
 
 	"github.com/werf/werf/v2/test/pkg/werf"
 )
@@ -79,9 +80,10 @@ var _ = Describe("Complex compose", Label("e2e", "compose", "complex"), func() {
 				By(fmt.Sprintf("%s: preparing test repo", opts.State))
 				SuiteData.InitTestRepo(ctx, repoDirname, fixtureRelPath)
 				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
+				reportProject := report.NewProjectWithReport(werfProject)
 
 				By(fmt.Sprintf("%s: building images", opts.State))
-				buildOut, _ := werfProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), &werf.BuildWithReportOptions{
+				buildOut, _ := reportProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), &werf.WithReportOptions{
 					CommonOptions: werf.CommonOptions{
 						ShouldFail: false,
 					},

@@ -82,9 +82,10 @@ var _ = Describe("Simple bundle publish/apply", Label("e2e", "bundle-publish-app
 				By("state0: preparing test repo")
 				SuiteData.InitTestRepo(ctx, repoDirname, fixtureRelPath)
 				werfProject = werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
+				reportProject := report.NewProjectWithReport(werfProject)
 
 				By("state0: building images")
-				buildOut, _ := werfProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), nil)
+				buildOut, _ := reportProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), nil)
 				Expect(buildOut).NotTo(ContainSubstring("Use previously built image"))
 
 				By("state0: execute bundle publish")
@@ -95,7 +96,7 @@ var _ = Describe("Simple bundle publish/apply", Label("e2e", "bundle-publish-app
 				})
 
 				By("state0: execute bundle apply")
-				_, deployReport := werfProject.BundleApplyWithReport(ctx, werfProject.Release(ctx), werfProject.Namespace(ctx), SuiteData.GetDeployReportPath(deployReportName), nil)
+				_, deployReport := reportProject.BundleApplyWithReport(ctx, werfProject.Release(ctx), werfProject.Namespace(ctx), SuiteData.GetDeployReportPath(deployReportName), nil)
 
 				By("state0: check deploy report")
 				Expect(deployReport.Release).To(Equal(werfProject.Release(ctx)))

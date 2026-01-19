@@ -85,13 +85,14 @@ var _ = Describe("Simple converge", Label("e2e", "converge", "simple"), func() {
 				By("state0: preparing test repo")
 				SuiteData.InitTestRepo(ctx, repoDirname, fixtureRelPath)
 				werfProject = werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
+				reportProject := report.NewProjectWithReport(werfProject)
 
 				By("state0: building images")
-				buildOut, _ := werfProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), nil)
+				buildOut, _ := reportProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), nil)
 				Expect(buildOut).NotTo(ContainSubstring("Use previously built image"))
 
 				By("state0: execute converge")
-				_, deployReport := werfProject.ConvergeWithReport(ctx, SuiteData.GetDeployReportPath(deployReportName), &werf.ConvergeWithReportOptions{
+				_, deployReport := reportProject.ConvergeWithReport(ctx, SuiteData.GetDeployReportPath(deployReportName), &werf.WithReportOptions{
 					CommonOptions: werf.CommonOptions{
 						ExtraArgs: []string{"--use-build-report", "--build-report-path", SuiteData.GetBuildReportPath(buildReportName)},
 					},

@@ -7,6 +7,7 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/werf/werf/v2/test/pkg/report"
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/test/pkg/werf"
@@ -117,9 +118,10 @@ var _ = Describe("Simple kube-run", Label("e2e", "kube-run", "simple"), func() {
 			By("state0: preparing test repo")
 			SuiteData.InitTestRepo(ctx, repoDirname, fixtureRelPath)
 			werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
+			reportProject := report.NewProjectWithReport(werfProject)
 
 			By("state0: building images")
-			buildOut, _ := werfProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), &werf.BuildWithReportOptions{
+			buildOut, _ := reportProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), &werf.WithReportOptions{
 				CommonOptions: werf.CommonOptions{
 					ShouldFail: false,
 				},

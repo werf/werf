@@ -9,6 +9,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/werf/werf/v2/test/pkg/report"
 
 	"github.com/werf/werf/v2/test/pkg/suite_init"
 	"github.com/werf/werf/v2/test/pkg/utils"
@@ -122,13 +123,14 @@ var _ = Describe("Simple export", Label("e2e", "export", "simple"), func() {
 				By("preparing test repo")
 				SuiteData.InitTestRepo(ctx, repoDirname, fixtureRelPath)
 				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
+				reportProject := report.NewProjectWithReport(werfProject)
 
 				By("building images and saving build report")
 				var buildArgs []string
 				for _, platform := range opts.Platforms {
 					buildArgs = append(buildArgs, "--platform", platform)
 				}
-				buildOut, _ := werfProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), &werf.BuildWithReportOptions{
+				buildOut, _ := reportProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), &werf.WithReportOptions{
 					CommonOptions: werf.CommonOptions{
 						ShouldFail: false,
 						ExtraArgs:  buildArgs,
@@ -138,8 +140,7 @@ var _ = Describe("Simple export", Label("e2e", "export", "simple"), func() {
 				Expect(buildOut).NotTo(ContainSubstring("Use previously built image"))
 
 				By("running export with build report")
-				imageName := fmt.Sprintf("%s/werf-export-%s", SuiteData.RegistryLocalAddress, utils.GetRandomString(10))
-
+				imageName := suite_init.TestRepo(fmt.Sprintf("werf-export-%s", utils.GetRandomString(10)))
 				exportArgs := getExportArgs(imageName, commonTestOptions{
 					Platforms:    opts.Platforms,
 					CustomLabels: opts.CustomLabels,
