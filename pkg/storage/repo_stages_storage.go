@@ -120,7 +120,7 @@ func (storage *RepoStagesStorage) GetStagesIDs(ctx context.Context, _ string, op
 	var res []image.StageID
 
 	o := makeOptions(opts...)
-	tags, err := storage.Tags(ctx, storage.DockerRegistry, storage.RepoAddress, o.dockerRegistryOptions...)
+	tags, err := storage.Tags(ctx, storage.RepoAddress, o.dockerRegistryOptions...)
 	if err != nil {
 		return nil, fmt.Errorf("unable to fetch tags for repo %q: %w", storage.RepoAddress, err)
 	}
@@ -224,7 +224,7 @@ func (storage *RepoStagesStorage) GetStagesIDsByDigest(ctx context.Context, _, d
 	var res []image.StageID
 
 	o := makeOptions(opts...)
-	tags, err := storage.Tags(ctx, storage.DockerRegistry, storage.RepoAddress, o.dockerRegistryOptions...)
+	tags, err := storage.Tags(ctx, storage.RepoAddress, o.dockerRegistryOptions...)
 	if err != nil {
 		return nil, fmt.Errorf("unable to fetch tags for repo %q: %w", storage.RepoAddress, err)
 	}
@@ -416,7 +416,7 @@ func (storage *RepoStagesStorage) GetStageCustomTagMetadata(ctx context.Context,
 
 func (storage *RepoStagesStorage) GetStageCustomTagMetadataIDs(ctx context.Context, opts ...Option) ([]string, error) {
 	o := makeOptions(opts...)
-	tags, err := storage.Tags(ctx, storage.DockerRegistry, storage.RepoAddress, o.dockerRegistryOptions...)
+	tags, err := storage.Tags(ctx, storage.RepoAddress, o.dockerRegistryOptions...)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get repo %s tags: %w", storage.RepoAddress, err)
 	}
@@ -494,7 +494,7 @@ func (storage *RepoStagesStorage) GetManagedImages(ctx context.Context, projectN
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetManagedImages %s\n", projectName)
 
 	o := makeOptions(opts...)
-	tags, err := storage.Tags(ctx, storage.DockerRegistry, storage.RepoAddress, o.dockerRegistryOptions...)
+	tags, err := storage.Tags(ctx, storage.RepoAddress, o.dockerRegistryOptions...)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get repo %s tags: %w", storage.RepoAddress, err)
 	}
@@ -551,6 +551,20 @@ func (storage *RepoStagesStorage) ShouldFetchImage(ctx context.Context, img cont
 
 func (storage *RepoStagesStorage) PutImageMetadata(ctx context.Context, projectName, imageNameOrManagedImageName, commit, stageID string) error {
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PutImageMetadata %s %s %s %s\n", projectName, imageNameOrManagedImageName, commit, stageID)
+
+	tagName := makeRepoImageMetadataTagName(imageNameOrManagedImageName, commit, stageID)
+	tags, err := storage.Tags(ctx, storage.RepoAddress)
+	if err != nil {
+		return fmt.Errorf("unable to get repo %s tags: %w", storage.RepoAddress, err)
+	}
+
+	for _, tag := range tags {
+		if tag == tagName {
+			logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PutImageMetadata tag %s already exists, skipping push\n", tagName)
+
+			return nil
+		}
+	}
 
 	fullImageName := makeRepoImageMetadataName(storage.RepoAddress, imageNameOrManagedImageName, commit, stageID)
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PutImageMetadata full image name: %s\n", fullImageName)
@@ -642,7 +656,7 @@ func (storage *RepoStagesStorage) GetAllAndGroupImageMetadataByImageName(ctx con
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetImageNameStageIDCommitList %s %s\n", projectName)
 
 	o := makeOptions(opts...)
-	tags, err := storage.Tags(ctx, storage.DockerRegistry, storage.RepoAddress, o.dockerRegistryOptions...)
+	tags, err := storage.Tags(ctx, storage.RepoAddress, o.dockerRegistryOptions...)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to get repo %s tags: %w", storage.RepoAddress, err)
 	}
@@ -671,6 +685,20 @@ func (storage *RepoStagesStorage) GetImportMetadata(ctx context.Context, _, id s
 func (storage *RepoStagesStorage) PutImportMetadata(ctx context.Context, projectName string, metadata *ImportMetadata) error {
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PutImportMetadata %v\n", metadata)
 
+	tagName := fmt.Sprintf("%s%s", RepoImportMetadata_ImageTagPrefix, metadata.ImportSourceID)
+	tags, err := storage.Tags(ctx, storage.RepoAddress)
+	if err != nil {
+		return fmt.Errorf("unable to get repo %s tags: %w", storage.RepoAddress, err)
+	}
+
+	for _, tag := range tags {
+		if tag == tagName {
+			logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PutImportMetadata tag %s already exists, skipping push\n", tagName)
+
+			return nil
+		}
+	}
+
 	fullImageName := makeRepoImportMetadataName(storage.RepoAddress, metadata.ImportSourceID)
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PutImportMetadata full image name: %s\n", fullImageName)
 
@@ -678,6 +706,12 @@ func (storage *RepoStagesStorage) PutImportMetadata(ctx context.Context, project
 	opts.Labels[image.WerfLabel] = projectName
 
 	if err := storage.DockerRegistry.PushImage(ctx, fullImageName, opts); err != nil {
+		if docker_registry.IsStatusForbiddenErr(err) {
+			logboek.Context(ctx).Warn().LogF("WARNING: Failed to push import meta tag image %s\n", fullImageName)
+
+			return nil
+		}
+
 		return fmt.Errorf("unable to push image %s: %w", fullImageName, err)
 	}
 
@@ -708,7 +742,7 @@ func (storage *RepoStagesStorage) GetImportMetadataIDs(ctx context.Context, _ st
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetImportMetadataIDs\n")
 
 	o := makeOptions(opts...)
-	tags, err := storage.Tags(ctx, storage.DockerRegistry, storage.RepoAddress, o.dockerRegistryOptions...)
+	tags, err := storage.Tags(ctx, storage.RepoAddress, o.dockerRegistryOptions...)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get repo %s tags: %w", storage.RepoAddress, err)
 	}
@@ -864,7 +898,7 @@ func (storage *RepoStagesStorage) GetClientIDRecords(ctx context.Context, projec
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetClientIDRecords for project %s\n", projectName)
 
 	o := makeOptions(opts...)
-	tags, err := storage.Tags(ctx, storage.DockerRegistry, storage.RepoAddress, o.dockerRegistryOptions...)
+	tags, err := storage.Tags(ctx, storage.RepoAddress, o.dockerRegistryOptions...)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get repo %s tags: %w", storage.RepoAddress, err)
 	}
@@ -963,7 +997,7 @@ func (storage *RepoStagesStorage) GetSyncServerRecords(ctx context.Context, proj
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetSyncServerRecords for project %s\n", projectName)
 
 	o := makeOptions(opts...)
-	tags, err := storage.Tags(ctx, storage.DockerRegistry, storage.RepoAddress, o.dockerRegistryOptions...)
+	tags, err := storage.Tags(ctx, storage.RepoAddress, o.dockerRegistryOptions...)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get repo %s tags: %w", storage.RepoAddress, err)
 	}
@@ -1022,7 +1056,7 @@ func (storage *RepoStagesStorage) PostSyncServerRecord(ctx context.Context, proj
 	return nil
 }
 
-func (storage *RepoStagesStorage) Tags(ctx context.Context, registry docker_registry.Interface, reference string, opts ...docker_registry.Option) ([]string, error) {
+func (storage *RepoStagesStorage) Tags(ctx context.Context, reference string, opts ...docker_registry.Option) ([]string, error) {
 	var tags []string
 	if err := logboek.Context(ctx).Info().LogProcess("List tags for repo %s", reference).DoError(func() error {
 		var err error
@@ -1049,7 +1083,7 @@ func (storage *RepoStagesStorage) GetLastCleanupRecord(ctx context.Context, proj
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetLastCleanupRecord for project %s\n", projectName)
 
 	o := makeOptions(opts...)
-	tags, err := storage.Tags(ctx, storage.DockerRegistry, storage.RepoAddress, o.dockerRegistryOptions...)
+	tags, err := storage.Tags(ctx, storage.RepoAddress, o.dockerRegistryOptions...)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get repo %s tags: %w", storage.RepoAddress, err)
 	}
