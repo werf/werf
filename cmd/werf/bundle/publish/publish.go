@@ -268,7 +268,7 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 			if c.UseBuildReport {
 				logboek.Context(ctx).Debug().LogFDetails("Avoid building because of using build report: %s\n", c.BuildReportPath)
 
-				imagesInfoGetters, err = c.GetImageInfoGettersFromReport(image.InfoGetterOptions{CustomTagFunc: useCustomTagFunc})
+				imagesInfoGetters, err = c.GetImageInfoGettersFromReport(ctx, image.InfoGetterOptions{CustomTagFunc: useCustomTagFunc})
 				if err != nil {
 					return err
 				}

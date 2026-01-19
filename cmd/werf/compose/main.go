@@ -488,7 +488,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 
 		if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
 			if c.UseBuildReport {
-				envArray, err = c.GetImagesEnvArrayFromReport()
+				envArray, err = c.GetImagesEnvArrayFromReport(ctx)
 				if err != nil {
 					return fmt.Errorf("unable to get images env array from build report: %w", err)
 				}

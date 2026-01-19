@@ -88,7 +88,7 @@ func (e *Exporter) RunFromReport(ctx context.Context, reportPath string) error {
 		return nil
 	}
 
-	report, err := LoadBuildReportFromFile(reportPath)
+	report, err := LoadBuildReportFromFile(ctx, reportPath)
 	if err != nil {
 		return fmt.Errorf("unable to load build report: %w", err)
 	}

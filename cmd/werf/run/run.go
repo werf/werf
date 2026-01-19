@@ -374,7 +374,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		if c.UseBuildReport {
 			logboek.Context(ctx).Debug().LogFDetails("Avoid building because of using build report: %s\n", c.BuildReportPath)
 
-			dockerImageName, err = c.GetFullImageNameFromReport(imageName)
+			dockerImageName, err = c.GetFullImageNameFromReport(ctx, imageName)
 			if err != nil {
 				return fmt.Errorf("unable to get full name for image %q: %w", imageName, err)
 			}

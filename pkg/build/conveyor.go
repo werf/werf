@@ -442,8 +442,8 @@ func (c *Conveyor) GetFullImageName(imageName string) (string, error) {
 	return "", fmt.Errorf("image %q not found", imageName)
 }
 
-func (c *Conveyor) GetFullImageNameFromReport(imageName string) (string, error) {
-	infoGetters, err := c.GetImageInfoGettersFromReport(imagePkg.InfoGetterOptions{})
+func (c *Conveyor) GetFullImageNameFromReport(ctx context.Context, imageName string) (string, error) {
+	infoGetters, err := c.GetImageInfoGettersFromReport(ctx, imagePkg.InfoGetterOptions{})
 	if err != nil {
 		return "", err
 	}
@@ -520,8 +520,8 @@ func (c *Conveyor) GetImageInfoGetters(opts imagePkg.InfoGetterOptions) ([]*imag
 	return imagesGetters, nil
 }
 
-func (c *Conveyor) GetImageInfoGettersFromReport(opts imagePkg.InfoGetterOptions) ([]*imagePkg.InfoGetter, error) {
-	report, err := LoadBuildReportFromFile(c.BuildReportPath)
+func (c *Conveyor) GetImageInfoGettersFromReport(ctx context.Context, opts imagePkg.InfoGetterOptions) ([]*imagePkg.InfoGetter, error) {
+	report, err := LoadBuildReportFromFile(ctx, c.BuildReportPath)
 	if err != nil {
 		return nil, fmt.Errorf("unable to load build report: %w", err)
 	}
@@ -552,10 +552,10 @@ func (c *Conveyor) GetImagesEnvArray() []string {
 	return envArray
 }
 
-func (c *Conveyor) GetImagesEnvArrayFromReport() ([]string, error) {
+func (c *Conveyor) GetImagesEnvArrayFromReport(ctx context.Context) ([]string, error) {
 	var envArray []string
 
-	report, err := LoadBuildReportFromFile(c.BuildReportPath)
+	report, err := LoadBuildReportFromFile(ctx, c.BuildReportPath)
 	if err != nil {
 		return nil, fmt.Errorf("unable to load build report: %w", err)
 	}
