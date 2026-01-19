@@ -319,7 +319,7 @@ func validateBuildReport(ctx context.Context, path string, report *ImagesReport)
 	return nil
 }
 
-func validateImageRecord(ctx context.Context, path string, imageName string, record ReportImageRecord) error {
+func validateImageRecord(ctx context.Context, path, imageName string, record ReportImageRecord) error {
 	if record.WerfImageName == "" {
 		return fmt.Errorf("image %q has empty WerfImageName", imageName)
 	}
@@ -348,7 +348,7 @@ func validateImageRecord(ctx context.Context, path string, imageName string, rec
 	return nil
 }
 
-func validateStageRecord(ctx context.Context, path string, imageName string, stageIndex int, stage ReportStageRecord) error {
+func validateStageRecord(ctx context.Context, path, imageName string, stageIndex int, stage ReportStageRecord) error {
 	stageRef := fmt.Sprintf("image %q stage #%d", imageName, stageIndex)
 
 	if stage.Name == "" {
