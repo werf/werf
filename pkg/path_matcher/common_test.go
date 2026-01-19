@@ -86,6 +86,16 @@ func TestFormatPath(t *testing.T) {
 			path: "/",
 			want: "",
 		},
+		{
+			name: "normal path",
+			path: ".helm",
+			want: ".helm",
+		},
+		{
+			name: "path with subdirectory",
+			path: ".helm/templates",
+			want: ".helm/templates",
+		},
 	}
 
 	for _, tt := range tests {
