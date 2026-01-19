@@ -105,7 +105,7 @@ func formatPaths(paths []string) []string {
 }
 
 func formatPath(path string) string {
-	if path == "" || path == "." {
+	if path == "" || path == "." || path == "/" {
 		return ""
 	}
 

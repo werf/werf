@@ -64,3 +64,36 @@ func TestIsPathMatched(t *testing.T) {
 		})
 	}
 }
+
+func TestFormatPath(t *testing.T) {
+	tests := []struct {
+		name string
+		path string
+		want string
+	}{
+		{
+			name: "empty path",
+			path: "",
+			want: "",
+		},
+		{
+			name: "dot path",
+			path: ".",
+			want: "",
+		},
+		{
+			name: "root slash path",
+			path: "/",
+			want: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := formatPath(tt.path)
+			if got != tt.want {
+				t.Errorf("formatPath(%q) = %q; want %q", tt.path, got, tt.want)
+			}
+		})
+	}
+}
