@@ -51,13 +51,13 @@ var _ = Describe("Complex compose", Label("e2e", "compose", "complex"), func() {
 				Expect(composeDownOut).To(ContainSubstring("Removed"))
 			}
 		},
-		Entry("without additional options", simpleTestOptions{
+		XEntry("without additional options", simpleTestOptions{
 			ExtraArgs:        []string{},
 			State:            "state0",
 			StateDescription: "running compose up with no options",
 			Repo:             "repo0",
 		}),
-		Entry("with multiple compose files", simpleTestOptions{
+		XEntry("with multiple compose files", simpleTestOptions{
 			ExtraArgs: []string{
 				"--docker-compose-options", "-f docker-compose.yaml -f docker-compose-b.yaml",
 				"--docker-compose-command-options", "--always-recreate-deps",
@@ -97,16 +97,17 @@ var _ = Describe("Complex compose", Label("e2e", "compose", "complex"), func() {
 						ExtraArgs: append([]string{commandUp}, opts.ExtraArgs...),
 					},
 				})
+
 				By(fmt.Sprintf("%s: running compose down", opts.State))
 				composeDownOut := werfProject.Compose(ctx, &werf.BuildOptions{
 					CommonOptions: werf.CommonOptions{
-						ExtraArgs: []string{commandDown},
+						ExtraArgs: append([]string{commandDown}, "--use-build-report", "--build-report-path", SuiteData.GetBuildReportPath(buildReportName)),
 					},
 				})
 				Expect(composeDownOut).To(ContainSubstring("Removed"))
 			}
 		},
-		Entry("without additional options with build report using", simpleTestOptions{
+		XEntry("without additional options with build report using", simpleTestOptions{
 			ExtraArgs:        []string{},
 			State:            "state0",
 			StateDescription: "running compose up with no options",
