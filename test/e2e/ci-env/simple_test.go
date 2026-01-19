@@ -36,7 +36,7 @@ var _ = Describe("Simple ci-env", Label("e2e", "ci-env", "simple"), func() {
 				},
 			})
 
-			dockerDirPattern := filepath.Join(tmpDir, "werf-docker-config-*")
+			dockerDirPattern := filepath.Join(tmpDir, "werf-*-docker-config-*")
 			dockerDirMatches, err := filepath.Glob(dockerDirPattern)
 			Expect(err).To(Succeed())
 

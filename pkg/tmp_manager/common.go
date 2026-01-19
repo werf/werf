@@ -13,8 +13,10 @@ const (
 	kubeConfigsServiceDir       = "kubeconfigs"
 	werfConfigRendersServiceDir = "werf_config_renders"
 	contextArchivesDir          = "context"
+)
 
-	commonPrefix           = "werf-"
+var (
+	commonPrefix           = "werf-" + werf.Version + "-"
 	contextArchivePrefix   = commonPrefix + "context-"
 	projectDirPrefix       = commonPrefix + "project-data-"
 	dockerConfigDirPrefix  = commonPrefix + "docker-config-"
