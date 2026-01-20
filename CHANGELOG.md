@@ -1,5 +1,20 @@
 # Changelog
 
+## [2.57.2](https://github.com/werf/werf/compare/v2.57.1...v2.57.2) (2026-01-20)
+
+
+### Bug Fixes
+
+* **build, docker, dockerfile:** don't post cleanup images ([#7313](https://github.com/werf/werf/issues/7313)) ([f7bf030](https://github.com/werf/werf/commit/f7bf0305cc1c19632ef20250330fb479ed09c9a9))
+* **build, dockerfile, staged:** fix staged dockerfile dependencies for COPY --from ([#7300](https://github.com/werf/werf/issues/7300)) ([18e3c64](https://github.com/werf/werf/commit/18e3c6498f9ed6ab1acfd291bd235d5dc1e76d2f))
+* **build, stapel, buildah:** binary files patch incorrect ([#7310](https://github.com/werf/werf/issues/7310)) ([2eec873](https://github.com/werf/werf/commit/2eec873ef6a880baab16b5c59c20afbadafcf29f))
+* **build, stapel, import, buildah:** close file descriptors in checksum calculation loop ([#7320](https://github.com/werf/werf/issues/7320)) ([b4f5124](https://github.com/werf/werf/commit/b4f51241d82fa8ada6e5bb1fbad0ef53729faa59))
+* **build:** sanitize docker credentials from buildkit and docker errors ([#7299](https://github.com/werf/werf/issues/7299)) ([ae50410](https://github.com/werf/werf/commit/ae504101c171bd75fe6666113256ff2d75c79548))
+* **ci-env:** optimize docker config copying to prevent inodes overflow ([#7305](https://github.com/werf/werf/issues/7305)) ([d5005c1](https://github.com/werf/werf/commit/d5005c15301f90341fa8139213e4ad3311c87287))
+* **deploy:** add standalone pod tracking ([#7316](https://github.com/werf/werf/issues/7316)) ([418e21a](https://github.com/werf/werf/commit/418e21a078e3d3df19211f8b4427b9764babc7af))
+* **deploy:** adjust service account managed fields ([#7319](https://github.com/werf/werf/issues/7319)) ([751a900](https://github.com/werf/werf/commit/751a900449680f6101496471df395d124798f46e))
+* **includes, giterminism:** fix includePaths handling ([#7321](https://github.com/werf/werf/issues/7321)) ([b71c543](https://github.com/werf/werf/commit/b71c54352c73afd151196d62c9916b3503d053d1))
+
 ## [2.57.1](https://github.com/werf/werf/compare/v2.57.0...v2.57.1) (2025-12-30)
 
 
