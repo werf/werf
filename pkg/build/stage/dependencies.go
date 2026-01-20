@@ -391,7 +391,15 @@ func (s *DependenciesStage) generateImportChecksum(ctx context.Context, c Convey
 // We cannot simply ask rsync to print "just file paths" in a machine-friendly format.
 //
 // To keep the checksum aligned with the actual import logic, we reuse rsync and the same
-// filters as the import server does (PrepareRsyncFilters),
+// filters as the import server does (PrepareRsyncFilters).
+//
+// The script uses two-phase approach matching the import logic:
+// Phase 1: Use 'find' to get directories that directly match include globs
+//
+//	(rsync with --prune-empty-dirs cannot detect empty target directories in --dry-run mode)
+//
+// Phase 2: Use rsync to get files matching the globs (using PrepareRsyncFilters)
+// This ensures empty directories that match globs like "app/**/add-dir" are included in checksum.
 func generateChecksumScript(from string, includePaths, excludePaths []string, resultChecksumPath string) []string {
 	// As we are running rsync from the container root, we need to make sure that the paths
 	// we are passing to rsync are relative to the container root.
@@ -416,23 +424,16 @@ func generateChecksumScript(from string, includePaths, excludePaths []string, re
 		excludePathsCopy = append(excludePathsCopy, stapel.CONTAINER_MOUNT_ROOT)
 	}
 
-	// Do not follow symlinks when calculating checksums to avoid runner hang-ups (-L)
-	rsyncCommand := stapel.RsyncBinPath() + " -r --dry-run"
-	// Run rsync from the container root to avoid problems with relative paths in the output.
-	rsyncCommand += import_server.PrepareRsyncFilters("", includePathsCopy, excludePathsCopy)
-	rsyncCommand += " " + "/"
-
 	// We have an old rsync version, so we can't use --out-format and other options to parse file paths.
 	// Example lines:
 	// "-rw-r--r--    1 root     root             0 Nov 17 22:57 test-file.a"
 	// "drwxr-xr-x    1 root     root             0 Nov 17 22:57 some-directory"
 	// "lrw-r--r--    1 root     root             0 Dec 10 10:07 path/to/link -> target/path"
 	//
-	// NOTE: We include directories (d*) in the checksum calculation. This does NOT mean all
-	// directories are included — only those that rsync returns based on the filters above
-	// (PrepareRsyncFilters). For file globs like "**/*.txt", only parent directories of
-	// matching files are included. For directory globs like "cache", the directory itself
-	// is included even if empty. This ensures checksum consistency with what gets copied.
+	// NOTE: We include directories (d*) in the checksum calculation. This ensures checksum
+	// consistency with what gets copied. For file globs like "**/*.txt", only parent directories
+	// of matching files are included. For directory globs like "app/**/add-dir", the directories
+	// themselves are included even if empty (via Phase 1 find command).
 	parseFilePathCommand := `while read -r mode rest; do
 	 case "$mode" in
 	   -*) echo "/${rest##* }" ;;
@@ -444,14 +445,66 @@ func generateChecksumScript(from string, includePaths, excludePaths []string, re
 	     ;;
 	 esac
 	done`
-	sortCommand := fmt.Sprintf("%s -n", stapel.SortBinPath())
+
+	var commands string
+
+	// Phase 1: Use 'find' to get directories that directly match include globs
+	// This is necessary because rsync with --prune-empty-dirs removes empty directories
+	// from output even when they match the include pattern.
+	// We extract the last segment of the glob (directory name) and use find -name to locate it.
+	// Then we filter results to ensure they match the full glob pattern.
+	if len(includePaths) > 0 {
+		var findCommands []string
+		for _, p := range includePathsCopy {
+			// Extract the last segment of the path (the directory name to find)
+			lastSegment := path.Base(p)
+
+			baseDir := from
+			if baseDir == "" {
+				baseDir = "/"
+			}
+
+			// For patterns with **, we search for directories with the target name
+			// and filter by the path prefix
+			if strings.Contains(p, "**") {
+				// Get the prefix before ** (e.g., "/out/tree/app" from "/out/tree/app/**/add-dir")
+				parts := strings.Split(p, "**")
+				pathPrefix := strings.TrimSuffix(parts[0], "/")
+				if pathPrefix == "" {
+					pathPrefix = baseDir
+				}
+				// Find directories with the target name under the base directory
+				// and filter to ensure they are under the correct prefix path
+				findCmd := fmt.Sprintf("find %s -type d -name '%s' 2>/dev/null | while read d; do case \"$d\" in %s*) echo \"$d/\" ;; esac; done",
+					baseDir, lastSegment, pathPrefix)
+				findCommands = append(findCommands, findCmd)
+			} else {
+				// Simple path without **, use direct path matching
+				findCmd := fmt.Sprintf("[ -d '%s' ] && echo '%s/' || true", p, p)
+				findCommands = append(findCommands, findCmd)
+			}
+		}
+		commands = fmt.Sprintf("{ %s; ", strings.Join(findCommands, "; "))
+	} else {
+		commands = "{ "
+	}
+
+	// Phase 2: Get files matching the globs using rsync (standard behavior)
+	// Do not follow symlinks when calculating checksums to avoid runner hang-ups (-L)
+	rsyncFilesCommand := stapel.RsyncBinPath() + " -r --dry-run"
+	// Run rsync from the container root to avoid problems with relative paths in the output.
+	rsyncFilesCommand += import_server.PrepareRsyncFilters("", includePathsCopy, excludePathsCopy)
+	rsyncFilesCommand += " " + "/"
+	commands += rsyncFilesCommand + " | " + parseFilePathCommand + "; }"
+
+	sortCommand := fmt.Sprintf("%s -u", stapel.SortBinPath()) // -u for unique (remove duplicates)
 	md5SumCommand := stapel.Md5sumBinPath()
 	cutCommand := fmt.Sprintf("%s -c 1-32", stapel.CutBinPath())
 
-	commands := []string{rsyncCommand, parseFilePathCommand, sortCommand, "checksum", md5SumCommand, cutCommand}
+	allCommands := []string{commands, sortCommand, "checksum", md5SumCommand, cutCommand}
 
 	script := generateChecksumBashFunction()
-	script = append(script, fmt.Sprintf("%s > %s", strings.Join(commands, " | "), resultChecksumPath))
+	script = append(script, fmt.Sprintf("%s > %s", strings.Join(allCommands, " | "), resultChecksumPath))
 
 	return script
 }
