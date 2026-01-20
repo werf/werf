@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   detect-changes:
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, regular]
     timeout-minutes: 10
     permissions:
       pull-requests: read
