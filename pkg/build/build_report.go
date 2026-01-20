@@ -186,6 +186,9 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 		if _, isLocal := phase.Conveyor.StorageManager.GetStagesStorage().(*storage.LocalStagesStorage); !isLocal {
 			if len(targetPlatforms) > 1 {
 				img := phase.Conveyor.imagesTree.GetMultiplatformImage(name)
+				if img == nil {
+					continue
+				}
 
 				isRebuilt := false
 				for _, pImg := range img.Images {
@@ -227,6 +230,8 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 	debugJsonData, err := phase.ImagesReport.ToJsonData()
 	logboek.Context(ctx).Debug().LogF("ImagesReport: (err: %v)\n%s", err, debugJsonData)
 
+	phase.ImagesReport.sendTelemetry(ctx)
+
 	if phase.ReportPath != "" {
 		var data []byte
 		var err error
@@ -247,8 +252,6 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 			return fmt.Errorf("unable to write report to %s: %w", phase.ReportPath, err)
 		}
 	}
-
-	phase.ImagesReport.sendTelemetry(ctx)
 
 	return nil
 }
