@@ -33,10 +33,10 @@ func werfHostPurge(ctx context.Context, dir string, opts liveexec.ExecCommandOpt
 }
 
 type pathChecks struct {
-	files          []string
-	dirs           []string
-	excludedFiles  []string
-	excludedDirs   []string
+	files         []string
+	dirs          []string
+	excludedFiles []string
+	excludedDirs  []string
 }
 
 func generatePathCheckCommands(checks pathChecks) []string {

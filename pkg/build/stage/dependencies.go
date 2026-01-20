@@ -451,40 +451,13 @@ func generateChecksumScript(from string, includePaths, excludePaths []string, re
 	// Phase 1: Use 'find' to get directories that directly match include globs
 	// This is necessary because rsync with --prune-empty-dirs removes empty directories
 	// from output even when they match the include pattern.
-	// We extract the last segment of the glob (directory name) and use find -name to locate it.
-	// Then we filter results to ensure they match the full glob pattern.
+	//
+	// Optimized approach:
+	// - For patterns with **: use ONE find command with multiple -name conditions
+	// - For simple paths: batch all existence checks together
+	// This minimizes the number of filesystem traversals.
 	if len(includePaths) > 0 {
-		var findCommands []string
-		for _, p := range includePathsCopy {
-			// Extract the last segment of the path (the directory name to find)
-			lastSegment := path.Base(p)
-
-			baseDir := from
-			if baseDir == "" {
-				baseDir = "/"
-			}
-
-			// For patterns with **, we search for directories with the target name
-			// and filter by the path prefix
-			if strings.Contains(p, "**") {
-				// Get the prefix before ** (e.g., "/out/tree/app" from "/out/tree/app/**/add-dir")
-				parts := strings.Split(p, "**")
-				pathPrefix := strings.TrimSuffix(parts[0], "/")
-				if pathPrefix == "" {
-					pathPrefix = baseDir
-				}
-				// Find directories with the target name under the base directory
-				// and filter to ensure they are under the correct prefix path
-				findCmd := fmt.Sprintf("find %s -type d -name '%s' 2>/dev/null | while read d; do case \"$d\" in %s*) echo \"$d/\" ;; esac; done",
-					baseDir, lastSegment, pathPrefix)
-				findCommands = append(findCommands, findCmd)
-			} else {
-				// Simple path without **, use direct path matching
-				findCmd := fmt.Sprintf("[ -d '%s' ] && echo '%s/' || true", p, p)
-				findCommands = append(findCommands, findCmd)
-			}
-		}
-		commands = fmt.Sprintf("{ %s; ", strings.Join(findCommands, "; "))
+		commands = "{ " + generatePhase1FindCommand(from, includePathsCopy) + "; "
 	} else {
 		commands = "{ "
 	}
@@ -537,6 +510,116 @@ func getDependencyImportID(dependencyImport *config.DependencyImport) string {
 		"Type", string(dependencyImport.Type),
 		"TargetEnv", dependencyImport.TargetEnv,
 	)
+}
+
+// generatePhase1FindCommand creates an optimized shell command to find directories
+// matching the include patterns. Instead of running multiple find commands (one per pattern),
+// this function:
+// 1. Groups patterns with ** by their common prefix to minimize filesystem traversals
+// 2. Uses a single find with multiple -name conditions where possible
+// 3. Batches simple path checks together
+//
+// This is important for performance when the source directory contains hundreds of
+// thousands of files.
+func generatePhase1FindCommand(from string, includePathsCopy []string) string {
+	if len(includePathsCopy) == 0 {
+		return "true"
+	}
+
+	baseDir := from
+	if baseDir == "" {
+		baseDir = "/"
+	}
+
+	// Separate glob patterns (with **) from simple paths
+	type globPattern struct {
+		prefix      string // path before **
+		dirName     string // directory name to find (after **)
+		fullPattern string // original pattern for path filtering
+	}
+
+	var globPatterns []globPattern
+	var simplePaths []string
+
+	for _, p := range includePathsCopy {
+		if strings.Contains(p, "**") {
+			parts := strings.SplitN(p, "**", 2)
+			prefix := strings.TrimSuffix(parts[0], "/")
+			suffix := strings.TrimPrefix(parts[1], "/")
+			if suffix == "" {
+				continue // "app/**" matches everything, no specific dir to find
+			}
+			// For patterns like "app/**/sub/dir", we need the last segment
+			dirName := path.Base(suffix)
+			globPatterns = append(globPatterns, globPattern{
+				prefix:      prefix,
+				dirName:     dirName,
+				fullPattern: p,
+			})
+		} else {
+			simplePaths = append(simplePaths, p)
+		}
+	}
+
+	var commands []string
+
+	// Group glob patterns by prefix to run fewer find commands
+	if len(globPatterns) > 0 {
+		// Group patterns by their prefix
+		prefixGroups := make(map[string][]globPattern)
+		for _, gp := range globPatterns {
+			prefixGroups[gp.prefix] = append(prefixGroups[gp.prefix], gp)
+		}
+
+		for prefix, patterns := range prefixGroups {
+			searchDir := baseDir
+			if prefix != "" {
+				searchDir = path.Join(baseDir, prefix)
+			}
+
+			// Build find command with multiple -name conditions (OR)
+			var nameConditions []string
+			var pathPrefixes []string
+			for _, gp := range patterns {
+				nameConditions = append(nameConditions, fmt.Sprintf("-name '%s'", gp.dirName))
+				// Calculate path prefix for filtering
+				pathPrefix := strings.TrimSuffix(strings.SplitN(gp.fullPattern, "**", 2)[0], "/")
+				if pathPrefix == "" {
+					pathPrefix = baseDir
+				}
+				pathPrefixes = append(pathPrefixes, pathPrefix)
+			}
+
+			// Combine name conditions with -o (OR)
+			nameExpr := strings.Join(nameConditions, " -o ")
+			if len(nameConditions) > 1 {
+				nameExpr = "\\( " + nameExpr + " \\)"
+			}
+
+			// Build case pattern for path filtering
+			var casePatterns []string
+			for _, pfx := range pathPrefixes {
+				casePatterns = append(casePatterns, pfx+"*")
+			}
+			casePattern := strings.Join(casePatterns, "|")
+
+			findCmd := fmt.Sprintf(
+				"find %s -type d %s 2>/dev/null | while read d; do case \"$d\" in %s) echo \"$d/\" ;; esac; done",
+				searchDir, nameExpr, casePattern)
+			commands = append(commands, findCmd)
+		}
+	}
+
+	// Handle simple paths - just check if directory exists
+	for _, p := range simplePaths {
+		commands = append(commands, fmt.Sprintf("[ -d '%s' ] && echo '%s/' || true", p, p))
+	}
+
+	if len(commands) == 0 {
+		return "true"
+	}
+
+	return strings.Join(commands, "; ")
 }
 
 func getImportID(importElm *config.Import) string {

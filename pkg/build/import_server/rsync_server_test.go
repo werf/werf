@@ -423,3 +423,92 @@ func Test_prepareRsyncExcludeFiltersForGlobs(t *testing.T) {
 		})
 	}
 }
+
+func Test_findCommonGlobPrefix(t *testing.T) {
+	tests := []struct {
+		name     string
+		patterns []string
+		want     string
+	}{
+		{
+			name:     "empty patterns",
+			patterns: nil,
+			want:     "",
+		},
+		{
+			name:     "single pattern",
+			patterns: []string{"app/**/cache"},
+			want:     "app",
+		},
+		{
+			name:     "same prefix",
+			patterns: []string{"app/**/cache", "app/**/logs"},
+			want:     "app",
+		},
+		{
+			name:     "nested same prefix",
+			patterns: []string{"app/foo/**/cache", "app/foo/**/logs"},
+			want:     "app/foo",
+		},
+		{
+			name:     "different prefixes under common root",
+			patterns: []string{"app/foo/**/x", "app/bar/**/y"},
+			want:     "app",
+		},
+		{
+			name:     "no common prefix",
+			patterns: []string{"**/cache", "app/**/logs"},
+			want:     "",
+		},
+		{
+			name:     "all start with **",
+			patterns: []string{"**/cache", "**/logs"},
+			want:     "",
+		},
+		{
+			name:     "pattern without **",
+			patterns: []string{"app/cache"},
+			want:     "",
+		},
+		{
+			name:     "mixed with and without **",
+			patterns: []string{"app/**/cache", "app/data"},
+			want:     "app",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := findCommonGlobPrefix(tt.patterns)
+			if got != tt.want {
+				t.Errorf("findCommonGlobPrefix(%v) = %q, want %q", tt.patterns, got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_commonPathPrefix(t *testing.T) {
+	tests := []struct {
+		a, b string
+		want string
+	}{
+		{"", "", ""},
+		{"a", "a", "a"},
+		{"a", "b", ""},
+		{"a/b", "a/b", "a/b"},
+		{"a/b", "a/c", "a"},
+		{"a/b/c", "a/b/d", "a/b"},
+		{"a/b/c", "a/x/y", "a"},
+		{"app/foo", "app/bar", "app"},
+		{"app", "application", ""}, // different first segments
+		{"", "a/b", ""},
+		{"a/b", "", ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.a+"_"+tt.b, func(t *testing.T) {
+			got := commonPathPrefix(tt.a, tt.b)
+			if got != tt.want {
+				t.Errorf("commonPathPrefix(%q, %q) = %q, want %q", tt.a, tt.b, got, tt.want)
+			}
+		})
+	}
+}
