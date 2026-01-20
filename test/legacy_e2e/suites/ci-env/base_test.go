@@ -1,7 +1,7 @@
 package ci_env_test
 
 import (
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -58,10 +58,10 @@ var _ = Describe("base", func() {
 				useAsFileOutput := utils.SucceedCommandOutputString(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "ci-env", ciSystem, "--as-file")
 
 				scriptPath := strings.TrimSpace(useAsFileOutput)
-				scriptDataByte, err := ioutil.ReadFile(scriptPath)
+				scriptDataByte, err := os.ReadFile(scriptPath)
 				Expect(err).ShouldNot(HaveOccurred())
 
-				re := regexp.MustCompile("(.*/tmp/werf-docker-config-)[0-9]+(.*)")
+				re := regexp.MustCompile("(.*/tmp/werf-.*?-docker-config-)[0-9]+(.*)")
 				scriptData := re.ReplaceAllString(string(scriptDataByte), "${1}${2}")
 				output = re.ReplaceAllString(output, "${1}${2}")
 
