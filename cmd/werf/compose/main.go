@@ -450,11 +450,6 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 
 	var envArray []string
 	if !imagesToProcess.WithoutImages && shouldBeBuilt {
-		common.SetupOndemandKubeInitializer(commonCmdData.KubeContextCurrent, commonCmdData.LegacyKubeConfigPath, commonCmdData.KubeConfigBase64, commonCmdData.LegacyKubeConfigPathsMergeList)
-		if err := common.GetOndemandKubeInitializer().Init(ctx); err != nil {
-			return err
-		}
-
 		projectName := werfConfig.Meta.Project
 
 		projectTmpDir, err := tmp_manager.CreateProjectDir(ctx)

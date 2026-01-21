@@ -276,7 +276,7 @@ func run(
 
 	if !imagesToProcess.WithoutImages {
 		logboek.LogOptionalLn()
-		common.SetupOndemandKubeInitializer(commonCmdData.KubeContextCurrent, commonCmdData.LegacyKubeConfigPath, commonCmdData.KubeConfigBase64, commonCmdData.LegacyKubeConfigPathsMergeList)
+		common.SetupOndemandKubeInitializer(commonCmdData.KubeContextCurrent, commonCmdData.LegacyKubeConfigPath, commonCmdData.KubeConfigBase64, commonCmdData.LegacyKubeConfigPathsMergeList, commonCmdData.KubeBearerTokenData, commonCmdData.KubeBearerTokenPath)
 		if err := common.GetOndemandKubeInitializer().Init(ctx); err != nil {
 			return err
 		}

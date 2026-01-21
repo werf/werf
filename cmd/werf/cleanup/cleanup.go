@@ -20,8 +20,10 @@ import (
 var commonCmdData common.CmdData
 
 type cmdDataType struct {
-	ScanContextOnly string
-	KeepList        string
+	ScanContextOnly     string
+	KeepList            string
+	KubeBearerTokenData string
+	KubeBearerTokenPath string
 }
 
 var cmdData cmdDataType
@@ -104,6 +106,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	// aliases, but only WERF_SCAN_ONLY_CONTEXT env var is supported
 	cmd.PersistentFlags().StringVarP(&cmdData.ScanContextOnly, "scan-context-only", "", os.Getenv("WERF_SCAN_CONTEXT_ONLY"), "Scan for used images only in the specified kube context, scan all contexts from kube config otherwise (default false or $WERF_SCAN_CONTEXT_ONLY)")
 	cmd.PersistentFlags().StringVarP(&cmdData.ScanContextOnly, "kube-context", "", os.Getenv("WERF_SCAN_CONTEXT_ONLY"), "Scan for used images only in the specified kube context, scan all contexts from kube config otherwise (default false or $WERF_SCAN_CONTEXT_ONLY)")
+	cmd.Flags().StringVarP(&cmdData.KubeBearerTokenData, "kube-token", "", os.Getenv("WERF_KUBE_TOKEN"), "Kubernetes bearer token used for authentication (default $WERF_KUBE_TOKEN)")
+	cmd.Flags().StringVarP(&cmdData.KubeBearerTokenPath, "kube-token-path", "", os.Getenv("WERF_KUBE_TOKEN_PATH"), "Path to file with bearer token for authentication in Kubernetes (default $WERF_KUBE_TOKEN_PATH)")
 
 	setupKeeplist(&cmdData, cmd)
 
@@ -141,7 +145,7 @@ func runCleanup(ctx context.Context, cmd *cobra.Command) error {
 		}
 	}()
 
-	common.SetupOndemandKubeInitializer(cmdData.ScanContextOnly, commonCmdData.LegacyKubeConfigPath, commonCmdData.KubeConfigBase64, commonCmdData.LegacyKubeConfigPathsMergeList)
+	common.SetupOndemandKubeInitializer(cmdData.ScanContextOnly, commonCmdData.LegacyKubeConfigPath, commonCmdData.KubeConfigBase64, commonCmdData.LegacyKubeConfigPathsMergeList, commonCmdData.KubeBearerTokenData, commonCmdData.KubeBearerTokenPath)
 	if err := common.GetOndemandKubeInitializer().Init(ctx); err != nil {
 		return err
 	}
