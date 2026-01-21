@@ -141,6 +141,11 @@ werf cleanup [options]
       --kube-context=""
             Scan for used images only in the specified kube context, scan all contexts from kube    
             config otherwise (default false or $WERF_SCAN_CONTEXT_ONLY)
+      --kube-token=""
+            Kubernetes bearer token used for authentication (default $WERF_KUBE_TOKEN)
+      --kube-token-path=""
+            Path to file with bearer token for authentication in Kubernetes (default                
+            $WERF_KUBE_TOKEN_PATH)
       --log-color-mode="auto"
             Set log color mode.
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
