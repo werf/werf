@@ -55,7 +55,7 @@ var _ = Describe("Complex compose", Label("e2e", "compose", "complex"), func() {
 			ExtraArgs:        []string{},
 			State:            "state0",
 			StateDescription: "running compose up with no options",
-			Repo:             "repo0",
+			Repo:             "repo0-compose",
 		}),
 		Entry("with multiple compose files", simpleTestOptions{
 			ExtraArgs: []string{
@@ -64,7 +64,7 @@ var _ = Describe("Complex compose", Label("e2e", "compose", "complex"), func() {
 			},
 			State:            "state1",
 			StateDescription: "running compose up with multiple compose files and args",
-			Repo:             "repo1",
+			Repo:             "repo1-compose",
 		}),
 	)
 
@@ -111,7 +111,7 @@ var _ = Describe("Complex compose", Label("e2e", "compose", "complex"), func() {
 			ExtraArgs:        []string{},
 			State:            "state0",
 			StateDescription: "running compose up with no options",
-			Repo:             "repo0",
+			Repo:             "repo0-compose-report",
 		}),
 		Entry("with multiple compose files with build report using", simpleTestOptions{
 			ExtraArgs: []string{
@@ -120,7 +120,7 @@ var _ = Describe("Complex compose", Label("e2e", "compose", "complex"), func() {
 			},
 			State:            "state1",
 			StateDescription: "running compose up with multiple compose files and args",
-			Repo:             "repo1",
+			Repo:             "repo1-compose-report",
 		}),
 	)
 })
