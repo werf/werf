@@ -309,7 +309,7 @@ func NewConveyorStubForDependencies(giterminismManager *GiterminismManagerStub, 
 
 var _ = Describe("generateFirstPhaseFindCommand", func() {
 	DescribeTable("should generate correct find commands for various include patterns",
-		func(baseDir string, includePaths []string, expectedContains []string, expectedNotContains []string) {
+		func(baseDir string, includePaths, expectedContains, expectedNotContains []string) {
 			result := generateFirstPhaseFindCommand(baseDir, includePaths)
 
 			for _, expected := range expectedContains {
