@@ -151,8 +151,7 @@ func (srv *RsyncServer) GetCopyCommand(ctx context.Context, importConfig *config
 	//
 	// Phase 1: Create directories that directly match include globs.
 	// Uses a single rsync --list-only call to get directory listing, then filters
-	// and creates directories matching the glob patterns. This is more efficient
-	// than multiple rsync calls (one per includePath).
+	// and creates directories matching the glob patterns.
 	//
 	// rsync with --prune-empty-dirs cannot preserve empty directories even when
 	// they match include patterns, so we create them explicitly before Phase 2.
@@ -165,15 +164,10 @@ func (srv *RsyncServer) GetCopyCommand(ctx context.Context, importConfig *config
 	// This copies all files matching the globs and creates parent directories as needed.
 	// --prune-empty-dirs prevents creation of empty directories that don't contain matching files,
 	// but directories created in Phase 1 are preserved since they already exist.
-	//
-	// This unified approach handles all globs consistently without trying to distinguish
-	// between "file globs" and "directory globs" based on pattern analysis, which is unreliable
-	// because directory names can have any format (including dots, extensions, etc.).
 
 	// Phase 1: Create directories that directly match include globs
-	// Optimized: single rsync --list-only call + shell filtering for all patterns
 	if len(importConfig.IncludePaths) > 0 {
-		mkdirCmd := generatePhase1MkdirCommand(srv, importConfig)
+		mkdirCmd := generateFirstPhaseMkdirCommand(srv, importConfig)
 		if mkdirCmd != "" {
 			args = append(args, mkdirCmd)
 		}
@@ -192,7 +186,7 @@ func (srv *RsyncServer) GetCopyCommand(ctx context.Context, importConfig *config
 	return command
 }
 
-// generatePhase1MkdirCommand creates a shell command that:
+// generateFirstPhaseMkdirCommand creates a shell command that:
 // 1. Runs a single rsync --list-only to get directory listing from source
 // 2. Filters directories matching any of the includePaths patterns
 // 3. Creates matching directories with mkdir -p
@@ -200,7 +194,7 @@ func (srv *RsyncServer) GetCopyCommand(ctx context.Context, importConfig *config
 // The function handles two types of patterns:
 // - Patterns with "**" (e.g., "app/**/cache"): match directories by name anywhere under prefix
 // - Simple paths (e.g., "app/data"): match exact directory path
-func generatePhase1MkdirCommand(srv *RsyncServer, importConfig *config.Import) string {
+func generateFirstPhaseMkdirCommand(srv *RsyncServer, importConfig *config.Import) string {
 	if len(importConfig.IncludePaths) == 0 {
 		return ""
 	}
@@ -251,8 +245,8 @@ func generatePhase1MkdirCommand(srv *RsyncServer, importConfig *config.Import) s
 		}
 	}
 
-	// Handle simple paths: check if directory exists, then create
-	// These are batched into a single subshell to reduce overhead
+	// handle simple paths: check if directory exists, then create
+	// these are batched into a single subshell to reduce overhead
 	if len(simplePaths) > 0 {
 		var checkAndCreate []string
 		for _, p := range simplePaths {
@@ -280,7 +274,7 @@ func findCommonGlobPrefix(patterns []string) string {
 		return ""
 	}
 
-	// Extract prefix before ** for each pattern
+	// extract prefix before ** for each pattern
 	var prefixes []string
 	for _, p := range patterns {
 		idx := strings.Index(p, "**")
@@ -295,7 +289,7 @@ func findCommonGlobPrefix(patterns []string) string {
 		return ""
 	}
 
-	// Find common prefix among all prefixes
+	// find common prefix among all prefixes
 	common := prefixes[0]
 	for _, prefix := range prefixes[1:] {
 		common = commonPathPrefix(common, prefix)

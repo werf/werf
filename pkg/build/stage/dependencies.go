@@ -448,24 +448,23 @@ func generateChecksumScript(from string, includePaths, excludePaths []string, re
 
 	var commands string
 
-	// Phase 1: Use 'find' to get directories that directly match include globs
-	// This is necessary because rsync with --prune-empty-dirs removes empty directories
+	// phase 1: Use 'find' to get directories that directly match include globs
+	// this is necessary because rsync with --prune-empty-dirs removes empty directories
 	// from output even when they match the include pattern.
 	//
-	// Optimized approach:
-	// - For patterns with **: use ONE find command with multiple -name conditions
-	// - For simple paths: batch all existence checks together
-	// This minimizes the number of filesystem traversals.
+	// optimized approach:
+	// - for patterns with **: use ONE find command with multiple -name conditions
+	// - for simple paths: batch all existence checks together
 	if len(includePaths) > 0 {
-		commands = "{ " + generatePhase1FindCommand(from, includePathsCopy) + "; "
+		commands = "{ " + generateFirstPhaseFindCommand(from, includePathsCopy) + "; "
 	} else {
 		commands = "{ "
 	}
 
-	// Phase 2: Get files matching the globs using rsync (standard behavior)
-	// Do not follow symlinks when calculating checksums to avoid runner hang-ups (-L)
+	// phase 2: Get files matching the globs using rsync (standard behavior)
+	// do not follow symlinks when calculating checksums to avoid runner hang-ups (-L)
 	rsyncFilesCommand := stapel.RsyncBinPath() + " -r --dry-run"
-	// Run rsync from the container root to avoid problems with relative paths in the output.
+	// run rsync from the container root to avoid problems with relative paths in the output.
 	rsyncFilesCommand += import_server.PrepareRsyncFilters("", includePathsCopy, excludePathsCopy)
 	rsyncFilesCommand += " " + "/"
 	commands += rsyncFilesCommand + " | " + parseFilePathCommand + "; }"
@@ -512,16 +511,16 @@ func getDependencyImportID(dependencyImport *config.DependencyImport) string {
 	)
 }
 
-// generatePhase1FindCommand creates an optimized shell command to find directories
+// generateFirstPhaseFindCommand creates an optimized shell command to find directories
 // matching the include patterns. Instead of running multiple find commands (one per pattern),
 // this function:
-// 1. Groups patterns with ** by their common prefix to minimize filesystem traversals
-// 2. Uses a single find with multiple -name conditions where possible
-// 3. Batches simple path checks together
+// 1. groups patterns with ** by their common prefix to minimize filesystem traversals
+// 2. uses a single find with multiple -name conditions where possible
+// 3. batches simple path checks together
 //
-// This is important for performance when the source directory contains hundreds of
+// this is important for performance when the source directory contains hundreds of
 // thousands of files.
-func generatePhase1FindCommand(from string, includePathsCopy []string) string {
+func generateFirstPhaseFindCommand(from string, includePathsCopy []string) string {
 	if len(includePathsCopy) == 0 {
 		return "true"
 	}
@@ -531,7 +530,7 @@ func generatePhase1FindCommand(from string, includePathsCopy []string) string {
 		baseDir = "/"
 	}
 
-	// Separate glob patterns (with **) from simple paths
+	// separate glob patterns (with **) from simple paths
 	type globPattern struct {
 		prefix      string // path before **
 		dirName     string // directory name to find (after **)
@@ -547,9 +546,9 @@ func generatePhase1FindCommand(from string, includePathsCopy []string) string {
 			prefix := strings.TrimSuffix(parts[0], "/")
 			suffix := strings.TrimPrefix(parts[1], "/")
 			if suffix == "" {
-				continue // "app/**" matches everything, no specific dir to find
+				continue
 			}
-			// For patterns like "app/**/sub/dir", we need the last segment
+			// for patterns like "app/**/sub/dir", we need the last segment
 			dirName := path.Base(suffix)
 			globPatterns = append(globPatterns, globPattern{
 				prefix:      prefix,
@@ -563,26 +562,28 @@ func generatePhase1FindCommand(from string, includePathsCopy []string) string {
 
 	var commands []string
 
-	// Group glob patterns by prefix to run fewer find commands
+	// group glob patterns by prefix to run fewer find commands
 	if len(globPatterns) > 0 {
-		// Group patterns by their prefix
+		// group patterns by their prefix
 		prefixGroups := make(map[string][]globPattern)
 		for _, gp := range globPatterns {
 			prefixGroups[gp.prefix] = append(prefixGroups[gp.prefix], gp)
 		}
 
 		for prefix, patterns := range prefixGroups {
-			searchDir := baseDir
-			if prefix != "" {
-				searchDir = path.Join(baseDir, prefix)
+			// prefix already contains the full path,
+			// so use it directly as searchDir
+			searchDir := prefix
+			if searchDir == "" {
+				searchDir = baseDir
 			}
 
-			// Build find command with multiple -name conditions (OR)
+			// build find command with multiple -name conditions (OR)
 			var nameConditions []string
 			var pathPrefixes []string
 			for _, gp := range patterns {
 				nameConditions = append(nameConditions, fmt.Sprintf("-name '%s'", gp.dirName))
-				// Calculate path prefix for filtering
+				// calculate path prefix for filtering
 				pathPrefix := strings.TrimSuffix(strings.SplitN(gp.fullPattern, "**", 2)[0], "/")
 				if pathPrefix == "" {
 					pathPrefix = baseDir
@@ -590,13 +591,13 @@ func generatePhase1FindCommand(from string, includePathsCopy []string) string {
 				pathPrefixes = append(pathPrefixes, pathPrefix)
 			}
 
-			// Combine name conditions with -o (OR)
+			// combine name conditions with -o (OR)
 			nameExpr := strings.Join(nameConditions, " -o ")
 			if len(nameConditions) > 1 {
 				nameExpr = "\\( " + nameExpr + " \\)"
 			}
 
-			// Build case pattern for path filtering
+			// build case pattern for path filtering
 			var casePatterns []string
 			for _, pfx := range pathPrefixes {
 				casePatterns = append(casePatterns, pfx+"*")
@@ -610,7 +611,7 @@ func generatePhase1FindCommand(from string, includePathsCopy []string) string {
 		}
 	}
 
-	// Handle simple paths - just check if directory exists
+	// handle simple paths - just check if directory exists
 	for _, p := range simplePaths {
 		commands = append(commands, fmt.Sprintf("[ -d '%s' ] && echo '%s/' || true", p, p))
 	}
