@@ -32,6 +32,7 @@ type CleanupOptions struct {
 	KubernetesContextClients                []*kube.ContextClient
 	KubernetesNamespaceRestrictionByContext map[string]string
 	WithoutKube                             bool // TODO: remove this legacy logic in v3.
+	HasKubeConfig                           bool
 	ConfigMetaCleanup                       config.MetaCleanup
 	KeepStagesBuiltWithinLastNHours         *uint64
 	DryRun                                  bool
@@ -58,6 +59,7 @@ func newCleanupManager(projectName string, storageManager *manager.StorageManage
 		KubernetesContextClients:                options.KubernetesContextClients,
 		KubernetesNamespaceRestrictionByContext: options.KubernetesNamespaceRestrictionByContext,
 		WithoutKube:                             options.WithoutKube,
+		HasKubeConfig:                           options.HasKubeConfig,
 		ConfigMetaCleanup:                       options.ConfigMetaCleanup,
 		KeepStagesBuiltWithinLastNHours:         options.KeepStagesBuiltWithinLastNHours,
 	}
@@ -76,6 +78,7 @@ type cleanupManager struct {
 	KubernetesContextClients                []*kube.ContextClient
 	KubernetesNamespaceRestrictionByContext map[string]string
 	WithoutKube                             bool
+	HasKubeConfig                           bool
 	ConfigMetaCleanup                       config.MetaCleanup
 	KeepStagesBuiltWithinLastNHours         *uint64
 	DryRun                                  bool
@@ -145,7 +148,7 @@ func (m *cleanupManager) run(ctx context.Context) error {
 	}
 
 	if !(m.WithoutKube || m.ConfigMetaCleanup.DisableKubernetesBasedPolicy) {
-		if len(m.KubernetesContextClients) == 0 {
+		if m.HasKubeConfig && len(m.KubernetesContextClients) == 0 {
 			return fmt.Errorf("no kubernetes configs found to skip images being used in the Kubernetes, pass --without-kube option (or WERF_WITHOUT_KUBE env var) to suppress this error")
 		}
 

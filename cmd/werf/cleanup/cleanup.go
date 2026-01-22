@@ -219,14 +219,18 @@ func runCleanup(ctx context.Context, cmd *cobra.Command) error {
 	var kubernetesContextClients []*kube.ContextClient
 	var kubernetesNamespaceRestrictionByContext map[string]string
 	if !(*commonCmdData.WithoutKube || werfConfig.Meta.Cleanup.DisableKubernetesBasedPolicy) {
-		kubernetesContextClients, err = common.GetKubernetesContextClients(commonCmdData.LegacyKubeConfigPath, commonCmdData.KubeConfigBase64, commonCmdData.LegacyKubeConfigPathsMergeList, cmdData.ScanContextOnly)
-		if err != nil {
-			return fmt.Errorf("unable to get Kubernetes clusters connections: %w", err)
+		if common.HasKubeConfig(commonCmdData.LegacyKubeConfigPath, commonCmdData.KubeConfigBase64, commonCmdData.LegacyKubeConfigPathsMergeList) {
+			kubernetesContextClients, err = common.GetKubernetesContextClients(commonCmdData.LegacyKubeConfigPath, commonCmdData.KubeConfigBase64, commonCmdData.LegacyKubeConfigPathsMergeList, cmdData.ScanContextOnly)
+			if err != nil {
+				return fmt.Errorf("unable to get Kubernetes clusters connections: %w", err)
+			}
+
+			kubernetesNamespaceRestrictionByContext = common.GetKubernetesNamespaceRestrictionByContext(&commonCmdData, kubernetesContextClients)
+		} else {
+			kubernetesContextClients = nil
+			kubernetesNamespaceRestrictionByContext = nil
 		}
-
-		kubernetesNamespaceRestrictionByContext = common.GetKubernetesNamespaceRestrictionByContext(&commonCmdData, kubernetesContextClients)
 	}
-
 	keepList := cleaning.NewKeepListWithSize(0)
 
 	if cmdData.KeepList != "" {
@@ -235,12 +239,15 @@ func runCleanup(ctx context.Context, cmd *cobra.Command) error {
 		}
 	}
 
+	hasKubeConfig := common.HasKubeConfig(commonCmdData.LegacyKubeConfigPath, commonCmdData.KubeConfigBase64, commonCmdData.LegacyKubeConfigPathsMergeList)
+
 	cleanupOptions := cleaning.CleanupOptions{
 		ImageNameList:                           imagesNames,
 		LocalGit:                                giterminismManager.LocalGitRepo().(*git_repo.Local),
 		KubernetesContextClients:                kubernetesContextClients,
 		KubernetesNamespaceRestrictionByContext: kubernetesNamespaceRestrictionByContext,
 		WithoutKube:                             *commonCmdData.WithoutKube,
+		HasKubeConfig:                           hasKubeConfig,
 		ConfigMetaCleanup:                       werfConfig.Meta.Cleanup,
 		KeepStagesBuiltWithinLastNHours:         common.GetKeepStagesBuiltWithinLastNHours(&commonCmdData, cmd),
 		DryRun:                                  *commonCmdData.DryRun,

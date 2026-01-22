@@ -1589,3 +1589,9 @@ func StubSetupHooksStatusProgressPeriod(cmdData *CmdData, cmd *cobra.Command) {
 func StubSetupTrackTimeout(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().IntVarP(lo.ToPtr(0), "timeout", "t", 0, "No-op")
 }
+
+func HasKubeConfig(kubeConfigPath, kubeConfigBase64 string, kubeConfigPathMergeList []string) bool {
+	return kubeConfigPath != "" ||
+		kubeConfigBase64 != "" ||
+		len(kubeConfigPathMergeList) > 0
+}
