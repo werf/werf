@@ -37,12 +37,16 @@ spec:
   tls:
   - hosts:
       - {{ $host }}
+{{- if eq .Values.werf.env "production" }}
       - ru.{{ $host }}
+{{- else }}
+      - ru-{{ $host }}
+{{- end }}
       - www.{{ $host }}
 {{- if eq $.Values.werf.env "production" }}
     secretName: tls-{{ $host }}
 {{- else }}
-    secretName: ingress-le-tls
+    secretName: {{ pluck .Values.werf.env .Values.ingressSecretName | first | default .Values.ingressSecretName._default }}
 {{- end }}
   rules:
   - host: {{ $host }}
@@ -62,7 +66,11 @@ spec:
             name: {{ $.Chart.Name }}-{{ $versionDNSNormalized }}
             port:
               name: http
+{{- if eq .Values.werf.env "production" }}
   - host: ru.{{ $host }}
+{{- else }}
+  - host: ru-{{ $host }}
+{{- end }}
     http:
       paths:
       - path: /docs/{{ $versionURLNormalized }}/
@@ -103,7 +111,7 @@ spec:
 {{- if eq $.Values.werf.env "production" }}
     secretName: tls-{{ $host }}
 {{- else }}
-    secretName: ingress-le-tls
+    secretName: {{ pluck .Values.werf.env .Values.ingressSecretName | first | default .Values.ingressSecretName._default }}
 {{- end }}
   rules:
   - host: {{ $host }}
@@ -143,14 +151,22 @@ spec:
   ingressClassName: {{ pluck $.Values.werf.env $.Values.ingressClassName | first | default $.Values.ingressClassName._default }}
   tls:
   - hosts:
+{{- if eq .Values.werf.env "production" }}
       - ru.{{ $host }}
+{{- else }}
+      - ru-{{ $host }}
+{{- end }}
 {{- if eq $.Values.werf.env "production" }}
     secretName: tls-{{ $host }}
 {{- else }}
-    secretName: ingress-le-tls
+    secretName: {{ pluck .Values.werf.env .Values.ingressSecretName | first | default .Values.ingressSecretName._default }}
 {{- end }}
   rules:
+{{- if eq .Values.werf.env "production" }}
   - host: ru.{{ $host }}
+{{- else }}
+  - host: ru-{{ $host }}
+{{- end }}
     http:
       paths:
       - path: /docs/{{ $versionURLNormalized }}/
