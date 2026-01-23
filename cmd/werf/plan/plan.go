@@ -160,6 +160,7 @@ werf plan --repo registry.mydomain.com/web --env production`,
 	lo.Must0(common.SetupChartRepoConnectionFlags(&commonCmdData, cmd))
 	lo.Must0(common.SetupValuesFlags(&commonCmdData, cmd))
 	lo.Must0(common.SetupSecretValuesFlags(&commonCmdData, cmd))
+	lo.Must0(common.SetupResourceValidationFlags(&commonCmdData, cmd))
 
 	common.SetupAddAnnotations(&commonCmdData, cmd)
 	common.SetupAddLabels(&commonCmdData, cmd)
@@ -503,6 +504,7 @@ func run(
 		ReleaseLabels:               releaseLabels,
 		ReleaseStorageDriver:        commonCmdData.ReleaseStorageDriver,
 		ReleaseStorageSQLConnection: commonCmdData.ReleaseStorageSQLConnection,
+		ResourceValidationOptions:   commonCmdData.ResourceValidationOptions,
 		ShowInsignificantDiffs:      cmdData.ShowInsignificantDiffs,
 		ShowSensitiveDiffs:          cmdData.ShowSensitiveDiffs,
 		ShowVerboseCRDDiffs:         cmdData.ShowVerboseCRDDiffs,

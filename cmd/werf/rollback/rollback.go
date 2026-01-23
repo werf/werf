@@ -77,6 +77,7 @@ werf rollback --revision 10`,
 	commonCmdData.SetupAllowIncludesUpdate(cmd)
 
 	lo.Must0(common.SetupKubeConnectionFlags(&commonCmdData, cmd))
+	lo.Must0(common.SetupResourceValidationFlags(&commonCmdData, cmd))
 	lo.Must0(common.SetupTrackingFlags(&commonCmdData, cmd))
 
 	common.SetupAddAnnotations(&commonCmdData, cmd)
@@ -192,6 +193,7 @@ func run(ctx context.Context) error {
 		Revision:                    cmdData.Revision,
 		RollbackGraphPath:           commonCmdData.RollbackGraphPath,
 		RollbackReportPath:          rollbackReportPath,
+		ResourceValidationOptions:   commonCmdData.ResourceValidationOptions,
 		TrackingOptions:             commonCmdData.TrackingOptions,
 	}); err != nil {
 		return fmt.Errorf("release install: %w", err)

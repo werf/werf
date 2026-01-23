@@ -20,6 +20,7 @@ import (
 	"github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
 	"github.com/werf/nelm/pkg/common"
+	"github.com/werf/nelm/pkg/featgate"
 	"github.com/werf/nelm/pkg/log"
 	"github.com/werf/werf/v2/pkg/build"
 	"github.com/werf/werf/v2/pkg/build/stage"
@@ -1531,6 +1532,23 @@ func SetupTrackingFlags(cmdData *CmdData, cmd *cobra.Command) error {
 	}
 
 	StubSetupHooksStatusProgressPeriod(cmdData, cmd)
+
+	return nil
+}
+
+func SetupResourceValidationFlags(cmdData *CmdData, cmd *cobra.Command) error {
+	if !featgate.FeatGateResourceValidation.Enabled() {
+		return nil
+	}
+
+	kubeVersion := os.Getenv("WERF_RESOURCE_VALIDATION_KUBE_VERSION")
+	if kubeVersion == "" {
+		kubeVersion = common.DefaultResourceValidationKubeVersion
+	}
+
+	cmd.Flags().BoolVarP(&cmdData.NoResourceValidation, "no-resource-validation", "", util.GetBoolEnvironmentDefaultFalse("WERF_NO_RESOURCE_VALIDATION"), "Disable resource validation (default $WERF_NO_RESOURCE_VALIDATION)")
+	cmd.Flags().StringVarP(&cmdData.ValidationKubeVersion, "resource-validation-kube-version", "", kubeVersion, "Kubernetes schemas version to use during resource validation. Also can be defined by $WERF_RESOURCE_VALIDATION_KUBE_VERSION")
+	cmd.Flags().StringArrayVarP(&cmdData.ValidationSkip, "resource-validation-skip", "", []string{}, "Skip resource validation for resources with specified attributes (can specify multiple). Format: key1=value1,key2=value2. Supported keys: group, version, kind, name, namespace. Example: kind=Deployment,name=my-app. Also, can be defined with $WERF_RESOURCE_VALIDATION_SKIP_* (e.g. $WERF_RESOURCE_VALIDATION_SKIP_1=kind=Deployment,name=my-app)")
 
 	return nil
 }
