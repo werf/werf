@@ -40,6 +40,19 @@ func GetConveyorOptions(ctx context.Context, commonCmdData *CmdData, imagesToPro
 	if commonCmdData.SkipImageSpecStage != nil {
 		conveyorOptions.SkipImageSpecStage = *commonCmdData.SkipImageSpecStage
 	}
+
+	useBuildReport := GetUseBuildReport(commonCmdData)
+	buildReportPath := GetBuildReportPath(commonCmdData)
+
+	if useBuildReport {
+		if buildReportPath == "" {
+			return build.ConveyorOptions{}, fmt.Errorf("build report path must be specified")
+		}
+
+		conveyorOptions.UseBuildReport = useBuildReport
+		conveyorOptions.BuildReportPath = buildReportPath
+	}
+
 	return conveyorOptions, nil
 }
 

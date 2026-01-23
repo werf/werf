@@ -46,13 +46,25 @@ func (s *RemoteStorage) CopyFromRemote(ctx context.Context, fromRemote *RemoteSt
 
 func (s *RemoteStorage) copyCurrentBuildStagesFromRemote(ctx context.Context, fromRemote *RemoteStorage, opts copyToOptions) error {
 	return fromRemote.ConveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
-		if _, err := c.Build(ctx, opts.BuildOptions); err != nil {
-			return err
-		}
+		var infoGetters []*image.InfoGetter
+		var err error
 
-		infoGetters, err := c.GetImageInfoGettersWithOpts(image.InfoGetterOptions{OnlyFinal: false})
-		if err != nil {
-			return err
+		if c.UseBuildReport {
+			logboek.Context(ctx).Debug().LogFDetails("Avoid building because of using build report: %s\n", c.BuildReportPath)
+
+			infoGetters, err = c.GetImageInfoGettersFromReport(ctx, image.InfoGetterOptions{OnlyFinal: false})
+			if err != nil {
+				return fmt.Errorf("unable to get image info getters from build report: %w", err)
+			}
+		} else {
+			if _, err := c.Build(ctx, opts.BuildOptions); err != nil {
+				return fmt.Errorf("error while building: %w", err)
+			}
+
+			infoGetters, err = c.GetImageInfoGettersWithOpts(image.InfoGetterOptions{OnlyFinal: false})
+			if err != nil {
+				return fmt.Errorf("unable to get image info getters: %w", err)
+			}
 		}
 
 		for _, infoGetter := range infoGetters {

@@ -110,6 +110,9 @@ func NewExportCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupRequireBuiltImages(&commonCmdData, cmd)
 
+	common.SetupBuildReportPath(&commonCmdData, cmd)
+	common.SetupUseBuildReport(&commonCmdData, cmd)
+
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified repo")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
 	common.StubSetupInsecureHelmDependencies(&commonCmdData, cmd)
@@ -238,26 +241,39 @@ func run(ctx context.Context, imageNameListFromArgs, tagTemplateList []string, e
 			return err
 		}
 
-		if common.GetRequireBuiltImages(&commonCmdData) {
-			if _, err := c.ShouldBeBuilt(ctx, build.ShouldBeBuiltOptions{}); err != nil {
-				return err
-			}
+		if c.UseBuildReport {
+			return c.ExportFromReport(ctx, build.ExportOptions{
+				ExportImageNameList: imagesToProcess.FinalImageNameList,
+				ExportTagFuncList:   tagFuncList,
+				MutateConfigFunc: func(config v1.Config) (v1.Config, error) {
+					for k, v := range extraLabels {
+						config.Labels[k] = v
+					}
+					return config, nil
+				},
+			})
 		} else {
-			if _, err := c.Build(ctx, build.BuildOptions{SkipImageMetadataPublication: *commonCmdData.Dev}); err != nil {
-				return err
-			}
-		}
-
-		return c.Export(ctx, build.ExportOptions{
-			ExportImageNameList: imagesToProcess.FinalImageNameList,
-			ExportTagFuncList:   tagFuncList,
-			MutateConfigFunc: func(config v1.Config) (v1.Config, error) {
-				for k, v := range extraLabels {
-					config.Labels[k] = v
+			if common.GetRequireBuiltImages(&commonCmdData) {
+				if _, err := c.ShouldBeBuilt(ctx, build.ShouldBeBuiltOptions{}); err != nil {
+					return err
 				}
-				return config, nil
-			},
-		})
+			} else {
+				if _, err := c.Build(ctx, build.BuildOptions{SkipImageMetadataPublication: *commonCmdData.Dev}); err != nil {
+					return err
+				}
+			}
+
+			return c.Export(ctx, build.ExportOptions{
+				ExportImageNameList: imagesToProcess.FinalImageNameList,
+				ExportTagFuncList:   tagFuncList,
+				MutateConfigFunc: func(config v1.Config) (v1.Config, error) {
+					for k, v := range extraLabels {
+						config.Labels[k] = v
+					}
+					return config, nil
+				},
+			})
+		}
 	})
 }
 
