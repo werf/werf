@@ -1128,6 +1128,10 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 	if err := logboek.Context(ctx).Default().LogProcess("Store stage into %s", phase.Conveyor.StorageManager.GetStagesStorage().String()).DoError(func() error {
 		if stg.IsMutable() {
 			if err := stg.MutateImage(ctx, phase.Conveyor.StorageManager.GetStagesStorage(), phase.StagesIterator.PrevBuiltStage.GetStageImage(), stageImage); err != nil {
+				if storage.IsErrBrokenImage(err) {
+					return manager.ErrUnexpectedStagesStorageState
+				}
+
 				return fmt.Errorf("unable to mutate %s: %w", stg.Name(), err)
 			}
 		} else {

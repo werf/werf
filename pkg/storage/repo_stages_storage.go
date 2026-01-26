@@ -1160,8 +1160,17 @@ func (storage *RepoStagesStorage) PostLastCleanupRecord(ctx context.Context, pro
 }
 
 func (storage *RepoStagesStorage) MutateAndPushImage(ctx context.Context, src, dest string, newConfig image.SpecConfig, _ container_backend.LegacyImageInterface) error {
-	return storage.DockerRegistry.MutateAndPushImage(ctx, src, dest, api.WithConfigFileMutation(func(ctx context.Context, config *v1.ConfigFile) (*v1.ConfigFile, error) {
+	if err := storage.DockerRegistry.MutateAndPushImage(ctx, src, dest, api.WithConfigFileMutation(func(ctx context.Context, config *v1.ConfigFile) (*v1.ConfigFile, error) {
 		image.UpdateConfigFile(newConfig, config)
+
 		return config, nil
-	}))
+	})); err != nil {
+		if docker_registry.IsBrokenImageError(err) {
+			return ErrBrokenImage
+		}
+
+		return err
+	}
+
+	return nil
 }
