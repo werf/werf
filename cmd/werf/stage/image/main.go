@@ -183,9 +183,7 @@ func run(ctx context.Context, imageName string) error {
 			return fmt.Errorf("resolve target platforms for image %q: %w", imageName, err)
 		}
 
-		for _, platform := range targetPlatforms {
-			fmt.Println(c.GetImageNameForLastImageStage(platform, imageName))
-		}
+		fmt.Println(c.GetImageNameForLastImageStage(targetPlatforms[0], imageName))
 
 		return nil
 	}); err != nil {
