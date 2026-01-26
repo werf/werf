@@ -384,9 +384,11 @@ func (c *Conveyor) ShouldAddManagedImagesRecords() bool {
 }
 
 type ShouldBeBuiltOptions struct {
-	CustomTagFuncList []imagePkg.CustomTagFunc
-	ReportPath        string
-	ReportFormat      ReportFormat
+	SkipImageMetadataPublication bool
+	SkipAddManagedImagesRecords  bool
+	CustomTagFuncList            []imagePkg.CustomTagFunc
+	ReportPath                   string
+	ReportFormat                 ReportFormat
 }
 
 func (c *Conveyor) ShouldBeBuilt(ctx context.Context, opts ShouldBeBuiltOptions) ([]*ImagesReport, error) {
@@ -400,9 +402,11 @@ func (c *Conveyor) ShouldBeBuilt(ctx context.Context, opts ShouldBeBuiltOptions)
 		NewBuildPhase(c, BuildPhaseOptions{
 			ShouldBeBuiltMode: true,
 			BuildOptions: BuildOptions{
-				CustomTagFuncList: opts.CustomTagFuncList,
-				ReportPath:        opts.ReportPath,
-				ReportFormat:      opts.ReportFormat,
+				SkipImageMetadataPublication: opts.SkipImageMetadataPublication,
+				SkipAddManagedImagesRecords:  opts.SkipAddManagedImagesRecords,
+				CustomTagFuncList:            opts.CustomTagFuncList,
+				ReportPath:                   opts.ReportPath,
+				ReportFormat:                 opts.ReportFormat,
 			},
 		}),
 	}
