@@ -329,12 +329,12 @@ type (
 )
 
 type (
-	SubmoduleAddedAndNotCommittedError  SubmoduleErrorBase
-	SubmoduleDeletedError               SubmoduleErrorBase
-	SubmoduleHasUntrackedChangesError   SubmoduleErrorBase
-	SubmoduleHasUncommittedChangesError SubmoduleErrorBase
-	SubmoduleCommitChangedError         SubmoduleErrorBase
-	SubmoduleErrorBase                  struct {
+	SubmoduleAddedAndNotCommittedError  SubmoduleBaseError
+	SubmoduleDeletedError               SubmoduleBaseError
+	SubmoduleHasUntrackedChangesError   SubmoduleBaseError
+	SubmoduleHasUncommittedChangesError SubmoduleBaseError
+	SubmoduleCommitChangedError         SubmoduleBaseError
+	SubmoduleBaseError                  struct {
 		SubmodulePath string
 		error
 	}
@@ -483,13 +483,13 @@ func (repo *Local) StatusIndexChecksum(ctx context.Context) (string, error) {
 	return statusResult.Index.Checksum(), nil
 }
 
-type treeEntryNotFoundInRepoErr struct {
+type treeEntryNotFoundInRepoError struct {
 	error
 }
 
 func IsTreeEntryNotFoundInRepoErr(err error) bool {
 	switch err.(type) {
-	case treeEntryNotFoundInRepoErr:
+	case treeEntryNotFoundInRepoError:
 		return true
 	default:
 		return false

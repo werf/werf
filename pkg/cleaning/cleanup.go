@@ -1161,13 +1161,13 @@ func (m *cleanupManager) deleteUnusedCustomTags(ctx context.Context) error {
 
 func handleDeletionError(err error) error {
 	switch {
-	case docker_registry.IsDockerHubUnauthorizedErr(err):
+	case docker_registry.IsDockerHubUnauthorizedError(err):
 		return fmt.Errorf(`%w
 
 You should specify Docker Hub token or username and password to remove tags with Docker Hub API.
 Check --repo-docker-hub-token, --repo-docker-hub-username and --repo-docker-hub-password options.
 Be aware that access to the resource is forbidden with personal access token.`, err)
-	case docker_registry.IsGitHubPackagesUnauthorizedErr(err), docker_registry.IsGitHubPackagesForbiddenErr(err):
+	case docker_registry.IsGitHubPackagesUnauthorizedError(err), docker_registry.IsGitHubPackagesForbiddenError(err):
 		return fmt.Errorf(`%w
 
 You should specify a token with delete:packages and read:packages scopes to remove package versions.

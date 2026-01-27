@@ -18,15 +18,15 @@ const (
 	azureCrRepositoryNotFoundErrPrefix = "azure cr repository not found: "
 )
 
-type AzureCrRepositoryNotFoundErr apiError
+type AzureCrRepositoryNotFoundError apiError
 
-func NewAzureCrRepositoryNotFoundErr(err error) AzureCrRepositoryNotFoundErr {
-	return AzureCrRepositoryNotFoundErr{
+func NewAzureCrRepositoryNotFoundError(err error) AzureCrRepositoryNotFoundError {
+	return AzureCrRepositoryNotFoundError{
 		error: fmt.Errorf(azureCrRepositoryNotFoundErrPrefix + err.Error()),
 	}
 }
 
-func IsAzureCrRepositoryNotFoundErr(err error) bool {
+func IsAzureCrRepositoryNotFoundError(err error) bool {
 	return strings.Contains(err.Error(), azureCrRepositoryNotFoundErrPrefix)
 }
 
@@ -81,7 +81,7 @@ func (r *azureCr) DeleteRepo(ctx context.Context, reference string) error {
 	)
 	if err != nil {
 		if strings.Contains(err.Error(), "repository name not known to registry") {
-			return NewAzureCrRepositoryNotFoundErr(err)
+			return NewAzureCrRepositoryNotFoundError(err)
 		}
 
 		return err

@@ -20,27 +20,27 @@ const (
 )
 
 type (
-	DockerHubUnauthorizedErr       apiError
-	DockerHubRepositoryNotFoundErr apiError
+	DockerHubUnauthorizedError       apiError
+	DockerHubRepositoryNotFoundError apiError
 )
 
-func NewDockerHubUnauthorizedErr(err error) DockerHubUnauthorizedErr {
-	return DockerHubUnauthorizedErr{
+func NewDockerHubUnauthorizedError(err error) DockerHubUnauthorizedError {
+	return DockerHubUnauthorizedError{
 		error: errors.New(dockerHubUnauthorizedErrPrefix + err.Error()),
 	}
 }
 
-func IsDockerHubUnauthorizedErr(err error) bool {
+func IsDockerHubUnauthorizedError(err error) bool {
 	return strings.Contains(err.Error(), dockerHubUnauthorizedErrPrefix)
 }
 
-func NewDockerHubRepositoryNotFoundErr(err error) DockerHubRepositoryNotFoundErr {
-	return DockerHubRepositoryNotFoundErr{
+func NewDockerHubRepositoryNotFoundError(err error) DockerHubRepositoryNotFoundError {
+	return DockerHubRepositoryNotFoundError{
 		error: errors.New(dockerHubRepositoryNotFoundErrPrefix + err.Error()),
 	}
 }
 
-func IsDockerHubRepositoryNotFoundErr(err error) bool {
+func IsDockerHubRepositoryNotFoundError(err error) bool {
 	return strings.Contains(err.Error(), dockerHubRepositoryNotFoundErrPrefix)
 }
 
@@ -144,9 +144,9 @@ func (r *dockerHub) getToken(ctx context.Context) (string, error) {
 func (r *dockerHub) handleFailedApiResponse(resp *http.Response, err error) error {
 	switch resp.StatusCode {
 	case http.StatusUnauthorized:
-		return NewDockerHubUnauthorizedErr(err)
+		return NewDockerHubUnauthorizedError(err)
 	case http.StatusNotFound:
-		return NewDockerHubRepositoryNotFoundErr(err)
+		return NewDockerHubRepositoryNotFoundError(err)
 	}
 
 	return nil
