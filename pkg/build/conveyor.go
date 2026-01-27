@@ -29,6 +29,7 @@ import (
 	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/storage/manager"
 	"github.com/werf/werf/v2/pkg/storage/synchronization/lock_manager"
+	"github.com/werf/werf/v2/pkg/telemetry"
 	"github.com/werf/werf/v2/pkg/util/parallel"
 )
 
@@ -157,6 +158,30 @@ func (c *Conveyor) GetForcedTargetPlatforms() []string {
 
 func (c *Conveyor) GetTargetPlatforms() ([]string, error) {
 	return prepareConfigurationPlatforms(c.werfConfig.Meta.Build.Platform)
+}
+
+func (c *Conveyor) ResolveTargetPlatforms(imageName string) ([]string, error) {
+	if forcedPlatforms := c.GetForcedTargetPlatforms(); len(forcedPlatforms) > 0 {
+		return forcedPlatforms, nil
+	}
+
+	imagePlatforms, err := c.GetImageTargetPlatforms(imageName)
+	if err != nil {
+		return nil, fmt.Errorf("get image %q target platforms: %w", imageName, err)
+	}
+	if len(imagePlatforms) > 0 {
+		return imagePlatforms, nil
+	}
+
+	commonPlatforms, err := c.GetTargetPlatforms()
+	if err != nil {
+		return nil, fmt.Errorf("get common target platforms: %w", err)
+	}
+	if len(commonPlatforms) > 0 {
+		return commonPlatforms, nil
+	}
+
+	return []string{c.ContainerBackend.GetDefaultPlatform()}, nil
 }
 
 func (c *Conveyor) GetServiceRWMutex(service string) *sync.RWMutex {
@@ -383,9 +408,11 @@ func (c *Conveyor) ShouldAddManagedImagesRecords() bool {
 }
 
 type ShouldBeBuiltOptions struct {
-	CustomTagFuncList []imagePkg.CustomTagFunc
-	ReportPath        string
-	ReportFormat      ReportFormat
+	SkipImageMetadataPublication bool
+	SkipAddManagedImagesRecords  bool
+	CustomTagFuncList            []imagePkg.CustomTagFunc
+	ReportPath                   string
+	ReportFormat                 ReportFormat
 }
 
 func (c *Conveyor) ShouldBeBuilt(ctx context.Context, opts ShouldBeBuiltOptions) ([]*ImagesReport, error) {
@@ -399,9 +426,11 @@ func (c *Conveyor) ShouldBeBuilt(ctx context.Context, opts ShouldBeBuiltOptions)
 		NewBuildPhase(c, BuildPhaseOptions{
 			ShouldBeBuiltMode: true,
 			BuildOptions: BuildOptions{
-				CustomTagFuncList: opts.CustomTagFuncList,
-				ReportPath:        opts.ReportPath,
-				ReportFormat:      opts.ReportFormat,
+				SkipImageMetadataPublication: opts.SkipImageMetadataPublication,
+				SkipAddManagedImagesRecords:  opts.SkipAddManagedImagesRecords,
+				CustomTagFuncList:            opts.CustomTagFuncList,
+				ReportPath:                   opts.ReportPath,
+				ReportFormat:                 opts.ReportFormat,
 			},
 		}),
 	}
@@ -642,6 +671,7 @@ func (c *Conveyor) runPhases(ctx context.Context, phases []Phase, logImages bool
 	}
 
 	if err := c.doImages(ctx, phases, logImages); err != nil {
+		telemetry.GetTelemetryWerfIO().BuildFinished(ctx, false)
 		return fmt.Errorf("unable to process images: %w", err)
 	}
 
@@ -879,7 +909,7 @@ func (c *Conveyor) GetImage(targetPlatform, name string) *image.Image {
 		}
 	}
 
-	panic(fmt.Sprintf("Image %q not found!", name))
+	panic(fmt.Sprintf("Image %q with target platform %q not found!", name, targetPlatform))
 }
 
 func (c *Conveyor) GetImageStageContentDigest(targetPlatform, imageName, stageName string) string {

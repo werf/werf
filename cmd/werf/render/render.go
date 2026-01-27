@@ -277,7 +277,7 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 
 		if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
 			if common.GetRequireBuiltImages(&commonCmdData) {
-				shouldBeBuiltOptions, err := common.GetShouldBeBuiltOptions(&commonCmdData, imagesToProcess)
+				shouldBeBuiltOptions, err := common.GetShouldBeBuiltOptions(&commonCmdData, werfConfig, imagesToProcess)
 				if err != nil {
 					return err
 				}
