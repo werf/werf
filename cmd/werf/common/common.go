@@ -1155,24 +1155,17 @@ func GetSecondaryStagesStorage(cmdData *CmdData) []string {
 }
 
 func GetContainerRegistryMirror(ctx context.Context, cmdData *CmdData) ([]string, error) {
-	mirrors := append(util.PredefinedValuesByEnvNamePrefix("WERF_CONTAINER_REGISTRY_MIRROR_"), *cmdData.ContainerRegistryMirror...)
+	cmdMirrors := append(util.PredefinedValuesByEnvNamePrefix("WERF_CONTAINER_REGISTRY_MIRROR_"), *cmdData.ContainerRegistryMirror...)
 
-	// init registry mirrors if docker cli initialized in context
-	if docker.IsEnabled() && docker.IsContext(ctx) {
-		info, err := docker.Info(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("unable to get docker system info: %w", err)
-		}
-
-		if info.RegistryConfig == nil {
-			return nil, nil
-		}
-
-		return info.RegistryConfig.Mirrors, nil
+	dockerMirrors, err := docker.GetRegistryMirrors(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get docker registry mirrors: %w", err)
 	}
 
 	var result []string
-	for _, mirror := range mirrors {
+	seen := make(map[string]bool)
+
+	for _, mirror := range cmdMirrors {
 		if strings.HasPrefix(mirror, "http://") {
 			return nil, fmt.Errorf("invalid container registry mirror %q: only https schema allowed", mirror)
 		}
@@ -1181,7 +1174,17 @@ func GetContainerRegistryMirror(ctx context.Context, cmdData *CmdData) ([]string
 			mirror = "https://" + mirror
 		}
 
-		result = append(result, mirror)
+		if !seen[mirror] {
+			seen[mirror] = true
+			result = append(result, mirror)
+		}
+	}
+
+	for _, mirror := range dockerMirrors {
+		if !seen[mirror] {
+			seen[mirror] = true
+			result = append(result, mirror)
+		}
 	}
 
 	return result, nil

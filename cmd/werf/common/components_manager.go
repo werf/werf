@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/werf/logboek"
+	"github.com/werf/werf/v2/pkg/buildah"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
@@ -67,6 +68,21 @@ func InitCommonComponents(ctx context.Context, opts InitCommonComponentsOptions)
 			return nil, ctx, err
 		} else if ok {
 			global_warnings.GlobalWarningLn(ctx, warning)
+		}
+	}
+
+	// Initialize Docker early to read registry mirrors from daemon.json before GetContainerRegistryMirror call
+	if opts.InitProcessContainerBackend {
+		buildahMode, _, err := GetBuildahMode()
+		if err != nil {
+			return nil, ctx, fmt.Errorf("unable to determine buildah mode: %w", err)
+		}
+		if *buildahMode == buildah.ModeDisabled {
+			newCtx, err := InitProcessDocker(ctx, opts.Cmd)
+			if err != nil {
+				return nil, ctx, fmt.Errorf("unable to init docker: %w", err)
+			}
+			ctx = newCtx
 		}
 	}
 
