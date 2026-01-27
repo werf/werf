@@ -129,18 +129,20 @@ func InitProcessContainerBackend(ctx context.Context, cmdData *CmdData, registry
 		return wrapContainerBackend(container_backend.NewBuildahBackend(b, container_backend.BuildahBackendOptions{TmpDir: filepath.Join(werf.GetServiceDir(), "tmp", "buildah")})), ctx, nil
 	}
 
-	if !docker.IsContext(ctx) {
-		newCtx, err := InitProcessDocker(ctx, cmdData)
-		if err != nil {
-			return nil, ctx, fmt.Errorf("unable to init process docker for docker-server container backend: %w", err)
-		}
-		ctx = newCtx
+	newCtx, err := InitProcessDocker(ctx, cmdData)
+	if err != nil {
+		return nil, ctx, fmt.Errorf("unable to init process docker for docker-server container backend: %w", err)
 	}
+	ctx = newCtx
 
 	return wrapContainerBackend(container_backend.NewDockerServerBackend(werf.HostLocker().Locker())), ctx, nil
 }
 
 func InitProcessDocker(ctx context.Context, cmdData *CmdData) (context.Context, error) {
+	if docker.IsContext(ctx) {
+		return ctx, nil
+	}
+
 	opts := docker.InitOptions{
 		DockerConfigDir: *cmdData.DockerConfig,
 		Verbose:         *cmdData.LogVerbose,
