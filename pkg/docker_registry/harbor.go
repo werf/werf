@@ -21,15 +21,15 @@ const (
 
 var harborPatterns = []string{"^harbor\\..*", "demo\\.goharbor\\.io"}
 
-type HarborRepositoryNotFoundErr apiError
+type HarborRepositoryNotFoundError apiError
 
-func NewHarborRepositoryNotFoundErr(err error) HarborRepositoryNotFoundErr {
-	return HarborRepositoryNotFoundErr{
+func NewHarborRepositoryNotFoundError(err error) HarborRepositoryNotFoundError {
+	return HarborRepositoryNotFoundError{
 		error: errors.New(harborRepositoryNotFoundErrPrefix + err.Error()),
 	}
 }
 
-func IsHarborRepositoryNotFoundErr(err error) bool {
+func IsHarborRepositoryNotFoundError(err error) bool {
 	return strings.Contains(err.Error(), harborRepositoryNotFoundErrPrefix)
 }
 
@@ -103,7 +103,7 @@ func (r *harbor) deleteRepo(ctx context.Context, reference string) error {
 	resp, err := r.harborApi.DeleteRepository(ctx, hostname, repository, r.harborCredentials.username, r.harborCredentials.password)
 	if err != nil {
 		if resp != nil && resp.StatusCode == http.StatusNotFound {
-			return NewHarborRepositoryNotFoundErr(err)
+			return NewHarborRepositoryNotFoundError(err)
 		}
 
 		return err

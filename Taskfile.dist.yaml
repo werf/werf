@@ -13,6 +13,8 @@ includes:
   lint:
     taskfile: https://raw.githubusercontent.com/werf/common-ci/refs/heads/main/Taskfile.format_lint.yml
     flatten: true
+    vars:
+      golangciPaths: "./cmd/... ./pkg/... ./test/..."
   deps:
     taskfile: https://raw.githubusercontent.com/werf/common-ci/refs/heads/main/Taskfile.deps.yml
     flatten: true

@@ -24,27 +24,27 @@ const (
 var gitHubPackagesPatterns = []string{"^ghcr\\.io", "^docker\\.pkg\\.github\\.com"}
 
 type (
-	GitHubPackagesUnauthorizedErr apiError
-	GitHubPackagesForbiddenErr    apiError
+	GitHubPackagesUnauthorizedError apiError
+	GitHubPackagesForbiddenError    apiError
 )
 
-func NewGitHubPackagesUnauthorizedErr(err error) GitHubPackagesUnauthorizedErr {
-	return GitHubPackagesUnauthorizedErr{
+func NewGitHubPackagesUnauthorizedError(err error) GitHubPackagesUnauthorizedError {
+	return GitHubPackagesUnauthorizedError{
 		error: errors.New(gitHubPackagesUnauthorizedErrPrefix + err.Error()),
 	}
 }
 
-func IsGitHubPackagesUnauthorizedErr(err error) bool {
+func IsGitHubPackagesUnauthorizedError(err error) bool {
 	return strings.Contains(err.Error(), gitHubPackagesUnauthorizedErrPrefix)
 }
 
-func NewGitHubPackagesForbiddenErr(err error) GitHubPackagesForbiddenErr {
-	return GitHubPackagesForbiddenErr{
+func NewGitHubPackagesForbiddenError(err error) GitHubPackagesForbiddenError {
+	return GitHubPackagesForbiddenError{
 		error: errors.New(gitHubPackagesForbiddenErrPrefix + err.Error()),
 	}
 }
 
-func IsGitHubPackagesForbiddenErr(err error) bool {
+func IsGitHubPackagesForbiddenError(err error) bool {
 	return strings.Contains(err.Error(), gitHubPackagesForbiddenErrPrefix)
 }
 
@@ -231,9 +231,9 @@ func (r *gitHubPackages) handleFailedApiResponse(resp *http.Response, err error)
 	if resp != nil {
 		switch resp.StatusCode {
 		case http.StatusUnauthorized:
-			return NewGitHubPackagesUnauthorizedErr(err)
+			return NewGitHubPackagesUnauthorizedError(err)
 		case http.StatusForbidden:
-			return NewGitHubPackagesForbiddenErr(err)
+			return NewGitHubPackagesForbiddenError(err)
 		}
 	}
 
