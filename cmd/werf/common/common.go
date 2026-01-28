@@ -1590,8 +1590,16 @@ func StubSetupTrackTimeout(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().IntVarP(lo.ToPtr(0), "timeout", "t", 0, "No-op")
 }
 
-func HasKubeConfig(kubeConfigPath, kubeConfigBase64 string, kubeConfigPathMergeList []string) bool {
-	return kubeConfigPath != "" ||
-		kubeConfigBase64 != "" ||
-		len(kubeConfigPathMergeList) > 0
+func HasKubeConfig(cmdData *CmdData) bool {
+	return cmdData.LegacyKubeConfigPath != "" ||
+		cmdData.KubeConfigBase64 != "" ||
+		len(cmdData.LegacyKubeConfigPathsMergeList) > 0
+}
+
+func HasKubeAccess(cmdData *CmdData) bool {
+	return HasKubeConfig(cmdData) ||
+		cmdData.KubeConfigBase64 != "" ||
+		cmdData.KubeBearerTokenData != "" ||
+		cmdData.KubeBearerTokenPath != "" ||
+		cmdData.KubeContextCurrent != ""
 }
