@@ -11,12 +11,12 @@ env:
 
 includes:
   lint:
-    taskfile: https://raw.githubusercontent.com/werf/common-ci/refs/heads/chore/golangci-lint-update/Taskfile.format_lint.yml
+    taskfile: https://raw.githubusercontent.com/werf/common-ci/refs/heads/main/Taskfile.format_lint.yml
     flatten: true
     vars:
       golangciPaths: "./cmd/... ./pkg/... ./test/..."
   deps:
-    taskfile: https://raw.githubusercontent.com/werf/common-ci/refs/heads/chore/golangci-lint-update/Taskfile.deps.yml
+    taskfile: https://raw.githubusercontent.com/werf/common-ci/refs/heads/main/Taskfile.deps.yml
     flatten: true
 
 vars:
