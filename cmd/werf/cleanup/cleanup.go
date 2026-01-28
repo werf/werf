@@ -237,8 +237,7 @@ func runCleanup(ctx context.Context, cmd *cobra.Command) error {
 		}
 	}
 
-	kubernetesNamespaceRestrictionByContext =
-		common.GetKubernetesNamespaceRestrictionByContext(&commonCmdData, kubernetesContextClients)
+	kubernetesNamespaceRestrictionByContext = common.GetKubernetesNamespaceRestrictionByContext(&commonCmdData, kubernetesContextClients)
 
 	keepList := cleaning.NewKeepListWithSize(0)
 

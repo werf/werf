@@ -132,6 +132,10 @@ werf cleanup [options]
       --keep-stages-built-within-last-n-hours=2
             Keep stages that were built within last hours (default                                  
             $WERF_KEEP_STAGES_BUILT_WITHIN_LAST_N_HOURS or 2)
+      --kube-api-server=""
+            Kubernetes API server address (default $WERF_KUBE_API_SERVER)
+      --kube-ca-data=""
+            Pass Kubernetes API server TLS CA data (default $WERF_KUBE_CA_DATA)
       --kube-config=""
             Kubernetes config file path (default $WERF_KUBE_CONFIG, or $WERF_KUBECONFIG, or         
             $KUBECONFIG)
@@ -217,6 +221,9 @@ werf cleanup [options]
             cache.
             Also, can be specified with $WERF_SECONDARY_REPO_* (e.g. $WERF_SECONDARY_REPO_1=...,    
             $WERF_SECONDARY_REPO_2=...)
+      --skip-tls-verify-kube=false
+            Skip TLS certificate validation when accessing a Kubernetes cluster (default            
+            $WERF_SKIP_TLS_VERIFY_KUBE)
       --skip-tls-verify-registry=false
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)
