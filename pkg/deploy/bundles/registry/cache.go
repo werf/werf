@@ -100,8 +100,6 @@ func (cache *Cache) FetchReference(ctx context.Context, ref *ref.Reference, opts
 		Tag:  ref.Tag,
 	}
 	for _, desc := range cache.ociStore.ListReferences() {
-		desc := desc
-
 		if desc.Annotations[ocispec.AnnotationRefName] == r.Name {
 			r.Exists = true
 			manifestBytes, err := cache.fetchBlob(ctx, &desc)
@@ -122,7 +120,6 @@ func (cache *Cache) FetchReference(ctx context.Context, ref *ref.Reference, opts
 			}
 			var contentLayer *ocispec.Descriptor
 			for _, layer := range manifest.Layers {
-				layer := layer
 				if layer.MediaType == HelmChartContentLayerMediaType || layer.MediaType == HelmChartContentLayerFullMediaType {
 					contentLayer = &layer
 				}

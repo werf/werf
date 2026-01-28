@@ -187,7 +187,6 @@ func (c *Client) PullChart(ctx context.Context, ref *ref.Reference) (*bytes.Buff
 
 	var contentLayer *ocispec.Descriptor
 	for _, layer := range layerDescriptors {
-		layer := layer
 		if layer.MediaType == HelmChartContentLayerMediaType {
 			contentLayer = &layer
 		}
