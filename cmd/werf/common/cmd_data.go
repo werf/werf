@@ -16,6 +16,7 @@ import (
 type CmdData struct {
 	common.KubeConnectionOptions
 	common.ChartRepoConnectionOptions
+	common.ResourceValidationOptions
 	common.ValuesOptions
 	common.SecretValuesOptions
 	common.TrackingOptions
@@ -346,6 +347,7 @@ func (cmdData *CmdData) processFlags() error {
 	cmdData.ValuesSetLiteral = append(util.PredefinedValuesByEnvNamePrefix("WERF_SET_LITERAL_"), cmdData.ValuesSetLiteral...)
 	cmdData.ValuesFiles = append(util.PredefinedValuesByEnvNamePrefix("WERF_VALUES_"), cmdData.ValuesFiles...)
 	cmdData.SecretValuesFiles = append(util.PredefinedValuesByEnvNamePrefix("WERF_SECRET_VALUES_"), cmdData.SecretValuesFiles...)
+	cmdData.ValidationSkip = append(util.PredefinedValuesByEnvNamePrefix("WERF_RESOURCE_VALIDATION_SKIP_"), cmdData.ValidationSkip...)
 	cmdData.ExtraAPIVersions = append(util.PredefinedValuesByEnvNamePrefix("WERF_EXTRA_APIVERSIONS_"), cmdData.ExtraAPIVersions...)
 
 	return nil

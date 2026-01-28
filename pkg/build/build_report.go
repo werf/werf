@@ -6,12 +6,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strconv"
 	"sync"
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/build/image"
 	"github.com/werf/werf/v2/pkg/storage"
+	"github.com/werf/werf/v2/pkg/telemetry"
 )
 
 const (
@@ -109,6 +111,42 @@ func (report *ImagesReport) ToEnvFileData() []byte {
 	return buf.Bytes()
 }
 
+func (report *ImagesReport) sendTelemetry(ctx context.Context) {
+	report.mux.Lock()
+	defer report.mux.Unlock()
+
+	for _, record := range report.Images {
+		for _, stage := range record.Stages {
+			durationMs := parseBuildTimeMs(stage.BuildTime)
+			fromCache := !stage.Rebuilt
+
+			telemetry.GetTelemetryWerfIO().StageBuildFinished(
+				ctx,
+				record.WerfImageName,
+				stage.Name,
+				durationMs,
+				fromCache,
+			)
+		}
+
+		durationMs := parseBuildTimeMs(record.BuildTime)
+		telemetry.GetTelemetryWerfIO().ImageBuildFinished(
+			ctx,
+			record.WerfImageName,
+			durationMs,
+			record.Rebuilt,
+		)
+	}
+}
+
+func parseBuildTimeMs(buildTime string) int64 {
+	seconds, err := strconv.ParseFloat(buildTime, 64)
+	if err != nil {
+		return 0
+	}
+	return int64(seconds * 1000)
+}
+
 func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util.Pair[string, []*image.Image]) error {
 	for _, desc := range imagePairs {
 		name, images := desc.Unpair()
@@ -148,6 +186,9 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 		if _, isLocal := phase.Conveyor.StorageManager.GetStagesStorage().(*storage.LocalStagesStorage); !isLocal {
 			if len(targetPlatforms) > 1 {
 				img := phase.Conveyor.imagesTree.GetMultiplatformImage(name)
+				if img == nil {
+					continue
+				}
 
 				isRebuilt := false
 				for _, pImg := range img.Images {
@@ -188,6 +229,8 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 
 	debugJsonData, err := phase.ImagesReport.ToJsonData()
 	logboek.Context(ctx).Debug().LogF("ImagesReport: (err: %v)\n%s", err, debugJsonData)
+
+	phase.ImagesReport.sendTelemetry(ctx)
 
 	if phase.ReportPath != "" {
 		var data []byte

@@ -64,7 +64,7 @@ func (r *gitLabRegistry) DeleteRepoImage(ctx context.Context, repoImage *image.I
 	} {
 		if err := deleteFunc(ctx, repoImage); err != nil {
 			reference := strings.Join([]string{repoImage.Repository, repoImage.Tag}, ":")
-			if strings.Contains(err.Error(), "404 Not Found; 404 page not found") {
+			if strings.Contains(err.Error(), "404 Not Found") {
 				logboek.Context(ctx).Debug().LogF("DEBUG: %s: %s", reference, err)
 				break
 			} else if strings.Contains(err.Error(), "UNAUTHORIZED") {

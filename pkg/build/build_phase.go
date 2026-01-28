@@ -28,6 +28,7 @@ import (
 	"github.com/werf/werf/v2/pkg/stapel"
 	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/storage/manager"
+	"github.com/werf/werf/v2/pkg/telemetry"
 	"github.com/werf/werf/v2/pkg/util/parallel"
 	"github.com/werf/werf/v2/pkg/werf"
 )
@@ -110,6 +111,10 @@ func (phase *BuildPhase) BeforeImages(ctx context.Context) error {
 	if err := phase.Conveyor.StorageManager.InitCache(ctx); err != nil {
 		return fmt.Errorf("unable to init storage manager cache: %w", err)
 	}
+
+	imagesPairs := phase.Conveyor.imagesTree.GetImagesByName(false)
+	telemetry.GetTelemetryWerfIO().BuildStarted(ctx, len(imagesPairs))
+
 	return nil
 }
 
@@ -188,6 +193,8 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 	}); err != nil {
 		return err
 	}
+
+	telemetry.GetTelemetryWerfIO().BuildFinished(ctx, true)
 
 	return phase.createReport(ctx, imagesPairs)
 }
@@ -1121,6 +1128,10 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 	if err := logboek.Context(ctx).Default().LogProcess("Store stage into %s", phase.Conveyor.StorageManager.GetStagesStorage().String()).DoError(func() error {
 		if stg.IsMutable() {
 			if err := stg.MutateImage(ctx, phase.Conveyor.StorageManager.GetStagesStorage(), phase.StagesIterator.PrevBuiltStage.GetStageImage(), stageImage); err != nil {
+				if storage.IsErrBrokenImage(err) {
+					return manager.ErrUnexpectedStagesStorageState
+				}
+
 				return fmt.Errorf("unable to mutate %s: %w", stg.Name(), err)
 			}
 		} else {

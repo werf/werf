@@ -66,22 +66,26 @@ func GetConveyorOptionsWithParallel(ctx context.Context, commonCmdData *CmdData,
 	return conveyorOptions, nil
 }
 
-func GetShouldBeBuiltOptions(commonCmdData *CmdData, imagesToProcess config.ImagesToProcess) (options build.ShouldBeBuiltOptions, err error) {
+func GetShouldBeBuiltOptions(commonCmdData *CmdData, werfConfig *config.WerfConfig, imagesToProcess config.ImagesToProcess) (builtOptions build.ShouldBeBuiltOptions, err error) {
 	customTagFuncList, err := getCustomTagFuncList(getCustomTagOptionValues(commonCmdData), commonCmdData, imagesToProcess)
 	if err != nil {
-		return options, err
+		return builtOptions, err
 	}
 
-	options = build.ShouldBeBuiltOptions{CustomTagFuncList: customTagFuncList}
+	builtOptions = build.ShouldBeBuiltOptions{
+		SkipAddManagedImagesRecords:  werfConfig.Meta.Cleanup.DisableCleanup,
+		SkipImageMetadataPublication: *commonCmdData.Dev || werfConfig.Meta.Cleanup.DisableGitHistoryBasedPolicy || werfConfig.Meta.Cleanup.DisableCleanup,
+		CustomTagFuncList:            customTagFuncList,
+	}
 
 	if GetSaveBuildReport(commonCmdData) {
-		options.ReportPath, options.ReportFormat, err = GetBuildReportPathAndFormat(commonCmdData)
+		builtOptions.ReportPath, builtOptions.ReportFormat, err = GetBuildReportPathAndFormat(commonCmdData)
 		if err != nil {
-			return options, fmt.Errorf("getting build report path failed: %w", err)
+			return builtOptions, fmt.Errorf("getting build report path failed: %w", err)
 		}
 	}
 
-	return options, nil
+	return builtOptions, nil
 }
 
 func GetBuildOptions(ctx context.Context, commonCmdData *CmdData, werfConfig *config.WerfConfig, imagesToProcess config.ImagesToProcess) (buildOptions build.BuildOptions, err error) {
