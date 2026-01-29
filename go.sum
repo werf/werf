@@ -1414,6 +1414,8 @@ github.com/werf/kubedog v0.13.1-0.20260128105733-99b263deddf7 h1:y3x3AGtNaFL3yle
 github.com/werf/kubedog v0.13.1-0.20260128105733-99b263deddf7/go.mod h1:gu4EY4hxtiYVDy5o6WE2lRZS0YWqrOV0HS//GTYyrUE=
 github.com/werf/kubedog v0.13.1-0.20260128143512-d35355f580f8 h1:RZAZb2NdEwjdy/ztbgSt2MXAa8vgeMEXa1k+U07JSyY=
 github.com/werf/kubedog v0.13.1-0.20260128143512-d35355f580f8/go.mod h1:gu4EY4hxtiYVDy5o6WE2lRZS0YWqrOV0HS//GTYyrUE=
+github.com/werf/kubedog v0.13.1-0.20260129075252-d2aee7a0bd59 h1:50cyfWJl5Qsfbwa3Ljii0+K7cazUDNBtWj8smO/WPgk=
+github.com/werf/kubedog v0.13.1-0.20260129075252-d2aee7a0bd59/go.mod h1:gu4EY4hxtiYVDy5o6WE2lRZS0YWqrOV0HS//GTYyrUE=
 github.com/werf/kubedog-for-werf-helm v0.0.0-20241217155728-9d45c48b82b6 h1:lpgQPTCp+wNJfTqJWtR6A5gRA4e4m/eRJFV7V18XCoA=
 github.com/werf/kubedog-for-werf-helm v0.0.0-20241217155728-9d45c48b82b6/go.mod h1:PA9xGVKX9Il6sCgvPrcB3/FahRme3bXRz4BuylvAssc=
 github.com/werf/lockgate v0.1.1 h1:S400JFYjtWfE4i4LY9FA8zx0fMdfui9DPrBiTciCrx4=
