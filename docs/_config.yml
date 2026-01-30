@@ -3,7 +3,7 @@ output: web
 topnav_title: werf
 site_title: werf
 company_name: Flant
-company_url: https://flant.com
+company_url: https://flant.ru
 url: https://werf.io
 canonical_url_prefix: /docs/v2
 site_lang: en
