@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.59.0](https://github.com/werf/werf/compare/v2.58.0...v2.59.0) (2026-02-02)
+
+
+### Features
+
+* **deploy:** enhanced local resource validation ([#7335](https://github.com/werf/werf/issues/7335)) ([bf1ef99](https://github.com/werf/werf/commit/bf1ef99908f6d8eec8395d1560f3d27d21c4b045))
+
 ## [2.58.0](https://github.com/werf/werf/compare/v2.57.2...v2.58.0) (2026-01-27)
 
 
