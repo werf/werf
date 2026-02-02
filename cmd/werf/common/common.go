@@ -1613,11 +1613,3 @@ func HasKubeConfig(cmdData *CmdData) bool {
 		cmdData.KubeConfigBase64 != "" ||
 		len(cmdData.LegacyKubeConfigPathsMergeList) > 0
 }
-
-func HasKubeAccess(cmdData *CmdData) bool {
-	return HasKubeConfig(cmdData) ||
-		cmdData.KubeConfigBase64 != "" ||
-		cmdData.KubeBearerTokenData != "" ||
-		cmdData.KubeBearerTokenPath != "" ||
-		cmdData.KubeContextCurrent != ""
-}

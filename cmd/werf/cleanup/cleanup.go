@@ -247,15 +247,12 @@ func runCleanup(ctx context.Context, cmd *cobra.Command) error {
 		}
 	}
 
-	hasKubeAccess := common.HasKubeAccess(&commonCmdData)
-
 	cleanupOptions := cleaning.CleanupOptions{
 		ImageNameList:                           imagesNames,
 		LocalGit:                                giterminismManager.LocalGitRepo().(*git_repo.Local),
 		KubernetesContextClients:                kubernetesContextClients,
 		KubernetesNamespaceRestrictionByContext: kubernetesNamespaceRestrictionByContext,
 		WithoutKube:                             *commonCmdData.WithoutKube,
-		HasKubeAccess:                           hasKubeAccess,
 		ConfigMetaCleanup:                       werfConfig.Meta.Cleanup,
 		KeepStagesBuiltWithinLastNHours:         common.GetKeepStagesBuiltWithinLastNHours(&commonCmdData, cmd),
 		DryRun:                                  *commonCmdData.DryRun,

@@ -32,7 +32,6 @@ type CleanupOptions struct {
 	KubernetesContextClients                []*kube.ContextClient
 	KubernetesNamespaceRestrictionByContext map[string]string
 	WithoutKube                             bool // TODO: remove this legacy logic in v3.
-	HasKubeAccess                           bool
 	ConfigMetaCleanup                       config.MetaCleanup
 	KeepStagesBuiltWithinLastNHours         *uint64
 	DryRun                                  bool
@@ -59,7 +58,6 @@ func newCleanupManager(projectName string, storageManager *manager.StorageManage
 		KubernetesContextClients:                options.KubernetesContextClients,
 		KubernetesNamespaceRestrictionByContext: options.KubernetesNamespaceRestrictionByContext,
 		WithoutKube:                             options.WithoutKube,
-		HasKubeAccess:                           options.HasKubeAccess,
 		ConfigMetaCleanup:                       options.ConfigMetaCleanup,
 		KeepStagesBuiltWithinLastNHours:         options.KeepStagesBuiltWithinLastNHours,
 	}
