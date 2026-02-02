@@ -1611,5 +1611,8 @@ func StubSetupTrackTimeout(cmdData *CmdData, cmd *cobra.Command) {
 func HasKubeConfig(cmdData *CmdData) bool {
 	return cmdData.LegacyKubeConfigPath != "" ||
 		cmdData.KubeConfigBase64 != "" ||
-		len(cmdData.LegacyKubeConfigPathsMergeList) > 0
+		len(cmdData.LegacyKubeConfigPathsMergeList) > 0 ||
+		cmdData.KubeBearerTokenData != "" ||
+		cmdData.KubeBearerTokenPath != "" ||
+		cmdData.KubeAPIServerAddress != ""
 }

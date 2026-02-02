@@ -76,7 +76,6 @@ type cleanupManager struct {
 	KubernetesContextClients                []*kube.ContextClient
 	KubernetesNamespaceRestrictionByContext map[string]string
 	WithoutKube                             bool
-	HasKubeAccess                           bool
 	ConfigMetaCleanup                       config.MetaCleanup
 	KeepStagesBuiltWithinLastNHours         *uint64
 	DryRun                                  bool
