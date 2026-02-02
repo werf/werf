@@ -148,7 +148,7 @@ func (m *cleanupManager) run(ctx context.Context) error {
 	}
 
 	if !(m.WithoutKube || m.ConfigMetaCleanup.DisableKubernetesBasedPolicy) {
-		if !m.HasKubeAccess && len(m.KubernetesContextClients) == 0 {
+		if len(m.KubernetesContextClients) == 0 {
 			return fmt.Errorf("cleanup requires Kubernetes access (token or kubeconfig), pass --without-kube to skip Kubernetes cleanup")
 		}
 
