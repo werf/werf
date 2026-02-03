@@ -15,6 +15,7 @@ This article contains description of annotations which control werf resource ope
  - [`werf.io/deploy-on`](#conditional-resource-deployment) — defines when to render the resource for the deployment and on which stages should it be deployed.
  - [`werf.io/delete-policy`](#resource-delete-policy) — defines how resource deletions should be handled during resource deployment.
  - [`werf.io/delete-propagation`](#delete-propagation) — defines the propagation policy for resource deletions.
+ - [`werf.io/delete-dependency-ANY_NAME`](#delete-dependencies) — define a dependency for the resource deletion, which will affect the order in which the resources are deleted.
  - [`werf.io/replicas-on-creation`](#replicas-on-creation) — defines number of replicas that should be set only when creating resource initially (useful for HPA).
  - [`werf.io/track-termination-mode`](#track-termination-mode) — defines a condition when werf should stop tracking of the resource.
  - [`werf.io/fail-mode`](#fail-mode) — defines how werf will handle a resource failure condition which occurred after failures threshold has been reached for the resource during deploy process.
@@ -132,6 +133,24 @@ By default, general resources have no delete policy, while hooks have values fro
 The `werf.io/delete-propagation` annotation defines the propagation policy for resource deletions. `Foreground` means delete the resource after deleting all of its dependents, `Background` means delete the resource immediately, and delete all of its dependents in the background, and `Orphan` means delete the resource, but leave all of its dependents untouched.
 
 The default value is `Foreground`.
+
+## Delete dependencies
+
+`werf.io/delete-dependency-ANY_NAME: state=STATE[,name=NAME][,namespace=NAMESPACE][,kind=KIND][,group=GROUP][,version=VERSION]`
+
+Example: \
+`werf.io/delete-dependency-db: state=absent,kind=StatefulSet,name=postgres` \
+`werf.io/delete-dependency-app: state=absent,kind=Deployment,group=apps,version=v1,name=app,namespace=app`
+
+Required parameters:
+- `state`: `absent`. Wait until resource is deleted.
+
+At least one of these parameters must be specified:
+- `name`: name of a resource to depend on.
+- `namespace`: namespace of a resource to depend on.
+- `kind`: kind of a resource to depend on.
+- `group`: api group of a resource to depend on.
+- `version`: api version of a resource to depend on.
 
 ## Replicas on creation
 
