@@ -23,7 +23,6 @@ import (
 	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/ssh_agent"
-	"github.com/werf/werf/v2/pkg/tmp_manager"
 )
 
 type DockerServerBackend struct {
@@ -128,13 +127,8 @@ func (backend *DockerServerBackend) BuildDockerfile(ctx context.Context, _ []byt
 		cliArgs = append(cliArgs, "--tag", tag)
 	}
 
-	newIDFile, err := tmp_manager.TempFile("docker-built-id-*.tmp")
-	if err != nil {
-		return "", err
-	}
-	defer os.Remove(newIDFile.Name())
-
-	cliArgs = append(cliArgs, "--iidfile", newIDFile.Name())
+	tempTag := fmt.Sprintf("werf-tmp-build:%d", time.Now().UnixNano())
+	cliArgs = append(cliArgs, "--tag", tempTag)
 
 	cliArgs = append(cliArgs, "-")
 
@@ -148,16 +142,15 @@ func (backend *DockerServerBackend) BuildDockerfile(ctx context.Context, _ []byt
 	}
 	defer contextReader.Close()
 
+	if _, _, err := backend.locker.Acquire(tempTag, lockgate.AcquireOptions{}); err != nil {
+		return "", fmt.Errorf("unable to acquire lock for %q: %w", tempTag, err)
+	}
+
 	if err := docker.CliBuild_LiveOutputWithCustomIn(ctx, contextReader, cliArgs...); err != nil {
 		return "", err
 	}
 
-	newID, err := os.ReadFile(newIDFile.Name())
-	if err != nil {
-		return "", err
-	}
-
-	return string(newID), nil
+	return tempTag, nil
 }
 
 func (backend *DockerServerBackend) BuildDockerfileStage(ctx context.Context, baseImage string, opts BuildDockerfileStageOptions, instructions ...InstructionInterface) (string, error) {
