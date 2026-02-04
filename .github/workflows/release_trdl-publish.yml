@@ -38,31 +38,6 @@ jobs:
           vault-auth-method: approle
           vault-role-id: ${{ secrets.TRDL_VAULT_ROLE_ID }}
           vault-secret-id: ${{ secrets.TRDL_VAULT_SECRET_ID }}
-
-  deploy_channels_cm_prod:
-    name: Deploy trdl_channels.yaml to production
-    needs: publish
-    runs-on: prod-github-runner-0
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Install werf
-        uses: werf/actions/install@v2
-
-      - name: Converge
-        run: |
-          . $(werf ci-env github --as-file)
-          werf converge
-        env:
-          WERF_NAMESPACE: "werfio-production"
-          WERF_DIR: "ci"
-          WERF_ENV: production
-          WERF_KUBE_CONFIG_BASE64: ${{ secrets.KUBECONFIG_BASE64_PRODUCTION }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
   publish_werf_images:
     name: Publish images with werf by trdl group and channel
     strategy:
@@ -233,7 +208,6 @@ jobs:
     if: always()
     needs:
       - publish
-      - deploy_channels_cm_prod
       - publish_werf_images
       - update_release
       - run_website_deploy
