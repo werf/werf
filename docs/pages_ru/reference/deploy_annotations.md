@@ -14,6 +14,7 @@ toc: false
  - [`werf.io/deploy-on`](#conditional-resource-deployment) — определяет, когда рендерить ресурс для выката и на каких стадиях он должен быть задеплоен.
  - [`werf.io/delete-policy`](#resource-delete-policy) — управляет удалением ресурса во время его выката.
  - [`werf.io/delete-propagation`](#delete-propagation) — определяет политику удаления дочерних ресурсов.
+ - [`werf.io/delete-dependency-ANY_NAME`](#delete-dependencies) — задать зависимость от другого ресурса, что повлияет на порядок удаления ресурсов.
  - [`werf.io/replicas-on-creation`](#replicas-on-creation) — задаёт количество реплик, которое должно быть установлено при первичном создании ресурса (полезно при использовании HPA).
  - [`werf.io/track-termination-mode`](#track-termination-mode) — определяет условие при котором werf остановит отслеживание ресурса.
  - [`werf.io/fail-mode`](#fail-mode) — определяет как werf обработает ресурс в состоянии ошибки. Ресурс в свою очередь перейдет в состояние ошибки после превышения порога допустимых ошибок, обнаруженных при отслеживании этого ресурса в процессе выката.
@@ -125,6 +126,26 @@ toc: false
 Аннотация `werf.io/delete-propagation` определяет политику удаления дочерних ресурсов. `Foreground` означает удаление ресурса после удаления всех его зависимостей, `Background` означает немедленное удаление ресурса и удаление всех его зависимостей в фоновом режиме, а `Orphan` означает удаление ресурса, но без удаления его зависимостей.
 
 Значением по умолчанию является `Foreground`.
+
+## Delete dependencies
+
+`werf.io/delete-dependency-ANY_NAME: state=STATE[,name=NAME][,namespace=NAMESPACE][,kind=KIND][,group=GROUP][,version=VERSION]`
+
+Пример: \
+`werf.io/delete-dependency-db: state=absent,kind=StatefulSet,name=postgres` \
+`werf.io/delete-dependency-app: state=absent,kind=Deployment,group=apps,version=v1,name=app,namespace=app`
+
+Обязательные параметры:
+- `state`: `absent`. Дождаться, пока ресурс будет удален.
+
+Как минимум один из этих параметров требуется указать:
+- `name`: имя ресурса, от которого будет зависеть текущий ресурс.
+- `namespace`: namespace ресурса, от которого будет зависеть текущий ресурс.
+- `kind`: kind ресурса, от которого будет зависеть текущий ресурс.
+- `group`: api group ресурса, от которого будет зависеть текущий ресурс.
+- `version`: api version ресурса, от которого будет зависеть текущий ресурс.
+
+Больше информации: [порядок развертывания]({{ "/usage/deploy/deployment_order.html" | true_relative_url }})
 
 ## Replicas on creation
 
