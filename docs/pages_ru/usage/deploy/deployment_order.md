@@ -127,6 +127,41 @@ metadata:
 
 Это более гибкий и эффективный способ установить порядок развертывания ресурсов по сравнению с `werf.io/weight` и другими методами, так как он позволяет развертывать ресурсы в порядке, подобном графу.
 
+### Задание порядка удаления (только werf)
+
+Аннотация `werf.io/delete-dependency-<name>` может быть использована для настройки порядка удаления ресурсов. Ресурс с такой аннотацией будет удалён только после того, как все его зависимости будут удалены.
+
+Например:
+
+```yaml
+# .helm/templates/example.yaml:
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app
+# ...
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: app
+  annotations:
+    werf.io/delete-dependency-ingress: state=absent,kind=Ingress,group=networking.k8s.io,version=v1,name=app
+# ...
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: app
+  annotations:
+    werf.io/delete-dependency-service: state=absent,kind=Service,version=v1,name=app
+# ...
+```
+
+В этом примере, при удалении релиза, сначала будет удалён ресурс `Ingress`, затем `Service`, и только потом `Deployment`.
+
+Посмотрите все возможности этой аннотации [здесь]({{ "/reference/deploy_annotations.html#delete-dependencies" | true_relative_url }}).
+
 ## Ожидание готовности ресурсов вне релиза (только werf)
 
 Ресурсы, развертывающиеся в рамках текущего релиза, могут зависеть от ресурсов, которые не принадлежат этому релизу. werf может ждать, пока эти внешние ресурсы не станут готовыми — вам просто нужно добавить аннотацию `<name>.external-dependency.werf.io/resource` следующим образом:

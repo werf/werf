@@ -127,6 +127,41 @@ Check out all capabilities of this annotation [here]({{ "/reference/deploy_annot
 
 This is a more flexible and effective way to set the order of resource deployments in comparison to `werf.io/weight` and other methods, as it allows you to deploy resources in a graph-like order.
 
+### Deletion ordering via dependencies (werf only)
+
+Annotation `werf.io/delete-dependency-<name>` can be used to set resource ordering during deletion. The resource with such an annotation will be deleted only after all its dependencies are deleted.
+
+For example:
+
+```yaml
+# .helm/templates/example.yaml:
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app
+# ...
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: app
+  annotations:
+    werf.io/delete-dependency-ingress: state=absent,kind=Ingress,group=networking.k8s.io,version=v1,name=app
+# ...
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: app
+  annotations:
+    werf.io/delete-dependency-service: state=absent,kind=Service,version=v1,name=app
+# ...
+```
+
+In this case, the `Ingress` will be deleted first, then the `Service`, and only then the `Deployment`.
+
+Check out all capabilities of this annotation [here]({{ "/reference/deploy_annotations.html#delete-dependencies" | true_relative_url }}).
+
 ## Waiting for non-release resources to be ready (werf only)
 
 The resources deployed as part of the current release may depend on resources that do not belong to this release. werf can wait for these external resources to be ready — you just need to add the `<name>.external-dependency.werf.io/resource` annotation as follows:
