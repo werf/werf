@@ -84,7 +84,7 @@ In this case, the `database` resource is deployed first, followed by `database-m
 
 ### Ordering via dependencies (werf only)
 
-The annotation `werf.io/deploy-dependency-<name>` can be used to set resource ordering during deployment. The resource with such an annotation will be deployed as soon as all its dependencies are satisfied, but within its stage (pre, main or post). The resource weight is ignored when this annotation is used.
+The annotation `werf.io/deploy-dependency-<name>` can be used to set resource ordering during deployment. The resource with such an annotation will be deployed as soon as all its dependencies are satisfied. This annotation has no effect if the resource on which we depend upon is outside the stage (pre, main, post, ...) of the resource with the annotation. The resource weight is ignored when this annotation is used.
 
 For example:
 
@@ -129,7 +129,7 @@ This is a more flexible and effective way to set the order of resource deploymen
 
 ### Deletion ordering via dependencies (werf only)
 
-Annotation `werf.io/delete-dependency-<name>` can be used to set resource ordering during deletion. The resource with such an annotation will be deleted only after all its dependencies are deleted.
+Annotation `werf.io/delete-dependency-<name>` can be used to set resource ordering during deletion. The resource with such an annotation will be deleted only after all its dependencies are deleted. This annotation has no effect if the resource on which we depend upon is outside the stage (pre, main, post, ...) of the resource with the annotation.
 
 For example:
 

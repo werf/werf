@@ -152,6 +152,8 @@ At least one of these parameters must be specified:
 - `group`: api group of a resource to depend on.
 - `version`: api version of a resource to depend on.
 
+More info: [deployment order]({{ "/usage/deploy/deployment_order.html" | true_relative_url }})
+
 ## Replicas on creation
 
 When HPA is active usage of default `spec.replicas` leads to harmful and tricky behaviour, because each time werf chart is being converged through CI/CD process, resource replicas will be reset to the static `spec.replicas` value in the chart templates, even if this value will was already changed in runtime by the HPA.
