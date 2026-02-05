@@ -67,7 +67,7 @@ func (h *handle) GetCommitTree(hash plumbing.Hash) (TreeHandle, error) {
 
 func (h *handle) Submodule(submodulePath string) (SubmoduleHandle, error) {
 	for _, s := range h.submoduleHandleList {
-		if s.Config().Path == submodulePath {
+		if s.Config().Path == submodulePath || s.Config().Name == submodulePath {
 			return s, nil
 		}
 	}
