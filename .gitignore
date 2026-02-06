@@ -5,6 +5,7 @@
 /.idea
 /.run
 /.help
+/.zed
 .env
 cmd/werf/werf
 
