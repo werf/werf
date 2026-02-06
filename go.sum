@@ -1406,6 +1406,8 @@ github.com/werf/3p-docker-buildx v0.13.0-rc2.0.20241111114615-d77c2e1444ad h1:FB
 github.com/werf/3p-docker-buildx v0.13.0-rc2.0.20241111114615-d77c2e1444ad/go.mod h1:Q3gtkv8D3sdaa5LJXbzMooYR/A5vBiEB2yQ56wywohM=
 github.com/werf/3p-helm v0.0.0-20260204140535-11a50c572ad8 h1:PrrWCukmr1enIzLoKRzWdhyUIoWkUmF5Gtvl1XhifZ0=
 github.com/werf/3p-helm v0.0.0-20260204140535-11a50c572ad8/go.mod h1:UAmQvGZhiUULXQpigm1yqcp57s097kpAHz2EvFtKCSk=
+github.com/werf/3p-helm v0.0.0-20260206103658-171c7659858a h1:LtJjZfpvNKyh48On7h7SnGV6nbkzfR18oMcWLJAKm8o=
+github.com/werf/3p-helm v0.0.0-20260206103658-171c7659858a/go.mod h1:UAmQvGZhiUULXQpigm1yqcp57s097kpAHz2EvFtKCSk=
 github.com/werf/3p-helm-for-werf-helm v0.0.0-20241217155820-089f92cd5c9d h1:HN9jmAG2Gyhf8hJca9yoAO2xawNZQ/6OYDomxkKr5Sw=
 github.com/werf/3p-helm-for-werf-helm v0.0.0-20241217155820-089f92cd5c9d/go.mod h1:fozJ+C/Llp1e+jHxrJOZUu+D4QEw+laQK6W6RFqvTsg=
 github.com/werf/3p-oras v0.9.1-0.20240115121544-03962ecbd40a h1:PsU9szHZlIH+CjcuIuPXRLc5dsdoaFldvYjS6YHI7YQ=
@@ -1424,6 +1426,8 @@ github.com/werf/logboek v0.6.1 h1:oEe6FkmlKg0z0n80oZjLplj6sXcBeLleCkjfOOZEL2g=
 github.com/werf/logboek v0.6.1/go.mod h1:Gez5J4bxekyr6MxTmIJyId1F61rpO+0/V4vjCIEIZmk=
 github.com/werf/nelm v1.21.1-0.20260204144645-c7b4d45f3c88 h1:E19A1RoDbpibSEFRkrKFe/vHtQHP5i8izIeYnNNxX/Y=
 github.com/werf/nelm v1.21.1-0.20260204144645-c7b4d45f3c88/go.mod h1:OLaPmtDPsGzdq6d5BGG1yjNABtUpPpHlINBSwCx+6SM=
+github.com/werf/nelm v1.21.1-0.20260206114337-2b6de4b552ef h1:j46OU4x/APIRMKSpzZBUhIqOn6T7lhFxko0tER1g6Yc=
+github.com/werf/nelm v1.21.1-0.20260206114337-2b6de4b552ef/go.mod h1:qh0jmmloNIdpm6mJATPTroxW7Z5qW8TA7SqPpg0rPZQ=
 github.com/werf/nelm-for-werf-helm v0.0.0-20241217155925-b0e6734d1dbf h1:K51qz209c1yJgKzPw8AeS72T21F/ACp0VI3RJvT4THA=
 github.com/werf/nelm-for-werf-helm v0.0.0-20241217155925-b0e6734d1dbf/go.mod h1:7RJXSGPKKPEvfPqrTwNA8jT7y52O0ebwhSbSn29ESMA=
 github.com/xanzy/go-gitlab v0.31.0/go.mod h1:sPLojNBn68fMUWSxIJtdVVIP8uSBYqesTfDUseX11Ug=
