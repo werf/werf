@@ -117,6 +117,8 @@ dockerfile: ./Dockerfile
 staged: true
 ```
 
+> **ВАЖНО**: Опция `staged: true` поддерживается только при использовании сборщика Buildah.
+
 <div class="details">
 <a href="javascript:void(0)" class="details__summary">**ЗАМЕЧАНИЕ**: Послойное кеширование Dockerfile на данный момент находится стадии альфа-тестирования.</a>
 <div class="details__content" markdown="1">
