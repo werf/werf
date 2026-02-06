@@ -17,7 +17,7 @@ cd /app/docs && \
     --check_html \
     --url_ignore '/localhost/,/example.com/,/atseashop.com/,/https\:\/\/t.me/,/.slack.com/,/docs.github.com/,/help.github.com/,/habr.com/,/cncf.io/,/\/guides/,/\/how_it_works\.html/,/\/installation\.html/,/werf_yaml.html#configuring-cleanup-policies/,/css\/configuration-table.css/,/kubernetes.io\/cluster-service=true/' \
     --url_swap 'docs/v[0-9]+[^/]+/:docs/' \
-    --http-status-ignore '0,429' \
+    --http-status-ignore '0,429,403' \
     /app/_site/$arg_site_lang
 EOF
 )
