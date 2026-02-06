@@ -7,6 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/cmd/werf/common"
@@ -104,6 +105,11 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	// aliases, but only WERF_SCAN_ONLY_CONTEXT env var is supported
 	cmd.PersistentFlags().StringVarP(&cmdData.ScanContextOnly, "scan-context-only", "", os.Getenv("WERF_SCAN_CONTEXT_ONLY"), "Scan for used images only in the specified kube context, scan all contexts from kube config otherwise (default false or $WERF_SCAN_CONTEXT_ONLY)")
 	cmd.PersistentFlags().StringVarP(&cmdData.ScanContextOnly, "kube-context", "", os.Getenv("WERF_SCAN_CONTEXT_ONLY"), "Scan for used images only in the specified kube context, scan all contexts from kube config otherwise (default false or $WERF_SCAN_CONTEXT_ONLY)")
+	cmd.Flags().StringVarP(&commonCmdData.KubeBearerTokenData, "kube-token", "", os.Getenv("WERF_KUBE_TOKEN"), "Kubernetes bearer token used for authentication (default $WERF_KUBE_TOKEN)")
+	cmd.Flags().StringVarP(&commonCmdData.KubeBearerTokenPath, "kube-token-path", "", os.Getenv("WERF_KUBE_TOKEN_PATH"), "Path to file with bearer token for authentication in Kubernetes (default $WERF_KUBE_TOKEN_PATH)")
+	cmd.Flags().StringVarP(&commonCmdData.KubeAPIServerAddress, "kube-api-server", "", os.Getenv("WERF_KUBE_API_SERVER"), "Kubernetes API server address (default $WERF_KUBE_API_SERVER)")
+	cmd.Flags().BoolVarP(&commonCmdData.KubeSkipTLSVerify, "skip-tls-verify-kube", "", util.GetBoolEnvironmentDefaultFalse("WERF_SKIP_TLS_VERIFY_KUBE"), "Skip TLS certificate validation when accessing a Kubernetes cluster (default $WERF_SKIP_TLS_VERIFY_KUBE)")
+	cmd.Flags().StringVarP(&commonCmdData.KubeTLSCAData, "kube-ca-data", "", os.Getenv("WERF_KUBE_CA_DATA"), "Pass Kubernetes API server TLS CA data (default $WERF_KUBE_CA_DATA)")
 
 	setupKeeplist(&cmdData, cmd)
 
@@ -141,7 +147,7 @@ func runCleanup(ctx context.Context, cmd *cobra.Command) error {
 		}
 	}()
 
-	common.SetupOndemandKubeInitializer(cmdData.ScanContextOnly, commonCmdData.LegacyKubeConfigPath, commonCmdData.KubeConfigBase64, commonCmdData.LegacyKubeConfigPathsMergeList)
+	common.SetupOndemandKubeInitializer(cmdData.ScanContextOnly, commonCmdData.LegacyKubeConfigPath, commonCmdData.KubeConfigBase64, commonCmdData.LegacyKubeConfigPathsMergeList, commonCmdData.KubeBearerTokenData, commonCmdData.KubeBearerTokenPath)
 	if err := common.GetOndemandKubeInitializer().Init(ctx); err != nil {
 		return err
 	}
@@ -215,13 +221,23 @@ func runCleanup(ctx context.Context, cmd *cobra.Command) error {
 	var kubernetesContextClients []*kube.ContextClient
 	var kubernetesNamespaceRestrictionByContext map[string]string
 	if !(*commonCmdData.WithoutKube || werfConfig.Meta.Cleanup.DisableKubernetesBasedPolicy) {
-		kubernetesContextClients, err = common.GetKubernetesContextClients(commonCmdData.LegacyKubeConfigPath, commonCmdData.KubeConfigBase64, commonCmdData.LegacyKubeConfigPathsMergeList, cmdData.ScanContextOnly)
+		kubernetesContextClients, err = common.GetKubernetesContextClients(
+			commonCmdData.LegacyKubeConfigPath,
+			commonCmdData.KubeConfigBase64,
+			commonCmdData.LegacyKubeConfigPathsMergeList,
+			cmdData.ScanContextOnly,
+			commonCmdData.KubeBearerTokenData,
+			commonCmdData.KubeBearerTokenPath,
+			commonCmdData.KubeAPIServerAddress,
+			commonCmdData.KubeTLSCAData,
+			commonCmdData.KubeSkipTLSVerify,
+		)
 		if err != nil {
 			return fmt.Errorf("unable to get Kubernetes clusters connections: %w", err)
 		}
-
-		kubernetesNamespaceRestrictionByContext = common.GetKubernetesNamespaceRestrictionByContext(&commonCmdData, kubernetesContextClients)
 	}
+
+	kubernetesNamespaceRestrictionByContext = common.GetKubernetesNamespaceRestrictionByContext(&commonCmdData, kubernetesContextClients)
 
 	keepList := cleaning.NewKeepListWithSize(0)
 

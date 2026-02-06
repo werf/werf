@@ -146,7 +146,7 @@ func (m *cleanupManager) run(ctx context.Context) error {
 
 	if !(m.WithoutKube || m.ConfigMetaCleanup.DisableKubernetesBasedPolicy) {
 		if len(m.KubernetesContextClients) == 0 {
-			return fmt.Errorf("no kubernetes configs found to skip images being used in the Kubernetes, pass --without-kube option (or WERF_WITHOUT_KUBE env var) to suppress this error")
+			return fmt.Errorf("cleanup requires Kubernetes access (token or kubeconfig), pass --without-kube to skip Kubernetes cleanup")
 		}
 
 		deployedDockerImages, err := m.deployedDockerImages(ctx)

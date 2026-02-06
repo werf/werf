@@ -210,7 +210,7 @@ func NewCmd(ctx context.Context) (*cobra.Command, error) {
 					registry_legacy.ClientOptPlainHTTP()
 				}
 
-				common.SetupOndemandKubeInitializer(_commonCmdData.KubeContextCurrent, _commonCmdData.LegacyKubeConfigPath, _commonCmdData.KubeConfigBase64, _commonCmdData.LegacyKubeConfigPathsMergeList)
+				common.SetupOndemandKubeInitializer(_commonCmdData.KubeContextCurrent, _commonCmdData.LegacyKubeConfigPath, _commonCmdData.KubeConfigBase64, _commonCmdData.LegacyKubeConfigPathsMergeList, _commonCmdData.KubeBearerTokenData, _commonCmdData.KubeBearerTokenPath)
 
 				helm.InitActionConfig(ctx, common.GetOndemandKubeInitializer(), namespace, helm_v3.Settings, actionConfig, helm.InitActionConfigOptions{
 					StatusProgressPeriod:      time.Duration(_commonCmdData.LegacyProgressTablePrintInterval) * time.Second,
