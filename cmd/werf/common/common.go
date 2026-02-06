@@ -1549,9 +1549,29 @@ func SetupResourceValidationFlags(cmdData *CmdData, cmd *cobra.Command) error {
 		kubeVersion = common.DefaultResourceValidationKubeVersion
 	}
 
+	defaultValidationCacheLifetime := common.DefaultResourceValidationCacheLifetime
+
+	if os.Getenv("WERF_RESOURCE_VALIDATION_CACHE_LIFETIME") != "" {
+		var err error
+
+		defaultValidationCacheLifetime, err = util.GetDurationEnvVar("WERF_RESOURCE_VALIDATION_CACHE_LIFETIME")
+		if err != nil {
+			return fmt.Errorf("bad WERF_RESOURCE_VALIDATION_CACHE_LIFETIME value: %w", err)
+		}
+	}
+
+	validationSchemas := util.PredefinedValuesByEnvNamePrefix("WERF_RESOURCE_VALIDATION_SCHEMA_")
+	if len(validationSchemas) == 0 {
+		validationSchemas = common.DefaultResourceValidationSchema
+	}
+
 	cmd.Flags().BoolVarP(&cmdData.NoResourceValidation, "no-resource-validation", "", util.GetBoolEnvironmentDefaultFalse("WERF_NO_RESOURCE_VALIDATION"), "Disable resource validation (default $WERF_NO_RESOURCE_VALIDATION)")
+	cmd.Flags().BoolVarP(&cmdData.LocalResourceValidation, "local-resource-validation", "", util.GetBoolEnvironmentDefaultFalse("WERF_LOCAL_RESOURCE_VALIDATION"), "Do not use external json schema sources (default $WERF_LOCAL_RESOURCE_VALIDATION)")
 	cmd.Flags().StringVarP(&cmdData.ValidationKubeVersion, "resource-validation-kube-version", "", kubeVersion, "Kubernetes schemas version to use during resource validation. Also can be defined by $WERF_RESOURCE_VALIDATION_KUBE_VERSION")
 	cmd.Flags().StringArrayVarP(&cmdData.ValidationSkip, "resource-validation-skip", "", []string{}, "Skip resource validation for resources with specified attributes (can specify multiple). Format: key1=value1,key2=value2. Supported keys: group, version, kind, name, namespace. Example: kind=Deployment,name=my-app. Also, can be defined with $WERF_RESOURCE_VALIDATION_SKIP_* (e.g. $WERF_RESOURCE_VALIDATION_SKIP_1=kind=Deployment,name=my-app)")
+	cmd.Flags().StringArrayVarP(&cmdData.ValidationSchemas, "resource-validation-schema", "", validationSchemas, "Default json schema sources to validate resources. Must be a valid go template defining a http(s) URL, or an absolute path on local file system. Also, can be defined with $WERF_RESOURCE_VALIDATION_SCHEMA_* (eg. $WERF_RESOURCE_VALIDATION_SCHEMA_1='https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json')")
+	cmd.Flags().StringArrayVarP(&cmdData.ValidationExtraSchemas, "resource-validation-extra-schema", "", []string{}, "Extra json schema sources to validate resources (preferred over default sources). Must be a valid go template defining a http(s) URL, or an absolute path on local file system. Also, can be defined with $WERF_RESOURCE_VALIDATION_EXTRA_SCHEMA_* (eg. $WERF_RESOURCE_VALIDATION_EXTRA_SCHEMA_1='https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json')")
+	cmd.Flags().DurationVarP(&cmdData.ValidationSchemaCacheLifetime, "resource-validation-cache-lifetime", "", defaultValidationCacheLifetime, "How long local schema cache will be valid. Also can be defined by $WERF_RESOURCE_VALIDATION_CACHE_LIFETIME")
 
 	return nil
 }
