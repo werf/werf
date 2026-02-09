@@ -5,6 +5,7 @@ import "time"
 type CommonOptions struct {
 	ShouldFail bool
 	ExtraArgs  []string
+	ExtraEnv   []string
 
 	CancelOnOutput        string
 	CancelOnOutputTimeout time.Duration

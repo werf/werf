@@ -17,6 +17,24 @@ werf provides a ready-made integrations for GitLab CI/CD and GitHub Actions. By 
   - Setting up werf logging (`WERF_LOG_*`).
   - Enabling automatic cleaning of werf processes for cancelled CI jobs (`WERF_ENABLE_PROCESS_EXTERMINATOR=1`). This procedure is only required in CI systems that cannot send termination signals to spawned processes (e.g., GitLab CI/CD).
 
+### Isolated Docker configuration
+
+By default, `werf ci-env` selects the Docker configuration in the following order: the value passed via `--docker-config`, then `WERF_DOCKER_CONFIG`, then `DOCKER_CONFIG`, and only if none of these are set, the host's `~/.docker` directory.
+The selected configuration is then copied into a temporary directory for the CI job. On shared CI runners, this can cause conflicts between jobs or credential leaks.
+
+Use the `--init-tmp-docker-config` flag to force werf to create an isolated empty Docker configuration instead of copying any existing one:
+
+```shell
+. $(werf ci-env gitlab --as-file --init-tmp-docker-config)
+```
+
+This flag:
+- Creates a new temporary directory with an empty `config.json`
+- Ignores any existing Docker configuration (from `--docker-config`, `WERF_DOCKER_CONFIG`, or `DOCKER_CONFIG`)
+- Works seamlessly with automatic CI registry login (enabled by default via `--login-to-registry`) when CI environment variables are present
+
+You can also enable it via environment variable: `WERF_INIT_TMP_DOCKER_CONFIG=1`.
+
 ## GitLab CI/CD
 
 The entire integration boils down to invoking the [ci-env]({{"reference/cli/werf_ci_env.html" | true_relative_url }}) command and then following the instructions the command prints to stdout.
