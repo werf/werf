@@ -82,6 +82,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	lo.Must0(common.SetupChartRepoConnectionFlags(&commonCmdData, cmd))
 	lo.Must0(common.SetupValuesFlags(&commonCmdData, cmd))
 	lo.Must0(common.SetupSecretValuesFlags(&commonCmdData, cmd))
+	lo.Must0(common.SetupResourceValidationFlags(&commonCmdData, cmd))
 	lo.Must0(common.SetupTrackingFlags(&commonCmdData, cmd))
 
 	common.SetupAddAnnotations(&commonCmdData, cmd)
@@ -247,6 +248,7 @@ func runApply(ctx context.Context) error {
 		ReleaseStorageDriver:        commonCmdData.ReleaseStorageDriver,
 		ReleaseStorageSQLConnection: commonCmdData.ReleaseStorageSQLConnection,
 		RollbackGraphPath:           commonCmdData.RollbackGraphPath,
+		ResourceValidationOptions:   commonCmdData.ResourceValidationOptions,
 		ShowSubchartNotes:           commonCmdData.ShowSubchartNotes,
 		TemplatesAllowDNS:           commonCmdData.TemplatesAllowDNS,
 	}); err != nil {

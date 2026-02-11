@@ -274,7 +274,7 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 				}
 			} else {
 				if common.GetRequireBuiltImages(&commonCmdData) {
-					shouldBeBuiltOptions, err := common.GetShouldBeBuiltOptions(&commonCmdData, imagesToProcess)
+					shouldBeBuiltOptions, err := common.GetShouldBeBuiltOptions(&commonCmdData, werfConfig, imagesToProcess)
 					if err != nil {
 						return err
 					}

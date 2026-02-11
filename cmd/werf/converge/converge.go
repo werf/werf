@@ -153,6 +153,7 @@ werf converge --repo registry.mydomain.com/web --env production`,
 	lo.Must0(common.SetupChartRepoConnectionFlags(&commonCmdData, cmd))
 	lo.Must0(common.SetupValuesFlags(&commonCmdData, cmd))
 	lo.Must0(common.SetupSecretValuesFlags(&commonCmdData, cmd))
+	lo.Must0(common.SetupResourceValidationFlags(&commonCmdData, cmd))
 	lo.Must0(common.SetupTrackingFlags(&commonCmdData, cmd))
 
 	common.SetupAddAnnotations(&commonCmdData, cmd)
@@ -318,7 +319,7 @@ func run(
 				}
 			} else {
 				if common.GetRequireBuiltImages(&commonCmdData) {
-					shouldBeBuiltOptions, err := common.GetShouldBeBuiltOptions(&commonCmdData, imagesToProcess)
+					shouldBeBuiltOptions, err := common.GetShouldBeBuiltOptions(&commonCmdData, werfConfig, imagesToProcess)
 					if err != nil {
 						return err
 					}
@@ -478,6 +479,7 @@ func run(
 		ReleaseLabels:               releaseLabels,
 		ReleaseStorageDriver:        commonCmdData.ReleaseStorageDriver,
 		ReleaseStorageSQLConnection: commonCmdData.ReleaseStorageSQLConnection,
+		ResourceValidationOptions:   commonCmdData.ResourceValidationOptions,
 		RollbackGraphPath:           commonCmdData.RollbackGraphPath,
 		ShowSubchartNotes:           commonCmdData.ShowSubchartNotes,
 		TemplatesAllowDNS:           commonCmdData.TemplatesAllowDNS,

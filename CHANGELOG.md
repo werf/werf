@@ -1,5 +1,28 @@
 # Changelog
 
+## [2.59.0](https://github.com/werf/werf/compare/v2.58.0...v2.59.0) (2026-02-02)
+
+
+### Features
+
+* **deploy:** enhanced local resource validation ([#7335](https://github.com/werf/werf/issues/7335)) ([bf1ef99](https://github.com/werf/werf/commit/bf1ef99908f6d8eec8395d1560f3d27d21c4b045))
+
+## [2.58.0](https://github.com/werf/werf/compare/v2.57.2...v2.58.0) (2026-01-27)
+
+
+### Features
+
+* **build:** skip meta tags publication for read only registry ([#7291](https://github.com/werf/werf/issues/7291)) ([7a80bbf](https://github.com/werf/werf/commit/7a80bbfa6376e866d345ac5c74555419ac8bb76c))
+* **deploy:** implement resource validation against api spec ([#7328](https://github.com/werf/werf/issues/7328)) ([b927515](https://github.com/werf/werf/commit/b9275150606790bd7b16bef384baf8f97918278f))
+
+
+### Bug Fixes
+
+* **build:** add broken image error handling for image-spec stage ([#7322](https://github.com/werf/werf/issues/7322)) ([56fb883](https://github.com/werf/werf/commit/56fb88304d35c94aa812444ec3cfb1ed439b93b6))
+* **build:** panic: image "..." not found ([#7318](https://github.com/werf/werf/issues/7318)) ([145064e](https://github.com/werf/werf/commit/145064e25ef9e4e567e0dd10805aad165680b3d5))
+* **cleanup:** normalize 404 error message on tag deletion ([#7332](https://github.com/werf/werf/issues/7332)) ([72deb33](https://github.com/werf/werf/commit/72deb338e33f5222c686b4eaa828ba0568481f3f))
+* **deploy:** force adoption always on ([8154022](https://github.com/werf/werf/commit/81540220e26c0080971f70b60e68d26c0504d953))
+
 ## [2.57.2](https://github.com/werf/werf/compare/v2.57.1...v2.57.2) (2026-01-20)
 
 

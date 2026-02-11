@@ -16,15 +16,15 @@ const (
 	quayRepositoryNotFoundErrPrefix = "quay repository not found: "
 )
 
-type QuayRepositoryNotFoundErr apiError
+type QuayRepositoryNotFoundError apiError
 
-func NewQuayRepositoryNotFoundErr(err error) QuayRepositoryNotFoundErr {
-	return QuayRepositoryNotFoundErr{
+func NewQuayRepositoryNotFoundError(err error) QuayRepositoryNotFoundError {
+	return QuayRepositoryNotFoundError{
 		error: errors.New(quayRepositoryNotFoundErrPrefix + err.Error()),
 	}
 }
 
-func IsQuayRepositoryNotFoundErr(err error) bool {
+func IsQuayRepositoryNotFoundError(err error) bool {
 	return err != nil && strings.Contains(err.Error(), quayRepositoryNotFoundErrPrefix)
 }
 
@@ -77,7 +77,7 @@ func (r *quay) deleteRepo(ctx context.Context, reference string) error {
 	resp, err := r.quayApi.DeleteRepository(ctx, hostname, namespace, repository, r.quayCredentials.token)
 	if err != nil {
 		if resp != nil && resp.StatusCode == http.StatusNotFound {
-			return NewQuayRepositoryNotFoundErr(err)
+			return NewQuayRepositoryNotFoundError(err)
 		}
 
 		return err

@@ -122,6 +122,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	lo.Must0(common.SetupChartRepoConnectionFlags(&commonCmdData, cmd))
 	lo.Must0(common.SetupValuesFlags(&commonCmdData, cmd))
 	lo.Must0(common.SetupSecretValuesFlags(&commonCmdData, cmd))
+	lo.Must0(common.SetupResourceValidationFlags(&commonCmdData, cmd))
 
 	common.SetupAddAnnotations(&commonCmdData, cmd)
 	common.SetupAddLabels(&commonCmdData, cmd)
@@ -267,7 +268,7 @@ func runLint(ctx context.Context, imageNameListFromArgs []string) error {
 				}
 			} else {
 				if common.GetRequireBuiltImages(&commonCmdData) {
-					shouldBeBuiltOptions, err := common.GetShouldBeBuiltOptions(&commonCmdData, imagesToProcess)
+					shouldBeBuiltOptions, err := common.GetShouldBeBuiltOptions(&commonCmdData, werfConfig, imagesToProcess)
 					if err != nil {
 						return err
 					}
@@ -414,6 +415,7 @@ func runLint(ctx context.Context, imageNameListFromArgs []string) error {
 		ReleaseNamespace:            releaseNamespace,
 		ReleaseStorageDriver:        commonCmdData.ReleaseStorageDriver,
 		ReleaseStorageSQLConnection: commonCmdData.ReleaseStorageSQLConnection,
+		ResourceValidationOptions:   commonCmdData.ResourceValidationOptions,
 		Remote:                      cmdData.Validate,
 		TemplatesAllowDNS:           commonCmdData.TemplatesAllowDNS,
 	}); err != nil {

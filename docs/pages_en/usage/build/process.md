@@ -119,6 +119,8 @@ dockerfile: ./Dockerfile
 staged: true
 ```
 
+> **IMPORTANT**: The `staged: true` option is supported only when using the Buildah builder.
+
 <div class="details">
 <a href="javascript:void(0)" class="details__summary">**NOTE**: The staged Dockerfile caching feature is currently alpha</a>
 <div class="details__content" markdown="1">

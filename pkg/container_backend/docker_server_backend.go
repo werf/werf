@@ -14,6 +14,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
+	"github.com/tidwall/gjson"
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/lockgate"
@@ -128,13 +129,13 @@ func (backend *DockerServerBackend) BuildDockerfile(ctx context.Context, _ []byt
 		cliArgs = append(cliArgs, "--tag", tag)
 	}
 
-	newIDFile, err := tmp_manager.TempFile("docker-built-id-*.tmp")
+	newMetadataFile, err := tmp_manager.TempFile("docker-buildx-metadata-file-*.tmp")
 	if err != nil {
 		return "", err
 	}
-	defer os.Remove(newIDFile.Name())
+	defer os.Remove(newMetadataFile.Name())
 
-	cliArgs = append(cliArgs, "--iidfile", newIDFile.Name())
+	cliArgs = append(cliArgs, "--metadata-file", newMetadataFile.Name())
 
 	cliArgs = append(cliArgs, "-")
 
@@ -152,12 +153,48 @@ func (backend *DockerServerBackend) BuildDockerfile(ctx context.Context, _ []byt
 		return "", err
 	}
 
-	newID, err := os.ReadFile(newIDFile.Name())
+	newID, err := parseImageIDFromMetadata(newMetadataFile.Name())
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("unable to read build metadata: %w", err)
 	}
 
-	return string(newID), nil
+	if Debug() {
+		fmt.Printf("[DOCKER BUILD] extracted image ID from metadata: %s\n", newID)
+	}
+
+	return newID, nil
+}
+
+// parseImageIDFromMetadata extracts the Image ID from the buildx metadata file.
+// https://docs.docker.com/reference/cli/docker/buildx/build/#metadata-file
+//
+// Background:
+// In modern Docker environments (especially with BuildKit and the newer containerd image store),
+// the behavior of the traditional '--iidfile' option has changed significantly based on the
+// storage driver in use.
+//
+//  1. Traditional Graph Drivers (overlay2, devicemapper, etc.):
+//     In the classic Docker architecture, '--iidfile' returns the "Image ID", which is the hash
+//     of the image's configuration JSON.
+//
+//  2. Containerd Image Store (Snapshotters):
+//     With the newer containerd-based storage (often enabled in Docker Desktop or via 'containerd-snapshotter: true'),
+//     the primary identifier became the "Manifest Digest". In this mode, '--iidfile' may return the
+//     digest of the manifest list or the manifest itself.
+//
+// https://docs.docker.com/reference/cli/docker/buildx/build/#metadata-file
+func parseImageIDFromMetadata(path string) (string, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return "", fmt.Errorf("read file %q: %w", path, err)
+	}
+
+	res := gjson.GetBytes(data, "containerimage\\.digest")
+	if res.Exists() {
+		return res.String(), nil
+	}
+
+	return "", fmt.Errorf("image ID not found in metadata file %q", path)
 }
 
 func (backend *DockerServerBackend) BuildDockerfileStage(ctx context.Context, baseImage string, opts BuildDockerfileStageOptions, instructions ...InstructionInterface) (string, error) {

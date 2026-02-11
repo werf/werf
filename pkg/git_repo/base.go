@@ -759,7 +759,7 @@ func (repo *Base) resolveCommitFilePath(ctx context.Context, commit, path string
 		mode := lsTreeEntry.Mode
 		switch {
 		case mode.IsMalformed():
-			return "", treeEntryNotFoundInRepoErr{fmt.Errorf("commit tree entry %q not found in the repository", pathToResolve)}
+			return "", treeEntryNotFoundInRepoError{fmt.Errorf("commit tree entry %q not found in the repository", pathToResolve)}
 		case mode == filemode.Symlink:
 			data, err := repo.ReadCommitTreeEntryContent(ctx, commit, pathToResolve)
 			if err != nil {
@@ -768,12 +768,12 @@ func (repo *Base) resolveCommitFilePath(ctx context.Context, commit, path string
 
 			link := string(data)
 			if pathPkg.IsAbs(link) {
-				return "", treeEntryNotFoundInRepoErr{fmt.Errorf("commit tree entry %q not found in the repository", link)}
+				return "", treeEntryNotFoundInRepoError{fmt.Errorf("commit tree entry %q not found in the repository", link)}
 			}
 
 			resolvedLink := pathPkg.Join(pathPkg.Dir(pathToResolve), link)
 			if resolvedLink == ".." || strings.HasPrefix(resolvedLink, "../") {
-				return "", treeEntryNotFoundInRepoErr{fmt.Errorf("commit tree entry %q not found in the repository", link)}
+				return "", treeEntryNotFoundInRepoError{fmt.Errorf("commit tree entry %q not found in the repository", link)}
 			}
 
 			if checkSymlinkTargetFunc != nil {

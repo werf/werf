@@ -20,6 +20,7 @@ import (
 	"github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
 	"github.com/werf/nelm/pkg/common"
+	"github.com/werf/nelm/pkg/featgate"
 	"github.com/werf/nelm/pkg/log"
 	"github.com/werf/werf/v2/pkg/build"
 	"github.com/werf/werf/v2/pkg/build/stage"
@@ -1168,24 +1169,17 @@ func GetSecondaryStagesStorage(cmdData *CmdData) []string {
 }
 
 func GetContainerRegistryMirror(ctx context.Context, cmdData *CmdData) ([]string, error) {
-	mirrors := append(util.PredefinedValuesByEnvNamePrefix("WERF_CONTAINER_REGISTRY_MIRROR_"), *cmdData.ContainerRegistryMirror...)
+	cmdMirrors := append(util.PredefinedValuesByEnvNamePrefix("WERF_CONTAINER_REGISTRY_MIRROR_"), *cmdData.ContainerRegistryMirror...)
 
-	// init registry mirrors if docker cli initialized in context
-	if docker.IsEnabled() && docker.IsContext(ctx) {
-		info, err := docker.Info(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("unable to get docker system info: %w", err)
-		}
-
-		if info.RegistryConfig == nil {
-			return nil, nil
-		}
-
-		return info.RegistryConfig.Mirrors, nil
+	dockerMirrors, err := docker.GetRegistryMirrors(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get docker registry mirrors: %w", err)
 	}
 
 	var result []string
-	for _, mirror := range mirrors {
+	seen := make(map[string]bool)
+
+	for _, mirror := range cmdMirrors {
 		if strings.HasPrefix(mirror, "http://") {
 			return nil, fmt.Errorf("invalid container registry mirror %q: only https schema allowed", mirror)
 		}
@@ -1194,7 +1188,17 @@ func GetContainerRegistryMirror(ctx context.Context, cmdData *CmdData) ([]string
 			mirror = "https://" + mirror
 		}
 
-		result = append(result, mirror)
+		if !seen[mirror] {
+			seen[mirror] = true
+			result = append(result, mirror)
+		}
+	}
+
+	for _, mirror := range dockerMirrors {
+		if !seen[mirror] {
+			seen[mirror] = true
+			result = append(result, mirror)
+		}
 	}
 
 	return result, nil
@@ -1545,6 +1549,43 @@ func SetupTrackingFlags(cmdData *CmdData, cmd *cobra.Command) error {
 	}
 
 	StubSetupHooksStatusProgressPeriod(cmdData, cmd)
+
+	return nil
+}
+
+func SetupResourceValidationFlags(cmdData *CmdData, cmd *cobra.Command) error {
+	if !featgate.FeatGateResourceValidation.Enabled() {
+		return nil
+	}
+
+	kubeVersion := os.Getenv("WERF_RESOURCE_VALIDATION_KUBE_VERSION")
+	if kubeVersion == "" {
+		kubeVersion = common.DefaultResourceValidationKubeVersion
+	}
+
+	defaultValidationCacheLifetime := common.DefaultResourceValidationCacheLifetime
+
+	if os.Getenv("WERF_RESOURCE_VALIDATION_CACHE_LIFETIME") != "" {
+		var err error
+
+		defaultValidationCacheLifetime, err = util.GetDurationEnvVar("WERF_RESOURCE_VALIDATION_CACHE_LIFETIME")
+		if err != nil {
+			return fmt.Errorf("bad WERF_RESOURCE_VALIDATION_CACHE_LIFETIME value: %w", err)
+		}
+	}
+
+	validationSchemas := util.PredefinedValuesByEnvNamePrefix("WERF_RESOURCE_VALIDATION_SCHEMA_")
+	if len(validationSchemas) == 0 {
+		validationSchemas = common.DefaultResourceValidationSchema
+	}
+
+	cmd.Flags().BoolVarP(&cmdData.NoResourceValidation, "no-resource-validation", "", util.GetBoolEnvironmentDefaultFalse("WERF_NO_RESOURCE_VALIDATION"), "Disable resource validation (default $WERF_NO_RESOURCE_VALIDATION)")
+	cmd.Flags().BoolVarP(&cmdData.LocalResourceValidation, "local-resource-validation", "", util.GetBoolEnvironmentDefaultFalse("WERF_LOCAL_RESOURCE_VALIDATION"), "Do not use external json schema sources (default $WERF_LOCAL_RESOURCE_VALIDATION)")
+	cmd.Flags().StringVarP(&cmdData.ValidationKubeVersion, "resource-validation-kube-version", "", kubeVersion, "Kubernetes schemas version to use during resource validation. Also can be defined by $WERF_RESOURCE_VALIDATION_KUBE_VERSION")
+	cmd.Flags().StringArrayVarP(&cmdData.ValidationSkip, "resource-validation-skip", "", []string{}, "Skip resource validation for resources with specified attributes (can specify multiple). Format: key1=value1,key2=value2. Supported keys: group, version, kind, name, namespace. Example: kind=Deployment,name=my-app. Also, can be defined with $WERF_RESOURCE_VALIDATION_SKIP_* (e.g. $WERF_RESOURCE_VALIDATION_SKIP_1=kind=Deployment,name=my-app)")
+	cmd.Flags().StringArrayVarP(&cmdData.ValidationSchemas, "resource-validation-schema", "", validationSchemas, "Default json schema sources to validate resources. Must be a valid go template defining a http(s) URL, or an absolute path on local file system. Also, can be defined with $WERF_RESOURCE_VALIDATION_SCHEMA_* (eg. $WERF_RESOURCE_VALIDATION_SCHEMA_1='https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json')")
+	cmd.Flags().StringArrayVarP(&cmdData.ValidationExtraSchemas, "resource-validation-extra-schema", "", []string{}, "Extra json schema sources to validate resources (preferred over default sources). Must be a valid go template defining a http(s) URL, or an absolute path on local file system. Also, can be defined with $WERF_RESOURCE_VALIDATION_EXTRA_SCHEMA_* (eg. $WERF_RESOURCE_VALIDATION_EXTRA_SCHEMA_1='https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json')")
+	cmd.Flags().DurationVarP(&cmdData.ValidationSchemaCacheLifetime, "resource-validation-cache-lifetime", "", defaultValidationCacheLifetime, "How long local schema cache will be valid. Also can be defined by $WERF_RESOURCE_VALIDATION_CACHE_LIFETIME")
 
 	return nil
 }
