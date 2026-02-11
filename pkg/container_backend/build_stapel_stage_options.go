@@ -19,6 +19,7 @@ type BuildStapelStageOptionsInterface interface {
 	SetUser(user string) BuildStapelStageOptionsInterface
 	SetWorkdir(workdir string) BuildStapelStageOptionsInterface
 	SetHealthcheck(healthcheck string) BuildStapelStageOptionsInterface
+	SetNetwork(network string) BuildStapelStageOptionsInterface
 
 	AddBuildVolumes(volumes ...string) BuildStapelStageOptionsInterface
 	AddCommands(commands ...string) BuildStapelStageOptionsInterface
@@ -41,6 +42,7 @@ type BuildStapelStageOptions struct {
 	User        string
 	Workdir     string
 	Healthcheck string
+	Network     string
 
 	BuildVolumes []string
 	Commands     []string
@@ -141,6 +143,11 @@ func (opts *BuildStapelStageOptions) SetWorkdir(workdir string) BuildStapelStage
 
 func (opts *BuildStapelStageOptions) SetHealthcheck(healthcheck string) BuildStapelStageOptionsInterface {
 	opts.Healthcheck = healthcheck
+	return opts
+}
+
+func (opts *BuildStapelStageOptions) SetNetwork(network string) BuildStapelStageOptionsInterface {
+	opts.Network = network
 	return opts
 }
 

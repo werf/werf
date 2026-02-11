@@ -23,6 +23,7 @@ type LegacyStageImageContainerOptions struct {
 	User        string
 	Entrypoint  string
 	HealthCheck string
+	Network     string
 }
 
 func newLegacyStageContainerOptions() *LegacyStageImageContainerOptions {
@@ -74,6 +75,10 @@ func (co *LegacyStageImageContainerOptions) AddHealthCheck(check string) {
 
 func (co *LegacyStageImageContainerOptions) AddEntrypoint(entrypoint string) {
 	co.Entrypoint = entrypoint
+}
+
+func (co *LegacyStageImageContainerOptions) AddNetwork(network string) {
+	co.Network = network
 }
 
 func (co *LegacyStageImageContainerOptions) merge(co2 *LegacyStageImageContainerOptions) *LegacyStageImageContainerOptions {
@@ -132,6 +137,12 @@ func (co *LegacyStageImageContainerOptions) merge(co2 *LegacyStageImageContainer
 		mergedCo.HealthCheck = co2.HealthCheck
 	}
 
+	if co2.Network == "" {
+		mergedCo.Network = co.Network
+	} else {
+		mergedCo.Network = co2.Network
+	}
+
 	return mergedCo
 }
 
@@ -177,6 +188,10 @@ func (co *LegacyStageImageContainerOptions) toRunArgs() ([]string, error) {
 
 	if co.Entrypoint != "" {
 		args = append(args, fmt.Sprintf("--entrypoint=%s", co.Entrypoint))
+	}
+
+	if co.Network != "" {
+		args = append(args, fmt.Sprintf("--network=%s", co.Network))
 	}
 
 	return args, nil
