@@ -253,6 +253,8 @@ func (cmdData *CmdData) ProcessFlags() error {
 		return err
 	}
 
+	ProcessEnvironment(cmdData)
+
 	return nil
 }
 

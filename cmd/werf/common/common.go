@@ -363,6 +363,14 @@ func SetupEnvironment(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringVarP(&cmdData.Environment, "env", "", os.Getenv("WERF_ENV"), "Use specified environment (default $WERF_ENV)")
 }
 
+func ProcessEnvironment(cmdData *CmdData) {
+	if cmdData.Environment == "" {
+		if werfEnv := os.Getenv("WERF_ENV"); werfEnv != "" {
+			cmdData.Environment = werfEnv
+		}
+	}
+}
+
 func SetupRelease(cmdData *CmdData, cmd *cobra.Command, projectConfigParsed bool) {
 	var usage string
 	if projectConfigParsed {
