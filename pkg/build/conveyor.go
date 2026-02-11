@@ -78,6 +78,8 @@ type ConveyorOptions struct {
 	DeferBuildLog                   bool
 	ImagesToProcess                 config.ImagesToProcess
 	SkipImageSpecStage              bool
+	UseBuildReport                  bool
+	BuildReportPath                 string
 }
 
 func NewConveyor(werfConfig *config.WerfConfig, giterminismManager giterminism_manager.Interface, projectDir, baseTmpDir string, containerBackend container_backend.ContainerBackend, storageManager manager.StorageManagerInterface, storageLockManager lock_manager.Interface, opts ConveyorOptions) *Conveyor {
@@ -450,20 +452,38 @@ func (c *Conveyor) ShouldBeBuilt(ctx context.Context, opts ShouldBeBuiltOptions)
 func (c *Conveyor) FetchLastImageStage(ctx context.Context, targetPlatform, imageName string) error {
 	lastImageStage := c.GetImage(targetPlatform, imageName).GetLastNonEmptyStage()
 	_, err := c.StorageManager.FetchStage(ctx, c.ContainerBackend, lastImageStage)
+
 	return err
 }
 
-func (c *Conveyor) GetFullImageName(ctx context.Context, imageName string) (string, error) {
+func (c *Conveyor) GetFullImageName(imageName string) (string, error) {
 	infoGetters, err := c.GetImageInfoGetters(imagePkg.InfoGetterOptions{})
 	if err != nil {
-		return "", nil
+		return "", err
 	}
+
 	for _, getter := range infoGetters {
 		if getter.WerfImageName == imageName {
 			return getter.GetName(), nil
 		}
 	}
-	return "", fmt.Errorf("image not found")
+
+	return "", fmt.Errorf("image %q not found", imageName)
+}
+
+func (c *Conveyor) GetFullImageNameFromReport(ctx context.Context, imageName string) (string, error) {
+	infoGetters, err := c.GetImageInfoGettersFromReport(ctx, imagePkg.InfoGetterOptions{})
+	if err != nil {
+		return "", err
+	}
+
+	for _, getter := range infoGetters {
+		if getter.WerfImageName == imageName {
+			return getter.GetName(), nil
+		}
+	}
+
+	return "", fmt.Errorf("image %q not found in build report", imageName)
 }
 
 func (c *Conveyor) GetImageInfoGettersWithOpts(opts imagePkg.InfoGetterOptions) ([]*imagePkg.InfoGetter, error) {
@@ -525,7 +545,17 @@ func (c *Conveyor) GetImageInfoGetters(opts imagePkg.InfoGetterOptions) ([]*imag
 			imagesGetters = append(imagesGetters, getter)
 		}
 	}
+
 	return imagesGetters, nil
+}
+
+func (c *Conveyor) GetImageInfoGettersFromReport(ctx context.Context, opts imagePkg.InfoGetterOptions) ([]*imagePkg.InfoGetter, error) {
+	report, err := LoadBuildReportFromFile(ctx, c.BuildReportPath)
+	if err != nil {
+		return nil, fmt.Errorf("unable to load build report: %w", err)
+	}
+
+	return report.ToImageInfoGetters(opts), nil
 }
 
 func (c *Conveyor) GetExportedImages() (res []*image.Image) {
@@ -549,6 +579,33 @@ func (c *Conveyor) GetImagesEnvArray() []string {
 	}
 
 	return envArray
+}
+
+func (c *Conveyor) GetImagesEnvArrayFromReport(ctx context.Context) ([]string, error) {
+	var envArray []string
+
+	report, err := LoadBuildReportFromFile(ctx, c.BuildReportPath)
+	if err != nil {
+		return nil, fmt.Errorf("unable to load build report: %w", err)
+	}
+
+	for imageName, img := range report.Images {
+		if !img.Final {
+			continue
+		}
+
+		envArray = append(envArray, GenerateImageEnv(imageName, c.GetImageNameForLastImageStageFromReport(img)))
+	}
+
+	return envArray, nil
+}
+
+func (c *Conveyor) GetImageNameForLastImageStageFromReport(image ReportImageRecord) string {
+	if len(image.Stages) == 0 {
+		return image.DockerImageName
+	}
+
+	return image.Stages[len(image.Stages)-1].DockerImageName
 }
 
 func (c *Conveyor) checkContainerBackendSupported(ctx context.Context) error {
@@ -639,6 +696,10 @@ func (c *Conveyor) Build(ctx context.Context, opts BuildOptions) ([]*ImagesRepor
 
 func (c *Conveyor) Export(ctx context.Context, opts ExportOptions) error {
 	return NewExporter(c, opts).Run(ctx)
+}
+
+func (c *Conveyor) ExportFromReport(ctx context.Context, opts ExportOptions) error {
+	return NewExporter(c, opts).RunFromReport(ctx, c.BuildReportPath)
 }
 
 func (c *Conveyor) determineStages(ctx context.Context) error {

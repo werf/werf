@@ -305,6 +305,9 @@ func newCmd(ctx context.Context, composeCmdName string, options *newCmdOptions) 
 
 	common.SetupRequireBuiltImages(&commonCmdData, cmd)
 
+	common.SetupBuildReportPath(&commonCmdData, cmd)
+	common.SetupUseBuildReport(&commonCmdData, cmd)
+
 	if options.FollowSupport {
 		common.SetupFollow(&commonCmdData, cmd)
 	}
@@ -484,23 +487,30 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		defer conveyorWithRetry.Terminate()
 
 		if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
-			if common.GetRequireBuiltImages(&commonCmdData) {
-				if _, err := c.ShouldBeBuilt(ctx, build.ShouldBeBuiltOptions{}); err != nil {
-					return err
+			if c.UseBuildReport {
+				envArray, err = c.GetImagesEnvArrayFromReport(ctx)
+				if err != nil {
+					return fmt.Errorf("unable to get images env array from build report: %w", err)
 				}
 			} else {
-				if _, err := c.Build(ctx, build.BuildOptions{SkipImageMetadataPublication: *commonCmdData.Dev}); err != nil {
-					return err
+				if common.GetRequireBuiltImages(&commonCmdData) {
+					if _, err := c.ShouldBeBuilt(ctx, build.ShouldBeBuiltOptions{}); err != nil {
+						return err
+					}
+				} else {
+					if _, err := c.Build(ctx, build.BuildOptions{SkipImageMetadataPublication: *commonCmdData.Dev}); err != nil {
+						return err
+					}
 				}
-			}
 
-			for _, img := range c.GetExportedImages() {
-				if err := c.FetchLastImageStage(ctx, img.TargetPlatform, img.Name); err != nil {
-					return err
+				for _, img := range c.GetExportedImages() {
+					if err := c.FetchLastImageStage(ctx, img.TargetPlatform, img.Name); err != nil {
+						return err
+					}
 				}
-			}
 
-			envArray = c.GetImagesEnvArray()
+				envArray = c.GetImagesEnvArray()
+			}
 
 			return nil
 		}); err != nil {

@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"strconv"
 	"sync"
@@ -12,6 +13,7 @@ import (
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/build/image"
+	imagePkg "github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/telemetry"
 )
@@ -35,6 +37,7 @@ type ReportImageRecord struct {
 	DockerImageID     string
 	DockerImageDigest string
 	DockerImageName   string
+	TargetPlatform    string
 	Rebuilt           bool
 	Final             bool
 	Size              int64
@@ -168,6 +171,7 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 				DockerImageID:     stageDesc.Info.ID,
 				DockerImageDigest: stageDesc.Info.GetDigest(),
 				DockerImageName:   stageDesc.Info.Name,
+				TargetPlatform:    img.TargetPlatform,
 				Rebuilt:           img.GetRebuilt(),
 				Final:             img.IsFinal,
 				Size:              stageDesc.Info.Size,
@@ -216,6 +220,7 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 					DockerImageID:     stageDesc.Info.ID,
 					DockerImageDigest: stageDesc.Info.GetDigest(),
 					DockerImageName:   stageDesc.Info.Name,
+					TargetPlatform:    "", // multiplatform manifest list
 					Rebuilt:           isRebuilt,
 					Final:             img.IsFinal,
 					Size:              stageDesc.Info.Size,
@@ -231,6 +236,17 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 	logboek.Context(ctx).Debug().LogF("ImagesReport: (err: %v)\n%s", err, debugJsonData)
 
 	phase.ImagesReport.sendTelemetry(ctx)
+
+	for imageName, record := range phase.ImagesReport.Images {
+		if record.DockerImageDigest == "" {
+			logboek.Context(ctx).Warn().LogF("WARNING: Build report: image %q has empty DockerImageDigest (expected when using local storage without registry)\n", imageName)
+		}
+		for _, stg := range record.Stages {
+			if stg.DockerImageDigest == "" {
+				logboek.Context(ctx).Warn().LogF("WARNING: Build report: image %q stage %q has empty DockerImageDigest (expected when using local storage without registry)\n", imageName, stg.Name)
+			}
+		}
+	}
 
 	if phase.ReportPath != "" {
 		var data []byte
@@ -292,4 +308,123 @@ func getStagesReport(img *image.Image, multiplatform bool) []ReportStageRecord {
 		stagesRecords = append(stagesRecords, record)
 	}
 	return stagesRecords
+}
+
+func LoadBuildReportFromFile(ctx context.Context, path string) (*ImagesReport, error) {
+	file, err := os.Open(path) // opens it for reading only
+	if err != nil {
+		return nil, fmt.Errorf("unable to read build report file %q: %w", path, err)
+	}
+	defer file.Close()
+
+	report, err := parseBuildReport(file)
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse build report file %q: %w", path, err)
+	}
+
+	if err := validateBuildReport(ctx, path, report); err != nil {
+		return nil, fmt.Errorf("invalid build report file %q: %w", path, err)
+	}
+
+	return report, nil
+}
+
+func parseBuildReport(reader io.Reader) (*ImagesReport, error) {
+	decoder := json.NewDecoder(reader)
+
+	var report ImagesReport
+	if err := decoder.Decode(&report); err != nil {
+		return nil, fmt.Errorf("unable to decode build report: %w", err)
+	}
+
+	return &report, nil
+}
+
+func validateBuildReport(ctx context.Context, path string, report *ImagesReport) error {
+	if len(report.Images) == 0 {
+		return fmt.Errorf("build report contains no images")
+	}
+
+	for imageName, record := range report.Images {
+		if err := validateImageRecord(ctx, path, imageName, record); err != nil {
+			return err
+		}
+	}
+
+	for imageName, platformRecords := range report.ImagesByPlatform {
+		for platform, record := range platformRecords {
+			if err := validateImageRecord(ctx, path, fmt.Sprintf("%s[%s]", imageName, platform), record); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func validateImageRecord(ctx context.Context, path, imageName string, record ReportImageRecord) error {
+	if record.WerfImageName == "" {
+		return fmt.Errorf("image %q has empty WerfImageName", imageName)
+	}
+	if record.DockerImageName == "" {
+		return fmt.Errorf("image %q has empty DockerImageName", imageName)
+	}
+	if record.DockerRepo == "" {
+		return fmt.Errorf("image %q has empty DockerRepo", imageName)
+	}
+	if record.DockerTag == "" {
+		return fmt.Errorf("image %q has empty DockerTag", imageName)
+	}
+	if record.DockerImageID == "" {
+		return fmt.Errorf("image %q has empty DockerImageID", imageName)
+	}
+	if record.DockerImageDigest == "" {
+		logboek.Context(ctx).Warn().LogF("WARNING: Build report %q: image %q has empty DockerImageDigest (expected when using local storage without registry)\n", path, imageName)
+	}
+
+	for i, stage := range record.Stages {
+		if err := validateStageRecord(ctx, path, imageName, i, stage); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func validateStageRecord(ctx context.Context, path, imageName string, stageIndex int, stage ReportStageRecord) error {
+	stageRef := fmt.Sprintf("image %q stage #%d", imageName, stageIndex)
+
+	if stage.Name == "" {
+		return fmt.Errorf("%s has empty Name", stageRef)
+	}
+
+	stageRef = fmt.Sprintf("image %q stage %q", imageName, stage.Name)
+
+	if stage.DockerImageName == "" {
+		return fmt.Errorf("%s has empty DockerImageName", stageRef)
+	}
+	if stage.DockerImageID == "" {
+		return fmt.Errorf("%s has empty DockerImageID", stageRef)
+	}
+	if stage.DockerImageDigest == "" {
+		logboek.Context(ctx).Warn().LogF("WARNING: Build report %q: %s has empty DockerImageDigest (expected when using local storage without registry)\n", path, stageRef)
+	}
+
+	return nil
+}
+
+func (report *ImagesReport) ToImageInfoGetters(opts imagePkg.InfoGetterOptions) []*imagePkg.InfoGetter {
+	report.mux.Lock()
+	defer report.mux.Unlock()
+
+	var infoGetters []*imagePkg.InfoGetter
+	for _, record := range report.Images {
+		if opts.OnlyFinal && !record.Final {
+			continue
+		}
+
+		infoGetters = append(infoGetters, imagePkg.NewInfoGetter(record.WerfImageName, record.DockerImageName, opts))
+	}
+
+	return infoGetters
 }

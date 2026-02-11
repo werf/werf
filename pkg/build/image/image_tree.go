@@ -85,7 +85,7 @@ func (tree *ImagesTree) Calculate(ctx context.Context) error {
 				}
 			}
 
-			commonImageOpts.ForceTargetPlatformLogging = (len(targetPlatforms) > 1)
+			commonImageOpts.ForceTargetPlatformLogging = len(targetPlatforms) > 1
 
 			for _, targetPlatform := range targetPlatforms {
 				imageLogName := logging.ImageLogProcessName(imageConfigI.GetName(), imageConfigI.IsFinal(), targetPlatform)
@@ -416,7 +416,7 @@ func makeGitMappingTo(ctx context.Context, gitMapping *stage.GitMapping, gitMapp
 	if gitMappingAddIsDir, err := gitMapping.GitRepo().IsCommitTreeEntryDirectory(ctx, commitInfo.Commit, gitMapping.Add); err != nil {
 		return "", fmt.Errorf("unable to determine whether git `add: %s` is dir or file for repo %q: %w", gitMapping.Add, gitRepoName, err)
 	} else if !gitMappingAddIsDir {
-		return "", fmt.Errorf("for git repo %q specifying `to: /` when adding a single file from git with `add: %s` is not allowed. Fix this by changing `to: /` to `to: /%s`.", gitRepoName, gitMapping.Add, filepath.Base(gitMapping.Add))
+		return "", fmt.Errorf("for git repo %q specifying `to: /` when adding a single file from git with `add: %s` is not allowed. Fix this by changing `to: /` to `to: /%s`", gitRepoName, gitMapping.Add, filepath.Base(gitMapping.Add))
 	}
 
 	return gitMappingTo, nil

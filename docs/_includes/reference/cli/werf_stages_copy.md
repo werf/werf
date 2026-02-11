@@ -247,5 +247,9 @@ werf stages copy [options]
       --to=""
             Destination address to copy stages to. Use archive:PATH for stage archive or            
             [docker://]REPO for container registry.
+      --use-build-report=false
+            Use build report, previously saved with --save-build-report (by default                 
+            $WERF_USE_BUILD_REPORT or false). Its path and format configured with                   
+            --build-report-path
 ```
 
