@@ -16,16 +16,25 @@ type OndemandKubeInitializer struct {
 	KubeConfigBase64        string
 	KubeConfigPathMergeList []string
 
+	BearerToken     string
+	BearerTokenFile string
+
 	initialized bool
 }
 
 // TODO(v3): why do we even need this? Can we get rid from these kube dependencies for building?
-func SetupOndemandKubeInitializer(kubeContext, kubeConfig, kubeConfigBase64 string, kubeConfigPathMergeList []string) {
+func SetupOndemandKubeInitializer(
+	kubeContext, kubeConfig, kubeConfigBase64 string,
+	kubeConfigPathMergeList []string,
+	bearerToken, bearerTokenFile string,
+) {
 	ondemandKubeInitializer = &OndemandKubeInitializer{
 		KubeContext:             kubeContext,
 		KubeConfig:              kubeConfig,
 		KubeConfigBase64:        kubeConfigBase64,
 		KubeConfigPathMergeList: kubeConfigPathMergeList,
+		BearerToken:             bearerToken,
+		BearerTokenFile:         bearerTokenFile,
 	}
 }
 
@@ -38,12 +47,16 @@ func (initializer *OndemandKubeInitializer) Init(ctx context.Context) error {
 		return nil
 	}
 
-	if err := kube.Init(kube.InitOptions{KubeConfigOptions: kube.KubeConfigOptions{
+	kubeOpts := kube.KubeConfigOptions{
 		Context:             initializer.KubeContext,
 		ConfigPath:          initializer.KubeConfig,
 		ConfigDataBase64:    initializer.KubeConfigBase64,
 		ConfigPathMergeList: initializer.KubeConfigPathMergeList,
-	}}); err != nil {
+		BearerToken:         initializer.BearerToken,
+		BearerTokenFile:     initializer.BearerTokenFile,
+	}
+
+	if err := kube.Init(kube.InitOptions{KubeConfigOptions: kubeOpts}); err != nil {
 		return fmt.Errorf("cannot initialize kube: %w", err)
 	}
 
