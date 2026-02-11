@@ -288,6 +288,13 @@ werf bundle publish [IMAGE_NAME...] [options]
             commas: key1=val1,key2=val2).)
             Also, can be defined with $WERF_SET_LITERAL_* (e.g. $WERF_SET_LITERAL_1=key1=val1,      
             $WERF_SET_LITERAL_2=key2=val2)
+      --set-root-json=[]
+            Set new keys in arbitrary things in the global root context ("$"), where the key is the 
+            value path and the value is JSON. This is meant to be generated inside the program, so  
+            use --set-json instead, unless you REALLY know what you are doing. Can specify multiple 
+            or separate values with commas: key1=val1,key2=val2.
+            Also, can be defined with $WERF_SET_ROOT_JSON_* (e.g. $WERF_SET_ROOT_JSON_1=key1=val1,  
+            $WERF_SET_ROOT_JSON_2=key2=val2)
       --set-runtime-json=[]
             Set new keys in $.Runtime, where the key is the value path and the value is JSON. This  
             is meant to be generated inside the program, so use --set-json instead, unless you know 

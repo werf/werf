@@ -343,6 +343,7 @@ func (cmdData *CmdData) processFlags() error {
 	cmdData.ValuesSet = append(util.PredefinedValuesByEnvNamePrefix("WERF_SET_", "WERF_SET_STRING_", "WERF_SET_FILE_", "WERF_SET_DOCKER_CONFIG_JSON_VALUE"), cmdData.ValuesSet...)
 	cmdData.ValuesSetString = append(util.PredefinedValuesByEnvNamePrefix("WERF_SET_STRING_"), cmdData.ValuesSetString...)
 	cmdData.ValuesSetFile = append(util.PredefinedValuesByEnvNamePrefix("WERF_SET_FILE_"), cmdData.ValuesSetFile...)
+	cmdData.RootSetJSON = append(util.PredefinedValuesByEnvNamePrefix("WERF_SET_ROOT_JSON_"), cmdData.RootSetJSON...)
 	cmdData.RuntimeSetJSON = append(util.PredefinedValuesByEnvNamePrefix("WERF_SET_RUNTIME_JSON_"), cmdData.RuntimeSetJSON...)
 	cmdData.ValuesSetJSON = append(util.PredefinedValuesByEnvNamePrefix("WERF_SET_JSON_"), cmdData.ValuesSetJSON...)
 	cmdData.ValuesSetLiteral = append(util.PredefinedValuesByEnvNamePrefix("WERF_SET_LITERAL_"), cmdData.ValuesSetLiteral...)

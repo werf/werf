@@ -1505,6 +1505,8 @@ func SetupChartRepoConnectionFlags(cmdData *CmdData, cmd *cobra.Command) error {
 
 func SetupValuesFlags(cmdData *CmdData, cmd *cobra.Command) error {
 	cmd.Flags().BoolVarP(&cmdData.DefaultValuesDisable, "disable-default-values", "", util.GetBoolEnvironmentDefaultFalse("WERF_DISABLE_DEFAULT_VALUES"), `Do not use values from the default .helm/values.yaml file (default $WERF_DISABLE_DEFAULT_VALUES or false)`)
+	cmd.Flags().StringArrayVarP(&cmdData.RootSetJSON, "set-root-json", "", []string{}, `Set new keys in arbitrary things in the global root context ("$"), where the key is the value path and the value is JSON. This is meant to be generated inside the program, so use --set-json instead, unless you REALLY know what you are doing. Can specify multiple or separate values with commas: key1=val1,key2=val2.
+Also, can be defined with $WERF_SET_ROOT_JSON_* (e.g. $WERF_SET_ROOT_JSON_1=key1=val1, $WERF_SET_ROOT_JSON_2=key2=val2)`)
 	cmd.Flags().StringArrayVarP(&cmdData.RuntimeSetJSON, "set-runtime-json", "", []string{}, `Set new keys in $.Runtime, where the key is the value path and the value is JSON. This is meant to be generated inside the program, so use --set-json instead, unless you know what you are doing. Can specify multiple or separate values with commas: key1=val1,key2=val2.
 Also, can be defined with $WERF_SET_RUNTIME_JSON_* (e.g. $WERF_SET_RUNTIME_JSON_1=key1=val1, $WERF_SET_RUNTIME_JSON_2=key2=val2)`)
 	cmd.Flags().StringArrayVarP(&cmdData.ValuesFiles, "values", "", []string{}, `Specify helm values in a YAML file or a URL (can specify multiple). Also, can be defined with $WERF_VALUES_* (e.g. $WERF_VALUES_1=.helm/values_1.yaml, $WERF_VALUES_2=.helm/values_2.yaml)`)
