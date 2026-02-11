@@ -117,7 +117,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupProjectName(&commonCmdData, cmd, false)
 
 	commonCmdData.SetupPlatform(cmd)
-	commonCmdData.SetupBackendNetwork(cmd)
+	commonCmdData.SetupNetwork(cmd)
 
 	commonCmdData.SetupSkipImageSpecStage(cmd)
 	commonCmdData.SetupDebugTemplates(cmd)
