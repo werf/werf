@@ -1,5 +1,22 @@
 # Changelog
 
+## [2.60.0](https://github.com/werf/werf/compare/v2.59.0...v2.60.0) (2026-02-11)
+
+
+### Features
+
+* add TypeScript chart rendering support (`NELM_FEAT_TYPESCRIPT=true`) ([#7341](https://github.com/werf/werf/issues/7341)) ([b336225](https://github.com/werf/werf/commit/b3362251a4786d78f7c2af17554ab5c7f4b1d503))
+* **build:** use build report in commands require build ([#7297](https://github.com/werf/werf/issues/7297)) ([d705476](https://github.com/werf/werf/commit/d7054768e6ad297bb84d5cbd862031d5d496d26c))
+* **cleanup:** support kube token and kube token path ([#7327](https://github.com/werf/werf/issues/7327)) ([352b8c3](https://github.com/werf/werf/commit/352b8c349d7ee47cc27387ab8ca1e8f94f66c8b8))
+* **deploy:** `werf.io/delete-dependency-<id>` annotation ([#7337](https://github.com/werf/werf/issues/7337)) ([05dfc1d](https://github.com/werf/werf/commit/05dfc1d6aa38f3287256359dd1782a82cfcb1ea2))
+* **deploy:** add resource validation flags ([#7343](https://github.com/werf/werf/issues/7343)) ([223d537](https://github.com/werf/werf/commit/223d5373a9331704776939ca6b7e147a4179e13e))
+* **deploy:** auto delete dependency detection ([#7342](https://github.com/werf/werf/issues/7342)) ([ddb2087](https://github.com/werf/werf/commit/ddb2087dc223a891129cc1de02db9f82608fd6ca))
+
+
+### Bug Fixes
+
+* **build, docker:** robust image ID extraction for buildx across different Docker storage drivers ([#7345](https://github.com/werf/werf/issues/7345)) ([db3c046](https://github.com/werf/werf/commit/db3c046ecf18f2ff2d52d09f07a206f006e2b909))
+
 ## [2.59.0](https://github.com/werf/werf/compare/v2.58.0...v2.59.0) (2026-02-02)
 
 
