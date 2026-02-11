@@ -179,6 +179,8 @@ werf kube-run [options] [IMAGE_NAME] [-- COMMAND ARG...]
       --namespace=""
             Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or         
             deploy.namespace custom template from werf.yaml or $WERF_NAMESPACE)
+      --network=""
+            Network mode for the build containers ($WERF_NETWORK or default by default)
       --overrides=""
             Inline JSON to override/extend any fields in created Pod, e.g. to add imagePullSecrets  
             field (default $WERF_OVERRIDES). %pod_name%, %container_name%, and %container_image%    

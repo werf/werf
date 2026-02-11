@@ -336,6 +336,7 @@ func newCmd(ctx context.Context, composeCmdName string, options *newCmdOptions) 
 	common.SetupProjectName(&commonCmdData, cmd, false)
 
 	commonCmdData.SetupPlatform(cmd)
+	commonCmdData.SetupNetwork(cmd)
 	commonCmdData.SetupDebugTemplates(cmd)
 
 	cmd.Flags().StringVarP(&cmdData.RawComposeOptions, "docker-compose-options", "", os.Getenv("WERF_DOCKER_COMPOSE_OPTIONS"), "Define docker-compose options (default $WERF_DOCKER_COMPOSE_OPTIONS)")
@@ -498,7 +499,12 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 						return err
 					}
 				} else {
-					if _, err := c.Build(ctx, build.BuildOptions{SkipImageMetadataPublication: *commonCmdData.Dev}); err != nil {
+					buildOptions, err := common.GetBuildOptions(ctx, &commonCmdData, werfConfig, imagesToProcess)
+					if err != nil {
+						return err
+					}
+
+					if _, err := c.Build(ctx, buildOptions); err != nil {
 						return err
 					}
 				}

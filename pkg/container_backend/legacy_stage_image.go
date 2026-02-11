@@ -70,6 +70,10 @@ func (i *LegacyStageImage) GetID() string {
 }
 
 func (i *LegacyStageImage) Build(ctx context.Context, options BuildOptions) error {
+	if options.Network != "" {
+		i.container.runOptions.AddNetwork(options.Network)
+	}
+
 	if i.GetTargetPlatform() == i.ContainerBackend.GetDefaultPlatform() && i.ContainerBackend.GetDefaultPlatform() != "linux/amd64" {
 		logboek.Context(ctx).Error().LogF("Detected your default build platform as %s.\n", i.ContainerBackend.GetDefaultPlatform())
 		logboek.Context(ctx).Error().LogF("Building of stapel-type images using Docker-Server backend for platforms other than linux/amd64 is not supported.\n")

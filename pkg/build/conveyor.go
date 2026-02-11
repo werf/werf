@@ -666,6 +666,18 @@ func (c *Conveyor) printDeferredBuildLog(_ context.Context, buf *bytes.Buffer) {
 }
 
 func (c *Conveyor) Build(ctx context.Context, opts BuildOptions) ([]*ImagesReport, error) {
+	if opts.ImageBuildOptions.Network != "" {
+		if _, isBuildah := c.ContainerBackend.(*container_backend.BuildahBackend); isBuildah {
+			return nil, fmt.Errorf("--network option is not supported with Buildah backend")
+		}
+
+		for _, i := range c.werfConfig.Images(false) {
+			if img, ok := i.(*config.ImageFromDockerfile); ok && img.Staged {
+				return nil, fmt.Errorf("staged Dockerfile build (staged: true) is not supported with --network option (use staged: false for %q image or remove --network option)", img.Name)
+			}
+		}
+	}
+
 	if err := c.checkContainerBackendSupported(ctx); err != nil {
 		return nil, err
 	}

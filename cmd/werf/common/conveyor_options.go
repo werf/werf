@@ -119,6 +119,7 @@ func GetBuildOptions(ctx context.Context, commonCmdData *CmdData, werfConfig *co
 		ImageBuildOptions: container_backend.BuildOptions{
 			IntrospectAfterError:  GetIntrospectAfterError(commonCmdData),
 			IntrospectBeforeError: GetIntrospectBeforeError(commonCmdData),
+			Network:               commonCmdData.GetNetwork(),
 		},
 		IntrospectOptions: introspectOptions,
 	}

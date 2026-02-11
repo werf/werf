@@ -258,6 +258,8 @@ werf lint [IMAGE_NAME...] [options]
       --namespace=""
             Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or         
             deploy.namespace custom template from werf.yaml or $WERF_NAMESPACE)
+      --network=""
+            Network mode for the build containers ($WERF_NETWORK or default by default)
       --network-parallelism=30
             Parallelize some network operations (default $WERF_NETWORK_PARALLELISM or 30)
       --no-final-tracking=false
