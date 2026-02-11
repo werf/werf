@@ -127,6 +127,7 @@ func NewExportCmd(ctx context.Context) *cobra.Command {
 	common.SetupVirtualMerge(&commonCmdData, cmd)
 
 	commonCmdData.SetupPlatform(cmd)
+	commonCmdData.SetupNetwork(cmd)
 	commonCmdData.SetupDebugTemplates(cmd)
 	commonCmdData.SetupFinalImagesOnly(cmd, true)
 	commonCmdData.SetupAllowIncludesUpdate(cmd)
@@ -258,7 +259,7 @@ func run(ctx context.Context, imageNameListFromArgs, tagTemplateList []string, e
 					return err
 				}
 			} else {
-				if _, err := c.Build(ctx, build.BuildOptions{SkipImageMetadataPublication: *commonCmdData.Dev}); err != nil {
+				if _, err := c.Build(ctx, buildOptions); err != nil {
 					return err
 				}
 			}

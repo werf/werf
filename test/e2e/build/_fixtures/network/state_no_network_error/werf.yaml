@@ -1,0 +1,11 @@
+project: network-test
+configVersion: 1
+---
+image: stapel
+from: registry.werf.io/base/alpine
+shell:
+  setup:
+    - apk add --no-cache bash
+---
+image: dockerfile
+dockerfile: Dockerfile
