@@ -119,7 +119,7 @@ func (srv *RsyncServer) GetCopyCommand(ctx context.Context, importConfig *config
 
 	rsyncImportPathSpec := fmt.Sprintf("rsync://%s@%s:%s/import/%s", srv.AuthUser, srv.IPAddress, srv.Port, importConfig.Add)
 
-	// FIXME(v3): remove `-L`
+	// TODO(major): remove `-L`
 	// Dereferencing symlinks (`-L`) copies targets instead of symlinks themselves,
 	// which breaks checksums and pulls extra data. Symlinks must be preserved as-is.
 	rsyncStatImportPathCommand := fmt.Sprintf("RSYNC_PASSWORD='%s' %s -L %s", srv.AuthPassword, stapel.RsyncBinPath(), rsyncImportPathSpec)

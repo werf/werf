@@ -211,7 +211,7 @@ func runRender(ctx context.Context) error {
 		return fmt.Errorf("get annotations and labels: %w", err)
 	}
 
-	// TODO(v3): get rid of forcing color mode via ci-env and use color mode detection logic from
+	// TODO(major): get rid of forcing color mode via ci-env and use color mode detection logic from
 	// Nelm instead. Until then, color will be always off here.
 	ctx = log.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultChartRenderLogLevel), log.SetupLoggingOptions{
 		ColorMode:      log.LogColorModeOff,

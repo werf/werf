@@ -273,7 +273,7 @@ func (co *LegacyStageImageContainerOptions) prepareCommitChanges(ctx context.Con
 	return args, nil
 }
 
-// FIXME: remove escaping in 2.0 or 1.3
+// TODO(major): remove escaping
 func escapeVolume(volume string, exactValues bool) string {
 	if exactValues {
 		return fmt.Sprintf("[%s]", quoteValue(volume))

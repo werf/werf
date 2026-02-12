@@ -22,7 +22,7 @@ type OndemandKubeInitializer struct {
 	initialized bool
 }
 
-// TODO(v3): why do we even need this? Can we get rid from these kube dependencies for building?
+// TODO(major): why do we even need this? Can we get rid from these kube dependencies for building?
 func SetupOndemandKubeInitializer(
 	kubeContext, kubeConfig, kubeConfigBase64 string,
 	kubeConfigPathMergeList []string,

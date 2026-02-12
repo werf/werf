@@ -326,7 +326,7 @@ func modifyEnv(env, removeKeys []string, addKeysMap map[string]string) ([]string
 		}
 	}
 
-	// FIXME: (v3) This is a temporary solution to remove werf commit envs that persist after build.
+	// TODO(major): This is a temporary solution to remove werf commit envs that persist after build.
 	removeKeys = append(removeKeys, []string{
 		"WERF_COMMIT_HASH",
 		"WERF_COMMIT_TIME_HUMAN",

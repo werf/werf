@@ -1438,7 +1438,7 @@ func getFlags(cmd *cobra.Command, persistent bool) *pflag.FlagSet {
 	return cmd.Flags()
 }
 
-// TODO(v3): get rid of this, don't require Kubernetes for non-deployment related tasks
+// TODO(major): get rid of this, don't require Kubernetes for non-deployment related tasks
 func SetupMinimalKubeConnectionFlags(cmdData *CmdData, cmd *cobra.Command) error {
 	SetupKubeConfigBase64(cmdData, cmd)
 	SetupLegacyKubeConfigPath(cmdData, cmd)
@@ -1627,22 +1627,22 @@ func SetupChartRepoInsecure(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(&cmdData.ChartRepoInsecure, "insecure-helm-dependencies", "", util.GetBoolEnvironmentDefaultFalse("WERF_INSECURE_HELM_DEPENDENCIES"), "Allow insecure oci registries to be used in the Chart.yaml dependencies configuration (default $WERF_INSECURE_HELM_DEPENDENCIES)")
 }
 
-// TODO(v3): remove
+// TODO(major): remove
 func StubSetupInsecureHelmDependencies(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().BoolVar(lo.ToPtr(false), "insecure-helm-dependencies", false, "No-op")
 }
 
-// TODO(v3): remove
+// TODO(major): remove
 func StubSetupStatusProgressPeriod(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.PersistentFlags().IntVarP(lo.ToPtr(0), "status-progress-period", "", 0, "No-op")
 }
 
-// TODO(v3): remove
+// TODO(major): remove
 func StubSetupHooksStatusProgressPeriod(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.PersistentFlags().Int64VarP(lo.ToPtr(int64(0)), "hooks-status-progress-period", "", 0, "No-op")
 }
 
-// TODO(v3): remove
+// TODO(major): remove
 func StubSetupTrackTimeout(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().IntVarP(lo.ToPtr(0), "timeout", "t", 0, "No-op")
 }

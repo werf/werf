@@ -143,7 +143,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupRelease(&commonCmdData, cmd, true)
 	common.SetupReleaseStorageDriver(&commonCmdData, cmd)
 	common.SetupReleaseStorageSQLConnection(&commonCmdData, cmd)
-	common.SetupReleasesHistoryMax(&commonCmdData, cmd) // TODO(v3): remove, useless for render
+	common.SetupReleasesHistoryMax(&commonCmdData, cmd) // TODO(major): remove, useless for render
 	common.SetupSetDockerConfigJsonValue(&commonCmdData, cmd)
 	common.SetupTemplatesAllowDNS(&commonCmdData, cmd)
 	common.StubSetupHooksStatusProgressPeriod(&commonCmdData, cmd)
@@ -395,7 +395,7 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 
 	file.ChartFileReader = giterminismManager.FileManager
 
-	// TODO(v3): get rid of forcing color mode via ci-env and use color mode detection logic from
+	// TODO(major): get rid of forcing color mode via ci-env and use color mode detection logic from
 	// Nelm instead. Until then, color will be always off here.
 	ctx = log.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultChartRenderLogLevel), log.SetupLoggingOptions{
 		ColorMode:      log.LogColorModeOff,

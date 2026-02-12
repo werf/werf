@@ -364,7 +364,7 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 
 	helm_v3.Settings.Debug = *commonCmdData.LogDebug
 
-	// FIXME(1.3): compatibility mode with older 1.2 versions, which do not require WERF_SECRET_KEY in the 'werf bundle publish' command
+	// TODO(major): compatibility mode with older 1.2 versions, which do not require WERF_SECRET_KEY in the 'werf bundle publish' command
 	if err := secrets_manager.Manager.AllowMissedSecretKeyMode(giterminismManager.ProjectDir()); err != nil {
 		return err
 	}

@@ -45,7 +45,7 @@ type CmdData struct {
 	CacheStagesStorage     *[]string
 
 	CheckBuiltImages       *bool
-	LegacyCheckBuiltImages *bool // TODO(v3): remove
+	LegacyCheckBuiltImages *bool // TODO(major): remove
 	RequireBuiltImages     *bool
 	StubTags               *bool
 
