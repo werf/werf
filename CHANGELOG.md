@@ -12,6 +12,18 @@
 
 * **kube:** correctly resolve client config per context ([5f12fed](https://github.com/werf/werf/commit/5f12fed8555a59c6f66d555848a0aaf1da7f4e78))
 
+## [2.61.0](https://github.com/werf/werf/compare/v2.60.0...v2.61.0) (2026-02-12)
+
+
+### Features
+
+* **deploy:** `--set-root-json` flag ([#7348](https://github.com/werf/werf/issues/7348)) ([429ea3b](https://github.com/werf/werf/commit/429ea3b4e221171f25fbc5954740af950d63cba5))
+
+
+### Bug Fixes
+
+* **kube:** correctly resolve client config per context ([5f12fed](https://github.com/werf/werf/commit/5f12fed8555a59c6f66d555848a0aaf1da7f4e78))
+
 ## [2.60.0](https://github.com/werf/werf/compare/v2.59.0...v2.60.0) (2026-02-11)
 
 
