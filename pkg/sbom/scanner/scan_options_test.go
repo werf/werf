@@ -10,7 +10,7 @@ var _ = Describe("ScanOptions", func() {
 	Describe("DefaultSyftScanOptions()", func() {
 		It("should work", func() {
 			Expect(DefaultSyftScanOptions()).To(Equal(ScanOptions{
-				Image:      "ghcr.io/anchore/syft:v1.23.1",
+				Image:      "anchore/syft:v1.23.1",
 				PullPolicy: PullIfMissing,
 				Commands: []ScanCommand{
 					NewSyftScanCommand(),
@@ -26,7 +26,7 @@ var _ = Describe("ScanOptions", func() {
 		Entry(
 			"should work for DefaultSyftScanOptions",
 			DefaultSyftScanOptions(),
-			Equal("f2b172aa9b952cfba7ae9914e7e5a9760ff0d2c7d5da69d09195c63a2577da79"),
+			Equal("0c15bc4e5bd8541138b5b6b7065eb8f641284b4913878d953be46419f50e8ebc"),
 		),
 	)
 })

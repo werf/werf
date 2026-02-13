@@ -663,7 +663,7 @@ Currently, this option uses the following _defaults_:
 | Property                          | Value                                                                                  |
 |-----------------------------------|----------------------------------------------------------------------------------------|
 | **Scanner**                       | syft                                                                                   |
-| **Scanner Image**                 | ghcr.io/anchore/syft:v1.23.1                                                           |
+| **Scanner Image**                 | anchore/syft:v1.23.1                                                           |
 | **Image Pull Policy**             | `PullIfMissing`                                                                        |
 | **Data Source Connection Method** | daemon + socket via volume (for Docker) or image (for Buildah)                         |
 | **Path in Source Image**          | OS root                                                                                |
