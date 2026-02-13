@@ -158,6 +158,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupVirtualMerge(&commonCmdData, cmd)
 
 	commonCmdData.SetupPlatform(cmd)
+	commonCmdData.SetupNetwork(cmd)
 
 	cmd.Flags().BoolVarP(&cmdData.Shell, "shell", "", false, "Use predefined docker options and command for debug")
 	cmd.Flags().BoolVarP(&cmdData.Bash, "bash", "", false, "Use predefined docker options and command for debug")
@@ -384,7 +385,12 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 					return err
 				}
 			} else {
-				if _, err := c.Build(ctx, build.BuildOptions{SkipImageMetadataPublication: *commonCmdData.Dev}); err != nil {
+				buildOptions, err := common.GetBuildOptions(ctx, &commonCmdData, werfConfig, imagesToProcess)
+				if err != nil {
+					return err
+				}
+
+				if _, err := c.Build(ctx, buildOptions); err != nil {
 					return err
 				}
 			}
