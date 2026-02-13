@@ -12,6 +12,33 @@ import (
 	"github.com/samber/lo"
 )
 
+// CreateEmptyDockerConfigDir creates an empty temporary docker config directory
+// with a minimal config.json file. This is useful when you want to start with
+// a clean docker config without inheriting any credentials or settings from
+// the host's ~/.docker directory.
+func CreateEmptyDockerConfigDir(ctx context.Context) (string, error) {
+	newDir, err := newTmpDir(dockerConfigDirPrefix)
+	if err != nil {
+		return "", fmt.Errorf("unable to create tmp docker config dir: %w", err)
+	}
+
+	if err = registrator.queueRegistration(ctx, newDir, filepath.Join(getCreatedTmpDirs(), dockerConfigsServiceDir)); err != nil {
+		return "", fmt.Errorf("unable to queue GC registration: %w", err)
+	}
+
+	if err = os.Chmod(newDir, 0o700); err != nil {
+		return "", fmt.Errorf("unable to chmod tmp docker config dir: %w", err)
+	}
+
+	// Create minimal config.json for better compatibility
+	configPath := filepath.Join(newDir, "config.json")
+	if err = os.WriteFile(configPath, []byte("{}"), 0o600); err != nil {
+		return "", fmt.Errorf("unable to create config.json: %w", err)
+	}
+
+	return newDir, nil
+}
+
 func CreateDockerConfigDir(ctx context.Context, fromDockerConfig string) (string, error) {
 	newDir, err := newTmpDir(dockerConfigDirPrefix)
 	if err != nil {

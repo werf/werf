@@ -33,6 +33,7 @@ var cmdData struct {
 	OutputFilePath      string
 	Shell               string
 	AllowRegistryLogin  bool
+	InitTmpDockerConfig bool
 }
 
 var commonCmdData common.CmdData
@@ -84,6 +85,7 @@ Currently supported only GitLab (gitlab) and GitHub (github) CI systems`,
 	cmd.Flags().BoolVarP(&cmdData.AsEnvFile, "as-env-file", "", util.GetBoolEnvironmentDefaultFalse("WERF_AS_ENV_FILE"), "Create the .env file and print the path for sourcing (default $WERF_AS_ENV_FILE).")
 	cmd.Flags().StringVarP(&cmdData.OutputFilePath, "output-file-path", "o", os.Getenv("WERF_OUTPUT_FILE_PATH"), "Write to custom file (default $WERF_OUTPUT_FILE_PATH).")
 	cmd.Flags().StringVarP(&cmdData.Shell, "shell", "", os.Getenv("WERF_SHELL"), "Set to cmdexe, powershell or use the default behavior that is compatible with any unix shell (default $WERF_SHELL).")
+	cmd.Flags().BoolVarP(&cmdData.InitTmpDockerConfig, "init-tmp-docker-config", "", util.GetBoolEnvironmentDefaultFalse("WERF_INIT_TMP_DOCKER_CONFIG"), "Create a new temporary docker config directory instead of copying from the host's ~/.docker or using any docker config explicitly specified via --docker-config/WERF_DOCKER_CONFIG/DOCKER_CONFIG (useful for CI to isolate from host's docker config, default $WERF_INIT_TMP_DOCKER_CONFIG).")
 	cmd.Flags().StringVarP(&cmdData.TaggingStrategyStub, "tagging-strategy", "", "", `stub`)
 	cmd.Flag("tagging-strategy").Hidden = true
 
@@ -229,6 +231,7 @@ func generateGitlabEnvs(ctx context.Context, w io.Writer, dockerConfig string) e
 	}
 
 	writeHeader(w, "DOCKER CONFIG", false)
+	writeEnv(w, "WERF_DOCKER_CONFIG", dockerConfig, true)
 	writeEnv(w, "DOCKER_CONFIG", dockerConfig, true)
 
 	writeHeader(w, "REPO", true)
@@ -333,6 +336,7 @@ func generateGithubEnvs(ctx context.Context, w io.Writer, dockerConfig string) e
 	}
 
 	writeHeader(w, "DOCKER CONFIG", false)
+	writeEnv(w, "WERF_DOCKER_CONFIG", dockerConfig, true)
 	writeEnv(w, "DOCKER_CONFIG", dockerConfig, true)
 
 	writeHeader(w, "REPO", true)
@@ -408,6 +412,16 @@ func generateGithubDefaultRepo(ctx context.Context, defaultRegistry, ciGithubDoc
 }
 
 func generateSessionDockerConfigDir(ctx context.Context) (string, error) {
+	if cmdData.InitTmpDockerConfig {
+
+		// Create an empty docker config directory without copying from host
+		dockerConfigDir, err := tmp_manager.CreateEmptyDockerConfigDir(ctx)
+		if err != nil {
+			return "", fmt.Errorf("unable to create empty tmp docker config: %w", err)
+		}
+		return dockerConfigDir, nil
+	}
+
 	dockerConfigPath := *commonCmdData.DockerConfig
 	if *commonCmdData.DockerConfig == "" {
 		dockerConfigPath = filepath.Join(os.Getenv("HOME"), ".docker")
