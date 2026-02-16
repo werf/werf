@@ -20,6 +20,11 @@ const (
 	defaultUpdaterTaskTimeout  = 1 * time.Minute
 )
 
+const (
+	updaterPollIntervalEnv = "WERF_PUBLISH_TAG_CACHE_POLL_INTERVAL"
+	updaterTaskTimeoutEnv  = "WERF_PUBLISH_TAG_CACHE_TASK_TIMEOUT"
+)
+
 type DockerRegistryWithCache struct {
 	Interface
 	cachedTagsMap *sync.Map
@@ -35,7 +40,9 @@ func newDockerRegistryWithCache(ctx context.Context, dockerRegistry Interface) *
 	}
 
 	if os.Getenv("WERF_DISABLE_PUBLISH_TAG_CACHE_SYNC") == "1" {
-		r.startBackgroundCacheUpdater(ctx, defaultUpdaterPollInterval, defaultUpdaterTaskTimeout)
+		pollInterval := readDurationEnv(ctx, updaterPollIntervalEnv, defaultUpdaterPollInterval)
+		taskTimeout := readDurationEnv(ctx, updaterTaskTimeoutEnv, defaultUpdaterTaskTimeout)
+		r.startBackgroundCacheUpdater(ctx, pollInterval, taskTimeout)
 	}
 
 	return r
@@ -191,4 +198,24 @@ func (r *DockerRegistryWithCache) startBackgroundCacheUpdater(ctx context.Contex
 			}
 		}
 	}()
+}
+
+func readDurationEnv(ctx context.Context, envName string, fallback time.Duration) time.Duration {
+	value := strings.TrimSpace(os.Getenv(envName))
+	if value == "" {
+		return fallback
+	}
+
+	parsed, err := time.ParseDuration(value)
+	if err != nil {
+		logboek.Context(ctx).Warn().LogF("WARNING: Invalid %s=%q, using default %s: %s\n", envName, value, fallback, err)
+		return fallback
+	}
+
+	if parsed <= 0 {
+		logboek.Context(ctx).Warn().LogF("WARNING: Non-positive %s=%q, using default %s\n", envName, value, fallback)
+		return fallback
+	}
+
+	return parsed
 }
