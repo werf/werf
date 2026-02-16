@@ -11,6 +11,10 @@ func Info(ctx context.Context) (types.Info, error) {
 }
 
 // GetRegistryMirrors returns registry mirrors from Docker daemon.
+//
+// This function is fault-tolerant: errors from the Docker daemon (e.g., connection refused)
+// are ignored, as registry mirrors are optional. This ensures commands like "werf cleanup"
+// work in environments without Docker.
 func GetRegistryMirrors(ctx context.Context) ([]string, error) {
 	if !IsEnabled() {
 		return nil, nil
@@ -28,7 +32,7 @@ func GetRegistryMirrors(ctx context.Context) ([]string, error) {
 	}
 
 	if err != nil {
-		return nil, err
+		return nil, nil
 	}
 
 	if info.RegistryConfig == nil {
