@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.61.1](https://github.com/werf/werf/compare/v2.61.0...v2.61.1) (2026-02-17)
+
+
+### Miscellaneous Chores
+
+* **release:** force 2.61.1 ([615246c](https://github.com/werf/werf/commit/615246c806cb250bf7c07fb894acf10ef225a6ba))
+
 ## [2.61.0](https://github.com/werf/werf/compare/v2.60.0...v2.61.0) (2026-02-12)
 
 
