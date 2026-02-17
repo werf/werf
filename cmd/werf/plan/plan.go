@@ -143,7 +143,7 @@ werf plan --repo registry.mydomain.com/web --env production`,
 	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultBuildParallelTasksLimit)
 	common.SetupRequireBuiltImages(&commonCmdData, cmd)
 	commonCmdData.SetupPlatform(cmd)
-	commonCmdData.SetupNetwork(cmd)
+	commonCmdData.SetupBackendNetwork(cmd)
 	common.SetupFollow(&commonCmdData, cmd)
 
 	common.SetupDisableAutoHostCleanup(&commonCmdData, cmd)

@@ -33,6 +33,8 @@ werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
 ```shell
       --allow-includes-update=false
             Allow use includes latest versions (default $WERF_ALLOW_INCLUDES_UPDATE or false)
+      --backend-network=""
+            Network mode for the build containers ($WERF_BACKEND_NETWORK or nothing by default)
       --bash=false
             Use predefined docker options and command for debug
       --build-report-path=""
@@ -157,8 +159,6 @@ werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
             Enable verbose output (default $WERF_LOG_VERBOSE).
       --loose-giterminism=false
             Loose werf giterminism mode restrictions
-      --network=""
-            Network mode for the build containers ($WERF_NETWORK or default by default)
       --platform=[]
             Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT]     
             ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)

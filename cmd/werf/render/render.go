@@ -121,7 +121,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupRequireBuiltImages(&commonCmdData, cmd)
 	commonCmdData.SetupPlatform(cmd)
-	commonCmdData.SetupNetwork(cmd)
+	commonCmdData.SetupBackendNetwork(cmd)
 
 	commonCmdData.SetupSkipImageSpecStage(cmd)
 	commonCmdData.SetupDebugTemplates(cmd)
