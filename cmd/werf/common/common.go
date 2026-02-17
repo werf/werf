@@ -54,7 +54,7 @@ const (
 	DefaultRollbackReportPathJSON  = ".werf-rollback-report.json"
 	DefaultUninstallReportPathJSON = ".werf-uninstall-report.json"
 	DefaultSaveUninstallReport     = false
-	TemplateErrHint                = "Use --debug-templates or $WERF_DEBUG_TEMPLATES to get more details about this error."
+	TemplateErrHint                = "Use --debug --debug-templates (or $WERF_DEBUG and $WERF_DEBUG_TEMPLATES environment variables) to get more details about this error."
 )
 
 func init() {
