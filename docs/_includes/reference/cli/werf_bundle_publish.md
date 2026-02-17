@@ -230,8 +230,6 @@ werf bundle publish [IMAGE_NAME...] [options]
             Enable verbose output (default $WERF_LOG_VERBOSE).
       --loose-giterminism=false
             Loose werf giterminism mode restrictions
-      --network=""
-            Network mode for the build containers ($WERF_NETWORK or default by default)
   -p, --parallel=true
             Run in parallel (default $WERF_PARALLEL or true)
       --parallel-tasks-limit=5
@@ -394,4 +392,3 @@ werf bundle publish [IMAGE_NAME...] [options]
             in the .helm/templates ($WERF_WITHOUT_IMAGES or false by default — e.g. enable all      
             images defined in the werf.yaml by default)
 ```
-

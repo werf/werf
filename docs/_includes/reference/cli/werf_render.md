@@ -48,6 +48,8 @@ werf render [IMAGE_NAME...] [options]
             Enable ELF files signing with bsign (default $WERF_BSIGN_ELF_FILES).
             When enabled, the private elf key must be specified with --elf-pgp-private-key-base64   
             or --elf-pgp-private-key-fingerprint option
+      --backend-network=""
+            Network mode for the build containers ($WERF_BACKEND_NETWORK or nothing by default)
       --build-report-path=""
             Change build report path and format (by default $WERF_BUILD_REPORT_PATH or              
             ".werf-build-report.json" if not set). Extension must be either .json for JSON format   
@@ -274,8 +276,6 @@ werf render [IMAGE_NAME...] [options]
       --namespace=""
             Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or         
             deploy.namespace custom template from werf.yaml or $WERF_NAMESPACE)
-      --network=""
-            Network mode for the build containers ($WERF_NETWORK or default by default)
       --network-parallelism=30
             Parallelize some network operations (default $WERF_NETWORK_PARALLELISM or 30)
       --output=""
@@ -467,4 +467,3 @@ werf render [IMAGE_NAME...] [options]
             in the .helm/templates ($WERF_WITHOUT_IMAGES or false by default — e.g. enable all      
             images defined in the werf.yaml by default)
 ```
-

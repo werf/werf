@@ -12,6 +12,7 @@ type networkTestOptions struct {
 	setupEnvOptions
 	ExpectError bool
 	FixturePath string
+	NetworkNone bool
 }
 
 var _ = Describe("Network isolation build", Label("e2e", "build", "network"), func() {
@@ -33,50 +34,66 @@ var _ = Describe("Network isolation build", Label("e2e", "build", "network"), fu
 			SuiteData.InitTestRepo(ctx, repoDirname, fixtureRelPath)
 			werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
 
-			By("building images with --network=none")
+			var extraArgs []string
+			if testOpts.NetworkNone {
+				extraArgs = append(extraArgs, "--backend-network", "none")
+			}
+
+			By("building images")
 			opts := &werf.BuildOptions{
 				CommonOptions: werf.CommonOptions{
 					ShouldFail: testOpts.ExpectError,
-					ExtraArgs:  []string{"--network", "none"},
+					ExtraArgs:  extraArgs,
 				},
 			}
 			buildOut := werfProject.Build(ctx, opts)
 
 			if !testOpts.ExpectError {
 				Expect(buildOut).To(ContainSubstring("Building stage"))
+				Expect(buildOut).To(ContainSubstring("network:"))
 			}
 		},
-		Entry("Scenario 1 (Vanilla): Failure when network access is required in RUN/shell with --network=none", Label("scenario1"), networkTestOptions{
-			setupEnvOptions: setupEnvOptions{
-				ContainerBackendMode: "vanilla-docker",
-				WithLocalRepo:        false,
-			},
-			ExpectError: true,
-			FixturePath: "network/state_no_network_error",
+
+		// Stapel tests
+		Entry("Stapel (Vanilla): Failure with --backend-network=none", Label("stapel"), networkTestOptions{
+			setupEnvOptions: setupEnvOptions{ContainerBackendMode: "vanilla-docker", WithLocalRepo: false},
+			ExpectError:     true,
+			FixturePath:     "network/stapel",
+			NetworkNone:     true,
 		}),
-		Entry("Scenario 1 (BuildKit): Failure when network access is required in RUN/shell with --network=none", Label("scenario1", "buildkit"), networkTestOptions{
-			setupEnvOptions: setupEnvOptions{
-				ContainerBackendMode: "buildkit-docker",
-				WithLocalRepo:        true,
-			},
-			ExpectError: true,
-			FixturePath: "network/state_no_network_error",
+		Entry("Stapel (Vanilla): Success without --backend-network flag", Label("stapel"), networkTestOptions{
+			setupEnvOptions: setupEnvOptions{ContainerBackendMode: "vanilla-docker", WithLocalRepo: false},
+			ExpectError:     false,
+			FixturePath:     "network/stapel",
+			NetworkNone:     false,
 		}),
-		Entry("Scenario 2 (Vanilla): Success when NO network access is required in RUN/shell with --network=none", Label("scenario2"), networkTestOptions{
-			setupEnvOptions: setupEnvOptions{
-				ContainerBackendMode: "vanilla-docker",
-				WithLocalRepo:        false,
-			},
-			ExpectError: false,
-			FixturePath: "network/state_no_network_success",
+
+		// Dockerfile (Vanilla) tests
+		Entry("Dockerfile (Vanilla): Failure with --backend-network=none", Label("dockerfile"), networkTestOptions{
+			setupEnvOptions: setupEnvOptions{ContainerBackendMode: "vanilla-docker", WithLocalRepo: false},
+			ExpectError:     true,
+			FixturePath:     "network/dockerfile",
+			NetworkNone:     true,
 		}),
-		Entry("Scenario 2 (BuildKit): Success when NO network access is required in RUN/shell with --network=none", Label("scenario2", "buildkit"), networkTestOptions{
-			setupEnvOptions: setupEnvOptions{
-				ContainerBackendMode: "buildkit-docker",
-				WithLocalRepo:        true,
-			},
-			ExpectError: false,
-			FixturePath: "network/state_no_network_success",
+		Entry("Dockerfile (Vanilla): Success without --backend-network flag", Label("dockerfile"), networkTestOptions{
+			setupEnvOptions: setupEnvOptions{ContainerBackendMode: "vanilla-docker", WithLocalRepo: false},
+			ExpectError:     false,
+			FixturePath:     "network/dockerfile",
+			NetworkNone:     false,
+		}),
+
+		// Dockerfile (BuildKit) tests
+		Entry("Dockerfile (BuildKit): Failure with --backend-network=none", Label("dockerfile", "buildkit"), networkTestOptions{
+			setupEnvOptions: setupEnvOptions{ContainerBackendMode: "buildkit-docker", WithLocalRepo: true},
+			ExpectError:     true,
+			FixturePath:     "network/dockerfile",
+			NetworkNone:     true,
+		}),
+		Entry("Dockerfile (BuildKit): Success without --backend-network flag", Label("dockerfile", "buildkit"), networkTestOptions{
+			setupEnvOptions: setupEnvOptions{ContainerBackendMode: "buildkit-docker", WithLocalRepo: true},
+			ExpectError:     false,
+			FixturePath:     "network/dockerfile",
+			NetworkNone:     false,
 		}),
 	)
 })

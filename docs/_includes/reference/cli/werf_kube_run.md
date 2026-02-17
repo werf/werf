@@ -54,6 +54,8 @@ werf kube-run [options] [IMAGE_NAME] [-- COMMAND ARG...]
             Enable ELF files signing with bsign (default $WERF_BSIGN_ELF_FILES).
             When enabled, the private elf key must be specified with --elf-pgp-private-key-base64   
             or --elf-pgp-private-key-fingerprint option
+      --backend-network=""
+            Network mode for the build containers ($WERF_BACKEND_NETWORK or nothing by default)
       --build-report-path=""
             Change build report path and format (by default $WERF_BUILD_REPORT_PATH or              
             ".werf-build-report.json" if not set). Extension must be either .json for JSON format   
@@ -194,8 +196,6 @@ werf kube-run [options] [IMAGE_NAME] [-- COMMAND ARG...]
       --namespace=""
             Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or         
             deploy.namespace custom template from werf.yaml or $WERF_NAMESPACE)
-      --network=""
-            Network mode for the build containers ($WERF_NETWORK or default by default)
       --overrides=""
             Inline JSON to override/extend any fields in created Pod, e.g. to add imagePullSecrets  
             field (default $WERF_OVERRIDES). %pod_name%, %container_name%, and %container_image%    
@@ -290,4 +290,3 @@ werf kube-run [options] [IMAGE_NAME] [-- COMMAND ARG...]
             Enable virtual/ephemeral merge commit mode when building current application state      
             ($WERF_VIRTUAL_MERGE by default)
 ```
-

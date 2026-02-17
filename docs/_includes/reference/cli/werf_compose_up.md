@@ -235,8 +235,6 @@ werf compose up [IMAGE_NAME...] [options] [--docker-compose-options="OPTIONS"] [
             Enable verbose output (default $WERF_LOG_VERBOSE).
       --loose-giterminism=false
             Loose werf giterminism mode restrictions
-      --network=""
-            Network mode for the build containers ($WERF_NETWORK or default by default)
       --platform=[]
             Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT]     
             ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)
@@ -322,4 +320,3 @@ werf compose up [IMAGE_NAME...] [options] [--docker-compose-options="OPTIONS"] [
             in the .helm/templates ($WERF_WITHOUT_IMAGES or false by default — e.g. enable all      
             images defined in the werf.yaml by default)
 ```
-
