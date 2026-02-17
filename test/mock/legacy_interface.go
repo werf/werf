@@ -13,10 +13,9 @@ import (
 	context "context"
 	reflect "reflect"
 
-	gomock "go.uber.org/mock/gomock"
-
 	container_backend "github.com/werf/werf/v2/pkg/container_backend"
 	image "github.com/werf/werf/v2/pkg/image"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockLegacyImageInterface is a mock of LegacyImageInterface interface.
