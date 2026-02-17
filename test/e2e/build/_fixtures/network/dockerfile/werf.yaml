@@ -1,8 +1,5 @@
 project: network-test
 configVersion: 1
 ---
-image: stapel
-from: registry.werf.io/base/alpine
----
 image: dockerfile
 dockerfile: Dockerfile

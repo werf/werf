@@ -56,6 +56,8 @@ werf bundle publish [IMAGE_NAME...] [options]
             becomes below "allowed-local-cache-volume-usage -                                       
             allowed-local-cache-volume-usage-margin" level (default 5% or                           
             $WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE_MARGIN)
+      --backend-network=""
+            Network mode for the build containers ($WERF_BACKEND_NETWORK or nothing by default)
       --backend-storage-path=""
             Use specified path to the local backend (Docker or Buildah) storage to check backend    
             storage volume usage while performing garbage collection of local backend images        
@@ -215,8 +217,6 @@ werf bundle publish [IMAGE_NAME...] [options]
             Enable verbose output (default $WERF_LOG_VERBOSE).
       --loose-giterminism=false
             Loose werf giterminism mode restrictions
-      --network=""
-            Network mode for the build containers ($WERF_NETWORK or default by default)
   -p, --parallel=true
             Run in parallel (default $WERF_PARALLEL or true)
       --parallel-tasks-limit=5
