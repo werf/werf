@@ -27,7 +27,7 @@ env:
 jobs:
   _:
     if: inputs.forceSkip == 'false'
-    runs-on: [self-hosted, regular]
+    runs-on: delivery-github-runner
     timeout-minutes: 60
     steps:
       - name: Checkout code
@@ -48,19 +48,17 @@ jobs:
         uses: ./.github/actions/set-up-git-config
 
       - name: Install ginkgo
-        run: task --yes -p deps:install:ginkgo
+        run: task --yes deps:install:ginkgo
 
       - name: Test
         run: |
           if ${{ inputs.coverage }}; then
-            task --yes -p test:unit paths="$(echo ${{ inputs.packages }} | tr , ' ')" -- --coverprofile="$(openssl rand -hex 6)-coverage.out" --keep-going --skip-package '${{ inputs.excludePackages }}'
+            task --yes test:unit paths="$(echo ${{ inputs.packages }} | tr , ' ')" -- --coverprofile="$(openssl rand -hex 6)-coverage.out" --keep-going --skip-package '${{ inputs.excludePackages }}'
             mv *-coverage.out "$WERF_TEST_COVERAGE_DIR/"
           else
-            task --yes -p test:unit paths="$(echo ${{ inputs.packages }} | tr , ' ')" -- --keep-going --skip-package '${{ inputs.excludePackages }}'
+            task --yes test:unit paths="$(echo ${{ inputs.packages }} | tr , ' ')" -- --keep-going --skip-package '${{ inputs.excludePackages }}'
           fi
           echo loadavg: $(cat /proc/loadavg)
-        env:
-          LD_LIBRARY_PATH: "/usr/local/lib/libgost"
 
       - name: Upload coverage artifact
         uses: ./.github/actions/upload-coverage-artifact

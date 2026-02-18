@@ -16,7 +16,7 @@ var _ = Describe("config dockerfile", func() {
 	BeforeEach(CommonBeforeEach)
 
 	const minimalDockerfile = `
-FROM alpine
+FROM registry.werf.io/base/alpine
 `
 
 	Context("contextAddFiles", func() {

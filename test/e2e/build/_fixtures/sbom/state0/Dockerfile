@@ -1,4 +1,4 @@
-FROM alpine:3.18
+FROM registry.werf.io/base/alpine:3.21
 
 COPY file /file
 

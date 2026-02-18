@@ -7,7 +7,7 @@ on:
 
 jobs:
   label_issues:
-    runs-on: [self-hosted, regular]
+    runs-on: delivery-github-runner
     permissions:
       issues: write
     steps:

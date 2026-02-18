@@ -18,7 +18,7 @@ on:
 
 jobs:
   manage:
-    runs-on: [self-hosted, regular]
+    runs-on: delivery-github-runner
     timeout-minutes: 20
     steps:
       - uses: tiangolo/issue-manager@0.4.0

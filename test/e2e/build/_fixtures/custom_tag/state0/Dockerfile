@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=alpine:latest
+ARG BASE_IMAGE=registry.werf.io/base/alpine:latest
 
 FROM ${BASE_IMAGE}
 

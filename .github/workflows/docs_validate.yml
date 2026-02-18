@@ -26,7 +26,6 @@ concurrency:
 env:
   DEBIAN_FRONTEND: "noninteractive"
   TASK_X_REMOTE_TASKFILES: 1
-  # TODO: remove after implementing `werf ci-env --disable-docker-config-copy`
 
 jobs:
   doc_unit:
@@ -40,7 +39,7 @@ jobs:
       packages: test/legacy_e2e/suites/docs
 
   check_broken_links:
-    runs-on: [self-hosted, regular]
+    runs-on: delivery-github-runner
     timeout-minutes: 60
     steps:
       - name: Checkout code

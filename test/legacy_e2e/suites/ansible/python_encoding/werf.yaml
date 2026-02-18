@@ -20,7 +20,7 @@ ansible:
 {{ tuple . "python3" | include "installRequirements" }}
 {{ tuple . "python3" | include "runScript" }}
 ---
-image: alpine-python3
+image: python:3-alpine
 from: registry.werf.io/base/python:3-alpine
 git:
 {{ include "appGit" . }}

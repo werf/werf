@@ -18,7 +18,7 @@ env:
 jobs:
   _:
     if: inputs.forceSkip == 'false'
-    runs-on: [self-hosted, regular]
+    runs-on: delivery-github-runner
     timeout-minutes: 30
     steps:
       - name: Checkout code
@@ -31,13 +31,13 @@ jobs:
           go-version-file: go.mod
 
       - name: Install ginkgo
-        run: task --yes -p deps:install:ginkgo
+        run: task --yes deps:install:ginkgo
 
       - name: Install golangci-lint
-        run: task --yes -p deps:install:golangci-lint
+        run: task --yes deps:install:golangci-lint
 
       - name: Lint
-        run: task --yes -p lint
+        run: task --yes lint
 
       - name: Check mocks are up-to-date
-        run: task --yes -p mock:check
+        run: task --yes mock:check

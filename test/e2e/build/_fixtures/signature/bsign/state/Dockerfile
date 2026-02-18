@@ -1,4 +1,4 @@
-FROM ubuntu:22.04 AS builder
+FROM registry.werf.io/base/ubuntu:22.04 AS builder
 
 RUN apt-get update && \
     apt-get install -y curl

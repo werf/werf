@@ -26,4 +26,4 @@ dependencies:
         targetBuildArg: BASE_DOCKERFILE_IMAGE_TAG
 ---
 image: stapel
-from: alpine:latest
+from: registry.werf.io/base/alpine:latest

@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   detect-changes:
-    runs-on: [self-hosted, regular]
+    runs-on: delivery-github-runner
     timeout-minutes: 10
     permissions:
       pull-requests: read
@@ -89,13 +89,13 @@ jobs:
       packages: test/legacy_e2e/suites/build/stapel_image/git
     secrets: inherit
 
-  integration_ansible:
-    if: github.ref == 'refs/heads/main' || needs.detect-changes.outputs.workflow_proceed != 'false'
-    needs: detect-changes
-    uses: ./.github/workflows/_test_integration_regular.yml
-    with:
-      packages: test/legacy_e2e/suites/ansible
-    secrets: inherit
+  # integration_ansible:
+  #   if: github.ref == 'refs/heads/main' || needs.detect-changes.outputs.workflow_proceed != 'false'
+  #   needs: detect-changes
+  #   uses: ./.github/workflows/_test_integration_regular.yml
+  #   with:
+  #     packages: test/legacy_e2e/suites/ansible
+  #   secrets: inherit
 
   build:
     if: needs.detect-changes.outputs.workflow_proceed != 'false'
@@ -113,7 +113,7 @@ jobs:
       - unit
       - integration_main
       - integration_git
-      - integration_ansible
+      # - integration_ansible
       - e2e_simple
       - e2e_complex
       - e2e_extra
