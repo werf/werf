@@ -237,6 +237,39 @@ In this case, werf will compose the following sets to build:
 └ Concurrent builds plan (no more than 5 images at the same time)
 ```
 
+## Network isolation
+
+werf supports configuring the networking mode for the build containers. This allows you to restrict network access during the build process, which can be useful for security or reproducibility.
+
+Network isolation is currently supported only when using the **Docker** container backend. It works for both **Dockerfile** and **Stapel** image syntaxes.
+
+### Configuration
+
+You can specify the network mode in the `werf.yaml` configuration for each image using the `network` parameter:
+
+```yaml
+project: my-project
+configVersion: 1
+---
+image: backend
+dockerfile: Dockerfile
+network: none # network is disabled during the build
+---
+image: frontend
+from: alpine:3.14
+network: host # use host's network
+```
+
+### CLI option
+
+You can also set the network mode globally for the build process using the `--backend-network` CLI option:
+
+```bash
+werf build --backend-network none
+```
+
+The `--backend-network` CLI option has **priority** over the `network` parameter defined in the `werf.yaml` configuration.
+
 ## Using the SSH agent
 
 werf allows using the SSH agent for authentication when accessing remote Git repositories or executing commands in build containers.
