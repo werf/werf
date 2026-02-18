@@ -341,6 +341,8 @@ werf converge --repo registry.mydomain.com/web --env production
       --parallel-tasks-limit=5
             Parallel tasks limit, set -1 to remove the limitation (default                          
             $WERF_PARALLEL_TASKS_LIMIT or 5)
+      --plan-lifetime=2h0m0s
+            How long plan artifact is valid
       --platform=[]
             Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT]     
             ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)
@@ -513,6 +515,8 @@ werf converge --repo registry.mydomain.com/web --env production
             - %image_content_based_tag% to use a content-based tag.
             For cleaning custom tags and associated content-based tag are treated as one.
             Also, can be defined with $WERF_USE_CUSTOM_TAG (e.g. $WERF_USE_CUSTOM_TAG="%image%-tag")
+      --use-plan-path=""
+            Use the gzip-compressed JSON plan file from the specified path during release install
       --values=[]
             Specify helm values in a YAML file or a URL (can specify multiple). Also, can be        
             defined with $WERF_VALUES_* (e.g. $WERF_VALUES_1=.helm/values_1.yaml,                   
