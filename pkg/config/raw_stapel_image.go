@@ -28,6 +28,7 @@ type rawStapelImage struct {
 	Platform             []string         `yaml:"platform,omitempty"`
 	Network              string           `yaml:"network,omitempty"`
 	RawSbom              *rawSbom         `yaml:"sbom,omitempty"`
+	Network              string           `yaml:"network,omitempty"`
 	RawSecrets           []*rawSecret     `yaml:"secrets,omitempty"`
 	RawImageSpec         *rawImageSpec    `yaml:"imageSpec,omitempty"`
 

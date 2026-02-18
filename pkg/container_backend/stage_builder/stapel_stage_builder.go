@@ -31,7 +31,9 @@ func NewStapelStageBuilder(containerBackend container_backend.ContainerBackend, 
 func (builder *StapelStageBuilder) Build(ctx context.Context, opts container_backend.BuildOptions) error {
 	finalOpts := builder.BuildStapelStageOptions
 	finalOpts.TargetPlatform = opts.TargetPlatform
-	finalOpts.Network = opts.Network
+	if opts.Network != "" {
+		finalOpts.Network = opts.Network
+	}
 	// TODO: support introspect options
 
 	builtID, err := builder.ContainerBackend.BuildStapelStage(ctx, builder.BaseImage, finalOpts)
