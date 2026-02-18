@@ -205,8 +205,8 @@ werf plan --repo registry.mydomain.com/web --env production`,
 	// TODO(major): get rid?
 	cmd.Flags().BoolVarP(&cmdData.ShowVerboseDiffs, "show-verbose-diffs", "", util.GetBoolEnvironmentDefaultTrue("WERF_SHOW_VERBOSE_DIFFS"), "Show verbose diff lines ($WERF_SHOW_VERBOSE_DIFFS by default)")
 
-	cmd.Flags().StringVarP(&cmdData.PlanArtifactPath, "save-plan-path", "", os.Getenv("WERF_SAVE_PLAN_PATH"), "Save the gzip-compressed JSON install plan to the specified file")
-	cmd.Flags().StringVarP(&cmdData.ShowPlanArtifactPath, "show-plan-path", "", os.Getenv("WERF_SHOW_PLAN_PATH"), "Show plan artifact planned changes")
+	cmd.Flags().StringVarP(&cmdData.PlanArtifactPath, "save-plan", "", os.Getenv("WERF_SAVE_PLAN_PATH"), "Save the gzip-compressed JSON install plan to the specified file")
+	cmd.Flags().StringVarP(&cmdData.ShowPlanArtifactPath, "show-plan", "", os.Getenv("WERF_SHOW_PLAN_PATH"), "Show plan artifact planned changes")
 
 	var defaultDiffLines int
 	if lines := lo.Must(util.GetIntEnvVar("WERF_DIFF_CONTEXT_LINES")); lines != nil {

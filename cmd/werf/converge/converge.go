@@ -198,7 +198,7 @@ werf converge --repo registry.mydomain.com/web --env production`,
 
 	cmd.Flags().BoolVarP(&cmdData.AutoRollback, "auto-rollback", "R", util.GetBoolEnvironmentDefaultFalse("WERF_AUTO_ROLLBACK"), "Enable auto rollback of the failed release to the previous deployed release version when current deploy process have failed ($WERF_AUTO_ROLLBACK by default)")
 	cmd.Flags().BoolVarP(&cmdData.AutoRollback, "atomic", "", util.GetBoolEnvironmentDefaultFalse("WERF_ATOMIC"), "Enable auto rollback of the failed release to the previous deployed release version when current deploy process have failed ($WERF_ATOMIC by default)")
-	cmd.Flags().StringVarP(&cmdData.PlanArtifactPath, "use-plan-path", "", os.Getenv("WERF_USE_PLAN_PATH"), "Use the gzip-compressed JSON plan file from the specified path during release install")
+	cmd.Flags().StringVarP(&cmdData.PlanArtifactPath, "use-plan", "", os.Getenv("WERF_USE_PLAN_PATH"), "Use the gzip-compressed JSON plan file from the specified path during release install")
 	cmd.Flags().DurationVarP(&cmdData.PlanArtifactLifetime, "plan-lifetime", "", planArtifactLifetime, "How long plan artifact is valid")
 
 	return cmd

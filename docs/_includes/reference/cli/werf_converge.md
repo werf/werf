@@ -515,7 +515,7 @@ werf converge --repo registry.mydomain.com/web --env production
             - %image_content_based_tag% to use a content-based tag.
             For cleaning custom tags and associated content-based tag are treated as one.
             Also, can be defined with $WERF_USE_CUSTOM_TAG (e.g. $WERF_USE_CUSTOM_TAG="%image%-tag")
-      --use-plan-path=""
+      --use-plan=""
             Use the gzip-compressed JSON plan file from the specified path during release install
       --values=[]
             Specify helm values in a YAML file or a URL (can specify multiple). Also, can be        
