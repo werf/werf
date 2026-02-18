@@ -13,12 +13,12 @@ import (
 	"github.com/google/uuid"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
-
 	"github.com/werf/3p-helm/pkg/engine"
 	"github.com/werf/3p-helm/pkg/werf/helmopts"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/nelm/pkg/action"
+	nelmcommon "github.com/werf/nelm/pkg/common"
 	"github.com/werf/nelm/pkg/log"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/deploy/bundles"
@@ -216,41 +216,43 @@ func runApply(ctx context.Context) error {
 	engine.Debug = commonCmdData.DebugTemplates
 
 	if err := action.ReleaseInstall(ctx, releaseName, releaseNamespace, action.ReleaseInstallOptions{
-		KubeConnectionOptions:       commonCmdData.KubeConnectionOptions,
-		ChartRepoConnectionOptions:  commonCmdData.ChartRepoConnectionOptions,
-		ValuesOptions:               commonCmdData.ValuesOptions,
-		SecretValuesOptions:         commonCmdData.SecretValuesOptions,
-		TrackingOptions:             commonCmdData.TrackingOptions,
-		AutoRollback:                cmdData.AutoRollback,
-		ChartDirPath:                bundlePath,
-		ChartProvenanceKeyring:      commonCmdData.ChartProvenanceKeyring,
-		ChartProvenanceStrategy:     commonCmdData.ChartProvenanceStrategy,
-		ChartRepoSkipUpdate:         commonCmdData.ChartRepoSkipUpdate,
-		DefaultDeletePropagation:    commonCmdData.DefaultDeletePropagation,
-		ExtraAnnotations:            extraAnnotations,
-		ExtraLabels:                 extraLabels,
-		ExtraRuntimeAnnotations:     extraRuntimeAnnotations,
-		ExtraRuntimeLabels:          commonCmdData.ExtraRuntimeLabels,
-		ForceAdoption:               commonCmdData.ForceAdoption,
-		InstallGraphPath:            commonCmdData.InstallGraphPath,
-		InstallReportPath:           installReportPath,
-		LegacyChartType:             helmopts.ChartTypeBundle,
-		LegacyExtraValues:           serviceValues,
-		LegacyLogRegistryStreamOut:  os.Stdout,
-		NetworkParallelism:          commonCmdData.NetworkParallelism,
-		NoInstallStandaloneCRDs:     commonCmdData.NoInstallStandaloneCRDs,
-		NoRemoveManualChanges:       commonCmdData.NoRemoveManualChanges,
-		NoShowNotes:                 commonCmdData.NoShowNotes,
-		RegistryCredentialsPath:     registryCredentialsPath,
-		ReleaseHistoryLimit:         commonCmdData.ReleaseHistoryLimit,
-		ReleaseInfoAnnotations:      releaseInfoAnnotations,
-		ReleaseLabels:               releaseLabels,
-		ReleaseStorageDriver:        commonCmdData.ReleaseStorageDriver,
-		ReleaseStorageSQLConnection: commonCmdData.ReleaseStorageSQLConnection,
-		RollbackGraphPath:           commonCmdData.RollbackGraphPath,
-		ResourceValidationOptions:   commonCmdData.ResourceValidationOptions,
-		ShowSubchartNotes:           commonCmdData.ShowSubchartNotes,
-		TemplatesAllowDNS:           commonCmdData.TemplatesAllowDNS,
+		KubeConnectionOptions:      commonCmdData.KubeConnectionOptions,
+		ChartRepoConnectionOptions: commonCmdData.ChartRepoConnectionOptions,
+		ValuesOptions:              commonCmdData.ValuesOptions,
+		SecretValuesOptions:        commonCmdData.SecretValuesOptions,
+		TrackingOptions:            commonCmdData.TrackingOptions,
+		AutoRollback:               cmdData.AutoRollback,
+		ChartDirPath:               bundlePath,
+		ChartProvenanceKeyring:     commonCmdData.ChartProvenanceKeyring,
+		ChartProvenanceStrategy:    commonCmdData.ChartProvenanceStrategy,
+		ChartRepoSkipUpdate:        commonCmdData.ChartRepoSkipUpdate,
+		InstallGraphPath:           commonCmdData.InstallGraphPath,
+		InstallReportPath:          installReportPath,
+		LegacyChartType:            helmopts.ChartTypeBundle,
+		LegacyExtraValues:          serviceValues,
+		LegacyLogRegistryStreamOut: os.Stdout,
+		NetworkParallelism:         commonCmdData.NetworkParallelism,
+		NoShowNotes:                commonCmdData.NoShowNotes,
+		RegistryCredentialsPath:    registryCredentialsPath,
+		RollbackGraphPath:          commonCmdData.RollbackGraphPath,
+		ShowSubchartNotes:          commonCmdData.ShowSubchartNotes,
+		TemplatesAllowDNS:          commonCmdData.TemplatesAllowDNS,
+		ReleaseInstallRuntimeOptions: nelmcommon.ReleaseInstallRuntimeOptions{
+			ResourceValidationOptions:   commonCmdData.ResourceValidationOptions,
+			DefaultDeletePropagation:    commonCmdData.DefaultDeletePropagation,
+			ExtraAnnotations:            extraAnnotations,
+			ExtraLabels:                 extraLabels,
+			ExtraRuntimeAnnotations:     extraRuntimeAnnotations,
+			ExtraRuntimeLabels:          commonCmdData.ExtraRuntimeLabels,
+			ForceAdoption:               commonCmdData.ForceAdoption,
+			NoInstallStandaloneCRDs:     commonCmdData.NoInstallStandaloneCRDs,
+			NoRemoveManualChanges:       commonCmdData.NoRemoveManualChanges,
+			ReleaseHistoryLimit:         commonCmdData.ReleaseHistoryLimit,
+			ReleaseInfoAnnotations:      releaseInfoAnnotations,
+			ReleaseLabels:               releaseLabels,
+			ReleaseStorageDriver:        commonCmdData.ReleaseStorageDriver,
+			ReleaseStorageSQLConnection: commonCmdData.ReleaseStorageSQLConnection,
+		},
 	}); err != nil {
 		return fmt.Errorf("release install: %w", err)
 	}

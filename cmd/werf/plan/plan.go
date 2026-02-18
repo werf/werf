@@ -39,6 +39,8 @@ import (
 var cmdData struct {
 	DetailedExitCode       bool
 	DiffContextLines       int
+	PlanArtifactPath       string
+	ShowPlanArtifactPath   string
 	ShowInsignificantDiffs bool
 	ShowSensitiveDiffs     bool
 	ShowVerboseCRDDiffs    bool
@@ -203,6 +205,9 @@ werf plan --repo registry.mydomain.com/web --env production`,
 	// TODO(major): get rid?
 	cmd.Flags().BoolVarP(&cmdData.ShowVerboseDiffs, "show-verbose-diffs", "", util.GetBoolEnvironmentDefaultTrue("WERF_SHOW_VERBOSE_DIFFS"), "Show verbose diff lines ($WERF_SHOW_VERBOSE_DIFFS by default)")
 
+	cmd.Flags().StringVarP(&cmdData.PlanArtifactPath, "save-plan-path", "", os.Getenv("WERF_SAVE_PLAN_PATH"), "Save the gzip-compressed JSON install plan to the specified file")
+	cmd.Flags().StringVarP(&cmdData.ShowPlanArtifactPath, "show-plan-path", "", os.Getenv("WERF_SHOW_PLAN_PATH"), "Show plan artifact planned changes")
+
 	var defaultDiffLines int
 	if lines := lo.Must(util.GetIntEnvVar("WERF_DIFF_CONTEXT_LINES")); lines != nil {
 		defaultDiffLines = int(*lines)
@@ -277,6 +282,25 @@ func run(
 	giterminismManager *giterminism_manager.Manager,
 	imageNameListFromArgs []string,
 ) error {
+	if cmdData.ShowPlanArtifactPath != "" {
+		if err := action.ReleasePlanShow(ctx, action.ReleasePlanShowOptions{
+			ResourceDiffOptions: nelmcommon.ResourceDiffOptions{
+				DiffContextLines:       cmdData.DiffContextLines,
+				ShowVerboseCRDDiffs:    cmdData.ShowVerboseCRDDiffs,
+				ShowVerboseDiffs:       cmdData.ShowVerboseDiffs,
+				ShowSensitiveDiffs:     cmdData.ShowSensitiveDiffs,
+				ShowInsignificantDiffs: cmdData.ShowInsignificantDiffs,
+			},
+			PlanArtifactPath: cmdData.ShowPlanArtifactPath,
+			SecretKey:        commonCmdData.SecretKey,
+			SecretWorkDir:    commonCmdData.SecretWorkDir,
+		}); err != nil {
+			return fmt.Errorf("release plan show: %w", err)
+		}
+
+		return nil
+	}
+
 	werfConfigPath, werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %w", err)
@@ -482,44 +506,49 @@ func run(
 	engine.Debug = commonCmdData.DebugTemplates
 
 	if err := action.ReleasePlanInstall(ctx, releaseName, releaseNamespace, action.ReleasePlanInstallOptions{
-		KubeConnectionOptions:       commonCmdData.KubeConnectionOptions,
-		ChartRepoConnectionOptions:  commonCmdData.ChartRepoConnectionOptions,
-		ValuesOptions:               commonCmdData.ValuesOptions,
-		SecretValuesOptions:         commonCmdData.SecretValuesOptions,
-		ChartAppVersion:             common.GetHelmChartConfigAppVersion(werfConfig),
-		ChartDirPath:                relChartPath,
-		ChartProvenanceKeyring:      commonCmdData.ChartProvenanceKeyring,
-		ChartProvenanceStrategy:     commonCmdData.ChartProvenanceStrategy,
-		ChartRepoSkipUpdate:         commonCmdData.ChartRepoSkipUpdate,
-		DefaultChartAPIVersion:      chart.APIVersionV2,
-		DefaultChartName:            werfConfig.Meta.Project,
-		DefaultChartVersion:         "1.0.0",
-		DefaultDeletePropagation:    commonCmdData.DefaultDeletePropagation,
-		DiffContextLines:            cmdData.DiffContextLines,
-		ErrorIfChangesPlanned:       cmdData.DetailedExitCode,
-		ExtraAnnotations:            extraAnnotations,
-		ExtraLabels:                 extraLabels,
-		ExtraRuntimeAnnotations:     extraRuntimeAnnotations,
-		ExtraRuntimeLabels:          commonCmdData.ExtraRuntimeLabels,
-		ForceAdoption:               commonCmdData.ForceAdoption,
-		InstallGraphPath:            commonCmdData.InstallGraphPath,
-		LegacyExtraValues:           serviceValues,
-		LegacyLogRegistryStreamOut:  os.Stdout,
-		NetworkParallelism:          commonCmdData.NetworkParallelism,
-		NoFinalTracking:             commonCmdData.NoFinalTracking,
-		NoInstallStandaloneCRDs:     commonCmdData.NoInstallStandaloneCRDs,
-		NoRemoveManualChanges:       commonCmdData.NoRemoveManualChanges,
-		RegistryCredentialsPath:     registryCredentialsPath,
-		ReleaseInfoAnnotations:      releaseInfoAnnotations,
-		ReleaseLabels:               releaseLabels,
-		ReleaseStorageDriver:        commonCmdData.ReleaseStorageDriver,
-		ReleaseStorageSQLConnection: commonCmdData.ReleaseStorageSQLConnection,
-		ResourceValidationOptions:   commonCmdData.ResourceValidationOptions,
-		ShowInsignificantDiffs:      cmdData.ShowInsignificantDiffs,
-		ShowSensitiveDiffs:          cmdData.ShowSensitiveDiffs,
-		ShowVerboseCRDDiffs:         cmdData.ShowVerboseCRDDiffs,
-		ShowVerboseDiffs:            cmdData.ShowVerboseDiffs,
-		TemplatesAllowDNS:           commonCmdData.TemplatesAllowDNS,
+		KubeConnectionOptions:      commonCmdData.KubeConnectionOptions,
+		ChartRepoConnectionOptions: commonCmdData.ChartRepoConnectionOptions,
+		ValuesOptions:              commonCmdData.ValuesOptions,
+		SecretValuesOptions:        commonCmdData.SecretValuesOptions,
+		ChartAppVersion:            common.GetHelmChartConfigAppVersion(werfConfig),
+		ChartDirPath:               relChartPath,
+		ChartProvenanceKeyring:     commonCmdData.ChartProvenanceKeyring,
+		ChartProvenanceStrategy:    commonCmdData.ChartProvenanceStrategy,
+		ChartRepoSkipUpdate:        commonCmdData.ChartRepoSkipUpdate,
+		DefaultChartAPIVersion:     chart.APIVersionV2,
+		DefaultChartName:           werfConfig.Meta.Project,
+		DefaultChartVersion:        "1.0.0",
+		ErrorIfChangesPlanned:      cmdData.DetailedExitCode,
+		InstallGraphPath:           commonCmdData.InstallGraphPath,
+		LegacyExtraValues:          serviceValues,
+		LegacyLogRegistryStreamOut: os.Stdout,
+		NetworkParallelism:         commonCmdData.NetworkParallelism,
+		NoFinalTracking:            commonCmdData.NoFinalTracking,
+		PlanArtifactPath:           cmdData.PlanArtifactPath,
+		RegistryCredentialsPath:    registryCredentialsPath,
+		TemplatesAllowDNS:          commonCmdData.TemplatesAllowDNS,
+		ReleaseInstallRuntimeOptions: nelmcommon.ReleaseInstallRuntimeOptions{
+			ResourceValidationOptions:   commonCmdData.ResourceValidationOptions,
+			DefaultDeletePropagation:    commonCmdData.DefaultDeletePropagation,
+			ExtraAnnotations:            extraAnnotations,
+			ExtraLabels:                 extraLabels,
+			ExtraRuntimeAnnotations:     extraRuntimeAnnotations,
+			ExtraRuntimeLabels:          commonCmdData.ExtraRuntimeLabels,
+			ForceAdoption:               commonCmdData.ForceAdoption,
+			NoInstallStandaloneCRDs:     commonCmdData.NoInstallStandaloneCRDs,
+			NoRemoveManualChanges:       commonCmdData.NoRemoveManualChanges,
+			ReleaseInfoAnnotations:      releaseInfoAnnotations,
+			ReleaseLabels:               releaseLabels,
+			ReleaseStorageDriver:        commonCmdData.ReleaseStorageDriver,
+			ReleaseStorageSQLConnection: commonCmdData.ReleaseStorageSQLConnection,
+		},
+		ResourceDiffOptions: nelmcommon.ResourceDiffOptions{
+			DiffContextLines:       cmdData.DiffContextLines,
+			ShowVerboseCRDDiffs:    cmdData.ShowVerboseCRDDiffs,
+			ShowVerboseDiffs:       cmdData.ShowVerboseDiffs,
+			ShowSensitiveDiffs:     cmdData.ShowSensitiveDiffs,
+			ShowInsignificantDiffs: cmdData.ShowInsignificantDiffs,
+		},
 	}); err != nil {
 		return fmt.Errorf("release plan install: %w", err)
 	}

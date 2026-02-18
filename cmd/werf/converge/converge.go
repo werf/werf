@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
@@ -17,6 +18,7 @@ import (
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/nelm/pkg/action"
+	nelmcommon "github.com/werf/nelm/pkg/common"
 	"github.com/werf/nelm/pkg/log"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/build"
@@ -34,7 +36,9 @@ import (
 )
 
 var cmdData struct {
-	AutoRollback bool
+	AutoRollback         bool
+	PlanArtifactLifetime time.Duration
+	PlanArtifactPath     string
 }
 
 var commonCmdData common.CmdData
@@ -184,8 +188,18 @@ werf converge --repo registry.mydomain.com/web --env production`,
 	common.SetupTemplatesAllowDNS(&commonCmdData, cmd)
 	commonCmdData.SetupSkipDependenciesRepoRefresh(cmd)
 
+	planArtifactLifetime := nelmcommon.DefaultPlanArtifactLifetime
+
+	if os.Getenv("WERF_PLAN_LIFETIME") != "" {
+		if lifetime, err := util.GetDurationEnvVar("WERF_PLAN_LIFETIME"); err == nil {
+			planArtifactLifetime = lifetime
+		}
+	}
+
 	cmd.Flags().BoolVarP(&cmdData.AutoRollback, "auto-rollback", "R", util.GetBoolEnvironmentDefaultFalse("WERF_AUTO_ROLLBACK"), "Enable auto rollback of the failed release to the previous deployed release version when current deploy process have failed ($WERF_AUTO_ROLLBACK by default)")
 	cmd.Flags().BoolVarP(&cmdData.AutoRollback, "atomic", "", util.GetBoolEnvironmentDefaultFalse("WERF_ATOMIC"), "Enable auto rollback of the failed release to the previous deployed release version when current deploy process have failed ($WERF_ATOMIC by default)")
+	cmd.Flags().StringVarP(&cmdData.PlanArtifactPath, "use-plan-path", "", os.Getenv("WERF_USE_PLAN_PATH"), "Use the gzip-compressed JSON plan file from the specified path during release install")
+	cmd.Flags().DurationVarP(&cmdData.PlanArtifactLifetime, "plan-lifetime", "", planArtifactLifetime, "How long plan artifact is valid")
 
 	return cmd
 }
@@ -251,6 +265,17 @@ func run(
 	giterminismManager *giterminism_manager.Manager,
 	imageNameListFromArgs []string,
 ) error {
+	var err error
+
+	var releaseName, releaseNamespace, relChartPath, registryCredentialsPath string
+
+	extraRuntimeAnnotations := make(map[string]string)
+	releaseInfoAnnotations := make(map[string]string)
+	extraAnnotations := make(map[string]string)
+	extraLabels := make(map[string]string)
+	releaseLabels := make(map[string]string)
+	serviceValues := make(map[string]interface{})
+
 	werfConfigPath, werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %w", err)
@@ -268,139 +293,174 @@ func run(
 		return fmt.Errorf("getting project tmp dir failed: %w", err)
 	}
 
-	buildOptions, err := common.GetBuildOptions(ctx, &commonCmdData, werfConfig, imagesToProcess)
-	if err != nil {
-		return err
-	}
+	usePlanArtifact := cmdData.PlanArtifactPath != ""
 
-	var imagesInfoGetters []*image.InfoGetter
-	var imagesRepo string
-
-	if !imagesToProcess.WithoutImages {
-		logboek.LogOptionalLn()
-		common.SetupOndemandKubeInitializer(commonCmdData.KubeContextCurrent, commonCmdData.LegacyKubeConfigPath, commonCmdData.KubeConfigBase64, commonCmdData.LegacyKubeConfigPathsMergeList, commonCmdData.KubeBearerTokenData, commonCmdData.KubeBearerTokenPath)
-		if err := common.GetOndemandKubeInitializer().Init(ctx); err != nil {
-			return err
-		}
-
-		useCustomTagFunc, err := common.GetUseCustomTagFunc(&commonCmdData, giterminismManager, imagesToProcess)
+	if !usePlanArtifact {
+		buildOptions, err := common.GetBuildOptions(ctx, &commonCmdData, werfConfig, imagesToProcess)
 		if err != nil {
 			return err
 		}
 
-		storageManager, err := common.NewStorageManager(ctx, &common.NewStorageManagerConfig{
-			ProjectName:                    projectName,
-			ContainerBackend:               containerBackend,
-			CmdData:                        &commonCmdData,
-			CleanupDisabled:                werfConfig.Meta.Cleanup.DisableCleanup,
-			GitHistoryBasedCleanupDisabled: werfConfig.Meta.Cleanup.DisableGitHistoryBasedPolicy,
-		})
-		if err != nil {
-			return fmt.Errorf("unable to init storage manager: %w", err)
-		}
+		var imagesInfoGetters []*image.InfoGetter
+		var imagesRepo string
 
-		imagesRepo = storageManager.GetServiceValuesRepo()
+		if !imagesToProcess.WithoutImages {
+			logboek.LogOptionalLn()
+			common.SetupOndemandKubeInitializer(commonCmdData.KubeContextCurrent, commonCmdData.LegacyKubeConfigPath, commonCmdData.KubeConfigBase64, commonCmdData.LegacyKubeConfigPathsMergeList, commonCmdData.KubeBearerTokenData, commonCmdData.KubeBearerTokenPath)
+			if err := common.GetOndemandKubeInitializer().Init(ctx); err != nil {
+				return err
+			}
 
-		conveyorOptions, err := common.GetConveyorOptionsWithParallel(ctx, &commonCmdData, imagesToProcess, buildOptions)
-		if err != nil {
-			return err
-		}
+			useCustomTagFunc, err := common.GetUseCustomTagFunc(&commonCmdData, giterminismManager, imagesToProcess)
+			if err != nil {
+				return err
+			}
 
-		conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, giterminismManager.ProjectDir(), projectTmpDir, containerBackend, storageManager, storageManager.StorageLockManager, conveyorOptions)
-		defer conveyorWithRetry.Terminate()
+			storageManager, err := common.NewStorageManager(ctx, &common.NewStorageManagerConfig{
+				ProjectName:                    projectName,
+				ContainerBackend:               containerBackend,
+				CmdData:                        &commonCmdData,
+				CleanupDisabled:                werfConfig.Meta.Cleanup.DisableCleanup,
+				GitHistoryBasedCleanupDisabled: werfConfig.Meta.Cleanup.DisableGitHistoryBasedPolicy,
+			})
+			if err != nil {
+				return fmt.Errorf("unable to init storage manager: %w", err)
+			}
 
-		if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
-			if c.UseBuildReport {
-				logboek.Context(ctx).Debug().LogFDetails("Avoid building because of using build report: %s\n", c.BuildReportPath)
+			imagesRepo = storageManager.GetServiceValuesRepo()
 
-				imagesInfoGetters, err = c.GetImageInfoGettersFromReport(ctx, image.InfoGetterOptions{CustomTagFunc: useCustomTagFunc})
-				if err != nil {
-					return err
-				}
-			} else {
-				if common.GetRequireBuiltImages(&commonCmdData) {
-					shouldBeBuiltOptions, err := common.GetShouldBeBuiltOptions(&commonCmdData, werfConfig, imagesToProcess)
+			conveyorOptions, err := common.GetConveyorOptionsWithParallel(ctx, &commonCmdData, imagesToProcess, buildOptions)
+			if err != nil {
+				return err
+			}
+
+			conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, giterminismManager.ProjectDir(), projectTmpDir, containerBackend, storageManager, storageManager.StorageLockManager, conveyorOptions)
+			defer conveyorWithRetry.Terminate()
+
+			if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
+				if c.UseBuildReport {
+					logboek.Context(ctx).Debug().LogFDetails("Avoid building because of using build report: %s\n", c.BuildReportPath)
+
+					imagesInfoGetters, err = c.GetImageInfoGettersFromReport(ctx, image.InfoGetterOptions{CustomTagFunc: useCustomTagFunc})
 					if err != nil {
 						return err
 					}
-
-					if _, err := c.ShouldBeBuilt(ctx, shouldBeBuiltOptions); err != nil {
-						return err
-					}
 				} else {
-					if _, err := c.Build(ctx, buildOptions); err != nil {
+					if common.GetRequireBuiltImages(&commonCmdData) {
+						shouldBeBuiltOptions, err := common.GetShouldBeBuiltOptions(&commonCmdData, werfConfig, imagesToProcess)
+						if err != nil {
+							return err
+						}
+
+						if _, err := c.ShouldBeBuilt(ctx, shouldBeBuiltOptions); err != nil {
+							return err
+						}
+					} else {
+						if _, err := c.Build(ctx, buildOptions); err != nil {
+							return err
+						}
+					}
+
+					imagesInfoGetters, err = c.GetImageInfoGetters(image.InfoGetterOptions{CustomTagFunc: useCustomTagFunc})
+					if err != nil {
 						return err
 					}
 				}
 
-				imagesInfoGetters, err = c.GetImageInfoGetters(image.InfoGetterOptions{CustomTagFunc: useCustomTagFunc})
-				if err != nil {
-					return err
+				return nil
+			}); err != nil {
+				return err
+			}
+
+			logboek.LogOptionalLn()
+		}
+
+		relChartPath, err = common.GetHelmChartDir(
+			werfConfigPath,
+			werfConfig,
+			giterminismManager,
+		)
+		if err != nil {
+			return fmt.Errorf("get relative helm chart directory: %w", err)
+		}
+
+		releaseNamespace, err = deploy_params.GetKubernetesNamespace(
+			commonCmdData.Namespace,
+			commonCmdData.Environment,
+			werfConfig,
+		)
+		if err != nil {
+			return fmt.Errorf("get kubernetes namespace: %w", err)
+		}
+
+		releaseName, err = deploy_params.GetHelmRelease(
+			commonCmdData.Release,
+			commonCmdData.Environment,
+			releaseNamespace,
+			werfConfig,
+		)
+		if err != nil {
+			return fmt.Errorf("get helm release name: %w", err)
+		}
+
+		serviceAnnotations := map[string]string{}
+		if annos, err := common.GetUserExtraAnnotations(&commonCmdData); err != nil {
+			return fmt.Errorf("get user extra annotations: %w", err)
+		} else {
+			for key, value := range annos {
+				if strings.HasPrefix(key, "project.werf.io/") ||
+					strings.Contains(key, "ci.werf.io/") ||
+					key == "werf.io/release-channel" {
+					serviceAnnotations[key] = value
+				} else {
+					extraAnnotations[key] = value
 				}
 			}
-
-			return nil
-		}); err != nil {
-			return err
 		}
 
-		logboek.LogOptionalLn()
-	}
+		serviceAnnotations["werf.io/version"] = werf.Version
+		serviceAnnotations["project.werf.io/name"] = projectName
+		serviceAnnotations["project.werf.io/env"] = commonCmdData.Environment
 
-	relChartPath, err := common.GetHelmChartDir(
-		werfConfigPath,
-		werfConfig,
-		giterminismManager,
-	)
-	if err != nil {
-		return fmt.Errorf("get relative helm chart directory: %w", err)
-	}
+		extraRuntimeAnnotations = lo.Assign(commonCmdData.ExtraRuntimeAnnotations, serviceAnnotations)
+		releaseInfoAnnotations = lo.Assign(commonCmdData.ReleaseInfoAnnotations, serviceAnnotations)
 
-	releaseNamespace, err := deploy_params.GetKubernetesNamespace(
-		commonCmdData.Namespace,
-		commonCmdData.Environment,
-		werfConfig,
-	)
-	if err != nil {
-		return fmt.Errorf("get kubernetes namespace: %w", err)
-	}
-
-	releaseName, err := deploy_params.GetHelmRelease(
-		commonCmdData.Release,
-		commonCmdData.Environment,
-		releaseNamespace,
-		werfConfig,
-	)
-	if err != nil {
-		return fmt.Errorf("get helm release name: %w", err)
-	}
-
-	serviceAnnotations := map[string]string{}
-	extraAnnotations := map[string]string{}
-	if annos, err := common.GetUserExtraAnnotations(&commonCmdData); err != nil {
-		return fmt.Errorf("get user extra annotations: %w", err)
-	} else {
-		for key, value := range annos {
-			if strings.HasPrefix(key, "project.werf.io/") ||
-				strings.Contains(key, "ci.werf.io/") ||
-				key == "werf.io/release-channel" {
-				serviceAnnotations[key] = value
-			} else {
-				extraAnnotations[key] = value
-			}
+		extraLabels, err = common.GetUserExtraLabels(&commonCmdData)
+		if err != nil {
+			return fmt.Errorf("get user extra labels: %w", err)
 		}
-	}
 
-	serviceAnnotations["werf.io/version"] = werf.Version
-	serviceAnnotations["project.werf.io/name"] = projectName
-	serviceAnnotations["project.werf.io/env"] = commonCmdData.Environment
+		headHash, err := giterminismManager.LocalGitRepo().HeadCommitHash(ctx)
+		if err != nil {
+			return fmt.Errorf("get HEAD commit hash: %w", err)
+		}
 
-	extraRuntimeAnnotations := lo.Assign(commonCmdData.ExtraRuntimeAnnotations, serviceAnnotations)
-	releaseInfoAnnotations := lo.Assign(commonCmdData.ReleaseInfoAnnotations, serviceAnnotations)
+		headTime, err := giterminismManager.LocalGitRepo().HeadCommitTime(ctx)
+		if err != nil {
+			return fmt.Errorf("get HEAD commit time: %w", err)
+		}
 
-	extraLabels, err := common.GetUserExtraLabels(&commonCmdData)
-	if err != nil {
-		return fmt.Errorf("get user extra labels: %w", err)
+		registryCredentialsPath := docker.GetDockerConfigCredentialsFile(*commonCmdData.DockerConfig)
+
+		serviceValues, err = helpers.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepo, imagesInfoGetters, helpers.ServiceValuesOptions{
+			Namespace:                releaseNamespace,
+			Env:                      commonCmdData.Environment,
+			SetDockerConfigJsonValue: *commonCmdData.SetDockerConfigJsonValue,
+			DockerConfigPath:         filepath.Dir(registryCredentialsPath),
+			CommitHash:               headHash,
+			CommitDate:               headTime,
+		})
+		if err != nil {
+			return fmt.Errorf("get service values: %w", err)
+		}
+
+		releaseLabels, err = common.GetReleaseLabels(&commonCmdData)
+		if err != nil {
+			return fmt.Errorf("get release labels: %w", err)
+		}
+
+		file.ChartFileReader = giterminismManager.FileManager
+
 	}
 
 	var installReportPath string
@@ -408,81 +468,54 @@ func run(
 		installReportPath = commonCmdData.DeployReportPath
 	}
 
-	headHash, err := giterminismManager.LocalGitRepo().HeadCommitHash(ctx)
-	if err != nil {
-		return fmt.Errorf("get HEAD commit hash: %w", err)
-	}
-
-	headTime, err := giterminismManager.LocalGitRepo().HeadCommitTime(ctx)
-	if err != nil {
-		return fmt.Errorf("get HEAD commit time: %w", err)
-	}
-
-	registryCredentialsPath := docker.GetDockerConfigCredentialsFile(*commonCmdData.DockerConfig)
-
-	serviceValues, err := helpers.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepo, imagesInfoGetters, helpers.ServiceValuesOptions{
-		Namespace:                releaseNamespace,
-		Env:                      commonCmdData.Environment,
-		SetDockerConfigJsonValue: *commonCmdData.SetDockerConfigJsonValue,
-		DockerConfigPath:         filepath.Dir(registryCredentialsPath),
-		CommitHash:               headHash,
-		CommitDate:               headTime,
-	})
-	if err != nil {
-		return fmt.Errorf("get service values: %w", err)
-	}
-
-	releaseLabels, err := common.GetReleaseLabels(&commonCmdData)
-	if err != nil {
-		return fmt.Errorf("get release labels: %w", err)
-	}
-
-	file.ChartFileReader = giterminismManager.FileManager
-
 	ctx = log.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultReleaseInstallLogLevel), log.SetupLoggingOptions{
 		ColorMode: *commonCmdData.LogColorMode,
 	})
 	engine.Debug = commonCmdData.DebugTemplates
 
 	if err := action.ReleaseInstall(ctx, releaseName, releaseNamespace, action.ReleaseInstallOptions{
-		KubeConnectionOptions:       commonCmdData.KubeConnectionOptions,
-		ChartRepoConnectionOptions:  commonCmdData.ChartRepoConnectionOptions,
-		ValuesOptions:               commonCmdData.ValuesOptions,
-		SecretValuesOptions:         commonCmdData.SecretValuesOptions,
-		TrackingOptions:             commonCmdData.TrackingOptions,
-		AutoRollback:                cmdData.AutoRollback,
-		ChartAppVersion:             common.GetHelmChartConfigAppVersion(werfConfig),
-		ChartDirPath:                relChartPath,
-		ChartProvenanceKeyring:      commonCmdData.ChartProvenanceKeyring,
-		ChartProvenanceStrategy:     commonCmdData.ChartProvenanceStrategy,
-		ChartRepoSkipUpdate:         commonCmdData.ChartRepoSkipUpdate,
-		DefaultChartAPIVersion:      chart.APIVersionV2,
-		DefaultChartName:            werfConfig.Meta.Project,
-		DefaultChartVersion:         "1.0.0",
-		DefaultDeletePropagation:    commonCmdData.DefaultDeletePropagation,
-		ExtraAnnotations:            extraAnnotations,
-		ExtraLabels:                 extraLabels,
-		ExtraRuntimeAnnotations:     extraRuntimeAnnotations,
-		ExtraRuntimeLabels:          commonCmdData.ExtraRuntimeLabels,
-		ForceAdoption:               commonCmdData.ForceAdoption,
-		InstallGraphPath:            commonCmdData.InstallGraphPath,
-		InstallReportPath:           installReportPath,
-		LegacyExtraValues:           serviceValues,
-		LegacyLogRegistryStreamOut:  os.Stdout,
-		NetworkParallelism:          commonCmdData.NetworkParallelism,
-		NoInstallStandaloneCRDs:     commonCmdData.NoInstallStandaloneCRDs,
-		NoRemoveManualChanges:       commonCmdData.NoRemoveManualChanges,
-		NoShowNotes:                 commonCmdData.NoShowNotes,
-		RegistryCredentialsPath:     registryCredentialsPath,
-		ReleaseHistoryLimit:         commonCmdData.ReleaseHistoryLimit,
-		ReleaseInfoAnnotations:      releaseInfoAnnotations,
-		ReleaseLabels:               releaseLabels,
-		ReleaseStorageDriver:        commonCmdData.ReleaseStorageDriver,
-		ReleaseStorageSQLConnection: commonCmdData.ReleaseStorageSQLConnection,
-		ResourceValidationOptions:   commonCmdData.ResourceValidationOptions,
-		RollbackGraphPath:           commonCmdData.RollbackGraphPath,
-		ShowSubchartNotes:           commonCmdData.ShowSubchartNotes,
-		TemplatesAllowDNS:           commonCmdData.TemplatesAllowDNS,
+		KubeConnectionOptions:      commonCmdData.KubeConnectionOptions,
+		ChartRepoConnectionOptions: commonCmdData.ChartRepoConnectionOptions,
+		ValuesOptions:              commonCmdData.ValuesOptions,
+		SecretValuesOptions:        commonCmdData.SecretValuesOptions,
+		TrackingOptions:            commonCmdData.TrackingOptions,
+		AutoRollback:               cmdData.AutoRollback,
+		ChartAppVersion:            common.GetHelmChartConfigAppVersion(werfConfig),
+		ChartDirPath:               relChartPath,
+		ChartProvenanceKeyring:     commonCmdData.ChartProvenanceKeyring,
+		ChartProvenanceStrategy:    commonCmdData.ChartProvenanceStrategy,
+		ChartRepoSkipUpdate:        commonCmdData.ChartRepoSkipUpdate,
+		DefaultChartAPIVersion:     chart.APIVersionV2,
+		DefaultChartName:           werfConfig.Meta.Project,
+		DefaultChartVersion:        "1.0.0",
+		InstallGraphPath:           commonCmdData.InstallGraphPath,
+		InstallReportPath:          installReportPath,
+		LegacyExtraValues:          serviceValues,
+		LegacyLogRegistryStreamOut: os.Stdout,
+		NetworkParallelism:         commonCmdData.NetworkParallelism,
+		NoShowNotes:                commonCmdData.NoShowNotes,
+		PlanArtifactPath:           cmdData.PlanArtifactPath,
+		PlanArtifactLifetime:       cmdData.PlanArtifactLifetime,
+		RegistryCredentialsPath:    registryCredentialsPath,
+		RollbackGraphPath:          commonCmdData.RollbackGraphPath,
+		ShowSubchartNotes:          commonCmdData.ShowSubchartNotes,
+		TemplatesAllowDNS:          commonCmdData.TemplatesAllowDNS,
+		ReleaseInstallRuntimeOptions: nelmcommon.ReleaseInstallRuntimeOptions{
+			ResourceValidationOptions:   commonCmdData.ResourceValidationOptions,
+			DefaultDeletePropagation:    commonCmdData.DefaultDeletePropagation,
+			ExtraAnnotations:            extraAnnotations,
+			ExtraLabels:                 extraLabels,
+			ExtraRuntimeAnnotations:     extraRuntimeAnnotations,
+			ExtraRuntimeLabels:          commonCmdData.ExtraRuntimeLabels,
+			ForceAdoption:               commonCmdData.ForceAdoption,
+			NoInstallStandaloneCRDs:     commonCmdData.NoInstallStandaloneCRDs,
+			NoRemoveManualChanges:       commonCmdData.NoRemoveManualChanges,
+			ReleaseHistoryLimit:         commonCmdData.ReleaseHistoryLimit,
+			ReleaseInfoAnnotations:      releaseInfoAnnotations,
+			ReleaseLabels:               releaseLabels,
+			ReleaseStorageDriver:        commonCmdData.ReleaseStorageDriver,
+			ReleaseStorageSQLConnection: commonCmdData.ReleaseStorageSQLConnection,
+		},
 	}); err != nil {
 		return fmt.Errorf("release install: %w", err)
 	}
