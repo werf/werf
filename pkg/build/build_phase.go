@@ -581,6 +581,18 @@ func (phase *BuildPhase) getPrevNonEmptyStageCreationTs() int64 {
 	return 0
 }
 
+func (phase *BuildPhase) getLogImageNetwork(img *image.Image) string {
+	network := phase.ImageBuildOptions.Network
+	if network == "" {
+		if img.IsDockerfileImage && img.DockerfileImageConfig != nil {
+			network = img.DockerfileImageConfig.Network
+		} else if img.StapelImageConfig != nil {
+			network = img.StapelImageConfig.ImageBaseConfig().Network
+		}
+	}
+	return network
+}
+
 func (phase *BuildPhase) OnImageStage(ctx context.Context, img *image.Image, stg stage.Interface) error {
 	return phase.StagesIterator.OnImageStage(ctx, img, stg, func(img *image.Image, stg stage.Interface, isEmpty bool) error {
 		if isEmpty {
@@ -633,7 +645,7 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *image.Image, stg
 
 	if foundSuitableStage {
 		logboek.Context(ctx).Default().LogFHighlight("Use previously built image for %s\n", stg.LogDetailedName())
-		container_backend.LogImageInfo(ctx, stg.GetStageImage().Image, phase.getPrevNonEmptyStageImageSize(), img.ShouldLogPlatform(), phase.ImageBuildOptions.Network)
+		container_backend.LogImageInfo(ctx, stg.GetStageImage().Image, phase.getPrevNonEmptyStageImageSize(), img.ShouldLogPlatform(), phase.getLogImageNetwork(img))
 
 		logboek.Context(ctx).LogOptionalLn()
 
@@ -774,7 +786,7 @@ func (phase *BuildPhase) findAndFetchStageFromSecondaryStagesStorage(ctx context
 				}
 
 				logboek.Context(ctx).Default().LogFHighlight("Use previously built image for %s\n", stg.LogDetailedName())
-				container_backend.LogImageInfo(ctx, stg.GetStageImage().Image, phase.getPrevNonEmptyStageImageSize(), img.ShouldLogPlatform(), phase.ImageBuildOptions.Network)
+				container_backend.LogImageInfo(ctx, stg.GetStageImage().Image, phase.getPrevNonEmptyStageImageSize(), img.ShouldLogPlatform(), phase.getLogImageNetwork(img))
 
 				return nil
 			}
@@ -1011,7 +1023,7 @@ func (phase *BuildPhase) buildStage(ctx context.Context, img *image.Image, stg s
 		if err != nil {
 			return
 		}
-		container_backend.LogImageInfo(ctx, stg.GetStageImage().Image, phase.getPrevNonEmptyStageImageSize(), img.ShouldLogPlatform(), phase.ImageBuildOptions.Network)
+		container_backend.LogImageInfo(ctx, stg.GetStageImage().Image, phase.getPrevNonEmptyStageImageSize(), img.ShouldLogPlatform(), phase.getLogImageNetwork(img))
 	}
 
 	if err := logboek.Context(ctx).Default().LogProcess("Building stage %s", stg.LogDetailedName()).

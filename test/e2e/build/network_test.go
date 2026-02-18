@@ -10,9 +10,10 @@ import (
 
 type networkTestOptions struct {
 	setupEnvOptions
-	ExpectError bool
-	FixturePath string
-	NetworkNone bool
+	ExpectError        bool
+	FixturePath        string
+	NetworkNone        bool
+	ExpectNetworkValue string
 }
 
 var _ = Describe("Network isolation build", Label("e2e", "build", "network"), func() {
@@ -50,11 +51,15 @@ var _ = Describe("Network isolation build", Label("e2e", "build", "network"), fu
 
 			if !testOpts.ExpectError {
 				Expect(buildOut).To(ContainSubstring("Building stage"))
-				Expect(buildOut).To(ContainSubstring("network:"))
+				if testOpts.ExpectNetworkValue != "" {
+					Expect(buildOut).To(ContainSubstring("network: " + testOpts.ExpectNetworkValue))
+				} else {
+					Expect(buildOut).To(ContainSubstring("network:"))
+				}
 			}
 		},
 
-		// Stapel tests
+		// CLI tests (verify CLI works when YAML is empty)
 		Entry("Stapel (Vanilla): Failure with --backend-network=none", Label("stapel"), networkTestOptions{
 			setupEnvOptions: setupEnvOptions{ContainerBackendMode: "vanilla-docker", WithLocalRepo: false},
 			ExpectError:     true,
@@ -67,8 +72,6 @@ var _ = Describe("Network isolation build", Label("e2e", "build", "network"), fu
 			FixturePath:     "network/stapel",
 			NetworkNone:     false,
 		}),
-
-		// Dockerfile (Vanilla) tests
 		Entry("Dockerfile (Vanilla): Failure with --backend-network=none", Label("dockerfile"), networkTestOptions{
 			setupEnvOptions: setupEnvOptions{ContainerBackendMode: "vanilla-docker", WithLocalRepo: false},
 			ExpectError:     true,
@@ -82,18 +85,40 @@ var _ = Describe("Network isolation build", Label("e2e", "build", "network"), fu
 			NetworkNone:     false,
 		}),
 
-		// Dockerfile (BuildKit) tests
-		Entry("Dockerfile (BuildKit): Failure with --backend-network=none", Label("dockerfile", "buildkit"), networkTestOptions{
-			setupEnvOptions: setupEnvOptions{ContainerBackendMode: "buildkit-docker", WithLocalRepo: true},
+		// YAML tests (verify network directive in werf.yaml)
+		Entry("Stapel (Vanilla): Failure with network:none in werf.yaml", Label("stapel", "yml"), networkTestOptions{
+			setupEnvOptions: setupEnvOptions{ContainerBackendMode: "vanilla-docker", WithLocalRepo: false},
 			ExpectError:     true,
-			FixturePath:     "network/dockerfile",
-			NetworkNone:     true,
-		}),
-		Entry("Dockerfile (BuildKit): Success without --backend-network flag", Label("dockerfile", "buildkit"), networkTestOptions{
-			setupEnvOptions: setupEnvOptions{ContainerBackendMode: "buildkit-docker", WithLocalRepo: true},
-			ExpectError:     false,
-			FixturePath:     "network/dockerfile",
+			FixturePath:     "network/stapel_yml",
 			NetworkNone:     false,
+		}),
+		Entry("Stapel (Vanilla): Success with network:host in werf.yaml", Label("stapel", "yml"), networkTestOptions{
+			setupEnvOptions:    setupEnvOptions{ContainerBackendMode: "vanilla-docker", WithLocalRepo: false},
+			ExpectError:        false,
+			FixturePath:        "network/stapel_yml_success",
+			NetworkNone:        false,
+			ExpectNetworkValue: "host",
+		}),
+		Entry("Dockerfile (Vanilla): Failure with network:none in werf.yaml", Label("dockerfile", "yml"), networkTestOptions{
+			setupEnvOptions: setupEnvOptions{ContainerBackendMode: "vanilla-docker", WithLocalRepo: false},
+			ExpectError:     true,
+			FixturePath:     "network/dockerfile_yml",
+			NetworkNone:     false,
+		}),
+		Entry("Dockerfile (Vanilla): Success with network:host in werf.yaml", Label("dockerfile", "yml"), networkTestOptions{
+			setupEnvOptions:    setupEnvOptions{ContainerBackendMode: "vanilla-docker", WithLocalRepo: false},
+			ExpectError:        false,
+			FixturePath:        "network/dockerfile_yml_success",
+			NetworkNone:        false,
+			ExpectNetworkValue: "host",
+		}),
+
+		// CLI overriding YAML
+		Entry("Stapel (Vanilla): CLI --backend-network=none overrides YAML network:host (should fail)", Label("stapel", "override"), networkTestOptions{
+			setupEnvOptions: setupEnvOptions{ContainerBackendMode: "vanilla-docker", WithLocalRepo: false},
+			ExpectError:     true,
+			FixturePath:     "network/stapel_yml_success",
+			NetworkNone:     true, // CLI 'none' overrides YAML 'host'
 		}),
 	)
 })

@@ -61,7 +61,7 @@ type FullDockerfileStage struct {
 	*BaseStage
 }
 
-func NewDockerRunArgs(dockerfile []byte, dockerfilePath, target, context string, contextAddFiles []string, buildArgs map[string]interface{}, addHost []string, network, ssh string, secrets []string) *DockerRunArgs {
+func NewDockerRunArgs(dockerfile []byte, dockerfilePath, target, context string, contextAddFiles []string, buildArgs map[string]interface{}, addHost []string, ssh string, secrets []string) *DockerRunArgs {
 	return &DockerRunArgs{
 		dockerfile:      dockerfile,
 		dockerfilePath:  dockerfilePath,
@@ -70,7 +70,6 @@ func NewDockerRunArgs(dockerfile []byte, dockerfilePath, target, context string,
 		contextAddFiles: contextAddFiles,
 		buildArgs:       buildArgs,
 		addHost:         addHost,
-		network:         network,
 		ssh:             ssh,
 		secrets:         secrets,
 	}
@@ -84,7 +83,6 @@ type DockerRunArgs struct {
 	contextAddFiles []string
 	buildArgs       map[string]interface{}
 	addHost         []string
-	network         string
 	ssh             string
 	secrets         []string
 }
@@ -649,8 +647,8 @@ func (s *FullDockerfileStage) SetupDockerImageBuilder(b stage_builder.Dockerfile
 		b.AppendAddHost(s.addHost...)
 	}
 
-	if s.network != "" {
-		b.SetNetwork(s.network)
+	if s.BaseStage.network != "" {
+		b.SetNetwork(s.BaseStage.network)
 	}
 
 	if s.ssh != "" {
