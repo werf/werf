@@ -392,6 +392,8 @@ werf plan --repo registry.mydomain.com/web --env production
       --save-build-report=false
             Save build report (by default $WERF_SAVE_BUILD_REPORT or false). Its path and format    
             configured with --build-report-path
+      --save-plan=""
+            Save the gzip-compressed JSON install plan to the specified file
       --secondary-repo=[]
             Specify one or multiple secondary read-only repos with images that will be used as a    
             cache.
@@ -447,6 +449,8 @@ werf plan --repo registry.mydomain.com/web --env production
             $WERF_SET_STRING_2=key2=val2)
       --show-insignificant-diffs=false
             Show insignificant diff lines ($WERF_SHOW_INSIGNIFICANT_DIFFS by default)
+      --show-plan=""
+            Show plan artifact planned changes
       --show-sensitive-diffs=false
             Show sensitive diff lines ($WERF_SHOW_SENSITIVE_DIFFS by default)
       --show-verbose-crd-diffs=false
