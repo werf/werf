@@ -74,6 +74,10 @@ type DependenciesStage struct {
 	dependencies []*config.Dependency
 }
 
+func (s *DependenciesStage) GetImports() []*config.Import {
+	return s.imports
+}
+
 func (s *DependenciesStage) GetDependencies(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, _, _ *StageImage, _ container_backend.BuildContextArchiver) (string, error) {
 	var args []string
 

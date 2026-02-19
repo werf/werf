@@ -644,19 +644,38 @@ Result:
 
 ## Scanning and Generation of SBOM Artifacts (EXPERIMENTAL)
 
-To enable scanning and generation of SBOM artifacts during the build process, activate the `sbom` option in werf.yml:
+To enable scanning and generation of SBOM artifacts during the build process for all images, activate the `sbom` option in werf.yml.
+
+When `build.sbom.enable: true`, you are free to provide an SBOM configuration for each image via `sbom.fragment`:
 
 ```
 project: werf-sbom-experimental
 configVersion: 1
+build:
+  sbom:
+    enable: true
 ---
 image: dockerfile
 dockerfile: Dockerfile
-sbom: true # <-- (!) here
+sbom:
+  fragment: |
+    components:
+      - type: library
+        name: openssl
+        version: "3.0.0"
+        purl: pkg:generic/openssl@3.0.0
+        licenses:
+          - license:
+              id: Apache-2.0
+        hashes:
+          - alg: SHA-256
+            content: 9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08
 ```
 
 The scanning result will be saved as a separate image with the `-sbom` postfix in the local backend storage
 (Docker or Buildah), and will also be sent to the container registry if the `--repo` flag is specified.
+
+`sbom.fragment` must be a YAML CycloneDX@1.6 document or a partial fragment (e.g. only `components:`). werf will build a full CycloneDX@1.6 BOM document from this fragment.
 
 Currently, this option uses the following _defaults_:
 

@@ -3,8 +3,10 @@ package build
 import (
 	"context"
 	"fmt"
+	"io"
 	"slices"
 
+	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/samber/lo"
 
 	"github.com/werf/logboek"
@@ -12,7 +14,9 @@ import (
 	"github.com/werf/werf/v2/pkg/container_backend/filter"
 	"github.com/werf/werf/v2/pkg/container_backend/label"
 	"github.com/werf/werf/v2/pkg/image"
-	"github.com/werf/werf/v2/pkg/sbom"
+	"github.com/werf/werf/v2/pkg/sbom/cyclonedxutil"
+	"github.com/werf/werf/v2/pkg/sbom/extract"
+	sbomImage "github.com/werf/werf/v2/pkg/sbom/image"
 	"github.com/werf/werf/v2/pkg/sbom/scanner"
 	"github.com/werf/werf/v2/pkg/storage"
 )
@@ -36,59 +40,72 @@ func newSbomStep(
 	}
 }
 
-// Converge searches relevant SBOM image in local and remote storages.
-// If the relevant image is found, it does nothing.
-// Otherwise, it generates new sbom image and pushes that image into remote storage.
-func (step *sbomStep) Converge(ctx context.Context, werfImgName string, stageDesc *image.StageDesc, scanOpts scanner.ScanOptions) error {
+func (step *sbomStep) ConvergeWithMerge(ctx context.Context, werfImgName string, stageDesc *image.StageDesc, scanOpts scanner.ScanOptions, mergeOpts cyclonedxutil.MergeOpts) error {
 	sourceImageName := stageDesc.Info.Name
-	sbomImageName := sbom.ImageName(sourceImageName)
+	sbomImageName := sbomImage.ImageName(sourceImageName)
 
 	scanOpts.Commands[0].SourcePath = sourceImageName
 
-	sbomBaseImgLabels := step.prepareSbomBaseLabels(ctx, stageDesc.Info.Labels, scanOpts)
-	sbomImgLabels := step.prepareSbomLabels(ctx, stageDesc.Info.Labels, scanOpts)
+	sbomBaseImgLabels := step.prepareSbomBaseLabelsWithMerge(ctx, stageDesc.Info.Labels, scanOpts, mergeOpts)
+	sbomImgLabels := step.prepareSbomLabelsWithMerge(ctx, stageDesc.Info.Labels, scanOpts, mergeOpts)
+
+	_, ok, err := step.findSbomImageLocally(ctx, sbomBaseImgLabels, sbomImageName)
+	if err != nil {
+		return err
+	}
+
+	if step.isLocalStorage {
+		if ok {
+			logboek.Context(ctx).Default().LogF("image %s: Use previously generated SBOM from local backend storage\n", werfImgName)
+			return nil
+		}
+	} else {
+		if ok {
+			if _, err = step.stagesStorage.PushIfNotExistSbomImage(ctx, sbomImageName); err != nil {
+				return fmt.Errorf("unable to push sbom image: %q: %w", sbomImageName, err)
+			}
+			return nil
+		} else {
+			if pulled, err := step.stagesStorage.PullIfExistSbomImage(ctx, sbomImageName); err != nil {
+				return fmt.Errorf("unable to pull sbom image: %q: %w", sbomImageName, err)
+			} else if pulled {
+				logboek.Context(ctx).Default().LogF("image %s: Use previously generated SBOM from container registry\n", werfImgName)
+				return nil
+			}
+		}
+	}
+
+	if !step.isLocalStorage {
+		if err := step.containerBackend.Pull(ctx, sourceImageName, container_backend.PullOpts{}); err != nil {
+			return fmt.Errorf("unable to pull %q: %w", sourceImageName, err)
+		}
+	}
 
 	return logboek.Context(ctx).Default().LogProcess("image %s: SBOM processing", werfImgName).DoError(func() error {
-		_, ok, err := step.findSbomImageLocally(ctx, sbomBaseImgLabels, sbomImageName)
+		tmpImgId, err := step.containerBackend.GenerateSBOM(ctx, scanOpts, nil)
+		if err != nil {
+			return fmt.Errorf("unable to scan image: %w", err)
+		}
+
+		targetBOM, err := step.extractBOM(ctx, tmpImgId)
+		if rmErr := step.containerBackend.Rmi(ctx, tmpImgId, container_backend.RmiOpts{Force: true}); rmErr != nil {
+			logboek.Context(ctx).Warn().LogF("unable to remove temp image %q: %s\n", tmpImgId, rmErr)
+		}
+		if err != nil {
+			return fmt.Errorf("unable to extract scanned BOM: %w", err)
+		}
+
+		resultBOM := targetBOM
+		if !mergeOpts.IsEmpty() {
+			resultBOM = cyclonedxutil.MergeBOMs(targetBOM, mergeOpts)
+		}
+
+		sbomImgId, err := step.buildSbomImage(ctx, resultBOM, scanOpts, sbomImgLabels.ToStringSlice())
 		if err != nil {
 			return err
 		}
-		logboek.Context(ctx).Debug().LogF("-- sbom_phase.Converge: sbom image is found locally=%t\n", ok)
 
-		if step.isLocalStorage {
-			if ok {
-				logboek.Context(ctx).Default().LogLn("Use previously generated image from local backend storage")
-				return nil
-			}
-		} else {
-			if ok {
-				if _, err = step.stagesStorage.PushIfNotExistSbomImage(ctx, sbomImageName); err != nil {
-					return fmt.Errorf("unable to push sbom image: %q: %w", sbomImageName, err)
-				}
-				return nil
-			} else {
-				if pulled, err := step.stagesStorage.PullIfExistSbomImage(ctx, sbomImageName); err != nil {
-					return fmt.Errorf("unable to pull sbom image: %q: %w", sbomImageName, err)
-				} else if pulled {
-					logboek.Context(ctx).Default().LogLn("Use previously generated image from container registry")
-					return nil
-				}
-			}
-		}
-
-		// SBOM scanning is local operation. Ensure source image exist locally.
-		if !step.isLocalStorage {
-			if err := step.containerBackend.Pull(ctx, sourceImageName, container_backend.PullOpts{}); err != nil {
-				return fmt.Errorf("unable to pull %q: %w", sourceImageName, err)
-			}
-		}
-
-		tmpImgId, err := step.containerBackend.GenerateSBOM(ctx, scanOpts, sbomImgLabels.ToStringSlice())
-		if err != nil {
-			return fmt.Errorf("unable to scan source image and store the result: %w", err)
-		}
-
-		if err = step.containerBackend.Tag(ctx, tmpImgId, sbomImageName, container_backend.TagOpts{}); err != nil {
+		if err = step.containerBackend.Tag(ctx, sbomImgId, sbomImageName, container_backend.TagOpts{}); err != nil {
 			return fmt.Errorf("unable to tag sbom image: %w", err)
 		}
 
@@ -102,17 +119,52 @@ func (step *sbomStep) Converge(ctx context.Context, werfImgName string, stageDes
 	})
 }
 
-func (step *sbomStep) prepareSbomBaseLabels(_ context.Context, srcImgLabels map[string]string, scanOpts scanner.ScanOptions) label.LabelList {
+func (step *sbomStep) extractBOM(ctx context.Context, imageId string) (*cdx.BOM, error) {
+	opener := func() (io.ReadCloser, error) {
+		return step.containerBackend.SaveImageToStream(ctx, imageId)
+	}
+
+	artifactContent, err := extract.FromImageBytes(opener)
+	if err != nil {
+		return nil, fmt.Errorf("unable to find SBOM artifact: %w", err)
+	}
+
+	bom, err := cyclonedxutil.BuildCycloneDX16BOMFromJSON(artifactContent)
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse SBOM artifact: %w", err)
+	}
+
+	return bom, nil
+}
+
+func (step *sbomStep) buildSbomImage(ctx context.Context, bom *cdx.BOM, scanOpts scanner.ScanOptions, labels []string) (string, error) {
+	source := container_backend.NewStaticSource(bom)
+	builder := container_backend.NewSBOMImageBuilder(step.containerBackend)
+
+	imgId, err := builder.BuildImage(ctx, source, scanOpts, labels)
+	if err != nil {
+		return "", fmt.Errorf("unable to build SBOM image: %w", err)
+	}
+
+	return imgId, nil
+}
+
+func (step *sbomStep) prepareSbomBaseLabelsWithMerge(_ context.Context, srcImgLabels map[string]string, scanOpts scanner.ScanOptions, mergeOpts cyclonedxutil.MergeOpts) label.LabelList {
+	checksum := scanOpts.Checksum()
+	if mc := mergeOpts.Checksum(); mc != "" {
+		checksum += "-" + mc
+	}
+
 	return label.LabelList{
 		label.NewLabel(image.WerfLabel, srcImgLabels[image.WerfLabel]),
 		label.NewLabel(image.WerfProjectRepoCommitLabel, srcImgLabels[image.WerfProjectRepoCommitLabel]),
 		label.NewLabel(image.WerfStageContentDigestLabel, srcImgLabels[image.WerfStageContentDigestLabel]),
-		label.NewLabel(image.WerfSbomLabel, scanOpts.Checksum()),
+		label.NewLabel(image.WerfSbomLabel, checksum),
 	}
 }
 
-func (step *sbomStep) prepareSbomLabels(ctx context.Context, srcImgLabels map[string]string, scanOpts scanner.ScanOptions) label.LabelList {
-	list := step.prepareSbomBaseLabels(ctx, srcImgLabels, scanOpts)
+func (step *sbomStep) prepareSbomLabelsWithMerge(ctx context.Context, srcImgLabels map[string]string, scanOpts scanner.ScanOptions, mergeOpts cyclonedxutil.MergeOpts) label.LabelList {
+	list := step.prepareSbomBaseLabelsWithMerge(ctx, srcImgLabels, scanOpts, mergeOpts)
 	list.Add(label.NewLabel(image.WerfVersionLabel, srcImgLabels[image.WerfVersionLabel]))
 	return list
 }
@@ -136,4 +188,73 @@ func (step *sbomStep) findSbomImageLocally(ctx context.Context, sbomBaseImgLabel
 	})
 
 	return img, ok, nil
+}
+
+func (step *sbomStep) GetImageBOM(ctx context.Context, werfImgName, imageRef string, imageInfo *image.Info) (*cdx.BOM, error) {
+	if imageInfo == nil {
+		return nil, fmt.Errorf("image info not available for %q", imageRef)
+	}
+
+	return step.pullImageSbom(ctx, werfImgName, imageInfo)
+}
+
+func (step *sbomStep) pullImageSbom(ctx context.Context, werfImgName string, imageInfo *image.Info) (*cdx.BOM, error) {
+	sbomImageName, err := step.resolveImageSbomName(imageInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = logboek.Context(ctx).Default().LogProcess("image %s: image SBOM processing (%s)", werfImgName, imageInfo.Name).DoError(func() error {
+		return step.ensureSbomImageExists(ctx, sbomImageName, imageInfo.Name)
+	}); err != nil {
+		return nil, fmt.Errorf("unable to pull image SBOM: %w", err)
+	}
+
+	opener := func() (io.ReadCloser, error) {
+		return step.containerBackend.SaveImageToStream(ctx, sbomImageName)
+	}
+
+	artifactContent, err := extract.FromImageBytes(opener)
+	if err != nil {
+		return nil, fmt.Errorf("unable to find SBOM artifact: %w", err)
+	}
+
+	bom, err := cyclonedxutil.BuildCycloneDX16BOMFromJSON(artifactContent)
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse SBOM artifact: %w", err)
+	}
+
+	return bom, nil
+}
+
+func (step *sbomStep) resolveImageSbomName(baseImageInfo *image.Info) (string, error) {
+	if digest, ok := baseImageInfo.Labels[image.WerfStageContentDigestLabel]; ok && digest != "" {
+		_, tag := image.ParseRepositoryAndTag(baseImageInfo.Name)
+
+		return sbomImage.BaseImageName(baseImageInfo.Repository, tag), nil
+	}
+
+	return "", fmt.Errorf(
+		"unable to resolve SBOM name for image %q: required werf stage content digest label is missing",
+		baseImageInfo.Name,
+	)
+}
+
+func (step *sbomStep) ensureSbomImageExists(ctx context.Context, sbomImageName, sourceImageName string) error {
+	if info, err := step.containerBackend.GetImageInfo(ctx, sbomImageName, container_backend.GetImageInfoOpts{}); err == nil && info != nil {
+		logboek.Context(ctx).Default().LogF("Using local image SBOM %s\n", sbomImageName)
+
+		return nil
+	}
+
+	if step.isLocalStorage {
+		return fmt.Errorf("SBOM for image %q not found locally", sourceImageName)
+	}
+
+	logboek.Context(ctx).Default().LogF("Pulling image SBOM from %s\n", sbomImageName)
+	if err := step.containerBackend.Pull(ctx, sbomImageName, container_backend.PullOpts{}); err != nil {
+		return fmt.Errorf("SBOM for image %q not found in container registry: %w", sourceImageName, err)
+	}
+
+	return nil
 }

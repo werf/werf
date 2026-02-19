@@ -219,20 +219,58 @@ func (i *Image) UsesBuildContext() bool {
 	return false
 }
 
+type ImportImageInfo struct {
+	ImageName     string
+	ExternalImage bool
+}
+
+func (i *Image) GetImportImagesInfo() []ImportImageInfo {
+	var result []ImportImageInfo
+
+	for _, stg := range i.GetStages() {
+		if depStage, ok := stg.(interface{ GetImports() []*config.Import }); ok {
+			for _, imp := range depStage.GetImports() {
+				imageName := imp.ImageName
+				if imageName == "" {
+					imageName = imp.ArtifactName
+				}
+
+				result = append(result, ImportImageInfo{
+					ImageName:     imageName,
+					ExternalImage: imp.ExternalImage,
+				})
+			}
+		}
+	}
+
+	return result
+}
+
+func (i *Image) GetLastNonEmptyStageImageInfo() *image.Info {
+	lastStage := i.GetLastNonEmptyStage()
+	if lastStage == nil {
+		return nil
+	}
+
+	stageImage := lastStage.GetStageImage()
+	if stageImage == nil {
+		return nil
+	}
+
+	stageDesc := stageImage.Image.GetStageDesc()
+	if stageDesc == nil {
+		return nil
+	}
+
+	return stageDesc.Info
+}
+
 func (i *Image) UseCustomTag() bool {
 	return i.useCustomTag
 }
 
-func (i *Image) UseSbom() bool {
-	if !i.IsFinal {
-		return false
-	}
-
-	if i.IsDockerfileImage {
-		return i.DockerfileImageConfig.Sbom() != nil
-	}
-
-	return i.sbom != nil
+func (i *Image) Sbom() *config.Sbom {
+	return i.sbom
 }
 
 func (i *Image) GetName() string {

@@ -10,7 +10,7 @@ import (
 	"github.com/werf/logboek"
 )
 
-type workingTree struct {
+type WorkingTree struct {
 	// rootDir is absolute path to dir.
 	rootDir string
 
@@ -27,8 +27,8 @@ type workingTree struct {
 	containerfileContent []byte
 }
 
-func NewWorkingTree() *workingTree {
-	return &workingTree{
+func NewWorkingTree() *WorkingTree {
+	return &WorkingTree{
 		billDir:   "sbom",
 		billFiles: nil,
 
@@ -41,7 +41,7 @@ COPY ./sbom /sbom
 	}
 }
 
-func (wt *workingTree) Create(_ context.Context, baseDir string, paths []string) error {
+func (wt *WorkingTree) Create(_ context.Context, baseDir string, paths []string) error {
 	var err error
 
 	if wt.rootDir, err = os.MkdirTemp(baseDir, fmt.Sprintf("sbom-")); err != nil {
@@ -60,7 +60,7 @@ func (wt *workingTree) Create(_ context.Context, baseDir string, paths []string)
 	for i, name := range paths {
 		billFileDir := filepath.Join(wt.rootDir, wt.billDir, filepath.Dir(name))
 
-		if err = os.Mkdir(billFileDir, 0o700); err != nil {
+		if err = os.MkdirAll(billFileDir, 0o700); err != nil {
 			return fmt.Errorf("unable to create %q: %w", billFileDir, err)
 		}
 
@@ -85,7 +85,7 @@ func (wt *workingTree) Create(_ context.Context, baseDir string, paths []string)
 	return nil
 }
 
-func (wt *workingTree) Cleanup(ctx context.Context) {
+func (wt *WorkingTree) Cleanup(ctx context.Context) {
 	for _, billFile := range wt.billFiles {
 		if err := billFile.Close(); err != nil {
 			logboek.Context(ctx).Warn().LogF("closing bill file %q\n", billFile.Name())
@@ -96,26 +96,52 @@ func (wt *workingTree) Cleanup(ctx context.Context) {
 	}
 }
 
-func (wt *workingTree) RootDir() string {
+func (wt *WorkingTree) RootDir() string {
 	return wt.rootDir
 }
 
-func (wt *workingTree) BillsDir() string {
+func (wt *WorkingTree) BillsDir() string {
 	return wt.billDir
 }
 
-func (wt *workingTree) Containerfile() string {
+func (wt *WorkingTree) Containerfile() string {
 	return wt.containerfile
 }
 
-func (wt *workingTree) ContainerfileContent() []byte {
+func (wt *WorkingTree) ContainerfileContent() []byte {
 	return slices.Clone(wt.containerfileContent)
 }
 
-func (wt *workingTree) BillFiles() []*os.File {
+func (wt *WorkingTree) BillFiles() []*os.File {
 	return slices.Clone(wt.billFiles)
 }
 
-func (wt *workingTree) BillPaths() []string {
+func (wt *WorkingTree) BillPaths() []string {
 	return slices.Clone(wt.billPaths)
+}
+
+func (wt *WorkingTree) WriteBOMToFirstFile(bomJSON []byte) error {
+	if len(wt.billFiles) == 0 {
+		return fmt.Errorf("no bill files available")
+	}
+
+	file := wt.billFiles[0]
+
+	if _, err := file.Seek(0, 0); err != nil {
+		return fmt.Errorf("seek to start: %w", err)
+	}
+
+	if err := file.Truncate(0); err != nil {
+		return fmt.Errorf("truncate file: %w", err)
+	}
+
+	if _, err := file.Write(bomJSON); err != nil {
+		return fmt.Errorf("write BOM: %w", err)
+	}
+
+	if err := file.Sync(); err != nil {
+		return fmt.Errorf("sync file: %w", err)
+	}
+
+	return nil
 }

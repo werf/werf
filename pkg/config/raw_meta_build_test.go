@@ -36,7 +36,7 @@ var _ = Describe("rawMetaBuild", func() {
 				ImageSpec:    new(rawImageSpecGlobal).toDirective(),
 			},
 		),
-		Entry("should work with RawSbom=nil",
+		Entry("should work with RawMetaSbom=nil",
 			&rawMetaBuild{
 				CacheVersion: "some-cache-token",
 				Platform:     []string{"linux"},
@@ -48,18 +48,18 @@ var _ = Describe("rawMetaBuild", func() {
 				Staged:       true,
 			},
 		),
-		Entry("should work with RawSbom != nil",
+		Entry("should work with RawMetaBuildSbom != nil",
 			&rawMetaBuild{
 				CacheVersion: "some-cache-token",
 				Platform:     []string{"linux"},
 				Staged:       true,
-				RawSbom:      new(rawSbom),
+				RawMetaSbom:  new(rawMetaBuildSbom),
 			},
 			MetaBuild{
 				CacheVersion: "some-cache-token",
 				Platform:     []string{"linux"},
 				Staged:       true,
-				Sbom:         new(rawSbom).toDirective(),
+				Sbom:         new(rawMetaBuildSbom).toDirective(),
 			},
 		),
 	)

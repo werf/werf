@@ -1,0 +1,44 @@
+project: werf-test-e2e-build-sbom-merge-base-fragment
+configVersion: 1
+build:
+  sbom:
+    enable: true
+    standard: cyclonedx@1.6
+---
+image: app
+from: registry.werf.io/werf/scratch
+sbom:
+  fragment: |
+    components:
+      - name: custom-component
+        type: application
+        version: 1.0.0
+        purl: pkg:generic/custom-component@1.0.0
+
+    services:
+      - name: custom-api-service
+        endpoints:
+          - https://api.example.com/v1
+        authenticated: true
+        x-trust-boundary: false
+
+    externalReferences:
+      - type: website
+        url: https://example.com
+      - type: documentation
+        url: https://docs.example.com
+
+    properties:
+      - name: build-environment
+        value: production
+      - name: custom-property
+        value: custom-value
+
+    annotations:
+      - text: "This is a test annotation for merge verification"
+        annotator:
+          organization:
+            name: "werf"
+        timestamp: "2024-05-24T12:00:00Z"
+        subjects:
+          - "urn:cdx:custom-component/1.0.0"

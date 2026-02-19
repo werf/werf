@@ -646,19 +646,38 @@ jq -r '.Images | to_entries | map({key: .key, value: .value.DockerImageName}) | 
 
 ## Сканирование и генерация SBOM артефактов (EXPERIMENTAL)
 
-Для сканирования и генерации SBOM артефактов в процессе сборки активируйте опцию `sbom` в werf.yml:
+Для сканирования и генерации SBOM артефактов для всех образов в процессе сборки активируйте опцию `sbom` в werf.yml.
+
+При `build.sbom.enable: true` также можно указать SBOM-конфигурацию для каждого image через `sbom.fragment`:
 
 ```
 project: werf-sbom-experimental
 configVersion: 1
+build:
+  sbom:
+    enable: true
 ---
 image: dockerfile
 dockerfile: Dockerfile
-sbom: true # <-- (!) вот здесь
+sbom:
+  fragment: |
+    components:
+      - type: library
+        name: openssl
+        version: "3.0.0"
+        purl: pkg:generic/openssl@3.0.0
+        licenses:
+          - license:
+              id: Apache-2.0
+        hashes:
+          - alg: SHA-256
+            content: 9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08
 ```
 
 Результат сканирования будет сохранен как отдельный образ с постфиксом `-sbom` в локальном хранилище бекенда 
 (Docker или Buildah), а также отправлен в container registry, если указан флаг `--repo`.
+
+`sbom.fragment` должен быть YAML-документом CycloneDX@1.6 (или его частичным фрагментом, например только `components:`). werf достроит до полноценного BOM-документа CycloneDX@1.6.
 
 Сейчас данная опция использует следующие _умолчания_:
 

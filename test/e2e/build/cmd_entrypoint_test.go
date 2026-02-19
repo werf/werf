@@ -75,7 +75,7 @@ var _ = Describe("CMD and ENTRYPOINT combinations", Label("e2e", "build", "extra
 			},
 		},
 		{
-			name: "native-rootless",
+			name: "Buildah (native-rootless)",
 			options: setupEnvOptions{
 				ContainerBackendMode:        "native-rootless",
 				WithLocalRepo:               true,
@@ -83,7 +83,7 @@ var _ = Describe("CMD and ENTRYPOINT combinations", Label("e2e", "build", "extra
 			},
 		},
 		{
-			name: "native-rootless-staged",
+			name: "Buildah (native-rootless-staged)",
 			options: setupEnvOptions{
 				ContainerBackendMode:        "native-rootless",
 				WithLocalRepo:               true,
@@ -108,7 +108,7 @@ var _ = Describe("CMD and ENTRYPOINT combinations", Label("e2e", "build", "extra
 				Entry("Base image CMD", cmdEntrypointTestOptions{setupEnvOptions: backend.options}, "dockerfile_base_image_cmd", nil, strslice.StrSlice{"/bin/sh", "-c", "echo \"CMD (shell, base image)\""}),
 			)
 
-			if backend.name == "native-rootless" {
+			if backend.name == "Buildah (native-rootless)" {
 				// Dockerfile SHELL instruction is ignored by pure Buildah.
 				// rel https://github.com/containers/buildah/issues/2959.
 				DescribeTable("should produce expected image configurations", checkFunc,

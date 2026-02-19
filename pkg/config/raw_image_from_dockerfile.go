@@ -77,9 +77,9 @@ func (c *rawImageFromDockerfile) UnmarshalYAML(unmarshal func(interface{}) error
 	return nil
 }
 
-func (c *rawImageFromDockerfile) toImageFromDockerfileDirectives(giterminismManager giterminism_manager.Interface) (images []*ImageFromDockerfile, err error) {
+func (c *rawImageFromDockerfile) toImageFromDockerfileDirectives(giterminismManager giterminism_manager.Interface, meta *Meta) (images []*ImageFromDockerfile, err error) {
 	for _, imageName := range c.Images {
-		if image, err := c.toImageFromDockerfileDirective(giterminismManager, imageName); err != nil {
+		if image, err := c.toImageFromDockerfileDirective(giterminismManager, meta, imageName); err != nil {
 			return nil, err
 		} else {
 			images = append(images, image)
@@ -89,7 +89,7 @@ func (c *rawImageFromDockerfile) toImageFromDockerfileDirectives(giterminismMana
 	return images, nil
 }
 
-func (c *rawImageFromDockerfile) toImageFromDockerfileDirective(giterminismManager giterminism_manager.Interface, imageName string) (image *ImageFromDockerfile, err error) {
+func (c *rawImageFromDockerfile) toImageFromDockerfileDirective(giterminismManager giterminism_manager.Interface, meta *Meta, imageName string) (image *ImageFromDockerfile, err error) {
 	image = &ImageFromDockerfile{}
 	image.Name = imageName
 	image.Dockerfile = c.Dockerfile
@@ -152,8 +152,8 @@ func (c *rawImageFromDockerfile) toImageFromDockerfileDirective(giterminismManag
 		image.ImageSpec = c.RawImageSpec.toDirective()
 	}
 
-	if c.RawSbom != nil {
-		image.sbom = c.RawSbom.toDirective()
+	if image.sbom, err = buildImageSbom(meta, c.RawSbom, c.doc); err != nil {
+		return nil, err
 	}
 
 	if err := image.validate(giterminismManager); err != nil {

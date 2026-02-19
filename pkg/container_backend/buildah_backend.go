@@ -1136,63 +1136,47 @@ func (backend *BuildahBackend) LoadImageFromStream(ctx context.Context, input io
 }
 
 func (backend *BuildahBackend) GenerateSBOM(ctx context.Context, scanOpts scanner.ScanOptions, dstImgLabels []string) (string, error) {
-	workingTree := scanner.NewWorkingTree()
-
-	billNames := mapSbomScanCommandsToSbomBillNames(scanOpts.Commands)
-
-	if err := workingTree.Create(ctx, os.TempDir(), billNames); err != nil {
-		return "", err
-	}
-	defer workingTree.Cleanup(ctx)
-
-	scannerContainerName := fmt.Sprintf("%s%s", image.SBOMScannerContainerNamePrefix, uuid.New().String())
-	// TODO (zaytsev): support multiple commands
-	scannerContainerRef, err := backend.buildah.FromCommand(ctx, scannerContainerName, scanOpts.Commands[0].SourcePath, buildah.FromCommandOpts{})
-	if err != nil {
-		return "", fmt.Errorf("unable to from scanner container: %w", err)
-	}
-
-	scanOptions := mapSbomScanOptionsToBuidahBackendScanOptions(scanOpts)
-	// TODO (zaytsev): support multiple commands
-	scanOptions.SBOMOutput = filepath.Join(workingTree.RootDir(), workingTree.BillsDir(), workingTree.BillPaths()[0])
-
-	scanLogger := logboek.Context(ctx).Default().LogProcess("Scan image %q", scanOpts.Commands[0].SourcePath)
-	scanLogger.Start()
-
-	imageRef, err := backend.buildah.Commit(ctx, scannerContainerRef, buildah.CommitOpts{
-		CommonOpts: buildah.CommonOpts{
-			LogWriter: logboek.Context(ctx).OutStream(),
-		},
-		SBOMScanOptions: []buildah.SBOMScanOptions{scanOptions},
-	})
-	if err != nil {
-		scanLogger.End()
-		return "", fmt.Errorf("unable to commit scanner container %q: %w", scannerContainerName, err)
-	}
-	defer func() {
-		if err = backend.buildah.Rmi(ctx, imageRef, buildah.RmiOpts{Force: true}); err != nil {
-			logboek.Context(ctx).Warn().LogF("removing image %q and container %q\n", imageRef, scannerContainerName)
+	runner := func(ctx context.Context, wt *scanner.WorkingTree) error {
+		scannerContainerName := fmt.Sprintf("%s%s", image.SBOMScannerContainerNamePrefix, uuid.New().String())
+		// TODO (zaytsev): support multiple commands
+		scannerContainerRef, err := backend.buildah.FromCommand(ctx, scannerContainerName, scanOpts.Commands[0].SourcePath, buildah.FromCommandOpts{})
+		if err != nil {
+			return fmt.Errorf("unable to from scanner container: %w", err)
 		}
-	}()
-	scanLogger.End()
+
+		scanOptions := mapSbomScanOptionsToBuidahBackendScanOptions(scanOpts)
+		// TODO (zaytsev): support multiple commands
+		scanOptions.SBOMOutput = filepath.Join(wt.RootDir(), wt.BillsDir(), wt.BillPaths()[0])
+
+		scanLogger := logboek.Context(ctx).Default().LogProcess("Scan image %q", scanOpts.Commands[0].SourcePath)
+		scanLogger.Start()
+		defer scanLogger.End()
+
+		imageRef, err := backend.buildah.Commit(ctx, scannerContainerRef, buildah.CommitOpts{
+			CommonOpts: buildah.CommonOpts{
+				LogWriter: logboek.Context(ctx).OutStream(),
+			},
+			SBOMScanOptions: []buildah.SBOMScanOptions{scanOptions},
+		})
+		if err != nil {
+			return fmt.Errorf("unable to commit scanner container %q: %w", scannerContainerName, err)
+		}
+		defer func() {
+			if err = backend.buildah.Rmi(ctx, imageRef, buildah.RmiOpts{Force: true}); err != nil {
+				logboek.Context(ctx).Warn().LogF("removing image %q and container %q\n", imageRef, scannerContainerName)
+			}
+		}()
+		return nil
+	}
+
+	source := NewScannerSource(runner)
+	builder := NewSBOMImageBuilder(backend)
 
 	buildLogger := logboek.Context(ctx).Default().LogProcess("Build destination image")
 	buildLogger.Start()
+	defer buildLogger.End()
 
-	imageId, err := backend.buildah.BuildFromDockerfile(ctx, workingTree.Containerfile(), buildah.BuildFromDockerfileOpts{
-		ContextDir: workingTree.RootDir(),
-		Labels:     dstImgLabels,
-		CommonOpts: buildah.CommonOpts{
-			LogWriter: io.Discard, // discard build log
-		},
-	})
-	if err != nil {
-		buildLogger.End()
-		return "", fmt.Errorf("unable to build sbom result image: %w", err)
-	}
-	buildLogger.End()
-
-	return imageId, nil
+	return builder.BuildImage(ctx, source, scanOpts, dstImgLabels)
 }
 
 func mapSbomScanOptionsToBuidahBackendScanOptions(scanOpts scanner.ScanOptions) buildah.SBOMScanOptions {

@@ -1,7 +1,22 @@
 project: werf-test-e2e-sbom-get
 configVersion: 1
-
+build:
+  sbom:
+    enable: true
+    standard: cyclonedx@1.6
 ---
-image: dockerfile
-dockerfile: Dockerfile
-sbom: true
+image: stapel
+from: registry.werf.io/werf/scratch
+sbom:
+  fragment: |
+    components:
+      - name: curl
+        type: application
+        version: 8.12.1
+        purl: pkg:generic/curl@8.12.1
+        licenses:
+          - license:
+              id: MIT
+        hashes:
+          - alg: SHA-256
+            content: 9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08

@@ -5,5 +5,5 @@ type MetaBuild struct {
 	Platform     []string
 	Staged       bool
 	ImageSpec    *ImageSpec
-	Sbom         *Sbom
+	Sbom         *MetaBuildSbom
 }

@@ -112,6 +112,23 @@ func (c *WerfConfig) validateInfiniteLoopBetweenRelatedImages() error {
 	return nil
 }
 
+// TODO: remove this validation after adding SBOM support for Dockerfile images
+func (c *WerfConfig) validateSbomOnlyWithStapelImages() error {
+	if c.Meta.Build.Sbom == nil || !c.Meta.Build.Sbom.Enable {
+		return nil
+	}
+
+	for _, image := range c.Images(false) {
+		if !image.IsStapel() {
+			return newConfigError(
+				fmt.Sprintf("SBOM is enabled but image %q uses Dockerfile syntax. SBOM feature is only supported with Stapel images", image.GetName()),
+			)
+		}
+	}
+
+	return nil
+}
+
 func (c *WerfConfig) validateImageInfiniteLoop(imageName string, imageNameStack []string) (error, []string) {
 	for _, stackImageName := range imageNameStack {
 		if stackImageName == imageName {

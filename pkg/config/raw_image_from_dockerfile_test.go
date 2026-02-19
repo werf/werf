@@ -37,7 +37,9 @@ var _ = Describe("rawImageFromDockerfile", func() {
 
 			Expect(yaml.UnmarshalStrict(doc.Content, rawDockerfileImage)).To(Succeed())
 
-			dockerfileImage, err := rawDockerfileImage.toImageFromDockerfileDirective(giterminismManager, "image1")
+			meta := &Meta{}
+
+			dockerfileImage, err := rawDockerfileImage.toImageFromDockerfileDirective(giterminismManager, meta, "image1")
 			Expect(err).To(Succeed())
 
 			dockerfileImage.raw = nil // set to nil for correct deep comparison
@@ -64,14 +66,14 @@ var _ = Describe("rawImageFromDockerfile", func() {
 			"should handle sbom",
 			map[string]interface{}{
 				"image": "image1",
-				"sbom":  true,
+				// "sbom": "..." TODO: restore when sbom is implemented
 			},
 			&ImageFromDockerfile{
 				Name:            "image1",
 				ContextAddFiles: []string{},
 				AddHost:         []string{},
 				Secrets:         []Secret{},
-				sbom:            new(rawSbom).toDirective(),
+				sbom:            nil, // SBOM is validated/built via buildImageSbom(...) during conversion; keep nil here in expected struct.
 
 				platform: []string{},
 				final:    true,
@@ -96,7 +98,9 @@ var _ = Describe("rawImageFromDockerfile", func() {
 
 			Expect(yaml.UnmarshalStrict(doc.Content, rawDockerfileImage)).To(Succeed())
 
-			dockerfileImage, err := rawDockerfileImage.toImageFromDockerfileDirective(giterminismManager, "image1")
+			meta := &Meta{}
+
+			dockerfileImage, err := rawDockerfileImage.toImageFromDockerfileDirective(giterminismManager, meta, "image1")
 			Expect(err).To(Succeed())
 
 			for i, expectedDep := range expected {
@@ -258,7 +262,9 @@ var _ = Describe("rawImageFromDockerfile", func() {
 			Expect(yaml.UnmarshalStrict(doc.Content, rawDockerfileImage)).To(Succeed())
 
 			var errConf *configError
-			_, err = rawDockerfileImage.toImageFromDockerfileDirective(giterminismManager, "image1")
+			meta := &Meta{}
+
+			_, err = rawDockerfileImage.toImageFromDockerfileDirective(giterminismManager, meta, "image1")
 			Expect(errors.As(err, &errConf)).To(BeTrue())
 		},
 		Entry(

@@ -83,3 +83,15 @@ func NewSyftScanCommand() ScanCommand {
 		outputFormat:    "json",
 	}
 }
+
+func BillNameFromCommand(cmd ScanCommand) string {
+	return fmt.Sprintf("%s/%s.json", cmd.OutputStandard.String(), cmd.Checksum())
+}
+
+func BillNamesFromCommands(commands []ScanCommand) []string {
+	billNames := make([]string, len(commands))
+	for i, cmd := range commands {
+		billNames[i] = BillNameFromCommand(cmd)
+	}
+	return billNames
+}

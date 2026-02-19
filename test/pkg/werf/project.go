@@ -40,6 +40,27 @@ func (p *Project) Build(ctx context.Context, opts *BuildOptions) (combinedOut st
 	return string(outb)
 }
 
+func (p *Project) BuildWithErr(ctx context.Context, opts *BuildOptions) (combinedOut string, err error) {
+	if opts == nil {
+		opts = &BuildOptions{}
+	}
+
+	args := append([]string{"build"}, opts.ExtraArgs...)
+	outb, err := iutils.RunCommandWithOptions(
+		ctx,
+		p.GitRepoPath,
+		p.WerfBinPath,
+		args,
+		iutils.RunCommandOptions{
+			ShouldSucceed:         false,
+			ExtraEnv:              opts.Envs,
+			CancelOnOutput:        opts.CancelOnOutput,
+			CancelOnOutputTimeout: opts.CancelOnOutputTimeout,
+		})
+
+	return string(outb), err
+}
+
 func (p *Project) Converge(ctx context.Context, opts *ConvergeOptions) (combinedOut string) {
 	if opts == nil {
 		opts = &ConvergeOptions{}

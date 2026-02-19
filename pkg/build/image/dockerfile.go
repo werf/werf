@@ -271,18 +271,6 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 }
 
 func mapLegacyDockerfileToImage(ctx context.Context, metaConfig *config.Meta, dockerfileImageConfig *config.ImageFromDockerfile, targetPlatform string, useCustomTag bool, opts CommonImageOptions) (*Image, error) {
-	img, err := NewImage(ctx, targetPlatform, dockerfileImageConfig.Name, NoBaseImage, ImageOptions{
-		CommonImageOptions:    opts,
-		IsFinal:               dockerfileImageConfig.IsFinal(),
-		IsDockerfileImage:     true,
-		UseCustomTag:          useCustomTag,
-		DockerfileImageConfig: dockerfileImageConfig,
-		Sbom:                  dockerfileImageConfig.Sbom(),
-	})
-	if err != nil {
-		return nil, fmt.Errorf("unable to create image %q: %w", dockerfileImageConfig.Name, err)
-	}
-
 	for _, contextAddFile := range dockerfileImageConfig.ContextAddFiles {
 		relContextAddFile := filepath.Join(dockerfileImageConfig.Context, contextAddFile)
 		absContextAddFile := filepath.Join(opts.ProjectDir, relContextAddFile)
@@ -322,6 +310,21 @@ func mapLegacyDockerfileToImage(ctx context.Context, metaConfig *config.Meta, do
 	dockerTargetIndex, err := frontend.GetDockerTargetStageIndex(dockerStages, dockerfileImageConfig.Target)
 	if err != nil {
 		return nil, err
+	}
+
+	baseImageType, baseImageReference := extractBaseImageFromDockerfile(dockerStages, dockerTargetIndex)
+
+	img, err := NewImage(ctx, targetPlatform, dockerfileImageConfig.Name, baseImageType, ImageOptions{
+		CommonImageOptions:    opts,
+		IsFinal:               dockerfileImageConfig.IsFinal(),
+		IsDockerfileImage:     true,
+		UseCustomTag:          useCustomTag,
+		DockerfileImageConfig: dockerfileImageConfig,
+		BaseImageReference:    baseImageReference,
+		Sbom:                  dockerfileImageConfig.Sbom(),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("unable to create image %q: %w", dockerfileImageConfig.Name, err)
 	}
 
 	ds := stage.NewDockerStages(
@@ -426,4 +429,29 @@ func createDockerIgnorePathMatcher(ctx context.Context, giterminismMgr gitermini
 	}
 
 	return dockerIgnorePathMatcher, nil
+}
+
+func extractBaseImageFromDockerfile(dockerStages []instructions.Stage, targetIndex int) (BaseImageType, string) {
+	if targetIndex < 0 || targetIndex >= len(dockerStages) {
+		return NoBaseImage, ""
+	}
+
+	targetStage := dockerStages[targetIndex]
+	baseName := targetStage.BaseName
+
+	if baseName == "" || strings.EqualFold(baseName, "scratch") {
+		return NoBaseImage, ""
+	}
+
+	if strings.Contains(baseName, "${") || strings.Contains(baseName, "$") {
+		return NoBaseImage, ""
+	}
+
+	for i := 0; i < targetIndex; i++ {
+		if strings.EqualFold(dockerStages[i].Name, baseName) {
+			return NoBaseImage, ""
+		}
+	}
+
+	return ImageFromRegistryAsBaseImage, baseName
 }

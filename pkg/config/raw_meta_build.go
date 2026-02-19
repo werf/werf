@@ -5,7 +5,7 @@ type rawMetaBuild struct {
 	Platform     []string            `yaml:"platform,omitempty"`
 	Staged       bool                `yaml:"staged,omitempty"`
 	RawImageSpec *rawImageSpecGlobal `yaml:"imageSpec,omitempty"`
-	RawSbom      *rawSbom            `yaml:"sbom,omitempty"`
+	RawMetaSbom  *rawMetaBuildSbom   `yaml:"sbom,omitempty"`
 	rawMeta      *rawMeta
 
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
@@ -39,8 +39,8 @@ func (c *rawMetaBuild) toMetaBuild() MetaBuild {
 	if c.RawImageSpec != nil {
 		metaBuild.ImageSpec = c.RawImageSpec.toDirective()
 	}
-	if c.RawSbom != nil {
-		metaBuild.Sbom = c.RawSbom.toDirective()
+	if c.RawMetaSbom != nil {
+		metaBuild.Sbom = c.RawMetaSbom.toDirective()
 	}
 	return metaBuild
 }

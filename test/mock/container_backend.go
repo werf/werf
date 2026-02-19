@@ -10,7 +10,6 @@
 package mock
 
 import (
-	bytes "bytes"
 	context "context"
 	io "io"
 	reflect "reflect"
@@ -137,21 +136,6 @@ func (m *MockContainerBackend) Containers(ctx context.Context, opts container_ba
 func (mr *MockContainerBackendMockRecorder) Containers(ctx, opts any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Containers", reflect.TypeOf((*MockContainerBackend)(nil).Containers), ctx, opts)
-}
-
-// DumpImage mocks base method.
-func (m *MockContainerBackend) DumpImage(ctx context.Context, ref string) (*bytes.Reader, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DumpImage", ctx, ref)
-	ret0, _ := ret[0].(*bytes.Reader)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// DumpImage indicates an expected call of DumpImage.
-func (mr *MockContainerBackendMockRecorder) DumpImage(ctx, ref any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DumpImage", reflect.TypeOf((*MockContainerBackend)(nil).DumpImage), ctx, ref)
 }
 
 // GenerateSBOM mocks base method.
@@ -454,20 +438,6 @@ func (m *MockContainerBackend) SaveImageToStream(ctx context.Context, imageName 
 func (mr *MockContainerBackendMockRecorder) SaveImageToStream(ctx, imageName any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveImageToStream", reflect.TypeOf((*MockContainerBackend)(nil).SaveImageToStream), ctx, imageName)
-}
-
-// ShouldCleanupDockerfileImage mocks base method.
-func (m *MockContainerBackend) ShouldCleanupDockerfileImage() bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ShouldCleanupDockerfileImage")
-	ret0, _ := ret[0].(bool)
-	return ret0
-}
-
-// ShouldCleanupDockerfileImage indicates an expected call of ShouldCleanupDockerfileImage.
-func (mr *MockContainerBackendMockRecorder) ShouldCleanupDockerfileImage() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ShouldCleanupDockerfileImage", reflect.TypeOf((*MockContainerBackend)(nil).ShouldCleanupDockerfileImage))
 }
 
 // String mocks base method.
