@@ -1,5 +1,21 @@
 # Changelog
 
+## [2.62.0](https://github.com/werf/werf/compare/v2.61.1...v2.62.0) (2026-02-20)
+
+
+### Features
+
+* **build:** add network isolation for Docker backend ([6f41567](https://github.com/werf/werf/commit/6f41567bbbc65776472e0a68f2a749a4324b38b3))
+* **build:** document network isolation for build containers ([beb904f](https://github.com/werf/werf/commit/beb904ff4699642809d9db9c8e58b772d29acc55))
+* **build:** remove unused empty string argument in full dockerfile test ([09b3e43](https://github.com/werf/werf/commit/09b3e4388bef76afb38eda38e9ebd6968ad0fc20))
+* **build:** support network directive in werf.yaml ([bf8482f](https://github.com/werf/werf/commit/bf8482f6a72785fda0ff2e644c8c5d8d11d0e34c))
+* **deploy:** add plan freezing support ([#7362](https://github.com/werf/werf/issues/7362)) ([28c053f](https://github.com/werf/werf/commit/28c053faf35226d44ad530ec93000878e56e9640))
+
+
+### Bug Fixes
+
+* **build:** impl requested changes ([2811f4e](https://github.com/werf/werf/commit/2811f4e6536b9dabcf192548869338487699389c))
+
 ## [2.62.0](https://github.com/werf/werf/compare/v2.61.1...v2.62.0) (2026-02-19)
 
 
