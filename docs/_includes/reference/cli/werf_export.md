@@ -56,8 +56,6 @@ werf export [IMAGE_NAME...] [options]
             Enable ELF files signing with bsign (default $WERF_BSIGN_ELF_FILES).
             When enabled, the private elf key must be specified with --elf-pgp-private-key-base64   
             or --elf-pgp-private-key-fingerprint option
-      --backend-network=""
-            Network mode for the build containers ($WERF_BACKEND_NETWORK or nothing by default)
       --build-report-path=""
             Change build report path and format (by default $WERF_BUILD_REPORT_PATH or              
             ".werf-build-report.json" if not set). Extension must be either .json for JSON format   
@@ -288,3 +286,4 @@ werf export [IMAGE_NAME...] [options]
             Enable virtual/ephemeral merge commit mode when building current application state      
             ($WERF_VIRTUAL_MERGE by default)
 ```
+

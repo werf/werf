@@ -253,3 +253,4 @@ werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
             Enable virtual/ephemeral merge commit mode when building current application state      
             ($WERF_VIRTUAL_MERGE by default)
 ```
+

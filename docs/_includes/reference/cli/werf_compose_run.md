@@ -309,3 +309,4 @@ werf compose run [IMAGE_NAME...] [options] [--docker-compose-options="OPTIONS"] 
             in the .helm/templates ($WERF_WITHOUT_IMAGES or false by default — e.g. enable all      
             images defined in the werf.yaml by default)
 ```
+

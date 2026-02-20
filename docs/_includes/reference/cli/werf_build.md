@@ -316,3 +316,4 @@ werf build [IMAGE_NAME...] [options]
             Enable virtual/ephemeral merge commit mode when building current application state      
             ($WERF_VIRTUAL_MERGE by default)
 ```
+
