@@ -1,0 +1,20 @@
+project: werf-sbom-cross-project-derived
+configVersion: 1
+build:
+  sbom:
+    enable: true
+    standard: cyclonedx@1.6
+---
+image: derived-level-1
+from: {{ env "BASE_IMAGE_REF" }}
+sbom:
+  fragment: |
+    components:
+      - name: derived-component
+        type: application
+        version: 1.0.0
+        purl: pkg:generic/derived-component@1.0.0
+git:
+  - add: /file
+    to: /state0/file
+

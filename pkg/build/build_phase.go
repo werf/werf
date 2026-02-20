@@ -1450,22 +1450,36 @@ func (phase *BuildPhase) collectBaseImageSbom(ctx context.Context, img *image.Im
 		return cyclonedxutil.NewBOM(), nil
 	}
 
-	if img.GetBaseImageReference() != "" {
-		if baseStageImage := img.GetBaseStageImage(); baseStageImage != nil {
-			if baseStageDesc := baseStageImage.Image.GetStageDesc(); baseStageDesc != nil && baseStageDesc.Info != nil {
-				baseImageSbom, err := phase.sbomStep.GetImageBOM(ctx, name, img.GetBaseImageReference(), baseStageDesc.Info)
-				if err != nil {
-					return nil, fmt.Errorf("unable to get base image sbom with ref %s SBOM: %w", img.GetBaseImageReference(), err)
-				}
+	if img.GetBaseImageReference() == "" {
+		return nil, fmt.Errorf("unable to collect base image sbom for image %q: empty base image reference", name)
+	}
 
-				return baseImageSbom, nil
-			}
-		} else {
-			return nil, fmt.Errorf("unable to get last non empty stage image info for base image with ref %s", img.GetBaseImageReference())
+	var baseImageInfo *imagePkg.Info
+
+	if baseStageImage := img.GetBaseStageImage(); baseStageImage != nil {
+		if baseStageDesc := baseStageImage.Image.GetStageDesc(); baseStageDesc != nil && baseStageDesc.Info != nil {
+			baseImageInfo = baseStageDesc.Info
 		}
 	}
 
-	return nil, fmt.Errorf("unable to collect base image sbom for image %q", name)
+	if baseImageInfo == nil {
+		info, err := phase.Conveyor.ContainerBackend.GetImageInfo(ctx, img.GetBaseImageReference(), container_backend.GetImageInfoOpts{})
+		if err != nil {
+			return nil, fmt.Errorf("unable to get base image info for %q: %w", img.GetBaseImageReference(), err)
+		}
+		baseImageInfo = info
+	}
+
+	if baseImageInfo == nil {
+		return nil, fmt.Errorf("unable to collect base image sbom for image %q: base image info not available", name)
+	}
+
+	baseImageSbom, err := phase.sbomStep.GetImageBOM(ctx, name, img.GetBaseImageReference(), baseImageInfo)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get base image sbom with ref %s: %w", img.GetBaseImageReference(), err)
+	}
+
+	return baseImageSbom, nil
 }
 
 func (phase *BuildPhase) collectImportImageSboms(ctx context.Context, img *image.Image, name string) ([]*cdx.BOM, error) {
@@ -1486,15 +1500,23 @@ func (phase *BuildPhase) collectImportImageSboms(ctx context.Context, img *image
 			}
 		}
 
-		if importImageInfo != nil {
-			importImageSbom, err := phase.sbomStep.GetImageBOM(ctx, name, importInfo.ImageName, importImageInfo)
+		if importImageInfo == nil {
+			info, err := phase.Conveyor.ContainerBackend.GetImageInfo(ctx, importInfo.ImageName, container_backend.GetImageInfoOpts{})
 			if err != nil {
-				return nil, fmt.Errorf("unable to get import image sbom for %q: %w", importInfo.ImageName, err)
+				return nil, fmt.Errorf("unable to get import image info for %q: %w", importInfo.ImageName, err)
 			}
-			importImageSboms = append(importImageSboms, importImageSbom)
-		} else {
-			return nil, fmt.Errorf("unable to get last non empty stage image info for import image %q on platform %q", importInfo.ImageName, img.TargetPlatform)
+			importImageInfo = info
 		}
+
+		if importImageInfo == nil {
+			return nil, fmt.Errorf("unable to collect import image sbom for %q on platform %q: image info not available", importInfo.ImageName, img.TargetPlatform)
+		}
+
+		importImageSbom, err := phase.sbomStep.GetImageBOM(ctx, name, importInfo.ImageName, importImageInfo)
+		if err != nil {
+			return nil, fmt.Errorf("unable to get import image sbom for %q: %w", importInfo.ImageName, err)
+		}
+		importImageSboms = append(importImageSboms, importImageSbom)
 	}
 
 	return importImageSboms, nil
