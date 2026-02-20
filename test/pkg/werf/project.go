@@ -170,6 +170,7 @@ func (p *Project) RunCommand(
 		args,
 		iutils.RunCommandOptions{
 			ShouldSucceed:         !opts.ShouldFail,
+			ExtraEnv:              opts.ExtraEnv,
 			CancelOnOutput:        opts.CancelOnOutput,
 			CancelOnOutputTimeout: opts.CancelOnOutputTimeout,
 		})
