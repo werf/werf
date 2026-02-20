@@ -391,7 +391,15 @@ func (s *DependenciesStage) generateImportChecksum(ctx context.Context, c Convey
 // We cannot simply ask rsync to print "just file paths" in a machine-friendly format.
 //
 // To keep the checksum aligned with the actual import logic, we reuse rsync and the same
-// filters as the import server does (PrepareRsyncFilters),
+// filters as the import server does (PrepareRsyncFilters).
+//
+// The script uses two-phase approach matching the import logic:
+// Phase 1: Use 'find' to get directories that directly match include globs
+//
+//	(rsync with --prune-empty-dirs cannot detect empty target directories in --dry-run mode)
+//
+// Phase 2: Use rsync to get files matching the globs (using PrepareRsyncFilters)
+// This ensures empty directories that match globs like "app/**/add-dir" are included in checksum.
 func generateChecksumScript(from string, includePaths, excludePaths []string, resultChecksumPath string) []string {
 	// As we are running rsync from the container root, we need to make sure that the paths
 	// we are passing to rsync are relative to the container root.
@@ -416,19 +424,20 @@ func generateChecksumScript(from string, includePaths, excludePaths []string, re
 		excludePathsCopy = append(excludePathsCopy, stapel.CONTAINER_MOUNT_ROOT)
 	}
 
-	// Do not follow symlinks when calculating checksums to avoid runner hang-ups (-L)
-	rsyncCommand := stapel.RsyncBinPath() + " -r --dry-run"
-	// Run rsync from the container root to avoid problems with relative paths in the output.
-	rsyncCommand += import_server.PrepareRsyncFilters("", includePathsCopy, excludePathsCopy)
-	rsyncCommand += " " + "/"
-
-	// We have an old rsync version, so we can't use --out-format and other options to parse file paths.'
+	// We have an old rsync version, so we can't use --out-format and other options to parse file paths.
 	// Example lines:
 	// "-rw-r--r--    1 root     root             0 Nov 17 22:57 test-file.a"
+	// "drwxr-xr-x    1 root     root             0 Nov 17 22:57 some-directory"
 	// "lrw-r--r--    1 root     root             0 Dec 10 10:07 path/to/link -> target/path"
+	//
+	// NOTE: We include directories (d*) in the checksum calculation. This ensures checksum
+	// consistency with what gets copied. For file globs like "**/*.txt", only parent directories
+	// of matching files are included. For directory globs like "app/**/add-dir", the directories
+	// themselves are included even if empty (via Phase 1 find command).
 	parseFilePathCommand := `while read -r mode rest; do
 	 case "$mode" in
 	   -*) echo "/${rest##* }" ;;
+	   d*) echo "/${rest##* }/" ;;
 	   l*)
 	     name="${rest%% -> *}"
 	     name="${name##* }"
@@ -436,14 +445,38 @@ func generateChecksumScript(from string, includePaths, excludePaths []string, re
 	     ;;
 	 esac
 	done`
-	sortCommand := fmt.Sprintf("%s -n", stapel.SortBinPath())
+
+	var commands string
+
+	// phase 1: Use 'find' to get directories that directly match include globs
+	// this is necessary because rsync with --prune-empty-dirs removes empty directories
+	// from output even when they match the include pattern.
+	//
+	// optimized approach:
+	// - for patterns with **: use ONE find command with multiple -name conditions
+	// - for simple paths: batch all existence checks together
+	if len(includePaths) > 0 {
+		commands = "{ " + generateFirstPhaseFindCommand(from, includePathsCopy) + "; "
+	} else {
+		commands = "{ "
+	}
+
+	// phase 2: Get files matching the globs using rsync (standard behavior)
+	// do not follow symlinks when calculating checksums to avoid runner hang-ups (-L)
+	rsyncFilesCommand := stapel.RsyncBinPath() + " -r --dry-run"
+	// run rsync from the container root to avoid problems with relative paths in the output.
+	rsyncFilesCommand += import_server.PrepareRsyncFilters("", includePathsCopy, excludePathsCopy)
+	rsyncFilesCommand += " " + "/"
+	commands += rsyncFilesCommand + " | " + parseFilePathCommand + "; }"
+
+	sortCommand := fmt.Sprintf("%s -u", stapel.SortBinPath()) // -u for unique (remove duplicates)
 	md5SumCommand := stapel.Md5sumBinPath()
 	cutCommand := fmt.Sprintf("%s -c 1-32", stapel.CutBinPath())
 
-	commands := []string{rsyncCommand, parseFilePathCommand, sortCommand, "checksum", md5SumCommand, cutCommand}
+	allCommands := []string{commands, sortCommand, "checksum", md5SumCommand, cutCommand}
 
 	script := generateChecksumBashFunction()
-	script = append(script, fmt.Sprintf("%s > %s", strings.Join(commands, " | "), resultChecksumPath))
+	script = append(script, fmt.Sprintf("%s > %s", strings.Join(allCommands, " | "), resultChecksumPath))
 
 	return script
 }
@@ -476,6 +509,118 @@ func getDependencyImportID(dependencyImport *config.DependencyImport) string {
 		"Type", string(dependencyImport.Type),
 		"TargetEnv", dependencyImport.TargetEnv,
 	)
+}
+
+// generateFirstPhaseFindCommand creates an optimized shell command to find directories
+// matching the include patterns. Instead of running multiple find commands (one per pattern),
+// this function:
+// 1. groups patterns with ** by their common prefix to minimize filesystem traversals
+// 2. uses a single find with multiple -name conditions where possible
+// 3. batches simple path checks together
+//
+// this is important for performance when the source directory contains hundreds of
+// thousands of files.
+func generateFirstPhaseFindCommand(from string, includePathsCopy []string) string {
+	if len(includePathsCopy) == 0 {
+		return "true"
+	}
+
+	baseDir := from
+	if baseDir == "" {
+		baseDir = "/"
+	}
+
+	// separate glob patterns (with **) from simple paths
+	type globPattern struct {
+		prefix      string // path before **
+		dirName     string // directory name to find (after **)
+		fullPattern string // original pattern for path filtering
+	}
+
+	var globPatterns []globPattern
+	var simplePaths []string
+
+	for _, p := range includePathsCopy {
+		if strings.Contains(p, "**") {
+			parts := strings.SplitN(p, "**", 2)
+			prefix := strings.TrimSuffix(parts[0], "/")
+			suffix := strings.TrimPrefix(parts[1], "/")
+			if suffix == "" {
+				continue
+			}
+			// for patterns like "app/**/sub/dir", we need the last segment
+			dirName := path.Base(suffix)
+			globPatterns = append(globPatterns, globPattern{
+				prefix:      prefix,
+				dirName:     dirName,
+				fullPattern: p,
+			})
+		} else {
+			simplePaths = append(simplePaths, p)
+		}
+	}
+
+	var commands []string
+
+	// group glob patterns by prefix to run fewer find commands
+	if len(globPatterns) > 0 {
+		// group patterns by their prefix
+		prefixGroups := make(map[string][]globPattern)
+		for _, gp := range globPatterns {
+			prefixGroups[gp.prefix] = append(prefixGroups[gp.prefix], gp)
+		}
+
+		for prefix, patterns := range prefixGroups {
+			// prefix already contains the full path,
+			// so use it directly as searchDir
+			searchDir := prefix
+			if searchDir == "" {
+				searchDir = baseDir
+			}
+
+			// build find command with multiple -name conditions (OR)
+			var nameConditions []string
+			var pathPrefixes []string
+			for _, gp := range patterns {
+				nameConditions = append(nameConditions, fmt.Sprintf("-name '%s'", gp.dirName))
+				// calculate path prefix for filtering
+				pathPrefix := strings.TrimSuffix(strings.SplitN(gp.fullPattern, "**", 2)[0], "/")
+				if pathPrefix == "" {
+					pathPrefix = baseDir
+				}
+				pathPrefixes = append(pathPrefixes, pathPrefix)
+			}
+
+			// combine name conditions with -o (OR)
+			nameExpr := strings.Join(nameConditions, " -o ")
+			if len(nameConditions) > 1 {
+				nameExpr = "\\( " + nameExpr + " \\)"
+			}
+
+			// build case pattern for path filtering
+			var casePatterns []string
+			for _, pfx := range pathPrefixes {
+				casePatterns = append(casePatterns, pfx+"*")
+			}
+			casePattern := strings.Join(casePatterns, "|")
+
+			findCmd := fmt.Sprintf(
+				"find %s -type d %s 2>/dev/null | while read d; do case \"$d\" in %s) echo \"$d/\" ;; esac; done",
+				searchDir, nameExpr, casePattern)
+			commands = append(commands, findCmd)
+		}
+	}
+
+	// handle simple paths - just check if directory exists
+	for _, p := range simplePaths {
+		commands = append(commands, fmt.Sprintf("[ -d '%s' ] && echo '%s/' || true", p, p))
+	}
+
+	if len(commands) == 0 {
+		return "true"
+	}
+
+	return strings.Join(commands, "; ")
 }
 
 func getImportID(importElm *config.Import) string {

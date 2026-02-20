@@ -306,3 +306,105 @@ func NewConveyorStubForDependencies(giterminismManager *GiterminismManagerStub, 
 
 	return NewConveyorStub(giterminismManager, lastStageImageNameByImageName, lastStageImageIDByImageName, lastStageImageDigestByImageName)
 }
+
+var _ = Describe("generateFirstPhaseFindCommand", func() {
+	DescribeTable("should generate correct find commands for various include patterns",
+		func(baseDir string, includePaths, expectedContains, expectedNotContains []string) {
+			result := generateFirstPhaseFindCommand(baseDir, includePaths)
+
+			for _, expected := range expectedContains {
+				Expect(result).To(ContainSubstring(expected),
+					"expected command to contain %q, got: %s", expected, result)
+			}
+
+			for _, notExpected := range expectedNotContains {
+				Expect(result).NotTo(ContainSubstring(notExpected),
+					"expected command NOT to contain %q, got: %s", notExpected, result)
+			}
+		},
+
+		Entry("should use prefix directly when it's already an absolute path",
+			"/out/tree",
+			[]string{"/out/tree/app/**/add-dir"},
+			[]string{
+				"find /out/tree/app",
+				"-name 'add-dir'",
+			},
+			[]string{
+				"/out/tree/out/tree",
+			},
+		),
+
+		Entry("should handle multiple glob patterns with same prefix",
+			"/src",
+			[]string{"/src/app/**/cache", "/src/app/**/logs"},
+			[]string{
+				"find /src/app",
+				"-name 'cache'",
+				"-name 'logs'",
+			},
+			[]string{
+				"/src/src/app",
+			},
+		),
+
+		Entry("should handle patterns with different prefixes",
+			"/data",
+			[]string{"/data/a/**/x", "/data/b/**/y"},
+			[]string{
+				"find /data/a",
+				"find /data/b",
+				"-name 'x'",
+				"-name 'y'",
+			},
+			[]string{
+				"/data/data",
+			},
+		),
+
+		Entry("should handle empty prefix (pattern starting with **)",
+			"/root",
+			[]string{"/root/**/target"},
+			[]string{
+				"find /root",
+				"-name 'target'",
+			},
+			[]string{},
+		),
+
+		Entry("should handle simple paths without **",
+			"/base",
+			[]string{"/base/simple/path"},
+			[]string{
+				"[ -d '/base/simple/path' ]",
+			},
+			[]string{
+				"find",
+			},
+		),
+
+		Entry("should return 'true' when no include paths provided",
+			"/base",
+			[]string{},
+			[]string{"true"},
+			[]string{"find"},
+		),
+
+		Entry("should skip patterns like 'app/**' that match everything",
+			"/base",
+			[]string{"/base/app/**"},
+			[]string{"true"},
+			[]string{"find"},
+		),
+
+		Entry("should handle nested patterns like app/**/sub/dir",
+			"/src",
+			[]string{"/src/app/**/sub/dir"},
+			[]string{
+				"find /src/app",
+				"-name 'dir'",
+			},
+			[]string{},
+		),
+	)
+})
