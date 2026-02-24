@@ -42,3 +42,6 @@ jobs:
 
       - name: Lint
         run: task --yes -p lint
+
+      - name: Check mocks are up-to-date
+        run: task --yes -p mock:check

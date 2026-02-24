@@ -84,6 +84,7 @@ type BaseStageOptions struct {
 	ImageTmpDir       string
 	ContainerWerfDir  string
 	ProjectName       string
+	Network           string
 }
 
 func NewBaseStage(name StageName, options *BaseStageOptions) *BaseStage {
@@ -96,6 +97,7 @@ func NewBaseStage(name StageName, options *BaseStageOptions) *BaseStage {
 	s.imageTmpDir = options.ImageTmpDir
 	s.containerWerfDir = options.ContainerWerfDir
 	s.projectName = options.ProjectName
+	s.network = options.Network
 	s.meta = &StageMeta{}
 	return s
 }
@@ -113,6 +115,7 @@ type BaseStage struct {
 	containerWerfDir string
 	configMounts     []*config.Mount
 	projectName      string
+	network          string
 	meta             *StageMeta
 }
 
@@ -314,6 +317,14 @@ func (s *BaseStage) PrepareImage(ctx context.Context, c Conveyor, cb container_b
 		stageImage.Builder.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions().AddLabel(addLabels)
 	} else {
 		stageImage.Builder.StapelStageBuilder().AddLabels(addLabels)
+	}
+
+	if s.network != "" {
+		if c.UseLegacyStapelBuilder(cb) {
+			stageImage.Builder.LegacyStapelStageBuilder().Container().RunOptions().AddNetwork(s.network)
+		} else {
+			stageImage.Builder.StapelStageBuilder().SetNetwork(s.network)
+		}
 	}
 
 	serviceMounts := s.getServiceMounts(prevBuiltImage)

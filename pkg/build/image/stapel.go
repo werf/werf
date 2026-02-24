@@ -32,6 +32,7 @@ func mapStapelConfigToImage(ctx context.Context, metaConfig *config.Meta, stapel
 		CommonImageOptions: opts,
 		IsFinal:            stapelImageConfig.IsFinal(),
 		UseCustomTag:       useCustomTag,
+		StapelImageConfig:  stapelImageConfig,
 	}
 
 	var baseImageType BaseImageType
@@ -74,6 +75,7 @@ func initStages(ctx context.Context, image *Image, metaConfig *config.Meta, stap
 		ImageTmpDir:      filepath.Join(opts.TmpDir, "image", imageBaseConfig.Name),
 		ContainerWerfDir: opts.ContainerWerfDir,
 		ProjectName:      opts.ProjectName,
+		Network:          imageBaseConfig.Network,
 	}
 
 	gitArchiveStageOptions := &stage.NewGitArchiveStageOptions{

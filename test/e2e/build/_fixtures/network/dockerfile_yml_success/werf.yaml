@@ -1,0 +1,6 @@
+project: network-test
+configVersion: 1
+---
+image: dockerfile
+dockerfile: Dockerfile
+network: host

@@ -14,12 +14,11 @@ import (
 	reflect "reflect"
 	time "time"
 
-	gomock "go.uber.org/mock/gomock"
-
 	git_repo "github.com/werf/werf/v2/pkg/git_repo"
 	repo_handle "github.com/werf/werf/v2/pkg/git_repo/repo_handle"
 	path_matcher "github.com/werf/werf/v2/pkg/path_matcher"
 	ls_tree "github.com/werf/werf/v2/pkg/true_git/ls_tree"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockGitRepo is a mock of GitRepo interface.
@@ -44,21 +43,6 @@ func NewMockGitRepo(ctrl *gomock.Controller) *MockGitRepo {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockGitRepo) EXPECT() *MockGitRepoMockRecorder {
 	return m.recorder
-}
-
-// AreSubmoduleCommitsValid mocks base method.
-func (m *MockGitRepo) AreSubmoduleCommitsValid(ctx context.Context, commit string) (bool, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AreSubmoduleCommitsValid", ctx, commit)
-	ret0, _ := ret[0].(bool)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// AreSubmoduleCommitsValid indicates an expected call of AreSubmoduleCommitsValid.
-func (mr *MockGitRepoMockRecorder) AreSubmoduleCommitsValid(ctx, commit any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AreSubmoduleCommitsValid", reflect.TypeOf((*MockGitRepo)(nil).AreSubmoduleCommitsValid), ctx, commit)
 }
 
 // CreateDetachedMergeCommit mocks base method.
@@ -599,21 +583,6 @@ func NewMockgitRepo(ctrl *gomock.Controller) *MockgitRepo {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockgitRepo) EXPECT() *MockgitRepoMockRecorder {
 	return m.recorder
-}
-
-// AreSubmoduleCommitsValid mocks base method.
-func (m *MockgitRepo) AreSubmoduleCommitsValid(ctx context.Context, commit string) (bool, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AreSubmoduleCommitsValid", ctx, commit)
-	ret0, _ := ret[0].(bool)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// AreSubmoduleCommitsValid indicates an expected call of AreSubmoduleCommitsValid.
-func (mr *MockgitRepoMockRecorder) AreSubmoduleCommitsValid(ctx, commit any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AreSubmoduleCommitsValid", reflect.TypeOf((*MockgitRepo)(nil).AreSubmoduleCommitsValid), ctx, commit)
 }
 
 // CreateDetachedMergeCommit mocks base method.

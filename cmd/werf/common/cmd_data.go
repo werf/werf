@@ -53,6 +53,7 @@ type CmdData struct {
 	UseCustomTag *string
 
 	Synchronization    *string
+	BackendNetwork     *string
 	Parallel           *bool
 	ParallelTasksLimit *int64
 
@@ -224,6 +225,15 @@ func (cmdData *CmdData) SetupCreateIncludesLockFile() {
 
 func (cmdData *CmdData) SetupAllowIncludesUpdate(cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(&cmdData.AllowIncludesUpdate, "allow-includes-update", "", util.GetBoolEnvironmentDefaultFalse("WERF_ALLOW_INCLUDES_UPDATE"), `Allow use includes latest versions (default $WERF_ALLOW_INCLUDES_UPDATE or false)`)
+}
+
+func (cmdData *CmdData) SetupBackendNetwork(cmd *cobra.Command) {
+	cmdData.BackendNetwork = new(string)
+	cmd.Flags().StringVarP(cmdData.BackendNetwork, "backend-network", "", os.Getenv("WERF_BACKEND_NETWORK"), "Network mode for the build containers ($WERF_BACKEND_NETWORK or nothing by default)")
+}
+
+func (cmdData *CmdData) GetBackendNetwork() string {
+	return option.PtrValueOrDefault(cmdData.BackendNetwork, "")
 }
 
 func (cmdData *CmdData) SetupIncludesLsFilter(cmd *cobra.Command) {

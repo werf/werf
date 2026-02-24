@@ -11,15 +11,14 @@ package mock
 
 import (
 	context "context"
-	"io"
+	io "io"
 	reflect "reflect"
-
-	gomock "go.uber.org/mock/gomock"
 
 	container_backend "github.com/werf/werf/v2/pkg/container_backend"
 	info "github.com/werf/werf/v2/pkg/container_backend/info"
 	prune "github.com/werf/werf/v2/pkg/container_backend/prune"
 	image "github.com/werf/werf/v2/pkg/image"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockContainerBackend is a mock of ContainerBackend interface.
@@ -225,6 +224,21 @@ func (mr *MockContainerBackendMockRecorder) Info(ctx any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Info", reflect.TypeOf((*MockContainerBackend)(nil).Info), ctx)
 }
 
+// LoadImageFromStream mocks base method.
+func (m *MockContainerBackend) LoadImageFromStream(ctx context.Context, input io.Reader) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "LoadImageFromStream", ctx, input)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// LoadImageFromStream indicates an expected call of LoadImageFromStream.
+func (mr *MockContainerBackendMockRecorder) LoadImageFromStream(ctx, input any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadImageFromStream", reflect.TypeOf((*MockContainerBackend)(nil).LoadImageFromStream), ctx, input)
+}
+
 // PostManifest mocks base method.
 func (m *MockContainerBackend) PostManifest(ctx context.Context, ref string, opts container_backend.PostManifestOpts) error {
 	m.ctrl.T.Helper()
@@ -395,18 +409,19 @@ func (mr *MockContainerBackendMockRecorder) Rmi(ctx, ref, opts any) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Rmi", reflect.TypeOf((*MockContainerBackend)(nil).Rmi), ctx, ref, opts)
 }
 
-// ShouldCleanupDockerfileImage mocks base method.
-func (m *MockContainerBackend) ShouldCleanupDockerfileImage() bool {
+// SaveImageToStream mocks base method.
+func (m *MockContainerBackend) SaveImageToStream(ctx context.Context, imageName string) (io.ReadCloser, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ShouldCleanupDockerfileImage")
-	ret0, _ := ret[0].(bool)
-	return ret0
+	ret := m.ctrl.Call(m, "SaveImageToStream", ctx, imageName)
+	ret0, _ := ret[0].(io.ReadCloser)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
-// ShouldCleanupDockerfileImage indicates an expected call of ShouldCleanupDockerfileImage.
-func (mr *MockContainerBackendMockRecorder) ShouldCleanupDockerfileImage() *gomock.Call {
+// SaveImageToStream indicates an expected call of SaveImageToStream.
+func (mr *MockContainerBackendMockRecorder) SaveImageToStream(ctx, imageName any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ShouldCleanupDockerfileImage", reflect.TypeOf((*MockContainerBackend)(nil).ShouldCleanupDockerfileImage))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveImageToStream", reflect.TypeOf((*MockContainerBackend)(nil).SaveImageToStream), ctx, imageName)
 }
 
 // String mocks base method.
@@ -449,12 +464,4 @@ func (m *MockContainerBackend) TagImageByName(ctx context.Context, img container
 func (mr *MockContainerBackendMockRecorder) TagImageByName(ctx, img any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TagImageByName", reflect.TypeOf((*MockContainerBackend)(nil).TagImageByName), ctx, img)
-}
-
-func (mr *MockContainerBackend) SaveImageToStream(ctx context.Context, imageName string) (io.ReadCloser, error) {
-	panic("not implemented")
-}
-
-func (mr *MockContainerBackend) LoadImageFromStream(ctx context.Context, input io.Reader) (string, error) {
-	panic("not implemented")
 }

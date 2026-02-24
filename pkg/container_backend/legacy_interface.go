@@ -82,4 +82,5 @@ type LegacyContainerOptions interface {
 	AddUser(user string)
 	AddEntrypoint(entrypoint string)
 	AddHealthCheck(check string)
+	AddNetwork(network string)
 }

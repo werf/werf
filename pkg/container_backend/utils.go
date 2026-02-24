@@ -33,7 +33,7 @@ func LogImageName(ctx context.Context, name string) {
 	logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "name", name)
 }
 
-func LogImageInfo(ctx context.Context, img LegacyImageInterface, prevStageImageSize int64, withPlatform bool) {
+func LogImageInfo(ctx context.Context, img LegacyImageInterface, prevStageImageSize int64, withPlatform bool, network string) {
 	LogImageName(ctx, img.Name())
 
 	logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "id", stringid.TruncateID(img.GetStageDesc().Info.ID))
@@ -52,6 +52,8 @@ func LogImageInfo(ctx context.Context, img LegacyImageInterface, prevStageImageS
 	if withPlatform {
 		logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "platform", img.GetTargetPlatform())
 	}
+
+	logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "network", network)
 }
 
 func LogMultiplatformImageInfo(ctx context.Context, platforms []string) {

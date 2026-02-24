@@ -26,6 +26,7 @@ type rawStapelImage struct {
 	RawImport            []*rawImport     `yaml:"import,omitempty"`
 	RawDependencies      []*rawDependency `yaml:"dependencies,omitempty"`
 	Platform             []string         `yaml:"platform,omitempty"`
+	Network              string           `yaml:"network,omitempty"`
 	RawSecrets           []*rawSecret     `yaml:"secrets,omitempty"`
 	RawImageSpec         *rawImageSpec    `yaml:"imageSpec,omitempty"`
 
@@ -244,6 +245,7 @@ func (c *rawStapelImage) toStapelImageBaseDirective(giterminismManager gitermini
 
 	imageBase.cacheVersion = c.CacheVersion
 	imageBase.platform = append([]string{}, c.Platform...)
+	imageBase.Network = c.Network
 
 	for _, git := range c.RawGit {
 		if git.gitType() == "local" {

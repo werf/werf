@@ -81,6 +81,8 @@ werf compose down [IMAGE_NAME...] [options] [--docker-compose-options="OPTIONS"]
             becomes below "allowed-local-cache-volume-usage -                                       
             allowed-local-cache-volume-usage-margin" level (default 5% or                           
             $WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE_MARGIN)
+      --backend-network=""
+            Network mode for the build containers ($WERF_BACKEND_NETWORK or nothing by default)
       --backend-storage-path=""
             Use specified path to the local backend (Docker or Buildah) storage to check backend    
             storage volume usage while performing garbage collection of local backend images        

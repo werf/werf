@@ -405,6 +405,22 @@ tasks:
     cmds:
       - go generate -run mockgen ./cmd/... ./pkg/...
 
+  mock:check:
+    desc: "Check that mocks are up-to-date."
+    deps:
+      - deps:install:mockgen
+    cmds:
+      - |
+        FILES="test/mock/ pkg/config/image_interface_mock.go pkg/giterminism_manager/file_reader/file_reader_deps_mock_test.go pkg/giterminism_manager/file_reader/file_reader_deps_fileinfo_mock_test.go"
+
+        go generate -run mockgen ./cmd/... ./pkg/...
+
+        git diff --exit-code $FILES || {
+          echo "ERROR: Mocks are out of date. Run 'task mock:generate' and commit changes."
+          exit 1
+        }
+        echo "Mocks are up-to-date"
+
   enum:generate:
     desc: "Generate enums."
     cmds:

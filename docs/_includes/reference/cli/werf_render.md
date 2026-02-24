@@ -39,6 +39,8 @@ werf render [IMAGE_NAME...] [options]
             $WERF_ADD_LABEL_1=labelName1=labelValue1, $WERF_ADD_LABEL_2=labelName2=labelValue2)
       --allow-includes-update=false
             Allow use includes latest versions (default $WERF_ALLOW_INCLUDES_UPDATE or false)
+      --backend-network=""
+            Network mode for the build containers ($WERF_BACKEND_NETWORK or nothing by default)
       --build-report-path=""
             Change build report path and format (by default $WERF_BUILD_REPORT_PATH or              
             ".werf-build-report.json" if not set). Extension must be either .json for JSON format   
