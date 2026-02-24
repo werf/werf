@@ -644,19 +644,39 @@ Result:
 
 ## Scanning and Generation of SBOM Artifacts (EXPERIMENTAL)
 
-To enable scanning and generation of SBOM artifacts during the build process for all images, activate the `sbom` option in werf.yml.
+To enable scanning and generation of SBOM artifacts during the build process, you need to configure the global `build.sbom` section and, optionally, per-image components.
 
-When `build.sbom.enable: true`, you are free to provide an SBOM configuration for each image via `sbom.fragment`:
+### Global project configuration (`build.sbom`)
 
-```
-project: werf-sbom-experimental
+The following options enable the scanning process for all images in the project:
+1. Set `build.sbom.enable: true` to activate the feature.
+2. Specify the output standard via `standard: cyclonedx@1.6` (currently only `cyclonedx@1.6` is supported).
+
+```yaml
+project: werf-sbom-meta-example
 configVersion: 1
 build:
   sbom:
     enable: true
+    standard: cyclonedx@1.6
+```
+
+### Per-image configuration (`sbom.fragment`)
+
+Optionally you can provide additional SBOM data for each image via the `sbom.fragment` property. This can be used to manually include components that are not automatically detected by the scanner.
+
+`sbom.fragment` must be a YAML CycloneDX@1.6 document or a partial fragment (e.g., only the `components:` section). werf will build a full CycloneDX@1.6 BOM document by combining the scan results with this fragment.
+
+```yaml
+project: werf-sbom-base-image-example
+configVersion: 1
+build:
+  sbom:
+    enable: true
+    standard: cyclonedx@1.6
 ---
-image: dockerfile
-dockerfile: Dockerfile
+image: base-image
+from: registry.werf.io/werf/scratch:latest
 sbom:
   fragment: |
     components:
@@ -672,10 +692,7 @@ sbom:
             content: 9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08
 ```
 
-The scanning result will be saved as a separate image with the `-sbom` postfix in the local backend storage
-(Docker or Buildah), and will also be sent to the container registry if the `--repo` flag is specified.
-
-`sbom.fragment` must be a YAML CycloneDX@1.6 document or a partial fragment (e.g. only `components:`). werf will build a full CycloneDX@1.6 BOM document from this fragment.
+The scanning result will be saved as a separate image with the `-sbom` postfix in the local backend storage (for example, Docker), and will also be sent to the container registry if the `--repo` flag is specified.
 
 Currently, this option uses the following _defaults_:
 
@@ -684,7 +701,7 @@ Currently, this option uses the following _defaults_:
 | **Scanner**                       | syft                                                                                   |
 | **Scanner Image**                 | anchore/syft:v1.23.1                                                           |
 | **Image Pull Policy**             | `PullIfMissing`                                                                        |
-| **Data Source Connection Method** | daemon + socket via volume (for Docker) or image (for Buildah)                         |
+| **Data Source Connection Method** | daemon + socket via volume (for Docker) |
 | **Path in Source Image**          | OS root                                                                                |
 | **Scan Settings**                 | [link](https://github.com/anchore/syft/wiki/Configuration#list-of-configurable-values) |
 | **Output Standard**               | `CycloneDX@1.6`                                                                        |
