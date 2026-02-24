@@ -25,7 +25,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Detect changes
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
         uses: dorny/paths-filter@v3
         id: changes
         with:

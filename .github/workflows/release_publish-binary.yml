@@ -40,7 +40,7 @@ jobs:
         run: |
           VERSION=${GITHUB_REF_NAME#v}
           echo "Uploading werf to release ${GITHUB_REF_NAME}"
-          gh release upload "${GITHUB_REF_NAME}" dist/$VERSION/linux-amd64/bin/werf --name "werf"
+          gh release upload "${GITHUB_REF_NAME}" "dist/$VERSION/linux-amd64/bin/werf#werf"
 
   notify:
     if: always()
