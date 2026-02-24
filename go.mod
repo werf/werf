@@ -57,7 +57,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.5
-	github.com/werf/3p-helm v0.0.0-20260211143448-0b619e3cc3bf
+	github.com/werf/3p-helm v0.0.0-20260220154239-5d04719baf9d
 	github.com/werf/3p-helm-for-werf-helm v0.0.0-20241217155820-089f92cd5c9d
 	github.com/werf/common-go v0.0.0-20251113140850-a1a98e909e9b
 	github.com/werf/copy-recurse v0.2.7

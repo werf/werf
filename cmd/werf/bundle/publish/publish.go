@@ -27,9 +27,11 @@ import (
 	"github.com/werf/3p-helm/pkg/werf/helmopts"
 	"github.com/werf/3p-helm/pkg/werf/secrets"
 	"github.com/werf/3p-helm/pkg/werf/secrets/runtimedata"
+	tsbundle "github.com/werf/3p-helm/pkg/werf/ts"
 	"github.com/werf/common-go/pkg/secrets_manager"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
+	"github.com/werf/nelm/pkg/featgate"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/build"
 	"github.com/werf/werf/v2/pkg/config"
@@ -460,6 +462,12 @@ func createNewBundle(
 		return fmt.Errorf("error loading chart %q: %w", chartDir, err)
 	}
 
+	if featgate.FeatGateTypescript.Enabled() {
+		if err := tsbundle.BundleTSChartsRecursive(ctx, chrt, chartDir, true); err != nil {
+			return fmt.Errorf("unable to process TypeScript files in chart: %w", err)
+		}
+	}
+
 	var valsData []byte
 	{
 		p := getter.All(helm_v3.Settings)
@@ -577,6 +585,12 @@ WritingFiles:
 
 		if err := writeChartFile(ctx, destDir, f.Name, f.Data); err != nil {
 			return fmt.Errorf("error writing miscellaneous chart file: %w", err)
+		}
+	}
+
+	for _, f := range chrt.RuntimeFiles {
+		if err := writeChartFile(ctx, destDir, f.Name, f.Data); err != nil {
+			return fmt.Errorf("error writing chart runtime file: %w", err)
 		}
 	}
 

@@ -17,6 +17,8 @@ import (
 	bundle_plan "github.com/werf/werf/v2/cmd/werf/bundle/plan"
 	bundle_publish "github.com/werf/werf/v2/cmd/werf/bundle/publish"
 	bundle_render "github.com/werf/werf/v2/cmd/werf/bundle/render"
+	chart_ts_build "github.com/werf/werf/v2/cmd/werf/chart/ts/build"
+	chart_ts_init "github.com/werf/werf/v2/cmd/werf/chart/ts/init"
 	"github.com/werf/werf/v2/cmd/werf/ci_env"
 	"github.com/werf/werf/v2/cmd/werf/cleanup"
 	"github.com/werf/werf/v2/cmd/werf/common"
@@ -107,6 +109,7 @@ func ConstructRootCmd(ctx context.Context) (*cobra.Command, error) {
 				slugify.NewCmd(ctx),
 				render.NewCmd(ctx),
 				lint.NewCmd(ctx),
+				chartCmd(ctx),
 				includesCmd(ctx),
 				stagesCmd(ctx),
 			},
@@ -248,6 +251,27 @@ func includesCmd(ctx context.Context) *cobra.Command {
 		includes_lsfiles.NewCmd(ctx),
 		includes_getfile.NewCmd(ctx),
 	)
+
+	return cmd
+}
+
+func chartCmd(ctx context.Context) *cobra.Command {
+	cmd := common.SetCommandContext(ctx, &cobra.Command{
+		Use:   "chart",
+		Short: "Work with charts",
+	})
+	cmd.AddCommand(chartTSCmd(ctx))
+
+	return cmd
+}
+
+func chartTSCmd(ctx context.Context) *cobra.Command {
+	cmd := common.SetCommandContext(ctx, &cobra.Command{
+		Use:   "ts",
+		Short: "Work with TypeScript charts",
+	})
+	cmd.AddCommand(chart_ts_build.NewCmd(ctx))
+	cmd.AddCommand(chart_ts_init.NewCmd(ctx))
 
 	return cmd
 }
