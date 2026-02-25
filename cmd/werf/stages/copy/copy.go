@@ -157,6 +157,10 @@ func runCopy(ctx context.Context, cmdData copyCmdData) error {
 		return fmt.Errorf("component init error: %w", err)
 	}
 
+	defer func() {
+		commonManager.Shutdown(ctx)
+	}()
+
 	opts, err := getCopyOptions(cmdData)
 	if err != nil {
 		return err

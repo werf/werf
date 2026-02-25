@@ -424,6 +424,20 @@ func (mr *MockContainerBackendMockRecorder) SaveImageToStream(ctx, imageName any
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveImageToStream", reflect.TypeOf((*MockContainerBackend)(nil).SaveImageToStream), ctx, imageName)
 }
 
+// Shutdown mocks base method.
+func (m *MockContainerBackend) Shutdown(ctx context.Context) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Shutdown", ctx)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Shutdown indicates an expected call of Shutdown.
+func (mr *MockContainerBackendMockRecorder) Shutdown(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Shutdown", reflect.TypeOf((*MockContainerBackend)(nil).Shutdown), ctx)
+}
+
 // String mocks base method.
 func (m *MockContainerBackend) String() string {
 	m.ctrl.T.Helper()
