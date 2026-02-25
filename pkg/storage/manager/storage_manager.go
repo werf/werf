@@ -30,6 +30,8 @@ var (
 	ErrStageNotFound                = errors.New("stage not found")
 )
 
+const maxRetriesOnUnexpectedStagesStorageState = 3
+
 func IsErrUnexpectedStagesStorageState(err error) bool {
 	if err != nil {
 		return strings.HasSuffix(err.Error(), ErrUnexpectedStagesStorageState.Error())
@@ -104,15 +106,27 @@ type CopyStageIntoStorageOptions struct {
 	LogDetailedName      string
 }
 
-func RetryOnUnexpectedStagesStorageState(_ context.Context, _ StorageManagerInterface, f func() error) error {
-Retry:
-	err := f()
+func RetryOnUnexpectedStagesStorageState(ctx context.Context, _ StorageManagerInterface, f func() error) error {
+	for attempt := 0; attempt <= maxRetriesOnUnexpectedStagesStorageState; attempt++ {
+		if attempt > 0 {
+			if err := ctx.Err(); err != nil {
+				return err
+			}
+			logboek.Context(ctx).Warn().LogF("Retrying due to unexpected stages storage state (attempt %d/%d)\n", attempt, maxRetriesOnUnexpectedStagesStorageState)
+		}
 
-	if IsErrUnexpectedStagesStorageState(err) {
-		goto Retry
+		err := f()
+
+		if !IsErrUnexpectedStagesStorageState(err) {
+			return err
+		}
+
+		if attempt == maxRetriesOnUnexpectedStagesStorageState {
+			return fmt.Errorf("exhausted %d retries on unexpected stages storage state: %w", maxRetriesOnUnexpectedStagesStorageState, err)
+		}
 	}
 
-	return err
+	return nil
 }
 
 func NewStorageManager(projectName string, stagesStorage storage.PrimaryStagesStorage, finalStagesStorage storage.StagesStorage, secondaryStagesStorageList, cacheStagesStorageList []storage.StagesStorage, storageLockManager lock_manager.Interface) *StorageManager {
@@ -553,6 +567,12 @@ func (m *StorageManager) FetchStage(ctx context.Context, containerBackend contai
 
 		if IsErrStageNotFound(err) || storage.IsErrBrokenImage(err) {
 			logboek.Context(ctx).Error().LogF("Stage %s image %s is no longer available: %s!\n", stg.LogDetailedName(), stg.GetStageImage().Image.Name(), err)
+
+			// Invalidate manifest cache for the rejected stage (do this regardless of RejectStage result)
+			stageImageName := m.StagesStorage.ConstructStageImageName(m.ProjectName, stageID.Digest, stageID.CreationTs)
+			if err := image.CommonManifestCache.DeleteImageInfo(ctx, m.StagesStorage.String(), stageImageName); err != nil {
+				logboek.Context(ctx).Warn().LogF("Unable to delete manifest cache for rejected stage %s: %s\n", stageImageName, err)
+			}
 
 			logboek.Context(ctx).Error().LogF("Will mark image %s as rejected in the stages storage %s\n", stg.GetStageImage().Image.Name(), m.StagesStorage.String())
 			if err := m.StagesStorage.RejectStage(ctx, m.ProjectName, stageID.Digest, stageID.CreationTs); err != nil {

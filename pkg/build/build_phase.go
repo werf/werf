@@ -1141,6 +1141,12 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 		if stg.IsMutable() {
 			if err := stg.MutateImage(ctx, phase.Conveyor.StorageManager.GetStagesStorage(), phase.StagesIterator.PrevBuiltStage.GetStageImage(), stageImage); err != nil {
 				if storage.IsErrBrokenImage(err) {
+					// Invalidate manifest cache for the broken previous stage
+					prevStageID := phase.StagesIterator.PrevBuiltStage.GetStageImage().Image.GetStageDesc().StageID
+					prevStageImageName := phase.Conveyor.StorageManager.GetStagesStorage().ConstructStageImageName(phase.Conveyor.ProjectName(), prevStageID.Digest, prevStageID.CreationTs)
+					if err := imagePkg.CommonManifestCache.DeleteImageInfo(ctx, phase.Conveyor.StorageManager.GetStagesStorage().String(), prevStageImageName); err != nil {
+						logboek.Context(ctx).Warn().LogF("Unable to delete manifest cache for broken stage %s: %s\n", prevStageImageName, err)
+					}
 					return manager.ErrUnexpectedStagesStorageState
 				}
 
