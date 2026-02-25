@@ -276,6 +276,26 @@ func (b *NativeBuildah) GetDefaultPlatform() string {
 	return b.defaultPlatform
 }
 
+// Shutdown releases storage resources by unmounting all layers and closing lock files.
+// This prevents file descriptor leaks when running many builds.
+func (b *NativeBuildah) Shutdown(ctx context.Context) error {
+	if b.Store == nil {
+		return nil
+	}
+
+	layers, err := b.Store.Shutdown(false)
+	if err != nil {
+		logrus.Warnf("Normal storage shutdown failed (mounted layers: %v): %s. Trying force shutdown...", layers, err)
+		layers, err = b.Store.Shutdown(true)
+		if err != nil {
+			return fmt.Errorf("failed to shutdown storage (mounted layers: %v): %w", layers, err)
+		}
+		logrus.Debugf("Force storage shutdown completed successfully")
+	}
+
+	return nil
+}
+
 // Inspect returns nil, nil if image not found.
 func (b *NativeBuildah) Inspect(ctx context.Context, ref string) (*thirdparty.BuilderInfo, error) {
 	builder, err := b.getBuilderFromImage(ctx, ref, CommonOpts{})

@@ -174,3 +174,12 @@ func (m *ComponentsManager) TerminateSSHAgent() {
 		logboek.Warn().LogF("WARNING: ssh agent termination failed: %s\n", err)
 	}
 }
+
+func (m *ComponentsManager) Shutdown(ctx context.Context) {
+	if m.containerBackend == nil {
+		return
+	}
+	if err := m.containerBackend.Shutdown(ctx); err != nil {
+		logboek.Context(ctx).Warn().LogF("WARNING: container backend shutdown failed: %s\n", err)
+	}
+}

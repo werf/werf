@@ -478,3 +478,7 @@ func (backend *DockerServerBackend) SaveImageToStream(ctx context.Context, image
 func (backend *DockerServerBackend) LoadImageFromStream(ctx context.Context, input io.Reader) (string, error) {
 	return docker.CliLoadFromStream(ctx, input)
 }
+
+func (backend *DockerServerBackend) Shutdown(ctx context.Context) error {
+	return nil
+}

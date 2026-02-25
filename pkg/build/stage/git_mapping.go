@@ -645,6 +645,7 @@ func (gm *GitMapping) PreparePatchForImage(ctx context.Context, c Conveyor, cb c
 			}
 
 			go func() {
+				defer f.Close()
 				logboek.Context(ctx).Debug().LogF("Starting archive %q filtering process, includePaths: %v\n", archive.GetFilePath(), includePaths)
 				if err := filterTarArchive(ctx, f, patchArchiveWriter, includePaths); err != nil {
 					logboek.Context(ctx).Error().LogF("ERROR: %s\n", err)

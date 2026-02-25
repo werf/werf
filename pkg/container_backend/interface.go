@@ -122,6 +122,10 @@ type ContainerBackend interface {
 	// Mutation
 	SaveImageToStream(ctx context.Context, imageName string) (io.ReadCloser, error)
 	LoadImageFromStream(ctx context.Context, input io.Reader) (string, error)
+
+	// Shutdown releases backend resources (storage locks, mounted layers).
+	// Must be called when backend is no longer needed to prevent FD leaks.
+	Shutdown(ctx context.Context) error
 }
 
 func PullImageFromRegistry(ctx context.Context, containerBackend ContainerBackend, img LegacyImageInterface) error {
