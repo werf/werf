@@ -134,20 +134,25 @@ func NewNativeBuildah(commonOpts CommonBuildahOpts, opts NativeModeOpts) (*Nativ
 		return nil, fmt.Errorf("unable to set env var CONTAINERS_CONF: %w", err)
 	}
 
-	registriesConfig, err := generateRegistriesConfig(commonOpts.RegistryMirrors)
-	if err != nil {
-		return nil, fmt.Errorf("unable to generate registries config: %w", err)
-	}
+	// If no mirrors specified, use system registries.conf (don't override)
+	// This allows using /etc/containers/registries.conf with insecure settings
+	if len(commonOpts.RegistryMirrors) > 0 {
+		registriesConfig, err := generateRegistriesConfig(commonOpts.RegistryMirrors, commonOpts.Insecure)
+		if err != nil {
+			return nil, fmt.Errorf("unable to generate registries config: %w", err)
+		}
 
-	b.RegistriesConfigPath = filepath.Join(b.ConfigTmpDir, "registries.conf")
-	if err := ioutil.WriteFile(b.RegistriesConfigPath, []byte(registriesConfig), os.ModePerm); err != nil {
-		return nil, fmt.Errorf("unable to write file %q: %w", b.RegistriesConfigPath, err)
-	}
+		b.RegistriesConfigPath = filepath.Join(b.ConfigTmpDir, "registries.conf")
+		if err := ioutil.WriteFile(b.RegistriesConfigPath, []byte(registriesConfig), os.ModePerm); err != nil {
+			return nil, fmt.Errorf("unable to write file %q: %w", b.RegistriesConfigPath, err)
+		}
 
-	b.RegistriesConfigDirPath = filepath.Join(b.ConfigTmpDir, "registries.conf.d")
-	if err := os.MkdirAll(b.RegistriesConfigDirPath, os.ModePerm); err != nil {
-		return nil, fmt.Errorf("unable to create dir %q: %w", b.RegistriesConfigDirPath, err)
+		b.RegistriesConfigDirPath = filepath.Join(b.ConfigTmpDir, "registries.conf.d")
+		if err := os.MkdirAll(b.RegistriesConfigDirPath, os.ModePerm); err != nil {
+			return nil, fmt.Errorf("unable to create dir %q: %w", b.RegistriesConfigDirPath, err)
+		}
 	}
+	// If no mirrors, b.RegistriesConfigPath remains empty and system config will be used
 
 	storeOpts, err := NewNativeStoreOptions(unshare.GetRootlessUID(), *commonOpts.StorageDriver)
 	if err != nil {
@@ -161,7 +166,7 @@ func NewNativeBuildah(commonOpts CommonBuildahOpts, opts NativeModeOpts) (*Nativ
 
 	b.defaultSystemContext = imgtypes.SystemContext{
 		SignaturePolicyPath:               b.SignaturePolicyPath,
-		SystemRegistriesConfPath:          b.RegistriesConfigPath,
+		SystemRegistriesConfPath:          b.RegistriesConfigPath, // Empty string means use system default
 		SystemRegistriesConfDirPath:       b.RegistriesConfigDirPath,
 		OCIInsecureSkipTLSVerify:          b.Insecure,
 		DockerInsecureSkipTLSVerify:       imgtypes.NewOptionalBool(b.Insecure),
@@ -228,7 +233,7 @@ func (b *NativeBuildah) getSystemContext(targetPlatform string) (*imgtypes.Syste
 	return systemContext, nil
 }
 
-func generateRegistriesConfig(mirrors []string) (string, error) {
+func generateRegistriesConfig(mirrors []string, insecure bool) (string, error) {
 	var mrs []string
 	for _, mirror := range mirrors {
 		mirror, _ = strings.CutPrefix(mirror, "https://")
@@ -236,6 +241,7 @@ func generateRegistriesConfig(mirrors []string) (string, error) {
 		mrs = append(mrs, mirror)
 	}
 
+	// Template with insecure flag support
 	tpl := `
 unqualified-search-registries = ["docker.io"]
 
@@ -245,6 +251,7 @@ location = "docker.io"
 {{ range . -}}
 [[registry.mirror]]
 location = "{{ . }}"
+insecure = true
 
 {{ end -}}
 `

@@ -1180,10 +1180,8 @@ func GetContainerRegistryMirror(ctx context.Context, cmdData *CmdData) ([]string
 	seen := make(map[string]bool)
 
 	for _, mirror := range cmdMirrors {
-		if strings.HasPrefix(mirror, "http://") {
-			return nil, fmt.Errorf("invalid container registry mirror %q: only https schema allowed", mirror)
-		}
-
+		// Allow http:// mirrors - they are valid for insecure registries
+		// Don't force https:// prefix, keep the mirror as-is if it has a scheme
 		if !strings.HasPrefix(mirror, "http://") && !strings.HasPrefix(mirror, "https://") {
 			mirror = "https://" + mirror
 		}
