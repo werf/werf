@@ -364,6 +364,11 @@ func (backend *DockerServerBackend) String() string {
 	return "docker-server-backend"
 }
 
+// Shutdown is a no-op for Docker backend as Docker daemon manages its own resources.
+func (backend *DockerServerBackend) Shutdown(ctx context.Context) error {
+	return nil
+}
+
 func (backend *DockerServerBackend) RemoveHostDirs(ctx context.Context, mountDir string, dirs []string) error {
 	var containerDirs []string
 	for _, dir := range dirs {

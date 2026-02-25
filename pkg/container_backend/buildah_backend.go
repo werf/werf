@@ -326,45 +326,53 @@ func (backend *BuildahBackend) CalculateDependencyImportChecksum(ctx context.Con
 
 func (backend *BuildahBackend) applyDataArchives(ctx context.Context, container *containerDesc, dataArchives []DataArchiveSpec) error {
 	for _, archive := range dataArchives {
-		destPath := filepath.Join(container.RootMount, archive.To)
-
-		var extractDestPath string
-		switch archive.Type {
-		case DirectoryArchive:
-			extractDestPath = destPath
-		case FileArchive:
-			extractDestPath = filepath.Dir(destPath)
-
-			_, err := os.Stat(destPath)
-			switch {
-			case os.IsNotExist(err):
-			case err != nil:
-				return fmt.Errorf("unable to access container path %q: %w", destPath, err)
-			default:
-				logboek.Context(ctx).Debug().LogF("Removing archive destination path %s\n", archive.To)
-				if err := os.RemoveAll(destPath); err != nil {
-					return fmt.Errorf("unable to cleanup archive destination path %s: %w", archive.To, err)
+		if err := func(archive DataArchiveSpec) error {
+			defer func() {
+				if err := archive.Archive.Close(); err != nil {
+					logboek.Context(ctx).Warn().LogF("Warning: error closing archive data stream: %s\n", err)
 				}
+			}()
+
+			destPath := filepath.Join(container.RootMount, archive.To)
+
+			var extractDestPath string
+			switch archive.Type {
+			case DirectoryArchive:
+				extractDestPath = destPath
+			case FileArchive:
+				extractDestPath = filepath.Dir(destPath)
+
+				_, err := os.Stat(destPath)
+				switch {
+				case os.IsNotExist(err):
+				case err != nil:
+					return fmt.Errorf("unable to access container path %q: %w", destPath, err)
+				default:
+					logboek.Context(ctx).Debug().LogF("Removing archive destination path %s\n", archive.To)
+					if err := os.RemoveAll(destPath); err != nil {
+						return fmt.Errorf("unable to cleanup archive destination path %s: %w", archive.To, err)
+					}
+				}
+			default:
+				return fmt.Errorf("unknown archive type %q", archive.Type)
 			}
-		default:
-			return fmt.Errorf("unknown archive type %q", archive.Type)
-		}
 
-		var err error
-		var uid, gid *uint32
-		uid, gid, err = getUIDAndGID(archive.Owner, archive.Group, container.RootMount)
-		if err != nil {
-			return fmt.Errorf("error getting UID/GID: %w", err)
-		}
+			var err error
+			var uid, gid *uint32
+			uid, gid, err = getUIDAndGID(archive.Owner, archive.Group, container.RootMount)
+			if err != nil {
+				return fmt.Errorf("error getting UID/GID: %w", err)
+			}
 
-		logboek.Context(ctx).Debug().LogF("Extracting archive into container path %s\n", archive.To)
+			logboek.Context(ctx).Debug().LogF("Extracting archive into container path %s\n", archive.To)
 
-		if err := util.ExtractTar(archive.Archive, extractDestPath, util.ExtractTarOptions{UID: uid, GID: gid}); err != nil {
-			return fmt.Errorf("unable to extract data archive into %s: %w", archive.To, err)
-		}
+			if err := util.ExtractTar(archive.Archive, extractDestPath, util.ExtractTarOptions{UID: uid, GID: gid}); err != nil {
+				return fmt.Errorf("unable to extract data archive into %s: %w", archive.To, err)
+			}
 
-		if err := archive.Archive.Close(); err != nil {
-			return fmt.Errorf("error closing archive data stream: %w", err)
+			return nil
+		}(archive); err != nil {
+			return err
 		}
 	}
 
@@ -845,6 +853,12 @@ func (backend *BuildahBackend) RemoveImage(ctx context.Context, img LegacyImageI
 
 func (backend *BuildahBackend) String() string {
 	return "buildah-backend"
+}
+
+// Shutdown releases storage resources held by the buildah backend.
+// This unmounts all layers and closes lock files to prevent FD leaks.
+func (backend *BuildahBackend) Shutdown(ctx context.Context) error {
+	return backend.buildah.Shutdown(ctx)
 }
 
 func (backend *BuildahBackend) RemoveHostDirs(ctx context.Context, mountDir string, dirs []string) error {

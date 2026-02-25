@@ -199,6 +199,9 @@ type Buildah interface {
 	PruneImages(ctx context.Context, opts PruneImagesOptions) (PruneImagesReport, error)
 	SaveImageToStream(ctx context.Context, imageName string) (io.ReadCloser, error)
 	LoadImageFromStream(ctx context.Context, input io.Reader) (string, error)
+	// Shutdown releases storage resources (unmounts layers, closes lock files).
+	// Must be called when buildah is no longer needed to prevent FD leaks.
+	Shutdown(ctx context.Context) error
 }
 
 type Mode string

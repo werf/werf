@@ -395,6 +395,12 @@ func runMain(ctx context.Context, dockerComposeCmdName string, cmdData composeCm
 
 	containerBackend := commonManager.ContainerBackend()
 
+	// Shutdown must be deferred first (executed last in LIFO order)
+	// so it runs after RunAutoHostCleanup which uses containerBackend
+	defer func() {
+		commonManager.Shutdown(ctx)
+	}()
+
 	defer func() {
 		if err := tmp_manager.DelegateCleanup(ctx); err != nil {
 			logboek.Context(ctx).Warn().LogF("Temporary files cleanup preparation failed: %s\n", err)

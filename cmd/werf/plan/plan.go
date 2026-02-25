@@ -247,6 +247,12 @@ func runMain(ctx context.Context, imageNameListFromArgs []string) error {
 
 	containerBackend := commonManager.ContainerBackend()
 
+	// Shutdown must be deferred first (executed last in LIFO order)
+	// so it runs after RunAutoHostCleanup which uses containerBackend
+	defer func() {
+		commonManager.Shutdown(ctx)
+	}()
+
 	defer func() {
 		if err := common.RunAutoHostCleanup(ctx, &commonCmdData, containerBackend); err != nil {
 			logboek.Context(ctx).Error().LogF("Auto host cleanup failed: %s\n", err)

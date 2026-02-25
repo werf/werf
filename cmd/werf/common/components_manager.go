@@ -174,3 +174,15 @@ func (m *ComponentsManager) TerminateSSHAgent() {
 		logboek.Warn().LogF("WARNING: ssh agent termination failed: %s\n", err)
 	}
 }
+
+// Shutdown releases container backend resources (storage locks, mounted layers).
+// Must be called when container backend is no longer needed to prevent FD leaks.
+// Safe to call even if container backend was not initialized.
+func (m *ComponentsManager) Shutdown(ctx context.Context) {
+	if m.containerBackend == nil {
+		return
+	}
+	if err := m.containerBackend.Shutdown(ctx); err != nil {
+		logboek.Context(ctx).Warn().LogF("WARNING: container backend shutdown failed: %s\n", err)
+	}
+}

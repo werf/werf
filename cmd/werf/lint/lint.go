@@ -172,6 +172,12 @@ func runLint(ctx context.Context, imageNameListFromArgs []string) error {
 
 	containerBackend := commonManager.ContainerBackend()
 
+	// Shutdown must be deferred first (executed last in LIFO order)
+	// so it runs after all cleanup operations that may use containerBackend
+	defer func() {
+		commonManager.Shutdown(ctx)
+	}()
+
 	defer func() {
 		commonManager.TerminateSSHAgent()
 	}()

@@ -188,19 +188,21 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 				return fmt.Errorf("unable to write tar header for file %q: %w", tarEntryName, err)
 			}
 
-			f, err := os.Open(absFilepath)
-			if err != nil {
-				return fmt.Errorf("unable to open file %s: %w", absFilepath, err)
-			}
+			if err := func() error {
+				f, err := os.Open(absFilepath)
+				if err != nil {
+					return fmt.Errorf("unable to open file %s: %w", absFilepath, err)
+				}
+				defer f.Close()
 
-			_, err = io.Copy(tw, f)
-			if err != nil {
-				return fmt.Errorf("unable to write data to tar archive from file %s: %w", absFilepath, err)
-			}
+				_, err = io.Copy(tw, f)
+				if err != nil {
+					return fmt.Errorf("unable to write data to tar archive from file %s: %w", absFilepath, err)
+				}
 
-			err = f.Close()
-			if err != nil {
-				return fmt.Errorf("error closing file %s: %w", absFilepath, err)
+				return nil
+			}(); err != nil {
+				return err
 			}
 
 			if debugArchive() {
