@@ -18,8 +18,26 @@ type genericApi struct {
 }
 
 func newGenericApi(_ context.Context, options apiOptions) (*genericApi, error) {
+	// Pre-parse http:// mirrors and add them to insecure hosts list
+	// to avoid runtime mutation of insecureRegistryHosts map.
+	insecureHosts := make([]string, 0, len(options.InsecureRegistryHosts)+len(options.RegistryMirrors))
+	insecureHosts = append(insecureHosts, options.InsecureRegistryHosts...)
+
+	for _, mirror := range options.RegistryMirrors {
+		mirrorUrl, err := url.Parse(mirror)
+		if err != nil {
+			continue
+		}
+		if mirrorUrl.Scheme == "http" && mirrorUrl.Host != "" {
+			insecureHosts = append(insecureHosts, mirrorUrl.Host)
+		}
+	}
+
+	opts := options
+	opts.InsecureRegistryHosts = insecureHosts
+
 	d := &genericApi{}
-	d.commonApi = newAPI(options)
+	d.commonApi = newAPI(opts)
 	d.mirrors = options.RegistryMirrors
 	return d, nil
 }
@@ -102,7 +120,9 @@ func (api *genericApi) mirrorReferenceList(ctx context.Context, reference string
 			return nil, fmt.Errorf("unable to parse mirror registry url %q: %w", mirrorRegistry, err)
 		}
 
-		mirrorReference := mirrorRegistryUrl.Host
+		mirrorHost := mirrorRegistryUrl.Host
+
+		mirrorReference := mirrorHost
 		mirrorReference += "/" + referenceParts.repository
 		mirrorReference += ":" + referenceParts.tag
 

@@ -702,6 +702,18 @@ func (mr *MockLegacyContainerOptionsMockRecorder) AddLabel(labels any) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddLabel", reflect.TypeOf((*MockLegacyContainerOptions)(nil).AddLabel), labels)
 }
 
+// AddNetwork mocks base method.
+func (m *MockLegacyContainerOptions) AddNetwork(network string) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "AddNetwork", network)
+}
+
+// AddNetwork indicates an expected call of AddNetwork.
+func (mr *MockLegacyContainerOptionsMockRecorder) AddNetwork(network any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddNetwork", reflect.TypeOf((*MockLegacyContainerOptions)(nil).AddNetwork), network)
+}
+
 // AddUser mocks base method.
 func (m *MockLegacyContainerOptions) AddUser(user string) {
 	m.ctrl.T.Helper()

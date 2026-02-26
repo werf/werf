@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"math/rand"
+	"net"
 	"net/http"
 	"regexp"
 	"strings"
@@ -34,21 +35,86 @@ type api struct {
 	InsecureRegistry      bool
 	SkipTlsVerifyRegistry bool
 
-	httpTransport http.RoundTripper
+	// insecureRegistryHosts holds exact hostnames (with optional port) that must be
+	// accessed over plain HTTP or without TLS verification.
+	insecureRegistryHosts map[string]bool
+	// insecureRegistryCIDRs holds parsed CIDR networks for IP-based matching.
+	insecureRegistryCIDRs []*net.IPNet
+
+	httpTransport         http.RoundTripper
+	insecureHttpTransport http.RoundTripper
 }
 
 type apiOptions struct {
 	InsecureRegistry      bool
 	SkipTlsVerifyRegistry bool
 	RegistryMirrors       []string
+	// InsecureRegistryHosts is the list of registry hostnames (or CIDRs)
+	// that should be accessed over plain HTTP / without TLS verification.
+	// Populated from Docker daemon's "insecure-registries" or buildah registries.conf.
+	InsecureRegistryHosts []string
 }
 
 func newAPI(options apiOptions) *api {
+	insecureHosts := make(map[string]bool)
+	var insecureCIDRs []*net.IPNet
+
+	for _, h := range options.InsecureRegistryHosts {
+		// Try to parse as CIDR
+		_, cidr, err := net.ParseCIDR(h)
+		if err == nil {
+			insecureCIDRs = append(insecureCIDRs, cidr)
+			continue
+		}
+		// Not a CIDR — treat as host[:port]
+		insecureHosts[h] = true
+	}
+
 	return &api{
 		InsecureRegistry:      options.InsecureRegistry,
 		SkipTlsVerifyRegistry: options.SkipTlsVerifyRegistry,
+		insecureRegistryHosts: insecureHosts,
+		insecureRegistryCIDRs: insecureCIDRs,
 		httpTransport:         newHttpTransport(options.SkipTlsVerifyRegistry),
+		insecureHttpTransport: newHttpTransport(true),
 	}
+}
+
+// isInsecureHost returns true when the given registry hostname should be
+// treated as insecure (plain HTTP / no TLS verification).
+// Supports exact host:port matching and CIDR-based IP matching.
+func (api *api) isInsecureHost(host string) bool {
+	if api.InsecureRegistry {
+		return true
+	}
+
+	// Exact match (host or host:port)
+	if api.insecureRegistryHosts[host] {
+		return true
+	}
+
+	// Extract host part without port for IP/CIDR matching
+	hostOnly := host
+	if h, _, err := net.SplitHostPort(host); err == nil {
+		hostOnly = h
+	}
+
+	// Also check host without port
+	if hostOnly != host && api.insecureRegistryHosts[hostOnly] {
+		return true
+	}
+
+	// CIDR matching for IP addresses
+	ip := net.ParseIP(hostOnly)
+	if ip != nil {
+		for _, cidr := range api.insecureRegistryCIDRs {
+			if cidr.Contains(ip) {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 func (api *api) Tags(ctx context.Context, reference string, _ ...Option) ([]string, error) {
@@ -56,7 +122,7 @@ func (api *api) Tags(ctx context.Context, reference string, _ ...Option) ([]stri
 }
 
 func (api *api) tags(ctx context.Context, reference string) ([]string, error) {
-	tags, err := api.list(ctx, reference, api.defaultRemoteOptions(ctx)...)
+	tags, err := api.list(ctx, reference)
 	if err != nil {
 		if IsStatusNotFoundErr(err) {
 			return []string{}, nil
@@ -69,19 +135,19 @@ func (api *api) tags(ctx context.Context, reference string) ([]string, error) {
 }
 
 func (api *api) tagImage(ctx context.Context, reference, tag string) error {
-	ref, err := name.ParseReference(reference, api.parseReferenceOptions()...)
+	ref, err := name.ParseReference(reference, api.parseReferenceOptionsForHost(reference)...)
 	if err != nil {
 		return fmt.Errorf("parsing reference %q: %w", reference, err)
 	}
 
-	desc, err := remote.Get(ref, api.defaultRemoteOptions(ctx)...)
+	desc, err := remote.Get(ref, api.defaultRemoteOptionsForHost(ctx, reference)...)
 	if err != nil {
 		return fmt.Errorf("getting reference %q: %w", reference, err)
 	}
 
 	dst := ref.Context().Tag(tag)
 
-	return remote.Tag(dst, desc, api.defaultRemoteOptions(ctx)...)
+	return remote.Tag(dst, desc, api.defaultRemoteOptionsForHost(ctx, reference)...)
 }
 
 func (api *api) IsRepoImageExists(ctx context.Context, reference string) (bool, error) {
@@ -234,13 +300,13 @@ func (api *api) getRepoImageByDesc(ctx context.Context, originalTag string, desc
 }
 
 func (api *api) list(ctx context.Context, reference string, extraListOptions ...remote.Option) ([]string, error) {
-	repo, err := name.NewRepository(reference, api.newRepositoryOptions()...)
+	repo, err := name.NewRepository(reference, api.newRepositoryOptionsForHost(reference)...)
 	if err != nil {
 		return nil, fmt.Errorf("parsing repo %q: %w", reference, err)
 	}
 
 	listOptions := append(
-		api.defaultRemoteOptions(ctx),
+		api.defaultRemoteOptionsForHost(ctx, reference),
 		extraListOptions...,
 	)
 
@@ -253,12 +319,12 @@ func (api *api) list(ctx context.Context, reference string, extraListOptions ...
 }
 
 func (api *api) deleteImageByReference(ctx context.Context, reference string) error {
-	r, err := name.ParseReference(reference, api.parseReferenceOptions()...)
+	r, err := name.ParseReference(reference, api.parseReferenceOptionsForHost(reference)...)
 	if err != nil {
 		return fmt.Errorf("parsing reference %q: %w", reference, err)
 	}
 
-	if err := remote.Delete(r, api.defaultRemoteOptions(ctx)...); err != nil {
+	if err := remote.Delete(r, api.defaultRemoteOptionsForHost(ctx, reference)...); err != nil {
 		return fmt.Errorf("deleting image %q: %w", r, err)
 	}
 
@@ -270,7 +336,7 @@ func (api *api) MutateAndPushImage(ctx context.Context, sourceReference, destina
 }
 
 func (api *api) mutateAndPushImage(ctx context.Context, sourceReference, destinationReference string, opts ...registry_api.MutateOption) error {
-	dstRef, err := name.ParseReference(destinationReference, api.parseReferenceOptions()...)
+	dstRef, err := name.ParseReference(destinationReference, api.parseReferenceOptionsForHost(destinationReference)...)
 	if err != nil {
 		return fmt.Errorf("parsing reference %q: %w", destinationReference, err)
 	}
@@ -327,7 +393,7 @@ func (api *api) mutateAndPushImage(ctx context.Context, sourceReference, destina
 }
 
 func (api *api) CopyImage(ctx context.Context, sourceReference, destinationReference string, _ CopyImageOptions) error {
-	dstRef, err := name.ParseReference(destinationReference, api.parseReferenceOptions()...)
+	dstRef, err := name.ParseReference(destinationReference, api.parseReferenceOptionsForHost(destinationReference)...)
 	if err != nil {
 		return fmt.Errorf("parsing reference %q: %w", destinationReference, err)
 	}
@@ -379,7 +445,7 @@ func (api *api) PushImage(ctx context.Context, reference string, opts *PushImage
 }
 
 func (api *api) pushImage(ctx context.Context, reference string, opts *PushImageOptions) error {
-	ref, err := name.ParseReference(reference, api.parseReferenceOptions()...)
+	ref, err := name.ParseReference(reference, api.parseReferenceOptionsForHost(reference)...)
 	if err != nil {
 		return fmt.Errorf("parsing reference %q: %w", reference, err)
 	}
@@ -398,12 +464,12 @@ func (api *api) pushImage(ctx context.Context, reference string, opts *PushImage
 }
 
 func (api *api) getImageDesc(ctx context.Context, reference string) (*remote.Descriptor, name.Reference, error) {
-	ref, err := name.ParseReference(reference, api.parseReferenceOptions()...)
+	ref, err := name.ParseReference(reference, api.parseReferenceOptionsForHost(reference)...)
 	if err != nil {
 		return nil, nil, fmt.Errorf("parsing reference %q: %w", reference, err)
 	}
 
-	desc, err := remote.Get(ref, api.defaultRemoteOptions(ctx)...)
+	desc, err := remote.Get(ref, api.defaultRemoteOptionsForHost(ctx, reference)...)
 	if err != nil {
 		return nil, nil, fmt.Errorf("getting %s: %w", ref, err)
 	}
@@ -412,6 +478,10 @@ func (api *api) getImageDesc(ctx context.Context, reference string) (*remote.Des
 
 func (api *api) newRepositoryOptions() []name.Option {
 	return api.parseReferenceOptions()
+}
+
+func (api *api) newRepositoryOptionsForHost(reference string) []name.Option {
+	return api.parseReferenceOptionsForHost(reference)
 }
 
 func (api *api) parseReferenceOptions() []name.Option {
@@ -434,6 +504,56 @@ func (api *api) defaultRemoteOptions(ctx context.Context) []remote.Option {
 	}
 }
 
+// defaultRemoteOptionsForHost returns remote options with insecure transport
+// when the registry host is in the insecure-registries list.
+func (api *api) defaultRemoteOptionsForHost(ctx context.Context, reference string) []remote.Option {
+	if api.InsecureRegistry || api.SkipTlsVerifyRegistry {
+		return api.defaultRemoteOptions(ctx)
+	}
+
+	registryHost := api.extractRegistryHost(reference)
+	if registryHost != "" && api.isInsecureHost(registryHost) {
+		return []remote.Option{
+			remote.WithContext(ctx),
+			remote.WithAuthFromKeychain(authn.DefaultKeychain),
+			remote.WithTransport(api.insecureHttpTransport),
+			remote.WithUserAgent(werf.UserAgent),
+		}
+	}
+
+	return api.defaultRemoteOptions(ctx)
+}
+
+// extractRegistryHost extracts the registry host from a reference or repository string.
+func (api *api) extractRegistryHost(reference string) string {
+	// Try parsing as full reference first (e.g. registry/repo:tag)
+	if ref, err := name.ParseReference(reference, name.WeakValidation, name.Insecure); err == nil {
+		return ref.Context().RegistryStr()
+	}
+	// Fallback to parsing as repository (e.g. registry/repo)
+	if repo, err := name.NewRepository(reference, name.WeakValidation, name.Insecure); err == nil {
+		return repo.RegistryStr()
+	}
+	return ""
+}
+
+// parseReferenceOptionsForHost returns name.Option list for the given reference,
+// adding name.Insecure when the registry host is in insecure-registries list.
+func (api *api) parseReferenceOptionsForHost(reference string) []name.Option {
+	options := api.parseReferenceOptions()
+
+	if api.InsecureRegistry {
+		return options
+	}
+
+	registryHost := api.extractRegistryHost(reference)
+	if registryHost != "" && api.isInsecureHost(registryHost) {
+		options = append(options, name.Insecure)
+	}
+
+	return options
+}
+
 type referenceParts struct {
 	registry   string
 	repository string
@@ -442,7 +562,7 @@ type referenceParts struct {
 }
 
 func (api *api) parseReferenceParts(reference string) (referenceParts, error) {
-	parsedReference, err := name.ParseReference(reference, api.parseReferenceOptions()...)
+	parsedReference, err := name.ParseReference(reference, api.parseReferenceOptionsForHost(reference)...)
 	if err != nil {
 		return referenceParts{}, err
 	}
@@ -469,7 +589,7 @@ func (api *api) parseReferenceParts(reference string) (referenceParts, error) {
 }
 
 func (api *api) PushImageArchive(ctx context.Context, archiveOpener ArchiveOpener, reference string) error {
-	tag, err := name.NewTag(reference, api.parseReferenceOptions()...)
+	tag, err := name.NewTag(reference, api.parseReferenceOptionsForHost(reference)...)
 	if err != nil {
 		return fmt.Errorf("unable to parse reference %q: %w", reference, err)
 	}
@@ -524,7 +644,7 @@ func (api *api) writeToRemote(ctx context.Context, ref name.Reference, imageOrIn
 	return logboek.Context(ctx).Info().LogProcess("Pushing reference %s to remote repo", ref).DoError(func() error {
 		c := make(chan v1.Update, 200)
 
-		remoteOpts := append(api.defaultRemoteOptions(ctx), remote.WithProgress(c))
+		remoteOpts := append(api.defaultRemoteOptionsForHost(ctx, ref.String()), remote.WithProgress(c))
 		switch i := imageOrIndex.(type) {
 		case v1.Image:
 			go remote.Write(ref, i, remoteOpts...)
@@ -550,12 +670,12 @@ func (api *api) writeToRemote(ctx context.Context, ref name.Reference, imageOrIn
 }
 
 func (api *api) PullImageArchive(ctx context.Context, archiveWriter io.Writer, reference string) error {
-	ref, err := name.ParseReference(reference, api.parseReferenceOptions()...)
+	ref, err := name.ParseReference(reference, api.parseReferenceOptionsForHost(reference)...)
 	if err != nil {
 		return fmt.Errorf("unable to parse reference %q: %w", reference, err)
 	}
 
-	desc, err := remote.Get(ref, api.defaultRemoteOptions(ctx)...)
+	desc, err := remote.Get(ref, api.defaultRemoteOptionsForHost(ctx, reference)...)
 	if err != nil {
 		return fmt.Errorf("getting reference %q: %w", reference, err)
 	}
@@ -589,7 +709,7 @@ func (api *api) PushManifestList(ctx context.Context, reference string, opts Man
 		panic("unexpected empty manifests list")
 	}
 
-	manifestListRef, err := name.ParseReference(reference, api.parseReferenceOptions()...)
+	manifestListRef, err := name.ParseReference(reference, api.parseReferenceOptionsForHost(reference)...)
 	if err != nil {
 		return fmt.Errorf("unable to parse reference %q: %w", reference, err)
 	}
@@ -606,7 +726,7 @@ func (api *api) PushManifestList(ctx context.Context, reference string, opts Man
 	adds := make([]mutate.IndexAddendum, 0, len(opts.Manifests))
 
 	for _, info := range opts.Manifests {
-		ref, err := name.ParseReference(info.Name, api.parseReferenceOptions()...)
+		ref, err := name.ParseReference(info.Name, api.parseReferenceOptionsForHost(info.Name)...)
 		if err != nil {
 			return fmt.Errorf("unable to parse reference %q: %w", info.Name, err)
 		}
@@ -622,7 +742,7 @@ func (api *api) PushManifestList(ctx context.Context, reference string, opts Man
 				return fmt.Errorf("unable to parse platform %q: %w", p, err)
 			}
 
-			options := append(api.defaultRemoteOptions(ctx), remote.WithPlatform(*pl))
+			options := append(api.defaultRemoteOptionsForHost(ctx, info.Name), remote.WithPlatform(*pl))
 			desc, err = remote.Get(ref, options...)
 			if err != nil {
 				return fmt.Errorf("unable to get manifest of %q: %w", info.Name, err)
