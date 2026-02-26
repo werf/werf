@@ -34,7 +34,6 @@ func mapStapelConfigToImage(ctx context.Context, metaConfig *config.Meta, stapel
 		UseCustomTag:       useCustomTag,
 		StapelImageConfig:  stapelImageConfig,
 		Sbom:               stapelImageConfig.Sbom(),
-		StapelImageConfig:  stapelImageConfig,
 	}
 
 	var baseImageType BaseImageType

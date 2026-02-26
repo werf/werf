@@ -17,7 +17,7 @@ var (
 	suiteImage2 = "flant/werf-test:base-image-suite-image2"
 )
 
-var testSuiteEntrypointFunc = suite_init.MakeTestSuiteEntrypointFunc("Ansible suite", suite_init.TestSuiteEntrypointFuncOptions{
+var testSuiteEntrypointFunc = suite_init.MakeTestSuiteEntrypointFunc("Base images suite", suite_init.TestSuiteEntrypointFuncOptions{
 	RequiredSuiteTools: []string{"docker"},
 	RequiredSuiteEnvs: []string{
 		"WERF_TEST_K8S_DOCKER_REGISTRY",

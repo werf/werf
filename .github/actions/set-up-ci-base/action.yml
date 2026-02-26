@@ -1,0 +1,49 @@
+name: Set up CI base
+description: Prepare common CI prerequisites (job id, Go, cache, tools). Requires checkout before use.
+inputs:
+  setJobId:
+    default: "false"
+    description: Whether to export JOB_ID to GITHUB_ENV.
+  prepareMultiarch:
+    default: "false"
+    description: Whether to prepare system for multiarch builds.
+  installGolangciLint:
+    default: "false"
+    description: Whether to ensure golangci-lint is installed.
+runs:
+  using: composite
+  steps:
+    - if: inputs.setJobId == 'true'
+      name: Set up JOB_ID
+      shell: bash
+      run: |
+        echo "JOB_ID=${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> "$GITHUB_ENV"
+
+    - if: inputs.prepareMultiarch == 'true'
+      name: Prepare system for multiarch builds
+      shell: bash
+      run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes || true
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        cache: false
+        go-version-file: go.mod
+
+    - name: Add Go bin to PATH
+      shell: bash
+      run: echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+
+    - name: Restore Go tools cache
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/go/bin/ginkgo
+          ~/go/bin/golangci-lint
+        key: ${{ runner.os }}-go-tools-${{ hashFiles('go.mod', 'go.sum', 'Taskfile.dist.yaml') }}
+
+    - if: inputs.installGolangciLint == 'true'
+      name: Install golangci-lint
+      shell: bash
+      run: |
+        command -v golangci-lint >/dev/null 2>&1 || task --yes deps:install:golangci-lint
