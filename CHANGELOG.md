@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.62.1](https://github.com/werf/werf/compare/v2.62.0...v2.62.1) (2026-02-26)
+
+
+### Bug Fixes
+
+* **cleanup:** do not require docker daemon for registry mirrors ([7a42d33](https://github.com/werf/werf/commit/7a42d33ee17eb35a807580c1d7ae39aab4e56cef))
+
 ## [2.62.0](https://github.com/werf/werf/compare/v2.61.1...v2.62.0) (2026-02-19)
 
 
