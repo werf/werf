@@ -12,7 +12,7 @@ To avoid this, the Docker community suggests installing tools, building, and rem
 RUN “download-source && cmd && cmd2 && remove-source”
 ```
 
-> You can do the same in werf — just specify the relevant instructions for some _user stage_. Below is an example of specifying the _shell assembly instructions_ for the _install stage_ (you can do so for the _ansible_ builder as well):
+> You can do the same in werf — just specify the relevant instructions for some _user stage_. Below is an example of specifying the _shell assembly instructions_ for the _install stage_:
 ```yaml
 shell:
   install:

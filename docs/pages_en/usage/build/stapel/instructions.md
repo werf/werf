@@ -1,14 +1,14 @@
 ---
 title: Running assembly instructions
 permalink: usage/build/stapel/instructions.html
-directive_summary: shell_and_ansible
+directive_summary: shell
 ---
 
 ## What are user stages?
 
 ***User stage*** is a stage containing _assembly instructions_ from the config.
 
-Currently, there are two kinds of assembly instructions: _shell_ and _ansible_. werf provides four user stages and executes them in the following order: _beforeInstall_, _install_, _beforeSetup_, and _setup_. You can create a specific Docker layer by executing assembly instructions in the corresponding stage.
+Currently, there is one kind of assembly instructions: _shell_. werf provides four user stages and executes them in the following order: _beforeInstall_, _install_, _beforeSetup_, and _setup_. You can create a specific Docker layer by executing assembly instructions in the corresponding stage.
 
 ## Using user stages
 
@@ -33,7 +33,7 @@ What is the best strategy for carrying them out? You might think the best way is
 
 When building a stage, the stage instructions are supposed to run in a container based on the previous built stage or [base image]({{"usage/build/stapel/base.html#from" | true_relative_url }}). We will further refer to such a container as a **build container**.
 
-Before running the _build container_, werf prepares a set of instructions. This set depends on the stage type and contains both werf service commands and user commands specified in the `werf.yaml` config file. The service commands may include, for example, adding files, applying patches, running Ansible jobs, etc.
+Before running the _build container_, werf prepares a set of instructions. This set depends on the stage type and contains both werf service commands and user commands specified in the `werf.yaml` config file. The service commands may include, for example, adding files, applying patches, etc.
 
 The Stapel builder uses its own set of tools and libraries and does not depend on the base image in any way. When the _build container_ is started, werf mounts everything it needs from the special service image named `registry.werf.io/werf/stapel`.
 
@@ -127,7 +127,7 @@ No limitations are imposed on assembly instructions. The suggested use of _user 
 
 ## Syntax
 
-There are two mutually exclusive top-level ***builder directives*** for assembly instructions: `shell` and `ansible`. You can build an image either via ***shell instructions*** or via their ***ansible counterparts***.
+The top-level ***builder directive*** for assembly instructions is `shell`. You build an image via ***shell instructions***.
 
 The _builder directive_ includes four directives that define assembly instructions for each _user stage_:
 
@@ -176,149 +176,6 @@ beforeInstall:
 ```
 
 The `bash` binary is stored in a _Stapel volume_. You can find additional information about the concept in this [blog post [RU]](https://habr.com/company/flant/blog/352432/) (`dappdeps` has been renamed to `stapel`; still, the principle remains the same)
-
-## Ansible
-
-Here is the _user stage_ syntax featuring _ansible assembly instructions_:
-
-```yaml
-ansible:
-  beforeInstall:
-  - <ansible task 1>
-  - <ansible task 2>
-  # ...
-  - <ansible task N>
-  install:
-  - ansible task
-  # ...
-  beforeSetup:
-  - ansible task
-  # ...
-  setup:
-  - ansible task
-  # ...
-  cacheVersion: <version>
-  beforeInstallCacheVersion: <version>
-  installCacheVersion: <version>
-  beforeSetupCacheVersion: <version>
-  setupCacheVersion: <version>
-```
-
-> **Note:** the ansible syntax is not available for the Buildah building backend.
-
-### Ansible config and stage playbook
-
-_Ansible assembly instructions_ for the _user stage_ are a set of Ansible tasks.
-
-The generated `ansible.cfg` file contains the Ansible settings:
-- use local transport (transport = local);
-- werf's stdout_callback method for better logging (stdout_callback = werf);
-- turn on the force_color mode (force_color = 1);
-- use sudo for privilege escalation (to avoid using `become` in ansible tasks).
-
-The generated `playbook.yml` file is a playbook with all tasks from the specific _user stage_. Below is an example of `werf.yaml` that includes all the tasks for the _install_ stage:
-
-```yaml
-ansible:
-  install:
-  - debug: msg='Start install'
-  - file: path=/etc mode=0777
-  - copy:
-      src: /bin/sh
-      dest: /bin/sh.orig
-  - apk:
-      name: curl
-      update_cache: yes
-  # ...
-```
-
-`ansible` and `python` binaries/libraries are stored in a _Stapel volume_. You can find more information about this concept in [this blog post [RU]](https://habr.com/company/flant/blog/352432/) (`dappdeps` has been renamed to `stapel`; still, the principle remains the same).
-
-### Supported modules
-
-One of the ideas at the core of werf is idempotent builds. werf must generate the identical image every time as long as there are no changes. We achieve this by calculating a _digest_ for _stages_. However, Ansible modules are non-idempotent, meaning they produce different results even if the input parameters are the same. Consequently, werf cannot correctly calculate a _digest_ to determine whether _stages_ need to be rebuilt. This is why werf currently supports a limited list of modules:
-
-- Command modules: command, shell, raw, script.
-- Crypto modules: openssl_certificate, and other.
-- Files modules: acl, archive, copy, stat, tempfile, and other.
-- Net Tools Modules: get_url, slurp, uri.
-- Packaging/Language modules: composer, gem, npm, pip, and other.
-- Packaging/OS modules: apt, apk, yum, and other.
-- System modules: user, group, getent, locale_gen, timezone, cron, and other.
-- Utilities modules: assert, debug, set_fact, wait_for.
-
-An attempt to do a _werf config_ with the module not in this list will result in an error and a failed build. Feel free to create an [issue](https://github.com/werf/werf/issues/new) if you think some module should be enabled.
-
-### Copying files
-
-[Git mappings]({{ "usage/build/stapel/git.html" | true_relative_url }}) are the preferred way of copying files into an image. werf cannot detect changes to the files referred to in the `copy` module. Currently, the only way to copy some external file into an image is to use the `.Files.Get` method of Go templates. This method returns the contents of the file as a string. Thus, the contents become a part of the _user stage digest_, and changes to the file cause the _user stage_ to be rebuilt.
-
-Here is an example of copying `nginx.conf` into an image:
-
-{% raw %}
-```yaml
-ansible:
-  install:
-  - copy:
-      content: |
-{{ .Files.Get "/conf/etc/nginx.conf" | indent 8 }}
-      dest: /etc/nginx/nginx.conf
-```
-{% endraw %}
-
-werf will render the above snippet as a go template and transform it into the following `playbook.yml`:
-
-```yaml
-- hosts: all
-  gather_facts: no
-  tasks:
-    install:
-    - copy:
-        content: |
-          http {
-            sendfile on;
-            tcp_nopush on;
-            tcp_nodelay on;
-            # ...
-```
-
-### Jinja templates
-
-Ansible supports [Jinja templates](https://docs.ansible.com/ansible/2.5/user_guide/playbooks_templating.html) in playbooks. Unfortunately, Go and Jinja templates have similar delimiters: {% raw %}{{ and }}{% endraw %}. So you have to escape Jinja templates to use them. There are two possible ways to do that: you can either escape the {% raw %}{{{% endraw %} delimiters or the entire Jinja expression.
-
-Let’s take a look at the example. Say, you have the following Ansible task:
-
-{% raw %}
-```yaml
-- copy:
-    src: {{item}}
-    dest: /etc/nginx
-    with_files:
-    - /app/conf/etc/nginx.conf
-    - /app/conf/etc/server.conf
-```
-{% endraw %}
-
-{% raw %}
-In this case, the `{{item}}` Jinja expression must be escaped:
-{% endraw %}
-
-{% raw %}
-```yaml
-# Escape {{ only.
-src: {{"{{"}} item }}
-```
-or
-```yaml
-# Escape the whole expression.
-src: {{`{{item}}`}}
-```
-{% endraw %}
-
-### Ansible complications
-
-- Only raw and command modules support Live stdout output. Other modules display contents of stdout and stderr streams after execution, which results in output delays.
-- The `apt` module causes the build process to hang in some Debian and Ubuntu versions. The derived images are affected as well ([issue #645](https://github.com/werf/werf/issues/645)).
 
 ## Environment variables of the build container
 

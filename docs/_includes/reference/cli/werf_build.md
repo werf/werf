@@ -31,12 +31,6 @@ werf build [IMAGE_NAME...] [options]
   $ werf build --repo harbor.company.io/werf
 ```
 
-{{ header }} Environments
-
-```shell
-  $WERF_DEBUG_ANSIBLE_ARGS  Pass specified cli args to ansible ($ANSIBLE_ARGS)
-```
-
 {{ header }} Options
 
 ```shell

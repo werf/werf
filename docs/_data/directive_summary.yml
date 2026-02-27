@@ -72,7 +72,7 @@ en:
               - <path or glob relative to path in add>
               setup:
               - <path or glob relative to path in add>
-  shell_and_ansible: &shell_and_ansible
+  shell: &shell
     link: "images/configuration/assembly_instructions1.svg"
     preview_link: "images/configuration/assembly_instructions1.svg"
     link_alt: "User stages"
@@ -93,23 +93,7 @@ en:
             installCacheVersion: <arbitrary string>
             beforeSetupCacheVersion: <arbitrary string>
             setupCacheVersion: <arbitrary string>
-      - name: ansible
-        data: |
-          ansible:
-            beforeInstall:
-            - <task>
-            install:
-            - <task>
-            beforeSetup:
-            - <task>
-            setup:
-            - <task>
-            cacheVersion: <arbitrary string>
-            beforeInstallCacheVersion: <arbitrary string>
-            installCacheVersion: <arbitrary string>
-            beforeSetupCacheVersion: <arbitrary string>
-            setupCacheVersion: <arbitrary string>
-    extra: &shell_and_ansible_extra
+    extra: &shell_extra
       text: "Running assembly instructions with git"
       link: "images/configuration/assembly_instructions2.svg"
       preview_link: "images/configuration/assembly_instructions2.svg"
@@ -157,11 +141,11 @@ ru:
   git:
     <<: *git
     link_alt: "Стадии git"
-  shell_and_ansible:
-    <<: *shell_and_ansible
+  shell:
+    <<: *shell
     link_alt: "Пользовательские стадии"
     extra:
-      <<: *shell_and_ansible_extra
+      <<: *shell_extra
       text: "Запуск инструкций сборки при изменениях в git-репозитории"
   mount:
     <<: *mount
