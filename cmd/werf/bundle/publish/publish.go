@@ -464,7 +464,7 @@ func createNewBundle(
 	}
 
 	if featgate.FeatGateTypescript.Enabled() {
-		if err := deno.NewDenoRuntime(true).BundleChartsRecursive(ctx, chrt, chartDir); err != nil {
+		if err := deno.NewDenoRuntime(true, deno.DenoRuntimeOptions{}).BundleChartsRecursive(ctx, chrt, chartDir); err != nil {
 			return fmt.Errorf("unable to process TypeScript files in chart: %w", err)
 		}
 	}
