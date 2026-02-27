@@ -2,9 +2,15 @@
 
 werf is an Open Source project, and we are thrilled to develop and improve it in collaboration with the community.
 
-## Feedback
+## Before you start
 
-The first thing we recommend is to check the existing [issues](https://github.com/werf/werf/issues), [discussion threads](https://github.com/werf/werf/discussions), and [documentation](https://werf.io/docs/v2/) - there may already be a discussion or solution on your topic. If not, choose the appropriate way to address the issue on [the new issue form](https://github.com/werf/werf/issues/new/choose).
+For any significant change, open the issue first (or comment on an existing one) to discuss with the maintainers on what to do and how. When the solution is agreed upon, you can proceed with implementation and open a pull request.
+
+For small changes, such as few lines bugfixes or documentation improvements, feel free to open a pull request directly.
+
+For easy first issues, check the [good first issue](https://github.com/werf/werf/issues?q=is%3Aissue%20state%3Aopen%20label%3A%22good%20first%20issue%22) tag.
+
+You can also check the existing [issues](https://github.com/werf/werf/issues), [discussion threads](https://github.com/werf/werf/discussions), and [documentation](https://werf.io/docs/v2/) — there may already be a discussion or solution on your topic. If not, choose the appropriate way to address the issue on [the new issue form](https://github.com/werf/werf/issues/new/choose).
 
 ## Contributing code
 
@@ -57,22 +63,12 @@ The first thing we recommend is to check the existing [issues](https://github.co
 
    Additionally, to build the `werf` binary, you need to install the `libbtrfs-dev` package.
 
-4. Make changes.
-5. Build werf:
+4. Make your changes.
+5. Run `task` with no arguments to run all essential checks (build, lint, format, quick tests, and others).
 
-   ```shell
-   task build # The built werf binary will be available in the bin directory.
-   ```
+   You can also check out all available tasks with `task -l`.
 
-6. Format and lint your code:
-
-    ```shell
-    task format lint
-    ```
-
-    Note: The `task format` and `task lint` will run Prettier inside a container.
-
-7. Testing:
+6. Testing:
    1. Setup testing environment:
       ```shell
       task test:setup:environment
@@ -89,13 +85,9 @@ The first thing we recommend is to check the existing [issues](https://github.co
       ```
    4.  Do manual testing (if needed).
 
-8.  Commit changes:
+7. Commit your changes. See [Conventions](#conventions) for the commit message format. The commit must be signed off (`--signoff`) as an acknowledgment of the [DCO](https://developercertificate.org/).
+8. Push and open a pull request.
 
-    - Follow [The Conventional Commits specification](https://www.conventionalcommits.org/en/v1.0.0/).
-    - Sign off every commit you contributed as an acknowledgment of the [DCO](https://developercertificate.org/).
-
-9.  Push commits.
-10. Create a pull request.
 
 ## Conventions
 
@@ -191,10 +183,9 @@ A concise, hyphen-separated phrase in kebab-case that clearly describes the main
 
 Each pull request title should clearly reflect the changes introduced, adhering to [**the header format** of a commit message](#commit-message), typically mirroring the main commit's text in the PR.
 
-### Coding Conventions
+### Code style
 
-- [Effective Go](https://golang.org/doc/effective_go.html).
-- [Go's commenting conventions](http://blog.golang.org/godoc-documenting-go-code).
+See [CODESTYLE.md](CODESTYLE.md).
 
 ## Improving the documentation
 
