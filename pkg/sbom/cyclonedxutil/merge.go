@@ -2,6 +2,7 @@ package cyclonedxutil
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
@@ -37,7 +38,11 @@ func (o MergeOpts) mergeOrder(target *cdx.BOM) []*cdx.BOM {
 	return boms
 }
 
-func MergeBOMs(target *cdx.BOM, opts MergeOpts) *cdx.BOM {
+func MergeBOMs(target *cdx.BOM, opts MergeOpts) (*cdx.BOM, error) {
+	if err := validateBOMSpecVersions(target, opts); err != nil {
+		return nil, err
+	}
+
 	result := NewBOM()
 
 	if target != nil && target.Metadata != nil {
@@ -55,7 +60,7 @@ func MergeBOMs(target *cdx.BOM, opts MergeOpts) *cdx.BOM {
 	result.Annotations = mergeAnnotations(boms)
 	result.Formulation = mergeFormulation(boms)
 
-	return result
+	return result, nil
 }
 
 func mergeComponents(boms []*cdx.BOM) *[]cdx.Component {
@@ -228,4 +233,24 @@ func BOMChecksum(bom *cdx.BOM) string {
 	}
 
 	return util.Sha256Hash(string(data))
+}
+
+func validateBOMSpecVersions(target *cdx.BOM, opts MergeOpts) error {
+	boms := opts.mergeOrder(target)
+	for _, bom := range boms {
+		if bom == nil {
+			continue
+		}
+
+		if bom.SpecVersion != 0 && bom.SpecVersion != cdx.SpecVersion1_6 {
+			return fmt.Errorf(
+				"unsupported CycloneDX spec version %q in BOM (expected %q): "+
+					"newer spec versions may introduce fields not handled during merging, "+
+					"convert the BOM to the supported spec version",
+				bom.SpecVersion, cdx.SpecVersion1_6,
+			)
+		}
+	}
+
+	return nil
 }

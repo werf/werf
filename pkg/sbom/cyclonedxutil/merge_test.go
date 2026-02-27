@@ -49,11 +49,12 @@ var _ = Describe("MergeBOMs", func() {
 			},
 		}
 
-		result := MergeBOMs(targetBOM, MergeOpts{
+		result, err := MergeBOMs(targetBOM, MergeOpts{
 			BaseBOM:     baseBOM,
 			ImportBOMs:  []*cdx.BOM{importBOM1, importBOM2},
 			FragmentBOM: fragmentBOM,
 		})
+		Expect(err).ToNot(HaveOccurred())
 
 		Expect(result.Components).ToNot(BeNil())
 		Expect(componentNames(result)).To(Equal([]string{
@@ -80,7 +81,8 @@ var _ = Describe("MergeBOMs", func() {
 			Components: &[]cdx.Component{},
 		}
 
-		result := MergeBOMs(targetBOM, MergeOpts{BaseBOM: baseBOM})
+		result, err := MergeBOMs(targetBOM, MergeOpts{BaseBOM: baseBOM})
+		Expect(err).ToNot(HaveOccurred())
 
 		Expect(result.Metadata).ToNot(BeNil())
 		Expect(result.Metadata.Component).ToNot(BeNil())
@@ -90,8 +92,8 @@ var _ = Describe("MergeBOMs", func() {
 	It("sets correct BOM fields", func() {
 		targetBOM := &cdx.BOM{Components: &[]cdx.Component{}}
 
-		result := MergeBOMs(targetBOM, MergeOpts{})
-
+		result, err := MergeBOMs(targetBOM, MergeOpts{})
+		Expect(err).ToNot(HaveOccurred())
 		Expect(result.BOMFormat).To(Equal(cdx.BOMFormat))
 		Expect(result.SpecVersion).To(Equal(cdx.SpecVersion1_6))
 		Expect(result.Version).To(Equal(1))
@@ -105,8 +107,8 @@ var _ = Describe("MergeBOMs", func() {
 			Components:   &[]cdx.Component{},
 		}
 
-		result := MergeBOMs(targetBOM, MergeOpts{})
-
+		result, err := MergeBOMs(targetBOM, MergeOpts{})
+		Expect(err).ToNot(HaveOccurred())
 		Expect(result.SerialNumber).To(HavePrefix("urn:uuid:"))
 		Expect(result.SerialNumber).ToNot(Equal(targetBOM.SerialNumber))
 	})
@@ -118,8 +120,8 @@ var _ = Describe("MergeBOMs", func() {
 			},
 		}
 
-		result := MergeBOMs(nil, MergeOpts{BaseBOM: baseBOM})
-
+		result, err := MergeBOMs(nil, MergeOpts{BaseBOM: baseBOM})
+		Expect(err).ToNot(HaveOccurred())
 		Expect(result.Components).ToNot(BeNil())
 		Expect(*result.Components).To(HaveLen(1))
 		Expect(result.Metadata).To(BeNil())
@@ -130,8 +132,71 @@ var _ = Describe("MergeBOMs", func() {
 		baseBOM := &cdx.BOM{Components: &[]cdx.Component{duplicateComp}}
 		targetBOM := &cdx.BOM{Components: &[]cdx.Component{duplicateComp}}
 
-		result := MergeBOMs(targetBOM, MergeOpts{BaseBOM: baseBOM})
+		result, err := MergeBOMs(targetBOM, MergeOpts{BaseBOM: baseBOM})
+		Expect(err).ToNot(HaveOccurred())
+		Expect(result.Components).ToNot(BeNil())
+		Expect(*result.Components).To(HaveLen(2))
+	})
 
+	It("returns error for unsupported spec version in target BOM", func() {
+		targetBOM := &cdx.BOM{
+			SpecVersion: cdx.SpecVersion1_5,
+			Components:  &[]cdx.Component{},
+		}
+
+		_, err := MergeBOMs(targetBOM, MergeOpts{})
+		Expect(err).To(HaveOccurred())
+		Expect(err.Error()).To(ContainSubstring("unsupported CycloneDX spec version"))
+		Expect(err.Error()).To(ContainSubstring("1.5"))
+	})
+
+	It("returns error for unsupported spec version in base BOM", func() {
+		baseBOM := &cdx.BOM{
+			SpecVersion: cdx.SpecVersion(100),
+			Components:  &[]cdx.Component{},
+		}
+		targetBOM := &cdx.BOM{Components: &[]cdx.Component{}}
+
+		_, err := MergeBOMs(targetBOM, MergeOpts{BaseBOM: baseBOM})
+		Expect(err).To(HaveOccurred())
+		Expect(err.Error()).To(ContainSubstring("unsupported CycloneDX spec version"))
+		Expect(err.Error()).To(ContainSubstring("SpecVersion(100)"))
+	})
+
+	It("returns error for unsupported spec version in import BOM", func() {
+		importBOM := &cdx.BOM{
+			SpecVersion: cdx.SpecVersion1_5,
+			Components:  &[]cdx.Component{},
+		}
+		targetBOM := &cdx.BOM{Components: &[]cdx.Component{}}
+
+		_, err := MergeBOMs(targetBOM, MergeOpts{ImportBOMs: []*cdx.BOM{importBOM}})
+		Expect(err).To(HaveOccurred())
+		Expect(err.Error()).To(ContainSubstring("unsupported CycloneDX spec version"))
+	})
+
+	It("succeeds when BOMs have matching 1.6 spec version", func() {
+		baseBOM := &cdx.BOM{
+			SpecVersion: cdx.SpecVersion1_6,
+			Components:  &[]cdx.Component{{Name: "base-comp"}},
+		}
+		targetBOM := &cdx.BOM{
+			SpecVersion: cdx.SpecVersion1_6,
+			Components:  &[]cdx.Component{{Name: "target-comp"}},
+		}
+
+		result, err := MergeBOMs(targetBOM, MergeOpts{BaseBOM: baseBOM})
+		Expect(err).ToNot(HaveOccurred())
+		Expect(result.Components).ToNot(BeNil())
+		Expect(*result.Components).To(HaveLen(2))
+	})
+
+	It("succeeds when BOMs have empty spec version", func() {
+		baseBOM := &cdx.BOM{Components: &[]cdx.Component{{Name: "base-comp"}}}
+		targetBOM := &cdx.BOM{Components: &[]cdx.Component{{Name: "target-comp"}}}
+
+		result, err := MergeBOMs(targetBOM, MergeOpts{BaseBOM: baseBOM})
+		Expect(err).ToNot(HaveOccurred())
 		Expect(result.Components).ToNot(BeNil())
 		Expect(*result.Components).To(HaveLen(2))
 	})

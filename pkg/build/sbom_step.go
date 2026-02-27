@@ -97,7 +97,10 @@ func (step *sbomStep) ConvergeWithMerge(ctx context.Context, werfImgName string,
 
 		resultBOM := targetBOM
 		if !mergeOpts.IsEmpty() {
-			resultBOM = cyclonedxutil.MergeBOMs(targetBOM, mergeOpts)
+			resultBOM, err = cyclonedxutil.MergeBOMs(targetBOM, mergeOpts)
+			if err != nil {
+				return fmt.Errorf("merge BOMs: %w", err)
+			}
 		}
 
 		sbomImgId, err := step.buildSbomImage(ctx, resultBOM, scanOpts, sbomImgLabels.ToStringSlice())
