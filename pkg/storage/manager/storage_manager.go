@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/cenkalti/backoff/v5"
 	"gopkg.in/yaml.v2"
 
 	"github.com/werf/lockgate"
@@ -30,7 +31,7 @@ var (
 	ErrStageNotFound                = errors.New("stage not found")
 )
 
-const maxRetriesOnUnexpectedStagesStorageState = 3
+const maxRetryAttemptsOnUnexpectedStagesStorageState = 4
 
 func IsErrUnexpectedStagesStorageState(err error) bool {
 	if err != nil {
@@ -107,23 +108,40 @@ type CopyStageIntoStorageOptions struct {
 }
 
 func RetryOnUnexpectedStagesStorageState(ctx context.Context, _ StorageManagerInterface, f func() error) error {
-	for attempt := 0; attempt <= maxRetriesOnUnexpectedStagesStorageState; attempt++ {
-		if attempt > 0 {
-			if err := ctx.Err(); err != nil {
-				return err
-			}
-			logboek.Context(ctx).Warn().LogF("Retrying due to unexpected stages storage state (attempt %d/%d)\n", attempt, maxRetriesOnUnexpectedStagesStorageState)
-		}
+	var attempt int
+	op := func() (struct{}, error) {
+		attempt++
 
 		err := f()
+		if err == nil {
+			return struct{}{}, nil
+		}
 
 		if !IsErrUnexpectedStagesStorageState(err) {
-			return err
+			return struct{}{}, backoff.Permanent(err)
 		}
 
-		if attempt == maxRetriesOnUnexpectedStagesStorageState {
-			return fmt.Errorf("exhausted %d retries on unexpected stages storage state: %w", maxRetriesOnUnexpectedStagesStorageState, err)
+		return struct{}{}, err
+	}
+
+	notify := func(err error, duration time.Duration) {
+		logboek.Context(ctx).Warn().LogF("Retrying due to unexpected stages storage state (attempt %d/%d) in %0.2f seconds ...\n", attempt, maxRetryAttemptsOnUnexpectedStagesStorageState-1, duration.Seconds())
+	}
+
+	eb := backoff.NewExponentialBackOff()
+	eb.InitialInterval = 2 * time.Second
+	eb.MaxInterval = 10 * time.Second
+
+	_, err := backoff.Retry(ctx, op,
+		backoff.WithBackOff(eb),
+		backoff.WithMaxTries(maxRetryAttemptsOnUnexpectedStagesStorageState),
+		backoff.WithNotify(notify),
+	)
+	if err != nil {
+		if IsErrUnexpectedStagesStorageState(err) {
+			return fmt.Errorf("exhausted %d retries on unexpected stages storage state: %w", maxRetryAttemptsOnUnexpectedStagesStorageState-1, err)
 		}
+		return err
 	}
 
 	return nil

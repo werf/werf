@@ -6,28 +6,28 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	"github.com/werf/werf/v2/pkg/logging"
 	"github.com/werf/werf/v2/pkg/werf"
 )
 
 var _ = Describe("ManifestCache.DeleteImageInfo", func() {
 	var (
-		ctx         context.Context
 		cache       *ManifestCache
 		storageName string
 	)
 
 	BeforeEach(func() {
-		ctx = context.Background()
 		storageName = "test-storage"
 
 		tempDir := GinkgoT().TempDir()
-		err := werf.Init("", tempDir)
-		Expect(err).NotTo(HaveOccurred())
+		Expect(werf.Init("", tempDir)).To(Succeed())
 
 		cache = NewManifestCache(tempDir)
 	})
 
-	It("should delete an existing cache entry", func() {
+	It("should delete an existing cache entry", func(ctx context.Context) {
+		ctx = logging.WithLogger(ctx)
+
 		imageName := "test-image"
 
 		testInfo := &Info{
@@ -49,7 +49,9 @@ var _ = Describe("ManifestCache.DeleteImageInfo", func() {
 		Expect(info).To(BeNil())
 	})
 
-	It("should not error when deleting a non-existent entry", func() {
+	It("should not error when deleting a non-existent entry", func(ctx context.Context) {
+		ctx = logging.WithLogger(ctx)
+
 		Expect(cache.DeleteImageInfo(ctx, storageName, "non-existent-image")).To(Succeed())
 	})
 })
