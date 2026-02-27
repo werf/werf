@@ -48,3 +48,6 @@ buildah-test
 /.github/actions/get-commit-message/node_modules/
 .task
 /playground/s3_registry/data
+
+/.sisyphus
+/.opencode
