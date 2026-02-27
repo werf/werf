@@ -68,6 +68,7 @@ ALWAYS use these `task` commands. NEVER use raw `go build`, `go test`, `go fmt`,
 - `task lint` — run all linters in parallel.
 - `task enum:generate` — run enum generators.
 - `task mock:generate` — run mock generators.
+- `task mock:check` — verify generated mocks are up to date (runs `go generate -run mockgen` and diffs).
 
 ## Testing (MANDATORY)
 
