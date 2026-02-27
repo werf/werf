@@ -178,17 +178,6 @@ func hasStageInstructions(imageBaseConfig *config.StapelImageBase, stageName sta
 		}
 	}
 
-	if imageBaseConfig.Ansible != nil {
-		switch stageName {
-		case stage.Install:
-			return len(imageBaseConfig.Ansible.Install) > 0
-		case stage.BeforeSetup:
-			return len(imageBaseConfig.Ansible.BeforeSetup) > 0
-		case stage.Setup:
-			return len(imageBaseConfig.Ansible.Setup) > 0
-		}
-	}
-
 	return false
 }
 

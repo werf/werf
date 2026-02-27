@@ -81,13 +81,12 @@ git:
 ---
 image: web
 from: nginx:stable-alpine
-ansible:
+shell:
   setup:
-  - name: "Setup /etc/nginx/nginx.conf"
-    copy:
-      content: |
-{{ .Files.Get ".werf/nginx.conf" | indent 8 }}
-      dest: /etc/nginx/nginx.conf
+    - |
+      cat << 'NGINX' > /etc/nginx/nginx.conf
+{{ .Files.Get ".werf/nginx.conf" | indent 6 }}
+      NGINX
 import:
 - image: assets
   add: /app/_site

@@ -98,30 +98,24 @@ configVersion: 1
 
 image: app1
 from: alpine
-ansible:
-beforeInstall:
+shell:
+  beforeInstall:
 {{- include "(component) ruby" . }}
 ---
 image: app2
 from: alpine
-ansible:
-beforeInstall:
+shell:
+  beforeInstall:
 {{- include "(component) ruby" . }}
 
 {{- define "(component) ruby" }}
-- command: gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3
-- get_url:
-    url: https://raw.githubusercontent.com/rvm/rvm/master/binscripts/rvm-installer
-    dest: /tmp/rvm-installer
-- name: "Install rvm"
-  command: bash -e /tmp/rvm-installer
-- name: "Install ruby 2.3.4"
-  raw: bash -lec {{`{{ item | quote }}`}}
-  with_items:
-  - rvm install 2.3.4
-  - rvm use --default 2.3.4
-  - gem install bundler --no-ri --no-rdoc
-  - rvm cleanup all
+  - gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3
+  - curl -sSL https://raw.githubusercontent.com/rvm/rvm/master/binscripts/rvm-installer -o /tmp/rvm-installer
+  - bash -e /tmp/rvm-installer
+  - bash -lec 'rvm install 2.3.4'
+  - bash -lec 'rvm use --default 2.3.4'
+  - bash -lec 'gem install bundler --no-ri --no-rdoc'
+  - bash -lec 'rvm cleanup all'
 {{- end }}
 ```
 {% endraw %}
@@ -270,26 +264,6 @@ setup:
 ```
 {% endraw %}
 
-##### Пример: использование определённого файла в stapel-образе без использования директивы git (ansible)
-
-{% raw %}
-```yaml
-project: my-project
-configVersion: 1
----
-
-image: app
-from: alpine
-ansible:
-  setup:
-  - name: "Setup /etc/nginx/nginx.conf"
-    copy:
-      content: |
-{{ .Files.Get ".werf/nginx.conf" | indent 8 }}
-      dest: /etc/nginx/nginx.conf
-```
-{% endraw %}
-
 #### .Files.Glob
 
 Функция `.Files.Glob` позволяет работать с файлами проекта и их содержимым по глобу. 
@@ -323,30 +297,6 @@ shell:
     head -c -1 <<EOF > /app/{{ base $path }}
 {{ $content | indent 4 }}
     EOF
-{{ end }}
-```
-{% endraw %}
-
-##### Пример: использование файлов по глобу в stapel-образе без использования директивы git (ansible)
-
-{% raw %}
-```yaml
-project: my-project
-configVersion: 1
----
-
-image: app
-from: alpine
-ansible:
-  install:
-  - raw: mkdir /app
-  setup:
-{{ range $path, $content := .Files.Glob "modules/*/images/*/{Dockerfile,werf.inc.yaml}" }}
-  - name: "Setup /app/{{ base $path }}"
-    copy:
-      content: |
-{{ $content | indent 8 }}
-      dest: /app/{{ base $path }}
 {{ end }}
 ```
 {% endraw %}
@@ -528,7 +478,7 @@ configVersion: 1
 
 image: rails
 from: {{ .BaseImage }}
-ansible:
+shell:
   beforeInstall:
   {{- include "(component) mysql client" . }}
   {{- include "(component) ruby" . }}
@@ -541,60 +491,40 @@ ansible:
 </div>
 
 <div class="details">
-<a href="javascript:void(0)" class="details__summary">.werf/ansible/components.tmpl</a>
+<a href="javascript:void(0)" class="details__summary">.werf/shell/components.tmpl</a>
 <div class="details__content" markdown="1">
 
 {% raw %}
 ```yaml
 {{- define "(component) Gemfile dependencies" }}
-  - file:
-      path: /root/.ssh
-      state: directory
-      owner: root
-      group: root
-      recurse: yes
-  - name: "Setup ssh known_hosts used in Gemfile"
-    shell: |
-      set -e
-      ssh-keyscan github.com >> /root/.ssh/known_hosts
-      ssh-keyscan mygitlab.myorg.com >> /root/.ssh/known_hosts
-    args:
-      executable: /bin/bash
-  - name: "Install Gemfile dependencies with bundler"
-    shell: |
-      set -e
-      source /etc/profile.d/rvm.sh
-      cd /app
-      bundle install --without development test --path vendor/bundle
-    args:
-      executable: /bin/bash
+  - mkdir -p /root/.ssh
+  - |
+    bash -ec '
+    set -e
+    ssh-keyscan github.com >> /root/.ssh/known_hosts
+    ssh-keyscan mygitlab.myorg.com >> /root/.ssh/known_hosts
+    '
+  - |
+    bash -lec '
+    set -e
+    source /etc/profile.d/rvm.sh
+    cd /app
+    bundle install --without development test --path vendor/bundle
+    '
 {{- end }}
 
 {{- define "(component) mysql client" }}
-  - name: "Install mysql client"
-    apt:
-      name: "{{`{{ item }}`}}"
-      update_cache: yes
-    with_items:
-    - libmysqlclient-dev
-    - mysql-client
-    - g++
+  - apt-get update && apt-get install -y libmysqlclient-dev mysql-client g++
 {{- end }}
 
 {{- define "(component) ruby" }}
-  - command: gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3
-  - get_url:
-      url: https://raw.githubusercontent.com/rvm/rvm/master/binscripts/rvm-installer
-      dest: /tmp/rvm-installer
-  - name: "Install rvm"
-    command: bash -e /tmp/rvm-installer
-  - name: "Install ruby {{ .RubyVersion }}"
-    raw: bash -lec {{`{{ item | quote }}`}}
-    with_items:
-    - rvm install {{ .RubyVersion }}
-    - rvm use --default {{ .RubyVersion }}
-    - gem install bundler --no-ri --no-rdoc
-    - rvm cleanup all
+  - gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3
+  - curl -sSL https://raw.githubusercontent.com/rvm/rvm/master/binscripts/rvm-installer -o /tmp/rvm-installer
+  - bash -e /tmp/rvm-installer
+  - bash -lec 'rvm install {{ .RubyVersion }}'
+  - bash -lec 'rvm use --default {{ .RubyVersion }}'
+  - bash -lec 'gem install bundler --no-ri --no-rdoc'
+  - bash -lec 'rvm cleanup all'
 {{- end }}
 ```
 {% endraw %}

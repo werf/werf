@@ -20,7 +20,6 @@ type rawStapelImage struct {
 	DisableGitAfterPatch bool             `yaml:"disableGitAfterPatch,omitempty"`
 	RawGit               []*rawGit        `yaml:"git,omitempty"`
 	RawShell             *rawShell        `yaml:"shell,omitempty"`
-	RawAnsible           *rawAnsible      `yaml:"ansible,omitempty"`
 	RawMount             []*rawMount      `yaml:"mount,omitempty"`
 	RawDocker            *rawDocker       `yaml:"docker,omitempty"`
 	RawImport            []*rawImport     `yaml:"import,omitempty"`
@@ -191,23 +190,6 @@ func (c *rawStapelImage) toShellDirectiveByCommandAndStage(command, stage string
 	return
 }
 
-//nolint:unused
-func (c *rawStapelImage) toAnsibleWithTaskByStage(task *AnsibleTask, stage string) (ansible *Ansible) {
-	ansible = &Ansible{}
-	switch stage {
-	case "beforeInstall":
-		ansible.BeforeInstall = []*AnsibleTask{task}
-	case "install":
-		ansible.Install = []*AnsibleTask{task}
-	case "beforeSetup":
-		ansible.BeforeSetup = []*AnsibleTask{task}
-	case "setup":
-		ansible.Setup = []*AnsibleTask{task}
-	}
-	ansible.raw = c.RawAnsible
-	return
-}
-
 func (c *rawStapelImage) validateStapelImageArtifactDirective(imageArtifact *StapelImageArtifact) (err error) {
 	if c.RawDocker != nil {
 		return newDetailedConfigError("`docker` section is not supported for artifact!", nil, c.doc)
@@ -268,14 +250,6 @@ func (c *rawStapelImage) toStapelImageBaseDirective(giterminismManager gitermini
 			return nil, err
 		} else {
 			imageBase.Shell = shell
-		}
-	}
-
-	if c.RawAnsible != nil {
-		if ansible, err := c.RawAnsible.toDirective(); err != nil {
-			return nil, err
-		} else {
-			imageBase.Ansible = ansible
 		}
 	}
 

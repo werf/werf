@@ -46,7 +46,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 		Long:                  common.GetLongCommandDescription(GetLintDocs().Long),
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
-			common.CmdEnvAnno: common.EnvsDescription(common.WerfDebugAnsibleArgs, common.WerfSecretKey),
+			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
 			common.DocsLongMD: GetLintDocs().LongMD,
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
