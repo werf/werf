@@ -17,7 +17,6 @@ type StapelImageBase struct {
 	FromCacheVersion string
 	Git              *GitManager
 	Shell            *Shell
-	Ansible          *Ansible
 	Mount            []*Mount
 	Import           []*Import
 	Dependencies     []*Dependency

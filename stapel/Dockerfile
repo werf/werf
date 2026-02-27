@@ -389,69 +389,7 @@ ENV RANLIB=
 ENV CC_FOR_TARGET=
 ENV PKG_CONFIG_PATH=
 
-RUN go get github.com/werf/logboek@v0.5.4
-RUN cd /root/go/pkg/mod/github.com/werf/logboek@v0.5.4 && \
-go build -o $TOOLS/embedded/lib/python2.7/_logboek.so -buildmode=c-shared github.com/werf/logboek/c_lib && \
-cp logboek.py $TOOLS/embedded/lib/python2.7
 
-ADD pkg /werf/pkg
-RUN cp /werf/pkg/build/builder/ansible/crypt.py $TOOLS/embedded/lib/python2.7
-
-# Ansible tools overlay takes precedence over PATH and library linker path (using LD_LIBRARY_PATH)
-RUN mkdir -p $TOOLS/ansible_tools_overlay/bin $TOOLS/ansible_tools_overlay/lib
-
-# Shadow /usr/bin/tar with gnu tar (needed for unarchive ansible module in alpine based image)
-RUN ln -fs $TOOLS/embedded/bin/tar $TOOLS/ansible_tools_overlay/bin/tar
-
-# Binaries and libraries built and linked for ubuntu:18.04
-RUN mkdir -p $TOOLS/ubuntu_tools/bin $TOOLS/ubuntu_tools/lib $TOOLS/ubuntu_tools/lib/python2.7 $TOOLS/ubuntu_tools/lib/python2.7
-
-# python-apt package will install all libs in docker.from image.
-# python-apt will be installed automatically by ansible apt module on first run.
-# registry.werf.io/werf/stapel offers support for ansible-apt-module only for ubuntu:14.04 ubuntu:16.04 ubuntu:18.04
-RUN apt update && apt install -y python-apt libzstd1 apt-utils
-RUN \
-cp /usr/lib/x86_64-linux-gnu/libapt-private.so.0.0 $TOOLS/ubuntu_tools/lib/ && \
-cp /usr/lib/x86_64-linux-gnu/libapt-private.so.0.0.0 $TOOLS/ubuntu_tools/lib/ && \
-cp /usr/lib/x86_64-linux-gnu/libapt-pkg.so.5.0 $TOOLS/ubuntu_tools/lib/ && \
-cp /usr/lib/x86_64-linux-gnu/libapt-pkg.so.5.0.2 $TOOLS/ubuntu_tools/lib/ && \
-cp /usr/lib/x86_64-linux-gnu/libapt-inst.so.2.0 $TOOLS/ubuntu_tools/lib/ && \
-cp /usr/lib/x86_64-linux-gnu/libapt-inst.so.2.0.0 $TOOLS/ubuntu_tools/lib/ && \
-cp /usr/lib/x86_64-linux-gnu/liblz4.so.1 $TOOLS/ubuntu_tools/lib/ && \
-cp /lib/x86_64-linux-gnu/liblzma.so.5 $TOOLS/ubuntu_tools/lib/ && \
-cp /lib/x86_64-linux-gnu/libbz2.so.1.0 $TOOLS/ubuntu_tools/lib/ && \
-cp /lib/x86_64-linux-gnu/libudev.so.1 $TOOLS/ubuntu_tools/lib/ && \
-cp /usr/lib/x86_64-linux-gnu/libzstd.so* $TOOLS/ubuntu_tools/lib/ && \
-cp /usr/lib/python2.7/dist-packages/apt_inst.x86_64-linux-gnu.so /tmp/apt_inst.so && \
-cp /tmp/apt_inst.so $TOOLS/ubuntu_tools/lib/python2.7/ && \
-cp /usr/lib/python2.7/dist-packages/apt_pkg.x86_64-linux-gnu.so /tmp/apt_pkg.so && \
-cp /tmp/apt_pkg.so $TOOLS/ubuntu_tools/lib/python2.7/ && \
-cp -r /usr/lib/python2.7/dist-packages/apt $TOOLS/ubuntu_tools/lib/python2.7/ && \
-cp -r /usr/lib/python2.7/dist-packages/aptsources $TOOLS/ubuntu_tools/lib/python2.7/ && \
-cp /lib/x86_64-linux-gnu/libsystemd.so.0.21.0 $TOOLS/ubuntu_tools/lib && \
-cp /lib/x86_64-linux-gnu/libsystemd.so.0 $TOOLS/ubuntu_tools/lib && \
-cp /usr/bin/apt-extracttemplates $TOOLS/ubuntu_tools/bin && \
-ln -fs $TOOLS/ubuntu_tools/lib/libapt-private.so.0.0   $TOOLS/embedded/lib/libapt-private.so.0.0 && \
-ln -fs $TOOLS/ubuntu_tools/lib/libapt-private.so.0.0.0 $TOOLS/embedded/lib/libapt-private.so.0.0.0 && \
-ln -fs $TOOLS/ubuntu_tools/lib/libapt-pkg.so.5.0   $TOOLS/embedded/lib/libapt-pkg.so.5.0 && \
-ln -fs $TOOLS/ubuntu_tools/lib/libapt-pkg.so.5.0.2 $TOOLS/embedded/lib/libapt-pkg.so.5.0.2 && \
-ln -fs $TOOLS/ubuntu_tools/lib/libapt-inst.so.2.0   $TOOLS/embedded/lib/libapt-inst.so.2.0 && \
-ln -fs $TOOLS/ubuntu_tools/lib/libapt-inst.so.2.0.0 $TOOLS/embedded/lib/libapt-inst.so.2.0.0 && \
-ln -fs $TOOLS/ubuntu_tools/lib/liblz4.so.1 $TOOLS/embedded/lib/liblz4.so.1 && \
-ln -fs $TOOLS/ubuntu_tools/lib/liblzma.so.5 $TOOLS/embedded/lib/liblzma.so.5 && \
-ln -fs $TOOLS/ubuntu_tools/lib/libbz2.so.1.0 $TOOLS/embedded/lib/libbz2.so.1.0 && \
-ln -fs $TOOLS/ubuntu_tools/lib/libudev.so.1 $TOOLS/embedded/lib/libudev.so.1 && \
-ln -fs $TOOLS/ubuntu_tools/lib/libzstd.so.1 $TOOLS/embedded/lib/libzstd.so.1 && \
-ln -fs $TOOLS/ubuntu_tools/lib/libzstd.so.1.3.3 $TOOLS/embedded/lib/libzstd.so.1.3.3 && \
-ln -fs $TOOLS/ubuntu_tools/lib/python2.7/apt_inst.so $TOOLS/embedded/lib/python2.7/apt_inst.so && \
-ln -fs $TOOLS/ubuntu_tools/lib/python2.7/apt_pkg.so $TOOLS/embedded/lib/python2.7/apt_pkg.so && \
-ln -fs $TOOLS/ubuntu_tools/lib/python2.7/apt $TOOLS/embedded/lib/python2.7/apt && \
-ln -fs $TOOLS/ubuntu_tools/lib/python2.7/aptsources $TOOLS/embedded/lib/python2.7/aptsources && \
-ln -fs $TOOLS/ubuntu_tools/lib/libsystemd.so.0.21.0 $TOOLS/embedded/lib/libsystemd.so.0.21.0 && \
-ln -fs $TOOLS/ubuntu_tools/lib/libsystemd.so.0 $TOOLS/embedded/lib/libsystemd.so.0 && \
-ln -fs $TOOLS/ubuntu_tools/bin/apt-extracttemplates $TOOLS/embedded/bin/apt-extracttemplates && \
-ln -fs $TOOLS/ubuntu_tools/lib/libapt-inst.so.2.0 $TOOLS/ansible_tools_overlay/lib/libapt-inst.so.2.0 && \
-ln -fs $TOOLS/ubuntu_tools/lib/libapt-inst.so.2.0.0 $TOOLS/ansible_tools_overlay/lib/libapt-inst.so.2.0.0
 
 # TODO: FIXME: https://github.com/werf/werf/issues/1798
 # TODO: FIXME: try set nsswitch.conf file: http://www.linuxfromscratch.org/lfs/view/9.0-systemd-rc1/chapter06/glibc.html
@@ -465,67 +403,6 @@ ENV PKG_CONFIG_PATH="/.werf/stapel/lib/pkgconfig:/.werf/stapel/embedded/lib/pkgc
 
 ENV PATH=$TOOLS/x86_64-lfs-linux-gnu/bin:$TOOLS/bin:$PATH
 
-# yum-utils package needed for ansible yum module to work
-RUN apt update && \
-apt install -y libcurl4-openssl-dev libssl-dev && \
-$TOOLS/embedded/bin/pip install urlgrabber && \
-apt install -y yum-utils
-
-RUN \
-cp -r /usr/lib/python2.7/dist-packages/yumutils $TOOLS/embedded/lib/python2.7/ && \
-cp -r /usr/lib/python2.7/dist-packages/yum $TOOLS/embedded/lib/python2.7/ && \
-cp -r /usr/lib/python2.7/dist-packages/rpmUtils $TOOLS/embedded/lib/python2.7 && \
-cp -r /usr/lib/python2.7/dist-packages/rpm $TOOLS/embedded/lib/python2.7 && \
-ln -fs $TOOLS/embedded/lib/python2.7/rpm/_rpm.x86_64-linux-gnu.so $TOOLS/embedded/lib/python2.7/rpm/_rpm.so && \
-ln -fs $TOOLS/embedded/lib/python2.7/rpm/_rpmb.x86_64-linux-gnu.so $TOOLS/embedded/lib/python2.7/rpm/_rpmb.so && \
-ln -fs $TOOLS/embedded/lib/python2.7/rpm/_rpms.x86_64-linux-gnu.so $TOOLS/embedded/lib/python2.7/rpm/_rpms.so && \
-cp /usr/lib/python2.7/dist-packages/sqlitecachec.py $TOOLS/embedded/lib/python2.7 && \
-cp /usr/lib/python2.7/dist-packages/_sqlitecache.so $TOOLS/embedded/lib/python2.7 && \
-cp /usr/lib/x86_64-linux-gnu/librpmbuild.so.8.0.1 $TOOLS/embedded/lib/ && \
-cp /usr/lib/x86_64-linux-gnu/librpmsign.so.8.0.1 $TOOLS/embedded/lib/ && \
-cp /usr/lib/x86_64-linux-gnu/librpm.so.8.0.1 $TOOLS/embedded/lib/ && \
-cp /usr/lib/x86_64-linux-gnu/librpm.so.8 $TOOLS/embedded/lib/ && \
-cp /usr/lib/x86_64-linux-gnu/librpmio.so.8 $TOOLS/embedded/lib/ && \
-cp /usr/lib/x86_64-linux-gnu/librpmsign.so.8 $TOOLS/embedded/lib/ && \
-cp /usr/lib/x86_64-linux-gnu/librpmio.so.8.0.1 $TOOLS/embedded/lib/ && \
-cp /usr/lib/x86_64-linux-gnu/librpmbuild.so.8 $TOOLS/embedded/lib/ && \
-cp /lib/x86_64-linux-gnu/libcap.so.2.25 $TOOLS/lib && \
-cp /lib/x86_64-linux-gnu/libcap.so.2 $TOOLS/lib && \
-cp /usr/lib/x86_64-linux-gnu/liblua5.2.so.0 $TOOLS/lib && \
-cp /usr/lib/x86_64-linux-gnu/libdb-5.3.so $TOOLS/lib && \
-cp /usr/lib/x86_64-linux-gnu/libelf.so.1 $TOOLS/lib && \
-cp /usr/lib/x86_64-linux-gnu/libplc4.so $TOOLS/lib && \
-cp /usr/lib/x86_64-linux-gnu/libplds4.so $TOOLS/lib && \
-cp /usr/lib/x86_64-linux-gnu/libnspr4.so $TOOLS/lib && \
-cp /lib/x86_64-linux-gnu/libnss_nis.so.2 $TOOLS/lib && \
-cp /lib/x86_64-linux-gnu/libnss_compat.so.2 $TOOLS/lib && \
-cp /lib/x86_64-linux-gnu/libnss_nis-2.27.so $TOOLS/lib && \
-cp /lib/x86_64-linux-gnu/libnss_files-2.27.so $TOOLS/lib && \
-cp /lib/x86_64-linux-gnu/libnss_nisplus-2.27.so $TOOLS/lib && \
-cp /lib/x86_64-linux-gnu/libnss_nisplus.so.2 $TOOLS/lib && \
-cp /lib/x86_64-linux-gnu/libnss_hesiod-2.27.so $TOOLS/lib && \
-cp /lib/x86_64-linux-gnu/libnss_dns.so.2 $TOOLS/lib && \
-cp /lib/x86_64-linux-gnu/libnss_hesiod.so.2 $TOOLS/lib && \
-cp /lib/x86_64-linux-gnu/libnss_dns-2.27.so $TOOLS/lib && \
-cp /lib/x86_64-linux-gnu/libnss_files.so.2 $TOOLS/lib && \
-cp /lib/x86_64-linux-gnu/libnss_compat-2.27.so $TOOLS/lib && \
-cp /usr/lib/x86_64-linux-gnu/libnss_files.so $TOOLS/lib && \
-cp /usr/lib/x86_64-linux-gnu/libnss_dns.so $TOOLS/lib && \
-cp /usr/lib/x86_64-linux-gnu/libnss_nis.so $TOOLS/lib && \
-cp /usr/lib/x86_64-linux-gnu/libnss_nisplus.so $TOOLS/lib && \
-cp /usr/lib/x86_64-linux-gnu/libnss3.so $TOOLS/lib && \
-cp /usr/lib/x86_64-linux-gnu/libnss_hesiod.so $TOOLS/lib && \
-cp /usr/lib/x86_64-linux-gnu/libnss_compat.so $TOOLS/lib && \
-cp /usr/lib/x86_64-linux-gnu/libnssutil3.so $TOOLS/lib && \
-cp -r /usr/lib/x86_64-linux-gnu/nss $TOOLS/lib && \
-ln -fs $TOOLS/embedded/lib/librpmbuild.so.8.0.1 $TOOLS/ansible_tools_overlay/lib/librpmbuild.so.8.0.1 && \
-ln -fs $TOOLS/embedded/lib/librpmsign.so.8.0.1 $TOOLS/ansible_tools_overlay/lib/librpmsign.so.8.0.1 && \
-ln -fs $TOOLS/embedded/lib/librpm.so.8.0.1 $TOOLS/ansible_tools_overlay/lib/librpm.so.8.0.1 && \
-ln -fs $TOOLS/embedded/lib/librpm.so.8 $TOOLS/ansible_tools_overlay/lib/librpm.so.8 && \
-ln -fs $TOOLS/embedded/lib/librpmio.so.8 $TOOLS/ansible_tools_overlay/lib/librpmio.so.8 && \
-ln -fs $TOOLS/embedded/lib/librpmsign.so.8 $TOOLS/ansible_tools_overlay/lib/librpmsign.so.8 && \
-ln -fs $TOOLS/embedded/lib/librpmio.so.8.0.1 $TOOLS/ansible_tools_overlay/lib/librpmio.so.8.0.1 && \
-ln -fs $TOOLS/embedded/lib/librpmbuild.so.8 $TOOLS/ansible_tools_overlay/lib/librpmbuild.so.8
 
 
 # Cleanup stapel: only runtime libs and binaries are needed
@@ -553,17 +430,6 @@ $TOOLS/var \
 $TOOLS/embedded/lib/*.a \
 $TOOLS/embedded/include \
 $TOOLS/embedded/lib/python2.7/test \
-$TOOLS/embedded/lib/python2.7/site-packages/ansible/galaxy \
-$TOOLS/embedded/lib/python2.7/site-packages/ansible/modules/clustering \
-$TOOLS/embedded/lib/python2.7/site-packages/ansible/modules/source_control \
-$TOOLS/embedded/lib/python2.7/site-packages/ansible/modules/notification \
-$TOOLS/embedded/lib/python2.7/site-packages/ansible/modules/web_infrastructure \
-$TOOLS/embedded/lib/python2.7/site-packages/ansible/modules/remote_management \
-$TOOLS/embedded/lib/python2.7/site-packages/ansible/modules/monitoring \
-$TOOLS/embedded/lib/python2.7/site-packages/ansible/modules/windows \
-$TOOLS/embedded/lib/python2.7/site-packages/ansible/modules/storage \
-$TOOLS/embedded/lib/python2.7/site-packages/ansible/modules/cloud \
-$TOOLS/embedded/lib/python2.7/site-packages/ansible/modules/network \
 $TOOLS/embedded/lib/python2.7/site-packages/*.dist-info \
 $TOOLS/embedded/share/aclocal \
 $TOOLS/embedded/share/doc \
@@ -597,7 +463,6 @@ mv /tmp/UNICODE.so $TOOLS/lib/gconv
 
 RUN find $TOOLS/embedded/lib/python2.7 -name *.py[oc] | xargs rm
 
-RUN sed -i -e 's|if sys.version_info\[0\] == 2:|if False:|g' $TOOLS/embedded/lib/python2.7/site-packages/cryptography/__init__.py
 
 RUN mkdir /tmp/bin && \
 cp $TOOLS/bin/gpg* /tmp/bin && \
@@ -630,5 +495,3 @@ COPY --from=0 $TOOLS/embedded/libexec $TOOLS/embedded/libexec
 COPY --from=0 $TOOLS/embedded/sbin $TOOLS/embedded/sbin
 COPY --from=0 $TOOLS/embedded/share $TOOLS/embedded/share
 COPY --from=0 $TOOLS/embedded/ssl $TOOLS/embedded/ssl
-COPY --from=0 $TOOLS/ubuntu_tools $TOOLS/ubuntu_tools
-COPY --from=0 $TOOLS/ansible_tools_overlay $TOOLS/ansible_tools_overlay

@@ -35,39 +35,27 @@ image: image_a
 from: ubuntu
 git:
 - to: /app
-ansible:
+shell:
   beforeInstall:
-    - command: gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3
-    - get_url:
-        url: https://raw.githubusercontent.com/rvm/rvm/master/binscripts/rvm-installer
-        dest: /tmp/rvm-installer
-    - name: "Install rvm"
-      command: bash -e /tmp/rvm-installer
-    - name: "Install ruby 2.3.4"
-      raw: bash -lec {{ item | quote }}
-      with_items:
-        - rvm install 2.3.4
-        - rvm use --default 2.3.4
-        - gem install bundler --no-ri --no-rdoc
-        - rvm cleanup all
+    - gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3
+    - curl -sSL https://raw.githubusercontent.com/rvm/rvm/master/binscripts/rvm-installer -o /tmp/rvm-installer
+    - bash -e /tmp/rvm-installer
+    - bash -lec "rvm install 2.3.4"
+    - bash -lec "rvm use --default 2.3.4"
+    - bash -lec "gem install bundler --no-ri --no-rdoc"
+    - bash -lec "rvm cleanup all"
 ---
 image: image_b
 from: ubuntu
-ansible:
+shell:
   beforeInstall:
-    - command: gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3
-    - get_url:
-        url: https://raw.githubusercontent.com/rvm/rvm/master/binscripts/rvm-installer
-        dest: /tmp/rvm-installer
-    - name: "Install rvm"
-      command: bash -e /tmp/rvm-installer
-    - name: "Install ruby 2.3.4"
-      raw: bash -lec {{ item | quote }}
-      with_items:
-        - rvm install 2.3.4
-        - rvm use --default 2.3.4
-        - gem install bundler --no-ri --no-rdoc
-        - rvm cleanup all
+    - gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3
+    - curl -sSL https://raw.githubusercontent.com/rvm/rvm/master/binscripts/rvm-installer -o /tmp/rvm-installer
+    - bash -e /tmp/rvm-installer
+    - bash -lec "rvm install 2.3.4"
+    - bash -lec "rvm use --default 2.3.4"
+    - bash -lec "gem install bundler --no-ri --no-rdoc"
+    - bash -lec "rvm cleanup all"
 `,
 	}),
 	Entry("image_a", renderEntry{
@@ -76,21 +64,15 @@ ansible:
 from: ubuntu
 git:
 - to: /app
-ansible:
+shell:
   beforeInstall:
-    - command: gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3
-    - get_url:
-        url: https://raw.githubusercontent.com/rvm/rvm/master/binscripts/rvm-installer
-        dest: /tmp/rvm-installer
-    - name: "Install rvm"
-      command: bash -e /tmp/rvm-installer
-    - name: "Install ruby 2.3.4"
-      raw: bash -lec {{ item | quote }}
-      with_items:
-        - rvm install 2.3.4
-        - rvm use --default 2.3.4
-        - gem install bundler --no-ri --no-rdoc
-        - rvm cleanup all
+    - gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3
+    - curl -sSL https://raw.githubusercontent.com/rvm/rvm/master/binscripts/rvm-installer -o /tmp/rvm-installer
+    - bash -e /tmp/rvm-installer
+    - bash -lec "rvm install 2.3.4"
+    - bash -lec "rvm use --default 2.3.4"
+    - bash -lec "gem install bundler --no-ri --no-rdoc"
+    - bash -lec "rvm cleanup all"
 `,
 	}),
 	Entry("exclude image_b via ! pattern", renderEntry{
@@ -99,21 +81,15 @@ ansible:
 from: ubuntu
 git:
 - to: /app
-ansible:
+shell:
   beforeInstall:
-    - command: gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3
-    - get_url:
-        url: https://raw.githubusercontent.com/rvm/rvm/master/binscripts/rvm-installer
-        dest: /tmp/rvm-installer
-    - name: "Install rvm"
-      command: bash -e /tmp/rvm-installer
-    - name: "Install ruby 2.3.4"
-      raw: bash -lec {{ item | quote }}
-      with_items:
-        - rvm install 2.3.4
-        - rvm use --default 2.3.4
-        - gem install bundler --no-ri --no-rdoc
-        - rvm cleanup all
+    - gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3
+    - curl -sSL https://raw.githubusercontent.com/rvm/rvm/master/binscripts/rvm-installer -o /tmp/rvm-installer
+    - bash -e /tmp/rvm-installer
+    - bash -lec "rvm install 2.3.4"
+    - bash -lec "rvm use --default 2.3.4"
+    - bash -lec "gem install bundler --no-ri --no-rdoc"
+    - bash -lec "rvm cleanup all"
 `,
 	}),
 
@@ -123,21 +99,15 @@ ansible:
 from: ubuntu
 git:
 - to: /app
-ansible:
+shell:
   beforeInstall:
-    - command: gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3
-    - get_url:
-        url: https://raw.githubusercontent.com/rvm/rvm/master/binscripts/rvm-installer
-        dest: /tmp/rvm-installer
-    - name: "Install rvm"
-      command: bash -e /tmp/rvm-installer
-    - name: "Install ruby 2.3.4"
-      raw: bash -lec {{ item | quote }}
-      with_items:
-        - rvm install 2.3.4
-        - rvm use --default 2.3.4
-        - gem install bundler --no-ri --no-rdoc
-        - rvm cleanup all
+    - gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3
+    - curl -sSL https://raw.githubusercontent.com/rvm/rvm/master/binscripts/rvm-installer -o /tmp/rvm-installer
+    - bash -e /tmp/rvm-installer
+    - bash -lec "rvm install 2.3.4"
+    - bash -lec "rvm use --default 2.3.4"
+    - bash -lec "gem install bundler --no-ri --no-rdoc"
+    - bash -lec "rvm cleanup all"
 `,
 	}),
 
@@ -147,38 +117,26 @@ ansible:
 from: ubuntu
 git:
 - to: /app
-ansible:
+shell:
   beforeInstall:
-    - command: gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3
-    - get_url:
-        url: https://raw.githubusercontent.com/rvm/rvm/master/binscripts/rvm-installer
-        dest: /tmp/rvm-installer
-    - name: "Install rvm"
-      command: bash -e /tmp/rvm-installer
-    - name: "Install ruby 2.3.4"
-      raw: bash -lec {{ item | quote }}
-      with_items:
-        - rvm install 2.3.4
-        - rvm use --default 2.3.4
-        - gem install bundler --no-ri --no-rdoc
-        - rvm cleanup all
+    - gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3
+    - curl -sSL https://raw.githubusercontent.com/rvm/rvm/master/binscripts/rvm-installer -o /tmp/rvm-installer
+    - bash -e /tmp/rvm-installer
+    - bash -lec "rvm install 2.3.4"
+    - bash -lec "rvm use --default 2.3.4"
+    - bash -lec "gem install bundler --no-ri --no-rdoc"
+    - bash -lec "rvm cleanup all"
 ---
 image: image_b
 from: ubuntu
-ansible:
+shell:
   beforeInstall:
-    - command: gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3
-    - get_url:
-        url: https://raw.githubusercontent.com/rvm/rvm/master/binscripts/rvm-installer
-        dest: /tmp/rvm-installer
-    - name: "Install rvm"
-      command: bash -e /tmp/rvm-installer
-    - name: "Install ruby 2.3.4"
-      raw: bash -lec {{ item | quote }}
-      with_items:
-        - rvm install 2.3.4
-        - rvm use --default 2.3.4
-        - gem install bundler --no-ri --no-rdoc
-        - rvm cleanup all
+    - gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3
+    - curl -sSL https://raw.githubusercontent.com/rvm/rvm/master/binscripts/rvm-installer -o /tmp/rvm-installer
+    - bash -e /tmp/rvm-installer
+    - bash -lec "rvm install 2.3.4"
+    - bash -lec "rvm use --default 2.3.4"
+    - bash -lec "gem install bundler --no-ri --no-rdoc"
+    - bash -lec "rvm cleanup all"
 `,
 	}))

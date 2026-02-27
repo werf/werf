@@ -6,20 +6,16 @@ gitWorktree:
 image: backend
 from: registry.werf.io/base/python:alpine
 fromCacheVersion: {{ env "FROM_CACHE_VERSION" }}
-ansible:
+shell:
   install:
-  - file:
-      path: /app
-      state: directory
-      mode: 0755
-  - name: Prepare main page
-    copy:
-      content:
-        <!DOCTYPE html>
-        <html>
-          <body>
-            <h2>Congratulations!</h2>
-            <img src="https://flant.com/images/logo_en.png" style="max-height:100%;" height="76">
-          </body>
-        </html>
-      dest: /app/index.html
+    - mkdir -p /app && chmod 0755 /app
+    - |
+      cat << 'EOF' > /app/index.html
+      <!DOCTYPE html>
+      <html>
+        <body>
+          <h2>Congratulations!</h2>
+          <img src="https://flant.com/images/logo_en.png" style="max-height:100%;" height="76">
+        </body>
+      </html>
+      EOF
