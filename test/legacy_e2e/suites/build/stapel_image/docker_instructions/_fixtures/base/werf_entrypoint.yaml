@@ -2,6 +2,10 @@ project: none
 configVersion: 1
 ---
 image: ~
-from: registry.werf.io/base/alpine
-docker:
-  ENTRYPOINT: "[\"command\", \"param1\", \"param2\"]"
+from: registry.werf.io/base/alpine:3.21
+imageSpec:
+  config:
+    entrypoint:
+      - "command"
+      - "param1"
+      - "param2"

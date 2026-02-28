@@ -376,7 +376,7 @@ shell:
 image: app
 from: alpine:latest
 import:
-- image: builder
+- from: builder
   add: /app/build/app
   to: /usr/local/bin/app
   after: install
@@ -481,7 +481,7 @@ imageSpec:
       - "/var/lib/postgresql/data"
 ---
 image: app
-fromImage: base
+from: base
 git:
   add: /postgresql/data
   to: /var/lib/postgresql/data

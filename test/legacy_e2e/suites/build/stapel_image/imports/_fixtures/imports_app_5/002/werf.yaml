@@ -2,7 +2,7 @@ configVersion: 1
 project: test
 ---
 image: artifact
-from: registry.werf.io/base/alpine
+from: registry.werf.io/base/alpine:3.21
 final: false
 import:
 shell:
@@ -11,9 +11,9 @@ shell:
     - chmod 0777 /xx
 ---
 image: final
-from: registry.werf.io/base/alpine
+from: registry.werf.io/base/alpine:3.21
 import:
-  - image: artifact
+  - from: artifact
     add: /xx
     to: /xx
     before: install

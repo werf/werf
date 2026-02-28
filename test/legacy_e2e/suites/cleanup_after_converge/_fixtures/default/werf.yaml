@@ -22,14 +22,14 @@ shell:
       </html>
       EOF
 import:
-  - image: artifact
+  - from: artifact
     add: /artifact
     to: /artifact
     before: setup
 ---
 image: artifact
 final: false
-from: registry.werf.io/base/alpine
+from: registry.werf.io/base/alpine:3.21
 fromCacheVersion: {{ env "ARTIFACT_CACHE_VERSION" }}
 shell:
   install:

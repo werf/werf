@@ -1,4 +1,4 @@
-{{- $base_image := "ubuntu" -}}
+{{- $base_image := "ubuntu:22.04" -}}
 
 project: none
 configVersion: 1.0

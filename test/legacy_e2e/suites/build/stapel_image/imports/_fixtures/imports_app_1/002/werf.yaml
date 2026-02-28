@@ -14,29 +14,29 @@ shell:
   - touch /myartifact/a/b/c/fffilel
 ---
 image: ~
-from: registry.werf.io/base/alpine
+from: registry.werf.io/base/alpine:3.21
 import:
-- image: myartifact
+- from: myartifact
   add: /myartifact/a/b/FILE
   to: /usr/local
   after: install
-- image: myartifact
+- from: myartifact
   add: /myartifact/a/b/FILE
   to: /usr/locallll
   after: install
-- image: myartifact
+- from: myartifact
   add: /myartifact/
   to: /usr/newlocal
   after: install
-- image: myartifact
+- from: myartifact
   add: /myartifact
   to: /usr/share
   after: install
-- image: myartifact
+- from: myartifact
   add: /myartifact/file-no-such-file
   to: /file2
   after: install
-- image: myartifact
+- from: myartifact
   add: /myartifact/file
   to: /file
   after: install

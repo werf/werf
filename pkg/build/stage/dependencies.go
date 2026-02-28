@@ -150,7 +150,7 @@ func (s *DependenciesStage) getImportArgsByFileChecksum(ctx context.Context, c C
 }
 
 func formatImportTitle(elm *config.Import) string {
-	title := fmt.Sprintf("image=%s add=%s to=%s", elm.ImageName, elm.Add, elm.To)
+	title := fmt.Sprintf("image=%s add=%s to=%s", elm.From, elm.Add, elm.To)
 	if len(elm.IncludePaths) != 0 {
 		title += fmt.Sprintf(" includePaths=%v", elm.IncludePaths)
 	}
@@ -228,7 +228,7 @@ func (s *DependenciesStage) prepareImage(ctx context.Context, c Conveyor, cr con
 		var sourceImageName string
 
 		if elm.ExternalImage {
-			sourceImageName = elm.ImageName
+			sourceImageName = elm.From
 		} else {
 			sourceImageConfigName := getSourceImageName(elm)
 			if elm.Stage == "" {
@@ -544,7 +544,7 @@ func getDependencyImportID(dependencyImport *config.DependencyImport) string {
 
 func getImportID(importElm *config.Import) string {
 	return util.Sha256Hash(
-		"ImageName", importElm.ImageName,
+		"ImageName", importElm.From,
 		"Stage", importElm.Stage,
 		"After", importElm.After,
 		"Before", importElm.Before,
@@ -590,7 +590,7 @@ func fetchSourceImageDockerImage(ctx context.Context, c Conveyor, targetPlatform
 
 func getSourceImageDockerImageName(c Conveyor, targetPlatform string, importElm *config.Import) string {
 	if importElm.ExternalImage {
-		return importElm.ImageName
+		return importElm.From
 	}
 	sourceImageName := getSourceImageName(importElm)
 
@@ -606,7 +606,7 @@ func getSourceImageDockerImageName(c Conveyor, targetPlatform string, importElm 
 
 func getSourceStageID(c Conveyor, targetPlatform string, importElm *config.Import) string {
 	if importElm.ExternalImage {
-		return fmt.Sprintf("%s:%s", image.WerfImportSourceExternalImagePrefix, importElm.ImageName)
+		return fmt.Sprintf("%s:%s", image.WerfImportSourceExternalImagePrefix, importElm.From)
 	}
 
 	sourceImageName := getSourceImageName(importElm)
@@ -623,7 +623,7 @@ func getSourceStageID(c Conveyor, targetPlatform string, importElm *config.Impor
 
 func getSourceImageContentDigest(c Conveyor, targetPlatform string, importElm *config.Import) string {
 	if importElm.ExternalImage {
-		return fmt.Sprintf("%s:%s", image.WerfImportSourceExternalImagePrefix, importElm.ImageName)
+		return fmt.Sprintf("%s:%s", image.WerfImportSourceExternalImagePrefix, importElm.From)
 	}
 
 	sourceImageName := getSourceImageName(importElm)
@@ -639,7 +639,7 @@ func getSourceImageContentDigest(c Conveyor, targetPlatform string, importElm *c
 }
 
 func getSourceImageName(importElm *config.Import) string {
-	return importElm.ImageName
+	return importElm.From
 }
 
 func debugImportSourceChecksum() bool {
