@@ -1382,7 +1382,43 @@ func ProcessLogTerminalWidth(cmdData *CmdData) error {
 }
 
 func DockerRegistryInit(ctx context.Context, cmdData *CmdData, registryMirrors []string) error {
-	return docker_registry.Init(ctx, *cmdData.InsecureRegistry, *cmdData.SkipTlsVerifyRegistry, registryMirrors)
+	insecureHosts, err := GetInsecureRegistryHosts(ctx, cmdData)
+	if err != nil {
+		return fmt.Errorf("unable to get insecure registry hosts: %w", err)
+	}
+	return docker_registry.Init(ctx, *cmdData.InsecureRegistry, *cmdData.SkipTlsVerifyRegistry, registryMirrors, insecureHosts)
+}
+
+// GetInsecureRegistryHosts returns list of insecure registry hostnames from Docker daemon.
+// Note: buildah insecure registries are read inside NewNativeBuildah after user namespace setup.
+func GetInsecureRegistryHosts(ctx context.Context, cmdData *CmdData) ([]string, error) {
+	// If the global --insecure-registry flag is set there is no need to build a
+	// per-host list — every host will be treated as insecure anyway.
+	if cmdData.InsecureRegistry != nil && *cmdData.InsecureRegistry {
+		return nil, nil
+	}
+
+	seen := make(map[string]bool)
+	var result []string
+
+	addHost := func(h string) {
+		h = strings.TrimPrefix(h, "https://")
+		h = strings.TrimPrefix(h, "http://")
+		if h != "" && !seen[h] {
+			seen[h] = true
+			result = append(result, h)
+		}
+	}
+
+	dockerInsecure, err := docker.GetInsecureRegistries(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get docker insecure registries: %w", err)
+	}
+	for _, h := range dockerInsecure {
+		addHost(h)
+	}
+
+	return result, nil
 }
 
 func ValidateMinimumNArgs(minArgs int, args []string, cmd *cobra.Command) error {
