@@ -2,7 +2,7 @@ project: none
 configVersion: 1
 ---
 image: app
-fromImage: fromArtifact
+from: fromArtifact
 ---
 image: fromArtifact
 final: false

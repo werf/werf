@@ -23,7 +23,7 @@ shell:
 image: final
 from: registry.werf.io/base/alpine
 import:
-  - image: filer
+  - from: filer
     add: /out/tree
     to: /test-tree
     includePaths:

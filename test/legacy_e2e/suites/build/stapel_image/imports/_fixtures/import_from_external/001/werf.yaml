@@ -18,7 +18,7 @@ shell:
   install:
     - mkdir -p /etc/test
 import:
-  - image: test-import-0
+  - from: test-import-0
     add: /bin/busybox
     to: /etc/test
     after: install

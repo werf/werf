@@ -523,8 +523,8 @@ sections:
       - name: from
         value: "string"
         description:
-          en: "The name of a base image"
-          ru: Имя и тег базового образа
+          en: "The base image: another image from `werf.yaml` (e.g. `backend`) or an external image with a tag/digest (e.g. `nginx:1.25`, `nginx@sha256:...`)."
+          ru: "Базовый образ: другой образ из `werf.yaml` (например, `backend`) или внешний образ с тегом/дайджестом (например, `nginx:1.25`, `nginx@sha256:...`)."
         detailsArticle:
           all: "/usage/build/stapel/base.html#from"
       - name: fromLatest
@@ -534,14 +534,6 @@ sections:
           ru: Использование актуального базового образа (без кеширования)
         detailsArticle:
           all: "/usage/build/stapel/base.html#from"
-      - name: fromImage
-        value: "string"
-        description:
-          en: "To use image as base image by image name (DEPRECATED)"
-          ru: "Использование образа из werf.yaml в качестве базового (DEPRECATED)"
-        detailsArticle:
-          en: "/usage/build/stapel/base.html#from"
-          ru: "/usage/build/stapel/base.html#from"
       - name: fromCacheVersion
         value: "string"
         description:
@@ -810,11 +802,6 @@ sections:
         collapsible: true
         isCollapsedByDefault: false
         directiveList:
-          - name: image
-            value: "string"
-            description:
-              en: "The image name from which you want to copy files (DEPRECATED)"
-              ru: "Имя образа, из которого выполнять копирование файлов (DEPRECATED)"
           - name: from
             value: "string"
             description:

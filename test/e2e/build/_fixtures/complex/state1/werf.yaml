@@ -39,7 +39,7 @@ shell:
 
 ---
 image: stapel-shell
-fromImage: base-stapel-shell
+from: base-stapel-shell
 fromCacheVersion: 1
 mount:
 - from: tmp_dir
@@ -96,9 +96,9 @@ imageSpec:
       - "-c"
       - "sleep infinity"
     healthcheck:
-      test: ["CMD", "echo", "healthcheck20"]
+      test: ["CMD-SHELL", "echo healthcheck20"]
 import:
-- image: base-stapel-shell
+- from: base-stapel-shell
   before: install
   add: /basedir/
   to: /basedir-imported/

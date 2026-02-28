@@ -13,7 +13,7 @@ shell:
 image: final
 from: registry.werf.io/base/alpine
 import:
-  - image: artifact
+  - from: artifact
     add: /xx
     to: /xx
     before: install
