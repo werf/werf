@@ -481,7 +481,7 @@ imageSpec:
       - "/var/lib/postgresql/data"
 ---
 image: app
-fromImage: base
+from: base
 git:
   add: /postgresql/data
   to: /var/lib/postgresql/data

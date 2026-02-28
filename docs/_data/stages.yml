@@ -35,7 +35,6 @@ en:
         from: <image[:<tag>]>
         fromLatest: <bool>
         fromCacheVersion: <arbitrary string>
-        fromImage: <image name>
         mount:
         - from: build_dir
           to: <absolute or relative path>

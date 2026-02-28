@@ -7,7 +7,6 @@ en:
       from: <image[:<tag>]>
       fromLatest: <bool>
       fromCacheVersion: <arbitrary string>
-      fromImage: <image name>
   docker: &docker
     link: "images/configuration/docker_directive1.svg"
     preview_link: "images/configuration/docker_directive1.svg"
