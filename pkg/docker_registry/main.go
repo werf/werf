@@ -12,7 +12,7 @@ import (
 
 var generic *genericApi
 
-func Init(ctx context.Context, insecureRegistry, skipTlsVerifyRegistry bool, registryMirrors []string) error {
+func Init(ctx context.Context, insecureRegistry, skipTlsVerifyRegistry bool, registryMirrors, insecureRegistryHosts []string) error {
 	if logboek.Context(ctx).Debug().IsAccepted() {
 		logs.Progress.SetOutput(logboek.Context(ctx).OutStream())
 		logs.Warn.SetOutput(logboek.Context(ctx).ErrStream())
@@ -33,6 +33,7 @@ func Init(ctx context.Context, insecureRegistry, skipTlsVerifyRegistry bool, reg
 		InsecureRegistry:      insecureRegistry,
 		SkipTlsVerifyRegistry: skipTlsVerifyRegistry,
 		RegistryMirrors:       registryMirrors,
+		InsecureRegistryHosts: insecureRegistryHosts,
 	})
 	if err != nil {
 		return err
