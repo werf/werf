@@ -25,9 +25,6 @@ func newImagePlatformValidator() *imagePlatformValidator {
 // "image": test-from-image
 // "fromImage": <...>
 // ---
-// "image": test-from-artifact
-// "fromArtifact": <...>
-// ---
 // b) dependencies/imports syntaxes via:
 // ---
 // "image": test-dep

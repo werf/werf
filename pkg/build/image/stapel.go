@@ -44,9 +44,6 @@ func mapStapelConfigToImage(ctx context.Context, metaConfig *config.Meta, stapel
 	} else {
 		fromImage := imageBaseConfig.From
 		baseImageType = StageAsBaseImage
-		if imageBaseConfig.FromArtifactName != "" {
-			fromImage = imageBaseConfig.FromArtifactName
-		}
 		imageOpts.BaseImageName = fromImage
 	}
 

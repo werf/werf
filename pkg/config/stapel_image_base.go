@@ -1,19 +1,16 @@
 package config
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
-	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
 
 type StapelImageBase struct {
 	Name             string
 	From             string
 	FromLatest       bool
-	FromArtifactName string
 	FromCacheVersion string
 	Git              *GitManager
 	Shell            *Shell
@@ -64,9 +61,6 @@ func (c *StapelImageBase) Platform() []string {
 }
 
 func (c *StapelImageBase) GetFrom() string {
-	if c.FromArtifactName != "" {
-		return c.FromArtifactName
-	}
 	return c.From
 }
 
@@ -77,17 +71,9 @@ func (c *StapelImageBase) SetFromExternal() {
 func (c *StapelImageBase) dependsOn() DependsOn {
 	var dependsOn DependsOn
 
-	if c.FromArtifactName != "" {
-		dependsOn.From = c.FromArtifactName
-	}
-
 	for _, imp := range c.Import {
 		if imp.ImageName != "" && !imp.ExternalImage {
 			dependsOn.Imports = append(dependsOn.Imports, imp.ImageName)
-		}
-
-		if imp.ArtifactName != "" {
-			dependsOn.Imports = append(dependsOn.Imports, imp.ArtifactName)
 		}
 	}
 
@@ -146,12 +132,12 @@ func (c *StapelImageBase) validate(giterminismManager giterminism_manager.Interf
 		}
 	}
 
-	if c.From == "" && c.raw.FromImage == "" && c.raw.FromArtifact == "" && c.FromArtifactName == "" {
-		return newDetailedConfigError("`from: DOCKER_IMAGE`, `fromImage: IMAGE_NAME`, `fromArtifact: IMAGE_ARTIFACT_NAME` required!", nil, c.raw.doc)
+	if c.From == "" && c.raw.FromImage == "" {
+		return newDetailedConfigError("`from: DOCKER_IMAGE`, `fromImage: IMAGE_NAME` required!", nil, c.raw.doc)
 	}
 
-	if c.Name != "" && (c.From == c.Name || c.raw.FromArtifact == c.Name || c.raw.FromImage == c.Name) {
-		return newDetailedConfigError("conflict between `from`, `fromImage` or `fromArtifact` and image name: image cannot reference itself!", nil, c.raw.doc)
+	if c.Name != "" && (c.From == c.Name || c.raw.FromImage == c.Name) {
+		return newDetailedConfigError("conflict between `from`, `fromImage` and image name: image cannot reference itself!", nil, c.raw.doc)
 	}
 
 	mountByTo := map[string]bool{}
@@ -164,48 +150,7 @@ func (c *StapelImageBase) validate(giterminismManager giterminism_manager.Interf
 		mountByTo[mount.To] = true
 	}
 
-	if !oneOrNone([]bool{c.From != "", c.raw.FromArtifact != ""}) {
-		return newDetailedConfigError("conflict between `from`, `fromImage` and `fromArtifact` directives!", nil, c.raw.doc)
-	}
-
-	if c.raw.FromArtifact != "" {
-		printArtifactDepricationWarning()
-	}
-
 	// TODO: валидацию формата `From`
 
 	return nil
-}
-
-var isArtifactDepricationWarningPrinted bool
-
-func printArtifactDepricationWarning() {
-	if isArtifactDepricationWarningPrinted {
-		return
-	}
-
-	global_warnings.GlobalDeprecationWarningLn(context.Background(), `The 'artifact', 'fromArtifact' and 'import.artifact' directives are deprecated and will be completely removed in version v3.
-
-Instead of 'artifact', use the 'image' directive:
-
-- If you need to preserve artifact behavior when working with 'git' (disabling source updates by skipping the 'gitCache' and 'gitLatestPatch' stages), use the 'disableGitAfterPatch' directive:
-
-    '''
-    image: builder
-    from: alpine:3.10
-    disableGitAfterPatch: true
-    git:
-    - add: /
-      to: /app
-    '''
-
-- If you simply need to limit the scope of image use, use the 'final' directive:
-
-    '''
-    image: builder
-    from: alpine:3.10
-    final: false
-    '''`)
-
-	isArtifactDepricationWarningPrinted = true
 }

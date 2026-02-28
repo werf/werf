@@ -481,7 +481,6 @@ func getDependencyImportID(dependencyImport *config.DependencyImport) string {
 func getImportID(importElm *config.Import) string {
 	return util.Sha256Hash(
 		"ImageName", importElm.ImageName,
-		"ArtifactName", importElm.ArtifactName,
 		"Stage", importElm.Stage,
 		"After", importElm.After,
 		"Before", importElm.Before,
@@ -576,14 +575,7 @@ func getSourceImageContentDigest(c Conveyor, targetPlatform string, importElm *c
 }
 
 func getSourceImageName(importElm *config.Import) string {
-	var sourceImageName string
-	if importElm.ImageName != "" {
-		sourceImageName = importElm.ImageName
-	} else {
-		sourceImageName = importElm.ArtifactName
-	}
-
-	return sourceImageName
+	return importElm.ImageName
 }
 
 func debugImportSourceChecksum() bool {

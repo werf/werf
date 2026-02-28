@@ -513,14 +513,7 @@ sections:
     isCollapsedByDefault: false
     directives:
       - << : *dockerfile-image-section-image
-      - name: artifact
-        value: "string"
-        description:
-          en: The unique name for artifact (DEPRECATED)
-          ru: Уникальное имя артефакта (DEPRECATED)
-        detailsArticle:
-          all: "/usage/build/stapel/imports.html"
-      - << : *dockerfile-image-section-final
+      - <<: *dockerfile-image-section-final
       - << : *meta-section-build-cache-version
       - name: platform
         description:
@@ -549,11 +542,6 @@ sections:
         detailsArticle:
           en: "/usage/build/stapel/base.html#from"
           ru: "/usage/build/stapel/base.html#from"
-      - name: fromArtifact
-        value: "string"
-        description:
-          en: "To use artifact as base image by artifact name (DEPRECATED)"
-          ru: "Использование образа артефакта из werf.yaml в качестве базового (DEPRECATED)"
       - name: fromCacheVersion
         value: "string"
         description:
@@ -904,11 +892,6 @@ sections:
         collapsible: true
         isCollapsedByDefault: false
         directiveList:
-          - name: artifact
-            value: "string"
-            description:
-              en: "The artifact name from which you want to copy files (DEPRECATED)"
-              ru: "Имя артефакта, из которого выполнять копирование файлов (DEPRECATED)"
           - name: image
             value: "string"
             description:

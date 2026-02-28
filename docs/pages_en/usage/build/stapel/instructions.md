@@ -431,7 +431,7 @@ The _git mapping configuration_ in the above `werf.yaml` instructs werf to trans
 
 ### Disabling source updates (skipping gitCache and gitLatestPatch stages)
 
-The `disableGitAfterPatch` directive allows you to lock the source code in the image during the artifact build stage and prevent it from being updated in subsequent builds.
+The `disableGitAfterPatch` directive allows you to lock the source code in the image during the build and prevent it from being updated in subsequent builds.
 
 This approach is useful in scenarios where you need to use the actual set of source files during the build stage, but only changes to specific files should restart the build process.
 

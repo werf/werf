@@ -127,10 +127,6 @@ en:
         - <relative path or glob>
         excludePaths:
         - <relative path or glob>
-  artifact: &artifact
-    link: "images/configuration/stapel_artifact1.svg"
-    preview_link: "images/configuration/stapel_artifact1.svg"
-    link_alt: "Artifact stages"
 ru:
   base_image:
     <<: *base_image
@@ -153,6 +149,3 @@ ru:
   import:
     <<: *import
     link_alt: "Стадии импорта"
-  artifact:
-    <<: *artifact
-    link_alt: "Стадии артефакта"

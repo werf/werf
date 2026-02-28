@@ -23,22 +23,9 @@ permalink: usage/build/stapel/overview.html
 
 _Конвейер стадий_ — набор условий и правил выполнения стадий, подразумевающий также четко определенный порядок выполнения стадий.
 
-<div class="tabs">
-  <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'stapel-image-tab')">stapel-образ</a>
-  <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'stapel-artifact-tab')">stapel-артефакт</a>
-</div>
-
-<div id="stapel-image-tab" class="tabs__content">
 <a class="google-drawings" href="{{ "images/reference/stages_and_images2.png" | true_relative_url }}" data-featherlight="image">
 <img src="{{ "images/reference/stages_and_images2_preview.png" | true_relative_url }}" >
 </a>
-</div>
-
-<div id="stapel-artifact-tab" class="tabs__content">
-<a class="google-drawings" href="{{ "images/reference/stages_and_images3.png" | true_relative_url }}" data-featherlight="image">
-<img src="{{ "images/reference/stages_and_images3_preview.png" | true_relative_url }}">
-</a>
-</div>
 
 Для каждой _стадии_ werf подсчитывает уникальный сборочный идентификатор — дайджест стадии.
 
@@ -56,12 +43,7 @@ _Зависимости стадии_ — это данные, которые н
 
 Большинство _зависимостей стадии_ определяется в файле конфигурации `werf.yaml`, остальные — во время запуска.
 
-Следующая таблица иллюстрирует зависимости в stapel-образе и stapel-артефакте. Каждая строка таблицы описывает зависимости для определенной стадии. Левая колонка содержит краткое описание зависимостей, правая содержит соответствующую часть `werf.yaml` и ссылки на разделы с более подробной информацией.
-
-<div class="tabs">
-  <a href="javascript:void(0)" id="image-dependencies" class="tabs__btn dependencies-btn active">stapel-образ</a>
-  <a href="javascript:void(0)" id="artifact-dependencies" class="tabs__btn dependencies-btn">stapel-артефакт</a>
-</div>
+Следующая таблица иллюстрирует зависимости в stapel-образе. Каждая строка таблицы описывает зависимости для определенной стадии. Левая колонка содержит краткое описание зависимостей, правая содержит соответствующую часть `werf.yaml` и ссылки на разделы с более подробной информацией.
 
 <div id="dependencies">
 {% for stage in site.data.stages.ru.entries %}
@@ -108,32 +90,3 @@ _Зависимости стадии_ — это данные, которые н
 </div>
 
 <link rel="stylesheet" type="text/css" href="{{ assets["stages.css"].digest_path | true_relative_url }}" />
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-<script>
-function application() {
-  if ($("a[id=image-dependencies]").hasClass('active')) {
-    $(".artifact").addClass('hidden');
-    $(".image").removeClass('hidden')
-  }
-  else if ($("a[id=artifact-dependencies]").hasClass('active')) {
-    $(".image").addClass('hidden');
-    $(".artifact").removeClass('hidden')
-  }
-  else {
-    $(".image").addClass('hidden');
-    $(".artifact").addClass('hidden')
-  }
-}
-
-$('.tabs').on('click', '.dependencies-btn', function() {
-  $(this).toggleClass('active').siblings().removeClass('active');
-  application()
-});
-
-application();
-$.noConflict();
-</script>
-
-</div>
-</div>

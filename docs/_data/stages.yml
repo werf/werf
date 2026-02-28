@@ -17,13 +17,12 @@ en:
           <build arg name>: <value>
         addHost:
         - <host:ip>
-    - &image_artifact_from
+    - &image_from
       name: from
-      type: "image artifact"
+      type: "image"
       dependencies:
         - from
         - or from image stages-digest
-        - or from artifact stages-digest
         - "actual digest from registry (if fromLatest: true)"
         - fromCacheVersion
         - mounts
@@ -44,9 +43,9 @@ en:
           to: <absolute path>
         - fromPath: <absolute or relative path>
           to: <absolute path>
-    - &image_artifact_before_install
+    - &image_before_install
       name: beforeInstall
-      type: "image artifact"
+      type: "image"
       dependencies:
         - beforeInstall bash commands
         - cacheVersion
@@ -60,9 +59,9 @@ en:
           - <bash command>
           cacheVersion: <arbitrary string>
           beforeInstallCacheVersion: <arbitrary string>
-    - &image_artifact_dependencies_before_install
+    - &image_dependencies_before_install
       name: dependenciesBeforeInstall
-      type: "image artifact"
+      type: "image"
       dependencies:
         - dependencies before install
       references:
@@ -80,9 +79,9 @@ en:
           - <relative path or glob>
           excludePaths:
           - <relative path or glob>
-    - &image_artifact_git_archive
+    - &image_git_archive
       name: gitArchive
-      type: "image artifact"
+      type: "image"
       dependencies:
         - git mappings
       references:
@@ -110,9 +109,9 @@ en:
           - <relative path or glob>
           excludePaths:
           - <relative path or glob>
-    - &image_artifact_install
+    - &image_install
       name: install
-      type: "image artifact"
+      type: "image"
       dependencies:
         - install bash commands
         - installCacheVersion
@@ -132,9 +131,9 @@ en:
           install:
           - <bash command>
           installCacheVersion: <arbitrary string>
-    - &image_artifact_dependencies_after_install
+    - &image_dependencies_after_install
       name: dependenciesAfterInstall
-      type: "image artifact"
+      type: "image"
       dependencies:
         - dependencies after install
       werf_config: |
@@ -152,9 +151,9 @@ en:
       references:
         - name: "Importing from images"
           link: "/usage/build/stapel/imports.html"
-    - &image_artifact_before_setup
+    - &image_before_setup
       name: beforeSetup
-      type: "image artifact"
+      type: "image"
       dependencies:
         - beforeSetup bash commands
         - beforeSetupCacheVersion
@@ -174,9 +173,9 @@ en:
           beforeSetup:
           - <bash command>
           beforeSetupCacheVersion: <arbitrary string>
-    - &image_artifact_dependencies_before_setup
+    - &image_dependencies_before_setup
       name: dependenciesBeforeSetup
-      type: "image artifact"
+      type: "image"
       dependencies:
         - dependencies before setup
       werf_config: |
@@ -194,9 +193,9 @@ en:
       references:
         - name: "Importing from images"
           link: "/usage/build/stapel/imports.html"
-    - &image_artifact_setup
+    - &image_setup
       name: setup
-      type: "image artifact"
+      type: "image"
       dependencies:
         - setup bash commands
         - setupCacheVersion
@@ -226,7 +225,7 @@ en:
           link: "/usage/build/stapel/git.html#more-details-gitarchive-gitcache-gitlatestpatch"
     - &image_dependencies_after_setup
       name: dependenciesAfterSetup
-      type: "image artifact"
+      type: "image"
       dependencies:
         - dependencies after setup
       werf_config: |
@@ -278,45 +277,45 @@ en:
 ru:
   entries:
     - <<: *dockerfile
-    - <<: *image_artifact_from
+    - <<: *image_from
       references:
         - name: "Базовый образ"
           link: "/usage/build/stapel/base.html"
         - name: "Ускорение сборки и уменьшение размера за счёт маунтов"
           link: "/usage/build/stapel/mounts.html"
-    - <<: *image_artifact_before_install
+    - <<: *image_before_install
       references:
         - name: "Запуск инструкций сборки"
           link: "/usage/build/stapel/instructions.html"
-    - <<: *image_artifact_dependencies_before_install
+    - <<: *image_dependencies_before_install
       references:
         - name: "Импортирование из образов"
           link: "/usage/build/stapel/imports.html"
-    - <<: *image_artifact_git_archive
+    - <<: *image_git_archive
       references:
         - name: "Добавление исходного кода из git-репозиториев"
           link: "/usage/build/stapel/git.html"
-    - <<: *image_artifact_install
+    - <<: *image_install
       references:
         - name: "Запуск инструкций сборки"
           link: "/usage/build/stapel/instructions.html"
         - name: "Зависимость от изменений в git-репозитории"
           link: "/usage/build/stapel/instructions.html#зависимость-от-изменений-в-git-репозитории"
-    - <<: *image_artifact_dependencies_after_install
+    - <<: *image_dependencies_after_install
       references:
         - name: "Импортирование из образов"
           link: "/usage/build/stapel/imports.html"
-    - <<: *image_artifact_before_setup
+    - <<: *image_before_setup
       references:
         - name: "Запуск инструкций сборки"
           link: "/usage/build/stapel/instructions.html"
         - name: "Зависимость от изменений в git-репозитории"
           link: "/usage/build/stapel/instructions.html#зависимость-от-изменений-в-git-репозитории"
-    - <<: *image_artifact_dependencies_before_setup
+    - <<: *image_dependencies_before_setup
       references:
         - name: "Импортирование из образов"
           link: "/usage/build/stapel/imports.html"
-    - <<: *image_artifact_setup
+    - <<: *image_setup
       references:
         - name: "Запуск инструкций сборки"
           link: "/usage/build/stapel/instructions.html"
