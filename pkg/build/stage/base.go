@@ -34,7 +34,6 @@ const (
 	DependenciesAfterSetup    StageName = "dependenciesAfterSetup"
 	GitCache                  StageName = "gitCache"
 	GitLatestPatch            StageName = "gitLatestPatch"
-	DockerInstructions        StageName = "dockerInstructions"
 
 	Dockerfile StageName = "dockerfile"
 	ImageSpec  StageName = "imageSpec"
@@ -69,7 +68,6 @@ var AllStages = []StageName{
 	DependenciesAfterSetup,
 	GitCache,
 	GitLatestPatch,
-	DockerInstructions,
 
 	Dockerfile,
 	ImageSpec,
