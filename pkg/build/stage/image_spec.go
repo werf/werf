@@ -387,6 +387,21 @@ func sortSliceWithNewSlice(original []string) []string {
 	return result
 }
 
+func mapToSortedArgs(h map[string]string) []string {
+	keys := make([]string, 0, len(h))
+	for key := range h {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+
+	var result []string
+	for _, key := range keys {
+		result = append(result, key, h[key])
+	}
+
+	return result
+}
+
 func toDuration(seconds int) time.Duration {
 	return time.Duration(seconds) * time.Second
 }

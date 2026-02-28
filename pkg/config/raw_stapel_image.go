@@ -19,7 +19,6 @@ type rawStapelImage struct {
 	RawGit               []*rawGit        `yaml:"git,omitempty"`
 	RawShell             *rawShell        `yaml:"shell,omitempty"`
 	RawMount             []*rawMount      `yaml:"mount,omitempty"`
-	RawDocker            *rawDocker       `yaml:"docker,omitempty"`
 	RawImport            []*rawImport     `yaml:"import,omitempty"`
 	RawDependencies      []*rawDependency `yaml:"dependencies,omitempty"`
 	Platform             []string         `yaml:"platform,omitempty"`
@@ -120,14 +119,6 @@ func (c *rawStapelImage) toStapelImageDirective(giterminismManager giterminism_m
 	}
 
 	image.StapelImageBase.final = option.PtrValueOrDefault(c.Final, true)
-
-	if c.RawDocker != nil {
-		if docker, err := c.RawDocker.toDirective(); err != nil {
-			return nil, err
-		} else {
-			image.Docker = docker
-		}
-	}
 
 	if err := c.validateStapelImageDirective(image); err != nil {
 		return nil, err
