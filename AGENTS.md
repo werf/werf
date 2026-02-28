@@ -91,6 +91,15 @@ ALWAYS use these `task` commands. NEVER use raw `go build`, `go test`, `go fmt`,
 - NEVER introduce breaking user-facing changes (not API changes) unless they are hidden behind a feature flag. Flag to the user first.
 - NEVER introduce changes that may compromise security. Flag to the user first.
 
+## Self-improvement (MANDATORY)
+
+ALWAYS perform this step after completing any user request. NEVER skip it, even if the work "looks fine."
+
+1. Review what went wrong during execution: wasted steps, wrong assumptions, missed dependencies.
+2. If a mistake was caused by a missing rule in AGENTS.md — propose a concrete rule addition to the user.
+3. If a mistake was caused by a missing rule in OPENCODE.md — propose a concrete rule addition to the user.
+4. NEVER silently swallow lessons learned. ALWAYS surface them.
+
 ## Related repositories
 
 - [werf/nelm](https://github.com/werf/nelm) — Deployment engine used by werf. Go-based Kubernetes deployment tool that manages Helm charts.
