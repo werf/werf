@@ -11,9 +11,9 @@ shell:
     - ln -s /app/file /link_file
 ---
 image: app
-from: registry.werf.io/base/alpine
+from: registry.werf.io/base/alpine:3.21
 import:
-  - image: artifact
+  - from: artifact
     add: /link_file
     to: /file
     before: install

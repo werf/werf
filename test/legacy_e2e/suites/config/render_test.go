@@ -32,7 +32,7 @@ var _ = DescribeTable("config render", renderItBody,
 configVersion: 1.0
 ---
 image: image_a
-from: ubuntu
+from: ubuntu:22.04
 git:
 - to: /app
 shell:
@@ -46,7 +46,7 @@ shell:
     - bash -lec "rvm cleanup all"
 ---
 image: image_b
-from: ubuntu
+from: ubuntu:22.04
 shell:
   beforeInstall:
     - gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3
@@ -61,7 +61,7 @@ shell:
 	Entry("image_a", renderEntry{
 		extraArgs: []string{"image_a"},
 		expectedOutput: `image: image_a
-from: ubuntu
+from: ubuntu:22.04
 git:
 - to: /app
 shell:
@@ -78,7 +78,7 @@ shell:
 	Entry("exclude image_b via ! pattern", renderEntry{
 		extraArgs: []string{"!image_b"},
 		expectedOutput: `image: image_a
-from: ubuntu
+from: ubuntu:22.04
 git:
 - to: /app
 shell:
@@ -96,7 +96,7 @@ shell:
 	Entry("suffix match with *_a", renderEntry{
 		extraArgs: []string{"*_a"},
 		expectedOutput: `image: image_a
-from: ubuntu
+from: ubuntu:22.04
 git:
 - to: /app
 shell:
@@ -114,7 +114,7 @@ shell:
 	Entry("prefix match with image_*", renderEntry{
 		extraArgs: []string{"image_*"},
 		expectedOutput: `image: image_a
-from: ubuntu
+from: ubuntu:22.04
 git:
 - to: /app
 shell:
@@ -128,7 +128,7 @@ shell:
     - bash -lec "rvm cleanup all"
 ---
 image: image_b
-from: ubuntu
+from: ubuntu:22.04
 shell:
   beforeInstall:
     - gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3
