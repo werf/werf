@@ -8,8 +8,9 @@ from: registry.werf.io/base/alpine
 image: FromImage
 from: FromExternalImage
 ---
-artifact: FromImageAlias
+image: FromImageAlias
+final: false
 fromImage: FromImage
 ---
-image: FromArtifact
-fromArtifact: FromImageAlias
+image: FromAnother
+from: FromImageAlias
