@@ -61,7 +61,6 @@ var _ = Describe("rawStapelImage", func() {
 					platform:     []string{},
 					final:        true,
 				},
-				Docker: nil,
 			},
 		),
 	)

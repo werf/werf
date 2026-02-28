@@ -251,29 +251,6 @@ en:
       references:
         - name: "More details: gitArchive, gitCache, gitLatestPatch"
           link: "/usage/build/stapel/git.html#more-details-gitarchive-gitcache-gitlatestpatch"
-    - &image_docker_instructions
-      name: dockerInstructions
-      type: "image"
-      dependencies:
-        - docker instructions
-      references:
-        - name: Adding docker instructions
-          link: "/usage/build/stapel/dockerfile.html"
-      werf_config: |
-        docker:
-          VOLUME:
-          - <volume>
-          EXPOSE:
-          - <expose>
-          ENV:
-            <env name>: <env value>
-          LABEL:
-            <label name>: <label value>
-          ENTRYPOINT: <entrypoint>
-          CMD: <cmd>
-          WORKDIR: <workdir>
-          USER: <user>
-          HEALTHCHECK: <healthcheck>
 ru:
   entries:
     - <<: *dockerfile
@@ -333,7 +310,3 @@ ru:
       references:
         - name: "Подробнее про gitArchive, gitCache, gitLatestPatch"
           link: "/usage/build/stapel/git.html#подробнее-про-gitarchive-gitcache-gitlatestpatch"
-    - <<: *image_docker_instructions
-      references:
-        - name: "Использование Docker-инструкций"
-          link: "/usage/build/stapel/dockerfile.html"

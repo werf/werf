@@ -76,22 +76,27 @@ shell:
   setup:
   - "echo setup >> /triggered-stages"
   - "echo content > /tmp_dir/file"
-docker:
-  USER: 0:0
-  WORKDIR: /app
-  VOLUME:
-    - /volume20
-  ENV:
-    ENV_NAME: env-value
-  LABEL:
-    LABEL_NAME: label-value
-  EXPOSE:
-  - "8010/tcp"
-  ENTRYPOINT:
-  - sh
-  - -ec
-  CMD: "sleep infinity"
-  HEALTHCHECK: "CMD echo healthcheck20"
+imageSpec:
+  config:
+    user: "0:0"
+    workingDir: /app
+    volumes:
+      - /volume20
+    env:
+      ENV_NAME: env-value
+    labels:
+      LABEL_NAME: label-value
+    expose:
+      - "8010/tcp"
+    entrypoint:
+      - sh
+      - -ec
+    cmd:
+      - "/bin/sh"
+      - "-c"
+      - "sleep infinity"
+    healthcheck:
+      test: ["CMD", "echo", "healthcheck20"]
 import:
 - image: base-stapel-shell
   before: install
