@@ -250,8 +250,20 @@ func (c *WerfConfig) updateDependencies(image ImageInterface) DependsOn {
 		image.SetFromExternal()
 	}
 
+	for _, importName := range curDeps.Imports {
+		if c.GetImage(importName) != nil {
+			d.Imports = append(d.Imports, importName)
+			continue
+		}
+
+		for _, imp := range image.(StapelImageInterface).ImageBaseConfig().Import {
+			if imp.ImageName == importName {
+				imp.ExternalImage = true
+			}
+		}
+	}
+
 	d.Dependencies = curDeps.Dependencies
-	d.Imports = curDeps.Imports
 
 	return d
 }
