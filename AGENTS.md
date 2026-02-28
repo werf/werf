@@ -12,6 +12,9 @@ werf is a CNCF Sandbox CLI tool to implement full-cycle CI/CD to Kubernetes. wer
 - ALWAYS start with the simplest possible solution. If it works, stop. Add complexity only when justified by a concrete, current requirement — NEVER for hypothetical future needs.
 - NEVER leave TODOs, stubs, or partial implementations.
 - ALWAYS stay within the scope of what was asked. When asked to update a plan — only update the plan, don't change code. When asked to brainstorm/discuss — only discuss, don't write code. When asked to do X — do X and nothing else. NEVER make unsolicited changes.
+- NEVER modify CHANGELOG.md, release notes, or other generated/workflow-managed files unless the user explicitly requests it.
+- When deleting a block from structured data files (YAML, JSON, TOML), ALWAYS read surrounding lines to verify adjacent content (anchors, references, unrelated entries) is preserved.
+- When removing content, ALWAYS clean up orphaned structural elements (comment separators, section headers, blank-line groups) that no longer serve a purpose.
 
 ## Code style
 
