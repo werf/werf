@@ -2,7 +2,7 @@ project: none
 configVersion: 1
 ---
 image: app
-fromImage: fromImage
+from: fromImage
 ---
 image: fromImage
 from: registry.werf.io/base/alpine

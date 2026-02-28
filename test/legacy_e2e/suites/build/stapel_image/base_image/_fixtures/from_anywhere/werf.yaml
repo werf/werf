@@ -10,7 +10,7 @@ from: FromExternalImage
 ---
 image: FromImageAlias
 final: false
-fromImage: FromImage
+from: FromImage
 ---
 image: FromAnother
 from: FromImageAlias
