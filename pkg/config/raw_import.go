@@ -1,7 +1,9 @@
 package config
 
 import (
-	"github.com/docker/distribution/reference"
+	"context"
+
+	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
 
 type rawImport struct {
@@ -54,24 +56,21 @@ func (c *rawImport) UnmarshalYAML(unmarshal func(interface{}) error) error {
 func (c *rawImport) toDirective() (imp *Import, err error) {
 	imp = &Import{}
 
-	if export, err := c.rawExport.toDirective(); err != nil {
-		return nil, err
+	if export, tempErr := c.rawExport.toDirective(); tempErr != nil {
+		return nil, tempErr
 	} else {
 		imp.Export = export
 	}
 
-	if !oneOrNone([]bool{c.ImageName != "", c.From != ""}) {
-		return nil, newDetailedConfigError("specify only `image: NAME` or `from: NAME` for import!", c, c.doc())
+	if c.ImageName != "" && c.From != "" {
+		return nil, newDetailedConfigError("cannot specify both 'image' (deprecated) and 'from' in import, use only 'from'", c, c.doc())
 	}
 
-	if c.From != "" {
+	if c.ImageName != "" {
+		global_warnings.GlobalDeprecationWarningLn(context.Background(), "Using 'image' for imports is deprecated, use 'from' instead")
+		imp.ImageName = c.ImageName
+	} else if c.From != "" {
 		imp.ImageName = c.From
-	} else {
-		imp.ImageName = c.ImageName // to deprecate
-	}
-
-	if hasTagOrDigest(imp.ImageName) {
-		imp.ExternalImage = true
 	}
 
 	imp.Before = c.Before
@@ -93,16 +92,4 @@ func (c *rawImport) validateDirective(imp *Import) (err error) {
 	}
 
 	return nil
-}
-
-func hasTagOrDigest(image string) bool {
-	ref, err := reference.ParseNormalizedNamed(image)
-	if err != nil {
-		return false
-	}
-
-	_, isTagged := ref.(reference.Tagged)
-	_, isDigested := ref.(reference.Digested)
-
-	return isTagged || isDigested
 }
