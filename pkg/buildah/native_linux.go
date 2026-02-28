@@ -82,6 +82,9 @@ type NativeBuildah struct {
 	RegistriesConfigPath    string
 	RegistriesConfigDirPath string
 	Insecure                bool
+	// InsecureRegistries holds per-host insecure flags collected from
+	// Docker daemon "insecure-registries" and buildah registries.conf.
+	InsecureRegistries []string
 
 	Store storage.Store
 
@@ -99,10 +102,20 @@ func (b *NativeBuildah) Info(ctx context.Context) (info.Info, error) {
 }
 
 func NewNativeBuildah(commonOpts CommonBuildahOpts, opts NativeModeOpts) (*NativeBuildah, error) {
+	// Read insecure registries from buildah config here (after user namespace setup)
+	// to avoid triggering reexec issues when called from common.go before namespace is ready.
+	insecureRegistries := commonOpts.InsecureRegistries
+	if len(insecureRegistries) == 0 && !commonOpts.Insecure {
+		if configInsecure, err := GetInsecureRegistriesFromConfig(); err == nil && len(configInsecure) > 0 {
+			insecureRegistries = configInsecure
+		}
+	}
+
 	b := &NativeBuildah{
-		Isolation: *commonOpts.Isolation,
-		TmpDir:    commonOpts.TmpDir,
-		Insecure:  commonOpts.Insecure,
+		Isolation:          *commonOpts.Isolation,
+		TmpDir:             commonOpts.TmpDir,
+		Insecure:           commonOpts.Insecure,
+		InsecureRegistries: insecureRegistries,
 	}
 
 	if err := os.MkdirAll(b.TmpDir, os.ModePerm); err != nil {
@@ -134,7 +147,7 @@ func NewNativeBuildah(commonOpts CommonBuildahOpts, opts NativeModeOpts) (*Nativ
 		return nil, fmt.Errorf("unable to set env var CONTAINERS_CONF: %w", err)
 	}
 
-	registriesConfig, err := generateRegistriesConfig(commonOpts.RegistryMirrors)
+	registriesConfig, err := generateRegistriesConfig(commonOpts.RegistryMirrors, insecureRegistries)
 	if err != nil {
 		return nil, fmt.Errorf("unable to generate registries config: %w", err)
 	}
@@ -228,23 +241,44 @@ func (b *NativeBuildah) getSystemContext(targetPlatform string) (*imgtypes.Syste
 	return systemContext, nil
 }
 
-func generateRegistriesConfig(mirrors []string) (string, error) {
-	var mrs []string
+// generateRegistriesConfig creates registries.conf content with mirror configuration.
+// Mirror is marked insecure if it uses http:// scheme or is in insecureRegistries list.
+func generateRegistriesConfig(mirrors, insecureRegistries []string) (string, error) {
+	type mirrorEntry struct {
+		Location string
+		Insecure bool
+	}
+	var mrs []mirrorEntry
+
+	insecureHosts := make(map[string]bool, len(insecureRegistries))
+	for _, h := range insecureRegistries {
+		h = strings.TrimPrefix(h, "https://")
+		h = strings.TrimPrefix(h, "http://")
+		insecureHosts[h] = true
+	}
+
 	for _, mirror := range mirrors {
-		mirror, _ = strings.CutPrefix(mirror, "https://")
-		mirror, _ = strings.CutPrefix(mirror, "http://")
-		mrs = append(mrs, mirror)
+		isHTTP := strings.HasPrefix(mirror, "http://")
+		mirror = strings.TrimPrefix(mirror, "https://")
+		mirror = strings.TrimPrefix(mirror, "http://")
+		mirror = strings.TrimSuffix(mirror, "/")
+		mrs = append(mrs, mirrorEntry{
+			Location: mirror,
+			Insecure: isHTTP || insecureHosts[mirror],
+		})
 	}
 
 	tpl := `
 unqualified-search-registries = ["docker.io"]
 
 [[registry]]
+prefix = "docker.io"
 location = "docker.io"
 
 {{ range . -}}
 [[registry.mirror]]
-location = "{{ . }}"
+location = "{{ .Location }}"
+insecure = {{ .Insecure }}
 
 {{ end -}}
 `

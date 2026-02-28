@@ -210,11 +210,12 @@ const (
 )
 
 type CommonBuildahOpts struct {
-	Isolation       *thirdparty.Isolation
-	StorageDriver   *StorageDriver
-	TmpDir          string
-	Insecure        bool
-	RegistryMirrors []string
+	Isolation          *thirdparty.Isolation
+	StorageDriver      *StorageDriver
+	TmpDir             string
+	Insecure           bool
+	RegistryMirrors    []string
+	InsecureRegistries []string // Per-host insecure registries from Docker/buildah config
 }
 
 type NativeModeOpts struct {
