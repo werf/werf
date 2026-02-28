@@ -124,8 +124,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 }
 
 func runRender(ctx context.Context) error {
-	global_warnings.PostponeMultiwerfNotUpToDateWarning(ctx)
-
 	var isLocalBundle bool
 	switch {
 	case cmdData.BundleDir != "":
