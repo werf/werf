@@ -206,8 +206,6 @@ werf converge --repo registry.mydomain.com/web --env production`,
 }
 
 func runMain(ctx context.Context, imageNameListFromArgs []string) error {
-	global_warnings.PostponeMultiwerfNotUpToDateWarning(ctx)
-
 	commonManager, ctx, err := common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
 		Cmd: &commonCmdData,
 		InitTrueGitWithOptions: &common.InitTrueGitOptions{
