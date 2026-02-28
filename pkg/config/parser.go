@@ -777,6 +777,10 @@ func prepareWerfConfig(giterminismManager giterminism_manager.Interface, rawImag
 		return nil, err
 	}
 
+	if err := werfConfig.validateExternalImageReferences(); err != nil {
+		return nil, err
+	}
+
 	if err := werfConfig.validateRelatedImages(); err != nil {
 		return nil, err
 	}
