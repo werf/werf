@@ -136,8 +136,8 @@ func (c *StapelImageBase) validate(giterminismManager giterminism_manager.Interf
 		return newDetailedConfigError("`from: DOCKER_IMAGE`, `fromImage: IMAGE_NAME` required!", nil, c.raw.doc)
 	}
 
-	if c.Name != "" && (c.From == c.Name || c.raw.FromImage == c.Name) {
-		return newDetailedConfigError("conflict between `from`, `fromImage` and image name: image cannot reference itself!", nil, c.raw.doc)
+	if c.Name != "" && c.From == c.Name {
+		return newDetailedConfigError("image \""+c.Name+"\" cannot use itself as base image in 'from' directive", nil, c.raw.doc)
 	}
 
 	mountByTo := map[string]bool{}
