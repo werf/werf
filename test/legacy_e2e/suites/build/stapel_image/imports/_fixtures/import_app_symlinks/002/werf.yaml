@@ -4,7 +4,7 @@ configVersion: 1
 image: final
 from: registry.werf.io/base/alpine
 import:
-  - image: container/filer
+  - from: container/filer
     add: /out/links
     to: /test-links
     before: install

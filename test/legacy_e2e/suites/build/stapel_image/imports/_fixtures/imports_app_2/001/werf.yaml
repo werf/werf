@@ -15,21 +15,21 @@ shell:
 image: app
 from: registry.werf.io/base/alpine
 import:
-  - image: artifact
+  - from: artifact
     add: /artifact/a/b/c
     includePaths:
       - added_file1
       - added_file2
     to: /dest1
     before: install
-  - image: artifact
+  - from: artifact
     add: /artifact/a/b/c
     excludePaths:
       - not_added_file3
       - not_added_file4
     to: /dest2
     after: install
-  - image: artifact
+  - from: artifact
     add: /artifact/a/b/c
     includePaths:
       - added_file1

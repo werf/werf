@@ -90,11 +90,62 @@ func (c *WerfConfig) validateConflictBetweenImagesNames() error {
 	return nil
 }
 
+func (c *WerfConfig) validateExternalImageReferences() error {
+	for _, image := range c.Images(false) {
+		if !image.IsStapel() {
+			continue
+		}
+
+		from := image.GetFrom()
+		if from == "" {
+			continue
+		}
+
+		if c.GetImage(from) == nil {
+			if !strings.Contains(from, ":") && !strings.Contains(from, "@") {
+				return newDetailedConfigError(
+					fmt.Sprintf("external image reference %q in `from` must include a tag (`:TAG`) or digest (`@sha256:...`)", from),
+					nil, image.rawDoc(),
+				)
+			}
+		}
+
+		if stapelImage, ok := image.(StapelImageInterface); ok {
+			for _, imp := range stapelImage.ImageBaseConfig().Import {
+				if imp.From == "" {
+					continue
+				}
+				if c.GetImage(imp.From) == nil {
+					if !strings.Contains(imp.From, ":") && !strings.Contains(imp.From, "@") {
+						return newDetailedConfigError(
+							fmt.Sprintf("external image reference %q in import `from` must include a tag (`:TAG`) or digest (`@sha256:...`)", imp.From),
+							imp.raw, image.rawDoc(),
+						)
+					}
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
 func (c *WerfConfig) validateRelatedImages() error {
 	for _, image := range c.Images(false) {
-		for _, relatedImageName := range image.dependsOn().relatedImageNameList() {
-			if c.GetImage(relatedImageName) == nil {
-				return newDetailedConfigError(fmt.Sprintf("image %q not found!", relatedImageName), nil, image.rawDoc())
+		deps := image.dependsOn()
+
+		for _, importName := range deps.Imports {
+			if c.GetImage(importName) == nil && image.IsStapel() {
+				continue
+			}
+			if c.GetImage(importName) == nil {
+				return newDetailedConfigError(fmt.Sprintf("image %q not found!", importName), nil, image.rawDoc())
+			}
+		}
+
+		for _, depName := range deps.Dependencies {
+			if c.GetImage(depName) == nil {
+				return newDetailedConfigError(fmt.Sprintf("image %q not found!", depName), nil, image.rawDoc())
 			}
 		}
 	}
@@ -126,6 +177,10 @@ func (c *WerfConfig) validateImageInfiniteLoop(imageName string, imageNameStack 
 	}
 
 	for _, relatedImageName := range image.dependsOn().relatedImageNameList() {
+		if c.GetImage(relatedImageName) == nil {
+			continue
+		}
+
 		if err, errImagesStack := c.validateImageInfiniteLoop(relatedImageName, imageNameStack); err != nil {
 			return err, append([]string{imageName}, errImagesStack...)
 		}
@@ -250,8 +305,20 @@ func (c *WerfConfig) updateDependencies(image ImageInterface) DependsOn {
 		image.SetFromExternal()
 	}
 
+	for _, importName := range curDeps.Imports {
+		if c.GetImage(importName) != nil {
+			d.Imports = append(d.Imports, importName)
+			continue
+		}
+
+		for _, imp := range image.(StapelImageInterface).ImageBaseConfig().Import {
+			if imp.From == importName {
+				imp.ExternalImage = true
+			}
+		}
+	}
+
 	d.Dependencies = curDeps.Dependencies
-	d.Imports = curDeps.Imports
 
 	return d
 }

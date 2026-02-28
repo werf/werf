@@ -14,7 +14,6 @@ type rawStapelImage struct {
 	From                 string           `yaml:"from,omitempty"`
 	FromLatest           bool             `yaml:"fromLatest,omitempty"`
 	FromCacheVersion     string           `yaml:"fromCacheVersion,omitempty"`
-	FromImage            string           `yaml:"fromImage,omitempty"`
 	DisableGitAfterPatch bool             `yaml:"disableGitAfterPatch,omitempty"`
 	RawGit               []*rawGit        `yaml:"git,omitempty"`
 	RawShell             *rawShell        `yaml:"shell,omitempty"`
@@ -160,17 +159,8 @@ func (c *rawStapelImage) toStapelImageBaseDirective(giterminismManager gitermini
 	}
 
 	imageBase.From = c.From
-	if c.FromImage != "" {
-		imageBase.From = c.FromImage
-	}
-
 	imageBase.FromLatest = c.FromLatest
 	imageBase.FromCacheVersion = c.FromCacheVersion
-
-	// TODO(major): This is a dirty temporary backward compatibility fix. Remove it.
-	if imageBase.Name == imageBase.From {
-		imageBase.From += ":latest"
-	}
 
 	imageBase.cacheVersion = c.CacheVersion
 	imageBase.platform = append([]string{}, c.Platform...)

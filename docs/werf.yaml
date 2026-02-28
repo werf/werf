@@ -26,7 +26,7 @@ shell:
 
 ---
 image: assets
-fromImage: jekyll_base
+from: jekyll_base
 shell:
   beforeSetup:
     - mkdir -p /app/_site/main/
@@ -88,7 +88,7 @@ shell:
 {{ .Files.Get ".werf/nginx.conf" | indent 6 }}
       NGINX
 import:
-- image: assets
+- from: assets
   add: /app/_site
   to: /app
   before: setup

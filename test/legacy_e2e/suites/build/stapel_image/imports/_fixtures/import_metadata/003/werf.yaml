@@ -6,7 +6,7 @@ from: registry.werf.io/base/alpine
 shell:
   setup: date
 import:
-- image: artifact
+- from: artifact
   add: /artifact
   to: /artifact
   before: setup
