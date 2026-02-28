@@ -72,7 +72,7 @@ func (c *StapelImageBase) dependsOn() DependsOn {
 	var dependsOn DependsOn
 
 	for _, imp := range c.Import {
-		if imp.ImageName != "" && !imp.ExternalImage {
+		if imp.ImageName != "" {
 			dependsOn.Imports = append(dependsOn.Imports, imp.ImageName)
 		}
 	}
@@ -133,7 +133,7 @@ func (c *StapelImageBase) validate(giterminismManager giterminism_manager.Interf
 	}
 
 	if c.From == "" && c.raw.FromImage == "" {
-		return newDetailedConfigError("`from: DOCKER_IMAGE`, `fromImage: IMAGE_NAME` required!", nil, c.raw.doc)
+		return newDetailedConfigError("`from: IMAGE` required!", nil, c.raw.doc)
 	}
 
 	if c.Name != "" && c.From == c.Name {
