@@ -212,13 +212,12 @@ werf converge --repo registry.mydomain.com/web --env production
             several stages.
             
             There are the following formats to use:
-            * specify IMAGE_NAME/STAGE_NAME to introspect stage STAGE_NAME of either image or       
-            artifact IMAGE_NAME
+            * specify IMAGE_NAME/STAGE_NAME to introspect stage STAGE_NAME of image IMAGE_NAME
             * specify STAGE_NAME or */STAGE_NAME for the introspection of all existing stages with  
             name STAGE_NAME
             
-            IMAGE_NAME is the name of an image or artifact described in werf.yaml, the nameless     
-            image specified with ~.
+            IMAGE_NAME is the name of an image described in werf.yaml, the nameless image specified 
+            with ~.
             STAGE_NAME should be one of the following: from, beforeInstall,                         
             dependenciesBeforeInstall, gitArchive, install, dependenciesAfterInstall, beforeSetup,  
             dependenciesBeforeSetup, setup, dependenciesAfterSetup, gitCache, gitLatestPatch,       

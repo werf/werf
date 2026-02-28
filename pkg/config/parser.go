@@ -768,16 +768,6 @@ func prepareWerfConfig(giterminismManager giterminism_manager.Interface, rawImag
 				}
 				images = append(images, image)
 			}
-		} else {
-			if image, err := rawImage.toStapelImageArtifactDirectives(giterminismManager); err != nil {
-				return nil, err
-			} else {
-				if meta.Build.ImageSpec != nil && image.final {
-					merged := mergeImageSpec(meta.Build.ImageSpec, image.ImageSpec)
-					image.ImageSpec = &merged
-				}
-				images = append(images, image)
-			}
 		}
 	}
 
@@ -840,7 +830,7 @@ func splitByMetaAndRawImages(docs []*doc) (*Meta, []*rawStapelImage, []*rawImage
 			}
 			rawStapelImages = append(rawStapelImages, image)
 		default:
-			return nil, nil, nil, newYamlUnmarshalError(errors.New("cannot recognize type of config section (part of YAML stream separated by three hyphens, https://yaml.org/spec/1.2/spec.html#id2800132):\n * 'configVersion' required for meta config section;\n * 'image' required for the image config sections;\n * 'artifact' required for the artifact config sections;"), doc)
+			return nil, nil, nil, newYamlUnmarshalError(errors.New("cannot recognize type of config section (not an image, not a meta config section). Expected 'image' required for the image config sections"), doc)
 		}
 	}
 
@@ -857,8 +847,6 @@ func isMetaDoc(h map[string]interface{}) bool {
 
 func isImageDoc(h map[string]interface{}) bool {
 	if _, ok := h["image"]; ok {
-		return true
-	} else if _, ok := h["artifact"]; ok {
 		return true
 	}
 

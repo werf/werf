@@ -23,14 +23,14 @@ var _ = Describe("FromStage", func() {
 			prevImage := NewStageImage(containerBackend, "base-image", legacyImage)
 
 			fromStage := &FromStage{
-				fromImageOrArtifactImageName: data.FromImageOrArtifactImageName,
-				baseImageRepoIdOrNone:        data.BaseImageRepoIdOrNone,
-				fromCacheVersion:             data.FromCacheVersion,
-				imageCacheVersion:            data.ImageCacheVersion,
-				BaseStage:                    NewBaseStage(From, &BaseStageOptions{}),
+				fromImageName:         data.FromImageName,
+				baseImageRepoIdOrNone: data.BaseImageRepoIdOrNone,
+				fromCacheVersion:      data.FromCacheVersion,
+				imageCacheVersion:     data.ImageCacheVersion,
+				BaseStage:             NewBaseStage(From, &BaseStageOptions{}),
 			}
 
-			if fromStage.fromImageOrArtifactImageName != "" {
+			if fromStage.fromImageName != "" {
 				// do nothing
 			} else {
 				legacyImage.EXPECT().Name().Return(data.PrevImageImageName)
@@ -69,10 +69,10 @@ var _ = Describe("FromStage", func() {
 				ExpectedDigest: "29e4de9b8f38c28e4fffb47f5a22f2c8ac76986cffd81133d5180586ebf85adf",
 			}),
 
-		Entry("should calculate from stage digest with fromImageOrArtifactImageName param",
+		Entry("should calculate from stage digest with fromImageName param",
 			testDataFrom{
-				FromImageOrArtifactImageName: "from-image-or-artifact-image-name",
-				PrevImageImageName:           "prev-image-image-name",
+				FromImageName:      "from-image-or-artifact-image-name",
+				PrevImageImageName: "prev-image-image-name",
 
 				ExpectedDigest: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
 			}),
@@ -80,10 +80,10 @@ var _ = Describe("FromStage", func() {
 })
 
 type testDataFrom struct {
-	FromImageOrArtifactImageName string
-	BaseImageRepoIdOrNone        string
-	FromCacheVersion             string
-	ImageCacheVersion            string
+	FromImageName         string
+	BaseImageRepoIdOrNone string
+	FromCacheVersion      string
+	ImageCacheVersion     string
 
 	ImageContentDigest string
 	PrevImageImageName string

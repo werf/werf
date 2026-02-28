@@ -5,15 +5,14 @@ import (
 )
 
 type rawImport struct {
-	ImageName    string `yaml:"image,omitempty"`
-	From         string `yaml:"from,omitempty"`
-	ArtifactName string `yaml:"artifact,omitempty"`
-	Before       string `yaml:"before,omitempty"`
-	After        string `yaml:"after,omitempty"`
-	Stage        string `yaml:"stage,omitempty"`
+	ImageName string `yaml:"image,omitempty"`
+	From      string `yaml:"from,omitempty"`
+	Before    string `yaml:"before,omitempty"`
+	After     string `yaml:"after,omitempty"`
+	Stage     string `yaml:"stage,omitempty"`
 
-	rawArtifactExport `yaml:",inline"`
-	rawStapelImage    *rawStapelImage `yaml:"-"` // parent
+	rawExport      `yaml:",inline"`
+	rawStapelImage *rawStapelImage `yaml:"-"` // parent
 
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
 }
@@ -39,14 +38,14 @@ func (c *rawImport) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return err
 	}
 
-	c.rawArtifactExport.inlinedIntoRaw(c)
+	c.rawExport.inlinedIntoRaw(c)
 
 	if err := checkOverflow(c.UnsupportedAttributes, c, c.rawStapelImage.doc); err != nil {
 		return err
 	}
 
-	if c.rawArtifactExport.rawExportBase.To == "" {
-		c.rawArtifactExport.rawExportBase.To = c.rawArtifactExport.rawExportBase.Add
+	if c.rawExport.rawExportBase.To == "" {
+		c.rawExport.rawExportBase.To = c.rawExport.rawExportBase.Add
 	}
 
 	return nil
@@ -55,10 +54,10 @@ func (c *rawImport) UnmarshalYAML(unmarshal func(interface{}) error) error {
 func (c *rawImport) toDirective() (imp *Import, err error) {
 	imp = &Import{}
 
-	if artifactExport, err := c.rawArtifactExport.toDirective(); err != nil {
+	if export, err := c.rawExport.toDirective(); err != nil {
 		return nil, err
 	} else {
-		imp.ArtifactExport = artifactExport
+		imp.Export = export
 	}
 
 	if !oneOrNone([]bool{c.ImageName != "", c.From != ""}) {
@@ -75,7 +74,6 @@ func (c *rawImport) toDirective() (imp *Import, err error) {
 		imp.ExternalImage = true
 	}
 
-	imp.ArtifactName = c.ArtifactName
 	imp.Before = c.Before
 	imp.After = c.After
 	imp.Stage = c.Stage

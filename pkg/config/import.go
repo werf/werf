@@ -5,9 +5,8 @@ import (
 )
 
 type Import struct {
-	*ArtifactExport
+	*Export
 	ImageName     string
-	ArtifactName  string
 	Before        string
 	After         string
 	Stage         string
@@ -21,19 +20,13 @@ func (c *Import) GetRaw() interface{} {
 }
 
 func (c *Import) validate() error {
-	if err := c.ArtifactExport.validate(); err != nil {
+	if err := c.Export.validate(); err != nil {
 		return err
 	}
 
-	if c.ArtifactName != "" {
-		printArtifactDepricationWarning()
-	}
-
 	switch {
-	case c.ArtifactName == "" && c.ImageName == "":
-		return newDetailedConfigError("artifact name `artifact: NAME` or image name `image: NAME` required for import!", c.raw, c.raw.rawStapelImage.doc)
-	case c.ArtifactName != "" && c.ImageName != "":
-		return newDetailedConfigError("specify only one artifact name using `artifact: NAME` or image name using `image: NAME` for import!", c.raw, c.raw.rawStapelImage.doc)
+	case c.ImageName == "":
+		return newDetailedConfigError("image name `image: NAME` required for import!", c.raw, c.raw.rawStapelImage.doc)
 	case c.Before != "" && c.After != "":
 		return newDetailedConfigError("specify only one artifact stage using `before: install|setup` or `after: install|setup` for import!", c.raw, c.raw.rawStapelImage.doc)
 	case c.Before == "" && c.After == "":
