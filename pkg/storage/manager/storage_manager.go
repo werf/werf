@@ -109,19 +109,17 @@ type CopyStageIntoStorageOptions struct {
 
 func RetryOnUnexpectedStagesStorageState(ctx context.Context, _ StorageManagerInterface, f func() error) error {
 	var attempt int
-	op := func() (struct{}, error) {
+	op := func() (bool, error) {
 		attempt++
 
-		err := f()
-		if err == nil {
-			return struct{}{}, nil
+		if err := f(); err != nil {
+			if !IsErrUnexpectedStagesStorageState(err) {
+				return false, backoff.Permanent(err)
+			}
+			return false, fmt.Errorf("exhausted %d retries on unexpected stages storage state: %w", maxRetryAttemptsOnUnexpectedStagesStorageState-1, err)
 		}
 
-		if !IsErrUnexpectedStagesStorageState(err) {
-			return struct{}{}, backoff.Permanent(err)
-		}
-
-		return struct{}{}, err
+		return false, nil
 	}
 
 	notify := func(err error, duration time.Duration) {
@@ -137,14 +135,7 @@ func RetryOnUnexpectedStagesStorageState(ctx context.Context, _ StorageManagerIn
 		backoff.WithMaxTries(maxRetryAttemptsOnUnexpectedStagesStorageState),
 		backoff.WithNotify(notify),
 	)
-	if err != nil {
-		if IsErrUnexpectedStagesStorageState(err) {
-			return fmt.Errorf("exhausted %d retries on unexpected stages storage state: %w", maxRetryAttemptsOnUnexpectedStagesStorageState-1, err)
-		}
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func NewStorageManager(projectName string, stagesStorage storage.PrimaryStagesStorage, finalStagesStorage storage.StagesStorage, secondaryStagesStorageList, cacheStagesStorageList []storage.StagesStorage, storageLockManager lock_manager.Interface) *StorageManager {
