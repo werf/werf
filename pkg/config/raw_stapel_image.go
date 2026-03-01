@@ -1,10 +1,12 @@
 package config
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
 	"github.com/werf/werf/v2/pkg/util/option"
+	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
 
 type rawStapelImage struct {
@@ -161,16 +163,12 @@ func (c *rawStapelImage) toStapelImageBaseDirective(giterminismManager gitermini
 
 	imageBase.From = c.From
 	if c.FromImage != "" {
+		global_warnings.GlobalDeprecationWarningLn(context.Background(), "Using 'fromImage' is deprecated, use 'from' instead")
 		imageBase.From = c.FromImage
 	}
 
 	imageBase.FromLatest = c.FromLatest
 	imageBase.FromCacheVersion = c.FromCacheVersion
-
-	// TODO(major): This is a dirty temporary backward compatibility fix. Remove it.
-	if imageBase.Name == imageBase.From {
-		imageBase.From += ":latest"
-	}
 
 	imageBase.cacheVersion = c.CacheVersion
 	imageBase.platform = append([]string{}, c.Platform...)

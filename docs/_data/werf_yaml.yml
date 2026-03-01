@@ -534,14 +534,6 @@ sections:
           ru: Использование актуального базового образа (без кеширования)
         detailsArticle:
           all: "/usage/build/stapel/base.html#from"
-      - name: fromImage
-        value: "string"
-        description:
-          en: "To use image as base image by image name (DEPRECATED)"
-          ru: "Использование образа из werf.yaml в качестве базового (DEPRECATED)"
-        detailsArticle:
-          en: "/usage/build/stapel/base.html#from"
-          ru: "/usage/build/stapel/base.html#from"
       - name: fromCacheVersion
         value: "string"
         description:

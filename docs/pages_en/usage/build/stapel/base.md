@@ -15,7 +15,7 @@ image: example
 from: alpine
 ```
 
-A _base image_ can be declared with `from` or `fromImage` directive.
+A _base image_ can be declared with the `from` directive.
 
 ## from
 
@@ -56,7 +56,7 @@ it makes sense to store its description together with _images_ which use it as o
 This method comes in handy if the stages of the existing _stage conveyor_ are not enough for building the image. Using the image described in the same `werf.yaml` as the base image, you can essentially build your own _stage conveyor_.
 
 <a class="google-drawings" href="{{ "images/configuration/base_image2.svg" | true_relative_url }}" data-featherlight="image">
-    <img src="{{ "images/configuration/base_image2.svg" | true_relative_url }}" alt="Conveyor with fromImage stages">
+    <img src="{{ "images/configuration/base_image2.svg" | true_relative_url }}" alt="Conveyor with from stages">
 </a>
 
 ## fromCacheVersion

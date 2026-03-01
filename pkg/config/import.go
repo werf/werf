@@ -26,7 +26,7 @@ func (c *Import) validate() error {
 
 	switch {
 	case c.ImageName == "":
-		return newDetailedConfigError("image name `image: NAME` required for import!", c.raw, c.raw.rawStapelImage.doc)
+		return newDetailedConfigError("`from: IMAGE_NAME` required for import!", c.raw, c.raw.rawStapelImage.doc)
 	case c.Before != "" && c.After != "":
 		return newDetailedConfigError("specify only one artifact stage using `before: install|setup` or `after: install|setup` for import!", c.raw, c.raw.rawStapelImage.doc)
 	case c.Before == "" && c.After == "":

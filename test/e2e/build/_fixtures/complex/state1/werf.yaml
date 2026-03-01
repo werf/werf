@@ -39,7 +39,7 @@ shell:
 
 ---
 image: stapel-shell
-fromImage: base-stapel-shell
+from: base-stapel-shell
 fromCacheVersion: 1
 mount:
 - from: tmp_dir
