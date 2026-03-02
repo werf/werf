@@ -80,6 +80,26 @@ func (cache *ManifestCache) StoreImageInfo(ctx context.Context, storageName stri
 	return cache.writeRecord(storageName, record)
 }
 
+func (cache *ManifestCache) DeleteImageInfo(ctx context.Context, storageName, imageName string) error {
+	logboek.Context(ctx).Debug().LogF("Deleting manifest cache entry for %s/%s\n", storageName, imageName)
+
+	if lock, err := cache.lock(ctx, storageName, imageName); err != nil {
+		return err
+	} else {
+		defer cache.unlock(lock)
+	}
+
+	filePath := cache.constructFilePathForImage(storageName, imageName)
+	if err := os.Remove(filePath); err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return fmt.Errorf("unable to delete manifest cache entry for %s/%s: %w", storageName, imageName, err)
+	}
+
+	return nil
+}
+
 func (cache *ManifestCache) readRecord(ctx context.Context, storageName, imageName string) (*ManifestCacheRecord, error) {
 	filePath := cache.constructFilePathForImage(storageName, imageName)
 

@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/cenkalti/backoff/v5"
 	"gopkg.in/yaml.v2"
 
 	"github.com/werf/lockgate"
@@ -29,6 +30,8 @@ var (
 	ErrUnexpectedStagesStorageState = errors.New("unexpected stages storage state")
 	ErrStageNotFound                = errors.New("stage not found")
 )
+
+const maxRetryAttemptsOnUnexpectedStagesStorageState = 4
 
 func IsErrUnexpectedStagesStorageState(err error) bool {
 	if err != nil {
@@ -104,14 +107,34 @@ type CopyStageIntoStorageOptions struct {
 	LogDetailedName      string
 }
 
-func RetryOnUnexpectedStagesStorageState(_ context.Context, _ StorageManagerInterface, f func() error) error {
-Retry:
-	err := f()
+func RetryOnUnexpectedStagesStorageState(ctx context.Context, _ StorageManagerInterface, f func() error) error {
+	var attempt int
+	op := func() (bool, error) {
+		attempt++
 
-	if IsErrUnexpectedStagesStorageState(err) {
-		goto Retry
+		if err := f(); err != nil {
+			if !IsErrUnexpectedStagesStorageState(err) {
+				return false, backoff.Permanent(err)
+			}
+			return false, fmt.Errorf("exhausted %d retries on unexpected stages storage state: %w", maxRetryAttemptsOnUnexpectedStagesStorageState-1, err)
+		}
+
+		return false, nil
 	}
 
+	notify := func(err error, duration time.Duration) {
+		logboek.Context(ctx).Warn().LogF("Retrying due to unexpected stages storage state (attempt %d/%d) in %0.2f seconds ...\n", attempt, maxRetryAttemptsOnUnexpectedStagesStorageState-1, duration.Seconds())
+	}
+
+	eb := backoff.NewExponentialBackOff()
+	eb.InitialInterval = 2 * time.Second
+	eb.MaxInterval = 10 * time.Second
+
+	_, err := backoff.Retry(ctx, op,
+		backoff.WithBackOff(eb),
+		backoff.WithMaxTries(maxRetryAttemptsOnUnexpectedStagesStorageState),
+		backoff.WithNotify(notify),
+	)
 	return err
 }
 
@@ -553,6 +576,12 @@ func (m *StorageManager) FetchStage(ctx context.Context, containerBackend contai
 
 		if IsErrStageNotFound(err) || storage.IsErrBrokenImage(err) {
 			logboek.Context(ctx).Error().LogF("Stage %s image %s is no longer available: %s!\n", stg.LogDetailedName(), stg.GetStageImage().Image.Name(), err)
+
+			// Invalidate manifest cache for the rejected stage (do this regardless of RejectStage result)
+			stageImageName := m.StagesStorage.ConstructStageImageName(m.ProjectName, stageID.Digest, stageID.CreationTs)
+			if err := image.CommonManifestCache.DeleteImageInfo(ctx, m.StagesStorage.String(), stageImageName); err != nil {
+				logboek.Context(ctx).Warn().LogF("Unable to delete manifest cache for rejected stage %s: %s\n", stageImageName, err)
+			}
 
 			logboek.Context(ctx).Error().LogF("Will mark image %s as rejected in the stages storage %s\n", stg.GetStageImage().Image.Name(), m.StagesStorage.String())
 			if err := m.StagesStorage.RejectStage(ctx, m.ProjectName, stageID.Digest, stageID.CreationTs); err != nil {
