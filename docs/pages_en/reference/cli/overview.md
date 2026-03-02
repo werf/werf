@@ -25,6 +25,7 @@ Helper commands:
  - [werf slugify]({{ "/reference/cli/werf_slugify.html" | true_relative_url }}) — {% include /reference/cli/werf_slugify.short.md %}.
  - [werf render]({{ "/reference/cli/werf_render.html" | true_relative_url }}) — {% include /reference/cli/werf_render.short.md %}.
  - [werf lint]({{ "/reference/cli/werf_lint.html" | true_relative_url }}) — {% include /reference/cli/werf_lint.short.md %}.
+ - [werf chart]({{ "/reference/cli/werf_chart_ts.html" | true_relative_url }}) — {% include /reference/cli/werf_chart_ts.short.md %}.
  - [werf includes]({{ "/reference/cli/werf_includes_get_file.html" | true_relative_url }}) — {% include /reference/cli/werf_includes_get_file.short.md %}.
  - [werf stages]({{ "/reference/cli/werf_stages_copy.html" | true_relative_url }}) — {% include /reference/cli/werf_stages_copy.short.md %}.
 
