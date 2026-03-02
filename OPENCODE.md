@@ -83,14 +83,14 @@ Tool priority order: Kubernetes MCP tools ONLY.
 ALWAYS verify after making changes, in this order. NEVER skip steps. NEVER assume "it probably compiles."
 
 Default action when unsure: ALWAYS run the full verification pipeline.
-Tool priority order: `task format` → `task build` → `task lint:golangci-lint` → `task test:unit`.
+Tool priority order: `task format` → `task build` → `task lint` → `task test:unit`.
 
 1. ALWAYS run `task format` first — it mutates files, so other checks must run after it.
 2. ALWAYS run `task build` — verify it compiles. NEVER assume your changes compile without checking.
-3. ALWAYS run `task lint:golangci-lint` — verify linting passes. NEVER ignore lint errors.
-4. ALWAYS run `task test:unit` — verify tests pass. NEVER skip tests.
+3. ALWAYS run `task lint` NEVER ignore lint errors.
+4. ALWAYS run `task test:unit` — verify tests pass. This step is MANDATORY, not optional. NEVER skip it, even if build and lint pass.
 
-Scope verification with `golangciPaths=` for focused lint changes (e.g. `task lint:golangci-lint golangciPaths="./pkg/foo/..."`). Use `paths=` for other tasks. ALWAYS run full-project verification at the end of a task.
+Scope verification with `golangciPaths=` for focused golangci-lint runs (e.g. `task lint:golangci-lint golangciPaths="./pkg/foo/..."`). Use `paths=` for other tasks. ALWAYS run full-project verification (`task lint`) at the end of a task.
 
 When changes affect CLI commands, deployment logic, or Kubernetes interactions, ALSO verify against the local dev cluster:
 

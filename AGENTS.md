@@ -12,6 +12,11 @@ werf is a CNCF Sandbox CLI tool to implement full-cycle CI/CD to Kubernetes. wer
 - ALWAYS start with the simplest possible solution. If it works, stop. Add complexity only when justified by a concrete, current requirement — NEVER for hypothetical future needs.
 - NEVER leave TODOs, stubs, or partial implementations.
 - ALWAYS stay within the scope of what was asked. When asked to update a plan — only update the plan, don't change code. When asked to brainstorm/discuss — only discuss, don't write code. When asked to do X — do X and nothing else. NEVER make unsolicited changes.
+- NEVER modify CHANGELOG.md, release notes, or other generated/workflow-managed files unless the user explicitly requests it.
+- When deleting a block from structured data files (YAML, JSON, TOML), ALWAYS read surrounding lines to verify adjacent content (anchors, references, unrelated entries) is preserved.
+- When removing content, ALWAYS clean up orphaned structural elements (comment separators, section headers, blank-line groups) that no longer serve a purpose.
+- When renaming a type, function, or constant, ALWAYS rename all related local variables, parameters, and error messages that reference the old name. A rename is not complete until grep for the old name returns zero hits in affected packages.
+- When removing a feature that has documentation in multiple languages (e.g. `pages_en/`, `pages_ru/`), ALWAYS apply the same removal to ALL language versions. NEVER assume English-only cleanup is sufficient.
 
 ## Code style
 
@@ -68,6 +73,8 @@ ALWAYS use these `task` commands. NEVER use raw `go build`, `go test`, `go fmt`,
 - `task lint` — run all linters in parallel.
 - `task enum:generate` — run enum generators.
 - `task mock:generate` — run mock generators.
+- `task mock:check` — verify generated mocks are up to date (runs `go generate -run mockgen` and diffs).
+- `task doc:gen` — regenerate CLI reference docs. ALWAYS run after changing command descriptions, flags, or help text in Go source.
 
 ## Testing (MANDATORY)
 
