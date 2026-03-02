@@ -86,7 +86,7 @@ werf bundle publish [IMAGE_NAME...] [options]
       --debug-templates=false
             Enable debug mode for Go templates (default $WERF_DEBUG_TEMPLATES or false)
       --deno-binary-path=""
-            Path to Deno binary
+            Path to Deno binary (default $WERF_DENO_BINARY_PATH)
       --dev=false
             Enable development mode (default $WERF_DEV).
             The mode allows working with project files without doing redundant commits during       
