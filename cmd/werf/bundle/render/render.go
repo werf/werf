@@ -103,6 +103,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupSetDockerConfigJsonValue(&commonCmdData, cmd)
 	common.SetupTemplatesAllowDNS(&commonCmdData, cmd)
 	commonCmdData.SetupSkipDependenciesRepoRefresh(cmd)
+	common.SetupTSOptions(&commonCmdData, cmd)
 
 	defaultTag := os.Getenv("WERF_TAG")
 	if defaultTag == "" {
@@ -248,6 +249,8 @@ func runRender(ctx context.Context) error {
 		ShowOnlyFiles:               append(util.PredefinedValuesByEnvNamePrefix("WERF_SHOW_ONLY"), cmdData.ShowOnly...),
 		ShowStandaloneCRDs:          cmdData.IncludeCRDs,
 		TemplatesAllowDNS:           commonCmdData.TemplatesAllowDNS,
+		RebuildTSBundle:             commonCmdData.RebuildTSBundle,
+		DenoBinaryPath:              commonCmdData.DenoBinaryPath,
 	}); err != nil {
 		return fmt.Errorf("chart render: %w", err)
 	}

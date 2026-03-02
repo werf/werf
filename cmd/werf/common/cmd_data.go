@@ -152,6 +152,8 @@ type CmdData struct {
 	UninstallGraphPath               string
 	UninstallReportPath              string
 	UseDeployReport                  bool
+	RebuildTSBundle                  bool
+	DenoBinaryPath                   string
 }
 
 func (cmdData *CmdData) SetupFinalImagesOnly(cmd *cobra.Command, defaultEnabled bool) {

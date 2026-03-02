@@ -109,6 +109,8 @@ werf plan --repo registry.mydomain.com/web --env production
       --delete-propagation=""
             Set default delete propagation strategy (default $WERF_DELETE_PROPAGATION or            
             Foreground).
+      --deno-binary-path=""
+            Path to Deno binary
       --deploy-graph-path=""
             Save deploy graph path to the specified file (by default $WERF_DEPLOY_GRAPH_PATH).      
             Extension must be .dot or not specified. If extension not specified, then .dot is used
@@ -340,6 +342,8 @@ werf plan --repo registry.mydomain.com/web --env production
             $WERF_PROVENANCE_KEYRING)
       --provenance-strategy=""
             Strategy for provenance verifying (default $WERF_PROVENANCE_STRATEGY).
+      --rebuild-ts=false
+            Rebuild TypeScript bundle
       --release=""
             Use specified Helm release name (default [[ project ]]-[[ env ]] template or            
             deploy.helmRelease custom template from werf.yaml or $WERF_RELEASE)

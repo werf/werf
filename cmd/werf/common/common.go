@@ -784,6 +784,15 @@ func SetupKubeVersion(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringVarP(&cmdData.KubeVersion, "kube-version", "", os.Getenv("WERF_KUBE_VERSION"), "Set specific Capabilities.KubeVersion (default $WERF_KUBE_VERSION)")
 }
 
+func SetupTSOptions(cmdData *CmdData, cmd *cobra.Command) {
+	cmd.Flags().BoolVarP(&cmdData.RebuildTSBundle, "rebuild-ts", "", util.GetBoolEnvironmentDefaultFalse("WERF_REBUILD_TS"), "Rebuild TypeScript bundle")
+	cmd.Flags().StringVarP(&cmdData.DenoBinaryPath, "deno-binary-path", "", os.Getenv("WERF_DENO_BINARY_PATH"), "Path to Deno binary")
+}
+
+func SetupDenoBinaryPath(cmdData *CmdData, cmd *cobra.Command) {
+	cmd.Flags().StringVarP(&cmdData.DenoBinaryPath, "deno-binary-path", "", os.Getenv("WERF_DENO_BINARY_PATH"), "Path to Deno binary")
+}
+
 func allStagesNames() []string {
 	var stageNames []string
 	for _, stageName := range stage.AllStages {

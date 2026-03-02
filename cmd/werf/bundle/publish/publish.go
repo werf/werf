@@ -111,6 +111,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
 	common.SetupSynchronization(&commonCmdData, cmd)
+	common.SetupDenoBinaryPath(&commonCmdData, cmd)
 
 	common.SetupSaveBuildReport(&commonCmdData, cmd)
 	common.SetupBuildReportPath(&commonCmdData, cmd)
@@ -416,6 +417,7 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 		chartDir,
 		bundleTmpDir,
 		chartVersion,
+		commonCmdData.DenoBinaryPath,
 		&values.Options{
 			ValueFiles:    commonCmdData.ValuesFiles,
 			StringValues:  commonCmdData.ValuesSetString,
@@ -455,6 +457,7 @@ func createNewBundle(
 	chartDir string,
 	destDir string,
 	chartVersion string,
+	denoBinaryPath string,
 	vals *values.Options,
 	opts helmopts.HelmOptions,
 ) error {
@@ -464,7 +467,7 @@ func createNewBundle(
 	}
 
 	if featgate.FeatGateTypescript.Enabled() {
-		if err := deno.NewDenoRuntime(true, deno.DenoRuntimeOptions{}).BundleChartsRecursive(ctx, chrt, chartDir); err != nil {
+		if err := deno.NewDenoRuntime(true, deno.DenoRuntimeOptions{BinaryPath: denoBinaryPath}).BundleChartsRecursive(ctx, chrt, chartDir); err != nil {
 			return fmt.Errorf("unable to process TypeScript files in chart: %w", err)
 		}
 	}

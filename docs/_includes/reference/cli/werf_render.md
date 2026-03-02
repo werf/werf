@@ -64,6 +64,8 @@ werf render [IMAGE_NAME...] [options]
             (Buildah-only) Use specified mirrors for docker.io
       --debug-templates=false
             Enable debug mode for Go templates (default $WERF_DEBUG_TEMPLATES or false)
+      --deno-binary-path=""
+            Path to Deno binary
       --dev=false
             Enable development mode (default $WERF_DEV).
             The mode allows working with project files without doing redundant commits during       
@@ -279,6 +281,8 @@ werf render [IMAGE_NAME...] [options]
             $WERF_PROVENANCE_KEYRING)
       --provenance-strategy=""
             Strategy for provenance verifying (default $WERF_PROVENANCE_STRATEGY).
+      --rebuild-ts=false
+            Rebuild TypeScript bundle
       --release=""
             Use specified Helm release name (default [[ project ]]-[[ env ]] template or            
             deploy.helmRelease custom template from werf.yaml or $WERF_RELEASE)
