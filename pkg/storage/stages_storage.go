@@ -18,7 +18,10 @@ const (
 	NamelessImageRecordTag          = "__nameless__"
 )
 
-var ErrBrokenImage = errors.New("broken image")
+var (
+	ErrBrokenImage   = errors.New("broken image")
+	ErrImageNotFound = errors.New("image not found")
+)
 
 func IsErrBrokenImage(err error) bool {
 	return err != nil && strings.HasSuffix(err.Error(), ErrBrokenImage.Error())

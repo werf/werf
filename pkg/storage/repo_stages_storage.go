@@ -302,7 +302,7 @@ func (storage *RepoStagesStorage) GetStageDesc(ctx context.Context, projectName 
 
 	imgInfo, err := storage.DockerRegistry.GetRepoImage(ctx, stageImageName)
 	if docker_registry.IsImageNotFoundError(err) {
-		return nil, nil
+		return nil, ErrImageNotFound
 	}
 	if docker_registry.IsBrokenImageError(err) {
 		return nil, ErrBrokenImage

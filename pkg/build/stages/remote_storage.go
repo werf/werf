@@ -72,7 +72,7 @@ func (s *RemoteStorage) copyCurrentBuildStagesFromRemote(ctx context.Context, fr
 
 			reference, err := ref.ParseReference(infoGetter.Tag)
 			if err != nil {
-				return err
+				return fmt.Errorf("unable to parse reference %q: %w", infoGetter.Tag, err)
 			}
 
 			reference.Repo = s.RegistryAddress.Repo
@@ -100,12 +100,15 @@ func (s *RemoteStorage) copyAllFromRemote(ctx context.Context, fromRemote *Remot
 
 		stageDesc, err := fromRemote.StorageManager.StagesStorage.GetStageDesc(ctx, opts.ProjectName, stageId)
 		if err != nil {
-			return err
+			return fmt.Errorf("unable to get description of stage %s: %w", stageId, err)
+		}
+		if stageDesc == nil {
+			return fmt.Errorf("description of stage %s not found", stageId)
 		}
 
 		reference, err := ref.ParseReference(stageId.Digest)
 		if err != nil {
-			return err
+			return fmt.Errorf("unable to parse stage %q reference: %w", stageId, err)
 		}
 
 		reference.Repo = s.RegistryAddress.Repo
@@ -132,7 +135,7 @@ func (s *RemoteStorage) copyFromArchive(ctx context.Context, fromArchive *Archiv
 
 		reference, err := ref.ParseReference(stageId)
 		if err != nil {
-			return err
+			return fmt.Errorf("unable to parse stage %q reference: %w", stageId, err)
 		}
 
 		reference.Repo = s.RegistryAddress.Repo

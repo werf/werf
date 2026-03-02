@@ -68,7 +68,10 @@ func (s *ArchiveStorage) copyAllFromRemote(ctx context.Context, fromRemote *Remo
 
 			stageDesc, err := fromRemote.StorageManager.StagesStorage.GetStageDesc(ctx, opts.ProjectName, stageId)
 			if err != nil {
-				return err
+				return fmt.Errorf("unable to get description of stage %s: %w", stageId, err)
+			}
+			if stageDesc == nil {
+				return fmt.Errorf("description of stage %s not found", stageId)
 			}
 
 			stageRef := stageDesc.Info.Name
