@@ -34,6 +34,17 @@ sbom:
         dependsOn:
           - builder-dep
 
+    declarations:
+      assessors:
+        - bom-ref: builder-assessor
+          thirdParty: false
+          organization:
+            name: "Builder Org"
+      claims:
+        - bom-ref: builder-claim
+          target: builder-custom
+          predicate: "Build dependency verified"
+
     properties:
       - name: builder-property
         value: builder-value
@@ -89,6 +100,17 @@ sbom:
         dependsOn:
           - app-dep-a
           - app-dep-b
+
+    declarations:
+      assessors:
+        - bom-ref: app-assessor
+          thirdParty: true
+          organization:
+            name: "App Security Org"
+      claims:
+        - bom-ref: app-claim
+          target: app-custom
+          predicate: "Application is compliant"
 
     annotations:
       - text: "Application level annotation"

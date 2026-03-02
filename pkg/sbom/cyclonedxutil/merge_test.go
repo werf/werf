@@ -118,6 +118,7 @@ var _ = Describe("MergeBOMs", func() {
 		Expect(result.Version).To(Equal(1))
 		Expect(result.SerialNumber).To(HavePrefix("urn:uuid:"))
 		Expect(result.Dependencies).To(BeNil(), "no dependencies were provided, so result should have none")
+		Expect(result.Declarations).To(BeNil(), "no declarations were provided, so result should have none")
 	})
 
 	It("generates new serial number", func() {
@@ -293,6 +294,143 @@ var _ = Describe("MergeBOMs", func() {
 				Expect(dep.Ref).To(Equal("ref-1"))
 				Expect(*dep.Dependencies).To(Equal([]string{"dep-a"}))
 				Expect(*dep.Provides).To(Equal([]string{"prov-a"}))
+			},
+		),
+	)
+
+	DescribeTable("merges declarations",
+		func(target *cdx.BOM, opts MergeOpts, assert func(*cdx.BOM)) {
+			result, err := MergeBOMs(target, opts)
+			Expect(err).ToNot(HaveOccurred())
+			assert(result)
+		},
+
+		Entry("returns nil when no BOMs have declarations",
+			&cdx.BOM{SpecVersion: cdx.SpecVersion1_6},
+			MergeOpts{BaseBOM: &cdx.BOM{SpecVersion: cdx.SpecVersion1_6}},
+			func(result *cdx.BOM) {
+				Expect(result.Declarations).To(BeNil())
+			},
+		),
+
+		Entry("concatenates assessors from multiple BOMs",
+			&cdx.BOM{
+				SpecVersion: cdx.SpecVersion1_6,
+				Declarations: &cdx.Declarations{
+					Assessors: &[]cdx.Assessor{{BOMRef: "target-assessor", ThirdParty: true}},
+				},
+			},
+			MergeOpts{BaseBOM: &cdx.BOM{
+				SpecVersion: cdx.SpecVersion1_6,
+				Declarations: &cdx.Declarations{
+					Assessors: &[]cdx.Assessor{{BOMRef: "base-assessor", ThirdParty: false}},
+				},
+			}},
+			func(result *cdx.BOM) {
+				Expect(result.Declarations).ToNot(BeNil())
+				Expect(result.Declarations.Assessors).ToNot(BeNil())
+				Expect(*result.Declarations.Assessors).To(HaveLen(2))
+				Expect((*result.Declarations.Assessors)[0].BOMRef).To(Equal(cdx.BOMReference("base-assessor")))
+				Expect((*result.Declarations.Assessors)[1].BOMRef).To(Equal(cdx.BOMReference("target-assessor")))
+			},
+		),
+
+		Entry("concatenates claims and evidence",
+			&cdx.BOM{
+				SpecVersion: cdx.SpecVersion1_6,
+				Declarations: &cdx.Declarations{
+					Claims:   &[]cdx.Claim{{BOMRef: "target-claim", Predicate: "secure"}},
+					Evidence: &[]cdx.DeclarationEvidence{{BOMRef: "target-evidence"}},
+				},
+			},
+			MergeOpts{BaseBOM: &cdx.BOM{
+				SpecVersion: cdx.SpecVersion1_6,
+				Declarations: &cdx.Declarations{
+					Claims:   &[]cdx.Claim{{BOMRef: "base-claim", Predicate: "compliant"}},
+					Evidence: &[]cdx.DeclarationEvidence{{BOMRef: "base-evidence"}},
+				},
+			}},
+			func(result *cdx.BOM) {
+				Expect(result.Declarations).ToNot(BeNil())
+				Expect(*result.Declarations.Claims).To(HaveLen(2))
+				Expect(*result.Declarations.Evidence).To(HaveLen(2))
+			},
+		),
+
+		Entry("concatenates targets (organizations, components, services)",
+			&cdx.BOM{
+				SpecVersion: cdx.SpecVersion1_6,
+				Declarations: &cdx.Declarations{
+					Targets: &cdx.Targets{
+						Components: &[]cdx.Component{{Name: "target-comp"}},
+						Services:   &[]cdx.Service{{Name: "target-svc"}},
+					},
+				},
+			},
+			MergeOpts{BaseBOM: &cdx.BOM{
+				SpecVersion: cdx.SpecVersion1_6,
+				Declarations: &cdx.Declarations{
+					Targets: &cdx.Targets{
+						Organizations: &[]cdx.OrganizationalEntity{{Name: "base-org"}},
+						Components:    &[]cdx.Component{{Name: "base-comp"}},
+					},
+				},
+			}},
+			func(result *cdx.BOM) {
+				Expect(result.Declarations).ToNot(BeNil())
+				Expect(result.Declarations.Targets).ToNot(BeNil())
+				Expect(*result.Declarations.Targets.Organizations).To(HaveLen(1))
+				Expect(*result.Declarations.Targets.Components).To(HaveLen(2))
+				Expect(*result.Declarations.Targets.Services).To(HaveLen(1))
+			},
+		),
+
+		Entry("last affirmation wins",
+			&cdx.BOM{
+				SpecVersion: cdx.SpecVersion1_6,
+				Declarations: &cdx.Declarations{
+					Affirmation: &cdx.Affirmation{Statement: "target affirms"},
+				},
+			},
+			MergeOpts{BaseBOM: &cdx.BOM{
+				SpecVersion: cdx.SpecVersion1_6,
+				Declarations: &cdx.Declarations{
+					Affirmation: &cdx.Affirmation{Statement: "base affirms"},
+				},
+			}},
+			func(result *cdx.BOM) {
+				Expect(result.Declarations).ToNot(BeNil())
+				Expect(result.Declarations.Affirmation).ToNot(BeNil())
+				Expect(result.Declarations.Affirmation.Statement).To(Equal("target affirms"))
+			},
+		),
+
+		Entry("handles nil target with declarations in base",
+			nil,
+			MergeOpts{BaseBOM: &cdx.BOM{
+				SpecVersion: cdx.SpecVersion1_6,
+				Declarations: &cdx.Declarations{
+					Assessors: &[]cdx.Assessor{{BOMRef: "base-assessor"}},
+				},
+			}},
+			func(result *cdx.BOM) {
+				Expect(result.Declarations).ToNot(BeNil())
+				Expect(*result.Declarations.Assessors).To(HaveLen(1))
+			},
+		),
+
+		Entry("does not carry over declarations signature",
+			&cdx.BOM{SpecVersion: cdx.SpecVersion1_6},
+			MergeOpts{BaseBOM: &cdx.BOM{
+				SpecVersion: cdx.SpecVersion1_6,
+				Declarations: &cdx.Declarations{
+					Assessors: &[]cdx.Assessor{{BOMRef: "assessor-1"}},
+					Signature: &cdx.JSFSignature{},
+				},
+			}},
+			func(result *cdx.BOM) {
+				Expect(result.Declarations).ToNot(BeNil())
+				Expect(result.Declarations.Signature).To(BeNil())
 			},
 		),
 	)

@@ -60,6 +60,7 @@ func MergeBOMs(target *cdx.BOM, opts MergeOpts) (*cdx.BOM, error) {
 	result.Properties = mergeProperties(boms)
 	result.Annotations = mergeAnnotations(boms)
 	result.Formulation = mergeFormulation(boms)
+	result.Declarations = mergeDeclarations(boms)
 
 	return result, nil
 }
@@ -172,6 +173,25 @@ func mergeDependencies(boms []*cdx.BOM) *[]cdx.Dependency {
 	return nil
 }
 
+func mergeDeclarations(boms []*cdx.BOM) *cdx.Declarations {
+	var result cdx.Declarations
+	var found bool
+
+	for _, bom := range boms {
+		if bom == nil || bom.Declarations == nil {
+			continue
+		}
+		found = true
+		appendBOMDeclarations(&result, bom.Declarations)
+	}
+
+	if !found {
+		return nil
+	}
+
+	return &result
+}
+
 func appendBOMComponents(dest []cdx.Component, bom *cdx.BOM) []cdx.Component {
 	if bom != nil && bom.Components != nil {
 		return append(dest, *bom.Components...)
@@ -241,6 +261,39 @@ func appendBOMDependencies(dest []cdx.Dependency, bom *cdx.BOM) []cdx.Dependency
 		return append(dest, *bom.Dependencies...)
 	}
 
+	return dest
+}
+
+func appendBOMDeclarations(dest, src *cdx.Declarations) {
+	dest.Assessors = appendPtrSlice(dest.Assessors, src.Assessors)
+	dest.Attestations = appendPtrSlice(dest.Attestations, src.Attestations)
+	dest.Claims = appendPtrSlice(dest.Claims, src.Claims)
+	dest.Evidence = appendPtrSlice(dest.Evidence, src.Evidence)
+
+	if src.Targets != nil {
+		if dest.Targets == nil {
+			dest.Targets = &cdx.Targets{}
+		}
+		dest.Targets.Organizations = appendPtrSlice(dest.Targets.Organizations, src.Targets.Organizations)
+		dest.Targets.Components = appendPtrSlice(dest.Targets.Components, src.Targets.Components)
+		dest.Targets.Services = appendPtrSlice(dest.Targets.Services, src.Targets.Services)
+	}
+
+	if src.Affirmation != nil {
+		dest.Affirmation = src.Affirmation
+	}
+}
+
+func appendPtrSlice[T any](dest, src *[]T) *[]T {
+	if src == nil {
+		return dest
+	}
+	if dest == nil {
+		result := make([]T, len(*src))
+		copy(result, *src)
+		return &result
+	}
+	*dest = append(*dest, *src...)
 	return dest
 }
 

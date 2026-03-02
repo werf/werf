@@ -419,6 +419,15 @@ var _ = Describe("SBOM merge", Label("e2e", "build", "sbom", "merge", "simple"),
 				})
 				Expect(len(deps)).To(Equal(1), "should have exactly 1 dependency")
 
+				By("verifying Declarations from fragment")
+				Expect(bom.Declarations).NotTo(BeNil(), "SBOM should have declarations")
+				Expect(bom.Declarations.Assessors).NotTo(BeNil())
+				Expect(*bom.Declarations.Assessors).To(HaveLen(1))
+				Expect(string((*bom.Declarations.Assessors)[0].BOMRef)).To(Equal("fragment-assessor"))
+				Expect(bom.Declarations.Claims).NotTo(BeNil())
+				Expect(*bom.Declarations.Claims).To(HaveLen(1))
+				Expect((*bom.Declarations.Claims)[0].BOMRef).To(Equal("fragment-claim"))
+
 				By("verifying Annotations are present")
 				Expect(bom.Annotations).NotTo(BeNil(), "SBOM should have annotations")
 				annotations := *bom.Annotations
@@ -717,6 +726,13 @@ var _ = Describe("SBOM merge", Label("e2e", "build", "sbom", "merge", "simple"),
 				})
 
 				Expect(len(deps)).To(Equal(2), "should have exactly 2 dependencies (builder + app)")
+
+				By("verifying Declarations from both builder and app")
+				Expect(bom.Declarations).NotTo(BeNil(), "SBOM should have declarations")
+				Expect(bom.Declarations.Assessors).NotTo(BeNil())
+				Expect(*bom.Declarations.Assessors).To(HaveLen(2), "should have 2 assessors (builder + app)")
+				Expect(bom.Declarations.Claims).NotTo(BeNil())
+				Expect(*bom.Declarations.Claims).To(HaveLen(2), "should have 2 claims (builder + app)")
 
 				By("verifying Annotations are present")
 				Expect(bom.Annotations).NotTo(BeNil(), "SBOM should have annotations")

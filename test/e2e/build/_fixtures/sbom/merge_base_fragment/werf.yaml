@@ -51,6 +51,17 @@ sbom:
           - dep-a
           - dep-b
 
+    declarations:
+      assessors:
+        - bom-ref: fragment-assessor
+          thirdParty: true
+          organization:
+            name: "Fragment Assessor Org"
+      claims:
+        - bom-ref: fragment-claim
+          target: custom-component
+          predicate: "Component is verified"
+
     annotations:
       - text: "This is a test annotation for merge verification"
         annotator:
