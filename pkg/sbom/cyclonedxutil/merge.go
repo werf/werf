@@ -242,7 +242,7 @@ func validateBOMSpecVersions(target *cdx.BOM, opts MergeOpts) error {
 			continue
 		}
 
-		if bom.SpecVersion != 0 && bom.SpecVersion != cdx.SpecVersion1_6 {
+		if bom.SpecVersion != cdx.SpecVersion1_6 {
 			return fmt.Errorf(
 				"unsupported CycloneDX spec version %q in BOM (expected %q): "+
 					"newer spec versions may introduce fields not handled during merging, "+
