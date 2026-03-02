@@ -365,8 +365,8 @@ var _ = Describe("SBOM merge", Label("e2e", "build", "sbom", "merge", "simple"),
 				})
 
 				By("verifying components count (fragment only, scratch has no components)")
-				Expect(len(components)).To(Equal(1),
-					"merged SBOM should contain exactly 1 component from fragment")
+				Expect(len(components)).To(Equal(3),
+					"merged SBOM should contain exactly 3 components from fragment (custom-component + dep-a + dep-b)")
 
 				By("verifying Services with strict field validation")
 				Expect(bom.Services).NotTo(BeNil(), "SBOM should have services")
@@ -408,6 +408,16 @@ var _ = Describe("SBOM merge", Label("e2e", "build", "sbom", "merge", "simple"),
 					Value: "custom-value",
 				})
 				Expect(len(props)).To(Equal(2), "should have exactly 2 properties")
+
+				By("verifying Dependencies with strict field validation")
+				Expect(bom.Dependencies).NotTo(BeNil(), "SBOM should have dependencies")
+				deps := *bom.Dependencies
+				customDep := findDependencyByRef(deps, "custom-component")
+				assertDependencyEquals(customDep, expectedDependency{
+					Ref:       "custom-component",
+					DependsOn: []string{"dep-a", "dep-b"},
+				})
+				Expect(len(deps)).To(Equal(1), "should have exactly 1 dependency")
 
 				By("verifying Annotations are present")
 				Expect(bom.Annotations).NotTo(BeNil(), "SBOM should have annotations")
@@ -491,7 +501,17 @@ var _ = Describe("SBOM merge", Label("e2e", "build", "sbom", "merge", "simple"),
 			baseComponents := *baseBom.Components
 			baseCurlComponent := findComponentByName(baseComponents, "curl")
 			assertComponentEquals(baseCurlComponent, expectedCurl)
-			Expect(len(baseComponents)).To(Equal(1), "base-level-0 should have exactly 1 component")
+			Expect(len(baseComponents)).To(Equal(2), "base-level-0 should have exactly 2 components (curl + libcurl)")
+
+			By("verifying base-level-0 dependencies")
+			Expect(baseBom.Dependencies).NotTo(BeNil(), "base-level-0 SBOM should have dependencies")
+			baseDeps := *baseBom.Dependencies
+			baseCurlDep := findDependencyByRef(baseDeps, "curl")
+			assertDependencyEquals(baseCurlDep, expectedDependency{
+				Ref:       "curl",
+				DependsOn: []string{"libcurl"},
+			})
+			Expect(len(baseDeps)).To(Equal(1), "base-level-0 should have exactly 1 dependency")
 
 			By("extracting and verifying SBOM for derived-level-1")
 			derivedReportRecord, ok := buildReport.Images["derived-level-1"]
@@ -511,9 +531,19 @@ var _ = Describe("SBOM merge", Label("e2e", "build", "sbom", "merge", "simple"),
 			derivedCurlComponent := findComponentByName(derivedComponents, "curl")
 			assertComponentEquals(derivedCurlComponent, expectedCurl)
 
-			By("verifying derived-level-1 components count (curl from base, empty fragment)")
-			Expect(len(derivedComponents)).To(Equal(1),
-				"derived-level-1 SBOM should contain exactly 1 component (curl inherited from base)")
+			By("verifying derived-level-1 components count (curl + libcurl from base, empty fragment)")
+			Expect(len(derivedComponents)).To(Equal(2),
+				"derived-level-1 SBOM should contain exactly 2 components (curl + libcurl inherited from base)")
+
+			By("verifying derived-level-1 dependencies inherited from base")
+			Expect(derivedBom.Dependencies).NotTo(BeNil(), "derived-level-1 SBOM should have dependencies inherited from base")
+			derivedDeps := *derivedBom.Dependencies
+			derivedCurlDep := findDependencyByRef(derivedDeps, "curl")
+			assertDependencyEquals(derivedCurlDep, expectedDependency{
+				Ref:       "curl",
+				DependsOn: []string{"libcurl"},
+			})
+			Expect(len(derivedDeps)).To(Equal(1), "derived-level-1 should have exactly 1 dependency inherited from base")
 		},
 		Entry("with local repo using Vanilla Docker", simpleTestOptions{setupEnvOptions{
 			ContainerBackendMode:        "vanilla-docker",
@@ -597,8 +627,8 @@ var _ = Describe("SBOM merge", Label("e2e", "build", "sbom", "merge", "simple"),
 				})
 
 				By("verifying components count (import + fragment)")
-				Expect(len(components)).To(Equal(2),
-					"merged SBOM should contain exactly 2 components (builder-custom from import + app-custom from fragment)")
+				Expect(len(components)).To(Equal(5),
+					"merged SBOM should contain exactly 5 components (builder-custom + builder-dep from import + app-custom + app-dep-a + app-dep-b from fragment)")
 
 				By("verifying metadata is present")
 				Expect(bom.Metadata).NotTo(BeNil())
@@ -670,6 +700,24 @@ var _ = Describe("SBOM merge", Label("e2e", "build", "sbom", "merge", "simple"),
 
 				Expect(len(refs)).To(Equal(2), "should have exactly 2 external references")
 
+				By("verifying Dependencies from both builder and app with strict validation")
+				Expect(bom.Dependencies).NotTo(BeNil(), "SBOM should have dependencies")
+				deps := *bom.Dependencies
+
+				builderDep := findDependencyByRef(deps, "builder-custom")
+				assertDependencyEquals(builderDep, expectedDependency{
+					Ref:       "builder-custom",
+					DependsOn: []string{"builder-dep"},
+				})
+
+				appDep := findDependencyByRef(deps, "app-custom")
+				assertDependencyEquals(appDep, expectedDependency{
+					Ref:       "app-custom",
+					DependsOn: []string{"app-dep-a", "app-dep-b"},
+				})
+
+				Expect(len(deps)).To(Equal(2), "should have exactly 2 dependencies (builder + app)")
+
 				By("verifying Annotations are present")
 				Expect(bom.Annotations).NotTo(BeNil(), "SBOM should have annotations")
 				annotations := *bom.Annotations
@@ -735,6 +783,15 @@ var _ = Describe("SBOM cross-project merge", Label("e2e", "build", "sbom", "merg
 			baseCurlComponent := findComponentByName(baseComponents, "curl")
 			Expect(baseCurlComponent).NotTo(BeNil(), "base image should have curl component")
 
+			By("verifying base image dependencies")
+			Expect(baseBom.Dependencies).NotTo(BeNil(), "base image should have dependencies")
+			baseDeps := *baseBom.Dependencies
+			baseCurlDep := findDependencyByRef(baseDeps, "curl")
+			assertDependencyEquals(baseCurlDep, expectedDependency{
+				Ref:       "curl",
+				DependsOn: []string{"libcurl"},
+			})
+
 			By("Step 3: building derived project with BASE_IMAGE_REF env")
 			derivedRepoDirname := "repo_cross_project_derived"
 			derivedFixtureRelPath := "sbom/cross_project/derived"
@@ -791,8 +848,27 @@ var _ = Describe("SBOM cross-project merge", Label("e2e", "build", "sbom", "merg
 			assertComponentEquals(derivedOwnComponent, expectedDerived)
 
 			By("verifying total components count")
-			Expect(len(derivedComponents)).To(Equal(2),
-				"derived SBOM should contain exactly 2 components (curl from base + derived-component from fragment)")
+			Expect(len(derivedComponents)).To(Equal(4),
+				"derived SBOM should contain exactly 4 components (curl + libcurl from base + derived-component + derived-dep from fragment)")
+
+			By("verifying derived dependencies from both base and fragment")
+			Expect(derivedBom.Dependencies).NotTo(BeNil(), "derived SBOM should have dependencies")
+			derivedDeps := *derivedBom.Dependencies
+
+			derivedCurlDep := findDependencyByRef(derivedDeps, "curl")
+			assertDependencyEquals(derivedCurlDep, expectedDependency{
+				Ref:       "curl",
+				DependsOn: []string{"libcurl"},
+			})
+
+			derivedOwnDep := findDependencyByRef(derivedDeps, "derived-component")
+			assertDependencyEquals(derivedOwnDep, expectedDependency{
+				Ref:       "derived-component",
+				DependsOn: []string{"derived-dep"},
+			})
+
+			Expect(len(derivedDeps)).To(Equal(2),
+				"derived SBOM should have exactly 2 dependencies (curl from base + derived-component from fragment)")
 		},
 		Entry("with local repo using Vanilla Docker", simpleTestOptions{setupEnvOptions{
 			ContainerBackendMode:        "vanilla-docker",
@@ -903,6 +979,11 @@ type expectedExternalReference struct {
 	URL  string
 }
 
+type expectedDependency struct {
+	Ref       string
+	DependsOn []string
+}
+
 func assertComponentEquals(actual *cdx.Component, expected expectedComponent) {
 	Expect(actual).NotTo(BeNil(), "component %q should exist", expected.Name)
 	Expect(actual.Name).To(Equal(expected.Name), "component name mismatch")
@@ -970,6 +1051,27 @@ func findHashByAlgorithm(hashes []cdx.Hash, alg cdx.HashAlgorithm) *cdx.Hash {
 		}
 	}
 	return nil
+}
+
+func findDependencyByRef(deps []cdx.Dependency, ref string) *cdx.Dependency {
+	for i := range deps {
+		if deps[i].Ref == ref {
+			return &deps[i]
+		}
+	}
+	return nil
+}
+
+func assertDependencyEquals(actual *cdx.Dependency, expected expectedDependency) {
+	Expect(actual).NotTo(BeNil(), "dependency with ref %q should exist", expected.Ref)
+	Expect(actual.Ref).To(Equal(expected.Ref), "dependency ref mismatch")
+
+	if len(expected.DependsOn) > 0 {
+		Expect(actual.Dependencies).NotTo(BeNil(), "dependency %q should have dependsOn", expected.Ref)
+		Expect(*actual.Dependencies).To(ConsistOf(expected.DependsOn), "dependency %q dependsOn mismatch", expected.Ref)
+	} else if actual.Dependencies != nil {
+		Expect(*actual.Dependencies).To(BeEmpty(), "dependency %q should have no dependsOn", expected.Ref)
+	}
 }
 
 func boolPtr(b bool) *bool {

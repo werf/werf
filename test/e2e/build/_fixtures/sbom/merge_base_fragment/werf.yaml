@@ -11,9 +11,20 @@ sbom:
   fragment: |
     components:
       - name: custom-component
+        bom-ref: custom-component
         type: application
         version: 1.0.0
         purl: pkg:generic/custom-component@1.0.0
+      - name: dep-a
+        bom-ref: dep-a
+        type: library
+        version: 1.0.0
+        purl: pkg:generic/dep-a@1.0.0
+      - name: dep-b
+        bom-ref: dep-b
+        type: library
+        version: 2.0.0
+        purl: pkg:generic/dep-b@2.0.0
 
     services:
       - name: custom-api-service
@@ -33,6 +44,12 @@ sbom:
         value: production
       - name: custom-property
         value: custom-value
+
+    dependencies:
+      - ref: custom-component
+        dependsOn:
+          - dep-a
+          - dep-b
 
     annotations:
       - text: "This is a test annotation for merge verification"

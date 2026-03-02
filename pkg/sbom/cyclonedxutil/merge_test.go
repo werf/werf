@@ -20,6 +20,18 @@ func componentNames(bom *cdx.BOM) []string {
 	return out
 }
 
+func dependencyRefs(bom *cdx.BOM) []string {
+	if bom == nil || bom.Dependencies == nil {
+		return nil
+	}
+	deps := *bom.Dependencies
+	out := make([]string, 0, len(deps))
+	for _, d := range deps {
+		out = append(out, d.Ref)
+	}
+	return out
+}
+
 var _ = Describe("MergeBOMs", func() {
 	It("concatenates components in order", func() {
 		baseBOM := &cdx.BOM{
@@ -105,7 +117,7 @@ var _ = Describe("MergeBOMs", func() {
 		Expect(result.SpecVersion).To(Equal(cdx.SpecVersion1_6))
 		Expect(result.Version).To(Equal(1))
 		Expect(result.SerialNumber).To(HavePrefix("urn:uuid:"))
-		Expect(result.Dependencies).To(BeNil())
+		Expect(result.Dependencies).To(BeNil(), "no dependencies were provided, so result should have none")
 	})
 
 	It("generates new serial number", func() {
@@ -199,6 +211,91 @@ var _ = Describe("MergeBOMs", func() {
 		Expect(result.Components).ToNot(BeNil())
 		Expect(*result.Components).To(HaveLen(2))
 	})
+
+	DescribeTable("merges dependencies",
+		func(target *cdx.BOM, opts MergeOpts, assert func(*cdx.BOM)) {
+			result, err := MergeBOMs(target, opts)
+			Expect(err).ToNot(HaveOccurred())
+			assert(result)
+		},
+
+		Entry("concatenates in merge order (base → imports → fragment → target)",
+			&cdx.BOM{
+				SpecVersion: cdx.SpecVersion1_6,
+				Dependencies: &[]cdx.Dependency{
+					{Ref: "target-ref", Dependencies: &[]string{"dep-e"}},
+				},
+			},
+			MergeOpts{
+				BaseBOM: &cdx.BOM{
+					SpecVersion: cdx.SpecVersion1_6,
+					Dependencies: &[]cdx.Dependency{
+						{Ref: "base-ref-1", Dependencies: &[]string{"dep-a"}},
+						{Ref: "base-ref-2"},
+					},
+				},
+				ImportBOMs: []*cdx.BOM{
+					{SpecVersion: cdx.SpecVersion1_6, Dependencies: &[]cdx.Dependency{{Ref: "import1-ref"}}},
+					{SpecVersion: cdx.SpecVersion1_6, Dependencies: &[]cdx.Dependency{{Ref: "import2-ref"}}},
+				},
+				FragmentBOM: &cdx.BOM{
+					SpecVersion:  cdx.SpecVersion1_6,
+					Dependencies: &[]cdx.Dependency{{Ref: "fragment-ref"}},
+				},
+			},
+			func(result *cdx.BOM) {
+				Expect(dependencyRefs(result)).To(Equal([]string{
+					"base-ref-1", "base-ref-2",
+					"import1-ref", "import2-ref",
+					"fragment-ref",
+					"target-ref",
+				}))
+			},
+		),
+
+		Entry("returns nil when no BOMs have dependencies",
+			&cdx.BOM{SpecVersion: cdx.SpecVersion1_6, Components: &[]cdx.Component{{Name: "comp"}}},
+			MergeOpts{BaseBOM: &cdx.BOM{SpecVersion: cdx.SpecVersion1_6, Components: &[]cdx.Component{{Name: "comp"}}}},
+			func(result *cdx.BOM) {
+				Expect(result.Dependencies).To(BeNil())
+			},
+		),
+
+		Entry("does not deduplicate",
+			&cdx.BOM{SpecVersion: cdx.SpecVersion1_6, Dependencies: &[]cdx.Dependency{{Ref: "dup", Dependencies: &[]string{"dep-a"}}}},
+			MergeOpts{BaseBOM: &cdx.BOM{SpecVersion: cdx.SpecVersion1_6, Dependencies: &[]cdx.Dependency{{Ref: "dup", Dependencies: &[]string{"dep-a"}}}}},
+			func(result *cdx.BOM) {
+				Expect(result.Dependencies).ToNot(BeNil())
+				Expect(*result.Dependencies).To(HaveLen(2))
+			},
+		),
+
+		Entry("handles nil target",
+			nil,
+			MergeOpts{BaseBOM: &cdx.BOM{SpecVersion: cdx.SpecVersion1_6, Dependencies: &[]cdx.Dependency{{Ref: "base-ref", Dependencies: &[]string{"dep-a"}}}}},
+			func(result *cdx.BOM) {
+				Expect(result.Dependencies).ToNot(BeNil())
+				Expect(*result.Dependencies).To(HaveLen(1))
+				Expect((*result.Dependencies)[0].Ref).To(Equal("base-ref"))
+			},
+		),
+
+		Entry("preserves dependsOn and provides fields",
+			&cdx.BOM{SpecVersion: cdx.SpecVersion1_6},
+			MergeOpts{BaseBOM: &cdx.BOM{
+				SpecVersion:  cdx.SpecVersion1_6,
+				Dependencies: &[]cdx.Dependency{{Ref: "ref-1", Dependencies: &[]string{"dep-a"}, Provides: &[]string{"prov-a"}}},
+			}},
+			func(result *cdx.BOM) {
+				Expect(result.Dependencies).ToNot(BeNil())
+				Expect(*result.Dependencies).To(HaveLen(1))
+				dep := (*result.Dependencies)[0]
+				Expect(dep.Ref).To(Equal("ref-1"))
+				Expect(*dep.Dependencies).To(Equal([]string{"dep-a"}))
+				Expect(*dep.Provides).To(Equal([]string{"prov-a"}))
+			},
+		),
+	)
 })
 
 var _ = Describe("BOMChecksum", func() {

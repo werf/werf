@@ -11,9 +11,20 @@ sbom:
   fragment: |
     components:
       - name: derived-component
+        bom-ref: derived-component
         type: application
         version: 1.0.0
         purl: pkg:generic/derived-component@1.0.0
+      - name: derived-dep
+        bom-ref: derived-dep
+        type: library
+        version: 1.0.0
+        purl: pkg:generic/derived-dep@1.0.0
+
+    dependencies:
+      - ref: derived-component
+        dependsOn:
+          - derived-dep
 git:
   - add: /file
     to: /state0/file

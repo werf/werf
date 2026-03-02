@@ -14,14 +14,25 @@ sbom:
   fragment: |
     components:
       - name: builder-custom
+        bom-ref: builder-custom
         type: library
         version: 1.0.0
         purl: pkg:generic/builder-custom@1.0.0
+      - name: builder-dep
+        bom-ref: builder-dep
+        type: library
+        version: 1.0.0
+        purl: pkg:generic/builder-dep@1.0.0
 
     services:
       - name: builder-service
         endpoints:
           - https://builder.example.com
+
+    dependencies:
+      - ref: builder-custom
+        dependsOn:
+          - builder-dep
 
     properties:
       - name: builder-property
@@ -40,9 +51,20 @@ sbom:
   fragment: |
     components:
       - name: app-custom
+        bom-ref: app-custom
         type: application
         version: 2.0.0
         purl: pkg:generic/app-custom@2.0.0
+      - name: app-dep-a
+        bom-ref: app-dep-a
+        type: library
+        version: 1.0.0
+        purl: pkg:generic/app-dep-a@1.0.0
+      - name: app-dep-b
+        bom-ref: app-dep-b
+        type: library
+        version: 2.0.0
+        purl: pkg:generic/app-dep-b@2.0.0
 
     services:
       - name: app-api-service
@@ -61,6 +83,12 @@ sbom:
         value: app-value
       - name: environment
         value: production
+
+    dependencies:
+      - ref: app-custom
+        dependsOn:
+          - app-dep-a
+          - app-dep-b
 
     annotations:
       - text: "Application level annotation"

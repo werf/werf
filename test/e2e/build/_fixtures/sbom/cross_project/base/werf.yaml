@@ -11,6 +11,7 @@ sbom:
   fragment: |
     components:
       - name: curl
+        bom-ref: curl
         type: application
         version: 8.12.1
         purl: pkg:generic/curl@8.12.1
@@ -20,4 +21,14 @@ sbom:
         hashes:
           - alg: SHA-256
             content: 9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08
+      - name: libcurl
+        bom-ref: libcurl
+        type: library
+        version: 8.12.1
+        purl: pkg:generic/libcurl@8.12.1
+
+    dependencies:
+      - ref: curl
+        dependsOn:
+          - libcurl
 

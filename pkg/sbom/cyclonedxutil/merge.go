@@ -55,6 +55,7 @@ func MergeBOMs(target *cdx.BOM, opts MergeOpts) (*cdx.BOM, error) {
 	result.Services = mergeServices(boms)
 	result.Vulnerabilities = mergeVulnerabilities(boms)
 	result.ExternalReferences = mergeExternalReferences(boms)
+	result.Dependencies = mergeDependencies(boms)
 	result.Compositions = mergeCompositions(boms)
 	result.Properties = mergeProperties(boms)
 	result.Annotations = mergeAnnotations(boms)
@@ -159,6 +160,18 @@ func mergeFormulation(boms []*cdx.BOM) *[]cdx.Formula {
 	return nil
 }
 
+func mergeDependencies(boms []*cdx.BOM) *[]cdx.Dependency {
+	var dependencies []cdx.Dependency
+	for _, bom := range boms {
+		dependencies = appendBOMDependencies(dependencies, bom)
+	}
+	if len(dependencies) > 0 {
+		return &dependencies
+	}
+
+	return nil
+}
+
 func appendBOMComponents(dest []cdx.Component, bom *cdx.BOM) []cdx.Component {
 	if bom != nil && bom.Components != nil {
 		return append(dest, *bom.Components...)
@@ -218,6 +231,14 @@ func appendBOMAnnotations(dest []cdx.Annotation, bom *cdx.BOM) []cdx.Annotation 
 func appendBOMFormulation(dest []cdx.Formula, bom *cdx.BOM) []cdx.Formula {
 	if bom != nil && bom.Formulation != nil {
 		return append(dest, *bom.Formulation...)
+	}
+
+	return dest
+}
+
+func appendBOMDependencies(dest []cdx.Dependency, bom *cdx.BOM) []cdx.Dependency {
+	if bom != nil && bom.Dependencies != nil {
+		return append(dest, *bom.Dependencies...)
 	}
 
 	return dest
