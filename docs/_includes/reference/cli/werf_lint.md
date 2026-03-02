@@ -68,7 +68,8 @@ werf lint [IMAGE_NAME...] [options]
             Set default delete propagation strategy (default $WERF_DELETE_PROPAGATION or            
             Foreground).
       --deno-binary-path=""
-            Path to Deno binary (default $WERF_DENO_BINARY_PATH)
+            Path to the Deno binary to use instead of auto-downloading (default                     
+            $WERF_DENO_BINARY_PATH)
       --dev=false
             Enable development mode (default $WERF_DEV).
             The mode allows working with project files without doing redundant commits during       
@@ -285,7 +286,7 @@ werf lint [IMAGE_NAME...] [options]
       --provenance-strategy=""
             Strategy for provenance verifying (default $WERF_PROVENANCE_STRATEGY).
       --rebuild-ts=false
-            Rebuild TypeScript bundle (default $WERF_REBUILD_TS)
+            Rebuild the typescript bundle even if it already exists (default $WERF_REBUILD_TS)
       --release=""
             Use specified Helm release name (default [[ project ]]-[[ env ]] template or            
             deploy.helmRelease custom template from werf.yaml or $WERF_RELEASE)

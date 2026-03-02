@@ -785,12 +785,12 @@ func SetupKubeVersion(cmdData *CmdData, cmd *cobra.Command) {
 }
 
 func SetupTSOptions(cmdData *CmdData, cmd *cobra.Command) {
-	cmd.Flags().BoolVarP(&cmdData.RebuildTSBundle, "rebuild-ts", "", util.GetBoolEnvironmentDefaultFalse("WERF_REBUILD_TS"), "Rebuild TypeScript bundle (default $WERF_REBUILD_TS)")
-	cmd.Flags().StringVarP(&cmdData.DenoBinaryPath, "deno-binary-path", "", os.Getenv("WERF_DENO_BINARY_PATH"), "Path to Deno binary (default $WERF_DENO_BINARY_PATH)")
+	cmd.Flags().BoolVarP(&cmdData.RebuildTSBundle, "rebuild-ts", "", util.GetBoolEnvironmentDefaultFalse("WERF_REBUILD_TS"), "Rebuild the typescript bundle even if it already exists (default $WERF_REBUILD_TS)")
+	cmd.Flags().StringVarP(&cmdData.DenoBinaryPath, "deno-binary-path", "", os.Getenv("WERF_DENO_BINARY_PATH"), "Path to the Deno binary to use instead of auto-downloading (default $WERF_DENO_BINARY_PATH)")
 }
 
 func SetupDenoBinaryPath(cmdData *CmdData, cmd *cobra.Command) {
-	cmd.Flags().StringVarP(&cmdData.DenoBinaryPath, "deno-binary-path", "", os.Getenv("WERF_DENO_BINARY_PATH"), "Path to Deno binary (default $WERF_DENO_BINARY_PATH)")
+	cmd.Flags().StringVarP(&cmdData.DenoBinaryPath, "deno-binary-path", "", os.Getenv("WERF_DENO_BINARY_PATH"), "Path to the Deno binary to use instead of auto-downloading (default $WERF_DENO_BINARY_PATH)")
 }
 
 func allStagesNames() []string {
