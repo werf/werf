@@ -57,19 +57,23 @@ func (step *sbomStep) ConvergeWithMerge(ctx context.Context, werfImgName string,
 	if step.isLocalStorage {
 		if ok {
 			logboek.Context(ctx).Default().LogF("image %s: Use previously generated SBOM from local backend storage\n", werfImgName)
+
 			return nil
 		}
+		logboek.Context(ctx).Debug().LogF("image %s: SBOM not found in local cache, will generate\n", werfImgName)
 	} else {
 		if ok {
 			if _, err = step.stagesStorage.PushIfNotExistSbomImage(ctx, sbomImageName); err != nil {
 				return fmt.Errorf("unable to push sbom image: %q: %w", sbomImageName, err)
 			}
+
 			return nil
 		} else {
 			if pulled, err := step.stagesStorage.PullIfExistSbomImage(ctx, sbomImageName); err != nil {
 				return fmt.Errorf("unable to pull sbom image: %q: %w", sbomImageName, err)
 			} else if pulled {
 				logboek.Context(ctx).Default().LogF("image %s: Use previously generated SBOM from container registry\n", werfImgName)
+
 				return nil
 			}
 		}
@@ -169,6 +173,7 @@ func (step *sbomStep) prepareSbomBaseLabelsWithMerge(_ context.Context, srcImgLa
 func (step *sbomStep) prepareSbomLabelsWithMerge(ctx context.Context, srcImgLabels map[string]string, scanOpts scanner.ScanOptions, mergeOpts cyclonedxutil.MergeOpts) label.LabelList {
 	list := step.prepareSbomBaseLabelsWithMerge(ctx, srcImgLabels, scanOpts, mergeOpts)
 	list.Add(label.NewLabel(image.WerfVersionLabel, srcImgLabels[image.WerfVersionLabel]))
+
 	return list
 }
 

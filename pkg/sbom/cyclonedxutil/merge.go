@@ -23,10 +23,11 @@ func (o MergeOpts) IsEmpty() bool {
 func (o MergeOpts) Checksum() string {
 	var parts []string
 	for _, bom := range append([]*cdx.BOM{o.BaseBOM, o.FragmentBOM}, o.ImportBOMs...) {
-		if cs := BOMChecksum(bom); cs != "" {
+		if cs := StableBOMChecksum(bom); cs != "" {
 			parts = append(parts, cs)
 		}
 	}
+
 	return strings.Join(parts, "-")
 }
 
@@ -35,6 +36,7 @@ func (o MergeOpts) mergeOrder(target *cdx.BOM) []*cdx.BOM {
 	boms = append(boms, o.BaseBOM)
 	boms = append(boms, o.ImportBOMs...)
 	boms = append(boms, o.FragmentBOM, target)
+
 	return boms
 }
 
@@ -297,11 +299,25 @@ func appendPtrSlice[T any](dest, src *[]T) *[]T {
 	return dest
 }
 
-func BOMChecksum(bom *cdx.BOM) string {
+// StableBOMChecksum computes a checksum excluding only dynamically generated
+// fields (SerialNumber, Version, Signature, Metadata.Timestamp). New fields
+// added to the CycloneDX spec are automatically included, preserving cache
+// correctness.
+func StableBOMChecksum(bom *cdx.BOM) string {
 	if bom == nil {
 		return ""
 	}
-	data, err := json.Marshal(bom)
+	stable := *bom
+	stable.SerialNumber = ""
+	stable.Version = 0
+	stable.Signature = nil
+	if stable.Metadata != nil {
+		stableMetadata := *stable.Metadata
+		stableMetadata.Timestamp = ""
+		stable.Metadata = &stableMetadata
+	}
+
+	data, err := json.Marshal(stable)
 	if err != nil {
 		return ""
 	}
