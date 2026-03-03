@@ -10,8 +10,8 @@ package cyclonedxutil
 // to strictly enforce only version 1.6 during validation.
 
 const (
-	cycloneDX16SchemaId    = "http://cyclonedx.org/schema/bom-1.6.schema.json"
-	cycloneDX16SchemaValue = `{
+	bom_1_6_SchemaId    = "http://cyclonedx.org/schema/bom-1.6.schema.json"
+	bom_1_6_SchemaValue = `{
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "http://cyclonedx.org/schema/bom-1.6.schema.json",
   "type": "object",
