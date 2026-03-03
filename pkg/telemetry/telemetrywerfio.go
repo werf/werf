@@ -38,7 +38,9 @@ type TelemetryWerfIOInterface interface {
 	BuildStarted(ctx context.Context, imagesCount int)
 	BuildFinished(ctx context.Context, success bool)
 	ImageBuildFinished(ctx context.Context, image string, durationMs int64, rebuilt bool)
-	StageBuildFinished(ctx context.Context, image, stage string, durationMs int64, fromCache bool)
+	StageBuildFinished(ctx context.Context, image, stage string, durationMs int64, fromCache bool, sourceType string, baseImagePulled bool)
+	BuildError(ctx context.Context, errorType string, exitCode int)
+	BuildMetadata(ctx context.Context, backend string, configTypes []string, containerized bool, totalStages, cachedStages int, avgBuildTimeMs, wallClockBuildTimeMs int64)
 }
 
 type TelemetryWerfIO struct {
@@ -160,8 +162,16 @@ func (t *TelemetryWerfIO) ImageBuildFinished(ctx context.Context, image string, 
 	t.sendEvent(ctx, NewImageBuildFinished(image, durationMs, rebuilt))
 }
 
-func (t *TelemetryWerfIO) StageBuildFinished(ctx context.Context, image, stage string, durationMs int64, fromCache bool) {
-	t.sendEvent(ctx, NewStageBuildFinished(image, stage, durationMs, fromCache))
+func (t *TelemetryWerfIO) StageBuildFinished(ctx context.Context, image, stage string, durationMs int64, fromCache bool, sourceType string, baseImagePulled bool) {
+	t.sendEvent(ctx, NewStageBuildFinished(image, stage, durationMs, fromCache, sourceType, baseImagePulled))
+}
+
+func (t *TelemetryWerfIO) BuildError(ctx context.Context, errorType string, exitCode int) {
+	t.sendEvent(ctx, NewBuildError(errorType, exitCode))
+}
+
+func (t *TelemetryWerfIO) BuildMetadata(ctx context.Context, backend string, configTypes []string, containerized bool, totalStages, cachedStages int, avgBuildTimeMs, wallClockBuildTimeMs int64) {
+	t.sendEvent(ctx, NewBuildMetadata(backend, configTypes, containerized, totalStages, cachedStages, avgBuildTimeMs, wallClockBuildTimeMs))
 }
 
 func (t *TelemetryWerfIO) getAttributes() map[string]interface{} {

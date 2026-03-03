@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -19,6 +20,7 @@ import (
 	"github.com/werf/werf/v2/pkg/build/image"
 	"github.com/werf/werf/v2/pkg/build/stage"
 	"github.com/werf/werf/v2/pkg/build/stage/instruction"
+	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	backend_instruction "github.com/werf/werf/v2/pkg/container_backend/instruction"
 	"github.com/werf/werf/v2/pkg/docker_registry"
@@ -74,6 +76,7 @@ func NewBuildPhase(c *Conveyor, opts BuildPhaseOptions) *BuildPhase {
 		BasePhase:         BasePhase{c},
 		BuildPhaseOptions: opts,
 		ImagesReport:      NewImagesReport(),
+		buildMetadata:     newBuildMetadata(),
 	}
 }
 
@@ -85,6 +88,23 @@ type BuildPhase struct {
 	ImagesReport   *ImagesReport
 
 	buildContextArchive container_backend.BuildContextArchiver
+	buildMetadata       *BuildMetadata
+}
+
+type BuildMetadata struct {
+	configTypes      map[string]bool
+	totalStages      int
+	cachedStages     int
+	buildStartTime   time.Time
+	totalBuildTimeMs int64
+	imagesCount      int
+}
+
+func newBuildMetadata() *BuildMetadata {
+	return &BuildMetadata{
+		configTypes:    make(map[string]bool),
+		buildStartTime: time.Now(),
+	}
 }
 
 func GenerateImageEnv(werfImageName, imageName string) string {
@@ -108,11 +128,35 @@ func (phase *BuildPhase) Name() string {
 }
 
 func (phase *BuildPhase) BeforeImages(ctx context.Context) error {
+	phase.buildMetadata.buildStartTime = time.Now()
+
 	if err := phase.Conveyor.StorageManager.InitCache(ctx); err != nil {
 		return fmt.Errorf("unable to init storage manager cache: %w", err)
 	}
 
 	imagesPairs := phase.Conveyor.imagesTree.GetImagesByName(false)
+	phase.buildMetadata.imagesCount = len(imagesPairs)
+
+	for _, pair := range imagesPairs {
+		_, images := pair.Unpair()
+		for _, img := range images {
+			configImage := phase.Conveyor.werfConfig.GetImage(img.Name)
+			if configImage != nil {
+				if configImage.IsStapel() {
+					phase.buildMetadata.configTypes["stapel"] = true
+				} else {
+					if dockerfileImg, ok := configImage.(*config.ImageFromDockerfile); ok {
+						if dockerfileImg.Staged {
+							phase.buildMetadata.configTypes["staged_dockerfile"] = true
+						} else {
+							phase.buildMetadata.configTypes["dockerfile"] = true
+						}
+					}
+				}
+			}
+		}
+	}
+
 	telemetry.GetTelemetryWerfIO().BuildStarted(ctx, len(imagesPairs))
 
 	return nil
@@ -194,9 +238,15 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 		return err
 	}
 
-	telemetry.GetTelemetryWerfIO().BuildFinished(ctx, true)
+	if err := phase.createReport(ctx, imagesPairs); err != nil {
+		telemetry.GetTelemetryWerfIO().BuildFinished(ctx, false)
+		return err
+	}
 
-	return phase.createReport(ctx, imagesPairs)
+	telemetry.GetTelemetryWerfIO().BuildFinished(ctx, true)
+	phase.sendBuildMetadata(ctx)
+
+	return nil
 }
 
 func (phase *BuildPhase) targetPlatforms(ctx context.Context, forcedTargetPlatforms, commonTargetPlatforms []string, name string, images []*image.Image) ([]string, error) {
@@ -240,6 +290,43 @@ AssertAllTargetPlatformsPresent:
 	}
 
 	return targetPlatforms, nil
+}
+
+func (phase *BuildPhase) sendBuildMetadata(ctx context.Context) {
+	totalStages, cachedStages, totalBuildTimeMs := phase.ImagesReport.CollectStageStats()
+
+	phase.buildMetadata.totalStages = totalStages
+	phase.buildMetadata.cachedStages = cachedStages
+	phase.buildMetadata.totalBuildTimeMs = totalBuildTimeMs
+
+	backend := "docker"
+	if phase.Conveyor.ContainerBackend.HasStapelBuildSupport() {
+		backend = "buildah"
+	}
+
+	configTypes := make([]string, 0, len(phase.buildMetadata.configTypes))
+	for configType := range phase.buildMetadata.configTypes {
+		configTypes = append(configTypes, configType)
+	}
+	sort.Strings(configTypes)
+
+	var avgBuildTimeMs int64
+	if phase.buildMetadata.imagesCount > 0 {
+		avgBuildTimeMs = phase.buildMetadata.totalBuildTimeMs / int64(phase.buildMetadata.imagesCount)
+	}
+
+	fullBuildTimeMs := time.Since(phase.buildMetadata.buildStartTime).Milliseconds()
+
+	telemetry.GetTelemetryWerfIO().BuildMetadata(
+		ctx,
+		backend,
+		configTypes,
+		os.Getenv("WERF_CONTAINERIZED") == "yes",
+		phase.buildMetadata.totalStages,
+		phase.buildMetadata.cachedStages,
+		avgBuildTimeMs,
+		fullBuildTimeMs,
+	)
 }
 
 func (phase *BuildPhase) publishFinalImage(ctx context.Context, name string, img *image.Image, finalStagesStorage storage.StagesStorage) error {
@@ -682,8 +769,9 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *image.Image, stg
 		var fetchInfo fetchBaseImageForStageInfo
 		if stg.IsBuildable() {
 			info, err := phase.fetchBaseImageForStage(ctx, img, stg)
+			err = container_backend.SanitizeError(err)
 			if err != nil {
-				return err
+				return fmt.Errorf("unable to prepare base image for stage %s: %w", stg.LogDetailedName(), err)
 			}
 			fetchInfo = info
 		} else {

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -400,7 +401,64 @@ func (c *Conveyor) SkipImageSpecStage() bool {
 func (c *Conveyor) SetShouldAddManagedImagesRecords() {
 	c.GetServiceRWMutex("ShouldAddManagedImagesRecords").Lock()
 	defer c.GetServiceRWMutex("ShouldAddManagedImagesRecords").Unlock()
+
 	c.shouldAddManagedImagesRecords = true
+}
+
+func (c *Conveyor) sendBuildErrorTelemetry(ctx context.Context, err error) {
+	if err == nil {
+		return
+	}
+
+	errorType := classifyBuildError(err)
+	telemetry.GetTelemetryWerfIO().BuildError(ctx, errorType, exitCodeFromError(err))
+}
+
+func classifyBuildError(err error) string {
+	switch {
+	case errors.Is(err, stage.ErrInvalidBaseImage):
+		return "invalid_base_image"
+	case errors.Is(err, stage.ErrNothingToImport):
+		return "nothing_to_import"
+	case errors.Is(err, container_backend.ErrPatchApply):
+		return "git_patch_apply_failed"
+	case storage.IsErrBrokenImage(err):
+		return "broken_image"
+	case errors.Is(err, lock_manager.ErrNoSyncServerFound):
+		return "no_sync_server"
+	}
+
+	exitCode := exitCodeFromError(err)
+	if exitCode != 0 {
+		return "build_run_failed"
+	}
+
+	return "build_failed"
+}
+
+func exitCodeFromError(err error) int {
+	var exitErr *exec.ExitError
+	if errors.As(err, &exitErr) {
+		return exitErr.ExitCode()
+	}
+
+	msg := err.Error()
+	if !strings.Contains(msg, "exit code") && !strings.Contains(msg, "exit status") {
+		return 0
+	}
+
+	parts := strings.Split(msg, "exit")
+	for _, part := range parts[1:] {
+		var code int
+		if _, parseErr := fmt.Sscanf(part, " code %d", &code); parseErr == nil {
+			return code
+		}
+		if _, parseErr := fmt.Sscanf(part, " status %d", &code); parseErr == nil {
+			return code
+		}
+	}
+
+	return 0
 }
 
 func (c *Conveyor) ShouldAddManagedImagesRecords() bool {
@@ -733,6 +791,14 @@ func (c *Conveyor) doDetermineStages(ctx context.Context) error {
 }
 
 func (c *Conveyor) runPhases(ctx context.Context, phases []Phase, logImages bool) error {
+	var buildFinishedSent bool
+
+	defer func() {
+		if !buildFinishedSent {
+			telemetry.GetTelemetryWerfIO().BuildFinished(ctx, false)
+		}
+	}()
+
 	for _, phase := range phases {
 		logProcess := logboek.Context(ctx).Debug().LogProcess("Phase %s -- BeforeImages()", phase.Name())
 		logProcess.Start()
@@ -744,7 +810,14 @@ func (c *Conveyor) runPhases(ctx context.Context, phases []Phase, logImages bool
 	}
 
 	if err := c.doImages(ctx, phases, logImages); err != nil {
-		telemetry.GetTelemetryWerfIO().BuildFinished(ctx, false)
+		for _, phase := range phases {
+			if buildPhase, ok := phase.(*BuildPhase); ok {
+				imagesPairs := buildPhase.Conveyor.imagesTree.GetImagesByName(false)
+				_ = buildPhase.createReport(ctx, imagesPairs)
+				buildPhase.sendBuildMetadata(ctx)
+			}
+		}
+		c.sendBuildErrorTelemetry(ctx, err)
 		return fmt.Errorf("unable to process images: %w", err)
 	}
 
@@ -761,6 +834,7 @@ func (c *Conveyor) runPhases(ctx context.Context, phases []Phase, logImages bool
 		}
 	}
 
+	buildFinishedSent = true
 	return nil
 }
 

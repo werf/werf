@@ -12,6 +12,8 @@ const (
 	BuildFinishedEvent      EventType = "BuildFinished"
 	ImageBuildFinishedEvent EventType = "ImageBuildFinished"
 	StageBuildFinishedEvent EventType = "StageBuildFinished"
+	BuildErrorEvent         EventType = "BuildError"
+	BuildMetadataEvent      EventType = "BuildMetadata"
 )
 
 type Event interface {
@@ -105,19 +107,61 @@ func NewImageBuildFinished(image string, durationMs int64, rebuilt bool) *ImageB
 func (*ImageBuildFinished) GetType() EventType { return ImageBuildFinishedEvent }
 
 type StageBuildFinished struct {
-	Image      string `json:"image"`
-	Stage      string `json:"stage"`
-	DurationMs int64  `json:"durationMs"`
-	FromCache  bool   `json:"fromCache"`
+	Image           string `json:"image"`
+	Stage           string `json:"stage"`
+	DurationMs      int64  `json:"durationMs"`
+	FromCache       bool   `json:"fromCache"`
+	SourceType      string `json:"sourceType,omitempty"`
+	BaseImagePulled bool   `json:"baseImagePulled"`
 }
 
-func NewStageBuildFinished(image, stage string, durationMs int64, fromCache bool) *StageBuildFinished {
+func NewStageBuildFinished(image, stage string, durationMs int64, fromCache bool, sourceType string, baseImagePulled bool) *StageBuildFinished {
 	return &StageBuildFinished{
-		Image:      image,
-		Stage:      stage,
-		DurationMs: durationMs,
-		FromCache:  fromCache,
+		Image:           image,
+		Stage:           stage,
+		DurationMs:      durationMs,
+		FromCache:       fromCache,
+		SourceType:      sourceType,
+		BaseImagePulled: baseImagePulled,
 	}
 }
 
 func (*StageBuildFinished) GetType() EventType { return StageBuildFinishedEvent }
+
+type BuildError struct {
+	ErrorType string `json:"errorType"`
+	ExitCode  int    `json:"exitCode,omitempty"`
+}
+
+func NewBuildError(errorType string, exitCode int) *BuildError {
+	return &BuildError{
+		ErrorType: errorType,
+		ExitCode:  exitCode,
+	}
+}
+
+func (*BuildError) GetType() EventType { return BuildErrorEvent }
+
+type BuildMetadata struct {
+	Backend              string   `json:"backend"`
+	ConfigTypes          []string `json:"configTypes"`
+	Containerized        bool     `json:"containerized"`
+	TotalStagesCount     int      `json:"totalStagesCount"`
+	CachedStagesCount    int      `json:"cachedStagesCount"`
+	AvgBuildTimeMs       int64    `json:"avgBuildTimeMs"`
+	WallClockBuildTimeMs int64    `json:"wallClockBuildTimeMs"`
+}
+
+func NewBuildMetadata(backend string, configTypes []string, containerized bool, totalStages, cachedStages int, avgBuildTimeMs, wallClockBuildTimeMs int64) *BuildMetadata {
+	return &BuildMetadata{
+		Backend:              backend,
+		ConfigTypes:          configTypes,
+		Containerized:        containerized,
+		TotalStagesCount:     totalStages,
+		CachedStagesCount:    cachedStages,
+		AvgBuildTimeMs:       avgBuildTimeMs,
+		WallClockBuildTimeMs: wallClockBuildTimeMs,
+	}
+}
+
+func (*BuildMetadata) GetType() EventType { return BuildMetadataEvent }

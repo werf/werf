@@ -129,6 +129,8 @@ func (report *ImagesReport) sendTelemetry(ctx context.Context) {
 				stage.Name,
 				durationMs,
 				fromCache,
+				stage.SourceType,
+				stage.BaseImagePulled,
 			)
 		}
 
@@ -140,6 +142,38 @@ func (report *ImagesReport) sendTelemetry(ctx context.Context) {
 			record.Rebuilt,
 		)
 	}
+}
+
+func (report *ImagesReport) CollectStageStats() (totalStages, cachedStages int, totalBuildTimeMs int64) {
+	report.mux.Lock()
+	defer report.mux.Unlock()
+
+	if len(report.Images) > 0 {
+		for _, record := range report.Images {
+			for _, stage := range record.Stages {
+				totalStages++
+				if !stage.Rebuilt {
+					cachedStages++
+				}
+			}
+			totalBuildTimeMs += parseBuildTimeMs(record.BuildTime)
+		}
+		return totalStages, cachedStages, totalBuildTimeMs
+	}
+
+	for _, platformRecords := range report.ImagesByPlatform {
+		for _, record := range platformRecords {
+			for _, stage := range record.Stages {
+				totalStages++
+				if !stage.Rebuilt {
+					cachedStages++
+				}
+			}
+			totalBuildTimeMs += parseBuildTimeMs(record.BuildTime)
+		}
+	}
+
+	return totalStages, cachedStages, totalBuildTimeMs
 }
 
 func parseBuildTimeMs(buildTime string) int64 {
@@ -156,10 +190,22 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 		targetPlatforms := util.MapFuncToSlice(images, func(img *image.Image) string { return img.TargetPlatform })
 
 		for _, img := range images {
-			stageImage := img.GetLastNonEmptyStage().GetStageImage().Image
-			stageDesc := stageImage.GetFinalStageDesc()
+			lastStage := img.GetLastNonEmptyStage()
+			if lastStage == nil {
+				continue
+			}
+
+			stageImage := lastStage.GetStageImage()
+			if stageImage == nil || stageImage.Image == nil {
+				continue
+			}
+
+			stageDesc := stageImage.Image.GetFinalStageDesc()
 			if stageDesc == nil {
-				stageDesc = stageImage.GetStageDesc()
+				stageDesc = stageImage.Image.GetStageDesc()
+			}
+			if stageDesc == nil {
+				continue
 			}
 
 			stages := getStagesReport(img, false)
