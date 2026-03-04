@@ -619,30 +619,6 @@ func (c *Conveyor) checkContainerBackendSupported(ctx context.Context) error {
 		return nil
 	}
 
-	// Check if ansible builder is used with buildah container backend.
-	{
-		var nameList []string
-		for _, i := range c.werfConfig.Images(false) {
-			switch imageOrArtifact := i.(type) {
-			case config.StapelImageInterface:
-				if imageOrArtifact.ImageBaseConfig().Ansible != nil {
-					nameList = append(nameList, fmt.Sprintf("%q", imageOrArtifact.GetName()))
-				}
-			case *config.ImageFromDockerfile:
-			default:
-				panic(fmt.Errorf("unexpected image type %T", imageOrArtifact))
-			}
-		}
-
-		if len(nameList) > 0 {
-			return fmt.Errorf(`Unable to build stapel images or/and artifacts (%s), which use ansible builder when buildah container backend is enabled.
-
-Please use shell builder instead, or select docker server backend to continue usage of ansible builder (disable buildah runtime by unsetting WERF_BUILDAH_MODE environment variable).
-
-It is recommended to use shell builder, because ansible builder will be deprecated soon.`, strings.Join(nameList, ", "))
-		}
-	}
-
 	return nil
 }
 

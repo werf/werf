@@ -14,13 +14,12 @@ werf lint [IMAGE_NAME...] [options]
 {{ header }} Environments
 
 ```shell
-  $WERF_DEBUG_ANSIBLE_ARGS  Pass specified cli args to ansible ($ANSIBLE_ARGS)
-  $WERF_SECRET_KEY          Use specified secret key to extract secrets for the deploy. Recommended 
-                            way to set secret key in CI-system.
-                            
-                            Secret key also can be defined in files:
-                            * ~/.werf/global_secret_key (globally),
-                            * .werf_secret_key (per project)
+  $WERF_SECRET_KEY  Use specified secret key to extract secrets for the deploy. Recommended way to  
+                    set secret key in CI-system.
+                    
+                    Secret key also can be defined in files:
+                    * ~/.werf/global_secret_key (globally),
+                    * .werf_secret_key (per project)
 ```
 
 {{ header }} Options
@@ -149,17 +148,16 @@ werf lint [IMAGE_NAME...] [options]
             several stages.
             
             There are the following formats to use:
-            * specify IMAGE_NAME/STAGE_NAME to introspect stage STAGE_NAME of either image or       
-            artifact IMAGE_NAME
+            * specify IMAGE_NAME/STAGE_NAME to introspect stage STAGE_NAME of image IMAGE_NAME
             * specify STAGE_NAME or */STAGE_NAME for the introspection of all existing stages with  
             name STAGE_NAME
             
-            IMAGE_NAME is the name of an image or artifact described in werf.yaml, the nameless     
-            image specified with ~.
+            IMAGE_NAME is the name of an image described in werf.yaml, the nameless image specified 
+            with ~.
             STAGE_NAME should be one of the following: from, beforeInstall,                         
             dependenciesBeforeInstall, gitArchive, install, dependenciesAfterInstall, beforeSetup,  
             dependenciesBeforeSetup, setup, dependenciesAfterSetup, gitCache, gitLatestPatch,       
-            dockerInstructions, dockerfile, imageSpec
+            dockerfile, imageSpec
       --kube-api-server=""
             Kubernetes API server address (default $WERF_KUBE_API_SERVER)
       --kube-auth-password=""

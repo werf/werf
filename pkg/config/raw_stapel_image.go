@@ -10,19 +10,15 @@ import (
 type rawStapelImage struct {
 	Images               []string         `yaml:"-"`
 	Final                *bool            `yaml:"final,omitempty"`
-	Artifact             string           `yaml:"artifact,omitempty"`
 	CacheVersion         string           `yaml:"cacheVersion,omitempty"`
 	From                 string           `yaml:"from,omitempty"`
 	FromLatest           bool             `yaml:"fromLatest,omitempty"`
 	FromCacheVersion     string           `yaml:"fromCacheVersion,omitempty"`
 	FromImage            string           `yaml:"fromImage,omitempty"`
-	FromArtifact         string           `yaml:"fromArtifact,omitempty"`
 	DisableGitAfterPatch bool             `yaml:"disableGitAfterPatch,omitempty"`
 	RawGit               []*rawGit        `yaml:"git,omitempty"`
 	RawShell             *rawShell        `yaml:"shell,omitempty"`
-	RawAnsible           *rawAnsible      `yaml:"ansible,omitempty"`
 	RawMount             []*rawMount      `yaml:"mount,omitempty"`
-	RawDocker            *rawDocker       `yaml:"docker,omitempty"`
 	RawImport            []*rawImport     `yaml:"import,omitempty"`
 	RawDependencies      []*rawDependency `yaml:"dependencies,omitempty"`
 	Platform             []string         `yaml:"platform,omitempty"`
@@ -85,12 +81,9 @@ func (c *rawStapelImage) UnmarshalYAML(unmarshal func(interface{}) error) error 
 
 func (c *rawStapelImage) validateStapelImageType() error {
 	isImage := len(c.Images) != 0
-	isArtifact := c.Artifact != ""
 
-	if isImage && isArtifact {
-		return newDetailedConfigError("unknown doc type: one and only one of `image: NAME` or `artifact: NAME` non-empty name required!", nil, c.doc)
-	} else if !(isImage || isArtifact) {
-		return newDetailedConfigError("unknown doc type: one of `image: NAME` or `artifact: NAME` non-empty name required!", nil, c.doc)
+	if !isImage {
+		return newDetailedConfigError("unknown doc type: `image: NAME` is required!", nil, c.doc)
 	}
 
 	return nil
@@ -99,8 +92,6 @@ func (c *rawStapelImage) validateStapelImageType() error {
 func (c *rawStapelImage) stapelImageType() string {
 	if len(c.Images) != 0 {
 		return "images"
-	} else if c.Artifact != "" {
-		return "artifact"
 	}
 
 	return ""
@@ -118,44 +109,16 @@ func (c *rawStapelImage) toStapelImageDirectives(giterminismManager giterminism_
 	return images, nil
 }
 
-func (c *rawStapelImage) toStapelImageArtifactDirectives(giterminismManager giterminism_manager.Interface) (*StapelImageArtifact, error) {
-	imageArtifact := &StapelImageArtifact{}
-
-	var err error
-	if imageArtifact.StapelImageBase, err = c.toStapelImageBaseDirective(giterminismManager, c.Artifact, true); err != nil {
-		return nil, err
-	}
-	imageArtifact.StapelImageBase.final = false
-
-	if imageArtifact.Git != nil {
-		imageArtifact.Git.isGitAfterPatchDisabled = true
-	}
-
-	if err := c.validateStapelImageArtifactDirective(imageArtifact); err != nil {
-		return nil, err
-	}
-
-	return imageArtifact, nil
-}
-
 func (c *rawStapelImage) toStapelImageDirective(giterminismManager giterminism_manager.Interface, name string) (*StapelImage, error) {
 	image := &StapelImage{}
 
-	if imageBase, err := c.toStapelImageBaseDirective(giterminismManager, name, false); err != nil {
+	if imageBase, err := c.toStapelImageBaseDirective(giterminismManager, name); err != nil {
 		return nil, err
 	} else {
 		image.StapelImageBase = imageBase
 	}
 
 	image.StapelImageBase.final = option.PtrValueOrDefault(c.Final, true)
-
-	if c.RawDocker != nil {
-		if docker, err := c.RawDocker.toDirective(); err != nil {
-			return nil, err
-		} else {
-			image.Docker = docker
-		}
-	}
 
 	if err := c.validateStapelImageDirective(image); err != nil {
 		return nil, err
@@ -191,40 +154,7 @@ func (c *rawStapelImage) toShellDirectiveByCommandAndStage(command, stage string
 	return
 }
 
-//nolint:unused
-func (c *rawStapelImage) toAnsibleWithTaskByStage(task *AnsibleTask, stage string) (ansible *Ansible) {
-	ansible = &Ansible{}
-	switch stage {
-	case "beforeInstall":
-		ansible.BeforeInstall = []*AnsibleTask{task}
-	case "install":
-		ansible.Install = []*AnsibleTask{task}
-	case "beforeSetup":
-		ansible.BeforeSetup = []*AnsibleTask{task}
-	case "setup":
-		ansible.Setup = []*AnsibleTask{task}
-	}
-	ansible.raw = c.RawAnsible
-	return
-}
-
-func (c *rawStapelImage) validateStapelImageArtifactDirective(imageArtifact *StapelImageArtifact) (err error) {
-	if c.RawDocker != nil {
-		return newDetailedConfigError("`docker` section is not supported for artifact!", nil, c.doc)
-	} else if c.Final != nil {
-		return newDetailedConfigError("`final` directive is not supported for artifact!", nil, c.doc)
-	} else if c.DisableGitAfterPatch {
-		return newDetailedConfigError("`disableGitAfterPatch` directive is not supported for artifact!", nil, c.doc)
-	}
-
-	if err := imageArtifact.validate(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (c *rawStapelImage) toStapelImageBaseDirective(giterminismManager giterminism_manager.Interface, name string, isArtifact bool) (imageBase *StapelImageBase, err error) {
+func (c *rawStapelImage) toStapelImageBaseDirective(giterminismManager giterminism_manager.Interface, name string) (imageBase *StapelImageBase, err error) {
 	if imageBase, err = c.toBaseStapelImageBaseDirective(giterminismManager, name); err != nil {
 		return nil, err
 	}
@@ -234,7 +164,6 @@ func (c *rawStapelImage) toStapelImageBaseDirective(giterminismManager gitermini
 		imageBase.From = c.FromImage
 	}
 
-	imageBase.FromArtifactName = c.FromArtifact
 	imageBase.FromLatest = c.FromLatest
 	imageBase.FromCacheVersion = c.FromCacheVersion
 
@@ -271,14 +200,6 @@ func (c *rawStapelImage) toStapelImageBaseDirective(giterminismManager gitermini
 		}
 	}
 
-	if c.RawAnsible != nil {
-		if ansible, err := c.RawAnsible.toDirective(); err != nil {
-			return nil, err
-		} else {
-			imageBase.Ansible = ansible
-		}
-	}
-
 	for _, importArtifact := range c.RawImport {
 		if importArtifactDirective, err := importArtifact.toDirective(); err != nil {
 			return nil, err
@@ -289,10 +210,6 @@ func (c *rawStapelImage) toStapelImageBaseDirective(giterminismManager gitermini
 
 	if err := imageBase.exportsAutoExcluding(); err != nil {
 		return nil, err
-	}
-
-	if isArtifact && len(c.RawDependencies) > 0 {
-		return nil, newDetailedConfigError(fmt.Sprintf("dependencies directive is specified for %q artifact, but dependencies are not supported for artifacts!", name), nil, c.doc)
 	}
 
 	for _, rawDep := range c.RawDependencies {

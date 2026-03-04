@@ -238,7 +238,6 @@ func processArgs(cmd *cobra.Command, args []string) error {
 }
 
 func runMain(ctx context.Context) error {
-	global_warnings.PostponeMultiwerfNotUpToDateWarning(ctx)
 	commonManager, ctx, err := common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
 		Cmd: &commonCmdData,
 		InitTrueGitWithOptions: &common.InitTrueGitOptions{

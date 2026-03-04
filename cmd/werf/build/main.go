@@ -39,7 +39,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 		Long:                  common.GetLongCommandDescription(GetBuildDocs().Long),
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
-			common.CmdEnvAnno: common.EnvsDescription(common.WerfDebugAnsibleArgs),
 			common.DocsLongMD: GetBuildDocs().LongMD,
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -127,7 +126,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 }
 
 func runMain(ctx context.Context, imageNameListFromArgs []string) error {
-	global_warnings.PostponeMultiwerfNotUpToDateWarning(ctx)
 	commonManager, ctx, err := common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
 		Cmd:                &commonCmdData,
 		InitWerf:           true,

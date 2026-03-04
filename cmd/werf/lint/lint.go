@@ -46,7 +46,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 		Long:                  common.GetLongCommandDescription(GetLintDocs().Long),
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
-			common.CmdEnvAnno: common.EnvsDescription(common.WerfDebugAnsibleArgs, common.WerfSecretKey),
+			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
 			common.DocsLongMD: GetLintDocs().LongMD,
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -152,8 +152,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 }
 
 func runLint(ctx context.Context, imageNameListFromArgs []string) error {
-	global_warnings.PostponeMultiwerfNotUpToDateWarning(ctx)
-
 	commonManager, ctx, err := common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
 		Cmd: &commonCmdData,
 		InitTrueGitWithOptions: &common.InitTrueGitOptions{

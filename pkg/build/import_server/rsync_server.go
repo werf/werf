@@ -153,7 +153,7 @@ func (srv *RsyncServer) GetCopyCommand(ctx context.Context, importConfig *config
 
 	command := strings.Join(args, " && ")
 
-	logboek.Context(ctx).Debug().LogF("Rsync server copy commands for import: artifact=%q image=%q add=%s to=%s includePaths=%v excludePaths=%v: %q\n", importConfig.ArtifactName, importConfig.ImageName, importConfig.Add, importConfig.To, importConfig.IncludePaths, importConfig.ExcludePaths, command)
+	logboek.Context(ctx).Debug().LogF("Rsync server copy commands for import: image=%q add=%s to=%s includePaths=%v excludePaths=%v: %q\n", importConfig.ImageName, importConfig.Add, importConfig.To, importConfig.IncludePaths, importConfig.ExcludePaths, command)
 
 	return command
 }

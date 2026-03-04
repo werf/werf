@@ -513,14 +513,7 @@ sections:
     isCollapsedByDefault: false
     directives:
       - << : *dockerfile-image-section-image
-      - name: artifact
-        value: "string"
-        description:
-          en: The unique name for artifact (DEPRECATED)
-          ru: Уникальное имя артефакта (DEPRECATED)
-        detailsArticle:
-          all: "/usage/build/stapel/imports.html"
-      - << : *dockerfile-image-section-final
+      - <<: *dockerfile-image-section-final
       - << : *meta-section-build-cache-version
       - name: platform
         description:
@@ -549,11 +542,6 @@ sections:
         detailsArticle:
           en: "/usage/build/stapel/base.html#from"
           ru: "/usage/build/stapel/base.html#from"
-      - name: fromArtifact
-        value: "string"
-        description:
-          en: "To use artifact as base image by artifact name (DEPRECATED)"
-          ru: "Использование образа артефакта из werf.yaml в качестве базового (DEPRECATED)"
       - name: fromCacheVersion
         value: "string"
         description:
@@ -788,166 +776,7 @@ sections:
             detailsArticle:
               en: "/usage/build/stapel/instructions.html#dependency-on-the-cacheversion"
               ru: "/usage/build/stapel/instructions.html#зависимость-от-значения-cacheversion"
-      - name: ansible
-        description:
-          en: "Ansible assembly instructions"
-          ru: "Ansible сборочные инструкции"
-        detailsArticle:
-          all: "/usage/build/stapel/instructions.html#ansible"
-        collapsible: true
-        isCollapsedByDefault: false
-        directives:
-          - name: beforeInstall
-            value: "[ task, ... ]"
-            description:
-              en: "Tasks for beforeInstall stage"
-              ru: "Задания для стадии beforeInstall"
-            detailsArticle:
-              all: "/usage/build/stapel/instructions.html#ansible"
-          - name: install
-            value: "[ task, ... ]"
-            description:
-              en: "Tasks for install stage"
-              ru: "Задания для стадии install"
-            detailsArticle:
-              all: "/usage/build/stapel/instructions.html#ansible"
-          - name: beforeSetup
-            value: "[ task, ... ]"
-            description:
-              en: "Tasks for beforeSetup stage"
-              ru: "Задания для стадии beforeSetup"
-            detailsArticle:
-              all: "/usage/build/stapel/instructions.html#ansible"
-          - name: setup
-            value: "[ task, ... ]"
-            description:
-              en: "Tasks for setup stage"
-              ru: "Задания для стадии setup"
-            detailsArticle:
-              all: "/usage/build/stapel/instructions.html#ansible"
-          - name: cacheVersion
-            value: "string"
-            description:
-              en: "Common cache version"
-              ru: "Общая версия кеша"
-            detailsArticle:
-              en: "/usage/build/stapel/instructions.html#dependency-on-the-cacheversion"
-              ru: "/usage/build/stapel/instructions.html#зависимость-от-значения-cacheversion"
-          - name: beforeInstallCacheVersion
-            value: "string"
-            description:
-              en: "Cache version for beforeInstall stage"
-              ru: "Версия кеша для стадии beforeInstall"
-            detailsArticle:
-              en: "/usage/build/stapel/instructions.html#dependency-on-the-cacheversion"
-              ru: "/usage/build/stapel/instructions.html#зависимость-от-значения-cacheversion"
-          - name: installCacheVersion
-            value: "string"
-            description:
-              en: "Cache version for install stage"
-              ru: "Версия кеша для стадии install"
-            detailsArticle:
-              en: "/usage/build/stapel/instructions.html#dependency-on-the-cacheversion"
-              ru: "/usage/build/stapel/instructions.html#зависимость-от-значения-cacheversion"
-          - name: beforeSetupCacheVersion
-            value: "string"
-            description:
-              en: "Cache version for beforeSetup stage"
-              ru: "Версия кеша для стадии beforeSetup"
-            detailsArticle:
-              en: "/usage/build/stapel/instructions.html#dependency-on-the-cacheversion"
-              ru: "/usage/build/stapel/instructions.html#зависимость-от-значения-cacheversion"
-          - name: setupCacheVersion
-            value: "string"
-            description:
-              en: "Cache version for setup stage"
-              ru: "Версия кеша для стадии setup"
-            detailsArticle:
-              en: "/usage/build/stapel/instructions.html#dependency-on-the-cacheversion"
-              ru: "/usage/build/stapel/instructions.html#зависимость-от-значения-cacheversion"
       - <<: *common_image_spec_config
-      - name: docker
-        description:
-          en: "Set of directives to change the image manifest (DEPRECATED). Incompatible with the imageSpec directive"
-          ru: "Набор директив для изменения манифеста образа (DEPRECATED). Несовместимо с директивой imageSpec"
-        detailsArticle:
-          all: "/usage/build/stapel/dockerfile.html"
-        collapsible: true
-        isCollapsedByDefault: false
-        directives:
-          - name: exactValues
-            value: "bool"
-            description:
-              en: "Set specified options values as-is, including unescaped quotes and spaces. Option affects only docker-server backend and does not affect buildah backend."
-              ru: "Включить использование незаэкранированных символов (например кавычки и пробелы) в значениях опций. Опция имеет действие только при использовании docker-server backend, и не влияет на работу buildah backend."
-          - name: USER
-            value: "string"
-            description:
-              en: "The user name (or UID) and optionally the user group (or GID)"
-              ru: "Имя пользователя (или UID) и необязательная пользовательская группа (или GID)"
-            detailsLink: "https://docs.docker.com/engine/reference/builder/#user"
-          - name: WORKDIR
-            value: "string"
-            description:
-              en: "The working directory"
-              ru: "Рабочая директория"
-            detailsLink: "https://docs.docker.com/engine/reference/builder/#workdir"
-          - name: VOLUME
-            value: "[ string, ... ]"
-            description:
-              en: "Mount points"
-              ru: "Точки монтирования"
-            detailsLink: "https://docs.docker.com/engine/reference/builder/#volume"
-          - name: ENV
-            value: "{ name string: value string, ... }"
-            description:
-              en: "The environment variables"
-              ru: "Переменные окружения"
-            detailsLink: "https://docs.docker.com/engine/reference/builder/#env"
-          - name: LABEL
-            value: "{ name string: value string, ... }"
-            description:
-              en: "The metadata to an image"
-              ru: "Метаданные"
-            detailsLink: "https://docs.docker.com/engine/reference/builder/#label"
-          - name: EXPOSE
-            value: "[ string, ... ]"
-            description:
-              en: "To inform Docker that the container listens on the specified network ports at runtime"
-              ru: "Описание сетевых портов, которые будут прослушиваться в запущенном контейнере"
-            detailsLink: "https://docs.docker.com/engine/reference/builder/#expose"
-          - name: ENTRYPOINT
-            value: "string | [ string, ... ]"
-            description:
-              en: "To configure a container that will run as an executable. Shell and exec forms are supported"
-              ru: "Команда по умолчанию, которая будет выполнена при запуске контейнера (форма записи shell или exec)"
-            detailsLink: "https://docs.docker.com/engine/reference/builder/#entrypoint"
-            detailsCustomLinks:
-              en:
-                - text: "How the Stapel builder processes CMD and ENTRYPOINT"
-                  article: "/usage/build/stapel/base.html#how-the-stapel-builder-processes-cmd-and-entrypoint"
-              ru:
-                - text: "Как сборщик Stapel работает с CMD и ENTRYPOINT"
-                  article: "/usage/build/stapel/base.html#как-сборщик-stapel-работает-с-cmd-и-entrypoint"
-          - name: CMD
-            value: "string | [ string, ... ]"
-            description:
-              en: "To provide default arguments for the ENTRYPOINT to configure a container that will run as an executable. Shell and exec forms are supported"
-              ru: "Аргументы по умолчанию для ENTRYPOINT (форма записи shell или exec)"
-            detailsLink: "https://docs.docker.com/engine/reference/builder/#cmd"
-            detailsCustomLinks:
-              en:
-                - text: "How the Stapel builder processes CMD and ENTRYPOINT"
-                  article: "/usage/build/stapel/base.html#how-the-stapel-builder-processes-cmd-and-entrypoint"
-              ru:
-                - text: "Как сборщик Stapel работает с CMD и ENTRYPOINT"
-                  article: "/usage/build/stapel/base.html#как-сборщик-stapel-работает-с-cmd-и-entrypoint"
-          - name: HEALTHCHECK
-            value: string
-            description:
-              en: "To tell Docker how to test a container to check that it is still working"
-              ru: "Инструкции, которые Docker может использовать для проверки работоспособности запущенного контейнера"
-            detailsLink: "https://docs.docker.com/engine/reference/builder/#healthcheck"
       - name: mount
         description:
           en: "Mount points"
@@ -981,11 +810,6 @@ sections:
         collapsible: true
         isCollapsedByDefault: false
         directiveList:
-          - name: artifact
-            value: "string"
-            description:
-              en: "The artifact name from which you want to copy files (DEPRECATED)"
-              ru: "Имя артефакта, из которого выполнять копирование файлов (DEPRECATED)"
           - name: image
             value: "string"
             description:

@@ -44,9 +44,6 @@ func mapStapelConfigToImage(ctx context.Context, metaConfig *config.Meta, stapel
 	} else {
 		fromImage := imageBaseConfig.From
 		baseImageType = StageAsBaseImage
-		if imageBaseConfig.FromArtifactName != "" {
-			fromImage = imageBaseConfig.FromArtifactName
-		}
 		imageOpts.BaseImageName = fromImage
 	}
 
@@ -120,8 +117,6 @@ func initStages(ctx context.Context, image *Image, metaConfig *config.Meta, stap
 			stages = append(stages, stage.NewGitCacheStage(gitPatchStageOptions, baseStageOptions))
 			stages = append(stages, stage.NewGitLatestPatchStage(gitPatchStageOptions, baseStageOptions))
 		}
-
-		stages = appendIfExist(ctx, stages, stage.GenerateStapelDockerInstructionsStage(stapelImageConfig.(*config.StapelImage), baseStageOptions))
 	}
 
 	if imageBaseConfig.ImageSpec != nil && !opts.Conveyor.SkipImageSpecStage() {
