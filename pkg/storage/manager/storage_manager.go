@@ -385,6 +385,9 @@ func (m *StorageManager) LockStageImage(ctx context.Context, imageName string) e
 	imageLockName := container_backend.ImageLockName(imageName)
 
 	m.sharedHostImagesLocksMux.Lock()
+	if m.sharedHostImagesLocks == nil {
+		m.sharedHostImagesLocks = map[string]lockgate.LockHandle{}
+	}
 	if _, hasKey := m.sharedHostImagesLocks[imageName]; hasKey {
 		m.sharedHostImagesLocksMux.Unlock()
 		return nil
@@ -397,6 +400,9 @@ func (m *StorageManager) LockStageImage(ctx context.Context, imageName string) e
 	}
 
 	m.sharedHostImagesLocksMux.Lock()
+	if m.sharedHostImagesLocks == nil {
+		m.sharedHostImagesLocks = map[string]lockgate.LockHandle{}
+	}
 	if _, hasKey := m.sharedHostImagesLocks[imageName]; hasKey {
 		m.sharedHostImagesLocksMux.Unlock()
 
