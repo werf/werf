@@ -207,6 +207,9 @@ ENTRYPOINT ["nginx", "-g", "daemon off;"]
 ```
 
 ```yaml
+project: my-project
+configVersion: 1
+---
 image: backend
 dockerfile: Dockerfile
 context: backend
@@ -227,14 +230,12 @@ There are 3 images: `backend`, `frontend` and `frontend-assets`. The `frontend-a
 In this case, werf will compose the following sets to build:
 
 ```shell
-┌ Concurrent builds plan (no more than 5 images at the same time)
+┌ Concurrent build plan (no more than 5 images at the same time)
 │ Set #0:
-│ - ⛵ image backend
-│ - ⛵ image frontend
-│
-│ Set #1:
-│ - ⛵ frontend-assets
-└ Concurrent builds plan (no more than 5 images at the same time)
+│ - 🛳  (1/3) image frontend-assets
+│ - 🛳  (2/3) image backend
+│ - 🛳  (3/3) image frontend
+└ Concurrent build plan (no more than 5 images at the same time)
 ```
 
 ## Network isolation
