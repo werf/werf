@@ -6,8 +6,10 @@ import (
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/samber/lo"
 
 	pkgsbom "github.com/werf/werf/v2/pkg/sbom"
+	"github.com/werf/werf/v2/pkg/sbom/cyclonedxutil/gost"
 )
 
 func strPtr(s string) *string { return &s }
@@ -49,12 +51,13 @@ var _ = Describe("buildImageSbom", func() {
 			nil,
 		),
 		Entry(
-			"should succeed when build.sbom.enable=true and image sbom is not specified (now optional)",
+			"GOST logic [1]: should use default 'yes' values when no GOST config is provided",
 			&Meta{
 				Build: MetaBuild{
 					Sbom: &MetaBuildSbom{
 						Enable:   true,
 						Standard: pkgsbom.StandardTypeCycloneDX16,
+						Gost:     gost.DefaultConfig(),
 					},
 				},
 			},
@@ -63,7 +66,86 @@ var _ = Describe("buildImageSbom", func() {
 			Succeed(),
 			false,
 			func(sbomDirective *Sbom) {
-				Expect(sbomDirective).To(BeNil())
+				Expect(sbomDirective).ToNot(BeNil())
+				Expect(sbomDirective.Gost.AttackSurface).To(Equal(gost.GostValueYes))
+				Expect(sbomDirective.Gost.SecurityFunction).To(Equal(gost.GostValueYes))
+			},
+		),
+		Entry(
+			"GOST logic [2]: should use values from meta when specified there",
+			&Meta{
+				Build: MetaBuild{
+					Sbom: &MetaBuildSbom{
+						Enable:   true,
+						Standard: pkgsbom.StandardTypeCycloneDX16,
+						Gost: gost.Config{
+							AttackSurface:    gost.GostValueNo,
+							SecurityFunction: gost.GostValueNo,
+						},
+					},
+				},
+			},
+			nil,
+			&doc{RenderFilePath: "werf.yaml", Content: []byte("image: test")},
+			Succeed(),
+			false,
+			func(sbomDirective *Sbom) {
+				Expect(sbomDirective).ToNot(BeNil())
+				Expect(sbomDirective.Gost.AttackSurface).To(Equal(gost.GostValueNo))
+				Expect(sbomDirective.Gost.SecurityFunction).To(Equal(gost.GostValueNo))
+			},
+		),
+		Entry(
+			"GOST logic [3]: should use values from image when specified only there (with defaults fallback)",
+			&Meta{
+				Build: MetaBuild{
+					Sbom: &MetaBuildSbom{
+						Enable:   true,
+						Standard: pkgsbom.StandardTypeCycloneDX16,
+						Gost:     gost.DefaultConfig(),
+					},
+				},
+			},
+			&rawSbom{
+				Gost: &rawGost{
+					AttackSurface: lo.ToPtr("inherit"),
+				},
+			},
+			&doc{RenderFilePath: "werf.yaml", Content: []byte("image: test")},
+			Succeed(),
+			false,
+			func(sbomDirective *Sbom) {
+				Expect(sbomDirective).ToNot(BeNil())
+				Expect(sbomDirective.Gost.AttackSurface).To(Equal(gost.GostValueInherit))
+				Expect(sbomDirective.Gost.SecurityFunction).To(Equal(gost.GostValueYes))
+			},
+		),
+		Entry(
+			"GOST logic [4]: should override meta config with image config",
+			&Meta{
+				Build: MetaBuild{
+					Sbom: &MetaBuildSbom{
+						Enable:   true,
+						Standard: pkgsbom.StandardTypeCycloneDX16,
+						Gost: gost.Config{
+							AttackSurface:    gost.GostValueYes,
+							SecurityFunction: gost.GostValueNo,
+						},
+					},
+				},
+			},
+			&rawSbom{
+				Gost: &rawGost{
+					AttackSurface: lo.ToPtr("no"),
+				},
+			},
+			&doc{RenderFilePath: "werf.yaml", Content: []byte("image: test")},
+			Succeed(),
+			false,
+			func(sbomDirective *Sbom) {
+				Expect(sbomDirective).ToNot(BeNil())
+				Expect(sbomDirective.Gost.AttackSurface).To(Equal(gost.GostValueNo))
+				Expect(sbomDirective.Gost.SecurityFunction).To(Equal(gost.GostValueNo))
 			},
 		),
 		Entry(
@@ -73,6 +155,7 @@ var _ = Describe("buildImageSbom", func() {
 					Sbom: &MetaBuildSbom{
 						Enable:   true,
 						Standard: pkgsbom.StandardTypeCycloneDX16,
+						Gost:     gost.DefaultConfig(),
 					},
 				},
 			},
@@ -85,12 +168,13 @@ var _ = Describe("buildImageSbom", func() {
 			nil,
 		),
 		Entry(
-			"should succeed when build.sbom.enable=true and sbom.fragment contains valid YAML (components)",
+			"should succeed when build.sbom.enable=true and sbom.fragment contains valid YAML",
 			&Meta{
 				Build: MetaBuild{
 					Sbom: &MetaBuildSbom{
 						Enable:   true,
 						Standard: pkgsbom.StandardTypeCycloneDX16,
+						Gost:     gost.DefaultConfig(),
 					},
 				},
 			},
@@ -116,6 +200,7 @@ components:
 				Expect(sbomDirective.Document.Components).ToNot(BeNil())
 				Expect(*sbomDirective.Document.Components).To(HaveLen(1))
 				Expect((*sbomDirective.Document.Components)[0].Name).To(Equal("openssl"))
+				Expect(sbomDirective.Gost.AttackSurface).To(Equal(gost.GostValueYes))
 			},
 		),
 	)

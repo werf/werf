@@ -40,14 +40,65 @@ sections:
               en: "Enable layer-by-layer caching of Dockerfile instructions in container registry globally for all images"
               ru: "Включить послойное кеширование инструкций Dockerfile в container registry глобально для всех образов"
           - &meta-section-sbom
-            value: bool
-            default: false
+            name: sbom
             description:
-              en: "Enable SBOM scanning and generation (EXPERIMENTAL)"
-              ru: "Включить сканирование и генерацию SBOM (ЭКСПЕРИМЕНТАЛЬНО)"
+              en: "SBOM scanning and generation (EXPERIMENTAL)"
+              ru: "Сканирование и генерация SBOM (ЭКСПЕРИМЕНТАЛЬНО)"
+            collapsible: true
+            isCollapsedByDefault: false
             detailsArticle:
               en: "/usage/build/process.html#scanning-and-generation-of-sbom-artifacts-experimental"
               ru: "/usage/build/process.html#сканирование-и-генерация-sbom-артефактов-experimental"
+            directives:
+              - name: enable
+                value: bool
+                default: false
+                description:
+                  en: "Enable SBOM scanning and generation"
+                  ru: "Включить сканирование и генерацию SBOM"
+              - name: standard
+                value: "string"
+                default: "cyclonedx@1.6"
+                description:
+                  en: "SBOM standard (currently only cyclonedx@1.6 is supported)"
+                  ru: "Стандарт SBOM (на данный момент поддерживается только cyclonedx@1.6)"
+              - &gost-directive
+                name: gost
+                description:
+                  en: "GOST security properties"
+                  ru: "Свойства безопасности ГОСТ"
+                collapsible: true
+                isCollapsedByDefault: false
+                directives:
+                  - name: attackSurface
+                    value: "string"
+                    default: "yes"
+                    description:
+                      en: "Attack surface property (yes | no | inherit). Default: yes"
+                      ru: "Свойство поверхности атаки (yes | no | inherit). По умолчанию: yes"
+                  - name: securityFunction
+                    value: "string"
+                    default: "yes"
+                    description:
+                      en: "Security function property (yes | no | inherit). Default: yes"
+                      ru: "Свойство функции безопасности (yes | no | inherit). По умолчанию: yes"
+          - &image-section-sbom
+            name: sbom
+            description:
+              en: "SBOM scanning and generation (EXPERIMENTAL)"
+              ru: "Сканирование и генерация SBOM (ЭКСПЕРИМЕНТАЛЬНО)"
+            collapsible: true
+            isCollapsedByDefault: false
+            detailsArticle:
+              en: "/usage/build/process.html#scanning-and-generation-of-sbom-artifacts-experimental"
+              ru: "/usage/build/process.html#сканирование-и-генерация-sbom-артефактов-experimental"
+            directives:
+              - name: fragment
+                value: "string"
+                description:
+                  en: "Additional SBOM data in CycloneDX format"
+                  ru: "Дополнительные данные SBOM в формате CycloneDX"
+              - <<: *gost-directive
           - name: imageSpec
             description:
               en: Global image configuration options according to the OCI specification, which will be applied to all images
@@ -277,7 +328,7 @@ sections:
         detailsArticle:
           en: "/usage/build/images.html#using-intermediate-and-final-images"
           ru: "/usage/build/images.html#использование-промежуточных-и-конечных-образов"
-      - - << : *meta-section-sbom
+      - <<: *image-section-sbom
       - name: dockerfile
         value: "string"
         description:
@@ -289,7 +340,7 @@ sections:
         description:
           en: "Enable layer-by-layer caching of Dockerfile instructions in container registry"
           ru: "Включить послойное кеширование Dockerfile-инструкций в container registry"
-      - << : *meta-section-build-cache-version
+      - <<: *meta-section-build-cache-version
       - name: context
         value: "string"
         description:
@@ -381,16 +432,16 @@ sections:
             collapsible: false
             isCollapsedByDefault: false
             directiveList:
-            - name: type
-              value: "string"
-              description:
-                en: "Type of image info: ImageName, ImageDigest, ImageRepo or ImageTag"
-                ru: "Тип импортируемой информации об образе: ImageName, ImageDigest, ImageRepo или ImageTag"
-            - name: targetBuildArg
-              value: "string"
-              description:
-                en: "Name of build argument which will contain specified type of information about image"
-                ru: "Имя аргумента (Dockerfile build-args), который будет содержать указанный тип информации об образе"
+              - name: type
+                value: "string"
+                description:
+                  en: "Type of image info: ImageName, ImageDigest, ImageRepo or ImageTag"
+                  ru: "Тип импортируемой информации об образе: ImageName, ImageDigest, ImageRepo или ImageTag"
+              - name: targetBuildArg
+                value: "string"
+                description:
+                  en: "Name of build argument which will contain specified type of information about image"
+                  ru: "Имя аргумента (Dockerfile build-args), который будет содержать указанный тип информации об образе"
       - &common_image_spec_config
         name: imageSpec
         description:
@@ -522,7 +573,7 @@ sections:
       ru: "Секция Stapel image: может использоваться произвольное количество секций"
     isCollapsedByDefault: false
     directives:
-      - << : *dockerfile-image-section-image
+      - <<: *dockerfile-image-section-image
       - name: artifact
         value: "string"
         description:
@@ -530,9 +581,9 @@ sections:
           ru: Уникальное имя артефакта (DEPRECATED)
         detailsArticle:
           all: "/usage/build/stapel/imports.html"
-      - << : *dockerfile-image-section-final
-      - << : *meta-section-sbom
-      - << : *meta-section-build-cache-version
+      - <<: *dockerfile-image-section-final
+      - <<: *image-section-sbom
+      - <<: *meta-section-build-cache-version
       - name: platform
         description:
           en: List of target platforms for this image (for example ['linux/amd64', 'linux/arm64', 'linux/arm/v8'])
@@ -1081,14 +1132,13 @@ sections:
             collapsible: false
             isCollapsedByDefault: false
             directiveList:
-            - name: type
-              value: "string"
-              description:
-                en: "Type of image info: ImageName, ImageDigest, ImageRepo or ImageTag"
-                ru: "Тип импортируемой информации об образе: ImageName, ImageDigest, ImageRepo или ImageTag"
-            - name: targetEnv
-              value: "string"
-              description:
-                en: "Name of environment variable which will contain specified type of information about image"
-                ru: "Имя переменной окружения, которая будет содержать указанный тип информации об образе"
-
+              - name: type
+                value: "string"
+                description:
+                  en: "Type of image info: ImageName, ImageDigest, ImageRepo or ImageTag"
+                  ru: "Тип импортируемой информации об образе: ImageName, ImageDigest, ImageRepo или ImageTag"
+              - name: targetEnv
+                value: "string"
+                description:
+                  en: "Name of environment variable which will contain specified type of information about image"
+                  ru: "Имя переменной окружения, которая будет содержать указанный тип информации об образе"

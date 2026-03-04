@@ -5,16 +5,19 @@ import (
 	"fmt"
 	"io"
 	"slices"
+	"strings"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/samber/lo"
 
+	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/container_backend/filter"
 	"github.com/werf/werf/v2/pkg/container_backend/label"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/sbom/cyclonedxutil"
+	"github.com/werf/werf/v2/pkg/sbom/cyclonedxutil/gost"
 	"github.com/werf/werf/v2/pkg/sbom/extract"
 	sbomImage "github.com/werf/werf/v2/pkg/sbom/image"
 	"github.com/werf/werf/v2/pkg/sbom/scanner"
@@ -45,6 +48,10 @@ func (step *sbomStep) ConvergeWithMerge(ctx context.Context, werfImgName string,
 	sbomImageName := sbomImage.ImageName(sourceImageName)
 
 	scanOpts.Commands[0].SourcePath = sourceImageName
+
+	if err := step.prepareGostComponents(ctx, &mergeOpts); err != nil {
+		return err
+	}
 
 	sbomBaseImgLabels := step.prepareSbomBaseLabelsWithMerge(ctx, stageDesc.Info.Labels, scanOpts, mergeOpts)
 	sbomImgLabels := step.prepareSbomLabelsWithMerge(ctx, stageDesc.Info.Labels, scanOpts, mergeOpts)
@@ -99,6 +106,10 @@ func (step *sbomStep) ConvergeWithMerge(ctx context.Context, werfImgName string,
 			return fmt.Errorf("unable to extract scanned BOM: %w", err)
 		}
 
+		if err := gost.Upsert(targetBOM, mergeOpts.Gost); err != nil {
+			return fmt.Errorf("unable to set GOST properties into scanned BOM: %w", err)
+		}
+
 		resultBOM := targetBOM
 		if !mergeOpts.IsEmpty() {
 			resultBOM, err = cyclonedxutil.MergeBOMs(targetBOM, mergeOpts)
@@ -124,6 +135,45 @@ func (step *sbomStep) ConvergeWithMerge(ctx context.Context, werfImgName string,
 
 		return nil
 	})
+}
+
+// prepareGostComponents validates external SBOMs and upserts GOST properties into the user-defined fragment.
+func (step *sbomStep) prepareGostComponents(ctx context.Context, mergeOpts *cyclonedxutil.MergeOpts) error {
+	if !mergeOpts.Gost.AttackSurface.IsUndefined() || !mergeOpts.Gost.SecurityFunction.IsUndefined() {
+		logboek.Context(ctx).Default().LogF("Warning: GOST SBOM integration is experimental and its behavior may change in the future\n")
+	}
+
+	// 1. Validate inputs early before generation.
+	// Images built FROM scratch are exempt from base SBOM validation as they have no prior BOM.
+	if mergeOpts.BaseBOM != nil {
+		if err := gost.Validate(mergeOpts.BaseBOM); err != nil {
+			return fmt.Errorf("base image SBOM validation failed: %w", err)
+		}
+	}
+	for i, bom := range mergeOpts.ImportBOMs {
+		if err := gost.Validate(bom); err != nil {
+			return fmt.Errorf("imported image %d SBOM validation failed: %w", i, err)
+		}
+	}
+
+	// 2. Prepare fragment early (must be done BEFORE checksum calculation).
+	if mergeOpts.FragmentBOM != nil {
+		if err := gost.Upsert(mergeOpts.FragmentBOM, mergeOpts.Gost); err != nil {
+			return fmt.Errorf("unable to set GOST properties into user-defined fragment BOM: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// calculateStableChecksum generates a SHA256 identifier for labels,
+// including scanning environment, merged BOM sources, and GOST configuration.
+func (step *sbomStep) calculateStableChecksum(scanOpts scanner.ScanOptions, mergeOpts cyclonedxutil.MergeOpts) string {
+	var parts []string
+	parts = append(parts, scanOpts.Checksum())
+	parts = append(parts, mergeOpts.Checksum())
+
+	return util.Sha256Hash(strings.Join(parts, "-"))
 }
 
 func (step *sbomStep) extractBOM(ctx context.Context, imageId string) (*cdx.BOM, error) {
@@ -157,10 +207,7 @@ func (step *sbomStep) buildSbomImage(ctx context.Context, bom *cdx.BOM, scanOpts
 }
 
 func (step *sbomStep) prepareSbomBaseLabelsWithMerge(_ context.Context, srcImgLabels map[string]string, scanOpts scanner.ScanOptions, mergeOpts cyclonedxutil.MergeOpts) label.LabelList {
-	checksum := scanOpts.Checksum()
-	if mc := mergeOpts.Checksum(); mc != "" {
-		checksum += "-" + mc
-	}
+	checksum := step.calculateStableChecksum(scanOpts, mergeOpts)
 
 	return label.LabelList{
 		label.NewLabel(image.WerfLabel, srcImgLabels[image.WerfLabel]),

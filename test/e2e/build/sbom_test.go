@@ -8,9 +8,11 @@ import (
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/samber/lo"
 
 	imagePkg "github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/sbom/cyclonedxutil"
+	"github.com/werf/werf/v2/pkg/sbom/cyclonedxutil/gost"
 	"github.com/werf/werf/v2/pkg/sbom/extract"
 	sbomImage "github.com/werf/werf/v2/pkg/sbom/image"
 	"github.com/werf/werf/v2/test/pkg/contback"
@@ -64,7 +66,7 @@ var _ = Describe("Simple build", Label("e2e", "build", "sbom", "simple"), func()
 						Expect(sbomImgInspect.Config.Labels[imagePkg.WerfProjectRepoCommitLabel]).To(Equal(imgInspect.Config.Labels[imagePkg.WerfProjectRepoCommitLabel]))
 						Expect(sbomImgInspect.Config.Labels[imagePkg.WerfStageContentDigestLabel]).To(Equal(imgInspect.Config.Labels[imagePkg.WerfStageContentDigestLabel]))
 						// sbom labels
-						Expect(sbomImgInspect.Config.Labels[imagePkg.WerfSbomLabel]).To(HavePrefix("0c15bc4e5bd8541138b5b6b7065eb8f641284b4913878d953be46419f50e8ebc"))
+						Expect(sbomImgInspect.Config.Labels[imagePkg.WerfSbomLabel]).To(HavePrefix("7bff0c5a05553c27f7b47d7c9e7f11841f40e5aafab399b8afaffac5aae66df9"))
 
 						By("state0: SBOM image file system layout")
 						opener := func() (io.ReadCloser, error) {
@@ -906,6 +908,102 @@ var _ = Describe("SBOM cross-project merge", Label("e2e", "build", "sbom", "merg
 			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: false,
 		}}),
+	)
+})
+
+var _ = Describe("GOST SBOM fields", Label("e2e", "build", "sbom", "gost"), func() {
+	type expectedGostConfig struct {
+		AttackSurface    string
+		SecurityFunction string
+	}
+
+	DescribeTable("should validate GOST fields in SBOM",
+		func(ctx SpecContext, testOpts simpleTestOptions, fixtureRelPath, repoDirname string, expectedGost expectedGostConfig) {
+			By("initializing")
+			setupEnv(testOpts.setupEnvOptions)
+
+			contRuntime, err := contback.NewContainerBackend(testOpts.ContainerBackendMode)
+			if err == contback.ErrRuntimeUnavailable {
+				Skip(err.Error())
+			} else if err != nil {
+				Fail(err.Error())
+			}
+
+			By("preparing test repo")
+			SuiteData.InitTestRepo(ctx, repoDirname, fixtureRelPath)
+
+			By("building image")
+			werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
+			reportProject := report.NewProjectWithReport(werfProject)
+			buildOut, buildReport := reportProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(repoDirname+".json"), nil)
+			Expect(buildOut).To(ContainSubstring("Building stage"))
+
+			for builtImgName, reportRecord := range buildReport.Images {
+				By(fmt.Sprintf("validate result for %q", builtImgName))
+				bom := extractBOMFromSbomImage(ctx, contRuntime, reportRecord.DockerImageName)
+
+				Expect(bom.Metadata).NotTo(BeNil())
+				Expect(bom.Metadata.Component).NotTo(BeNil())
+
+				props := lo.FromPtr(bom.Metadata.Component.Properties)
+				assertPropertyEquals(findPropertyByName(props, gost.PropertyAttackSurface), expectedProperty{
+					Name:  gost.PropertyAttackSurface,
+					Value: expectedGost.AttackSurface,
+				})
+				assertPropertyEquals(findPropertyByName(props, gost.PropertySecurityFunction), expectedProperty{
+					Name:  gost.PropertySecurityFunction,
+					Value: expectedGost.SecurityFunction,
+				})
+			}
+		},
+		Entry("default values using Vanilla Docker",
+			simpleTestOptions{setupEnvOptions{
+				ContainerBackendMode: "vanilla-docker",
+				WithLocalRepo:        false,
+			}},
+			"sbom/gost_defaults",
+			"gost-defaults",
+			expectedGostConfig{
+				AttackSurface:    "yes",
+				SecurityFunction: "yes",
+			},
+		),
+		Entry("default values using BuildKit Docker",
+			simpleTestOptions{setupEnvOptions{
+				ContainerBackendMode: "buildkit-docker",
+				WithLocalRepo:        false,
+			}},
+			"sbom/gost_defaults",
+			"gost-defaults",
+			expectedGostConfig{
+				AttackSurface:    "yes",
+				SecurityFunction: "yes",
+			},
+		),
+		Entry("image override meta using Vanilla Docker",
+			simpleTestOptions{setupEnvOptions{
+				ContainerBackendMode: "vanilla-docker",
+				WithLocalRepo:        false,
+			}},
+			"sbom/gost_meta_image",
+			"gost-meta-image",
+			expectedGostConfig{
+				AttackSurface:    "no",
+				SecurityFunction: "yes",
+			},
+		),
+		Entry("image override meta using BuildKit Docker",
+			simpleTestOptions{setupEnvOptions{
+				ContainerBackendMode: "buildkit-docker",
+				WithLocalRepo:        false,
+			}},
+			"sbom/gost_meta_image",
+			"gost-meta-image",
+			expectedGostConfig{
+				AttackSurface:    "no",
+				SecurityFunction: "yes",
+			},
+		),
 	)
 })
 

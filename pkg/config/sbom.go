@@ -4,6 +4,7 @@ import (
 	cyclonedx "github.com/CycloneDX/cyclonedx-go"
 
 	"github.com/werf/werf/v2/pkg/sbom"
+	"github.com/werf/werf/v2/pkg/sbom/cyclonedxutil/gost"
 )
 
 // Sbom represents an SBOM directive attached to a specific image configuration.
@@ -17,4 +18,7 @@ type Sbom struct {
 	// Document is the full SBOM document assembled from configuration (and, in the future, possibly merged
 	// with scanner-generated output).
 	Document *cyclonedx.BOM
+
+	// Gost contains GOST-specific security properties configuration.
+	Gost gost.Config
 }

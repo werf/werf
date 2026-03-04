@@ -1,0 +1,9 @@
+project: gost-defaults
+configVersion: 1
+build:
+  sbom:
+    enable: true
+    standard: "cyclonedx@1.6"
+---
+image: app
+from: registry.werf.io/werf/scratch

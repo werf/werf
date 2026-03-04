@@ -1,0 +1,18 @@
+project: gost-meta-image
+configVersion: 1
+build:
+  sbom:
+    enable: true
+    standard: "cyclonedx@1.6"
+    gost:
+      attackSurface: yes
+      securityFunction: no
+---
+image: app
+from: registry.werf.io/werf/scratch
+sbom:
+  fragment: |
+    components: []
+  gost:
+    attackSurface: no
+    securityFunction: yes

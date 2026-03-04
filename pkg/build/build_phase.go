@@ -29,6 +29,7 @@ import (
 	imagePkg "github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/logging"
 	"github.com/werf/werf/v2/pkg/sbom/cyclonedxutil"
+	"github.com/werf/werf/v2/pkg/sbom/cyclonedxutil/gost"
 	sbomImage "github.com/werf/werf/v2/pkg/sbom/image"
 	"github.com/werf/werf/v2/pkg/sbom/scanner"
 	"github.com/werf/werf/v2/pkg/stapel"
@@ -289,14 +290,17 @@ func (phase *BuildPhase) convergeImageSbom(ctx context.Context, name string, ima
 	}
 
 	var fragmentBOM *cdx.BOM
+	var gostConfig gost.Config
 	if imgSbom := primaryImg.Sbom(); imgSbom != nil {
 		fragmentBOM = imgSbom.Document
+		gostConfig = imgSbom.Gost
 	}
 
 	mergeOpts := cyclonedxutil.MergeOpts{
 		BaseBOM:     baseImageSbom,
 		ImportBOMs:  importImageSboms,
 		FragmentBOM: fragmentBOM,
+		Gost:        gostConfig,
 	}
 
 	if err := phase.sbomStep.ConvergeWithMerge(ctx, name, stageDesc, scanner.DefaultSyftScanOptions(), mergeOpts); err != nil {

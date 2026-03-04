@@ -22,7 +22,6 @@ func buildImageSbom(meta *Meta, raw *rawSbom, d *doc) (*Sbom, error) {
 	metaSbom := meta.Build.Sbom
 	metaEnabled := metaSbom != nil && metaSbom.Enable
 
-	// build.sbom is disabled (or absent) => images must not specify sbom
 	if !metaEnabled {
 		if raw != nil {
 			return nil, newDetailedConfigError("`sbom` is specified for the image, but `build.sbom.enable` is false", nil, d)
@@ -30,9 +29,18 @@ func buildImageSbom(meta *Meta, raw *rawSbom, d *doc) (*Sbom, error) {
 		return nil, nil
 	}
 
-	// build.sbom is enabled => sbom is optional for every image
+	// Determine GOST config (fallback meta -> image).
+	gostConfig := metaSbom.Gost
+	if raw != nil && raw.Gost != nil {
+		gostConfig = gostConfig.Merge(raw.Gost.toConfig())
+	}
+
+	// If no image-level configs are provided, we return early with the inherited GOST configuration.
 	if raw == nil {
-		return nil, nil
+		return &Sbom{
+			Standard: sbomPkg.StandardTypeCycloneDX16,
+			Gost:     gostConfig,
+		}, nil
 	}
 
 	// Defensive check: meta-level validation currently allows only CycloneDX@1.6.
@@ -48,12 +56,17 @@ func buildImageSbom(meta *Meta, raw *rawSbom, d *doc) (*Sbom, error) {
 		)
 	}
 
+	// If fragment is not specified, we return the configuration with GOST only.
 	if raw.Fragment == nil {
-		return nil, newDetailedConfigError("`sbom.fragment` is required when `build.sbom.enable` is true", nil, d)
+		return &Sbom{
+			Standard: sbomPkg.StandardTypeCycloneDX16,
+			Gost:     gostConfig,
+		}, nil
 	}
+
 	fragment := strings.TrimSpace(*raw.Fragment)
 	if fragment == "" {
-		return nil, newDetailedConfigError("`sbom.fragment` must not be empty when `build.sbom.enable` is true", nil, d)
+		return nil, newDetailedConfigError("`sbom.fragment` must not be empty if specified", nil, d)
 	}
 
 	bom, err := cyclonedxutil.BuildCycloneDX16BOMFromYAMLFragment([]byte(fragment))
@@ -64,5 +77,6 @@ func buildImageSbom(meta *Meta, raw *rawSbom, d *doc) (*Sbom, error) {
 	return &Sbom{
 		Standard: sbomPkg.StandardTypeCycloneDX16,
 		Document: bom,
+		Gost:     gostConfig,
 	}, nil
 }

@@ -12,7 +12,7 @@ import (
 
 var _ = Describe("rawSbom (YAML-level validation)", func() {
 	DescribeTable(
-		"fragment validation when sbom section is present",
+		"fragment and gost validation when sbom section is present",
 		func(yamlMap map[string]interface{}, expectedSbomPresent bool, unmarshalMatcher, configErrMatcher OmegaMatcher) {
 			// NOTE: global var used by UnmarshalYAML parent tracking across many config raw structs.
 			parentStack = util.NewStack()
@@ -25,8 +25,9 @@ var _ = Describe("rawSbom (YAML-level validation)", func() {
 				Content:        rawYaml,
 			}
 
-			rawDockerfileImage := &rawImageFromDockerfile{doc: d}
-			err = yaml.UnmarshalStrict(d.Content, rawDockerfileImage)
+			// Using Stapel syntax per requirements.
+			rawStapelImage := &rawStapelImage{doc: d}
+			err = yaml.UnmarshalStrict(d.Content, rawStapelImage)
 
 			Expect(err).To(unmarshalMatcher)
 
@@ -36,15 +37,15 @@ var _ = Describe("rawSbom (YAML-level validation)", func() {
 				return
 			}
 
-			Expect(rawDockerfileImage).ToNot(BeNil())
-			Expect(rawDockerfileImage.RawSbom != nil).To(Equal(expectedSbomPresent))
+			Expect(rawStapelImage).ToNot(BeNil())
+			Expect(rawStapelImage.RawSbom != nil).To(Equal(expectedSbomPresent))
 		},
 
 		Entry(
 			"should succeed when sbom section is omitted",
 			map[string]interface{}{
-				"image":      "image1",
-				"dockerfile": "Dockerfile",
+				"image": "image1",
+				"from":  "alpine:3.20",
 			},
 			false,
 			Succeed(),
@@ -54,9 +55,9 @@ var _ = Describe("rawSbom (YAML-level validation)", func() {
 		Entry(
 			"should fail when sbom section exists but fragment is missing",
 			map[string]interface{}{
-				"image":      "image1",
-				"dockerfile": "Dockerfile",
-				"sbom":       map[string]interface{}{},
+				"image": "image1",
+				"from":  "alpine:3.20",
+				"sbom":  map[string]interface{}{},
 			},
 			false,
 			HaveOccurred(),
@@ -66,8 +67,8 @@ var _ = Describe("rawSbom (YAML-level validation)", func() {
 		Entry(
 			"should fail when sbom.fragment is empty",
 			map[string]interface{}{
-				"image":      "image1",
-				"dockerfile": "Dockerfile",
+				"image": "image1",
+				"from":  "alpine:3.20",
 				"sbom": map[string]interface{}{
 					"fragment": "   ",
 				},
@@ -80,8 +81,8 @@ var _ = Describe("rawSbom (YAML-level validation)", func() {
 		Entry(
 			"should fail when sbom.fragment is not valid YAML",
 			map[string]interface{}{
-				"image":      "image1",
-				"dockerfile": "Dockerfile",
+				"image": "image1",
+				"from":  "alpine:3.20",
 				"sbom": map[string]interface{}{
 					"fragment": "components: [",
 				},
@@ -94,8 +95,8 @@ var _ = Describe("rawSbom (YAML-level validation)", func() {
 		Entry(
 			"should fail when sbom.fragment YAML root is not a mapping",
 			map[string]interface{}{
-				"image":      "image1",
-				"dockerfile": "Dockerfile",
+				"image": "image1",
+				"from":  "alpine:3.20",
 				"sbom": map[string]interface{}{
 					"fragment": "- a\n- b\n",
 				},
@@ -108,8 +109,8 @@ var _ = Describe("rawSbom (YAML-level validation)", func() {
 		Entry(
 			"should succeed when sbom.fragment contains valid YAML mapping",
 			map[string]interface{}{
-				"image":      "image1",
-				"dockerfile": "Dockerfile",
+				"image": "image1",
+				"from":  "alpine:3.20",
 				"sbom": map[string]interface{}{
 					"fragment": "components: []\n",
 				},
@@ -117,6 +118,57 @@ var _ = Describe("rawSbom (YAML-level validation)", func() {
 			true,
 			Succeed(),
 			BeFalse(),
+		),
+
+		Entry(
+			"should succeed when sbom.fragment and gost are valid",
+			map[string]interface{}{
+				"image": "image1",
+				"from":  "alpine:3.20",
+				"sbom": map[string]interface{}{
+					"fragment": "components: []\n",
+					"gost": map[string]interface{}{
+						"attackSurface": "yes",
+					},
+				},
+			},
+			true,
+			Succeed(),
+			BeFalse(),
+		),
+
+		Entry(
+			"should accept gost with inherit",
+			map[string]interface{}{
+				"image": "image1",
+				"from":  "alpine:3.20",
+				"sbom": map[string]interface{}{
+					"fragment": "components: []\n",
+					"gost": map[string]interface{}{
+						"attackSurface": "inherit",
+					},
+				},
+			},
+			true,
+			Succeed(),
+			BeFalse(),
+		),
+
+		Entry(
+			"should fail when gost section has invalid value",
+			map[string]interface{}{
+				"image": "image1",
+				"from":  "alpine:3.20",
+				"sbom": map[string]interface{}{
+					"fragment": "components: []\n",
+					"gost": map[string]interface{}{
+						"attackSurface": "invalid",
+					},
+				},
+			},
+			false,
+			HaveOccurred(),
+			BeTrue(),
 		),
 	)
 })

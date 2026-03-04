@@ -1,11 +1,11 @@
 package cyclonedxutil
 
 import (
-	"strings"
-
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"github.com/werf/werf/v2/pkg/sbom/cyclonedxutil/gost"
 )
 
 func componentNames(bom *cdx.BOM) []string {
@@ -468,26 +468,30 @@ var _ = Describe("MergeOpts", func() {
 		Entry("with empty import slice", MergeOpts{ImportBOMs: []*cdx.BOM{}}, true),
 	)
 
-	It("Checksum: same opts -> same checksum; different opts -> different checksum", func() {
-		bom1 := &cdx.BOM{Components: &[]cdx.Component{{Name: "comp1"}}}
-		bom2 := &cdx.BOM{Components: &[]cdx.Component{{Name: "comp2"}}}
-
-		opts1 := MergeOpts{BaseBOM: bom1}
-		opts2 := MergeOpts{BaseBOM: bom2}
-		opts3 := MergeOpts{BaseBOM: bom1}
-
-		checksum1 := opts1.Checksum()
-		checksum2 := opts2.Checksum()
-		checksum3 := opts3.Checksum()
-
-		Expect(checksum1).ToNot(BeEmpty())
-		Expect(checksum1).ToNot(Equal(checksum2))
-		Expect(checksum1).To(Equal(checksum3))
-	})
-
-	It("Checksum is empty for empty opts", func() {
-		Expect(MergeOpts{}.Checksum()).To(BeEmpty())
-	})
+	DescribeTable("Checksum",
+		func(opts MergeOpts, expected string) {
+			Expect(opts.Checksum()).To(Equal(expected))
+		},
+		Entry("empty opts", MergeOpts{}, ""),
+		Entry("empty opts with GOST configuration (should be invariant)",
+			MergeOpts{
+				Gost: gost.Config{
+					AttackSurface:    gost.GostValueYes,
+					SecurityFunction: gost.GostValueInherit,
+				},
+			},
+			""),
+		Entry("opts with BaseBOM",
+			MergeOpts{
+				BaseBOM: &cdx.BOM{
+					SpecVersion: cdx.SpecVersion1_6,
+					Components: &[]cdx.Component{
+						{Name: "comp1"},
+					},
+				},
+			},
+			"a452fb07f06a6aeda6167a7a117bf41073df4874287acaa4e0aaa1838ac1f80f"),
+	)
 })
 
 var _ = Describe("StableBOMChecksum", func() {
@@ -658,11 +662,5 @@ var _ = Describe("StableBOMChecksum", func() {
 		}
 
 		Expect(StableBOMChecksum(bom1)).NotTo(Equal(StableBOMChecksum(bom2)))
-	})
-})
-
-var _ = Describe("internal sanity", func() {
-	It("strings import is used", func() {
-		Expect(strings.HasPrefix("urn:uuid:x", "urn:uuid:")).To(BeTrue())
 	})
 })

@@ -6,12 +6,14 @@ import (
 	"github.com/samber/lo"
 
 	"github.com/werf/werf/v2/pkg/sbom"
+	"github.com/werf/werf/v2/pkg/sbom/cyclonedxutil/gost"
 	"github.com/werf/werf/v2/pkg/util/option"
 )
 
 type rawMetaBuildSbom struct {
-	Enable   *bool   `yaml:"enable,omitempty"`
-	Standard *string `yaml:"standard,omitempty"`
+	Enable   *bool    `yaml:"enable,omitempty"`
+	Standard *string  `yaml:"standard,omitempty"`
+	Gost     *rawGost `yaml:"gost,omitempty"`
 
 	rawMetaBuild *rawMetaBuild `yaml:"-"`
 
@@ -104,7 +106,8 @@ func (s *rawMetaBuildSbom) toDirective() *MetaBuildSbom {
 	}
 
 	return &MetaBuildSbom{
-		Enable:   option.PtrValueOrDefault(s.Enable, false),
+		Enable:   lo.FromPtr(s.Enable),
 		Standard: sbom.StandardTypeCycloneDX16,
+		Gost:     gost.DefaultConfig().Merge(s.Gost.toConfig()),
 	}
 }

@@ -7,6 +7,7 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/pkg/sbom"
+	"github.com/werf/werf/v2/pkg/sbom/cyclonedxutil/gost"
 )
 
 var _ = Describe("rawMetaBuildSbom", func() {
@@ -47,6 +48,7 @@ var _ = Describe("rawMetaBuildSbom", func() {
 			&MetaBuildSbom{
 				Enable:   false,
 				Standard: sbom.StandardTypeCycloneDX16,
+				Gost:     gost.DefaultConfig(),
 			},
 			Succeed(),
 		),
@@ -66,6 +68,7 @@ var _ = Describe("rawMetaBuildSbom", func() {
 			&MetaBuildSbom{
 				Enable:   false,
 				Standard: sbom.StandardTypeCycloneDX16,
+				Gost:     gost.DefaultConfig(),
 			},
 			Succeed(),
 		),
@@ -78,6 +81,7 @@ var _ = Describe("rawMetaBuildSbom", func() {
 			&MetaBuildSbom{
 				Enable:   true,
 				Standard: sbom.StandardTypeCycloneDX16,
+				Gost:     gost.DefaultConfig(),
 			},
 			Succeed(),
 		),
@@ -90,6 +94,7 @@ var _ = Describe("rawMetaBuildSbom", func() {
 			&MetaBuildSbom{
 				Enable:   false,
 				Standard: sbom.StandardTypeCycloneDX16,
+				Gost:     gost.DefaultConfig(),
 			},
 			Succeed(),
 		),
@@ -105,6 +110,53 @@ var _ = Describe("rawMetaBuildSbom", func() {
 			"should reject unsupported standard values",
 			map[string]interface{}{
 				"standard": "cyclonedx@1.5",
+			},
+			nil,
+			HaveOccurred(),
+		),
+		Entry(
+			"should accept gost section even when enable=false",
+			map[string]interface{}{
+				"enable": false,
+				"gost": map[string]interface{}{
+					"attackSurface": "yes",
+				},
+			},
+			&MetaBuildSbom{
+				Enable:   false,
+				Standard: sbom.StandardTypeCycloneDX16,
+				Gost: gost.Config{
+					AttackSurface:    gost.GostValueYes,
+					SecurityFunction: gost.GostValueYes,
+				},
+			},
+			Succeed(),
+		),
+		Entry(
+			"should accept gost with inherit",
+			map[string]interface{}{
+				"enable":   true,
+				"standard": "cyclonedx@1.6",
+				"gost": map[string]interface{}{
+					"attackSurface": "inherit",
+				},
+			},
+			&MetaBuildSbom{
+				Enable:   true,
+				Standard: sbom.StandardTypeCycloneDX16,
+				Gost: gost.Config{
+					AttackSurface:    gost.GostValueInherit,
+					SecurityFunction: gost.GostValueYes,
+				},
+			},
+			Succeed(),
+		),
+		Entry(
+			"should reject invalid gost values",
+			map[string]interface{}{
+				"gost": map[string]interface{}{
+					"attackSurface": "invalid",
+				},
 			},
 			nil,
 			HaveOccurred(),

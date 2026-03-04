@@ -10,7 +10,8 @@ import (
 type rawSbom struct {
 	doc *doc `yaml:"-"`
 
-	Fragment *string `yaml:"fragment,omitempty"`
+	Fragment *string  `yaml:"fragment,omitempty"`
+	Gost     *rawGost `yaml:"gost,omitempty"`
 
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
 }

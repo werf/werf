@@ -8,12 +8,14 @@ import (
 	cdx "github.com/CycloneDX/cyclonedx-go"
 
 	"github.com/werf/common-go/pkg/util"
+	"github.com/werf/werf/v2/pkg/sbom/cyclonedxutil/gost"
 )
 
 type MergeOpts struct {
 	BaseBOM     *cdx.BOM
 	ImportBOMs  []*cdx.BOM
 	FragmentBOM *cdx.BOM
+	Gost        gost.Config
 }
 
 func (o MergeOpts) IsEmpty() bool {

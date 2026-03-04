@@ -694,6 +694,28 @@ sbom:
 
 The scanning result will be saved as a separate image with the `-sbom` postfix in the local backend storage (for example, Docker), and will also be sent to the container registry if the `--repo` flag is specified.
 
+### GOST security properties (`sbom.gost`)
+
+To comply with GOST safety standards, you can configure mandatory security properties for all components in the SBOM. These properties will be injected into all direct components of the final SBOM. By default, both generated and user-defined SBOMs are enriched with `attackSurface=yes` and `securityFunction=yes`, unless specified otherwise at the project (meta) or image level.
+
+1. `attackSurface`: The attack surface property (`yes` | `no` | `inherit`).
+2. `securityFunction`: The security function property (`yes` | `no` | `inherit`).
+
+You can define these globally in `build.sbom.gost` or per-image in `image.sbom.gost`. Image-level configuration overrides global configuration.
+
+> **NOTE:** GOST properties integration is experimental and strictly tied to the `cyclonedx@1.6` standard.
+
+Example:
+```yaml
+build:
+  sbom:
+    enable: true
+    standard: cyclonedx@1.6
+    gost:
+      attackSurface: yes
+      securityFunction: no
+```
+
 Currently, this option uses the following _defaults_:
 
 | Property                          | Value                                                                                  |
