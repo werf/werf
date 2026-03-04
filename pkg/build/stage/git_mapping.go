@@ -645,6 +645,12 @@ func (gm *GitMapping) PreparePatchForImage(ctx context.Context, c Conveyor, cb c
 			}
 
 			go func() {
+				defer func() {
+					if err := f.Close(); err != nil {
+						logboek.Context(ctx).Error().LogF("ERROR: unable to close archive file %q: %s\n", archive.GetFilePath(), err)
+					}
+				}()
+
 				logboek.Context(ctx).Debug().LogF("Starting archive %q filtering process, includePaths: %v\n", archive.GetFilePath(), includePaths)
 				if err := filterTarArchive(ctx, f, patchArchiveWriter, includePaths); err != nil {
 					logboek.Context(ctx).Error().LogF("ERROR: %s\n", err)

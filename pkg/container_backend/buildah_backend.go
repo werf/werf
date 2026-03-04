@@ -743,17 +743,23 @@ func (backend *BuildahBackend) BuildDockerfile(ctx context.Context, dockerfileCo
 	if err != nil {
 		return "", fmt.Errorf("error creating temporary dockerfile: %w", err)
 	}
+	dockerfilePath := dockerfile.Name()
 
 	if _, err := dockerfile.Write(dockerfileContent); err != nil {
 		return "", fmt.Errorf("error writing temporary dockerfile: %w", err)
 	}
+
+	if err := dockerfile.Close(); err != nil {
+		return "", fmt.Errorf("error closing temporary dockerfile %q: %w", dockerfilePath, err)
+	}
+
 	defer func() {
-		if err := os.Remove(dockerfile.Name()); err != nil {
-			logboek.Context(ctx).Error().LogF("ERROR: unable to remove temporary dockerfile %s: %s\n", dockerfile.Name(), err)
+		if err := os.Remove(dockerfilePath); err != nil {
+			logboek.Context(ctx).Error().LogF("ERROR: unable to remove temporary dockerfile %s: %s\n", dockerfilePath, err)
 		}
 	}()
 
-	return backend.buildah.BuildFromDockerfile(ctx, dockerfile.Name(), buildah.BuildFromDockerfileOpts{
+	return backend.buildah.BuildFromDockerfile(ctx, dockerfilePath, buildah.BuildFromDockerfileOpts{
 		CommonOpts: backend.getBuildahCommonOpts(ctx, false, nil, opts.TargetPlatform),
 		ContextDir: buildContextTmpDir,
 		BuildArgs:  buildArgs,
@@ -1091,6 +1097,12 @@ func (backend *BuildahBackend) PostManifest(ctx context.Context, ref string, opt
 	if err != nil {
 		return fmt.Errorf("unable to create container using scratch base image: %w", err)
 	}
+
+	defer func() {
+		if err := backend.buildah.Rm(ctx, containerID, buildah.RmOpts(backend.getBuildahCommonOpts(ctx, true, nil, opts.TargetPlatform))); err != nil {
+			logboek.Context(ctx).Error().LogF("ERROR: unable to remove temporary container %q: %s\n", containerID, err)
+		}
+	}()
 
 	if err := backend.buildah.Config(ctx, containerID, buildah.ConfigOpts{Labels: opts.Labels}); err != nil {
 		return fmt.Errorf("unable to configure container %q labels: %w", containerID, err)
