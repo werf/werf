@@ -36,7 +36,11 @@ func NewConveyorWithRetryWrapper(werfConfig *config.WerfConfig, giterminismManag
 }
 
 func (wrapper *ConveyorWithRetryWrapper) Terminate() error {
-	return nil
+	if wrapper.StorageManager == nil {
+		return nil
+	}
+
+	return wrapper.StorageManager.ReleaseSharedHostImageLocks()
 }
 
 func (wrapper *ConveyorWithRetryWrapper) WithRetryBlock(ctx context.Context, f func(c *Conveyor) error) error {
