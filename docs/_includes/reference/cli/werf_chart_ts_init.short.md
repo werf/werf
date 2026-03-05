@@ -1,0 +1,1 @@
+initialize a new TypeScript chart project

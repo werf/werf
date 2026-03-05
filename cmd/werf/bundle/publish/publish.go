@@ -30,6 +30,8 @@ import (
 	"github.com/werf/common-go/pkg/secrets_manager"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
+	"github.com/werf/nelm/pkg/deno"
+	"github.com/werf/nelm/pkg/featgate"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/build"
 	"github.com/werf/werf/v2/pkg/config"
@@ -109,6 +111,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
 	common.SetupSynchronization(&commonCmdData, cmd)
+	common.SetupDenoBinaryPath(&commonCmdData, cmd)
 
 	common.SetupSaveBuildReport(&commonCmdData, cmd)
 	common.SetupBuildReportPath(&commonCmdData, cmd)
@@ -414,6 +417,7 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 		chartDir,
 		bundleTmpDir,
 		chartVersion,
+		commonCmdData.DenoBinaryPath,
 		&values.Options{
 			ValueFiles:    commonCmdData.ValuesFiles,
 			StringValues:  commonCmdData.ValuesSetString,
@@ -453,12 +457,19 @@ func createNewBundle(
 	chartDir string,
 	destDir string,
 	chartVersion string,
+	denoBinaryPath string,
 	vals *values.Options,
 	opts helmopts.HelmOptions,
 ) error {
 	chrt, err := loader.LoadDir(chartDir, opts)
 	if err != nil {
 		return fmt.Errorf("error loading chart %q: %w", chartDir, err)
+	}
+
+	if featgate.FeatGateTypescript.Enabled() {
+		if err := deno.NewDenoRuntime(true, deno.DenoRuntimeOptions{BinaryPath: denoBinaryPath}).BundleChartsRecursive(ctx, chrt, chartDir); err != nil {
+			return fmt.Errorf("unable to process TypeScript files in chart: %w", err)
+		}
 	}
 
 	var valsData []byte
@@ -578,6 +589,12 @@ WritingFiles:
 
 		if err := writeChartFile(ctx, destDir, f.Name, f.Data); err != nil {
 			return fmt.Errorf("error writing miscellaneous chart file: %w", err)
+		}
+	}
+
+	for _, f := range chrt.RuntimeFiles {
+		if err := writeChartFile(ctx, destDir, f.Name, f.Data); err != nil {
+			return fmt.Errorf("error writing chart runtime file: %w", err)
 		}
 	}
 

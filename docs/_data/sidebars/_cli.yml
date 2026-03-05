@@ -84,6 +84,16 @@ cli: &cli
       - title: werf lint
         url: /reference/cli/werf_lint.html
 
+      - title: werf chart
+        f:
+          - title: werf chart ts
+            f:
+              - title: werf chart ts build
+                url: /reference/cli/werf_chart_ts_build.html
+
+              - title: werf chart ts init
+                url: /reference/cli/werf_chart_ts_init.html
+
       - title: werf includes
         f:
           - title: werf includes get-file

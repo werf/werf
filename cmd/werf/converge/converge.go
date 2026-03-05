@@ -188,6 +188,7 @@ werf converge --repo registry.mydomain.com/web --env production`,
 	common.SetupSetDockerConfigJsonValue(&commonCmdData, cmd)
 	common.SetupTemplatesAllowDNS(&commonCmdData, cmd)
 	commonCmdData.SetupSkipDependenciesRepoRefresh(cmd)
+	common.SetupTSOptions(&commonCmdData, cmd)
 
 	planArtifactLifetime := nelmcommon.DefaultPlanArtifactLifetime
 
@@ -501,6 +502,8 @@ func run(
 		RollbackGraphPath:          commonCmdData.RollbackGraphPath,
 		ShowSubchartNotes:          commonCmdData.ShowSubchartNotes,
 		TemplatesAllowDNS:          commonCmdData.TemplatesAllowDNS,
+		RebuildTSBundle:            commonCmdData.RebuildTSBundle,
+		DenoBinaryPath:             commonCmdData.DenoBinaryPath,
 		ReleaseInstallRuntimeOptions: nelmcommon.ReleaseInstallRuntimeOptions{
 			ResourceValidationOptions:   commonCmdData.ResourceValidationOptions,
 			DefaultDeletePropagation:    commonCmdData.DefaultDeletePropagation,
