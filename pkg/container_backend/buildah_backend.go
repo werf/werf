@@ -1133,3 +1133,7 @@ func (backend *BuildahBackend) LoadImageFromStream(ctx context.Context, input io
 	}
 	return imageID, nil
 }
+
+func (backend *BuildahBackend) Shutdown(ctx context.Context) error {
+	return backend.buildah.Shutdown(ctx)
+}

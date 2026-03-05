@@ -176,13 +176,17 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 		return fmt.Errorf("component init error: %w", err)
 	}
 
+	containerBackend := commonManager.ContainerBackend()
+
+	defer func() {
+		commonManager.Shutdown(ctx)
+	}()
+
 	defer func() {
 		if err := tmp_manager.DelegateCleanup(ctx); err != nil {
 			logboek.Context(ctx).Warn().LogF("Temporary files cleanup preparation failed: %s\n", err)
 		}
 	}()
-
-	containerBackend := commonManager.ContainerBackend()
 
 	defer func() {
 		commonManager.TerminateSSHAgent()
