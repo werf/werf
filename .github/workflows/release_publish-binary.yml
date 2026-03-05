@@ -8,11 +8,12 @@ on:
 env:
   DEBIAN_FRONTEND: "noninteractive"
   TASK_X_REMOTE_TASKFILES: 1
+  LD_LIBRARY_PATH: "/usr/local/lib/libgost"
 
 jobs:
   publish:
     name: Build and publish binary
-    runs-on: delivery-github-runner
+    runs-on: [self-hosted, regular]
     permissions:
       contents: write
     steps:

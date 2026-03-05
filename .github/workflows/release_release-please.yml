@@ -16,7 +16,7 @@ defaults:
 
 jobs:
   release-please:
-    runs-on: delivery-github-runner
+    runs-on: [self-hosted, regular]
     steps:
       - name: Release
         id: release
