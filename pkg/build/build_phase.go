@@ -113,7 +113,20 @@ func (phase *BuildPhase) BeforeImages(ctx context.Context) error {
 	}
 
 	imagesPairs := phase.Conveyor.imagesTree.GetImagesByName(false)
-	telemetry.GetTelemetryWerfIO().BuildStarted(ctx, len(imagesPairs))
+
+	backend := "docker"
+	if phase.Conveyor.ContainerBackend.HasStapelBuildSupport() {
+		backend = "buildah"
+	}
+
+	werfInContainer := os.Getenv("WERF_CONTAINERIZED") == "yes"
+
+	phase.ImagesReport.Runtime = RuntimeInfo{
+		Backend:     backend,
+		InContainer: werfInContainer,
+	}
+
+	telemetry.GetTelemetryWerfIO().BuildStarted(ctx, len(imagesPairs), backend, werfInContainer)
 
 	return nil
 }
