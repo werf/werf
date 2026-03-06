@@ -1,5 +1,21 @@
 # Changelog
 
+## [3.0.0](https://github.com/werf/werf/compare/v2.62.1...v3.0.0) (2026-02-28)
+
+
+### ⚠ BREAKING CHANGES
+
+* The artifact directive is no longer supported. Use image with final: false instead.
+
+### Bug Fixes
+
+* --set-root-json not working ([#7374](https://github.com/werf/werf/issues/7374)) ([613f2e1](https://github.com/werf/werf/commit/613f2e1c987d56e1281a4e75dec18c70a81712af))
+
+
+### Code Refactoring
+
+* remove artifact image type ([f5a6cda](https://github.com/werf/werf/commit/f5a6cdad6c7ba3038d36fdfe8a0cc3517771a1e7))
+
 ## [2.62.1](https://github.com/werf/werf/compare/v2.62.0...v2.62.1) (2026-02-26)
 
 
