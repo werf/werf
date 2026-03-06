@@ -2,6 +2,7 @@ package build
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"strconv"
@@ -38,6 +39,7 @@ import (
 	"github.com/werf/werf/v2/pkg/telemetry"
 	"github.com/werf/werf/v2/pkg/util/parallel"
 	"github.com/werf/werf/v2/pkg/werf"
+	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
 
 type BuildPhaseOptions struct {
@@ -250,7 +252,8 @@ func (phase *BuildPhase) convergeSbomByImagesSets(ctx context.Context) error {
 		}
 
 		if err := parallel.DoTasks(ctx, len(names), parallel.DoTasksOptions{
-			MaxNumberOfWorkers: int(phase.Conveyor.ParallelTasksLimit),
+			MaxNumberOfWorkers:         int(phase.Conveyor.ParallelTasksLimit),
+			InitDockerCLIForEachWorker: true,
 		}, func(ctx context.Context, taskId int) error {
 			name := names[taskId]
 			images := imagesByName[name]
@@ -1455,7 +1458,8 @@ func (phase *BuildPhase) collectBaseImageSbom(ctx context.Context, img *image.Im
 	}
 
 	if img.GetBaseImageReference() == "" {
-		return nil, fmt.Errorf("unable to collect base image sbom for image %q: empty base image reference", name)
+		global_warnings.GlobalWarningLn(ctx, fmt.Sprintf("SBOM for base image of %q is not available: empty base image reference", name))
+		return nil, nil
 	}
 
 	var baseImageInfo *imagePkg.Info
@@ -1475,11 +1479,16 @@ func (phase *BuildPhase) collectBaseImageSbom(ctx context.Context, img *image.Im
 	}
 
 	if baseImageInfo == nil {
-		return nil, fmt.Errorf("unable to collect base image sbom for image %q: base image info not available", name)
+		global_warnings.GlobalWarningLn(ctx, fmt.Sprintf("SBOM for base image (from) of %q is not available: base image info not available", name))
+		return nil, nil
 	}
 
 	baseImageSbom, err := phase.sbomStep.GetImageBOM(ctx, name, img.GetBaseImageReference(), baseImageInfo)
 	if err != nil {
+		if errors.Is(err, ErrSbomNotAvailable) {
+			global_warnings.GlobalWarningLn(ctx, fmt.Sprintf("SBOM for base image (from) %q of %q is not available: %s", img.GetBaseImageReference(), name, err))
+			return nil, nil
+		}
 		return nil, fmt.Errorf("unable to get base image sbom with ref %s: %w", img.GetBaseImageReference(), err)
 	}
 
@@ -1513,11 +1522,16 @@ func (phase *BuildPhase) collectImportImageSboms(ctx context.Context, img *image
 		}
 
 		if importImageInfo == nil {
-			return nil, fmt.Errorf("unable to collect import image sbom for %q on platform %q: image info not available", importInfo.ImageName, img.TargetPlatform)
+			global_warnings.GlobalWarningLn(ctx, fmt.Sprintf("SBOM for imported image (import) %q of %q on platform %q is not available: image info not available", importInfo.ImageName, name, img.TargetPlatform))
+			continue
 		}
 
 		importImageSbom, err := phase.sbomStep.GetImageBOM(ctx, name, importInfo.ImageName, importImageInfo)
 		if err != nil {
+			if errors.Is(err, ErrSbomNotAvailable) {
+				global_warnings.GlobalWarningLn(ctx, fmt.Sprintf("SBOM for imported image (import) %q of %q is not available: %s", importInfo.ImageName, name, err))
+				continue
+			}
 			return nil, fmt.Errorf("unable to get import image sbom for %q: %w", importInfo.ImageName, err)
 		}
 		importImageSboms = append(importImageSboms, importImageSbom)

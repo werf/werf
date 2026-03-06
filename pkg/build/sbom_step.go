@@ -2,6 +2,7 @@ package build
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"slices"
@@ -23,6 +24,11 @@ import (
 	"github.com/werf/werf/v2/pkg/sbom/scanner"
 	"github.com/werf/werf/v2/pkg/storage"
 )
+
+// ErrSbomNotAvailable indicates that SBOM for the given image is not available
+// (e.g. it was not built by werf, or the SBOM image is missing from the registry/local storage).
+// Callers should handle this as a non-fatal condition by emitting a warning.
+var ErrSbomNotAvailable = errors.New("sbom not available")
 
 type sbomStep struct {
 	containerBackend container_backend.ContainerBackend
@@ -247,7 +253,7 @@ func (step *sbomStep) findSbomImageLocally(ctx context.Context, sbomBaseImgLabel
 
 func (step *sbomStep) GetImageBOM(ctx context.Context, werfImgName, imageRef string, imageInfo *image.Info) (*cdx.BOM, error) {
 	if imageInfo == nil {
-		return nil, fmt.Errorf("image info not available for %q", imageRef)
+		return nil, fmt.Errorf("image info not available for %q: %w", imageRef, ErrSbomNotAvailable)
 	}
 
 	return step.pullImageSbom(ctx, werfImgName, imageInfo)
@@ -290,8 +296,8 @@ func (step *sbomStep) resolveImageSbomName(baseImageInfo *image.Info) (string, e
 	}
 
 	return "", fmt.Errorf(
-		"unable to resolve SBOM name for image %q: required werf stage content digest label is missing",
-		baseImageInfo.Name,
+		"unable to resolve SBOM name for image %q: required werf stage content digest label is missing: %w",
+		baseImageInfo.Name, ErrSbomNotAvailable,
 	)
 }
 
@@ -303,12 +309,12 @@ func (step *sbomStep) ensureSbomImageExists(ctx context.Context, sbomImageName, 
 	}
 
 	if step.isLocalStorage {
-		return fmt.Errorf("SBOM for image %q not found locally", sourceImageName)
+		return fmt.Errorf("SBOM for image %q not found locally: %w", sourceImageName, ErrSbomNotAvailable)
 	}
 
 	logboek.Context(ctx).Default().LogF("Pulling image SBOM from %s\n", sbomImageName)
 	if err := step.containerBackend.Pull(ctx, sbomImageName, container_backend.PullOpts{}); err != nil {
-		return fmt.Errorf("SBOM for image %q not found in container registry: %w", sourceImageName, err)
+		return fmt.Errorf("SBOM for image %q not found in container registry (%w): %w", sourceImageName, err, ErrSbomNotAvailable)
 	}
 
 	return nil

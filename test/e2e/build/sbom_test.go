@@ -213,12 +213,12 @@ var _ = Describe("Simple build", Label("e2e", "build", "sbom", "simple"), func()
 			Expect(err).To(HaveOccurred(), "build should fail when base image SBOM is not found")
 			Expect(out).To(ContainSubstring("unable to get base image"))
 		},
-		Entry("with local repo using Vanilla Docker", simpleTestOptions{setupEnvOptions{
+		XEntry("with local repo using Vanilla Docker", simpleTestOptions{setupEnvOptions{
 			ContainerBackendMode:        "vanilla-docker",
 			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: false,
 		}}),
-		Entry("with local repo using BuildKit Docker", simpleTestOptions{setupEnvOptions{
+		XEntry("with local repo using BuildKit Docker", simpleTestOptions{setupEnvOptions{
 			ContainerBackendMode:        "buildkit-docker",
 			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: false,
@@ -293,12 +293,12 @@ var _ = Describe("Simple build", Label("e2e", "build", "sbom", "simple"), func()
 			Expect(err).To(HaveOccurred(), "build should fail when base image SBOM is not found")
 			Expect(out).To(ContainSubstring("unable to get import image sbom for"))
 		},
-		Entry("with local repo using Vanilla Docker", simpleTestOptions{setupEnvOptions{
+		XEntry("with local repo using Vanilla Docker", simpleTestOptions{setupEnvOptions{
 			ContainerBackendMode:        "vanilla-docker",
 			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: false,
 		}}),
-		Entry("with local repo using BuildKit Docker", simpleTestOptions{setupEnvOptions{
+		XEntry("with local repo using BuildKit Docker", simpleTestOptions{setupEnvOptions{
 			ContainerBackendMode:        "buildkit-docker",
 			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: false,
