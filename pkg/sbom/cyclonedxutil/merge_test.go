@@ -149,10 +149,23 @@ var _ = Describe("MergeBOMs", func() {
 		Expect(result.Metadata).To(BeNil())
 	})
 
-	It("does not deduplicate components", func() {
+	It("deduplicates identical components from different BOMs", func() {
 		duplicateComp := cdx.Component{Name: "duplicate-comp", Version: "1.0.0"}
 		baseBOM := &cdx.BOM{SpecVersion: cdx.SpecVersion1_6, Components: &[]cdx.Component{duplicateComp}}
 		targetBOM := &cdx.BOM{SpecVersion: cdx.SpecVersion1_6, Components: &[]cdx.Component{duplicateComp}}
+
+		result, err := MergeBOMs(targetBOM, MergeOpts{BaseBOM: baseBOM})
+		Expect(err).ToNot(HaveOccurred())
+		Expect(result.Components).ToNot(BeNil())
+		Expect(*result.Components).To(HaveLen(1))
+		Expect((*result.Components)[0].Name).To(Equal("duplicate-comp"))
+	})
+
+	It("keeps components that differ in any field", func() {
+		comp1 := cdx.Component{Name: "comp", Version: "1.0.0"}
+		comp2 := cdx.Component{Name: "comp", Version: "2.0.0"}
+		baseBOM := &cdx.BOM{SpecVersion: cdx.SpecVersion1_6, Components: &[]cdx.Component{comp1}}
+		targetBOM := &cdx.BOM{SpecVersion: cdx.SpecVersion1_6, Components: &[]cdx.Component{comp2}}
 
 		result, err := MergeBOMs(targetBOM, MergeOpts{BaseBOM: baseBOM})
 		Expect(err).ToNot(HaveOccurred())
@@ -262,12 +275,13 @@ var _ = Describe("MergeBOMs", func() {
 			},
 		),
 
-		Entry("does not deduplicate",
+		Entry("deduplicates identical dependencies",
 			&cdx.BOM{SpecVersion: cdx.SpecVersion1_6, Dependencies: &[]cdx.Dependency{{Ref: "dup", Dependencies: &[]string{"dep-a"}}}},
 			MergeOpts{BaseBOM: &cdx.BOM{SpecVersion: cdx.SpecVersion1_6, Dependencies: &[]cdx.Dependency{{Ref: "dup", Dependencies: &[]string{"dep-a"}}}}},
 			func(result *cdx.BOM) {
 				Expect(result.Dependencies).ToNot(BeNil())
-				Expect(*result.Dependencies).To(HaveLen(2))
+				Expect(*result.Dependencies).To(HaveLen(1))
+				Expect((*result.Dependencies)[0].Ref).To(Equal("dup"))
 			},
 		),
 

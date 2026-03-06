@@ -81,4 +81,40 @@ components:
 			),
 		)
 	})
+
+	Describe("BuildCycloneDX16BOMFromJSON", func() {
+		It("deduplicates components in external SBOM before validation", func() {
+			inputJSON := `{
+				"bomFormat": "CycloneDX",
+				"specVersion": "1.6",
+				"version": 1,
+				"serialNumber": "urn:uuid:00000000-0000-0000-0000-000000000000",
+				"components": [
+					{"type": "library", "name": "openssl", "version": "3.0.0"},
+					{"type": "library", "name": "openssl", "version": "3.0.0"},
+					{"type": "library", "name": "zlib", "version": "1.2.13"}
+				]
+			}`
+
+			bom, err := BuildCycloneDX16BOMFromJSON([]byte(inputJSON))
+			Expect(err).ToNot(HaveOccurred())
+			Expect(bom).ToNot(BeNil())
+			Expect(bom.Components).ToNot(BeNil())
+			Expect(*bom.Components).To(HaveLen(2))
+			Expect((*bom.Components)[0].Name).To(Equal("openssl"))
+			Expect((*bom.Components)[1].Name).To(Equal("zlib"))
+		})
+
+		It("rejects invalid BOM even after dedup", func() {
+			inputJSON := `{
+				"bomFormat": "INVALID",
+				"specVersion": "1.6",
+				"version": 1
+			}`
+
+			_, err := BuildCycloneDX16BOMFromJSON([]byte(inputJSON))
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("validation failed"))
+		})
+	})
 })

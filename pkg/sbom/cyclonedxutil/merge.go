@@ -66,6 +66,8 @@ func MergeBOMs(target *cdx.BOM, opts MergeOpts) (*cdx.BOM, error) {
 	result.Formulation = mergeFormulation(boms)
 	result.Declarations = mergeDeclarations(boms)
 
+	DedupBOM(result)
+
 	return result, nil
 }
 

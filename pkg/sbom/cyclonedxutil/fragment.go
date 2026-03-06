@@ -44,14 +44,25 @@ func BuildCycloneDX16BOMFromYAMLFragment(fragmentYAML []byte) (*cdx.BOM, error) 
 
 // BuildCycloneDX16BOMFromJSON builds a CycloneDX BOM document from JSON bytes and validates it.
 // Currently, only CycloneDX@1.6 is supported.
+//
+// External SBOMs may contain duplicate entries in arrays with "uniqueItems: true"
+// (e.g. components). To handle this gracefully, the function first deserializes
+// and deduplicates the BOM, then validates the cleaned result against the schema.
 func BuildCycloneDX16BOMFromJSON(bomJSON []byte) (*cdx.BOM, error) {
-	if err := ValidateCycloneDX16Schema(bomJSON); err != nil {
-		return nil, fmt.Errorf("cyclonedxutil: validation failed: %w", err)
-	}
-
 	var bom cdx.BOM
 	if err := json.Unmarshal(bomJSON, &bom); err != nil {
 		return nil, fmt.Errorf("cyclonedxutil: failed to decode CycloneDX document: %w", err)
+	}
+
+	DedupBOM(&bom)
+
+	cleanJSON, err := json.Marshal(bom)
+	if err != nil {
+		return nil, fmt.Errorf("cyclonedxutil: failed to re-encode BOM after dedup: %w", err)
+	}
+
+	if err := ValidateCycloneDX16Schema(cleanJSON); err != nil {
+		return nil, fmt.Errorf("cyclonedxutil: validation failed: %w", err)
 	}
 
 	// As a "hard-ish" check, ensure cyclonedx-go can encode the resulting BOM as JSON 1.6.
