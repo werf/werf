@@ -43,6 +43,9 @@ werf bundle render [options]
             (Buildah-only) Use specified mirrors for docker.io
       --debug-templates=false
             Enable debug mode for Go templates (default $WERF_DEBUG_TEMPLATES or false)
+      --deno-binary-path=""
+            Path to the Deno binary to use instead of auto-downloading (default                     
+            $WERF_DENO_BINARY_PATH)
       --disable-default-secret-values=false
             Do not use secret values from the default .helm/secret-values.yaml file (default        
             $WERF_DISABLE_DEFAULT_SECRET_VALUES or false)
@@ -180,6 +183,8 @@ werf bundle render [options]
             $WERF_PROVENANCE_KEYRING)
       --provenance-strategy=""
             Strategy for provenance verifying (default $WERF_PROVENANCE_STRATEGY).
+      --rebuild-ts=false
+            Rebuild the typescript bundle even if it already exists (default $WERF_REBUILD_TS)
       --release=""
             Use specified Helm release name (default $WERF_RELEASE)
       --release-storage=""
