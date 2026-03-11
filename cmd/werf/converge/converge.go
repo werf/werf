@@ -502,7 +502,7 @@ func run(
 		RollbackGraphPath:          commonCmdData.RollbackGraphPath,
 		ShowSubchartNotes:          commonCmdData.ShowSubchartNotes,
 		TemplatesAllowDNS:          commonCmdData.TemplatesAllowDNS,
-		RebuildTSBundle:            commonCmdData.RebuildTSBundle,
+		IgnoreBundleJS:             commonCmdData.IgnoreBundleJS,
 		DenoBinaryPath:             commonCmdData.DenoBinaryPath,
 		ReleaseInstallRuntimeOptions: nelmcommon.ReleaseInstallRuntimeOptions{
 			ResourceValidationOptions:   commonCmdData.ResourceValidationOptions,

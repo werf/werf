@@ -420,7 +420,7 @@ func runLint(ctx context.Context, imageNameListFromArgs []string) error {
 		ResourceValidationOptions:   commonCmdData.ResourceValidationOptions,
 		Remote:                      cmdData.Validate,
 		TemplatesAllowDNS:           commonCmdData.TemplatesAllowDNS,
-		RebuildTSBundle:             commonCmdData.RebuildTSBundle,
+		IgnoreBundleJS:              commonCmdData.IgnoreBundleJS,
 		DenoBinaryPath:              commonCmdData.DenoBinaryPath,
 	}); err != nil {
 		return fmt.Errorf("chart lint: %w", err)

@@ -249,7 +249,7 @@ func runRender(ctx context.Context) error {
 		ShowOnlyFiles:               append(util.PredefinedValuesByEnvNamePrefix("WERF_SHOW_ONLY"), cmdData.ShowOnly...),
 		ShowStandaloneCRDs:          cmdData.IncludeCRDs,
 		TemplatesAllowDNS:           commonCmdData.TemplatesAllowDNS,
-		RebuildTSBundle:             commonCmdData.RebuildTSBundle,
+		IgnoreBundleJS:              commonCmdData.IgnoreBundleJS,
 		DenoBinaryPath:              commonCmdData.DenoBinaryPath,
 	}); err != nil {
 		return fmt.Errorf("chart render: %w", err)

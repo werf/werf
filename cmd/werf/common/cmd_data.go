@@ -152,7 +152,7 @@ type CmdData struct {
 	UninstallGraphPath               string
 	UninstallReportPath              string
 	UseDeployReport                  bool
-	RebuildTSBundle                  bool
+	IgnoreBundleJS                   bool
 	DenoBinaryPath                   string
 }
 

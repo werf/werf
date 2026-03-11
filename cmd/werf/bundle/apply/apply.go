@@ -255,7 +255,7 @@ func runApply(ctx context.Context) error {
 			ReleaseStorageDriver:        commonCmdData.ReleaseStorageDriver,
 			ReleaseStorageSQLConnection: commonCmdData.ReleaseStorageSQLConnection,
 		},
-		RebuildTSBundle: commonCmdData.RebuildTSBundle,
+		IgnoreBundleJS:  commonCmdData.IgnoreBundleJS,
 		DenoBinaryPath:  commonCmdData.DenoBinaryPath,
 	}); err != nil {
 		return fmt.Errorf("release install: %w", err)
