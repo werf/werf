@@ -35,7 +35,7 @@ toc: false
 
 Больше информации о том, что такое чарт, шаблоны и пр. доступно в [главе про Helm]({{ "usage/deploy/overview.html" | true_relative_url }}).
 
-## Resource weight
+## Вес ресурса
 
 `werf.io/weight: "NUM"`
 
@@ -49,7 +49,7 @@ toc: false
 
 Дополнительная информация доступна в разделе [Порядок развертывания]({{ "/usage/deploy/deployment_order.html" | true_relative_url }}).
 
-## Resource dependencies
+## Зависимости ресурса
 
 `werf.io/deploy-dependency-ANY_NAME: state=STATE[,name=NAME][,namespace=NAMESPACE][,kind=KIND][,group=GROUP][,version=VERSION]`
 
@@ -69,7 +69,7 @@ toc: false
 
 Больше информации: [порядок развертывания]({{ "/usage/deploy/deployment_order.html" | true_relative_url }})
 
-## External dependency resource
+## Внешняя зависимость: ресурс
 
 `<any-name>.external-dependency.werf.io/resource: type[.version.group]/name`
 
@@ -79,13 +79,13 @@ toc: false
 
 Задает внешнюю зависимость для ресурса. Ресурс с аннотацией будет развернут только после создания и готовности внешней зависимости.
 
-## External dependency namespace
+## Внешняя зависимость: пространство имен
 
 `<any-name>.external-dependency.werf.io/namespace: name`
 
-Указывает пространство имен для внешней зависимости, заданной [соответствующей аннотацией](#external-dependency-resource). Префикс `<any-name>` должен быть таким же, как у аннотации, определяющей внешнюю зависимость.
+Указывает пространство имен для внешней зависимости, заданной [соответствующей аннотацией](#внешняя-зависимость-ресурс). Префикс `<any-name>` должен быть таким же, как у аннотации, определяющей внешнюю зависимость.
 
-## Resource ownership
+## Право владения ресурсом
 
 `werf.io/ownership: release|anyone`
 
@@ -95,7 +95,7 @@ toc: false
 
 Обычные ресурсы по умолчанию имеют владельцем `release`, а хуки и CRD из директории `crds` — `anyone`.
 
-## Conditional resource deployment
+## Условный деплой ресурса
 
 `werf.io/deploy-on: pre-install|install|post-install|pre-upgrade|upgrade|post-upgrade|pre-rollback|rollback|post-rollback|pre-delete|delete|post-delete`
 
@@ -107,7 +107,7 @@ toc: false
 
 По умолчанию для обычных ресурсов используется значение `install,upgrade,rollback`, для хуков — значения из `helm.sh/hook`.
 
-## Resource delete policy
+## Политика удаления ресурса
 
 `werf.io/delete-policy: before-creation|before-creation-if-immutable|succeeded|failed`
 
@@ -119,7 +119,7 @@ toc: false
 
 По умолчанию для обычных ресурсов политика удаления не задана, а для хуков значения берутся из `helm.sh/hook-delete-policy` и преобразуются в значения в `werf.io/delete-policy`.
 
-## Delete propagation
+## Распространение удаления
 
 `werf.io/delete-propagation: Foreground|Background|Orphan`
 
@@ -127,7 +127,7 @@ toc: false
 
 Значением по умолчанию является `Foreground`.
 
-## Delete dependencies
+## Зависимости при удалении
 
 `werf.io/delete-dependency-ANY_NAME: state=STATE[,name=NAME][,namespace=NAMESPACE][,kind=KIND][,group=GROUP][,version=VERSION]`
 
@@ -147,7 +147,7 @@ toc: false
 
 Больше информации: [порядок развертывания]({{ "/usage/deploy/deployment_order.html" | true_relative_url }})
 
-## Replicas on creation
+## Количество реплик при создании
 
 Когда для ресурса включён HPA, использование `spec.replicas` может привести к непредсказуемому поведению, потому что каждый раз когда происходит converge для werf chart через CI/CD количество реплик ресурса будет сброшено к статически заданному в шаблонах чарта значению `spec.replicas`, даже если это значение изменил HPA в рантайме.
 
@@ -159,7 +159,7 @@ toc: false
 
 **ЗАМЕЧАНИЕ** `"NUM"` должно быть указано строкой (в двойных кавычках), потому что аннотации не поддерживают передачу других типов данных кроме строк, аннотации с другим типом данных будут проигнорированы.
 
-## Track termination mode
+## Режим остановки отслеживания
 
 `"werf.io/track-termination-mode": WaitUntilResourceReady|NonBlocking`
 
@@ -173,7 +173,7 @@ toc: false
 
 **СОВЕТ** Используйте аннотацию `"werf.io/track-termination-mode": NonBlocking`, когда описываете в релизе объект StatefulSet с ручной стратегией выката (параметр `OnDelete`) и не хотите блокировать весь процесс деплоя из-за этого объекта, дожидаясь его обновления.
 
-## Fail mode
+## Режим обработки ошибок
 
 `"werf.io/fail-mode": FailWholeDeployProcessImmediately|HopeUntilEndOfDeployProcess|IgnoreAndContinueDeployProcess`
 
@@ -182,13 +182,13 @@ toc: false
  * `HopeUntilEndOfDeployProcess` — в случае ошибки при деплое ресурса с данной аннотацией его отслеживание будет продолжаться, пока есть другие ресурсы, готовности которых ожидает процесс деплоя, либо все оставшиеся ресурсы имеют такую-же аннотацию. Если с ошибкой остался только этот ресурс или несколько ресурсов с такой-же аннотацией, то в случае сохранения ошибки весь процесс деплоя завершается с ошибкой.
  * `IgnoreAndContinueDeployProcess` — ошибка при деплое ресурса с данной аннотацией не влияет на весь процесс деплоя.
 
-## Failures allowed per replica
+## Допустимое количество ошибок на реплику
 
 `"werf.io/failures-allowed-per-replica": "NUMBER"`
 
 По умолчанию, при отслеживании статуса ресурса допускается срабатывание ошибки 1 раз, прежде чем весь процесс деплоя считается ошибочным. Этот параметр влияет на поведение настройки [Fail mode](#fail-mode): определяет порог срабатывания, после которого начинает работать режим реакции на ошибки.
 
-## Ignore readiness probe failures for container
+## Игнорировать неудачные readiness-пробы для контейнера
 
 `"werf.io/ignore-readiness-probe-fails-for-CONTAINER_NAME": "TIME"`
 
@@ -203,7 +203,7 @@ readiness-пробы указано `failureThreshold: 1`, тогда перва
 Пример:
 `"werf.io/ignore-readiness-probe-fails-for-backend": "20s"`
 
-## No activity timeout
+## Таймаут отсутствия активности
 
 `werf.io/no-activity-timeout: "TIME"`
 
@@ -217,31 +217,31 @@ readiness-пробы указано `failureThreshold: 1`, тогда перва
 
 Формат записи значения описан [здесь](https://pkg.go.dev/time#ParseDuration).
 
-## Log regex
+## Шаблон для включения логов
 
 `"werf.io/log-regex": RE2_REGEX`
 
 Определяет [Re2 regex](https://github.com/google/re2/wiki/Syntax) шаблон, применяемый ко всем логам всех контейнеров всех подов ресурса с этой аннотацией. werf будет выводить только те строки лога, которые удовлетворяют regex-шаблону. По умолчанию werf выводит все строки лога.
 
-## Log regex for container
+## Шаблон для включения логов контейнера
 
 `"werf.io/log-regex-for-CONTAINER_NAME": RE2_REGEX`
 
 Определяет [Re2 regex](https://github.com/google/re2/wiki/Syntax) шаблон, применяемый к логам контейнера с именем `CONTAINER_NAME` всех подов с данной аннотацией. werf будет выводить только те строки лога, которые удовлетворяют regex-шаблону. По умолчанию werf выводит все строки лога.
 
-## Log regex skip
+## Шаблон для исключения логов
 
 `"werf.io/log-regex-skip": RE2_REGEX`
 
 Определяет [Re2 regex](https://github.com/google/re2/wiki/Syntax) шаблон, применяемый ко всем логам всех контейнеров всех подов ресурса с этой аннотацией. werf не будет выводить те строки лога, которые удовлетворяют regex-шаблону. По умолчанию werf выводит все строки лога.
 
-## Log regex skip for container
+## Шаблон для исключения логов контейнера
 
 `"werf.io/log-regex-skip-for-CONTAINER_NAME": RE2_REGEX`
 
 Определяет [Re2 regex](https://github.com/google/re2/wiki/Syntax) шаблон, применяемый к логам контейнера с именем `CONTAINER_NAME` всех подов с данной аннотацией. werf будет скрывать те строки лога, которые удовлетворяют regex-шаблону. По умолчанию werf выводит все строки лога.
 
-## Skip logs
+## Отключение логов
 
 `"werf.io/skip-logs": "true"|"false"`
 
@@ -249,25 +249,25 @@ readiness-пробы указано `failureThreshold: 1`, тогда перва
 
 <img src="https://raw.githubusercontent.com/werf/demos/master/deploy/werf-new-track-modes-2.gif" />
 
-## Skip logs for containers
+## Отключение логов для контейнеров
 
 `"werf.io/skip-logs-for-containers": CONTAINER_NAME1,CONTAINER_NAME2,CONTAINER_NAME3...`
 
 Список (через запятую) контейнеров пода с данной аннотацией, для которых логи не выводятся при отслеживании.
 
-## Show logs only for number of replicas
+## Логи только для указанного числа реплик
 
 `"werf.io/show-logs-only-for-number-of-replicas": "NUMBER"`
 
 Отобразить логи только для указанного числа реплик ресурса в процессе трекинга. Мы отображаем логи только для одной реплики по умолчанию, чтобы избежать избыточного вывода логов и оптимизировать утилизацию ресурсов.
 
-## Show logs only for containers
+## Логи только для указанных контейнеров
 
 `"werf.io/show-logs-only-for-containers": CONTAINER_NAME1,CONTAINER_NAME2,CONTAINER_NAME3...`
 
 Список (через запятую) контейнеров пода с данной аннотацией, для которых выводятся логи при отслеживании. Для контейнеров, чьи имена отсутствуют в списке, логи не выводятся. По умолчанию выводятся логи для всех контейнеров всех подов ресурса.
 
-## Show service messages
+## Показывать служебные сообщения
 
 `"werf.io/show-service-messages": "true"|"false"`
 
@@ -275,7 +275,7 @@ readiness-пробы указано `failureThreshold: 1`, тогда перва
 
 <img src="https://raw.githubusercontent.com/werf/demos/master/deploy/werf-new-track-modes-1.gif" />
 
-## Mark fields of a resource as sensitive
+## Пометка полей ресурса как чувствительных
 
 `"werf.io/sensitive-paths": "JSONPath,JSONPath,..."`
 
@@ -284,7 +284,7 @@ readiness-пробы указано `failureThreshold: 1`, тогда перва
 
 Не показывать диффы для ресурсных полей, которые подпадают под указанные JSONPath. Переопределяет значение аннотации `werf.io/sensitive`.
 
-## Mark resource as sensitive
+## Пометка ресурса как чувствительного
 
 `"werf.io/sensitive": "true"|"false"`
 
