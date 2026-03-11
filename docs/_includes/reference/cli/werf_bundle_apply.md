@@ -69,6 +69,9 @@ werf bundle apply [options]
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --hooks-status-progress-period=0
             No-op
+      --ignore-bundle-js=false
+            Do not use the existing bundle.js file. Requires TypeScript source files and Deno to    
+            rebuild (default $WERF_IGNORE_BUNDLE_JS)
       --ignore-secret-key=false
             Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)
       --insecure-helm-dependencies=false
@@ -192,8 +195,6 @@ werf bundle apply [options]
             $WERF_PROVENANCE_KEYRING)
       --provenance-strategy=""
             Strategy for provenance verifying (default $WERF_PROVENANCE_STRATEGY).
-      --rebuild-ts=false
-            Rebuild the typescript bundle even if it already exists (default $WERF_REBUILD_TS)
       --release=""
             Use specified Helm release name (default $WERF_RELEASE)
       --release-info-annotations=[]
