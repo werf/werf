@@ -103,6 +103,5 @@ ALWAYS perform this step after completing any user request. NEVER skip it, even 
 ## Related repositories
 
 - [werf/nelm](https://github.com/werf/nelm) — Deployment engine used by werf. Go-based Kubernetes deployment tool that manages Helm charts.
-- [werf/3p-helm](https://github.com/werf/3p-helm) — Helm fork. Provides chart loading, rendering, and release primitives. Changes to Helm internals go here, not in werf.
 - [werf/kubedog](https://github.com/werf/kubedog) — Kubernetes resource tracking library.
 - [werf/common-go](https://github.com/werf/common-go) — Shared Go libraries (secrets, CLI utilities, locking).

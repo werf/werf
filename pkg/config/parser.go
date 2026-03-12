@@ -21,7 +21,7 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
-	"github.com/werf/nelm/pkg/export/helm/engine"
+	"github.com/werf/nelm/pkg/helm/pkg/engine"
 	"github.com/werf/werf/v2/pkg/file_manager"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
 	"github.com/werf/werf/v2/pkg/slug"
@@ -555,11 +555,11 @@ func detailedTemplateError(tmpl *template.Template, d detailedTemplateErrorData,
 			strings.TrimRightFunc(util.NumerateLines(d.templateContent, 1), unicode.IsSpace),
 		)
 	}
-	if strings.Contains(err.Error(), engine.GetTemplateErrHint()) {
+	if strings.Contains(err.Error(), engine.TemplateErrHint) {
 		return err
 	}
 
-	return fmt.Errorf("%w\n%s", err, engine.GetTemplateErrHint())
+	return fmt.Errorf("%w\n%s", err, engine.TemplateErrHint)
 }
 
 type files struct {

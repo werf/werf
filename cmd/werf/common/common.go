@@ -18,9 +18,9 @@ import (
 	"github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
 	"github.com/werf/nelm/pkg/common"
-	"github.com/werf/nelm/pkg/export/helm/chart/loader"
-	"github.com/werf/nelm/pkg/export/helm/engine"
 	"github.com/werf/nelm/pkg/featgate"
+	"github.com/werf/nelm/pkg/helm/pkg/chart/loader"
+	"github.com/werf/nelm/pkg/helm/pkg/engine"
 	"github.com/werf/nelm/pkg/log"
 	"github.com/werf/werf/v2/pkg/build"
 	"github.com/werf/werf/v2/pkg/build/stage"
@@ -59,7 +59,7 @@ const (
 
 func init() {
 	loader.NoChartLockWarning = `Cannot automatically download chart dependencies without .helm/Chart.lock or .helm/requirements.lock. Run "werf helm dependency update .helm" and commit resulting .helm/Chart.lock or .helm/requirements.lock. Committing .tgz files in .helm/charts is not required, better add "/.helm/charts/*.tgz" to the .gitignore.`
-	engine.SetTemplateErrHint(TemplateErrHint)
+	engine.TemplateErrHint = TemplateErrHint
 }
 
 type GitWorktreeNotFoundError struct{}
@@ -1272,12 +1272,6 @@ func GetIntrospectOptions(cmdData *CmdData, werfConfig *config.WerfConfig) (buil
 	return introspectOptions, nil
 }
 
-func LogKubeContext(kubeContext string) {
-	if kubeContext != "" {
-		logboek.LogF("Using kube context: %s\n", kubeContext)
-	}
-}
-
 func ProcessLogProjectDir(cmdData *CmdData, projectDir string) {
 	if *cmdData.LogProjectDir {
 		logboek.LogF("Using project dir: %s\n", projectDir)
@@ -1647,11 +1641,7 @@ func StubSetupTrackTimeout(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().IntVarP(lo.ToPtr(0), "timeout", "t", 0, "No-op")
 }
 
-func HasKubeConfig(cmdData *CmdData) bool {
-	return cmdData.LegacyKubeConfigPath != "" ||
-		cmdData.KubeConfigBase64 != "" ||
-		len(cmdData.LegacyKubeConfigPathsMergeList) > 0 ||
-		cmdData.KubeBearerTokenData != "" ||
-		cmdData.KubeBearerTokenPath != "" ||
-		cmdData.KubeAPIServerAddress != ""
+func SetupScanContextNamespaceOnly(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.ScanContextNamespaceOnly = new(bool)
+	cmd.Flags().BoolVarP(cmdData.ScanContextNamespaceOnly, "scan-context-namespace-only", "", util.GetBoolEnvironmentDefaultFalse("WERF_SCAN_CONTEXT_NAMESPACE_ONLY"), "Scan for used images only in namespace linked with context for each available context in kube-config (or only for the context specified with option --kube-context). When disabled will scan all namespaces in all contexts (or only for the context specified with option --kube-context). (Default $WERF_SCAN_CONTEXT_NAMESPACE_ONLY)")
 }

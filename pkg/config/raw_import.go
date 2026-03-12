@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/docker/distribution/reference"
+	"github.com/distribution/reference"
 )
 
 type rawImport struct {

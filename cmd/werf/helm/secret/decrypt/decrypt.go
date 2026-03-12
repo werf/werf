@@ -13,7 +13,6 @@ import (
 	"github.com/werf/common-go/pkg/secrets_manager"
 	secret_common "github.com/werf/nelm/pkg/legacy/secret"
 	"github.com/werf/werf/v2/cmd/werf/common"
-	"github.com/werf/werf/v2/cmd/werf/docs/replacers/helm"
 	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
 	"github.com/werf/werf/v2/pkg/werf"
@@ -31,7 +30,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 		Use:                   "decrypt",
 		DisableFlagsInUseLine: true,
 		Short:                 "Decrypt data",
-		Long:                  common.GetLongCommandDescription(helm.GetHelmSecretDecryptDocs().Long),
 		Example: `  # Decrypt data in interactive mode
   $ werf helm secret decrypt
   Enter secret:
@@ -42,7 +40,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
   Tue Jun 26 09:58:10 PDT 1990`,
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
-			common.DocsLongMD: helm.GetHelmSecretDecryptDocs().LongMD,
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()

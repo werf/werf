@@ -8,8 +8,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/werf/logboek"
-	"github.com/werf/nelm/pkg/export/helm/cmd/helm"
-	"github.com/werf/nelm/pkg/export/helm/werf/helmopts"
+	nelmcommon "github.com/werf/nelm/pkg/common"
+	helm "github.com/werf/nelm/pkg/helm/pkg/cmd"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/deploy/bundles"
 	"github.com/werf/werf/v2/pkg/docker_registry"
@@ -148,9 +148,9 @@ func runCopy(ctx context.Context) error {
 			ToRegistryClient:      toRegistry,
 			HelmCompatibleChart:   commonCmdData.HelmCompatibleChart,
 			RenameChart:           commonCmdData.RenameChart,
-			HelmOptions: helmopts.HelmOptions{
-				ChartLoadOpts: helmopts.ChartLoadOptions{
-					ChartType: helmopts.ChartTypeBundle,
+			HelmOptions: nelmcommon.HelmOptions{
+				ChartLoadOpts: nelmcommon.ChartLoadOptions{
+					ChartType: nelmcommon.LegacyChartTypeBundle,
 					NoSecrets: true,
 				},
 			},

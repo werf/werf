@@ -9,7 +9,6 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/werf/v2/test/pkg/utils"
 	"github.com/werf/werf/v2/test/pkg/utils/liveexec"
 )
@@ -33,9 +32,7 @@ func werfHostPurge(ctx context.Context, dir string, opts liveexec.ExecCommandOpt
 }
 
 var _ = Describe("Stapel imports", func() {
-	BeforeEach(func() {
-		Expect(kube.Init(kube.InitOptions{})).To(Succeed())
-	})
+	BeforeEach(func() {})
 
 	Context("importing files and directories from artifact", func() {
 		AfterEach(func(ctx SpecContext) {

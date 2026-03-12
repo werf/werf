@@ -8,7 +8,6 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/werf"
@@ -59,7 +58,6 @@ func getImageID(ctx context.Context, ref string, containerBackend container_back
 
 var _ = Describe("Images dependencies", Label("e2e", "build", "extra"), func() {
 	BeforeEach(func() {
-		Expect(kube.Init(kube.InitOptions{})).To(Succeed())
 		Expect(werf.Init(SuiteData.TmpDir, "")).To(Succeed())
 	})
 

@@ -13,9 +13,8 @@ import (
 )
 
 const (
-	LocalStorageAddress             = ":local"
-	DefaultKubernetesStorageAddress = "kubernetes://werf-synchronization"
-	NamelessImageRecordTag          = "__nameless__"
+	LocalStorageAddress    = ":local"
+	NamelessImageRecordTag = "__nameless__"
 )
 
 var (

@@ -12,7 +12,6 @@ import (
 	"github.com/rodaine/table"
 
 	"github.com/werf/common-go/pkg/util"
-	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/cleaning/allow_list"
 	"github.com/werf/werf/v2/pkg/cleaning/git_history_based_cleanup"
@@ -29,7 +28,7 @@ import (
 type CleanupOptions struct {
 	ImageNameList                           []string
 	LocalGit                                GitRepo
-	KubernetesContextClients                []*kube.ContextClient
+	KubernetesContextClients                []*ContextClient
 	KubernetesNamespaceRestrictionByContext map[string]string
 	WithoutKube                             bool // TODO: remove this legacy logic in v3.
 	ConfigMetaCleanup                       config.MetaCleanup
@@ -73,7 +72,7 @@ type cleanupManager struct {
 	StorageManager                          manager.StorageManagerInterface
 	ImageNameList                           []string
 	LocalGit                                GitRepo
-	KubernetesContextClients                []*kube.ContextClient
+	KubernetesContextClients                []*ContextClient
 	KubernetesNamespaceRestrictionByContext map[string]string
 	WithoutKube                             bool
 	ConfigMetaCleanup                       config.MetaCleanup

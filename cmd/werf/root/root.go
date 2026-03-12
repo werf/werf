@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"path/filepath"
 	"runtime"
 	"strconv"
 	"time"
@@ -62,10 +61,6 @@ func ConstructRootCmd(ctx context.Context) (*cobra.Command, error) {
 	helmCmd, err := helm.NewCmd(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("unable to init helm commands: %w", err)
-	}
-
-	if filepath.Base(os.Args[0]) == "helm" || helm.IsHelm3Mode() {
-		return helmCmd, nil
 	}
 
 	rootCmd := common.SetCommandContext(ctx, &cobra.Command{

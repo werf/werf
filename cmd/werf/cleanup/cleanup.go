@@ -8,7 +8,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/werf/common-go/pkg/util"
-	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/cleaning"
@@ -147,11 +146,6 @@ func runCleanup(ctx context.Context, cmd *cobra.Command) error {
 		}
 	}()
 
-	common.SetupOndemandKubeInitializer(cmdData.ScanContextOnly, commonCmdData.LegacyKubeConfigPath, commonCmdData.KubeConfigBase64, commonCmdData.LegacyKubeConfigPathsMergeList, commonCmdData.KubeBearerTokenData, commonCmdData.KubeBearerTokenPath)
-	if err := common.GetOndemandKubeInitializer().Init(ctx); err != nil {
-		return err
-	}
-
 	giterminismManager, err := common.GetGiterminismManager(ctx, &commonCmdData)
 	if err != nil {
 		return err
@@ -218,10 +212,10 @@ func runCleanup(ctx context.Context, cmd *cobra.Command) error {
 	}
 	logboek.Debug().LogF("Managed images names: %v\n", imagesNames)
 
-	var kubernetesContextClients []*kube.ContextClient
+	var kubernetesContextClients []*cleaning.ContextClient
 	var kubernetesNamespaceRestrictionByContext map[string]string
 	if !(*commonCmdData.WithoutKube || werfConfig.Meta.Cleanup.DisableKubernetesBasedPolicy) {
-		kubernetesContextClients, err = common.GetKubernetesContextClients(
+		kubernetesContextClients, err = cleaning.GetKubernetesContextClients(
 			commonCmdData.LegacyKubeConfigPath,
 			commonCmdData.KubeConfigBase64,
 			commonCmdData.LegacyKubeConfigPathsMergeList,
@@ -237,7 +231,7 @@ func runCleanup(ctx context.Context, cmd *cobra.Command) error {
 		}
 	}
 
-	kubernetesNamespaceRestrictionByContext = common.GetKubernetesNamespaceRestrictionByContext(&commonCmdData, kubernetesContextClients)
+	kubernetesNamespaceRestrictionByContext = cleaning.GetKubernetesNamespaceRestrictionByContext(&commonCmdData, kubernetesContextClients)
 
 	keepList := cleaning.NewKeepListWithSize(0)
 
