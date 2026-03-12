@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 
@@ -25,22 +24,15 @@ var (
 )
 
 func IsErrBrokenImage(err error) bool {
-	return err != nil && strings.HasSuffix(err.Error(), ErrBrokenImage.Error())
+	return errors.Is(err, ErrBrokenImage)
 }
 
 func IsErrStageNotFound(err error) bool {
-	if err != nil {
-		return strings.HasSuffix(err.Error(), ErrStageNotFound.Error())
-	}
-	return false
-}
-
-func IsErrStageRejected(err error) bool {
-	return err != nil && strings.HasSuffix(err.Error(), ErrStageRejected.Error())
+	return errors.Is(err, ErrStageNotFound)
 }
 
 func IsErrStageUnavailable(err error) bool {
-	return IsErrStageNotFound(err) || IsErrBrokenImage(err) || IsErrStageRejected(err)
+	return errors.Is(err, ErrStageNotFound) || errors.Is(err, ErrBrokenImage) || errors.Is(err, ErrStageRejected)
 }
 
 type FilterStagesAndProcessRelatedDataOptions struct {
