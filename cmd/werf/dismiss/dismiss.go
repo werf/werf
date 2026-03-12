@@ -11,11 +11,11 @@ import (
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 
-	helmrelease "github.com/werf/3p-helm/pkg/release"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
 	"github.com/werf/nelm/pkg/action"
+	helmrelease "github.com/werf/nelm/pkg/export/helm/release"
 	"github.com/werf/nelm/pkg/log"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/config/deploy_params"

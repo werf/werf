@@ -6,7 +6,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/yaml"
 
-	"github.com/werf/3p-helm/pkg/releaseutil"
+	"github.com/werf/nelm/pkg/export/helm/releaseutil"
 	"github.com/werf/werf/v2/test/pkg/utils"
 )
 

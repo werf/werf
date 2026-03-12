@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/werf/3p-helm/pkg/chart/loader"
-	"github.com/werf/3p-helm/pkg/werf/helmopts"
 	"github.com/werf/logboek"
+	"github.com/werf/nelm/pkg/export/helm/chart/loader"
+	"github.com/werf/nelm/pkg/export/helm/werf/helmopts"
 	"github.com/werf/werf/v2/pkg/deploy/bundles/registry"
 	"github.com/werf/werf/v2/pkg/ref"
 )

@@ -50,6 +50,10 @@ func NewCmd(ctx context.Context) *cobra.Command {
 				return err
 			}
 
+			if len(args) == 0 {
+				return fmt.Errorf("FILE_NAME argument required")
+			}
+
 			gm, err := common.GetGiterminismManager(ctx, &commonCmdData)
 			if err != nil {
 				return err

@@ -3,7 +3,7 @@ package giterminism_manager
 import (
 	"context"
 
-	"github.com/werf/3p-helm/pkg/werf/file"
+	"github.com/werf/nelm/pkg/export/helm/werf/file"
 	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/path_matcher"
 )

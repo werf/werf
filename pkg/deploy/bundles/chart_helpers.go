@@ -9,11 +9,11 @@ import (
 
 	"sigs.k8s.io/yaml"
 
-	"github.com/werf/3p-helm/pkg/chart"
-	"github.com/werf/3p-helm/pkg/chart/loader"
-	"github.com/werf/3p-helm/pkg/chartutil"
-	"github.com/werf/3p-helm/pkg/werf/helmopts"
 	"github.com/werf/logboek"
+	"github.com/werf/nelm/pkg/export/helm/chart"
+	"github.com/werf/nelm/pkg/export/helm/chart/loader"
+	"github.com/werf/nelm/pkg/export/helm/chartutil"
+	"github.com/werf/nelm/pkg/export/helm/werf/helmopts"
 )
 
 func ChartToBytes(ch *chart.Chart) ([]byte, error) {

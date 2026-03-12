@@ -7,8 +7,8 @@ import (
 
 	"k8s.io/cli-runtime/pkg/resource"
 
-	"github.com/werf/3p-helm/pkg/kube"
-	"github.com/werf/3p-helm/pkg/phases/stages"
+	"github.com/werf/nelm/pkg/export/helm/kube"
+	"github.com/werf/nelm/pkg/export/helm/phases/stages"
 )
 
 func NewStagesSplitter() *StagesSplitter {

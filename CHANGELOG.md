@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.62.2](https://github.com/werf/werf/compare/v2.62.1...v2.62.2) (2026-03-04)
+
+
+### Bug Fixes
+
+* --set-root-json not working ([#7374](https://github.com/werf/werf/issues/7374)) ([613f2e1](https://github.com/werf/werf/commit/613f2e1c987d56e1281a4e75dec18c70a81712af))
+* **build:** bound retry loop on unexpected stages storage state and invalidate manifest cache on stage rejection ([#7369](https://github.com/werf/werf/issues/7369)) ([9e3c8a1](https://github.com/werf/werf/commit/9e3c8a1ac474fd976c78c16a49e12d9f78497de0))
+* regenerate mock for LegacyContainerOptions to add missing AddNetwork method ([1ea6c3a](https://github.com/werf/werf/commit/1ea6c3a72eee71c66ee8aea82eff9dd6c790d55e))
+* **stages-copy:** fix panic ([#7382](https://github.com/werf/werf/issues/7382)) ([08d91de](https://github.com/werf/werf/commit/08d91defda828a06bf8cd96c3f420542c6716739))
+
 ## [2.62.1](https://github.com/werf/werf/compare/v2.62.0...v2.62.1) (2026-02-26)
 
 

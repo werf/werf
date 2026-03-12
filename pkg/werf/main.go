@@ -9,11 +9,11 @@ import (
 
 	"github.com/hofstadter-io/cinful"
 
-	"github.com/werf/3p-helm/pkg/chart/loader"
 	"github.com/werf/common-go/pkg/locker"
 	"github.com/werf/common-go/pkg/secrets_manager"
 	"github.com/werf/lockgate/pkg/file_lock"
 	secrets_manager_legacy "github.com/werf/nelm-for-werf-helm/pkg/secrets_manager"
+	"github.com/werf/nelm/pkg/export/helm/chart/loader"
 )
 
 var (

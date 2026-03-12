@@ -6,8 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/werf/3p-helm/pkg/werf/file"
 	"github.com/werf/common-go/pkg/util"
+	"github.com/werf/nelm/pkg/export/helm/werf/file"
 )
 
 func (r FileReader) LocateChart(ctx context.Context, chartDir string) (string, error) {

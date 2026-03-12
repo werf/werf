@@ -7,9 +7,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	helm_v3 "github.com/werf/3p-helm/cmd/helm"
-	"github.com/werf/3p-helm/pkg/werf/helmopts"
 	"github.com/werf/logboek"
+	"github.com/werf/nelm/pkg/export/helm/cmd/helm"
+	"github.com/werf/nelm/pkg/export/helm/werf/helmopts"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/deploy/bundles"
 	"github.com/werf/werf/v2/pkg/docker_registry"
@@ -90,7 +90,7 @@ func runCopy(ctx context.Context) error {
 		}
 	}()
 
-	helm_v3.Settings.Debug = *commonCmdData.LogDebug
+	helm.Settings.Debug = *commonCmdData.LogDebug
 
 	bundlesRegistryClient, err := common.NewBundlesRegistryClient(ctx, &commonCmdData)
 	if err != nil {

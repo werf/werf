@@ -6,7 +6,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/werf/3p-helm/pkg/phases/stages/externaldeps"
+	"github.com/werf/nelm/pkg/export/helm/phases/stages/externaldeps"
 )
 
 func NewGVKBuilder(discoveryShortcutExpander meta.RESTMapper) externaldeps.GVKBuilder {
