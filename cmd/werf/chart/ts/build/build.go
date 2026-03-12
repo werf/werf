@@ -7,8 +7,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/werf/3p-helm/pkg/werf/file"
 	"github.com/werf/nelm/pkg/action"
+	"github.com/werf/nelm/pkg/export/helm/werf/file"
 	"github.com/werf/nelm/pkg/log"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/true_git"
@@ -82,7 +82,7 @@ func runChartTSBuild(ctx context.Context, chartDir string) error {
 		return err
 	}
 
-	file.ChartFileReader = giterminismManager.FileManager
+	file.SetChartFileReader(giterminismManager.FileManager)
 
 	werfConfigPath, werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
 	if err != nil {

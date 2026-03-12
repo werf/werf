@@ -30,6 +30,8 @@ import (
 	"github.com/werf/nelm/pkg/export/helm/werf/helmopts"
 	"github.com/werf/nelm/pkg/export/helm/werf/secrets"
 	"github.com/werf/nelm/pkg/export/helm/werf/secrets/runtimedata"
+	"github.com/werf/nelm/pkg/featgate"
+	"github.com/werf/nelm/pkg/ts"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/build"
 	"github.com/werf/werf/v2/pkg/config"
@@ -465,7 +467,7 @@ func createNewBundle(
 	}
 
 	if featgate.FeatGateTypescript.Enabled() {
-		if err := deno.NewDenoRuntime(true, deno.DenoRuntimeOptions{BinaryPath: denoBinaryPath}).BundleChartsRecursive(ctx, chrt, chartDir); err != nil {
+		if err := ts.BundleChartsRecursive(ctx, chrt, chartDir, true, denoBinaryPath); err != nil {
 			return fmt.Errorf("unable to process TypeScript files in chart: %w", err)
 		}
 	}
