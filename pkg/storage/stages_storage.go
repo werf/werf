@@ -20,11 +20,27 @@ const (
 
 var (
 	ErrBrokenImage   = errors.New("broken image")
-	ErrImageNotFound = errors.New("image not found")
+	ErrStageNotFound = errors.New("stage not found")
+	ErrStageRejected = errors.New("stage rejected")
 )
 
 func IsErrBrokenImage(err error) bool {
 	return err != nil && strings.HasSuffix(err.Error(), ErrBrokenImage.Error())
+}
+
+func IsErrStageNotFound(err error) bool {
+	if err != nil {
+		return strings.HasSuffix(err.Error(), ErrStageNotFound.Error())
+	}
+	return false
+}
+
+func IsErrStageRejected(err error) bool {
+	return err != nil && strings.HasSuffix(err.Error(), ErrStageRejected.Error())
+}
+
+func IsErrStageUnavailable(err error) bool {
+	return IsErrStageNotFound(err) || IsErrBrokenImage(err) || IsErrStageRejected(err)
 }
 
 type FilterStagesAndProcessRelatedDataOptions struct {

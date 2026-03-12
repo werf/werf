@@ -351,9 +351,6 @@ func (phase *BuildPhase) publishMultiplatformImageMetadata(ctx context.Context, 
 	if err != nil {
 		return fmt.Errorf("unable to get image %s %s descriptor: %w", name, img.GetStageID(), err)
 	}
-	if desc == nil {
-		return fmt.Errorf("unable to get image %s %s descriptor: no manifest found", name, img.GetStageID())
-	}
 	img.SetStageDesc(desc)
 
 	if !phase.BuildPhaseOptions.SkipImageMetadataPublication {
@@ -1162,7 +1159,7 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 		}
 
 		desc, err := phase.Conveyor.StorageManager.GetStagesStorage().GetStageDesc(ctx, phase.Conveyor.ProjectName(), *imagePkg.NewStageID(stg.GetDigest(), stageCreationTs))
-		if err != nil || desc == nil {
+		if err != nil {
 			return fmt.Errorf("unable to get stage %s digest %s image %s description from repo %s after stages has been stored into repo: %w", stg.LogDetailedName(), stg.GetDigest(), stageImage.Image.Name(), phase.Conveyor.StorageManager.GetStagesStorage().String(), err)
 		}
 		stageImage.Image.SetStageDesc(desc)
