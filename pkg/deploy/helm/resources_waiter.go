@@ -24,7 +24,6 @@ import (
 	"k8s.io/cli-runtime/pkg/resource"
 	"k8s.io/client-go/kubernetes/scheme"
 
-	helm_kube "github.com/werf/3p-helm/pkg/kube"
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/kubedog/pkg/tracker"
 	"github.com/werf/kubedog/pkg/tracker/resid"
@@ -32,6 +31,7 @@ import (
 	"github.com/werf/kubedog/pkg/trackers/rollout/multitrack"
 	"github.com/werf/kubedog/pkg/trackers/rollout/multitrack/generic"
 	"github.com/werf/logboek"
+	helm_kube "github.com/werf/nelm/pkg/export/helm/kube"
 )
 
 func init() {

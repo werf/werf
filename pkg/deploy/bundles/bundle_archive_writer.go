@@ -11,7 +11,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/werf/3p-helm/pkg/werf/helmopts"
+	"github.com/werf/nelm/pkg/export/helm/werf/helmopts"
 )
 
 type BundleArchiveWriter interface {

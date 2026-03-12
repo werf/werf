@@ -16,20 +16,20 @@ import (
 	"github.com/spf13/cobra"
 	"sigs.k8s.io/yaml"
 
-	helm_v3 "github.com/werf/3p-helm/cmd/helm"
-	"github.com/werf/3p-helm/pkg/chart"
-	"github.com/werf/3p-helm/pkg/chart/loader"
-	"github.com/werf/3p-helm/pkg/chartutil"
-	"github.com/werf/3p-helm/pkg/cli/values"
-	"github.com/werf/3p-helm/pkg/downloader"
-	"github.com/werf/3p-helm/pkg/getter"
-	"github.com/werf/3p-helm/pkg/werf/file"
-	"github.com/werf/3p-helm/pkg/werf/helmopts"
-	"github.com/werf/3p-helm/pkg/werf/secrets"
-	"github.com/werf/3p-helm/pkg/werf/secrets/runtimedata"
 	"github.com/werf/common-go/pkg/secrets_manager"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
+	"github.com/werf/nelm/pkg/export/helm/chart"
+	"github.com/werf/nelm/pkg/export/helm/chart/loader"
+	"github.com/werf/nelm/pkg/export/helm/chartutil"
+	"github.com/werf/nelm/pkg/export/helm/cli/values"
+	"github.com/werf/nelm/pkg/export/helm/cmd/helm"
+	"github.com/werf/nelm/pkg/export/helm/downloader"
+	"github.com/werf/nelm/pkg/export/helm/getter"
+	"github.com/werf/nelm/pkg/export/helm/werf/file"
+	"github.com/werf/nelm/pkg/export/helm/werf/helmopts"
+	"github.com/werf/nelm/pkg/export/helm/werf/secrets"
+	"github.com/werf/nelm/pkg/export/helm/werf/secrets/runtimedata"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/build"
 	"github.com/werf/werf/v2/pkg/config"
@@ -342,7 +342,7 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 		return err
 	}
 
-	file.ChartFileReader = giterminismManager.FileManager
+	file.SetChartFileReader(giterminismManager.FileManager)
 
 	headHash, err := giterminismManager.LocalGitRepo().HeadCommitHash(ctx)
 	if err != nil {
@@ -363,7 +363,7 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 		return fmt.Errorf("get service values: %w", err)
 	}
 
-	helm_v3.Settings.Debug = *commonCmdData.LogDebug
+	helm.Settings.Debug = *commonCmdData.LogDebug
 
 	// TODO(major): compatibility mode with older 1.2 versions, which do not require WERF_SECRET_KEY in the 'werf bundle publish' command
 	if err := secrets_manager.Manager.AllowMissedSecretKeyMode(giterminismManager.ProjectDir()); err != nil {
@@ -391,11 +391,11 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 				Out:               logboek.Context(ctx).OutStream(),
 				ChartPath:         bundleTmpDir,
 				AllowMissingRepos: true,
-				Getters:           getter.All(helm_v3.Settings),
+				Getters:           getter.All(helm.Settings),
 				RegistryClient:    helmRegistryClient,
-				RepositoryConfig:  helm_v3.Settings.RepositoryConfig,
-				RepositoryCache:   helm_v3.Settings.RepositoryCache,
-				Debug:             helm_v3.Settings.Debug,
+				RepositoryConfig:  helm.Settings.RepositoryConfig,
+				RepositoryCache:   helm.Settings.RepositoryCache,
+				Debug:             helm.Settings.Debug,
 			},
 			ExtraValues:       serviceValues,
 			SecretKeyIgnore:   commonCmdData.SecretKeyIgnore,
@@ -463,7 +463,7 @@ func createNewBundle(
 
 	var valsData []byte
 	{
-		p := getter.All(helm_v3.Settings)
+		p := getter.All(helm.Settings)
 		vals, err := vals.MergeValues(p, opts)
 		if err != nil {
 			return fmt.Errorf("unable to merge input values: %w", err)

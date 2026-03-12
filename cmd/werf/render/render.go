@@ -11,13 +11,13 @@ import (
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 
-	"github.com/werf/3p-helm/pkg/chart"
-	"github.com/werf/3p-helm/pkg/engine"
-	"github.com/werf/3p-helm/pkg/werf/file"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/level"
 	"github.com/werf/nelm/pkg/action"
+	"github.com/werf/nelm/pkg/export/helm/chart"
+	"github.com/werf/nelm/pkg/export/helm/engine"
+	"github.com/werf/nelm/pkg/export/helm/werf/file"
 	"github.com/werf/nelm/pkg/log"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/build"
@@ -394,7 +394,7 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 		return fmt.Errorf("get service values: %w", err)
 	}
 
-	file.ChartFileReader = giterminismManager.FileManager
+	file.SetChartFileReader(giterminismManager.FileManager)
 
 	// TODO(major): get rid of forcing color mode via ci-env and use color mode detection logic from
 	// Nelm instead. Until then, color will be always off here.
@@ -402,7 +402,7 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 		ColorMode:      log.LogColorModeOff,
 		LogIsParseable: true,
 	})
-	engine.Debug = commonCmdData.DebugTemplates
+	engine.SetDebug(commonCmdData.DebugTemplates)
 
 	if _, err := action.ChartRender(ctx, action.ChartRenderOptions{
 		KubeConnectionOptions:       commonCmdData.KubeConnectionOptions,

@@ -19,9 +19,9 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	"gopkg.in/yaml.v2"
 
-	"github.com/werf/3p-helm/pkg/engine"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
+	"github.com/werf/nelm/pkg/export/helm/engine"
 	"github.com/werf/werf/v2/pkg/file_manager"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
 	"github.com/werf/werf/v2/pkg/slug"
@@ -555,11 +555,11 @@ func detailedTemplateError(tmpl *template.Template, d detailedTemplateErrorData,
 			strings.TrimRightFunc(util.NumerateLines(d.templateContent, 1), unicode.IsSpace),
 		)
 	}
-	if strings.Contains(err.Error(), engine.TemplateErrHint) {
+	if strings.Contains(err.Error(), engine.GetTemplateErrHint()) {
 		return err
 	}
 
-	return fmt.Errorf("%w\n%s", err, engine.TemplateErrHint)
+	return fmt.Errorf("%w\n%s", err, engine.GetTemplateErrHint())
 }
 
 type files struct {

@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/werf/3p-helm/pkg/chartutil"
-	"github.com/werf/3p-helm/pkg/werf/helmopts"
 	"github.com/werf/logboek"
+	"github.com/werf/nelm/pkg/export/helm/chartutil"
+	"github.com/werf/nelm/pkg/export/helm/werf/helmopts"
 	"github.com/werf/werf/v2/pkg/deploy/bundles/registry"
 	"github.com/werf/werf/v2/pkg/ref"
 )

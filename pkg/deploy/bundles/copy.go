@@ -3,7 +3,7 @@ package bundles
 import (
 	"context"
 
-	"github.com/werf/3p-helm/pkg/werf/helmopts"
+	"github.com/werf/nelm/pkg/export/helm/werf/helmopts"
 	"github.com/werf/werf/v2/pkg/docker_registry"
 	"github.com/werf/werf/v2/pkg/ref"
 )

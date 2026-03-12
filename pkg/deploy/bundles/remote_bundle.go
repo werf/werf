@@ -8,10 +8,10 @@ import (
 
 	"sigs.k8s.io/yaml"
 
-	"github.com/werf/3p-helm/pkg/chart"
-	"github.com/werf/3p-helm/pkg/werf/helmopts"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
+	"github.com/werf/nelm/pkg/export/helm/chart"
+	"github.com/werf/nelm/pkg/export/helm/werf/helmopts"
 	"github.com/werf/werf/v2/pkg/docker_registry"
 	bundles_registry "github.com/werf/werf/v2/pkg/ref"
 )

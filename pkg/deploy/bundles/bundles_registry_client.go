@@ -3,8 +3,8 @@ package bundles
 import (
 	"context"
 
-	"github.com/werf/3p-helm/pkg/chart"
-	"github.com/werf/3p-helm/pkg/werf/helmopts"
+	"github.com/werf/nelm/pkg/export/helm/chart"
+	"github.com/werf/nelm/pkg/export/helm/werf/helmopts"
 	bundles_registry "github.com/werf/werf/v2/pkg/ref"
 )
 
