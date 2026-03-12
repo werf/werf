@@ -3,16 +3,15 @@ package chart_ts_init
 import (
 	"context"
 	"fmt"
-	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/spf13/cobra"
 
+	"github.com/werf/3p-helm/pkg/werf/file"
 	"github.com/werf/nelm/pkg/action"
 	"github.com/werf/nelm/pkg/log"
 	"github.com/werf/werf/v2/cmd/werf/common"
-	"github.com/werf/werf/v2/pkg/slug"
+	"github.com/werf/werf/v2/pkg/true_git"
 )
 
 var commonCmdData common.CmdData
@@ -21,8 +20,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	ctx = common.NewContextWithCmdData(ctx, &commonCmdData)
 	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:                   "init [PATH]",
-		Short:                 "Initialize a new TypeScript chart project",
-		Long:                  common.GetLongCommandDescription("Initialize a new werf project with TypeScript chart scaffolding. Creates werf.yaml and .helm/ directory with TypeScript boilerplate. If PATH is not specified, uses the current directory."),
+		Short:                 "Initialize TypeScript directory for chart",
+		Long:                  common.GetLongCommandDescription("Initialize the TypeScript directory for an existing werf chart. Creates ts/ directory with TypeScript boilerplate and ensures ignore files include necessary paths. Requires an existing werf.yaml. If PATH is not specified, uses the current directory."),
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
@@ -32,19 +31,27 @@ func NewCmd(ctx context.Context) *cobra.Command {
 				return err
 			}
 
-			var targetDir string
+			var chartDir string
 			if len(args) > 0 {
-				targetDir = args[0]
+				chartDir = args[0]
 			} else {
-				targetDir = "."
+				chartDir = "."
 			}
 
 			common.LogVersion()
 
-			return runChartTSInit(ctx, targetDir)
+			return runChartTSInit(ctx, chartDir)
 		},
 	})
 
+	common.SetupDir(&commonCmdData, cmd)
+	common.SetupGitWorkTree(&commonCmdData, cmd)
+	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
+	common.SetupConfigRenderPath(&commonCmdData, cmd)
+	common.SetupConfigPath(&commonCmdData, cmd)
+	common.SetupGiterminismConfigPath(&commonCmdData, cmd)
+	common.SetupEnvironment(&commonCmdData, cmd)
+	common.SetupGiterminismOptions(&commonCmdData, cmd)
 	common.SetupTmpDir(&commonCmdData, cmd, common.SetupTmpDirOptions{})
 	common.SetupHomeDir(&commonCmdData, cmd, common.SetupHomeDirOptions{})
 	common.SetupLogOptions(&commonCmdData, cmd)
@@ -52,41 +59,50 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	return cmd
 }
 
-func runChartTSInit(ctx context.Context, targetDir string) error {
-	absTargetDir, err := filepath.Abs(targetDir)
+func runChartTSInit(ctx context.Context, chartDir string) error {
+	if *commonCmdData.Dir == "" && chartDir != "." {
+		commonCmdData.Dir = &chartDir
+	}
+
+	_, ctx, err := common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
+		Cmd: &commonCmdData,
+		InitTrueGitWithOptions: &common.InitTrueGitOptions{
+			Options: true_git.Options{LiveGitOutput: *commonCmdData.LogVerbose || *commonCmdData.LogDebug},
+		},
+		InitWerf:           true,
+		InitGitDataManager: true,
+	})
 	if err != nil {
-		return fmt.Errorf("get absolute path: %w", err)
+		return fmt.Errorf("component init error: %w", err)
 	}
 
-	werfConfigPath := filepath.Join(absTargetDir, "werf.yaml")
-	if _, err := os.Stat(werfConfigPath); err == nil {
-		return fmt.Errorf("werf.yaml already exists in %s, project is already initialized", absTargetDir)
+	giterminismManager, err := common.GetGiterminismManager(ctx, &commonCmdData)
+	if err != nil {
+		return err
 	}
 
-	if err := os.MkdirAll(absTargetDir, 0o755); err != nil {
-		return fmt.Errorf("create target directory: %w", err)
+	file.ChartFileReader = giterminismManager.FileManager
+
+	werfConfigPath, werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
+	if err != nil {
+		return fmt.Errorf("unable to load werf config: %w", err)
 	}
 
-	projectName := slug.Project(strings.ToLower(filepath.Base(absTargetDir)))
-
-	werfConfigContent := fmt.Sprintf("configVersion: 1\nproject: %s\n", projectName)
-	if err := os.WriteFile(werfConfigPath, []byte(werfConfigContent), 0o644); err != nil {
-		return fmt.Errorf("create werf.yaml: %w", err)
+	relChartPath, err := common.GetHelmChartDir(werfConfigPath, werfConfig, giterminismManager)
+	if err != nil {
+		return fmt.Errorf("get helm chart dir: %w", err)
 	}
 
-	helmDir := filepath.Join(absTargetDir, ".helm")
+	chartPath := filepath.Join(giterminismManager.ProjectDir(), relChartPath)
 
 	ctx = log.SetupLogging(ctx, common.GetNelmLogLevel(&commonCmdData), log.SetupLoggingOptions{
 		ColorMode: *commonCmdData.LogColorMode,
 	})
 
 	if err := action.ChartTSInit(ctx, action.ChartTSInitOptions{
-		ChartDirPath: helmDir,
-		ChartName:    projectName,
+		ChartDirPath: chartPath,
+		ChartName:    werfConfig.Meta.Project,
 	}); err != nil {
-		if removeErr := os.Remove(werfConfigPath); removeErr != nil {
-			return fmt.Errorf("chart ts init failed: %w (also failed to cleanup werf.yaml: %v)", err, removeErr)
-		}
 		return fmt.Errorf("chart ts init: %w", err)
 	}
 

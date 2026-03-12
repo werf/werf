@@ -551,8 +551,8 @@ func run(
 			ShowSensitiveDiffs:     cmdData.ShowSensitiveDiffs,
 			ShowInsignificantDiffs: cmdData.ShowInsignificantDiffs,
 		},
-		IgnoreBundleJS:  commonCmdData.IgnoreBundleJS,
-		DenoBinaryPath:  commonCmdData.DenoBinaryPath,
+		IgnoreBundleJS: commonCmdData.IgnoreBundleJS,
+		DenoBinaryPath: commonCmdData.DenoBinaryPath,
 	}); err != nil {
 		return fmt.Errorf("release plan install: %w", err)
 	}

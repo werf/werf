@@ -255,8 +255,8 @@ func runApply(ctx context.Context) error {
 			ReleaseStorageDriver:        commonCmdData.ReleaseStorageDriver,
 			ReleaseStorageSQLConnection: commonCmdData.ReleaseStorageSQLConnection,
 		},
-		IgnoreBundleJS:  commonCmdData.IgnoreBundleJS,
-		DenoBinaryPath:  commonCmdData.DenoBinaryPath,
+		IgnoreBundleJS: commonCmdData.IgnoreBundleJS,
+		DenoBinaryPath: commonCmdData.DenoBinaryPath,
 	}); err != nil {
 		return fmt.Errorf("release install: %w", err)
 	}
