@@ -171,7 +171,7 @@ func (s *DependenciesStage) prepareImageWithLegacyStapelBuilder(ctx context.Cont
 
 		labels, err := s.getImportLabels(ctx, c, elm)
 		if err != nil {
-			return fmt.Errorf("get import labels: %w", err)
+			return fmt.Errorf("unable to get import labels: %w", err)
 		}
 		imageServiceCommitChangeOptions.AddLabel(labels)
 	}
@@ -236,7 +236,7 @@ func (s *DependenciesStage) prepareImage(ctx context.Context, c Conveyor, cr con
 
 		labels, err := s.getImportLabels(ctx, c, elm)
 		if err != nil {
-			return fmt.Errorf("get import labels: %w", err)
+			return fmt.Errorf("unable to get import labels: %w", err)
 		}
 		stageImage.Builder.StapelStageBuilder().AddLabels(labels)
 
