@@ -685,20 +685,6 @@ func (storage *RepoStagesStorage) GetImportMetadata(ctx context.Context, _, id s
 func (storage *RepoStagesStorage) PutImportMetadata(ctx context.Context, projectName string, metadata *ImportMetadata) error {
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PutImportMetadata %v\n", metadata)
 
-	tagName := fmt.Sprintf("%s%s", RepoImportMetadata_ImageTagPrefix, metadata.ImportSourceID)
-	tags, err := storage.Tags(ctx, storage.RepoAddress)
-	if err != nil {
-		return fmt.Errorf("unable to get repo %s tags: %w", storage.RepoAddress, err)
-	}
-
-	for _, tag := range tags {
-		if tag == tagName {
-			logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PutImportMetadata tag %s already exists, skipping push\n", tagName)
-
-			return nil
-		}
-	}
-
 	fullImageName := makeRepoImportMetadataName(storage.RepoAddress, metadata.ImportSourceID)
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PutImportMetadata full image name: %s\n", fullImageName)
 
