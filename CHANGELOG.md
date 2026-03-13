@@ -1,5 +1,21 @@
 # Changelog
 
+## [2.63.0](https://github.com/werf/werf/compare/v2.62.2...v2.63.0) (2026-03-13)
+
+
+### Features
+
+* **build, stapel, git:** add WERF_DISABLE_GIT_COMMIT_ANCESTRY_CHECK to disable git commit ancestry check ([bae3300](https://github.com/werf/werf/commit/bae3300acc5d212f78f2d8f706c0aa4036e616f5))
+* **deploy:** switch to goccy/go-yaml and improve parse error context ([#7398](https://github.com/werf/werf/issues/7398)) ([3097703](https://github.com/werf/werf/commit/3097703331ede996f9ea04ac0696372f9522ca8a))
+* **telemetry:** extend build metrics with metadata fields ([#7384](https://github.com/werf/werf/issues/7384)) ([09a324e](https://github.com/werf/werf/commit/09a324e383e26367d3b6e2a5190ca181c397b49a))
+
+
+### Bug Fixes
+
+* **deploy:** print engine.Render() result on debug level ([#7396](https://github.com/werf/werf/issues/7396)) ([7237218](https://github.com/werf/werf/commit/7237218b844f3487048234bedf450c26b01a542d))
+* **deploy:** tracking absence for release namespace deletion ([#7397](https://github.com/werf/werf/issues/7397)) ([6d885d9](https://github.com/werf/werf/commit/6d885d92b71ec190ab989c1b6a07e1a997a4cfc0))
+* **includes:** add empty args check ([a6b8766](https://github.com/werf/werf/commit/a6b87668af0fa7fb7478fa6b502c6c98dd62eb11))
+
 ## [2.62.2](https://github.com/werf/werf/compare/v2.62.1...v2.62.2) (2026-03-04)
 
 
