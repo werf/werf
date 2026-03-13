@@ -13,10 +13,13 @@ import (
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/build/image"
+	"github.com/werf/werf/v2/pkg/config"
 	imagePkg "github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/telemetry"
 )
+
+type ReportFormat string
 
 const (
 	ReportJSON    ReportFormat = "json"
@@ -28,10 +31,14 @@ const (
 	BaseImageSourceTypeSecondary = "secondary"
 )
 
-type ReportFormat string
+type RuntimeInfo struct {
+	Backend     string `json:"Backend"`
+	InContainer bool   `json:"InContainer"`
+}
 
 type ReportImageRecord struct {
 	WerfImageName     string
+	ConfigType        string
 	DockerRepo        string
 	DockerTag         string
 	DockerImageID     string
@@ -61,6 +68,7 @@ type ReportStageRecord struct {
 
 type ImagesReport struct {
 	mux              sync.Mutex
+	Runtime          RuntimeInfo `json:"Runtime"`
 	Images           map[string]ReportImageRecord
 	ImagesByPlatform map[string]map[string]ReportImageRecord
 }
@@ -129,6 +137,8 @@ func (report *ImagesReport) sendTelemetry(ctx context.Context) {
 				stage.Name,
 				durationMs,
 				fromCache,
+				stage.SourceType,
+				stage.BaseImagePulled,
 			)
 		}
 
@@ -138,8 +148,29 @@ func (report *ImagesReport) sendTelemetry(ctx context.Context) {
 			record.WerfImageName,
 			durationMs,
 			record.Rebuilt,
+			record.ConfigType,
 		)
 	}
+}
+
+func determineConfigType(werfConfig *config.WerfConfig, imageName string) string {
+	configImage := werfConfig.GetImage(imageName)
+	if configImage == nil {
+		return "unknown"
+	}
+
+	if configImage.IsStapel() {
+		return "stapel"
+	}
+
+	if dockerfileImg, ok := configImage.(*config.ImageFromDockerfile); ok {
+		if dockerfileImg.Staged {
+			return "staged"
+		}
+		return "dockerfile"
+	}
+
+	return "unknown"
 }
 
 func parseBuildTimeMs(buildTime string) int64 {
@@ -164,6 +195,8 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 
 			stages := getStagesReport(img, false)
 
+			configType := determineConfigType(phase.Conveyor.werfConfig, img.Name)
+
 			record := ReportImageRecord{
 				WerfImageName:     img.GetName(),
 				DockerRepo:        stageDesc.Info.Repository,
@@ -177,6 +210,7 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 				Size:              stageDesc.Info.Size,
 				BuildTime:         fmt.Sprintf("%.2f", img.BuildDuration.Seconds()),
 				Stages:            stages,
+				ConfigType:        configType,
 			}
 
 			if os.Getenv("WERF_ENABLE_REPORT_BY_PLATFORM") == "1" {
