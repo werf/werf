@@ -7,6 +7,7 @@ import (
 	"path"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/werf/common-go/pkg/util"
@@ -85,6 +86,25 @@ type BaseStageOptions struct {
 	ContainerWerfDir  string
 	ProjectName       string
 	Network           string
+}
+
+const disableGitCommitAncestryCheckEnv = "WERF_DISABLE_GIT_COMMIT_ANCESTRY_CHECK"
+
+func isGitCommitAncestryCheckDisabled() bool {
+	v, hasKey := os.LookupEnv(disableGitCommitAncestryCheckEnv)
+	if !hasKey {
+		return false
+	}
+	if v == "" {
+		return false
+	}
+
+	disabled, err := strconv.ParseBool(v)
+	if err != nil {
+		return false
+	}
+
+	return disabled
 }
 
 func NewBaseStage(name StageName, options *BaseStageOptions) *BaseStage {
@@ -255,6 +275,11 @@ func (s *BaseStage) selectAncestorStageDescByGitMappings(ctx context.Context, c 
 		currentCommitsByIndex = append(currentCommitsByIndex, currentCommit)
 	}
 
+	disableAncestryCheck := isGitCommitAncestryCheckDisabled()
+	if disableAncestryCheck {
+		logboek.Context(ctx).Debug().LogF("Git commit ancestry check is disabled by %s\n", disableGitCommitAncestryCheckEnv)
+	}
+
 ScanImages:
 	for _, stageDesc := range sortStageDescSetByOldestCreationTs(stageDescSet) {
 		for i, gitMapping := range s.gitMappings {
@@ -281,6 +306,10 @@ ScanImages:
 			if !exist {
 				logboek.Context(ctx).Info().LogF("Skipping stage %s: commit %s does not exist in repo %s\n", stageDesc.Info.Name, commitToCheckAncestry, gitMapping.GitRepo().String())
 				continue ScanImages
+			}
+
+			if disableAncestryCheck {
+				continue
 			}
 
 			isOurAncestor, err := gitMapping.GitRepo().IsAncestor(ctx, commitToCheckAncestry, currentCommit)
