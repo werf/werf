@@ -63,11 +63,17 @@ type UnshallowFailed struct {
 func (*UnshallowFailed) GetType() EventType { return UnshallowFailedEvent }
 
 type BuildStarted struct {
-	ImagesCount int `json:"imagesCount"`
+	ImagesCount      int    `json:"imagesCount"`
+	ContainerBackend string `json:"containerBackend"`
+	InContainer      bool   `json:"inContainer"`
 }
 
-func NewBuildStarted(imagesCount int) *BuildStarted {
-	return &BuildStarted{ImagesCount: imagesCount}
+func NewBuildStarted(imagesCount int, containerBackend string, inContainer bool) *BuildStarted {
+	return &BuildStarted{
+		ImagesCount:      imagesCount,
+		ContainerBackend: containerBackend,
+		InContainer:      inContainer,
+	}
 }
 
 func (*BuildStarted) GetType() EventType { return BuildStartedEvent }
@@ -92,6 +98,7 @@ type ImageBuildFinished struct {
 	Image      string `json:"image"`
 	DurationMs int64  `json:"durationMs"`
 	Rebuilt    bool   `json:"rebuilt"`
+	ConfigType string `json:"configType,omitempty"`
 }
 
 func NewImageBuildFinished(image string, durationMs int64, rebuilt bool) *ImageBuildFinished {
@@ -105,10 +112,12 @@ func NewImageBuildFinished(image string, durationMs int64, rebuilt bool) *ImageB
 func (*ImageBuildFinished) GetType() EventType { return ImageBuildFinishedEvent }
 
 type StageBuildFinished struct {
-	Image      string `json:"image"`
-	Stage      string `json:"stage"`
-	DurationMs int64  `json:"durationMs"`
-	FromCache  bool   `json:"fromCache"`
+	Image           string `json:"image"`
+	Stage           string `json:"stage"`
+	DurationMs      int64  `json:"durationMs"`
+	FromCache       bool   `json:"fromCache"`
+	BaseImageSource string `json:"baseImageSource"`
+	BaseImagePulled bool   `json:"baseImagePulled"`
 }
 
 func NewStageBuildFinished(image, stage string, durationMs int64, fromCache bool) *StageBuildFinished {
