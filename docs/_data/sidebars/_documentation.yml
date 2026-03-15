@@ -49,9 +49,6 @@ entries:
                   - title: Importing from images
                     url: /usage/build/stapel/imports.html
 
-                  - title: Dockerfile instructions
-                    url: /usage/build/stapel/dockerfile.html
-
                   - title: Reducing image size and speeding up a build by mounts
                     url: /usage/build/stapel/mounts.html
 
@@ -206,9 +203,6 @@ entries:
 
                   - title: Импортирование из образов
                     url: /usage/build/stapel/imports.html
-
-                  - title: Инструкции Dockerfile
-                    url: /usage/build/stapel/dockerfile.html
 
                   - title: Ускорение сборки и уменьшение размера за счёт монтирования
                     url: /usage/build/stapel/mounts.html
