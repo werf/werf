@@ -16,6 +16,7 @@ import (
 	"github.com/werf/werf/v2/pkg/docker_registry"
 	"github.com/werf/werf/v2/pkg/docker_registry/api"
 	"github.com/werf/werf/v2/pkg/image"
+	sbomImage "github.com/werf/werf/v2/pkg/sbom/image"
 	"github.com/werf/werf/v2/pkg/slug"
 )
 
@@ -189,6 +190,17 @@ func (storage *RepoStagesStorage) DeleteStage(ctx context.Context, stageDesc *im
 	} else if rejectedImgInfo != nil {
 		if err := storage.DockerRegistry.DeleteRepoImage(ctx, rejectedImgInfo); err != nil {
 			return fmt.Errorf("unable to remove rejected image record %q: %w", rejectedImageName, err)
+		}
+	}
+
+	sbomImageName := makeRepoSbomImageRecord(storage.RepoAddress, sbomImage.ImageName(stageDesc.Info.Name))
+	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.DeleteStage sbom image name: %s\n", sbomImageName)
+
+	if sbomImgInfo, err := storage.DockerRegistry.TryGetRepoImage(ctx, sbomImageName); err != nil {
+		return fmt.Errorf("unable to get sbom image record %q: %w", sbomImageName, err)
+	} else if sbomImgInfo != nil {
+		if err := storage.DockerRegistry.DeleteRepoImage(ctx, sbomImgInfo); err != nil {
+			return fmt.Errorf("unable to remove sbom image record %q: %w", sbomImageName, err)
 		}
 	}
 
