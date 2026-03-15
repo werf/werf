@@ -144,18 +144,177 @@ func (srv *RsyncServer) GetCopyCommand(ctx context.Context, importConfig *config
 	if importConfig.Owner != "" || importConfig.Group != "" {
 		rsyncChownOption = fmt.Sprintf("--chown=%s:%s", importConfig.Owner, importConfig.Group)
 	}
-	rsyncCommand := fmt.Sprintf("RSYNC_PASSWORD='%s' %s --archive --links --inplace --xattrs %s", srv.AuthPassword, stapel.RsyncBinPath(), rsyncChownOption)
-	rsyncCommand += PrepareRsyncFilters(importConfig.Add, importConfig.IncludePaths, importConfig.ExcludePaths)
 
-	rsyncCommand += fmt.Sprintf(" %s$IMPORT_PATH_TRAILING_SLASH_OPTIONAL %s", rsyncImportPathSpec, importConfig.To)
-	// run rsync itself
-	args = append(args, rsyncCommand)
+	rsyncFilters := PrepareRsyncFilters(importConfig.Add, importConfig.IncludePaths, importConfig.ExcludePaths)
+
+	// Two-phase import to preserve empty directories matching include globs:
+	//
+	// Phase 1: Create directories that directly match include globs.
+	// Uses a single rsync --list-only call to get directory listing, then filters
+	// and creates directories matching the glob patterns.
+	//
+	// rsync with --prune-empty-dirs cannot preserve empty directories even when
+	// they match include patterns, so we create them explicitly before Phase 2.
+	//
+	// For example:
+	//   - "app/**/add-dir" -> finds and creates all directories named "add-dir" under app/
+	//   - "**/*.txt" -> no directories will match (no dir named "*.txt"), nothing created
+	//
+	// Phase 2: Copy files with --prune-empty-dirs.
+	// This copies all files matching the globs and creates parent directories as needed.
+	// --prune-empty-dirs prevents creation of empty directories that don't contain matching files,
+	// but directories created in Phase 1 are preserved since they already exist.
+
+	// Phase 1: Create directories that directly match include globs
+	if len(importConfig.IncludePaths) > 0 {
+		mkdirCmd := generateFirstPhaseMkdirCommand(srv, importConfig)
+		if mkdirCmd != "" {
+			args = append(args, mkdirCmd)
+		}
+	}
+
+	// Phase 2: Copy files with --prune-empty-dirs
+	rsyncFilesCommand := fmt.Sprintf("RSYNC_PASSWORD='%s' %s --prune-empty-dirs --archive --links --inplace --xattrs %s", srv.AuthPassword, stapel.RsyncBinPath(), rsyncChownOption)
+	rsyncFilesCommand += rsyncFilters
+	rsyncFilesCommand += fmt.Sprintf(" %s$IMPORT_PATH_TRAILING_SLASH_OPTIONAL %s", rsyncImportPathSpec, importConfig.To)
+	args = append(args, rsyncFilesCommand)
 
 	command := strings.Join(args, " && ")
 
 	logboek.Context(ctx).Debug().LogF("Rsync server copy commands for import: artifact=%q image=%q add=%s to=%s includePaths=%v excludePaths=%v: %q\n", importConfig.ArtifactName, importConfig.ImageName, importConfig.Add, importConfig.To, importConfig.IncludePaths, importConfig.ExcludePaths, command)
 
 	return command
+}
+
+// generateFirstPhaseMkdirCommand creates a shell command that:
+// 1. Runs a single rsync --list-only to get directory listing from source
+// 2. Filters directories matching any of the includePaths patterns
+// 3. Creates matching directories with mkdir -p
+//
+// The function handles two types of patterns:
+// - Patterns with "**" (e.g., "app/**/cache"): match directories by name anywhere under prefix
+// - Simple paths (e.g., "app/data"): match exact directory path
+func generateFirstPhaseMkdirCommand(srv *RsyncServer, importConfig *config.Import) string {
+	if len(importConfig.IncludePaths) == 0 {
+		return ""
+	}
+
+	var globPatterns []string
+	var simplePaths []string
+
+	for _, p := range importConfig.IncludePaths {
+		if strings.Contains(p, "**") {
+			globPatterns = append(globPatterns, p)
+		} else {
+			simplePaths = append(simplePaths, p)
+		}
+	}
+
+	var commands []string
+
+	if len(globPatterns) > 0 {
+		commonPrefix := findCommonGlobPrefix(globPatterns)
+		listPath := path.Join(importConfig.Add, commonPrefix)
+		rsyncListSpec := fmt.Sprintf("rsync://%s@%s:%s/import%s", srv.AuthUser, srv.IPAddress, srv.Port, listPath)
+
+		var casePatterns []string
+		for _, glob := range globPatterns {
+			parts := strings.SplitN(glob, "**", 2)
+			suffix := strings.Trim(parts[1], "/")
+			if suffix == "" {
+				continue
+			}
+			casePatterns = append(casePatterns, suffix, "*/"+suffix)
+		}
+
+		if len(casePatterns) > 0 {
+			casePattern := strings.Join(casePatterns, "|")
+			cmd := fmt.Sprintf(
+				"RSYNC_PASSWORD='%s' %s --list-only -r %s/ 2>/dev/null | "+
+					"grep '^d' | "+
+					"awk '{print $NF}' | "+
+					"while read d; do "+
+					"  case \"$d\" in "+
+					"    %s) %s -p '%s/'\"$d\" 2>/dev/null || true ;; "+
+					"  esac; "+
+					"done",
+				srv.AuthPassword, stapel.RsyncBinPath(), rsyncListSpec,
+				casePattern,
+				stapel.MkdirBinPath(), path.Join(importConfig.To, commonPrefix))
+			commands = append(commands, cmd)
+		}
+	}
+
+	// handle simple paths: check if directory exists, then create
+	// these are batched into a single subshell to reduce overhead
+	if len(simplePaths) > 0 {
+		var checkAndCreate []string
+		for _, p := range simplePaths {
+			srcPath := path.Join(importConfig.Add, p)
+			targetDir := path.Join(importConfig.To, p)
+			rsyncCheckSpec := fmt.Sprintf("rsync://%s@%s:%s/import%s", srv.AuthUser, srv.IPAddress, srv.Port, srcPath)
+			checkAndCreate = append(checkAndCreate,
+				fmt.Sprintf("(RSYNC_PASSWORD='%s' %s --list-only %s/ 2>/dev/null && %s -p '%s') || true",
+					srv.AuthPassword, stapel.RsyncBinPath(), rsyncCheckSpec,
+					stapel.MkdirBinPath(), targetDir))
+		}
+		commands = append(commands, "{ "+strings.Join(checkAndCreate, "; ")+"; }")
+	}
+
+	if len(commands) == 0 {
+		return ""
+	}
+
+	return strings.Join(commands, " && ")
+}
+
+// findCommonGlobPrefix finds the longest common path prefix before "**" in patterns.
+func findCommonGlobPrefix(patterns []string) string {
+	if len(patterns) == 0 {
+		return ""
+	}
+
+	// extract prefix before ** for each pattern
+	var prefixes []string
+	for _, p := range patterns {
+		idx := strings.Index(p, "**")
+		if idx == -1 {
+			continue
+		}
+		prefix := strings.TrimSuffix(p[:idx], "/")
+		prefixes = append(prefixes, prefix)
+	}
+
+	if len(prefixes) == 0 {
+		return ""
+	}
+
+	// find common prefix among all prefixes
+	common := prefixes[0]
+	for _, prefix := range prefixes[1:] {
+		common = commonPathPrefix(common, prefix)
+		if common == "" {
+			break
+		}
+	}
+
+	return common
+}
+
+func commonPathPrefix(a, b string) string {
+	aParts := strings.Split(a, "/")
+	bParts := strings.Split(b, "/")
+
+	var common []string
+	for i := 0; i < len(aParts) && i < len(bParts); i++ {
+		if aParts[i] == bParts[i] {
+			common = append(common, aParts[i])
+		} else {
+			break
+		}
+	}
+
+	return strings.Join(common, "/")
 }
 
 func PrepareRsyncFilters(add string, includePaths, excludePaths []string) string {
@@ -260,6 +419,8 @@ func PrepareRsyncIncludeFiltersForGlobs(add string, includeGlobs []string) strin
 // - When kept and not final && !finalOnly -> adds "**/" as a directory pattern.
 // Empty or all-slash input returns nil.
 func globToRsyncFilterPaths(glob string, finalSegmentOnly bool) []string {
+	// preserve leading slash to maintain absolute paths
+	hasLeadingSlash := strings.HasPrefix(glob, "/")
 	glob = strings.Trim(glob, "/")
 	if glob == "" {
 		return nil
@@ -325,7 +486,12 @@ func globToRsyncFilterPaths(glob string, finalSegmentOnly bool) []string {
 
 	out := make([]string, 0, len(results))
 	for v := range results {
-		out = append(out, v)
+		// restore leading slash if original glob had one
+		if hasLeadingSlash {
+			out = append(out, "/"+v)
+		} else {
+			out = append(out, v)
+		}
 	}
 	sort.Strings(out)
 	return out
