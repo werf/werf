@@ -302,7 +302,7 @@ func (storage *RepoStagesStorage) GetStageDesc(ctx context.Context, projectName 
 
 	imgInfo, err := storage.DockerRegistry.GetRepoImage(ctx, stageImageName)
 	if docker_registry.IsImageNotFoundError(err) {
-		return nil, ErrImageNotFound
+		return nil, ErrStageNotFound
 	}
 	if docker_registry.IsBrokenImageError(err) {
 		return nil, ErrBrokenImage
@@ -318,7 +318,7 @@ func (storage *RepoStagesStorage) GetStageDesc(ctx context.Context, projectName 
 		return nil, fmt.Errorf("unable to get repo image %q: %w", rejectedImageName, err)
 	} else if rejectedImgInfo != nil {
 		logboek.Context(ctx).Info().LogF("Stage digest %s creation timestamp %d image is rejected: ignore stage image\n", stageID.Digest, stageID.CreationTs)
-		return nil, nil
+		return nil, ErrStageRejected
 	}
 
 	return &image.StageDesc{
@@ -968,11 +968,13 @@ func (storage *RepoStagesStorage) PostMultiplatformImage(ctx context.Context, pr
 
 func (storage *RepoStagesStorage) CopyFromStorage(ctx context.Context, src StagesStorage, projectName string, stageID image.StageID, opts CopyFromStorageOptions) (*image.StageDesc, error) {
 	desc, err := storage.GetStageDesc(ctx, projectName, stageID)
-	if err != nil {
-		return nil, fmt.Errorf("unable to get stage %s description: %w", stageID, err)
-	}
-	if desc != nil {
+	switch {
+	case err == nil:
 		return desc, nil
+	case IsErrStageUnavailable(err):
+		// Stage not found in destination — proceed to copy.
+	default:
+		return nil, fmt.Errorf("unable to get stage %s description: %w", stageID, err)
 	}
 
 	srcRef := src.ConstructStageImageName(projectName, stageID.Digest, stageID.CreationTs)
