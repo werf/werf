@@ -144,7 +144,7 @@ func (s *DependenciesStage) prepareImageWithLegacyStapelBuilder(ctx context.Cont
 		if err != nil {
 			return fmt.Errorf("unable to get import source checksum: %w", err)
 		} else if importMetadata == nil {
-			panic(fmt.Sprintf("import metadata %s not found", importSourceID))
+			return fmt.Errorf("import metadata %s not found", importSourceID)
 		}
 
 		imageServiceCommitChangeOptions.AddLabel(map[string]string{
@@ -219,7 +219,7 @@ func (s *DependenciesStage) prepareImage(ctx context.Context, c Conveyor, cr con
 		if err != nil {
 			return fmt.Errorf("unable to get import source checksum: %w", err)
 		} else if importMetadata == nil {
-			panic(fmt.Sprintf("import metadata %s not found", importSourceID))
+			return fmt.Errorf("import metadata %s not found", importSourceID)
 		}
 
 		stageImage.Builder.StapelStageBuilder().AddLabels(map[string]string{
