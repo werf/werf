@@ -70,6 +70,7 @@ type StorageManagerInterface interface {
 	EnableParallel(parallelTasksLimit int)
 	MaxNumberOfWorkers() int
 	GenerateStageDescCreationTs(digest string, stageDescSet image.StageDescSet) (string, int64)
+	ReleaseSharedHostImageLocks() error
 
 	LockStageImage(ctx context.Context, imageName string) error
 	GetStageDescSetByDigest(ctx context.Context, stageName, stageDigest string, parentStageCreationTs int64) (image.StageDescSet, error)
@@ -147,6 +148,7 @@ func NewStorageManager(projectName string, stagesStorage storage.PrimaryStagesSt
 		FinalStagesStorage:         finalStagesStorage,
 		CacheStagesStorageList:     cacheStagesStorageList,
 		SecondaryStagesStorageList: secondaryStagesStorageList,
+		sharedHostImagesLocks:      map[string]lockgate.LockHandle{},
 	}
 }
 
@@ -200,8 +202,8 @@ type StorageManager struct {
 	CacheStagesStorageList     []storage.StagesStorage
 	SecondaryStagesStorageList []storage.StagesStorage
 
-	// These will be released automatically when current process exits
-	SharedHostImagesLocks []lockgate.LockHandle
+	sharedHostImagesLocksMux sync.Mutex
+	sharedHostImagesLocks    map[string]lockgate.LockHandle
 
 	FinalStagesListCacheMux sync.Mutex
 	FinalStagesListCache    *StagesList
@@ -382,14 +384,58 @@ func (m *StorageManager) ForEachDeleteStage(ctx context.Context, options ForEach
 func (m *StorageManager) LockStageImage(ctx context.Context, imageName string) error {
 	imageLockName := container_backend.ImageLockName(imageName)
 
+	m.sharedHostImagesLocksMux.Lock()
+	if m.sharedHostImagesLocks == nil {
+		m.sharedHostImagesLocks = map[string]lockgate.LockHandle{}
+	}
+	if _, hasKey := m.sharedHostImagesLocks[imageName]; hasKey {
+		m.sharedHostImagesLocksMux.Unlock()
+		return nil
+	}
+	m.sharedHostImagesLocksMux.Unlock()
+
 	_, l, err := werf.HostLocker().AcquireLock(ctx, imageLockName, lockgate.AcquireOptions{Shared: true})
 	if err != nil {
 		return fmt.Errorf("error locking %q shared lock: %w", imageLockName, err)
 	}
 
-	m.SharedHostImagesLocks = append(m.SharedHostImagesLocks, l)
+	m.sharedHostImagesLocksMux.Lock()
+	if m.sharedHostImagesLocks == nil {
+		m.sharedHostImagesLocks = map[string]lockgate.LockHandle{}
+	}
+	if _, hasKey := m.sharedHostImagesLocks[imageName]; hasKey {
+		m.sharedHostImagesLocksMux.Unlock()
+
+		if err := werf.HostLocker().ReleaseLock(l); err != nil {
+			return fmt.Errorf("error releasing duplicated shared lock %q: %w", imageLockName, err)
+		}
+
+		return nil
+	}
+
+	m.sharedHostImagesLocks[imageName] = l
+	m.sharedHostImagesLocksMux.Unlock()
 
 	return nil
+}
+
+func (m *StorageManager) ReleaseSharedHostImageLocks() error {
+	m.sharedHostImagesLocksMux.Lock()
+	handles := make([]lockgate.LockHandle, 0, len(m.sharedHostImagesLocks))
+	for _, handle := range m.sharedHostImagesLocks {
+		handles = append(handles, handle)
+	}
+	m.sharedHostImagesLocks = map[string]lockgate.LockHandle{}
+	m.sharedHostImagesLocksMux.Unlock()
+
+	releaseErrors := make([]error, 0, len(handles))
+	for _, handle := range handles {
+		if err := werf.HostLocker().ReleaseLock(handle); err != nil {
+			releaseErrors = append(releaseErrors, fmt.Errorf("error releasing shared image lock %q: %w", handle.LockName, err))
+		}
+	}
+
+	return errors.Join(releaseErrors...)
 }
 
 func doFetchStage(ctx context.Context, projectName string, stagesStorage storage.StagesStorage, stageID image.StageID, img container_backend.LegacyImageInterface) error {
