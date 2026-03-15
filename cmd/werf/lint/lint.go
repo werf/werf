@@ -173,6 +173,10 @@ func runLint(ctx context.Context, imageNameListFromArgs []string) error {
 	containerBackend := commonManager.ContainerBackend()
 
 	defer func() {
+		commonManager.Shutdown(ctx)
+	}()
+
+	defer func() {
 		commonManager.TerminateSSHAgent()
 	}()
 

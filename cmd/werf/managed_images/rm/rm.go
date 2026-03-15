@@ -95,13 +95,17 @@ func run(ctx context.Context, imageNames []string) error {
 		return fmt.Errorf("component init error: %w", err)
 	}
 
+	containerBackend := commonManager.ContainerBackend()
+
+	defer func() {
+		commonManager.Shutdown(ctx)
+	}()
+
 	defer func() {
 		if err := tmp_manager.DelegateCleanup(ctx); err != nil {
 			logboek.Context(ctx).Warn().LogF("Temporary files cleanup preparation failed: %s\n", err)
 		}
 	}()
-
-	containerBackend := commonManager.ContainerBackend()
 
 	if logboek.Context(ctx).IsAcceptedLevel(level.Default) {
 		logboek.Context(ctx).SetAcceptedLevel(level.Error)

@@ -248,6 +248,10 @@ func runMain(ctx context.Context, imageNameListFromArgs []string) error {
 	containerBackend := commonManager.ContainerBackend()
 
 	defer func() {
+		commonManager.Shutdown(ctx)
+	}()
+
+	defer func() {
 		if err := common.RunAutoHostCleanup(ctx, &commonCmdData, containerBackend); err != nil {
 			logboek.Context(ctx).Error().LogF("Auto host cleanup failed: %s\n", err)
 		}

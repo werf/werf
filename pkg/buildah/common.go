@@ -199,6 +199,7 @@ type Buildah interface {
 	PruneImages(ctx context.Context, opts PruneImagesOptions) (PruneImagesReport, error)
 	SaveImageToStream(ctx context.Context, imageName string) (io.ReadCloser, error)
 	LoadImageFromStream(ctx context.Context, input io.Reader) (string, error)
+	Shutdown(ctx context.Context) error
 }
 
 type Mode string

@@ -218,3 +218,7 @@ func (runtime *PerfCheckContainerBackend) SaveImageToStream(ctx context.Context,
 func (runtime *PerfCheckContainerBackend) LoadImageFromStream(ctx context.Context, input io.Reader) (string, error) {
 	return runtime.ContainerBackend.LoadImageFromStream(ctx, input)
 }
+
+func (runtime *PerfCheckContainerBackend) Shutdown(ctx context.Context) error {
+	return runtime.ContainerBackend.Shutdown(ctx)
+}

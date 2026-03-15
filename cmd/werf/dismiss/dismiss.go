@@ -141,7 +141,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 }
 
 func runDismiss(ctx context.Context) error {
-	_, ctx, err := common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
+	commonManager, ctx, err := common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
 		Cmd: &commonCmdData,
 		InitTrueGitWithOptions: &common.InitTrueGitOptions{
 			Options: true_git.Options{LiveGitOutput: *commonCmdData.LogDebug},
@@ -155,6 +155,10 @@ func runDismiss(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("component init error: %w", err)
 	}
+
+	defer func() {
+		commonManager.Shutdown(ctx)
+	}()
 
 	defer func() {
 		if err := tmp_manager.DelegateCleanup(ctx); err != nil {
