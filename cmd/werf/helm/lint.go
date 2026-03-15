@@ -26,6 +26,8 @@ func NewLintCmd(actionConfig *action.Configuration, wc *chart_extender.WerfChart
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		ctx := cmd.Context()
 
+		common.ProcessEnvironment(&lintCmdData)
+
 		// NOTICE: This is temporary approach to use `werf helm lint` in pipelines correctly — respect --env / WERF_ENV param,
 		// NOTICE: which is typically set by the `werf ci-env` command.
 		if lintCmdData.Environment != "" {
