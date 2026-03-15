@@ -78,28 +78,11 @@ func (s *DependenciesStage) GetDependencies(ctx context.Context, c Conveyor, cb 
 	var args []string
 
 	if len(s.imports) != 0 {
-		if err := logboek.Context(ctx).Default().LogProcess("Calculating import checksums").DoError(func() error {
-			for ind, elm := range s.imports {
-				sourceChecksum, err := s.getImportSourceChecksum(ctx, c, cb, elm)
-				if err != nil {
-					return fmt.Errorf("unable to get import %d source checksum: %w", ind, err)
-				}
-
-				// TODO: in v3 we should return err instead of warning
-				if sourceChecksum == nothingChecksum {
-					global_warnings.GlobalWarningLn(ctx, fmt.Sprintf("This import config does nothing: %s", formatImportTitle(elm)))
-				}
-
-				logboek.Context(ctx).Default().LogF("%s: %s\n", sourceChecksum, formatImportTitle(elm))
-
-				args = append(args, sourceChecksum)
-				args = append(args, elm.To)
-				args = append(args, elm.Group, elm.Owner)
-			}
-			return nil
-		}); err != nil {
+		importArgs, err := s.getImportArgs(ctx, c, cb)
+		if err != nil {
 			return "", err
 		}
+		args = append(args, importArgs...)
 	}
 
 	for _, dep := range s.dependencies {
@@ -110,6 +93,56 @@ func (s *DependenciesStage) GetDependencies(ctx context.Context, c Conveyor, cb 
 	}
 
 	return util.Sha256Hash(args...), nil
+}
+
+func (s *DependenciesStage) getImportArgs(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend) ([]string, error) {
+	if util.GetBoolEnvironmentDefaultFalse("WERF_EXPERIMENTAL_IMPORT_BY_SOURCE_IMAGE_TAG") {
+		return s.getImportArgsBySourceImageTag(ctx, c), nil
+	}
+	return s.getImportArgsByFileChecksum(ctx, c, cb)
+}
+
+func (s *DependenciesStage) getImportArgsBySourceImageTag(ctx context.Context, c Conveyor) []string {
+	var args []string
+	for _, elm := range s.imports {
+		sourceContentDigest := getSourceImageContentDigest(c, s.targetPlatform, elm)
+		logboek.Context(ctx).Default().LogF("source content digest %s: %s\n", sourceContentDigest, formatImportTitle(elm))
+
+		args = append(args, sourceContentDigest)
+		args = append(args, elm.Add)
+		args = append(args, elm.To)
+		args = append(args, elm.Group, elm.Owner)
+		args = append(args, strings.Join(elm.IncludePaths, "///"))
+		args = append(args, strings.Join(elm.ExcludePaths, "///"))
+	}
+	return args
+}
+
+func (s *DependenciesStage) getImportArgsByFileChecksum(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend) ([]string, error) {
+	var args []string
+	if err := logboek.Context(ctx).Default().LogProcess("Calculating import checksums").DoError(func() error {
+		for ind, elm := range s.imports {
+			sourceChecksum, err := s.getImportSourceChecksum(ctx, c, cb, elm)
+			if err != nil {
+				return fmt.Errorf("unable to get import %d source checksum: %w", ind, err)
+			}
+
+			// TODO: in v3 we should return err instead of warning
+			if sourceChecksum == nothingChecksum {
+				global_warnings.GlobalWarningLn(ctx, fmt.Sprintf("This import config does nothing: %s", formatImportTitle(elm)))
+			}
+
+			logboek.Context(ctx).Default().LogF("%s: %s\n", sourceChecksum, formatImportTitle(elm))
+
+			args = append(args, sourceChecksum)
+			args = append(args, elm.To)
+			args = append(args, elm.Group, elm.Owner)
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	return args, nil
 }
 
 func formatImportTitle(elm *config.Import) string {
@@ -136,21 +169,11 @@ func (s *DependenciesStage) prepareImageWithLegacyStapelBuilder(ctx context.Cont
 		command := srv.GetCopyCommand(ctx, elm)
 		stageImage.Builder.LegacyStapelStageBuilder().Container().AddServiceRunCommands(command)
 
-		checksumLabelKey := imagePkg.WerfImportChecksumLabelPrefix + getImportID(elm)
-		sourceStageIDLabelKey := imagePkg.WerfImportSourceStageIDLabelPrefix + getImportID(elm)
-
-		importSourceID := getImportSourceID(c, s.targetPlatform, elm)
-		importMetadata, err := c.GetImportMetadata(ctx, s.projectName, importSourceID)
+		labels, err := s.getImportLabels(ctx, c, elm)
 		if err != nil {
-			return fmt.Errorf("unable to get import source checksum: %w", err)
-		} else if importMetadata == nil {
-			panic(fmt.Sprintf("import metadata %s not found", importSourceID))
+			return fmt.Errorf("get import labels: %w", err)
 		}
-
-		imageServiceCommitChangeOptions.AddLabel(map[string]string{
-			checksumLabelKey:      importMetadata.Checksum,
-			sourceStageIDLabelKey: importMetadata.SourceStageID,
-		})
+		imageServiceCommitChangeOptions.AddLabel(labels)
 	}
 
 	for _, dep := range s.dependencies {
@@ -211,21 +234,12 @@ func (s *DependenciesStage) prepareImage(ctx context.Context, c Conveyor, cr con
 			}
 		}
 
-		checksumLabelKey := imagePkg.WerfImportChecksumLabelPrefix + getImportID(elm)
-		sourceStageIDLabelKey := imagePkg.WerfImportSourceStageIDLabelPrefix + getImportID(elm)
-
-		importSourceID := getImportSourceID(c, s.targetPlatform, elm)
-		importMetadata, err := c.GetImportMetadata(ctx, s.projectName, importSourceID)
+		labels, err := s.getImportLabels(ctx, c, elm)
 		if err != nil {
-			return fmt.Errorf("unable to get import source checksum: %w", err)
-		} else if importMetadata == nil {
-			panic(fmt.Sprintf("import metadata %s not found", importSourceID))
+			return fmt.Errorf("get import labels: %w", err)
 		}
+		stageImage.Builder.StapelStageBuilder().AddLabels(labels)
 
-		stageImage.Builder.StapelStageBuilder().AddLabels(map[string]string{
-			checksumLabelKey:      importMetadata.Checksum,
-			sourceStageIDLabelKey: importMetadata.SourceStageID,
-		})
 		stageImage.Builder.StapelStageBuilder().AddDependencyImport(sourceImageName, elm.Add, elm.To, elm.IncludePaths, elm.ExcludePaths, elm.Owner, elm.Group)
 	}
 
@@ -274,6 +288,33 @@ func (s *DependenciesStage) PrepareImage(ctx context.Context, c Conveyor, cb con
 	} else {
 		return s.prepareImage(ctx, c, cb, prevBuiltImage, stageImage)
 	}
+}
+
+func (s *DependenciesStage) getImportLabels(ctx context.Context, c Conveyor, elm *config.Import) (map[string]string, error) {
+	sourceStageIDLabelKey := imagePkg.WerfImportSourceStageIDLabelPrefix + getImportID(elm)
+	sourceStageID := getSourceStageID(c, s.targetPlatform, elm)
+
+	if util.GetBoolEnvironmentDefaultFalse("WERF_EXPERIMENTAL_IMPORT_BY_SOURCE_IMAGE_TAG") {
+		return map[string]string{
+			sourceStageIDLabelKey: sourceStageID,
+		}, nil
+	}
+
+	checksumLabelKey := imagePkg.WerfImportChecksumLabelPrefix + getImportID(elm)
+	importSourceID := getImportSourceID(c, s.targetPlatform, elm)
+
+	importMetadata, err := c.GetImportMetadata(ctx, s.projectName, importSourceID)
+	if err != nil {
+		return nil, fmt.Errorf("get import metadata: %w", err)
+	}
+	if importMetadata == nil {
+		panic(fmt.Sprintf("import metadata %s not found", importSourceID))
+	}
+
+	return map[string]string{
+		checksumLabelKey:      importMetadata.Checksum,
+		sourceStageIDLabelKey: importMetadata.SourceStageID,
+	}, nil
 }
 
 func (s *DependenciesStage) getImportSourceChecksum(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, importElm *config.Import) (string, error) {
