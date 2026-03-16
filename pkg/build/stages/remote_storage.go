@@ -102,9 +102,6 @@ func (s *RemoteStorage) copyAllFromRemote(ctx context.Context, fromRemote *Remot
 		if err != nil {
 			return fmt.Errorf("unable to get description of stage %s: %w", stageId, err)
 		}
-		if stageDesc == nil {
-			return fmt.Errorf("description of stage %s not found", stageId)
-		}
 
 		reference, err := ref.ParseReference(stageId.Digest)
 		if err != nil {
