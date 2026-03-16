@@ -37,6 +37,9 @@ func LogImageInfo(ctx context.Context, img LegacyImageInterface, prevStageImageS
 	LogImageName(ctx, img.Name())
 
 	logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "id", stringid.TruncateID(img.GetStageDesc().Info.ID))
+
+	logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "sha256", (strings.TrimPrefix(img.GetStageDesc().Info.GetDigest(), "sha256:")))
+
 	logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "created", img.GetStageDesc().Info.GetCreatedAt())
 
 	if prevStageImageSize == 0 {

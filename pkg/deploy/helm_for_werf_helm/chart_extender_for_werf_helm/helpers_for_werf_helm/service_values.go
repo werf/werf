@@ -73,6 +73,7 @@ func GetServiceValues(ctx context.Context, projectName, repo string, imageInfoGe
 		"repo":    repo,
 		"image":   map[string]interface{}{},
 		"tag":     map[string]interface{}{},
+		"sha256":  map[string]interface{}{},
 		"commit": map[string]interface{}{
 			"hash": opts.CommitHash,
 			"date": map[string]interface{}{
@@ -96,6 +97,7 @@ func GetServiceValues(ctx context.Context, projectName, repo string, imageInfoGe
 
 	if opts.IsStub {
 		stubTag := "TAG"
+		stubSha256 := "SHA256"
 		stubImage := fmt.Sprintf("%s:%s", repo, stubTag)
 
 		werfInfo["is_stub"] = true
@@ -103,12 +105,14 @@ func GetServiceValues(ctx context.Context, projectName, repo string, imageInfoGe
 		for _, name := range opts.StubImageNameList {
 			werfInfo["image"].(map[string]interface{})[name] = stubImage
 			werfInfo["tag"].(map[string]interface{})[name] = stubTag
+			werfInfo["sha256"].(map[string]interface{})[name] = stubSha256
 		}
 	}
 
 	for _, imageInfoGetter := range imageInfoGetters {
 		tag := imageInfoGetter.GetTag()
 		image := imageInfoGetter.GetName()
+		digest := imageInfoGetter.GetDigest()
 
 		if imageInfoGetter.IsNameless() {
 			werfInfo["is_nameless_image"] = true
@@ -116,6 +120,7 @@ func GetServiceValues(ctx context.Context, projectName, repo string, imageInfoGe
 		} else {
 			werfInfo["image"].(map[string]interface{})[imageInfoGetter.GetWerfImageName()] = image
 			werfInfo["tag"].(map[string]interface{})[imageInfoGetter.GetWerfImageName()] = tag
+			werfInfo["sha256"].(map[string]interface{})[imageInfoGetter.GetWerfImageName()] = digest
 		}
 	}
 

@@ -457,7 +457,7 @@ func (report *ImagesReport) ToImageInfoGetters(opts imagePkg.InfoGetterOptions) 
 			continue
 		}
 
-		infoGetters = append(infoGetters, imagePkg.NewInfoGetter(record.WerfImageName, record.DockerImageName, opts))
+		infoGetters = append(infoGetters, imagePkg.NewInfoGetter(record.WerfImageName, record.DockerImageName, record.DockerImageDigest, opts))
 	}
 
 	return infoGetters

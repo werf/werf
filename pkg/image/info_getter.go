@@ -11,6 +11,7 @@ type InfoGetter struct {
 	WerfImageName string
 	Repo          string
 	Tag           string
+	Digest        string
 
 	InfoGetterOptions
 }
@@ -20,13 +21,14 @@ type InfoGetterOptions struct {
 	OnlyFinal     bool
 }
 
-func NewInfoGetter(imageName, ref string, opts InfoGetterOptions) *InfoGetter {
+func NewInfoGetter(imageName, ref, digest string, opts InfoGetterOptions) *InfoGetter {
 	repo, tag := ParseRepositoryAndTag(ref)
 
 	return &InfoGetter{
 		WerfImageName:     imageName,
 		Repo:              repo,
 		Tag:               tag,
+		Digest:            digest,
 		InfoGetterOptions: opts,
 	}
 }
@@ -48,4 +50,8 @@ func (d *InfoGetter) GetTag() string {
 		return d.CustomTagFunc(d.WerfImageName, d.Tag)
 	}
 	return d.Tag
+}
+
+func (d *InfoGetter) GetDigest() string {
+	return d.Digest
 }
