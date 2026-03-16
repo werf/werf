@@ -275,11 +275,12 @@ func (m *StorageManager) getStageDescSet(ctx context.Context, opts ...storage.Op
 		stageID := stageIDs[taskId]
 
 		stageDesc, err := getStageDesc(ctx, m.ProjectName, stageID, m.StagesStorage, m.CacheStagesStorageList, getStageDescOptions{WithLocalManifestCache: m.getWithLocalManifestCacheOption()})
-		if storage.IsErrStageUnavailable(err) {
-			logboek.Context(ctx).Warn().LogF("Ignoring stage %s: cannot get stage description from %s: %s\n", stageID.String(), m.StagesStorage.String(), err)
-			return nil
-		}
 		if err != nil {
+			if storage.IsErrStageUnavailable(err) {
+				logboek.Context(ctx).Warn().LogF("Ignoring stage %s: cannot get stage description from %s: %s\n", stageID.String(), m.StagesStorage.String(), err)
+				return nil
+			}
+
 			return fmt.Errorf("error getting stage %s description: %w", stageID.String(), err)
 		}
 
@@ -309,11 +310,12 @@ func (m *StorageManager) GetFinalStageDescSet(ctx context.Context) (image.StageD
 		stageID := stageIDs[taskId]
 
 		stageDesc, err := getStageDesc(ctx, m.ProjectName, stageID, m.FinalStagesStorage, nil, getStageDescOptions{WithLocalManifestCache: true})
-		if storage.IsErrStageUnavailable(err) {
-			logboek.Context(ctx).Warn().LogF("Ignoring stage %s: cannot get stage description from %s: %s\n", stageID.String(), m.FinalStagesStorage.String(), err)
-			return nil
-		}
 		if err != nil {
+			if storage.IsErrStageUnavailable(err) {
+				logboek.Context(ctx).Warn().LogF("Ignoring stage %s: cannot get stage description from %s: %s\n", stageID.String(), m.FinalStagesStorage.String(), err)
+				return nil
+			}
+
 			return fmt.Errorf("error getting stage %s description from %s: %w", stageID.String(), m.FinalStagesStorage.String(), err)
 		}
 
@@ -830,11 +832,12 @@ func (m *StorageManager) getStageDescSetFromStagesStorage(ctx context.Context, s
 	stageDescSet := image.NewStageDescSet()
 	for _, stageID := range stageIDs {
 		stageDesc, err := getStageDesc(ctx, m.ProjectName, stageID, stagesStorage, cacheStagesStorageList, getStageDescOptions{WithLocalManifestCache: m.getWithLocalManifestCacheOption()})
-		if storage.IsErrStageUnavailable(err) {
-			logboek.Context(ctx).Warn().LogF("Ignoring stage %s: cannot get stage description from %s: %s\n", stageID.String(), m.StagesStorage.String(), err)
-			continue
-		}
 		if err != nil {
+			if storage.IsErrStageUnavailable(err) {
+				logboek.Context(ctx).Warn().LogF("Ignoring stage %s: cannot get stage description from %s: %s\n", stageID.String(), m.StagesStorage.String(), err)
+				continue
+			}
+
 			return nil, err
 		}
 
@@ -922,10 +925,11 @@ func getStageDesc(ctx context.Context, projectName string, stageID image.StageID
 				logboek.Context(ctx).Debug().LogF("Got stage description: %#v\n", stageDesc)
 				return err
 			})
-		if storage.IsErrStageUnavailable(err) {
-			continue
-		}
 		if err != nil {
+			if storage.IsErrStageUnavailable(err) {
+				continue
+			}
+
 			logboek.Context(ctx).Warn().LogF("Unable to get stage description from cache stages storage %s: %s\n", cacheStagesStorage.String(), err)
 			continue
 		}
@@ -941,10 +945,11 @@ func getStageDesc(ctx context.Context, projectName string, stageID image.StageID
 
 	logboek.Context(ctx).Debug().LogF("Getting digest %q creation timestamp %d stage info from %s...\n", stageID.Digest, stageID.CreationTs, stagesStorage.String())
 	stageDesc, err := stagesStorage.GetStageDesc(ctx, projectName, stageID)
-	if storage.IsErrStageUnavailable(err) {
-		return nil, err
-	}
 	if err != nil {
+		if storage.IsErrStageUnavailable(err) {
+			return nil, err
+		}
+
 		return nil, fmt.Errorf("error getting digest %q creation timestamp %d stage info from %s: %w", stageID.Digest, stageID.CreationTs, stagesStorage.String(), err)
 	}
 
