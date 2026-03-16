@@ -4,11 +4,13 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 
 	"github.com/google/go-containerregistry/pkg/v1/mutate"
 	"github.com/google/go-containerregistry/pkg/v1/tarball"
 
 	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/tmp_manager"
 )
 
 type BackendLoaderStorer interface {
@@ -17,11 +19,37 @@ type BackendLoaderStorer interface {
 }
 
 func MutateAndPushImage(ctx context.Context, imageName string, newConfig image.SpecConfig, backend BackendLoaderStorer) (string, error) {
-	opener := func() (io.ReadCloser, error) {
-		return backend.SaveImageToStream(ctx, imageName)
+	imageStream, err := backend.SaveImageToStream(ctx, imageName)
+	if err != nil {
+		return "", fmt.Errorf("failed to save image: %w", err)
 	}
 
-	img, err := tarball.Image(opener, nil)
+	tempTarFile, err := tmp_manager.TempFile("werf-image-mutation-*.tar")
+	if err != nil {
+		_ = imageStream.Close()
+		return "", fmt.Errorf("failed to create temp tar file: %w", err)
+	}
+	tempTarPath := tempTarFile.Name()
+	defer func() {
+		_ = os.Remove(tempTarPath)
+	}()
+
+	if _, err := io.Copy(tempTarFile, imageStream); err != nil {
+		_ = imageStream.Close()
+		_ = tempTarFile.Close()
+		return "", fmt.Errorf("failed to persist image tarball: %w", err)
+	}
+
+	if err := imageStream.Close(); err != nil {
+		_ = tempTarFile.Close()
+		return "", fmt.Errorf("failed to close image save stream: %w", err)
+	}
+
+	if err := tempTarFile.Close(); err != nil {
+		return "", fmt.Errorf("failed to finalize temp tar file: %w", err)
+	}
+
+	img, err := tarball.ImageFromPath(tempTarPath, nil)
 	if err != nil {
 		return "", fmt.Errorf("failed to read image: %w", err)
 	}
@@ -40,9 +68,11 @@ func MutateAndPushImage(ctx context.Context, imageName string, newConfig image.S
 
 	pr, pw := io.Pipe()
 	go func() {
-		defer pw.Close()
+		defer func() {
+			_ = pw.Close()
+		}()
 		if err := tarball.Write(nil, img, pw); err != nil {
-			pw.CloseWithError(fmt.Errorf("failed to write tarball: %w", err))
+			_ = pw.CloseWithError(fmt.Errorf("failed to write tarball: %w", err))
 		}
 	}()
 
