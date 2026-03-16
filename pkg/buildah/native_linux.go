@@ -14,6 +14,7 @@ import (
 	"math/rand"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"syscall"
@@ -241,31 +242,54 @@ func (b *NativeBuildah) getSystemContext(targetPlatform string) (*imgtypes.Syste
 	return systemContext, nil
 }
 
-// generateRegistriesConfig creates registries.conf content with mirror configuration.
-// Mirror is marked insecure if it uses http:// scheme or is in insecureRegistries list.
+// generateRegistriesConfig creates registries.conf content with mirror and per-host insecure
+// registry configuration.
+//
+// Mirror entries are marked insecure when they use http:// scheme or appear in insecureRegistries.
+// Insecure registries that are NOT mirror targets receive a standalone [[registry]] entry so that
+// buildah skips TLS verification for them even when they are used directly (not via a mirror).
 func generateRegistriesConfig(mirrors, insecureRegistries []string) (string, error) {
 	type mirrorEntry struct {
 		Location string
 		Insecure bool
 	}
-	var mrs []mirrorEntry
 
 	insecureHosts := make(map[string]bool, len(insecureRegistries))
 	for _, h := range insecureRegistries {
 		h = strings.TrimPrefix(h, "https://")
 		h = strings.TrimPrefix(h, "http://")
-		insecureHosts[h] = true
+		if h != "" {
+			insecureHosts[h] = true
+		}
 	}
 
+	mirrorHosts := make(map[string]bool, len(mirrors))
+	var mrs []mirrorEntry
 	for _, mirror := range mirrors {
 		isHTTP := strings.HasPrefix(mirror, "http://")
 		mirror = strings.TrimPrefix(mirror, "https://")
 		mirror = strings.TrimPrefix(mirror, "http://")
 		mirror = strings.TrimSuffix(mirror, "/")
+		mirrorHosts[mirror] = true
 		mrs = append(mrs, mirrorEntry{
 			Location: mirror,
 			Insecure: isHTTP || insecureHosts[mirror],
 		})
+	}
+
+	// Collect insecure registries that are not already covered as mirror targets.
+	// They need an explicit [[registry]] entry so buildah skips TLS for direct pulls/pushes.
+	var standaloneInsecure []string
+	for host := range insecureHosts {
+		if !mirrorHosts[host] {
+			standaloneInsecure = append(standaloneInsecure, host)
+		}
+	}
+	sort.Strings(standaloneInsecure)
+
+	type templateData struct {
+		Mirrors            []mirrorEntry
+		InsecureRegistries []string
 	}
 
 	tpl := `
@@ -275,10 +299,16 @@ unqualified-search-registries = ["docker.io"]
 prefix = "docker.io"
 location = "docker.io"
 
-{{ range . -}}
+{{ range .Mirrors -}}
 [[registry.mirror]]
 location = "{{ .Location }}"
 insecure = {{ .Insecure }}
+
+{{ end -}}
+{{ range .InsecureRegistries -}}
+[[registry]]
+location = "{{ . }}"
+insecure = true
 
 {{ end -}}
 `
@@ -288,8 +318,7 @@ insecure = {{ .Insecure }}
 	}
 
 	var result bytes.Buffer
-	err = tmpl.Execute(&result, mrs)
-	if err != nil {
+	if err = tmpl.Execute(&result, templateData{Mirrors: mrs, InsecureRegistries: standaloneInsecure}); err != nil {
 		return "", err
 	}
 

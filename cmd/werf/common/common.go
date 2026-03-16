@@ -1392,9 +1392,9 @@ func DockerRegistryInit(ctx context.Context, cmdData *CmdData, registryMirrors [
 // GetInsecureRegistryHosts returns list of insecure registry hostnames from Docker daemon.
 // Note: buildah insecure registries are read inside NewNativeBuildah after user namespace setup.
 func GetInsecureRegistryHosts(ctx context.Context, cmdData *CmdData) ([]string, error) {
-	// If the global --insecure-registry flag is set there is no need to build a
+	// If a global insecure mode is enabled there is no need to build a
 	// per-host list — every host will be treated as insecure anyway.
-	if cmdData.InsecureRegistry != nil && *cmdData.InsecureRegistry {
+	if (cmdData.InsecureRegistry != nil && *cmdData.InsecureRegistry) || (cmdData.SkipTlsVerifyRegistry != nil && *cmdData.SkipTlsVerifyRegistry) {
 		return nil, nil
 	}
 
