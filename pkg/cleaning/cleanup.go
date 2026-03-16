@@ -903,7 +903,7 @@ func (m *cleanupManager) cleanupUnusedStages(ctx context.Context) error {
 }
 
 func (m *cleanupManager) deleteUnusedImportsMetadata(ctx context.Context) error {
-	if len(m.sourceStageIDImportIDs) == 0 {
+	if util.GetBoolEnvironmentDefaultFalse("WERF_EXPERIMENTAL_IMPORT_BY_SOURCE_IMAGE_TAG") || len(m.sourceStageIDImportIDs) == 0 {
 		return nil
 	}
 
@@ -960,6 +960,10 @@ FilterOutFinalStages:
 }
 
 func (m *cleanupManager) initImportsMetadata(ctx context.Context) error {
+	if util.GetBoolEnvironmentDefaultFalse("WERF_EXPERIMENTAL_IMPORT_BY_SOURCE_IMAGE_TAG") {
+		return nil
+	}
+
 	m.checksumSourceStageIDs = map[string][]string{}
 	m.sourceStageIDImportIDs = map[string][]string{}
 
@@ -1064,34 +1068,8 @@ func (m *cleanupManager) protectRelativeStageDescSetByStageDesc(targetStageDesc 
 				handledStageDescSet.Add(currentStageDesc)
 			}
 
-			// Import or Dependency source checking.
 			if withImportOrDependencySources {
-				for label, value := range currentStageDesc.Info.Labels {
-					if strings.HasPrefix(label, image.WerfImportChecksumLabelPrefix) {
-						sourceStageIDs, ok := m.checksumSourceStageIDs[value]
-						if !ok {
-							continue
-						}
-
-						for _, sourceStageID := range sourceStageIDs {
-							if strings.HasPrefix(sourceStageID, image.WerfImportSourceExternalImagePrefix) {
-								// Skip external image import sources.
-								continue
-							}
-							sourceStageDesc := m.stageManager.GetStageDescByStageID(sourceStageID)
-							if sourceStageDesc != nil {
-								currentStageDescSet.Add(sourceStageDesc)
-								m.stageManager.MarkStageDescAsProtected(sourceStageDesc, stage_manager.ProtectionReasonImportSource, false)
-							}
-						}
-					} else if strings.HasPrefix(label, image.WerfDependencySourceStageIDLabelPrefix) {
-						sourceStageDesc := m.stageManager.GetStageDescByStageID(value)
-						if sourceStageDesc != nil {
-							currentStageDescSet.Add(sourceStageDesc)
-							m.stageManager.MarkStageDescAsProtected(sourceStageDesc, stage_manager.ProtectionReasonDependencySource, false)
-						}
-					}
-				}
+				m.protectImportAndDependencySources(currentStageDesc, currentStageDescSet)
 			}
 
 			// Parent stage checking.
@@ -1113,6 +1091,43 @@ func (m *cleanupManager) protectRelativeStageDescSetByStageDesc(targetStageDesc 
 			}
 		}
 	}
+}
+
+func (m *cleanupManager) protectImportAndDependencySources(stageDesc *image.StageDesc, currentStageDescSet image.StageDescSet) {
+	for label, value := range stageDesc.Info.Labels {
+		if strings.HasPrefix(label, image.WerfImportSourceStageIDLabelPrefix) || strings.HasPrefix(label, image.WerfImportChecksumLabelPrefix) {
+			for _, sourceStageID := range m.resolveImportSourceStageIDs(label, value) {
+				if strings.HasPrefix(sourceStageID, image.WerfImportSourceExternalImagePrefix) {
+					continue
+				}
+				if sourceStageDesc := m.stageManager.GetStageDescByStageID(sourceStageID); sourceStageDesc != nil {
+					currentStageDescSet.Add(sourceStageDesc)
+					m.stageManager.MarkStageDescAsProtected(sourceStageDesc, stage_manager.ProtectionReasonImportSource, false)
+				}
+			}
+		}
+
+		if strings.HasPrefix(label, image.WerfDependencySourceStageIDLabelPrefix) {
+			if sourceStageDesc := m.stageManager.GetStageDescByStageID(value); sourceStageDesc != nil {
+				currentStageDescSet.Add(sourceStageDesc)
+				m.stageManager.MarkStageDescAsProtected(sourceStageDesc, stage_manager.ProtectionReasonDependencySource, false)
+			}
+		}
+	}
+}
+
+func (m *cleanupManager) resolveImportSourceStageIDs(label, value string) []string {
+	if util.GetBoolEnvironmentDefaultFalse("WERF_EXPERIMENTAL_IMPORT_BY_SOURCE_IMAGE_TAG") {
+		if strings.HasPrefix(label, image.WerfImportSourceStageIDLabelPrefix) {
+			return []string{value}
+		}
+		return nil
+	}
+
+	if strings.HasPrefix(label, image.WerfImportChecksumLabelPrefix) {
+		return m.checksumSourceStageIDs[value]
+	}
+	return nil
 }
 
 func (m *cleanupManager) deleteUnusedCustomTags(ctx context.Context) error {
