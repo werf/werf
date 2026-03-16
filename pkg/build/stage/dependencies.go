@@ -72,6 +72,8 @@ type DependenciesStage struct {
 
 	imports      []*config.Import
 	dependencies []*config.Dependency
+
+	resolvedImportMetadata map[string]*storage.ImportMetadata
 }
 
 func (s *DependenciesStage) GetDependencies(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, _, _ *StageImage, _ container_backend.BuildContextArchiver) (string, error) {
@@ -171,7 +173,7 @@ func (s *DependenciesStage) prepareImageWithLegacyStapelBuilder(ctx context.Cont
 
 		labels, err := s.getImportLabels(ctx, c, elm)
 		if err != nil {
-			return fmt.Errorf("unable to get import labels: %w", err)
+			return fmt.Errorf("get import labels: %w", err)
 		}
 		imageServiceCommitChangeOptions.AddLabel(labels)
 	}
@@ -236,7 +238,7 @@ func (s *DependenciesStage) prepareImage(ctx context.Context, c Conveyor, cr con
 
 		labels, err := s.getImportLabels(ctx, c, elm)
 		if err != nil {
-			return fmt.Errorf("unable to get import labels: %w", err)
+			return fmt.Errorf("get import labels: %w", err)
 		}
 		stageImage.Builder.StapelStageBuilder().AddLabels(labels)
 
@@ -303,12 +305,9 @@ func (s *DependenciesStage) getImportLabels(ctx context.Context, c Conveyor, elm
 	checksumLabelKey := imagePkg.WerfImportChecksumLabelPrefix + getImportID(elm)
 	importSourceID := getImportSourceID(c, s.targetPlatform, elm)
 
-	importMetadata, err := c.GetImportMetadata(ctx, s.projectName, importSourceID)
+	importMetadata, err := s.getResolvedImportMetadata(ctx, c, importSourceID)
 	if err != nil {
-		return nil, fmt.Errorf("get import metadata: %w", err)
-	}
-	if importMetadata == nil {
-		panic(fmt.Sprintf("import metadata %s not found", importSourceID))
+		return nil, fmt.Errorf("get import metadata for %s: %w", importSourceID, err)
 	}
 
 	return map[string]string{
@@ -320,7 +319,12 @@ func (s *DependenciesStage) getImportLabels(ctx context.Context, c Conveyor, elm
 func (s *DependenciesStage) getImportSourceChecksum(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, importElm *config.Import) (string, error) {
 	importSourceID := getImportSourceID(c, s.targetPlatform, importElm)
 	importMetadata, err := c.GetImportMetadata(ctx, s.projectName, importSourceID)
-	if err != nil {
+	if storage.IsErrBrokenImage(err) {
+		logboek.Context(ctx).Warn().LogF("Import metadata %s image is broken in the container registry, will regenerate\n", importSourceID)
+		importMetadata = nil
+	} else if storage.IsErrImportMetadataNotFound(err) {
+		importMetadata = nil
+	} else if err != nil {
 		return "", fmt.Errorf("unable to get import metadata: %w", err)
 	}
 
@@ -342,7 +346,27 @@ func (s *DependenciesStage) getImportSourceChecksum(ctx context.Context, c Conve
 		}
 	}
 
+	if s.resolvedImportMetadata == nil {
+		s.resolvedImportMetadata = make(map[string]*storage.ImportMetadata)
+	}
+	s.resolvedImportMetadata[importSourceID] = importMetadata
+
 	return importMetadata.Checksum, nil
+}
+
+func (s *DependenciesStage) getResolvedImportMetadata(ctx context.Context, c Conveyor, importSourceID string) (*storage.ImportMetadata, error) {
+	if importMetadata := s.resolvedImportMetadata[importSourceID]; importMetadata != nil {
+		return importMetadata, nil
+	}
+
+	logboek.Context(ctx).Warn().LogF("Import metadata %s was not resolved during GetDependencies phase, falling back to registry read. The import metadata image in the container registry may be missing or broken.\n", importSourceID)
+
+	importMetadata, err := c.GetImportMetadata(ctx, s.projectName, importSourceID)
+	if err != nil {
+		return nil, fmt.Errorf("get import metadata: %w", err)
+	}
+
+	return importMetadata, nil
 }
 
 func (s *DependenciesStage) generateImportChecksum(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, importElm *config.Import) (string, error) {
