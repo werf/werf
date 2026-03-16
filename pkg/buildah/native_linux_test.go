@@ -81,6 +81,41 @@ var _ = Describe("buildah", func() {
 			Expect(insecureCount).To(Equal(2))
 			Expect(secureCount).To(Equal(1))
 		})
+
+		It("should generate standalone [[registry]] entry for insecure non-mirror registry", func() {
+			config, err := generateRegistriesConfig(
+				[]string{},
+				[]string{"localhost:5000"},
+			)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(config).To(ContainSubstring(`location = "localhost:5000"`))
+			Expect(config).To(ContainSubstring(`insecure = true`))
+			// Must be a [[registry]] entry, not a [[registry.mirror]]
+			Expect(config).NotTo(ContainSubstring(`[[registry.mirror]]`))
+		})
+
+		It("should not duplicate registry when insecure registry is also a mirror target", func() {
+			config, err := generateRegistriesConfig(
+				[]string{"http://mirror.local:5000"},
+				[]string{"mirror.local:5000"},
+			)
+			Expect(err).NotTo(HaveOccurred())
+			// mirror is covered by [[registry.mirror]] entry — no standalone [[registry]] for it
+			mirrorCount := strings.Count(config, `location = "mirror.local:5000"`)
+			Expect(mirrorCount).To(Equal(1))
+		})
+
+		It("should generate standalone entries for multiple insecure non-mirror registries", func() {
+			config, err := generateRegistriesConfig(
+				[]string{},
+				[]string{"registry-a.local:5000", "registry-b.local:5001"},
+			)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(config).To(ContainSubstring(`location = "registry-a.local:5000"`))
+			Expect(config).To(ContainSubstring(`location = "registry-b.local:5001"`))
+			insecureCount := strings.Count(config, "insecure = true")
+			Expect(insecureCount).To(Equal(2))
+		})
 	})
 
 	Describe("GetInsecureRegistriesFromConfig", func() {
