@@ -67,7 +67,21 @@ func (r *defaultImplementation) TagRepoImage(ctx context.Context, repoImage *ima
 }
 
 func (r *defaultImplementation) DeleteRepoImage(ctx context.Context, repoImage *image.Info) error {
-	return r.api.deleteImageByReference(ctx, repoImage.RepoDigest)
+	if repoImage.Tag != "" {
+		tagReference := strings.Join([]string{repoImage.Repository, repoImage.Tag}, ":")
+		if err := r.api.deleteImageByTag(ctx, tagReference); err != nil {
+			logboek.Context(ctx).Info().LogF("Delete tag %s: %s\n", tagReference, err)
+		}
+	}
+
+	if err := r.api.deleteImageByReference(ctx, repoImage.RepoDigest); err != nil {
+		if IsStatusNotFoundErr(err) || IsImageNotFoundError(err) {
+			return nil
+		}
+		return err
+	}
+
+	return nil
 }
 
 func (r *defaultImplementation) String() string {

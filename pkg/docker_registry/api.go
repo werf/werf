@@ -265,6 +265,19 @@ func (api *api) deleteImageByReference(ctx context.Context, reference string) er
 	return nil
 }
 
+func (api *api) deleteImageByTag(ctx context.Context, reference string) error {
+	r, err := name.NewTag(reference, api.parseReferenceOptions()...)
+	if err != nil {
+		return fmt.Errorf("parsing tag reference %q: %w", reference, err)
+	}
+
+	if err := remote.Delete(r, api.defaultRemoteOptions(ctx)...); err != nil {
+		return fmt.Errorf("deleting tag %q: %w", r, err)
+	}
+
+	return nil
+}
+
 func (api *api) MutateAndPushImage(ctx context.Context, sourceReference, destinationReference string, opts ...registry_api.MutateOption) error {
 	return api.mutateAndPushImage(ctx, sourceReference, destinationReference, opts...)
 }
