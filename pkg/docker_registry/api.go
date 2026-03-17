@@ -35,10 +35,7 @@ type api struct {
 	InsecureRegistry      bool
 	SkipTlsVerifyRegistry bool
 
-	// insecureRegistryHosts holds exact hostnames (with optional port) that must be
-	// accessed over plain HTTP or without TLS verification.
 	insecureRegistryHosts map[string]bool
-	// insecureRegistryCIDRs holds parsed CIDR networks for IP-based matching.
 	insecureRegistryCIDRs []*net.IPNet
 
 	httpTransport         http.RoundTripper
@@ -49,9 +46,6 @@ type apiOptions struct {
 	InsecureRegistry      bool
 	SkipTlsVerifyRegistry bool
 	RegistryMirrors       []string
-	// InsecureRegistryHosts is the list of registry hostnames (or CIDRs)
-	// that should be accessed over plain HTTP / without TLS verification.
-	// Populated from Docker daemon's "insecure-registries" or buildah registries.conf.
 	InsecureRegistryHosts []string
 }
 
@@ -60,13 +54,11 @@ func newAPI(options apiOptions) *api {
 	var insecureCIDRs []*net.IPNet
 
 	for _, h := range options.InsecureRegistryHosts {
-		// Try to parse as CIDR
 		_, cidr, err := net.ParseCIDR(h)
 		if err == nil {
 			insecureCIDRs = append(insecureCIDRs, cidr)
 			continue
 		}
-		// Not a CIDR — treat as host[:port]
 		insecureHosts[h] = true
 	}
 
@@ -80,31 +72,24 @@ func newAPI(options apiOptions) *api {
 	}
 }
 
-// isInsecureHost returns true when the given registry hostname should be
-// treated as insecure (plain HTTP / no TLS verification).
-// Supports exact host:port matching and CIDR-based IP matching.
 func (api *api) isInsecureHost(host string) bool {
 	if api.InsecureRegistry {
 		return true
 	}
 
-	// Exact match (host or host:port)
 	if api.insecureRegistryHosts[host] {
 		return true
 	}
 
-	// Extract host part without port for IP/CIDR matching
 	hostOnly := host
 	if h, _, err := net.SplitHostPort(host); err == nil {
 		hostOnly = h
 	}
 
-	// Also check host without port
 	if hostOnly != host && api.insecureRegistryHosts[hostOnly] {
 		return true
 	}
 
-	// CIDR matching for IP addresses
 	ip := net.ParseIP(hostOnly)
 	if ip != nil {
 		for _, cidr := range api.insecureRegistryCIDRs {

@@ -2,18 +2,14 @@ package docker
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"net"
-	"os"
-	"path/filepath"
-	"runtime"
 	"strings"
 
 	"github.com/docker/docker/api/types"
 	dockerclient "github.com/docker/docker/client"
 )
 
+<<<<<<< HEAD
 type daemonConfig struct {
 	RegistryMirrors    []string `json:"registry-mirrors"`
 	InsecureRegistries []string `json:"insecure-registries"`
@@ -62,6 +58,8 @@ func readDaemonConfigFromFile() (*daemonConfig, error) {
 	return nil, nil
 }
 
+====== =
+>>>>>>> f3c418151 (chore(build): fix remarks)
 func Info(ctx context.Context) (types.Info, error) {
 	return apiCli(ctx).Info(ctx)
 }
@@ -111,6 +109,7 @@ func getDaemonInfo(ctx context.Context) (*types.Info, error) {
 	return &info, nil
 }
 
+<<<<<<< HEAD
 // TryGetDaemonInfo attempts to get Docker daemon info without requiring prior Init.
 // Returns (nil, nil) when daemon is unavailable, allowing graceful fallback.
 func TryGetDaemonInfo(ctx context.Context) (*types.Info, error) {
@@ -145,8 +144,10 @@ func registryInfoFromDaemon(ctx context.Context) (*types.Info, error) {
 
 // GetRegistryMirrors returns registry mirrors from Docker daemon API.
 // Falls back to reading daemon.json if daemon is unavailable.
+====== =
+>>>>>>> f3c418151 (chore(build): fix remarks)
 func GetRegistryMirrors(ctx context.Context) ([]string, error) {
-	info, err := registryInfoFromDaemon(ctx)
+	info, err := getDaemonInfo(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -155,21 +156,11 @@ func GetRegistryMirrors(ctx context.Context) ([]string, error) {
 		return info.RegistryConfig.Mirrors, nil
 	}
 
-	cfg, err := readDaemonConfigFromFile()
-	if err != nil {
-		return nil, err
-	}
-	if cfg != nil {
-		return cfg.RegistryMirrors, nil
-	}
-
 	return nil, nil
 }
 
-// GetInsecureRegistries returns insecure registries from Docker daemon API.
-// Falls back to reading daemon.json if daemon is unavailable.
 func GetInsecureRegistries(ctx context.Context) ([]string, error) {
-	info, err := registryInfoFromDaemon(ctx)
+	info, err := getDaemonInfo(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -194,14 +185,6 @@ func GetInsecureRegistries(ctx context.Context) ([]string, error) {
 		}
 
 		return result, nil
-	}
-
-	cfg, err := readDaemonConfigFromFile()
-	if err != nil {
-		return nil, err
-	}
-	if cfg != nil {
-		return cfg.InsecureRegistries, nil
 	}
 
 	return nil, nil

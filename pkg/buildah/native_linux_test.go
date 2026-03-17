@@ -90,7 +90,6 @@ var _ = Describe("buildah", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(config).To(ContainSubstring(`location = "localhost:5000"`))
 			Expect(config).To(ContainSubstring(`insecure = true`))
-			// Must be a [[registry]] entry, not a [[registry.mirror]]
 			Expect(config).NotTo(ContainSubstring(`[[registry.mirror]]`))
 		})
 
@@ -135,13 +134,11 @@ var _ = Describe("buildah", func() {
 				os.RemoveAll(tmpDir)
 			})
 
-			// Create config directory
 			configDir := tmpDir + "/.config/containers"
 			Expect(os.MkdirAll(configDir, 0o755)).To(Succeed())
 		})
 
 		It("should return empty list when config has no insecure registries", func() {
-			// Create an empty but valid registries.conf so the function returns before checking /etc
 			configPath := tmpDir + "/.config/containers/registries.conf"
 			content := `# Empty registries config
 `
@@ -181,6 +178,102 @@ insecure = true
 			result, err := GetInsecureRegistriesFromConfig()
 			Expect(err).NotTo(HaveOccurred())
 			Expect(result).To(ContainElement("mirror.example.com"))
+		})
+	})
+
+	Describe("GetRegistryMirrorsFromConfig", func() {
+		var tmpDir string
+		var oldHome string
+
+		BeforeEach(func() {
+			var err error
+			tmpDir, err = os.MkdirTemp("", "registries-mirrors-test")
+			Expect(err).NotTo(HaveOccurred())
+
+			oldHome = os.Getenv("HOME")
+			os.Setenv("HOME", tmpDir)
+
+			DeferCleanup(func() {
+				os.Setenv("HOME", oldHome)
+				os.RemoveAll(tmpDir)
+			})
+
+			configDir := tmpDir + "/.config/containers"
+			Expect(os.MkdirAll(configDir, 0o755)).To(Succeed())
+		})
+
+		It("should return empty list when config has no mirrors", func() {
+			configPath := tmpDir + "/.config/containers/registries.conf"
+			content := `# Empty registries config
+`
+			Expect(os.WriteFile(configPath, []byte(content), 0o644)).To(Succeed())
+
+			result, err := GetRegistryMirrorsFromConfig()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(result).To(BeEmpty())
+		})
+
+		It("should parse docker.io mirrors", func() {
+			configPath := tmpDir + "/.config/containers/registries.conf"
+			content := `
+[[registry]]
+location = "docker.io"
+
+[[registry.mirror]]
+location = "mirror.example.com"
+
+[[registry.mirror]]
+location = "mirror2.example.com"
+`
+			Expect(os.WriteFile(configPath, []byte(content), 0o644)).To(Succeed())
+
+			result, err := GetRegistryMirrorsFromConfig()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(result).To(HaveLen(2))
+			Expect(result).To(ContainElement("https://mirror.example.com"))
+			Expect(result).To(ContainElement("https://mirror2.example.com"))
+		})
+
+		It("should ignore mirrors for non-docker.io registries", func() {
+			configPath := tmpDir + "/.config/containers/registries.conf"
+			content := `
+[[registry]]
+location = "quay.io"
+
+[[registry.mirror]]
+location = "quay-mirror.example.com"
+`
+			Expect(os.WriteFile(configPath, []byte(content), 0o644)).To(Succeed())
+
+			result, err := GetRegistryMirrorsFromConfig()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(result).To(BeEmpty())
+		})
+
+		It("should deduplicate mirrors", func() {
+			configPath := tmpDir + "/.config/containers/registries.conf"
+			content := `
+[[registry]]
+location = "docker.io"
+
+[[registry.mirror]]
+location = "mirror.example.com"
+
+[[registry.mirror]]
+location = "mirror.example.com"
+`
+			Expect(os.WriteFile(configPath, []byte(content), 0o644)).To(Succeed())
+
+			result, err := GetRegistryMirrorsFromConfig()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(result).To(HaveLen(1))
+			Expect(result).To(ContainElement("https://mirror.example.com"))
+		})
+
+		It("should return nil when no config file exists", func() {
+			result, err := GetRegistryMirrorsFromConfig()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(result).To(BeNil())
 		})
 	})
 })

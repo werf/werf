@@ -83,9 +83,7 @@ type NativeBuildah struct {
 	RegistriesConfigPath    string
 	RegistriesConfigDirPath string
 	Insecure                bool
-	// InsecureRegistries holds per-host insecure flags collected from
-	// Docker daemon "insecure-registries" and buildah registries.conf.
-	InsecureRegistries []string
+	InsecureRegistries      []string
 
 	Store storage.Store
 
@@ -103,20 +101,11 @@ func (b *NativeBuildah) Info(ctx context.Context) (info.Info, error) {
 }
 
 func NewNativeBuildah(commonOpts CommonBuildahOpts, opts NativeModeOpts) (*NativeBuildah, error) {
-	// Read insecure registries from buildah config here (after user namespace setup)
-	// to avoid triggering reexec issues when called from common.go before namespace is ready.
-	insecureRegistries := commonOpts.InsecureRegistries
-	if len(insecureRegistries) == 0 && !commonOpts.Insecure {
-		if configInsecure, err := GetInsecureRegistriesFromConfig(); err == nil && len(configInsecure) > 0 {
-			insecureRegistries = configInsecure
-		}
-	}
-
 	b := &NativeBuildah{
 		Isolation:          *commonOpts.Isolation,
 		TmpDir:             commonOpts.TmpDir,
 		Insecure:           commonOpts.Insecure,
-		InsecureRegistries: insecureRegistries,
+		InsecureRegistries: commonOpts.InsecureRegistries,
 	}
 
 	if err := os.MkdirAll(b.TmpDir, os.ModePerm); err != nil {
@@ -148,7 +137,7 @@ func NewNativeBuildah(commonOpts CommonBuildahOpts, opts NativeModeOpts) (*Nativ
 		return nil, fmt.Errorf("unable to set env var CONTAINERS_CONF: %w", err)
 	}
 
-	registriesConfig, err := generateRegistriesConfig(commonOpts.RegistryMirrors, insecureRegistries)
+	registriesConfig, err := generateRegistriesConfig(commonOpts.RegistryMirrors, commonOpts.InsecureRegistries)
 	if err != nil {
 		return nil, fmt.Errorf("unable to generate registries config: %w", err)
 	}
@@ -242,12 +231,6 @@ func (b *NativeBuildah) getSystemContext(targetPlatform string) (*imgtypes.Syste
 	return systemContext, nil
 }
 
-// generateRegistriesConfig creates registries.conf content with mirror and per-host insecure
-// registry configuration.
-//
-// Mirror entries are marked insecure when they use http:// scheme or appear in insecureRegistries.
-// Insecure registries that are NOT mirror targets receive a standalone [[registry]] entry so that
-// buildah skips TLS verification for them even when they are used directly (not via a mirror).
 func generateRegistriesConfig(mirrors, insecureRegistries []string) (string, error) {
 	type mirrorEntry struct {
 		Location string
@@ -277,8 +260,6 @@ func generateRegistriesConfig(mirrors, insecureRegistries []string) (string, err
 		})
 	}
 
-	// Collect insecure registries that are not already covered as mirror targets.
-	// They need an explicit [[registry]] entry so buildah skips TLS for direct pulls/pushes.
 	var standaloneInsecure []string
 	for host := range insecureHosts {
 		if !mirrorHosts[host] {

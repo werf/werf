@@ -109,9 +109,9 @@ func InitProcessContainerBackend(ctx context.Context, cmdData *CmdData, registry
 
 		var insecureHosts []string
 		if !insecure {
-			insecureHosts, err = GetInsecureRegistryHosts(ctx, cmdData)
+			insecureHosts, err = GetInsecureRegistryHosts(ctx, cmdData, *buildahMode)
 			if err != nil {
-				return nil, ctx, fmt.Errorf("unable to get insecure registry hosts: %w", err)
+				return nil, ctx, fmt.Errorf("get insecure registry hosts: %w", err)
 			}
 		}
 

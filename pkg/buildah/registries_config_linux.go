@@ -4,6 +4,7 @@
 package buildah
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/BurntSushi/toml"
@@ -42,7 +43,7 @@ func GetInsecureRegistriesFromConfig() ([]string, error) {
 			if os.IsNotExist(err) || os.IsPermission(err) {
 				continue
 			}
-			return nil, err
+			return nil, fmt.Errorf("read %s: %w", path, err)
 		}
 
 		var conf registriesConf
@@ -72,6 +73,49 @@ func GetInsecureRegistriesFromConfig() ([]string, error) {
 			for _, mirror := range reg.Mirrors {
 				if mirror.Insecure {
 					addIfNew(mirror.Location)
+				}
+			}
+		}
+
+		return result, nil
+	}
+
+	return nil, nil
+}
+
+// GetRegistryMirrorsFromConfig returns docker.io mirrors from registries.conf.
+func GetRegistryMirrorsFromConfig() ([]string, error) {
+	for _, path := range getRegistriesConfPaths() {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			if os.IsNotExist(err) || os.IsPermission(err) {
+				continue
+			}
+			return nil, fmt.Errorf("read %s: %w", path, err)
+		}
+
+		var conf registriesConf
+		if _, err := toml.Decode(string(data), &conf); err != nil {
+			continue
+		}
+
+		var result []string
+		seen := make(map[string]bool)
+
+		for _, reg := range conf.Registries {
+			loc := reg.Location
+			if loc == "" {
+				loc = reg.Prefix
+			}
+
+			if loc != "docker.io" {
+				continue
+			}
+
+			for _, mirror := range reg.Mirrors {
+				if mirror.Location != "" && !seen[mirror.Location] {
+					seen[mirror.Location] = true
+					result = append(result, "https://"+mirror.Location)
 				}
 			}
 		}
