@@ -3,7 +3,10 @@
 
 package buildah
 
-// GetInsecureRegistriesFromConfig is a no-op stub for non-Linux platforms.
 func GetInsecureRegistriesFromConfig() ([]string, error) {
+	return nil, nil
+}
+
+func GetRegistryMirrorsFromConfig() ([]string, error) {
 	return nil, nil
 }

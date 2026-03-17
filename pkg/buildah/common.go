@@ -215,7 +215,7 @@ type CommonBuildahOpts struct {
 	TmpDir             string
 	Insecure           bool
 	RegistryMirrors    []string
-	InsecureRegistries []string // Per-host insecure registries from Docker/buildah config
+	InsecureRegistries []string
 }
 
 type NativeModeOpts struct {

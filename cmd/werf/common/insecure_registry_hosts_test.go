@@ -3,6 +3,8 @@ package common
 import (
 	"context"
 	"testing"
+
+	"github.com/werf/werf/v2/pkg/buildah"
 )
 
 func TestGetInsecureRegistryHosts_SkipWhenInsecureRegistryEnabled(t *testing.T) {
@@ -11,7 +13,7 @@ func TestGetInsecureRegistryHosts_SkipWhenInsecureRegistryEnabled(t *testing.T) 
 		SkipTlsVerifyRegistry: boolPtr(false),
 	}
 
-	hosts, err := GetInsecureRegistryHosts(context.Background(), cmdData)
+	hosts, err := GetInsecureRegistryHosts(context.Background(), cmdData, buildah.ModeDisabled)
 	if err != nil {
 		t.Fatalf("expected no error, got: %v", err)
 	}
@@ -26,7 +28,7 @@ func TestGetInsecureRegistryHosts_SkipWhenSkipTLSVerifyEnabled(t *testing.T) {
 		SkipTlsVerifyRegistry: boolPtr(true),
 	}
 
-	hosts, err := GetInsecureRegistryHosts(context.Background(), cmdData)
+	hosts, err := GetInsecureRegistryHosts(context.Background(), cmdData, buildah.ModeNative)
 	if err != nil {
 		t.Fatalf("expected no error, got: %v", err)
 	}
