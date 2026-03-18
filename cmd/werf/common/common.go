@@ -24,6 +24,7 @@ import (
 	"github.com/werf/nelm/pkg/log"
 	"github.com/werf/werf/v2/pkg/build"
 	"github.com/werf/werf/v2/pkg/build/stage"
+	"github.com/werf/werf/v2/pkg/buildah"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/docker"
@@ -1168,12 +1169,22 @@ func GetSecondaryStagesStorage(cmdData *CmdData) []string {
 	return append(util.PredefinedValuesByEnvNamePrefix("WERF_SECONDARY_REPO_"), *cmdData.SecondaryStagesStorage...)
 }
 
-func GetContainerRegistryMirror(ctx context.Context, cmdData *CmdData) ([]string, error) {
+func GetContainerRegistryMirror(ctx context.Context, cmdData *CmdData, buildahMode buildah.Mode) ([]string, error) {
 	cmdMirrors := append(util.PredefinedValuesByEnvNamePrefix("WERF_CONTAINER_REGISTRY_MIRROR_"), *cmdData.ContainerRegistryMirror...)
 
-	dockerMirrors, err := docker.GetRegistryMirrors(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("unable to get docker registry mirrors: %w", err)
+	var backendMirrors []string
+	if buildahMode != buildah.ModeDisabled {
+		m, err := buildah.GetRegistryMirrorsFromConfig()
+		if err != nil {
+			return nil, fmt.Errorf("get registry mirrors from containers config: %w", err)
+		}
+		backendMirrors = m
+	} else {
+		m, err := docker.GetRegistryMirrors(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("get docker registry mirrors: %w", err)
+		}
+		backendMirrors = m
 	}
 
 	var result []string
@@ -1184,7 +1195,7 @@ func GetContainerRegistryMirror(ctx context.Context, cmdData *CmdData) ([]string
 			return nil, fmt.Errorf("invalid container registry mirror %q: only https schema allowed", mirror)
 		}
 
-		if !strings.HasPrefix(mirror, "http://") && !strings.HasPrefix(mirror, "https://") {
+		if !strings.HasPrefix(mirror, "https://") {
 			mirror = "https://" + mirror
 		}
 
@@ -1194,7 +1205,7 @@ func GetContainerRegistryMirror(ctx context.Context, cmdData *CmdData) ([]string
 		}
 	}
 
-	for _, mirror := range dockerMirrors {
+	for _, mirror := range backendMirrors {
 		if !seen[mirror] {
 			seen[mirror] = true
 			result = append(result, mirror)
@@ -1381,8 +1392,50 @@ func ProcessLogTerminalWidth(cmdData *CmdData) error {
 	return nil
 }
 
-func DockerRegistryInit(ctx context.Context, cmdData *CmdData, registryMirrors []string) error {
-	return docker_registry.Init(ctx, *cmdData.InsecureRegistry, *cmdData.SkipTlsVerifyRegistry, registryMirrors)
+func DockerRegistryInit(ctx context.Context, cmdData *CmdData, registryMirrors []string, buildahMode buildah.Mode) error {
+	insecureHosts, err := GetInsecureRegistryHosts(ctx, cmdData, buildahMode)
+	if err != nil {
+		return fmt.Errorf("get insecure registry hosts: %w", err)
+	}
+	return docker_registry.Init(ctx, *cmdData.InsecureRegistry, *cmdData.SkipTlsVerifyRegistry, registryMirrors, insecureHosts)
+}
+
+func GetInsecureRegistryHosts(ctx context.Context, cmdData *CmdData, buildahMode buildah.Mode) ([]string, error) {
+	if (cmdData.InsecureRegistry != nil && *cmdData.InsecureRegistry) || (cmdData.SkipTlsVerifyRegistry != nil && *cmdData.SkipTlsVerifyRegistry) {
+		return nil, nil
+	}
+
+	seen := make(map[string]bool)
+	var result []string
+
+	addHost := func(h string) {
+		h = strings.TrimPrefix(h, "https://")
+		h = strings.TrimPrefix(h, "http://")
+		if h != "" && !seen[h] {
+			seen[h] = true
+			result = append(result, h)
+		}
+	}
+
+	if buildahMode != buildah.ModeDisabled {
+		hosts, err := buildah.GetInsecureRegistriesFromConfig()
+		if err != nil {
+			return nil, fmt.Errorf("get insecure registries from containers config: %w", err)
+		}
+		for _, h := range hosts {
+			addHost(h)
+		}
+	} else {
+		dockerInsecure, err := docker.GetInsecureRegistries(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("get docker insecure registries: %w", err)
+		}
+		for _, h := range dockerInsecure {
+			addHost(h)
+		}
+	}
+
+	return result, nil
 }
 
 func ValidateMinimumNArgs(minArgs int, args []string, cmd *cobra.Command) error {

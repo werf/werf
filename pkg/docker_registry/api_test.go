@@ -58,3 +58,34 @@ var _ = DescribeTable("Api_ParseReferenceParts", func(entry ParseReferencePartsE
 		},
 	}),
 )
+
+var _ = Describe("api.isInsecureHost", func() {
+	var testApi *api
+
+	BeforeEach(func() {
+		testApi = newAPI(apiOptions{
+			InsecureRegistryHosts: []string{
+				"my-registry.local:5000",
+				"10.0.0.100",
+				"192.168.1.0/24",
+			},
+		})
+	})
+
+	It("should match exact host:port", func() {
+		Expect(testApi.isInsecureHost("my-registry.local:5000")).To(BeTrue())
+	})
+
+	It("should match IP in CIDR range", func() {
+		Expect(testApi.isInsecureHost("192.168.1.50:8080")).To(BeTrue())
+	})
+
+	It("should not match host outside list", func() {
+		Expect(testApi.isInsecureHost("docker.io")).To(BeFalse())
+	})
+
+	It("should return true for all hosts when InsecureRegistry flag is set", func() {
+		apiWithFlag := newAPI(apiOptions{InsecureRegistry: true})
+		Expect(apiWithFlag.isInsecureHost("any-registry.com")).To(BeTrue())
+	})
+})
