@@ -162,12 +162,17 @@ func NewNativeBuildah(commonOpts CommonBuildahOpts, opts NativeModeOpts) (*Nativ
 		return nil, fmt.Errorf("unable to get storage: %w", err)
 	}
 
+	dockerInsecure := imgtypes.OptionalBoolUndefined
+	if b.Insecure {
+		dockerInsecure = imgtypes.OptionalBoolTrue
+	}
+
 	b.defaultSystemContext = imgtypes.SystemContext{
 		SignaturePolicyPath:               b.SignaturePolicyPath,
 		SystemRegistriesConfPath:          b.RegistriesConfigPath,
 		SystemRegistriesConfDirPath:       b.RegistriesConfigDirPath,
 		OCIInsecureSkipTLSVerify:          b.Insecure,
-		DockerInsecureSkipTLSVerify:       imgtypes.NewOptionalBool(b.Insecure),
+		DockerInsecureSkipTLSVerify:       dockerInsecure,
 		DockerDaemonInsecureSkipTLSVerify: b.Insecure,
 	}
 

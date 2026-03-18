@@ -9,7 +9,6 @@ import (
 
 var _ = Describe("docker system", func() {
 	Describe("isDaemonUnavailableErr", func() {
-
 		It("should return false for nil error", func() {
 			Expect(isDaemonUnavailableErr(nil)).To(BeFalse())
 		})
