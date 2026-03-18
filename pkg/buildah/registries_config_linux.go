@@ -84,6 +84,9 @@ func GetInsecureRegistriesFromConfig() ([]string, error) {
 }
 
 // GetRegistryMirrorsFromConfig returns docker.io mirrors from registries.conf.
+// Supports two formats:
+//   - [[registry.mirror]] entries under a registry with location "docker.io"
+//   - relocation: [[registry]] with prefix "docker.io" and location pointing to a mirror host
 func GetRegistryMirrorsFromConfig() ([]string, error) {
 	for _, path := range getRegistriesConfPaths() {
 		data, err := os.ReadFile(path)
@@ -102,21 +105,31 @@ func GetRegistryMirrorsFromConfig() ([]string, error) {
 		var result []string
 		seen := make(map[string]bool)
 
+		addMirror := func(loc string) {
+			if loc != "" && !seen[loc] {
+				seen[loc] = true
+				result = append(result, "https://"+loc)
+			}
+		}
+
 		for _, reg := range conf.Registries {
-			loc := reg.Location
-			if loc == "" {
-				loc = reg.Prefix
+			prefix := reg.Prefix
+			if prefix == "" {
+				prefix = reg.Location
 			}
 
-			if loc != "docker.io" {
+			if prefix != "docker.io" {
 				continue
 			}
 
+			// Relocation: prefix=docker.io, location=<mirror-host>
+			if reg.Location != "" && reg.Location != "docker.io" {
+				addMirror(reg.Location)
+			}
+
+			// Explicit [[registry.mirror]] entries
 			for _, mirror := range reg.Mirrors {
-				if mirror.Location != "" && !seen[mirror.Location] {
-					seen[mirror.Location] = true
-					result = append(result, "https://"+mirror.Location)
-				}
+				addMirror(mirror.Location)
 			}
 		}
 

@@ -275,5 +275,39 @@ location = "mirror.example.com"
 			Expect(err).NotTo(HaveOccurred())
 			Expect(result).To(BeNil())
 		})
+
+		It("should treat relocation as mirror (prefix=docker.io, location=mirror-host)", func() {
+			configPath := tmpDir + "/.config/containers/registries.conf"
+			content := `
+[[registry]]
+prefix = "docker.io"
+location = "dh-mirror.gitverse.ru"
+insecure = true
+`
+			Expect(os.WriteFile(configPath, []byte(content), 0o644)).To(Succeed())
+
+			result, err := GetRegistryMirrorsFromConfig()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(result).To(HaveLen(1))
+			Expect(result).To(ContainElement("https://dh-mirror.gitverse.ru"))
+		})
+
+		It("should not treat docker.io location as mirror", func() {
+			configPath := tmpDir + "/.config/containers/registries.conf"
+			content := `
+[[registry]]
+prefix = "docker.io"
+location = "docker.io"
+
+[[registry.mirror]]
+location = "mirror.example.com"
+`
+			Expect(os.WriteFile(configPath, []byte(content), 0o644)).To(Succeed())
+
+			result, err := GetRegistryMirrorsFromConfig()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(result).To(HaveLen(1))
+			Expect(result).To(ContainElement("https://mirror.example.com"))
+		})
 	})
 })
