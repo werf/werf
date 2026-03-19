@@ -107,22 +107,13 @@ func InitProcessContainerBackend(ctx context.Context, cmdData *CmdData, registry
 
 		insecure := *cmdData.InsecureRegistry || *cmdData.SkipTlsVerifyRegistry
 
-		var insecureHosts []string
-		if !insecure {
-			insecureHosts, err = GetInsecureRegistryHosts(ctx, cmdData, *buildahMode)
-			if err != nil {
-				return nil, ctx, fmt.Errorf("get insecure registry hosts: %w", err)
-			}
-		}
-
 		b, err := buildah.NewBuildah(*buildahMode, buildah.BuildahOpts{
 			CommonBuildahOpts: buildah.CommonBuildahOpts{
-				TmpDir:             filepath.Join(werf.GetServiceDir(), "tmp", "buildah"),
-				Insecure:           insecure,
-				Isolation:          buildahIsolation,
-				StorageDriver:      storageDriver,
-				RegistryMirrors:    registryMirrors,
-				InsecureRegistries: insecureHosts,
+				TmpDir:          filepath.Join(werf.GetServiceDir(), "tmp", "buildah"),
+				Insecure:        insecure,
+				Isolation:       buildahIsolation,
+				StorageDriver:   storageDriver,
+				RegistryMirrors: registryMirrors,
 			},
 			NativeModeOpts: buildah.NativeModeOpts{},
 		})
