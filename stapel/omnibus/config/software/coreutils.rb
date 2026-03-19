@@ -7,7 +7,7 @@ license_file 'COPYING'
 version('8.25') { source md5: '070e43ba7f618d747414ef56ab248a48' }
 version('8.30') { source md5: 'ab06d68949758971fe744db66b572816' }
 
-source url: "https://ftp.gnu.org/gnu/coreutils/coreutils-#{version}.tar.xz"
+source url: "https://ftpmirror.gnu.org/gnu/coreutils/coreutils-#{version}.tar.xz"
 
 dependency 'pcre'
 dependency 'acl'

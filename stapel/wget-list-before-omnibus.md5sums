@@ -75,7 +75,7 @@ d659bf7cd417d93dc609872f6334b019  util-linux-2.37.2.tar.xz
 e0325a4988b1b99b9c2e46fa853c1980  vim-8.2.3337.tar.gz
 80bb18a8e6240fcf7ec2f7b57601c170  XML-Parser-2.46.tar.gz
 aa1621ec7013a19abab52a8aff04fe5b  xz-5.2.5.tar.xz
-85adef240c5f370b308da8c938951a68  zlib-1.2.11.tar.xz
+1c9f62f0778697a09d36121ead88e08e  zlib-1.2.11.tar.gz
 a6eb7fb1f2c21fa80030a47993853e92  zstd-1.5.0.tar.gz
 3518fa864fe8d7ef65be4960f380b03b  binutils-2.37-upstream_fix-1.patch
 6a5ac7e89b791aae556de0f745916f7f  bzip2-1.0.8-install_docs-1.patch

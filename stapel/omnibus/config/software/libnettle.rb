@@ -6,7 +6,7 @@ version("3.4") { source md5: "dc0f13028264992f58e67b4e8915f53d" }
 
 license_file "COPYINGv2"
 
-source url: "https://ftp.gnu.org/gnu/nettle/nettle-#{version}.tar.gz"
+source url: "https://ftpmirror.gnu.org/gnu/nettle/nettle-#{version}.tar.gz"
 
 relative_path "nettle-#{version}"
 

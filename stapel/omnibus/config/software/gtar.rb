@@ -23,7 +23,7 @@ version("1.28") { source md5: "6ea3dbea1f2b0409b234048e021a9fd7" }
 license "GPL-3.0"
 license_file "COPYING"
 
-source url: "http://ftp.gnu.org/gnu/tar/tar-#{version}.tar.gz"
+source url: "http://ftpmirror.gnu.org/gnu/tar/tar-#{version}.tar.gz"
 
 relative_path "tar-#{version}"
 

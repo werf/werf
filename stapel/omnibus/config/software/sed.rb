@@ -6,7 +6,7 @@ license_file 'COPYING'
 
 version('4.2') { source md5: '31580bee0c109c0fc8f31c4cf204757e' }
 
-source url: "https://ftp.gnu.org/gnu/sed/sed-#{version}.tar.gz"
+source url: "https://ftpmirror.gnu.org/gnu/sed/sed-#{version}.tar.gz"
 
 dependency 'attr'
 dependency 'acl'

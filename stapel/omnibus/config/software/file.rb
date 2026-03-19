@@ -6,7 +6,7 @@ license_file "COPYING"
 
 version("5.36") { source md5: "9af0eb3f5db4ae00fffc37f7b861575c" }
 
-source url: "ftp://ftp.astron.com/pub/file/file-#{version}.tar.gz"
+source url: "https://astron.com/pub/file/file-#{version}.tar.gz"
 
 relative_path "file-#{version}"
 

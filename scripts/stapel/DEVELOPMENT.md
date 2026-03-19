@@ -9,10 +9,10 @@ Stapel is an [LFS](http://www.linuxfromscratch.org/lfs/view/stable) based linux 
 Stapel tools built in non-standard root location. Binaries, libraries and other related files are located in the following directories:
 
  * `/.werf/stapel/(etc|lib|lib64|libexec)`
- * `/.werf/stapel/x86_64-lfs-linux-gnu/bin`
+ * `/.werf/stapel/<target-lfs-triplet>/bin` (for example `x86_64-lfs-linux-gnu` or `aarch64-lfs-linux-gnu`)
  * `/.werf/stapel/embedded/(bin|etc|lib|libexec|sbin|share|ssl)`
 
-The base of stapel is a Glibc library and linker (`/.werf/stapel/lib/libc-VERSION.so` and `/.werf/stapel/x86_64-lfs-linux-gnu/bin/ld`). All tools from `/.werf/stapel` are compiled and linked only against libraries contained in `/.werf/stapel`. So stapel is a self-contained distribution of tools and libraries without external dependencies with an independent Glibc, which allows running these tools in arbitrary environment (independently of linux distribution and libraries versions in this distribution).
+The base of stapel is a Glibc library and linker (`/.werf/stapel/lib/libc-VERSION.so` and `/.werf/stapel/<target-lfs-triplet>/bin/ld`). All tools from `/.werf/stapel` are compiled and linked only against libraries contained in `/.werf/stapel`. So stapel is a self-contained distribution of tools and libraries without external dependencies with an independent Glibc, which allows running these tools in arbitrary environment (independently of linux distribution and libraries versions in this distribution).
 
 Stapel filesystem `/.werf/stapel` is intent to be mounted into build container based on some base image. Tools from stapel can then be used for some purposes. As stapel tools does not have external dependencies stapel image can be mounted into any base image (alpine linux with musl libc, or ubuntu with glibc — does not matter) and tools will work as expected.
 

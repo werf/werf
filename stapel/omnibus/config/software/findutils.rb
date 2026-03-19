@@ -6,7 +6,7 @@ license_file 'COPYING'
 
 version('4.6.0') { source md5: '9936aa8009438ce185bea2694a997fc1' }
 
-source url: "https://ftp.gnu.org/pub/gnu/findutils/findutils-#{version}.tar.gz"
+source url: "https://ftpmirror.gnu.org/gnu/findutils/findutils-#{version}.tar.gz"
 
 dependency 'pcre'
 
