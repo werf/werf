@@ -174,11 +174,11 @@ func (i *Image) GetStages() []stage.Interface {
 }
 
 func (i *Image) AddStageDuration(stageName stage.StageName, d time.Duration) {
-	if i.stageDurations == nil {
-		i.stageDurations = make(map[stage.StageName]time.Duration)
-	}
 	if d <= 0 {
 		return
+	}
+	if i.stageDurations == nil {
+		i.stageDurations = make(map[stage.StageName]time.Duration)
 	}
 	i.stageDurations[stageName] += d
 }
