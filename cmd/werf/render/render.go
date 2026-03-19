@@ -236,7 +236,7 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 		isStub = true
 		stubImageNameList = append(stubImageNameList, imagesToProcess.FinalImageNameList...)
 	default:
-		if err := common.DockerRegistryInit(ctx, &commonCmdData, commonManager.RegistryMirrors(), commonManager.BuildahMode()); err != nil {
+		if err := common.DockerRegistryInit(ctx, &commonCmdData, commonManager.RegistryMirrors()); err != nil {
 			return err
 		}
 
