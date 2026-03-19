@@ -805,10 +805,21 @@ type GetStagesStorageOpts struct {
 }
 
 func GetStagesStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData, opts GetStagesStorageOpts) (storage.PrimaryStagesStorage, error) {
+	buildahMode, _, err := GetBuildahMode()
+	if err != nil {
+		return nil, fmt.Errorf("unable to determine buildah mode: %w", err)
+	}
+
+	insecureRegistryHosts, err := GetInsecureRegistryHosts(ctx, cmdData, *buildahMode)
+	if err != nil {
+		return nil, fmt.Errorf("get insecure registry hosts: %w", err)
+	}
+
 	return cmdData.Repo.CreateStagesStorage(ctx, &CreateStagesStorageOptions{
 		ContainerBackend:               containerBackend,
 		InsecureRegistry:               *cmdData.InsecureRegistry,
 		SkipTlsVerifyRegistry:          *cmdData.SkipTlsVerifyRegistry,
+		InsecureRegistryHosts:          insecureRegistryHosts,
 		CleanupDisabled:                opts.CleanupDisabled,
 		GitHistoryBasedCleanupDisabled: opts.GitHistoryBasedCleanupDisabled,
 		SkipMetaCheck:                  opts.SkipMetaCheck,
@@ -819,10 +830,22 @@ func GetOptionalFinalStagesStorage(ctx context.Context, containerBackend contain
 	if *cmdData.FinalRepo.Address == "" {
 		return nil, nil
 	}
+
+	buildahMode, _, err := GetBuildahMode()
+	if err != nil {
+		return nil, fmt.Errorf("unable to determine buildah mode: %w", err)
+	}
+
+	insecureRegistryHosts, err := GetInsecureRegistryHosts(ctx, cmdData, *buildahMode)
+	if err != nil {
+		return nil, fmt.Errorf("get insecure registry hosts: %w", err)
+	}
+
 	return cmdData.FinalRepo.CreateStagesStorage(ctx, &CreateStagesStorageOptions{
 		ContainerBackend:      containerBackend,
 		InsecureRegistry:      *cmdData.InsecureRegistry,
 		SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
+		InsecureRegistryHosts: insecureRegistryHosts,
 		SkipMetaCheck:         true,
 	})
 }
@@ -830,20 +853,31 @@ func GetOptionalFinalStagesStorage(ctx context.Context, containerBackend contain
 func GetCacheStagesStorageList(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) ([]storage.StagesStorage, error) {
 	var res []storage.StagesStorage
 
+	buildahMode, _, err := GetBuildahMode()
+	if err != nil {
+		return nil, fmt.Errorf("unable to determine buildah mode: %w", err)
+	}
+
+	insecureRegistryHosts, err := GetInsecureRegistryHosts(ctx, cmdData, *buildahMode)
+	if err != nil {
+		return nil, fmt.Errorf("get insecure registry hosts: %w", err)
+	}
+
 	for _, address := range GetCacheStagesStorage(cmdData) {
 		repoData := NewRepoData("cache-repo", RepoDataOptions{OnlyAddress: true})
 		repoData.Address = &address
 
-		storage, err := repoData.CreateStagesStorage(ctx, &CreateStagesStorageOptions{
+		cacheStorage, err := repoData.CreateStagesStorage(ctx, &CreateStagesStorageOptions{
 			ContainerBackend:      containerBackend,
 			InsecureRegistry:      *cmdData.InsecureRegistry,
 			SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
+			InsecureRegistryHosts: insecureRegistryHosts,
 			SkipMetaCheck:         true,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("unable to create cache stages storage in %s: %w", address, err)
 		}
-		res = append(res, storage)
+		res = append(res, cacheStorage)
 	}
 
 	return res, nil
@@ -856,540 +890,34 @@ func GetSecondaryStagesStorageList(ctx context.Context, stagesStorage storage.St
 		res = append(res, storage.NewLocalStagesStorage(containerBackend))
 	}
 
+	buildahMode, _, err := GetBuildahMode()
+	if err != nil {
+		return nil, fmt.Errorf("unable to determine buildah mode: %w", err)
+	}
+
+	insecureRegistryHosts, err := GetInsecureRegistryHosts(ctx, cmdData, *buildahMode)
+	if err != nil {
+		return nil, fmt.Errorf("get insecure registry hosts: %w", err)
+	}
+
 	for _, address := range GetSecondaryStagesStorage(cmdData) {
 		repoData := NewRepoData("secondary-repo", RepoDataOptions{OnlyAddress: true})
 		repoData.Address = &address
 
-		storage, err := repoData.CreateStagesStorage(ctx, &CreateStagesStorageOptions{
+		secondaryStorage, err := repoData.CreateStagesStorage(ctx, &CreateStagesStorageOptions{
 			ContainerBackend:      containerBackend,
 			InsecureRegistry:      *cmdData.InsecureRegistry,
 			SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
+			InsecureRegistryHosts: insecureRegistryHosts,
 			SkipMetaCheck:         true,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("unable to create secondary stages storage in %s: %w", address, err)
 		}
-		res = append(res, storage)
+		res = append(res, secondaryStorage)
 	}
 
 	return res, nil
-}
-
-func GetOptionalWerfConfig(ctx context.Context, cmdData *CmdData, giterminismManager giterminism_manager.Interface, opts config.WerfConfigOptions) (string, *config.WerfConfig, error) {
-	customWerfConfigRelPath, err := GetCustomWerfConfigRelPath(giterminismManager, cmdData)
-	if err != nil {
-		return "", nil, err
-	}
-
-	exist, err := giterminismManager.FileReader().IsConfigExistAnywhere(ctx, customWerfConfigRelPath)
-	if err != nil {
-		return "", nil, err
-	}
-
-	if exist {
-		customWerfConfigTemplatesDirRelPath, err := GetCustomWerfConfigTemplatesDirRelPath(giterminismManager, cmdData)
-		if err != nil {
-			return "", nil, err
-		}
-
-		customWerfConfigRenderPath, err := GetCustomWerfConfigRenderPath(cmdData)
-		if err != nil {
-			return "", nil, err
-		}
-
-		configPath, c, err := config.GetWerfConfig(ctx, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, customWerfConfigRenderPath, giterminismManager, opts)
-		if err != nil {
-			return "", nil, err
-		}
-
-		return configPath, c, nil
-	}
-
-	return "", nil, nil
-}
-
-func GetRequiredWerfConfig(ctx context.Context, cmdData *CmdData, giterminismManager giterminism_manager.Interface, opts config.WerfConfigOptions) (string, *config.WerfConfig, error) {
-	customWerfConfigRelPath, err := GetCustomWerfConfigRelPath(giterminismManager, cmdData)
-	if err != nil {
-		return "", nil, err
-	}
-
-	customWerfConfigTemplatesDirRelPath, err := GetCustomWerfConfigTemplatesDirRelPath(giterminismManager, cmdData)
-	if err != nil {
-		return "", nil, err
-	}
-
-	customWerfConfigRenderPath, err := GetCustomWerfConfigRenderPath(cmdData)
-	if err != nil {
-		return "", nil, err
-	}
-
-	configPath, c, err := config.GetWerfConfig(ctx, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, customWerfConfigRenderPath, giterminismManager, opts)
-	if err != nil {
-		return "", nil, err
-	}
-
-	return configPath, c, nil
-}
-
-func GetCustomWerfConfigRelPath(giterminismManager giterminism_manager.Interface, cmdData *CmdData) (string, error) {
-	customConfigPath := *cmdData.ConfigPath
-	if customConfigPath == "" {
-		return "", nil
-	}
-
-	customConfigPath = util.GetAbsoluteFilepath(customConfigPath)
-	if !util.IsSubpathOfBasePath(giterminismManager.LocalGitRepo().GetWorkTreeDir(), customConfigPath) {
-		return "", fmt.Errorf("the werf config %q must be in the project git work tree %q", customConfigPath, giterminismManager.LocalGitRepo().GetWorkTreeDir())
-	}
-
-	return util.GetRelativeToBaseFilepath(giterminismManager.ProjectDir(), customConfigPath), nil
-}
-
-func GetWerfGiterminismConfigRelPath(cmdData *CmdData) string {
-	path := cmdData.GiterminismConfigRelPath
-	if path == nil || *path == "" {
-		return "werf-giterminism.yaml"
-	}
-
-	return filepath.ToSlash(*path)
-}
-
-func GetCustomWerfConfigTemplatesDirRelPath(giterminismManager giterminism_manager.Interface, cmdData *CmdData) (string, error) {
-	customConfigTemplatesDirPath := *cmdData.ConfigTemplatesDir
-	if customConfigTemplatesDirPath == "" {
-		return "", nil
-	}
-
-	customConfigTemplatesDirPath = util.GetAbsoluteFilepath(customConfigTemplatesDirPath)
-	if !util.IsSubpathOfBasePath(giterminismManager.LocalGitRepo().GetWorkTreeDir(), customConfigTemplatesDirPath) {
-		return "", fmt.Errorf("the werf configuration templates directory %q must be in the project git work tree %q", customConfigTemplatesDirPath, giterminismManager.LocalGitRepo().GetWorkTreeDir())
-	}
-
-	return util.GetRelativeToBaseFilepath(giterminismManager.ProjectDir(), customConfigTemplatesDirPath), nil
-}
-
-func GetCustomWerfConfigRenderPath(cmdData *CmdData) (string, error) {
-	if cmdData.ConfigRenderPath == nil || *cmdData.ConfigRenderPath == "" {
-		return "", nil
-	}
-
-	customConfigRenderPath := *cmdData.ConfigRenderPath
-	customConfigRenderPath = util.GetAbsoluteFilepath(customConfigRenderPath)
-
-	return customConfigRenderPath, nil
-}
-
-func GetWerfConfigOptions(cmdData *CmdData, logRenderedFilePath bool) config.WerfConfigOptions {
-	return config.WerfConfigOptions{
-		LogRenderedFilePath: logRenderedFilePath,
-		Env:                 cmdData.Environment,
-		DebugTemplates:      cmdData.DebugTemplates,
-	}
-}
-
-func OpenGitRepo(ctx context.Context, cmdData *CmdData, workingDir, gitWorkTree string) (*git_repo.Local, error) {
-	isWorkingDirInsideGitWorkTree := util.IsSubpathOfBasePath(gitWorkTree, workingDir)
-	areWorkingDirAndGitWorkTreeTheSame := gitWorkTree == workingDir
-	if !(isWorkingDirInsideGitWorkTree || areWorkingDirAndGitWorkTreeTheSame) {
-		return nil, fmt.Errorf("werf requires project dir — the current working directory or directory specified with --dir option (or WERF_DIR env var) — to be located inside the git work tree: %q is located outside of the git work tree %q", gitWorkTree, workingDir)
-	}
-
-	var openLocalRepoOptions git_repo.OpenLocalRepoOptions
-	if *cmdData.Dev {
-		openLocalRepoOptions.WithServiceHeadCommit = true
-		openLocalRepoOptions.ServiceBranchOptions.Name = *cmdData.DevBranch
-		openLocalRepoOptions.ServiceBranchOptions.GlobExcludeList = GetDevIgnore(cmdData)
-	}
-
-	return git_repo.OpenLocalRepo(ctx, "own", gitWorkTree, openLocalRepoOptions)
-}
-
-func GetGiterminismManager(ctx context.Context, cmdData *CmdData) (*giterminism_manager.Manager, error) {
-	printGlobalWarningIfDevInCI(ctx, cmdData)
-	manager := new(giterminism_manager.Manager)
-	if err := logboek.Context(ctx).Info().LogProcess("Initialize giterminism manager").
-		DoError(func() error {
-			workingDir := GetWorkingDir(cmdData)
-
-			gitWorkTree, err := GetGitWorkTree(ctx, cmdData, workingDir)
-			if err != nil {
-				return fmt.Errorf("unable to get git work tree: %w", err)
-			}
-
-			localGitRepo, err := OpenGitRepo(ctx, cmdData, workingDir, gitWorkTree)
-			if err != nil {
-				return err
-			}
-
-			headCommit, err := localGitRepo.HeadCommitHash(ctx)
-			if err != nil {
-				return err
-			}
-
-			configRelPath := GetWerfGiterminismConfigRelPath(cmdData)
-
-			gm, err := giterminism_manager.NewManager(ctx, configRelPath, workingDir, localGitRepo, headCommit, giterminism_manager.NewManagerOptions{
-				LooseGiterminism:       *cmdData.LooseGiterminism,
-				Dev:                    *cmdData.Dev,
-				CreateIncludesLockFile: cmdData.CreateIncludesLockFile,
-				AllowIncludesUpdate:    cmdData.AllowIncludesUpdate,
-			})
-			if err != nil {
-				return err
-			}
-
-			manager = gm
-
-			return nil
-		}); err != nil {
-		return nil, err
-	}
-
-	return manager, nil
-}
-
-func GetGitWorkTree(ctx context.Context, cmdData *CmdData, workingDir string) (string, error) {
-	if *cmdData.GitWorkTree != "" {
-		workTree := *cmdData.GitWorkTree
-
-		if isValid, err := true_git.IsValidWorkTree(ctx, workTree); err != nil {
-			return "", err
-		} else if isValid {
-			return util.GetAbsoluteFilepath(workTree), nil
-		}
-
-		return "", fmt.Errorf("werf requires a git work tree for the project to exist: not a valid git work tree %q specified", workTree)
-	}
-
-	if found, workTree, err := true_git.UpwardLookupAndVerifyWorkTree(ctx, workingDir); err != nil {
-		return "", err
-	} else if found {
-		return util.GetAbsoluteFilepath(workTree), nil
-	}
-
-	if res, err := LookupGitWorkTree(ctx, workingDir); err != nil {
-		return "", fmt.Errorf("unable to lookup git work tree from wd %q: %w", workingDir, err)
-	} else if res != "" {
-		return res, nil
-	}
-
-	return "", &GitWorktreeNotFoundError{}
-}
-
-func printGlobalWarningIfDevInCI(ctx context.Context, cmdData *CmdData) {
-	const (
-		devModeInCIWarning = `The development mode is enabled in CI environment by providing --dev flag or WERF_DEV env variable.
-This mode is intended for local development only and relies on the Git worktree state, including tracked and untracked files, while ignoring changes based on .gitignore and --dev-ignore rules.
-Using development in CI may lead to non-reproducible builds and unexpected results.`
-	)
-	if cmdData.Dev != nil && *cmdData.Dev {
-		if werf.IsRunningInCI() {
-			global_warnings.GlobalWarningLn(ctx, devModeInCIWarning)
-		}
-	}
-}
-
-func LookupGitWorkTree(ctx context.Context, workingDir string) (string, error) {
-	if found, workTree, err := true_git.UpwardLookupAndVerifyWorkTree(ctx, workingDir); err != nil {
-		return "", err
-	} else if found {
-		return util.GetAbsoluteFilepath(workTree), nil
-	}
-
-	return "", nil
-}
-
-func GetWorkingDir(cmdData *CmdData) string {
-	var workingDir string
-	if *cmdData.Dir != "" {
-		workingDir = *cmdData.Dir
-	} else {
-		workingDir = "."
-	}
-	return util.GetAbsoluteFilepath(workingDir)
-}
-
-func GetHelmChartDir(werfConfigPath string, werfConfig *config.WerfConfig, giterminismManager giterminism_manager.Interface) (string, error) {
-	var helmChartDir string
-	if werfConfig.Meta.Deploy.HelmChartDir != nil && *werfConfig.Meta.Deploy.HelmChartDir != "" {
-		helmChartDir = *werfConfig.Meta.Deploy.HelmChartDir
-	} else {
-		helmChartDir = filepath.Join(filepath.Dir(werfConfigPath), ".helm")
-	}
-
-	absHelmChartDir := filepath.Join(giterminismManager.ProjectDir(), helmChartDir)
-	if !util.IsSubpathOfBasePath(giterminismManager.LocalGitRepo().GetWorkTreeDir(), absHelmChartDir) {
-		return "", fmt.Errorf("the chart directory %s must be in the project git work tree %s", absHelmChartDir, giterminismManager.LocalGitRepo().GetWorkTreeDir())
-	}
-
-	return helmChartDir, nil
-}
-
-func GetHelmChartConfigAppVersion(werfConfig *config.WerfConfig) string {
-	if werfConfig.Meta.Deploy.HelmChartConfig.AppVersion != nil {
-		return *werfConfig.Meta.Deploy.HelmChartConfig.AppVersion
-	}
-
-	return ""
-}
-
-func GetNamespace(cmdData *CmdData) string {
-	if cmdData.Namespace == "" {
-		return "default"
-	}
-	return cmdData.Namespace
-}
-
-func GetDevIgnore(cmdData *CmdData) []string {
-	return append(util.PredefinedValuesByEnvNamePrefix("WERF_DEV_IGNORE_"), *cmdData.DevIgnore...)
-}
-
-func GetSSHKey(cmdData *CmdData) []string {
-	return append(util.PredefinedValuesByEnvNamePrefix("WERF_SSH_KEY_"), *cmdData.SSHKeys...)
-}
-
-func GetAddLabels(cmdData *CmdData) []string {
-	return append(util.PredefinedValuesByEnvNamePrefix("WERF_ADD_LABEL_"), cmdData.ExtraLabels...)
-}
-
-func GetAddAnnotations(cmdData *CmdData) []string {
-	return append(util.PredefinedValuesByEnvNamePrefix("WERF_ADD_ANNOTATION_"), cmdData.ExtraAnnotations...)
-}
-
-func GetReleaseLabel(cmdData *CmdData) []string {
-	return append(util.PredefinedValuesByEnvNamePrefix("WERF_RELEASE_LABEL_"), cmdData.ReleaseLabels...)
-}
-
-func GetCacheStagesStorage(cmdData *CmdData) []string {
-	return append(util.PredefinedValuesByEnvNamePrefix("WERF_CACHE_REPO_"), *cmdData.CacheStagesStorage...)
-}
-
-func GetSecondaryStagesStorage(cmdData *CmdData) []string {
-	return append(util.PredefinedValuesByEnvNamePrefix("WERF_SECONDARY_REPO_"), *cmdData.SecondaryStagesStorage...)
-}
-
-func GetContainerRegistryMirror(ctx context.Context, cmdData *CmdData, buildahMode buildah.Mode) ([]string, error) {
-	cmdMirrors := append(util.PredefinedValuesByEnvNamePrefix("WERF_CONTAINER_REGISTRY_MIRROR_"), *cmdData.ContainerRegistryMirror...)
-
-	var backendMirrors []string
-	if buildahMode != buildah.ModeDisabled {
-		m, err := buildah.GetRegistryMirrorsFromConfig()
-		if err != nil {
-			return nil, fmt.Errorf("get registry mirrors from containers config: %w", err)
-		}
-		backendMirrors = m
-	} else {
-		m, err := docker.GetRegistryMirrors(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("get docker registry mirrors: %w", err)
-		}
-		backendMirrors = m
-	}
-
-	var result []string
-	seen := make(map[string]bool)
-
-	for _, mirror := range cmdMirrors {
-		if strings.HasPrefix(mirror, "http://") {
-			return nil, fmt.Errorf("invalid container registry mirror %q: only https schema allowed", mirror)
-		}
-
-		if !strings.HasPrefix(mirror, "https://") {
-			mirror = "https://" + mirror
-		}
-
-		if !seen[mirror] {
-			seen[mirror] = true
-			result = append(result, mirror)
-		}
-	}
-
-	for _, mirror := range backendMirrors {
-		if !seen[mirror] {
-			seen[mirror] = true
-			result = append(result, mirror)
-		}
-	}
-
-	return result, nil
-}
-
-func getAddCustomTag(cmdData *CmdData) []string {
-	return append(util.PredefinedValuesByEnvNamePrefix("WERF_ADD_CUSTOM_TAG_"), *cmdData.AddCustomTag...)
-}
-
-func GetRequiredRelease(cmdData *CmdData) (string, error) {
-	if cmdData.Release == "" {
-		return "", fmt.Errorf("--release=RELEASE param required")
-	}
-	return cmdData.Release, nil
-}
-
-func GetOptionalRelease(cmdData *CmdData) string {
-	if cmdData.Release == "" {
-		return "werf-stub"
-	}
-	return cmdData.Release
-}
-
-// GetRequireBuiltImages returns true if --require-built-images is set or --skip-build is set.
-// There is no way to determine if both options are used, so no warning.
-func GetRequireBuiltImages(cmdData *CmdData) bool {
-	return option.PtrValueOrDefault(cmdData.RequireBuiltImages, false)
-}
-
-func GetIntrospectOptions(cmdData *CmdData, werfConfig *config.WerfConfig) (build.IntrospectOptions, error) {
-	isStageExist := func(sName string) bool {
-		for _, stageName := range allStagesNames() {
-			if sName == stageName {
-				return true
-			}
-		}
-
-		return false
-	}
-
-	introspectOptions := build.IntrospectOptions{}
-
-	for _, optionValue := range GetIntrospectStage(cmdData) {
-		var imageName, stageName string
-		{
-			parts := strings.SplitN(optionValue, "/", 2)
-			if len(parts) == 1 {
-				imageName = "*"
-				stageName = parts[0]
-			} else {
-				if parts[0] != "~" {
-					imageName = parts[0]
-				}
-
-				stageName = parts[1]
-			}
-		}
-
-		if imageName != "*" && werfConfig.GetImage(imageName) == nil {
-			return introspectOptions, fmt.Errorf("specified image %q (%q) is not defined in werf.yaml", imageName, optionValue)
-		}
-
-		if !isStageExist(stageName) {
-			return introspectOptions, fmt.Errorf("specified stage name %q (%q) is not exist", stageName, optionValue)
-		}
-
-		introspectTarget := build.IntrospectTarget{ImageName: imageName, StageName: stageName}
-		introspectOptions.Targets = append(introspectOptions.Targets, introspectTarget)
-	}
-
-	return introspectOptions, nil
-}
-
-func LogKubeContext(kubeContext string) {
-	if kubeContext != "" {
-		logboek.LogF("Using kube context: %s\n", kubeContext)
-	}
-}
-
-func ProcessLogProjectDir(cmdData *CmdData, projectDir string) {
-	if *cmdData.LogProjectDir {
-		logboek.LogF("Using project dir: %s\n", projectDir)
-	}
-}
-
-func ProcessLogOptions(cmdData *CmdData) error {
-	if err := ProcessLogColorMode(cmdData); err != nil {
-		return err
-	}
-
-	switch {
-	case *cmdData.LogDebug:
-		logboek.SetAcceptedLevel(level.Debug)
-		logboek.Streams().EnablePrefixDuration()
-		logboek.Streams().SetPrefixStyle(style.Details())
-	case *cmdData.LogVerbose:
-		logboek.SetAcceptedLevel(level.Info)
-	case *cmdData.LogQuiet:
-		logboek.SetAcceptedLevel(level.Error)
-	}
-
-	if *cmdData.LogTime {
-		logboek.Streams().EnablePrefixTime()
-		logboek.Streams().SetPrefixTimeFormat(*cmdData.LogTimeFormat)
-		logboek.Streams().SetPrefixStyle(style.Details())
-	}
-
-	if !*cmdData.LogPretty {
-		logboek.Streams().DisablePrettyLog()
-		logging.DisablePrettyLog()
-	}
-
-	if err := ProcessLogTerminalWidth(cmdData); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func GetNelmLogLevel(cmdData *CmdData) log.Level {
-	if util.GetBoolEnvironmentDefaultFalse("WERF_NELM_TRACE") {
-		return log.TraceLevel
-	}
-
-	var logLevel log.Level
-	switch {
-	case *cmdData.LogDebug:
-		logLevel = log.DebugLevel
-	case *cmdData.LogQuiet:
-		logLevel = log.ErrorLevel
-	default:
-		logLevel = log.InfoLevel
-	}
-
-	return logLevel
-}
-
-func ProcessLogColorMode(cmdData *CmdData) error {
-	logColorMode := *cmdData.LogColorMode
-
-	switch logColorMode {
-	case "auto":
-	case "on":
-		logboek.Streams().EnableStyle()
-	case "off":
-		logboek.Streams().DisableStyle()
-	default:
-		return fmt.Errorf("bad log color mode %q: on, off and auto modes are supported", logColorMode)
-	}
-
-	return nil
-}
-
-func ProcessLogTerminalWidth(cmdData *CmdData) error {
-	value := *cmdData.LogTerminalWidth
-
-	if value != -1 {
-		if value < 0 {
-			return fmt.Errorf("--log-terminal-width parameter (%d) can not be negative", value)
-		}
-
-		logboek.Streams().SetWidth(int(value))
-	} else {
-		pInt64, err := util.GetInt64EnvVar("WERF_LOG_TERMINAL_WIDTH")
-		if err != nil {
-			return err
-		}
-
-		if pInt64 == nil {
-			return nil
-		}
-
-		if *pInt64 < 0 {
-			return fmt.Errorf("WERF_LOG_TERMINAL_WIDTH value (%s) can not be negative", os.Getenv("WERF_LOG_TERMINAL_WIDTH"))
-		}
-
-		logboek.Streams().SetWidth(int(*pInt64))
-	}
-
-	return nil
 }
 
 func DockerRegistryInit(ctx context.Context, cmdData *CmdData, registryMirrors []string, buildahMode buildah.Mode) error {
@@ -1411,6 +939,7 @@ func GetInsecureRegistryHosts(ctx context.Context, cmdData *CmdData, buildahMode
 	addHost := func(h string) {
 		h = strings.TrimPrefix(h, "https://")
 		h = strings.TrimPrefix(h, "http://")
+		h = strings.TrimSuffix(h, "/")
 		if h != "" && !seen[h] {
 			seen[h] = true
 			result = append(result, h)
@@ -1707,4 +1236,506 @@ func HasKubeConfig(cmdData *CmdData) bool {
 		cmdData.KubeBearerTokenData != "" ||
 		cmdData.KubeBearerTokenPath != "" ||
 		cmdData.KubeAPIServerAddress != ""
+}
+
+func GetCacheStagesStorage(cmdData *CmdData) []string {
+	return append(util.PredefinedValuesByEnvNamePrefix("WERF_CACHE_REPO_"), *cmdData.CacheStagesStorage...)
+}
+
+func GetSecondaryStagesStorage(cmdData *CmdData) []string {
+	return append(util.PredefinedValuesByEnvNamePrefix("WERF_SECONDARY_REPO_"), *cmdData.SecondaryStagesStorage...)
+}
+
+func GetContainerRegistryMirror(ctx context.Context, cmdData *CmdData, buildahMode buildah.Mode) ([]string, error) {
+	cmdMirrors := append(util.PredefinedValuesByEnvNamePrefix("WERF_CONTAINER_REGISTRY_MIRROR_"), *cmdData.ContainerRegistryMirror...)
+
+	var backendMirrors []string
+	if buildahMode != buildah.ModeDisabled {
+		m, err := buildah.GetRegistryMirrorsFromConfig()
+		if err != nil {
+			return nil, fmt.Errorf("get registry mirrors from containers config: %w", err)
+		}
+		backendMirrors = m
+	} else {
+		m, err := docker.GetRegistryMirrors(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("get docker registry mirrors: %w", err)
+		}
+		backendMirrors = m
+	}
+
+	var result []string
+	seen := make(map[string]bool)
+
+	for _, mirror := range cmdMirrors {
+		if strings.HasPrefix(mirror, "http://") {
+			return nil, fmt.Errorf("invalid container registry mirror %q: only https schema allowed", mirror)
+		}
+
+		if !strings.HasPrefix(mirror, "https://") {
+			mirror = "https://" + mirror
+		}
+
+		if !seen[mirror] {
+			seen[mirror] = true
+			result = append(result, mirror)
+		}
+	}
+
+	for _, mirror := range backendMirrors {
+		if !seen[mirror] {
+			seen[mirror] = true
+			result = append(result, mirror)
+		}
+	}
+
+	return result, nil
+}
+
+func getAddCustomTag(cmdData *CmdData) []string {
+	return append(util.PredefinedValuesByEnvNamePrefix("WERF_ADD_CUSTOM_TAG_"), *cmdData.AddCustomTag...)
+}
+
+func GetRequireBuiltImages(cmdData *CmdData) bool {
+	return option.PtrValueOrDefault(cmdData.RequireBuiltImages, false)
+}
+
+func GetAddLabels(cmdData *CmdData) []string {
+	return append(util.PredefinedValuesByEnvNamePrefix("WERF_ADD_LABEL_"), cmdData.ExtraLabels...)
+}
+
+func GetAddAnnotations(cmdData *CmdData) []string {
+	return append(util.PredefinedValuesByEnvNamePrefix("WERF_ADD_ANNOTATION_"), cmdData.ExtraAnnotations...)
+}
+
+func GetReleaseLabel(cmdData *CmdData) []string {
+	return append(util.PredefinedValuesByEnvNamePrefix("WERF_RELEASE_LABEL_"), cmdData.ReleaseLabels...)
+}
+
+func GetSSHKey(cmdData *CmdData) []string {
+	return append(util.PredefinedValuesByEnvNamePrefix("WERF_SSH_KEY_"), *cmdData.SSHKeys...)
+}
+
+func GetIntrospectOptions(cmdData *CmdData, werfConfig *config.WerfConfig) (build.IntrospectOptions, error) {
+	isStageExist := func(sName string) bool {
+		for _, stageName := range allStagesNames() {
+			if sName == stageName {
+				return true
+			}
+		}
+
+		return false
+	}
+
+	introspectOptions := build.IntrospectOptions{}
+
+	for _, optionValue := range GetIntrospectStage(cmdData) {
+		var imageName, stageName string
+		{
+			parts := strings.SplitN(optionValue, "/", 2)
+			if len(parts) == 1 {
+				imageName = "*"
+				stageName = parts[0]
+			} else {
+				if parts[0] != "~" {
+					imageName = parts[0]
+				}
+
+				stageName = parts[1]
+			}
+		}
+
+		if imageName != "*" && werfConfig.GetImage(imageName) == nil {
+			return introspectOptions, fmt.Errorf("specified image %q (%q) is not defined in werf.yaml", imageName, optionValue)
+		}
+
+		if !isStageExist(stageName) {
+			return introspectOptions, fmt.Errorf("specified stage name %q (%q) is not exist", stageName, optionValue)
+		}
+
+		introspectTarget := build.IntrospectTarget{ImageName: imageName, StageName: stageName}
+		introspectOptions.Targets = append(introspectOptions.Targets, introspectTarget)
+	}
+
+	return introspectOptions, nil
+}
+
+func GetGiterminismManager(ctx context.Context, cmdData *CmdData) (*giterminism_manager.Manager, error) {
+	printGlobalWarningIfDevInCI(ctx, cmdData)
+	manager := new(giterminism_manager.Manager)
+	if err := logboek.Context(ctx).Info().LogProcess("Initialize giterminism manager").
+		DoError(func() error {
+			workingDir := GetWorkingDir(cmdData)
+
+			gitWorkTree, err := GetGitWorkTree(ctx, cmdData, workingDir)
+			if err != nil {
+				return fmt.Errorf("unable to get git work tree: %w", err)
+			}
+
+			localGitRepo, err := OpenGitRepo(ctx, cmdData, workingDir, gitWorkTree)
+			if err != nil {
+				return err
+			}
+
+			headCommit, err := localGitRepo.HeadCommitHash(ctx)
+			if err != nil {
+				return err
+			}
+
+			configRelPath := GetWerfGiterminismConfigRelPath(cmdData)
+
+			gm, err := giterminism_manager.NewManager(ctx, configRelPath, workingDir, localGitRepo, headCommit, giterminism_manager.NewManagerOptions{
+				LooseGiterminism:       *cmdData.LooseGiterminism,
+				Dev:                    *cmdData.Dev,
+				CreateIncludesLockFile: cmdData.CreateIncludesLockFile,
+				AllowIncludesUpdate:    cmdData.AllowIncludesUpdate,
+			})
+			if err != nil {
+				return err
+			}
+
+			manager = gm
+			return nil
+		}); err != nil {
+		return nil, err
+	}
+
+	return manager, nil
+}
+
+func GetGitWorkTree(ctx context.Context, cmdData *CmdData, workingDir string) (string, error) {
+	if *cmdData.GitWorkTree != "" {
+		workTree := *cmdData.GitWorkTree
+
+		if isValid, err := true_git.IsValidWorkTree(ctx, workTree); err != nil {
+			return "", err
+		} else if isValid {
+			return util.GetAbsoluteFilepath(workTree), nil
+		}
+
+		return "", fmt.Errorf("werf requires a git work tree for the project to exist: not a valid git work tree %q specified", workTree)
+	}
+
+	if found, workTree, err := true_git.UpwardLookupAndVerifyWorkTree(ctx, workingDir); err != nil {
+		return "", err
+	} else if found {
+		return util.GetAbsoluteFilepath(workTree), nil
+	}
+
+	if res, err := LookupGitWorkTree(ctx, workingDir); err != nil {
+		return "", fmt.Errorf("unable to lookup git work tree from wd %q: %w", workingDir, err)
+	} else if res != "" {
+		return res, nil
+	}
+
+	return "", &GitWorktreeNotFoundError{}
+}
+
+func printGlobalWarningIfDevInCI(ctx context.Context, cmdData *CmdData) {
+	const devModeInCIWarning = `The development mode is enabled in CI environment by providing --dev flag or WERF_DEV env variable.
+This mode is intended for local development only and relies on the Git worktree state, including tracked and untracked files, while ignoring changes based on .gitignore and --dev-ignore rules.
+Using development in CI may lead to non-reproducible builds and unexpected results.`
+	if cmdData.Dev != nil && *cmdData.Dev && werf.IsRunningInCI() {
+		global_warnings.GlobalWarningLn(ctx, devModeInCIWarning)
+	}
+}
+
+func LookupGitWorkTree(ctx context.Context, workingDir string) (string, error) {
+	if found, workTree, err := true_git.UpwardLookupAndVerifyWorkTree(ctx, workingDir); err != nil {
+		return "", err
+	} else if found {
+		return util.GetAbsoluteFilepath(workTree), nil
+	}
+
+	return "", nil
+}
+
+func GetWorkingDir(cmdData *CmdData) string {
+	var workingDir string
+	if *cmdData.Dir != "" {
+		workingDir = *cmdData.Dir
+	} else {
+		workingDir = "."
+	}
+	return util.GetAbsoluteFilepath(workingDir)
+}
+
+func OpenGitRepo(ctx context.Context, cmdData *CmdData, workingDir, gitWorkTree string) (*git_repo.Local, error) {
+	isWorkingDirInsideGitWorkTree := util.IsSubpathOfBasePath(gitWorkTree, workingDir)
+	areWorkingDirAndGitWorkTreeTheSame := gitWorkTree == workingDir
+	if !(isWorkingDirInsideGitWorkTree || areWorkingDirAndGitWorkTreeTheSame) {
+		return nil, fmt.Errorf("werf requires project dir — the current working directory or directory specified with --dir option (or WERF_DIR env var) — to be located inside the git work tree: %q is located outside of the git work tree %q", gitWorkTree, workingDir)
+	}
+
+	var openLocalRepoOptions git_repo.OpenLocalRepoOptions
+	if *cmdData.Dev {
+		openLocalRepoOptions.WithServiceHeadCommit = true
+		openLocalRepoOptions.ServiceBranchOptions.Name = *cmdData.DevBranch
+		openLocalRepoOptions.ServiceBranchOptions.GlobExcludeList = GetDevIgnore(cmdData)
+	}
+
+	return git_repo.OpenLocalRepo(ctx, "own", gitWorkTree, openLocalRepoOptions)
+}
+
+func GetDevIgnore(cmdData *CmdData) []string {
+	return append(util.PredefinedValuesByEnvNamePrefix("WERF_DEV_IGNORE_"), *cmdData.DevIgnore...)
+}
+
+func ProcessLogOptions(cmdData *CmdData) error {
+	if err := ProcessLogColorMode(cmdData); err != nil {
+		return err
+	}
+
+	switch {
+	case *cmdData.LogDebug:
+		logboek.SetAcceptedLevel(level.Debug)
+		logboek.Streams().EnablePrefixDuration()
+		logboek.Streams().SetPrefixStyle(style.Details())
+	case *cmdData.LogVerbose:
+		logboek.SetAcceptedLevel(level.Info)
+	case *cmdData.LogQuiet:
+		logboek.SetAcceptedLevel(level.Error)
+	}
+
+	if *cmdData.LogTime {
+		logboek.Streams().EnablePrefixTime()
+		logboek.Streams().SetPrefixTimeFormat(*cmdData.LogTimeFormat)
+		logboek.Streams().SetPrefixStyle(style.Details())
+	}
+
+	if !*cmdData.LogPretty {
+		logboek.Streams().DisablePrettyLog()
+		logging.DisablePrettyLog()
+	}
+
+	if err := ProcessLogTerminalWidth(cmdData); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func GetNelmLogLevel(cmdData *CmdData) log.Level {
+	if util.GetBoolEnvironmentDefaultFalse("WERF_NELM_TRACE") {
+		return log.TraceLevel
+	}
+
+	switch {
+	case *cmdData.LogDebug:
+		return log.DebugLevel
+	case *cmdData.LogQuiet:
+		return log.ErrorLevel
+	default:
+		return log.InfoLevel
+	}
+}
+
+func ProcessLogColorMode(cmdData *CmdData) error {
+	switch logColorMode := *cmdData.LogColorMode; logColorMode {
+	case "auto":
+	case "on":
+		logboek.Streams().EnableStyle()
+	case "off":
+		logboek.Streams().DisableStyle()
+	default:
+		return fmt.Errorf("bad log color mode %q: on, off and auto modes are supported", logColorMode)
+	}
+
+	return nil
+}
+
+func ProcessLogTerminalWidth(cmdData *CmdData) error {
+	value := *cmdData.LogTerminalWidth
+
+	if value != -1 {
+		if value < 0 {
+			return fmt.Errorf("--log-terminal-width parameter (%d) can not be negative", value)
+		}
+		logboek.Streams().SetWidth(int(value))
+		return nil
+	}
+
+	pInt64, err := util.GetInt64EnvVar("WERF_LOG_TERMINAL_WIDTH")
+	if err != nil {
+		return err
+	}
+	if pInt64 == nil {
+		return nil
+	}
+	if *pInt64 < 0 {
+		return fmt.Errorf("WERF_LOG_TERMINAL_WIDTH value (%s) can not be negative", os.Getenv("WERF_LOG_TERMINAL_WIDTH"))
+	}
+
+	logboek.Streams().SetWidth(int(*pInt64))
+	return nil
+}
+
+func GetWerfGiterminismConfigRelPath(cmdData *CmdData) string {
+	path := cmdData.GiterminismConfigRelPath
+	if path == nil || *path == "" {
+		return "werf-giterminism.yaml"
+	}
+
+	return filepath.ToSlash(*path)
+}
+
+func GetOptionalWerfConfig(ctx context.Context, cmdData *CmdData, giterminismManager giterminism_manager.Interface, opts config.WerfConfigOptions) (string, *config.WerfConfig, error) {
+	customWerfConfigRelPath, err := GetCustomWerfConfigRelPath(giterminismManager, cmdData)
+	if err != nil {
+		return "", nil, err
+	}
+
+	exist, err := giterminismManager.FileReader().IsConfigExistAnywhere(ctx, customWerfConfigRelPath)
+	if err != nil {
+		return "", nil, err
+	}
+
+	if exist {
+		customWerfConfigTemplatesDirRelPath, err := GetCustomWerfConfigTemplatesDirRelPath(giterminismManager, cmdData)
+		if err != nil {
+			return "", nil, err
+		}
+
+		customWerfConfigRenderPath, err := GetCustomWerfConfigRenderPath(cmdData)
+		if err != nil {
+			return "", nil, err
+		}
+
+		configPath, c, err := config.GetWerfConfig(ctx, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, customWerfConfigRenderPath, giterminismManager, opts)
+		if err != nil {
+			return "", nil, err
+		}
+
+		return configPath, c, nil
+	}
+
+	return "", nil, nil
+}
+
+func GetRequiredWerfConfig(ctx context.Context, cmdData *CmdData, giterminismManager giterminism_manager.Interface, opts config.WerfConfigOptions) (string, *config.WerfConfig, error) {
+	customWerfConfigRelPath, err := GetCustomWerfConfigRelPath(giterminismManager, cmdData)
+	if err != nil {
+		return "", nil, err
+	}
+
+	customWerfConfigTemplatesDirRelPath, err := GetCustomWerfConfigTemplatesDirRelPath(giterminismManager, cmdData)
+	if err != nil {
+		return "", nil, err
+	}
+
+	customWerfConfigRenderPath, err := GetCustomWerfConfigRenderPath(cmdData)
+	if err != nil {
+		return "", nil, err
+	}
+
+	configPath, c, err := config.GetWerfConfig(ctx, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, customWerfConfigRenderPath, giterminismManager, opts)
+	if err != nil {
+		return "", nil, err
+	}
+
+	return configPath, c, nil
+}
+
+func GetCustomWerfConfigRelPath(giterminismManager giterminism_manager.Interface, cmdData *CmdData) (string, error) {
+	customConfigPath := *cmdData.ConfigPath
+	if customConfigPath == "" {
+		return "", nil
+	}
+
+	customConfigPath = util.GetAbsoluteFilepath(customConfigPath)
+	if !util.IsSubpathOfBasePath(giterminismManager.LocalGitRepo().GetWorkTreeDir(), customConfigPath) {
+		return "", fmt.Errorf("the werf config %q must be in the project git work tree %q", customConfigPath, giterminismManager.LocalGitRepo().GetWorkTreeDir())
+	}
+
+	return util.GetRelativeToBaseFilepath(giterminismManager.ProjectDir(), customConfigPath), nil
+}
+
+func GetCustomWerfConfigTemplatesDirRelPath(giterminismManager giterminism_manager.Interface, cmdData *CmdData) (string, error) {
+	customConfigTemplatesDirPath := *cmdData.ConfigTemplatesDir
+	if customConfigTemplatesDirPath == "" {
+		return "", nil
+	}
+
+	customConfigTemplatesDirPath = util.GetAbsoluteFilepath(customConfigTemplatesDirPath)
+	if !util.IsSubpathOfBasePath(giterminismManager.LocalGitRepo().GetWorkTreeDir(), customConfigTemplatesDirPath) {
+		return "", fmt.Errorf("the werf configuration templates directory %q must be in the project git work tree %q", customConfigTemplatesDirPath, giterminismManager.LocalGitRepo().GetWorkTreeDir())
+	}
+
+	return util.GetRelativeToBaseFilepath(giterminismManager.ProjectDir(), customConfigTemplatesDirPath), nil
+}
+
+func GetCustomWerfConfigRenderPath(cmdData *CmdData) (string, error) {
+	if cmdData.ConfigRenderPath == nil || *cmdData.ConfigRenderPath == "" {
+		return "", nil
+	}
+
+	customConfigRenderPath := *cmdData.ConfigRenderPath
+	customConfigRenderPath = util.GetAbsoluteFilepath(customConfigRenderPath)
+
+	return customConfigRenderPath, nil
+}
+
+func GetWerfConfigOptions(cmdData *CmdData, logRenderedFilePath bool) config.WerfConfigOptions {
+	return config.WerfConfigOptions{
+		LogRenderedFilePath: logRenderedFilePath,
+		Env:                 cmdData.Environment,
+		DebugTemplates:      cmdData.DebugTemplates,
+	}
+}
+
+func GetHelmChartDir(werfConfigPath string, werfConfig *config.WerfConfig, giterminismManager giterminism_manager.Interface) (string, error) {
+	var helmChartDir string
+	if werfConfig.Meta.Deploy.HelmChartDir != nil && *werfConfig.Meta.Deploy.HelmChartDir != "" {
+		helmChartDir = *werfConfig.Meta.Deploy.HelmChartDir
+	} else {
+		helmChartDir = filepath.Join(filepath.Dir(werfConfigPath), ".helm")
+	}
+
+	absHelmChartDir := filepath.Join(giterminismManager.ProjectDir(), helmChartDir)
+	if !util.IsSubpathOfBasePath(giterminismManager.LocalGitRepo().GetWorkTreeDir(), absHelmChartDir) {
+		return "", fmt.Errorf("the chart directory %s must be in the project git work tree %s", absHelmChartDir, giterminismManager.LocalGitRepo().GetWorkTreeDir())
+	}
+
+	return helmChartDir, nil
+}
+
+func GetHelmChartConfigAppVersion(werfConfig *config.WerfConfig) string {
+	if werfConfig.Meta.Deploy.HelmChartConfig.AppVersion != nil {
+		return *werfConfig.Meta.Deploy.HelmChartConfig.AppVersion
+	}
+
+	return ""
+}
+
+func ProcessLogProjectDir(cmdData *CmdData, projectDir string) {
+	if *cmdData.LogProjectDir {
+		logboek.LogF("Using project dir: %s\n", projectDir)
+	}
+}
+
+func GetNamespace(cmdData *CmdData) string {
+	if cmdData.Namespace == "" {
+		return "default"
+	}
+	return cmdData.Namespace
+}
+
+func GetRequiredRelease(cmdData *CmdData) (string, error) {
+	if cmdData.Release == "" {
+		return "", fmt.Errorf("--release=RELEASE param required")
+	}
+	return cmdData.Release, nil
+}
+
+func GetOptionalRelease(cmdData *CmdData) string {
+	if cmdData.Release == "" {
+		return "werf-stub"
+	}
+	return cmdData.Release
+}
+
+func LogKubeContext(kubeContext string) {
+	if kubeContext != "" {
+		logboek.LogF("Using kube context: %s\n", kubeContext)
+	}
 }

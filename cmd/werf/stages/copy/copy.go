@@ -233,7 +233,7 @@ func initCommonCopyComponents(ctx context.Context, managerConfig *common.NewStor
 		return nil, nil, fmt.Errorf("unable to init storage manager: %w", err)
 	}
 
-	dockerRegistry, err := common.CreateDockerRegistry(ctx, *managerConfig.CmdData.Repo.Address, *commonCmdData.InsecureRegistry, *commonCmdData.SkipTlsVerifyRegistry)
+	dockerRegistry, err := common.CreateDockerRegistry(ctx, *managerConfig.CmdData.Repo.Address, *commonCmdData.InsecureRegistry, *commonCmdData.SkipTlsVerifyRegistry, nil)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to create docker registry: %w", err)
 	}

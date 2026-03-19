@@ -53,13 +53,23 @@ func newAPI(options apiOptions) *api {
 	insecureHosts := make(map[string]bool)
 	var insecureCIDRs []*net.IPNet
 
+	normalizeHost := func(h string) string {
+		h = strings.TrimPrefix(h, "https://")
+		h = strings.TrimPrefix(h, "http://")
+		h = strings.TrimSuffix(h, "/")
+		return h
+	}
+
 	for _, h := range options.InsecureRegistryHosts {
+		h = normalizeHost(h)
 		_, cidr, err := net.ParseCIDR(h)
 		if err == nil {
 			insecureCIDRs = append(insecureCIDRs, cidr)
 			continue
 		}
-		insecureHosts[h] = true
+		if h != "" {
+			insecureHosts[h] = true
+		}
 	}
 
 	return &api{
@@ -505,8 +515,7 @@ func (api *api) defaultRemoteOptionsForHost(ctx context.Context, reference strin
 		return api.defaultRemoteOptions(ctx)
 	}
 
-	registryHost := api.extractRegistryHost(reference)
-	if registryHost != "" && api.isInsecureHost(registryHost) {
+	if api.shouldUseInsecureRegistry(reference) {
 		return []remote.Option{
 			remote.WithContext(ctx),
 			remote.WithAuthFromKeychain(authn.DefaultKeychain),
@@ -516,6 +525,15 @@ func (api *api) defaultRemoteOptionsForHost(ctx context.Context, reference strin
 	}
 
 	return api.defaultRemoteOptions(ctx)
+}
+
+func (api *api) shouldUseInsecureRegistry(reference string) bool {
+	if api.InsecureRegistry {
+		return true
+	}
+
+	registryHost := api.extractRegistryHost(reference)
+	return registryHost != "" && api.isInsecureHost(registryHost)
 }
 
 // extractRegistryHost extracts the registry host from a reference or repository string.
@@ -536,12 +554,7 @@ func (api *api) extractRegistryHost(reference string) string {
 func (api *api) parseReferenceOptionsForHost(reference string) []name.Option {
 	options := api.parseReferenceOptions()
 
-	if api.InsecureRegistry {
-		return options
-	}
-
-	registryHost := api.extractRegistryHost(reference)
-	if registryHost != "" && api.isInsecureHost(registryHost) {
+	if api.shouldUseInsecureRegistry(reference) {
 		options = append(options, name.Insecure)
 	}
 
