@@ -683,8 +683,6 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *image.Image, stg
 			return fmt.Errorf("stages required")
 		}
 
-		start := time.Now()
-
 		// Will build a new stage
 		i := phase.Conveyor.GetOrCreateStageImage(uuid.New().String(), phase.StagesIterator.GetPrevImage(img, stg), stg, img)
 		stg.SetStageImage(i)
@@ -710,13 +708,11 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *image.Image, stg
 		if err := phase.buildStage(ctx, img, stg); err != nil {
 			return err
 		}
-		duration := time.Since(start).Seconds()
 
 		stg.SetMeta(&stage.StageMeta{
 			Rebuilt:             true,
 			BaseImagePulled:     fetchInfo.BaseImagePulled,
 			BaseImageSourceType: fetchInfo.BaseImageSource,
-			BuildTime:           fmt.Sprintf("%.2f", duration),
 		})
 	}
 

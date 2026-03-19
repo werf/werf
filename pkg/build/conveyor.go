@@ -885,10 +885,12 @@ func (c *Conveyor) doImage(ctx context.Context, img *image.Image, phases []Phase
 				logProcess.Start()
 				for _, stg := range img.GetStages() {
 					logboek.Context(ctx).Debug().LogF("Phase %s -- OnImageStage() %s %s\n", phase.Name(), img.GetLogName(), stg.LogDetailedName())
+					stageStart := time.Now()
 					if err := phase.OnImageStage(ctx, img, stg); err != nil {
 						logProcess.Fail()
 						return fmt.Errorf("phase %s on image %s stage %s handler failed: %w", phase.Name(), img.GetLogName(), stg.Name(), err)
 					}
+					img.AddStageDuration(stg.Name(), time.Since(stageStart))
 				}
 				logProcess.End()
 
@@ -913,6 +915,7 @@ func (c *Conveyor) doImage(ctx context.Context, img *image.Image, phases []Phase
 		})
 
 	img.BuildDuration = time.Since(start)
+
 	return err
 }
 

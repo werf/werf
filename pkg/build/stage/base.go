@@ -143,7 +143,6 @@ type StageMeta struct {
 	Rebuilt             bool
 	BaseImagePulled     bool
 	BaseImageSourceType string
-	BuildTime           string
 }
 
 func (s *BaseStage) IsBuildable() bool {

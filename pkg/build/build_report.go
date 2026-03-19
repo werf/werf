@@ -306,13 +306,6 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 	return nil
 }
 
-func setBuildTime(b bool, t string) string {
-	if !b {
-		return "0.00"
-	}
-	return t
-}
-
 func getStagesReport(img *image.Image, multiplatform bool) []ReportStageRecord {
 	var stagesRecords []ReportStageRecord
 	for _, stg := range img.GetStages() {
@@ -337,7 +330,7 @@ func getStagesReport(img *image.Image, multiplatform bool) []ReportStageRecord {
 			SourceType:        stgMeta.BaseImageSourceType,
 			BaseImagePulled:   stgMeta.BaseImagePulled,
 			Rebuilt:           stgMeta.Rebuilt,
-			BuildTime:         setBuildTime(stgMeta.Rebuilt, stgMeta.BuildTime),
+			BuildTime:         fmt.Sprintf("%.2f", img.GetStageDuration(stg.Name()).Seconds()),
 		}
 		stagesRecords = append(stagesRecords, record)
 	}
