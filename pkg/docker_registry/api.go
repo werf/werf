@@ -508,8 +508,6 @@ func (api *api) defaultRemoteOptions(ctx context.Context) []remote.Option {
 	}
 }
 
-// defaultRemoteOptionsForHost returns remote options with insecure transport
-// when the registry host is in the insecure-registries list.
 func (api *api) defaultRemoteOptionsForHost(ctx context.Context, reference string) []remote.Option {
 	if api.InsecureRegistry || api.SkipTlsVerifyRegistry {
 		return api.defaultRemoteOptions(ctx)
@@ -536,21 +534,16 @@ func (api *api) shouldUseInsecureRegistry(reference string) bool {
 	return registryHost != "" && api.isInsecureHost(registryHost)
 }
 
-// extractRegistryHost extracts the registry host from a reference or repository string.
 func (api *api) extractRegistryHost(reference string) string {
-	// Try parsing as full reference first (e.g. registry/repo:tag)
 	if ref, err := name.ParseReference(reference, name.WeakValidation, name.Insecure); err == nil {
 		return ref.Context().RegistryStr()
 	}
-	// Fallback to parsing as repository (e.g. registry/repo)
 	if repo, err := name.NewRepository(reference, name.WeakValidation, name.Insecure); err == nil {
 		return repo.RegistryStr()
 	}
 	return ""
 }
 
-// parseReferenceOptionsForHost returns name.Option list for the given reference,
-// adding name.Insecure when the registry host is in insecure-registries list.
 func (api *api) parseReferenceOptionsForHost(reference string) []name.Option {
 	options := api.parseReferenceOptions()
 

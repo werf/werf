@@ -93,15 +93,14 @@ var _ = Describe("buildah", func() {
 			Expect(config).NotTo(ContainSubstring(`[[registry.mirror]]`))
 		})
 
-		It("should not duplicate registry when insecure registry is also a mirror target", func() {
+		It("should not generate standalone registry when insecure host is used only as mirror", func() {
 			config, err := generateRegistriesConfig(
 				[]string{"http://mirror.local:5000"},
 				[]string{"mirror.local:5000"},
 			)
 			Expect(err).NotTo(HaveOccurred())
-			// mirror is covered by [[registry.mirror]] entry — no standalone [[registry]] for it
-			mirrorCount := strings.Count(config, `location = "mirror.local:5000"`)
-			Expect(mirrorCount).To(Equal(1))
+			Expect(strings.Count(config, `location = "mirror.local:5000"`)).To(Equal(1))
+			Expect(config).To(ContainSubstring(`[[registry.mirror]]`))
 		})
 
 		It("should generate standalone entries for multiple insecure non-mirror registries", func() {
@@ -289,7 +288,7 @@ insecure = true
 			result, err := GetRegistryMirrorsFromConfig()
 			Expect(err).NotTo(HaveOccurred())
 			Expect(result).To(HaveLen(1))
-			Expect(result).To(ContainElement("https://dh-mirror.gitverse.ru"))
+			Expect(result).To(ContainElement("http://dh-mirror.gitverse.ru"))
 		})
 
 		It("should not treat docker.io location as mirror", func() {
@@ -308,6 +307,88 @@ location = "mirror.example.com"
 			Expect(err).NotTo(HaveOccurred())
 			Expect(result).To(HaveLen(1))
 			Expect(result).To(ContainElement("https://mirror.example.com"))
+		})
+
+		It("should keep insecure mirror as http scheme", func() {
+			configPath := tmpDir + "/.config/containers/registries.conf"
+			content := `
+[[registry]]
+location = "docker.io"
+
+[[registry.mirror]]
+location = "mirror.example.com"
+insecure = true
+`
+			Expect(os.WriteFile(configPath, []byte(content), 0o644)).To(Succeed())
+
+			result, err := GetRegistryMirrorsFromConfig()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(result).To(HaveLen(1))
+			Expect(result).To(ContainElement("http://mirror.example.com"))
+		})
+
+		It("should keep insecure relocation mirror as http scheme", func() {
+			configPath := tmpDir + "/.config/containers/registries.conf"
+			content := `
+[[registry]]
+prefix = "docker.io"
+location = "dh-mirror.gitverse.ru"
+insecure = true
+`
+			Expect(os.WriteFile(configPath, []byte(content), 0o644)).To(Succeed())
+
+			result, err := GetRegistryMirrorsFromConfig()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(result).To(HaveLen(1))
+			Expect(result).To(ContainElement("http://dh-mirror.gitverse.ru"))
+		})
+	})
+
+	Describe("registries.conf real-world docker.io mirror with standalone insecure registry", func() {
+		var tmpDir string
+		var oldHome string
+
+		BeforeEach(func() {
+			var err error
+			tmpDir, err = os.MkdirTemp("", "registries-realworld-test")
+			Expect(err).NotTo(HaveOccurred())
+
+			oldHome = os.Getenv("HOME")
+			os.Setenv("HOME", tmpDir)
+
+			DeferCleanup(func() {
+				os.Setenv("HOME", oldHome)
+				os.RemoveAll(tmpDir)
+			})
+
+			configDir := tmpDir + "/.config/containers"
+			Expect(os.MkdirAll(configDir, 0o755)).To(Succeed())
+		})
+
+		It("should parse docker.io mirror and standalone insecure registry from the same config", func() {
+			configPath := tmpDir + "/.config/containers/registries.conf"
+			content := `
+[[registry]]
+prefix = "docker.io"
+location = "docker.io"
+
+[[registry.mirror]]
+location = "local-registry.test:32768"
+insecure = true
+
+[[registry]]
+location = "local-registry.test:32768"
+insecure = true
+`
+			Expect(os.WriteFile(configPath, []byte(content), 0o644)).To(Succeed())
+
+			mirrors, err := GetRegistryMirrorsFromConfig()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(mirrors).To(ContainElement("http://local-registry.test:32768"))
+
+			insecureRegs, err := GetInsecureRegistriesFromConfig()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(insecureRegs).To(ContainElement("local-registry.test:32768"))
 		})
 	})
 })
