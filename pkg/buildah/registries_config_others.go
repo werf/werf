@@ -3,14 +3,16 @@
 
 package buildah
 
-func GetStandaloneInsecureRegistriesFromConfig() ([]string, error) {
+import "context"
+
+func GetStandaloneInsecureRegistriesFromConfig(_ context.Context) ([]string, error) {
 	return nil, nil
 }
 
-func GetInsecureRegistriesFromConfig() ([]string, error) {
+func GetInsecureRegistriesFromConfig(_ context.Context) ([]string, error) {
 	return nil, nil
 }
 
-func GetRegistryMirrorsFromConfig() ([]string, error) {
+func GetRegistryMirrorsFromConfig(_ context.Context) ([]string, error) {
 	return nil, nil
 }

@@ -114,7 +114,7 @@ func InitProcessContainerBackend(ctx context.Context, cmdData *CmdData, registry
 			if err != nil {
 				return nil, ctx, fmt.Errorf("get insecure registry hosts: %w", err)
 			}
-			standaloneInsecureHosts, err = buildah.GetStandaloneInsecureRegistriesFromConfig()
+			standaloneInsecureHosts, err = buildah.GetStandaloneInsecureRegistriesFromConfig(ctx)
 			if err != nil {
 				return nil, ctx, fmt.Errorf("get standalone insecure registries from containers config: %w", err)
 			}

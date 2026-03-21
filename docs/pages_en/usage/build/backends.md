@@ -47,6 +47,8 @@ werf uses the following data from this configuration:
 - mirrors for `docker.io`;
 - standalone insecure registries from `[[registry]] insecure = true`.
 
+werf does not parse or override other container configuration files such as `shortnames.conf`.
+
 An insecure mirror for `docker.io` does not automatically make the same host a standalone insecure registry. If the same host must be used both as a `docker.io` mirror and as a standalone insecure registry, it must be described by two separate entries.
 
 ### Storage Driver

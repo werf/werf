@@ -4,8 +4,8 @@
 package buildah
 
 import (
+	"context"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"sort"
@@ -13,6 +13,8 @@ import (
 	"sync"
 
 	"github.com/BurntSushi/toml"
+
+	"github.com/werf/logboek"
 )
 
 type registriesConf struct {
@@ -54,26 +56,27 @@ func getRegistriesConfPaths() []string {
 
 var (
 	cachedRegistries     []registryConf
-	cachedRegistriesErr  error
+	errCachedRegistries  error
 	cachedRegistriesOnce sync.Once
 )
 
-func loadRegistriesConf() ([]registryConf, error) {
+func loadRegistriesConf(ctx context.Context) ([]registryConf, error) {
 	cachedRegistriesOnce.Do(func() {
-		cachedRegistries, cachedRegistriesErr = doLoadRegistriesConf()
+		cachedRegistries, errCachedRegistries = doLoadRegistriesConf(ctx)
 	})
-	return cachedRegistries, cachedRegistriesErr
+	return cachedRegistries, errCachedRegistries
 }
 
 func resetRegistriesConfCache() {
 	cachedRegistriesOnce = sync.Once{}
 	cachedRegistries = nil
-	cachedRegistriesErr = nil
+	errCachedRegistries = nil
 }
 
-func doLoadRegistriesConf() ([]registryConf, error) {
+func doLoadRegistriesConf(ctx context.Context) ([]registryConf, error) {
 	for _, path := range getRegistriesConfPaths() {
 		var regs []registryConf
+		found := false
 
 		data, err := os.ReadFile(path)
 		if err != nil {
@@ -81,9 +84,10 @@ func doLoadRegistriesConf() ([]registryConf, error) {
 				return nil, fmt.Errorf("read %s: %w", path, err)
 			}
 		} else {
+			found = true
 			var conf registriesConf
 			if _, err := toml.Decode(string(data), &conf); err != nil {
-				log.Printf("WARNING: unable to parse %s: %s", path, err)
+				logboek.Context(ctx).Warn().LogF("WARNING: unable to parse %s: %s\n", path, err)
 			} else {
 				regs = append(regs, conf.Registries...)
 			}
@@ -93,13 +97,14 @@ func doLoadRegistriesConf() ([]registryConf, error) {
 		entries, err := os.ReadDir(dir)
 		if err != nil {
 			if os.IsNotExist(err) || os.IsPermission(err) {
-				if regs != nil {
+				if found {
 					return regs, nil
 				}
 				continue
 			}
 			return nil, fmt.Errorf("read %s: %w", dir, err)
 		}
+		found = true
 
 		var names []string
 		for _, entry := range entries {
@@ -122,13 +127,13 @@ func doLoadRegistriesConf() ([]registryConf, error) {
 
 			var dropIn registriesConf
 			if _, err := toml.Decode(string(dropInData), &dropIn); err != nil {
-				log.Printf("WARNING: unable to parse %s: %s", dropInPath, err)
+				logboek.Context(ctx).Warn().LogF("WARNING: unable to parse %s: %s\n", dropInPath, err)
 				continue
 			}
 			regs = append(regs, dropIn.Registries...)
 		}
 
-		if regs != nil {
+		if found {
 			return regs, nil
 		}
 	}
@@ -136,8 +141,8 @@ func doLoadRegistriesConf() ([]registryConf, error) {
 	return nil, nil
 }
 
-func GetStandaloneInsecureRegistriesFromConfig() ([]string, error) {
-	regs, err := loadRegistriesConf()
+func GetStandaloneInsecureRegistriesFromConfig(ctx context.Context) ([]string, error) {
+	regs, err := loadRegistriesConf(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -180,12 +185,12 @@ func GetStandaloneInsecureRegistriesFromConfig() ([]string, error) {
 	return result, nil
 }
 
-func GetInsecureRegistriesFromConfig() ([]string, error) {
-	return GetStandaloneInsecureRegistriesFromConfig()
+func GetInsecureRegistriesFromConfig(ctx context.Context) ([]string, error) {
+	return GetStandaloneInsecureRegistriesFromConfig(ctx)
 }
 
-func GetRegistryMirrorsFromConfig() ([]string, error) {
-	regs, err := loadRegistriesConf()
+func GetRegistryMirrorsFromConfig(ctx context.Context) ([]string, error) {
+	regs, err := loadRegistriesConf(ctx)
 	if err != nil {
 		return nil, err
 	}

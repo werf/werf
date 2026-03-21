@@ -47,6 +47,8 @@ werf использует из этой конфигурации:
 - зеркала для `docker.io`;
 - standalone insecure registries из `[[registry]] insecure = true`.
 
+werf не парсит и не подменяет другие файлы container-конфигурации, например `shortnames.conf`.
+
 Insecure-зеркало для `docker.io` не делает тот же host standalone insecure registry автоматически. Если один и тот же host должен использоваться и как зеркало `docker.io`, и как standalone insecure registry, его нужно описать двумя отдельными записями.
 
 ### Драйвер хранилища

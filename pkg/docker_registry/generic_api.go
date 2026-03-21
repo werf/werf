@@ -46,6 +46,22 @@ func (api *genericApi) MutateAndPushImage(ctx context.Context, sourceReference, 
 	return api.commonApi.MutateAndPushImage(ctx, sourceReference, destinationReference, opts...)
 }
 
+func trySequentially[T any](items []string, getter func(string) (T, bool, error)) (T, bool, error) {
+	var zero T
+
+	for _, item := range items {
+		value, ok, err := getter(item)
+		if err != nil {
+			continue
+		}
+		if ok {
+			return value, true, nil
+		}
+	}
+
+	return zero, false, nil
+}
+
 func (api *genericApi) GetRepoImageConfigFile(ctx context.Context, reference string) (*v1.ConfigFile, error) {
 	mirrorReferenceList, err := api.mirrorReferenceList(ctx, reference)
 	if err != nil {
@@ -88,20 +104,27 @@ func (api *genericApi) GetRepoImage(ctx context.Context, reference string) (*ima
 		return nil, fmt.Errorf("unable to prepare mirror reference list: %w", err)
 	}
 
-	for _, mirrorReference := range mirrorReferenceList {
+	info, found, err := trySequentially(mirrorReferenceList, func(mirrorReference string) (*image.Info, bool, error) {
 		info, err := api.commonApi.TryGetRepoImage(ctx, mirrorReference)
 		if err != nil {
-			return nil, fmt.Errorf("unable to try getting mirror repo image %q: %w", mirrorReference, err)
+			return nil, false, err
 		}
-		if info != nil {
-			return info, nil
+		if info == nil {
+			return nil, false, nil
 		}
+		return info, true, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	if found {
+		return info, nil
 	}
 
 	return api.commonApi.GetRepoImage(ctx, reference)
 }
 
-func (api *genericApi) mirrorReferenceList(ctx context.Context, reference string) ([]string, error) {
+func (api *genericApi) mirrorReferenceList(_ context.Context, reference string) ([]string, error) {
 	var referenceList []string
 
 	referenceParts, err := api.commonApi.parseReferenceParts(reference)

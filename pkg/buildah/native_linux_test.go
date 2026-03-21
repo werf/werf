@@ -1,6 +1,7 @@
 package buildah
 
 import (
+	"context"
 	"os"
 	"strings"
 
@@ -175,7 +176,7 @@ var _ = Describe("buildah", func() {
 `
 			Expect(os.WriteFile(configPath, []byte(content), 0o644)).To(Succeed())
 
-			result, err := GetInsecureRegistriesFromConfig()
+			result, err := GetInsecureRegistriesFromConfig(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 			Expect(result).To(BeEmpty())
 		})
@@ -189,7 +190,7 @@ insecure = true
 `
 			Expect(os.WriteFile(configPath, []byte(content), 0o644)).To(Succeed())
 
-			result, err := GetInsecureRegistriesFromConfig()
+			result, err := GetInsecureRegistriesFromConfig(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 			Expect(result).To(ContainElement("localhost:5000"))
 		})
@@ -206,7 +207,7 @@ insecure = true
 `
 			Expect(os.WriteFile(configPath, []byte(content), 0o644)).To(Succeed())
 
-			result, err := GetInsecureRegistriesFromConfig()
+			result, err := GetInsecureRegistriesFromConfig(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 			Expect(result).To(BeEmpty())
 		})
@@ -221,7 +222,7 @@ insecure = true
 `
 			Expect(os.WriteFile(configPath, []byte(content), 0o644)).To(Succeed())
 
-			result, err := GetInsecureRegistriesFromConfig()
+			result, err := GetInsecureRegistriesFromConfig(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 			Expect(result).To(BeEmpty())
 		})
@@ -256,7 +257,7 @@ insecure = true
 `
 			Expect(os.WriteFile(configPath, []byte(content), 0o644)).To(Succeed())
 
-			result, err := GetRegistryMirrorsFromConfig()
+			result, err := GetRegistryMirrorsFromConfig(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 			Expect(result).To(BeEmpty())
 		})
@@ -275,7 +276,7 @@ location = "mirror2.example.com"
 `
 			Expect(os.WriteFile(configPath, []byte(content), 0o644)).To(Succeed())
 
-			result, err := GetRegistryMirrorsFromConfig()
+			result, err := GetRegistryMirrorsFromConfig(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 			Expect(result).To(HaveLen(2))
 			Expect(result).To(ContainElement("https://mirror.example.com"))
@@ -293,7 +294,7 @@ location = "quay-mirror.example.com"
 `
 			Expect(os.WriteFile(configPath, []byte(content), 0o644)).To(Succeed())
 
-			result, err := GetRegistryMirrorsFromConfig()
+			result, err := GetRegistryMirrorsFromConfig(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 			Expect(result).To(BeEmpty())
 		})
@@ -312,14 +313,14 @@ location = "mirror.example.com"
 `
 			Expect(os.WriteFile(configPath, []byte(content), 0o644)).To(Succeed())
 
-			result, err := GetRegistryMirrorsFromConfig()
+			result, err := GetRegistryMirrorsFromConfig(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 			Expect(result).To(HaveLen(1))
 			Expect(result).To(ContainElement("https://mirror.example.com"))
 		})
 
 		It("should return nil when no config file exists", func() {
-			result, err := GetRegistryMirrorsFromConfig()
+			result, err := GetRegistryMirrorsFromConfig(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 			Expect(result).To(BeNil())
 		})
@@ -334,7 +335,7 @@ insecure = true
 `
 			Expect(os.WriteFile(configPath, []byte(content), 0o644)).To(Succeed())
 
-			result, err := GetRegistryMirrorsFromConfig()
+			result, err := GetRegistryMirrorsFromConfig(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 			Expect(result).To(HaveLen(1))
 			Expect(result).To(ContainElement("http://dh-mirror.gitverse.ru"))
@@ -352,7 +353,7 @@ location = "mirror.example.com"
 `
 			Expect(os.WriteFile(configPath, []byte(content), 0o644)).To(Succeed())
 
-			result, err := GetRegistryMirrorsFromConfig()
+			result, err := GetRegistryMirrorsFromConfig(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 			Expect(result).To(HaveLen(1))
 			Expect(result).To(ContainElement("https://mirror.example.com"))
@@ -370,7 +371,7 @@ insecure = true
 `
 			Expect(os.WriteFile(configPath, []byte(content), 0o644)).To(Succeed())
 
-			result, err := GetRegistryMirrorsFromConfig()
+			result, err := GetRegistryMirrorsFromConfig(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 			Expect(result).To(HaveLen(1))
 			Expect(result).To(ContainElement("http://mirror.example.com"))
@@ -386,7 +387,7 @@ insecure = true
 `
 			Expect(os.WriteFile(configPath, []byte(content), 0o644)).To(Succeed())
 
-			result, err := GetRegistryMirrorsFromConfig()
+			result, err := GetRegistryMirrorsFromConfig(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 			Expect(result).To(HaveLen(1))
 			Expect(result).To(ContainElement("http://dh-mirror.gitverse.ru"))
@@ -433,11 +434,11 @@ insecure = true
 `
 			Expect(os.WriteFile(configPath, []byte(content), 0o644)).To(Succeed())
 
-			mirrors, err := GetRegistryMirrorsFromConfig()
+			mirrors, err := GetRegistryMirrorsFromConfig(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 			Expect(mirrors).To(ContainElement("http://local-registry.test:32768"))
 
-			insecureRegs, err := GetInsecureRegistriesFromConfig()
+			insecureRegs, err := GetInsecureRegistriesFromConfig(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 			Expect(insecureRegs).To(ContainElement("local-registry.test:32768"))
 		})
@@ -481,12 +482,12 @@ location = "home-mirror.example.com"
 `
 			Expect(os.WriteFile(configPath, []byte(content), 0o644)).To(Succeed())
 
-			result, err := GetRegistryMirrorsFromConfig()
+			result, err := GetRegistryMirrorsFromConfig(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 			Expect(result).To(ContainElement("https://home-mirror.example.com"))
 		})
 
-		It("should prefer CONTAINERS_REGISTRIES_CONF over HOME config", func() {
+		It("should read CONTAINERS_REGISTRIES_CONF", func() {
 			homeConfigPath := tmpDir + "/.config/containers/registries.conf"
 			envConfigPath := tmpDir + "/custom-registries.conf"
 			Expect(os.WriteFile(homeConfigPath, []byte(`
@@ -505,7 +506,7 @@ location = "env-mirror.example.com"
 `), 0o644)).To(Succeed())
 			os.Setenv("CONTAINERS_REGISTRIES_CONF", envConfigPath)
 
-			result, err := GetRegistryMirrorsFromConfig()
+			result, err := GetRegistryMirrorsFromConfig(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 			Expect(result).To(ContainElement("https://env-mirror.example.com"))
 			Expect(result).NotTo(ContainElement("https://home-mirror.example.com"))
@@ -540,11 +541,11 @@ insecure = true
 `), 0o644)).To(Succeed())
 			os.Setenv("CONTAINERS_REGISTRIES_CONF", envConfigPath)
 
-			mirrors, err := GetRegistryMirrorsFromConfig()
+			mirrors, err := GetRegistryMirrorsFromConfig(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 			Expect(mirrors).To(ContainElement("https://env-mirror.example.com"))
 
-			insecureRegs, err := GetInsecureRegistriesFromConfig()
+			insecureRegs, err := GetInsecureRegistriesFromConfig(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 			Expect(insecureRegs).To(ContainElement("env-dropin-registry.example.com"))
 			Expect(insecureRegs).NotTo(ContainElement("home-dropin-registry.example.com"))
@@ -567,7 +568,7 @@ location = "dropin-mirror.example.com"
 insecure = true
 `), 0o644)).To(Succeed())
 
-			result, err := GetRegistryMirrorsFromConfig()
+			result, err := GetRegistryMirrorsFromConfig(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 			Expect(result).To(ContainElement("http://dropin-mirror.example.com"))
 		})
@@ -583,7 +584,7 @@ location = "dropin-registry.example.com"
 insecure = true
 `), 0o644)).To(Succeed())
 
-			result, err := GetInsecureRegistriesFromConfig()
+			result, err := GetInsecureRegistriesFromConfig(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 			Expect(result).To(ContainElement("dropin-registry.example.com"))
 		})
@@ -611,7 +612,7 @@ location = "docker.io"
 location = "second-mirror.example.com"
 `), 0o644)).To(Succeed())
 
-			result, err := GetRegistryMirrorsFromConfig()
+			result, err := GetRegistryMirrorsFromConfig(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 			Expect(result).To(Equal([]string{"https://first-mirror.example.com", "https://second-mirror.example.com"}))
 		})
@@ -636,7 +637,7 @@ location = "same-mirror.example.com"
 insecure = true
 `), 0o644)).To(Succeed())
 
-			result, err := GetRegistryMirrorsFromConfig()
+			result, err := GetRegistryMirrorsFromConfig(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 			Expect(result).To(Equal([]string{"https://same-mirror.example.com"}))
 		})
@@ -656,7 +657,7 @@ location = "same-registry.example.com"
 insecure = true
 `), 0o644)).To(Succeed())
 
-			result, err := GetInsecureRegistriesFromConfig()
+			result, err := GetInsecureRegistriesFromConfig(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 			Expect(result).To(Equal([]string{"same-registry.example.com"}))
 		})
@@ -676,7 +677,7 @@ location = "docker.io"
 location = "dropin-mirror.example.com"
 `), 0o644)).To(Succeed())
 
-			result, err := GetRegistryMirrorsFromConfig()
+			result, err := GetRegistryMirrorsFromConfig(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 			Expect(result).To(ContainElement("https://dropin-mirror.example.com"))
 		})

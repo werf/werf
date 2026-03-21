@@ -956,7 +956,7 @@ func GetInsecureRegistryHosts(ctx context.Context, cmdData *CmdData, buildahMode
 	}
 
 	if buildahMode != buildah.ModeDisabled {
-		hosts, err := buildah.GetInsecureRegistriesFromConfig()
+		hosts, err := buildah.GetInsecureRegistriesFromConfig(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("get insecure registries from containers config: %w", err)
 		}
@@ -1260,7 +1260,7 @@ func GetContainerRegistryMirror(ctx context.Context, cmdData *CmdData, buildahMo
 
 	var backendMirrors []string
 	if buildahMode != buildah.ModeDisabled {
-		m, err := buildah.GetRegistryMirrorsFromConfig()
+		m, err := buildah.GetRegistryMirrorsFromConfig(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("get registry mirrors from containers config: %w", err)
 		}
