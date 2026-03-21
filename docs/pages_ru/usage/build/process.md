@@ -29,7 +29,7 @@ registry.example.org/group/project  e6073b8f03231e122fa3b7d3294ff69a5060c332c439
 - атомарную публикацию образов по этим тегам в репозиторий или локально;
 - передачу тегов в Helm-чарт.
 
-Образы в репозитории именуются согласно следующей схемы: `CONTAINER_REGISTRY_REPO:DIGEST-TIMESTAMP_MILLISEC`. Здесь:
+Образы в репозитории именуются согласно следующей схеме: `CONTAINER_REGISTRY_REPO:DIGEST-TIMESTAMP_MILLISEC`. Здесь:
 
 - `CONTAINER_REGISTRY_REPO` — репозиторий, заданный опцией `--repo`;
 - `DIGEST` — контрольная сумма от:
@@ -418,6 +418,27 @@ export WERF_CONTAINER_REGISTRY_MIRROR_GCR=mirror.gcr.io
 export WERF_CONTAINER_REGISTRY_MIRROR_LOCAL=docker.mirror.local
 ```
 
+Зеркала, заданные таким способом, по умолчанию считаются secure (`https`) зеркалами. При необходимости для обращений к registry можно включить глобальный insecure-режим werf через `--insecure-registry` или `--skip-tls-verify-registry`.
+
+werf также читает зеркала container registry и standalone insecure registries из `registries.conf`.
+
+Поддерживаются следующие пути в порядке приоритета:
+
+1. путь из переменной окружения `CONTAINERS_REGISTRIES_CONF`;
+2. `~/.config/containers/registries.conf`;
+3. `/etc/containers/registries.conf`.
+
+Если задан `CONTAINERS_REGISTRIES_CONF`, werf использует только этот файл и соседнюю директорию `<path>.d`.
+
+Если `CONTAINERS_REGISTRIES_CONF` не задан, werf использует первый найденный файл из стандартных путей и соседнюю директорию `<path>.d` для этого файла.
+
+Из этой конфигурации werf использует:
+
+- зеркала для `docker.io`;
+- standalone insecure registries из `[[registry]] insecure = true`.
+
+Insecure-зеркала должны задаваться через `registries.conf`. Insecure-зеркало для `docker.io` не делает тот же host standalone insecure registry автоматически. Если один и тот же host должен использоваться и как зеркало `docker.io`, и как standalone insecure registry, его нужно описать двумя отдельными записями.
+
 ## Использование container registry
 
 При использовании werf container registry используется не только для хранения конечных образов, но также для сборочного кэша и служебных данных, необходимых для работы werf (например, метаданные для очистки container registry на основе истории Git). Репозиторий container registry задаётся параметром `--repo`:
@@ -642,4 +663,3 @@ jq -r '.Images | to_entries | map({key: .key, value: .value.DockerImageName}) | 
   "frontend": "localhost:5000/demo-app:079dfdd3f51a800c269cdfdd5e4febfcc1676b2c0d533f520255961c-1752501317353"
 }
 ```
-

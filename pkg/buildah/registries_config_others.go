@@ -3,6 +3,10 @@
 
 package buildah
 
+func GetStandaloneInsecureRegistriesFromConfig() ([]string, error) {
+	return nil, nil
+}
+
 func GetInsecureRegistriesFromConfig() ([]string, error) {
 	return nil, nil
 }

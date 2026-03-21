@@ -233,7 +233,12 @@ func initCommonCopyComponents(ctx context.Context, managerConfig *common.NewStor
 		return nil, nil, fmt.Errorf("unable to init storage manager: %w", err)
 	}
 
-	dockerRegistry, err := common.CreateDockerRegistry(ctx, *managerConfig.CmdData.Repo.Address, *commonCmdData.InsecureRegistry, *commonCmdData.SkipTlsVerifyRegistry, nil)
+	buildahMode, _, err := common.GetBuildahMode()
+	if err != nil {
+		return nil, nil, fmt.Errorf("unable to determine buildah mode: %w", err)
+	}
+
+	dockerRegistry, err := common.CreateDockerRegistryWithInsecureHosts(ctx, managerConfig.CmdData, *managerConfig.CmdData.Repo.Address, *buildahMode)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to create docker registry: %w", err)
 	}

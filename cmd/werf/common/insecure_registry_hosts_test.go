@@ -37,6 +37,30 @@ func TestGetInsecureRegistryHosts_SkipWhenSkipTLSVerifyEnabled(t *testing.T) {
 	}
 }
 
+func TestCreateDockerRegistryWithInsecureHosts_SkipWhenInsecureRegistryEnabled(t *testing.T) {
+	cmdData := &CmdData{
+		InsecureRegistry:      boolPtr(true),
+		SkipTlsVerifyRegistry: boolPtr(false),
+	}
+
+	_, err := CreateDockerRegistryWithInsecureHosts(context.Background(), cmdData, "registry.example.com/project", buildah.ModeNative)
+	if err != nil {
+		t.Fatalf("expected no error creating registry client with global insecure mode, got: %v", err)
+	}
+}
+
+func TestCreateDockerRegistryWithInsecureHosts_SkipWhenSkipTLSVerifyEnabled(t *testing.T) {
+	cmdData := &CmdData{
+		InsecureRegistry:      boolPtr(false),
+		SkipTlsVerifyRegistry: boolPtr(true),
+	}
+
+	_, err := CreateDockerRegistryWithInsecureHosts(context.Background(), cmdData, "registry.example.com/project", buildah.ModeNative)
+	if err != nil {
+		t.Fatalf("expected no error creating registry client with skip tls verify mode, got: %v", err)
+	}
+}
+
 func boolPtr(v bool) *bool {
 	return &v
 }

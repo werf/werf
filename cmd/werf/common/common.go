@@ -928,6 +928,15 @@ func DockerRegistryInit(ctx context.Context, cmdData *CmdData, registryMirrors [
 	return docker_registry.Init(ctx, *cmdData.InsecureRegistry, *cmdData.SkipTlsVerifyRegistry, registryMirrors, insecureHosts)
 }
 
+func CreateDockerRegistryWithInsecureHosts(ctx context.Context, cmdData *CmdData, addr string, buildahMode buildah.Mode) (docker_registry.Interface, error) {
+	insecureHosts, err := GetInsecureRegistryHosts(ctx, cmdData, buildahMode)
+	if err != nil {
+		return nil, fmt.Errorf("get insecure registry hosts: %w", err)
+	}
+
+	return CreateDockerRegistry(ctx, addr, *cmdData.InsecureRegistry, *cmdData.SkipTlsVerifyRegistry, insecureHosts)
+}
+
 func GetInsecureRegistryHosts(ctx context.Context, cmdData *CmdData, buildahMode buildah.Mode) ([]string, error) {
 	if (cmdData.InsecureRegistry != nil && *cmdData.InsecureRegistry) || (cmdData.SkipTlsVerifyRegistry != nil && *cmdData.SkipTlsVerifyRegistry) {
 		return nil, nil

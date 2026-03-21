@@ -5,7 +5,12 @@ package buildah
 
 import (
 	"fmt"
+	"log"
 	"os"
+	"path/filepath"
+	"sort"
+	"strings"
+	"sync"
 
 	"github.com/BurntSushi/toml"
 )
@@ -27,114 +32,201 @@ type mirrorConf struct {
 }
 
 func getRegistriesConfPaths() []string {
-	paths := []string{
-		"/etc/containers/registries.conf",
+	var paths []string
+	seen := make(map[string]bool)
+
+	addPath := func(path string) {
+		if path == "" || seen[path] {
+			return
+		}
+		seen[path] = true
+		paths = append(paths, path)
 	}
+
+	addPath(os.Getenv("CONTAINERS_REGISTRIES_CONF"))
 	if home := os.Getenv("HOME"); home != "" {
-		paths = append([]string{home + "/.config/containers/registries.conf"}, paths...)
+		addPath(home + "/.config/containers/registries.conf")
 	}
+	addPath("/etc/containers/registries.conf")
+
 	return paths
 }
 
-func GetInsecureRegistriesFromConfig() ([]string, error) {
+var (
+	cachedRegistries     []registryConf
+	cachedRegistriesErr  error
+	cachedRegistriesOnce sync.Once
+)
+
+func loadRegistriesConf() ([]registryConf, error) {
+	cachedRegistriesOnce.Do(func() {
+		cachedRegistries, cachedRegistriesErr = doLoadRegistriesConf()
+	})
+	return cachedRegistries, cachedRegistriesErr
+}
+
+func resetRegistriesConfCache() {
+	cachedRegistriesOnce = sync.Once{}
+	cachedRegistries = nil
+	cachedRegistriesErr = nil
+}
+
+func doLoadRegistriesConf() ([]registryConf, error) {
 	for _, path := range getRegistriesConfPaths() {
+		var regs []registryConf
+
 		data, err := os.ReadFile(path)
 		if err != nil {
+			if !os.IsNotExist(err) && !os.IsPermission(err) {
+				return nil, fmt.Errorf("read %s: %w", path, err)
+			}
+		} else {
+			var conf registriesConf
+			if _, err := toml.Decode(string(data), &conf); err != nil {
+				log.Printf("WARNING: unable to parse %s: %s", path, err)
+			} else {
+				regs = append(regs, conf.Registries...)
+			}
+		}
+
+		dir := path + ".d"
+		entries, err := os.ReadDir(dir)
+		if err != nil {
 			if os.IsNotExist(err) || os.IsPermission(err) {
+				if regs != nil {
+					return regs, nil
+				}
 				continue
 			}
-			return nil, fmt.Errorf("read %s: %w", path, err)
+			return nil, fmt.Errorf("read %s: %w", dir, err)
 		}
 
-		var conf registriesConf
-		if _, err := toml.Decode(string(data), &conf); err != nil {
-			continue
-		}
-
-		var result []string
-		seen := make(map[string]bool)
-
-		addIfNew := func(loc string) {
-			if loc != "" && !seen[loc] {
-				seen[loc] = true
-				result = append(result, loc)
+		var names []string
+		for _, entry := range entries {
+			if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".conf") {
+				continue
 			}
+			names = append(names, entry.Name())
 		}
+		sort.Strings(names)
 
-		for _, reg := range conf.Registries {
-			if reg.Insecure {
-				loc := reg.Location
-				if loc == "" {
-					loc = reg.Prefix
+		for _, name := range names {
+			dropInPath := filepath.Join(dir, name)
+			dropInData, err := os.ReadFile(dropInPath)
+			if err != nil {
+				if os.IsNotExist(err) || os.IsPermission(err) {
+					continue
 				}
-				addIfNew(loc)
+				return nil, fmt.Errorf("read %s: %w", dropInPath, err)
 			}
 
-			for _, mirror := range reg.Mirrors {
-				if mirror.Insecure {
-					addIfNew(mirror.Location)
-				}
+			var dropIn registriesConf
+			if _, err := toml.Decode(string(dropInData), &dropIn); err != nil {
+				log.Printf("WARNING: unable to parse %s: %s", dropInPath, err)
+				continue
 			}
+			regs = append(regs, dropIn.Registries...)
 		}
 
-		return result, nil
+		if regs != nil {
+			return regs, nil
+		}
 	}
 
 	return nil, nil
 }
 
-func GetRegistryMirrorsFromConfig() ([]string, error) {
-	for _, path := range getRegistriesConfPaths() {
-		data, err := os.ReadFile(path)
-		if err != nil {
-			if os.IsNotExist(err) || os.IsPermission(err) {
-				continue
-			}
-			return nil, fmt.Errorf("read %s: %w", path, err)
-		}
+func GetStandaloneInsecureRegistriesFromConfig() ([]string, error) {
+	regs, err := loadRegistriesConf()
+	if err != nil {
+		return nil, err
+	}
+	if regs == nil {
+		return nil, nil
+	}
 
-		var conf registriesConf
-		if _, err := toml.Decode(string(data), &conf); err != nil {
+	var result []string
+	seen := make(map[string]bool)
+
+	addIfNew := func(loc string) {
+		if loc != "" && !seen[loc] {
+			seen[loc] = true
+			result = append(result, loc)
+		}
+	}
+
+	for _, reg := range regs {
+		if !reg.Insecure {
 			continue
 		}
 
-		var result []string
-		seen := make(map[string]bool)
-
-		addMirror := func(loc string, insecure bool) {
-			if loc == "" || seen[loc] {
-				return
-			}
-			seen[loc] = true
-			// Preserve insecure mirror semantics for downstream code that keys off http:// mirrors.
-			if insecure {
-				result = append(result, "http://"+loc)
-			} else {
-				result = append(result, "https://"+loc)
-			}
+		prefix := reg.Prefix
+		if prefix == "" {
+			prefix = reg.Location
 		}
 
-		for _, reg := range conf.Registries {
-			prefix := reg.Prefix
-			if prefix == "" {
-				prefix = reg.Location
-			}
-
-			if prefix != "docker.io" {
-				continue
-			}
-
-			if reg.Location != "" && reg.Location != "docker.io" {
-				addMirror(reg.Location, reg.Insecure)
-			}
-
-			for _, mirror := range reg.Mirrors {
-				addMirror(mirror.Location, mirror.Insecure)
-			}
+		// Skip docker.io entries — they are mirrors, not standalone registries.
+		if prefix == "docker.io" {
+			continue
 		}
 
-		return result, nil
+		loc := reg.Location
+		if loc == "" {
+			loc = reg.Prefix
+		}
+		addIfNew(loc)
 	}
 
-	return nil, nil
+	return result, nil
+}
+
+func GetInsecureRegistriesFromConfig() ([]string, error) {
+	return GetStandaloneInsecureRegistriesFromConfig()
+}
+
+func GetRegistryMirrorsFromConfig() ([]string, error) {
+	regs, err := loadRegistriesConf()
+	if err != nil {
+		return nil, err
+	}
+	if regs == nil {
+		return nil, nil
+	}
+
+	var result []string
+	seen := make(map[string]bool)
+
+	addMirror := func(loc string, insecure bool) {
+		if loc == "" || seen[loc] {
+			return
+		}
+		seen[loc] = true
+		// Preserve insecure mirror semantics for downstream code that keys off http:// mirrors.
+		if insecure {
+			result = append(result, "http://"+loc)
+		} else {
+			result = append(result, "https://"+loc)
+		}
+	}
+
+	for _, reg := range regs {
+		prefix := reg.Prefix
+		if prefix == "" {
+			prefix = reg.Location
+		}
+
+		if prefix != "docker.io" {
+			continue
+		}
+
+		if reg.Location != "" && reg.Location != "docker.io" {
+			addMirror(reg.Location, reg.Insecure)
+		}
+
+		for _, mirror := range reg.Mirrors {
+			addMirror(mirror.Location, mirror.Insecure)
+		}
+	}
+
+	return result, nil
 }

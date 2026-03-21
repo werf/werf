@@ -137,7 +137,7 @@ func NewNativeBuildah(commonOpts CommonBuildahOpts, opts NativeModeOpts) (*Nativ
 		return nil, fmt.Errorf("unable to set env var CONTAINERS_CONF: %w", err)
 	}
 
-	registriesConfig, err := generateRegistriesConfig(commonOpts.RegistryMirrors, commonOpts.InsecureRegistries)
+	registriesConfig, err := generateRegistriesConfig(commonOpts.RegistryMirrors, commonOpts.InsecureRegistries, commonOpts.StandaloneInsecureRegistries)
 	if err != nil {
 		return nil, fmt.Errorf("unable to generate registries config: %w", err)
 	}
@@ -236,7 +236,7 @@ func (b *NativeBuildah) getSystemContext(targetPlatform string) (*imgtypes.Syste
 	return systemContext, nil
 }
 
-func generateRegistriesConfig(mirrors, insecureRegistries []string) (string, error) {
+func generateRegistriesConfig(mirrors, insecureRegistries, standaloneInsecureRegistries []string) (string, error) {
 	type mirrorEntry struct {
 		Location string
 		Insecure bool
@@ -251,23 +251,31 @@ func generateRegistriesConfig(mirrors, insecureRegistries []string) (string, err
 		}
 	}
 
-	mirrorHosts := make(map[string]bool, len(mirrors))
+	mirrorSeen := make(map[string]bool)
 	var mrs []mirrorEntry
 	for _, mirror := range mirrors {
 		isHTTP := strings.HasPrefix(mirror, "http://")
 		mirror = strings.TrimPrefix(mirror, "https://")
 		mirror = strings.TrimPrefix(mirror, "http://")
 		mirror = strings.TrimSuffix(mirror, "/")
-		mirrorHosts[mirror] = true
+		if mirror == "" || mirrorSeen[mirror] {
+			continue
+		}
+		mirrorSeen[mirror] = true
 		mrs = append(mrs, mirrorEntry{
 			Location: mirror,
 			Insecure: isHTTP || insecureHosts[mirror],
 		})
 	}
 
+	standaloneSeen := make(map[string]bool)
 	var standaloneInsecure []string
-	for host := range insecureHosts {
-		if !mirrorHosts[host] {
+	for _, host := range standaloneInsecureRegistries {
+		host = strings.TrimPrefix(host, "https://")
+		host = strings.TrimPrefix(host, "http://")
+		host = strings.TrimSuffix(host, "/")
+		if host != "" && !standaloneSeen[host] {
+			standaloneSeen[host] = true
 			standaloneInsecure = append(standaloneInsecure, host)
 		}
 	}

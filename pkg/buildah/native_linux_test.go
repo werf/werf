@@ -36,6 +36,7 @@ var _ = Describe("buildah", func() {
 			config, err := generateRegistriesConfig(
 				[]string{"http://mirror.example.com"},
 				[]string{},
+				[]string{},
 			)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(config).To(ContainSubstring(`prefix = "docker.io"`))
@@ -48,6 +49,7 @@ var _ = Describe("buildah", func() {
 			config, err := generateRegistriesConfig(
 				[]string{"https://secure-mirror.example.com"},
 				[]string{"secure-mirror.example.com"},
+				[]string{},
 			)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(config).To(ContainSubstring(`location = "secure-mirror.example.com"`))
@@ -57,6 +59,7 @@ var _ = Describe("buildah", func() {
 		It("should mark https mirrors not in insecureRegistries as secure", func() {
 			config, err := generateRegistriesConfig(
 				[]string{"https://secure-mirror.example.com"},
+				[]string{},
 				[]string{},
 			)
 			Expect(err).NotTo(HaveOccurred())
@@ -72,6 +75,7 @@ var _ = Describe("buildah", func() {
 					"https://secure.example.com",
 				},
 				[]string{"insecure-https.example.com"},
+				[]string{},
 			)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -86,6 +90,7 @@ var _ = Describe("buildah", func() {
 			config, err := generateRegistriesConfig(
 				[]string{},
 				[]string{"localhost:5000"},
+				[]string{"localhost:5000"},
 			)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(config).To(ContainSubstring(`location = "localhost:5000"`))
@@ -97,15 +102,29 @@ var _ = Describe("buildah", func() {
 			config, err := generateRegistriesConfig(
 				[]string{"http://mirror.local:5000"},
 				[]string{"mirror.local:5000"},
+				[]string{},
 			)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(strings.Count(config, `location = "mirror.local:5000"`)).To(Equal(1))
 			Expect(config).To(ContainSubstring(`[[registry.mirror]]`))
 		})
 
+		It("should keep explicit standalone insecure registry when mirror host matches it", func() {
+			config, err := generateRegistriesConfig(
+				[]string{"https://local-registry.test:32768"},
+				[]string{"local-registry.test:32768"},
+				[]string{"local-registry.test:32768"},
+			)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(strings.Count(config, `location = "local-registry.test:32768"`)).To(Equal(2))
+			Expect(config).To(ContainSubstring(`[[registry.mirror]]`))
+			Expect(config).To(ContainSubstring("[[registry]]\nlocation = \"local-registry.test:32768\"\ninsecure = true"))
+		})
+
 		It("should generate standalone entries for multiple insecure non-mirror registries", func() {
 			config, err := generateRegistriesConfig(
 				[]string{},
+				[]string{"registry-a.local:5000", "registry-b.local:5001"},
 				[]string{"registry-a.local:5000", "registry-b.local:5001"},
 			)
 			Expect(err).NotTo(HaveOccurred())
@@ -114,6 +133,17 @@ var _ = Describe("buildah", func() {
 			insecureCount := strings.Count(config, "insecure = true")
 			Expect(insecureCount).To(Equal(2))
 		})
+
+		It("should deduplicate identical mirrors from different sources", func() {
+			config, err := generateRegistriesConfig(
+				[]string{"https://local-registry.test:32768", "https://local-registry.test:32768", "http://dh-mirror.gitverse.ru"},
+				[]string{"local-registry.test:32768", "dh-mirror.gitverse.ru"},
+				[]string{"local-registry.test:32768"},
+			)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(strings.Count(config, `[[registry.mirror]]`)).To(Equal(2))
+			Expect(strings.Count(config, `location = "local-registry.test:32768"`)).To(Equal(2))
+		})
 	})
 
 	Describe("GetInsecureRegistriesFromConfig", func() {
@@ -121,6 +151,8 @@ var _ = Describe("buildah", func() {
 		var oldHome string
 
 		BeforeEach(func() {
+			resetRegistriesConfCache()
+
 			var err error
 			tmpDir, err = os.MkdirTemp("", "registries-test")
 			Expect(err).NotTo(HaveOccurred())
@@ -162,7 +194,7 @@ insecure = true
 			Expect(result).To(ContainElement("localhost:5000"))
 		})
 
-		It("should parse insecure mirror within registry", func() {
+		It("should not treat insecure mirror as standalone insecure registry", func() {
 			configPath := tmpDir + "/.config/containers/registries.conf"
 			content := `
 [[registry]]
@@ -176,7 +208,22 @@ insecure = true
 
 			result, err := GetInsecureRegistriesFromConfig()
 			Expect(err).NotTo(HaveOccurred())
-			Expect(result).To(ContainElement("mirror.example.com"))
+			Expect(result).To(BeEmpty())
+		})
+
+		It("should not treat insecure relocation-style docker.io mirror as standalone insecure registry", func() {
+			configPath := tmpDir + "/.config/containers/registries.conf"
+			content := `
+[[registry]]
+prefix = "docker.io"
+location = "dh-mirror.gitverse.ru"
+insecure = true
+`
+			Expect(os.WriteFile(configPath, []byte(content), 0o644)).To(Succeed())
+
+			result, err := GetInsecureRegistriesFromConfig()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(result).To(BeEmpty())
 		})
 	})
 
@@ -185,6 +232,8 @@ insecure = true
 		var oldHome string
 
 		BeforeEach(func() {
+			resetRegistriesConfCache()
+
 			var err error
 			tmpDir, err = os.MkdirTemp("", "registries-mirrors-test")
 			Expect(err).NotTo(HaveOccurred())
@@ -349,6 +398,8 @@ insecure = true
 		var oldHome string
 
 		BeforeEach(func() {
+			resetRegistriesConfCache()
+
 			var err error
 			tmpDir, err = os.MkdirTemp("", "registries-realworld-test")
 			Expect(err).NotTo(HaveOccurred())
@@ -389,6 +440,245 @@ insecure = true
 			insecureRegs, err := GetInsecureRegistriesFromConfig()
 			Expect(err).NotTo(HaveOccurred())
 			Expect(insecureRegs).To(ContainElement("local-registry.test:32768"))
+		})
+	})
+
+	Describe("registries.conf path precedence", func() {
+		var tmpDir string
+		var oldHome string
+		var oldContainersRegistriesConf string
+
+		BeforeEach(func() {
+			resetRegistriesConfCache()
+
+			var err error
+			tmpDir, err = os.MkdirTemp("", "registries-paths-test")
+			Expect(err).NotTo(HaveOccurred())
+
+			oldHome = os.Getenv("HOME")
+			oldContainersRegistriesConf = os.Getenv("CONTAINERS_REGISTRIES_CONF")
+
+			os.Setenv("HOME", tmpDir)
+			os.Unsetenv("CONTAINERS_REGISTRIES_CONF")
+
+			DeferCleanup(func() {
+				os.Setenv("HOME", oldHome)
+				os.Setenv("CONTAINERS_REGISTRIES_CONF", oldContainersRegistriesConf)
+				os.RemoveAll(tmpDir)
+			})
+
+			Expect(os.MkdirAll(tmpDir+"/.config/containers", 0o755)).To(Succeed())
+		})
+
+		It("should read HOME config by default", func() {
+			configPath := tmpDir + "/.config/containers/registries.conf"
+			content := `
+[[registry]]
+location = "docker.io"
+
+[[registry.mirror]]
+location = "home-mirror.example.com"
+`
+			Expect(os.WriteFile(configPath, []byte(content), 0o644)).To(Succeed())
+
+			result, err := GetRegistryMirrorsFromConfig()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(result).To(ContainElement("https://home-mirror.example.com"))
+		})
+
+		It("should prefer CONTAINERS_REGISTRIES_CONF over HOME config", func() {
+			homeConfigPath := tmpDir + "/.config/containers/registries.conf"
+			envConfigPath := tmpDir + "/custom-registries.conf"
+			Expect(os.WriteFile(homeConfigPath, []byte(`
+[[registry]]
+location = "docker.io"
+
+[[registry.mirror]]
+location = "home-mirror.example.com"
+`), 0o644)).To(Succeed())
+			Expect(os.WriteFile(envConfigPath, []byte(`
+[[registry]]
+location = "docker.io"
+
+[[registry.mirror]]
+location = "env-mirror.example.com"
+`), 0o644)).To(Succeed())
+			os.Setenv("CONTAINERS_REGISTRIES_CONF", envConfigPath)
+
+			result, err := GetRegistryMirrorsFromConfig()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(result).To(ContainElement("https://env-mirror.example.com"))
+			Expect(result).NotTo(ContainElement("https://home-mirror.example.com"))
+		})
+
+		It("should use only CONTAINERS_REGISTRIES_CONF and its neighboring drop-in dir", func() {
+			homeConfigPath := tmpDir + "/.config/containers/registries.conf"
+			envConfigPath := tmpDir + "/custom-registries.conf"
+			homeDropInDir := tmpDir + "/.config/containers/registries.conf.d"
+			envDropInDir := envConfigPath + ".d"
+
+			Expect(os.WriteFile(homeConfigPath, []byte(`# base home config is ignored when env config is set
+`), 0o644)).To(Succeed())
+			Expect(os.WriteFile(envConfigPath, []byte(`
+[[registry]]
+location = "docker.io"
+
+[[registry.mirror]]
+location = "env-mirror.example.com"
+`), 0o644)).To(Succeed())
+			Expect(os.MkdirAll(homeDropInDir, 0o755)).To(Succeed())
+			Expect(os.WriteFile(homeDropInDir+"/10-insecure.conf", []byte(`
+[[registry]]
+location = "home-dropin-registry.example.com"
+insecure = true
+`), 0o644)).To(Succeed())
+			Expect(os.MkdirAll(envDropInDir, 0o755)).To(Succeed())
+			Expect(os.WriteFile(envDropInDir+"/10-insecure.conf", []byte(`
+[[registry]]
+location = "env-dropin-registry.example.com"
+insecure = true
+`), 0o644)).To(Succeed())
+			os.Setenv("CONTAINERS_REGISTRIES_CONF", envConfigPath)
+
+			mirrors, err := GetRegistryMirrorsFromConfig()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(mirrors).To(ContainElement("https://env-mirror.example.com"))
+
+			insecureRegs, err := GetInsecureRegistriesFromConfig()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(insecureRegs).To(ContainElement("env-dropin-registry.example.com"))
+			Expect(insecureRegs).NotTo(ContainElement("home-dropin-registry.example.com"))
+		})
+
+		It("should read mirrors from registries.conf.d drop-ins", func() {
+			configPath := tmpDir + "/.config/containers/registries.conf"
+			dropInDir := configPath + ".d"
+			Expect(os.WriteFile(configPath, []byte(`
+[[registry]]
+location = "docker.io"
+`), 0o644)).To(Succeed())
+			Expect(os.MkdirAll(dropInDir, 0o755)).To(Succeed())
+			Expect(os.WriteFile(dropInDir+"/10-mirror.conf", []byte(`
+[[registry]]
+location = "docker.io"
+
+[[registry.mirror]]
+location = "dropin-mirror.example.com"
+insecure = true
+`), 0o644)).To(Succeed())
+
+			result, err := GetRegistryMirrorsFromConfig()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(result).To(ContainElement("http://dropin-mirror.example.com"))
+		})
+
+		It("should read standalone insecure registries from registries.conf.d drop-ins", func() {
+			configPath := tmpDir + "/.config/containers/registries.conf"
+			dropInDir := configPath + ".d"
+			Expect(os.WriteFile(configPath, []byte("# base\n"), 0o644)).To(Succeed())
+			Expect(os.MkdirAll(dropInDir, 0o755)).To(Succeed())
+			Expect(os.WriteFile(dropInDir+"/20-insecure.conf", []byte(`
+[[registry]]
+location = "dropin-registry.example.com"
+insecure = true
+`), 0o644)).To(Succeed())
+
+			result, err := GetInsecureRegistriesFromConfig()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(result).To(ContainElement("dropin-registry.example.com"))
+		})
+
+		It("should merge multiple registries.conf.d drop-ins in lexicographic order", func() {
+			configPath := tmpDir + "/.config/containers/registries.conf"
+			dropInDir := configPath + ".d"
+			Expect(os.WriteFile(configPath, []byte(`
+[[registry]]
+location = "docker.io"
+`), 0o644)).To(Succeed())
+			Expect(os.MkdirAll(dropInDir, 0o755)).To(Succeed())
+			Expect(os.WriteFile(dropInDir+"/10-first.conf", []byte(`
+[[registry]]
+location = "docker.io"
+
+[[registry.mirror]]
+location = "first-mirror.example.com"
+`), 0o644)).To(Succeed())
+			Expect(os.WriteFile(dropInDir+"/20-second.conf", []byte(`
+[[registry]]
+location = "docker.io"
+
+[[registry.mirror]]
+location = "second-mirror.example.com"
+`), 0o644)).To(Succeed())
+
+			result, err := GetRegistryMirrorsFromConfig()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(result).To(Equal([]string{"https://first-mirror.example.com", "https://second-mirror.example.com"}))
+		})
+
+		It("should deduplicate mirrors between base config and drop-ins", func() {
+			configPath := tmpDir + "/.config/containers/registries.conf"
+			dropInDir := configPath + ".d"
+			Expect(os.WriteFile(configPath, []byte(`
+[[registry]]
+location = "docker.io"
+
+[[registry.mirror]]
+location = "same-mirror.example.com"
+`), 0o644)).To(Succeed())
+			Expect(os.MkdirAll(dropInDir, 0o755)).To(Succeed())
+			Expect(os.WriteFile(dropInDir+"/10-duplicate.conf", []byte(`
+[[registry]]
+location = "docker.io"
+
+[[registry.mirror]]
+location = "same-mirror.example.com"
+insecure = true
+`), 0o644)).To(Succeed())
+
+			result, err := GetRegistryMirrorsFromConfig()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(result).To(Equal([]string{"https://same-mirror.example.com"}))
+		})
+
+		It("should deduplicate insecure registries between base config and drop-ins", func() {
+			configPath := tmpDir + "/.config/containers/registries.conf"
+			dropInDir := configPath + ".d"
+			Expect(os.WriteFile(configPath, []byte(`
+[[registry]]
+location = "same-registry.example.com"
+insecure = true
+`), 0o644)).To(Succeed())
+			Expect(os.MkdirAll(dropInDir, 0o755)).To(Succeed())
+			Expect(os.WriteFile(dropInDir+"/10-duplicate.conf", []byte(`
+[[registry]]
+location = "same-registry.example.com"
+insecure = true
+`), 0o644)).To(Succeed())
+
+			result, err := GetInsecureRegistriesFromConfig()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(result).To(Equal([]string{"same-registry.example.com"}))
+		})
+
+		It("should fallback to registries.conf.d on invalid base registries.conf", func() {
+			configPath := tmpDir + "/.config/containers/registries.conf"
+			dropInDir := configPath + ".d"
+			Expect(os.WriteFile(configPath, []byte(`
+invalid config
+`), 0o644)).To(Succeed())
+			Expect(os.MkdirAll(dropInDir, 0o755)).To(Succeed())
+			Expect(os.WriteFile(dropInDir+"/10-valid.conf", []byte(`
+[[registry]]
+location = "docker.io"
+
+[[registry.mirror]]
+location = "dropin-mirror.example.com"
+`), 0o644)).To(Succeed())
+
+			result, err := GetRegistryMirrorsFromConfig()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(result).To(ContainElement("https://dropin-mirror.example.com"))
 		})
 	})
 })

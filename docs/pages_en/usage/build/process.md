@@ -419,6 +419,27 @@ export WERF_CONTAINER_REGISTRY_MIRROR_GCR=mirror.gcr.io
 export WERF_CONTAINER_REGISTRY_MIRROR_LOCAL=docker.mirror.local
 ```
 
+Mirrors configured this way are treated as secure (`https`) mirrors by default. If needed, you can enable werf global insecure mode for registry access with `--insecure-registry` or `--skip-tls-verify-registry`.
+
+werf also reads container registry mirrors and standalone insecure registries from `registries.conf`.
+
+The following paths are supported in priority order:
+
+1. the path from `CONTAINERS_REGISTRIES_CONF`;
+2. `~/.config/containers/registries.conf`;
+3. `/etc/containers/registries.conf`.
+
+If `CONTAINERS_REGISTRIES_CONF` is set, werf uses only that file and its neighboring `<path>.d` directory.
+
+If `CONTAINERS_REGISTRIES_CONF` is not set, werf uses the first existing file from the standard paths and the neighboring `<path>.d` directory for that file.
+
+werf uses the following data from this configuration:
+
+- mirrors for `docker.io`;
+- standalone insecure registries from `[[registry]] insecure = true`.
+
+Insecure mirrors should be configured through `registries.conf`. An insecure mirror for `docker.io` does not automatically make the same host a standalone insecure registry. If the same host must be used both as a `docker.io` mirror and as a standalone insecure registry, it must be described by two separate entries.
+
 ## Using container registry
 
 In werf, the container registry is used not only to store the final images, but also to store the build cache and service data required for werf (e.g., metadata for cleaning the container registry based on Git history). The container registry is set by the `--repo` parameter:
