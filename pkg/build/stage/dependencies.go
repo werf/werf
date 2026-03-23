@@ -60,9 +60,11 @@ func getDependencies(imageBaseConfig *config.StapelImageBase, options *getImport
 }
 
 func newDependenciesStage(imports []*config.Import, dependencies []*config.Dependency, name StageName, baseStageOptions *BaseStageOptions) *DependenciesStage {
-	s := &DependenciesStage{}
-	s.imports = imports
-	s.dependencies = dependencies
+	s := &DependenciesStage{
+		imports:                imports,
+		dependencies:           dependencies,
+		resolvedImportMetadata: make(map[string]*storage.ImportMetadata),
+	}
 	s.BaseStage = NewBaseStage(name, baseStageOptions)
 	return s
 }
@@ -346,9 +348,6 @@ func (s *DependenciesStage) getImportSourceChecksum(ctx context.Context, c Conve
 		}
 	}
 
-	if s.resolvedImportMetadata == nil {
-		s.resolvedImportMetadata = make(map[string]*storage.ImportMetadata)
-	}
 	s.resolvedImportMetadata[importSourceID] = importMetadata
 
 	return importMetadata.Checksum, nil
