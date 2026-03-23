@@ -44,6 +44,6 @@ groups:
       - name: ea
         version: 2.63.0
       - name: stable
-        version: 2.57.1
+        version: 2.63.0
       - name: rock-solid
         version: 2.57.1
