@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.63.1](https://github.com/werf/werf/compare/v2.63.0...v2.63.1) (2026-03-23)
+
+### Bug Fixes
+
+* **deploy:** adopt managed fields after migration from helm to nelm ([#7406](https://github.com/werf/werf/issues/7406)) ([eab87e5](https://github.com/werf/werf/commit/eab87e518f81ea86384f081bb509bae3b00a3104))
+* **deploy:** pass option for yaml validator to allow duplicate map key ([#7408](https://github.com/werf/werf/issues/7408)) ([c9ea743](https://github.com/werf/werf/commit/c9ea743659a900b65c12ebcacc30ddf1b6147a99))
+
 ## [2.63.0](https://github.com/werf/werf/compare/v2.62.2...v2.63.0) (2026-03-16)
 
 
