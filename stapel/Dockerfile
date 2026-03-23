@@ -264,7 +264,24 @@ ENV CC_FOR_TARGET=$LFS_TGT-gcc
 ENV PKG_CONFIG_PATH="/.werf/stapel/lib/pkgconfig:/.werf/stapel/embedded/lib/pkgconfig"
 
 RUN source /etc/profile.d/rvm.sh && \
+  if [ "$TARGETARCH" = "arm64" ]; then \
+  export ac_cv_build=aarch64-unknown-linux-gnu ac_cv_host=aarch64-unknown-linux-gnu ac_cv_target=aarch64-unknown-linux-gnu; \
+  fi && \
   env CC=/usr/bin/gcc CXX=/usr/bin/g++ bundle exec omnibus build -o append_timestamp:false werf-stapel
+
+ENV PATH=/sbin:/usr/sbin:/usr/local/sbin:/bin:/usr/bin:/usr/local/bin
+ENV CC=/usr/bin/gcc
+ENV CXX=/usr/bin/g++
+ENV AR=/usr/bin/ar
+ENV RANLIB=/usr/bin/ranlib
+ENV PKG_CONFIG_PATH=$TOOLS/lib/pkgconfig
+
+RUN if [ "$TARGETARCH" = "arm64" ]; then \
+  echo "export LIBC_SEARCH_PATHS='-L/lib/aarch64-linux-gnu -L/usr/lib/aarch64-linux-gnu'" > /etc/profile.d/libc_paths.sh; \
+  else \
+  echo "export LIBC_SEARCH_PATHS='-L/lib/x86_64-linux-gnu -L/usr/lib/x86_64-linux-gnu'" > /etc/profile.d/libc_paths.sh; \
+  fi && \
+  chmod +x /etc/profile.d/libc_paths.sh
 
 ADD stapel/wget-list-after-omnibus $LFS/sources/wget-list-after-omnibus
 ADD stapel/wget-list-after-omnibus.md5sums $LFS/sources/wget-list-after-omnibus.md5sums
@@ -286,8 +303,8 @@ RUN echo "libgcrypt" && cd $LFS/sources && \
   mkdir libgcrypt && \
   tar xf libgcrypt*.tar.* -C libgcrypt --strip-components 1
 WORKDIR $LFS/sources/libgcrypt
-RUN ./configure --prefix=$TOOLS
-RUN make
+RUN ./configure --prefix=$TOOLS --with-gpg-error-prefix=$TOOLS
+RUN . /etc/profile.d/libc_paths.sh && make LDFLAGS="$LIBC_SEARCH_PATHS -Wl,-rpath,$TOOLS/lib"
 RUN make install
 
 # libassuan
@@ -295,8 +312,8 @@ RUN echo "libassuan" && cd $LFS/sources && \
   mkdir libassuan && \
   tar xf libassuan*.tar.* -C libassuan --strip-components 1
 WORKDIR $LFS/sources/libassuan
-RUN ./configure --prefix=$TOOLS
-RUN make
+RUN ./configure --prefix=$TOOLS --with-libgpg-error-prefix=$TOOLS
+RUN . /etc/profile.d/libc_paths.sh && make LDFLAGS="$LIBC_SEARCH_PATHS -Wl,-rpath,$TOOLS/lib"
 RUN make install
 
 # libksba
@@ -304,8 +321,8 @@ RUN echo "libksba" && cd $LFS/sources && \
   mkdir libksba && \
   tar xf libksba*.tar.* -C libksba --strip-components 1
 WORKDIR $LFS/sources/libksba
-RUN ./configure --prefix=$TOOLS
-RUN make
+RUN ./configure --prefix=$TOOLS --with-libgpg-error-prefix=$TOOLS
+RUN . /etc/profile.d/libc_paths.sh && make LDFLAGS="$LIBC_SEARCH_PATHS -Wl,-rpath,$TOOLS/lib"
 RUN make install
 
 # npth
@@ -331,7 +348,7 @@ RUN echo "nettle" && cd $LFS/sources && \
   mkdir nettle && \
   tar xf nettle*.tar.* -C nettle --strip-components 1
 WORKDIR $LFS/sources/nettle
-RUN ./configure --prefix=$TOOLS --disable-static
+RUN ./configure --prefix=$TOOLS --disable-static --disable-documentation
 RUN make
 RUN make install && chmod -v 755 $TOOLS/lib/libnettle.so
 
@@ -347,8 +364,12 @@ RUN echo "gnutls" && cd $LFS/sources && \
   mkdir gnutls && \
   tar xf gnutls*.tar.* -C gnutls --strip-components 1
 WORKDIR $LFS/sources/gnutls
-RUN ./configure --prefix=$TOOLS --disable-guile --without-p11-kit --with-included-libtasn1 --with-included-unistring
-RUN make
+RUN . /etc/profile.d/libc_paths.sh && \
+  CFLAGS="-I$TOOLS/include" \
+  LDFLAGS="$LIBC_SEARCH_PATHS -L$TOOLS/lib -Wl,-rpath,$TOOLS/lib" \
+  PKG_CONFIG_PATH="$TOOLS/lib/pkgconfig" \
+  ./configure --prefix=$TOOLS --disable-guile --disable-cxx --without-p11-kit --with-included-libtasn1 --with-included-unistring
+RUN . /etc/profile.d/libc_paths.sh && make LDFLAGS="$LIBC_SEARCH_PATHS -L$TOOLS/lib -Wl,-rpath,$TOOLS/lib"
 RUN make install
 
 # gnupg
@@ -356,8 +377,12 @@ RUN echo "gnupg" && cd $LFS/sources && \
   mkdir gnupg && \
   tar xf gnupg*.tar.* -C gnupg --strip-components 1
 WORKDIR $LFS/sources/gnupg
-RUN ./configure --prefix=$TOOLS --enable-symcryptrun --localstatedir=/.werf/stapel/var --sysconfdir=/etc --disable-sqlite
-RUN make
+RUN perl -0pi -e 's@static const char \*\nget_signal_name\( int signum \)\n\{\n.*?\n\}\n#endif /\*!HAVE_DOSISH_SYSTEM\*/@static const char *\nget_signal_name( int signum )\n{\n  (void)signum;\n  return NULL;\n}\n#endif /*!HAVE_DOSISH_SYSTEM*/@s' common/signal.c
+RUN PKG_CONFIG_PATH="$TOOLS/lib/pkgconfig" \
+  ./configure --prefix=$TOOLS --enable-symcryptrun --localstatedir=/.werf/stapel/var --sysconfdir=/etc --disable-sqlite --disable-dirmngr \
+  --with-libgpg-error-prefix=$TOOLS --with-libgcrypt-prefix=$TOOLS --with-libassuan-prefix=$TOOLS \
+  --with-ksba-prefix=$TOOLS --with-npth-prefix=$TOOLS
+RUN . /etc/profile.d/libc_paths.sh && make LDFLAGS="$LIBC_SEARCH_PATHS -L$TOOLS/lib -Wl,-rpath,$TOOLS/lib"
 RUN make install
 
 # util-linux
@@ -365,21 +390,35 @@ RUN echo "util-linux" && cd $LFS/sources && \
   mkdir util-linux && \
   tar xf util-linux-*.tar.* -C util-linux --strip-components 1
 WORKDIR $LFS/sources/util-linux
-RUN ./configure --prefix=$TOOLS --without-python --disable-makeinstall-chown --without-systemdsystemunitdir PKG_CONFIG=""
-RUN make
+RUN ./configure --prefix=$TOOLS --without-python --disable-all-programs --disable-makeinstall-chown --without-systemdsystemunitdir PKG_CONFIG=""
+RUN . /etc/profile.d/libc_paths.sh && make LDFLAGS="$LIBC_SEARCH_PATHS -Wl,-rpath,$TOOLS/lib"
 RUN make install
 
 # glib
 RUN PATH=/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin:/usr/local/sbin apt update
-RUN PATH=/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin:/usr/local/sbin apt install -y python3-pip xsltproc
-RUN PATH=/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin:/usr/local/sbin pip3 install meson ninja
+RUN PATH=/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin:/usr/local/sbin apt install -y python3-pip xsltproc ninja-build libpcre3-dev
+RUN PATH=/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin:/usr/local/sbin pip3 install meson
 RUN echo "glib" && cd $LFS/sources && \
   mkdir glib && \
   tar xf glib-*.tar* -C glib --strip-components 1
 WORKDIR $LFS/sources/glib
-RUN LDFLAGS="-static-libgcc -Wl,-rpath-link,$TOOLS/lib,-rpath-link,$TOOLS/$LFS_TGT/lib,-rpath-link,$TOOLS/embedded/lib,--library-path,$TOOLS/lib,--library-path,$TOOLS/$LFS_TGT/lib,--library-path,$TOOLS/embedded/lib" meson _build -Diconv=external -Dman=false --prefix=$TOOLS -Dselinux=disabled
-RUN ninja -C _build
+RUN mkdir -p /tmp/glib-linker-stash && \
+  shopt -s nullglob && \
+  for p in $TOOLS/lib/libresolv.so* $TOOLS/lib/libdl.so*; do mv "$p" /tmp/glib-linker-stash/; done && \
+  rm -rf _build && \
+  PKG_CONFIG_PATH="$TOOLS/lib/pkgconfig" \
+  CC="/usr/bin/gcc" \
+  CXX="/usr/bin/g++" \
+  AR="/usr/bin/ar" \
+  RANLIB="/usr/bin/ranlib" \
+  CFLAGS="-pthread" \
+  LDFLAGS="-pthread" \
+  meson _build -Diconv=auto -Dman=false -Dtests=false -Dinstalled_tests=false -Dforce_posix_threads=true --prefix=$TOOLS -Dselinux=disabled
+RUN ninja -C _build -v
 RUN ninja -C _build install
+RUN shopt -s nullglob && \
+  for p in /tmp/glib-linker-stash/*; do mv "$p" $TOOLS/lib/; done && \
+  rmdir /tmp/glib-linker-stash
 
 # libxml2
 RUN echo "libxml2" && cd $LFS/sources && \
@@ -387,7 +426,7 @@ RUN echo "libxml2" && cd $LFS/sources && \
   tar xf libxml2-*.tar.* -C libxml2 --strip-components 1
 WORKDIR $LFS/sources/libxml2
 RUN ./configure --prefix=$TOOLS --disable-static --with-history --without-python --with-iconv=no
-RUN make
+RUN . /etc/profile.d/libc_paths.sh && make LDFLAGS="$LIBC_SEARCH_PATHS -Wl,-rpath,$TOOLS/lib"
 RUN make install
 
 # Restore PATH *not to* use stapel build tools anymore
@@ -488,7 +527,7 @@ RUN mkdir /tmp/bin && \
   cp $TOOLS/bin/libassuan* /tmp/bin && \
   cp $TOOLS/bin/libgcrypt* /tmp/bin && \
   cp $TOOLS/bin/npth* /tmp/bin && \
-  cp $TOOLS/bin/dirmngr* /tmp/bin && \
+  cp $TOOLS/bin/dirmngr* /tmp/bin 2>/dev/null || true && \
   rm -rf $TOOLS/bin && \
   mv /tmp/bin $TOOLS/bin
 

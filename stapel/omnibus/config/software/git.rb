@@ -34,6 +34,8 @@ source url: "https://www.kernel.org/pub/software/scm/git/git-#{version}.tar.gz"
 
 build do
   env = with_standard_compiler_flags(with_embedded_path)
+  env["CC"] = "/usr/bin/gcc"
+  env["LD"] = "/usr/bin/gcc"
   env["LDFLAGS"] += " -Wl,-rpath-link,/.werf/stapel/embedded/lib"
 
   env["EXTLIBS"] ||= ""

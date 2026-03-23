@@ -12,6 +12,6 @@ relative_path "unzip60"
 
 build do
   env = with_standard_compiler_flags(with_embedded_path)
-  make "-f unix/Makefile -j #{workers} generic", env: env
-  make "-f unix/Makefile prefix=#{install_dir}/embedded install", env: env
+  make "-f unix/Makefile -j #{workers} generic CC=/usr/bin/gcc", env: env
+  make "-f unix/Makefile prefix=#{install_dir}/embedded install CC=/usr/bin/gcc", env: env
 end
