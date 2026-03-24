@@ -1,5 +1,21 @@
 # Changelog
 
+## [2.64.0](https://github.com/werf/werf/compare/v2.63.0...v2.64.0) (2026-03-24)
+
+
+### Features
+
+* **build:** respect insecure registries and mirrors from backend-native config ([#7376](https://github.com/werf/werf/issues/7376)) ([fd5a826](https://github.com/werf/werf/commit/fd5a826680ecc2a5c0199462c856df4bec1f7ebd))
+
+
+### Bug Fixes
+
+* **build:** fix stage build time in report ([#7404](https://github.com/werf/werf/issues/7404)) ([74ae247](https://github.com/werf/werf/commit/74ae2474c0610232c9bdacc377bf5b5d76d43f5f))
+* **build:** handle broken import metadata images in container registry ([#7394](https://github.com/werf/werf/issues/7394)) ([0413384](https://github.com/werf/werf/commit/04133847bed3b8842ab1b45609a4f81d468c6af2))
+* **cleanup:** ensure tag is deleted before manifest removal ([#7401](https://github.com/werf/werf/issues/7401)) ([303506e](https://github.com/werf/werf/commit/303506ede573f252d87c2d7b0f14a1b149ffdd59))
+* **deploy:** adopt managed fields after migration from helm to nelm ([#7406](https://github.com/werf/werf/issues/7406)) ([eab87e5](https://github.com/werf/werf/commit/eab87e518f81ea86384f081bb509bae3b00a3104))
+* **deploy:** pass option for yaml validator to allow duplicate map key ([#7408](https://github.com/werf/werf/issues/7408)) ([c9ea743](https://github.com/werf/werf/commit/c9ea743659a900b65c12ebcacc30ddf1b6147a99))
+
 ## [2.63.0](https://github.com/werf/werf/compare/v2.62.2...v2.63.0) (2026-03-16)
 
 
