@@ -24,4 +24,3 @@ func IsErrStageNotFound(err error) bool {
 func IsErrStageUnavailable(err error) bool {
 	return errors.Is(err, ErrStageNotFound) || errors.Is(err, ErrBrokenImage) || errors.Is(err, ErrStageRejected)
 }
-
