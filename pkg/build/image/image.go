@@ -107,6 +107,7 @@ type Image struct {
 	BuildDuration           time.Duration
 
 	stages            []stage.Interface
+	stageDurations    map[stage.StageName]time.Duration
 	lastNonEmptyStage stage.Interface
 	contentDigest     string
 	rebuilt           bool
@@ -170,6 +171,23 @@ func (i *Image) SetStages(stages []stage.Interface) {
 
 func (i *Image) GetStages() []stage.Interface {
 	return i.stages
+}
+
+func (i *Image) AddStageDuration(stageName stage.StageName, d time.Duration) {
+	if d <= 0 {
+		return
+	}
+	if i.stageDurations == nil {
+		i.stageDurations = make(map[stage.StageName]time.Duration)
+	}
+	i.stageDurations[stageName] += d
+}
+
+func (i *Image) GetStageDuration(stageName stage.StageName) time.Duration {
+	if i.stageDurations == nil {
+		return 0
+	}
+	return i.stageDurations[stageName]
 }
 
 func (i *Image) SetLastNonEmptyStage(stg stage.Interface) {
