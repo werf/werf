@@ -263,7 +263,7 @@ func (storage *LocalStagesStorage) GetImportMetadata(ctx context.Context, projec
 		return nil, fmt.Errorf("unable to get image %s info: %w", fullImageName, err)
 	}
 	if info == nil {
-		return nil, nil
+		return nil, ErrImportMetadataNotFound
 	}
 	return newImportMetadataFromLabels(info.Labels), nil
 }

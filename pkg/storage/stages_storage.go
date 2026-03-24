@@ -18,9 +18,10 @@ const (
 )
 
 var (
-	ErrBrokenImage   = errors.New("broken image")
-	ErrStageNotFound = errors.New("stage not found")
-	ErrStageRejected = errors.New("stage rejected")
+	ErrBrokenImage            = errors.New("broken image")
+	ErrStageNotFound          = errors.New("stage not found")
+	ErrStageRejected          = errors.New("stage rejected")
+	ErrImportMetadataNotFound = errors.New("import metadata not found")
 )
 
 func IsErrBrokenImage(err error) bool {
@@ -33,6 +34,10 @@ func IsErrStageNotFound(err error) bool {
 
 func IsErrStageUnavailable(err error) bool {
 	return errors.Is(err, ErrStageNotFound) || errors.Is(err, ErrBrokenImage) || errors.Is(err, ErrStageRejected)
+}
+
+func IsErrImportMetadataNotFound(err error) bool {
+	return errors.Is(err, ErrImportMetadataNotFound)
 }
 
 type FilterStagesAndProcessRelatedDataOptions struct {
