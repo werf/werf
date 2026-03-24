@@ -13,10 +13,11 @@ import (
 	"github.com/werf/werf/v2/pkg/storage"
 )
 
-func CreateDockerRegistry(ctx context.Context, addr string, insecureRegistry, skipTlsVerifyRegistry bool) (docker_registry.Interface, error) {
+func CreateDockerRegistry(ctx context.Context, addr string, insecureRegistry, skipTlsVerifyRegistry bool, insecureRegistryHosts []string) (docker_registry.Interface, error) {
 	regOpts := docker_registry.DockerRegistryOptions{
 		InsecureRegistry:      insecureRegistry,
 		SkipTlsVerifyRegistry: skipTlsVerifyRegistry,
+		InsecureRegistryHosts: insecureRegistryHosts,
 	}
 
 	dockerRegistry, err := docker_registry.NewDockerRegistry(ctx, addr, "", regOpts)
@@ -27,7 +28,7 @@ func CreateDockerRegistry(ctx context.Context, addr string, insecureRegistry, sk
 	return dockerRegistry, nil
 }
 
-func (repoData *RepoData) CreateDockerRegistry(ctx context.Context, insecureRegistry, skipTlsVerifyRegistry bool) (docker_registry.Interface, error) {
+func (repoData *RepoData) CreateDockerRegistry(ctx context.Context, insecureRegistry, skipTlsVerifyRegistry bool, insecureRegistryHosts []string) (docker_registry.Interface, error) {
 	addr, err := repoData.GetAddress()
 	if err != nil {
 		return nil, err
@@ -38,7 +39,7 @@ func (repoData *RepoData) CreateDockerRegistry(ctx context.Context, insecureRegi
 		return nil, err
 	}
 
-	regOpts := repoData.GetDockerRegistryOptions(insecureRegistry, skipTlsVerifyRegistry)
+	regOpts := repoData.GetDockerRegistryOptions(insecureRegistry, skipTlsVerifyRegistry, insecureRegistryHosts)
 	dockerRegistry, err := docker_registry.NewDockerRegistry(ctx, addr, cr, regOpts)
 	if err != nil {
 		return nil, fmt.Errorf("error creating container registry accessor for repo %q: %w", addr, err)
@@ -51,6 +52,7 @@ type CreateStagesStorageOptions struct {
 	ContainerBackend               container_backend.ContainerBackend
 	InsecureRegistry               bool
 	SkipTlsVerifyRegistry          bool
+	InsecureRegistryHosts          []string
 	CleanupDisabled                bool
 	GitHistoryBasedCleanupDisabled bool
 	SkipMetaCheck                  bool
@@ -65,7 +67,7 @@ func (repoData *RepoData) CreateStagesStorage(ctx context.Context, opts *CreateS
 	if addr == storage.LocalStorageAddress {
 		return storage.NewLocalStagesStorage(opts.ContainerBackend), nil
 	} else {
-		dockerRegistry, err := repoData.CreateDockerRegistry(ctx, opts.InsecureRegistry, opts.SkipTlsVerifyRegistry)
+		dockerRegistry, err := repoData.CreateDockerRegistry(ctx, opts.InsecureRegistry, opts.SkipTlsVerifyRegistry, opts.InsecureRegistryHosts)
 		if err != nil {
 			return nil, err
 		}
@@ -129,10 +131,11 @@ func (d *RepoData) GetContainerRegistry(ctx context.Context) string {
 	return ""
 }
 
-func (d *RepoData) GetDockerRegistryOptions(insecureRegistry, skipTlsVerifyRegistry bool) docker_registry.DockerRegistryOptions {
+func (d *RepoData) GetDockerRegistryOptions(insecureRegistry, skipTlsVerifyRegistry bool, insecureRegistryHosts []string) docker_registry.DockerRegistryOptions {
 	opts := docker_registry.DockerRegistryOptions{
 		InsecureRegistry:      insecureRegistry,
 		SkipTlsVerifyRegistry: skipTlsVerifyRegistry,
+		InsecureRegistryHosts: insecureRegistryHosts,
 	}
 
 	if !d.OnlyAddress {

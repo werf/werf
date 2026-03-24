@@ -21,6 +21,7 @@ import (
 type ComponentsManager struct {
 	registryMirrors  *[]string
 	containerBackend container_backend.ContainerBackend
+	buildahMode      buildah.Mode
 }
 
 type InitCommonComponentsOptions struct {
@@ -71,23 +72,26 @@ func InitCommonComponents(ctx context.Context, opts InitCommonComponentsOptions)
 		}
 	}
 
-	// Initialize Docker early to read registry mirrors from daemon.json before GetContainerRegistryMirror call
-	if opts.InitProcessContainerBackend {
+	var resolvedBuildahMode buildah.Mode
+	if opts.InitProcessContainerBackend || opts.InitDockerRegistry {
 		buildahMode, _, err := GetBuildahMode()
 		if err != nil {
 			return nil, ctx, fmt.Errorf("unable to determine buildah mode: %w", err)
 		}
-		if *buildahMode == buildah.ModeDisabled {
-			newCtx, err := InitProcessDocker(ctx, opts.Cmd)
-			if err != nil {
-				return nil, ctx, fmt.Errorf("unable to init docker: %w", err)
-			}
-			ctx = newCtx
+		resolvedBuildahMode = *buildahMode
+		cmanager.buildahMode = resolvedBuildahMode
+	}
+
+	if opts.InitProcessContainerBackend && resolvedBuildahMode == buildah.ModeDisabled {
+		newCtx, err := InitProcessDocker(ctx, opts.Cmd)
+		if err != nil {
+			return nil, ctx, fmt.Errorf("unable to init docker: %w", err)
 		}
+		ctx = newCtx
 	}
 
 	if opts.InitDockerRegistry || opts.InitProcessContainerBackend {
-		rm, err := GetContainerRegistryMirror(ctx, opts.Cmd)
+		rm, err := GetContainerRegistryMirror(ctx, opts.Cmd, resolvedBuildahMode)
 		if err != nil {
 			return nil, ctx, fmt.Errorf("error get container registry mirrors: %w", err)
 		}
@@ -95,7 +99,7 @@ func InitCommonComponents(ctx context.Context, opts InitCommonComponentsOptions)
 	}
 
 	if opts.InitDockerRegistry {
-		if err := DockerRegistryInit(ctx, opts.Cmd, *cmanager.registryMirrors); err != nil {
+		if err := DockerRegistryInit(ctx, opts.Cmd, *cmanager.registryMirrors, resolvedBuildahMode); err != nil {
 			return nil, ctx, fmt.Errorf("docker registry initialization error: %w", err)
 		}
 	}
@@ -166,6 +170,10 @@ func (m *ComponentsManager) ContainerBackend() container_backend.ContainerBacken
 		panic("bug: init required!")
 	}
 	return m.containerBackend
+}
+
+func (m *ComponentsManager) BuildahMode() buildah.Mode {
+	return m.buildahMode
 }
 
 func (m *ComponentsManager) TerminateSSHAgent() {
