@@ -462,21 +462,57 @@ werf --secret-values .helm/secret-values-production.yaml
 
 ## Информация о собранных образах (только в werf)
 
-werf хранит информацию о собранных образах в параметрах `$.Values.werf` основного чарта:
+werf хранит подробную информацию о собранных образах в `$.Values.global.werf.images`, доступную во всех чартах (основном и зависимых):
 
 ```yaml
-werf:
-  image:
-    # Полный путь к собранному Docker-образу для werf-образа "backend":
-    backend: example.org/apps/myapp:a243949601ddc3d4133c4d5269ba23ed58cb8b18bf2b64047f35abd2-1598024377816
-  # Адрес container registry для собранных образов:
-  repo: example.org/apps/myapp
-  tag:
-    # Тег собранного Docker-образа для werf-образа "backend":
-    backend: a243949601ddc3d4133c4d5269ba23ed58cb8b18bf2b64047f35abd2-1598024377816
+global:
+  werf:
+    images:
+      backend:
+        # Адрес container registry:
+        registry: example.org
+        # Пространство имён репозитория:
+        namespace: apps
+        # Короткое имя образа:
+        name: myapp
+        # Тег образа:
+        tag: a243949601ddc3d4133c4d5269ba23ed58cb8b18bf2b64047f35abd2-1598024377816
+        # Дайджест образа:
+        digest: sha256:ece15c4a8e7e04dd0afa25b85a51e3fba35eb31e0e1489a2f3e916da77e4e865
+        # Тег и дайджест вместе:
+        tag_digest: "a243949...816@sha256:ece15c4a..."
+        # Полное имя образа без тега (registry + repository):
+        image: example.org/apps/myapp
+        # Полный путь репозитория (namespace + name):
+        repository: apps/myapp
+        # Полная ссылка на образ с дайджестом:
+        ref: "example.org/apps/myapp:a243949...816@sha256:ece15c4a..."
+        # Полная ссылка на образ с тегом:
+        ref_tag: "example.org/apps/myapp:a243949...816"
+        # Путь репозитория с тегом и дайджестом:
+        repository_ref: "apps/myapp:a243949...816@sha256:ece15c4a..."
+        # Путь репозитория с тегом:
+        repository_tag: "apps/myapp:a243949...816"
+        # Короткое имя с тегом и дайджестом:
+        name_ref: "myapp:a243949...816@sha256:ece15c4a..."
+        # Короткое имя с тегом:
+        name_tag: "myapp:a243949...816"
 ```
 
-Пример использования:
+Этот структурированный формат позволяет использовать отдельные компоненты образа, что удобно при работе с внешними чартами, ожидающими значения образов в структурированном формате:
+
+{% raw %}
+
+```
+image:
+  registry: {{ $.Values.global.werf.images.backend.registry }}
+  repository: {{ $.Values.global.werf.images.backend.repository }}
+  tag: {{ $.Values.global.werf.images.backend.tag }}
+```
+
+{% endraw %}
+
+Для обратной совместимости полный путь к образу также доступен в `$.Values.werf.image`:
 
 {% raw %}
 
@@ -492,33 +528,31 @@ image: {{ $.Values.werf.image.backend }}
 image: example.org/apps/myapp:a243949601ddc3d4133c4d5269ba23ed58cb8b18bf2b64047f35abd2-1598024377816
 ```
 
-Для использования `$.Values.werf` в зависимых чартах воспользуйтесь директивой `export-values` (только в werf):
+Поскольку `$.Values.global.werf` имеет глобальную область видимости, `images` доступен во всех зависимых чартах без `export-values`. Также можно использовать `export-values` для передачи отдельных полей образа в формате, который ожидает внешний чарт:
 
 ```yaml
 # .helm/Chart.yaml:
 dependencies:
-- name: backend
+- name: postgres-operator
   export-values:
-  - parent: werf
-    child: werf
+  - parent: global.werf.images.pg.registry
+    child: image.registry
+  - parent: global.werf.images.pg.repository
+    child: image.repository
+  - parent: global.werf.images.pg.tag
+    child: image.tag
 ```
 
-{% raw %}
-
-```
-# .helm/charts/backend/templates/example.yaml:
-image: {{ $.Values.werf.image.backend }}
-```
-
-{% endraw %}
-
-Результат:
+Чарт `postgres-operator` получит:
 
 ```yaml
-image: example.org/apps/myapp:a243949601ddc3d4133c4d5269ba23ed58cb8b18bf2b64047f35abd2-1598024377816
+image:
+  registry: example.org
+  repository: apps/pg
+  tag: a243949601ddc3d4133c4d5269ba23ed58cb8b18bf2b64047f35abd2-1598024377816
 ```
 
-## Информация о релизе
+## Информация о релизе (только в werf)
 
 werf хранит информацию о релизе в свойствах объекта `$.Release`:
 
@@ -535,15 +569,20 @@ Namespace: myapp-production
 Revision: 1
 ```
 
-... и в параметрах `$.Values.werf` основного чарта (только в werf):
+... и в `$.Values.global.werf`, доступном во всех чартах (только в werf):
 
 ```yaml
-werf:
-  # Имя werf-проекта:
-  name: myapp
-  # Окружение:
-  env: production
+global:
+  werf:
+    # Имя werf-проекта:
+    name: myapp
+    # Окружение:
+    env: production
+    # Kubernetes Namespace:
+    namespace: myapp-production
 ```
+
+Для обратной совместимости те же значения также доступны в `$.Values.werf`.
 
 Пример использования:
 
@@ -551,7 +590,7 @@ werf:
 
 ```
 {{ $.Release.Namespace }}
-{{ $.Values.werf.env }}
+{{ $.Values.global.werf.env }}
 ```
 
 {% endraw %}
@@ -560,32 +599,6 @@ werf:
 
 ```
 myapp-production
-production
-```
-
-Для использования `$.Values.werf` в зависимых чартах воспользуйтесь директивой `export-values` (только в werf):
-
-```yaml
-# .helm/Chart.yaml:
-dependencies:
-- name: backend
-  export-values:
-  - parent: werf
-    child: werf
-```
-
-{% raw %}
-
-```
-# .helm/charts/backend/templates/example.yaml:
-{{ $.Values.werf.env }}
-```
-
-{% endraw %}
-
-Результат:
-
-```yaml
 production
 ```
 
@@ -663,26 +676,29 @@ mychart/templates/example.yaml
 
 ## Информация о Git-коммите (только в werf)
 
-werf хранит информацию о Git-коммите, на котором он был запущен, в параметрах `$.Values.werf.commit` основного чарта:
+werf хранит информацию о Git-коммите, на котором он был запущен, в `$.Values.global.werf.commit`, доступном во всех чартах:
 
 ```yaml
-werf:
-  commit:
-    date:
-      # Дата Git-коммита, на котором был запущен werf (человекочитаемая форма):
-      human: 2022-01-21 18:51:39 +0300 +0300
-      # Дата Git-коммита, на котором был запущен werf (Unix time):
-      unix: 1642780299
-    # Хэш Git-коммита, на котором был запущен werf:
-    hash: 1b28e6843a963c5bdb3579f6fc93317cc028051c
+global:
+  werf:
+    commit:
+      date:
+        # Дата Git-коммита, на котором был запущен werf (человекочитаемая форма):
+        human: 2022-01-21 18:51:39 +0300 +0300
+        # Дата Git-коммита, на котором был запущен werf (Unix time):
+        unix: 1642780299
+      # Хэш Git-коммита, на котором был запущен werf:
+      hash: 1b28e6843a963c5bdb3579f6fc93317cc028051c
 ```
+
+Для обратной совместимости те же значения также доступны в `$.Values.werf.commit`.
 
 Пример использования:
 
 {% raw %}
 
 ```
-{{ $.Values.werf.commit.hash }}
+{{ $.Values.global.werf.commit.hash }}
 ```
 
 {% endraw %}
@@ -690,32 +706,6 @@ werf:
 Результат:
 
 ```
-1b28e6843a963c5bdb3579f6fc93317cc028051c
-```
-
-Для использования `$.Values.werf.commit` в зависимых чартах воспользуйтесь директивой `export-values` (только в werf):
-
-```yaml
-# .helm/Chart.yaml:
-dependencies:
-- name: backend
-  export-values:
-  - parent: werf
-    child: werf
-```
-
-{% raw %}
-
-```
-# .helm/charts/backend/templates/example.yaml:
-{{ $.Values.werf.commit.hash }}
-```
-
-{% endraw %}
-
-Результат:
-
-```yaml
 1b28e6843a963c5bdb3579f6fc93317cc028051c
 ```
 

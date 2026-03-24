@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/samber/lo"
 	"sigs.k8s.io/yaml"
 
 	"github.com/werf/common-go/pkg/util"
@@ -32,19 +33,12 @@ type ServiceValuesOptions struct {
 }
 
 func GetServiceValues(ctx context.Context, projectName, repo string, imageInfoGetters []*image.InfoGetter, opts ServiceValuesOptions) (map[string]interface{}, error) {
-	globalInfo := map[string]interface{}{
-		"werf": map[string]interface{}{
-			"name":    projectName,
-			"version": werf.Version,
-		},
-	}
+	imagesInfo := map[string]interface{}{}
 
 	werfInfo := map[string]interface{}{
 		"name":    projectName,
 		"version": werf.Version,
 		"repo":    repo,
-		"image":   map[string]interface{}{},
-		"tag":     map[string]interface{}{},
 		"commit": map[string]interface{}{
 			"hash": opts.CommitHash,
 			"date": map[string]interface{}{
@@ -54,11 +48,15 @@ func GetServiceValues(ctx context.Context, projectName, repo string, imageInfoGe
 		},
 	}
 
+	// TODO(major): remove
+	werfLegacyInfo := map[string]interface{}{
+		"image": map[string]interface{}{},
+		"tag":   map[string]interface{}{},
+	}
+
 	if opts.Env != "" {
-		globalInfo["env"] = opts.Env
 		werfInfo["env"] = opts.Env
 	} else if opts.IsStub && !opts.DisableEnvStub {
-		globalInfo["env"] = ""
 		werfInfo["env"] = ""
 	}
 
@@ -73,30 +71,39 @@ func GetServiceValues(ctx context.Context, projectName, repo string, imageInfoGe
 		werfInfo["is_stub"] = true
 		werfInfo["stub_image"] = stubImage
 		for _, name := range opts.StubImageNameList {
-			werfInfo["image"].(map[string]interface{})[name] = stubImage
-			werfInfo["tag"].(map[string]interface{})[name] = stubTag
+			werfLegacyInfo["image"].(map[string]interface{})[name] = stubImage
+			werfLegacyInfo["tag"].(map[string]interface{})[name] = stubTag
+			imagesInfo[name] = image.BuildStubImageValuesMap(repo, stubTag)
 		}
 	}
 
 	for _, imageInfoGetter := range imageInfoGetters {
 		tag := imageInfoGetter.GetTag()
-		image := imageInfoGetter.GetName()
+		imageName := imageInfoGetter.GetName()
 
 		if imageInfoGetter.IsNameless() {
 			werfInfo["is_nameless_image"] = true
-			werfInfo["nameless_image"] = image
+			werfInfo["nameless_image"] = imageName
 		} else {
-			werfInfo["image"].(map[string]interface{})[imageInfoGetter.GetWerfImageName()] = image
-			werfInfo["tag"].(map[string]interface{})[imageInfoGetter.GetWerfImageName()] = tag
+			werfLegacyInfo["image"].(map[string]interface{})[imageInfoGetter.GetWerfImageName()] = imageName
+			werfLegacyInfo["tag"].(map[string]interface{})[imageInfoGetter.GetWerfImageName()] = tag
+
+			imageDetails, err := image.BuildImageValuesMap(imageInfoGetter)
+			if err != nil {
+				return nil, fmt.Errorf("get image details for %q: %w", imageName, err)
+			}
+
+			imagesInfo[imageInfoGetter.GetWerfImageName()] = imageDetails
 		}
 	}
 
 	res := map[string]interface{}{
-		"werf": werfInfo,
-	}
-
-	if exposeGlobalServiceValues() {
-		res["global"] = globalInfo
+		"werf": lo.Assign(werfInfo, werfLegacyInfo), // TODO(major): remove
+		"global": map[string]interface{}{
+			"werf": lo.Assign(werfInfo, map[string]interface{}{
+				"images": imagesInfo,
+			}),
+		},
 	}
 
 	if opts.SetDockerConfigJsonValue {

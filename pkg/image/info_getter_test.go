@@ -10,7 +10,7 @@ import (
 var _ = Describe("InfoGetter", func() {
 	DescribeTable("TestInfoGetter",
 		func(data TestInfoGetter) {
-			getter := NewInfoGetter(data.ImageName, data.Ref, data.Opts)
+			getter := NewInfoGetter(data.ImageName, data.Ref, data.Digest, data.Opts)
 
 			Expect(getter.IsNameless()).To(Equal(data.ExpectIsNameless))
 			Expect(getter.GetWerfImageName()).To(Equal(data.ExpectWerfImageName))
@@ -60,6 +60,7 @@ var _ = Describe("InfoGetter", func() {
 type TestInfoGetter struct {
 	ImageName string
 	Ref       string
+	Digest    string
 	Opts      InfoGetterOptions
 
 	ExpectIsNameless    bool
