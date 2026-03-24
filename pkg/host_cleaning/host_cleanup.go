@@ -7,6 +7,7 @@ import (
 
 	"github.com/werf/common-go/pkg/graceful"
 	"github.com/werf/logboek"
+	thresholdpkg "github.com/werf/werf/v2/pkg/cleaning/threshold"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
 	"github.com/werf/werf/v2/pkg/tmp_manager"
@@ -21,6 +22,62 @@ const (
 	DefaultAllowedLocalCacheVolumeUsageMarginPercentage     float64 = 5.0
 )
 
+type VolumeUsageThresholdType = thresholdpkg.Type
+
+const (
+	VolumeUsageThresholdTypePercentage = thresholdpkg.TypePercentage
+	VolumeUsageThresholdTypeBytes      = thresholdpkg.TypeBytes
+)
+
+type VolumeUsageThreshold = thresholdpkg.Threshold
+
+func NewVolumeUsageThresholdPercentage(value uint64) VolumeUsageThreshold {
+	return thresholdpkg.NewPercentage(value)
+}
+
+func NewVolumeUsageThresholdBytes(value uint64) VolumeUsageThreshold {
+	return thresholdpkg.NewBytes(value)
+}
+
+func DefaultAllowedBackendStorageVolumeUsageThreshold() VolumeUsageThreshold {
+	return NewVolumeUsageThresholdPercentage(uint64(DefaultAllowedBackendStorageVolumeUsagePercentage))
+}
+
+func DefaultAllowedBackendStorageVolumeUsageMarginThreshold() VolumeUsageThreshold {
+	return NewVolumeUsageThresholdPercentage(uint64(DefaultAllowedBackendStorageVolumeUsageMarginPercentage))
+}
+
+func DefaultAllowedLocalCacheVolumeUsageThreshold() VolumeUsageThreshold {
+	return NewVolumeUsageThresholdPercentage(uint64(DefaultAllowedLocalCacheVolumeUsagePercentage))
+}
+
+func DefaultAllowedLocalCacheVolumeUsageMarginThreshold() VolumeUsageThreshold {
+	return NewVolumeUsageThresholdPercentage(uint64(DefaultAllowedLocalCacheVolumeUsageMarginPercentage))
+}
+
+func ParseVolumeUsageThreshold(value string) (VolumeUsageThreshold, error) {
+	return thresholdpkg.Parse(value)
+}
+
+func volumeUsageThresholdValueOrDefault(optionValue *VolumeUsageThreshold, defaultValue VolumeUsageThreshold) VolumeUsageThreshold {
+	if optionValue != nil {
+		return *optionValue
+	}
+	return defaultValue
+}
+
+func resolveVolumeUsageThresholds(thresholdOption, marginOption *VolumeUsageThreshold, defaultThreshold, defaultMargin VolumeUsageThreshold, marginExplicit bool, thresholdFlagName, marginFlagName string) (VolumeUsageThreshold, VolumeUsageThreshold, error) {
+	return thresholdpkg.Resolve(thresholdOption, marginOption, defaultThreshold, defaultMargin, marginExplicit, thresholdFlagName, marginFlagName)
+}
+
+func resolveBackendStorageVolumeUsageThresholds(thresholdOption, marginOption *VolumeUsageThreshold, marginExplicit bool) (VolumeUsageThreshold, VolumeUsageThreshold, error) {
+	return resolveVolumeUsageThresholds(thresholdOption, marginOption, DefaultAllowedBackendStorageVolumeUsageThreshold(), DefaultAllowedBackendStorageVolumeUsageMarginThreshold(), marginExplicit, "--allowed-backend-storage-volume-usage", "--allowed-backend-storage-volume-usage-margin")
+}
+
+func resolveLocalCacheVolumeUsageThresholds(thresholdOption, marginOption *VolumeUsageThreshold, marginExplicit bool) (VolumeUsageThreshold, VolumeUsageThreshold, error) {
+	return resolveVolumeUsageThresholds(thresholdOption, marginOption, DefaultAllowedLocalCacheVolumeUsageThreshold(), DefaultAllowedLocalCacheVolumeUsageMarginThreshold(), marginExplicit, "--allowed-local-cache-volume-usage", "--allowed-local-cache-volume-usage-margin")
+}
+
 type AutoHostCleanupOptions struct {
 	HostCleanupOptions
 
@@ -30,24 +87,16 @@ type AutoHostCleanupOptions struct {
 }
 
 type HostCleanupOptions struct {
-	BackendStoragePath                               *string
-	AllowedBackendStorageVolumeUsagePercentage       *uint
-	AllowedBackendStorageVolumeUsageMarginPercentage *uint
-	AllowedLocalCacheVolumeUsagePercentage           *uint
-	AllowedLocalCacheVolumeUsageMarginPercentage     *uint
+	BackendStoragePath                              *string
+	AllowedBackendStorageVolumeUsageThreshold       *VolumeUsageThreshold
+	AllowedBackendStorageVolumeUsageMarginThreshold *VolumeUsageThreshold
+	AllowedBackendStorageVolumeUsageMarginExplicit  bool
+	AllowedLocalCacheVolumeUsageThreshold           *VolumeUsageThreshold
+	AllowedLocalCacheVolumeUsageMarginThreshold     *VolumeUsageThreshold
+	AllowedLocalCacheVolumeUsageMarginExplicit      bool
 
 	DryRun bool
 	Force  bool
-}
-
-func getOptionValueOrDefault(optionValue *uint, defaultValue float64) float64 {
-	var res float64
-	if optionValue != nil {
-		res = float64(*optionValue)
-	} else {
-		res = defaultValue
-	}
-	return res
 }
 
 func RunAutoHostCleanup(ctx context.Context, backend container_backend.ContainerBackend, options AutoHostCleanupOptions) error {
@@ -68,17 +117,17 @@ func RunAutoHostCleanup(ctx context.Context, backend container_backend.Container
 		fmt.Sprintf("--force=%v", options.Force),
 	)
 
-	if options.AllowedBackendStorageVolumeUsagePercentage != nil {
-		args = append(args, "--allowed-backend-storage-volume-usage", fmt.Sprintf("%d", *options.AllowedBackendStorageVolumeUsagePercentage))
+	if options.AllowedBackendStorageVolumeUsageThreshold != nil {
+		args = append(args, "--allowed-backend-storage-volume-usage", options.AllowedBackendStorageVolumeUsageThreshold.FormatCLIValue())
 	}
-	if options.AllowedBackendStorageVolumeUsageMarginPercentage != nil {
-		args = append(args, "--allowed-backend-storage-volume-usage-margin", fmt.Sprintf("%d", *options.AllowedBackendStorageVolumeUsageMarginPercentage))
+	if options.AllowedBackendStorageVolumeUsageMarginThreshold != nil {
+		args = append(args, "--allowed-backend-storage-volume-usage-margin", options.AllowedBackendStorageVolumeUsageMarginThreshold.FormatCLIValue())
 	}
-	if options.AllowedLocalCacheVolumeUsagePercentage != nil {
-		args = append(args, "--allowed-local-cache-volume-usage", fmt.Sprintf("%d", *options.AllowedLocalCacheVolumeUsagePercentage))
+	if options.AllowedLocalCacheVolumeUsageThreshold != nil {
+		args = append(args, "--allowed-local-cache-volume-usage", options.AllowedLocalCacheVolumeUsageThreshold.FormatCLIValue())
 	}
-	if options.AllowedLocalCacheVolumeUsageMarginPercentage != nil {
-		args = append(args, "--allowed-local-cache-volume-usage-margin", fmt.Sprintf("%d", *options.AllowedLocalCacheVolumeUsageMarginPercentage))
+	if options.AllowedLocalCacheVolumeUsageMarginThreshold != nil {
+		args = append(args, "--allowed-local-cache-volume-usage-margin", options.AllowedLocalCacheVolumeUsageMarginThreshold.FormatCLIValue())
 	}
 	if options.BackendStoragePath != nil && *options.BackendStoragePath != "" {
 		args = append(args, "--backend-storage-path", *options.BackendStoragePath)
@@ -110,13 +159,15 @@ func RunHostCleanup(ctx context.Context, backend container_backend.ContainerBack
 		return err
 	}
 
-	allowedLocalCacheVolumeUsagePercentage := getOptionValueOrDefault(options.AllowedLocalCacheVolumeUsagePercentage, DefaultAllowedLocalCacheVolumeUsagePercentage)
-	allowedLocalCacheVolumeUsageMarginPercentage := getOptionValueOrDefault(options.AllowedLocalCacheVolumeUsageMarginPercentage, DefaultAllowedLocalCacheVolumeUsageMarginPercentage)
+	allowedLocalCacheVolumeUsageThreshold, allowedLocalCacheVolumeUsageMarginThreshold, err := resolveLocalCacheVolumeUsageThresholds(options.AllowedLocalCacheVolumeUsageThreshold, options.AllowedLocalCacheVolumeUsageMarginThreshold, options.AllowedLocalCacheVolumeUsageMarginExplicit)
+	if err != nil {
+		return err
+	}
 
 	if err := logboek.Context(ctx).Default().LogProcess("Running GC for git data").DoError(func() error {
 		if err := gitdata.RunGC(ctx, gitdata.RunGCOptions{
-			AllowedLocalCacheVolumeUsagePercentage:       allowedLocalCacheVolumeUsagePercentage,
-			AllowedLocalCacheVolumeUsageMarginPercentage: allowedLocalCacheVolumeUsageMarginPercentage,
+			AllowedLocalCacheVolumeUsageThreshold:       allowedLocalCacheVolumeUsageThreshold,
+			AllowedLocalCacheVolumeUsageMarginThreshold: allowedLocalCacheVolumeUsageMarginThreshold,
 			DryRun: options.DryRun,
 		}); err != nil {
 			return fmt.Errorf("git repo GC failed: %w", err)
@@ -126,8 +177,10 @@ func RunHostCleanup(ctx context.Context, backend container_backend.ContainerBack
 		return err
 	}
 
-	allowedBackendStorageVolumeUsagePercentage := getOptionValueOrDefault(options.AllowedBackendStorageVolumeUsagePercentage, DefaultAllowedBackendStorageVolumeUsagePercentage)
-	allowedBackendStorageVolumeUsageMarginPercentage := getOptionValueOrDefault(options.AllowedBackendStorageVolumeUsageMarginPercentage, DefaultAllowedBackendStorageVolumeUsageMarginPercentage)
+	allowedBackendStorageVolumeUsageThreshold, allowedBackendStorageVolumeUsageMarginThreshold, err := resolveBackendStorageVolumeUsageThresholds(options.AllowedBackendStorageVolumeUsageThreshold, options.AllowedBackendStorageVolumeUsageMarginThreshold, options.AllowedBackendStorageVolumeUsageMarginExplicit)
+	if err != nil {
+		return err
+	}
 
 	cleaner, err := NewLocalBackendCleaner(backend, werf.HostLocker().Locker())
 	if errors.Is(err, ErrUnsupportedContainerBackend) {
@@ -139,11 +192,11 @@ func RunHostCleanup(ctx context.Context, backend container_backend.ContainerBack
 
 	return logboek.Context(ctx).Default().LogProcess("Running GC for local %s backend", cleaner.BackendName()).DoError(func() error {
 		err := cleaner.RunGC(ctx, RunGCOptions{
-			AllowedStorageVolumeUsagePercentage:       allowedBackendStorageVolumeUsagePercentage,
-			AllowedStorageVolumeUsageMarginPercentage: allowedBackendStorageVolumeUsageMarginPercentage,
-			StoragePath: *options.BackendStoragePath,
-			Force:       options.Force,
-			DryRun:      options.DryRun,
+			AllowedStorageVolumeUsageThreshold:       allowedBackendStorageVolumeUsageThreshold,
+			AllowedStorageVolumeUsageMarginThreshold: allowedBackendStorageVolumeUsageMarginThreshold,
+			StoragePath:                              *options.BackendStoragePath,
+			Force:                                    options.Force,
+			DryRun:                                   options.DryRun,
 		})
 		if err != nil {
 			return fmt.Errorf("local %s backend GC failed: %w", cleaner.BackendName(), err)
@@ -169,9 +222,9 @@ func shouldRunAutoHostCleanup(ctx context.Context, backend container_backend.Con
 		return true, nil
 	}
 
-	allowedLocalCacheVolumeUsagePercentage := getOptionValueOrDefault(options.AllowedLocalCacheVolumeUsagePercentage, DefaultAllowedLocalCacheVolumeUsagePercentage)
+	allowedLocalCacheVolumeUsageThreshold := volumeUsageThresholdValueOrDefault(options.AllowedLocalCacheVolumeUsageThreshold, DefaultAllowedLocalCacheVolumeUsageThreshold())
 
-	shouldRun, err = gitdata.ShouldRunAutoGC(ctx, allowedLocalCacheVolumeUsagePercentage)
+	shouldRun, err = gitdata.ShouldRunAutoGC(ctx, allowedLocalCacheVolumeUsageThreshold)
 	if err != nil {
 		return false, fmt.Errorf("failed to check git repo GC: %w", err)
 	}
@@ -179,7 +232,7 @@ func shouldRunAutoHostCleanup(ctx context.Context, backend container_backend.Con
 		return true, nil
 	}
 
-	allowedBackendStorageVolumeUsagePercentage := getOptionValueOrDefault(options.AllowedBackendStorageVolumeUsagePercentage, DefaultAllowedBackendStorageVolumeUsagePercentage)
+	allowedBackendStorageVolumeUsageThreshold := volumeUsageThresholdValueOrDefault(options.AllowedBackendStorageVolumeUsageThreshold, DefaultAllowedBackendStorageVolumeUsageThreshold())
 
 	cleaner, err := NewLocalBackendCleaner(backend, werf.HostLocker().Locker())
 	if errors.Is(err, ErrUnsupportedContainerBackend) {
@@ -190,8 +243,8 @@ func shouldRunAutoHostCleanup(ctx context.Context, backend container_backend.Con
 	}
 
 	shouldRun, err = cleaner.ShouldRunAutoGC(ctx, RunAutoGCOptions{
-		AllowedStorageVolumeUsagePercentage: allowedBackendStorageVolumeUsagePercentage,
-		StoragePath:                         *options.BackendStoragePath,
+		AllowedStorageVolumeUsageThreshold: allowedBackendStorageVolumeUsageThreshold,
+		StoragePath:                        *options.BackendStoragePath,
 	})
 	if err != nil {
 		return false, fmt.Errorf("failed to check local %s backend GC: %w", cleaner.BackendName(), err)

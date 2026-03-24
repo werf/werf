@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"math"
 	"os"
 	"path/filepath"
 	"slices"
@@ -16,6 +15,7 @@ import (
 	"github.com/werf/kubedog/pkg/utils"
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
+	thresholdpkg "github.com/werf/werf/v2/pkg/cleaning/threshold"
 	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/volumeutils"
 	"github.com/werf/werf/v2/pkg/werf"
@@ -26,19 +26,75 @@ const (
 	KeepGitRepoCacheVersionV1_1     = "3"
 )
 
-func ShouldRunAutoGC(ctx context.Context, allowedVolumeUsagePercentage float64) (bool, error) {
+func exceedsLocalCacheVolumeUsageThreshold(vu volumeutils.VolumeUsage, threshold thresholdpkg.Threshold) bool {
+	switch threshold.Type {
+	case thresholdpkg.TypePercentage:
+		return vu.Percentage() > threshold.PercentageValue()
+	case thresholdpkg.TypeBytes:
+		return vu.FreeBytes() < threshold.Value
+	default:
+		panic(fmt.Sprintf("unexpected volume usage threshold type %q", threshold.Type))
+	}
+}
+
+func targetLocalCacheBytesToFree(vu volumeutils.VolumeUsage, threshold, margin thresholdpkg.Threshold) uint64 {
+	switch threshold.Type {
+	case thresholdpkg.TypePercentage:
+		return vu.BytesToFree(max(threshold.PercentageValue()-margin.PercentageValue(), 0))
+	case thresholdpkg.TypeBytes:
+		return vu.BytesToFreeForTargetFreeBytes(threshold.Value + margin.Value)
+	default:
+		panic(fmt.Sprintf("unexpected volume usage threshold type %q", threshold.Type))
+	}
+}
+
+func logLocalCacheVolumeUsageThresholdCheck(ctx context.Context, vu volumeutils.VolumeUsage, threshold thresholdpkg.Threshold) {
+	switch threshold.Type {
+	case thresholdpkg.TypePercentage:
+		logboek.Context(ctx).Default().LogF("Allowed volume usage percentage: %s <= %s — %s\n", utils.GreenF("%0.2f%%", vu.Percentage()), utils.BlueF("%0.2f%%", threshold.PercentageValue()), utils.GreenF("OK"))
+	case thresholdpkg.TypeBytes:
+		logboek.Context(ctx).Default().LogF("Allowed free space: %s >= %s — %s\n", utils.GreenF("%s", humanize.Bytes(vu.FreeBytes())), utils.BlueF("%s", humanize.Bytes(threshold.Value)), utils.GreenF("OK"))
+	default:
+		panic(fmt.Sprintf("unexpected volume usage threshold type %q", threshold.Type))
+	}
+}
+
+func logExceededLocalCacheVolumeUsageThreshold(ctx context.Context, vu volumeutils.VolumeUsage, threshold thresholdpkg.Threshold) {
+	switch threshold.Type {
+	case thresholdpkg.TypePercentage:
+		logboek.Context(ctx).Default().LogF("Allowed percentage level exceeded: %s > %s — %s\n", utils.RedF("%0.2f%%", vu.Percentage()), utils.YellowF("%0.2f%%", threshold.PercentageValue()), utils.RedF("HIGH VOLUME USAGE"))
+	case thresholdpkg.TypeBytes:
+		logboek.Context(ctx).Default().LogF("Allowed free space level exceeded: %s < %s — %s\n", utils.RedF("%s", humanize.Bytes(vu.FreeBytes())), utils.YellowF("%s", humanize.Bytes(threshold.Value)), utils.RedF("LOW FREE SPACE"))
+	default:
+		panic(fmt.Sprintf("unexpected volume usage threshold type %q", threshold.Type))
+	}
+}
+
+func logTargetLocalCacheVolumeUsageThreshold(ctx context.Context, threshold, margin thresholdpkg.Threshold, bytesToFree uint64) {
+	switch threshold.Type {
+	case thresholdpkg.TypePercentage:
+		logboek.Context(ctx).Default().LogF("Target percentage level after cleanup: %0.2f%% - %0.2f%% (margin) = %s\n", threshold.PercentageValue(), margin.PercentageValue(), utils.BlueF("%0.2f%%", max(threshold.PercentageValue()-margin.PercentageValue(), 0)))
+	case thresholdpkg.TypeBytes:
+		logboek.Context(ctx).Default().LogF("Target free space after cleanup: %s + %s (margin) = %s\n", humanize.Bytes(threshold.Value), humanize.Bytes(margin.Value), utils.BlueF("%s", humanize.Bytes(threshold.Value+margin.Value)))
+	default:
+		panic(fmt.Sprintf("unexpected volume usage threshold type %q", threshold.Type))
+	}
+	logboek.Context(ctx).Default().LogF("Needed to free: %s\n", utils.RedF("%s", humanize.Bytes(bytesToFree)))
+}
+
+func ShouldRunAutoGC(ctx context.Context, allowedVolumeUsageThreshold thresholdpkg.Threshold) (bool, error) {
 	vu, err := volumeutils.GetVolumeUsageByPath(ctx, werf.GetLocalCacheDir())
 	if err != nil {
 		return false, fmt.Errorf("error getting volume usage by path %q: %w", werf.GetLocalCacheDir(), err)
 	}
 
-	return vu.Percentage() > allowedVolumeUsagePercentage, nil
+	return exceedsLocalCacheVolumeUsageThreshold(vu, allowedVolumeUsageThreshold), nil
 }
 
 type RunGCOptions struct {
-	AllowedLocalCacheVolumeUsagePercentage       float64
-	AllowedLocalCacheVolumeUsageMarginPercentage float64
-	DryRun                                       bool
+	AllowedLocalCacheVolumeUsageThreshold       thresholdpkg.Threshold
+	AllowedLocalCacheVolumeUsageMarginThreshold thresholdpkg.Threshold
+	DryRun                                      bool
 }
 
 func RunGC(ctx context.Context, options RunGCOptions) error {
@@ -96,15 +152,13 @@ func RunGC(ctx context.Context, options RunGCOptions) error {
 		return fmt.Errorf("error getting volume usage by path %q: %w", werf.GetLocalCacheDir(), err)
 	}
 
-	targetVolumeUsagePercentage := math.Max(options.AllowedLocalCacheVolumeUsagePercentage-options.AllowedLocalCacheVolumeUsageMarginPercentage, 0)
+	bytesToFree := targetLocalCacheBytesToFree(vu, options.AllowedLocalCacheVolumeUsageThreshold, options.AllowedLocalCacheVolumeUsageMarginThreshold)
 
-	bytesToFree := vu.BytesToFree(targetVolumeUsagePercentage)
-
-	if vu.Percentage() <= options.AllowedLocalCacheVolumeUsagePercentage {
+	if !exceedsLocalCacheVolumeUsageThreshold(vu, options.AllowedLocalCacheVolumeUsageThreshold) {
 		logboek.Context(ctx).Default().LogBlock("Git data storage check").Do(func() {
 			logboek.Context(ctx).Default().LogF("Werf local cache dir: %s\n", werf.GetLocalCacheDir())
 			logboek.Context(ctx).Default().LogF("Volume usage: %s / %s\n", humanize.Bytes(vu.UsedBytes), humanize.Bytes(vu.TotalBytes))
-			logboek.Context(ctx).Default().LogF("Allowed volume usage percentage: %s <= %s — %s\n", utils.GreenF("%0.2f%%", vu.Percentage()), utils.BlueF("%0.2f%%", options.AllowedLocalCacheVolumeUsagePercentage), utils.GreenF("OK"))
+			logLocalCacheVolumeUsageThresholdCheck(ctx, vu, options.AllowedLocalCacheVolumeUsageThreshold)
 		})
 
 		return nil
@@ -113,9 +167,8 @@ func RunGC(ctx context.Context, options RunGCOptions) error {
 	logboek.Context(ctx).Default().LogBlock("Git data storage check").Do(func() {
 		logboek.Context(ctx).Default().LogF("Werf local cache dir: %s\n", werf.GetLocalCacheDir())
 		logboek.Context(ctx).Default().LogF("Volume usage: %s / %s\n", humanize.Bytes(vu.UsedBytes), humanize.Bytes(vu.TotalBytes))
-		logboek.Context(ctx).Default().LogF("Allowed percentage level exceeded: %s > %s — %s\n", utils.RedF("%0.2f%%", vu.Percentage()), utils.YellowF("%0.2f%%", options.AllowedLocalCacheVolumeUsagePercentage), utils.RedF("HIGH VOLUME USAGE"))
-		logboek.Context(ctx).Default().LogF("Target percentage level after cleanup: %0.2f%% - %0.2f%% (margin) = %s\n", options.AllowedLocalCacheVolumeUsagePercentage, options.AllowedLocalCacheVolumeUsageMarginPercentage, utils.BlueF("%0.2f%%", targetVolumeUsagePercentage))
-		logboek.Context(ctx).Default().LogF("Needed to free: %s\n", utils.RedF("%s", humanize.Bytes(bytesToFree)))
+		logExceededLocalCacheVolumeUsageThreshold(ctx, vu, options.AllowedLocalCacheVolumeUsageThreshold)
+		logTargetLocalCacheVolumeUsageThreshold(ctx, options.AllowedLocalCacheVolumeUsageThreshold, options.AllowedLocalCacheVolumeUsageMarginThreshold, bytesToFree)
 	})
 
 	var gitDataEntries []GitDataEntry

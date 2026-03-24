@@ -107,11 +107,13 @@ func runCleanup(ctx context.Context) error {
 	hostCleanupOptions := host_cleaning.HostCleanupOptions{
 		DryRun: *commonCmdData.DryRun,
 		Force:  cmdData.Force,
-		AllowedBackendStorageVolumeUsagePercentage:       commonCmdData.AllowedBackendStorageVolumeUsage,
-		AllowedBackendStorageVolumeUsageMarginPercentage: commonCmdData.AllowedBackendStorageVolumeUsageMargin,
-		AllowedLocalCacheVolumeUsagePercentage:           commonCmdData.AllowedLocalCacheVolumeUsage,
-		AllowedLocalCacheVolumeUsageMarginPercentage:     commonCmdData.AllowedLocalCacheVolumeUsageMargin,
-		BackendStoragePath:                               commonCmdData.BackendStoragePath,
+		AllowedBackendStorageVolumeUsageThreshold:       commonCmdData.AllowedBackendStorageVolumeUsage,
+		AllowedBackendStorageVolumeUsageMarginThreshold: commonCmdData.AllowedBackendStorageVolumeUsageMargin,
+		AllowedBackendStorageVolumeUsageMarginExplicit:  commonCmdData.AllowedBackendStorageVolumeUsageMarginExplicit != nil && *commonCmdData.AllowedBackendStorageVolumeUsageMarginExplicit,
+		AllowedLocalCacheVolumeUsageThreshold:           commonCmdData.AllowedLocalCacheVolumeUsage,
+		AllowedLocalCacheVolumeUsageMarginThreshold:     commonCmdData.AllowedLocalCacheVolumeUsageMargin,
+		AllowedLocalCacheVolumeUsageMarginExplicit:      commonCmdData.AllowedLocalCacheVolumeUsageMarginExplicit != nil && *commonCmdData.AllowedLocalCacheVolumeUsageMarginExplicit,
+		BackendStoragePath:                              commonCmdData.BackendStoragePath,
 	}
 
 	return host_cleaning.RunHostCleanup(ctx, commonManager.ContainerBackend(), hostCleanupOptions)

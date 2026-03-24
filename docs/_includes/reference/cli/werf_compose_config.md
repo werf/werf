@@ -71,22 +71,24 @@ werf compose config [IMAGE_NAME...] [options] [--docker-compose-options="OPTIONS
       --allow-includes-update=false
             Allow use includes latest versions (default $WERF_ALLOW_INCLUDES_UPDATE or false)
       --allowed-backend-storage-volume-usage=70
-            Set allowed percentage of backend (Docker or Buildah) storage volume usage which will   
-            cause cleanup of least recently used local backend images (default 70% or               
+            Set the cleanup threshold for backend (Docker or Buildah) storage. Plain numbers define 
+            the maximum allowed usage percentage, while values with units define the minimum        
+            required free space, e.g. 70 or 10GB (default 70 or                                     
             $WERF_ALLOWED_BACKEND_STORAGE_VOLUME_USAGE)
       --allowed-backend-storage-volume-usage-margin=5
-            During cleanup of least recently used local backend (Docker or Buildah) images werf     
-            would delete images until volume usage becomes below                                    
-            "allowed-backend-storage-volume-usage - allowed-backend-storage-volume-usage-margin"    
-            level (default 5% or $WERF_ALLOWED_BACKEND_STORAGE_VOLUME_USAGE_MARGIN)
+            Set the cleanup margin for backend (Docker or Buildah) storage. In percentage mode the  
+            margin is subtracted from the usage threshold, while in bytes mode it is added to the   
+            minimum required free space threshold, e.g. 5 or 2GB (default 5 or                      
+            $WERF_ALLOWED_BACKEND_STORAGE_VOLUME_USAGE_MARGIN)
       --allowed-local-cache-volume-usage=70
-            Set allowed percentage of local cache (~/.werf/local_cache by default) volume usage     
-            which will cause cleanup of least recently used data from the local cache (default 70%  
-            or $WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE)
+            Set the cleanup threshold for local cache (~/.werf/local_cache by default). Plain       
+            numbers define the maximum allowed usage percentage, while values with units define the 
+            minimum required free space, e.g. 70 or 10GB (default 70 or                             
+            $WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE)
       --allowed-local-cache-volume-usage-margin=5
-            During cleanup of local cache werf would delete local cache data until volume usage     
-            becomes below "allowed-local-cache-volume-usage -                                       
-            allowed-local-cache-volume-usage-margin" level (default 5% or                           
+            Set the cleanup margin for local cache. In percentage mode the margin is subtracted     
+            from the usage threshold, while in bytes mode it is added to the minimum required free  
+            space threshold, e.g. 5 or 2GB (default 5 or                                            
             $WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE_MARGIN)
       --backend-network=""
             Network mode for the build containers ($WERF_BACKEND_NETWORK or nothing by default)

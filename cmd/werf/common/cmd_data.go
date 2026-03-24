@@ -10,6 +10,7 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/nelm/pkg/common"
+	thresholdpkg "github.com/werf/werf/v2/pkg/cleaning/threshold"
 	"github.com/werf/werf/v2/pkg/util/option"
 )
 
@@ -96,12 +97,14 @@ type CmdData struct {
 	ScanContextNamespaceOnly *bool
 
 	// Host storage cleanup options
-	DisableAutoHostCleanup                 *bool
-	BackendStoragePath                     *string
-	AllowedBackendStorageVolumeUsage       *uint
-	AllowedBackendStorageVolumeUsageMargin *uint
-	AllowedLocalCacheVolumeUsage           *uint
-	AllowedLocalCacheVolumeUsageMargin     *uint
+	DisableAutoHostCleanup                         *bool
+	BackendStoragePath                             *string
+	AllowedBackendStorageVolumeUsage               *thresholdpkg.Threshold
+	AllowedBackendStorageVolumeUsageMargin         *thresholdpkg.Threshold
+	AllowedBackendStorageVolumeUsageMarginExplicit *bool
+	AllowedLocalCacheVolumeUsage                   *thresholdpkg.Threshold
+	AllowedLocalCacheVolumeUsageMargin             *thresholdpkg.Threshold
+	AllowedLocalCacheVolumeUsageMarginExplicit     *bool
 
 	Platform *[]string
 

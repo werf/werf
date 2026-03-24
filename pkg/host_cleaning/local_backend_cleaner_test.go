@@ -60,16 +60,16 @@ var _ = Describe("LocalBackendCleaner", func() {
 	Describe("ShouldRunAutoGC", func() {
 		It("should return true if cleanup needed", func(ctx SpecContext) {
 			result, err := cleaner.ShouldRunAutoGC(ctx, RunAutoGCOptions{
-				AllowedStorageVolumeUsagePercentage: 0,
-				StoragePath:                         t.TempDir(),
+				AllowedStorageVolumeUsageThreshold: NewVolumeUsageThresholdPercentage(0),
+				StoragePath:                        t.TempDir(),
 			})
 			Expect(err).To(Succeed())
 			Expect(result).To(BeTrue())
 		})
 		It("should return false if cleanup not needed", func(ctx SpecContext) {
 			result, err := cleaner.ShouldRunAutoGC(ctx, RunAutoGCOptions{
-				AllowedStorageVolumeUsagePercentage: 1000,
-				StoragePath:                         t.TempDir(),
+				AllowedStorageVolumeUsageThreshold: NewVolumeUsageThresholdPercentage(100),
+				StoragePath:                        t.TempDir(),
 			})
 			Expect(err).To(Succeed())
 			Expect(result).To(BeFalse())
@@ -336,7 +336,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 
 			stubs.StubFunc(&cleaner.volumeutilsGetVolumeUsageByPath, vuStub, nil)
 
-			report, err := cleaner.cleanupWerfImages(ctx, RunGCOptions{}, vu, 40.00)
+			report, err := cleaner.cleanupWerfImages(ctx, RunGCOptions{}, vu, 40)
 			Expect(err).To(Succeed())
 			Expect(report).To(Equal(expectedReport))
 		},
@@ -508,10 +508,10 @@ var _ = Describe("LocalBackendCleaner", func() {
 			ctx = logging.WithLogger(ctx)
 
 			options := RunGCOptions{
-				AllowedStorageVolumeUsagePercentage:       0,
-				AllowedStorageVolumeUsageMarginPercentage: 0,
-				StoragePath: t.TempDir(),
-				Force:       true,
+				AllowedStorageVolumeUsageThreshold:       NewVolumeUsageThresholdPercentage(0),
+				AllowedStorageVolumeUsageMarginThreshold: NewVolumeUsageThresholdPercentage(0),
+				StoragePath:                              t.TempDir(),
+				Force:                                    true,
 			}
 
 			stubs.StubFunc(&cleaner.volumeutilsGetVolumeUsageByPath, volumeutils.VolumeUsage{

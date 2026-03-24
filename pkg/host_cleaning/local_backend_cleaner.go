@@ -30,16 +30,76 @@ var ErrUnsupportedContainerBackend = errors.New("unsupported container backend")
 var errOptionDryRunNotSupported = errors.New("option dry-run not supported")
 
 type RunGCOptions struct {
-	AllowedStorageVolumeUsagePercentage       float64
-	AllowedStorageVolumeUsageMarginPercentage float64
-	StoragePath                               string
-	Force                                     bool
-	DryRun                                    bool
+	AllowedStorageVolumeUsageThreshold       VolumeUsageThreshold
+	AllowedStorageVolumeUsageMarginThreshold VolumeUsageThreshold
+	StoragePath                              string
+	Force                                    bool
+	DryRun                                   bool
 }
 
 type RunAutoGCOptions struct {
-	AllowedStorageVolumeUsagePercentage float64
-	StoragePath                         string
+	AllowedStorageVolumeUsageThreshold VolumeUsageThreshold
+	StoragePath                        string
+}
+
+func exceedsVolumeUsageThreshold(vu volumeutils.VolumeUsage, threshold VolumeUsageThreshold) bool {
+	switch threshold.Type {
+	case VolumeUsageThresholdTypePercentage:
+		return vu.Percentage() > threshold.PercentageValue()
+	case VolumeUsageThresholdTypeBytes:
+		return vu.FreeBytes() < threshold.Value
+	default:
+		panic(fmt.Sprintf("unexpected volume usage threshold type %q", threshold.Type))
+	}
+}
+
+func targetBytesToFree(vu volumeutils.VolumeUsage, threshold, margin VolumeUsageThreshold) uint64 {
+	if threshold.Type != margin.Type {
+		panic(fmt.Sprintf("mixed volume usage threshold types: threshold=%q, margin=%q; both must be the same type", threshold.Type, margin.Type))
+	}
+
+	switch threshold.Type {
+	case VolumeUsageThresholdTypePercentage:
+		return vu.BytesToFree(max(threshold.PercentageValue()-margin.PercentageValue(), 0))
+	case VolumeUsageThresholdTypeBytes:
+		return vu.BytesToFreeForTargetFreeBytes(threshold.Value + margin.Value)
+	default:
+		panic(fmt.Sprintf("unexpected volume usage threshold type %q", threshold.Type))
+	}
+}
+
+func logVolumeUsageThresholdCheck(ctx context.Context, vu volumeutils.VolumeUsage, threshold VolumeUsageThreshold) {
+	switch threshold.Type {
+	case VolumeUsageThresholdTypePercentage:
+		logboek.Context(ctx).LogF("Allowed volume usage percentage: %s <= %s — %s\n", utils.GreenF("%0.2f%%", vu.Percentage()), utils.BlueF("%0.2f%%", threshold.PercentageValue()), utils.GreenF("OK"))
+	case VolumeUsageThresholdTypeBytes:
+		logboek.Context(ctx).LogF("Allowed free space: %s >= %s — %s\n", utils.GreenF("%s", humanize.Bytes(vu.FreeBytes())), utils.BlueF("%s", humanize.Bytes(threshold.Value)), utils.GreenF("OK"))
+	default:
+		panic(fmt.Sprintf("unexpected volume usage threshold type %q", threshold.Type))
+	}
+}
+
+func logExceededVolumeUsageThreshold(ctx context.Context, vu volumeutils.VolumeUsage, threshold VolumeUsageThreshold) {
+	switch threshold.Type {
+	case VolumeUsageThresholdTypePercentage:
+		logboek.Context(ctx).LogF("Allowed percentage level exceeded: %s > %s — %s\n", utils.RedF("%0.2f%%", vu.Percentage()), utils.YellowF("%0.2f%%", threshold.PercentageValue()), utils.RedF("HIGH VOLUME USAGE"))
+	case VolumeUsageThresholdTypeBytes:
+		logboek.Context(ctx).LogF("Allowed free space level exceeded: %s < %s — %s\n", utils.RedF("%s", humanize.Bytes(vu.FreeBytes())), utils.YellowF("%s", humanize.Bytes(threshold.Value)), utils.RedF("LOW FREE SPACE"))
+	default:
+		panic(fmt.Sprintf("unexpected volume usage threshold type %q", threshold.Type))
+	}
+}
+
+func logTargetVolumeUsageThreshold(ctx context.Context, threshold, margin VolumeUsageThreshold, bytesToFree uint64) {
+	switch threshold.Type {
+	case VolumeUsageThresholdTypePercentage:
+		logboek.Context(ctx).LogF("Target percentage level after cleanup: %0.2f%% - %0.2f%% (margin) = %s\n", threshold.PercentageValue(), margin.PercentageValue(), utils.BlueF("%0.2f%%", max(threshold.PercentageValue()-margin.PercentageValue(), 0)))
+	case VolumeUsageThresholdTypeBytes:
+		logboek.Context(ctx).LogF("Target free space after cleanup: %s + %s (margin) = %s\n", humanize.Bytes(threshold.Value), humanize.Bytes(margin.Value), utils.BlueF("%s", humanize.Bytes(threshold.Value+margin.Value)))
+	default:
+		panic(fmt.Sprintf("unexpected volume usage threshold type %q", threshold.Type))
+	}
+	logboek.Context(ctx).LogF("Needed to free: %s\n", utils.RedF("%s", humanize.Bytes(bytesToFree)))
 }
 
 //go:generate mockgen -package mock -destination ../../test/mock/locker.go github.com/werf/lockgate Locker
@@ -111,7 +171,7 @@ func (cleaner *LocalBackendCleaner) ShouldRunAutoGC(ctx context.Context, options
 	if err != nil {
 		return false, fmt.Errorf("error getting volume usage by path %q: %w", backendStoragePath, err)
 	}
-	return vu.Percentage() > options.AllowedStorageVolumeUsagePercentage, nil
+	return exceedsVolumeUsageThreshold(vu, options.AllowedStorageVolumeUsageThreshold), nil
 }
 
 // werfImages returns werf images are safe for removing
@@ -259,22 +319,21 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 		return fmt.Errorf("error getting volume usage by path %q: %w", options.StoragePath, err)
 	}
 
-	if vu.Percentage() <= options.AllowedStorageVolumeUsagePercentage {
+	if !exceedsVolumeUsageThreshold(vu, options.AllowedStorageVolumeUsageThreshold) {
 		logboek.Context(ctx).LogBlock("Check storage").Do(func() {
 			logboek.Context(ctx).LogF("Volume usage: %s / %s\n", humanize.Bytes(vu.UsedBytes), humanize.Bytes(vu.TotalBytes))
-			logboek.Context(ctx).LogF("Allowed volume usage percentage: %s <= %s — %s\n", utils.GreenF("%0.2f%%", vu.Percentage()), utils.BlueF("%0.2f%%", options.AllowedStorageVolumeUsagePercentage), utils.GreenF("OK"))
+			logVolumeUsageThresholdCheck(ctx, vu, options.AllowedStorageVolumeUsageThreshold)
 		})
 
 		return nil
 	}
 
-	targetVolumeUsagePercentage := math.Max(options.AllowedStorageVolumeUsagePercentage-options.AllowedStorageVolumeUsageMarginPercentage, 0)
+	bytesToFree := targetBytesToFree(vu, options.AllowedStorageVolumeUsageThreshold, options.AllowedStorageVolumeUsageMarginThreshold)
 
 	logboek.Context(ctx).LogBlock("Check storage").Do(func() {
 		logboek.Context(ctx).LogF("Volume usage: %s / %s\n", humanize.Bytes(vu.UsedBytes), humanize.Bytes(vu.TotalBytes))
-		logboek.Context(ctx).LogF("Allowed percentage level exceeded: %s > %s — %s\n", utils.RedF("%0.2f%%", vu.Percentage()), utils.YellowF("%0.2f%%", options.AllowedStorageVolumeUsagePercentage), utils.RedF("HIGH VOLUME USAGE"))
-		logboek.Context(ctx).LogF("Target percentage level after cleanup: %0.2f%% - %0.2f%% (margin) = %s\n", options.AllowedStorageVolumeUsagePercentage, options.AllowedStorageVolumeUsageMarginPercentage, utils.BlueF("%0.2f%%", targetVolumeUsagePercentage))
-		logboek.Context(ctx).LogF("Needed to free: %s\n", utils.RedF("%s", humanize.Bytes(vu.BytesToFree(targetVolumeUsagePercentage))))
+		logExceededVolumeUsageThreshold(ctx, vu, options.AllowedStorageVolumeUsageThreshold)
+		logTargetVolumeUsageThreshold(ctx, options.AllowedStorageVolumeUsageThreshold, options.AllowedStorageVolumeUsageMarginThreshold, bytesToFree)
 	})
 
 	vuBefore := vu
@@ -315,12 +374,12 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 		return fmt.Errorf("unable to prune werf dangling images: %w", err)
 	}
 
-	if vu.Percentage() <= options.AllowedStorageVolumeUsagePercentage {
+	if !exceedsVolumeUsageThreshold(vu, options.AllowedStorageVolumeUsageThreshold) {
 		logboek.Context(ctx).LogBlock("Check storage").Do(func() {
 			logboek.Context(ctx).LogF("Total freed space: %s\n", utils.RedF("%s", humanize.Bytes(vuBefore.UsedBytes-vu.UsedBytes)))
 			logboek.Context(ctx).LogF("Volume usage: %s / %s\n", humanize.Bytes(vu.UsedBytes), humanize.Bytes(vu.TotalBytes))
-			logboek.Context(ctx).LogF("Allowed percentage level exceeded: %s > %s — %s\n", utils.RedF("%0.2f%%", vu.Percentage()), utils.YellowF("%0.2f%%", options.AllowedStorageVolumeUsagePercentage), utils.RedF("HIGH VOLUME USAGE"))
-			logboek.Context(ctx).LogF("Target percentage level after cleanup: %0.2f%% - %0.2f%% (margin) = %s\n", options.AllowedStorageVolumeUsagePercentage, options.AllowedStorageVolumeUsageMarginPercentage, utils.BlueF("%0.2f%%", targetVolumeUsagePercentage))
+			logExceededVolumeUsageThreshold(ctx, vu, options.AllowedStorageVolumeUsageThreshold)
+			logTargetVolumeUsageThreshold(ctx, options.AllowedStorageVolumeUsageThreshold, options.AllowedStorageVolumeUsageMarginThreshold, bytesToFree)
 		})
 
 		return nil
@@ -346,7 +405,7 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 
 	// Step 4. Remove werf images
 	err = logboek.Context(ctx).LogBlock("Cleanup werf images").DoError(func() error {
-		reportWerfImages, err := cleaner.cleanupWerfImages(ctx, options, vu, targetVolumeUsagePercentage)
+		reportWerfImages, err := cleaner.cleanupWerfImages(ctx, options, vu, bytesToFree)
 		if err != nil {
 			return err
 		}
@@ -365,11 +424,11 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 	logboek.Context(ctx).LogBlock("Check storage").Do(func() {
 		logboek.Context(ctx).LogF("Total freed space: %s\n", utils.RedF("%s", humanize.Bytes(vuBefore.UsedBytes-vu.UsedBytes)))
 		logboek.Context(ctx).LogF("Volume usage: %s / %s\n", humanize.Bytes(vu.UsedBytes), humanize.Bytes(vu.TotalBytes))
-		logboek.Context(ctx).LogF("Allowed percentage level exceeded: %s > %s — %s\n", utils.RedF("%0.2f%%", vu.Percentage()), utils.YellowF("%0.2f%%", options.AllowedStorageVolumeUsagePercentage), utils.RedF("HIGH VOLUME USAGE"))
-		logboek.Context(ctx).LogF("Target percentage level after cleanup: %0.2f%% - %0.2f%% (margin) = %s\n", options.AllowedStorageVolumeUsagePercentage, options.AllowedStorageVolumeUsageMarginPercentage, utils.BlueF("%0.2f%%", targetVolumeUsagePercentage))
+		logExceededVolumeUsageThreshold(ctx, vu, options.AllowedStorageVolumeUsageThreshold)
+		logTargetVolumeUsageThreshold(ctx, options.AllowedStorageVolumeUsageThreshold, options.AllowedStorageVolumeUsageMarginThreshold, bytesToFree)
 	})
 
-	if vu.Percentage() > targetVolumeUsagePercentage {
+	if exceedsVolumeUsageThreshold(vu, options.AllowedStorageVolumeUsageThreshold) {
 		logboek.Context(ctx).Info().LogOptionalLn()
 		logboek.Context(ctx).Info().LogF("NOTE: Detected high %s storage volume usage, while no werf images available to cleanup!\n", cleaner.BackendName())
 		logboek.Context(ctx).Info().LogF("NOTE:\n")
@@ -496,7 +555,7 @@ func (cleaner *LocalBackendCleaner) cleanupWerfContainers(ctx context.Context, o
 	return report.Normalize(), nil
 }
 
-func (cleaner *LocalBackendCleaner) cleanupWerfImages(ctx context.Context, options RunGCOptions, vu volumeutils.VolumeUsage, targetVolumeUsagePercentage float64) (cleanupReport, error) {
+func (cleaner *LocalBackendCleaner) cleanupWerfImages(ctx context.Context, options RunGCOptions, vu volumeutils.VolumeUsage, bytesToFree uint64) (cleanupReport, error) {
 	images, err := cleaner.werfImages(ctx)
 	if err != nil {
 		return cleanupReport{}, err
@@ -507,9 +566,7 @@ func (cleaner *LocalBackendCleaner) cleanupWerfImages(ctx context.Context, optio
 		SpaceReclaimed: 0,
 	}
 
-	tVu := targetVolumeUsagePercentage
-
-	for i, n := 0, countImagesToFree(images, 0, vu.BytesToFree(tVu)); n != -1; i, n = n+1, countImagesToFree(images, n+1, vu.BytesToFree(tVu)) {
+	for i, n := 0, countImagesToFree(images, 0, bytesToFree); n != -1; i, n = n+1, countImagesToFree(images, n+1, bytesToFree) {
 
 		for _, imgSummary := range images[i : n+1] {
 
@@ -544,8 +601,8 @@ func (cleaner *LocalBackendCleaner) cleanupWerfImages(ctx context.Context, optio
 		}
 
 		report.SpaceReclaimed += vu.UsedBytes - vuAfter.UsedBytes
-		// we must update vu variable to re-calculate how many images need to clean-up
 		vu = vuAfter
+		bytesToFree = max(bytesToFree-report.SpaceReclaimed, 0)
 	}
 
 	return report.Normalize(), nil

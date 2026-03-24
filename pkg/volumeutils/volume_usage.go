@@ -19,11 +19,22 @@ func (vu VolumeUsage) Percentage() float64 {
 	return (float64(vu.UsedBytes) / float64(vu.TotalBytes)) * 100
 }
 
+func (vu VolumeUsage) FreeBytes() uint64 {
+	return vu.TotalBytes - vu.UsedBytes
+}
+
 func (vu VolumeUsage) BytesToFree(targetVolumeUsagePercentage float64) uint64 {
 	diffPercentage := vu.Percentage() - targetVolumeUsagePercentage
 	allowedVolumeUsageToFree := math.Max(diffPercentage, 0)
 	bytesToFree := uint64((float64(vu.TotalBytes) / 100.0) * allowedVolumeUsageToFree)
 	return bytesToFree
+}
+
+func (vu VolumeUsage) BytesToFreeForTargetFreeBytes(targetFreeBytes uint64) uint64 {
+	if vu.FreeBytes() >= targetFreeBytes {
+		return 0
+	}
+	return targetFreeBytes - vu.FreeBytes()
 }
 
 func GetVolumeUsageByPath(ctx context.Context, path string) (VolumeUsage, error) {
