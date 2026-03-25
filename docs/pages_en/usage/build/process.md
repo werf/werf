@@ -563,29 +563,42 @@ werf build --save-build-report --repo REPO
 
 By default, the report is saved to a `.werf-build-report.json` file in `json` format, which contains detailed information about the build:
 
-* **Images** — list of built images:
+* **Runtime** — build runtime information:
+  * Selected container backend (`Backend`: `docker` or `buildah`)
+  * Whether werf is running inside a container (`InContainer`).
 
+* **Images** — list of built images:
+  * Image name in werf (`WerfImageName`)
+  * Image config type (`ConfigType`: `stapel`, `dockerfile`, `staged`, `unknown`)
   * Image tags (`DockerImageName`, `DockerRepo`, `DockerTag`)
+  * Target platform (`TargetPlatform`), for example `linux/amd64`
   * Whether the image was rebuilt (`Rebuilt`)
   * Whether the image is final (`Final`)
-  * Image size in bytes (`Size`) and build time (`BuildTime`)
+  * Image size in bytes (`Size`) and build time in seconds (`BuildTime`)
   * Build stages (`Stages`) with details:
+    * Stage name (`Name`)
     * Tags (`DockerImageName`, `DockerTag`, `DockerImageID`, `DockerImageDigest`)
-    * Size (`Size`) in bytes
-    * Stage build time (`BuildTime`) in seconds
+    * Stage image creation time in Unix time nanoseconds (`CreatedAt`)
+    * Size in bytes (`Size`)
     * Source of the base image (`SourceType`: `local`, `secondary`, `cache-repo`, `registry`)
     * Whether the base image was pulled (`BaseImagePulled`)
     * Whether the stage was rebuilt (`Rebuilt`)
+    * Stage build time in seconds (`BuildTime`).
 
-* **ImagesByPlatform** — architecture-specific image info (for multiarch builds), same structure as `Images`
+* **ImagesByPlatform** — per-platform breakdown for multiarch builds. This field is populated only when the `WERF_ENABLE_REPORT_BY_PLATFORM=1` environment variable is set. The record structure is the same as in `Images`, but the data is grouped by image name and platform.
 
 Example report in `json` format:
 
 ```json
 {
+  "Runtime": {
+    "Backend": "docker",
+    "InContainer": false
+  },
   "Images": {
     "frontend": {
       "WerfImageName": "frontend",
+      "ConfigType": "dockerfile",
       "DockerRepo": "localhost:5000/demo-app",
       "DockerTag": "079dfdd3f51a800c269cdfdd5e4febfcc1676b2c0d533f520255961c-1752501317353",
       "DockerImageID": "sha256:9b3a32dfe5a4aa46d96547e3f8e678626f96741776d78656ea72cab7117612bf",
@@ -631,7 +644,7 @@ Example report in `json` format:
 
 ### Retrieving Tags
 
-You can use the `--build-report-path` option to specify a custom path for the report, as well as the format: `json` or `envfile`. The `envfile` format does not contain detailed build info and is mainly used for retrieving image tags.
+You can use the `--build-report-path` option to specify a custom path for the report, as well as the format in which it will be created: `json` or `envfile`. The `envfile` format does not contain detailed build information and is used to get the tags of built images.
 
 Example of generating a report in `envfile` format:
 
@@ -645,6 +658,8 @@ Example output:
 WERF_BACKEND_DOCKER_IMAGE_NAME=localhost:5000/demo-app:b94607bcb6e03a6ee07c8dc912739d6ab8ef2efc985227fa82d3de6f-1752510311968
 WERF_FRONTEND_DOCKER_IMAGE_NAME=localhost:5000/demo-app:079dfdd3f51a800c269cdfdd5e4febfcc1676b2c0d533f520255961c-1752501317353
 ```
+
+> **Important:** It is impossible to get the tags before the build — they are generated during the build process. To use the tags, save them after the build with `--save-build-report`.
 
 To extract final image tags from a JSON report, you can use the `jq` utility:
 
@@ -660,5 +675,3 @@ Result:
   "frontend": "localhost:5000/demo-app:079dfdd3f51a800c269cdfdd5e4febfcc1676b2c0d533f520255961c-1752501317353"
 }
 ```
-
-> **NOTE:** Retrieving tags beforehand without first invoking the build process is currently impossible. You can only retrieve tags from the images you've already built.
