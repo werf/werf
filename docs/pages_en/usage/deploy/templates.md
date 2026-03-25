@@ -78,7 +78,7 @@ Here's how to use predefined variables:
 {% raw %}
 
 ```
-{{ $.Values.werf.env }}
+{{ $.Values.global.werf.env }}
 ```
 
 {% endraw %}
@@ -567,7 +567,7 @@ The root context remains intact even in blocks that change the relative context 
 ```
 {{ with $.Values.backend }}
 - command: {{ .command }}
-  image: {{ $.Values.werf.image.backend }}
+  image: {{ $.Values.global.werf.images.backend.ref_tag }}
 {{ end }}
 ```
 
