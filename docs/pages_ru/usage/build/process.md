@@ -563,29 +563,42 @@ werf build --save-build-report --repo REPO
 
 По умолчанию отчёт формируется в файл `.werf-build-report.json` формата `json`, который содержит расширенную информацию о сборке:
 
-* **Images** — список собранных образов:
+* **Runtime** — информация об окружении сборки:
+  * Используемый контейнерный бэкенд (`Backend`: `docker` или `buildah`)
+  * Флаг запуска werf внутри контейнера (`InContainer`).
 
+* **Images** — список собранных образов:
+  * Имя образа в werf (`WerfImageName`)
+  * Тип конфигурации образа (`ConfigType`: `stapel`, `dockerfile`, `staged`, `unknown`)
   * Теги образа (`DockerImageName`, `DockerRepo`, `DockerTag`)
+  * Целевая платформа (`TargetPlatform`), например `linux/amd64`
   * Был ли образ пересобран (`Rebuilt`)
   * Является ли образ финальным (`Final`)
-  * Размер и образа в байтах (`Size`) и время сборки (`BuildTime`)
+  * Размер образа в байтах (`Size`) и время сборки в секундах (`BuildTime`)
   * Стадии сборки (`Stages`) с деталями:
+    * Имя стадии (`Name`)
     * Теги (`DockerImageName`, `DockerTag`, `DockerImageID`, `DockerImageDigest`)
+    * Время создания образа стадии в Unix time nanoseconds (`CreatedAt`)
     * Размер (`Size`) в байтах
-    * Время сборки стадии (`BuildTime`) в секундах
     * Источник базового образа (`SourceType`: `local`, `secondary`, `cache-repo`, `registry`)
     * Был ли загружен базовый образ (`BaseImagePulled`)
     * Была ли стадия пересобрана (`Rebuilt`)
+    * Время сборки стадии в секундах (`BuildTime`).
 
-* **ImagesByPlatform** — информация по архитектурам (при multiarch-сборке) анлогично Images
+* **ImagesByPlatform** — разрез по платформам для multiarch-сборок. Поле включается только если установлена переменная окружения `WERF_ENABLE_REPORT_BY_PLATFORM=1`. Структура записей та же, что и у `Images`, но данные сгруппированы по имени образа и платформе.
 
 Пример отчёта в формате `json`:
 
 ```json
 {
+  "Runtime": {
+    "Backend": "docker",
+    "InContainer": false
+  },
   "Images": {
     "frontend": {
       "WerfImageName": "frontend",
+      "ConfigType": "dockerfile",
       "DockerRepo": "localhost:5000/demo-app",
       "DockerTag": "079dfdd3f51a800c269cdfdd5e4febfcc1676b2c0d533f520255961c-1752501317353",
       "DockerImageID": "sha256:9b3a32dfe5a4aa46d96547e3f8e678626f96741776d78656ea72cab7117612bf",
@@ -647,7 +660,6 @@ WERF_FRONTEND_DOCKER_IMAGE_NAME=localhost:5000/demo-app:079dfdd3f51a800c269cdfdd
 ```
 
 > **Важно:** Получить теги до сборки невозможно — они формируются в процессе. Чтобы использовать теги, сохраните их после выполнения сборки с помощью `--save-build-report`.
-
 
 Чтобы извлечь список итоговых тегов образов из отчета в формате `json`, можно использовать утилиту `jq`:
 
