@@ -158,8 +158,15 @@ func InitProcessDocker(ctx context.Context, cmdData *CmdData) (context.Context, 
 		return ctx, nil
 	}
 
+	var defaultPlatform string
+	if platforms := cmdData.GetPlatform(); len(platforms) == 1 {
+		defaultPlatform = platforms[0]
+	}
+
 	opts := docker.InitOptions{
 		DockerConfigDir: *cmdData.DockerConfig,
+		DefaultPlatform: defaultPlatform,
+		ClaimPlatforms:  cmdData.GetPlatform(),
 		Verbose:         *cmdData.LogVerbose,
 		Debug:           *cmdData.LogDebug,
 	}

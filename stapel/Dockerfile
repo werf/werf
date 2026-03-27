@@ -269,6 +269,20 @@ RUN source /etc/profile.d/rvm.sh && \
   fi && \
   env CC=/usr/bin/gcc CXX=/usr/bin/g++ bundle exec omnibus build -o append_timestamp:false werf-stapel
 
+# Fix ELF interpreter paths for arm64: omnibus binaries are linked against the system Ubuntu glibc
+# (interpreter /lib/ld-linux-aarch64.so.1), which is not present in build containers using the
+# stapel volume. Patch every arm64 ELF binary to use /.werf/stapel/lib/ld-linux-aarch64.so.1,
+# and copy the system linker there so it is accessible via the volume mount.
+RUN if [ "$TARGETARCH" = "arm64" ]; then \
+  apt-get install -y patchelf && \
+  cp /lib/aarch64-linux-gnu/ld-linux-aarch64.so.1 $TOOLS/lib/ld-linux-aarch64.so.1 && \
+  find $TOOLS/embedded/bin $TOOLS/bin $TOOLS/embedded/sbin $TOOLS/sbin $TOOLS/embedded/libexec -type f 2>/dev/null | while read f; do \
+  if file "$f" 2>/dev/null | grep -q 'ELF.*ARM aarch64.*dynamically linked'; then \
+  patchelf --set-interpreter $TOOLS/lib/ld-linux-aarch64.so.1 "$f" 2>/dev/null || true; \
+  fi; \
+  done; \
+  fi
+
 ENV PATH=/sbin:/usr/sbin:/usr/local/sbin:/bin:/usr/bin:/usr/local/bin
 ENV CC=/usr/bin/gcc
 ENV CXX=/usr/bin/g++
