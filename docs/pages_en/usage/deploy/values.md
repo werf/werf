@@ -512,22 +512,6 @@ image:
 
 {% endraw %}
 
-For backward compatibility, the full image path is also available in `$.Values.werf.image`:
-
-{% raw %}
-
-```
-image: {{ $.Values.werf.image.backend }}
-```
-
-{% endraw %}
-
-Output:
-
-```yaml
-image: example.org/apps/myapp:a243949601ddc3d4133c4d5269ba23ed58cb8b18bf2b64047f35abd2-1598024377816
-```
-
 Since `$.Values.global.werf` has global scope, `images` is available in all dependent charts. You can also use `export-values` to map individual image fields to the format expected by an external chart:
 
 ```yaml

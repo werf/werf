@@ -47,8 +47,7 @@ func GetServiceValues(ctx context.Context, projectName, repo string, imageInfoGe
 		},
 	}
 
-	// TODO(major): remove
-	werfLegacyInfo := map[string]interface{}{
+	legacyImageInfo := map[string]interface{}{
 		"image": map[string]interface{}{},
 		"tag":   map[string]interface{}{},
 	}
@@ -70,8 +69,8 @@ func GetServiceValues(ctx context.Context, projectName, repo string, imageInfoGe
 		werfInfo["is_stub"] = true
 		werfInfo["stub_image"] = stubImage
 		for _, name := range opts.StubImageNameList {
-			werfLegacyInfo["image"].(map[string]interface{})[name] = stubImage
-			werfLegacyInfo["tag"].(map[string]interface{})[name] = stubTag
+			legacyImageInfo["image"].(map[string]interface{})[name] = stubImage
+			legacyImageInfo["tag"].(map[string]interface{})[name] = stubTag
 			imagesInfo[name] = image.BuildStubImageValuesMap(repo, stubTag)
 		}
 	}
@@ -84,8 +83,8 @@ func GetServiceValues(ctx context.Context, projectName, repo string, imageInfoGe
 			werfInfo["is_nameless_image"] = true
 			werfInfo["nameless_image"] = imageName
 		} else {
-			werfLegacyInfo["image"].(map[string]interface{})[imageInfoGetter.GetWerfImageName()] = imageName
-			werfLegacyInfo["tag"].(map[string]interface{})[imageInfoGetter.GetWerfImageName()] = tag
+			legacyImageInfo["image"].(map[string]interface{})[imageInfoGetter.GetWerfImageName()] = imageName
+			legacyImageInfo["tag"].(map[string]interface{})[imageInfoGetter.GetWerfImageName()] = tag
 
 			imageDetails, err := image.BuildImageValuesMap(imageInfoGetter)
 			if err != nil {
@@ -97,7 +96,7 @@ func GetServiceValues(ctx context.Context, projectName, repo string, imageInfoGe
 	}
 
 	res := map[string]interface{}{
-		"werf": lo.Assign(werfInfo, werfLegacyInfo), // TODO(major): remove
+		"werf": lo.Assign(werfInfo, legacyImageInfo),
 		"global": map[string]interface{}{
 			"werf": lo.Assign(werfInfo, map[string]interface{}{
 				"images": imagesInfo,
@@ -131,7 +130,7 @@ func GetBundleServiceValues(ctx context.Context, opts ServiceValuesOptions) (map
 	}
 
 	res := map[string]interface{}{
-		"werf": werfInfo, // TODO(major): remove
+		"werf": werfInfo,
 		"global": map[string]interface{}{
 			"werf": werfInfo,
 		},
