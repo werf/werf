@@ -314,7 +314,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 	})
 
 	DescribeTable("cleanupWerfImages",
-		func(ctx context.Context, vu volumeutils.VolumeUsage, imgList image.ImagesList, vuStub volumeutils.VolumeUsage, rmiRefs []string, expectedReport cleanupReport) {
+		func(ctx context.Context, vu volumeutils.VolumeUsage, imgList image.ImagesList, vuStub volumeutils.VolumeUsage, rmiRefs []string, rmiTimes int, expectedReport cleanupReport) {
 			ctx = logging.WithLogger(ctx)
 
 			backend.EXPECT().Images(ctx, buildImagesOptions(
@@ -331,7 +331,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 			stubs.StubFunc(&cleaner.werfGetWerfLastRunAtV1_1, time.Unix(1, 0), nil)
 
 			if len(rmiRefs) > 0 {
-				backend.EXPECT().Rmi(ctx, gomock.AnyOf(toAnySlice(rmiRefs)...), container_backend.RmiOpts{}).Return(nil).Times(3)
+				backend.EXPECT().Rmi(ctx, gomock.AnyOf(toAnySlice(rmiRefs)...), container_backend.RmiOpts{}).Return(nil).Times(rmiTimes)
 			}
 
 			stubs.StubFunc(&cleaner.volumeutilsGetVolumeUsageByPath, vuStub, nil)
@@ -341,7 +341,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 			Expect(report).To(Equal(expectedReport))
 		},
 		Entry(
-			"should call cleaner.volumeutilsGetVolumeUsageByPath() two times if after first cleanup iteration reclaimed space not enough",
+			"should stop cleanup when reclaimed space satisfies bytesToFree target",
 			volumeutils.VolumeUsage{
 				UsedBytes:  800,
 				TotalBytes: 1000,
@@ -355,9 +355,10 @@ var _ = Describe("LocalBackendCleaner", func() {
 				UsedBytes:  600,
 				TotalBytes: 1000,
 			},
-			[]string{"one-digest", "two-digest", "three-digest"},
+			[]string{"one-digest"},
+			1,
 			cleanupReport{
-				ItemsDeleted:   []string{"one", "two", "three"},
+				ItemsDeleted:   []string{"one"},
 				SpaceReclaimed: 200,
 			},
 		),
@@ -375,6 +376,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 				TotalBytes: 1000,
 			},
 			[]string{},
+			0,
 			cleanupReport{},
 		),
 	)

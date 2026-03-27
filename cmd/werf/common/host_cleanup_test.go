@@ -1,96 +1,100 @@
 package common
 
 import (
-	"testing"
-
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 	"github.com/spf13/cobra"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
-func TestSetupAllowedBackendStorageVolumeUsageMargin_DefaultKeepsNil(t *testing.T) {
-	t.Setenv("WERF_ALLOWED_BACKEND_STORAGE_VOLUME_USAGE_MARGIN", "")
-	t.Setenv("WERF_ALLOWED_DOCKER_STORAGE_VOLUME_USAGE_MARGIN", "")
+var _ = Describe("host cleanup CLI wiring", func() {
+	Describe("SetupAllowedBackendStorageVolumeUsageMargin", func() {
+		It("keeps nil by default", func() {
+			GinkgoT().Setenv("WERF_ALLOWED_BACKEND_STORAGE_VOLUME_USAGE_MARGIN", "")
+			GinkgoT().Setenv("WERF_ALLOWED_DOCKER_STORAGE_VOLUME_USAGE_MARGIN", "")
 
-	var cmdData CmdData
-	cmd := &cobra.Command{Use: "test"}
+			var cmdData CmdData
+			cmd := &cobra.Command{Use: "test"}
 
-	SetupAllowedBackendStorageVolumeUsageMargin(&cmdData, cmd)
+			SetupAllowedBackendStorageVolumeUsageMargin(&cmdData, cmd)
 
-	assert.Nil(t, cmdData.AllowedBackendStorageVolumeUsageMargin)
-	require.NotNil(t, cmdData.AllowedBackendStorageVolumeUsageMarginExplicit)
-	assert.False(t, *cmdData.AllowedBackendStorageVolumeUsageMarginExplicit)
-}
+			Expect(cmdData.AllowedBackendStorageVolumeUsageMargin).To(BeNil())
+			Expect(cmdData.AllowedBackendStorageVolumeUsageMarginExplicit).NotTo(BeNil())
+			Expect(*cmdData.AllowedBackendStorageVolumeUsageMarginExplicit).To(BeFalse())
+		})
 
-func TestSetupAllowedBackendStorageVolumeUsageMargin_EnvMakesValueExplicit(t *testing.T) {
-	t.Setenv("WERF_ALLOWED_BACKEND_STORAGE_VOLUME_USAGE_MARGIN", "2GB")
-	t.Setenv("WERF_ALLOWED_DOCKER_STORAGE_VOLUME_USAGE_MARGIN", "")
+		It("marks env value as explicit", func() {
+			GinkgoT().Setenv("WERF_ALLOWED_BACKEND_STORAGE_VOLUME_USAGE_MARGIN", "2GB")
+			GinkgoT().Setenv("WERF_ALLOWED_DOCKER_STORAGE_VOLUME_USAGE_MARGIN", "")
 
-	var cmdData CmdData
-	cmd := &cobra.Command{Use: "test"}
+			var cmdData CmdData
+			cmd := &cobra.Command{Use: "test"}
 
-	SetupAllowedBackendStorageVolumeUsageMargin(&cmdData, cmd)
+			SetupAllowedBackendStorageVolumeUsageMargin(&cmdData, cmd)
 
-	require.NotNil(t, cmdData.AllowedBackendStorageVolumeUsageMargin)
-	require.NotNil(t, cmdData.AllowedBackendStorageVolumeUsageMarginExplicit)
-	assert.True(t, *cmdData.AllowedBackendStorageVolumeUsageMarginExplicit)
-	assert.Equal(t, "2000000000B", cmdData.AllowedBackendStorageVolumeUsageMargin.FormatCLIValue())
-}
+			Expect(cmdData.AllowedBackendStorageVolumeUsageMargin).NotTo(BeNil())
+			Expect(cmdData.AllowedBackendStorageVolumeUsageMarginExplicit).NotTo(BeNil())
+			Expect(*cmdData.AllowedBackendStorageVolumeUsageMarginExplicit).To(BeTrue())
+			Expect(cmdData.AllowedBackendStorageVolumeUsageMargin.FormatCLIValue()).To(Equal("2000000000B"))
+		})
 
-func TestSetupAllowedBackendStorageVolumeUsageMargin_FlagMakesValueExplicit(t *testing.T) {
-	t.Setenv("WERF_ALLOWED_BACKEND_STORAGE_VOLUME_USAGE_MARGIN", "")
-	t.Setenv("WERF_ALLOWED_DOCKER_STORAGE_VOLUME_USAGE_MARGIN", "")
+		It("marks flag value as explicit", func() {
+			GinkgoT().Setenv("WERF_ALLOWED_BACKEND_STORAGE_VOLUME_USAGE_MARGIN", "")
+			GinkgoT().Setenv("WERF_ALLOWED_DOCKER_STORAGE_VOLUME_USAGE_MARGIN", "")
 
-	var cmdData CmdData
-	cmd := &cobra.Command{Use: "test"}
+			var cmdData CmdData
+			cmd := &cobra.Command{Use: "test"}
 
-	SetupAllowedBackendStorageVolumeUsageMargin(&cmdData, cmd)
+			SetupAllowedBackendStorageVolumeUsageMargin(&cmdData, cmd)
 
-	require.NoError(t, cmd.Flags().Parse([]string{"--allowed-backend-storage-volume-usage-margin=2GB"}))
-	require.NotNil(t, cmdData.AllowedBackendStorageVolumeUsageMargin)
-	require.NotNil(t, cmdData.AllowedBackendStorageVolumeUsageMarginExplicit)
-	assert.True(t, *cmdData.AllowedBackendStorageVolumeUsageMarginExplicit)
-	assert.Equal(t, "2000000000B", cmdData.AllowedBackendStorageVolumeUsageMargin.FormatCLIValue())
-}
+			Expect(cmd.Flags().Parse([]string{"--allowed-backend-storage-volume-usage-margin=2GB"})).To(Succeed())
+			Expect(cmdData.AllowedBackendStorageVolumeUsageMargin).NotTo(BeNil())
+			Expect(cmdData.AllowedBackendStorageVolumeUsageMarginExplicit).NotTo(BeNil())
+			Expect(*cmdData.AllowedBackendStorageVolumeUsageMarginExplicit).To(BeTrue())
+			Expect(cmdData.AllowedBackendStorageVolumeUsageMargin.FormatCLIValue()).To(Equal("2000000000B"))
+		})
+	})
 
-func TestSetupAllowedLocalCacheVolumeUsageMargin_DefaultKeepsNil(t *testing.T) {
-	t.Setenv("WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE_MARGIN", "")
+	Describe("SetupAllowedLocalCacheVolumeUsageMargin", func() {
+		It("keeps nil by default", func() {
+			GinkgoT().Setenv("WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE_MARGIN", "")
 
-	var cmdData CmdData
-	cmd := &cobra.Command{Use: "test"}
+			var cmdData CmdData
+			cmd := &cobra.Command{Use: "test"}
 
-	SetupAllowedLocalCacheVolumeUsageMargin(&cmdData, cmd)
+			SetupAllowedLocalCacheVolumeUsageMargin(&cmdData, cmd)
 
-	assert.Nil(t, cmdData.AllowedLocalCacheVolumeUsageMargin)
-	require.NotNil(t, cmdData.AllowedLocalCacheVolumeUsageMarginExplicit)
-	assert.False(t, *cmdData.AllowedLocalCacheVolumeUsageMarginExplicit)
-}
+			Expect(cmdData.AllowedLocalCacheVolumeUsageMargin).To(BeNil())
+			Expect(cmdData.AllowedLocalCacheVolumeUsageMarginExplicit).NotTo(BeNil())
+			Expect(*cmdData.AllowedLocalCacheVolumeUsageMarginExplicit).To(BeFalse())
+		})
 
-func TestSetupAllowedLocalCacheVolumeUsageMargin_EnvMakesValueExplicit(t *testing.T) {
-	t.Setenv("WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE_MARGIN", "2GB")
+		It("marks env value as explicit", func() {
+			GinkgoT().Setenv("WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE_MARGIN", "2GB")
 
-	var cmdData CmdData
-	cmd := &cobra.Command{Use: "test"}
+			var cmdData CmdData
+			cmd := &cobra.Command{Use: "test"}
 
-	SetupAllowedLocalCacheVolumeUsageMargin(&cmdData, cmd)
+			SetupAllowedLocalCacheVolumeUsageMargin(&cmdData, cmd)
 
-	require.NotNil(t, cmdData.AllowedLocalCacheVolumeUsageMargin)
-	require.NotNil(t, cmdData.AllowedLocalCacheVolumeUsageMarginExplicit)
-	assert.True(t, *cmdData.AllowedLocalCacheVolumeUsageMarginExplicit)
-	assert.Equal(t, "2000000000B", cmdData.AllowedLocalCacheVolumeUsageMargin.FormatCLIValue())
-}
+			Expect(cmdData.AllowedLocalCacheVolumeUsageMargin).NotTo(BeNil())
+			Expect(cmdData.AllowedLocalCacheVolumeUsageMarginExplicit).NotTo(BeNil())
+			Expect(*cmdData.AllowedLocalCacheVolumeUsageMarginExplicit).To(BeTrue())
+			Expect(cmdData.AllowedLocalCacheVolumeUsageMargin.FormatCLIValue()).To(Equal("2000000000B"))
+		})
 
-func TestSetupAllowedLocalCacheVolumeUsageMargin_FlagMakesValueExplicit(t *testing.T) {
-	t.Setenv("WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE_MARGIN", "")
+		It("marks flag value as explicit", func() {
+			GinkgoT().Setenv("WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE_MARGIN", "")
 
-	var cmdData CmdData
-	cmd := &cobra.Command{Use: "test"}
+			var cmdData CmdData
+			cmd := &cobra.Command{Use: "test"}
 
-	SetupAllowedLocalCacheVolumeUsageMargin(&cmdData, cmd)
+			SetupAllowedLocalCacheVolumeUsageMargin(&cmdData, cmd)
 
-	require.NoError(t, cmd.Flags().Parse([]string{"--allowed-local-cache-volume-usage-margin=2GB"}))
-	require.NotNil(t, cmdData.AllowedLocalCacheVolumeUsageMargin)
-	require.NotNil(t, cmdData.AllowedLocalCacheVolumeUsageMarginExplicit)
-	assert.True(t, *cmdData.AllowedLocalCacheVolumeUsageMarginExplicit)
-	assert.Equal(t, "2000000000B", cmdData.AllowedLocalCacheVolumeUsageMargin.FormatCLIValue())
-}
+			Expect(cmd.Flags().Parse([]string{"--allowed-local-cache-volume-usage-margin=2GB"})).To(Succeed())
+			Expect(cmdData.AllowedLocalCacheVolumeUsageMargin).NotTo(BeNil())
+			Expect(cmdData.AllowedLocalCacheVolumeUsageMarginExplicit).NotTo(BeNil())
+			Expect(*cmdData.AllowedLocalCacheVolumeUsageMarginExplicit).To(BeTrue())
+			Expect(cmdData.AllowedLocalCacheVolumeUsageMargin.FormatCLIValue()).To(Equal("2000000000B"))
+		})
+	})
+})

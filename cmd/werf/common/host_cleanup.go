@@ -74,6 +74,8 @@ func (f *volumeUsageThresholdFlag) Type() string {
 	return "volume-usage"
 }
 
+// Double pointer is needed because the helper initializes the caller field itself
+// and keeps one shared target for the main flag and its aliases.
 func initVolumeUsageThresholdTarget(target **thresholdpkg.Threshold, defaultValue string) {
 	if *target != nil {
 		return

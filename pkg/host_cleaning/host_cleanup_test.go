@@ -1,97 +1,85 @@
 package host_cleaning
 
 import (
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 )
 
-func TestResolveBackendStorageVolumeUsageThresholds_DefaultPercentageMargin(t *testing.T) {
-	t.Parallel()
+var _ = Describe("host cleanup threshold resolving", func() {
+	Describe("resolveBackendStorageVolumeUsageThresholds", func() {
+		It("uses default percentage margin", func() {
+			threshold, margin, err := resolveBackendStorageVolumeUsageThresholds(loToPtr(NewVolumeUsageThresholdPercentage(70)), nil, false)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(threshold).To(Equal(NewVolumeUsageThresholdPercentage(70)))
+			Expect(margin).To(Equal(DefaultAllowedBackendStorageVolumeUsageMarginThreshold()))
+		})
 
-	threshold, margin, err := resolveBackendStorageVolumeUsageThresholds(loToPtr(NewVolumeUsageThresholdPercentage(70)), nil, false)
-	require.NoError(t, err)
-	assert.Equal(t, NewVolumeUsageThresholdPercentage(70), threshold)
-	assert.Equal(t, DefaultAllowedBackendStorageVolumeUsageMarginThreshold(), margin)
-}
+		It("uses zero bytes margin for implicit bytes thresholds", func() {
+			threshold, margin, err := resolveBackendStorageVolumeUsageThresholds(loToPtr(NewVolumeUsageThresholdBytes(10_000_000_000)), nil, false)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(threshold).To(Equal(NewVolumeUsageThresholdBytes(10_000_000_000)))
+			Expect(margin).To(Equal(NewVolumeUsageThresholdBytes(0)))
+		})
 
-func TestResolveBackendStorageVolumeUsageThresholds_DefaultBytesMarginBecomesZeroBytes(t *testing.T) {
-	t.Parallel()
+		It("returns an error for explicitly mixed formats", func() {
+			_, _, err := resolveBackendStorageVolumeUsageThresholds(
+				loToPtr(NewVolumeUsageThresholdBytes(10_000_000_000)),
+				loToPtr(NewVolumeUsageThresholdPercentage(5)),
+				true,
+			)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("must use the same format"))
+		})
 
-	threshold, margin, err := resolveBackendStorageVolumeUsageThresholds(loToPtr(NewVolumeUsageThresholdBytes(10_000_000_000)), nil, false)
-	require.NoError(t, err)
-	assert.Equal(t, NewVolumeUsageThresholdBytes(10_000_000_000), threshold)
-	assert.Equal(t, NewVolumeUsageThresholdBytes(0), margin)
-}
+		It("uses threshold-type default when mixed margin was not explicit", func() {
+			threshold, margin, err := resolveBackendStorageVolumeUsageThresholds(
+				loToPtr(NewVolumeUsageThresholdBytes(10_000_000_000)),
+				loToPtr(NewVolumeUsageThresholdPercentage(5)),
+				false,
+			)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(threshold).To(Equal(NewVolumeUsageThresholdBytes(10_000_000_000)))
+			Expect(margin).To(Equal(NewVolumeUsageThresholdBytes(0)))
+		})
 
-func TestResolveBackendStorageVolumeUsageThresholds_ExplicitMixedFormatsReturnError(t *testing.T) {
-	t.Parallel()
+		It("passes explicit same-format values", func() {
+			threshold, margin, err := resolveBackendStorageVolumeUsageThresholds(
+				loToPtr(NewVolumeUsageThresholdBytes(10_000_000_000)),
+				loToPtr(NewVolumeUsageThresholdBytes(2_000_000_000)),
+				true,
+			)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(threshold).To(Equal(NewVolumeUsageThresholdBytes(10_000_000_000)))
+			Expect(margin).To(Equal(NewVolumeUsageThresholdBytes(2_000_000_000)))
+		})
+	})
 
-	_, _, err := resolveBackendStorageVolumeUsageThresholds(
-		loToPtr(NewVolumeUsageThresholdBytes(10_000_000_000)),
-		loToPtr(NewVolumeUsageThresholdPercentage(5)),
-		true,
-	)
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "must use the same format")
-}
+	Describe("resolveLocalCacheVolumeUsageThresholds", func() {
+		It("uses default percentage margin", func() {
+			threshold, margin, err := resolveLocalCacheVolumeUsageThresholds(loToPtr(NewVolumeUsageThresholdPercentage(70)), nil, false)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(threshold).To(Equal(NewVolumeUsageThresholdPercentage(70)))
+			Expect(margin).To(Equal(DefaultAllowedLocalCacheVolumeUsageMarginThreshold()))
+		})
 
-func TestResolveBackendStorageVolumeUsageThresholds_ImplicitMixedFormatsUseDefaultForThresholdType(t *testing.T) {
-	t.Parallel()
+		It("uses zero bytes margin for implicit bytes thresholds", func() {
+			threshold, margin, err := resolveLocalCacheVolumeUsageThresholds(loToPtr(NewVolumeUsageThresholdBytes(10_000_000_000)), nil, false)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(threshold).To(Equal(NewVolumeUsageThresholdBytes(10_000_000_000)))
+			Expect(margin).To(Equal(NewVolumeUsageThresholdBytes(0)))
+		})
 
-	threshold, margin, err := resolveBackendStorageVolumeUsageThresholds(
-		loToPtr(NewVolumeUsageThresholdBytes(10_000_000_000)),
-		loToPtr(NewVolumeUsageThresholdPercentage(5)),
-		false,
-	)
-	require.NoError(t, err)
-	assert.Equal(t, NewVolumeUsageThresholdBytes(10_000_000_000), threshold)
-	assert.Equal(t, NewVolumeUsageThresholdBytes(0), margin)
-}
-
-func TestResolveBackendStorageVolumeUsageThresholds_ExplicitSameFormatsPass(t *testing.T) {
-	t.Parallel()
-
-	threshold, margin, err := resolveBackendStorageVolumeUsageThresholds(
-		loToPtr(NewVolumeUsageThresholdBytes(10_000_000_000)),
-		loToPtr(NewVolumeUsageThresholdBytes(2_000_000_000)),
-		true,
-	)
-	require.NoError(t, err)
-	assert.Equal(t, NewVolumeUsageThresholdBytes(10_000_000_000), threshold)
-	assert.Equal(t, NewVolumeUsageThresholdBytes(2_000_000_000), margin)
-}
-
-func TestResolveLocalCacheVolumeUsageThresholds_DefaultPercentageMargin(t *testing.T) {
-	t.Parallel()
-
-	threshold, margin, err := resolveLocalCacheVolumeUsageThresholds(loToPtr(NewVolumeUsageThresholdPercentage(70)), nil, false)
-	require.NoError(t, err)
-	assert.Equal(t, NewVolumeUsageThresholdPercentage(70), threshold)
-	assert.Equal(t, DefaultAllowedLocalCacheVolumeUsageMarginThreshold(), margin)
-}
-
-func TestResolveLocalCacheVolumeUsageThresholds_DefaultBytesMarginBecomesZeroBytes(t *testing.T) {
-	t.Parallel()
-
-	threshold, margin, err := resolveLocalCacheVolumeUsageThresholds(loToPtr(NewVolumeUsageThresholdBytes(10_000_000_000)), nil, false)
-	require.NoError(t, err)
-	assert.Equal(t, NewVolumeUsageThresholdBytes(10_000_000_000), threshold)
-	assert.Equal(t, NewVolumeUsageThresholdBytes(0), margin)
-}
-
-func TestResolveLocalCacheVolumeUsageThresholds_ExplicitMixedFormatsReturnError(t *testing.T) {
-	t.Parallel()
-
-	_, _, err := resolveLocalCacheVolumeUsageThresholds(
-		loToPtr(NewVolumeUsageThresholdBytes(10_000_000_000)),
-		loToPtr(NewVolumeUsageThresholdPercentage(5)),
-		true,
-	)
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "--allowed-local-cache-volume-usage")
-}
+		It("returns an error for explicitly mixed formats", func() {
+			_, _, err := resolveLocalCacheVolumeUsageThresholds(
+				loToPtr(NewVolumeUsageThresholdBytes(10_000_000_000)),
+				loToPtr(NewVolumeUsageThresholdPercentage(5)),
+				true,
+			)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("--allowed-local-cache-volume-usage"))
+		})
+	})
+})
 
 func loToPtr[T any](v T) *T {
 	return &v

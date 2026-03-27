@@ -20,6 +20,9 @@ func (vu VolumeUsage) Percentage() float64 {
 }
 
 func (vu VolumeUsage) FreeBytes() uint64 {
+	if vu.UsedBytes >= vu.TotalBytes {
+		return 0
+	}
 	return vu.TotalBytes - vu.UsedBytes
 }
 

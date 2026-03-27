@@ -378,7 +378,7 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 		logboek.Context(ctx).LogBlock("Check storage").Do(func() {
 			logboek.Context(ctx).LogF("Total freed space: %s\n", utils.RedF("%s", humanize.Bytes(vuBefore.UsedBytes-vu.UsedBytes)))
 			logboek.Context(ctx).LogF("Volume usage: %s / %s\n", humanize.Bytes(vu.UsedBytes), humanize.Bytes(vu.TotalBytes))
-			logExceededVolumeUsageThreshold(ctx, vu, options.AllowedStorageVolumeUsageThreshold)
+			logVolumeUsageThresholdCheck(ctx, vu, options.AllowedStorageVolumeUsageThreshold)
 			logTargetVolumeUsageThreshold(ctx, options.AllowedStorageVolumeUsageThreshold, options.AllowedStorageVolumeUsageMarginThreshold, bytesToFree)
 		})
 
@@ -404,6 +404,9 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 	}
 
 	// Step 4. Remove werf images
+	// Recompute bytesToFree from the current vu after Steps 1–3 may have already reclaimed space.
+	bytesToFree = targetBytesToFree(vu, options.AllowedStorageVolumeUsageThreshold, options.AllowedStorageVolumeUsageMarginThreshold)
+
 	err = logboek.Context(ctx).LogBlock("Cleanup werf images").DoError(func() error {
 		reportWerfImages, err := cleaner.cleanupWerfImages(ctx, options, vu, bytesToFree)
 		if err != nil {
@@ -421,14 +424,20 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 		return fmt.Errorf("unable to cleanup werf images: %w", err)
 	}
 
+	remainingBytesToFree := targetBytesToFree(vu, options.AllowedStorageVolumeUsageThreshold, options.AllowedStorageVolumeUsageMarginThreshold)
+
 	logboek.Context(ctx).LogBlock("Check storage").Do(func() {
 		logboek.Context(ctx).LogF("Total freed space: %s\n", utils.RedF("%s", humanize.Bytes(vuBefore.UsedBytes-vu.UsedBytes)))
 		logboek.Context(ctx).LogF("Volume usage: %s / %s\n", humanize.Bytes(vu.UsedBytes), humanize.Bytes(vu.TotalBytes))
-		logExceededVolumeUsageThreshold(ctx, vu, options.AllowedStorageVolumeUsageThreshold)
-		logTargetVolumeUsageThreshold(ctx, options.AllowedStorageVolumeUsageThreshold, options.AllowedStorageVolumeUsageMarginThreshold, bytesToFree)
+		if exceedsVolumeUsageThreshold(vu, options.AllowedStorageVolumeUsageThreshold) {
+			logExceededVolumeUsageThreshold(ctx, vu, options.AllowedStorageVolumeUsageThreshold)
+		} else {
+			logVolumeUsageThresholdCheck(ctx, vu, options.AllowedStorageVolumeUsageThreshold)
+		}
+		logTargetVolumeUsageThreshold(ctx, options.AllowedStorageVolumeUsageThreshold, options.AllowedStorageVolumeUsageMarginThreshold, remainingBytesToFree)
 	})
 
-	if exceedsVolumeUsageThreshold(vu, options.AllowedStorageVolumeUsageThreshold) {
+	if remainingBytesToFree > 0 {
 		logboek.Context(ctx).Info().LogOptionalLn()
 		logboek.Context(ctx).Info().LogF("NOTE: Detected high %s storage volume usage, while no werf images available to cleanup!\n", cleaner.BackendName())
 		logboek.Context(ctx).Info().LogF("NOTE:\n")
@@ -600,9 +609,14 @@ func (cleaner *LocalBackendCleaner) cleanupWerfImages(ctx context.Context, optio
 			return report, fmt.Errorf("error getting volume usage by path %q: %w", options.StoragePath, err)
 		}
 
-		report.SpaceReclaimed += vu.UsedBytes - vuAfter.UsedBytes
+		iterationSpaceReclaimed := vu.UsedBytes - vuAfter.UsedBytes
+		report.SpaceReclaimed += iterationSpaceReclaimed
 		vu = vuAfter
-		bytesToFree = max(bytesToFree-report.SpaceReclaimed, 0)
+		if iterationSpaceReclaimed >= bytesToFree {
+			bytesToFree = 0
+		} else {
+			bytesToFree -= iterationSpaceReclaimed
+		}
 	}
 
 	return report.Normalize(), nil
