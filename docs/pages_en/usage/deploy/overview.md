@@ -109,7 +109,7 @@ spec:
         app: backend
     spec:
       containers:
-      - image: {{ $.Values.werf.image.backend }}
+      - image: {{ $.Values.global.werf.images.backend.ref_tag }}
 ```
 
 {% endraw %}
