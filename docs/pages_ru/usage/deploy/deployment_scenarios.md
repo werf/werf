@@ -33,29 +33,7 @@ werf build --save-build-report --build-report-path .werf-build-report.json --rep
 werf converge --use-build-report --build-report-path .werf-build-report.json --repo example.org/mycompany/myapp
 ```
 
-Формат отчёта определяется автоматически по расширению файла (`.json` → JSON, `.env` → envfile).
-
-### Пример для GitLab CI
-
-Формат envfile нативно интегрируется с [dotenv-артефактами GitLab CI](https://docs.gitlab.com/ci/yaml/artifacts_reports/#artifactsreportsdotenv):
-
-```yaml
-build:
-  stage: build
-  script:
-    - werf build --save-build-report --build-report-path .werf-build-report.env --repo $WERF_REPO
-  artifacts:
-    reports:
-      dotenv: .werf-build-report.env
-
-deploy:
-  stage: deploy
-  script:
-    - werf converge --use-build-report --build-report-path .werf-build-report.env --repo $WERF_REPO
-  needs: [build]
-```
-
-Для других CI-систем передавайте файл отчёта как обычный артефакт и указывайте путь через `--build-report-path`.
+Формат отчёта определяется автоматически по расширению файла (`.json`, `.env`). Формат envfile удобен для CI-систем с поддержкой dotenv-артефактов — задание сборки сохраняет отчёт, а задание развертывания автоматически получает переменные с именами образов.
 
 ## Развертывание с использованием произвольных тегов образов
 

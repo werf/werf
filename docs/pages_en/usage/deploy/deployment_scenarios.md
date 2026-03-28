@@ -33,29 +33,7 @@ werf build --save-build-report --build-report-path .werf-build-report.json --rep
 werf converge --use-build-report --build-report-path .werf-build-report.json --repo example.org/mycompany/myapp
 ```
 
-The report format is auto-detected by file extension (`.json` → JSON, `.env` → envfile).
-
-### GitLab CI example
-
-The envfile format integrates natively with [GitLab CI dotenv artifacts](https://docs.gitlab.com/ci/yaml/artifacts_reports/#artifactsreportsdotenv):
-
-```yaml
-build:
-  stage: build
-  script:
-    - werf build --save-build-report --build-report-path .werf-build-report.env --repo $WERF_REPO
-  artifacts:
-    reports:
-      dotenv: .werf-build-report.env
-
-deploy:
-  stage: deploy
-  script:
-    - werf converge --use-build-report --build-report-path .werf-build-report.env --repo $WERF_REPO
-  needs: [build]
-```
-
-For other CI systems, pass the report file as a regular artifact and specify the path with `--build-report-path`.
+The report format is auto-detected by file extension (`.json`, `.env`). The envfile format is convenient for CI systems that support dotenv artifacts — the build job saves the report, and the deploy job picks up image variables automatically.
 
 ## Deploying using custom image tags
 
