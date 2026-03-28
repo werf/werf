@@ -33,6 +33,7 @@ var cmdData struct {
 	OutputFilePath      string
 	Shell               string
 	AllowRegistryLogin  bool
+	UseDockerAuthConfig bool
 }
 
 var commonCmdData common.CmdData
@@ -80,6 +81,7 @@ Currently supported only GitLab (gitlab) and GitHub (github) CI systems`,
 	commonCmdData.SetupAllowIncludesUpdate(cmd)
 
 	cmd.Flags().BoolVarP(&cmdData.AllowRegistryLogin, "login-to-registry", "", util.GetBoolEnvironmentDefaultTrue("WERF_LOGIN_TO_REGISTRY"), "Log in to CI-specific registry automatically if possible (default $WERF_LOGIN_TO_REGISTRY).")
+	cmd.Flags().BoolVarP(&cmdData.UseDockerAuthConfig, "use-docker-auth-config", "", util.GetBoolEnvironmentDefaultFalse("WERF_USE_DOCKER_AUTH_CONFIG"), "Generate Docker config from DOCKER_AUTH_CONFIG environment variable instead of copying current Docker config (default $WERF_USE_DOCKER_AUTH_CONFIG).")
 	cmd.Flags().BoolVarP(&cmdData.AsFile, "as-file", "", util.GetBoolEnvironmentDefaultFalse("WERF_AS_FILE"), "Create the script and print the path for sourcing (default $WERF_AS_FILE).")
 	cmd.Flags().BoolVarP(&cmdData.AsEnvFile, "as-env-file", "", util.GetBoolEnvironmentDefaultFalse("WERF_AS_ENV_FILE"), "Create the .env file and print the path for sourcing (default $WERF_AS_ENV_FILE).")
 	cmd.Flags().StringVarP(&cmdData.OutputFilePath, "output-file-path", "o", os.Getenv("WERF_OUTPUT_FILE_PATH"), "Write to custom file (default $WERF_OUTPUT_FILE_PATH).")
@@ -408,6 +410,20 @@ func generateGithubDefaultRepo(ctx context.Context, defaultRegistry, ciGithubDoc
 }
 
 func generateSessionDockerConfigDir(ctx context.Context) (string, error) {
+	if cmdData.UseDockerAuthConfig {
+		authConfig := os.Getenv("DOCKER_AUTH_CONFIG")
+		if authConfig == "" {
+			return "", fmt.Errorf("DOCKER_AUTH_CONFIG environment variable is not set, but --use-docker-auth-config flag is enabled")
+		}
+
+		dockerConfigDir, err := tmp_manager.CreateDockerConfigDirFromAuthConfig(ctx, authConfig)
+		if err != nil {
+			return "", fmt.Errorf("unable to create tmp docker config from DOCKER_AUTH_CONFIG: %w", err)
+		}
+
+		return dockerConfigDir, nil
+	}
+
 	dockerConfigPath := *commonCmdData.DockerConfig
 	if *commonCmdData.DockerConfig == "" {
 		dockerConfigPath = filepath.Join(os.Getenv("HOME"), ".docker")
