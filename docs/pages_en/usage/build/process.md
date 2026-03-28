@@ -565,7 +565,7 @@ Use `--save-build-report` to save a build report to a file:
 werf build --save-build-report --repo REPO
 ```
 
-By default, the report is saved to `.werf-build-report.json` in JSON format. Use `--build-report-path` to specify a custom path — the format is auto-detected by the file extension (`.json` → JSON, `.env` → envfile):
+By default, the report is saved to `.werf-build-report.json` in JSON format. Use `--build-report-path` to specify a custom path — the format is auto-detected by the file extension (`.json`, `.env`):
 
 ```shell
 werf build --save-build-report --build-report-path .werf-build-report.env --repo REPO

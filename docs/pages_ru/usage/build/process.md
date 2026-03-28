@@ -565,7 +565,7 @@ werf converge --repo registry.mydomain.org/repo --synchronization :local
 werf build --save-build-report --repo REPO
 ```
 
-По умолчанию отчёт сохраняется в файл `.werf-build-report.json` в формате JSON. С помощью `--build-report-path` можно указать произвольный путь — формат определяется автоматически по расширению файла (`.json` → JSON, `.env` → envfile):
+По умолчанию отчёт сохраняется в файл `.werf-build-report.json` в формате JSON. С помощью `--build-report-path` можно указать произвольный путь — формат определяется автоматически по расширению файла (`.json`, `.env`):
 
 ```shell
 werf build --save-build-report --build-report-path .werf-build-report.env --repo REPO
@@ -712,7 +712,7 @@ WERF_FRONTEND_FINAL=true
 
 Флаг `--use-build-report` позволяет пропустить сборку и прочитать данные об образах из ранее сохранённого отчёта. Путь и формат отчёта задаются через `--build-report-path` (формат определяется автоматически по расширению файла). Поддерживаются форматы JSON и envfile.
 
-Флаг `--use-build-report` поддерживается всеми командами, использующими результаты сборки.
+Флаг `--use-build-report` поддерживается всеми командами, в рамках которых выполняется сборка.
 
 Пример двухшагового CI-пайплайна — сборка в одном задании, деплой в другом:
 
