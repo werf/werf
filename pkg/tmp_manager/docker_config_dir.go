@@ -2,6 +2,7 @@ package tmp_manager
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -70,6 +71,31 @@ func CreateDockerConfigDir(ctx context.Context, fromDockerConfig string) (string
 
 	if err = copy.Copy(fromDockerConfig, newDir, options); err != nil {
 		return "", fmt.Errorf("unable to copy %q to %q: %w", fromDockerConfig, newDir, err)
+	}
+
+	return newDir, nil
+}
+
+func CreateDockerConfigDirFromAuthConfig(ctx context.Context, authConfigJSON string) (string, error) {
+	newDir, err := newTmpDir(dockerConfigDirPrefix)
+	if err != nil {
+		return "", err
+	}
+
+	if err = registrator.queueRegistration(ctx, newDir, filepath.Join(getCreatedTmpDirs(), dockerConfigsServiceDir)); err != nil {
+		return "", fmt.Errorf("unable to queue GC registration: %w", err)
+	}
+
+	if err = os.Chmod(newDir, 0o700); err != nil {
+		return "", err
+	}
+
+	if !json.Valid([]byte(authConfigJSON)) {
+		return "", fmt.Errorf("invalid docker auth config JSON")
+	}
+
+	if err = os.WriteFile(filepath.Join(newDir, "config.json"), []byte(authConfigJSON), 0o600); err != nil {
+		return "", fmt.Errorf("unable to write config.json: %w", err)
 	}
 
 	return newDir, nil
