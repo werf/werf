@@ -1,13 +1,16 @@
 package build
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/werf/common-go/pkg/util"
@@ -117,9 +120,30 @@ func (report *ImagesReport) ToEnvFileData() []byte {
 	for img, record := range report.Images {
 		buf.WriteString(GenerateImageEnv(img, record.DockerImageName))
 		buf.WriteString("\n")
+
+		prefix := imageEnvPrefix(img)
+		buf.WriteString(fmt.Sprintf("%sDOCKER_IMAGE_ID=%s\n", prefix, record.DockerImageID))
+		buf.WriteString(fmt.Sprintf("%sDOCKER_IMAGE_DIGEST=%s\n", prefix, record.DockerImageDigest))
+		buf.WriteString(fmt.Sprintf("%sDOCKER_REPO=%s\n", prefix, record.DockerRepo))
+		buf.WriteString(fmt.Sprintf("%sDOCKER_TAG=%s\n", prefix, record.DockerTag))
+		buf.WriteString(fmt.Sprintf("%sWERF_IMAGE_NAME=%s\n", prefix, record.WerfImageName))
+		buf.WriteString(fmt.Sprintf("%sFINAL=%t\n", prefix, record.Final))
 	}
 
 	return buf.Bytes()
+}
+
+func imageEnvPrefix(werfImageName string) string {
+	if werfImageName == "" {
+		return "WERF_"
+	}
+
+	normalizedName := strings.ToUpper(werfImageName)
+	for _, l := range []string{"/", "-", "."} {
+		normalizedName = strings.ReplaceAll(normalizedName, l, "_")
+	}
+
+	return fmt.Sprintf("WERF_%s_", normalizedName)
 }
 
 func (report *ImagesReport) sendTelemetry(ctx context.Context) {
@@ -344,7 +368,13 @@ func LoadBuildReportFromFile(ctx context.Context, path string) (*ImagesReport, e
 	}
 	defer file.Close()
 
-	report, err := parseBuildReport(file)
+	var report *ImagesReport
+	switch filepath.Ext(path) {
+	case ".env":
+		report, err = parseEnvFileBuildReport(file)
+	default:
+		report, err = parseBuildReport(file)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse build report file %q: %w", path, err)
 	}
@@ -454,4 +484,56 @@ func (report *ImagesReport) ToImageInfoGetters(opts imagePkg.InfoGetterOptions) 
 	}
 
 	return infoGetters
+}
+
+func parseEnvFileBuildReport(reader io.Reader) (*ImagesReport, error) {
+	scanner := bufio.NewScanner(reader)
+	values := make(map[string]string)
+	lineNumber := 0
+
+	for scanner.Scan() {
+		lineNumber++
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+
+		parts := strings.SplitN(line, "=", 2)
+		if len(parts) != 2 {
+			return nil, fmt.Errorf("malformed env line %d: %q", lineNumber, line)
+		}
+		values[parts[0]] = parts[1]
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("unable to read env build report: %w", err)
+	}
+
+	report := NewImagesReport()
+	imagePrefixes := make(map[string]struct{})
+	for key := range values {
+		if strings.HasSuffix(key, "_DOCKER_IMAGE_NAME") {
+			prefix := strings.TrimSuffix(key, "DOCKER_IMAGE_NAME")
+			imagePrefixes[prefix] = struct{}{}
+		}
+	}
+
+	for prefix := range imagePrefixes {
+		record := ReportImageRecord{
+			WerfImageName:     values[prefix+"WERF_IMAGE_NAME"],
+			DockerImageName:   values[prefix+"DOCKER_IMAGE_NAME"],
+			DockerImageID:     values[prefix+"DOCKER_IMAGE_ID"],
+			DockerImageDigest: values[prefix+"DOCKER_IMAGE_DIGEST"],
+			DockerRepo:        values[prefix+"DOCKER_REPO"],
+			DockerTag:         values[prefix+"DOCKER_TAG"],
+		}
+
+		if finalValue, ok := values[prefix+"FINAL"]; ok {
+			record.Final = finalValue == "true"
+		}
+
+		report.Images[record.WerfImageName] = record
+	}
+
+	return report, nil
 }
