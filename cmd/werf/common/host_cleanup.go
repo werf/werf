@@ -39,13 +39,9 @@ func RunAutoHostCleanup(ctx context.Context, cmdData *CmdData, containerBackend 
 }
 
 type volumeUsageThresholdFlag struct {
-	value      *thresholdpkg.Threshold
-	onExplicit func()
-	afterSet   func(*thresholdpkg.Threshold)
-}
-
-func newVolumeUsageThresholdFlag(target *thresholdpkg.Threshold, onExplicit func(), afterSet func(*thresholdpkg.Threshold)) *volumeUsageThresholdFlag {
-	return &volumeUsageThresholdFlag{value: target, onExplicit: onExplicit, afterSet: afterSet}
+	value    *thresholdpkg.Threshold
+	explicit *bool
+	assign   **thresholdpkg.Threshold
 }
 
 func (f *volumeUsageThresholdFlag) String() string {
@@ -61,11 +57,11 @@ func (f *volumeUsageThresholdFlag) Set(value string) error {
 		return err
 	}
 	*f.value = threshold
-	if f.onExplicit != nil {
-		f.onExplicit()
+	if f.explicit != nil {
+		*f.explicit = true
 	}
-	if f.afterSet != nil {
-		f.afterSet(f.value)
+	if f.assign != nil {
+		*f.assign = f.value
 	}
 	return nil
 }
@@ -74,24 +70,19 @@ func (f *volumeUsageThresholdFlag) Type() string {
 	return "volume-usage"
 }
 
-// Double pointer is needed because the helper initializes the caller field itself
-// and keeps one shared target for the main flag and its aliases.
-func initVolumeUsageThresholdTarget(target **thresholdpkg.Threshold, defaultValue string) {
-	if *target != nil {
-		return
-	}
-
+func newVolumeUsageThreshold(defaultValue string) *thresholdpkg.Threshold {
 	parsedDefaultValue, err := thresholdpkg.Parse(defaultValue)
 	if err != nil {
 		panic(err)
 	}
 
-	*target = new(thresholdpkg.Threshold)
-	**target = parsedDefaultValue
+	t := new(thresholdpkg.Threshold)
+	*t = parsedDefaultValue
+	return t
 }
 
-func setupVolumeUsageThresholdFlag(flagSet *pflag.FlagSet, target *thresholdpkg.Threshold, onExplicit func(), afterSet func(*thresholdpkg.Threshold), paramName, defaultValue, usage string) {
-	flagSet.Var(newVolumeUsageThresholdFlag(target, onExplicit, afterSet), paramName, usage)
+func setupVolumeUsageThresholdFlag(flagSet *pflag.FlagSet, target *thresholdpkg.Threshold, explicit *bool, assign **thresholdpkg.Threshold, paramName, defaultValue, usage string) {
+	flagSet.Var(&volumeUsageThresholdFlag{value: target, explicit: explicit, assign: assign}, paramName, usage)
 
 	flag := flagSet.Lookup(paramName)
 	if flag == nil {
@@ -125,10 +116,12 @@ func SetupAllowedBackendStorageVolumeUsage(cmdData *CmdData, cmd *cobra.Command)
 
 	defaultValue := option.ValueOrDefault(firstEnvValue(aliases[0].EnvName, aliases[1].EnvName), host_cleaning.DefaultAllowedBackendStorageVolumeUsageThreshold().FormatCLIValue())
 
-	initVolumeUsageThresholdTarget(&cmdData.AllowedBackendStorageVolumeUsage, defaultValue)
+	if cmdData.AllowedBackendStorageVolumeUsage == nil {
+		cmdData.AllowedBackendStorageVolumeUsage = newVolumeUsageThreshold(defaultValue)
+	}
 
 	for _, alias := range aliases {
-		setupVolumeUsageThresholdFlag(cmd.Flags(), cmdData.AllowedBackendStorageVolumeUsage, nil, nil, alias.ParamName, defaultValue, fmt.Sprintf("Set the cleanup threshold for backend (Docker or Buildah) storage. Plain numbers define the maximum allowed usage percentage, while values with units define the minimum required free space, e.g. 70 or 10GB (default %s or $%s)", host_cleaning.DefaultAllowedBackendStorageVolumeUsageThreshold().String(), alias.EnvName))
+		setupVolumeUsageThresholdFlag(cmd.Flags(), cmdData.AllowedBackendStorageVolumeUsage, nil, &cmdData.AllowedBackendStorageVolumeUsage, alias.ParamName, defaultValue, fmt.Sprintf("Set the cleanup threshold for backend (Docker or Buildah) storage. Plain numbers define the maximum allowed usage percentage, while values with units define the minimum required free space, e.g. 70 or 10GB (default %s or $%s)", host_cleaning.DefaultAllowedBackendStorageVolumeUsageThreshold().String(), alias.EnvName))
 	}
 
 	if err := cmd.Flags().MarkHidden(aliases[1].ParamName); err != nil {
@@ -147,16 +140,18 @@ func SetupAllowedBackendStorageVolumeUsageMargin(cmdData *CmdData, cmd *cobra.Co
 
 	defaultValue := option.ValueOrDefault(firstEnvValue(aliases[0].EnvName, aliases[1].EnvName), host_cleaning.DefaultAllowedBackendStorageVolumeUsageMarginThreshold().FormatCLIValue())
 	marginEnvValue := firstEnvValue(aliases[0].EnvName, aliases[1].EnvName)
+
 	cmdData.AllowedBackendStorageVolumeUsageMarginExplicit = new(bool)
 	*cmdData.AllowedBackendStorageVolumeUsageMarginExplicit = marginEnvValue != ""
 
-	initVolumeUsageThresholdTarget(&cmdData.AllowedBackendStorageVolumeUsageMargin, defaultValue)
 	marginTarget := cmdData.AllowedBackendStorageVolumeUsageMargin
+	if marginTarget == nil {
+		marginTarget = newVolumeUsageThreshold(defaultValue)
+		cmdData.AllowedBackendStorageVolumeUsageMargin = marginTarget
+	}
 
 	for _, alias := range aliases {
-		setupVolumeUsageThresholdFlag(cmd.Flags(), marginTarget, func() { *cmdData.AllowedBackendStorageVolumeUsageMarginExplicit = true }, func(target *thresholdpkg.Threshold) {
-			cmdData.AllowedBackendStorageVolumeUsageMargin = target
-		}, alias.ParamName, defaultValue, fmt.Sprintf("Set the cleanup margin for backend (Docker or Buildah) storage. In percentage mode the margin is subtracted from the usage threshold, while in bytes mode it is added to the minimum required free space threshold, e.g. 5 or 2GB (default %s or $%s)", host_cleaning.DefaultAllowedBackendStorageVolumeUsageMarginThreshold().String(), alias.EnvName))
+		setupVolumeUsageThresholdFlag(cmd.Flags(), marginTarget, cmdData.AllowedBackendStorageVolumeUsageMarginExplicit, &cmdData.AllowedBackendStorageVolumeUsageMargin, alias.ParamName, defaultValue, fmt.Sprintf("Set the cleanup margin for backend (Docker or Buildah) storage. In percentage mode the margin is subtracted from the usage threshold, while in bytes mode it is added to the minimum required free space threshold, e.g. 5 or 2GB (default %s or $%s)", host_cleaning.DefaultAllowedBackendStorageVolumeUsageMarginThreshold().String(), alias.EnvName))
 	}
 
 	if marginEnvValue == "" {
@@ -202,20 +197,28 @@ func SetupAllowedLocalCacheVolumeUsage(cmdData *CmdData, cmd *cobra.Command) {
 	envVarName := "WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE"
 	defaultValue := option.ValueOrDefault(os.Getenv(envVarName), host_cleaning.DefaultAllowedLocalCacheVolumeUsageThreshold().FormatCLIValue())
 
-	initVolumeUsageThresholdTarget(&cmdData.AllowedLocalCacheVolumeUsage, defaultValue)
-	setupVolumeUsageThresholdFlag(cmd.Flags(), cmdData.AllowedLocalCacheVolumeUsage, nil, nil, "allowed-local-cache-volume-usage", defaultValue, fmt.Sprintf("Set the cleanup threshold for local cache (~/.werf/local_cache by default). Plain numbers define the maximum allowed usage percentage, while values with units define the minimum required free space, e.g. 70 or 10GB (default %s or $%s)", host_cleaning.DefaultAllowedLocalCacheVolumeUsageThreshold().String(), envVarName))
+	if cmdData.AllowedLocalCacheVolumeUsage == nil {
+		cmdData.AllowedLocalCacheVolumeUsage = newVolumeUsageThreshold(defaultValue)
+	}
+
+	setupVolumeUsageThresholdFlag(cmd.Flags(), cmdData.AllowedLocalCacheVolumeUsage, nil, &cmdData.AllowedLocalCacheVolumeUsage, "allowed-local-cache-volume-usage", defaultValue, fmt.Sprintf("Set the cleanup threshold for local cache (~/.werf/local_cache by default). Plain numbers define the maximum allowed usage percentage, while values with units define the minimum required free space, e.g. 70 or 10GB (default %s or $%s)", host_cleaning.DefaultAllowedLocalCacheVolumeUsageThreshold().String(), envVarName))
 }
 
 func SetupAllowedLocalCacheVolumeUsageMargin(cmdData *CmdData, cmd *cobra.Command) {
 	envVarName := "WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE_MARGIN"
 	marginEnvValue := os.Getenv(envVarName)
 	defaultValue := option.ValueOrDefault(marginEnvValue, host_cleaning.DefaultAllowedLocalCacheVolumeUsageMarginThreshold().FormatCLIValue())
+
 	cmdData.AllowedLocalCacheVolumeUsageMarginExplicit = new(bool)
 	*cmdData.AllowedLocalCacheVolumeUsageMarginExplicit = marginEnvValue != ""
 
-	initVolumeUsageThresholdTarget(&cmdData.AllowedLocalCacheVolumeUsageMargin, defaultValue)
 	marginTarget := cmdData.AllowedLocalCacheVolumeUsageMargin
-	setupVolumeUsageThresholdFlag(cmd.Flags(), marginTarget, func() { *cmdData.AllowedLocalCacheVolumeUsageMarginExplicit = true }, func(target *thresholdpkg.Threshold) { cmdData.AllowedLocalCacheVolumeUsageMargin = target }, "allowed-local-cache-volume-usage-margin", defaultValue, fmt.Sprintf("Set the cleanup margin for local cache. In percentage mode the margin is subtracted from the usage threshold, while in bytes mode it is added to the minimum required free space threshold, e.g. 5 or 2GB (default %s or $%s)", host_cleaning.DefaultAllowedLocalCacheVolumeUsageMarginThreshold().String(), envVarName))
+	if marginTarget == nil {
+		marginTarget = newVolumeUsageThreshold(defaultValue)
+		cmdData.AllowedLocalCacheVolumeUsageMargin = marginTarget
+	}
+
+	setupVolumeUsageThresholdFlag(cmd.Flags(), marginTarget, cmdData.AllowedLocalCacheVolumeUsageMarginExplicit, &cmdData.AllowedLocalCacheVolumeUsageMargin, "allowed-local-cache-volume-usage-margin", defaultValue, fmt.Sprintf("Set the cleanup margin for local cache. In percentage mode the margin is subtracted from the usage threshold, while in bytes mode it is added to the minimum required free space threshold, e.g. 5 or 2GB (default %s or $%s)", host_cleaning.DefaultAllowedLocalCacheVolumeUsageMarginThreshold().String(), envVarName))
 
 	if marginEnvValue == "" {
 		cmdData.AllowedLocalCacheVolumeUsageMargin = nil

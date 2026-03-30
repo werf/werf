@@ -31,50 +31,31 @@ const (
 
 type VolumeUsageThreshold = thresholdpkg.Threshold
 
-func NewVolumeUsageThresholdPercentage(value uint64) VolumeUsageThreshold {
-	return thresholdpkg.NewPercentage(value)
+func DefaultAllowedBackendStorageVolumeUsageThreshold() thresholdpkg.Threshold {
+	return thresholdpkg.NewPercentage(uint64(DefaultAllowedBackendStorageVolumeUsagePercentage))
 }
 
-func NewVolumeUsageThresholdBytes(value uint64) VolumeUsageThreshold {
-	return thresholdpkg.NewBytes(value)
+func DefaultAllowedBackendStorageVolumeUsageMarginThreshold() thresholdpkg.Threshold {
+	return thresholdpkg.NewPercentage(uint64(DefaultAllowedBackendStorageVolumeUsageMarginPercentage))
 }
 
-func DefaultAllowedBackendStorageVolumeUsageThreshold() VolumeUsageThreshold {
-	return NewVolumeUsageThresholdPercentage(uint64(DefaultAllowedBackendStorageVolumeUsagePercentage))
+func DefaultAllowedLocalCacheVolumeUsageThreshold() thresholdpkg.Threshold {
+	return thresholdpkg.NewPercentage(uint64(DefaultAllowedLocalCacheVolumeUsagePercentage))
 }
 
-func DefaultAllowedBackendStorageVolumeUsageMarginThreshold() VolumeUsageThreshold {
-	return NewVolumeUsageThresholdPercentage(uint64(DefaultAllowedBackendStorageVolumeUsageMarginPercentage))
+func DefaultAllowedLocalCacheVolumeUsageMarginThreshold() thresholdpkg.Threshold {
+	return thresholdpkg.NewPercentage(uint64(DefaultAllowedLocalCacheVolumeUsageMarginPercentage))
 }
 
-func DefaultAllowedLocalCacheVolumeUsageThreshold() VolumeUsageThreshold {
-	return NewVolumeUsageThresholdPercentage(uint64(DefaultAllowedLocalCacheVolumeUsagePercentage))
-}
-
-func DefaultAllowedLocalCacheVolumeUsageMarginThreshold() VolumeUsageThreshold {
-	return NewVolumeUsageThresholdPercentage(uint64(DefaultAllowedLocalCacheVolumeUsageMarginPercentage))
-}
-
-func ParseVolumeUsageThreshold(value string) (VolumeUsageThreshold, error) {
-	return thresholdpkg.Parse(value)
-}
-
-func volumeUsageThresholdValueOrDefault(optionValue *VolumeUsageThreshold, defaultValue VolumeUsageThreshold) VolumeUsageThreshold {
-	if optionValue != nil {
-		return *optionValue
-	}
-	return defaultValue
-}
-
-func resolveVolumeUsageThresholds(thresholdOption, marginOption *VolumeUsageThreshold, defaultThreshold, defaultMargin VolumeUsageThreshold, marginExplicit bool, thresholdFlagName, marginFlagName string) (VolumeUsageThreshold, VolumeUsageThreshold, error) {
+func resolveVolumeUsageThresholds(thresholdOption, marginOption *thresholdpkg.Threshold, defaultThreshold, defaultMargin thresholdpkg.Threshold, marginExplicit bool, thresholdFlagName, marginFlagName string) (thresholdpkg.Threshold, thresholdpkg.Threshold, error) {
 	return thresholdpkg.Resolve(thresholdOption, marginOption, defaultThreshold, defaultMargin, marginExplicit, thresholdFlagName, marginFlagName)
 }
 
-func resolveBackendStorageVolumeUsageThresholds(thresholdOption, marginOption *VolumeUsageThreshold, marginExplicit bool) (VolumeUsageThreshold, VolumeUsageThreshold, error) {
+func resolveBackendStorageVolumeUsageThresholds(thresholdOption, marginOption *thresholdpkg.Threshold, marginExplicit bool) (thresholdpkg.Threshold, thresholdpkg.Threshold, error) {
 	return resolveVolumeUsageThresholds(thresholdOption, marginOption, DefaultAllowedBackendStorageVolumeUsageThreshold(), DefaultAllowedBackendStorageVolumeUsageMarginThreshold(), marginExplicit, "--allowed-backend-storage-volume-usage", "--allowed-backend-storage-volume-usage-margin")
 }
 
-func resolveLocalCacheVolumeUsageThresholds(thresholdOption, marginOption *VolumeUsageThreshold, marginExplicit bool) (VolumeUsageThreshold, VolumeUsageThreshold, error) {
+func resolveLocalCacheVolumeUsageThresholds(thresholdOption, marginOption *thresholdpkg.Threshold, marginExplicit bool) (thresholdpkg.Threshold, thresholdpkg.Threshold, error) {
 	return resolveVolumeUsageThresholds(thresholdOption, marginOption, DefaultAllowedLocalCacheVolumeUsageThreshold(), DefaultAllowedLocalCacheVolumeUsageMarginThreshold(), marginExplicit, "--allowed-local-cache-volume-usage", "--allowed-local-cache-volume-usage-margin")
 }
 
@@ -88,11 +69,11 @@ type AutoHostCleanupOptions struct {
 
 type HostCleanupOptions struct {
 	BackendStoragePath                              *string
-	AllowedBackendStorageVolumeUsageThreshold       *VolumeUsageThreshold
-	AllowedBackendStorageVolumeUsageMarginThreshold *VolumeUsageThreshold
+	AllowedBackendStorageVolumeUsageThreshold       *thresholdpkg.Threshold
+	AllowedBackendStorageVolumeUsageMarginThreshold *thresholdpkg.Threshold
 	AllowedBackendStorageVolumeUsageMarginExplicit  bool
-	AllowedLocalCacheVolumeUsageThreshold           *VolumeUsageThreshold
-	AllowedLocalCacheVolumeUsageMarginThreshold     *VolumeUsageThreshold
+	AllowedLocalCacheVolumeUsageThreshold           *thresholdpkg.Threshold
+	AllowedLocalCacheVolumeUsageMarginThreshold     *thresholdpkg.Threshold
 	AllowedLocalCacheVolumeUsageMarginExplicit      bool
 
 	DryRun bool
@@ -148,6 +129,16 @@ func RunAutoHostCleanup(ctx context.Context, backend container_backend.Container
 }
 
 func RunHostCleanup(ctx context.Context, backend container_backend.ContainerBackend, options HostCleanupOptions) error {
+	allowedLocalCacheVolumeUsageThreshold, allowedLocalCacheVolumeUsageMarginThreshold, err := resolveLocalCacheVolumeUsageThresholds(options.AllowedLocalCacheVolumeUsageThreshold, options.AllowedLocalCacheVolumeUsageMarginThreshold, options.AllowedLocalCacheVolumeUsageMarginExplicit)
+	if err != nil {
+		return err
+	}
+
+	allowedBackendStorageVolumeUsageThreshold, allowedBackendStorageVolumeUsageMarginThreshold, err := resolveBackendStorageVolumeUsageThresholds(options.AllowedBackendStorageVolumeUsageThreshold, options.AllowedBackendStorageVolumeUsageMarginThreshold, options.AllowedBackendStorageVolumeUsageMarginExplicit)
+	if err != nil {
+		return err
+	}
+
 	if err := logboek.Context(ctx).LogProcess("Running GC for tmp data").DoError(func() error {
 		if err := tmp_manager.RunGC(ctx, options.DryRun); errors.Is(err, tmp_manager.ErrPathRemoval) {
 			return nil
@@ -156,11 +147,6 @@ func RunHostCleanup(ctx context.Context, backend container_backend.ContainerBack
 		}
 		return nil
 	}); err != nil {
-		return err
-	}
-
-	allowedLocalCacheVolumeUsageThreshold, allowedLocalCacheVolumeUsageMarginThreshold, err := resolveLocalCacheVolumeUsageThresholds(options.AllowedLocalCacheVolumeUsageThreshold, options.AllowedLocalCacheVolumeUsageMarginThreshold, options.AllowedLocalCacheVolumeUsageMarginExplicit)
-	if err != nil {
 		return err
 	}
 
@@ -174,11 +160,6 @@ func RunHostCleanup(ctx context.Context, backend container_backend.ContainerBack
 		}
 		return nil
 	}); err != nil {
-		return err
-	}
-
-	allowedBackendStorageVolumeUsageThreshold, allowedBackendStorageVolumeUsageMarginThreshold, err := resolveBackendStorageVolumeUsageThresholds(options.AllowedBackendStorageVolumeUsageThreshold, options.AllowedBackendStorageVolumeUsageMarginThreshold, options.AllowedBackendStorageVolumeUsageMarginExplicit)
-	if err != nil {
 		return err
 	}
 
@@ -222,7 +203,7 @@ func shouldRunAutoHostCleanup(ctx context.Context, backend container_backend.Con
 		return true, nil
 	}
 
-	allowedLocalCacheVolumeUsageThreshold := volumeUsageThresholdValueOrDefault(options.AllowedLocalCacheVolumeUsageThreshold, DefaultAllowedLocalCacheVolumeUsageThreshold())
+	allowedLocalCacheVolumeUsageThreshold := thresholdpkg.ValueOrDefault(options.AllowedLocalCacheVolumeUsageThreshold, DefaultAllowedLocalCacheVolumeUsageThreshold())
 
 	shouldRun, err = gitdata.ShouldRunAutoGC(ctx, allowedLocalCacheVolumeUsageThreshold)
 	if err != nil {
@@ -232,7 +213,7 @@ func shouldRunAutoHostCleanup(ctx context.Context, backend container_backend.Con
 		return true, nil
 	}
 
-	allowedBackendStorageVolumeUsageThreshold := volumeUsageThresholdValueOrDefault(options.AllowedBackendStorageVolumeUsageThreshold, DefaultAllowedBackendStorageVolumeUsageThreshold())
+	allowedBackendStorageVolumeUsageThreshold := thresholdpkg.ValueOrDefault(options.AllowedBackendStorageVolumeUsageThreshold, DefaultAllowedBackendStorageVolumeUsageThreshold())
 
 	cleaner, err := NewLocalBackendCleaner(backend, werf.HostLocker().Locker())
 	if errors.Is(err, ErrUnsupportedContainerBackend) {

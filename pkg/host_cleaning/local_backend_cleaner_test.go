@@ -14,6 +14,7 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/lockgate"
+	thresholdpkg "github.com/werf/werf/v2/pkg/cleaning/threshold"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/container_backend/filter"
 	"github.com/werf/werf/v2/pkg/container_backend/info"
@@ -60,7 +61,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 	Describe("ShouldRunAutoGC", func() {
 		It("should return true if cleanup needed", func(ctx SpecContext) {
 			result, err := cleaner.ShouldRunAutoGC(ctx, RunAutoGCOptions{
-				AllowedStorageVolumeUsageThreshold: NewVolumeUsageThresholdPercentage(0),
+				AllowedStorageVolumeUsageThreshold: thresholdpkg.NewPercentage(0),
 				StoragePath:                        t.TempDir(),
 			})
 			Expect(err).To(Succeed())
@@ -68,7 +69,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 		})
 		It("should return false if cleanup not needed", func(ctx SpecContext) {
 			result, err := cleaner.ShouldRunAutoGC(ctx, RunAutoGCOptions{
-				AllowedStorageVolumeUsageThreshold: NewVolumeUsageThresholdPercentage(100),
+				AllowedStorageVolumeUsageThreshold: thresholdpkg.NewPercentage(100),
 				StoragePath:                        t.TempDir(),
 			})
 			Expect(err).To(Succeed())
@@ -510,8 +511,8 @@ var _ = Describe("LocalBackendCleaner", func() {
 			ctx = logging.WithLogger(ctx)
 
 			options := RunGCOptions{
-				AllowedStorageVolumeUsageThreshold:       NewVolumeUsageThresholdPercentage(0),
-				AllowedStorageVolumeUsageMarginThreshold: NewVolumeUsageThresholdPercentage(0),
+				AllowedStorageVolumeUsageThreshold:       thresholdpkg.NewPercentage(0),
+				AllowedStorageVolumeUsageMarginThreshold: thresholdpkg.NewPercentage(0),
 				StoragePath:                              t.TempDir(),
 				Force:                                    true,
 			}
