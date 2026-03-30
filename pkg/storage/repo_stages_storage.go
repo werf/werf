@@ -193,17 +193,6 @@ func (storage *RepoStagesStorage) DeleteStage(ctx context.Context, stageDesc *im
 		}
 	}
 
-	sbomImageName := makeRepoSbomImageRecord(storage.RepoAddress, sbomImage.ImageName(stageDesc.Info.Name))
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.DeleteStage sbom image name: %s\n", sbomImageName)
-
-	if sbomImgInfo, err := storage.DockerRegistry.TryGetRepoImage(ctx, sbomImageName); err != nil {
-		return fmt.Errorf("unable to get sbom image record %q: %w", sbomImageName, err)
-	} else if sbomImgInfo != nil {
-		if err := storage.DockerRegistry.DeleteRepoImage(ctx, sbomImgInfo); err != nil {
-			return fmt.Errorf("unable to remove sbom image record %q: %w", sbomImageName, err)
-		}
-	}
-
 	return nil
 }
 
@@ -900,6 +889,46 @@ func (storage *RepoStagesStorage) Address() string {
 func makeRepoSbomImageRecord(repoAddress, imageName string) string {
 	_, imgTag := image.ParseRepositoryAndTag(imageName)
 	return fmt.Sprintf(RepoSbomImageRecord_ImageNameFormat, repoAddress, imgTag)
+}
+
+func (storage *RepoStagesStorage) GetOrphanedSbomImageNames(ctx context.Context) ([]string, error) {
+	tags, err := storage.Tags(ctx, storage.RepoAddress)
+	if err != nil {
+		return nil, fmt.Errorf("get repo tags: %w", err)
+	}
+
+	tagSet := make(map[string]struct{}, len(tags))
+	for _, tag := range tags {
+		tagSet[tag] = struct{}{}
+	}
+
+	var orphanedNames []string
+	for _, tag := range tags {
+		if !strings.HasSuffix(tag, sbomImage.TagSuffix) {
+			continue
+		}
+
+		parentTag := strings.TrimSuffix(tag, sbomImage.TagSuffix)
+		if _, exists := tagSet[parentTag]; exists {
+			continue
+		}
+
+		orphanedNames = append(orphanedNames, fmt.Sprintf("%s:%s", storage.RepoAddress, tag))
+	}
+
+	return orphanedNames, nil
+}
+
+func (storage *RepoStagesStorage) DeleteSbomImage(ctx context.Context, imageName string) error {
+	imgInfo, err := storage.DockerRegistry.TryGetRepoImage(ctx, imageName)
+	if err != nil {
+		return fmt.Errorf("get sbom image %q: %w", imageName, err)
+	}
+	if imgInfo == nil {
+		return nil
+	}
+
+	return storage.DockerRegistry.DeleteRepoImage(ctx, imgInfo)
 }
 
 func makeRepoCustomTagMetadataRecord(repoAddress, tag string) string {

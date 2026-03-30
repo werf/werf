@@ -252,6 +252,14 @@ func (storage *LocalStagesStorage) PullIfExistSbomImage(ctx context.Context, ima
 	return false, ErrNotSupported
 }
 
+func (storage *LocalStagesStorage) GetOrphanedSbomImageNames(_ context.Context) ([]string, error) {
+	return nil, nil
+}
+
+func (storage *LocalStagesStorage) DeleteSbomImage(_ context.Context, _ string) error {
+	return nil
+}
+
 func (storage *LocalStagesStorage) IsImageMetadataExist(ctx context.Context, projectName, imageNameOrManagedImageName, commit, stageID string, opts ...Option) (bool, error) {
 	return false, nil
 }

@@ -157,6 +157,20 @@ func (mr *MockStagesStorageMockRecorder) DeleteRepo(ctx any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteRepo", reflect.TypeOf((*MockStagesStorage)(nil).DeleteRepo), ctx)
 }
 
+// DeleteSbomImage mocks base method.
+func (m *MockStagesStorage) DeleteSbomImage(ctx context.Context, imageName string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteSbomImage", ctx, imageName)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteSbomImage indicates an expected call of DeleteSbomImage.
+func (mr *MockStagesStorageMockRecorder) DeleteSbomImage(ctx, imageName any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSbomImage", reflect.TypeOf((*MockStagesStorage)(nil).DeleteSbomImage), ctx, imageName)
+}
+
 // DeleteStage mocks base method.
 func (m *MockStagesStorage) DeleteStage(ctx context.Context, stageDesc *image.StageDesc, options storage.DeleteImageOptions) error {
 	m.ctrl.T.Helper()
@@ -342,6 +356,21 @@ func (mr *MockStagesStorageMockRecorder) GetManagedImages(ctx, projectName any, 
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, projectName}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetManagedImages", reflect.TypeOf((*MockStagesStorage)(nil).GetManagedImages), varargs...)
+}
+
+// GetOrphanedSbomImageNames mocks base method.
+func (m *MockStagesStorage) GetOrphanedSbomImageNames(ctx context.Context) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetOrphanedSbomImageNames", ctx)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetOrphanedSbomImageNames indicates an expected call of GetOrphanedSbomImageNames.
+func (mr *MockStagesStorageMockRecorder) GetOrphanedSbomImageNames(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrphanedSbomImageNames", reflect.TypeOf((*MockStagesStorage)(nil).GetOrphanedSbomImageNames), ctx)
 }
 
 // GetStageDesc mocks base method.
