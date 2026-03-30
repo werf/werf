@@ -1,5 +1,24 @@
 # Changelog
 
+## [2.65.0](https://github.com/werf/werf/compare/v2.64.0...v2.65.0) (2026-03-29)
+
+
+### Features
+
+* **build-report:** support reading .env format build reports ([8e1501c](https://github.com/werf/werf/commit/8e1501ce5ad068e9824dd3f3bc50c9e0bb94d3ad))
+* **ci-env:** add --use-docker-auth-config flag to generate Docker config from DOCKER_AUTH_CONFIG env var ([c2701f7](https://github.com/werf/werf/commit/c2701f7f72ef177ca3edbff14cc64438a5cb025d))
+* **deploy:** add structured image values to $.Values.global.werf.images ([#7413](https://github.com/werf/werf/issues/7413)) ([1b93dcc](https://github.com/werf/werf/commit/1b93dccbc7ae65877d316a16639ccd657ad9558e))
+
+
+### Bug Fixes
+
+* **build:** fix git owner and group with buildah backend ([#7415](https://github.com/werf/werf/issues/7415)) ([7af23b6](https://github.com/werf/werf/commit/7af23b66ec6dd59850abcd80babae4134d34d65e))
+* **build:** use path.Join for container-internal paths in stapel ([#7258](https://github.com/werf/werf/issues/7258)) ([c974594](https://github.com/werf/werf/commit/c974594d3c4d7ade4fe2fe9865bd6dec5c1bd6e4))
+* **deploy:** goroutine leak in watch error channel consumer for ReleaseInstall, ReleaseUninstall and ReleaseRollback ([#7418](https://github.com/werf/werf/issues/7418)) ([f2d817c](https://github.com/werf/werf/commit/f2d817cbef24017ad7073d1e949c16d1873917bd))
+* **deploy:** release had pending status after error instead of failed ([#7416](https://github.com/werf/werf/issues/7416)) ([b523cf2](https://github.com/werf/werf/commit/b523cf2cc1f71b0f78b9cb165e584254ce267682))
+* **host-cleanup:** handle race condition in tmp files GC when entries disappear between readdir and stat ([18ff151](https://github.com/werf/werf/commit/18ff151563b7b22e6062fff5132943102ebb7ee3))
+* **includes:** respect --loose-giterminism for --allow-includes-update ([#7414](https://github.com/werf/werf/issues/7414)) ([db75a5a](https://github.com/werf/werf/commit/db75a5a7fcf2c1abe0eba8033831f1c672bb169f))
+
 ## [2.64.0](https://github.com/werf/werf/compare/v2.63.0...v2.64.0) (2026-03-24)
 
 
