@@ -194,24 +194,36 @@ func CliPushWithRetries(ctx context.Context, args ...string) error {
 	})
 }
 
-func doCliTag(ctx context.Context, c command.Cli, args ...string) error {
-	return prepareCliCmd(ctx, image.NewTagCommand(c), args...).Execute()
-}
-
 func CliTag(ctx context.Context, args ...string) error {
-	return callCliWithAutoOutput(ctx, func(c command.Cli) error {
-		return doCliTag(ctx, c, args...)
-	})
-}
-
-func doCliRmi(ctx context.Context, c command.Cli, args ...string) error {
-	return prepareCliCmd(ctx, image.NewRemoveCommand(c), args...).Execute()
+	if len(args) < 2 {
+		return fmt.Errorf("tag requires source and target arguments")
+	}
+	return apiCli(ctx).ImageTag(ctx, args[0], args[1])
 }
 
 func CliRmi(ctx context.Context, args ...string) error {
-	return callCliWithAutoOutput(ctx, func(c command.Cli) error {
-		return doCliRmi(ctx, c, args...)
-	})
+	force := false
+	imageRefs := []string{}
+
+	for _, arg := range args {
+		if arg == "--force" || arg == "-f" {
+			force = true
+		} else {
+			imageRefs = append(imageRefs, arg)
+		}
+	}
+
+	for _, ref := range imageRefs {
+		_, err := apiCli(ctx).ImageRemove(ctx, ref, types.ImageRemoveOptions{
+			Force:         force,
+			PruneChildren: false,
+		})
+		if err != nil {
+			return fmt.Errorf("remove image %s: %w", ref, err)
+		}
+	}
+
+	return nil
 }
 
 type BuildOptions struct {

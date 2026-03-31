@@ -81,18 +81,30 @@ func CliRun_RecordedOutput(ctx context.Context, args ...string) (string, error) 
 	})
 }
 
-func doCliRm(ctx context.Context, c command.Cli, args ...string) error {
-	return prepareCliCmd(ctx, container.NewRmCommand(c), args...).Execute()
-}
-
 func CliRm(ctx context.Context, args ...string) error {
-	return callCliWithAutoOutput(ctx, func(c command.Cli) error {
-		return doCliRm(ctx, c, args...)
-	})
+	force := false
+	containerRefs := []string{}
+
+	for _, arg := range args {
+		if arg == "--force" || arg == "-f" {
+			force = true
+		} else {
+			containerRefs = append(containerRefs, arg)
+		}
+	}
+
+	for _, ref := range containerRefs {
+		if err := ContainerRemove(ctx, ref, types.ContainerRemoveOptions{Force: force}); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func CliRm_RecordedOutput(ctx context.Context, args ...string) (string, error) {
-	return callCliWithRecordedOutput(ctx, func(c command.Cli) error {
-		return doCliRm(ctx, c, args...)
-	})
+	if err := CliRm(ctx, args...); err != nil {
+		return "", err
+	}
+	return "", nil
 }

@@ -1,0 +1,154 @@
+//go:build ai_tests
+
+package docker
+
+import (
+	"context"
+	"io"
+	"testing"
+
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/image"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func TestAI_Rm_Success(t *testing.T) {
+	ctx := context.Background()
+	err := Init(ctx, InitOptions{})
+	require.NoError(t, err)
+
+	pullResp, err := apiCli(ctx).ImagePull(ctx, "alpine:latest", image.PullOptions{})
+	require.NoError(t, err)
+	_, _ = io.Copy(io.Discard, pullResp)
+	_ = pullResp.Close()
+
+	createResp, err := apiCli(ctx).ContainerCreate(ctx, &container.Config{
+		Image: "alpine:latest",
+		Cmd:   []string{"true"},
+	}, nil, nil, nil, "")
+	require.NoError(t, err)
+	containerID := createResp.ID
+
+	err = CliRm(ctx, containerID)
+	assert.NoError(t, err)
+
+	_, err = ContainerInspect(ctx, containerID)
+	assert.Error(t, err)
+}
+
+func TestAI_Rm_Force(t *testing.T) {
+	ctx := context.Background()
+	err := Init(ctx, InitOptions{})
+	require.NoError(t, err)
+
+	pullResp, err := apiCli(ctx).ImagePull(ctx, "alpine:latest", image.PullOptions{})
+	require.NoError(t, err)
+	_, _ = io.Copy(io.Discard, pullResp)
+	_ = pullResp.Close()
+
+	createResp, err := apiCli(ctx).ContainerCreate(ctx, &container.Config{
+		Image: "alpine:latest",
+		Cmd:   []string{"sleep", "3600"},
+	}, nil, nil, nil, "")
+	require.NoError(t, err)
+	containerID := createResp.ID
+
+	err = apiCli(ctx).ContainerStart(ctx, containerID, container.StartOptions{})
+	require.NoError(t, err)
+
+	err = CliRm(ctx, "--force", containerID)
+	assert.NoError(t, err)
+
+	_, err = ContainerInspect(ctx, containerID)
+	assert.Error(t, err)
+}
+
+func TestAI_Rm_ForceShortFlag(t *testing.T) {
+	ctx := context.Background()
+	err := Init(ctx, InitOptions{})
+	require.NoError(t, err)
+
+	pullResp, err := apiCli(ctx).ImagePull(ctx, "alpine:latest", image.PullOptions{})
+	require.NoError(t, err)
+	_, _ = io.Copy(io.Discard, pullResp)
+	_ = pullResp.Close()
+
+	createResp, err := apiCli(ctx).ContainerCreate(ctx, &container.Config{
+		Image: "alpine:latest",
+		Cmd:   []string{"sleep", "3600"},
+	}, nil, nil, nil, "")
+	require.NoError(t, err)
+	containerID := createResp.ID
+
+	err = apiCli(ctx).ContainerStart(ctx, containerID, container.StartOptions{})
+	require.NoError(t, err)
+
+	err = CliRm(ctx, "-f", containerID)
+	assert.NoError(t, err)
+
+	_, err = ContainerInspect(ctx, containerID)
+	assert.Error(t, err)
+}
+
+func TestAI_Rm_NotFound(t *testing.T) {
+	ctx := context.Background()
+	err := Init(ctx, InitOptions{})
+	require.NoError(t, err)
+
+	err = CliRm(ctx, "nonexistent-container-12345")
+	assert.Error(t, err)
+}
+
+func TestAI_Rm_RecordedOutput_Success(t *testing.T) {
+	ctx := context.Background()
+	err := Init(ctx, InitOptions{})
+	require.NoError(t, err)
+
+	pullResp, err := apiCli(ctx).ImagePull(ctx, "alpine:latest", image.PullOptions{})
+	require.NoError(t, err)
+	_, _ = io.Copy(io.Discard, pullResp)
+	_ = pullResp.Close()
+
+	createResp, err := apiCli(ctx).ContainerCreate(ctx, &container.Config{
+		Image: "alpine:latest",
+		Cmd:   []string{"true"},
+	}, nil, nil, nil, "")
+	require.NoError(t, err)
+	containerID := createResp.ID
+
+	output, err := CliRm_RecordedOutput(ctx, containerID)
+	assert.NoError(t, err)
+	assert.Equal(t, "", output)
+
+	_, err = ContainerInspect(ctx, containerID)
+	assert.Error(t, err)
+}
+
+func TestAI_Rm_RecordedOutput_Force(t *testing.T) {
+	ctx := context.Background()
+	err := Init(ctx, InitOptions{})
+	require.NoError(t, err)
+
+	pullResp, err := apiCli(ctx).ImagePull(ctx, "alpine:latest", image.PullOptions{})
+	require.NoError(t, err)
+	_, _ = io.Copy(io.Discard, pullResp)
+	_ = pullResp.Close()
+
+	createResp, err := apiCli(ctx).ContainerCreate(ctx, &container.Config{
+		Image: "alpine:latest",
+		Cmd:   []string{"sleep", "3600"},
+	}, nil, nil, nil, "")
+	require.NoError(t, err)
+	containerID := createResp.ID
+
+	err = apiCli(ctx).ContainerStart(ctx, containerID, container.StartOptions{})
+	require.NoError(t, err)
+
+	output, err := CliRm_RecordedOutput(ctx, "--force", containerID)
+	assert.NoError(t, err)
+	assert.Equal(t, "", output)
+
+	_, err = ContainerInspect(ctx, containerID)
+	assert.Error(t, err)
+}
