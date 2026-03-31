@@ -124,8 +124,6 @@ func NewExportCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupSynchronization(&commonCmdData, cmd)
 
-	common.SetupVirtualMerge(&commonCmdData, cmd)
-
 	commonCmdData.SetupPlatform(cmd)
 	commonCmdData.SetupBackendNetwork(cmd)
 	commonCmdData.SetupDebugTemplates(cmd)

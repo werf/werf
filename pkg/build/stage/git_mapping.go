@@ -280,41 +280,12 @@ func (gm *GitMapping) GetLatestCommitInfo(ctx context.Context, c Conveyor) (Imag
 		res.Commit = commit
 	}
 
-	if gm.GitRepo().IsLocal() && c.GetLocalGitRepoVirtualMergeOptions().VirtualMerge {
-		res.VirtualMerge = true
-
-		fromCommit, intoCommit, err := git_repo.GetVirtualMergeParents(ctx, gm.GitRepo(), res.Commit)
-		if err != nil {
-			return ImageCommitInfo{}, fmt.Errorf("unable to get virtual merge commit %q parents: %w", res.Commit, err)
-		}
-
-		res.VirtualMergeFromCommit = fromCommit
-		logboek.Context(ctx).Debug().LogF("Got virtual-merge-from-commit from parents of %s => %s\n", res.Commit, res.VirtualMergeFromCommit)
-
-		res.VirtualMergeIntoCommit = intoCommit
-		logboek.Context(ctx).Debug().LogF("Got virtual-merge-into-commit from parents of %s => %s\n", res.Commit, res.VirtualMergeIntoCommit)
-
-		if res.VirtualMergeFromCommit == "" {
-			return ImageCommitInfo{}, fmt.Errorf("unable to detect virtual-merge-from-commit for virtual merge commit %q", res.Commit)
-		}
-		if res.VirtualMergeIntoCommit == "" {
-			return ImageCommitInfo{}, fmt.Errorf("unable to detect virtual-merge-into-commit for virtual merge commit %q", res.Commit)
-		}
-	}
-
 	return res, nil
 }
 
 func (gm *GitMapping) AddGitCommitToImageLabels(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, stageImage *StageImage, commitInfo ImageCommitInfo) {
-	addLabels := make(map[string]string)
-	addLabels[gm.ImageGitCommitLabel()] = commitInfo.Commit
-
-	if commitInfo.VirtualMerge {
-		addLabels[gm.VirtualMergeLabel()] = "true"
-		addLabels[gm.VirtualMergeFromCommitLabel()] = commitInfo.VirtualMergeFromCommit
-		addLabels[gm.VirtualMergeIntoCommitLabel()] = commitInfo.VirtualMergeIntoCommit
-	} else {
-		addLabels[gm.VirtualMergeLabel()] = "false"
+	addLabels := map[string]string{
+		gm.ImageGitCommitLabel(): commitInfo.Commit,
 	}
 
 	if len(addLabels) > 0 {
@@ -339,33 +310,14 @@ func (gm *GitMapping) GetBaseCommitForPrevBuiltImage(ctx context.Context, c Conv
 		return "", fmt.Errorf("error getting prev built image %s commits info: %w", prevBuiltImage.Image.Name(), err)
 	}
 
-	var baseCommit string
-	if prevBuiltImageCommitInfo.VirtualMerge {
-		if latestCommit, err := gm.getCommit(ctx); err != nil {
-			return "", err
-		} else if gm.GitRepo().IsLocal() && c.GetLocalGitRepoVirtualMergeOptions().VirtualMerge && latestCommit == prevBuiltImageCommitInfo.Commit {
-			baseCommit = prevBuiltImageCommitInfo.Commit
-		} else {
-			if detachedMergeCommit, err := gm.GitRepo().CreateDetachedMergeCommit(ctx, prevBuiltImageCommitInfo.VirtualMergeFromCommit, prevBuiltImageCommitInfo.VirtualMergeIntoCommit); err != nil {
-				return "", fmt.Errorf("unable to create detached merge commit of %s into %s: %w", prevBuiltImageCommitInfo.VirtualMergeFromCommit, prevBuiltImageCommitInfo.VirtualMergeIntoCommit, err)
-			} else {
-				logboek.Context(ctx).Info().LogF("Created detached merge commit %s (merge %s into %s) for repo %s\n", detachedMergeCommit, prevBuiltImageCommitInfo.VirtualMergeFromCommit, prevBuiltImageCommitInfo.VirtualMergeIntoCommit, gm.GitRepo().GetName())
-				baseCommit = detachedMergeCommit
-			}
-		}
-	} else {
-		baseCommit = prevBuiltImageCommitInfo.Commit
-	}
+	baseCommit := prevBuiltImageCommitInfo.Commit
 
 	gm.BaseCommitByPrevBuiltImageName[prevBuiltImage.Image.Name()] = baseCommit
 	return baseCommit, nil
 }
 
 type ImageCommitInfo struct {
-	Commit                 string
-	VirtualMerge           bool
-	VirtualMergeFromCommit string
-	VirtualMergeIntoCommit string
+	Commit string
 }
 
 func makeInvalidImageError(label string) error {
@@ -373,46 +325,16 @@ func makeInvalidImageError(label string) error {
 }
 
 func (gm *GitMapping) GetBuiltImageCommitInfo(builtImageLabels map[string]string) (ImageCommitInfo, error) {
-	res := ImageCommitInfo{}
-
-	res.VirtualMerge = builtImageLabels[gm.VirtualMergeLabel()] == "true"
-	if res.VirtualMerge {
-		if commit, hasKey := builtImageLabels[gm.VirtualMergeFromCommitLabel()]; !hasKey {
-			return ImageCommitInfo{}, makeInvalidImageError(gm.VirtualMergeFromCommitLabel())
-		} else {
-			res.VirtualMergeFromCommit = commit
-		}
-
-		if commit, hasKey := builtImageLabels[gm.VirtualMergeIntoCommitLabel()]; !hasKey {
-			return ImageCommitInfo{}, makeInvalidImageError(gm.VirtualMergeIntoCommitLabel())
-		} else {
-			res.VirtualMergeIntoCommit = commit
-		}
-	}
-
-	if commit, hasKey := builtImageLabels[gm.ImageGitCommitLabel()]; !hasKey {
+	commit, hasKey := builtImageLabels[gm.ImageGitCommitLabel()]
+	if !hasKey {
 		return ImageCommitInfo{}, makeInvalidImageError(gm.ImageGitCommitLabel())
-	} else {
-		res.Commit = commit
 	}
 
-	return res, nil
+	return ImageCommitInfo{Commit: commit}, nil
 }
 
 func (gm *GitMapping) ImageGitCommitLabel() string {
 	return fmt.Sprintf("werf-git-%s-commit", gm.GetParamshash())
-}
-
-func (gm *GitMapping) VirtualMergeLabel() string {
-	return fmt.Sprintf("werf-git-%s-virtual-merge", gm.GetParamshash())
-}
-
-func (gm *GitMapping) VirtualMergeFromCommitLabel() string {
-	return fmt.Sprintf("werf-git-%s-virtual-merge-from-commit", gm.GetParamshash())
-}
-
-func (gm *GitMapping) VirtualMergeIntoCommitLabel() string {
-	return fmt.Sprintf("werf-git-%s-virtual-merge-into-commit", gm.GetParamshash())
 }
 
 func (gm *GitMapping) baseApplyPatchCommand(ctx context.Context, fromCommit, toCommit string, prevBuiltImage *StageImage) ([]string, error) {

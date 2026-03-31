@@ -10,7 +10,6 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/level"
 	"github.com/werf/werf/v2/pkg/build"
-	"github.com/werf/werf/v2/pkg/build/stage"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/container_backend/thirdparty/platformutil"
@@ -22,9 +21,6 @@ import (
 
 func GetConveyorOptions(ctx context.Context, commonCmdData *CmdData, imagesToProcess config.ImagesToProcess) (build.ConveyorOptions, error) {
 	conveyorOptions := build.ConveyorOptions{
-		LocalGitRepoVirtualMergeOptions: stage.VirtualMergeOptions{
-			VirtualMerge: GetVirtualMerge(commonCmdData),
-		},
 		ImagesToProcess: imagesToProcess,
 	}
 

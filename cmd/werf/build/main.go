@@ -97,7 +97,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupBuildReportPath(&commonCmdData, cmd)
 
 	common.SetupAddCustomTag(&commonCmdData, cmd)
-	common.SetupVirtualMerge(&commonCmdData, cmd)
 
 	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultBuildParallelTasksLimit)
 	common.SetupCheckBuiltImages(&commonCmdData, cmd)

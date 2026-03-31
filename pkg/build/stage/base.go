@@ -262,14 +262,7 @@ func (s *BaseStage) selectAncestorStageDescByGitMappings(ctx context.Context, c 
 			return nil, fmt.Errorf("error getting latest commit of git mapping %s: %w", gitMapping.Name, err)
 		}
 
-		var currentCommit string
-		if currentCommitInfo.VirtualMerge {
-			currentCommit = currentCommitInfo.VirtualMergeFromCommit
-		} else {
-			currentCommit = currentCommitInfo.Commit
-		}
-
-		currentCommitsByIndex = append(currentCommitsByIndex, currentCommit)
+		currentCommitsByIndex = append(currentCommitsByIndex, currentCommitInfo.Commit)
 	}
 
 	disableAncestryCheck := isGitCommitAncestryCheckDisabled()
@@ -288,12 +281,7 @@ ScanImages:
 				continue ScanImages
 			}
 
-			var commitToCheckAncestry string
-			if imageCommitInfo.VirtualMerge {
-				commitToCheckAncestry = imageCommitInfo.VirtualMergeFromCommit
-			} else {
-				commitToCheckAncestry = imageCommitInfo.Commit
-			}
+			commitToCheckAncestry := imageCommitInfo.Commit
 
 			exist, err := gitMapping.GitRepo().IsCommitExists(ctx, commitToCheckAncestry)
 			if err != nil {

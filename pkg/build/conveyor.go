@@ -71,15 +71,14 @@ type Conveyor struct {
 type ConveyorCleanupFunc func(context.Context) error
 
 type ConveyorOptions struct {
-	Parallel                        bool
-	ParallelTasksLimit              int64
-	LocalGitRepoVirtualMergeOptions stage.VirtualMergeOptions
-	TargetPlatforms                 []string
-	DeferBuildLog                   bool
-	ImagesToProcess                 config.ImagesToProcess
-	SkipImageSpecStage              bool
-	UseBuildReport                  bool
-	BuildReportPath                 string
+	Parallel           bool
+	ParallelTasksLimit int64
+	TargetPlatforms    []string
+	DeferBuildLog      bool
+	ImagesToProcess    config.ImagesToProcess
+	SkipImageSpecStage bool
+	UseBuildReport     bool
+	BuildReportPath    string
 }
 
 func NewConveyor(werfConfig *config.WerfConfig, giterminismManager giterminism_manager.Interface, projectDir, baseTmpDir string, containerBackend container_backend.ContainerBackend, storageManager manager.StorageManagerInterface, storageLockManager lock_manager.Interface, opts ConveyorOptions) *Conveyor {
@@ -258,10 +257,6 @@ func (c *Conveyor) GetStageDigestMutex(stage string) *sync.Mutex {
 	}
 
 	return m
-}
-
-func (c *Conveyor) GetLocalGitRepoVirtualMergeOptions() stage.VirtualMergeOptions {
-	return c.ConveyorOptions.LocalGitRepoVirtualMergeOptions
 }
 
 func (c *Conveyor) GetImportServer(ctx context.Context, targetPlatform, imageName, stageName string, fromExternalImage bool) (import_server.ImportServer, error) {

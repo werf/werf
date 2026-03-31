@@ -31,13 +31,8 @@ type Conveyor interface {
 	GetImageIDForImageStage(targetPlatform, imageName, stageName string) string
 
 	GetImportServer(ctx context.Context, targetPlatform, imageName, stageName string, e bool) (import_server.ImportServer, error)
-	GetLocalGitRepoVirtualMergeOptions() VirtualMergeOptions
 
 	GiterminismManager() giterminism_manager.Interface
 
 	UseLegacyStapelBuilder(cb container_backend.ContainerBackend) bool
-}
-
-type VirtualMergeOptions struct {
-	VirtualMerge bool
 }

@@ -134,7 +134,6 @@ werf converge --repo registry.mydomain.com/web --env production`,
 
 	common.SetupUseCustomTag(&commonCmdData, cmd)
 	common.SetupAddCustomTag(&commonCmdData, cmd)
-	common.SetupVirtualMerge(&commonCmdData, cmd)
 
 	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultBuildParallelTasksLimit)
 	common.SetupRequireBuiltImages(&commonCmdData, cmd)
