@@ -531,7 +531,7 @@ func (repo *Local) initRepoHandleBackedByWorkTree(ctx context.Context, commit st
 				return err
 			}
 
-			repoHandle, err = repo_handle.NewHandle(repositoryWithPreparedWorktree)
+			repoHandle, err = repo_handle.NewHandle(repositoryWithPreparedWorktree, repo_handle.NewHandleOptions{CommitHash: commitHash, WorkTreeDir: preparedWorkTreeDir})
 			return err
 		}); err != nil {
 			return nil, err

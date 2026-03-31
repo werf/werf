@@ -17,6 +17,8 @@ type handle struct {
 	mutex *sync.Mutex
 }
 
+var _ Handle = (*handle)(nil)
+
 func newHandle(repository *git.Repository, mutex *sync.Mutex) *handle {
 	return &handle{
 		repository: repository,
@@ -88,6 +90,8 @@ type submoduleHandle struct {
 	config *config.Submodule
 	status *git.SubmoduleStatus
 }
+
+var _ SubmoduleHandle = (*submoduleHandle)(nil)
 
 func newSubmoduleHandle(handle Handle, config *config.Submodule, status *git.SubmoduleStatus) *submoduleHandle {
 	return &submoduleHandle{
