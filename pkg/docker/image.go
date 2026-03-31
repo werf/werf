@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"os"
 	"slices"
 	"strings"
 	"time"
@@ -18,7 +17,6 @@ import (
 	dockerImage "github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
 	"github.com/samber/lo"
-	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 
 	"github.com/werf/logboek"
@@ -221,39 +219,13 @@ type BuildOptions struct {
 }
 
 func doCliBuild(ctx context.Context, c command.Cli, opts BuildOptions, args ...string) error {
-	var finalArgs []string
-	var cmd *cobra.Command
-
-	if opts.EnableBuildx {
-		cmd = NewBuildxCommand(c)
-		finalArgs = append([]string{"build", "--load"}, args...)
-	} else {
-		cmd = image.NewBuildCommand(c)
-		finalArgs = args
-	}
-
+	cmd := NewBuildxCommand(c)
+	finalArgs := append([]string{"build", "--load"}, args...)
 	return prepareCliCmd(ctx, cmd, finalArgs...).Execute()
 }
 
 func CliBuild_LiveOutputWithCustomIn(ctx context.Context, rc io.ReadCloser, args ...string) error {
-	buildOpts := BuildOptions{}
-
-	if useBuildx {
-		buildOpts.EnableBuildx = true
-
-		// TODO: --provenance=false is a workaround for index manifests that we cannot handle properly with current code base (fix in v3).
-		args = append([]string{"--provenance=false"}, args...)
-	} else {
-		var err error
-		args, err = checkForUnsupportedOptions(ctx, args...)
-		if err != nil {
-			return err
-		}
-		// ensure buildkit not enabled
-		if err := os.Setenv("DOCKER_BUILDKIT", "0"); err != nil {
-			return err
-		}
-	}
+	args = append([]string{"--provenance=false"}, args...)
 
 	return cliWithCustomOptions(ctx, []command.DockerCliOption{
 		func(cli *command.DockerCli) error {
@@ -261,30 +233,8 @@ func CliBuild_LiveOutputWithCustomIn(ctx context.Context, rc io.ReadCloser, args
 			return nil
 		},
 	}, func(cli command.Cli) error {
-		return doCliBuild(ctx, cli, buildOpts, args...)
+		return doCliBuild(ctx, cli, BuildOptions{}, args...)
 	})
-}
-
-func checkForUnsupportedOptions(ctx context.Context, args ...string) ([]string, error) {
-	borderIndex := 0
-	for i := 0; i < len(args); i++ {
-		arg := args[i]
-		if strings.Contains(arg, "--secret") {
-			return nil, fmt.Errorf("secrets are only available with Docker BuildKit")
-		}
-		// since we use our ssh agent as default we need to pop ssh options
-		// to be able to run build with legacy backend
-		if strings.Contains(arg, "--ssh") {
-			logboek.Context(ctx).Info().LogF("--ssh is not supported by legacy Docker builder so it will be skipped")
-			if i+1 < len(args) {
-				i++
-			}
-			continue
-		}
-		args[borderIndex] = args[i]
-		borderIndex++
-	}
-	return args[:borderIndex], nil
 }
 
 func CliImageSaveToStream(ctx context.Context, imageName string) (io.ReadCloser, error) {
