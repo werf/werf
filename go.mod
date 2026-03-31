@@ -54,11 +54,11 @@ require (
 	github.com/sirupsen/logrus v1.9.4
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
-	github.com/werf/common-go v0.0.0-20251113140850-a1a98e909e9b
+	github.com/werf/common-go v0.0.0-20260212174520-adf7d95a1579
 	github.com/werf/copy-recurse v0.2.7
 	github.com/werf/lockgate v0.1.1
 	github.com/werf/logboek v0.6.1
-	github.com/werf/nelm v1.23.2-0.20260327172522-9fd804c04354
+	github.com/werf/nelm v1.23.3-0.20260331154124-ebc52bff0a68
 	go.opentelemetry.io/otel v1.42.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.42.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.42.0
@@ -90,7 +90,7 @@ require (
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d // indirect
 	github.com/alecthomas/chroma/v2 v2.23.1 // indirect
 	github.com/chainguard-dev/git-urls v1.0.2 // indirect
-	github.com/clipperhouse/uax29/v2 v2.2.0 // indirect
+	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
 	github.com/dlclark/regexp2 v1.11.5 // indirect
 	github.com/docker/distribution v2.8.3+incompatible // indirect
 	github.com/dop251/goja v0.0.0-20260311135729-065cd970411c // indirect
@@ -145,7 +145,7 @@ require (
 	oras.land/oras-go/v2 v2.6.0 // indirect
 	sigs.k8s.io/controller-runtime v0.23.3 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
-	sigs.k8s.io/structured-merge-diff/v6 v6.3.2-0.20260122202528-d9cc6641c482 // indirect
+	sigs.k8s.io/structured-merge-diff/v6 v6.3.2 // indirect
 )
 
 require (
@@ -345,7 +345,7 @@ require (
 	github.com/sigstore/sigstore v1.8.2 // indirect
 	github.com/skeema/knownhosts v1.2.2 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
-	github.com/spf13/cast v1.7.0 // indirect
+	github.com/spf13/cast v1.10.0 // indirect
 	github.com/stefanberger/go-pkcs11uri v0.0.0-20230803200340-78284954bff6 // indirect
 	github.com/stretchr/testify v1.11.1
 	github.com/sylabs/sif/v2 v2.16.0 // indirect
@@ -389,7 +389,7 @@ require (
 	go.opentelemetry.io/otel/exporters/prometheus v0.64.0 // indirect
 	go.opentelemetry.io/otel/metric v1.42.0 // indirect
 	go.opentelemetry.io/otel/sdk/metric v1.42.0 // indirect
-	go.opentelemetry.io/proto/otlp v1.9.0 // indirect
+	go.opentelemetry.io/proto/otlp v1.10.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/exp v0.0.0-20250210185358-939b2ce775ac // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
